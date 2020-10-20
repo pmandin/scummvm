@@ -1,0 +1,63 @@
+/* ResidualVM - A 3D game interpreter
+ *
+ * ResidualVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the AUTHORS
+ * file distributed with this source distribution.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *
+ */
+
+#ifndef REEVENGI_ROOM_H
+#define REEVENGI_ROOM_H
+
+#include "common/stream.h"
+#include "math/vector2d.h"
+
+namespace Reevengi {
+
+typedef struct {
+	int32 fromX, fromY, fromZ;
+	int32 toX, toY, toZ;
+} RdtCameraPos_t;
+
+class Room {
+public:
+	Room(Common::SeekableReadStream *stream);
+	virtual ~Room();
+
+	virtual int getNumCameras(void);
+	virtual void getCameraPos(int numCamera, RdtCameraPos_t *cameraPos);
+
+	virtual int checkCamSwitch(int curCam, Math::Vector2d fromPos, Math::Vector2d toPos);
+	virtual void drawCamSwitch(int curCam);
+
+	virtual bool checkCamBoundary(int curCam, Math::Vector2d fromPos, Math::Vector2d toPos);
+	virtual void drawCamBoundary(int curCam);
+
+	virtual void drawMasks(int numCamera);
+
+protected:
+	// raw data file for room
+	byte *_roomPtr;
+	int32 _roomSize;
+
+	virtual void postLoad(void);
+	bool isInside(Math::Vector2d pos, Math::Vector2d quad[4]);
+};
+
+} // End of namespace Reevengi
+
+#endif
