@@ -60,7 +60,7 @@ enum ScriptOpcode {
 	OPCODE_VAR_GT2,
 	OPCODE_VAR_GTE1,
 	OPCODE_VAR_GTE2,
-	OPCODE_CURRENT_OBJECT_TAKEABLE,
+	OPCODE_CURRENT_IS_OBJECT,
 	OPCODE_OBJECT_PRESENT,
 	OPCODE_ELSE,
 	OPCODE_OBJECT_IN_ROOM,
@@ -89,6 +89,7 @@ enum ScriptOpcode {
 	OPCODE_TAKE_OBJECT,
 	OPCODE_MOVE_OBJECT_TO_ROOM,
 	OPCODE_SAVE_ACTION,
+	OPCODE_CLEAR_LINE,
 	OPCODE_MOVE_TO_ROOM,
 	OPCODE_VAR_ADD,
 	OPCODE_SET_ROOM_DESCRIPTION,
@@ -97,7 +98,6 @@ enum ScriptOpcode {
 	OPCODE_SET_OBJECT_DESCRIPTION,
 	OPCODE_SET_OBJECT_LONG_DESCRIPTION,
 	OPCODE_MOVE_DEFAULT,
-	OPCODE_MOVE_DIRECTION,
 	OPCODE_PRINT,
 	OPCODE_REMOVE_OBJECT,
 	OPCODE_SET_FLAG,
@@ -121,21 +121,23 @@ enum ScriptOpcode {
 	OPCODE_SET_STRING_REPLACEMENT2,
 	OPCODE_SET_STRING_REPLACEMENT3,
 	OPCODE_SET_CURRENT_NOUN_STRING_REPLACEMENT,
-	OPCODE_CURRENT_IS_NOT_OBJECT,
 	OPCODE_DRAW_ROOM,
 	OPCODE_DRAW_OBJECT,
 	OPCODE_WAIT_KEY,
 	OPCODE_TEST_FALSE,
 	OPCODE_CAN_TAKE,
 	OPCODE_TOO_HEAVY,
-	OPCODE_NOT_TAKEABLE,
+	OPCODE_OBJECT_TAKEABLE,
 	OPCODE_OBJECT_CAN_TAKE,
 	OPCODE_CLEAR_INVISIBLE,
 	OPCODE_SET_INVISIBLE,
 	OPCODE_CLEAR_CAN_TAKE,
 	OPCODE_SET_CAN_TAKE,
 	OPCODE_CLEAR_FLAG40,
-	OPCODE_SET_FLAG40
+	OPCODE_SET_FLAG40,
+	OPCODE_RANDOM_MSG,
+	OPCODE_SET_WORD,
+	OPCODE_CLEAR_WORD
 };
 
 /* Game state update flags */
@@ -201,6 +203,7 @@ struct FunctionState {
 	bool _and;
 	bool _inCommand;
 	bool _executed;
+	bool _notComparison;
 
 	FunctionState() {
 		clear();
@@ -308,6 +311,8 @@ struct Instruction {
 		clear();
 	}
 
+	Instruction(byte opcode, byte op1 = 0, byte op2 = 0, byte op3 = 0);
+
 	void clear();
 };
 
@@ -385,9 +390,7 @@ public:
 	uint8 _totalInventoryWeight;
 
 	Common::Array<Item> _items;
-
-	Word *_words;
-	size_t _nr_words;
+	Common::Array<Word> _words;
 
 	StringTable _strings;
 	StringTable _strings2;
@@ -396,6 +399,7 @@ public:
 	uint16 _variables[MAX_VARIABLES];
 
 	uint8 _currentReplaceWord;
+	uint8 _wordFlags;
 	uint _updateFlags;
 
 	Common::Array<WordMap> _wordMaps;

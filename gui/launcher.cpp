@@ -184,11 +184,11 @@ void LauncherDialog::build() {
 #endif
 		_searchDesc = new StaticTextWidget(this, "Launcher.SearchDesc", _("Search:"));
 
-	_searchWidget = new EditTextWidget(this, "Launcher.Search", _search, Common::U32String(""), kSearchCmd);
+	_searchWidget = new EditTextWidget(this, "Launcher.Search", _search, Common::U32String(), kSearchCmd);
 	_searchClearButton = addClearButton(this, "Launcher.SearchClearButton", kSearchClearCmd);
 
 	// Add list with game titles
-	_list = new ListWidget(this, "Launcher.GameList", Common::U32String(""), kListSearchCmd);
+	_list = new ListWidget(this, "Launcher.GameList", Common::U32String(), kListSearchCmd);
 	_list->setEditable(false);
 	_list->enableDictionarySelect(true);
 	_list->setNumberingMode(kListNumberingOff);
@@ -253,6 +253,21 @@ void LauncherDialog::close() {
 	ConfMan.flushToDisk();
 	Dialog::close();
 }
+struct LauncherEntry {
+	Common::String key;
+	Common::String description;
+	const Common::ConfigManager::Domain *domain;
+
+	LauncherEntry(Common::String k, Common::String d, const Common::ConfigManager::Domain *v) {
+		key = k; description = d, domain = v;
+	}
+};
+
+struct LauncherEntryComparator {
+	bool operator()(const LauncherEntry &x, const LauncherEntry &y) const {
+			return scumm_compareDictionary(x.description.c_str(), y.description.c_str()) < 0;
+	}
+};
 
 void LauncherDialog::updateListing() {
 	U32StringArray l;
@@ -266,17 +281,7 @@ void LauncherDialog::updateListing() {
 	bool scanEntries = numEntries == -1 ? true : (domains.size() <= numEntries);
 
 	// Turn it into a list of pointers
-	struct Entry {
-		String key;
-		String description;
-		const Common::ConfigManager::Domain *domain;
-
-		Entry(Common::String k, Common::String d, const Common::ConfigManager::Domain *v) {
-			key = k; description = d, domain = v;
-		}
-	};
-
-	Common::List<Entry> domainList;
+	Common::List<LauncherEntry> domainList;
 	for (ConfigManager::DomainMap::const_iterator iter = domains.begin(); iter != domains.end(); ++iter) {
 #ifdef __DS__
 		// DS port uses an extra section called 'ds'.  This prevents the section from being
@@ -304,20 +309,14 @@ void LauncherDialog::updateListing() {
 		}
 
 		if (!description.empty())
-			domainList.push_back(Entry(iter->_key, description, &iter->_value));
+			domainList.push_back(LauncherEntry(iter->_key, description, &iter->_value));
 	}
 
 	// Now sort the list in dictionary order
-	struct EntryComparator {
-        bool operator()(const Entry &x, const Entry &y) const {
-                return scumm_compareDictionary(x.description.c_str(), y.description.c_str()) < 0;
-        }
-	};
-
-	Common::sort(domainList.begin(), domainList.end(), EntryComparator());
+	Common::sort(domainList.begin(), domainList.end(), LauncherEntryComparator());
 
 	// And fill out our structures
-	for (Common::List<Entry>::const_iterator iter = domainList.begin(); iter != domainList.end(); ++iter) {
+	for (Common::List<LauncherEntry>::const_iterator iter = domainList.begin(); iter != domainList.end(); ++iter) {
 		color = ThemeEngine::kFontColorNormal;
 
 		if (scanEntries) {
@@ -708,8 +707,8 @@ void LauncherDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 		break;
 	case kSearchClearCmd:
 		// Reset the active search filter, thus showing all games again
-		_searchWidget->setEditString(Common::U32String(""));
-		_list->setFilter(Common::U32String(""));
+		_searchWidget->setEditString(Common::U32String());
+		_list->setFilter(Common::U32String());
 		break;
 	default:
 		Dialog::handleCommand(sender, cmd, data);

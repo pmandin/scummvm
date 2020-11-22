@@ -70,6 +70,28 @@ ifdef DYNAMIC_MODULES
 	rm -rf "$(DESTDIR)$(libdir)/scummvm/"
 endif
 
+# Special generic target for simple archive distribution
+
+dist-generic: $(EXECUTABLE)
+	mkdir -p ./dist-generic/scummvm/data
+	mkdir -p ./dist-generic/scummvm/doc
+	cp $(EXECUTABLE) ./dist-generic/scummvm
+	cp $(DIST_FILES_DOCS) ./dist-generic/scummvm/doc
+	cp $(DIST_FILES_THEMES) ./dist-generic/scummvm/data
+ifdef DIST_FILES_ENGINEDATA
+	cp $(DIST_FILES_ENGINEDATA) ./dist-generic/scummvm/data
+endif
+ifdef DIST_FILES_NETWORKING
+	cp $(DIST_FILES_NETWORKING) ./dist-generic/scummvm/data
+endif
+ifdef DIST_FILES_VKEYBD
+	cp $(DIST_FILES_VKEYBD) ./dist-generic/scummvm/data
+endif
+ifdef DIST_FILES_SHADERS
+	mkdir -p ./dist-generic/scummvm/data/shaders
+	cp $(DIST_FILES_SHADERS) ./dist-generic/scummvm/data/shaders
+endif
+
 # Special target to create a application wrapper for Mac OS X
 
 ifdef USE_DOCKTILEPLUGIN
@@ -322,11 +344,10 @@ endif
 	cp $(srcdir)/dists/ios7/Images.xcassets/LaunchImage.launchimage/ScummVM-splash-2208x1242.png $(bundle_name)/LaunchImage-800-Landscape-736h@3x.png
 	cp $(srcdir)/dists/ios7/Images.xcassets/LaunchImage.launchimage/ScummVM-splash-750x1334.png $(bundle_name)/LaunchImage-800-667h@2x.png
 
-# Location of static libs for the iPhone
-ifneq ($(BACKEND), iphone)
-ifneq ($(BACKEND), ios7)
-# Static libaries, used for the scummvm-static and iphone targets
+
+ifndef WITHOUT_SDL
 OSX_STATIC_LIBS := `$(SDLCONFIG) --prefix=$(STATICLIBPATH) --static-libs`
+
 ifdef USE_SDL_NET
 ifdef USE_SDL2
 OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libSDL2_net.a
@@ -334,13 +355,27 @@ else
 OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libSDL_net.a
 endif
 endif
+
 # With sdl2-config we don't always get the OpenGL framework
 OSX_STATIC_LIBS += -framework OpenGL
+
+else # WITHOUT_SDL
+
+# Special SDL_Net library without SDL (iPhone)
+ifdef USE_SDL_NET
+ifeq ($(SDL_NET_MAJOR),1)
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libSDL_net.a
+else
+ifeq ($(SDL_NET_MAJOR),2)
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libSDL2_net.a
 endif
 endif
+endif # USE_SDL_NET
+
+endif # WITHOUT_SDL
 
 ifdef USE_LIBCURL
-OSX_STATIC_LIBS += -lcurl
+OSX_STATIC_LIBS += -lcurl -framework Security
 endif
 
 ifdef USE_FREETYPE2
@@ -349,10 +384,6 @@ endif
 
 ifdef USE_FRIBIDI
 OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libfribidi.a
-endif
-
-ifdef USE_ICONV
-OSX_STATIC_LIBS += -liconv
 endif
 
 ifdef USE_VORBIS
@@ -374,11 +405,7 @@ OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libogg.a
 endif
 
 ifdef USE_FLUIDSYNTH
-# If iconv was not yet added, add it now as we need it for libfluidsynth
-ifndef USE_ICONV
-OSX_STATIC_LIBS += -liconv
-endif
-OSX_STATIC_LIBS += \
+OSX_STATIC_LIBS += -liconv \
                 -framework CoreMIDI -framework CoreAudio\
                 $(STATICLIBPATH)/lib/libfluidsynth.a \
                 $(STATICLIBPATH)/lib/libglib-2.0.a \
@@ -436,7 +463,7 @@ OSX_STATIC_LIBS += -framework Sparkle -Wl,-rpath,@loader_path/../Frameworks
 endif
 endif
 ifdef USE_GLEW
-OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libglew.a
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libGLEW.a
 endif
 
 # Special target to create a static linked binary for Mac OS X.

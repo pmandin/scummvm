@@ -171,7 +171,6 @@ _taskbar=auto
 _updates=no
 _libunity=auto
 _dialogs=auto
-_iconv=auto
 _tts=auto
 _gtk=auto
 _fribidi=auto
@@ -1181,9 +1180,6 @@ Optional Libraries:
   --with-libcurl-prefix=DIR    prefix where libcurl is installed (optional)
   --disable-libcurl        disable libcurl networking library [autodetect]
 
-  --with-iconv-prefix=DIR    prefix where libiconv is installed (optional)
-  --disable-iconv        disable libiconv encoding conversion library [autodetect]
-
   --with-discord-prefix=DIR   prefix where discord-rpc is installed (optional)
   --disable-discord       disable Discord rich presence integration [autodetect]
 
@@ -1349,8 +1345,6 @@ for ac_option in $@; do
 	--disable-eventrecorder)     _eventrec=no            ;;
 	--enable-text-console)       _text_console=yes       ;;
 	--disable-text-console)      _text_console=no        ;;
-	--enable-iconv)              _iconv=yes              ;;
-	--disable-iconv)             _iconv=no               ;;
 	--with-fluidsynth-prefix=*)
 		arg=`echo $ac_option | cut -d '=' -f 2`
 		FLUIDSYNTH_CFLAGS="-I$arg/include"
@@ -1469,11 +1463,6 @@ for ac_option in $@; do
 		arg=`echo $ac_option | cut -d '=' -f 2`
 		GLEW_CFLAGS="-I$arg/include"
 		GLEW_LIBS="-L$arg/lib"
-		;;
-	--with-iconv-prefix=*)
-		arg=`echo $ac_option | cut -d '=' -f 2`
-		ICONV_CFLAGS="-I$arg/include"
-		ICONV_LIBS="-L$arg/lib"
 		;;
 	--with-discord-prefix=*)
 		arg=`echo $ac_option | cut -d '=' -f 2`
@@ -2906,24 +2895,27 @@ case $_host_os in
 		# A workaround is to set the LC_VERSION_MIN_MACOSX load command's sdk value
 		# to n/a (i.e. 0.0). See bug #11430 for details.
 		echocheck "macOS deployement target"
-		_macos_min_version=undefined
-		for _macos_min_version_check in 1030 140 1050 1060 1070 1080 1090 101000 101100 101200 101300 101400 101500 101600; do
-			cat > $TMPC << EOF
+		cat > $TMPC << EOF
 #include "AvailabilityMacros.h"
-#if MAC_OS_X_VERSION_MIN_REQUIRED > ${_macos_min_version_check}
-error
-#endif
-int main(int argc, char *argv[]) { return 0; }
+
+#define _DIGIT(x) #x
+#define DIGIT(x) _DIGIT(x)
+
+const char version[] = "Version:" DIGIT(MAC_OS_X_VERSION_MIN_REQUIRED);
+const char *_version() { char *s = (char *)version; return s; }
+
+int main(int argc, char *argv[]) { _version(); return 0; }
 EOF
-			cc_check
-			if test "$TMPR" -eq 0; then
-				_macos_min_version=$_macos_min_version_check
-				break
-			fi
-		done
+		cc_check_no_clean
+		if $_strings $TMPO$HOSTEXEEXT | grep Version: >/dev/null; then
+			_macos_min_version=`$_strings $TMPO$HOSTEXEEXT | grep Version:`
+			_macos_min_version="${_macos_min_version#Version:}"
+		fi
+		cc_check_clean
+
 		# Also get a dot version of the min version
 		_macos_min_version_dot=undefined
-		if test "$_macos_min_version" != undefined ; then
+		if test -n "$_macos_min_version" ; then
 			if test "$_macos_min_version" -lt 101000; then
 				_macos_min_ver_major=$((${_macos_min_version}/100))
 				_macos_min_ver_minor=$((${_macos_min_version}/10 - 10*${_macos_min_ver_major}))
@@ -2953,15 +2945,18 @@ EOF
 			append_var LDFLAGS "$_macos_ldflags_platform_version"
 		fi
 
-		# When building for MacOS X 10.5 or below we need to use the legacy icon
-		if test "$_macos_min_version" != undefined -a "$_macos_min_version" -lt 1060 ; then
-			add_line_to_config_mk 'MACOSX_USE_LEGACY_ICONS = 1'
-		fi
+		# Version-specific quirks
+		if test -n "$_macos_min_version" ; then
+			# When building for MacOS X 10.5 or below we need to use the legacy icon
+			if test "$_macos_min_version" -lt 1060 ; then
+				add_line_to_config_mk 'MACOSX_USE_LEGACY_ICONS = 1'
+			fi
 
-		# When building with SDK 10.14 or above, we cannot compile the 32 bits dock plugin
-		# Assume the SDK version is the same as the min version.
-		if test "$_macos_min_version" != undefined -a "$_macos_min_version" -gt 101399 ; then
-			add_line_to_config_mk 'MACOSX_64_BITS_ONLY = 1'
+			# When building with SDK 10.14 or above, we cannot compile the 32 bits dock plugin
+			# Assume the SDK version is the same as the min version.
+			if test "$_macos_min_version" -gt 101399 ; then
+				add_line_to_config_mk 'MACOSX_64_BITS_ONLY = 1'
+			fi
 		fi
 
 		# Use pandoc to generate README and NEWS file for the bundle
@@ -3164,9 +3159,14 @@ EOF
 		;;
 	psp)
 		_optimization_level=-O2
+		_freetypepath="$PSPDEV/psp/bin"
+		if test -z "$PKG_CONFIG_LIBDIR"; then
+			export PKG_CONFIG_LIBDIR="$PSPDEV/psp/lib/pkgconfig"
+		fi
 		append_var CXXFLAGS "-I$PSPSDK/include"
 		# FIXME: Why is the following in CXXFLAGS and not in DEFINES? Change or document this.
 		append_var CXXFLAGS "-D_PSP_FW_VERSION=150"
+		append_var CXXFLAGS "-G0"
 		add_line_to_config_mk 'PSP = 1'
 		;;
 	riscos)
@@ -3364,6 +3364,7 @@ if test -n "$_host"; then
 			# The Raspberry Pi always supports OpenGL ES 2.0 contexts, thus we
 			# take advantage of those.
 			_opengl_mode=gles2
+			_opengl_game_es2=yes
 			;;
 		dreamcast)
 			append_var DEFINES "-DDISABLE_DEFAULT_SAVEFILEMANAGER"
@@ -3467,6 +3468,7 @@ if test -n "$_host"; then
 			_port_mk="backends/platform/gph/gp2xwiz-bundle.mk"
 			;;
 		iphone)
+			add_line_to_config_mk 'IPHONE = 1'
 			append_var DEFINES "-DIPHONE"
 			append_var ASFLAGS "-arch armv6"
 			_backend="iphone"
@@ -3476,7 +3478,8 @@ if test -n "$_host"; then
 			_timidity=no
 			;;
 		ios7)
-			append_var DEFINES "-DIPHONE"
+			add_line_to_config_mk 'IPHONE = 1'
+			append_var DEFINES "-DIPHONE -DIPHONE_IOS7 -DIPHONE_SANDBOXED"
 			_backend="ios7"
 			_seq_midi=no
 			_timidity=no
@@ -3625,6 +3628,7 @@ if test -n "$_host"; then
 			# This might be related to a known crash on OpenGL de-init due
 			# to the OpenGL implementation on this platform.
 			_opengl_mode=gles2
+			_opengl_game_es2=yes
 			_vkeybd=yes
 			_port_mk="backends/platform/sdl/switch/switch.mk"
 			;;
@@ -3902,14 +3906,18 @@ EOF
 	if test "$_sdlnet" = yes ; then
 		set_var SDL_NET_LIBS   "$SDL2_NET_LIBS"
 		set_var SDL_NET_CFLAGS "$SDL2_NET_CFLAGS"
+		add_line_to_config_mk "SDL_NET_MAJOR = 2"
 	else
 		cat > $TMPC << EOF
 #include "SDL_net.h"
 int main(int argc, char *argv[]) { SDLNet_Init(); return 0; }
 EOF
 		cc_check $SDL1_NET_LIBS $LIBS $INCLUDES $SDL1_NET_CFLAGS && _sdlnet=yes
-		set_var SDL_NET_LIBS   "$SDL1_NET_LIBS"
-		set_var SDL_NET_CFLAGS "$SDL1_NET_CFLAGS"
+		if test "$_sdlnet" = yes ; then
+			set_var SDL_NET_LIBS   "$SDL1_NET_LIBS"
+			set_var SDL_NET_CFLAGS "$SDL1_NET_CFLAGS"
+			add_line_to_config_mk "SDL_NET_MAJOR = 1"
+		fi
 	fi
 
 	if test "$_sdlnet" = yes ; then
@@ -3917,6 +3925,7 @@ EOF
 		prepend_var LIBS "$SDL_NET_LIBS"
 		append_var INCLUDES "$SDL_NET_CFLAGS"
 	fi
+	define_in_config_if_no "$_sdl" 'WITHOUT_SDL'
 	define_in_config_if_yes "$_sdlnet" 'USE_SDL_NET'
 	echo "$_sdlnet"
 fi
@@ -4333,7 +4342,7 @@ if test "$_tts" = auto ; then
 		mingw*)
 			cat > $TMPC << EOF
 #include <windows.h>
-#include <Servprov.h>
+#include <servprov.h>
 #include <sapi.h>
 int main(void) { return 0; }
 EOF
@@ -4992,6 +5001,10 @@ case $_host_os in
 		FLUIDSYNTH_STATIC_LIBS="$FLUIDSYNTH_LIBS -lnx"
 	;;
 
+	psp2)
+		FLUIDSYNTH_STATIC_LIBS="$FLUIDSYNTH_LIBS -lpthread"
+	;;
+
 	*)
 		FLUIDSYNTH_STATIC_LIBS="$FLUIDSYNTH_LIBS -lglib-2.0 -lintl -liconv"
 	;;
@@ -5386,7 +5399,7 @@ echocheck "OpenGL for game"
 
 if test "$_opengl_game" = auto ; then
 	_opengl_game=no
-	if (test "$_backend" = "sdl" && test "$_opengl" = yes) || test "$_backend" = "android3d"; then
+	if (test "$_backend" = "sdl" && test "$_opengl" = yes) || test "$_backend" = "android3d" || test "$_backend" = "switch" || test "$_backend" = "raspberrypi"; then
 		# Try different header filenames
 		# 1) GL/gl.h         This is usually used on POSIX and Windows systems
 		# 2) OpenGL/gl.h     This is used on Mac OS X
@@ -5491,86 +5504,6 @@ if test -n "$LIBS_3D" ; then
 	_mak_plugins=$_mak_plugins"PLUGIN_LDFLAGS  += $LIBS_3D"
 fi
 
-
-#
-# Check for iconv
-#
-echo_n "Checking whether iconv.h is present... "
-if test "$_iconv" = auto ; then
-	_iconv=no
-	cat > $TMPC << EOF
-#include <iconv.h>
-int main(int, char **) {
-	return 0;
-}
-EOF
-	cc_check $ICONV_CFLAGS $ICONV_LIBS && _iconv=yes
-fi
-
-create_iconv_test() {
-	cat > $TMPC << EOF
-#include <iconv.h>
-int main(int, char **) {
-	iconv_t iconv = iconv_open("UTF-32", "SJIS");
-	iconv_close(iconv);
-	return 0;
-}
-EOF
-}
-echo "$_iconv"
-
-if test "$_iconv" = yes ; then
-	echo_n "Checking whether iconv needs linking against libiconv... "
-
-	needs_iconvlib='auto'
-	create_iconv_test
-	cc_check $ICONV_CFLAGS $ICONV_LIBS -liconv && needs_iconvlib='yes'
-	# We do check linking without -liconv here too, just in case
-	# it would fail otherwise too
-	create_iconv_test
-	cc_check $ICONV_CFLAGS $ICONV_LIBS && needs_iconvlib='no'
-
-	if test "$needs_iconvlib" = auto ; then
-		_iconv=no
-		echo "does not link at all"
-	else
-		if test "$needs_iconvlib" = yes ; then
-			append_var ICONV_LIBS "-liconv"
-		fi
-		echo "$needs_iconvlib"
-
-		echo_n "Checking signature of iconv... "
-		uses_const=no
-
-		cat > $TMPC << EOF
-#include <iconv.h>
-int main(int argc, char **argv) {
-	iconv_t iconvP;
-	const char **inbuf = 0;
-	iconv(iconvP, inbuf, 0, 0, 0);
-	return 0;
-}
-EOF
-		cc_check $ICONV_CFLAGS $ICONV_LIBS && uses_const=yes
-
-		if test "$uses_const" = yes ; then
-			echo "iconv_t, const char **, size_t *, char **, size_t *"
-		else
-			echo "iconv_t, char **, size_t *, char **, size_t *"
-		fi
-
-		define_in_config_if_yes "$uses_const" 'ICONV_USES_CONST'
-	fi
-fi
-
-if test "$_iconv" = yes ; then
-	append_var LIBS "$ICONV_LIBS"
-	append_var INCLUDES "$ICONV_CFLAGS"
-fi
-
-echocheck "iconv"
-define_in_config_if_yes "$_iconv" 'USE_ICONV'
-echo "$_iconv"
 
 #
 # Check for Linux CD-ROM support
@@ -5814,6 +5747,10 @@ if test "$_dialogs" = "no"; then
 	echo "no"
 else
 	case $_host_os in
+	morphos*)
+		echo "morphos"
+		_dialogs=yes
+		;;
 	mingw*)
 		append_var LIBS "-lole32 -luuid"
 		echo "win32"

@@ -105,7 +105,10 @@ private:
 	void setTrigger(TriggerParams *trigger);
 	void setHookIdForMusic(int hookId);
 	Track *cloneToFadeOutTrack(Track *track, int fadeDelay);
-
+	Track *handleComiFadeOut(Track *track, int fadeDelay);
+	int transformVolumeLinearToEqualPow(int volume, int mode);
+	int transformVolumeEqualPowToLinear(int volume, int mode);
+	
 	void setFtMusicState(int stateId);
 	void setFtMusicSequence(int seqId);
 	void setFtMusicCuePoint(int cueId);
@@ -113,7 +116,9 @@ private:
 
 	void setComiMusicState(int stateId);
 	void setComiMusicSequence(int seqId);
+	void setComiDemoMusicState(int stateId);
 	void playComiMusic(const char *songName, const imuseComiTable *table, int attribPos, bool sequence);
+	void playComiDemoMusic(const char *songName, const imuseComiTable *table, int attribPos);
 
 	void setDigMusicState(int stateId);
 	void setDigMusicSequence(int seqId);

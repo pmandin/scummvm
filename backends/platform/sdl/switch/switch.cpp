@@ -22,6 +22,8 @@
 
 #define FORBIDDEN_SYMBOL_EXCEPTION_printf
 
+#include <switch.h>
+
 #include "common/scummsys.h"
 #include "common/config-manager.h"
 #include "common/translation.h"
@@ -39,6 +41,7 @@ static const Common::HardwareInputTableEntry switchJoystickButtons[] = {
     { "JOY_Y",              Common::JOYSTICK_BUTTON_Y,              _s("X")           },
     { "JOY_BACK",           Common::JOYSTICK_BUTTON_BACK,           _s("Minus")       },
     { "JOY_START",          Common::JOYSTICK_BUTTON_START,          _s("Plus")        },
+    { "JOY_GUIDE",          Common::JOYSTICK_BUTTON_START,          _s("Plus")        },
     { "JOY_LEFT_STICK",     Common::JOYSTICK_BUTTON_LEFT_STICK,     _s("L3")          },
     { "JOY_RIGHT_STICK",    Common::JOYSTICK_BUTTON_RIGHT_STICK,    _s("R3")          },
     { "JOY_LEFT_SHOULDER",  Common::JOYSTICK_BUTTON_LEFT_SHOULDER,  _s("L")           },
@@ -162,4 +165,30 @@ Common::HardwareInputSet *OSystem_Switch::getHardwareInputSet() {
 	inputSet->addHardwareInputSet(new JoystickHardwareInputSet(switchJoystickButtons, switchJoystickAxes));
 
 	return inputSet;
+}
+
+Common::String OSystem_Switch::getSystemLanguage() const {
+	u64 lang;
+	SetLanguage langcode;
+
+	setInitialize();
+	setGetSystemLanguage(&lang);
+	setMakeLanguage(lang, &langcode);
+
+	switch (langcode) {
+		case SetLanguage_JA:   return "ja_JP";
+		case SetLanguage_ENUS: return "en_US";
+		case SetLanguage_FR:   return "fr_FR";
+		case SetLanguage_FRCA: return "fr_FR";
+		case SetLanguage_DE:   return "de_DE";
+		case SetLanguage_IT:   return "it_IT";
+		case SetLanguage_ES:   return "es_ES";
+		case SetLanguage_ZHCN: return "zh_CN";
+		case SetLanguage_KO:   return "ko_KR";
+		case SetLanguage_NL:   return "nl_NL";
+		case SetLanguage_PT:   return "pt_PT";
+		case SetLanguage_RU:   return "ru_RU";
+		case SetLanguage_ZHTW: return "zh_HK";
+		default:               return "en_US";
+	}
 }

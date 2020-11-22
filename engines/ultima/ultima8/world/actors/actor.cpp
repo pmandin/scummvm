@@ -46,6 +46,7 @@
 #include "ultima/ultima8/world/actors/loiter_process.h"
 #include "ultima/ultima8/world/actors/guard_process.h"
 #include "ultima/ultima8/world/actors/combat_process.h"
+#include "ultima/ultima8/world/actors/attack_process.h"
 #include "ultima/ultima8/world/actors/pace_process.h"
 #include "ultima/ultima8/world/actors/surrender_process.h"
 #include "ultima/ultima8/world/world.h"
@@ -75,7 +76,7 @@ Actor::Actor() : _strength(0), _dexterity(0), _intelligence(0),
 		_lastAnim(Animation::stand), _animFrame(0), _direction(dir_north),
 		_fallStart(0), _unkByte(0), _actorFlags(0), _combatTactic(0),
 		_homeX(0), _homeY(0), _homeZ(0), _currentActivityNo(0),
-		_lastActivityNo(0), _activeWeapon(0) {
+		_lastActivityNo(0), _activeWeapon(0), _lastTimeWasHit(0) {
 	_defaultActivity[0] = 0;
 	_defaultActivity[1] = 0;
 	_defaultActivity[2] = 0;
@@ -479,10 +480,22 @@ uint16 Actor::doAnim(Animation::Sequence anim, Direction dir, unsigned int steps
 	}
 #endif
 
-	// HACK: When switching from 16-dir combat to 8-dir walking,
-	// fix the direction to only 8 dirs
-	if (GAME_IS_CRUSADER && anim == Animation::stand) {
-		dir = static_cast<Direction>(dir - (static_cast<uint32>(dir) % 2));
+	if (GAME_IS_CRUSADER) {
+		// Crusader sets some flags on animation start
+		// HACK: When switching from 16-dir combat to 8-dir walking,
+		// fix the direction to only 8 dirs
+		if (anim == Animation::stand)
+			dir = static_cast<Direction>(dir - (static_cast<uint32>(dir) % 2));
+		else if (anim == Animation::readyWeapon)
+			setActorFlag(ACT_WEAPONREADY);
+		else if (anim == Animation::unreadyWeapon)
+			clearActorFlag(ACT_WEAPONREADY);
+		else if (anim == Animation::startKneeling || anim == Animation::kneelAndFire ||
+				 anim == Animation::kneelAndFireSmallWeapon ||
+				 anim == Animation::kneelAndFireLargeWeapon)
+			setActorFlag(ACT_KNEELING);
+		else if (anim == Animation::stopKneeling)
+			clearActorFlag(ACT_KNEELING);
 	}
 
 	Process *p = new ActorAnimProcess(this, anim, dir, steps);
@@ -635,7 +648,7 @@ uint16 Actor::setActivityU8(int activity) {
 		return Kernel::get_instance()->addProcess(new DelayProcess(1));
 		break;
 	case 1: // combat
-		setInCombat();
+		setInCombatU8();
 		return 0;
 	case 2: // stand
 		// NOTE: temporary fall-throughs!
@@ -676,11 +689,11 @@ uint16 Actor::setActivityCru(int activity) {
 	    break;
 	case 5:
 	case 9:
-	case 10:
+	case 0xa:
 	case 0xb:
 	case 0xc:
 		// attack
-		setInCombat();
+		setInCombatCru(activity);
 		return 0;
 	case 0xd:
 		// Only in No Regret
@@ -804,12 +817,14 @@ void Actor::receiveHitCru(uint16 other, Direction dir, int damage, uint16 damage
 	if (isDead())
 		return;
 
+	_lastTimeWasHit = Kernel::get_instance()->getFrameNum() * 2;
+
 	if (shape != 1 && this != getControlledActor()) {
 		Actor *controlled = getControlledActor();
 		if (!isInCombat()) {
 			setActivity(getDefaultActivity(2)); // get activity from field 0xA
 			if (!isInCombat()) {
-				setInCombat();
+				setInCombatCru(5);
 				CombatProcess *combat = getCombatProcess();
 				if (combat && controlled) {
 					combat->setTarget(controlled->getObjId());
@@ -819,7 +834,7 @@ void Actor::receiveHitCru(uint16 other, Direction dir, int damage, uint16 damage
 			if (getCurrentActivityNo() == 8) {
 				setActivity(5);
 			}
-			setInCombat();
+			setInCombatCru(5);
 			CombatProcess *combat = getCombatProcess();
 			if (combat && controlled) {
 				combat->setTarget(controlled->getObjId());
@@ -890,6 +905,59 @@ void Actor::receiveHitCru(uint16 other, Direction dir, int damage, uint16 damage
 				}
 			}
 		}
+	}
+}
+
+void Actor::tookHitCru() {
+	Animation::Sequence lastanim = getLastAnim();
+	if ((lastanim == Animation::unknownAnim30) || (lastanim == Animation::startRunWithLargeWeapon)) {
+		//uint16 controllednpc = World::get_instance()->getControlledNPCNum();
+		bool canseecontrolled = true; //this->canSee(controllednpc);
+		if (canseecontrolled) {
+			if (getRandom() % 4)
+				setActivity(5);
+			else
+				setActivity(10);
+		}
+	} else {
+		uint32 shape = getShape();
+		if (shape != 0x576) { // 0x576 = flaming guy
+			if (shape < 0x577) {
+				if (shape == 0x385 || shape == 0x4e6) {
+				   explode(2, 0);
+				   clearFlag(FLG_IN_NPC_LIST);
+				   clearFlag(FLG_GUMP_OPEN);
+			   }
+			   return;
+		   }
+		   if (shape != 0x596) {
+			   return;
+		   }
+		}
+
+		bool violence = true; // Game::I_isViolenceEnabled
+		if (!violence)
+			return;
+
+		static const uint16 FEMALE_SCREAMS[] = {0xb, 0xa};
+		static const uint16 MALE_SCREAMS[] = {0x65, 0x66, 0x67};
+		int nsounds;
+		const uint16 *sounds;
+		if (hasExtFlags(EXT_FEMALE)) {
+			nsounds = ARRAYSIZE(FEMALE_SCREAMS);
+			sounds = FEMALE_SCREAMS;
+		} else {
+			nsounds = ARRAYSIZE(MALE_SCREAMS);
+			sounds = MALE_SCREAMS;
+		}
+		AudioProcess *audio = AudioProcess::get_instance();
+		if (!audio)
+			return;
+		for (int i = 0; i < nsounds; i++) {
+			if (audio->isSFXPlayingForObject(sounds[i], _objId))
+				return;
+		}
+		audio->playSFX(sounds[getRandom() % nsounds], 0x80, _objId, 1);
 	}
 }
 
@@ -1004,7 +1072,7 @@ void Actor::receiveHitU8(uint16 other, Direction dir, int damage, uint16 damage_
 		if (attacker)
 			target = attacker->getObjId();
 		if (!isInCombat())
-			setInCombat();
+			setInCombatU8();
 
 		CombatProcess *cp = getCombatProcess();
 		assert(cp);
@@ -1303,7 +1371,24 @@ CombatProcess *Actor::getCombatProcess() {
 	return cp;
 }
 
-void Actor::setInCombat() {
+AttackProcess *Actor::getAttackProcess() {
+	Process *p = Kernel::get_instance()->findProcess(_objId, 0x259); // CONSTANT!
+	if (!p)
+		return nullptr;
+	AttackProcess *ap = dynamic_cast<AttackProcess *>(p);
+	assert(ap);
+
+	return ap;
+}
+
+void Actor::setInCombat(int activity) {
+	if (GAME_IS_U8)
+		setInCombatU8();
+	else
+		setInCombatCru(activity);
+}
+
+void Actor::setInCombatU8() {
 	if ((_actorFlags & ACT_INCOMBAT) != 0) return;
 
 	assert(getCombatProcess() == nullptr);
@@ -1324,12 +1409,55 @@ void Actor::setInCombat() {
 	setActorFlag(ACT_INCOMBAT);
 }
 
+void Actor::setInCombatCru(int activity) {
+	if ((_actorFlags & ACT_INCOMBAT) != 0) return;
+
+	assert(getAttackProcess() == nullptr);
+
+	setActorFlag(ACT_INCOMBAT);
+
+	AttackProcess *ap = new AttackProcess(this);
+	Kernel::get_instance()->addProcess(ap);
+
+	if (getCurrentActivityNo() == 8) {
+		// Guard process.. set some flag in ap
+		ap->setField97();
+	}
+	if (activity == 0xc) {
+		ap->setTimer3();
+		// This sets fields 0x77 and 0x79 of the attack process
+		// to some random timer value in the future
+		//ap->AttackProcess_1108_1485();
+	}
+
+	uint16 animproc = 0;
+	if (activity == 9 || activity == 0xb) {
+		ap->setIsActivity9OrB();
+		animproc = doAnim(Animation::readyWeapon, dir_current);
+	} else {
+		animproc = doAnim(Animation::stand, dir_current);
+	}
+	if (animproc) {
+		// Do the animation first
+		ap->waitFor(animproc);
+	}
+
+	if (activity == 0xa || activity == 0xb) {
+		ap->setIsActivityAOrB();
+	}
+}
+
 void Actor::clearInCombat() {
 	if ((_actorFlags & ACT_INCOMBAT) == 0) return;
 
-	CombatProcess *cp = getCombatProcess();
-	if (cp)
-		cp->terminate();
+	Process *p;
+	if (GAME_IS_U8) {
+		p = getCombatProcess();
+	} else {
+		p = getAttackProcess();
+	}
+	if (p)
+		p->terminate();
 
 	clearActorFlag(ACT_INCOMBAT);
 }
@@ -1477,6 +1605,7 @@ void Actor::saveData(Common::WriteStream *ws) {
 		ws->writeUint16LE(_currentActivityNo);
 		ws->writeUint16LE(_lastActivityNo);
 		ws->writeUint16LE(_activeWeapon);
+		ws->writeSint32LE(_lastTimeWasHit);
 	}
 }
 
@@ -1508,6 +1637,7 @@ bool Actor::loadData(Common::ReadStream *rs, uint32 version) {
 		_currentActivityNo = rs->readUint16LE();
 		_lastActivityNo = rs->readUint16LE();
 		_activeWeapon = rs->readUint16LE();
+		_lastTimeWasHit = rs->readSint32LE();
 	}
 
 	return true;
@@ -1720,7 +1850,8 @@ uint32 Actor::I_setInCombat(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_ACTOR_FROM_PTR(actor);
 	if (!actor) return 0;
 
-	actor->setInCombat();
+	assert(GAME_IS_U8);
+	actor->setInCombatU8();
 
 	return 0;
 }
@@ -1739,9 +1870,11 @@ uint32 Actor::I_setTarget(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_UINT16(target);
 	if (!actor) return 0;
 
+	assert(GAME_IS_U8);
+
 	CombatProcess *cp = actor->getCombatProcess();
 	if (!cp) {
-		actor->setInCombat();
+		actor->setInCombatU8();
 		cp = actor->getCombatProcess();
 	}
 	if (!cp) {
@@ -2055,14 +2188,30 @@ uint32 Actor::I_createActorCru(const uint8 *args, unsigned int /*argsize*/) {
 
 	newactor->setUnkByte(item->getQuality() & 0xff);
 
+	bool wpnflag = (item->getMapNum() & 4);
 	uint16 wpntype = npcData->getWpnType();
-	Item *weapon = ItemFactory::createItem(wpntype, 0, 0, 0, 0, newactor->getMapNum(), 0, true);
+	uint16 wpntype2 = npcData->getWpnType2();
+
 	if (World::get_instance()->getGameDifficulty() == 4) {
 	   wpntype = NPCDat::randomlyGetStrongerWeaponTypes(shape);
 	}
 
-	// TODO: should this be addItemCru? If so need to move it from MainActor.
-	weapon->moveToContainer(newactor, false);
+	if ((!wpntype || !wpnflag) && wpntype2) {
+		wpntype = wpntype2;
+	}
+
+	if (wpntype) {
+		// TODO: Nasty hard coded list.. use the ini file for this.
+		static const int WPNSHAPES[] = {0, 0x032E, 0x032F, 0x0330, 0x038C, 0x0332, 0x0333,
+			0x0334, 0x038E, 0x0388, 0x038A, 0x038D, 0x038B, 0x0386};
+		// wpntype is an offset into wpn table
+		Item *weapon = ItemFactory::createItem(WPNSHAPES[wpntype], 0, 0, 0, 0, newactor->getMapNum(), 0, true);
+		if (weapon) {
+			weapon->moveToContainer(newactor, false);
+			newactor->_activeWeapon = weapon->getObjId();
+		}
+	}
+
 	newactor->setCombatTactic(0);
 	newactor->setHomePosition(x, y, z);
 
@@ -2235,7 +2384,6 @@ uint32 Actor::I_turnToward(const uint8 *args, unsigned int /*argsize*/) {
 
 	return actor->turnTowardDir(Direction_FromUsecodeDir(dir));
 }
-
 
 } // End of namespace Ultima8
 } // End of namespace Ultima

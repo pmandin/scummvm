@@ -51,6 +51,7 @@ MODULE_OBJS := \
 	graphics/coordadjuster.o \
 	graphics/cursor.o \
 	graphics/fontsjis.o \
+	graphics/fontkorean.o \
 	graphics/maciconbar.o \
 	graphics/menu.o \
 	graphics/paint16.o \
@@ -60,6 +61,7 @@ MODULE_OBJS := \
 	graphics/ports.o \
 	graphics/remap.o \
 	graphics/scifont.o \
+	graphics/scifx.o \
 	graphics/screen.o \
 	graphics/text16.o \
 	graphics/transitions.o \

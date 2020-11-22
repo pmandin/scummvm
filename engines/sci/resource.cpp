@@ -605,9 +605,16 @@ void ResourceSource::loadResource(ResourceManager *resMan, Resource *res) {
 	if (!fileStream)
 		return;
 
-	fileStream->seek(res->_fileOffset, SEEK_SET);
+	fileStream->seek(0, SEEK_SET);
+	ResourceType type = resMan->convertResType(fileStream->readByte());
+	ResVersion volVersion = resMan->getVolVersion();
 
-	int error = res->decompress(resMan->getVolVersion(), fileStream);
+	// FIXME: if resource.msg has different version from SCIII, this has to be modified.
+	if (((type == kResourceTypeMessage && res->getType() == kResourceTypeMessage) || (type == kResourceTypeText && res->getType() == kResourceTypeText)) && g_sci->getLanguage() == Common::KO_KOR)
+		volVersion = kResVersionSci11;
+	fileStream->seek(res->_fileOffset, SEEK_SET);
+	
+	int error = res->decompress(volVersion, fileStream);
 	if (error) {
 		warning("Error %d occurred while reading %s from resource file %s: %s",
 				error, res->_id.toString().c_str(), res->getResourceLocation().c_str(),
@@ -633,6 +640,7 @@ int ResourceManager::addAppropriateSources() {
 		Common::ArchiveMemberList files;
 		SearchMan.listMatchingMembers(files, "resource.0##");
 
+		Common::sort(files.begin(), files.end(), Common::ArchiveMemberListComparator());
 		for (Common::ArchiveMemberList::const_iterator x = files.begin(); x != files.end(); ++x) {
 			const Common::String name = (*x)->getName();
 			const char *dot = strrchr(name.c_str(), '.');
@@ -672,6 +680,7 @@ int ResourceManager::addAppropriateSources() {
 			_multiDiscAudio = true;
 		}
 
+		Common::sort(mapFiles.begin(), mapFiles.end(), Common::ArchiveMemberListComparator());
 		for (Common::ArchiveMemberList::const_iterator mapIterator = mapFiles.begin(); mapIterator != mapFiles.end(); ++mapIterator) {
 			Common::String mapName = (*mapIterator)->getName();
 			int mapNumber = atoi(strrchr(mapName.c_str(), '.') + 1);
@@ -813,7 +822,7 @@ void ResourceManager::addScriptChunkSources() {
 #endif
 }
 
-extern int showScummVMDialog(const Common::U32String &message, const Common::U32String &altButton = Common::U32String(""), bool alignCenter = true);
+extern int showScummVMDialog(const Common::U32String &message, const Common::U32String &altButton = Common::U32String(), bool alignCenter = true);
 
 void ResourceManager::scanNewSources() {
 	_hasBadResources = false;
@@ -854,7 +863,7 @@ void DirectoryResourceSource::scanSource(ResourceManager *resMan) {
 }
 
 void ExtMapResourceSource::scanSource(ResourceManager *resMan) {
-	if (resMan->_mapVersion < kResVersionSci1Late) {
+	if (resMan->_mapVersion < kResVersionSci1Late && !resMan->isKoreanMessageMap(this)) {
 		if (resMan->readResourceMapSCI0(this) != SCI_ERROR_NONE) {
 			resMan->_hasBadResources = true;
 		}
@@ -1926,6 +1935,8 @@ int ResourceManager::readResourceMapSCI1(ResourceSource *map) {
 	memset(resMap, 0, sizeof(resource_index_t) * 32);
 	byte type = 0, prevtype = 0;
 	byte nEntrySize = _mapVersion == kResVersionSci11 ? SCI11_RESMAP_ENTRIES_SIZE : SCI1_RESMAP_ENTRIES_SIZE;
+	if (isKoreanMessageMap(map))
+		nEntrySize = SCI1_RESMAP_ENTRIES_SIZE;
 	ResourceId resId;
 
 	// Read resource type and offsets to resource offsets block from .MAP file
@@ -1953,7 +1964,7 @@ int ResourceManager::readResourceMapSCI1(ResourceSource *map) {
 		for (int i = 0; i < resMap[type].wSize; i++) {
 			uint16 number = fileStream->readUint16LE();
 			int volume_nr = 0;
-			if (_mapVersion == kResVersionSci11) {
+			if (_mapVersion == kResVersionSci11 && !isKoreanMessageMap(map)) {
 				// offset stored in 3 bytes
 				fileOffset = fileStream->readUint16LE();
 				fileOffset |= fileStream->readByte() << 16;
@@ -1961,7 +1972,7 @@ int ResourceManager::readResourceMapSCI1(ResourceSource *map) {
 			} else {
 				// offset/volume stored in 4 bytes
 				fileOffset = fileStream->readUint32LE();
-				if (_mapVersion < kResVersionSci11) {
+				if (_mapVersion < kResVersionSci11 && !isKoreanMessageMap(map)) {
 					volume_nr = fileOffset >> 28; // most significant 4 bits
 					fileOffset &= 0x0FFFFFFF;     // least significant 28 bits
 				} else {
@@ -2187,16 +2198,22 @@ Resource *ResourceManager::updateResource(ResourceId resId, ResourceSource *src,
 	// Update a patched resource, whether it exists or not
 	Resource *res = _resMap.getVal(resId, nullptr);
 
-	Common::SeekableReadStream *volumeFile = getVolumeFile(src);
-	if (volumeFile == nullptr) {
-		error("Could not open %s for reading", src->getLocationName().c_str());
+	// When pulling from resource the "main" file may not even
+	// exist as both forks may be combined into MacBin
+	Common::SeekableReadStream *volumeFile = nullptr;
+	if (src->getSourceType() != kSourceMacResourceFork) {
+		volumeFile = getVolumeFile(src);
+		if (volumeFile == nullptr) {
+			error("Could not open %s for reading", src->getLocationName().c_str());
+		}
 	}
 
 	AudioVolumeResourceSource *avSrc = dynamic_cast<AudioVolumeResourceSource *>(src);
 	if (avSrc != nullptr && !avSrc->relocateMapOffset(offset, size)) {
 		warning("Compressed volume %s does not contain a valid entry for %s (map offset %u)", src->getLocationName().c_str(), resId.toString().c_str(), offset);
 		_hasBadResources = true;
-		disposeVolumeFileStream(volumeFile, src);
+		if (volumeFile != nullptr)
+			disposeVolumeFileStream(volumeFile, src);
 		return res;
 	}
 
@@ -2220,7 +2237,8 @@ Resource *ResourceManager::updateResource(ResourceId resId, ResourceSource *src,
 		_hasBadResources = true;
 	}
 
-	disposeVolumeFileStream(volumeFile, src);
+	if (volumeFile != nullptr)
+		disposeVolumeFileStream(volumeFile, src);
 	return res;
 }
 
@@ -3070,6 +3088,10 @@ Common::String ResourceManager::findSierraGameId(const bool isBE) {
 	}
 
 	return heap->getStringAt(offset);
+}
+
+bool ResourceManager::isKoreanMessageMap(ResourceSource *source) {
+	return source->getLocationName() == "message.map" && g_sci->getLanguage() == Common::KO_KOR;
 }
 
 const Common::String &Resource::getResourceLocation() const {

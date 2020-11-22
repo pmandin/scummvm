@@ -8,12 +8,11 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.graphics.Rect;
-//import android.inputmethodservice.Keyboard;
-//import android.inputmethodservice.KeyboardView;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
@@ -21,7 +20,9 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -41,6 +42,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -61,9 +63,6 @@ import java.util.TreeSet;
 
 import static android.content.res.Configuration.KEYBOARD_QWERTY;
 
-//import android.os.Environment;
-//import java.util.List;
-
 public class ScummVMActivity extends Activity implements OnKeyboardVisibilityListener {
 
 	/* Establish whether the hover events are available */
@@ -78,6 +77,10 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 	private File _usingScummVMSavesDir;
 	boolean _externalPathAvailableForReadAccess;
 //	private File _usingLogFile;
+
+	// SAF related
+	private LinkedHashMap<String, ParcelFileDescriptor> hackyNameToOpenFileDescriptorList;
+	public final static int REQUEST_SAF = 50000;
 
 	/**
 	 * Ids to identify an external storage read (and write) request.
@@ -164,19 +167,20 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 								public boolean shift = false;
 								public boolean alt = false;
 								public final TreeSet<Integer> stickyKeys = new TreeSet<>();
-								public long mEventTime = -1;
+								public long mEventPressTime = -1;
+								public int mKeyRepeatedCount = 0;
 
 								public BuiltInKeyboardView(Context context, android.util.AttributeSet attrs) {
 									super(context, attrs);
 								}
 
 								public boolean onKeyDown(int key, final KeyEvent event) {
-									Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - onKeyDown()" );
+									//Log.d(ScummVM.LOG_TAG, "BuiltInKeyboardView- 001 - onKeyDown()" );
 									return false;
 								}
 
 								public boolean onKeyUp(int key, final KeyEvent event) {
-									Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - onKeyUp()" );
+									//Log.d(ScummVM.LOG_TAG, "BuiltInKeyboardView - 001 - onKeyUp()" );
 									return false;
 								}
 
@@ -265,6 +269,12 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 									//ScummVMActivity.this._scummvm.displayMessageOnOSD ("NEW KEYBOARD LAYOUT: QWERTY"
 									//	+ (alt ? " ALT " : "") + (shift? " SHIFT" : ""));
 								}
+
+								public void resetEventAndTimestamps() {
+									// clear event timestamps and repetition counts
+									mEventPressTime = -1;
+									mKeyRepeatedCount = -1;
+								}
 							}
 
 							final BuiltInKeyboardView builtinKeyboard = new BuiltInKeyboardView(ScummVMActivity.this, null);
@@ -273,7 +283,9 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 							builtinKeyboard.setOnKeyboardActionListener(new CustomKeyboardView.OnKeyboardActionListener() {
 
 								public void onPress(int key) {
-									//Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - onPress key: " + key ); // CALLED
+									builtinKeyboard.resetEventAndTimestamps();
+
+//									Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - onPress key: " + key );
 									if (key == KeyEvent.KEYCODE_BACK) {
 										return;
 									}
@@ -288,35 +300,21 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 										}
 									}
 
-									int compiledMetaState = builtinKeyboard.getCompiledMetaState();
-
-									// keys with keyCode greater than 100000, should be submitted with a LEFT_SHIFT_ modifier (and decreased by 100000 to get their proper code)
-									if (key > 100000) {
-										key -= 100000;
-										compiledMetaState |= KeyEvent.META_SHIFT_LEFT_ON;
-									}
-
 									//
 									// downTime (long) - The time (in SystemClock.uptimeMillis()) at which this key code originally went down.
 									// ** Since this is a down event, this will be the same as getEventTime(). **
 									// Note that when chording keys, this value is the down time of the most recently pressed key, which may not be the same physical key of this event.
 									// eventTime (long) -  The time (in SystemClock.uptimeMillis()) at which this event happened.
 									// TODO update repeat and event time? with
-									builtinKeyboard.mEventTime = SystemClock.uptimeMillis();
-									KeyEvent compiledKeyEvent = new KeyEvent(builtinKeyboard.mEventTime,
-									                                         builtinKeyboard.mEventTime,
-									                                         KeyEvent.ACTION_DOWN,
-									                                         key,
-									                                         0,
-									                                         compiledMetaState);
+									builtinKeyboard.mEventPressTime =  SystemClock.uptimeMillis();
 
-									_main_surface.dispatchKeyEvent(compiledKeyEvent);
 								}
 
 								public void onRelease(int key) {
-									//Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - onRelease key: " + key );
+//									Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - onRelease key: " + key );
 									if (key == KeyEvent.KEYCODE_BACK) {
 										builtinKeyboard.setOnKeyboardActionListener(null);
+										builtinKeyboard.resetEventAndTimestamps();
 										showScreenKeyboardWithoutTextInputField(0); // Hide keyboard
 										return;
 									}
@@ -327,6 +325,7 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 									if (key == CustomKeyboard.KEYCODE_SHIFT) {
 										builtinKeyboard.shift = !builtinKeyboard.shift;
 										builtinKeyboard.ChangeKeyboard();
+										builtinKeyboard.resetEventAndTimestamps();
 										return;
 									}
 
@@ -336,10 +335,12 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 											builtinKeyboard.shift = false;
 										}
 										builtinKeyboard.ChangeKeyboard();
+										builtinKeyboard.resetEventAndTimestamps();
 										return;
 									}
 
 									if (key <= 0) {
+										builtinKeyboard.resetEventAndTimestamps();
 										return;
 									}
 
@@ -358,6 +359,7 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 												builtinKeyboard.stickyKeys.add(key);
 											}
 											builtinKeyboard.recheckStickyKeys();
+											builtinKeyboard.resetEventAndTimestamps();
 											return;
 										}
 									}
@@ -371,16 +373,18 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 										compiledMetaState |= KeyEvent.META_SHIFT_LEFT_ON;
 									}
 
-									// TODO properly set repeat value?
-									KeyEvent compiledKeyEvent = new KeyEvent(builtinKeyboard.mEventTime,
+ 									// The repeat argument (int) is:
+									// A repeat count for down events (> 0 if this is after the  initial down)
+									// or event count for multiple events.
+									KeyEvent compiledKeyEvent = new KeyEvent(builtinKeyboard.mEventPressTime,
 										SystemClock.uptimeMillis(),
 										KeyEvent.ACTION_UP,
 										key,
-										0,
+										builtinKeyboard.mKeyRepeatedCount,
 										compiledMetaState);
 
 									_main_surface.dispatchKeyEvent(compiledKeyEvent);
-									builtinKeyboard.mEventTime = -1; // reset event time
+									builtinKeyboard.resetEventAndTimestamps();
 
 									// Excluding the CAPS LOCK NUM LOCK AND SCROLL LOCK keys,
 									// clear the state of all other sticky keys that are used in a key combo
@@ -402,11 +406,50 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 								}
 
 								public void onText(CharSequence p1) {}
-								public void swipeLeft() {}
-								public void swipeRight() {}
-								public void swipeDown() {}
-								public void swipeUp() {}
-								public void onKey(int p1, int[] p2) {}
+
+								// TODO - "Swipe" behavior does not seem to work currently. Should we support it?
+								public void swipeLeft() {
+									//Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - swipeLeft");
+								}
+
+								public void swipeRight() {
+									//Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - swipeRight" );
+								}
+
+								public void swipeDown() {
+									//Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - swipeDown" );
+								}
+
+								public void swipeUp() {
+									//Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - swipeUp ");
+								}
+								public void onKey(int key, int[] keysAround) {
+//									Log.d(ScummVM.LOG_TAG, "SHOW KEYBOARD - 001 - onKey key: " + key );
+									if (builtinKeyboard.mEventPressTime == -1) {
+										return;
+									}
+
+									if (builtinKeyboard.mKeyRepeatedCount < Integer.MAX_VALUE) {
+										++builtinKeyboard.mKeyRepeatedCount;
+									}
+									int compiledMetaState = builtinKeyboard.getCompiledMetaState();
+
+									// keys with keyCode greater than 100000, should be submitted with a LEFT_SHIFT_ modifier (and decreased by 100000 to get their proper code)
+									if (key > 100000) {
+										key -= 100000;
+										compiledMetaState |= KeyEvent.META_SHIFT_LEFT_ON;
+									}
+
+									// update the eventTime after the above check for first time "hit"
+									KeyEvent compiledKeyEvent = new KeyEvent(builtinKeyboard.mEventPressTime,
+										SystemClock.uptimeMillis(),
+										KeyEvent.ACTION_DOWN,
+										key,
+										builtinKeyboard.mKeyRepeatedCount,
+										compiledMetaState);
+
+									_main_surface.dispatchKeyEvent(compiledKeyEvent);
+								}
 							});
 
 							_screenKeyboard = builtinKeyboard;
@@ -492,9 +535,13 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 		return _screenKeyboard != null;
 	}
 
-	public View getScreenKeyboard () {
+	public View getScreenKeyboard() {
 		return _screenKeyboard;
 	}
+
+//	public View getMainSurfaceView() {
+//		return _main_surface;
+//	}
 
 	//
 	// END OF new screenKeyboardCode
@@ -514,8 +561,9 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 
 
 	private class MyScummVM extends ScummVM {
-		public MyScummVM(SurfaceHolder holder) {
-			super(ScummVMActivity.this.getAssets(), holder);
+
+		public MyScummVM(SurfaceHolder holder, final MyScummVMDestroyedCallback destroyedCallback) {
+			super(ScummVMActivity.this.getAssets(), holder, destroyedCallback);
 		}
 
 		@Override
@@ -626,17 +674,12 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 		}
 
 		@Override
-		protected byte[] convertEncoding(String to, String from, byte[] string) throws UnsupportedEncodingException {
-			String str = new String(string, from);
-			return str.getBytes(to);
-		}
-
-		@Override
 		protected String[] getAllStorageLocations() {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-				&& checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+			    && (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+			        || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
 			) {
-				requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXT_STORAGE);
+				requestPermissions(MY_PERMISSIONS_STR_LIST, MY_PERMISSION_ALL);
 			} else {
 				return ExternalStorage.getAllStorageLocations(getApplicationContext()).toArray(new String[0]);
 			}
@@ -654,6 +697,149 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 			//      but for now, just return nothing
 			return new String[0]; // an array of zero length
 		}
+
+		// In this method we first try the old method for creating directories (mkdirs())
+		// That should work with app spaces but will probably have issues with external physical "secondary" storage locations
+		// (eg user SD Card) on some devices, anyway.
+		@Override
+		protected boolean createDirectoryWithSAF(String dirPath) {
+			final boolean[] retRes = {false};
+
+			Log.d(ScummVM.LOG_TAG, "Attempt to create folder on path: " + dirPath);
+			File folderToCreate = new File (dirPath);
+//			if (folderToCreate.canWrite()) {
+//				Log.d(ScummVM.LOG_TAG, "This file node has write permission!" + dirPath);
+//			}
+//
+//			if (folderToCreate.canRead()) {
+//				Log.d(ScummVM.LOG_TAG, "This file node has read permission!" + dirPath);
+//
+//			}
+//
+//			if (folderToCreate.getParentFile() != null) {
+//				if( folderToCreate.getParentFile().canWrite()) {
+//					Log.d(ScummVM.LOG_TAG, "The parent of this node permits write operation!" + dirPath);
+//				}
+//
+//				if (folderToCreate.getParentFile().canRead()) {
+//					Log.d(ScummVM.LOG_TAG, "The parent of this node permits read operation!" + dirPath);
+//
+//				}
+//			}
+
+			if (folderToCreate.mkdirs()) {
+				Log.d(ScummVM.LOG_TAG, "Folder created with the simple mkdirs() command!");
+			} else {
+				Log.d(ScummVM.LOG_TAG, "Folder creation with mkdirs() failed!");
+				if (getStorageAccessFrameworkTreeUri() == null) {
+					requestStorageAccessFramework(dirPath);
+					Log.d(ScummVM.LOG_TAG, "Requested Storage Access via Storage Access Framework!");
+				} else {
+					Log.d(ScummVM.LOG_TAG, "Already requested Storage Access (Storage Access Framework) in the past (share prefs saved)!");
+				}
+
+				if (canWriteFile(folderToCreate, true)) {
+					// TODO we should only need the callback if we want to do something with the file descriptor
+					//  (the writeFile will close it afterwards if keepFileDescriptorOpen is false)
+					Log.d(ScummVM.LOG_TAG, "(post SAF request) Writing is possible for this directory node");
+					writeFile(folderToCreate, true, false, new MyWriteFileCallback() {
+						@Override
+						public void handle(Boolean created, String hackyFilename) {
+							//Log.d(ScummVM.LOG_TAG, "Via callback: file operation success: " + created);
+							retRes[0] = created;
+						}
+					});
+				} else {
+					Log.d(ScummVM.LOG_TAG, "(post SAF request) Error - writing is still not possible for this directory node");
+
+				}
+			}
+
+//			// debug purpose
+//			if (folderToCreate.canWrite()) {
+//				// This is expected to return false here (since we don't check via SAF here)
+//				Log.d(ScummVM.LOG_TAG, "(post SAF access) We can write in folder:" + dirPath);
+//			}
+//			if (folderToCreate.canRead()) {
+//				// This will probably return true (at least for Android 28 and below)
+//				Log.d(ScummVM.LOG_TAG, "(post SAF access) We can read from folder:" + dirPath);
+//
+//			}
+
+			return retRes[0];
+		}
+
+		@Override
+		protected String createFileWithSAF(String filePath) {
+			final String[] retResStr = {""};
+			File fileToCreate = new File (filePath);
+
+			Log.d(ScummVM.LOG_TAG, "Attempting file creation for: " + filePath);
+
+			// normal (no SAF) file create attempt
+			boolean needToGoThroughSAF = false;
+			try {
+				if (fileToCreate.exists() || !fileToCreate.createNewFile()) {
+					Log.d(ScummVM.LOG_TAG, "The file already exists!");
+					// already existed
+				} else {
+					Log.d(ScummVM.LOG_TAG, "An empty file was created!");
+
+				}
+			} catch(Exception e) {
+				//e.printStackTrace();
+				needToGoThroughSAF = true;
+			}
+
+			if (needToGoThroughSAF) {
+				Log.d(ScummVM.LOG_TAG, "File creation with createNewFile() failed!");
+				if (getStorageAccessFrameworkTreeUri() == null) {
+					requestStorageAccessFramework(filePath);
+					Log.d(ScummVM.LOG_TAG, "Requested Storage Access via Storage Access Framework!");
+				}
+
+				if (canWriteFile(fileToCreate, false)) {
+					// TODO we should only need the callback if we want to do something with the file descriptor
+					//      (the writeFile will close it afterwards if keepFileDescriptorOpen is false)
+					//      we need the fileDescriptor open for the native to continue the write operation
+					Log.d(ScummVM.LOG_TAG, "(post SAF request check) File writing should be possible");
+					writeFile(fileToCreate, false, true, new MyWriteFileCallback() {
+						@Override
+						public void handle(Boolean created, String hackyFilename) {
+							//Log.d(ScummVM.LOG_TAG, "Via callback: file operation success: " + created + " :: " + hackyFilename);
+							if (created) {
+								retResStr[0] = hackyFilename;
+							} else {
+								retResStr[0] = "";
+							}
+						}
+					});
+				} else {
+					Log.e(ScummVM.LOG_TAG, "(post SAF request) Error - writing is still not possible for this directory node");
+				}
+			}
+			return retResStr[0];
+		}
+
+		@Override
+		protected void closeFileWithSAF(String hackyFileName) {
+			if (hackyNameToOpenFileDescriptorList.containsKey(hackyFileName)) {
+				ParcelFileDescriptor openFileDescriptor = hackyNameToOpenFileDescriptorList.get(hackyFileName);
+
+				Log.d(ScummVM.LOG_TAG, "Closing file descriptor for " + hackyFileName);
+				if (openFileDescriptor != null) {
+					try {
+						openFileDescriptor.close();
+					} catch (IOException e) {
+						Log.e(ScummVM.LOG_TAG, e.getMessage());
+						e.printStackTrace();
+					}
+				}
+				hackyNameToOpenFileDescriptorList.remove(hackyFileName);
+			}
+		}
+
+		// TODO do we also need SAF enabled methods for deletion (file/folder) and reading (for files), listing of files (for folders)?
 	}
 
 	private MyScummVM _scummvm;
@@ -666,12 +852,14 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		hackyNameToOpenFileDescriptorList = new LinkedHashMap<>();
+
 		hideSystemUI();
 
 		_videoLayout = new FrameLayout(this);
 		SetLayerType.get().setLayerType(_videoLayout);
-		setContentView(_videoLayout);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		setContentView(_videoLayout);
 		_videoLayout.setFocusable(true);
 		_videoLayout.setFocusableInTouchMode(true);
 		_videoLayout.requestFocus();
@@ -721,7 +909,14 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 		//                            so app's internal space (which would be deleted on uninstall) was set as WORLD_READABLE which is no longer supported in newer versions of Android API
 		//                            In newer APIs we can set that path as Context.MODE_PRIVATE which is the default - but this makes the files inaccessible to other apps
 
-		_scummvm = new MyScummVM(_main_surface.getHolder());
+		_scummvm = new MyScummVM(_main_surface.getHolder(), new MyScummVMDestroyedCallback() {
+		                                                        @Override
+		                                                        public void handle(int exitResult) {
+		                                                        	Log.d(ScummVM.LOG_TAG, "Via callback: ScummVM native terminated with code: " + exitResult);
+		                                                        	// call onDestroy()
+		                                                        	finish();
+		                                                        }
+		                                                    });
 
 		//
 		// seekAndInitScummvmConfiguration() returns false if something went wrong
@@ -819,6 +1014,23 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 		Log.d(ScummVM.LOG_TAG, "onDestroy");
 
 		super.onDestroy();
+
+		// close any open file descriptors due to the SAF code
+		for (String hackyFileName : hackyNameToOpenFileDescriptorList.keySet()) {
+			Log.d(ScummVM.LOG_TAG, "Destroy: Closing file descriptor for " + hackyFileName);
+
+			ParcelFileDescriptor openFileDescriptor = hackyNameToOpenFileDescriptorList.get(hackyFileName);
+
+			if (openFileDescriptor != null) {
+				try {
+					openFileDescriptor.close();
+				} catch (IOException e) {
+					Log.e(ScummVM.LOG_TAG, e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+		hackyNameToOpenFileDescriptorList.clear();
 
 		if (_events != null) {
 			_events.clearEventHandler();
@@ -1346,6 +1558,14 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 		final Version version2_2_1_forPatch = new Version("2.2.1"); // patch for 2.2.1 Beta1 purposes
 		boolean existingConfigInScummVMDataDirReplacedOnce = false; // patch for 2.2.1 Beta1 purposes
 
+		// NOTE: our config file scummvm.ini is created directly inside the ScummVM internal app path
+		//       this is probably due to a mistake (?), since we do create a config path for it above
+		//       ( in File internalScummVMConfigDir , the sub-path ".config/scummvm")
+		//       However, this is harmless, so we can keep it this way.
+		//       Or we could change it in a future version.
+		//       Keep in mind that changing the scummvm.ini config file location would require at the very least:
+		//       - Moving the old scummvm.ini (if upgrading) to the new location and deleting it from the old one
+		//       - Updating the ScummVM documentation about the new location
 		_configScummvmFile = new File(_actualScummVMDataDir, "scummvm.ini");
 
 		try {
@@ -1353,7 +1573,7 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 				Log.d(ScummVM.LOG_TAG, "ScummVM Config file already exists!");
 				Log.d(ScummVM.LOG_TAG, "Existing ScummVM INI: " + _configScummvmFile.getPath());
 				String existingVersionInfo = getVersionInfoFromScummvmConfiguration(_configScummvmFile.getPath());
-				if (!existingVersionInfo.trim().isEmpty()) {
+				if (!TextUtils.isEmpty(existingVersionInfo) && !TextUtils.isEmpty(existingVersionInfo.trim()) ) {
 					Log.d(ScummVM.LOG_TAG, "Existing ScummVM Version: " + existingVersionInfo.trim());
 					Version tmpOldVersionFound = new Version(existingVersionInfo.trim());
 					if (tmpOldVersionFound.compareTo(maxOldVersionFound) > 0) {
@@ -1385,7 +1605,7 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 					if (oldCandidateScummVMConfig.exists() && oldCandidateScummVMConfig.isFile()) {
 						Log.d(ScummVM.LOG_TAG, "Old config " + oldConfigFileDescription + " ScummVM file was found!");
 						String existingVersionInfo = getVersionInfoFromScummvmConfiguration(oldCandidateScummVMConfig.getPath());
-						if (!existingVersionInfo.trim().isEmpty()) {
+						if (!TextUtils.isEmpty(existingVersionInfo) && !TextUtils.isEmpty(existingVersionInfo.trim())) {
 							Log.d(ScummVM.LOG_TAG, "Old config's ScummVM version: " + existingVersionInfo.trim());
 							Version tmpOldVersionFound = new Version(existingVersionInfo.trim());
 							//
@@ -1709,7 +1929,7 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 		if (_configScummvmFile.exists() && _configScummvmFile.isFile()) {
 			Log.d(ScummVM.LOG_TAG, "Looking into config file for save path: " + _configScummvmFile.getPath());
 			String persistentGlobalSavePathStr = getSavepathInfoFromScummvmConfiguration(_configScummvmFile.getPath());
-			if (!persistentGlobalSavePathStr.trim().isEmpty()) {
+			if (!TextUtils.isEmpty(persistentGlobalSavePathStr) && !TextUtils.isEmpty(persistentGlobalSavePathStr.trim()) ) {
 				Log.d(ScummVM.LOG_TAG, "Found explicit save path: " + persistentGlobalSavePathStr);
 				persistentGlobalSavePath = new File(persistentGlobalSavePathStr);
 				if (persistentGlobalSavePath.exists() && persistentGlobalSavePath.isDirectory() && persistentGlobalSavePath.listFiles() != null) {
@@ -1843,6 +2063,234 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 			}
 		}
 	}
+
+	// -------------------------------------------------------------------------------------------
+	// Start of SAF enabled code
+	// Code borrows parts from open source project: OpenLaucher's SharedUtil class
+	// https://github.com/OpenLauncherTeam/openlauncher
+	// https://github.com/OpenLauncherTeam/openlauncher/blob/master/app/src/main/java/net/gsantner/opoc/util/ShareUtil.java
+	// as well as StackOverflow threads:
+	// https://stackoverflow.com/questions/43066117/android-m-write-to-sd-card-permission-denied
+	// https://stackoverflow.com/questions/59000390/android-accessing-files-in-native-c-c-code-with-google-scoped-storage-api
+	// -------------------------------------------------------------------------------------------
+	public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+		if (resultCode != RESULT_OK)
+			return;
+		else {
+			if (requestCode == REQUEST_SAF) {
+				if (resultCode == RESULT_OK && resultData != null && resultData.getData() != null) {
+					Uri treeUri = resultData.getData();
+					//SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(getApplicationContext().getPackageName() + "_preferences", Context.MODE_PRIVATE);
+					SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+
+					SharedPreferences.Editor editor = sharedPref.edit();
+					editor.putString(getString(R.string.preference_saf_tree_key), treeUri.toString());
+					editor.apply();
+
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+						getContentResolver().takePersistableUriPermission(treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+					}
+					return;
+				}
+			}
+		}
+	}
+
+	/***
+	 * Request storage access. The user needs to press "Select storage" at the correct storage.
+	 */
+	public void requestStorageAccessFramework(String dirPathSample) {
+
+		_scummvm.displayMessageOnOSD(getString(R.string.saf_request_prompt) + dirPathSample);
+
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+			Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+			intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
+			                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+			                | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+			                | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
+			);
+			startActivityForResult(intent, REQUEST_SAF);
+		}
+	}
+
+	/**
+	 * Get storage access framework tree uri. The user must have granted access via requestStorageAccessFramework
+	 *
+	 * @return Uri or null if not granted yet
+	 */
+	public Uri getStorageAccessFrameworkTreeUri() {
+		SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+		String treeStr = sharedPref.getString(getString(R.string.preference_saf_tree_key), null);
+
+		if (!TextUtils.isEmpty(treeStr)) {
+			try {
+				Log.d(ScummVM.LOG_TAG, "getStorageAccessFrameworkTreeUri: " + treeStr);
+				return Uri.parse(treeStr);
+			} catch (Exception ignored) {
+			}
+		}
+		return null;
+	}
+
+	public File getStorageRootFolder(final File file) {
+		String filepath;
+		try {
+			filepath = file.getCanonicalPath();
+		} catch (Exception ignored) {
+			return null;
+		}
+
+		for (String storagePath : _scummvm.getAllStorageLocationsNoPermissionRequest() ) {
+			if (filepath.startsWith(storagePath)) {
+				return new File(storagePath);
+			}
+		}
+		return null;
+	}
+
+	// TODO we need to implement support for reading access somewhere too
+	@SuppressWarnings({"ResultOfMethodCallIgnored", "StatementWithEmptyBody"})
+	public void writeFile(final File file, final boolean isDirectory, final boolean keepFileDescriptorOpen, final MyWriteFileCallback writeFileCallback ) {
+		try {
+			// TODO we need code for read access too (even though currently API28 reading works without SAF, just with the runtime permissions)
+			String hackyFilename = "";
+
+			ParcelFileDescriptor pfd = null;
+			if (file.canWrite() || (!file.exists() && file.getParentFile().canWrite())) {
+				if (isDirectory) {
+					file.mkdirs();
+				} else {
+					// If we are here this means creating a new file can be done with fopen from native
+					//fileOutputStream = new FileOutputStream(file);
+					Log.d(ScummVM.LOG_TAG, "writeFile() file can be created normally -- (not created here)" );
+					hackyFilename = "";
+				}
+			} else {
+				DocumentFile dof = getDocumentFile(file, isDirectory);
+				if (dof != null && dof.getUri() != null && dof.canWrite()) {
+					if (isDirectory) {
+						// Nothing more to do
+					} else {
+						pfd = getContentResolver().openFileDescriptor(dof.getUri(), "w");
+						if (pfd != null) {
+							// https://stackoverflow.com/questions/59000390/android-accessing-files-in-native-c-c-code-with-google-scoped-storage-api
+							int fd = pfd.getFd();
+							hackyFilename = "/proc/self/fd/" + fd;
+							hackyNameToOpenFileDescriptorList.put(hackyFilename, pfd);
+							Log.d(ScummVM.LOG_TAG, "writeFile() file created with SAF -- hacky name: " + hackyFilename );
+						}
+					}
+				}
+			}
+
+			// TODO the idea of a callback is to work with the output (or input) streams, then return here and close the streams and the descriptors properly
+			//      however since we are interacting with native this would not work for those cases
+
+			if (writeFileCallback != null) {
+				writeFileCallback.handle( (isDirectory && file.exists()) || (!isDirectory && file.exists() && file.isFile() ), hackyFilename);
+
+			}
+
+			// TODO We need to close the file descriptor when we are done with it from native
+			//		- what if the call is not from native but from the activity?
+			//      - directory operations don't create or need a file descriptor
+			if (!keepFileDescriptorOpen && pfd != null) {
+				if (hackyNameToOpenFileDescriptorList.containsKey(hackyFilename)) {
+					hackyNameToOpenFileDescriptorList.remove(hackyFilename);
+				}
+				pfd.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Get a DocumentFile object out of a normal java File object.
+	 * When used on a external storage (SD), use requestStorageAccessFramework()
+	 * first to get access. Otherwise this will fail.
+	 *
+	 * @param file  The file/folder to convert
+	 * @param isDir Whether or not file is a directory. For non-existing (to be created) files this info is not known hence required.
+	 * @return A DocumentFile object or null if file cannot be converted
+	 */
+	@SuppressWarnings("RegExpRedundantEscape")
+	public DocumentFile getDocumentFile(final File file, final boolean isDir) {
+		// On older versions use fromFile
+		if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
+			return DocumentFile.fromFile(file);
+		}
+
+		// Get ContextUtils to find storageRootFolder
+		File baseFolderFile = getStorageRootFolder(file);
+
+		String baseFolder = baseFolderFile == null ? null : baseFolderFile.getAbsolutePath();
+		boolean originalDirectory = false;
+		if (baseFolder == null) {
+			return null;
+		}
+
+		String relPath = null;
+		try {
+			String fullPath = file.getCanonicalPath();
+			if (!baseFolder.equals(fullPath)) {
+				relPath = fullPath.substring(baseFolder.length() + 1);
+			} else {
+				originalDirectory = true;
+			}
+		} catch (IOException e) {
+			return null;
+		} catch (Exception ignored) {
+			originalDirectory = true;
+		}
+		Uri treeUri;
+		if ((treeUri = getStorageAccessFrameworkTreeUri()) == null) {
+			return null;
+		}
+		DocumentFile dof = DocumentFile.fromTreeUri(getApplicationContext(), treeUri);
+		if (originalDirectory) {
+			return dof;
+		}
+		String[] parts = relPath.split("\\/");
+		for (int i = 0; i < parts.length; i++) {
+			DocumentFile nextDof = dof.findFile(parts[i]);
+			if (nextDof == null) {
+				try {
+					nextDof = ((i < parts.length - 1) || isDir) ? dof.createDirectory(parts[i]) : dof.createFile("image", parts[i]);
+				} catch (Exception ignored) {
+					nextDof = null;
+				}
+			}
+			dof = nextDof;
+		}
+		return dof;
+	}
+
+	/**
+	 * Check whether or not a file can be written.
+	 * Requires storage access framework permission for external storage (SD)
+	 *
+	 * @param file  The file object (file/folder)
+	 * @param isDirectory Whether or not the given file parameter is a directory
+	 * @return Whether or not the file can be written
+	 */
+	public boolean canWriteFile(final File file, final boolean isDirectory) {
+		if (file == null) {
+			return false;
+		} else if (file.getAbsolutePath().startsWith(Environment.getExternalStorageDirectory().getAbsolutePath())
+		           || file.getAbsolutePath().startsWith(getFilesDir().getAbsolutePath())) {
+			return (!isDirectory && file.getParentFile() != null) ? file.getParentFile().canWrite() : file.canWrite();
+		} else {
+			DocumentFile dof = getDocumentFile(file, isDirectory);
+			return dof != null && dof.canWrite();
+		}
+	}
+	// -------------------------------------------------------------------------------------------
+	// End of SAF enabled code
+	// -------------------------------------------------------------------------------------------
+
+
 } // end of ScummVMActivity
 
 // *** HONEYCOMB / ICS FIX FOR FULLSCREEN MODE, by lmak ***
@@ -1915,4 +2363,14 @@ abstract class SetLayerType {
 
 		public void setLayerType(final View view) { }
 	}
+}
+
+// Used to define the interface for a callback after a write operation (via the method that is enhanced to use SAF if the normal way fails)
+interface MyWriteFileCallback {
+	public void handle(Boolean created, String hackyFilename);
+}
+
+// Used to define the interface for a callback after ScummVM thread has finished
+interface MyScummVMDestroyedCallback {
+	public void handle(int exitResult);
 }

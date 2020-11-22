@@ -249,7 +249,8 @@ endif
 ifdef MORPHOS
 MODULE_OBJS += \
 	fs/morphos/morphos-fs.o \
-	fs/morphos/morphos-fs-factory.o
+	fs/morphos/morphos-fs-factory.o \
+	dialogs/morphos/morphos-dialogs.o
 endif
 
 ifdef RISCOS
@@ -297,6 +298,11 @@ MODULE_OBJS += \
 	events/gph/gph-events.o \
 	graphics/gph/gph-graphics.o \
 	graphics/downscalesdl/downscalesdl-graphics.o
+endif
+
+ifdef IPHONE
+MODULE_OBJS += \
+	mutex/pthread/pthread-mutex.o
 endif
 
 ifeq ($(BACKEND),maemo)

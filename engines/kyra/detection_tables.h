@@ -77,6 +77,8 @@ namespace {
 #define GAMEOPTION_EOB_HPGRAPHS   GUIO_GAMEOPTIONS6
 #define GAMEOPTION_EOB_MOUSESWAP  GUIO_GAMEOPTIONS7
 
+static const char msgUnsupportedFanTranslation[] = _s("The fan translator does not wish his translation to be incorporated into ScummVM.");
+
 const KYRAGameDescription adGameDescs[] = {
 	/* disable these targets until they get supported
 	{
@@ -462,11 +464,11 @@ const KYRAGameDescription adGameDescs[] = {
 	{ // Modern fan-made Russian translation by Siberian GRemlin
 		{
 			"kyra1",
-			"CD",
+			msgUnsupportedFanTranslation,
 			AD_ENTRY1("MAIN_ENG.CPS", "535765395e3594bfd9b727834028e288"),
 			Common::RU_RUS,
 			Common::kPlatformDOS,
-			ADGF_CD,
+			ADGF_CD | ADGF_UNSUPPORTED,
 			GUIO4(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIPCSPK, GUIO_RENDERVGA)
 		},
 		KYRA1_CD_FAN_FLAGS(Common::RU_RUS, Common::EN_ANY)
@@ -719,11 +721,11 @@ const KYRAGameDescription adGameDescs[] = {
 	{ // CD version
 		{
 			"kyra2",
-			"CD",
+			msgUnsupportedFanTranslation,
 			AD_ENTRY1("FERRY.CPS", "763e2103858347d4ffffc329910d323f"),
 			Common::RU_RUS,
 			Common::kPlatformDOS,
-			ADGF_DROPLANGUAGE | ADGF_CD,
+			ADGF_CD | ADGF_UNSUPPORTED,
 			GUIO5(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_MIDIPCSPK, GUIO_RENDERVGA)
 		},
 		KYRA2_CD_FAN_FLAGS(Common::RU_RUS, Common::EN_ANY)
@@ -1094,6 +1096,22 @@ const KYRAGameDescription adGameDescs[] = {
 			GUIO5(GUIO_NOMIDI, GUIO_RENDERVGA, GAMEOPTION_KYRA3_AUDIENCE, GAMEOPTION_KYRA3_SKIP, GAMEOPTION_KYRA3_HELIUM)
 		},
 		KYRA3_CD_FAN_FLAGS(Common::IT_ITA, Common::FR_FRA)
+	},
+	{
+		{
+			"kyra3",
+			0,
+			{
+				{ "ONETIME.PAK", 0, "3833ff312757b8e6147f464cca0a6587", -1 },
+				{ "ALBUM.TRG", 0, "5e40de0c74cc2321928a15019252d468", -1 },
+				{ "AUD.PAK", 0, 0, -1 }
+			},
+			Common::RU_RUS,
+			Common::kPlatformDOS,
+			ADGF_DROPLANGUAGE,
+			GUIO5(GUIO_NOMIDI, GUIO_RENDERVGA, GAMEOPTION_KYRA3_AUDIENCE, GAMEOPTION_KYRA3_SKIP, GAMEOPTION_KYRA3_HELIUM)
+		},
+		KYRA3_CD_FAN_FLAGS(Common::RU_RUS, Common::DE_DEU)
 	},
 
 #ifdef ENABLE_LOL

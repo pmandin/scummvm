@@ -1,10 +1,10 @@
 package org.scummvm.scummvm;
 
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 import android.content.Context;
 //import android.util.Log;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.KeyCharacterMap;
 import android.view.MotionEvent;
@@ -156,7 +156,23 @@ public class ScummVMEventsBase implements
 	// OnKeyListener
 	@Override
 	final public boolean onKey(View v, int keyCode, KeyEvent e) {
-//		Log.d(ScummVM.LOG_TAG, "SCUMMV-EVENTS-BASE - onKEY:::" + keyCode); // Called
+
+//		String actionStr = "";
+//		switch (e.getAction()) {
+//			case KeyEvent.ACTION_UP:
+//				actionStr = "KeyEvent.ACTION_UP";
+//				break;
+//			case KeyEvent.ACTION_DOWN:
+//				actionStr = "KeyEvent.ACTION_DOWN";
+//				break;
+//			case KeyEvent.ACTION_MULTIPLE:
+//				actionStr = "KeyEvent.ACTION_MULTIPLE";
+//				break;
+//			default:
+//				actionStr = e.toString();
+//		}
+//		Log.d(ScummVM.LOG_TAG, "SCUMMV-EVENTS-BASE - onKEY:::" + keyCode + " Action::" + actionStr + " View:: " + actionView); // Called
+
 		final int action = e.getAction();
 
 		int eventUnicodeChar = e.getUnicodeChar();
@@ -191,8 +207,10 @@ public class ScummVMEventsBase implements
 				if (action == KeyEvent.ACTION_DOWN) {
 					return true;
 				} else if (action == KeyEvent.ACTION_UP) {
-					// Hide keyboard (the argument here (0) does not matter)
-					((ScummVMActivity) _context).showScreenKeyboardWithoutTextInputField(0);
+					// Hide keyboard
+					if (((ScummVMActivity) _context).isScreenKeyboardShown()) {
+						((ScummVMActivity) _context).hideScreenKeyboard();
+					}
 					return true;
 				}
 			}
@@ -200,8 +218,9 @@ public class ScummVMEventsBase implements
 
 		if (e.isSystem()) {
 			// no repeats for system keys
-			if (e.getRepeatCount() > 0)
+			if (e.getRepeatCount() > 0) {
 				return false;
+			}
 
 			// Have to reimplement hold-down-menu-brings-up-softkeybd
 			// ourselves, since we are otherwise hijacking the menu key :(
@@ -252,27 +271,38 @@ public class ScummVMEventsBase implements
 			}
 		}
 
-		// sequence of characters
-		if (action == KeyEvent.ACTION_MULTIPLE
-		    && keyCode == KeyEvent.KEYCODE_UNKNOWN) {
-			final KeyCharacterMap m = KeyCharacterMap.load(e.getDeviceId());
-			final KeyEvent[] es = m.getEvents(e.getCharacters().toCharArray());
+		// The KeyEvent.ACTION_MULTIPLE constant was deprecated in API level 29 (Q).
+		// No longer used by the input system.
+		// getAction() value: multiple duplicate key events have occurred in a row, or a complex string is being delivered.
+		//    If the key code is not KEYCODE_UNKNOWN then the getRepeatCount() method returns the number of times the given key code should be executed.
+		//    Otherwise, if the key code is KEYCODE_UNKNOWN, then this is a sequence of characters as returned by getCharacters().
+		//    sequence of characters
+		// getCharacters() is also deprecated in API level 29
+		//    For the special case of a ACTION_MULTIPLE event with key code of KEYCODE_UNKNOWN,
+		//    this is a raw string of characters associated with the event. In all other cases it is null.
+		// TODO What is the use case for this?
+		//  Does it make sense to keep it with a Build.VERSION.SDK_INT < Build.VERSION_CODES.Q check?
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+			if (action == KeyEvent.ACTION_MULTIPLE
+				&& keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+				final KeyCharacterMap m = KeyCharacterMap.load(e.getDeviceId());
+				final KeyEvent[] es = m.getEvents(e.getCharacters().toCharArray());
 
-			if (es == null) {
+				if (es == null) {
+					return true;
+				}
+
+				for (KeyEvent s : es) {
+					_scummvm.pushEvent(JE_KEY,
+						s.getAction(),
+						s.getKeyCode(),
+						eventUnicodeChar & KeyCharacterMap.COMBINING_ACCENT_MASK,
+						s.getMetaState(),
+						s.getRepeatCount(),
+						0);
+				}
 				return true;
 			}
-
-			for (KeyEvent s : es) {
-				_scummvm.pushEvent(JE_KEY,
-				                   s.getAction(),
-				                   s.getKeyCode(),
-				                   eventUnicodeChar & KeyCharacterMap.COMBINING_ACCENT_MASK,
-				                   s.getMetaState(),
-				                   s.getRepeatCount(),
-				                   0);
-			}
-
-			return true;
 		}
 
 		int type;
@@ -309,6 +339,13 @@ public class ScummVMEventsBase implements
 		case KeyEvent.KEYCODE_BUTTON_MODE:
 			type = JE_GAMEPAD;
 			break;
+		case KeyEvent.KEYCODE_BUTTON_1:
+		case KeyEvent.KEYCODE_BUTTON_2:
+		case KeyEvent.KEYCODE_BUTTON_3:
+		case KeyEvent.KEYCODE_BUTTON_4:
+			// These are oddly detected with SOURCE_KEYBOARD for joystick so don't bother checking the e.getSource()
+			type = JE_JOYSTICK;
+			break;
 		default:
 			if (e.isSystem()) {
 				type = JE_SYS_KEY;
@@ -318,7 +355,7 @@ public class ScummVMEventsBase implements
 			break;
 		}
 
-//		_scummvm.displayMessageOnOSD("GetKey: " + keyCode + " unic=" + eventUnicodeChar+ " arg3= " + (eventUnicodeChar& KeyCharacterMap.COMBINING_ACCENT_MASK));
+		//_scummvm.displayMessageOnOSD("GetKey: " + keyCode + " unic=" + eventUnicodeChar+ " arg3= " + (eventUnicodeChar& KeyCharacterMap.COMBINING_ACCENT_MASK));
 
 		// look in events.cpp for how this is handled
 		_scummvm.pushEvent(type,
@@ -335,7 +372,18 @@ public class ScummVMEventsBase implements
 	// OnTouchListener
 	@Override
 	final public boolean onTouch(View v, final MotionEvent event) {
-		//Log.d(ScummVM.LOG_TAG, "SCUMMV-EVENTS-BASE - onTOUCH");
+//		String actionStr = "";
+//		switch (event.getAction()) {
+//			case MotionEvent.ACTION_UP:
+//				actionStr = "MotionEvent.ACTION_UP";
+//				break;
+//			case MotionEvent.ACTION_DOWN:
+//				actionStr = "MotionEvent.ACTION_DOWN";
+//				break;
+//			default:
+//				actionStr = event.toString();
+//		}
+//		Log.d(ScummVM.LOG_TAG, "SCUMMV-EVENTS-BASE - onTOUCH event" + actionStr);
 
 		if (ScummVMActivity.keyboardWithoutTextInputShown
 		    && ((ScummVMActivity) _context).isScreenKeyboardShown()
@@ -383,7 +431,7 @@ public class ScummVMEventsBase implements
 	// OnGestureListener
 	@Override
 	final public boolean onDown(MotionEvent e) {
-		//Log.d(ScummVM.LOG_TAG, "SCUMMV-EVENTS-BASE - onDONW");
+		//Log.d(ScummVM.LOG_TAG, "SCUMMV-EVENTS-BASE - onDOWN MotionEvent");
 		_scummvm.pushEvent(JE_DOWN, (int)e.getX(), (int)e.getY(), 0, 0, 0, 0);
 		return true;
 	}

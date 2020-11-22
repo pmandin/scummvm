@@ -329,7 +329,7 @@ void XcodeProvider::createProjectFile(const std::string &, const std::string &, 
 	}
 
 	std::ofstream project;
-	if (modulePath.size())
+	if (!modulePath.empty())
 		addFilesToProject(moduleDir, project, includeList, excludeList, setup.filePrefix + '/' + modulePath);
 	else
 		addFilesToProject(moduleDir, project, includeList, excludeList, setup.filePrefix);
@@ -379,7 +379,7 @@ void XcodeProvider::outputMainProjectFile(const BuildSetup &setup) {
 // Files
 //////////////////////////////////////////////////////////////////////////
 void XcodeProvider::writeFileListToProject(const FileNode &dir, std::ofstream &projectFile, const int indentation,
-                                           const StringList &duplicate, const std::string &objPrefix, const std::string &filePrefix) {
+                                           const std::string &objPrefix, const std::string &filePrefix) {
 
 	// Ensure that top-level groups are generated for i.e. engines/
 	Group *group = touchGroupsForPath(filePrefix);
@@ -393,7 +393,7 @@ void XcodeProvider::writeFileListToProject(const FileNode &dir, std::ofstream &p
 		}
 		// Process child nodes
 		if (!node->children.empty())
-			writeFileListToProject(*node, projectFile, indentation + 1, duplicate, objPrefix + node->name + '_', filePrefix + node->name + '/');
+			writeFileListToProject(*node, projectFile, indentation + 1, objPrefix + node->name + '_', filePrefix + node->name + '/');
 	}
 }
 
@@ -822,14 +822,15 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles() const {
 		files.push_back("dists/engine-data/cryo.dat");
 		files.push_back("dists/engine-data/cryomni3d.dat");
 		files.push_back("dists/engine-data/drascula.dat");
+		files.push_back("dists/engine-data/encoding.dat");
 		files.push_back("dists/engine-data/fonts.dat");
 		files.push_back("dists/engine-data/hugo.dat");
 		files.push_back("dists/engine-data/kyra.dat");
 		files.push_back("dists/engine-data/lure.dat");
 		files.push_back("dists/engine-data/macgui.dat");
 		files.push_back("dists/engine-data/myst3.dat");
-		files.push_back("dists/engine-data/residualvm-emi-patch.m4b");
-		files.push_back("dists/engine-data/residualvm-grim-patch.lab");
+		files.push_back("dists/engine-data/monkey4-patch.m4b");
+		files.push_back("dists/engine-data/grim-patch.lab");
 		files.push_back("dists/engine-data/macventure.dat");
 		files.push_back("dists/engine-data/mort.dat");
 		files.push_back("dists/engine-data/neverhood.dat");

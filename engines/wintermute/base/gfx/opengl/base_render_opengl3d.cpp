@@ -213,10 +213,14 @@ void BaseRenderOpenGL3D::displayShadow(BaseObject *object, const Math::Vector3d 
 	glEnable(GL_TEXTURE_2D);
 	static_cast<BaseSurfaceOpenGL3D *>(shadowImage)->setTexture();
 
-	#ifndef __MORPHOS__
-	glInterleavedArrays(GL_T2F_N3F_V3F, 0, _simpleShadow);
-	#endif
-	
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glVertexPointer(3, GL_FLOAT, sizeof(SimpleShadowVertex), &_simpleShadow[0].x);
+	glNormalPointer(GL_FLOAT, sizeof(SimpleShadowVertex), &_simpleShadow[0].nx);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SimpleShadowVertex), &_simpleShadow[0].u);
+
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	glDepthMask(true);
@@ -243,10 +247,6 @@ void BaseRenderOpenGL3D::setWindowed(bool windowed) {
 }
 
 void BaseRenderOpenGL3D::fadeToColor(byte r, byte g, byte b, byte a) {
-#if defined(USE_OPENGL_SHADERS)
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
-
 	setProjection2D();
 
 	const int vertexSize = 16;
@@ -431,6 +431,12 @@ bool BaseRenderOpenGL3D::initRenderer(int width, int height, bool windowed) {
 	_simpleShadow[3].u = 1.0f;
 	_simpleShadow[3].v = 0.0f;
 
+	// The ShaderSurfaceRenderer sets an array buffer which appearently conflicts with us
+	// Reset it!
+#if defined(USE_OPENGL_SHADERS)
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+#endif // defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
+
 	return true;
 }
 
@@ -613,12 +619,6 @@ bool BaseRenderOpenGL3D::drawSpriteEx(BaseSurfaceOpenGL3D &tex, const Wintermute
                                       bool mirrorX, bool mirrorY) {
 	// original wme has a batch mode for sprites, we ignore this for the moment
 
-	// The ShaderSurfaceRenderer sets an array buffer which appearently conflicts with us
-	// Reset it!
-#if defined(USE_OPENGL_SHADERS)
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-#endif // defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
-
 	if (_forceAlphaColor != 0) {
 		color = _forceAlphaColor;
 	}
@@ -721,11 +721,12 @@ bool BaseRenderOpenGL3D::drawSpriteEx(BaseSurfaceOpenGL3D &tex, const Wintermute
 	glEnableClientState(GL_COLOR_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
 
-#ifndef __MORPHOS__
-	glInterleavedArrays(GL_T2F_C4UB_V3F, 0, vertices);
-#endif
-	
+	glVertexPointer(3, GL_FLOAT, sizeof(SpriteVertex), &vertices[0].x);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SpriteVertex), &vertices[0].u);
+	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(SpriteVertex), &vertices[0].r);
+
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	if (alphaDisable) {

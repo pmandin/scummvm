@@ -76,7 +76,8 @@ Pics::ImageFile::ImageFile(const Common::String &filename) {
 	 * image offsets start at the beginning of the image file.
 	 */
 	version = f.readUint16LE();
-	if (version == 0x6300 /* Single image file */) {
+	if (version == 0x6300 /* Single image file */
+			|| version == 0x81f3 /* OO-Topos title - t0 */) {
 		_imageOffsets.resize(1);
 		_imageOffsets[0] = 4;
 		return;
@@ -135,7 +136,8 @@ bool Pics::ImageFile::doImageOp(Pics::ImageContext *ctx) const {
 
 	case OPCODE_SET_PEN_COLOR:
 		debugC(kDebugGraphics, "set_pen_color(%.2x)", opcode);
-		ctx->_penColor = ctx->_drawSurface->getPenColor(param);
+		if (!(ctx->_drawFlags & IMAGEF_NO_FILL))
+			ctx->_penColor = ctx->_drawSurface->getPenColor(param);
 		break;
 
 	case OPCODE_TEXT_CHAR:
@@ -219,7 +221,8 @@ bool Pics::ImageFile::doImageOp(Pics::ImageContext *ctx) const {
 		debugC(kDebugGraphics, "draw_shape(%d, %d), style=%.2x, fill=%.2x",
 		       a, b, ctx->_shape, ctx->_fillColor);
 
-		ctx->_drawSurface->drawShape(a, b, ctx->_shape, ctx->_fillColor);
+		if (!(ctx->_drawFlags & IMAGEF_NO_FILL))
+			ctx->_drawSurface->drawShape(a, b, ctx->_shape, ctx->_fillColor);
 		break;
 
 	case OPCODE_DELAY:
@@ -236,7 +239,7 @@ bool Pics::ImageFile::doImageOp(Pics::ImageContext *ctx) const {
 			a += 255;
 
 		debugC(kDebugGraphics, "paint(%d, %d)", a, b);
-		if (!(ctx->_drawFlags & IMAGEF_NO_FLOODFILL))
+		if (!(ctx->_drawFlags & IMAGEF_NO_FILL))
 			ctx->_drawSurface->floodFill(a, b, ctx->_fillColor);
 		break;
 
@@ -384,11 +387,13 @@ void Pics::drawPicture(int pictureNum) const {
 		    pictureNum % IMAGES_PER_FILE, &ctx);
 
 	} else {
-		if (pictureNum < LOCATIONS_NO_BG_OFFSET)
-			ctx._drawSurface->clearScreen(G_COLOR_WHITE);
-		else
+		if (pictureNum < LOCATIONS_NO_BG_OFFSET) {
+			ctx._drawSurface->clearScreen((ctx._drawFlags & IMAGEF_REVERSE) ? G_COLOR_BLACK : G_COLOR_WHITE);
+			if (ctx._drawFlags & IMAGEF_REVERSE)
+				ctx._penColor = RGB(255, 255, 255);
+		} else {
 			ctx._drawSurface->clear(0);
-
+		}
 		pictureNum %= 100;
 		_rooms[pictureNum / IMAGES_PER_FILE].draw(
 		    pictureNum % IMAGES_PER_FILE, &ctx);

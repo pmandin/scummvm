@@ -52,12 +52,12 @@ public:
 	int16 addItemCru(Item *item, bool showtoast);
 
 	//! teleport to the given location on the given map
-	void teleport(int mapNum_, int32 x_, int32 y_, int32 z_) override;
+	void teleport(int mapNum, int32 x, int32 y, int32 z) override;
 
 	//! teleport to a teleport-destination egg
 	//! \param mapnum The map to teleport to
 	//! \param teleport_id The ID of the egg to teleport to
-	void teleport(int mapNum_, int teleport_id); // to teleportegg
+	void teleport(int mapNum, int teleport_id); // to teleportegg
 
 	bool hasJustTeleported() const {
 		return _justTeleported;
@@ -89,7 +89,15 @@ public:
 	uint16 getDamageType() const override;
 	int getDamageAmount() const override;
 
-	void setInCombat() override;
+	void toggleInCombat() {
+		if (isInCombat())
+			clearInCombat();
+		else
+			setInCombat(0);
+	}
+
+	// Note: activity num parameter is ignored for Avatar.
+	void setInCombat(int activity) override;
 	void clearInCombat() override;
 
 	ProcId die(uint16 DamageType) override;
@@ -149,7 +157,7 @@ public:
 	INTRINSIC(I_addItemCru);
 	INTRINSIC(I_getNumberOfCredits);
 
-	void getWeaponOverlay(const WeaponOverlayFrame *&frame_, uint32 &shape_);
+	void getWeaponOverlay(const WeaponOverlayFrame *&frame, uint32 &shape);
 
 
 protected:

@@ -216,7 +216,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Actor::I_setDead,
 	0, // I_playFlic(char *) Intrinsic0A9(void)
 	AudioProcess::I_playSFX, // void Intrinsic0AA(2 bytes)
-	0, // int Intrinsic0AB(4 bytes)
+	0, // int Actor::I_getFlag0x59Field1  Intrinsic0AB(4 bytes)
 	Item::I_getFamilyOfType, // void Intrinsic0AC(2 bytes)
 	Item::I_getNpcNum, // based on same coff as 102 (-> variable name in TRIGGER::ordinal21)
 	Item::I_getQLo, // based on same coff set as 02B
@@ -258,7 +258,7 @@ Intrinsic RemorseIntrinsics[] = {
 	// 0x0D0
 	Item::I_use, // void Intrinsic0D0(4 bytes)
 	AudioProcess::I_stopAllSFX,
-	0, // void I_playFlic(int *item,char *flicname,word sizex,word sizey) // play flic
+	MovieGump::I_playMovieCutscene, // void I_playFlic(int *item,char *flicname,word sizex,word sizey) // play flic
 	0, // void Intrinsic0D3(void)
 	AudioProcess::I_playSFX, // void Intrinsic0D4(2 bytes)
 	Item::I_use, // void Intrinsic0D5(4 bytes)
@@ -330,7 +330,7 @@ Intrinsic RemorseIntrinsics[] = {
 	UCMachine::I_numToStr, // see VMAIL::func0A for example usage
 	Item::I_andStatus, // void Intrinsic114(6 bytes)
 	Item::I_getNpcNum, // based on same coff as 102 (-> variable name in TRIGGER::ordinal21)
-	0, // byte Intrinsic116(14 bytes)
+	Item::I_fireDistance, // byte Intrinsic116(14 bytes)
 	Item::I_andStatus, // void Intrinsic117(6 bytes)
 	Item::I_hurl, // int16 Intrinsic118(12 bytes)
 	Item::I_setBroken, // void Intrinsic119(4 bytes)

@@ -323,8 +323,19 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	_msgCount = 0;
 	_costumeLoader = NULL;
 	_costumeRenderer = NULL;
+	_existLanguageFile = false;
+	_languageBuffer = 0;
+	_numTranslatedLines = 0;
+	_translatedLines = 0;
+	_languageLineIndex = 0;
 	_2byteFontPtr = 0;
+	_2byteWidth = 0;
+	_2byteHeight = 0;
+	_2byteShadow = 0;
+	_krStrPost = 0;
 	_V1TalkingActor = 0;
+	for (int i = 0; i < 20; i++)
+		_2byteMultiFontPtr[i] = NULL;
 	_NESStartStrip = 0;
 
 	_skipDrawObject = 0;
@@ -614,7 +625,15 @@ ScummEngine::~ScummEngine() {
 
 	delete[] _sortedActors;
 
-	delete[] _2byteFontPtr;
+	delete[] _languageBuffer;
+	delete[] _translatedLines;
+	delete[] _languageLineIndex;
+
+	if (_2byteFontPtr && !_useMultiFont)
+		delete[] _2byteFontPtr;
+	for (int i = 0; i < 20; i++)
+		if (_2byteMultiFontPtr[i])
+			delete _2byteMultiFontPtr[i];
 	delete _charset;
 	delete _messageDialog;
 	delete _pauseDialog;

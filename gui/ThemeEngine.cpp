@@ -27,6 +27,7 @@
 #include "common/unzip.h"
 #include "common/tokenizer.h"
 #include "common/translation.h"
+#include "common/unicode-bidi.h"
 
 #include "graphics/conversion.h"
 #include "graphics/cursorman.h"
@@ -242,6 +243,7 @@ ThemeEngine::~ThemeEngine() {
 	_backBuffer.free();
 
 	unloadTheme();
+	unloadExtraFont();
 
 	// Release all graphics surfaces
 	for (ImagesMap::iterator i = _bitmaps.begin(); i != _bitmaps.end(); ++i) {
@@ -553,7 +555,7 @@ bool ThemeEngine::addFont(TextData textId, const Common::String &language, const
 		Common::String localized = FontMan.genLocalizedFontFilename(file);
 		const Common::String charset
 #ifdef USE_TRANSLATION
-		                            (TransMan.getCurrentCharset())
+		                            (textId == kTextDataExtraLang ? "" : TransMan.getCurrentCharset())
 #endif
 		                            ;
 
@@ -596,6 +598,63 @@ bool ThemeEngine::addFont(TextData textId, const Common::String &language, const
 
 	return true;
 
+}
+
+// This should work independently of the translation manager, since it is is just about displaying
+// correct ingame messages in Chinese, Korean and Japanese games, even if the launcher is set to
+// English and/or the translations are disabled.
+Common::Array<Common::Language> getLangIdentifiers(const Common::String &language) {
+	struct IdStr2Lang {
+		const char strId[6];
+		Common::Language lang;
+	};
+
+	// I have added only the languages that currently make sense (the only other extra font that we
+	// currently have is for Hindi, but that language is only supported in the launcher, there are
+	// no games in Hindi).
+	IdStr2Lang matchPairs[] = {
+	//  { "hi", Common::UNK_LANG },
+		{ "ja", Common::JA_JPN },
+		{ "ko", Common::KO_KOR },
+		{ "zh", Common::ZH_ANY },
+		{ "zh", Common::ZH_CNA },
+		{ "zh", Common::ZH_TWN }
+	};
+
+	Common::Array<Common::Language> result;
+
+	for (int i = 0; i < ARRAYSIZE(matchPairs); ++i) {
+		if (language.contains(matchPairs[i].strId))
+			result.push_back(matchPairs[i].lang);
+	}
+
+	return result;
+}
+
+void ThemeEngine::storeFontNames(TextData textId, const Common::String &language, const Common::String &file, const Common::String &scalableFile, const int pointsize) {
+	if (language.empty())
+		return;
+
+	Common::Array<Common::Language> langs = getLangIdentifiers(language);
+	if (langs.empty())
+		return;
+
+	Common::Array<LangExtraFont>::iterator entry = Common::find(_langExtraFonts.begin(), _langExtraFonts.end(), langs[0]);
+	if (entry == _langExtraFonts.end())
+		_langExtraFonts.push_back(LangExtraFont(textId, langs, file, scalableFile, pointsize));
+	else
+		entry->storeFileNames(textId, file, scalableFile, pointsize);
+}
+
+bool ThemeEngine::loadExtraFont(FontStyle style, Common::Language lang) {
+	if (style >= kFontStyleMax)
+		return false;
+
+	Common::Array<LangExtraFont>::iterator entry = Common::find(_langExtraFonts.begin(), _langExtraFonts.end(), lang);
+	if (entry == _langExtraFonts.end())
+		return false;
+	TextData td = fontStyleToData(style);
+	return addFont(kTextDataExtraLang, Common::String(), entry->file(td), entry->sclFile(td), entry->fntSize(td));
 }
 
 bool ThemeEngine::addTextColor(TextColor colorId, int r, int g, int b) {
@@ -772,6 +831,9 @@ void ThemeEngine::unloadTheme() {
 	}
 
 	for (int i = 0; i < kTextDataMAX; ++i) {
+		// Don't unload the language specific extra font here or it will be lost after a refresh() call.
+		if (i == kTextDataExtraLang)
+			continue;
 		delete _texts[i];
 		_texts[i] = nullptr;
 	}
@@ -783,6 +845,11 @@ void ThemeEngine::unloadTheme() {
 
 	_themeEval->reset();
 	_themeOk = false;
+}
+
+void ThemeEngine::unloadExtraFont() {
+	delete _texts[kTextDataExtraLang];
+	_texts[kTextDataExtraLang] = nullptr;
 }
 
 bool ThemeEngine::loadDefaultXML() {
@@ -926,40 +993,6 @@ void ThemeEngine::drawDD(DrawData type, const Common::Rect &r, uint32 dynamic, b
 	}
 }
 
-void ThemeEngine::drawDDText(TextData type, TextColor color, const Common::Rect &r, const Common::String &text,
-                             bool restoreBg, bool ellipsis, Graphics::TextAlign alignH, TextAlignVertical alignV,
-                             int deltax, const Common::Rect &drawableTextArea) {
-
-	if (type == kTextDataNone || !_texts[type] || _layerToDraw == kDrawLayerBackground)
-		return;
-
-	Common::Rect area = r;
-	area.clip(_screen.w, _screen.h);
-
-	Common::Rect dirty = drawableTextArea;
-	if (dirty.isEmpty()) dirty = area;
-	else dirty.clip(area);
-
-	if (!_clip.isEmpty()) {
-		dirty.clip(_clip);
-	}
-
-	// HACK: One small pixel should be invisible enough
-	if (dirty.isEmpty()) dirty = Common::Rect(0, 0, 1, 1);
-
-	if (restoreBg)
-		restoreBackground(dirty);
-
-	_vectorRenderer->setFgColor(_textColors[color]->r, _textColors[color]->g, _textColors[color]->b);
-#ifdef USE_TRANSLATION
-	_vectorRenderer->drawString(_texts[type]->_fontPtr, TransMan.convertBiDiString(text), area, alignH, alignV, deltax, ellipsis, dirty);
-#else
-	_vectorRenderer->drawString(_texts[type]->_fontPtr, text, area, alignH, alignV, deltax, ellipsis, dirty);
-#endif
-
-	addDirtyRect(dirty);
-}
-
 void ThemeEngine::drawDDText(TextData type, TextColor color, const Common::Rect &r, const Common::U32String &text,
 	bool restoreBg, bool ellipsis, Graphics::TextAlign alignH, TextAlignVertical alignV,
 	int deltax, const Common::Rect &drawableTextArea) {
@@ -985,8 +1018,8 @@ void ThemeEngine::drawDDText(TextData type, TextColor color, const Common::Rect 
 		restoreBackground(dirty);
 
 	_vectorRenderer->setFgColor(_textColors[color]->r, _textColors[color]->g, _textColors[color]->b);
-#ifdef USE_TRANSLATION
-	_vectorRenderer->drawString(_texts[type]->_fontPtr, TransMan.convertBiDiString(text), area, alignH, alignV, deltax, ellipsis, dirty);
+#ifdef USE_FRIBIDI
+	_vectorRenderer->drawString(_texts[type]->_fontPtr, Common::convertBiDiU32String(text), area, alignH, alignV, deltax, ellipsis, dirty);
 #else
 	_vectorRenderer->drawString(_texts[type]->_fontPtr, text, area, alignH, alignV, deltax, ellipsis, dirty);
 #endif
@@ -1603,10 +1636,6 @@ const Graphics::Font *ThemeEngine::getFont(FontStyle font) const {
 
 int ThemeEngine::getFontHeight(FontStyle font) const {
 	return ready() ? _texts[fontStyleToData(font)]->_fontPtr->getFontHeight() : 0;
-}
-
-int ThemeEngine::getStringWidth(const Common::String &str, FontStyle font) const {
-	return ready() ? _texts[fontStyleToData(font)]->_fontPtr->getStringWidth(str) : 0;
 }
 
 int ThemeEngine::getStringWidth(const Common::U32String &str, FontStyle font) const {

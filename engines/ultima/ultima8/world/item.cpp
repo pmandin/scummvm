@@ -72,6 +72,7 @@ namespace Ultima {
 namespace Ultima8 {
 
 static const uint32 SNAP_EGG_SHAPE = 0x4fe;
+static const uint32 BULLET_SPLASH_SHAPE = 0x1d9;
 
 // p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(Item)
@@ -475,8 +476,8 @@ Box Item::getWorldBox() const {
 	return Box(_x, _y, _z, xd, yd, zd);
 }
 
-void Item::setShape(uint32 shape_) {
-	_shape = shape_;
+void Item::setShape(uint32 shape) {
+	_shape = shape;
 	_cachedShapeInfo = nullptr;
 	_cachedShape = nullptr;
 	// FIXME: In Crusader, here we should check if the shape
@@ -613,10 +614,10 @@ bool Item::isOnScreen() const {
 	return false;
 }
 
-bool Item::canExistAt(int32 x_, int32 y_, int32 z_, bool needsupport) const {
+bool Item::canExistAt(int32 x, int32 y, int32 z, bool needsupport) const {
 	CurrentMap *cm = World::get_instance()->getCurrentMap();
 	const Item *support;
-	bool valid = cm->isValidPosition(x_, y_, z_, getShape(), getObjId(),
+	bool valid = cm->isValidPosition(x, y, z, getShape(), getObjId(),
 	                                 &support, 0);
 	return valid && (!needsupport || support);
 }
@@ -1162,8 +1163,6 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 	if (GAME_IS_REGRET)
 		warning("Item::fireWeapon: TODO: Update for Regret (different firetypes)");
 
-	static const uint32 BULLET_SPLASH_SHAPE = 0x1d9;
-
 	ix += x;
 	iy += y;
 	iz += z;
@@ -1297,10 +1296,82 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 	return 0;
 }
 
-unsigned int Item::countNearby(uint32 shape_, uint16 range) {
+uint16 Item::fireDistance(Item *other, Direction dir, int16 xoff, int16 yoff, int16 zoff) {
+	if (!other)
+		return 0;
+
+	Actor *a = dynamic_cast<Actor *>(this);
+	if (a) {
+		Animation::Sequence anim;
+		bool kneeling = a->hasActorFlags(Actor::ACT_KNEELING);
+		bool smallwpn = true;
+		MainActor *ma = dynamic_cast<MainActor *>(this);
+		Item *wpn = getItem(a->getActiveWeapon());
+		if (wpn && wpn->getShapeInfo()->_weaponInfo) {
+			smallwpn = wpn->getShapeInfo()->_weaponInfo->_small;
+		}
+
+		if (kneeling) {
+			if (smallwpn)
+				anim = Animation::kneelAndFireSmallWeapon;
+			else
+				anim = Animation::kneelAndFireLargeWeapon;
+		} else {
+			if (ma || smallwpn)
+				anim = Animation::attack;
+			else
+				anim = Animation::fire2;
+		}
+
+		// TODO: Get midpoint of frames in anim.  For now we ignore it and get the centre below.
+	}
+
+	int32 cx, cy, cz;
+	getCentre(cx, cy, cz);
+
+	int32 ox, oy, oz;
+	other->getLocation(ox, oy, oz);
+
+	int32 dist = 0;
+
+	CurrentMap *cm = World::get_instance()->getCurrentMap();
+	if (!cm)
+		return 0;
+	const Item *blocker = nullptr;
+	bool valid = cm->isValidPosition(cx, cy, cz, BULLET_SPLASH_SHAPE,
+									 getObjId(), nullptr, nullptr, &blocker);
+	if (!valid) {
+		if (blocker->getObjId() == other->getObjId())
+			dist = MAX(abs(_x - ox), abs(_y - oy));
+	} else {
+		int32 ocx, ocy, ocz;
+		other->getCentre(ocx, ocy, ocz);
+		const int32 start[3] = {cx, cy, cz};
+		const int32 end[3] = {ocx, ocy, cz};
+		const int32 dims[3] = { 2, 2, 2 };
+
+		Std::list<CurrentMap::SweepItem> collisions;
+		Std::list<CurrentMap::SweepItem>::iterator it;
+		cm->sweepTest(start, end, dims, ShapeInfo::SI_SOLID,
+					   _objId, false, &collisions);
+		for (it = collisions.begin(); it != collisions.end(); it++) {
+			if (it->_item == getObjId())
+				continue;
+			if (it->_item != other->getObjId())
+				break;
+			int32 out[3];
+			it->GetInterpolatedCoords(out, start, end);
+			dist = MAX(abs(_x - out[0]), abs(_y - out[1]));
+			break;
+		}
+	}
+	return dist / 32;
+}
+
+unsigned int Item::countNearby(uint32 shape, uint16 range) {
 	CurrentMap *currentmap = World::get_instance()->getCurrentMap();
 	UCList itemlist(2);
-	LOOPSCRIPT(script, LS_SHAPE_EQUAL(shape_));
+	LOOPSCRIPT(script, LS_SHAPE_EQUAL(shape));
 	currentmap->areaSearch(&itemlist, script, sizeof(script),
 	                       this, range, false);
 	return itemlist.getSize();
@@ -1324,9 +1395,9 @@ uint32 Item::callUsecodeEvent(uint32 event, const uint8 *args, int argsize) {
 	        !(_flags & FLG_FAST_ONLY))
 		return 0;
 
-	// UnkEggs have _quality+0x47F
+	// UnkEggs have class quality + 0x47F in U8, +0x900 in Crusader
 	if (getFamily() == ShapeInfo::SF_UNKEGG)
-		class_id = _quality + 0x47F;
+		class_id = _quality + (GAME_IS_U8 ? 0x47F : 0x900);
 
 	Usecode *u = GameData::get_instance()->getMainUsecode();
 	uint32 offset = u->get_class_event(class_id, event);
@@ -3643,6 +3714,21 @@ uint32 Item::I_fireWeapon(const uint8 *args, unsigned int /*argsize*/) {
 	if (!item) return 0;
 
 	return item->fireWeapon(x * 2, y * 2, z, Direction_FromUsecodeDir(dir), firetype, unkflag);
+}
+
+uint32 Item::I_fireDistance(const uint8 *args, unsigned int /*argsize*/) {
+	ARG_ITEM_FROM_PTR(item);
+	ARG_UINT16(other);
+	ARG_SINT16(dir);
+	ARG_SINT16(xoff);
+	ARG_SINT16(yoff);
+	ARG_SINT16(zoff);
+
+	Item *otheritem = getItem(other);
+
+	if (!item || !otheritem) return 0;
+
+	return item->fireDistance(otheritem, Direction_FromUsecodeDir(dir), xoff * 2, yoff * 2, zoff);
 }
 
 } // End of namespace Ultima8

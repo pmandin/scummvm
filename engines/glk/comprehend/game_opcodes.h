@@ -38,7 +38,9 @@ protected:
 
 	void execute_opcode(const Instruction *instr, const Sentence *sentence, FunctionState *func_state) override;
 
-	void func_set_test_result(FunctionState *func_state, bool value);
+	Item *getItem(const Instruction *instr);
+
+	virtual void func_set_test_result(FunctionState *func_state, bool value);
 	bool isItemPresent(Item *item) const;
 public:
 	ComprehendGameOpcodes();
@@ -72,6 +74,7 @@ public:
 	ComprehendGameV2();
 
 	byte getOpcode(const Instruction *instr) override;
+	void func_set_test_result(FunctionState *func_state, bool value) override;
 };
 
 } // namespace Comprehend

@@ -33,6 +33,9 @@ namespace Comprehend {
 #define ROOM_IS_NORMAL 0
 #define ROOM_IS_DARK 1
 #define ROOM_IS_TOO_BRIGHT 2
+#define INPUT_LINE_SIZE 1024
+
+enum NounState { NOUNSTATE_STANDARD = 0, NOUNSTATE_QUERY = 1, NOUNSTATE_INITIAL = 2 };
 
 struct GameStrings;
 struct Sentence;
@@ -48,10 +51,18 @@ struct Sentence {
 	}
 
 	bool empty() const {
-		return _nr_words == 0;
+		return !_formattedWords[0];
 	}
 
+	/**
+	 * Clears the sentence
+	 */
 	void clear();
+
+	/**
+	 * Copies from another sentence to this one
+	 */
+	void copyFrom(const Sentence &src, bool copyNoun = true);
 
 	/**
 	 * Splits up the array of _words into a _formattedWords
@@ -62,8 +73,12 @@ struct Sentence {
 };
 
 class ComprehendGame : public GameData {
-private:
+protected:
 	bool _ended;
+	NounState _nounState;
+	Sentence _sentence;
+	char _inputLine[INPUT_LINE_SIZE];
+	int _inputLineIndex;
 public:
 	const GameStrings *_gameStrings;
 
@@ -72,15 +87,14 @@ private:
 	void eval_instruction(FunctionState *func_state,
 		const Function &func, uint functionOffset,
 		const Sentence *sentence);
-	void skip_whitespace(char **p);
-	void skip_non_whitespace(char **p);
+	void skip_whitespace(const char **p);
+	void skip_non_whitespace(const char **p);
 	bool handle_sentence(Sentence *sentence);
 	bool handle_sentence(uint tableNum, Sentence *sentence, Common::Array<byte> &words);
-	void read_sentence(char **line, Sentence *sentence);
+	void read_sentence(Sentence *sentence);
 	void parse_sentence_word_pairs(Sentence *sentence);
-	void doBeforeTurn();
-	void doAfterTurn();
 	void read_input();
+	void doBeforeTurn();
 
 protected:
 	void game_save();
@@ -113,6 +127,7 @@ protected:
 	}
 
 	Item *get_item_by_noun(byte noun);
+	int get_item_id(byte noun);
 	void weighInventory();
 	size_t num_objects_in_room(int room);
 	void doMovementVerb(uint verbNum);
@@ -123,10 +138,9 @@ public:
 
 	virtual void beforeGame() {}
 	virtual void beforePrompt() {}
-	virtual void beforeTurn() {}
-	virtual bool afterTurn() {
-		return false;
-	}
+	virtual void afterPrompt() {}
+	virtual void beforeTurn();
+	virtual void afterTurn() {}
 	virtual int roomIsSpecial(unsigned room_index, unsigned *room_desc_string) {
 		return ROOM_IS_NORMAL;
 	}

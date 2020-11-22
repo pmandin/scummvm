@@ -35,7 +35,7 @@ DebuggerDumper::DebuggerDumper() : _game(nullptr) {
 
 	_opcodes[OPCODE_OBJECT_IS_NOT_NOWHERE] = "object_is_not_nowhere";
 
-	_opcodes[OPCODE_CURRENT_OBJECT_TAKEABLE] = "current_object_takeable";
+	_opcodes[OPCODE_CURRENT_IS_OBJECT] = "current_is_object";
 	_opcodes[OPCODE_CURRENT_OBJECT_NOT_TAKEABLE] = "current_object_not_takeable";
 
 	_opcodes[OPCODE_CURRENT_OBJECT_NOT_IN_ROOM] = "current_object_not_in_room";
@@ -75,6 +75,7 @@ DebuggerDumper::DebuggerDumper() : _game(nullptr) {
 	_opcodes[OPCODE_INVENTORY] = "inventory";
 	_opcodes[OPCODE_MOVE_OBJECT_TO_ROOM] = "move_object_to_room";
 	_opcodes[OPCODE_SAVE_ACTION] = "save_action";
+	_opcodes[OPCODE_CLEAR_LINE] = "clear_line";
 	_opcodes[OPCODE_MOVE_TO_ROOM] = "move_to_room";
 	_opcodes[OPCODE_VAR_ADD] = "var_add";
 	_opcodes[OPCODE_SET_ROOM_DESCRIPTION] = "set_room_description";
@@ -103,19 +104,21 @@ DebuggerDumper::DebuggerDumper() : _game(nullptr) {
 	_opcodes[OPCODE_SET_STRING_REPLACEMENT2] = "set_string_replacement2";
 	_opcodes[OPCODE_SET_STRING_REPLACEMENT3] = "set_string_replacement3";
 	_opcodes[OPCODE_SET_CURRENT_NOUN_STRING_REPLACEMENT] = "set_current_noun_string_replacement";
-	_opcodes[OPCODE_CURRENT_IS_NOT_OBJECT] = "current_is_not_object";
 	_opcodes[OPCODE_DRAW_ROOM] = "draw_room";
 	_opcodes[OPCODE_DRAW_OBJECT] = "draw_object";
 	_opcodes[OPCODE_WAIT_KEY] = "wait_key";
 	_opcodes[OPCODE_TEST_FALSE] = "test_false";
 	_opcodes[OPCODE_OBJECT_CAN_TAKE] = "object_can_take";
-	_opcodes[OPCODE_NOT_TAKEABLE] = "not_takeable";
+	_opcodes[OPCODE_OBJECT_TAKEABLE] = "object_takeable";
 	_opcodes[OPCODE_CLEAR_INVISIBLE] = "clear_invisible";
 	_opcodes[OPCODE_SET_INVISIBLE] = "set_invisible";
 	_opcodes[OPCODE_CLEAR_CAN_TAKE] = "clear_can_take";
 	_opcodes[OPCODE_SET_CAN_TAKE] = "set_can_take";
 	_opcodes[OPCODE_SET_FLAG40] = "set_flag40";
 	_opcodes[OPCODE_CLEAR_FLAG40] = "clear_flag40";
+	_opcodes[OPCODE_RANDOM_MSG] = "random_msg";
+	_opcodes[OPCODE_SET_WORD] = "set_word";
+	_opcodes[OPCODE_CLEAR_WORD] = "clear_word";
 }
 
 Common::String DebuggerDumper::dumpInstruction(ComprehendGame *game,
@@ -131,10 +134,13 @@ Common::String DebuggerDumper::dumpInstruction(ComprehendGame *game,
 		                              func_state->_testResult, func_state->_elseResult);
 
 	line += Common::String::format("  [%.2x] ", instr->_opcode);
-	if (_opcodes.contains(opcode))
+	if (_opcodes.contains(opcode)) {
+		if (_game->_comprehendVersion == 2 && !instr->_isCommand && (instr->_opcode & 0x40) != 0)
+			line += "!";
 		line += _opcodes[opcode];
-	else
+	} else {
 		line += "unknown";
+	}
 
 	if (instr->_nr_operands) {
 		line += "(";
@@ -164,7 +170,11 @@ Common::String DebuggerDumper::dumpInstruction(ComprehendGame *game,
 	case OPCODE_SET_STRING_REPLACEMENT1:
 	case OPCODE_SET_STRING_REPLACEMENT2:
 	case OPCODE_SET_STRING_REPLACEMENT3:
-		line += Common::String::format(" %s", game->_replaceWords[instr->_operand[0] - 1].c_str());
+		str_index = instr->_operand[0] - 1;
+		if (str_index < 0 || str_index >= (int)game->_replaceWords.size())
+			warning("invalid string replacement index - %d", str_index);
+		else
+			line += Common::String::format(" %s", game->_replaceWords[str_index].c_str());
 		break;
 
 	default:
@@ -217,36 +227,26 @@ void DebuggerDumper::dumpActionTable() {
 	}
 }
 
-int DebuggerDumper::wordIndexCompare(const void *a, const void *b) {
-	const Word *word_a = (const Word *)a, *word_b = (const Word *)b;
-
-	if (word_a->_index > word_b->_index)
+int DebuggerDumper::wordIndexCompare(const Word &a, const Word &b) {
+	if (a._index > b._index)
 		return 1;
-	if (word_a->_index < word_b->_index)
+	if (a._index < b._index)
 		return -1;
 	return 0;
 }
 
 void DebuggerDumper::dumpDictionary() {
-	Word *dictionary;
-	Word *words;
-	uint i;
+	Common::Array<Word> dictionary;
 
 	/* Sort the dictionary by index */
-	dictionary = (Word *)malloc(sizeof(*words) * _game->_nr_words);
-	memcpy(dictionary, _game->_words,
-	       sizeof(*words) * _game->_nr_words);
-	qsort(dictionary, _game->_nr_words, sizeof(*words),
-	      wordIndexCompare);
+	dictionary = _game->_words;
+	Common::sort(dictionary.begin(), dictionary.end(), wordIndexCompare);
 
-	print("Dictionary (%u words)\n", (uint)_game->_nr_words);
-	for (i = 0; i < _game->_nr_words; i++) {
-		words = &dictionary[i];
-		print("  [%.2x] %.2x %s\n", words->_index, words->_type,
-		      words->_word);
+	print("Dictionary (%u words)\n", dictionary.size());
+	for (uint i = 0; i < dictionary.size(); i++) {
+		const Word &word = dictionary[i];
+		print("  [%.2x] %.2x %s\n", word._index, word._type, word._word);
 	}
-
-	free(dictionary);
 }
 
 void DebuggerDumper::dumpWordMap() {
@@ -316,7 +316,7 @@ void DebuggerDumper::dumpItems() {
 			      _game->stringLookup(item->_longString).c_str());
 
 		print("    words: ");
-		for (j = 0; j < _game->_nr_words; j++)
+		for (j = 0; j < _game->_words.size(); j++)
 			if (_game->_words[j]._index == item->_word &&
 			        (_game->_words[j]._type & WORD_TYPE_NOUN_MASK))
 				print("%s ", _game->_words[j]._word);

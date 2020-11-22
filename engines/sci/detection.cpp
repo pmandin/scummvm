@@ -255,13 +255,36 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 	// KQ7 - Upscale videos to double their size (The in-game "Full screen" video setting)
 	{
 		GAMEOPTION_UPSCALE_VIDEOS,
-	{
-		_s("Upscale videos"),
-		_s("Upscale videos to double their size"),
-		"enable_video_upscale",
-		true
-	}
+		{
+			_s("Upscale videos"),
+			_s("Upscale videos to double their size"),
+			"enable_video_upscale",
+			true
+		}
 	},
+	
+	// SCI16 games: use RGB renderer instead of indexed
+	{
+		GAMEOPTION_RGB_RENDERING,
+		{
+			_s("Use RGB rendering"),
+			_s("Use RGB rendering to improve screen transitions"),
+			"rgb_rendering",
+			false
+		}
+	},
+	
+	// SCI16 games: use custom per-resource palettes to improve visuals
+	{
+		GAMEOPTION_PALETTE_MODS,
+		{
+			_s("Use per-resource modified palettes"),
+			_s("Use custom per-resource palettes to improve visuals"),
+			"palette_mods",
+			false
+		}
+	},
+
 	AD_EXTRA_GUI_OPTIONS_TERMINATOR
 };
 
@@ -467,7 +490,7 @@ ADDetectedGame SciMetaEngineDetection::fallbackDetect(const FileMap &allFiles, c
 		} else {
 			static bool warn = true;
 			if (warn) {
-				warning("Engine plugin for Sci not present. Fallback detection is disabled.");
+				warning("Engine plugin for SCI not present. Fallback detection is disabled.");
 				warn = false;
 			}
 		}

@@ -33,6 +33,7 @@ namespace Ultima8 {
 class ActorAnimProcess;
 struct PathfindingState;
 class CombatProcess;
+class AttackProcess;
 
 class Actor : public Container {
 	friend class ActorAnimProcess;
@@ -82,13 +83,10 @@ public:
 	bool isInCombat() const {
 		return (_actorFlags & ACT_INCOMBAT) != 0;
 	}
-	void toggleInCombat() {
-		if (isInCombat()) clearInCombat();
-		else setInCombat();
-	}
 
-	CombatProcess *getCombatProcess();
-	virtual void setInCombat();
+	CombatProcess *getCombatProcess(); 	// in U8
+	AttackProcess *getAttackProcess();	// in Crusader
+	virtual void setInCombat(int activity);
 	virtual void clearInCombat();
 
 	uint16 getAlignment() const {
@@ -222,6 +220,10 @@ public:
 		_lastActivityNo = 0;
 	}
 
+	int32 getLastTimeWasHit() const {
+		return _lastTimeWasHit;
+	}
+
 	//! run the given animation
 	//! \return the PID of the ActorAnimProcess
 	uint16 doAnim(Animation::Sequence anim, Direction dir, unsigned int steps = 0);
@@ -272,7 +274,14 @@ public:
 		return _activeWeapon;
 	}
 
+	uint16 getCombatTactic() const {
+		return _combatTactic;
+	}
+
 	bool activeWeaponIsSmall() const;
+
+	// A cru-specific behavior - mostly make "ugh" noises, or explode for some robots.
+	void tookHitCru();
 
 	ENABLE_RUNTIME_CLASSTYPE()
 
@@ -346,10 +355,12 @@ public:
 		ACT_DESCENDING     = 0x000004,
 		ACT_ANIMLOCK       = 0x000008,
 
+		ACT_KNEELING	   = 0x000100, // not the same bit used in Crusader, but use this because it's empty.
 		ACT_FIRSTSTEP      = 0x000400, // flags from npcdata byte 0x2F
 		ACT_INCOMBAT       = 0x000800,
 		ACT_DEAD           = 0x001000,
-		ACT_SURRENDERED    = 0x002000, // not the same bit as used in Crusader, but we use this because it's empty.
+		ACT_SURRENDERED    = 0x002000, // not the same bit used in Crusader, but use this because it's empty.
+		ACT_WEAPONREADY	   = 0x004000, // not the same bit used in Crusader, but use this because it's empty.
 		ACT_COMBATRUN      = 0x008000,
 
 		ACT_AIRWALK        = 0x010000, // flags from npcdata byte 0x30
@@ -400,6 +411,9 @@ protected:
 	//! Active weapon item (only used in Crusader)
 	uint16 _activeWeapon;
 
+	//! Kernel timer last time NPC was hit (only used in Crusader)
+	int32 _lastTimeWasHit;
+
 	//! starts an activity (Ultima 8 version)
 	//! \return processID of process handling the activity or zero
 	uint16 setActivityU8(int activity);
@@ -413,6 +427,9 @@ protected:
 
 	void receiveHitU8(uint16 other, Direction dir, int damage, uint16 type);
 	void receiveHitCru(uint16 other, Direction dir, int damage, uint16 type);
+
+	void setInCombatU8();
+	void setInCombatCru(int activity);
 };
 
 } // End of namespace Ultima8

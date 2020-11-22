@@ -45,8 +45,6 @@
 #include "common/config-manager.h"
 #include "common/error.h"
 #include "common/textconsole.h"
-#include "common/translation.h"
-#include "common/encoding.h"
 #include "engines/engine.h"
 
 #include "backends/platform/android/android.h"
@@ -87,10 +85,12 @@ jmethodID JNI::_MID_setWindowCaption = 0;
 jmethodID JNI::_MID_showVirtualKeyboard = 0;
 jmethodID JNI::_MID_showKeyboardControl = 0;
 jmethodID JNI::_MID_getSysArchives = 0;
-jmethodID JNI::_MID_convertEncoding = 0;
 jmethodID JNI::_MID_getAllStorageLocations = 0;
 jmethodID JNI::_MID_initSurface = 0;
 jmethodID JNI::_MID_deinitSurface = 0;
+jmethodID JNI::_MID_createDirectoryWithSAF = 0;
+jmethodID JNI::_MID_createFileWithSAF = 0;
+jmethodID JNI::_MID_closeFileWithSAF = 0;
 
 jmethodID JNI::_MID_EGL10_eglSwapBuffers = 0;
 
@@ -134,7 +134,11 @@ jint JNI::onLoad(JavaVM *vm) {
 	if (_vm->GetEnv((void **)&env, JNI_VERSION_1_2))
 		return JNI_ERR;
 
+#ifdef BACKEND_ANDROID3D
+	jclass cls = env->FindClass("org/residualvm/residualvm/ResidualVM");
+#else
 	jclass cls = env->FindClass("org/scummvm/scummvm/ScummVM");
+#endif
 	if (cls == 0)
 		return JNI_ERR;
 
@@ -230,7 +234,7 @@ void JNI::displayMessageOnOSD(const Common::U32String &msg) {
 	// called from common/osd_message_queue, method: OSDMessageQueue::pollEvent()
 	JNIEnv *env = JNI::getEnv();
 
-	jstring java_msg = convertToJString(env, msg.encode(), "UTF-8");
+	jstring java_msg = convertToJString(env, msg);
 	if (java_msg == nullptr) {
 		// Show a placeholder indicative of the translation error instead of silent failing
 		java_msg = env->NewStringUTF("?");
@@ -297,15 +301,15 @@ Common::U32String JNI::getTextFromClipboard() {
 		return Common::U32String();
 	}
 
-	Common::String text = convertFromJString(env, javaText, "UTF-8");
+	Common::U32String text = convertFromJString(env, javaText);
 	env->DeleteLocalRef(javaText);
 
-	return text.decode();
+	return text;
 }
 
 bool JNI::setTextInClipboard(const Common::U32String &text) {
 	JNIEnv *env = JNI::getEnv();
-	jstring javaText = convertToJString(env, text.encode(), "UTF-8");
+	jstring javaText = convertToJString(env, text);
 
 	bool success = env->CallBooleanMethod(_jobj, _MID_setTextInClipboard, javaText);
 
@@ -336,9 +340,9 @@ bool JNI::isConnectionLimited() {
 	return limited;
 }
 
-void JNI::setWindowCaption(const Common::String &caption) {
+void JNI::setWindowCaption(const Common::U32String &caption) {
 	JNIEnv *env = JNI::getEnv();
-	jstring java_caption = convertToJString(env, caption, "ISO-8859-1");
+	jstring java_caption = convertToJString(env, caption);
 
 	env->CallVoidMethod(_jobj, _MID_setWindowCaption, java_caption);
 
@@ -420,36 +424,6 @@ void JNI::addSysArchivesToSearchSet(Common::SearchSet &s, int priority) {
 	// However, we keep android APK's "assets" as a fall back, in case something went wrong with the extraction process
 	//          and since we had the code anyway
 	s.add("ASSET", _asset_archive, priority - 1, false);
-}
-
-char *JNI::convertEncoding(const char *to, const char *from, const char *string, size_t length) {
-	JNIEnv *env = JNI::getEnv();
-
-	jstring javaTo = env->NewStringUTF(to);
-	jstring javaFrom = env->NewStringUTF(from);
-	jbyteArray javaString = env->NewByteArray(length);
-	env->SetByteArrayRegion(javaString, 0, length, reinterpret_cast<const jbyte*>(string));
-
-	jbyteArray javaOut = (jbyteArray)env->CallObjectMethod(_jobj, _MID_convertEncoding, javaTo, javaFrom, javaString);
-
-	if (!javaOut || env->ExceptionCheck()) {
-		LOGE("Failed to convert text from %s to %s", from, to);
-
-		env->ExceptionDescribe();
-		env->ExceptionClear();
-
-		return nullptr;
-	}
-
-	int outLength = env->GetArrayLength(javaOut);
-	char *buf = (char *)malloc(outLength + 1);
-	if (!buf)
-		return nullptr;
-
-	env->GetByteArrayRegion(javaOut, 0, outLength, reinterpret_cast<jbyte *>(buf));
-	buf[outLength] = 0;
-
-	return buf;
 }
 
 bool JNI::initSurface() {
@@ -580,9 +554,11 @@ void JNI::create(JNIEnv *env, jobject self, jobject asset_manager,
 	FIND_METHOD(, showKeyboardControl, "(Z)V");
 	FIND_METHOD(, getSysArchives, "()[Ljava/lang/String;");
 	FIND_METHOD(, getAllStorageLocations, "()[Ljava/lang/String;");
-	FIND_METHOD(, convertEncoding, "(Ljava/lang/String;Ljava/lang/String;[B)[B");
 	FIND_METHOD(, initSurface, "()Ljavax/microedition/khronos/egl/EGLSurface;");
 	FIND_METHOD(, deinitSurface, "()V");
+	FIND_METHOD(, createDirectoryWithSAF, "(Ljava/lang/String;)Z");
+	FIND_METHOD(, createFileWithSAF, "(Ljava/lang/String;)Ljava/lang/String;");
+	FIND_METHOD(, closeFileWithSAF, "(Ljava/lang/String;)V");
 
 	_jobj_egl = env->NewGlobalRef(egl);
 	_jobj_egl_display = env->NewGlobalRef(egl_display);
@@ -726,10 +702,12 @@ void JNI::setPause(JNIEnv *env, jobject self, jboolean value) {
 		else
 			JNI::_pauseToken.clear();
 
-		/*if (value &&
+#ifdef BACKEND_ANDROID3D
+		if (value &&
 				g_engine->hasFeature(Engine::kSupportsSavingDuringRuntime) &&
 				g_engine->canSaveGameStateCurrently())
-			g_engine->saveGameState(0, "Android parachute");*/
+			g_engine->saveGameState(0, "Android parachute");
+#endif
 	}
 
 	pause = value;
@@ -741,29 +719,21 @@ void JNI::setPause(JNIEnv *env, jobject self, jboolean value) {
 	}
 }
 
-jstring JNI::convertToJString(JNIEnv *env, const Common::String &str, const Common::String &from) {
-	Common::Encoding converter("UTF-8", from.c_str());
-	char *utf8Str = converter.convert(str.c_str(), converter.stringLength(str.c_str(), from));
-	if (utf8Str == nullptr)
-		return nullptr;
-
-	jstring jstr = env->NewStringUTF(utf8Str);
-	free(utf8Str);
-
+jstring JNI::convertToJString(JNIEnv *env, const Common::U32String &str) {
+	uint len = 0;
+	uint16 *u16str = str.encodeUTF16Native(&len);
+	jstring jstr = env->NewString(u16str, len);
+	delete[] u16str;
 	return jstr;
 }
 
-Common::String JNI::convertFromJString(JNIEnv *env, const jstring &jstr, const Common::String &to) {
-	const char *utf8Str = env->GetStringUTFChars(jstr, 0);
-	if (!utf8Str)
-		return Common::String();
-
-	Common::Encoding converter(to.c_str(), "UTF-8");
-	char *asciiStr = converter.convert(utf8Str, env->GetStringUTFLength(jstr));
-	env->ReleaseStringUTFChars(jstr, utf8Str);
-
-	Common::String str(asciiStr);
-	free(asciiStr);
+Common::U32String JNI::convertFromJString(JNIEnv *env, const jstring &jstr) {
+	const uint16 *utf16Str = env->GetStringChars(jstr, 0);
+	uint jcount = env->GetStringLength(jstr);
+	if (!utf16Str)
+		return Common::U32String();
+	Common::U32String str = Common::U32String::decodeUTF16Native(utf16Str, jcount);
+	env->ReleaseStringChars(jstr, utf16Str);
 
 	return str;
 }
@@ -799,6 +769,63 @@ Common::Array<Common::String> JNI::getAllStorageLocations() {
 	}
 
 	return *res;
+}
+
+bool JNI::createDirectoryWithSAF(const Common::String &dirPath) {
+	JNIEnv *env = JNI::getEnv();
+	jstring javaDirPath = env->NewStringUTF(dirPath.c_str());
+
+	bool created = env->CallBooleanMethod(_jobj, _MID_createDirectoryWithSAF, javaDirPath);
+
+	if (env->ExceptionCheck()) {
+		LOGE("JNI - Failed to create directory with SAF enhanced method");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+		created = false;
+	}
+
+	return created;
+
+}
+
+Common::U32String JNI::createFileWithSAF(const Common::String &filePath) {
+	JNIEnv *env = JNI::getEnv();
+	jstring javaFilePath = env->NewStringUTF(filePath.c_str());
+
+	jstring hackyFilenameJSTR = (jstring)env->CallObjectMethod(_jobj, _MID_createFileWithSAF, javaFilePath);
+
+
+	if (env->ExceptionCheck()) {
+		LOGE("JNI - Failed to create file with SAF enhanced method");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+		hackyFilenameJSTR = env->NewStringUTF("");
+	}
+
+	Common::U32String hackyFilenameStr = convertFromJString(env, hackyFilenameJSTR);
+
+	//LOGD("JNI - _MID_createFileWithSAF returned %s", hackyFilenameStr.c_str());
+	env->DeleteLocalRef(hackyFilenameJSTR);
+
+	return hackyFilenameStr;
+
+}
+
+void JNI::closeFileWithSAF(const Common::String &hackyFilename) {
+	JNIEnv *env = JNI::getEnv();
+	jstring javaHackyFilename = env->NewStringUTF(hackyFilename.c_str());
+
+	env->CallVoidMethod(_jobj, _MID_closeFileWithSAF, javaHackyFilename);
+
+	if (env->ExceptionCheck()) {
+		LOGE("JNI - Failed to close file with SAF enhanced method");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+	}
+
 }
 
 

@@ -31,7 +31,11 @@
 namespace Glk {
 namespace Comprehend {
 
-#define IMAGEF_NO_FLOODFILL (1 << 1)
+enum ImageFlag {
+	IMAGEF_REVERSE = 1 << 0,
+	IMAGEF_NO_PAINTING = 1 << 1,
+	IMAGEF_NO_FILL = IMAGEF_REVERSE | IMAGEF_NO_PAINTING
+};
 
 enum {
 	LOCATIONS_OFFSET = 0,
@@ -59,7 +63,7 @@ class Pics : public Common::Archive {
 		uint16 _textY;
 
 		ImageContext(DrawSurface *drawSurface, Graphics::Font *font, uint flags) :
-			_drawSurface(drawSurface), _font(font), _drawFlags(0),
+			_drawSurface(drawSurface), _font(font), _drawFlags(flags),
 			_x(0), _y(0), _penColor(G_COLOR_BLACK), _fillColor(G_COLOR_BLACK),
 			_shape(SHAPE_CIRCLE_LARGE), _textX(0), _textY(0) {
 		}

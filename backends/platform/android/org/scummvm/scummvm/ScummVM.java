@@ -10,7 +10,6 @@ import android.os.Build;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 
@@ -25,6 +24,7 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 	final protected static String LOG_TAG = "ScummVM";
 	final private AssetManager _asset_manager;
 	final private Object _sem_surface;
+	final private MyScummVMDestroyedCallback _svm_destroyed_callback;
 
 	private EGL10 _egl;
 	private EGLDisplay _egl_display = EGL10.EGL_NO_DISPLAY;
@@ -67,14 +67,16 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 	abstract protected void showVirtualKeyboard(boolean enable);
 	abstract protected void showKeyboardControl(boolean enable);
 	abstract protected String[] getSysArchives();
-	abstract protected byte[] convertEncoding(String to, String from, byte[] string) throws UnsupportedEncodingException;
 	abstract protected String[] getAllStorageLocations();
 	abstract protected String[] getAllStorageLocationsNoPermissionRequest();
+	abstract protected boolean createDirectoryWithSAF(String dirPath);
+	abstract protected String createFileWithSAF(String filePath);
+	abstract protected void closeFileWithSAF(String hackyFilename);
 
-	public ScummVM(AssetManager asset_manager, SurfaceHolder holder) {
+	public ScummVM(AssetManager asset_manager, SurfaceHolder holder, final MyScummVMDestroyedCallback scummVMDestroyedCallback) {
 		_asset_manager = asset_manager;
 		_sem_surface = new Object();
-
+		_svm_destroyed_callback = scummVMDestroyedCallback;
 		holder.addCallback(this);
 	}
 
@@ -153,8 +155,11 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 		deinitAudio();
 
 		destroy();
-		// On exit, tear everything down for a fresh restart next time.
-		System.exit(res);
+
+		// Don't exit force-ably here!
+		if (_svm_destroyed_callback != null) {
+			_svm_destroyed_callback.handle(res);
+		}
 	}
 
 	private void initEGL() throws Exception {

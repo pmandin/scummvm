@@ -41,7 +41,8 @@ static const TextDataInfo kTextDataDefaults[] = {
 	{ kTextDataButton,			"text_button" },
 	{ kTextDataNormalFont,		"text_normal" },
 	{ kTextDataTooltip,			"tooltip_normal" },
-	{ kTextDataConsole,			"console" }
+	{ kTextDataConsole,			"console" },
+	{ kTextDataExtraLang,		"extra_lang" }
 };
 
 
@@ -221,6 +222,9 @@ bool ThemeParser::parserCallback_language(ParserNode *node) {
 	} else if (getParentNode(node)->values.contains("scalable_file")) {
 		scalableFile = getParentNode(node)->values["scalable_file"];
 	}
+
+
+	_theme->storeFontNames(textDataId, node->values["id"], file, scalableFile, pointsize);
 
 	if (!_theme->addFont(textDataId, node->values["id"], file, scalableFile, pointsize))
 		return parserError("Error loading localized Font in theme engine.");

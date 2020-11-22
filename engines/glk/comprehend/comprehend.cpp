@@ -32,7 +32,6 @@
 #include "glk/comprehend/pics.h"
 #include "glk/quetzal.h"
 #include "common/config-manager.h"
-#include "common/translation.h"
 #include "common/ustr.h"
 #include "engines/util.h"
 
@@ -139,7 +138,7 @@ void Comprehend::print(const Common::U32String fmt, ...) {
 	va_end(argp);
 
 	glk_put_string_stream_uni(glk_window_get_stream(_bottomWindow),
-	                          outputMsg.c_str());
+	                          outputMsg.u32_str());
 }
 
 void Comprehend::readLine(char *buffer, size_t maxLen) {
@@ -183,6 +182,15 @@ Common::Error Comprehend::readSaveData(Common::SeekableReadStream *rs) {
 	_game->synchronizeSave(s);
 
 	_game->_updateFlags = UPDATE_ALL;
+
+	if (isInputLineActive()) {
+		// Restored game using GMM, so update grpahics and print room description
+		g_comprehend->print("\n");
+		_game->update();
+
+		g_comprehend->print("> ");
+	}
+
 	return Common::kNoError;
 }
 
@@ -201,11 +209,16 @@ bool Comprehend::loadLauncherSavegameIfNeeded() {
 	return false;
 }
 
-
 void Comprehend::drawPicture(uint pictureNum) {
-	if (_topWindow)
+	if (_topWindow) {
+		// Clear the picture cache before each drawing in OO-Topos. Wearing the goggles
+		// can producing different versions of the same scene, so we can't cache it
+		if (_gameDescription._gameId == "ootopos")
+			_pictures->clear();
+
 		glk_image_draw_scaled(_topWindow, pictureNum,
 			20 * SCALE_FACTOR, 0, G_RENDER_WIDTH * SCALE_FACTOR, G_RENDER_HEIGHT * SCALE_FACTOR);
+	}
 }
 
 void Comprehend::drawLocationPicture(int pictureNum, bool clearBg) {
@@ -239,6 +252,10 @@ void Comprehend::showGraphics() {
 			160 * SCALE_FACTOR, wintype_Graphics, 2);
 		_graphicsEnabled = true;
 	}
+}
+
+bool Comprehend::isInputLineActive() const {
+	return _bottomWindow->_lineRequest || _bottomWindow->_lineRequestUni;
 }
 
 } // namespace Comprehend
