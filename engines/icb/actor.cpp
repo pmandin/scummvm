@@ -35,7 +35,7 @@ namespace ICB {
 
 // return 0 if on screen
 // return 1 if off screen
-int QuickActorCull(psxCamera *camera, VECTOR *pos, SVECTOR *orient) {
+int32 QuickActorCull(psxCamera *camera, VECTOR *pos, SVECTOR *orient) {
 	MATRIX lw, ls;
 
 	// Set the focal length in the GTE
@@ -99,7 +99,7 @@ int QuickActorCull(psxCamera *camera, VECTOR *pos, SVECTOR *orient) {
 	SVECTOR *scrn = bboxScrn;
 	int32 z0;
 	int32 p, flag;
-	int i;
+	int32 i;
 
 	// Set the local-screen matrix in the GTE
 	gte_SetRotMatrix(&ls);
@@ -107,7 +107,7 @@ int QuickActorCull(psxCamera *camera, VECTOR *pos, SVECTOR *orient) {
 
 	for (i = 0; i < 8; i++, local++, scrn++) {
 		gte_RotTransPers(local, (int32 *)&(scrn->vx), &p, &flag, &z0);
-		scrn->vz = (short)z0;
+		scrn->vz = (int16)z0;
 	}
 
 	// Find the minimum and maximum screen positions (plus z)

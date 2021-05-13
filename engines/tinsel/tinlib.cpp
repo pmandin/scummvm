@@ -152,8 +152,8 @@ enum MASTER_LIB_CODES {
 	THISOBJECT, THISTAG, TIMER, TOPIC, TOPPLAY, TOPWINDOW, TRANSLUCENTINDEX,
 	TRYPLAYSAMPLE, UNDIMMUSIC, UNHOOKSCENE, UNTAGACTOR, VIBRATE, WAITFRAME, WAITKEY,
 	WAITSCROLL, WAITTIME, WALK, WALKED, WALKEDPOLY, WALKEDTAG, WALKINGACTOR, WALKPOLY,
-	WALKTAG, WALKXPOS, WALKYPOS, WHICHCD, WHICHINVENTORY, ZZZZZZ,
-	HIGHEST_LIBCODE
+	WALKTAG, WALKXPOS, WALKYPOS, WHICHCD, WHICHINVENTORY, ZZZZZZ, DEC3D, DECINVMAIN,
+	ADDNOTEBOOK, ADDINV3, ADDCONV, SET3DTEXTURE, FADEMUSIC, VOICEOVER, HIGHEST_LIBCODE
 };
 
 static const MASTER_LIB_CODES DW1DEMO_CODES[] = {
@@ -331,7 +331,7 @@ void ResetVarsTinlib() {
 }
 
 /**
- * For Scroll() and Offset(), work out top left for a
+ * For ScrollScreen() and Offset(), work out top left for a
  * given screen position.
  */
 static void DecodeExtreme(EXTREME extreme, int *px, int *py) {
@@ -884,9 +884,9 @@ static void ConvTopic(int icon) {
 }
 
 /**
- * Cursor(on/off)
+ * ToggleCursor(on/off)
  */
-void Cursor(int onoff) {
+void ToggleCursor(int onoff) {
 	if (onoff) {
 		// Re-instate cursor
 		_vm->_cursor->UnHideCursor();
@@ -1537,12 +1537,12 @@ static void Play(CORO_PARAM, SCNHANDLE hFilm, int x, int y, int compit, int acto
 
 	if (compit == 1) {
 		// Play to completion before returning
-		CORO_INVOKE_ARGS(PlayFilmc, (CORO_SUBCTX, hFilm, x, y, actorid, splay, sfact, escOn, myEscape, bTop));
+		CORO_INVOKE_ARGS(PlayFilmc, (CORO_SUBCTX, hFilm, x, y, actorid, splay, sfact, escOn, myEscape, bTop, nullptr));
 	} else if (compit == 2) {
 		error("play(): compit == 2 - please advise John");
 	} else {
 		// Kick off the play and return.
-		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, x, y, actorid, splay, sfact, escOn, myEscape, bTop));
+		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, x, y, actorid, splay, sfact, escOn, myEscape, bTop, nullptr));
 	}
 	CORO_END_CODE;
 }
@@ -1550,8 +1550,9 @@ static void Play(CORO_PARAM, SCNHANDLE hFilm, int x, int y, int compit, int acto
 /**
  * Play a film
  */
-static void Play(CORO_PARAM, SCNHANDLE hFilm, int x, int y, bool bComplete, int myEscape,
-		bool bTop, TINSEL_EVENT event, HPOLYGON hPoly, int taggedActor) {
+static void Play(CORO_PARAM, SCNHANDLE hFilm, int x, int y, int compit, int myEscape, bool bTop, TINSEL_EVENT event, HPOLYGON hPoly, int taggedActor) {
+	OBJECT** playfield = nullptr;
+
 	CORO_BEGIN_CONTEXT;
 	CORO_END_CONTEXT(_ctx);
 
@@ -1563,6 +1564,10 @@ static void Play(CORO_PARAM, SCNHANDLE hFilm, int x, int y, bool bComplete, int 
 	if (g_bEscapedCdPlay) {
 		g_bEscapedCdPlay = false;
 		return;
+	}
+
+	if (TinselV3) {
+		CORO_INVOKE_0(_vm->_bg->WaitForBG);
 	}
 
 	if (event == TALKING) {
@@ -1586,12 +1591,25 @@ static void Play(CORO_PARAM, SCNHANDLE hFilm, int x, int y, bool bComplete, int 
 		_vm->_actor->SetActorTalkFilm(actor, hFilm);
 	}
 
+	bool bComplete;
+
+	bComplete = compit;
+
+	if (TinselV3) {
+		bComplete = compit & 0x20;
+		if (bTop) {
+			playfield = _vm->_bg->GetPlayfieldList(FIELD_STATUS);
+		} else {
+			playfield = _vm->_bg->GetPlayfieldList(compit & 0x0F);
+		}
+	}
+
 	if (bComplete) {
 		// Play to completion before returning
-		CORO_INVOKE_ARGS(PlayFilmc, (CORO_SUBCTX, hFilm, x, y, 0, false, false, myEscape != 0, myEscape, bTop));
+		CORO_INVOKE_ARGS(PlayFilmc, (CORO_SUBCTX, hFilm, x, y, 0, false, false, myEscape != 0, myEscape, bTop, playfield));
 	} else {
 		// Kick off the play and return.
-		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, x, y, myEscape, bTop));
+		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, x, y, myEscape, bTop, playfield));
 	}
 
 	CORO_END_CODE;
@@ -1658,9 +1676,47 @@ static void PlayMovie(CORO_PARAM, SCNHANDLE hFileStem, int myEscape) {
 }
 
 /**
+ * Plays a movie
+ */
+static void t3PlayMovie(CORO_PARAM, SCNHANDLE hFileStem, int myEscape) {
+	CORO_BEGIN_CONTEXT;
+		int i;
+		bool hadControl;
+	CORO_END_CONTEXT(_ctx);
+
+	CORO_BEGIN_CODE(_ctx);
+
+	if (myEscape && myEscape != GetEscEvents())
+		return;
+
+	_ctx->hadControl = GetControl();
+
+	while (_vm->_bmv->MoviePlaying()) {
+		CORO_SLEEP(1);
+	}
+
+	// Play the movie
+	CORO_INVOKE_2(_vm->_bmv->PlayBMV, hFileStem, myEscape);
+
+	if (_ctx->hadControl) {
+		ControlOn();
+	}
+
+	// Change scene
+
+	CORO_END_CODE;
+}
+
+
+/**
  * Play some music
  */
 static void PlayMusic(int tune) {
+	_vm->_pcmMusic->startPlay(tune);
+}
+
+static void FadeMusic(int tune, int fadeParams) {
+	warning("TODO: Implement fading: %08x", fadeParams);
 	_vm->_pcmMusic->startPlay(tune);
 }
 
@@ -2514,7 +2570,7 @@ static int ScanIcon() {
 /**
  * Scroll the screen to target co-ordinates.
  */
-static void Scroll(CORO_PARAM, EXTREME extreme, int xp, int yp, int xIter, int yIter, bool bComp, bool escOn, int myEscape) {
+static void ScrollScreen(CORO_PARAM, EXTREME extreme, int xp, int yp, int xIter, int yIter, bool bComp, bool escOn, int myEscape) {
 	CORO_BEGIN_CONTEXT;
 		int	thisScroll;
 		int x, y;
@@ -2692,6 +2748,20 @@ static void SetPalette(SCNHANDLE hPal, bool escOn, int myEscape) {
 		return;
 
 	_vm->_bg->ChangePalette(hPal);
+}
+
+/**
+ * Set system reel
+ */
+static void SetSystemReel(int index, SCNHANDLE reel) {
+	switch (index) {
+		case 11:
+			DecCursor(reel);
+			break;
+		default:
+			warning("SetSystemReel(%d, %08X), STUBBED", index, reel);
+			break;
+	}
 }
 
 /**
@@ -2915,7 +2985,7 @@ void Stand(CORO_PARAM, int actor, int x, int y, SCNHANDLE hFilm) {
 		assert(hFilm != 0); // Trying to play NULL film
 
 		// Kick off the play and return.
-		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, x, y, actor, false, 0, false, 0, false));
+		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, x, y, actor, false, 0, false, 0, false, nullptr));
 	}
 
 	CORO_END_CODE;
@@ -3144,7 +3214,7 @@ static void FinishTalkingReel(CORO_PARAM, PMOVER pMover, int actor) {
 		AlterMover(pMover, 0, AR_POPREEL);
 	} else {
 		_vm->_actor->SetActorTalking(actor, false);
-		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, _vm->_actor->GetActorPlayFilm(actor), -1, -1, 0, false, 0, false, 0, false));
+		CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, _vm->_actor->GetActorPlayFilm(actor), -1, -1, 0, false, 0, false, 0, false, _vm->_bg->GetPlayfieldList(FIELD_WORLD)));
 	}
 
 	CORO_END_CODE;
@@ -3271,7 +3341,7 @@ static void TalkOrSay(CORO_PARAM, SPEECH_TYPE speechType, SCNHANDLE hText, int x
 		} else {
 			_vm->_actor->SetActorTalking(_ctx->actor, true);
 			_vm->_actor->SetActorTalkFilm(_ctx->actor, hFilm);
-			CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, -1, -1, 0, false, 0, escOn, myEscape, false));
+			CORO_INVOKE_ARGS(PlayFilm, (CORO_SUBCTX, hFilm, -1, -1, 0, false, 0, escOn, myEscape, false, _vm->_bg->GetPlayfieldList(FIELD_WORLD)));
 		}
 		_ctx->bTalkReel = true;
 		CORO_SLEEP(1);		// Allow the play to come in
@@ -4167,6 +4237,295 @@ int WhichInventory() {
 }
 
 
+struct NoirMapping {
+	const char *name;
+	int libCode;
+	int numArgs;
+};
+
+NoirMapping translateNoirLibCode(int libCode, int32 *pp) {
+	// This function allows us to both log the called library functions, as well
+	// as to stub the ones we haven't yet implemented. Eventually this might
+	// get rolled up into a lookup table similar to DW1 and DW2, but for now
+	// this is convenient for debug.
+	NoirMapping mapping;
+	switch (libCode) {
+	case 3:
+		mapping = NoirMapping{"ACTORPRIORITY", ACTORPRIORITY, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 5:
+		mapping = NoirMapping{"ACTORRGB", ACTORRGB, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 8:
+		mapping = NoirMapping{"ADDNOTEBOOK", ADDNOTEBOOK, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 9:
+		mapping = NoirMapping{"ADDCONV", ADDCONV, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 12:
+		mapping = NoirMapping{"ADDINV1", ADDINV1, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 16:
+		mapping = NoirMapping{"ADDINV3", ADDINV3, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%08X)", mapping.name, pp[0]);
+		break;
+	case 18:
+		mapping = NoirMapping{"BACKGROUND", BACKGROUND, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 37:
+		mapping = NoirMapping{"CONTROL", CONTROL, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%08X)", mapping.name, pp[0]);
+		break;
+	case 26:
+		mapping = NoirMapping{"CALLTAG", CALLTAG, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 28:
+		mapping = NoirMapping{"CDCHANGESCENE", CDCHANGESCENE, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 41:
+		mapping = NoirMapping{"CURSORXPOS", CURSORXPOS, 0};
+		debug(7, "%s()", mapping.name);
+		break;
+	case 42:
+		mapping = NoirMapping{"CURSORYPOS", CURSORYPOS, 0};
+		debug(7, "%s()", mapping.name);
+		break;
+	case 43:
+		mapping = NoirMapping{"DECINVMAIN", DECINVMAIN, 8};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], pp[6], pp[7]);
+		break;
+	case 44: // Changed in Noir
+		mapping = NoirMapping{"DECINV2", DECINV2, 8};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], pp[6], pp[7]);
+		break;
+	case 45:
+		mapping = NoirMapping{"DECLARELANGUAGE", DECLARELANGUAGE, 3};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2]);
+		break;
+	case 46:
+		mapping = NoirMapping{"DECLEAD", DECLEAD, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 47:
+		mapping = NoirMapping{"DEC3D", DEC3D, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 48:
+		mapping = NoirMapping{"DECTAGFONT", DECTAGFONT, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 49:
+		mapping = NoirMapping{"DECTALKFONT", DECTALKFONT, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 58:
+		mapping = NoirMapping{"ENDACTOR", ENDACTOR, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 61:
+		mapping = NoirMapping{"EVENT", EVENT, 0};
+		debug(7, "%s()", mapping.name);
+		break;
+	case 64:
+		mapping = NoirMapping{"FADEMUSIC", FADEMUSIC, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%08X, %d)", mapping.name, pp[0], pp[1]);
+		break;
+	case 74:
+		mapping = NoirMapping{"HAVE", HAVE, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 77:
+		mapping = NoirMapping{"HIDEACTOR", HIDEACTOR, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 83:
+		mapping = NoirMapping{"HIDETAG", HIDETAG, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 86:
+		mapping = NoirMapping{"OP86", ZZZZZZ, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 94:
+		mapping = NoirMapping{"KILLPROCESS", KILLPROCESS, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 96:
+		mapping = NoirMapping{"MOVECURSOR", MOVECURSOR, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, %d)", mapping.name, pp[0], pp[1]);
+		break;
+	case 99:
+		mapping = NoirMapping{"NEWSCENE", NEWSCENE, 3};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2]);
+		break;
+	case 110:
+		mapping = NoirMapping{"PLAY", PLAY, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 112:
+		mapping = NoirMapping{"PLAYMUSIC", PLAYMUSIC, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 113:
+		mapping = NoirMapping{"PLAYSAMPLE", PLAYSAMPLE, 4};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2], pp[3]);
+		break;
+	case 121:
+		mapping = NoirMapping{"POSTTAG", POSTTAG, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 124:
+		mapping = NoirMapping{"PRINTTAG", PRINTTAG, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 128:
+		mapping = NoirMapping{"RANDOM", RANDOM, 3};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, %d, %d)", mapping.name, pp[0], pp[1], pp[2]);
+		break;
+	case 151:
+		mapping = NoirMapping{"SETSYSTEMREEL", SETSYSTEMREEL, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 152:
+		mapping = NoirMapping{"SETSYSTEMSTRING", SETSYSTEMSTRING, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, %08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 153:
+		mapping = NoirMapping{"SETSYSTEMVAR", SETSYSTEMVAR, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, 0x%08X)", mapping.name, pp[0], pp[1]);
+		break;
+	case 156:
+		mapping = NoirMapping{"SHOWACTOR", SHOWACTOR, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 159:
+		mapping = NoirMapping{"SHOWMENU", SHOWMENU, 0};
+		debug(7, "%s()", mapping.name);
+		break;
+	case 163:
+		mapping = NoirMapping{"SHOWTAG", SHOWTAG, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 164:
+		mapping = NoirMapping{"STAND", STAND, 4};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2], pp[3]);
+		break;
+	case 167:
+		mapping = NoirMapping{"STARTPROCESS", STARTPROCESS, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 175:
+		mapping = NoirMapping{"SYSTEMVAR", SYSTEMVAR, 0};
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 183:
+		mapping = NoirMapping{"TALKVIA", TALKVIA, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d)", mapping.name, pp[0]);
+		break;
+	case 197:
+		mapping = NoirMapping{"WAITTIME", WAITTIME, 2};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(%d, %d)", mapping.name, pp[0], pp[1]);
+		break;
+	case 207:
+		mapping = NoirMapping{"WHICHCD", WHICHCD, 0};
+		debug(7, "%s()", mapping.name);
+		break;
+	case 208:
+		mapping = NoirMapping{"WHICHINVENTORY", WHICHINVENTORY, 0};
+		debug(7, "%s()", mapping.name);
+		break;
+	case 210: // STUBBED
+		mapping = NoirMapping{"OP210", ZZZZZZ, 8};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], pp[6], pp[7]);
+		break;
+	case 212: // STUBBED
+		mapping = NoirMapping{"OP212", ZZZZZZ, 8};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], pp[6], pp[7]);
+		break;
+	case 213: // STUBBED
+		mapping = NoirMapping{"OP213", ZZZZZZ, 8};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X)", mapping.name, pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], pp[6], pp[7]);
+		break;
+	case 214:
+		mapping = NoirMapping{"SET3DTEXTURE", SET3DTEXTURE, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 217:
+		mapping = NoirMapping{"VOICEOVER", VOICEOVER, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 225: // STUBBED
+		mapping = NoirMapping{"PLAYMOVIE", PLAYMOVIE, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	case 228: // STUBBED
+		mapping = NoirMapping{"OP228", ZZZZZZ, 1};
+		pp -= mapping.numArgs - 1;
+		debug(7, "%s(0x%08X)", mapping.name, pp[0]);
+		break;
+	default:
+		error("Unmapped libCode %d", libCode);
+	}
+
+	return mapping;
+}
+
+
 /**
  * Subtract one less that the number of parameters from pp
  * pp then points to the first parameter.
@@ -4185,6 +4544,14 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 	if (TinselV0) libCode = DW1DEMO_CODES[operand];
 	else if (!TinselV2) libCode = DW1_CODES[operand];
 	else if (TinselV2Demo) libCode = DW2DEMO_CODES[operand];
+	else if (TinselV3) {
+		NoirMapping mapping = translateNoirLibCode(operand, pp);
+		libCode = mapping.libCode;
+		if (libCode == ZZZZZZ) {
+			debug(7, "%08X CallLibraryRoutine op %d (escOn %d, myEscape %d)", pic->hCode, operand, pic->escOn, pic->myEscape);
+			return -mapping.numArgs;
+		}
+	}
 	else libCode = DW2_CODES[operand];
 
 	debug(7, "CallLibraryRoutine op %d (escOn %d, myEscape %d)", operand, pic->escOn, pic->myEscape);
@@ -4213,7 +4580,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -3;
 
 	case ACTORPRIORITY:
-		// DW2 only
+		// DW2 / Noir
 		pp -= 1;			// 2 parameters
 		ActorPriority(pp[0], pp[1]);
 		return -2;
@@ -4225,7 +4592,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case ACTORRGB:
-		// DW2 only
+		// Common to DW2 / Noir
 		pp -= 1;			// 2 parameters
 		ActorRGB(pp[0], pp[1]);
 		return -2;
@@ -4250,6 +4617,11 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		pp[0] = ActorPos(ACTORYPOS, pp[0]);
 		return 0;
 
+	case ADDCONV:
+		// Noir only
+		warning("TODO: Implement ADDCONV");
+		return -1;
+
 	case ADDHIGHLIGHT:
 		// DW2 only
 		// Command doesn't actually do anything
@@ -4262,13 +4634,23 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case ADDINV1:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		AddInv(INV_1, pp[0]);
 		return -1;
 
 	case ADDINV2:
 		// Common to both DW1 & DW2
 		AddInv(INV_2, pp[0]);
+		return -1;
+
+	case ADDINV3:
+		// Noir only
+		warning("TODO: Implement ADDINV3");
+		return -1;
+
+	case ADDNOTEBOOK:
+		// Noir Only
+		warning("TODO: Implement ADDNOTEBOOK");
 		return -1;
 
 	case ADDOPENINV:
@@ -4288,7 +4670,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -14;
 
 	case BACKGROUND:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		startBackground(coroParam, pp[0]);
 		return -1;
 
@@ -4357,7 +4739,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		error("CallScene isn't a real function");
 
 	case CALLTAG:
-		// DW2 only
+		// DW2 / Noir
 		pp -= 1;			// 2 parameters
 		if (*pResumeState == RES_1 && pic->resumeCode == RES_WAITING) {
 			bool result;
@@ -4388,7 +4770,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case CDCHANGESCENE:
-		// DW2 only
+		// DW2 / Noir
 		CdChangeScene(pp[0]);
 		return -1;
 
@@ -4423,7 +4805,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case CONTROL:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		Control(pp[0]);
 		return -1;
 
@@ -4439,22 +4821,27 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 
 	case CURSOR:
 		// DW2 only
-		Cursor(pp[0]);
+		ToggleCursor(pp[0]);
 		return -1;
 
 	case CURSORXPOS:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp[0] = CursorPos(CURSORXPOS);
 		return 0;
 
 	case CURSORYPOS:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp[0] = CursorPos(CURSORYPOS);
 		return 0;
 
 	case CUTSCENE:
 		// DW1 only
 		error("cutscene isn't a real function");
+
+	case DEC3D:
+		// Noir only
+		warning("TODO: Implement DEC3D");
+		return -3;
 
 	case DECCONVW:
 		// Common to both DW1 & DW2
@@ -4490,10 +4877,14 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -8;
 
 	case DECINV2:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp -= 7;			// 8 parameters
 		DecInv2(pp[0], pp[1], pp[2], pp[3],
 			 pp[4], pp[5], pp[6], pp[7]);
+		return -8;
+
+	case DECINVMAIN:
+		warning("TODO: Implement DECINVMAIN");
 		return -8;
 
 	case DECINVW:
@@ -4502,13 +4893,13 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case DECLARELANGUAGE:
-		// DW2 only
+		// Common to DW2 & Noir
 		pp -= 2;			// 3 parameters
 		DeclareLanguage(pp[0], pp[1], pp[2]);
 		return -3;
 
 	case DECLEAD:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		if (TinselV2) {
 			DecLead(pp[0]);
 			return -1;
@@ -4527,12 +4918,12 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -14;
 
 	case DECTAGFONT:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		_vm->_font->SetTagFontHandle(pp[0]);
 		return -1;
 
 	case DECTALKFONT:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		_vm->_font->SetTalkFontHandle(pp[0]);
 		return -1;
 
@@ -4583,7 +4974,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case ENDACTOR:
-		// DW2 only
+		// DW2 & Noir
 		EndActor(pp[0]);
 		return -1;
 
@@ -4594,8 +4985,8 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		error("Escape isn't a real function");
 
 	case EVENT:
-		// Common to both DW1 & DW2
-		if (TinselVersion == TINSEL_V2)
+		// Common to DW1 / DW2 / Noir
+		if (TinselVersion == TINSEL_V2 || TinselVersion == TINSEL_V3)
 			pp[0] = pic->event;
 		else
 			pp[0] = TINSEL1_EVENT_MAP[pic->event];
@@ -4615,6 +5006,12 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		// DW1 only
 		FadeMidi(coroParam, pp[0]);
 		return -1;
+
+	case FADEMUSIC:
+		// Noir only
+		pp -= 1;
+		FadeMusic(pp[0], pp[1]);
+		return -2;
 
 	case FADEOUT:
 		// DW1 only
@@ -4660,7 +5057,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case HAVE:
-		// DW2 only
+		// DW2 / Noir
 		pp[0] = Have(pp[0]);
 		return 0;			// using return value
 
@@ -4670,7 +5067,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case HIDEACTOR:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		if (!TinselV2)
 			HideActorFn(coroParam, pp[0]);
 		else if (*pResumeState == RES_1 && pic->resumeCode == RES_WAITING) {
@@ -4700,7 +5097,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case HIDEREFER:
-		// DW2 only
+		// DW2 / Noir
 		HideRefer(pp[0]);
 		return -1;
 
@@ -4792,7 +5189,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case KILLPROCESS:
-		// DW2 only
+		// DW2 / Noir
 		KillProcess(pp[0]);
 		return -1;
 
@@ -4806,7 +5203,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		error("LocalVar isn't a real function");
 
 	case MOVECURSOR:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp -= 1;			// 2 parameters
 		MoveCursor(pp[0], pp[1]);
 		return -2;
@@ -4824,7 +5221,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -3;
 
 	case NEWSCENE:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp -= 2;			// 3 parameters
 		if (*pResumeState == RES_2)
 			*pResumeState = RES_NOT;
@@ -4876,14 +5273,27 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case PLAY:
-		// Common to both DW1 & DW2
-		if (TinselV2) {
+		// Common to DW1 / DW2 / Noir
+		if (TinselV3) {
+			if (*pResumeState == RES_1 && _vm->_handle->IsCdPlayHandle(pp[0])) {
+				*pResumeState = RES_NOT;
+				if ((pp[0] & 0x10) != 0) {
+					return -4;
+				}
+				return -2;
+			} else if ((pp[0] & 0x10) != 0) {
+				Play(coroParam, pp[-1], pp[-3], pp[-2], pp[0], pic->myEscape, false, pic->event, pic->hPoly, pic->idActor);
+				return -4;
+			}
+			Play(coroParam, pp[-1], -1, -1, pp[0], pic->myEscape, false, pic->event, pic->hPoly, pic->idActor);
+			return -2;
+
+		} if (TinselV2) {
 			pp -= 3;			// 4 parameters
 			if (*pResumeState == RES_1 && _vm->_handle->IsCdPlayHandle(pp[0]))
 				*pResumeState = RES_NOT;
 			else {
-				Play(coroParam, pp[0], pp[1], pp[2], pp[3], pic->myEscape, false,
-						pic->event, pic->hPoly, pic->idActor);
+				Play(coroParam, pp[0], pp[1], pp[2], pp[3], pic->myEscape, false, pic->event, pic->hPoly, pic->idActor);
 			}
 			return -4;
 
@@ -4904,12 +5314,16 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -3;
 
 	case PLAYMOVIE:
-		// DW2 only
-		PlayMovie(coroParam, pp[0], pic->myEscape);
+		if (TinselV3) {
+			t3PlayMovie(coroParam, pp[0], pic->myEscape);
+		} else {
+			// DW2 only
+			PlayMovie(coroParam, pp[0], pic->myEscape);
+		}
 		return -1;
 
 	case PLAYMUSIC:
-		// DW2 only
+		// DW2 / Noir only
 		PlayMusic(pp[0]);
 		return -1;
 
@@ -4918,8 +5332,8 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		error("playrtf only applies to cdi");
 
 	case PLAYSAMPLE:
-		// Common to both DW1 & DW2
-		if (TinselV2) {
+		// Common to DW1 / DW2 / Noir
+		if (TinselV2 || TinselV3) {
 			pp -= 3;			// 4 parameters
 			PlaySample(coroParam, pp[0], pp[1], pp[2], pp[3], pic->myEscape);
 			return -4;
@@ -4964,7 +5378,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -2;
 
 	case POSTTAG:
-		// DW2 only
+		// DW2 / Noir
 		pp -= 1;			// 2 parameters
 		PostTag(coroParam, pp[0], (TINSEL_EVENT)pp[1], pic->hPoly, pic->myEscape);
 		return -2;
@@ -4999,8 +5413,8 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case PRINTTAG:
-		// Common to both DW1 & DW2
-		PrintTag(pic->hPoly, pp[0], TinselV2 ? pic->idActor : 0, false);
+		// Common to DW1 / DW2 / Noir
+		PrintTag(pic->hPoly, pp[0], TinselV2 ? pic->idActor : 0,  TinselV3 ? true : false);
 		return -1;
 
 	case QUITGAME:
@@ -5009,7 +5423,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case RANDOM:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp -= 2;			// 3 parameters
 		pp[0] = RandomFn(pp[0], pp[1], pp[2]);
 		return -2;		// One holds return value
@@ -5074,6 +5488,11 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		TalkOrSay(coroParam, IS_SAYAT, pp[3], pp[1], pp[2], 0, pp[0], pp[4], pic->escOn, pic->myEscape);
 		return -5;
 
+	case VOICEOVER:
+		// Noir only
+		TalkOrSay(coroParam, IS_SAY, pp[0], 0, 0, 0, SystemVar(SV_USER2), false, pic->escOn, pic->myEscape);
+		return -1;
+
 	case SCALINGREELS:
 		// Common to both DW1 & DW2
 		pp -= 6;			// 7 parameters
@@ -5099,11 +5518,11 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		// Common to both DW1 & DW2
 		if (TinselV2) {
 			pp -= 5;			// 6 parameters
-			Scroll(coroParam, (EXTREME)pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], pic->escOn, pic->myEscape);
+			ScrollScreen(coroParam, (EXTREME)pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], pic->escOn, pic->myEscape);
 			return -6;
 		} else {
 			pp -= 3;			// 4 parameters
-			Scroll(coroParam, EX_USEXY, pp[0], pp[1], pp[2], pp[2], pp[3], pic->escOn, pic->myEscape);
+			ScrollScreen(coroParam, EX_USEXY, pp[0], pp[1], pp[2], pp[2], pp[3], pic->escOn, pic->myEscape);
 			return -4;
 		}
 
@@ -5135,6 +5554,10 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		}
 		return -1;
 
+	case SET3DTEXTURE:
+		// Noir only
+		warning("TODO: Implement SET3DTEXTURE(0x%08X)", pp[0]);
+		return -1;
 
 	case SETACTOR:
 		// DW1 only
@@ -5180,14 +5603,24 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 			return -1;
 		}
 
+	case SETSYSTEMREEL:
+		// Noir only
+		if (TinselV3) {
+			pp -= 1;
+			SetSystemReel(pp[0], pp[1]);
+			return -2;
+		} else {
+			error("SETSYSTEMREEL is only used in Noir");
+		}
+
 	case SETSYSTEMSTRING:
-		// DW2 only
+		// DW2 & Noir
 		pp -= 1;				// 2 parameters
 		SetSystemString(pp[0], pp[1]);
 		return -2;
 
 	case SETSYSTEMVAR:
-		// DW1 only
+		// DW1 & Noir
 		pp -= 1;				// 2 parameters
 		SetSystemVar(pp[0], pp[1]);
 		return -2;
@@ -5209,7 +5642,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case SHOWACTOR:
-		// DW2 only
+		// DW2 & Noir
 		if (*pResumeState == RES_1 && pic->resumeCode == RES_WAITING) {
 			*pResumeState = RES_NOT;
 			FinishWaiting(coroParam, pic);
@@ -5232,7 +5665,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case SHOWMENU:
-		// DW2 only
+		// DW2 / Noir
 		ShowMenu();
 		return 0;
 
@@ -5260,7 +5693,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case SHOWTAG:
-		// DW2 only
+		// DW2 / Noir
 		if (*pResumeState == RES_1 && pic->resumeCode == RES_WAITING) {
 			*pResumeState = RES_NOT;
 			FinishWaiting(coroParam, pic);
@@ -5285,7 +5718,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -7;
 
 	case STAND:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp -= 3;			// 4 parameters
 		Stand(coroParam, pp[0], pp[1], pp[2], pp[3]);
 		return -4;
@@ -5301,7 +5734,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -1;
 
 	case STARTPROCESS:
-		// DW2 only
+		// DW2 / Noir
 		StartProcess(coroParam, pp[0]);
 		return -1;
 
@@ -5349,7 +5782,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -7;
 
 	case SYSTEMVAR:
-		// DW2 only
+		// DW2 / Noir
 		pp[0] = SystemVar(pp[0]);
 		return 0;
 
@@ -5413,7 +5846,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return -3;
 
 	case TALKVIA:
-		// DW2 only
+		// DW2 / Noir
 		TalkVia(pp[0]);
 		return -1;
 
@@ -5512,7 +5945,7 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case WAITTIME:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp -= 1;			// 2 parameters
 		WaitTime(coroParam, pp[0], pp[1], pic->escOn, pic->myEscape);
 		if (!coroParam && (pic->hCode == 0x3007540) && (pic->resumeState == RES_2))
@@ -5587,12 +6020,12 @@ int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONTEXT *pi
 		return 0;
 
 	case WHICHCD:
-		// DW2 only
+		// DW2 / Noir
 		pp[0] = WhichCd();
 		return 0;
 
 	case WHICHINVENTORY:
-		// Common to both DW1 & DW2
+		// Common to DW1 / DW2 / Noir
 		pp[0] = WhichInventory();
 		return 0;
 

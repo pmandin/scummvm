@@ -69,7 +69,7 @@ static uint32 computeCapacity(uint32 len) {
 
 TEMPLATE
 BASESTRING::BaseString(const BASESTRING &str)
-    : _size(str._size) {
+	: _size(str._size) {
 	if (str.isStorageIntern()) {
 		// String in internal storage: just copy it
 		memcpy(_storage, str._storage, _builtinCapacity * sizeof(value_type));
@@ -181,12 +181,18 @@ TEMPLATE
 void BASESTRING::incRefCount() const {
 	assert(!isStorageIntern());
 	if (_extern._refCount == nullptr) {
+#ifndef SCUMMVM_UTIL
+		lockMemoryPoolMutex();
+#endif
 		if (g_refCountPool == nullptr) {
 			g_refCountPool = new MemoryPool(sizeof(int));
 			assert(g_refCountPool);
 		}
 
 		_extern._refCount = (int *)g_refCountPool->allocChunk();
+#ifndef SCUMMVM_UTIL
+		unlockMemoryPoolMutex();
+#endif
 		*_extern._refCount = 2;
 	} else {
 		++(*_extern._refCount);
@@ -205,8 +211,14 @@ void BASESTRING::decRefCount(int *oldRefCount) {
 		// The ref count reached zero, so we free the string storage
 		// and the ref count storage.
 		if (oldRefCount) {
+#ifndef SCUMMVM_UTIL
+			lockMemoryPoolMutex();
+#endif
 			assert(g_refCountPool);
 			g_refCountPool->freeChunk(oldRefCount);
+#ifndef SCUMMVM_UTIL
+			unlockMemoryPoolMutex();
+#endif
 		}
 		// Coverity thinks that we always free memory, as it assumes
 		// (correctly) that there are cases when oldRefCount == 0
@@ -276,7 +288,7 @@ TEMPLATE bool BASESTRING::equalsC(const char *ptr) const {
 	uint i = 0;
 
 	for (; i < _size && *ptr; i++, ptr++) {
-		if (_str[i] != *ptr)
+		if (_str[i] != (T)*ptr)
 			return false;
 	}
 
@@ -477,7 +489,7 @@ TEMPLATE void BASESTRING::clear() {
 	_storage[0] = 0;
 }
 
-	
+
 TEMPLATE void BASESTRING::setChar(value_type c, uint32 p) {
 	assert(p < _size);
 
@@ -598,7 +610,7 @@ TEMPLATE uint64 BASESTRING::asUint64Ext() const {
 	uint64 result = 0;
 	uint64 base = 10;
 	uint32 skip = 0;
-	
+
 	if (_size >= 3 && _str[0] == '0' && _str[1] == 'x') {
 		base = 16;
 		skip = 2;

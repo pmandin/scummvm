@@ -5,7 +5,7 @@
 #
 ######################################################################
 
-TESTS        := $(srcdir)/test/common/*.h $(srcdir)/test/audio/*.h $(srcdir)/test/math/*.h
+TESTS        := $(srcdir)/test/common/*.h $(srcdir)/test/audio/*.h $(srcdir)/test/math/*.h $(srcdir)/test/image/*.h
 TEST_LIBS    :=
 
 ifdef POSIX
@@ -15,22 +15,19 @@ TEST_LIBS += test/null_osystem.o \
 	backends/fs/posix/posix-iostream.o \
 	backends/fs/abstract-fs.o \
 	backends/fs/stdiostream.o \
-	backends/modular-backend.o \
-	test/stubs.o
+	backends/modular-backend.o
 endif
 
 ifdef WIN32
 TEST_LIBS += test/null_osystem.o \
-	backends/fs/posix/posix-fs-factory.o \
-	backends/fs/posix/posix-fs.o \
-	backends/fs/posix/posix-iostream.o \
+	backends/fs/windows/windows-fs-factory.o \
+	backends/fs/windows/windows-fs.o \
 	backends/fs/abstract-fs.o \
 	backends/fs/stdiostream.o \
-	backends/modular-backend.o \
-	test/stubs.o
+	backends/modular-backend.o
 endif
 
-TEST_LIBS +=	audio/libaudio.a math/libmath.a common/libcommon.a
+TEST_LIBS +=	audio/libaudio.a math/libmath.a common/libcommon.a image/libimage.a graphics/libgraphics.a
 
 ifeq ($(ENABLE_WINTERMUTE), STATIC_PLUGIN)
 	TESTS += $(srcdir)/test/engines/wintermute/*.h
@@ -50,7 +47,6 @@ TEST_CXXFLAGS := $(filter-out -Wglobal-constructors,$(CXXFLAGS))
 
 ifdef WIN32
 TEST_LDFLAGS := $(filter-out -mwindows,$(TEST_LDFLAGS))
-TEST_LIBS += backends/fs/windows/windows-fs-factory.o backends/fs/windows/windows-fs.o
 endif
 
 ifdef N64
@@ -71,8 +67,8 @@ endif
 test: test/runner
 	./test/runner
 test/runner: test/runner.cpp $(TEST_LIBS) copy-dat
-	$(QUIET_CXX)$(CXX) $(TEST_CXXFLAGS) $(CPPFLAGS) $(TEST_CFLAGS) -o $@ test/runner.cpp $(TEST_LIBS) $(TEST_LDFLAGS)
-test/runner.cpp: $(TESTS)
+	+$(QUIET_CXX)$(LD) $(TEST_CXXFLAGS) $(CPPFLAGS) $(TEST_CFLAGS) -o $@ test/runner.cpp $(TEST_LIBS) $(TEST_LDFLAGS)
+test/runner.cpp: $(TESTS) $(srcdir)/test/module.mk
 	@mkdir -p test
 	$(srcdir)/test/cxxtest/cxxtestgen.py $(TEST_FLAGS) -o $@ $+
 
@@ -81,8 +77,10 @@ clean-test:
 	-$(RM) test/runner.cpp test/runner test/engine-data/encoding.dat
 	-rmdir test/engine-data
 
-copy-dat:
+test/engine-data/encoding.dat: $(srcdir)/dists/engine-data/encoding.dat
 	$(MKDIR) test/engine-data
 	$(CP) $(srcdir)/dists/engine-data/encoding.dat test/engine-data/encoding.dat
+
+copy-dat: test/engine-data/encoding.dat
 
 .PHONY: test clean-test copy-dat

@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/world/create_item_process.h"
 #include "ultima/ultima8/world/item_factory.h"
 #include "ultima/ultima8/world/item.h"
@@ -39,10 +38,10 @@ CreateItemProcess::CreateItemProcess()
 }
 
 CreateItemProcess::CreateItemProcess(uint32 shape, uint32 frame,
-                                     uint16 quality, uint16 flags,
-                                     uint16 npcnum, uint16 mapnum,
-                                     uint32 extendedflags,
-                                     int32 x, int32 y, int32 z)
+									 uint16 quality, uint16 flags,
+									 uint16 npcnum, uint16 mapnum,
+									 uint32 extendedflags,
+									 int32 x, int32 y, int32 z)
 	: _shape(shape), _frame(frame), _quality(quality), _flags(flags),
 	  _npcNum(npcnum), _mapNum(mapnum), _extendedFlags(extendedflags),
 	  _x(x), _y(y), _z(z) {

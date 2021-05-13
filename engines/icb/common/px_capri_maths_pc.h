@@ -28,8 +28,6 @@
 #ifndef ICB_PX_CAPRI_MATHS_PC_H
 #define ICB_PX_CAPRI_MATHS_PC_H
 
-#include "engines/icb/common/px_rccommon.h"
-
 #include "common/util.h"
 
 namespace ICB {
@@ -38,8 +36,8 @@ namespace ICB {
 
 // make our own equivalents
 typedef struct MATRIXPC {
-	int m[3][3]; /* 3x3 rotation matrix */
-	int pad;
+	int32 m[3][3]; /* 3x3 rotation matrix */
+	int32 pad;
 	int32 t[3]; /* transfer vector */
 	MATRIXPC() { pad = 0; }
 } MATRIXPC;
@@ -53,8 +51,8 @@ typedef struct VECTOR {
 
 /* short word type 3D vector */
 typedef struct SVECTORPC {
-	int vx, vy;
-	int vz, pad;
+	int32 vx, vy;
+	int32 vz, pad;
 	SVECTORPC() { pad = 0; }
 	bool operator==(const SVECTORPC &v) { return ((v.vx == vx) && (v.vy == vy) && (v.vz == vz)); }
 } SVECTORPC;
@@ -62,7 +60,7 @@ typedef struct SVECTORPC {
 /* short word type 3D vector */
 typedef struct CVECTOR {
 	uint8 r, g;
-	short b, pad;
+	int16 b, pad;
 	CVECTOR() { pad = 0; }
 	bool operator==(const CVECTOR &v) { return ((v.r == r) && (v.g == g) && (v.b == b)); }
 } CVECTOR;
@@ -70,12 +68,12 @@ typedef struct CVECTOR {
 #endif // #if (_PSX_ON_PC==0)
 
 //-=- Definitions -=-//
-const int ONE_PC_SCALE = 12;
-const int ONE_PC = 1 << ONE_PC_SCALE;
+const int32 ONE_PC_SCALE = 12;
+const int32 ONE_PC = 1 << ONE_PC_SCALE;
 const float myPI_PC = 3.141592654f;
-const int ZSCALE = 1;
+const int32 ZSCALE = 1;
 
-inline int myNINT_PC(float f) {
+inline int32 myNINT_PC(float f) {
 	if (f >= 0.0f)
 		return int(f + 0.5f);
 	else
@@ -107,13 +105,13 @@ inline int myNINT_PC(float f) {
 
 //------------------------------------------------------------------------
 
-extern MATRIXPC gterot_pc;
-extern MATRIXPC gtetrans_pc;
-extern MATRIXPC gtecolour_pc;
-extern MATRIXPC gtelight_pc;
-extern int gteback_pc[3];
+extern MATRIXPC *gterot_pc;
+extern MATRIXPC *gtetrans_pc;
+extern MATRIXPC *gtecolour_pc;
+extern MATRIXPC *gtelight_pc;
+extern int32 gteback_pc[3];
 extern int32 gtegeomscrn_pc;
-extern int gtescreenscaleshift_pc;
+extern int32 gtescreenscaleshift_pc;
 
 //------------------------------------------------------------------------
 
@@ -221,27 +219,27 @@ inline void mygte_MulMatrix0_pc(MATRIXPC *m1, MATRIXPC *m2, MATRIXPC *out) {
 
 //------------------------------------------------------------------------
 
-inline void mygte_SetRotMatrix_pc(MATRIXPC *m) { gterot_pc = *m; }
+inline void mygte_SetRotMatrix_pc(MATRIXPC *m) { *gterot_pc = *m; }
 
 //------------------------------------------------------------------------
 
-inline void mygte_SetTransMatrix_pc(MATRIXPC *m) { gtetrans_pc = *m; }
+inline void mygte_SetTransMatrix_pc(MATRIXPC *m) { *gtetrans_pc = *m; }
 
 //------------------------------------------------------------------------
 
 inline void mygte_ApplyRotMatrix_pc(SVECTORPC *invec, VECTOR *outvec) {
-	outvec->vx = ((gterot_pc.m[0][0] * invec->vx + gterot_pc.m[0][1] * invec->vy + gterot_pc.m[0][2] * invec->vz) / ONE_PC);
-	outvec->vy = ((gterot_pc.m[1][0] * invec->vx + gterot_pc.m[1][1] * invec->vy + gterot_pc.m[1][2] * invec->vz) / ONE_PC);
-	outvec->vz = ((gterot_pc.m[2][0] * invec->vx + gterot_pc.m[2][1] * invec->vy + gterot_pc.m[2][2] * invec->vz) / ONE_PC);
+	outvec->vx = ((gterot_pc->m[0][0] * invec->vx + gterot_pc->m[0][1] * invec->vy + gterot_pc->m[0][2] * invec->vz) / ONE_PC);
+	outvec->vy = ((gterot_pc->m[1][0] * invec->vx + gterot_pc->m[1][1] * invec->vy + gterot_pc->m[1][2] * invec->vz) / ONE_PC);
+	outvec->vz = ((gterot_pc->m[2][0] * invec->vx + gterot_pc->m[2][1] * invec->vy + gterot_pc->m[2][2] * invec->vz) / ONE_PC);
 }
 
 //------------------------------------------------------------------------
 
 inline void mygte_RotTrans_pc(SVECTORPC *in0, VECTOR *out0, int32 *flag) {
 	mygte_ApplyRotMatrix_pc(in0, out0);
-	out0->vx += gtetrans_pc.t[0];
-	out0->vy += gtetrans_pc.t[1];
-	out0->vz += gtetrans_pc.t[2];
+	out0->vx += gtetrans_pc->t[0];
+	out0->vy += gtetrans_pc->t[1];
+	out0->vz += gtetrans_pc->t[2];
 
 	// What GTE flags should we set ?
 	*flag = 0;
@@ -257,9 +255,9 @@ inline void mygte_RotTrans_pc(SVECTOR *in0, VECTOR *out0, int32 *flag) {
 
 	mygte_ApplyRotMatrix_pc(&sv_pc, out0);
 
-	out0->vx += gtetrans_pc.t[0];
-	out0->vy += gtetrans_pc.t[1];
-	out0->vz += gtetrans_pc.t[2];
+	out0->vx += gtetrans_pc->t[0];
+	out0->vy += gtetrans_pc->t[1];
+	out0->vz += gtetrans_pc->t[2];
 
 	// What GTE flags should we set ?
 	*flag = 0;
@@ -269,12 +267,12 @@ inline void mygte_RotTrans_pc(SVECTOR *in0, VECTOR *out0, int32 *flag) {
 
 inline void mygte_RotTransPers_pc(SVECTORPC *in0, SVECTORPC *sxy0, int32 * /* p */, int32 *flag, int32 *z) {
 	VECTOR cam;
-	cam.vx = ((gterot_pc.m[0][0] * in0->vx + gterot_pc.m[0][1] * in0->vy + gterot_pc.m[0][2] * in0->vz) / ONE_PC);
-	cam.vy = ((gterot_pc.m[1][0] * in0->vx + gterot_pc.m[1][1] * in0->vy + gterot_pc.m[1][2] * in0->vz) / ONE_PC);
-	cam.vz = ((gterot_pc.m[2][0] * in0->vx + gterot_pc.m[2][1] * in0->vy + gterot_pc.m[2][2] * in0->vz) / ONE_PC);
-	cam.vx += (gtetrans_pc.t[0] << gtescreenscaleshift_pc);
-	cam.vy += (gtetrans_pc.t[1] << gtescreenscaleshift_pc);
-	cam.vz += (gtetrans_pc.t[2] << gtescreenscaleshift_pc);
+	cam.vx = ((gterot_pc->m[0][0] * in0->vx + gterot_pc->m[0][1] * in0->vy + gterot_pc->m[0][2] * in0->vz) / ONE_PC);
+	cam.vy = ((gterot_pc->m[1][0] * in0->vx + gterot_pc->m[1][1] * in0->vy + gterot_pc->m[1][2] * in0->vz) / ONE_PC);
+	cam.vz = ((gterot_pc->m[2][0] * in0->vx + gterot_pc->m[2][1] * in0->vy + gterot_pc->m[2][2] * in0->vz) / ONE_PC);
+	cam.vx += (gtetrans_pc->t[0] << gtescreenscaleshift_pc);
+	cam.vy += (gtetrans_pc->t[1] << gtescreenscaleshift_pc);
+	cam.vz += (gtetrans_pc->t[2] << gtescreenscaleshift_pc);
 
 	*flag = 0;
 
@@ -304,12 +302,12 @@ inline void mygte_RotTransPers_pc(SVECTORPC *in0, SVECTORPC *sxy0, int32 * /* p 
 
 inline void mygte_RotTransPers_pc(SVECTOR *in0, SVECTORPC *sxy0, int32 * /* p */, int32 *flag, int32 *z) {
 	VECTOR cam;
-	cam.vx = ((gterot_pc.m[0][0] * (int)in0->vx + gterot_pc.m[0][1] * (int)in0->vy + gterot_pc.m[0][2] * (int)in0->vz) / ONE_PC);
-	cam.vy = ((gterot_pc.m[1][0] * (int)in0->vx + gterot_pc.m[1][1] * (int)in0->vy + gterot_pc.m[1][2] * (int)in0->vz) / ONE_PC);
-	cam.vz = ((gterot_pc.m[2][0] * (int)in0->vx + gterot_pc.m[2][1] * (int)in0->vy + gterot_pc.m[2][2] * (int)in0->vz) / ONE_PC);
-	cam.vx += (gtetrans_pc.t[0] << gtescreenscaleshift_pc);
-	cam.vy += (gtetrans_pc.t[1] << gtescreenscaleshift_pc);
-	cam.vz += (gtetrans_pc.t[2] << gtescreenscaleshift_pc);
+	cam.vx = ((gterot_pc->m[0][0] * (int)in0->vx + gterot_pc->m[0][1] * (int)in0->vy + gterot_pc->m[0][2] * (int)in0->vz) / ONE_PC);
+	cam.vy = ((gterot_pc->m[1][0] * (int)in0->vx + gterot_pc->m[1][1] * (int)in0->vy + gterot_pc->m[1][2] * (int)in0->vz) / ONE_PC);
+	cam.vz = ((gterot_pc->m[2][0] * (int)in0->vx + gterot_pc->m[2][1] * (int)in0->vy + gterot_pc->m[2][2] * (int)in0->vz) / ONE_PC);
+	cam.vx += (gtetrans_pc->t[0] << gtescreenscaleshift_pc);
+	cam.vy += (gtetrans_pc->t[1] << gtescreenscaleshift_pc);
+	cam.vz += (gtetrans_pc->t[2] << gtescreenscaleshift_pc);
 
 	*flag = 0;
 
@@ -357,8 +355,8 @@ inline void mygte_RotTransPers3_pc(SVECTORPC *in0, SVECTORPC *in1, SVECTORPC *in
 inline void myRotMatrix_gte_pc(SVECTOR *rot, MATRIXPC *m) {
 	float ang0 = (float)rot->vx * 2.0f * myPI_PC / 4096;
 	MATRIXPC m0;
-	int c0 = myNINT_PC(ONE_PC * (float)cos(ang0));
-	int s0 = myNINT_PC(ONE_PC * (float)sin(ang0));
+	int32 c0 = myNINT_PC(ONE_PC * (float)cos(ang0));
+	int32 s0 = myNINT_PC(ONE_PC * (float)sin(ang0));
 	m0.m[0][0] = ONE_PC;
 	m0.m[0][1] = 0;
 	m0.m[0][2] = 0;
@@ -372,8 +370,8 @@ inline void myRotMatrix_gte_pc(SVECTOR *rot, MATRIXPC *m) {
 	m0.m[2][2] = c0;
 
 	float ang1 = (float)rot->vy * 2.0f * myPI_PC / 4096;
-	int c1 = myNINT_PC(ONE_PC * (float)cos(ang1));
-	int s1 = myNINT_PC(ONE_PC * (float)sin(ang1));
+	int32 c1 = myNINT_PC(ONE_PC * (float)cos(ang1));
+	int32 s1 = myNINT_PC(ONE_PC * (float)sin(ang1));
 	MATRIXPC m1;
 	m1.m[0][0] = c1;
 	m1.m[0][1] = 0;
@@ -388,8 +386,8 @@ inline void myRotMatrix_gte_pc(SVECTOR *rot, MATRIXPC *m) {
 	m1.m[2][2] = c1;
 
 	float ang2 = (float)rot->vz * 2.0f * myPI_PC / 4096;
-	int c2 = myNINT_PC(ONE_PC * (float)cos(ang2));
-	int s2 = myNINT_PC(ONE_PC * (float)sin(ang2));
+	int32 c2 = myNINT_PC(ONE_PC * (float)cos(ang2));
+	int32 s2 = myNINT_PC(ONE_PC * (float)sin(ang2));
 	MATRIXPC m2;
 
 	m2.m[0][0] = c2;
@@ -418,11 +416,11 @@ inline void mygte_SetBackColor_pc(int32 r, int32 g, int32 b) {
 
 //------------------------------------------------------------------------
 
-inline void mygte_SetColorMatrix_pc(MATRIXPC *m) { gtecolour_pc = *m; }
+inline void mygte_SetColorMatrix_pc(MATRIXPC *m) { *gtecolour_pc = *m; }
 
 //------------------------------------------------------------------------
 
-inline void mygte_SetLightMatrix_pc(MATRIXPC *m) { gtelight_pc = *m; }
+inline void mygte_SetLightMatrix_pc(MATRIXPC *m) { *gtelight_pc = *m; }
 
 //------------------------------------------------------------------------
 
@@ -433,7 +431,7 @@ inline void mygte_SetGeomScreen_pc(int32 h) { gtegeomscrn_pc = h; }
 inline void mygte_NormalColorCol_pc(SVECTOR *v0, CVECTOR *in0, CVECTOR *out0) {
 	SVECTORPC lightEffect;
 	// Normal line vector(local) -> light source effect
-	ApplyMatrixSV_pc(&gtelight_pc, v0, &lightEffect);
+	ApplyMatrixSV_pc(gtelight_pc, v0, &lightEffect);
 	if (lightEffect.vx < 0)
 		lightEffect.vx = 0;
 	if (lightEffect.vy < 0)
@@ -443,7 +441,7 @@ inline void mygte_NormalColorCol_pc(SVECTOR *v0, CVECTOR *in0, CVECTOR *out0) {
 
 	// Light source effect -> Colour effect(local colour matrix+back colour)
 	SVECTORPC colourEffect;
-	ApplyMatrixSV_pc(&gtecolour_pc, &lightEffect, &colourEffect);
+	ApplyMatrixSV_pc(gtecolour_pc, &lightEffect, &colourEffect);
 	if (colourEffect.vx < 0)
 		colourEffect.vx = 0;
 	if (colourEffect.vy < 0)
@@ -459,9 +457,9 @@ inline void mygte_NormalColorCol_pc(SVECTOR *v0, CVECTOR *in0, CVECTOR *out0) {
 
 	// 256 = 1.0 in colourEffect
 	// 128 = 1.0 in in0
-	int red = ((in0->r * colourEffect.vx) >> 8);
-	int green = ((in0->g * colourEffect.vy) >> 8);
-	int blue = ((in0->b * colourEffect.vz) >> 8);
+	int32 red = ((in0->r * colourEffect.vx) >> 8);
+	int32 green = ((in0->g * colourEffect.vy) >> 8);
+	int32 blue = ((in0->b * colourEffect.vz) >> 8);
 
 	if (red > 255)
 		red = 255;
@@ -502,10 +500,10 @@ inline int32 myVectorNormal_pc(VECTOR *in0, VECTOR *out0) {
 
 inline void mygte_NormalClip_pc(SVECTORPC *sxy0, SVECTORPC *sxy1, SVECTORPC *sxy2, int32 *flag) {
 	// compute the cross-product of (v1-v0) x (v2-v0)
-	int l0x = sxy1->vx - sxy0->vx;
-	int l0y = sxy1->vy - sxy0->vy;
-	int l1x = sxy2->vx - sxy0->vx;
-	int l1y = sxy2->vy - sxy0->vy;
+	int32 l0x = sxy1->vx - sxy0->vx;
+	int32 l0y = sxy1->vy - sxy0->vy;
+	int32 l1x = sxy2->vx - sxy0->vx;
+	int32 l1y = sxy2->vy - sxy0->vy;
 
 	*flag = ((l0x * l1y) - (l0y * l1x));
 }
@@ -514,10 +512,10 @@ inline void mygte_NormalClip_pc(SVECTORPC *sxy0, SVECTORPC *sxy1, SVECTORPC *sxy
 
 inline void mygte_NormalClip_pc(SVECTOR *sxy0, SVECTOR *sxy1, SVECTOR *sxy2, int32 *flag) {
 	// compute the cross-product of (v1-v0) x (v2-v0)
-	int l0x = sxy1->vx - sxy0->vx;
-	int l0y = sxy1->vy - sxy0->vy;
-	int l1x = sxy2->vx - sxy0->vx;
-	int l1y = sxy2->vy - sxy0->vy;
+	int32 l0x = sxy1->vx - sxy0->vx;
+	int32 l0y = sxy1->vy - sxy0->vy;
+	int32 l1x = sxy2->vx - sxy0->vx;
+	int32 l1y = sxy2->vy - sxy0->vy;
 
 	*flag = ((l0x * l1y) - (l0y * l1x));
 }

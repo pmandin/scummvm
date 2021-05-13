@@ -108,6 +108,7 @@
 		#define NOWH
 		#define NOSOUND
 		#define NODRAWTEXT
+		#define NOMINMAX 1
 
 	#endif
 
@@ -338,7 +339,11 @@
 //
 #ifndef GCC_PRINTF
 	#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-		#define GCC_PRINTF(x,y) __attribute__((__format__(__printf__, x, y)))
+		#if __USE_MINGW_ANSI_STDIO && !defined(__clang__)
+			#define GCC_PRINTF(x,y) __attribute__((__format__(__gnu_printf__, x, y)))
+		#else
+			#define GCC_PRINTF(x,y) __attribute__((__format__(__printf__, x, y)))
+		#endif
 	#else
 		#define GCC_PRINTF(x,y)
 	#endif
@@ -373,13 +378,15 @@
 #ifndef NORETURN_PRE
 	#if defined(_MSC_VER)
 		#define NORETURN_PRE __declspec(noreturn)
+	#elif defined(__GNUC__)
+		#define NORETURN_PRE __attribute__((__noreturn__))
 	#else
 		#define NORETURN_PRE
 	#endif
 #endif
 
 #ifndef NORETURN_POST
-	#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+	#if defined(__INTEL_COMPILER)
 		#define NORETURN_POST __attribute__((__noreturn__))
 	#else
 		#define NORETURN_POST
@@ -462,6 +469,15 @@ typedef uint32 uintptr;
 
 #endif
 
+#endif
+
+//
+// std::nullptr_t when c++11 is enabled but this type is not available
+//
+#if defined(USE_CXX11) && defined(NO_CXX11_NULLPTR_T)
+namespace std {
+	typedef decltype(nullptr) nullptr_t;
+}
 #endif
 
 #include "common/forbidden.h"

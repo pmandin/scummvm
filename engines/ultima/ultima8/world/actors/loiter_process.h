@@ -35,7 +35,6 @@ public:
 	LoiterProcess();
 	LoiterProcess(Actor *actor, int32 count = -1);
 
-	// p_dynamic_cast stuff
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	void run() override;
@@ -43,6 +42,7 @@ public:
 	bool loadData(Common::ReadStream *rs, uint32 version);
 	void saveData(Common::WriteStream *ws) override;
 
+	void dumpInfo() const override;
 protected:
 	int32 _count;
 };

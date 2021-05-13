@@ -30,7 +30,6 @@
 
 #include "engines/icb/common/px_array.h"
 #include "engines/icb/common/px_string.h"
-#include "engines/icb/common/px_assert.h"
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/string_vest.h"
 
@@ -72,9 +71,9 @@ public:
 #define MAX_coms 3
 
 class __conversation {
-      public:
+public:
 	__conversation() {
-		for (int i = 0; i < MAX_people_talking; i++)
+		for (int32 i = 0; i < MAX_people_talking; i++)
 			subscribers_requested[i] = 0;
 
 		total_subscribers = 0;

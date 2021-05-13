@@ -125,13 +125,10 @@ my @excludes_snd = (
         "Poly.cpp",
 	"TVA.cpp",
 	"TVF.cpp",
-	"TVP.cpp",
-	"rate.*"			# not really needed, USE_ARM_SOUND_ASM currently not parsed correctly,
-						# "rate[_arm|_arm_asm].(cpp|s)" will be added later based on WINS/ARM build!
-						# These #defines for compile time are set in portdefs.h
+	"TVP.cpp"
 );
 
-my @excludes_graphics = (	
+my @excludes_graphics = (
 );
 
 my @excludes_gui = (

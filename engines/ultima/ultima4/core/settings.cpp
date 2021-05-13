@@ -22,7 +22,6 @@
 
 #include "ultima/ultima4/core/settings.h"
 #include "ultima/ultima4/events/event_handler.h"
-#include "ultima/ultima4/filesys/filesystem.h"
 #include "ultima/ultima4/core/utils.h"
 #include "common/file.h"
 
@@ -100,7 +99,7 @@ Settings::Settings() {
 	bool isEnhanced = _videoType != "EGA";
 	_scale = isEnhanced ? 2 : 1;
 	_filter = isEnhanced ? "Scale2x" : "point";
-  
+
 	_battleDiffs.push_back("Normal");
 	_battleDiffs.push_back("Hard");
 	_battleDiffs.push_back("Expert");

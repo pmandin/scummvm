@@ -23,7 +23,7 @@
 #ifndef SCI_INCLUDE_FEATURES_H
 #define SCI_INCLUDE_FEATURES_H
 
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/engine/seg_manager.h"
 
 namespace Sci {
@@ -235,7 +235,7 @@ public:
 	MoveCountType detectMoveCountType();
 
 	int detectPlaneIdBase();
-	
+
 	bool handleMoveCount() { return detectMoveCountType() == kIncrementMoveCount; }
 
 	bool usesCdTrack() { return _usesCdTrack; }
@@ -257,6 +257,8 @@ public:
 	 * selected a MIDI output device
 	 */
 	void forceDOSTracks() { _forceDOSTracks = true; }
+
+	bool useWindowsCursors() { return _useWindowsCursors; }
 
 	/**
 	 * Autodetects, if Pseudo Mouse ability is enabled (different behavior in keyboard driver)
@@ -285,6 +287,7 @@ private:
 	MoveCountType _moveCountType;
 	bool _usesCdTrack;
 	bool _forceDOSTracks;
+	bool _useWindowsCursors;
 
 	PseudoMouseAbilityType _pseudoMouseAbility;
 

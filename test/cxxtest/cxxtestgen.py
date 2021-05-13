@@ -147,7 +147,7 @@ def printVersion():
 def setFiles( patterns ):
     '''Set input files specified on command line'''
     files = expandWildcards( patterns )
-    if len(files) is 0 and not root:
+    if len(files) == 0 and not root:
         usage( "No input files found" )
     return files
 
@@ -169,7 +169,7 @@ def scanInputFiles(files):
     for file in files:
         scanInputFile(file)
     global suites
-    if len(suites) is 0 and not root:
+    if len(suites) == 0 and not root:
         abort( 'No tests defined' )
 
 def scanInputFile(fileName):
@@ -288,7 +288,7 @@ def addLineToBlock( suite, lineNo, line ):
     '''Append the line to the current CXXTEST_CODE() block'''
     line = fixBlockLine( suite, lineNo, line )
     line = re.sub( r'^.*\{\{', '', line )
-    
+
     e = re.search( r'\}\}', line )
     if e:
         line = line[:e.start()]
@@ -328,7 +328,7 @@ def closeSuite():
     '''Close current suite and add it to the list if valid'''
     global suite
     if suite is not None:
-        if len(suite['tests']) is not 0:
+        if len(suite['tests']) != 0:
             verifySuite(suite)
             rememberSuite(suite)
         suite = None
@@ -533,11 +533,11 @@ def runBody( suite, test ):
 def dynamicRun( suite, test ):
     '''Body of TestDescription::run() for test in a dynamic suite'''
     return 'if ( ' + suite['object'] + ' ) ' + suite['object'] + '->' + test['name'] + '();'
-    
+
 def staticRun( suite, test ):
     '''Body of TestDescription::run() for test in a non-dynamic suite'''
     return suite['object'] + '.' + test['name'] + '();'
-    
+
 def writeSuiteDescription( output, suite ):
     '''Write SuiteDescription object'''
     if isDynamic( suite ):

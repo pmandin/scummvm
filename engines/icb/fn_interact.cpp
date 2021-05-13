@@ -246,12 +246,12 @@ mcodeFunctionReturnCodes _game_session::fn_wandering_generic_prop_interact(int32
 }
 
 mcodeFunctionReturnCodes _game_session::Core_prop_interact(int32 & /*result*/, int32 *params, bool8 custom, bool8 coord_correction) {
-	bool8 initial_turn;
+	//bool8 initial_turn;
 	bool8 res = FALSE8;
 	__mega_set_names anim;
 	PXreal destx, destz;
 	PXfloat diff;
-	int retval;
+	int32 retval;
 	PXreal sub1, sub2, len, len2;
 	uint32 j;
 
@@ -290,7 +290,7 @@ mcodeFunctionReturnCodes _game_session::Core_prop_interact(int32 & /*result*/, i
 		}
 
 		// start psx asyncing the anim - may already be doing so if scripts are written properly!
-		if (rs_anims->Res_async_open(I->get_info_name(anim), I->info_name_hash[anim], I->base_path, I->base_path_hash) == 0)
+		if (rs_anims->Res_open(I->get_info_name(anim), I->info_name_hash[anim], I->base_path, I->base_path_hash) == 0)
 			return IR_REPEAT;
 
 		// we are now looping, having done the init
@@ -332,9 +332,9 @@ mcodeFunctionReturnCodes _game_session::Core_prop_interact(int32 & /*result*/, i
 		if ((len2 > len) || (M->reverse_route == TRUE8)) { // if further away OR already set to reverse - must have been by fn-sony-door
 			M->m_main_route.request_form.anim_type = __STEP_BACKWARD;
 			M->reverse_route = TRUE8;
-			initial_turn = FALSE8;
+			//initial_turn = FALSE8;
 		} else {
-			initial_turn = TRUE8;
+			//initial_turn = TRUE8;
 
 			if (M->motion == __MOTION_WALK)
 				M->m_main_route.request_form.anim_type = __WALK;
@@ -431,7 +431,7 @@ mcodeFunctionReturnCodes _game_session::Core_prop_interact(int32 & /*result*/, i
 			anim = Fetch_generic_anim_from_ascii(anim_name);
 
 		// in memory yet?
-		if (rs_anims->Res_async_open(I->get_info_name(anim), I->info_name_hash[anim], I->base_path, I->base_path_hash)) {
+		if (rs_anims->Res_open(I->get_info_name(anim), I->info_name_hash[anim], I->base_path, I->base_path_hash)) {
 			L->cur_anim_type = anim;
 			L->anim_pc = 0;
 			L->looping = 4; // go straight to play anim
@@ -446,7 +446,7 @@ mcodeFunctionReturnCodes _game_session::Core_prop_interact(int32 & /*result*/, i
 		PXanim *pAnim = (PXanim *)rs_anims->Res_open(I->get_info_name(L->cur_anim_type), I->info_name_hash[L->cur_anim_type], I->base_path, I->base_path_hash); //
 
 		// last frame is currently displayed?
-		if ((int)(L->anim_pc + M->anim_speed) >= (pAnim->frame_qty - 1)) {
+		if ((int32)(L->anim_pc + M->anim_speed) >= (pAnim->frame_qty - 1)) {
 			L->looping = FALSE8;
 			M->reverse_route = FALSE8;
 

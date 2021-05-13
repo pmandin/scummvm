@@ -20,10 +20,8 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/misc/util.h"
 #include "ultima/ultima8/misc/istring.h"
-#include "ultima/shared/std/string.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -160,7 +158,7 @@ template void TabsToSpaces<istring>(istring &str, unsigned int n);
 
 
 template<class T> void SplitString(const T &args, char sep,
-                                   Std::vector<T> &argv) {
+								   Std::vector<T> &argv) {
 	// Clear the vector
 	argv.clear();
 
@@ -188,7 +186,7 @@ template void SplitString<istring>(const istring &args, char sep, Std::vector<is
 
 
 template<class T> void SplitStringKV(const T &args, char sep,
-                                     Std::vector<Std::pair<T, T> > &argv) {
+									 Std::vector<Std::pair<T, T> > &argv) {
 	// Clear the vector
 	argv.clear();
 

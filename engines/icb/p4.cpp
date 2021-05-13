@@ -51,7 +51,7 @@ uint32 font_cluster_hash = NULL_HASH;
 // Res_open will compute the hash value and store it
 uint32 sys_font_hash = NULL_HASH;
 
-int gameCycle; // holds current game cycle - ticks up one each cycle
+int32 gameCycle; // holds current game cycle - ticks up one each cycle
 
 // The PSX specific code is in p4_psx.cpp
 // PC specific code is in p4_pc.cpp
@@ -90,14 +90,11 @@ void _stub::Set_current_stub_mode(__stub_modes new_mode) {
 void _stub::Process_stub() {
 	// call the mode!
 
-	// update current keys
-	Poll_direct_input();
-
 	// Check for pause key .... moved from player::UpdateInputStates so the pause
 	// menu is reachable regardless of the players state (ie in conversation)
 	if (mode[stub] == __mission_and_console) {
 		{
-			if ((Read_DI_once_keys(pause_key)) || (Read_Joystick_once(pause_button))) {
+			if (Read_DI_once_keys(pause_key)) {
 				if (!g_theOptionsManager->HasControl())
 					g_theOptionsManager->StartInGameOptions();
 				return;
@@ -220,23 +217,14 @@ void _stub::Update_screen() {
 
 	// Record the next frame of the video if any
 	static uint32 frameNumber = 0;
-	if (px.recordingVideo)
+	if (g_px->recordingVideo)
 		surface_manager->RecordFrame(pxVString("icb%05d.bmp", frameNumber++));
 
 	// Grab screen shots if required
 	if (Read_DI_keys(Common::KEYCODE_LCTRL) || Read_DI_keys(Common::KEYCODE_RCTRL)) {
 		if (Read_DI_keys(Common::KEYCODE_s)) {
 			// Take a screen grab
-			if (!checkFileExists(pxVString("ScreenShots"))) // TODO: Had amode = 0
-				error("ICB wants to create folder ScreenShots");
-			/*
-#ifdef _WIN32
-				mkdir(pxVString("ScreenShots"));
-#else
-				mkdir(pxVString("ScreenShots"), 0755);
-#endif
-			*/
-			surface_manager->RecordFrame(pxVString("ScreenShots\\%08d.bmp", g_system->getMillis()));
+			surface_manager->RecordFrame(pxVString("ScreenShot_%08d.bmp", g_system->getMillis()));
 		}
 	}
 

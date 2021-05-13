@@ -30,10 +30,7 @@ static const MADSGameDescription gameDescriptions[] = {
 		{
 			"nebular",
 			0,
-			{
-				{"mpslabs.001", 0, "4df5c557b52abb5b661cf4befe5ae301", 1315354},
-				AD_LISTEND
-			},
+			AD_ENTRY1s("mpslabs.001", "4df5c557b52abb5b661cf4befe5ae301", 1315354),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
@@ -49,10 +46,7 @@ static const MADSGameDescription gameDescriptions[] = {
 		{
 			"nebular",
 			0,
-			{
-				{"section1.hag", 0, "6f725eb38660de8af31ec7cdd628d615", 927222},
-				AD_LISTEND
-			},
+			AD_ENTRY1s("section1.hag", "6f725eb38660de8af31ec7cdd628d615", 927222),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
@@ -71,10 +65,7 @@ static const MADSGameDescription gameDescriptions[] = {
 		{
 			"nebular",
 			0,
-			{
-				{ "section1.hag", 0, "d583576923e3437937fb7f46f4b6274f", 927222 },
-				AD_LISTEND
-			},
+			AD_ENTRY1s("section1.hag", "d583576923e3437937fb7f46f4b6274f", 927222),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
@@ -84,15 +75,14 @@ static const MADSGameDescription gameDescriptions[] = {
 		0
 	},
 
+#ifdef ENABLE_MADSV2
+
 	{
 		// Return of the Phantom DOS English
 		{
 			"phantom",
 			0,
-			{
-				{"section1.hag", 0, "76e2d47a7aebafe48edc9884b3d91782", 1130939},
-				AD_LISTEND
-			},
+			AD_ENTRY1s("section1.hag", "76e2d47a7aebafe48edc9884b3d91782", 1130939),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_UNSTABLE,
@@ -107,10 +97,7 @@ static const MADSGameDescription gameDescriptions[] = {
 		{
 			"dragonsphere",
 			0,
-			{
-				{"section1.hag", 0, "2770e441d296be5e806194693eebd95a", 2061199},
-				AD_LISTEND
-			},
+			AD_ENTRY1s("section1.hag", "2770e441d296be5e806194693eebd95a", 2061199),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_UNSTABLE,
@@ -125,10 +112,7 @@ static const MADSGameDescription gameDescriptions[] = {
 		{
 			"dragonsphere",
 			"Demo",
-			{
-				{"section1.hag", 0, "9587b06eb4f9ee7ed5b19af4643743b0", 328083},
-				AD_LISTEND
-			},
+			AD_ENTRY1s("section1.hag", "9587b06eb4f9ee7ed5b19af4643743b0", 328083),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_UNSTABLE | ADGF_DEMO,
@@ -137,6 +121,8 @@ static const MADSGameDescription gameDescriptions[] = {
 		GType_Dragonsphere,
 		0
 	},
+
+#endif
 
 	{ AD_TABLE_END_MARKER, 0, 0 }
 };

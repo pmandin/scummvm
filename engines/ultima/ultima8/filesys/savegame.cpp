@@ -20,14 +20,7 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/filesys/savegame.h"
-#include "ultima/ultima8/filesys/idata_source.h"
-#include "ultima/ultima8/filesys/odata_source.h"
-#include "ultima/shared/engine/ultima.h"
-#include "common/system.h"
-#include "common/savefile.h"
-#include "graphics/thumbnail.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -79,7 +72,7 @@ SavegameReader::State SavegameReader::isValid() const {
 		return SAVE_VALID;
 }
 
-IDataSource *SavegameReader::getDataSource(const Std::string &name) {
+Common::SeekableReadStream *SavegameReader::getDataSource(const Std::string &name) {
 	assert(_index.contains(name));
 
 	const FileEntry &fe = _index[name];
@@ -87,7 +80,7 @@ IDataSource *SavegameReader::getDataSource(const Std::string &name) {
 	_file->seek(fe._offset);
 	_file->read(data, fe._size);
 
-	return new IBufferDataSource(data, fe._size, false, true);
+	return new Common::MemoryReadStream(data, fe._size, DisposeAfterUse::YES);
 }
 
 
@@ -117,7 +110,7 @@ bool SavegameWriter::finish() {
 		_file->writeUint32LE(fe.size());
 		_file->write(&fe[0], fe.size());
 	}
-	
+
 	return true;
 }
 
@@ -133,8 +126,8 @@ bool SavegameWriter::writeFile(const Std::string &name, const uint8 *data, uint3
 	return true;
 }
 
-bool SavegameWriter::writeFile(const Std::string &name, OAutoBufferDataSource *ods) {
-	return writeFile(name, ods->getData(), ods->size());
+bool SavegameWriter::writeFile(const Std::string &name, Common::MemoryWriteStreamDynamic *buf) {
+	return writeFile(name, buf->getData(), buf->pos());
 }
 
 } // End of namespace Ultima8

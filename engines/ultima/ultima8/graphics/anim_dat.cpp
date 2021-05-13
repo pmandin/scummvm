@@ -24,14 +24,10 @@
 
 #include "ultima/ultima8/graphics/anim_dat.h"
 
-#include "ultima/ultima8/filesys/idata_source.h"
 #include "ultima/ultima8/world/actors/actor_anim.h"
-#include "ultima/ultima8/world/actors/anim_action.h"
-#include "ultima/ultima8/world/actors/animation.h"
 #include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/get_object.h"
-#include "ultima/ultima8/kernel/core_app.h"
-#include "ultima/ultima8/games/game_info.h"
+#include "ultima/ultima8/ultima8.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -75,6 +71,7 @@ uint32 AnimDat::getActionNumberForSequence(Animation::Sequence action, const Act
 			altfire = (wpninfo && (wpninfo->_overlayShape == 0x36e || wpninfo->_overlayShape == 0x33b));
 		}
 
+		//
 		// For crusader the actions have different IDs.  Rather than
 		// rewrite everything, we just translate them here for all the ones
 		// we want to use programmatically.  There are more, but they are
@@ -82,60 +79,70 @@ uint32 AnimDat::getActionNumberForSequence(Animation::Sequence action, const Act
 		//
 		// We also translate based on weapon.  See the function at 1128:2104
 		//
-		// TODO: Also handle kneeling weapon animations
+		// First, if the animation includes the Animation::crusaderAbsoluteAnimFlag
+		// bitmask then it's from the usecode - use directly and don't translate.
+		//
+		const uint32 action_int = static_cast<uint32>(action);
+		if (action_int & Animation::crusaderAbsoluteAnimFlag)
+			return action_int - Animation::crusaderAbsoluteAnimFlag;
+
 		switch (action) {
 		case Animation::stand:
-			return 0;
+			return Animation::standCru;
 		case Animation::step:
-			return 1; // Same as walk in crusader.
+			return Animation::walkCru; // Same as walk in crusader.
 		case Animation::walk:
-			return 1;
+			return Animation::walkCru;
 		case Animation::retreat:
-			return (smallwpn ? 2 : 45);
+			return (smallwpn ? Animation::retreatSmallWeapon : Animation::retreatLargeWeapon);
+		case Animation::reloadSmallWeapon:
+			return (smallwpn ? Animation::reloadSmallWeapon : Animation::reloadLargeWeapon);
 		case Animation::run:
-			return (smallwpn ? 3 : 49);
-		case Animation::combatRun:
-			return (smallwpn ? 48 : 49);
+			return Animation::runCru;
+		case Animation::combatRunSmallWeapon:
+			return (smallwpn ? Animation::combatRunSmallWeapon : Animation::combatRunLargeWeapon);
 		case Animation::combatStand:
-			return (smallwpn ? 4 : 37);
-		// Note: 5, 6, 9, 10 == nothing (for avatar)?
+			return (smallwpn ? Animation::combatStandSmallWeapon : Animation::combatStandLargeWeapon);
 		case Animation::unreadyWeapon:
-			return (smallwpn ? 11: 16);
+				return (smallwpn ? Animation::unreadySmallWeapon :  Animation::unreadyLargeWeapon);
 		case Animation::readyWeapon:
-			return (smallwpn ? 7 : 12);
+			return (smallwpn ? Animation::readySmallWeapon : Animation::readyLargeWeapon);
 		case Animation::attack: {
 			if (smallwpn)
-				return 8;
-			return (altfire ? 54 : 13);
+				return Animation::fireSmallWeapon;
+			return (altfire ? Animation::brightFireLargeWpn : Animation::fireLargeWeapon);
 		}
 		// Note: 14, 17, 21, 22, 29 == nothing for avatar
 		case Animation::fallBackwards:
-			return 18;
+			return Animation::fallBackwardsCru;
 		case Animation::die:
-			return 20; // maybe? falls over forwards
+			return Animation::fallBackwardsCru; // by default fall over backwards. TODO: randomly use Animation::fallForwardsCru for some deaths.
 		case Animation::advance:
-			return (smallwpn ? 36 : 44);
-		case Animation::startKneeling:
-			return 40;
+			return (smallwpn ? Animation::advanceSmallWeapon : Animation::advanceLargeWeapon);
+		// Kneel start/end never used in code - mover process uses correct ones.
+		/*case Animation::startKneeling:
+			return Animation::kneelStartCru;
 		case Animation::stopKneeling:
-			return 41;
+			return Animation::kneelEndCru;*/
 		case Animation::kneel:
-			return (smallwpn ? 46 : 47);
+			return (smallwpn ? Animation::kneelingWithSmallWeapon : Animation::kneelingWithLargeWeapon);
 		case Animation::kneelAndFire: {
 			if (smallwpn)
-				return 42;
-			return (altfire ? 50 : 43);
+				return Animation::kneelAndFireSmallWeapon;
+			return (altfire ? Animation::brightKneelAndFireLargeWeapon : Animation::kneelAndFireLargeWeapon);
 		}
 		case Animation::lookLeft:
 			return 0;
 		case Animation::lookRight:
 			return 0;
-		case Animation::teleportInReplacement:
-			return Animation::teleportIn;
-		case Animation::teleportOutReplacement:
-			return Animation::teleportOut;
+		case Animation::jump:
+			return Animation::quickJumpCru;
+		case Animation::startRunLargeWeapon:
+			return (smallwpn ? Animation::startRunSmallWeapon : Animation::startRunLargeWeapon2);
+		case Animation::stopRunningAndDrawSmallWeapon:
+			return (smallwpn ? Animation::stopRunningAndDrawSmallWeapon : Animation::stopRunningAndDrawLargeWeapon);
 		default:
-			return static_cast<uint32>(action);
+			return action_int;
 		}
 	}
 }
@@ -185,15 +192,31 @@ void AnimDat::load(Common::SeekableReadStream *rs) {
 			uint32 actionsize = rs->readByte();
 			a->_actions[action]->_size = actionsize;
 			// byte 1: flags low byte
-			a->_actions[action]->_flags = rs->readByte();
-			// byte 2: frame repeat
-			a->_actions[action]->_frameRepeat = rs->readByte();
+			uint32 rawflags = rs->readByte();
+			// byte 2: frame repeat and rotated flag
+			byte repeatAndRotateFlag = rs->readByte();
+			a->_actions[action]->_frameRepeat = repeatAndRotateFlag & 0xf;
+			if (GAME_IS_U8 && (repeatAndRotateFlag & 0xf0)) {
+				// This should never happen..
+				error("Anim data: frame repeat byte should never be > 0xf");
+			} else if (GAME_IS_CRUSADER) {
+				// WORKAROUND: In Crusader, the process wait semantics changed so
+				// wait of 1 frame was the same as no wait.  The frame repeat
+				// is implemented as a process wait, so this effectively reduced
+				// all frame repeats by 1.
+				if (a->_actions[action]->_frameRepeat)
+					a->_actions[action]->_frameRepeat--;
+			}
 			// byte 3: flags high byte
-			a->_actions[action]->_flags |= rs->readByte() << 8;
+			rawflags |= rs->readByte() << 8;
+
+			// Only one flag in this byte in crusader.. the "rotate" flag.
+			rawflags |= (repeatAndRotateFlag & 0xf0) << 12;
+
+			a->_actions[action]->_flags = AnimAction::loadAnimActionFlags(rawflags);
 
 			unsigned int dirCount = 8;
-			if (GAME_IS_CRUSADER &&
-			        (a->_actions[action]->_flags & AnimAction::AAF_CRUS_16DIRS)) {
+			if (a->_actions[action]->hasFlags(AnimAction::AAF_16DIRS)) {
 				dirCount = 16;
 			}
 
@@ -226,20 +249,21 @@ void AnimDat::load(Common::SeekableReadStream *rs) {
 						const uint8 x = rs->readByte();
 						f._frame += (x & 0xF) << 8;
 						// byte 2: delta z
-						f._deltaZ = rs->readByte();
+						f._deltaZ = rs->readSByte();
 						// byte 3: sfx
 						f._sfx = rs->readByte();
 						// byte 4: deltadir (signed) - convert to pixels
 						f._deltaDir = rs->readSByte();
-						// byte 5: flags TODO: Ensure "flipped" flag is mapped correctly
-						f._flags = rs->readByte();
+						// byte 5: flags.  The lowest bit is actually a sign bit for
+						// deltaDir, which is technically 9 bits long.  There are no
+						// animations in the game exceeding 8-bit signed, the 9th bit
+						// is there so that multiple frames can be stacked in the same
+						// struct by the original game when it's skipping frames.
+						// We have more memory and don't frame-skip, so just ignore it.
+						f._flags = rs->readByte() & 0xFE;
 						f._flags += (x & 0xF0) << 8;
 						// bytes 6, 7: more flags
 						f._flags += rs->readUint16LE() << 16;
-
-						// Map the "flipped" flag to match U8.. is this right?
-						//if (f._flags & AnimFrame::AFF_CRUFLIP)
-						//	f._flags |= AnimFrame::AFF_FLIPPED;
 
 						/*if (f._flags & AnimFrame::AFF_UNKNOWN) {
 							warning("AnimFlags: shape %d action %d dir %d frame %d has unknown flags %08X", shape, action, dir, j,

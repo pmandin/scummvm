@@ -30,7 +30,7 @@ namespace Ultima1 {
 namespace Maps {
 	class MapCityCastle;
 }
-	
+
 namespace U1Dialogs {
 
 /**
@@ -38,7 +38,7 @@ namespace U1Dialogs {
  */
 class Tavern : public BuySellDialog {
 	DECLARE_MESSAGE_MAP;
-	bool FrameMsg(CFrameMsg &msg);
+	bool FrameMsg(CFrameMsg *msg);
 private:
 	Maps::MapCityCastle *_map;
 	//uint _tavernNum;

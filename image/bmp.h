@@ -23,9 +23,9 @@
 /**
  * @file
  * Image decoder used in engines:
+ *  - buried
  *  - hugo
  *  - mohawk
- *  - petka
  *  - wintermute
  */
 
@@ -46,6 +46,20 @@ struct Surface;
 }
 
 namespace Image {
+
+/**
+ * @defgroup image_bmp BMP decoder
+ * @ingroup image
+ *
+ * @brief Decoder for BMP images.
+ *
+ * Used in engines:
+ *  - Hugo
+ *  - Mohawk
+ *  - Petka
+ *  - Wintermute
+ * @{
+ */
 
 class Codec;
 
@@ -72,7 +86,7 @@ private:
  * Outputs an uncompressed BMP stream of the given input surface.
  */
 bool writeBMP(Common::WriteStream &out, const Graphics::Surface &input);
-
+/** @} */
 } // End of namespace Image
 
 #endif

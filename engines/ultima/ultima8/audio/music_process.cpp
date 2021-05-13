@@ -20,17 +20,11 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/audio/music_process.h"
-#include "ultima/ultima8/games/game_data.h"
-#include "ultima/ultima8/audio/music_flex.h"
-#include "ultima/ultima8/audio/midi_player.h"
-#include "ultima/ultima8/audio/audio_mixer.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(MusicProcess)
 
 MusicProcess *MusicProcess::_theMusicProcess = nullptr;
@@ -46,13 +40,13 @@ MusicProcess::~MusicProcess() {
 }
 
 uint32 MusicProcess::I_stopMusic(const uint8 * /*args*/,
-                                 unsigned int /*argsize*/) {
+								 unsigned int /*argsize*/) {
 	if (_theMusicProcess) _theMusicProcess->playMusic_internal(0);
 	return 0;
 }
 
 uint32 MusicProcess::I_playMusic(const uint8 *args,
-                                 unsigned int /*argsize*/) {
+								 unsigned int /*argsize*/) {
 	ARG_UINT8(song);
 	if (_theMusicProcess) _theMusicProcess->playMusic(song & 0x7F);
 	return 0;
@@ -62,14 +56,14 @@ uint32 MusicProcess::I_playMusic(const uint8 *args,
 uint32 MusicProcess::I_pauseMusic(const uint8 *args,
 								 unsigned int /*argsize*/) {
 	// This is only used in Crusader: No Regret.
-	warning("TODO: MusicProcess::I_pauseMusic Implement me");
+	if (_theMusicProcess) _theMusicProcess->pauseMusic();
 	return 0;
 }
 
 uint32 MusicProcess::I_unpauseMusic(const uint8 *args,
 								 unsigned int /*argsize*/) {
 	// This is only used in Crusader: No Regret.
-	warning("TODO: MusicProcess::I_unpauseMusic Implement me");
+	if (_theMusicProcess) _theMusicProcess->unpauseMusic();
 	return 0;
 }
 

@@ -20,12 +20,10 @@
  *
  */
 
-#include "sludge/allfiles.h"
 #include "sludge/floor.h"
+#include "sludge/freeze.h"
 #include "sludge/function.h"
 #include "sludge/graphics.h"
-#include "sludge/loadsave.h"
-#include "sludge/moreio.h"
 #include "sludge/newfatal.h"
 #include "sludge/objtypes.h"
 #include "sludge/people.h"
@@ -34,11 +32,7 @@
 #include "sludge/sludger.h"
 #include "sludge/sound.h"
 #include "sludge/speech.h"
-#include "sludge/sprbanks.h"
-#include "sludge/sprites.h"
-#include "sludge/variable.h"
 #include "sludge/version.h"
-#include "sludge/zbuffer.h"
 
 #define ANI_STAND 0
 #define ANI_WALK 1
@@ -341,108 +335,107 @@ enum drawModes {
 
 void PeopleManager::setMyDrawMode(OnScreenPerson *moveMe, int h) {
 	switch (h) {
-		case drawModeTransparent3:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 0;
-			moveMe->transparency = 64;
-			break;
-		case drawModeTransparent2:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 0;
-			moveMe->transparency = 128;
-			break;
-		case drawModeTransparent1:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 0;
-			moveMe->transparency = 192;
-			break;
-		case drawModeInvisible:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 0;
-			moveMe->transparency = 254;
-			break;
-		case drawModeDark1:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 192;
-			moveMe->transparency = 0;
-			break;
-		case drawModeDark2:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 128;
-			moveMe->transparency = 0;
-			break;
-		case drawModeDark3:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 64;
-			moveMe->transparency = 0;
-			break;
-		case drawModeBlack:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 255;
-			moveMe->transparency = 0;
-			break;
-		case drawModeShadow1:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 255;
-			moveMe->transparency = 64;
-			break;
-		case drawModeShadow2:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 255;
-			moveMe->transparency = 128;
-			break;
-		case drawModeShadow3:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 255;
-			moveMe->transparency = 192;
-			break;
-		case drawModeFoggy3:
-			moveMe->r = moveMe->g = moveMe->b = 128;
-			moveMe->colourmix = 192;
-			moveMe->transparency = 0;
-			break;
-		case drawModeFoggy2:
-			moveMe->r = moveMe->g = moveMe->b = 128;
-			moveMe->colourmix = 128;
-			moveMe->transparency = 0;
-			break;
-		case drawModeFoggy1:
-			moveMe->r = moveMe->g = moveMe->b = 128;
-			moveMe->colourmix = 64;
-			moveMe->transparency = 0;
-			break;
-		case drawModeFoggy4:
-			moveMe->r = moveMe->g = moveMe->b = 128;
-			moveMe->colourmix = 255;
-			moveMe->transparency = 0;
-			break;
-		case drawModeGlow3:
-			moveMe->r = moveMe->g = moveMe->b = 255;
-			moveMe->colourmix = 192;
-			moveMe->transparency = 0;
-			break;
-		case drawModeGlow2:
-			moveMe->r = moveMe->g = moveMe->b = 255;
-			moveMe->colourmix = 128;
-			moveMe->transparency = 0;
-			break;
-		case drawModeGlow1:
-			moveMe->r = moveMe->g = moveMe->b = 255;
-			moveMe->colourmix = 64;
-			moveMe->transparency = 0;
-			break;
-		case drawModeGlow4:
-			moveMe->r = moveMe->g = moveMe->b = 255;
-			moveMe->colourmix = 255;
-			moveMe->transparency = 0;
-			break;
-		default:
-			moveMe->r = moveMe->g = moveMe->b = 0;
-			moveMe->colourmix = 0;
-			moveMe->transparency = 0;
-			break;
+	case drawModeTransparent3:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 0;
+		moveMe->transparency = 64;
+		break;
+	case drawModeTransparent2:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 0;
+		moveMe->transparency = 128;
+		break;
+	case drawModeTransparent1:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 0;
+		moveMe->transparency = 192;
+		break;
+	case drawModeInvisible:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 0;
+		moveMe->transparency = 254;
+		break;
+	case drawModeDark1:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 192;
+		moveMe->transparency = 0;
+		break;
+	case drawModeDark2:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 128;
+		moveMe->transparency = 0;
+		break;
+	case drawModeDark3:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 64;
+		moveMe->transparency = 0;
+		break;
+	case drawModeBlack:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 255;
+		moveMe->transparency = 0;
+		break;
+	case drawModeShadow1:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 255;
+		moveMe->transparency = 64;
+		break;
+	case drawModeShadow2:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 255;
+		moveMe->transparency = 128;
+		break;
+	case drawModeShadow3:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 255;
+		moveMe->transparency = 192;
+		break;
+	case drawModeFoggy3:
+		moveMe->r = moveMe->g = moveMe->b = 128;
+		moveMe->colourmix = 192;
+		moveMe->transparency = 0;
+		break;
+	case drawModeFoggy2:
+		moveMe->r = moveMe->g = moveMe->b = 128;
+		moveMe->colourmix = 128;
+		moveMe->transparency = 0;
+		break;
+	case drawModeFoggy1:
+		moveMe->r = moveMe->g = moveMe->b = 128;
+		moveMe->colourmix = 64;
+		moveMe->transparency = 0;
+		break;
+	case drawModeFoggy4:
+		moveMe->r = moveMe->g = moveMe->b = 128;
+		moveMe->colourmix = 255;
+		moveMe->transparency = 0;
+		break;
+	case drawModeGlow3:
+		moveMe->r = moveMe->g = moveMe->b = 255;
+		moveMe->colourmix = 192;
+		moveMe->transparency = 0;
+		break;
+	case drawModeGlow2:
+		moveMe->r = moveMe->g = moveMe->b = 255;
+		moveMe->colourmix = 128;
+		moveMe->transparency = 0;
+		break;
+	case drawModeGlow1:
+		moveMe->r = moveMe->g = moveMe->b = 255;
+		moveMe->colourmix = 64;
+		moveMe->transparency = 0;
+		break;
+	case drawModeGlow4:
+		moveMe->r = moveMe->g = moveMe->b = 255;
+		moveMe->colourmix = 255;
+		moveMe->transparency = 0;
+		break;
+	default:
+		moveMe->r = moveMe->g = moveMe->b = 0;
+		moveMe->colourmix = 0;
+		moveMe->transparency = 0;
+		break;
 	}
-
 }
 
 void PeopleManager::setDrawMode(int h, int ob) {

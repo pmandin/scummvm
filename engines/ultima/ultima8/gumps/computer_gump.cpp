@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/computer_gump.h"
 #include "ultima/ultima8/gumps/widgets/text_widget.h"
 #include "ultima/ultima8/games/game_data.h"
@@ -29,12 +28,6 @@
 #include "ultima/ultima8/graphics/gump_shape_archive.h"
 #include "ultima/ultima8/graphics/shape_frame.h"
 #include "ultima/ultima8/usecode/uc_machine.h"
-#include "ultima/ultima8/gumps/gump_notify_process.h"
-#include "ultima/ultima8/world/item.h"
-#include "ultima/ultima8/world/get_object.h"
-#include "ultima/ultima8/kernel/core_app.h"
-#include "ultima/ultima8/games/game_info.h"
-#include "ultima/ultima8/misc/util.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -86,7 +79,8 @@ void ComputerGump::InitGump(Gump *newparent, bool take_focus) {
 	botGump->SetShape(shape, 1);
 	botGump->InitGump(this, false);
 
-	_textWidget = new TextWidget(41, 38, _text, true, COMPUTER_FONT, _dims.width() - 100, 0, Font::TEXT_LEFT);
+	_textWidget = new TextWidget(41, 38, _text, true, COMPUTER_FONT, _dims.width() - 100,
+								_dims.height() - 100, Font::TEXT_LEFT);
 	_textWidget->InitGump(this);
 
 	AudioProcess *audio = AudioProcess::get_instance();
@@ -108,13 +102,23 @@ void ComputerGump::run() {
 	// * Add <MORE> if there is too many lines of text
 }
 
+void ComputerGump::nextText() {
+	TextWidget *textWidget = dynamic_cast<TextWidget *>(_textWidget);
+
+	if (!textWidget)
+		return;
+
+	if (!textWidget->setupNextText())
+		Close();
+}
+
 Gump *ComputerGump::onMouseDown(int button, int32 mx, int32 my) {
-	Close();
+	nextText();
 	return this;
 }
 
 bool ComputerGump::OnKeyDown(int key, int mod) {
-	Close();
+	nextText();
 	return true;
 }
 

@@ -25,7 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/global_switches.h"
 #include "engines/icb/session.h"
 #include "engines/icb/animation_mega_set.h"
@@ -48,93 +47,93 @@ namespace ICB {
 
 // this is the master animation declaration table.
 _an_anim_entry master_anim_name_table[__TOTAL_ANIMS] = {
-    {"walk", __WALK},
-    {"walk_to_stand", __WALK_TO_STAND},
-    {"walk_to_other_stand_(left_leg)", __WALK_TO_OTHER_STAND_LEFT_LEG},
-    {"walk_to_pull_out_weapon", __WALK_TO_PULL_OUT_WEAPON},
+	{"walk", __WALK},
+	{"walk_to_stand", __WALK_TO_STAND},
+	{"walk_to_other_stand_(left_leg)", __WALK_TO_OTHER_STAND_LEFT_LEG},
+	{"walk_to_pull_out_weapon", __WALK_TO_PULL_OUT_WEAPON},
 
-    {"stand", __STAND},
-    {"stand_to_walk", __STAND_TO_WALK},
-    {"stand_to_walk_upstairs_right", __STAND_TO_WALK_UP_STAIRS_RIGHT},
-    {"stand_to_walk_downstairs_right", __STAND_TO_WALK_DOWN_STAIRS_RIGHT},
-    {"stand_to_run", __STAND_TO_RUN},
-    {"stand_to_step_backward", __STAND_TO_STEP_BACKWARD},
-    {"stand_crouch_to_stand", __STAND_CROUCHED_TO_STAND},
-    {"stand_crouch_to_walk_crouched", __STAND_CROUCHED_TO_WALK_CROUCHED},
+	{"stand", __STAND},
+	{"stand_to_walk", __STAND_TO_WALK},
+	{"stand_to_walk_upstairs_right", __STAND_TO_WALK_UP_STAIRS_RIGHT},
+	{"stand_to_walk_downstairs_right", __STAND_TO_WALK_DOWN_STAIRS_RIGHT},
+	{"stand_to_run", __STAND_TO_RUN},
+	{"stand_to_step_backward", __STAND_TO_STEP_BACKWARD},
+	{"stand_crouch_to_stand", __STAND_CROUCHED_TO_STAND},
+	{"stand_crouch_to_walk_crouched", __STAND_CROUCHED_TO_WALK_CROUCHED},
 
-    {"run", __RUN},
-    {"run_to_stand", __RUN_TO_STAND},
-    {"run_to_pull_out_weapon", __RUN_TO_PULL_OUT_WEAPON},
+	{"run", __RUN},
+	{"run_to_stand", __RUN_TO_STAND},
+	{"run_to_pull_out_weapon", __RUN_TO_PULL_OUT_WEAPON},
 
-    {"use_card_on_slot", __USE_CARD_ON_SLOT},
-    {"pick_up_object_from_floor", __PICK_UP_OBJECT_FROM_FLOOR},
-    {"push_button", __PUSH_BUTTON},
-    {"being_shot", __BEING_SHOT},
-    {"being_shot_dead", __BEING_SHOT_DEAD},
+	{"use_card_on_slot", __USE_CARD_ON_SLOT},
+	{"pick_up_object_from_floor", __PICK_UP_OBJECT_FROM_FLOOR},
+	{"push_button", __PUSH_BUTTON},
+	{"being_shot", __BEING_SHOT},
+	{"being_shot_dead", __BEING_SHOT_DEAD},
 
-    {"sidestep_left", __SIDESTEP_LEFT},
-    {"step_backward", __STEP_BACKWARD},
-    {"step_forward", __STEP_FORWARD},
-    {"step_backward_to_stand", __STEP_BACKWARD_TO_STAND},
-    {"step_backward_to_other_stand_(left_leg)", __STEP_BACKWARD_TO_OTHER_STAND_LEFT},
+	{"sidestep_left", __SIDESTEP_LEFT},
+	{"step_backward", __STEP_BACKWARD},
+	{"step_forward", __STEP_FORWARD},
+	{"step_backward_to_stand", __STEP_BACKWARD_TO_STAND},
+	{"step_backward_to_other_stand_(left_leg)", __STEP_BACKWARD_TO_OTHER_STAND_LEFT},
 
-    {"stand_and_aim", __STAND_AND_AIM},
-    {"stand_and_shoot", __STAND_AND_SHOOT},
-    {"pull_out_weapon", __PULL_OUT_WEAPON},
-    {"cord_strike", __STRIKE},
-    {"low_strike", __LOW_STRIKE},
-    {"hit_from_behind", __HIT_FROM_BEHIND},
+	{"stand_and_aim", __STAND_AND_AIM},
+	{"stand_and_shoot", __STAND_AND_SHOOT},
+	{"pull_out_weapon", __PULL_OUT_WEAPON},
+	{"cord_strike", __STRIKE},
+	{"low_strike", __LOW_STRIKE},
+	{"hit_from_behind", __HIT_FROM_BEHIND},
 
-    {"turn_on_the_spot_cw", __TURN_ON_THE_SPOT_CLOCKWISE},
+	{"turn_on_the_spot_cw", __TURN_ON_THE_SPOT_CLOCKWISE},
 
-    {"walk_upstairs_left", __WALK_UPSTAIRS_LEFT},
-    {"walk_upstairs_right", __WALK_UPSTAIRS_RIGHT},
-    {"walk_downstairs_left", __WALK_DOWNSTAIRS_LEFT},
-    {"walk_downstairs_right", __WALK_DOWNSTAIRS_RIGHT},
+	{"walk_upstairs_left", __WALK_UPSTAIRS_LEFT},
+	{"walk_upstairs_right", __WALK_UPSTAIRS_RIGHT},
+	{"walk_downstairs_left", __WALK_DOWNSTAIRS_LEFT},
+	{"walk_downstairs_right", __WALK_DOWNSTAIRS_RIGHT},
 
-    {"walk_upstairs_left_to_stood_on_stairs_facing_up", __WALK_UPSTAIRS_LEFT_TO_STOOD_ON_STAIRS_FACING_UP},
-    {"walk_upstairs_right_to_stood_on_stairs_facing_up", __WALK_UPSTAIRS_RIGHT_TO_STOOD_ON_STAIRS_FACING_UP},
-    {"walk_downstairs_left_to_stood_on_stairs_facing_down", __WALK_DOWNSTAIRS_LEFT_TO_STOOD_ON_STAIRS_FACING_DOWN},
-    {"walk_downstairs_right_to_stood_on_stairs_facing_down", __WALK_DOWNSTAIRS_RIGHT_TO_STOOD_ON_STAIRS_FACING_DOWN},
+	{"walk_upstairs_left_to_stood_on_stairs_facing_up", __WALK_UPSTAIRS_LEFT_TO_STOOD_ON_STAIRS_FACING_UP},
+	{"walk_upstairs_right_to_stood_on_stairs_facing_up", __WALK_UPSTAIRS_RIGHT_TO_STOOD_ON_STAIRS_FACING_UP},
+	{"walk_downstairs_left_to_stood_on_stairs_facing_down", __WALK_DOWNSTAIRS_LEFT_TO_STOOD_ON_STAIRS_FACING_DOWN},
+	{"walk_downstairs_right_to_stood_on_stairs_facing_down", __WALK_DOWNSTAIRS_RIGHT_TO_STOOD_ON_STAIRS_FACING_DOWN},
 
-    {"walk_upstairs_left_to_walk_downstairs_right", __WALK_UPSTAIRS_LEFT_TO_WALK_DOWNSTAIRS_RIGHT},
-    {"walk_upstairs_right_to_walk_downstairs_left", __WALK_UPSTAIRS_RIGHT_TO_WALK_DOWNSTAIRS_LEFT},
-    {"walk_downstairs_left_to_walk_upstairs_right", __WALK_DOWNSTAIRS_LEFT_TO_WALK_UPSTAIRS_RIGHT},
-    {"walk_downstairs_right_to_walk_upstairs_left", __WALK_DOWNSTAIRS_RIGHT_TO_WALK_UPSTAIRS_LEFT},
+	{"walk_upstairs_left_to_walk_downstairs_right", __WALK_UPSTAIRS_LEFT_TO_WALK_DOWNSTAIRS_RIGHT},
+	{"walk_upstairs_right_to_walk_downstairs_left", __WALK_UPSTAIRS_RIGHT_TO_WALK_DOWNSTAIRS_LEFT},
+	{"walk_downstairs_left_to_walk_upstairs_right", __WALK_DOWNSTAIRS_LEFT_TO_WALK_UPSTAIRS_RIGHT},
+	{"walk_downstairs_right_to_walk_upstairs_left", __WALK_DOWNSTAIRS_RIGHT_TO_WALK_UPSTAIRS_LEFT},
 
-    {"run_up_stairs_left", __RUN_UPSTAIRS_LEFT},
-    {"run_up_stairs_right", __RUN_UPSTAIRS_RIGHT},
-    {"run_down_stairs_left", __RUN_DOWNSTAIRS_LEFT},
-    {"run_down_stairs_right", __RUN_DOWNSTAIRS_RIGHT},
+	{"run_up_stairs_left", __RUN_UPSTAIRS_LEFT},
+	{"run_up_stairs_right", __RUN_UPSTAIRS_RIGHT},
+	{"run_down_stairs_left", __RUN_DOWNSTAIRS_LEFT},
+	{"run_down_stairs_right", __RUN_DOWNSTAIRS_RIGHT},
 
-    {"climb_up_ladder_left", __CLIMB_UP_LADDER_LEFT},
-    {"climb_up_ladder_right", __CLIMB_UP_LADDER_RIGHT},
-    {"climb_down_ladder_left", __CLIMB_DOWN_LADDER_LEFT},
-    {"climb_down_ladder_right", __CLIMB_DOWN_LADDER_RIGHT},
+	{"climb_up_ladder_left", __CLIMB_UP_LADDER_LEFT},
+	{"climb_up_ladder_right", __CLIMB_UP_LADDER_RIGHT},
+	{"climb_down_ladder_left", __CLIMB_DOWN_LADDER_LEFT},
+	{"climb_down_ladder_right", __CLIMB_DOWN_LADDER_RIGHT},
 
-    {"climb_up_ladder_right_to_stand", __CLIMB_UP_LADDER_RIGHT_TO_STAND},
-    {"climb_down_ladder_right_to_stand", __CLIMB_DOWN_LADDER_RIGHT_TO_STAND},
+	{"climb_up_ladder_right_to_stand", __CLIMB_UP_LADDER_RIGHT_TO_STAND},
+	{"climb_down_ladder_right_to_stand", __CLIMB_DOWN_LADDER_RIGHT_TO_STAND},
 
-    {"cord_stand_to_climb_up_ladder", __CORD_STAND_TO_CLIMB_UP_LADDER},
+	{"cord_stand_to_climb_up_ladder", __CORD_STAND_TO_CLIMB_UP_LADDER},
 
-    {"stand_to_climb_up_ladder_right", __STAND_TO_CLIMB_UP_LADDER_RIGHT},
-    {"stand_to_climb_down_ladder_right", __STAND_TO_CLIMB_DOWN_LADDER_RIGHT},
+	{"stand_to_climb_up_ladder_right", __STAND_TO_CLIMB_UP_LADDER_RIGHT},
+	{"stand_to_climb_down_ladder_right", __STAND_TO_CLIMB_DOWN_LADDER_RIGHT},
 
-    {"climb_down_ladder_left_to_slide_down_ladder", __CLIMB_DOWN_LADDER_LEFT_TO_SLIDE_DOWN_LADDER},
-    {"slide_down_ladder", __SLIDE_DOWN_LADDER},
-    {"slide_down_ladder_to_stand", __SLIDE_DOWN_LADDER_TO_STAND},
+	{"climb_down_ladder_left_to_slide_down_ladder", __CLIMB_DOWN_LADDER_LEFT_TO_SLIDE_DOWN_LADDER},
+	{"slide_down_ladder", __SLIDE_DOWN_LADDER},
+	{"slide_down_ladder_to_stand", __SLIDE_DOWN_LADDER_TO_STAND},
 
-    {"load_gun", __LOAD_GUN},
-    {"load_gun_2", __LOAD_GUN_2},
-    {"load_gun2", __LOAD_GUN_CROUCH_2},
+	{"load_gun", __LOAD_GUN},
+	{"load_gun_2", __LOAD_GUN_2},
+	{"load_gun2", __LOAD_GUN_CROUCH_2},
 
-    {"cowering", __COWER},
-    {"cowering_to_stand", __COWER_TO_STAND},
-    {"run_hand_through_hair", __HAND_HAIR},
-    {"shrug", __SHRUG},
-    {"look_at_watch", __LOOK_AT_WATCH},
-    {"stretch", __STRETCH},
-    {"scratching_backside", __SCRATCH},
+	{"cowering", __COWER},
+	{"cowering_to_stand", __COWER_TO_STAND},
+	{"run_hand_through_hair", __HAND_HAIR},
+	{"shrug", __SHRUG},
+	{"look_at_watch", __LOOK_AT_WATCH},
+	{"stretch", __STRETCH},
+	{"scratching_backside", __SCRATCH},
 };
 
 // these names must be in same order as __weapon
@@ -163,7 +162,7 @@ void _vox_image::___init(const char *chr, const char *set, __weapon weapon) {
 	// where chr='cord'
 	// set='casual_wear'
 
-	int k, len;
+	int32 k, len;
 
 	// check for no weapon being set
 	if (weapon == __NOT_SET)
@@ -228,11 +227,11 @@ void _vox_image::___init(const char *chr, const char *set, __weapon weapon) {
 	Zdebug("\n-------------------------------------------------------------------------------\n");
 }
 
-void _vox_image::MakeAnimEntry(int i) {
+void _vox_image::MakeAnimEntry(int32 i) {
 // make name
 
 	char name[ANIM_NAME_STR_LEN];
-	int len;
+	int32 len;
 
 	len = sprintf(name, "%s%s.rab", (const char *)image_path, (const char *)master_anim_name_table[i].name);
 
@@ -406,7 +405,7 @@ __mega_set_names _game_session::Fetch_generic_anim_from_ascii(const char *ascii_
 void PreRegisterTexture(const char *, uint32, const char *, uint32, const char *, uint32);
 
 bool8 _vox_image::Set_texture(const char *tex_name) {
-	int len;
+	int32 len;
 
 	len = sprintf(texture_name, "%s.revtex", tex_name);
 
@@ -428,7 +427,7 @@ bool8 _vox_image::Set_texture(const char *tex_name) {
 
 bool8 _vox_image::Set_mesh(const char *m_name) {
 	char name[32];
-	int len;
+	int32 len;
 
 	strcpy(name, m_name);
 	strcat(name, ".rap");
@@ -448,7 +447,7 @@ bool8 _vox_image::Set_palette(const char *pal_name) {
 		return TRUE8;
 	}
 
-	int len;
+	int32 len;
 
 	len = sprintf(palette_name, "%s.revtex", pal_name);
 

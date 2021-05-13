@@ -24,7 +24,7 @@
 #define ULTIMA8_GUMPS_CRUINVENTORYGUMP_H
 
 #include "ultima/ultima8/gumps/cru_stat_gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -52,9 +52,10 @@ public:
 	void saveData(Common::WriteStream *ws) override;
 
 private:
-	Shape *_inventoryShape;
 	Gump *_inventoryItemGump;
 	TextWidget *_inventoryText;
+
+	void resetText();
 };
 
 } // End of namespace Ultima8

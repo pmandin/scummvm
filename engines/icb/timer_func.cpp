@@ -25,7 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/debug.h"
 #include "engines/icb/mission.h"
 #include "engines/icb/global_objects.h"
@@ -63,35 +62,35 @@ int32 timerDanger;
 #define BOT_BIT 64
 
 const uint8 digitBits[10] = {
-    //	TOP_BIT  |   TOP_RIGHT_BIT   |   TOP_LEFT_BIT    |   MID_BIT |   BOT_RIGHT_BIT   |   BOT_LEFT_BIT    |   BOT_BIT
-    TOP_BIT | TOP_RIGHT_BIT | TOP_LEFT_BIT | 0 | BOT_RIGHT_BIT | BOT_LEFT_BIT | BOT_BIT,       // 0
-    0 | 0 | TOP_LEFT_BIT | 0 | 0 | BOT_LEFT_BIT | 0,                                           // 1
-    TOP_BIT | TOP_RIGHT_BIT | 0 | MID_BIT | 0 | BOT_LEFT_BIT | BOT_BIT,                        // 2
-    TOP_BIT | TOP_RIGHT_BIT | 0 | MID_BIT | BOT_RIGHT_BIT | 0 | BOT_BIT,                       // 3
-    0 | TOP_RIGHT_BIT | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | 0 | 0,                        // 4
-    TOP_BIT | 0 | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | 0 | BOT_BIT,                        // 5
-    TOP_BIT | 0 | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | BOT_LEFT_BIT | BOT_BIT,             // 6
-    TOP_BIT | TOP_RIGHT_BIT | 0 | 0 | BOT_RIGHT_BIT | 0 | 0,                                   // 7
-    TOP_BIT | TOP_RIGHT_BIT | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | BOT_LEFT_BIT | BOT_BIT, // 8
-    TOP_BIT | TOP_RIGHT_BIT | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | 0 | BOT_BIT,            // 9
+	//	TOP_BIT  |   TOP_RIGHT_BIT   |   TOP_LEFT_BIT    |   MID_BIT |   BOT_RIGHT_BIT   |   BOT_LEFT_BIT    |   BOT_BIT
+	TOP_BIT | TOP_RIGHT_BIT | TOP_LEFT_BIT | 0 | BOT_RIGHT_BIT | BOT_LEFT_BIT | BOT_BIT,       // 0
+	0 | 0 | TOP_LEFT_BIT | 0 | 0 | BOT_LEFT_BIT | 0,                                           // 1
+	TOP_BIT | TOP_RIGHT_BIT | 0 | MID_BIT | 0 | BOT_LEFT_BIT | BOT_BIT,                        // 2
+	TOP_BIT | TOP_RIGHT_BIT | 0 | MID_BIT | BOT_RIGHT_BIT | 0 | BOT_BIT,                       // 3
+	0 | TOP_RIGHT_BIT | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | 0 | 0,                        // 4
+	TOP_BIT | 0 | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | 0 | BOT_BIT,                        // 5
+	TOP_BIT | 0 | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | BOT_LEFT_BIT | BOT_BIT,             // 6
+	TOP_BIT | TOP_RIGHT_BIT | 0 | 0 | BOT_RIGHT_BIT | 0 | 0,                                   // 7
+	TOP_BIT | TOP_RIGHT_BIT | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | BOT_LEFT_BIT | BOT_BIT, // 8
+	TOP_BIT | TOP_RIGHT_BIT | TOP_LEFT_BIT | MID_BIT | BOT_RIGHT_BIT | 0 | BOT_BIT,            // 9
 
 };
 
 const short barXY[7][2] = {
-    {1, 0},                          // top
-    {BAR_WIDTH + 1, 1},              // top/right
-    {0, 1},                          // top/left
-    {1, BAR_HEIGHT + 1},             // mid
-    {BAR_WIDTH + 1, BAR_HEIGHT + 2}, // bot/right
-    {0, BAR_HEIGHT + 2},             // bot/left
-    {1, 2 * BAR_HEIGHT + 2}          // bot
+	{1, 0},                          // top
+	{BAR_WIDTH + 1, 1},              // top/right
+	{0, 1},                          // top/left
+	{1, BAR_HEIGHT + 1},             // mid
+	{BAR_WIDTH + 1, BAR_HEIGHT + 2}, // bot/right
+	{0, BAR_HEIGHT + 2},             // bot/left
+	{1, 2 * BAR_HEIGHT + 2}          // bot
 };
 
 // DRAW THE SEGMENT - different for psx and pc at the moment -----------------
 
 #include "surface_manager.h"
 
-void DrawSegment(int x, int y, int dx, int dy, int danger) {
+void DrawSegment(int32 x, int32 y, int32 dx, int32 dy, int32 danger) {
 	uint8 *surface_address;
 	uint32 pitch;
 
@@ -122,9 +121,9 @@ void DrawSegment(int x, int y, int dx, int dy, int danger) {
 }
 
 // draw a digit using lcd display, -1 for the :
-void DrawDigit(int x, int y, int d, int danger) {
-	int sx, sy, dx, dy;
-	int i, dig;
+void DrawDigit(int32 x, int32 y, int32 d, int32 danger) {
+	int32 sx, sy, dx, dy;
+	int32 i, dig;
 
 	// special dash...
 	if (d == -1) {
@@ -157,8 +156,8 @@ void DrawDigit(int x, int y, int d, int danger) {
 }
 
 // draw mm:ss
-void DrawTime(int mins, int secs, int hs, int danger) {
-	int x, y;
+void DrawTime(int32 mins, int32 secs, int32 hs, int32 danger) {
+	int32 x, y;
 
 	x = TIME_X;
 	y = TIME_Y;
@@ -188,9 +187,9 @@ void DrawTimer() {
 	if (!timerOn)
 		return;
 
-	int mins, secs, cycles, totalSecs, hs, danger;
+	int32 mins, secs, cycles, totalSecs, hs, danger;
 
-	cycles = g_globalScriptVariables.GetVariable(timerVariable);
+	cycles = g_globalScriptVariables->GetVariable(timerVariable);
 
 	totalSecs = cycles / timerMultiplier;
 
@@ -231,7 +230,7 @@ mcodeFunctionReturnCodes fn_activate_timer(int32 &, int32 *params) {
 	timerVariable = HashString(timer_name);
 
 	// test variable exists...
-	int32 test = g_globalScriptVariables.FindVariable(timerVariable);
+	int32 test = g_globalScriptVariables->FindVariable(timerVariable);
 	if (test == -1) {
 		Fatal_error("No global variable %s which fn_activate_timer() has been told to follow!", timer_name);
 	}

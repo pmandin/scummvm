@@ -51,6 +51,7 @@ const Game kyra1Games[] = {
 	{ kKyra1, kPlatformDOS, kTalkieVersion, IT_ITA },
 	{ kKyra1, kPlatformDOS, kTalkieVersion, ES_ESP },
 	//{ kKyra1, kPlatformDOS, kTalkieVersion, RU_RUS },
+	{ kKyra1, kPlatformDOS, kTalkieVersion, HE_ISR },
 
 	{ kKyra1, kPlatformFMTowns, kNoSpecial, EN_ANY },
 	{ kKyra1, kPlatformFMTowns, kNoSpecial, JA_JPN },
@@ -96,6 +97,8 @@ const Game kyra3Games[] = {
 	{ kKyra3, kPlatformDOS, kTalkieVersion, DE_DEU },
 	{ kKyra3, kPlatformDOS, kTalkieVersion, IT_ITA },
 	{ kKyra3, kPlatformDOS, kTalkieVersion, ES_ESP },
+	{ kKyra3, kPlatformDOS, kTalkieVersion, RU_RUS },
+	{ kKyra3, kPlatformDOS, kTalkieVersion, ZH_CNA },
 
 	GAME_DUMMY_ENTRY
 };
@@ -112,6 +115,7 @@ const Game eob1Games[] = {
 	{ kEoB1, kPlatformPC98, kNoSpecial, JA_JPN },
 
 	{ kEoB1, kPlatformSegaCD, kNoSpecial, EN_ANY },
+	{ kEoB1, kPlatformSegaCD, kNoSpecial, JA_JPN },
 
 	GAME_DUMMY_ENTRY
 };
@@ -146,6 +150,10 @@ const Game lolGames[] = {
 	{ kLoL, kPlatformDOS, kTalkieVersion, IT_ITA },
 	{ kLoL, kPlatformDOS, kTalkieVersion, RU_RUS },
 	{ kLoL, kPlatformDOS, kTalkieVersion, ES_ESP },
+
+	{ kLoL, kPlatformDOS, kTalkieDemoVersion, EN_ANY },
+	{ kLoL, kPlatformDOS, kTalkieDemoVersion, FR_FRA },
+	{ kLoL, kPlatformDOS, kTalkieDemoVersion, DE_DEU },
 
 	{ kLoL, kPlatformPC98, kNoSpecial, JA_JPN },
 
@@ -798,6 +806,9 @@ const int kyra3Need[] = {
 	k3ItemAnimData,
 	k3ItemMagicTable,
 	k3ItemStringMap,
+	k3FontData,
+	k3VqaSubtitlesIntro,
+	k3VqaSubtitlesBoat,
 	-1
 };
 
@@ -1143,6 +1154,90 @@ const int lolCDNeed[] = {
 	-1
 };
 
+const int lolCDDemoNeed[] = {
+	kLoLCharacterDefs,
+	kLoLIngameSfxFiles,
+	kLoLIngameSfxIndex,
+	kLoLMusicTrackMap,
+	kLoLIngameGMSfxIndex,
+	kLoLIngameMT32SfxIndex,
+	kLoLIngamePcSpkSfxIndex,
+	kLoLSpellProperties,
+	kLoLGameShapeMap,
+	kLoLSceneItemOffs,
+	kLoLCharInvIndex,
+	kLoLCharInvDefs,
+	kLoLCharDefsMan,
+	kLoLCharDefsAkshel,
+	kLoLExpRequirements,
+	kLoLMonsterModifiers1,
+	kLoLMonsterModifiers2,
+	kLoLMonsterModifiers3,
+	kLoLMonsterModifiers4,
+	kLoLMonsterShiftOffsets,
+	kLoLMonsterDirFlags,
+	kLoLMonsterScaleY,
+	kLoLMonsterScaleX,
+	kLoLMonsterScaleWH,
+	kLoLFlyingObjectShp,
+	kLoLInventoryDesc,
+
+	kLoLLevelShpList,
+	kLoLLevelDatList,
+	kLoLCompassDefs,
+	kLoLItemPrices,
+	kLoLStashSetup,
+	kLoLDscWalls,
+	kRpgCommonDscShapeIndex,
+	kLoLDscOvlMap,
+	kLoLDscScaleWidthData,
+	kLoLDscScaleHeightData,
+	kRpgCommonDscX,
+	kLoLBaseDscY,
+	kRpgCommonDscTileIndex,
+	kRpgCommonDscDoorShapeIndex,
+	kRpgCommonDscDimData1,
+	kRpgCommonDscDimData2,
+	kRpgCommonDscBlockMap,
+	kRpgCommonDscDimMap,
+	kLoLDscOvlIndex,
+	kRpgCommonDscBlockIndex,
+	kRpgCommonDscDoorY2,
+	kRpgCommonDscDoorFrameY1,
+	kRpgCommonDscDoorFrameY2,
+	kRpgCommonDscDoorScaleOffs,
+	kLoLDscDoorScale,
+	kLoLDscDoor4,
+	kLoLDscDoorX,
+	kLoLDscDoorY,
+
+	kLoLScrollXTop,
+	kLoLScrollYTop,
+	kLoLScrollXBottom,
+	kLoLScrollYBottom,
+
+	kLoLButtonDefs,
+	kLoLButtonList1,
+	kLoLButtonList2,
+	kLoLButtonList3,
+	kLoLButtonList4,
+	kLoLButtonList5,
+	kLoLButtonList6,
+	kLoLButtonList7,
+	kLoLButtonList8,
+
+	kLoLLegendData,
+	kLoLMapCursorOvl,
+	kLoLMapStringId,
+
+	kLoLSpellbookAnim,
+	kLoLSpellbookCoords,
+	kLoLHealShapeFrames,
+	kLoLLightningDefs,
+
+	-1
+};
+
 const int lolDemoNeed[] = {
 	k2SeqplayPakFiles,
 	k2SeqplayStrings,
@@ -1430,6 +1525,7 @@ const int eob1FloppyNeed[] = {
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseEncodeMonsterDefs,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 
 	kEoBBaseSoundFilesIntro,
 	kEoBBaseSoundFilesIngame,
@@ -1724,6 +1820,7 @@ const int eob1FloppyOldNeed[] = {
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseEncodeMonsterDefs,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 
 	kEoBBaseSoundFilesIntro,
 	kEoBBaseSoundFilesIngame,
@@ -2005,6 +2102,7 @@ const int eob1AmigaNeed[] = {
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseEncodeMonsterDefs,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 
 	kEoBBaseSoundMap,
 	kEoBBaseLevelSoundFiles1,
@@ -2303,6 +2401,7 @@ const int eob1PC98Need[] = {
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseEncodeMonsterDefs,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 
 	kEoBBaseSoundFilesIntro,
 	kEoBBaseSoundFilesIngame,
@@ -2422,11 +2521,11 @@ const int eob1SegaCDNeed[] = {
 	kEoBBaseCancelStrings,
 
 	kEoBBaseMenuStringsSaveLoad,
-	kEoBBaseMenuStringsOnOff,
+	//kEoBBaseMenuStringsOnOff,
 	kEoBBaseMenuStringsSpells,
 	kEoBBaseMenuStringsRest,
 	kEoBBaseMenuStringsDrop,
-	kEoBBaseMenuStringsExit,
+	//kEoBBaseMenuStringsExit,
 	kEoBBaseMenuStringsStarve,
 	kEoBBaseMenuStringsScribe,
 	kEoBBaseMenuStringsDrop2,
@@ -2444,7 +2543,7 @@ const int eob1SegaCDNeed[] = {
 	kEoBBaseNumSpellsPal,
 	kEoBBaseNumSpellsMage,
 
-	kEoBBaseCharGuiStringsIn,
+	//kEoBBaseCharGuiStringsIn,
 
 	kEoBBaseCharStatusStrings7,
 	kEoBBaseCharStatusStrings81,
@@ -2712,6 +2811,9 @@ const int eob1SegaCDNeed[] = {
 	kEoBBaseTextInputSelectStrings,
 
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
+
+	kEoBBaseSaveNamePatterns,
 
 	-1
 };
@@ -3015,6 +3117,7 @@ const int eob2FloppyNeed[] = {
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseEncodeMonsterDefs,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 	kEoB2Npc1Strings,
 	kEoB2Npc2Strings,
 	kEoB2MonsterDustStrings,
@@ -3341,6 +3444,7 @@ const int eob2AmigaNeed[] = {
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseEncodeMonsterDefs,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 	kEoB2Npc1Strings,
 	kEoB2Npc2Strings,
 	kEoB2MonsterDustStrings,
@@ -3377,7 +3481,7 @@ const int eob2AmigaNeed[] = {
 
 	-1
 };
-
+/*
 const int eob2PC98Need[] = {
 	kEoBBaseChargenStrings1,
 	kEoBBaseChargenStrings2,
@@ -3677,6 +3781,7 @@ const int eob2PC98Need[] = {
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseEncodeMonsterDefs,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 	kEoB2Npc1Strings,
 	kEoB2Npc2Strings,
 	kEoB2MonsterDustStrings,
@@ -3703,7 +3808,7 @@ const int eob2PC98Need[] = {
 	kEoBBaseSoundFilesFinale,
 
 	-1
-};
+};*/
 
 const int eob2FMTownsNeed[] = {
 	kEoBBaseChargenStrings1,
@@ -4019,6 +4124,7 @@ const int eob2FMTownsNeed[] = {
 	kEoBBaseMonsterDirChangeTable,
 	kEoBBaseMonsterDistAttStrings,
 	kEoBBaseNpcPresets,
+	kEoBBaseNpcPresetsNames,
 	kEoB2Npc1Strings,
 	kEoB2Npc2Strings,
 	kEoB2MonsterDustStrings,
@@ -4259,7 +4365,7 @@ const int eob2FMTownsNeed[] = {
 	kEoB2FontDmpSearchTbl,
 	kEoB2Ascii2SjisTables,
 	kEoB2Ascii2SjisTables2,
-	kEoB2SaveNamePatterns,
+	kEoBBaseSaveNamePatterns,
 
 	kEoBBaseSoundFilesIntro,
 	kEoBBaseSoundFilesFinale,
@@ -4314,6 +4420,7 @@ const GameNeed gameNeedTable[] = {
 	{ kLoL, kPlatformFMTowns, kNoSpecial, lolFMTownsNeed },
 
 	{ kLoL, kPlatformDOS, kTalkieVersion, lolCDNeed },
+	{ kLoL, kPlatformDOS, kTalkieDemoVersion, lolCDDemoNeed },
 
 	{ kEoB1, kPlatformDOS, kNoSpecial, eob1FloppyNeed },
 	{ kEoB1, kPlatformDOS, kOldFloppy, eob1FloppyOldNeed },

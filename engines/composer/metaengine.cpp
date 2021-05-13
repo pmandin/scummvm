@@ -67,23 +67,20 @@ bool ComposerEngine::loadDetectedConfigFile(Common::INIFile &configFile) const {
 
 class ComposerMetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "composer";
 	}
 
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 	bool hasFeature(MetaEngineFeature f) const override;
 
 	int getMaximumSaveSlot() const override;
 	SaveStateList listSaves(const char* target) const override;
 };
 
-bool ComposerMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const Composer::ComposerGameDescription *gd = (const Composer::ComposerGameDescription *)desc;
-	if (gd) {
-		*engine = new Composer::ComposerEngine(syst, gd);
-	}
-	return gd != 0;
+Common::Error ComposerMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Composer::ComposerEngine(syst, (const Composer::ComposerGameDescription *)desc);
+	return Common::kNoError;
 }
 
 bool ComposerMetaEngine::hasFeature(MetaEngineFeature f) const {

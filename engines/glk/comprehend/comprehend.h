@@ -28,11 +28,10 @@
 #include "glk/glk_api.h"
 #include "glk/window_graphics.h"
 #include "glk/window_text_buffer.h"
+#include "glk/window_text_grid.h"
 
 namespace Glk {
 namespace Comprehend {
-
-#define PATH_MAX 256
 
 class DrawSurface;
 class Pics;
@@ -53,6 +52,7 @@ private:
 	bool _disableSaves;
 public:
 	GraphicsWindow *_topWindow;
+	TextGridWindow *_roomDescWindow;
 	TextBufferWindow *_bottomWindow;
 	DrawSurface *_drawSurface;
 	ComprehendGame *_game;
@@ -133,8 +133,13 @@ public:
 
 	/**
 	 * Print unicode-string to the buffer window
-	*/
+	 */
 	void print(const Common::U32String fmt, ...);
+
+	/**
+	 * Prints the room description in the room description window
+	 */
+	void printRoomDesc(const Common::String &desc);
 
 	/**
 	 * Read an input line
@@ -169,7 +174,7 @@ public:
 	/**
 	 * Toggles whether the picture window is visible
 	 */
-	void toggleGraphics();
+	bool toggleGraphics();
 
 	/**
 	 * Ensures the picture window is visible

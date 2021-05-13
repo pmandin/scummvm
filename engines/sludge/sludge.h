@@ -23,35 +23,37 @@
 #ifndef SLUDGE_SLUDGE_H
 #define SLUDGE_SLUDGE_H
 
-#include "common/random.h"
 #include "engines/engine.h"
-#include "graphics/pixelformat.h"
-#include "gui/debugger.h"
 
-#include "sludge/console.h"
-#include "sludge/fileset.h"
-#include "sludge/language.h"
-#include "sludge/objtypes.h"
-#include "sludge/timing.h"
+namespace Common {
+class RandomSource;
+}
+
+namespace Graphics {
+struct PixelFormat;
+}
 
 namespace Sludge {
-
-extern SludgeEngine *g_sludge;
 
 class CursorManager;
 class EventManager;
 class FatalMsgManager;
 class FloorManager;
 class GraphicsManager;
+class LanguageManager;
+class ObjectManager;
 class PeopleManager;
+class ResourceManager;
 class RegionManager;
 class SoundManager;
 class SpeechManager;
+class StatusBarManager;
 class TextManager;
-
-class SludgeConsole;
+class Timer;
 
 struct SludgeGameDescription;
+
+#define IN_THE_CENTRE 65535
 
 // debug channels
 enum {
@@ -77,7 +79,7 @@ public:
 	Common::String gamePath;
 
 	// timer
-	Timer _timer;
+	Timer *_timer;
 
 	// managers
 	ResourceManager *_resMan;
@@ -93,6 +95,9 @@ public:
 	PeopleManager *_peopleMan;
 	FloorManager *_floorMan;
 	FatalMsgManager *_fatalMan;
+	StatusBarManager *_statusBar;
+
+	bool _dumpScripts;
 
 	SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc);
 	~SludgeEngine() override;
@@ -114,6 +119,8 @@ private:
 	Graphics::PixelFormat *_pixelFormat;
 	Graphics::PixelFormat *_origFormat;
 };
+
+extern SludgeEngine *g_sludge;
 
 } // End of namespace Sludge
 

@@ -64,8 +64,8 @@ void *ltk_sigsuballoc(errcxdef *errcx, size_t siz) {
   /* allocate the memory */
   if (!(ptr = ltk_suballoc(siz)))
   {
-    /* signal an error */
-    errsigf(errcx, "LTK", 0);
+	/* signal an error */
+	errsigf(errcx, "LTK", 0);
   }
 
   /* return the memory */
@@ -106,8 +106,8 @@ void *ltk_sigalloc(errcxdef *errcx, size_t siz) {
   void *ptr;                                 /* pointer to allocated memory */
 
   if (!(ptr = ltk_alloc(siz))) {
-    /* signal error */
-    errsigf(errcx, "LTK", 0);
+	/* signal error */
+	errsigf(errcx, "LTK", 0);
   }
 
   /* return a ptr to the allocated memory */
@@ -119,7 +119,7 @@ void *ltk_sigalloc(errcxdef *errcx, size_t siz) {
 /*
  * ltk_free - free a block of memory allocated by ltk_alloc.  This
  * takes the memory handle stashed just behind the allocation, and frees
- * the block of memory.  
+ * the block of memory.
  */
 void ltk_free(void *mem) {
 	free(mem);

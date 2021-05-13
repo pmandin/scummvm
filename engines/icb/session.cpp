@@ -26,7 +26,6 @@
  */
 
 #include "engines/icb/p4.h"
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/debug.h"
 #include "engines/icb/p4_generic.h"
 #include "engines/icb/res_man.h"
@@ -54,7 +53,7 @@ namespace ICB {
 
 // Translation tweaks
 
-_linked_data_file *LoadTranslatedFile(cstr session, cstr mission);
+_linked_data_file *LoadTranslatedFile(const char *session, const char *mission);
 
 
 // prototypes
@@ -323,7 +322,7 @@ void _game_session::___init(const char *mission, const char *new_session_name) {
 		walk_areas = (_linked_data_file *)private_session_resman->Res_open(temp_buf, buf_hash, session_cluster, session_cluster_hash);
 		Tdebug("walkareas.txt", "%d top level walkareas\n", walk_areas->Fetch_number_of_items());
 
-		int nMissing = 0;
+		int32 nMissing = 0;
 		for (uint32 k = 0; k < walk_areas->Fetch_number_of_items(); k++) {
 			INTEGER_WalkAreaFile *inner_wa;
 			inner_wa = (INTEGER_WalkAreaFile *)walk_areas->Fetch_item_by_number(k);
@@ -572,7 +571,7 @@ void _game_session::Init_objects() {
 		L = logic_structs[j];
 		I = L->voxel_info;
 		if (L->image_type == VOXEL) {
-			for (uint i = 0; i < __NON_GENERIC; i++) {
+			for (uint32 i = 0; i < __NON_GENERIC; i++) {
 				if (I->IsAnimTable(i)) {
 #ifdef PRELOAD
 					rs_anims->Res_open(I->info_name[i], I->info_name_hash[i], I->base_path, I->base_path_hash);
@@ -615,7 +614,7 @@ void _game_session::Init_objects() {
 			player.Set_player_id(id);
 
 		// Preload the player animation to make PSX jerking better
-		for (uint i = 0; i < NUMBER_player_startup_anims; i++)
+		for (uint32 i = 0; i < NUMBER_player_startup_anims; i++)
 			rs_anims->Res_open(I->get_anim_name(player_startup_anims[i]), I->anim_name_hash[player_startup_anims[i]], I->base_path, I->base_path_hash);
 	}
 
@@ -673,7 +672,7 @@ void _game_session::Pre_initialise_objects() {
 
 		object = (c_game_object *)objects->Fetch_item_by_number(j);
 
-		logic_structs[j] = &logics[j];
+		logic_structs[j] = g_logics[j];
 		logic_structs[j]->___init((const char *)object->GetName());
 	}
 
@@ -785,11 +784,11 @@ void _game_session::One_logic_cycle() {
 			// run appropriate logic
 			switch (L->big_mode) {
 			case __SCRIPT: // just running full scripts
-				if (px.mega_timer)
+				if (g_px->mega_timer)
 					script_cycleTimer = GetMicroTimer();
 				Pre_logic_event_check();
 				Script_cycle();
-				if (px.mega_timer) {
+				if (g_px->mega_timer) {
 					script_cycleTimer = GetMicroTimer() - script_cycleTimer;
 					L->cycle_time = script_cycleTimer;
 				}
@@ -799,10 +798,10 @@ void _game_session::One_logic_cycle() {
 				break;
 
 			case __CUSTOM_SIMPLE_ANIMATE: // special simple animator logic
-				if (px.mega_timer)
+				if (g_px->mega_timer)
 					script_cycleTimer = GetMicroTimer();
 				Custom_simple_animator();
-				if (px.mega_timer) {
+				if (g_px->mega_timer) {
 					script_cycleTimer = GetMicroTimer() - script_cycleTimer;
 					L->cycle_time = script_cycleTimer;
 				}
@@ -810,10 +809,10 @@ void _game_session::One_logic_cycle() {
 				break;
 
 			case __CUSTOM_BUTTON_OPERATED_DOOR: // special button operated door
-				if (px.mega_timer)
+				if (g_px->mega_timer)
 					script_cycleTimer = GetMicroTimer();
 				Custom_button_operated_door();
-				if (px.mega_timer) {
+				if (g_px->mega_timer) {
 					script_cycleTimer = GetMicroTimer() - script_cycleTimer;
 					L->cycle_time = script_cycleTimer;
 				}
@@ -821,10 +820,10 @@ void _game_session::One_logic_cycle() {
 				break;
 
 			case __CUSTOM_AUTO_DOOR:
-				if (px.mega_timer)
+				if (g_px->mega_timer)
 					script_cycleTimer = GetMicroTimer();
 				Custom_auto_door();
-				if (px.mega_timer) {
+				if (g_px->mega_timer) {
 					script_cycleTimer = GetMicroTimer() - script_cycleTimer;
 					L->cycle_time = script_cycleTimer;
 				}
@@ -838,7 +837,7 @@ void _game_session::One_logic_cycle() {
 					Script_cycle();
 				}
 
-				if (PXfabs(M->actor_xyz.y - logic_structs[player.Fetch_player_id()]->mega->actor_xyz.y) < (int)(M->slice_hold_tolerance)) {
+				if (PXfabs(M->actor_xyz.y - logic_structs[player.Fetch_player_id()]->mega->actor_xyz.y) < (int32)(M->slice_hold_tolerance)) {
 					L->big_mode = __SCRIPT;
 					g_oEventManager->ClearAllEventsForObject(cur_id);
 					g_oSoundLogicEngine->ClearHeardFlag(cur_id);
@@ -881,10 +880,6 @@ void _game_session::One_logic_cycle() {
 				if (!first_session_cycle)
 					Process_player_floor_status(); // sends events when object gains same floor as player
 
-				// async
-				if (!M->dead)
-					Service_generic_async(); // servive live megas
-
 				// process hold mode options
 				// has on-camera-only mode and is not on screen - then sleep again
 				if ((L->hold_mode == mega_player_floor_hold) && (!M->on_players_floor))
@@ -892,7 +887,7 @@ void _game_session::One_logic_cycle() {
 
 				// has slice hold mode and is now off camera - check for shut off tolerance
 				if ((L->hold_mode == mega_slice_hold) && (!M->on_players_floor)) {
-					if (PXfabs(M->actor_xyz.y - logic_structs[player.Fetch_player_id()]->mega->actor_xyz.y) > (int)(M->slice_hold_tolerance))
+					if (PXfabs(M->actor_xyz.y - logic_structs[player.Fetch_player_id()]->mega->actor_xyz.y) > (int32)(M->slice_hold_tolerance))
 						L->big_mode = __MEGA_SLICE_HELD;
 				}
 
@@ -1193,9 +1188,9 @@ void _game_session::Set_init_voxel_floors() {
 	Prepare_megas_route_barriers(TRUE8); // update barriers
 }
 
-_linked_data_file *LoadTranslatedFile(cstr mission, cstr session) {
+_linked_data_file *LoadTranslatedFile(const char *mission, const char *session) {
 	// Get the actual session name
-	cstr sessionstart = session + strlen(mission) + 1;
+	const char *sessionstart = session + strlen(mission) + 1;
 	pxString actsession;
 	actsession.SetString(sessionstart, strlen(sessionstart) - 1);
 
@@ -1211,19 +1206,19 @@ _linked_data_file *LoadTranslatedFile(cstr mission, cstr session) {
 	if (stream == NULL) // if it could not be opened
 		Fatal_error("Unable to load file %s", (const char *)fname);
 
-	uint len = stream->size();
+	uint32 len = stream->size();
 
 	//      make space for file
-	char *mem = new char[len + 1];
+	char *memPtr = new char[len + 1];
 
 	//      read it in
-	stream->read(mem, len);
+	stream->read(memPtr, len);
 	delete stream; // close the file
 
 	//      0 terminate the string
-	mem[len] = 0;
+	memPtr[len] = 0;
 
-	return ((_linked_data_file *)mem);
+	return ((_linked_data_file *)memPtr);
 }
 
 } // End of namespace ICB

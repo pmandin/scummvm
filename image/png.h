@@ -20,14 +20,6 @@
  *
  */
 
-/*
- * PNG decoder used in engines:
- *  - sword25
- *  - wintermute
- * Dependencies:
- *  - libpng
- */
-
 #ifndef IMAGE_PNG_H
 #define IMAGE_PNG_H
 
@@ -47,16 +39,30 @@ struct Surface;
 
 namespace Image {
 
+/**
+ * @defgroup image_png PNG decoder
+ * @ingroup image
+ *
+ * @brief Decoder for PNG images.
+ *
+ * This decoder has a dependency on the libpng library.
+ *
+ * Used in engines:
+ * - Sword25
+ * - Wintermute
+ * @{
+ */
+
 class PNGDecoder : public ImageDecoder {
 public:
 	PNGDecoder();
 	~PNGDecoder();
 
-	bool loadStream(Common::SeekableReadStream &stream);
-	void destroy();
-	const Graphics::Surface *getSurface() const { return _outputSurface; }
-	const byte *getPalette() const { return _palette; }
-	uint16 getPaletteColorCount() const { return _paletteColorCount; }
+	bool loadStream(Common::SeekableReadStream &stream) override;
+	void destroy() override;
+	const Graphics::Surface *getSurface() const override { return _outputSurface; }
+	const byte *getPalette() const override { return _palette; }
+	uint16 getPaletteColorCount() const override { return _paletteColorCount; }
 	int getTransparentColor() const { return _transparentColor; }
 	void setSkipSignature(bool skip) { _skipSignature = skip; }
 	void setKeepTransparencyPaletted(bool keep) { _keepTransparencyPaletted = keep; }
@@ -78,9 +84,13 @@ private:
 
 /**
  * Outputs a compressed PNG stream of the given input surface.
+  *
+ *  @param out  Stream to which to write the PNG image.
+ *  @param input The surface to save as a PNG image..
+ *  @param palette    The palette (in RGB888), if the source format has a bpp of 1.
  */
-bool writePNG(Common::WriteStream &out, const Graphics::Surface &input);
-
+bool writePNG(Common::WriteStream &out, const Graphics::Surface &input, const byte *palette = nullptr);
+/** @} */
 } // End of namespace Image
 
 #endif

@@ -68,7 +68,7 @@ struct SaveInfoSection {
 
 #define SaveInfoSectionSize (4+4+4 + 4+4 + 4+2)
 
-#define CURRENT_VER 99
+#define CURRENT_VER 100
 #define INFOSECTION_VERSION 2
 
 #pragma mark -
@@ -85,7 +85,7 @@ bool ScummEngine::canLoadGameStateCurrently() {
 	// aware of *any* spots where loading is not supported?
 
 	// HE games are limited to original load and save interface only,
-	// due to numerous glitches (see bug #1726909) that can occur.
+	// due to numerous glitches (see bug #3210) that can occur.
 	//
 	// Except the earliest HE Games (3DO and initial DOS version of
 	// puttputt), which didn't offer scripted load/save screens.
@@ -119,7 +119,7 @@ bool ScummEngine::canSaveGameStateCurrently() {
 	// original EXE allowed this.
 
 	// HE games are limited to original load and save interface only,
-	// due to numerous glitches (see bug #1726909) that can occur.
+	// due to numerous glitches (see bug #3210) that can occur.
 	//
 	// Except the earliest HE Games (3DO and initial DOS version of
 	// puttputt), which didn't offer scripted load/save screens.
@@ -580,7 +580,7 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 	// after game load, and o2_loadRoomWithEgo() does as well
 	// this script starts character-dependent music
 	//
-	// Fixes bug #1766072: MANIACNES: Music Doesn't Start On Load Game
+	// Fixes bug #3362: MANIACNES: Music Doesn't Start On Load Game
 	if (_game.platform == Common::kPlatformNES) {
 		runScript(5, 0, 0, 0);
 
@@ -815,7 +815,7 @@ static void syncWithSerializer(Common::Serializer &s, ObjectData &od) {
 }
 
 static void syncWithSerializer(Common::Serializer &s, VerbSlot &vs) {
-	s.syncAsSint16LE(vs.curRect.left, VER(8));
+	s.syncAsSint16LE(vs.origLeft, VER(8));
 	s.syncAsSint16LE(vs.curRect.top, VER(8));
 	s.syncAsSint16LE(vs.curRect.right, VER(8));
 	s.syncAsSint16LE(vs.curRect.bottom, VER(8));
@@ -837,6 +837,8 @@ static void syncWithSerializer(Common::Serializer &s, VerbSlot &vs) {
 	s.syncAsByte(vs.center, VER(8));
 	s.syncAsByte(vs.prep, VER(8));
 	s.syncAsUint16LE(vs.imgindex, VER(8));
+	if (s.isLoading() && s.getVersion() >= 8)
+		vs.curRect.left = vs.origLeft;
 }
 
 static void syncWithSerializer(Common::Serializer &s, ScriptSlot &ss) {
@@ -1007,6 +1009,10 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncAsSint16LE(camera._dest.y, VER(8));
 	s.syncAsSint16LE(camera._cur.x, VER(8));
 	s.syncAsSint16LE(camera._cur.y, VER(8));
+	if (_game.platform == Common::kPlatformFMTowns)
+		// WORKAROUND: FM-TOWNS original _screenHeight is 240. if we use trim_fmtowns_to_200_pixels, it's reduced to 200
+		// camera's y is always half of the screen. in order to share save games between the two modes, we need to update the y
+		camera._cur.y = _screenHeight / 2;
 	s.syncAsSint16LE(camera._last.x, VER(8));
 	s.syncAsSint16LE(camera._last.y, VER(8));
 	s.syncAsSint16LE(camera._accel.x, VER(8));
@@ -1258,6 +1264,7 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 				while (s.syncAsUint16LE(idx), idx != 0xFFFF) {
 					assert(idx < _res->_types[type].size());
 					loadResource(s, type, idx);
+					applyWorkaroundIfNeeded(type, idx);
 				}
 			}
 		}
@@ -1318,7 +1325,6 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 
 	if (hasTownsData) {
 		s.syncBytes(_textPalette, 48);
-		// TODO: This seems wrong, there are 16 _cyclRects
 		s.syncArray(_cyclRects, 10, syncWithSerializer, VER(82));
 		if (s.getVersion() >= VER(82))
 			syncWithSerializer(s, _curStringRect);
@@ -1416,6 +1422,25 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncBytes(_bitVars, _numBitVariables / 8);
 
 
+	// WORKAROUND: FM-TOWNS Zak used the extra 40 pixels at the bottom to increase the inventory to 10 items
+	// if we trim to 200 pixels, we can show only 6 items
+	// therefore we need to make sure that the inventory is now display correctly, regardless of the mode that the game was saved with
+	if (s.isLoading() && _game.platform == Common::kPlatformFMTowns && _game.id == GID_ZAK) {
+		if (ConfMan.getBool("trim_fmtowns_to_200_pixels"))
+			_verbs[getVerbSlot(116, 0)].curRect.top = 208 - 18;		// make down arrow higher
+		else
+			_verbs[getVerbSlot(116, 0)].curRect.top = 208;			// return down arrow to its original location
+
+		if (ConfMan.getBool("trim_fmtowns_to_200_pixels"))
+			// VAR(102) to VAR(111) originally keep the 10 displayed inventory items; clean the last 4 ones
+			for (int v = 102 + 6; v <= 111; v++)
+				VAR(v) = 0;
+
+		// make sure the appropriate verbs and arrows are displayed
+		runInventoryScript(0);
+	}
+
+
 	//
 	// Save/load a list of the locked objects
 	//
@@ -1483,7 +1508,7 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 			_charset->setCurID(curId);
 		} else {
 			// Before V72, the charset id wasn't saved. This used to cause issues such
-			// as the one described in the bug report #1722153. For these savegames,
+			// as the one described in the bug report #3194. For these savegames,
 			// we reinitialize the id using a, hopefully, sane value.
 			_charset->setCurID(_string[0]._default.charset);
 		}
@@ -1572,7 +1597,7 @@ void ScummEngine_v7::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncAsSint32LE(_verbLineSpacing, VER(68));
 
 	if (s.getVersion() <= VER(68) && s.isLoading()) {
-		// WORKAROUND bug #1846049: Reset the default charset color to a sane value.
+		// WORKAROUND bug #3483: Reset the default charset color to a sane value.
 		_string[0]._default.charset = 1;
 	}
 }

@@ -93,6 +93,7 @@ protected:
 
 	// detection
 	int _lang;
+	const int _numLang;
 
 	// Input
 	virtual int inputSceneChange(int x, int y, int unk1, int unk2) = 0;
@@ -343,7 +344,7 @@ protected:
 	// chat
 	int _vocHigh;
 
-	const char *_chatText;
+	Common::String _chatText;
 	int _chatObject;
 	uint32 _chatEndTime;
 	int _chatVocHigh, _chatVocLow;

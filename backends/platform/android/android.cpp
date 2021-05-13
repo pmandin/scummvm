@@ -104,7 +104,10 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_touchpad_mode(true),
 	_touchpad_scale(66),
 	_dpad_scale(4),
-	_fingersDown(0),
+//	_fingersDown(0),
+	_firstPointerId(-1),
+	_secondPointerId(-1),
+	_thirdPointerId(-1),
 	_trackball_scale(2),
 	_joystick_scale(10) {
 
@@ -318,6 +321,11 @@ void OSystem_Android::initBackend() {
 
 	_main_thread = pthread_self();
 
+	// TODO Setting debug level to 3, temporarily
+	//      only for catching the level 3 messages from the new (Apr 2021)
+	//      gui-scale (hidpi) code
+	gDebugLevel = 3;
+
 	// Warning: ConfMan.registerDefault() can be used for a Session of ScummVM
 	//          but:
 	//              1. The values will NOT persist to storage
@@ -444,7 +452,8 @@ bool OSystem_Android::hasFeature(Feature f) {
 		return false;
 	if (f == kFeatureVirtualKeyboard ||
 			f == kFeatureOpenUrl ||
-			f == kFeatureClipboardSupport) {
+			f == kFeatureClipboardSupport ||
+	                f == OSystem::kFeatureHiDPI) {
 		return true;
 	}
 	return ModularGraphicsBackend::hasFeature(f);
@@ -468,6 +477,8 @@ bool OSystem_Android::getFeatureState(Feature f) {
 	switch (f) {
 	case kFeatureVirtualKeyboard:
 		return _virtkeybd_on;
+	case OSystem::kFeatureHiDPI:
+		return true;
 	default:
 		return ModularGraphicsBackend::getFeatureState(f);
 	}

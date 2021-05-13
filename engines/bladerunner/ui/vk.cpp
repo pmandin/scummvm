@@ -239,7 +239,7 @@ void VK::addQuestion(int intensity, int sentenceId, int relatedSentenceId) {
 	}
 }
 
-void VK::playSpeechLine(int actorId, int sentenceId, float duration) {
+void VK::playSpeechLine(int actorId, int sentenceId, float pauseDuration) {
 	_vm->gameWaitForActive();
 
 	_vm->_mouse->disable();
@@ -258,9 +258,9 @@ void VK::playSpeechLine(int actorId, int sentenceId, float duration) {
 		}
 	}
 
-	if (duration > 0.0f && !_vm->_actorSpeakStopIsRequested) {
+	if (pauseDuration > 0.0f && !_vm->_actorSpeakStopIsRequested) {
 		uint32  timeStart = _vm->_time->current();
-		uint32  timeUntil = duration * 1000.0f;
+		uint32  timeUntil = pauseDuration * 1000.0f;
 		while ((_vm->_time->current() - timeStart < timeUntil) && _vm->_gameIsRunning) {
 			_vm->gameTick();
 		}
@@ -958,8 +958,8 @@ void VK::setAdjustmentFromMouse() {
 * It will search through all questions to find a related question Id and its intensity
 */
 void VK::findRelatedQuestionBySentenceId(int inSentenceId, int &outRelatedQuestionId, int &outRelatedIntensity) {
-    outRelatedQuestionId = -1;
-    outRelatedIntensity  = -1;
+	outRelatedQuestionId = -1;
+	outRelatedIntensity  = -1;
 
 	for (int intensity = 0; intensity < 3; ++intensity) {
 		for (int i = 0; i < (int)_questions[intensity].size(); ++i) {

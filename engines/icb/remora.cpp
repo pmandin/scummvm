@@ -160,7 +160,7 @@ void _remora::SetDefaultOrOverrideMode() {
 
 void _remora::DisplayCharacterSpeech(uint32 nHash) {
 	// No character speech is displayed unless sub_titles are turned on
-	if (px.on_screen_text == TRUE8) {
+	if (g_px->on_screen_text == TRUE8) {
 		const char *pcText;
 
 		// Find the text in the resources.
@@ -236,7 +236,7 @@ void _remora::CycleRemoraLogic(const _input &sKeyboardState) {
 
 	// If text is scrolling, process the scroll.
 	if (m_bScrolling) {
-		int scrollAmount = (256 * m_nCharacterHeight) / REMORA_SCROLL_CYCLES;
+		int32 scrollAmount = (256 * m_nCharacterHeight) / REMORA_SCROLL_CYCLES;
 
 		// See which way we're scrolling.
 		if (m_eTextScroll == SCROLL_UP) {
@@ -520,7 +520,7 @@ void _remora::SetText(const char *pcText, uint8 nAttribute, uint8 nIndent, _pin_
 		m_nCharacterHeight = (uint8)MS->text_bloc->CharHeight(psTextParameters->fontResource, psTextParameters->fontResource_hash);
 
 		// To have ceiling based rounding
-		m_nPictureHeightCorrection = (u_char)(m_nCharacterHeight - 1);
+		m_nPictureHeightCorrection = (uint8)(m_nCharacterHeight - 1);
 	}
 
 	// Check if we are setting the main heading for the screen.
@@ -661,7 +661,7 @@ void _remora::AddFloorRange(uint32 nLower, uint32 nUpper) {
 
 void _remora::Save(Common::WriteStream *stream) const {
 	// Save any outstanding email.  Just write the whole string since it is small and there's only one.
-	stream->write(m_pcEmailID, sizeof(char) * (REMORA_MAXLEN_EMAIL_ID_STRING + 1)); // TODO: Refactor to string.
+	stream->write(m_pcEmailID, sizeof(char) * (REMORA_MAXLEN_EMAIL_ID_STRING + 1));
 }
 
 void _remora::Restore(Common::SeekableReadStream *stream) {
@@ -886,7 +886,7 @@ void _remora::ClearAllText() {
 
 void _remora::DrawVoiceOverText() const {
 	// Here we draw the text that characters may say inside the Remora.
-	if (px.on_screen_text && (m_nSpeechTimer > 0) && (strlen(m_pcSpeechText) > 0)) {
+	if (g_px->on_screen_text && (m_nSpeechTimer > 0) && (strlen(m_pcSpeechText) > 0)) {
 		// Yes we need to display speech text.
 		MS->Create_remora_text(REMORA_SPEECH_X_POSITION, REMORA_SPEECH_Y_POSITION, m_pcSpeechText, 0, PIN_AT_CENTRE, 0, 0, REMORA_DISPLAY_WIDTH);
 

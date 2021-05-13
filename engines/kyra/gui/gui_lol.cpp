@@ -322,7 +322,6 @@ void LoLEngine::gui_changeCharacterStats(int charNum) {
 
 void LoLEngine::gui_drawCharInventoryItem(int itemIndex) {
 	static const uint8 slotShapes[] = { 0x30, 0x34, 0x30, 0x34, 0x2E, 0x2F, 0x32, 0x33, 0x31, 0x35, 0x35 };
-	//2Eh, 32h, 2Eh, 32h, 2Ch, 2Dh, 30h, 31h, 2Fh, 33h, 33h
 	const uint8 *coords = &_charInvDefs[_charInvIndex[_characters[_selectedCharacter].raceClassSex] * 22 + itemIndex * 2];
 	uint8 x = *coords++;
 	uint8 y = *coords;
@@ -2542,15 +2541,15 @@ void GUI_LoL::sortSaveSlots() {
 	Common::sort(_saveSlots.begin(), _saveSlots.end(), Common::Greater<int>());
 }
 
-void GUI_LoL::printMenuText(const char *str, int x, int y, uint8 c0, uint8 c1, uint8 flags) {
-	_screen->fprintString("%s", x, y, c0, c1, _vm->gameFlags().use16ColorMode ? (flags & 3) : flags , str);
+void GUI_LoL::printMenuText(const Common::String &str, int x, int y, uint8 c0, uint8 c1, uint8 flags) {
+	_screen->fprintString("%s", x, y, c0, c1, _vm->gameFlags().use16ColorMode ? (flags & 3) : flags , str.c_str());
 }
 
-int GUI_LoL::getMenuCenterStringX(const char *str, int x1, int x2) {
-	if (!str)
+int GUI_LoL::getMenuCenterStringX(const Common::String &str, int x1, int x2) {
+	if (str.empty())
 		return 0;
 
-	int strWidth = _screen->getTextWidth(str);
+	int strWidth = _screen->getTextWidth(str.c_str());
 	int w = x2 - x1 + 1;
 	return x1 + (w - strWidth) / 2;
 }
@@ -2672,7 +2671,7 @@ int GUI_LoL::clickedSaveMenu(Button *button) {
 	_saveDescription = (char *)_vm->_tempBuffer5120 + 1000;
 	_saveDescription[0] = 0;
 	if (_saveMenu.item[-s - 2].saveSlot != -3) {
-		strcpy(_saveDescription, _saveMenu.item[-s - 2].itemString);
+		strcpy(_saveDescription, _saveMenu.item[-s - 2].itemString.c_str());
 	} else if (_vm->_autoSaveNamesEnabled) {
 		TimeDate td;
 		g_system->getTimeAndDate(td);
@@ -2904,21 +2903,21 @@ int GUI_LoL::scrollDown(Button *button) {
 	return 1;
 }
 
-const char *GUI_LoL::getMenuTitle(const Menu &menu) {
+Common::String GUI_LoL::getMenuTitle(const Menu &menu) {
 	if (!menu.menuNameId)
 		return 0;
 	return _vm->getLangString(menu.menuNameId);
 }
 
-const char *GUI_LoL::getMenuItemTitle(const MenuItem &menuItem) {
-	if (menuItem.itemId & 0x8000 && menuItem.itemString)
+Common::String GUI_LoL::getMenuItemTitle(const MenuItem &menuItem) {
+	if (menuItem.itemId & 0x8000 && !menuItem.itemString.empty())
 		return menuItem.itemString;
 	else if (menuItem.itemId & 0x8000 || !menuItem.itemId)
 		return 0;
 	return _vm->getLangString(menuItem.itemId);
 }
 
-const char *GUI_LoL::getMenuItemLabel(const MenuItem &menuItem) {
+Common::String GUI_LoL::getMenuItemLabel(const MenuItem &menuItem) {
 	if (menuItem.labelId & 0x8000 && menuItem.labelString)
 		return menuItem.labelString;
 	else if (menuItem.labelId & 0x8000 || !menuItem.labelId)

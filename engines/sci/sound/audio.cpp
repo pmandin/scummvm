@@ -20,7 +20,7 @@
  *
  */
 
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/engine/kernel.h"
 #include "sci/engine/seg_manager.h"
 #include "sci/sound/audio.h"
@@ -44,7 +44,7 @@
 namespace Sci {
 
 AudioPlayer::AudioPlayer(ResourceManager *resMan) : _resMan(resMan), _audioRate(11025),
-		_audioCdStart(0), _initCD(false) {
+		_audioCdStart(0), _initCD(false), _playCounter(0) {
 
 	_mixer = g_system->getMixer();
 	_wPlayFlag = false;
@@ -515,10 +515,9 @@ int AudioPlayer::audioCdPlay(int track, int start, int duration) {
 
 		// Subtract one from track. KQ6 starts at track 1, while ScummVM
 		// ignores the data track and considers track 2 to be track 1.
-		g_system->getAudioCDManager()->play(track - 1, 1, start, duration);
-		return 1;
+		return g_system->getAudioCDManager()->play(track - 1, 1, start, duration) ? 1 : 0;
 	} else {
-		// Jones in the Fast Lane CD Audio format
+		// Jones in the Fast Lane and Mothergoose256 CD Audio format
 		uint32 length = 0;
 
 		audioCdStop();
@@ -529,14 +528,15 @@ int AudioPlayer::audioCdPlay(int track, int start, int duration) {
 
 		while (audioMap.pos() < audioMap.size()) {
 			uint16 res = audioMap.readUint16LE();
+			res &= 0x1fff; // Upper bits are always set in Mothergoose256
 			uint32 startFrame = audioMap.readUint16LE();
 			startFrame += audioMap.readByte() << 16;
-			audioMap.readByte(); // Unknown, always 0x20
+			audioMap.readByte(); // Unknown, always 0x20 in Jones, 0x04 in Mothergoose256
 			length = audioMap.readUint16LE();
 			length += audioMap.readByte() << 16;
 			audioMap.readByte(); // Unknown, always 0x00
 
-			// Jones uses the track as the resource value in the map
+			// The track is the resource value in the map
 			if (res == track) {
 				g_system->getAudioCDManager()->play(1, 1, startFrame, length);
 				_audioCdStart = g_system->getMillis();
@@ -566,6 +566,14 @@ int AudioPlayer::audioCdPosition() {
 
 	// Return the position otherwise (in ticks).
 	return (g_system->getMillis() - _audioCdStart) * 60 / 1000;
+}
+
+void AudioPlayer::incrementPlayCounter() {
+	_playCounter++;
+}
+
+uint16 AudioPlayer::getPlayCounter() {
+	return _playCounter;
 }
 
 } // End of namespace Sci

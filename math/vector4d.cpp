@@ -21,13 +21,13 @@
  */
 
 #include "common/streamdebug.h"
+#include "math/vector3d.h"
 #include "math/vector4d.h"
 
 namespace Math {
 
 Vector4d::Matrix() :
 	MatrixType<4, 1>() {
-
 }
 
 Vector4d::Matrix(float lx, float ly, float lz, float lw) :
@@ -48,6 +48,11 @@ Vector4d::Matrix(const float *data) :
 
 void Vector4d::set(float lx, float ly, float lz, float lw) {
 	x() = lx; y() = ly; z() = lz; w() = lw;
+}
+
+Vector3d Vector4d::getXYZ() const {
+	Vector3d v(value(0), value(1), value(2));
+	return v;
 }
 
 } // end of namespace Math

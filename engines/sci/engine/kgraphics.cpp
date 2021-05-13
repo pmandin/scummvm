@@ -31,7 +31,7 @@
 
 #include "sci/sci.h"
 #include "sci/event.h"
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/engine/features.h"
 #include "sci/engine/guest_additions.h"
 #include "sci/engine/savegame.h"
@@ -60,7 +60,7 @@ namespace Sci {
 static int16 adjustGraphColor(int16 color) {
 	// WORKAROUND: EGA and Amiga games can set invalid colors (above 0 - 15).
 	// It seems only the lower nibble was used in these games.
-	// bug #3048908, #3486899.
+	// bug #5267, #5968.
 	// Confirmed in EGA games KQ4(late), QFG1(ega), LB1 that
 	// at least FillBox (only one of the functions using adjustGraphColor)
 	// behaves like this.
@@ -198,7 +198,7 @@ static reg_t kSetCursorSci11(EngineState *s, int argc, reg_t *argv) {
 		}
 		break;
 	case 10:
-		// Freddy pharkas, when using the whiskey glass to read the prescription (bug #3034973)
+		// Freddy pharkas, when using the whiskey glass to read the prescription (bug #4969)
 		g_sci->_gfxCursor->kernelSetZoomZone(argv[0].toUint16(),
 			Common::Rect(argv[1].toUint16(), argv[2].toUint16(), argv[3].toUint16(), argv[4].toUint16()),
 			argv[5].toUint16(), argv[6].toUint16(), argv[7].toUint16(),
@@ -368,7 +368,7 @@ reg_t kTextSize(EngineState *s, int argc, reg_t *argv) {
 	// its end. We trim the text here, otherwise the graphics code will
 	// attempt to draw a very large window (larger than the screen) to
 	// show the text, and crash.
-	// Fixes bug #3306417.
+	// Fixes bug #5710.
 	if (textWidth >= g_sci->_gfxScreen->getDisplayWidth() ||
 		textHeight >= g_sci->_gfxScreen->getDisplayHeight()) {
 		// TODO: Is this needed for SCI32 as well?
@@ -403,6 +403,7 @@ reg_t kWait(EngineState *s, int argc, reg_t *argv) {
 		return NULL_REG;
 	}
 
+	s->_paletteSetIntensityCounter = 0;
 	return make_reg(0, delta);
 }
 
@@ -645,6 +646,22 @@ reg_t kPaletteSetIntensity(EngineState *s, int argc, reg_t *argv) {
 	// Palette intensity in non-VGA SCI1 games has been removed
 	if (g_sci->_gfxPalette16->getTotalColorCount() < 256)
 		return s->r_acc;
+
+	if (setPalette) {
+		// Detect if we're being called from an unthrottled script loop.
+		// Throttled loops that call kWait on each iteration are okay.
+		if (s->_paletteSetIntensityCounter > 0) {
+			// Call speed throttler, otherwise the palette fade from this
+			// unthrottled script loop won't have any visible effect.
+			// Examples: KQ6 intro text/credits and SQ4CD intro credits
+			s->speedThrottler(30);
+		}
+		s->_paletteSetIntensityCounter++;
+
+		// Enable normal throttling in case this is being called from a script that
+		// doesn't animate anything with kAnimate, such as the LB2 title screen.
+		s->_throttleTrigger = true;
+	}
 
 	g_sci->_gfxPalette16->kernelSetIntensity(fromColor, toColor, intensity, setPalette);
 	return s->r_acc;
@@ -1178,7 +1195,7 @@ reg_t kAnimate(EngineState *s, int argc, reg_t *argv) {
 	// doesn't call kGetEvent(), so no events are processed (e.g. window
 	// focusing, window moving etc). We poll events for that scene, to
 	// keep ScummVM responsive. Fixes ScummVM "freezing" during the credits,
-	// bug #3101846
+	// bug #5494
 	if (g_sci->getGameId() == GID_ECOQUEST && s->currentRoomNumber() == 680)
 		g_sci->getEventManager()->getSciEvent(kSciEventPeek);
 

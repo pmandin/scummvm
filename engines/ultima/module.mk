@@ -52,7 +52,6 @@ MODULE_OBJS := \
 	shared/maps/map_tile.o \
 	shared/maps/map_widget.o \
 	shared/maps/creature.o \
-	shared/std/misc.o \
 	shared/std/string.o \
 	ultima0/core/resources.o \
 	ultima0/game.o \
@@ -166,7 +165,6 @@ MODULE_OBJS := \
 	ultima4/core/utils.o \
 	ultima4/events/event_handler.o \
 	ultima4/events/timed_event_mgr.o \
-	ultima4/filesys/filesystem.o \
 	ultima4/filesys/rle.o \
 	ultima4/filesys/savegame.o \
 	ultima4/filesys/u4file.o \
@@ -395,14 +393,11 @@ MODULE_OBJS := \
 	ultima8/audio/speech_flex.o \
 	ultima8/audio/u8_music_process.o \
 	ultima8/conf/config_file_manager.o \
-	ultima8/conf/ini_file.o \
-	ultima8/conf/setting_manager.o \
 	ultima8/convert/convert_shape.o \
 	ultima8/convert/u8/convert_shape_u8.o \
 	ultima8/convert/crusader/convert_shape_crusader.o \
 	ultima8/filesys/archive.o \
 	ultima8/filesys/archive_file.o \
-	ultima8/filesys/data.o \
 	ultima8/filesys/file_system.o \
 	ultima8/filesys/flex_file.o \
 	ultima8/filesys/raw_archive.o \
@@ -428,7 +423,6 @@ MODULE_OBJS := \
 	ultima8/graphics/palette.o \
 	ultima8/graphics/palette_fader_process.o \
 	ultima8/graphics/palette_manager.o \
-	ultima8/graphics/point_scaler.o \
 	ultima8/graphics/raw_shape_frame.o \
 	ultima8/graphics/render_surface.o \
 	ultima8/graphics/shape.o \
@@ -437,14 +431,9 @@ MODULE_OBJS := \
 	ultima8/graphics/shape_info.o \
 	ultima8/graphics/skf_player.o \
 	ultima8/graphics/soft_render_surface.o \
-	ultima8/graphics/texture.o \
-	ultima8/graphics/texture_bitmap.o \
-	ultima8/graphics/texture_png.o \
 	ultima8/graphics/type_flags.o \
 	ultima8/graphics/wpn_ovlay_dat.o \
 	ultima8/graphics/xform_blend.o \
-	ultima8/graphics/texture_targa.o \
-	ultima8/graphics/fonts/fixed_width_font.o \
 	ultima8/graphics/fonts/font.o \
 	ultima8/graphics/fonts/font_manager.o \
 	ultima8/graphics/fonts/font_shape_archive.o \
@@ -471,6 +460,7 @@ MODULE_OBJS := \
 	ultima8/gumps/cru_status_gump.o \
 	ultima8/gumps/cru_weapon_gump.o \
 	ultima8/gumps/desktop_gump.o \
+	ultima8/gumps/difficulty_gump.o \
 	ultima8/gumps/fast_area_vis_gump.o \
 	ultima8/gumps/game_map_gump.o \
 	ultima8/gumps/gump.o \
@@ -491,29 +481,27 @@ MODULE_OBJS := \
 	ultima8/gumps/readable_gump.o \
 	ultima8/gumps/remorse_menu_gump.o \
 	ultima8/gumps/resizable_gump.o \
-	ultima8/gumps/scaler_gump.o \
 	ultima8/gumps/scroll_gump.o \
 	ultima8/gumps/shape_viewer_gump.o \
 	ultima8/gumps/slider_gump.o \
 	ultima8/gumps/target_gump.o \
 	ultima8/gumps/translucent_gump.o \
 	ultima8/gumps/u8_save_gump.o \
+	ultima8/gumps/weasel_dat.o \
+	ultima8/gumps/weasel_gump.o \
 	ultima8/gumps/widgets/button_widget.o \
 	ultima8/gumps/widgets/edit_widget.o \
 	ultima8/gumps/widgets/sliding_widget.o \
 	ultima8/gumps/widgets/text_widget.o \
-	ultima8/kernel/core_app.o \
 	ultima8/kernel/delay_process.o \
 	ultima8/kernel/kernel.o \
 	ultima8/kernel/mouse.o \
 	ultima8/kernel/object.o \
 	ultima8/kernel/object_manager.o \
 	ultima8/kernel/process.o \
-	ultima8/misc/args.o \
 	ultima8/misc/debugger.o \
 	ultima8/misc/encoding.o \
 	ultima8/misc/id_man.o \
-	ultima8/misc/istring.o \
 	ultima8/misc/util.o \
 	ultima8/usecode/bit_set.o \
 	ultima8/usecode/byte_set.o \
@@ -561,12 +549,15 @@ MODULE_OBJS := \
 	ultima8/world/actors/animation_tracker.o \
 	ultima8/world/actors/anim_action.o \
 	ultima8/world/actors/attack_process.o \
+	ultima8/world/actors/auto_firer_process.o \
 	ultima8/world/actors/avatar_death_process.o \
 	ultima8/world/actors/avatar_gravity_process.o \
 	ultima8/world/actors/avatar_mover_process.o \
 	ultima8/world/actors/battery_charger_process.o \
 	ultima8/world/actors/clear_feign_death_process.o \
+	ultima8/world/actors/cru_avatar_mover_process.o \
 	ultima8/world/actors/cru_healer_process.o \
+	ultima8/world/actors/cru_pathfinder_process.o \
 	ultima8/world/actors/combat_dat.o \
 	ultima8/world/actors/combat_process.o \
 	ultima8/world/actors/grant_peace_process.o \
@@ -583,7 +574,8 @@ MODULE_OBJS := \
 	ultima8/world/actors/scheduler_process.o \
 	ultima8/world/actors/surrender_process.o \
 	ultima8/world/actors/targeted_anim_process.o \
-	ultima8/world/actors/teleport_to_egg_process.o
+	ultima8/world/actors/teleport_to_egg_process.o \
+	ultima8/world/actors/u8_avatar_mover_process.o
 
 # This module can be built as a plugin
 ifeq ($(ENABLE_ULTIMA), DYNAMIC_PLUGIN)

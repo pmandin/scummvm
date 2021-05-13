@@ -100,7 +100,7 @@ int Words::loadDictionary(const char *fname) {
 			// WORKAROUND:
 			// The SQ0 fan game stores words starting with numbers (like '7up')
 			// in its dictionary under the 'a' entry. We skip these.
-			// See bug #3615061
+			// See bug #6415
 			if (str[0] == 'a' + i) {
 				// And store it in our internal dictionary
 				WordEntry *newWord = new WordEntry;
@@ -114,10 +114,36 @@ int Words::loadDictionary(const char *fname) {
 			// Are there more words with an already known prefix?
 			// WORKAROUND: We only break after already seeing words with the
 			// right prefix, for the SQ0 words starting with digits filed under
-			// 'a'. See above comment and bug #3615061.
+			// 'a'. See above comment and bug #6415.
 			if (k == 0 && str[0] >= 'a' + i)
 				break;
 		}
+	}
+
+	return errOK;
+}
+
+int Words::loadExtendedDictionary(const char *sierraFname) {
+	Common::String fnameStr = Common::String(sierraFname) + ".extended";
+	const char *fname = fnameStr.c_str();
+
+	Common::File fp;
+
+	if (!fp.open(fname)) {
+		warning("loadWords: can't open %s", fname);
+		return errOK; // err_BadFileOpen
+	}
+	debug(0, "Loading dictionary: %s", fname);
+
+	// skip the header
+	fp.readString('\n');
+
+	while (!fp.eos() && !fp.err()) {
+		WordEntry *newWord = new WordEntry;
+		newWord->word = fp.readString();
+		newWord->id = atoi(fp.readString('\n').c_str());
+		if(!newWord->word.empty())
+			_dictionaryWords[(byte)newWord->word[0] - 'a'].push_back(newWord);
 	}
 
 	return errOK;
@@ -226,7 +252,9 @@ int16 Words::findWordInDictionary(const Common::String &userInputLowcased, uint1
 
 	foundWordLen = 0;
 
-	if ((firstChar >= 'a') && (firstChar <= 'z')) {
+	const byte lastCharInAbc = _vm->getLanguage() == Common::HE_ISR ? 0xfa : 'z';
+
+	if ((firstChar >= 'a') && (firstChar <= lastCharInAbc)) {
 		// word has to start with a letter
 		if (((userInputPos + 1) < userInputLen) && (userInputLowcased[userInputPos + 1] == ' ')) {
 			// current word is 1 char only?

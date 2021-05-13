@@ -27,23 +27,18 @@
 #include "ultima/ultima8/filesys/flex_file.h"
 #include "ultima/ultima8/filesys/raw_archive.h"
 #include "ultima/ultima8/world/item_factory.h"
-#include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
 #include "ultima/ultima8/world/loop_script.h"
 #include "ultima/ultima8/usecode/uc_list.h"
-#include "ultima/ultima8/misc/id_man.h"
 #include "ultima/ultima8/misc/direction_util.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/kernel/kernel.h"
 #include "ultima/ultima8/kernel/object_manager.h"
-#include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/world/camera_process.h" // for resetting the camera
 #include "ultima/ultima8/gumps/gump.h" // For CloseItemDependents notification
-#include "ultima/ultima8/world/actors/animation.h"
 #include "ultima/ultima8/world/get_object.h"
+#include "ultima/ultima8/world/target_reticle_process.h"
 #include "ultima/ultima8/audio/audio_process.h"
-#include "ultima/ultima8/filesys/idata_source.h"
-#include "ultima/ultima8/usecode/intrinsics.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -52,8 +47,8 @@ namespace Ultima8 {
 
 World *World::_world = nullptr;
 
-World::World() : _currentMap(nullptr), _alertActive(false), _difficulty(1),
-				 _controlledNPCNum(1) {
+World::World() : _currentMap(nullptr), _alertActive(false), _difficulty(3),
+				 _controlledNPCNum(1), _vargasShield(5000) {
 	debugN(MM_INFO, "Creating World...\n");
 
 	_world = this;
@@ -343,8 +338,10 @@ void World::save(Common::WriteStream *ws) {
 	ws->writeUint16LE(_currentMap->_eggHatcher);
 
 	if (GAME_IS_CRUSADER) {
-		ws->writeByte(_alertActive ? 0 : 1);
+		ws->writeByte(_alertActive ? 1 : 0);
 		ws->writeByte(_difficulty);
+		ws->writeUint16LE(_controlledNPCNum);
+		ws->writeUint32LE(_vargasShield);
 	}
 
 	uint16 es = static_cast<uint16>(_ethereal.size());
@@ -375,6 +372,8 @@ bool World::load(Common::ReadStream *rs, uint32 version) {
 	if (GAME_IS_CRUSADER) {
 		_alertActive = (rs->readByte() != 0);
 		_difficulty = rs->readByte();
+		_controlledNPCNum = rs->readUint16LE();
+		_vargasShield = rs->readUint32LE();
 	}
 
 	uint32 etherealcount = rs->readUint32LE();
@@ -395,6 +394,12 @@ void World::saveMaps(Common::WriteStream *ws) {
 bool World::loadMaps(Common::ReadStream *rs, uint32 version) {
 	uint32 mapcount = rs->readUint32LE();
 
+	// Integrity check
+	if (mapcount > _maps.size()) {
+		warning("Invalid mapcount in save: %d.  Corrupt save?", mapcount);
+		return false;
+	}
+
 	// Map objects have already been created by reset()
 	for (unsigned int i = 0; i < mapcount; ++i) {
 		bool res = _maps[i]->load(rs, version);
@@ -407,7 +412,7 @@ bool World::loadMaps(Common::ReadStream *rs, uint32 version) {
 void World::setAlertActive(bool active)
 {
 	assert(GAME_IS_CRUSADER);
-    _alertActive = active;
+	_alertActive = active;
 
 	// Replicate the behavior of the original game.
 	LOOPSCRIPT(script,
@@ -446,8 +451,27 @@ void World::setAlertActive(bool active)
 }
 
 void World::setControlledNPCNum(uint16 num) {
-	warning("TODO: World::setControlledNPCNum(%d): IMPLEMENT ME", num);
+	uint16 oldnpc = _controlledNPCNum;
+	_controlledNPCNum = num;
+	CameraProcess::SetCameraProcess(new CameraProcess(num));
+	Actor *previous = getActor(oldnpc);
+	if (previous && !previous->isDead() && previous->isInCombat()) {
+		previous->clearInCombat();
+	}
+
+	Actor *controlled = getActor(num);
+	if (controlled && num != 1) {
+		Kernel::get_instance()->killProcesses(num, Kernel::PROC_TYPE_ALL, true);
+		if (controlled->isInCombat())
+			controlled->clearInCombat();
+	}
+
+	TargetReticleProcess *t = TargetReticleProcess::get_instance();
+	if (t) {
+		t->avatarMoved();
+	}
 }
+
 
 uint32 World::I_getAlertActive(const uint8 * /*args*/,
 	unsigned int /*argsize*/) {
@@ -480,6 +504,12 @@ uint32 World::I_setControlledNPCNum(const uint8 *args,
 	unsigned int /*argsize*/) {
 	ARG_UINT16(num);
 	get_instance()->_world->setControlledNPCNum(num);
+	return 0;
+}
+
+uint32 World::I_resetVargasShield(const uint8 * /*args*/,
+	unsigned int /*argsize*/) {
+	get_instance()->setVargasShield(500);
 	return 0;
 }
 

@@ -23,12 +23,12 @@
 #ifndef SLUDGE_GRAPHICS_H
 #define SLUDGE_GRAPHICS_H
 
-#include "common/stream.h"
-
-#include "graphics/surface.h"
-#include "graphics/transparent_surface.h"
-
 #include "sludge/sprbanks.h"
+
+namespace Common {
+class SeekableReadStream;
+class WriteStream;
+}
 
 namespace Sludge {
 
@@ -84,8 +84,8 @@ public:
 	void blankAllScreen();
 	void darkScreen();
 	void saveHSI(Common::WriteStream *stream);
-	bool loadHSI(Common::SeekableReadStream *stream, int, int, bool);
-	bool mixHSI(Common::SeekableReadStream *stream, int x = 0, int y = 0);
+	bool loadHSI(int num, Common::SeekableReadStream *stream, int, int, bool);
+	bool mixHSI(int num, Common::SeekableReadStream *stream, int x = 0, int y = 0);
 	void drawLine(uint, uint, uint, uint);
 	void drawHorizontalLine(uint, uint, uint);
 	void drawVerticalLine(uint, uint, uint);
@@ -140,7 +140,7 @@ public:
 	void burnSpriteToBackDrop(int x1, int y1, Sprite &single, const SpritePalette &fontPal);
 
 	void resetSpriteLayers(ZBufferData *ptrZBuffer, int x, int y, bool upsidedown);
-	void addSpriteDepth(Graphics::Surface *ptr, int depth, int x, int y, Graphics::FLIP_FLAGS flip, int width = -1, int height = -1, bool disposeAfterUse = false);
+	void addSpriteDepth(Graphics::Surface *ptr, int depth, int x, int y, Graphics::FLIP_FLAGS flip, int width = -1, int height = -1, bool disposeAfterUse = false, byte trans = 255);
 	void displaySpriteLayers();
 	void killSpriteLayers();
 

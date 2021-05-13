@@ -42,7 +42,7 @@ class Resources {
 	 * Derived file class with sync method aliases so that the same
 	 * code from create_xeen can be re-used for both reading and
 	 * writing the resource data
-	 */	
+	 */
 	class ResFile : public File {
 	private:
 		char *_buffer;
@@ -382,6 +382,7 @@ public:
 	const char *HIT_SPELL_POINTS_RESTORED;
 	const char *TOO_DANGEROUS_TO_REST;
 	const char *SOME_CHARS_MAY_DIE;
+	const char *DISMISS_WHOM;
 	const char *CANT_DISMISS_LAST_CHAR;
 	const char *DELETE_CHAR_WITH_ELDER_WEAPON;
 	const char *REMOVE_DELETE[2];

@@ -30,7 +30,7 @@ namespace Ultima {
 namespace Nuvie {
 
 GUI_TextInput:: GUI_TextInput(int x, int y, uint8 r, uint8 g, uint8 b, const char *str,
-                              GUI_Font *gui_font, uint16 width, uint16 height, GUI_CallBack *callback)
+							  GUI_Font *gui_font, uint16 width, uint16 height, GUI_CallBack *callback)
 	: GUI_Text(x, y, r, g, b, gui_font, width) {
 	max_height = height;
 	callback_object = callback;
@@ -136,6 +136,7 @@ GUI_status GUI_TextInput::KeyDown(const Common::KeyState &keyState) {
 	case Common::KEYCODE_RETURN:
 		if (callback_object)
 			callback_object->callback(TEXTINPUT_CB_TEXT_READY, this, text);
+		// falls through
 	case Common::KEYCODE_ESCAPE :
 		release_focus();
 		break;

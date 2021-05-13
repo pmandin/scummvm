@@ -20,18 +20,15 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/kernel/object.h"
 #include "ultima/ultima8/kernel/kernel.h"
 #include "ultima/ultima8/kernel/object_manager.h"
-#include "ultima/ultima8/world/world.h"
 #include "ultima/ultima8/usecode/uc_process.h"
 #include "ultima/ultima8/usecode/uc_machine.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(Object)
 
 Object::~Object() {
@@ -47,7 +44,7 @@ ObjId Object::assignObjId() {
 
 void Object::clearObjId() {
 	// On clearObjId we kill all processes that belonged to us
-	Kernel::get_instance()->killProcesses(_objId, 6, true);
+	Kernel::get_instance()->killProcesses(_objId, Kernel::PROC_TYPE_ALL, true);
 
 	if (_objId != 0xFFFF)
 		ObjectManager::get_instance()->clearObjId(_objId);
@@ -59,7 +56,7 @@ void Object::dumpInfo() const {
 }
 
 ProcId Object::callUsecode(uint16 classid, uint16 offset,
-                           const uint8 *args, int argsize) {
+						   const uint8 *args, int argsize) {
 	uint32 objptr = UCMachine::objectToPtr(getObjId());
 	UCProcess *p = new UCProcess(classid, offset, objptr, 2, args, argsize);
 	return Kernel::get_instance()->addProcess(p);
@@ -73,6 +70,13 @@ void Object::saveData(Common::WriteStream *ws) {
 }
 
 bool Object::loadData(Common::ReadStream *rs, uint32 version) {
+	// If we are loading into an object that already got an ID defined, then
+	// there is a problem - default constructors should not allocate object
+	// IDs, otherwise we can end up with the wrong IDs during load, because
+	// we blindly reload the old object IDs and then assign the kernel pointer
+	// table using those.
+	assert(_objId == 0xFFFF);
+
 	_objId = rs->readUint16LE();
 
 	return true;

@@ -159,6 +159,19 @@ static const QueenGameDescription gameDescriptions[] = {
 		},
 	},
 
+	// Amiga Floppy - German. Bugreport #12313
+	{
+		{
+			"queen",
+			"Floppy",
+			AD_ENTRY1s("queen.1", "b545c73010236dc022bad51c59120a75", 344575),
+			Common::DE_DEU,
+			Common::kPlatformAmiga,
+			ADGF_NO_FLAGS,
+			GUIO1(GUIO_NOSPEECH)
+		},
+	},
+
 	// DOS Floppy - English
 	{
 		{
@@ -250,20 +263,18 @@ static const QueenGameDescription gameDescriptions[] = {
 		},
 	},
 
-#if 0
 	// DOS CD - Hebrew
 	{
 		{
 			"queen",
 			"Talkie",
-			AD_ENTRY1s("queen.1", NULL, 190705558), // TODO: Fill in correct MD5
+			AD_ENTRY1s("queen.1", "b6302bccf70463de3d5faf0f0628f742", 190705558),
 			Common::HE_ISR,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
 			GUIO1(GAMEOPTION_ALT_INTRO)
 		},
 	},
-#endif
 
 	// DOS Floppy - Italian
 	{

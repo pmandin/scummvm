@@ -25,11 +25,11 @@
 #include "ultima/ultima8/world/item.h"
 #include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/graphics/shape_frame.h"
-#include "ultima/ultima8/graphics/shape_info.h"
 #include "ultima/ultima8/graphics/main_shape_archive.h"
 #include "ultima/ultima8/graphics/render_surface.h"
 #include "ultima/ultima8/misc/rect.h"
 #include "ultima/ultima8/games/game_data.h"
+#include "ultima/ultima8/ultima8.h"
 
 // temp
 #include "ultima/ultima8/world/actors/weapon_overlay.h"
@@ -50,14 +50,14 @@ struct SortItem {
 			_syTop(0), _sxBot(0), _syBot(0),_f32x32(false), _flat(false),
 			_occl(false), _solid(false), _draw(false), _roof(false),
 			_noisy(false), _anim(false), _trans(false), _fixed(false),
-			_land(false), _occluded(false), _clipped(0) { }
+			_land(false), _occluded(false), _clipped(false), _sprite(false) { }
 
 	SortItem                *_next;
 	SortItem                *_prev;
 
 	uint16                  _itemNum;   // Owner item number
 
-	Shape                   *_shape;
+	const Shape             *_shape;
 	uint32                  _shapeNum;
 	uint32                  _frame;
 	uint32                  _flags;     // Item flags
@@ -108,10 +108,10 @@ struct SortItem {
 	bool    _trans : 1;          // Needs 1 bit  8
 	bool    _fixed : 1;
 	bool    _land : 1;
+	bool 	_sprite : 1;         // Always-on-top sprite, for Crusader (U8 sprites appear in z order)
 
 	bool    _occluded : 1;       // Set true if occluded
-
-	int16   _clipped;            // Clipped to RenderSurface
+	bool  	_clipped : 1;        // Clipped to RenderSurface
 
 	int32   _order;      // Rendering _order. -1 is not yet drawn
 
@@ -142,15 +142,15 @@ struct SortItem {
 				n = n->_next;
 				return *this;
 			}
-			bool operator != (const iterator &o) {
+			bool operator != (const iterator &o) const {
 				return n != o.n;
 			}
 		};
 
-		iterator begin() {
+		iterator begin() const {
 			return iterator(list);
 		}
-		iterator end() {
+		iterator end() const {
 			return iterator(nullptr);
 		}
 
@@ -221,26 +221,22 @@ struct SortItem {
 
 	// Functions
 
-	// Check to see if we overlap si2
+	// Screenspace check to see if this overlaps si2
 	inline bool overlap(const SortItem &si2) const;
 
-	// Check to see if we occlude si2
+	// Screenspace check to see if this occludes si2. Assumes this is above of si2
 	inline bool occludes(const SortItem &si2) const;
 
-	// Operator less than
-	inline bool operator<(const SortItem &si2) const;
-
-	// Operator left shift (ok, what this does it output the comparisons)
-	inline bool operator<<(const SortItem &si2) const;
+	// Screenspace check to see if this is below si2. Assumes this overlaps si2
+	inline bool below(const SortItem &si2) const;
 
 	// Comparison for the sorted lists
 	inline bool ListLessThan(const SortItem *other) const {
-		return _z < other->_z || (_z == other->_z && _flat);
+		return _z < other->_z || (_z == other->_z && _flat && !other->_flat);
 	}
 
 };
 
-// Check to see if we overlap si2
 inline bool SortItem::overlap(const SortItem &si2) const {
 	const int point_top_diff[2] = { _sxTop - si2._sxBot, _syTop - si2._syBot };
 	const int point_bot_diff[2] = { _sxBot - si2._sxTop, _syBot - si2._syTop };
@@ -275,7 +271,6 @@ inline bool SortItem::overlap(const SortItem &si2) const {
 	return !clear;
 }
 
-// Check to see if we occlude si2
 inline bool SortItem::occludes(const SortItem &si2) const {
 	const int point_top_diff[2] = { _sxTop - si2._sxTop, _syTop - si2._syTop };
 	const int point_bot_diff[2] = { _sxBot - si2._sxBot, _syBot - si2._syBot };
@@ -308,50 +303,64 @@ inline bool SortItem::occludes(const SortItem &si2) const {
 		top_right_res && top_left_res;
 }
 
-inline bool SortItem::operator<(const SortItem &si2) const {
+inline bool SortItem::below(const SortItem &si2) const {
 	const SortItem &si1 = *this;
+
+	if (si1._sprite != si2._sprite)
+		return si1._sprite < si2._sprite;
 
 	// Specialist z flat handling
 	if (si1._flat && si2._flat) {
 		// Differing z is easy for flats
-		if (si1._zTop != si2._zTop) return si1._zTop < si2._zTop;
+		if (si1._zTop != si2._zTop)
+			return si1._zTop < si2._zTop;
 
 		// Equal z
 
 		// Animated always gets drawn after
-		if (si1._anim != si2._anim) return si1._anim < si2._anim;
+		if (si1._anim != si2._anim)
+			return si1._anim < si2._anim;
 
 		// Trans always gets drawn after
-		if (si1._trans != si2._trans) return si1._trans < si2._trans;
+		if (si1._trans != si2._trans)
+			return si1._trans < si2._trans;
 
 		// Draw always gets drawn first
-		if (si1._draw != si2._draw) return si1._draw > si2._draw;
+		if (si1._draw != si2._draw)
+			return si1._draw > si2._draw;
 
 		// Solid always gets drawn first
-		if (si1._solid != si2._solid) return si1._solid > si2._solid;
+		if (si1._solid != si2._solid)
+			return si1._solid > si2._solid;
 
 		// Occludes always get drawn first
-		if (si1._occl != si2._occl) return si1._occl > si2._occl;
+		if (si1._occl != si2._occl)
+			return si1._occl > si2._occl;
 
 		// 32x32 flats get drawn first
-		if (si1._f32x32 != si2._f32x32) return si1._f32x32 > si2._f32x32;
+		if (si1._f32x32 != si2._f32x32)
+			return si1._f32x32 > si2._f32x32;
 	}
 	// Mixed, or non flat
 	else {
 		// Clearly in z
 		if (si1._zTop <= si2._z)
 			return true;
-		else if (si1._z >= si2._zTop)
+		if (si1._z >= si2._zTop)
 			return false;
 	}
 
-	// Clearly in x?
-	if (si1._x <= si2._xLeft) return true;
-	else if (si1._xLeft >= si2._x) return false;
-
 	// Clearly in y?
-	if (si1._y <= si2._yFar) return true;
-	else if (si1._yFar >= si2._y) return false;
+	if (si1._y <= si2._yFar)
+		return true;
+	if (si1._yFar >= si2._y)
+		return false;
+
+	// Clearly in x?
+	if (si1._x <= si2._xLeft)
+		return true;
+	if (si1._xLeft >= si2._x)
+		return false;
 
 	// Are overlapping in all 3 dimentions if we come here
 
@@ -359,222 +368,62 @@ inline bool SortItem::operator<(const SortItem &si2) const {
 	// If an object's base (z-bottom) is higher another's, it should be rendered after.
 	// This check must be on the z-bottom and not the z-top because two objects with the
 	// same z-position may have different heights (think of a mouse sorting vs the Avatar).
-	if (si1._z < si2._z) return true;
-	else if (si1._z > si2._z) return false;
-
-	// Biased Clearly in z
-	if ((si1._zTop + si1._z) / 2 <= si2._z) return true;
-	else if (si1._z >= (si2._zTop + si2._z) / 2) return false;
-
-	// Biased Clearly X
-	if ((si1._x + si1._xLeft) / 2 <= si2._xLeft) return true;
-	else if (si1._xLeft >= (si2._x + si2._xLeft) / 2) return false;
-
-	// Biased Clearly Y
-	if ((si1._y + si1._yFar) / 2 <= si2._yFar) return true;
-	else if (si1._yFar >= (si2._y + si2._yFar) / 2) return false;
+	if (si1._z != si2._z)
+		return si1._z < si2._z;
 
 	// Partial in X + Y front
-	if (si1._x + si1._y != si2._x + si2._y) return (si1._x + si1._y < si2._x + si2._y);
+	if (si1._x + si1._y != si2._x + si2._y)
+		return (si1._x + si1._y < si2._x + si2._y);
 
 	// Partial in X + Y back
-	if (si1._xLeft + si1._yFar != si2._xLeft + si2._yFar) return (si1._xLeft + si1._yFar < si2._xLeft + si2._yFar);
-
-	// Partial in x?
-	if (si1._x != si2._x) return si1._x < si2._x;
+	if (si1._xLeft + si1._yFar != si2._xLeft + si2._yFar)
+		return (si1._xLeft + si1._yFar < si2._xLeft + si2._yFar);
 
 	// Partial in y?
-	if (si1._y != si2._y) return si1._y < si2._y;
+	if (si1._y != si2._y)
+		return si1._y < si2._y;
+
+	// Partial in x?
+	if (si1._x != si2._x)
+		return si1._x < si2._x;
 
 	// Just sort by shape number
-	if (si1._shapeNum != si2._shapeNum) return si1._shapeNum < si2._shapeNum;
+	if (si1._shapeNum != si2._shapeNum)
+		return si1._shapeNum < si2._shapeNum;
 
 	// And then by _frame
 	return si1._frame < si2._frame;
 }
 
-#define COMPARISON_RETURN(val,op,tab)                               \
-	pout << tab"if (si1."#val" != si2."#val") -> ("             \
-	     << si1.val << " != " << si2.val << ") -> "          \
-	     << (si1.val != si2.val) << Std::endl;               \
-	pout << tab"{" << Std::endl;                                \
-	if (si1.val != si2.val)                                     \
-	{                                                           \
-		pout << tab"\treturn si1."#val" "#op" si2."#val"; -> (" \
-		     << si1.val << " "#op" " << si2.val << ") -> "\
-		     << (si1.val op si2.val) << Std::endl;       \
-		return si1.val op si2.val;                              \
-	}                                                           \
-	pout << tab"}" << Std::endl;
+ConsoleStream &operator<<(ConsoleStream &cs, const SortItem &si) {
+	cs << si._shapeNum << ":" << si._frame <<
+		" (" << si._xLeft << "," << si._yFar << "," << si._z << ")" <<
+		" (" << si._x << "," << si._y << "," << si._zTop << "): ";
+	if (si._sprite)
+		cs << "sprite ";
+	if (si._flat)
+		cs << "flat ";
+	if (si._anim)
+		cs << "anim ";
+	if (si._trans)
+		cs << "trans ";
+	if (si._draw)
+		cs << "draw ";
+	if (si._solid)
+		cs << "solid ";
+	if (si._occl)
+		cs << "occl ";
+	if (si._f32x32)
+		cs << "f32x32 ";
+	if (si._roof)
+		cs << "roof ";
+	if (si._land)
+		cs << "land ";
+	if (si._noisy)
+		cs << "noisy ";
 
-#define COMPARISON_RETURN_EX(val1,op,val2,tab)                      \
-	pout << tab"if ("#val1" != "#val2") -> ("                   \
-	     << val1 << " != " << val2 << ") -> "                \
-	     << (val1 != val2) << Std::endl;                     \
-	pout << tab"{" << Std::endl;                                \
-	if (val1 != val2)                                           \
-	{                                                           \
-		pout << tab"\treturn "#val1" "#op" "#val2"; -> ("       \
-		     << val1 << " "#op" " << val2 << ") -> "     \
-		     << (val1 op val2) << Std::endl;             \
-		return val1 op val2;                                    \
-	}                                                           \
-	pout << tab"}" << Std::endl;
-
-#define COMPARISON_RETURN_TF(val1,op,val2,tf,tab)                   \
-	pout << tab "if ("#val1" "#op" "#val2") -> ("                   \
-	     << val1 << " "#op" " << val2 << ") -> "             \
-	     << (val1 op val2) << Std::endl;                     \
-	pout << tab"{" << Std::endl;                                \
-	if (val1 op val2)                                           \
-	{                                                           \
-		pout << tab"\treturn " << tf << Std::endl;              \
-		return tf;                                              \
-	}                                                           \
-	pout << tab"}" << Std::endl;
-
-inline bool SortItem::operator<<(const SortItem &si2) const {
-	const SortItem &si1 = *this;
-
-	if (si2.overlap(si1)) pout << "Overlaping" << Std::endl;
-	else {
-		pout << "Not Overlaping" << Std::endl;
-		return false;
-	}
-
-	// Specialist z flat handling
-	pout << "if (si1._flat && si2._flat) -> if ("
-	     << si1._flat << " && " << si2._flat << ") -> "
-	     << (si1._flat && si2._flat) << Std::endl;
-	pout << "{" << Std::endl;
-
-	if (si1._flat && si2._flat) {
-		// Differing z is easy for flats
-		//if (si1._zTop != si2._zTop) return si1._zTop < si2._zTop;
-		COMPARISON_RETURN(_zTop, <, "\t");
-
-		// Equal z
-
-		// Animated always gets drawn after
-		//if (si1._anim != si2._anim) return si1._anim < si2._anim;
-		COMPARISON_RETURN(_anim, <, "\t");
-
-		// Trans always gets drawn after
-		//if (si1._trans != si2._trans) return si1._trans < si2._trans;
-		COMPARISON_RETURN(_trans, <, "\t");
-
-		// Draw always gets drawn first
-		//if (si1._draw != si2._draw) return si1._draw > si2._draw;
-		COMPARISON_RETURN(_draw, >, "\t");
-
-		// Solid always gets drawn first
-		//if (si1._solid != si2._solid) return si1._solid > si2._solid;
-		COMPARISON_RETURN(_solid, >, "\t");
-
-		// Occludes always get drawn first
-		//if (si1._occl != si2._occl) return si1._occl > si2._occl;
-		COMPARISON_RETURN(_occl, >, "\t");
-
-		// 32x32 flats get drawn first
-		//if (si1._f32x32 != si2._f32x32) return si1._f32x32 > si2._f32x32;
-		COMPARISON_RETURN(_f32x32, >, "\t");
-	}
-	// Mixed, or non flat
-	else {
-		pout << "}" << Std::endl;
-		pout << "else" << Std::endl;
-		pout << "{" << Std::endl;
-
-		// Clearly X, Y and Z  (useful?)
-		//if (si1._x <= si2._xLeft && si1._y <= si2._yFar && si1._zTop <= si2._z) return true;
-		//else if (si1._xLeft >= si2._x && si1._yFar >= si2._y && si1._z >= si2._zTop) return false;
-
-		//int front1 = si1._x + si1._y;
-		//int rear1 = si1._xLeft + si1._yFar;
-		//int front2 = si2._x + si2._y;
-		//int rear2 = si2._xLeft + si2._yFar;
-
-		// Rear of object is infront of other's front
-		//if (front1 <= rear2) return true;
-		//else if (rear1 >= front2) return false;
-		//COMPARISON_RETURN_TF(front1,<=,rear2,true,"\t");
-		//COMPARISON_RETURN_TF(rear1,>=,front2,false,"\t");
-
-		// Clearly in z
-		//if (si1._zTop <= si2._z) return true;
-		//else if (si1._z >= si2._zTop) return false;
-		COMPARISON_RETURN_TF(si1._zTop, <=, si2._z, true, "\t");
-		COMPARISON_RETURN_TF(si1._z, >=, si2._zTop, false, "\t");
-
-		// Partial in z
-		//if (si1._zTop != si2._zTop) return si1._zTop < si2._zTop;
-	}
-	pout << "}" << Std::endl;
-
-	// Clearly in x and y? (useful?)
-	//if (si1._x <= si2._xLeft && si1._y <= si2._yFar) return true;
-	//else if (si1._xLeft >= si2._x && si1._yFar >= si2._y) return false;
-
-	// Clearly X
-	//if (si1._x <= si2._xLeft) return true;
-	//else if (si1._xLeft >= si2._x) return false;
-	COMPARISON_RETURN_TF(si1._x, <=, si2._xLeft, true, "\t");
-	COMPARISON_RETURN_TF(si1._xLeft, >=, si2._x, false, "\t");
-
-	// Clearly Y
-	//if (si1._y <= si2._yFar) return true;
-	//else if (si1._yFar >= si2._y) return false;
-	COMPARISON_RETURN_TF(si1._y, <=, si2._yFar, true, "\t");
-	COMPARISON_RETURN_TF(si1._yFar, >=, si2._y, false, "\t");
-
-	// Z base
-	COMPARISON_RETURN_TF(si1._z, <, si2._z, true, "");
-	COMPARISON_RETURN_TF(si1._z, >, si2._z, false, "");
-
-	// Biased Clearly in z
-	//if ((si1._zTop+si1._z)/2 <= si2._z) return true;
-	//else if (si1._z >= (si2._zTop+si2._z)/2) return false;
-	COMPARISON_RETURN_TF((si1._zTop + si1._z) / 2, <=, si2._z, true, "");
-	COMPARISON_RETURN_TF(si1._z, >=, (si2._zTop + si2._z) / 2, false, "");
-
-	// Biased Clearly X
-	//if ((si1._x+si1._xLeft)/2 <= si2._xLeft) return true;
-	//else if (si1._xLeft >= (si2._x+si2._xLeft)/2) return false;
-	COMPARISON_RETURN_TF((si1._x + si1._xLeft) / 2, <=, si2._xLeft, true, "");
-	COMPARISON_RETURN_TF(si1._xLeft, >=, (si2._x + si2._xLeft) / 2, false, "");
-
-	// Biased Clearly Y
-	//if ((si1._y+si1._yFar)/2 <= si2._yFar) return true;
-	//else if (si1._yFar >= (si2._y+si2._yFar)/2) return false;
-	COMPARISON_RETURN_TF((si1._y + si1._yFar) / 2, <=, si2._yFar, true, "");
-	COMPARISON_RETURN_TF(si1._yFar, >=, (si2._y + si2._yFar) / 2, false, "");
-
-	// Partial in X + Y front
-	//if (si1._x + si1._y != si2._x + si2._y) return (si1._x + si1._y < si2._x + si2._y);
-	COMPARISON_RETURN_EX(si1._x + si1._y, <, si2._x + si2._y, "");
-
-	// Partial in X + Y back
-	//if (si1._xLeft + si1._yFar != si2._xLeft + si2._yFar) return (si1._xLeft + si1._yFar < si2._xLeft + si2._yFar);
-	COMPARISON_RETURN_EX(si1._xLeft + si1._yFar, <, si2._xLeft + si2._yFar, "");
-
-	// Partial in x?
-	//if (si1._x != si2._x) return si1._x < si2._x;
-	COMPARISON_RETURN(_x, <, "");
-
-	// Partial in y?
-	//if (si1._y != si2._y) return si1._y < si2._y;
-	COMPARISON_RETURN(_y, <, "");
-
-	// Just sort by _shape number
-//	if (si1._shapeNum != si2._shapeNum) return si1._shapeNum < si2._shapeNum;
-	COMPARISON_RETURN(_shapeNum, <, "");
-
-	// And then by _frame
-	//return si1._frame < si2._frame;
-	COMPARISON_RETURN(_frame, <, "");
-	return 0;
+	return cs;
 }
-
 
 //
 // ItemSorter
@@ -606,7 +455,7 @@ ItemSorter::~ItemSorter() {
 }
 
 void ItemSorter::BeginDisplayList(RenderSurface *rs,
-                                  int32 camx, int32 camy, int32 camz) {
+								  int32 camx, int32 camy, int32 camz) {
 	// Get the _shapes, if required
 	if (!_shapes) _shapes = GameData::get_instance()->getMainShapes();
 
@@ -639,10 +488,9 @@ void ItemSorter::AddItem(int32 x, int32 y, int32 z, uint32 shapeNum, uint32 fram
 	si->_shape = _shapes->getShape(shapeNum);
 	si->_shapeNum = shapeNum;
 	si->_frame = frame_num;
-	const ShapeFrame *_frame = si->_shape->getFrame(si->_frame);
+	const ShapeFrame *_frame = si->_shape ? si->_shape->getFrame(si->_frame) : nullptr;
 	if (!_frame) {
-		perr << "Invalid shape: " << si->_shapeNum << "," << si->_frame
-		     << Std::endl;
+		perr << "Invalid shape: " << si->_shapeNum << "," << si->_frame << Std::endl;
 		return;
 	}
 
@@ -684,10 +532,12 @@ void ItemSorter::AddItem(int32 x, int32 y, int32 z, uint32 shapeNum, uint32 fram
 	si->_sy2 = si->_sy + _frame->_height;   // Bottom
 
 	// Do Clipping here
-	si->_clipped = _surf->CheckClipped(Rect(si->_sx, si->_sy, si->_sx + _frame->_width, si->_sy + _frame->_height));
-	if (si->_clipped < 0)
+	int16 clipped = _surf->CheckClipped(Rect(si->_sx, si->_sy, si->_sx + _frame->_width, si->_sy + _frame->_height));
+	if (clipped < 0)
 		// Clipped away entirely - don't add to the list.
 		return;
+
+	si->_clipped = (clipped != 0);
 
 	// These help out with sorting. We calc them now, so it will be faster
 	si->_f32x32 = xd == 128 && yd == 128;
@@ -703,6 +553,7 @@ void ItemSorter::AddItem(int32 x, int32 y, int32 z, uint32 shapeNum, uint32 fram
 	si->_trans = info->is_translucent();
 	si->_fixed = info->is_fixed();
 	si->_land = info->is_land();
+	si->_sprite = GAME_IS_CRUSADER && (si->_extFlags & Item::EXT_SPRITE);
 
 	si->_occluded = false;
 	si->_order = -1;
@@ -726,7 +577,7 @@ void ItemSorter::AddItem(int32 x, int32 y, int32 z, uint32 shapeNum, uint32 fram
 			continue;
 
 		// Attempt to find which is infront
-		if (*si < *si2) {
+		if (si->below(*si2)) {
 			// si2 occludes si (us)
 			if (si2->_occl && si2->occludes(*si)) {
 				// No need to do any more checks, this isn't visible
@@ -871,7 +722,7 @@ bool ItemSorter::PaintSortItem(SortItem *si) {
 		uint32 wo_shapenum;
 		av->getWeaponOverlay(wo_frame, wo_shapenum);
 		if (wo_frame) {
-			Shape *wo_shape = GameData::get_instance()->getMainShapes()->getShape(wo_shapenum);
+			const Shape *wo_shape = GameData::get_instance()->getMainShapes()->getShape(wo_shapenum);
 			_surf->Paint(wo_shape, wo_frame->_frame,
 			            si->_sxBot + wo_frame->_xOff,
 			            si->_syBot + wo_frame->_yOff);
@@ -881,14 +732,12 @@ bool ItemSorter::PaintSortItem(SortItem *si) {
 	if (_sortLimit) {
 		if (_orderCounter == _sortLimit) {
 			static uint32 previt = 0;
-			int x1 = si->_xLeft;
-			int y1 = si->_yFar;
-			int z2 = si->_zTop;
 			if (!previt || previt != si->_itemNum) {
 				previt = si->_itemNum;
-				pout << si->_shapeNum << ":" << si->_frame << " (" << x1 << "," << y1 << "," << si->_z << ") (" << si->_x << "," << si->_y << "," << z2 << ")" << Std::endl;
-				//  ss->info->print();
-				if (_prev) *_prev << *si;
+				pout << "SortItem: " << *si << Std::endl;
+				if (_prev && si->overlap(_prev)) {
+					pout << "Overlaps: " << *_prev << Std::endl;
+				}
 			}
 			return true;
 		}
@@ -1037,6 +886,12 @@ uint16 ItemSorter::Trace(int32 x, int32 y, HitFace *face, bool item_highlight) {
 	}
 
 	return 0;
+}
+
+void ItemSorter::IncSortLimit(int count) {
+	_sortLimit += count;
+	if (_sortLimit < 0)
+		_sortLimit = 0;
 }
 
 } // End of namespace Ultima8

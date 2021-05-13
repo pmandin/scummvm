@@ -28,9 +28,7 @@
 #ifndef ICB_GAME_OBJECT_H
 #define ICB_GAME_OBJECT_H
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_rcutypes.h"
-#include "engines/icb/common/px_assert.h"
 
 namespace ICB {
 
@@ -54,24 +52,24 @@ class c_un_game_object {
 
 public:
 	// Main access functions
-	cstr GetName() const;             // Get a pointer to the object name
-	uint GetNoLvars() const;          // Get the number of local variables
-	uint GetNoScripts() const;        // Get the number of scripts
-	cstr GetScriptName(uint32) const; // Get the name of a script
+	const char *GetName() const;             // Get a pointer to the object name
+	uint32 GetNoLvars() const;                 // Get the number of local variables
+	uint32 GetNoScripts() const;               // Get the number of scripts
+	const char *GetScriptName(uint32) const; // Get the name of a script
 	uint32 GetSize() { return (m_size); }
 	uint32 GetLvarInfoOffset() { return (m_var_table_offset); }
 
-	cstr GetScriptVariableName(uint32) const; // gets name
-	int32 GetVariable(cstr name) const;       // get's number of named variable
+	const char *GetScriptVariableName(uint32) const; // gets name
+	int32 GetVariable(const char *name) const;       // get's number of named variable
 
 	int32 IsVariableString(uint32) const; // is variable a string (1=string, 0=int)
 
 	void SetIntegerVariable(uint32, int32); // Sets the value of an integer variable
 
 	int32 &GetIntegerVariable(uint32); // Get the value of an integer variable
-	cstr GetStringVariable(uint32) const;    // Get the value of a string variable
+	const char *GetStringVariable(uint32) const;    // Get the value of a string variable
 
-	cstr GetStringValueOrDefault(const cstr varName, const cstr defaultStr) {
+	const char *GetStringValueOrDefault(const char *varName, const char *defaultStr) {
 		int32 var;
 		var = GetVariable(varName);
 		if (var == -1)
@@ -80,7 +78,7 @@ public:
 			return GetStringVariable(var);
 	}
 
-	int32 GetIntegerValueOrDefault(const cstr varName, int32 defaultInt) {
+	int32 GetIntegerValueOrDefault(const char *varName, int32 defaultInt) {
 		int32 var;
 		var = GetVariable(varName);
 		if (var == -1)
@@ -112,51 +110,51 @@ protected: // The rest of the data
 	uint32 m_noScripts; // The number of scripts associated with this object
 };
 
-inline cstr c_un_game_object::GetName() const {
+inline const char *c_un_game_object::GetName() const {
 	// Get a pointer to the object name
-	return ((cstr)(((cstr) this) + m_name_offset));
+	return ((const char *)(((const char *) this) + m_name_offset));
 }
 
-inline uint c_un_game_object::GetNoLvars() const {
+inline uint32 c_un_game_object::GetNoLvars() const {
 	// Get the number of local variables
 	return (m_noLvars);
 }
 
-inline uint c_un_game_object::GetNoScripts() const {
+inline uint32 c_un_game_object::GetNoScripts() const {
 	// Get the number of scripts
 	return (m_noScripts);
 }
 
-inline cstr c_un_game_object::GetScriptName(uint32 scriptNo) const {
-	_ASSERT((scriptNo >= 0) && (scriptNo < m_noScripts));
-	return ((cstr)(((const cstr) this) + ((const int *)(((const char *)this) + m_script_name_table_offset))[scriptNo]));
+inline const char *c_un_game_object::GetScriptName(uint32 scriptNo) const {
+	assert(scriptNo < m_noScripts);
+	return ((const char *)(((const char *) this) + ((const int32 *)(((const char *)this) + m_script_name_table_offset))[scriptNo]));
 }
 
-inline cstr c_un_game_object::GetScriptVariableName(uint32 varNo) const {
-	cstr currentPos;
+inline const char *c_un_game_object::GetScriptVariableName(uint32 varNo) const {
+	const char *currentPos;
 	const uint32 *table;
 
-	currentPos = (((cstr) this) + m_var_table_offset);
+	currentPos = (((const char *) this) + m_var_table_offset);
 	table = (const uint32 *)currentPos;
 	return currentPos + table[varNo * 2];
 }
 
 inline int32 c_un_game_object::IsVariableString(uint32 varNo) const {
-	cstr currentPos;
+	const char *currentPos;
 	const uint32 *table;
 
-	currentPos = (((cstr) this) + m_var_table_offset);
+	currentPos = (((const char *) this) + m_var_table_offset);
 	table = (const uint32 *)currentPos;
 	return table[varNo * 2 + 1];
 }
 
-inline int32 c_un_game_object::GetVariable(cstr name) const {
-	cstr currentPos;
+inline int32 c_un_game_object::GetVariable(const char *name) const {
+	const char *currentPos;
 	const uint32 *table;
 	int32 retValue;
 	int32 whichVar;
 
-	currentPos = (((cstr) this) + m_var_table_offset);
+	currentPos = (((const char *) this) + m_var_table_offset);
 	table = (const uint32 *)currentPos;
 
 	retValue = -1;
@@ -172,20 +170,20 @@ inline int32 c_un_game_object::GetVariable(cstr name) const {
 }
 
 inline void c_un_game_object::SetIntegerVariable(uint32 lvar, int32 val) {
-	_ASSERT((lvar >= 0) && (lvar < m_noLvars));
-	(((int *)(((char *)this) + m_lvars_offset))[lvar]) = val;
+	assert(lvar < m_noLvars);
+	(((int32 *)(((char *)this) + m_lvars_offset))[lvar]) = val;
 }
 
 inline int32 &c_un_game_object::GetIntegerVariable(uint32 lvar) {
 	// Get an lvar value
-	_ASSERT((lvar >= 0) && (lvar < m_noLvars));
-	return (((int *)(((char *)this) + m_lvars_offset))[lvar]);
+	assert(lvar < m_noLvars);
+	return (((int32 *)(((char *)this) + m_lvars_offset))[lvar]);
 }
 
-inline cstr c_un_game_object::GetStringVariable(uint32 lvar) const {
+inline const char *c_un_game_object::GetStringVariable(uint32 lvar) const {
 	// Get an lvar value
-	_ASSERT((lvar >= 0) && (lvar < m_noLvars));
-	return (((cstr) this) + ((const int *)(((const char *)this) + m_lvars_offset))[lvar]);
+	assert(lvar < m_noLvars);
+	return (((const char *) this) + ((const int32 *)(((const char *)this) + m_lvars_offset))[lvar]);
 }
 
 class c_compressed_game_object {
@@ -196,26 +194,26 @@ class c_compressed_game_object {
 
 public:
 	// Main access functions
-	cstr GetName() const;      // Get a pointer to the object name
-	uint GetNoLvars() const;   // Get the number of local variables
-	uint GetNoScripts() const; // Get the number of scripts
+	const char *GetName() const;      // Get a pointer to the object name
+	uint32 GetNoLvars() const;   // Get the number of local variables
+	uint32 GetNoScripts() const; // Get the number of scripts
 	uint32 GetSize() { return (m_size); }
 
 	// Using the hash system you cannot get names, only hashes
 	uint32 GetScriptNameFullHash(uint32) const;
 	uint32 GetScriptNamePartHash(uint32) const;
 
-	cstr GetScriptVariableName(uint32) const; // gets name
-	int32 GetVariable(cstr name) const;       // get's number of named variable
+	const char *GetScriptVariableName(uint32) const; // gets name
+	int32 GetVariable(const char *name) const;       // get's number of named variable
 
 	int32 IsVariableString(uint32) const; // is variable a string (1=string, 0=int)
 
 	void SetIntegerVariable(uint32, int32); // Sets the value of an integer variable
 
 	int32 &GetIntegerVariable(uint32); // Get the value of an integer variable
-	cstr GetStringVariable(uint32) const;    // Get the value of a string variable
+	const char *GetStringVariable(uint32) const;    // Get the value of a string variable
 
-	cstr GetStringValueOrDefault(const cstr varName, const cstr defaultStr) {
+	const char *GetStringValueOrDefault(const char *varName, const char *defaultStr) {
 		int32 var;
 		var = GetVariable(varName);
 		if (var == -1)
@@ -224,7 +222,7 @@ public:
 			return GetStringVariable(var);
 	}
 
-	int32 GetIntegerValueOrDefault(const cstr varName, int32 defaultInt) {
+	int32 GetIntegerValueOrDefault(const char *varName, int32 defaultInt) {
 		int32 var;
 		var = GetVariable(varName);
 		if (var == -1)
@@ -264,62 +262,62 @@ protected: // The rest of the data
 	*/
 };
 
-inline cstr c_compressed_game_object::GetName() const {
+inline const char *c_compressed_game_object::GetName() const {
 	// Get a pointer to the object name
-	return ((cstr)(((cstr) this) + m_name_offset));
+	return ((const char *)(((const char *) this) + m_name_offset));
 }
 
-inline uint c_compressed_game_object::GetNoLvars() const {
+inline uint32 c_compressed_game_object::GetNoLvars() const {
 	// Get the number of local variables
 	return (m_noLvars);
 }
 
-inline uint c_compressed_game_object::GetNoScripts() const {
+inline uint32 c_compressed_game_object::GetNoScripts() const {
 	// Get the number of scripts
 	return (m_noScripts);
 }
 
 inline uint32 c_compressed_game_object::GetScriptNameFullHash(uint32 scriptNo) const {
-	_ASSERT((scriptNo >= 0) && (scriptNo < m_noScripts));
-	return (((const int *)(((const char *)this) + m_script_name_hash_table_offset))[scriptNo * 2]);
+	assert(scriptNo < m_noScripts);
+	return (((const int32 *)(((const char *)this) + m_script_name_hash_table_offset))[scriptNo * 2]);
 }
 
 inline uint32 c_compressed_game_object::GetScriptNamePartHash(uint32 scriptNo) const {
-	_ASSERT((scriptNo >= 0) && (scriptNo < m_noScripts));
-	return (((const int *)(((const char *)this) + m_script_name_hash_table_offset))[scriptNo * 2 + 1]);
+	assert(scriptNo < m_noScripts);
+	return (((const int32 *)(((const char *)this) + m_script_name_hash_table_offset))[scriptNo * 2 + 1]);
 }
 
-inline cstr c_compressed_game_object::GetScriptVariableName(uint32 varNo) const {
-	cstr currentPos;
+inline const char *c_compressed_game_object::GetScriptVariableName(uint32 varNo) const {
+	const char *currentPos;
 	const uint32 *table;
 
-	currentPos = (((cstr) this) + m_var_table_offset);
+	currentPos = (((const char *) this) + m_var_table_offset);
 	table = (const uint32 *)currentPos;
 	return ((const char *)this) + table[varNo * 2];
 }
 
 inline int32 c_compressed_game_object::IsVariableString(uint32 varNo) const {
-	cstr currentPos;
+	const char *currentPos;
 	const uint32 *table;
 
-	currentPos = (((cstr) this) + m_var_table_offset);
+	currentPos = (((const char *) this) + m_var_table_offset);
 	table = (const uint32 *)currentPos;
 	return table[varNo * 2 + 1];
 }
 
-inline int32 c_compressed_game_object::GetVariable(cstr name) const {
-	cstr currentPos;
+inline int32 c_compressed_game_object::GetVariable(const char *name) const {
+	const char *currentPos;
 	const uint32 *table;
 	int32 retValue;
 	uint32 whichVar;
 
-	currentPos = (((cstr) this) + m_var_table_offset);
+	currentPos = (((const char *) this) + m_var_table_offset);
 	table = (const uint32 *)currentPos;
 
 	retValue = -1;
 
 	for (whichVar = 0; whichVar < m_noLvars; whichVar++) {
-		if (strcmp(name, ((cstr) this) + table[whichVar * 2]) == 0) {
+		if (strcmp(name, ((const char *) this) + table[whichVar * 2]) == 0) {
 			retValue = whichVar;
 			whichVar = (int32)m_noLvars;
 		}
@@ -329,20 +327,20 @@ inline int32 c_compressed_game_object::GetVariable(cstr name) const {
 }
 
 inline void c_compressed_game_object::SetIntegerVariable(uint32 lvar, int32 val) {
-	_ASSERT((lvar >= 0) && (lvar < m_noLvars));
-	(((int *)(((char *)this) + m_lvars_offset))[lvar]) = val;
+	assert(lvar < m_noLvars);
+	(((int32 *)(((char *)this) + m_lvars_offset))[lvar]) = val;
 }
 
 inline int32 &c_compressed_game_object::GetIntegerVariable(uint32 lvar) {
 	// Get an lvar value
-	_ASSERT((lvar >= 0) && (lvar < m_noLvars));
-	return (((int *)(((char *)this) + m_lvars_offset))[lvar]);
+	assert(lvar < m_noLvars);
+	return (((int32 *)(((char *)this) + m_lvars_offset))[lvar]);
 }
 
-inline cstr c_compressed_game_object::GetStringVariable(uint32 lvar) const {
+inline const char *c_compressed_game_object::GetStringVariable(uint32 lvar) const {
 	// Get an lvar value
-	_ASSERT((lvar >= 0) && (lvar < m_noLvars));
-	return (((cstr) this) + ((const int *)(((const char *)this) + m_lvars_offset))[lvar]);
+	assert(lvar < m_noLvars);
+	return (((const char *) this) + ((const int32 *)(((const char *)this) + m_lvars_offset))[lvar]);
 }
 
 class CSettableGameObject : public c_un_game_object {

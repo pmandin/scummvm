@@ -175,7 +175,7 @@ void ScummEngine_v0::resetVerbs() {
 		vs->center = 0;
 		vs->imgindex = 0;
 		vs->prep = verbPrepIdType(vtable[i - 1].id);
-		vs->curRect.left = vtable[i - 1].x_pos * 8;
+		vs->curRect.left = vs->origLeft = vtable[i - 1].x_pos * 8;
 		vs->curRect.top = vtable[i - 1].y_pos * 8 + virt->topline + 8;
 		loadPtrToResource(rtVerb, i, (const byte*)vtable[i - 1].name);
 	}
@@ -555,7 +555,7 @@ void ScummEngine::checkExecVerbs() {
 		if (!(_game.id == GID_MONKEY && _game.platform == Common::kPlatformSegaCD)) {
 			// This is disabled in the SegaCD version as the "vs->key" values setup
 			// by script-17 conflict with the values expected by the generic keyboard
-			// input script. See tracker item #1193185.
+			// input script. See tracker item #2013.
 			vs = &_verbs[1];
 			for (i = 1; i < _numVerbs; i++, vs++) {
 				if (vs->verbid && vs->saveid == 0 && vs->curmode == 1) {
@@ -617,7 +617,7 @@ void ScummEngine::checkExecVerbs() {
 		const byte code = _mouseAndKeyboardStat & MBS_LEFT_CLICK ? 1 : 2;
 
 		// This could be kUnkVirtScreen.
-		// Fixes bug #1536932: "MANIACNES: Crash on click in speechtext-area"
+		// Fixes bug #2773: "MANIACNES: Crash on click in speechtext-area"
 		if (!zone)
 			return;
 
@@ -699,7 +699,7 @@ void ScummEngine_v2::checkExecVerbs() {
 		const int inventoryArea = (_game.platform == Common::kPlatformNES) ? 48: 32;
 
 		// This could be kUnkVirtScreen.
-		// Fixes bug #1536932: "MANIACNES: Crash on click in speechtext-area"
+		// Fixes bug #2773: "MANIACNES: Crash on click in speechtext-area"
 		if (!zone)
 			return;
 
@@ -1013,26 +1013,22 @@ void ScummEngine_v7::drawVerb(int verb, int mode) {
 		_charset->setCurID(vs->charset_nr);
 
 		// Compute the text rect
-		if (_language == Common::HE_ISR) {
-			vs->curRect.left = _screenWidth - _charset->getStringWidth(0, buf);
-		}
-		vs->curRect.right = 0;
+		int textWidth = 0;
 		vs->curRect.bottom = 0;
 		const byte *msg2 = msg;
 		while (*msg2) {
 			const int charWidth = _charset->getCharWidth(*msg2);
 			const int charHeight = _charset->getCharHeight(*msg2);
-			vs->curRect.right += charWidth;
+			textWidth += charWidth;
 			if (vs->curRect.bottom < charHeight)
 				vs->curRect.bottom = charHeight;
 			msg2++;
 		}
-		vs->curRect.right += vs->curRect.left;
 		vs->curRect.bottom += vs->curRect.top;
 		vs->oldRect = vs->curRect;
 
-		const int maxWidth = _screenWidth - vs->curRect.left;
-		if (_charset->getStringWidth(0, buf) > maxWidth && _game.version == 8) {
+		const int maxWidth = _language == Common::HE_ISR ? vs->curRect.right + 1 : _screenWidth - vs->curRect.left;
+		if (_game.version == 8 && _charset->getStringWidth(0, buf) > maxWidth) {
 			byte tmpBuf[384];
 			memcpy(tmpBuf, msg, 384);
 
@@ -1046,12 +1042,23 @@ void ScummEngine_v7::drawVerb(int verb, int mode) {
 				}
 				--len;
 			}
-			enqueueText(tmpBuf, vs->curRect.left, vs->curRect.top, color, vs->charset_nr, vs->center);
+			int16 leftPos = vs->curRect.left;
+			if (_language == Common::HE_ISR)
+				vs->curRect.left = vs->origLeft = leftPos = vs->curRect.right - _charset->getStringWidth(0, tmpBuf);
+			else
+				vs->curRect.right = vs->curRect.left + _charset->getStringWidth(0, tmpBuf);
+			enqueueText(tmpBuf, leftPos, vs->curRect.top, color, vs->charset_nr, vs->center);
 			if (len >= 0) {
-				enqueueText(&msg[len + 1], vs->curRect.left, vs->curRect.top + _verbLineSpacing, color, vs->charset_nr, vs->center);
+				if (_language == Common::HE_ISR)
+					leftPos = vs->curRect.right - _charset->getStringWidth(0, &msg[len + 1]);
+				enqueueText(&msg[len + 1], leftPos, vs->curRect.top + _verbLineSpacing, color, vs->charset_nr, vs->center);
 				vs->curRect.bottom += _verbLineSpacing;
 			}
 		} else {
+			if (_language == Common::HE_ISR)
+				vs->curRect.left = vs->origLeft = vs->curRect.right - textWidth;
+			else
+				vs->curRect.right = vs->curRect.left + textWidth;
 			enqueueText(msg, vs->curRect.left, vs->curRect.top, color, vs->charset_nr, vs->center);
 		}
 		_charset->setCurID(oldID);
@@ -1077,7 +1084,7 @@ void ScummEngine::drawVerb(int verb, int mode) {
 		restoreVerbBG(verb);
 
 		_string[4].charset = vs->charset_nr;
-		_string[4].xpos = vs->curRect.left;
+		_string[4].xpos = vs->origLeft;
 		_string[4].ypos = vs->curRect.top;
 		_string[4].right = _screenWidth - 1;
 		_string[4].center = vs->center;
@@ -1103,6 +1110,7 @@ void ScummEngine::drawVerb(int verb, int mode) {
 		drawString(4, msg);
 		_charset->_center = tmp;
 
+		vs->curRect.left = _charset->_str.left;
 		vs->curRect.right = _charset->_str.right;
 		vs->curRect.bottom = _charset->_str.bottom;
 		vs->oldRect = _charset->_str;

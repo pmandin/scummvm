@@ -37,11 +37,11 @@ enum {
 
 class TeenAgentMetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "teenagent";
 	}
 
-    bool hasFeature(MetaEngineFeature f) const override {
+	bool hasFeature(MetaEngineFeature f) const override {
 		switch (f) {
 		case kSupportsListSaves:
 		case kSupportsDeleteSave:
@@ -54,11 +54,9 @@ public:
 		}
 	}
 
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override {
-		if (desc) {
-			*engine = new TeenAgent::TeenAgentEngine(syst, desc);
-		}
-		return desc != 0;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override {
+		*engine = new TeenAgent::TeenAgentEngine(syst, desc);
+		return Common::kNoError;
 	}
 
 	static Common::String generateGameStateFileName(const char *target, int slot) {

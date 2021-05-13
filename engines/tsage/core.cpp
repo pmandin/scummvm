@@ -1604,22 +1604,42 @@ void SceneItem::doAction(int action) {
 	} else {
 		const char *msg = NULL;
 
-		switch ((int)action) {
-		case CURSOR_LOOK:
-			msg = LOOK_SCENE_HOTSPOT;
-			break;
-		case CURSOR_USE:
-			msg = USE_SCENE_HOTSPOT;
-			break;
-		case CURSOR_TALK:
-			msg = TALK_SCENE_HOTSPOT;
-			break;
-		case 0x1000:
-			msg = SPECIAL_SCENE_HOTSPOT;
-			break;
-		default:
-			msg = DEFAULT_SCENE_HOTSPOT;
-			break;
+		if (g_vm->getLanguage() == Common::ES_ESP) {
+			switch ((int)action) {
+			case CURSOR_LOOK:
+				msg = ESP_LOOK_SCENE_HOTSPOT;
+				break;
+			case CURSOR_USE:
+				msg = ESP_USE_SCENE_HOTSPOT;
+				break;
+			case CURSOR_TALK:
+				msg = ESP_TALK_SCENE_HOTSPOT;
+				break;
+			case 0x1000:
+				msg = ESP_SPECIAL_SCENE_HOTSPOT;
+				break;
+			default:
+				msg = ESP_DEFAULT_SCENE_HOTSPOT;
+				break;
+			}
+		} else {
+			switch ((int)action) {
+			case CURSOR_LOOK:
+				msg = LOOK_SCENE_HOTSPOT;
+				break;
+			case CURSOR_USE:
+				msg = USE_SCENE_HOTSPOT;
+				break;
+			case CURSOR_TALK:
+				msg = TALK_SCENE_HOTSPOT;
+				break;
+			case 0x1000:
+				msg = SPECIAL_SCENE_HOTSPOT;
+				break;
+			default:
+				msg = DEFAULT_SCENE_HOTSPOT;
+				break;
+			}
 		}
 
 		GUIErrorMessage(msg);
@@ -1924,19 +1944,31 @@ void SceneHotspot::doAction(int action) {
 	switch ((int)action) {
 	case CURSOR_LOOK:
 		if (g_vm->getGameID() == GType_BlueForce)
-			SceneItem::display(LOOK_SCENE_HOTSPOT);
+			if (g_vm->getLanguage() == Common::ES_ESP) {
+				SceneItem::display(ESP_LOOK_SCENE_HOTSPOT);
+			} else {
+				SceneItem::display(LOOK_SCENE_HOTSPOT);
+			}
 		else
 			display(1, 0, SET_Y, 20, SET_WIDTH, 200, SET_EXT_BGCOLOR, 7, LIST_END);
 		break;
 	case CURSOR_USE:
 		if (g_vm->getGameID() == GType_BlueForce)
-			SceneItem::display(USE_SCENE_HOTSPOT);
+			if (g_vm->getLanguage() == Common::ES_ESP) {
+				SceneItem::display(ESP_USE_SCENE_HOTSPOT);
+			} else {
+				SceneItem::display(USE_SCENE_HOTSPOT);
+			}
 		else
 			display(1, 5, SET_Y, 20, SET_WIDTH, 200, SET_EXT_BGCOLOR, 7, LIST_END);
 		break;
 	case CURSOR_TALK:
 		if (g_vm->getGameID() == GType_BlueForce)
-			SceneItem::display(TALK_SCENE_HOTSPOT);
+			if (g_vm->getLanguage() == Common::ES_ESP) {
+				SceneItem::display(ESP_TALK_SCENE_HOTSPOT);
+			} else {
+				SceneItem::display(TALK_SCENE_HOTSPOT);
+			}
 		else
 			display(1, 15, SET_Y, 20, SET_WIDTH, 200, SET_EXT_BGCOLOR, 7, LIST_END);
 		break;
@@ -1944,7 +1976,11 @@ void SceneHotspot::doAction(int action) {
 		break;
 	default:
 		if (g_vm->getGameID() == GType_BlueForce)
-			SceneItem::display(DEFAULT_SCENE_HOTSPOT);
+			if (g_vm->getLanguage() == Common::ES_ESP) {
+				SceneItem::display(ESP_DEFAULT_SCENE_HOTSPOT);
+			} else {
+				SceneItem::display(DEFAULT_SCENE_HOTSPOT);
+			}
 		else
 			display(2, action, SET_Y, 20, SET_WIDTH, 200, SET_EXT_BGCOLOR, 7, LIST_END);
 		break;
@@ -2142,6 +2178,48 @@ SceneObject::SceneObject(const SceneObject &so) : SceneHotspot() {
 SceneObject::~SceneObject() {
 	delete _mover;
 	delete _objectWrapper;
+}
+
+SceneObject& SceneObject::operator=(const SceneObject &so) {
+	this->SceneHotspot::operator=(so);
+
+	_visageImages = so._visageImages;
+
+	_updateStartFrame = so._updateStartFrame;
+	_walkStartFrame = so._walkStartFrame;
+	_oldPosition = so._oldPosition;
+	_percent = so._percent;
+	_priority = so._priority;
+	_angle = so._angle;
+	_flags = so._flags;
+	_xs = so._xs;
+	_xe = so._xe;
+	for (uint i = 0; i < ARRAYSIZE(_paneRects); i++) _paneRects[i] = so._paneRects[i];
+	_visage = so._visage;
+	_objectWrapper = so._objectWrapper;
+	_strip = so._strip;
+	_animateMode = so._animateMode;
+	_frame = so._frame;
+	_endFrame = so._endFrame;
+	_loopCount = so._loopCount;
+	_frameChange = so._frameChange;
+	_numFrames = so._numFrames;
+	_regionIndex = so._regionIndex;
+	_mover = so._mover;
+	_moveDiff = so._moveDiff;
+
+	_moveRate = so._moveRate;
+	_actorDestPos = so._actorDestPos;
+	_endAction = so._endAction;
+	_regionBitList = so._regionBitList;
+
+	_shadowMap = so._shadowMap;
+	_shade = so._shade;
+	_oldShade = so._oldShade;
+	_effect = so._effect;
+	_linkedActor = so._linkedActor;
+
+	return *this;
 }
 
 int SceneObject::getNewFrame() {
@@ -4435,8 +4513,13 @@ void SceneHandler::dispatch() {
 		Common::Error err = g_saver->save(saveSlot, _saveName);
 		// FIXME: Make use of the description string in err to enhance
 		// the error reported to the user.
-		if (err.getCode() != Common::kNoError)
-			GUIErrorMessage(SAVE_ERROR_MSG);
+		if (err.getCode() != Common::kNoError) {
+			if (g_vm->getLanguage() == Common::ES_ESP) {
+				GUIErrorMessage(ESP_SAVE_ERROR_MSG);
+			} else {
+				GUIErrorMessage(SAVE_ERROR_MSG);
+			}
+		}
 	}
 	if (_loadGameSlot != -1) {
 		int priorSceneBeforeLoad = GLOBALS._sceneManager._previousScene;

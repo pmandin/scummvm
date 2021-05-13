@@ -444,6 +444,10 @@ bool MessageState::stringStage(Common::String &outstr, const Common::String &inS
 		// SCI32 seems to support having digits in stage directions
 		if (((inStr[i] >= 'a') && (inStr[i] <= 'z')) || ((inStr[i] >= '0') && (inStr[i] <= '9') && (getSciVersion() < SCI_VERSION_2)))
 			return false;
+
+		// If it contains Hebrew letters, it's not a stage direction
+		if (g_sci->getLanguage() == Common::HE_ISR && (byte)inStr[i] >= 128)
+			return false;
 	}
 
 	// We ran into the end of the string without finding a closing bracket
@@ -495,7 +499,7 @@ void MessageState::outputString(reg_t buf, const Common::String &str) {
 		} else {
 			// LSL6 sets an exit text here, but the buffer size allocated
 			// is too small. Don't display a warning in this case, as we
-			// don't use the exit text anyway - bug report #3035533
+			// don't use the exit text anyway - bug report #5000
 			if (g_sci->getGameId() == GID_LSL6 && str.hasPrefix("\r\n(c) 1993 Sierra On-Line, Inc")) {
 				// LSL6 buggy exit text, don't show warning
 			} else {

@@ -41,7 +41,8 @@ LureLanguage LureEngine::getLureLanguage() const {
 	case Common::DE_DEU: return LANG_DE_DEU;
 	case Common::ES_ESP: return LANG_ES_ESP;
 	case Common::RU_RUS: return LANG_RU_RUS;
-	case Common::EN_ANY: return LANG_EN_ANY;
+	case Common::EN_ANY:
+		return isKonami() ? LANG_EN_KONAMI : LANG_EN_ANY;
 	case Common::UNK_LANG: return LANG_UNKNOWN;
 	default:
 		error("Unknown game language");
@@ -52,12 +53,12 @@ LureLanguage LureEngine::getLureLanguage() const {
 
 class LureMetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "lure";
 	}
 
 	bool hasFeature(MetaEngineFeature f) const override;
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
@@ -78,12 +79,9 @@ bool Lure::LureEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsSavingDuringRuntime);
 }
 
-bool LureMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const Lure::LureGameDescription *gd = (const Lure::LureGameDescription *)desc;
-	if (gd) {
-		*engine = new Lure::LureEngine(syst, gd);
-	}
-	return gd != 0;
+Common::Error LureMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Lure::LureEngine(syst, (const Lure::LureGameDescription *)desc);
+	return Common::kNoError;
 }
 
 SaveStateList LureMetaEngine::listSaves(const char *target) const {

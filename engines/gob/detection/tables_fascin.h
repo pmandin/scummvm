@@ -58,7 +58,7 @@
 
 // -- DOS VGA Floppy (3 disks) --
 
-{ // Supplied by alex86r in bug report #3297633
+{ // Supplied by alex86r in bug report #5691
 	{
 		"fascination",
 		"VGA 3 disks edition",
@@ -100,7 +100,7 @@
 	kFeaturesAdLib,
 	"intro.stk", 0, 0
 },
-{ // Supplied by windlepoons in bug report #2809247
+{ // Supplied by windlepoons in bug report #4371
 	{
 		"fascination",
 		"VGA 3 disks edition",
@@ -252,6 +252,21 @@
 		"",
 		AD_ENTRY1s("disk0.stk", "7691827fff35df7799f14cfd6be178ad", 189931),
 		IT_ITA,
+		kPlatformAmiga,
+		ADGF_NO_FLAGS,
+		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+	},
+	kGameTypeFascination,
+	kFeaturesNone,
+	"disk0.stk", 0, 0
+},
+
+{ // Supplied by CaptainHIT in bug report #11592
+	{
+		"fascination",
+		"",
+		AD_ENTRY1s("disk0.stk", "be68d6609da9ded9489dc2c4523035d2", 190030),
+		ES_ESP,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)

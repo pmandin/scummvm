@@ -47,10 +47,10 @@ public:
 
 	_display_mode display_mode; // nethack or full voxel
 
-	int actorShadows; // -1 = top down shadows only, 0 - no actors shadows
-	int current_cd;
-	int antialiasedActorLevel; // 0 = none, 1 = edges only, 2 = edge + actor blend
-	int missionTimeout;        // how many game cycles to run a mission for ( <=0 - means forever)
+	int32 actorShadows; // -1 = top down shadows only, 0 - no actors shadows
+	int32 current_cd;
+	int32 antialiasedActorLevel; // 0 = none, 1 = edges only, 2 = edge + actor blend
+	int32 missionTimeout;        // how many game cycles to run a mission for ( <=0 - means forever)
 
 	bool8 nicos_displayed; // yes or no
 	bool8 frag_help;       // display set fragments
@@ -70,7 +70,6 @@ public:
 	bool8 wireframeActors;
 
 	bool8 speechLineNumbers;
-	bool8 pc_full_intall;
 	bool8 joystickVibration;
 	bool8 socket_watch;
 
@@ -82,7 +81,7 @@ public:
 	bool8 game_completed; // Set by gamescript marker - unlocks title screen bonuses
 };
 
-extern c_global_switches px;
+extern c_global_switches *g_px;
 
 } // End of namespace ICB
 

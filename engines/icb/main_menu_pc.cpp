@@ -25,7 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/res_man_pc.h"
 #include "engines/icb/p4.h"
 #include "engines/icb/global_objects.h"
@@ -43,7 +42,7 @@ void Main_menu() {
 	} else {
 		// OptionsManager is in control
 		g_theOptionsManager->CycleLogic();
-		stub.Update_screen();
+		g_stub->Update_screen();
 	}
 }
 
@@ -53,13 +52,13 @@ void Pause_menu() {
 		g_theOptionsManager->ForceInGameScreenRefresh();
 
 	g_theOptionsManager->CycleLogic();
-	stub.Update_screen();
+	g_stub->Update_screen();
 }
 
 void Credits() {
 	uint32 t = GetMicroTimer();
 	g_theOptionsManager->DoCredits();
-	stub.Update_screen();
+	g_stub->Update_screen();
 	t = GetMicroTimer() - t;
 
 	// As the DoCredits() function takes a variable time this timing code
@@ -70,18 +69,7 @@ void Credits() {
 	}
 }
 
-void InitisliaseScrollingText(const char *textFileName, const char *movieFileName, int frameStart) {
-	// Movies are streamed from the CD
-	char *_root;
-
-#if 1 // was ifdef FROM_PC_CD
-#ifndef PC_DEMO
-
-	_root = g_theClusterManager->GetCDRoot();
-
-#endif
-#endif
-
+void InitisliaseScrollingText(const char *textFileName, const char *movieFileName, int32 frameStart) {
 	// Find movie to play
 	pxString fullMovieName;
 
@@ -147,7 +135,7 @@ void InitisliaseScrollingText(const char *textFileName, const char *movieFileNam
 void ScrollingText() {
 	uint32 t = GetMicroTimer();
 	g_theOptionsManager->DoScrollingText();
-	stub.Update_screen();
+	g_stub->Update_screen();
 	t = GetMicroTimer() - t;
 
 #ifdef PC_DEMO
@@ -173,12 +161,12 @@ void Gameover_menu() {
 			g_theOptionsManager->ForceInGameScreenRefresh();
 
 		g_theOptionsManager->CycleLogic();
-		stub.Update_screen();
+		g_stub->Update_screen();
 	}
 }
 
 void GameCompleted() {
-	px.game_completed = TRUE8;
+	g_px->game_completed = TRUE8;
 	// Fill in any gaps in the movie library
 	g_theOptionsManager->UnlockMovies();
 }

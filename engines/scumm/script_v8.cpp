@@ -295,7 +295,7 @@ void ScummEngine_v8::writeVar(uint var, int value) {
 			// Otherwise, use the value specified by the game script.
 			// Note: To determine whether there was a user override, we only
 			// look at the target specific settings, assuming that any global
-			// value is likely to be bogus. See also bug #2251765.
+			// value is likely to be bogus. See also bug #4008.
 			if (ConfMan.hasKey("talkspeed", _targetName)) {
 				value = getTalkSpeed();
 			} else {
@@ -978,7 +978,10 @@ void ScummEngine_v8::o8_verbOps() {
 		break;
 	case 0x9A:		// SO_VERB_AT Set verb (X,Y) placement
 		vs->curRect.top = pop();
-		vs->curRect.left = pop();
+		if (_language == Common::HE_ISR)
+			vs->curRect.right = _screenWidth - 1 - pop();
+		else
+			vs->curRect.left = vs->origLeft = pop();
 		break;
 	case 0x9B:		// SO_VERB_ON Turn verb on
 		vs->curmode = 1;

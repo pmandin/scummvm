@@ -35,10 +35,9 @@ enum YesNo { NO, YES, UNSET };
 class OOToposGame : public ComprehendGameV2 {
 private:
 	RestartMode _restartMode;
-	YesNo _noFloodfill, _lightOn;
+	YesNo _noFloodfill;
 	int _stringVal1, _stringVal2;
 	bool _printComputerMsg, _shipNotWorking;
-	int _currentRoomCopy;
 
 	/**
 	 * Randomizes a guard to different locations
@@ -84,7 +83,7 @@ public:
 	void beforePrompt() override;
 	void afterPrompt() override;
 	int roomIsSpecial(unsigned room_index, unsigned *room_desc_string) override;
-	void handleSpecialOpcode(uint8 operand) override;
+	void handleSpecialOpcode() override;
 	bool handle_restart() override;
 	void synchronizeSave(Common::Serializer &s) override;
 };

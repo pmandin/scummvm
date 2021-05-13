@@ -58,6 +58,7 @@ class SeekableReadStream;
 
 namespace Graphics {
 struct Surface;
+class FontSJIS;
 }
 
 namespace AGOS {
@@ -202,7 +203,7 @@ protected:
 	friend class Debugger;
 
 	// Engine APIs
-	Common::Error init();
+	virtual Common::Error init();
 	virtual Common::Error go();
 	Common::Error run() override {
 		Common::Error err;
@@ -349,6 +350,7 @@ protected:
 	uint16 _scrollWidth, _scrollHeight;
 	const byte *_scrollImage;
 	byte _boxStarHeight;
+	bool _forceAscii;
 
 	SubroutineLine *_classLine;
 	int16 _classMask, _classMode1, _classMode2;
@@ -445,6 +447,7 @@ protected:
 	volatile uint16 _fastFadeInFlag;
 
 	uint16 _screenWidth, _screenHeight;
+	uint16 _internalWidth, _internalHeight;
 
 	uint16 _noOverWrite;
 	bool _rejectBlock;
@@ -551,6 +554,8 @@ protected:
 	byte *_planarBuf;
 	byte _videoBuf1[32000];
 	uint16 _videoWindows[128];
+	const byte *_pak98Buf;
+	byte _paletteModNext;
 
 	uint8 _window3Flag;
 	uint8 _window4Flag;
@@ -806,6 +811,9 @@ protected:
 
 	uint loadTextFile_simon1(const char *filename, byte *dst);
 	Common::SeekableReadStream *openTablesFile_simon1(const char *filename);
+	Common::SeekableReadStream *openTablesFile_pak98(const char *filename);
+	Common::SeekableReadStream *createPak98FileStream(const char *filename);
+	void convertPC98Image(VC10_state &state);
 
 	uint loadTextFile_gme(const char *filename, byte *dst);
 	Common::SeekableReadStream *openTablesFile_gme(const char *filename);
@@ -1152,8 +1160,12 @@ protected:
 	void horizontalScroll(VC10_state *state);
 	void verticalScroll(VC10_state *state);
 
+	Graphics::Surface *getBackendSurface() const;
+	void updateBackendSurface(Common::Rect *area = 0) const;
+	virtual void clearHiResTextLayer() {}
+
 	int vcReadVarOrWord();
-	uint vcReadNextWord();
+	uint vcReadNextWord(bool forceLERead = false);
 	uint vcReadNextByte();
 	uint vcReadVar(uint var);
 	void vcWriteVar(uint var, int16 value);
@@ -1206,7 +1218,7 @@ protected:
 	byte *getBackGround();
 	byte *getScaleBuf();
 
-	byte *convertImage(VC10_state *state, bool compressed);
+	byte *convertAmigaImage(VC10_state *state, bool compressed);
 
 	bool decrunchFile(byte *src, byte *dst, uint32 size);
 	void loadVGABeardFile(uint16 id);
@@ -1548,7 +1560,8 @@ protected:
 class AGOSEngine_Elvira1 : public AGOSEngine {
 public:
 	AGOSEngine_Elvira1(OSystem *system, const AGOSGameDescription *gd);
-	//~AGOSEngine_Elvira1();
+	~AGOSEngine_Elvira1() override;
+	Common::Error init() override;
 
 	void setupGame() override;
 	void setupOpcodes() override;
@@ -1622,8 +1635,15 @@ protected:
 	const OpcodeEntryElvira1 *_opcodesElvira1;
 
 	void drawIcon(WindowBlock *window, uint icon, uint x, uint y) override;
+	void windowDrawChar(WindowBlock *window, uint x, uint y, byte chr) override;
+	void addHiResTextDirtyRect(Common::Rect rect);
+	void clearHiResTextLayer() override;
 
 	Common::String genSaveName(int slot) const override;
+
+	Graphics::FontSJIS *_sjisFont;
+	Common::Array<Common::Rect> _sjisTextFields;
+	uint16 _sjisCurChar;
 };
 
 class AGOSEngine_Elvira2 : public AGOSEngine_Elvira1 {

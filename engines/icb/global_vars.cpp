@@ -33,6 +33,7 @@
 #include "engines/icb/mission.h"
 #include "engines/icb/object_structs.h"
 #include "engines/icb/global_objects.h"
+#include "engines/icb/global_objects_psx.h"
 #include "engines/icb/debug.h"
 #include "engines/icb/res_man.h"
 #include "engines/icb/movie_pc.h"
@@ -41,6 +42,15 @@
 #include "engines/icb/options_manager_pc.h"
 #include "engines/icb/floors.h"
 #include "engines/icb/remora.h"
+#include "engines/icb/gfx/psx_camera.h"
+#include "engines/icb/gfx/psx_pxactor.h"
+#include "engines/icb/gfx/rlp_api.h"
+#include "engines/icb/gfx/psx_scrn.h"
+#include "engines/icb/common/px_capri_maths_pc.h"
+#include "engines/icb/common/px_capri_maths.h"
+#include "engines/icb/common/ptr_util.h"
+#include "engines/icb/sound.h"
+#include "engines/icb/tracer.h"
 
 namespace ICB {
 
@@ -50,7 +60,7 @@ namespace ICB {
 
 void Init_globals() {
 	int32 len, index;
-	uint8 *mem;
+	uint8 *mem_tmp;
 	char buf[ENGINE_STRING_LEN];
 	char cluster[ENGINE_STRING_LEN];
 	char input[256];
@@ -67,7 +77,7 @@ void Init_globals() {
 
 		Tdebug("globals.txt", "found globals file - %s", (const char *)buf);
 
-		mem = rs_bg->Res_open(buf, fn_hash, cluster, cluster_hash);
+		mem_tmp = rs_bg->Res_open(buf, fn_hash, cluster, cluster_hash);
 
 		Tdebug("globals.txt", "loaded");
 
@@ -78,8 +88,8 @@ void Init_globals() {
 			// get name
 			i = 0;
 
-			while (ISGRAPH(mem[index]))
-				input[i++] = mem[index++];
+			while (ISGRAPH(mem_tmp[index]))
+				input[i++] = mem_tmp[index++];
 
 			input[i] = 0; // NULL terminate
 
@@ -88,7 +98,7 @@ void Init_globals() {
 			}
 
 			// ship white
-			while (!ISGRAPH(mem[index]))
+			while (!ISGRAPH(mem_tmp[index]))
 				index++;
 
 			if (index >= len) {
@@ -98,19 +108,19 @@ void Init_globals() {
 			// get value
 			i = 0;
 
-			while ((index < len) && (ISNUMBER(mem[index]))) // 0-9
-				value[i++] = mem[index++];              // toupper(buf[index++]);
+			while ((index < len) && (ISNUMBER(mem_tmp[index]))) // 0-9
+				value[i++] = mem_tmp[index++];              // toupper(buf[index++]);
 
 			value[i] = 0; // NULL terminate
 
 			// ship white
-			while ((index < len) && (!ISGRAPH(mem[index])))
+			while ((index < len) && (!ISGRAPH(mem_tmp[index])))
 				index++;
 
 			i = atoi(value);
 
 			Tdebug("globals.txt", "found var [%s] set to [%s, %d]", input, value, i);
-			g_globalScriptVariables.InitVariable(input, i);
+			g_globalScriptVariables->InitVariable(input, i);
 
 			nVars++;
 		} while (index < (len - 1));
@@ -121,12 +131,18 @@ void Init_globals() {
 
 	// Right all done
 	// So sort the globals so they can be searched quicker !
-	g_globalScriptVariables.SortVariables();
+	g_globalScriptVariables->SortVariables();
+
+	g_otz_offset = -5;
 
 	Tdebug("globals.txt", "Found %d global variables", nVars);
 }
 
 void CreateGlobalObjects() {
+	g_px = new c_global_switches;
+	g_oTracer = new _tracer;
+	g_ptrArray = new Common::Array<PointerReference>;
+	g_globalScriptVariables = new CpxGlobalScriptVariables;
 	g_theSequenceManager = new MovieManager;
 	g_while_u_wait_SequenceManager = new MovieManager;
 	g_personalSequenceManager = new MovieManager;
@@ -137,6 +153,27 @@ void CreateGlobalObjects() {
 	g_icb_session_floors = new _floor_world;
 	g_text_bloc1 = new text_sprite;
 	g_text_bloc2 = new text_sprite;
+	g_av_actor = new psxActor;
+	g_camera = new psxCamera;
+	g_av_Light = new PSXLamp;
+	for (int i = 0; i < MAX_voxel_list; i++) {
+		g_megas[i] = new _mega;
+		g_vox_images[i] = new _vox_image;
+	}
+	for (int i = 0; i < MAX_session_objects; i++)
+		g_logics[i] = new _logic;
+	g_stub = new _stub;
+	gterot_pc = new MATRIXPC;
+	gtetrans_pc = new MATRIXPC;
+	gtecolour_pc = new MATRIXPC;
+	gtelight_pc = new MATRIXPC;
+	gterot = new MATRIX;
+	gtetrans = new MATRIX;
+	gtecolour = new MATRIX;
+	gtelight = new MATRIX;
+	for (int i = 0; i < MAX_REGISTERED_SOUNDS; i++)
+		g_registeredSounds[i] = new CRegisteredSound;
+
 	// The order of creation matters:
 	g_oEventManager = new _event_manager;
 	g_oLineOfSight = new _line_of_sight;
@@ -147,6 +184,10 @@ void CreateGlobalObjects() {
 }
 
 void DestroyGlobalObjects() {
+	delete g_px;
+	delete g_oTracer;
+	delete g_ptrArray;
+	delete g_globalScriptVariables;
 	delete g_theSequenceManager;
 	delete g_while_u_wait_SequenceManager;
 	delete g_personalSequenceManager;
@@ -157,6 +198,27 @@ void DestroyGlobalObjects() {
 	delete g_icb_session_floors;
 	delete g_text_bloc1;
 	delete g_text_bloc2;
+	delete g_camera;
+	delete g_av_actor;
+	delete g_av_Light;
+	for (int i = 0; i < MAX_voxel_list; i++) {
+		delete g_megas[i];
+		delete g_vox_images[i];
+	}
+	for (int i = 0; i < MAX_session_objects; i++)
+		delete g_logics[i];
+	delete g_stub;
+	delete gterot_pc;
+	delete gtetrans_pc;
+	delete gtecolour_pc;
+	delete gtelight_pc;
+	delete gterot;
+	delete gtetrans;
+	delete gtecolour;
+	delete gtelight;
+	for (int i = 0; i < MAX_REGISTERED_SOUNDS; i++)
+		delete g_registeredSounds[i];
+
 	delete g_oEventManager;
 	delete g_oLineOfSight;
 	delete g_oIconMenu;

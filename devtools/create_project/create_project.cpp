@@ -23,7 +23,7 @@
 #define ENABLE_XCODE
 
 // HACK to allow building with the SDL backend on MinGW
-// see bug #1800764 "TOOLS: MinGW tools building broken"
+// see bug #3412 "TOOLS: MinGW tools building broken"
 #ifdef main
 #undef main
 #endif // main
@@ -297,16 +297,24 @@ int main(int argc, char *argv[]) {
 
 	// When building tests, disable some features
 	if (setup.tests) {
+		setup.useStaticDetection = false;
 		setFeatureBuildState("mt32emu", setup.features, false);
 		setFeatureBuildState("eventrecorder", setup.features, false);
 
 		for (EngineDescList::iterator j = setup.engines.begin(); j != setup.engines.end(); ++j)
 			j->enable = false;
+	} else if (setup.devTools) {
+		setup.useStaticDetection = false;
 	}
 
 	// HACK: Vorbis and Tremor can not be enabled simultaneously
 	if (getFeatureBuildState("tremor", setup.features)) {
 		setFeatureBuildState("vorbis", setup.features, false);
+	}
+
+	// HACK: Fluidsynth and Fluidlite can not be enabled simultaneously
+	if (getFeatureBuildState("fluidsynth", setup.features)) {
+		setFeatureBuildState("fluidlite", setup.features, false);
 	}
 
 	// HACK: These features depend on OpenGL
@@ -1040,12 +1048,14 @@ const Feature s_features[] = {
 	{    "tremor",      "USE_TREMOR", true, false, "Tremor support" },
 	{      "flac",        "USE_FLAC", true, true,  "FLAC support" },
 	{       "png",         "USE_PNG", true, true,  "libpng support" },
+	{       "gif",         "USE_GIF", true, false, "libgif support" },
 	{      "faad",        "USE_FAAD", true, false, "AAC support" },
 	{     "mpeg2",       "USE_MPEG2", true, false, "MPEG-2 support" },
 	{    "theora",   "USE_THEORADEC", true, true,  "Theora decoding support" },
 	{  "freetype",   "USE_FREETYPE2", true, true,  "FreeType support" },
 	{      "jpeg",        "USE_JPEG", true, true,  "libjpeg support" },
 	{"fluidsynth",  "USE_FLUIDSYNTH", true, true,  "FluidSynth support" },
+	{ "fluidlite",   "USE_FLUIDLITE", true, false, "FluidLite support" },
 	{   "libcurl",     "USE_LIBCURL", true, true,  "libcurl support" },
 	{    "sdlnet",     "USE_SDL_NET", true, true,  "SDL_net support" },
 	{   "discord",     "USE_DISCORD", true, false, "Discord support" },
@@ -1055,6 +1065,8 @@ const Feature s_features[] = {
 	{             "bink",                      "USE_BINK", false, true,  "Bink video support" },
 	{          "scalers",                   "USE_SCALERS", false, true,  "Scalers" },
 	{        "hqscalers",                "USE_HQ_SCALERS", false, true,  "HQ scalers" },
+	{      "edgescalers",              "USE_EDGE_SCALERS", false, true,  "Edge scalers" },
+	{           "aspect",                    "USE_ASPECT", false, true,  "Aspect ratio correction" },
 	{            "16bit",                 "USE_RGB_COLOR", false, true,  "16bit color support" },
 	{          "highres",                   "USE_HIGHRES", false, true,  "high resolution" },
 	{          "mt32emu",                   "USE_MT32EMU", false, true,  "integrated MT-32 emulator" },
@@ -1479,11 +1491,11 @@ FileNode *scanFiles(const std::string &dir, const StringList &includeList, const
 			continue;
 		}
 
-		if (isInList(dir, i->name, excludeList))
-			continue;
-
 		std::string name, ext;
 		splitFilename(i->name, name, ext);
+
+		if (ext != "h" && isInList(dir, i->name, excludeList))
+			continue;
 
 		if (!isInList(dir, i->name, includeList))
 			continue;
@@ -1506,7 +1518,7 @@ FileNode *scanFiles(const std::string &dir, const StringList &includeList, const
 // Project Provider methods
 //////////////////////////////////////////////////////////////////////////
 ProjectProvider::ProjectProvider(StringList &global_warnings, std::map<std::string, StringList> &project_warnings, const int version)
-    : _version(version), _globalWarnings(global_warnings), _projectWarnings(project_warnings) {
+	: _version(version), _globalWarnings(global_warnings), _projectWarnings(project_warnings) {
 }
 
 void ProjectProvider::createProject(BuildSetup &setup) {
@@ -1571,22 +1583,7 @@ void ProjectProvider::createProject(BuildSetup &setup) {
 		createProjectFile(detProject, detUUID, setup, setup.srcDir + "/engines", in, ex);
 	}
 
-	if (setup.tests) {
-		// Create the main project file.
-		in.clear();
-		ex.clear();
-		createModuleList(setup.srcDir + "/backends", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/backends/platform/sdl", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/base", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/common", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/engines", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/graphics", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/gui", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/audio", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/test", setup.defines, setup.testDirs, in, ex);
-
-		createProjectFile(setup.projectName, svmUUID, setup, setup.srcDir, in, ex);
-	} else if (!setup.devTools) {
+	if (!setup.devTools) {
 		// Last but not least create the main project file.
 		in.clear();
 		ex.clear();
@@ -1603,21 +1600,27 @@ void ProjectProvider::createProject(BuildSetup &setup) {
 		createModuleList(setup.srcDir + "/video", setup.defines, setup.testDirs, in, ex);
 		createModuleList(setup.srcDir + "/image", setup.defines, setup.testDirs, in, ex);
 		createModuleList(setup.srcDir + "/math", setup.defines, setup.testDirs, in, ex);
+		if (setup.tests) {
+			createModuleList(setup.srcDir + "/test", setup.defines, setup.testDirs, in, ex);
+		} else {
+			// Resource files
+			addResourceFiles(setup, in, ex);
 
-		// Resource files
-		addResourceFiles(setup, in, ex);
-
-		// Various text files
-		in.push_back(setup.srcDir + "/AUTHORS");
-		in.push_back(setup.srcDir + "/COPYING");
-		in.push_back(setup.srcDir + "/COPYING.LGPL");
-		in.push_back(setup.srcDir + "/COPYING.BSD");
-		in.push_back(setup.srcDir + "/COPYING.FREEFONT");
-		in.push_back(setup.srcDir + "/COPYING.OFL");
-		in.push_back(setup.srcDir + "/COPYRIGHT");
-		in.push_back(setup.srcDir + "/NEWS");
-		in.push_back(setup.srcDir + "/README");
-		in.push_back(setup.srcDir + "/TODO");
+			// Various text files
+			in.push_back(setup.srcDir + "/AUTHORS");
+			in.push_back(setup.srcDir + "/COPYING");
+			in.push_back(setup.srcDir + "/COPYING.BSD");
+			in.push_back(setup.srcDir + "/COPYING.FREEFONT");
+			in.push_back(setup.srcDir + "/COPYING.ISC");
+			in.push_back(setup.srcDir + "/COPYING.LGPL");
+			in.push_back(setup.srcDir + "/COPYING.LUA");
+			in.push_back(setup.srcDir + "/COPYING.MIT");
+			in.push_back(setup.srcDir + "/COPYING.OFL");
+			in.push_back(setup.srcDir + "/COPYING.TINYGL");
+			in.push_back(setup.srcDir + "/COPYRIGHT");
+			in.push_back(setup.srcDir + "/NEWS.md");
+			in.push_back(setup.srcDir + "/README.md");
+		}
 
 		// Create the main project file.
 		createProjectFile(setup.projectName, svmUUID, setup, setup.srcDir, in, ex);
@@ -1768,8 +1771,8 @@ std::string ProjectProvider::getLastPathComponent(const std::string &path) {
 }
 
 void ProjectProvider::addFilesToProject(const std::string &dir, std::ofstream &projectFile,
-                                        const StringList &includeList, const StringList &excludeList,
-                                        const std::string &filePrefix) {
+										const StringList &includeList, const StringList &excludeList,
+										const std::string &filePrefix) {
 	FileNode *files = scanFiles(dir, includeList, excludeList);
 
 	writeFileListToProject(*files, projectFile, 0, std::string(), filePrefix + '/');
@@ -1937,9 +1940,6 @@ void ProjectProvider::createModuleList(const std::string &moduleDir, const Strin
 
 				// Scan all files in the include folder
 				FileList files = listDirectory(folder);
-
-				if (files.empty())
-					continue;
 
 				// Add to list of test folders
 				testDirs.push_back(folder);

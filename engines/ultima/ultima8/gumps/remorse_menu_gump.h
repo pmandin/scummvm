@@ -24,12 +24,10 @@
 #define ULTIMA8_GUMPS_REMORSEMENUGUMP_H
 
 #include "ultima/ultima8/gumps/modal_gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
-
-class RenderedText;
 
 /**
  * The game menu for Crusader: No Remorse.  Different enough to the U8 menu that it's implemented separately.

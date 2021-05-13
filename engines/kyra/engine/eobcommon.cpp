@@ -38,6 +38,7 @@
 
 #include "backends/keymapper/action.h"
 #include "backends/keymapper/keymapper.h"
+#include "backends/keymapper/standard-actions.h"
 
 namespace Kyra {
 
@@ -203,6 +204,7 @@ EoBCoreEngine::EoBCoreEngine(OSystem *system, const GameFlags &flags) : KyraRpgE
 	_transferStringsScummVM = 0;
 	_buttonDefs = 0;
 	_npcPreset = 0;
+	_npcPresetNames = 0;
 	_chargenStatStrings = _chargenRaceSexStrings = _chargenClassStrings = 0;
 	_chargenAlignmentStrings = _pryDoorStrings = _warningStrings = _ripItemStrings = 0;
 	_cursedString = _enchantedString = _magicObjectStrings = _magicObjectString5 = 0;
@@ -233,7 +235,7 @@ EoBCoreEngine::EoBCoreEngine(OSystem *system, const GameFlags &flags) : KyraRpgE
 	_menuStringsSpellNo = _menuYesNoStrings = _2431Strings = _textInputCharacterLines = _textInputSelectStrings = 0;
 	_errorSlotEmptyString = _errorSlotNoNameString = _menuOkString = 0;
 	_spellLevelsMage = _spellLevelsCleric = _numSpellsCleric = _numSpellsWisAdj = _numSpellsPal = _numSpellsMage = 0;
-	_mnNumWord = _numSpells = _mageSpellListSize = _spellLevelsMageSize = _spellLevelsClericSize = 0;
+	_mnNumWord = _numSpells = _mageSpellListSize = _spellLevelsMageSize = _spellLevelsClericSize = _textInputCharacterLinesSize = 0;
 	_inventorySlotsX = _slotValidationFlags = _encodeMonsterShpTable = 0;
 	_cgaMappingDefault = _cgaMappingAlt = _cgaMappingInv = _cgaLevelMappingIndex = _cgaMappingItemsL = _cgaMappingItemsS = _cgaMappingThrown = _cgaMappingIcons = _cgaMappingDeco = 0;
 	_amigaLevelSoundList1 = _amigaLevelSoundList2 = 0;
@@ -363,8 +365,8 @@ EoBCoreEngine::~EoBCoreEngine() {
 Common::KeymapArray EoBCoreEngine::initKeymaps(const Common::String &gameId) {
 	Common::Keymap *const keyMap = new Common::Keymap(Common::Keymap::kKeymapTypeGame, kKeymapName, "Eye of the Beholder");
 
-	addKeymapAction(keyMap, "LCLK", _("Interact via Left Click"), &Common::Action::setLeftClickEvent, "MOUSE_LEFT", "JOY_A");
-	addKeymapAction(keyMap, "RCLK", _("Interact via Right Click"), &Common::Action::setRightClickEvent, "MOUSE_RIGHT", "JOY_B");
+	addKeymapAction(keyMap, Common::kStandardActionLeftClick, _("Interact via Left Click"), &Common::Action::setLeftClickEvent, "MOUSE_LEFT", "JOY_A");
+	addKeymapAction(keyMap, Common::kStandardActionRightClick, _("Interact via Right Click"), &Common::Action::setRightClickEvent, "MOUSE_RIGHT", "JOY_B");
 	addKeymapAction(keyMap, "MVF", _("Move Forward"), Common::KeyState(Common::KEYCODE_UP), "UP", "JOY_UP");
 	addKeymapAction(keyMap, "MVB", _("Move Back"), Common::KeyState(Common::KEYCODE_DOWN), "DOWN", "JOY_DOWN");
 	addKeymapAction(keyMap, "MVL", _("Move Left"), Common::KeyState(Common::KEYCODE_LEFT), "LEFT", "JOY_LEFT_TRIGGER");
@@ -595,7 +597,7 @@ void EoBCoreEngine::loadFonts() {
 		_conFont = _invFont3 = Screen::FID_SJIS_FNT;
 	} else if (_flags.platform == Common::kPlatformSegaCD) {
 		_screen->loadFont(Screen::FID_8_FNT, "FONTK12");
-		_screen->setFontStyles(Screen::FID_8_FNT, _flags.lang == Common::JA_JPN ? Font::kStyleFixedWidth : Font::kStyleFat);
+		_screen->setFontStyles(Screen::FID_8_FNT, Font::kStyleNone);
 		_invFont1 = _invFont2 = _conFont = Screen::FID_8_FNT;
 	}
 }
@@ -1364,6 +1366,7 @@ void EoBCoreEngine::initNpc(int npcIndex) {
 
 	delete[] c->faceShape;
 	memcpy(c, &_npcPreset[npcIndex], sizeof(EoBCharacter));
+	Common::strlcpy(c->name, _npcPresetNames[npcIndex], 21);
 	recalcArmorClass(i);
 	makeFaceShapes(i);
 	makeNameShapes(i);
@@ -1380,7 +1383,7 @@ int EoBCoreEngine::npcJoinDialogue(int npcIndex, int queryJoinTextId, int confir
 	int r = runDialogue(queryJoinTextId, _flags.platform == Common::kPlatformSegaCD ? 3 : 2, _flags.platform == Common::kPlatformSegaCD ? 3 : -1, _yesNoStrings[0], _yesNoStrings[1], _flags.platform == Common::kPlatformSegaCD ? _yesNoStrings[2] : 0) - 1;
 	if (r == 0) {
 		if (confirmJoinTextId == -1) {
-			Common::String tmp = Common::String::format(_npcJoinStrings[0], _npcPreset[npcIndex].name);
+			Common::String tmp = Common::String::format(_npcJoinStrings[0], _npcPresetNames[npcIndex]);
 			_txt->printDialogueText(tmp.c_str(), true);
 		} else {
 			_txt->printDialogueText(confirmJoinTextId, _okStrings[0]);
@@ -1901,14 +1904,14 @@ int EoBCoreEngine::countResurrectionCandidates() {
 			if ((_flags.gameID == GI_EOB1 && ((_itemTypes[_items[inv].type].extraProperties & 0x7F) != 8)) || (_flags.gameID == GI_EOB2 && _items[inv].type != 33))
 				continue;
 
-			_rrNames[_rrCount] = _npcPreset[_items[inv].value - 1].name;
+			_rrNames[_rrCount] = _npcPresetNames[_items[inv].value - 1];
 			_rrId[_rrCount++] = -_items[inv].value;
 		}
 	}
 
 	if (_itemInHand > 0) {
 		if ((_flags.gameID == GI_EOB1 && ((_itemTypes[_items[_itemInHand].type].extraProperties & 0x7F) == 8)) || (_flags.gameID == GI_EOB2 && _items[_itemInHand].type == 33)) {
-			_rrNames[_rrCount] = _npcPreset[_items[_itemInHand].value - 1].name;
+			_rrNames[_rrCount] = _npcPresetNames[_items[_itemInHand].value - 1];
 			_rrId[_rrCount++] = -_items[_itemInHand].value;
 		}
 	}

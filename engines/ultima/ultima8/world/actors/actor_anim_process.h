@@ -32,17 +32,16 @@ namespace Ultima8 {
 
 class Actor;
 class AnimAction;
+struct AnimFrame;
 class AnimationTracker;
 class Item;
 
 class ActorAnimProcess : public Process {
 public:
 	ActorAnimProcess();
-	//! note: this probably needs some more parameters
 	ActorAnimProcess(Actor *actor, Animation::Sequence action, Direction dir,
 	                 uint32 steps = 0);
 
-	// p_dynamic_cast stuff
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	static const uint16 ACTOR_ANIM_PROC_TYPE = 0x00F0;
@@ -69,6 +68,9 @@ protected:
 	//! perform special action when hitting an opponent
 	void doHitSpecial(Item *hit);
 
+	//! Fire weapon
+	void doFireWeaponCru(Actor *actor, const AnimFrame *frame);
+
 	Animation::Sequence _action;
 	Direction _dir;
 	uint32 _steps;
@@ -82,6 +84,9 @@ protected:
 	bool _animAborted;
 
 	bool _attackedSomething; // attacked and hit something with this animation
+
+	//! Interpolate position on repeated frames
+	bool _interpolate;
 };
 
 } // End of namespace Ultima8

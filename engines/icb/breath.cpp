@@ -25,8 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
-
 #if !defined(_PSX_ON_PC)
 #include "engines/icb/debug.h"
 #include "engines/icb/mission.h"
@@ -49,9 +47,9 @@ mcodeFunctionReturnCodes _game_session::fn_breath(int32 &, int32 *params) {
 	M->breath.Init();
 
 	// location is not used at the moment
-	M->breath.position.vx = (short)params[1];
-	M->breath.position.vy = (short)params[2];
-	M->breath.position.vz = (short)params[3];
+	M->breath.position.vx = (int16)params[1];
+	M->breath.position.vy = (int16)params[2];
+	M->breath.position.vz = (int16)params[3];
 
 	return IR_CONT;
 }
@@ -98,16 +96,16 @@ Breath::Breath() {
 #define BREATH_WAIT (12 * BREATH_WAIT_SECONDS * BREATH_DC + BREATH_IC) // between breaths
 
 void Breath::Init() {
-	breathEnd = (short)(BREATH_WAIT);
+	breathEnd = (int16)(BREATH_WAIT);
 
-	int i;
+	int32 i;
 	for (i = 0; i < MAX_BREATH; i++) {
 		breathStarted[i] = 0;
 
 		if (on == BREATH_ON) {
-			breathColour[i] = (short)(breathEnd - (BREATH_DC * i));
+			breathColour[i] = (int16)(breathEnd - (BREATH_DC * i));
 		} else { // smoke...
-			breathColour[i] = (short)(breathEnd - (SMOKE_DC * i));
+			breathColour[i] = (int16)(breathEnd - (SMOKE_DC * i));
 		}
 	}
 
@@ -118,8 +116,8 @@ void Breath::Init() {
 // update the breath every cycle
 void Breath::Update() {
 	if (on) {
-		int i;
-		int numberStarted;
+		int32 i;
+		int32 numberStarted;
 
 		numberStarted = 0;
 

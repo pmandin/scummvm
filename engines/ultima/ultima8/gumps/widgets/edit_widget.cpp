@@ -20,14 +20,10 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/widgets/edit_widget.h"
-#include "ultima/ultima8/graphics/fonts/shape_font.h"
 #include "ultima/ultima8/graphics/fonts/rendered_text.h"
 #include "ultima/ultima8/graphics/render_surface.h"
 #include "ultima/ultima8/graphics/fonts/font_manager.h"
-#include "ultima/ultima8/graphics/fonts/tt_font.h"
-#include "ultima/ultima8/misc/encoding.h"
 #include "common/system.h"
 #include "common/events.h"
 
@@ -37,7 +33,7 @@ namespace Ultima8 {
 DEFINE_RUNTIME_CLASSTYPE_CODE(EditWidget)
 
 EditWidget::EditWidget(int x, int y, Std::string txt, bool gamefont, int font,
-                       int w, int h, unsigned int maxlength, bool multiline)
+					   int w, int h, unsigned int maxlength, bool multiline)
 	: Gump(x, y, w, h), _text(txt), _gameFont(gamefont), _fontNum(font),
 	  _maxLength(maxlength), _multiLine(multiline),
 	  _cursorChanged(0), _cursorVisible(true), _cachedText(nullptr) {

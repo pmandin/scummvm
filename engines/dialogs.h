@@ -91,14 +91,6 @@ public:
 
 private:
 	OptionsContainerWidget *_engineOptions;
-
-#ifdef GUI_ENABLE_KEYSDIALOG
-public:
-	void handleCommand(CommandSender *sender, uint32 cmd, uint32 data) override;
-
-private:
-	Dialog *_keysDialog;
-#endif
 };
 
 class ExtraGuiOptionsWidget : public OptionsContainerWidget {
@@ -109,6 +101,9 @@ public:
 	// OptionsContainerWidget API
 	void load() override;
 	bool save() override;
+
+protected:
+	void defineLayout(ThemeEval& layouts, const Common::String& layoutName, const Common::String& overlayedLayout) const override;
 
 private:
 	typedef Common::Array<CheckboxWidget *> CheckboxWidgetList;

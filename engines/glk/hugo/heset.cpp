@@ -525,7 +525,7 @@ ModifyAttribute:
 unsigned int Hugo::GetAnonymousFunction(long addr) {
 	long skipaddr;
 	unsigned int af_addr;
-	
+
 	skipaddr = PeekWord(addr);
 	/* The address of the anonymous function is the next address boundary,
 	   calculated as:
@@ -557,7 +557,7 @@ int Hugo::SetCompound(int t) {
 		if (Peek(codeptr+1)==NOT_T)
 		{
 			codeptr += 2;
-                        set_value = GetValue();	/* the attr. # */
+						set_value = GetValue();	/* the attr. # */
 			inobj = 0;
 			return 3;
 		}

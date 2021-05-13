@@ -133,7 +133,7 @@ byte ClassicCostumeRenderer::mainRoutine(int xmoveCur, int ymoveCur) {
 		// It's possible that the scale indexes will overflow and wrap
 		// around to zero, so it's important that we use the same
 		// method of accessing it both when calculating the size of the
-		// scaled costume, and when drawing it. See bug #1519667.
+		// scaled costume, and when drawing it. See bug #2729.
 
 		if (_mirror) {
 			/* Adjust X position */
@@ -300,6 +300,8 @@ byte ClassicCostumeRenderer::mainRoutine(int xmoveCur, int ymoveCur) {
 		return 2;
 	}
 
+	v1.width = _out.w;
+	v1.height = _out.h;
 	v1.destptr = (byte *)_out.getBasePtr(v1.x, v1.y);
 
 	v1.mask_ptr = _vm->getMaskBuffer(0, v1.y, _zbuf);
@@ -421,16 +423,16 @@ void ClassicCostumeRenderer::procC64(Codec1 &v1, int actor) {
 #endif
 
 extern "C" int ClassicProc3RendererShadowARM(int _scaleY,
-                                        ClassicCostumeRenderer::Codec1 *v1,
-                                        Graphics::Surface *_out,
-                                        const byte *src,
-                                        int   height,
-                                        int _scaleX,
-                                        int _scaleIndexX,
-                                        byte *_shadow_table,
-                                        uint16 _palette[32],
-                                        int32 _numStrips,
-                                        int _scaleIndexY);
+										ClassicCostumeRenderer::Codec1 *v1,
+										int pitch,
+										const byte *src,
+										int   height,
+										int _scaleX,
+										int _scaleIndexX,
+										byte *_shadow_table,
+										uint16 _palette[32],
+										int32 _numStrips,
+										int _scaleIndexY);
 #endif
 
 void ClassicCostumeRenderer::proc3(Codec1 &v1) {
@@ -449,7 +451,7 @@ void ClassicCostumeRenderer::proc3(Codec1 &v1) {
 	{
 		_scaleIndexX = ClassicProc3RendererShadowARM(_scaleY,
 		                                             &v1,
-		                                             &_out,
+		                                             _out.pitch,
 		                                             _srcptr,
 		                                             _height,
 		                                             _scaleX,

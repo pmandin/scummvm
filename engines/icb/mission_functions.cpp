@@ -27,7 +27,6 @@
 
 #define FORBIDDEN_SYMBOL_EXCEPTION_strcasecmp
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/global_objects.h"
 #include "engines/icb/global_vars.h"
@@ -40,34 +39,31 @@
 
 namespace ICB {
 
-int LoadMission(int m, void *usr) {
-	int demo = g_globalScriptVariables.GetVariable("demo");
+int32 LoadMission(int32 m, void * /*usr*/) {
+	int32 demo = g_globalScriptVariables->GetVariable("demo");
 	Init_globals(); // reload the global vars for the new mission
-	g_globalScriptVariables.SetVariable("missionelapsedtime", 0);
+	g_globalScriptVariables->SetVariable("missionelapsedtime", 0);
 
 	// On mission 8 (m=7?) then set a global variable to say we are on mission 8 and not on mission 9
 	if (m == 7) {
-		g_globalScriptVariables.SetVariable("mission9", 0);
+		g_globalScriptVariables->SetVariable("mission9", 0);
 	}
 	// On mission 9 (m=8?) then set a global variable to say we are on mission 9 and not on mission 8
 	if (m == 8) {
-		g_globalScriptVariables.SetVariable("mission9", 1);
+		g_globalScriptVariables->SetVariable("mission9", 1);
 	}
 
 	// update the demo flag status
-	g_globalScriptVariables.SetVariable("demo", demo);
+	g_globalScriptVariables->SetVariable("demo", demo);
 
 	// Purge the res_man's to prevent them getting confused
 	rs_anims->Res_purge_all();
 	rs_bg->Res_purge_all();
 
-	// To remove compiler warning
-	usr = NULL;
-
 	warning("rs_anims %d files %dKB rs_bg %d files %dKB", rs_anims->Fetch_files_open(), (rs_anims->Fetch_mem_used() / 1024), rs_bg->Fetch_files_open(),
 	        (rs_bg->Fetch_mem_used() / 1024));
 
-	px.current_cd = WhichCD(g_mission_names[m - 1]);
+	g_px->current_cd = WhichCD(g_mission_names[m - 1]);
 
 	// Load in the session (mission_name, session_name)
 	if (Setup_new_mission(g_mission_startup_names[(m - 1) * 2], g_mission_startup_names[(m - 1) * 2 + 1])) {
@@ -94,7 +90,7 @@ void RestartMission(void) {
 	mission_name = g_mission->Fetch_tiny_mission_name();
 
 	// Find which mission number the current mission is
-	int m = FindMissionNumber(mission_name);
+	int32 m = FindMissionNumber(mission_name);
 	if (m == -1) {
 		Fatal_error("Couldn't find the mission '%s'", mission_name);
 	}
@@ -106,15 +102,15 @@ void RestartMission(void) {
 	LoadMission(m, NULL);
 }
 
-int FindMissionNumber(const char *mission) {
-	int m;
+int32 FindMissionNumber(const char *mission) {
+	int32 m;
 
 	// Find which mission number this mission is
 	for (m = 0; m < NUMBER_OF_MISSIONS; m++) {
 		if (scumm_stricmp(g_mission_names[m], mission) == 0) {
 			// Mission 8-9 special case check
 			if (m == 6) {
-				if (g_globalScriptVariables.GetVariable("mission9") == 1)
+				if (g_globalScriptVariables->GetVariable("mission9") == 1)
 					m = 7;
 			}
 

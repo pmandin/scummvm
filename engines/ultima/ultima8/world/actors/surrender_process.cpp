@@ -20,23 +20,15 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
-#include "ultima/ultima8/misc/direction.h"
-#include "ultima/ultima8/misc/direction_util.h"
 #include "ultima/ultima8/audio/audio_process.h"
 #include "ultima/ultima8/world/actors/surrender_process.h"
-#include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
-#include "ultima/ultima8/world/actors/actor_anim_process.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/kernel/delay_process.h"
-#include "ultima/ultima8/kernel/core_app.h"
 #include "ultima/ultima8/world/get_object.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(SurrenderProcess)
 
 static const uint16 SUIT_SUR_SNDS[] = {0xe9, 0xe0, 0xeb, 0xe1, 0xea};
@@ -54,7 +46,8 @@ SurrenderProcess::SurrenderProcess(Actor *actor) : _playedSound(false) {
 	assert(actor);
 	_itemNum = actor->getObjId();
 
-	actor->doAnim(Animation::surrender, actor->getDir());
+	if (!actor->hasActorFlags(Actor::ACT_SURRENDERED))
+		actor->doAnim(Animation::surrender, actor->getDir());
 
 	_type = 0x25f; // CONSTANT!
 }
@@ -63,20 +56,14 @@ void SurrenderProcess::run() {
 	Actor *a = getActor(_itemNum);
 	MainActor *main = getMainActor();
 	if (!a || a->isDead() || !main) {
-		// dead?
+		// dead
 		terminate();
 		return;
 	}
 
-	// do nothing while we are not in the fast area
-	if (!a->hasFlags(Item::FLG_FASTAREA))
+	// do nothing while we are not in the fast area or busy
+	if (!a->hasFlags(Item::FLG_FASTAREA) || a->isBusy())
 		return;
-
-	int animating = Kernel::get_instance()->getNumProcesses(_itemNum, ActorAnimProcess::ACTOR_ANIM_PROC_TYPE);
-	if (animating) {
-		// already busy.
-		return;
-	}
 
 	a->setActorFlag(Actor::ACT_SURRENDERED);
 

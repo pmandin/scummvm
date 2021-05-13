@@ -45,6 +45,139 @@
 
 namespace StarTrek {
 
+extern const RoomAction mudd1ActionList[] = {
+	{ {ACTION_TICK, 1, 0, 0}, &Room::mudd1Tick1 },
+	{ {ACTION_TIMER_EXPIRED, 1, 0, 0}, &Room::mudd1Timer1Expired },
+
+	{ {ACTION_USE, OBJECT_ICOMM, 0xff, 0},    &Room::mudd1UseCommunicator },
+	{ {ACTION_USE, OBJECT_SPOCK, 0x23, 0},  &Room::mudd1UseSpockOnBlueButton },
+	{ {ACTION_FINISHED_WALKING, 1, 0, 0},   &Room::mudd1SpockReachedBlueButton },
+	{ {ACTION_FINISHED_ANIMATION, 1, 0, 0}, &Room::mudd1SpockPressedBlueButton },
+	{ {ACTION_FINISHED_ANIMATION, 2, 0, 0}, &Room::mudd1CraneFinishedMoving },
+	{ {ACTION_USE, OBJECT_SPOCK, 0x24, 0},  &Room::mudd1UseSpockOnYellowButton },
+	{ {ACTION_FINISHED_WALKING, 2, 0, 0},   &Room::mudd1SpockReachedYellowButton },
+	{ {ACTION_FINISHED_ANIMATION, 3, 0, 0}, &Room::mudd1SpockPressedYellowButton },
+	{ {ACTION_USE, OBJECT_SPOCK, 0x25, 0},  &Room::mudd1UseSpockOnRedButton },
+	{ {ACTION_FINISHED_WALKING, 3, 0, 0},   &Room::mudd1SpockReachedRedButton },
+	{ {ACTION_FINISHED_ANIMATION, 4, 0, 0}, &Room::mudd1SpockPressedRedButton },
+
+	// Common code (next 4 lines)
+	{ {ACTION_USE, OBJECT_IDEGRIME, 0xff, 0}, &Room::muddaUseDegrimer },
+	{ {ACTION_USE, OBJECT_ILENSES, OBJECT_IDEGRIME, 0}, &Room::muddaUseLenseOnDegrimer },
+	{ {ACTION_USE, OBJECT_IALIENDV, 0xff, 0}, &Room::muddaUseAlienDevice },
+	{ {ACTION_FINISHED_ANIMATION, 9, 0, 0}, &Room::muddaFiredAlienDevice },
+
+	{ {ACTION_GET, 9,    0, 0}, &Room::mudd1GetTorpedo },
+	{ {ACTION_GET, 0x21, 0, 0}, &Room::mudd1GetTorpedo },
+	{ {ACTION_GET, 0x20, 0, 0}, &Room::mudd1GetTorpedo },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 0x21, 0}, &Room::mudd1UseSTricorderOnTorpedo },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 9,    0}, &Room::mudd1UseSTricorderOnTorpedo },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 0x20, 0}, &Room::mudd1UseSTricorderOnTorpedo },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 0x22, 0}, &Room::mudd1UseSTricorderOnTorpedoLauncher },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 0x25, 0}, &Room::mudd1UseSTricorderOnButton },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 0x23, 0}, &Room::mudd1UseSTricorderOnButton },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 0x24, 0}, &Room::mudd1UseSTricorderOnButton },
+	{ {ACTION_USE, OBJECT_ISTRICOR, 8, 0},    &Room::mudd1UseSTricorderOnCrane },
+	{ {ACTION_USE, OBJECT_IMEDKIT, 0xff, 0},  &Room::mudd1UseMedkitAnywhere },
+	{ {ACTION_LOOK, 0xff, 0, 0}, &Room::mudd1LookAnywhere },
+	{ {ACTION_LOOK, 0x20, 0, 0}, &Room::mudd1LookAtTorpedo },
+	{ {ACTION_LOOK, 9,    0, 0}, &Room::mudd1LookAtTorpedo },
+	{ {ACTION_LOOK, 0x21, 0, 0}, &Room::mudd1LookAtFallenTorpedo },
+	{ {ACTION_LOOK, 0x22, 0, 0}, &Room::mudd1LookAtTorpedoLauncher },
+	{ {ACTION_LOOK, OBJECT_KIRK,     0, 0}, &Room::mudd1LookAtKirk },
+	{ {ACTION_LOOK, OBJECT_SPOCK,    0, 0}, &Room::mudd1LookAtSpock },
+	{ {ACTION_LOOK, OBJECT_MCCOY,    0, 0}, &Room::mudd1LookAtMccoy },
+	{ {ACTION_LOOK, OBJECT_REDSHIRT, 0, 0}, &Room::mudd1LookAtRedshirt },
+	{ {ACTION_LOOK, 8,    0, 0}, &Room::mudd1LookAtCrane },
+	{ {ACTION_LOOK, 0x25, 0, 0}, &Room::mudd1LookAtRedButton },
+	{ {ACTION_LOOK, 0x23, 0, 0}, &Room::mudd1LookAtBlueButton },
+	{ {ACTION_LOOK, 0x24, 0, 0}, &Room::mudd1LookAtYellowButton },
+	{ {ACTION_TALK, OBJECT_KIRK,     0, 0}, &Room::mudd1TalkToKirk },
+	{ {ACTION_TALK, OBJECT_SPOCK,    0, 0}, &Room::mudd1TalkToSpock },
+	{ {ACTION_TALK, OBJECT_MCCOY,    0, 0}, &Room::mudd1TalkToMccoy },
+	{ {ACTION_TALK, OBJECT_REDSHIRT, 0, 0}, &Room::mudd1TalkToRedshirt },
+	{ {ACTION_WALK, 0x28, 0, 0}, &Room::mudd1WalkToSouthDoor },
+	{ {ACTION_TOUCHED_HOTSPOT, 2, 0, 0}, &Room::mudd1TouchedHotspot2 },
+	{ {ACTION_WALK, 0x27, 0, 0}, &Room::mudd1WalkToNorthDoor },
+	{ {ACTION_TOUCHED_HOTSPOT, 1, 0, 0}, &Room::mudd1TouchedHotspot1 },
+	{ {ACTION_WALK, 0x26, 0, 0}, &Room::mudd1WalkToWestDoor },
+	{ {ACTION_TOUCHED_HOTSPOT, 0, 0, 0}, &Room::mudd1TouchedHotspot0 },
+
+	// Common code (countdown for losing atmosphere when life support malfunctioning)
+	{ {ACTION_TICK, 0xff, 0xff, 0xff},           &Room::muddaTick },
+	{ {ACTION_LIST_END, 0, 0, 0}, nullptr }
+};
+
+enum mudd1TextIds {
+	TX_SPEAKER_KIRK, TX_SPEAKER_MCCOY, TX_SPEAKER_SPOCK, TX_SPEAKER_UHURA, TX_SPEAKER_BUCHERT,
+	TX_MUD1_001, TX_MUD1_003, TX_MUD1_004, TX_MUD1_005, TX_MUD1_006,
+	TX_MUD1_007, TX_MUD1_008, TX_MUD1_009, TX_MUD1_010, TX_MUD1_011,
+	TX_MUD1_012, TX_MUD1_013, TX_MUD1_014, TX_MUD1_015, TX_MUD1_016,
+	TX_MUD1_017, TX_MUD1_019, TX_MUD1_020, TX_MUD1_021, TX_MUD1_022,
+	TX_MUD1_023, TX_MUD1_024, TX_MUD1_025, TX_MUD1_026, TX_MUD1_027,
+	TX_MUD1_028, TX_MUD1N000, TX_MUD1N001, TX_MUD1N002, TX_MUD1N003,
+	TX_MUD1N005, TX_MUD1N006, TX_MUD1N007, TX_MUD1N008, TX_MUD1N009,
+	TX_MUD1N010, TX_MUD1N011, TX_MUD1N012, TX_MUD1N014, TX_MUD1N015,
+	TX_MUD1N016, TX_STATICU1, TX_DEM0N009
+};
+
+// TODO: Finish floppy offsets
+extern const RoomTextOffsets mudd1TextOffsets[] = {
+	{ TX_SPEAKER_KIRK, 3119, 0 },
+	{ TX_SPEAKER_MCCOY, 3130, 0 },
+	{ TX_SPEAKER_SPOCK, 3140, 0 },
+	{ TX_SPEAKER_UHURA, 3162, 0 },
+	{ TX_SPEAKER_BUCHERT, 3150, 0 },
+	{ TX_MUD1_001, 471, 0 },
+	{ TX_MUD1_003, 5160, 0 },
+	{ TX_MUD1_004, 5023, 0 },
+	{ TX_MUD1_005, 5885, 0 },
+	{ TX_MUD1_006, 5744, 0 },
+	{ TX_MUD1_007, 5231, 0 },
+	{ TX_MUD1_008, 5971, 0 },
+	{ TX_MUD1_009, 3561, 0 },
+	{ TX_MUD1_010, 3751, 0 },
+	{ TX_MUD1_011, 1546, 0 },
+	{ TX_MUD1_012, 6082, 0 },
+	{ TX_MUD1_013, 5815, 0 },
+	{ TX_MUD1_014, 6545, 0 },
+	{ TX_MUD1_015, 6647, 0 },
+	{ TX_MUD1_016, 6293, 0 },
+	{ TX_MUD1_017, 6236, 0 },
+	{ TX_MUD1_019, 5916, 0 },
+	{ TX_MUD1_020, 4092, 0 },
+	{ TX_MUD1_021, 4686, 0 },
+	{ TX_MUD1_022, 4582, 0 },
+	{ TX_MUD1_023, 4860, 0 },
+	{ TX_MUD1_024, 4478, 0 },
+	{ TX_MUD1_025, 3906, 0 },
+	{ TX_MUD1_026, 3473, 0 },
+	{ TX_MUD1_027, 4005, 0 },
+	{ TX_MUD1_028, 4309, 0 },
+	{ TX_MUD1N000, 6347, 0 },
+	{ TX_MUD1N001, 6413, 0 },
+	{ TX_MUD1N002, 3291, 0 },
+	{ TX_MUD1N003, 3411, 0 },
+	{ TX_MUD1N005, 5357, 0 },
+	{ TX_MUD1N006, 5666, 0 },
+	{ TX_MUD1N007, 2457, 0 },
+	{ TX_MUD1N008, 5577, 0 },
+	{ TX_MUD1N009, 5434, 0 },
+	{ TX_MUD1N010, 2649, 0 },
+	{ TX_MUD1N011, 3173, 0 },
+	{ TX_MUD1N012, 3348, 0 },
+	{ TX_MUD1N014, 3704, 0 },
+	{ TX_MUD1N015, 6499, 0 },
+	{ TX_MUD1N016, 6453, 0 },
+	{ TX_STATICU1, 5318, 0 },
+	{          -1, 0,    0 }
+};
+
+extern const RoomText mudd1Texts[] = {
+	{ TX_DEM0N009, Common::EN_ANY, "#DEM0\\DEM0N009#Spock raises an eyebrow" },
+	{ -1, Common::UNK_LANG, "" }
+};
+
 void Room::mudd1Tick1() {
 	playVoc("MUD1LOOP"); // BUGFIX: moved this out of below if statement
 
@@ -60,11 +193,11 @@ void Room::mudd1Tick1() {
 }
 
 void Room::mudd1Timer1Expired() {
-	playSoundEffectIndex(SND_07);
+	playSoundEffectIndex(kSfxButton);
 }
 
 void Room::mudd1UseCommunicator() {
-	showText(TX_SPEAKER_KIRK,  1, true);
+	showText(TX_SPEAKER_KIRK,  TX_MUD1_001);
 	showText(TX_SPEAKER_UHURA, TX_STATICU1);
 }
 
@@ -99,9 +232,9 @@ void Room::mudd1CraneFinishedMoving() {
 	walkCrewman(OBJECT_SPOCK, 0x43, 0x9f);
 
 	if (_awayMission->mudd.torpedoLoaded)
-		showText(TX_SPEAKER_SPOCK, 17, true);
+		showText(TX_SPEAKER_SPOCK, TX_MUD1_017);
 	else
-		showText(TX_SPEAKER_SPOCK, 16, true);
+		showText(TX_SPEAKER_SPOCK, TX_MUD1_016);
 }
 
 
@@ -146,22 +279,22 @@ void Room::mudd1SpockReachedRedButton() {
 void Room::mudd1SpockPressedRedButton() {
 	walkCrewman(OBJECT_SPOCK, 0x43, 0x9f);
 
-	showText(TX_SPEAKER_SPOCK, 22, true);
-	showText(TX_SPEAKER_SPOCK, 21, true);
-	showText(TX_SPEAKER_SPOCK, 23, true);
+	showText(TX_SPEAKER_SPOCK, TX_MUD1_022);
+	showText(TX_SPEAKER_SPOCK, TX_MUD1_021);
+	showText(TX_SPEAKER_SPOCK, TX_MUD1_023);
 
 	_awayMission->disableInput = false;
 	_awayMission->mudd.knowAboutTorpedo = true;
 
 	const TextRef choices[] = {
 		TX_SPEAKER_KIRK,
-		4,
-		3,
-		7,
-		TX_BLANK
+		TX_MUD1_004,
+		TX_MUD1_003,
+		TX_MUD1_007,
+		TX_END
 	};
 
-	int choice = showMultipleTexts(choices, true);
+	int choice = showMultipleTexts(choices);
 
 	switch (choice) {
 	case 0:
@@ -169,120 +302,117 @@ void Room::mudd1SpockPressedRedButton() {
 
 		// ENHANCEMENT: Original text was just "(Spock raises eyebrow)" without any audio.
 		// This changes it to a narration to make it flow better.
-		// TODO: This needs to be refactored
 		showDescription(TX_DEM0N009);
 		break;
 
 	case 1:
-		showText(TX_SPEAKER_KIRK, 7, true);
+		showText(TX_SPEAKER_KIRK, TX_MUD1_007);
 	// fall through
 
 	case 2:
 		_awayMission->mudd.torpedoStatus = 1;
 		showText(TX_SPEAKER_UHURA, TX_STATICU1);
 		break;
-
-	default:
-		break;
 	}
 }
 
+
 void Room::mudd1GetTorpedo() {
-	showDescription(14, true);
+	showDescription(TX_MUD1N014);
 }
 
 void Room::mudd1UseSTricorderOnTorpedo() {
-	spockScan(DIR_W, 25, false, true);
-	showText(TX_SPEAKER_BUCHERT, 27, true);
-	showText(TX_SPEAKER_SPOCK,   20, true);
-	showText(TX_SPEAKER_BUCHERT, 28, true);
-	showText(TX_SPEAKER_SPOCK,   24, true);
+	spockScan(DIR_W, TX_SPEAKER_SPOCK, TX_MUD1_025, false);
+	showText(TX_SPEAKER_BUCHERT, TX_MUD1_027);
+	showText(TX_SPEAKER_SPOCK,   TX_MUD1_020);
+	showText(TX_SPEAKER_BUCHERT, TX_MUD1_028);
+	showText(TX_SPEAKER_SPOCK,   TX_MUD1_024);
 }
 
 void Room::mudd1UseSTricorderOnTorpedoLauncher() {
-	spockScan(DIR_W, 10, false, true);
+	spockScan(DIR_W, TX_SPEAKER_SPOCK, TX_MUD1_010, false);
 }
 
 void Room::mudd1UseSTricorderOnButton() {
 	// ENHANCEMENT: Do the whole "spockScan" thing, don't just show the text
-	spockScan(DIR_W, 15, false, true);
+	spockScan(DIR_W, TX_SPEAKER_SPOCK, TX_MUD1_015, false);
 }
 
 void Room::mudd1UseSTricorderOnCrane() {
 	// ENHANCEMENT: See above
-	spockScan(DIR_N, 14, false, true);
+	spockScan(DIR_N, TX_SPEAKER_SPOCK, TX_MUD1_014, false);
 }
 
 void Room::mudd1UseMedkitAnywhere() {
-	showText(TX_SPEAKER_MCCOY, 11, true);
+	showText(TX_SPEAKER_MCCOY, TX_MUD1_011);
 }
 
 void Room::mudd1LookAnywhere() {
-	showDescription(11, true);
+	showDescription(TX_MUD1N011);
 }
 
 void Room::mudd1LookAtTorpedo() {
-	showDescription(2, true);
+	showDescription(TX_MUD1N002);
 }
 
 void Room::mudd1LookAtFallenTorpedo() {
-	showDescription(12, true);
+	showDescription(TX_MUD1N012);
 }
 
 void Room::mudd1LookAtTorpedoLauncher() {
-	showDescription(3, true);
+	showDescription(TX_MUD1N003);
 }
 
 void Room::mudd1LookAtKirk() {
-	showDescription(5, true);
+	showDescription(TX_MUD1N005);
 }
 
 void Room::mudd1LookAtSpock() {
-	showDescription(9, true);
+	showDescription(TX_MUD1N009);
 }
 
 void Room::mudd1LookAtMccoy() {
-	showDescription(8, true);
+	showDescription(TX_MUD1N008);
 }
 
 void Room::mudd1LookAtRedshirt() {
-	showDescription(6, true);
+	showDescription(TX_MUD1N006);
 }
 
 void Room::mudd1LookAtCrane() {
-	showDescription(0, true);
+	showDescription(TX_MUD1N000);
 }
 
 void Room::mudd1LookAtRedButton() {
-	showDescription(1, true);
+	showDescription(TX_MUD1N001);
 }
 
 void Room::mudd1LookAtBlueButton() {
-	showDescription(15, true);
+	showDescription(TX_MUD1N015);
 }
 
 void Room::mudd1LookAtYellowButton() {
-	showDescription(16, true);
+	showDescription(TX_MUD1N016);
 }
 
 void Room::mudd1TalkToKirk() {
-	showText(TX_SPEAKER_KIRK,  6, true);
-	showText(TX_SPEAKER_MCCOY, 13, true);
-	showText(TX_SPEAKER_KIRK,  5, true);
+	showText(TX_SPEAKER_KIRK,  TX_MUD1_006);
+	showText(TX_SPEAKER_MCCOY, TX_MUD1_013);
+	showText(TX_SPEAKER_KIRK,  TX_MUD1_005);
 }
 
 void Room::mudd1TalkToSpock() {
-	showText(TX_SPEAKER_SPOCK, 19, true);
-	showText(TX_SPEAKER_KIRK,  8, true);
+	showText(TX_SPEAKER_SPOCK, TX_MUD1_019);
+	showText(TX_SPEAKER_KIRK,  TX_MUD1_008);
 }
 
 void Room::mudd1TalkToMccoy() {
-	showText(TX_SPEAKER_MCCOY, 12, true);
+	showText(TX_SPEAKER_MCCOY, TX_MUD1_012);
 }
 
 void Room::mudd1TalkToRedshirt() {
-	showText(TX_SPEAKER_BUCHERT, 26, true);
-	showText(TX_SPEAKER_KIRK,    9, true);
+	showText(TX_SPEAKER_BUCHERT, TX_MUD1_026);
+	showText(TX_SPEAKER_KIRK,    TX_MUD1_009);
 }
 
 void Room::mudd1WalkToSouthDoor() {

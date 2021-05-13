@@ -48,6 +48,7 @@
 #include "tinsel/sysvar.h"
 #include "tinsel/token.h"
 
+#include "common/memstream.h"
 #include "common/textconsole.h"
 
 namespace Tinsel {
@@ -128,9 +129,36 @@ void ResetVarsScene() {
 	memset(&g_tempStruc, 0, sizeof(SCENE_STRUC));
 }
 
+SCENE_STRUC* parseV3Scene(const byte *pStruc) {
+	memset(&g_tempStruc, 0, sizeof(SCENE_STRUC));
+	Common::MemoryReadStream stream(pStruc, 84);
+	g_tempStruc.defRefer = stream.readUint32LE();
+	g_tempStruc.hSceneScript = stream.readUint32LE();
+	g_tempStruc.hSceneDesc = stream.readUint32LE();
+	g_tempStruc.numEntrance = stream.readUint32LE();
+	g_tempStruc.hEntrance = stream.readUint32LE();
+	stream.readUint32LE();
+	stream.readUint32LE();
+	stream.readUint32LE();
+	stream.readUint32LE();
+	g_tempStruc.numPoly = stream.readUint32LE();
+	g_tempStruc.hPoly = stream.readUint32LE();
+	g_tempStruc.numTaggedActor = stream.readUint32LE();
+	g_tempStruc.hTaggedActor = stream.readUint32LE();
+	g_tempStruc.numProcess = stream.readUint32LE();
+	g_tempStruc.hProcess = stream.readUint32LE();
+	g_tempStruc.hMusicScript = stream.readUint32LE();
+	g_tempStruc.hMusicSegment = stream.readUint32LE();
+	warning("TODO: Complete scene loading logic for Noir");
+
+	return &g_tempStruc;
+}
+
 const SCENE_STRUC *GetSceneStruc(const byte *pStruc) {
 	if (TinselVersion == TINSEL_V2)
 		return (const SCENE_STRUC *)pStruc;
+	else if (TinselVersion == TINSEL_V3)
+		return parseV3Scene(pStruc);
 
 	// Copy appropriate fields into tempStruc, and return a pointer to it
 	const byte *p = pStruc;
@@ -164,7 +192,7 @@ static void SceneTinselProcess(CORO_PARAM, const void *param) {
 
 	// The following myEscape value setting is used for enabling title screen skipping in DW1
 	if (TinselV1 && (g_sceneCtr == 1)) g_initialMyEscape = GetEscEvents();
-	// DW1 PSX has its own scene skipping script code for scenes 2 and 3 (bug #3541542).
+	// DW1 PSX has its own scene skipping script code for scenes 2 and 3 (bug #6094).
 	// Same goes for DW1 Mac.
 	_ctx->myEscape = (TinselV1 && (g_sceneCtr < ((TinselV1PSX || TinselV1Mac) ? 2 : 4))) ? g_initialMyEscape : 0;
 

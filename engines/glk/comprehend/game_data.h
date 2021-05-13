@@ -102,6 +102,7 @@ enum ScriptOpcode {
 	OPCODE_REMOVE_OBJECT,
 	OPCODE_SET_FLAG,
 	OPCODE_CALL_FUNC,
+	OPCODE_CALL_FUNC2,
 	OPCODE_TURN_TICK,
 	OPCODE_CLEAR_FLAG,
 	OPCODE_INVENTORY_ROOM,
@@ -194,7 +195,7 @@ enum ItemFlag {
 #define WORD_TYPE_NOUN 0x40
 #define WORD_TYPE_NOUN_PLURAL 0x80
 #define WORD_TYPE_NOUN_MASK (WORD_TYPE_FEMALE | WORD_TYPE_MALE | \
-                             WORD_TYPE_NOUN | WORD_TYPE_NOUN_PLURAL)
+							 WORD_TYPE_NOUN | WORD_TYPE_NOUN_PLURAL)
 
 struct FunctionState {
 	bool _testResult;
@@ -326,7 +327,7 @@ struct StringFile {
 	uint32 _endOffset;
 
 	StringFile() : _baseOffset(0), _endOffset(0) {
-	} 
+	}
 	StringFile(const char *fname, uint32 baseOfs = 0, uint32 endO = 0) :
 		_filename(fname), _baseOffset(baseOfs), _endOffset(endO) {
 	}
@@ -432,6 +433,15 @@ private:
 	uint64 string_get_chunk(uint8 *string);
 	char decode_string_elem(uint8 c, bool capital, bool special);
 
+	void parse_string_table(FileBuffer *fb, uint start_addr,
+		uint32 end_addr, StringTable *table);
+	void parse_variables(FileBuffer *fb);
+	void parse_flags(FileBuffer *fb);
+	void parse_replace_words(FileBuffer *fb);
+
+	void loadGameData();
+
+protected:
 	/**
 	 * Game strings are stored using 5-bit characters. By default a character
 	 * value maps to the lower-case letter table. If a character has the value 0x1e
@@ -442,15 +452,6 @@ private:
 	 */
 	Common::String parseString(FileBuffer *fb);
 
-	void parse_string_table(FileBuffer *fb, uint start_addr,
-		uint32 end_addr, StringTable *table);
-	void parse_variables(FileBuffer *fb);
-	void parse_flags(FileBuffer *fb);
-	void parse_replace_words(FileBuffer *fb);
-
-	void loadGameData();
-
-protected:
 	/**
 	 * The main game data file header has the offsets for where each bit of
 	 * game data is. The offsets have a magic constant value added to them.

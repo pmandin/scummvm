@@ -2827,8 +2827,8 @@ void HotspotTickHandlers::standardCharacterAnimHandler(Hotspot &h) {
 
 //			if (h.destHotspotId() != 0) {
 				// Walking to an exit, check for any required room change
-				if (Support::checkRoomChange(h))
-					break;
+			if (Support::checkRoomChange(h))
+				break;
 //			}
 		}
 
@@ -2909,21 +2909,21 @@ void HotspotTickHandlers::roomExitAnimHandler(Hotspot &h) {
 		h.setOccupied(true);
 
 		++rs.currentFrame;
-		if ((rs.currentFrame == rs.destFrame) && (h.hotspotId() == room.roomNumber()))
+		if ((rs.currentFrame == rs.destFrame) && (h.roomNumber() == room.roomNumber()) && (rs.closeSound != 0))
 			Sound.addSound(rs.closeSound);
 
 	} else if ((rec->blocked == 0) && (rs.currentFrame != 0)) {
 		// Opening the door
 		h.setOccupied(false);
 
-		--rs.currentFrame;
-		if ((rs.currentFrame == rs.destFrame) && (h.hotspotId() == room.roomNumber())) {
+		if ((rs.currentFrame == rs.destFrame) && (h.roomNumber() == room.roomNumber()) && (rs.openSound != 0)) {
 			Sound.addSound(rs.openSound);
 
 			// If in the outside village, trash reverb
 			if (fields.getField(AREA_FLAG) == 1)
 				Sound.musicInterface_TrashReverb();
 		}
+		--rs.currentFrame;
 	}
 
 	h.setFrameNumber(rs.currentFrame);
@@ -3635,6 +3635,13 @@ void HotspotTickHandlers::talkAnimHandler(Hotspot &h) {
 			responseNumber = Script::execute(_talkResponse->preSequenceId);
 			debugC(ERROR_DETAILED, kLureDebugAnimations, "Character response new response = %d",
 				responseNumber);
+
+			// FIXME: Fix for resetting the character being talked to
+			// after talking to Goewin whilst transformed
+			if (_talkResponse->preSequenceId == 10902) {
+				HotspotData *character = res.getHotspot(PLAYER_ID);
+				character->talkDestCharacterId = 0;
+			}
 		} while (responseNumber != TALK_RESPONSE_MAGIC_ID);
 
 		descId = _talkResponse->descId;
@@ -4118,8 +4125,10 @@ void HotspotTickHandlers::npcRoomChange(Hotspot &h) {
 	}
 
 	// Get room exit coordinates
-	RoomExitCoordinateData &exitData = res.coordinateList().getEntry(
-		h.roomNumber()).getData(h.currentActions().top().roomNumber());
+	uint16 srcRoom = h.roomNumber(),
+		destRoom = h.currentActions().top().roomNumber();
+	RoomExitCoordinates &coords = res.coordinateList().getEntry(srcRoom);
+	RoomExitCoordinateData &exitData = coords.getData(destRoom);
 
 	if (h.hotspotId() != RATPOUCH_ID) {
 		// Count up the number of characters in the room

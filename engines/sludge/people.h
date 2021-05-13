@@ -22,13 +22,14 @@
 #ifndef SLUDGE_PEOPLE_H
 #define SLUDGE_PEOPLE_H
 
-#include "sludge/variable.h"
+#include "common/list.h"
 
 namespace Sludge {
 
 struct FrozenStuffStruct;
 struct LoadedSpriteBank;
 struct ScreenRegion;
+struct VariableStack;
 
 class SludgeEngine;
 
@@ -52,7 +53,7 @@ struct PersonaAnimation {
 	int numFrames;
 
 	PersonaAnimation();
-	PersonaAnimation(int num, struct VariableStack *&stacky);
+	PersonaAnimation(int num, VariableStack *&stacky);
 	PersonaAnimation(PersonaAnimation *orig);
 	~PersonaAnimation();
 

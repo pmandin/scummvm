@@ -20,15 +20,14 @@
  *
  */
 
-#include "sludge/allfiles.h"
+#include "common/system.h"
+
 #include "sludge/cursors.h"
 #include "sludge/event.h"
 #include "sludge/freeze.h"
 #include "sludge/graphics.h"
 #include "sludge/newfatal.h"
 #include "sludge/people.h"
-#include "sludge/sprites.h"
-#include "sludge/sprbanks.h"
 #include "sludge/sludge.h"
 #include "sludge/sludger.h"
 

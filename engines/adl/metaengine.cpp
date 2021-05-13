@@ -69,17 +69,17 @@ Common::Platform getPlatform(const AdlGameDescription &adlDesc) {
 
 class AdlMetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "adl";
 	}
 
-    bool hasFeature(MetaEngineFeature f) const override;
+	bool hasFeature(MetaEngineFeature f) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 	int getMaximumSaveSlot() const override { return 'O' - 'A'; }
 	SaveStateList listSaves(const char *target) const override;
 	void removeSaveState(const char *target, int slot) const override;
 
-    bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
 };
 
 bool AdlMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -209,10 +209,7 @@ Engine *HiRes4Engine_create(OSystem *syst, const AdlGameDescription *gd);
 Engine *HiRes5Engine_create(OSystem *syst, const AdlGameDescription *gd);
 Engine *HiRes6Engine_create(OSystem *syst, const AdlGameDescription *gd);
 
-bool AdlMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const {
-	if (!gd)
-		return false;
-
+Common::Error AdlMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const {
 	const AdlGameDescription *adlGd = (const AdlGameDescription *)gd;
 
 	switch (adlGd->gameType) {
@@ -238,10 +235,10 @@ bool AdlMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameD
 		*engine = HiRes6Engine_create(syst, adlGd);
 		break;
 	default:
-		error("Unknown GameType");
+		return Common::kUnsupportedGameidError;
 	}
 
-	return true;
+	return Common::kNoError;
 }
 
 } // End of namespace Adl

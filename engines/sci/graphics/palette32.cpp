@@ -26,7 +26,7 @@
 
 #include "sci/sci.h"
 #include "sci/event.h"
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/util.h"
 #include "sci/engine/features.h"
 #include "sci/graphics/palette32.h"
@@ -436,6 +436,14 @@ int16 GfxPalette32::matchColor(const uint8 r, const uint8 g, const uint8 b) {
 	}
 
 	return bestIndex;
+}
+
+uint8 GfxPalette32::getPlatformBlack() const {
+	return (g_sci->getPlatform() == Common::kPlatformMacintosh) ? 255 : 0;
+}
+
+uint8 GfxPalette32::getPlatformWhite() const {
+	return (g_sci->getPlatform() == Common::kPlatformMacintosh) ? 0 : 255;
 }
 
 void GfxPalette32::submit(const Palette &palette) {

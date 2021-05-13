@@ -29,7 +29,7 @@
 // Enable the following #define if you want to check how many collisions the
 // code produces (many collisions indicate either a bad hash function, or a
 // hash table that is too small).
- 
+
 //#define DEBUG_HASH_COLLISIONS
 
 /**
@@ -41,6 +41,8 @@
 
 
 #include "common/func.h"
+
+#include "common/str.h"
 
 #ifdef DEBUG_HASH_COLLISIONS
 #include "common/debug.h"
@@ -244,9 +246,11 @@ public:
 	Val &operator[](const Key &key);
 	const Val &operator[](const Key &key) const;
 
+	Val &getOrCreateVal(const Key &key);
 	Val &getVal(const Key &key);
 	const Val &getVal(const Key &key) const;
-	const Val &getVal(const Key &key, const Val &defaultVal) const;
+	const Val &getValOrDefault(const Key &key) const;
+	const Val &getValOrDefault(const Key &key, const Val &defaultVal) const;
 	bool tryGetVal(const Key &key, Val &out) const;
 	void setVal(const Key &key, const Val &val);
 
@@ -296,11 +300,43 @@ public:
 	}
 
 	// TODO: insert() method?
-    /** Return true if hashmap is empty. */
+	/** Return true if hashmap is empty. */
 	bool empty() const {
 		return (_size == 0);
 	}
 };
+
+template <class Key>
+void NORETURN_PRE unknownKeyError(Key k) NORETURN_POST {
+	error("Unknown key");
+}
+
+template<>
+void NORETURN_PRE unknownKeyError(::Common::String key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(signed char key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(unsigned char key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(short signed key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(short unsigned key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(long signed key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(long unsigned key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(signed int key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(unsigned int key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(long long signed key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(long long unsigned key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(void *key) NORETURN_POST;
+template<>
+void NORETURN_PRE unknownKeyError(const char *key) NORETURN_POST;
 
 //-------------------------------------------------------
 // HashMap functions
@@ -569,7 +605,7 @@ bool HashMap<Key, Val, HashFunc, EqualFunc>::contains(const Key &key) const {
 
 template<class Key, class Val, class HashFunc, class EqualFunc>
 Val &HashMap<Key, Val, HashFunc, EqualFunc>::operator[](const Key &key) {
-	return getVal(key);
+	return getOrCreateVal(key);
 }
 
 /**
@@ -586,7 +622,7 @@ const Val &HashMap<Key, Val, HashFunc, EqualFunc>::operator[](const Key &key) co
  */
 
 template<class Key, class Val, class HashFunc, class EqualFunc>
-Val &HashMap<Key, Val, HashFunc, EqualFunc>::getVal(const Key &key) {
+Val &HashMap<Key, Val, HashFunc, EqualFunc>::getOrCreateVal(const Key &key) {
 	size_type ctr = lookupAndCreateIfMissing(key);
 	assert(_storage[ctr] != nullptr);
 	return _storage[ctr]->_value;
@@ -597,8 +633,41 @@ Val &HashMap<Key, Val, HashFunc, EqualFunc>::getVal(const Key &key) {
  */
 
 template<class Key, class Val, class HashFunc, class EqualFunc>
+Val &HashMap<Key, Val, HashFunc, EqualFunc>::getVal(const Key &key) {
+	size_type ctr = lookup(key);
+	if (_storage[ctr] != nullptr)
+		return _storage[ctr]->_value;
+	else
+		// In the past getVal() and operator[] used to return the default value for this case.
+		// Clarifying the intent by using getValOrDefault() when we query a key that may not be
+		// present is a good idea, but we have a lot of legacy code that may need to be updated.
+		// So for now only returns an error in non-release builds. Once we are confident all the
+		// code has been updated to use the correct function we can remove the RELEASE_BUILD
+		// special case.
+#ifdef RELEASE_BUILD
+		return _defaultVal;
+#else
+		unknownKeyError(key);
+#endif
+}
+
+template<class Key, class Val, class HashFunc, class EqualFunc>
 const Val &HashMap<Key, Val, HashFunc, EqualFunc>::getVal(const Key &key) const {
-	return getVal(key, _defaultVal);
+	size_type ctr = lookup(key);
+	if (_storage[ctr] != nullptr)
+		return _storage[ctr]->_value;
+	else
+		// See comment in non-const getVal() above.
+#ifdef RELEASE_BUILD
+		return _defaultVal;
+#else
+		unknownKeyError(key);
+#endif
+}
+
+template<class Key, class Val, class HashFunc, class EqualFunc>
+const Val &HashMap<Key, Val, HashFunc, EqualFunc>::getValOrDefault(const Key &key) const {
+	return getValOrDefault(key, _defaultVal);
 }
 
 /**
@@ -606,7 +675,7 @@ const Val &HashMap<Key, Val, HashFunc, EqualFunc>::getVal(const Key &key) const 
  */
 
 template<class Key, class Val, class HashFunc, class EqualFunc>
-const Val &HashMap<Key, Val, HashFunc, EqualFunc>::getVal(const Key &key, const Val &defaultVal) const {
+const Val &HashMap<Key, Val, HashFunc, EqualFunc>::getValOrDefault(const Key &key, const Val &defaultVal) const {
 	size_type ctr = lookup(key);
 	if (_storage[ctr] != nullptr)
 		return _storage[ctr]->_value;

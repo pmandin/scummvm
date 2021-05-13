@@ -63,13 +63,13 @@ bool8 _game_script::Init_game_script() {
 	fn_hash = HashString(fname);
 	cluster_hash = HashString(cluster);
 
-	warning("Init_gs::'%s'::'%s'", fname, cluster);
+	Zdebug("Init_gs::'%s'::'%s'", fname, cluster);
 	if (private_session_resman->Test_file(fname, fn_hash, cluster, cluster_hash)) {
 		// program counter in gameScript
 
 		pc = 0;
 
-		warning("Gamescript found");
+		Zdebug("Gamescript found");
 		running_from_game_script = TRUE8;
 
 		return TRUE8;
@@ -96,9 +96,9 @@ void _game_script::Run_to_bookmark(const char *name) {
 	char p1[ENGINE_STRING_LEN];
 
 	// reset program counter (but keep demo flag!)
-	int demo = g_globalScriptVariables.GetVariable("demo");
+	int32 demo = g_globalScriptVariables->GetVariable("demo");
 	Restart_game_script();
-	g_globalScriptVariables.SetVariable("demo", demo);
+	g_globalScriptVariables->SetVariable("demo", demo);
 
 	// now loop through gamescript...
 	while (1) {
@@ -159,12 +159,12 @@ void _game_script::Process_game_script() {
 		pc += 2;
 		Fetch_next_param(p1);
 		Fetch_next_line(); // ignored in normal gamescript
-		warning("Hit bookmark mission %s", p1);
+		Zdebug("Hit bookmark mission %s", p1);
 		break;
 
 	case 'X': // yes, its the amazing X mode   - t h e  m a i n  m e n u -
 		Fetch_next_line();
-		stub.Push_stub_mode(__toe_on_door);
+		g_stub->Push_stub_mode(__toe_on_door);
 		break;
 
 	case 'W':
@@ -182,7 +182,7 @@ void _game_script::Process_game_script() {
 		if (Setup_new_mission(p1, p2)) { // mission_name, session_name
 			// only do actor relative on pc
 			MS->player.Set_control_mode(ACTOR_RELATIVE);
-			stub.Push_stub_mode(__mission_and_console);
+			g_stub->Push_stub_mode(__mission_and_console);
 		} else {
 			Fatal_error("no such mission-session [%s][%s]", p1, p2);
 		}
@@ -208,7 +208,7 @@ void _game_script::Process_game_script() {
 	case 'P':
 		Fetch_next_line();
 		MS->player.Set_control_mode(ACTOR_RELATIVE);
-		stub.Push_stub_mode(__mission_and_console);
+		g_stub->Push_stub_mode(__mission_and_console);
 		break;
 
 	case 'T':
@@ -222,7 +222,7 @@ void _game_script::Process_game_script() {
 		warning("text scrolly %s over movie/screen %s starting frame %d", p1, p2, atoi(p3));
 
 		InitisliaseScrollingText(p1, p2, atoi(p3));
-		stub.Push_stub_mode(__scrolling_text);
+		g_stub->Push_stub_mode(__scrolling_text);
 		break;
 
 	case 'G':
@@ -231,7 +231,7 @@ void _game_script::Process_game_script() {
 		Fetch_next_param(p1);
 		Fetch_next_param(p2);
 		Fetch_next_line();
-		g_globalScriptVariables.SetVariable(p1, (atoi(p2)));
+		g_globalScriptVariables->SetVariable(p1, (atoi(p2)));
 		break;
 
 	case 'R': // restart
@@ -239,7 +239,7 @@ void _game_script::Process_game_script() {
 		break;
 
 	case 'D': // debugging on again
-		px.debugging_and_console = TRUE8;
+		g_px->debugging_and_console = TRUE8;
 		Fetch_next_line();
 		break;
 
@@ -255,10 +255,10 @@ void _game_script::Process_game_script() {
 		pc += 2;
 		Fetch_next_param(p1);
 		Fetch_next_line();
-		px.current_cd = atoi(p1);
+		g_px->current_cd = atoi(p1);
 
-		if ((!px.current_cd) || (px.current_cd > 3))
-			Fatal_error("gamescript tried to set silly cd number %d", px.current_cd);
+		if ((!g_px->current_cd) || (g_px->current_cd > 3))
+			Fatal_error("gamescript tried to set silly cd number %d", g_px->current_cd);
 		break;
 
 	case 'Z': // Signify that the game has been completed

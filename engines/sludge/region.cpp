@@ -20,11 +20,10 @@
  *
  */
 
-#include "sludge/allfiles.h"
 #include "sludge/backdrop.h"
 #include "sludge/event.h"
+#include "sludge/freeze.h"
 #include "sludge/graphics.h"
-#include "sludge/moreio.h"
 #include "sludge/newfatal.h"
 #include "sludge/objtypes.h"
 #include "sludge/region.h"
@@ -33,8 +32,7 @@
 
 namespace Sludge {
 
-RegionManager::RegionManager(SludgeEngine *vm)
-{
+RegionManager::RegionManager(SludgeEngine *vm) {
 	_vm = vm;
 	_allScreenRegions = new ScreenRegionList;
 	_allScreenRegions->clear();

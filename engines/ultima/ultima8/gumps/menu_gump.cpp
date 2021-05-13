@@ -20,7 +20,8 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
+#include "common/config-manager.h"
+
 #include "ultima/ultima8/gumps/menu_gump.h"
 #include "ultima/ultima8/gumps/remorse_menu_gump.h"
 #include "ultima/ultima8/games/game_data.h"
@@ -28,24 +29,18 @@
 #include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/graphics/shape_frame.h"
 #include "ultima/ultima8/ultima8.h"
-#include "ultima/ultima8/gumps/desktop_gump.h"
+#include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/gumps/widgets/button_widget.h"
 #include "ultima/ultima8/gumps/widgets/text_widget.h"
 #include "ultima/ultima8/gumps/quit_gump.h"
-#include "ultima/ultima8/gumps/paged_gump.h"
 #include "ultima/ultima8/games/game.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
-#include "ultima/ultima8/graphics/fonts/font.h"
-#include "ultima/ultima8/graphics/fonts/rendered_text.h"
-#include "ultima/ultima8/graphics/fonts/font_manager.h"
 #include "ultima/ultima8/graphics/palette_manager.h"
-#include "ultima/ultima8/conf/setting_manager.h"
 #include "ultima/ultima8/audio/music_process.h"
 #include "ultima/ultima8/gumps/widgets/edit_widget.h"
 #include "ultima/ultima8/gumps/u8_save_gump.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/meta_engine.h"
-#include "engines/dialogs.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -130,11 +125,8 @@ void MenuGump::InitGump(Gump *newparent, bool take_focus) {
 	logo->InitGump(this, false);
 
 	if (!_nameEntryMode) {
-		SettingManager *settingman = SettingManager::get_instance();
-		bool endgame = false;
-		bool quotes = false;
-		settingman->get("endgame", endgame);
-		settingman->get("quotes", quotes);
+		bool endgame = ConfMan.getBool("endgame");
+		bool quotes = ConfMan.getBool("quotes");
 
 		int x = _dims.width() / 2 + 14;
 		int y = 18;
@@ -228,10 +220,8 @@ void MenuGump::ChildNotify(Gump *child, uint32 message) {
 }
 
 void MenuGump::selectEntry(int entry) {
-	SettingManager *settingman = SettingManager::get_instance();
-	bool endgame, quotes;
-	settingman->get("endgame", endgame);
-	settingman->get("quotes", quotes);
+	bool endgame = ConfMan.getBool("endgame");
+	bool quotes = ConfMan.getBool("quotes");
 
 	switch (entry) {
 	case 1: // Intro
@@ -242,9 +232,7 @@ void MenuGump::selectEntry(int entry) {
 		U8SaveGump::showLoadSaveGump(this, entry == 3);
 		break;
 	case 4: {
-		// Options - show the ScummVM options dialog
-		GUI::ConfigDialog dlg;
-		dlg.runModal();
+		Ultima8Engine::get_instance()->openConfigDialog();
 	}
 	break;
 	case 5: // Credits

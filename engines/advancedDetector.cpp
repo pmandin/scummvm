@@ -66,7 +66,7 @@ public:
 	}
 
 	Common::SeekableReadStream *createReadStreamForMember(const Common::String &name) const override {
-		Common::FSNode fsNode = _fileMap[name];
+		Common::FSNode fsNode = _fileMap.getValOrDefault(name);
 		return fsNode.createReadStream();
 	}
 
@@ -87,7 +87,7 @@ static Common::String sanitizeName(const char *name, int maxLen) {
 			// Skipping short words and "the"
 			if ((word.size() > 2 && !word.equals("the")) || (!word.empty() && Common::isDigit(word[0]))) {
 				// Adding first word, or when word fits
-				if (res.empty() || word.size() < maxLen)
+				if (res.empty() || (int)word.size() < maxLen)
 					res += word;
 
 				maxLen -= word.size();
@@ -171,7 +171,7 @@ DetectedGame AdvancedMetaEngineDetection::toDetectedGame(const ADDetectedGame &a
 		extra = desc->extra;
 	}
 
-	DetectedGame game(getEngineId(), desc->gameId, title, desc->language, desc->platform, extra, desc->flags & ADGF_UNSUPPORTED);
+	DetectedGame game(getEngineId(), desc->gameId, title, desc->language, desc->platform, extra, ((desc->flags & (ADGF_UNSUPPORTED | ADGF_WARNING)) != 0));
 	game.hasUnknownFiles = adGame.hasUnknownFiles;
 	game.matchedFiles = adGame.matchedFiles;
 	game.preferredTarget = generatePreferredTarget(desc, _maxAutogenLength);
@@ -182,7 +182,9 @@ DetectedGame AdvancedMetaEngineDetection::toDetectedGame(const ADDetectedGame &a
 	else if (desc->flags & ADGF_TESTING)
 		game.gameSupportLevel = kTestingGame;
 	else if (desc->flags & ADGF_UNSUPPORTED)
-		game.gameSupportLevel = kUnupportedGame;
+		game.gameSupportLevel = kUnsupportedGame;
+	else if (desc->flags & ADGF_WARNING)
+		game.gameSupportLevel = kWarningGame;
 
 	game.setGUIOptions(desc->guiOptions + _guiOptions);
 	game.appendGUIOptions(getGameGUIOptionsDescriptionLanguage(desc->language));
@@ -196,7 +198,7 @@ DetectedGame AdvancedMetaEngineDetection::toDetectedGame(const ADDetectedGame &a
 	return game;
 }
 
-bool cleanupPirated(ADDetectedGames &matched) {
+bool AdvancedMetaEngineDetection::cleanupPirated(ADDetectedGames &matched) const {
 	// OKay, now let's sense presence of pirated games
 	if (!matched.empty()) {
 		for (uint j = 0; j < matched.size();) {
@@ -239,8 +241,7 @@ DetectedGames AdvancedMetaEngineDetection::detectGames(const Common::FSList &fsl
 	for (uint i = 0; i < matches.size(); i++) {
 		DetectedGame game = toDetectedGame(matches[i]);
 
-		if (game.hasUnknownFiles) {
-			// Non fallback games with unknown files cannot be added/launched
+		if (game.hasUnknownFiles && !canPlayUnknownVariants()) {
 			game.canBeAdded = false;
 		}
 
@@ -249,7 +250,7 @@ DetectedGames AdvancedMetaEngineDetection::detectGames(const Common::FSList &fsl
 
 	bool foundKnownGames = false;
 	for (uint i = 0; i < detectedGames.size(); i++) {
-		foundKnownGames |= detectedGames[i].canBeAdded;
+		foundKnownGames |= !detectedGames[i].hasUnknownFiles;
 	}
 
 	if (!foundKnownGames) {
@@ -342,7 +343,7 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 
 	ADDetectedGame agdDesc;
 	for (uint i = 0; i < matches.size(); i++) {
-		if (matches[i].desc->gameId == gameid && !matches[i].hasUnknownFiles) {
+		if (matches[i].desc->gameId == gameid && (!matches[i].hasUnknownFiles || canPlayUnknownVariants())) {
 			agdDesc = matches[i];
 			break;
 		}
@@ -381,7 +382,11 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 			&& !Engine::warnUserAboutUnsupportedGame())
 		return Common::kUserCanceled;
 
-	if (gameDescriptor.gameSupportLevel == kUnupportedGame) {
+	if (gameDescriptor.gameSupportLevel == kWarningGame
+			&& !Engine::warnUserAboutUnsupportedGame(gameDescriptor.extra))
+		return Common::kUserCanceled;
+
+	if (gameDescriptor.gameSupportLevel == kUnsupportedGame) {
 		Engine::errorUnsupportedGame(gameDescriptor.extra);
 		return Common::kUserCanceled;
 	}
@@ -399,12 +404,10 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 
 	if (plugin) {
 		// Call child class's createInstanceMethod.
-		if (plugin->get<AdvancedMetaEngine>().createInstance(syst, engine, agdDesc.desc)) {
-			return Common::Error(Common::kNoError);
-		}
+		return plugin->get<AdvancedMetaEngine>().createInstance(syst, engine, agdDesc.desc);
 	}
 
-	return Common::Error(Common::kNoGameDataFoundError);
+	return Common::Error(Common::kEnginePluginNotFound);
 }
 
 void AdvancedMetaEngineDetection::composeFileHashMap(FileMap &allFiles, const Common::FSList &fslist, int depth, const Common::String &parentName) const {

@@ -20,35 +20,27 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 
 #include "ultima/ultima8/world/actors/attack_process.h"
 
-#include "common/memstream.h"
 #include "ultima/ultima8/audio/audio_process.h"
 #include "ultima/ultima8/games/game_data.h"
-#include "ultima/ultima8/graphics/shape_info.h"
 #include "ultima/ultima8/kernel/kernel.h"
 #include "ultima/ultima8/kernel/delay_process.h"
 #include "ultima/ultima8/usecode/uc_list.h"
 #include "ultima/ultima8/world/actors/actor.h"
-#include "ultima/ultima8/world/actors/actor_anim_process.h"
 #include "ultima/ultima8/world/current_map.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/world/world.h"
 #include "ultima/ultima8/world/loop_script.h"
-#include "ultima/ultima8/world/weapon_info.h"
-#include "ultima/ultima8/world/actors/animation_tracker.h"
 #include "ultima/ultima8/world/actors/combat_dat.h"
 #include "ultima/ultima8/world/actors/loiter_process.h"
-#include "ultima/ultima8/world/actors/pathfinder_process.h"
-#include "ultima/ultima8/misc/direction.h"
+#include "ultima/ultima8/world/actors/cru_pathfinder_process.h"
 #include "ultima/ultima8/misc/direction_util.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(AttackProcess)
 
 static const int16 ATTACK_SFX_1[] = {0x15, 0x78, 0x80, 0x83, 0xDC, 0xDD};
@@ -65,14 +57,9 @@ static const int16 ATTACK_SFX_7[] = {0x9B, 0x9C, 0x9D, 0x9E, 0x9F};
 // read from the data array.
 static const int MAGIC_DATA_OFF = 33000;
 
+const uint16 AttackProcess::ATTACK_PROCESS_TYPE = 0x259;
 
 static uint16 someSleepGlobal = 0;
-
-// TODO: Implement me. Set timer for some avatar moves.
-static bool World_FinishedAvatarMoveTimeout() {
-	return true;
-}
-
 
 static inline int32 randomOf(int32 max) {
 	return (max > 0 ? getRandom() % max : 0);
@@ -105,6 +92,8 @@ _soundTimestamp(0), _fireTimestamp(0) {
 	for (int i = 0; i < ARRAYSIZE(_dataArray); i++) {
 		_dataArray[i] = 0;
 	}
+
+	actor->setAttackAimFlag(false);
 
 	const Item *wpn = getItem(actor->getActiveWeapon());
 	if (wpn) {
@@ -148,7 +137,7 @@ _soundTimestamp(0), _fireTimestamp(0) {
 		}
 	}
 
-	_type = 0x0259; // CONSTANT !
+	_type = ATTACK_PROCESS_TYPE;
 
 	setTacticNo(actor->getCombatTactic());
 }
@@ -213,14 +202,14 @@ void AttackProcess::run() {
 		case 0x88:
 		{
 			// Turn 90 degrees left
-			Direction newdir = Direction_OneLeft(Direction_OneLeft(curdir, dirmode_8dirs), dirmode_8dirs);
+			Direction newdir = Direction_TurnByDelta(curdir, -2, dirmode_8dirs);
 			a->turnTowardDir(newdir);
 			return;
 		}
 		case 0x89:
 		{
 			// Turn 90 degrees right
-			Direction newdir = Direction_OneRight(Direction_OneLeft(curdir, dirmode_8dirs), dirmode_8dirs);
+			Direction newdir = Direction_TurnByDelta(curdir, 2, dirmode_8dirs);
 			a->turnTowardDir(newdir);
 			return;
 		}
@@ -249,7 +238,7 @@ void AttackProcess::run() {
 			int32 x, y, z;
 			a->getHomePosition(x, y, z);
 			ProcId pid = Kernel::get_instance()->addProcess(
-					   new PathfinderProcess(a, x, y, z));
+					   new CruPathfinderProcess(a, x, y, z, 100, 0x40, true));
 			waitFor(pid);
 			return;
 		}
@@ -259,7 +248,7 @@ void AttackProcess::run() {
 			int32 x, y, z;
 			target->getLocation(x, y, z);
 			ProcId pid = Kernel::get_instance()->addProcess(
-					   new PathfinderProcess(a, x, y, z));
+					   new CruPathfinderProcess(a, x, y, z, 12, 0x40, true));
 			waitFor(pid);
 			return;
 		}
@@ -274,7 +263,7 @@ void AttackProcess::run() {
 			int32 y = (ty + ay) / 2;
 			int32 z = (tz + az) / 2;
 			ProcId pid = Kernel::get_instance()->addProcess(
-					   new PathfinderProcess(a, x, y, z));
+					   new CruPathfinderProcess(a, x, y, z, 12, 0x40, true));
 			waitFor(pid);
 			return;
 		}
@@ -402,7 +391,7 @@ void AttackProcess::run() {
 
 				if (itemFrame == targetFrame && (targetQ == 0 || itemQlo == targetQ)) {
 					ProcId pid = Kernel::get_instance()->addProcess(
-						 new PathfinderProcess(a, founditem->getObjId()));
+						 new CruPathfinderProcess(a, founditem, 100, 0x40, true));
 					waitFor(pid);
 					break;
 				}
@@ -523,8 +512,13 @@ void AttackProcess::genericAttack() {
 	Actor *a = getActor(_itemNum);
 	assert(a);
 
-	if (Kernel::get_instance()->getNumProcesses(_itemNum, ActorAnimProcess::ACTOR_ANIM_PROC_TYPE)
-		|| a->hasActorFlags(Actor::ACT_PATHFINDING)) {
+	if (a->isBusy() || a->hasActorFlags(Actor::ACT_PATHFINDING)) {
+		return;
+	}
+
+	// This should never be running on the controlled npc.
+	if (_itemNum == World::get_instance()->getControlledNPCNum()) {
+		terminate();
 		return;
 	}
 
@@ -535,7 +529,7 @@ void AttackProcess::genericAttack() {
 
 	AudioProcess *audio = AudioProcess::get_instance();
 	const Direction curdir = a->getDir();
-	const int32 now = Kernel::get_instance()->getFrameNum() * 2;
+	const int32 now = Kernel::get_instance()->getTickNum();
 	int wpnField8 = wpn ? wpn->getShapeInfo()->_weaponInfo->_field8 : 1;
 	const uint16 controlledNPC = World::get_instance()->getControlledNPCNum();
 	Direction targetdir = dir_invalid;
@@ -558,20 +552,22 @@ void AttackProcess::genericAttack() {
 			y += -0x1ff + randomOf(0x400);
 			_field96 = true;
 			const ProcId pid = Kernel::get_instance()->addProcess(
-								new PathfinderProcess(a, x, y, z));
-			waitFor(pid);
+								new CruPathfinderProcess(a, x, y, z, 12, 0x40, true));
+			// add a tiny delay to avoid tight loops
+			Process *delayproc = new DelayProcess(2);
+			Kernel::get_instance()->addProcess(delayproc);
+			delayproc->waitFor(pid);
+			waitFor(delayproc);
 			return;
 		}
 	} else {
-		// TODO: Get directions anim has (8 or 16)
-		DirectionMode standDirMode = dirmode_8dirs;
-		/*
 		Animation::Sequence anim;
 		if (a->isInCombat()) {
 			anim = Animation::combatStand;
 		} else {
 			anim = Animation::stand;
-		}*/
+		}
+		DirectionMode standDirMode = a->animDirMode(anim);
 		if (_timer3set) {
 			if (_timer3 >= now) {
 				if (a->isInCombat()) {
@@ -607,7 +603,7 @@ void AttackProcess::genericAttack() {
 					if (_wpnField8 < 3) {
 						_wpnField8 = 1;
 					} else if ((_doubleDelay && (getRandom() % 2 == 0)) || (getRandom() % 5 == 0)) {
-						// TODO: a->setField0x68(1);
+						a->setAttackAimFlag(true);
 						_wpnField8 *= 4;
 					}
 					_fireTimestamp = now;
@@ -649,8 +645,11 @@ void AttackProcess::genericAttack() {
 		}
 		if (targetdir == curdir) {
 			const uint16 rnd = randomOf(10);
+			const uint32 frameno = Kernel::get_instance()->getFrameNum();
+			const uint32 timeoutfinish = target->getAttackMoveTimeoutFinish();
+
 			if (!onscreen ||
-				(!_field96 && !timer4and5Update(now) && !World_FinishedAvatarMoveTimeout()
+				(!_field96 && !timer4and5Update(now) && frameno < timeoutfinish
 				 && rnd > 2 && (!_isActivityAorB || rnd > 3))) {
 				sleep(0x14);
 				return;
@@ -701,7 +700,7 @@ void AttackProcess::genericAttack() {
 				if (wpn) {
 					_wpnField8 = wpnField8;
 					if (_wpnField8 > 2 && ((_doubleDelay && randomOf(2) == 0) || randomOf(5) == 0)) {
-						// TODO: a->setField0x68(1);
+						a->setAttackAimFlag(true);
 						_wpnField8 *= 4;
 					}
 				}
@@ -815,14 +814,14 @@ bool AttackProcess::checkTimer2PlusDelayElapsed(int now) {
 
 void AttackProcess::setAttackData(uint16 off, uint16 val) {
 	if (off >= MAGIC_DATA_OFF && off < MAGIC_DATA_OFF + ARRAYSIZE(_dataArray) - 1)
-		_dataArray[off] = val;
+		_dataArray[off - MAGIC_DATA_OFF] = val;
 
 	warning("Invalid offset to setAttackDataArray %d %d", off, val);
 }
 
 uint16 AttackProcess::getAttackData(uint16 off) const {
 	if (off >= MAGIC_DATA_OFF && off < MAGIC_DATA_OFF + ARRAYSIZE(_dataArray) - 1)
-		return _dataArray[off];
+		return _dataArray[off - MAGIC_DATA_OFF];
 
 	warning("Invalid offset to getAttackDataArray: %d", off);
 	return 0;
@@ -836,7 +835,7 @@ void AttackProcess::pathfindToItemInNPCData() {
 	Actor *a = getActor(_itemNum);
 	Actor *target = getActor(_target);
 
-	Process *pathproc = new PathfinderProcess(a, target->getObjId());
+	Process *pathproc = new CruPathfinderProcess(a, target, 12, 0x40, false);
 	// In case pathfinding fails delay for a bit to ensure we don't get
 	// stuck in a tight loop using all the cpu
 	Process *delayproc = new DelayProcess(10);
@@ -882,13 +881,15 @@ void AttackProcess::timeNowToTimerVal2(int now) {
 }
 
 void AttackProcess::setTimer3() {
-	const int32 now = Kernel::get_instance()->getFrameNum() * 2;
+	const int32 now = Kernel::get_instance()->getTickNum();
 	_timer3set = true;
 	_timer3 = randomOf(10) * 60 + now;
 	return;
 }
 
 void AttackProcess::sleep(int ticks) {
+	// waiting less than 2 ticks can cause a tight loop
+	ticks = MAX(ticks, 2);
 	Process *delayProc = new DelayProcess(ticks);
 	ProcId pid = Kernel::get_instance()->addProcess(delayProc);
 	waitFor(pid);
@@ -979,6 +980,7 @@ bool AttackProcess::loadData(Common::ReadStream *rs, uint32 version) {
 	_target = rs->readUint16LE();
 	setTacticNo(rs->readUint16LE());
 	setBlockNo(rs->readUint16LE());
+	_tacticDatStartOffset = rs->readUint16LE();
 
 	_soundNo = rs->readUint16LE();
 	_playedStartSound = rs->readByte();

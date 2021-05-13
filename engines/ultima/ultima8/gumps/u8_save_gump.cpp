@@ -20,21 +20,19 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/u8_save_gump.h"
-#include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/gumps/desktop_gump.h"
 #include "ultima/ultima8/gumps/widgets/edit_widget.h"
 #include "ultima/ultima8/gumps/widgets/text_widget.h"
 #include "ultima/ultima8/ultima8.h"
+#include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/graphics/shape_frame.h"
-#include "ultima/ultima8/filesys/file_system.h"
 #include "ultima/ultima8/filesys/savegame.h"
 #include "ultima/ultima8/gumps/paged_gump.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
+#include "common/config-manager.h"
 #include "common/savefile.h"
 #include "common/translation.h"
 
@@ -274,7 +272,7 @@ bool U8SaveGump::savegame(int saveIndex, const Std::string &name) {
 
 	if (name.empty()) return false;
 
-	Ultima8Engine::get_instance()->saveGame(saveIndex, name, true);
+	Ultima8Engine::get_instance()->saveGame(saveIndex, name);
 	return true;
 }
 
@@ -317,12 +315,16 @@ void U8SaveGump::loadDescriptions() {
 
 //static
 Gump *U8SaveGump::showLoadSaveGump(Gump *parent, bool save) {
-	if (save) {
-		// can't save if game over
-		// FIXME: this check should probably be in Game or GUIApp
-		const MainActor *av = getMainActor();
-		if (!av || av->hasActorFlags(Actor::ACT_DEAD))
-			return nullptr;
+	if (!ConfMan.getBool("originalsaveload")) {
+		if (save)
+			Ultima8Engine::get_instance()->saveGameDialog();
+		else
+			Ultima8Engine::get_instance()->loadGameDialog();
+		return nullptr;
+	}
+
+	if (save && !Ultima8Engine::get_instance()->canSaveGameStateCurrently(false)) {
+		return nullptr;
 	}
 
 	PagedGump *gump = new PagedGump(34, -38, 3, 35);

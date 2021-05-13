@@ -78,21 +78,21 @@ typedef Array<TLanguage> TLangArray;
 struct PoMessageEntry {
 	int msgid;         /*!< ID of the message. */
 	String msgctxt;    /*!< Context of the message. It can be empty.
-                            Can be used to solve ambiguities. */
+							Can be used to solve ambiguities. */
 	U32String msgstr;  /*!< Message string. */
 };
 
 /**
  * Message translation manager.
  */
-class TranslationManager : public Singleton<TranslationManager> {
+class TranslationManager : public NonCopyable {
 public:
 	/**
 	 * Constructor that sets the current language to the default language.
 	 *
 	 * The default language is the detected system language.
 	 */
-	TranslationManager();
+	TranslationManager(const Common::String &fileName);
 	~TranslationManager();
 
 	/**
@@ -221,7 +221,7 @@ private:
 	/**
 	 * Load the list of languages from the translations.dat file.
 	 */
-	void loadTranslationsInfoDat();
+	void loadTranslationsInfoDat(const Common::String &name);
 
 	/**
 	 * Load the translation for the given language from the translations.dat file.
@@ -242,13 +242,20 @@ private:
 	Array<PoMessageEntry> _currentTranslationMessages;
 	String _currentCharset;
 	int _currentLang;
+	Common::String _translationsFileName;
+};
+
+class MainTranslationManager : public TranslationManager, public Singleton<MainTranslationManager> {
+public:
+	MainTranslationManager() : TranslationManager("translations.dat") {}
+	~MainTranslationManager() {}
 };
 
 /** @} */
 
 } // End of namespace Common
 
-#define TransMan Common::TranslationManager::instance()
+#define TransMan Common::MainTranslationManager::instance()
 
 #define _(str) TransMan.getTranslation(str)
 #define _c(str, context) TransMan.getTranslation(str, context)

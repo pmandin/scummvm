@@ -20,6 +20,7 @@
  *
  */
 
+#if 0
 #include "startrek/room.h"
 
 #define OBJECT_DEAD_GUY 8 // Unused
@@ -107,10 +108,25 @@ extern const RoomAction veng8ActionList[] = {
 	{ {ACTION_USE, OBJECT_IPHASERK, 0xff,     0}, &Room::vengaUsePhaserAnywhere },
 	{ {ACTION_LOOK, OBJECT_IHYPO,          0, 0}, &Room::vengaLookAtHypo },
 	{ {ACTION_USE, OBJECT_ICOMM, OBJECT_KIRK, 0}, &Room::vengaUseCommunicator },
+	{ {ACTION_LIST_END, 0, 0, 0}, nullptr }
 };
 
-extern const int veng8NumActions = ARRAYSIZE(veng8ActionList);
+enum veng8TextIds {
+	TX_SPEAKER_KIRK, TX_SPEAKER_MCCOY, TX_SPEAKER_SPOCK, TX_SPEAKER_EVERTS,
+};
 
+// TODO: Finish floppy offsets
+extern const RoomTextOffsets veng8TextOffsets[] = {
+	//{ TX_SPEAKER_KIRK, 2597, 0 },
+	//{ TX_SPEAKER_MCCOY, 2622, 0 },
+	//{ TX_SPEAKER_SPOCK, 2632, 0 },
+	//{ TX_SPEAKER_EVERTS, 2642, 0 },
+	{          -1, 0,    0 }
+};
+
+extern const RoomText veng8Texts[] = {
+	  { -1, Common::UNK_LANG, "" }
+};
 
 void Room::veng8Tick1() {
 	playVoc("VEN8LOOP");
@@ -134,7 +150,7 @@ void Room::veng8WalkToDoor() {
 
 void Room::veng8ReachedDoor() {
 	_awayMission->disableInput = true;
-	playSoundEffectIndex(SND_DOOR1);
+	playSoundEffectIndex(kSfxDoor);
 	loadActorAnimC(OBJECT_DOOR, "s7r8d1", 0x12c, 0xac, &Room::veng8DoorOpened);
 }
 
@@ -159,31 +175,31 @@ void Room::veng8SparkAnim2Done() {
 }
 
 void Room::veng8LookAtPowerPack() {
-	showDescription(4, true);
+	showDescription(TX_VEN8N004);
 }
 
 void Room::veng8LookAtDoor() {
-	showDescription(9, true);
+	showDescription(TX_VEN8N009);
 }
 
 void Room::veng8LookAtPowerCircuits() {
-	showDescription(6, true);
+	showDescription(TX_VEN8N006);
 }
 
 void Room::veng8LookAtControls() {
-	showDescription(7, true);
+	showDescription(TX_VEN8N007);
 }
 
 void Room::veng8LookAtDeadGuy() {
-	showDescription(3, true); // Unused, since the dead guy object isn't drawn
+	showDescription(TX_VEN8N003); // Unused, since the dead guy object isn't drawn
 }
 
 void Room::veng8LookAtSlider() {
-	showDescription(8, true);
+	showDescription(TX_VEN8N008);
 }
 
 void Room::veng8LookAtKirk() {
-	showDescription(1, true);
+	showDescription(TX_VEN8N001);
 }
 
 void Room::veng8LookAtSpock() {
@@ -198,58 +214,58 @@ void Room::veng8LookAtMccoy() {
 }
 
 void Room::veng8LookAtRedshirt() {
-	showDescription(0, true);
+	showDescription(TX_VEN8N000);
 }
 
 void Room::veng8LookAtTransporter() {
-	showDescription(10, true);
+	showDescription(TX_VEN8N010);
 }
 
 void Room::veng8LookAnywhere() {
-	showDescription(5, true);
+	showDescription(TX_VEN8N005);
 }
 
 void Room::veng8TalkToKirk() {
 	if (_awayMission->veng.torpedoLoaded)
-		showText(TX_SPEAKER_KIRK, 2, true);
+		showText(TX_SPEAKER_KIRK, TX_VEN8_002);
 	else if (_awayMission->veng.countdownStarted)
-		showText(TX_SPEAKER_KIRK, 5, true);
+		showText(TX_SPEAKER_KIRK, TX_VEN8_005);
 	else
-		showText(TX_SPEAKER_KIRK, 6, true);
+		showText(TX_SPEAKER_KIRK, TX_VEN8_006);
 }
 
 void Room::veng8TalkToSpock() {
 	if (_awayMission->veng.torpedoLoaded)
-		showText(TX_SPEAKER_SPOCK, 32, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_032);
 	else if (_awayMission->veng.countdownStarted)
-		showText(TX_SPEAKER_SPOCK, 29, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_029);
 	else
-		showText(TX_SPEAKER_SPOCK, 28, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_028);
 }
 
 void Room::veng8TalkToMccoy() {
 	if (_awayMission->veng.torpedoLoaded) {
-		showText(TX_SPEAKER_MCCOY, 20, true);
-		showText(TX_SPEAKER_KIRK,   1, true);
+		showText(TX_SPEAKER_MCCOY, TX_VEN8_020);
+		showText(TX_SPEAKER_KIRK,  TX_VEN8_001);
 	} else if (_awayMission->veng.countdownStarted)
-		showText(TX_SPEAKER_MCCOY, 21, true);
+		showText(TX_SPEAKER_MCCOY, TX_VEN8_021);
 	else
-		showText(TX_SPEAKER_MCCOY, 18, true);
+		showText(TX_SPEAKER_MCCOY, TX_VEN8_018);
 }
 
 void Room::veng8TalkToRedshirt() {
 	if (_awayMission->veng.torpedoLoaded) {
-		showText(TX_SPEAKER_KIJE,  34, true);
-		showText(TX_SPEAKER_MCCOY, 23, true);
-		showText(TX_SPEAKER_KIJE,  36, true);
+		showText(TX_SPEAKER_KIJE,  TX_VEN8_034);
+		showText(TX_SPEAKER_MCCOY, TX_VEN8_023);
+		showText(TX_SPEAKER_KIJE,  TX_VEN8_036);
 	} else if (_awayMission->veng.countdownStarted)
-		showText(TX_SPEAKER_KIJE, 41, true);
+		showText(TX_SPEAKER_KIJE, TX_VEN8_041);
 	else
-		showText(TX_SPEAKER_KIJE, 40, true);
+		showText(TX_SPEAKER_KIJE, TX_VEN8_040);
 }
 
 void Room::veng8UseKirkOnControls() {
-	showText(TX_SPEAKER_KIRK,  3, true);
+	showText(TX_SPEAKER_KIRK, TX_VEN8_003);
 	veng8UseSpockOnControls();
 }
 
@@ -266,13 +282,13 @@ void Room::veng8SpockUsedControls() {
 	_awayMission->disableInput = false;
 
 	if (!_awayMission->veng.powerPackPluggedIntoTransporter && !_awayMission->veng.impulseEnginesOn)
-		showText(TX_SPEAKER_SPOCK, 26, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_026);
 	else if (!_awayMission->veng.powerPackPluggedIntoTransporter && _awayMission->veng.poweredSystem != 3)
-		showText(TX_SPEAKER_SPOCK, 14, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_014);
 	else if (!_awayMission->veng.examinedTorpedoControl)
-		showText(TX_SPEAKER_SPOCK, 30, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_030);
 	else {
-		showText(TX_SPEAKER_SPOCK, 31, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_031);
 		_awayMission->veng.setTransporterCoordinates = true;
 	}
 }
@@ -280,9 +296,9 @@ void Room::veng8SpockUsedControls() {
 void Room::veng8UsePowerPackOnPowerCircuit() {
 	if (!_awayMission->veng.powerPackPluggedIntoTransporter) {
 		_awayMission->disableInput = true;
-		showText(TX_SPEAKER_KIRK,  11, true);
-		showText(TX_SPEAKER_SPOCK, 33, true);
-		showText(TX_SPEAKER_KIRK,   9, true);
+		showText(TX_SPEAKER_KIRK,  TX_VEN8_011);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_033);
+		showText(TX_SPEAKER_KIRK,  TX_VEN8_009);
 		walkCrewmanC(OBJECT_SPOCK, 0xfa, 0xa4, &Room::veng8SpockReachedPowerCircuit);
 	}
 }
@@ -310,7 +326,7 @@ void Room::veng8TransporterPoweredUp() {
 }
 
 void Room::veng8UseKirkOnSlider() {
-	showText(TX_SPEAKER_KIRK,  4, true);
+	showText(TX_SPEAKER_KIRK, TX_VEN8_004);
 	veng8UseSpockOnSlider();
 }
 
@@ -324,51 +340,51 @@ void Room::veng8SpockReachedSlider() {
 	_awayMission->disableInput = false;
 
 	if (!_awayMission->veng.powerPackPluggedIntoTransporter && !_awayMission->veng.impulseEnginesOn)
-		showText(TX_SPEAKER_SPOCK, 27, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_027);
 	else if (!_awayMission->veng.powerPackPluggedIntoTransporter && _awayMission->veng.poweredSystem != 3)
-		showText(TX_SPEAKER_SPOCK, 15, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_015);
 	else if (!_awayMission->veng.setTransporterCoordinates) {
 		walkCrewman(OBJECT_SPOCK, 0x98, 0xb6);
-		showText(TX_SPEAKER_SPOCK, 13, true);
+		showText(TX_SPEAKER_SPOCK, TX_VEN8_013);
 	} else if (_awayMission->veng.torpedoLoaded)
-		showText(TX_SPEAKER_KIJE, 42, true);
+		showText(TX_SPEAKER_KIJE, TX_VEN8_042);
 	else {
 		_awayMission->disableInput = true;
-		showText(TX_SPEAKER_KIRK, 10, true);
-		showText(TX_SPEAKER_KIJE, 35, true);
+		showText(TX_SPEAKER_KIRK, TX_VEN8_010);
+		showText(TX_SPEAKER_KIJE, TX_VEN8_035);
 		walkCrewmanC(OBJECT_REDSHIRT, 0xc8, 0x7f, &Room::veng8RedshirtReachedTransporter);
 		_awayMission->crewDirectionsAfterWalk[OBJECT_REDSHIRT] = DIR_S;
 	}
 }
 
 void Room::veng8RedshirtReachedTransporter() {
-	showText(TX_SPEAKER_KIRK,  9, true);
+	showText(TX_SPEAKER_KIRK, TX_VEN8_009);
 	loadActorAnimC(OBJECT_SPOCK, "susehn", -1, -1, &Room::veng8SpockPulledSliderToBeamOut);
-	playSoundEffectIndex(SND_TRANSENE);
+	playSoundEffectIndex(kSfxTransporterEnergize);
 }
 
 void Room::veng8SpockPulledSliderToBeamOut() {
 	loadActorAnimC(OBJECT_REDSHIRT, "rteled", -1, -1, &Room::veng8RedshirtBeamedOut);
-	playSoundEffectIndex(SND_TRANSDEM);
+	playSoundEffectIndex(kSfxTransporterDematerialize);
 	_awayMission->redshirtDead = true;
 }
 
 void Room::veng8RedshirtBeamedOut() {
 	loadActorStandAnim(OBJECT_REDSHIRT);
-	showText(TX_SPEAKER_KIJE, 37, true);
-	showText(TX_SPEAKER_KIRK, 12, true);
-	showText(TX_SPEAKER_KIJE, 39, true);
-	showText(TX_SPEAKER_KIRK,  8, true);
-	showText(TX_SPEAKER_KIJE, 38, true);
-	showText(TX_SPEAKER_KIRK,  7, true);
+	showText(TX_SPEAKER_KIJE, TX_VEN8_037);
+	showText(TX_SPEAKER_KIRK, TX_VEN8_012);
+	showText(TX_SPEAKER_KIJE, TX_VEN8_039);
+	showText(TX_SPEAKER_KIRK, TX_VEN8_008);
+	showText(TX_SPEAKER_KIJE, TX_VEN8_038);
+	showText(TX_SPEAKER_KIRK, TX_VEN8_007);
 	loadActorAnimC(OBJECT_SPOCK, "susehn", -1, -1, &Room::veng8SpockPulledSliderToBeamIn);
-	playSoundEffectIndex(SND_TRANSENE);
+	playSoundEffectIndex(kSfxTransporterEnergize);
 }
 
 void Room::veng8SpockPulledSliderToBeamIn() {
 	_awayMission->redshirtDead = false;
 	loadActorAnimC(OBJECT_REDSHIRT, "rtele", 0xc8, 0x81, &Room::veng8RedshirtBeamedIn);
-	playSoundEffectIndex(SND_TRANSMAT);
+	playSoundEffectIndex(kSfxTransporterMaterialize);
 }
 
 void Room::veng8RedshirtBeamedIn() {
@@ -378,7 +394,8 @@ void Room::veng8RedshirtBeamedIn() {
 }
 
 void Room::veng8UseSTricorderOnConsole() {
-	spockScan(DIR_S, 25, true);
+	spockScan(DIR_S, TX_SPEAKER_SPOCK, TX_VEN8_025);
 }
 
 }
+#endif

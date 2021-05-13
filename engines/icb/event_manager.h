@@ -29,9 +29,7 @@
 #define ICB_EVENTMANAGER_H_INCLUDED
 
 // Include files with relative paths
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_string.h"
-#include "engines/icb/common/px_assert.h"
 #include "engines/icb/p4.h"
 #include "engines/icb/event_timer.h"
 #include "engines/icb/event_list.h"

@@ -57,7 +57,7 @@ void _prim_route_builder::Add_barrier(_route_barrier *new_barrier) {
 	if (!ExtrapolateLine(&barrier_list[total_points - 2], &barrier_list[total_points - 1], &barrier_list[total_points - 2], &barrier_list[total_points - 1], extrap_size))
 		Fatal_error("extrapolate line failed on line %3.2f %3.2f  %3.2f %3.2f", new_barrier->x1(), new_barrier->z1(), new_barrier->x2(), new_barrier->z2());
 
-	_ASSERT(total_points < MAX_barriers);
+	assert(total_points < MAX_barriers);
 }
 
 void _prim_route_builder::Give_barrier_list(_route_description *route) {
@@ -339,7 +339,7 @@ void _prim_route_builder::Find_connects(uint32 point, PXreal cur_len, uint32 lev
 				pen += 20;
 				Tdebug("trout.txt", "hit the target");
 				if ((branch_len + cur_len) < final_len) { // point we got to is final point, so
-					Tdebug("trout.txt", "%d shorter than %d", (int)(branch_len + cur_len), (int)final_len);
+					Tdebug("trout.txt", "%d shorter than %d", (int32)(branch_len + cur_len), (int32)final_len);
 					final_len = branch_len + cur_len;
 					final_points = level + 1;
 
@@ -348,7 +348,7 @@ void _prim_route_builder::Find_connects(uint32 point, PXreal cur_len, uint32 lev
 						final_route[k].z = barrier_list[temp_route[k]].z;
 					}
 				} else
-					Tdebug("trout.txt", "%d is int32er then %d", (int)(branch_len + cur_len), (int)final_len);
+					Tdebug("trout.txt", "%d is int32er then %d", (int32)(branch_len + cur_len), (int32)final_len);
 			}
 		}
 	}
@@ -361,7 +361,7 @@ uint32 _prim_route_builder::ExtrapolateLine(_point *pSrc0, _point *pSrc1, _point
 	// pDst0, pDst1 ->   Destination points!
 
 	_fpoint p0, p1;
-	int swapped = 0;
+	int32 swapped = 0;
 
 	//  Make sure points are going from left to right!
 	if (pSrc0->x < pSrc1->x) {

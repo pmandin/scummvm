@@ -120,7 +120,6 @@ public:
 	uint16 _data;
 
 	Thing() : _data(0) {}
-	Thing(const Thing &other) { set(other._data); }
 	explicit Thing(uint16 d) { set(d); }
 
 	void set(uint16 d) {

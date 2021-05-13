@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/usecode/uc_process.h"
 #include "ultima/ultima8/usecode/uc_machine.h"
 #include "ultima/ultima8/usecode/usecode.h"
@@ -29,7 +28,6 @@
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(UCProcess)
 
 UCProcess::UCProcess() : Process(), _classId(0xFFFF), _ip(0xFFFF),
@@ -38,7 +36,7 @@ UCProcess::UCProcess() : Process(), _classId(0xFFFF), _ip(0xFFFF),
 }
 
 UCProcess::UCProcess(uint16 classid, uint16 offset, uint32 this_ptr,
-                     int thissize, const uint8 *args, int argsize)
+					 int thissize, const uint8 *args, int argsize)
 	: Process(), _classId(0xFFFF), _ip(0xFFFF), _bp(0x0000), _temp32(0) {
 	_usecode = GameData::get_instance()->getMainUsecode();
 
@@ -49,7 +47,7 @@ UCProcess::~UCProcess() {
 }
 
 void UCProcess::load(uint16 classid, uint16 offset, uint32 this_ptr,
-                     int thissize, const uint8 *args, int argsize) {
+					 int thissize, const uint8 *args, int argsize) {
 	if (_usecode->get_class_size(classid) == 0)
 		perr << "Class is empty..." << Std::endl;
 

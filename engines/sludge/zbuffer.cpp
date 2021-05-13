@@ -20,17 +20,12 @@
  *
  */
 
-#include "common/debug.h"
-#include "graphics/pixelformat.h"
-#include "graphics/transparent_surface.h"
+#include "image/png.h"
 
-#include "sludge/allfiles.h"
 #include "sludge/fileset.h"
 #include "sludge/graphics.h"
-#include "sludge/moreio.h"
 #include "sludge/newfatal.h"
 #include "sludge/sludge.h"
-#include "sludge/sprites.h"
 #include "sludge/zbuffer.h"
 
 namespace Sludge {
@@ -84,9 +79,14 @@ bool GraphicsManager::setZBuffer(int num) {
 	setResourceForFatal(num);
 
 	_zBuffer->originalNum = num;
-	if (!g_sludge->_resMan->openFileFromNum(num))
+	uint fsize = g_sludge->_resMan->openFileFromNum(num);
+	if (!fsize)
 		return false;
-	Common::ReadStream *readStream = g_sludge->_resMan->getData();
+
+	Common::SeekableReadStream *readStream = g_sludge->_resMan->getData();
+
+	g_sludge->_resMan->dumpFile(num, "zbuffer%04d.zbu");
+
 	if (readStream->readByte() != 'S')
 		return fatal("Not a Z-buffer file");
 	if (readStream->readByte() != 'z')
@@ -135,9 +135,10 @@ bool GraphicsManager::setZBuffer(int num) {
 		_zBuffer->sprites[i].create(picWidth, picHeight, *g_sludge->getScreenPixelFormat());
 	}
 
+	int n = 0;
+
 	for (uint y = 0; y < _sceneHeight; y++) {
 		for (uint x = 0; x < _sceneWidth; x++) {
-			int n = 0;
 			if (stillToGo == 0) {
 				n = readStream->readByte();
 				stillToGo = n >> 4;
@@ -147,9 +148,10 @@ bool GraphicsManager::setZBuffer(int num) {
 					stillToGo++;
 				n &= 15;
 			}
+
 			for (int i = 0; i < _zBuffer->numPanels; ++i) {
 				byte *target = (byte *)_zBuffer->sprites[i].getBasePtr(x, y);
-				if (n && (sorted[i] == n || i == 0)) {
+				if (sorted[i] == n || i == 0) {
 					byte *source = (byte *)_backdropSurface.getBasePtr(x, y);
 					target[0] = source[0];
 					target[1] = source[1];
@@ -165,8 +167,25 @@ bool GraphicsManager::setZBuffer(int num) {
 			stillToGo--;
 		}
 	}
+
 	g_sludge->_resMan->finishAccess();
 	setResourceForFatal(-1);
+
+	if (!g_sludge->_dumpScripts)
+		return true;
+
+	// Debug code to output light map image
+
+	for (int i = 0; i < _zBuffer->numPanels; ++i) {
+		Common::DumpFile *outFile = new Common::DumpFile();
+
+		outFile->open(Common::String::format("dumps/zbuffer%04d-%d.png", num, i));
+		Image::writePNG(*outFile, _zBuffer->sprites[i]);
+		outFile->finalize();
+		outFile->close();
+		delete outFile;
+	}
+
 	return true;
 }
 

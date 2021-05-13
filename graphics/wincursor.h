@@ -35,6 +35,15 @@ class SeekableReadStream;
 namespace Graphics {
 
 /**
+ * @defgroup graphics_wincursor Windows cursor
+ * @ingroup graphics
+ *
+ * @brief API related to Windows cursors.
+ *
+ * @{
+ */
+
+/**
  * A structure holding an array of cursors from a single Windows Executable cursor group.
  *
  * Windows lumps different versions of the same cursors/icons together and decides which one
@@ -64,6 +73,15 @@ struct WinCursorGroup {
  * @note The calling code is responsible for deleting the returned pointer.
  */
 Cursor *makeDefaultWinCursor();
+
+/**
+ * Create a Cursor for the Windows busy cursor.
+ *
+ * @note The calling code is responsible for deleting the returned pointer.
+ */
+Cursor *makeBusyWinCursor();
+
+/** @} */
 
 } // End of namespace Graphics
 

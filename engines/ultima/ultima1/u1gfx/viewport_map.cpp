@@ -33,7 +33,7 @@ BEGIN_MESSAGE_MAP(ViewportMap, Shared::ViewportMap)
 END_MESSAGE_MAP()
 
 ViewportMap::ViewportMap(TreeItem *parent) : Shared::ViewportMap(parent), _mapType(Maps::MAP_OVERWORLD) {
-	_sprites = new Sprites(this);	
+	_sprites = new Sprites(this);
 }
 
 ViewportMap::~ViewportMap() {
@@ -53,7 +53,7 @@ void ViewportMap::draw() {
 	Shared::ViewportMap::draw();
 }
 
-bool ViewportMap::FrameMsg(CFrameMsg &msg) {
+bool ViewportMap::FrameMsg(CFrameMsg *msg) {
 	// To allow map to animate, on each frame mark the map as dirty again
 	setDirty(true);
 	return true;

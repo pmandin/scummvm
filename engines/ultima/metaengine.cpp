@@ -41,34 +41,32 @@ const char *UltimaMetaEngine::getName() const {
 	return "ultima";
 }
 
-bool UltimaMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+Common::Error UltimaMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
 	const Ultima::UltimaGameDescription *gd = (const Ultima::UltimaGameDescription *)desc;
-	if (gd) {
-		switch (gd->gameId) {
+	switch (gd->gameId) {
 #ifndef RELEASE_BUILD
-		case Ultima::GAME_ULTIMA1:
-			*engine = new Ultima::Shared::UltimaEarlyEngine(syst, gd);
-			break;
+	case Ultima::GAME_ULTIMA1:
+		*engine = new Ultima::Shared::UltimaEarlyEngine(syst, gd);
+		break;
 #endif
-		case Ultima::GAME_ULTIMA4:
-			*engine = new Ultima::Ultima4::Ultima4Engine(syst, gd);
-			break;
-		case Ultima::GAME_ULTIMA6:
-		case Ultima::GAME_MARTIAN_DREAMS:
-		case Ultima::GAME_SAVAGE_EMPIRE:
-			*engine = new Ultima::Nuvie::NuvieEngine(syst, gd);
-			break;
-		case Ultima::GAME_ULTIMA8:
-		case Ultima::GAME_CRUSADER_REG:
-		case Ultima::GAME_CRUSADER_REM:
-			*engine = new Ultima::Ultima8::Ultima8Engine(syst, gd);
-			break;
+	case Ultima::GAME_ULTIMA4:
+		*engine = new Ultima::Ultima4::Ultima4Engine(syst, gd);
+		break;
+	case Ultima::GAME_ULTIMA6:
+	case Ultima::GAME_MARTIAN_DREAMS:
+	case Ultima::GAME_SAVAGE_EMPIRE:
+		*engine = new Ultima::Nuvie::NuvieEngine(syst, gd);
+		break;
+	case Ultima::GAME_ULTIMA8:
+	case Ultima::GAME_CRUSADER_REG:
+	case Ultima::GAME_CRUSADER_REM:
+		*engine = new Ultima::Ultima8::Ultima8Engine(syst, gd);
+		break;
 
-		default:
-			error("Unsupported ultima engine game specified");
-		}
+	default:
+		return Common::kUnsupportedGameidError;
 	}
-	return gd != 0;
+	return Common::kNoError;
 }
 
 int UltimaMetaEngine::getMaximumSaveSlot() const {
@@ -95,7 +93,17 @@ Common::KeymapArray UltimaMetaEngine::initKeymaps(const char *target) const {
 	return Common::KeymapArray();
 }
 
-Common::String UltimaMetaEngine::getGameId(const char *target) {
+const ExtraGuiOptions UltimaMetaEngine::getExtraGuiOptions(const Common::String& target) const
+{
+	const Common::String gameId = getGameId(target);
+	if (gameId == "ultima8" || gameId == "remorse" || gameId == "regret")
+		return Ultima::Ultima8::MetaEngine::getExtraGuiOptions(gameId);
+
+	ExtraGuiOptions options;
+	return options;
+}
+
+Common::String UltimaMetaEngine::getGameId(const Common::String& target) {
 	// Store a copy of the active domain
 	Common::String currDomain = ConfMan.getActiveDomainName();
 

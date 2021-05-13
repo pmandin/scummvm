@@ -22,13 +22,11 @@
 
 #include "common/debug.h"
 
-#include "sludge/allfiles.h"
 #include "sludge/errors.h"
 #include "sludge/fileset.h"
 #include "sludge/newfatal.h"
 #include "sludge/sludge.h"
 #include "sludge/sound.h"
-#include "sludge/version.h"
 
 namespace Common {
 DECLARE_SINGLETON(Sludge::FatalMsgManager);

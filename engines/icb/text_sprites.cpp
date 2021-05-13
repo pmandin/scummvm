@@ -46,9 +46,9 @@ text_sprite::text_sprite() {
 text_sprite::~text_sprite() { Zdebug("**destructing text sprite**"); }
 
 _TSrtn text_sprite::GetRenderCoords(const int32 pinX,           // screen x-coord where we want to position the pin
-                                    const int32 pinY,           // y-coord -"-
-                                    const _pin_position pinPos, // position of pin on text sprite
-                                    const int32 margin)         // margin to keep sprite within edge of screen, or -1 if allowed anywhere
+									const int32 pinY,           // y-coord -"-
+									const _pin_position pinPos, // position of pin on text sprite
+									const int32 margin)         // margin to keep sprite within edge of screen, or -1 if allowed anywhere
 
 {
 	// first, calculate the render coords based on the pin position & desired pin coords:
@@ -58,6 +58,7 @@ _TSrtn text_sprite::GetRenderCoords(const int32 pinX,           // screen x-coor
 	case PIN_AT_CENTRE:
 		renderX = pinX - spriteWidth / 2;
 		renderY = pinY - spriteHeight / 2;
+		break;
 
 	case PIN_AT_CENTRE_OF_TOP:
 		renderX = pinX - spriteWidth / 2;
@@ -176,7 +177,7 @@ _TSrtn text_sprite::MakeTextSprite(bool8 analysisAlreadyDone, int32 stopAtLine, 
 			// Right we appear to have a present-and-correct line number.  To display it we don't have
 			// to do anything special.  If the displaying of line numbers is turned off then we must skip
 			// past the line number.
-			if (!px.speechLineNumbers) {
+			if (!g_px->speechLineNumbers) {
 				// Skip to first non-space after the line number.
 				pcTextLine = (const char *)(&params.textLine[nCloseBracePos + 1]);
 				while ((*pcTextLine != '\0') && (*pcTextLine == ' '))
@@ -187,7 +188,7 @@ _TSrtn text_sprite::MakeTextSprite(bool8 analysisAlreadyDone, int32 stopAtLine, 
 					Fatal_error("Found line number [%s] with no text", params.textLine);
 
 				// Write the modified pointer back into the text block.
-				params.textLine = (unsigned char *)const_cast<char *>(pcTextLine);
+				params.textLine = (uint8 *)const_cast<char *>(pcTextLine);
 			}
 		}
 
@@ -323,9 +324,9 @@ void text_sprite::CopyChar(_pxSprite *charPtr, uint8 *spritePtr, uint8 *pal) { /
 
 		for (cols = 0; cols < charPtr->width; cols++) { // *charPtr is width of char
 			if (*source) {
-				*dest++ = (unsigned char)(pal[((*source) * 4)]); // b
-				*dest++ = (unsigned char)(pal[((*source) * 4) + 1]); // g
-				*dest++ = (unsigned char)(pal[((*source) * 4) + 2]); // r
+				*dest++ = (uint8)(pal[((*source) * 4)]); // b
+				*dest++ = (uint8)(pal[((*source) * 4) + 1]); // g
+				*dest++ = (uint8)(pal[((*source) * 4) + 2]); // r
 			} else {
 				dest += 3;
 			}
@@ -337,6 +338,7 @@ void text_sprite::CopyChar(_pxSprite *charPtr, uint8 *spritePtr, uint8 *pal) { /
 }
 
 _pxBitmap *text_sprite::LoadFont(const char *fontRes, uint32 fontRes_hash) {
+	pxString font_cluster = FONT_CLUSTER_PATH;
 	_pxBitmap *font = (_pxBitmap *)rs_font->Res_open(const_cast<char *>(fontRes), fontRes_hash, font_cluster, font_cluster_hash); // open font file
 
 	return (font);

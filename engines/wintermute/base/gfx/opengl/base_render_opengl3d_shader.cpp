@@ -58,7 +58,7 @@ struct SpriteVertexShader {
 
 BaseRenderOpenGL3DShader::BaseRenderOpenGL3DShader(BaseGame *inGame)
 	: BaseRenderer3D(inGame), _spriteBatchMode(false), _flatShadowMaskShader(nullptr) {
-    (void)_spriteBatchMode; // silence warning
+	(void)_spriteBatchMode; // silence warning
 }
 
 BaseRenderOpenGL3DShader::~BaseRenderOpenGL3DShader() {
@@ -642,6 +642,7 @@ bool BaseRenderOpenGL3DShader::setup3D(Camera3D *camera, bool force) {
 			color[1] = RGBCOLGetG(fogParameters._color) / 255.0f;
 			color[2] = RGBCOLGetB(fogParameters._color) / 255.0f;
 			color[3] = RGBCOLGetA(fogParameters._color) / 255.0f;
+			debug(5, "BaseRenderOpenGL3DShader::setup3D fog not yet implemented! [%f %f %f %f]", color[0], color[1], color[2], color[3]);
 		} else {
 			// TODO: Disable fog in shader
 		}
@@ -686,9 +687,9 @@ BaseSurface *Wintermute::BaseRenderOpenGL3DShader::createSurface() {
 }
 
 bool BaseRenderOpenGL3DShader::drawSpriteEx(BaseSurfaceOpenGL3D &tex, const Wintermute::Rect32 &rect,
-                                            const Wintermute::Vector2 &pos, const Wintermute::Vector2 &rot, const Wintermute::Vector2 &scale,
-                                            float angle, uint32 color, bool alphaDisable, Graphics::TSpriteBlendMode blendMode,
-                                            bool mirrorX, bool mirrorY) {
+											const Wintermute::Vector2 &pos, const Wintermute::Vector2 &rot, const Wintermute::Vector2 &scale,
+											float angle, uint32 color, bool alphaDisable, Graphics::TSpriteBlendMode blendMode,
+											bool mirrorX, bool mirrorY) {
 	// original wme has a batch mode for sprites, we ignore this for the moment
 
 	if (_forceAlphaColor != 0) {
@@ -790,7 +791,7 @@ bool BaseRenderOpenGL3DShader::drawSpriteEx(BaseSurfaceOpenGL3D &tex, const Wint
 }
 
 void BaseRenderOpenGL3DShader::renderSceneGeometry(const BaseArray<AdWalkplane *> &planes, const BaseArray<AdBlock *> &blocks,
-                                                   const BaseArray<AdGeneric *> &generics, const BaseArray<Light3D *> &lights, Camera3D *camera) {
+												   const BaseArray<AdGeneric *> &generics, const BaseArray<Light3D *> &lights, Camera3D *camera) {
 	// don't render scene geometry, as OpenGL ES 2 has no wireframe rendering and we don't have a shader alternative yet
 }
 

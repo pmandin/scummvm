@@ -19,24 +19,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  */
-#include "common/scummsys.h"
 #include "common/config-manager.h"
-#include "common/debug.h"
 #include "common/debug-channels.h"
 #include "common/error.h"
+#include "common/random.h"
 
 #include "sludge/cursors.h"
 #include "sludge/event.h"
+#include "sludge/fileset.h"
 #include "sludge/fonttext.h"
 #include "sludge/floor.h"
 #include "sludge/graphics.h"
+#include "sludge/language.h"
 #include "sludge/main_loop.h"
 #include "sludge/newfatal.h"
+#include "sludge/objtypes.h"
 #include "sludge/people.h"
 #include "sludge/region.h"
 #include "sludge/sludge.h"
 #include "sludge/sound.h"
 #include "sludge/speech.h"
+#include "sludge/statusba.h"
+#include "sludge/timing.h"
 
 namespace Sludge {
 
@@ -52,16 +56,18 @@ SludgeEngine::SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc)
 	_rnd = new Common::RandomSource("sludge");
 
 	// Add debug channels
-	DebugMan.addDebugChannel(kSludgeDebugFatal, "Script", "Script debug level");
-	DebugMan.addDebugChannel(kSludgeDebugDataLoad, "Data Load", "Data loading debug level");
-	DebugMan.addDebugChannel(kSludgeDebugStackMachine, "Stack Machine", "Stack Machine debug level");
-	DebugMan.addDebugChannel(kSludgeDebugBuiltin, "Built-in", "Built-in debug level");
-	DebugMan.addDebugChannel(kSludgeDebugGraphics, "Graphics", "Graphics debug level");
-	DebugMan.addDebugChannel(kSludgeDebugZBuffer, "ZBuffer", "ZBuffer debug level");
-	DebugMan.addDebugChannel(kSludgeDebugSound, "Sound", "Sound debug level");
+	DebugMan.addDebugChannel(kSludgeDebugFatal, "script", "Script debug level");
+	DebugMan.addDebugChannel(kSludgeDebugDataLoad, "loading", "Data loading debug level");
+	DebugMan.addDebugChannel(kSludgeDebugStackMachine, "stack", "Stack Machine debug level");
+	DebugMan.addDebugChannel(kSludgeDebugBuiltin, "builtin", "Built-in debug level");
+	DebugMan.addDebugChannel(kSludgeDebugGraphics, "graphics", "Graphics debug level");
+	DebugMan.addDebugChannel(kSludgeDebugZBuffer, "zBuffer", "ZBuffer debug level");
+	DebugMan.addDebugChannel(kSludgeDebugSound, "sound", "Sound debug level");
 
-	DebugMan.enableDebugChannel("Data Load");
-	DebugMan.enableDebugChannel("Built-in");
+	//DebugMan.enableDebugChannel("loading");
+	//DebugMan.enableDebugChannel("builtin");
+
+	_dumpScripts = ConfMan.getBool("dump_scripts");
 
 	// init graphics
 	_origFormat = new Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0);
@@ -74,6 +80,7 @@ SludgeEngine::SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc)
 	gamePath = "";
 
 	// Init managers
+	_timer = new Timer();
 	_fatalMan = new FatalMsgManager();
 	_peopleMan = new PeopleManager(this);
 	_resMan = new ResourceManager();
@@ -87,6 +94,7 @@ SludgeEngine::SludgeEngine(OSystem *syst, const SludgeGameDescription *gameDesc)
 	_speechMan = new SpeechManager(this);
 	_regionMan = new RegionManager(this);
 	_floorMan = new FloorManager(this);
+	_statusBar = new StatusBarManager(this);
 }
 
 SludgeEngine::~SludgeEngine() {
@@ -131,14 +139,13 @@ SludgeEngine::~SludgeEngine() {
 	_floorMan = nullptr;
 	delete _fatalMan;
 	_fatalMan = nullptr;
+	delete _statusBar;
+	delete _timer;
 }
 
 Common::Error SludgeEngine::run() {
 	// set global variable
 	g_sludge = this;
-
-	// create console
-	setDebugger(new SludgeConsole(this));
 
 	// debug log
 	main_loop(getGameFile());
@@ -147,4 +154,3 @@ Common::Error SludgeEngine::run() {
 }
 
 } // End of namespace Sludge
-

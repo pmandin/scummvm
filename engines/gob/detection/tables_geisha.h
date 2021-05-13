@@ -55,7 +55,7 @@
 	kFeaturesEGA | kFeaturesAdLib,
 	"disk1.stk", "intro.tot", 0
 },
-{ // Supplied by misterhands in bug report #3539797
+{ // Supplied by misterhands in bug report #6079
 	{
 		"geisha",
 		"",
@@ -69,7 +69,7 @@
 	kFeaturesEGA | kFeaturesAdLib,
 	"disk1.stk", "intro.tot", 0
 },
-{ // Supplied by einstein95 in bug report #3544449
+{ // Supplied by einstein95 in bug report #6102
 	{
 		"geisha",
 		"",
@@ -83,7 +83,7 @@
 	kFeaturesEGA | kFeaturesAdLib,
 	"disk1.stk", "intro.tot", 0
 },
-{ // Supplied by einstein95 in bug report #3544449
+{ // Supplied by einstein95 in bug report #6102
 	{
 		"geisha",
 		"",
@@ -97,7 +97,7 @@
 	kFeaturesEGA | kFeaturesAdLib,
 	"disk1.stk", "intro.tot", 0
 },
-{ // Supplied by alestedx in bug report #3610207
+{ // Supplied by alestedx in bug report #6269
 	{
 		"geisha",
 		"",
@@ -134,6 +134,51 @@
 		"",
 		AD_ENTRY1s("disk1.stk", "e5892f00917c62423e93f5fd9920cf47", 208120),
 		EN_ANY,
+		kPlatformAmiga,
+		ADGF_NO_FLAGS,
+		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+	},
+	kGameTypeGeisha,
+	kFeaturesEGA,
+	"disk1.stk", "intro.tot", 0
+},
+
+{ // Supplied by CaptainHIT in bug report #11594
+	{
+		"geisha",
+		"",
+		AD_ENTRY1s("disk1.stk", "260abe99a1fe0aa0ca76348e9f9f7746", 208133),
+		DE_DEU,
+		kPlatformAmiga,
+		ADGF_NO_FLAGS,
+		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+	},
+	kGameTypeGeisha,
+	kFeaturesEGA,
+	"disk1.stk", "intro.tot", 0
+},
+
+{ // Supplied by CaptainHIT in bug report #11593
+	{
+		"geisha",
+		"",
+		AD_ENTRY1s("disk1.stk", "948a74459c9433273bb4c7a2b4ccbf6c", 208135),
+		FR_FRA,
+		kPlatformAmiga,
+		ADGF_NO_FLAGS,
+		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+	},
+	kGameTypeGeisha,
+	kFeaturesEGA,
+	"disk1.stk", "intro.tot", 0
+},
+
+{ // Supplied by CaptainHIT in bug report #11595
+	{
+		"geisha",
+		"",
+		AD_ENTRY1s("disk1.stk", "84e2b52fbfa965c59dc6a6db52b39450", 208148),
+		ES_ESP,
 		kPlatformAmiga,
 		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)

@@ -20,20 +20,18 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
-#include "ultima/ultima8/misc/direction.h"
 #include "ultima/ultima8/world/gravity_process.h"
-#include "ultima/ultima8/world/actors/actor.h"
+
 #include "ultima/ultima8/audio/audio_process.h"
-#include "ultima/ultima8/world/current_map.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/world/world.h"
+#include "ultima/ultima8/ultima8.h"
+#include "ultima/ultima8/world/actors/actor.h"
+#include "ultima/ultima8/world/actors/actor_anim_process.h"
 #include "ultima/ultima8/world/get_object.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(GravityProcess)
 
 GravityProcess::GravityProcess()
@@ -82,6 +80,9 @@ void GravityProcess::run() {
 		return;
 	}
 
+	// There should never be more than one gravity on an object
+	assert(item->getGravityPID() == _pid);
+
 	Actor *actor = dynamic_cast<Actor *>(item);
 	if (actor && actor->getFallStart() < actor->getZ()) {
 		actor->setFallStart(actor->getZ());
@@ -98,40 +99,18 @@ void GravityProcess::run() {
 
 	int32 ix, iy, iz;
 	item->getLocation(ix, iy, iz);
-	int32 ixd, iyd, izd;
-	item->getFootpadWorld(ixd, iyd, izd);
+
+	if (iz < -1000) {
+		// Shouldn't happen as item should always hit the floor.
+		warning("Item %d fell too far, stopping GravityProcess", _itemNum);
+		terminate();
+		return;
+	}
 
 	int32 tx, ty, tz;
 	tx = ix + _xSpeed;
 	ty = iy + _ySpeed;
 	tz = iz + _zSpeed;
-
-	bool clipped = false;
-
-	// Clip to region. This doesn't work
-#if 0
-	if (tx < 0 && ix >= 0) {
-		int32 scale = (ix - tx) >> 0x8;
-		tx = 0;
-		ty = iy + ((_ySpeed * scale) >> 0x2000);
-		tz = iz + ((_zSpeed * scale) >> 0x2000);
-		clipped = true;
-	}
-	if (ty < 0 && iy >= 0) {
-		int32 scale = (iy - ty) >> 0x8;
-		tx = ix + ((_xSpeed * scale) >> 0x2000);
-		ty = 0;
-		tz = iz + ((_zSpeed * scale) >> 0x2000);
-		clipped = true;
-	}
-	if (tz < 0 && iz >= 0) {
-		int32 scale = (iz - tz) >> 0x8;
-		tx = ix + ((_xSpeed * scale) >> 0x2000);
-		ty = iy + ((_ySpeed * scale) >> 0x2000);
-		tz = 0;
-		clipped = true;
-	}
-#endif
 
 //#define BOUNCE_DIAG
 
@@ -139,8 +118,8 @@ void GravityProcess::run() {
 	uint8 dirs;
 	int32 dist = item->collideMove(tx, ty, tz, false, false, &hititemid, &dirs);
 
-	if (dist == 0x4000 && !clipped) {
-		// normal move
+	if (dist == 0x4000 && !hititemid) {
+		// didn't hit anything.
 		_zSpeed -= _gravity;
 		return;
 	}
@@ -175,7 +154,7 @@ void GravityProcess::run() {
 			     << "]: hit " << hititem->getObjId() << Std::endl;
 #endif
 
-			if (!hititem->getShapeInfo()->is_land() || _zSpeed < -2 * _gravity) {
+			if (GAME_IS_U8 && (!hititem->getShapeInfo()->is_land() || _zSpeed < -2 * _gravity)) {
 				// Bounce!
 				termFlag = false;
 #ifdef BOUNCE_DIAG
@@ -190,7 +169,7 @@ void GravityProcess::run() {
 				// in a 180 degree pie around the orginal vector in x/y
 				double heading_r = atan2((double)_ySpeed, (double)_xSpeed);
 				double deltah_r = static_cast<double>(getRandom())
-				                  * M_PI / RAND_MAX - M_PI / 2;
+				                  * M_PI / U8_RAND_MAX - M_PI / 2;
 #ifdef BOUNCE_DIAG
 				double headingold_r = heading_r;
 #endif
@@ -286,7 +265,14 @@ void GravityProcess::terminate() {
 	//signal item GravityProcess is gone
 	Item *item = getItem(_itemNum);
 	if (item) {
-		item->setGravityPID(0);
+		// This is strange, but not impossible (one terminates
+		// and another starts before terminate() gets called).
+		// Don't reset the item's gravityPID in this case.
+		if (item->getGravityPID() != 0 && item->getGravityPID() != _pid)
+			warning("GravityProcess::terminate %d on item %d which now has gravityPID %d",
+					_pid, _itemNum, item->getGravityPID());
+		else
+			item->setGravityPID(0);
 
 		// no longer bouncing
 		item->clearFlag(Item::FLG_BOUNCING);
@@ -302,39 +288,81 @@ void GravityProcess::fallStopped() {
 	Actor *actor = getActor(_itemNum);
 	if (actor && !actor->isDead()) {
 		int height = actor->getFallStart() - actor->getZ();
+		if (GAME_IS_U8)
+			actorFallStoppedU8(actor, height);
+		else
+			actorFallStoppedCru(actor, height);
+	}
+}
 
-		if (height >= 80) {
-			int damage = 0;
+void GravityProcess::actorFallStoppedU8(Actor *actor, int height) {
+	if (height >= 80) {
+		int damage = 0;
 
-			if (height < 104) {
-				// medium fall: take some damage
-				damage = (height - 72) / 4;
-			} else {
-				// high fall: die
-				damage = actor->getHP();
-			}
-
-			actor->receiveHit(0, actor->getDir(), damage,
-			                  WeaponInfo::DMG_FALLING | WeaponInfo::DMG_PIERCE);
-
-			// 'ooof'
-			AudioProcess *audioproc = AudioProcess::get_instance();
-			if (audioproc) audioproc->playSFX(51, 250, _itemNum, 0); // CONSTANT!
+		if (height < 104) {
+			// medium fall: take some damage
+			damage = (height - 72) / 4;
+		} else {
+			// high fall: die
+			damage = actor->getHP();
 		}
 
-		if (!actor->isDead() && actor->getLastAnim() != Animation::die) {
+		actor->receiveHit(0, actor->getDir(), damage,
+						  WeaponInfo::DMG_FALLING | WeaponInfo::DMG_PIERCE);
 
-			// play land animation, overriding other animations
-			Kernel::get_instance()->killProcesses(_itemNum, 0xF0, false); // CONSTANT!
-			ProcId lpid = actor->doAnim(Animation::land, dir_current);
+		// 'ooof'
+		AudioProcess *audioproc = AudioProcess::get_instance();
+		if (audioproc) audioproc->playSFX(51, 250, _itemNum, 0); // CONSTANT!
+	}
 
-			if (actor->isInCombat()) {
-				// need to get back to a combat stance to prevent weapon from
-				// being drawn again
-				ProcId spid = actor->doAnim(Animation::combatStand, dir_current);
-				Process *sp = Kernel::get_instance()->getProcess(spid);
-				sp->waitFor(lpid);
-			}
+	if (!actor->isDead() && actor->getLastAnim() != Animation::die) {
+		Kernel *kernel = Kernel::get_instance();
+
+		// play land animation, overriding other animations
+		kernel->killProcesses(_itemNum, ActorAnimProcess::ACTOR_ANIM_PROC_TYPE, false); // CONSTANT!
+		ProcId lpid = actor->doAnim(Animation::land, dir_current);
+
+		if (actor->isInCombat()) {
+			// need to get back to a combat stance to prevent weapon from
+			// being drawn again
+			ProcId spid = actor->doAnim(Animation::combatStand, dir_current);
+			Process *sp = kernel->getProcess(spid);
+			sp->waitFor(lpid);
+		}
+	}
+}
+
+void GravityProcess::actorFallStoppedCru(Actor *actor, int height) {
+	Animation::Sequence lastanim = actor->getLastAnim();
+	Kernel *kernel = Kernel::get_instance();
+
+	if (height / 8 > 2 &&
+		(lastanim != Animation::quickJumpCru &&
+		 lastanim != Animation::combatRollLeft &&
+		 lastanim != Animation::combatRollRight &&
+		 lastanim != Animation::kneelCombatRollLeft &&
+		 lastanim != Animation::kneelCombatRollRight &&
+		 lastanim != Animation::run &&
+		 lastanim != Animation::jumpForward &&
+		 lastanim != Animation::unknownAnim30 &&
+		 lastanim != Animation::brightKneelAndFireLargeWeapon)) {
+		// play land animation, overriding other animations
+		kernel->killProcesses(_itemNum, ActorAnimProcess::ACTOR_ANIM_PROC_TYPE, false); // CONSTANT!
+		ProcId lpid = actor->doAnim(Animation::jumpLanding, dir_current);
+
+		Animation::Sequence nextanim = actor->isInCombat() ? Animation::combatStand : Animation::stand;
+		ProcId spid = actor->doAnim(nextanim, dir_current);
+		Process *sp = kernel->getProcess(spid);
+		sp->waitFor(lpid);
+
+		// 'ooof' (Note: same sound no is used in No Remorse and No Regret)
+		AudioProcess *audioproc = AudioProcess::get_instance();
+		if (audioproc) audioproc->playSFX(0x8f, 250, _itemNum, 0); // CONSTANT!
+	} else {
+		Process *currentanim = kernel->findProcess(_itemNum, ActorAnimProcess::ACTOR_ANIM_PROC_TYPE);
+		if (currentanim) {
+			// TODO: Is this the right thing?
+			currentanim->wakeUp(0);
 		}
 	}
 }

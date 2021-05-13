@@ -24,6 +24,7 @@
 
 #include "graphics/surface.h"
 #include "graphics/pixelformat.h"
+#include "common/scummsys.h"
 #include "common/rect.h"
 
 namespace Dragons {
@@ -34,6 +35,14 @@ namespace Dragons {
 #define DRAGONS_SCREEN_HEIGHT 200
 
 #define DRAGONS_NUM_FLAT_QUADS 0xf
+
+#ifdef SCUMM_BIG_ENDIAN
+	#define WRITE_SCREEN WRITE_BE_UINT16
+	#define READ_SCREEN READ_BE_INT16
+#else
+	#define WRITE_SCREEN WRITE_LE_UINT16
+	#define READ_SCREEN READ_LE_INT16
+#endif
 
 enum AlphaBlendMode {
 	NONE,

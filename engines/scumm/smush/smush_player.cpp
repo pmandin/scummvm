@@ -275,7 +275,7 @@ void SmushPlayer::init(int32 speed) {
 	_dst = vs->getPixels(0, 0);
 
 	// HACK HACK HACK: This is an *evil* trick, beware!
-	// We do this to fix bug #1037052. A proper solution would change all the
+	// We do this to fix bug #1792. A proper solution would change all the
 	// drawing code to use the pitch value specified by the virtual screen.
 	// However, since a lot of the SMUSH code currently assumes the screen
 	// width and pitch to be equal, this will require lots of changes. So
@@ -535,7 +535,7 @@ void SmushPlayer::handleTextResource(uint32 subType, int32 subSize, Common::Seek
 	//
 	// Query ConfMan here. However it may be slower, but
 	// player may want to switch the subtitles on or off during the
-	// playback. This fixes bug #1550974
+	// playback. This fixes bug #2812
 	if ((!ConfMan.getBool("subtitles")) && ((flags & 8) == 8))
 		return;
 
@@ -579,7 +579,7 @@ void SmushPlayer::handleTextResource(uint32 subType, int32 subSize, Common::Seek
 		}
 	}
 
-	// HACK. This is to prevent bug #1310846. In updated Win95 dig
+	// HACK. This is to prevent bug #2220. In updated Win95 dig
 	// there is such line:
 	//
 	// ^f01^c001LEAD TESTER
@@ -641,7 +641,7 @@ void SmushPlayer::handleTextResource(uint32 subType, int32 subSize, Common::Seek
 	// bit 7 - skip ^ codes (COMI)     0x80        (should be irrelevant for Smush, we strip these commands anyway)
 	// bit 8 - no vertical fix (COMI)  0x100       (COMI handles this in the printing method, but I haven't seen a case where it is used)
 
-	if (flags & 4) {
+	if ((flags & 4) || _vm->_language == Common::HE_ISR) {
 		// COMI has to do it all a bit different, of course. SCUMM7 games immediately render the text from here and actually use the clipping data
 		// provided by the text resource. COMI does not render directly, but enqueues a blast string (which is then drawn through the usual main
 		// loop routines). During that process the rect data will get dumped and replaced with the following default values. It's hard to tell
@@ -1249,7 +1249,7 @@ void SmushPlayer::play(const char *filename, int32 speed, int32 offset, int32 st
 			skipped = 0;
 		if (_updateNeeded) {
 			if (!skipFrame) {
-				// Workaround for bug #1386333: "FT DEMO: assertion triggered
+				// Workaround for bug #2415: "FT DEMO: assertion triggered
 				// when playing movie". Some frames there are 384 x 224
 				int w = MIN(_width, _vm->_screenWidth);
 				int h = MIN(_height, _vm->_screenHeight);

@@ -265,7 +265,7 @@
 	kFeatures640x480,
 	0, 0, 0
 },
-{ // Supplied by DjDiabolik in bug report #1971294
+{ // Supplied by DjDiabolik in bug report #3737
 	{
 		"woodruff",
 		"",
@@ -279,7 +279,7 @@
 	kFeatures640x480,
 	0, 0, 0
 },
-{ // Supplied by DjDiabolik in bug report #1971294
+{ // Supplied by DjDiabolik in bug report #3737
 	{
 		"woodruff",
 		"",
@@ -293,7 +293,7 @@
 	kFeatures640x480,
 	0, 0, 0
 },
-{ // Supplied by DjDiabolik in bug report #1971294
+{ // Supplied by DjDiabolik in bug report #3737
 	{
 		"woodruff",
 		"",
@@ -307,7 +307,7 @@
 	kFeatures640x480,
 	0, 0, 0
 },
-{ // Supplied by DjDiabolik in bug report #1971294
+{ // Supplied by DjDiabolik in bug report #3737
 	{
 		"woodruff",
 		"",
@@ -321,7 +321,7 @@
 	kFeatures640x480,
 	0, 0, 0
 },
-{ // Supplied by DjDiabolik in bug report #1971294
+{ // Supplied by DjDiabolik in bug report #3737
 	{
 		"woodruff",
 		"",
@@ -335,7 +335,7 @@
 	kFeatures640x480,
 	0, 0, 0
 },
-{ // Supplied by goodoldgeorg in bug report #2098838
+{ // Supplied by goodoldgeorg in bug report #3950
 	{
 		"woodruff",
 		"",
@@ -370,11 +370,8 @@
 	{
 		"woodruff",
 		"Non-Interactive Demo",
-		{
-			{"demo.scn", 0, "16bb85fc5f8e519147b60475dbf33962", 89},
-			{"wooddem3.vmd", 0, "a1700596172c2d4e264760030c3a3d47", 8994250},
-			{0, 0, 0, 0}
-		},
+		AD_ENTRY2s("demo.scn",		"16bb85fc5f8e519147b60475dbf33962", 89,
+				   "wooddem3.vmd",	"a1700596172c2d4e264760030c3a3d47", 8994250),
 		EN_ANY,
 		kPlatformDOS,
 		ADGF_NO_FLAGS,

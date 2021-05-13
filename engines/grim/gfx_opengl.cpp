@@ -95,7 +95,7 @@ static char dimFragSrc[] =
 GfxOpenGL::GfxOpenGL() : _smushNumTex(0),
 		_smushTexIds(nullptr), _smushWidth(0), _smushHeight(0),
 		_useDepthShader(false), _fragmentProgram(0), _useDimShader(0),
-		_dimFragProgram(0), _maxLights(0), _storedDisplay(nullptr), 
+		_dimFragProgram(0), _maxLights(0), _storedDisplay(nullptr),
 		_emergFont(0), _alpha(1.f) {
 	// GL_LEQUAL as glDepthFunc ensures that subsequent drawing attempts for
 	// the same triangles are not ignored by the depth test.
@@ -463,7 +463,7 @@ void GfxOpenGL::getScreenBoundingBox(const EMIModel *model, int *x1, int *y1, in
 	double t = bottom;
 	bottom = _gameHeight - top;
 	top = _gameHeight - t;
-	
+
 	if (left < 0)
 		left = 0;
 	if (right >= _gameWidth)
@@ -472,7 +472,7 @@ void GfxOpenGL::getScreenBoundingBox(const EMIModel *model, int *x1, int *y1, in
 		top = 0;
 	if (bottom >= _gameHeight)
 		bottom = _gameHeight - 1;
-	
+
 	if (top >= _gameHeight || left >= _gameWidth || bottom < 0 || right < 0) {
 		*x1 = -1;
 		*y1 = -1;
@@ -480,7 +480,7 @@ void GfxOpenGL::getScreenBoundingBox(const EMIModel *model, int *x1, int *y1, in
 		*y2 = -1;
 		return;
 	}
-	
+
 	*x1 = (int)left;
 	*y1 = (int)top;
 	*x2 = (int)right;
@@ -930,7 +930,7 @@ void GfxOpenGL::drawOverlay(const Overlay *overlay) {
 	glEnable(GL_TEXTURE_2D);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+
 
 	glDisable(GL_LIGHTING);
 
@@ -941,7 +941,7 @@ void GfxOpenGL::drawOverlay(const Overlay *overlay) {
 
 
 	glDisable(GL_DEPTH_TEST);
-	
+
 
 	float height = overlay->getHeight() * _globalScaleH;
 	float width = overlay->getWidth() * _globalScaleW;
@@ -1742,7 +1742,17 @@ void GfxOpenGL::prepareMovieFrame(Graphics::Surface *frame) {
 		format = GL_BGRA;
 		dataType = GL_UNSIGNED_INT_8_8_8_8;
 #else
-		// AmigaOS' MiniGL does not understand GL_UNSIGNED_INT_8_8_8_8 yet.
+		// MiniGL on AmigaOS4 doesn't understand GL_UNSIGNED_INT_8_8_8_8 yet.
+		format = GL_BGRA;
+		dataType = GL_UNSIGNED_BYTE;
+#endif
+	// Used by Grim Fandango Remastered
+	} else if (frame->format == Graphics::PixelFormat(4, 8, 8, 8, 8, 8, 16, 24, 0)) {
+#if !defined(__amigaos4__)
+		format = GL_BGRA;
+		dataType = GL_UNSIGNED_INT_8_8_8_8;
+#else
+		// MiniGL on AmigaOS4 doesn't understand GL_UNSIGNED_INT_8_8_8_8 yet.
 		format = GL_BGRA;
 		dataType = GL_UNSIGNED_BYTE;
 #endif
@@ -1900,7 +1910,7 @@ void GfxOpenGL::drawEmergString(int x, int y, const char *text, const Color &fgC
 	glColor3f(1.0f, 1.0f, 1.0f);
 
 	glListBase(_emergFont);
-	
+
 	char *list = const_cast<char *>(text);
 	glCallLists(strlen(text), GL_UNSIGNED_BYTE, (void *)list);
 

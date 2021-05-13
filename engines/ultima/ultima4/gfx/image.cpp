@@ -25,7 +25,6 @@
 #include "ultima/ultima4/core/settings.h"
 #include "ultima/ultima4/core/utils.h"
 #include "ultima/shared/std/containers.h"
-#include "ultima/shared/std/misc.h"
 #include "common/system.h"
 #include "common/list.h"
 #include "common/textconsole.h"
@@ -282,8 +281,8 @@ void Image::makeBackgroundColorTransparent(int haloSize, int shadowOpacity) {
 }
 
 void Image::performTransparencyHack(uint colorValue, uint numFrames,
-                                    uint currentFrameIndex, uint haloWidth,
-                                    uint haloOpacityIncrementByPixelDistance) {
+									uint currentFrameIndex, uint haloWidth,
+									uint haloOpacityIncrementByPixelDistance) {
 	Common::List<Std::pair<uint, uint> > opaqueXYs;
 	uint x, y;
 	byte t_r, t_g, t_b;

@@ -71,9 +71,9 @@ bool8 DoesClusterContainFile(pxString clustername, uint32 hash_to_find, uint32 &
 	Cluster_API *clu = (Cluster_API *)memory;
 
 	// Look for the file in the cluster
-	int nFiles = (int)clu->ho.noFiles;
+	int32 nFiles = (int32)clu->ho.noFiles;
 
-	int i;
+	int32 i;
 	for (i = 0; i < nFiles; i++) {
 		// Have we found it
 		if (hash_to_find == clu->hn[i].hash)
@@ -100,17 +100,17 @@ bool8 DoesClusterContainFile(pxString clustername, uint32 hash_to_find, uint32 &
 
 void SetupSndEngine() {}
 
-void LoadSessionSounds(const cstr cluster) { Tdebug("sounds.txt", "Setting up session sfx data cluster \"%s\"", cluster); }
+void LoadSessionSounds(const char *cluster) { Tdebug("sounds.txt", "Setting up session sfx data cluster \"%s\"", cluster); }
 
-void LoadMissionSounds(const cstr cluster) { Tdebug("sounds.txt", "Setting up mission sfx data cluster \"%s\"", cluster); }
+void LoadMissionSounds(const char *cluster) { Tdebug("sounds.txt", "Setting up mission sfx data cluster \"%s\"", cluster); }
 
 // in Hz
-int32 GetSamplePitch(const cstr sampleName, bool8 isInSession) {
+int32 GetSamplePitch(const char *sampleName, bool8 isInSession) {
 	if (g_theFxManager) {
 		Tdebug("sounds.txt", "Getting sample rate for %s (isInSession=%d) = %d", sampleName, isInSession,
 		       g_theFxManager->GetDefaultRate(pxVString("samples\\pc\\%s.wav", sampleName)));
 
-		int rate = 0;
+		int32 rate = 0;
 		pxString smp;
 		smp.Format("%s.wav", sampleName);
 
@@ -129,7 +129,7 @@ int32 GetSamplePitch(const cstr sampleName, bool8 isInSession) {
 	return false;
 }
 
-void StartSample(int32 ch, const cstr sampleName, bool8 isInSession, int looping) {
+void StartSample(int32 ch, const char *sampleName, bool8 isInSession, int32 looping) {
 	int32 result;
 
 	if (g_theFxManager) {
@@ -188,10 +188,10 @@ void SetChannelPitch(int32 ch, int32 pitch) {
 // Speech support routines
 
 // just return 1, no preloading so always continue
-int PreloadSpeech(uint32) { return 1; }
+int32 PreloadSpeech(uint32) { return 1; }
 
 // do the line of text
-int SayLineOfSpeech(uint32 speechHash) {
+int32 SayLineOfSpeech(uint32 speechHash) {
 	if ((g_theSpeechManager) && (GetSpeechVolume() > 0)) {
 
 		// If we are testing the translations wavs then we need to look elsewhere for the wav files

@@ -22,7 +22,7 @@
 
 #include "sci/console.h"
 #include "sci/sci.h"
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/util.h"
 #include "sci/engine/features.h"
 #include "sci/engine/state.h"
@@ -125,7 +125,7 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 		// fit the string showing how many shots are left (a nasty script bug,
 		// corrupting heap memory). We add 10 more locals so that it has enough
 		// space to use as the target for its kFormat operation. Fixes bug
-		// #3059871.
+		// #5335.
 		extraLocalsWorkaround = 10;
 	}
 	bufSize += extraLocalsWorkaround * 2;
@@ -154,7 +154,7 @@ void Script::load(int script_nr, ResourceManager *resMan, ScriptPatcher *scriptP
 		// Some buggy game scripts contain two export tables (e.g. script 912
 		// in Camelot and script 306 in KQ4); in these scripts, the first table
 		// is broken, so we ignore it and use the last one instead
-		// Fixes bugs #3039785 and #3037595.
+		// Fixes bugs #5151 and #5079.
 		SciSpan<const uint16> exportTable = findBlockSCI0(SCI_OBJ_EXPORTS, true).subspan<const uint16>(0);
 		if (exportTable) {
 			// The export table is after the block header (4 bytes / 2 uint16s)
@@ -1055,6 +1055,8 @@ void Script::initializeClasses(SegManager *segMan) {
 					segMan->resizeClassTable(species + 1);
 				else if (g_sci->getGameId() == GID_SQ3 && !g_sci->isDemo() && _nr == 99)
 					segMan->resizeClassTable(species + 1);
+				else if (g_sci->getGameId() == GID_KQ5 && g_sci->getPlatform() == Common::kPlatformAmiga && _nr == 220)
+					segMan->resizeClassTable(species + 1);
 			}
 
 			if (species < 0 || species >= (int)segMan->classTableSize())
@@ -1072,7 +1074,7 @@ void Script::initializeObjectsSci0(SegManager *segMan, SegmentId segmentId, bool
 	bool oldScriptHeader = (getSciVersion() == SCI_VERSION_0_EARLY);
 
 	// We need to make two passes, as the objects in the script might be in the
-	// wrong order (e.g. in the demo of Iceman) - refer to bug #3034713
+	// wrong order (e.g. in the demo of Iceman) - refer to bug #4963
 	for (int pass = 1; pass <= 2; pass++) {
 		SciSpan<const byte> seeker = _buf->subspan(oldScriptHeader ? 2 : 0);
 
@@ -1096,8 +1098,8 @@ void Script::initializeObjectsSci0(SegManager *segMan, SegmentId segmentId, bool
 							if ((_nr == 202 || _nr == 764) && g_sci->getGameId() == GID_KQ5) {
 								// WORKAROUND: Script 202 of KQ5 French and German
 								// (perhaps Spanish too?) has an invalid object.
-								// This is non-fatal. Refer to bugs #3035396 and
-								// #3150767.
+								// This is non-fatal. Refer to bugs #4996 and
+								// #5568.
 								// Same happens with script 764, it seems to
 								// contain junk towards its end.
 								_objects.erase(addr.toUint16() - SCRIPT_OBJECT_MAGIC_OFFSET);

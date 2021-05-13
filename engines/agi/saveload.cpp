@@ -85,11 +85,20 @@ int AgiEngine::saveGame(const Common::String &fileName, const Common::String &de
 
 	out->writeUint32BE(AGIflag);
 
+	const char *descriptionStringC;
+	Common::U32String hebDesc;
+	if (_game._vm->getLanguage() != Common::HE_ISR) {
+		descriptionStringC = descriptionString.c_str();
+	} else {
+		hebDesc = descriptionString.substr(0, SAVEDGAME_DESCRIPTION_LEN / 2 - 3).decode(Common::kWindows1255);
+		descriptionStringC = hebDesc.encode(Common::kUtf8).c_str();
+	}
+
 	// Write description of saved game, limited to SAVEDGAME_DESCRIPTION_LEN characters + terminating NUL
 	char description[SAVEDGAME_DESCRIPTION_LEN + 1];
 
 	memset(description, 0, sizeof(description));
-	strncpy(description, descriptionString.c_str(), SAVEDGAME_DESCRIPTION_LEN);
+	Common::strlcpy(description, descriptionStringC, SAVEDGAME_DESCRIPTION_LEN);
 	assert(SAVEDGAME_DESCRIPTION_LEN + 1 == 31); // safety
 	out->write(description, 31);
 
@@ -123,7 +132,7 @@ int AgiEngine::saveGame(const Common::String &fileName, const Common::String &de
 	debugC(5, kDebugLevelMain | kDebugLevelSavegame, "Writing game id (%s, %s)", gameIDstring, _game.id);
 
 	const char *tmp = getGameMD5();
-	// As reported in bug report #2849084 "AGI: Crash when saving fallback-matched game"
+	// As reported in bug report #4582 "AGI: Crash when saving fallback-matched game"
 	// getGameMD5 will return NULL for fallback matched games. Since there is also no
 	// filename available we can not compute any MD5 here either. Thus we will just set
 	// the MD5 sum in the savegame to all zero, when getGameMD5 returns NULL.
@@ -789,7 +798,7 @@ int AgiEngine::doSave(int slot, const Common::String &desc) {
 	debugC(8, kDebugLevelMain | kDebugLevelResources, "file is [%s]", fileName.c_str());
 
 	// Make sure all graphics was blitted to screen. This fixes bug
-	// #2960567: "AGI: Ego partly erased in Load/Save thumbnails"
+	// #4790: "AGI: Ego partly erased in Load/Save thumbnails"
 	_gfx->updateScreen();
 //	_gfx->doUpdate();
 
@@ -927,6 +936,10 @@ bool AgiEngine::getSavegameInformation(int16 slotId, Common::String &saveDescrip
 		saveDescription += saveGameDescription;
 		saveIsValid = true;
 
+		if (_game._vm->getLanguage() == Common::HE_ISR) {
+			saveDescription = saveDescription.decode(Common::kUtf8).encode(Common::kWindows1255);
+		}
+
 		delete in;
 		return true;
 	}
@@ -1005,7 +1018,7 @@ bool AgiEngine::saveGameDialog() {
 
 
 void AgiEngine::recordImageStackCall(uint8 type, int16 p1, int16 p2, int16 p3,
-                                     int16 p4, int16 p5, int16 p6, int16 p7) {
+									 int16 p4, int16 p5, int16 p6, int16 p7) {
 	ImageStackElement pnew;
 
 	pnew.type = type;
@@ -1022,7 +1035,7 @@ void AgiEngine::recordImageStackCall(uint8 type, int16 p1, int16 p2, int16 p3,
 }
 
 void AgiEngine::replayImageStackCall(uint8 type, int16 p1, int16 p2, int16 p3,
-                                     int16 p4, int16 p5, int16 p6, int16 p7) {
+									 int16 p4, int16 p5, int16 p6, int16 p7) {
 	switch (type) {
 	case ADD_PIC:
 		debugC(8, kDebugLevelMain, "--- decoding picture %d ---", p1);

@@ -56,18 +56,18 @@ Common::KeymapArray MetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action("LCLK", _("Left Click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
-	act = new Action("MCLK", _("Middle Click"));
+	act = new Action(kStandardActionMiddleClick, _("Middle Click"));
 	act->addDefaultInputMapping("MOUSE_MIDDLE");
 	act->setMiddleClickEvent();
 	engineKeyMap->addAction(act);
 
-	act = new Action("RCLK", _("Right Click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");
@@ -165,21 +165,19 @@ void MetaEngine::appendExtendedSave(Common::OutSaveFile *saveFile, uint32 playti
 	saveFile->writeString(desc);
 	saveFile->writeByte(isAutosave);
 
-	saveScreenThumbnail(saveFile);
+	// Write out the thumbnail
+	Graphics::Surface thumb;
+	getSavegameThumbnail(thumb);
+	Graphics::saveThumbnail(*saveFile, thumb);
+	thumb.free();
 
 	saveFile->writeUint32LE(headerPos);	// Store where the header starts
 
 	saveFile->finalize();
 }
 
-void MetaEngine::saveScreenThumbnail(Common::OutSaveFile *saveFile) {
-	// Create a thumbnail surface from the screen
-	Graphics::Surface thumb;
+void MetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
 	::createThumbnailFromScreen(&thumb);
-
-	// Write out the thumbnail
-	Graphics::saveThumbnail(*saveFile, thumb);
-	thumb.free();
 }
 
 void MetaEngine::parseSavegameHeader(ExtendedSavegameHeader *header, SaveStateDescriptor *desc) {
@@ -261,7 +259,7 @@ WARN_UNUSED_RESULT bool MetaEngine::readSavegameHeader(Common::InSaveFile *in, E
 
 
 //////////////////////////////////////////////
-// MetaEngineConnect default implementations
+// MetaEngine default implementations
 //////////////////////////////////////////////
 
 SaveStateList MetaEngine::listSaves(const char *target) const {

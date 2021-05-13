@@ -27,6 +27,7 @@
 #include "common/keyboard.h"
 #include "common/scummsys.h"
 #include "common/util.h"
+#include "common/rect.h"
 
 namespace TwinE {
 
@@ -35,6 +36,7 @@ class TwinEEngine;
 extern const char *mainKeyMapId;
 extern const char *uiKeyMapId;
 extern const char *cutsceneKeyMapId;
+extern const char *holomapKeyMapId;
 
 enum TwinEActionType {
 	Pause,
@@ -53,6 +55,10 @@ enum TwinEActionType {
 	QuickBehaviourAthletic,
 	QuickBehaviourAggressive,
 	QuickBehaviourDiscreet,
+	ChangeBehaviourNormal,
+	ChangeBehaviourAthletic,
+	ChangeBehaviourAggressive,
+	ChangeBehaviourDiscreet,
 	ExecuteBehaviourAction,
 	BehaviourMenu,
 	OptionsMenu,
@@ -79,12 +85,15 @@ enum TwinEActionType {
 
 	CutsceneAbort,
 
-	Max
-};
+	HolomapAbort,
+	HolomapLeft,
+	HolomapRight,
+	HolomapUp,
+	HolomapDown,
+	HolomapNext,
+	HolomapPrev,
 
-struct MouseStatusStruct {
-	int32 x = 0;
-	int32 y = 0;
+	Max
 };
 
 /**
@@ -128,7 +137,7 @@ public:
 	 */
 	bool isActionActive(TwinEActionType actionType, bool onlyFirstTime = true) const;
 
-	bool isMouseHovering(int32 left, int32 top, int32 right, int32 bottom) const;
+	bool isMouseHovering(const Common::Rect &rect) const;
 
 	/**
 	 * @brief If the action is active, the internal state is reset and a following call of this method won't return
@@ -141,12 +150,13 @@ public:
 	bool isQuickBehaviourActionActive() const;
 	bool isMoveOrTurnActionActive() const;
 	bool isHeroActionActive() const;
+	bool resetHeroActions();
 
 	/**
 	 * Gets mouse positions
 	 * @param mouseData structure that contains mouse position info
 	 */
-	void getMousePositions(MouseStatusStruct *mouseData);
+	Common::Point getMousePositions() const;
 
 	/**
 	 * @brief Updates the internal action states

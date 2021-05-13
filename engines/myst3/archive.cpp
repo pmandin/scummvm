@@ -36,7 +36,7 @@ void Archive::decryptHeader(Common::SeekableReadStream &inStream, Common::WriteS
 	uint32 size = inStream.readUint32LE();
 
 	bool encrypted = size > 1000000;
-	
+
 	inStream.seek(0);
 
 	if (encrypted) {
@@ -154,7 +154,7 @@ const Archive::DirectoryEntry *Archive::getEntry(const Common::String &room, uin
 }
 
 ResourceDescription Archive::getDescription(const Common::String &room, uint32 index, uint16 face,
-                                                 ResourceType type) {
+												 ResourceType type) {
 	const DirectoryEntry *entry = getEntry(room, index);
 	if (!entry) {
 		return ResourceDescription();
@@ -171,7 +171,7 @@ ResourceDescription Archive::getDescription(const Common::String &room, uint32 i
 }
 
 ResourceDescriptionArray Archive::listFilesMatching(const Common::String &room, uint32 index, uint16 face,
-                                                 ResourceType type) {
+												 ResourceType type) {
 	const DirectoryEntry *entry = getEntry(room, index);
 	if (!entry) {
 		return ResourceDescriptionArray();
@@ -199,7 +199,7 @@ bool Archive::open(const char *fileName, const char *room) {
 		readDirectory();
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -286,17 +286,14 @@ Common::String ResourceDescription::getTextData(uint index) const {
 	// extract the wanted one
 	cnt = 0;
 	int i = 0;
-	Common::String text;
-	while (cnt <= index && i < 89) {
-		if (cnt == index)
-			text += decrypted[i];
-
+	while (cnt < index) {
 		if (!decrypted[i])
 			cnt++;
 
 		i++;
 	}
 
+	Common::String text((const char *)&decrypted[i]);
 	return text;
 }
 

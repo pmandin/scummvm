@@ -20,20 +20,17 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
-#include "ultima/ultima8/misc/direction.h"
 #include "ultima/ultima8/world/actors/loiter_process.h"
 #include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/actors/pathfinder_process.h"
 #include "ultima/ultima8/kernel/kernel.h"
 #include "ultima/ultima8/kernel/delay_process.h"
-#include "ultima/ultima8/kernel/core_app.h"
+#include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/world/get_object.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(LoiterProcess)
 
 LoiterProcess::LoiterProcess() : Process(), _count(0) {
@@ -47,6 +44,11 @@ LoiterProcess::LoiterProcess(Actor *actor, int32 c) : _count(c) {
 		_type = 0x205; // CONSTANT!
 	else
 		_type = 599;
+
+	// Only loiter with one process at a time.
+	Process *previous = Kernel::get_instance()->findProcess(_itemNum, _type);
+	if (previous)
+		previous->terminate();
 }
 
 void LoiterProcess::run() {
@@ -104,6 +106,11 @@ void LoiterProcess::run() {
 
 		waitFor(dp);
 	}
+}
+
+void LoiterProcess::dumpInfo() const {
+	Process::dumpInfo();
+	pout << "Frames left: " << _count;
 }
 
 void LoiterProcess::saveData(Common::WriteStream *ws) {

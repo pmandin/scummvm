@@ -28,7 +28,6 @@
 #ifndef ICB_OPTIONS_MANAGER_PC_H_INCLUDED
 #define ICB_OPTIONS_MANAGER_PC_H_INCLUDED
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/p4.h"
 #include "engines/icb/global_objects.h"
 #include "engines/icb/global_switches.h"
@@ -66,12 +65,12 @@ private:
 	bool8 m_movieBackdrop;
 
 	bool8 m_loopingMovie;
-	int m_frameStart;
-	int m_totalMovieFrames;
+	int32 m_frameStart;
+	int32 m_totalMovieFrames;
 
 public:
 	Crediter();
-	void Initialise(const char *textFileName, const char *movieFileName, bool8 loopingMovie, bool8 attachLogo, int frameStart);
+	void Initialise(const char *textFileName, const char *movieFileName, bool8 loopingMovie, bool8 attachLogo, int32 frameStart);
 	int32 DoScreen();
 };
 
@@ -120,7 +119,7 @@ enum OPTION_CHOICES {
 	VIDEO_SETTINGS = 0,
 	AUDIO_SETTINGS = 1,
 	CONTROLS = 2,
-	BACK = 3
+	DO_BACK = 3
 };
 
 #define NUMBER_OF_AUDIO_CHOICES 4
@@ -132,30 +131,20 @@ enum AUDIO_CHOICES {
 	DO_ONE = 3
 };
 
-#define NUMBER_OF_VIDEO_CHOICES 5
+#define NUMBER_OF_VIDEO_CHOICES 4
 
 enum VIDEO_CHOICES {
 	SUBTITLES = 0,
-	SEMITRANS = 1,
-	SHADOWS = 2,
-	FRAMELIMITER = 3,
-	LEAVE = 4
+	SHADOWS = 1,
+	FRAMELIMITER = 2,
+	LEAVE = 3
 };
 
-#define NUMBER_OF_CONTROL_CHOICES 11
+#define NUMBER_OF_CONTROL_CHOICES 2
 
 enum CONTROL_CHOICES {
-	DEVICE = 0,
-	METHOD = 1,
-	UP_CROUCH = 2,
-	DOWN_INTERACT = 3,
-	LEFT_ARM = 4,
-	RIGHT_ATTACK = 5,
-	RUN_INVENTORY = 6,
-	SIDESTEP_REMORA = 7,
-	PAUSE = 8,
-	DEFAULTS = 9,
-	DONE = 10
+	METHOD = 0,
+	DONE = 1
 };
 
 #define TOTAL_NUMBER_OF_GAME_SLOTS 100
@@ -251,7 +240,7 @@ enum M_PROFILES_CHOICES {
 };
 #define NUMBER_OF_GAMEOVER_CHOICES 3
 
-enum GAMEOVER_CHOICES { RESTORE = 0, RESTART = 1, FUCKTHAT = 2 };
+enum GAMEOVER_CHOICES { RESTORE = 0, RESTART = 1, GAMEOVER = 2 };
 
 #define MAX_LABEL_LENGTH 24
 
@@ -354,8 +343,8 @@ private:
 	bool8 m_controlPage1;       // Control screen page indicator
 	uint32 m_controlAnimCursor; // Animation sequence position
 
-	int m_move_sfx_channel;   // Audio channel for move sfx
-	int m_choose_sfx_channel; // Audio channel for select sfx
+	int32 m_move_sfx_channel;   // Audio channel for move sfx
+	int32 m_choose_sfx_channel; // Audio channel for select sfx
 
 	bool8 m_canSave; // Is save disabled in game
 
@@ -365,7 +354,7 @@ private:
 	char m_defaultSlotName[MAX_LABEL_LENGTH];
 	bool8 m_editing;
 	bool8 m_defaultWiper;
-	int m_emptySlotFlag;
+	int32 m_emptySlotFlag;
 
 	uint32 m_timePlayed;
 
@@ -373,7 +362,7 @@ private:
 	bool8 m_paging;              // Are we currently paging (animating)
 	bool8 m_pageleft;            // Left or right paging
 	LRECT m_slotBoundingRect;    // Box containing the 10 visible slots
-	int32 m_slotsFuckOffBy;      // Animation step incrementer
+	int32 m_slotsAnimOffBy;      // Animation step incrementer
 	LRECT m_pageOn_from;         // Source blit rect for slots entering the screen
 	LRECT m_pageOn_dest;         // Target blit rect for slots entering the screen
 	LRECT m_pageOff_from;        // Source blit rect for slots leaving the screen
@@ -382,7 +371,7 @@ private:
 
 	bool8 m_awaitingKeyPress; // For control assignment
 	bool8 m_configLimiter;
-	int m_assignFlash;
+	int32 m_assignFlash;
 
 	bool8 m_creditControl; // Credits displaying flag
 	Crediter m_crediter;   // Crediter class instance
@@ -420,7 +409,7 @@ public:
 
 	// Public access routines
 	void DoCredits();
-	void InitialiseScrollingText(const char *textFileName, const char *movieFileName, int frameStart);
+	void InitialiseScrollingText(const char *textFileName, const char *movieFileName, int32 frameStart);
 	void DoScrollingText();
 	void DisplayText(uint8 *ad, uint32 pitch, const char *str, int32 x, int32 y, uint32 col, bool8 centredHorizontally, bool8 boxed = FALSE8);
 	const char *GetTextFromReference(uint32 hashRef);
@@ -474,7 +463,6 @@ private:
 	void DrawAudioSettings();
 	void DrawVideoSettings();
 	void DrawControllerConfiguration();
-	void DrawControls(uint32 surface_id = working_buffer_id);
 	void DrawMainLoadScreen(uint32 surface_id = working_buffer_id);
 	void DrawMovieScreen(uint32 surface_id = working_buffer_id);
 	void DrawQuitGameConfirmScreen(uint32 surface_id = working_buffer_id);

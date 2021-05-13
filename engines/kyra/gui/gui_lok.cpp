@@ -357,7 +357,7 @@ void GUI_LoK::setGUILabels() {
 	int menuLabelGarbageOffset = 0;
 
 	if (_vm->gameFlags().isTalkie) {
-		if (_vm->gameFlags().lang == Common::EN_ANY)
+		if (_vm->gameFlags().lang == Common::EN_ANY || _vm->gameFlags().lang == Common::HE_ISR)
 			offset = 52;
 		else if (_vm->gameFlags().lang == Common::DE_DEU)
 			offset = 30;
@@ -745,7 +745,7 @@ int GUI_LoK::saveGame(Button *button) {
 	} else {
 		for (int i = 0; i < 5; i++) {
 			if (_menu[2].item[i].saveSlot == _vm->_gameToLoad) {
-				Common::strlcpy(_savegameName, _menu[2].item[i].itemString, 31);
+				Common::strlcpy(_savegameName, _menu[2].item[i].itemString.c_str(), 31);
 				break;
 			}
 		}

@@ -24,6 +24,7 @@
 #include "common/savefile.h"
 #include "common/system.h"
 #include "common/installshield_cab.h"
+#include "common/translation.h"
 
 #include "engines/advancedDetector.h"
 #include "engines/obsolete.h"
@@ -35,17 +36,17 @@
 
 class AgosMetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "agos";
 	}
 
-    bool hasFeature(MetaEngineFeature f) const override;
+	bool hasFeature(MetaEngineFeature f) const override;
 
 	Common::Error createInstance(OSystem *syst, Engine **engine) const override {
 		Engines::upgradeTargetIfNecessary(obsoleteGameIDsTable);
 		return AdvancedMetaEngine::createInstance(syst, engine);
 	}
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
@@ -62,9 +63,8 @@ bool AGOS::AGOSEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsReturnToLauncher);
 }
 
-bool AgosMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+Common::Error AgosMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
 	const AGOS::AGOSGameDescription *gd = (const AGOS::AGOSGameDescription *)desc;
-	bool res = true;
 
 	switch (gd->gameType) {
 	case AGOS::GType_PN:
@@ -98,13 +98,16 @@ bool AgosMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGame
 		else
 			*engine = new AGOS::AGOSEngine_PuzzlePack(syst, gd);
 		break;
+#else
+	case AGOS::GType_FF:
+	case AGOS::GType_PP:
+		return Common::Error(Common::kUnsupportedGameidError, _s("AGOS 2 support is not compiled in"));
 #endif
 	default:
-		res = false;
-		error("AGOS engine: unknown gameType");
+		return Common::kUnsupportedGameidError;
 	}
 
-	return res;
+	return Common::kNoError;
 }
 
 SaveStateList AgosMetaEngine::listSaves(const char *target) const {
@@ -200,6 +203,9 @@ void AGOSEngine::loadArchives() {
 
 	if (getFeatures() & GF_PACKED) {
 		for (ag = _gameDescription->desc.filesDescriptions; ag->fileName; ag++) {
+			if (ag->fileType != GAME_CABFILE)
+				continue;
+
 			if (!SearchMan.hasArchive(ag->fileName)) {
 				Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(ag->fileName);
 

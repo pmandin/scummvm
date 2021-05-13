@@ -20,11 +20,9 @@
  *
  */
 
+#include "common/memstream.h"
 #include "ultima/ultima8/misc/pent_include.h"
-
 #include "ultima/ultima8/filesys/raw_archive.h"
-#include "ultima/ultima8/filesys/idata_source.h"
-#include "ultima/ultima8/filesys/archive_file.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -76,7 +74,7 @@ uint8 *RawArchive::get_object(uint32 index) {
 		if (size == 0)
 			return nullptr;
 		uint8 *object = new uint8[size];
-		Std::memcpy(object, _objects[index], size);
+		memcpy(object, _objects[index], size);
 		return object;
 	}
 
@@ -89,7 +87,7 @@ uint32 RawArchive::get_size(uint32 index) {
 	return getRawSize(index);
 }
 
-IDataSource *RawArchive::get_datasource(uint32 index) {
+Common::SeekableReadStream *RawArchive::get_datasource(uint32 index) {
 	if (index >= _count)
 		return nullptr;
 	cache(index);
@@ -97,7 +95,7 @@ IDataSource *RawArchive::get_datasource(uint32 index) {
 	if (!_objects[index])
 		return nullptr;
 
-	return new IBufferDataSource(_objects[index], getRawSize(index));
+	return new Common::MemoryReadStream(_objects[index], getRawSize(index));
 }
 
 } // End of namespace Ultima8

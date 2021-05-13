@@ -20,12 +20,8 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/world/actors/pace_process.h"
-#include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
-#include "ultima/ultima8/world/actors/animation.h"
-#include "ultima/ultima8/world/actors/actor_anim_process.h"
 #include "ultima/ultima8/misc/direction_util.h"
 #include "ultima/ultima8/kernel/kernel.h"
 #include "ultima/ultima8/kernel/delay_process.h"
@@ -34,7 +30,6 @@
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(PaceProcess)
 
 PaceProcess::PaceProcess() : Process(), _counter(0) {
@@ -44,11 +39,16 @@ PaceProcess::PaceProcess(Actor *actor): _counter(0) {
 	assert(actor);
 	_itemNum = actor->getObjId();
 	_type = 0x255;
+
+	// Only pace with one process at a time.
+	Process *previous = Kernel::get_instance()->findProcess(_itemNum, _type);
+	if (previous)
+		previous->terminate();
 }
 
 
 bool PaceProcess::maybeStartDefaultActivity1(Actor *actor) {
-	const Actor *mainactor = getMainActor();
+	const Actor *mainactor = getControlledActor();
 	if (!mainactor)
 		return false;
 
@@ -77,10 +77,13 @@ void PaceProcess::run() {
 		return;
 	}
 
+	if (!a->hasFlags(Item::FLG_FASTAREA))
+		return;
+
 	if (maybeStartDefaultActivity1(a))
 		return;
 
-	if (kernel->getNumProcesses(a->getObjId(), ActorAnimProcess::ACTOR_ANIM_PROC_TYPE)) {
+	if (a->isBusy()) {
 		return;
 	}
 

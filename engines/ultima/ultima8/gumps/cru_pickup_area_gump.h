@@ -24,7 +24,7 @@
 #define ULTIMA8_GUMPS_CRUPICKUPAREAGUMP_H
 
 #include "ultima/ultima8/gumps/gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -39,15 +39,23 @@ class CruPickupAreaGump : public Gump {
 public:
 	ENABLE_RUNTIME_CLASSTYPE()
 
+	// default constructor only for use when loading savegame
 	CruPickupAreaGump();
-	CruPickupAreaGump(Item *item, int y);
-	~CruPickupAreaGump() override;
 
-	void addPickup(Item *item);
+	// Normal constructor
+	CruPickupAreaGump(bool unused);
+	~CruPickupAreaGump();
+
+	void InitGump(Gump *newparent, bool take_focus = false) override;
+
+	bool loadData(Common::ReadStream *rs, uint32 version);
+	void saveData(Common::WriteStream *ws) override;
+
+	void addPickup(const Item *item, bool showCount);
 
 	static CruPickupAreaGump *get_instance();
 private:
-    static CruPickupAreaGump *_instance;
+	static CruPickupAreaGump *_instance;
 };
 
 } // End of namespace Ultima8

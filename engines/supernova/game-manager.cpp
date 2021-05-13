@@ -153,8 +153,8 @@ int GameManager::guiStatusCommands[] = {
 GameManager::GameManager(SupernovaEngine *vm, Sound *sound)
 	: _inventory(&_nullObject, _inventoryScroll)
 	, _vm(vm)
-    , _sound(sound)
-    , _mouseClickType(Common::EVENT_INVALID) {
+	, _sound(sound)
+	, _mouseClickType(Common::EVENT_INVALID) {
 	initGui();
 }
 
@@ -841,7 +841,7 @@ void GameManager::edit(Common::String &input, int x, int y, uint length) {
 						kScreenWidth - x : (length + 1) * (kFontWidth + 2);
 		background = kColorDarkBlue;
 	} else if (_vm->_MSPart == 2) {
-		overdrawWidth = ((int)((length + 1) * (kFontWidth2 + 2)) > (kScreenWidth - x)) 
+		overdrawWidth = ((int)((length + 1) * (kFontWidth2 + 2)) > (kScreenWidth - x))
 			? kScreenWidth - x : (length + 1) * (kFontWidth2 + 2);
 		background = kColorWhite35;
 	}

@@ -25,7 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/p4.h"
 #include "engines/icb/p4_generic.h"
@@ -52,10 +51,10 @@ namespace ICB {
 // Cute little puppies
 extern char *pRGB;
 extern char *pZa;
-extern int RGBWidth;
-extern int RGBHeight;
-extern int RGBPitch;
-extern int RGBBytesPerPixel;
+extern int32 RGBWidth;
+extern int32 RGBHeight;
+extern int32 RGBPitch;
+extern int32 RGBBytesPerPixel;
 
 RevRenderDevice renderingDevice;
 
@@ -65,14 +64,10 @@ extern int32 texturesUsedThisCycle;
 uint32 auto_anim = 2;
 
 // Camera and animation structures
-psxCamera camera;
 PXanim *pxanim;
 SVECTOR rot;   // Actor rotation
 SVECTOR _crot; // Camera rotation
-int uvframe = 0;
-
-// Actor structure
-psxActor av_actor;
+int32 uvframe = 0;
 
 // Global filename stuff
 char cluster_name[32];
@@ -86,14 +81,13 @@ char *anim_name;
 const char *weapon_name;
 char *outfit_name;
 
-int framenum;
+int32 framenum;
 int32 g_repeats;
 
 // Do we allow keyboard input to affect the actor viewing
 bool8 g_av_userControlled = FALSE8;
 
 // Lighting structure and coordinates, colour components
-PSXLamp av_Light;
 int16 av_LightX;
 int16 av_LightY;
 int16 av_LightZ;
@@ -111,7 +105,7 @@ int16 av_x, av_y, av_z;
 
 // Prototypes for functions used in this module
 TextureHandle *GetRegisteredTexture(const char *, uint32, const char *, uint32, const char *, uint32);
-void DrawFrame(const int frame);
+void DrawFrame(const int32 frame);
 void MakeCameraView();
 void ResetCamera();
 void ResetActor();
@@ -219,9 +213,9 @@ void ChangeAnimPlaying(const char *pose, const char *anim, bool8 forwards, int32
 	ResetCamera();
 }
 
-int ActorViewDraw() {
+int32 ActorViewDraw() {
 	// Return value
-	int returnStatus = MID_ANIMATION;
+	int32 returnStatus = MID_ANIMATION;
 
 	// Alters the light nicely
 	AutoCycleLight();
@@ -235,26 +229,26 @@ int ActorViewDraw() {
 	// from the initialised defaults.
 	if (g_av_userControlled) {
 		// Increment in degrees
-		int dang = 5;
+		int32 dang = 5;
 
 		// Actor rotation
 		if (Read_DI_keys(Common::KEYCODE_LEFT)) {
-			rot.vy = (short)(rot.vy + 4096 * dang / 360);
+			rot.vy = (int16)(rot.vy + 4096 * dang / 360);
 		}
 		if (Read_DI_keys(Common::KEYCODE_DOWN)) {
-			rot.vy = (short)(rot.vy - 4096 * dang / 360);
+			rot.vy = (int16)(rot.vy - 4096 * dang / 360);
 		}
 		if (Read_DI_keys(Common::KEYCODE_UP)) {
-			rot.vx = (short)(rot.vx + 4096 * dang / 360);
+			rot.vx = (int16)(rot.vx + 4096 * dang / 360);
 		}
 		if (Read_DI_keys(Common::KEYCODE_DOWN)) {
-			rot.vx = (short)(rot.vx - 4096 * dang / 360);
+			rot.vx = (int16)(rot.vx - 4096 * dang / 360);
 		}
 		if (Read_DI_keys(Common::KEYCODE_PAGEUP)) {
-			rot.vz = (short)(rot.vz + 4096 * dang / 360);
+			rot.vz = (int16)(rot.vz + 4096 * dang / 360);
 		}
 		if (Read_DI_keys(Common::KEYCODE_PAGEDOWN)) {
-			rot.vz = (short)(rot.vz - 4096 * dang / 360);
+			rot.vz = (int16)(rot.vz - 4096 * dang / 360);
 		}
 
 		if (rot.vx > 4096)
@@ -341,9 +335,9 @@ int ActorViewDraw() {
 
 	uint32 *safe_ad = address;
 
-	for (int y = SCREEN_DEPTH; y; y--) {
+	for (int32 y = SCREEN_DEPTH; y; y--) {
 		uint32 *ad = safe_ad;
-		for (int x = SCREEN_WIDTH; x; x--) {
+		for (int32 x = SCREEN_WIDTH; x; x--) {
 			// If the z-map for this pixel is FFFF then this pixel doesn't contain actor
 			if (*zActor != 0xFFFF) {
 				*ad = *source;
@@ -363,13 +357,13 @@ int ActorViewDraw() {
 	return returnStatus;
 }
 
-void DrawFrame(const int frame) {
+void DrawFrame(const int32 frame) {
 	// These structures are needed for the drawing code to accept our light
 	PSXLampList the_lights;
 	PSXShadeList the_shades;
 	the_lights.n = 1;
 	the_lights.states[0] = 0;
-	the_lights.lamps[0] = (PSXLamp *)(&av_Light);
+	the_lights.lamps[0] = g_av_Light;
 	the_shades.n = 0;
 
 	// Open the animation file
@@ -386,28 +380,28 @@ void DrawFrame(const int frame) {
 	PXFrameEnOfAnim(framenum, pxanim)->markers[ORG_POS];
 
 	// Make the actors orientation matrix
-	av_actor.rot = rot;
-	av_actor.rot.vy = (short)(av_actor.rot.vy);
+	g_av_actor->rot = rot;
+	g_av_actor->rot.vy = (int16)(g_av_actor->rot.vy);
 
 	// Make the root local-world matrix
-	RotMatrix_gte(&av_actor.rot, &av_actor.lw);
+	RotMatrix_gte(&g_av_actor->rot, &g_av_actor->lw);
 
 	// Need to use marker to get correct actor height (making crouch look correct)
 	PXframe *frm = PXFrameEnOfAnim(framenum, pxanim);
 	PXmarker &marker = frm->markers[ORG_POS];
 	float mposx, mposy, mposz;
 	marker.GetXYZ(&mposx, &mposy, &mposz);
-	int dy = (int)mposy;
+	int32 dy = (int32)mposy;
 
-	av_actor.lw.t[0] = 0;
-	av_actor.lw.t[1] = dy - 112;
-	av_actor.lw.t[2] = 0;
+	g_av_actor->lw.t[0] = 0;
+	g_av_actor->lw.t[1] = dy - 112;
+	g_av_actor->lw.t[2] = 0;
 
 	// Set the true rotation & position values from the ORG marker
-	av_actor.truePos.x = 0;
-	av_actor.truePos.y = dy - 112;
-	av_actor.truePos.z = 0;
-	av_actor.trueRot = av_actor.rot;
+	g_av_actor->truePos.x = 0;
+	g_av_actor->truePos.y = dy - 112;
+	g_av_actor->truePos.z = 0;
+	g_av_actor->trueRot = g_av_actor->rot;
 
 	sprintf(pose_name, "%s\\pose.rap", weapon_name);
 	sprintf(bone_name, "%s\\%s.rab", weapon_name, anim_name);
@@ -428,19 +422,19 @@ void DrawFrame(const int frame) {
 	ConvertRAP(mesh);
 
 	// Some error checking
-	if (*(int *)mesh->id != *(int *)const_cast<char *>(RAP_API_ID)) {
+	if (*(int32 *)mesh->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
 		Fatal_error("Wrong rap id value file %d api %d file:%s", mesh->id, RAP_API_ID, mesh_name);
 	}
 	if (mesh->schema != RAP_API_SCHEMA) {
 		Fatal_error("Wrong rap schema value file %d rap_api %d file:%s", mesh->schema, RAP_API_SCHEMA, mesh_name);
 	}
-	if (*(int *)pose->id != *(int *)const_cast<char *>(RAP_API_ID)) {
+	if (*(int32 *)pose->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
 		Fatal_error("Wrong rap id value file %d api %d file:%s", pose->id, RAP_API_ID, pose_name);
 	}
 	if (pose->schema != RAP_API_SCHEMA) {
 		Fatal_error("Wrong rap schema value file %d rap_api %d file:%s", pose->schema, RAP_API_SCHEMA, pose_name);
 	}
-	if (*(int *)rab->id != *(int *)const_cast<char *>(RAB_API_ID)) {
+	if (*(int32 *)rab->id != *(int32 *)const_cast<char *>(RAB_API_ID)) {
 		Fatal_error("Wrong rab id value file %d rab_api %d file:%s", rab->id, RAB_API_ID, bone_name);
 	}
 	if (rab->schema != RAB_API_SCHEMA) {
@@ -452,20 +446,20 @@ void DrawFrame(const int frame) {
 
 	// Pass in the linkage file and the bones file
 	Bone_Frame *bone_frame = rab->GetFrame(frame);
-	int brightness;
+	int32 brightness;
 
-	int debug = 1;
+	int32 debug = 1;
 
 	BoneDeformation *myBones[MAX_DEFORMABLE_BONES];
 
-	for (int i = 0; i < MAX_DEFORMABLE_BONES; i++) {
+	for (int32 i = 0; i < MAX_DEFORMABLE_BONES; i++) {
 		myBones[i] = NULL;
 	}
 
 	// Shadow stuff to play with
-	int nShadows = 0;
+	int32 nShadows = 0;
 	SVECTORPC p_n[3];
-	int p_d[3];
+	int32 p_d[3];
 
 	p_n[0].vx = 0;
 	p_n[0].vy = -1;
@@ -475,35 +469,35 @@ void DrawFrame(const int frame) {
 	MATRIXPC local2screen; // not really bothered about this...
 
 	// Drawing finally
-	DrawActor4PC(&av_actor, &camera, bone_frame, mesh, pose, smesh, &ambient, &the_lights, &the_shades, nShadows, p_n, p_d, debug, uvframe, myBones, &brightness,
+	DrawActor4PC(g_av_actor, g_camera, bone_frame, mesh, pose, smesh, &ambient, &the_lights, &the_shades, nShadows, p_n, p_d, debug, uvframe, myBones, &brightness,
 	             &local2screen);
 
 	uvframe++;
 }
 
 void MakeCameraView() {
-	RotMatrix_gte(&_crot, &camera.view);
+	RotMatrix_gte(&_crot, &g_camera->view);
 
 	// Include the x,y,z scalings
-	camera.view.m[0][0] = (short)(camera.view.m[0][0] * 1);
-	camera.view.m[0][1] = (short)(camera.view.m[0][1] * 1);
-	camera.view.m[0][2] = (short)(camera.view.m[0][2] * 1);
-	camera.view.m[1][0] = (short)(camera.view.m[1][0] * 1);
-	camera.view.m[1][1] = (short)(camera.view.m[1][1] * 1);
-	camera.view.m[1][2] = (short)(camera.view.m[1][2] * 1);
-	camera.view.m[2][0] = (short)(camera.view.m[2][0] * 4);
-	camera.view.m[2][1] = (short)(camera.view.m[2][1] * 4);
-	camera.view.m[2][2] = (short)(camera.view.m[2][2] * 4);
+	g_camera->view.m[0][0] = (int16)(g_camera->view.m[0][0] * 1);
+	g_camera->view.m[0][1] = (int16)(g_camera->view.m[0][1] * 1);
+	g_camera->view.m[0][2] = (int16)(g_camera->view.m[0][2] * 1);
+	g_camera->view.m[1][0] = (int16)(g_camera->view.m[1][0] * 1);
+	g_camera->view.m[1][1] = (int16)(g_camera->view.m[1][1] * 1);
+	g_camera->view.m[1][2] = (int16)(g_camera->view.m[1][2] * 1);
+	g_camera->view.m[2][0] = (int16)(g_camera->view.m[2][0] * 4);
+	g_camera->view.m[2][1] = (int16)(g_camera->view.m[2][1] * 4);
+	g_camera->view.m[2][2] = (int16)(g_camera->view.m[2][2] * 4);
 }
 
 void ResetCamera() {
 	_crot.vx = (4096 * 180) / 360;
 	_crot.vy = (4096 * -30) / 360;
 	_crot.vz = 0;
-	camera.view.t[0] = 170 + av_x;
-	camera.view.t[1] = 0 + av_y;
-	camera.view.t[2] = 1800 + av_z;
-	camera.focLen = 619 * 4;
+	g_camera->view.t[0] = 170 + av_x;
+	g_camera->view.t[1] = 0 + av_y;
+	g_camera->view.t[2] = 1800 + av_z;
+	g_camera->focLen = 619 * 4;
 	MakeCameraView();
 }
 
@@ -515,25 +509,25 @@ void ResetActor() {
 }
 
 void InitLight() {
-	av_Light.nStates = 1;       // One state
-	av_Light.w = 0;             // Zero width
-	av_Light.b = 0;             // Zero bounce
-	av_Light.anu = 0;           // Don't use it
-	av_Light.type = OMNI_LIGHT; // OMNI
-	av_Light.ba = 0;            // Means nothing for an OMNI
-	av_Light.bs = 0;            // Means nothing for an OMNI
+	g_av_Light->nStates = 1;       // One state
+	g_av_Light->w = 0;             // Zero width
+	g_av_Light->b = 0;             // Zero bounce
+	g_av_Light->anu = 0;           // Don't use it
+	g_av_Light->type = OMNI_LIGHT; // OMNI
+	g_av_Light->ba = 0;            // Means nothing for an OMNI
+	g_av_Light->bs = 0;            // Means nothing for an OMNI
 
 	// Don't think these things are used...
-	av_Light.states[0].ans2 = 0;
-	av_Light.states[0].ane2 = (100 * 1) * (100 * 1);
+	g_av_Light->states[0].ans2 = 0;
+	g_av_Light->states[0].ane2 = (100 * 1) * (100 * 1);
 
 	// No shade...
-	av_Light.states[0].m = 128;
+	g_av_Light->states[0].m = 128;
 
 	// Direction doesn't matter; it's an OMNI light
-	av_Light.states[0].vx = 4096; // Ignored for an OMNI light
-	av_Light.states[0].vy = 0;    // Ignored for an OMNI light
-	av_Light.states[0].vz = 0;    // Ignored for an OMNI light
+	g_av_Light->states[0].vx = 4096; // Ignored for an OMNI light
+	g_av_Light->states[0].vy = 0;    // Ignored for an OMNI light
+	g_av_Light->states[0].vz = 0;    // Ignored for an OMNI light
 
 	// Initial angle
 	av_LightA = 0;
@@ -565,27 +559,25 @@ void AutoCycleLight() {
 	double radians = (av_LightA * M_PI) / 180.0f;
 
 	// Now calculate z and x coordinates from this angle
-	av_LightX = (short)(sin(radians) * LIGHT_DISTANCE_FROM_ACTOR);
-	av_LightZ = (short)(cos(radians) * LIGHT_DISTANCE_FROM_ACTOR);
+	av_LightX = (int16)(sin(radians) * LIGHT_DISTANCE_FROM_ACTOR);
+	av_LightZ = (int16)(cos(radians) * LIGHT_DISTANCE_FROM_ACTOR);
 
 	// Now bouce the light height between two fixed limits
 	if (av_LightDir) {
-		av_LightY = (short)(av_LightY + 10);
+		av_LightY = (int16)(av_LightY + 10);
 
 		if (av_LightY > LIGHT_HEIGHT_LIMIT) {
 			av_LightY = LIGHT_HEIGHT_LIMIT;
 			av_LightDir = FALSE8;
 		}
 	} else {
-		av_LightY = (short)(av_LightY - 10);
+		av_LightY = (int16)(av_LightY - 10);
 
 		if (av_LightY < -LIGHT_HEIGHT_LIMIT) {
 			av_LightY = -LIGHT_HEIGHT_LIMIT;
 			av_LightDir = TRUE8;
 		}
 	}
-
-	// Now fuck with the colours a bit
 
 	// Red component
 	if (av_autoR) {
@@ -645,44 +637,44 @@ void SetLight(int32 falloff) {
 		Fatal_error("ActorView light rgb %d,%d,%d out of range (0-255)", av_LightR, av_LightG, av_LightB);
 
 	// Set colours (scale 0-255 to 0-4095)
-	av_Light.states[0].c.r = (short)((av_LightR * 4096) / 256);
-	av_Light.states[0].c.g = (short)((av_LightG * 4096) / 256);
-	av_Light.states[0].c.b = (short)((av_LightB * 4096) / 256);
+	g_av_Light->states[0].c.r = (int16)((av_LightR * 4096) / 256);
+	g_av_Light->states[0].c.g = (int16)((av_LightG * 4096) / 256);
+	g_av_Light->states[0].c.b = (int16)((av_LightB * 4096) / 256);
 
 	// Set the v field of colour to be the maximum of r,g,b
-	av_Light.states[0].c.v = av_Light.states[0].c.r;         // Start at red
-	if (av_Light.states[0].c.g > av_Light.states[0].c.v)     // If green bigger
-		av_Light.states[0].c.v = av_Light.states[0].c.g; // Set to green
-	if (av_Light.states[0].c.b > av_Light.states[0].c.v)     // If blue bigger
-		av_Light.states[0].c.v = av_Light.states[0].c.b; // Set to blue
+	g_av_Light->states[0].c.v = g_av_Light->states[0].c.r;         // Start at red
+	if (g_av_Light->states[0].c.g > g_av_Light->states[0].c.v)     // If green bigger
+		g_av_Light->states[0].c.v = g_av_Light->states[0].c.g; // Set to green
+	if (g_av_Light->states[0].c.b > g_av_Light->states[0].c.v)     // If blue bigger
+		g_av_Light->states[0].c.v = g_av_Light->states[0].c.b; // Set to blue
 
-	av_Light.states[0].pos.vx = (int32)av_LightX;
-	av_Light.states[0].pos.vy = (int32)av_LightY;
-	av_Light.states[0].pos.vz = (int32)av_LightZ;
+	g_av_Light->states[0].pos.vx = (int32)av_LightX;
+	g_av_Light->states[0].pos.vy = (int32)av_LightY;
+	g_av_Light->states[0].pos.vz = (int32)av_LightZ;
 
 	// And add the players position
-	av_Light.states[0].pos.vx += (int32)av_actor.truePos.x;
-	av_Light.states[0].pos.vy += (int32)av_actor.truePos.y;
-	av_Light.states[0].pos.vz += (int32)av_actor.truePos.z;
+	g_av_Light->states[0].pos.vx += (int32)g_av_actor->truePos.x;
+	g_av_Light->states[0].pos.vy += (int32)g_av_actor->truePos.y;
+	g_av_Light->states[0].pos.vz += (int32)g_av_actor->truePos.z;
 
 	// Falloff
 	if (falloff == 0) {
-		av_Light.afu = 0; // Don't use it
+		g_av_Light->afu = 0; // Don't use it
 	} else {
-		av_Light.states[0].afs2 = (falloff * falloff) / 100; // (d/10)^2     = (d*d)/100
-		av_Light.states[0].afe2 = falloff * falloff;         // d^2          = (d*d)
-		av_Light.afu = 1;                                    // Use it
+		g_av_Light->states[0].afs2 = (falloff * falloff) / 100; // (d/10)^2     = (d*d)/100
+		g_av_Light->states[0].afe2 = falloff * falloff;         // d^2          = (d*d)
+		g_av_Light->afu = 1;                                    // Use it
 	}
 }
 
-int my_sprintf(char *buf, const char *format...) {
+int32 my_sprintf(char *buf, const char *format...) {
 	char lbuf[256];
 
 	// Process the variable arguments
 	va_list arglist;
 	va_start(arglist, format);
 
-	int slen = vsnprintf(lbuf, 256, const_cast<char *>(format), arglist);
+	int32 slen = vsnprintf(lbuf, 256, const_cast<char *>(format), arglist);
 
 	strncpy(buf, lbuf, slen);
 	buf[slen] = '\0';

@@ -42,7 +42,10 @@ void StarTrekEngine::initStarfield(int16 x, int16 y, int16 width, int16 height, 
 	_starfieldRect.top = _starfieldYVar1 - _starfieldYVar2;
 	_starfieldRect.bottom = _starfieldYVar1 + _starfieldYVar2;
 
-	memset(_starList, 0, sizeof(_starList));
+	for (uint i = 0; i < ARRAYSIZE(_starList); i++) {
+		_starList[i].active = false;
+		_starList[i].pos = Point3(0, 0, 0);
+	}
 	_starfieldPointDivisor = 150;
 	_flt_50898 = 50.0;
 }
@@ -279,24 +282,24 @@ void StarTrekEngine::drawR3Shape(R3 *r3) {
 		r3->field98 = dbl48;
 
 		// dbl30, (bitmap->xoffset + 2), r3->field58,
-		double tmp = r3->field58 - (double)(r3->bitmap->xoffset + 2) * dbl30;
+		double tmp = r3->field58 - ((double)r3->bitmap->xoffset + 2) * dbl30;
 		// dbl20, (bitmap->yoffset + 2), tmp
-		double dbl10 = tmp - (double)(r3->bitmap->yoffset + 2) * dbl20;
+		double dbl10 = tmp - ((double)r3->bitmap->yoffset + 2) * dbl20;
 
 		// dbl28, (bitmap->xoffset + 2), r3->field5a
-		tmp = r3->field5a - (double)(r3->bitmap->xoffset + 2) * dbl28;
+		tmp = r3->field5a - ((double)r3->bitmap->xoffset + 2) * dbl28;
 		// dbl18, (bitmap->yoffset + 2), tmp
-		double dbl8 = tmp - (double)(r3->bitmap->yoffset + 2) * dbl18;
+		double dbl8 = tmp - ((double)r3->bitmap->yoffset + 2) * dbl18;
 
 		// dbl60, r3->field58, bitmap->xoffset + 2
-		tmp = (r3->bitmap->xoffset + 2) - dbl60 * r3->field58;
+		tmp = ((double)r3->bitmap->xoffset + 2) - dbl60 * r3->field58;
 		double dbl40 = tmp - dbl50 * r3->field5a;
 
-		tmp = (r3->bitmap->yoffset + 2) - dbl58 * r3->field58;
+		tmp = ((double)r3->bitmap->yoffset + 2) - dbl58 * r3->field58;
 		double dbl38 = tmp - dbl48 * r3->field5a;
 
-		double dbl3e4 = r3->bitmap->width + 2;
-		double dbl3ec = r3->bitmap->height + 2;
+		double dbl3e4 = (double)r3->bitmap->width + 2;
+		double dbl3ec = (double)r3->bitmap->height + 2;
 
 		double thing[8];
 		tmp = 1.0 * dbl30;

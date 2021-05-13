@@ -106,7 +106,11 @@ bool AIScriptFreeSlotA::Update() {
 			if (Actor_Query_Which_Set_In(kActorFreeSlotA) != Player_Query_Current_Set()) {
 				Game_Flag_Reset(kFlagRatWalkingAround);
 				Game_Flag_Reset(kFlagUG15BridgeWillBreak);
+#if BLADERUNNER_ORIGINAL_BUGS
 				Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotADefault);
+#else
+				Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAGoneIntermediate);
+#endif
 			}
 			break;
 
@@ -143,7 +147,11 @@ bool AIScriptFreeSlotA::Update() {
 				if (Actor_Query_Goal_Number(kActorFreeSlotA) == kGoalFreeSlotAGone) {
 					if (Actor_Query_Which_Set_In(kActorFreeSlotA) != Player_Query_Current_Set()) {
 						Non_Player_Actor_Combat_Mode_Off(kActorFreeSlotA);
+#if BLADERUNNER_ORIGINAL_BUGS
 						Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAAct5Default);
+#else
+						Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAGoneIntermediate);
+#endif
 						return true;
 					}
 				}
@@ -244,11 +252,10 @@ void AIScriptFreeSlotA::OtherAgentExitedThisSet(int otherActorId) {
 		if (Global_Variable_Query(kVariableChapter) == 4) {
 			Game_Flag_Reset(kFlagRatWalkingAround);
 			Game_Flag_Reset(kFlagUG15BridgeWillBreak);
-			Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotADefault);
 		} else if (Global_Variable_Query(kVariableChapter) == 5) {
 			Non_Player_Actor_Combat_Mode_Off(kActorFreeSlotA);
-			Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAAct5Default);
 		}
+		Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAGoneIntermediate);
 	}
 #endif // BLADERUNNER_ORIGINAL_BUGS
 	// return false;
@@ -267,6 +274,12 @@ void AIScriptFreeSlotA::ShotAtAndMissed() {
 bool AIScriptFreeSlotA::ShotAtAndHit() {
 	if (Actor_Query_In_Set(kActorFreeSlotA, kSetUG15)) {
 		checkIfOnBridge();
+		// This goal "kGoalFreeSlotAUG15Die" circumvents the proper process
+		// a proper combat with the rat and it dying when its health reaches <= 0
+		// ie. being "retired".
+		// Thus, since the rat never actually 'dies' from being shot,
+		// its Actor::retire() is not called in this case (UG15 bridge rat),
+		// and so its bounding box is not affected. Thus, the rat corpse remains clickable.
 		Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAUG15Die);
 		return true;
 	}
@@ -385,8 +398,23 @@ bool AIScriptFreeSlotA::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 		AI_Movement_Track_Repeat(kActorFreeSlotA);
 		break;
 
-	case kGoalFreeSlotAGone:
+#if BLADERUNNER_ORIGINAL_BUGS
+#else
+	case kGoalFreeSlotAGoneIntermediate:
 		Actor_Set_Health(kActorFreeSlotA, 20, 20);
+		if (Global_Variable_Query(kVariableChapter) == 4) {
+			Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotADefault);
+		} else if (Global_Variable_Query(kVariableChapter) == 5) {
+			Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAAct5Default);
+		}
+		break;
+#endif
+
+	case kGoalFreeSlotAGone:
+#if BLADERUNNER_ORIGINAL_BUGS
+		Actor_Set_Health(kActorFreeSlotA, 20, 20);
+#endif
+		// A bug? What does this friendliness affect?
 		Actor_Set_Friendliness_To_Other(kActorFreeSlotA, kActorMcCoy, 40);
 		break;
 
@@ -400,15 +428,15 @@ bool AIScriptFreeSlotA::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 bool AIScriptFreeSlotA::UpdateAnimation(int *animation, int *frame) {
 	switch (_animationState) {
 	case 0:
-		*animation = 861;
+		*animation = kModelAnimationRatIdle;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(861)) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatIdle)) {
 			_animationFrame = 0;
 		}
 		break;
 
 	case 1:
-		*animation = 862;
+		*animation = kModelAnimationRatSlowWalk;
 		if (_var1) {
 			--_var1;
 		} else {
@@ -429,25 +457,25 @@ bool AIScriptFreeSlotA::UpdateAnimation(int *animation, int *frame) {
 		break;
 
 	case 2:
-		*animation = 862;
+		*animation = kModelAnimationRatSlowWalk;
 		++_animationFrame;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(862) - 1) {
-			*animation = 861;
+		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatSlowWalk) - 1) {
+			*animation = kModelAnimationRatIdle;
 			_animationFrame = 0;
 			_animationState = 0;
 		}
 		break;
 
 	case 3:
-		*animation = 858;
+		*animation = kModelAnimationRatRunning;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(858)) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatRunning)) {
 			_animationFrame = 0;
 		}
 		break;
 
 	case 4:
-		*animation = 857;
+		*animation = kModelAnimationRatJumpAttack;
 		++_animationFrame;
 		if (_animationFrame == 1) {
 			int snd;
@@ -462,7 +490,7 @@ bool AIScriptFreeSlotA::UpdateAnimation(int *animation, int *frame) {
 			Ambient_Sounds_Play_Sound(kSfxRATTY4, 99, 0, 0, 20);
 			Actor_Combat_AI_Hit_Attempt(kActorFreeSlotA);
 		}
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(857)) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatJumpAttack)) {
 			_animationState = 0;
 			_animationFrame = 0;
 			Actor_Change_Animation_Mode(kActorFreeSlotA, kAnimationModeCombatIdle);
@@ -472,9 +500,9 @@ bool AIScriptFreeSlotA::UpdateAnimation(int *animation, int *frame) {
 	case 5:
 		// This is an animation for Maggie (exploding) but is also used for generic death states (rats, generic walkers)
 		// probably for debug purposes
-		*animation = 874;
+		*animation = kModelAnimationMaggieExploding;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(874) - 1) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationMaggieExploding) - 1) {
 			Actor_Change_Animation_Mode(kActorFreeSlotA, kAnimationModeIdle);
 		}
 		break;
@@ -483,9 +511,9 @@ bool AIScriptFreeSlotA::UpdateAnimation(int *animation, int *frame) {
 		if (_animationFrame == 1) {
 			Ambient_Sounds_Play_Sound(kSfxRATTY3, 99, 0, 0, 20);
 		}
-		*animation = 860;
+		*animation = kModelAnimationRatHurt;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(860)) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatHurt)) {
 			_animationFrame = 0;
 			_animationState = 0;
 			Actor_Change_Animation_Mode(kActorFreeSlotA, kAnimationModeIdle);
@@ -493,23 +521,24 @@ bool AIScriptFreeSlotA::UpdateAnimation(int *animation, int *frame) {
 		break;
 
 	case 7:
-		*animation = 859;
+		*animation = kModelAnimationRatDying;
 		++_animationFrame;
 		if (_animationFrame == 1) {
 			Ambient_Sounds_Play_Sound(kSfxRATTY5, 99, 0, 0, 25);
 		}
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(859) - 1) {
-			// -1 in the clause is ok here since the next _animationState is 8 which will maintain the last frame (Slice_Animation_Query_Number_Of_Frames(859) - 1)
-			_animationFrame = Slice_Animation_Query_Number_Of_Frames(859) - 1;
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1) {
+			// -1 in the clause is ok here since the next _animationState is 8 which will maintain the last frame (Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1)
+			_animationFrame = Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1;
 			_animationState = 8;
 			Actor_Set_Goal_Number(kActorFreeSlotA, kGoalFreeSlotAGone);
 		}
 		break;
 
 	case 8:
-		*animation = 859;
-		_animationFrame = Slice_Animation_Query_Number_Of_Frames(859) - 1;
+		*animation = kModelAnimationRatDying;
+		_animationFrame = Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1;
 		break;
+
 	default:
 		break;
 	}

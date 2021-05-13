@@ -60,7 +60,7 @@ struct Choice {
 	Common::Rect _region;
 	Common::String _sceneName;
 };
-	
+
 struct Scene {
 	int	 _bitmapNum;
 	int	 _startBitmap;
@@ -109,7 +109,7 @@ private:
 	bool _setDurationFl;
 	bool _leftButtonDownFl;
 	bool _endGameFl;
-	bool _timerInstalled; 
+	bool _timerInstalled;
 	int	 _curSceneIdx, _prvSceneIdx;
 	int	 _curBitmapIdx;
 	int	 _curChoice;
@@ -155,7 +155,7 @@ private:
 
 	void initTables();
 	void readTablesPC(const Common::String &fileName);
-    	void readTables3DO(const Common::String &fileName);
+		void readTables3DO(const Common::String &fileName);
 	int getSceneNumb(const Common::String &sName);
 	int getMouseHiLite();
 

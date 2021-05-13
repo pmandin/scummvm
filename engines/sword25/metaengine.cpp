@@ -33,22 +33,20 @@ uint32 Sword25Engine::getGameFlags() const { return _gameDescription->flags; }
 
 class Sword25MetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "sword25";
 	}
 
-    bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 	bool hasFeature(MetaEngineFeature f) const override;
 
-    int getMaximumSaveSlot() const override { return Sword25::PersistenceService::getSlotCount(); }
+	int getMaximumSaveSlot() const override { return Sword25::PersistenceService::getSlotCount(); }
 	SaveStateList listSaves(const char *target) const override;
 };
 
-bool Sword25MetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	if (desc) {
-		*engine = new Sword25::Sword25Engine(syst, desc);
-	}
-	return desc != 0;
+Common::Error Sword25MetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Sword25::Sword25Engine(syst, desc);
+	return Common::kNoError;
 }
 
 bool Sword25MetaEngine::hasFeature(MetaEngineFeature f) const {

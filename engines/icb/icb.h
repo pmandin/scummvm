@@ -41,10 +41,12 @@ public:
 	virtual ~IcbEngine();
 
 	Common::RandomSource *getRandomSource() { return _randomSource; }
+	static Common::Array<Common::Keymap *> initKeymapsIcb(const char *target);
+	bool hasFeature(EngineFeature f) const override;
 
 protected:
 	// Engine APIs
-	virtual Common::Error run();
+	virtual Common::Error run() override;
 
 private:
 	void initGfx(bool hwAccel, bool fullscreen);

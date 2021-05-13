@@ -75,7 +75,7 @@ int Hugo::Elder(int obj) {
 	p = Parent(obj);
 	cp = Child(p);
 
-        if (p==0 || cp==obj)
+	if (p==0 || cp==obj)
 		return 0;
 
 	lastobj = cp;
@@ -204,7 +204,7 @@ int Hugo::GetProp(int obj, int p, int n, char s) {
 	if (getaddress && MEM(codeptr)!=DECIMAL_T)
 		getpropaddress = true;
 
-        tempself = var[self];
+	tempself = var[self];
 	if (!s) var[self] = obj;
 
 	temp_stack_depth = stack_depth;
@@ -382,10 +382,10 @@ GetNextProp:
 							/* Prevent premature stopping */
 							if (debugger_step_over && !debugger_finish)
 								debugger_run = true;
-							
+
 							if (IsBreakpoint(orig_inprop))
 								complex_prop_breakpoint = true;
-							
+
 							sprintf(debug_line, "Calling:  %s.%s", objectname[obj], propertyname[p]);
 							trace_complex_prop_routine = true;
 
@@ -408,7 +408,7 @@ GetNextProp:
 						   and have therefore removed it.
 						*/
 						if (!flag || (objonly && !g) || ((game_version<22) && PeekWord(inprop-2)==(unsigned int)parseaddr))
-                                                        inprop = (long)PeekWord(inprop+1)*address_scale;
+														inprop = (long)PeekWord(inprop+1)*address_scale;
 						else break;
 					}
 				}

@@ -9,7 +9,6 @@ MODULE_OBJS := \
 	animation_mega_set.o \
 	async_generic.o \
 	barriers.o \
-	bink_stub.o \
 	bone.o \
 	breath.o \
 	camera.o \
@@ -20,7 +19,6 @@ MODULE_OBJS := \
 	custom_logics.o \
 	debug.o \
 	debug_pc.o \
-	detection.o \
 	direct_input.o \
 	drawpoly_pc.o \
 	event_list.o \
@@ -124,7 +122,6 @@ MODULE_OBJS := \
 	common/px_string.o \
 	gfx/gfxstub.o \
 	gfx/gfxstub_dutch.o \
-	gfx/gfxstub_ogl.o \
 	gfx/gfxstub_rev.o \
 	gfx/psx_camera.o \
 	gfx/psx_pcgpu.o \

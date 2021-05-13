@@ -20,22 +20,17 @@
  *
  */
 
-#include "sludge/allfiles.h"
 #include "sludge/backdrop.h"
 #include "sludge/cursors.h"
 #include "sludge/event.h"
-#include "sludge/fonttext.h"
 #include "sludge/freeze.h"
 #include "sludge/graphics.h"
 #include "sludge/newfatal.h"
-#include "sludge/objtypes.h"
 #include "sludge/people.h"
 #include "sludge/region.h"
 #include "sludge/sludge.h"
 #include "sludge/sludger.h"
 #include "sludge/speech.h"
-#include "sludge/sprites.h"
-#include "sludge/sprbanks.h"
 #include "sludge/statusba.h"
 #include "sludge/zbuffer.h"
 
@@ -88,7 +83,7 @@ bool GraphicsManager::freeze() {
 	StatusStuff *newStatusStuff = new StatusStuff;
 	if (!checkNew(newStatusStuff))
 		return false;
-	newFreezer->frozenStatus = copyStatusBarStuff(newStatusStuff);
+	newFreezer->frozenStatus = _vm->_statusBar->copyStatusBarStuff(newStatusStuff);
 
 	_vm->_regionMan->freeze(newFreezer);
 	_vm->_cursorMan->freeze(newFreezer);
@@ -155,7 +150,7 @@ void GraphicsManager::unfreeze(bool killImage) {
 	killParallax();
 	_parallaxStuff = _frozenStuff->parallaxStuff;
 	_vm->_cursorMan->resotre(_frozenStuff);
-	restoreBarStuff(_frozenStuff->frozenStatus);
+	_vm->_statusBar->restoreBarStuff(_frozenStuff->frozenStatus);
 	_vm->_evtMan->restore(_frozenStuff);
 	_vm->_speechMan->restore(_frozenStuff);
 

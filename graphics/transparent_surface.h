@@ -35,15 +35,19 @@
  *
  */
 
-#ifdef SCUMM_LITTLE_ENDIAN
-#define TS_RGB(R,G,B)       (uint32)((0xff << 24) | ((R) << 16) | ((G) << 8) | (B))
+#define TS_RGB(R,G,B)       (uint32)(((R) << 24) | ((G) << 16) | ((B) << 8) | 0xff)
 #define TS_ARGB(A,R,G,B)    (uint32)(((R) << 24) | ((G) << 16) | ((B) << 8) | (A))
-#else
-#define TS_RGB(R,G,B)       (uint32)(((R) << 24) | ((G) << 16) | (B << 8) | 0xff)
-#define TS_ARGB(A,R,G,B)    (uint32)(((R) << 24) | ((G) << 16) | ((B) << 8) | (A))
-#endif
 
 namespace Graphics {
+
+/**
+ * @defgroup graphics_transparent_surface Transparent surface
+ * @ingroup graphics
+ *
+ * @brief TransparentSurface class.
+ *
+ * @{
+ */
 
 // Enums
 /**
@@ -66,11 +70,6 @@ enum AlphaType {
 	ALPHA_OPAQUE = 0,
 	ALPHA_BINARY = 1,
 	ALPHA_FULL = 2
-};
-
-enum TFilteringMode {
-	FILTER_NEAREST = 0,
-	FILTER_BILINEAR = 1
 };
 
 /**
@@ -152,12 +151,10 @@ struct TransparentSurface : public Graphics::Surface {
 	 * scaling. Please do not use this if angle == 0, use plain old scaling function.
 	 *
 	 * @param transform a TransformStruct wrapping the required info. @see TransformStruct
+	 * @param filtering Whether or not to use bilinear filtering.
 	 *
 	 */
-	template <TFilteringMode filteringMode>
-	TransparentSurface *rotoscaleT(const TransformStruct &transform) const;
-
-	TransparentSurface *rotoscale(const TransformStruct &transform) const;
+	TransparentSurface *rotoscale(const TransformStruct &transform, bool filtering = false) const;
 
 	TransparentSurface *convertTo(const PixelFormat &dstFormat, const byte *palette = 0) const;
 
@@ -180,12 +177,12 @@ private:
  * This deleter assures Surface::free is called on deletion.
  */
 /*struct SharedPtrTransparentSurfaceDeleter {
-    void operator()(TransparentSurface *ptr) {
-        ptr->free();
-        delete ptr;
-    }
+	void operator()(TransparentSurface *ptr) {
+		ptr->free();
+		delete ptr;
+	}
 };*/
-
+/** @} */
 } // End of namespace Graphics
 
 

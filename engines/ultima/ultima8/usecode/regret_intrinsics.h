@@ -38,7 +38,7 @@ Intrinsic RegretIntrinsics[] = {
 	Item::I_getStatus, // Intrinsic004()
 	Item::I_orStatus, // Intrinsic005()
 	Item::I_equip, // Intrinsic006()
-	Item::I_isOnScreen, // Intrinsic007()
+	Item::I_isPartlyOnScreen, // Intrinsic007()
 	Actor::I_isNPC, // Intrinsic008()
 	Item::I_getZ, // Intrinsic009()
 	World::I_gameDifficulty, // Intrinsic00A()
@@ -125,7 +125,7 @@ Intrinsic RegretIntrinsics[] = {
 	UCMachine::I_true, // Actually Game::I_isReleaseBuild
 	MainActor::I_setMana, // Intrinsic057()
 	Item::I_use, // Intrinsic058()
-	0, // Intrinsic059()
+	Item::I_setUnkEggType, // Intrinsic059()
 	MusicProcess::I_playMusic, // Intrinsic05A()
 	Item::I_getSurfaceWeight, // Intrinsic05B()
 	Item::I_isCentreOn, // Intrinsic05C()
@@ -143,20 +143,20 @@ Intrinsic RegretIntrinsics[] = {
 	Item::I_hurl, // Intrinsic067()
 	Kernel::I_getNumProcesses, // Intrinsic068()
 	Item::I_getCY, // Intrinsic069()
-	0, // Intrinsic06A()
+	0, // Intrinsic06A() I_isAnimDisabled
 	0, // Intrinsic06B()
 	MusicProcess::I_pauseMusic, // Intrinsic06C()
-	0, // Intrinsic06D()
+	MovieGump::I_playMovieCutsceneRegret, // Intrinsic06D()
 	MusicProcess::I_unpauseMusic, // Intrinsic06E()
 	Item::I_isInNpc, // Intrinsic06F()
 	// 0070
 	Ultima8Engine::I_setCruStasis, // Intrinsic070()
 	Ultima8Engine::I_clrCruStasis, // Intrinsic071()
-	0, // Intrinsic072()
+	0, // Intrinsic072() PaletteFaderProcess::I_jumpToColor
 	PaletteFaderProcess::I_fadeFromBlack, // Intrinsic073()
 	Actor::I_isDead, // Intrinsic074()
 	Actor::I_getNpcNum, // Intrinsic075()
-	0, // Intrinsic076()
+	0, // Intrinsic076() - null intrinsic
 	UCMachine::I_true, // Actually Game::I_isViolenceEnabled
 	Item::I_unequip, // Intrinsic078()
 	Item::I_andStatus, // Intrinsic079()
@@ -187,7 +187,7 @@ Intrinsic RegretIntrinsics[] = {
 	CameraProcess::I_getCameraY, // Intrinsic090()
 	Item::I_setMapArray, // Intrinsic091()
 	Actor::I_getNpcNum, // Intrinsic092()
-	0, // Intrinsic093()
+	Item::I_shoot, // Intrinsic093()
 	CameraProcess::I_setCenterOn, // Intrinsic094()
 	Item::I_enterFastArea, // Intrinsic095()
 	Item::I_setBroken, // Intrinsic096()
@@ -199,7 +199,7 @@ Intrinsic RegretIntrinsics[] = {
 	Actor::I_clrInCombat, // Intrinsic09C()
 	PaletteFaderProcess::I_jumpToGreyScale, // Intrinsic09D()
 	PaletteFaderProcess::I_jumpToNormalPalette, // Intrinsic09E()
-	0, // Intrinsic09F(), same as Int05F in Remorse
+	CruStatusGump::I_showStatusGump, // Intrinsic09F(), same as Int05F in Remorse
 	// 00A0
 	Item::I_andStatus, // Intrinsic0A0()
 	Egg::I_getUnkEggType, // Intrinsic0A1()
@@ -210,7 +210,7 @@ Intrinsic RegretIntrinsics[] = {
 	Item::I_getQHi, // Intrinsic0A6()
 	Actor::I_getLastAnimSet, // Intrinsic0A7()
 	Item::I_getCY, // Intrinsic0A8()
-	0, // Intrinsic0A9()
+	CurrentMap::I_canExistAt, // Intrinsic0A9()
 	Item::I_isOn, // Intrinsic0AA()
 	Actor::I_isDead, // Intrinsic0AB()
 	Item::I_hurl, // Intrinsic0AC()
@@ -263,11 +263,11 @@ Intrinsic RegretIntrinsics[] = {
 	Actor::I_getDefaultActivity1, // Intrinsic0D8()
 	Actor::I_getDefaultActivity2, // Intrinsic0D9()
 	Actor::I_getLastAnimSet, // Intrinsic0DA()
-	0, // Actor::GetFlag0x77Field1()
+	Actor::I_isFalling, // Actor::I_isFalling()
 	Item::I_getQLo, // Intrinsic0DC()
 	Item::I_getQHi, // Intrinsic0DD()
 	Actor::I_getNpcNum, // Intrinsic0DE()
-	0, // Intrinsic0DF()
+	0, // Intrinsic0DF() Item::I_setField0x81
 	// 00E0
 	Item::I_hurl, // Intrinsic0E0()
 	Actor::I_setDead, // Intrinsic0E1()
@@ -355,13 +355,13 @@ Intrinsic RegretIntrinsics[] = {
 	Item::I_andStatus, // Intrinsic12F()
 	// 0130
 	Actor::I_getNpcNum, // Intrinsic130()
-	0, // Intrinsic131() - same as Intrinsic 116 in No Remorse
+	Item::I_fireDistance, // Intrinsic131() - same as Intrinsic 116 in No Remorse
 	Item::I_andStatus, // Intrinsic132()
 	Item::I_hurl, // Intrinsic133()
 	Item::I_andStatus, // Intrinsic134()
 	CameraProcess::I_getCameraY, // Intrinsic135()
 	CameraProcess::I_getCameraZ, // Intrinsic136()
-	0, // Intrinsic137(), same as Int05D in Remorse
+	CruStatusGump::I_hideStatusGump, // Intrinsic137(), same as Int05D in Remorse
 	Actor::I_clrInCombat, // Intrinsic138()
 	Item::I_getTypeFlag, // Intrinsic139()
 	Actor::I_getNpcNum, // Intrinsic13A()
@@ -369,14 +369,14 @@ Intrinsic RegretIntrinsics[] = {
 	Item::I_getCY, // Intrinsic13C()
 	Item::I_getCZ, // Intrinsic13D()
 	Item::I_setFrame, // Intrinsic13E()
-	AudioProcess::I_playAmbientSFX, // Intrinsic13F()
+	AudioProcess::I_playSFX, // Intrinsic13F()
 	// 0140
 	AudioProcess::I_isSFXPlaying, // Intrinsic140()
 	0, // TODO: World::I_clrAlertActive, but not the same as remorse
 	PaletteFaderProcess::I_fadeToGivenColor, // Intrinsic142()
 	Actor::I_isDead, // Intrinsic143()
 	Actor::I_setDead, // Intrinsic144()
-	0, // Intrinsic145()
+	0, // Intrinsic145() - I_maybeShowCredits
 	PaletteFaderProcess::I_jumpToAllGrey, // Intrinsic146()
 	Item::I_getFamilyOfType, // Intrinsic147()
 	Actor::I_getNpcNum, // Intrinsic148()
@@ -389,7 +389,7 @@ Intrinsic RegretIntrinsics[] = {
 	Egg::I_getEggXRange, // Intrinsic14F()
 	// 0150
 	Actor::I_clrInCombat, // Intrinsic150()
-	0, // Intrinsic151()
+	0, // Intrinsic151() PaletteFaderProcess::I_jumpToColor
 	Item::I_setFrame, // Intrinsic152()
 	UCMachine::I_numToStr, // Intrinsic153()
 	Actor::I_getDir, // Intrinsic154()

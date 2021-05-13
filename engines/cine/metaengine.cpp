@@ -54,10 +54,7 @@ public:
 		return "cine";
 	}
 
-    Common::Error createInstance(OSystem *syst, Engine **engine) const override {
-		return AdvancedMetaEngine::createInstance(syst, engine);
-	}
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
 	bool hasFeature(MetaEngineFeature f) const override;
 	SaveStateList listSaves(const char *target) const override;
@@ -86,12 +83,9 @@ bool Cine::CineEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsSavingDuringRuntime);
 }
 
-bool CineMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const Cine::CINEGameDescription *gd = (const Cine::CINEGameDescription *)desc;
-	if (gd) {
-		*engine = new Cine::CineEngine(syst, gd);
-	}
-	return gd != 0;
+Common::Error CineMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Cine::CineEngine(syst, (const Cine::CINEGameDescription *)desc);
+	return Common::kNoError;
 }
 
 SaveStateList CineMetaEngine::listSaves(const char *target) const {
@@ -231,7 +225,7 @@ SaveStateDescriptor CineMetaEngine::querySaveMetaInfos(const char *target, int s
 		SaveStateDescriptor desc;
 		desc.setDescription(_("Empty autosave"));
 		desc.setSaveSlot(slot);
-		desc.setAutosave(true);		
+		desc.setAutosave(true);
 		desc.setWriteProtectedFlag(true);
 		return desc;
 	}
@@ -331,7 +325,7 @@ Common::Error CineEngine::saveGameState(int slot, const Common::String &desc, bo
 }
 
 Common::String CineEngine::getSaveStateName(int slot) const {
-	return getMetaEngine().getSavegameFile(slot, _targetName.c_str());
+	return getMetaEngine()->getSavegameFile(slot, _targetName.c_str());
 }
 
 bool CineEngine::canLoadGameStateCurrently() {

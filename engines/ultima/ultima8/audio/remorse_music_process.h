@@ -24,9 +24,7 @@
 #define ULTIMA8_AUDIO_REMORSEMUSICPROCESS_H
 
 #include "ultima/ultima8/audio/music_process.h"
-#include "ultima/ultima8/kernel/process.h"
-#include "ultima/ultima8/usecode/intrinsics.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 #include "audio/audiostream.h"
 #include "audio/mixer.h"
 
@@ -47,15 +45,13 @@ protected:
 private:
 	int _currentTrack;      //! Currently playing track (don't save)
 
-	//! Is the current music "combat" music
-	bool _combatMusicActive;
-
 	int _savedTrack;
 
 	uint8 _m16offset;
 
 	Audio::SoundHandle _soundHandle;
 
+	// These are both initialized in constructor and do not need to be saved.
 	int _maxTrack;
 	const char **_trackNames;
 
@@ -63,7 +59,6 @@ public:
 	RemorseMusicProcess();
 	~RemorseMusicProcess() override;
 
-	// p_dynamic_cast stuff
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	//! Play some background music. Does not change the current track if combat music is active.  If another track is currently queued, just queues this track for play.

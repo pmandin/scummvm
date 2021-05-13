@@ -25,7 +25,7 @@
 
 #include "ultima/ultima8/gumps/modal_gump.h"
 #include "ultima/ultima8/usecode/intrinsics.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -37,8 +37,10 @@ class KeypadGump : public ModalGump {
 public:
 	ENABLE_RUNTIME_CLASSTYPE()
 
-	KeypadGump(int targetValue);
+	KeypadGump(int targetValue, uint16 ucnotifypid);
 	~KeypadGump() override;
+
+	void Close(bool no_del=false) override;
 
 	void InitGump(Gump *newparent, bool take_focus = true) override;
 
@@ -54,10 +56,15 @@ public:
 	void saveData(Common::WriteStream *ws) override;
 
 protected:
+	void updateDigitDisplay();
+
+	void onDigit(int digit);
+
 	ObjId _buttons[12];
 
 	int _value;
 	int _targetValue;
+	uint16 _ucNotifyPid;
 };
 
 } // End of namespace Ultima8

@@ -42,7 +42,7 @@ namespace Tinsel {
 /** different types of polygon */
 enum POLY_TYPE {
 	POLY_PATH, POLY_NPATH, POLY_BLOCK, POLY_REFER, POLY_EFFECT,
-	POLY_EXIT, POLY_TAG
+	POLY_EXIT, POLY_TAG, POLY_UNKNOWN
 };
 
 // Note 7/10/94, with adjacency reduction ANKHMAP max is 3, UNSEEN max is 4
@@ -184,6 +184,9 @@ public:
 	int32 reel;			// } PATH and NPATH
 	int32 zFactor;		// }
 
+	int32 playfield;	// TinselV3
+	int32 unknown;		// TinselV3
+
 protected:
 	int32 nodecount;		///<The number of nodes in this polygon
 	int32 pnodelistx, pnodelisty;	///<offset in chunk to this array if present
@@ -230,6 +233,8 @@ void Poly::nextPoly() {
 	const byte *pRecord = _pData;
 
 	int typeVal = nextLong(_pData);
+	if ((FROM_32(typeVal) == 6) && TinselV3)
+		typeVal = TO_32(7);
 	if ((FROM_32(typeVal) == 5) && TinselV2)
 		typeVal = TO_32(6);
 	type = (POLY_TYPE)typeVal;
@@ -243,6 +248,11 @@ void Poly::nextPoly() {
 		xoff = nextLong(_pData);
 		yoff = nextLong(_pData);
 		id = nextLong(_pData);
+		if (TinselV3) {
+			warning("TODO: Complete implementation of Polygon loading for Noir");
+			unknown = nextLong(_pData);
+			playfield = nextLong(_pData);
+		}
 		reftype = nextLong(_pData);
 	}
 
@@ -1408,7 +1418,7 @@ void CheckNPathIntegrity() {
 	int		i, j;	// Loop counters
 	int		n;	// Last node in current path
 
-	pps = LockMem(pHandle);		// All polygons
+	pps = _vm->_handle->LockMem(pHandle);		// All polygons
 
 	for (i = 0; i < MAX_POLY; i++) {		// For each polygon..
 		rp = Polys[i];
@@ -1422,9 +1432,9 @@ void CheckNPathIntegrity() {
 			hp = PolygonIndex(rp);
 			for (j = 0; j <= n; j++) {
 				if (!IsInPolygon(cp.getNodeX(j), cp.getNodeY(j), hp)) {
-					sprintf(TextBufferAddr(), "Node (%d, %d) is not in its own path (starting (%d, %d))",
+					sprintf(_vm->_font->TextBufferAddr(), "Node (%d, %d) is not in its own path (starting (%d, %d))",
 						 cp.getNodeX(j), cp.getNodeY(j), rp->cx[0], rp->cy[0]);
-					error(TextBufferAddr());
+					error(_vm->_font->TextBufferAddr());
 				}
 			}
 
@@ -1434,14 +1444,14 @@ void CheckNPathIntegrity() {
 					break;
 
 				if (IsInPolygon(cp.getNodeX(0), cp.getNodeY(0), PolygonIndex(rp->adjpaths[j]))) {
-					sprintf(TextBufferAddr(), "Node (%d, %d) is in another path (starting (%d, %d))",
+					sprintf(_vm->_font->TextBufferAddr(), "Node (%d, %d) is in another path (starting (%d, %d))",
 						 cp.getNodeX(0), cp.getNodeY(0), rp->adjpaths[j]->cx[0], rp->adjpaths[j]->cy[0]);
-					error(TextBufferAddr());
+					error(_vm->_font->TextBufferAddr());
 				}
 				if (IsInPolygon(cp.getNodeX(n), cp.getNodeY(n), PolygonIndex(rp->adjpaths[j]))) {
-					sprintf(TextBufferAddr(), "Node (%d, %d) is in another path (starting (%d, %d))",
+					sprintf(_vm->_font->TextBufferAddr(), "Node (%d, %d) is in another path (starting (%d, %d))",
 						 cp.getNodeX(n), cp.getNodeY(n), rp->adjpaths[j]->cx[0], rp->adjpaths[j]->cy[0]);
-					error(TextBufferAddr());
+					error(_vm->_font->TextBufferAddr());
 				}
 			}
 		}
@@ -1659,9 +1669,9 @@ static void PseudoCenter(POLYGON *p) {
 #ifdef DEBUG
 	//	assert(IsInPolygon(p->pcenterx, p->pcentery, PolygonIndex(p)));  // Pseudo-center is not in path
 	if (!IsInPolygon(p->pcenterx, p->pcentery, PolygonIndex(p))) {
-		sprintf(TextBufferAddr(), "Pseudo-center is not in path (starting (%d, %d)) - polygon reversed?",
+		sprintf(_vm->_font->TextBufferAddr(), "Pseudo-center is not in path (starting (%d, %d)) - polygon reversed?",
 			p->cx[0], p->cy[0]);
-		error(TextBufferAddr());
+		error(_vm->_font->TextBufferAddr());
 	}
 #endif
 }
@@ -1752,6 +1762,15 @@ static void InitTag(const Poly &ptp, int pno, bool bRestart) {
 	CommonInits(TAG, pno, ptp, bRestart);
 }
 
+
+/**
+ * Initialize an unknown polygon.
+ */
+static void InitUnknown(const Poly &ptp, int pno, bool bRestart) {
+	CommonInits(UNKNOWN, pno, ptp, bRestart);
+}
+
+
 /**
  * Called at the restart of a scene, nobbles polygons which are dead.
  */
@@ -1781,6 +1800,10 @@ static void KillDeadPolygons() {
 
 			case TAG:
 				Polys[i]->polyType = EX_TAG;
+				break;
+
+			case UNKNOWN:
+				Polys[i]->polyType = EX_UNKNOWN;
 				break;
 
 			default:
@@ -1859,6 +1882,10 @@ void InitPolygons(SCNHANDLE ph, int numPoly, bool bRestart) {
 				InitTag(ptp, i, bRestart);
 				break;
 
+			case POLY_UNKNOWN:
+				InitUnknown(ptp, i, bRestart);
+				break;
+
 			default:
 				error("Unknown polygon type");
 			}
@@ -1882,7 +1909,13 @@ void InitPolygons(SCNHANDLE ph, int numPoly, bool bRestart) {
 			KillDeadPolygons();
 		} else {
 			for (int i = numPoly - 1; i >= 0; i--) {
-				if (Polys[i]->polyType == TAG) {
+				if (Polys[i]->polyType == TAG){
+					if (TinselV3) {
+						Poly ptp(_vm->_handle->LockMem(pHandle), Polys[i]->pIndex);
+						if (ptp.unknown != -1) {
+							continue;
+						}
+					}
 					PolygonEvent(Common::nullContext, i, STARTUP, 0, false, 0);
 				}
 			}

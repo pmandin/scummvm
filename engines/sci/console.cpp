@@ -27,7 +27,7 @@
 #include "sci/console.h"
 #include "sci/debug.h"
 #include "sci/event.h"
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/engine/state.h"
 #include "sci/engine/kernel.h"
 #include "sci/engine/selector.h"
@@ -76,7 +76,7 @@ bool g_debug_track_mouse_clicks = false;
 static int parse_reg_t(EngineState *s, const char *str, reg_t *dest);
 
 Console::Console(SciEngine *engine) : GUI::Debugger(),
-	_engine(engine), _debugState(engine->_debugState) {
+	_engine(engine), _debugState(engine->_debugState), _videoFrameDelay(0) {
 
 	assert(_engine);
 	assert(_engine->_gamestate);
@@ -179,6 +179,7 @@ Console::Console(SciEngine *engine) : GUI::Debugger(),
 	// Script
 	registerCmd("addresses",			WRAP_METHOD(Console, cmdAddresses));
 	registerCmd("registers",			WRAP_METHOD(Console, cmdRegisters));
+	registerCmd("reg",					WRAP_METHOD(Console, cmdRegisters));
 	registerCmd("dissect_script",		WRAP_METHOD(Console, cmdDissectScript));
 	registerCmd("backtrace",			WRAP_METHOD(Console, cmdBacktrace));
 	registerCmd("bt",					WRAP_METHOD(Console, cmdBacktrace));	// alias
@@ -310,7 +311,6 @@ bool Console::cmdHelp(int argc, const char **argv) {
 	debugPrintf("gc_interval: Number of kernel calls in between garbage collections\n");
 	debugPrintf("simulated_key: Add a key with the specified scan code to the event list\n");
 	debugPrintf("track_mouse_clicks: Toggles mouse click tracking to the console\n");
-	debugPrintf("weak_validations: Turns some validation errors into warnings\n");
 	debugPrintf("script_abort_flag: Set to 1 to abort script execution. Set to 2 to force a replay afterwards\n");
 	debugPrintf("\n");
 	debugPrintf("Debug flags\n");
@@ -405,7 +405,7 @@ bool Console::cmdHelp(int argc, const char **argv) {
 	debugPrintf("\n");
 	debugPrintf("Script:\n");
 	debugPrintf(" addresses - Provides information on how to pass addresses\n");
-	debugPrintf(" registers - Shows the current register values\n");
+	debugPrintf(" registers / reg - Shows the current register values\n");
 	debugPrintf(" dissect_script - Examines a script\n");
 	debugPrintf(" backtrace / bt - Dumps the send/self/super/call/calle/callb stack\n");
 	debugPrintf(" trace / t / s - Executes one operation (no parameters) or several operations (specified as a parameter) \n");
@@ -515,7 +515,7 @@ bool Console::cmdOpcodes(int argc, const char **argv) {
 
 	// If the resource couldn't be loaded, leave
 	if (!r) {
-		debugPrintf("unable to load vocab.998");
+		debugPrintf("unable to load vocab.998\n");
 		return true;
 	}
 
@@ -529,7 +529,7 @@ bool Console::cmdOpcodes(int argc, const char **argv) {
 		int type = r->getUint16LEAt(offset + 2);
 		// QFG3 has empty opcodes
 		Common::String name = len > 0 ? r->getStringAt(offset + 4, len) : "Dummy";
-		debugPrintf("%03x: %03x %20s | ", i, type, name.c_str());
+		debugPrintf("%03x: %03x %15s | ", i, type, name.c_str());
 		if ((i % 3) == 2)
 			debugPrintf("\n");
 	}
@@ -2681,7 +2681,7 @@ bool Console::cmdToggleSound(int argc, const char **argv) {
 	} else if (newState == "stop")
 		g_sci->_soundCmd->processStopSound(id, false);
 	else
-		debugPrintf("New state can either be 'play' or 'stop'");
+		debugPrintf("New state can either be 'play' or 'stop'\n");
 
 	return true;
 }
@@ -2960,7 +2960,7 @@ bool Console::cmdStack(int argc, const char **argv) {
 	}
 
 	if (_engine->_gamestate->_executionStack.empty()) {
-		debugPrintf("No exec stack!");
+		debugPrintf("No exec stack!\n");
 		return true;
 	}
 
@@ -2999,19 +2999,19 @@ bool Console::cmdValueType(int argc, const char **argv) {
 
 	switch (t) {
 	case SIG_TYPE_LIST:
-		debugPrintf("List");
+		debugPrintf("List\n");
 		break;
 	case SIG_TYPE_OBJECT:
-		debugPrintf("Object");
+		debugPrintf("Object\n");
 		break;
 	case SIG_TYPE_REFERENCE:
-		debugPrintf("Reference");
+		debugPrintf("Reference\n");
 		break;
 	case SIG_TYPE_INTEGER:
-		debugPrintf("Integer");
+		debugPrintf("Integer\n");
 		break;
 	case SIG_TYPE_INTEGER | SIG_TYPE_NULL:
-		debugPrintf("Null");
+		debugPrintf("Null\n");
 		break;
 	default:
 		debugPrintf("Erroneous unknown type 0x%02x (%d decimal)\n", t, t);
@@ -4052,7 +4052,7 @@ bool Console::cmdBreakpointAction(int argc, const char **argv) {
 		for (; bp != end; ++bp)
 			bp->_action = bpaction;
 		_debugState.updateActiveBreakpointTypes();
-		return true;	
+		return true;
 	}
 
 	const int idx = atoi(argv[1]);

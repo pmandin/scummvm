@@ -33,7 +33,7 @@
 
 #include "sci/sound/drivers/mididriver.h"
 #include "sci/sound/drivers/macmixer.h"
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 
 #include "common/file.h"
 #include "common/memstream.h"
@@ -798,7 +798,7 @@ void MidiPlayer_Amiga0::AmigaVoice::noteOn(int8 note, int8 velocity) {
 
 	const int8 *seg1 = (const int8 *)ins->samples;
 	const int8 *seg2 = seg1;
-	int16 seg1Size = ins->seg1Size; 
+	int16 seg1Size = ins->seg1Size;
 	seg2 += ins->seg2Offset & 0xfffe;
 	int16 seg2Size = ins->seg2Size;
 

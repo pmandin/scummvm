@@ -26,7 +26,7 @@
 /* VM and kernel declarations */
 
 #include "sci/engine/vm_types.h"	// for reg_t
-#include "sci/resource.h"	// for SciVersion
+#include "sci/resource/resource.h"	// for SciVersion
 
 #include "common/util.h"
 
@@ -152,6 +152,7 @@ enum GlobalVar {
 	kGlobalVarVersion        = 27,
 	kGlobalVarGK2MusicVolume = 76, // 0 to 127
 	kGlobalVarPhant2SecondaryVolume = 76, // 0 to 127
+	kGlobalVarPhant2User           = 80,
 	kGlobalVarFastCast             = 84, // SCI16
 	kGlobalVarMessageType          = 90,
 	kGlobalVarTextSpeed            = 94, // SCI32; 0 is fastest, 8 is slowest
@@ -180,8 +181,7 @@ enum GlobalVar {
 	kGlobalVarPhant2ControlPanel   = 250,
 	kGlobalVarShivers1Score        = 349,
 	kGlobalVarQFG4Flags            = 500,
-	kGlobalVarHoyle5MusicVolume    = 897,
-	kGlobalVarHoyle5ResponseTime  = 899
+	kGlobalVarHoyle5MusicVolume    = 897
 };
 
 /** Number of kernel calls in between gcs; should be < 50000 */

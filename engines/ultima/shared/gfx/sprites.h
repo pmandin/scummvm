@@ -56,12 +56,17 @@ public:
 	Sprite(const byte *src, uint bpp, uint16 w = 16, uint16 h = 16);
 
 	/**
+	 * Copy assignment operator
+	 */
+	Sprite &operator=(const Sprite &src);
+
+	/**
 	 * Draw a tile onto a passed surface
 	 */
 	void draw(Graphics::ManagedSurface &dest, const Common::Point &pt);
 
 	/**
-	 * Return the width of the sprite 
+	 * Return the width of the sprite
 	 */
 	uint16 w() const { return _surface.w; }
 

@@ -47,6 +47,10 @@ public:
 	bool CanAddItem(Item *item, bool checkwghtvol = false) override;
 	bool addItem(Item *item, bool checkwghtvol = false) override;
 
+	//! Get the ShapeInfo object for this MainActor.  Overrided because it changes
+	//! when Crusader is kneeling.
+	const ShapeInfo *getShapeInfoFromGameInstance() const override;
+
 	//! Add item to avatar's inventory, but with some extra logic to do things like combine
 	//! ammo and credits, use batteries, etc.
 	int16 addItemCru(Item *item, bool showtoast);
@@ -100,7 +104,7 @@ public:
 	void setInCombat(int activity) override;
 	void clearInCombat() override;
 
-	ProcId die(uint16 DamageType) override;
+	ProcId die(uint16 damageType, uint16 damagePts, Direction srcDir) override;
 
 	const Std::string &getName() const {
 		return _name;
@@ -139,6 +143,9 @@ public:
 	//! Check if we can absorb a hit with the shield. Returns the modified damage value.
 	int receiveShieldHit(int damage, uint16 damage_type) override;
 
+	//! Detonate used bomb
+	void detonateBomb();
+
 	bool loadData(Common::ReadStream *rs, uint32 version);
 	void saveData(Common::WriteStream *ws) override;
 
@@ -156,6 +163,7 @@ public:
 	INTRINSIC(I_clrKeycards);
 	INTRINSIC(I_addItemCru);
 	INTRINSIC(I_getNumberOfCredits);
+	INTRINSIC(I_switchMap);
 
 	void getWeaponOverlay(const WeaponOverlayFrame *&frame, uint32 &shape);
 
@@ -178,6 +186,8 @@ protected:
 
 	uint16 _shieldSpriteProc;
 	uint16 _shieldType;
+
+	static ShapeInfo *_kneelingShapeInfo;
 
 };
 

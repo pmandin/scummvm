@@ -75,7 +75,6 @@ public:
 	 */
 	class Row {
 	public:
-		Row &operator=(const Row &r);
 		Row &operator<<(float value);
 
 	private:
@@ -132,18 +131,23 @@ public:
 	static Matrix<rows, cols> sum(const Matrix<rows, cols> &m1, const Matrix<rows, cols> &m2);
 	static Matrix<rows, cols> difference(const Matrix<rows, cols> &m1, const Matrix<rows, cols> &m2);
 	static Matrix<rows, cols> product(const Matrix<rows, cols> &m1, float factor);
+	static Matrix<rows, cols> product(const Matrix<rows, cols> &m1, const Matrix<rows, cols> &m2);
 	static Matrix<rows, cols> quotient(const Matrix<rows, cols> &m1, float factor);
+	static Matrix<rows, cols> quotient(const Matrix<rows, cols> &m1, const Matrix<rows, cols> &m2);
 
 	Matrix<rows, cols> &operator=(const Matrix<rows, cols> &m);
 	Matrix<rows, cols> &operator+=(const Matrix<rows, cols> &m);
 	Matrix<rows, cols> &operator-=(const Matrix<rows, cols> &m);
 	Matrix<rows, cols> &operator*=(float factor);
+	Matrix<rows, cols> &operator*=(const Matrix<rows, cols> &m);
 	Matrix<rows, cols> &operator/=(float factor);
+	Matrix<rows, cols> &operator/=(const Matrix<rows, cols> &m);
 
 protected:
 	MatrixBase();
 	MatrixBase(const float *data);
 	MatrixBase(const MatrixBase<rows, cols> &m);
+	MatrixBase &operator=(const MatrixBase<rows, cols> &m);
 
 	inline const Matrix<rows, cols> &getThis() const {
 		return *static_cast<const Matrix<rows, cols> *>(this); }
@@ -228,6 +232,11 @@ MatrixBase<rows, cols>::MatrixBase(const MatrixBase<rows, cols> &m) {
 	setData(m._values);
 }
 
+template<int rows, int cols>
+MatrixBase<rows, cols> &MatrixBase<rows, cols>::operator=(const MatrixBase<rows, cols> &m) {
+	setData(m._values);
+	return *this;
+}
 
 
 
@@ -308,6 +317,15 @@ Matrix<r, c> MatrixBase<r, c>::product(const Matrix<r, c> &m1, float factor) {
 }
 
 template <int r, int c>
+Matrix<r, c> MatrixBase<r, c>::product(const Matrix<r, c> &m1, const Matrix<r, c> &m2) {
+	Matrix<r, c> result;
+	for (int i = 0; i < r * c; ++i) {
+		result._values[i] = m1._values[i] * m2._values[i];
+	}
+	return result;
+}
+
+template <int r, int c>
 Matrix<r, c> MatrixBase<r, c>::quotient(const Matrix<r, c> &m1, float factor) {
 	Matrix<r, c> result;
 	for (int i = 0; i < r * c; ++i) {
@@ -316,6 +334,14 @@ Matrix<r, c> MatrixBase<r, c>::quotient(const Matrix<r, c> &m1, float factor) {
 	return result;
 }
 
+template <int r, int c>
+Matrix<r, c> MatrixBase<r, c>::quotient(const Matrix<r, c> &m1, const Matrix<r, c> &m2) {
+	Matrix<r, c> result;
+	for (int i = 0; i < r * c; ++i) {
+		result._values[i] = m1._values[i] / m2._values[i];
+	}
+	return result;
+}
 
 
 
@@ -389,15 +415,6 @@ MatrixBase<rows, cols>::Row::Row(MatrixBase<rows, cols> *m, int row) :
 }
 
 template<int rows, int cols>
-typename MatrixBase<rows, cols>::Row &MatrixBase<rows, cols>::Row::operator=(const Row &r) {
-	_col = r._col;
-	_row = r._row;
-	_matrix = r._matrix;
-
-	return *this;
-}
-
-template<int rows, int cols>
 typename MatrixBase<rows, cols>::Row &MatrixBase<rows, cols>::Row::operator<<(float value) {
 	assert(_col < cols);
 	_matrix->setValue(_row, _col++, value);
@@ -432,8 +449,18 @@ inline Matrix<r, c> operator-(const Matrix<r, c> &m1, const Matrix<r, c> &m2) {
 }
 
 template <int r, int c>
+inline Matrix<r, c> operator*(const Matrix<r, c> &m1, const Matrix<r, c> &m2) {
+	return Matrix<r, c>::product(m1, m2);
+}
+
+template <int r, int c>
 inline Matrix<r, c> operator*(const Matrix<r, c> &m1, float factor) {
 	return Matrix<r, c>::product(m1, factor);
+}
+
+template <int r, int c>
+inline Matrix<r, c> operator/(const Matrix<r, c> &m1, const Matrix<r, c> &m2) {
+	return Matrix<r, c>::quotient(m1, m2);
 }
 
 template <int r, int c>

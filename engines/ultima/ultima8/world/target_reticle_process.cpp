@@ -20,15 +20,13 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 
 #include "ultima/ultima8/gumps/message_box_gump.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/world/actors/main_actor.h"
+#include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/target_reticle_process.h"
 #include "ultima/ultima8/world/sprite_process.h"
-#include "ultima/ultima8/world/item.h"
 #include "ultima/ultima8/world/world.h"
 #include "ultima/ultima8/world/current_map.h"
 #include "ultima/ultima8/world/get_object.h"
@@ -38,7 +36,6 @@ namespace Ultima8 {
 
 TargetReticleProcess *TargetReticleProcess::_instance = nullptr;
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(TargetReticleProcess)
 
 TargetReticleProcess::TargetReticleProcess() : Process(), _reticleEnabled(true),
@@ -50,13 +47,14 @@ void TargetReticleProcess::run() {
 	Kernel *kernel = Kernel::get_instance();
 	assert(kernel);
 	uint32 frameno = kernel->getFrameNum();
-	Actor *mainactor = getMainActor();
+	Actor *mainactor = getControlledActor();
 	Process *spriteProc = nullptr;
 	if (_reticleSpriteProcess != 0) {
 		spriteProc = kernel->getProcess(_reticleSpriteProcess);
 	}
 
-	if (!_reticleEnabled || (mainactor && !mainactor->isInCombat())) {
+	if (!_reticleEnabled || (mainactor && !mainactor->isInCombat()) || !mainactor) {
+		// Reticle not enabled, actor not in combat, or actor is gone.
 		if (spriteProc) {
 			spriteProc->terminate();
 		}
@@ -64,19 +62,28 @@ void TargetReticleProcess::run() {
 		return;
 	}
 
-	if (frameno - _lastUpdate < 60) {
+	if (_reticleSpriteProcess && (!spriteProc || spriteProc->is_terminated())) {
+		// The sprite proc has finished but the target is still valid - replace
+		// with one that just holds the last frame.
+		Item *target = getItem(_lastTargetItem);
+		if (target)
+			putTargetReticleOnItem(target, true);
+	}
+
+	if (frameno - _lastUpdate < 2 * Kernel::FRAMES_PER_SECOND) {
 		return;
 	}
 
 	bool changed = findTargetItem();
-	if (spriteProc && changed)
+	if (spriteProc && changed) {
 		// Terminate the old process.
 		spriteProc->terminate();
+	}
 	_lastUpdate = frameno;
 }
 
 bool TargetReticleProcess::findTargetItem() {
-	MainActor *mainactor = getMainActor();
+	Actor *mainactor = getControlledActor();
 	CurrentMap *currentmap = World::get_instance()->getCurrentMap();
 	bool changed = false;
 
@@ -94,7 +101,7 @@ bool TargetReticleProcess::findTargetItem() {
 		Item *lastItem = getItem(_lastTargetItem);
 		if (lastItem)
 			lastItem->clearExtFlag(Item::EXT_TARGET);
-		putTargetReticleOnItem(item);
+		putTargetReticleOnItem(item, false);
 		_lastTargetDir = dir;
 		changed = true;
 	} else if (!item) {
@@ -115,7 +122,7 @@ void TargetReticleProcess::avatarMoved() {
 	_lastUpdate = 0;
 }
 
-void TargetReticleProcess::putTargetReticleOnItem(Item *item) {
+void TargetReticleProcess::putTargetReticleOnItem(Item *item, bool last_frame) {
 	int32 x, y, z;
 
 	// TODO: the game does a bunch of other maths here to pick the right location.
@@ -124,7 +131,11 @@ void TargetReticleProcess::putTargetReticleOnItem(Item *item) {
 	item->getCentre(x, y, z);
 	z -= 8;
 
-	Process *p = new SpriteProcess(0x59a, 0, 5, 1, 10, x, y, z, false);
+	Process *p;
+	if (!last_frame)
+		p = new SpriteProcess(0x59a, 0, 5, 1, 10, x, y, z, false);
+	else
+		p = new SpriteProcess(0x59a, 5, 5, 1, 1000, x, y, z, false);
 
 	_reticleSpriteProcess = Kernel::get_instance()->addProcess(p);
 	_lastTargetItem = item->getObjId();
@@ -142,7 +153,7 @@ void TargetReticleProcess::itemMoved(Item *item) {
 	int32 x, y, z;
 	item->getCentre(x, y, z);
 
-	MainActor *mainactor = getMainActor();
+	Actor *mainactor = getControlledActor();
 	int actordir = -1;
 	int dirtoitem = -2;
 	if (mainactor) {
@@ -155,6 +166,7 @@ void TargetReticleProcess::itemMoved(Item *item) {
 	if (spriteproc) {
 		if (actordir != _lastTargetDir || dirtoitem != _lastTargetDir) {
 			spriteproc->terminate();
+			_reticleSpriteProcess = 0;
 			clearSprite();
 		} else {
 			spriteproc->move(x, y, z);
@@ -184,16 +196,20 @@ void TargetReticleProcess::toggle() {
 void TargetReticleProcess::saveData(Common::WriteStream *ws) {
 	Process::saveData(ws);
 
+	ws->writeByte(_reticleEnabled ? 1 : 0);
 	ws->writeUint32LE(_lastUpdate);
 	ws->writeUint16LE(_reticleSpriteProcess);
+	ws->writeByte(_lastTargetDir);
 	ws->writeUint16LE(_lastTargetItem);
 }
 
 bool TargetReticleProcess::loadData(Common::ReadStream *rs, uint32 version) {
 	if (!Process::loadData(rs, version)) return false;
 
+	_reticleEnabled = (rs->readByte() != 0);
 	_lastUpdate = rs->readUint32LE();
 	_reticleSpriteProcess = rs->readUint16LE();
+	_lastTargetDir = static_cast<Direction>(rs->readByte());
 	_lastTargetItem = rs->readUint16LE();
 
 	return true;

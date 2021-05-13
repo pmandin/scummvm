@@ -20,12 +20,11 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/shape_viewer_gump.h"
 
-#include "ultima/ultima8/graphics/shape_archive.h"
 #include "ultima/ultima8/graphics/render_surface.h"
 #include "ultima/ultima8/ultima8.h"
+#include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/graphics/shape_frame.h"
 #include "ultima/ultima8/graphics/shape_info.h"
@@ -38,7 +37,6 @@
 #include "ultima/ultima8/graphics/fonts/font_shape_archive.h"
 #include "ultima/ultima8/graphics/main_shape_archive.h"
 #include "ultima/ultima8/graphics/gump_shape_archive.h"
-#include "ultima/ultima8/gumps/desktop_gump.h"
 
 #include "ultima/ultima8/filesys/file_system.h"
 #include "ultima/ultima8/convert/u8/convert_shape_u8.h"
@@ -59,8 +57,8 @@ ShapeViewerGump::ShapeViewerGump()
 }
 
 ShapeViewerGump::ShapeViewerGump(int x, int y, int width, int height,
-                                 Std::vector<Std::pair<Std::string, ShapeArchive *> > &flexes,
-                                 uint32 flags, int32 layer)
+								 Std::vector<Std::pair<Std::string, ShapeArchive *> > &flexes,
+								 uint32 flags, int32 layer)
 		: ModalGump(x, y, width, height, 0, flags, layer), _flexes(flexes),
 		_curFlex(0), _curShape(0), _curFrame(0), _background(0), _fontNo(0),
 		_shapeW(0), _shapeH(0), _shapeX(0), _shapeY(0) {
@@ -95,10 +93,10 @@ void ShapeViewerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool /*s
 	int32 posx = (_dims.width() - _shapeW) / 2 + _shapeX;
 	int32 posy = (_dims.height() - _shapeH) / 2 + _shapeY - 25;
 
-	Shape *shape = _flex->getShape(_curShape);
+	const Shape *shape = _flex->getShape(_curShape);
 	if (shape && _curFrame < shape->frameCount())
 		surf->Paint(shape, _curFrame, posx, posy);
-	
+
 	RenderedText *rendtext;
 	Font *font = FontManager::get_instance()->getGameFont(_fontNo, true);
 	if (!font)
@@ -121,7 +119,7 @@ void ShapeViewerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool /*s
 		rendtext->draw(surf, 20, 10);
 		delete rendtext;
 	}
-	
+
 	{
 		// Dump the pixel val under the mouse cursor:
 		int32 mx = 0;
@@ -130,7 +128,7 @@ void ShapeViewerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool /*s
 
 		Mouse::get_instance()->getMouseCoords(mx, my);
 		ScreenSpaceToGump(mx, my);
-		
+
 		int32 relx = mx - (posx - _shapeX);
 		int32 rely = my - (posy - _shapeY);
 		if (shape && relx >= 0 && rely >= 0 && relx < _shapeW && rely < _shapeH) {
@@ -143,17 +141,16 @@ void ShapeViewerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool /*s
 				uint8 px_r = shape->getPalette()->_palette[rawpx * 3];
 				uint8 px_g = shape->getPalette()->_palette[rawpx * 3 + 1];
 				uint8 px_b = shape->getPalette()->_palette[rawpx * 3 + 2];
-				
-				sprintf(buf2, "px: (%d/%d, %d/%d): %d (%d, %d, %d)", relx, frame->_xoff, rely, frame->_yoff, rawpx, px_r, px_g, px_b);
+
+				sprintf(buf2, "px: (%d, %d)(%d, %d): %d (%d, %d, %d)", relx, rely, frame->_xoff, frame->_yoff, rawpx, px_r, px_g, px_b);
 				rendtext = font->renderText(buf2, remaining);
 				rendtext->draw(surf, 20, 25);
 				delete rendtext;
 			}
 		}
 
-		
 	}
- 
+
 	{
 		// Additional shapeinfo (only in main shapes archive)
 		MainShapeArchive *mainshapes = dynamic_cast<MainShapeArchive *>(_flex);
@@ -167,11 +164,11 @@ void ShapeViewerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool /*s
 		if (info) {
 			sprintf(buf3, "x: %d, y: %d, z: %d\n flags: 0x%04X, family: %d",
 					info->_x, info->_y, info->_z, info->_flags, info->_family);
-			sprintf(buf4, "equip type: %d, unk. flags: 0x%02X\n weight: %d",
-					info->_equipType, info->_unknown, info->_weight);
-			sprintf(buf5, "vol: %d\n animtype: %d, animdata: %d",
-					info->_volume, info->_animType, info->_animData);
-			sprintf(buf6, "ShapeInfo: %s\n %s, %s\nUsecode: %s",
+			sprintf(buf4, "equip type: %d, weight: %d, vol: %d",
+					info->_equipType, info->_weight, info->_volume);
+			sprintf(buf5, "anim:  type: %d, data: %d, speed: %d",
+					info->_animType, info->_animData, info->_animSpeed);
+			sprintf(buf6, "ShapeInfo: %s\n%s\n%s\nUsecode: %s",
 					buf3, buf4, buf5, GameData::get_instance()->getMainUsecode()->get_class_name(_curShape));
 			rendtext = font->renderText(buf6, remaining);
 			rendtext->draw(surf, 20, _dims.height() - 58);
@@ -187,6 +184,7 @@ bool ShapeViewerGump::OnKeyDown(int key, int mod) {
 
 	switch (key) {
 	case Common::KEYCODE_UP:
+	case Common::KEYCODE_k:
 		if (delta >= _flex->getCount()) delta = 1;
 		if (_curShape < delta)
 			_curShape = _flex->getCount() + _curShape - delta;
@@ -196,6 +194,7 @@ bool ShapeViewerGump::OnKeyDown(int key, int mod) {
 		_curFrame = 0;
 		break;
 	case Common::KEYCODE_DOWN:
+	case Common::KEYCODE_j:
 		if (delta >= _flex->getCount()) delta = 1;
 		if (_curShape + delta >= _flex->getCount())
 			_curShape = _curShape + delta - _flex->getCount();
@@ -204,7 +203,8 @@ bool ShapeViewerGump::OnKeyDown(int key, int mod) {
 		_curFrame = 0;
 		shapechanged = true;
 		break;
-	case Common::KEYCODE_LEFT: {
+	case Common::KEYCODE_LEFT:
+	case Common::KEYCODE_h: {
 		const Shape *shape = _flex->getShape(_curShape);
 		if (shape && shape->frameCount()) {
 			if (delta >= shape->frameCount()) delta = 1;
@@ -215,7 +215,8 @@ bool ShapeViewerGump::OnKeyDown(int key, int mod) {
 		}
 	}
 	break;
-	case Common::KEYCODE_RIGHT: {
+	case Common::KEYCODE_RIGHT:
+	case Common::KEYCODE_l: {
 		const Shape *shape = _flex->getShape(_curShape);
 		if (shape && shape->frameCount()) {
 			if (delta >= shape->frameCount()) delta = 1;
@@ -307,7 +308,7 @@ void ShapeViewerGump::U8ShapeViewer() {
 	_flex.second = gamedata->getFonts();
 	_flexes.push_back(_flex);
 	FileSystem *filesys = FileSystem::get_instance();
-	Common::SeekableReadStream *eintro = filesys->ReadFile("@game/static/eintro.skf");
+	Common::SeekableReadStream *eintro = filesys->ReadFile("static/eintro.skf");
 	if (eintro) {
 		ShapeArchive *eintroshapes = new ShapeArchive(eintro, GameData::OTHER,
 		        PaletteManager::get_instance()->getPalette(PaletteManager::Pal_Game),
@@ -318,7 +319,7 @@ void ShapeViewerGump::U8ShapeViewer() {
 		// !! memory leak
 	}
 
-	Common::SeekableReadStream *endgame = filesys->ReadFile("@game/static/endgame.skf");
+	Common::SeekableReadStream *endgame = filesys->ReadFile("static/endgame.skf");
 	if (endgame) {
 		ShapeArchive *endgameshapes = new ShapeArchive(endgame, GameData::OTHER,
 		        PaletteManager::get_instance()->getPalette(PaletteManager::Pal_Game),

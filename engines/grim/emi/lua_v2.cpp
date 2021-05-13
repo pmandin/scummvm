@@ -481,7 +481,7 @@ void Lua_V2::ThumbnailFromFile() {
 	}
 	int index = (int)lua_getnumber(texIdObj);
 	Common::String filename(lua_getstring(filenameObj));
-	
+
 	if (g_grim->getGameType() == GType_MONKEY4 &&
 		g_grim->getGamePlatform() == Common::kPlatformPS2) {
 		filename += ".ps2";
@@ -691,7 +691,7 @@ void Lua_V2::SetLayerSortOrder() {
 
 // Stub function for builtin functions not yet implemented
 /*static void stubWarning(const char *funcName) {
-    warning("Stub function: %s", funcName);
+	warning("Stub function: %s", funcName);
 }*/
 
 static void stubError(const char *funcName) {

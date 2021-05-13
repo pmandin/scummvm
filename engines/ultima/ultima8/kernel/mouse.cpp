@@ -21,17 +21,13 @@
  */
 
 #include "graphics/cursorman.h"
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/kernel/mouse.h"
-#include "ultima/ultima8/ultima8.h"
-#include "ultima/ultima8/filesys/file_system.h"
+#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/graphics/render_surface.h"
 #include "ultima/ultima8/gumps/gump.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/misc/direction.h"
 #include "ultima/ultima8/misc/direction_util.h"
-#include "ultima/ultima8/misc/rect.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
 
@@ -40,7 +36,7 @@ namespace Ultima8 {
 
 Mouse *Mouse::_instance = nullptr;
 
-Mouse::Mouse() : _flashingCursorTime(0), _mouseOverGump(0), _defaultMouse(nullptr),
+Mouse::Mouse() : _flashingCursorTime(0), _mouseOverGump(0),
 		_dragging(DRAG_NOT), _dragging_objId(0), _draggingItem_startGump(0),
 		_draggingItem_lastGump(0) {
 	_instance = this;
@@ -51,14 +47,6 @@ Mouse::~Mouse() {
 }
 
 void Mouse::setup() {
-	FileSystem *filesys = FileSystem::get_instance();
-	Common::SeekableReadStream *dm = filesys->ReadFile("@data/mouse.tga");
-	_defaultMouse = dm ? Texture::Create(dm, "@data/mouse.tga") : 0;
-
-	if (!_defaultMouse)
-		error("Unable to load '@data/mouse.tga'");
-
-	delete dm;
 	pushMouseCursor();
 }
 
@@ -139,7 +127,7 @@ bool Mouse::isMouseDownEvent(Shared::MouseButton button) const {
 	return _mouseButton[button].isState(MBS_DOWN);
 }
 
-int Mouse::getMouseLength(int mx, int my) {
+int Mouse::getMouseLength(int mx, int my) const {
 	Rect dims;
 	RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
 	screen->GetSurfaceDims(dims);
@@ -171,7 +159,7 @@ int Mouse::getMouseLength(int mx, int my) {
 	}
 }
 
-Direction Mouse::getMouseDirectionWorld(int mx, int my) {
+Direction Mouse::getMouseDirectionWorld(int mx, int my) const {
 	Rect dims;
 	RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
 	screen->GetSurfaceDims(dims);
@@ -183,7 +171,7 @@ Direction Mouse::getMouseDirectionWorld(int mx, int my) {
 	return Direction_Get(dy * 2, dx, dirmode_8dirs);
 }
 
-Direction Mouse::getMouseDirectionScreen(int mx, int my) {
+Direction Mouse::getMouseDirectionScreen(int mx, int my) const {
 	return Direction_OneRight(getMouseDirectionWorld(mx, my), dirmode_8dirs);
 }
 
@@ -215,14 +203,17 @@ int Mouse::getMouseFrame() {
 
 	switch (cursor) {
 	case MOUSE_NORMAL: {
+		if (GAME_IS_CRUSADER)
+			return -1;
+
 		bool combat = false;
-		MainActor *av = getMainActor();
+		const MainActor *av = getMainActor();
 		if (av) {
 			combat = av->isInCombat();
 		}
 
 		// Calculate frame based on direction
-		Direction mousedir = getMouseDirectionScreen(_mousePos.x, _mousePos.y);
+		Direction mousedir = getMouseDirectionScreen();
 		int frame = mouseFrameForDir(mousedir);
 
 		/** length --- frame offset
@@ -231,7 +222,7 @@ int Mouse::getMouseFrame() {
 		 *    2             16
 		 *  combat          25
 		 **/
-		int offset = getMouseLength(_mousePos.x, _mousePos.y) * 8;
+		int offset = getMouseLength() * 8;
 		if (combat && offset != 16) //combat mouse is off if running
 			offset = 25;
 		return frame + offset;
@@ -529,7 +520,7 @@ void Mouse::handleDelayedEvents() {
 				Gump *parent = gump->GetParent();
 				if (parent)
 					parent->ScreenSpaceToGump(mx, my);
-				
+
 				gump->onMouseClick(button, mx, my);
 			}
 
@@ -547,18 +538,15 @@ void Mouse::paint() {
 	RenderSurface *screen = Ultima8Engine::get_instance()->getRenderScreen();
 	GameData *gamedata = GameData::get_instance();
 
-	if (gamedata) {
-		Shape *mouse = gamedata->getMouse();
-		if (mouse) {
-			int frame = getMouseFrame();
-			if (frame >= 0) {
-				screen->Paint(mouse, frame, _mousePos.x, _mousePos.y, true);
-			} else if (frame == -2)
-				screen->Blit(_defaultMouse, 0, 0, _defaultMouse->w, _defaultMouse->h, _mousePos.x, _mousePos.y);
+	if (!gamedata)
+		return;
+
+	const Shape *mouse = gamedata->getMouse();
+	if (mouse) {
+		int frame = getMouseFrame();
+		if (frame >= 0) {
+			screen->Paint(mouse, frame, _mousePos.x, _mousePos.y, true);
 		}
-	} else {
-		if (getMouseFrame() != -1)
-			screen->Blit(_defaultMouse, 0, 0, _defaultMouse->w, _defaultMouse->h, _mousePos.x, _mousePos.y);
 	}
 }
 

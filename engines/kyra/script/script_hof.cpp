@@ -892,16 +892,16 @@ int KyraEngine_HoF::o2_updateSceneAnim(EMCState *script) {
 	//
 	// We know currently of some different animations where this happens.
 	// - Where Marco is dangling from the flesh-eating plant (see bug
-	//   #1923638 "HoF: Marco missing animation frames").
+	//   #3667 "HoF: Marco missing animation frames").
 	// - After giving the ticket to the captain. He would move very fast
 	//   (barely noticeable) onto the ship without this delay.
 	// - The scene after giving the sandwitch to the guards in the city.
-	//   (see bug #1926838 "HoF: Animation plays too fast")
+	//   (see bug #3671 "HoF: Animation plays too fast")
 	//   This scene script calls o2_delay though, but since this updates
 	//   the scene animation scripts again there is no delay for the
 	//   animation.
 	// - When the sheriff enters the jail, either to lock you up or to throw
-	//   away the key. (see bug #1926838 "HoF: Animation plays too fast").
+	//   away the key. (see bug #3671 "HoF: Animation plays too fast").
 
 	if ((stackPos(0) == 2 && _mainCharacter.sceneId == 3) ||
 			(stackPos(0) == 3 && _mainCharacter.sceneId == 33) ||
@@ -1155,8 +1155,7 @@ int KyraEngine_HoF::o2_mushroomEffect(EMCState *script) {
 
 int KyraEngine_HoF::o2_customChat(EMCState *script) {
 	debugC(3, kDebugLevelScriptFuncs, "KyraEngine_HoF::o2_customChat(%p) ('%s', %d, %d)", (const void *)script, stackPosString(0), stackPos(1), stackPos(2));
-	strcpy((char *)_unkBuf500Bytes, stackPosString(0));
-	_chatText = (char *)_unkBuf500Bytes;
+	_chatText = stackPosString(0);
 	_chatObject = stackPos(1);
 
 	_chatVocHigh = _chatVocLow = -1;
@@ -1168,7 +1167,7 @@ int KyraEngine_HoF::o2_customChat(EMCState *script) {
 int KyraEngine_HoF::o2_customChatFinish(EMCState *script) {
 	debugC(3, kDebugLevelScriptFuncs, "KyraEngine_HoF::o2_customChatFinish(%p) ()", (const void *)script);
 	_text->restoreScreen();
-	_chatText = 0;
+	_chatText = "";
 	_chatObject = -1;
 	return 0;
 }
@@ -1452,7 +1451,7 @@ int KyraEngine_HoF::t2_initChat(const TIM *tim, const uint16 *param) {
 
 	if (_flags.lang == Common::JA_JPN) {
 		for (int i = 0; i < _ingameTimJpStrSize; i += 2) {
-			if (!scumm_stricmp(_chatText, _ingameTimJpStr[i]))
+		    if (!scumm_stricmp(_chatText.c_str(), _ingameTimJpStr[i]))
 				_chatText = _ingameTimJpStr[i + 1];
 		}
 	}
@@ -1470,7 +1469,7 @@ int KyraEngine_HoF::t2_updateSceneAnim(const TIM *tim, const uint16 *param) {
 int KyraEngine_HoF::t2_resetChat(const TIM *tim, const uint16 *param) {
 	debugC(3, kDebugLevelScriptFuncs, "KyraEngine_HoF::t2_resetChat(%p, %p) ()", (const void *)tim, (const void *)param);
 	_text->restoreScreen();
-	_chatText = 0;
+	_chatText = "";
 	_chatObject = -1;
 	return 0;
 }

@@ -64,7 +64,6 @@ int32 GetSfxVolume() { return sfxVolume; }
 
 int32 GetMusicVolume() { return musicVolume; }
 
-// TODO: Modify all of this to use 0-255, also syncSoundSettings.
 void SetSpeechVolume(int32 v) {
 	if ((v < 0) || (v > 128))
 		Fatal_error("Speech volume must be 0-128 not %d", v);
@@ -99,7 +98,7 @@ bool8 soundOn = TRUE8;
 
 bool8 pauseSound = TRUE8;
 
-int speechOnSliderValue = MAX_VOLUME;
+int32 speechOnSliderValue = MAX_VOLUME;
 
 const uint8 pitchMakerMults[12 * 16] = PITCH_MULT;
 const uint8 pitchMakerDivs[12 * 16] = PITCH_DIV;
@@ -148,7 +147,7 @@ const uint8 volMakerFunction[MAX_VOLUME + 1] = VOL_FUNCTION;
 
 class VolMaker {
 
-      public:
+	  public:
 	int32 GetVol(int32 i) {
 		if (i < 0)
 			return 0;
@@ -222,11 +221,11 @@ const char *menuCancelSfx = "menu\\menu_cancel";
 // x is in same units...
 int32 EvalEnv(const CEnvelope &env, int32 x) {
 
-	int pa = env.a;
-	int pb = env.b;
-	int pc = env.c;
-	int pd = env.d;
-	int xxx, xx;
+	int32 pa = env.a;
+	int32 pb = env.b;
+	int32 pc = env.c;
+	int32 pd = env.d;
+	int32 xxx, xx;
 
 	if (pa == 0)
 		xxx = 0;
@@ -390,99 +389,10 @@ int32 GetFreeChannel() {
 	return -1;
 }
 
-#define NO_REGISTERED_SOUND 0xffffffff
-#define MAX_REGISTERED_SOUNDS 128
 #define UPDATES_PER_SECOND 10
 #define MAX_ENV_POSITION (128 * 128)
 
 #define VOLUME_SLIDE 48 // how quickly we fade out a sound when it's time to cut off (this happens rarely but we don't want a pop)
-
-class CRegisteredSound {
-
-public:
-	uint32 m_objID;   // id of object calling us
-	uint32 m_sndHash; // hash of sound id
-	int32 m_channel;  // -1 for no channel        needed for the turn everything off hack...
-
-	PXreal m_x;
-	PXreal m_y;
-	PXreal m_z;
-
-	int32 m_restart_time;
-	int32 m_volume;
-
-private:
-	int32 m_sfxNumber; // hash value of sfx
-
-	int32 m_velocity;
-	int32 m_position; // position*128
-
-	int32 m_current_pitch;
-	int32 m_sample_pitch;
-	int32 m_rand_pitch_value;
-	int32 m_next_random_pos;
-	int32 m_pan;
-
-	PXreal m_xoffset;
-	PXreal m_yoffset;
-	PXreal m_zoffset;
-
-	int8 m_objMoving;
-	int8 m_volume_offset; // offset of volume, 127 is normal full volume effect, anything less scales down
-
-public:
-	inline void Wipe();
-
-	CRegisteredSound() : m_objID(NO_REGISTERED_SOUND) { Wipe(); }
-
-	~CRegisteredSound() {}
-
-	inline uint32 GetObjectID() { return m_objID; }
-
-	bool8 IsThisSound(uint32 obj, uint32 sndHash) {
-
-		if ((obj == m_objID) && (sndHash == m_sndHash))
-			return TRUE8;
-		else
-			return FALSE8;
-	}
-
-	inline bool8 IsFree() { return (bool8)(m_objID == NO_REGISTERED_SOUND); }
-	inline bool8 IsUsed() { return (bool8)(m_objID != NO_REGISTERED_SOUND); }
-
-	int32 GetChannel() { return m_channel; }
-
-	bool8 SetHearable();
-	void SetUnhearable();
-
-	void Update10Hz(); // update 10hz (updates position etc)
-
-	void GetPosition();
-
-	void TurnOff();
-
-	// update every game cycle (starts samples if required, updates vol, pitch, pan, stops if end reached, etc...)
-	void UpdateGameCycle(int32 newVol, int32 newPan);
-
-	void GetRandom(CSfx *sfx); // update random value
-	void Register(const cstr sndName, const cstr sfxName, uint32 sfxHash, int8 volume);
-
-	void RegisterFromObject(const uint32 objID, const cstr sndName, const cstr sfxName, uint32 sfxHash, PXreal xo, PXreal yo, PXreal zo, int8 volume);
-	void RegisterFromAbsolute(const uint32 objID, const cstr sndName, const cstr sfxName, uint32 sfxHash, PXreal x, PXreal y, PXreal z, int8 volume);
-
-	void Remove();
-
-	CSfx *GetSfx(); // should be reasonably fast now...
-
-	// volume and pan together (faster than seperate)
-	void GetVolumeAndPan(int32 &vol, int32 &pan);
-
-      private:
-	bool8 m_inSession; // if TRUE sfx is in session cluster, otherwise sfx is in mission cluster
-	bool8 m_turnOff;   // turning off
-	bool8 m_remove;    // if true then when finihsed turning off remove the sound
-	uint8 padding1;
-};
 
 // Get sfx for this registered sound
 CSfx *CRegisteredSound::GetSfx() {
@@ -503,7 +413,7 @@ CSfx *CRegisteredSound::GetSfx() {
 }
 
 // Zero out all the values of a sound
-inline void CRegisteredSound::Wipe() {
+void CRegisteredSound::Wipe() {
 	m_objID = NO_REGISTERED_SOUND;
 	m_sndHash = NULL_HASH;
 	m_channel = -1;
@@ -777,7 +687,7 @@ void CRegisteredSound::GetRandom(CSfx *sfx) {
 }
 
 // register a new sound setting internal params
-void CRegisteredSound::Register(const cstr sndName, const cstr sfxName, uint32 sfxHash, int8 volume) {
+void CRegisteredSound::Register(const char *sndName, const char *sfxName, uint32 sfxHash, int8 volume) {
 	CSfx *sfx;
 
 	// simple params
@@ -831,7 +741,7 @@ void CRegisteredSound::Register(const cstr sndName, const cstr sfxName, uint32 s
 }
 
 // register a sound and take position from the position of the object registering the sound
-void CRegisteredSound::RegisterFromObject(const uint32 objID, const cstr sndName, const cstr sfxName, uint32 sfxHash, PXreal xo, PXreal yo, PXreal zo, int8 volume) {
+void CRegisteredSound::RegisterFromObject(const uint32 objID, const char *sndName, const char *sfxName, uint32 sfxHash, PXreal xo, PXreal yo, PXreal zo, int8 volume) {
 	Register(sndName, sfxName, sfxHash, volume);
 	m_xoffset = xo;
 	m_yoffset = yo;
@@ -853,7 +763,7 @@ void CRegisteredSound::RegisterFromObject(const uint32 objID, const cstr sndName
 }
 
 // register a sound as an absolute position
-void CRegisteredSound::RegisterFromAbsolute(const uint32 objID, const cstr sndName, const cstr sfxName, uint32 sfxHash, PXreal x, PXreal y, PXreal z, int8 volume) {
+void CRegisteredSound::RegisterFromAbsolute(const uint32 objID, const char *sndName, const char *sfxName, uint32 sfxHash, PXreal x, PXreal y, PXreal z, int8 volume) {
 
 	Register(sndName, sfxName, sfxHash, volume);
 
@@ -882,8 +792,8 @@ void CRegisteredSound::GetPosition() {
 void CRegisteredSound::GetVolumeAndPan(int32 &vol, int32 &pan) {
 	// special sound, always central, etc
 	if (m_objID == SPECIAL_SOUND) {
-		vol = (int)m_z; // get sound from z position...!
-		pan = (int)m_x; // pan is x position!
+		vol = (int32)m_z; // get sound from z position...!
+		pan = (int32)m_x; // pan is x position!
 		return;
 	}
 
@@ -913,7 +823,7 @@ void CRegisteredSound::GetVolumeAndPan(int32 &vol, int32 &pan) {
 	return;
 }
 
-CRegisteredSound registeredSounds[MAX_REGISTERED_SOUNDS];
+CRegisteredSound *g_registeredSounds[MAX_REGISTERED_SOUNDS];
 
 int32 assignedSounds = 0;
 
@@ -922,51 +832,46 @@ void UpdateSounds10Hz() {
 	int32 i;
 
 	for (i = 0; i < MAX_REGISTERED_SOUNDS; i++)
-		registeredSounds[i].Update10Hz();
+		g_registeredSounds[i]->Update10Hz();
 }
 
 // called every game cycle sets hearable and unhearable sounds...
 void UpdateHearableSounds() {
 	int32 i;
 	int32 assigned;
-	CRegisteredSound *snd;
-
 	int32 volume;
 	int32 pan;
 
 	assigned = 0;
-	snd = &(registeredSounds[0]);
 
 	// no sound...
 	currentSoundLevel = 0;
 
 	for (i = 0; i < MAX_REGISTERED_SOUNDS; i++) {
-
 		// we might need to do this even if sound is not currently used
-		snd->TurnOff();
+		g_registeredSounds[i]->TurnOff();
 
-		if (snd->IsUsed()) {
+		if (g_registeredSounds[i]->IsUsed()) {
 			// work out if is current hearable by the camera
 
 			// if speical sound or sound is not paused then we get the volume and pan from manager
-			if (((snd->m_objID == SPECIAL_SOUND) && (snd->m_sndHash == menuSoundIDHash)) || (!pauseSound)) {
-				snd->GetVolumeAndPan(volume, pan);
+			if (((g_registeredSounds[i]->m_objID == SPECIAL_SOUND) && (g_registeredSounds[i]->m_sndHash == menuSoundIDHash)) || (!pauseSound)) {
+				g_registeredSounds[i]->GetVolumeAndPan(volume, pan);
 
 				// if volume is greater than zero
 				if (volume > 0) {
-					if (!snd->SetHearable())
+					if (!g_registeredSounds[i]->SetHearable())
 						Fatal_error("Can't find a free channel to play sound");
 				} else
-					snd->SetUnhearable(); // no Update required we are turning off or are off screen....
+					g_registeredSounds[i]->SetUnhearable(); // no Update required we are turning off or are off screen....
 			} else {
 				volume = 0;
 				pan = 0;
 			}
 
 			// update the wave etc
-			snd->UpdateGameCycle(volume, pan);
+			g_registeredSounds[i]->UpdateGameCycle(volume, pan);
 		}
-		snd++;
 	}
 
 	currentSoundLevel = (currentSoundLevel * 100) / (128 * 128);
@@ -977,7 +882,7 @@ void UpdateHearableSounds() {
 
 	// speech volume slider
 
-	int speechOnSliderTarget;
+	int32 speechOnSliderTarget;
 
 	// if somebody speaking...
 	if ((g_mission) && (g_mission->session) && (MS->speech_info[CONV_ID].total_subscribers > 0) && (GetSpeechVolume() > 0))
@@ -1009,8 +914,8 @@ int32 GetSoundCloser(int32 objID, PXreal x, PXreal y, PXreal z) {
 	PXreal dist;     // distance of this object
 	PXreal thisDist; // distance of comparing object
 
-	int i;
-	int c;
+	int32 i;
+	int32 c;
 
 	// if
 	if (objID != SPECIAL_SOUND) {
@@ -1024,18 +929,18 @@ int32 GetSoundCloser(int32 objID, PXreal x, PXreal y, PXreal z) {
 		dist = (PXreal)0;
 
 	PXreal maxDist = dist;
-	int sfxReplace = -1;
-	int channelReplace = -1;
+	int32 sfxReplace = -1;
+	int32 channelReplace = -1;
 
 	for (i = 0; i < MAX_REGISTERED_SOUNDS; i++) {
-		c = registeredSounds[i].m_channel;
+		c = g_registeredSounds[i]->m_channel;
 
 		// can only replace a sound that has a channel and is not a special sound
-		if ((c != -1) && (registeredSounds[i].m_objID != SPECIAL_SOUND)) {
-			registeredSounds[i].GetPosition();
-			x = registeredSounds[i].m_x - px;
-			y = registeredSounds[i].m_y - py;
-			z = registeredSounds[i].m_z - pz;
+		if ((c != -1) && (g_registeredSounds[i]->m_objID != SPECIAL_SOUND)) {
+			g_registeredSounds[i]->GetPosition();
+			x = g_registeredSounds[i]->m_x - px;
+			y = g_registeredSounds[i]->m_y - py;
+			z = g_registeredSounds[i]->m_z - pz;
 			thisDist = x * x + y * y + z * z;
 
 			// if this distance from player is more than the maximum so far then this is the furthest sound
@@ -1057,7 +962,7 @@ int32 GetSoundCloser(int32 objID, PXreal x, PXreal y, PXreal z) {
 		Tdebug("sounds.txt", "replacing sound %d (channel %d) because it's too far away (dist: %g, our dist: %g)", sfxReplace, channelReplace, maxDist, dist);
 
 		// the sfx now has no channel
-		registeredSounds[sfxReplace].m_channel = -1;
+		g_registeredSounds[sfxReplace]->m_channel = -1;
 
 		// we return the channel we have just pinched
 
@@ -1072,14 +977,15 @@ void TurnOffSound() { soundOn = FALSE8; }
 
 void TurnOnSound() { soundOn = TRUE8; }
 
-int32 GetFreeSound(const cstr sfxName) {
+int32 GetFreeSound(const char *sfxName) {
 	int32 i;
 
-	for (i = 0; i < MAX_REGISTERED_SOUNDS; i++)
-		if (registeredSounds[i].IsFree()) {
+	for (i = 0; i < MAX_REGISTERED_SOUNDS; i++) {
+		if (g_registeredSounds[i]->IsFree()) {
 			Tdebug("sounds.txt", "sfx: %s  registered sound: %d", sfxName, i);
 			return i;
 		}
+	}
 
 	Fatal_error("No free sounds! %s", sfxName);
 	return -1;
@@ -1088,9 +994,10 @@ int32 GetFreeSound(const cstr sfxName) {
 int32 FindSound(uint32 obj, uint32 sndHash, int32 start = 0) {
 	int32 i;
 
-	for (i = start; i < MAX_REGISTERED_SOUNDS; i++)
-		if (registeredSounds[i].IsThisSound(obj, sndHash))
+	for (i = start; i < MAX_REGISTERED_SOUNDS; i++) {
+		if (g_registeredSounds[i]->IsThisSound(obj, sndHash))
 			return i;
+	}
 
 	// should this be a fatal error..??
 	return -1;
@@ -1098,13 +1005,13 @@ int32 FindSound(uint32 obj, uint32 sndHash, int32 start = 0) {
 
 // fn_play_sfx_offset(sfxName,sndID,x,y,z,isNico)
 // this is the generic function
-void RegisterSoundOffset(uint32 obj, const cstr offsetName, const cstr sfxName, uint32 sfxHash, const cstr sndID, PXreal xo, PXreal yo, PXreal zo, int isNico, int time,
-                         int8 volume_offset) {
+void RegisterSoundOffset(uint32 obj, const char *offsetName, const char *sfxName, uint32 sfxHash, const char *sndID, PXreal xo, PXreal yo, PXreal zo, int32 isNico, int32 time,
+						 int8 volume_offset) {
 	// check we have the hash before we register any sounds...!
 	if (menuSoundIDHash == NULL_HASH)
 		menuSoundIDHash = HashString(menuSoundID);
 
-	int i;
+	int32 i;
 	i = GetFreeSound(sfxName);
 
 	// for getting nico position
@@ -1115,12 +1022,12 @@ void RegisterSoundOffset(uint32 obj, const cstr offsetName, const cstr sfxName, 
 
 	// special sound
 	if (obj == SPECIAL_SOUND) {
-		registeredSounds[i].RegisterFromAbsolute(obj, sndID, sfxName, sfxHash, xo, yo, zo, volume_offset);
+		g_registeredSounds[i]->RegisterFromAbsolute(obj, sndID, sfxName, sfxHash, xo, yo, zo, volume_offset);
 	}
 	// absolute sound (no name)
 	else if ((offsetName == NULL) || (strcmp(offsetName, "") == 0)) {
 		// absolute address
-		registeredSounds[i].RegisterFromAbsolute(obj, sndID, sfxName, sfxHash, xo, yo, zo, volume_offset);
+		g_registeredSounds[i]->RegisterFromAbsolute(obj, sndID, sfxName, sfxHash, xo, yo, zo, volume_offset);
 	}
 	// object is a nico marker
 	else if (isNico) {
@@ -1130,22 +1037,22 @@ void RegisterSoundOffset(uint32 obj, const cstr offsetName, const cstr sfxName, 
 		x = fi->x;
 		y = fi->y;
 		z = fi->z;
-		registeredSounds[i].RegisterFromAbsolute(obj, sndID, sfxName, sfxHash, x + xo, y + yo, z + zo, volume_offset);
+		g_registeredSounds[i]->RegisterFromAbsolute(obj, sndID, sfxName, sfxHash, x + xo, y + yo, z + zo, volume_offset);
 	}
 	// object is a mega
 	else {
 		// is mega object so attach sound to it
 		// obj=
 		obj = MS->objects->Fetch_item_number_by_name(offsetName);
-		registeredSounds[i].RegisterFromObject(obj, sndID, sfxName, sfxHash, xo, yo, zo, volume_offset);
+		g_registeredSounds[i]->RegisterFromObject(obj, sndID, sfxName, sfxHash, xo, yo, zo, volume_offset);
 	}
 
 	Tdebug("sounds.txt", "restart time is %d %d\n", (-1) - (time), time);
-	registeredSounds[i].m_restart_time = (-1) - (time);
+	g_registeredSounds[i]->m_restart_time = (-1) - (time);
 }
 
 // register a sound from an object
-void RegisterSound(uint32 obj, const cstr sfxName, uint32 sfxHash, const cstr sndID, int8 volume_offset) {
+void RegisterSound(uint32 obj, const char *sfxName, uint32 sfxHash, const char *sndID, int8 volume_offset) {
 	const char *name;
 
 	if (obj == SPECIAL_SOUND)
@@ -1157,11 +1064,11 @@ void RegisterSound(uint32 obj, const cstr sfxName, uint32 sfxHash, const cstr sn
 }
 
 // register a sound from an absolute position
-void RegisterSoundAbsolute(uint32 obj, const cstr sfxName, uint32 sfxHash, const cstr sndID, PXreal x, PXreal y, PXreal z, int8 volume_offset) {
+void RegisterSoundAbsolute(uint32 obj, const char *sfxName, uint32 sfxHash, const char *sndID, PXreal x, PXreal y, PXreal z, int8 volume_offset) {
 	RegisterSoundOffset(obj, NULL, sfxName, sfxHash, sndID, x, y, z, 0, 0, volume_offset);
 }
 
-void RegisterSoundTime(uint32 obj, const cstr sfxName, uint32 sfxHash, const cstr sndID, int32 time, int8 volume_offset) {
+void RegisterSoundTime(uint32 obj, const char *sfxName, uint32 sfxHash, const char *sndID, int32 time, int8 volume_offset) {
 	const char *name;
 
 	if (obj == SPECIAL_SOUND)
@@ -1174,25 +1081,25 @@ void RegisterSoundTime(uint32 obj, const cstr sfxName, uint32 sfxHash, const cst
 
 // special sound
 // for menus
-void RegisterMenuSound(const cstr sfxName, uint32 sfxHash, int32 volume, int32 pan, int8 volume_offset) {
+void RegisterMenuSound(const char *sfxName, uint32 sfxHash, int32 volume, int32 pan, int8 volume_offset) {
 	// volume is z of position
 	RegisterSoundOffset(SPECIAL_SOUND, NULL, sfxName, sfxHash, menuSoundID, (PXreal)pan, (PXreal)0, (PXreal)volume, 0, 0, volume_offset);
 }
 
 // special sound
 // for in game (these are paused just like any other...
-void RegisterSoundSpecial(const cstr sfxName, uint32 sfxHash, const cstr sndID, int32 volume, int32 pan, int8 volume_offset) {
+void RegisterSoundSpecial(const char *sfxName, uint32 sfxHash, const char *sndID, int32 volume, int32 pan, int8 volume_offset) {
 	// volume is z of position
 	RegisterSoundOffset(SPECIAL_SOUND, NULL, sfxName, sfxHash, sndID, (PXreal)pan, (PXreal)0, (PXreal)volume, 0, 0, volume_offset);
 }
 
-void RemoveRegisteredSound(uint32 obj, const cstr sndID) {
+void RemoveRegisteredSound(uint32 obj, const char *sndID) {
 	int32 i;
 	uint32 sndIDHash;
 
 	sndIDHash = HashString(sndID);
 
-	int start;
+	int32 start;
 
 	// do object sounds with id
 
@@ -1201,10 +1108,9 @@ void RemoveRegisteredSound(uint32 obj, const cstr sndID) {
 
 	do {
 		i = FindSound(obj, sndIDHash, start);
-
 		// okay we have one (either object or special)
 		if (i != -1)
-			registeredSounds[i].Remove();
+			g_registeredSounds[i]->Remove();
 
 		// next start of search is one above this...
 		start = i + 1;
@@ -1221,7 +1127,7 @@ void RemoveRegisteredSound(uint32 obj, const cstr sndID) {
 
 		// okay we have one (either object or special)
 		if (i != -1)
-			registeredSounds[i].Remove();
+			g_registeredSounds[i]->Remove();
 
 		// next start of search is one above this...
 		start = i + 1;
@@ -1235,17 +1141,17 @@ void RemoveAllSoundsWithID(uint32 obj) {
 	int32 i;
 
 	for (i = 0; i < MAX_REGISTERED_SOUNDS; i++) {
-		if (registeredSounds[i].GetObjectID() == obj)
-			registeredSounds[i].Remove();
+		if (g_registeredSounds[i]->GetObjectID() == obj)
+			g_registeredSounds[i]->Remove();
 	}
 }
 
 void StopAllSoundsNow() {
 	Tdebug("sounds.txt", "stopping");
-	uint i;
+	uint32 i;
 
 	for (i = 0; i < MAX_REGISTERED_SOUNDS; i++) {
-		registeredSounds[i].Wipe();
+		g_registeredSounds[i]->Wipe();
 	}
 
 	for (i = 0; i < NUMBER_CHANNELS; i++) {

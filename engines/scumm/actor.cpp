@@ -383,7 +383,7 @@ void Actor::setBox(int box) {
 }
 
 void Actor_v3::setupActorScale() {
-	// WORKAROUND bug #1463598: Under certain circumstances, it is possible
+	// WORKAROUND bug #2556: Under certain circumstances, it is possible
 	// for Henry Sr. to reach the front side of Castle Brunwald (following
 	// Indy there). But it seems the game has no small costume for Henry,
 	// hence he is shown as a giant, triple in size compared to Indy.
@@ -2061,11 +2061,11 @@ void ScummEngine::processActors() {
 	// 'optimization' wouldn't yield a useful gain anyway.
 	//
 	// In particular, changing this loop caused a number of bugs in the
-	// past, including bugs #758167, #775097, and #1093867.
+	// past, including bugs #758167, #775097, and #1864.
 	//
 	// Note that Sam & Max uses a stable sorting method. Older games don't
 	// and, according to cyx, neither do newer ones. At least not FT and
-	// COMI. See bug #1220168 for more details.
+	// COMI. See bug #2064 for more details.
 
 	if (_game.id == GID_SAMNMAX) {
 		for (int j = 0; j < numactors; ++j) {
@@ -2634,7 +2634,7 @@ void ScummEngine::setActorRedrawFlags() {
 	int i, j;
 
 	// Redraw all actors if a full redraw was requested.
-	// Also redraw all actors in COMI (see bug #1066329 for details).
+	// Also redraw all actors in COMI (see bug #1825 for details).
 	if (_fullRedraw || _game.version == 8 || (VAR_REDRAW_ALL_ACTORS != 0xFF && VAR(VAR_REDRAW_ALL_ACTORS) != 0)) {
 		for (j = 1; j < _numActors; j++) {
 			_actors[j]->_needRedraw = true;
@@ -2818,11 +2818,15 @@ void ScummEngine::actorTalk(const byte *msg) {
 
 	convertMessageToString(msg, _charsetBuffer, sizeof(_charsetBuffer));
 
+	// I have commented out this workaround, since it did cause another
+	// bug (#11480). It is not okay to skip the stopTalk() calls here.
+	// Instead, I have added two checks from LOOM DOS EGA disasm (one
+	// below and one in CHARSET_1()).
 	// WORKAROUND for bugs #770039 and #770049
-	if (_game.id == GID_LOOM) {
+	/*if (_game.id == GID_LOOM) {
 		if (!*_charsetBuffer)
 			return;
-	}
+	}*/
 
 	if (_actorToPrintStrFor == 0xFF) {
 		if (!_keepText) {
@@ -2848,7 +2852,11 @@ void ScummEngine::actorTalk(const byte *msg) {
 			setTalkingActor(a->_number);
 			if (_game.heversion != 0)
 				((ActorHE *)a)->_heTalking = true;
-			if (!_string[0].no_talk_anim) {
+			// The second check is from LOOM DOS EGA disasm. It prevents weird speech animations
+			// with empty strings (bug #990). The same code is present in CHARSET_1(). The FM-Towns
+			// versions don't have such code, but I do not get the weird speech animations either.
+			// So apparently it is not needed there.
+			if (!_string[0].no_talk_anim && !(_game.id == GID_LOOM && _game.platform != Common::kPlatformFMTowns && !*_charsetBuffer)) {
 				a->runActorTalkScript(a->_talkStartFrame);
 				_useTalkAnims = true;
 			}
@@ -2912,6 +2920,7 @@ void ScummEngine::stopTalk() {
 
 	_haveMsg = 0;
 	_talkDelay = 0;
+	_sound->_sfxMode = 0;
 
 	act = getTalkingActor();
 	if (act && act < 0x80) {

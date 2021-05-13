@@ -24,7 +24,6 @@
 #define ULTIMA8_AUDIO_MUSICFLEX_H
 
 #include "ultima/ultima8/filesys/archive.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -36,7 +35,7 @@ public:
 		SongInfo();
 		~SongInfo();
 
-		char        _filename[16];
+		char        _filename[17];
 		int         _numMeasures;
 		int         _loopJump;
 		int         *_transitions[128];

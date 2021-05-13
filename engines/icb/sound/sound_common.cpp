@@ -35,11 +35,10 @@
 namespace ICB {
 
 // Common code between the three sound-managers
-bool8 openWav(Common::SeekableReadStream *stream, _wavHeader &header, uint32 &length, uint32 &byteOffsetInCluster, int &lengthInCycles) {
+bool8 openWav(Common::SeekableReadStream *stream, _wavHeader &header, uint32 &length, uint32 &byteOffsetInCluster, int32 &lengthInCycles) {
 
-	int pos = stream->pos();
-	// TODO: fopen must happen before
-	int bytesRead;
+	int32 pos = stream->pos();
+	int32 bytesRead;
 	char buff[1024];
 	bool bMore = true;
 
@@ -48,13 +47,13 @@ bool8 openWav(Common::SeekableReadStream *stream, _wavHeader &header, uint32 &le
 		return FALSE8;
 
 	if (header.formatTag != 1) {
-		warning("DirectSound only supports PCM uncompressed wav files");
+		warning("Only supports PCM uncompressed wav files");
 		return FALSE8;
 	}
 
 	// Find the start of the data
 	do {
-		int i = 0;
+		int32 i = 0;
 		bytesRead = stream->read(buff, 256);
 		for (i = 0; i < (bytesRead - 3) && bMore; i++)
 			bMore = READ_LE_U32(buff + i) != MKTAG('a', 't', 'a', 'd');
@@ -78,7 +77,7 @@ bool8 openWav(Common::SeekableReadStream *stream, _wavHeader &header, uint32 &le
 	byteOffsetInCluster = (uint32)stream->pos();
 
 	// Expected number of cycles this sample reguires to completely playback
-	lengthInCycles = (int)ceil(((double)length / (double)header.avgBytesPerSec) * 12.0f * 1.215f);
+	lengthInCycles = (int32)ceil(((double)length / (double)header.avgBytesPerSec) * 12.0f * 1.215f);
 
 	stream->seek(pos);
 

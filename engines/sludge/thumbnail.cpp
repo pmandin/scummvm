@@ -21,22 +21,19 @@
  */
 
 #include "common/savefile.h"
+#include "common/system.h"
+
 #include "image/png.h"
 
-#include "sludge/allfiles.h"
-#include "sludge/backdrop.h"
 #include "sludge/errors.h"
 #include "sludge/graphics.h"
 #include "sludge/imgloader.h"
-#include "sludge/moreio.h"
 #include "sludge/newfatal.h"
-#include "sludge/sludger.h"
 #include "sludge/version.h"
 
 namespace Sludge {
 
-bool GraphicsManager::setThumbnailSize(int thumbWidth, int thumbHeight)
-{
+bool GraphicsManager::setThumbnailSize(int thumbWidth, int thumbHeight) {
 	if (checkSizeValide(thumbWidth, thumbHeight))
 	{
 		_thumbWidth = thumbWidth;
@@ -47,7 +44,6 @@ bool GraphicsManager::setThumbnailSize(int thumbWidth, int thumbHeight)
 }
 
 bool GraphicsManager::saveThumbnail(Common::WriteStream *stream) {
-
 	stream->writeUint32LE(_thumbWidth);
 	stream->writeUint32LE(_thumbHeight);
 

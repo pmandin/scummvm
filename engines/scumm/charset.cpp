@@ -836,9 +836,9 @@ void CharsetRendererPCE::setColor(byte color) {
 #endif
 
 void CharsetRendererV3::printChar(int chr, bool ignoreCharsetMask) {
-	// WORKAROUND for bug #1509509: Indy3 Mac does not show black
+	// WORKAROUND for bug #2703: Indy3 Mac does not show black
 	// characters (such as in the grail diary) if ignoreCharsetMask
-	// is true. See also patch #1851568.
+	// is true. See also bug #8759.
 	if (_vm->_game.id == GID_INDY3 && _vm->_game.platform == Common::kPlatformMacintosh && _color == 0)
 		ignoreCharsetMask = false;
 
@@ -850,8 +850,10 @@ void CharsetRendererV3::printChar(int chr, bool ignoreCharsetMask) {
 
 	assertRange(0, _curId, _vm->_numCharsets - 1, "charset");
 
-	if ((vs = _vm->findVirtScreen(_top)) == NULL)
+	if ((vs = _vm->findVirtScreen(_top)) == NULL) {
+		warning("findVirtScreen(%d) failed, therefore printChar cannot print '%c'", _top, chr);
 		return;
+	}
 
 	if (chr == '@')
 		return;
@@ -1333,6 +1335,9 @@ void CharsetRendererTownsV3::drawBits1(Graphics::Surface &dest, int x, int y, co
 		CharsetRendererV3::drawBits1(dest, x, y, src, drawTop, width, height);
 		return;
 	}
+
+	if (y + height > dest.h)
+		error("Trying to draw below screen boundries");
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 #ifdef USE_RGB_COLOR

@@ -20,28 +20,21 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
+#include "common/config-manager.h"
 
 #include "ultima/ultima8/world/actors/actor_anim_process.h"
-#include "ultima/ultima8/games/game_data.h"
-#include "ultima/ultima8/world/actors/animation.h"
-#include "ultima/ultima8/graphics/anim_dat.h"
 #include "ultima/ultima8/world/actors/anim_action.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
-#include "ultima/ultima8/misc/direction.h"
 #include "ultima/ultima8/misc/direction_util.h"
 #include "ultima/ultima8/world/world.h"
-#include "ultima/ultima8/world/gravity_process.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/kernel/core_app.h"
 #include "ultima/ultima8/usecode/uc_list.h"
 #include "ultima/ultima8/world/loop_script.h"
 #include "ultima/ultima8/world/current_map.h"
-#include "ultima/ultima8/graphics/shape_info.h"
 #include "ultima/ultima8/world/actors/animation_tracker.h"
 #include "ultima/ultima8/audio/audio_process.h"
-#include "ultima/ultima8/conf/setting_manager.h"
 #include "ultima/ultima8/world/actors/combat_process.h"
+#include "ultima/ultima8/world/actors/auto_firer_process.h"
 #include "ultima/ultima8/world/sprite_process.h"
 #include "ultima/ultima8/graphics/palette_fader_process.h"
 #include "ultima/ultima8/world/create_item_process.h"
@@ -58,30 +51,38 @@ namespace Ultima8 {
 static const int watchactor = WATCHACTOR;
 #endif
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(ActorAnimProcess)
 
 ActorAnimProcess::ActorAnimProcess() : Process(), _tracker(nullptr),
 	_dir(dir_north), _action(Animation::walk), _steps(0), _firstFrame(true),
 	_currentStep(0), _repeatCounter(0), _animAborted(false),
-	_attackedSomething(false) {
+	_attackedSomething(false), _interpolate(false) {
 }
 
 ActorAnimProcess::ActorAnimProcess(Actor *actor, Animation::Sequence action,
-                                   Direction dir, uint32 steps) :
+								   Direction dir, uint32 steps) :
 		_dir(dir), _action(action), _steps(steps), _tracker(nullptr),
 		_firstFrame(true), _currentStep(0), _repeatCounter(0),
-		_animAborted(false), _attackedSomething(false)  {
+		_animAborted(false), _attackedSomething(false), _interpolate(false)  {
 	assert(actor);
 	_itemNum = actor->getObjId();
 
 	_type = ACTOR_ANIM_PROC_TYPE;
+#ifdef WATCHACTOR
+	if (_itemNum == watchactor)
+		pout << "Animation [" << Kernel::get_instance()->getFrameNum()
+			 << "] ActorAnimProcess created (" << _itemNum << ","
+			 << _action << "," << _dir << ") steps " << _steps
+			 << Std::endl;
+#endif
 }
 
 bool ActorAnimProcess::init() {
 	_repeatCounter = 0;
 	_animAborted = false;
 	_attackedSomething = false;
+
+	_interpolate = ConfMan.getBool("interpolate");
 
 	Actor *actor = getActor(_itemNum);
 	assert(actor);
@@ -101,7 +102,8 @@ bool ActorAnimProcess::init() {
 		//! Or maybe wait until the previous one finishes?
 
 		perr << "ActorAnimProcess [" << getPid() << "]: ANIMLOCK set on actor "
-		     << _itemNum << Std::endl;
+		     << _itemNum << ", skipping anim (" << _action << "," << _dir << ")"
+			 << Std::endl;
 
 		// for now, just don't play this one.
 		return false;
@@ -123,8 +125,9 @@ bool ActorAnimProcess::init() {
 #ifdef WATCHACTOR
 	if (_itemNum == watchactor)
 		pout << "Animation [" << Kernel::get_instance()->getFrameNum()
-		     << "] ActorAnimProcess " << getPid() << " created ("
-		     << _action << "," << _dir << ") _steps " << _steps << Std::endl;
+		     << "] ActorAnimProcess " << getPid() << " initalized ("
+			 << _itemNum << "," << _action << "," << _dir << ") steps "
+			 << _steps << Std::endl;
 #endif
 
 	return true;
@@ -221,10 +224,9 @@ void ActorAnimProcess::run() {
 				return;
 			}
 
-
 			if (_tracker->isBlocked() &&
-			        !(_tracker->getAnimAction()->hasFlags(AnimAction::AAF_UNSTOPPABLE))) {
-				// FIXME: For blocked large _steps we may still want to do
+				!_tracker->getAnimAction()->hasFlags(AnimAction::AAF_UNSTOPPABLE)) {
+				// FIXME: For blocked large steps we may still want to do
 				//        a partial move. (But how would that work with
 				//        repeated frames?)
 
@@ -255,19 +257,21 @@ void ActorAnimProcess::run() {
 		}
 
 		const AnimFrame *curframe = _tracker->getAnimFrame();
-		if (curframe && curframe->_sfx) {
-			AudioProcess *audioproc = AudioProcess::get_instance();
-			if (audioproc) audioproc->playSFX(curframe->_sfx, 0x60, _itemNum, 0);
-		}
-
 		if (curframe) {
+			if (curframe->_sfx) {
+				AudioProcess *audioproc = AudioProcess::get_instance();
+				if (audioproc) audioproc->playSFX(curframe->_sfx, 0x60, _itemNum, 0);
+			}
+
 			if (curframe->_flags & AnimFrame::AFF_SPECIAL) {
 				// Flag to trigger a special action
 				// E.g.: play draw/sheathe SFX for avatar when weapon equipped,
 				// throw skull-fireball when ghost attacks, ...
 				doSpecial();
-			} else if (curframe->_flags & AnimFrame::AFF_HURTY) {
+			} else if (curframe->_flags & AnimFrame::AFF_HURTY && GAME_IS_CRUSADER) {
 				a->tookHitCru();
+			} else if (curframe->is_cruattack() && GAME_IS_CRUSADER) {
+				doFireWeaponCru(a, curframe);
 			}
 		}
 
@@ -287,18 +291,29 @@ void ActorAnimProcess::run() {
 
 	int32 x, y, z, x2, y2, z2;
 	a->getLocation(x, y, z);
-	_tracker->getInterpolatedPosition(x2, y2, z2, _repeatCounter);
-	if (x == x2 && y == y2 && z == z2) {
-		_tracker->getInterpolatedPosition(x, y, z, _repeatCounter + 1);
-		a->collideMove(x, y, z, false, true); // forced move
-		a->setFrame(_tracker->getFrame());
-	} else {
+
+	if (_interpolate) {
+		// Apply interpolated position on repeated frames
+		_tracker->getInterpolatedPosition(x2, y2, z2, _repeatCounter);
+		if (x == x2 && y == y2 && z == z2) {
+			_tracker->getInterpolatedPosition(x, y, z, _repeatCounter + 1);
+			a->collideMove(x, y, z, false, true); // forced move
+			a->setFrame(_tracker->getFrame());
 #ifdef WATCHACTOR
-		if (_itemNum == watchactor) {
-			pout << "Animation [" << Kernel::get_instance()->getFrameNum()
-			     << "] moved, so aborting this frame." << Std::endl;
+		} else {
+			if (_itemNum == watchactor) {
+				pout << "Animation [" << Kernel::get_instance()->getFrameNum()
+					 << "] moved, so aborting this frame." << Std::endl;
+			}
+#endif // WATCHACTOR
 		}
-#endif
+	} else {
+		// Just move the whole distance on frame 0 of the repeat.
+		if (_repeatCounter == 0) {
+			_tracker->getPosition(x2, y2, z2);
+			a->collideMove(x2, y2, z2, false, true); // forced move
+			a->setFrame(_tracker->getFrame());
+		}
 	}
 
 	// Did we just leave the fast area?
@@ -320,7 +335,9 @@ void ActorAnimProcess::run() {
 		     << "] showing frame (" << x << "," << y << "," << z << ")"
 		     << " shape (" << a->getShape() << "," << _tracker->getFrame()
 		     << ") sfx " << _tracker->getAnimFrame()->_sfx
-		     << " rep " << _repeatCounter << " ";
+		     << " rep " << _repeatCounter << ConsoleStream::hex
+			 << " flags " << _tracker->getAnimFrame()->_flags << " "
+			 << ConsoleStream::dec;
 
 		if (_tracker->isDone()) pout << "D";
 		if (_tracker->isBlocked()) pout << "B";
@@ -439,9 +456,7 @@ void ActorAnimProcess::doSpecial() {
 	}
 
 	// play PC/NPC footsteps
-	SettingManager *settingman = SettingManager::get_instance();
-	bool playavfootsteps;
-	settingman->get("footsteps", playavfootsteps);
+	bool playavfootsteps = ConfMan.getBool("footsteps");
 	if (_itemNum != 1 || playavfootsteps) {
 		UCList itemlist(2);
 		LOOPSCRIPT(script, LS_TOKEN_TRUE);
@@ -497,6 +512,33 @@ void ActorAnimProcess::doSpecial() {
 	}
 
 }
+
+void ActorAnimProcess::doFireWeaponCru(Actor *a, const AnimFrame *f) {
+	assert(a);
+	assert(f);
+	if (!f->is_cruattack())
+		return;
+
+	const Item *wpn = getItem(a->getActiveWeapon());
+	if (!wpn)
+		return;
+	const ShapeInfo *wpninfo = wpn->getShapeInfo();
+	if (!wpninfo || !wpninfo->_weaponInfo)
+		return;
+
+	if (a->getObjId() == 1 && wpninfo->_weaponInfo->_damageType == 6) {
+		Process *auto_firer = new AutoFirerProcess();
+		Kernel::get_instance()->addProcess(auto_firer);
+	}
+
+	a->fireWeapon(f->cru_attackx(), f->cru_attacky(), f->cru_attackz(),
+				  a->getDir(), wpninfo->_weaponInfo->_damageType, true);
+
+	AudioProcess *audioproc = AudioProcess::get_instance();
+	if (audioproc)
+		audioproc->playSFX(wpninfo->_weaponInfo->_sound, 0x80, a->getObjId(), 0, false);
+}
+
 
 
 void ActorAnimProcess::doHitSpecial(Item *hit) {

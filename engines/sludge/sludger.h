@@ -22,7 +22,7 @@
 #ifndef SLUDGER_H
 #define SLUDGER_H
 
-#include "sludge/allfiles.h"
+#include "common/file.h"
 
 namespace Sludge {
 

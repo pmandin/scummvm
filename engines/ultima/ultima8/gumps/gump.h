@@ -27,7 +27,7 @@
 #include "ultima/ultima8/misc/rect.h"
 #include "ultima/ultima8/graphics/frame_id.h"
 #include "ultima/shared/std/containers.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -38,8 +38,8 @@ class Item;
 class GumpNotifyProcess;
 
 class Gump;
-typedef bool (*FindGumpPredicate)(Gump *g);
-template<class T> inline bool IsOfType(Gump *g) { return dynamic_cast<T*>(g) != nullptr; }
+typedef bool (*FindGumpPredicate)(const Gump *g);
+template<class T> inline bool IsOfType(const Gump *g) { return dynamic_cast<const T*>(g) != nullptr; }
 
 /**
  * A Gump is a single GUI element within the game, like the backpack window, menu,
@@ -58,7 +58,7 @@ protected:
 
 	int32 _index;         // 'Index'
 
-	Shape *_shape;        // The gumps shape (always painted at 0,0)
+	const Shape *_shape;  // The gumps shape (always painted at 0,0)
 	uint32 _frameNum;
 
 	//! The Gump list for this gump. This will contain all child gumps,
@@ -89,7 +89,7 @@ public:
 	}
 
 	//! Set the Gump's shape/frame
-	inline void SetShape(Shape *shape, uint32 frameNum) {
+	inline void SetShape(const Shape *shape, uint32 frameNum) {
 		_shape = shape;
 		_frameNum = frameNum;
 	}
@@ -123,6 +123,9 @@ public:
 	template<class T> Gump     *FindGump(bool recursive = true) {
 		return FindGump(&IsOfType<T>, recursive);
 	}
+
+	//! A predicate to find a ui element by its index
+	template<int T> static bool FindByIndex(const Gump *g) { return g->GetIndex() == T; }
 
 	//! Find gump (this, child or NULL) at parent coordinates (mx,my)
 	//! \return the Gump at these coordinates, or NULL if none
@@ -421,17 +424,21 @@ public:
 	// Gump Flags
 	//
 	enum GumpFlags {
-		FLAG_DRAGGABLE      = 0x01,     // When set, the gump can be dragged
-		FLAG_HIDDEN         = 0x02,     // When set, the gump will not be drawn
-		FLAG_CLOSING        = 0x04,     // When set, the gump is closing
-		FLAG_CLOSE_AND_DEL  = 0x08,     // When set, the gump is closing and will be deleted
-		FLAG_ITEM_DEPENDENT = 0x10,     // When set, the gump will be deleted on MapChange
-		FLAG_DONT_SAVE      = 0x20,     // When set, don't save this gump.
-		// Be very careful with this one!
-		FLAG_CORE_GUMP      = 0x40,     // core gump (only children are saved)
-		FLAG_KEEP_VISIBLE   = 0x80      // Keep this gump on-screen.
-		                      // (only for ItemRelativeGumps)
+		FLAG_DRAGGABLE      = 0x0001,     // When set, the gump can be dragged
+		FLAG_HIDDEN         = 0x0002,     // When set, the gump will not be drawn
+		FLAG_CLOSING        = 0x0004,     // When set, the gump is closing
+		FLAG_CLOSE_AND_DEL  = 0x0008,     // When set, the gump is closing and will be deleted
+		FLAG_ITEM_DEPENDENT = 0x0010,     // When set, the gump will be deleted on MapChange
+		FLAG_DONT_SAVE      = 0x0020,     // When set, don't save this gump. Be very careful with this one!
+		FLAG_CORE_GUMP      = 0x0040,     // core gump (only children are saved)
+		FLAG_KEEP_VISIBLE   = 0x0080,     // Keep this gump on-screen. (only for ItemRelativeGumps)
+		FLAG_PREVENT_SAVE	= 0x0100	  // When set, prevent game from saving
 	};
+
+	//! Does this gump have any of the given flags mask set
+	inline bool hasFlags(uint flags) const {
+		return (_flags & flags) != 0;
+	}
 
 	inline bool IsHidden() const {
 		return (_flags & FLAG_HIDDEN) || (_parent && _parent->IsHidden());
@@ -444,6 +451,12 @@ public:
 	}
 	virtual void UnhideGump() {
 		_flags &= ~FLAG_HIDDEN;
+	}
+	void SetVisibility(bool visible) {
+		if (visible)
+			UnhideGump();
+		else
+			HideGump();
 	}
 
 	bool mustSave(bool toplevel) const;
@@ -458,6 +471,10 @@ public:
 		LAYER_ABOVE_NORMAL  = 8,        // Layer for Always on top Gumps
 		LAYER_MODAL         = 12,       // Layer for Modal Gumps
 		LAYER_CONSOLE       = 16        // Layer for the console
+	};
+
+	enum Message {
+		GUMP_CLOSING = 0x100
 	};
 
 	bool loadData(Common::ReadStream *rs, uint32 version);

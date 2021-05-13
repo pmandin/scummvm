@@ -29,7 +29,7 @@
 
 namespace Kyra {
 
-KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const EngineDesc &desc) : KyraEngine_v1(system, flags), _desc(desc) {
+KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const EngineDesc &desc) : KyraEngine_v1(system, flags), _desc(desc), _numLang(flags.hasExtraLanguage ? 4 : 3) {
 	memset(&_sceneAnims, 0, sizeof(_sceneAnims));
 	memset(&_sceneAnimMovie, 0, sizeof(_sceneAnimMovie));
 
@@ -61,7 +61,7 @@ KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const Engi
 	_vocHigh = -1;
 	_chatVocHigh = -1;
 	_chatVocLow = -1;
-	_chatText = 0;
+	_chatText = "";
 	_chatObject = -1;
 	_chatTextEnabled = false;
 
@@ -98,6 +98,7 @@ KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const Engi
 		break;
 
 	case Common::JA_JPN:
+	case Common::ZH_CNA:
 		_lang = 3;
 		break;
 
@@ -150,7 +151,7 @@ void KyraEngine_v2::delay(uint32 amount, bool updateGame, bool isMainLoop) {
 	uint32 start = _system->getMillis();
 	do {
 		if (updateGame) {
-			if (_chatText)
+			if (!_chatText.empty())
 				updateWithText();
 			else
 				update();

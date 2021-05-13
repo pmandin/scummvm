@@ -35,7 +35,7 @@ public:
 		return "tucker";
 	}
 
-    bool hasFeature(MetaEngineFeature f) const override {
+	bool hasFeature(MetaEngineFeature f) const override {
 		switch (f) {
 		case kSupportsListSaves:
 		case kSupportsLoadingDuringStartup:
@@ -50,14 +50,12 @@ public:
 		}
 	}
 
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override {
-		if (desc) {
-			*engine = new Tucker::TuckerEngine(syst, desc->language, desc->flags);
-		}
-		return desc != nullptr;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override {
+		*engine = new Tucker::TuckerEngine(syst, desc->language, desc->flags);
+		return Common::kNoError;
 	}
 
-    SaveStateList listSaves(const char *target) const override {
+	SaveStateList listSaves(const char *target) const override {
 		Common::String pattern = Tucker::generateGameStateFileName(target, 0, true);
 		Common::StringArray filenames = g_system->getSavefileManager()->listSavefiles(pattern);
 		Tucker::TuckerEngine::SavegameHeader header;

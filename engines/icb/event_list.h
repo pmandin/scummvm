@@ -29,9 +29,7 @@
 #define ICB_EVENTLIST_H_INCLUDED
 
 #include "engines/icb/string_vest.h"
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_string.h"
-#include "engines/icb/common/px_assert.h"
 #include "engines/icb/string_vest.h"
 
 namespace ICB {

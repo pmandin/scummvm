@@ -24,6 +24,7 @@
 #include "groovie/saveload.h"
 
 #include "common/system.h"
+#include "common/translation.h"
 
 #include "engines/advancedDetector.h"
 #include "groovie/detection.h"
@@ -32,11 +33,11 @@ namespace Groovie {
 
 class GroovieMetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "groovie";
 	}
 
-    bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
 	bool hasFeature(MetaEngineFeature f) const override;
 
 	SaveStateList listSaves(const char *target) const override;
@@ -45,11 +46,14 @@ public:
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 };
 
-bool GroovieMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const {
-	if (gd) {
-		*engine = new GroovieEngine(syst, (const GroovieGameDescription *)gd);
-	}
-	return gd != 0;
+Common::Error GroovieMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const {
+#ifndef ENABLE_GROOVIE2
+	if (((const GroovieGameDescription *)gd)->version == kGroovieV2)
+		return Common::Error(Common::kUnsupportedGameidError, _s("GroovieV2 support is not compiled in"));
+#endif
+
+	*engine = new GroovieEngine(syst, (const GroovieGameDescription *)gd);
+	return Common::kNoError;
 }
 
 bool GroovieMetaEngine::hasFeature(MetaEngineFeature f) const {

@@ -105,7 +105,7 @@ void FrameBuffer::drawLine(const ZBufferPoint *p1, const ZBufferPoint *p2) {
 	int color = RGB_TO_PIXEL(r, g, b);
 	int sr, sg, sb;
 
-        if (kInterpZ) {
+		if (kInterpZ) {
 		sz = (p2->z - p1->z) / n;
 		z = p1->z;
 	}
@@ -147,7 +147,7 @@ void FrameBuffer::plot(ZBufferPoint *p) {
 	const unsigned int z = p->z;
 	if (_depthWrite && _depthTestEnabled)
 		putPixel<true>(pixelOffset, col, p->x, p->y, z);
-	else 
+	else
 		putPixel<false>(pixelOffset, col, p->x, p->y, z);
 }
 

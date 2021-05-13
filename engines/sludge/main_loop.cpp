@@ -20,27 +20,15 @@
  *
  */
 
-#include "common/debug.h"
-
-#include "graphics/surface.h"
-
-#include "sludge/allfiles.h"
 #include "sludge/backdrop.h"
 #include "sludge/event.h"
-#include "sludge/floor.h"
 #include "sludge/function.h"
 #include "sludge/graphics.h"
-#include "sludge/language.h"
 #include "sludge/loadsave.h"
-#include "sludge/newfatal.h"
-#include "sludge/objtypes.h"
 #include "sludge/people.h"
-#include "sludge/region.h"
-#include "sludge/statusba.h"
 #include "sludge/sound.h"
 #include "sludge/sludge.h"
 #include "sludge/sludger.h"
-#include "sludge/speech.h"
 #include "sludge/timing.h"
 
 namespace Sludge {
@@ -58,7 +46,7 @@ int main_loop(Common::String filename) {
 	startNewFunctionNum(0, 0, NULL, noStack);
 
 	g_sludge->_evtMan->startGame();
-	g_sludge->_timer.init();
+	g_sludge->_timer->init();
 
 	while (!g_sludge->_evtMan->quit()) {
 		g_sludge->_evtMan->checkInput();
@@ -69,7 +57,7 @@ int main_loop(Common::String filename) {
 		}
 		sludgeDisplay();
 		g_sludge->_soundMan->handleSoundLists();
-		g_sludge->_timer.waitFrame();
+		g_sludge->_timer->waitFrame();
 	}
 
 	killSludge();

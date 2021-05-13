@@ -48,6 +48,7 @@ extern int CallLibraryRoutine(CORO_PARAM, int operand, int32 *pp, const INT_CONT
 
 /** list of all opcodes */
 enum OPCODE {
+	OP_NOOP = 0x3F, ///< Do nothing (Actually 0 in Noir, but due to -1 we get this)
 	OP_HALT = 0,	///< end of program
 	OP_IMM = 1,		///< loads signed immediate onto stack
 	OP_ZERO = 2,	///< loads zero onto stack
@@ -172,7 +173,7 @@ const WorkaroundEntry workaroundList[] = {
 	// restoring the game, it will error if you try to move. This
 	// fragment turns off NPC blocking for the Outside Inn rooms so that
 	// the luggage won't block Past Outside Inn.
-	// See bug report #2525010.
+	// See bug report #4101.
 	{TINSEL_V1, false, false, Common::kPlatformUnknown, 444622076, 0,  sizeof(fragment2), fragment2},
 	// Present Outside Inn
 	{TINSEL_V1, false, false, Common::kPlatformUnknown, 352600876, 0,  sizeof(fragment2), fragment2},
@@ -181,7 +182,7 @@ const WorkaroundEntry workaroundList[] = {
 	// STRING||| - this happens if you initiate dialog with one of the
 	// guards, but not the other. So these fragments provide the correct
 	// talk parameters where needed.
-	// See bug report #2831159.
+	// See bug report #4512.
 	{TINSEL_V1, false, false, Common::kPlatformUnknown, 310506872, 463, sizeof(fragment4), fragment4},
 	{TINSEL_V1, false, false, Common::kPlatformUnknown, 310506872, 485, sizeof(fragment5), fragment5},
 	{TINSEL_V1, false, false, Common::kPlatformUnknown, 310506872, 513, sizeof(fragment6), fragment6},
@@ -201,8 +202,8 @@ const WorkaroundEntry workaroundList[] = {
 	// which try to disable the bees animation, since they wait
 	// indefinitely for the global to be cleared, incorrectly believing
 	// the animation is currently playing. This includes:
-	//  * Giving the brochure to the beekeeper (bug #2680397)
-	//  * Stealing the mallets from the wizards (bug #2820788).
+	//  * Giving the brochure to the beekeeper (bug #4222)
+	//  * Stealing the mallets from the wizards (bug #4404).
 	// This fix ensures that the global is reset when the Garden scene
 	// is loaded (both entering and restoring a game).
 	{TINSEL_V2, true, false, Common::kPlatformUnknown, 2888147476U, 0, sizeof(fragment3), fragment3},
@@ -213,7 +214,7 @@ const WorkaroundEntry workaroundList[] = {
 
 	// DW1-GRA/SCN: Corrects the dead-end of being able to give the
 	// whistle back to the pirate before giving him the parrot.
-	// See bug report #2934211.
+	// See bug report #4755.
 	{TINSEL_V1, true, false, Common::kPlatformUnknown, 352601285, 1569, sizeof(fragment11), fragment11},
 	{TINSEL_V1, false, false, Common::kPlatformUnknown, 352602304, 1488, sizeof(fragment12), fragment12},
 
@@ -625,6 +626,12 @@ void Interpret(CORO_PARAM, INT_CONTEXT *ic) {
 		if (TinselV0 && ((opcode & OPMASK) > OP_IMM))
 			opcode += 3;
 
+		if (TinselV3) {
+			// Discworld Noir adds a NOOP-operation as opcode 0, leaving everything
+			// else 1 higher, so we subtract 1, and add NOOP as the highest opcode instead.
+			opcode -= 1;
+		}
+
 		debug(7, "ip=%d  Opcode %d (-> %d)", ic->ip, opcode, opcode & OPMASK);
 		switch (opcode & OPMASK) {
 		case OP_HALT:			// end of program
@@ -849,6 +856,12 @@ void Interpret(CORO_PARAM, INT_CONTEXT *ic) {
 		case OP_ESCOFF:
 			ic->escOn = false;
 			ic->myEscape = 0;
+			break;
+
+		case OP_NOOP:
+			if (!TinselV3) {
+				error("OP_NOOP seen outside Discworld Noir");
+			}
 			break;
 
 		default:

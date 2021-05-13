@@ -36,7 +36,7 @@ namespace Actions {
 class Action;
 } // End of namespace Actions
 } // End of namespace Shared
-	
+
 namespace Ultima1 {
 namespace U1Gfx {
 
@@ -53,10 +53,10 @@ using Shared::CCharacterInputMsg;
  */
 class ViewGame : public Shared::Gfx::VisualContainer {
 	DECLARE_MESSAGE_MAP;
-	bool ShowMsg(CShowMsg &msg);
-	bool EndOfTurnMsg(CEndOfTurnMsg &msg);
-	bool FrameMsg(CFrameMsg &msg);
-	bool CharacterInputMsg(CCharacterInputMsg &msg);
+	bool ShowMsg(CShowMsg *msg);
+	bool EndOfTurnMsg(CEndOfTurnMsg *msg);
+	bool FrameMsg(CFrameMsg *msg);
+	bool CharacterInputMsg(CCharacterInputMsg *msg);
 private:
 	Shared::Info *_info;
 	Shared::ViewportDungeon *_viewportDungeon;

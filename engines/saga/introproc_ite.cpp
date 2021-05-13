@@ -43,6 +43,7 @@ namespace Saga {
 #define INTRO_DE_CAPTION_Y 160
 #define INTRO_IT_CAPTION_Y 160
 #define INTRO_FR_CAPTION_Y 160
+#define INTRO_RU_CAPTION_Y 160
 #define INTRO_VOICE_PAD 50
 #define INTRO_VOICE_LETTERLEN 90
 
@@ -121,16 +122,18 @@ EventColumns *Scene::queueIntroDialogue(EventColumns *eventColumns, int n_dialog
 
 	// Queue narrator dialogue list
 	textEntry.knownColor = kKnownColorSubtitleTextColor;
-	textEntry.effectKnownColor = kKnownColorTransparent;
+	textEntry.effectKnownColor = (_vm->getPlatform() == Common::kPlatformPC98) ? kKnownColorSubtitleEffectColorPC98 : kKnownColorTransparent;
 	textEntry.useRect = true;
-	textEntry.rect.left = 0;
-	textEntry.rect.right = _vm->getDisplayInfo().width;
+	textEntry.rect.left = (_vm->getPlatform() == Common::kPlatformPC98) ? 10 : 0;
+	textEntry.rect.right = _vm->getDisplayInfo().width - (_vm->getPlatform() == Common::kPlatformPC98 ? 10 : 0);
 	if (_vm->getLanguage() == Common::DE_DEU) {
 		textEntry.rect.top = INTRO_DE_CAPTION_Y;
 	} else if (_vm->getLanguage() == Common::IT_ITA) {
 		textEntry.rect.top = INTRO_IT_CAPTION_Y;
 	} else if (_vm->getLanguage() == Common::FR_FRA) {
 		textEntry.rect.top = INTRO_FR_CAPTION_Y;
+	} else if (_vm->getLanguage() == Common::RU_RUS) {
+		textEntry.rect.top = INTRO_RU_CAPTION_Y;
 	} else {
 		textEntry.rect.top = INTRO_CAPTION_Y;
 	}
@@ -140,6 +143,11 @@ EventColumns *Scene::queueIntroDialogue(EventColumns *eventColumns, int n_dialog
 
 	for (i = 0; i < n_dialogues; i++) {
 		textEntry.text = dialogue[i].i_str;
+
+		// For the Japanese version align each string to the bottom of the screen
+		if (_vm->getLanguage() == Common::JA_JPN)
+			textEntry.rect.top = textEntry.rect.bottom - _vm->_font->getHeight(textEntry.font, textEntry.text, textEntry.rect.width(), textEntry.flags);
+
 		entry = _vm->_scene->_textList.addEntry(textEntry);
 
 		if (_vm->_subtitlesEnabled) {
@@ -198,12 +206,14 @@ EventColumns *Scene::queueCredits(int delta_time, int duration, int n_credits, c
 		game = kITECreditsWyrmKeep;
 	else if (_vm->getPlatform() == Common::kPlatformMacintosh)
 		game = kITECreditsMac;
+	else if (_vm->getPlatform() == Common::kPlatformPC98)
+		game = kITECreditsPC98;
 	else if (_vm->getFeatures() & GF_EXTRA_ITE_CREDITS)
 		game = kITECreditsPCCD;
 	else
 		game = kITECreditsPC;
 
-	int line_spacing = 0;
+	int lineHeight = 0;
 	int paragraph_spacing;
 	KnownFont font = kKnownFontSmall;
 	int i;
@@ -223,24 +233,26 @@ EventColumns *Scene::queueCredits(int delta_time, int duration, int n_credits, c
 		switch (credits[i].type) {
 		case kITECreditsHeader:
 			font = kKnownFontSmall;
-			line_spacing = 4;
+			// First glance at disasm might suggest that the 12 here is a typo (instead of 11). But it isn't.
+			// I take into account the extra pixel per paragraph here which the original code will consider
+			// elsewhere. In tbe second (queueing) loop below I have to be a bit more elaborate to get this
+			// right (using extra variable yOffs2), but here it works fine like this...
+			lineHeight = (_vm->getPlatform() == Common::kPlatformPC98) ? 12 : _vm->_font->getHeight(font) + 4;
 			n_paragraphs++;
 			break;
 		case kITECreditsText:
 			font = kKnownFontMedium;
-			line_spacing = 2;
+			lineHeight = (_vm->getPlatform() == Common::kPlatformPC98) ? (_vm->_font->getHeight(font) << 1) : _vm->_font->getHeight(font) + 2;
 			break;
 		default:
 			error("Unknown credit type");
 		}
 
-		credits_height += (_vm->_font->getHeight(font) + line_spacing);
+		credits_height += lineHeight;
 	}
 
 	paragraph_spacing = (200 - credits_height) / (n_paragraphs + 3);
-	credits_height += (n_paragraphs * paragraph_spacing);
-
-	int y = paragraph_spacing;
+	int y = (_vm->getPlatform() == Common::kPlatformPC98) ? paragraph_spacing + 80 : paragraph_spacing;
 
 	TextListEntry textEntry;
 	TextListEntry *entry;
@@ -251,6 +263,8 @@ EventColumns *Scene::queueCredits(int delta_time, int duration, int n_credits, c
 	textEntry.effectKnownColor = (_vm->getPlatform() == Common::kPlatformPC98) ? kKnownColorVerbTextShadow : kKnownColorTransparent;
 	textEntry.flags = (FontEffectFlags)(((_vm->getPlatform() == Common::kPlatformPC98) ? kFontShadow : kFontOutline) | kFontCentered);
 	textEntry.point.x = 160;
+	int yOffs = 0;
+	int yOffs2 = 0;
 
 	for (i = 0; i < n_credits; i++) {
 		if (credits[i].lang != lang && credits[i].lang != Common::UNK_LANG) {
@@ -264,12 +278,14 @@ EventColumns *Scene::queueCredits(int delta_time, int duration, int n_credits, c
 		switch (credits[i].type) {
 		case kITECreditsHeader:
 			font = kKnownFontSmall;
-			line_spacing = 4;
-			y += paragraph_spacing;
+			lineHeight = (_vm->getPlatform() == Common::kPlatformPC98) ? 11 : _vm->_font->getHeight(font) + 4;
+			yOffs = (_vm->getPlatform() == Common::kPlatformPC98) ? -3 : 0;
+			y = y + paragraph_spacing + yOffs2;
 			break;
 		case kITECreditsText:
 			font = kKnownFontMedium;
-			line_spacing = 2;
+			lineHeight = (_vm->getPlatform() == Common::kPlatformPC98) ? (_vm->_font->getHeight(font) << 1) : _vm->_font->getHeight(font) + 2;
+			yOffs = 0;
 			break;
 		default:
 			break;
@@ -277,7 +293,12 @@ EventColumns *Scene::queueCredits(int delta_time, int duration, int n_credits, c
 
 		textEntry.text = credits[i].string;
 		textEntry.font = font;
-		textEntry.point.y = y;
+		textEntry.point.y = y + yOffs;
+
+		if (_vm->getPlatform() == Common::kPlatformPC98) {
+			textEntry.point.y >>= 1;
+			yOffs2 = 1;
+		}
 
 		entry = _vm->_scene->_textList.addEntry(textEntry);
 
@@ -297,7 +318,7 @@ EventColumns *Scene::queueCredits(int delta_time, int duration, int n_credits, c
 		event.time = duration;
 		_vm->_events->chain(eventColumns, event);
 
-		y += (_vm->_font->getHeight(font) + line_spacing);
+		y += lineHeight;
 	}
 
 	return eventColumns;
@@ -386,6 +407,8 @@ int Scene::ITEIntroCaveCommonProc(int param, int caveScene) {
 		lang = 3;
 	else if (_vm->getLanguage() == Common::JA_JPN)
 		lang = 4;
+	else if (_vm->getLanguage() == Common::RU_RUS)
+		lang = 5;
 
 	int n_dialogues = 0;
 
@@ -731,8 +754,7 @@ int Scene::ITEIntroFaireTentProc(int param) {
 		_vm->_events->chain(eventColumns, event);
 
 		// Queue PC98 extra credits
-		if (_vm->getPlatform() == Common::kPlatformPC98)
-			eventColumns = queueCredits(DISSOLVE_DURATION, CREDIT_DURATION1, ARRAYSIZE(creditsTent), creditsTent);
+		eventColumns = queueCredits(DISSOLVE_DURATION, CREDIT_DURATION1, ARRAYSIZE(creditsTent), creditsTent);
 
 		// End scene after momentary pause
 		event.type = kEvTOneshot;

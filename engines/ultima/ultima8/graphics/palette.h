@@ -51,12 +51,19 @@ enum PalTransforms {
 	Transform_GBR       = 6,
 
 	// O[b] = I[r]; O[r] = I[g]; O[g] = I[b];
-	Transform_BRG       = 7
+	Transform_BRG       = 7,
+
+	// Any value beyond this is invalid in savegames.
+	Transform_Invalid 	= 8
 };
 
 struct Palette {
 	void load(Common::ReadStream &rs, Common::ReadStream &xformrs);
 	void load(Common::ReadStream &rs);
+
+	// Transform a single set of rgb values based on the current matrix.
+	// Not designed for speed - just useful for one-offs.
+	void transformRGB(int &r, int &g, int &b) const;
 
 	// 256 rgb entries
 	uint8 _palette[768];

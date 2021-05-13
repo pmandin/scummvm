@@ -31,7 +31,7 @@
 
 namespace Scumm {
 
-    // Helper functions for ManiacMansion workarounds
+	// Helper functions for ManiacMansion workarounds
 #define MM_SCRIPT(script)  (script + (_game.version == 0 ? 0 : 5))
 #define MM_VALUE(v0,v1)    (_game.version == 0 ? v0 : v1)
 
@@ -831,7 +831,7 @@ void ScummEngine_v2::o2_verbOps() {
 		vs->imgindex = 0;
 		vs->prep = prep;
 
-		vs->curRect.left = x;
+		vs->curRect.left = vs->origLeft = x;
 		vs->curRect.top = y;
 
 		// FIXME: these keyboard map depends on the language of the game.
@@ -1113,7 +1113,7 @@ void ScummEngine_v2::o2_walkActorTo() {
 
 	int act = getVarOrDirectByte(PARAM_1);
 
-	// WORKAROUND bug #1252606
+	// WORKAROUND bug #2110
 	if (_game.id == GID_ZAK && _game.version == 1 && vm.slot[_currentScript].number == 115 && act == 249) {
 		act = VAR(VAR_EGO);
 	}
@@ -1149,7 +1149,7 @@ void ScummEngine_v2::o2_startScript() {
 			return;
 	}
 
-	// WORKAROUND bug #1447058: In Maniac Mansion, when the door bell
+	// WORKAROUND bug #2524: In Maniac Mansion, when the door bell
 	// rings, then this normally causes Ted Edison to leave his room.
 	// This is controlled by script 87. On the other hand, when the
 	// player enters Ted's room while Ted is in it, then Ted captures
@@ -1188,44 +1188,44 @@ void ScummEngine_v2::o2_startScript() {
 		}
 	}
 
-    // WORKAROUND bug #4556: Purple Tentacle can appear in the lab, after being
-    // chased out and end up stuck in the room. This bug is triggered if the player
-    // enters the lab within 45 minutes of first entering the mansion and has chased Purple Tentacle
-    // out. Eventually the cutscene with Purple Tentacle chasing Sandy in the lab
-    // will play. This script leaves Purple Tentacle in the room causing him to become
-    // a permanent resident.
-    // Our fix is simply to prevent the Cutscene playing, if the lab has already been stormed
-    if (_game.id == GID_MANIAC) {
-        if (_game.version >= 1 && script == 155) {
-            if (VAR(120) == 1)
-                return;
-        }
-        // Script numbers are different in V0
-        if (_game.version == 0 && script == 150) {
-            if (VAR(104) == 1)
-                return;
-        }
-    }
+	// WORKAROUND bug #4556: Purple Tentacle can appear in the lab, after being
+	// chased out and end up stuck in the room. This bug is triggered if the player
+	// enters the lab within 45 minutes of first entering the mansion and has chased Purple Tentacle
+	// out. Eventually the cutscene with Purple Tentacle chasing Sandy in the lab
+	// will play. This script leaves Purple Tentacle in the room causing him to become
+	// a permanent resident.
+	// Our fix is simply to prevent the Cutscene playing, if the lab has already been stormed
+	if (_game.id == GID_MANIAC) {
+		if (_game.version >= 1 && script == 155) {
+			if (VAR(120) == 1)
+				return;
+		}
+		// Script numbers are different in V0
+		if (_game.version == 0 && script == 150) {
+			if (VAR(104) == 1)
+				return;
+		}
+	}
 
 	runScript(script, 0, 0, 0);
 }
 
 void ScummEngine_v2::stopScriptCommon(int script) {
-    // WORKAROUND bug #4112: If you enter the lab while Dr. Fred has the powered turned off
-    // to repair the Zom-B-Matic, the script will be stopped and the power will never turn
-    // back on. This fix forces the power on, when the player enters the lab,
-    // if the script which turned it off is running
-    if (_game.id == GID_MANIAC && _roomResource == 4 && isScriptRunning(MM_SCRIPT(138))) {
+	// WORKAROUND bug #4112: If you enter the lab while Dr. Fred has the powered turned off
+	// to repair the Zom-B-Matic, the script will be stopped and the power will never turn
+	// back on. This fix forces the power on, when the player enters the lab,
+	// if the script which turned it off is running
+	if (_game.id == GID_MANIAC && _roomResource == 4 && isScriptRunning(MM_SCRIPT(138))) {
 
-        if (vm.slot[_currentScript].number == MM_VALUE(130, 163)) {
+		if (vm.slot[_currentScript].number == MM_VALUE(130, 163)) {
 
-            if (script == MM_SCRIPT(138)) {
+			if (script == MM_SCRIPT(138)) {
 
-                int obj = MM_VALUE(124, 157);
-                putState(obj, getState(obj) & ~kObjectState_08);
-            }
-        }
-    }
+				int obj = MM_VALUE(124, 157);
+				putState(obj, getState(obj) & ~kObjectState_08);
+			}
+		}
+	}
 
 	if (_game.id == GID_MANIAC && _roomResource == 26 && vm.slot[_currentScript].number == 10001) {
 	// FIXME: Nasty hack for bug #915575

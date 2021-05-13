@@ -24,17 +24,15 @@
 
 #include "ultima/ultima8/graphics/fonts/font_manager.h"
 
-#include "ultima/ultima8/graphics/fonts/font.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/graphics/fonts/shape_font.h"
 #include "ultima/ultima8/graphics/fonts/font_shape_archive.h"
-#include "ultima/ultima8/filesys/idata_source.h"
 #include "ultima/ultima8/filesys/file_system.h"
 #include "ultima/ultima8/graphics/fonts/tt_font.h"
 #include "ultima/ultima8/graphics/fonts/jp_font.h"
 #include "ultima/ultima8/graphics/palette_manager.h"
-#include "ultima/ultima8/graphics/palette.h"
-#include "ultima/ultima8/conf/setting_manager.h"
+
+#include "common/config-manager.h"
 #include "graphics/fonts/ttf.h"
 
 namespace Ultima {
@@ -42,28 +40,18 @@ namespace Ultima8 {
 
 FontManager *FontManager::_fontManager = nullptr;
 
-FontManager::FontManager(bool ttf_antialiasing) : _ttfAntialiasing(ttf_antialiasing) {
+FontManager::FontManager() {
 	debugN(MM_INFO, "Creating Font Manager...\n");
 
 	_fontManager = this;
 
-	SettingManager *settingman = SettingManager::get_instance();
-	settingman->setDefault("ttf_highres", true);
+	ConfMan.registerDefault("font_highres", true);
 }
 
 FontManager::~FontManager() {
 	debugN(MM_INFO, "Destroying Font Manager...\n");
 
 	resetGameFonts();
-
-	for (unsigned int i = 0; i < _ttFonts.size(); ++i)
-		delete _ttFonts[i];
-	_ttFonts.clear();
-
-	TTFFonts::iterator iter;
-	for (iter = _ttfFonts.begin(); iter != _ttfFonts.end(); ++iter)
-		delete iter->_value;
-	_ttfFonts.clear();
 
 	assert(_fontManager == this);
 	_fontManager = nullptr;
@@ -74,10 +62,18 @@ void FontManager::resetGameFonts() {
 	for (unsigned int i = 0; i < _overrides.size(); ++i)
 		delete _overrides[i];
 	_overrides.clear();
-}
+
+	for (unsigned int i = 0; i < _ttFonts.size(); ++i)
+		delete _ttFonts[i];
+	_ttFonts.clear();
+
+	TTFFonts::iterator iter;
+	for (iter = _ttfFonts.begin(); iter != _ttfFonts.end(); ++iter)
+		delete iter->_value;
+	_ttfFonts.clear();}
 
 Font *FontManager::getGameFont(unsigned int fontnum,
-        bool allowOverride) {
+		bool allowOverride) {
 	if (allowOverride && fontnum < _overrides.size() && _overrides[fontnum])
 		return _overrides[fontnum];
 
@@ -91,7 +87,7 @@ Font *FontManager::getTTFont(unsigned int fontnum) {
 }
 
 
-Graphics::Font *FontManager::getTTF_Font(const Std::string &filename, int pointsize) {
+Graphics::Font *FontManager::getTTF_Font(const Std::string &filename, int pointsize, bool antialiasing) {
 	TTFId id;
 	id._filename = filename;
 	id._pointSize = pointsize;
@@ -103,26 +99,27 @@ Graphics::Font *FontManager::getTTF_Font(const Std::string &filename, int points
 		return iter->_value;
 
 	Common::SeekableReadStream *fontids;
-	fontids = FileSystem::get_instance()->ReadFile("@data/" + filename);
+	fontids = FileSystem::get_instance()->ReadFile("data/" + filename);
 	if (!fontids) {
-		perr << "Failed to open TTF: @data/" << filename << Std::endl;
+		perr << "Failed to open TTF: data/" << filename << Std::endl;
 		return nullptr;
 	}
 
 #ifdef USE_FREETYPE2
 	// open font using ScummVM TTF API
 	// Note: The RWops and ReadStream will be deleted by the TTF_Font
-	Graphics::Font *font = Graphics::loadTTFFont(*fontids, pointsize);
+	Graphics::TTFRenderMode mode = antialiasing ? Graphics::kTTFRenderModeNormal : Graphics::kTTFRenderModeMonochrome;
+	Graphics::Font *font = Graphics::loadTTFFont(*fontids, pointsize, Graphics::kTTFSizeModeCharacter, 0, mode, 0, false);
 
 	if (!font) {
-		perr << "Failed to open TTF: @data/" << filename << Std::endl;
+		perr << "Failed to open TTF: data/" << filename << Std::endl;
 		return nullptr;
 	}
 
 	_ttfFonts[id] = font;
 
 #ifdef DEBUG
-	pout << "Opened TTF: @data/" << filename << "." << Std::endl;
+	pout << "Opened TTF: data/" << filename << "." << Std::endl;
 #endif
 
 	return font;
@@ -143,16 +140,15 @@ void FontManager::setOverride(unsigned int fontnum, Font *newFont) {
 
 
 bool FontManager::addTTFOverride(unsigned int fontnum, const Std::string &filename,
-                                 int pointsize, uint32 rgb, int bordersize,
-                                 bool SJIS) {
-	Graphics::Font *f = getTTF_Font(filename, pointsize);
+								 int pointsize, uint32 rgb, int bordersize,
+								 bool SJIS) {
+	bool antialiasing = ConfMan.getBool("font_antialiasing");
+	Graphics::Font *f = getTTF_Font(filename, pointsize, antialiasing);
 	if (!f)
 		return false;
 
-	TTFont *font = new TTFont(f, rgb, bordersize, _ttfAntialiasing, SJIS);
-	SettingManager *settingman = SettingManager::get_instance();
-	bool highres;
-	settingman->get("ttf_highres", highres);
+	TTFont *font = new TTFont(f, rgb, bordersize, antialiasing, SJIS);
+	bool highres = ConfMan.getBool("font_highres");
 	font->setHighRes(highres);
 
 	setOverride(fontnum, font);
@@ -165,7 +161,7 @@ bool FontManager::addTTFOverride(unsigned int fontnum, const Std::string &filena
 }
 
 bool FontManager::addJPOverride(unsigned int fontnum,
-                                unsigned int jpfont, uint32 rgb) {
+								unsigned int jpfont, uint32 rgb) {
 	ShapeFont *jf = dynamic_cast<ShapeFont *>(GameData::get_instance()->getFonts()->getFont(jpfont));
 	if (!jf)
 		return false;
@@ -198,17 +194,16 @@ bool FontManager::addJPOverride(unsigned int fontnum,
 
 
 bool FontManager::loadTTFont(unsigned int fontnum, const Std::string &filename,
-                             int pointsize, uint32 rgb, int bordersize) {
-	Graphics::Font *f = getTTF_Font(filename, pointsize);
+							 int pointsize, uint32 rgb, int bordersize) {
+	bool antialiasing = ConfMan.getBool("font_antialiasing");
+	Graphics::Font *f = getTTF_Font(filename, pointsize, antialiasing);
 	if (!f)
 		return false;
 
-	TTFont *font = new TTFont(f, rgb, bordersize, _ttfAntialiasing, false);
+	TTFont *font = new TTFont(f, rgb, bordersize, antialiasing, false);
 
 	// TODO: check if this is indeed what we want for non-gamefonts
-	SettingManager *settingman = SettingManager::get_instance();
-	bool highres;
-	settingman->get("ttf_highres", highres);
+	bool highres = ConfMan.getBool("font_highres");
 	font->setHighRes(highres);
 
 	if (fontnum >= _ttFonts.size())

@@ -34,7 +34,7 @@ using Shared::CFrameMsg;
 
 class ViewportMap : public Shared::ViewportMap {
 	DECLARE_MESSAGE_MAP;
-	bool FrameMsg(CFrameMsg &msg);
+	bool FrameMsg(CFrameMsg *msg);
 private:
 	Maps::MapType _mapType;
 public:
@@ -44,7 +44,7 @@ public:
 	 * Constructor
 	 */
 	ViewportMap(Shared::TreeItem *parent);
-	
+
 	/**
 	 * Destructor
 	 */

@@ -373,16 +373,29 @@ OBJECT *InitObject(const OBJ_INIT *pInitTbl) {
 		PALQ *pPalQ= nullptr;	// palette queue pointer
 		const IMAGE *pImg = (const IMAGE *)_vm->_handle->LockMem(pInitTbl->hObjImg); // handle to image
 
-		if (pImg->hImgPal) {
-			// allocate a palette for this object
-			pPalQ = AllocPalette(FROM_32(pImg->hImgPal));
+		if (!TinselV3) {
+			if (pImg->hImgPal) {
+				// allocate a palette for this object
+				pPalQ = AllocPalette(FROM_32(pImg->hImgPal));
 
-			// make sure palette allocated
-			assert(pPalQ != NULL);
+				// make sure palette allocated
+				assert(pPalQ != NULL);
+			}
+
+			// assign palette to object
+			pObj->pPal = pPalQ;
+		} else {
+			const IMAGE_T3 *pImgT3 = (const IMAGE_T3 *)pImg;
+
+			if ((pImgT3->colorFlags & 0x0C) == 0) { // bits 0b1100 are used to select blending mode
+				pObj->flags = pObj->flags & ~DMA_GHOST;
+			} else {
+				assert((pObj->flags & DMA_WNZ) != 0);
+				pObj->flags |= DMA_GHOST;
+			}
+			pObj->isRLE = pImgT3->isRLE;
+			pObj->colorFlags = pImgT3->colorFlags;
 		}
-
-		// assign palette to object
-		pObj->pPal = pPalQ;
 
 		// set objects size
 		pObj->width  = FROM_16(pImg->imgWidth);

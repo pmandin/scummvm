@@ -21,15 +21,11 @@
  */
 
 #include "common/config-manager.h"
-#include "common/debug.h"
 
-#include "sludge/allfiles.h"
-#include "sludge/backdrop.h"
-#include "sludge/builtin.h"
 #include "sludge/cursors.h"
+#include "sludge/errors.h"
 #include "sludge/event.h"
 #include "sludge/fonttext.h"
-#include "sludge/freeze.h"
 #include "sludge/floor.h"
 #include "sludge/fileset.h"
 #include "sludge/function.h"
@@ -46,12 +42,9 @@
 #include "sludge/sludger.h"
 #include "sludge/sound.h"
 #include "sludge/speech.h"
-#include "sludge/sprites.h"
-#include "sludge/sprbanks.h"
 #include "sludge/statusba.h"
-#include "sludge/variable.h"
+#include "sludge/timing.h"
 #include "sludge/version.h"
-#include "sludge/zbuffer.h"
 
 namespace Sludge {
 
@@ -123,7 +116,7 @@ Common::File *openAndVerify(const Common::String &filename, char extra1, char ex
 }
 
 void initSludge() {
-	g_sludge->_timer.reset();
+	g_sludge->_timer->reset();
 	g_sludge->_languageMan->init();
 	g_sludge->_gfxMan->init();
 	g_sludge->_resMan->init();
@@ -131,7 +124,7 @@ void initSludge() {
 	g_sludge->_floorMan->init();
 	g_sludge->_objMan->init();
 	g_sludge->_speechMan->init();
-	initStatusBar();
+	g_sludge->_statusBar->init();
 	g_sludge->_evtMan->init();
 	g_sludge->_txtMan->init();
 	g_sludge->_cursorMan->init();
@@ -155,10 +148,10 @@ void initSludge() {
 
 void killSludge() {
 	killAllFunctions();
+	g_sludge->_speechMan->kill();
 	g_sludge->_peopleMan->kill();
 	g_sludge->_regionMan->kill();
 	g_sludge->_floorMan->kill();
-	g_sludge->_speechMan->kill();
 	g_sludge->_languageMan->kill();
 	g_sludge->_gfxMan->kill();
 	g_sludge->_resMan->kill();
@@ -217,7 +210,7 @@ bool initSludge(const Common::String &filename) {
 
 	int specialSettings = fp->readByte();
 	debugC(2, kSludgeDebugDataLoad, "specialSettings : %i", specialSettings);
-	g_sludge->_timer.setDesiredFPS(1000 / fp->readByte());
+	g_sludge->_timer->setDesiredFPS(1000 / fp->readByte());
 
 	readString(fp);  // Unused - was used for registration purposes.
 
@@ -254,7 +247,7 @@ bool initSludge(const Common::String &filename) {
 
 		// read game icon
 		Graphics::Surface gameIcon;
-		if (!ImgLoader::loadImage(fp, &gameIcon, false))
+		if (!ImgLoader::loadImage(-1, "icon", fp, &gameIcon, false))
 			return false;
 
 	}
@@ -265,7 +258,7 @@ bool initSludge(const Common::String &filename) {
 
 		// read game logo
 		Graphics::Surface gameLogo;
-		if (!ImgLoader::loadImage(fp, &gameLogo))
+		if (!ImgLoader::loadImage(-1, "logo", fp, &gameLogo))
 			return false;
 	}
 
@@ -284,7 +277,7 @@ bool initSludge(const Common::String &filename) {
 		Common::String dataFolder = encodeFilename(dataFol);
 	}
 
-	positionStatus(10, winHeight - 15);
+	g_sludge->_statusBar->positionStatus(10, winHeight - 15);
 
 	return true;
 }
@@ -300,7 +293,7 @@ void displayBase() {
 void sludgeDisplay() {
 	displayBase();
 	g_sludge->_speechMan->display();
-	drawStatusBar();
+	g_sludge->_statusBar->draw();
 	g_sludge->_cursorMan->displayCursor();
 	g_sludge->_gfxMan->display();
 }

@@ -28,7 +28,6 @@
 #ifndef ICB_GAME_ENGINE_SCRIPTENGINE_H
 #define ICB_GAME_ENGINE_SCRIPTENGINE_H
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_string.h"
 #include "engines/icb/common/px_game_object.h"
 #include "engines/icb/common/px_globalvariables.h"
@@ -45,13 +44,13 @@ enum scriptInterpreterReturnCodes {
 };
 
 scriptInterpreterReturnCodes RunScript(const char *&scriptData, // A pointer to the script data that can be modified
-                                       c_game_object *object,   // A pointer to the object that owns this object
-                                       int *engineReturnValue = NULL,
-                                       const char *scriptSourceName = NULL); // A value to return to the game engine
+									   c_game_object *object,   // A pointer to the object that owns this object
+									   int32 *engineReturnValue = NULL,
+									   const char *scriptSourceName = NULL); // A value to return to the game engine
 
 void SetScriptDebugging(bool8 f); // Set script debugging flag
 
-extern CpxGlobalScriptVariables g_globalScriptVariables;
+extern CpxGlobalScriptVariables *g_globalScriptVariables;
 
 #define CP_END_SCRIPT 0               // Terminate a script
 #define CP_PUSH_INT32 1               // Push a number on to the stack

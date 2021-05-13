@@ -100,7 +100,7 @@ void StarTrekEngine::loadRoom(const Common::String &missionName, int roomIndex) 
 
 	_awayMission.activeAction = ACTION_WALK;
 
-	actorFunc1();
+	removeDrawnActorsFromScreen();
 	initActors();
 
 	Fixed8 num = _room->getMaxScale() - _room->getMinScale();
@@ -287,19 +287,19 @@ void StarTrekEngine::handleAwayMissionEvents() {
 				break;
 
 			case Common::KEYCODE_e:
-				if (event.kbd.flags && Common::KBD_CTRL) {
+				if (event.kbd.flags & Common::KBD_CTRL) {
 					_sound->toggleSfx();
 				}
 				break;
 
 			case Common::KEYCODE_m:
-				if (event.kbd.flags && Common::KBD_CTRL) {
+				if (event.kbd.flags & Common::KBD_CTRL) {
 					_sound->toggleMusic();
 				}
 				break;
 
 			case Common::KEYCODE_q:
-				if (event.kbd.flags && Common::KBD_CTRL) {
+				if (event.kbd.flags & Common::KBD_CTRL) {
 					showQuitGamePrompt(20, 20);
 				}
 				break;
@@ -400,7 +400,7 @@ void StarTrekEngine::awayMissionSelectAction(bool openActionMenu) {
 		if (_awayMission.disableInput)
 			return;
 		hideInventoryIcons();
-		_sound->playSoundEffectIndex(SND_07);
+		_sound->playSoundEffectIndex(kSfxButton);
 		_awayMission.activeAction = showActionMenu();
 	}
 
@@ -498,7 +498,7 @@ void StarTrekEngine::awayMissionGetLookOrTalk(int16 clickedObject) {
 void StarTrekEngine::unloadRoom() {
 	_gfx->fadeoutScreen();
 	// sub_2394b(); // TODO
-	actorFunc1();
+	removeDrawnActorsFromScreen();
 	delete _room;
 	_room = nullptr;
 	delete _mapFile;
@@ -535,7 +535,7 @@ void StarTrekEngine::addAction(const Action &action) {
 	_actionQueue.push(action);
 }
 
-void StarTrekEngine::addAction(byte type, byte b1, byte b2, byte b3) {
+void StarTrekEngine::addAction(int8 type, byte b1, byte b2, byte b3) {
 	const Action a = {type, b1, b2, b3};
 	addAction(a);
 }

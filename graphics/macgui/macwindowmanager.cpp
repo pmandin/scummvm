@@ -189,9 +189,6 @@ MacWindowManager::MacWindowManager(uint32 mode, MacPatterns *patterns) {
 
 	_fullRefresh = true;
 
-	_palette = nullptr;
-	_paletteSize = 0;
-
 	if (mode & kWMMode32bpp)
 		_pixelformat = Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
 	else
@@ -206,6 +203,12 @@ MacWindowManager::MacWindowManager(uint32 mode, MacPatterns *patterns) {
 
 	g_system->getPaletteManager()->setPalette(palette, 0, ARRAYSIZE(palette) / 3);
 
+	_paletteSize = ARRAYSIZE(palette) / 3;
+	if (_paletteSize) {
+		_palette = (byte *)malloc(_paletteSize * 3);
+		memcpy(_palette, palette, _paletteSize * 3);
+	}
+
 	_fontMan = new MacFontManager(mode);
 
 	_cursor = nullptr;
@@ -215,7 +218,9 @@ MacWindowManager::MacWindowManager(uint32 mode, MacPatterns *patterns) {
 	CursorMan.showMouse(true);
 
 	loadDataBundle();
-	loadDesktop();
+	if (!(_mode & Graphics::kWMNoScummVMWallpaper)) {
+		loadDesktop();
+	}
 }
 
 MacWindowManager::~MacWindowManager() {
@@ -230,6 +235,8 @@ MacWindowManager::~MacWindowManager() {
 
 	delete _desktopBmp;
 	delete _desktop;
+
+	cleanupDataBundle();
 
 	g_system->getTimerManager()->removeTimerProc(&menuTimerHandler);
 }
@@ -267,6 +274,9 @@ void MacWindowManager::setMode(uint32 mode) {
 }
 
 void MacWindowManager::setActiveWidget(MacWidget *widget) {
+	if (_activeWidget == widget)
+		return;
+
 	if (_activeWidget)
 		_activeWidget->setActive(false);
 
@@ -295,6 +305,16 @@ MacWindow *MacWindowManager::addWindow(bool scrollable, bool resizable, bool edi
 }
 
 MacTextWindow *MacWindowManager::addTextWindow(const MacFont *font, int fgcolor, int bgcolor, int maxWidth, TextAlign textAlignment, MacMenu *menu, bool cursorHandler) {
+	MacTextWindow *w = new MacTextWindow(this, font, fgcolor, bgcolor, maxWidth, textAlignment, menu, cursorHandler);
+
+	addWindowInitialized(w);
+
+	setActiveWindow(getNextId());
+
+	return w;
+}
+
+MacTextWindow *MacWindowManager::addTextWindow(const Font *font, int fgcolor, int bgcolor, int maxWidth, TextAlign textAlignment, MacMenu *menu, bool cursorHandler) {
 	MacTextWindow *w = new MacTextWindow(this, font, fgcolor, bgcolor, maxWidth, textAlignment, menu, cursorHandler);
 
 	addWindowInitialized(w);
@@ -448,11 +468,43 @@ void macDrawPixel(int x, int y, int color, void *data) {
 	}
 }
 
+void macDrawInvertPixel(int x, int y, int color, void *data) {
+	MacPlotData *p = (MacPlotData *)data;
+
+	if (p->fillType > p->patterns->size() || !p->fillType)
+		return;
+
+	if (x >= 0 && x < p->surface->w && y >= 0 && y < p->surface->h) {
+		uint xu = (uint)x; // for letting compiler optimize it
+		uint yu = (uint)y;
+
+		byte cur_color = *((byte *)p->surface->getBasePtr(xu, yu));
+		// 0 represent black in default palette, and 4 represent white
+		// if color is black, we invert it to white, otherwise, we invert it to black
+		byte invert_color = 0;
+		if (cur_color == 0) {
+			invert_color = 4;
+		}
+		*((byte *)p->surface->getBasePtr(xu, yu)) = invert_color;
+
+		if (p->mask)
+			*((byte *)p->mask->getBasePtr(xu, yu)) = 0xff;
+	}
+}
+
 MacDrawPixPtr MacWindowManager::getDrawPixel() {
 	if (_pixelformat.bytesPerPixel == 1)
 		return &macDrawPixel<byte *>;
 	else
 		return &macDrawPixel<uint32 *>;
+}
+
+// get the function of drawing invert pixel for default palette
+MacDrawPixPtr MacWindowManager::getDrawInvertPixel() {
+	if (_pixelformat.bytesPerPixel == 1)
+		return &macDrawInvertPixel;
+	warning("function of drawing invert pixel for default palette has not implemented yet");
+	return nullptr;
 }
 
 void MacWindowManager::loadDesktop() {
@@ -506,21 +558,22 @@ void MacWindowManager::draw() {
 	Common::Rect bounds = getScreenBounds();
 
 	if (_fullRefresh) {
-		Common::Rect screen = getScreenBounds();
-		if (_desktop->w != screen.width() || _desktop->h != screen.height()) {
-			_desktop->free();
-			_desktop->create(screen.width(), screen.height(), _pixelformat);
-			drawDesktop();
-		}
+		if (!(_mode & kWMModeNoDesktop)) {
+			Common::Rect screen = getScreenBounds();
+			if (_desktop->w != screen.width() || _desktop->h != screen.height()) {
+				_desktop->free();
+				_desktop->create(screen.width(), screen.height(), _pixelformat);
+				drawDesktop();
+			}
 
-		if (_screen) {
-			_screen->blitFrom(*_desktop, Common::Point(0, 0));
-			g_system->copyRectToScreen(_screen->getPixels(), _screen->pitch, 0, 0, _screen->w, _screen->h);
-		} else {
-			_screenCopyPauseToken = new PauseToken(pauseEngine());
-			g_system->copyRectToScreen(_desktop->getPixels(), _desktop->pitch, 0, 0, _desktop->w, _desktop->h);
+			if (_screen) {
+				_screen->blitFrom(*_desktop, Common::Point(0, 0));
+				g_system->copyRectToScreen(_screen->getPixels(), _screen->pitch, 0, 0, _screen->w, _screen->h);
+			} else {
+				_screenCopyPauseToken = new PauseToken(pauseEngine());
+				g_system->copyRectToScreen(_desktop->getPixels(), _desktop->pitch, 0, 0, _desktop->w, _desktop->h);
+			}
 		}
-
 		if (_redrawEngineCallback != nullptr)
 			_redrawEngineCallback(_engineR);
 	}
@@ -947,8 +1000,10 @@ void MacWindowManager::passPalette(const byte *pal, uint size) {
 	if (_palette)
 		free(_palette);
 
-	_palette = (byte *)malloc(size * 3);
-	memcpy(_palette, pal, size * 3);
+	if (size) {
+		_palette = (byte *)malloc(size * 3);
+		memcpy(_palette, pal, size * 3);
+	}
 	_paletteSize = size;
 
 	_colorHash.clear();

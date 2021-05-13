@@ -3,6 +3,7 @@ MODULE := image
 MODULE_OBJS := \
 	bmp.o \
 	cel_3do.o \
+	gif.o \
 	iff.o \
 	jpeg.o \
 	pcx.o \
@@ -13,6 +14,7 @@ MODULE_OBJS := \
 	codecs/cdtoons.o \
 	codecs/cinepak.o \
 	codecs/codec.o \
+	codecs/hlz.o \
 	codecs/indeo3.o \
 	codecs/indeo4.o \
 	codecs/indeo5.o \
@@ -26,6 +28,7 @@ MODULE_OBJS := \
 	codecs/smc.o \
 	codecs/svq1.o \
 	codecs/truemotion1.o \
+	codecs/xan.o \
 	codecs/indeo/indeo.o \
 	codecs/indeo/indeo_dsp.o \
 	codecs/indeo/mem.o \

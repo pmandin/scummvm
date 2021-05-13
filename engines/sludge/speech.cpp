@@ -20,8 +20,8 @@
  *
  */
 
-#include "sludge/allfiles.h"
-#include "sludge/backdrop.h"
+#include "common/system.h"
+
 #include "sludge/fonttext.h"
 #include "sludge/freeze.h"
 #include "sludge/graphics.h"
@@ -34,8 +34,6 @@
 #include "sludge/sludger.h"
 #include "sludge/sound.h"
 #include "sludge/speech.h"
-#include "sludge/sprbanks.h"
-#include "sludge/sprites.h"
 
 namespace Sludge {
 

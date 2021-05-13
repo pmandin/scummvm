@@ -20,11 +20,9 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 
 #include "ultima/ultima8/world/sprite_process.h"
 #include "ultima/ultima8/world/fire_type.h"
-#include "ultima/ultima8/world/item.h"
 #include "ultima/ultima8/world/current_map.h"
 #include "ultima/ultima8/world/loop_script.h"
 #include "ultima/ultima8/world/get_object.h"
@@ -32,8 +30,8 @@
 #include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/usecode/uc_list.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/misc/point3.h"
 #include "ultima/ultima8/audio/audio_process.h"
+#include "ultima/ultima8/ultima8.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -49,6 +47,8 @@ FireType::FireType(uint16 typeNo, uint16 minDamage, uint16 maxDamage, uint8 rang
 }
 
 uint16 FireType::getRandomDamage() const {
+	if (_minDamage == _maxDamage)
+		return _minDamage;
 	return _minDamage + (getRandom() % (_maxDamage - _minDamage));
 }
 
@@ -69,6 +69,11 @@ void FireType::makeBulletSplashShapeAndPlaySound(int32 x, int32 y, int32 z) cons
 	int16 shape = 0;
 
 	// First randomize the sprite and sound
+	if (GAME_IS_REGRET) {
+		// there are some differences which we need to implement.
+		warning("TODO: update FireType::makeBulletSplashShapeAndPlaySound for No Regret");
+	}
+
 	switch (_typeNo) {
 		case 1:
 		case 0xb:
@@ -84,7 +89,7 @@ void FireType::makeBulletSplashShapeAndPlaySound(int32 x, int32 y, int32 z) cons
 			sfxno = RANDOM_ELEM(FIRESOUND_3);
 			break;
 		case 5:
-			shape = 0x573;
+			shape = 0x537;
 			break;
 		case 6:
 			shape = 0x578;
@@ -127,7 +132,7 @@ void FireType::makeBulletSplashShapeAndPlaySound(int32 x, int32 y, int32 z) cons
 		lastframe = 10;
 		break;
 	case 0x578:
-		firstframe = (getRandom() % 3) * 6;
+		firstframe = (getRandom() % 3) * 5;
 		lastframe = firstframe + 4;
 		break;
 	case 0x59b:
@@ -165,7 +170,8 @@ void FireType::makeBulletSplashShapeAndPlaySound(int32 x, int32 y, int32 z) cons
 	}
 }
 
-void FireType::applySplashDamageAround(const Point3 &pt, int damage, const Item *exclude, const Item *src) const {
+void FireType::applySplashDamageAround(const Point3 &pt, int damage, int rangediv, const Item *exclude, const Item *src) const {
+	assert(rangediv > 0);
 	if (!getRange())
 		return;
 	static const uint32 BULLET_SPLASH_SHAPE = 0x1d9;
@@ -173,15 +179,20 @@ void FireType::applySplashDamageAround(const Point3 &pt, int damage, const Item 
 	CurrentMap *currentmap = World::get_instance()->getCurrentMap();
 
 	//
-	// Find items in range and apply splash damage
+	// Find items in range and apply splash damage.  Coordinates here are 2x the
+	// original game code (in line with our other x2 multipliers for game coords)
 	//
 	UCList uclist(2);
 	LOOPSCRIPT(script, LS_TOKEN_TRUE); // we want all items
 	currentmap->areaSearch(&uclist, script, sizeof(script), nullptr,
-						   getRange() * 16, true);
+						   getRange() * 32 / rangediv, true, pt.x, pt.y);
 	for (unsigned int i = 0; i < uclist.getSize(); ++i) {
 		Item *splashitem = getItem(uclist.getuint16(i));
-		assert(splashitem);
+		if (!splashitem) {
+			// already gone - probably got destroyed by some chain-reaction?
+			continue;
+		}
+
 		//
 		// Other items don't get splash damage from their own fire.. but the
 		// player does.  Life is not fair..
@@ -198,6 +209,9 @@ void FireType::applySplashDamageAround(const Point3 &pt, int damage, const Item 
 			if (splashrange)
 				splashitemdamage /= splashrange;
 		}
+		if (!splashitemdamage)
+			continue;
+
 		Direction splashdir = src->getDirToItemCentre(pt);
 		splashitem->receiveHit(0, splashdir, splashitemdamage, _typeNo);
 	}

@@ -20,11 +20,9 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/graphics/palette_fader_process.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/graphics/palette.h"
-#include "ultima/ultima8/kernel/core_app.h"
+#include "ultima/ultima8/ultima8.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -39,7 +37,7 @@ PaletteFaderProcess::PaletteFaderProcess() : Process(), _priority(0),
 }
 
 PaletteFaderProcess::PaletteFaderProcess(PalTransforms trans,
-        int priority, int frames) : _priority(priority),
+		int priority, int frames) : _priority(priority),
 	_counter(frames), _maxCounter(frames) {
 	PaletteManager  *pm = PaletteManager::get_instance();
 	Palette *pal = pm->getPalette(PaletteManager::Pal_Game);
@@ -49,7 +47,7 @@ PaletteFaderProcess::PaletteFaderProcess(PalTransforms trans,
 }
 
 PaletteFaderProcess::PaletteFaderProcess(uint32 col32, bool from,
-        int priority, int frames, bool current) : _priority(priority),
+		int priority, int frames, bool current) : _priority(priority),
 	_counter(frames), _maxCounter(frames) {
 	PaletteManager  *pm = PaletteManager::get_instance();
 	Palette *pal = pm->getPalette(PaletteManager::Pal_Game);
@@ -69,7 +67,7 @@ PaletteFaderProcess::PaletteFaderProcess(uint32 col32, bool from,
 }
 
 PaletteFaderProcess::PaletteFaderProcess(const int16 from[12], const int16 to[12],
-        int priority, int frames) : _priority(priority),
+		int priority, int frames) : _priority(priority),
 	_counter(frames), _maxCounter(frames) {
 	int i;
 	for (i = 0; i < 12; i++) _oldMatrix[i] = from[i];
@@ -128,13 +126,15 @@ bool PaletteFaderProcess::loadData(Common::ReadStream *rs, uint32 version) {
 }
 
 uint32 PaletteFaderProcess::I_fadeToPaletteTransform(const uint8 *args,
-        unsigned int /*argsize*/) {
+		unsigned int /*argsize*/) {
 	ARG_UINT16(transform);
 	ARG_UINT16(priority);
 
 	// If current _fader has higher _priority, we do nothing
-	if (_fader && _fader->_priority > priority) return 0;
-	else if (_fader) _fader->terminate();
+	if (_fader && _fader->_priority > priority)
+		return 0;
+	else if (_fader && !_fader->is_terminated())
+		_fader->terminate();
 
 	_fader = new PaletteFaderProcess(static_cast<PalTransforms>(transform),
 	                                priority, 45);
@@ -143,9 +143,11 @@ uint32 PaletteFaderProcess::I_fadeToPaletteTransform(const uint8 *args,
 }
 
 uint32 PaletteFaderProcess::I_fadeToBlack(const uint8 *args,
-        unsigned int argsize) {
-	if (_fader && _fader->_priority > 0x7FFF) return 0;
-	else if (_fader) _fader->terminate();
+		unsigned int argsize) {
+	if (_fader && _fader->_priority > 0x7FFF)
+		return 0;
+	else if (_fader && !_fader->is_terminated())
+		_fader->terminate();
 
 	int nsteps = (GAME_IS_U8 ? 30 : 40);
 	if (argsize > 0) {
@@ -162,9 +164,11 @@ uint32 PaletteFaderProcess::I_fadeToBlack(const uint8 *args,
 }
 
 uint32 PaletteFaderProcess::I_fadeFromBlack(const uint8 *args,
-        unsigned int argsize) {
-	if (_fader && _fader->_priority > 0x7FFF) return 0;
-	else if (_fader) _fader->terminate();
+		unsigned int argsize) {
+	if (_fader && _fader->_priority > 0x7FFF)
+		return 0;
+	else if (_fader && !_fader->is_terminated())
+		_fader->terminate();
 
 	int nsteps = (GAME_IS_U8 ? 30 : 40);
 	if (argsize > 0) {
@@ -181,27 +185,33 @@ uint32 PaletteFaderProcess::I_fadeFromBlack(const uint8 *args,
 }
 
 uint32 PaletteFaderProcess::I_fadeToWhite(const uint8 * /*args*/,
-        unsigned int /*argsize*/) {
-	if (_fader && _fader->_priority > 0x7FFF) return 0;
-	else if (_fader) _fader->terminate();
+		unsigned int /*argsize*/) {
+	if (_fader && _fader->_priority > 0x7FFF)
+		return 0;
+	else if (_fader && !_fader->is_terminated())
+		_fader->terminate();
 
 	_fader = new PaletteFaderProcess(0x00FFFFFF, false, 0x7FFF, 30, true);
 	return Kernel::get_instance()->addProcess(_fader);
 }
 
 uint32 PaletteFaderProcess::I_fadeFromWhite(const uint8 * /*args*/,
-        unsigned int /*argsize*/) {
-	if (_fader && _fader->_priority > 0x7FFF) return 0;
-	else if (_fader) _fader->terminate();
+		unsigned int /*argsize*/) {
+	if (_fader && _fader->_priority > 0x7FFF)
+		return 0;
+	else if (_fader && !_fader->is_terminated())
+		_fader->terminate();
 
 	_fader = new PaletteFaderProcess(0x00FFFFFF, true, 0x7FFF, 30, false);
 	return Kernel::get_instance()->addProcess(_fader);
 }
 
 uint32 PaletteFaderProcess::I_lightningBolt(const uint8 * /*args*/,
-        unsigned int /*argsize*/) {
-	if (_fader && _fader->_priority > -1) return 0;
-	else if (_fader) _fader->terminate();
+		unsigned int /*argsize*/) {
+	if (_fader && _fader->_priority > -1)
+		return 0;
+	else if (_fader && !_fader->is_terminated())
+		_fader->terminate();
 
 	_fader = new PaletteFaderProcess(0x3FCFCFCF, true, -1, 10, false);
 	return Kernel::get_instance()->addProcess(_fader);
@@ -258,7 +268,7 @@ uint32 PaletteFaderProcess::I_fadeToGivenColor(const uint8 *args,
 
 
 uint32 PaletteFaderProcess::I_jumpToGreyScale(const uint8 * /*args*/,
-        unsigned int /*argsize*/) {
+		unsigned int /*argsize*/) {
 	if (_fader && _fader->_priority > 0x7FFF) return 0;
 	else if (_fader) _fader->terminate();
 
@@ -268,7 +278,7 @@ uint32 PaletteFaderProcess::I_jumpToGreyScale(const uint8 * /*args*/,
 }
 
 uint32 PaletteFaderProcess::I_jumpToAllBlack(const uint8 * /*args*/,
-        unsigned int /*argsize*/) {
+		unsigned int /*argsize*/) {
 	if (_fader && _fader->_priority > 0x7FFF) return 0;
 	else if (_fader) _fader->terminate();
 
@@ -278,7 +288,7 @@ uint32 PaletteFaderProcess::I_jumpToAllBlack(const uint8 * /*args*/,
 }
 
 uint32 PaletteFaderProcess::I_jumpToAllGrey(const uint8 * /*args*/,
-        unsigned int /*argsize*/) {
+		unsigned int /*argsize*/) {
 	if (_fader && _fader->_priority > 0x7FFF) return 0;
 	else if (_fader) _fader->terminate();
 

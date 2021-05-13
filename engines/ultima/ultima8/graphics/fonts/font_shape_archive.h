@@ -24,7 +24,6 @@
 #define ULTIMA8_GRAPHICS_FONTS_FONTSHAPEARCHIVE_H
 
 #include "ultima/ultima8/graphics/shape_archive.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -42,7 +41,7 @@ public:
 	FontShapeArchive(Common::SeekableReadStream *rs, uint16 id, Palette *pal = 0,
 	                 const ConvertShapeFormat *format = 0)
 		: ShapeArchive(rs, id, pal, format) { }
- 
+
 	~FontShapeArchive() override { }
 
 	//! load HVLeads from u8.ini

@@ -24,7 +24,7 @@
 #define ULTIMA8_KERNEL_USECODE_PROCESS_H
 
 #include "ultima/shared/std/containers.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 #include "ultima/ultima8/misc/pent_include.h"
 
 namespace Ultima {
@@ -41,7 +41,6 @@ public:
 	Process(ObjId _itemNum = 0, uint16 type = 0);
 	virtual ~Process() { }
 
-	// p_dynamic_cast stuff
 	ENABLE_RUNTIME_CLASSTYPE_BASE()
 
 	uint32 getProcessFlags() const {
@@ -74,8 +73,8 @@ public:
 		_flags |= PROC_RUNPAUSED;
 	};
 
-	//! suspend until process '_pid' returns. If _pid is 0, suspend indefinitely
-	void waitFor(ProcId _pid);
+	//! suspend until process 'pid' returns. If pid is 0, suspend indefinitely
+	void waitFor(ProcId pid);
 
 	//! suspend until process returns. If proc is 0, suspend indefinitely
 	void waitFor(Process *proc);
@@ -95,6 +94,9 @@ public:
 	void setType(uint16 ty) {
 		_type = ty;
 	}
+	void setTicksPerRun(uint32 val) {
+		_ticksPerRun = val;
+	}
 
 	ProcId getPid() const {
 		return _pid;
@@ -104,6 +106,9 @@ public:
 	}
 	uint16 getType() const {
 		return _type;
+	}
+	uint32 getTicksPerRun() const {
+		return _ticksPerRun;
 	}
 
 	//! dump some info about this process to pout
@@ -115,11 +120,20 @@ public:
 	//! save Process data
 	virtual void saveData(Common::WriteStream *ws);
 
+	//! Check the waiting processes.  This is used after loading a game.
+	//! Ensures they are all valid processes and suspended.  Can't be done in
+	//! loadData because the waiters may not be loaded yet at that point.
+	bool validateWaiters() const;
+
 protected:
 	//! process id
 	ProcId _pid;
 
 	uint32 _flags;
+
+	//! how many kernel ticks between when this process should be run.
+	//! not saved because it's fixed by process type and game.
+	uint32 _ticksPerRun;
 
 	//! item we are assigned to
 	ObjId _itemNum;

@@ -152,6 +152,10 @@ bool SceneScriptHF05::ClickedOn3DObject(const char *objectName, bool a2) {
 
 bool SceneScriptHF05::ClickedOnActor(int actorId) {
 	if (actorId == kActorCrazylegs) {
+		// Note: dialogueWithCrazylegs1() makes sense only for Acts 3 and 4.
+		//      by Act 5, McCoy is done interrogating, and it would also be weird
+		//      if he is asking questions about Lucy or Dektora, with them standing next to him.
+		// TODO Recheck: Is McCoy allowed to click on CrazyLegs in Act5 while Dektora or Lucy are there too?
 #if BLADERUNNER_ORIGINAL_BUGS
 		if (!Loop_Actor_Walk_To_Actor(kActorMcCoy, kActorCrazylegs, 60, true, false)) {
 			Actor_Face_Actor(kActorMcCoy, kActorCrazylegs, true);
@@ -395,11 +399,24 @@ void SceneScriptHF05::dialogueWithCrazylegs1() {
 		DM_Add_To_List_Never_Repeat_Once_Selected(1180, 3, 6, 7); // ADVERTISEMENT
 	}
 	if (Actor_Clue_Query(kActorMcCoy, kClueCrazylegsInterview1)) {
+		// kClueCrazylegsInterview1 is acquired (after bug fix)
+		// only when Dektora has bought the car (kClueCarRegistration1)
+		// and McCoy has asked Crazylegs for the CAR REGISTRATION topic already
 		DM_Add_To_List_Never_Repeat_Once_Selected(1190, 2, 7, 4); // WOMAN
 	}
+#if BLADERUNNER_ORIGINAL_BUGS
 	if (Actor_Clue_Query(kActorMcCoy, kClueDektorasDressingRoom)) {
 		DM_Add_To_List_Never_Repeat_Once_Selected(1200, 5, 5, 3); // WOMAN'S PHOTO
 	}
+#else
+	if ((Actor_Clue_Query(kActorMcCoy, kClueDektorasDressingRoom)
+	    && Actor_Clue_Query(kActorMcCoy, kClueCrazylegsInterview1))
+	) {
+		// kClueDektorasDressingRoom is acquired from EarlyQ at his office (nr04)
+		// McCoy should only ask about this if CrazyLegs already told him at least about the sexy blonde (kClueCrazylegsInterview1)
+		DM_Add_To_List_Never_Repeat_Once_Selected(1200, 5, 5, 3); // WOMAN'S PHOTO
+	}
+#endif // BLADERUNNER_ORIGINAL_BUGS
 	if (Actor_Clue_Query(kActorMcCoy, kClueLucy)
 	 && Actor_Query_Goal_Number(kActorLucy) != kGoalLucyGone
 	) {
@@ -410,11 +427,15 @@ void SceneScriptHF05::dialogueWithCrazylegs1() {
 	  && Global_Variable_Query(kVariableChapter) == 3
 	 )
 	) {
+		// TODO recheck the condition here. The chapter check should probably be done in both cases
+		//      either McCoy has kClueGrigoriansResources or kClueGrigoriansNote
 		DM_Add_To_List_Never_Repeat_Once_Selected(1220, -1, 2, 8); // GRIGORIAN
 	}
 	if (Actor_Clue_Query(kActorMcCoy, kClueCarRegistration1)
 	 || Actor_Clue_Query(kActorMcCoy, kClueCarRegistration3)
 	) {
+		// Dektora bought the car or Blake Williams (which is an alias, that Clovis used)
+		// Gordo is with Dektora when making the car purchase (as revealed by CrazyLegs in the "WOMAN" question).
 		DM_Add_To_List_Never_Repeat_Once_Selected(1230, 4, 7, -1); // CAR REGISTRATION
 	}
 
@@ -445,6 +466,7 @@ void SceneScriptHF05::dialogueWithCrazylegs1() {
 		Actor_Says(kActorCrazylegs, 550, 16);
 		Actor_Says(kActorMcCoy, 1940, 15);
 		Actor_Says(kActorMcCoy, 1945, -1);
+		// CrazyLegs cuts his sentence short here. He is not interrupted.
 		Actor_Says(kActorCrazylegs, 560, 15);
 		Actor_Says(kActorCrazylegs, 570, 16);
 		Actor_Says(kActorMcCoy, 1950, 17);
@@ -514,6 +536,13 @@ void SceneScriptHF05::dialogueWithCrazylegs1() {
 			Actor_Says(kActorMcCoy, 2080, kAnimationModeTalk);
 			Actor_Says(kActorCrazylegs, 860, 16);
 			Actor_Says(kActorCrazylegs, 870, kAnimationModeTalk);
+#if BLADERUNNER_ORIGINAL_BUGS
+#else
+			// This clue was never acquired, even though it is checked in KIA
+			// (so that it appears as a recording in KIA if acquired)
+			// It also enables the "WOMAN" conversation option with CrazyLegs.
+			Actor_Clue_Acquire(kActorMcCoy, kClueCrazylegsInterview1, true, kActorCrazylegs);
+#endif // BLADERUNNER_ORIGINAL_BUGS
 		} else if (Actor_Clue_Query(kActorMcCoy, kClueCarRegistration3)) {
 			Actor_Says(kActorCrazylegs, 880, 12);
 			Actor_Says(kActorCrazylegs, 890, 14);
@@ -608,7 +637,12 @@ void SceneScriptHF05::talkWithDektora() {
 	Actor_Says(kActorDektora, 2660, 12);
 	Actor_Says(kActorMcCoy, 8990, kAnimationModeTalk);
 	Actor_Says(kActorDektora, 2670, 13);
+#if BLADERUNNER_ORIGINAL_BUGS
 	Actor_Says(kActorDektora, 2680, 17);
+#else
+	// Dektora is interrupted here
+	Actor_Says_With_Pause(kActorDektora, 2680, 0.0f, 17);
+#endif // BLADERUNNER_ORIGINAL_BUGS
 	Actor_Says(kActorMcCoy, 8995, 14);
 	Actor_Says(kActorDektora, 2690, 15);
 	Actor_Says_With_Pause(kActorMcCoy, 9000, 1.0f, 16);
@@ -657,6 +691,7 @@ void SceneScriptHF05::talkWithCrazylegs3(int affectionTowardsActor) {
 		Actor_Says(kActorMcCoy, 1725, kAnimationModeTalk);
 		Actor_Says(kActorCrazylegs, 40, 16);
 		Actor_Says(kActorCrazylegs, 50, kAnimationModeTalk);
+		// CrazyLegs cuts his sentence short here. He is not interrupted.
 		Actor_Says(kActorCrazylegs, 60, 12);
 		Actor_Says(kActorCrazylegs, 70, 13);
 		Actor_Says(kActorMcCoy, 1730, kAnimationModeTalk);
@@ -697,6 +732,7 @@ void SceneScriptHF05::talkWithCrazyLegs1() {
 		ADQ_Flush();
 		ADQ_Add(kActorCrazylegs, 130, 18);
 		ADQ_Add(kActorCrazylegs, 140, 18);
+		// CrazyLegs cuts his sentence short here. He is not interrupted.
 		ADQ_Add(kActorCrazylegs, 150, 18);
 		ADQ_Add(kActorCrazylegs, 160, 17);
 	}

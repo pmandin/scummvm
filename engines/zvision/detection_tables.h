@@ -104,7 +104,11 @@ static const ZVisionGameDescription gameDescriptions[] = {
 		{
 			"znemesis",
 			0,
-			AD_ENTRY1s("CSCR.ZFS", "88226e51a205d2e50c67a5237f3bd5f2", 2397741),
+			{
+				{ "CSCR.ZFS", 0, "88226e51a205d2e50c67a5237f3bd5f2", 2397741 },
+				{ "ASCR.ZFS", 0, "9a1e1a48a56cf12a22bad2d2e47f6c92", 917452 },
+				AD_LISTEND
+			},
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
@@ -118,11 +122,8 @@ static const ZVisionGameDescription gameDescriptions[] = {
 		{
 			"znemesis",
 			0,
-			{
-				{ "CSCR.ZFS", 0, "f04113357b4748c13efcb58b4629887c", 2577873 },
-				{ "NEMESIS.STR", 0, "333bcb17bbb7f57cae742fbbe44f56f3", 9219 },
-				AD_LISTEND
-			},
+			AD_ENTRY2s("CSCR.ZFS",		"f04113357b4748c13efcb58b4629887c", 2577873,
+					   "NEMESIS.STR",	"333bcb17bbb7f57cae742fbbe44f56f3", 9219),
 			Common::FR_FRA,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
@@ -136,11 +137,8 @@ static const ZVisionGameDescription gameDescriptions[] = {
 		{
 			"znemesis",
 			0,
-			{
-				{ "CSCR.ZFS", 0, "f04113357b4748c13efcb58b4629887c", 2577873 },
-				{ "NEMESIS.STR", 0, "3d1a12b907751653866cffc6d4dfb331", 9505 },
-				AD_LISTEND
-			},
+			AD_ENTRY2s("CSCR.ZFS",		"f04113357b4748c13efcb58b4629887c", 2577873,
+					   "NEMESIS.STR",	"3d1a12b907751653866cffc6d4dfb331", 9505),
 			Common::DE_DEU,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
@@ -154,14 +152,70 @@ static const ZVisionGameDescription gameDescriptions[] = {
 		{
 			"znemesis",
 			0,
-			{
-				{ "CSCR.ZFS", 0, "f04113357b4748c13efcb58b4629887c", 2577873 },
-				{ "NEMESIS.STR", 0, "7c568feca8d9f9ae855c47183612c305", 9061 },
-				AD_LISTEND
-			},
+			AD_ENTRY2s("CSCR.ZFS",		"f04113357b4748c13efcb58b4629887c", 2577873,
+					   "NEMESIS.STR",	"7c568feca8d9f9ae855c47183612c305", 9061),
 			Common::IT_ITA,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
+			GUIO4(GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_DOUBLE_FPS, GAMEOPTION_ENABLE_VENUS, GAMEOPTION_DISABLE_ANIM_WHILE_TURNING)
+		},
+		GID_NEMESIS
+	},
+
+	{
+		// Zork Nemesis Korean version
+		{
+			"znemesis",
+			0,
+			{
+				{ "CSCR.ZFS", 0, "88226e51a205d2e50c67a5237f3bd5f2", 2397741 },
+				{ "ASCR.ZFS", 0, "127f59f96be3d13eafac665eeede080d", 765413 },
+				AD_LISTEND
+			},
+			Common::KO_KOR,
+			Common::kPlatformDOS,
+			ADGF_NO_FLAGS,
+			GUIO4(GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_DOUBLE_FPS, GAMEOPTION_ENABLE_VENUS, GAMEOPTION_DISABLE_ANIM_WHILE_TURNING)
+		},
+		GID_NEMESIS
+	},
+
+	{
+		// Zork Nemesis English Mac version
+		// Bugreport #11755
+		// These are proper checksums, but it is not working with AD so far
+		// (see comment at the start of getFileProperties()
+		{
+			"znemesis",
+			_s("Missing game code"), // Reason for being unsupported
+			{
+				{ "CSCR.ZFS", 0, "ce26cbb17bfbaa774742b3187262a7c0", 2597635 },
+				{ "ASCR.ZFS", 0, "5ee98db1bf73983eb8148da231342085", 929931 },
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformMacintosh,
+			ADGF_UNSUPPORTED | ADGF_MACRESFORK,
+			GUIO4(GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_DOUBLE_FPS, GAMEOPTION_ENABLE_VENUS, GAMEOPTION_DISABLE_ANIM_WHILE_TURNING)
+		},
+		GID_NEMESIS
+	},
+
+	{
+		// Zork Nemesis English Mac version
+		// These are improper checksums for MacBinary files
+		// Added to avoid further bugreports.
+		{
+			"znemesis",
+			_s("Missing game code"), // Reason for being unsupported
+			{
+				{ "CSCR.ZFS", 0, "afcf3b38c210db13988fe7b22d5b2288", 2597888 },
+				{ "ASCR.ZFS", 0, "75e07b46ef60967c9ea66a19e4916b0f", 930176 },
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformMacintosh,
+			ADGF_UNSUPPORTED,
 			GUIO4(GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_DOUBLE_FPS, GAMEOPTION_ENABLE_VENUS, GAMEOPTION_DISABLE_ANIM_WHILE_TURNING)
 		},
 		GID_NEMESIS

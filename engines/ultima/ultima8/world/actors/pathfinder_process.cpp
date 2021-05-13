@@ -20,11 +20,9 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/world/actors/pathfinder_process.h"
 
 #include "ultima/ultima8/world/actors/actor.h"
-#include "ultima/ultima8/world/actors/pathfinder.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/misc/direction_util.h"
 
@@ -36,7 +34,6 @@ static const unsigned int PATH_FAILED = 0;
 
 const uint16 PathfinderProcess::PATHFINDER_PROC_TYPE = 0x204;
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(PathfinderProcess)
 
 PathfinderProcess::PathfinderProcess() : Process(),

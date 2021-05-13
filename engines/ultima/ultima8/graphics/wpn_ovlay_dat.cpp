@@ -24,7 +24,6 @@
 
 #include "ultima/ultima8/graphics/wpn_ovlay_dat.h"
 
-#include "ultima/ultima8/filesys/idata_source.h"
 #include "ultima/ultima8/world/actors/weapon_overlay.h"
 #include "ultima/ultima8/filesys/raw_archive.h"
 #include "ultima/ultima8/games/game_data.h"
@@ -43,8 +42,8 @@ WpnOvlayDat::~WpnOvlayDat() {
 }
 
 const WeaponOverlayFrame *WpnOvlayDat::getOverlayFrame(uint32 action, int type,
-        Direction direction,
-        int frame) const {
+		Direction direction,
+		int frame) const {
 	if (action >= _overlay.size())
 		return nullptr;
 	if (!_overlay[action])

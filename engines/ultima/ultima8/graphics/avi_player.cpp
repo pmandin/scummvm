@@ -21,33 +21,29 @@
  */
 
 #include "ultima/ultima8/audio/music_process.h"
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/graphics/avi_player.h"
 #include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/graphics/texture.h"
-#include "ultima/ultima8/ultima8.h"
-#include "graphics/surface.h"
-#include "common/system.h"
-#include "common/stream.h"
 #include "video/avi_decoder.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-AVIPlayer::AVIPlayer(Common::SeekableReadStream *rs, int width, int height, const byte *overridePal)
+AVIPlayer::AVIPlayer(Common::SeekableReadStream *rs, int width, int height, const byte *overridePal, bool noScale)
 	: MoviePlayer(), _playing(false), _width(width), _height(height),
 	  _doubleSize(false), _pausedMusic(false), _overridePal(overridePal) {
 	_decoder = new Video::AVIDecoder();
 	_decoder->loadStream(rs);
 	uint32 vidWidth = _decoder->getWidth();
 	uint32 vidHeight = _decoder->getHeight();
-	if (vidWidth <= _width / 2 && vidHeight <= _height / 2) {
+	if (vidWidth <= _width / 2 && vidHeight <= _height / 2 && !noScale) {
 		_doubleSize = true;
 		vidHeight *= 2;
 		vidWidth *= 2;
 	}
 	_xoff = _width / 2 - (vidWidth / 2);
 	_yoff = _height / 2 - (vidHeight / 2);
+	_currentFrame.create(vidWidth, vidHeight, _decoder->getPixelFormat());
+	_currentFrame.fillRect(Common::Rect(0, 0, vidWidth, vidHeight), 0);
 }
 
 AVIPlayer::~AVIPlayer() {
@@ -96,30 +92,40 @@ void AVIPlayer::paint(RenderSurface *surf, int /*lerp*/) {
 			else
 				pal = _decoder->getPalette();
 
-			_currentFrame.loadSurface8Bit(frame, pal);
+			_currentFrame.setPalette(pal, 0, 256);
+		}
+		if (_doubleSize) {
+			// TODO: Add support for multiple bytes per pixel
+			assert(_currentFrame.w == frame->w * 2 && _currentFrame.h == frame->h * 2);
+			const int bpp = frame->format.bytesPerPixel;
+			for (int y = 0; y < frame->h; y++) {
+				const uint8 *srcPixel = static_cast<const uint8 *>(frame->getPixels()) + frame->pitch * y;
+				uint8 *dstPixels = static_cast<uint8 *>(_currentFrame.getPixels()) + _currentFrame.pitch * y * 2;
+				for (int x = 0; x < frame->w; x++) {
+					for (int i = 0; i < bpp; i++) {
+						dstPixels[x * 2 * bpp + i] = *srcPixel;
+						dstPixels[x * 2 * bpp + i + bpp] = *srcPixel;
+						srcPixel++;
+					}
+				}
+			}
 		} else {
-			_currentFrame.loadSurface(frame);
+			_currentFrame.blitFrom(*frame);
 		}
 	}
 
-	// TODO: Crusader has a CRT-like scaling which it uses in some
-	// movies too (eg, T02 for the intro).  For now just point-scale.
-	if (_doubleSize) {
-		const Scaler *pointScaler = &Ultima8Engine::get_instance()->point_scaler;
-		bool ok = surf->ScalerBlit(&_currentFrame, 0, 0, _currentFrame.w, _currentFrame.h,
-								   _xoff, _yoff, _currentFrame.w * 2, _currentFrame.h * 2,
-								   pointScaler, false);
-		assert(ok);
-	} else {
-		surf->Blit(&_currentFrame, 0, 0, _currentFrame.w, _currentFrame.h,
-				   _xoff, _yoff);
-	}
+	surf->Blit(&_currentFrame, 0, 0, _currentFrame.w, _currentFrame.h,
+			_xoff, _yoff);
 }
 
 void AVIPlayer::run() {
 	if (_decoder->endOfVideo()) {
 		_playing = false;
 	}
+}
+
+int AVIPlayer::getFrameNo() const {
+	return _decoder->getCurFrame();
 }
 
 } // End of namespace Ultima8

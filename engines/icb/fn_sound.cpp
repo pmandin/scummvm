@@ -25,7 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/ptr_util.h"
 #include "engines/icb/debug.h"
 #include "engines/icb/mission.h"
@@ -58,7 +57,7 @@ mcodeFunctionReturnCodes fn_set_sfx(int32 &result, int32 *params) { return (MS->
 // open         0
 // close        1
 mcodeFunctionReturnCodes _game_session::fn_set_sfx(int32 &, int32 *params) {
-	int whichVar;
+	int32 whichVar;
 
 	const char *name = (const char *)MemoryUtil::resolvePtr(params[0]);
 	const char *sfx = (const char *)MemoryUtil::resolvePtr(params[1]);
@@ -173,7 +172,7 @@ mcodeFunctionReturnCodes _game_session::fn_stop_sfx(int32 &, int32 *params) {
 
 		strcpy(tempSnd, sub + strlen("::"));
 
-		int obj = MS->objects->Fetch_item_number_by_name(tempObj);
+		int32 obj = MS->objects->Fetch_item_number_by_name(tempObj);
 
 		if (obj != -1)
 			RemoveRegisteredSound(obj, tempSnd);

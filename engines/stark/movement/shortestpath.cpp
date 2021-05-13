@@ -62,14 +62,14 @@ ShortestPath::NodeList ShortestPath::search(const Resources::FloorEdge *start, c
 }
 
 ShortestPath::NodeList ShortestPath::rebuildPath(const Resources::FloorEdge *start, const Resources::FloorEdge *goal,
-                                                 const NodePrecedenceMap &cameFrom) const {
+												 const NodePrecedenceMap &cameFrom) const {
 	NodeList path;
 
 	const Resources::FloorEdge *current = goal;
 	path.push_front(goal);
 
 	while (current && current != start) {
-		current = cameFrom[current];
+		current = cameFrom.getValOrDefault(current, nullptr);
 		path.push_front(current);
 	}
 

@@ -92,7 +92,8 @@ bool parseBool(const String &val, bool &valAsBool) {
 	}
 	if (val.equalsIgnoreCase("false") ||
 		val.equalsIgnoreCase("no") ||
-		val.equals("0")) {
+		val.equals("0") ||
+		val.empty()) {
 		valAsBool = false;
 		return true;
 	}
@@ -161,6 +162,10 @@ bool isCntrl(int c) {
 bool isGraph(int c) {
 	ENSURE_ASCII_CHAR(c);
 	return isgraph((byte)c);
+}
+
+bool isBlank(int c) {
+	return c == ' ' || c == '\t';
 }
 
 

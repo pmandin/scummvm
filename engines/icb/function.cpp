@@ -337,7 +337,7 @@ mcodeFunctionReturnCodes _game_session::fn_create_mega(int32 &, int32 *) {
 	Zdebug("FN_create_mega");
 
 	// assign _mega object
-	logic_structs[cur_id]->mega = &megas[num_megas];
+	logic_structs[cur_id]->mega = g_megas[num_megas];
 
 	logic_structs[cur_id]->mega->___init();
 
@@ -364,7 +364,7 @@ mcodeFunctionReturnCodes _game_session::socket_force_new_logic(int32 &, int32 *p
 
 	script_hash = HashString(script_name);
 
-	if (px.socket_watch)
+	if (g_px->socket_watch)
 		Message_box("socket_force_new_logic - obj %s, script %s", socket_object->GetName(), script_name);
 
 	// now try and find a script with the passed extention i.e. ???::looping
@@ -376,7 +376,7 @@ mcodeFunctionReturnCodes _game_session::socket_force_new_logic(int32 &, int32 *p
 			// get the address of the script we want to run
 			ad = (char *)scripts->Try_fetch_item_by_hash(socket_object->GetScriptNameFullHash(k));
 
-			if (px.socket_watch)
+			if (g_px->socket_watch)
 				Message_box("replacing logic");
 
 			// write actual offset
@@ -434,7 +434,7 @@ mcodeFunctionReturnCodes _game_session::fn_set_voxel_image_path(int32 &, int32 *
 	// create _vox_image object
 	if (!logic_structs[cur_id]->voxel_info) {
 		// assign a struct
-		logic_structs[cur_id]->voxel_info = &vox_images[num_vox_images];
+		logic_structs[cur_id]->voxel_info = g_vox_images[num_vox_images];
 		num_vox_images++;
 	}
 
@@ -793,7 +793,7 @@ mcodeFunctionReturnCodes _game_session::fn_call_socket(int32 &result, int32 *par
 	//	params   0       ascii name of target object
 	//				1     ascii name of socket script
 
-	int retval;
+	int32 retval;
 	uint32 script_hash;
 
 	const char *target_object_name = (const char *)MemoryUtil::resolvePtr(params[0]);
@@ -801,7 +801,7 @@ mcodeFunctionReturnCodes _game_session::fn_call_socket(int32 &result, int32 *par
 
 	Zdebug("fn_call_socket - obj %s, script %s", target_object_name, socket_script_name);
 
-	if (px.socket_watch)
+	if (g_px->socket_watch)
 		Message_box("%s fn_call_socket - obj %s, script %s", object->GetName(), target_object_name, socket_script_name);
 
 	script_hash = HashString(socket_script_name);
@@ -895,8 +895,12 @@ bool8 _game_session::Call_socket(uint32 id, const char *script, int32 *retval) {
 			// get the address of the script we want to run
 			const char *pc = (const char *)scripts->Try_fetch_item_by_hash(socket_object->GetScriptNameFullHash(k));
 
+			int32 result = static_cast<int>(*retval);
+
 			// run the script - pass its object so vars can be accessed
-			RunScript(pc, socket_object, retval);
+			RunScript(pc, socket_object, &result);
+
+			*retval = result;
 
 			return (TRUE8);
 		}
@@ -1031,7 +1035,7 @@ mcodeFunctionReturnCodes _game_session::fn_teleport_y_to_id(int32 &, int32 *para
 
 	Zdebug("fn_teleport_y_to_id to %d", params[0]);
 
-	_ASSERT((uint32)params[0] < total_objects);
+	assert((uint32)params[0] < total_objects);
 
 	if (logic_structs[params[0]]->image_type == PROP) {
 		logic_structs[cur_id]->mega->actor_xyz.y = floor_def->Gravitise_y(logic_structs[params[0]]->prop_xyz.y); // logic_structs[tar]->prop_xyz.y;
@@ -1871,7 +1875,7 @@ mcodeFunctionReturnCodes _game_session::fn_add_object_id_to_list(int32 &, int32 
 	if (L->total_list == MAX_list)
 		Fatal_error("fn_object_id_to_list [%s] has exceeded list size of %d", object->GetName(), MAX_list);
 
-	_ASSERT((uint32)params[0] < total_objects);
+	assert((uint32)params[0] < total_objects);
 
 	L->list[L->total_list++] = params[0];
 
@@ -1956,7 +1960,7 @@ mcodeFunctionReturnCodes _game_session::fn_lib_lift_chord_and_chi(int32 &result,
 	uint32 lift = 0; // lift number in platform list
 	bool8 hit = FALSE8;
 	uint32 j = 0;
-	static int issued_warning = FALSE8;
+	static int32 issued_warning = FALSE8;
 	const char *nico_name = (const char *)MemoryUtil::resolvePtr(params[0]);
 
 	if (!prev_save_state) { // could not save last go - then cant operate lift either. Player is in a private script
@@ -2052,10 +2056,10 @@ mcodeFunctionReturnCodes _game_session::fn_lift2_process(int32 &result, int32 *p
 	bool8 has_platform = FALSE8;
 	PXreal lifty = REAL_ZERO;
 	uint32 lift = 0; // lift number in platform list
-	static int issued_warning = FALSE8;
+	static int32 issued_warning = FALSE8;
 	const char *nico_name = (const char *)MemoryUtil::resolvePtr(params[0]);
 
-	static int inited = FALSE8;
+	static int32 inited = FALSE8;
 	if (!inited) {
 		for (j = 0; j < MAX_session_objects; j++)
 			lift2s[j].init = 0;
@@ -2366,7 +2370,7 @@ mcodeFunctionReturnCodes _game_session::fn_set_watch(int32 &, int32 *params) {
 
 	// If we are switching back to the player then we need to put the Remora back up if
 	// it was up when we switched to a manual watch (but only in 3D).
-	if (px.display_mode == THREED) {
+	if (g_px->display_mode == THREED) {
 		// Check if switching to player.
 		if (id == player.Fetch_player_id()) {
 			// If the Remora was active, need to bring it back up.
@@ -2387,7 +2391,7 @@ mcodeFunctionReturnCodes _game_session::fn_set_watch(int32 &, int32 *params) {
 				g_mission->remora_save_mode = (int32)g_oRemora->GetMode();
 				g_oRemora->SetMode(_remora::MOTION_SCAN);
 				g_oRemora->DeactivateRemora(TRUE8);
-				sInputState.UnSetButton((const ButtonEnums)(0xff));
+				sInputState.UnSetButton(__UNUSEDBUTTON);
 				g_oRemora->CycleRemoraLogic(sInputState);
 				MS->player.Pop_control_mode();
 				MS->player.Set_player_status(STOOD);
@@ -3335,12 +3339,10 @@ mcodeFunctionReturnCodes _game_session::fn_set_to_floor(int32 &, int32 *params) 
 
 	//	params[0]    ascii name of floor
 
-	_floor *floor;
-
-	const char *floor_name = (const char *)MemoryUtil::resolvePtr(params[0]);
+	//const char *floor_name = (const char *)MemoryUtil::resolvePtr(params[0]);
 
 	// get the floor
-	floor = (_floor *)floor_def->Fetch_named_floor(floor_name);
+	//_floor *floor = (_floor *)floor_def->Fetch_named_floor(floor_name);
 
 	return IR_CONT;
 }

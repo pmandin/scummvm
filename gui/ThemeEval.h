@@ -41,7 +41,7 @@ class ThemeEval {
 	typedef Common::HashMap<Common::String, ThemeLayout *> LayoutsMap;
 
 public:
-	ThemeEval() {
+	ThemeEval() : _scaleFactor(1.0f) {
 		buildBuiltinVars();
 	}
 
@@ -70,17 +70,19 @@ public:
 		return def;
 	}
 
+	void setScaleFactor(float s) { _scaleFactor = s; }
+
 	void setVar(const Common::String &name, int val) { _vars[name] = val; }
 
 	bool hasVar(const Common::String &name) { return _vars.contains(name) || _builtin.contains(name); }
 
 	ThemeEval &addDialog(const Common::String &name, const Common::String &overlays, int16 maxWidth = -1, int16 maxHeight = -1, int inset = 0);
 	ThemeEval &addLayout(ThemeLayout::LayoutType type, int spacing = -1, ThemeLayout::ItemAlign itemAlign = ThemeLayout::kItemAlignStart);
-	ThemeEval &addWidget(const Common::String &name, const Common::String &type, int w = -1, int h = -1, Graphics::TextAlign align = Graphics::kTextAlignStart, bool useRTL = false);
+	ThemeEval &addWidget(const Common::String &name, const Common::String &type, int w = -1, int h = -1, Graphics::TextAlign align = Graphics::kTextAlignStart, bool useRTL = true);
 	ThemeEval &addImportedLayout(const Common::String &name);
 	ThemeEval &addSpace(int size = -1);
 
-	ThemeEval &addPadding(int16 l, int16 r, int16 t, int16 b) { _curLayout.top()->setPadding(l, r, t, b); return *this; }
+	ThemeEval &addPadding(int16 l, int16 r, int16 t, int16 b);
 
 	ThemeEval &closeLayout() { _curLayout.pop(); return *this; }
 	ThemeEval &closeDialog() { _curLayout.pop(); _curDialog.clear(); return *this; }
@@ -108,6 +110,8 @@ private:
 	LayoutsMap _layouts;
 	Common::Stack<ThemeLayout *> _curLayout;
 	Common::String _curDialog;
+
+	float _scaleFactor;
 };
 
 } // End of namespace GUI

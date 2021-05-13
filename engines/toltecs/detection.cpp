@@ -58,7 +58,7 @@ static const ToltecsGameDescription gameDescriptions[] = {
 
 	{
 		// 3 Skulls of the Toltecs English version (alternate)
-		// From bug #3614933
+		// From bug #6393
 		{
 			"toltecs",
 			0,
@@ -152,7 +152,7 @@ static const ToltecsGameDescription gameDescriptions[] = {
 
 	{
 		// 3 Skulls of the Toltecs Hungarian version
-		// From bug #3440641
+		// From bug #5902
 		{
 			"toltecs",
 			0,
@@ -170,11 +170,11 @@ static const ToltecsGameDescription gameDescriptions[] = {
 		{
 			"toltecs",
 			0,
-				AD_ENTRY1s("WESTERN", "57503131c0217c76b07d0b5c14805631", 337644552),
-				Common::CZ_CZE,
-				Common::kPlatformDOS,
-				ADGF_NO_FLAGS,
-				GUIO1(GUIO_NONE)
+			AD_ENTRY1s("WESTERN", "57503131c0217c76b07d0b5c14805631", 337644552),
+			Common::CZ_CZE,
+			Common::kPlatformDOS,
+			ADGF_NO_FLAGS,
+			GUIO1(GUIO_NONE)
 		},
 	},
 

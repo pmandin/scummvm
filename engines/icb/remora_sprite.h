@@ -32,9 +32,7 @@
 #include "engines/icb/debug.h"
 #include "engines/icb/string_vest.h"
 #include "engines/icb/common/px_clu_api.h"
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_string.h"
-#include "engines/icb/common/px_assert.h"
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/common/px_bitmap.h"
 

@@ -17,6 +17,7 @@ MODULE_OBJS := \
 	iff_container.o \
 	ini-file.o \
 	installshield_cab.o \
+	installshieldv3_archive.o \
 	json.o \
 	language.o \
 	localization.o \
@@ -106,10 +107,8 @@ MODULE_OBJS += \
 	lua/scummvm_file.o
 endif
 
-ifdef USE_TTS
 MODULE_OBJS += \
 	text-to-speech.o
-endif
 
 # Include common rules
 include $(srcdir)/rules.mk

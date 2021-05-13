@@ -44,21 +44,22 @@ void Clip_text_print(_rgb *pen, uint32 x, uint32 y, uint8 *base, uint32 pitch, c
 
 	_frameHeader *head;
 	uint8 *charSet, *sprite_data;
-	int chr;
+	int32 chr;
 	char ascii[150];
 	va_list arg_ptr; // variable argument pointer
-	int j = 0;
+	int32 j = 0;
 
 	va_start(arg_ptr, format);
 	vsnprintf(ascii, 150, format, arg_ptr);
 
+	pxString font_cluster = FONT_CLUSTER_PATH;
 	charSet = rs_font->Res_open(SYS_FONT, sys_font_hash, font_cluster, font_cluster_hash);
 
 	do {
-		chr = (int)ascii[j++];
+		chr = (int32)ascii[j++];
 		chr -= 32;
 
-		_ASSERT((chr >= 0));
+		assert(chr >= 0);
 		head = (_frameHeader *)FetchFrameHeader(charSet, (uint16)chr);
 		sprite_data = (uint8 *)(head + 1);
 

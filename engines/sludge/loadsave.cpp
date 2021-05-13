@@ -20,12 +20,13 @@
  *
  */
 
+#include "common/system.h"
+
 #include "common/savefile.h"
 
-#include "sludge/allfiles.h"
-#include "sludge/backdrop.h"
 #include "sludge/bg_effects.h"
 #include "sludge/cursors.h"
+#include "sludge/errors.h"
 #include "sludge/event.h"
 #include "sludge/floor.h"
 #include "sludge/fonttext.h"
@@ -33,21 +34,16 @@
 #include "sludge/graphics.h"
 #include "sludge/language.h"
 #include "sludge/loadsave.h"
-#include "sludge/moreio.h"
 #include "sludge/newfatal.h"
-#include "sludge/objtypes.h"
 #include "sludge/people.h"
 #include "sludge/region.h"
 #include "sludge/savedata.h"
 #include "sludge/sludge.h"
 #include "sludge/sludger.h"
 #include "sludge/sound.h"
-#include "sludge/sprites.h"
 #include "sludge/statusba.h"
 #include "sludge/speech.h"
-#include "sludge/variable.h"
 #include "sludge/version.h"
-#include "sludge/zbuffer.h"
 
 namespace Sludge {
 
@@ -142,7 +138,7 @@ bool saveGame(const Common::String &fname) {
 	g_sludge->_gfxMan->saveLightMap(fp);
 
 	g_sludge->_speechMan->save(fp);
-	saveStatusBars(fp);
+	g_sludge->_statusBar->saveStatusBars(fp);
 	g_sludge->_soundMan->saveSounds(fp);
 
 	fp->writeUint16BE(CustomSaveHelper::_saveEncoding);
@@ -274,7 +270,7 @@ bool loadGame(const Common::String &fname) {
 	}
 
 	g_sludge->_speechMan->load(fp);
-	loadStatusBars(fp);
+	g_sludge->_statusBar->loadStatusBars(fp);
 	g_sludge->_soundMan->loadSounds(fp);
 
 	CustomSaveHelper::_saveEncoding = fp->readUint16BE();

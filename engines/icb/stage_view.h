@@ -29,12 +29,11 @@
 #define ICB_STAGE_VIEW_H__
 
 #include "engines/icb/common/px_rcutypes.h"
-#include "engines/icb/common/px_rccommon.h"
 
 namespace ICB {
 
 bool8 InitStageView(const char *cameraUrl, const char *walkgridUrl, const char *poseUrl, const char *meshUrl, const char *shadowUrl, const char *textureUrl,
-                    const char *animUrl); // Initalize the stage view module
+					const char *animUrl); // Initalize the stage view module
 void StageView();                         // Called every cycle.  Gets user input, updates character and draws the set
 
 } // End of namespace ICB

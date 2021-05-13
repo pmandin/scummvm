@@ -203,7 +203,12 @@ void SceneScriptRC04::dialogueWithBulletBob() {
 		Actor_Says(kActorBulletBob, 490, 31);
 		Actor_Says(kActorBulletBob, 500, 32);
 		Actor_Says(kActorBulletBob, 510, 33);
+#if BLADERUNNER_ORIGINAL_BUGS
 		Actor_Says(kActorBulletBob, 520, 34);
+#else
+		//  Quote 530 is the second half of the 520 sentence and flow of speech works better without the default delay
+		Actor_Says_With_Pause(kActorBulletBob, 520, 0.0f, 34);
+#endif // BLADERUNNER_ORIGINAL_BUGS
 		Actor_Says(kActorBulletBob, 530, 35);
 		Actor_Says(kActorBulletBob, 540, 36);
 		Actor_Says(kActorMcCoy, 5040, 16);
@@ -305,7 +310,12 @@ void SceneScriptRC04::dialogueWithBulletBob() {
 		Actor_Says(kActorMcCoy, 4980, 11);
 		if (Actor_Query_Friendliness_To_Other(kActorBulletBob, kActorMcCoy) > 49) {
 			Actor_Says(kActorBulletBob, 740, 37);
+#if BLADERUNNER_ORIGINAL_BUGS
 			Actor_Says(kActorMcCoy, 5085, 16);
+#else
+			// McCoy is interrupted here
+			Actor_Says_With_Pause(kActorMcCoy, 5085, 0.0f, 16);
+#endif // BLADERUNNER_ORIGINAL_BUGS
 			Actor_Says(kActorBulletBob, 750, 37);
 			Actor_Says(kActorBulletBob, 760, 37);
 			Voight_Kampff_Activate(kActorBulletBob, 50);
@@ -319,7 +329,12 @@ void SceneScriptRC04::dialogueWithBulletBob() {
 		} else {
 			Actor_Says(kActorBulletBob, 770, 36);
 			Actor_Says(kActorBulletBob, 780, 36);
+#if BLADERUNNER_ORIGINAL_BUGS
 			Actor_Says(kActorMcCoy, 5090, 16);
+#else
+			// McCoy is interrupted here
+			Actor_Says_With_Pause(kActorMcCoy, 5090, 0.0f, 16);
+#endif // BLADERUNNER_ORIGINAL_BUGS
 			Actor_Says(kActorBulletBob, 790, 36);
 			Actor_Says(kActorBulletBob, 800, 35);
 			Voight_Kampff_Activate(kActorBulletBob, 50);

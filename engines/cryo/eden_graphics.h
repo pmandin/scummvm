@@ -32,7 +32,7 @@ class HnmPlayer;
 
 class EdenGraphics {
 public:
-	EdenGraphics(EdenGame *game, HnmPlayer *video);
+	EdenGraphics(EdenGame *game);
 
 	// Original name: noclipax
 	void drawSprite(int16 index, int16 x, int16 y, bool withBlack = false, bool onSubtitle = false);
@@ -53,7 +53,7 @@ public:
 
 	void setGlowX(int16 value);
 
-	void setGlowY(int16 value);	
+	void setGlowY(int16 value);
 
 	// Original name : blackbars
 	void drawBlackBars();
@@ -154,7 +154,6 @@ public:
 
 private:
 	EdenGame *_game;
-	HnmPlayer *_video;
 
 	int16 _glowX;
 	int16 _glowY;
@@ -171,16 +170,16 @@ private:
 	View  *_underBarsView;
 
 	Common::Rect _underSubtitlesScreenRect;
-	Common::Rect _underSubtitlesBackupRect;	
+	Common::Rect _underSubtitlesBackupRect;
 
 	Common::Rect _underTopBarScreenRect;
 	Common::Rect _underBottomBarBackupRect;
 	Common::Rect _underBottomBarScreenRect;
 	Common::Rect _underTopBarBackupRect;
 
-	byte *_underSubtitlesViewBuf; // CHECKME: Useless?	
+	byte *_underSubtitlesViewBuf; // CHECKME: Useless?
 
-	byte *_mainViewBuf;	
+	byte *_mainViewBuf;
 
 	View  *_hnmView;
 	byte *_hnmViewBuf;
@@ -190,7 +189,7 @@ private:
 
 	Common::Rect _rect_dst, _rect_src;
 
-	View  *_view2;	
+	View  *_view2;
 
 	int _hnmFrameNum;
 
@@ -206,7 +205,7 @@ private:
 	color_t  _oldPalette[256];    // TODO palette_t ?
 	color_t  _newPalette[256];
 
-	bool _showBlackBars;	
+	bool _showBlackBars;
 
 	void saveUnderSubtitles(int16 y);
 
@@ -233,7 +232,7 @@ private:
 
 	////// film.c
 	// Original name: showfilm
-	void showMovie(char arg1);
+	void showMovie(int16 num, char arg1);
 
 	// Original name bullehnm
 	void handleHNMSubtitles();

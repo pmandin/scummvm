@@ -557,11 +557,6 @@ void GfxPalette::kernelSetIntensity(uint16 fromColor, uint16 toColor, uint16 int
 	memset(&_sysPalette.intensity[0] + fromColor, intensity, toColor - fromColor);
 	if (setPalette) {
 		setOnScreen();
-		EngineState *state = g_sci->getEngineState();
-		// Call speed throttler from here as well just in case we need it
-		//  At least in kq6 intro the scripts call us in a tight loop for fadein/fadeout
-		state->speedThrottler(30);
-		state->_throttleTrigger = true;
 	}
 }
 
@@ -740,7 +735,7 @@ bool GfxPalette::palVaryLoadTargetPalette(GuiResourceId resourceId) {
 void GfxPalette::palVaryInstallTimer() {
 	// Remove any possible leftover palVary timer callbacks.
 	// This happens for example in QFG1VGA, when sleeping at Erana's place
-	// (bug #3439240) - the nighttime to daytime effect clashes with the
+	// (bug #5900) - the nighttime to daytime effect clashes with the
 	// scene transition effect, as we load scene images too quickly for
 	// the SCI scripts in that case (also refer to kernelPalVaryInit).
 	palVaryRemoveTimer();

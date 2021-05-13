@@ -258,7 +258,7 @@ static const AGIGameDescription gameDescriptions[] = {
 	// Menus not tested
 	GAME("ddp", "1.0A 1986-08-08", "64388812e25dbd75f7af1103bc348596", 0x2272, GID_DDP),
 
-	// reported by Filippos (thebluegr) in bugreport #1654500
+	// reported by Filippos (thebluegr) in bugreport #3048
 	// Menus not tested
 	GAME_PS("ddp", "1.0C 1986-06-09", "550971d196f65190a5c760d2479406ef", 132, 0x2272, GID_DDP, Common::kPlatformDOS),
 
@@ -290,11 +290,8 @@ static const AGIGameDescription gameDescriptions[] = {
 		{
 			"goldrush",
 			"2.01 1988-12-22",
-			{
-				{ "grdir", 0, "db733d199238d4009a9e95f11ece34e9", 2399},
-				{ "vol.0", 0, "4b6423d143674d3757ab1b875d25951d", 25070},
-				AD_LISTEND
-			},
+			AD_ENTRY2s("grdir", "db733d199238d4009a9e95f11ece34e9", 2399,
+					   "vol.0", "4b6423d143674d3757ab1b875d25951d", 25070),
 			Common::EN_ANY,
 			Common::kPlatformMacintosh,
 			ADGF_NO_FLAGS,
@@ -384,8 +381,8 @@ static const AGIGameDescription gameDescriptions[] = {
 
 	// King's Quest 3 (Amiga) 2.15 11/15/89 # 2.333
 	// Original pauses with ESC, has menus accessible with mouse.
-	// ver = 0x3086 -> menus accessible with ESC or mouse, bug #2835581 (KQ3: Game Crash When Leaving Tavern as Fly).
-	// ver = 0x3149 -> menus accessible with mouse, ESC pauses game, bug #2835581 disappears.
+	// ver = 0x3086 -> menus accessible with ESC or mouse, bug #4528 (KQ3: Game Crash When Leaving Tavern as Fly).
+	// ver = 0x3149 -> menus accessible with mouse, ESC pauses game, bug #4528 disappears.
 	GAME3_PSO("kq3", "2.15 1989-11-15", "dirs", "8e35bded2bc5cf20f5eec2b15523b155", 1805, 0x3149, 0, GID_KQ3, Common::kPlatformAmiga, GAMEOPTIONS_AMIGA),
 
 	// King's Quest 3 (PC) 1.01 11/08/86 [AGI 2.272]
@@ -397,6 +394,10 @@ static const AGIGameDescription gameDescriptions[] = {
 
 	// King's Quest 3 (PC 5.25") 2.00 5/25/87 [AGI 2.435]
 	GAME("kq3", "2.00 1987-05-25 5.25\"", "18aad8f7acaaff760720c5c6885b6bab", 0x2440, GID_KQ3),
+
+	// King's Quest 3 (PC 5.25") 2.00 5/28/87 [AGI 2.435]
+	// Bugreport #10646
+	GAME("kq3", "2.00 1987-05-25 5.25\"", "b46dc63d6272fb6ed24a004ad580a033", 0x2440, GID_KQ3),
 
 	// King's Quest 3 (Mac) 2.14 3/15/88
 	// Menus not tested
@@ -471,7 +472,7 @@ static const AGIGameDescription gameDescriptions[] = {
 	// Manhunter NY (Amiga) 1.06 3/18/89
 	GAME3_PO("mh1", "1.06 1989-03-18", "dirs", "92c6183042d1c2bb76236236a7d7a847", 0x3149, GF_OLDAMIGAV20, GID_MH1, Common::kPlatformAmiga, GAMEOPTIONS_AMIGA),
 
-	// reported by Filippos (thebluegr) in bugreport #1654500
+	// reported by Filippos (thebluegr) in bugreport #3048
 	// Manhunter NY (PC 5.25") 1.22 8/31/88 [AGI 3.002.107]
 	GAME3_PS("mh1", "1.22 1988-08-31", "mhdir", "0c7b86f05fe02c2e26cff1b07450b82a", 2123, 0x3149, 0, GID_MH1, Common::kPlatformDOS),
 
@@ -548,6 +549,9 @@ static const AGIGameDescription gameDescriptions[] = {
 	// not sure about disk format -- dsymonds
 	GAME("pq1", "2.0G 1987-12-03", "d194e5d88363095f55d5096b8e32fbbb", 0x2917, GID_PQ1),
 
+	// Police Quest 1 (PC) 2.0G 12/3/87; with Hebrew translation
+	GAME_LVFPN("pq1", "2.0G 1987-12-03", "PQ1.WAG", "59e1b2fb6d025968b8ed7388f107c7b5", -1, Common::HE_ISR, 0x2917, 0, GID_PQ1, Common::kPlatformDOS, GType_V2, GAMEOPTIONS_DEFAULT),
+
 	// Police Quest 1 (CoCo3 360k) [AGI 2.023]
 	GAME_PS("pq1", "", "28a077041f75aab78f66804800940085", 375, 0x2440, GID_PQ1, Common::kPlatformCoCo3),
 
@@ -613,11 +617,8 @@ static const AGIGameDescription gameDescriptions[] = {
 		{
 			"sq2",
 			"2.0F 1986-12-09 [VOL.2->PICTURE.16 broken]",
-			{
-				{ "logdir", 0, "28add5125484302d213911df60d2aded", 426},
-				{ "object", 0, "5dc52be721257719f4b311a84ce22b16", 372},
-				AD_LISTEND
-			},
+			AD_ENTRY2s("logdir", "28add5125484302d213911df60d2aded", 426,
+					   "object", "5dc52be721257719f4b311a84ce22b16", 372),
 			Common::EN_ANY,
 			Common::kPlatformAmiga,
 			ADGF_NO_FLAGS,
@@ -633,11 +634,11 @@ static const AGIGameDescription gameDescriptions[] = {
 	// Space Quest 2 (Mac) 2.0D
 	GAME_P("sq2", "2.0D 1988-04-04", "bfbebe0b59d83f931f2e1c62ce9484a7", 0x2936, GID_SQ2, Common::kPlatformMacintosh),
 
-	// reported by Filippos (thebluegr) in bugreport #1654500
+	// reported by Filippos (thebluegr) in bugreport #3048
 	// Space Quest 2 (PC 5.25") 2.0A [AGI 2.912]
 	GAME_PS("sq2", "2.0A 1987-11-06 5.25\"", "ad7ce8f800581ecc536f3e8021d7a74d", 423, 0x2917, GID_SQ2, Common::kPlatformDOS),
 
-	// reported by RadG (radg123) in bug report #3260349
+	// reported by RadG (radg123) in bug report #5617
 	// Space Quest 2 (Spanish)
 	GAME_LPS("sq2", "", "1ae7640dd4d253c3ac2d708d61a35379", 426, Common::ES_ESP, 0x2917, GID_SQ2, Common::kPlatformDOS),
 

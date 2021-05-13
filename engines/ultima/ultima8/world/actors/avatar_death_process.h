@@ -28,13 +28,10 @@
 namespace Ultima {
 namespace Ultima8 {
 
-class MainActor;
-
 class AvatarDeathProcess : public Process {
 public:
 	AvatarDeathProcess();
 
-	// p_dynamic_cast stuff
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	void run() override;

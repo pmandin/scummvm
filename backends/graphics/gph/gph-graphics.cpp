@@ -27,11 +27,11 @@
 #include "backends/graphics/gph/gph-graphics.h"
 
 GPHGraphicsManager::GPHGraphicsManager(SdlEventSource *sdlEventSource, SdlWindow *window)
-	: DownscaleSdlGraphicsManager(sdlEventSource, window) {
+	: SurfaceSdlGraphicsManager(sdlEventSource, window) {
 }
 
 void GPHGraphicsManager::initSize(uint w, uint h, const Graphics::PixelFormat *format) {
-	DownscaleSdlGraphicsManager::initSize(w, h, format);
+	SurfaceSdlGraphicsManager::initSize(w, h, format);
 
 	_videoMode.overlayWidth = 320;
 	_videoMode.overlayHeight = 240;
@@ -47,25 +47,17 @@ void GPHGraphicsManager::setupHardwareSize() {
 
 	if (_videoMode.screenWidth > 320 || _videoMode.screenHeight > 240) {
 		_videoMode.aspectRatioCorrection = false;
-		setGraphicsMode(GFX_HALF);
-	} else {
-		setGraphicsMode(GFX_NORMAL);
 	}
 
-	if ((_videoMode.mode == GFX_HALF) && !_overlayVisible) {
-		_videoMode.overlayWidth = _videoMode.screenWidth / 2;
-		_videoMode.overlayHeight = _videoMode.screenHeight / 2;
-	} else {
-		_videoMode.overlayWidth = _videoMode.screenWidth * _videoMode.scaleFactor;
-		_videoMode.overlayHeight = _videoMode.screenHeight * _videoMode.scaleFactor;
+	_videoMode.overlayWidth = _videoMode.screenWidth * _videoMode.scaleFactor;
+	_videoMode.overlayHeight = _videoMode.screenHeight * _videoMode.scaleFactor;
 
-		if (_videoMode.aspectRatioCorrection)
-			_videoMode.overlayHeight = real2Aspect(_videoMode.overlayHeight);
-	}
+	if (_videoMode.aspectRatioCorrection)
+		_videoMode.overlayHeight = real2Aspect(_videoMode.overlayHeight);
 }
 
 bool GPHGraphicsManager::loadGFXMode() {
-	bool success = DownscaleSdlGraphicsManager::loadGFXMode();
+	bool success = SurfaceSdlGraphicsManager::loadGFXMode();
 
 	// The old GP2X hacked SDL needs this after any call to SDL_SetVideoMode
 	// and it does not hurt other devices.

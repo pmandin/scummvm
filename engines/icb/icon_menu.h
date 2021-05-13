@@ -29,9 +29,7 @@
 #define ICB_ICONMENU_H_INCLUDED
 
 // Include headers needed by this class.
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_string.h"
-#include "engines/icb/common/px_assert.h"
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/common/px_bitmap.h"
 #include "engines/icb/player.h"
@@ -98,7 +96,7 @@ public:
 	bool8 CycleIconMenu(const _input &sKeyboardState);
 
 	// Draw the special armed inventory
-	void DrawArmedMenu(const int nBullets, const int maxBullets, const int nClips, const int maxClips);
+	void DrawArmedMenu(const int32 nBullets, const int32 maxBullets, const int32 nClips, const int32 maxClips);
 
 	// And this draws it each cycle.
 	void DrawIconMenu();
@@ -145,8 +143,8 @@ public:
 	// These are used for PSX smoothing.  (Won't do any harm on the PC.)
 	void PreloadIcon(const char *pcIconPath, const char *pcIconName);
 
-      private:
-	int GetScrollingPosition(const int nInputX, uint &nIconIndex);
+private:
+	int32 GetScrollingPosition(const int32 nInputX, uint32 &nIconIndex);
 
 	enum IconMenuGameState { INACTIVE = 0, ACTIVE };
 

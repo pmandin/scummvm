@@ -74,86 +74,86 @@ enum ColourIndex {
 #define REMPAL(c, v) (pnRemoraColour[m_nCurrentPalette][c][v])
 
 const uint8 pnRemoraColour[REMORA_NUM_COLOUR_SCHEMES][REMORA_COLOURS_PER_SCHEME][3] = {
-    // Pallete 0.
-    {{0, 180, 241},   // CI_HEADING
-     {255, 255, 255}, // CI_WARNING
-     {0, 221, 160},   // CI_OPTION
-     {0, 140, 200},   // CI_PARAGRAPH
-     {0, 3, 35},      // CI_BACKGROUND
-     {30, 60, 120},   // CI_GRID
-     {0, 3, 35},      // CI_CLIP
-     {2, 55, 128},    // CI_FLOORS
-     {50, 80, 255},   // CI_BARRIERS
-     {0, 20, 180},    // CI_BEAM_LEADING
-     {0, 0, 0},       // CI_BEAM_TRAILING
-     {225, 34, 5},    // CI_ROBOT
-     {160, 10, 0},    // CI_DEAD_ROBOT
-     {2, 24, 200},    // CI_HUMAN
-     {1, 10, 140},    // CI_DEAD_HUMAN
-     {38, 255, 0},    // CI_RECHARGE
-     {255, 20, 20},   // CI_RECHARGE_ARMED
-     {255, 255, 255}, // CI_PLAYER
-     {38, 255, 0},    // CI_DOOR_OPEN
-     {255, 125, 0},   // CI_DOOR_CLOSED
-     {255, 255, 255}, // CI_PROGRESS_HEAD
-     {15, 50, 200},   // CI_PROGRESS_TAIL
-     {255, 30, 30},   // CI_M08_LOCKED_DOOR
-     {7, 141, 23},    // CI_M08_UNLOCKED_DOOR
-     {0, 90, 220}},   // CI_M08_BARRIERS
+	// Pallete 0.
+	{{0, 180, 241},   // CI_HEADING
+	 {255, 255, 255}, // CI_WARNING
+	 {0, 221, 160},   // CI_OPTION
+	 {0, 140, 200},   // CI_PARAGRAPH
+	 {0, 3, 35},      // CI_BACKGROUND
+	 {30, 60, 120},   // CI_GRID
+	 {0, 3, 35},      // CI_CLIP
+	 {2, 55, 128},    // CI_FLOORS
+	 {50, 80, 255},   // CI_BARRIERS
+	 {0, 20, 180},    // CI_BEAM_LEADING
+	 {0, 0, 0},       // CI_BEAM_TRAILING
+	 {225, 34, 5},    // CI_ROBOT
+	 {160, 10, 0},    // CI_DEAD_ROBOT
+	 {2, 24, 200},    // CI_HUMAN
+	 {1, 10, 140},    // CI_DEAD_HUMAN
+	 {38, 255, 0},    // CI_RECHARGE
+	 {255, 20, 20},   // CI_RECHARGE_ARMED
+	 {255, 255, 255}, // CI_PLAYER
+	 {38, 255, 0},    // CI_DOOR_OPEN
+	 {255, 125, 0},   // CI_DOOR_CLOSED
+	 {255, 255, 255}, // CI_PROGRESS_HEAD
+	 {15, 50, 200},   // CI_PROGRESS_TAIL
+	 {255, 30, 30},   // CI_M08_LOCKED_DOOR
+	 {7, 141, 23},    // CI_M08_UNLOCKED_DOOR
+	 {0, 90, 220}},   // CI_M08_BARRIERS
 
-    // Pallete 1.
-    {{0, 241, 180},   // CI_HEADING
-     {255, 255, 255}, // CI_WARNING
-     {0, 160, 221},   // CI_OPTION
-     {0, 200, 140},   // CI_PARAGRAPH
-     {0, 35, 10},     // CI_BACKGROUND
-     {0, 220, 80},    // CI_GRID
-     {0, 35, 10},     // CI_CLIP
-     {0, 75, 15},     // CI_FLOORS
-     {0, 220, 80},    // CI_BARRIERS
-     {40, 255, 100},  // CI_BEAM_LEADING
-     {0, 20, 0},      // CI_BEAM_TRAILING
-     {255, 34, 5},    // CI_ROBOT
-     {170, 10, 0},    // CI_DEAD_ROBOT
-     {5, 225, 34},    // CI_HUMAN
-     {5, 160, 10},    // CI_DEAD_HUMAN
-     {238, 156, 0},   // CI_RECHARGE
-     {255, 20, 20},   // CI_RECHARGE_ARMED
-     {255, 255, 255}, // CI_PLAYER
-     {238, 156, 0},   // CI_DOOR_OPEN
-     {238, 4, 0},     // CI_DOOR_CLOSED
-     {255, 255, 255}, // CI_PROGRESS_HEAD
-     {5, 200, 50},    // CI_PROGRESS_TAIL
-     {255, 30, 30},   // CI_M08_LOCKED_DOOR
-     {7, 235, 23},    // CI_M08_UNLOCKED_DOOR
-     {0, 230, 90}},   // CI_M08_BARRIERS
+	// Pallete 1.
+	{{0, 241, 180},   // CI_HEADING
+	 {255, 255, 255}, // CI_WARNING
+	 {0, 160, 221},   // CI_OPTION
+	 {0, 200, 140},   // CI_PARAGRAPH
+	 {0, 35, 10},     // CI_BACKGROUND
+	 {0, 220, 80},    // CI_GRID
+	 {0, 35, 10},     // CI_CLIP
+	 {0, 75, 15},     // CI_FLOORS
+	 {0, 220, 80},    // CI_BARRIERS
+	 {40, 255, 100},  // CI_BEAM_LEADING
+	 {0, 20, 0},      // CI_BEAM_TRAILING
+	 {255, 34, 5},    // CI_ROBOT
+	 {170, 10, 0},    // CI_DEAD_ROBOT
+	 {5, 225, 34},    // CI_HUMAN
+	 {5, 160, 10},    // CI_DEAD_HUMAN
+	 {238, 156, 0},   // CI_RECHARGE
+	 {255, 20, 20},   // CI_RECHARGE_ARMED
+	 {255, 255, 255}, // CI_PLAYER
+	 {238, 156, 0},   // CI_DOOR_OPEN
+	 {238, 4, 0},     // CI_DOOR_CLOSED
+	 {255, 255, 255}, // CI_PROGRESS_HEAD
+	 {5, 200, 50},    // CI_PROGRESS_TAIL
+	 {255, 30, 30},   // CI_M08_LOCKED_DOOR
+	 {7, 235, 23},    // CI_M08_UNLOCKED_DOOR
+	 {0, 230, 90}},   // CI_M08_BARRIERS
 
-    // Pallete 2.
-    {{247, 236, 23},  // CI_HEADING
-     {252, 21, 10},   // CI_WARNING
-     {235, 165, 33},  // CI_OPTION
-     {233, 238, 30},  // CI_PARAGRAPH
-     {85, 45, 0},     // CI_BACKGROUND
-     {216, 151, 1},   // CI_GRID
-     {85, 45, 0},     // CI_CLIP
-     {133, 84, 1},    // CI_FLOORS
-     {216, 151, 1},   // CI_BARRIERS
-     {224, 200, 123}, // CI_BEAM_LEADING
-     {35, 20, 0},     // CI_BEAM_TRAILING
-     {250, 140, 15},  // CI_ROBOT
-     {176, 94, 2},    // CI_DEAD_ROBOT
-     {24, 175, 3},    // CI_HUMAN
-     {15, 104, 2},    // CI_DEAD_HUMAN
-     {247, 236, 23},  // CI_RECHARGE
-     {255, 20, 20},   // CI_RECHARGE_ARMED
-     {255, 255, 255}, // CI_PLAYER
-     {197, 47, 20},   // CI_DOOR_OPEN
-     {235, 47, 20},   // CI_DOOR_CLOSED
-     {255, 255, 255}, // CI_PROGRESS_HEAD
-     {216, 137, 8},   // CI_PROGRESS_TAIL
-     {255, 30, 30},   // CI_M08_LOCKED_DOOR
-     {247, 236, 23},  // CI_M08_UNLOCKED_DOOR
-     {247, 236, 23}}  // CI_M08_BARRIERS
+	// Pallete 2.
+	{{247, 236, 23},  // CI_HEADING
+	 {252, 21, 10},   // CI_WARNING
+	 {235, 165, 33},  // CI_OPTION
+	 {233, 238, 30},  // CI_PARAGRAPH
+	 {85, 45, 0},     // CI_BACKGROUND
+	 {216, 151, 1},   // CI_GRID
+	 {85, 45, 0},     // CI_CLIP
+	 {133, 84, 1},    // CI_FLOORS
+	 {216, 151, 1},   // CI_BARRIERS
+	 {224, 200, 123}, // CI_BEAM_LEADING
+	 {35, 20, 0},     // CI_BEAM_TRAILING
+	 {250, 140, 15},  // CI_ROBOT
+	 {176, 94, 2},    // CI_DEAD_ROBOT
+	 {24, 175, 3},    // CI_HUMAN
+	 {15, 104, 2},    // CI_DEAD_HUMAN
+	 {247, 236, 23},  // CI_RECHARGE
+	 {255, 20, 20},   // CI_RECHARGE_ARMED
+	 {255, 255, 255}, // CI_PLAYER
+	 {197, 47, 20},   // CI_DOOR_OPEN
+	 {235, 47, 20},   // CI_DOOR_CLOSED
+	 {255, 255, 255}, // CI_PROGRESS_HEAD
+	 {216, 137, 8},   // CI_PROGRESS_TAIL
+	 {255, 30, 30},   // CI_M08_LOCKED_DOOR
+	 {247, 236, 23},  // CI_M08_UNLOCKED_DOOR
+	 {247, 236, 23}}  // CI_M08_BARRIERS
 };
 
 // struct Point2DColoured
@@ -176,10 +176,10 @@ typedef struct {
 Span remora_spans[REMORA_MAX_YS];
 
 void DrawGouraudQuad(uint32 nX0, uint32 nY0, uint32 nX1, uint32 nY1, uint32 nX2, uint32 nY2, uint32 nX3, uint32 nY3, uint8 nRed0, uint8 nGreen0, uint8 nBlue0, uint8 nRed1,
-                     uint8 nGreen1, uint8 nBlue1, uint8 nRed2, uint8 nGreen2, uint8 nBlue2, uint8 nRed3, uint8 nGreen3, uint8 nBlue3, int32 nOpacity);
+					 uint8 nGreen1, uint8 nBlue1, uint8 nRed2, uint8 nGreen2, uint8 nBlue2, uint8 nRed3, uint8 nGreen3, uint8 nBlue3, int32 nOpacity);
 
 void DrawGouraudTriangle(uint32 x0, uint32 y0, uint32 x1, uint32 y1, uint32 x2, uint32 y2, uint8 r0, uint8 g0, uint8 b0, uint8 r1, uint8 g1, uint8 b1, uint8 r2, uint8 g2, uint8 b2,
-                         int32 nOpacity);
+						 int32 nOpacity);
 
 // These values are used for mapping game-world points to the Remora's screen.
 float fRotateCos, fRotateSin;     // Used to store cosine and sine for rotating, so we don't have to keep working it out.
@@ -255,16 +255,6 @@ void _remora::ActivateRemora(RemoraMode eMode) {
 }
 
 void _remora::DoPlatformSpecificInitialisation() {
-
-	uint32 nFileNameHash, nClusterHash;
-	char pcFileName[ENGINE_STRING_LEN];
-
-	// Load the Map Data.  When clustered the session files have the base stripped.
-	strcpy(pcFileName, REMORA_MAP_FILENAME);
-
-	nClusterHash = MS->Fetch_session_cluster_hash();
-	nFileNameHash = NULL_HASH;
-
 	// Allocate a text buffer if one hasn't been allocated already.
 	if (!m_pDisplayBuffer)
 		m_pDisplayBuffer = new _remora_line[REMORA_TEXT_BUFFER_ROWS];
@@ -599,8 +589,8 @@ void _remora::DrawStaticBarriers(_rgb oLineColour) const {
 		for (j = 0; j < pSlice->num_cubes; ++j) {
 			// Get to the barriers for this cube.
 			nBarrierCubeOffset = pSlice->offset_cubes[j];
-			pBarrierCube = (_barrier_cube *)((unsigned char *)pSlice + nBarrierCubeOffset);
-			pBarrierArray = (uint32 *)((unsigned char *)pSlice + pBarrierCube->barriers);
+			pBarrierCube = (_barrier_cube *)((uint8 *)pSlice + nBarrierCubeOffset);
+			pBarrierArray = (uint32 *)((uint8 *)pSlice + pBarrierCube->barriers);
 
 			// Draw the barriers for this cube.
 			for (k = 0; k < (uint32)pBarrierCube->num_barriers; ++k) {
@@ -1091,7 +1081,7 @@ void _remora::DrawPulse() {
 	int32 nHighlightIndex;
 	int32 pnWholePulse[REMORA_PULSE_POINTS * REMORA_MAX_HEALTH][2];
 	float pfHighlightValues[REMORA_PULSE_POINTS * REMORA_MAX_HEALTH];
-	int32 nBaseX, nBaseY;
+	//int32 nBaseX, nBaseY;
 	int32 nX1, nY1, nX2, nY2;
 	_rgb oLineColour, oDrawColour;
 	uint32 nWholePulseIndex;
@@ -1102,8 +1092,8 @@ void _remora::DrawPulse() {
 	uint32 nHits, nHealth;
 
 	// Calculate a base drawing point for the whole thing.
-	nBaseX = REMORA_PULSE_X;
-	nBaseY = REMORA_PULSE_Y;
+	//nBaseX = REMORA_PULSE_X;
+	//nBaseY = REMORA_PULSE_Y;
 
 	// Work out player's health.
 	pPlayer = (c_game_object *)MS->objects->Fetch_item_by_name("player");
@@ -1372,11 +1362,6 @@ void _remora::ColourToRGB(uint8 nAttributes, uint8 &nRed, uint8 &nGreen, uint8 &
 }
 
 void _remora::SetUpM08LockControl() {
-	uint32 oBitmapNameHash;
-
-	// We need the size of the scan screen for clipping the barriers.
-	oBitmapNameHash = NULL_HASH;
-
 	// Here we build a list of the door names and what object ID they are.
 	BuildM08DoorList();
 }
@@ -1726,14 +1711,14 @@ inline void _remora::DrawOctagonSymbol(int32 nX, int32 nY, uint32 nPal, uint32 n
 }
 
 void DrawGouraudQuad(uint32 nX0, uint32 nY0, uint32 nX1, uint32 nY1, uint32 nX2, uint32 nY2, uint32 nX3, uint32 nY3, uint8 nRed0, uint8 nGreen0, uint8 nBlue0, uint8 nRed1,
-                     uint8 nGreen1, uint8 nBlue1, uint8 nRed2, uint8 nGreen2, uint8 nBlue2, uint8 nRed3, uint8 nGreen3, uint8 nBlue3, int32 nOpacity) {
+					 uint8 nGreen1, uint8 nBlue1, uint8 nRed2, uint8 nGreen2, uint8 nBlue2, uint8 nRed3, uint8 nGreen3, uint8 nBlue3, int32 nOpacity) {
 	DrawGouraudTriangle(nX0, nY0, nX1, nY1, nX2, nY2, nRed0, nGreen0, nBlue0, nRed1, nGreen1, nBlue1, nRed2, nGreen2, nBlue2, nOpacity);
 
 	DrawGouraudTriangle(nX1, nY1, nX2, nY2, nX3, nY3, nRed1, nGreen1, nBlue1, nRed2, nGreen2, nBlue2, nRed3, nGreen3, nBlue3, nOpacity);
 }
 
 void DrawGouraudTriangle(uint32 x0, uint32 y0, uint32 x1, uint32 y1, uint32 x2, uint32 y2, uint8 r0, uint8 g0, uint8 b0, uint8 r1, uint8 g1, uint8 b1, uint8 r2, uint8 g2, uint8 b2,
-                         int32 nOpacity) {
+						 int32 nOpacity) {
 	// Range-check the opacity.
 	if (nOpacity == 0)
 		return;
@@ -1928,7 +1913,7 @@ void DrawGouraudTriangle(uint32 x0, uint32 y0, uint32 x1, uint32 y1, uint32 x2, 
 					++x;
 				}
 
-				int xLim = remora_spans[y].x1;
+				int32 xLim = remora_spans[y].x1;
 				if (xLim > REMORA_SCREEN_WIDTH)
 					xLim = REMORA_SCREEN_WIDTH;
 
@@ -1949,7 +1934,7 @@ void DrawGouraudTriangle(uint32 x0, uint32 y0, uint32 x1, uint32 y1, uint32 x2, 
 					uint8 *pixel = (uint8 *)&left;
 					uint8 *add = (uint8 *)&newCol;
 					// Add from RGB components
-					for (int p = 0; p < 3; p++) {
+					for (int32 p = 0; p < 3; p++) {
 						pixel[p] = MIN(255, pixel[p] + add[p]);
 					}
 #else
@@ -2028,7 +2013,7 @@ void DrawGouraudTriangle(uint32 x0, uint32 y0, uint32 x1, uint32 y1, uint32 x2, 
 				if (x < 0)
 					x = 0;
 
-				int xLim = remora_spans[y].x1;
+				int32 xLim = remora_spans[y].x1;
 				if (xLim > REMORA_SCREEN_WIDTH)
 					xLim = REMORA_SCREEN_WIDTH;
 
@@ -2049,7 +2034,7 @@ void DrawGouraudTriangle(uint32 x0, uint32 y0, uint32 x1, uint32 y1, uint32 x2, 
 				uint8 *pixel = (uint8 *)&left;
 				uint8 *add = (uint8 *)&newCol;
 				// Add from RGB components
-				for (int p = 0; p < 3; p++) {
+				for (int32 p = 0; p < 3; p++) {
 					pixel[p] = (pixel[p] + add[p]) >> 1;
 				}
 #else

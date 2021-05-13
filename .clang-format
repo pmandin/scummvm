@@ -1,6 +1,6 @@
 {
     BasedOnStyle: LLVM,
-    UseTab: ForIndentation,
+    UseTab: ForContinuationAndIndentation,
     IndentWidth: 4,
     TabWidth: 4,
     BreakBeforeBraces: Attach,
@@ -14,7 +14,7 @@
     SpaceAfterTemplateKeyword: false,
     SpaceBeforeAssignmentOperators: true,
     SpaceBeforeCtorInitializerColon: true,
-    SpaceBeforeInheritanceColon: true, 
+    SpaceBeforeInheritanceColon: true,
     SpaceInEmptyParentheses: false,
     SpacesInAngles: false,
     SpacesInParentheses: false,

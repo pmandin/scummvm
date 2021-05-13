@@ -20,13 +20,10 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/widgets/text_widget.h"
-#include "ultima/ultima8/graphics/fonts/shape_font.h"
 #include "ultima/ultima8/graphics/fonts/rendered_text.h"
 #include "ultima/ultima8/graphics/render_surface.h"
 #include "ultima/ultima8/graphics/fonts/font_manager.h"
-#include "ultima/ultima8/graphics/fonts/tt_font.h"
 #include "ultima/ultima8/gumps/bark_gump.h"
 #include "ultima/ultima8/gumps/ask_gump.h"
 #include "ultima/ultima8/gumps/widgets/button_widget.h"
@@ -42,7 +39,7 @@ TextWidget::TextWidget() : Gump(), _gameFont(false), _fontNum(0), _blendColour(0
 }
 
 TextWidget::TextWidget(int x, int y, const Std::string &txt, bool gamefont, int font,
-                       int w, int h, Font::TextAlign align) :
+					   int w, int h, Font::TextAlign align) :
 	Gump(x, y, w, h), _text(txt), _gameFont(gamefont), _fontNum(font),
 	_blendColour(0), _currentStart(0), _currentEnd(0), _tx(0), _ty(0),
 	_targetWidth(w), _targetHeight(h), _cachedText(nullptr), _textAlign(align) {

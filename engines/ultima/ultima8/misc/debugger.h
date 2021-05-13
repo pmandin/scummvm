@@ -26,7 +26,6 @@
 #include "ultima/ultima8/misc/common_types.h"
 #include "ultima/shared/engine/debugger.h"
 #include "ultima/shared/std/containers.h"
-#include "ultima/shared/std/misc.h"
 #include "common/debug.h"
 #include "common/stream.h"
 
@@ -34,10 +33,12 @@ namespace Ultima {
 namespace Ultima8 {
 
 class ConsoleStream : public Common::WriteStream {
-private:
-	Std::Precision _precision;
 public:
-	ConsoleStream() : Common::WriteStream(), _precision(Std::dec) {
+	enum Precision { hex = 16, dec = 10 };
+private:
+	Precision _precision;
+public:
+	ConsoleStream() : Common::WriteStream(), _precision(dec) {
 	}
 
 	int32 pos() const override {
@@ -69,14 +70,14 @@ public:
 		return *this;
 	}
 
-	ConsoleStream &operator<<(Std::Precision p) {
+	ConsoleStream &operator<<(Precision p) {
 		_precision = p;
 		return *this;
 	}
 
 	ConsoleStream &operator<<(int val) {
 		Common::String str = Common::String::format(
-			(_precision == Std::hex) ? "%x" : "%d", val);
+			(_precision == hex) ? "%x" : "%d", val);
 		write(str.c_str(), str.size());
 		return *this;
 	}
@@ -142,15 +143,12 @@ private:
 	bool cmdLoadGame(int argc, const char **argv);
 	bool cmdNewGame(int argc, const char **argv);
 	bool cmdQuit(int argc, const char **argv);
-	bool cmdChangeGame(int argc, const char **argv);
-	bool cmdListGames(int argc, const char **argv);
 	bool cmdSetVideoMode(int argc, const char **argv);
 	bool cmdEngineStats(int argc, const char **argv);
 	bool cmdToggleAvatarInStasis(int argc, const char **argv);
 	bool cmdTogglePaintEditorItems(int argc, const char **argv);
 	bool cmdToggleShowTouchingItems(int argc, const char **argv);
 	bool cmdCloseItemGumps(int argc, const char **argv);
-	bool cmdMemberVar(int argc, const char **argv);
 
 	// Avatar mover
 	bool cmdStartJump(int argc, const char **argv);
@@ -194,6 +192,8 @@ private:
 	bool cmdToggleInvincibility(int argc, const char **argv);
 
 	// Game Map Gump
+	bool cmdStartHighlightItems(int argc, const char **argv);
+	bool cmdStopHighlightItems(int argc, const char **argv);
 	bool cmdToggleHighlightItems(int argc, const char **argv);
 	bool cmdDumpMap(int argc, const char **argvv);
 	bool cmdIncrementSortOrder(int argc, const char **argv);
@@ -222,8 +222,11 @@ private:
 	bool cmdToggleCombat(int argc, const char **argv);
 	bool cmdUseInventoryItem(int argc, const char **argv);
 	bool cmdUseMedikit(int argc, const char **argv);
+	bool cmdUseEnergyCube(int argc, const char **argv);
+	bool cmdDetonateBomb(int argc, const char **argv);
 	bool cmdStartSelection(int argc, const char **argv);
 	bool cmdUseSelection(int argc, const char **argv);
+	bool cmdGrabItems(int argc, const char **argv);
 
 	// Object Manager
 	bool cmdObjectTypes(int argc, const char **argv);

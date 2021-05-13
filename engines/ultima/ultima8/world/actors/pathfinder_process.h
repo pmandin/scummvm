@@ -39,13 +39,10 @@ public:
 	PathfinderProcess(Actor *actor, int32 x, int32 y, int32 z);
 	~PathfinderProcess() override;
 
-	// p_dynamic_cast stuff
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	void run() override;
 	void terminate() override;
-
-//	virtual void terminate();
 
 	bool loadData(Common::ReadStream *rs, uint32 version);
 	void saveData(Common::WriteStream *ws) override;

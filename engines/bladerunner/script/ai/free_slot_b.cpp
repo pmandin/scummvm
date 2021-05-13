@@ -81,7 +81,11 @@ bool AIScriptFreeSlotB::Update() {
 
 		case kGoalFreeSlotBGone:
 			if (Actor_Query_Which_Set_In(kActorFreeSlotB) != Player_Query_Current_Set()) {
+#if BLADERUNNER_ORIGINAL_BUGS
 				Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBAct4Default);
+#else
+				Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBGoneIntermediate);
+#endif
 			}
 			break;
 
@@ -104,7 +108,11 @@ bool AIScriptFreeSlotB::Update() {
 			if (Actor_Query_Goal_Number(kActorFreeSlotB) == kGoalFreeSlotBGone) {
 				if (Actor_Query_Which_Set_In(kActorFreeSlotB) != Player_Query_Current_Set()) {
 					Non_Player_Actor_Combat_Mode_Off(kActorFreeSlotB);
+#if BLADERUNNER_ORIGINAL_BUGS
 					Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBAct5Default);
+#else
+					Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBGoneIntermediate);
+#endif
 					return true;
 				}
 			}
@@ -184,12 +192,10 @@ void AIScriptFreeSlotB::OtherAgentEnteredThisSet(int otherActorId) {
 void AIScriptFreeSlotB::OtherAgentExitedThisSet(int otherActorId) {
 #if !BLADERUNNER_ORIGINAL_BUGS
 	if (otherActorId == kActorMcCoy && Actor_Query_Goal_Number(kActorFreeSlotB) == kGoalFreeSlotBGone) {
-		if (Global_Variable_Query(kVariableChapter) == 4) {
-			Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBAct4Default);
-		} else if (Global_Variable_Query(kVariableChapter) == 5) {
+		if (Global_Variable_Query(kVariableChapter) == 5) {
 			Non_Player_Actor_Combat_Mode_Off(kActorFreeSlotB);
-			Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBAct5Default);
 		}
+		Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBGoneIntermediate);
 	}
 
 #endif // BLADERUNNER_ORIGINAL_BUGS
@@ -250,8 +256,22 @@ bool AIScriptFreeSlotB::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 		AI_Movement_Track_Repeat(kActorFreeSlotB);
 		break;
 
-	case kGoalFreeSlotBGone:
+#if BLADERUNNER_ORIGINAL_BUGS
+#else
+	case kGoalFreeSlotBGoneIntermediate:
 		Actor_Set_Health(kActorFreeSlotB, 20, 20);
+		if (Global_Variable_Query(kVariableChapter) == 4) {
+			Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBAct4Default);
+		} else if (Global_Variable_Query(kVariableChapter) == 5) {
+			Actor_Set_Goal_Number(kActorFreeSlotB, kGoalFreeSlotBAct5Default);
+		}
+		break;
+#endif
+
+	case kGoalFreeSlotBGone:
+#if BLADERUNNER_ORIGINAL_BUGS
+		Actor_Set_Health(kActorFreeSlotB, 20, 20);
+#endif
 		break;
 
 	default:
@@ -264,15 +284,15 @@ bool AIScriptFreeSlotB::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 bool AIScriptFreeSlotB::UpdateAnimation(int *animation, int *frame) {
 	switch (_animationState) {
 	case 0:
-		*animation = 861;
+		*animation = kModelAnimationRatIdle;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(861)) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatIdle)) {
 			_animationFrame = 0;
 		}
 		break;
 
 	case 1:
-		*animation = 862;
+		*animation = kModelAnimationRatSlowWalk;
 		if (_var1) {
 			--_var1;
 		} else {
@@ -293,25 +313,25 @@ bool AIScriptFreeSlotB::UpdateAnimation(int *animation, int *frame) {
 		break;
 
 	case 2:
-		*animation = 862;
+		*animation = kModelAnimationRatSlowWalk;
 		++_animationFrame;
-		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(862) - 1) {
-			*animation = 861;
+		if (_animationFrame > Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatSlowWalk) - 1) {
+			*animation = kModelAnimationRatIdle;
 			_animationFrame = 0;
 			_animationState = 0;
 		}
 		break;
 
 	case 3:
-		*animation = 858;
+		*animation = kModelAnimationRatRunning;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(858)) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatRunning)) {
 			_animationFrame = 0;
 		}
 		break;
 
 	case 4:
-		*animation = 857;
+		*animation = kModelAnimationRatJumpAttack;
 		++_animationFrame;
 		if (_animationFrame == 3) {
 			int snd;
@@ -326,7 +346,7 @@ bool AIScriptFreeSlotB::UpdateAnimation(int *animation, int *frame) {
 			Actor_Combat_AI_Hit_Attempt(kActorFreeSlotB);
 		}
 		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(*animation)) {
-			*animation = 861;
+			*animation = kModelAnimationRatIdle;
 			_animationFrame = 0;
 			_animationState = 0;
 		}
@@ -335,11 +355,11 @@ bool AIScriptFreeSlotB::UpdateAnimation(int *animation, int *frame) {
 	case 5:
 		// This is an animation for Maggie (exploding) but is also used for generic death states (rats, generic walkers)
 		// probably for debug purposes
-		*animation = 874;
+		*animation = kModelAnimationMaggieExploding;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(874) - 1) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationMaggieExploding) - 1) {
 			_animationState = 8;
-			_animationFrame = Slice_Animation_Query_Number_Of_Frames(874) - 1;
+			_animationFrame = Slice_Animation_Query_Number_Of_Frames(kModelAnimationMaggieExploding) - 1;
 		}
 		break;
 
@@ -347,9 +367,9 @@ bool AIScriptFreeSlotB::UpdateAnimation(int *animation, int *frame) {
 		if (_animationFrame == 1) {
 			Ambient_Sounds_Play_Sound(kSfxRATTY3, 99, 0, 0, 20);
 		}
-		*animation = 860;
+		*animation = kModelAnimationRatHurt;
 		++_animationFrame;
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(860)) {
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatHurt)) {
 			_animationFrame = 0;
 			_animationState = 0;
 			Actor_Change_Animation_Mode(kActorFreeSlotB, kAnimationModeIdle);
@@ -357,27 +377,27 @@ bool AIScriptFreeSlotB::UpdateAnimation(int *animation, int *frame) {
 		break;
 
 	case 7:
-		*animation = 859;
+		*animation = kModelAnimationRatDying;
 		++_animationFrame;
 		if (_animationFrame == 1) {
 			Ambient_Sounds_Play_Sound(kSfxRATTY5, 99, 0, 0, 25);
 		}
 #if BLADERUNNER_ORIGINAL_BUGS
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(859) - 1) {
-			_animationFrame = Slice_Animation_Query_Number_Of_Frames(859) - 1;
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1) {
+			_animationFrame = Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1;
 		}
 		_animationState = 8;
 #else
-		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(859) - 1) {
-			_animationFrame = Slice_Animation_Query_Number_Of_Frames(859) - 1;
+		if (_animationFrame >= Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1) {
+			_animationFrame = Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1;
 			_animationState = 8;
 		}
 #endif // BLADERUNNER_ORIGINAL_BUGS
 		break;
 
 	case 8:
-		*animation = 859;
-		_animationFrame = Slice_Animation_Query_Number_Of_Frames(859) - 1;
+		*animation = kModelAnimationRatDying;
+		_animationFrame = Slice_Animation_Query_Number_Of_Frames(kModelAnimationRatDying) - 1;
 		break;
 
 	default:

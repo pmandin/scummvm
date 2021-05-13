@@ -35,11 +35,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// English DVD
 	{
-		"tlj", "DVD", {
-			{"x.xarc", 0, "de8327850d7bba90b690b141eaa23f61", 3032},
-			{"chapters.ini", 0, "5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "DVD",
+		AD_ENTRY2s("x.xarc",		"de8327850d7bba90b690b141eaa23f61", 3032,
+				   "chapters.ini",	"5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485),
 		Common::EN_ANY,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -49,11 +47,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// GOG edition
 	{
-		"tlj", "GOG", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "GOG",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485),
 		Common::EN_ANY,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -63,11 +59,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// English Old Demo
 	{
-		"tlj", "Old Demo", {
-			{"x.xarc", 0, "97abc1bb9239dee4c208e533f3c97e1c", 98},
-			{"chapters.ini", 0, "5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "Old Demo",
+		AD_ENTRY2s("x.xarc",		"97abc1bb9239dee4c208e533f3c97e1c", 98,
+				   "chapters.ini",	"5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485),
 		Common::EN_ANY,
 		Common::kPlatformWindows,
 		ADGF_DEMO,
@@ -77,11 +71,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// English v1.61 Demo
 	{
-		"tlj", "v1.61 Demo", {
-			{"x.xarc", 0, "61093bcd499b386ed5c0345c52f48909", 98},
-			{"chapters.ini", 0, "5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "v1.61 Demo",
+		AD_ENTRY2s("x.xarc",		"61093bcd499b386ed5c0345c52f48909", 98,
+				   "chapters.ini",	"5b5a1f1dd2297d9ce0d3d12216d5d2c5", 485),
 		Common::EN_ANY,
 		Common::kPlatformWindows,
 		ADGF_DEMO,
@@ -89,13 +81,24 @@ static const ADGameDescription gameDescriptions[] = {
 	},
 
 	// The Longest Journey
+	// Czech 4CD
+	// Bugreport #11914
+	{
+		"tlj", "4 CD build 142",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"547f0b9c04c00d330b60eed6e8d24732", 484),
+		Common::CZ_CZE,
+		Common::kPlatformWindows,
+		ADGF_NO_FLAGS,
+		GUIO_NONE
+	},
+
+	// The Longest Journey
 	// French Demo
 	{
-		"tlj", "Demo", {
-			{"x.xarc", 0, "97abc1bb9239dee4c208e533f3c97e1c", 98},
-			{"chapters.ini", 0, "e54f6370dca06496069790840409cf95", 506},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "Demo",
+		AD_ENTRY2s("x.xarc",		"97abc1bb9239dee4c208e533f3c97e1c", 98,
+				   "chapters.ini",	"e54f6370dca06496069790840409cf95", 506),
 		Common::FR_FRA,
 		Common::kPlatformWindows,
 		ADGF_DEMO,
@@ -105,11 +108,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Norwegian Demo
 	{
-		"tlj", "Demo", {
-			{"x.xarc", 0, "97abc1bb9239dee4c208e533f3c97e1c", 98},
-			{"chapters.ini", 0, "f358f604abd1aa1476ed05d6d271ac70", 473},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "Demo",
+		AD_ENTRY2s("x.xarc",		"97abc1bb9239dee4c208e533f3c97e1c", 98,
+				   "chapters.ini",	"f358f604abd1aa1476ed05d6d271ac70", 473),
 		Common::NB_NOR,
 		Common::kPlatformWindows,
 		ADGF_DEMO,
@@ -119,11 +120,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Norwegian 4 CD version - supplied by L0ngcat
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "f358f604abd1aa1476ed05d6d271ac70", 473},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"f358f604abd1aa1476ed05d6d271ac70", 473),
 		Common::NB_NOR,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -133,11 +132,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Norwegian DLC-edition (DVD?)
 	{
-		"tlj", "DVD", {
-			{"x.xarc", 0, "de8327850d7bba90b690b141eaa23f61", 3032},
-			{"chapters.ini", 0, "f358f604abd1aa1476ed05d6d271ac70", 473},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "DVD",
+		AD_ENTRY2s("x.xarc",		"de8327850d7bba90b690b141eaa23f61", 3032,
+				   "chapters.ini",	"f358f604abd1aa1476ed05d6d271ac70", 473),
 		Common::NB_NOR,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -147,11 +144,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// German DVD version supplied by Vorph on the forums
 	{
-		"tlj", "DVD", {
-			{"x.xarc", 0, "de8327850d7bba90b690b141eaa23f61", 3032},
-			{"chapters.ini", 0, "e4611d143a87b263d8d7a54edc7e7cd7", 515},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "DVD",
+		AD_ENTRY2s("x.xarc",		"de8327850d7bba90b690b141eaa23f61", 3032,
+				   "chapters.ini",	"e4611d143a87b263d8d7a54edc7e7cd7", 515),
 		Common::DE_DEU,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -161,11 +156,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// German 4CD
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "e4611d143a87b263d8d7a54edc7e7cd7", 515},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"e4611d143a87b263d8d7a54edc7e7cd7", 515),
 		Common::DE_DEU,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -175,11 +168,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Italian DVD version
 	{
-		"tlj", "DVD", {
-			{"x.xarc", 0, "de8327850d7bba90b690b141eaa23f61", 3032},
-			{"chapters.ini", 0, "9a81ea4e6f5b84511dd4e56d04a64e2e", 498},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "DVD",
+		AD_ENTRY2s("x.xarc",		"de8327850d7bba90b690b141eaa23f61", 3032,
+				   "chapters.ini",	"9a81ea4e6f5b84511dd4e56d04a64e2e", 498),
 		Common::IT_ITA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -189,11 +180,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Italian 4CD
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "9a81ea4e6f5b84511dd4e56d04a64e2e", 498},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"9a81ea4e6f5b84511dd4e56d04a64e2e", 498),
 		Common::IT_ITA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -203,11 +192,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Dutch 4CD
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "c8dadd9a3b41640734d6213e89cd5635", 508},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"c8dadd9a3b41640734d6213e89cd5635", 508),
 		Common::NL_NLD,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -217,11 +204,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Spanish 4CD
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "3640df6d536b186bff228337284d9631", 525},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"3640df6d536b186bff228337284d9631", 525),
 		Common::ES_ESP,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -231,11 +216,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// French 2CD
 	{
-		"tlj", "2 CD", {
-			{"x.xarc", 0, "de8327850d7bba90b690b141eaa23f61", 3032},
-			{"chapters.ini", 0, "e54f6370dca06496069790840409cf95", 506},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "2 CD",
+		AD_ENTRY2s("x.xarc",		"de8327850d7bba90b690b141eaa23f61", 3032,
+				   "chapters.ini",	"e54f6370dca06496069790840409cf95", 506),
 		Common::FR_FRA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -245,11 +228,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// French 4CD
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "e54f6370dca06496069790840409cf95", 506},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"e54f6370dca06496069790840409cf95", 506),
 		Common::FR_FRA,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -259,11 +240,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Swedish Demo
 	{
-		"tlj", "Demo", {
-			{"x.xarc", 0, "97abc1bb9239dee4c208e533f3c97e1c", 98},
-			{"chapters.ini", 0, "f6a2007300209492b7b90b4c0467832d", 462},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "Demo",
+		AD_ENTRY2s("x.xarc",		"97abc1bb9239dee4c208e533f3c97e1c", 98,
+				   "chapters.ini",	"f6a2007300209492b7b90b4c0467832d", 462),
 		Common::SE_SWE,
 		Common::kPlatformWindows,
 		ADGF_DEMO,
@@ -273,11 +252,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Swedish 4CD
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "f6a2007300209492b7b90b4c0467832d", 462},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"f6a2007300209492b7b90b4c0467832d", 462),
 		Common::SE_SWE,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -287,11 +264,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Swedish DVD Nordic Special Edition - supplied by L0ngcat
 	{
-		"tlj", "DVD", {
-			{"x.xarc", 0, "de8327850d7bba90b690b141eaa23f61", 3032},
-			{"chapters.ini", 0, "f6a2007300209492b7b90b4c0467832d", 462},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "DVD",
+		AD_ENTRY2s("x.xarc",		"de8327850d7bba90b690b141eaa23f61", 3032,
+				   "chapters.ini",	"f6a2007300209492b7b90b4c0467832d", 462),
 		Common::SE_SWE,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -301,11 +276,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Polish 4CD
 	{
-		"tlj", "4 CD", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "6abc5c38e6e31face4b675355b117620", 499},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "4 CD",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"6abc5c38e6e31face4b675355b117620", 499),
 		Common::PL_POL,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -313,13 +286,25 @@ static const ADGameDescription gameDescriptions[] = {
 	},
 
 	// The Longest Journey
+	// Polish Demo.
+	// Provided by Faalargon, Bugreport #11883 (#1440 in Residualvm)
+	// Folder structure is completely different. Unsupported for now
+	{
+		"tlj", _s("Missing game code"), // Reason for being unsupported
+		AD_ENTRY2s("x.xarc",		"6c6c388f757adcc49e7f33b0b2cccf96", 2904,
+				   "chapters.ini",	"6ee43a176a5eb94153c2d813261c3226", 252),
+		Common::PL_POL,
+		Common::kPlatformWindows,
+		ADGF_DEMO | ADGF_UNSUPPORTED,
+		GUIO_NONE
+	},
+
+	// The Longest Journey
 	// Russian 2CD by 1C
 	{
-		"tlj", "2 CD/Fargus", {
-			{"x.xarc", 0, "de8327850d7bba90b690b141eaa23f61", 3032},
-			{"chapters.ini", 0, "740b97b94e97ed11f064f5fa125ebee1", 486},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "2 CD/Fargus",
+		AD_ENTRY2s("x.xarc",		"de8327850d7bba90b690b141eaa23f61", 3032,
+				   "chapters.ini",	"740b97b94e97ed11f064f5fa125ebee1", 486),
 		Common::RU_RUS,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,
@@ -329,11 +314,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Russian 2CD by 7Wolf
 	{
-		"tlj", "2 CD/7Wolf", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "8e08025c89575d2573c2edf0daa1cb34", 406},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "2 CD/7Wolf",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"8e08025c89575d2573c2edf0daa1cb34", 406),
 		Common::RU_RUS,
 		Common::kPlatformWindows,
 		ADGF_UNSTABLE,
@@ -343,11 +326,9 @@ static const ADGameDescription gameDescriptions[] = {
 	// The Longest Journey
 	// Hungarian fan-made
 	{
-		"tlj", "Fanmade", {
-			{"x.xarc", 0, "a0559457126caadab0cadac02d35f26f", 3032},
-			{"chapters.ini", 0, "790b51a88b5493bff5168a77738e0e84", 451},
-			{nullptr, 0, nullptr, 0}
-		},
+		"tlj", "Fanmade",
+		AD_ENTRY2s("x.xarc",		"a0559457126caadab0cadac02d35f26f", 3032,
+				   "chapters.ini",	"790b51a88b5493bff5168a77738e0e84", 451),
 		Common::HU_HUN,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,

@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 
 #include "ultima/ultima8/world/actors/scheduler_process.h"
 #include "ultima/ultima8/world/actors/actor.h"
@@ -30,7 +29,6 @@
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(SchedulerProcess)
 
 SchedulerProcess::SchedulerProcess() : Process() {

@@ -23,7 +23,7 @@
 // Main vocabulary support functions and word lookup
 
 #include "sci/parser/vocabulary.h"
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/engine/state.h"
 #include "sci/engine/kernel.h"
 #include "sci/console.h"
@@ -885,7 +885,7 @@ static int node_major(ParseTreeNode* node) {
 }
 static bool node_is_terminal(ParseTreeNode* node) {
 	return (node->right->right &&
-            node->right->right->type != kParseTreeBranchNode);
+			node->right->right->type != kParseTreeBranchNode);
 }
 static int node_terminal_value(ParseTreeNode* node) {
 	assert(node_is_terminal(node));

@@ -24,7 +24,7 @@
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 
 // HACK to allow building with the SDL backend on MinGW
-// see bug #1800764 "TOOLS: MinGW tools building broken"
+// see bug #3412 "TOOLS: MinGW tools building broken"
 #ifdef main
 #undef main
 #endif // main
@@ -45,7 +45,7 @@
 
 
 enum {
-	kKyraDatVersion = 105
+	kKyraDatVersion = 109
 };
 
 const ExtractFilename extractFilenames[] = {
@@ -205,7 +205,7 @@ const ExtractFilename extractFilenames[] = {
 
 
 	// MALCOLM'S REVENGE
-	{ k3MainMenuStrings, kStringList, false },
+	{ k3MainMenuStrings, kStringList, true },
 	{ k3MusicFiles, kStringList, false },
 	{ k3ScoreTable, kRawData, false },
 	{ k3SfxFiles, kStringList, false },
@@ -213,6 +213,9 @@ const ExtractFilename extractFilenames[] = {
 	{ k3ItemAnimData, k2ItemAnimDefinition, false },
 	{ k3ItemMagicTable, kRawData, false },
 	{ k3ItemStringMap, kRawData, false },
+	{ k3FontData, kRawData, true },
+	{ k3VqaSubtitlesIntro, kStringList, true },
+	{ k3VqaSubtitlesBoat, kStringList, true },
 
 	// EYE OF THE BEHOLDER COMMON
 	{ kEoBBaseChargenStrings1, kStringList, true },
@@ -542,7 +545,7 @@ const ExtractFilename extractFilenames[] = {
 	{ kEoB1CharWidthTable1, kRawData, false },
 	{ kEoB1CharWidthTable2, kRawData, false },
 	{ kEoB1CharWidthTable3, kRawData, false },
-	{ kEoB1CharTilesTable, kRawData, false },
+	{ kEoB1CharTilesTable, kRawData, true },
 
 	// EYE OF THE BEHOLDER II
 	{ kEoB2MainMenuStrings, kStringList, true },
@@ -821,6 +824,7 @@ const ExtractFilename extractFilenames[] = {
 	{ kEoB1MonsterAnimFrames109, kRawData, false },
 
 	{ kEoBBaseNpcPresets, kEoBNpcData, false },
+	{ kEoBBaseNpcPresetsNames, kStringList, true },
 	{ kEoB2Npc1Strings, kStringList, true },
 	{ kEoB2Npc2Strings, kStringList, true },
 	{ kEoB2MonsterDustStrings, kStringList, true },
@@ -1052,7 +1056,7 @@ const ExtractFilename extractFilenames[] = {
 	{ kEoB2FontDmpSearchTbl, kRawDataBe16, false },
 	{ kEoB2Ascii2SjisTables, kStringList, false },
 	{ kEoB2Ascii2SjisTables2, kStringList, false },
-	{ kEoB2SaveNamePatterns, kStringList, false },
+	{ kEoBBaseSaveNamePatterns, kStringList, true },
 
 	{ kEoB2PcmSoundEffectsIngame, kRawData, false },
 	{ kEoB2PcmSoundEffectsIntro, kRawData, false },
@@ -1200,6 +1204,8 @@ const TypeTable languageTable[] = {
 	{ IT_ITA, 5 },
 	{ JA_JPN, 6 },
 	{ RU_RUS, 7 },
+	{ HE_ISR, 8 },
+	{ ZH_CNA, 9 },
 	{ -1, -1 }
 };
 

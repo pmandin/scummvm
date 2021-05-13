@@ -23,8 +23,6 @@
 #ifndef MADS_COMPRESSION_H
 #define MADS_COMPRESSION_H
 
-#include "common/scummsys.h"
-#include "common/endian.h"
 #include "common/memstream.h"
 #include "common/stream.h"
 
@@ -74,8 +72,8 @@ public:
 
 class FabDecompressor {
 private:
-    int _bitsLeft;
-    uint32 _bitBuffer;
+	int _bitsLeft;
+	uint32 _bitBuffer;
 	const byte *_srcData, *_srcP;
 	int _srcSize;
 

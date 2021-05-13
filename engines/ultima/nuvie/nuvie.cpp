@@ -258,10 +258,10 @@ bool NuvieEngine::canLoadGameStateCurrently(bool isAutosave) {
 	// the save dialog will result in active gumps being closed
 	Events *events = static_cast<Events *>(_events);
 	MapWindow *mapWindow = _game->get_map_window();
-	
+
 	if (isAutosave) {
 		return events->get_mode() == MOVE_MODE;
-	
+
 	} else {
 		events->close_gumps();
 
@@ -407,6 +407,15 @@ bool NuvieEngine::playIntro() {
 	if (ConfMan.hasKey("save_slot") && ConfMan.getInt("save_slot") >= 0)
 		// Loading a savegame from the launcher, so skip intro
 		return true;
+
+	bool skip_intro;
+	string key = config_get_game_key(_config);
+	key.append("/skip_intro");
+	_config->value(key, skip_intro, false);
+
+	if (skip_intro)
+		return true;
+
 
 	if (_script->play_cutscene("/intro.lua")) {
 		bool should_quit = false;

@@ -125,7 +125,7 @@ bool8 Setup_new_mission(const char *mission_name, const char *session_name) {
 	HashFile(session_name, h_session_name);
 
 	// convert hashes to lower-case for FS operations
-	for (int i = 0; i < 8; i++) {
+	for (int32 i = 0; i < 8; i++) {
 		h_mission_name[i] = (char)tolower(h_mission_name[i]);
 		h_session_name[i] = (char)tolower(h_session_name[i]);
 	}
@@ -189,7 +189,7 @@ void _mission::___init_mission(const char *new_mission_name, const char *session
 		Fatal_error("new mission no session name");
 
 	// Work out which CD we should be using
-	px.current_cd = WhichCD(new_mission_name);
+	g_px->current_cd = WhichCD(new_mission_name);
 
 	// Need a mission id number fist of all
 	MISSION_ID m = (MISSION_ID)FindMissionNumber(new_mission_name);
@@ -290,10 +290,10 @@ _mission::_mission()
 	memset(tiny_mission_name, '\0', TINY_NAME_LEN);
 	memset(tiny_session_name, '\0', TINY_NAME_LEN);
 	memset(h_mission_name, '\0', 8);
-	for (int i = 0; i < MAX_sessions; i++) {
+	for (int32 i = 0; i < MAX_sessions; i++) {
 		memset(micro_sessions[i].session__name, '\0', ENGINE_STRING_LEN);
 		micro_sessions[i].number_of_micro_objects = 0;
-		for (int j = 0; j < MAX_session_objects; j++) {
+		for (int32 j = 0; j < MAX_session_objects; j++) {
 			memset(micro_sessions[i].micro_objects[j].lvar_value, 0, MAX_lvars * sizeof(int32));
 			micro_sessions[i].micro_objects[j].total_lvars = 0;
 			micro_sessions[i].micro_objects[j].status_flag = OB_STATUS_NOT_HELD;
@@ -361,9 +361,6 @@ uint32 _mission::Game_cycle() {
 
 	rs_anims->Garbage_removal();
 
-	// check async
-	rs1->async_checkArray();
-
 	// update the sound engine
 	UpdateHearableSounds();
 
@@ -372,14 +369,14 @@ uint32 _mission::Game_cycle() {
 	MS->prev_save_state = MS->Can_save(); // get previous state - used by lifts to see if player is active
 	MS->Set_can_save(FALSE8);             // cant save as default - this is reversed by states that allow save this game cycle
 
-	px.logic_timing = TRUE8;
+	g_px->logic_timing = TRUE8;
 	logic_time = GetMicroTimer();
 	resman_logic_time = 0; // reset
 	xtra_mega_time = 0;
 	session->One_logic_cycle();
 	// work out overall time
 	logic_time = GetMicroTimer() - logic_time;
-	px.logic_timing = FALSE8;
+	g_px->logic_timing = FALSE8;
 
 	// cancel SAVE if watching another mega
 	if (g_mission->camera_follow_id_overide)
@@ -387,12 +384,8 @@ uint32 _mission::Game_cycle() {
 
 	session->Process_conveyors(); // conveyor belts
 
-#if defined(DEBUG_AUTOSAVE)
-	RAM_save_and_restore();
-#endif
-
 	// Update global timer by a tick
-	g_globalScriptVariables.SetVariable("missionelapsedtime", g_globalScriptVariables.GetVariable("missionelapsedtime") + 1);
+	g_globalScriptVariables->SetVariable("missionelapsedtime", g_globalScriptVariables->GetVariable("missionelapsedtime") + 1);
 
 	// call the camera director which will pick a view depending upon the player objects position
 	session->Camera_director();
@@ -461,11 +454,11 @@ void _mission::Save_micro_session() {
 			if (!object->IsVariableString(k)) {
 				Tdebug("micro_session.txt", "   saving lvar %d %s value %d", k, object->GetScriptVariableName(k), object->GetIntegerVariable(k));
 
-				int value = object->GetIntegerVariable(k);
+				int32 value = object->GetIntegerVariable(k);
 
 				// Using 14-bits to pack lvar's
-				int packMin = -(1 << 13);
-				int packMax = +((1 << 13) - 1);
+				int32 packMin = -(1 << 13);
+				int32 packMax = +((1 << 13) - 1);
 
 				if ((value < packMin) || (value > packMax)) {
 					// Don't do a message box for a CD build of the game!
@@ -475,8 +468,8 @@ void _mission::Save_micro_session() {
 				}
 
 				// Using 16-bits as a maximum to store lvar's
-				int lvarMin = -(1 << 15);
-				int lvarMax = +((1 << 15) - 1);
+				int32 lvarMin = -(1 << 15);
+				int32 lvarMax = +((1 << 15) - 1);
 
 				if ((value < lvarMin) || (value > lvarMax)) {
 					Fatal_error("Object '%s' lvar %d '%s' is too big to save %d range is %d->%d", object->GetName(), k, object->GetScriptVariableName(k), value,
@@ -598,7 +591,7 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 	Save_micro_session();
 
 	// Check the lvar's to see if we can pack them or not
-	uint nlvars = 0;
+	uint32 nlvars = 0;
 	for (j = 0; j < number_sessions_saved; j++) {
 		for (i = 0; i < micro_sessions[j].number_of_micro_objects; i++) {
 			nlvars = (uint8)micro_sessions[j].micro_objects[i].total_lvars;
@@ -607,8 +600,8 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 				lval = (int16)micro_sessions[j].micro_objects[i].lvar_value[k];
 
 				// Using 14-bits to pack lvar's
-				int packMin = -(1 << 13);
-				int packMax = +((1 << 13) - 1);
+				int32 packMin = -(1 << 13);
+				int32 packMax = +((1 << 13) - 1);
 
 				if ((lval < packMin) || (lval > packMax)) {
 					Message_box("Jake says : packData = 0");
@@ -618,34 +611,11 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 		}
 	}
 
-	error("TODO: Fix savegame-path");
-	/*
-	#ifdef _WIN32
-	        mkdir("saves");
-	#else
-	        mkdir("saves", 0755);
-	#endif
-	*/
-
 	// first save the index file which contains the session name and mission name that we're currently running - and hence want to
 	// restore to later
 	Common::WriteStream *stream = openDiskWriteStream(filename); // attempt to open the file for writing
-
-#if defined(DEBUG_AUTOSAVE)
-
-	// NULL is only an error if the filename is something other than the name of
-	// the debug autosave file.
-	if (strcmp(filename, AUTOSAVE_FILENAME) != 0) {
-		if (fh == NULL)
-			Fatal_error("Save_game_position cannot *OPEN* [%s]", (const char *)filename);
-	}
-
-#else
-
 	if (stream == NULL)
 		Fatal_error("Save_game_position cannot *OPEN* [%s]", (const char *)filename);
-
-#endif
 
 	// specific stuff for pc save game menu
 	stream->write(slot_label, MAX_LABEL_LENGTH);
@@ -656,21 +626,21 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 
 	avalue = strlen(Fetch_tiny_mission_name()) + 1;
 	stream->writeSint32LE(avalue);
-	stream->write((const char *)Fetch_tiny_mission_name(), strlen(Fetch_tiny_mission_name()) + 1); // TODO: Refactor to string
+	stream->write((const char *)Fetch_tiny_mission_name(), avalue);
 
 	avalue = strlen(Fetch_tiny_session_name()) + 1;
 	stream->writeSint32LE(avalue);
-	stream->write((const char *)Fetch_tiny_session_name(), strlen(Fetch_tiny_session_name()) + 1); // TODO: Refactor to string
+	stream->write((const char *)Fetch_tiny_session_name(), avalue);
 
 	// now write the globals out
-	atinyvalue = (uint8)g_globalScriptVariables.GetNoItems();
+	atinyvalue = (uint8)g_globalScriptVariables->GetNoItems();
 	Tdebug("save_restore.txt", " %d globals", atinyvalue);
 	stream->writeByte(atinyvalue);
 
 	for (j = 0; j < atinyvalue; j++) {
-		avalue = (int32)g_globalScriptVariables.GetVariable(g_globalScriptVariables[j].hash, 0, 0);
+		avalue = (int32)g_globalScriptVariables->GetVariable((*g_globalScriptVariables)[j].hash, 0, 0);
 		stream->writeSint32LE(avalue);
-		Tdebug("save_restore.txt", "  %d 0x%08x = %d", j, g_globalScriptVariables[j].hash, avalue);
+		Tdebug("save_restore.txt", "  %d 0x%08x = %d", j, (*g_globalScriptVariables)[j].hash, avalue);
 	}
 
 	// get the icon information
@@ -683,7 +653,7 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 		// write length of icon name then the string
 		avalue = strlen(iconnames[j]) + 1;
 		stream->writeSint32LE(avalue);
-		stream->write((const void *)iconnames[j], avalue); // TODO: Refactor to string?
+		stream->write((const void *)iconnames[j], avalue);
 
 		// write the hash value
 		avalue = (uint32)iconHashes[j];
@@ -710,7 +680,7 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 		avalue = strlen(micro_sessions[j].session__name) + 1;
 		stream->writeSint32LE(avalue);
 		Tdebug("save_restore.txt", "  name len %d", avalue);
-		stream->write((const void *)micro_sessions[j].session__name, strlen(micro_sessions[j].session__name) + 1); // TODO: Refactor to string?
+		stream->write((const void *)micro_sessions[j].session__name, avalue);
 
 		for (l = 0; l < MAX_fvars; l++) {
 			fval = micro_sessions[j].fvars[l];
@@ -755,7 +725,7 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 		dret = dpack.open(DataPacker::WRITE, packMode);
 
 		if (dret != DataPacker::OK) {
-			Real_Fatal_error("DataPacker::Open failed dret %d", (int)dret);
+			Real_Fatal_error("DataPacker::Open failed dret %d", (int32)dret);
 		}
 		for (i = 0; i < micro_sessions[j].number_of_micro_objects; i++) {
 			nlvars = micro_sessions[j].micro_objects[i].total_lvars;
@@ -765,13 +735,13 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 
 				dret = dpack.put(lval, stream);
 				if (dret != DataPacker::OK) {
-					Real_Fatal_error("DataPacker::Put failed dret %d", (int)dret);
+					Real_Fatal_error("DataPacker::Put failed dret %d", (int32)dret);
 				}
 			}
 		}
 		dret = dpack.close(stream);
 		if (dret != DataPacker::OK) {
-			Real_Fatal_error("DataPacker::Close failed dret %d", (int)dret);
+			Real_Fatal_error("DataPacker::Close failed dret %d", (int32)dret);
 		}
 	}
 
@@ -818,7 +788,7 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 		stream->writeByte(atinyvalue);
 
 		// save name
-		stream->write(session->manual_camera_name, ENGINE_STRING_LEN); // TODO: Refactor to string?
+		stream->write(session->manual_camera_name, ENGINE_STRING_LEN);
 		// cam number
 		stream->writeUint32LE(session->cur_camera_number);
 	} else {
@@ -839,18 +809,8 @@ void _mission::Save_game_position(const char *filename, const char *slot_label, 
 	// Save the Remora's locations-visited information.
 	g_oRemora->Save(stream);
 
-	// Need to guard against NULL pointer in use by debug autosave.
-#if 0 // TODO: Do we actually need to do this? We don't have a max size...
-	if (stream) {
-		fseek(fh, 0, SEEK_END);    //get size of file
-		if (ftell(fh) > SAVE_GAME_MAX_SIZE)
-			Message_box("Warning : save game is greater than %d bytes (is %d bytes)\nthis will not work on the PSX please tell Jake",
-			            SAVE_GAME_MAX_SIZE, ftell(fh));
-	}
-#endif
-
 	// save gfx init info for initing a set...
-	MSS.SaveGFXInfo(stream);
+	surface_manager->SaveGFXInfo(stream);
 	SavePlatformSpecific(stream);
 
 	delete stream;
@@ -928,7 +888,7 @@ void _mission::Restore_micro_session_from_save_game(Common::SeekableReadStream *
 		dret = dpack.open(DataPacker::READ, packMode);
 
 		if (dret != DataPacker::OK) {
-			Real_Fatal_error("DataPacker::Open failed dret %d", (int)dret);
+			Real_Fatal_error("DataPacker::Open failed dret %d", (int32)dret);
 		}
 
 		for (i = 0; i < micro_sessions[j].number_of_micro_objects; i++) {
@@ -936,7 +896,7 @@ void _mission::Restore_micro_session_from_save_game(Common::SeekableReadStream *
 			for (k = 0; k < total_lvars; k++) {
 				dret = dpack.Get(avalue, stream);
 				if (dret != DataPacker::OK) {
-					Real_Fatal_error("DataPacker::Get failed dret %d", (int)dret);
+					Real_Fatal_error("DataPacker::Get failed dret %d", (int32)dret);
 				}
 				micro_sessions[j].micro_objects[i].lvar_value[k] = avalue;
 				Tdebug("save_restore.txt", "   lvar %d = %d", k, avalue);
@@ -945,7 +905,7 @@ void _mission::Restore_micro_session_from_save_game(Common::SeekableReadStream *
 
 		dret = dpack.close(stream);
 		if (dret != DataPacker::OK) {
-			Real_Fatal_error("DataPacker::Close failed dret %d", (int)dret);
+			Real_Fatal_error("DataPacker::Close failed dret %d", (int32)dret);
 		}
 	}
 }
@@ -1001,14 +961,14 @@ __load_result Load_game(const char *filename) {
 	// number of globals
 	atinyvalue = stream->readByte();
 	Tdebug("save_restore.txt", " %d globals", atinyvalue);
-	if (atinyvalue != (uint8)g_globalScriptVariables.GetNoItems()) {
+	if (atinyvalue != (uint8)g_globalScriptVariables->GetNoItems()) {
 		Tdebug("save_restore.txt", " globals mismatch");
 		return __GLOBAL_MISMATCH;
 	}
 
 	for (j = 0; j < atinyvalue; j++) {
 		avalue = stream->readSint32LE();
-		g_globalScriptVariables.SetVariable(g_globalScriptVariables[j].hash, avalue);
+		g_globalScriptVariables->SetVariable((*g_globalScriptVariables)[j].hash, avalue);
 		Tdebug("save_restore.txt", "  %d = %d", j, avalue);
 	}
 
@@ -1130,27 +1090,25 @@ __load_result Load_game(const char *filename) {
 	g_oRemora->Restore(stream);
 
 	// load gfx init info for initing a set...
-	MSS.LoadGFXInfo(stream);
+	surface_manager->LoadGFXInfo(stream);
 	g_mission->LoadPlatformSpecific(stream);
 
 	delete stream;
 
 	// run a logic cycle to get those anims caching!
 	MS->One_logic_cycle();
-	rs_anims->async_flush();
 	MS->Camera_director();
 	MS->One_logic_cycle();
-	rs_anims->async_flush();
 
 	return __LOAD_OK;
 }
 
 void _mission::Create_display() {
-	switch (px.display_mode) {
+	switch (g_px->display_mode) {
 	case THREED:
 		// Need this for development safey - but is redundant in final (console-less) game
 		if (!session->SetOK()) {
-			px.display_mode = TEMP_NETHACK; // so we can bounce out again if a real camera/set is found
+			g_px->display_mode = TEMP_NETHACK; // so we can bounce out again if a real camera/set is found
 
 			// Save the actor's control mode
 			session->player.Push_control_mode(ACTOR_RELATIVE);
@@ -1179,7 +1137,7 @@ void _mission::Create_display() {
 
 				// Only render speech when not in REMORA mode
 				// (as REMORA uses speech system to draw its own text)
-				if (px.on_screen_text) {
+				if (g_px->on_screen_text) {
 					session->Render_speech(session->text_speech_bloc);
 
 					// If there is currently a SFX subtitle active then display it.
@@ -1197,10 +1155,10 @@ void _mission::Create_display() {
 
 				// If not in the REMORA then draw the armed menu & health bar as well
 				if ((g_oRemora->IsActive() == FALSE8) && (session->logic_structs[session->player.Fetch_player_id()]->mega->Fetch_armed_status())) {
-					int nBullets = session->player.GetNoBullets();
-					int nClips = session->player.GetNoAmmoClips();
-					int maxBullets = session->player.GetBulletsPerClip();
-					int maxClips = session->player.GetMaxClips();
+					int32 nBullets = session->player.GetNoBullets();
+					int32 nClips = session->player.GetNoAmmoClips();
+					int32 maxBullets = session->player.GetBulletsPerClip();
+					int32 maxClips = session->player.GetMaxClips();
 					g_oIconMenu->DrawArmedMenu(nBullets, maxBullets, nClips, maxClips);
 
 					session->Draw_health_bar();
@@ -1210,10 +1168,10 @@ void _mission::Create_display() {
 				session->Draw_health_bar();
 				session->health_time = 0; // cancel the health bar timer
 
-				int nBullets = session->player.GetNoBullets();
-				int nClips = session->player.GetNoAmmoClips();
-				int maxBullets = session->player.GetBulletsPerClip();
-				int maxClips = session->player.GetMaxClips();
+				int32 nBullets = session->player.GetNoBullets();
+				int32 nClips = session->player.GetNoAmmoClips();
+				int32 maxBullets = session->player.GetBulletsPerClip();
+				int32 maxClips = session->player.GetMaxClips();
 				g_oIconMenu->DrawArmedMenu(nBullets, maxBullets, nClips, maxClips);
 			} else if (session->health_time) {
 				// Draw the health bar if unarmed and recently taken damage
@@ -1225,7 +1183,7 @@ void _mission::Create_display() {
 			if (!g_oRemora->IsActive() && g_oIconMenu->IsAdding())
 				g_oIconMenu->DrawAdding();
 
-			if (px.mega_timer)
+			if (g_px->mega_timer)
 				session->Display_mega_times();
 
 			// Crude Interaction Highlight

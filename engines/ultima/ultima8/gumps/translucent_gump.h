@@ -24,7 +24,7 @@
 #define ULTIMA8_GUMPS_TRANSLUCENTGUMP_H
 
 #include "ultima/ultima8/gumps/gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -43,6 +43,9 @@ public:
 
 	// Paint this Gump
 	void PaintThis(RenderSurface *, int32 lerp_factor, bool scaled) override;
+
+	bool loadData(Common::ReadStream *rs, uint32 version);
+	void saveData(Common::WriteStream *ws) override;
 };
 
 } // End of namespace Ultima8

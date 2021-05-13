@@ -87,17 +87,23 @@ MidiPlayer::~MidiPlayer() {
 	clearConstructs();
 }
 
-int MidiPlayer::open(int gameType, bool isDemo) {
+int MidiPlayer::open(int gameType, Common::Platform platform, bool isDemo) {
 	// Don't call open() twice!
 	assert(!_driver);
 
 	Common::String accoladeDriverFilename;
 	musicType = MT_INVALID;
+	int devFlags = MDT_MIDI | MDT_ADLIB | MDT_PREFER_MT32;
 
 	switch (gameType) {
 	case GType_ELVIRA1:
-		_musicMode = kMusicModeAccolade;
-		accoladeDriverFilename = "INSTR.DAT";
+		if (platform == Common::kPlatformPC98) {
+			_musicMode = kMusicModePC98;
+			devFlags = (devFlags & ~MDT_ADLIB) | MDT_PC98;
+		} else {
+			_musicMode = kMusicModeAccolade;
+			accoladeDriverFilename = "INSTR.DAT";
+		}
 		break;
 	case GType_ELVIRA2:
 	case GType_WW:
@@ -129,8 +135,15 @@ int MidiPlayer::open(int gameType, bool isDemo) {
 	MidiDriver::DeviceHandle dev;
 	int ret = 0;
 
-	if (_musicMode != kMusicModeDisabled) {
-		dev = MidiDriver::detectDevice(MDT_MIDI | MDT_ADLIB | MDT_PREFER_MT32);
+	if (_musicMode == kMusicModePC98) {
+		dev = MidiDriver::detectDevice(devFlags);
+		_driver = MidiDriverPC98_create(dev);
+		if (_driver && !_driver->open()) {
+			_driver->setTimerCallback(this, &onTimer);
+			return 0;
+		}
+	} else if (_musicMode != kMusicModeDisabled) {
+		dev = MidiDriver::detectDevice(devFlags);
 		musicType = MidiDriver::getMusicType(dev);
 
 		switch (musicType) {
@@ -163,7 +176,6 @@ int MidiPlayer::open(int gameType, bool isDemo) {
 		switch (musicType) {
 		case MT_ADLIB:
 			_driver = MidiDriver_Accolade_AdLib_create(accoladeDriverFilename);
-			
 			break;
 		case MT_MT32:
 			_driver = MidiDriver_Accolade_MT32_create(accoladeDriverFilename);
@@ -481,7 +493,10 @@ void MidiPlayer::pause(bool b) {
 	// if using the driver Accolade_AdLib call setVolume() to turn off\on the volume on all channels
 	if (musicType == MT_ADLIB && _musicMode == kMusicModeAccolade) {
 		static_cast <MidiDriver_Accolade_AdLib*> (_driver)->setVolume(_paused ? 0 : 128);
+	} else if (_musicMode == kMusicModePC98) {
+		_driver->property(0x30, _paused ? 1 : 0);
 	}
+
 	for (int i = 0; i < 16; ++i) {
 		if (_music.channel[i])
 			_music.channel[i]->volume(_paused ? 0 : (_music.volume[i] * _musicVolume / 255));
@@ -499,6 +514,11 @@ void MidiPlayer::setVolume(int musicVol, int sfxVol) {
 
 	_musicVolume = musicVol;
 	_sfxVolume   = sfxVol;
+
+	if (_musicMode == kMusicModePC98) {
+		_driver->property(0x10, _musicVolume);
+		_driver->property(0x20, _sfxVolume);
+	}
 
 	// Now tell all the channels this.
 	Common::StackLock lock(_mutex);
@@ -577,7 +597,7 @@ static const int simon1_gmf_size[] = {
 	17256, 5103, 8794, 4884, 16
 };
 
-void MidiPlayer::loadSMF(Common::File *in, int song, bool sfx) {
+void MidiPlayer::loadSMF(Common::SeekableReadStream *in, int song, bool sfx) {
 	Common::StackLock lock(_mutex);
 
 	MusicInfo *p = sfx ? &_sfx : &_music;
@@ -642,7 +662,7 @@ void MidiPlayer::loadSMF(Common::File *in, int song, bool sfx) {
 			// this should be the right way to calculate it.
 			timerRate = (4 * _driver->getBaseTempo()) / p->data[5];
 
-			// According to bug #1004919 calling setLoop() from
+			// According to bug #1706 calling setLoop() from
 			// within a lock causes a lockup, though I have no
 			// idea when this actually happens.
 			_loopTrack = (p->data[6] != 0);
@@ -666,7 +686,7 @@ void MidiPlayer::loadSMF(Common::File *in, int song, bool sfx) {
 	p->parser = parser; // That plugs the power cord into the wall
 }
 
-void MidiPlayer::loadMultipleSMF(Common::File *in, bool sfx) {
+void MidiPlayer::loadMultipleSMF(Common::SeekableReadStream *in, bool sfx) {
 	// This is a special case for Simon 2 Windows.
 	// Instead of having multiple sequences as
 	// separate tracks in a Type 2 file, simon2win
@@ -722,7 +742,7 @@ void MidiPlayer::loadMultipleSMF(Common::File *in, bool sfx) {
 	}
 }
 
-void MidiPlayer::loadXMIDI(Common::File *in, bool sfx) {
+void MidiPlayer::loadXMIDI(Common::SeekableReadStream *in, bool sfx) {
 	Common::StackLock lock(_mutex);
 	MusicInfo *p = sfx ? &_sfx : &_music;
 	clearConstructs(*p);
@@ -768,7 +788,7 @@ void MidiPlayer::loadXMIDI(Common::File *in, bool sfx) {
 	p->parser = parser; // That plugs the power cord into the wall
 }
 
-void MidiPlayer::loadS1D(Common::File *in, bool sfx) {
+void MidiPlayer::loadS1D(Common::SeekableReadStream *in, bool sfx) {
 	Common::StackLock lock(_mutex);
 	MusicInfo *p = sfx ? &_sfx : &_music;
 	clearConstructs(*p);

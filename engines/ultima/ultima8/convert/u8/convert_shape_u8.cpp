@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/convert/u8/convert_shape_u8.h"
 
 namespace Ultima {
@@ -31,7 +30,7 @@ const ConvertShapeFormat U8ShapeFormat = {
 	"Ultima8",
 	6,		// header
 	"",		// ident
-	0,		// bytes_ident 
+	0,		// bytes_ident
 	0,		// bytes_special
 	4,		// header_unk
 	2,		// num_frames
@@ -59,7 +58,7 @@ const ConvertShapeFormat U82DShapeFormat = {
 	"Ultima8 2D",
 	6,		// header
 	"",		// ident
-	0,		// bytes_ident 
+	0,		// bytes_ident
 	0,		// bytes_special
 	4,		// header_unk
 	2,		// num_frames
@@ -87,7 +86,7 @@ const ConvertShapeFormat U8SKFShapeFormat = {
 	"Ultima8 SKF",
 	2,		// header
 	"\2",	// ident
-	2,		// bytes_ident 
+	2,		// bytes_ident
 	0,		// bytes_special
 	0,		// header_unk
 	0,		// num_frames
@@ -115,7 +114,7 @@ const ConvertShapeFormat U8CMPShapeFormat = {
 	"Ultima8 CMP",
 	11,		// header
 	"",		// ident
-	0,		// bytes_ident 
+	0,		// bytes_ident
 	5,		// bytes_special
 	4,		// header_unk
 	2,		// num_frames

@@ -42,7 +42,7 @@ namespace ICB {
 void Terminate_ap(); // call this to end the game and return to windows
 
 // variables
-extern int gameCycle; // for head-up display
+extern int32 gameCycle; // for head-up display
 extern char gamelanguage[];
 extern bool8 camera_hack;
 extern uint32 font_cluster_hash; // Res_open will compute the hash value and store it
@@ -90,9 +90,6 @@ extern uint32 BACKGROUND_BUFFER_SIZE;
 extern uint32 ANIMATION_BUFFER_SIZE;
 extern uint32 BITMAP_BUFFER_SIZE;
 extern uint32 SONICS_BUFFER_SIZE;
-
-// globals for the font cluster name and hash value
-extern pxString font_cluster;
 
 #define ANIM_CHECK(a)                                                                                                                                                              \
 	if (!I->IsAnimTable(a))                                                                                                                                                    \
@@ -144,7 +141,7 @@ class _stub {
 
 	__stub_modes mode[TOTAL_STUBS];
 	int32 stub; // stub level number
-	int cycle_speed;
+	int32 cycle_speed;
 private:
 	uint32 stub_timer_time;
 	bool8 timer; // on off
@@ -157,7 +154,7 @@ private:
 void Mission_and_console();
 
 // returns the CD number for the specified mission
-int WhichCD(const char *mission);
+int32 WhichCD(const char *mission);
 
 } // End of namespace ICB
 

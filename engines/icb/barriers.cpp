@@ -84,7 +84,7 @@ __barrier_result _game_session::Check_barrier_bump_and_bounce(PXreal newx, PXrea
 	uint32 j;
 	PXfloat barrier_tolerance = BARRIER_TOLERANCE; // 1/8 of a turn = 45 degress
 	PXfloat diff;
-	int ignoreThis;
+	int32 ignoreThis;
 
 	// 1 = means don't do fort knox solution on this barrier
 	// 0 = means do fort knox solution on this barrier
@@ -192,7 +192,7 @@ __barrier_result _game_session::Check_barrier_bump_and_bounce(PXreal newx, PXrea
 
 		// check for collision with nudge barriers
 		for (j = 0; j < M->number_of_nudge; j++) {
-			int b = Fetch_megas_nudge_barrier_number(j);
+			int32 b = Fetch_megas_nudge_barrier_number(j);
 			bar = session_barriers->Fetch_barrier(b);
 
 			pdist = ((newx * bar->bcm().lpx()) + (newz * bar->bcm().lpz())) - bar->bcm().linedist();
@@ -241,11 +241,11 @@ __barrier_result _game_session::Check_barrier_bump_and_bounce(PXreal newx, PXrea
 	adjusted_pan = FLOAT_ZERO;
 	made_adjust = FALSE8;
 	normalAngle = 3 * FULL_TURN; // place holder to mean not set
-	int nFortKnox = 0;
-	uint nBarriers = (M->number_of_barriers + M->number_of_animating);
+	int32 nFortKnox = 0;
+	uint32 nBarriers = (M->number_of_barriers + M->number_of_animating);
 
 	for (j = 0; j < nBarriers; j++) {
-		int b = Fetch_megas_barrier_number(j);
+		int32 b = Fetch_megas_barrier_number(j);
 		bar = session_barriers->Fetch_barrier(b);
 		ignoreBarrier[j] = 1;
 
@@ -281,7 +281,7 @@ __barrier_result _game_session::Check_barrier_bump_and_bounce(PXreal newx, PXrea
 	}
 
 	// if we hit a single corectable barrier then we can make that adjustment now
-	int repulsed = 0;
+	int32 repulsed = 0;
 	PXfloat destx = FLOAT_ZERO;
 	PXfloat destz = FLOAT_ZERO;
 
@@ -310,12 +310,12 @@ __barrier_result _game_session::Check_barrier_bump_and_bounce(PXreal newx, PXrea
 	// Right so finally do a line intersection between the old position and the "final" new position
 	// old position is : oldx, oldz
 	// new position is : destx, destz
-	int hit = 0;
+	int32 hit = 0;
 
 	// Special treatment for the player
 	if (pl) {
 		for (j = 0; j < nBarriers; j++) {
-			int b = Fetch_megas_barrier_number(j);
+			int32 b = Fetch_megas_barrier_number(j);
 			bar = session_barriers->Fetch_barrier(b);
 
 			// Ignore barriers which are in the ignore list
@@ -373,7 +373,7 @@ __barrier_result _game_session::Check_barrier_bump_and_bounce(PXreal newx, PXrea
 		// he is on the right-hand side of the line
 		*/
 
-		static int total_adjusts = 0;
+		static int32 total_adjusts = 0;
 
 		if ((!total_adjusts) && (MS->player.interact_selected) && (logic_structs[MS->player.cur_interact_id]->image_type == VOXEL)) {
 			// player is highlighting a mega
@@ -420,8 +420,7 @@ __barrier_result _game_session::Check_barrier_bump_and_bounce(PXreal newx, PXrea
 	return (__OK);
 }
 
-__barrier_result _game_session::Check_this_barrier(_route_barrier *bar, PXreal newx, PXreal newz, PXreal /* oldx */, PXreal /* oldz */, PXreal bar_close, int *ignoreThis) {
-	PXreal lpan;
+__barrier_result _game_session::Check_this_barrier(_route_barrier *bar, PXreal newx, PXreal newz, PXreal /* oldx */, PXreal /* oldz */, PXreal bar_close, int32 *ignoreThis) {
 	PXfloat delta;
 	PXfloat delta2;
 	PXfloat barrier_tolerance = BARRIER_TOLERANCE; // 1/8 of a turn = 45 degress
@@ -447,7 +446,6 @@ __barrier_result _game_session::Check_this_barrier(_route_barrier *bar, PXreal n
 
 				// we are going to hit this barrier
 				// but, if the angle is narrow we can aquire the barriers pan and continue unmolested
-				lpan = L->pan;
 				delta = remainder(L->pan - bar->pan(), FULL_TURN, HALF_TURN);
 				delta2 = delta;
 
@@ -855,7 +853,7 @@ _route_barrier *_barrier_handler::Fetch_barrier(uint32 num) {
 	// return a pointer to numbered barrier
 	_route_barrier *bar;
 
-	_ASSERT(num < total_barriers);
+	assert(num < total_barriers);
 
 	if (num >= total_barriers)
 		Fatal_error("illegal barrier request %d", num);

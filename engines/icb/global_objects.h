@@ -36,8 +36,8 @@
 namespace ICB {
 
 // Define the minimum distance an actor can be from the camera until he/she is clipped in cm
-const int g_actor_hither_plane = 100;    // 1m
-const int g_actor_far_clip_plane = 8000; // 80m
+const int32 g_actor_hither_plane = 100;    // 1m
+const int32 g_actor_far_clip_plane = 8000; // 80m
 
 class res_man;
 // this is the main resource manager object
@@ -68,7 +68,7 @@ class _mission;
 // holds info about current mission
 extern _mission *g_mission;
 
-extern _stub stub;
+extern _stub *g_stub;
 
 // game script manager
 extern _game_script gs;
@@ -79,9 +79,9 @@ extern _game_session *g_icb_session;
 // session objects
 extern _barrier_handler g_icb_session_barriers;
 extern _floor_world *g_icb_session_floors;
-extern _logic logics[MAX_session_objects];
-extern _mega megas[MAX_voxel_list];
-extern _vox_image vox_images[MAX_voxel_list];
+extern _logic *g_logics[MAX_session_objects];
+extern _mega *g_megas[MAX_voxel_list];
+extern _vox_image *g_vox_images[MAX_voxel_list];
 
 // For choosing different sessions & missions
 #define NUMBER_OF_MISSIONS (11)
@@ -103,14 +103,14 @@ extern const char *g_m09;
 extern const char *g_m10;
 
 // Prop sprite brightness to use when highlighting a prop that the player could interact with
-extern int g_prop_select_r;
-extern int g_prop_select_g;
-extern int g_prop_select_b;
+extern int32 g_prop_select_r;
+extern int32 g_prop_select_g;
+extern int32 g_prop_select_b;
 
 // extra ambient brightness to use when highlighting a mega that the player could interact with
-extern int g_mega_select_r;
-extern int g_mega_select_g;
-extern int g_mega_select_b;
+extern int32 g_mega_select_r;
+extern int32 g_mega_select_g;
+extern int32 g_mega_select_b;
 
 } // End of namespace ICB
 

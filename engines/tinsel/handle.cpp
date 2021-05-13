@@ -34,6 +34,7 @@
 #include "tinsel/timers.h"	// for DwGetCurrentTime()
 #include "tinsel/tinsel.h"
 #include "tinsel/scene.h"
+#include "tinsel/noir/lzss.h"
 
 namespace Tinsel {
 
@@ -56,7 +57,9 @@ enum {
 	fCompressed	= 0x10000000L,	///< compressed data
 	fLoaded		= 0x20000000L	///< set when file data has been loaded
 };
-#define	FSIZE_MASK	0x00FFFFFFL	///< mask to isolate the filesize
+#define FSIZE_MASK	(TinselV3 ? 0xFFFFFFFFL : 0x00FFFFFFL)	//!< mask to isolate the filesize
+#define MEMFLAGS(x) (TinselV3 ? x->flags2 : x->filesize)
+#define MEMFLAGSET(x, mask) (TinselV3 ? x->flags2 |= mask : x->filesize |= mask)
 
 Handle::Handle() : _handleTable(0), _numHandles(0), _cdPlayHandle((uint32)-1), _cdBaseHandle(0), _cdTopHandle(0), _cdGraphStream(nullptr) {
 }
@@ -131,7 +134,7 @@ void Handle::SetupHandleTable() {
 
 	// allocate memory nodes and load all permanent graphics
 	for (i = 0, pH = _handleTable; i < _numHandles; i++, pH++) {
-		if (pH->filesize & fPreload) {
+		if (MEMFLAGS(pH) & fPreload) {
 			// allocate a fixed memory node for permanent files
 			pH->_node = MemoryAllocFixed((pH->filesize & FSIZE_MASK));
 
@@ -178,7 +181,7 @@ void Handle::LoadCDGraphData(MEMHANDLE *pH) {
 	assert(!(pH->filesize & fCompressed));
 
 	// Can't be preloaded
-	assert(!(pH->filesize & fPreload));
+	assert(!(MEMFLAGS(pH) & fPreload));
 
 	// discardable - lock the memory
 	addr = (byte *)MemoryLock(pH->_node);
@@ -202,7 +205,7 @@ void Handle::LoadCDGraphData(MEMHANDLE *pH) {
 	MemoryUnlock(pH->_node);
 
 	// set the loaded flag
-	pH->filesize |= fLoaded;
+	MEMFLAGSET(pH, fLoaded);
 
 	// clear the loading flag
 //	pH->filesize &= ~fLoading;
@@ -252,7 +255,7 @@ void Handle::LoadFile(MEMHANDLE *pH) {
 	memcpy(szFilename, pH->szName, sizeof(pH->szName));
 	szFilename[sizeof(pH->szName)] = 0;
 
-	if (pH->filesize & fCompressed) {
+	if (!TinselV3 && MEMFLAGS(pH) & fCompressed) {
 		error("Compression handling has been removed - %s", szFilename);
 	}
 
@@ -267,7 +270,11 @@ void Handle::LoadFile(MEMHANDLE *pH) {
 		// make sure address is valid
 		assert(addr);
 
-		bytes = f.read(addr, pH->filesize & FSIZE_MASK);
+		if (TinselV3 && MEMFLAGS(pH) & fCompressed) {
+			bytes = decompressLZSS(f, addr);
+		} else {
+			bytes = f.read(addr, pH->filesize & FSIZE_MASK);
+		}
 
 		// close the file
 		f.close();
@@ -276,7 +283,7 @@ void Handle::LoadFile(MEMHANDLE *pH) {
 		MemoryUnlock(pH->_node);
 
 		// set the loaded flag
-		pH->filesize |= fLoaded;
+		MEMFLAGSET(pH, fLoaded);
 
 		if (bytes == (pH->filesize & FSIZE_MASK)) {
 			return;
@@ -304,7 +311,7 @@ byte *Handle::LockMem(SCNHANDLE offset) {
 
 	pH = _handleTable + handle;
 
-	if (pH->filesize & fPreload) {
+	if (MEMFLAGS(pH) & fPreload) {
 		// permanent files are already loaded, nothing to be done
 	} else if (handle == _cdPlayHandle) {
 		// Must be in currently loaded/loadable range
@@ -323,7 +330,7 @@ byte *Handle::LockMem(SCNHANDLE offset) {
 		}
 
 		// make sure address is valid
-		assert(pH->filesize & fLoaded);
+		assert(MEMFLAGS(pH) & fLoaded);
 
 		offset -= _cdBaseHandle;
 	} else {
@@ -339,7 +346,7 @@ byte *Handle::LockMem(SCNHANDLE offset) {
 		}
 
 		// make sure address is valid
-		assert(pH->filesize & fLoaded);
+		assert(MEMFLAGS(pH) & fLoaded);
 	}
 
 	return MemoryDeref(pH->_node) + (offset & OFFSETMASK);
@@ -359,7 +366,7 @@ void Handle::LockScene(SCNHANDLE offset) {
 
 	pH = _handleTable + handle;
 
-	if ((pH->filesize & fPreload) == 0) {
+	if ((MEMFLAGS(pH) & fPreload) == 0) {
 		// Ensure the scene handle is allocated.
 		MemoryReAlloc(pH->_node, pH->filesize & FSIZE_MASK);
 
@@ -382,7 +389,7 @@ void Handle::UnlockScene(SCNHANDLE offset) {
 
 	pH = _handleTable + handle;
 
-	if ((pH->filesize & fPreload) == 0) {
+	if ((MEMFLAGS(pH) & fPreload) == 0) {
 		// unlock the scene data
 		MemoryUnlock(pH->_node);
 	}

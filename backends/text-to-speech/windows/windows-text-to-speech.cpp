@@ -31,6 +31,10 @@
 #include <servprov.h>
 
 #include <sapi.h>
+#if _SAPI_VER < 0x53
+#define SPF_PARSE_SAPI 0x80
+#endif
+
 #include "backends/platform/sdl/win32/win32_wrapper.h"
 
 #include "backends/text-to-speech/windows/windows-text-to-speech.h"
@@ -150,7 +154,7 @@ DWORD WINAPI startSpeech(LPVOID parameters) {
 			break;
 		}
 		WCHAR *currentSpeech = params->queue->front();
-		_voice->Speak(currentSpeech, SPF_PURGEBEFORESPEAK | SPF_ASYNC, 0);
+		_voice->Speak(currentSpeech, SPF_PURGEBEFORESPEAK | SPF_ASYNC | SPF_PARSE_SAPI, 0);
 		ReleaseMutex(*params->mutex);
 
 		while (*(params->state) != WindowsTextToSpeechManager::PAUSED)
@@ -183,7 +187,7 @@ bool WindowsTextToSpeechManager::say(const Common::U32String &str, Action action
 		return true;
 
 	// We have to set the pitch by prepending xml code at the start of the said string;
-	Common::U32String pitch = Common::U32String::format("<pitch absmiddle=\"%d\">%S", _ttsState->_pitch / 10, str.c_str());
+	Common::U32String pitch = Common::U32String::format("<pitch absmiddle=\"%d\"/>%S", _ttsState->_pitch / 10, str.c_str());
 	WCHAR *strW = (WCHAR *) pitch.encodeUTF16Native();
 	if (strW == nullptr) {
 		warning("Cannot convert from UTF-32 encoding for text to speech");

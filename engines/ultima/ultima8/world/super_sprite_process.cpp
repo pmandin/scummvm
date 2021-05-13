@@ -20,15 +20,11 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/world/super_sprite_process.h"
 
 #include "ultima/ultima8/games/game_data.h"
-#include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/kernel/core_app.h"
 #include "ultima/ultima8/kernel/delay_process.h"
-#include "ultima/ultima8/misc/direction.h"
 #include "ultima/ultima8/misc/direction_util.h"
 #include "ultima/ultima8/usecode/uc_list.h"
 #include "ultima/ultima8/world/loop_script.h"
@@ -36,7 +32,6 @@
 #include "ultima/ultima8/world/fire_type.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/world/item_factory.h"
-#include "ultima/ultima8/world/item.h"
 #include "ultima/ultima8/world/world.h"
 #include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/sprite_process.h"
@@ -57,7 +52,7 @@ SuperSpriteProcess::SuperSpriteProcess() : Process(),
 SuperSpriteProcess::SuperSpriteProcess(int shape, int frame, int sx, int sy, int sz,
 									   int dx, int dy, int dz,
 									   uint16 firetype, uint16 damage, uint16 source,
-									   uint16 target, uint8 spread) :
+									   uint16 target, bool inexact) :
 		_shape(shape), _frame(frame), _startpt(sx, sy, sz), _destpt(dx, dy, dz),
 		_nextpt(sx, sy, sz), _fireType(firetype), _damage(damage), _source(source),
 		_target(target), _counter(1), _item0x77(0), _spriteNo(0),
@@ -67,9 +62,9 @@ SuperSpriteProcess::SuperSpriteProcess(int shape, int frame, int sx, int sy, int
 	const FireType *firetypedat = GameData::get_instance()->getFireType(firetype);
 	assert(firetypedat);
 	if (firetypedat->getAccurate()) {
-		spread = 0;
+		inexact = false;
 	}
-	if (spread) {
+	if (inexact) {
 		int rng = _startpt.maxDistXYZ(_destpt);
 		Item *srcitem = getItem(source);
 		if (srcitem == getControlledActor()) {
@@ -82,13 +77,27 @@ SuperSpriteProcess::SuperSpriteProcess(int shape, int frame, int sx, int sy, int
 			else
 				rng /= 10;
 		} else {
-			if (dynamic_cast<Actor *>(srcitem) != nullptr) {
-				rng /= 2;
+			Actor *srcnpc = dynamic_cast<Actor *>(srcitem);
+			Actor *controlled = getControlledActor();
+			const uint32 frameno = Kernel::get_instance()->getFrameNum();
+			const uint32 timeoutfinish = controlled ? controlled->getAttackMoveTimeoutFinish() : 0;
+			if (!srcnpc || !srcnpc->getAttackAimFlag()) {
+				if (!srcnpc || frameno < timeoutfinish) {
+					if (!srcnpc && (controlled && controlled->isKneeling())) {
+						rng = rng / 5;
+					} else {
+						const uint16 dodgefactor = controlled ? controlled->getAttackMoveDodgeFactor() : 2;
+						if (!srcnpc) {
+							rng = rng / (dodgefactor * 3);
+						} else {
+							rng = rng / dodgefactor;
+						}
+					}
+				} else {
+					rng = rng / 8;
+				}
 			} else {
-				// TODO: various other flags are checked in the game (around 1138:0bd1)
-				// such as World_FinishedAvatarMoveTimeout() -> 8
-				//  to make it either 5 or 8.  For now just use 5.
-				rng /= 5;
+				rng = rng / 2;
 			}
 		}
 
@@ -110,7 +119,7 @@ SuperSpriteProcess::SuperSpriteProcess(int shape, int frame, int sx, int sy, int
 
 	float travel = _destpt.maxDistXYZ(_nextpt);
 	// FIXME: how to get this scaled correctly?
-	float speed = firetypedat->getCellsPerRound() * 128.0f;
+	float speed = firetypedat->getCellsPerRound() * 32.0f;
 	float rounds = travel / speed;
 	if (rounds < 1)
 		rounds = 1;
@@ -140,6 +149,14 @@ void SuperSpriteProcess::move(int x, int y, int z) {
 		item->move(_nowpt);
 }
 
+static inline int _sign(int x) {
+	if (x < 0)
+		return -1;
+	else if (x == 0)
+		return 0;
+	return 1;
+}
+
 void SuperSpriteProcess::run() {
 	CurrentMap *map = World::get_instance()->getCurrentMap();
 	int mapChunkSize = map->getChunkSize();
@@ -159,23 +176,29 @@ void SuperSpriteProcess::run() {
 		newpt.z += _counter * _zstep;
 	} else {
 		int targetz = 0;
-		if (_counter > firetypedat->getRoundDuration()) {
+		if (_counter < firetypedat->getRoundDuration()) {
 			if (!_expired) {
+				Direction dir8 = dir_current;
 				if (_target == 0) {
 					targetz = _nowpt.z;
 				} else {
-					Item *target = getItem(_target);
+					const Item *target = getItem(_target);
 					if (target) {
 						int32 tx, ty, tz;
 						int32 cx, cy, cz;
 						target->getLocation(tx, ty, tz);
 						target->getCentre(cx, cy, cz);
 						targetz = cz + 8;
+						dir8 = Direction_GetWorldDir(ty - _nowpt.y, tx - _nowpt.x, dirmode_8dirs);
 					}
 				}
 
-				// TODO: Apply point adjustments for firetype 9 here
-				// (lines 134~214 of disasm)
+				int xoff = Direction_XFactor(dir8);
+				if (_sign(xoff) != _sign(_xstep))
+					_xstep *= 2;
+				int yoff = Direction_YFactor(dir8);
+				if (_sign(yoff) != _sign(_ystep))
+					_ystep *= 2;
 			}
 		} else {
 			_expired = true;
@@ -214,22 +237,27 @@ void SuperSpriteProcess::run() {
 			}
 		}
 	}
+
 	_pt3 = newpt;
+	if (_pt3.z < 0)
+		_pt3.z = 0;
+	if (_pt3.z > 0xfa)
+		_pt3.z = 0xfa;
 
 	_counter++;
 
-	if (!_itemNum && _counter > 1) {
+	if (!_spriteNo && _counter > 1) {
 		Item *sprite = ItemFactory::createItem(_shape, _frame, 0, Item::FLG_DISPOSABLE,
 			0, 0, Item::EXT_SPRITE, true);
 		_spriteNo = sprite->getObjId();
 		sprite->move(_nowpt);
 	}
 
-	if (_pt3.z != 0 && _pt3.z != 0xfa) {
-		int32 duration = firetypedat->getRoundDuration();
+	if (_pt3.z > 0 && _pt3.z < 0xfa) {
+		int32 duration = firetypedat->getRoundDuration() + 25;
 
-		if (_counter >= duration) {
-			// disasm ~line 311
+		if (_counter < duration) {
+			// disasm ~line 305
 			if (!map->isChunkFast(_nowpt.x / mapChunkSize, _nowpt.y / mapChunkSize)) {
 				destroyItemOrTerminate();
 				return;
@@ -275,22 +303,47 @@ void SuperSpriteProcess::makeBulletSplash(const Point3 &pt) {
 	if (firetypedat->getRange()) {
 		Item *item = getItem(_item0x77);
 		Item *src = getItem(_source);
-		firetypedat->applySplashDamageAround(pt, _damage, item, src);
+		firetypedat->applySplashDamageAround(pt, _damage, 1, item, src);
 	}
 	firetypedat->makeBulletSplashShapeAndPlaySound(pt.x, pt.y, pt.z);
+}
+
+static bool _pointOutOfMap(const int32 pt[3], int32 maxxy) {
+	return (pt[0] < 0     || pt[1] < 0     || pt[2] < 0 ||
+			pt[0] > maxxy || pt[1] > maxxy || pt[2] > 255);
 }
 
 void SuperSpriteProcess::hitAndFinish() {
 	Point3 pt(_nowpt);
 	//int dist = _nowpt.maxDistXYZ(_pt3);
 
-	CurrentMap *map = World::get_instance()->getCurrentMap();
-	Std::list<CurrentMap::SweepItem> hits;
-	int32 start[3] = {_nowpt.x, _nowpt.y, _nowpt.z};
-	int32 end[3] = {_pt3.x, _pt3.y, _pt3.z};
+	int xstep = _pt3.x - _nowpt.x;
+	int ystep = _pt3.y - _nowpt.y;
+	int zstep = _pt3.z - _nowpt.z;
+	// We add a slight hack - our sweep test is off-by-one on Z??
+	int32 start[3] = {_nowpt.x, _nowpt.y, _nowpt.z + 1};
+	int32 end[3] = {_pt3.x, _pt3.y, _pt3.z + 1};
 	int32 dims[3] = {1, 1, 1};
-	bool collision = map->sweepTest(start, end, dims, ShapeInfo::SI_SOLID,
-									_source, true, &hits);
+	// will never get a collision if not stepping at all..
+	bool collision = !(xstep || ystep || zstep);
+	Std::list<CurrentMap::SweepItem> hits;
+
+	while (!collision) {
+		CurrentMap *map = World::get_instance()->getCurrentMap();
+		collision = map->sweepTest(start, end, dims, ShapeInfo::SI_SOLID,
+								   _source, true, &hits);
+		if (collision)
+			break;
+		start[0] += xstep;
+		start[1] += ystep;
+		start[2] += zstep;
+		end[0] += xstep;
+		end[1] += ystep;
+		end[2] += zstep;
+		const int32 mapmax = map->getChunkSize() * MAP_NUM_CHUNKS;
+		if (_pointOutOfMap(start, mapmax) || _pointOutOfMap(end, mapmax))
+			break;
+	}
 
 	if (collision && hits.size()) {
 		const CurrentMap::SweepItem &firsthit = hits.front();
@@ -328,6 +381,16 @@ void SuperSpriteProcess::hitAndFinish() {
 	destroyItemOrTerminate();
 }
 
+void SuperSpriteProcess::terminate() {
+	if (_spriteNo) {
+		Item *sprite = getItem(_spriteNo);
+		if (sprite)
+			sprite->destroy();
+		_spriteNo = 0;
+	}
+	Process::terminate();
+}
+
 void SuperSpriteProcess::destroyItemOrTerminate() {
 	if (_itemNum) {
 		Item *item = getItem(_itemNum);
@@ -343,27 +406,28 @@ void SuperSpriteProcess::destroyItemOrTerminate() {
 void SuperSpriteProcess::advanceFrame() {
 	_nextpt = _pt3;
 
-	if (_itemNum) {
-		warning("TODO: SuperSpriteProcess::advanceFrame: Implement area search 10e0_123a");
-		// TODO: do an area search for something here.
-		// AreaSearch_10e0_123a
+	Item *item = getItem(_itemNum);
+	if (item) {
+		item->collideMove(_pt3.x, _pt3.y, _pt3.z, false, false);
 	}
 
 	if (_spriteNo) {
 		Item *sprite = getItem(_spriteNo);
 		assert(sprite);
 		sprite->move(_nextpt);
-		uint32 frame = sprite->getFrame();
-		frame++;
-		if (frame > 0x4b)
-			frame = 0x47;
-		sprite->setFrame(frame);
+		if (_fireType == 0xe) {
+			uint32 frame = sprite->getFrame();
+			frame++;
+			if (frame > 0x4b)
+				frame = 0x47;
+			sprite->setFrame(frame);
+		}
 	}
 
 	if (_fireType == 3) {
 		if (_pt5.x != -1) {
 			// Create a little sparkly thing
-			Process *p = new SpriteProcess(0x426, 0, 9, 0, 3, _pt5.x, _pt5.y, _pt5.z);
+			Process *p = new SpriteProcess(0x426, 0, 9, 1, 3, _pt5.x, _pt5.y, _pt5.z);
 			Kernel::get_instance()->addProcess(p);
 		}
 		_pt5 = _nextpt;
@@ -371,22 +435,25 @@ void SuperSpriteProcess::advanceFrame() {
 }
 
 bool SuperSpriteProcess::areaSearch() {
-	// int x1, int y1, int z1, int x2, int y2, int z2
 	CurrentMap *map = World::get_instance()->getCurrentMap();
 
-	warning("TODO: SuperSpriteProcess::areaSearch: Implement area search 1138_0ee8");
-	// TODO: Implement SuperSprite_AreaSearch_1138_0ee8
-	uint16 lsrange = _pt3.maxDistXYZ(_nextpt);
-	UCList uclist(2);
-	LOOPSCRIPT(script, LS_TOKEN_TRUE); // we want all items
-	map->areaSearch(&uclist, script, sizeof(script), nullptr,
-					lsrange, true, _nextpt.x, _nextpt.y);
-	for (unsigned int i = 0; i < uclist.getSize(); ++i) {
-		Item *searchitem = getItem(uclist.getuint16(i));
-		assert(searchitem);
+	int32 start[3] = {_nowpt.x, _nowpt.y, _nowpt.z + 1};
+	int32 end[3] = {_pt3.x, _pt3.y, _pt3.z + 1};
+	int32 dims[3] = {1, 1, 1};
+
+	Item *item = getItem(_itemNum);
+	if (item)
+		item->getLocation(start[0], start[1], start[2]);
+
+	Std::list<CurrentMap::SweepItem> hits;
+	map->sweepTest(start, end, dims, ShapeInfo::SI_SOLID,
+							   _source, true, &hits);
+
+	if (hits.size() > 0) {
+		_item0x77 = hits.front()._item;
 	}
 
-	return false;
+	return hits.size() == 0;
 }
 
 
@@ -401,17 +468,19 @@ void SuperSpriteProcess::saveData(Common::WriteStream *ws) {
 	_startpt.saveData(ws);
 	_pt5.saveData(ws);
 	_destpt.saveData(ws);
+	ws->writeUint16LE(_frame);
 	ws->writeUint16LE(_fireType);
 	ws->writeUint16LE(_damage);
 	ws->writeUint16LE(_source);
 	ws->writeUint16LE(_target);
+	ws->writeUint16LE(_counter);
 	ws->writeUint16LE(_item0x77);
 	ws->writeUint16LE(_spriteNo);
 	ws->writeFloatLE(_xstep);
 	ws->writeFloatLE(_ystep);
 	ws->writeFloatLE(_zstep);
-
-	// TODO: Update save and load functions once this is finished.
+	ws->writeByte(_startedAsFiretype9);
+	ws->writeByte(_expired);
 }
 
 bool SuperSpriteProcess::loadData(Common::ReadStream *rs, uint32 version) {
@@ -425,15 +494,19 @@ bool SuperSpriteProcess::loadData(Common::ReadStream *rs, uint32 version) {
 	_startpt.loadData(rs, version);
 	_pt5.loadData(rs, version);
 	_destpt.loadData(rs, version);
+	_frame = rs->readUint16LE();
 	_fireType = rs->readUint16LE();
 	_damage = rs->readUint16LE();
 	_source = rs->readUint16LE();
 	_target = rs->readUint16LE();
+	_counter = rs->readUint16LE();
 	_item0x77 = rs->readUint16LE();
 	_spriteNo = rs->readUint16LE();
 	_xstep = rs->readFloatLE();
 	_ystep = rs->readFloatLE();
 	_zstep = rs->readFloatLE();
+	_startedAsFiretype9 = (rs->readByte() != 0);
+	_expired = (rs->readByte() != 0);
 
 	return true;
 }

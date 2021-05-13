@@ -20,24 +20,20 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 
 #include "ultima/ultima8/world/container.h"
 
 #include "ultima/ultima8/kernel/object_manager.h"
 #include "ultima/ultima8/usecode/uc_machine.h"
 #include "ultima/ultima8/usecode/uc_list.h"
-#include "ultima/ultima8/world/item_factory.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
 #include "ultima/ultima8/world/get_object.h"
-#include "ultima/ultima8/kernel/core_app.h"
+#include "ultima/ultima8/ultima8.h"
 
-#include "ultima/ultima8/graphics/shape_info.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(Container)
 
 Container::Container() {
@@ -112,8 +108,7 @@ bool Container::CanAddItem(Item *item, bool checkwghtvol) {
 		uint32 shapeid = item->getShape();
 		if (GAME_IS_U8 && (shapeid == 115 /*Barrel*/
 		                   || shapeid == 78 || shapeid == 117 /*Chests*/)) {
-			// TODO: make this off by default, but can enable it through
-			// pentagram.ini
+			// TODO: make this off by default, but can enable it through config
 			MainActor *avatar = getMainActor();
 			ObjId bp = avatar->getEquip(7); // !! constant
 			Container *avatarbackpack = getContainer(bp);
@@ -273,7 +268,7 @@ uint32 Container::getContentVolume() const {
 }
 
 void Container::containerSearch(UCList *itemlist, const uint8 *loopscript,
-                                uint32 scriptsize, bool recurse) const {
+								uint32 scriptsize, bool recurse) const {
 	Std::list<Item *>::const_iterator iter;
 	for (iter = _contents.begin(); iter != _contents.end(); ++iter) {
 		// check item against loopscript
@@ -354,7 +349,7 @@ bool Container::loadData(Common::ReadStream *rs, uint32 version) {
 
 	uint32 contentcount = rs->readUint32LE();
 
-	// read _contents
+	// read contents
 	for (unsigned int i = 0; i < contentcount; ++i) {
 		Object *obj = ObjectManager::get_instance()->loadObject(rs, version);
 		Item *item = dynamic_cast<Item *>(obj);

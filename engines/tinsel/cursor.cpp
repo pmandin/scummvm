@@ -467,12 +467,14 @@ void Cursor::InitCurObj() {
 	const MULTI_INIT *pmi;
 	IMAGE *pim;
 
-	if (TinselV2) {
+	if (TinselV2 || TinselV3) {
 		pFilm = (const FILM *)_vm->_handle->LockMem(_cursorFilm);
 		pfr = (const FREEL *)&pFilm->reels[0];
 		pmi = (MULTI_INIT *)_vm->_handle->LockMem(FROM_32(pfr->mobj));
 
-		PokeInPalette(pmi);
+		if (!TinselV3) {
+			PokeInPalette(pmi);
+		}
 	} else {
 		assert(_vm->_bg->BgPal()); // no background palette
 
@@ -632,6 +634,15 @@ void CursorStoppedCheck(CORO_PARAM) {
 	CORO_END_CODE;
 }
 
+bool CanInitializeCursor() {
+	if (!_vm->_cursor->HasReelData()) {
+		return false;
+	} else if (TinselVersion != TINSEL_V3) {
+		return (_vm->_bg->BgPal() != 0);
+	}
+	return true;
+}
+
 /**
  * The main cursor process.
  */
@@ -642,7 +653,7 @@ void CursorProcess(CORO_PARAM, const void *) {
 
 	CORO_BEGIN_CODE(_ctx);
 
-	while (!_vm->_cursor->HasReelData() || !_vm->_bg->BgPal())
+	while (!CanInitializeCursor())
 		CORO_SLEEP(1);
 
 	_vm->_cursor->InitCurObj();

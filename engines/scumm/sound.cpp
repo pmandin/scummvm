@@ -198,7 +198,7 @@ void Sound::playSound(int soundID) {
 			// The original game had hard-coded lengths for all
 			// tracks, but this one track is the only one (as far
 			// as we know) where this actually matters. See bug
-			// #3024173 - LOOM-PCE: Music stops prematurely.
+			// #4914 - LOOM-PCE: Music stops prematurely.
 
 			int track = tracks[soundID - 13];
 			if (track == 6) {
@@ -544,6 +544,9 @@ void Sound::startTalkSound(uint32 offset, uint32 b, int mode, Audio::SoundHandle
 			return;
 		}
 	} else {
+		// This has been verified for INDY4, DOTT and SAM
+		if (_vm->_voiceMode == 2 && _vm->_game.version <= 6)
+			return;
 
 		if (_sfxFilename.empty()) {
 			warning("startTalkSound: SFX file not found");

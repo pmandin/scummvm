@@ -29,6 +29,7 @@
 #include "graphics/transparent_surface.h"
 #include "graphics/nine_patch.h"
 #include "graphics/palette.h"
+#include "graphics/font.h"
 
 #include "graphics/macgui/macwidget.h"
 #include "graphics/macgui/macwindowborder.h"
@@ -60,6 +61,10 @@ enum WindowClick {
 	kBorderInner,
 	kBorderBorder,
 	kBorderResizeButton
+};
+
+enum {
+	kWindowModeDynamicScrollbar = 1 << 0
 };
 }
 using namespace MacWindowConstants;
@@ -264,7 +269,7 @@ public:
 	 * Mutator to change the title of the window.
 	 * @param title Target title.
 	 */
-	void setTitle(const Common::String &title) { _title = title; _borderIsDirty = true; }
+	void setTitle(const Common::String &title);
 	/**
 	 * Accessor to get the title of the window.
 	 * @return Title.
@@ -300,11 +305,15 @@ public:
 	 * @param to Width of the top side of the border, in pixels.
 	 * @param bo Width of the bottom side of the border, in pixels.
 	 */
-	void loadBorder(Common::SeekableReadStream &file, bool active, int lo = -1, int ro = -1, int to = -1, int bo = -1);
-	void loadBorder(Common::SeekableReadStream &file, bool active, BorderOffsets offsets);
-	void setBorder(TransparentSurface *border, bool active, int lo = -1, int ro = -1, int to = -1, int bo = -1);
-	void setBorder(TransparentSurface *border, bool active, BorderOffsets offsets);
+	void loadBorder(Common::SeekableReadStream &file, uint32 flags, int lo = -1, int ro = -1, int to = -1, int bo = -1);
+	void loadBorder(Common::SeekableReadStream &file, uint32 flags, BorderOffsets offsets);
 	void disableBorder();
+	void loadWin95Border(const Common::String &filename, uint32 flags);
+	/**
+	 * we better set this before we load the border
+	 * @param scrollbar state
+	 */
+	void enableScrollbar(bool active) { _hasScrollBar = active; }
 
 	/**
 	 * Indicate whether the window can be closed (false by default).
@@ -323,6 +332,12 @@ public:
 	 */
 	int getBorderType() { return _borderType; };
 
+	/**
+	 * We should call this method whenever we need border flags
+	 * don't calc border flags yourself
+	 * @return Border flags
+	 */
+	uint32 getBorderFlags();
 
 	void addDirtyRect(const Common::Rect &r);
 	void markAllDirty();
@@ -330,10 +345,13 @@ public:
 
 	virtual bool isDirty() override { return _borderIsDirty || _contentIsDirty; }
 
+	void setBorderDirty(bool dirty) { _borderIsDirty = true; }
+	void resizeBorderSurface();
+
+	void setMode(uint32 mode) { _mode = mode; }
+
 private:
-	void prepareBorderSurface(ManagedSurface *g);
-	void drawSimpleBorder(ManagedSurface *g);
-	void drawBorderFromSurface(ManagedSurface *g);
+	void drawBorderFromSurface(ManagedSurface *g, uint32 flags);
 	void drawPattern();
 	void drawBox(ManagedSurface *g, int x, int y, int w, int h);
 	void fillRect(ManagedSurface *g, int x, int y, int w, int h, int color);
@@ -348,6 +366,7 @@ private:
 protected:
 	void drawBorder();
 	WindowClick isInBorder(int x, int y);
+	BorderOffsets getBorderOffsets() { return _macBorder.getOffset(); }
 
 protected:
 	ManagedSurface _borderSurface;
@@ -356,7 +375,9 @@ protected:
 	Common::Rect _innerDims;
 
 	Common::List<Common::Rect> _dirtyRects;
+	bool _hasScrollBar;
 
+	uint32 _mode;
 private:
 	MacWindowBorder _macBorder;
 
@@ -374,7 +395,6 @@ private:
 	int _draggedX, _draggedY;
 
 	WindowClick _highlightedPart;
-	float _scrollPos, _scrollSize;
 
 	Common::String _title;
 

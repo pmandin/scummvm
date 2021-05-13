@@ -45,7 +45,7 @@ Glossary
   object    - inventory item
   icon      - clickable rectangle with some action tied to it
   dialog    - a set of of dialog lines for character. further divided by categories and each entry may have associated
-              condition to be validated
+			  condition to be validated
   global    - game-wide storage area. must be preserved when saving/loading
   phase     - current story progress. Incremented by 1 for minor events, by 0x10 for major advancements
 */
@@ -321,13 +321,6 @@ struct perso_t {
 	byte    _lastLoc;    // For party member this is mini sprite x offset
 	byte    _speed;      // num ticks per step
 	byte    _steps;      // current ticks
-};
-
-class EdenGame;
-
-struct phase_t {
-	int16 _id;
-	void (EdenGame::*disp)();
 };
 
 namespace ObjectFlags {
@@ -742,6 +735,8 @@ struct global_t {
 	byte   _var119;     // unused
 };
 
+#include "common/pack-end.h"
+
 struct PakHeaderItem {
 	Common::String _name; //[16];
 	int32 _size;
@@ -757,8 +752,6 @@ public:
 	uint16    _count;
 	PakHeaderItem* _files;
 };
-
-#include "common/pack-end.h"
 
 struct Citadel {
 	int16 _id;

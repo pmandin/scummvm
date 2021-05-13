@@ -43,6 +43,7 @@ class NPCDat;
 class CombatDat;
 class FireType;
 class ShapeFrame;
+class WeaselDat;
 class SoundFlex;
 class SpeechFlex;
 struct GameInfo;
@@ -76,7 +77,7 @@ public:
 	GumpShapeArchive *getGumps() const {
 		return _gumps;
 	}
-	Shape *getMouse() const {
+	const Shape *getMouse() const {
 		return _mouse;
 	}
 	MusicFlex *getMusic() const {
@@ -101,6 +102,8 @@ public:
 
 	const FireType *getFireType(uint16 type) const;
 
+	const WeaselDat *getWeaselDat(uint16 level) const;
+
 	Std::string translate(const Std::string &text);
 	FrameID translate(FrameID frame);
 
@@ -111,7 +114,7 @@ public:
 	};
 private:
 	void loadTranslation();
-	void setupTTFOverrides(const char *configkey, bool SJIS);
+	void setupTTFOverrides(const char *category, bool SJIS);
 	void setupJPOverrides();
 
 	RawArchive *_fixed;
@@ -125,6 +128,7 @@ private:
 	WpnOvlayDat *_weaponOverlay;
 	Std::vector<NPCDat *> _npcTable;
 	Std::vector<CombatDat *> _combatData;
+	Std::vector<WeaselDat *> _weaselData;
 
 	SoundFlex *_soundFlex;
 	Std::vector<SpeechFlex **> _speech;

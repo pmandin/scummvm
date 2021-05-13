@@ -755,6 +755,17 @@ void SoundCommandParser::reconstructPlayList() {
 			processPlaySound(entry->soundObj, entry->playBed, true);
 		}
 	}
+
+	// Emulate the original SCI0 behavior: If no sound with status kSoundPlaying was found we
+	// look for the first sound with status kSoundPaused and start that. It relies on a correctly
+	// sorted playlist, but we have that...
+	if (_soundVersion <= SCI_VERSION_0_LATE && !_music->getFirstSlotWithStatus(kSoundPlaying)) {
+		if (MusicEntry *pSnd = _music->getFirstSlotWithStatus(kSoundPaused)) {
+			writeSelectorValue(_segMan, pSnd->soundObj, SELECTOR(loop), pSnd->loop);
+			writeSelectorValue(_segMan, pSnd->soundObj, SELECTOR(priority), pSnd->priority);
+			processPlaySound(pSnd->soundObj, pSnd->playBed, true);
+		}
+	}
 }
 
 #ifdef ENABLE_SCI32
@@ -839,7 +850,7 @@ void GfxPalette::saveLoadWithSerializer(Common::Serializer &s) {
 		// We need to save intensity of the _sysPalette at least for kq6 when entering the dark cave (room 390)
 		//  from room 340. scripts will set intensity to 60 for this room and restore them when leaving.
 		//  Sierra SCI is also doing this (although obviously not for SCI0->SCI01 games, still it doesn't hurt
-		//  to save it everywhere). Refer to bug #3072868
+		//  to save it everywhere). Refer to bug #5383
 		s.syncBytes(_sysPalette.intensity, 256);
 	}
 	if (s.getVersion() >= 24) {
@@ -1318,6 +1329,20 @@ void gamestate_afterRestoreFixUp(EngineState *s, int savegameId) {
 		g_sci->_gfxMenu->kernelSetAttribute(515 >> 8, 515 & 0xFF, SCI_MENU_ATTRIBUTE_ENABLED, TRUE_REG);    // Game -> Restore Game
 		g_sci->_gfxMenu->kernelSetAttribute(1025 >> 8, 1025 & 0xFF, SCI_MENU_ATTRIBUTE_ENABLED, TRUE_REG);  // Status -> Statistics
 		g_sci->_gfxMenu->kernelSetAttribute(1026 >> 8, 1026 & 0xFF, SCI_MENU_ATTRIBUTE_ENABLED, TRUE_REG);  // Status -> Goals
+		break;
+	case GID_KQ5:
+		// WORKAROUND: We allow users to choose if they want the older KQ5 CD Windows cursors. These
+		//  are black and white Cursor resources instead of the color View resources in the DOS version.
+		//  This setting affects how KQCursor objects are initialized and might have changed since the
+		//  game was saved. The scripts don't expect this since it wasn't an option in the original.
+		//  In order for the cursors to correctly use the current setting, we need to clear the "number"
+		//  property of every KQCursor when restoring when Windows cursors are disabled.
+		if (g_sci->isCD() && !g_sci->_features->useWindowsCursors()) {
+			Common::Array<reg_t> cursors = s->_segMan->findObjectsBySuperClass("KQCursor");
+			for (uint i = 0; i < cursors.size(); ++i) {
+				writeSelector(s->_segMan, cursors[i], SELECTOR(number), NULL_REG);
+			}
+		}
 		break;
 	case GID_KQ6:
 		if (g_sci->isCD()) {

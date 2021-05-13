@@ -250,7 +250,7 @@ void PoolObject<T>::Pool::removeObject(int32 id) {
 
 template <class T>
 T *PoolObject<T>::Pool::getObject(int32 id) {
-	return _map.getVal(id, NULL);
+	return _map.getValOrDefault(id, NULL);
 }
 
 template <class T>
@@ -314,9 +314,10 @@ void PoolObject<T>::Pool::restoreObjects(SaveGame *state) {
 	Common::HashMap<int32, T *> tempMap;
 	for (int32 i = 0; i < size; ++i) {
 		int32 id = state->readLESint32();
-		T *t = _map.getVal(id);
-		_map.erase(id);
-		if (!t) {
+		T *t = nullptr;
+		if (_map.tryGetVal(id, t))
+			_map.erase(id);
+		else {
 			t = new T();
 			t->setId(id);
 		}

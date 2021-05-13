@@ -1,5 +1,5 @@
 // HACK to allow building with the SDL backend on MinGW
-// see bug #1800764 "TOOLS: MinGW tools building broken"
+// see bug #3412 "TOOLS: MinGW tools building broken"
 #ifdef main
 #undef main
 #endif // main
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < numImages; i++) {
 		totalLength += writePixelData(output, i, bytesSkip);
 		if (oldLength == totalLength) {
-			std::cerr << "Error while reading the image number: " << i << std::endl; 
+			std::cerr << "Error while reading the image number: " << i << std::endl;
 			return 1;
 		}
 		oldLength = totalLength;

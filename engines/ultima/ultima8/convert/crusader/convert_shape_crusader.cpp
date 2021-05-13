@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/convert/crusader/convert_shape_crusader.h"
 
 namespace Ultima {
@@ -31,7 +30,7 @@ const ConvertShapeFormat CrusaderShapeFormat = {
 	"Crusader",
 	6,		// header
 	"",		// ident
-	0,		// bytes_ident 
+	0,		// bytes_ident
 	0,		// bytes_special
 	4,		// header_unk
 	2,		// num_frames
@@ -59,7 +58,7 @@ const ConvertShapeFormat Crusader2DShapeFormat = {
 	"Crusader 2D",
 	6,		// header
 	"",		// ident
-	0,		// bytes_ident 
+	0,		// bytes_ident
 	0,		// bytes_special
 	4,		// header_unk
 	2,		// num_frames

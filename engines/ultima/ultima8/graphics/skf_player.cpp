@@ -30,12 +30,11 @@
 #include "ultima/ultima8/graphics/palette_manager.h"
 #include "ultima/ultima8/audio/music_process.h"
 #include "ultima/ultima8/audio/audio_process.h"
-#include "ultima/ultima8/filesys/idata_source.h"
-#include "ultima/ultima8/audio/audio_mixer.h"
 #include "ultima/ultima8/audio/raw_audio_sample.h"
 #include "ultima/ultima8/graphics/fonts/font.h"
 #include "ultima/ultima8/graphics/fonts/font_manager.h"
 #include "ultima/ultima8/graphics/fonts/rendered_text.h"
+#include "common/config-manager.h"
 #include "common/system.h"
 
 namespace Ultima {
@@ -69,7 +68,7 @@ SKFPlayer::SKFPlayer(Common::SeekableReadStream *rs, int width, int height, bool
 	: _width(width), _height(height), _curFrame(0), _curObject(0), _curAction(0),
 	  _curEvent(0), _playing(false), _timer(0), _frameRate(15), _fadeColour(0),
 	  _fadeLevel(0), _buffer(nullptr), _subs(nullptr), _introMusicHack(introMusicHack),
-      _lastUpdate(0), _subtitleY(0) {
+	  _lastUpdate(0), _subtitleY(0) {
 	_skf = new RawArchive(rs);
 	Common::ReadStream *eventlist = _skf->get_datasource(0);
 	if (!eventlist) {
@@ -80,7 +79,11 @@ SKFPlayer::SKFPlayer(Common::SeekableReadStream *rs, int width, int height, bool
 	parseEventList(eventlist);
 	delete eventlist;
 
-	_buffer = RenderSurface::CreateSecondaryRenderSurface(_width, _height);
+	// TODO: Slight hack.. clean me up.
+	if (RenderSurface::getPixelFormat().bpp() == 16)
+		_buffer = new SoftRenderSurface<uint16>(new Graphics::ManagedSurface(_width, _height, RenderSurface::getPixelFormat()));
+	else
+		_buffer = new SoftRenderSurface<uint32>(new Graphics::ManagedSurface(_width, _height, RenderSurface::getPixelFormat()));
 }
 
 SKFPlayer::~SKFPlayer() {
@@ -106,9 +109,7 @@ void SKFPlayer::parseEventList(Common::ReadStream *eventlist) {
 }
 
 void SKFPlayer::start() {
-	_buffer->BeginPainting();
 	_buffer->Fill32(0, 0, 0, _width, _height);
-	_buffer->EndPainting();
 	MusicProcess *musicproc = MusicProcess::get_instance();
 	if (musicproc) musicproc->playMusic(0);
 	_playing = true;
@@ -124,16 +125,14 @@ void SKFPlayer::stop() {
 void SKFPlayer::paint(RenderSurface *surf, int /*lerp*/) {
 	if (!_buffer) return;
 
-	Texture *tex = _buffer->GetSurfaceAsTexture();
-
 	if (!_fadeLevel) {
-		surf->Blit(tex, 0, 0, _width, _height, 0, 0);
+		surf->Blit(_buffer->getRawSurface(), 0, 0, _width, _height, 0, 0);
 		if (_subs)
 			_subs->draw(surf, 60, _subtitleY);
 	} else {
 		uint32 fade = TEX32_PACK_RGBA(_fadeColour, _fadeColour, _fadeColour,
 		                              (_fadeLevel * 255) / FADESTEPS);
-		surf->FadedBlit(tex, 0, 0, _width, _height, 0, 0, fade);
+		surf->FadedBlit(_buffer->getRawSurface(), 0, 0, _width, _height, 0, 0, fade);
 		if (_subs)
 			_subs->drawBlended(surf, 60, _subtitleY, fade);
 	}
@@ -172,6 +171,9 @@ void SKFPlayer::run() {
 
 	MusicProcess *musicproc = MusicProcess::get_instance();
 	AudioProcess *audioproc = AudioProcess::get_instance();
+
+	bool subtitles = ConfMan.getBool("subtitles");
+	bool speechMute = ConfMan.getBool("speech_mute");
 
 	// handle _events for the current frame
 	while (_curEvent < _events.size() && _events[_curEvent]->_frame <= _curFrame) {
@@ -222,7 +224,7 @@ void SKFPlayer::run() {
 		case SKF_PlaySound: {
 //			pout << "PlaySound " << _events[_curEvent]->_data << Std::endl;
 
-			if (audioproc) {
+			if (!speechMute && audioproc) {
 				uint8 *buf = _skf->get_object(_events[_curEvent]->_data);
 				uint32 bufsize = _skf->get_size(_events[_curEvent]->_data);
 				AudioSample *s;
@@ -238,7 +240,7 @@ void SKFPlayer::run() {
 			char *textbuf = reinterpret_cast<char *>(
 			                    _skf->get_object(_events[_curEvent]->_data - 1));
 			uint32 textsize = _skf->get_size(_events[_curEvent]->_data - 1);
-			if (textsize > 7) {
+			if (subtitles && textsize > 7) {
 				Std::string subtitle = (textbuf + 6);
 				delete _subs;
 				_subtitleY = textbuf[4] + (textbuf[5] << 8);
@@ -267,7 +269,7 @@ void SKFPlayer::run() {
 	_curFrame++;
 
 	PaletteManager *palman = PaletteManager::get_instance();
-	IDataSource *object;
+	Common::SeekableReadStream *object;
 
 	uint16 objecttype = 0;
 	do {

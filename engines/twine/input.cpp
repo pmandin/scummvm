@@ -25,7 +25,7 @@
 #include "common/events.h"
 #include "common/keyboard.h"
 #include "common/system.h"
-#include "twine/actor.h"
+#include "twine/scene/actor.h"
 #include "twine/twine.h"
 
 namespace TwinE {
@@ -33,9 +33,11 @@ namespace TwinE {
 const char *mainKeyMapId = "mainKeyMap";
 const char *uiKeyMapId = "uiKeyMap";
 const char *cutsceneKeyMapId = "cutsceneKeyMap";
+const char *holomapKeyMapId = "holomapKeyMap";
 
 ScopedKeyMap::ScopedKeyMap(TwinEEngine* engine, const char *id) : _engine(engine) {
 	_changed = _engine->_input->enableAdditionalKeyMap(id, true);
+	_keymap = id;
 }
 
 ScopedKeyMap::~ScopedKeyMap() {
@@ -66,6 +68,7 @@ bool Input::toggleAbortAction() {
 	abortState |= toggleActionIfActive(TwinEActionType::CutsceneAbort);
 	abortState |= toggleActionIfActive(TwinEActionType::UIAbort);
 	abortState |= toggleActionIfActive(TwinEActionType::Escape);
+	abortState |= toggleActionIfActive(TwinEActionType::HolomapAbort);
 	return abortState;
 }
 
@@ -79,6 +82,10 @@ bool Input::isMoveOrTurnActionActive() const {
 
 bool Input::isHeroActionActive() const {
 	return isActionActive(TwinEActionType::ExecuteBehaviourAction) || isActionActive(TwinEActionType::SpecialAction);
+}
+
+bool Input::resetHeroActions() {
+	return toggleActionIfActive(TwinEActionType::ExecuteBehaviourAction) || toggleActionIfActive(TwinEActionType::SpecialAction);
 }
 
 bool Input::enableAdditionalKeyMap(const char *id, bool enable) {
@@ -101,7 +108,7 @@ void Input::enableKeyMap(const char *id) {
 	const Common::KeymapArray &keymaps = keymapper->getKeymaps();
 	for (Common::Keymap *keymap : keymaps) {
 		const Common::String& keymapId = keymap->getId();
-		if (keymapId == mainKeyMapId || keymapId == uiKeyMapId || keymapId == cutsceneKeyMapId) {
+		if (keymapId == mainKeyMapId || keymapId == uiKeyMapId || keymapId == cutsceneKeyMapId || keymapId == holomapKeyMapId) {
 			keymap->setEnabled(keymapId == id);
 		}
 	}
@@ -153,15 +160,16 @@ void Input::readKeys() {
 	}
 }
 
-void Input::getMousePositions(MouseStatusStruct *mouseData) {
-	Common::Point point = g_system->getEventManager()->getMousePos();
-	mouseData->x = point.x;
-	mouseData->y = point.y;
+Common::Point Input::getMousePositions() const {
+	return g_system->getEventManager()->getMousePos();
 }
 
-bool Input::isMouseHovering(int32 left, int32 top, int32 right, int32 bottom) const {
-	Common::Point point = g_system->getEventManager()->getMousePos();
-	return point.x >= left && point.x <= right && point.y >= top && point.y <= bottom;
+bool Input::isMouseHovering(const Common::Rect &rect) const {
+	if (!_engine->cfgfile.Mouse) {
+		return false;
+	}
+	const Common::Point &point = getMousePositions();
+	return rect.contains(point);
 }
 
 } // namespace TwinE

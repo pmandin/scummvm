@@ -30,6 +30,7 @@
 #include "graphics/fonts/ttf.h"
 #include "graphics/font.h"
 #include "graphics/surface.h"
+#include "graphics/managed_surface.h"
 
 #include "common/ustr.h"
 #include "common/file.h"
@@ -51,19 +52,19 @@
 #include FT_TRUETYPE_TAGS_H
 
 #if (FREETYPE_MAJOR > 2 ||                                                          \
-        (FREETYPE_MAJOR == 2 && (FREETYPE_MINOR > 3 ||                              \
-                                 (FREETYPE_MINOR == 3 && FREETYPE_PATCH >= 8))))
+		(FREETYPE_MAJOR == 2 && (FREETYPE_MINOR > 3 ||                              \
+								 (FREETYPE_MINOR == 3 && FREETYPE_PATCH >= 8))))
 // FT2.3.8+, nothing to do, FT_GlyphSlot_Own_Bitmap is in FT_BITMAP_H
 #define FAKE_BOLD 2
 #elif (FREETYPE_MAJOR > 2 ||                                                        \
-        (FREETYPE_MAJOR == 2 && (FREETYPE_MINOR > 2 ||                              \
-                                 (FREETYPE_MINOR == 2 && FREETYPE_PATCH >= 0))))
+		(FREETYPE_MAJOR == 2 && (FREETYPE_MINOR > 2 ||                              \
+								 (FREETYPE_MINOR == 2 && FREETYPE_PATCH >= 0))))
 // FT2.2.0+ have FT_GlyphSlot_Own_Bitmap in FT_SYNTHESIS_H
 #include FT_SYNTHESIS_H
 #define FAKE_BOLD 2
 #elif (FREETYPE_MAJOR > 2 ||                                                        \
-        (FREETYPE_MAJOR == 2 && (FREETYPE_MINOR > 1 ||                              \
-                                 (FREETYPE_MINOR == 1 && FREETYPE_PATCH >= 10))))
+		(FREETYPE_MAJOR == 2 && (FREETYPE_MINOR > 1 ||                              \
+								 (FREETYPE_MINOR == 1 && FREETYPE_PATCH >= 10))))
 // FT2.1.10+ don't have FT_GlyphSlot_Own_Bitmap but they have FT_Bitmap_Embolden, do workaround
 #define FAKE_BOLD 1
 #else
@@ -148,6 +149,8 @@ public:
 
 	virtual int getFontHeight() const;
 
+	virtual int getFontAscent() const;
+
 	virtual int getMaxCharWidth() const;
 
 	virtual int getCharWidth(uint32 chr) const;
@@ -157,6 +160,8 @@ public:
 	virtual Common::Rect getBoundingBox(uint32 chr) const;
 
 	virtual void drawChar(Surface *dst, uint32 chr, int x, int y, uint32 color) const;
+	virtual void drawChar(ManagedSurface *dst, uint32 chr, int x, int y, uint32 color) const;
+
 private:
 	bool _initialized;
 	FT_Face _face;
@@ -185,6 +190,8 @@ private:
 	int computePointSize(int size, TTFSizeMode sizeMode) const;
 	int readPointSizeFromVDMXTable(int height) const;
 	int computePointSizeFromHeaders(int height) const;
+	void drawChar(Surface *dst, uint32 chr, int x, int y, uint32 color,
+		const uint32 *transparentColor) const;
 
 	FT_Int32 _loadFlags;
 	FT_Render_Mode _renderMode;
@@ -195,9 +202,9 @@ private:
 };
 
 TTFFont::TTFFont()
-    : _initialized(false), _face(), _ttfFile(0), _size(0), _width(0), _height(0), _ascent(0),
-      _descent(0), _glyphs(), _loadFlags(FT_LOAD_TARGET_NORMAL), _renderMode(FT_RENDER_MODE_NORMAL),
-      _hasKerning(false), _allowLateCaching(false), _fakeBold(false), _fakeItalic(false) {
+	: _initialized(false), _face(), _ttfFile(0), _size(0), _width(0), _height(0), _ascent(0),
+	  _descent(0), _glyphs(), _loadFlags(FT_LOAD_TARGET_NORMAL), _renderMode(FT_RENDER_MODE_NORMAL),
+	  _hasKerning(false), _allowLateCaching(false), _fakeBold(false), _fakeItalic(false) {
 }
 
 TTFFont::~TTFFont() {
@@ -215,7 +222,7 @@ TTFFont::~TTFFont() {
 }
 
 bool TTFFont::load(Common::SeekableReadStream &stream, int size, TTFSizeMode sizeMode,
-                   uint dpi, TTFRenderMode renderMode, const uint32 *mapping, bool stemDarkening) {
+				   uint dpi, TTFRenderMode renderMode, const uint32 *mapping, bool stemDarkening) {
 	if (!g_ttf.isInitialized())
 		return false;
 
@@ -241,7 +248,7 @@ bool TTFFont::load(Common::SeekableReadStream &stream, int size, TTFSizeMode siz
 }
 
 bool TTFFont::load(uint8 *ttfFile, uint32 sizeFile, int32 faceIndex, bool bold, bool italic,
-                   int size, TTFSizeMode sizeMode, uint dpi, TTFRenderMode renderMode, const uint32 *mapping, bool stemDarkening) {
+				   int size, TTFSizeMode sizeMode, uint dpi, TTFRenderMode renderMode, const uint32 *mapping, bool stemDarkening) {
 	_initialized = false;
 
 	if (!g_ttf.isInitialized())
@@ -261,14 +268,27 @@ bool TTFFont::load(uint8 *ttfFile, uint32 sizeFile, int32 faceIndex, bool bold, 
 		return false;
 	}
 
-	// We only support scalable fonts.
+	// Check if the fixed font has the requested size
 	if (!FT_IS_SCALABLE(_face)) {
-		g_ttf.closeFont(_face);
+		FT_Pos reqsize = computePointSize(size, sizeMode) * 64;
+		bool found = false;
 
-		// Don't delete ttfFile as we return fail
-		_ttfFile = 0;
+		for (int i = 0; i < _face->num_fixed_sizes; i++)
+			if (_face->available_sizes[i].size == reqsize) {
+				found = true;
+				break;
+			}
 
-		return false;
+		if (!found) {
+			warning("The non-scalable font has no requested size: %ld", reqsize);
+
+			g_ttf.closeFont(_face);
+
+			// Don't delete ttfFile as we return fail
+			_ttfFile = 0;
+
+			return false;
+		}
 	}
 	if (stemDarkening) {
 #if FREETYPE_MAJOR > 2 || ( FREETYPE_MAJOR == 2 &&  FREETYPE_MINOR >= 9)
@@ -521,6 +541,10 @@ int TTFFont::getFontHeight() const {
 	return _height;
 }
 
+int TTFFont::getFontAscent() const {
+	return _ascent;
+}
+
 int TTFFont::getMaxCharWidth() const {
 	return _width;
 }
@@ -582,8 +606,10 @@ Common::Rect TTFFont::getBoundingBox(uint32 chr) const {
 namespace {
 
 template<typename ColorType>
-static void renderGlyph(uint8 *dstPos, const int dstPitch, const uint8 *srcPos, const int srcPitch, const int w, const int h, ColorType color, const PixelFormat &dstFormat) {
-	uint8 sR, sG, sB;
+static void renderGlyph(uint8 *dstPos, const int dstPitch, const uint8 *srcPos,
+		const int srcPitch, const int w, const int h, ColorType color,
+		const PixelFormat &dstFormat, const uint32 *transparentColor) {
+	uint8 sA, sR, sG, sB;
 	dstFormat.colorToRGB(color, sR, sG, sB);
 
 	for (int y = 0; y < h; ++y) {
@@ -594,16 +620,25 @@ static void renderGlyph(uint8 *dstPos, const int dstPitch, const uint8 *srcPos, 
 			if (*src == 255) {
 				*rDst = color;
 			} else if (*src) {
-				const uint8 a = *src;
+				sA = *src;
 
-				uint8 dR, dG, dB;
-				dstFormat.colorToRGB(*rDst, dR, dG, dB);
+				uint8 dA, dR, dG, dB;
+				if (transparentColor && *rDst == *transparentColor) {
+					dA = dR = dG = dB = 0;
+				} else {
+					dstFormat.colorToARGB(*rDst, dA, dR, dG, dB);
+				}
 
-				dR = ((255 - a) * dR + a * sR) / 255;
-				dG = ((255 - a) * dG + a * sG) / 255;
-				dB = ((255 - a) * dB + a * sB) / 255;
+				double sAn = (double)sA / 255.0;
+				double dAn = (double)dA / 255.0;
+				double oAn = sAn + dAn * (1.0 - sAn);
 
-				*rDst = dstFormat.RGBToColor(dR, dG, dB);
+				dR = static_cast<uint8>(sR * sAn + dR * dAn * (1.0 - sAn) / oAn);
+				dG = static_cast<uint8>(sG * sAn + dG * dAn * (1.0 - sAn) / oAn);
+				dB = static_cast<uint8>(sB * sAn + dB * dAn * (1.0 - sAn) / oAn);
+				dA = static_cast<uint8>(oAn * 255.0);
+
+				*rDst = dstFormat.ARGBToColor(dA, dR, dG, dB);
 			}
 
 			++rDst;
@@ -618,6 +653,24 @@ static void renderGlyph(uint8 *dstPos, const int dstPitch, const uint8 *srcPos, 
 } // End of anonymous namespace
 
 void TTFFont::drawChar(Surface *dst, uint32 chr, int x, int y, uint32 color) const {
+	drawChar(dst, chr, x, y, color, nullptr);
+}
+
+void TTFFont::drawChar(ManagedSurface *dst, uint32 chr, int x, int y, uint32 color) const {
+	if (dst->hasTransparentColor()) {
+		uint32 transColor = dst->getTransparentColor();
+		drawChar(dst->surfacePtr(), chr, x, y, color, &transColor);
+	} else {
+		drawChar(dst->surfacePtr(), chr, x, y, color, nullptr);
+	}
+
+	Common::Rect charBox = getBoundingBox(chr);
+	charBox.translate(x, y);
+	dst->addDirtyRect(charBox);
+}
+
+void TTFFont::drawChar(Surface * dst, uint32 chr, int x, int y, uint32 color,
+		const uint32 *transparentColor) const {
 	assureCached(chr);
 	GlyphCache::const_iterator glyphEntry = _glyphs.find(chr);
 	if (glyphEntry == _glyphs.end())
@@ -684,9 +737,9 @@ void TTFFont::drawChar(Surface *dst, uint32 chr, int x, int y, uint32 color) con
 			srcPos += glyph.image.pitch;
 		}
 	} else if (dst->format.bytesPerPixel == 2) {
-		renderGlyph<uint16>(dstPos, dst->pitch, srcPos, glyph.image.pitch, w, h, color, dst->format);
+		renderGlyph<uint16>(dstPos, dst->pitch, srcPos, glyph.image.pitch, w, h, color, dst->format, transparentColor);
 	} else if (dst->format.bytesPerPixel == 4) {
-		renderGlyph<uint32>(dstPos, dst->pitch, srcPos, glyph.image.pitch, w, h, color, dst->format);
+		renderGlyph<uint32>(dstPos, dst->pitch, srcPos, glyph.image.pitch, w, h, color, dst->format, transparentColor);
 	}
 }
 
@@ -730,7 +783,7 @@ bool TTFFont::cacheGlyph(Glyph &glyph, uint32 chr) const {
 		// That's 26.6 fixed-point units
 		if (FT_Bitmap_Embolden(_face->glyph->library, &_face->glyph->bitmap, 1 << 6, 0))
 			return false;
-		
+
 		bitmap = &_face->glyph->bitmap;
 #elif FAKE_BOLD >= 1
 		FT_Bitmap_New(&ownBitmap);
@@ -861,7 +914,7 @@ Font *loadTTFFontFromArchive(const Common::String &filename, int size, TTFSizeMo
 }
 
 static bool matchFaceName(const Common::U32String &faceName, const FT_Face &face) {
-	if (faceName == Common::U32String(face->family_name)) {
+	if (faceName == Common::U32String(face->family_name, Common::kASCII)) {
 		// International name in ASCII match
 		return true;
 	}
@@ -883,21 +936,22 @@ static bool matchFaceName(const Common::U32String &faceName, const FT_Face &face
 			if (aname.encoding_id == TT_MS_ID_SYMBOL_CS ||
 			        aname.encoding_id == TT_MS_ID_UNICODE_CS) {
 				// MS local name in UTF-16
-				Common::U32String localName = Common::U32String::decodeUTF16BE((uint16 *) aname.string, aname.string_len);
+				// string_len is in bytes length, we take wchar_t length
+				Common::U32String localName = Common::U32String::decodeUTF16BE((uint16 *) aname.string, aname.string_len / 2);
 
 				if (faceName == localName) {
 					return true;
 				}
 			} else {
-				// No conversion
-				if (faceName == Common::U32String((char *)aname.string, aname.string_len)) {
+				// No conversion: try to match with 1 byte encoding
+				if (faceName == Common::U32String((char *)aname.string, aname.string_len, Common::kLatin1)) {
 					return true;
 				}
 			}
 		} else if (aname.platform_id == TT_PLATFORM_MACINTOSH &&
 		           aname.language_id != TT_MAC_LANGID_ENGLISH) {
 			// No conversion
-			if (faceName == Common::U32String((char *)aname.string, aname.string_len)) {
+			if (faceName == Common::U32String((char *)aname.string, aname.string_len, Common::kLatin1)) {
 				return true;
 			}
 		}
@@ -906,7 +960,7 @@ static bool matchFaceName(const Common::U32String &faceName, const FT_Face &face
 }
 
 Font *findTTFace(const Common::Array<Common::String> &files, const Common::U32String &faceName,
-                 bool bold, bool italic, int size, uint dpi, TTFRenderMode renderMode, const uint32 *mapping) {
+				 bool bold, bool italic, int size, uint dpi, TTFRenderMode renderMode, const uint32 *mapping) {
 	if (!g_ttf.isInitialized())
 		return nullptr;
 
@@ -1028,4 +1082,3 @@ DECLARE_SINGLETON(Graphics::TTFLibrary);
 } // End of namespace Common
 
 #endif
-

@@ -24,7 +24,7 @@
 #define ULTIMA8_GUMPS_PAPERDOLLGUMP_H
 
 #include "ultima/ultima8/gumps/container_gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -39,7 +39,7 @@ public:
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	PaperdollGump();
-	PaperdollGump(Shape *shape, uint32 frameNum, uint16 owner,
+	PaperdollGump(const Shape *shape, uint32 frameNum, uint16 owner,
 	              uint32 flags = FLAG_DRAGGABLE, int32 layer = LAYER_NORMAL);
 	~PaperdollGump() override;
 

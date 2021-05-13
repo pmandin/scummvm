@@ -185,7 +185,7 @@ void ViewTitle::drawTrademarksView() {
 		s.writeString(game->_res->TITLE_MESSAGES[10], TextPoint(2, 18));
 		s.writeString(game->_res->TITLE_MESSAGES[11], TextPoint(11, 19));
 		s.writeString(game->_res->TITLE_MESSAGES[12], TextPoint(6, 23));
-	}	
+	}
 }
 
 void ViewTitle::drawMainMenu() {
@@ -214,12 +214,12 @@ void ViewTitle::setCastlePalette() {
 	getGame()->setEGAPalette(PALETTE);
 }
 
-bool ViewTitle::FrameMsg(CFrameMsg &msg) {
+bool ViewTitle::FrameMsg(CFrameMsg *msg) {
 	uint32 time = getGame()->getMillis();
 	if (time < _expiryTime)
 		return true;
 	setDirty();
-	
+
 	switch (_mode) {
 	case TITLEMODE_COPYRIGHT:
 		setMode(TITLEMODE_PRESENTS);
@@ -281,7 +281,7 @@ void ViewTitle::setMode(TitleMode mode) {
 	}
 }
 
-bool ViewTitle::ShowMsg(CShowMsg &msg) {
+bool ViewTitle::ShowMsg(CShowMsg *msg) {
 	Shared::Gfx::VisualItem::ShowMsg(msg);
 
 	if (_mode == TITLEMODE_MAIN_MENU) {
@@ -292,16 +292,16 @@ bool ViewTitle::ShowMsg(CShowMsg &msg) {
 	return true;
 }
 
-bool ViewTitle::KeypressMsg(CKeypressMsg &msg) {
+bool ViewTitle::KeypressMsg(CKeypressMsg *msg) {
 	uint32 time = getGame()->getMillis();
 
 	if (_mode == TITLEMODE_MAIN_MENU) {
-		if (msg._keyState.keycode == Common::KEYCODE_a || msg._keyState.keycode == Common::KEYCODE_b) {
+		if (msg->_keyState.keycode == Common::KEYCODE_a || msg->_keyState.keycode == Common::KEYCODE_b) {
 			// Hide the cursor
 			Shared::Gfx::TextCursor *textCursor = getGame()->_textCursor;
 			textCursor->setVisible(false);
 
-			if (msg._keyState.keycode == Common::KEYCODE_a) {
+			if (msg->_keyState.keycode == Common::KEYCODE_a) {
 				setView("CharGen");
 			} else {
 				if (!g_vm->loadGameDialog())

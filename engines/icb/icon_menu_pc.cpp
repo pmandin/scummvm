@@ -123,7 +123,7 @@ void _icon_menu::Activate(const _icon_list *pIconList, const _icon_menu_duplicat
 		uint32 *icon_ad = (uint32 *)pyIconBitmap;
 		for (uint32 y = 0; y < ICON_Y_SIZE; y++) {
 			uint32 *rowAd = icon_ad;
-			for (int x = 0; x < ICON_X_SIZE; x++) {
+			for (int32 x = 0; x < ICON_X_SIZE; x++) {
 				uint32 col = *rowAd;
 				if (col != m_nTransparentKey) {
 					(*((uint8 *)rowAd + 0)) >>= 1;
@@ -139,7 +139,7 @@ void _icon_menu::Activate(const _icon_list *pIconList, const _icon_menu_duplicat
 		surface_manager->Unlock_surface(m_pnIconSurfaceIDs[i]);
 
 		// Create a surface for the icons hilite
-		sprintf(pcIconName, "%sH", pcIconName);
+		sprintf(pcIconName + strlen(pcIconName), "H");
 		m_pnHiLiteSurfaceIDs[i] = surface_manager->Create_new_surface(pcIconName, ICON_X_SIZE, ICON_Y_SIZE, EITHER);
 		surface_manager->Set_transparent_colour_key(m_pnHiLiteSurfaceIDs[i], m_nTransparentKey);
 		pyHiLiteBitmap = surface_manager->Lock_surface(m_pnHiLiteSurfaceIDs[i]);
@@ -164,7 +164,7 @@ void _icon_menu::Activate(const _icon_list *pIconList, const _icon_menu_duplicat
 }
 
 void _icon_menu::ReActivate() {
-	int i;
+	int32 i;
 
 	// Free up all the previous icon surfaces
 	for (i = m_pIconList->GetIconCount() - 1; i >= 0; --i) {
@@ -211,7 +211,7 @@ void _icon_menu::ReActivate() {
 		uint32 *icon_ad = (uint32 *)pyIconBitmap;
 		for (uint32 y = 0; y < ICON_Y_SIZE; y++) {
 			uint32 *rowAd = icon_ad;
-			for (int x = 0; x < ICON_X_SIZE; x++) {
+			for (int32 x = 0; x < ICON_X_SIZE; x++) {
 				uint32 col = *rowAd;
 				if (col != m_nTransparentKey) {
 					(*((uint8 *)rowAd + 0)) >>= 1;
@@ -227,7 +227,7 @@ void _icon_menu::ReActivate() {
 		surface_manager->Unlock_surface(m_pnIconSurfaceIDs[i]);
 
 		// Create a surface for the icons hilite
-		sprintf(pcIconName, "%sH", pcIconName);
+		sprintf(pcIconName + strlen(pcIconName), "H");
 		m_pnHiLiteSurfaceIDs[i] = surface_manager->Create_new_surface(pcIconName, ICON_X_SIZE, ICON_Y_SIZE, EITHER);
 		uint8 *pyHiLiteBitmap = surface_manager->Lock_surface(m_pnHiLiteSurfaceIDs[i]);
 		nPitch = surface_manager->Get_pitch(m_pnHiLiteSurfaceIDs[i]);
@@ -250,7 +250,7 @@ void _icon_menu::DrawIconMenu() {
 	LRECT sFromRectangle;
 	uint32 nIconCount;
 	uint32 nMaxDrawableIcons, nIconsToDraw;
-	int scrolling = 0;
+	int32 scrolling = 0;
 	char pcDigits[16];
 	const char *pcIconLabel;
 	char pcIconName[MAXLEN_ICON_NAME];
@@ -271,7 +271,7 @@ void _icon_menu::DrawIconMenu() {
 	nIconIndex = m_nSelectedIcon;
 	nStartX = ICON_MENU_PIXEL_X;
 
-	int scrollyX = GetScrollingPosition(nStartX, nIconIndex);
+	int32 scrollyX = GetScrollingPosition(nStartX, nIconIndex);
 
 	if ((nStartX != scrollyX) || (nIconIndex != m_nSelectedIcon)) {
 		scrolling = 1;
@@ -334,7 +334,7 @@ void _icon_menu::DrawIconMenu() {
 	nIconsToDraw = (nIconCount < nMaxDrawableIcons) ? nIconCount : nMaxDrawableIcons;
 
 	// Where to draw them
-	int x = nStartX;
+	int32 x = nStartX;
 
 	// Loop for each icon to be drawn.
 	for (i = 0; i < nIconsToDraw; ++i) {
@@ -371,7 +371,7 @@ void _icon_menu::DrawIconMenu() {
 			pcIconLabel = (const char *)global_text->Try_fetch_item_by_hash(nHashRef);
 
 			// If we found it, display it.
-			if (pcIconLabel && (px.display_mode == THREED)) {
+			if (pcIconLabel && (g_px->display_mode == THREED)) {
 				SetTextColour(255, 255, 255);
 				MS->Create_remora_text(sToRectangle.left, sToRectangle.top - 17, pcIconLabel, 2, PIN_AT_TOP_LEFT, 3, 2, 600);
 				MS->Render_speech(MS->text_bloc);
@@ -383,7 +383,7 @@ void _icon_menu::DrawIconMenu() {
 		nItemCount = m_sDuplicates.s_pnItemCounts[nIconIndex];
 
 		// Only write the number on in 3D mode.
-		if (px.display_mode == THREED) {
+		if (g_px->display_mode == THREED) {
 			// Write the number if greater than 1 or it is the clips or medipacks count.
 			if (((nItemCount > 1) || (nHashRef == HashString(ARMS_HEALTH_NAME)) || (nHashRef == HashString(ARMS_AMMO_NAME))) && x > 0) {
 				snprintf(pcDigits, 16, "%d", m_sDuplicates.s_pnItemCounts[nIconIndex]);
@@ -561,7 +561,7 @@ void _icon_menu::SetEmailArrived() {
 	SetupAdding(EMAIL_ARRIVED_NAME, m_nEmailArrivedSurface);
 }
 
-void _icon_menu::DrawArmedMenu(const int nBullets, const int maxBullets, const int nClips, const int maxClips) {
+void _icon_menu::DrawArmedMenu(const int32 nBullets, const int32 maxBullets, const int32 nClips, const int32 maxClips) {
 	// Ok, let's see just how selfcontained, yet inefficient we can make one function :o)
 	uint32 gunSurface = 0;
 	uint32 clipSurface = 0;
@@ -608,7 +608,6 @@ void _icon_menu::SetUpOffScreenArrows() {
 	uint32 nPitch;
 	uint32 nFullIconNameHash;
 	_pxBitmap *psIconBitmap;
-	uint32 nBufferCount;
 	char pcArrowIconName[MAXLEN_URL];
 	char pcIconPath[MAXLEN_URL];
 
@@ -626,7 +625,7 @@ void _icon_menu::SetUpOffScreenArrows() {
 
 	// Open the icon (contains both the highlighted and normal frames).
 	sprintf(pcIconPath, ICON_PATH);
-	nBufferCount = sprintf(pcArrowIconName, "%s%s.%s", pcIconPath, ICON_MENU_OFF_SCREEN_LEFT, PX_BITMAP_PC_EXT);
+	/*uint32 nBufferCount =*/ sprintf(pcArrowIconName, "%s%s.%s", pcIconPath, ICON_MENU_OFF_SCREEN_LEFT, PX_BITMAP_PC_EXT);
 
 	nFullIconNameHash = NULL_HASH;
 
@@ -656,7 +655,7 @@ void _icon_menu::SetUpOffScreenArrows() {
 	nPitch = surface_manager->Get_pitch(m_nRightArrowID);
 
 	// Open the icon (contains both the highlighted and normal frames).
-	nBufferCount = sprintf(pcArrowIconName, "%s%s.%s", pcIconPath, ICON_MENU_OFF_SCREEN_RIGHT, PX_BITMAP_PC_EXT);
+	/*uint32 nBufferCount =*/ sprintf(pcArrowIconName, "%s%s.%s", pcIconPath, ICON_MENU_OFF_SCREEN_RIGHT, PX_BITMAP_PC_EXT);
 
 	nFullIconNameHash = NULL_HASH;
 

@@ -53,7 +53,7 @@ SoundPC_v1::SoundPC_v1(KyraEngine_v1 *vm, Audio::Mixer *mixer, kType type)
 
 	switch (vm->game()) {
 	case GI_LOL:
-		_version = _vm->gameFlags().isDemo ? 3 : 4;
+		_version = (_vm->gameFlags().isDemo && !_vm->gameFlags().isTalkie) ? 3 : 4;
 		break;
 	case GI_KYRA2:
 		_version = 4;
@@ -235,7 +235,6 @@ void SoundPC_v1::internalLoadFile(Common::String file) {
 	playSoundEffect(0);
 
 	_driver->stopAllChannels();
-	_soundDataPtr = 0;
 
 	int soundDataSize = fileSize;
 	uint8 *p = fileData;
@@ -250,16 +249,15 @@ void SoundPC_v1::internalLoadFile(Common::String file) {
 		soundDataSize -= 120;
 	}
 
+	uint8 *oldData = _soundDataPtr;
 	_soundDataPtr = new uint8[soundDataSize];
 	assert(_soundDataPtr);
 
 	memcpy(_soundDataPtr, p, soundDataSize);
+	_driver->setSoundData(_soundDataPtr, soundDataSize);
 
 	delete[] fileData;
-	fileData = p = 0;
-	fileSize = 0;
-
-	_driver->setSoundData(_soundDataPtr, soundDataSize);
+	delete[] oldData;
 
 	_soundFileLoaded = file;
 }

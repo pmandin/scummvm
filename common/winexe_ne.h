@@ -67,6 +67,9 @@ public:
 	/** Return a stream to the specified resource (or 0 if non-existent). */
 	SeekableReadStream *getResource(const WinResourceID &type, const WinResourceID &id);
 
+	/** Get a string from a string resource. */
+	String loadString(uint32 stringID);
+
 private:
 	/** A resource. */
 	struct Resource {

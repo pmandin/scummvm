@@ -22,7 +22,11 @@
 #ifndef SLUDGE_FLOOR_H
 #define SLUDGE_FLOOR_H
 
-#include "common/rect.h"
+namespace Common {
+struct Point;
+class SeekableReadStream;
+class WriteStream;
+}
 
 namespace Sludge {
 
@@ -72,6 +76,7 @@ private:
 	bool closestPointOnLine(int &closestX, int &closestY, int x1, int y1, int x2, int y2, int xP, int yP);
 	bool pointInFloorPolygon(FloorPolygon &floorPoly, int x, int y);
 	bool polysShareSide(FloorPolygon &a, FloorPolygon &b);
+	void dumpFloor(int fileNum);
 };
 
 } // End of namespace Sludge

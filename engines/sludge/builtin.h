@@ -23,7 +23,7 @@
 #ifndef SLUDGE_BUILTIN_H
 #define SLUDGE_BUILTIN_H
 
-#include "sludge/allfiles.h"
+#include "common/str.h"
 
 namespace Sludge {
 
@@ -40,6 +40,7 @@ enum BuiltReturn {
 
 bool failSecurityCheck(const Common::String &fn);
 BuiltReturn callBuiltIn(int whichFunc, int numParams, LoadedFunction *fun);
+const char *getBuiltInName(int num);
 
 } // End of namespace Sludge
 

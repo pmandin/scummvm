@@ -59,6 +59,10 @@ bool PegasusEngine::isWindows() const {
 	return _gameDescription->desc.platform == Common::kPlatformWindows;
 }
 
+bool PegasusEngine::isLinux() const {
+	return _gameDescription->desc.platform == Common::kPlatformLinux;
+}
+
 } // End of namespace Pegasus
 
 class PegasusMetaEngine : public AdvancedMetaEngine {
@@ -68,7 +72,7 @@ public:
 	}
 
 	bool hasFeature(MetaEngineFeature f) const override;
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override { return 999; }
@@ -112,13 +116,9 @@ Common::KeymapArray PegasusMetaEngine::initKeymaps(const char *target) const {
 	return Pegasus::PegasusEngine::initKeymaps();
 }
 
-bool PegasusMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const Pegasus::PegasusGameDescription *gd = (const Pegasus::PegasusGameDescription *)desc;
-
-	if (gd)
-		*engine = new Pegasus::PegasusEngine(syst, gd);
-
-	return (gd != 0);
+Common::Error PegasusMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Pegasus::PegasusEngine(syst, (const Pegasus::PegasusGameDescription *)desc);
+	return Common::kNoError;
 }
 
 #if PLUGIN_ENABLED_DYNAMIC(PEGASUS)

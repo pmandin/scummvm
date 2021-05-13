@@ -80,6 +80,10 @@ struct LBValue {
 		list = l;
 	}
 	LBValue(const LBValue &val) {
+		copy(val);
+	}
+
+	void copy(const LBValue &val) {
 		type = val.type;
 		switch (type) {
 		case kLBValueString:
@@ -111,6 +115,8 @@ struct LBValue {
 		}
 	}
 
+	LBValue &operator=(const LBValue &other);
+
 	LBValueType type;
 	Common::String string;
 	int integer;
@@ -139,7 +145,8 @@ struct LBList {
 };
 
 enum {
-	kLBCodeLiteralInteger = 0x1
+	kLBCodeLiteralInteger = 0x1,
+	kLBCodeLiteralIntegerLE = 0x11
 };
 
 enum {

@@ -25,7 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/ptr_util.h"
 #include "engines/icb/mission.h"
 #include "engines/icb/global_objects.h"
@@ -74,7 +73,7 @@ void Init_play_movie(const char *param0, bool8 param1) {
 	// Stop all sounds occuring
 	PauseSounds();
 
-	const cstr moviename = (const cstr)param0;
+	const char *moviename = (const char *)param0;
 
 	// Filename checking to help catch Jake's PSX restrictions
 	if (strlen(moviename) > 8)
@@ -90,12 +89,10 @@ void Init_play_movie(const char *param0, bool8 param1) {
 
 	pxString fullname;
 
-	// Non-global movies are streamed from the CD
-	char *_root;
-
 #ifndef PC_DEMO
 #if 1 // was #ifdef FROM_PC_CD
-	_root = g_theClusterManager->GetCDRoot();
+	// Non-global movies are streamed from the CD
+	// char *_root = g_theClusterManager->GetCDRoot();
 #endif
 #endif
 
@@ -156,7 +153,7 @@ void Init_play_movie(const char *param0, bool8 param1) {
 		// Bink is now active and playing
 
 		// Successfully opened a bink sequence so set the engine to play and display it
-		stub.Push_stub_mode(__sequence);
+		g_stub->Push_stub_mode(__sequence);
 	} else {
 		Fatal_error(pxVString("Couldn't register the movie: %s", (const char *)fullname));
 	}

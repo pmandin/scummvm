@@ -25,7 +25,7 @@
 
 #include "ultima/ultima8/gumps/modal_gump.h"
 #include "ultima/ultima8/usecode/intrinsics.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -57,6 +57,8 @@ public:
 	void saveData(Common::WriteStream *ws) override;
 
 private:
+	void nextText();
+
 	/*
 	TODO: Implement stepping through the text
 	int _charOff;

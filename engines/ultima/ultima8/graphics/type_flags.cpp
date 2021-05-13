@@ -23,14 +23,12 @@
 #include "ultima/ultima8/misc/pent_include.h"
 
 #include "ultima/ultima8/graphics/type_flags.h"
-#include "ultima/ultima8/filesys/idata_source.h"
 #include "ultima/ultima8/conf/config_file_manager.h"
-#include "ultima/ultima8/kernel/core_app.h"
+#include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/graphics/main_shape_archive.h"
 #include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/games/treasure_loader.h"
-#include "ultima/ultima8/games/game_info.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -94,10 +92,10 @@ void TypeFlags::load(Common::SeekableReadStream *rs) {
 
 			si._animType = data[4] & 0x0F;
 			si._animData = data[4] >> 4;
+			si._animSpeed = data[5] & 0x0F;
 
-			si._unknown = data[5] & 0x0F;
 			if (data[5] & 0x10) si._flags |= ShapeInfo::SI_EDITOR;
-			if (data[5] & 0x20) si._flags |= ShapeInfo::SI_EXPLODE;
+			if (data[5] & 0x20) si._flags |= ShapeInfo::SI_U8_EXPLODE;
 			if (data[5] & 0x40) si._flags |= ShapeInfo::SI_UNKNOWN46;
 			if (data[5] & 0x80) si._flags |= ShapeInfo::SI_UNKNOWN47;
 
@@ -105,10 +103,13 @@ void TypeFlags::load(Common::SeekableReadStream *rs) {
 			si._volume = data[7];
 
 		} else if (GAME_IS_CRUSADER) {
+			// Changes from U8 to Crusader:
+			// * SI_OCCL seems to be used more like "target" in Cru
+			// * SI_BAG bit seems to have a different meaning in Cru
+			//   (multi-panel?), but we don't use it anyway
+			// * Family/x/y/z are all now 5 bits
+			// * There are more and different flags in the last byte
 
-			// might have to split up remorse/regret at some point
-
-			// unchecked
 			if (data[0] & 0x01) si._flags |= ShapeInfo::SI_FIXED;
 			if (data[0] & 0x02) si._flags |= ShapeInfo::SI_SOLID;
 			if (data[0] & 0x04) si._flags |= ShapeInfo::SI_SEA;
@@ -118,7 +119,6 @@ void TypeFlags::load(Common::SeekableReadStream *rs) {
 			if (data[0] & 0x40) si._flags |= ShapeInfo::SI_DAMAGING;
 			if (data[0] & 0x80) si._flags |= ShapeInfo::SI_NOISY;
 
-			// unchecked
 			if (data[1] & 0x01) si._flags |= ShapeInfo::SI_DRAW;
 			if (data[1] & 0x02) si._flags |= ShapeInfo::SI_IGNORE;
 			if (data[1] & 0x04) si._flags |= ShapeInfo::SI_ROOF;
@@ -126,36 +126,27 @@ void TypeFlags::load(Common::SeekableReadStream *rs) {
 			si._family = data[1] >> 4;
 			si._family += (data[2] & 1) << 4;
 
-			uint32 unk2data = (data[2] >> 1) & 0xF;
+			si._equipType = (data[2] >> 1) & 0xF;
 
 			si._x = ((data[3] << 3) | (data[2] >> 5)) & 0x1F;
 			si._y = (data[3] >> 2) & 0x1F;
 			si._z = ((data[4] << 1) | (data[3] >> 7)) & 0x1F;
 
-			// Left over bits we're not sure what to do with yet..
-			si._unknown = (unk2data << 16) | (((data[4] & 0xF0) << 8) | data[5]);
+			si._animType = data[4] >> 4;
+			si._animData = data[5] & 0x0F;
+			si._animSpeed = data[5] >> 4;
 
 			if (data[6] & 0x01) si._flags |= ShapeInfo::SI_EDITOR;
-			if (data[6] & 0x02) si._flags |= ShapeInfo::SI_SELECTABLE;
-			if (data[6] & 0x04) si._flags |= ShapeInfo::SI_CRUSUNK62;
-			if (data[6] & 0x08) si._flags |= ShapeInfo::SI_CRUSUNK63;
-			if (data[6] & 0x10) si._flags |= ShapeInfo::SI_TARGETABLE;
-			if (data[6] & 0x20) si._flags |= ShapeInfo::SI_CRUS_NPC;
-			if (data[6] & 0x40) si._flags |= ShapeInfo::SI_CRUSUNK66;
-			if (data[6] & 0x80) si._flags |= ShapeInfo::SI_CRUSUNK67;
+			if (data[6] & 0x02) si._flags |= ShapeInfo::SI_CRU_SELECTABLE;
+			if (data[6] & 0x04) si._flags |= ShapeInfo::SI_CRU_PRELOAD;
+			if (data[6] & 0x08) si._flags |= ShapeInfo::SI_CRU_SOUND;
+			if (data[6] & 0x10) si._flags |= ShapeInfo::SI_CRU_TARGETABLE;
+			if (data[6] & 0x20) si._flags |= ShapeInfo::SI_CRU_NPC;
+			if (data[6] & 0x40) si._flags |= ShapeInfo::SI_CRU_UNK66;
+			if (data[6] & 0x80) si._flags |= ShapeInfo::SI_CRU_UNK67;
 
 			si._weight = data[7];
 			si._volume = data[8];
-
-			// FIXME: this is not exactly right, but it is close and at
-			// least it animates the main items that need
-			// continuously animating
-			si._animType = (data[4] & 0xF0) >> 4;
-			if (si._animType == 4) {
-				// FIXME: Only one object (Shape 360, a small glowing
-				// reactor) has this type what should it do?
-				si._animType = 1;
-			}
 		} else {
 			error("unknown game type in type flags");
 		}
@@ -186,89 +177,106 @@ void TypeFlags::loadWeaponInfo() {
 
 	// load weapons
 	Std::vector<istring> weaponkeys;
-	weaponkeys = config->listSections("weapons", true);
+	istring category = "weapons";
+	weaponkeys = config->listSections(category);
 	for (Std::vector<istring>::const_iterator iter = weaponkeys.begin();
 	        iter != weaponkeys.end(); ++iter) {
-		const istring &k = *iter;
+		const istring &section = *iter;
 		WeaponInfo *wi = new WeaponInfo;
 
 		int val = 0;
 
-		// Slight hack.. get the name after the the /
-		wi->_name = k.substr(k.findLastOf('/') + 1, Std::string::npos);
+		wi->_name = section;
 
-		config->get(k + "/shape", val);
+		config->get(category, section, "shape", val);
 		wi->_shape = static_cast<uint32>(val);
 
-		config->get(k + "/overlay", val);
+		config->get(category, section, "overlay", val);
 		wi->_overlayType = static_cast<uint8>(val);
 
-		config->get(k + "/overlay_shape", val);
+		config->get(category, section, "overlay_shape", val);
 		wi->_overlayShape = static_cast<uint32>(val);
 
-		config->get(k + "/damage_mod", val);
+		config->get(category, section, "damage_mod", val);
 		wi->_damageModifier = static_cast<uint8>(val);
 
-		config->get(k + "/base_damage", val);
+		config->get(category, section, "base_damage", val);
 		wi->_baseDamage = static_cast<uint8>(val);
 
-		if (config->get(k + "/attack_dex", val))
+		if (config->get(category, section, "attack_dex", val))
 			wi->_dexAttackBonus = static_cast<uint8>(val);
 		else
 			wi->_dexAttackBonus = 0;
 
-		if (config->get(k + "/defend_dex", val))
+		if (config->get(category, section, "defend_dex", val))
 			wi->_dexDefendBonus = static_cast<uint8>(val);
 		else
 			wi->_dexDefendBonus = 0;
 
-		if (config->get(k + "/armour", val))
+		if (config->get(category, section, "armour", val))
 			wi->_armourBonus = static_cast<uint8>(val);
 		else
 			wi->_armourBonus = 0;
 
-		config->get(k + "/damage_type", val);
+		config->get(category, section, "damage_type", val);
 		wi->_damageType = static_cast<uint16>(val);
 
-		if (config->get(k + "/treasure_chance", val))
+		if (config->get(category, section, "treasure_chance", val))
 			wi->_treasureChance = static_cast<uint16>(val);
 		else
 			wi->_treasureChance = 0;
 
 		// Crusader-specific fields:
 
-		if (config->get(k + "/ammo_type", val))
+		if (config->get(category, section, "ammo_type", val))
 			wi->_ammoType = static_cast<uint16>(val);
 		else
 			wi->_ammoType = 0;
 
-		if (config->get(k + "/ammo_shape", val))
+		if (config->get(category, section, "ammo_shape", val))
 			wi->_ammoShape = static_cast<uint16>(val);
 		else
 			wi->_ammoShape = 0;
 
-		if (config->get(k + "/sound", val))
+		if (config->get(category, section, "sound", val))
 			wi->_sound = static_cast<uint16>(val);
 		else
 			wi->_sound = 0;
 
-		if (config->get(k + "/display_frame", val))
+		if (config->get(category, section, "reload_sound", val))
+			wi->_reloadSound = static_cast<uint16>(val);
+		else
+			wi->_reloadSound = 0;
+
+		if (config->get(category, section, "display_frame", val))
 			wi->_displayGumpFrame = static_cast<uint16>(val);
 		else
 			wi->_displayGumpFrame = 0;
 
-		if (config->get(k + "/display_shape", val))
+		if (config->get(category, section, "display_shape", val))
 			wi->_displayGumpShape = static_cast<uint16>(val);
 		else
 			wi->_displayGumpShape = 3;
 
-		if (config->get(k + "/small", val))
+		if (config->get(category, section, "small", val))
 			wi->_small = static_cast<uint8>(val);
 		else
 			wi->_small = 0;
 
-		// TODO: get from real data.
-		wi->_defaultAmmo = 37;
+		if (config->get(category, section, "clip_size", val))
+			wi->_clipSize = static_cast<uint16>(val);
+		else
+			wi->_clipSize = 10;
+
+		if (config->get(category, section, "energy", val))
+			wi->_energyUse = static_cast<uint16>(val);
+		else
+			wi->_energyUse = 0;
+
+		if (config->get(category, section, "shot_delay", val))
+			wi->_shotDelay = static_cast<uint16>(val);
+		else
+			wi->_shotDelay = 0;
 
 		// TODO: this should be 1, 2, or 3 depending on weapon.
 		// It's used in the AttackProcess
@@ -291,15 +299,16 @@ void TypeFlags::loadArmourInfo() {
 
 	// load armour
 	Std::vector<istring> armourkeys;
-	armourkeys = config->listSections("armour", true);
+	istring category = "armour";
+	armourkeys = config->listSections(category);
 	for (Std::vector<istring>::const_iterator iter = armourkeys.begin();
 	        iter != armourkeys.end(); ++iter) {
-		const istring &k = *iter;
+		const istring &section = *iter;
 		ArmourInfo ai;
 
 		int val;
 
-		config->get(k + "/shape", val);
+		config->get(category, section, "shape", val);
 		ai._shape = static_cast<uint32>(val);
 
 		assert(ai._shape < _shapeInfo.size());
@@ -318,20 +327,20 @@ void TypeFlags::loadArmourInfo() {
 			}
 		}
 
-		config->get(k + "/frame", val);
+		config->get(category, section, "frame", val);
 		ai._frame = static_cast<uint32>(val);
 
 		assert(ai._frame < framecount);
 
-		config->get(k + "/armour", val);
+		config->get(category, section, "armour", val);
 		ai._armourClass = static_cast<uint16>(val);
 
-		if (config->get(k + "/type", val))
+		if (config->get(category, section, "type", val))
 			ai._defenseType = static_cast<uint16>(val);
 		else
 			ai._defenseType = 0;
 
-		if (config->get(k + "/kick_bonus", val))
+		if (config->get(category, section, "kick_bonus", val))
 			ai._kickAttackBonus = static_cast<uint16>(val);
 		else
 			ai._kickAttackBonus = 0;
@@ -348,75 +357,76 @@ void TypeFlags::loadMonsterInfo() {
 
 	// load monsters
 	Std::vector<istring> monsterkeys;
-	monsterkeys = config->listSections("monsters", true);
+	istring category = "monsters";
+	monsterkeys = config->listSections(category);
 	for (Std::vector<istring>::const_iterator iter = monsterkeys.begin();
 	        iter != monsterkeys.end(); ++iter) {
-		const istring k = *iter;
+		const istring section = *iter;
 		MonsterInfo *mi = new MonsterInfo;
 
 		int val;
 
-		config->get(k + "/shape", val);
+		config->get(category, section, "shape", val);
 		mi->_shape = static_cast<uint32>(val);
 
-		config->get(k + "/hp_min", val);
+		config->get(category, section, "hp_min", val);
 		mi->_minHp = static_cast<uint16>(val);
 
-		config->get(k + "/hp_max", val);
+		config->get(category, section, "hp_max", val);
 		mi->_maxHp = static_cast<uint16>(val);
 
-		config->get(k + "/dex_min", val);
+		config->get(category, section, "dex_min", val);
 		mi->_minDex = static_cast<uint16>(val);
 
-		config->get(k + "/dex_max", val);
+		config->get(category, section, "dex_max", val);
 		mi->_maxDex = static_cast<uint16>(val);
 
-		config->get(k + "/damage_min", val);
+		config->get(category, section, "damage_min", val);
 		mi->_minDmg = static_cast<uint16>(val);
 
-		config->get(k + "/damage_max", val);
+		config->get(category, section, "damage_max", val);
 		mi->_maxDmg = static_cast<uint16>(val);
 
-		config->get(k + "/armour", val);
+		config->get(category, section, "armour", val);
 		mi->_armourClass = static_cast<uint16>(val);
 
-		config->get(k + "/alignment", val);
+		config->get(category, section, "alignment", val);
 		mi->_alignment = static_cast<uint8>(val);
 
-		config->get(k + "/unk", val);
+		config->get(category, section, "unk", val);
 		mi->_unk = (val != 0);
 
-		config->get(k + "/damage_type", val);
+		config->get(category, section, "damage_type", val);
 		mi->_damageType = static_cast<uint16>(val);
 
-		config->get(k + "/defense_type", val);
+		config->get(category, section, "defense_type", val);
 		mi->_defenseType = static_cast<uint16>(val);
 
-		if (config->get(k + "/resurrection", val))
+		if (config->get(category, section, "resurrection", val))
 			mi->_resurrection = (val != 0);
 		else
 			mi->_resurrection = false;
 
-		if (config->get(k + "/ranged", val))
+		if (config->get(category, section, "ranged", val))
 			mi->_ranged = (val != 0);
 		else
 			mi->_ranged = false;
 
-		if (config->get(k + "/shifter", val))
+		if (config->get(category, section, "shifter", val))
 			mi->_shifter = (val != 0);
 		else
 			mi->_shifter = false;
 
-		if (config->get(k + "/explode", val))
+		if (config->get(category, section, "explode", val))
 			mi->_explode = val;
 		else
 			mi->_explode = 0;
 
 		Std::string treasure;
-		if (config->get(k + "/treasure", treasure)) {
+		if (config->get(category, section, "treasure", treasure)) {
 			bool ok = treasureLoader.parse(treasure, mi->_treasure);
 			if (!ok) {
-				perr << "failed to parse treasure info for monster '" << k
+				perr << "failed to parse treasure info for monster '" << section
 				     << "'"  << Std::endl;
 				mi->_treasure.clear();
 			}

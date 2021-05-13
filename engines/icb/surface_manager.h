@@ -30,19 +30,10 @@
 
 #include "engines/icb/p4_generic.h"
 #include "engines/icb/common/px_array.h"
-#include "engines/icb/common/px_assert.h"
 #include "engines/icb/common/px_types.h"
-
-#ifdef ENABLE_OPENGL
-#include <SDL_opengl.h>
-#endif
 
 #include "graphics/surface.h"
 #include "graphics/pixelbuffer.h"
-
-namespace TinyGL {
-struct FrameBuffer;
-}
 
 namespace ICB {
 
@@ -55,18 +46,12 @@ namespace ICB {
 #define SYSTEM 0x00000000 // Surface is in system
 #define VIDEO 0x00000001  // Surface must be in vram
 
-typedef unsigned int uint32;
 extern uint32 effect_time; // Time spent doing postprocessing effects (fades ect)
 extern uint32 working_buffer_id;
 extern uint32 bg_buffer_id;
 
 // Define this here so we can get rid of the <ddraw.h> include
 #define DDBLT_KEYSRC 0x00008000l
-
-#if defined (SDL_BACKEND) && defined (ENABLE_OPENGL)
-extern PFNGLBINDFRAMEBUFFEREXTPROC glBindFramebuffer;
-extern GLuint g_RGBFrameBuffer;
-#endif
 
 class _surface {
 public:
@@ -75,6 +60,7 @@ public:
 	uint32 m_width;  // The surface width
 	uint32 m_height; // The surface height
 	bool8 m_locked;  // Is the surface locked ?
+	uint32 m_colorKey;
 
 	_surface();
 	~_surface();
@@ -83,14 +69,7 @@ public:
 class _surface_manager {
 
 private:
-	Graphics::Surface *sdl_screen;
-	TinyGL::FrameBuffer *_zb;
-#if defined (SDL_BACKEND) && defined (ENABLE_OPENGL)
-	GLuint RGBFrameBufferTexture;
-	GLuint RGBFrameBuffer;
-	GLuint renderBuffer;
-	GLuint sdlTextureId;
-#endif
+	Graphics::Surface *screenSurface;
 	LRECT m_screen_rect; // The screen rectangle
 public:
 	rcAutoPtrArray<_surface> m_Surfaces; // List of client surface
@@ -115,7 +94,7 @@ public:
 	void PrintDebugLabel(const char *mess, uint32 c);
 	void PrintTimer(char label, uint32 time, uint32 limit);
 
-	int Get_pitch(uint32 s_id);
+	int32 Get_pitch(uint32 s_id);
 	inline uint32 Get_width(uint32 nSurfaceID) const;
 	inline uint32 Get_height(uint32 nSurfaceID) const;
 	inline uint32 Get_BytesPP(uint32 nSurfaceID) const;
@@ -147,6 +126,9 @@ public:
 		return m_borderAlpha; // Access to the border colour
 	}
 	uint32 &BorderMode() { return m_borderMode; }
+
+	void LoadGFXInfo(Common::SeekableReadStream *stream);
+	void SaveGFXInfo(Common::WriteStream *stream);
 
 private:
 	LRECT m_borders;     // The border to add to the screen
@@ -202,19 +184,19 @@ private:
 };
 
 inline uint32 _surface_manager::Get_width(uint32 nSurfaceID) const {
-	_ASSERT(nSurfaceID < m_Surfaces.GetNoItems());
+	assert(nSurfaceID < m_Surfaces.GetNoItems());
 
 	return (m_Surfaces[nSurfaceID]->m_width);
 }
 
 inline uint32 _surface_manager::Get_height(uint32 nSurfaceID) const {
-	_ASSERT(nSurfaceID < m_Surfaces.GetNoItems());
+	assert(nSurfaceID < m_Surfaces.GetNoItems());
 
 	return (m_Surfaces[nSurfaceID]->m_height);
 }
 
 inline uint32 _surface_manager::Get_BytesPP(uint32 nSurfaceID) const {
-	_ASSERT(nSurfaceID < m_Surfaces.GetNoItems());
+	assert(nSurfaceID < m_Surfaces.GetNoItems());
 
 	return ((m_Surfaces[nSurfaceID]->m_dds->format.bytesPerPixel));
 }

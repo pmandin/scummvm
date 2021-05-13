@@ -272,6 +272,9 @@ static struct BuiltinProto {
 	// XCOD/XFCN (HyperCard), normally exposed
 	{ "GetVolumes", LB::b_getVolumes, 0, 0, true, 400, FBLTIN },
 
+	// Used in "Eastern Mind", normally a TheEntity
+	{ "colorQD", LB::b_colorQD, 0, 0, true, 300, FBLTIN },
+
 	{ 0, 0, 0, 0, false, 0, VOIDSYM }
 };
 
@@ -1845,11 +1848,20 @@ void LB::b_puppetPalette(int nargs) {
 }
 
 void LB::b_puppetSound(int nargs) {
-	ARGNUMCHECK(1);
+
+	if (nargs < 1 || nargs >= 3) {
+		warning("b_puppetSound(): needs 1 or 2 args");
+		return;
+	}
 
 	DirectorSound *sound = g_director->getSoundManager();
 	Datum castMember = g_lingo->pop();
 	Score *score = g_director->getCurrentMovie()->getScore();
+
+	int channel = 1;
+	if (nargs == 2) {
+		channel = g_lingo->pop().asInt();
+	}
 
 	if (!score) {
 		warning("b_puppetSound(): no score");
@@ -1857,7 +1869,7 @@ void LB::b_puppetSound(int nargs) {
 	}
 
 	int castId = castMember.asCastId();
-	sound->playCastMember(castId, 1);
+	sound->playCastMember(castId, channel);
 }
 
 void LB::b_puppetSprite(int nargs) {
@@ -2542,6 +2554,10 @@ void LB::b_getVolumes(int nargs) {
 	d.u.farr->push_back(Datum("Buried in Time\252 1"));
 
 	g_lingo->push(d);
+}
+
+void LB::b_colorQD(int nargs) {
+	g_lingo->push(Datum(1));
 }
 
 } // End of namespace Director

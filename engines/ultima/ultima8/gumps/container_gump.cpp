@@ -20,19 +20,16 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/container_gump.h"
 
 #include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/graphics/shape_frame.h"
-#include "ultima/ultima8/graphics/shape_info.h"
-#include "ultima/ultima8/world/container.h"
 #include "ultima/ultima8/graphics/render_surface.h"
 #include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/kernel/kernel.h"
+#include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/graphics/main_shape_archive.h"
-#include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/gumps/slider_gump.h"
 #include "ultima/ultima8/gumps/gump_notify_process.h"
 #include "ultima/ultima8/world/item_factory.h"
@@ -52,8 +49,8 @@ ContainerGump::ContainerGump()
 
 }
 
-ContainerGump::ContainerGump(Shape *shape, uint32 frameNum, uint16 owner,
-                             uint32 flags, int32 layer)
+ContainerGump::ContainerGump(const Shape *shape, uint32 frameNum, uint16 owner,
+							 uint32 flags, int32 layer)
 	: ItemRelativeGump(0, 0, 5, 5, owner, flags, layer),
 	  _displayDragging(false), _draggingShape(0), _draggingFrame(0),
 	  _draggingFlags(0), _draggingX(0), _draggingY(0) {
@@ -117,7 +114,7 @@ void ContainerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scale
 	}
 
 	Std::list<Item *> &contents = c->_contents;
-	int32 gametick = Kernel::get_instance()->getFrameNum();
+	int32 gameframeno = Kernel::get_instance()->getFrameNum();
 
 	//!! TODO: check these painting commands (flipped? translucent?)
 	bool paintEditorItems = Ultima8Engine::get_instance()->isPaintEditorItems();
@@ -125,14 +122,14 @@ void ContainerGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scale
 	Std::list<Item *>::iterator iter;
 	for (iter = contents.begin(); iter != contents.end(); ++iter) {
 		Item *item = *iter;
-		item->setupLerp(gametick);
+		item->setupLerp(gameframeno);
 
 		if (!paintEditorItems && item->getShapeInfo()->is_editor())
 			continue;
 
 		int32 itemx, itemy;
 		getItemCoords(item, itemx, itemy);
-		Shape *s = item->getShapeObject();
+		const Shape *s = item->getShapeObject();
 		assert(s);
 		surf->Paint(s, item->getFrame(), itemx, itemy);
 	}
@@ -192,7 +189,7 @@ uint16 ContainerGump::TraceObjId(int32 mx, int32 my) {
 
 // get item coords relative to self
 bool ContainerGump::GetLocationOfItem(uint16 itemid, int32 &gx, int32 &gy,
-                                      int32 lerp_factor) {
+									  int32 lerp_factor) {
 	Item *item = getItem(itemid);
 	if (!item) return false;
 	Item *parent = item->getParentAsContainer();
@@ -313,30 +310,23 @@ Gump *ContainerGump::onMouseDown(int button, int32 mx, int32 my) {
 
 void ContainerGump::onMouseClick(int button, int32 mx, int32 my) {
 	if (button == Shared::BUTTON_LEFT) {
-		if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-			pout << "Can't: avatarInStasis" << Std::endl;
-			return;
-		}
-
 		uint16 objID = TraceObjId(mx, my);
 
 		Item *item = getItem(objID);
 		if (item) {
 			item->dumpInfo();
 
-			// call the 'look' event
-			item->callUsecodeEvent_look();
+			if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
+				pout << "Can't look: avatarInStasis" << Std::endl;
+			} else {
+				item->callUsecodeEvent_look();
+			}
 		}
 	}
 }
 
 void ContainerGump::onMouseDouble(int button, int32 mx, int32 my) {
 	if (button == Shared::BUTTON_LEFT) {
-		if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-			pout << "Can't: avatarInStasis" << Std::endl;
-			return;
-		}
-
 		uint16 objID = TraceObjId(mx, my);
 
 		if (objID == getObjId()) {
@@ -346,6 +336,11 @@ void ContainerGump::onMouseDouble(int button, int32 mx, int32 my) {
 		Item *item = getItem(objID);
 		if (item) {
 			item->dumpInfo();
+
+			if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
+				pout << "Can't use: avatarInStasis" << Std::endl;
+				return;
+			}
 
 			MainActor *avatar = getMainActor();
 			if (objID == _owner || avatar->canReach(item, 128)) { // CONSTANT!
@@ -495,12 +490,19 @@ void ContainerGump::DropItem(Item *item, int mx, int my) {
 	if (targetitem && item->getShapeInfo()->hasQuantity()) {
 		// try to combine items
 		if (item->canMergeWith(targetitem)) {
-			targetitem->setQuality(targetitem->getQuality() +
-			                       item->getQuality());
-			targetitem->callUsecodeEvent_combine();
-
-			// combined, so delete item
-			item->destroy();
+			uint16 newquant = targetitem->getQuality() + item->getQuality();
+			// easter egg as in original: items stack to max quantity of 666
+			if (newquant > 666) {
+				item->setQuality(newquant - 666);
+				targetitem->setQuality(666);
+				// maybe this isn't needed? original doesn't do it here..
+				targetitem->callUsecodeEvent_combine();
+			} else {
+				targetitem->setQuality(newquant);
+				targetitem->callUsecodeEvent_combine();
+				// combined, so delete other
+				item->destroy();
+			}
 			return;
 		}
 	}

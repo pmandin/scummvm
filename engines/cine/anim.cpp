@@ -199,7 +199,7 @@ int loadSet(const char *resourceName, int16 idx, int16 frameIndex = -1);
 void checkAnimDataTableBounds(int entry) {
 	if (entry < 0) {
 		error("Out of free animation space");
-	} else if (entry >= g_cine->_animDataTable.size()) {
+	} else if (entry >= (int)g_cine->_animDataTable.size()) {
 		error("Animation entry (%d) out of bounds", entry);
 	}
 }
@@ -209,7 +209,7 @@ int16 fixAnimDataTableEndFrame(int entry, int16 startFrame, int16 endFrame) {
 
 	// Ensure that a non-empty range [entry, entry + endFrame - startFrame) stays in bounds
 	if (endFrame > startFrame &&
-		entry + (endFrame - startFrame - 1) >= g_cine->_animDataTable.size()) {
+		entry + (endFrame - startFrame - 1) >= (int)g_cine->_animDataTable.size()) {
 		warning("Restricting out of bounds animation data table write to in bounds");
 		return (int16)(g_cine->_animDataTable.size() - entry + startFrame);
 	} else {
@@ -304,7 +304,7 @@ byte AnimData::getColor(int x, int y) {
  * @param transparent Transparent color (for ANIM_MASKSPRITE)
  */
 void AnimData::load(byte *d, int type, uint16 w, uint16 h, int16 file,
-                    int16 frame, const char *n, byte transparent) {
+					int16 frame, const char *n, byte transparent) {
 	assert(d);
 
 	if (_data) {
@@ -439,7 +439,7 @@ void freeAnimDataRange(byte startIdx, byte numIdx) {
 		assert(startIdx < g_cine->_animDataTable.size());
 		assert(startIdx + numIdx <= g_cine->_animDataTable.size());
 	}
-		
+
 	for (byte i = 0; i < numIdx; i++) {
 		g_cine->_animDataTable[startIdx + i].clear();
 	}
@@ -683,7 +683,7 @@ int loadAni(const char *resourceName, int16 idx, int16 frameIndex) {
 	// TODO: Merge this special case hack into getAnimTransparentColor somehow.
 	// HACK: Versions of TITRE.ANI with height 37 use color 0xF for transparency.
 	//       Versions of TITRE.ANI with height 57 use color 0x0 for transparency.
-	//       Fixes bug #2057619: FW: Glitches in title display of demo (regression).
+	//       Fixes bug #3875: FW: Glitches in title display of demo (regression).
 	if (hacksEnabled && scumm_stricmp(resourceName, "TITRE.ANI") == 0 && animHeader.frameHeight == 37) {
 		transparentColor = 0xF;
 	}

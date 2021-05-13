@@ -69,9 +69,9 @@ public:
 		return "tinsel";
 	}
 
-    bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
-    bool hasFeature(MetaEngineFeature f) const override;
+	bool hasFeature(MetaEngineFeature f) const override;
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
@@ -169,12 +169,9 @@ SaveStateList TinselMetaEngine::listSaves(const char *target) const {
 	return saveList;
 }
 
-bool TinselMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const Tinsel::TinselGameDescription *gd = (const Tinsel::TinselGameDescription *)desc;
-	if (gd) {
-		*engine = new Tinsel::TinselEngine(syst, gd);
-	}
-	return gd != 0;
+Common::Error TinselMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Tinsel::TinselEngine(syst, (const Tinsel::TinselGameDescription *)desc);
+	return Common::kNoError;
 }
 
 int TinselMetaEngine::getMaximumSaveSlot() const { return 99; }
@@ -182,7 +179,7 @@ int TinselMetaEngine::getMaximumSaveSlot() const { return 99; }
 void TinselMetaEngine::removeSaveState(const char *target, int slot) const {
 	Tinsel::setNeedLoad();
 	// Same issue here as with loadGameState(): we need the physical savegame
-	// slot. Refer to bug #3387551.
+	// slot. Refer to bug #5819.
 	int listSlot = -1;
 	const int numStates = Tinsel::getList(g_system->getSavefileManager(), target);
 	for (int i = 0; i < numStates; ++i) {

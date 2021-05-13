@@ -24,7 +24,7 @@
 #define ULTIMA8_GUMPS_CONTAINERGUMP_H
 
 #include "ultima/ultima8/gumps/item_relative_gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -40,7 +40,7 @@ public:
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	ContainerGump();
-	ContainerGump(Shape *shape, uint32 frameNum, uint16 owner,
+	ContainerGump(const Shape *shape, uint32 frameNum, uint16 owner,
 	              uint32 flags = FLAG_DRAGGABLE, int32 layer = LAYER_NORMAL);
 	~ContainerGump() override;
 

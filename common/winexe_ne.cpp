@@ -211,4 +211,26 @@ const Array<WinResourceID> NEResources::getIDList(const WinResourceID &type) con
 	return idArray;
 }
 
+String NEResources::loadString(uint32 stringID) {
+	// This is how the resource ID is calculated
+	String string;
+	SeekableReadStream *stream = getResource(kWinString, (stringID >> 4) + 1);
+
+	if (!stream)
+		return string;
+
+	// Skip over strings we don't care about
+	uint32 startString = stringID & ~0xF;
+
+	for (uint32 i = startString; i < stringID; i++)
+		stream->skip(stream->readByte());
+
+	byte size = stream->readByte();
+	while (size--)
+		string += (char)stream->readByte();
+
+	delete stream;
+	return string;
+}
+
 } // End of namespace Common

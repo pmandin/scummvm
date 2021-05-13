@@ -154,8 +154,6 @@ void res_man::Defrag() {
 
 	// just to be on the safe side, finish all async stuff, we can't risk any async going to addresses we are moving about...
 
-	async_flush();
-
 	do {
 
 		Tdebug("defrag.txt", "\nlooking at bloc %d", cur_block);
@@ -242,7 +240,7 @@ void res_man::Defrag() {
 	// finished - should be done.
 }
 
-void res_man::Initialise(uint32 memory_tot, uint32 threadFlag) {
+void res_man::Initialise(uint32 memory_tot) {
 	total_free_memory = memory_tot;
 	total_pool = memory_tot; // kept for error referencing and so on
 
@@ -254,12 +252,6 @@ void res_man::Initialise(uint32 memory_tot, uint32 threadFlag) {
 
 	Reset();
 
-	// start async thread etc..
-	if (threadFlag)
-		OpenAsync();
-	else
-		hasThread = 0;
-
 	amount_of_defrags = 0;
 
 	Tdebug("resman.txt", "made resman - %d", total_pool);
@@ -268,7 +260,7 @@ void res_man::Initialise(uint32 memory_tot, uint32 threadFlag) {
 void res_man::Reset() { // trash all resources
 
 	// set all to unused
-	uint j;
+	uint32 j;
 	for (j = 0; j < max_mem_blocks; j++) {
 		mem_list[j].state = MEM_null;
 		mem_offset_list[j].total_hash = 0;
@@ -298,15 +290,12 @@ res_man::~res_man() {
 
 	delete[] memory_base;
 	delete[] mem_list;
-
-	// close async thread.
-	CloseAsync();
 }
 
-uint32 res_man::Fetch_old_memory(int number_of_cycles) {
+uint32 res_man::Fetch_old_memory(int32 number_of_cycles) {
 	uint32 amount;
 	int16 search;
-	int oldest_age;
+	int32 oldest_age;
 
 	amount = 0;
 	search = 0;
@@ -334,8 +323,8 @@ uint32 res_man::Fetch_old_memory(int number_of_cycles) {
 // If hash or cluster_hash == NULL_HASH then the hash of url/cluster_url
 // is computed and stored in hash/cluster_hash
 uint8 *res_man::Res_open(const char *url, uint32 &url_hash, const char *cluster, uint32 &cluster_hash,
-                         int compressed, // non zero if the resource is compressed
-                         int *ret_len) {
+						 int32 compressed, // non zero if the resource is compressed
+						 int32 *ret_len) {
 	// make the hash names if we need to
 	MakeHash(url, url_hash);
 	MakeHash(cluster, cluster_hash);
@@ -350,53 +339,13 @@ uint8 *res_man::Res_open(const char *url, uint32 &url_hash, const char *cluster,
 	params.compressed = compressed;
 	params.not_ready_yet = 0;
 
-	if ((px.logic_timing) && (px.mega_timer)) {
+	if ((g_px->logic_timing) && (g_px->mega_timer)) {
 		time = GetMicroTimer();
 	}
 
 	uint8 *ret = this->Internal_open(&params, ret_len);
 
-	if ((px.logic_timing) && (px.mega_timer)) {
-		time = GetMicroTimer() - time;
-		g_mission->resman_logic_time += time;
-	}
-
-	return (ret);
-}
-
-// If hash or cluster_hash == NULL_HASH then the hash of url/cluster_url
-// is computed and stored in hash/cluster_hash
-uint8 *res_man::Res_async_open(const char *url, uint32 &url_hash, const char *cluster, uint32 &cluster_hash, int compressed) {
-	// pc does not have async for now (well i know it does but i'm switching it off)
-	return Res_open(url, url_hash, cluster, cluster_hash, compressed);
-
-	// if this is a cluster then fatal error (cant res_async_open a cluster directly like you can open one)
-	if ((url_hash == NULL_HASH) && (url == NULL)) {
-		warning("cant res_async_open a cluster directly. loading");
-		return Res_open(url, url_hash, cluster, cluster_hash, compressed);
-	}
-
-	// make the hash names if we need to
-	MakeHash(url, url_hash);
-	MakeHash(cluster, cluster_hash);
-
-	RMParams params;
-	uint32 time = 0;
-
-	params.url_hash = url_hash;
-	params.cluster = cluster;
-	params.cluster_hash = cluster_hash;
-	params.mode = RM_ASYNCLOAD;
-	params.compressed = compressed;
-	params.not_ready_yet = 0;
-
-	if ((px.logic_timing) && (px.mega_timer)) {
-		time = GetMicroTimer();
-	}
-
-	uint8 *ret = this->Internal_open(&params, NULL);
-
-	if ((px.logic_timing) && (px.mega_timer)) {
+	if ((g_px->logic_timing) && (g_px->mega_timer)) {
 		time = GetMicroTimer() - time;
 		g_mission->resman_logic_time += time;
 	}
@@ -417,11 +366,9 @@ res_man::res_man() {
 	memory_base = NULL;
 	max_mem_blocks = 0;
 	mem_list = NULL;
-	hResManMutex = NULL;
-	hRunMutex = NULL;
 }
 
-res_man::res_man(uint32 memory_tot, uint32 threadFlag) {
+res_man::res_man(uint32 memory_tot) {
 	// object constructor - allocaes the memory pool for this manager
 
 	memory_base = AllocMemory(memory_tot);
@@ -430,11 +377,9 @@ res_man::res_man(uint32 memory_tot, uint32 threadFlag) {
 	mem_list = new mem[max_mem_blocks];
 	mem_offset_list = new mem_offset[max_mem_blocks];
 	num_mem_offsets = 0;
-	hResManMutex = NULL;
-	hRunMutex = NULL;
-	warning("res_man constructor");
+
 	// Setup everything up correctly
-	Initialise(memory_tot, threadFlag);
+	Initialise(memory_tot);
 }
 
 void res_man::Construct(uint8 *base, uint32 size, mem *memList, mem_offset *offsetList, uint32 nMemBlocks) {
@@ -450,7 +395,7 @@ void res_man::Construct(uint8 *base, uint32 size, mem *memList, mem_offset *offs
 	max_mem_blocks = nMemBlocks;
 
 	// Setup everything up correctly
-	Initialise(size, 0);
+	Initialise(size);
 }
 
 void res_man::Res_purge(const char *url, uint32 url_hash, const char *cluster, uint32 cluster_hash, uint32 fatal) {
@@ -583,7 +528,7 @@ int16 res_man::FindFile(uint32 url_hash, uint32 cluster_hash, uint32 total_hash)
 
 	// so it was in the list return it
 
-	return (short)search;
+	return (int16)search;
 }
 
 void res_man::AddMemOffset(uint32 hash, int32 search) {
@@ -705,7 +650,7 @@ uint32 res_man::Check_file_size(const char *url, uint32 url_hash, const char *cl
 	return (0);
 }
 
-uint8 *res_man::Internal_open(RMParams *params, int *ret_len) {
+uint8 *res_man::Internal_open(RMParams *params, int32 *ret_len) {
 	// Loads if not in memory here already
 
 	// resoures cannot be locked in memory
@@ -861,8 +806,6 @@ uint32 res_man::FindMemBlock(uint32 adj_len, RMParams *params) {
 
 			bool8 debug_state = zdebug;
 			zdebug = TRUE8;
-
-			async_flush();
 
 			uint16 *age_table = new uint16[MAX_MEM_BLOCKS];
 			uint32 total_age = 0;

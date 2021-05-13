@@ -30,7 +30,7 @@
 
 namespace ICB {
 
-int _selFace;
+int32 _selFace;
 
 // Number of GPU packets to reserve
 #define PACKETMAX 2900 * 4
@@ -48,23 +48,22 @@ GPUPACKET *drawpacketStart;
 GPUPACKET *drawpacketEnd;
 
 // Global double buffer index
-int drawBuf = 0;
+int32 drawBuf = 0;
 
 // Global ot arrays and stuff
 OT_tag *otarray[2];
 OT_tag *drawot;
 OT_tag otlist[2][OT_SIZE];
-GsOT Wot[2];
 
 // The min & max places to put Z data into the OT list
-int minZOTpos = 5;
-int maxZOTpos = OT_SIZE - 5;
-int nearClip = 0;
-int minUsedZpos = 20000;
-int maxUsedZpos = 0;
+int32 minZOTpos = 5;
+int32 maxZOTpos = OT_SIZE - 5;
+int32 nearClip = 0;
+int32 minUsedZpos = 20000;
+int32 maxUsedZpos = 0;
 
-int otz_shift = 0; // 1cm accuracy
-int otz_offset = ((nearClip >> otz_shift) - minZOTpos);
+int32 g_otz_shift = 0; // 1cm accuracy
+int32 g_otz_offset;
 
 // The zones for otz_shift computation
 #define OTZ_ZONE1 32000  // 1cm
@@ -90,8 +89,8 @@ void InitDrawing(void) {
 	minUsedZpos = 20000;
 	maxUsedZpos = 0;
 
-	otz_shift = 0; // 1cm accuracy
-	otz_offset = ((nearClip >> otz_shift) - minZOTpos);
+	g_otz_shift = 0; // 1cm accuracy
+	g_otz_offset = ((nearClip >> g_otz_shift) - minZOTpos);
 }
 
 void drawOTList(void) {
@@ -109,20 +108,20 @@ void recoverFromOTcrash(void) {
 void ResetZRange(void) {
 	// Reset the z-sorting values
 	nearClip = minUsedZpos - 100; // last used value -1m
-	int dz = maxUsedZpos - nearClip;
+	int32 dz = maxUsedZpos - nearClip;
 	// Simple zones for otz_shift
 	if (dz < OTZ_ZONE1) // 1cm
-		otz_shift = 0;
+		g_otz_shift = 0;
 	else if (dz < OTZ_ZONE2) // 2cm
-		otz_shift = 1;
+		g_otz_shift = 1;
 	else if (dz < OTZ_ZONE4) // 4cm
-		otz_shift = 2;
+		g_otz_shift = 2;
 	else if (dz < OTZ_ZONE8) // 8cm
-		otz_shift = 3;
+		g_otz_shift = 3;
 	else
-		otz_shift = 4; // 16cm - yuck
+		g_otz_shift = 4; // 16cm - yuck
 
-	otz_offset = ((nearClip >> otz_shift) - minZOTpos);
+	g_otz_offset = ((nearClip >> g_otz_shift) - minZOTpos);
 
 	minUsedZpos = 20000;
 	maxUsedZpos = 0;

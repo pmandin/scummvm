@@ -40,7 +40,7 @@
  * Note that 'alignment' must be a power of two!
  */
 #define IS_ALIGNED(value, alignment) \
-          ((((size_t)value) & ((alignment) - 1)) == 0)
+		  ((((size_t)value) & ((alignment) - 1)) == 0)
 
 #ifdef ABS
 #undef ABS
@@ -286,11 +286,28 @@ bool isCntrl(int c);
  */
 bool isGraph(int c);
 
+/**
+ * Test whether the given character is blank.
+ *
+ * The following characters are considered blank:
+ * @code
+ * ' ', '\t'
+ * @endcode
+ *
+ * If the parameter is outside the range of a signed or unsigned char, then
+ * false is returned.
+ *
+ * @param c		The character to test.
+ *
+ * @return True if the character is blank, false otherwise.
+ */
+bool isBlank(int c);
+
 
 /**
  * Represent the size of a file in bytes as a number with floating point and
  * largest suitable units. For example, 1474560 bytes as 1.4 MB.
- * 
+ *
  * @param[in]  bytes     Size in bytes to be represented.
  * @param[out] unitsOut  String with units.
  *

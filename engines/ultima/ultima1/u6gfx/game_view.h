@@ -61,7 +61,7 @@ using Shared::CKeypressMsg;
 class GameView : public Shared::Gfx::VisualContainer {
 	/**
 	 * Simple class encapsulating the logic for drawing the Ultima 6 scroll onto a surface
-	 */	
+	 */
 	class Scroll : private Graphics::ManagedSurface {
 	public:
 		/**
@@ -76,7 +76,7 @@ class GameView : public Shared::Gfx::VisualContainer {
 	};
 
 	DECLARE_MESSAGE_MAP;
-	bool KeypressMsg(CKeypressMsg &msg);
+	bool KeypressMsg(CKeypressMsg *msg);
 private:
 	Shared::Info *_info;
 	U1Gfx::Status *_status;

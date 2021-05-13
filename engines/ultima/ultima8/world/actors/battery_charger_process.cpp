@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/world/actors/battery_charger_process.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
 #include "ultima/ultima8/kernel/kernel.h"
@@ -28,12 +27,10 @@
 #include "ultima/ultima8/world/world.h"
 #include "ultima/ultima8/audio/audio_process.h"
 
-#include "common/util.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(BatteryChargerProcess)
 
 // These SFX IDs are the same in both No Regret and No Remorse.
@@ -68,7 +65,7 @@ void BatteryChargerProcess::run() {
 		return;
 	}
 
-    if (!audio->isSFXPlayingForObject(CHARGE_GOING_SFX, _itemNum))
+	if (!audio->isSFXPlayingForObject(CHARGE_GOING_SFX, _itemNum))
 		audio->playSFX(CHARGE_GOING_SFX, 0x80, _itemNum, 1);
 
 	uint16 newEnergy = avatar->getMana() + 25;

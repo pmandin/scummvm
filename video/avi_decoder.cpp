@@ -30,9 +30,11 @@
 #include "video/avi_decoder.h"
 
 // Audio Codecs
+#include "audio/decoders/wave_types.h"
 #include "audio/decoders/adpcm.h"
 #include "audio/decoders/mp3.h"
 #include "audio/decoders/raw.h"
+#include "audio/decoders/xan_dpcm.h"
 
 // Video Codecs
 #include "image/codecs/codec.h"
@@ -68,6 +70,12 @@ namespace Video {
 #define ID_DISP MKTAG('D','I','S','P')
 #define ID_PRMI MKTAG('P','R','M','I')
 #define ID_STRN MKTAG('s','t','r','n')
+#define ID_INDX MKTAG('i','n','d','x')
+#define ID_INDX2 MKTAG('I','N','D','X')
+#define ID__PC_ MKTAG('_','P','C','_')
+#define ID_PAL8 MKTAG('P','A','L','8')
+#define ID_BEST MKTAG('B','E','S','T')
+#define ID_SHOT MKTAG('S','H','O','T')
 
 // Stream Types
 enum {
@@ -209,9 +217,17 @@ bool AVIDecoder::parseNextChunk() {
 	case ID_ISFT: // Metadata, safe to ignore
 	case ID_DISP: // Metadata, should be safe to ignore
 	case ID_DMLH: // OpenDML extension, contains an extra total frames field, safe to ignore
+	case ID_INDX: // OpenDML extension, contains another type of index
+	case ID__PC_: // block in Origin Systems Xxan videos
+	case ID_SHOT: // block in Origin Systems Xxan videos
+	case ID_BEST: // block in Origin Systems Xxan videos
+	case ID_INDX2: // block in Origin Systems Xxan videos
 		skipChunk(size);
 		break;
-	case ID_STRN: // Metadata, safe to ignore
+	case ID_PAL8: // PAL8 block in Origin Systems Xxan videos
+		readPalette8(size);
+		break;
+	case ID_STRN:
 		readStreamName(size);
 		break;
 	case ID_IDX1:
@@ -379,6 +395,28 @@ void AVIDecoder::readStreamName(uint32 size) {
 			vidTrack->getName() = Common::String(buffer);
 		else if (audTrack)
 			audTrack->getName() = Common::String(buffer);
+	}
+}
+
+void AVIDecoder::readPalette8(uint32 size) {
+	if (size < 768) {
+		warning("AVI palette8 is too small (%d, expected >= 768)", size);
+		skipChunk(size);
+		return;
+	}
+
+	// Should also be able to load 768 byte palette8 entries here.
+	// Not supported at the moment.
+	if (!_lastAddedTrack || size != 1024) {
+		skipChunk(size);
+	} else {
+		AVIVideoTrack *vidTrack = dynamic_cast<AVIVideoTrack *>(_lastAddedTrack);
+		if (vidTrack) {
+			vidTrack->loadPaletteFromChunkRaw(_fileStream, 0, 256);
+		} else {
+			skipChunk(size);
+			warning("unexpected palette8 on a non-video track");
+		}
 	}
 }
 
@@ -940,6 +978,19 @@ Graphics::PixelFormat AVIDecoder::AVIVideoTrack::getPixelFormat() const {
 	return Graphics::PixelFormat();
 }
 
+void AVIDecoder::AVIVideoTrack::loadPaletteFromChunkRaw(Common::SeekableReadStream *chunk, int firstEntry, int numEntries) {
+	assert(chunk);
+	assert(firstEntry >= 0);
+	assert(numEntries > 0);
+	for (uint16 i = firstEntry; i < numEntries + firstEntry; i++) {
+		_palette[i * 3] = chunk->readByte();
+		_palette[i * 3 + 1] = chunk->readByte();
+		_palette[i * 3 + 2] = chunk->readByte();
+		chunk->readByte(); // Flags that don't serve us any purpose
+	}
+	_dirtyPalette = true;
+}
+
 void AVIDecoder::AVIVideoTrack::loadPaletteFromChunk(Common::SeekableReadStream *chunk) {
 	assert(chunk);
 	byte firstEntry = chunk->readByte();
@@ -950,16 +1001,11 @@ void AVIDecoder::AVIVideoTrack::loadPaletteFromChunk(Common::SeekableReadStream 
 	if (numEntries == 0)
 		numEntries = 256;
 
-	for (uint16 i = firstEntry; i < numEntries + firstEntry; i++) {
-		_palette[i * 3] = chunk->readByte();
-		_palette[i * 3 + 1] = chunk->readByte();
-		_palette[i * 3 + 2] = chunk->readByte();
-		chunk->readByte(); // Flags that don't serve us any purpose
-	}
+	loadPaletteFromChunkRaw(chunk, firstEntry, numEntries);
 
 	delete chunk;
-	_dirtyPalette = true;
 }
+
 
 void AVIDecoder::AVIVideoTrack::useInitialPalette() {
 	_dirtyPalette = false;
@@ -1096,7 +1142,7 @@ void AVIDecoder::AVIAudioTrack::createAudioStream() {
 	_packetStream = 0;
 
 	switch (_wvInfo.tag) {
-	case kWaveFormatPCM: {
+	case Audio::kWaveFormatPCM: {
 		byte flags = 0;
 		if (_audsHeader.sampleSize == 2)
 			flags |= Audio::FLAG_16BITS | Audio::FLAG_LITTLE_ENDIAN;
@@ -1109,23 +1155,26 @@ void AVIDecoder::AVIAudioTrack::createAudioStream() {
 		_packetStream = Audio::makePacketizedRawStream(_wvInfo.samplesPerSec, flags);
 		break;
 	}
-	case kWaveFormatMSADPCM:
+	case Audio::kWaveFormatXanDPCM:
+		_packetStream = new Audio::XanDPCMStream(_wvInfo.samplesPerSec, _wvInfo.channels);
+		break;
+	case Audio::kWaveFormatMSADPCM:
 		_packetStream = Audio::makePacketizedADPCMStream(Audio::kADPCMMS, _wvInfo.samplesPerSec, _wvInfo.channels, _wvInfo.blockAlign);
 		break;
-	case kWaveFormatMSIMAADPCM:
+	case Audio::kWaveFormatMSIMAADPCM:
 		_packetStream = Audio::makePacketizedADPCMStream(Audio::kADPCMMSIma, _wvInfo.samplesPerSec, _wvInfo.channels, _wvInfo.blockAlign);
 		break;
-	case kWaveFormatDK3:
+	case Audio::kWaveFormatDK3:
 		_packetStream = Audio::makePacketizedADPCMStream(Audio::kADPCMDK3, _wvInfo.samplesPerSec, _wvInfo.channels, _wvInfo.blockAlign);
 		break;
-	case kWaveFormatMP3:
+	case Audio::kWaveFormatMP3:
 #ifdef USE_MAD
 		_packetStream = Audio::makePacketizedMP3Stream(_wvInfo.channels, _wvInfo.samplesPerSec);
 #else
 		warning("AVI MP3 stream found, but no libmad support compiled in");
 #endif
 		break;
-	case kWaveFormatNone:
+	case Audio::kWaveFormatNone:
 		break;
 	default:
 		warning("Unsupported AVI audio format %d", _wvInfo.tag);

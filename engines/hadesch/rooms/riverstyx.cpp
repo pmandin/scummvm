@@ -46,7 +46,7 @@ struct StyxShadeInternal {
 		_ambient.unpause();
 		room->enableMouse();
 	}
-	
+
 	Common::String _name;
 	int _counter;
 	AmbientAnim _ambient;
@@ -125,8 +125,8 @@ public:
 		Persistent *persistent = g_vm->getPersistent();
 		if (name == "volcano top") {
 			room->disableMouse();
-			room->playAnimWithSound("morphing gems", "morphing gems sound",
-						1000, PlayAnimParams::keepLastFrame().backwards(), 28018);
+			room->playAnimWithSFX("morphing gems", "morphing gems sound",
+					      1000, PlayAnimParams::keepLastFrame().backwards(), 28018);
 			return;
 		}
 
@@ -135,7 +135,7 @@ public:
 			if (persistent->_styxCharonUsedPotion) {
 				room->playVideo("charon assumes you have gold sound", 0, 28004);
 			} else {
-				
+
 				room->playVideo(_charonSound ? "charon says away 2 sound" : "charon says away 1 sound", 0, 28004);
 			}
 			return;
@@ -226,10 +226,10 @@ public:
 			playCharonTalk("charon says quite dead sound", 28004);
 			break;
 		case 28006:
-			room->playSound("charon glow sting", 28007);
+			room->playMusic("charon glow sting", 28007);
 			break;
 		case 28008:
-			room->playSound("charon accepts coin sting", 28009);
+			room->playMusic("charon accepts coin sting", 28009);
 			break;
 		case 28009:
 			if (persistent->_styxCharonUsedPotion && persistent->_styxCharonUsedCoin) {
@@ -299,7 +299,7 @@ public:
 			room->enableHotzone("charon");
 		}
 
-		room->playSoundLoop(quest == kRescuePhilQuest ? "V4010eB0" : "V4010eA0");
+		room->playMusicLoop(quest == kRescuePhilQuest ? "V4010eB0" : "V4010eA0");
 		_axHead = StyxShade("ax head", 800, 5000, 10000);
 		_axHead.addSound("ax head click sound 1");
 		_axHead.addSound("ax head click sound 2");
@@ -350,7 +350,7 @@ public:
 
 		if (quest == kRescuePhilQuest) {
 			_alchemist = StyxShade("alchemist", 750, 5000, 10000, "alchemist");
-                        if (!persistent->_styxAlchemistSaidIntro)
+						if (!persistent->_styxAlchemistSaidIntro)
 				_alchemist.addSound("alchemist intro");
 			if (persistent->_hintsAreEnabled) {
 				if ((persistent->isInInventory(kCoin) || persistent->_styxCharonUsedCoin)
@@ -361,7 +361,7 @@ public:
 					_alchemist.addSound("alchemist hint 1");
 				}
 			}
-                        if (persistent->_styxAlchemistSaidIntro)
+						if (persistent->_styxAlchemistSaidIntro)
 				_alchemist.addSound("alchemist intro");
 			_alchemist.addSound("alchemist click");
 			_alchemist.start();

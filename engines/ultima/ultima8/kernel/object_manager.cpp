@@ -22,32 +22,24 @@
 
 #include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/kernel/object_manager.h"
-#include "ultima/shared/std/containers.h"
 #include "ultima/ultima8/misc/id_man.h"
-#include "ultima/ultima8/kernel/object.h"
-#include "ultima/ultima8/world/item.h"
-#include "ultima/ultima8/world/actors/actor.h"
-#include "ultima/ultima8/gumps/gump.h"
-#include "ultima/ultima8/world/item_factory.h"
 #include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
-#include "ultima/ultima8/world/egg.h"
 #include "ultima/ultima8/world/monster_egg.h"
 #include "ultima/ultima8/world/teleport_egg.h"
 #include "ultima/ultima8/world/glob_egg.h"
-#include "ultima/ultima8/gumps/game_map_gump.h"
-#include "ultima/ultima8/gumps/desktop_gump.h"
 #include "ultima/ultima8/gumps/ask_gump.h"
 #include "ultima/ultima8/gumps/bark_gump.h"
-#include "ultima/ultima8/gumps/container_gump.h"
 #include "ultima/ultima8/gumps/paperdoll_gump.h"
 #include "ultima/ultima8/gumps/widgets/text_widget.h"
 #include "ultima/ultima8/gumps/widgets/button_widget.h"
 #include "ultima/ultima8/gumps/widgets/sliding_widget.h"
 #include "ultima/ultima8/gumps/mini_stats_gump.h"
 #include "ultima/ultima8/gumps/minimap_gump.h"
+#include "ultima/ultima8/gumps/cru_status_gump.h"
 #include "ultima/ultima8/gumps/cru_pickup_gump.h"
 #include "ultima/ultima8/gumps/cru_pickup_area_gump.h"
+#include "ultima/ultima8/gumps/translucent_gump.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -100,7 +92,7 @@ void ObjectManager::reset() {
 	unsigned int i;
 
 	for (i = 0; i < _objects.size(); ++i) {
-		if (_objects[i] == 0) continue;
+		if (_objects[i] == nullptr) continue;
 #if 0
 		Item *item = dynamic_cast<Item *>(_objects[i]);
 		if (item && item->getParent()) continue; // will be deleted by parent
@@ -111,7 +103,7 @@ void ObjectManager::reset() {
 	}
 
 	for (i = 0; i < _objects.size(); ++i) {
-		assert(_objects[i] == 0);
+		assert(_objects[i] == nullptr);
 	}
 
 
@@ -164,7 +156,7 @@ uint16 ObjectManager::assignObjId(Object *obj, ObjId new_objid) {
 
 	// failure???
 	if (new_objid != 0) {
-		assert(_objects[new_objid] == 0);
+		assert(_objects[new_objid] == nullptr);
 		_objects[new_objid] = obj;
 	}
 	return new_objid;
@@ -231,7 +223,7 @@ void ObjectManager::save(Common::WriteStream *ws) {
 
 		saveObject(ws, object);
 	}
- 
+
 	ws->writeUint16LE(0);
 }
 
@@ -257,6 +249,7 @@ bool ObjectManager::load(Common::ReadStream *rs, uint32 version) {
 		// top level gumps have to be added to the correct core gump
 		Gump *gump = dynamic_cast<Gump *>(obj);
 		if (gump) {
+			assert(gump->GetParent() == nullptr);
 			Ultima8Engine::get_instance()->addGump(gump);
 		}
 
@@ -280,12 +273,34 @@ bool ObjectManager::load(Common::ReadStream *rs, uint32 version) {
 	}
 	unsigned int count = 0;
 	for (unsigned int i = 1024; i < _objects.size(); i++) {
-		if (_objects[i] == 0 && _objIDs->isIDUsed(i)) {
+		if (_objects[i] == nullptr && _objIDs->isIDUsed(i)) {
 			_objIDs->clearID(i);
 			count++;
 		}
 	}
 	pout << "Reclaimed " << count << " _objIDs on load." << Std::endl;
+
+	// Integrity check items - their ids should match, and if they have
+	// parents, those should be valid.
+	for (unsigned int i = 0; i < _objects.size(); i++) {
+		if (!_objects[i])
+			continue;
+		const Object *obj = _objects[i];
+		ObjId oid = obj->getObjId();
+		if (oid != i) {
+			warning("Corrupt save? Object %d thinks its id is %d", i, oid);
+			return false;
+		}
+
+		const Item *it = dynamic_cast<const Item *>(obj);
+		if (it) {
+			ObjId parent = it->getParent();
+			if (parent && !_objects[parent]) {
+				warning("Corrupt save? Object %d has parent %d which no longer exists", i, parent);
+				return false;
+			}
+		}
+	}
 
 	return true;
 }
@@ -317,7 +332,7 @@ Object *ObjectManager::loadObject(Common::ReadStream *rs, uint32 version) {
 }
 
 Object *ObjectManager::loadObject(Common::ReadStream *rs, Std::string classname,
-                                  uint32 version) {
+								  uint32 version) {
 	Std::map<Common::String, ObjectLoadFunc>::iterator iter;
 	iter = _objectLoaders.find(classname);
 
@@ -371,8 +386,10 @@ void ObjectManager::setupLoaders() {
 	addObjectLoader("SlidingWidget", ObjectLoader<SlidingWidget>::load);
 	addObjectLoader("MiniStatsGump", ObjectLoader<MiniStatsGump>::load);
 	addObjectLoader("MiniMapGump", ObjectLoader<MiniMapGump>::load);
+	addObjectLoader("CruStatusGump", ObjectLoader<CruStatusGump>::load);
 	addObjectLoader("CruPickupAreaGump", ObjectLoader<CruPickupAreaGump>::load);
 	addObjectLoader("CruPickupGump", ObjectLoader<CruPickupGump>::load);
+	addObjectLoader("TranslucentGump", ObjectLoader<TranslucentGump>::load);
 }
 
 } // End of namespace Ultima8

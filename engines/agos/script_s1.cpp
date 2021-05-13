@@ -361,7 +361,7 @@ void AGOSEngine_Simon1::os1_screenTextMsg() {
 	}
 
 	// WORKAROUND: Several strings in the French version of Simon the Sorcerer 1 set the incorrect width,
-	// causing crashes, or glitches in subtitles. See bug #3512776 for example.
+	// causing crashes, or glitches in subtitles. See bug #6014 for example.
 	if (getGameType() == GType_SIMON1 && _language == Common::FR_FRA) {
 		if ((getFeatures() & GF_TALKIE) && stringId == 33219)
 			tl->width = 96;
@@ -540,7 +540,7 @@ void AGOSEngine_Simon1::os1_loadStrings() {
 	// 185: load sound files
 	_soundFileId = getVarOrWord();
 	if (getPlatform() == Common::kPlatformAmiga && (getFeatures() & GF_TALKIE)) {
-		char buf[10];
+		char buf[13];
 		sprintf(buf, "%d%s", _soundFileId, "Effects");
 		_sound->readSfxFile(buf);
 		sprintf(buf, "%d%s", _soundFileId, "simon");

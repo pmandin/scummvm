@@ -25,6 +25,7 @@
 #include "ultima/ultima4/ultima4.h"
 #include "common/translation.h"
 #include "backends/keymapper/action.h"
+#include "backends/keymapper/standard-actions.h"
 
 namespace Ultima {
 namespace Ultima4 {
@@ -150,15 +151,6 @@ static const KeybindingRecord MENU_KEYS[] = {
 	{ KEYBIND_NONE, nullptr, nullptr, nullptr, nullptr, nullptr }
 };
 
-static const KeybindingRecord COMBAT_KEYS[] = {
-	{ KEYBIND_PASS, "PASS", "Pass", "pass", "SPACE", nullptr },
-	{ KEYBIND_UP, "UP", "Up", nullptr, "UP", nullptr },
-	{ KEYBIND_DOWN, "DOWN", "Down", nullptr, "DOWN", nullptr },
-	{ KEYBIND_LEFT, "LEFT", "Left", nullptr, "LEFT", nullptr },
-	{ KEYBIND_RIGHT, "RIGHT", "Right", nullptr, "RIGHT", nullptr },
-	{ KEYBIND_NONE, nullptr, nullptr, nullptr, nullptr, nullptr }
-};
-
 struct KeysRecord {
 	const char *_id;
 	const char *_desc;
@@ -230,13 +222,13 @@ Common::KeymapArray MetaEngine::initKeymaps(KeybindingMode mode) {
 void MetaEngine::addMouseClickActions(Common::Keymap &keyMap) {
 	Common::Action *act;
 
-	act = new Common::Action("LCLK", _("Interact via Left Click"));
+	act = new Common::Action(Common::kStandardActionLeftClick, _("Interact via Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	keyMap.addAction(act);
 
-	act = new Common::Action("RCLK", _("Interact via Right Click"));
+	act = new Common::Action(Common::kStandardActionRightClick, _("Interact via Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");

@@ -37,7 +37,8 @@ enum kMusicMode {
 	kMusicModeDisabled = 0,
 	kMusicModeAccolade = 1,
 	kMusicModeMilesAudio = 2,
-	kMusicModeSimon1 = 3
+	kMusicModeSimon1 = 3,
+	kMusicModePC98 = 4
 };
 
 struct MusicInfo {
@@ -96,10 +97,10 @@ public:
 	MidiPlayer();
 	~MidiPlayer() override;
 
-	void loadSMF(Common::File *in, int song, bool sfx = false);
-	void loadMultipleSMF(Common::File *in, bool sfx = false);
-	void loadXMIDI(Common::File *in, bool sfx = false);
-	void loadS1D(Common::File *in, bool sfx = false);
+	void loadSMF(Common::SeekableReadStream *in, int song, bool sfx = false);
+	void loadMultipleSMF(Common::SeekableReadStream *in, bool sfx = false);
+	void loadXMIDI(Common::SeekableReadStream *in, bool sfx = false);
+	void loadS1D(Common::SeekableReadStream *in, bool sfx = false);
 
 	bool hasNativeMT32() const { return _nativeMT32; }
 	void setLoop(bool loop);
@@ -115,7 +116,7 @@ public:
 	void setVolume(int musicVol, int sfxVol);
 
 public:
-	int open(int gameType, bool isDemo);
+	int open(int gameType, Common::Platform platform, bool isDemo);
 
 	// MidiDriver_BASE interface implementation
 	void send(uint32 b) override;
@@ -124,7 +125,7 @@ public:
 private:
 	kMusicMode _musicMode;
 	MusicType musicType;
-	
+
 private:
 	Common::SeekableReadStream *simon2SetupExtractFile(const Common::String &requestedFileName);
 };

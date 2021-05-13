@@ -31,7 +31,6 @@
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/common/px_game_object.h"
 #include "engines/icb/common/px_route_barriers.h"
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_array.h"
 #include "engines/icb/common/px_string.h"
 #include "engines/icb/animation_mega_set.h"
@@ -98,7 +97,7 @@ public:
 	__weapon temp_weapon;
 	char alternativeImagePath[128]; // this stores the pcp path for animations (for getting the raj files instead of rai files...
 	char alternativeBasePath[128];  // this is same as base path but is pcp (on voxels) - isn't required for polys and can go when we
-                                        // ditch
+										// ditch
 	// setting functions
 	bool8 Init_custom_animation(const char *anim_name);
 	bool8 Find_anim_type(__mega_set_names *anim, const char *name);
@@ -106,8 +105,8 @@ public:
 	bool8 Set_palette(const char *palette_name);
 	bool8 Set_mesh(const char *mesh_name);
 	void Promote_non_generic();
-	int8 IsAnimTable(int i);
-	void MakeAnimEntry(int i);
+	int8 IsAnimTable(int32 i);
+	void MakeAnimEntry(int32 i);
 
 	// those hashs in full
 
@@ -158,8 +157,8 @@ public:
 	// and so the access functions return the
 	// actual thing
 
-	char *get_anim_name(int i) { return anim_name[i]; }
-	char *get_info_name(int i) { return info_name[i]; }
+	char *get_anim_name(int32 i) { return anim_name[i]; }
+	char *get_info_name(int32 i) { return info_name[i]; }
 	char *get_mesh_name() { return mesh_name; }
 	char *get_shadow_mesh_name() { return shadow_mesh_name; }
 	char *get_texture_name() { return texture_name; }
@@ -169,7 +168,7 @@ public:
 
 };
 
-inline int8 _vox_image::IsAnimTable(int i) {
+inline int8 _vox_image::IsAnimTable(int32 i) {
 	// If the table has not been set yet : make the anim entry which will set anim_table entry to correct value
 	if (anim_table[i] == (int8)-1)
 		MakeAnimEntry(i);
@@ -203,7 +202,7 @@ enum CameraStateEnum { OFF_CAMERA = 0x0, ON_CAMERA = 0x1 };
 #define ON_ON_CAMERA MAKE_VIEW_STATE(ON_CAMERA, ON_CAMERA)
 
 class _mega { // mega logic specific
-      public:
+public:
 	_parent_box *cur_parent; // our owner parent box
 	uint32 par_number;       // for players abar list update
 	uint32 cur_slice;        // for speedups
@@ -320,7 +319,7 @@ class _mega { // mega logic specific
 
 	void ___init();
 
-	void InitCartridgeCase(SVECTOR *initPos, short initialHeight);
+	void InitCartridgeCase(SVECTOR *initPos, int16 initialHeight);
 
 	bool8 Fetch_armed_status();
 	bool8 Fetch_custom();

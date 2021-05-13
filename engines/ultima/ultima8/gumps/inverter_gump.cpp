@@ -20,11 +20,9 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/inverter_gump.h"
 
 #include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/graphics/texture.h"
 #include "ultima/ultima8/ultima8.h"
 
 namespace Ultima {
@@ -98,9 +96,9 @@ void InverterGump::PaintChildren(RenderSurface *surf, int32 lerp_factor, bool sc
 		_buffer = RenderSurface::CreateSecondaryRenderSurface(width, height);
 	}
 
+	_buffer->BeginPainting();
 	DesktopGump::PaintChildren(_buffer, lerp_factor, scaled);
-
-	Texture *tex = _buffer->GetSurfaceAsTexture();
+	_buffer->EndPainting();
 
 	// now invert-blit _buffer to screen
 	int t = (state * height) / 0x10000;
@@ -108,7 +106,7 @@ void InverterGump::PaintChildren(RenderSurface *surf, int32 lerp_factor, bool sc
 	for (int i = 0; i < height; ++i) {
 		int src = getLine(getIndex(i, height / 2) + t, height / 2);
 //		pout << src << " -> " << i << Std::endl;
-		surf->Blit(tex, 0, src, width, 1, 0, i);
+		surf->Blit(_buffer->getRawSurface(), 0, src, width, 1, 0, i);
 	}
 }
 

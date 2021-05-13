@@ -25,7 +25,6 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_rcutypes.h"
 #include "engines/icb/common/ptr_util.h"
 #include "engines/icb/global_objects.h"
@@ -469,7 +468,7 @@ mcodeFunctionReturnCodes _game_session::fn_remora_script_deactivate(int32 &, int
 	// Deactivate the Remora.
 	g_oRemora->SetMode(_remora::MOTION_SCAN);
 	g_oRemora->DeactivateRemora(TRUE8);
-	sInputState.UnSetButton((const ButtonEnums)(0xff));
+	sInputState.UnSetButton(__UNUSEDBUTTON);
 	g_oRemora->CycleRemoraLogic(sInputState);
 
 	// This tells the UI that the Remora is now gone and the player is back.
@@ -943,7 +942,7 @@ const char *SkipLineNumber(const char *pcLine) {
 	const char *pcParsePos;
 
 	// If line number display is turned on, don't do anything.
-	if (px.speechLineNumbers)
+	if (g_px->speechLineNumbers)
 		return (pcLine);
 
 	// Initialise parse pointer.

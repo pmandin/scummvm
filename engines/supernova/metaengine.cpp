@@ -36,8 +36,8 @@ public:
 		return "supernova";
 	}
 
-    bool hasFeature(MetaEngineFeature f) const override;
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	bool hasFeature(MetaEngineFeature f) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
 	SaveStateList listSaves(const char *target) const override;
 	void removeSaveState(const char *target, int slot) const override;
@@ -62,12 +62,9 @@ bool SupernovaMetaEngine::hasFeature(MetaEngineFeature f) const {
 	}
 }
 
-bool SupernovaMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	if (desc) {
-		*engine = new Supernova::SupernovaEngine(syst);
-	}
-
-	return desc != nullptr;
+Common::Error SupernovaMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Supernova::SupernovaEngine(syst);
+	return Common::kNoError;
 }
 
 SaveStateList SupernovaMetaEngine::listSaves(const char *target) const {
@@ -176,7 +173,7 @@ SaveStateDescriptor SupernovaMetaEngine::querySaveMetaInfos(const char *target, 
 }
 
 #if PLUGIN_ENABLED_DYNAMIC(SUPERNOVA)
-    REGISTER_PLUGIN_DYNAMIC(SUPERNOVA, PLUGIN_TYPE_ENGINE, SupernovaMetaEngine);
+	REGISTER_PLUGIN_DYNAMIC(SUPERNOVA, PLUGIN_TYPE_ENGINE, SupernovaMetaEngine);
 #else
-    REGISTER_PLUGIN_STATIC(SUPERNOVA, PLUGIN_TYPE_ENGINE, SupernovaMetaEngine);
+	REGISTER_PLUGIN_STATIC(SUPERNOVA, PLUGIN_TYPE_ENGINE, SupernovaMetaEngine);
 #endif

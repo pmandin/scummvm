@@ -20,31 +20,26 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/remorse_menu_gump.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/graphics/gump_shape_archive.h"
 #include "ultima/ultima8/graphics/shape.h"
 #include "ultima/ultima8/graphics/shape_frame.h"
 #include "ultima/ultima8/ultima8.h"
-#include "ultima/ultima8/gumps/desktop_gump.h"
+#include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/gumps/widgets/button_widget.h"
-#include "ultima/ultima8/gumps/widgets/text_widget.h"
 #include "ultima/ultima8/gumps/quit_gump.h"
-#include "ultima/ultima8/gumps/paged_gump.h"
+#include "ultima/ultima8/gumps/difficulty_gump.h"
 #include "ultima/ultima8/games/game.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
-#include "ultima/ultima8/graphics/fonts/font.h"
-#include "ultima/ultima8/graphics/fonts/rendered_text.h"
-#include "ultima/ultima8/graphics/fonts/font_manager.h"
 #include "ultima/ultima8/graphics/palette_manager.h"
-#include "ultima/ultima8/conf/setting_manager.h"
 #include "ultima/ultima8/audio/music_process.h"
-#include "ultima/ultima8/gumps/widgets/edit_widget.h"
-#include "ultima/ultima8/gumps/u8_save_gump.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/meta_engine.h"
+
 #include "engines/dialogs.h"
+#include "common/translation.h"
+#include "gui/saveload.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -76,7 +71,6 @@ RemorseMenuGump::RemorseMenuGump()
 RemorseMenuGump::~RemorseMenuGump() {
 	MetaEngine::setGameMenuActive(false);
 }
-
 
 void RemorseMenuGump::Close(bool no_del) {
 	// Restore old music state and palette.
@@ -172,7 +166,6 @@ void RemorseMenuGump::InitGump(Gump *newparent, bool take_focus) {
 	}
 }
 
-
 void RemorseMenuGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled) {
 	Gump::PaintThis(surf, lerp_factor, scaled);
 }
@@ -200,19 +193,18 @@ void RemorseMenuGump::ChildNotify(Gump *child, uint32 message) {
 }
 
 void RemorseMenuGump::selectEntry(int entry) {
-	SettingManager *settingman = SettingManager::get_instance();
-	bool endgame, quotes;
-	settingman->get("endgame", endgame);
-	settingman->get("quotes", quotes);
-
 	switch (entry) {
-	case 1: // New Game
-		Game::get_instance()->playIntroMovie(true);
+	case 1: { // New Game
+		DifficultyGump *gump = new DifficultyGump();
+		gump->InitGump(0);
+		gump->setRelativePosition(CENTER);
 		break;
+	}
 	case 2:
+		Ultima8Engine::get_instance()->loadGameDialog();
+		break;
 	case 3: // Load/Save Game
-		// FIXME: Need a different save/load gump for crusader
-		U8SaveGump::showLoadSaveGump(this, entry == 3);
+		Ultima8Engine::get_instance()->saveGameDialog();
 		break;
 	case 4: {
 		// Options - show the ScummVM options dialog
@@ -232,9 +224,7 @@ void RemorseMenuGump::selectEntry(int entry) {
 }
 
 bool RemorseMenuGump::OnTextInput(int unicode) {
-	if (Gump::OnTextInput(unicode)) return true;
-
-	return true;
+	return Gump::OnTextInput(unicode);
 }
 
 } // End of namespace Ultima8

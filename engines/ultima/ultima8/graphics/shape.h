@@ -24,7 +24,6 @@
 #define ULTIMA8_GRAPHICS_SHAPE_H
 
 #include "ultima/shared/std/containers.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -34,7 +33,6 @@ class RawShapeFrame;
 struct Palette;
 struct Rect;
 struct ConvertShapeFormat;
-class IDataSource;
 
 class Shape {
 public:
@@ -43,7 +41,7 @@ public:
 	// If format is not specified it will be autodetected
 	Shape(const uint8 *data, uint32 size, const ConvertShapeFormat *format,
 	      const uint16 flexId, const uint32 shapenum);
-	Shape(IDataSource *src, const ConvertShapeFormat *format);
+	Shape(Common::SeekableReadStream *src, const ConvertShapeFormat *format);
 	virtual ~Shape();
 	void setPalette(const Palette *pal) {
 		_palette = pal;
@@ -67,7 +65,7 @@ public:
 
 	// This will detect the format of a shape
 	static const ConvertShapeFormat *DetectShapeFormat(const uint8 *data, uint32 size);
-	static const ConvertShapeFormat *DetectShapeFormat(IDataSource *ds, uint32 size);
+	static const ConvertShapeFormat *DetectShapeFormat(Common::SeekableReadStream &ds, uint32 size);
 
 private:
 	void loadFrames(const uint8 *data, uint32 size, const ConvertShapeFormat *format);

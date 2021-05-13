@@ -45,25 +45,27 @@ typedef void (*sighandler_t)(int);
 #define FORBIDDEN_SYMBOL_EXCEPTION_exit
 #define FORBIDDEN_SYMBOL_EXCEPTION_time_h
 
+#include "common/scummsys.h"
+
+#if defined(USE_NULL_DRIVER)
 #include "backends/modular-backend.h"
 #include "base/main.h"
 
-#if defined(USE_NULL_DRIVER)
+#ifndef NULL_DRIVER_USE_FOR_TEST
 #include "backends/saves/default/default-saves.h"
 #include "backends/timer/default/default-timer.h"
 #include "backends/events/default/default-events.h"
 #include "backends/mixer/null/null-mixer.h"
 #include "backends/mutex/null/null-mutex.h"
 #include "backends/graphics/null/null-graphics.h"
-#include "audio/mixer_intern.h"
-#include "common/scummsys.h"
 #include "gui/debugger.h"
+#endif
 
 /*
  * Include header files needed for the getFilesystemFactory() method.
  */
 #if defined(__amigaos4__)
-	#include "backends/fs/amigaos4/amigaos4-fs-factory.h"
+	#include "backends/fs/amigaos/amigaos-fs-factory.h"
 #elif defined(__MORPHOS__)
 	#include "backends/fs/morphos/morphos-fs-factory.h"
 #elif defined(POSIX)
@@ -104,7 +106,7 @@ private:
 OSystem_NULL::OSystem_NULL() {
 	#if defined(__amigaos4__)
 		_fsFactory = new AmigaOSFilesystemFactory();
-	#elif defined(__MORPHOS__)	
+	#elif defined(__MORPHOS__)
 		_fsFactory = new MorphOSFilesystemFactory();
 	#elif defined(POSIX)
 		_fsFactory = new POSIXFilesystemFactory();
@@ -137,7 +139,9 @@ void OSystem_NULL::initBackend() {
 #elif defined(WIN32)
 	_startTime = GetTickCount();
 #endif
-#if defined(POSIX) && !defined(NULL_DRIVER_USE_FOR_TEST)
+
+#ifndef NULL_DRIVER_USE_FOR_TEST
+#ifdef POSIX
 	last_handler = signal(SIGINT, intHandler);
 #endif
 
@@ -149,15 +153,17 @@ void OSystem_NULL::initBackend() {
 	_mixerManager = new NullMixerManager();
 	// Setup and start mixer
 	_mixerManager->init();
+#endif
 
 	BaseBackend::initBackend();
 }
 
 bool OSystem_NULL::pollEvent(Common::Event &event) {
+#ifndef NULL_DRIVER_USE_FOR_TEST
 	((DefaultTimerManager *)getTimerManager())->checkTimers();
 	((NullMixerManager *)_mixerManager)->update(1);
 
-#if defined(POSIX) && !defined(NULL_DRIVER_USE_FOR_TEST)
+#ifdef POSIX
 	if (intReceived) {
 		intReceived = false;
 
@@ -173,6 +179,7 @@ bool OSystem_NULL::pollEvent(Common::Event &event) {
 		event.type = Common::EVENT_QUIT;
 		return true;
 	}
+#endif
 #endif
 
 	return false;
@@ -247,10 +254,6 @@ int main(int argc, char *argv[]) {
 	int res = scummvm_main(argc, argv);
 	g_system->destroy();
 	return res;
-}
-#else
-void Common::install_null_g_system() {
-	g_system = OSystem_NULL_create();
 }
 #endif
 

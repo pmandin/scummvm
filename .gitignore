@@ -15,6 +15,7 @@ lib*.a
 /ScummVMDockTilePlugin*
 /config.h
 /config.mk
+/configure.stamp
 /.gdb_history
 /dumps
 /Credits.rtf
@@ -31,6 +32,12 @@ lib*.a
 /map.txt
 *.elf
 /*.nds
+/*.3dsx
+/*.cia
+/*.smdh
+/*.bnr
+/romfs
+/dist_3ds
 /.project
 /.cproject
 /.settings
@@ -49,10 +56,14 @@ lib*.a
 /CONTRIBUTING.html
 /doc/de/NEUES
 /doc/de/NEUES.html
+/doc/docportal/_build
 
 /build*
 /staging
 /portdist
+
+/backends/platform/3ds/shader.shbin
+/backends/platform/3ds/shader_shbin.h
 
 /backends/platform/dc/gui
 /backends/platform/dc/graphics
@@ -67,13 +78,6 @@ lib*.a
 /backends/platform/dc/scummvm.bin
 /backends/platform/dc/SCUMMVM.BIN
 /backends/platform/dc/*.PLG
-
-/backends/platform/ds/arm7/arm7.bin
-/backends/platform/ds/arm7/build
-/backends/platform/ds/arm7/source/libcartreset/*.bak
-/backends/platform/ds/arm7/source/libcartreset/*.d
-/backends/platform/ds/arm9/data/*.h
-/backends/platform/ds/arm9/scummvm-?
 
 /backends/platform/maemo/scummvm
 

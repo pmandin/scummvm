@@ -27,6 +27,7 @@
 
 #include "common/system.h"
 #include "common/savefile.h"
+#include "common/translation.h"
 #include "common/config-manager.h"
 
 namespace Grim {
@@ -34,7 +35,7 @@ namespace Grim {
 class GrimMetaEngine : public AdvancedMetaEngine {
 public:
 	const char *getName() const override {
-		return "Grim";
+		return "grim";
 	}
 
 	Common::Error createInstance(OSystem *syst, Engine **engine) const override {
@@ -42,7 +43,7 @@ public:
 		return AdvancedMetaEngine::createInstance(syst, engine);
 	}
 
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
 	bool hasFeature(MetaEngineFeature f) const override;
 
@@ -52,22 +53,20 @@ public:
 
 };
 
-bool GrimMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+Common::Error GrimMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
 	const GrimGameDescription *gd = (const GrimGameDescription *)desc;
 
-	if (gd) {
-		if (gd->gameType == GType_MONKEY4) {
+	if (gd->gameType == GType_MONKEY4) {
 #ifdef ENABLE_MONKEY4
-			*engine = new EMIEngine(syst, gd->desc.flags, gd->gameType, gd->desc.platform, gd->desc.language);
+		*engine = new EMIEngine(syst, gd->desc.flags, gd->gameType, gd->desc.platform, gd->desc.language);
 #else
-			return false;
+		return Common::Error(Common::kUnsupportedGameidError, _s("Escape from Monkey Island support is not compiled in"));
 #endif
-		} else {
-			*engine = new GrimEngine(syst, gd->desc.flags, gd->gameType, gd->desc.platform, gd->desc.language);
-		}
+	} else {
+		*engine = new GrimEngine(syst, gd->desc.flags, gd->gameType, gd->desc.platform, gd->desc.language);
 	}
 
-	return gd != nullptr;
+	return Common::kNoError;
 }
 
 bool GrimMetaEngine::hasFeature(MetaEngineFeature f) const {

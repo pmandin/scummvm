@@ -26,16 +26,32 @@
 
 #ifdef USE_FRIBIDI
 #include <fribidi/fribidi.h>
+#else
+/* This constant is used below in common code
+ * fake it here to lighten code
+ */
+#define FRIBIDI_PAR_ON 0
 #endif
 
 namespace Common {
 
-UnicodeBiDiText::UnicodeBiDiText(const Common::U32String &str) : logical(str), _log_to_vis_index(NULL), _vis_to_log_index(NULL) {
+UnicodeBiDiText::UnicodeBiDiText(const Common::U32String &str) :
+	logical(str), _pbase_dir(FRIBIDI_PAR_ON),
+	_log_to_vis_index(NULL), _vis_to_log_index(NULL) {
 	initWithU32String(str);
 }
 
-UnicodeBiDiText::UnicodeBiDiText(const Common::String &str, const Common::CodePage page) : logical(str), _log_to_vis_index(NULL), _vis_to_log_index(NULL) {
+UnicodeBiDiText::UnicodeBiDiText(const Common::String &str, const Common::CodePage page) :
+	logical(str), _pbase_dir(FRIBIDI_PAR_ON),
+	_log_to_vis_index(NULL), _vis_to_log_index(NULL) {
 	initWithU32String(str.decode(page));
+}
+
+UnicodeBiDiText::UnicodeBiDiText(const Common::String &str, const Common::CodePage page,
+		uint32 *pbase_dir) : logical(str), _log_to_vis_index(NULL), _vis_to_log_index(NULL) {
+	_pbase_dir = *pbase_dir;
+	initWithU32String(str.decode(page));
+	*pbase_dir = _pbase_dir;
 }
 
 UnicodeBiDiText::~UnicodeBiDiText() {
@@ -43,7 +59,7 @@ UnicodeBiDiText::~UnicodeBiDiText() {
 	delete[] _vis_to_log_index;
 }
 
-uint32 UnicodeBiDiText::getVisualPosition(uint32 logicalPos) const { 
+uint32 UnicodeBiDiText::getVisualPosition(uint32 logicalPos) const {
 	if (NULL != _log_to_vis_index && logicalPos < size()) {
 		return _log_to_vis_index[logicalPos];
 	}
@@ -64,8 +80,8 @@ void UnicodeBiDiText::initWithU32String(const U32String &input) {
 	FriBidiChar *visual_str = new FriBidiChar[buff_length * sizeof(FriBidiChar)];
 	_log_to_vis_index = new uint32[input_size];
 	_vis_to_log_index = new uint32[input_size];
-	FriBidiParType pbase_dir = FRIBIDI_PAR_ON;
 
+	FriBidiParType pbase_dir = FriBidiParType(_pbase_dir);
 	if (!fribidi_log2vis(
 		/* input */
 		(const FriBidiChar *)input.c_str(),
@@ -88,6 +104,7 @@ void UnicodeBiDiText::initWithU32String(const U32String &input) {
 		visual = U32String((uint32 *)visual_str, input.size());
 		delete[] visual_str;
 	}
+	_pbase_dir = pbase_dir;
 #else
 	static bool fribidiWarning = true;
 	if (fribidiWarning) {
@@ -97,6 +114,19 @@ void UnicodeBiDiText::initWithU32String(const U32String &input) {
 	visual = input;
 #endif
 
+}
+
+Common::String bidiByLineHelper(Common::String line, va_list args) {
+	/* Common::CodePage is int
+	 * GCC warns that using Common::CodePage in va_arg would abort program */
+	Common::CodePage page = (Common::CodePage) va_arg(args, int);
+	uint32 *pbase_dir = va_arg(args, uint32*);
+	return UnicodeBiDiText(line, page, pbase_dir).visual.encode(page);
+}
+
+String convertBiDiStringByLines(const String &input, const Common::CodePage page) {
+	uint32 pbase_dir = FRIBIDI_PAR_ON;
+	return input.forEachLine(bidiByLineHelper, page, &pbase_dir);
 }
 
 String convertBiDiString(const String &input, const Common::Language lang) {

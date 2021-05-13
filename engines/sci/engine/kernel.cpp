@@ -23,7 +23,7 @@
 #include "sci/sci.h"
 #include "sci/engine/kernel.h"
 #include "sci/event.h"
-#include "sci/resource.h"
+#include "sci/resource/resource.h"
 #include "sci/engine/features.h"
 #include "sci/engine/kernel_tables.h"
 #include "sci/engine/state.h"
@@ -920,7 +920,7 @@ Common::String Kernel::lookupText(reg_t address, int index) {
 	}
 
 	int _index = index;
-	while (index--)
+	while (index-- && textlen)
 		while (textlen-- && *seeker++)
 			;
 

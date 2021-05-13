@@ -23,23 +23,30 @@
 #include "twine/flamovies.h"
 #include "common/file.h"
 #include "common/system.h"
-#include "twine/grid.h"
+#include "image/gif.h"
+#include "twine/audio/music.h"
+#include "twine/audio/sound.h"
 #include "twine/input.h"
-#include "twine/music.h"
-#include "twine/screens.h"
-#include "twine/sound.h"
+#include "twine/renderer/screens.h"
+#include "twine/resources/hqr.h"
+#include "twine/resources/resources.h"
+#include "twine/scene/grid.h"
 #include "twine/twine.h"
 
 namespace TwinE {
 
 /** FLA Frame Opcode types */
 enum FlaFrameOpcode {
-	kLoadPalette = 0,
-	kFade = 1,
-	kPlaySample = 2,
-	kStopSample = 4,
-	kDeltaFrame = 5,
-	kKeyFrame = 7
+	kLoadPalette = 1,
+	kFade = 2,
+	kPlaySample = 3,
+	kFlaUnknown4 = 4,
+	kStopSample = 5,
+	kDeltaFrame = 6,
+	kFlaUnknown7 = 7,
+	kKeyFrame = 8,
+	kFlaUnknown9 = 9,
+	kFlaUnknown16SameAs9 = 16
 };
 
 /** FLA movie sample structure */
@@ -62,140 +69,118 @@ struct FLASampleStruct {
 #define FLA_EXT ".fla"
 
 void FlaMovies::drawKeyFrame(Common::MemoryReadStream &stream, int32 width, int32 height) {
-	uint8 *destPtr = (uint8 *)flaBuffer;
+	uint8 *destPtr = (uint8 *)_flaBuffer;
 	uint8 *startOfLine = destPtr;
 
-	do {
-		int8 flag1 = stream.readByte();
+	for (int32 y = 0; y < height; ++y) {
+		const int8 lineEntryCount = stream.readByte();
 
-		for (int8 a = 0; a < flag1; a++) {
-			int8 flag2 = stream.readByte();
+		for (int8 a = 0; a < lineEntryCount; a++) {
+			const int8 rleFlag = stream.readByte();
 
-			if (flag2 < 0) {
-				flag2 = -flag2;
-				for (int8 b = 0; b < flag2; b++) {
-					*(destPtr++) = stream.readByte();
+			if (rleFlag < 0) {
+				const int8 rleCnt = ABS(rleFlag);
+				for (int8 b = 0; b < rleCnt; ++b) {
+					*destPtr++ = stream.readByte();
 				}
 			} else {
-				char colorFill = stream.readByte();
-
-				for (int8 b = 0; b < flag2; b++) {
-					*(destPtr++) = colorFill;
-				}
+				const char colorFill = stream.readByte();
+				Common::fill(&destPtr[0], &destPtr[rleFlag], colorFill);
+				destPtr += rleFlag;
 			}
 		}
 
 		startOfLine = destPtr = startOfLine + width;
-	} while (--height);
+	}
 }
 
 void FlaMovies::drawDeltaFrame(Common::MemoryReadStream &stream, int32 width) {
-	int32 a, b;
-	uint16 skip;
-	uint8 *destPtr;
-	uint8 *startOfLine;
-	int32 height;
+	const uint16 skip = stream.readUint16LE() * width;
+	const int32 height = stream.readSint16LE();
 
-	int8 flag1;
-	int8 flag2;
+	uint8 *destPtr = (uint8 *)_flaBuffer + skip;
+	uint8 *startOfLine = destPtr;
+	for (int32 y = 0; y < height; ++y) {
+		const int8 lineEntryCount = stream.readByte();
 
-	skip = stream.readUint16LE();
-	skip *= width;
-	startOfLine = destPtr = (uint8 *)flaBuffer + skip;
-	height = stream.readSint16LE();
-
-	do {
-		flag1 = stream.readByte();
-
-		for (a = 0; a < flag1; a++) {
+		for (int8 a = 0; a < lineEntryCount; ++a) {
 			destPtr += stream.readByte();
-			flag2 = stream.readByte();
+			const int8 rleFlag = stream.readByte();
 
-			if (flag2 > 0) {
-				for (b = 0; b < flag2; b++) {
-					*(destPtr++) = stream.readByte();
+			if (rleFlag > 0) {
+				for (int8 b = 0; b < rleFlag; ++b) {
+					*destPtr++ = stream.readByte();
 				}
 			} else {
-				char colorFill;
-				flag2 = -flag2;
-
-				colorFill = stream.readByte();
-
-				for (b = 0; b < flag2; b++) {
-					*(destPtr++) = colorFill;
-				}
+				const char colorFill = stream.readByte();
+				const int8 rleCnt = ABS(rleFlag);
+				Common::fill(&destPtr[0], &destPtr[rleCnt], colorFill);
+				destPtr += rleCnt;
 			}
 		}
 
 		startOfLine = destPtr = startOfLine + width;
-	} while (--height);
+	}
 }
 
 void FlaMovies::scaleFla2x() {
-	uint8 *source = (uint8 *)flaBuffer;
-	uint8 *dest = (uint8 *)_engine->workVideoBuffer.getPixels();
+	uint8 *source = (uint8 *)_flaBuffer;
+	uint8 *dest = (uint8 *)_engine->imageBuffer.getPixels();
 
 	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
-		for (uint32 i = 0; i < SCREEN_WIDTH * 40; i++) {
-			*(dest++) = 0x00;
-		}
+		Common::fill(&dest[0], &dest[_engine->imageBuffer.w * 40], 0x00);
+		dest += _engine->imageBuffer.w * 40;
 	}
 
 	for (int32 i = 0; i < FLASCREEN_HEIGHT; i++) {
 		for (int32 j = 0; j < FLASCREEN_WIDTH; j++) {
-			*(dest++) = *(source);
-			*(dest++) = *(source++);
+			*dest++ = *source;
+			*dest++ = *source++;
 		}
 		if (_engine->cfgfile.Movie == CONF_MOVIE_FLAWIDE) { // include wide bars
-			memcpy(dest, dest - SCREEN_WIDTH, FLASCREEN_WIDTH * 2);
+			memcpy(dest, dest - _engine->imageBuffer.w, FLASCREEN_WIDTH * 2);
 			dest += FLASCREEN_WIDTH * 2;
 		} else { // stretch the movie like original game.
 			if (i % 2) {
-				memcpy(dest, dest - SCREEN_WIDTH, FLASCREEN_WIDTH * 2);
+				memcpy(dest, dest - _engine->imageBuffer.w, FLASCREEN_WIDTH * 2);
 				dest += FLASCREEN_WIDTH * 2;
 			}
 			if (i % 10) {
-				memcpy(dest, dest - SCREEN_WIDTH, FLASCREEN_WIDTH * 2);
+				memcpy(dest, dest - _engine->imageBuffer.w, FLASCREEN_WIDTH * 2);
 				dest += FLASCREEN_WIDTH * 2;
 			}
 		}
 	}
 
 	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAWIDE) {
-		for (int32 i = 0; i < SCREEN_WIDTH * 40; i++) {
-			*(dest++) = 0x00;
-		}
+		Common::fill(&dest[0], &dest[_engine->imageBuffer.w * 40], 0x00);
 	}
 }
 
 void FlaMovies::processFrame() {
 	FLASampleStruct sample;
-	uint32 opcodeBlockSize;
-	int32 aux = 0;
 
-	file.read(&frameData.videoSize, 1);
-	file.read(&frameData.dummy, 1);
-	file.read(&frameData.frameVar0, 4);
-	if (frameData.frameVar0 > _engine->workVideoBuffer.w * _engine->workVideoBuffer.h) {
-		warning("Skipping video frame - it would exceed the screen buffer: %i", frameData.frameVar0);
+	_file.read(&_frameData.videoSize, 2);
+	_file.read(&_frameData.frameVar0, 4);
+	if (_frameData.frameVar0 > _engine->imageBuffer.w * _engine->imageBuffer.h) {
+		warning("Skipping video frame - it would exceed the screen buffer: %i", _frameData.frameVar0);
 		return;
 	}
 
-	uint8 *outBuf = (uint8*)_engine->workVideoBuffer.getPixels();
-	file.read(outBuf, frameData.frameVar0);
+	uint8 *outBuf = (uint8 *)_engine->imageBuffer.getPixels();
+	_file.read(outBuf, _frameData.frameVar0);
 
-	if ((int32)frameData.videoSize <= 0) {
+	if ((int32)_frameData.videoSize <= 0) {
 		return;
 	}
 
-	Common::MemoryReadStream stream(outBuf, frameData.frameVar0);
-	do {
-		uint8 opcode = stream.readByte();
-		stream.skip(1);
-		opcodeBlockSize = stream.readUint16LE();
+	Common::MemoryReadStream stream(outBuf, _frameData.frameVar0);
+	for (int32 frame = 0; frame < _frameData.videoSize; ++frame) {
+		const uint16 opcode = stream.readUint16LE();
+		const uint16 opcodeBlockSize = stream.readUint16LE();
 		const int32 pos = stream.pos();
 
-		switch (opcode - 1) {
+		switch (opcode) {
 		case kLoadPalette: {
 			int16 numOfColor = stream.readSint16LE();
 			int16 startColor = stream.readSint16LE();
@@ -204,12 +189,26 @@ void FlaMovies::processFrame() {
 			break;
 		}
 		case kFade: {
-			// FLA movies don't use cross fade
-			// fade out tricky
-			if (_fadeOut != 1) {
-				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
-				_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
-				_fadeOut = 1;
+			int16 innerOpcpde = stream.readSint16LE();
+			switch (innerOpcpde) {
+			case 1:
+				_engine->_music->playMidiMusic(26);
+				break;
+			case 2:
+				// FLA movies don't use cross fade
+				// fade out tricky
+				if (_fadeOut != 1) {
+					_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
+					_engine->_screens->fadeToBlack(_engine->_screens->paletteRGBACustom);
+					_fadeOut = 1;
+				}
+				break;
+			case 3:
+				_flaPaletteVar = true;
+				break;
+			case 4:
+				_engine->_music->stopMidiMusic();
+				break;
 			}
 			break;
 		}
@@ -220,7 +219,7 @@ void FlaMovies::processFrame() {
 			sample.dummy = stream.readSByte();
 			sample.x = stream.readByte();
 			sample.y = stream.readByte();
-			_engine->_sound->playFlaSample(sample.sampleNum, sample.freq, sample.repeat, sample.x, sample.y);
+			_engine->_sound->playFlaSample(sample.sampleNum, sample.repeat, sample.x, sample.y);
 			break;
 		}
 		case kStopSample: {
@@ -229,40 +228,123 @@ void FlaMovies::processFrame() {
 		}
 		case kDeltaFrame: {
 			drawDeltaFrame(stream, FLASCREEN_WIDTH);
-			if (_fadeOut == 1)
-				fadeOutFrames++;
+			if (_fadeOut == 1) {
+				++_fadeOutFrames;
+			}
 			break;
 		}
 		case kKeyFrame: {
 			drawKeyFrame(stream, FLASCREEN_WIDTH, FLASCREEN_HEIGHT);
 			break;
 		}
+		case kFlaUnknown7: {
+			byte *ptr = (byte *)_engine->frontVideoBuffer.getPixels();
+			for (int y = 0; y < 200; ++y) {
+				for (int x = 0; x < 80; ++x) {
+					*ptr++ = 0;
+				}
+				ptr = ptr + 80;
+			}
+			break;
+		}
+		case kFlaUnknown9:
+		case kFlaUnknown16SameAs9: {
+			byte *ptr = (byte *)_engine->frontVideoBuffer.getPixels();
+			for (int y = 0; y < 200; ++y) {
+				for (int x = 0; x < 80; ++x) {
+					*ptr++ = stream.readByte();
+				}
+				ptr = ptr + 80;
+			}
+			break;
+		}
+		case kFlaUnknown4:
 		default: {
 			break;
 		}
 		}
 
-		aux++;
 		stream.seek(pos + opcodeBlockSize);
-
-	} while (aux < (int32)frameData.videoSize);
-	//free(workVideoBufferCopy);
-}
-
-/** Play FLA PCX Screens
-	@param flaName FLA movie name */
-static void fla_pcxList(const char *flaName) {
-	// TODO if is using FLA PCX than show the images instead
+	}
 }
 
 FlaMovies::FlaMovies(TwinEEngine *engine) : _engine(engine) {}
 
+void FlaMovies::prepareGIF(int index) {
+	Image::GIFDecoder decoder;
+	Common::SeekableReadStream *stream = HQR::makeReadStream(Resources::HQR_FLAGIF_FILE, index);
+	if (stream == nullptr) {
+		warning("Failed to load gif hqr entry with id %i from %s", index, Resources::HQR_FLAGIF_FILE);
+		return;
+	}
+	if (!decoder.loadStream(*stream)) {
+		delete stream;
+		warning("Failed to load gif with id %i from %s", index, Resources::HQR_FLAGIF_FILE);
+		return;
+	}
+	const Graphics::Surface *surface = decoder.getSurface();
+	_engine->setPalette(0, decoder.getPaletteColorCount(), decoder.getPalette());
+	g_system->copyRectToScreen(surface->getPixels(), surface->pitch, 0, 0, surface->w, surface->h);
+	g_system->updateScreen();
+	debug(2, "Show gif with id %i from %s", index, Resources::HQR_FLAGIF_FILE);
+	delete stream;
+	_engine->delaySkip(5000);
+	_engine->setPalette(_engine->_screens->paletteRGBA);
+}
+
+void FlaMovies::playGIFMovie(const char *flaName) {
+	if (!Common::File::exists(Resources::HQR_FLAGIF_FILE)) {
+		warning("%s file doesn't exist", Resources::HQR_FLAGIF_FILE);
+		return;
+	}
+
+	Common::String name(flaName);
+	name.toLowercase();
+
+	debug(1, "Play gif %s", name.c_str());
+	// TODO: use the HQR 23th entry (movies informations)
+	// TODO: there are gifs [1-18]
+	if (name == FLA_INTROD) {
+		prepareGIF(3);
+		prepareGIF(4);
+		prepareGIF(5);
+	} else if (name == "bateau" || name == "bateau2") {
+		prepareGIF(7);
+	} else if (name == "navette") {
+		prepareGIF(15);
+	} else if (name == "templebu") {
+		prepareGIF(12);
+	} else if (name == "flute2") {
+		prepareGIF(8); // TODO: same as glass2?
+	} else if (name == "glass2") {
+		prepareGIF(8); // TODO: same as flute2?
+	} else if (name == "surf") {
+		prepareGIF(9);
+	} else if (name == "verser" || name == "verser2") {
+		prepareGIF(10);
+	} else if (name == "neige2") {
+		prepareGIF(11);
+	} else if (name == "capture") {
+		prepareGIF(14); // TODO: same as sendel?
+	} else if (name == "sendel") {
+		prepareGIF(14); // TODO: same as capture?
+	} else if (name == "sendel2") {
+		prepareGIF(17);
+	} else if (name == FLA_DRAGON3) {
+		prepareGIF(1);
+		prepareGIF(2);
+	} else if (name == "baffe" || name.matchString("baffe#")) {
+		prepareGIF(6);
+	} else {
+		warning("unknown gif image: %s", name.c_str());
+	}
+}
+
 void FlaMovies::playFlaMovie(const char *flaName) {
 	_engine->_sound->stopSamples();
 
-	// Play FLA PCX instead of movies
-	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAPCX) {
-		fla_pcxList(flaName);
+	if (_engine->cfgfile.Movie == CONF_MOVIE_FLAGIF) {
+		playGIFMovie(flaName);
 		return;
 	}
 
@@ -276,66 +358,72 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 	fileNamePath += FLA_EXT;
 
 	_fadeOut = -1;
-	fadeOutFrames = 0;
+	_fadeOutFrames = 0;
 
-	file.close();
-	if (!file.open(fileNamePath)) {
+	_file.close();
+	if (!_file.open(fileNamePath)) {
 		warning("Failed to open fla movie '%s'", fileNamePath.c_str());
 		return;
 	}
 
-	file.read(&flaHeaderData.version, 6);
-	flaHeaderData.numOfFrames = file.readUint32LE();
-	flaHeaderData.speed = file.readByte();
-	flaHeaderData.var1 = file.readByte();
-	flaHeaderData.xsize = file.readUint16LE();
-	flaHeaderData.ysize = file.readUint16LE();
+	_file.read(&_flaHeaderData.version, 6);
+	_flaHeaderData.numOfFrames = _file.readUint32LE();
+	_flaHeaderData.speed = _file.readByte();
+	_flaHeaderData.var1 = _file.readByte();
+	debug(2, "Unknown byte in fla file: %i", _flaHeaderData.var1);
+	_flaHeaderData.xsize = _file.readUint16LE();
+	_flaHeaderData.ysize = _file.readUint16LE();
 
-	samplesInFla = file.readUint16LE();
-	file.skip(2);
+	_samplesInFla = _file.readUint16LE();
+	const uint16 unk2 = _file.readUint16LE();
+	debug(2, "Unknown uint16 in fla file: %i", unk2);
 
-	file.skip(4 * samplesInFla);
+	_file.skip(4 * _samplesInFla);
 
-	if (!strcmp((const char *)flaHeaderData.version, "V1.3")) {
+	if (!strcmp((const char *)_flaHeaderData.version, "V1.3")) {
 		int32 currentFrame = 0;
 
 		debug("Play fla: %s", flaName);
 
 		ScopedKeyMap scopedKeyMap(_engine, cutsceneKeyMapId);
 
+		_flaPaletteVar = true;
 		do {
+			FrameMarker frame;
+			ScopedFPS scopedFps(_flaHeaderData.speed);
 			_engine->readKeys();
 			if (_engine->shouldQuit()) {
 				break;
 			}
-			if (currentFrame == flaHeaderData.numOfFrames) {
+			if (currentFrame == _flaHeaderData.numOfFrames) {
 				break;
 			}
 			processFrame();
 			scaleFla2x();
-			_engine->_screens->copyScreen(_engine->workVideoBuffer, _engine->frontVideoBuffer);
+			_engine->frontVideoBuffer.blitFrom(_engine->imageBuffer, _engine->imageBuffer.getBounds(), _engine->frontVideoBuffer.getBounds());
 
 			// Only blit to screen if isn't a fade
 			if (_fadeOut == -1) {
 				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
-				if (!currentFrame) // fade in the first frame
+				if (currentFrame == 0) {
+					// fade in the first frame
 					_engine->_screens->fadeIn(_engine->_screens->paletteRGBACustom);
-				else
+				} else {
 					_engine->setPalette(_engine->_screens->paletteRGBACustom);
+				}
+				_engine->flip();
 			}
 
 			// TRICKY: fade in tricky
-			if (fadeOutFrames >= 2) {
+			if (_fadeOutFrames >= 2) {
 				_engine->flip();
 				_engine->_screens->convertPalToRGBA(_engine->_screens->palette, _engine->_screens->paletteRGBACustom);
 				_engine->_screens->fadeToPal(_engine->_screens->paletteRGBACustom);
 				_fadeOut = -1;
-				fadeOutFrames = 0;
+				_fadeOutFrames = 0;
 			}
 
 			currentFrame++;
-
-			_engine->_system->delayMillis(1000 / flaHeaderData.speed + 1);
 		} while (!_engine->_input->toggleAbortAction());
 	}
 
@@ -347,109 +435,5 @@ void FlaMovies::playFlaMovie(const char *flaName) {
 
 	_engine->_sound->stopSamples();
 }
-
-/*
-void fla_pcxList(char *flaName)
-{
-	// check if FLAPCX file exist
-//	if(!checkIfFileExist("FLA_PCX.HQR") || !checkIfFileExist("FLA_GIF.HQR")){
-//		printf("FLA_PCX file doesn't exist!");
-		//return;
-	//}
-
-	// TODO: done this with the HQR 23th entry (movies informations)
-	if(!strcmp(flaName,"INTROD"))
-	{
-		prepareFlaPCX(1);
-		WaitTime(5000);
-		prepareFlaPCX(2);
-		WaitTime(5000);
-		prepareFlaPCX(3);
-		WaitTime(5000);
-		prepareFlaPCX(4);
-		WaitTime(5000);
-		prepareFlaPCX(5);
-		WaitTime(5000);
-
-	}
-	else if(!strcmp(flaName,"BAFFE") || !strcmp(flaName,"BAFFE2") || !strcmp(flaName,"BAFFE3") || !strcmp(flaName,"BAFFE4"))
-	{
-		prepareFlaPCX(6);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"bateau") || !strcmp(flaName,"bateau2"))
-	{
-		prepareFlaPCX(7);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"flute2"))
-	{
-		prepareFlaPCX(8);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"navette"))
-	{
-		prepareFlaPCX(15);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"templebu"))
-	{
-		prepareFlaPCX(12);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"glass2"))
-	{
-		prepareFlaPCX(8);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"surf"))
-	{
-		prepareFlaPCX(9);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"verser") || !strcmp(flaName,"verser2"))
-	{
-		prepareFlaPCX(10);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"capture"))
-	{
-		prepareFlaPCX(14);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"neige2"))
-	{
-		prepareFlaPCX(11);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"sendel"))
-	{
-		prepareFlaPCX(14);
-		WaitTime(5000);
-	}
-	else if(!strcmp(flaName,"sendel2"))
-	{
-		prepareFlaPCX(17);
-		WaitTime(5000);
-	}
-}
-
-void prepareFlaPCX(int index)
-{
-	int i;
-	SDL_Surface *image;
-
-	// TODO: Done this without SDL_Image Library
-	if(checkIfFileExist("FLA_PCX.HQR"))
-		image = IMG_LoadPCX_RW(SDL_RWFromMem(HQR_Get(HQR_FlaPCX,index), Size_HQR("FLA_PCX.HQR", index))); // rwop
-	else if(checkIfFileExist("FLA_GIF.HQR"))
-		image = IMG_LoadGIF_RW(SDL_RWFromMem(HQR_Get(HQR_FlaGIF,index), Size_HQR("fla_gif.hqr", index))); // rwop
-
-	if(!image) {
-		printf("Can't load FLA PCX: %s\n", IMG_GetError());
-	}
-
-	osystem_FlaPCXCrossFade(image);
-}*/
 
 } // namespace TwinE

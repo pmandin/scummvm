@@ -49,21 +49,32 @@ int StarTrekEngine::loadActorAnim(int actorIndex, const Common::String &animName
 	debugC(6, kDebugGraphics, "Load animation '%s' on actor %d", animName.c_str(), actorIndex);
 
 	if (actorIndex == -1) {
-		// TODO
-		warning("loadActorAnim: actor == -1");
-	} else {
-		Actor *actor = &_actorList[actorIndex];
+		bool foundSlot = false;
 
-		if (actor->spriteDrawn) {
-			releaseAnim(actor);
-			drawActorToScreen(actor, animName, x, y, scale, false);
-		} else {
-			drawActorToScreen(actor, animName, x, y, scale, true);
+		for (int i = 8; i < NUM_ACTORS; i++) {
+			if (_actorList[i].spriteDrawn == 0) {
+				actorIndex = i;
+				foundSlot = true;
+				break;
+			}
 		}
 
-		actor->triggerActionWhenAnimFinished = false;
-		actor->finishedAnimActionParam = 0;
+		if (!foundSlot) {
+			error("All animations are in use");
+		}
 	}
+
+	Actor *actor = &_actorList[actorIndex];
+
+	if (actor->spriteDrawn) {
+		releaseAnim(actor);
+		drawActorToScreen(actor, animName, x, y, scale, false);
+	} else {
+		drawActorToScreen(actor, animName, x, y, scale, true);
+	}
+
+	actor->triggerActionWhenAnimFinished = false;
+	actor->finishedAnimActionParam = 0;
 
 	return actorIndex;
 }
@@ -171,6 +182,8 @@ void StarTrekEngine::updateActorAnimations() {
 					actor->animFile->read(animFrameFilename, 16);
 					actor->bitmapFilename = animFrameFilename;
 					actor->bitmapFilename.trim();
+					if (actor->bitmapFilename.contains(' '))
+						actor->bitmapFilename = actor->bitmapFilename.substr(0, actor->bitmapFilename.find(' '));
 
 					sprite->setBitmap(loadAnimationFrame(actor->bitmapFilename, actor->scale));
 
@@ -430,7 +443,7 @@ void StarTrekEngine::removeActorFromScreen(int actorIndex) {
 	releaseAnim(actor);
 }
 
-void StarTrekEngine::actorFunc1() {
+void StarTrekEngine::removeDrawnActorsFromScreen() {
 	for (int i = 0; i < NUM_ACTORS; i++) {
 		if (_actorList[i].spriteDrawn == 1) {
 			removeActorFromScreen(i);
@@ -445,7 +458,7 @@ void StarTrekEngine::actorFunc1() {
 
 void StarTrekEngine::drawActorToScreen(Actor *actor, const Common::String &_animName, int16 x, int16 y, Fixed8 scale, bool addSprite) {
 	Common::String animFilename = _animName;
-	if (_animName.contains("stnd") /* && word_45d20 == -1 */) // TODO
+	if (_animName.hasPrefixIgnoreCase("stnd") /* && word_45d20 == -1 */) // TODO
 		animFilename += 'j';
 
 	actor->animFilename = _animName;
@@ -988,7 +1001,7 @@ bool StarTrekEngine::walkActiveObjectToHotspot() {
 	else {
 		// If this action has code defined for it in this room, buffer the action to be
 		// done after the object finished walking there.
-		Action action = {_awayMission.activeAction, _awayMission.activeObject, 0, 0};
+		Action action = {static_cast<int8>(_awayMission.activeAction), _awayMission.activeObject, 0, 0};
 		if (_awayMission.activeAction == ACTION_USE)
 			action.b2 = _awayMission.passiveObject;
 

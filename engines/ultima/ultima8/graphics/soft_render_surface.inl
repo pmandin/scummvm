@@ -31,12 +31,12 @@
 //
 // #define FLIP_SHAPES to flip rendering
 //
-// #define FLIP_CONDITIONAL to an argument of the function so FLIPPING can be 
+// #define FLIP_CONDITIONAL to an argument of the function so FLIPPING can be
 // enabled/disabled with a bool
 //
 // #define XFORM_SHAPES to enable XFORMing
 //
-// #define XFORM_CONDITIONAL to an argument of the function so XFORM can be 
+// #define XFORM_CONDITIONAL to an argument of the function so XFORM can be
 // enabled/disabled with a bool
 //
 // #define BLEND_SHAPES(src,dst) to an a specified blend function.
@@ -49,15 +49,15 @@
 // Macros defined by this file:
 //
 // NOT_CLIPPED_Y - Does Y Clipping check per line
-// 
+//
 // NOT_CLIPPED_X - Does X Clipping check per Pixel
-// 
+//
 // LINE_END_ASSIGN - Calcuates the line_end pointer required for X clipping
 //
 // XNEG - Negates X values if doing shape flipping
-// 
+//
 // USE_XFORM_FUNC - Checks to see if we want to use XForm Blending for this pixel
-// 
+//
 // CUSTOM_BLEND - Final Blend for invisiblity
 //
 
@@ -100,7 +100,7 @@ const int32 neg = (FLIP_CONDITIONAL)?-1:0;
 
 //
 // No Clipping = TRUE
-//	
+//
 #ifdef NO_CLIPPING
 
 #define LINE_END_ASSIGN //
@@ -110,7 +110,7 @@ const int32 neg = (FLIP_CONDITIONAL)?-1:0;
 
 //
 // No Clipping = FALSE
-//	
+//
 #else
 
 	const int		scrn_width = _clipWindow.width();
@@ -176,20 +176,22 @@ const int32 neg = (FLIP_CONDITIONAL)?-1:0;
 		return;
 	const uint8		*srcpixels		= frame->_pixels;
 	const uint8		*srcmask		= frame->_mask;
-	const uint32	*pal			= untformed_pal?
-										&(s->getPalette()->_native_untransformed[0]):
-										&(s->getPalette()->_native[0]);
+	const uint32	*pal			= untformed_pal ?
+										s->getPalette()->_native_untransformed:
+										s->getPalette()->_native;
 
 #ifdef XFORM_SHAPES
-	const uint32	*xform_pal		= untformed_pal?
-										&(s->getPalette()->_xform_untransformed[0]):
-										&(s->getPalette()->_xform[0]);
+	const uint32	*xform_pal		= untformed_pal ?
+										s->getPalette()->_xform_untransformed:
+										s->getPalette()->_xform;
 #endif
 
 	const int32 width_ = frame->_width;
 	const int32 height_ = frame->_height;
 	x -= XNEG(frame->_xoff);
 	y -= frame->_yoff;
+
+	assert(_pixels00 && _pixels && srcpixels && srcmask);
 
 	for (int i = 0; i < height_; i++)  {
 		int line = y + i;

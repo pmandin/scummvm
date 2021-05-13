@@ -219,9 +219,9 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		}
 	},
 
-	// KQ6 Windows - windows cursors
+	// KQ5 and KQ6 CD Windows - windows cursors
 	{
-		GAMEOPTION_KQ6_WINDOWS_CURSORS,
+		GAMEOPTION_KQ_WINDOWS_CURSORS,
 		{
 			_s("Use Windows cursors"),
 			_s("Use the Windows cursors (smaller and monochrome) instead of the DOS ones"),
@@ -262,7 +262,7 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			true
 		}
 	},
-	
+
 	// SCI16 games: use RGB renderer instead of indexed
 	{
 		GAMEOPTION_RGB_RENDERING,
@@ -273,7 +273,7 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			false
 		}
 	},
-	
+
 	// SCI16 games: use custom per-resource palettes to improve visuals
 	{
 		GAMEOPTION_PALETTE_MODS,
@@ -362,22 +362,22 @@ private:
 };
 
 OptionsWidget::OptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain) :
-		OptionsContainerWidget(boss, name, "SciOptionsDialog", false, domain) {
+		OptionsContainerWidget(boss, name, "SciGameOptionsDialog", false, domain) {
 	_guiOptions = ConfMan.get("guioptions", domain);
 
 	for (const ADExtraGuiOptionsMap *entry = optionsList; entry->guioFlag; ++entry)
 		if (checkGameGUIOption(entry->guioFlag, _guiOptions))
-			_checkboxes[entry->option.configOption] = new GUI::CheckboxWidget(widgetsBoss(), _dialogLayout + "." + entry->option.configOption, Common::U32String(entry->option.label), Common::U32String(entry->option.tooltip));
+			_checkboxes[entry->option.configOption] = new GUI::CheckboxWidget(widgetsBoss(), _dialogLayout + "." + entry->option.configOption, _(entry->option.label), _(entry->option.tooltip));
 
 	for (const PopUpOptionsMap *entry = popUpOptionsList; entry->guioFlag; ++entry)
 		if (checkGameGUIOption(entry->guioFlag, _guiOptions)) {
-			GUI::StaticTextWidget *textWidget = new GUI::StaticTextWidget(widgetsBoss(), _dialogLayout + "." + entry->configOption + "_desc", Common::U32String(entry->label), Common::U32String(entry->tooltip));
+			GUI::StaticTextWidget *textWidget = new GUI::StaticTextWidget(widgetsBoss(), _dialogLayout + "." + entry->configOption + "_desc", _(entry->label), _(entry->tooltip));
 			textWidget->setAlign(Graphics::kTextAlignRight);
 
 			_popUps[entry->configOption] = new GUI::PopUpWidget(widgetsBoss(), _dialogLayout + "." + entry->configOption);
 
 			for (uint i = 0; entry->items[i].label; ++i)
-				_popUps[entry->configOption]->appendEntry(entry->items[i].label, entry->items[i].configValue);
+				_popUps[entry->configOption]->appendEntry(_(entry->items[i].label), entry->items[i].configValue);
 		}
 }
 

@@ -23,6 +23,8 @@
 #ifndef SCUMM_DETECTION_STEAM_H
 #define SCUMM_DETECTION_STEAM_H
 
+#include "scumm/file.h"
+
 namespace Scumm {
 
 // The following table includes all the index files, which are embedded in the
@@ -34,10 +36,8 @@ static const SteamIndexFile steamIndexFiles[] = {
 	{ GID_INDY4, Common::kPlatformMacintosh, "atlantis.%03d", "ATLANTIS.000",  "The Fate of Atlantis",                       260224, 12035 },
 	{ GID_LOOM,  Common::kPlatformWindows,   "%03d.LFL",      "000.LFL",       "Loom.exe",                                   187248,  8307 },
 	{ GID_LOOM,  Common::kPlatformMacintosh, "%03d.LFL",      "000.LFL",       "Loom",                                       170464,  8307 },
-#ifdef ENABLE_SCUMM_7_8
 	{ GID_DIG,   Common::kPlatformWindows,   "dig.la%d",      "DIG.LA0",       "The Dig.exe",                                340632, 16304 },
 	{ GID_DIG,   Common::kPlatformMacintosh, "dig.la%d",      "DIG.LA0",       "The Dig",                                    339744, 16304 },
-#endif
 	{ 0,         Common::kPlatformUnknown,   nullptr,         nullptr,         nullptr,                                           0,     0 }
 };
 

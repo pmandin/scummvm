@@ -20,13 +20,11 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/world/sprite_process.h"
 #include "ultima/ultima8/world/item_factory.h"
 #include "ultima/ultima8/world/item.h"
-#include "ultima/ultima8/world/current_map.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/kernel/core_app.h"
+#include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/world/get_object.h"
 
 namespace Ultima {
@@ -42,8 +40,8 @@ SpriteProcess::SpriteProcess()
 }
 
 SpriteProcess::SpriteProcess(int shape, int frame, int lastFrame,
-                             int repeats, int delay, int x, int y, int z,
-                             bool delayed_init) :
+							 int repeats, int delay, int x, int y, int z,
+							 bool delayed_init) :
 	_shape(shape), _frame(frame), _firstFrame(frame), _lastFrame(lastFrame),
 	_repeats(repeats), _delay(delay * 2), _x(x), _y(y), _z(z), _delayCounter(0),
 	_initialized(false) {

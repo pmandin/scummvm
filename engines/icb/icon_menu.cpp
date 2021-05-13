@@ -62,8 +62,8 @@ _icon_menu::_icon_menu() {
 bool8 _icon_menu::CycleIconMenu(const _input &sKeyboardState) {
 	bool8 nRetVal = TRUE8;
 
-	static int lastInventoryPress = 0;
-	int inventoryPress;
+	static int32 lastInventoryPress = 0;
+	int32 inventoryPress;
 
 	// Cycle the transparency for the highlight, to pulse the icon on screen
 	++m_nHighlightCounter;
@@ -77,8 +77,8 @@ bool8 _icon_menu::CycleIconMenu(const _input &sKeyboardState) {
 
 	// FIND GOBACK if there is one
 	// found is -1 means none found
-	int found = -1;
-	int i;
+	int32 found = -1;
+	int32 i;
 
 	// loop through all the icons or until we find a goback
 	i = 0;
@@ -136,7 +136,7 @@ bool8 _icon_menu::CycleIconMenu(const _input &sKeyboardState) {
 
 		lastInventoryPress = 0;
 	}
-	// CONVESATION QUIT: remora is not activem m_bAllowEscape is probabily true
+	// CONVERSATION QUIT: remora is not active m_bAllowEscape is probably true
 	// no key lock, inventory was pressed and has now been released...
 	// and we have a quit!
 	else if ((!g_oRemora->IsActive()) && (!m_bAllowEscape) && (!m_nKeyLock) && (!inventoryPress) && (lastInventoryPress) && (found != -1)) {
@@ -309,13 +309,9 @@ void _icon_menu::PreloadIcon(const char *pcIconPath, const char *pcIconName) {
 	char pcFullIconName[MAXLEN_URL];
 	sprintf(pcFullIconName, "%s%s.%s", pcIconPath, pcIconName, PX_BITMAP_EXT);
 
-#if defined(_PSX)
-	const char *pcFullIconName = pcIconName;
-#endif // #if defined(_PSX)
-
 	// Open the icon resource.
 	nFullIconNameHash = NULL_HASH;
-	rs_icons->Res_async_open(pcFullIconName, nFullIconNameHash, m_pcIconCluster, m_nIconClusterHash);
+	rs_icons->Res_open(pcFullIconName, nFullIconNameHash, m_pcIconCluster, m_nIconClusterHash);
 }
 
 const char *_icon_menu::GetLastSelection() {
@@ -368,8 +364,8 @@ bool8 _icon_menu::IsAdding() const {
 // Scroll the icons smoothly left or right
 // This returns the x-position to start drawing the icons from (nX)
 // it also sets the first icon to start drawing (nIconIndex)
-int _icon_menu::GetScrollingPosition(const int nInputX, uint &nIconIndex) {
-	int nX = nInputX;
+int32 _icon_menu::GetScrollingPosition(const int32 nInputX, uint32 &nIconIndex) {
+	int32 nX = nInputX;
 
 	// OK are we scrolling
 	if (m_nScrollDirection != ICON_MENU_SCROLL_NONE) {

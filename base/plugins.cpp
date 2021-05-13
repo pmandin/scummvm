@@ -30,7 +30,7 @@
 #include "common/fs.h"
 #endif
 
-#include "engines/detection.h"
+#include "base/detection/detection.h"
 
 // Plugin versioning
 
@@ -39,6 +39,7 @@ int pluginTypeVersions[PLUGIN_TYPE_MAX] = {
 	PLUGIN_TYPE_ENGINE_VERSION,
 	PLUGIN_TYPE_MUSIC_VERSION,
 	PLUGIN_TYPE_DETECTION_VERSION,
+	PLUGIN_TYPE_SCALER_VERSION,
 };
 
 
@@ -124,11 +125,12 @@ public:
 		#if defined(IRIX)
 		LINK_PLUGIN(DMEDIA)
 		#endif
-		#if defined(__amigaos4__)
+		#if defined(__amigaos4__) || defined(__MORPHOS__)
 		LINK_PLUGIN(CAMD)
 		#endif
 		#if defined(MACOSX)
 		LINK_PLUGIN(COREAUDIO)
+		LINK_PLUGIN(COREMIDI)
 		#endif
 		#ifdef USE_FLUIDSYNTH
 		LINK_PLUGIN(FLUIDSYNTH)
@@ -154,11 +156,24 @@ public:
 		#if defined(USE_TIMIDITY)
 		LINK_PLUGIN(TIMIDITY)
 		#endif
-		#if defined(MACOSX)
-		// Keep this at the end of the list - it takes a long time to enumerate
-		// and is only for hardware midi devices
-		LINK_PLUGIN(COREMIDI)
-		#endif
+
+		// Scaler plugins
+		LINK_PLUGIN(NORMAL)
+#ifdef USE_SCALERS
+#ifdef USE_HQ_SCALERS
+		LINK_PLUGIN(HQ)
+#endif
+#ifdef USE_EDGE_SCALERS
+		LINK_PLUGIN(EDGE)
+#endif
+		LINK_PLUGIN(ADVMAME)
+		LINK_PLUGIN(SAI)
+		LINK_PLUGIN(SUPERSAI)
+		LINK_PLUGIN(SUPEREAGLE)
+		LINK_PLUGIN(PM)
+		LINK_PLUGIN(DOTMATRIX)
+		LINK_PLUGIN(TV)
+#endif
 
 		return pl;
 	}
@@ -344,12 +359,14 @@ void PluginManagerUncached::init() {
 
 	unloadPluginsExcept(PLUGIN_TYPE_ENGINE, NULL, false); // empty the engine plugins
 
+#ifndef DETECTION_STATIC
 	Common::String detectPluginName = "detection";
 #ifdef PLUGIN_SUFFIX
 	detectPluginName += PLUGIN_SUFFIX;
 #endif
 
 	bool foundDetectPlugin = false;
+#endif
 
 	for (ProviderList::iterator pp = _providers.begin();
 	                            pp != _providers.end();
@@ -361,6 +378,7 @@ void PluginManagerUncached::init() {
 			// file plugins. Currently this is the case. If it changes, we
 			// should find a fast way of detecting whether a plugin is a
 			// music or an engine plugin.
+#ifndef DETECTION_STATIC
 			if (!foundDetectPlugin && (*pp)->isFilePluginProvider()) {
 				Common::String pName = (*p)->getFileName();
 				if (pName.hasSuffix(detectPluginName)) {
@@ -370,6 +388,7 @@ void PluginManagerUncached::init() {
 					continue;
 				}
 			}
+#endif
 
 			if ((*pp)->isFilePluginProvider()) {
 				_allEnginePlugins.push_back(*p);
@@ -437,12 +456,13 @@ void PluginManagerUncached::updateConfigWithFileName(const Common::String &engin
 
 		Common::ConfigManager::Domain *domain = ConfMan.getDomain("engine_plugin_files");
 		assert(domain);
-		(*domain)[engineId] = (*_currentPlugin)->getFileName();
+		(*domain).setVal(engineId, (*_currentPlugin)->getFileName());
 
 		ConfMan.flushToDisk();
 	}
 }
 
+#ifndef DETECTION_STATIC
 void PluginManagerUncached::loadDetectionPlugin() {
 	bool linkMetaEngines = false;
 
@@ -484,6 +504,7 @@ void PluginManagerUncached::unloadDetectionPlugin() {
 		debug(9, "Detection plugin is already unloaded.");
 	}
 }
+#endif
 
 void PluginManagerUncached::loadFirstPlugin() {
 	unloadPluginsExcept(PLUGIN_TYPE_ENGINE, NULL, false);
@@ -523,6 +544,22 @@ void PluginManager::loadAllPlugins() {
 		PluginList pl((*pp)->getPlugins());
 		Common::for_each(pl.begin(), pl.end(), Common::bind1st(Common::mem_fun(&PluginManager::tryLoadPlugin), this));
 	}
+
+#ifndef DETECTION_STATIC
+	/*
+	 * When detection is dynamic, loading above only gets us a PLUGIN_TYPE_DETECTION plugin
+	 * We must register all plugins linked in it in order to use them
+	 */
+	PluginList dpl = getPlugins(PLUGIN_TYPE_DETECTION);
+	_pluginsInMem[PLUGIN_TYPE_ENGINE_DETECTION].clear();
+	for (PluginList::iterator it = dpl.begin();
+	                            it != dpl.end();
+	                            ++it) {
+		const Detection &detectionConnect = (*it)->get<Detection>();
+		const PluginList &pl = detectionConnect.getPlugins();
+		Common::for_each(pl.begin(), pl.end(), Common::bind1st(Common::mem_fun(&PluginManager::tryLoadPlugin), this));
+	}
+#endif
 }
 
 void PluginManager::loadAllPluginsOfType(PluginType type) {
@@ -935,4 +972,40 @@ DECLARE_SINGLETON(MusicManager);
 
 const PluginList &MusicManager::getPlugins() const {
 	return PluginManager::instance().getPlugins(PLUGIN_TYPE_MUSIC);
+}
+
+// Scaler plugins
+
+#include "graphics/scalerplugin.h"
+
+namespace Common {
+DECLARE_SINGLETON(ScalerManager);
+}
+
+const PluginList &ScalerManager::getPlugins() const {
+	return PluginManager::instance().getPlugins(PLUGIN_TYPE_SCALER);
+}
+
+uint ScalerManager::getMaxExtraPixels() const {
+	uint maxPixels = 0;
+	PluginList plugins = getPlugins();
+	PluginList::iterator i = plugins.begin();
+	for (; i != plugins.end(); ++i) {
+		uint n = (*i)->get<ScalerPluginObject>().extraPixels();
+		if (n > maxPixels) {
+			maxPixels = n;
+		}
+	}
+	return maxPixels;
+}
+
+Plugin *ScalerManager::findScalerPlugin(const char *name) const {
+	const PluginList &plugins = getPlugins();
+	for (PluginList::const_iterator i = plugins.begin(); i != plugins.end(); ++i) {
+		if (!strcmp((*i)->get<ScalerPluginObject>().getName(), name)) {
+			return *i;
+		}
+	}
+
+	return 0;
 }

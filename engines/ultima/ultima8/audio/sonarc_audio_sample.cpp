@@ -22,7 +22,6 @@
 
 #include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/audio/sonarc_audio_sample.h"
-#include "ultima/ultima8/filesys/idata_source.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -80,8 +79,8 @@ void SonarcAudioSample::GenerateOneTable() {
 }
 
 void SonarcAudioSample::decode_EC(int mode, int samplecount,
-                                  const uint8 *source, int sourcesize,
-                                  uint8 *dest) {
+								  const uint8 *source, int sourcesize,
+								  uint8 *dest) {
 	bool zerospecial = false;
 	uint32 data = 0;
 	int inputbits = 0; // current 'fill rate' of data window
@@ -150,7 +149,7 @@ void SonarcAudioSample::decode_EC(int mode, int samplecount,
 }
 
 void SonarcAudioSample::decode_LPC(int order, int nsamples,
-                                   uint8 *dest, const uint8 *factors) {
+								   uint8 *dest, const uint8 *factors) {
 	uint8 *startdest = dest;
 	dest -= order;
 

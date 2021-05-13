@@ -31,7 +31,6 @@
 #include "engines/icb/p4.h"
 #include "engines/icb/common/px_array.h"
 #include "engines/icb/common/px_string.h"
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/common/px_clu_api.h"
 
@@ -94,11 +93,11 @@ typedef struct RMParams {
 	const char *cluster;
 	uint32 cluster_hash;
 	uint32 mode;
-	int len;
-	int seekpos;
-	int zipped;
-	int search;
-	int compressed; // No zero if the resource is compressed
+	int32 len;
+	int32 seekpos;
+	int32 zipped;
+	int32 search;
+	int32 compressed; // No zero if the resource is compressed
 	Common::SeekableReadStream *_stream;
 	uint8 not_ready_yet; // are not ready yet
 } RMParams;
@@ -118,21 +117,11 @@ class res_man {
 
 	uint16 current_time_frame; // inc's each time Res_open is called and is given to resource as its age cannot be allowed to start at 0!
 
-	uint32 hasThread;
-
-	rcActArray<async_PacketType> async_fnArray;
-
 public:
-	int amount_of_defrags;
+	int32 amount_of_defrags;
 
-	async_PacketType async_data;
-	int32 async_loading;
-	int32 async_done;
-	//SDL_Thread *hThread; // TODO: Fix threading
-	Common::Mutex *hResManMutex;
-	Common::Mutex *hRunMutex;
 	res_man();
-	res_man(uint32 memory_tot, uint32 threadFlag);
+	res_man(uint32 memory_tot);
 	res_man(uint8 *base, uint32 size);
 	void Construct(uint8 *base, uint32 size, mem *memList, mem_offset *memOffsets, uint32 nMemBlocks);
 	~res_man();
@@ -151,11 +140,6 @@ public:
 	void Set_auto_timeframe_advance();
 	void Set_to_no_defrag();
 
-	int32 async_checkArray();
-	void async_flush();
-	void async_addFile(const int8 *fn, uint8 *p, int32 size, int32 zipped, int32 memListNo);
-	void RegisterAsync(const int32 n);
-
 	int16 find_oldest_file();
 	void Garbage_removal();
 
@@ -168,13 +152,8 @@ public:
 	// If hash or cluster_hash == NULL_HASH then the hash of url/cluster_url
 	// is computed and stored in hash/cluster_hash
 	uint8 *Res_open(const char *url, uint32 &url_hash, const char *cluster_url, uint32 &cluster_hash,
-	                int compressed = 0, // non zero if the resource is compressed
-	                int *ret_len = NULL);
-	// If hash or cluster_hash == NULL_HASH then the hash of url/cluster_url
-	// is computed and stored in hash/cluster_hash
-	uint8 *Res_async_open(const char *url,
-	                      uint32 &url_hash, const char *cluster_url, uint32 &cluster_hash,
-	                      int compressed = 0); // non zero if the resource is compressed
+	                int32 compressed = 0, // non zero if the resource is compressed
+	                int32 *ret_len = NULL);
 	// new function to just allocate some memory for use
 	// by code which wants temporary memory but not files
 	// e.g. stream player, image decompressor
@@ -196,17 +175,17 @@ public:
 	mem *Fetch_mem_list();
 	uint32 Fetch_max_mem_blocks();
 
-	uint32 Fetch_old_memory(int number_of_cycles);
+	uint32 Fetch_old_memory(int32 number_of_cycles);
 
 	// For testing purposes wanted to call Defrag from console
 	// so made it public function
 	void Defrag();
 
 	// To aid debugging messages
-	inline void Id(int newId);
-	inline int Id();
+	inline void Id(int32 newId);
+	inline int32 Id();
 
-      private:
+private:
 	inline void MakeHash(const char *s, uint32 &h);
 	inline int32 CheckHash(const char *s, const uint32 h, uint32 &h2);
 
@@ -229,20 +208,14 @@ public:
 	uint32 FindMemBlock(uint32 adj_len, RMParams *params);
 	uint8 *AllocMemory(uint32 &memory_tot);
 
-	void Initialise(uint32 memory_tot, uint32 threadFlag);
+	void Initialise(uint32 memory_tot);
 
-	uint8 *Internal_open(RMParams *params, int *ret_len = NULL);
+	uint8 *Internal_open(RMParams *params, int32 *ret_len = NULL);
 
 	uint8 *LoadFile(int32 &cluster_search, RMParams *params);
 
 	int16 Find_space(uint32 len);
 	uint16 Fetch_spawn(uint16 parent);
-	void OpenAsync();
-	void CloseAsync();
-
-	//              async
-	async_PacketType async_shiftArray();
-	void async_setLoading(async_PacketType s);
 
 	bool8 auto_time_advance; // if true then time stamp is automatically imcremented as a file is opened
 	bool8 no_defrag; // this manager is a static one so resources cannot be purged, shuffled or aged out
@@ -344,9 +317,9 @@ inline int32 res_man::CheckHash(const char *s, const uint32 h, uint32 &h2) {
 }
 
 // To aid debugging messages
-inline void res_man::Id(int newId) { id = (uint8)newId; }
+inline void res_man::Id(int32 newId) { id = (uint8)newId; }
 
-inline int res_man::Id() { return (int)id; }
+inline int32 res_man::Id() { return (int32)id; }
 
 extern uint32 memory_available; // set by memory_stats
 

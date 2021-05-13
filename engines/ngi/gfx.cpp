@@ -778,7 +778,7 @@ void Bitmap::putDib(int x, int y, const Palette &palette, byte alpha) {
 	if (y1 < 0)
 		y1 = 0;
 
-	int alphac = TS_ARGB(0xff, alpha, 0xff, 0xff);
+	int alphac = TS_ARGB(alpha, 0xff, 0xff, 0xff);
 
 	_surface->blit(g_nmi->_backgroundSurface, x1, y1, _flipping, &sub, alphac);
 	g_nmi->_system->copyRectToScreen(g_nmi->_backgroundSurface.getBasePtr(x1, y1), g_nmi->_backgroundSurface.pitch, x1, y1, sub.width(), sub.height());
@@ -815,19 +815,19 @@ bool Bitmap::putDibRB(byte *pixels, const Palette &palette) {
 	for (y = endy; y >= starty && !breakup; y--) {
 		x = startx;
 
-		while ((pixel = *srcPtr++) != 0) {
+		while ((pixel = FROM_LE_16(*srcPtr++)) != 0) {
 			if (pixel == 0x100) {
 				breakup = true;
 				break;
 			}
 
 			while (pixel == 0x200 && y >= starty) {
-				uint16 value = *srcPtr++;
+				uint16 value = FROM_LE_16(*srcPtr++);
 
 				x += (byte)(value & 0xff);
 				y -= (byte)((value >> 8) & 0xff);
 
-				pixel = *srcPtr++;
+				pixel = FROM_LE_16(*srcPtr++);
 			}
 
 			if (y < starty || pixel == 0)

@@ -28,9 +28,7 @@
 #ifndef ICB_PX_LINKED_DATA_FILE_H
 #define ICB_PX_LINKED_DATA_FILE_H
 
-#include "engines/icb/common/px_rccommon.h" // This is required to be included before anything else
 #include "engines/icb/common/px_rcutypes.h"
-#include "engines/icb/common/px_assert.h"
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/common/px_clu_api.h"
 #include "engines/icb/debug.h"
@@ -73,7 +71,7 @@ public:
 
 	void *Fetch_items_name_by_number(uint32 number); // return pointer to name of item number n
 
-	void *Try_fetch_item_by_name(cstr);   // reference a resource by name
+	void *Try_fetch_item_by_name(const char *);   // reference a resource by name
 	void *Try_fetch_item_by_hash(uint32); // reference a resource by hash
 
 	void *Try_fetch_item_by_script_name(const char *name);
@@ -91,7 +89,7 @@ public:
 // get DATA given NUMBER
 inline void *_linked_data_file::Fetch_item_by_number(uint32 number) {
 	// illegal reference number
-	_ASSERT(number < number_of_items);
+	assert(number < number_of_items);
 	// return address of resource
 	return (((uint8 *)&header) + list[number].data_offset);
 }
@@ -99,7 +97,7 @@ inline void *_linked_data_file::Fetch_item_by_number(uint32 number) {
 // get NAME given NUMBER
 inline void *_linked_data_file::Fetch_items_name_by_number(uint32 number) {
 	// illegal reference number
-	_ASSERT(number < number_of_items);
+	assert(number < number_of_items);
 	// return name
 	return (((uint8 *)&header) + list[number].name_offset);
 }
@@ -135,8 +133,8 @@ inline void *_linked_data_file::Fetch_item_by_name(const char *name) {
 }
 
 // get DATA given NAME (uses get NUMBER given NAME and returns 0 if not found or uses get DATA given NUMBER to return DATA)
-inline void *_linked_data_file::Try_fetch_item_by_name(cstr name) {
-	// as Fetch_item_with_name but will return 0 if entry could not be found as opposed to an _ASSERT error
+inline void *_linked_data_file::Try_fetch_item_by_name(const char *name) {
+	// as Fetch_item_with_name but will return 0 if entry could not be found as opposed to an assert
 	uint32 search = 0;
 
 	search = Fetch_item_number_by_name(name);
@@ -149,7 +147,7 @@ inline void *_linked_data_file::Try_fetch_item_by_name(cstr name) {
 
 // get DATA given HASH (uses get NUMBER given HASH and returns 0 if not found or uses get DATA given NUMBER to return DATA)
 inline void *_linked_data_file::Try_fetch_item_by_hash(uint32 hash) {
-	// as Fetch_item_with_name but will return 0 if entry could not be found as opposed to an _ASSERT error
+	// as Fetch_item_with_name but will return 0 if entry could not be found as opposed to an assert
 	uint32 search = 0;
 
 	search = Fetch_item_number_by_hash(hash);

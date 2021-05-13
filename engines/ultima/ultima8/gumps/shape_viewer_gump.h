@@ -26,7 +26,7 @@
 #include "ultima/ultima8/gumps/modal_gump.h"
 
 #include "ultima/shared/std/containers.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -43,7 +43,7 @@ public:
 	ShapeViewerGump();
 	ShapeViewerGump(int x, int y, int width, int height,
 	                Std::vector<Std::pair<Std::string, ShapeArchive *> > &flexes,
-	                uint32 flags = 0, int32 layer = LAYER_MODAL);
+	                uint32 flags = FLAG_PREVENT_SAVE, int32 layer = LAYER_MODAL);
 	~ShapeViewerGump() override;
 
 	void PaintThis(RenderSurface *, int32 lerp_factor, bool scaled) override;

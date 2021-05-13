@@ -58,14 +58,14 @@ enum {
 
 // Constructor
 GuiManager::GuiManager() : _redrawStatus(kRedrawDisabled), _stateIsSaved(false),
-    _cursorAnimateCounter(0), _cursorAnimateTimer(0) {
+	_cursorAnimateCounter(0), _cursorAnimateTimer(0) {
 	_theme = nullptr;
 	_useStdCursor = false;
 
 	_system = g_system;
 	_lastScreenChangeID = _system->getScreenChangeID();
-	_width = _system->getOverlayWidth();
-	_height = _system->getOverlayHeight();
+
+	computeScaleFactor();
 
 	_launched = false;
 
@@ -83,9 +83,7 @@ GuiManager::GuiManager() : _redrawStatus(kRedrawDisabled), _stateIsSaved(false),
 	setLanguageRTL();
 #endif // USE_TRANSLATION
 
-#ifdef USE_TTS
 	initTextToSpeech();
-#endif // USE_TTS
 
 	ConfMan.registerDefault("gui_theme", "scummremastered");
 	Common::String themefile(ConfMan.get("gui_theme"));
@@ -93,14 +91,6 @@ GuiManager::GuiManager() : _redrawStatus(kRedrawDisabled), _stateIsSaved(false),
 	ConfMan.registerDefault("gui_renderer", ThemeEngine::findModeConfigName(ThemeEngine::_defaultRendererMode));
 	ThemeEngine::GraphicsMode gfxMode = (ThemeEngine::GraphicsMode)ThemeEngine::findMode(ConfMan.get("gui_renderer"));
 
-#ifdef __DS__
-	// Searching for the theme file takes ~10 seconds on the DS.
-	// Disable this search here because external themes are not supported.
-	if (!loadNewTheme("builtin", gfxMode)) {
-		// Loading the built-in theme failed as well. Bail out
-		error("Failed to load any GUI theme, aborting");
-	}
-#else
 	// Try to load the theme
 	if (!loadNewTheme(themefile, gfxMode)) {
 		// Loading the theme failed, try to load the built-in theme
@@ -109,11 +99,48 @@ GuiManager::GuiManager() : _redrawStatus(kRedrawDisabled), _stateIsSaved(false),
 			error("Failed to load any GUI theme, aborting");
 		}
 	}
-#endif
 }
 
 GuiManager::~GuiManager() {
 	delete _theme;
+}
+
+void GuiManager::computeScaleFactor() {
+	uint16 w = g_system->getOverlayWidth();
+	uint16 h = g_system->getOverlayHeight();
+	uint scale = g_system->getFeatureState(OSystem::kFeatureHiDPI) ? 2 : 1;
+
+	_baseHeight = 0;	// Clean up from previous iteration
+
+	if (ConfMan.hasKey("gui_base")) {
+		_baseHeight = ConfMan.getInt("gui_base");
+
+		if (h < _baseHeight)
+			_baseHeight = 0; // Switch to auto for lower resolutions
+	}
+
+	if (_baseHeight == 0) {	// auto
+		if (h < 240 * scale) {	// 320 x 200
+			_baseHeight = MIN<int16>(200, h);
+		} else if (h < 400 * scale) {	// 320 x 240
+			_baseHeight = 240;
+		} else if (h < 480 * scale) {	// 640 x 400
+			_baseHeight = 400;
+		} else if (h < 720 * scale) {	// 640 x 480
+			_baseHeight = 480;
+		} else {				// 960 x 720
+			_baseHeight = 720;
+		}
+	}
+
+	_scaleFactor = (float)h / (float)_baseHeight;
+
+	_baseWidth = (int16)((float)w / _scaleFactor);
+
+	if (_theme)
+		_theme->setBaseResolution(_baseWidth, _baseHeight, _scaleFactor);
+
+	debug(3, "Setting %d x %d -> %d x %d -- %g", w, h, _baseWidth, _baseHeight, _scaleFactor);
 }
 
 Common::Keymap *GuiManager::getKeymap() const {
@@ -154,6 +181,10 @@ Common::Keymap *GuiManager::getKeymap() const {
 	act->addDefaultInputMapping("JOY_RIGHT");
 	guiMap->addAction(act);
 
+	act = new Action(kStandardActionEE, _("???"));
+	act->setKeyEvent(KEYCODE_v);
+	guiMap->addAction(act);
+
 	return guiMap;
 }
 
@@ -190,9 +221,12 @@ bool GuiManager::loadNewTheme(Common::String id, ThemeEngine::GraphicsMode gfx, 
 	// Try to load the new theme
 	newTheme = new ThemeEngine(id, gfx);
 	assert(newTheme);
+	newTheme->setBaseResolution(_baseWidth, _baseHeight, _scaleFactor);
 
-	if (!newTheme->init())
+	if (!newTheme->init()) {
+		delete newTheme;
 		return false;
+	}
 
 	//
 	// Disable and delete the old theme
@@ -354,7 +388,7 @@ void GuiManager::runLoop() {
 	Common::EventManager *eventMan = _system->getEventManager();
 	const uint32 targetFrameDuration = 1000 / 60;
 
-	while (!_dialogStack.empty() && activeDialog == getTopDialog() && !eventMan->shouldQuit()) {
+	while (!_dialogStack.empty() && activeDialog == getTopDialog() && !eventMan->shouldQuit() && (!g_engine || !eventMan->shouldReturnToLauncher())) {
 		uint32 frameStartTime = _system->getMillis(true);
 
 		// Don't "tickle" the dialog until the theme has had a chance
@@ -428,13 +462,13 @@ void GuiManager::runLoop() {
 
 	// WORKAROUND: When quitting we might not properly close the dialogs on
 	// the dialog stack, thus we do this here to avoid any problems.
-	// This is most noticable in bug #3481395 "LAUNCHER: Can't quit from unsupported game dialog".
+	// This is most noticable in bug #5954 "LAUNCHER: Can't quit from unsupported game dialog".
 	// It seems that Dialog::runModal never removes the dialog from the dialog
 	// stack, thus if the dialog does not call Dialog::close to close itself
 	// it will never be removed. Since we can have multiple run loops being
 	// called we cannot rely on catching EVENT_QUIT in the event loop above,
 	// since it would only catch it for the top run loop.
-	if (eventMan->shouldQuit() && activeDialog == getTopDialog())
+	if ((eventMan->shouldQuit() || (g_engine && eventMan->shouldReturnToLauncher())) && activeDialog == getTopDialog())
 		getTopDialog()->close();
 
 	if (didSaveState) {
@@ -562,8 +596,8 @@ bool GuiManager::checkScreenChange() {
 
 void GuiManager::screenChange() {
 	_lastScreenChangeID = _system->getScreenChangeID();
-	_width = _system->getOverlayWidth();
-	_height = _system->getOverlayHeight();
+
+	computeScaleFactor();
 
 	// reinit the whole theme
 	_theme->refresh();
@@ -686,7 +720,6 @@ void GuiManager::setDialogPaddings(int l, int r) {
 	_topDialogRightPadding = r;
 }
 
-#ifdef USE_TTS
 void GuiManager::initTextToSpeech() {
 	Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
 	if (ttsMan == nullptr)
@@ -711,6 +744,5 @@ void GuiManager::initTextToSpeech() {
 		voice = ttsMan->getDefaultVoice();
 	ttsMan->setVoice(voice);
 }
-#endif
 
 } // End of namespace GUI

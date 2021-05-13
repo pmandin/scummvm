@@ -56,7 +56,6 @@ public:
 	//! \return pid of process
 	ProcId addProcessExec(Process *proc);
 
-	void removeProcess(Process *proc);
 	void runProcesses();
 	Process *getProcess(ProcId pid);
 
@@ -122,8 +121,18 @@ public:
 	}
 
 	uint32 getFrameNum() const {
-		return _frameNum;
+		return _tickNum / TICKS_PER_FRAME;
 	};
+	uint32 getTickNum() const {
+		return _tickNum;
+	};
+
+	static const uint32 TICKS_PER_FRAME;
+	static const uint32 TICKS_PER_SECOND;
+	static const uint32 FRAMES_PER_SECOND;
+
+	// A special process type which means kill all the processes.
+	static const uint16 PROC_TYPE_ALL;
 
 	INTRINSIC(I_getNumProcesses);
 	INTRINSIC(I_resetRef);
@@ -133,13 +142,13 @@ private:
 	Std::list<Process *> _processes;
 	idMan   *_pIDs;
 
-	Std::list<Process *>::iterator current_process;
+	Std::list<Process *>::iterator _currentProcess;
 
 	Std::map<Common::String, ProcessLoadFunc> _processLoaders;
 
 	bool _loading;
 
-	uint32 _frameNum;
+	uint32 _tickNum;
 	unsigned int _paused;
 	bool _frameByFrame;
 
@@ -148,7 +157,10 @@ private:
 	static Kernel *_kernel;
 };
 
+
+extern const uint U8_RAND_MAX;
 extern uint getRandom();
+
 
 } // End of namespace Ultima8
 } // End of namespace Ultima

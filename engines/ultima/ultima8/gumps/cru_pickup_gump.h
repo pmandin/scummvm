@@ -24,7 +24,7 @@
 #define ULTIMA8_GUMPS_CRUPICKUPGUMP_H
 
 #include "ultima/ultima8/gumps/gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -39,10 +39,9 @@ public:
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	CruPickupGump();
-	//! Create a new gump for an item pickup. CurrentQ is the value of an existing gump
-	//! so they can be combined (eg, pick up one medikit then another -> show medikit 2)
-	CruPickupGump(Item *item, int y, uint16 currentq);
-	~CruPickupGump() override;
+	CruPickupGump(const Item *item, int y, bool showCount);
+
+	~CruPickupGump() override {};
 
 	// Init the gump, call after construction
 	void InitGump(Gump *newparent, bool take_focus = true) override;
@@ -58,6 +57,10 @@ public:
 		return _q;
 	}
 
+	//! Update for a second item pickup - generally just replace existing count text.
+	void updateForNewItem(const Item *item, bool showCount);
+	void addCountText();
+
 	bool loadData(Common::ReadStream *rs, uint32 version);
 	void saveData(Common::WriteStream *ws) override;
 
@@ -68,6 +71,7 @@ private:
 	uint16 _gumpFrameNo;
 	Std::string _itemName;
 	uint16 _q;
+	bool _showCount;
 };
 
 } // End of namespace Ultima8

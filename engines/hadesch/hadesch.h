@@ -40,6 +40,7 @@
 #include "hadesch/event.h"
 #include "hadesch/herobelt.h"
 #include "hadesch/persistent.h"
+#include "common/translation.h"
 
 struct ADGameDescription;
 
@@ -160,7 +161,7 @@ public:
 	Common::SharedPtr<HeroBelt> getHeroBelt() {
 		return _heroBelt;
 	}
-	
+
 	int firstAvailableSlot();
 
 	void newGame();
@@ -173,6 +174,10 @@ public:
 
 	Common::Array<HadeschSaveDescriptor> getHadeschSavesList();
 	void deleteSave(int slot);
+	int genSubtitleID();
+	uint32 getSubtitleDelayPerChar() const;
+	void wrapSubtitles(const Common::U32String &str, Common::Array<Common::U32String> &lines);
+	Common::U32String translate(const Common::String &str);
 
 private:
 	void addTimer(EventHandlerWrapper event, int32 start_time, int period,
@@ -197,7 +202,7 @@ private:
 	Common::RandomSource _rnd;
 
 	Common::String _cdScenesPath;
-	
+
 	Common::SharedPtr<VideoRoom> _sceneVideoRoom;
 	Common::SharedPtr<Handler> _sceneHandler;
 	Common::SharedPtr<VideoRoom> _optionsRoom;
@@ -219,6 +224,12 @@ private:
 	Common::Array<RoomId> _nextRoom;
 	bool _isRestoring;
   	bool _isQuitting;
+	int _subtitleID;
+	int _subtitleDelayPerChar;
+
+#ifdef USE_TRANSLATION
+	Common::TranslationManager *_transMan;
+#endif
 
 	// For freeing purposes
 	Common::Array <Graphics::MacCursor *> _macCursors;

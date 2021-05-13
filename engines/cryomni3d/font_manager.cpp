@@ -55,7 +55,7 @@ FontManager::~FontManager() {
 }
 
 void FontManager::loadFonts(const Common::Array<Common::String> &fontFiles,
-                            Common::CodePage codepage) {
+							Common::CodePage codepage) {
 	assert(codepage != Common::kCodePageInvalid);
 	_codepage = codepage;
 	setupWrapParameters();
@@ -70,8 +70,8 @@ void FontManager::loadFonts(const Common::Array<Common::String> &fontFiles,
 
 	for (Common::Array<Common::String>::const_iterator it = fontFiles.begin(); it != fontFiles.end();
 	        it++) {
-		Graphics::Font *fontEntry = fontsCache.getVal(*it, nullptr);
-		if (fontEntry) {
+		Graphics::Font *fontEntry = nullptr;
+		if (fontsCache.tryGetVal(*it, fontEntry)) {
 			_fonts.push_back(fontEntry);
 			continue;
 		}
@@ -162,6 +162,7 @@ Common::U32String FontManager::toU32(const Common::String &str) const {
 		return str.decode(_codepage);
 	}
 
+	// Beware: when not using Unicode, U32String will contain codepoints not corresponding to Unicode
 	switch (_codepage) {
 	case Common::kUtf8:
 		error("UTF-8 not supported");
@@ -184,7 +185,8 @@ Common::U32String FontManager::toU32(const Common::String &str) const {
 	}
 	default:
 		// All other codepages are SBCS: one byte is one character
-		return str;
+		// We use kISO8859_1 as it's the identity function [0-255] to [0-255]
+		return str.decode(Common::kISO8859_1);
 	}
 }
 
@@ -208,7 +210,7 @@ void FontManager::setSpaceWidth(uint additionalSpace) {
 }
 
 uint FontManager::displayStr_(uint x, uint y,
-                              const Common::U32String &text) const {
+							  const Common::U32String &text) const {
 	uint offset = 0;
 	for (Common::U32String::const_iterator it = text.begin(); it != text.end(); it++) {
 		_currentFont->drawChar(_currentSurface, *it, x + offset, y, _foreColor);
@@ -231,7 +233,7 @@ uint FontManager::getStrWidth(const Common::U32String &text) const {
 }
 
 bool FontManager::displayBlockText(const Common::U32String &text,
-                                   Common::U32String::const_iterator begin) {
+								   Common::U32String::const_iterator begin) {
 	bool notEnoughSpace = false;
 	Common::U32String::const_iterator ptr = begin;
 	Common::Array<Common::U32String> words;
@@ -349,8 +351,8 @@ uint FontManager::getLinesCount(const Common::U32String &text, uint width) {
 }
 
 void FontManager::calculateWordWrap(const Common::U32String &text,
-                                    Common::U32String::const_iterator *position, uint *finalPos, bool *hasCr,
-                                    Common::Array<Common::U32String> &words) const {
+									Common::U32String::const_iterator *position, uint *finalPos, bool *hasCr,
+									Common::Array<Common::U32String> &words) const {
 	*hasCr = false;
 	uint offset = 0;
 	bool wordWrap = false;

@@ -33,11 +33,11 @@ private:
 	/**
 	 * Gets the game Id given a target string
 	 */
-	static Common::String getGameId(const char *target);
+	static Common::String getGameId(const Common::String& target);
 public:
 	const char *getName() const override;
 
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 	int getMaximumSaveSlot() const override;
 
 	/**
@@ -49,6 +49,11 @@ public:
 	 * Initialize keymaps
 	 */
 	Common::KeymapArray initKeymaps(const char *target) const override;
+
+	/**
+	* Return the extra GUI options used by the target.
+	*/
+	const ExtraGuiOptions getExtraGuiOptions(const Common::String &target) const override;
 
 };
 

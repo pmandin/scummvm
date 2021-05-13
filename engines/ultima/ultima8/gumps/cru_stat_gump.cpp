@@ -20,15 +20,8 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/gumps/cru_stat_gump.h"
 
-#include "ultima/ultima8/games/game_data.h"
-#include "ultima/ultima8/graphics/gump_shape_archive.h"
-#include "ultima/ultima8/graphics/shape.h"
-#include "ultima/ultima8/graphics/shape_frame.h"
-#include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/world/get_object.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -40,7 +33,7 @@ CruStatGump::CruStatGump() : TranslucentGump() {
 }
 
 CruStatGump::CruStatGump(Shape *shape, int x)
-	: TranslucentGump(x, 0, 5, 5, 0) {
+	: TranslucentGump(x, 0, 5, 5, 0, FLAG_DONT_SAVE) {
 	_shape = shape;
 }
 
@@ -48,17 +41,17 @@ CruStatGump::~CruStatGump() {
 }
 
 void CruStatGump::InitGump(Gump *newparent, bool take_focus) {
-	Gump::InitGump(newparent, take_focus);
+	TranslucentGump::InitGump(newparent, take_focus);
 
 	UpdateDimsFromShape();
 }
 
 void CruStatGump::saveData(Common::WriteStream *ws) {
-	Gump::saveData(ws);
+	TranslucentGump::saveData(ws);
 }
 
 bool CruStatGump::loadData(Common::ReadStream *rs, uint32 version) {
-	return Gump::loadData(rs, version);
+	return TranslucentGump::loadData(rs, version);
 }
 
 } // End of namespace Ultima8

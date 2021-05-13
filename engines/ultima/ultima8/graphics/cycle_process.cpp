@@ -20,10 +20,8 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/graphics/cycle_process.h"
 #include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/graphics/palette.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -58,6 +56,7 @@ static inline void copyColor(uint8 *dst, const uint8 *src) {
 
 CycleProcess::CycleProcess() : Process(), _running(1) {
 	_instance = this;
+	_ticksPerRun = 2;
 	for (int i = 0; i < 7; i++) {
 		copyColor(_cycleColData[i], CYCLE_INIT_COLS[i]);
 	}

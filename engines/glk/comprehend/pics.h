@@ -27,6 +27,7 @@
 #include "common/archive.h"
 #include "common/file.h"
 #include "common/str-array.h"
+#include "graphics/font.h"
 
 namespace Glk {
 namespace Comprehend {
@@ -49,6 +50,7 @@ enum {
 class Pics : public Common::Archive {
 	struct ImageContext {
 		Common::File _file;
+		uint _picIndex;
 		DrawSurface *_drawSurface;
 		Graphics::Font *_font;
 		uint _drawFlags;
@@ -62,11 +64,14 @@ class Pics : public Common::Archive {
 		uint16 _textX;
 		uint16 _textY;
 
-		ImageContext(DrawSurface *drawSurface, Graphics::Font *font, uint flags) :
-			_drawSurface(drawSurface), _font(font), _drawFlags(flags),
+		ImageContext(DrawSurface *drawSurface, Graphics::Font *font, uint flags, uint picIndex) :
+			_drawSurface(drawSurface), _font(font), _drawFlags(flags), _picIndex(picIndex),
 			_x(0), _y(0), _penColor(G_COLOR_BLACK), _fillColor(G_COLOR_BLACK),
 			_shape(SHAPE_CIRCLE_LARGE), _textX(0), _textY(0) {
 		}
+
+		uint32 getFillColor() const;
+		void lineFixes();
 	};
 
 	struct ImageFile {
@@ -80,7 +85,7 @@ class Pics : public Common::Archive {
 		void doResetOp(ImageContext *ctx, byte param) const;
 	public:
 		ImageFile() {}
-		ImageFile(const Common::String &filename);
+		ImageFile(const Common::String &filename, bool isSingleImage = false);
 
 		void draw(uint index, ImageContext *ctx) const;
 	};

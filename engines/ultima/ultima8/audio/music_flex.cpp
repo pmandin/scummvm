@@ -23,16 +23,15 @@
 #include "ultima/ultima8/misc/pent_include.h"
 
 #include "ultima/ultima8/audio/music_flex.h"
-#include "ultima/ultima8/filesys/idata_source.h"
 #include "common/memstream.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
 MusicFlex::MusicFlex(Common::SeekableReadStream *rs) : Archive(rs) {
-	Std::memset(_info, 0, sizeof(SongInfo *) * 128);
+	memset(_info, 0, sizeof(SongInfo *) * 128);
 	_songs = new XMidiData *[_count];
-	Std::memset(_songs, 0, sizeof(XMidiData *) * _count);
+	memset(_songs, 0, sizeof(XMidiData *) * _count);
 	loadSongInfo();
 }
 
@@ -48,8 +47,8 @@ MusicFlex::~MusicFlex() {
 }
 
 MusicFlex::SongInfo::SongInfo() : _numMeasures(0), _loopJump(0) {
-	Std::memset(_filename, 0, 16);
-	Std::memset(_transitions, 0, 128 * sizeof(int *));
+	memset(_filename, 0, 17);
+	memset(_transitions, 0, 128 * sizeof(int *));
 }
 
 MusicFlex::SongInfo::~SongInfo() {
@@ -109,12 +108,12 @@ void MusicFlex::loadSongInfo() {
 	if (!buf || !size) {
 		error("Unable to load song info from sound/music.flx");
 	}
-	IBufferDataSource ds(buf, size);
+	Common::MemoryReadStream ds(buf, size);
 	Std::string line;
 
 	// Read first section till we hit a #
 	for (;;) {
-		ds.readline(line);
+		line = ds.readLine();
 
 		// We have hit the end of the section
 		if (line.at(0) == '#') break;
@@ -134,12 +133,12 @@ void MusicFlex::loadSongInfo() {
 		// Now number of measures
 		begIdx = line.findFirstNotOf(' ', endIdx);
 		endIdx = line.findFirstOf(' ', begIdx);
-		int measures = Std::atoi(line.substr(begIdx, endIdx - begIdx).c_str());
+		int measures = atoi(line.substr(begIdx, endIdx - begIdx).c_str());
 
 		// Now finally _loopJump
 		begIdx = line.findFirstNotOf(' ', endIdx);
 		endIdx = line.findFirstOf(' ', begIdx);
-		int loopJump = Std::atoi(line.substr(begIdx, endIdx - begIdx).c_str());
+		int loopJump = atoi(line.substr(begIdx, endIdx - begIdx).c_str());
 
 		// Uh oh
 		if (num < 0 || num > 127)
@@ -150,7 +149,7 @@ void MusicFlex::loadSongInfo() {
 
 		_info[num] = new SongInfo();
 
-		Std::strncpy(_info[num]->_filename, name.c_str(), 16);
+		strncpy(_info[num]->_filename, name.c_str(), 16);
 		_info[num]->_numMeasures = measures;
 		_info[num]->_loopJump = loopJump;
 	};
@@ -158,7 +157,7 @@ void MusicFlex::loadSongInfo() {
 	// Read 'Section2', or more like skip it, since it's only trans.xmi
 	// Read first section till we hit a #
 	for (;;) {
-		ds.readline(line);
+		line = ds.readLine();
 
 		// We have hit the end of the section
 		if (line.at(0) == '#') break;
@@ -166,7 +165,7 @@ void MusicFlex::loadSongInfo() {
 
 	// Skip 'Section3'
 	for (;;) {
-		ds.readline(line);
+		line = ds.readLine();
 
 		// We have hit the end of the section
 		if (line.at(0) == '#') break;
@@ -174,7 +173,7 @@ void MusicFlex::loadSongInfo() {
 
 	// Read 'Section4' (trans _info)
 	for (;;) {
-		ds.readline(line);
+		line = ds.readLine();
 
 		// We have hit the end of the section
 		if (line.at(0) == '#') break;

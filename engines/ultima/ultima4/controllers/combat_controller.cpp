@@ -132,6 +132,7 @@ void CombatController::init() {
 
 void CombatController::setActive() {
 	MetaEngine::setKeybindingMode(KBMODE_COMBAT);
+	g_context->_horseSpeed = 0;
 }
 
 // Accessor Methods
@@ -208,7 +209,7 @@ void CombatController::initDungeonRoom(int room, Direction from) {
 	assertMsg(g_context->_location->_prev->_context & CTX_DUNGEON, "Error: called initDungeonRoom from non-dungeon context");
 	{
 		Dungeon *dng = dynamic_cast<Dungeon *>(g_context->_location->_prev->_map);
-		assert(dng);  
+		assert(dng);
 
 		DngRoom &dngRoom = dng->_rooms[room];
 
@@ -319,10 +320,8 @@ void CombatController::end(bool adjustKarma) {
 			g_context->_location->_map->removeObject(_creature);
 
 		g_death->start(5);
-	}
 
-	else {
-
+	} else {
 		/* need to get this here because when we exit to the parent map, all the monsters are cleared */
 		bool won = isWon();
 
@@ -395,8 +394,8 @@ void CombatController::end(bool adjustKarma) {
 			g_context->_location->_map->removeObject(_creature);
 
 		/* Make sure finishturn only happens if a new combat has not begun */
-		if (! eventHandler->getController()->isCombatController())
-			g_context->_location->_turnCompleter->finishTurn();
+		if (!eventHandler->getController()->isCombatController())
+			g_context->_location->_turnCompleter->finishTurnAfterCombatEnds();
 	}
 
 	delete this;

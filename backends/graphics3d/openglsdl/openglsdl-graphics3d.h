@@ -23,7 +23,9 @@
 #ifndef BACKENDS_GRAPHICS3D_OPENGLSDL_GRAPHICS3D_H
 #define BACKENDS_GRAPHICS3D_OPENGLSDL_GRAPHICS3D_H
 
-#include "backends/graphics3d/sdl/sdl-graphics3d.h"
+#include "backends/graphics/sdl/sdl-graphics.h"
+
+#include "math/rect2d.h"
 
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
 
@@ -39,24 +41,9 @@ namespace OpenGL {
  *
  * Used when rendering games with OpenGL
  */
-class OpenGLSdlGraphics3dManager : public SdlGraphics3dManager {
+class OpenGLSdlGraphics3dManager : public SdlGraphicsManager {
 public:
-	/**
-	 * Capabilities of the current device
-	 */
-	struct Capabilities {
-		/**
-		 * Is the device capable of rendering to OpenGL framebuffers
-		 */
-		bool openGLFrameBuffer;
-
-		/** Supported levels of MSAA when using the OpenGL renderers */
-		Common::Array<uint> openGLAntiAliasLevels;
-
-		Capabilities() : openGLFrameBuffer(false) {}
-	};
-
-	OpenGLSdlGraphics3dManager(SdlEventSource *eventSource, SdlWindow *window, const Capabilities &capabilities);
+	OpenGLSdlGraphics3dManager(SdlEventSource *eventSource, SdlWindow *window, bool supportsFrameBuffer);
 	virtual ~OpenGLSdlGraphics3dManager();
 
 	// GraphicsManager API - Features
@@ -75,6 +62,10 @@ public:
 	// GraphicsManager API - Graphics mode
 #ifdef USE_RGB_COLOR
 	virtual Graphics::PixelFormat getScreenFormat() const override { return _overlayFormat; }
+	virtual Common::List<Graphics::PixelFormat> getSupportedFormats() const override {
+		Common::List<Graphics::PixelFormat> supportedFormats;
+		return supportedFormats;
+	}
 #endif
 	virtual int getScreenChangeID() const override { return _screenChangeCount; }
 	virtual void initSize(uint w, uint h, const Graphics::PixelFormat *format) override;
@@ -83,6 +74,16 @@ public:
 
 	// GraphicsManager API - Draw methods
 	virtual void updateScreen() override;
+	// Following methods are not used by 3D graphics managers
+	virtual void setPalette(const byte *colors, uint start, uint num) override {}
+	virtual void grabPalette(byte *colors, uint start, uint num) const override {}
+	virtual void copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) override {}
+	virtual Graphics::Surface *lockScreen() override { return nullptr; }
+	virtual void unlockScreen() override {}
+	virtual void fillScreen(uint32 col) override {}
+	virtual void setShakePos(int shakeXOffset, int shakeYOffset) override {};
+	virtual void setFocusRectangle(const Common::Rect& rect) override {}
+	virtual void clearFocusRectangle() override {}
 
 	// GraphicsManager API - Overlay
 	virtual void showOverlay() override;
@@ -96,12 +97,24 @@ public:
 	virtual bool isOverlayVisible() const override { return _overlayVisible; }
 
 	// GraphicsManager API - Mouse
+	virtual bool showMouse(bool visible) override;
 	virtual void warpMouse(int x, int y) override;
+	virtual void setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale = false, const Graphics::PixelFormat *format = NULL) override {}
+	virtual void setCursorPalette(const byte *colors, uint start, uint num) override {}
 
 	// SdlGraphicsManager API
-	virtual void transformMouseCoordinates(Common::Point &point) override;
+	virtual void notifyVideoExpose() override {};
+	virtual void notifyResize(const int width, const int height) override;
 
-	void notifyResize(const int width, const int height) override;
+	virtual bool gameNeedsAspectRatioCorrection() const override { return false; }
+	virtual int getGraphicsModeScale(int mode) const override { return 1; }
+
+	void transformMouseCoordinates(Common::Point &point);
+	virtual bool notifyMousePosition(Common::Point &mouse) override {
+		transformMouseCoordinates(mouse);
+
+		return true;
+	}
 
 protected:
 #if SDL_VERSION_ATLEAST(2, 0, 0)
@@ -109,7 +122,7 @@ protected:
 	void deinitializeRenderer();
 #endif
 
-	const Capabilities &_capabilities;
+	bool _supportsFrameBuffer;
 
 	Math::Rect2d _gameRect;
 

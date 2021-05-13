@@ -36,19 +36,19 @@
 #include "sky/sky.h"
 
 class SkyMetaEngine : public MetaEngine {
-    const char *getName() const override {
-        return "sky";
-    }
+	const char *getName() const override {
+		return "sky";
+	}
 
-    bool hasFeature(MetaEngineFeature f) const override;
+	bool hasFeature(MetaEngineFeature f) const override;
 
-    Common::Error createInstance(OSystem *syst, Engine **engine) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine) const override;
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
 	void removeSaveState(const char *target, int slot) const override;
 
-    Common::KeymapArray initKeymaps(const char *target) const override;
+	Common::KeymapArray initKeymaps(const char *target) const override;
 };
 
 bool SkyMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -73,13 +73,13 @@ Common::KeymapArray SkyMetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action("LCLK", _("Walk / Look / Talk"));
+	act = new Action(kStandardActionLeftClick, _("Walk / Look / Talk"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	mainKeymap->addAction(act);
 
-	act = new Action("RCLK", _("Use"));
+	act = new Action(kStandardActionRightClick, _("Use"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");

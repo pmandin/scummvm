@@ -25,17 +25,11 @@
 #include "ultima/ultima8/world/item_factory.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/graphics/main_shape_archive.h"
-#include "ultima/ultima8/graphics/shape_info.h"
-#include "ultima/ultima8/world/item.h"
-#include "ultima/ultima8/world/container.h"
-#include "ultima/ultima8/world/actors/actor.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
 #include "ultima/ultima8/world/glob_egg.h"
-#include "ultima/ultima8/world/egg.h"
 #include "ultima/ultima8/world/monster_egg.h"
 #include "ultima/ultima8/world/teleport_egg.h"
-#include "ultima/ultima8/kernel/core_app.h"
-#include "ultima/ultima8/filesys/idata_source.h"
+#include "ultima/ultima8/ultima8.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -78,8 +72,8 @@ static Item *getItemForFamily(uint32 family) {
 }
 
 Item *ItemFactory::createItem(uint32 shape, uint32 frame, uint16 quality,
-                              uint16 flags, uint16 npcnum, uint16 mapnum,
-                              uint32 extendedflags, bool objId) {
+							  uint16 flags, uint16 npcnum, uint16 mapnum,
+							  uint32 extendedflags, bool objId) {
 	// check what class to create
 	const ShapeInfo *info = GameData::get_instance()->getMainShapes()->
 	                  getShapeInfo(shape);
@@ -108,8 +102,8 @@ Item *ItemFactory::createItem(uint32 shape, uint32 frame, uint16 quality,
 				item->setDamagePoints(info->_damageInfo->damagePoints());
 			}
 			if (info->_family == ShapeInfo::SF_CRUWEAPON && info->_weaponInfo &&
-				info->_weaponInfo->_defaultAmmo) {
-				item->setQuality(info->_weaponInfo->_defaultAmmo);
+				info->_weaponInfo->_clipSize) {
+				item->setQuality(info->_weaponInfo->_clipSize);
 			}
 			if (info->_family == ShapeInfo::SF_CRUAMMO ||
 					 info->_family == ShapeInfo::SF_CRUBOMB) {
@@ -130,8 +124,8 @@ static Actor *getActorForNpcNum(uint32 npcnum) {
 }
 
 Actor *ItemFactory::createActor(uint32 shape, uint32 frame, uint16 quality,
-                                uint16 flags, uint16 npcnum, uint16 mapnum,
-                                uint32 extendedflags, bool objId) {
+								uint16 flags, uint16 npcnum, uint16 mapnum,
+								uint32 extendedflags, bool objId) {
 	/*
 	    // This makes it rather hard to create new NPCs...
 	    if (npcnum == 0) // or do monsters have npcnum 0? we'll see...

@@ -25,13 +25,12 @@
  *
  */
 
-#include "engines/icb/common/px_rccommon.h"
 #include "engines/icb/global_switches.h"
 
 namespace ICB {
 
 // projects x's global flags
-c_global_switches px;
+c_global_switches *g_px;
 
 c_global_switches::c_global_switches() {
 	px_fps = 1;               // 12
@@ -58,7 +57,6 @@ c_global_switches::c_global_switches() {
 	speechLineNumbers = FALSE8;
 	current_cd = 1; // cd 1, 2, 3
 	missionTimeout = -1;
-	pc_full_intall = FALSE8;
 	joystickVibration = FALSE8;
 	socket_watch = FALSE8;
 	semitransparencies = TRUE8;

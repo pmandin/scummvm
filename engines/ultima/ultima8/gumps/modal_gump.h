@@ -24,7 +24,7 @@
 #define ULTIMA8_GUMPS_MODALGUMP_H
 
 #include "ultima/ultima8/gumps/gump.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -38,7 +38,7 @@ public:
 
 	ModalGump();
 	ModalGump(int x, int y, int width, int height, uint16 owner = 0,
-	          uint32 flags = 0, int32 layer = LAYER_MODAL);
+	          uint32 flags = FLAG_PREVENT_SAVE, int32 layer = LAYER_MODAL);
 
 	~ModalGump() override;
 

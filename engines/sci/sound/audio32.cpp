@@ -41,7 +41,7 @@
 #include "sci/engine/features.h"    // for GameFeatures
 #include "sci/engine/guest_additions.h" // for GuestAdditions
 #include "sci/engine/vm_types.h"    // for reg_t, make_reg, NULL_REG
-#include "sci/resource.h"           // for ResourceId, ResourceType::kResour...
+#include "sci/resource/resource.h"  // for ResourceId, ResourceType::kResour...
 #include "sci/sci.h"                // for SciEngine, g_sci, getSciVersion
 #include "sci/sound/decoders/sol.h" // for makeSOLStream
 
@@ -1214,7 +1214,7 @@ reg_t Audio32::kernelPlay(const bool autoPlay, EngineState *s, const int argc, c
 		resourceId = ResourceId(kResourceTypeAudio, audioNumber);
 		loop = false;
 		volume = Audio32::kMaxVolume;
-		
+
 		// SSCI only plays one AIFF file at a time using this method. The game scripts
 		//  rely on this and don't stop the previous AIFF before playing another.
 		//  This entire scheme is only used in two rooms, so rather than track the

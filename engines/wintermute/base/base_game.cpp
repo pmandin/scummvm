@@ -504,8 +504,9 @@ bool BaseGame::initialize2() { // we know whether we are going to be accelerated
 #ifdef ENABLE_WME3D
 	Common::String rendererConfig = ConfMan.get("renderer");
 	Graphics::RendererType desiredRendererType = Graphics::parseRendererTypeCode(rendererConfig);
+	Graphics::RendererType matchingRendererType = Graphics::getBestMatchingAvailableRendererType(desiredRendererType);
 
-	if (!_playing3DGame && desiredRendererType == Graphics::kRendererTypeTinyGL) {
+	if (!_playing3DGame && (desiredRendererType == Graphics::kRendererTypeTinyGL || desiredRendererType == Graphics::kRendererTypeDefault)) {
 		_renderer = makeOSystemRenderer(this);
 		if (_renderer == nullptr) {
 			return STATUS_FAILED;
@@ -520,22 +521,27 @@ bool BaseGame::initialize2() { // we know whether we are going to be accelerated
 
 #if defined(USE_OPENGL_GAME)
 	// Check the OpenGL context actually supports shaders
-	if (backendCapableOpenGL && desiredRendererType == Graphics::kRendererTypeOpenGLShaders && !OpenGLContext.shadersSupported) {
-		desiredRendererType = Graphics::kRendererTypeOpenGL;
+	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders && !OpenGLContext.shadersSupported) {
+		matchingRendererType = Graphics::kRendererTypeOpenGL;
 	}
 #endif
 
+	if (matchingRendererType != desiredRendererType && desiredRendererType != Graphics::kRendererTypeDefault) {
+		// Display a warning if unable to use the desired renderer
+		warning("Unable to create a '%s' renderer", rendererConfig.c_str());
+	}
+
 #if defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
-	if (backendCapableOpenGL && desiredRendererType == Graphics::kRendererTypeOpenGLShaders) {
+	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders) {
 		_renderer3D = makeOpenGL3DShaderRenderer(this);
 	}
 #endif // defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
 #if defined(USE_OPENGL_GAME)
-	if (backendCapableOpenGL && desiredRendererType == Graphics::kRendererTypeOpenGL) {
+	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGL) {
 		_renderer3D = makeOpenGL3DRenderer(this);
 	}
 #endif // defined(USE_OPENGL)
-	if (_playing3DGame && desiredRendererType == Graphics::kRendererTypeTinyGL) {
+	if (_playing3DGame && matchingRendererType == Graphics::kRendererTypeTinyGL) {
 		_renderer3D = nullptr;// TODO: makeTinyGL3DRenderer(this);
 		error("3D software renderered is not supported yet");
 	}
@@ -2325,7 +2331,7 @@ bool BaseGame::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack
 	// Used at kalimba.script on F9 keypress to reload list of available music
 	// Known params: "*.mb"
 	// Original implementation does not seem to look up at DCP packages
-	// This implementation looks up at savegame storage and for actual files 
+	// This implementation looks up at savegame storage and for actual files
 	// Return value expected to be an Array of Strings
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "GetFiles") == 0) {
@@ -2334,7 +2340,7 @@ bool BaseGame::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisStack
 
 		Common::StringArray fnames;
 		BaseFileManager::getEngineInstance()->listMatchingFiles(fnames, pattern);
-		
+
 		stack->pushInt(0);
 		BaseScriptable *arr = makeSXArray(_gameRef, stack);
 		for (uint32 i = 0; i < fnames.size(); i++) {
@@ -3657,7 +3663,7 @@ bool BaseGame::externalCall(ScScript *script, ScStack *stack, ScStack *thisStack
 	else if (strcmp(name, "IsNumber") == 0) {
 		stack->correctParams(1);
 		ScValue *val = stack->pop();
-		
+
 		bool result = false;
 		if (val->isInt() || val->isFloat()) {
 			result = true;
@@ -3719,7 +3725,7 @@ bool BaseGame::externalCall(ScScript *script, ScStack *stack, ScStack *thisStack
 		stack->correctParams(1);
 		const char *str = stack->pop()->getString();
 		char *copy = new char[strlen(str) + 1];
-		strcpy(copy, str); 
+		strcpy(copy, str);
 
 		char *ptr = copy;
 		if (strcmp(name, "rTrim") != 0) {

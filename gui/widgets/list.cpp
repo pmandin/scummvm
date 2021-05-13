@@ -73,6 +73,7 @@ ListWidget::ListWidget(Dialog *boss, int x, int y, int w, int h, const U32String
 	: EditableWidget(boss, x, y, w, h, tooltip), _cmd(cmd) {
 
 	_entriesPerPage = 0;
+	_scrollBarWidth = 0;
 
 	_scrollBar = new ScrollBarWidget(this, _w - _scrollBarWidth, 0, _scrollBarWidth, _h);
 	_scrollBar->setTarget(this);
@@ -123,7 +124,7 @@ void ListWidget::setSelected(int item) {
 	// HACK/FIXME: If our _listIndex has a non zero size,
 	// we will need to look up, whether the user selected
 	// item is present in that list
-	if (_listIndex.size()) {
+	if (!_filter.empty()) {
 		int filteredItem = -1;
 
 		for (uint i = 0; i < _listIndex.size(); ++i) {
@@ -723,7 +724,7 @@ void ListWidget::reflowLayout() {
 	assert(_entriesPerPage > 0);
 
 	if (_scrollBar) {
-		_scrollBar->resize(_w - _scrollBarWidth, 0, _scrollBarWidth, _h);
+		_scrollBar->resize(_w - _scrollBarWidth, 0, _scrollBarWidth, _h, false);
 		scrollBarRecalc();
 		scrollToCurrent();
 	}

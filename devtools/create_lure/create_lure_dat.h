@@ -28,7 +28,7 @@
 #include "common/util.h"
 
 #define VERSION_MAJOR 1
-#define VERSION_MINOR 29
+#define VERSION_MINOR 31
 
 #define DIALOG_SIZE 0x150
 
@@ -67,6 +67,8 @@
 #define RANDOM_ROOM_NUM_ENTRIES 41
 
 #define SOUND_DESCS_SIZE 265
+
+#define AUDIO_INIT_ICON_SIZE 14 * 14
 
 #include "common/pack-start.h"	// START STRUCT PACKING
 
@@ -419,6 +421,7 @@ enum LureLanguage {
 	LANG_DE_DEU = 7,
 	LANG_ES_ESP = 17,
 	LANG_EN_ANY = 3,
+	LANG_EN_USA = 4,
 	LANG_UNKOWN = -1
 };
 

@@ -127,7 +127,7 @@ void LauncherDialog::build() {
 	if (g_gui.xmlEval()->getVar("Globals.ShowLauncherLogo") == 1 && g_gui.theme()->supportsImages()) {
 		_logo = new GraphicsWidget(this, "Launcher.Logo");
 		_logo->useThemeTransparency(true);
-		_logo->setGfx(g_gui.theme()->getImageSurface(ThemeEngine::kImageLogo));
+		_logo->setGfxFromTheme(ThemeEngine::kImageLogo);
 
 		new StaticTextWidget(this, "Launcher.Version", Common::U32String(gScummVMVersionDate));
 	} else
@@ -179,7 +179,7 @@ void LauncherDialog::build() {
 	_searchPic = nullptr;
 	if (g_gui.xmlEval()->getVar("Globals.ShowSearchPic") == 1 && g_gui.theme()->supportsImages()) {
 		_searchPic = new GraphicsWidget(this, "Launcher.SearchPic", _("Search in game list"));
-		_searchPic->setGfx(g_gui.theme()->getImageSurface(ThemeEngine::kImageSearch));
+		_searchPic->setGfxFromTheme(ThemeEngine::kImageSearch);
 	} else
 #endif
 		_searchDesc = new StaticTextWidget(this, "Launcher.SearchDesc", _("Search:"));
@@ -278,22 +278,18 @@ void LauncherDialog::updateListing() {
 	// Retrieve a list of all games defined in the config file
 	_domains.clear();
 	const ConfigManager::DomainMap &domains = ConfMan.getGameDomains();
-	bool scanEntries = numEntries == -1 ? true : (domains.size() <= numEntries);
+	bool scanEntries = numEntries == -1 ? true : ((int)domains.size() <= numEntries);
 
 	// Turn it into a list of pointers
 	Common::List<LauncherEntry> domainList;
 	for (ConfigManager::DomainMap::const_iterator iter = domains.begin(); iter != domains.end(); ++iter) {
-#ifdef __DS__
-		// DS port uses an extra section called 'ds'.  This prevents the section from being
-		// detected as a game.
-		if (iter->_key == "ds") {
+		// Do not list temporary targets added when starting a game from the command line
+		if (iter->_value.contains("id_came_from_command_line"))
 			continue;
-		}
-#endif
 
-		String description(iter->_value.getVal("description"));
+		String description;
 
-		if (description.empty()) {
+		if (!iter->_value.tryGetVal("description", description)) {
 			QualifiedGameDescriptor g = EngineMan.findTarget(iter->_key);
 			if (!g.description.empty())
 				description = g.description;
@@ -503,10 +499,11 @@ void LauncherDialog::loadGame(int item) {
 	}
 
 	if (enginePlugin) {
-		const MetaEngine &metaEngineConnect = enginePlugin->get<MetaEngine>();
-		if (metaEngineConnect.hasFeature(MetaEngine::kSupportsListSaves) &&
-			metaEngineConnect.hasFeature(MetaEngine::kSupportsLoadingDuringStartup)) {
-			int slot = _loadDialog->runModalWithPluginAndTarget(enginePlugin, target);
+		assert(enginePlugin->getType() == PLUGIN_TYPE_ENGINE);
+		const MetaEngine &metaEngine = enginePlugin->get<MetaEngine>();
+		if (metaEngine.hasFeature(MetaEngine::kSupportsListSaves) &&
+			metaEngine.hasFeature(MetaEngine::kSupportsLoadingDuringStartup)) {
+			int slot = _loadDialog->runModalWithMetaEngineAndTarget(&metaEngine, target);
 			if (slot >= 0) {
 				ConfMan.setActiveDomain(_domains[item]);
 				ConfMan.setInt("save_slot", slot, Common::ConfigManager::kTransientDomain);
@@ -754,7 +751,7 @@ void LauncherDialog::reflowLayout() {
 		if (!_logo)
 			_logo = new GraphicsWidget(this, "Launcher.Logo");
 		_logo->useThemeTransparency(true);
-		_logo->setGfx(g_gui.theme()->getImageSurface(ThemeEngine::kImageLogo));
+		_logo->setGfxFromTheme(ThemeEngine::kImageLogo);
 	} else {
 		StaticTextWidget *ver = (StaticTextWidget *)findWidget("Launcher.Version");
 		if (ver) {
@@ -773,7 +770,7 @@ void LauncherDialog::reflowLayout() {
 	if (g_gui.xmlEval()->getVar("Globals.ShowSearchPic") == 1 && g_gui.theme()->supportsImages()) {
 		if (!_searchPic)
 			_searchPic = new GraphicsWidget(this, "Launcher.SearchPic");
-		_searchPic->setGfx(g_gui.theme()->getImageSurface(ThemeEngine::kImageSearch));
+		_searchPic->setGfxFromTheme(ThemeEngine::kImageSearch);
 
 		if (_searchDesc) {
 			removeWidget(_searchDesc);

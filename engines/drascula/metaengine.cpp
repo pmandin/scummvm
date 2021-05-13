@@ -60,14 +60,14 @@ SaveStateDescriptor loadMetaData(Common::ReadStream *s, int slot, bool setPlayTi
 
 class DrasculaMetaEngine : public AdvancedMetaEngine {
 public:
-    const char *getName() const override {
+	const char *getName() const override {
 		return "drascula";
 	}
 
-    bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
 	bool hasFeature(MetaEngineFeature f) const override;
 
-    SaveStateList listSaves(const char *target) const override;
+	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
 	void removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
@@ -157,12 +157,9 @@ void DrasculaMetaEngine::removeSaveState(const char *target, int slot) const {
 	g_system->getSavefileManager()->removeSavefile(fileName);
 }
 
-bool DrasculaMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const Drascula::DrasculaGameDescription *gd = (const Drascula::DrasculaGameDescription *)desc;
-	if (gd) {
-		*engine = new Drascula::DrasculaEngine(syst, gd);
-	}
-	return gd != 0;
+Common::Error DrasculaMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Drascula::DrasculaEngine(syst, (const Drascula::DrasculaGameDescription *)desc);
+	return Common::kNoError;
 }
 
 } // End of namespace Drascula

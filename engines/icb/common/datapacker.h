@@ -58,18 +58,18 @@ public:
 	ReturnCodes open(const ModeEnum mode, const PackModeEnum packMode);
 
 	// Put a value into the bit-stream
-	ReturnCodes put(const int value, Common::WriteStream *fh);
+	ReturnCodes put(const int32 value, Common::WriteStream *fh);
 
 	// Get a value from the bit-stream
-	ReturnCodes Get(int &value, Common::SeekableReadStream *stream);
+	ReturnCodes Get(int32 &value, Common::SeekableReadStream *stream);
 
 	// Stop the bit-packing process : will output any remaining data
 	ReturnCodes close(Common::WriteStream *stream);
 	ReturnCodes close(Common::SeekableReadStream *stream);
 	// Simple inspectors
-	int Pos() const { return pos; }
-	int PackMin() const { return packMin; }
-	int PackMax() const { return packMax; }
+	int32 Pos() const { return pos; }
+	int32 PackMin() const { return packMin; }
+	int32 PackMax() const { return packMax; }
 
 private:
 	void ClearBuffer();
@@ -78,11 +78,11 @@ private:
 
 	ModeEnum iMode;
 	PackModeEnum iPackMode;
-	int pos;
-	int packMin;
-	int packMax;
+	int32 pos;
+	int32 packMin;
+	int32 packMax;
 
-	unsigned char buffer[BUFFER_BYTE_SIZE];
+	uint8 buffer[BUFFER_BYTE_SIZE];
 };
 
 } // End of namespace ICB

@@ -20,111 +20,77 @@
  *
  */
 
-#include "common/scummsys.h"
 #include "common/translation.h"
-#include "common/unzip.h"
-#include "common/translation.h"
-#include "common/config-manager.h"
 #include "gui/saveload.h"
 #include "image/png.h"
-#include "ultima/shared/engine/events.h"
-#include "ultima/ultima8/ultima8.h"
-#include "ultima/ultima8/misc/pent_include.h"
+#include "engines/dialogs.h"
 
  // TODO: !! a lot of these includes are just for some hacks... clean up sometime
-#include "ultima/ultima8/kernel/kernel.h"
-#include "ultima/ultima8/filesys/file_system.h"
-#include "ultima/ultima8/conf/setting_manager.h"
 #include "ultima/ultima8/conf/config_file_manager.h"
+#include "ultima/ultima8/filesys/file_system.h"
 #include "ultima/ultima8/kernel/object_manager.h"
-#include "ultima/ultima8/games/game_info.h"
 #include "ultima/ultima8/games/start_u8_process.h"
+#include "ultima/ultima8/games/start_crusader_process.h"
 #include "ultima/ultima8/graphics/fonts/font_manager.h"
 #include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/graphics/texture.h"
-#include "ultima/ultima8/graphics/fonts/fixed_width_font.h"
-#include "ultima/ultima8/graphics/palette_manager.h"
-#include "ultima/ultima8/graphics/palette.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/world/world.h"
-#include "ultima/ultima8/misc/debugger.h"
-#include "ultima/ultima8/misc/direction.h"
-#include "ultima/ultima8/games/game.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/filesys/savegame.h"
-#include "ultima/ultima8/gumps/gump.h"
-#include "ultima/ultima8/gumps/desktop_gump.h"
 #include "ultima/ultima8/gumps/game_map_gump.h"
 #include "ultima/ultima8/gumps/inverter_gump.h"
-#include "ultima/ultima8/gumps/scaler_gump.h"
-#include "ultima/ultima8/gumps/fast_area_vis_gump.h"
 #include "ultima/ultima8/gumps/minimap_gump.h"
-#include "ultima/ultima8/gumps/quit_gump.h"
-#include "ultima/ultima8/gumps/menu_gump.h"
 #include "ultima/ultima8/gumps/cru_status_gump.h"
 #include "ultima/ultima8/gumps/movie_gump.h"
+#include "ultima/ultima8/gumps/weasel_gump.h"
 
 // For gump positioning... perhaps shouldn't do it this way....
-#include "ultima/ultima8/gumps/bark_gump.h"
-#include "ultima/ultima8/gumps/ask_gump.h"
-#include "ultima/ultima8/gumps/modal_gump.h"
 #include "ultima/ultima8/gumps/message_box_gump.h"
 #include "ultima/ultima8/gumps/keypad_gump.h"
 #include "ultima/ultima8/gumps/computer_gump.h"
 #include "ultima/ultima8/world/actors/quick_avatar_mover_process.h"
-#include "ultima/ultima8/world/actors/actor.h"
-#include "ultima/ultima8/world/actors/actor_anim_process.h"
 #include "ultima/ultima8/world/actors/battery_charger_process.h"
 #include "ultima/ultima8/world/actors/cru_healer_process.h"
 #include "ultima/ultima8/world/actors/targeted_anim_process.h"
 #include "ultima/ultima8/usecode/u8_intrinsics.h"
 #include "ultima/ultima8/usecode/remorse_intrinsics.h"
 #include "ultima/ultima8/usecode/regret_intrinsics.h"
-#include "ultima/ultima8/world/egg.h"
-#include "ultima/ultima8/world/current_map.h"
-#include "ultima/ultima8/graphics/inverter_process.h"
+
 #include "ultima/ultima8/graphics/cycle_process.h"
-#include "ultima/ultima8/world/actors/heal_process.h"
 #include "ultima/ultima8/world/actors/scheduler_process.h"
 #include "ultima/ultima8/world/egg_hatcher_process.h" // for a hack
 #include "ultima/ultima8/usecode/uc_process.h" // more hacking
-#include "ultima/ultima8/gumps/gump_notify_process.h" // guess
 #include "ultima/ultima8/world/actors/actor_bark_notify_process.h" // guess
 #include "ultima/ultima8/kernel/delay_process.h"
 #include "ultima/ultima8/world/actors/avatar_gravity_process.h"
 #include "ultima/ultima8/world/actors/teleport_to_egg_process.h"
-#include "ultima/ultima8/world/item_factory.h"
 #include "ultima/ultima8/world/item_selection_process.h"
 #include "ultima/ultima8/world/split_item_process.h"
 #include "ultima/ultima8/world/target_reticle_process.h"
 #include "ultima/ultima8/world/snap_process.h"
 #include "ultima/ultima8/world/crosshair_process.h"
 #include "ultima/ultima8/world/actors/pathfinder_process.h"
-#include "ultima/ultima8/world/actors/avatar_mover_process.h"
+#include "ultima/ultima8/world/actors/u8_avatar_mover_process.h"
+#include "ultima/ultima8/world/actors/cru_avatar_mover_process.h"
+#include "ultima/ultima8/world/actors/cru_pathfinder_process.h"
 #include "ultima/ultima8/world/actors/resurrection_process.h"
 #include "ultima/ultima8/world/actors/clear_feign_death_process.h"
 #include "ultima/ultima8/world/actors/loiter_process.h"
 #include "ultima/ultima8/world/actors/avatar_death_process.h"
-#include "ultima/ultima8/world/actors/grant_peace_process.h"
-#include "ultima/ultima8/world/actors/cru_healer_process.h"
 #include "ultima/ultima8/world/actors/surrender_process.h"
 #include "ultima/ultima8/world/actors/combat_process.h"
 #include "ultima/ultima8/world/actors/guard_process.h"
 #include "ultima/ultima8/world/actors/attack_process.h"
+#include "ultima/ultima8/world/actors/auto_firer_process.h"
 #include "ultima/ultima8/world/actors/pace_process.h"
-#include "ultima/ultima8/world/fireball_process.h"
 #include "ultima/ultima8/world/super_sprite_process.h"
 #include "ultima/ultima8/world/destroy_item_process.h"
 #include "ultima/ultima8/world/actors/ambush_process.h"
-#include "ultima/ultima8/world/actors/pathfinder.h"
 #include "ultima/ultima8/audio/audio_mixer.h"
 #include "ultima/ultima8/audio/u8_music_process.h"
 #include "ultima/ultima8/audio/remorse_music_process.h"
-#include "ultima/ultima8/audio/audio_process.h"
 #include "ultima/ultima8/audio/midi_player.h"
 #include "ultima/ultima8/gumps/shape_viewer_gump.h"
-#include "ultima/ultima8/graphics/xform_blend.h"
-#include "ultima/ultima8/misc/util.h"
 #include "ultima/ultima8/meta_engine.h"
 
 namespace Ultima {
@@ -147,18 +113,23 @@ struct ProcessLoader {
 	}
 };
 
+inline bool HasPreventSaveFlag(const Gump *g) { return g->hasFlags(Gump::FLAG_PREVENT_SAVE); }
+
+Ultima8Engine *Ultima8Engine::_instance = nullptr;
+
 Ultima8Engine::Ultima8Engine(OSystem *syst, const Ultima::UltimaGameDescription *gameDesc) :
-		Shared::UltimaEngine(syst, gameDesc), CoreApp(gameDesc), _saveCount(0), _game(nullptr),
+		Shared::UltimaEngine(syst, gameDesc),
+		_isRunning(false),  _gameInfo(nullptr), _fileSystem(nullptr),
+		_configFileMan(nullptr), _saveCount(0), _game(nullptr),
 		_kernel(nullptr), _objectManager(nullptr), _mouse(nullptr), _ucMachine(nullptr),
 		_screen(nullptr), _fontManager(nullptr), _paletteManager(nullptr), _gameData(nullptr),
 		_world(nullptr), _desktopGump(nullptr), _gameMapGump(nullptr), _avatarMoverProcess(nullptr),
 		_frameSkip(false), _frameLimit(true), _interpolate(true), _animationRate(100),
-		_avatarInStasis(false), _paintEditorItems(false), _inversion(0), _painting(false),
+		_avatarInStasis(false), _cruStasis(false), _paintEditorItems(false), _inversion(0),
 		_showTouching(false), _timeOffset(0), _hasCheated(false), _cheatsEnabled(false),
-		_ttfOverrides(false), _audioMixer(0), _scalerGump(nullptr),
-		_inverterGump(nullptr), _lerpFactor(256), _inBetweenFrame(false),
-		_unkCrusaderFlag(false), _moveKeyFrame(0) {
-	_application = this;
+		_fontOverride(false), _fontAntialiasing(false), _audioMixer(0), _inverterGump(nullptr),
+	    _lerpFactor(256), _inBetweenFrame(false), _unkCrusaderFlag(false), _moveKeyFrame(0) {
+	_instance = this;
 }
 
 Ultima8Engine::~Ultima8Engine() {
@@ -174,6 +145,11 @@ Ultima8Engine::~Ultima8Engine() {
 	FORGET_OBJECT(_ucMachine);
 	FORGET_OBJECT(_fontManager);
 	FORGET_OBJECT(_screen);
+	FORGET_OBJECT(_fileSystem);
+	FORGET_OBJECT(_configFileMan);
+	FORGET_OBJECT(_gameInfo);
+
+	_instance = nullptr;
 }
 
 Common::Error Ultima8Engine::run() {
@@ -207,19 +183,23 @@ bool Ultima8Engine::initialize() {
 void Ultima8Engine::deinitialize() {
 }
 
+bool Ultima8Engine::hasFeature(EngineFeature f) const {
+	return
+		(f == kSupportsSubtitleOptions) ||
+		(f == kSupportsReturnToLauncher) ||
+		(f == kSupportsLoadingDuringRuntime) ||
+		(f == kSupportsSavingDuringRuntime) ||
+		(f == kSupportsChangingOptionsDuringRuntime);
+}
+
 bool Ultima8Engine::startup() {
 	setDebugger(new Debugger());
 	pout << "-- Initializing Pentagram -- " << Std::endl;
 
-	// parent's startup first
-	CoreApp::startup();
-
-	bool dataoverride;
-	if (!_settingMan->get("dataoverride", dataoverride,
-		SettingManager::DOM_GLOBAL))
-		dataoverride = false;
-	_fileSystem->initBuiltinData(dataoverride);
-
+	_gameInfo = nullptr;
+	_fileSystem = new FileSystem;
+	_configFileMan = new ConfigFileManager();
+	_fontManager = new FontManager();
 	_kernel = new Kernel();
 
 	//!! move this elsewhere
@@ -237,12 +217,18 @@ bool Ultima8Engine::startup() {
 		ProcessLoader<ActorAnimProcess>::load);
 	_kernel->addProcessLoader("TargetedAnimProcess",
 		ProcessLoader<TargetedAnimProcess>::load);
-	_kernel->addProcessLoader("AvatarMoverProcess",
-		ProcessLoader<AvatarMoverProcess>::load);
+	_kernel->addProcessLoader("AvatarMoverProcess", // parent class for backward compatibility
+		ProcessLoader<U8AvatarMoverProcess>::load);
+	_kernel->addProcessLoader("U8AvatarMoverProcess",
+		ProcessLoader<U8AvatarMoverProcess>::load);
+	_kernel->addProcessLoader("CruAvatarMoverProcess",
+		ProcessLoader<CruAvatarMoverProcess>::load);
 	_kernel->addProcessLoader("QuickAvatarMoverProcess",
 		ProcessLoader<QuickAvatarMoverProcess>::load);
 	_kernel->addProcessLoader("PathfinderProcess",
 		ProcessLoader<PathfinderProcess>::load);
+	_kernel->addProcessLoader("CruPathfinderProcess",
+		ProcessLoader<CruPathfinderProcess>::load);
 	_kernel->addProcessLoader("SpriteProcess",
 		ProcessLoader<SpriteProcess>::load);
 	_kernel->addProcessLoader("CameraProcess",
@@ -315,6 +301,8 @@ bool Ultima8Engine::startup() {
 		ProcessLoader<SuperSpriteProcess>::load);
 	_kernel->addProcessLoader("AttackProcess",
 		ProcessLoader<AttackProcess>::load);
+	_kernel->addProcessLoader("AutoFirerProcess",
+		ProcessLoader<AutoFirerProcess>::load);
 
 	_objectManager = new ObjectManager();
 	_mouse = new Mouse();
@@ -324,19 +312,39 @@ bool Ultima8Engine::startup() {
 
 	pout << "-- Pentagram Initialized -- " << Std::endl << Std::endl;
 
-	// We Attempt to startup _game
-	setupGameList();
-	GameInfo *info = getDefaultGame();
-
-	if (setupGame(info)) {
+	if (setupGame()) {
 		GraphicSysInit();
 		if (!startupGame())
 			return false;
 	} else {
 		// Couldn't setup the game, should never happen?
-		CANT_HAPPEN_MSG("default game failed to initialize");
+		CANT_HAPPEN_MSG("game failed to initialize");
 	}
 	paint();
+	return true;
+}
+
+bool Ultima8Engine::setupGame() {
+	istring gamename = _gameDescription->desc.gameId;
+	GameInfo *info = new GameInfo;
+	bool detected = getGameInfo(gamename, info);
+
+	// output detected game info
+	debugN(MM_INFO, "%s: ", gamename.c_str());
+	if (detected) {
+		// add game to games map
+		Std::string details = info->getPrintDetails();
+		debugN(MM_INFO, "%s", details.c_str());
+	} else {
+		debugN(MM_INFO, "unknown, skipping");
+		return false;
+	}
+
+	_gameInfo = info;
+
+	pout << "Selected game: " << info->_name << Std::endl;
+	pout << info->getPrintDetails() << Std::endl;
+
 	return true;
 }
 
@@ -350,7 +358,7 @@ bool Ultima8Engine::startupGame() {
 	if (_gameInfo->_type == GameInfo::GAME_U8) {
 		_ucMachine = new UCMachine(U8Intrinsics, 256);
 	} else if (_gameInfo->_type == GameInfo::GAME_REMORSE) {
-		_ucMachine = new UCMachine(RemorseIntrinsics, 308);
+		_ucMachine = new UCMachine(RemorseIntrinsics, 311);
 	} else if (_gameInfo->_type == GameInfo::GAME_REGRET) {
 		_ucMachine = new UCMachine(RegretIntrinsics, 350);
 	} else {
@@ -366,25 +374,19 @@ bool Ultima8Engine::startupGame() {
 
 	_game = Game::createGame(getGameInfo());
 
-	_settingMan->setDefault("ttf", false);
-	_settingMan->get("ttf", _ttfOverrides);
-
-	_settingMan->setDefault("frameSkip", false);
-	_settingMan->get("frameSkip", _frameSkip);
-
-	_settingMan->setDefault("frameLimit", true);
-	_settingMan->get("frameLimit", _frameLimit);
-
-	_settingMan->setDefault("interpolate", true);
-	_settingMan->get("interpolate", _interpolate);
-
-	_settingMan->setDefault("cheat", false);
-	_settingMan->get("cheat", _cheatsEnabled);
+	ConfMan.registerDefault("font_override", false);
+	ConfMan.registerDefault("font_antialiasing", true);
+	ConfMan.registerDefault("frameSkip", false);
+	ConfMan.registerDefault("frameLimit", true);
+	// Position interpolation looks nice on U8, but causes Crusader to look janky.
+	ConfMan.registerDefault("interpolate", _gameInfo->_type == GameInfo::GAME_U8);
+	ConfMan.registerDefault("cheat", false);
 
 	bool loaded = _game->loadFiles();
 	if (!loaded)
 		return false;
-	_gameData->setupFontOverrides();
+
+	applyGameSettings();
 
 	// Create Midi Driver for Ultima 8
 	if (getGameInfo()->_type == GameInfo::GAME_U8)
@@ -392,7 +394,7 @@ bool Ultima8Engine::startupGame() {
 
 	int saveSlot = ConfMan.hasKey("save_slot") ? ConfMan.getInt("save_slot") : -1;
 	if (saveSlot == -1)
-		_settingMan->get("lastSave", saveSlot);
+		saveSlot = ConfMan.getInt("lastSave");
 
 	newGame(saveSlot);
 
@@ -433,15 +435,19 @@ void Ultima8Engine::shutdownGame(bool reloading) {
 
 	_desktopGump = nullptr;
 	_gameMapGump = nullptr;
-	_scalerGump = nullptr;
 	_inverterGump = nullptr;
 
 	_timeOffset = -(int32)Kernel::get_instance()->getFrameNum();
 	_saveCount = 0;
 	_hasCheated = false;
 
-	// Kill Game
-	CoreApp::killGame();
+	_configFileMan->clearRoot("bindings");
+	_configFileMan->clearRoot("language");
+	_configFileMan->clearRoot("weapons");
+	_configFileMan->clearRoot("armour");
+	_configFileMan->clearRoot("monsters");
+	_configFileMan->clearRoot("game");
+	_gameInfo = nullptr;
 
 	pout << "-- Game Shutdown -- " << Std::endl;
 
@@ -455,77 +461,47 @@ void Ultima8Engine::shutdownGame(bool reloading) {
 		_desktopGump->MakeFocus();
 
 		if (GAME_IS_U8) {
-			debugN(MM_INFO, "Creating _scalerGump...\n");
-			_scalerGump = new ScalerGump(0, 0, dims.width(), dims.height());
-			_scalerGump->InitGump(0);
-
-			Rect scaled_dims;
-			_scalerGump->GetDims(scaled_dims);
-
 			debugN(MM_INFO, "Creating Inverter...\n");
-			_inverterGump = new InverterGump(0, 0, scaled_dims.width(), scaled_dims.height());
+			_inverterGump = new InverterGump(0, 0, dims.width(), dims.height());
 			_inverterGump->InitGump(0);
 		}
 	}
 }
 
-void Ultima8Engine::changeGame(istring newgame) {
-	_changeGameName = newgame;
-}
-
-void Ultima8Engine::menuInitMinimal(istring gamename) {
-	// Only if in the pentagram menu
-	if (_gameInfo->_name != "pentagram") return;
-	GameInfo *info = getGameInfo(gamename);
-	if (!info) info = getGameInfo("pentagram");
-	assert(info);
-
-	pout  << Std::endl << "-- Loading minimal _game data for: " << info->_name << " --" << Std::endl;
-
-	FORGET_OBJECT(_game);
-	FORGET_OBJECT(_gameData);
-
-
-	setupGamePaths(info);
-
-	if (info->_name == "pentagram") return;
-
-	_gameData = new GameData(info);
-	_game = Game::createGame(info);
-
-	_game->loadFiles();
-	_gameData->setupFontOverrides();
-
-	pout << "-- Finished loading minimal--" << Std::endl << Std::endl;
+//
+// To time the frames, we use "fast" ticks which come 3000 times a second.
+//
+static uint32 _fastTicksNow() {
+	return g_system->getMillis() * 3;
 }
 
 bool Ultima8Engine::runGame() {
 	_isRunning = true;
 
-	int32 next_ticks = g_system->getMillis() * 3;  // Next time is right now!
+	int32 next_ticks = _fastTicksNow();  // Next time is right now!
 
 	Common::Event event;
 	while (_isRunning) {
 		_inBetweenFrame = true;  // Will get set false if it's not an _inBetweenFrame
 
 		if (!_frameLimit) {
-			_kernel->runProcesses();
-			if (GAME_IS_CRUSADER)
+			for (unsigned int tick = 0; tick < Kernel::TICKS_PER_FRAME; tick++) {
 				_kernel->runProcesses();
-			_desktopGump->run();
+				_desktopGump->run();
+			}
 			_inBetweenFrame = false;
-			next_ticks = _animationRate + g_system->getMillis() * 3;
+			next_ticks = _animationRate + _fastTicksNow();
 			_lerpFactor = 256;
 		} else {
-			int32 ticks = g_system->getMillis() * 3;
+			int32 ticks = _fastTicksNow();
 			int32 diff = next_ticks - ticks;
 
 			while (diff < 0) {
 				next_ticks += _animationRate;
-				_kernel->runProcesses();
-				if (GAME_IS_CRUSADER)
+				for (unsigned int tick = 0; tick < Kernel::TICKS_PER_FRAME; tick++) {
 					_kernel->runProcesses();
-				_desktopGump->run();
+					_desktopGump->run();
+				}
 #if 0
 				perr << "--------------------------------------" << Std::endl;
 				perr << "NEW FRAME" << Std::endl;
@@ -533,7 +509,7 @@ bool Ultima8Engine::runGame() {
 #endif
 				_inBetweenFrame = false;
 
-				ticks = g_system->getMillis() * 3;
+				ticks = _fastTicksNow();
 
 				// If frame skipping is off, we will only recalc next
 				// ticks IF the frames are taking up 'way' too much time.
@@ -558,28 +534,6 @@ bool Ultima8Engine::runGame() {
 
 		// Paint Screen
 		paint();
-
-		if (!_changeGameName.empty()) {
-			pout << "Changing Game to: " << _changeGameName << Std::endl;
-
-			GameInfo *info = getGameInfo(_changeGameName);
-
-			if (info) {
-				shutdownGame();
-
-				_changeGameName.clear();
-
-				if (setupGame(info)) {
-					if (!startupGame())
-						return false;
-				} else {
-					CANT_HAPPEN_MSG("Failed to start up game with valid info.");
-				}
-			} else {
-				perr << "Game '" << _changeGameName << "' not found" << Std::endl;
-				_changeGameName.clear();
-			}
-		}
 
 		if (!_errorMessage.empty()) {
 			MessageBoxGump::Show(_errorTitle, _errorMessage, 0xFF8F3030);
@@ -610,10 +564,17 @@ void Ultima8Engine::paint() {
 	++t;
 
 	// Begin _painting
-	_painting = true;
 	_screen->BeginPainting();
 
 	tpaint -= g_system->getMillis();
+
+#ifdef DEBUG
+	// Fill the screen with an annoying color so we can see fast area bugs
+	Rect r;
+	_screen->GetSurfaceDims(r);
+	_screen->Fill32(0xFF1010FF, 0, 0, r.width(), r.height());
+#endif
+
 	_desktopGump->Paint(_screen, _lerpFactor, false);
 	tpaint += g_system->getMillis();
 
@@ -622,23 +583,21 @@ void Ultima8Engine::paint() {
 
 	// End _painting
 	_screen->EndPainting();
-	_painting = false;
 }
 
 void Ultima8Engine::GraphicSysInit() {
 	if (GAME_IS_U8) {
-		_settingMan->setDefault("width", U8_DEFAULT_SCREEN_WIDTH);
-		_settingMan->setDefault("height", U8_DEFAULT_SCREEN_HEIGHT);
+		ConfMan.registerDefault("width", U8_DEFAULT_SCREEN_WIDTH);
+		ConfMan.registerDefault("height", U8_DEFAULT_SCREEN_HEIGHT);
 	} else {
-		_settingMan->setDefault("width", CRUSADER_DEFAULT_SCREEN_WIDTH);
-		_settingMan->setDefault("height", CRUSADER_DEFAULT_SCREEN_HEIGHT);
+		ConfMan.registerDefault("width", CRUSADER_DEFAULT_SCREEN_WIDTH);
+		ConfMan.registerDefault("height", CRUSADER_DEFAULT_SCREEN_HEIGHT);
 	}
-	_settingMan->setDefault("bpp", 16);
+	ConfMan.registerDefault("bpp", 16);
 
-	int width, height, bpp;
-	_settingMan->get("width", width);
-	_settingMan->get("height", height);
-	_settingMan->get("bpp", bpp);
+	int width = ConfMan.getInt("width");
+	int height = ConfMan.getInt("height");
+	int bpp = ConfMan.getInt("bpp");
 
 	if (_screen) {
 		Rect old_dims;
@@ -677,33 +636,12 @@ void Ultima8Engine::GraphicSysInit() {
 	debugN(MM_INFO, "Loading Default Mouse Cursor...\n");
 	_mouse->setup();
 
-	Std::string alt_confont;
-	bool confont_loaded = false;
-
-	if (_settingMan->get("console_font", alt_confont)) {
-		debugN(MM_INFO, "Alternate console font found...\n");
-		confont_loaded = LoadConsoleFont(alt_confont);
-	}
-
-	if (!confont_loaded) {
-		debugN(MM_INFO, "Loading default console font...\n");
-		if (!LoadConsoleFont("@data/fixedfont.ini")) {
-			error("Failed to load console font. Exiting");
-		}
-	}
-
 	_desktopGump = new DesktopGump(0, 0, width, height);
 	_desktopGump->InitGump(0);
 	_desktopGump->MakeFocus();
 
 	if (GAME_IS_U8) {
-		_scalerGump = new ScalerGump(0, 0, width, height);
-		_scalerGump->InitGump(0);
-
-		Rect scaled_dims;
-		_scalerGump->GetDims(scaled_dims);
-
-		_inverterGump = new InverterGump(0, 0, scaled_dims.width(), scaled_dims.height());
+		_inverterGump = new InverterGump(0, 0, width, height);
 		_inverterGump->InitGump(0);
 	}
 
@@ -716,45 +654,20 @@ void Ultima8Engine::GraphicSysInit() {
 		showSplashScreen();
 	}
 
-	bool ttf_antialiasing = true;
-	_settingMan->setDefault("ttf_antialiasing", true);
-	_settingMan->get("ttf_antialiasing", ttf_antialiasing);
-
-	_fontManager = new FontManager(ttf_antialiasing);
 	_paletteManager = new PaletteManager(new_screen);
 
-	// TODO: assign names to these fontnumbers somehow
-	_fontManager->loadTTFont(0, "Vera.ttf", 18, 0xFFFFFF, 0);
-	_fontManager->loadTTFont(1, "VeraBd.ttf", 12, 0xFFFFFF, 0);
-	// GameWidget's version number information:
-	_fontManager->loadTTFont(2, "Vera.ttf", 8, 0xA0A0A0, 0);
-
-	bool faded_modal = true;
-	_settingMan->setDefault("fadedModal", faded_modal);
-	_settingMan->get("fadedModal", faded_modal);
+	ConfMan.registerDefault("fadedModal", true);
+	bool faded_modal = ConfMan.getBool("fadedModal");
 	DesktopGump::SetFadedModal(faded_modal);
 
 	paint();
 }
 
 void Ultima8Engine::changeVideoMode(int width, int height) {
-	if (width > 0) _settingMan->set("width", width);
-	if (height > 0) _settingMan->set("height", height);
+	if (width > 0) width = ConfMan.getInt("width");
+	if (height > 0) height = ConfMan.getInt("height");
 
 	GraphicSysInit();
-}
-
-bool Ultima8Engine::LoadConsoleFont(Std::string confontini) {
-	// try to load the file
-	debugN(MM_INFO, "Loading console font config: %s... ", confontini.c_str());
-	if (_configFileMan->readConfigFile(confontini, "confont", true))
-		pout << "Ok" << Std::endl;
-	else {
-		pout << "Failed" << Std::endl;
-		return false;
-	}
-
-	return true;
 }
 
 void Ultima8Engine::enterTextMode(Gump *gump) {
@@ -762,11 +675,16 @@ void Ultima8Engine::enterTextMode(Gump *gump) {
 		_textModes.remove(gump->getObjId());
 	}
 	_textModes.push_front(gump->getObjId());
+
+	MetaEngine::setTextInputActive(true);
 }
 
 void Ultima8Engine::leaveTextMode(Gump *gump) {
 	if (!_textModes.empty())
 		_textModes.remove(gump->getObjId());
+
+	if (_textModes.empty())
+		MetaEngine::setTextInputActive(false);
 }
 
 void Ultima8Engine::handleEvent(const Common::Event &event) {
@@ -828,50 +746,50 @@ void Ultima8Engine::handleEvent(const Common::Event &event) {
 
 	// Text mode input. A few hacks here
 	Gump *gump = nullptr;
+	while (!_textModes.empty()) {
+		gump = dynamic_cast<Gump *>(_objectManager->getObject(_textModes.front()));
+		if (gump)
+			break;
 
-	if (!_textModes.empty()) {
-		while (!_textModes.empty()) {
-			gump = dynamic_cast<Gump *>(_objectManager->getObject(_textModes.front()));
-			if (gump)
-				break;
-
-			_textModes.pop_front();
+		_textModes.pop_front();
+		if (_textModes.empty()) {
+			MetaEngine::setTextInputActive(false);
 		}
+	}
 
-		if (gump) {
-			switch (event.type) {
-			case Common::EVENT_KEYDOWN:
-				// Paste from Clip-Board on Ctrl-V - Note this should be a flag of some sort
-				if (event.kbd.keycode == Common::KEYCODE_v && (event.kbd.flags & Common::KBD_CTRL)) {
-					if (!g_system->hasTextInClipboard())
-						return;
-
-					Common::String text = g_system->getTextFromClipboard();
-
-					// Only read the first line of text
-					while (!text.empty() && text.firstChar() >= ' ')
-						gump->OnTextInput(text.firstChar());
-
+	if (gump) {
+		switch (event.type) {
+		case Common::EVENT_KEYDOWN:
+			// Paste from Clip-Board on Ctrl-V - Note this should be a flag of some sort
+			if (event.kbd.keycode == Common::KEYCODE_v && (event.kbd.flags & Common::KBD_CTRL)) {
+				if (!g_system->hasTextInClipboard())
 					return;
-				}
 
-				if (event.kbd.ascii >= ' ' &&
-					event.kbd.ascii <= 255 &&
-					!(event.kbd.ascii >= 0x7F && // control chars
-						event.kbd.ascii <= 0x9F)) {
-					gump->OnTextInput(event.kbd.ascii);
-				}
+				Common::String text = g_system->getTextFromClipboard();
 
-				gump->OnKeyDown(event.kbd.keycode, event.kbd.flags);
+				// Only read the first line of text
+				while (!text.empty() && text.firstChar() >= ' ')
+					gump->OnTextInput(text.firstChar());
+
 				return;
-
-			case Common::EVENT_KEYUP:
-				gump->OnKeyUp(event.kbd.keycode);
-				return;
-
-			default:
-				break;
 			}
+
+			if (event.kbd.ascii >= ' ' &&
+				event.kbd.ascii <= 255 &&
+				!(event.kbd.ascii >= 0x7F && // control chars
+					event.kbd.ascii <= 0x9F)) {
+				gump->OnTextInput(event.kbd.ascii);
+			}
+
+			gump->OnKeyDown(event.kbd.keycode, event.kbd.flags);
+			return;
+
+		case Common::EVENT_KEYUP:
+			gump->OnKeyUp(event.kbd.keycode);
+			return;
+
+		default:
+			break;
 		}
 	}
 }
@@ -880,6 +798,48 @@ void Ultima8Engine::handleDelayedEvents() {
 	//uint32 now = g_system->getMillis();
 
 	_mouse->handleDelayedEvents();
+}
+
+bool Ultima8Engine::getGameInfo(const istring &game, GameInfo *ginfo) {
+	// first try getting the information from the config file
+	// if that fails, try to autodetect it
+
+	ginfo->_name = game;
+	ginfo->_type = GameInfo::GAME_UNKNOWN;
+	ginfo->version = 0;
+	ginfo->_language = GameInfo::GAMELANG_UNKNOWN;
+
+	assert(game == "ultima8" || game == "remorse" || game == "regret");
+
+	if (game == "ultima8")
+		ginfo->_type = GameInfo::GAME_U8;
+	else if (game == "remorse")
+		ginfo->_type = GameInfo::GAME_REMORSE;
+	else if (game == "regret")
+		ginfo->_type = GameInfo::GAME_REGRET;
+
+	switch (_gameDescription->desc.language) {
+	case Common::EN_ANY:
+		ginfo->_language = GameInfo::GAMELANG_ENGLISH;
+		break;
+	case Common::FR_FRA:
+		ginfo->_language = GameInfo::GAMELANG_FRENCH;
+		break;
+	case Common::DE_DEU:
+		ginfo->_language = GameInfo::GAMELANG_GERMAN;
+		break;
+	case Common::ES_ESP:
+		ginfo->_language = GameInfo::GAMELANG_SPANISH;
+		break;
+	case Common::JA_JPN:
+		ginfo->_language = GameInfo::GAMELANG_JAPANESE;
+		break;
+	default:
+		error("Unknown language");
+		break;
+	}
+
+	return ginfo->_type != GameInfo::GAME_UNKNOWN;
 }
 
 void Ultima8Engine::writeSaveInfo(Common::WriteStream *ws) {
@@ -903,11 +863,19 @@ void Ultima8Engine::writeSaveInfo(Common::WriteStream *ws) {
 }
 
 bool Ultima8Engine::canSaveGameStateCurrently(bool isAutosave) {
-	if (_desktopGump->FindGump<ModalGump>() || _avatarInStasis)
-		// Can't save when a modal gump is open, or avatar in statsis  during cutscenes
+	// Can't save when avatar in stasis during cutscenes
+	if (_avatarInStasis || _cruStasis)
 		return false;
 
-	if (dynamic_cast<StartU8Process *>(_kernel->getRunningProcess()))
+	// Check for gumps that prevent saving
+	if (_desktopGump->FindGump(&HasPreventSaveFlag, true))
+	{
+		return false;
+	}
+
+
+	if (dynamic_cast<StartU8Process *>(_kernel->getRunningProcess())
+		|| dynamic_cast<StartCrusaderProcess *>(_kernel->getRunningProcess()))
 		// Don't save while starting up.
 		return false;
 
@@ -919,10 +887,10 @@ bool Ultima8Engine::canSaveGameStateCurrently(bool isAutosave) {
 	return true;
 }
 
-bool Ultima8Engine::saveGame(int slot, const Std::string &desc, bool ignore_modals) {
-	// Don't allow saving with Modals open
-	if (!ignore_modals && _desktopGump->FindGump<ModalGump>()) {
-		pout << "Can't save: modal gump open." << Std::endl;
+bool Ultima8Engine::saveGame(int slot, const Std::string &desc) {
+	// Check for gumps that prevent saving
+	if ( _desktopGump->FindGump(&HasPreventSaveFlag, true)) {
+		pout << "Can't save: open gump preventing save." << Std::endl;
 		return false;
 	}
 
@@ -940,9 +908,11 @@ bool Ultima8Engine::saveGame(int slot, const Std::string &desc, bool ignore_moda
 Common::Error Ultima8Engine::loadGameState(int slot) {
 	Common::Error result = Shared::UltimaEngine::loadGameState(slot);
 	if (result.getCode() == Common::kNoError)
-		_settingMan->set("lastSave", slot);
+		ConfMan.setInt("lastSave", slot);
 	else
-		_settingMan->set("lastSave", "");
+		ConfMan.set("lastSave", "");
+
+	ConfMan.flushToDisk();
 
 	return result;
 }
@@ -952,10 +922,12 @@ Common::Error Ultima8Engine::saveGameState(int slot, const Common::String &desc,
 
 	if (!isAutosave) {
 		if (result.getCode() == Common::kNoError)
-			_settingMan->set("lastSave", slot);
+			ConfMan.setInt("lastSave", slot);
 		else
-			_settingMan->set("lastSave", "");
+			ConfMan.set("lastSave", "");
 	}
+
+	ConfMan.flushToDisk();
 
 	return result;
 }
@@ -982,53 +954,51 @@ Common::Error Ultima8Engine::saveGameStream(Common::WriteStream *stream, bool is
 	_saveCount++;
 
 	SavegameWriter *sgw = new SavegameWriter(stream);
-
-	// We'll make it 2KB initially
-	OAutoBufferDataSource buf(2048);
+	Common::MemoryWriteStreamDynamic buf(DisposeAfterUse::YES);
 
 	_gameInfo->save(&buf);
 	sgw->writeFile("GAME", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	writeSaveInfo(&buf);
 	sgw->writeFile("INFO", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_kernel->save(&buf);
 	sgw->writeFile("KERNEL", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_objectManager->save(&buf);
 	sgw->writeFile("OBJECTS", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_world->save(&buf);
 	sgw->writeFile("WORLD", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_world->saveMaps(&buf);
 	sgw->writeFile("MAPS", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_world->getCurrentMap()->save(&buf);
 	sgw->writeFile("CURRENTMAP", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_ucMachine->saveStrings(&buf);
 	sgw->writeFile("UCSTRINGS", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_ucMachine->saveGlobals(&buf);
 	sgw->writeFile("UCGLOBALS", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	_ucMachine->saveLists(&buf);
 	sgw->writeFile("UCLISTS", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	save(&buf);
 	sgw->writeFile("APP", &buf);
-	buf.clear();
+	buf.seek(0);
 
 	sgw->finish();
 
@@ -1062,10 +1032,10 @@ void Ultima8Engine::resetEngine() {
 	// Reset thet gumps
 	_desktopGump = nullptr;
 	_gameMapGump = nullptr;
-	_scalerGump = nullptr;
 	_inverterGump = nullptr;
 
 	_textModes.clear();
+	MetaEngine::setTextInputActive(false);
 
 	// reset mouse cursor
 	_mouse->popAllCursors();
@@ -1091,43 +1061,31 @@ void Ultima8Engine::setupCoreGumps() {
 	_desktopGump->MakeFocus();
 
 	if (GAME_IS_U8) {
-		debugN(MM_INFO, "Creating ScalerGump...\n");
-		_scalerGump = new ScalerGump(0, 0, dims.width(), dims.height());
-		_scalerGump->InitGump(0);
-
-		Rect scaled_dims;
-		_scalerGump->GetDims(scaled_dims);
-
 		debugN(MM_INFO, "Creating Inverter...\n");
-		_inverterGump = new InverterGump(0, 0, scaled_dims.width(), scaled_dims.height());
+		_inverterGump = new InverterGump(0, 0, dims.width(), dims.height());
 		_inverterGump->InitGump(0);
-
-		debugN(MM_INFO, "Creating GameMapGump...\n");
-		_gameMapGump = new GameMapGump(0, 0, scaled_dims.width(), scaled_dims.height());
-		_gameMapGump->InitGump(0);
-	} else {
-		_gameMapGump = new GameMapGump(0, 0, dims.width(), dims.height());
-		_gameMapGump->InitGump(0);
 	}
+	debugN(MM_INFO, "Creating GameMapGump...\n");
+	_gameMapGump = new GameMapGump(0, 0, dims.width(), dims.height());
+	_gameMapGump->InitGump(0);
 
 	// TODO: clean this up
 	if (GAME_IS_U8) {
 		assert(_desktopGump->getObjId() == 256);
-		assert(_scalerGump->getObjId() == 257);
-		assert(_inverterGump->getObjId() == 258);
-		assert(_gameMapGump->getObjId() == 259);
+		assert(_inverterGump->getObjId() == 257);
+		assert(_gameMapGump->getObjId() == 258);
 	}
 
-	for (uint16 i = 261; i < 384; ++i)
+	for (uint16 i = 259; i < 384; ++i)
 		_objectManager->reserveObjId(i);
 }
 
-bool Ultima8Engine::newGame(int saveSlot) {
-	debugN(MM_INFO, "Starting New Game...\n");
+bool Ultima8Engine::newGame(int saveSlot, int difficulty) {
+	debugN(MM_INFO, "Starting New Game (slot %d difficulty %d)... \n", saveSlot, difficulty);
 
 	// First validate we still have a save file for the slot
 	if (saveSlot != -1) {
-		SaveStateDescriptor desc = getMetaEngine().querySaveMetaInfos(_targetName.c_str(), saveSlot);
+		SaveStateDescriptor desc = getMetaEngine()->querySaveMetaInfos(_targetName.c_str(), saveSlot);
 		if (desc.getSaveSlot() != saveSlot)
 			saveSlot = -1;
 	}
@@ -1142,10 +1100,14 @@ bool Ultima8Engine::newGame(int saveSlot) {
 	CameraProcess::SetCameraProcess(new CameraProcess(1)); // Follow Avatar
 
 	debugN(MM_INFO, "Create persistent Processes...\n");
-	_avatarMoverProcess = new AvatarMoverProcess();
+	if (GAME_IS_U8)
+		_avatarMoverProcess = new U8AvatarMoverProcess();
+	else
+		_avatarMoverProcess = new CruAvatarMoverProcess();
 	_kernel->addProcess(_avatarMoverProcess);
 
-	_kernel->addProcess(new HealProcess());
+	if (GAME_IS_U8)
+		_kernel->addProcess(new HealProcess());
 
 	_kernel->addProcess(new SchedulerProcess());
 
@@ -1162,6 +1124,10 @@ bool Ultima8Engine::newGame(int saveSlot) {
 
 	_game->startInitialUsecode(saveSlot);
 
+	if (difficulty > 0) {
+		_world->get_instance()->setGameDifficulty(difficulty);
+	}
+
 	if (GAME_IS_CRUSADER) {
 		_kernel->addProcess(new TargetReticleProcess());
 		_kernel->addProcess(new ItemSelectionProcess());
@@ -1171,7 +1137,7 @@ bool Ultima8Engine::newGame(int saveSlot) {
 	}
 
 	if (saveSlot == -1)
-		_settingMan->set("lastSave", "");
+		ConfMan.set("lastSave", "");
 
 	return true;
 }
@@ -1184,6 +1150,43 @@ void Ultima8Engine::syncSoundSettings() {
 	MidiPlayer *midiPlayer = audioMixer ? audioMixer->getMidiPlayer() : nullptr;
 	if (midiPlayer)
 		midiPlayer->setVolume(_mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType));
+}
+
+void Ultima8Engine::applyGameSettings() {
+	UltimaEngine::applyGameSettings();
+
+	bool fontOverride = ConfMan.getBool("font_override");
+	bool fontAntialiasing = ConfMan.getBool("font_antialiasing");
+
+	if (_fontOverride != fontOverride || _fontAntialiasing != fontAntialiasing) {
+		_fontOverride = fontOverride;
+		_fontAntialiasing = fontAntialiasing;
+
+		_fontManager->resetGameFonts();
+
+		// TODO: assign names to these fontnumbers somehow
+		_fontManager->loadTTFont(0, "Vera.ttf", 18, 0xFFFFFF, 0);
+		_fontManager->loadTTFont(1, "VeraBd.ttf", 12, 0xFFFFFF, 0);
+		// GameWidget's version number information:
+		_fontManager->loadTTFont(2, "Vera.ttf", 8, 0xA0A0A0, 0);
+
+		_gameData->setupFontOverrides();
+	}
+
+	_frameSkip = ConfMan.getBool("frameSkip");
+	_frameLimit = ConfMan.getBool("frameLimit");
+	_interpolate = ConfMan.getBool("interpolate");
+	_cheatsEnabled = ConfMan.getBool("cheat");
+
+}
+
+void Ultima8Engine::openConfigDialog() {
+	GUI::ConfigDialog dlg;
+	dlg.runModal();
+
+	g_system->applyBackendSettings();
+	applyGameSettings();
+	syncSoundSettings();
 }
 
 Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) {
@@ -1207,7 +1210,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	_mouse->paint();
 	_screen->EndPainting();
 
-	IDataSource *ds;
+	Common::SeekableReadStream *ds;
 	GameInfo saveinfo;
 	ds = sg->getDataSource("GAME");
 	uint32 version = sg->getVersion();
@@ -1225,9 +1228,8 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 		message += "Savegame    : " + saveinfo.getPrintDetails();
 
 #ifdef DEBUG
-		bool ignore;
-		_settingMan->setDefault("ignore_savegame_mismatch", false);
-		_settingMan->get("ignore_savegame_mismatch", ignore);
+		ConfMan.registerDefault("ignore_savegame_mismatch", true);
+		bool ignore = ConfMan.getBool("ignore_savegame_mismatch");
 
 		if (!ignore) {
 			error("%s", message.c_str());
@@ -1235,6 +1237,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 		perr << message << Std::endl;
 #else
 		Error(message, "Error Loading savegame");
+		delete sg;
 		return Common::kReadingFailed;
 #endif
 	}
@@ -1244,6 +1247,8 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	setupCoreGumps();
 
 	// and load everything back (order matters)
+	// for each entry, check that we read exactly the number of bytes
+	// expected - anything else suggests a corrupt save (or a bug)
 	bool totalok = true;
 
 	Std::string message;
@@ -1252,6 +1257,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	// so load these first
 	ds = sg->getDataSource("UCSTRINGS");
 	ok = _ucMachine->loadStrings(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "UCSTRINGS: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "UCSTRINGS: failed\n";
@@ -1259,6 +1265,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 
 	ds = sg->getDataSource("UCGLOBALS");
 	ok = _ucMachine->loadGlobals(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "UCGLOBALS: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "UCGLOBALS: failed\n";
@@ -1266,6 +1273,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 
 	ds = sg->getDataSource("UCLISTS");
 	ok = _ucMachine->loadLists(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "UCLISTS: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "UCLISTS: failed\n";
@@ -1275,6 +1283,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	// KERNEL must be before APP, for the _avatarMoverProcess
 	ds = sg->getDataSource("KERNEL");
 	ok = _kernel->load(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "KERNEL: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "KERNEL: failed\n";
@@ -1282,6 +1291,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 
 	ds = sg->getDataSource("APP");
 	ok = load(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "APP: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "APP: failed\n";
@@ -1290,6 +1300,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	// WORLD must be before OBJECTS, for the egghatcher
 	ds = sg->getDataSource("WORLD");
 	ok = _world->load(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "WORLD: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "WORLD: failed\n";
@@ -1297,6 +1308,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 
 	ds = sg->getDataSource("CURRENTMAP");
 	ok = _world->getCurrentMap()->load(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "CURRENTMAP: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "CURRENTMAP: failed\n";
@@ -1304,6 +1316,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 
 	ds = sg->getDataSource("OBJECTS");
 	ok = _objectManager->load(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "OBJECTS: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "OBJECTS: failed\n";
@@ -1311,6 +1324,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 
 	ds = sg->getDataSource("MAPS");
 	ok = _world->loadMaps(ds, version);
+	ok &= (ds->pos() == ds->size() && !ds->eos());
 	totalok &= ok;
 	pout << "MAPS: " << (ok ? "ok" : "failed") << Std::endl;
 	if (!ok) message += "MAPS: failed\n";
@@ -1321,7 +1335,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	_mouse->pushMouseCursor();
 
 	if (!totalok) {
-		Error(message, "Error Loading savegame", true);
+		Error(message, "Error Loading savegame");
 		delete sg;
 		return Common::kReadingFailed;
 	}
@@ -1332,18 +1346,13 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	return Common::kNoError;
 }
 
-void Ultima8Engine::Error(Std::string message, Std::string title, bool exit_to_menu) {
-	if (title.empty()) title = exit_to_menu ? "Fatal Game Error" : "Error";
+void Ultima8Engine::Error(Std::string message, Std::string title) {
+	if (title.empty()) title = "Error";
 
 	perr << title << ": " << message << Std::endl;
 
 	_errorMessage = message;
 	_errorTitle = title;
-
-	if (exit_to_menu) {
-		_changeGameName = "pentagram";
-		Kernel::get_instance()->killProcesses(0, 6, false);
-	}
 }
 
 Gump *Ultima8Engine::getGump(uint16 gumpid) {
@@ -1358,8 +1367,8 @@ void Ultima8Engine::addGump(Gump *gump) {
 	assert(_desktopGump);
 
 	if (dynamic_cast<ShapeViewerGump *>(gump) || dynamic_cast<MiniMapGump *>(gump) ||
-		dynamic_cast<ScalerGump *>(gump) || dynamic_cast<MessageBoxGump *>(gump)// ||
-		//(_ttfOverrides && (dynamic_cast<BarkGump *>(gump) ||
+		dynamic_cast<MessageBoxGump *>(gump)// ||
+		//(_fontOverrides && (dynamic_cast<BarkGump *>(gump) ||
 		//                dynamic_cast<AskGump *>(gump)))
 		) {
 		_desktopGump->AddChild(gump);
@@ -1369,19 +1378,16 @@ void Ultima8Engine::addGump(Gump *gump) {
 		else
 			_desktopGump->AddChild(gump);
 	} else if (dynamic_cast<InverterGump *>(gump)) {
-		_scalerGump->AddChild(gump);
+		_desktopGump->AddChild(gump);
 	} else if (dynamic_cast<DesktopGump *>(gump)) {
 	} else {
-		if (GAME_IS_U8)
-			_scalerGump->AddChild(gump);
-		else
-			_desktopGump->AddChild(gump);
+		_desktopGump->AddChild(gump);
 	}
 }
 
 uint32 Ultima8Engine::getGameTimeInSeconds() {
 	// 1 second per every 30 frames
-	return (Kernel::get_instance()->getFrameNum() + _timeOffset) / 30; // constant!
+	return (Kernel::get_instance()->getFrameNum() + _timeOffset) / Kernel::FRAMES_PER_SECOND; // constant!
 }
 
 void Ultima8Engine::moveKeyEvent() {
@@ -1390,12 +1396,17 @@ void Ultima8Engine::moveKeyEvent() {
 
 bool Ultima8Engine::moveKeyDownRecently() {
 	uint32 nowframe = Kernel::get_instance()->getFrameNum();
-	return (nowframe - _moveKeyFrame) < 60;
+	return (nowframe - _moveKeyFrame) < 2 * Kernel::FRAMES_PER_SECOND;
 }
 
 void Ultima8Engine::save(Common::WriteStream *ws) {
 	uint8 s = (_avatarInStasis ? 1 : 0);
 	ws->writeByte(s);
+
+	if (GAME_IS_CRUSADER) {
+		uint8 f = (_unkCrusaderFlag ? 1 : 0);
+		ws->writeByte(f);
+	}
 
 	int32 absoluteTime = Kernel::get_instance()->getFrameNum() + _timeOffset;
 	ws->writeUint32LE(static_cast<uint32>(absoluteTime));
@@ -1415,6 +1426,10 @@ void Ultima8Engine::save(Common::WriteStream *ws) {
 
 bool Ultima8Engine::load(Common::ReadStream *rs, uint32 version) {
 	_avatarInStasis = (rs->readByte() != 0);
+
+	if (GAME_IS_CRUSADER) {
+		_unkCrusaderFlag  = (rs->readByte() != 0);
+	}
 
 	// no gump should be moused over after load
 	_mouse->resetMouseOverGump();
@@ -1439,6 +1454,20 @@ bool Ultima8Engine::load(Common::ReadStream *rs, uint32 version) {
 
 	_hasCheated = (rs->readByte() != 0);
 
+	// Integrity checks
+	if (!_avatarMoverProcess) {
+		warning("No AvatarMoverProcess.  Corrupt savegame?");
+		return false;
+	}
+	if (pal->_transform >= Transform_Invalid) {
+		warning("Invalid palette transform %d.  Corrupt savegame?", static_cast<int>(pal->_transform));
+		return false;
+	}
+	if (_saveCount > 1024*1024) {
+		warning("Improbable savecount %d.  Corrupt savegame?", _saveCount);
+		return false;
+	}
+
 	return true;
 }
 
@@ -1461,7 +1490,7 @@ uint32 Ultima8Engine::I_makeAvatarACheater(const uint8 * /*args*/,
 uint32 Ultima8Engine::I_getCurrentTimerTick(const uint8 * /*args*/,
 	unsigned int /*argsize*/) {
 	// number of ticks of a 60Hz timer, with the default animrate of 30Hz
-	return Kernel::get_instance()->getFrameNum() * 2;
+	return Kernel::get_instance()->getTickNum();
 }
 
 uint32 Ultima8Engine::I_setAvatarInStasis(const uint8 *args, unsigned int argsize) {
@@ -1478,13 +1507,12 @@ uint32 Ultima8Engine::I_getAvatarInStasis(const uint8 * /*args*/, unsigned int /
 }
 
 uint32 Ultima8Engine::I_setCruStasis(const uint8 *args, unsigned int argsize) {
-	// This is like avatar stasis, but stops a lot of other keyboard inputs too.
-	warning("I_setCruStasis: TODO: implement me");
+	get_instance()->setCruStasis(true);
 	return 0;
 }
 
 uint32 Ultima8Engine::I_clrCruStasis(const uint8 *args, unsigned int argsize) {
-	warning("I_clrCruStasis: TODO: implement me");
+	get_instance()->setCruStasis(false);
 	return 0;
 }
 
@@ -1527,7 +1555,7 @@ uint32 Ultima8Engine::I_setTimeInGameHours(const uint8 *args,
 	ARG_UINT16(newhour);
 
 	// 1 _game hour per every 27000 frames
-	int32   absolute = newhour * 27000;
+	int32 absolute = newhour * 27000;
 	get_instance()->_timeOffset = absolute - Kernel::get_instance()->getFrameNum();
 
 	return 0;

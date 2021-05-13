@@ -66,7 +66,7 @@ Common::String Comment::getName() const {
 }
 
 void Comment::play() {
-	for (int i = 0; i < _lines.size(); i++) {
+	for (uint i = 0; i < _lines.size(); i++) {
 		Common::String text = g_localizer->localize(_lines[i]._line.c_str());
 		warning("Line: %d Start: %d End: %d Id: %d Text: %s", i, _lines[i]._start, _lines[i]._end, _lines[i]._id, text.c_str());
 	}
@@ -149,7 +149,7 @@ void Commentary::playCurrentCommentary() {
 		warning("Commentary::playCurrentCommentary, no current commentary");
 	}
 }
- 
+
 void Commentary::setCurrentCommentary(const Common::String &name) {
 	warning("Commentary::setCurrentCommentary(%s)", name.c_str());
 	_currentCommentary = findCommentary(name);

@@ -24,7 +24,7 @@
 #define ULTIMA8_WORLD_ITEMSELECTIONPROCESS_H
 
 #include "ultima/ultima8/kernel/process.h"
-#include "ultima/ultima8/misc/p_dynamic_cast.h"
+#include "ultima/ultima8/misc/classtype.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -38,21 +38,20 @@ class ItemSelectionProcess : public Process {
 public:
 	ItemSelectionProcess();
 
-	// p_dynamic_cast stuff
 	ENABLE_RUNTIME_CLASSTYPE()
 
 	void run() override;
 
-	//!< Select the next item
-	bool selectNextItem();
+	//! Select the next item.  If grab is true, pick up loose items now.
+	bool selectNextItem(bool grab);
 
-	//!< Clear the selector
+	//! Clear the selector sprite
 	void clearSelection();
 
-	//!< Avatar moved - clear the selector if needed.
+	//! Avatar moved - clear the selector if needed.
 	void avatarMoved();
 
-	//!< Use the selected item (if any)
+	//! Use the selected item (if any)
 	void useSelectedItem();
 
 	bool loadData(Common::ReadStream *rs, uint32 version);
@@ -62,9 +61,9 @@ public:
 		return _instance;
 	}
 
-    uint16 getSelectedItem() const {
-        return _selectedItem;
-    }
+	uint16 getSelectedItem() const {
+		return _selectedItem;
+	}
 
 private:
 	void putItemSelectionOnItem(Item *item);

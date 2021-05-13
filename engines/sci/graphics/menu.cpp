@@ -288,7 +288,7 @@ void GfxMenu::kernelSetAttribute(uint16 menuId, uint16 itemId, uint16 attributeI
 	GuiMenuItemEntry *itemEntry = findItem(menuId, itemId);
 
 	if (!itemEntry) {
-		// PQ2 demo calls this, for example, but has no menus (bug report #3034507). Some SCI
+		// PQ2 demo calls this, for example, but has no menus (bug report #4948). Some SCI
 		// fan games (Al Pond 2, Aquarius) call this too on non-existent menu items. The
 		// original interpreter ignored these as well.
 		debugC(kDebugLevelGraphics, "Tried to setAttribute() on non-existent menu-item %d:%d", menuId, itemId);
@@ -933,6 +933,9 @@ GuiMenuItemEntry *GfxMenu::interactiveWithKeyboard() {
 		case kSciEventNone:
 			g_sci->sleep(2500 / 1000);
 			break;
+
+		case kSciEventQuit:
+			return NULL;
 
 		default:
 			break;

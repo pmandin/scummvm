@@ -25,15 +25,17 @@
 
 #include "backends/keymapper/keymap.h"
 #include "common/random.h"
+#include "common/rect.h"
+#include "engines/advancedDetector.h"
 #include "engines/engine.h"
 
+#include "engines/metaengine.h"
 #include "graphics/managed_surface.h"
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
-#include "metaengine.h"
-#include "twine/actor.h"
-#include "twine/input.h"
 #include "twine/detection.h"
+#include "twine/input.h"
+#include "twine/scene/actor.h"
 
 namespace TwinE {
 
@@ -44,12 +46,8 @@ namespace TwinE {
 /** Definition for Modification version */
 #define MODIFICATION_VERSION 2
 
-/** Original screen width */
-#define SCREEN_WIDTH 640
-/** Original screen height */
-#define SCREEN_HEIGHT 480
 /** Default frames per second */
-#define DEFAULT_FRAMES_PER_SECOND 19
+#define DEFAULT_FRAMES_PER_SECOND 20
 
 /** Number of colors used in the game */
 #define NUMOFCOLORS 256
@@ -58,12 +56,12 @@ static const struct TwinELanguage {
 	const char *name;
 	const char *id;
 } LanguageTypes[] = {
-    {"English", "EN_"},
-    {"French", "FR_"},
-    {"German", "DE_"},
-    {"Spanish", "SP_"},
-    {"Italian", "IT_"},
-    {"Portuguese", ""}};
+	{"English", "EN_"},
+	{"French", "FR_"},
+	{"German", "DE_"},
+	{"Spanish", "SP_"},
+	{"Italian", "IT_"},
+	{"Portuguese", ""}};
 
 enum MidiFileType {
 	MIDIFILE_NONE,
@@ -76,7 +74,7 @@ enum MovieType {
 	CONF_MOVIE_NONE = 0,
 	CONF_MOVIE_FLA = 1,
 	CONF_MOVIE_FLAWIDE = 2,
-	CONF_MOVIE_FLAPCX = 3
+	CONF_MOVIE_FLAGIF = 3
 };
 
 /** Configuration file structure
@@ -89,10 +87,12 @@ struct ConfigFile {
 	bool Voice = true;
 	/** Enable/Disable game dialogues */
 	bool FlagDisplayText = false;
+	/** Flag to display game debug */
+	bool Debug = false;
 	/** Type of music file to be used */
 	MidiFileType MidiType = MIDIFILE_NONE;
 	/** *Game version */
-	int32 Version = 0;
+	int32 Version = EUROPE_VERSION;
 	/** If you want to use the LBA CD or not */
 	int32 UseCD = 0;
 	/** Allow various sound types */
@@ -101,8 +101,6 @@ struct ConfigFile {
 	int32 Movie = CONF_MOVIE_FLA;
 	/** Flag used to keep the game frames per second */
 	int32 Fps = 0;
-	/** Flag to display game debug */
-	bool Debug = false;
 
 	// these settings are not available in the original version
 	/** Use cross fade effect while changing images, or be as the original */
@@ -111,6 +109,7 @@ struct ConfigFile {
 	bool WallCollision = false;
 	/** Use original autosaving system or save when you want */
 	bool UseAutoSaving = false;
+	bool Mouse = false;
 
 	// these settings can be changed in-game - and must be persisted
 	/** Shadow mode type, value: all, character only, none */
@@ -156,20 +155,66 @@ enum class EngineState {
 };
 
 struct ScopedEngineFreeze {
-	TwinEEngine* _engine;
-	ScopedEngineFreeze(TwinEEngine* engine);
+	TwinEEngine *_engine;
+	ScopedEngineFreeze(TwinEEngine *engine);
 	~ScopedEngineFreeze();
+};
+
+struct ScopedCursor {
+	TwinEEngine *_engine;
+	ScopedCursor(TwinEEngine *engine);
+	~ScopedCursor();
+};
+
+class ScopedFPS {
+private:
+	uint32 _fps;
+	uint32 _start;
+public:
+	ScopedFPS(uint32 fps = DEFAULT_FRAMES_PER_SECOND);
+	~ScopedFPS();
+};
+
+class FrameMarker {
+public:
+	~FrameMarker();
 };
 
 class TwinEEngine : public Engine {
 private:
-	int32 isTimeFreezed = 0;
-	int32 saveFreezedTime = 0;
-	ActorMoveStruct loopMovePtr; // mainLoopVar1
+	int32 _isTimeFreezed = 0;
+	int32 _saveFreezedTime = 0;
+	int32 _mouseCursorState = 0;
+	ActorMoveStruct _loopMovePtr; // mainLoopVar1
 	PauseToken _pauseToken;
 	TwineGameType _gameType;
 	EngineState _state = EngineState::Menu;
+	Common::String _queuedFlaMovie;
 
+	ScriptLife *_scriptLife;
+	ScriptMove *_scriptMove;
+
+	Common::RandomSource _rnd;
+	Common::Language _gameLang;
+
+	void processBookOfBu();
+	void processBonusList();
+	void processInventoryAction();
+	void processOptionsMenu();
+
+	void initConfigurations();
+	/** Initialize all needed stuffs at first time running engine */
+	void initAll();
+	void initEngine();
+	void processActorSamplePosition(int32 actorIdx);
+	/** Allocate video memory, both front and back buffers */
+	void allocVideoMemory(int32 w, int32 h);
+
+	/**
+	 * Game engine main loop
+	 * @return true if we want to show credit sequence
+	 */
+	int32 runGameEngine();
 public:
 	TwinEEngine(OSystem *system, Common::Language language, uint32 flagsTwineGameType, TwineGameType gameType);
 	~TwinEEngine() override;
@@ -187,8 +232,15 @@ public:
 	SaveStateList getSaveSlots() const;
 	void autoSave();
 
-	bool isLBA1() const { return _gameType == TwineGameType::GType_LBA; };
-	bool isLBA2() const { return _gameType == TwineGameType::GType_LBA2; };
+	void pushMouseCursorVisible();
+	void popMouseCursorVisible();
+
+	bool isLBA1() const { return _gameType == TwineGameType::GType_LBA; }
+	bool isLBA2() const { return _gameType == TwineGameType::GType_LBA2; }
+	bool isDemo() const { return (_gameFlags & ADGF_DEMO) != 0; };
+	const char *getGameId() const;
+
+	bool unlockAchievement(const Common::String &id);
 
 	Actor *_actor;
 	Animations *_animations;
@@ -207,8 +259,6 @@ public:
 	Resources *_resources;
 	Scene *_scene;
 	Screens *_screens;
-	ScriptLife *_scriptLife;
-	ScriptMove *_scriptMove;
 	Holomap *_holomap;
 	Sound *_sound;
 	Text *_text;
@@ -221,22 +271,16 @@ public:
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */
 	ConfigFile cfgfile;
 
-	/** Initialize LBA engine */
-	void initEngine();
-	void initMCGA();
-	void initSVGA();
+	int width() const;
+	int height() const;
+	Common::Rect rect() const;
+	Common::Rect centerOnScreen(int32 w, int32 h) const;
 
-	void initConfigurations();
-	/** Initialize all needed stuffs at first time running engine */
-	void initAll();
-	void processActorSamplePosition(int32 actorIdx);
-	/**
-	 * Game engine main loop
-	 * @return true if we want to show credit sequence
-	 */
-	int32 runGameEngine();
-	/** Allocate video memory, both front and back buffers */
-	void allocVideoMemory();
+	void initSceneryView();
+	void exitSceneryView();
+
+	void queueMovie(const char *filename);
+
 	/**
 	 * @return A random value between [0-max)
 	 */
@@ -244,6 +288,7 @@ public:
 	int32 quitGame = 0;
 	int32 lbaTime = 0;
 
+	Graphics::ManagedSurface imageBuffer;
 	/** Work video buffer */
 	Graphics::ManagedSurface workVideoBuffer;
 	/** Main game video buffer */
@@ -255,8 +300,6 @@ public:
 	/** Disable screen recenter */
 	bool disableScreenRecenter = false;
 
-	int32 zoomScreen = 0;
-
 	void freezeTime();
 	void unfreezeTime();
 
@@ -266,21 +309,27 @@ public:
 	 */
 	bool gameEngineLoop();
 
-	Common::RandomSource _rnd;
-	Common::Language _gameLang;
 	uint32 _gameFlags;
 
 	/**
 	 * Deplay certain seconds till proceed - Can also Skip this delay
-	 * @param time time in seconds to delay
+	 * @param time time in milliseconds to delay
 	 */
 	bool delaySkip(uint32 time);
 
 	/**
 	 * Set a new palette in the SDL screen buffer
-	 * @param palette palette to set
+	 * @param palette palette to set in RGBA
 	 */
 	void setPalette(const uint32 *palette);
+	/**
+	 * @brief Set the Palette object
+	 *
+	 * @param startColor the first palette entry to be updated
+	 * @param numColors the number of palette entries to be updated
+	 * @param palette palette to set in RGB
+	 */
+	void setPalette(uint startColor, uint numColors, const byte *palette);
 
 	/** Blit surface in the screen */
 	void flip();
@@ -291,8 +340,10 @@ public:
 	 * @param top top position to start copy
 	 * @param right right position to start copy
 	 * @param bottom bottom position to start copy
+	 * @param updateScreen Perform blitting to screen if @c true, otherwise just prepare the blit
 	 */
-	void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom);
+	void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom, bool updateScreen = false);
+	void copyBlockPhys(const Common::Rect &rect, bool updateScreen = false);
 
 	/** Cross fade feature
 	 * @param buffer screen buffer
@@ -307,11 +358,23 @@ public:
 	 * Display text in screen
 	 * @param x X coordinate in screen
 	 * @param y Y coordinate in screen
-	 * @param string text to display
+	 * @param text text to display
 	 * @param center if the text should be centered accoding with the giving positions
 	 */
-	void drawText(int32 x, int32 y, const char *string, int32 center);
+	void drawText(int32 x, int32 y, const Common::String &text, bool center = false, bool bigFont = false, int width = 100);
 };
+
+inline int TwinEEngine::width() const {
+	return frontVideoBuffer.w;
+}
+
+inline int TwinEEngine::height() const {
+	return frontVideoBuffer.h;
+}
+
+inline Common::Rect TwinEEngine::rect() const {
+	return Common::Rect(0, 0, frontVideoBuffer.w - 1, frontVideoBuffer.h - 1);
+}
 
 } // namespace TwinE
 

@@ -44,12 +44,12 @@
 #include "image/bmp.h"
 #endif
 
-OpenGLSdlGraphics3dManager::OpenGLSdlGraphics3dManager(SdlEventSource *eventSource, SdlWindow *window, const Capabilities &capabilities)
-	: SdlGraphics3dManager(eventSource, window),
+OpenGLSdlGraphics3dManager::OpenGLSdlGraphics3dManager(SdlEventSource *eventSource, SdlWindow *window, bool supportsFrameBuffer)
+	: SdlGraphicsManager(eventSource, window),
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	_glContext(nullptr),
 #endif
-	_capabilities(capabilities),
+	_supportsFrameBuffer(supportsFrameBuffer),
 	_overlayVisible(false),
 	_overlayScreen(nullptr),
 	_overlayBackground(nullptr),
@@ -283,6 +283,8 @@ void OpenGLSdlGraphics3dManager::createOrUpdateScreen() {
 	int obtainedHeight = effectiveHeight;
 #endif
 
+	handleResize(obtainedWidth, obtainedHeight);
+
 	// Compute the rectangle where to draw the game inside the effective screen
 	_gameRect = computeGameRect(renderToFrameBuffer, _engineRequestedWidth, _engineRequestedHeight,
 	                            obtainedWidth, obtainedHeight);
@@ -305,7 +307,7 @@ void OpenGLSdlGraphics3dManager::createOrUpdateScreen() {
 }
 
 Math::Rect2d OpenGLSdlGraphics3dManager::computeGameRect(bool renderToFrameBuffer, uint gameWidth, uint gameHeight,
-                                                      uint screenWidth, uint screenHeight) {
+													  uint screenWidth, uint screenHeight) {
 	if (renderToFrameBuffer) {
 		if (_lockAspectRatio) {
 			// The game is scaled to fit the screen, keeping the same aspect ratio
@@ -382,9 +384,9 @@ OpenGLSdlGraphics3dManager::OpenGLPixelFormat::OpenGLPixelFormat(uint screenByte
 }
 
 bool OpenGLSdlGraphics3dManager::createOrUpdateGLContext(uint gameWidth, uint gameHeight,
-                                                       uint effectiveWidth, uint effectiveHeight,
-                                                       bool renderToFramebuffer,
-                                                       bool engineSupportsArbitraryResolutions) {
+													   uint effectiveWidth, uint effectiveHeight,
+													   bool renderToFramebuffer,
+													   bool engineSupportsArbitraryResolutions) {
 	// Build a list of OpenGL pixel formats usable by ScummVM
 	Common::Array<OpenGLPixelFormat> pixelFormats;
 	if (_antialiasing > 0 && !renderToFramebuffer) {
@@ -421,10 +423,10 @@ bool OpenGLSdlGraphics3dManager::createOrUpdateGLContext(uint gameWidth, uint ga
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
 #else
-		// AmigaOS4's OpenGL implementation is close to 1.3. Until that changes we need
+		// The OpenGL implementation on AmigaOS4 is close to 1.3. Until that changes we need
 		// to use 1.3 as version or ScummVM will cease working at all on that platform.
 		// Profile Mask has to be 0 as well.
-		// This will be revised and removed once AmigaOS4 supports 2.x or OpenGLES2.
+		// This will be revised and removed once AmigaOS4 supports OpenGL 2.x or OpenGLES2.
 		#ifdef __amigaos4__
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -437,6 +439,12 @@ bool OpenGLSdlGraphics3dManager::createOrUpdateGLContext(uint gameWidth, uint ga
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 		uint32 sdlflags = SDL_WINDOW_OPENGL;
+
+#ifdef NINTENDO_SWITCH
+		// Switch quirk: Switch seems to need this flag, otherwise the screen
+		// is zoomed when switching from Normal graphics mode to OpenGL
+		sdlflags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+#endif
 
 		if (renderToFramebuffer || engineSupportsArbitraryResolutions) {
 			sdlflags |= SDL_WINDOW_RESIZABLE;
@@ -504,7 +512,7 @@ bool OpenGLSdlGraphics3dManager::createOrUpdateGLContext(uint gameWidth, uint ga
 
 bool OpenGLSdlGraphics3dManager::shouldRenderToFramebuffer() const {
 	bool engineSupportsArbitraryResolutions = !g_engine || g_engine->hasFeature(Engine::kSupportsArbitraryResolutions);
-	return !engineSupportsArbitraryResolutions && _capabilities.openGLFrameBuffer;
+	return !engineSupportsArbitraryResolutions && _supportsFrameBuffer;
 }
 
 bool OpenGLSdlGraphics3dManager::isVSyncEnabled() const {
@@ -669,6 +677,11 @@ int16 OpenGLSdlGraphics3dManager::getOverlayHeight() const {
 
 int16 OpenGLSdlGraphics3dManager::getOverlayWidth() const {
 	return _overlayScreen->getWidth();
+}
+
+bool OpenGLSdlGraphics3dManager::showMouse(bool visible) {
+	SDL_ShowCursor(visible);
+	return true;
 }
 
 void OpenGLSdlGraphics3dManager::warpMouse(int x, int y) {

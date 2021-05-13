@@ -20,7 +20,6 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/world/actors/cru_healer_process.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
 #include "ultima/ultima8/kernel/kernel.h"
@@ -29,7 +28,6 @@
 #include "ultima/ultima8/ultima8.h"
 #include "ultima/ultima8/audio/audio_process.h"
 
-#include "common/util.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -39,7 +37,6 @@ namespace Ultima8 {
 static const uint16 HEAL_START_SFX = 0xdb;
 static const uint16 HEAL_GOING_SFX = 0xba;
 
-// p_dynamic_cast stuff
 DEFINE_RUNTIME_CLASSTYPE_CODE(CruHealerProcess)
 
 CruHealerProcess::CruHealerProcess() : Process() {
@@ -75,7 +72,7 @@ void CruHealerProcess::run() {
 		return;
 	}
 
-    if (audio && !audio->isSFXPlayingForObject(HEAL_GOING_SFX, _itemNum))
+	if (audio && !audio->isSFXPlayingForObject(HEAL_GOING_SFX, _itemNum))
 		audio->playSFX(HEAL_GOING_SFX, 0x80, _itemNum, 1);
 
 	uint16 newHP = avatar->getHP() + 1;

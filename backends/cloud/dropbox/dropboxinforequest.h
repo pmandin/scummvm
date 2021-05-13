@@ -30,8 +30,10 @@
 namespace Cloud {
 namespace Dropbox {
 
+class DropboxStorage;
+
 class DropboxInfoRequest: public Networking::Request {
-	Common::String _token;
+	DropboxStorage *_storage;
 	Common::String _uid, _name, _email;
 	Storage::StorageInfoCallback _infoCallback;
 	Request *_workingRequest;
@@ -43,7 +45,7 @@ class DropboxInfoRequest: public Networking::Request {
 	void errorCallback(Networking::ErrorResponse error);
 	void finishInfo(StorageInfo info);
 public:
-	DropboxInfoRequest(Common::String token, Storage::StorageInfoCallback cb, Networking::ErrorCallback ecb);
+	DropboxInfoRequest(DropboxStorage *storage, Storage::StorageInfoCallback cb, Networking::ErrorCallback ecb);
 	virtual ~DropboxInfoRequest();
 
 	virtual void handle();

@@ -57,9 +57,9 @@ public:
 		return "zvision";
 	}
 
-    bool hasFeature(MetaEngineFeature f) const override;
+	bool hasFeature(MetaEngineFeature f) const override;
 	Common::KeymapArray initKeymaps(const char *target) const override;
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
@@ -112,13 +112,13 @@ Common::KeymapArray ZVisionMetaEngine::initKeymaps(const char *target) const {
 
 	Action *act;
 
-	act = new Action("LCLK", _("Left Click"));
+	act = new Action(kStandardActionLeftClick, _("Left Click"));
 	act->setLeftClickEvent();
 	act->addDefaultInputMapping("MOUSE_LEFT");
 	act->addDefaultInputMapping("JOY_A");
 	mainKeymap->addAction(act);
 
-	act = new Action("RCLK", _("Right Click"));
+	act = new Action(kStandardActionRightClick, _("Right Click"));
 	act->setRightClickEvent();
 	act->addDefaultInputMapping("MOUSE_RIGHT");
 	act->addDefaultInputMapping("JOY_B");
@@ -232,12 +232,9 @@ Common::KeymapArray ZVisionMetaEngine::initKeymaps(const char *target) const {
 	return keymaps;
 }
 
-bool ZVisionMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
-	const ZVision::ZVisionGameDescription *gd = (const ZVision::ZVisionGameDescription *)desc;
-	if (gd) {
-		*engine = new ZVision::ZVision(syst, gd);
-	}
-	return gd != 0;
+Common::Error ZVisionMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new ZVision::ZVision(syst, (const ZVision::ZVisionGameDescription *)desc);
+	return Common::kNoError;
 }
 
 SaveStateList ZVisionMetaEngine::listSaves(const char *target) const {

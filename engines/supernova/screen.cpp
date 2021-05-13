@@ -175,7 +175,7 @@ bool Marquee::renderCharacter() {
 		} else
 			return false;
 		break;
-	case '\0':
+	case '\1':
 		clearText();
 		_text++;
 		_textWidth = Screen::textWidth(_text);
@@ -494,9 +494,11 @@ int Screen::textWidth(const uint16 key) {
 
 int Screen::textWidth(const char *text) {
 	int charWidth = 0;
-	while (*text != '\0') {
+	while (*text != '\0' && *text != '\1') {
 		byte c = *text++;
-		if (c < 32) {
+		if (c < 32 || c == 155) {
+			// 155 is used for looping in Marquee text and is not used otherwise
+			// (it is beyond the end of the font).
 			continue;
 		} else if (c == 225) {
 			c = 35;

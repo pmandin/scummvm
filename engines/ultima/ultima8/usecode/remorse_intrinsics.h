@@ -42,7 +42,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Item::I_getStatus,
 	Item::I_orStatus,
 	Item::I_equip, // void Intrinsic006(6 bytes)
-	Item::I_isOnScreen, //
+	Item::I_isPartlyOnScreen, //
 	Actor::I_isNPC, // byte Intrinsic008(Item *)
 	Item::I_getZ, // byte Intrinsic009(Item *)
 	Item::I_destroy, // void Intrinsic00A(Item *)
@@ -50,7 +50,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Ultima8Engine::I_setAvatarInStasis, // void Intrinsic00C(2 bytes)
 	Item::I_getDirToItem, // byte Intrinsic00D(6 bytes)
 	Actor::I_turnToward,
-	0, // TODO: VideoGump::I_playVideo(item, vidname, int16 sizex, int16 sizey)
+	MovieGump::I_playMovieCutsceneAlt,
 	// 0x010
 	Item::I_getQLo, // Based on having same coff as 02B
 	Actor::I_getMap, // int Intrinsic011(4 bytes)
@@ -91,7 +91,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Item::I_receiveHit, // void Intrinsic032(12 bytes)
 	Actor::I_isBusy, // int Intrinsic033(4 bytes)
 	Item::I_getDirFromTo16,
-	0, // TODO: Actor::I_getSomeFlagProbablyCrouch(Actor *)
+	Actor::I_isKneeling,
 	Actor::I_doAnim, // void Intrinsic036(12 bytes)
 	MainActor::I_addItemCru, // int Intrinsic037(4 bytes)
 	AudioProcess::I_stopSFXCru, // takes Item *, sndno (from disasm)
@@ -100,7 +100,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Item::I_setQLo,
 	Item::I_getFamily,
 	Container::I_destroyContents,
-	Item::I_fall, // FIXME: Not really the same as the U8 version.. does this work?
+	Item::I_fall,
 	Egg::I_getEggId, // void Intrinsic03F(4 bytes)
 	// 0x040
 	CameraProcess::I_moveTo, // void Intrinsic040(8 bytes)
@@ -148,7 +148,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Item::I_setNpcNum, // void Item::I_setSomething068(Item *, int16 something) , see VALUEBOX:ordinal20
 	Item::I_andStatus, // void Intrinsic069(6 bytes)
 	Item::I_move, // void Intrinsic06A(10 bytes)
-	UCMachine::I_true, // TODO: This is actualy "is compiled with VIOLENCE=1" (was set to 0 in germany). For now just always say yes.
+	UCMachine::I_true, // Note: This is actualy "is compiled with VIOLENCE=1" (was set to 0 in germany). For now just always say yes.
 	Kernel::I_resetRef, // void Intrinsic06C(4 bytes)
 	Item::I_getNpcNum, // based on same coff as 102 (-> variable name in TRIGGER::ordinal21)
 	Item::I_andStatus, // void Intrinsic06E(6 bytes)
@@ -181,7 +181,7 @@ Intrinsic RemorseIntrinsics[] = {
 	CameraProcess::I_getCameraY, // void Intrinsic087(void)
 	Item::I_setMapArray,
 	Item::I_getNpcNum, // based on same coff as 102 (-> variable name in TRIGGER::ordinal21)
-	0, // void Intrinsic08A(12 bytes)
+	Item::I_shoot, // void Intrinsic08A(12 bytes)
 	Item::I_enterFastArea, // void Intrinsic08B(4 bytes)
 	Item::I_setBroken, // void Intrinsic08C(4 bytes)
 	Item::I_hurl, // void Intrinsic08D(12 bytes)
@@ -189,14 +189,14 @@ Intrinsic RemorseIntrinsics[] = {
 	PaletteFaderProcess::I_jumpToAllBlack, // TODO: should also resume cycle process.
 	// 0x090
 	MusicProcess::I_stopMusic, // void Intrinsic090(void)
-	0, // void Intrinsic091(void)
-	0, // TODO: I_playFlic(char *)? void Intrinsic092(void)
-	0, // void Intrinsic093(void)
+	0, // pause cycler - not needed as our cycler does not run when paused
+	MovieGump::I_playMovieCutsceneAlt, // TODO: not exactly the same, Alt includes a fade.
+	0, // resume cycler - not needed as our cycler does not run when paused
 	Game::I_playCredits, // TODO: Implement this
 	Ultima8Engine::I_moveKeyDownRecently,
 	MainActor::I_teleportToEgg, // void Intrinsic096(4 bytes)
 	PaletteFaderProcess::I_jumpToGreyScale,
-	0, // void Intrinsic098(void) // TODO: reset vargas health to 500.. weird.
+	World::I_resetVargasShield, // void Intrinsic098(void)
 	Item::I_andStatus, // void Intrinsic099(6 bytes)
 	PaletteFaderProcess::I_jumpToNormalPalette, // TODO: should also stop cycle process?
 	PaletteFaderProcess::I_fadeFromBlack, // fade to game pal with number of steps
@@ -211,12 +211,12 @@ Intrinsic RemorseIntrinsics[] = {
 	Egg::I_setEggXRange, // void Intrinsic0A3(6 bytes)
 	Item::I_overlaps,
 	Item::I_isOn,
-	0, // TODO: I_getAnimationsDisabled -> default to 0 (fine for now..)
+	UCMachine::I_true, // I_getAnimationsEnabled -> default to true (animations enabled)
 	Egg::I_getEggXRange, // void Intrinsic0A7(4 bytes)
 	Actor::I_setDead,
-	0, // I_playFlic(char *) Intrinsic0A9(void)
+	MovieGump::I_playMovieCutsceneAlt, // TODO: not exactly the same, Alt includes a fade.
 	AudioProcess::I_playSFX, // void Intrinsic0AA(2 bytes)
-	0, // int Actor::I_getFlag0x59Field1  Intrinsic0AB(4 bytes)
+	Actor::I_isFalling, // int Actor::I_getFlag0x59Field1  Intrinsic0AB(4 bytes)
 	Item::I_getFamilyOfType, // void Intrinsic0AC(2 bytes)
 	Item::I_getNpcNum, // based on same coff as 102 (-> variable name in TRIGGER::ordinal21)
 	Item::I_getQLo, // based on same coff set as 02B
@@ -250,7 +250,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Item::I_hurl, // void Intrinsic0C8(12 bytes)
 	Item::I_getQHi,  // based on same coff set as 026
 	Actor::I_addHp, // int Intrinsic0CA(6 bytes)
-	0, // 0CB void I_createMapJumpProcess(int16 mapnum)", // TODO: Implement me
+	MainActor::I_switchMap, // 0CB
 	Actor::I_isInCombat, // int Intrinsic0CC(4 bytes)
 	Actor::I_setActivity, // void Intrinsic0CD(6 bytes)
 	UCMachine::I_true, // whether the string "GAME COMPILE=1" has the 1.  Might be interesting to see how this changes the game.. for now just set to true.
@@ -278,7 +278,7 @@ Intrinsic RemorseIntrinsics[] = {
 	Actor::I_getDefaultActivity1, // void Intrinsic0E2(4 bytes)
 	Actor::I_getDefaultActivity2, // void Intrinsic0E3(4 bytes)
 	Actor::I_getLastAnimSet, // void Intrinsic0E4(4 bytes)
-	0, // TODO: Actor::I_attack(Actor *, uint16 target) (implement me)
+	Actor::I_setTarget,
 	Actor::I_setUnkByte, // void Intrinsic0E6(6 bytes)
 	Actor::I_setDead,
 	Item::I_cast, // void Intrinsic0E8(6 bytes)
@@ -362,10 +362,10 @@ Intrinsic RemorseIntrinsics[] = {
 	Actor::I_setActivity, // void Intrinsic131(6 bytes)
 	Item::I_andStatus, // void Intrinsic132(6 bytes)
 	Item::I_getQHi,  // based on same coff set as 026
-    0, // void Intrinsic134(2 bytes)
-    Actor::I_setDead,
-    0, // void UNUSEDInt136()
-    0  // void UNUSEDInt137()
+	WeaselGump::I_showWeaselGump, // void Intrinsic134(2 bytes)
+	Actor::I_setDead,
+	0, // void UNUSEDInt136()
+	0  // void UNUSEDInt137()
 };
 
 } // End of namespace Ultima8
