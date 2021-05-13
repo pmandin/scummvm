@@ -48,7 +48,7 @@ public:
 		return "(C) Capcom";
 	}
 
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const /*override*/ {
+	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const /*override*/ {
 		const ReevengiGameDescription *gd = (const ReevengiGameDescription *)desc;
 
 		switch(gd->gameType) {
@@ -66,7 +66,10 @@ public:
 				break;
 		}
 
-		return engine != nullptr;
+		return (engine != nullptr
+			? Common::kNoError
+			: Common::Error(Common::kUnsupportedGameidError, "REEVENGI: Unknown game data to initialize engine")
+		);
 	}
 };
 
