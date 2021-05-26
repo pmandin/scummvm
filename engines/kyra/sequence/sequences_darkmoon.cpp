@@ -833,6 +833,8 @@ void DarkMoonEngine::seq_playFinale() {
 	sq.printText(15, textColor1);           // The temple ceases to exist
 	if (_flags.platform != Common::kPlatformAmiga) {
 		sq.initDelayedPaletteFade(6, 1);
+	} else if (skipFlag()) {
+		_screen->fadeToBlack();
 	} else {
 		_screen->fadePalette(_screen->getPalette(5), 127);
 		sq.copyPalette(5, 0);
@@ -1035,7 +1037,7 @@ void DarkMoonEngine::seq_playCredits(DarkmoonSequenceHelper *sq, const uint8 *da
 			delay(MIN<uint32>(_tickLength, end - cur));
 		}
 
-		end = _system->getMillis() + speed * _tickLength;
+		end = _system->getMillis() + ((speed * _tickLength) >> 1);
 
 		for (; i < 35 && *pos; i++) {
 			int16 nextY = i ? items[i].y + items[i].size + (items[i].size >> 2) : dm->h;
@@ -1104,7 +1106,7 @@ void DarkMoonEngine::seq_playCredits(DarkmoonSequenceHelper *sq, const uint8 *da
 				}
 			}
 
-			items[h + 1].y -= 2;
+			items[h + 1].y -= MAX<int>(1, speed >> 1);
 		}
 
 		_screen->copyRegion(dm->sx << 3, dm->sy, dm->sx << 3, dm->sy, dm->w << 3, dm->h, tempPage, 0, Screen::CR_NO_P_CHECK);

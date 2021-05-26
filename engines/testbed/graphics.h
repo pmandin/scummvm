@@ -37,6 +37,8 @@ void initMouseCursor();
 Common::Rect computeSize(const Common::Rect &cursorRect, int scalingFactor, int cursorTargetScale);
 void HSVtoRGB(int &rComp, int &gComp, int &bComp, int hue, int sat, int val);
 Common::Rect drawCursor(bool cursorPaletteDisabled = false, int cursorTargetScale = 1);
+TestExitStatus pixelFormats(Common::List<Graphics::PixelFormat> &pfList);
+void showPixelFormat(const Graphics::PixelFormat &pf, uint aLoss);
 
 // will contain function declarations for GFX tests
 TestExitStatus cursorTrails();
@@ -52,7 +54,8 @@ TestExitStatus shakingEffect();
 TestExitStatus focusRectangle();
 TestExitStatus overlayGraphics();
 TestExitStatus paletteRotation();
-TestExitStatus pixelFormats();
+TestExitStatus pixelFormatsSupported();
+TestExitStatus pixelFormatsRequired();
 // add more here
 
 } // End of namespace GFXtests

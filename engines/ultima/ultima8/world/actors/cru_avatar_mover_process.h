@@ -46,13 +46,13 @@ public:
 	bool loadData(Common::ReadStream *rs, uint32 version);
 	void saveData(Common::WriteStream *ws) override;
 
-	void tryAttack() override;
-
 	double getAvatarAngleDegrees() const {
 		return static_cast<double>(_avatarAngle) / 100.0;
 	}
 
 private:
+	/** Try readying or firing weapon. */
+	void tryAttack();
 
 	/**
 	* Angle of avatar in centidegrees (1/100deg).  The original game runs the keyboard
@@ -66,6 +66,11 @@ private:
 	 * Whether we've reloaded the SGA1 yet (it needs to happen every shot)
 	 */
 	bool _SGA1Loaded;
+
+	/**
+	 * Next tick the avatar can fire a weapon again.
+	 */
+	uint32 _nextFireTick;
 
 	void handleHangingMode() override;
 	void handleCombatMode() override;

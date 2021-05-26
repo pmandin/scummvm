@@ -22,6 +22,7 @@
 
 #include "common/config-manager.h"
 #include "common/debug-channels.h"
+#include "common/macresman.h"
 #include "common/md5.h"
 #include "common/events.h"
 #include "common/system.h"
@@ -100,20 +101,6 @@ struct dbgChannelDesc {
 	uint32 flag;
 };
 
-
-// Debug channel lookup table for Debugger console
-static const dbgChannelDesc debugChannels[] = {
-	{"SCRIPTS", "Track script execution", DEBUG_SCRIPTS},
-	{"OPCODES", "Track opcode execution", DEBUG_OPCODES},
-	{"IMUSE", "Track iMUSE events", DEBUG_IMUSE},
-	{"RESOURCE", "Track resource loading/management", DEBUG_RESOURCE},
-	{"VARS", "Track variable changes", DEBUG_VARS},
-	{"ACTORS", "Actor-related debug", DEBUG_ACTORS},
-	{"SOUND", "Sound related debug", DEBUG_SOUND},
-	{"INSANE", "Track INSANE", DEBUG_INSANE},
-	{"SMUSH", "Track SMUSH", DEBUG_SMUSH},
-	{"MOONBASEAI", "Track Moonbase AI", DEBUG_MOONBASE_AI}
-};
 
 ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	: Engine(syst),
@@ -292,6 +279,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	_hePalettes = NULL;
 	_hePaletteSlot = 0;
 	_16BitPalette = NULL;
+	_macScreen = NULL;
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	_townsScreen = 0;
 	_scrollRequest = _scrollDeltaAdjust = 0;
@@ -617,10 +605,6 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		_herculesBuf = (byte *)malloc(kHercWidth * kHercHeight);
 	}
 
-	// Add debug levels
-	for (int i = 0; i < ARRAYSIZE(debugChannels); ++i)
-		DebugMan.addDebugChannel(debugChannels[i].flag,  debugChannels[i].channel, debugChannels[i].desc);
-
 #ifndef DISABLE_HELP
 	// Create custom GMM dialog providing a help subdialog
 	assert(!_mainMenuDialog);
@@ -689,6 +673,11 @@ ScummEngine::~ScummEngine() {
 	free(_herculesBuf);
 
 	free(_16BitPalette);
+
+	if (_macScreen) {
+		_macScreen->free();
+		delete _macScreen;
+	}
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	delete _townsScreen;
@@ -1302,13 +1291,73 @@ Common::Error ScummEngine::init() {
 	// Load it earlier so _useCJKMode variable could be set
 	loadCJKFont();
 
+	Common::String macResourceFile;
+
+	if (_game.platform == Common::kPlatformMacintosh) {
+		Common::MacResManager resource;
+
+		if (_game.id == GID_LOOM) {
+			// \xAA is a trademark glyph in Mac OS Roman. We try
+			// that, but also the Windows version, the UTF-8
+			// version, and just plain without in case the file
+			// system can't handle exotic characters like that.
+
+			static const char *loomFileNames[] = {
+				"Loom\xAA",
+				"Loom\x99",
+				"Loom\xE2\x84\xA2",
+				"Loom"
+			};
+
+			for (int i = 0; i < ARRAYSIZE(loomFileNames); i++) {
+				if (resource.exists(loomFileNames[i])) {
+					macResourceFile = loomFileNames[i];
+
+					_textSurfaceMultiplier = 2;
+					_macScreen = new Graphics::Surface();
+					_macScreen->create(640, 400, Graphics::PixelFormat::createFormatCLUT8());
+					break;
+				}
+			}
+
+			if (macResourceFile.empty()) {
+				GUI::MessageDialog dialog(_(
+"Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
+"versions of font and cursor will be disabled."), _("OK"));
+				dialog.runModal();
+			}
+		} else if (_game.id == GID_MONKEY) {
+			// Try both with and without underscore in the
+			// filename, because some tools (e.g. hfsutils) may
+			// turn the space into an underscore.
+
+			static const char *monkeyIslandFileNames[] = {
+			        "Monkey Island",
+			        "Monkey_Island"
+			};
+
+		       for (int i = 0; i < ARRAYSIZE(monkeyIslandFileNames); i++) {
+		                if (resource.exists(monkeyIslandFileNames[i])) {
+		                        macResourceFile = monkeyIslandFileNames[i];
+		                }
+		        }
+
+			if (macResourceFile.empty()) {
+			        GUI::MessageDialog dialog(_(
+"Could not find the 'Monkey Island' Macintosh executable to read the\n"
+"instruments from. Music will be disabled."), _("OK"));
+				dialog.runModal();
+			}
+		}
+	}
+
 	// Initialize backend
 	if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) {
 		initGraphics(kHercWidth, kHercHeight);
 	} else {
 		int screenWidth = _screenWidth;
 		int screenHeight = _screenHeight;
-		if (_useCJKMode) {
+		if (_useCJKMode || _macScreen) {
 			// CJK FT and DIG use usual NUT fonts, not FM-TOWNS ROM, so
 			// there is no text surface for them. This takes that into account
 			screenWidth *= _textSurfaceMultiplier;
@@ -1372,7 +1421,7 @@ Common::Error ScummEngine::init() {
 
 	_outputPixelFormat = _system->getScreenFormat();
 
-	setupScumm();
+	setupScumm(macResourceFile);
 
 	readIndexFile();
 
@@ -1390,7 +1439,20 @@ Common::Error ScummEngine::init() {
 	return Common::kNoError;
 }
 
-void ScummEngine::setupScumm() {
+void ScummEngine::setupScumm(const Common::String &macResourceFile) {
+	Common::String macInstrumentFile;
+	Common::String macFontFile;
+
+	if (_game.platform == Common::kPlatformMacintosh) {
+		if (_game.id == GID_LOOM) {
+			macInstrumentFile = macResourceFile;
+			macFontFile = macResourceFile;
+			_macCursorFile = macResourceFile;
+		} else if (_game.id == GID_MONKEY) {
+			macInstrumentFile = macResourceFile;
+		}
+	}
+
 	// On some systems it's not safe to run CD audio games from the CD.
 	if (_game.features & GF_AUDIOTRACKS && !Common::File::exists("CDDA.SOU")) {
 		checkCD();
@@ -1404,13 +1466,13 @@ void ScummEngine::setupScumm() {
 		_sound = new Sound(this, _mixer);
 
 	// Setup the music engine
-	setupMusic(_game.midi);
+	setupMusic(_game.midi, macInstrumentFile);
 
 	// Load localization data, if present
 	loadLanguageBundle();
 
 	// Create the charset renderer
-	setupCharsetRenderer();
+	setupCharsetRenderer(macFontFile);
 
 	// Create and clear the text surface
 	_textSurface.create(_screenWidth * _textSurfaceMultiplier, _screenHeight * _textSurfaceMultiplier, Graphics::PixelFormat::createFormatCLUT8());
@@ -1491,7 +1553,7 @@ void ScummEngine::setupScumm() {
 }
 
 #ifdef ENABLE_SCUMM_7_8
-void ScummEngine_v7::setupScumm() {
+void ScummEngine_v7::setupScumm(const Common::String &macResourceFile) {
 
 	if (_game.id == GID_DIG && (_game.features & GF_DEMO))
 		_smushFrameRate = 15;
@@ -1503,7 +1565,7 @@ void ScummEngine_v7::setupScumm() {
 	ConfMan.flushToDisk();
 	_musicEngine = _imuseDigital = new IMuseDigital(this, _mixer, dimuseTempo);
 
-	ScummEngine::setupScumm();
+	ScummEngine::setupScumm(macResourceFile);
 
 	// Create FT INSANE object
 	if (_game.id == GID_FT)
@@ -1517,7 +1579,7 @@ void ScummEngine_v7::setupScumm() {
 }
 #endif
 
-void ScummEngine::setupCharsetRenderer() {
+void ScummEngine::setupCharsetRenderer(const Common::String &macFontFile) {
 	if (_game.version <= 2) {
 		if (_game.platform == Common::kPlatformNES)
 			_charset = new CharsetRendererNES(this);
@@ -1531,6 +1593,8 @@ void ScummEngine::setupCharsetRenderer() {
 #endif
 		if (_game.platform == Common::kPlatformFMTowns)
 			_charset = new CharsetRendererTownsV3(this);
+		else if (_game.platform == Common::kPlatformMacintosh && !macFontFile.empty())
+			_charset = new CharsetRendererMac(this, macFontFile);
 		else
 			_charset = new CharsetRendererV3(this);
 #ifdef ENABLE_SCUMM_7_8
@@ -1593,11 +1657,15 @@ void ScummEngine::resetScumm() {
 		delete _townsScreen;
 		_scrollRequest = _scrollDeltaAdjust = 0;
 		_scrollDestOffset = _scrollTimer = 0;
-		_townsScreen = new TownsScreen(_system, _screenWidth * _textSurfaceMultiplier, _screenHeight * _textSurfaceMultiplier, _outputPixelFormat);
+		_townsScreen = new TownsScreen(_system);
 		_townsScreen->setupLayer(0, 512, _screenHeight, _textSurfaceMultiplier, _textSurfaceMultiplier, (_outputPixelFormat.bytesPerPixel == 2) ? 32767 : 256);
 		_townsScreen->setupLayer(1, _screenWidth * _textSurfaceMultiplier, _screenHeight * _textSurfaceMultiplier, 1, 1, 16, _textPalette);
 	}
 #endif
+
+	if (_macScreen) {
+		_macScreen->fillRect(Common::Rect(_macScreen->w, _macScreen->h), 0);
+	}
 
 	if (_game.version == 0) {
 		initScreens(8, 144);
@@ -1886,7 +1954,7 @@ void ScummEngine_v100he::resetScumm() {
 }
 #endif
 
-void ScummEngine::setupMusic(int midi) {
+void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) {
 	MidiDriver::DeviceHandle dev = MidiDriver::detectDevice(midi);
 	_native_mt32 = ((MidiDriver::getMusicType(dev) == MT_MT32) || ConfMan.getBool("native_mt32"));
 
@@ -2000,10 +2068,10 @@ void ScummEngine::setupMusic(int midi) {
 		_musicEngine = new Player_V4A(this, _mixer);
 	} else if (_game.platform == Common::kPlatformMacintosh && _game.id == GID_LOOM) {
 		_musicEngine = new Player_V3M(this, _mixer);
-		((Player_V3M *)_musicEngine)->init();
+		((Player_V3M *)_musicEngine)->init(macInstrumentFile);
 	} else if (_game.platform == Common::kPlatformMacintosh && _game.id == GID_MONKEY) {
 		_musicEngine = new Player_V5M(this, _mixer);
-		((Player_V5M *)_musicEngine)->init();
+		((Player_V5M *)_musicEngine)->init(macInstrumentFile);
 	} else if (_game.id == GID_MANIAC && _game.version == 1) {
 		_musicEngine = new Player_V1(this, _mixer, MidiDriver::getMusicType(dev) != MT_PCSPK);
 	} else if (_game.version <= 2) {
@@ -2189,9 +2257,16 @@ Common::Error ScummEngine::go() {
 		// Determine how long to wait before the next loop iteration should start
 		int delta = (VAR_TIMER_NEXT != 0xFF) ? VAR(VAR_TIMER_NEXT) : 4;
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
-		// FM-Towns only. The original does this to make the engine wait for the scrolling to catch up.
-		if (_scrollDeltaAdjust)
-			delta = delta * 4 / (4 - _scrollDeltaAdjust);
+		// FM-Towns only. The original has a mechanism to let the scrolling catch up to the engine. This avoids glitches, e. g.
+		// when the engine draws actors or objects to the far left/right of the screen while the scrolling hasn't caught up yet.
+		// MI2 FM-Towns normally adds an amount of 4 to a counter on each 60 Hz tick from inside an interrupt handler, but only
+		// an amount of 3 while the smooth scrolling is in progress. The counter divided by 4 has to reach the VAR_TIMER_NEXT
+		// before the main loop continues. We try to imitate that behaviour here to avoid glitches, but without making it
+		// overly complicated...
+		if (_scrollDeltaAdjust) {
+			int adj = MIN<int>(_scrollDeltaAdjust * 4 / 3 - _scrollDeltaAdjust, delta * 4 / 3 - delta);
+			delta += adj;
+		}
 		_scrollDeltaAdjust = 0;
 #endif
 		if (delta < 1)	// Ensure we don't get into an endless loop

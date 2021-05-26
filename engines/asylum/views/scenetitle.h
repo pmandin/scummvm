@@ -8,30 +8,48 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- *
+
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  */
 
-#ifndef SLUDGE_BG_EFFECTS_H
-#define SLUDGE_BG_EFFECTS_H
+#ifndef ASYLUM_VIEWS_SCENETITLE_H
+#define ASYLUM_VIEWS_SCENETITLE_H
 
-namespace Sludge {
+#include "common/scummsys.h"
 
-struct VariableStack;
+namespace Asylum {
 
-bool blurScreen();
-void blur_saveSettings(Common::WriteStream *stream);
-void blur_loadSettings(Common::SeekableReadStream *stream);
-bool blur_createSettings(int numParams, VariableStack *&stack);
+class AsylumEngine;
+class GraphicResource;
 
-} // End of namespace Sludge
+class SceneTitle {
+public:
+	SceneTitle(AsylumEngine *engine);
+	~SceneTitle() {};
 
-#endif
+	void load();
+
+	void update(int32 tick);
+	bool loadingComplete() { return _done; }
+
+private:
+	AsylumEngine *_vm;
+
+	int32  _start;
+	bool   _done;
+	uint32 _spinnerFrameIndex;
+	int32  _spinnerProgress;
+	uint32 _spinnerFrameCount;
+};
+
+} // End of namespace Asylum
+
+#endif // ASYLUM_VIEWS_SCENETITLE_H

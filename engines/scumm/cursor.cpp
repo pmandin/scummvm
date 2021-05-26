@@ -21,8 +21,10 @@
  */
 
 #include "common/system.h"
+#include "common/macresman.h"
 #include "common/util.h"
 #include "graphics/cursorman.h"
+#include "graphics/maccursor.h"
 #ifdef ENABLE_HE
 #include "graphics/wincursor.h"
 #endif
@@ -389,6 +391,9 @@ void ScummEngine_v6::useBompCursor(const byte *im, int width, int height) {
 }
 
 void ScummEngine_v5::redefineBuiltinCursorFromChar(int index, int chr) {
+	if (!_macCursorFile.empty())
+		return;
+
 	// Cursor image in both Loom versions are based on images from charset.
 	// This function is *only* supported for Loom!
 	assert(_game.id == GID_LOOM);
@@ -592,6 +597,21 @@ void ScummEngine_v5::resetCursors() {
 }
 
 void ScummEngine_v5::setBuiltinCursor(int idx) {
+	if (!_macCursorFile.empty()) {
+		Common::MacResManager resource;
+		if (resource.open(_macCursorFile)) {
+			Common::MacResIDArray resArray = resource.getResIDArray(MKTAG('C', 'U', 'R', 'S'));
+			Common::SeekableReadStream *curs = resource.getResource(MKTAG('C', 'U', 'R', 'S'), resArray[0]);
+			Graphics::MacCursor macCursor;
+			if (macCursor.readFromStream(*curs)) {
+				CursorMan.replaceCursor(&macCursor);
+				delete curs;
+				return;
+			}
+			delete curs;
+		}
+	}
+
 	int i, j;
 	uint16 color;
 	const uint16 *src = _cursorImages[_currentCursor];

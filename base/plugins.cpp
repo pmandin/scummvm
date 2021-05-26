@@ -24,6 +24,7 @@
 
 #include "common/func.h"
 #include "common/debug.h"
+#include "common/debug-channels.h"
 #include "common/config-manager.h"
 
 #ifdef DYNAMIC_MODULES
@@ -31,6 +32,8 @@
 #endif
 
 #include "base/detection/detection.h"
+
+#include "engines/advancedDetector.h"
 
 // Plugin versioning
 
@@ -638,6 +641,7 @@ void PluginManager::addToPluginsInMemList(Plugin *plugin) {
 		if (!strcmp(plugin->getName(), (*pl)->getName())) {
 			// Found a duplicated module. Replace the old one.
 			found = true;
+			(*pl)->unloadPlugin();
 			delete *pl;
 			*pl = plugin;
 			debug(1, "Replaced the duplicated plugin: '%s'", plugin->getName());
@@ -674,6 +678,8 @@ QualifiedGameList EngineManager::findGamesMatching(const Common::String &engineI
 		const Plugin *p = EngineMan.findPlugin(engineId);
 		if (p) {
 			const MetaEngineDetection &engine = p->get<MetaEngineDetection>();
+			DebugMan.debugFlagsClear();
+			DebugMan.debugFlagsRegister(engine.getDebugChannels());
 
 			PlainGameDescriptor pluginResult = engine.findGame(gameId.c_str());
 			if (pluginResult.gameId) {
@@ -703,6 +709,8 @@ QualifiedGameList EngineManager::findGameInLoadedPlugins(const Common::String &g
 
 	for (iter = plugins.begin(); iter != plugins.end(); ++iter) {
 		const MetaEngineDetection &engine = (*iter)->get<MetaEngineDetection>();
+		DebugMan.debugFlagsClear();
+		DebugMan.debugFlagsRegister(engine.getDebugChannels());
 		PlainGameDescriptor pluginResult = engine.findGame(gameId.c_str());
 
 		if (pluginResult.gameId) {
@@ -722,10 +730,16 @@ DetectionResults EngineManager::detectGames(const Common::FSList &fslist) const 
 	// run detection for all of them.
 	plugins = getPlugins(PLUGIN_TYPE_ENGINE_DETECTION);
 
+	// Clear md5 cache before each detection starts, just in case.
+	MD5Man.clear();
+
 	// Iterate over all known games and for each check if it might be
 	// the game in the presented directory.
 	for (iter = plugins.begin(); iter != plugins.end(); ++iter) {
 		const MetaEngineDetection &metaEngine = (*iter)->get<MetaEngineDetection>();
+		// set the debug flags
+		DebugMan.debugFlagsClear();
+		DebugMan.debugFlagsRegister(metaEngine.getDebugChannels());
 		DetectedGames engineCandidates = metaEngine.detectGames(fslist);
 
 		for (uint i = 0; i < engineCandidates.size(); i++) {
@@ -856,6 +870,8 @@ QualifiedGameDescriptor EngineManager::findTarget(const Common::String &target, 
 
 	// Make sure it does support the game ID
 	const MetaEngineDetection &engine = foundPlugin->get<MetaEngineDetection>();
+	DebugMan.debugFlagsClear();
+	DebugMan.debugFlagsRegister(engine.getDebugChannels());
 	PlainGameDescriptor desc = engine.findGame(domain->getVal("gameid").c_str());
 	if (!desc.gameId) {
 		return QualifiedGameDescriptor();
@@ -921,6 +937,9 @@ void EngineManager::upgradeTargetForEngineId(const Common::String &target) const
 
 		// Take the first detection entry
 		const MetaEngineDetection &metaEngine = plugin->get<MetaEngineDetection>();
+		// set debug flags before call detectGames
+		DebugMan.debugFlagsClear();
+		DebugMan.debugFlagsRegister(metaEngine.getDebugChannels());
 		DetectedGames candidates = metaEngine.detectGames(files);
 		if (candidates.empty()) {
 			warning("No games supported by the engine '%s' were found in path '%s' when upgrading target '%s'",

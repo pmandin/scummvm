@@ -812,7 +812,8 @@ bool MacMenu::draw(ManagedSurface *g, bool forceRedraw) {
 
 	_screen.clear(_wm->_colorGreen);
 
-	drawFilledRoundRect(&_screen, r, kDesktopArc, _wm->_colorWhite);
+	drawFilledRoundRect(&_screen, r, (_wm->_mode & kWMModeWin95) ? 0 : kDesktopArc, _wm->_colorWhite);
+
 	r.top = 7;
 	_screen.fillRect(r, _wm->_colorWhite);
 	r.top = kMenuHeight - 1;
@@ -889,7 +890,7 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 	_screen.hLine(r->left + 3, r->bottom + 1, r->right + 1, _wm->_colorBlack);
 
 	int y = r->top + 1;
-	int x = _align == kTextAlignRight ? -kMenuWin95LeftDropdownPadding: kMenuWin95LeftDropdownPadding;
+	int x = _align == kTextAlignRight ? -_menuRightDropdownPadding: _menuLeftDropdownPadding;
 	x += r->left;
 
 	for (uint i = 0; i < menu->items.size(); i++) {
@@ -1037,6 +1038,15 @@ bool MacMenu::keyEvent(Common::Event &event) {
 	return false;
 }
 
+bool MacMenu::checkIntersects(Common::Rect &rect) {
+	if (_bbox.intersects(rect))
+		return true;
+	for (uint i = 0; i < _menustack.size(); i++)
+		if (_menustack[i]->bbox.intersects(rect))
+			return true;
+	return false;
+}
+
 bool MacMenu::mouseClick(int x, int y) {
 	if (_bbox.contains(x, y)) {
 		for (uint i = 0; i < _items.size(); i++) {
@@ -1046,21 +1056,8 @@ bool MacMenu::mouseClick(int x, int y) {
 
 				if (_activeItem != -1) { // Restore background
 					if (_items[_activeItem]->submenu != nullptr) {
-						_wm->setFullRefresh(true);
-
-						if (_wm->_mode & kWMModalMenuMode) {
-							int x1 = _items[_activeItem]->submenu->bbox.left;
-							int y1 = _items[_activeItem]->submenu->bbox.top;
-							uint w = _items[_activeItem]->submenu->bbox.width() + 2;
-							uint h = _items[_activeItem]->submenu->bbox.height() + 2;
-
-							if (x1 + w > _wm->_screenCopy->w)
-								w = _wm->_screenCopy->w - 1 - x1;
-							if (y1 + h > _wm->_screenCopy->h)
-								h = _wm->_screenCopy->h - 1 - y1;
-
-							g_system->copyRectToScreen(_wm->_screenCopy->getBasePtr(x1, y1), _wm->_screenCopy->pitch, x1, y1, w, h);
-						}
+						if (_wm->_mode & kWMModalMenuMode)
+							g_system->copyRectToScreen(_wm->_screenCopy->getPixels(), _wm->_screenCopy->pitch, 0, 0, _wm->_screenCopy->w, _wm->_screenCopy->h);
 
 						_menustack.pop_back(); // Drop previous submenu
 						_contentIsDirty = true;
@@ -1104,19 +1101,8 @@ bool MacMenu::mouseClick(int x, int y) {
 
 		if (numSubItem != _activeSubItem) {
 			if (_wm->_mode & kWMModalMenuMode) {
-				if (_activeSubItem != -1 && menu->items[_activeSubItem]->submenu != nullptr) {
-					int x1 = menu->items[_activeSubItem]->submenu->bbox.left;
-					int y1 = menu->items[_activeSubItem]->submenu->bbox.top;
-					uint w = menu->items[_activeSubItem]->submenu->bbox.width() + 2;
-					uint h = menu->items[_activeSubItem]->submenu->bbox.height() + 2;
-
-					if (x1 + w > _wm->_screenCopy->w)
-						w = _wm->_screenCopy->w - 1 - x1;
-					if (y1 + h > _wm->_screenCopy->h)
-						h = _wm->_screenCopy->h - 1 - y1;
-
-					g_system->copyRectToScreen(_wm->_screenCopy->getBasePtr(x1, y1), _wm->_screenCopy->pitch, x1, y1, w, h);
-				}
+				if (_activeSubItem == -1 || menu->items[_activeSubItem]->submenu != nullptr)
+					g_system->copyRectToScreen(_wm->_screenCopy->getPixels(), _wm->_screenCopy->pitch, 0, 0, _wm->_screenCopy->w, _wm->_screenCopy->h);
 			}
 			_activeSubItem = numSubItem;
 			menu->highlight = _activeSubItem;
@@ -1175,11 +1161,6 @@ bool MacMenu::mouseClick(int x, int y) {
 
 	if (_activeItem != -1) {
 		_activeSubItem = -1;
-
-		if (_menustack.size()) {
-			_contentIsDirty = true;
-			_wm->setFullRefresh(true);
-		}
 
 		return true;
 	}

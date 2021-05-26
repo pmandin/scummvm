@@ -638,6 +638,11 @@ void ScummEngine::drawStripToScreen(VirtScreen *vs, int x, int width, int top, i
 	if (width <= 0 || height <= 0)
 		return;
 
+	if (_macScreen) {
+		mac_drawStripToScreen(vs, top, x, y, width, height);
+		return;
+	}
+
 	const void *src = vs->getPixels(x, top);
 	int m = _textSurfaceMultiplier;
 	int vsPitch;
@@ -1098,6 +1103,11 @@ void ScummEngine::restoreBackground(Common::Rect rect, byte backColor) {
 		}
 #endif
 
+		if (_macScreen) {
+			byte *mask = (byte *)_textSurface.getBasePtr(rect.left * _textSurfaceMultiplier, (rect.top + vs->topline) * _textSurfaceMultiplier);
+			fill(mask, _textSurface.pitch, CHARSET_MASK_TRANSPARENCY, width * _textSurfaceMultiplier, height * _textSurfaceMultiplier, _textSurface.format.bytesPerPixel);
+		}
+
 		if (_game.features & GF_16BIT_COLOR)
 			fill(screenBuf, vs->pitch, _16BitPalette[backColor], width, height, vs->format.bytesPerPixel);
 		else
@@ -1396,6 +1406,11 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 					return;
 			}
 #endif
+
+			if (_macScreen) {
+				byte *mask = (byte *)_textSurface.getBasePtr(x * _textSurfaceMultiplier, (y - _screenTop + vs->topline) * _textSurfaceMultiplier);
+				fill(mask, _textSurface.pitch, CHARSET_MASK_TRANSPARENCY, width * _textSurfaceMultiplier, height * _textSurfaceMultiplier, _textSurface.format.bytesPerPixel);
+			}
 
 			fill(backbuff, vs->pitch, color, width, height, vs->format.bytesPerPixel);
 		}
@@ -4048,6 +4063,9 @@ void ScummEngine::dissolveEffect(int width, int height) {
 			towns_drawStripToScreen(vs, x, y + vs->topline, x, y, width, height);
 		else
 #endif
+		if (_macScreen)
+			mac_drawStripToScreen(vs, y, x, y + vs->topline, width, height);
+		else
 			_system->copyRectToScreen(vs->getPixels(x, y), vs->pitch, x, y + vs->topline, width, height);
 
 

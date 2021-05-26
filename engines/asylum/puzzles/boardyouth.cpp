@@ -1,0 +1,94 @@
+/* ScummVM - Graphic Adventure Engine
+ *
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
+ * file distributed with this source distribution.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *
+ */
+
+#include "asylum/puzzles/boardyouth.h"
+
+#include "asylum/system/cursor.h"
+
+#include "asylum/asylum.h"
+
+namespace Asylum {
+
+static const PuzzleBoard::PuzzleData puzzleYouthData = {
+	55,
+	kGameFlag282,
+	431,
+	2,
+	{{3, false}, {4, false}, {0, false}},
+	8,
+	{{'E',  64,  55},
+	{'U',   26,  69},
+	{'T',  135, 102},
+	{'O',   57, 134},
+	{'H',  417, 152},
+	{'T',  223, 181},
+	{'H',  497, 198},
+	{'Y',  435, 231},
+	{'\0',   0,   0},
+	{'\0',   0,   0}},
+	true,
+	"T H E   Y O U T H "
+};
+
+PuzzleBoardYouth::PuzzleBoardYouth(AsylumEngine *engine) : PuzzleBoard(engine, puzzleYouthData) {
+}
+
+void PuzzleBoardYouth::saveLoadWithSerializer(Common::Serializer &s) {
+	for (int32 i = 0; i < 9; i++)
+		s.syncAsUint32LE(_charUsed[i]);
+
+	s.syncBytes((byte *)&_solvedText, 20);
+
+	s.syncAsUint32LE(_position);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Event Handling
+//////////////////////////////////////////////////////////////////////////
+bool PuzzleBoardYouth::mouseLeftDown(const AsylumEvent &) {
+	Common::Point mousePos = getCursor()->position();
+
+	if (mousePos.y <= 350) {
+		int32 index = findRect();
+
+		if (index != -1 && _position < 18) {
+			_charUsed[index] = true;
+			_selectedSlot = -1;
+
+			_solvedText[_position++] = puzzleYouthData.charMap[index].character;
+			_solvedText[_position++] = ' ';
+
+			if (_position == 6) {
+				_solvedText[_position++] = ' ';
+				_solvedText[_position++] = ' ';
+			}
+
+			updateScreen();
+		}
+	} else if (_vm->isGameFlagNotSet(kGameFlag282)) {
+		checkSlots();
+	}
+
+	return true;
+}
+
+} // End of namespace Asylum

@@ -63,6 +63,9 @@ namespace Common {
 class SeekableReadStream;
 class WriteStream;
 }
+namespace Graphics {
+class FontSJIS;
+}
 
 /**
  * This is the namespace of the SCUMM engine.
@@ -344,19 +347,19 @@ public:
 	void pauseEngineIntern(bool pause) override;
 
 protected:
-	virtual void setupScumm();
+	virtual void setupScumm(const Common::String &macResourceFile);
 	virtual void resetScumm();
 
 	virtual void setupScummVars();
 	virtual void resetScummVars();
 
-	void setupCharsetRenderer();
+	void setupCharsetRenderer(const Common::String &macFontFile);
 	void setupCostumeRenderer();
 
 	virtual void loadLanguageBundle();
 	void loadCJKFont();
 	void loadKorFont();
-	void setupMusic(int midi);
+	void setupMusic(int midi, const Common::String &macInstrumentFile);
 	void setTalkSpeed(int talkspeed);
 	int getTalkSpeed();
 
@@ -634,6 +637,7 @@ protected:
 public:
 	/** The name of the (macintosh/rescumm style) container file, if any. */
 	Common::String _containerFile;
+	Common::String _macCursorFile;
 
 	bool openFile(BaseScummFile &file, const Common::String &filename, bool resourceFile = false);
 
@@ -951,7 +955,11 @@ protected:
 
 	virtual void drawDirtyScreenParts();
 	void updateDirtyScreen(VirtScreenNumber slot);
-	void drawStripToScreen(VirtScreen *vs, int x, int w, int t, int b);
+	void drawStripToScreen(VirtScreen *vs, int x, int width, int top, int bottom);
+	void mac_drawStripToScreen(VirtScreen *vs, int top, int x, int y, int width, int height);
+	void mac_restoreCharsetBg();
+	void mac_drawLoomPracticeMode();
+
 	void ditherCGA(byte *dst, int dstPitch, int x, int y, int width, int height) const;
 
 public:
@@ -1093,6 +1101,7 @@ public:
 	 */
 	Graphics::Surface _textSurface;
 	int _textSurfaceMultiplier;
+	Graphics::Surface *_macScreen;
 
 protected:
 	byte _charsetColor;

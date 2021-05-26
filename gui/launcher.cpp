@@ -51,6 +51,7 @@
 #include "gui/widgets/tab.h"
 #include "gui/widgets/popup.h"
 #include "gui/ThemeEval.h"
+#include "engines/advancedDetector.h"
 
 #include "graphics/cursorman.h"
 #if defined(USE_CLOUD) && defined(USE_LIBCURL)
@@ -393,6 +394,7 @@ void LauncherDialog::massAddGame() {
 	MessageDialog alert(_("Do you really want to run the mass game detector? "
 						  "This could potentially add a huge number of games."), _("Yes"), _("No"));
 	if (alert.runModal() == GUI::kMessageOK && _browser->runModal() > 0) {
+		MD5Man.clear();
 		MassAddDialog massAddDlg(_browser->getResult());
 
 		massAddDlg.runModal();

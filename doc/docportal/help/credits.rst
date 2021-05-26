@@ -241,6 +241,27 @@ AGS
    * - Berian Williams
      - AgsCreditz
 
+Asylum
+^^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Alex Bevilacqua
+     -
+   * - Alex Fontoura
+     -
+   * - Alexander Panov
+     -
+   * - Benjamin Haisch
+     -
+   * - Filippos Karapetis
+     -
+   * - Joseph Davies
+     -
+   * - Julien Templier
+     -
+
 Avalanche
 ^^^^^^^^^
 
@@ -1590,6 +1611,8 @@ Documentation
      - Numerous contributions to documentation (retired)
    * - Matthew Hoops
      - Numerous contributions to documentation (retired)
+   * - Cadi Howley
+     - User documentation (GSOD 2020)
 
 Retired Team Members
 ********************

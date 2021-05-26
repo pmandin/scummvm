@@ -495,6 +495,8 @@ uint16 Actor::doAnim(Animation::Sequence anim, Direction dir, unsigned int steps
 				anim == Animation::kneelAndFireLargeWeapon ||
 				anim == Animation::kneelCombatRollLeft ||
 				anim == Animation::kneelCombatRollRight ||
+				anim == Animation::combatRollLeft ||
+				anim == Animation::combatRollRight ||
 				anim == Animation::kneelingAdvance ||
 				anim == Animation::kneelingRetreat) {
 			setActorFlag(ACT_KNEELING);
@@ -1199,8 +1201,7 @@ void Actor::receiveHitU8(uint16 other, Direction dir, int damage, uint16 damage_
 		}
 	}
 
-	// FIXME: What are the equivalent Crusader animations here?
-	if (damage && !fallingprocid && GAME_IS_U8) {
+	if (damage && !fallingprocid) {
 		ProcId anim1pid = doAnim(Animation::stumbleBackwards, dir);
 		ProcId anim2pid;
 		if (isInCombat())
@@ -2009,6 +2010,13 @@ uint32 Actor::I_getHp(const uint8 *args, unsigned int /*argsize*/) {
 	return actor->getHP();
 }
 
+uint32 Actor::I_getMaxHp(const uint8 *args, unsigned int /*argsize*/) {
+	ARG_ACTOR_FROM_PTR(actor);
+	if (!actor) return 0;
+
+	return actor->getMaxHP();
+}
+
 uint32 Actor::I_getMana(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_ACTOR_FROM_PTR(actor);
 	if (!actor) return 0;
@@ -2480,10 +2488,12 @@ uint32 Actor::I_createActorCru(const uint8 *args, unsigned int /*argsize*/) {
 		wpntype = wpntype2;
 	}
 
-	if (wpntype) {
-		// TODO: Nasty hard coded list.. use the ini file for this.
-		static const int WPNSHAPES[] = {0, 0x032E, 0x032F, 0x0330, 0x038C, 0x0332, 0x0333,
-			0x0334, 0x038E, 0x0388, 0x038A, 0x038D, 0x038B, 0x0386};
+	// TODO: Nasty hard coded list.. use the ini file for this.
+	static const int WPNSHAPES[] = {0, 0x032E, 0x032F, 0x0330, 0x038C, 0x0332, 0x0333,
+		0x0334, 0x038E, 0x0388, 0x038A, 0x038D, 0x038B, 0x0386,
+		// Regret-specific weapon types
+		0x05F6, 0x05F5, 0x0198};
+	if (wpntype && wpntype < ARRAYSIZE(WPNSHAPES)) {
 		// wpntype is an offset into wpn table
 		Item *weapon = ItemFactory::createItem(WPNSHAPES[wpntype], 0, 0, 0, 0, newactor->getMapNum(), 0, true);
 		if (weapon) {

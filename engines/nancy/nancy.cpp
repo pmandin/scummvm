@@ -55,10 +55,6 @@ NancyEngine *g_nancy;
 NancyEngine::NancyEngine(OSystem *syst, const NancyGameDescription *gd) : Engine(syst), _gameDescription(gd), _system(syst) {
 	g_nancy = this;
 
-	DebugMan.addDebugChannel(kDebugEngine, "Engine", "Engine debug level");
-	DebugMan.addDebugChannel(kDebugActionRecord, "ActionRecord", "Action Record debug level");
-	DebugMan.addDebugChannel(kDebugScene, "Scene", "Scene debug level");
-
 	_randomSource = new Common::RandomSource("Nancy");
 	_randomSource->setSeed(_randomSource->getSeed());
 
@@ -68,7 +64,6 @@ NancyEngine::NancyEngine(OSystem *syst, const NancyGameDescription *gd) : Engine
 	_cursorManager = new CursorManager();
 
 	_resource = nullptr;
-	_firstSceneID = 0;
 	_startTimeHours = 0;
 	_overrideMovementTimeDeltas = false;
 	_cheatTypeIsEventFlag = false;
@@ -314,13 +309,11 @@ void NancyEngine::bootGameEngine() {
 	ConfMan.registerDefault("original_menus", false);
 	ConfMan.registerDefault("second_chance", false);
 
-	// Load archive
-	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember("data1.cab");
-	if (stream) {
-		Common::Archive *cab = Common::makeInstallShieldArchive(stream);
-
-		if (cab) {
-			SearchMan.add("data1.hdr", cab);
+	// Load archive if running a compressed variant
+	if (isCompressed()) {
+		Common::Archive *cabinet = Common::makeInstallShieldArchive("data");
+		if (cabinet) {
+			SearchMan.add("data1.cab", cabinet);
 		}
 	}
 
@@ -435,7 +428,7 @@ void NancyEngine::preloadCals(const IFF &boot) {
 }
 
 void NancyEngine::readChunkList(const IFF &boot, Common::Serializer &ser, const Common::String &prefix) {
-	byte numChunks;
+	byte numChunks = 0;
 	ser.syncAsByte(numChunks);
 	for (byte i = 0; i < numChunks; ++ i) {
 		Common::String name = Common::String::format("%s%d", prefix.c_str(), i);
@@ -452,44 +445,47 @@ void NancyEngine::readBootSummary(const IFF &boot) {
 	ser.setVersion(_gameDescription->gameType);
 
 	ser.skip(0x71, kGameTypeVampire, kGameTypeVampire);
-	ser.skip(0xA3, kGameTypeNancy1, kGameTypeNancy2);
-	ser.syncAsUint16LE(_firstSceneID);
-	ser.skip(4, kGameTypeNancy1, kGameTypeNancy2);
-	ser.syncAsUint16LE(_startTimeHours, kGameTypeNancy1, kGameTypeNancy2);
+	ser.skip(0xA3, kGameTypeNancy1, kGameTypeNancy1);
+	ser.skip(0x9D, kGameTypeNancy2, kGameTypeNancy3);
+	ser.syncAsUint16LE(_firstScene.sceneID);
+	ser.skip(12, kGameTypeVampire, kGameTypeVampire); // Palette
+	ser.syncAsUint16LE(_firstScene.frameID);
+	ser.syncAsUint16LE(_firstScene.verticalOffset);
+	ser.syncAsUint16LE(_startTimeHours);
+	ser.syncAsUint16LE(_startTimeMinutes);
 
-	ser.skip(0xB8, kGameTypeVampire, kGameTypeVampire);
-	ser.skip(0xA6, kGameTypeNancy1, kGameTypeNancy1);
-	ser.skip(0xA0, kGameTypeNancy2, kGameTypeNancy2);
+	ser.skip(0xA4, kGameTypeVampire, kGameTypeNancy2);
 
-	// nancy3 has not been looked into, skip straight to images
-	ser.skip(0xA7, kGameTypeNancy3, kGameTypeNancy3);
+	readChunkList(boot, ser, "FR"); // frames
+	readChunkList(boot, ser, "LG"); // logos
 
-	readChunkList(boot, ser, "FR");
-	readChunkList(boot, ser, "LG");
-
-	if (ser.getVersion() < kGameTypeNancy3) {
-		readChunkList(boot, ser, "OB");
+	if (ser.getVersion() == kGameTypeNancy3) {
+		readChunkList(boot, ser, "PLG"); // partner logos
 	}
+	
+	readChunkList(boot, ser, "OB"); // objects
 
 	ser.skip(0x28, kGameTypeVampire, kGameTypeVampire);
 	ser.skip(0x10, kGameTypeNancy1, kGameTypeNancy1);
+	ser.skip(0x20, kGameTypeNancy2, kGameTypeNancy3);
 	readRect(*bsum, _textboxScreenPosition);
 
 	ser.skip(0x5E, kGameTypeVampire, kGameTypeVampire);
 	ser.skip(0x59, kGameTypeNancy1, kGameTypeNancy1);
-	ser.syncAsUint16LE(_horizontalEdgesSize, kGameTypeVampire, kGameTypeNancy1);
-	ser.syncAsUint16LE(_verticalEdgesSize, kGameTypeVampire, kGameTypeNancy1);
-	ser.skip(0x1C, kGameTypeVampire, kGameTypeNancy1);
+	ser.skip(0x89, kGameTypeNancy2, kGameTypeNancy3);
+	ser.syncAsUint16LE(_horizontalEdgesSize);
+	ser.syncAsUint16LE(_verticalEdgesSize);
+	ser.skip(0x1C);
 	int16 time = 0;
-	ser.syncAsSint16LE(time, kGameTypeVampire, kGameTypeNancy1);
+	ser.syncAsSint16LE(time);
 	_playerTimeMinuteLength = time;
-	ser.skip(2, kGameTypeNancy1, kGameTypeNancy1);
-	ser.syncAsByte(_overrideMovementTimeDeltas, kGameTypeVampire, kGameTypeNancy1);
+	ser.skip(2, kGameTypeNancy1, kGameTypeNancy3);
+	ser.syncAsByte(_overrideMovementTimeDeltas);
 
 	if (_overrideMovementTimeDeltas) {
-		ser.syncAsSint16LE(time, kGameTypeVampire, kGameTypeNancy1);
+		ser.syncAsSint16LE(time);
 		_slowMovementTimeDelta = time;
-		ser.syncAsSint16LE(time, kGameTypeVampire, kGameTypeNancy1);
+		ser.syncAsSint16LE(time);
 		_fastMovementTimeDelta = time;
 	}
 }
@@ -509,6 +505,10 @@ Common::Error NancyEngine::synchronize(Common::Serializer &ser) {
 	NancySceneState._actionManager.synchronize(ser);
 
 	return Common::kNoError;
+}
+
+bool NancyEngine::isCompressed() {
+	return getGameFlags() & GF_COMPRESSED;
 }
 
 } // End of namespace Nancy

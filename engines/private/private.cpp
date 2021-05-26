@@ -52,11 +52,6 @@ PrivateEngine::PrivateEngine(OSystem *syst, const ADGameDescription *gd)
 	  _maxNumberClicks(0), _sirenWarning(0), _screenW(640), _screenH(480) {
 	_rnd = new Common::RandomSource("private");
 
-	// Debug channels
-	DebugMan.addDebugChannel(kPrivateDebugFunction, "functions", "Function execution debug channel");
-	DebugMan.addDebugChannel(kPrivateDebugCode, "code", "Code execution debug channel");
-	DebugMan.addDebugChannel(kPrivateDebugScript, "script", "Script execution debug channel");
-
 	// Global object for external reference
 	g_private = this;
 
@@ -299,6 +294,13 @@ Common::Error PrivateEngine::run() {
 	return Common::kNoError;
 }
 
+void PrivateEngine::ignoreEvents() {
+	Common::Event event;
+	g_system->getEventManager()->pollEvent(event);
+	g_system->updateScreen();
+	g_system->delayMillis(10);
+}
+
 void PrivateEngine::initFuncs() {
 	for (const Private::FuncTable *fnc = funcTable; fnc->name; fnc++) {
 		Common::String name(fnc->name);
@@ -426,7 +428,7 @@ bool PrivateEngine::cursorExit(Common::Point mousePos) {
 	return false;
 }
 
-bool PrivateEngine::inMask(Graphics::ManagedSurface *surf, Common::Point mousePos) {
+bool PrivateEngine::inMask(Graphics::Surface *surf, Common::Point mousePos) {
 	if (surf == NULL)
 		return false;
 
@@ -770,12 +772,16 @@ Common::Error PrivateEngine::loadGameStream(Common::SeekableReadStream *stream) 
 		Private::Symbol *sym = maps.locations.getVal(*it);
 		sym->u.val = val;
 	}
+
+	// Inventory
+	inventory.clear();
 	uint32 size = stream->readUint32LE();
 	for (uint32 i = 0; i < size; ++i) {
 		inventory.push_back(stream->readString());
 	}
 
 	// Dossiers
+	_dossiers.clear();
 	size = stream->readUint32LE();
 	DossierInfo m;
 	for (uint32 i = 0; i < size; ++i) {
@@ -983,6 +989,10 @@ void PrivateEngine::playSound(const Common::String &name, uint loops, bool stopO
 	_mixer->playStream(Audio::Mixer::kSFXSoundType, sh, stream, -1, Audio::Mixer::kMaxChannelVolume);
 }
 
+bool PrivateEngine::isSoundActive() {
+	return _mixer->isSoundIDActive(-1);
+}
+
 void PrivateEngine::playVideo(const Common::String &name) {
 	debugC(1, kPrivateDebugFunction, "%s(%s)", __FUNCTION__, name.c_str());
 	//stopSound(true);
@@ -1040,13 +1050,23 @@ void PrivateEngine::drawScreenFrame() {
 }
 
 
-Graphics::ManagedSurface *PrivateEngine::loadMask(const Common::String &name, int x, int y, bool drawn) {
+Graphics::Surface *PrivateEngine::loadMask(const Common::String &name, int x, int y, bool drawn) {
 	debugC(1, kPrivateDebugFunction, "%s(%s,%d,%d,%d)", __FUNCTION__, name.c_str(), x, y, drawn);
-	Graphics::ManagedSurface *surf = new Graphics::ManagedSurface();
+	Graphics::Surface *surf = new Graphics::Surface();
 	surf->create(_screenW, _screenH, _pixelFormat);
 	surf->fillRect(screenRect, _transparentColor);
 	Graphics::Surface *csurf = decodeImage(name);
-	surf->transBlitFrom(*csurf, Common::Point(x,y));
+
+	uint32 hdiff = 0;
+	uint32 wdiff = 0;
+
+	if (x+csurf->h > _screenH)
+		hdiff = x+csurf->h - _screenH;
+	if (y+csurf->w > _screenW)
+		wdiff = y+csurf->w - _screenW;
+
+	Common::Rect crect(csurf->w - wdiff, csurf->h - hdiff);
+	surf->copyRectToSurface(*csurf, x, y, crect);
 	csurf->free();
 	delete csurf;
 	_image->destroy();
@@ -1058,8 +1078,8 @@ Graphics::ManagedSurface *PrivateEngine::loadMask(const Common::String &name, in
 	return surf;
 }
 
-void PrivateEngine::drawMask(Graphics::ManagedSurface *surf) {
-	_compositeSurface->transBlitFrom(surf->rawSurface(), _origin, _transparentColor);
+void PrivateEngine::drawMask(Graphics::Surface *surf) {
+	_compositeSurface->transBlitFrom(*surf, _origin, _transparentColor);
 }
 
 void PrivateEngine::drawScreen() {
@@ -1163,7 +1183,6 @@ void PrivateEngine::loadInventory(uint32 x, const Common::Rect &r1, const Common
 	int16 offset = 0;
 	for (NameList::const_iterator it = inventory.begin(); it != inventory.end(); ++it) {
 		offset = offset + 22;
-		//debug("%hd %hd", rect->left, rect->top + offset);
 		loadMask(*it, r1.left, r1.top + offset, true);
 	}
 }

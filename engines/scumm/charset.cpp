@@ -20,6 +20,7 @@
  *
  */
 
+#include "common/macresman.h"
 
 #include "scumm/charset.h"
 #include "scumm/scumm.h"
@@ -1510,6 +1511,235 @@ void CharsetRendererPCE::setDrawCharIntern(uint16 chr) {
 	_sjisCurChar = (_vm->_useCJKMode && chr > 127) ? chr : 0;
 }
 #endif
+
+CharsetRendererMac::CharsetRendererMac(ScummEngine *vm, const Common::String &fontFile)
+	 : CharsetRendererCommon(vm) {
+
+	_pad = false;
+
+	// As far as I can tell, Loom uses only font size 13 for in-game text.
+	// The font is also provided in sizes 9 and 12, and it's possible that
+	// 12 is used for system messages, e.g. the original pause dialog. We
+	// don't support that.
+	//
+	// I have no idea what size 9 is used for. Possibly the original About
+	// dialog?
+	//
+	// As far as I can tell, the game does not use anything fancy, like
+	// different styles, and the font does not appear to have a kerning
+	// table.
+	//
+	// Special characters:
+	//
+	// 16-23 are the note names c through c'.
+	// 60 is an upside-down note, i.e. the one used for c'.
+	// 95 is a used for the rest of the notes.
+
+	if (_vm->_game.id == GID_LOOM) {
+		Common::MacResManager resource;
+		resource.open(fontFile);
+
+		uint16 fontId = 0;
+
+		Common::SeekableReadStream *fond = resource.getResource(MKTAG('F', 'O', 'N', 'D'), "Loom");
+		Graphics::MacFontFamily fontFamily;
+
+		if (fond) {
+			if (fontFamily.load(*fond)) {
+				Common::Array<Graphics::MacFontFamily::AsscEntry> *assoc = fontFamily.getAssocTable();
+				for (uint i = 0; i < assoc->size(); i++) {
+					if ((*assoc)[i]._fontSize == 13) {
+						fontId = (*assoc)[i]._fontID;
+						break;
+					}
+				}
+			}
+			delete fond;
+		}
+
+		assert(fontId);
+
+		Common::SeekableReadStream *font = resource.getResource(MKTAG('F', 'O', 'N', 'T'), fontId);
+		_macFont.loadFont(*font, &fontFamily, 13, 0);
+		delete font;
+	}
+}
+
+int CharsetRendererMac::getFontHeight() {
+	return _macFont.getFontHeight() / 2;
+}
+
+int CharsetRendererMac::getCharWidth(uint16 chr) {
+	return _macFont.getCharWidth(chr) / 2;
+}
+
+void CharsetRendererMac::printChar(int chr, bool ignoreCharsetMask) {
+	// If this is the beginning of a line, assume the position will be
+	// correct without any padding.
+
+	if (_firstChar || _top != _lastTop) {
+		_pad = false;
+	}
+
+	VirtScreen *vs;
+
+	if ((vs = _vm->findVirtScreen(_top)) == NULL) {
+		warning("findVirtScreen(%d) failed, therefore printChar cannot print '%c'", _top, chr);
+		return;
+	}
+
+	if (chr == '@')
+		return;
+
+	// Scale up the virtual coordinates to get the high resolution ones.
+
+	int macLeft = 2 * _left;
+	int macTop = 2 * _top;
+
+	// The last character ended on an odd X coordinate. This information
+	// was lost in the rounding, so we compensate for it here.
+
+	if (_pad) {
+		macLeft++;
+		_pad = false;
+	}
+
+	bool enableShadow = _enableShadow;
+	int color = _color;
+
+	// Shadowing is a bit of guesswork. It doesn't look like it's using
+	// the Mac's built-in form of shadowed text (which, as I recall it,
+	// never looked particularly good anyway). This seems to match the
+	// original look for normal text.
+
+	// HACK: Notes and their names should always be drawn with a shadow.
+	//       Actually, this doesn't quite match the original but I can't
+	//       figure out what the original does here. The "c" looks like
+	//       it's shadowed in the normal way, but everything else looks
+	//       kind-of-but-not-quite outlined instead. Weird.
+	//
+	//       Even weirder, I've seen screenshots where there is no
+	//       shadowing at all. I'll just keep it like this for now,
+	//       because it makes the notes stand out a bit better.
+
+	if ((chr >= 16 && chr <= 23) || chr == 60 || chr == 95) {
+		enableShadow = true;
+	}
+
+	// HACK: Apparently, note names are never drawn in light gray. Only
+	//       white for known notes, and dark gray for unknown ones. This
+	//       hack ensures that we won't be left with a mix of white and
+	//       light gray note names, because apparently the game never
+	//       changes them back to light gray once the draft is done?
+
+	if (chr >= 16 && chr <= 23 && _color == 7)
+		color = 15;
+
+	printCharInternal(chr, color, enableShadow, macLeft, macTop);
+
+	// HACK: The way we combine high and low resolution graphics means
+	//       that sometimes, when a note name is drawn on the distaff, the
+	//       note itself gets overdrawn by the low-resolution graphics.
+	//
+	//       The only workaround I can think of is to force the note to be
+	//       redrawn along with its name. It's enough to redraw it on the
+	//       text surface. We can assume the correct color is already on
+	//       screen.
+	//
+	//       Note that this will not affect the Practice Mode box, since
+	//       this note names are drawn by drawChar(), not printChar().
+
+	if (chr >= 16 && chr <= 23) {
+		int xOffset[] = { 16, 14, 12, 8, 6, 2, 0, 8 };
+
+		int note = (chr == 23) ? 60 : 95;
+		printCharInternal(note, -1, enableShadow, macLeft + 18, macTop + xOffset[chr - 16]);
+	}
+
+	// Mark the virtual screen as dirty, using downscaled coordinates.
+
+	int left, right, top, bottom;
+
+	if (enableShadow) {
+		left = macLeft / 2;
+		right = (macLeft + _macFont.getCharWidth(chr) + 3) / 2;
+		top = macTop / 2;
+		bottom = (macTop + _macFont.getFontHeight() + 3) / 2;
+	} else {
+		left = (macLeft + 1) / 2;
+		right = (macLeft + _macFont.getCharWidth(chr) + 1) / 2;
+		top = (macTop + 1) / 2;
+		bottom = (macTop + _macFont.getFontHeight() + 1) / 2;
+	}
+
+	if (_firstChar) {
+		_str.left = left;
+		_str.top = top;
+		_str.right = right;
+		_str.bottom = top;
+		_firstChar = false;
+	} else {
+		if (_str.left > left)
+			_str.left = left;
+		if (_str.right < right)
+			_str.right = right;
+		if (_str.bottom < bottom)
+			_str.bottom = bottom;
+	}
+
+	_vm->markRectAsDirty(vs->number, left, right, top - vs->topline, bottom - vs->topline);
+
+	if (!ignoreCharsetMask) {
+		_hasMask = true;
+		_textScreenID = vs->number;
+	}
+
+	// The next character may have to be adjusted to compensate for
+	// rounding errors.
+
+	macLeft += _macFont.getCharWidth(chr);
+	if (macLeft & 1)
+		_pad = true;
+
+	_left = macLeft / 2;
+	_lastTop = _top;
+}
+
+void CharsetRendererMac::printCharInternal(int chr, int color, bool shadow, int x, int y) {
+	if (shadow) {
+		_macFont.drawChar(&_vm->_textSurface, chr, x + 2, y, 0);
+		_macFont.drawChar(&_vm->_textSurface, chr, x, y + 2, 0);
+		_macFont.drawChar(&_vm->_textSurface, chr, x + 3, y + 3, 0);
+
+		if (color != -1) {
+			_macFont.drawChar(_vm->_macScreen, chr, x + 2, y, _shadowColor);
+			_macFont.drawChar(_vm->_macScreen, chr, x, y + 2, _shadowColor);
+			_macFont.drawChar(_vm->_macScreen, chr, x + 3, y + 3, _shadowColor);
+		}
+	}
+
+	_macFont.drawChar(&_vm->_textSurface, chr, x + 1, y + 1, 0);
+
+	if (color != -1)
+		_macFont.drawChar(_vm->_macScreen, chr, x + 1, y + 1, color);
+}
+
+void CharsetRendererMac::drawChar(int chr, Graphics::Surface &s, int x, int y) {
+	_macFont.drawChar(&s, chr, x, y, _color);
+}
+
+void CharsetRendererMac::setColor(byte color) {
+	_color = color;
+	_enableShadow = false;
+	_shadowColor = 0;
+
+	if (_vm->_game.id == GID_LOOM) {
+		_enableShadow = ((color & 0xF0) != 0);
+		// Anything outside the ordinary palette should be fine.
+		_shadowColor = 255;
+		_color &= 0x0F;
+	}
+}
 
 #ifdef ENABLE_SCUMM_7_8
 CharsetRendererNut::CharsetRendererNut(ScummEngine *vm)

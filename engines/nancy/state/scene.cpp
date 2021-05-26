@@ -123,7 +123,6 @@ void Scene::process() {
 		// fall through
 	case kLoad:
 		load();
-		run(); // Extra run() call to fix the single frame with a wrong palette in TVD
 		// fall through
 	case kStartSound:
 		_state = kRun;
@@ -132,6 +131,7 @@ void Scene::process() {
 			g_nancy->_sound->loadSound(_sceneState.summary.sound);
 			g_nancy->_sound->playSound(_sceneState.summary.sound);
 		}
+		run(); // Extra run() call to fix the single frame with a wrong palette in TVD
 		// fall through
 	case kRun:
 		run();
@@ -412,7 +412,7 @@ void Scene::init() {
 	_timers.pushedPlayTime = 0;
 	_timers.timeOfDay = Timers::kDay;
 
-	_sceneState.nextScene.sceneID = g_nancy->_firstSceneID;
+	changeScene(g_nancy->_firstScene);
 
 	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("HINT");
 

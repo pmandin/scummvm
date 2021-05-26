@@ -38,13 +38,18 @@ DEFINE_RUNTIME_CLASSTYPE_CODE(CruAvatarMoverProcess)
 
 static const int REBEL_BASE_MAP = 40;
 
-CruAvatarMoverProcess::CruAvatarMoverProcess() : AvatarMoverProcess(), _avatarAngle(0), _SGA1Loaded(false) {
+CruAvatarMoverProcess::CruAvatarMoverProcess() : AvatarMoverProcess(),
+_avatarAngle(0), _SGA1Loaded(false), _nextFireTick(0) {
 }
 
 
 CruAvatarMoverProcess::~CruAvatarMoverProcess() {
 }
 
+static bool _isAnimRunningWalking(Animation::Sequence anim) {
+	return (anim == Animation::run || anim == Animation::combatRunSmallWeapon ||
+			anim == Animation::walk);
+}
 
 void CruAvatarMoverProcess::run() {
 
@@ -84,6 +89,23 @@ void CruAvatarMoverProcess::run() {
 		}
 	} else {
 		_avatarAngle = -1;
+		// Check for a turn request while running or walking.  This only happens
+		// once per arrow keydown, so clear the flag.
+		if (avatar->isBusy() && _isAnimRunningWalking(avatar->getLastAnim())
+			&& hasMovementFlags(MOVE_FORWARD)
+			&& (hasMovementFlags(MOVE_TURN_LEFT) || hasMovementFlags(MOVE_TURN_RIGHT))) {
+			Kernel *kernel = Kernel::get_instance();
+			// Stop the current animation and turn now.
+			kernel->killProcesses(avatar->getObjId(), ActorAnimProcess::ACTOR_ANIM_PROC_TYPE, true);
+
+			Direction curdir = avatar->getDir();
+			Animation::Sequence anim = hasMovementFlags(MOVE_RUN) ? Animation::run : Animation::walk;
+			DirectionMode dirmode = avatar->animDirMode(anim);
+			Direction dir = getTurnDirForTurnFlags(curdir, dirmode);
+			clearMovementFlag(MOVE_TURN_LEFT | MOVE_TURN_RIGHT);
+			step(anim, dir);
+			return;
+		}
 	}
 
 	// Now do the regular process
@@ -104,11 +126,6 @@ static bool _isAnimRunningJumping(Animation::Sequence anim) {
 static bool _isAnimStartRunning(Animation::Sequence anim) {
 	return (anim == Animation::startRun || anim == Animation::startRunSmallWeapon ||
 			anim == Animation::startRunLargeWeapon);
-}
-
-static bool _isAnimRunningWalking(Animation::Sequence anim) {
-	return (anim == Animation::run || anim == Animation::combatRunSmallWeapon ||
-			anim == Animation::walk);
 }
 
 void CruAvatarMoverProcess::handleCombatMode() {
@@ -248,6 +265,11 @@ void CruAvatarMoverProcess::handleCombatMode() {
 		return;
 	}
 
+	if (hasMovementFlags(MOVE_ATTACKING) && !hasMovementFlags(MOVE_FORWARD | MOVE_BACK)) {
+		tryAttack();
+		return;
+	}
+
 	if (_isAnimRunningJumping(lastanim) || _isAnimStartRunning(idleanim)) {
 		idleanim = Animation::stopRunningAndDrawSmallWeapon;
 	}
@@ -350,6 +372,11 @@ void CruAvatarMoverProcess::handleNormalMode() {
 	if (avatar->isBusy())
 		return;
 
+	if (hasMovementFlags(MOVE_ATTACKING) && !hasMovementFlags(MOVE_FORWARD | MOVE_BACK)) {
+		tryAttack();
+		return;
+	}
+
 	// not doing anything in particular? stand
 	if (lastanim != Animation::stand && currentIdleTime == 0) {
 		waitFor(avatar->doAnim(Animation::stand, direction));
@@ -380,6 +407,14 @@ void CruAvatarMoverProcess::step(Animation::Sequence action, Direction direction
 		Direction dir_left = Direction_TurnByDelta(direction, -4, dirmode_16dirs);
 		Point3 origpt;
 		avatar->getLocation(origpt);
+
+		int32 dims[3];
+		avatar->getFootpadWorld(dims[0], dims[1], dims[2]);
+		int32 start[3];
+		start[0] = origpt.x;
+		start[1] = origpt.y;
+		start[2] = origpt.z;
+
 		// Double the values in original to match our coordinate space
 		static const int ADJUSTMENTS[] = {0x20, 0x20, 0x40, 0x40, 0x60, 0x60,
 			0x80, 0x80, 0xA0, 0xA0};
@@ -389,11 +424,31 @@ void CruAvatarMoverProcess::step(Animation::Sequence action, Direction direction
 			int32 x = origpt.x + Direction_XFactor(testdir) * ADJUSTMENTS[i];
 			int32 y = origpt.y + Direction_YFactor(testdir) * ADJUSTMENTS[i];
 			int32 z = origpt.z;
-			// Note: we don't actually need the blocker output, just add the parameter
-			// for compilers that can't tell nullptr from 0..
-			const Item *blocker;
-			if (currentmap->isValidPosition(x, y, z, avatar->getShape(), avatar->getObjId(),
-											nullptr, nullptr, &blocker)) {
+
+			//
+			// Check if we can slide from the original point to a different
+			// start point (otherwise we might pop through walls, lasers, etc).
+			// This is like Item::collideMove, but we want to stop on any blockers
+			// and not trigger any events
+			//
+			bool startvalid = true;
+			Std::list<CurrentMap::SweepItem> collisions;
+			int32 end[3];
+			end[0] = x;
+			end[1] = y;
+			end[2] = z;
+			avatar->setLocation(origpt.x, origpt.y, origpt.z);
+			currentmap->sweepTest(start, end, dims, avatar->getShapeInfo()->_flags,
+								  avatar->getObjId(), true, &collisions);
+			for (Std::list<CurrentMap::SweepItem>::iterator it = collisions.begin();
+				 it != collisions.end(); it++) {
+				if (!it->_touching && it->_blocking) {
+					startvalid = false;
+					break;
+				}
+			}
+
+			if (startvalid) {
 				avatar->setLocation(x, y, z);
 				res = avatar->tryAnim(testaction, direction);
 				if (res == Animation::SUCCESS) {
@@ -447,11 +502,14 @@ void CruAvatarMoverProcess::tryAttack() {
 	if (!wpn || !wpn->getShapeInfo() || !wpn->getShapeInfo()->_weaponInfo)
 		return;
 
+	Kernel *kernel = Kernel::get_instance();
+	if (kernel->getTickNum() < _nextFireTick)
+		return;
+
 	if (!avatar->isInCombat()) {
 		avatar->setInCombat(0);
 	}
 
-	Kernel *kernel = Kernel::get_instance();
 	AudioProcess *audio = AudioProcess::get_instance();
 	const WeaponInfo *wpninfo = wpn->getShapeInfo()->_weaponInfo;
 
@@ -492,13 +550,11 @@ void CruAvatarMoverProcess::tryAttack() {
 				avatar->doAnim(Animation::reloadSmallWeapon, dir_current);
 			}
 
-			int delayproc = kernel->addProcess(new DelayProcess(15));
-			this->waitFor(delayproc);
+			_nextFireTick = kernel->getTickNum() + 15;
 		} else {
 			// no shots left
 			audio->playSFX(0x2a, 0x80, avatar->getObjId(), 1);
-			int delayproc = kernel->addProcess(new DelayProcess(20));
-			this->waitFor(delayproc);
+			_nextFireTick = kernel->getTickNum() + 20;
 		}
 	} else {
 		// Check for SGA1 reload anim (which happens every shot)
@@ -516,7 +572,6 @@ void CruAvatarMoverProcess::tryAttack() {
 			Animation::Sequence fireanim = (avatar->isKneeling() ?
 											Animation::kneelAndFire : Animation::attack);
 			uint16 fireanimpid = avatar->doAnim(fireanim, dir);
-			waitFor(fireanimpid);
 
 			if (wpn->getShape() == 0x332)
 				_SGA1Loaded = false;
@@ -529,7 +584,9 @@ void CruAvatarMoverProcess::tryAttack() {
 			}
 
 			if (wpninfo->_shotDelay) {
-				waitFor(kernel->addProcess(new DelayProcess(wpninfo->_shotDelay)));
+				_nextFireTick = kernel->getTickNum() + wpninfo->_shotDelay;
+			} else {
+				waitFor(fireanimpid);
 			}
 		}
 	}

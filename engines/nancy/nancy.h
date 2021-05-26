@@ -55,12 +55,6 @@ namespace Nancy {
 
 static const int kSavegameVersion = 1;
 
-enum NancyDebugChannels {
-	kDebugEngine    	= 1 << 0,
-	kDebugActionRecord  = 1 << 1,
-	kDebugScene			= 1 << 2
-};
-
 struct NancyGameDescription;
 
 class ResourceManager;
@@ -123,8 +117,10 @@ public:
 	Common::RandomSource *_randomSource;
 
 	// BSUM data
-	uint16 _firstSceneID;
+	SceneChangeDescription _firstScene;
+	
 	uint16 _startTimeHours;
+	uint16 _startTimeMinutes;
 
 	bool _overrideMovementTimeDeltas;
 	Time _slowMovementTimeDelta;
@@ -157,6 +153,8 @@ private:
 	void readBootSummary(const IFF &boot);
 
 	Common::Error synchronize(Common::Serializer &serializer);
+
+	bool isCompressed();
 
 	bool _cheatTypeIsEventFlag;
 

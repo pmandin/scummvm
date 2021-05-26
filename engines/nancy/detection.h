@@ -36,12 +36,18 @@ enum GameType {
 };
 
 enum NancyGameFlags {
-	NGF_8BITCOLOR = 1 << 0 // Used in The Vampire Diaries
+	GF_COMPRESSED = 1 << 0
 };
 
 struct NancyGameDescription {
 	ADGameDescription desc;
 	GameType gameType;
+};
+
+enum NancyDebugChannels {
+	kDebugEngine    	= 1 << 0,
+	kDebugActionRecord  = 1 << 1,
+	kDebugScene			= 1 << 2
 };
 
 } // End of namespace Nancy

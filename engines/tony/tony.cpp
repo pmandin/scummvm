@@ -45,10 +45,6 @@ TonyEngine::TonyEngine(OSystem *syst, const TonyGameDescription *gameDesc) : Eng
 
 	// Set the up the debugger
 	setDebugger(new Debugger());
-	DebugMan.addDebugChannel(kTonyDebugAnimations, "animations", "Animations debugging");
-	DebugMan.addDebugChannel(kTonyDebugActions, "actions", "Actions debugging");
-	DebugMan.addDebugChannel(kTonyDebugSound, "sound", "Sound debugging");
-	DebugMan.addDebugChannel(kTonyDebugMusic, "music", "Music debugging");
 
 	// Add folders to the search directory list
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
@@ -120,13 +116,9 @@ Common::ErrorCode TonyEngine::init() {
 		return Common::kUnknownError;
 
 	if (isCompressed()) {
-		Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember("data1.cab");
-		if (!stream)
-			error("Failed to open data1.cab");
-
-		Common::Archive *cabinet = Common::makeInstallShieldArchive(stream);
+		Common::Archive *cabinet = Common::makeInstallShieldArchive("data");
 		if (!cabinet)
-			error("Failed to parse data1.cab");
+			error("Failed to open the InstallShield cabinet");
 
 		SearchMan.add("data1.cab", cabinet);
 	}

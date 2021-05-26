@@ -22,7 +22,6 @@
 
 #include "image/png.h"
 
-#include "sludge/backdrop.h"
 #include "sludge/event.h"
 #include "sludge/fileset.h"
 #include "sludge/graphics.h"
@@ -38,25 +37,25 @@
 
 namespace Sludge {
 
-Parallax::Parallax() {
-	_parallaxLayers.clear();
-}
+void GraphicsManager::killParallax() {
+	if (!_parallaxLayers)
+		return;
 
-Parallax::~Parallax() {
-	kill();
-}
-
-void Parallax::kill() {
-	ParallaxLayers::iterator it;
-	for (it = _parallaxLayers.begin(); it != _parallaxLayers.end(); ++it) {
+	for (ParallaxLayers::iterator it = _parallaxLayers->begin(); it != _parallaxLayers->end(); ++it) {
 		(*it)->surface.free();
 		delete (*it);
 		(*it) = nullptr;
 	}
-	_parallaxLayers.clear();
+	_parallaxLayers->clear();
+
+	delete _parallaxLayers;
+	_parallaxLayers = nullptr;
 }
 
-bool Parallax::add(uint16 v, uint16 fracX, uint16 fracY) {
+bool GraphicsManager::loadParallax(uint16 v, uint16 fracX, uint16 fracY) {
+	if (!_parallaxLayers)
+		_parallaxLayers = new ParallaxLayers;
+
 	setResourceForFatal(v);
 	if (!g_sludge->_resMan->openFileFromNum(v))
 		return fatal("Can't open parallax image");
@@ -65,7 +64,7 @@ bool Parallax::add(uint16 v, uint16 fracX, uint16 fracY) {
 	if (!checkNew(nP))
 		return false;
 
-	_parallaxLayers.push_back(nP);
+	_parallaxLayers->push_back(nP);
 
 	if (!ImgLoader::loadImage(v, "parallax", g_sludge->_resMan->getData(), &nP->surface, 0))
 		return false;
@@ -77,79 +76,60 @@ bool Parallax::add(uint16 v, uint16 fracX, uint16 fracY) {
 	// 65535 is the value of AUTOFIT constant in Sludge
 	if (fracX == 65535) {
 		nP->wrapS = false;
-//		if (nP->surface.w < _winWidth) {
-//			fatal("For AUTOFIT parallax backgrounds, the image must be at least as wide as the game window/screen.");
-//			return false;
-//		}
+		if (nP->surface.w < _winWidth) {
+			fatal("For AUTOFIT parallax backgrounds, the image must be at least as wide as the game window/screen.");
+			return false;
+		}
 	} else {
 		nP->wrapS = true;
 	}
 
 	if (fracY == 65535) {
 		nP->wrapT = false;
-//		if (nP->surface.h < _winHeight) {
-//			fatal("For AUTOFIT parallax backgrounds, the image must be at least as tall as the game window/screen.");
-//			return false;
-//		}
+		if (nP->surface.h < _winHeight) {
+			fatal("For AUTOFIT parallax backgrounds, the image must be at least as tall as the game window/screen.");
+			return false;
+		}
 	} else {
 		nP->wrapT = true;
 	}
-
-	// TODO: reinterpret this part
-#if 0
-	if (nP->wrapS)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	else
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	if (nP->wrapT)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	else
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-#endif
 
 	g_sludge->_resMan->finishAccess();
 	setResourceForFatal(-1);
 	return true;
 }
 
-void Parallax::draw() {
-	// draw parallaxStuff
-	if (!_parallaxLayers.empty()) {
-		// TODO: simulate image repeating effect
-		warning("Drawing parallaxStuff");
-#if 0
-		// display parallax from bottom to top
-		ParallaxLayers::iterator it;
-		for (it = _parallax.begin(); it != _parallax.end(); ++it) {
-			(*it)->cameraX = sortOutPCamera(cameraX, (*it)->fractionX, (int)(sceneWidth - (float)winWidth / cameraZoom), (int)((*it)->surface.w - (float)winWidth / cameraZoom));
-			(*it)->cameraY = sortOutPCamera(cameraY, (*it)->fractionY, (int)(sceneHeight - (float)winHeight / cameraZoom), (int)((*it)->surface.h - (float)winHeight / cameraZoom));
+void GraphicsManager::drawParallax() {
+	if (!_parallaxLayers || _parallaxLayers->empty())
+		return;
 
-			uint w = ((*it)->wrapS) ? sceneWidth : (*it)->surface.w;
-			uint h = ((*it)->wrapT) ? sceneHeight : (*it)->surface.h;
+	// display parallax from bottom to top
+	for (ParallaxLayers::iterator it = _parallaxLayers->begin(); it != _parallaxLayers->end(); ++it) {
+		ParallaxLayer *p = *it;
+		p->cameraX = sortOutPCamera(_cameraX, p->fractionX, (int)(_sceneWidth - (float)_winWidth / _cameraZoom), (int)(p->surface.w - (float)_winWidth / _cameraZoom));
+		p->cameraY = sortOutPCamera(_cameraY, p->fractionY, (int)(_sceneHeight - (float)_winHeight / _cameraZoom), (int)(p->surface.h - (float)_winHeight / _cameraZoom));
 
-			const GLfloat vertices[] = {
-				(GLfloat) - (*it)->cameraX, (GLfloat) - (*it)->cameraY, 0.1f,
-				w - (*it)->cameraX, (GLfloat) - (*it)->cameraY, 0.1f,
-				(GLfloat) - (*it)->cameraX, h - (*it)->cameraY, 0.1f,
-				w - (*it)->cameraX, h - (*it)->cameraY, 0.1f
-			};
+		uint w = p->wrapS ? _sceneWidth : p->surface.w;
+		uint h = p->wrapT ? _sceneHeight : p->surface.h;
 
-			const GLfloat texCoords[] = {
-				0.0f, 0.0f,
-				texw, 0.0f,
-				0.0f, texh,
-				texw, texh
-			};
-			drawQuad(shader.smartScaler, vertices, 1, texCoords);
+		debugC(1, kSludgeDebugGraphics, "drawParallax(): camX: %d camY: %d dims: %d x %d sceneDims: %d x %d winDims: %d x %d surf: %d x %d", p->cameraX, p->cameraY, w, h, _sceneWidth, _sceneHeight, _winWidth, _winHeight, p->surface.w, p->surface.h);
 
+		Graphics::TransparentSurface tmp(p->surface, false);
+		for (uint y = 0; y < _sceneHeight; y += p->surface.h) {
+			for (uint x = 0; x < _sceneWidth; x += p->surface.w) {
+				tmp.blit(_renderSurface, x - p->cameraX, y - p->cameraY);
+				debugC(3, kSludgeDebugGraphics, "drawParallax(): blit to: %d, %d", x - p->cameraX, y - p->cameraY);
+			}
 		}
-#endif
 	}
 }
 
-void Parallax::save(Common::WriteStream *stream) {
+void GraphicsManager::saveParallax(Common::WriteStream *stream) {
+	if (!_parallaxLayers)
+		return;
+
 	ParallaxLayers::iterator it;
-	for (it = _parallaxLayers.begin(); it != _parallaxLayers.end(); ++it) {
+	for (it = _parallaxLayers->begin(); it != _parallaxLayers->end(); ++it) {
 		stream->writeByte(1);
 		stream->writeUint16BE((*it)->fileNum);
 		stream->writeUint16BE((*it)->fractionX);

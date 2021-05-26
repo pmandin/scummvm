@@ -112,6 +112,13 @@ static void fSyncSound(ArgArray args) {
 
 	if (s != "\"\"") {
 		g_private->playSound(s, 1, true, false);
+		while (g_private->isSoundActive())
+			g_private->ignoreEvents();
+
+		uint32 i = 100;
+		while(i--) // one second extra
+			g_private->ignoreEvents();
+
 	}
 }
 
@@ -298,6 +305,14 @@ static void fLoseInventory(ArgArray args) {
 	g_private->inventory.clear();
 }
 
+bool inInventory(Common::String &bmp) {
+	for (NameList::const_iterator it = g_private->inventory.begin(); it != g_private->inventory.end(); ++it) {
+		if (*it == bmp)
+			return true;
+	}
+	return false;
+}
+
 static void fInventory(ArgArray args) {
 	// assert types
 	Datum b1 = args[0];
@@ -354,18 +369,22 @@ static void fInventory(ArgArray args) {
 			g_private->playSound(g_private->getTakeLeaveSound(), 1, false, false);
 		}
 
-		g_private->inventory.push_back(bmp);
+		if (!inInventory(bmp))
+			g_private->inventory.push_back(bmp);
 	} else {
 		if (v1.type == NAME) {
 			if (strcmp(c.u.str, "\"REMOVE\"") == 0) {
 				v1.u.sym->u.val = 0;
-				g_private->inventory.remove(bmp);
+				if (inInventory(bmp))
+					g_private->inventory.remove(bmp);
 			} else {
 				v1.u.sym->u.val = 1;
-				g_private->inventory.push_back(bmp);
+				if (!inInventory(bmp))
+					g_private->inventory.push_back(bmp);
 			}
 		} else {
-			g_private->inventory.push_back(bmp);
+			if (!inInventory(bmp))
+				g_private->inventory.push_back(bmp);
 		}
 		if (v2.type == NAME)
 			v2.u.sym->u.val = 1;
