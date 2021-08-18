@@ -63,6 +63,7 @@ static const char *RE1_MODEL3 = "%s%s/enemy/em11%02x.emd";
 RE1Engine::RE1Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc) {
 	_room = 6;
+	_camera = 1;
 
 	_country = 8;
 }
@@ -246,7 +247,7 @@ void RE1Engine::loadRoom(void) {
 	delete stream;
 }
 
-Entity *RE1Engine::loadEntity(int numEntity) {
+Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 	char filePath[64];
 	const char *filename = RE1_MODEL1;
 	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
@@ -254,26 +255,25 @@ Entity *RE1Engine::loadEntity(int numEntity) {
 
 	debug(3, "re1: loadEntity(%d)", numEntity);
 
-	if (numEntity>0x03) {
+	if (!isPlayer) {
 		filename = RE1_MODEL2;
-		numEntity -= 4;
-		if (numEntity>0x15) {
+		if (numEntity>=0x16) {
 			numEntity += 0x20-0x16;
 		}
-		if (numEntity>0x2e) {
-			numEntity += 1;
+		if (numEntity>=0x2f) {
+			numEntity += 0x30-0x2f;
 		}
-	}
-	if (numEntity>0x31) {
-		filename = RE1_MODEL3;
-		numEntity -= 0x32;
+		if (numEntity>=0x34) {
+			filename = RE1_MODEL3;
+			numEntity -= 0x34;
+		}
 	}
 
 	sprintf(filePath, filename, isPsx ? "psx" : "", re1_country[_country], numEntity);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
-		//debug(3, "loaded %s", filePath);
+		debug(3, "re1: loaded %s", filePath);
 		newEntity = (Entity *) new RE1Entity(stream);
 	}
 	delete stream;

@@ -133,6 +133,7 @@ Common::Error ReevengiEngine::run() {
 
 	bool fullscreen = ConfMan.getBool("fullscreen");
 	g_driver = createRenderer(640, 480, fullscreen);
+	Entity *entity = loadEntity(0, 1);
 
 	//TimDecoder *my_image = testLoadImage();
 	//testLoadMovie();
@@ -165,7 +166,7 @@ Common::Error ReevengiEngine::run() {
 		//testDisplayImage(my_image);
 		//testPlayMovie();
 		testView3DBegin();
-		testDrawGrid();
+		//testDrawGrid();
 		testDrawOrigin();
 		testDrawPlayer();
 		testView3DEnd();
@@ -182,6 +183,7 @@ Common::Error ReevengiEngine::run() {
 
 	g_driver->releaseMovieFrame();
 	//delete my_image;
+	delete entity;
 
 	return Common::kNoError;
 }
@@ -450,7 +452,7 @@ void ReevengiEngine::loadBgMaskImage(void) {
 	}
 }
 
-Entity *ReevengiEngine::loadEntity(int numEntity)
+Entity *ReevengiEngine::loadEntity(int numEntity, int isPlayer)
 {
 	return nullptr;
 }
