@@ -57,6 +57,9 @@ public:
 	void setModelview(float fromX, float fromY, float fromZ,
 		float toX, float toY, float toZ,
 		float upX, float upY, float upZ) override;
+	void loadIdentity(void) override;
+	void pushMatrix(void) override;
+	void popMatrix(void) override;
 	void rotate(float angle, float ax, float ay, float az) override;
 	void translate(float tx, float ty, float tz) override;
 
