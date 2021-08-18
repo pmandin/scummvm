@@ -108,6 +108,22 @@ int ModularGraphicsBackend::getStretchMode() const {
 	return _graphicsManager->getStretchMode();
 }
 
+uint ModularGraphicsBackend::getDefaultScaler() const {
+	return _graphicsManager->getDefaultScaler();
+}
+
+uint ModularGraphicsBackend::getDefaultScaleFactor() const {
+	return _graphicsManager->getDefaultScaleFactor();
+}
+
+bool ModularGraphicsBackend::setScaler(uint mode, int factor) {
+	return _graphicsManager->setScaler(mode, factor);
+}
+
+uint ModularGraphicsBackend::getScaler() const {
+	return _graphicsManager->getScaler();
+}
+
 #ifdef USE_RGB_COLOR
 
 Graphics::PixelFormat ModularGraphicsBackend::getScreenFormat() const {
@@ -211,8 +227,8 @@ void ModularGraphicsBackend::clearOverlay() {
 	_graphicsManager->clearOverlay();
 }
 
-void ModularGraphicsBackend::grabOverlay(void *buf, int pitch) {
-	_graphicsManager->grabOverlay(buf, pitch);
+void ModularGraphicsBackend::grabOverlay(Graphics::Surface &surface) {
+	_graphicsManager->grabOverlay(surface);
 }
 
 void ModularGraphicsBackend::copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) {
@@ -225,6 +241,10 @@ int16 ModularGraphicsBackend::getOverlayHeight() {
 
 int16 ModularGraphicsBackend::getOverlayWidth() {
 	return _graphicsManager->getOverlayWidth();
+}
+
+float ModularGraphicsBackend::getHiDPIScreenFactor() const {
+	return _graphicsManager->getHiDPIScreenFactor();
 }
 
 bool ModularGraphicsBackend::showMouse(bool visible) {

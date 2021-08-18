@@ -699,6 +699,10 @@ public:
 	const byte *findResourceData(uint32 tag, const byte *ptr);
 	const byte *findResource(uint32 tag, const byte *ptr);
 	void applyWorkaroundIfNeeded(ResType type, int idx);
+	bool verifyMI2MacBootScript();
+	bool verifyMI2MacBootScript(byte *buf, int size);
+	bool tryPatchMI1CannibalScript(byte *buf, int size);
+
 	int getResourceDataSize(const byte *ptr) const;
 	void dumpResource(const char *tag, int index, const byte *ptr, int length = -1);
 
@@ -957,8 +961,11 @@ protected:
 	void updateDirtyScreen(VirtScreenNumber slot);
 	void drawStripToScreen(VirtScreen *vs, int x, int width, int top, int bottom);
 	void mac_drawStripToScreen(VirtScreen *vs, int top, int x, int y, int width, int height);
-	void mac_restoreCharsetBg();
 	void mac_drawLoomPracticeMode();
+	void mac_createIndy3TextBox(Actor *a);
+	void mac_drawIndy3TextBox();
+	void mac_undrawIndy3TextBox();
+	void mac_undrawIndy3CreditsText();
 
 	void ditherCGA(byte *dst, int dstPitch, int x, int y, int width, int height) const;
 
@@ -1102,6 +1109,7 @@ public:
 	Graphics::Surface _textSurface;
 	int _textSurfaceMultiplier;
 	Graphics::Surface *_macScreen;
+	Graphics::Surface *_macIndy3TextBox;
 
 protected:
 	byte _charsetColor;
@@ -1129,7 +1137,7 @@ protected:
 	virtual void CHARSET_1();
 	bool newLine();
 	void drawString(int a, const byte *msg);
-	void fakeBidiString(byte *ltext, bool ignoreVerb);
+	void fakeBidiString(byte *ltext, bool ignoreVerb) const;
 	void debugMessage(const byte *msg);
 	void showMessageDialog(const byte *msg);
 
@@ -1144,6 +1152,10 @@ public:
 
 	// Used by class ScummDialog:
 	virtual void translateText(const byte *text, byte *trans_buff);
+	// Old Hebrew games require reversing the dialog text.
+	bool reverseIfNeeded(const byte *text, byte *reverseBuf) const;
+	// Returns codepage that matches the game for languages that require it.
+	Common::CodePage getDialogCodePage() const;
 
 	// Somewhat hackish stuff for 2 byte support (Chinese/Japanese/Korean)
 	bool _useCJKMode;
@@ -1375,6 +1387,10 @@ protected:
 	int _numCyclRects;
 	int _scrollRequest;
 	int _scrollDeltaAdjust;
+	int _refreshDuration[20];
+	int _refreshArrayPos;
+	bool _refreshNeedCatchUp;
+	bool _enableSmoothScrolling;
 	uint32 _scrollTimer;
 	uint32 _scrollDestOffset;
 	uint16 _scrollFeedStrips[3];

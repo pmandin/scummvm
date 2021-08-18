@@ -49,6 +49,7 @@ Dialog::Dialog(int x, int y, int w, int h)
 	// started a 640x480 game with a non 1x scaler.
 	g_gui.checkScreenChange();
 
+	_mouseUpdatedOnFocus = true;
 	_result = -1;
 }
 
@@ -66,6 +67,7 @@ Dialog::Dialog(const Common::String &name)
 	// and bug #2903: "SCUMM: F5 crashes game (640x480)"
 	g_gui.checkScreenChange();
 
+	_mouseUpdatedOnFocus = true;
 	_result = -1;
 }
 
@@ -251,6 +253,11 @@ void Dialog::handleKeyDown(Common::KeyState state) {
 	}
 
 	// Hotkey handling
+
+	// Convert keypad Enter to Return key
+	if (state.keycode == Common::KEYCODE_KP_ENTER) {
+		state.ascii = Common::ASCII_RETURN;
+	}
 	if (state.ascii != 0) {
 		Widget *w = _firstWidget;
 		state.ascii = toupper(state.ascii);

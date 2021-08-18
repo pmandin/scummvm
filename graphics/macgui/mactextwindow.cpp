@@ -47,7 +47,7 @@ MacTextWindow::MacTextWindow(MacWindowManager *wm, const MacFont *font, int fgco
 		MacWindow(wm->getLastId(), true, true, true, wm), _bgcolor(bgcolor), _maxWidth(maxWidth), _menu(menu) {
 
 	_font = font;
-	_mactext = new MacText("", _wm, font, fgcolor, bgcolor, maxWidth, textAlignment);
+	_mactext = new MacText(Common::U32String(""), _wm, font, fgcolor, bgcolor, maxWidth, textAlignment);
 
 	_fontRef = wm->_fontMan->getFont(*font);
 
@@ -131,7 +131,7 @@ void MacTextWindow::appendText(const Common::U32String &str, const MacFont *macF
 	_inputIsDirty = true;	//force it to redraw input
 
 	if (_editable) {
-		_scrollPos = MAX(0, _mactext->getTextHeight() - getInnerDimensions().height());
+		_scrollPos = MAX<int>(0, _mactext->getTextHeight() - getInnerDimensions().height());
 
 		updateCursorPos();
 	}
@@ -217,7 +217,7 @@ bool MacTextWindow::draw(bool forceRedraw) {
 	// Compose
 	_mactext->draw(_composeSurface, 0, _scrollPos, _composeSurface->w, _scrollPos + _composeSurface->h, 1, 1);
 
-	if (_cursorState)
+	if (_cursorState && _selectedText.endY == -1)
 		_composeSurface->blitFrom(*_cursorSurface, *_cursorRect, Common::Point(_cursorX + 1, _cursorY + 1));
 
 	if (_selectedText.endY != -1)
@@ -392,13 +392,35 @@ bool MacTextWindow::processEvent(Common::Event &event) {
 		_wm->setActiveWindow(getId());
 
 		if (event.kbd.flags & (Common::KBD_ALT | Common::KBD_CTRL | Common::KBD_META)) {
+			switch (event.kbd.keycode) {
+			case Common::KEYCODE_x:
+				_wm->setTextInClipboard(cutSelection());
+				return true;
+			case Common::KEYCODE_c:
+				_wm->setTextInClipboard(getSelection(true, false));
+				return true;
+			case Common::KEYCODE_v:
+				if (g_system->hasTextInClipboard()) {
+					if (_selectedText.endY != -1)
+						cutSelection();
+					appendInput(_wm->getTextFromClipboard());
+					_inputIsDirty = true;
+				}
+				return true;
+			default:
+				break;
+			}
 			return false;
 		}
 
 		switch (event.kbd.keycode) {
 		case Common::KEYCODE_BACKSPACE:
 			if (!_inputText.empty()) {
-				_inputText.deleteLastChar();
+				if (_selectedText.endY != -1) {
+					cutSelection();
+				} else {
+					_inputText.deleteLastChar();
+				}
 				_inputIsDirty = true;
 			}
 			return true;
@@ -413,6 +435,8 @@ bool MacTextWindow::processEvent(Common::Event &event) {
 				return false;
 
 			if (event.kbd.ascii >= 0x20 && event.kbd.ascii <= 0x7f) {
+				if (_selectedText.endY != -1)
+					cutSelection();
 				_inputText += (char)event.kbd.ascii;
 				_inputIsDirty = true;
 
@@ -512,7 +536,7 @@ void MacTextWindow::scroll(int delta) {
 	if (_editable)
 		_scrollPos = CLIP<int>(_scrollPos, 0, _mactext->getTextHeight() - kConScrollStep);
 	else
-		_scrollPos = CLIP<int>(_scrollPos, 0, MAX(0, _mactext->getTextHeight() - getInnerDimensions().height()));
+		_scrollPos = CLIP<int>(_scrollPos, 0, MAX<int>(0, _mactext->getTextHeight() - getInnerDimensions().height()));
 
 	undrawCursor();
 	_cursorY -= (_scrollPos - oldScrollPos);

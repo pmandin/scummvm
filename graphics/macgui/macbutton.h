@@ -38,6 +38,13 @@ enum MacButtonType {
 	kRadio
 };
 
+// those name comes from Apartment
+enum CheckBoxType {
+	kCBNormal,
+	kCBInsetBlack,
+	kCBFilledBlack
+};
+
 class MacButton : public MacText {
 public:
 	MacButton(MacButtonType buttonType, TextAlign textAlignment, MacWidget *parent, int x, int y, int w, int h, MacWindowManager *wm, const Common::U32String &s, const MacFont *macFont, int fgcolor, int bgcolor);
@@ -46,14 +53,25 @@ public:
 
 	void invertOuter();
 	void invertInner();
+
+	void setHilite(bool hilite);
+	void setCheckBoxType(int type);
+	void setCheckBoxAccess(int type) { _checkBoxAccess = type; }
+
 	virtual bool draw(ManagedSurface *g, bool forceRedraw = false) override;
 	virtual bool draw(bool forceRedraw = false) override;
 	virtual bool processEvent(Common::Event &event) override;
 	virtual Common::Point calculateOffset() override;
 
 private:
+	void init();
+
+private:
 	MacButtonType _buttonType;
 	MacPlotData _pd;
+	bool _invertInner;
+	int _checkBoxType;
+	int _checkBoxAccess;
 };
 
 } // End of namespace Graphics

@@ -95,6 +95,9 @@ public:
 	/** Construct a copy of the given string. */
 	U32String(const String &str, CodePage page = kUtf8);
 
+	/** Construct a string consisting of the given character. */
+	explicit U32String(value_type c);
+
 	/** Assign a given string to this string. */
 	U32String &operator=(const U32String &str);
 
@@ -199,6 +202,18 @@ U32String operator+(const U32String &x, const U32String &y);
 
 /** Append the given @p y character to the given @p x string. */
 U32String operator+(const U32String &x, U32String::value_type y);
+
+/**
+ * Converts string with all non-printable characters properly escaped
+ * with use of C++ escape sequences.
+ * Unlike the String version, this does not escape characters with
+ * codepoints > 127.
+ *
+ * @param src The source string.
+ * @param keepNewLines Whether keep newlines or convert them to '\n', default: true.
+ * @return The converted string.
+ */
+U32String toPrintable(const U32String &src, bool keepNewLines = true);
 
 /** @} */
 

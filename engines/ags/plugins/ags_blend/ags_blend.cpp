@@ -77,55 +77,48 @@ namespace AGSBlend {
 
 #pragma endregion
 
-IAGSEngine *AGSBlend::_engine;
-
-AGSBlend::AGSBlend() : PluginBase() {
-	DLL_METHOD(AGS_GetPluginName);
-	DLL_METHOD(AGS_EngineStartup);
-}
-
 const char *AGSBlend::AGS_GetPluginName() {
 	return "AGSBlend";
 }
 
 void AGSBlend::AGS_EngineStartup(IAGSEngine *engine) {
-	_engine = engine;
+	PluginBase::AGS_EngineStartup(engine);
 
 	// Make sure it's got the version with the features we need
 	if (_engine->version < MIN_ENGINE_VERSION)
 		_engine->AbortGame("Plugin needs engine version " STRINGIFY(MIN_ENGINE_VERSION) " or newer.");
 
 	// Register functions
-	SCRIPT_METHOD(GetAlpha);
-	SCRIPT_METHOD(PutAlpha);
-	SCRIPT_METHOD(DrawAlpha);
-	SCRIPT_METHOD(Blur);
-	SCRIPT_METHOD(HighPass);
-	SCRIPT_METHOD(DrawAdd);
-	SCRIPT_METHOD(DrawSprite);
+	SCRIPT_METHOD(GetAlpha, AGSBlend::GetAlpha);
+	SCRIPT_METHOD(PutAlpha, AGSBlend::PutAlpha);
+	SCRIPT_METHOD(DrawAlpha, AGSBlend::DrawAlpha);
+	SCRIPT_METHOD(Blur, AGSBlend::Blur);
+	SCRIPT_METHOD(HighPass, AGSBlend::HighPass);
+	SCRIPT_METHOD(DrawAdd, AGSBlend::DrawAdd);
+	SCRIPT_METHOD(DrawSprite, AGSBlend::DrawSprite);
 }
 
 //------------------------------------------------------------------------------
 
 #pragma region Color_Functions
 
-static int getr32(int c) {
+int getr32(int c) {
 	return ((c >> DEFAULT_RGB_R_SHIFT_32) & 0xFF);
 }
 
-static int getg32(int c) {
+int getg32(int c) {
 	return ((c >> DEFAULT_RGB_G_SHIFT_32) & 0xFF);
 }
 
-static int getb32(int c) {
+int getb32(int c) {
 	return ((c >> DEFAULT_RGB_B_SHIFT_32) & 0xFF);
 }
 
-static int geta32(int c) {
+int geta32(int c) {
 	return ((c >> DEFAULT_RGB_A_SHIFT_32) & 0xFF);
 }
 
-static int makeacol32(int r, int g, int b, int a) {
+int makeacol32(int r, int g, int b, int a) {
 	return ((r << DEFAULT_RGB_R_SHIFT_32) |
 	        (g << DEFAULT_RGB_G_SHIFT_32) |
 	        (b << DEFAULT_RGB_B_SHIFT_32) |
@@ -355,9 +348,9 @@ void AGSBlend::Blur(ScriptMethodParams &params) {
 		}
 	}
 
-	delete [] Pixels;
-	delete [] Dest;
-	delete [] Temp;
+	delete[] Pixels;
+	delete[] Dest;
+	delete[] Temp;
 	_engine->ReleaseBitmapSurface(src);
 	delete srclongbuffer;
 	delete srccharbuffer;

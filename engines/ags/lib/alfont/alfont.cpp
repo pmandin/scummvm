@@ -20,13 +20,13 @@
  *
  */
 
+#include "common/file.h"
+#include "graphics/fonts/ttf.h"
 #include "ags/lib/alfont/alfont.h"
 #include "ags/ags.h"
 #include "ags/globals.h"
-#include "ags/shared/ac/gamesetupstruct.h"
+#include "ags/shared/ac/game_setup_struct.h"
 #include "ags/engine/ac/display.h"
-#include "common/file.h"
-#include "graphics/fonts/ttf.h"
 
 namespace AGS3 {
 
@@ -71,7 +71,8 @@ void alfont_textout(BITMAP *bmp, ALFONT_FONT *font, const char *text, int x, int
 	// The original alfont changes the y based on the font height and ascent.
 	y += (font->_size - font->getFont()->getFontAscent());
 	Graphics::ManagedSurface &surf = **bmp;
-	font->getFont()->drawString(&surf, text, x, y, bmp->w - x, color);
+	font->getFont()->drawString(&surf, text, x, y, bmp->w - x,
+		(color == surf.getTransparentColor()) ? color - 1 : color);
 }
 
 void alfont_set_font_size(ALFONT_FONT *font, int size) {

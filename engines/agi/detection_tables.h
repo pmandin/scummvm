@@ -337,6 +337,9 @@ static const AGIGameDescription gameDescriptions[] = {
 	// King's Quest 1 (CoCo3 360k) [AGI 2.072]
 	GAME_PS("kq1", "updated", "94087178c78933a4af3cd24d1c8dd7b2", 315, 0x2440, GID_KQ1, Common::kPlatformCoCo3),
 
+	// King's Quest 1 (Russian)
+	GAME_LPS("kq1", "", "973f5830ed5e1c919354dfbcd5036c53", 315, Common::RU_RUS, 0x2440, GID_KQ1, Common::kPlatformDOS),
+
 	// King's Quest 2 (IIgs) 2.0A 6/16/88 (CE)
 	GAME_PO("kq2", "2.0A 1988-06-16 (CE)", "5203c8b95250a2ecfee93ddb99414753", 0x2917, GID_KQ2, Common::kPlatformApple2GS, GAMEOPTIONS_APPLE2GS),
 
@@ -870,11 +873,11 @@ static const AGIGameDescription gameDescriptions[] = {
 	FANMADE("Snowboarding Demo (v1.0)", "24bb8f29f1eddb5c0a099705267c86e4"),
 	FANMADE("Solar System Tour", "b5a3d0f392dfd76a6aa63f3d5f578403"),
 	FANMADE("Sorceror's Appraisal", "fe62615557b3cb7b08dd60c9d35efef1"),
-	GAME("sq0", "v1.03", "d2fd6f7404e86182458494e64375e590", 0x2917, GID_FANMADE),
-	GAME("sq0", "v1.04", "2ad9d1a4624a98571ee77dcc83f231b6", 0x2917, GID_FANMADE),
+	GAME_FO("sq0", "v1.03", "d2fd6f7404e86182458494e64375e590", 0x2917, GF_FANMADE, GID_FANMADE, GAMEOPTIONS_DEFAULT),
+	GAME_FO("sq0", "v1.04", "2ad9d1a4624a98571ee77dcc83f231b6", 0x2917, GF_FANMADE, GID_FANMADE, GAMEOPTIONS_DEFAULT),
 	GAME_PS("sq0", "", "e1a8e4efcce86e1efcaa14633b9eb986", 762, 0x2440, GID_FANMADE, Common::kPlatformCoCo3),
-	GAME("sqx", "v10.0 Feb 05", "c992ae2f8ab18360404efdf16fa9edd1", 0x2917, GID_FANMADE),
-	GAME("sqx", "v10.0 Jul 18", "812edec45cefad559d190ffde2f9c910", 0x2917, GID_FANMADE),
+	GAME_FO("sqx", "v10.0 Feb 05", "c992ae2f8ab18360404efdf16fa9edd1", 0x2917, GF_FANMADE, GID_FANMADE, GAMEOPTIONS_DEFAULT),
+	GAME_FO("sqx", "v10.0 Jul 18", "812edec45cefad559d190ffde2f9c910", 0x2917, GF_FANMADE, GID_FANMADE, GAMEOPTIONS_DEFAULT),
 	GAME_PS("sqx", "", "f0a59044475a5fa37c055d8c3eb4d1a7", 768, 0x2440, GID_FANMADE, Common::kPlatformCoCo3),
 	FANMADE_FO("Space Quest 3.5", "c077bc28d7b36213dd99dc9ecb0147fc", GF_AGIMOUSE, GAMEOPTIONS_FANMADE_MOUSE),	// AGIPAL
 	FANMADE("Space Trek (v1.0)", "807a1aeadb2ace6968831d36ab5ea37a"),

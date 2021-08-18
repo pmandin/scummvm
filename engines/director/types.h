@@ -25,6 +25,8 @@
 
 namespace Director {
 
+#define CONTINUATION (0xAC)
+
 enum MovieFlag {
 	kMovieFlagAllowOutdatedLingo	= (1 << 8)
 };
@@ -51,7 +53,8 @@ enum ScriptType {
 	kCastScript = 1,
 	kMovieScript = 2,
 	kEventScript = 3,
-	kMaxScriptType = 3	// Sync with score-loading.cpp:45, array scriptTypes[]
+	kTestScript = 4,
+	kMaxScriptType = 4	// Sync with cast.cpp:46, array scriptTypes[]
 };
 
 enum ScriptFlag {
@@ -285,8 +288,7 @@ enum PaletteType {
 	kClutSystemWin = -101
 };
 
-enum {
-	kCursorDefault,
+enum DirectorCursor {
 	kCursorMouseDown,
 	kCursorMouseUp
 };
@@ -312,6 +314,72 @@ enum ChunkType {
 	kChunkWord,
 	kChunkItem,
 	kChunkLine
+};
+
+enum {
+	kFileVer300 = 0x404,
+	kFileVer310 = 0x405,
+	kFileVer400 = 0x45B,
+	kFileVer404 = 0x45D,
+	kFileVer500 = 0x4B1,
+	kFileVer600 = 0x4C2,
+	kFileVer700 = 0x4C8,
+	kFileVer800 = 0x582,
+	kFileVer850 = 0x6A4,
+	kFileVer1000 = 0x73B,
+	kFileVer1100 = 0x781,
+	kFileVer1150 = 0x782,
+	kFileVer1200 = 0x783,
+	kFileVer1201 = 0x79F
+};
+
+enum DatumType {
+	ARRAY,
+	ARGC,
+	ARGCNORET,
+	CASTREF,
+	CHUNKREF,
+	FIELDREF,
+	FLOAT,
+	INT,
+	OBJECT,
+	PARRAY,
+	POINT,
+	STRING,
+	SYMBOL,
+	VARREF,
+	GLOBALREF,
+	LOCALREF,
+	PROPREF,
+	VOID,
+	RECT
+};
+
+enum VarType {
+	kVarGeneric,
+	kVarArgument,
+	kVarProperty,
+	kVarInstance,
+	kVarGlobal,
+	kVarLocal
+};
+
+struct CastMemberID {
+	int member;
+	int castLib;
+
+	CastMemberID() : member(0), castLib(0) {}
+	CastMemberID(int memberID, int castLibID)
+		: member(memberID), castLib(castLibID) {}
+	
+	bool operator==(const CastMemberID &c) {
+		return member == c.member && castLib == c.castLib;
+	}
+	bool operator!=(const CastMemberID &c) {
+		return member != c.member || castLib != c.castLib;
+	}
+
+	Common::String asString() const;
 };
 
 struct Datum;

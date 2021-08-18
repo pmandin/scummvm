@@ -27,52 +27,12 @@
 
 namespace TwinE {
 
-struct AchievementDescriptionList {
-	const char *gameId;
-	Common::AchievementsPlatform platform;
-	const char *appId;
-	const Common::AchievementDescription descriptions[64];
+static const Common::AchievementDescriptionList achievementDescriptionList[] = {
+	{"lba", Common::STEAM_ACHIEVEMENTS, "397330"},
+
+	ACHIEVEMENT_DESC_TABLE_END_MARKER
 };
 
-#define ACHIEVEMENT_SIMPLE_ENTRY(id, title, comment) \
-	{ id, false, title, comment }
-#define ACHIEVEMENT_NODESC_ENTRY(id, title) \
-	{ id, false, title, "" }
-#define ACHIEVEMENT_HIDDEN_ENTRY(id, title) \
-	{ id, true, title, "" }
-#define ACHIEVEMENTS_LISTEND \
-	{ 0, 0, 0, 0 }
-
-static const AchievementDescriptionList achievementDescriptionList[] = {
-	{
-		// https://steamdb.info/app/397330/stats/
-		"lba",
-		Common::STEAM_ACHIEVEMENTS,
-		"397330",
-		{
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_001", "Victory!", "Finish the game."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_002", "Heavily armed", "Get the magic saber."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_003", "Collector", "Unlock all the clover boxes."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_004", "FIRE !", "Fire the canon in the museum."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_005", "New record", "Finish the game in less than 4h."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_006", "Double vision", "Get into the meca-pinguin room."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_007", "I do what I want!", "Get the syrup in the pharmacy before going to Twinsen's house."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_008", "Fanboy", "Talk to the Star Wars fanboy."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_009", "Secret breaker", "Find the secret passage in the museum."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_010", "Seasickness", "Unlock the second video of the ferry trip."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_011", "Croesus", "Have at least 500 Kashes in your wallet."),
-			ACHIEVEMENT_SIMPLE_ENTRY("LBA_ACH_012", "In your face", "Unlock the 4 videos in which Twinsen gets a slap."),
-			ACHIEVEMENTS_LISTEND
-		}
-	},
-
-	{0, Common::UNK_ACHIEVEMENTS, 0, {ACHIEVEMENTS_LISTEND}}};
-
 } // namespace TwinE
-
-#undef ACHIEVEMENT_SIMPLE_ENTRY
-#undef ACHIEVEMENT_NODESC_ENTRY
-#undef ACHIEVEMENT_HIDDEN_ENTRY
-#undef ACHIEVEMENTS_LISTEND
 
 #endif // TWINE_ACHIEVEMENTS_H

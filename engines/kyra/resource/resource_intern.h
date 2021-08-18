@@ -50,10 +50,10 @@ public:
 	Entry getFileEntry(const Common::String &name) const;
 
 	// Common::Archive API implementation
-	bool hasFile(const Common::String &name) const override;
+	bool hasFile(const Common::Path &path) const override;
 	int listMembers(Common::ArchiveMemberList &list) const override;
-	const Common::ArchiveMemberPtr getMember(const Common::String &name) const override;
-	Common::SeekableReadStream *createReadStreamForMember(const Common::String &name) const override;
+	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 private:
 	typedef Common::HashMap<Common::String, Entry, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> FileMap;
 
@@ -66,10 +66,10 @@ public:
 	TlkArchive(Common::ArchiveMemberPtr file, uint16 entryCount, const uint32 *fileEntries);
 	~TlkArchive() override;
 
-	bool hasFile(const Common::String &name) const override;
+	bool hasFile(const Common::Path &path) const override;
 	int listMembers(Common::ArchiveMemberList &list) const override;
-	const Common::ArchiveMemberPtr getMember(const Common::String &name) const override;
-	Common::SeekableReadStream *createReadStreamForMember(const Common::String &name) const override;
+	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 private:
 	Common::ArchiveMemberPtr _file;
 
@@ -93,10 +93,10 @@ public:
 	CachedArchive(const FileInputList &files);
 	~CachedArchive() override;
 
-	bool hasFile(const Common::String &name) const override;
+	bool hasFile(const Common::Path &path) const override;
 	int listMembers(Common::ArchiveMemberList &list) const override;
-	const Common::ArchiveMemberPtr getMember(const Common::String &name) const override;
-	Common::SeekableReadStream *createReadStreamForMember(const Common::String &name) const override;
+	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 private:
 	struct Entry {
 		byte *data;
@@ -155,9 +155,9 @@ public:
 	uint32 read(void *dataPtr, uint32 dataSize) override { return _stream->read(dataPtr, dataSize); }
 
 	// Common::SeekableReadStream interface
-	int32 pos() const override { return _stream->pos(); }
-	int32 size() const override { return _stream->size(); }
-	bool seek(int32 offset, int whence = SEEK_SET) override { return _stream->seek(offset, whence); }
+	int64 pos() const override { return _stream->pos(); }
+	int64 size() const override { return _stream->size(); }
+	bool seek(int64 offset, int whence = SEEK_SET) override { return _stream->seek(offset, whence); }
 
 private:
 	Common::SeekableReadStream *_stream;

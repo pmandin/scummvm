@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef DIRECTOR_LINGO_XOBJECT_PALXOBJ_H
-#define DIRECTOR_LINGO_XOBJECT_PALXOBJ_H
+#ifndef DIRECTOR_LINGO_XLIBS_PALXOBJ_H
+#define DIRECTOR_LINGO_XLIBS_PALXOBJ_H
 
 namespace Director {
 
@@ -35,7 +35,11 @@ public:
 
 namespace PalXObj {
 
-void initialize(int type);
+extern const char *xlibName;
+extern const char *fileNames[];
+
+void open(int type);
+void close(int type);
 
 void m_new(int nargs);
 void m_patchIt(int nargs);

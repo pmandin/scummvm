@@ -34,16 +34,17 @@ class Collision {
 private:
 	TwinEEngine *_engine;
 
+	void handlePushing(const IVec3 &minsTest, const IVec3 &maxsTest, const ActorStruct *actor, ActorStruct *actorTest);
 public:
 	Collision(TwinEEngine *engine);
 	/** Actor collision coordinate */
-	IVec3 collision;
+	IVec3 _collision;
 
 	/** Actor collision coordinate */
-	IVec3 processCollision;
+	IVec3 _processCollision;
 
 	/** Cause damage in current processed actor */
-	int32 causeActorDamage = 0; //fieldCauseDamage
+	int32 _causeActorDamage = 0; //fieldCauseDamage
 
 	/**
 	 * Check if actor 1 is standing in actor 2
@@ -95,7 +96,7 @@ public:
 	int32 checkExtraCollisionWithActors(ExtraListStruct *extra, int32 actorIdx);
 
 	/** Check extra collision with bricks */
-	bool checkExtraCollisionWithBricks(int32 x, int32 y, int32 z, int32 oldX, int32 oldY, int32 oldZ);
+	bool checkExtraCollisionWithBricks(int32 x, int32 y, int32 z, const IVec3 &oldPos);
 
 	/**
 	 * Check extra collision with another extra

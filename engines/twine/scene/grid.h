@@ -24,6 +24,7 @@
 #define TWINE_SCENE_GRID_H
 
 #include "common/scummsys.h"
+#include "twine/parser/blocklibrary.h"
 #include "twine/parser/sprite.h"
 #include "twine/shared.h"
 #include "twine/twine.h"
@@ -64,9 +65,6 @@ struct BrickEntry {
 /** Total number of bricks allowed in the game */
 #define NUM_BRICKS 9000
 
-/** Total number of bricks allowed in the game */
-#define CELLING_GRIDS_START_INDEX 120
-
 /** Grip X size */
 #define GRID_SIZE_X 64
 /** Grip Y size */
@@ -77,9 +75,11 @@ struct BrickEntry {
 #define BRICK_SIZE 512
 #define BRICK_HEIGHT 256
 
-// short max
+// short max 32767 0x7FFF
+//           32256 0x7E00
+//           32000 0x7D00
 #define SCENE_SIZE_MAX (BRICK_SIZE * GRID_SIZE_X - 1)
-// short min
+// short min -32768
 #define SCENE_SIZE_MIN (-BRICK_SIZE * GRID_SIZE_X)
 #define SCENE_SIZE_HALF (BRICK_SIZE * GRID_SIZE_X / 2)
 #define SCENE_SIZE_HALFF (BRICK_SIZE * GRID_SIZE_X / 2.0f)
@@ -158,10 +158,8 @@ private:
 	/** Current grid pointer */
 	int32 _currentGridSize = 0;
 	uint8 *_currentGrid = nullptr;
-	/** Current block library pointer */
-	uint8 *_currentBll = nullptr;
-	/** Number of block libraries */
-	int32 _numberOfBll = 0;
+	/** Current block library */
+	BlockLibraryData _currentBlockLibrary;
 
 	/** Brick data buffer */
 	BrickEntry *_bricksDataBuffer = nullptr;
@@ -178,10 +176,9 @@ private:
 	int32 _blockBufferSize = 0;
 	uint8 *_blockBuffer = nullptr;
 
-	uint8 *getBlockBuffer(int32 x, int32 y, int32 z);
 	const BrickEntry* getBrickEntry(int32 j, int32 i) const;
 
-	void updateCollisionCoordinates(int32 x, int32 y, int32 z);
+	const IVec3 &updateCollisionCoordinates(int32 x, int32 y, int32 z);
 public:
 	Grid(TwinEEngine *engine);
 	~Grid();
@@ -194,18 +191,18 @@ public:
 	/**
 	 * search down until either ground is found or lower border of the cube is reached
 	 */
-	const uint8 *getBlockBufferGround(int32 x, int32 y, int32 z, int32 &ground);
+	const uint8 *getBlockBufferGround(const IVec3 &pos, int32 &ground);
 
 	/** New grid camera x, y and z coordinates */
-	IVec3 newCamera;
+	IVec3 _newCamera;
 
 	/** Current grid camera x, y and z coordinates */
-	IVec3 camera;
+	IVec3 _camera;
 
 	/** Flag to know if the engine is using celling grids */
-	int16 useCellingGrid = 0; // useAnotherGrm
+	int16 _useCellingGrid = 0;
 	/** Current celling grid index */
-	int16 cellingGridIdx = 0; // currentGrid2
+	int16 _cellingGridIdx = 0;
 
 	/**
 	 * Draw 3D actor over bricks
@@ -252,7 +249,7 @@ public:
 	 * @param ptr sprite buffer pointer to draw
 	 */
 	bool drawSprite(int32 index, int32 posX, int32 posY, const uint8 *spritePtr);
-	bool drawSprite(int32 posX, int32 posY, const SpriteData &ptr);
+	bool drawSprite(int32 posX, int32 posY, const SpriteData &ptr, int spriteIndex = 0);
 
 	/**
 	 * Draw sprite or bricks in the screen according with the type
@@ -266,10 +263,11 @@ public:
 
 	/**
 	 * Get block library
-	 * @param index block library index
+	 * @param blockIdx block library index
 	 * @return pointer to the current block index
 	 */
-	const uint8 *getBlockLibrary(int32 index) const;
+	const BlockData *getBlockLibrary(int32 blockIdx) const;
+	const BlockDataEntry* getBlockPointer(int32 blockIdx, int32 tmpBrickIdx) const;
 
 	/** Create grid map from current grid to block library buffer */
 	void createGridMap();
@@ -293,7 +291,7 @@ public:
 
 	ShapeType getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2);
 
-	int32 getBrickSoundType(int32 x, int32 y, int32 z);
+	uint8 getBrickSoundType(int32 x, int32 y, int32 z);
 
 	inline ShapeType getBrickShape(const IVec3 &pos) {
 		return getBrickShape(pos.x, pos.y, pos.z);
@@ -303,7 +301,7 @@ public:
 		return getBrickShapeFull(pos.x, pos.y, pos.z, y2);
 	}
 
-	inline int32 getBrickSoundType(const IVec3 &pos) {
+	inline uint8 getBrickSoundType(const IVec3 &pos) {
 		return getBrickSoundType(pos.x, pos.y, pos.z);
 	}
 };

@@ -22,35 +22,35 @@
 
 #include "ags/shared/ac/common.h"
 #include "ags/engine/ac/draw.h"
-#include "ags/engine/ac/gamesetup.h"
-#include "ags/shared/ac/gamesetupstruct.h"
-#include "ags/engine/ac/gamestate.h"
+#include "ags/engine/ac/dynobj/cc_audio_channel.h"
+#include "ags/engine/ac/game_setup.h"
+#include "ags/shared/ac/game_setup_struct.h"
+#include "ags/engine/ac/game_state.h"
+#include "ags/engine/ac/global_debug.h"
+#include "ags/engine/ac/global_translation.h"
 #include "ags/engine/ac/mouse.h"
 #include "ags/engine/ac/string.h"
 #include "ags/engine/ac/system.h"
-#include "ags/engine/ac/dynobj/scriptsystem.h"
+#include "ags/engine/ac/dynobj/script_system.h"
 #include "ags/engine/debugging/debug_log.h"
 #include "ags/shared/debugging/out.h"
+#include "ags/engine/gfx/graphics_driver.h"
+#include "ags/engine/main/config.h"
+#include "ags/engine/main/graphics_mode.h"
 #include "ags/engine/main/engine.h"
 #include "ags/engine/main/main.h"
-#include "ags/engine/gfx/graphicsdriver.h"
-#include "ags/engine/ac/dynobj/cc_audiochannel.h"
-#include "ags/engine/main/graphics_mode.h"
-#include "ags/engine/ac/global_debug.h"
-#include "ags/engine/ac/global_translation.h"
 #include "ags/engine/media/audio/audio_system.h"
 #include "ags/shared/util/string_compat.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
-#include "ags/engine/ac/dynobj/scriptstring.h"
+#include "ags/engine/ac/dynobj/script_string.h"
 #include "ags/globals.h"
 #include "ags/events.h"
 
 namespace AGS3 {
 
 using namespace AGS::Shared;
-using namespace AGS::Engine;
 
 bool System_HasInputFocus() {
 	return !_G(switched_away);
@@ -102,7 +102,7 @@ int System_GetViewportWidth() {
 }
 
 const char *System_GetVersion() {
-	return CreateNewScriptString(_G(EngineVersion).LongString);
+	return CreateNewScriptString(_G(EngineVersion).LongString.GetCStr());
 }
 
 int System_GetHardwareAcceleration() {
@@ -110,19 +110,15 @@ int System_GetHardwareAcceleration() {
 }
 
 int System_GetNumLock() {
-	return (::AGS::g_events->getModifierFlags() & __allegro_KB_NUMLOCK_FLAG) ? 1 : 0;
+	return (::AGS::g_events->getModifierFlags() & Common::KBD_NUM) ? 1 : 0;
 }
 
 int System_GetCapsLock() {
-	return (::AGS::g_events->getModifierFlags() & __allegro_KB_CAPSLOCK_FLAG) ? 1 : 0;
+	return (::AGS::g_events->getModifierFlags() & Common::KBD_CAPS) ? 1 : 0;
 }
 
 int System_GetScrollLock() {
-	return (::AGS::g_events->getModifierFlags() & __allegro_KB_SCROLOCK_FLAG) ? 1 : 0;
-}
-
-void System_SetNumLock(int newValue) {
-	// No implementation
+	return (::AGS::g_events->getModifierFlags() & Common::KBD_SCRL) ? 1 : 0;
 }
 
 int System_GetVsync() {
@@ -210,9 +206,6 @@ void System_SetRenderAtScreenResolution(int enable) {
 //
 //=============================================================================
 
-
-
-// int ()
 RuntimeScriptValue Sc_System_GetAudioChannelCount(const RuntimeScriptValue *params, int32_t param_count) {
 	API_SCALL_INT(System_GetAudioChannelCount);
 }
@@ -254,11 +247,6 @@ RuntimeScriptValue Sc_System_GetHasInputFocus(const RuntimeScriptValue *params, 
 // int ()
 RuntimeScriptValue Sc_System_GetNumLock(const RuntimeScriptValue *params, int32_t param_count) {
 	API_SCALL_INT(System_GetNumLock);
-}
-
-// void (int newValue)
-RuntimeScriptValue Sc_System_SetNumLock(const RuntimeScriptValue *params, int32_t param_count) {
-	API_SCALL_VOID_PINT(System_SetNumLock);
 }
 
 // int ()
@@ -342,12 +330,15 @@ RuntimeScriptValue Sc_System_SetRenderAtScreenResolution(const RuntimeScriptValu
 	API_SCALL_VOID_PINT(System_SetRenderAtScreenResolution);
 }
 
-RuntimeScriptValue Sc_System_Log(const RuntimeScriptValue *params, int32_t param_count) {
-	API_SCALL_SCRIPT_SPRINTF(Sc_System_Log, 2);
-	Debug::Printf(kDbgGroup_Script, (MessageType)params[0].IValue, "%s", scsf_buffer);
-	return RuntimeScriptValue((int32_t)0);
+RuntimeScriptValue Sc_System_SaveConfigToFile(const RuntimeScriptValue *params, int32_t param_count) {
+	API_SCALL_VOID(save_config_file);
 }
 
+RuntimeScriptValue Sc_System_Log(const RuntimeScriptValue *params, int32_t param_count) {
+	API_SCALL_SCRIPT_SPRINTF_PURE(Sc_System_Log, 2);
+	Debug::Printf(kDbgGroup_Script, (MessageType)params[0].IValue, String::Wrapper(scsf_buffer));
+	return RuntimeScriptValue((int32_t)0);
+}
 
 
 void RegisterSystemAPI() {
@@ -360,7 +351,6 @@ void RegisterSystemAPI() {
 	ccAddExternalStaticFunction("System::get_HardwareAcceleration", Sc_System_GetHardwareAcceleration);
 	ccAddExternalStaticFunction("System::get_HasInputFocus", Sc_System_GetHasInputFocus);
 	ccAddExternalStaticFunction("System::get_NumLock", Sc_System_GetNumLock);
-	ccAddExternalStaticFunction("System::set_NumLock", Sc_System_SetNumLock);
 	ccAddExternalStaticFunction("System::get_OperatingSystem", Sc_System_GetOS);
 	ccAddExternalStaticFunction("System::get_RenderAtScreenResolution", Sc_System_GetRenderAtScreenResolution);
 	ccAddExternalStaticFunction("System::set_RenderAtScreenResolution", Sc_System_SetRenderAtScreenResolution);
@@ -379,34 +369,9 @@ void RegisterSystemAPI() {
 	ccAddExternalStaticFunction("System::set_VSync", Sc_System_SetVsync);
 	ccAddExternalStaticFunction("System::get_Windowed", Sc_System_GetWindowed);
 	ccAddExternalStaticFunction("System::set_Windowed", Sc_System_SetWindowed);
+
+	ccAddExternalStaticFunction("System::SaveConfigToFile", Sc_System_SaveConfigToFile);
 	ccAddExternalStaticFunction("System::Log^102", Sc_System_Log);
-
-	/* ----------------------- Registering unsafe exports for plugins -----------------------*/
-
-	ccAddExternalFunctionForPlugin("System::get_AudioChannelCount", (void *)System_GetAudioChannelCount);
-	ccAddExternalFunctionForPlugin("System::geti_AudioChannels", (void *)System_GetAudioChannels);
-	ccAddExternalFunctionForPlugin("System::get_CapsLock", (void *)System_GetCapsLock);
-	ccAddExternalFunctionForPlugin("System::get_ColorDepth", (void *)System_GetColorDepth);
-	ccAddExternalFunctionForPlugin("System::get_Gamma", (void *)System_GetGamma);
-	ccAddExternalFunctionForPlugin("System::set_Gamma", (void *)System_SetGamma);
-	ccAddExternalFunctionForPlugin("System::get_HardwareAcceleration", (void *)System_GetHardwareAcceleration);
-	ccAddExternalFunctionForPlugin("System::get_NumLock", (void *)System_GetNumLock);
-	ccAddExternalFunctionForPlugin("System::set_NumLock", (void *)System_SetNumLock);
-	ccAddExternalFunctionForPlugin("System::get_OperatingSystem", (void *)System_GetOS);
-	ccAddExternalFunctionForPlugin("System::get_RuntimeInfo", (void *)System_GetRuntimeInfo);
-	ccAddExternalFunctionForPlugin("System::get_ScreenHeight", (void *)System_GetScreenHeight);
-	ccAddExternalFunctionForPlugin("System::get_ScreenWidth", (void *)System_GetScreenWidth);
-	ccAddExternalFunctionForPlugin("System::get_ScrollLock", (void *)System_GetScrollLock);
-	ccAddExternalFunctionForPlugin("System::get_SupportsGammaControl", (void *)System_GetSupportsGammaControl);
-	ccAddExternalFunctionForPlugin("System::get_Version", (void *)System_GetVersion);
-	ccAddExternalFunctionForPlugin("SystemInfo::get_Version", (void *)System_GetVersion);
-	ccAddExternalFunctionForPlugin("System::get_ViewportHeight", (void *)System_GetViewportHeight);
-	ccAddExternalFunctionForPlugin("System::get_ViewportWidth", (void *)System_GetViewportWidth);
-	ccAddExternalFunctionForPlugin("System::get_Volume", (void *)System_GetVolume);
-	ccAddExternalFunctionForPlugin("System::set_Volume", (void *)System_SetVolume);
-	ccAddExternalFunctionForPlugin("System::get_VSync", (void *)System_GetVsync);
-	ccAddExternalFunctionForPlugin("System::set_VSync", (void *)System_SetVsync);
-	ccAddExternalFunctionForPlugin("System::get_Windowed", (void *)System_GetWindowed);
 }
 
 } // namespace AGS3

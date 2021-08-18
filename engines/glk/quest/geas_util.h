@@ -83,12 +83,12 @@ public:
 private:
 	class Nullstreambuf : public Common::WriteStream {
 		uint32 write(const void *dataPtr, uint32 dataSize) override { return dataSize; }
-		int32 pos() const override { return 0; }
+		int64 pos() const override { return 0; }
 	};
 
 //	Common::WriteStream *logfilestr_;
 //	std::streambuf *cerrbuf_;
-	static Nullstreambuf cnull;
+// 	static Nullstreambuf cnull;
 };
 
 } // End of namespace Quest

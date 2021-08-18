@@ -24,6 +24,7 @@
 
 #include "asylum/resources/actor.h"
 #include "asylum/resources/encounters.h"
+#include "asylum/resources/inventory.h"
 #include "asylum/resources/object.h"
 #include "asylum/resources/polygons.h"
 #include "asylum/resources/script.h"
@@ -335,10 +336,10 @@ void Scene::activate() {
 	Actor *player = getActor();
 
 	if (player->getStatus() == kActorStatusWalking)
-		player->updateStatus(kActorStatusEnabled);
+		player->changeStatus(kActorStatusEnabled);
 
 	if (player->getStatus() == kActorStatusWalking2)
-		player->updateStatus(kActorStatusEnabled2);
+		player->changeStatus(kActorStatusEnabled2);
 }
 
 bool Scene::init() {
@@ -377,7 +378,7 @@ bool Scene::update() {
 		getEncounter()->setShouldEnablePlayer(false);
 
 		// Enable player
-		getActor()->updateStatus(kActorStatusEnabled);
+		getActor()->changeStatus(kActorStatusEnabled);
 	}
 
 	uint32 ticks = _vm->getTick();
@@ -488,10 +489,6 @@ bool Scene::key(const AsylumEvent &evt) {
 			getActor()->setLastScreenUpdate(_vm->screenUpdateCount);
 		}
 		break;
-
-	case Common::KEYCODE_TAB:
-		getScreen()->takeScreenshot();
-		break;
 	}
 
 	return true;
@@ -516,19 +513,19 @@ bool Scene::clickDown(const AsylumEvent &evt) {
 			stopSpeech();
 
 		if (player->getStatus() == kActorStatusShowingInventory || player->getStatus() == kActorStatus10) {
-			player->updateStatus(kActorStatusEnabled);
+			player->changeStatus(kActorStatusEnabled);
 			getSound()->playSound(MAKE_RESOURCE(kResourcePackSound, 5));
 		} else if (player->getStatus() != kActorStatusDisabled) {
-			player->updateStatus(kActorStatusWalking);
+			player->changeStatus(kActorStatusWalking);
 		}
 		break;
 
 	case Common::EVENT_MBUTTONDOWN:
 		if (player->getStatus() != kActorStatusDisabled) {
 			if (player->getStatus() == kActorStatusShowingInventory || player->getStatus() == kActorStatus10)
-				player->updateStatus(kActorStatusEnabled);
+				player->changeStatus(kActorStatusEnabled);
 			else
-				player->updateStatus(kActorStatusShowingInventory);
+				player->changeStatus(kActorStatusShowingInventory);
 		}
 		break;
 
@@ -542,9 +539,9 @@ bool Scene::clickDown(const AsylumEvent &evt) {
 		if (player->getStatus() == kActorStatusDisabled)
 			break;
 
-		if (player->getField638()) {
+		if (player->inventory.getSelectedItem()) {
 			if (hitTestPlayer()) {
-				player->setField638(0);
+				player->inventory.selectItem(0);
 				return true;
 			}
 
@@ -559,9 +556,9 @@ bool Scene::clickDown(const AsylumEvent &evt) {
 			return true;
 		}
 
-		if (!hitTestPlayer() || player->getStatus() >= kActorStatus11 || !player->getReactionValue(0)) {
+		if (!hitTestPlayer() || player->getStatus() >= kActorStatus11 || !player->inventory[0]) {
 			if (player->getStatus() == kActorStatusShowingInventory || player->getStatus() == kActorStatus10) {
-				playerReaction();
+				clickInventory();
 			} else {
 				HitType type = kHitNone;
 				int32 res = hitTest(type);
@@ -573,10 +570,10 @@ bool Scene::clickDown(const AsylumEvent &evt) {
 
 		if (player->getStatus() == kActorStatusShowingInventory || player->getStatus() == kActorStatus10) {
 			getSound()->playSound(MAKE_RESOURCE(kResourcePackSound, 5));
-			player->updateStatus(kActorStatusEnabled);
+			player->changeStatus(kActorStatusEnabled);
 		} else {
 			getSound()->playSound(MAKE_RESOURCE(kResourcePackSound, 2));
-			player->updateStatus(kActorStatusShowingInventory);
+			player->changeStatus(kActorStatusShowingInventory);
 		}
 		break;
 	}
@@ -791,7 +788,7 @@ void Scene::updateMouse() {
 
 	if (newDirection >= kDirectionN)
 		if (player->getStatus() == kActorStatusWalking || player->getStatus() == kActorStatusWalking2)
-			player->updateFromDirection(newDirection);
+			player->changeDirection(newDirection);
 }
 
 
@@ -1152,20 +1149,20 @@ void Scene::updateCursor(ActorDirection direction, const Common::Rect &rect) {
 		return;
 	}
 
-	if (player->getField638()) {
+	if (player->inventory.getSelectedItem()) {
 		if (mouse.x >= rect.left && mouse.x <= rightLimit && mouse.y >= rect.top  && mouse.y <= rect.bottom && hitTestPlayer()) {
 
-			ResourceId id = _ws->cursorResourcesAlternate[player->getField638() + 31];
+			ResourceId id = _ws->inventoryCursorsNormal[player->inventory.getSelectedItem() - 1];
 			if (getCursor()->getResourceId() != id)
 				getCursor()->set(id, 0, kCursorAnimationNone);
 
 		} else {
 			if (hitTestScene(type) == -1) {
-				ResourceId id = _ws->cursorResourcesAlternate[player->getField638() + 31];
+				ResourceId id = _ws->inventoryCursorsNormal[player->inventory.getSelectedItem() - 1];
 				if (getCursor()->getResourceId() != id)
 					getCursor()->set(id, 0, kCursorAnimationNone);
 			} else {
-				ResourceId id = _ws->cursorResourcesAlternate[player->getField638() + 47];
+				ResourceId id = _ws->inventoryCursorsBlinking[player->inventory.getSelectedItem() - 1];
 				uint32 frameCount = GraphicResource::getFrameCount(_vm, id);
 				if (getCursor()->getResourceId() != id)
 					getCursor()->set(id, 0, (frameCount <= 1) ? kCursorAnimationNone : kCursorAnimationMirror);
@@ -1176,7 +1173,7 @@ void Scene::updateCursor(ActorDirection direction, const Common::Rect &rect) {
 	}
 
 	if (mouse.x >= rect.left && mouse.x <= rightLimit && mouse.y >= rect.top  && mouse.y <= rect.bottom && hitTestPlayer()) {
-		if (player->getReactionValue(0)) {
+		if (player->inventory[0]) {
 			if (getCursor()->getResourceId() != _ws->cursorResources[kCursorResourceGrabPointer])
 				getCursor()->set(_ws->cursorResources[kCursorResourceGrabPointer]);
 
@@ -1619,7 +1616,7 @@ void Scene::handleHit(int32 index, HitType type) {
 
 			if (getSound()->isPlaying(actor->getSoundResourceId())) {
 				if (actor->getStatus() != kActorStatusEnabled)
-					actor->updateStatus(kActorStatusEnabled);
+					actor->changeStatus(kActorStatusEnabled);
 
 				getSound()->stop(actor->getSoundResourceId());
 				actor->setSoundResourceId(kResourceNone);
@@ -1649,35 +1646,30 @@ void Scene::handleHit(int32 index, HitType type) {
 	}
 }
 
-void Scene::playerReaction() {
+void Scene::clickInventory() {
 	const Common::Point mouse = getCursor()->position();
 	Common::Point point;
 	Actor *player = getActor();
 
 	player->adjustCoordinates(&point);
 
-	uint32 count;
-	for (count = 0; count < 8; count++) {
-		if (!player->getReactionValue(count))
-			break;
-	}
+	uint count = player->inventory.find();
 
-	player->setField638(0);
+	player->inventory.selectItem(0);
 
 	if (count > 0) {
 		for (uint32 i = 0; i < count; i++) {
-			Common::Point ringPoint = _vm->getInventoryRingPoint(count, i);
+			Common::Point ringPoint = Inventory::getInventoryRingPoint(_vm, count, i);
 			int32 x = point.x + player->getPoint2()->x + ringPoint.x;
 			int32 y = point.y + player->getPoint2()->y / 2 - ringPoint.y;
 
 			if (mouse.x >= x && mouse.x <= (x + 40) && mouse.y >= y && mouse.y <= (y + 40)) {
-				// Handle reaction
 				getSound()->playSound(MAKE_RESOURCE(kResourcePackSound, 4));
 
 				if (_ws->chapter == kChapter9) {
 					switch (i) {
 					default:
-						player->setField638(player->getReactionValue(i));
+						player->inventory.selectItem(player->inventory[i]);
 						break;
 
 					case 0:
@@ -1693,20 +1685,20 @@ void Scene::playerReaction() {
 						break;
 					}
 				} else {
-					player->setField638(player->getReactionValue(i));
+					player->inventory.selectItem(player->inventory[i]);
 				}
 				break;
 			}
 		}
 	}
 
-	player->updateStatus(kActorStatusEnabled);
+	player->changeStatus(kActorStatusEnabled);
 	getSound()->playSound(MAKE_RESOURCE(kResourcePackSound, 5));
 }
 
 void Scene::hitAreaChapter2(int32 id) {
 	if (id == 783)
-		getActor()->setField638(6);
+		getActor()->inventory.selectItem(6);
 }
 
 void Scene::hitAreaChapter7(int32 id) {
@@ -1749,7 +1741,7 @@ void Scene::hitActorChapter2(ActorIndex index) {
 
 	if (index == 11) {
 		player->faceTarget((uint32)index, kDirectionFromActor);
-		player->updateStatus(kActorStatusAttacking);
+		player->changeStatus(kActorStatusAttacking);
 
 		Actor *actor11 = getActor(index);
 
@@ -1758,17 +1750,17 @@ void Scene::hitActorChapter2(ActorIndex index) {
 
 		if (Actor::euclidianDistance(pointPlayer, pointActor11) < 150) {
 			if (actor11->getStatus() == kActorStatusWalking2)
-				actor11->updateStatus(kActorStatus18);
+				actor11->changeStatus(kActorStatus18);
 
 			if (actor11->getStatus() == kActorStatusEnabled)
-				actor11->updateStatus(kActorStatusEnabled2);
+				actor11->changeStatus(kActorStatusEnabled2);
 		}
 
 		getSharedData()->setChapter2ActorIndex(index);
 
 	} else if (index > 12) {
 		player->faceTarget((uint32)(index + 9), kDirectionFromActor);
-		player->updateStatus(kActorStatusAttacking);
+		player->changeStatus(kActorStatusAttacking);
 		getSharedData()->setChapter2ActorIndex(index);
 	}
 }
@@ -2051,7 +2043,7 @@ bool Scene::speak(Common::KeyCode code) {
 #undef GET_INDEX
 }
 
-bool Scene::pointIntersectsRect(const Common::Point &point, const Common::Rect &rect) const {
+bool Scene::pointBelowLine(const Common::Point &point, const Common::Rect &rect) const {
 	if (rect.top || rect.left || rect.bottom || rect.right) {
 		Common::Rational res(rect.height() * (point.x - rect.left), rect.width());
 
@@ -2358,8 +2350,7 @@ void Scene::changePlayerUpdate(ActorIndex index) {
 	actor->setPosition(player->getPoint1()->x + player->getPoint2()->x, player->getPoint1()->y + player->getPoint2()->y, player->getDirection(), 0);
 	player->hide();
 
-	for (uint i = 0; i < 8; i++)
-		actor->setReaction(i, player->getReactionValue(i));
+	actor->inventory.copyFrom(player->inventory);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -2371,6 +2362,7 @@ void Scene::preload() {
 
 	SceneTitle *title = new SceneTitle(_vm);
 	title->load();
+	getCursor()->hide();
 
 	do {
 		title->update(_vm->getTick());
@@ -2397,6 +2389,8 @@ bool Scene::drawScene() {
 
 	if (getSharedData()->getFlag(kFlagSkipDrawScene)) {
 		_vm->screen()->fillRect(0, 0, 640, 480, 0);
+		getCursor()->hide();
+
 		return false;
 	}
 
@@ -2419,7 +2413,7 @@ bool Scene::drawScene() {
 
 	Actor *player = getActor();
 	if (player->getStatus() == kActorStatusShowingInventory || player->getStatus() == kActorStatus10)
-		player->updateAndDraw();
+		player->drawInventory();
 	else
 		player->setNumberFlag01(0);
 
@@ -2524,7 +2518,7 @@ void Scene::processUpdateList() {
 				// Check if it intersects with either the object rect or the related polygon
 				bool isMasked = false;
 				if (object->flags & kObjectFlag2) {
-					isMasked = !pointIntersectsRect(sum, *object->getRect());
+					isMasked = !pointBelowLine(sum, *object->getRect());
 				} else if (object->flags & kObjectFlag40) {
 					Polygon poly = _polygons->get(object->getPolygonIndex());
 					isMasked = poly.contains(sum);

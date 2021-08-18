@@ -33,9 +33,9 @@
 namespace BladeRunner {
 
 enum LoopSetModes {
-	kLoopSetModeJustStart = 0,
-	kLoopSetModeEnqueue = 1,
-	kLoopSetModeImmediate = 2
+	kLoopSetModeJustStart = 0, // sets _frameBeginNext, _repeatsCount, _frameEnd
+	kLoopSetModeEnqueue   = 1, // sets _frameBeginNext, _repeatsCountQueued, _frameEndQueued
+	kLoopSetModeImmediate = 2  // like ModeJustStart, but also sets _frameNext to _frameBeginNext and updates _frameNextTime to current
 };
 
 class BladeRunnerEngine;
@@ -45,6 +45,7 @@ class ZBuffer;
 
 class VQAPlayer {
 	friend class Debugger;
+	friend class OuttakePlayer;
 
 	BladeRunnerEngine           *_vm;
 	Common::String               _name;
@@ -53,15 +54,30 @@ class VQAPlayer {
 	Audio::QueuingAudioStream   *_audioStream;
 	Graphics::Surface           *_surface;
 
+	static const uint32  kVqaFrameTimeDiff             = 4000; // 60 * 1000 / 15
+	static const int     kMaxAudioPreloadedFrames      = 15;
+	// Use speech sound type as in original engine
+	static const Audio::Mixer::SoundType kVQASoundType = Audio::Mixer::kSpeechSoundType;
+
 	int _frame;
 	int _frameNext;
-	int _frameBegin;
-	int _frameEnd;
-	int _loop;
-	int _repeatsCount;
+	int _frameBeginNext; // The frame to begin from, after current playing loop ends.
+	                     // Does not necessarily reflect current playing loop's start frame
+	int _frameEnd;       // The frame to end at for current playing loop
+	int _loopNext;       // Does not necessarily reflect current playing loop's id
+	                     // Used: - as param for _callbackLoopEnded() (which typically is loopEnded()), but never actually used in there)
+	                     //       - for the MA05 inshot glitch workaround
+	                     // It is set at every setLoop call except for the _loopInitial case (when no video stream is loaded)
+	int _repeatsCount;   // -1 loop forever
+	                     //  0 final repetition (or don't repeat after playing)
+	                     //    When that repetition is completeed VQAPlayer::update() returns -3 value
+	                     //    See Scene::advanceFrame() and OuttakePlayer::play() for checks for -3 result
+	                     // Value is decreased per completed loop of current playing videoloop until it reaches 0
 
 	int _repeatsCountQueued;
 	int _frameEndQueued;
+
+	int _lastAudioFrameSuccessfullyQueued;
 
 	int _loopInitial;
 	int _repeatsCountInitial;
@@ -85,12 +101,13 @@ public:
 		  _audioStream(nullptr),
 		  _frame(-1),
 		  _frameNext(-1),
-		  _frameBegin(-1),
+		  _frameBeginNext(-1),
 		  _frameEnd(-1),
-		  _loop(-1),
+		  _loopNext(-1),
 		  _repeatsCount(-1),
 		  _repeatsCountQueued(-1),
 		  _frameEndQueued(-1),
+		  _lastAudioFrameSuccessfullyQueued(-1),
 		  _loopInitial(-1),
 		  _repeatsCountInitial(-1),
 		  _frameNextTime(0),
@@ -117,10 +134,13 @@ public:
 
 	bool seekToFrame(int frame);
 
+	bool getCurrentBeginAndEndFrame(int frame, int *begin, int *end);
 	int getLoopBeginFrame(int loop);
 	int getLoopEndFrame(int loop);
 
-	int getFrameCount();
+	int getFrameCount() const;
+
+	int getQueuedAudioFrames() const;
 
 private:
 	void queueAudioFrame(Audio::AudioStream *audioStream);

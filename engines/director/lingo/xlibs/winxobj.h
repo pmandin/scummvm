@@ -21,8 +21,8 @@
  */
 
 
-#ifndef DIRECTOR_LINGO_XOBJECT_WINXOBJ_H
-#define DIRECTOR_LINGO_XOBJECT_WINXOBJ_H
+#ifndef DIRECTOR_LINGO_XLIBS_WINXOBJ_H
+#define DIRECTOR_LINGO_XLIBS_WINXOBJ_H
 
 namespace Director {
 
@@ -33,7 +33,11 @@ public:
 
 namespace RearWindowXObj {
 
-void initialize(int type);
+extern const char *xlibName;
+extern const char *fileNames[];
+
+void open(int type);
+void close(int type);
 
 void m_new(int nargs);
 void m_getMemoryNeeded(int nargs);

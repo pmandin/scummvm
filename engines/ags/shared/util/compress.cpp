@@ -20,11 +20,16 @@
  *
  */
 
-#include "ags/shared/ac/common.h"  // quit, update_polled_stuff
+#ifdef _MANAGED
+// ensure this doesn't get compiled to .NET IL
+#pragma unmanaged
+#endif
+
+#include "ags/shared/ac/common.h"   // quit, update_polled_stuff
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/shared/util/compress.h"
+#include "ags/shared/util/file.h"
 #include "ags/shared/util/lzw.h"
-#include "ags/shared/util/misc.h"
 #include "ags/shared/util/stream.h"
 #include "ags/globals.h"
 #if AGS_PLATFORM_ENDIAN_BIG
@@ -34,6 +39,10 @@
 namespace AGS3 {
 
 using namespace AGS::Shared;
+
+//-----------------------------------------------------------------------------
+// RLE
+//-----------------------------------------------------------------------------
 
 void cpackbitl(const uint8_t *line, int size, Stream *out) {
 	int cnt = 0;                  // bytes encoded
@@ -141,7 +150,7 @@ void cpackbitl32(const uint32_t *line, int size, Stream *out) {
 }
 
 
-void csavecompressed(Stream *out, const unsigned char *tobesaved, const color pala[256]) {
+void csavecompressed(Stream *out, const unsigned char *tobesaved, const RGB pala[256]) {
 	int widt, hit;
 	widt = *tobesaved++;
 	widt += (*tobesaved++) * 256;
@@ -178,7 +187,7 @@ int cunpackbitl(uint8_t *line, int size, Stream *in) {
 		if (in->HasErrors())
 			break;
 
-		int8 cx = ix;
+		int8_t cx = ix;
 		if (cx == -128)
 			cx = 0;
 
@@ -215,7 +224,7 @@ int cunpackbitl16(uint16_t *line, int size, Stream *in) {
 		if (in->HasErrors())
 			break;
 
-		int8 cx = ix;
+		int8_t cx = ix;
 		if (cx == -128)
 			cx = 0;
 
@@ -252,7 +261,7 @@ int cunpackbitl32(uint32_t *line, int size, Stream *in) {
 		if (in->HasErrors())
 			break;
 
-		int8 cx = ix;
+		int8_t cx = ix;
 		if (cx == -128)
 			cx = 0;
 
@@ -281,22 +290,52 @@ int cunpackbitl32(uint32_t *line, int size, Stream *in) {
 	return in->HasErrors() ? -1 : 0;
 }
 
-//=============================================================================
+void rle_compress(Bitmap *bmp, Shared::Stream *out) {
+	const int depth = bmp->GetBPP();
+	if (depth == 1) {
+		for (int y = 0; y < bmp->GetHeight(); y++)
+			cpackbitl(&bmp->GetScanLineForWriting(y)[0], bmp->GetWidth(), out);
+	} else if (depth == 2) {
+		for (int y = 0; y < bmp->GetHeight(); y++)
+			cpackbitl16((uint16_t *)&bmp->GetScanLine(y)[0], bmp->GetWidth(), out);
+	} else {
+		for (int y = 0; y < bmp->GetHeight(); y++)
+			cpackbitl32((uint32_t *)&bmp->GetScanLine(y)[0], bmp->GetWidth(), out);
+	}
+}
+
+void rle_decompress(Bitmap *bmp, Shared::Stream *in) {
+	const int depth = bmp->GetBPP();
+	if (depth == 1) {
+		for (int y = 0; y < bmp->GetHeight(); y++)
+			cunpackbitl(&bmp->GetScanLineForWriting(y)[0], bmp->GetWidth(), in);
+	} else if (depth == 2) {
+		for (int y = 0; y < bmp->GetHeight(); y++)
+			cunpackbitl16((uint16_t *)&bmp->GetScanLineForWriting(y)[0], bmp->GetWidth(), in);
+	} else {
+		for (int y = 0; y < bmp->GetHeight(); y++)
+			cunpackbitl32((uint32_t *)&bmp->GetScanLineForWriting(y)[0], bmp->GetWidth(), in);
+	}
+}
+
+//-----------------------------------------------------------------------------
+// LZW
+//-----------------------------------------------------------------------------
 
 const char *lztempfnm = "~aclzw.tmp";
 
-void save_lzw(Stream *out, const Bitmap *bmpp, const color *pall) {
+void save_lzw(Stream *out, const Bitmap *bmpp, const RGB *pall) {
 	// First write original bitmap into temporary file
-	Stream *lz_temp_s = ci_fopen(lztempfnm, kFile_CreateAlways, kFile_Write);
+	Stream *lz_temp_s = File::OpenFileCI(lztempfnm, kFile_CreateAlways, kFile_Write);
 	lz_temp_s->WriteInt32(bmpp->GetWidth() * bmpp->GetBPP());
 	lz_temp_s->WriteInt32(bmpp->GetHeight());
 	lz_temp_s->WriteArray(bmpp->GetData(), bmpp->GetLineLength(), bmpp->GetHeight());
 	delete lz_temp_s;
 
 	// Now open same file for reading, and begin writing compressed data into required output stream
-	lz_temp_s = ci_fopen(lztempfnm);
+	lz_temp_s = File::OpenFileCI(lztempfnm);
 	soff_t temp_sz = lz_temp_s->GetLength();
-	out->SafeWriteArray(&pall[0], PALETTE_COUNT);
+	out->WriteArray(&pall[0], sizeof(RGB), 256);
 	out->WriteInt32(temp_sz);
 	soff_t gobacto = out->GetPosition();
 
@@ -310,19 +349,19 @@ void save_lzw(Stream *out, const Bitmap *bmpp, const color *pall) {
 
 	// Delete temp file
 	delete lz_temp_s;
-	::remove(lztempfnm);
+	File::DeleteFile(lztempfnm);
 
 	// Seek back to the end of the output stream
 	out->Seek(toret, kSeekBegin);
 }
 
-void load_lzw(Stream *in, Bitmap **dst_bmp, int dst_bpp, color *pall) {
+void load_lzw(Stream *in, Bitmap **dst_bmp, int dst_bpp, RGB *pall) {
 	soff_t        uncompsiz;
 	int *loptr;
 	unsigned char *membuffer;
 	int           arin;
 
-	in->SafeReadArray(&pall[0], PALETTE_COUNT);
+	in->Read(&pall[0], sizeof(RGB) * 256);
 	_G(maxsize) = in->ReadInt32();
 	uncompsiz = in->ReadInt32();
 
@@ -341,13 +380,11 @@ void load_lzw(Stream *in, Bitmap **dst_bmp, int dst_bpp, color *pall) {
 	loptr[1] = BBOp::SwapBytesInt32(loptr[1]);
 	int bitmapNumPixels = loptr[0] * loptr[1] / dst_bpp;
 	switch (dst_bpp) { // bytes per pixel!
-	case 1:
-	{
+	case 1: {
 		// all done
 		break;
 	}
-	case 2:
-	{
+	case 2: {
 		short *sp = (short *)membuffer;
 		for (int i = 0; i < bitmapNumPixels; ++i) {
 			sp[i] = BBOp::SwapBytesInt16(sp[i]);
@@ -355,8 +392,7 @@ void load_lzw(Stream *in, Bitmap **dst_bmp, int dst_bpp, color *pall) {
 		// all done
 		break;
 	}
-	case 4:
-	{
+	case 4: {
 		int *ip = (int *)membuffer;
 		for (int i = 0; i < bitmapNumPixels; ++i) {
 			ip[i] = BBOp::SwapBytesInt32(ip[i]);
@@ -375,12 +411,8 @@ void load_lzw(Stream *in, Bitmap **dst_bmp, int dst_bpp, color *pall) {
 
 	update_polled_stuff_if_runtime();
 
-	bmm->Acquire();
-
 	for (arin = 0; arin < loptr[1]; arin++)
 		memcpy(&bmm->GetScanLineForWriting(arin)[0], &membuffer[arin * loptr[0]], loptr[0]);
-
-	bmm->Release();
 
 	update_polled_stuff_if_runtime();
 
@@ -394,7 +426,7 @@ void load_lzw(Stream *in, Bitmap **dst_bmp, int dst_bpp, color *pall) {
 	*dst_bmp = bmm;
 }
 
-void savecompressed_allegro(Stream *out, const Bitmap *bmpp, const color *pall) {
+void savecompressed_allegro(Stream *out, const Bitmap *bmpp, const RGB *pall) {
 	unsigned char *wgtbl = (unsigned char *)malloc(bmpp->GetWidth() * bmpp->GetHeight() + 4);
 	short *sss = (short *)wgtbl;
 
@@ -407,7 +439,7 @@ void savecompressed_allegro(Stream *out, const Bitmap *bmpp, const color *pall) 
 	free(wgtbl);
 }
 
-void loadcompressed_allegro(Stream *in, Bitmap **bimpp, color *pall) {
+void loadcompressed_allegro(Stream *in, Bitmap **bimpp, RGB *pall) {
 	short widd, hitt;
 	int   ii;
 

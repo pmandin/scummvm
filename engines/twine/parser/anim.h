@@ -61,8 +61,11 @@ private:
 	uint16 _numBoneframes;
 	uint16 _loopFrame;
 
+protected:
+	void reset() override;
+
 public:
-	bool loadFromStream(Common::SeekableReadStream &stream) override;
+	bool loadFromStream(Common::SeekableReadStream &stream, bool lba1) override;
 
 	const KeyFrame* getKeyframe(uint index) const;
 	const Common::Array<KeyFrame>& getKeyframes() const;

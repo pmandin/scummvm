@@ -20,6 +20,7 @@
  *
  */
 
+#include "common/config-manager.h"
 #include "ags/engine/ac/math.h"
 #include "ags/shared/ac/common.h" // quit
 #include "ags/shared/util/math.h"
@@ -27,6 +28,7 @@
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
 #include "ags/ags.h"
+#include "ags/globals.h"
 
 namespace AGS3 {
 
@@ -39,7 +41,7 @@ int FloatToInt(float value, int roundDirection) {
 		else if (roundDirection == eRoundUp)
 			return static_cast<int>(value + 0.999999);
 		else
-			quit("!FloatToInt: invalid round direction");
+			error("!FloatToInt: invalid round direction");
 	} else {
 		// negative number
 		if (roundDirection == eRoundUp)
@@ -49,7 +51,7 @@ int FloatToInt(float value, int roundDirection) {
 		else if (roundDirection == eRoundDown)
 			return static_cast<int>(value - 0.999999);
 		else
-			quit("!FloatToInt: invalid round direction");
+			error("!FloatToInt: invalid round direction");
 	}
 	return 0;
 }
@@ -132,16 +134,21 @@ float Math_GetPi() {
 
 float Math_Sqrt(float value) {
 	if (value < 0.0)
-		quit("!Sqrt: cannot perform square root of negative number");
+		error("!Sqrt: cannot perform square root of negative number");
 
 	return ::sqrt(value);
 }
 
 int __Rand(int upto) {
-	upto++;
-	if (upto < 1)
-		quit("!Random: invalid parameter passed -- must be at least 1.");
-	return ::AGS::g_vm->getRandomNumber(upto - 1);
+	// WORKAROUND: Fix crash in Captain Disaster in Death Has a Million Stomping Boots
+	// at the start of Act 2, walking to Aquarium
+	if (upto == -1 && ConfMan.get("gameid") == "captaindisaster")
+		upto = INT32_MAX;
+
+	if (upto < 0)
+		error("!Random: invalid parameter passed -- must be at least 0.");
+
+	return ::AGS::g_vm->getRandomNumber(upto);
 }
 
 
@@ -261,27 +268,6 @@ void RegisterMathAPI() {
 	ccAddExternalStaticFunction("Maths::Tan^1", Sc_Math_Tan);
 	ccAddExternalStaticFunction("Maths::Tanh^1", Sc_Math_Tanh);
 	ccAddExternalStaticFunction("Maths::get_Pi", Sc_Math_GetPi);
-
-	/* ----------------------- Registering unsafe exports for plugins -----------------------*/
-
-	ccAddExternalFunctionForPlugin("Maths::ArcCos^1", (void *)Math_ArcCos);
-	ccAddExternalFunctionForPlugin("Maths::ArcSin^1", (void *)Math_ArcSin);
-	ccAddExternalFunctionForPlugin("Maths::ArcTan^1", (void *)Math_ArcTan);
-	ccAddExternalFunctionForPlugin("Maths::ArcTan2^2", (void *)Math_ArcTan2);
-	ccAddExternalFunctionForPlugin("Maths::Cos^1", (void *)Math_Cos);
-	ccAddExternalFunctionForPlugin("Maths::Cosh^1", (void *)Math_Cosh);
-	ccAddExternalFunctionForPlugin("Maths::DegreesToRadians^1", (void *)Math_DegreesToRadians);
-	ccAddExternalFunctionForPlugin("Maths::Exp^1", (void *)Math_Exp);
-	ccAddExternalFunctionForPlugin("Maths::Log^1", (void *)Math_Log);
-	ccAddExternalFunctionForPlugin("Maths::Log10^1", (void *)Math_Log10);
-	ccAddExternalFunctionForPlugin("Maths::RadiansToDegrees^1", (void *)Math_RadiansToDegrees);
-	ccAddExternalFunctionForPlugin("Maths::RaiseToPower^2", (void *)Math_RaiseToPower);
-	ccAddExternalFunctionForPlugin("Maths::Sin^1", (void *)Math_Sin);
-	ccAddExternalFunctionForPlugin("Maths::Sinh^1", (void *)Math_Sinh);
-	ccAddExternalFunctionForPlugin("Maths::Sqrt^1", (void *)Math_Sqrt);
-	ccAddExternalFunctionForPlugin("Maths::Tan^1", (void *)Math_Tan);
-	ccAddExternalFunctionForPlugin("Maths::Tanh^1", (void *)Math_Tanh);
-	ccAddExternalFunctionForPlugin("Maths::get_Pi", (void *)Math_GetPi);
 }
 
 } // namespace AGS3

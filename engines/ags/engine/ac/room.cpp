@@ -23,53 +23,54 @@
 #include "ags/shared/core/platform.h"
 #include "ags/shared/util/string_utils.h" //strlwr()
 #include "ags/shared/ac/common.h"
-#include "ags/engine/ac/charactercache.h"
-#include "ags/engine/ac/characterextras.h"
+#include "ags/engine/ac/character.h"
+#include "ags/engine/ac/character_cache.h"
+#include "ags/engine/ac/character_extras.h"
 #include "ags/engine/ac/draw.h"
 #include "ags/engine/ac/event.h"
 #include "ags/engine/ac/game.h"
-#include "ags/engine/ac/gamesetup.h"
-#include "ags/shared/ac/gamesetupstruct.h"
-#include "ags/engine/ac/gamestate.h"
+#include "ags/engine/ac/game_setup.h"
+#include "ags/shared/ac/game_setup_struct.h"
+#include "ags/engine/ac/game_state.h"
 #include "ags/engine/ac/global_audio.h"
 #include "ags/engine/ac/global_character.h"
 #include "ags/engine/ac/global_game.h"
 #include "ags/engine/ac/global_object.h"
 #include "ags/engine/ac/global_translation.h"
-#include "ags/engine/ac/movelist.h"
+#include "ags/engine/ac/move_list.h"
 #include "ags/engine/ac/mouse.h"
-#include "ags/engine/ac/objectcache.h"
+#include "ags/engine/ac/object_cache.h"
 #include "ags/engine/ac/overlay.h"
 #include "ags/engine/ac/properties.h"
 #include "ags/engine/ac/region.h"
 #include "ags/engine/ac/sys_events.h"
 #include "ags/engine/ac/room.h"
-#include "ags/engine/ac/roomobject.h"
-#include "ags/engine/ac/roomstatus.h"
+#include "ags/engine/ac/room_object.h"
+#include "ags/engine/ac/room_status.h"
 #include "ags/engine/ac/screen.h"
 #include "ags/engine/ac/string.h"
 #include "ags/engine/ac/system.h"
-#include "ags/engine/ac/walkablearea.h"
-#include "ags/engine/ac/walkbehind.h"
-#include "ags/engine/ac/dynobj/scriptobject.h"
-#include "ags/engine/ac/dynobj/scripthotspot.h"
-#include "ags/shared/gui/guidefines.h"
+#include "ags/engine/ac/walkable_area.h"
+#include "ags/engine/ac/walk_behind.h"
+#include "ags/engine/ac/dynobj/script_object.h"
+#include "ags/engine/ac/dynobj/script_hotspot.h"
+#include "ags/shared/gui/gui_main.h"
 #include "ags/engine/script/cc_instance.h"
 #include "ags/engine/debugging/debug_log.h"
 #include "ags/engine/debugging/debugger.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/shared/game/room_version.h"
-#include "ags/engine/platform/base/agsplatformdriver.h"
-#include "ags/plugins/agsplugin.h"
+#include "ags/engine/platform/base/ags_platform_driver.h"
+#include "ags/plugins/ags_plugin.h"
 #include "ags/plugins/plugin_engine.h"
 #include "ags/shared/script/cc_error.h"
 #include "ags/engine/script/script.h"
 #include "ags/engine/script/script_runtime.h"
-#include "ags/shared/ac/spritecache.h"
+#include "ags/shared/ac/sprite_cache.h"
 #include "ags/shared/util/stream.h"
-#include "ags/engine/gfx/graphicsdriver.h"
-#include "ags/shared/core/assetmanager.h"
-#include "ags/engine/ac/dynobj/all_dynamicclasses.h"
+#include "ags/engine/gfx/graphics_driver.h"
+#include "ags/shared/core/asset_manager.h"
+#include "ags/engine/ac/dynobj/all_dynamic_classes.h"
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/engine/gfx/gfxfilter.h"
 #include "ags/shared/util/math.h"
@@ -77,7 +78,7 @@
 #include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
-#include "ags/engine/ac/dynobj/scriptstring.h"
+#include "ags/engine/ac/dynobj/script_string.h"
 #include "ags/globals.h"
 
 namespace AGS3 {
@@ -170,10 +171,15 @@ const char *Room_GetMessages(int index) {
 	}
 	char buffer[STD_BUFFER_SIZE];
 	buffer[0] = 0;
-	replace_tokens(get_translation(_GP(thisroom).Messages[index]), buffer, STD_BUFFER_SIZE);
+	replace_tokens(get_translation(_GP(thisroom).Messages[index].GetCStr()), buffer, STD_BUFFER_SIZE);
 	return CreateNewScriptString(buffer);
 }
 
+bool Room_Exists(int room) {
+	String room_filename;
+	room_filename.Format("room%d.crm", room);
+	return _GP(AssetMgr)->DoesAssetExist(room_filename);
+}
 
 //=============================================================================
 
@@ -191,9 +197,19 @@ void convert_room_background_to_game_res() {
 	for (size_t i = 0; i < _GP(thisroom).BgFrameCount; ++i)
 		_GP(thisroom).BgFrames[i].Graphic = FixBitmap(_GP(thisroom).BgFrames[i].Graphic, bkg_width, bkg_height);
 
-	// Fix walk-behinds to match room background
-	// TODO: would not we need to do similar to each mask if they were 1:1 in hires room?
+	// Fix masks to match resized room background
+	// Walk-behind is always 1:1 with room background size
 	_GP(thisroom).WalkBehindMask = FixBitmap(_GP(thisroom).WalkBehindMask, bkg_width, bkg_height);
+	int mask_width = bkg_width / _GP(thisroom).MaskResolution;
+	int mask_height = bkg_height / _GP(thisroom).MaskResolution;
+	_GP(thisroom).HotspotMask = FixBitmap(_GP(thisroom).HotspotMask, mask_width, mask_height);
+	_GP(thisroom).RegionMask = FixBitmap(_GP(thisroom).RegionMask, mask_width, mask_height);
+	_GP(thisroom).WalkAreaMask = FixBitmap(_GP(thisroom).WalkAreaMask, mask_width, mask_height);
+
+	for (size_t i = 0; i < _GP(thisroom).WalkAreaCount; ++i) {
+		_GP(thisroom).WalkAreas[i].Top = room_to_mask_coord(_GP(thisroom).WalkAreas[i].Top);
+		_GP(thisroom).WalkAreas[i].Bottom = room_to_mask_coord(_GP(thisroom).WalkAreas[i].Bottom);
+	}
 }
 
 
@@ -353,6 +369,8 @@ void convert_room_coordinates_to_data_res(RoomStruct *rstruc) {
 	rstruc->Height /= mul;
 }
 
+
+
 void update_letterbox_mode() {
 	const Size real_room_sz = Size(data_to_game_coord(_GP(thisroom).Width), data_to_game_coord(_GP(thisroom).Height));
 	const Rect game_frame = RectWH(_GP(game).GetGameRes());
@@ -369,6 +387,7 @@ void update_letterbox_mode() {
 
 	_GP(play).SetMainViewport(CenterInRect(game_frame, new_main_view));
 	_GP(play).SetUIViewport(new_main_view);
+	on_mainviewport_changed();
 }
 
 // Automatically reset primary room viewport and camera to match the new room size
@@ -397,7 +416,25 @@ static void update_all_viewcams_with_newroom() {
 	}
 }
 
-// forchar = _G(playerchar) on NewRoom, or NULL if restore saved game
+// Looks up for the room script available as a separate asset.
+// This is optional, so no error is raised if one is not found.
+// If found however, it will replace room script if one had been loaded
+// from the room file itself.
+HError LoadRoomScript(RoomStruct *room, int newnum) {
+	String filename = String::FromFormat("room%d.o", newnum);
+	std::unique_ptr<Stream> in(_GP(AssetMgr)->OpenAsset(filename));
+	if (in) {
+		PScript script(ccScript::CreateFromStream(in.get()));
+		if (!script)
+			return new Error(String::FromFormat(
+				"Failed to load a script module: %s", filename.GetCStr()),
+				_G(ccErrorString));
+		room->CompiledScript = script;
+	}
+	return HError::None();
+}
+
+// forchar = playerchar on NewRoom, or NULL if restore saved game
 void load_new_room(int newnum, CharacterInfo *forchar) {
 
 	debug_script_log("Loading room %d", newnum);
@@ -417,8 +454,8 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	if (newnum == 0) {
 		// support both room0.crm and intro.crm
 		// 2.70: Renamed intro.crm to room0.crm, to stop it causing confusion
-		if ((_G(loaded_game_file_version) < kGameVersion_270 && Shared::AssetManager::DoesAssetExist("intro.crm")) ||
-		        (_G(loaded_game_file_version) >= kGameVersion_270 && !Shared::AssetManager::DoesAssetExist(room_filename))) {
+		if ((_G(loaded_game_file_version) < kGameVersion_270 && _GP(AssetMgr)->DoesAssetExist("intro.crm")) ||
+		        (_G(loaded_game_file_version) >= kGameVersion_270 && !_GP(AssetMgr)->DoesAssetExist(room_filename))) {
 			room_filename = "intro.crm";
 		}
 	}
@@ -432,8 +469,13 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 
 	if ((_GP(thisroom).GameID != NO_GAME_ID_IN_ROOM_FILE) &&
 	        (_GP(thisroom).GameID != _GP(game).uniqueid)) {
-		quitprintf("!Unable to load '%s'. This room file is assigned to a different game.", room_filename.GetCStr());
+		quitprintf("!Unable to load '%s'. This room file is assigned to a different _GP(game).", room_filename.GetCStr());
 	}
+
+	HError err = LoadRoomScript(&_GP(thisroom), newnum);
+	if (!err)
+		quitprintf("!Unable to load '%s'. Error: %s", room_filename.GetCStr(),
+			err->FullMessage().GetCStr());
 
 	convert_room_coordinates_to_data_res(&_GP(thisroom));
 
@@ -477,7 +519,11 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	_G(our_eip) = 203;
 	_G(in_new_room) = 1;
 
-	// _G(walkable_areas_temp) is used by the pathfinder to generate a
+	set_color_depth(_GP(game).GetColorDepth());
+	// Make sure the room gfx and masks are matching game's native res
+	convert_room_background_to_game_res();
+
+	// walkable_areas_temp is used by the pathfinder to generate a
 	// copy of the walkable areas - allocate it here to save time later
 	delete _G(walkable_areas_temp);
 	_G(walkable_areas_temp) = BitmapHelper::CreateBitmap(_GP(thisroom).WalkAreaMask->GetWidth(), _GP(thisroom).WalkAreaMask->GetHeight(), 8);
@@ -492,9 +538,6 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	update_polled_stuff_if_runtime();
 	redo_walkable_areas();
 	update_polled_stuff_if_runtime();
-
-	set_color_depth(_GP(game).GetColorDepth());
-	convert_room_background_to_game_res();
 	recache_walk_behinds();
 	update_polled_stuff_if_runtime();
 
@@ -534,9 +577,9 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 		for (cc = 0; cc < _G(croom)->numobj; cc++) {
 			_G(croom)->obj[cc].x = _GP(thisroom).Objects[cc].X;
 			_G(croom)->obj[cc].y = _GP(thisroom).Objects[cc].Y;
-			_G(croom)->obj[cc].num = _GP(thisroom).Objects[cc].Sprite;
+			_G(croom)->obj[cc].num = Math::InRangeOrDef<uint16_t>(_GP(thisroom).Objects[cc].Sprite, 0);
 			_G(croom)->obj[cc].on = _GP(thisroom).Objects[cc].IsOn;
-			_G(croom)->obj[cc].view = -1;
+			_G(croom)->obj[cc].view = (uint16) - 1;
 			_G(croom)->obj[cc].loop = 0;
 			_G(croom)->obj[cc].frame = 0;
 			_G(croom)->obj[cc].wait = 0;
@@ -550,8 +593,10 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 			_G(croom)->obj[cc].blocking_width = 0;
 			_G(croom)->obj[cc].blocking_height = 0;
 			if (_GP(thisroom).Objects[cc].Baseline >= 0)
-				//        _G(croom)->obj[cc].baseoffs=_GP(thisroom).Objects.Baseline[cc]-_GP(thisroom).Objects[cc].y;
 				_G(croom)->obj[cc].baseline = _GP(thisroom).Objects[cc].Baseline;
+			if (_GP(thisroom).Objects[cc].Sprite > UINT16_MAX)
+				debug_script_warn("Warning: object's (id %d) sprite %d outside of internal range (%d), reset to 0",
+				                  cc, _GP(thisroom).Objects[cc].Sprite, UINT16_MAX);
 		}
 		for (size_t i = 0; i < (size_t)MAX_WALK_BEHINDS; ++i)
 			_G(croom)->walkbehind_base[i] = _GP(thisroom).WalkBehinds[i].Baseline;
@@ -620,7 +665,7 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	/*  THIS IS DONE IN THE EDITOR NOW
 	_GP(thisroom).BgFrames.IsPaletteShared[0] = 1;
 	for (dd = 1; dd < _GP(thisroom).BgFrameCount; dd++) {
-	if (memcmp (&_GP(thisroom).BgFrames.Palette[dd][0], &palette[0], sizeof(color) * 256) == 0)
+	if (memcmp (&_GP(thisroom).BgFrames.Palette[dd][0], &_G(palette)[0], sizeof(color) * 256) == 0)
 	_GP(thisroom).BgFrames.IsPaletteShared[dd] = 1;
 	else
 	_GP(thisroom).BgFrames.IsPaletteShared[dd] = 0;
@@ -667,10 +712,10 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 
 		forchar->prevroom = forchar->room;
 		forchar->room = newnum;
+
 		// only stop moving if it's a new room, not a restore game
 		for (cc = 0; cc < _GP(game).numcharacters; cc++)
 			StopMoving(cc);
-
 	}
 
 	update_polled_stuff_if_runtime();
@@ -691,12 +736,17 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	if ((_G(new_room_x) != SCR_NO_VALUE) && (forchar != nullptr)) {
 		forchar->x = _G(new_room_x);
 		forchar->y = _G(new_room_y);
+		if (_G(new_room_placeonwalkable))
+			Character_PlaceOnWalkableArea(forchar);
 
 		if (_G(new_room_loop) != SCR_NO_VALUE)
 			forchar->loop = _G(new_room_loop);
 	}
-	_G(new_room_x) = SCR_NO_VALUE;
+
+	// reset new_room instructions
+	_G(new_room_x) = _G(new_room_y) = SCR_NO_VALUE;
 	_G(new_room_loop) = SCR_NO_VALUE;
+	_G(new_room_placeonwalkable) = false;
 
 	if ((_G(new_room_pos) > 0) & (forchar != nullptr)) {
 		if (_G(new_room_pos) >= 4000) {
@@ -858,7 +908,7 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	_G(our_eip) = 220;
 	update_polled_stuff_if_runtime();
 	debug_script_log("Now in room %d", _G(displayed_room));
-	_G(guis_need_update) = 1;
+	GUI::MarkAllGUIForUpdate();
 	pl_run_plugin_hooks(AGSE_ENTERROOM, _G(displayed_room));
 	//  MoveToWalkableArea(_GP(game).playercharacter);
 	//  MSS_CHECK_ALL_BLOCKS;
@@ -910,7 +960,7 @@ void new_room(int newnum, CharacterInfo *forchar) {
 				_G(gfxDriver)->DestroyDDB(_G(guibgbmp)[i]);
 			_G(guibgbmp)[i] = nullptr;
 		}
-		_G(guis_need_update) = 1;
+		GUI::MarkAllGUIForUpdate();
 	}
 
 	update_polled_stuff_if_runtime();
@@ -932,7 +982,7 @@ int find_highest_room_entered() {
 void first_room_initialization() {
 	_G(starting_room) = _G(displayed_room);
 	set_loop_counter(0);
-	_G(mouse_z_was) = _G(mouse_z);
+	_G(mouse_z_was) = _G(sys_mouse_z);
 }
 
 void check_new_room() {
@@ -980,7 +1030,7 @@ void on_background_frame_change() {
 	invalidate_cached_walkbehinds();
 
 	// get the new frame's palette
-	memcpy(_G(palette), _GP(thisroom).BgFrames[_GP(play).bg_frame].Palette, sizeof(color) * 256);
+	memcpy(_G(palette), _GP(thisroom).BgFrames[_GP(play).bg_frame].Palette, sizeof(RGB) * 256);
 
 	// hi-colour, update the palette. It won't have an immediate effect
 	// but will be drawn properly when the screen fades in
@@ -1052,8 +1102,6 @@ void convert_move_path_to_room_resolution(MoveList *ml) {
 // Script API Functions
 //
 //=============================================================================
-
-
 
 // ScriptDrawingSurface* (int backgroundNumber)
 RuntimeScriptValue Sc_Room_GetDrawingSurfaceForBackground(const RuntimeScriptValue *params, int32_t param_count) {
@@ -1134,41 +1182,30 @@ RuntimeScriptValue Sc_RoomProcessClick(const RuntimeScriptValue *params, int32_t
 	API_SCALL_VOID_PINT3(RoomProcessClick);
 }
 
+RuntimeScriptValue Sc_Room_Exists(const RuntimeScriptValue *params, int32_t param_count) {
+	API_SCALL_BOOL_PINT(Room_Exists);
+}
+
 
 void RegisterRoomAPI() {
 	ccAddExternalStaticFunction("Room::GetDrawingSurfaceForBackground^1",   Sc_Room_GetDrawingSurfaceForBackground);
-	ccAddExternalStaticFunction("Room::GetProperty^1",                      Sc_Room_GetProperty);
-	ccAddExternalStaticFunction("Room::GetTextProperty^1",                  Sc_Room_GetTextProperty);
-	ccAddExternalStaticFunction("Room::SetProperty^2",                      Sc_Room_SetProperty);
-	ccAddExternalStaticFunction("Room::SetTextProperty^2",                  Sc_Room_SetTextProperty);
-	ccAddExternalStaticFunction("Room::ProcessClick^3",                     Sc_RoomProcessClick);
-	ccAddExternalStaticFunction("ProcessClick",                             Sc_RoomProcessClick);
-	ccAddExternalStaticFunction("Room::get_BottomEdge",                     Sc_Room_GetBottomEdge);
-	ccAddExternalStaticFunction("Room::get_ColorDepth",                     Sc_Room_GetColorDepth);
-	ccAddExternalStaticFunction("Room::get_Height",                         Sc_Room_GetHeight);
-	ccAddExternalStaticFunction("Room::get_LeftEdge",                       Sc_Room_GetLeftEdge);
-	ccAddExternalStaticFunction("Room::geti_Messages",                      Sc_Room_GetMessages);
-	ccAddExternalStaticFunction("Room::get_MusicOnLoad",                    Sc_Room_GetMusicOnLoad);
-	ccAddExternalStaticFunction("Room::get_ObjectCount",                    Sc_Room_GetObjectCount);
-	ccAddExternalStaticFunction("Room::get_RightEdge",                      Sc_Room_GetRightEdge);
-	ccAddExternalStaticFunction("Room::get_TopEdge",                        Sc_Room_GetTopEdge);
-	ccAddExternalStaticFunction("Room::get_Width",                          Sc_Room_GetWidth);
-
-	/* ----------------------- Registering unsafe exports for plugins -----------------------*/
-
-	ccAddExternalFunctionForPlugin("Room::GetDrawingSurfaceForBackground^1", (void *)Room_GetDrawingSurfaceForBackground);
-	ccAddExternalFunctionForPlugin("Room::GetProperty^1", (void *)Room_GetProperty);
-	ccAddExternalFunctionForPlugin("Room::GetTextProperty^1", (void *)Room_GetTextProperty);
-	ccAddExternalFunctionForPlugin("Room::get_BottomEdge", (void *)Room_GetBottomEdge);
-	ccAddExternalFunctionForPlugin("Room::get_ColorDepth", (void *)Room_GetColorDepth);
-	ccAddExternalFunctionForPlugin("Room::get_Height", (void *)Room_GetHeight);
-	ccAddExternalFunctionForPlugin("Room::get_LeftEdge", (void *)Room_GetLeftEdge);
-	ccAddExternalFunctionForPlugin("Room::geti_Messages", (void *)Room_GetMessages);
-	ccAddExternalFunctionForPlugin("Room::get_MusicOnLoad", (void *)Room_GetMusicOnLoad);
-	ccAddExternalFunctionForPlugin("Room::get_ObjectCount", (void *)Room_GetObjectCount);
-	ccAddExternalFunctionForPlugin("Room::get_RightEdge", (void *)Room_GetRightEdge);
-	ccAddExternalFunctionForPlugin("Room::get_TopEdge", (void *)Room_GetTopEdge);
-	ccAddExternalFunctionForPlugin("Room::get_Width", (void *)Room_GetWidth);
+	ccAddExternalStaticFunction("Room::GetProperty^1",      Sc_Room_GetProperty);
+	ccAddExternalStaticFunction("Room::GetTextProperty^1",  Sc_Room_GetTextProperty);
+	ccAddExternalStaticFunction("Room::SetProperty^2",      Sc_Room_SetProperty);
+	ccAddExternalStaticFunction("Room::SetTextProperty^2",  Sc_Room_SetTextProperty);
+	ccAddExternalStaticFunction("Room::ProcessClick^3",     Sc_RoomProcessClick);
+	ccAddExternalStaticFunction("ProcessClick",             Sc_RoomProcessClick);
+	ccAddExternalStaticFunction("Room::get_BottomEdge",     Sc_Room_GetBottomEdge);
+	ccAddExternalStaticFunction("Room::get_ColorDepth",     Sc_Room_GetColorDepth);
+	ccAddExternalStaticFunction("Room::get_Height",         Sc_Room_GetHeight);
+	ccAddExternalStaticFunction("Room::get_LeftEdge",       Sc_Room_GetLeftEdge);
+	ccAddExternalStaticFunction("Room::geti_Messages",      Sc_Room_GetMessages);
+	ccAddExternalStaticFunction("Room::get_MusicOnLoad",    Sc_Room_GetMusicOnLoad);
+	ccAddExternalStaticFunction("Room::get_ObjectCount",    Sc_Room_GetObjectCount);
+	ccAddExternalStaticFunction("Room::get_RightEdge",      Sc_Room_GetRightEdge);
+	ccAddExternalStaticFunction("Room::get_TopEdge",        Sc_Room_GetTopEdge);
+	ccAddExternalStaticFunction("Room::get_Width",          Sc_Room_GetWidth);
+	ccAddExternalStaticFunction("Room::Exists",             Sc_Room_Exists);
 }
 
 } // namespace AGS3

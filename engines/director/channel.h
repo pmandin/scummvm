@@ -58,14 +58,28 @@ public:
 	void setWidth(int w);
 	void setHeight(int h);
 	void setBbox(int l, int t, int r, int b);
-	void setCast(uint16 castId);
+	void setCast(CastMemberID memberID);
 	void setClean(Sprite *nextSprite, int spriteId, bool partial = false);
 	void setEditable(bool editable);
 	void replaceSprite(Sprite *nextSprite);
-	void replaceWidget();
+	void replaceWidget(CastMemberID previousCastId = CastMemberID(0, 0), bool force = false);
 	bool updateWidget();
+	void updateTextCast();
+
+	bool isTrail();
+
+	void updateGlobalAttr();
 
 	void addDelta(Common::Point pos);
+	bool canKeepWidget(CastMemberID castId);
+	bool canKeepWidget(Sprite *currentSprite, Sprite *nextSprite);
+
+	int getMouseChar(int x, int y);
+	int getMouseWord(int x, int y);
+	int getMouseItem(int x, int y);
+	int getMouseLine(int x, int y);
+
+	void updateVideoTime();
 
 public:
 	Sprite *_sprite;
@@ -85,9 +99,9 @@ public:
 
 	// Using in digital movie sprites
 	double _movieRate;
-	uint16 _movieTime;
-	uint16 _startTime;
-	uint16 _stopTime;
+	int _movieTime;
+	int _startTime;
+	int _stopTime;
 
 private:
 	Graphics::ManagedSurface *getSurface();

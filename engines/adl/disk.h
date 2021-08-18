@@ -53,6 +53,7 @@ public:
 
 	virtual const DataBlockPtr getDataBlock(const Common::String &filename, uint offset = 0) const = 0;
 	virtual Common::SeekableReadStream *createReadStream(const Common::String &filename, uint offset = 0) const = 0;
+	virtual bool exists(const Common::String &filename) const = 0;
 
 protected:
 	class DataBlock : public Adl::DataBlock {
@@ -126,6 +127,7 @@ class Files_Plain : public Files {
 public:
 	const DataBlockPtr getDataBlock(const Common::String &filename, uint offset = 0) const override;
 	Common::SeekableReadStream *createReadStream(const Common::String &filename, uint offset = 0) const override;
+	bool exists(const Common::String &filename) const override { return Common::File::exists(filename); }
 };
 
 // Data in files contained in Apple DOS 3.3 disk image
@@ -134,9 +136,10 @@ public:
 	Files_AppleDOS();
 	~Files_AppleDOS() override;
 
-	bool open(const Common::String &filename, uint trackVTOC = 17);
+	bool open(const Common::String &filename);
 	const DataBlockPtr getDataBlock(const Common::String &filename, uint offset = 0) const override;
 	Common::SeekableReadStream *createReadStream(const Common::String &filename, uint offset = 0) const override;
+	bool exists(const Common::String &filename) const override { return _toc.contains(filename); }
 
 private:
 	enum FileType {
@@ -161,7 +164,7 @@ private:
 		Common::Array<TrackSector> sectors;
 	};
 
-	void readVTOC(uint trackVTOC);
+	void readVTOC();
 	void readSectorList(TrackSector start, Common::Array<TrackSector> &list);
 	Common::SeekableReadStream *createReadStreamText(const TOCEntry &entry) const;
 	Common::SeekableReadStream *createReadStreamBinary(const TOCEntry &entry) const;

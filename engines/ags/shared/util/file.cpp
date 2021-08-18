@@ -21,11 +21,12 @@
  */
 
 #include "ags/shared/core/platform.h"
-#include "ags/shared/util/stdio_compat.h"
-#include "ags/shared/util/filestream.h"
-#include "ags/shared/util/bufferedstream.h"
-#include "ags/shared/util/file.h"
+#include "ags/shared/util/buffered_stream.h"
 #include "ags/shared/util/directory.h"
+#include "ags/shared/util/file.h"
+#include "ags/shared/util/file_stream.h"
+#include "ags/shared/util/path.h"
+#include "ags/shared/util/stdio_compat.h"
 #include "common/file.h"
 #include "common/savefile.h"
 #include "common/system.h"
@@ -43,7 +44,7 @@ soff_t File::GetFileSize(const String &filename) {
 bool File::TestReadFile(const String &filename) {
 	if (filename.IsEmpty())
 		return false;
-	return ags_file_exists(filename.GetNullableCStr());
+	return ags_file_exists(filename.GetCStr());
 }
 
 bool File::TestWriteFile(const String &filename) {
@@ -55,9 +56,11 @@ bool File::TestWriteFile(const String &filename) {
 bool File::TestCreateFile(const String &filename) {
 	if (filename.IsEmpty())
 		return false;
-	Common::DumpFile df;
-	bool result = df.open(getFSNode(filename.GetNullableCStr()));
-	df.close();
+
+	Common::OutSaveFile *sf = g_system->getSavefileManager()->openForSaving(filename);
+	bool result = sf != nullptr;
+	delete sf;
+
 	return result;
 }
 
@@ -128,18 +131,130 @@ String File::GetCMode(FileOpenMode open_mode, FileWorkMode work_mode) {
 
 Stream *File::OpenFile(const String &filename, FileOpenMode open_mode, FileWorkMode work_mode) {
 	FileStream *fs = nullptr;
-//	try {
-		if (work_mode == kFile_Read) // NOTE: BufferedStream does not work correctly in the write mode
-			fs = new BufferedStream(filename, open_mode, work_mode);
+	//  try {
+	if (work_mode == kFile_Read) // NOTE: BufferedStream does not work correctly in the write mode
+		fs = new BufferedStream(filename, open_mode, work_mode);
+	else
+		fs = new FileStream(filename, open_mode, work_mode);
+	if (fs != nullptr && !fs->IsValid()) {
+		delete fs;
+		fs = nullptr;
+	}
+	//  } catch (std::runtime_error) {
+	//      fs = nullptr;
+	//  }
+
+	return fs;
+}
+
+Stream *File::OpenStdin() {
+	error("TODO: File::OpenStdin");
+}
+
+Stream *File::OpenStdout() {
+	error("TODO: File::OpenStdout");
+}
+
+Stream *File::OpenStderr() {
+	error("TODO: File::OpenStderr");
+}
+
+String File::FindFileCI(const String &dir_name, const String &file_name) {
+#if !defined (AGS_CASE_SENSITIVE_FILESYSTEM)
+	// Simply concat dir and filename paths
+	return Path::ConcatPaths(dir_name, file_name);
+#else
+	// Case insensitive file find - on case sensitive filesystems
+	//
+	// TODO: still not covered: a situation when the file_name contains
+	// nested path -and- the case of at least one path parts does not match
+	// (with all matching case the file will be found by an early check).
+	//
+	struct stat   statbuf;
+	struct dirent *entry = nullptr;
+
+	if (dir_name.IsEmpty() && file_name.IsEmpty())
+		return nullptr;
+
+	String directory;
+	String filename;
+	String buf;
+
+	if (!dir_name.IsEmpty()) {
+		directory = dir_name;
+		Path::FixupPath(directory);
+	}
+	if (!file_name.IsEmpty()) {
+		filename = file_name;
+		Path::FixupPath(filename);
+	}
+
+	if (!filename.IsEmpty()) {
+		// TODO: move this case to ConcatPaths too?
+		if (directory.IsEmpty() && filename[0] == '/')
+			buf = filename;
 		else
-			fs = new FileStream(filename, open_mode, work_mode);
- 		if (fs != nullptr && !fs->IsValid()) {
-			delete fs;
-			fs = nullptr;
+			buf = Path::ConcatPaths(directory.IsEmpty() ? "." : directory, filename);
+
+		if (lstat(buf.GetCStr(), &statbuf) == 0 &&
+			(S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode))) {
+			return buf;
 		}
-//	} catch (std::runtime_error) {
-//		fs = nullptr;
-//	}
+	}
+
+	if (directory.IsEmpty()) {
+		String match = Path::GetFilename(filename);
+		if (match.IsEmpty())
+			return nullptr;
+		directory = Path::GetParent(filename);
+		filename = match;
+	}
+
+	DIR *rough = nullptr;
+	if ((rough = opendir(directory.GetCStr())) == nullptr) {
+		fprintf(stderr, "ci_find_file: cannot open directory: %s\n", directory.GetCStr());
+		return nullptr;
+	}
+
+	String diamond;
+	while ((entry = readdir(rough)) != nullptr) {
+		if (strcasecmp(filename.GetCStr(), entry->d_name) == 0) {
+			if (lstat(entry->d_name, &statbuf) == 0 &&
+				(S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode))) {
+#if AGS_PLATFORM_DEBUG
+				fprintf(stderr, "ci_find_file: Looked for %s in rough %s, found diamond %s.\n",
+					filename.GetCStr(), directory.GetCStr(), entry->d_name);
+#endif // AGS_PLATFORM_DEBUG
+				diamond = Path::ConcatPaths(directory, entry->d_name);
+				break;
+			}
+		}
+	}
+	closedir(rough);
+	return diamond;
+#endif
+}
+
+Stream *File::OpenFileCI(const String &file_name, FileOpenMode open_mode, FileWorkMode work_mode) {
+#if !defined (AGS_CASE_SENSITIVE_FILESYSTEM)
+	return File::OpenFile(file_name, open_mode, work_mode);
+#else
+	String fullpath = FindFileCI(nullptr, file_name);
+	if (!fullpath.IsEmpty())
+		return File::OpenFile(fullpath, open_mode, work_mode);
+	// If the file was not found, and it's Create mode, then open new file
+	if (open_mode != kFile_Open)
+		return File::OpenFile(file_name, open_mode, work_mode);
+	return nullptr;
+#endif
+}
+
+Stream *File::OpenFile(const String &filename, soff_t start_off, soff_t end_off) {
+	FileStream *fs = new BufferedSectionStream(filename, start_off, end_off, kFile_Open, kFile_Read);
+	if (fs != nullptr && !fs->IsValid()) {
+		delete fs;
+		return nullptr;
+	}
 
 	return fs;
 }

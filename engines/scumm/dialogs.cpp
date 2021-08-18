@@ -371,13 +371,24 @@ void HelpDialog::handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 da
 
 #pragma mark -
 
+static bool isCJKLanguage(Common::Language lang) {
+	switch (lang) {
+	case Common::KO_KOR:
+	case Common::JA_JPN:
+	case Common::ZH_TWN:
+	case Common::ZH_CNA:
+		return true;
+	default:
+		return false;
+	}
+}
+
 InfoDialog::InfoDialog(ScummEngine *scumm, int res)
 : ScummDialog(0, 0, 0, 0), _vm(scumm), _style(GUI::ThemeEngine::kFontStyleBold) { // dummy x and w
 
 	_message = queryResString(res);
 
-	Common::Language lang = (_vm->_language == Common::KO_KOR || _vm->_language == Common::JA_JPN ||
-		_vm->_language == Common::ZH_TWN || _vm->_language == Common::ZH_CNA) ? _vm->_language : Common::UNK_LANG;
+	Common::Language lang = isCJKLanguage(_vm->_language) ? _vm->_language : Common::UNK_LANG;
 
 	// Width and height are dummy
 	_text = new GUI::StaticTextWidget(this, 0, 0, 10, 10, _message, kTextAlignCenter, Common::U32String(), GUI::ThemeEngine::kFontStyleBold, lang);
@@ -419,6 +430,7 @@ void InfoDialog::reflowLayout() {
 
 const Common::U32String InfoDialog::queryResString(int stringno) {
 	byte buf[256];
+	byte reverseBuf[256];
 	const byte *result;
 
 	if (stringno == 0)
@@ -446,6 +458,8 @@ const Common::U32String InfoDialog::queryResString(int stringno) {
 		return _(string_map_table_v345[stringno - 1].string);
 	}
 
+	if (_vm->reverseIfNeeded(result, reverseBuf))
+		result = reverseBuf;
 	// Convert to a proper string (take care of FF codes)
 	byte chr;
 	String tmp;
@@ -457,16 +471,7 @@ const Common::U32String InfoDialog::queryResString(int stringno) {
 		}
 	}
 
-	Common::CodePage convertFromCodePage = Common::kCodePageInvalid;
-	if (_vm->_language == Common::KO_KOR)
-		convertFromCodePage = Common::kWindows949;
-	else if (_vm->_language == Common::JA_JPN)
-		convertFromCodePage = Common::kWindows932;
-	else if (_vm->_language == Common::ZH_TWN || _vm->_language == Common::ZH_CNA)
-		convertFromCodePage = Common::kWindows950;
-	else if (_vm->_language == Common::RU_RUS)
-		convertFromCodePage = Common::kDos866;
-
+	const Common::CodePage convertFromCodePage = _vm->getDialogCodePage();
 	return convertFromCodePage == Common::kCodePageInvalid ? _(tmp) : U32String(tmp, convertFromCodePage);
 }
 

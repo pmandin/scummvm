@@ -27,21 +27,26 @@
 #include "ags/shared/util/string.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/plugins/plugin_base.h"
+#include "ags/engine/util/library.h"
 
 namespace AGS3 {
-
 namespace AGS {
 namespace Engine {
 
-class ScummVMLibrary : BaseLibrary {
+class ScummVMLibrary : public BaseLibrary {
+private:
+	Plugins::PluginBase *_library = nullptr;
+
 public:
-	ScummVMLibrary()
-		: _library(nullptr) {
-	};
+	ScummVMLibrary() : BaseLibrary() {}
 
 	~ScummVMLibrary() override {
 		Unload();
 	};
+
+	AGS::Shared::String GetFilenameForLib(const AGS::Shared::String &libraryName) override {
+		return AGS::Shared::String::FromFormat("%s.dll", libraryName.GetCStr());
+	}
 
 	bool Load(const AGS::Shared::String &libraryName) override {
 		Unload();
@@ -54,7 +59,7 @@ public:
 
 	bool Unload() override {
 		if (_library) {
-			void *lib = _library;
+			Plugins::PluginBase *lib = _library;
 			_library = nullptr;
 
 			return (Plugins::pluginClose(lib) == 0);
@@ -63,16 +68,9 @@ public:
 		}
 	}
 
-	void *GetFunctionAddress(const AGS::Shared::String &functionName) override {
-		if (_library) {
-			return Plugins::pluginSym(_library, functionName.GetCStr());
-		} else {
-			return nullptr;
-		}
+	Plugins::PluginBase *getPlugin() const {
+		return _library;
 	}
-
-private:
-	void *_library;
 };
 
 

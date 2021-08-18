@@ -144,12 +144,12 @@ public:
 	/**
 	 * Opens the given file, throwing an error if it can't be opened
 	 */
-	bool open(const Common::String &filename) override;
+	bool open(const Common::Path &filename) override;
 
 	/**
 	 * Opens the given file, throwing an error if it can't be opened
 	 */
-	bool open(const Common::String &filename, Common::Archive &archive) override;
+	bool open(const Common::Path &filename, Common::Archive &archive) override;
 
 	/**
 	 * Opens the given file, throwing an error if it can't be opened
@@ -222,7 +222,7 @@ public:
 	}
 	bool flush() override { return _parentStream->flush(); }
 	void finalize() override {}
-	int32 pos() const override { return _parentStream->pos() - _begin; }
+	int64 pos() const override { return _parentStream->pos() - _begin; }
 };
 
 class StringArray : public Common::StringArray {
@@ -295,9 +295,9 @@ public:
 	BaseCCArchive() {}
 
 	// Archive implementation
-	bool hasFile(const Common::String &name) const override;
+	bool hasFile(const Common::Path &path) const override;
 	int listMembers(Common::ArchiveMemberList &list) const override;
-	const Common::ArchiveMemberPtr getMember(const Common::String &name) const override;
+	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
 };
 
 /**
@@ -316,7 +316,7 @@ public:
 	~CCArchive() override;
 
 	// Archive implementation
-	Common::SeekableReadStream *createReadStreamForMember(const Common::String &name) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 };
 
 class SaveArchive : public BaseCCArchive {
@@ -338,7 +338,7 @@ public:
 	/**
 	 * Archive implementation
 	 */
-	Common::SeekableReadStream *createReadStreamForMember(const Common::String &name) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 
 	/**
 	 * Archive implementation
@@ -392,7 +392,7 @@ public:
 	/**
 	 * Returns the current position
 	 */
-	int32 pos() const override;
+	int64 pos() const override;
 };
 
 } // End of namespace Xeen

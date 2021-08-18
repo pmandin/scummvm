@@ -24,24 +24,13 @@
 #define AGS_PLUGINS_AGS_PAL_RENDER_PAL_RENDER_H
 
 #include "ags/lib/allegro.h"
-#include "ags/plugins/agsplugin.h"
+#include "ags/plugins/ags_plugin.h"
+#include "ags/plugins/plugin_base.h"
 #include "common/algorithm.h"
 
 namespace AGS3 {
 namespace Plugins {
 namespace AGSPalRender {
-
-inline float PARAM_TO_FLOAT(int32 xi) {
-	float x;
-	memcpy(&x, &xi, sizeof(float));
-	return x;
-}
-
-inline int32 PARAM_FROM_FLOAT(float x) {
-	int32 xi;
-	memcpy(&xi, &x, sizeof(float));
-	return xi;
-}
 
 struct PALSTRUCT {
 	byte r;
@@ -184,7 +173,6 @@ public:
 		//engine->ReleaseBitmapSurface (clutspr);
 		return result;
 	}
-
 };
 
 void GetColor565(ScriptMethodParams &params);

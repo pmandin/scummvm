@@ -23,7 +23,7 @@
 #ifndef AGS_PLUGINS_SERIALIZER_H
 #define AGS_PLUGINS_SERIALIZER_H
 
-#include "ags/plugins/agsplugin.h"
+#include "ags/plugins/ags_plugin.h"
 #include "common/serializer.h"
 
 namespace AGS3 {
@@ -34,12 +34,16 @@ private:
 	IAGSEngine *_engine;
 	long _file;
 	bool _isLoading;
-public:
+	public:
 	Serializer(IAGSEngine *engine, long file, bool isLoading) :
 		_engine(engine), _file(file), _isLoading(isLoading) {}
 
-	bool isLoading() const { return _isLoading; }
-	bool isSaving() const { return !_isLoading; }
+	bool isLoading() const {
+		return _isLoading;
+	}
+	bool isSaving() const {
+		return !_isLoading;
+	}
 
 	template<typename T>
 	void syncAsInt(T &value) {

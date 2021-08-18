@@ -175,8 +175,7 @@ int AgiEngine::agiInit() {
 	// Reset in-game timer
 	inGameTimerReset();
 
-	// Sync volume settings from ScummVM system settings
-	setVolumeViaSystemSetting();
+	applyVolumeToMixer();
 
 	return ec;
 }
@@ -378,7 +377,7 @@ AgiEngine::AgiEngine(OSystem *syst, const AGIGameDescription *gameDesc) : AgiBas
 	_instructionCounter = 0;
 	resetGetVarSecondsHeuristic();
 
-	_setVolumeBrokenFangame = false; // for further study see AgiEngine::setVolumeViaScripts()
+	_setVolumeBrokenFangame = false; // for further study see AgiEngine::applyVolumeToMixer()
 
 	_playTimeInSecondsAdjust = 0;
 	_lastUsedPlayTimeInCycles = 0;
@@ -434,7 +433,6 @@ void AgiEngine::initialize() {
 			_soundemu = SOUND_EMU_AMIGA;
 			break;
 		default:
-			debug(0, "DEF");
 			_soundemu = SOUND_EMU_MIDI;
 			break;
 		}
@@ -530,7 +528,7 @@ Common::Error AgiEngine::go() {
 void AgiEngine::syncSoundSettings() {
 	Engine::syncSoundSettings();
 
-	setVolumeViaSystemSetting();
+	applyVolumeToMixer();
 }
 
 // WORKAROUND:

@@ -38,6 +38,7 @@ namespace AGS3 {
 #define AGS_PLATFORM_OS_ANDROID (0)
 #define AGS_PLATFORM_OS_IOS     (0)
 #define AGS_PLATFORM_OS_PSP     (0)
+#define AGS_PLATFORM_OS_EMSCRIPTEN (0)
 // check Android first because sometimes it can get confused with host OS
 #elif defined(__ANDROID__) || defined(ANDROID)
 #define AGS_PLATFORM_SCUMMVM    (0)
@@ -58,7 +59,7 @@ namespace AGS3 {
 #define AGS_PLATFORM_OS_PSP     (0)
 #elif defined(__APPLE__)
 #define AGS_PLATFORM_SCUMMVM    (0)
-#include "ags/shared/TargetConditionals.h"
+#include "ags/shared/ags/shared/TargetConditionals.h"
 #ifndef TARGET_OS_SIMULATOR
 #define TARGET_OS_SIMULATOR (0)
 #endif
@@ -136,6 +137,16 @@ namespace AGS3 {
 #else
 #define AGS_PLATFORM_DEBUG  (0)
 #endif
+
+#define AGS_HAS_DIRECT3D (AGS_PLATFORM_OS_WINDOWS)
+#define AGS_HAS_OPENGL (AGS_PLATFORM_OS_WINDOWS || AGS_PLATFORM_OS_ANDROID || AGS_PLATFORM_OS_IOS || AGS_PLATFORM_OS_LINUX)
+#define AGS_OPENGL_ES2 (AGS_PLATFORM_OS_ANDROID)
+
+// Only allow searching around for game data on desktop systems;
+// otherwise use explicit argument either from program wrapper, command-line
+// or read from default config.
+#define AGS_SEARCH_FOR_GAME_ON_LAUNCH (AGS_PLATFORM_OS_WINDOWS || AGS_PLATFORM_OS_LINUX || AGS_PLATFORM_OS_MACOS)
+
 
 } // namespace AGS3
 

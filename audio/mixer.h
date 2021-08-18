@@ -23,6 +23,7 @@
 #ifndef AUDIO_MIXER_H
 #define AUDIO_MIXER_H
 
+#include "common/mutex.h"
 #include "common/types.h"
 #include "common/noncopyable.h"
 
@@ -94,6 +95,10 @@ public:
 	 */
 	virtual bool isReady() const = 0;
 
+	/**
+	 * Return the mixer's internal mutex so that audio players can use it.
+	 */
+	virtual Common::Mutex &mutex() = 0;
 
 	/**
 	 * Start playing the given audio stream.
@@ -259,6 +264,11 @@ public:
 	 * Get an approximation of for how long the channel has been playing.
 	 */
 	virtual Timestamp getElapsedTime(SoundHandle handle) = 0;
+
+	/**
+	 * Replace the channel's stream with a version that loops indefinitely.
+	 */
+	virtual void loopChannel(SoundHandle handle) = 0;
 
 	/**
 	 * Check whether any channel of the given sound type is active.

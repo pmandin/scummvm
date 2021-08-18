@@ -23,10 +23,10 @@
 #ifndef AGS_ENGINE_AC_ROOM_H
 #define AGS_ENGINE_AC_ROOM_H
 
-#include "ags/engine/ac/dynobj/scriptdrawingsurface.h"
-#include "ags/shared/ac/characterinfo.h"
-#include "ags/engine/script/runtimescriptvalue.h"
-#include "ags/shared/game/roomstruct.h"
+#include "ags/engine/ac/dynobj/script_drawing_surface.h"
+#include "ags/shared/ac/character_info.h"
+#include "ags/engine/script/runtime_script_value.h"
+#include "ags/shared/game/room_struct.h"
 
 namespace AGS3 {
 
@@ -44,6 +44,7 @@ int Room_GetMusicOnLoad();
 const char *Room_GetTextProperty(const char *property);
 int Room_GetProperty(const char *property);
 const char *Room_GetMessages(int index);
+bool Room_Exists(int room);
 RuntimeScriptValue Sc_Room_GetProperty(const RuntimeScriptValue *params, int32_t param_count);
 
 //=============================================================================

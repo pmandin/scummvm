@@ -640,7 +640,7 @@ bool Debugger::cmdMusic(int argc, const char** argv) {
 		}
 		return true;
 	} else if (trackArgStr == "stop") {
-		_vm->_music->stop(0);
+		_vm->_music->stop(0u);
 		//_vm->_ambientSounds->removeLoopingSound(kSfxMUSBLEED, 0);
 	} else {
 		int musicId = atoi(argv[1]);
@@ -651,8 +651,8 @@ bool Debugger::cmdMusic(int argc, const char** argv) {
 			debugPrintf("Invalid music track id specified.\nPlease choose an integer between 0 and %d.\n", (int)_vm->_gameInfo->getMusicTrackCount() - 1);
 			return true;
 		} else {
-			_vm->_music->stop(0);
-			_vm->_music->play(_vm->_gameInfo->getMusicTrack(musicId), 100, 0, 0, -1, 0, 0);
+			_vm->_music->stop(0u);
+			_vm->_music->play(_vm->_gameInfo->getMusicTrack(musicId), 100, 0, 0, -1, kMusicLoopPlayOnce, 0);
 			//debugPrintf("Now playing track %2d - \"%s\" (%s)\n", musicId, kMusicTracksArr[musicId], _vm->_gameInfo->getMusicTrack(musicId).c_str());
 			debugPrintf("Now playing track %2d - \"%s\"\n", musicId, kMusicTracksArr[musicId]);
 		}
@@ -886,7 +886,7 @@ bool Debugger::cmdVariable(int argc, const char **argv) {
 
 bool Debugger::cmdClue(int argc, const char **argv) {
 	if (argc != 3 && argc != 4) {
-		debugPrintf("Get or changes clue for an actor.\n");
+		debugPrintf("Gets or changes clue for an actor.\n");
 		debugPrintf("Usage: %s <actorId> <clueId> [<value>]\n", argv[0]);
 		return true;
 	}
@@ -922,7 +922,7 @@ bool Debugger::cmdClue(int argc, const char **argv) {
 
 bool Debugger::cmdTimer(int argc, const char **argv) {
 	if (argc != 2 && argc != 4) {
-		debugPrintf("Get or changes timers for an actor.\n");
+		debugPrintf("Gets or changes timers for an actor.\n");
 		debugPrintf("Usage: %s <actorId> [<timer> <value>]\n", argv[0]);
 		return true;
 	}
@@ -964,7 +964,7 @@ bool Debugger::cmdTimer(int argc, const char **argv) {
 
 bool Debugger::cmdFriend(int argc, const char **argv) {
 	if (argc != 3 && argc != 4) {
-		debugPrintf("Get or changes friendliness for an actor towards another actor.\n");
+		debugPrintf("Gets or changes friendliness for an actor towards another actor.\n");
 		debugPrintf("Usage: %s <actorId> <otherActorId> [<value>]\n", argv[0]);
 		return true;
 	}
@@ -2617,12 +2617,11 @@ void Debugger::drawScreenEffects() {
 					Common::Rect r((entry.x + x) * 2, (entry.y + y) * 2, (entry.x + x) * 2 + 2, (entry.y + y) * 2 + 2);
 
 					int ec = entry.data[j++];
-					const int bladeToScummVmConstant = 256 / 16;
-
+					// We need to convert from 5 bits per channel (r,g,b) to 8 bits
 					int color = _vm->_surfaceFront.format.RGBToColor(
-						CLIP(entry.palette[ec].r * bladeToScummVmConstant, 0, 255),
-						CLIP(entry.palette[ec].g * bladeToScummVmConstant, 0, 255),
-						CLIP(entry.palette[ec].b * bladeToScummVmConstant, 0, 255));
+						Color::get8BitColorFrom5Bit(entry.palette[ec].r),
+						Color::get8BitColorFrom5Bit(entry.palette[ec].g),
+						Color::get8BitColorFrom5Bit(entry.palette[ec].b));
 					_vm->_surfaceFront.fillRect(r, color);
 				}
 			}

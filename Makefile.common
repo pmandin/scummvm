@@ -131,7 +131,7 @@ $(EXECUTABLE).dwp: $(EXECUTABLE)
 endif
 
 distclean: clean clean-devtools
-	$(RM) config.h config.mk config.log engines/engines.mk engines/plugins_table.h
+	$(RM) config.h config.mk config.log configure.stamp engines/engines.mk engines/plugins_table.h
 
 clean: clean-toplevel
 clean-toplevel:
@@ -454,6 +454,7 @@ endif
 ifdef ENABLE_MYST3
 DIST_FILES_ENGINEDATA+=myst3.dat
 endif
+DIST_FILES_ENGINEDATA+=achievements.dat
 DIST_FILES_ENGINEDATA+=encoding.dat
 DIST_FILES_ENGINEDATA:=$(addprefix $(srcdir)/dists/engine-data/,$(DIST_FILES_ENGINEDATA))
 

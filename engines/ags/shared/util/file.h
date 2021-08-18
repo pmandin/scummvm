@@ -68,7 +68,10 @@ bool        GetFileModesFromCMode(const String &cmode, FileOpenMode &open_mode, 
 // Gets C-style file mode from FileOpenMode and FileWorkMode
 String      GetCMode(FileOpenMode open_mode, FileWorkMode work_mode);
 
+// Opens file in the given mode
 Stream *OpenFile(const String &filename, FileOpenMode open_mode, FileWorkMode work_mode);
+// Opens file for reading restricted to the arbitrary offset range
+Stream *OpenFile(const String &filename, soff_t start_off, soff_t end_off);
 // Convenience helpers
 // Create a totally new file, overwrite existing one
 inline Stream *CreateFile(const String &filename) {
@@ -82,6 +85,21 @@ inline Stream *OpenFileRead(const String &filename) {
 inline Stream *OpenFileWrite(const String &filename) {
 	return OpenFile(filename, kFile_Create, kFile_Write);
 }
+
+// Opens stdin stream for reading
+Stream *OpenStdin();
+// Opens stdout stream for writing
+Stream *OpenStdout();
+// Opens stderr stream for writing
+Stream *OpenStderr();
+
+// Case insensitive find file
+String FindFileCI(const String &dir_name, const String &file_name);
+// Case insensitive file open: looks up for the file using FindFileCI
+Stream *OpenFileCI(const String &file_name,
+	FileOpenMode open_mode = kFile_Open,
+	FileWorkMode work_mode = kFile_Read);
+
 } // namespace File
 
 } // namespace Shared

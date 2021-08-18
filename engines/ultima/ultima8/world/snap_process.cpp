@@ -20,6 +20,8 @@
  *
  */
 
+#include "common/config-manager.h"
+
 #include "ultima/ultima8/world/snap_process.h"
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/world/actors/actor.h"
@@ -35,11 +37,32 @@ DEFINE_RUNTIME_CLASSTYPE_CODE(SnapProcess)
 
 SnapProcess::SnapProcess() : Process(), _currentSnapEgg() {
 	_instance = this;
+	_type = 1; // persistent
+}
+
+SnapProcess::~SnapProcess() {
+	if (_instance == this)
+		_instance = nullptr;
 }
 
 void SnapProcess::run() {
-	if (!_currentSnapEgg || !isNpcInRangeOfCurrentEgg()) {
-		updateCurrentEgg();
+	bool snap_to_player = ConfMan.getBool("camera_on_player");
+	if (snap_to_player) {
+		const Actor *controlled = getControlledActor();
+		if (controlled) {
+			int32 x, y, z;
+			controlled->getCentre(x, y, z);
+			if (x > 0 || y > 0) {
+				_currentSnapEgg = 0;
+				CameraProcess *camera = CameraProcess::GetCameraProcess();
+				if (camera->getItemNum() != controlled->getObjId())
+					CameraProcess::SetCameraProcess(new CameraProcess(x, y, z));
+			}
+		}
+	} else {
+		if (!_currentSnapEgg || !isNpcInRangeOfCurrentEgg()) {
+			updateCurrentEgg();
+		}
 	}
 }
 
@@ -71,7 +94,7 @@ void SnapProcess::updateCurrentEgg() {
 
 	for (Std::list<ObjId>::const_iterator iter = _snapEggs.begin();
 		 iter != _snapEggs.end(); iter++) {
-		Item *egg = getItem(*iter);
+		const Item *egg = getItem(*iter);
 		if (!egg)
 			continue;
 		Rect r;
@@ -105,7 +128,7 @@ bool SnapProcess::isNpcInRangeOfCurrentEgg() const {
 		return false;
 
 	const Actor *a = getControlledActor();
-	Item *currentegg = getItem(_currentSnapEgg);
+	const Item *currentegg = getItem(_currentSnapEgg);
 
 	if (!a || !currentegg)
 		return false;

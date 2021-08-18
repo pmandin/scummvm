@@ -246,10 +246,6 @@ void Screen::clip(Common::Rect *source, Common::Rect *destination, int32 flags) 
 	}
 }
 
-void Screen::takeScreenshot() {
-	warning("[Screen::takeScreenshot] Screenshot function not implemented!");
-}
-
 //////////////////////////////////////////////////////////////////////////
 // Palette
 //////////////////////////////////////////////////////////////////////////
@@ -696,9 +692,13 @@ void Screen::addGraphicToQueue(GraphicQueueItem const &item) {
 	_queueItems.push_back(item);
 }
 
+bool Screen::graphicQueueItemComparator(const GraphicQueueItem &item1, const GraphicQueueItem &item2) {
+	return item1.priority > item2.priority;
+}
+
 void Screen::drawGraphicsInQueue() {
 	// Sort by priority first
-	graphicsSelectionSort();
+	Common::sort(_queueItems.begin(), _queueItems.end(), &Screen::graphicQueueItemComparator);
 
 	for (Common::Array<GraphicQueueItem>::const_iterator i = _queueItems.begin(); i != _queueItems.end(); i++) {
 		const GraphicQueueItem *item = i;
@@ -716,31 +716,6 @@ void Screen::drawGraphicsInQueue() {
 
 void Screen::clearGraphicsInQueue() {
 	_queueItems.clear();
-}
-
-void Screen::graphicsSelectionSort() {
-	uint32 maxIdx;
-
-	if (!_queueItems.size())
-		return;
-
-	for (uint32 i = 0; i < _queueItems.size() - 1; i++) {
-		maxIdx = i;
-
-		for (uint32 j = i + 1; j < _queueItems.size(); j++)
-			if (_queueItems[j].priority > _queueItems[maxIdx].priority)
-				maxIdx = j;
-
-		if (i != maxIdx)
-			swapGraphicItem(i, maxIdx);
-	}
-}
-
-void Screen::swapGraphicItem(int32 item1, int32 item2) {
-	GraphicQueueItem temp;
-	temp = _queueItems[item1];
-	_queueItems[item1] = _queueItems[item2];
-	_queueItems[item2] = temp;
 }
 
 void Screen::deleteGraphicFromQueue(ResourceId resourceId) {
@@ -946,7 +921,7 @@ void Screen::blitMasked(GraphicFrame *frame, Common::Rect *source, byte *maskDat
 	byte *mirroredBuffer = NULL;
 	int16 frameRight = frame->surface.pitch;
 	uint16 maskHeight = (uint16)sourceMask->height(); // for debugging only
-	byte zoom = ABS(sourceMask->left) & 7;
+	byte nSkippedBits = ABS(sourceMask->left) % 8;
 
 	// Prepare temporary source buffer if needed
 	if (flags & kDrawFlagMirrorLeftRight) {
@@ -996,9 +971,9 @@ void Screen::blitMasked(GraphicFrame *frame, Common::Rect *source, byte *maskDat
 	}
 
 	if (destination->left > destMask->left) {
-		zoom += abs(destination->left - destMask->left) & 7;
-		zoom &= 7;
-		maskBufferPtr += ((destination->left - destMask->left) + zoom) / 8;
+		nSkippedBits += ABS(destination->left - destMask->left) % 8;
+		maskBufferPtr += (destination->left - destMask->left) / 8 + nSkippedBits / 8;
+		nSkippedBits %= 8;
 		sourceMask->setWidth(sourceMask->width() + destMask->left - destination->left);
 		destMask->left = destination->left;
 	}
@@ -1081,8 +1056,8 @@ void Screen::blitMasked(GraphicFrame *frame, Common::Rect *source, byte *maskDat
 	          source->height(),
 	          source->width(),
 	          (uint16)(frameRight - source->width()),
-	          (uint16)(maskWidth - (zoom + source->width())) / 8,
-	          zoom,
+	          (uint16)(maskWidth - (nSkippedBits + source->width())) / 8,
+	          nSkippedBits,
 	          (byte *)_backBuffer.getPixels() + _backBuffer.pitch * destination->top + destination->left,
 	          (uint16)(_backBuffer.pitch - source->width()));
 
@@ -1122,15 +1097,14 @@ void Screen::drawZoomedMask(byte *mask, uint16 height, uint16 width, uint16 mask
 	}
 }
 
-void Screen::bltMasked(byte *srcBuffer, byte *maskBuffer, int16 height, int16 width, uint16 srcPitch, uint16 maskPitch, byte zoom, byte *dstBuffer, uint16 dstPitch) const {
-	if (zoom > 7)
-		error("[Screen::bltMasked] Invalid zoom value (was: %d, max: 7)", zoom);
+void Screen::bltMasked(byte *srcBuffer, byte *maskBuffer, int16 height, int16 width, uint16 srcPitch, uint16 maskPitch, byte nSkippedBits, byte *dstBuffer, uint16 dstPitch) const {
+	if (nSkippedBits > 7)
+		error("[Screen::bltMasked] Invalid number of skipped bits (was: %d, max: 7)", nSkippedBits);
 
 	while (height--) {
-
-		// Calculate current zoom and run length
-		int run = (7 - zoom);
-		uint skip = (*maskBuffer >> zoom);
+		// Calculate current run length
+		int run = 7 - nSkippedBits;
+		uint skip = *maskBuffer >> nSkippedBits;
 
 		for (int16 i = 0; i < width; i++) {
 			// Set destination value

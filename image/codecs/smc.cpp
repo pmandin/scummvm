@@ -79,7 +79,7 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 
 	int32 chunkSize = stream.readUint32BE() & 0x00FFFFFF;
 	if (chunkSize != stream.size())
-		warning("MOV chunk size != SMC chunk size (%d != %d); ignoring SMC chunk size", chunkSize, stream.size());
+		warning("MOV chunk size != SMC chunk size (%d != %d); ignoring SMC chunk size", chunkSize, (int)stream.size());
 
 	int32 totalBlocks = ((_surface->w + 3) / 4) * ((_surface->h + 3) / 4);
 
@@ -91,7 +91,7 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 
 		// make sure stream ptr hasn't gone out of bounds
 		if (stream.pos() > stream.size()) {
-			warning("SMC decoder just went out of bounds (stream ptr = %d, chunk size = %d)", stream.pos(), stream.size());
+			warning("SMC decoder just went out of bounds (stream ptr = %d, chunk size = %d)", (int)stream.pos(), (int)stream.size());
 			return _surface;
 		}
 
@@ -135,10 +135,9 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 				prevBlockPtr = prevBlockPtr1;
 				for (byte y = 0; y < 4; y++) {
 					for (byte x = 0; x < 4; x++) {
-						if (blockPtr >= pixelSize)
-							break;
-
-						pixels[blockPtr++] = pixels[prevBlockPtr++];
+						if (blockPtr < pixelSize)
+							pixels[blockPtr] = pixels[prevBlockPtr];
+						blockPtr++, prevBlockPtr++;
 					}
 					blockPtr += rowInc;
 					prevBlockPtr += rowInc;
@@ -185,10 +184,9 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 
 				for (byte y = 0; y < 4; y++) {
 					for (byte x = 0; x < 4; x++) {
-						if (blockPtr >= pixelSize)
-							break;
-
-						pixels[blockPtr++] = pixels[prevBlockPtr++];
+						if (blockPtr < pixelSize)
+							pixels[blockPtr] = pixels[prevBlockPtr];
+						blockPtr++, prevBlockPtr++;
 					}
 
 					blockPtr += rowInc;
@@ -208,10 +206,9 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 				blockPtr = rowPtr + pixelPtr;
 				for (byte y = 0; y < 4; y++) {
 					for (byte x = 0; x < 4; x++) {
-						if (blockPtr >= pixelSize)
-							break;
-
-						pixels[blockPtr++] = pixel;
+						if (blockPtr < pixelSize)
+							pixels[blockPtr] = pixel;
+						blockPtr++;
 					}
 
 					blockPtr += rowInc;
@@ -258,10 +255,10 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 
 						flagMask >>= 1;
 
-						if (blockPtr >= pixelSize)
-							break;
+						if (blockPtr < pixelSize)
+							pixels[blockPtr] = _colorPairs[pixel];
 
-						pixels[blockPtr++] = _colorPairs[pixel];
+						blockPtr++;
 					}
 
 					blockPtr += rowInc;
@@ -307,10 +304,9 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 						pixel = colorTableIndex + ((colorFlags >> flagMask) & 0x03);
 						flagMask -= 2;
 
-						if (blockPtr >= pixelSize)
-							break;
-
-						pixels[blockPtr++] = _colorQuads[pixel];
+						if (blockPtr < pixelSize)
+							pixels[blockPtr] = _colorQuads[pixel];
+						blockPtr++;
 					}
 					blockPtr += rowInc;
 				}
@@ -375,10 +371,10 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 						pixel = colorTableIndex + ((colorFlags >> flagMask) & 0x07);
 						flagMask -= 3;
 
-						if (blockPtr >= pixelSize)
-							break;
+						if (blockPtr < pixelSize)
+							pixels[blockPtr] = _colorOctets[pixel];
 
-						pixels[blockPtr++] = _colorOctets[pixel];
+						blockPtr++;
 					}
 
 					blockPtr += rowInc;
@@ -395,10 +391,10 @@ const Graphics::Surface *SMCDecoder::decodeFrame(Common::SeekableReadStream &str
 				blockPtr = rowPtr + pixelPtr;
 				for (byte y = 0; y < 4; y++) {
 					for (byte x = 0; x < 4; x++) {
-						if (blockPtr >= pixelSize)
-							break;
-
-						pixels[blockPtr++] = stream.readByte();
+						byte b = stream.readByte();
+						if (blockPtr < pixelSize)
+							pixels[blockPtr] = b;
+						blockPtr++;
 					}
 
 					blockPtr += rowInc;

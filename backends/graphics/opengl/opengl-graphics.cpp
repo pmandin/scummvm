@@ -241,6 +241,7 @@ namespace {
 const OSystem::GraphicsMode glStretchModes[] = {
 	{"center", _s("Center"), STRETCH_CENTER},
 	{"pixel-perfect", _s("Pixel-perfect scaling"), STRETCH_INTEGRAL},
+	{"even-pixels", _s("Even pixels scaling"), STRETCH_INTEGRAL_AR},
 	{"fit", _s("Fit to window"), STRETCH_FIT},
 	{"stretch", _s("Stretch to window"), STRETCH_STRETCH},
 	{"fit_force_aspect", _s("Fit to window (4:3)"), STRETCH_FIT_FORCE_ASPECT},
@@ -637,17 +638,16 @@ void OpenGLGraphicsManager::clearOverlay() {
 	_overlay->fill(0);
 }
 
-void OpenGLGraphicsManager::grabOverlay(void *buf, int pitch) const {
+void OpenGLGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 	const Graphics::Surface *overlayData = _overlay->getSurface();
 
-	const byte *src = (const byte *)overlayData->getPixels();
-	byte *dst = (byte *)buf;
+	assert(surface.w >= overlayData->w);
+	assert(surface.h >= overlayData->h);
+	assert(surface.format.bytesPerPixel == overlayData->format.bytesPerPixel);
 
-	for (uint h = overlayData->h; h > 0; --h) {
-		memcpy(dst, src, overlayData->w * overlayData->format.bytesPerPixel);
-		dst += pitch;
-		src += overlayData->pitch;
-	}
+	const byte *src = (const byte *)overlayData->getPixels();
+	byte *dst = (byte *)surface.getPixels();
+	Graphics::copyBlit(dst, src, surface.pitch, overlayData->pitch, overlayData->w, overlayData->h, overlayData->format.bytesPerPixel);
 }
 
 namespace {
@@ -848,7 +848,7 @@ void OpenGLGraphicsManager::osdMessageUpdateSurface() {
 	for (uint i = 0; i < osdLines.size(); ++i) {
 		font->drawString(dst, osdLines[i],
 		                 0, i * lineHeight + vOffset + lineSpacing, width,
-		                 white, Graphics::kTextAlignCenter);
+		                 white, Graphics::kTextAlignCenter, 0, true);
 	}
 
 	_osdMessageSurface->updateGLTexture();
@@ -1107,27 +1107,26 @@ Surface *OpenGLGraphicsManager::createSurface(const Graphics::PixelFormat &forma
 		} else {
 			return new TextureCLUT8(glIntFormat, glFormat, glType, virtFormat);
 		}
-#if !USE_FORCED_GL
-	} else if (isGLESContext() && format == Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0)) {
+	} else if (getGLPixelFormat(format, glIntFormat, glFormat, glType)) {
+		return new Texture(glIntFormat, glFormat, glType, format);
+	} else if (g_context.packedPixelsSupported && format == Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0)) {
 		// OpenGL ES does not support a texture format usable for RGB555.
 		// Since SCUMM uses this pixel format for some games (and there is no
 		// hope for this to change anytime soon) we use pixel format
 		// conversion to a supported texture format.
 		return new TextureRGB555();
 #ifdef SCUMM_LITTLE_ENDIAN
-	} else if (isGLESContext() && format == Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) { // RGBA8888
+	} else if (format == Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0)) { // RGBA8888
 #else
-	} else if (isGLESContext() && format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) { // ABGR8888
+	} else if (format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) { // ABGR8888
 #endif
 		return new TextureRGBA8888Swap();
-#endif // !USE_FORCED_GL
 	} else {
-		const bool supported = getGLPixelFormat(format, glIntFormat, glFormat, glType);
-		if (!supported) {
-			return nullptr;
-		} else {
-			return new Texture(glIntFormat, glFormat, glType, format);
-		}
+#ifdef SCUMM_LITTLE_ENDIAN
+		return new FakeTexture(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), format);
+#else
+		return new FakeTexture(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0), format);
+#endif
 	}
 }
 
@@ -1141,6 +1140,8 @@ bool OpenGLGraphicsManager::getGLPixelFormat(const Graphics::PixelFormat &pixelF
 		glFormat = GL_RGBA;
 		glType = GL_UNSIGNED_BYTE;
 		return true;
+	} else if (!g_context.packedPixelsSupported) {
+		return false;
 	} else if (pixelFormat == Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0)) { // RGB565
 		glIntFormat = GL_RGB;
 		glFormat = GL_RGB;
@@ -1217,7 +1218,7 @@ bool OpenGLGraphicsManager::getGLPixelFormat(const Graphics::PixelFormat &pixelF
 }
 
 bool OpenGLGraphicsManager::gameNeedsAspectRatioCorrection() const {
-	if (ConfMan.getBool("aspect_ratio")) {
+	if (_currentState.aspectRatioCorrection) {
 		const uint width = getWidth();
 		const uint height = getHeight();
 

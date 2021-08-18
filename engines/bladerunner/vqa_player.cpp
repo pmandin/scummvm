@@ -53,32 +53,26 @@ bool VQAPlayer::open() {
 		// This has still frames in the end that so it looked as if the smoke was "frozen"
 		_decoder._loopInfo.loops[0].end  = 58; // 59 up to 74 are still frames
 	}
-//	else if (_name.equals("MA05_3.VQA")) {
-//		// loops[1] 60 up to 90 (it will be followed by loops[2] which will play from 30 to 90
-//		// this is to address the issue of non-aligned headlight rotation in the
-//		// InShot transition in Act 5. However, this is still glitchy
-//		// and results in bad z-buffer for the duration of the truncated loop 1
-//		// TODO is there a way to get and use the z-buffering info from start frame without displaying it?
-//		_decoder._loopInfo.loops[1].begin = 60;
-//		_decoder._loopInfo.loops[2].begin = 30;
-//	}
 #endif
 
 	_hasAudio = _decoder.hasAudio();
 	if (_hasAudio) {
 		_audioStream = Audio::makeQueuingAudioStream(_decoder.frequency(), false);
+		_lastAudioFrameSuccessfullyQueued = 1;
 	}
 
 	_repeatsCount = 0;
-	_loop = -1;
+	_loopNext = -1;
 	_frame = -1;
-	_frameBegin = -1;
-	_frameEnd = _decoder.numFrames() - 1;
+	_frameBeginNext = -1;
+	_frameEnd = getFrameCount() - 1;
 	_frameEndQueued = -1;
 	_repeatsCountQueued = -1;
 
 	if (_loopInitial >= 0) {
-		// TODO? When does this happen? _loopInitial seems to be unused
+		// loopInitial is set to the loop Id value that should play,
+		// when the SeekableReadStream (_s) is nullptr
+		// see setLoop()
 		setLoop(_loopInitial, _repeatsCountInitial, kLoopSetModeImmediate, nullptr, nullptr);
 	} else {
 		_frameNext = 0;
@@ -100,7 +94,7 @@ int VQAPlayer::update(bool forceDraw, bool advanceFrame, bool useTime, Graphics:
 	int result = -1;
 
 	if (_frameNext < 0) {
-		_frameNext = _frameBegin;
+		_frameNext = _frameBeginNext;
 	}
 
 	if ((_repeatsCount > 0 || _repeatsCount == -1) && (_frameNext > _frameEnd)) {
@@ -108,9 +102,29 @@ int VQAPlayer::update(bool forceDraw, bool advanceFrame, bool useTime, Graphics:
 		if (_frameEndQueued != -1) {
 			_frameEnd = _frameEndQueued;
 			_frameEndQueued = -1;
+#if !BLADERUNNER_ORIGINAL_BUGS
+			// Fix glitch in transition from inShot to mainloop
+			// in Act 5 at McCoy's apartment (moving from bedroom to balcony).
+			// This emulates a fast-forward, which is required
+			// in order to have proper z-buffer info,
+			// and display the new first frame of the loop (60) without artifacts.
+			// The code is similar to Scene::advanceFrame()
+			// This will be done once, since this first loop (loopId 1)
+			// is only executed once before moving on to loopId 2
+			if (_name.equals("MA05_3.VQA") && _loopNext == 1) {
+				while (update(false, true, false) != 59) {
+					updateZBuffer(_vm->_zbuffer);
+				}
+				// This works because the loopId 1 executes once before moving to _loop 2
+				// See Scene::advanceFrame()
+				//     Scene::loopEnded()
+				//
+				_frameBeginNext = 60;
+			}
+#endif
 		}
-		if (_frameNext != _frameBegin) {
-			_frameNext = _frameBegin;
+		if (_frameNext != _frameBeginNext) {
+			_frameNext = _frameBeginNext;
 		}
 
 		if (loopEndQueued == -1) {
@@ -123,50 +137,82 @@ int VQAPlayer::update(bool forceDraw, bool advanceFrame, bool useTime, Graphics:
 			_repeatsCountQueued = -1;
 
 			if (_callbackLoopEnded != nullptr) {
-				_callbackLoopEnded(_callbackData, 0, _loop);
+				_callbackLoopEnded(_callbackData, 0, _loopNext);
 			}
 		}
-
 		result = -1;
 	} else if (_frameNext > _frameEnd) {
 		result = -3;
 		// _repeatsCount == 0, so return here at the end of the video, to release the resource
 		return result;
-	} else if (useTime && (now < _frameNextTime)) {
+	} else if (useTime && (now - (_frameNextTime - kVqaFrameTimeDiff) < kVqaFrameTimeDiff)) {
+		// Not yet time to move to next frame.
+		// Note, we use unsigned difference to avoid potential time overflow issues
 		result = -1;
 	} else if (advanceFrame) {
 		_frame = _frameNext;
 		_decoder.readFrame(_frameNext, kVQAReadVideo);
 		_decoder.decodeVideoFrame(customSurface != nullptr ? customSurface : _surface, _frameNext);
 
+		int maxAllowedAudioPreloadedFrames = kMaxAudioPreloadedFrames;
+		if (_frameEnd - _frameNext < kMaxAudioPreloadedFrames - 1) {
+			maxAllowedAudioPreloadedFrames = _frameEnd - _frameNext + 1;
+		}
+
 		if (_hasAudio) {
-			int audioPreloadFrames = 14;
 			if (!_audioStarted) {
-				for (int i = 0; i < audioPreloadFrames; ++i) {
+				// start with preloading up to (kMaxAudioPreloadedFrames - 1) frames at most, before reaching the _frameEnd frame
+				for (int i = 0; i < kMaxAudioPreloadedFrames - 1; ++i) {
 					if (_frameNext + i < _frameEnd) {
 						_decoder.readFrame(_frameNext + i, kVQAReadAudio);
 						queueAudioFrame(_decoder.decodeAudioFrame());
+						_lastAudioFrameSuccessfullyQueued = _frameNext + i;
 					}
 				}
 				if (_vm->_mixer->isReady()) {
-					// Use speech sound type as in original engine
-					_vm->_mixer->playStream(Audio::Mixer::kSpeechSoundType, &_soundHandle, _audioStream);
+					// Audio stream starts playing, consuming queued "audio frames"
+					// Note: On its own, the audio will not re-synch with video;
+					// It plays independently so it can get ahead!
+					_vm->_mixer->playStream(kVQASoundType, &_soundHandle, _audioStream);
 				}
 				_audioStarted = true;
 			}
-			if (_frameNext + audioPreloadFrames < _frameEnd) {
-				_decoder.readFrame(_frameNext + audioPreloadFrames, kVQAReadAudio);
-				queueAudioFrame(_decoder.decodeAudioFrame());
+
+			// Due to our audio stream being queuable, the queued audio frames will play,
+			// even if the game is "paused" eg. by moving the ScummVM window.
+			// However, the video will stop playing immediately in that case.
+			// That would result in a audio video desynch, with audio being ahead of video.
+			// When the video resumes, we need to catch up to the audio "frame" of the queue that was last played,
+			// without queuing more audio, and then start queuing audio again.
+
+			// The following still covers the case of adding the final 15th audio frame to the queue
+			// when first starting the audio stream.
+			int tmpCurrentQueuedAudioFrames = getQueuedAudioFrames();
+			if (_lastAudioFrameSuccessfullyQueued != _frameEnd) {
+				// if video is behind audio, then resynch,
+				// which here means: don't queue and don't play audio until video catches up.
+			    if (_lastAudioFrameSuccessfullyQueued - tmpCurrentQueuedAudioFrames < _frameNext) {
+					int addToQueueRep = 0;
+					while (addToQueueRep < (maxAllowedAudioPreloadedFrames - tmpCurrentQueuedAudioFrames)
+					       && _lastAudioFrameSuccessfullyQueued + 1 <= _frameEnd) {
+						_decoder.readFrame(_lastAudioFrameSuccessfullyQueued + 1, kVQAReadAudio);
+						queueAudioFrame(_decoder.decodeAudioFrame());
+						++_lastAudioFrameSuccessfullyQueued;
+						++addToQueueRep;
+					}
+				}
 			}
 		}
+
 		if (useTime) {
-			_frameNextTime += 60000 / 15;
+			_frameNextTime += kVqaFrameTimeDiff;
 
 			// In some cases (as overlay paused by kia or game window is moved) new time might be still in the past.
 			// This can cause rapid playback of video where every refresh renders different frame of the video.
 			// Can be avoided by setting next time to the future.
-			if (_frameNextTime < now) {
-				_frameNextTime = now + 60000 / 15;
+			// Note, we use unsigned difference to avoid time overflow issues
+			if (now - (_frameNextTime - kVqaFrameTimeDiff) > kVqaFrameTimeDiff) {
+				_frameNextTime = now + kVqaFrameTimeDiff;
 			}
 		}
 		++_frameNext;
@@ -210,7 +256,7 @@ bool VQAPlayer::setLoop(int loop, int repeatsCount, int loopSetMode, void (*call
 		return false;
 	}
 	if (setBeginAndEndFrame(begin, end, repeatsCount, loopSetMode, callback, callbackData)) {
-		_loop = loop;
+		_loopNext = loop;
 		return true;
 	}
 	return false;
@@ -232,12 +278,12 @@ bool VQAPlayer::setBeginAndEndFrame(int begin, int end, int repeatsCount, int lo
 	}
 
 	if (_repeatsCount == 0 && loopSetMode == kLoopSetModeEnqueue) {
-		// if the member var _repeatsCount is 0 (which means "don't repeat existing loop")
-		// then execute set the enqueued loop for immediate execution
+		// if the member var _repeatsCount is 0 (which means "current playing loop will not be repeated")
+		// then do not enqueue and, instead, treat the request as kLoopSetModeImmediate
 		loopSetMode = kLoopSetModeImmediate;
 	}
 
-	_frameBegin = begin;
+	_frameBeginNext = begin;
 
 	if (loopSetMode == kLoopSetModeJustStart) {
 		_repeatsCount = repeatsCount;
@@ -263,6 +309,14 @@ bool VQAPlayer::seekToFrame(int frame) {
 	return true;
 }
 
+bool VQAPlayer::getCurrentBeginAndEndFrame(int frame, int *begin, int *end) {
+	int playingLoop = _decoder.getLoopIdFromFrame(frame);
+	if (playingLoop != -1) {
+		return _decoder.getLoopBeginAndEndFrame(playingLoop, begin, end);
+	}
+	return false;
+}
+
 int VQAPlayer::getLoopBeginFrame(int loop) {
 	int begin, end;
 	if (!_decoder.getLoopBeginAndEndFrame(loop, &begin, &end)) {
@@ -279,14 +333,26 @@ int VQAPlayer::getLoopEndFrame(int loop) {
 	return end;
 }
 
-int VQAPlayer::getFrameCount() {
+int VQAPlayer::getFrameCount() const {
 	return _decoder.numFrames();
 }
 
+int VQAPlayer::getQueuedAudioFrames() const {
+	return _audioStream->numQueuedStreams();
+}
+
+// Adds another audio "frame" to the queue of the audio stream
 void VQAPlayer::queueAudioFrame(Audio::AudioStream *audioStream) {
+	if (audioStream == nullptr) {
+		return;
+	}
+
 	int n = _audioStream->numQueuedStreams();
-	if (n == 0)
+	// TODO Maybe remove this warning or make it a debug-only message?
+	if (n == 0) {
 		warning("numQueuedStreams: %d", n);
+	}
+
 	_audioStream->queueAudioStream(audioStream, DisposeAfterUse::YES);
 }
 

@@ -121,9 +121,10 @@ private:
 	 */
 	struct CmdRenderSphere {
 		int8 colorIndex = 0;
+		int16 radius = 0;
 		int16 x = 0;
 		int16 y = 0;
-		int16 radius = 0;
+		int16 z = 0;
 	};
 
 	struct ModelData {
@@ -134,16 +135,19 @@ private:
 
 	ModelData _modelData;
 
-	bool renderAnimatedModel(ModelData *modelData, const BodyData &bodyData, RenderCommand *renderCmds, const IVec3 &angleVec, const IVec3 &renderPos);
+	bool renderAnimatedModel(ModelData *modelData, const BodyData &bodyData, RenderCommand *renderCmds, const IVec3 &angleVec, const IVec3 &renderPos, Common::Rect &modelRect);
 	void circleFill(int32 x, int32 y, int32 radius, uint8 color);
-	bool renderModelElements(int32 numOfPrimitives, const BodyData &bodyData, RenderCommand **renderCmds, ModelData *modelData);
-	void getCameraAnglePositions(int32 x, int32 y, int32 z);
+	bool renderModelElements(int32 numOfPrimitives, const BodyData &bodyData, RenderCommand **renderCmds, ModelData *modelData, Common::Rect &modelRect);
+	IVec3 getCameraAnglePositions(int32 x, int32 y, int32 z);
+	inline IVec3 getCameraAnglePositions(const IVec3 &vec) {
+		return getCameraAnglePositions(vec.x, vec.y, vec.z);
+	}
 	void applyRotation(IMatrix3x3 *targetMatrix, const IMatrix3x3 *currentMatrix, const IVec3 &angleVec);
-	void applyPointsRotation(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *rotationMatrix);
+	void applyPointsRotation(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *rotationMatrix, const IVec3 &destPos);
 	void processRotatedElement(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
-	void applyPointsTranslation(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *translationMatrix, const IVec3 &angleVec);
+	void applyPointsTranslation(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *translationMatrix, const IVec3 &angleVec, const IVec3 &destPos);
 	void processTranslatedElement(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
-	void translateGroup(int32 x, int32 y, int32 z);
+	IVec3 translateGroup(int32 x, int32 y, int32 z);
 
 	IVec3 _baseTransPos;
 	IVec3 _orthoProjPos;
@@ -156,6 +160,7 @@ private:
 	IMatrix3x3 _matricesTable[30 + 1];
 	IMatrix3x3 _shadeMatrix;
 	IVec3 _lightPos;
+	IVec3 _baseRotPos;
 
 	RenderCommand _renderCmds[1000];
 	/**
@@ -178,15 +183,15 @@ private:
 
 	bool _isUsingOrthoProjection = false;
 
-	void renderPolygonsCopper(uint8 *out, int vtop, int32 vsize, uint8 color) const;
-	void renderPolygonsBopper(uint8 *out, int vtop, int32 vsize, uint8 color) const;
-	void renderPolygonsFlat(uint8 *out, int vtop, int32 vsize, uint8 color) const;
-	void renderPolygonsTele(uint8 *out, int vtop, int32 vsize, uint8 color) const;
-	void renderPolygonsTras(uint8 *out, int vtop, int32 vsize, uint8 color) const;
-	void renderPolygonsTrame(uint8 *out, int vtop, int32 vsize, uint8 color) const;
-	void renderPolygonsGouraud(uint8 *out, int vtop, int32 vsize) const;
-	void renderPolygonsDither(uint8 *out, int vtop, int32 vsize) const;
-	void renderPolygonsMarble(uint8 *out, int vtop, int32 vsize, uint8 color) const;
+	void renderPolygonsCopper(int vtop, int32 vsize, uint8 color) const;
+	void renderPolygonsBopper(int vtop, int32 vsize, uint8 color) const;
+	void renderPolygonsFlat(int vtop, int32 vsize, uint8 color) const;
+	void renderPolygonsTele(int vtop, int32 vsize, uint8 color) const;
+	void renderPolygonsTras(int vtop, int32 vsize, uint8 color) const;
+	void renderPolygonsTrame(int vtop, int32 vsize, uint8 color) const;
+	void renderPolygonsGouraud(int vtop, int32 vsize) const;
+	void renderPolygonsDither(int vtop, int32 vsize) const;
+	void renderPolygonsMarble(int vtop, int32 vsize, uint8 color) const;
 
 	void computePolygons(int16 polyRenderType, const Vertex *vertices, int32 numVertices);
 
@@ -207,48 +212,63 @@ public:
 
 	void init(int32 w, int32 h);
 
-	IVec3 projPosScreen;
-	IVec3 projPos;
-	IVec3 baseRotPos;
-	IVec3 destPos;
+	IVec3 _projPos;
+
+	void setBaseRotationPos(int32 x, int32 y, int32 z);
 	IVec3 getHolomapRotation(const int32 angleX, const int32 angleY, const int32 angleZ) const;
 
 	void setLightVector(int32 angleX, int32 angleY, int32 angleZ);
-	void getBaseRotationPosition(int32 x, int32 y, int32 z);
+	IVec3 getBaseRotationPosition(int32 x, int32 y, int32 z);
+
+	inline IVec3 getBaseRotationPosition(const IVec3& vec) {
+		return getBaseRotationPosition(vec.x, vec.y, vec.z);
+	}
 
 	void renderPolygons(const CmdRenderPolygon &polygon, Vertex *vertices, int vtop, int vbottom);
 
-	inline int32 projectPositionOnScreen(const IVec3& pos) {
+	inline IVec3 &projectPositionOnScreen(const IVec3& pos) {
 		return projectPositionOnScreen(pos.x, pos.y, pos.z);
 	}
 
-	int32 projectPositionOnScreen(int32 cX, int32 cY, int32 cZ);
+	IVec3 &projectPositionOnScreen(int32 cX, int32 cY, int32 cZ);
 
-	inline void projectXYPositionOnScreen(const IVec3& pos) {
-		projectXYPositionOnScreen(pos.x, pos.y, pos.z);
-	}
-	void projectXYPositionOnScreen(int32 x,int32 y,int32 z);
 	void setCameraPosition(int32 x, int32 y, int32 depthOffset, int32 scaleY, int32 scaleZ);
 	void setCameraAngle(int32 transPosX, int32 transPosY, int32 transPosZ, int32 rotPosX, int32 rotPosY, int32 rotPosZ, int32 param6);
+	IVec3 updateCameraAnglePositions(int zShift = 0);
 	void setBaseTranslation(int32 x, int32 y, int32 z);
-	void setBaseRotation(int32 x, int32 y, int32 z, bool transpose = false);
+	IVec3 setBaseRotation(int32 x, int32 y, int32 z, bool transpose = false);
+
+	inline IVec3 setBaseRotation(const IVec3 &rot, bool transpose = false) {
+		return setBaseRotation(rot.x, rot.y, rot.z, transpose);
+	}
+
 	void setOrthoProjection(int32 x, int32 y, int32 z);
 
-	bool renderIsoModel(int32 x, int32 y, int32 z, int32 angleX, int32 angleY, int32 angleZ, const BodyData &bodyData);
+	bool renderIsoModel(int32 x, int32 y, int32 z, int32 angleX, int32 angleY, int32 angleZ, const BodyData &bodyData, Common::Rect &modelRect);
+
+	inline bool renderIsoModel(const IVec3 &pos, int32 angleX, int32 angleY, int32 angleZ, const BodyData &bodyData, Common::Rect &modelRect) {
+		return renderIsoModel(pos.x, pos.y, pos.z, angleX, angleY, angleZ, bodyData, modelRect);
+	}
 
 	/**
 	 * @param angle A value of @c -1 means that the model is automatically rotated
 	 */
-	void renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 boxBottom, int32 y, int32 angle, const BodyData &bodyData);
+	void renderBehaviourModel(int32 boxLeft, int32 boxTop, int32 boxRight, int32 boxBottom, int32 y, int32 angle, const BodyData &bodyData, ActorMoveStruct &move);
 	/**
 	 * @param angle A value of @c -1 means that the model is automatically rotated
 	 */
-	void renderBehaviourModel(const Common::Rect &rect, int32 y, int32 angle, const BodyData &bodyData);
+	void renderBehaviourModel(const Common::Rect &rect, int32 y, int32 angle, const BodyData &bodyData, ActorMoveStruct &move);
 
 	void renderInventoryItem(int32 x, int32 y, const BodyData &bodyData, int32 angle, int32 param);
 
-	void renderHolomapVertices(const Vertex vertexCoordinates[3], const Vertex vertexAngles[3]);
+	void renderHolomapVertices(const Vertex vertexCoordinates[3], const Vertex vertexCoordinates2[3]);
 };
+
+inline void Renderer::setBaseRotationPos(int32 x, int32 y, int32 z) {
+	_baseRotPos.x = x;
+	_baseRotPos.y = y;
+	_baseRotPos.z = z;
+}
 
 } // namespace TwinE
 

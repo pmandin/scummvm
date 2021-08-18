@@ -50,7 +50,7 @@ void ScummFile::resetSubfile() {
 	seek(0, SEEK_SET);
 }
 
-bool ScummFile::open(const Common::String &filename) {
+bool ScummFile::open(const Common::Path &filename) {
 	if (File::open(filename)) {
 		resetSubfile();
 		return true;
@@ -121,15 +121,15 @@ bool ScummFile::eos() const {
 	return _subFileLen ? _myEos : File::eos();
 }
 
-int32 ScummFile::pos() const {
+int64 ScummFile::pos() const {
 	return File::pos() - _subFileStart;
 }
 
-int32 ScummFile::size() const {
+int64 ScummFile::size() const {
 	return _subFileLen ? _subFileLen : File::size();
 }
 
-bool ScummFile::seek(int32 offs, int whence) {
+bool ScummFile::seek(int64 offs, int whence) {
 	if (_subFileLen) {
 		// Constrain the seek to the subfile
 		switch (whence) {
@@ -187,8 +187,8 @@ uint32 ScummFile::read(void *dataPtr, uint32 dataSize) {
 #pragma mark --- ScummSteamFile ---
 #pragma mark -
 
-bool ScummSteamFile::open(const Common::String &filename) {
-	if (filename.equalsIgnoreCase(_indexFile.indexFileName)) {
+bool ScummSteamFile::open(const Common::Path &filename) {
+	if (filename.toString().equalsIgnoreCase(_indexFile.indexFileName)) {
 		return openWithSubRange(_indexFile.executableName, _indexFile.start, _indexFile.len);
 	} else {
 		// Regular non-bundled file
@@ -323,7 +323,7 @@ bool ScummDiskImage::openDisk(char num) {
 	return true;
 }
 
-bool ScummDiskImage::open(const Common::String &filename) {
+bool ScummDiskImage::open(const Common::Path &filename) {
 	uint16 signature;
 
 	// check signature

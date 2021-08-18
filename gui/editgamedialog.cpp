@@ -361,14 +361,18 @@ EditGameDialog::EditGameDialog(const String &domain)
 	_savePathClearButton = addClearButton(tab, "GameOptions_Paths.SavePathClearButton", kCmdSavePathClear);
 
 	//
-	// 9) The Achievements tab
+	// 9) The Achievements & The Statistics tabs
 	//
 	if (enginePlugin) {
 		const MetaEngine &metaEngine = enginePlugin->get<MetaEngine>();
-		Common::AchievementsInfo achievementsInfo = metaEngine.getAchievementsInfo(domain);
-		if (achievementsInfo.descriptions.size() > 0) {
+		AchMan.setActiveDomain(metaEngine.getAchievementsInfo(domain));
+		if (AchMan.getAchievementCount()) {
 			tab->addTab(_("Achievements"), "GameOptions_Achievements");
-			addAchievementsControls(tab, "GameOptions_Achievements.", achievementsInfo);
+			addAchievementsControls(tab, "GameOptions_Achievements.");
+		}
+		if (AchMan.getStatCount()) {
+			tab->addTab(_("Statistics"), "GameOptions_Achievements");
+			addStatisticsControls(tab, "GameOptions_Achievements.");
 		}
 	}
 
@@ -407,6 +411,8 @@ void EditGameDialog::open() {
 	e = ConfMan.hasKey("gfx_mode", _domain) ||
 		ConfMan.hasKey("render_mode", _domain) ||
 		ConfMan.hasKey("stretch_mode", _domain) ||
+		ConfMan.hasKey("scaler", _domain) ||
+		ConfMan.hasKey("scale_factor", _domain) ||
 		ConfMan.hasKey("aspect_ratio", _domain) ||
 		ConfMan.hasKey("fullscreen", _domain) ||
 		ConfMan.hasKey("vsync", _domain) ||
@@ -610,7 +616,13 @@ void EditGameDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 		if (browser.runModal() > 0) {
 			// User made his choice...
 			Common::FSNode dir(browser.getResult());
-			_savePathWidget->setLabel(dir.getPath());
+			if (dir.isWritable()) {
+				_savePathWidget->setLabel(dir.getPath());
+			} else {
+				MessageDialog error(_("The chosen directory cannot be written to. Please select another one."));
+				error.runModal();
+				return;
+			}
 #if defined(USE_CLOUD) && defined(USE_LIBCURL)
 			MessageDialog warningMessage(_("Saved games sync feature doesn't work with non-default directories. If you want your saved games to sync, use default directory."));
 			warningMessage.runModal();
@@ -646,6 +658,9 @@ void EditGameDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 			_domain = newDomain;
 			if (_engineOptions) {
 				_engineOptions->setDomain(newDomain);
+			}
+			if (_backendOptions) {
+				_backendOptions->setDomain(newDomain);
 			}
 		}
 	}

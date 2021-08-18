@@ -26,6 +26,7 @@
 #include "audio/mixer.h"
 #include "audio/timestamp.h"	// TODO: Move this to common/ ?
 #include "common/array.h"
+#include "common/path.h"
 #include "common/rational.h"
 #include "common/str.h"
 #include "graphics/pixelformat.h"
@@ -66,7 +67,7 @@ public:
 	 * @param filename	the filename to load
 	 * @return whether loading the file succeeded
 	 */
-	virtual bool loadFile(const Common::String &filename);
+	virtual bool loadFile(const Common::Path &filename);
 
 	/**
 	 * Load a video from a generic read stream. The ownership of the
@@ -944,7 +945,7 @@ private:
 
 	// Current playback status
 	bool _needsUpdate;
-	Audio::Timestamp _lastTimeChange, _endTime;
+	Audio::Timestamp _endTime;
 	bool _endTimeSet;
 	Common::Rational _playbackRate;
 	VideoTrack *_nextVideoTrack;
@@ -959,6 +960,7 @@ private:
 	// Default PixelFormat settings
 	Graphics::PixelFormat _defaultHighColorFormat;
 
+protected:
 	// Internal helper functions
 	void stopAudio();
 	void startAudio();
@@ -966,7 +968,10 @@ private:
 	bool hasFramesLeft() const;
 	bool hasAudio() const;
 
+	Audio::Timestamp _lastTimeChange;
 	int32 _startTime;
+
+private:
 	uint32 _pauseLevel;
 	uint32 _pauseStartTime;
 	byte _audioVolume;

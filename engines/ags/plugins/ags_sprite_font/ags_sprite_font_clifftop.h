@@ -30,13 +30,15 @@ namespace Plugins {
 namespace AGSSpriteFont {
 
 class AGSSpriteFontClifftopGames : public AGSSpriteFont {
+	SCRIPT_HASH_SUB(AGSSpriteFontClifftopGames, AGSSpriteFont)
 private:
-	static void AGS_EngineStartup(IAGSEngine *engine);
-
-	static void SetLineHeightAdjust(ScriptMethodParams &params);
+	void SetLineHeightAdjust(ScriptMethodParams &params);
 
 public:
-	AGSSpriteFontClifftopGames();
+	AGSSpriteFontClifftopGames() : AGSSpriteFont() {}
+	virtual ~AGSSpriteFontClifftopGames() {}
+
+	void AGS_EngineStartup(IAGSEngine *engine) override;
 };
 
 } // namespace AGSSpriteFont

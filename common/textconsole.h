@@ -58,7 +58,7 @@ void setErrorOutputFormatter(OutputFormatter f);
  * A typical example would be a function that shows a debug
  * console and displays the given message in it.
  */
-typedef void (*ErrorHandler)(const char *msg);
+typedef bool (*ErrorHandler)(const char *msg);
 
 /**
  * Set a callback that is invoked by error() after the error
@@ -81,11 +81,11 @@ void setErrorHandler(ErrorHandler handler);
 /**
  * Print an error message to the text console and then terminate the process.
  */
-void NORETURN_PRE error(const char *s, ...) GCC_PRINTF(1, 2) NORETURN_POST;
+void NORETURN_PRE error(MSVC_PRINTF const char *s, ...) GCC_PRINTF(1, 2) NORETURN_POST;
 
 #ifdef DISABLE_TEXT_CONSOLE
 
-inline void warning(const char *s, ...) {}
+inline void GCC_PRINTF(1, 2) warning(MSVC_PRINTF const char *s, ...) {}
 
 #else
 
@@ -95,7 +95,7 @@ inline void warning(const char *s, ...) {}
  * Automatically prepends the text "WARNING: " and appends
  * an exclamation mark and a newline.
  */
-void warning(const char *s, ...) GCC_PRINTF(1, 2);
+void warning(MSVC_PRINTF const char *s, ...) GCC_PRINTF(1, 2);
 
 #endif
 /** @} */

@@ -28,6 +28,7 @@
 
 #include "asylum/resources/actor.h"
 #include "asylum/resources/encounters.h"
+#include "asylum/resources/inventory.h"
 #include "asylum/resources/object.h"
 #include "asylum/resources/script.h"
 #include "asylum/resources/worldstats.h"
@@ -218,7 +219,6 @@ Console::Console(AsylumEngine *engine) : _vm(engine) {
 }
 
 Console::~Console() {
-	DebugMan.clearAllDebugChannels();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -585,7 +585,7 @@ bool Console::cmdSetStatus(int argc, const char **argv) {
 		return true;
 	}
 
-	actor->updateStatus((ActorStatus)status);
+	actor->changeStatus((ActorStatus)status);
 	return false;
 }
 
@@ -837,7 +837,7 @@ bool Console::cmdAddToInventory(int argc, const char **argv) {
 	uint32 index = atoi(argv[1]), count = argc == 3 ? atoi(argv[2]) : 0, maxIndex;
 
 	for (maxIndex = 0; maxIndex < 16; maxIndex++) {
-		if (!getWorld()->cursorResourcesAlternate[maxIndex])
+		if (!getWorld()->inventoryIconsActive[maxIndex])
 			break;
 	}
 
@@ -846,7 +846,7 @@ bool Console::cmdAddToInventory(int argc, const char **argv) {
 		return true;
 	}
 
-	getScene()->getActor()->addReactionHive(index, count);
+	getScene()->getActor()->inventory.add(index, count);
 
 	return true;
 }
@@ -860,7 +860,7 @@ bool Console::cmdRemoveFromInventory(int argc, const char **argv) {
 	uint32 index = atoi(argv[1]), count = argc == 3 ? atoi(argv[2]) : 0, maxIndex;
 
 	for (maxIndex = 0; maxIndex < 16; maxIndex++) {
-		if (!getWorld()->cursorResourcesAlternate[maxIndex])
+		if (!getWorld()->inventoryIconsActive[maxIndex])
 			break;
 	}
 
@@ -869,7 +869,7 @@ bool Console::cmdRemoveFromInventory(int argc, const char **argv) {
 		return true;
 	}
 
-	getScene()->getActor()->removeReactionHive(index, count);
+	getScene()->getActor()->inventory.remove(index, count);
 
 	return true;
 }

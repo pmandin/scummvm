@@ -46,7 +46,9 @@ enum CodePage {
 	kISO8859_2,
 	kISO8859_5,
 	kMacCentralEurope,
+	kMacRoman,
 	kDos850,
+	kDos862,
 	kDos866,
 	kASCII,
 

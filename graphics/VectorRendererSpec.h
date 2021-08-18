@@ -203,13 +203,22 @@ protected:
 	virtual void drawSquareAlgClip(int x, int y, int w, int h,
 		PixelType color, FillMode fill_m);
 
+	virtual void drawTriangleHorzAlg(int x, int y, int w, int h,
+	    bool inverted, PixelType color, FillMode fill_m);
+
+	virtual void drawTriangleHorzAlgClip(int x, int y, int w, int h,
+		bool inverted, PixelType color, FillMode fill_m);
+
+	virtual void drawTriangleFastH(int x, int y, int size,
+	    bool inverted, PixelType color, FillMode fill_m);
+
 	virtual void drawTriangleVertAlg(int x, int y, int w, int h,
 	    bool inverted, PixelType color, FillMode fill_m);
 
 	virtual void drawTriangleVertAlgClip(int x, int y, int w, int h,
 		bool inverted, PixelType color, FillMode fill_m);
 
-	virtual void drawTriangleFast(int x, int y, int size,
+	virtual void drawTriangleFastV(int x, int y, int size,
 	    bool inverted, PixelType color, FillMode fill_m);
 
 	virtual void drawBevelSquareAlg(int x, int y, int w, int h,
@@ -279,13 +288,13 @@ protected:
 	 * @param alpha Alpha intensity of the pixel (0-255)
 	 */
 	inline void blendFill(PixelType *first, PixelType *last, PixelType color, uint8 alpha) {
-		while (first != last)
+		while (first < last)
 			blendPixelPtr(first++, color, alpha);
 	}
 
 	inline void blendFillClip(PixelType *first, PixelType *last, PixelType color, uint8 alpha, int realX, int realY) {
 		if (_clippingArea.top <= realY && realY < _clippingArea.bottom) {
-			while (first != last) {
+			while (first < last) {
 				if (_clippingArea.left <= realX && realX < _clippingArea.right)
 					blendPixelPtr(first++, color, alpha);
 				else

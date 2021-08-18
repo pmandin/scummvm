@@ -28,6 +28,7 @@
 #include "bladerunner/audio_speech.h"
 #include "bladerunner/bladerunner.h"
 #include "bladerunner/boundingbox.h"
+#include "bladerunner/crimes_database.h"
 #include "bladerunner/game_info.h"
 #include "bladerunner/items.h"
 #include "bladerunner/mouse.h"
@@ -262,10 +263,10 @@ void Actor::increaseFPS() {
 #endif // BLADERUNNER_ORIGINAL_BUGS
 }
 
-void Actor::timerStart(int timerId, int32 interval) {
+void Actor::timerStart(int timerId, int32 intervalMillis) {
 	assert(timerId >= 0 && timerId < kActorTimers);
 
-	_timersLeft[timerId] = interval;
+	_timersLeft[timerId] = intervalMillis;
 	_timersLast[timerId] = _vm->_time->current();
 }
 
@@ -375,14 +376,14 @@ void Actor::movementTrackNext(bool omitAiScript) {
 	bool hasNextMovement;
 	bool running;
 	int angle;
-	int32 delay;
+	int32 delayMillis;
 	int waypointId;
 	Vector3 waypointPosition;
 	bool arrived;
 
-	hasNextMovement = _movementTrack->next(&waypointId, &delay, &angle, &running);
+	hasNextMovement = _movementTrack->next(&waypointId, &delayMillis, &angle, &running);
 	_movementTrackNextWaypointId = waypointId;
-	_movementTrackNextDelay = delay;
+	_movementTrackNextDelay = delayMillis;
 	_movementTrackNextAngle = angle;
 	_movementTrackNextRunning = running;
 	if (hasNextMovement) {
@@ -392,26 +393,30 @@ void Actor::movementTrackNext(bool omitAiScript) {
 		int waypointSetId = _vm->_waypoints->getSetId(waypointId);
 		_vm->_waypoints->getXYZ(waypointId, &waypointPosition.x, &waypointPosition.y, &waypointPosition.z);
 		if (_setId == waypointSetId && waypointSetId == _vm->_actors[0]->_setId) {
+			// if target waypointSetId is in same set as both the actor and McCoy then call movementTrackWaypointReached
 			stopWalking(false);
 			_walkInfo->setup(_id, running, _position, waypointPosition, false, &arrived);
 
 			_movementTrackWalkingToWaypointId = waypointId;
-			_movementTrackDelayOnNextWaypoint = delay;
+			_movementTrackDelayOnNextWaypoint = delayMillis;
 			if (arrived) {
 				movementTrackWaypointReached();
 			}
 		} else {
+			// teleport to target waypoint's set and position anyway
+			// and schedule next movementTrackNext() using the kActorTimerMovementTrack
 			setSetId(waypointSetId);
 
 			setAtXYZ(waypointPosition, angle, true, false, false);
 
-			if (!delay) {
-				delay = 1;
+			if (!delayMillis) {
+				delayMillis = 1;
 			}
-			if (delay > 1) {
+			if (delayMillis > 1) {
 				changeAnimationMode(kAnimationModeIdle, false);
 			}
-			timerStart(kActorTimerMovementTrack, delay);
+
+			timerStart(kActorTimerMovementTrack, delayMillis);
 		}
 		//return true;
 	} else {
@@ -447,16 +452,31 @@ void Actor::movementTrackUnpause() {
 void Actor::movementTrackWaypointReached() {
 	if (!_movementTrack->isPaused() && _id != kActorMcCoy) {
 		if (_movementTrackWalkingToWaypointId >= 0 && _movementTrackDelayOnNextWaypoint >= 0) {
+#if !BLADERUNNER_ORIGINAL_BUGS
+			Vector3 waypointPosition;
+			int waypointSetId = _vm->_waypoints->getSetId(_movementTrackWalkingToWaypointId);
+			_vm->_waypoints->getXYZ(_movementTrackWalkingToWaypointId, &waypointPosition.x, &waypointPosition.y, &waypointPosition.z);
+			if (_setId != waypointSetId || waypointSetId != _vm->_actors[0]->_setId) {
+				// teleport to target waypoint's set and position anyway
+				// Code similar to movementTrackNext()
+				setSetId(waypointSetId);
+				if (_movementTrackNextAngle == -1) {
+					_movementTrackNextAngle = 0;
+				}
+				setAtXYZ(waypointPosition, _movementTrackNextAngle, true, false, false);
+			} else {
+				// Honor the heading defined by the AI_Movement_Track_Append_With_Facing method
+				if (_movementTrackNextAngle >= 0) {
+					faceHeading(_movementTrackNextAngle, true);
+				}
+			}
+#endif
 			if (!_movementTrackDelayOnNextWaypoint) {
 				_movementTrackDelayOnNextWaypoint = 1;
 			}
-#if !BLADERUNNER_ORIGINAL_BUGS
-			// Honor the heading defined by the AI_Movement_Track_Append_With_Facing method
-			if (_movementTrackNextAngle >= 0) {
-				faceHeading(_movementTrackNextAngle, true);
-			}
-#endif
+
 			if (_vm->_aiScripts->reachedMovementTrackWaypoint(_id, _movementTrackWalkingToWaypointId)) {
+				// schedule next movementTrackNext() using the kActorTimerMovementTrack
 				int32 delay = _movementTrackDelayOnNextWaypoint;
 				if (delay > 1) {
 					changeAnimationMode(kAnimationModeIdle, false);
@@ -489,7 +509,7 @@ void Actor::setAtXYZ(const Vector3 &position, int facing, bool snapFacing, bool 
 	}
 }
 
-void Actor::setAtWaypoint(int waypointId, int angle, int moving, bool retired) {
+void Actor::setAtWaypoint(int waypointId, int angle, bool moving, bool retired) {
 	Vector3 waypointPosition;
 	_vm->_waypoints->getXYZ(waypointId, &waypointPosition.x, &waypointPosition.y, &waypointPosition.z);
 	setAtXYZ(waypointPosition, angle, true, moving, retired);
@@ -1334,8 +1354,122 @@ void Actor::speechPlay(int sentenceId, bool voiceOver) {
 
 	int pan = 0;
 	if (!voiceOver && _id != BladeRunnerEngine::kActorVoiceOver) {
+#if BLADERUNNER_ORIGINAL_BUGS
 		Vector3 screenPosition = _vm->_view->calculateScreenPosition(_position);
 		pan = (75 * (2 *  CLIP<int>(screenPosition.x, 0, 640) - 640)) / 640; // map [0..640] to [-75..75]
+#else
+		// There are a few situations whereby 
+		// the actor is not actually in the set when speaking, 
+		// and the original code would result in audio playing 
+		// from a wrong balance point (bad pan value).
+		// We capture these situations here and set the pan explicitly.
+		// Mainly, these are:
+		// tv news, machine voices (from PCs, Doors etc)
+		// dispatch calls when used as actor speech and not as ambient sounds
+		// phone calls (From Guzza, to Guzza, Lucy, Clovis, Dektora, Steele)
+		// and other special cases, where the actor is not actually in the scene.
+		//
+		// pan:: map [0..640] to [-75..75]
+		if ((_id == kActorNewscaster     && sentenceId >= 0    && sentenceId <= 240)
+		 || (_id == kActorTyrell         && sentenceId >= 430  && sentenceId <= 460)
+		 || (_id == kActorGuzza          && sentenceId >= 1540 && sentenceId <= 1600)
+		 || (_id == kActorGovernorKolvig && sentenceId >= 80   && sentenceId <= 130)) {
+			// MA04 TV
+			// x: 149 --> pan: -41
+			// PS05 TV
+			// x: 527 --> pan:  48
+			// These quotes only play in kSetMA04 and kSetPS05
+			pan = (_vm->_playerActor->getSetId() == kSetMA04) ? -41 : 48;
+		} else if ((_id == kActorLucy     && sentenceId >= 500  && sentenceId <= 640)
+		        || (_id == kActorClovis   && sentenceId >= 310  && sentenceId <= 540)
+		        || (_id == kActorDektora  && sentenceId >= 220  && sentenceId <= 490)
+		        || (_id == kActorSteele   && sentenceId >= 680  && sentenceId <= 820)
+		        || (_id == kActorGuzza    && sentenceId >= 0    && sentenceId <= 70)) {
+			// MA04 phone
+			// x: 351 --> pan: 7
+			// These quotes only play in kSetMA04
+			pan = 7;
+		} else if (_id == kActorGuzza     && sentenceId >= 1380 && sentenceId <= 1480) {
+			// NR02 phone (Taffy's)
+			// x: 300 --> pan: -5
+			// DR06 phone (Twin's Apartment)
+			// x: 565 --> pan: 57
+			// These quotes only play in either kSetNR02 or kSetDR06
+			pan = (_vm->_playerActor->getSetId() == kSetNR02) ? -5 : 57;
+		} else if (_id == kActorAnsweringMachine) {
+			if (sentenceId == 0) {
+				// kSetBB07 - Bradbury, Sebastian's Lab Computer   (0)
+				// x: 567 --> pan: 58
+				pan = 58;
+			} else if (sentenceId >= 10 && sentenceId <= 50) {
+				// kSetDR06 - Luther & Lance answering machine [10, 50]
+				// x: 278 --> pan: -11
+				pan = -11;
+			} else if (sentenceId == 60) {
+				// kSetDR06 - Twin's Apartment
+				// Restored Cut Content quote
+				// (Twin's Lab has a door announcer -- as heard in the video intro of Act 4 too)
+				// Pan will be at vidphone spot
+				// x: 565 --> pan: 57
+				pan = 57;
+			} else if (sentenceId >= 330 && sentenceId <= 370) {
+				// Mainframe terminal - x: 500 --> pan: 42
+				// These quotes only play in kSetPS06
+				pan = 42;
+			}
+			// Default pan is already set to 0 (ie. center) 
+			// Includes Maze Scenes (kSetPS10_PS11_PS12_PS13) - quotes [280, 320]
+			// Also ESPER, KIA, VK, Elevator (MA06) and Spinner.
+		} else {
+			Vector3 actorScreenPosition;
+			switch (_id) {
+			case kActorLance:
+				// Lance does not have a model, but he is "attached" to his twin Luther
+				actorScreenPosition = _vm->_view->calculateScreenPosition(_vm->_actors[kActorLuther]->getPosition());
+				break;
+			case kActorDispatcher:
+				// kActorDispatcher does not have a model, but should be "attached" to McCoy or Steele
+				if (sentenceId >= 0 && sentenceId <= 40) {
+					// Steele's radio
+					actorScreenPosition = _vm->_view->calculateScreenPosition(_vm->_actors[kActorSteele]->getPosition());
+				} else {
+					// McCoy's radio
+					actorScreenPosition = _vm->_view->calculateScreenPosition(_vm->_playerActor->getPosition());
+				}
+				break;
+			case kActorOfficerLeary:
+				// Voice from dispatcher is attached to McCoy (coming from his radio)
+				if ((sentenceId >= 240 && sentenceId <= 450)
+				    || (sentenceId == 460 && _vm->_language == Common::DE_DEU)
+				    || (sentenceId >= 480 && sentenceId <= 530 && _vm->_language == Common::ES_ESP)
+				    || (sentenceId >= 520 && sentenceId <= 530 && _vm->_language == Common::IT_ITA)
+				) {
+					// responding to dispatch
+					actorScreenPosition = _vm->_view->calculateScreenPosition(_vm->_playerActor->getPosition());
+				} else {
+					actorScreenPosition = _vm->_view->calculateScreenPosition(_position);
+				}
+				break;
+			case kActorOfficerGrayford:
+				// Voice from dispatcher is attached to McCoy (coming from his radio)
+				if ((sentenceId >= 360 && sentenceId <= 450)
+				    || (sentenceId == 460 && _vm->_language == Common::DE_DEU)
+				    || (sentenceId >= 470 && sentenceId <= 550)
+				    || (sentenceId >= 560 && sentenceId <= 610 && _vm->_language == Common::ES_ESP)
+				) {
+					// responding to dispatch
+					actorScreenPosition = _vm->_view->calculateScreenPosition(_vm->_playerActor->getPosition());
+				} else {
+					actorScreenPosition = _vm->_view->calculateScreenPosition(_position);
+				}
+				break;
+			default:
+				actorScreenPosition = _vm->_view->calculateScreenPosition(_position);
+			}
+			pan	= (75 * (2 *  CLIP<int>(actorScreenPosition.x, 0, 640) - 640)) / 640; // map [0..640] to [-75..75]
+		}
+		// debug("actor: %d, pan: %d", _id, pan);
+#endif // BLADERUNNER_ORIGINAL_BUGS
 	}
 
 	_vm->_subtitles->loadInGameSubsText(_id, sentenceId);
@@ -1377,18 +1511,52 @@ bool Actor::hasClue(int clueId) const {
 	return _clues->isAcquired(clueId);
 }
 
+// This method is used exclusively for transfers from and to Mainframe.
+// It copies clues from this actor (_id) to a target actor (actorId).
+// Keep in mind that actors other than McCoy can also transfer clues to Mainframe (eg. Steele)
+// or retrieve from Mainframe (eg. Klein)
+// see: ScriptBase::Actor_Clues_Transfer_New_From_Mainframe()
+//      ScriptBase::Actor_Clues_Transfer_New_To_Mainframe()
+// In Restored Content it will skip transfering clues that are Intangible (default clue type)
+// since those clues do not actually show up in McCoy's KIA
 bool Actor::copyClues(int actorId) {
 	bool newCluesAcquired = false;
 	Actor *otherActor = _vm->_actors[actorId];
 	for (int i = 0; i < (int)_vm->_gameInfo->getClueCount(); ++i) {
 		int clueId = i;
-		if (hasClue(clueId) && !_clues->isPrivate(clueId) && otherActor->canAcquireClue(clueId) && !otherActor->hasClue(clueId)) {
+		if (hasClue(clueId)
+		    && !_clues->isPrivate(clueId)
+		    && (!_vm->_cutContent || _vm->_crimesDatabase->getAssetType(clueId) != kClueTypeIntangible)
+		    && otherActor->canAcquireClue(clueId)
+		    && !otherActor->hasClue(clueId)) {
 			int fromActorId = _id;
 			if (_id == BladeRunnerEngine::kActorVoiceOver) {
 				fromActorId = _clues->getFromActorId(clueId);
 			}
+			if (_vm->_cutContent
+			    && ((_id == BladeRunnerEngine::kActorVoiceOver && actorId == kActorMcCoy)
+			        || (_id == kActorMcCoy && actorId == BladeRunnerEngine::kActorVoiceOver) )) {
+				// when transfering a clue successfully between McCoy (playerActor) and Mainframe,
+				// we mark it as such, since if McCoy later marks it as hidden (with Bob's KIA hack)
+				// the player will have some indication that this clue is already on the mainframe.
+				// Hence manually hiding it would be pointless.
+				// This, however, cannot cover the case that someone else (eg. Steele) uploaded clues
+				// to the Mainframe, which McCoy had not yet tried to download.
+				// So, eg. if Steele uploaded clueA, and McCoy also somehow acquired clueA (without synching with Mainframe)
+				// then McCoy's KIA won't "know" that the Mainframe also has this clue, until he interacts / synchs with Mainframe
+				_vm->_playerActor->_clues->setSharedWithMainframe(clueId, true);
+			}
 			otherActor->acquireClue(clueId, false, fromActorId);
 			newCluesAcquired = true;
+		} else if (_vm->_cutContent
+		           && hasClue(clueId)
+		           && otherActor->hasClue(clueId)
+		           && _vm->_crimesDatabase->getAssetType(clueId) != kClueTypeIntangible
+		           && ((_id == BladeRunnerEngine::kActorVoiceOver && actorId == kActorMcCoy)
+		               || (_id == kActorMcCoy && actorId == BladeRunnerEngine::kActorVoiceOver) )
+		) {
+			// In Restored Content also mark clues that were not exchanged, because both parties already have them
+			_vm->_playerActor->_clues->setSharedWithMainframe(clueId, true);
 		}
 	}
 	return newCluesAcquired;
@@ -1411,9 +1579,12 @@ int Actor::soundVolume() const {
 	return (35 * CLIP<int>(100 - (dist / 12), 0, 100)) / 100; // map [0..1200] to [35..0]
 }
 
-int Actor::soundPan() const {
+// overrideRange argument was added to allow for more accurate sound balance on occasion (if required)
+int Actor::soundPan(uint8 overrideRange) const {
 	Vector3 screenPosition = _vm->_view->calculateScreenPosition(_position);
-	return (35 * (2 * CLIP<int>(screenPosition.x, 0, 640) - 640)) / 640; // map [0..640] to [-35..35]
+	// By default map [0..640] to [-overrideRange..overrideRange] (default range [-35..35])
+	CLIP<int>(overrideRange, 35, 100);
+	return (overrideRange * (2 * CLIP<int>(screenPosition.x, 0, 640) - 640)) / 640;
 }
 
 bool Actor::isObstacleBetween(const Vector3 &target) {

@@ -23,13 +23,14 @@
 #ifndef AGS_ENGINE_AC_HOTSPOT_H
 #define AGS_ENGINE_AC_HOTSPOT_H
 
-#include "ags/engine/ac/dynobj/scripthotspot.h"
+#include "ags/engine/ac/dynobj/script_hotspot.h"
 
 namespace AGS3 {
 
 void    Hotspot_SetEnabled(ScriptHotspot *hss, int newval);
 int     Hotspot_GetEnabled(ScriptHotspot *hss);
 int     Hotspot_GetID(ScriptHotspot *hss);
+ScriptHotspot *GetHotspotAtRoom(int x, int y);
 ScriptHotspot *GetHotspotAtScreen(int xx, int yy);
 int     Hotspot_GetWalkToX(ScriptHotspot *hss);
 int     Hotspot_GetWalkToY(ScriptHotspot *hss);

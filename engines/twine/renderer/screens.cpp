@@ -39,15 +39,15 @@ bool Screens::adelineLogo() {
 
 void Screens::loadMenuImage(bool fadeIn) {
 	loadImage(RESSHQR_MENUIMG, -1, fadeIn);
-	_engine->workVideoBuffer.blitFrom(_engine->frontVideoBuffer);
+	_engine->_workVideoBuffer.blitFrom(_engine->_frontVideoBuffer);
 }
 
 void Screens::loadCustomPalette(int32 index) {
-	if (HQR::getEntry(palette, Resources::HQR_RESS_FILE, index) == 0) {
+	if (HQR::getEntry(_palette, Resources::HQR_RESS_FILE, index) == 0) {
 		warning("Failed to load custom palette %i", index);
 		return;
 	}
-	convertPalToRGBA(palette, paletteRGBACustom);
+	convertPalToRGBA(_palette, _paletteRGBACustom);
 }
 
 void Screens::convertPalToRGBA(const uint8 *in, uint32 *out) {
@@ -63,57 +63,58 @@ void Screens::convertPalToRGBA(const uint8 *in, uint32 *out) {
 }
 
 void Screens::loadImage(int32 index, int32 paletteIndex, bool fadeIn) {
-	Graphics::ManagedSurface& src = _engine->imageBuffer;
+	Graphics::ManagedSurface& src = _engine->_imageBuffer;
 	if (HQR::getEntry((uint8 *)src.getPixels(), Resources::HQR_RESS_FILE, index) == 0) {
 		warning("Failed to load image with index %i", index);
 		return;
 	}
 	debug(0, "Load image: %i", index);
-	Graphics::ManagedSurface& target = _engine->frontVideoBuffer;
+	Graphics::ManagedSurface& target = _engine->_frontVideoBuffer;
 	target.transBlitFrom(src, src.getBounds(), target.getBounds(), 0, false, 0, 0xff, nullptr, true);
-	const uint32 *pal = paletteRGBA;
+	const uint32 *pal = _paletteRGBA;
 	if (paletteIndex != -1) {
 		loadCustomPalette(paletteIndex);
-		pal = paletteRGBACustom;
+		pal = _paletteRGBACustom;
 	}
 	if (fadeIn) {
 		fadeToPal(pal);
 	} else {
 		_engine->setPalette(pal);
 	}
-	_engine->flip();
 }
 
 bool Screens::loadImageDelay(int32 index, int32 paletteIndex, int32 seconds) {
 	loadImage(index, paletteIndex);
 	if (_engine->delaySkip(1000 * seconds)) {
-		adjustPalette(0, 0, 0, paletteRGBACustom, 100);
-		_engine->flip();
+		adjustPalette(0, 0, 0, _paletteRGBACustom, 100);
 		return true;
 	}
-	fadeOut(paletteRGBACustom);
+	fadeOut(_paletteRGBACustom);
 	return false;
 }
 
-void Screens::fadeIn(uint32 *pal) {
-	if (_engine->cfgfile.CrossFade) {
-		_engine->crossFade(_engine->frontVideoBuffer, pal);
+void Screens::fadeIn(const uint32 *pal) {
+	if (_engine->_cfgfile.CrossFade) {
+		_engine->crossFade(pal);
 	} else {
 		fadeToPal(pal);
 	}
 
 	_engine->setPalette(pal);
-	_engine->flip();
 }
 
-void Screens::fadeOut(uint32 *pal) {
-	/*if(cfgfile.CrossFade)
-		crossFade(frontVideoBuffer, pal);
-	else
-		fadeToBlack(pal);*/
-	if (!_engine->cfgfile.CrossFade) {
+void Screens::fadeOut(const uint32 *pal) {
+#if 0
+	if (_engine->_cfgfile.CrossFade) {
+		_engine->crossFade(pal);
+	} else {
 		fadeToBlack(pal);
 	}
+#else
+	if (!_engine->_cfgfile.CrossFade) {
+		fadeToBlack(pal);
+	}
+#endif
 }
 
 int32 Screens::crossDot(int32 modifier, int32 color, int32 param, int32 intensity) {
@@ -150,6 +151,7 @@ void Screens::adjustPalette(uint8 r, uint8 g, uint8 b, const uint32 *rgbaPal, in
 	}
 
 	_engine->setPalette(pal);
+	_engine->_frontVideoBuffer.update();
 }
 
 void Screens::adjustCrossPalette(const uint32 *pal1, const uint32 *pal2) {
@@ -162,8 +164,7 @@ void Screens::adjustCrossPalette(const uint32 *pal1, const uint32 *pal2) {
 	const uint8 *pal2p = (const uint8 *)pal2;
 	uint8 *paletteOut = (uint8 *)pal;
 	do {
-		FrameMarker frame;
-		ScopedFPS scopedFps(50);
+		FrameMarker frame(_engine, 50);
 		counter = 0;
 
 		uint8 *newR = &paletteOut[counter];
@@ -186,37 +187,33 @@ void Screens::adjustCrossPalette(const uint32 *pal1, const uint32 *pal2) {
 		}
 
 		_engine->setPalette(pal);
-		_engine->flip();
 		intensity++;
+		_engine->_frontVideoBuffer.update();
 	} while (intensity <= 100);
 }
 
 void Screens::fadeToBlack(const uint32 *pal) {
-	if (palResetted) {
+	if (_palResetted) {
 		return;
 	}
 
 	for (int32 i = 100; i >= 0; i -= 3) {
-		ScopedFPS scopedFps(50);
+		FrameMarker frame(_engine, 50);
 		adjustPalette(0, 0, 0, pal, i);
-		_engine->flip();
 	}
 
-	palResetted = true;
+	_palResetted = true;
 }
 
 void Screens::fadeToPal(const uint32 *pal) {
 	for (int32 i = 0; i <= 100; i += 3) {
-		FrameMarker frame;
-		ScopedFPS scopedFps(50);
+		FrameMarker frame(_engine, 50);
 		adjustPalette(0, 0, 0, pal, i);
-		_engine->flip();
 	}
 
 	_engine->setPalette(pal);
-	_engine->flip();
 
-	palResetted = false;
+	_palResetted = false;
 }
 
 void Screens::blackToWhite() {
@@ -226,35 +223,30 @@ void Screens::blackToWhite() {
 		memset(pal, i, sizeof(pal));
 
 		_engine->setPalette(pal);
-		_engine->flip();
+		_engine->_frontVideoBuffer.update();
 	}
 }
 
 void Screens::setBackPal() {
-	memset(palette, 0, sizeof(palette));
-	memset(paletteRGBA, 0, sizeof(paletteRGBA));
+	memset(_palette, 0, sizeof(_palette));
+	memset(_paletteRGBA, 0, sizeof(_paletteRGBA));
 
-	_engine->setPalette(paletteRGBA);
-	_engine->flip();
+	_engine->setPalette(_paletteRGBA);
 
-	palResetted = true;
+	_palResetted = true;
 }
 
 void Screens::fadePalRed(const uint32 *pal) {
 	for (int32 i = 100; i >= 0; i -= 2) {
-		FrameMarker frame;
-		ScopedFPS scopedFps(50);
+		FrameMarker frame(_engine, 50);
 		adjustPalette(0xFF, 0, 0, pal, i);
-		_engine->flip();
 	}
 }
 
 void Screens::fadeRedPal(const uint32 *pal) {
 	for (int32 i = 0; i <= 100; i += 2) {
-		FrameMarker frame;
-		ScopedFPS scopedFps(50);
+		FrameMarker frame(_engine, 50);
 		adjustPalette(0xFF, 0, 0, pal, i);
-		_engine->flip();
 	}
 }
 
@@ -263,7 +255,7 @@ void Screens::copyScreen(const Graphics::ManagedSurface &source, Graphics::Manag
 }
 
 void Screens::clearScreen() {
-	_engine->frontVideoBuffer.clear(0);
+	_engine->_frontVideoBuffer.clear(0);
 }
 
 } // namespace TwinE

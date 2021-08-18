@@ -28,14 +28,18 @@ namespace Asylum {
 //////////////////////////////////////////////////////////////////////////
 // Global
 //////////////////////////////////////////////////////////////////////////
-enum GameFlag : uint32 {
+enum GameFlag {
 	kGameFlag0                    = 0,
 
 	kGameFlag4                    = 4,
 	kGameFlag12                   = 12,
 	kGameFlag52                   = 52,
+	kGameFlag86                   = 86,
+	kGameFlag87                   = 87,
+	kGameFlag88                   = 88,
 	kGameFlag114                  = 114,
 	kGameFlag115                  = 115,
+	kGameFlag128                  = 128,
 	kGameFlag169                  = 169,
 	kGameFlagScriptProcessing     = 183,
 	kGameFlag186                  = 186,
@@ -81,6 +85,8 @@ enum GameFlag : uint32 {
 	kGameFlag281                  = 281,
 	kGameFlag282                  = 282,
 	kGameFlag283                  = 283,
+	kGameFlag284                  = 284,
+	kGameFlag289                  = 289,
 	kGameFlag319                  = 319,
 	kGameFlag320                  = 320,
 	kGameFlag321                  = 321,
@@ -227,6 +233,7 @@ enum GameFlag : uint32 {
 	kGameFlag880                  = 880,
 	kGameFlag881                  = 881,
 	kGameFlag897                  = 897,
+	kGameFlag899                  = 899,
 	kGameFlagFinishGame           = 901,
 	kGameFlag925                  = 925,
 	kGameFlag937                  = 937,
@@ -254,7 +261,20 @@ enum GameFlag : uint32 {
 	kGameFlag1122                 = 1122,
 	kGameFlag1131                 = 1131,
 	kGameFlag1137                 = 1137,
-	kGameFlag1144                 = 1144
+	kGameFlag1144                 = 1144,
+	kGameFlag3189                 = 3189,
+	kGameFlag3351                 = 3351,
+	kGameFlag3386                 = 3386,
+	kGameFlag3387                 = 3387,
+	kGameFlag3388                 = 3388,
+	kGameFlag3389                 = 3389,
+	kGameFlag3754                 = 3754,
+	kGameFlag3755                 = 3755,
+	kGameFlag3810                 = 3810,
+	kGameFlag3823                 = 3823,
+	kGameFlag3842                 = 3842,
+	kGameFlag3843                 = 3843,
+	kGameFlag3931                 = 3931
 };
 
 enum ChapterIndex {
@@ -375,17 +395,17 @@ enum OpcodeType {
 	kOpcodeJumpIfActionTalk,
 	kOpcodeSetActionTalk,
 	kOpcodeClearActionTalk,
-	kOpcodeAddReactionHive,
-	kOpcodeRemoveReactionHive,                  // 35
-	kOpcodeHasMoreReactions,
+	kOpcodeAddToInventory,
+	kOpcodeRemoveFromInventory,                 // 35
+	kOpcodeJumpIfInventoryOmits,
 	kOpcodeRunEncounter,
 	kOpcodeJumpIfAction16,
 	kOpcodeSetAction16,
 	kOpcodeClearAction16,                       // 40
-	kOpcodeSetActorField638,
-	kOpcodeJumpIfActorField638,
+	kOpcodeSelectInventoryItem,
+	kOpcodeJumpIfInventoryItemNotSelected,
 	kOpcodeChangeScene,
-	kOpcodeUpdateActor,
+	kOpcodeInteract,
 	kOpcodePlayMovie,                           // 45
 	kOpcodeStopAllObjectsSounds,
 	kOpcodeStopProcessing,
@@ -427,7 +447,7 @@ enum OpcodeType {
 	kOpcodeSetPlayerField944,
 	kOpcodeSetScriptField1BB0,
 	kOpcodeOnScriptField1BB0,                   // 85
-	kOpcodeInteract,
+	kOpcodeWalkToActor,
 	kOpcodeSetResourcePalette,
 	kOpcodeSetObjectFrameIndexAndFlags,
 	kOpcodeSetObjectFlags,
@@ -438,7 +458,7 @@ enum OpcodeType {
 	kOpcodeClearActorFields,
 	kOpcodeSetObjectLastFrameIndex,             // 95
 	kOpcodeSetActionAreaFlags,
-	kOpcodeUpdatePlayerChapter9,
+	kOpcodeMorphActor,
 	kOpcodeShowMenu,
 	kOpcodeUpdateGlobalFlags
 };
@@ -466,7 +486,7 @@ enum ActorStatus {
 	kActorStatusEnabled,          // Standing Still
 	kActorStatusDisabled,         // 5
 	kActorStatusShowingInventory,
-	kActorStatusPickupItem,
+	kActorStatusStoppedInteracting,
 	kActorStatus8,
 	kActorStatusFidget,
 	kActorStatus10,
@@ -479,7 +499,7 @@ enum ActorStatus {
 	kActorStatusRestarting,
 	kActorStatus18,
 	kActorStatusHittingPumpkin,
-	kActorStatus20,
+	kActorStatusStoppedHitting,
 	kActorStatusMorphingInto
 };
 

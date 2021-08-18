@@ -38,6 +38,7 @@ class Item;
 class TargetReticleProcess : public Process {
 public:
 	TargetReticleProcess();
+	~TargetReticleProcess();
 
 	ENABLE_RUNTIME_CLASSTYPE()
 
@@ -65,6 +66,8 @@ public:
 		return _instance;
 	}
 
+	void toggleReticleStyle();
+
 private:
 	bool findTargetItem();
 	void putTargetReticleOnItem(Item *, bool last_frame);
@@ -75,6 +78,9 @@ private:
 	uint16 _reticleSpriteProcess;
 	Direction _lastTargetDir;
 	uint16 _lastTargetItem;
+
+	// Only used in No Regret.
+	uint16 _reticleStyle;
 
 	static TargetReticleProcess *_instance;
 };

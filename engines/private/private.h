@@ -145,6 +145,8 @@ public:
 
 	const ADGameDescription *_gameDescription;
 	bool isDemo() const;
+	Common::Language _language;
+	Common::Platform _platform;
 
 	SymbolMaps maps;
 
@@ -157,6 +159,7 @@ public:
 	void restartGame();
 	void clearAreas();
 	void initializePath(const Common::FSNode &gamePath) override;
+	Common::SeekableReadStream *loadAssets();
 
 	// Functions
 
@@ -199,12 +202,16 @@ public:
 	void loadImage(const Common::String &file, int x, int y);
 	void drawScreenFrame();
 
+	// Cursors
 	void changeCursor(const Common::String &);
+	Common::String getInventoryCursor();
+	Common::String getExitCursor();
 
 	// Rendering
 	Graphics::ManagedSurface *_compositeSurface;
 	Graphics::Surface *loadMask(const Common::String &, int, int, bool);
 	void drawMask(Graphics::Surface *);
+	void fillRect(uint32, Common::Rect);
 	bool inMask(Graphics::Surface *, Common::Point);
 	uint32 _transparentColor;
 	Common::Rect screenRect;
@@ -218,6 +225,14 @@ public:
 	Common::String _nextSetting;
 	Common::String _pausedSetting;
 	Common::String _currentSetting;
+	Common::String getPauseMovieSetting();
+	Common::String getGoIntroSetting();
+	Common::String getMainDesktopSetting();
+	Common::String getPOGoBustMovieSetting();
+	Common::String getPoliceBustFromMOSetting();
+	Common::String getAlternateGameVariable();
+	Common::String getPoliceIndexVariable();
+	Common::String getWallSafeValueVariable();
 
 	// movies
 	Common::String _nextMovie;
@@ -225,8 +240,8 @@ public:
 
 	// Dossiers
 	DossierArray _dossiers;
-	unsigned int _dossierSuspect;
-	unsigned int _dossierPage;
+	uint _dossierSuspect;
+	uint _dossierPage;
 	MaskInfo _dossierNextSuspectMask;
 	MaskInfo _dossierPrevSuspectMask;
 	MaskInfo _dossierNextSheetMask;
@@ -299,6 +314,17 @@ public:
 	void selectPoliceRadioArea(Common::Point);
 	void selectPhoneArea(Common::Point);
 	void checkPhoneCall();
+
+	// Safe
+	uint32 _safeColor;
+	Common::String _safeNumberPath;
+	MaskInfo _safeDigitArea[3];
+	Common::Rect _safeDigitRect[3];
+	uint32 _safeDigit[3];
+
+	bool selectSafeDigit(Common::Point);
+	void addSafeDigit(uint32, Common::Rect*);
+	void renderSafeDigit(uint32);
 
 	// Random values
 	bool getRandomBool(uint);

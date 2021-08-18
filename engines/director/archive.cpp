@@ -28,6 +28,7 @@
 
 #include "director/director.h"
 #include "director/archive.h"
+#include "director/window.h"
 #include "director/util.h"
 
 namespace Director {
@@ -48,7 +49,7 @@ Common::String Archive::getFileName() const { return Director::getFileName(_path
 bool Archive::openFile(const Common::String &fileName) {
 	Common::File *file = new Common::File();
 
-	if (!file->open(fileName)) {
+	if (!file->open(Common::Path(fileName, g_director->_dirSeparator))) {
 		warning("Archive::openFile(): Error opening file %s", fileName.c_str());
 		delete file;
 		return false;
@@ -146,14 +147,14 @@ uint32 Archive::getOffset(uint32 tag, uint16 id) const {
 	return resMap[id].offset;
 }
 
-uint16 Archive::findResourceID(uint32 tag, const Common::String &resName) const {
+uint16 Archive::findResourceID(uint32 tag, const Common::String &resName, bool ignoreCase) const {
 	if (!_types.contains(tag) || resName.empty())
 		return 0xFFFF;
 
 	const ResourceMap &resMap = _types[tag];
 
 	for (ResourceMap::const_iterator it = resMap.begin(); it != resMap.end(); it++)
-		if (it->_value.name.matchString(resName))
+		if (it->_value.name.matchString(resName, ignoreCase))
 			return it->_key;
 
 	return 0xFFFF;
@@ -224,12 +225,12 @@ bool MacArchive::openFile(const Common::String &fileName) {
 
 	Common::String fName = fileName;
 
-	if (!_resFork->open(fName) || !_resFork->hasResFork()) {
+	if (!_resFork->open(Common::Path(fName, g_director->_dirSeparator)) || !_resFork->hasResFork()) {
 		close();
 		return false;
 	}
 
-	_pathName = _resFork->getBaseFileName();
+	_pathName = _resFork->getBaseFileName().toString(g_director->_dirSeparator);
 	if (_pathName.hasSuffix(".bin")) {
 		for (int i = 0; i < 4; i++)
 			_pathName.deleteLastChar();
@@ -289,7 +290,7 @@ Common::SeekableReadStreamEndian *MacArchive::getResource(uint32 tag, uint16 id)
 		return nullptr;
 	}
 
-	return new Common::SeekableSubReadStreamEndian(stream, 0, stream->size(), true, DisposeAfterUse::NO);
+	return new Common::SeekableSubReadStreamEndian(stream, 0, stream->size(), true, DisposeAfterUse::YES);
 }
 
 // RIFF Archive code
@@ -339,8 +340,15 @@ bool RIFFArchive::openStream(Common::SeekableReadStream *stream, uint32 startOff
 		byte nameSize = stream->readByte();
 
 		if (nameSize) {
+			bool skip = false;
 			for (uint8 i = 0; i < nameSize; i++) {
-				name += stream->readByte();
+				byte b = stream->readByte();
+
+				if (!b)
+					skip = true;
+
+				if (!skip)
+					name += b;
 			}
 		}
 
@@ -395,6 +403,7 @@ Common::SeekableReadStreamEndian *RIFFArchive::getResource(uint32 tag, uint16 id
 RIFXArchive::RIFXArchive() : Archive() {
 	_isBigEndian = true;
 	_rifxType = 0;
+	_ilsBodyOffset = 0;
 }
 
 RIFXArchive::~RIFXArchive() {
@@ -423,6 +432,14 @@ bool RIFXArchive::openStream(Common::SeekableReadStream *stream, uint32 startOff
 		if (Common::MacResManager::isMacBinary(*stream)) {
 			warning("RIFXArchive::openStream(): MacBinary detected, overriding");
 
+			// We need to look at the resource fork to detect XCOD resources
+			Common::SeekableSubReadStream *macStream = new Common::SeekableSubReadStream(stream, 0, stream->size());
+			MacArchive *macArchive = new MacArchive();
+			macArchive->openStream(macStream);
+			g_director->getCurrentWindow()->probeMacBinary(macArchive);
+			delete macArchive;
+
+			// Then read the data fork
 			moreOffset = Common::MacResManager::getDataForkOffset();
 			stream->seek(startOffset + moreOffset);
 
@@ -444,48 +461,74 @@ bool RIFXArchive::openStream(Common::SeekableReadStream *stream, uint32 startOff
 
 	uint32 sz = endianStream.readUint32(); // size
 
-	// If it is an embedded file, dump it if requested
+	// If it is an embedded file, dump it if requested.
+	// Start by copying the movie data to a new buffer.
+	byte *dumpData = nullptr;
+	Common::SeekableMemoryWriteStream *dumpStream = nullptr;
 	if (ConfMan.getBool("dump_scripts") && startOffset) {
-		Common::DumpFile out;
-
-		char buf[256];
-		sprintf(buf, "./dumps/%s-%08x", g_director->getEXEName().c_str(), startOffset);
-
-		if (out.open(buf, true)) {
-			byte *data = (byte *)malloc(sz);
-
-			stream->seek(startOffset);
-			stream->read(data, sz);
-			out.write(data, sz);
-			out.flush();
-			out.close();
-
-			free(data);
-
-			stream->seek(startOffset + 8);
-		} else {
-			warning("RIFXArchive::openStream(): Can not open dump file %s", buf);
-		}
+		dumpData = (byte *)malloc(sz);
+		dumpStream = new Common::SeekableMemoryWriteStream(dumpData, sz);
+		stream->seek(startOffset);
+		stream->read(dumpData, sz);
+		stream->seek(startOffset + 8);
 	}
 
 	_rifxType = endianStream.readUint32();
 	warning("RIFX: type: %s", tag2str(_rifxType));
 
+	// Now read the memory map.
+	// At the same time, we will patch the offsets in the dump data.
+	bool readMapSuccess = false;
 	switch (_rifxType) {
 	case MKTAG('M', 'V', '9', '3'):
 	case MKTAG('M', 'C', '9', '5'):
-		if (!readMemoryMap(endianStream, moreOffset))
-			return false;
+		readMapSuccess = readMemoryMap(endianStream, moreOffset, dumpStream, startOffset);
 		break;
 	case MKTAG('A', 'P', 'P', 'L'):
-		return readMemoryMap(endianStream, moreOffset);
+		readMapSuccess = readMemoryMap(endianStream, moreOffset, dumpStream, startOffset);
+		break;
 	case MKTAG('F', 'G', 'D', 'M'):
 	case MKTAG('F', 'G', 'D', 'C'):
-		if (!readAfterburnerMap(endianStream, moreOffset))
-			return false;
+		readMapSuccess = readAfterburnerMap(endianStream, moreOffset);
 		break;
 	default:
+		break;
+	}
+
+	// Now that the dump data has been patched, actually dump it.
+	if (dumpData) {
+		Common::DumpFile out;
+
+		char buf[256];
+		sprintf(buf, "./dumps/%s-%08x", encodePathForDump(g_director->getEXEName()).c_str(), startOffset);
+
+		if (out.open(buf, true)) {
+			out.write(dumpData, sz);
+			out.flush();
+			out.close();
+		} else {
+			warning("RIFXArchive::openStream(): Can not open dump file %s", buf);
+		}
+	}
+	free(dumpData);
+	delete dumpStream;
+
+	// If we couldn't read the map, we can't do anything past this point.
+	if (!readMapSuccess)
 		return false;
+
+	if (_rifxType == MKTAG('A', 'P', 'P', 'L')) {
+		if (hasResource(MKTAG('F', 'i', 'l', 'e'), -1)) {
+			// Replace this archive with the embedded archive.
+			uint32 fileId = getResourceIDList(MKTAG('F', 'i', 'l', 'e'))[0];
+			int32 fileOffset = _resources[fileId]->offset;
+			_types.clear();
+			_resources.clear();
+			return openStream(_stream, fileOffset);
+		} else {
+			warning("No 'File' resource present in APPL archive");
+			return false;
+		}
 	}
 
 	if (ConfMan.getBool("dump_scripts")) {
@@ -516,7 +559,7 @@ bool RIFXArchive::openStream(Common::SeekableReadStream *stream, uint32 startOff
 			else
 				prepend = "stream";
 
-			Common::String filename = Common::String::format("./dumps/%s-%s-%d", prepend.c_str(), tag2str(_resources[i]->tag), _resources[i]->index);
+			Common::String filename = Common::String::format("./dumps/%s-%s-%d", encodePathForDump(prepend).c_str(), tag2str(_resources[i]->tag), _resources[i]->index);
 			resStream->read(data, len);
 
 			if (!out.open(filename, true)) {
@@ -552,13 +595,22 @@ bool RIFXArchive::openStream(Common::SeekableReadStream *stream, uint32 startOff
 	return true;
 }
 
-bool RIFXArchive::readMemoryMap(Common::SeekableReadStreamEndian &stream, uint32 moreOffset) {
+bool RIFXArchive::readMemoryMap(Common::SeekableReadStreamEndian &stream, uint32 moreOffset, Common::SeekableMemoryWriteStream *dumpStream, uint32 movieStartOffset) {
 	if (stream.readUint32() != MKTAG('i', 'm', 'a', 'p'))
 		return false;
 
 	stream.readUint32(); // imap length
 	stream.readUint32(); // unknown
+	uint32 mmapOffsetPos = stream.pos();
 	uint32 mmapOffset = stream.readUint32() + moreOffset;
+	if (dumpStream) {
+		// If we're dumping the movie, patch this offset in the dump data.
+		dumpStream->seek(mmapOffsetPos - movieStartOffset);
+		if (stream.isBE())
+			dumpStream->writeUint32BE(mmapOffset - movieStartOffset);
+		else
+			dumpStream->writeUint32LE(mmapOffset - movieStartOffset);
+	}
 	uint32 version = stream.readUint32(); // 0 for 4.0, 0x4c1 for 5.0, 0x4c7 for 6.0, 0x708 for 8.5, 0x742 for 10.0
 	warning("mmap: version: %x", version);
 
@@ -577,37 +629,33 @@ bool RIFXArchive::readMemoryMap(Common::SeekableReadStreamEndian &stream, uint32
 	stream.skip(8); // all 0xFF
 	stream.readUint32(); // id of the first free resource, -1 if none.
 
-	if (_rifxType != MKTAG('A', 'P', 'P', 'L'))
-		_resources.reserve(resCount);
+	_resources.reserve(resCount);
 
 	for (uint32 i = 0; i < resCount; i++) {
 		uint32 tag = stream.readUint32();
 		uint32 size = stream.readUint32();
+		uint32 offsetPos = stream.pos();
 		int32 offset = stream.readUint32() + moreOffset;
+		if (dumpStream) {
+			dumpStream->seek(offsetPos - movieStartOffset);
+			if (stream.isBE())
+				dumpStream->writeUint32BE(offset - movieStartOffset);
+			else
+				dumpStream->writeUint32LE(offset - movieStartOffset);
+		}
 		uint16 flags = stream.readUint16();
 		uint16 unk1 = stream.readUint16();
 		uint32 nextFreeResourceId = stream.readUint32(); // for free resources, the next id, flag like for imap and mmap resources
 
 		debug(3, "Found RIFX resource index %d: '%s', %d bytes @ 0x%08x (%d), flags: %x unk1: %x nextFreeResourceId: %d",
 			i, tag2str(tag), size, offset, offset, flags, unk1, nextFreeResourceId);
-		// APPL is a special case; it has an embedded "normal" archive
-		if (_rifxType == MKTAG('A', 'P', 'P', 'L')) {
-			if (tag == MKTAG('F', 'i', 'l', 'e'))
-				return openStream(_stream, offset);
-		} else {
-			Resource &res = _types[tag][i];
-			res.index = i;
-			res.offset = offset;
-			res.size = size;
-			res.tag = tag;
-			_resources.push_back(&res);
-		}
-	}
 
-	// We need to have found the 'File' resource already
-	if (_rifxType == MKTAG('A', 'P', 'P', 'L')) {
-		warning("No 'File' resource present in APPL archive");
-		return false;
+		Resource &res = _types[tag][i];
+		res.index = i;
+		res.offset = offset;
+		res.size = size;
+		res.tag = tag;
+		_resources.push_back(&res);
 	}
 
 	return true;
@@ -668,7 +716,7 @@ bool RIFXArchive::readAfterburnerMap(Common::SeekableReadStreamEndian &stream, u
 		Common::DumpFile out;
 
 		char buf[256];
-		sprintf(buf, "./dumps/%s-%s", g_director->getEXEName().c_str(), "ABMP");
+		sprintf(buf, "./dumps/%s-%s", encodePathForDump(g_director->getEXEName()).c_str(), "ABMP");
 
 		if (out.open(buf, true)) {
 			byte *data = (byte *)malloc(abmpStream->size());

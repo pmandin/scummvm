@@ -31,6 +31,7 @@
 #include "cge2/text.h"
 #include "cge2/sound.h"
 #include "cge2/events.h"
+#include "common/config-manager.h"
 
 namespace CGE2 {
 
@@ -103,7 +104,7 @@ void CommandHandler::runCommand() {
 			spr = (tailCmd._ref < 0) ? ((Sprite *)tailCmd._spritePtr) : _vm->locate(tailCmd._ref);
 
 		Common::String sprStr;
-		if (spr && *spr->_file && (tailCmd._commandType != kCmdGhost))
+		if (tailCmd._commandType != kCmdGhost && spr && *spr->_file)
 			// In case of kCmdGhost _spritePtr stores a pointer to a Bitmap, not to a Sprite...
 			sprStr = Common::String(spr->_file);
 		else
@@ -656,7 +657,8 @@ void CGE2Engine::snSay(Sprite *spr, int val) {
 				i -= 100;
 			int16 oldRepeat = _sound->getRepeat();
 			_sound->setRepeat(1);
-			snSound(spr, i, Audio::Mixer::kSpeechSoundType);
+			if (!ConfMan.getBool("tts_enabled_speech") || getLanguage() == Common::PL_POL)
+				snSound(spr, i, Audio::Mixer::kSpeechSoundType);
 			_sound->setRepeat(oldRepeat);
 			_soundStat._wait = &_sound->_smpinf._counter;
 		}

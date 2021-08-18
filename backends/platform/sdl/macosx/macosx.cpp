@@ -30,6 +30,7 @@
 #include "backends/audiocd/macosx/macosx-audiocd.h"
 #include "backends/platform/sdl/macosx/appmenu_osx.h"
 #include "backends/platform/sdl/macosx/macosx.h"
+#include "backends/platform/sdl/macosx/macosx-window.h"
 #include "backends/updates/macosx/macosx-updates.h"
 #include "backends/taskbar/macosx/macosx-taskbar.h"
 #include "backends/text-to-speech/macosx/macosx-text-to-speech.h"
@@ -62,9 +63,8 @@ OSystem_MacOSX::~OSystem_MacOSX() {
 }
 
 void OSystem_MacOSX::init() {
-	// Use an iconless window on OS X, as we use a nicer external icon there.
 	initSDL();
-	_window = new SdlIconlessWindow();
+	_window = new SdlWindow_MacOSX();
 
 #if defined(USE_TASKBAR)
 	// Initialize taskbar manager
@@ -91,7 +91,7 @@ void OSystem_MacOSX::init() {
 
 void OSystem_MacOSX::initBackend() {
 #ifdef USE_TRANSLATION
-	// We need to initialize the translataion manager here for the following
+	// We need to initialize the translation manager here for the following
 	// call to replaceApplicationMenuItems() work correctly
 	TransMan.setLanguage(ConfMan.get("gui_language").c_str());
 #endif // USE_TRANSLATION
@@ -112,6 +112,12 @@ void OSystem_MacOSX::initBackend() {
 	// Invoke parent implementation of this method
 	OSystem_POSIX::initBackend();
 }
+
+#ifdef USE_OPENGL
+OSystem_SDL::GraphicsManagerType OSystem_MacOSX::getDefaultGraphicsManager() const {
+	return GraphicsManagerOpenGL;
+}
+#endif
 
 void OSystem_MacOSX::addSysArchivesToSearchSet(Common::SearchSet &s, int priority) {
 	// Invoke parent implementation of this method
@@ -216,7 +222,7 @@ Common::String OSystem_MacOSX::getSystemLanguage() const {
 		}
 
 	}
-	// Falback to POSIX implementation
+	// Fallback to POSIX implementation
 	return OSystem_POSIX::getSystemLanguage();
 #else // USE_DETECTLANG
 	return OSystem_POSIX::getSystemLanguage();

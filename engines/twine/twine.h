@@ -31,6 +31,7 @@
 
 #include "engines/metaengine.h"
 #include "graphics/managed_surface.h"
+#include "graphics/screen.h"
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
 #include "twine/detection.h"
@@ -51,6 +52,9 @@ namespace TwinE {
 
 /** Number of colors used in the game */
 #define NUMOFCOLORS 256
+
+#define ORIGINAL_WIDTH 640
+#define ORIGINAL_HEIGHT 480
 
 static const struct TwinELanguage {
 	const char *name;
@@ -166,18 +170,25 @@ struct ScopedCursor {
 	~ScopedCursor();
 };
 
-class ScopedFPS {
+class FrameMarker {
 private:
+	TwinEEngine *_engine;
 	uint32 _fps;
 	uint32 _start;
 public:
-	ScopedFPS(uint32 fps = DEFAULT_FRAMES_PER_SECOND);
-	~ScopedFPS();
+	FrameMarker(TwinEEngine *engine, uint32 fps = DEFAULT_FRAMES_PER_SECOND);
+	~FrameMarker();
 };
 
-class FrameMarker {
+class TwineScreen : public Graphics::Screen {
+private:
+	using Super = Graphics::Screen;
+	TwinEEngine *_engine;
+
 public:
-	~FrameMarker();
+	TwineScreen(TwinEEngine *engine);
+
+	void update() override;
 };
 
 class TwinEEngine : public Engine {
@@ -269,12 +280,30 @@ public:
 
 	/** Configuration file structure
 	 * Contains all the data used in the engine to configurated the game in particulary ways. */
-	ConfigFile cfgfile;
+	ConfigFile _cfgfile;
+
+	int32 _frameCounter = 0;
+	int32 _quitGame = 0;
+	int32 _lbaTime = 0;
+
+	int32 _loopInventoryItem = 0;
+	int32 _loopActorStep = 0;
+	uint32 _gameFlags;
+
+	/** Disable screen recenter */
+	bool _disableScreenRecenter = false;
+
+	Graphics::ManagedSurface _imageBuffer;
+	/** Work video buffer */
+	Graphics::ManagedSurface _workVideoBuffer;
+	/** Main game video buffer */
+	TwineScreen _frontVideoBuffer;
 
 	int width() const;
 	int height() const;
 	Common::Rect rect() const;
 	Common::Rect centerOnScreen(int32 w, int32 h) const;
+	Common::Rect centerOnScreenX(int32 w, int32 y, int32 h) const;
 
 	void initSceneryView();
 	void exitSceneryView();
@@ -285,20 +314,11 @@ public:
 	 * @return A random value between [0-max)
 	 */
 	int getRandomNumber(uint max = 0x7FFF);
-	int32 quitGame = 0;
-	int32 lbaTime = 0;
 
-	Graphics::ManagedSurface imageBuffer;
-	/** Work video buffer */
-	Graphics::ManagedSurface workVideoBuffer;
-	/** Main game video buffer */
-	Graphics::ManagedSurface frontVideoBuffer;
-
-	int32 loopInventoryItem = 0;
-	int32 loopActorStep = 0;
-
-	/** Disable screen recenter */
-	bool disableScreenRecenter = false;
+	void blitWorkToFront(const Common::Rect &rect);
+	void blitFrontToWork(const Common::Rect &rect);
+	void restoreFrontBuffer();
+	void saveFrontBuffer();
 
 	void freezeTime();
 	void unfreezeTime();
@@ -308,8 +328,6 @@ public:
 	 * @return true if we want to show credit sequence
 	 */
 	bool gameEngineLoop();
-
-	uint32 _gameFlags;
 
 	/**
 	 * Deplay certain seconds till proceed - Can also Skip this delay
@@ -331,25 +349,20 @@ public:
 	 */
 	void setPalette(uint startColor, uint numColors, const byte *palette);
 
-	/** Blit surface in the screen */
-	void flip();
-
 	/**
 	 * Blit surface in the screen in a determinate area
 	 * @param left left position to start copy
 	 * @param top top position to start copy
 	 * @param right right position to start copy
 	 * @param bottom bottom position to start copy
-	 * @param updateScreen Perform blitting to screen if @c true, otherwise just prepare the blit
 	 */
-	void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom, bool updateScreen = false);
-	void copyBlockPhys(const Common::Rect &rect, bool updateScreen = false);
+	void copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom);
+	void copyBlockPhys(const Common::Rect &rect);
 
 	/** Cross fade feature
-	 * @param buffer screen buffer
 	 * @param palette new palette to cross fade
 	 */
-	void crossFade(const Graphics::ManagedSurface &buffer, const uint32 *palette);
+	void crossFade(const uint32 *palette);
 
 	/** Handle keyboard pressed keys */
 	void readKeys();
@@ -365,15 +378,15 @@ public:
 };
 
 inline int TwinEEngine::width() const {
-	return frontVideoBuffer.w;
+	return _frontVideoBuffer.w;
 }
 
 inline int TwinEEngine::height() const {
-	return frontVideoBuffer.h;
+	return _frontVideoBuffer.h;
 }
 
 inline Common::Rect TwinEEngine::rect() const {
-	return Common::Rect(0, 0, frontVideoBuffer.w - 1, frontVideoBuffer.h - 1);
+	return Common::Rect(0, 0, _frontVideoBuffer.w - 1, _frontVideoBuffer.h - 1);
 }
 
 } // namespace TwinE

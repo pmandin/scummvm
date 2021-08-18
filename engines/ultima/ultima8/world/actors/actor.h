@@ -229,8 +229,8 @@ public:
 		_lastActivityNo = 0;
 	}
 
-	int32 getLastTimeWasHit() const {
-		return _lastTimeWasHit;
+	int32 getLastTickWasHit() const {
+		return _lastTickWasHit;
 	}
 
 	//! run the given animation
@@ -270,7 +270,8 @@ public:
 
 	//! Turn one step toward the given direction. If the current direction is already the same,
 	//! do nothing. Returns an anim process or 0 if no move needed.
-	uint16 turnTowardDir(Direction dir);
+	//! If a previous pid is specified, wait for that process.
+	uint16 turnTowardDir(Direction dir, ProcId prevpid = 0);
 
 	//! create an actor, assign objid, make it ethereal and load monster stats.
 	static Actor *createActor(uint32 shape, uint32 frame);
@@ -287,14 +288,6 @@ public:
 		return damage;
 	}
 
-	uint8 getShieldType() const {
-		return _shieldType;
-	}
-
-	void setShieldType(uint8 type) {
-		_shieldType = type;
-	}
-
 	uint16 getActiveWeapon() const {
 		return _activeWeapon;
 	}
@@ -305,14 +298,17 @@ public:
 
 	bool activeWeaponIsSmall() const;
 
-	// A cru-specific behavior - mostly make "ugh" noises, or explode for some robots.
+	//! A cru-specific behavior - mostly make "ugh" noises, or explode for some robots.
 	void tookHitCru();
+
+	//! Whether this NPC has the controlled actor in their sights (Crusader only)
+	bool canSeeControlledActor(bool forcombat);
 
 	//! Add the x/y/z fire offsets given the current state of the actor
 	void addFireAnimOffsets(int32 &x, int32 &y, int32 &z);
 
-	uint32 getAttackMoveTimeoutFinish() const {
-		return _attackMoveStartTime + _attackMoveTimeout;
+	uint32 getAttackMoveTimeoutFinishFrame() const {
+		return _attackMoveStartFrame + _attackMoveTimeout;
 	}
 
 	uint16 getAttackMoveDodgeFactor() const {
@@ -459,14 +455,11 @@ protected:
 	uint16 _activeWeapon;
 
 	//! Kernel timer last time NPC was hit (only used in Crusader)
-	int32 _lastTimeWasHit;
-
-	//! Type of shield (only used in Crusader)
-	uint8 _shieldType;
+	int32 _lastTickWasHit;
 
 	//! The frame certain animations last happened (for Crusader).
 	//! Used in calcualting how hard controlled actor is to hit.
-	uint32 _attackMoveStartTime;
+	uint32 _attackMoveStartFrame;
 	//! The number of frames the above effect lasts for.
 	uint32 _attackMoveTimeout;
 	//! A spread divisor used by shots targeting the controlled actor when they

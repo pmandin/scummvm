@@ -21,28 +21,32 @@
  */
 
 #include "ags/engine/ac/character.h"
-#include "ags/engine/ac/charactercache.h"
+#include "ags/engine/ac/character_cache.h"
 #include "ags/engine/ac/dialog.h"
 #include "ags/engine/ac/draw.h"
 #include "ags/engine/ac/file.h"
 #include "ags/engine/ac/game.h"
-#include "ags/engine/ac/gamesetup.h"
-#include "ags/shared/ac/gamesetupstruct.h"
-#include "ags/engine/ac/gamestate.h"
+#include "ags/engine/ac/game_setup.h"
+#include "ags/shared/ac/game_setup_struct.h"
+#include "ags/engine/ac/game_state.h"
 #include "ags/engine/ac/gui.h"
-#include "ags/engine/ac/movelist.h"
-#include "ags/engine/ac/dynobj/all_dynamicclasses.h"
-#include "ags/engine/ac/dynobj/all_scriptclasses.h"
-#include "ags/engine/ac/statobj/agsstaticobject.h"
-#include "ags/engine/ac/statobj/staticarray.h"
+#include "ags/engine/ac/lip_sync.h"
+#include "ags/engine/ac/move_list.h"
+#include "ags/engine/ac/dynobj/all_dynamic_classes.h"
+#include "ags/engine/ac/dynobj/all_script_classes.h"
+#include "ags/engine/ac/statobj/ags_static_object.h"
+#include "ags/engine/ac/statobj/static_array.h"
+#include "ags/shared/core/asset_manager.h"
 #include "ags/engine/debugging/debug_log.h"
 #include "ags/shared/debugging/out.h"
-#include "ags/shared/font/agsfontrenderer.h"
+#include "ags/shared/font/ags_font_renderer.h"
 #include "ags/shared/font/fonts.h"
 #include "ags/engine/game/game_init.h"
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/engine/gfx/ddb.h"
-#include "ags/shared/gui/guilabel.h"
+#include "ags/shared/gui/gui_label.h"
+#include "ags/engine/media/audio/audio_system.h"
+#include "ags/engine/platform/base/ags_platform_driver.h"
 #include "ags/plugins/plugin_engine.h"
 #include "ags/shared/script/cc_error.h"
 #include "ags/engine/script/exports.h"
@@ -65,7 +69,7 @@ String GetGameInitErrorText(GameInitErrorType err) {
 	case kGameInitErr_NoError:
 		return "No error.";
 	case kGameInitErr_NoFonts:
-		return "No fonts specified to be used in this game.";
+		return "No fonts specified to be used in this _GP(game).";
 	case kGameInitErr_TooManyAudioTypes:
 		return "Too many audio types for this engine to handle.";
 	case kGameInitErr_EntityInitFail:
@@ -74,6 +78,8 @@ String GetGameInitErrorText(GameInitErrorType err) {
 		return "Too many plugins for this engine to handle.";
 	case kGameInitErr_PluginNameInvalid:
 		return "Plugin name is invalid.";
+	case kGameInitErr_NoGlobalScript:
+		return "No global script in game.";
 	case kGameInitErr_ScriptLinkFailed:
 		return "Script link failed.";
 	}
@@ -257,6 +263,29 @@ void LoadFonts(GameDataVersion data_ver) {
 	}
 }
 
+void LoadLipsyncData() {
+	std::unique_ptr<Stream> speechsync(_GP(AssetMgr)->OpenAsset("syncdata.dat", "voice"));
+	if (!speechsync)
+		return;
+	// this game has voice lip sync
+	int lipsync_fmt = speechsync->ReadInt32();
+	if (lipsync_fmt != 4) {
+		Debug::Printf(kDbgMsg_Info, "Unknown speech lip sync format (%d).\nLip sync disabled.", lipsync_fmt);
+	} else {
+		_G(numLipLines) = speechsync->ReadInt32();
+		_G(splipsync) = (SpeechLipSyncLine *)malloc(sizeof(SpeechLipSyncLine) * _G(numLipLines));
+		for (int ee = 0; ee < _G(numLipLines); ee++) {
+			_G(splipsync)[ee].numPhonemes = speechsync->ReadInt16();
+			speechsync->Read(_G(splipsync)[ee].filename, 14);
+			_G(splipsync)[ee].endtimeoffs = (int32_t *)malloc(_G(splipsync)[ee].numPhonemes * sizeof(int));
+			speechsync->ReadArrayOfInt32(_G(splipsync)[ee].endtimeoffs, _G(splipsync)[ee].numPhonemes);
+			_G(splipsync)[ee].frame = (short *)malloc(_G(splipsync)[ee].numPhonemes * sizeof(short));
+			speechsync->ReadArrayOfInt16(_G(splipsync)[ee].frame, _G(splipsync)[ee].numPhonemes);
+		}
+	}
+	Debug::Printf(kDbgMsg_Info, "Lipsync data found and loaded");
+}
+
 void AllocScriptModules() {
 	_GP(moduleInst).resize(_G(numScriptModules), nullptr);
 	_GP(moduleInstFork).resize(_G(numScriptModules), nullptr);
@@ -278,12 +307,11 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	const ScriptAPIVersion base_api = (ScriptAPIVersion)_GP(game).options[OPT_BASESCRIPTAPI];
 	const ScriptAPIVersion compat_api = (ScriptAPIVersion)_GP(game).options[OPT_SCRIPTCOMPATLEV];
 	if (data_ver >= kGameVersion_341) {
-		// TODO: find a way to either automate this list of strings or make it more visible (shared & easier to find in engine code)
-		// TODO: stack-allocated strings, here and in other similar places
-		const String scapi_names[kScriptAPI_Current + 1] = { "v3.2.1", "v3.3.0", "v3.3.4", "v3.3.5", "v3.4.0", "v3.4.1", "v3.5.0", "v3.5.0.7" };
+		const char *base_api_name = GetScriptAPIName(base_api);
+		const char *compat_api_name = GetScriptAPIName(compat_api);
 		Debug::Printf(kDbgMsg_Info, "Requested script API: %s (%d), compat level: %s (%d)",
-			base_api >= 0 && base_api <= kScriptAPI_Current ? scapi_names[base_api].GetCStr() : "unknown", base_api,
-			compat_api >= 0 && compat_api <= kScriptAPI_Current ? scapi_names[compat_api].GetCStr() : "unknown", compat_api);
+			base_api >= 0 && base_api <= kScriptAPI_Current ? base_api_name : "unknown", base_api,
+			compat_api >= 0 && compat_api <= kScriptAPI_Current ? compat_api_name : "unknown", compat_api);
 	}
 	// If the game was compiled using unsupported version of the script API,
 	// we warn about potential incompatibilities but proceed further.
@@ -297,26 +325,8 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	if (_GP(game).numfonts == 0)
 		return new GameInitError(kGameInitErr_NoFonts);
 	if (_GP(game).audioClipTypes.size() > MAX_AUDIO_TYPES)
-		return new GameInitError(kGameInitErr_TooManyAudioTypes, String::FromFormat("Required: %u, max: %d", _GP(game).audioClipTypes.size(), MAX_AUDIO_TYPES));
-
-	//
-	// 2. Apply overriding config settings
-	//
-	// The earlier versions of AGS provided support for "upscaling" low-res
-	// games (320x200 and 320x240) to hi-res (640x400 and 640x480
-	// respectively). The script API has means for detecting if the game is
-	// running upscaled, and game developer could use this opportunity to setup
-	// game accordingly (e.g. assign hi-res fonts, etc).
-	// This feature is officially deprecated since 3.1.0, however the engine
-	// itself still supports it, technically.
-	// This overriding option re-enables "upscaling". It works ONLY for low-res
-	// resolutions, such as 320x200 and 320x240.
-	if (_G(loaded_game_file_version) < kGameVersion_310 && _GP(usetup).override_upscale) {
-		if (_GP(game).GetResolutionType() == kGameResolution_320x200)
-			_GP(game).SetGameResolution(kGameResolution_640x400);
-		else if (_GP(game).GetResolutionType() == kGameResolution_320x240)
-			_GP(game).SetGameResolution(kGameResolution_640x480);
-	}
+		return new GameInitError(kGameInitErr_TooManyAudioTypes,
+			String::FromFormat("Required: %zu, max: %zu", _GP(game).audioClipTypes.size(), MAX_AUDIO_TYPES));
 
 	//
 	// 3. Allocate and init game objects
@@ -359,7 +369,7 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 		// labels are not clickable by default
 		_GP(guilabels)[i].SetClickable(false);
 	}
-	_GP(play).gui_draw_order = (int32_t *)calloc(_GP(game).numgui * sizeof(int32_t), 1);
+	_GP(play).gui_draw_order = (int32_t *)calloc(_GP(game).numgui * sizeof(int), 1);
 	update_gui_zorder();
 	calculate_reserved_channel_count();
 
@@ -383,6 +393,8 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	// NOTE: we must do this after plugins, because some plugins may export
 	// script symbols too.
 	//
+	if (!ents.GlobalScript)
+		return new GameInitError(kGameInitErr_NoGlobalScript);
 	_GP(gamescript) = ents.GlobalScript;
 	_GP(dialogScriptsScript) = ents.DialogScript;
 	_G(numScriptModules) = ents.ScriptModules.size();

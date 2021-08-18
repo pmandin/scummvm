@@ -22,10 +22,13 @@
 
 #include "ags/lib/allegro.h"
 #include "ags/plugins/plugin_base.h"
+#include "ags/plugins/ags_agi/ags_agi.h"
 #include "ags/plugins/ags_blend/ags_blend.h"
+#include "ags/plugins/ags_clipboard/ags_clipboard.h"
 #include "ags/plugins/ags_controller/ags_controller.h"
 #include "ags/plugins/ags_creditz/ags_creditz1.h"
 #include "ags/plugins/ags_creditz/ags_creditz2.h"
+#include "ags/plugins/ags_fire/ags_fire.h"
 #include "ags/plugins/ags_flashlight/ags_flashlight.h"
 #include "ags/plugins/ags_galaxy_steam/ags_wadjeteye_steam.h"
 #include "ags/plugins/ags_galaxy_steam/ags_galaxy_steam.h"
@@ -34,10 +37,13 @@
 #include "ags/plugins/ags_pal_render/ags_pal_render.h"
 #include "ags/plugins/ags_shell/ags_shell.h"
 #include "ags/plugins/ags_snow_rain/ags_snow_rain.h"
+#include "ags/plugins/ags_sock/ags_sock.h"
 #include "ags/plugins/ags_sprite_font/ags_sprite_font.h"
 #include "ags/plugins/ags_sprite_font/ags_sprite_font_clifftop.h"
 #include "ags/plugins/ags_tcp_ip/ags_tcp_ip.h"
+#include "ags/plugins/ags_touch/ags_touch.h"
 #include "ags/plugins/ags_wadjet_util/ags_wadjet_util.h"
+#include "ags/plugins/ags_waves/ags_waves.h"
 #include "ags/ags.h"
 #include "ags/detection.h"
 #include "common/str.h"
@@ -45,7 +51,7 @@
 namespace AGS3 {
 namespace Plugins {
 
-void *pluginOpen(const char *filename) {
+Plugins::PluginBase *pluginOpen(const char *filename) {
 	Common::String fname(filename);
 
 	// Check for if the game specifies a specific plugin version for this game
@@ -61,8 +67,14 @@ void *pluginOpen(const char *filename) {
 	if (fname.equalsIgnoreCase("ags_tcp_ip"))
 		return new AGSTcpIp::AGSTcpIp();
 
+	if (fname.equalsIgnoreCase("AGS_AGI"))
+		return new AGSAgi::AGSAgi();
+
 	if (fname.equalsIgnoreCase("AGSBlend"))
 		return new AGSBlend::AGSBlend();
+
+	if (fname.equalsIgnoreCase("AGSClipboard"))
+		return new AGSClipboard::AGSClipboard();
 
 	if (fname.equalsIgnoreCase("AGSController"))
 		return new AGSController::AGSController();
@@ -73,6 +85,9 @@ void *pluginOpen(const char *filename) {
 	if (fname.equalsIgnoreCase("agsCreditz2"))
 		return new AGSCreditz::AGSCreditz2();
 
+	if (fname.equalsIgnoreCase("AGS_Fire"))
+		return new AGSFire::AGSFire();
+
 	if (fname.equalsIgnoreCase("AGSFlashlight"))
 		return new AGSFlashlight::AGSFlashlight();
 
@@ -82,11 +97,14 @@ void *pluginOpen(const char *filename) {
 	if (fname.equalsIgnoreCase("AGSPalRender"))
 		return new AGSPalRender::AGSPalRender();
 
-	if (fname.equalsIgnoreCase("ags_shell"))
+	if (fname.equalsIgnoreCase("ags_shell") || fname.equalsIgnoreCase("agsshell"))
 		return new AGSShell::AGSShell();
 
 	if (fname.equalsIgnoreCase("AGSSnowRain") || fname.equalsIgnoreCase("ags_snowrain"))
 		return new AGSSnowRain::AGSSnowRain();
+
+	if (fname.equalsIgnoreCase("AGSSock"))
+		return new AGSSock::AGSSock();
 
 	if ((fname.equalsIgnoreCase("AGSSpriteFont") && version == ::AGS::kClifftopGames))
 		return new AGSSpriteFont::AGSSpriteFontClifftopGames();
@@ -95,7 +113,7 @@ void *pluginOpen(const char *filename) {
 		return new AGSSpriteFont::AGSSpriteFont();
 
 	if (fname.equalsIgnoreCase("agsgalaxy") || fname.equalsIgnoreCase("agsgalaxy-unified") ||
-			fname.equalsIgnoreCase("agsgalaxy-disjoint"))
+	        fname.equalsIgnoreCase("agsgalaxy-disjoint"))
 		return new AGSGalaxySteam::AGSGalaxy();
 
 	if (fname.equalsIgnoreCase("ags_Nickenstien_GFX"))
@@ -105,25 +123,26 @@ void *pluginOpen(const char *filename) {
 		return new AGSGalaxySteam::AGSWadjetEyeSteam();
 
 	if (fname.equalsIgnoreCase("agsteam") || fname.equalsIgnoreCase("agsteam-unified") ||
-			fname.equalsIgnoreCase("agsteam-disjoint"))
+	        fname.equalsIgnoreCase("agsteam-disjoint"))
 		return new AGSGalaxySteam::AGSSteam();
+
+	if (fname.equalsIgnoreCase("AGSTouch"))
+		return new AGSTouch::AGSTouch();
 
 	if (fname.equalsIgnoreCase("AGSWadjetUtil"))
 		return new AGSWadjetUtil::AGSWadjetUtil();
+
+	if (fname.equalsIgnoreCase("agswaves"))
+		return new AGSWaves::AGSWaves();
 
 	debug("Plugin '%s' is not yet supported", fname.c_str());
 	return nullptr;
 }
 
-int pluginClose(void *lib) {
+int pluginClose(Plugins::PluginBase *lib) {
 	PluginBase *plugin = static_cast<PluginBase *>(lib);
 	delete plugin;
 	return 0;
-}
-
-void *pluginSym(void *lib, const char *method) {
-	PluginBase *plugin = static_cast<PluginBase *>(lib);
-	return (*plugin)[method];
 }
 
 const char *pluginError() {
@@ -132,53 +151,84 @@ const char *pluginError() {
 
 /*------------------------------------------------------------------*/
 
-PluginBase::PluginBase() {
-	DLL_METHOD(AGS_PluginV2);
-	DLL_METHOD(AGS_EditorStartup);
-	DLL_METHOD(AGS_EditorShutdown);
-	DLL_METHOD(AGS_EditorProperties);
-	DLL_METHOD(AGS_EditorSaveGame);
-	DLL_METHOD(AGS_EditorLoadGame);
-	DLL_METHOD(AGS_EngineStartup);
-	DLL_METHOD(AGS_EngineShutdown);
-	DLL_METHOD(AGS_EngineOnEvent);
-	DLL_METHOD(AGS_EngineDebugHook);
-	DLL_METHOD(AGS_EngineInitGfx);
+ScriptMethodParams::ScriptMethodParams() {
+
 }
 
-int PluginBase::AGS_EditorStartup(IAGSEditor *) {
-	return 0;
+ScriptMethodParams::ScriptMethodParams(int val1) {
+	push_back(val1);
 }
 
-void PluginBase::AGS_EditorShutdown() {
+ScriptMethodParams::ScriptMethodParams(int val1, int val2) {
+	push_back(val1);
+	push_back(val2);
 }
 
-void PluginBase::AGS_EditorProperties(HWND) {
+ScriptMethodParams::ScriptMethodParams(int val1, int val2, int val3) {
+	push_back(val1);
+	push_back(val2);
+	push_back(val3);
 }
 
-int PluginBase::AGS_EditorSaveGame(char *, int) {
-	return 0;
+ScriptMethodParams::ScriptMethodParams(int val1, int val2, int val3, int val4) {
+	push_back(val1);
+	push_back(val2);
+	push_back(val3);
+	push_back(val4);
 }
 
-void PluginBase::AGS_EditorLoadGame(char *, int) {
-}
+#define GET_CHAR c = format[0]; format.deleteChar(0)
 
-void PluginBase::AGS_EngineStartup(IAGSEngine *) {
-}
+Common::String ScriptMethodParams::format(int formatIndex) {
+	Common::String result;
 
-void PluginBase::AGS_EngineShutdown() {
-}
+	Common::String format((const char *)(*this)[formatIndex]);
+	Common::String paramFormat;
+	char c;
+	++formatIndex;
 
-int64 PluginBase::AGS_EngineOnEvent(int, NumberPtr) {
-	return 0;
-}
+	while (!format.empty()) {
+		GET_CHAR;
 
-int PluginBase::AGS_EngineDebugHook(const char *, int, int) {
-	return 0;
-}
+		if (c != '%') {
+			result += c;
 
-void PluginBase::AGS_EngineInitGfx(const char *driverID, void *data) {
-	assert(!strcmp(driverID, "Software"));
+		} else if (format.hasPrefix("%")) {
+			GET_CHAR;
+			result += '%';
+
+		} else {
+			// Form up a format specifier
+			paramFormat = "%";
+			while (!format.empty()) {
+				GET_CHAR;
+				paramFormat += c;
+
+				if (Common::isAlpha(c))
+					break;
+			}
+
+			// Convert the parameter to a string. Not sure if all the
+			// casts are necessary, but it's better safe than sorry
+			// for big endian systems
+			switch (tolower(paramFormat.lastChar())) {
+			case 'c':
+				result += Common::String::format(paramFormat.c_str(), (char)(*this)[formatIndex]);
+				break;
+			case 's':
+			case 'p':
+				result += Common::String::format(paramFormat.c_str(), (void *)(*this)[formatIndex]);
+				break;
+			default:
+				result += Common::String::format(paramFormat.c_str(), (int)(*this)[formatIndex]);
+				break;
+			}
+
+			formatIndex++;
+		}
+	}
+
+	return result;
 }
 
 } // namespace Plugins

@@ -280,10 +280,15 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	_hePaletteSlot = 0;
 	_16BitPalette = NULL;
 	_macScreen = NULL;
+	_macIndy3TextBox = NULL;
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	_townsScreen = 0;
 	_scrollRequest = _scrollDeltaAdjust = 0;
 	_scrollDestOffset = _scrollTimer = 0;
+	_refreshNeedCatchUp = false;
+	_enableSmoothScrolling = (_game.platform == Common::kPlatformFMTowns);
+	memset(_refreshDuration, 0, sizeof(_refreshDuration));
+	_refreshArrayPos = 0;
 #ifdef USE_RGB_COLOR
 	_cjkFont = 0;
 #endif
@@ -558,6 +563,12 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 			_renderMode = Common::kRenderDefault;
 		break;
 
+	case Common::kRenderMacintoshBW:
+		if (_game.platform != Common::kPlatformMacintosh || (_game.id != GID_LOOM && _game.id != GID_INDY3)) {
+			_renderMode = Common::kRenderDefault;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -583,6 +594,14 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		_screenWidth = 320;
 		_screenHeight = 200;
 	}
+
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+	if (_game.platform == Common::kPlatformFMTowns) {
+		ConfMan.registerDefault("smooth_scroll", true);
+		if (ConfMan.hasKey("smooth_scroll"))
+			_enableSmoothScrolling = ConfMan.getBool("smooth_scroll");
+	}
+#endif
 
 	_bytesPerPixel = (_game.features & GF_16BIT_COLOR) ? 2 : 1;
 	uint8 sizeMult = _bytesPerPixel;
@@ -614,8 +633,6 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 
 
 ScummEngine::~ScummEngine() {
-	DebugMan.clearAllDebugChannels();
-
 	delete _musicEngine;
 
 	_mixer->stopAll();
@@ -677,6 +694,11 @@ ScummEngine::~ScummEngine() {
 	if (_macScreen) {
 		_macScreen->free();
 		delete _macScreen;
+	}
+
+	if (_macIndy3TextBox) {
+		_macIndy3TextBox->free();
+		delete _macIndy3TextBox;
 	}
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
@@ -1296,12 +1318,41 @@ Common::Error ScummEngine::init() {
 	if (_game.platform == Common::kPlatformMacintosh) {
 		Common::MacResManager resource;
 
-		if (_game.id == GID_LOOM) {
-			// \xAA is a trademark glyph in Mac OS Roman. We try
-			// that, but also the Windows version, the UTF-8
-			// version, and just plain without in case the file
-			// system can't handle exotic characters like that.
+		// \xAA is a trademark glyph in Mac OS Roman. We try that, but
+		// also the Windows version, the UTF-8 version, and just plain
+		// without in case the file system can't handle exotic
+		// characters like that.
 
+		if (_game.id == GID_INDY3) {
+			static const char *indyFileNames[] = {
+				"Indy\xAA",
+				"Indy\x99",
+				"Indy\xE2\x84\xA2",
+				"Indy"
+			};
+
+			for (int i = 0; i < ARRAYSIZE(indyFileNames); i++) {
+				if (resource.exists(indyFileNames[i])) {
+					macResourceFile = indyFileNames[i];
+
+					_textSurfaceMultiplier = 2;
+					_macScreen = new Graphics::Surface();
+					_macScreen->create(640, 400, Graphics::PixelFormat::createFormatCLUT8());
+
+					_macIndy3TextBox = new Graphics::Surface();
+					_macIndy3TextBox->create(448, 47, Graphics::PixelFormat::createFormatCLUT8());
+					break;
+				}
+			}
+
+			if (macResourceFile.empty()) {
+				GUI::MessageDialog dialog(_(
+"Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
+"be disabled."), _("OK"));
+				dialog.runModal();
+			}
+
+		} else if (_game.id == GID_LOOM) {
 			static const char *loomFileNames[] = {
 				"Loom\xAA",
 				"Loom\x99",
@@ -1348,6 +1399,10 @@ Common::Error ScummEngine::init() {
 "instruments from. Music will be disabled."), _("OK"));
 				dialog.runModal();
 			}
+		}
+
+		if (!_macScreen && _renderMode == Common::kRenderMacintoshBW) {
+			_renderMode = Common::kRenderDefault;
 		}
 	}
 
@@ -1444,7 +1499,9 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 	Common::String macFontFile;
 
 	if (_game.platform == Common::kPlatformMacintosh) {
-		if (_game.id == GID_LOOM) {
+		if (_game.id == GID_INDY3) {
+			macFontFile = macResourceFile;
+		} if (_game.id == GID_LOOM) {
 			macInstrumentFile = macResourceFile;
 			macFontFile = macResourceFile;
 			_macCursorFile = macResourceFile;
@@ -1455,7 +1512,10 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 
 	// On some systems it's not safe to run CD audio games from the CD.
 	if (_game.features & GF_AUDIOTRACKS && !Common::File::exists("CDDA.SOU")) {
-		checkCD();
+		if (!existExtractedCDAudioFiles()
+		    && !isDataAndCDAudioReadFromSameCD()) {
+			warnMissingExtractedCDAudio();
+		}
 		_system->getAudioCDManager()->open();
 	}
 
@@ -1526,6 +1586,14 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 	//	_bootParam = 10001;
 
 	if (!_copyProtection && _game.id == GID_INDY4 && _bootParam == 0) {
+		_bootParam = -7873;
+	}
+
+	// This boot param does not exist in the DOS version, but skips straight
+	// to the difficulty selection screen in the Mac versions. (One of them
+	// didn't show the difficulty selection screen at all, but we patch the
+	// boot script to enable that.)
+	if (!_copyProtection && _game.id == GID_MONKEY2 && _game.platform == Common::kPlatformMacintosh && _bootParam == 0) {
 		_bootParam = -7873;
 	}
 
@@ -1665,6 +1733,10 @@ void ScummEngine::resetScumm() {
 
 	if (_macScreen) {
 		_macScreen->fillRect(Common::Rect(_macScreen->w, _macScreen->h), 0);
+	}
+
+	if (_macIndy3TextBox) {
+		_macIndy3TextBox->fillRect(Common::Rect(_macIndy3TextBox->w, _macIndy3TextBox->h), 0);
 	}
 
 	if (_game.version == 0) {
@@ -2026,6 +2098,38 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 		}
 	}
 
+	if (_game.platform == Common::kPlatformMacintosh && (_game.id == GID_MONKEY2 || _game.id == GID_INDY4)) {
+		// While the Mac versions do have ADL resources, the Mac player
+		// doesn't handle them. So if a song is missing a MAC resource,
+		// prefer the ROL version over ADL.
+		//
+		// This is the case in Monkey Island 2, where some key music is
+		// missing near the end of the game: The Indiana Jones fanfare
+		// when Guybrush uses the rope to get the chest, and the music
+		// after the first LeChuck encounter in the underground tunnels
+		// below that scene. As well as some others that I haven't
+		// identified.
+		//
+		// Note that this does not seem to be a ScummVM bug. That music
+		// was missing when I ran the game in a Mac emulator too!
+		//
+		// ScummVM would play the ROL music instead, but only if it
+		// didn't think it was  using an AdLib music driver. Even if
+		// (as in my case) it was only by default. Now we always set
+		// MDT_MIDI to ensure consistent behavior. The Mac instrument
+		// set isn't quite the same as the MT-32, but it looks like it
+		// was based on a subset of it.
+		//
+		// From what I've seen, when a resource has a Mac version that
+		// is all that it has. So there shouldn't be any case where it
+		// prefers a ROL resource over MAC.
+		//
+		// Adding AdLib capabilities to the player may still be a good
+		// idea, because there are plenty of sound resources that exist
+		// only as ADL and SPK.
+		_sound->_musicType = MDT_MIDI;
+	}
+
 	// DOTT + SAM use General MIDI, so they shouldn't use GS settings
 	if ((_game.id == GID_TENTACLE) || (_game.id == GID_SAMNMAX))
 		_enable_gs = false;
@@ -2067,7 +2171,7 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 	} else if (_game.platform == Common::kPlatformAmiga && _game.version <= 4) {
 		_musicEngine = new Player_V4A(this, _mixer);
 	} else if (_game.platform == Common::kPlatformMacintosh && _game.id == GID_LOOM) {
-		_musicEngine = new Player_V3M(this, _mixer);
+		_musicEngine = new Player_V3M(this, _mixer, ConfMan.getBool("mac_v3_low_quality_music"));
 		((Player_V3M *)_musicEngine)->init(macInstrumentFile);
 	} else if (_game.platform == Common::kPlatformMacintosh && _game.id == GID_MONKEY) {
 		_musicEngine = new Player_V5M(this, _mixer);
@@ -2094,7 +2198,7 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 		// EGA/VGA. However, we support multi MIDI for that game and we cannot
 		// support this with the Player_AD code at the moment. The reason here
 		// is that multi MIDI is supported internally by our iMuse output.
-		_musicEngine = new Player_AD(this);
+		_musicEngine = new Player_AD(this, _mixer->mutex());
 #ifdef ENABLE_HE
 	} else if (_game.platform == Common::kPlatformDOS && _sound->_musicType == MDT_ADLIB && _game.heversion >= 60) {
 		_musicEngine = new Player_HE(this);
@@ -2264,10 +2368,9 @@ Common::Error ScummEngine::go() {
 		// before the main loop continues. We try to imitate that behaviour here to avoid glitches, but without making it
 		// overly complicated...
 		if (_scrollDeltaAdjust) {
-			int adj = MIN<int>(_scrollDeltaAdjust * 4 / 3 - _scrollDeltaAdjust, delta * 4 / 3 - delta);
-			delta += adj;
+			delta = MAX<int>(0, delta - _scrollDeltaAdjust) + (MIN<int>(_scrollDeltaAdjust, delta) << 2) / 3;
+			_scrollDeltaAdjust = 0;
 		}
-		_scrollDeltaAdjust = 0;
 #endif
 		if (delta < 1)	// Ensure we don't get into an endless loop
 			delta = 1;  // by not decreasing sleepers.
@@ -2327,10 +2430,21 @@ void ScummEngine::waitForTimer(int msec_delay) {
 		_sound->updateCD(); // Loop CD Audio if needed
 		parseEvents();
 
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+		uint32 screenUpdateTimerStart = _system->getMillis();
 		towns_updateGfx();
+#endif
 		_system->updateScreen();
+		uint32 cur = _system->getMillis();
 
-		if (_system->getMillis() >= start_time + msec_delay)
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+		// These measurements are used to determine whether the FM-Towns smooth scrolling is likely to fall behind and need to catch
+		// up (becoming more sloppy than smooth). Calls to _system->updateScreen() can require way longer than a 60Hz tick, depending
+		// on the hardware and the filter setting. In fact, these calls can take way over 100ms for some unfortunate configs.
+		_refreshDuration[_refreshArrayPos] = (int)(cur - screenUpdateTimerStart);
+		_refreshArrayPos = (_refreshArrayPos + 1) % ARRAYSIZE(_refreshDuration);
+#endif
+		if (cur >= start_time + msec_delay)
 			break;
 		_system->delayMillis(10);
 	}
@@ -2373,7 +2487,7 @@ void ScummEngine::scummLoop(int delta) {
 		oldEgo = VAR(VAR_EGO);
 
 	// In V1-V3 games, CHARSET_1 is called much earlier than in newer games.
-	// See also bug #770042 for a case were this makes a difference.
+	// See also bug #987 for a case were this makes a difference.
 	if (_game.version <= 3)
 		CHARSET_1();
 
@@ -2821,6 +2935,23 @@ void ScummEngine::restart() {
 void ScummEngine::runBootscript() {
 	int args[NUM_SCRIPT_LOCAL];
 	memset(args, 0, sizeof(args));
+
+	// There are two known versions of Monkey Island 2 for the Mac. This
+	// boot param only exists in the floppy release. The version that was
+	// distributed on CD has a different boot script which doesn't show
+	// the copy protection (or difficulty selection) screen at all. We try
+	// to patch the script to put these features back, and use the boot
+	// param to bypass the copy protection screen (since ScummVM already
+	// disables the copy protection check in it).
+	//
+	// But if the script patching somehow failed, clear the boot param to
+	// avoid errors.
+
+	if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformMacintosh && _bootParam == -7873 && !verifyMI2MacBootScript()) {
+		warning("Unknown MI2 Mac boot script. Using default boot param");
+		_bootParam = 0;
+	}
+
 	args[0] = _bootParam;
 	if (_game.id == GID_MANIAC && (_game.features & GF_DEMO) && (_game.platform != Common::kPlatformC64))
 		runScript(9, 0, 0, args);
@@ -2857,7 +2988,7 @@ bool ScummEngine::startManiac() {
 				// While strictly speaking it's too broad, this matchString
 				// ignores the presence or absence of trailing path separators
 				// in either currentPath or path.
-				if (path.matchString("*maniac*", true, false)) {
+				if (path.matchString("*maniac*", true, NULL)) {
 					maniacTarget = iter->_key;
 					break;
 				}

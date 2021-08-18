@@ -331,12 +331,16 @@ ConfigDialog::ConfigDialog() :
 	}
 
 	//
-	// The Achievements tab
+	// The Achievements & The Statistics tabs
 	//
-	Common::AchievementsInfo achievementsInfo = metaEngine->getAchievementsInfo(gameDomain);
-	if (achievementsInfo.descriptions.size() > 0) {
+	AchMan.setActiveDomain(metaEngine->getAchievementsInfo(gameDomain));
+	if (AchMan.getAchievementCount()) {
 		tab->addTab(_("Achievements"), "GlobalConfig_Achievements");
-		addAchievementsControls(tab, "GlobalConfig_Achievements.", achievementsInfo);
+		addAchievementsControls(tab, "GlobalConfig_Achievements.");
+	}
+	if (AchMan.getStatCount()) {
+		tab->addTab(_("Statistics"), "GlobalConfig_Achievements");
+		addStatisticsControls(tab, "GlobalConfig_Achievements.");
 	}
 
 	// Activate the first tab

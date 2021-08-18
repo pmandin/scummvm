@@ -194,7 +194,7 @@ int16 MainActor::addItemCru(Item *item, bool showtoast) {
 			item->callUsecodeEvent_combine();
 			item->moveToContainer(this);
 			if (showtoast)
-				pickupArea->addPickup(item, true);
+				pickupArea->addPickup(item, false);
 			return 1;
 		} else {
 			// already have this, add some ammo.
@@ -203,7 +203,7 @@ int16 MainActor::addItemCru(Item *item, bool showtoast) {
 				ammo->setQuality(q + 1);
 				ammo->callUsecodeEvent_combine();
 				if (showtoast)
-					pickupArea->addPickup(item, true);
+					pickupArea->addPickup(item, false);
 				item->destroy();
 				return 1;
 			}
@@ -233,14 +233,14 @@ int16 MainActor::addItemCru(Item *item, bool showtoast) {
 					plusenergy = 0x9c4;
 				}
 			} else if (shapeno == 0x3a4) {
-				if (oldbattery < FusionBattery) {
-					setBatteryType(FusionBattery);
+				if (oldbattery < FissionBattery) {
+					setBatteryType(FissionBattery);
 				} else {
 					plusenergy = 5000;
 				}
 			} else if (shapeno == 0x3a3) {
-				if (oldbattery < FissionBattery) {
-					setBatteryType(FissionBattery);
+				if (oldbattery < FusionBattery) {
+					setBatteryType(FusionBattery);
 				} else {
 					plusenergy = 10000;
 				}
@@ -257,7 +257,7 @@ int16 MainActor::addItemCru(Item *item, bool showtoast) {
 			if (!existing) {
 				// Shields. Note, these are the same in Remorse and Regret.
 				if ((shapeno == 0x52e) || (shapeno == 0x52f) || (shapeno == 0x530)) {
-					int shieldtype;
+					uint16 shieldtype;
 					switch (shapeno) {
 						default:
 						case 0x52e:
@@ -327,6 +327,11 @@ int16 MainActor::addItemCru(Item *item, bool showtoast) {
 	return 0;
 }
 
+bool MainActor::removeItemCru(Item *item) {
+	warning("TODO: Implement MainActor::removeItemCru");
+	return false;
+}
+
 const ShapeInfo *MainActor::getShapeInfoFromGameInstance() const {
 	const ShapeInfo *info = Item::getShapeInfoFromGameInstance();
 
@@ -349,8 +354,21 @@ const ShapeInfo *MainActor::getShapeInfoFromGameInstance() const {
 	return _kneelingShapeInfo;
 }
 
+void MainActor::move(int32 x, int32 y, int32 z) {
+	Actor::move(x, y, z);
+	if (_shieldSpriteProc != 0) {
+		SpriteProcess *sprite = dynamic_cast<SpriteProcess *>(
+			Kernel::get_instance()->getProcess(_shieldSpriteProc));
+		if (sprite) {
+			sprite->move(x, y, z);
+		}
+	}
+}
+
 void MainActor::teleport(int mapNum, int32 x, int32 y, int32 z) {
 	World *world = World::get_instance();
+
+	uint16 oldmap = getMapNum();
 
 	// (attempt to) load the new map
 	if (!world->switchMap(mapNum)) {
@@ -360,9 +378,9 @@ void MainActor::teleport(int mapNum, int32 x, int32 y, int32 z) {
 
 	Actor::teleport(mapNum, x, y, z);
 
-	if (GAME_IS_CRUSADER && (x || y)) {
+	if (GAME_IS_CRUSADER && (x || y) && oldmap == mapNum) {
 		// Keep the camera on the avatar (the snap process will update on next move)
-		CameraProcess::SetCameraProcess(new CameraProcess(x, y, z));
+		CameraProcess::GetCameraProcess()->moveToLocation(x, y, z);
 	}
 
 	_justTeleported = true;
@@ -405,12 +423,14 @@ void MainActor::teleport(int mapNum, int teleport_id) {
 	pout << "Found destination: " << xv << "," << yv << "," << zv << Std::endl;
 	egg->dumpInfo();
 
-	Actor::teleport(mapNum, xv, yv, zv);
-
 	if (GAME_IS_CRUSADER) {
 		// Keep the camera on the avatar (the snap process will update on next move)
-		CameraProcess::SetCameraProcess(new CameraProcess(xv, yv, zv));
+		// We don't add a new camera process here, as that would update the fast area
+		// before the cachein calls above have run.
+		CameraProcess::GetCameraProcess()->moveToLocation(xv, yv, zv);
 	}
+
+	Actor::teleport(mapNum, xv, yv, zv);
 
 	_justTeleported = true;
 }
@@ -720,6 +740,11 @@ void MainActor::nextInvItem() {
 	Std::vector<Item *> items;
 	getItemsWithShapeFamily(items, ShapeInfo::SF_CRUINVITEM, true);
 	getItemsWithShapeFamily(items, ShapeInfo::SF_CRUBOMB, true);
+	if (GAME_IS_REMORSE) {
+		Item *credits = getFirstItemWithShape(0x4ed, true);
+		if (credits)
+			items.push_back(credits);
+	}
 	_activeInvItem = getIdOfNextItemInList(items, _activeInvItem);
 }
 
@@ -907,6 +932,21 @@ uint32 MainActor::I_switchMap(const uint8 *args,
 	return 0;
 }
 
+uint32 MainActor::I_removeItemCru(const uint8 *args,
+								 unsigned int /*argsize*/) {
+	MainActor *av = getMainActor();
+	ARG_ITEM_FROM_ID(item);
+
+	if (!av || !item)
+		return 0;
+
+	if (av->removeItemCru(item))
+		return 1;
+
+	return 0;
+}
+
+
 void MainActor::useInventoryItem(uint32 shapenum) {
 	Item *item = getFirstItemWithShape(shapenum, true);
 	useInventoryItem(item);
@@ -946,7 +986,7 @@ void MainActor::useInventoryItem(Item *item) {
 }
 
 int MainActor::receiveShieldHit(int damage, uint16 damage_type) {
-	uint8 shieldtype = getShieldType();
+	uint16 shieldtype = getShieldType();
 	if (shieldtype == 3) {
 		shieldtype = 4;
 	}

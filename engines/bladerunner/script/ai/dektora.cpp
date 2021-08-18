@@ -118,8 +118,8 @@ bool AIScriptDektora::Update() {
 	}
 
 	if (chapter == 4) {
-		if (Actor_Query_Goal_Number(kActorDektora) < 300) {
-			Actor_Set_Goal_Number(kActorDektora, 300);
+		if (Actor_Query_Goal_Number(kActorDektora) < kGoalDektoraStartAct4StashedAway) {
+			Actor_Set_Goal_Number(kActorDektora, kGoalDektoraStartAct4StashedAway);
 		}
 		return true;
 	}
@@ -346,7 +346,7 @@ void AIScriptDektora::Retired(int byActorId) {
 			Player_Set_Combat_Mode(false);
 			Loop_Actor_Walk_To_XYZ(kActorMcCoy, -12.0f, -41.58f, 72.0f, 0, true, false, false);
 			Ambient_Sounds_Remove_All_Non_Looping_Sounds(true);
-			Ambient_Sounds_Remove_All_Looping_Sounds(1);
+			Ambient_Sounds_Remove_All_Looping_Sounds(1u);
 			Game_Flag_Set(kFlagKP07toKP06);
 			Game_Flag_Reset(kFlagMcCoyIsHelpingReplicants);
 			Set_Enter(kSetKP05_KP06, kSceneKP06);
@@ -575,6 +575,11 @@ bool AIScriptDektora::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 
 	case kGoalDektoraNR11RanAway:
 		Game_Flag_Set(kFlagDektoraRanAway);
+#if !BLADERUNNER_ORIGINAL_BUGS
+		// This will teleport Dektora out of the NR11 scene
+		// and remove the awry target hotspot at the region where she left
+		Actor_Set_Goal_Number(kActorDektora, kGoalDektoraStartAct4StashedAway);
+#endif // !BLADERUNNER_ORIGINAL_BUGS
 		break;
 
 	case 299:
@@ -583,10 +588,10 @@ bool AIScriptDektora::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 		Actor_Set_Goal_Number(kActorDektora, kGoalDektoraGone);
 		break;
 
-	case 300:
+	case kGoalDektoraStartAct4StashedAway:
 		AI_Movement_Track_Flush(kActorDektora);
 		Actor_Put_In_Set(kActorDektora, kSetFreeSlotA);
-		Actor_Set_At_Waypoint(kActorDektora, 33, 0);
+		Actor_Set_At_Waypoint(kActorDektora, 33, 0); // in kSetFreeSlotA
 		break;
 
 	default:

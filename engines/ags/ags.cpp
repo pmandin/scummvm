@@ -41,8 +41,8 @@
 #include "ags/shared/ac/common.h"
 #include "ags/engine/ac/game.h"
 #include "ags/globals.h"
-#include "ags/engine/ac/gamesetup.h"
-#include "ags/engine/ac/gamestate.h"
+#include "ags/engine/ac/game_setup.h"
+#include "ags/engine/ac/game_state.h"
 #include "ags/engine/ac/room.h"
 #include "ags/shared/core/def_version.h"
 #include "ags/engine/debugging/debugger.h"
@@ -51,13 +51,12 @@
 #include "ags/engine/game/savegame.h"
 #include "ags/engine/main/config.h"
 #include "ags/engine/main/engine.h"
-#include "ags/engine/main/mainheader.h"
 #include "ags/engine/main/main.h"
 #include "ags/engine/main/quit.h"
-#include "ags/engine/platform/base/agsplatformdriver.h"
+#include "ags/engine/platform/base/ags_platform_driver.h"
 #include "ags/engine/script/script.h"
 #include "ags/engine/ac/route_finder.h"
-#include "ags/shared/core/assetmanager.h"
+#include "ags/shared/core/asset_manager.h"
 #include "ags/shared/util/directory.h"
 #include "ags/shared/script/cc_options.h"
 
@@ -70,9 +69,8 @@ namespace AGS {
 AGSEngine *g_vm;
 
 AGSEngine::AGSEngine(OSystem *syst, const AGSGameDescription *gameDesc) : Engine(syst),
-		_gameDescription(gameDesc), _randomSource("AGS"), _events(nullptr), _music(nullptr),
-		_rawScreen(nullptr), _screen(nullptr), _gfxDriver(nullptr),
-		_globals(nullptr), _forceTextAA(false) {
+	_gameDescription(gameDesc), _randomSource("AGS"), _events(nullptr), _music(nullptr),
+	_gfxDriver(nullptr), _globals(nullptr), _forceTextAA(false) {
 	g_vm = this;
 
 	_events = new EventsManager();
@@ -82,19 +80,21 @@ AGSEngine::AGSEngine(OSystem *syst, const AGSGameDescription *gameDesc) : Engine
 	Common::String forceAA;
 	if (ConfMan.getActiveDomain()->tryGetVal("force_text_aa", forceAA))
 		Common::parseBool(forceAA, _forceTextAA);
+
+	// WORKAROUND: Certain games need to force AA to render the text correctly
+	if (_gameDescription->desc.flags & GAMEFLAG_FORCE_AA)
+		_forceTextAA = true;
 }
 
 AGSEngine::~AGSEngine() {
-	if (_G(proper_exit) == 0) {
+	if (_globals && _G(proper_exit) == 0) {
 		_G(platform)->DisplayAlert("Error: the program has exited without requesting it.\n"
-			"Program pointer: %+03d  (write this number down), ACI version %s\n"
-			"If you see a list of numbers above, please write them down and contact\n"
-			"developers. Otherwise, note down any other information displayed.",
-			_G(our_eip), _G(EngineVersion).LongString.GetCStr());
+		                           "Program pointer: %+03d  (write this number down), ACI version %s\n"
+		                           "If you see a list of numbers above, please write them down and contact\n"
+		                           "developers. Otherwise, note down any other information displayed.",
+		                           _G(our_eip), _G(EngineVersion).LongString.GetCStr());
 	}
 
-	delete _screen;
-	delete _rawScreen;
 	delete _events;
 	delete _music;
 	delete _globals;
@@ -120,6 +120,20 @@ Common::Error AGSEngine::run() {
 		return Common::kNoError;
 	}
 
+	if (isUnsupportedPre25()) {
+		GUIError("The selected game is a completely unsupported pre-2.5 version");
+		return Common::kNoError;
+	}
+
+	if (is64BitGame()) {
+		// If the game file was opened and the engine started, but the
+		// size is -1, then it must be a game like Strangeland where
+		// the data file is > 2Gb
+		GUIError("The selected game has a data file greater than 2Gb, " \
+			"which isn't supported by your version of ScummVM yet");
+		return Common::kNoError;
+	}
+
 	if (debugChannelSet(-1, kDebugScript))
 		AGS3::ccSetOption(SCOPT_DEBUGRUN, 1);
 
@@ -135,9 +149,6 @@ Common::Error AGSEngine::run() {
 	const int ARGC = 2;
 	AGS3::main_init(ARGC, ARGV);
 
-#if AGS_PLATFORM_OS_WINDOWS
-	setup_malloc_handling();
-#endif
 	_G(debug_flags) = 0;
 
 	if (ConfMan.hasKey("display_fps"))
@@ -149,7 +160,7 @@ Common::Error AGSEngine::run() {
 		return Common::kUnknownError;
 
 	if (_G(justDisplayVersion)) {
-		_G(platform)->WriteStdOut(AGS3::get_engine_string());
+		_G(platform)->WriteStdOut(AGS3::get_engine_string().GetCStr());
 		return Common::kNoError;
 	}
 
@@ -161,7 +172,7 @@ Common::Error AGSEngine::run() {
 	if (!_G(justTellInfo))
 		_G(platform)->SetGUIMode(true);
 	AGS3::init_debug(startup_opts, _G(justTellInfo));
-	AGS3::AGS::Shared::Debug::Printf("%s", AGS3::get_engine_string().GetNullableCStr());
+	AGS3::AGS::Shared::Debug::Printf("%s", AGS3::get_engine_string().GetCStr());
 
 	AGS3::main_set_gamedir(ARGC, ARGV);
 
@@ -171,50 +182,71 @@ Common::Error AGSEngine::run() {
 
 	_G(loadSaveGameOnStartup) = ConfMan.getInt("save_slot");
 
-#ifdef USE_CUSTOM_EXCEPTION_HANDLER
-	if (_GP(usetup).disable_exception_handling)
-#endif
-	{
-		syncSoundSettings();
-		AGS3::initialize_engine(startup_opts);
+	syncSoundSettings();
+	AGS3::initialize_engine(startup_opts);
 
-		// Do shutdown stuff
-		::AGS3::quit_free();
+	// Do shutdown stuff
+	::AGS3::quit_free();
 
-		return Common::kNoError;
-	}
-#ifdef USE_CUSTOM_EXCEPTION_HANDLER
-	else {
-		return initialize_engine_with_exception_handling(initialize_engine, startup_opts);
-	}
-#endif
+	return Common::kNoError;
 }
 
 SaveStateList AGSEngine::listSaves() const {
 	return getMetaEngine()->listSaves(_targetName.c_str());
 }
 
-void AGSEngine::setGraphicsMode(size_t w, size_t h) {
+bool AGSEngine::getPixelFormat(int depth, Graphics::PixelFormat &format) const {
+	Common::List<Graphics::PixelFormat> supportedFormatsList = g_system->getSupportedFormats();
+
+	if (depth == 8) {
+		format = Graphics::PixelFormat::createFormatCLUT8();
+		return true;
+	}
+
+	for (Common::List<Graphics::PixelFormat>::iterator it =
+			supportedFormatsList.begin(); it != supportedFormatsList.end(); ++it) {
+		if (it->bpp() == depth) {
+			format = *it;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+void AGSEngine::setGraphicsMode(size_t w, size_t h, int colorDepth) {
 	Common::List<Graphics::PixelFormat> supportedFormatsList = g_system->getSupportedFormats();
 	Graphics::PixelFormat format;
-	if (!supportedFormatsList.empty())
-		format = supportedFormatsList.front();
-	else
-		format = Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
-	initGraphics(w, h, &format);
+	if (!getPixelFormat(colorDepth, format))
+		error("Unsupported color depth %d", colorDepth);
 
-	_rawScreen = new Graphics::Screen();
-	_screen = new ::AGS3::BITMAP(_rawScreen);
+	initGraphics(w, h, &format);
+}
+
+bool AGSEngine::isUnsupportedPre25() const {
+	return _gameDescription->desc.extra &&
+		!strcmp(_gameDescription->desc.extra, "Pre 2.5");
+}
+
+bool AGSEngine::is64BitGame() const {
+	Common::File f;
+	return f.open(_gameDescription->desc.filesDescriptions[0].fileName)
+		&& f.size() == -1;
+}
+
+Common::FSNode AGSEngine::getGameFolder() {
+	return Common::FSNode(ConfMan.get("path"));
 }
 
 bool AGSEngine::canLoadGameStateCurrently() {
 	return !_GP(thisroom).Options.SaveLoadDisabled &&
-		!_G(inside_script) && !_GP(play).fast_forward && !_G(no_blocking_functions);
+	       !_G(inside_script) && !_GP(play).fast_forward && !_G(no_blocking_functions);
 }
 
 bool AGSEngine::canSaveGameStateCurrently() {
 	return !_GP(thisroom).Options.SaveLoadDisabled &&
-		!_G(inside_script) && !_GP(play).fast_forward && !_G(no_blocking_functions);
+	       !_G(inside_script) && !_GP(play).fast_forward && !_G(no_blocking_functions);
 }
 
 Common::Error AGSEngine::loadGameState(int slot) {

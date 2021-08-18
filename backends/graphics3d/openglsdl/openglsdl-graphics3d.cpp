@@ -30,6 +30,7 @@
 #include "common/config-manager.h"
 #include "common/file.h"
 #include "engines/engine.h"
+#include "graphics/conversion.h"
 #include "graphics/pixelbuffer.h"
 #include "graphics/opengl/context.h"
 #include "graphics/opengl/framebuffer.h"
@@ -643,17 +644,16 @@ void OpenGLSdlGraphics3dManager::clearOverlay() {
 	_overlayScreen->fill(0);
 }
 
-void OpenGLSdlGraphics3dManager::grabOverlay(void *buf, int pitch) const {
+void OpenGLSdlGraphics3dManager::grabOverlay(Graphics::Surface &surface) const {
 	const Graphics::Surface *overlayData = _overlayScreen->getBackingSurface();
 
-	const byte *src = (const byte *)overlayData->getPixels();
-	byte *dst = (byte *)buf;
+	assert(surface.w >= overlayData->w);
+	assert(surface.h >= overlayData->h);
+	assert(surface.format.bytesPerPixel == overlayData->format.bytesPerPixel);
 
-	for (uint h = overlayData->h; h > 0; --h) {
-		memcpy(dst, src, overlayData->w * overlayData->format.bytesPerPixel);
-		dst += pitch;
-		src += overlayData->pitch;
-	}
+	const byte *src = (const byte *)overlayData->getPixels();
+	byte *dst = (byte *)surface.getPixels();
+	Graphics::copyBlit(dst, src, surface.pitch, overlayData->pitch, overlayData->w, overlayData->h, overlayData->format.bytesPerPixel);
 }
 
 void OpenGLSdlGraphics3dManager::closeOverlay() {

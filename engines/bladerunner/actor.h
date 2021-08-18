@@ -126,7 +126,7 @@ public:
 	void setup(int actorId);
 
 	void setAtXYZ(const Vector3 &pos, int facing, bool setFacing = true, bool moving = false, bool retired = false);
-	void setAtWaypoint(int waypointId, int angle, int unknown, bool retired);
+	void setAtWaypoint(int waypointId, int angle, bool moving, bool retired);
 
 	int  getId() const { return _id; };
 	float getX() const;
@@ -144,7 +144,7 @@ public:
 	void setFPS(int fps);
 	void increaseFPS();
 
-	void   timerStart(int timerId, int32 interval);
+	void   timerStart(int timerId, int32 intervalMillis);
 	void   timerReset(int timerId);
 	int32 timerLeft(int timerId);
 	void   timersUpdate();
@@ -262,7 +262,7 @@ public:
 	void acquireCluesByRelations();
 
 	int soundVolume() const;
-	int soundPan() const;
+	int soundPan(uint8 overrideRange = 35) const;
 
 	bool isObstacleBetween(const Vector3 &target);
 

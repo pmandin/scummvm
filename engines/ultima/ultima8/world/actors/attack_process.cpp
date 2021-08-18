@@ -43,13 +43,31 @@ namespace Ultima8 {
 
 DEFINE_RUNTIME_CLASSTYPE_CODE(AttackProcess)
 
-static const int16 ATTACK_SFX_1[] = {0x15, 0x78, 0x80, 0x83, 0xDC, 0xDD};
-static const int16 ATTACK_SFX_2[] = {0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xE7};
-static const int16 ATTACK_SFX_3[] = {0xFC, 0xFD, 0xFE, 0xC8};
-static const int16 ATTACK_SFX_4[] = {0xCC, 0xCD, 0xCE, 0xCF};
-static const int16 ATTACK_SFX_5[] = {0xC7, 0xCA, 0xC9};
-static const int16 ATTACK_SFX_6[] = {0x82, 0x84, 0x85};
-static const int16 ATTACK_SFX_7[] = {0x9B, 0x9C, 0x9D, 0x9E, 0x9F};
+// These sound number arrays are in the order they appear in the original exes
+
+static const int16 REM_SFX_1[] = {0x15, 0x78, 0x80, 0x83, 0xDC, 0xDD};
+static const int16 REM_SFX_2[] = {0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xE7};
+static const int16 REM_SFX_3[] = {0xFC, 0xFD, 0xFE, 0xC8};
+static const int16 REM_SFX_4[] = {0xCC, 0xCD, 0xCE, 0xCF};
+static const int16 REM_SFX_5[] = {0xC7, 0xCA, 0xC9};
+static const int16 REM_SFX_6[] = {0x82, 0x84, 0x85};
+static const int16 REM_SFX_7[] = {0x9B, 0x9C, 0x9D, 0x9E, 0x9F};
+
+static const int16 REG_SFX_1[] = { 0xD2, 0xD3, 0xD4, 0xD5, 0xE5, 0x100 };
+static const int16 REG_SFX_2[] = { 0x9, 0x79, 0x7A, 0x7B, 0x7C, 0x7D };
+static const int16 REG_SFX_3[] = { 0x7E, 0x7F, 0x90, 0xB6, 0xC2, 0xD0 };
+static const int16 REG_SFX_4[] = { 0x101, 0x102, 0x103, 0x104, 0x105, 0x106 };
+static const int16 REG_SFX_5[] = { 0x108, 0x109, 0x1AB, 0x1AC, 0x1AD, 0x1AF, 0x1AE };
+static const int16 REG_SFX_6[] = { 0x1B0, 0x1B1, 0x1B2, 0x1B3, 0x1B4 };
+static const int16 REG_SFX_7[] = { 0x1B5, 0x1B6, 0x1B7, 0x1B8, 0x1B9, 0x1BA, 0x1BB };
+static const int16 REG_SFX_8[] = { 0x1C1, 0x1C0, 0x1BF, 0x1BE, 0x1BD, 0x1BC };
+static const int16 REG_SFX_9[] = { 0x1C2, 0x1C3, 0x1C4, 0x1C5, 0x1C6, 0x1C7 };
+static const int16 REG_SFX_10[] = { 0x1C8, 0x1C9, 0x1CA, 0x1CB, 0x1CC, 0x1CD };
+static const int16 REG_SFX_11[] = { 0x1D0, 0x1D1, 0x1D2, 0x1D3, 0x1D4, 0x1D5 };
+static const int16 REG_SFX_12[] = { 0x1D7, 0x1D8, 0x1D9, 0x1DA, 0x1DB, 0x1DC };
+static const int16 REG_SFX_13[] = { 0x1DD, 0x1DE, 0x1DF, 0x1E0, 0x1E1, 0x1E2, 0x1E3 };
+static const int16 REG_SFX_14[] = { 0x9B, 0x9C, 0x9D, 0x9E, 0x9F };
+static const int16 REG_SFX_15[] = { 0x1E7, 0x1E8, 0x1E9, 0x1EA, 0x1ED };
 
 #define RANDOM_ELEM(array) (array[getRandom() % ARRAYSIZE(array)])
 
@@ -58,6 +76,9 @@ static const int16 ATTACK_SFX_7[] = {0x9B, 0x9C, 0x9D, 0x9E, 0x9F};
 static const int MAGIC_DATA_OFF = 33000;
 
 const uint16 AttackProcess::ATTACK_PROCESS_TYPE = 0x259;
+
+int16 AttackProcess::_lastAttackSound = -1;
+int16 AttackProcess::_lastLastAttackSound = -1;
 
 static uint16 someSleepGlobal = 0;
 
@@ -140,6 +161,7 @@ _soundTimestamp(0), _fireTimestamp(0) {
 	_type = ATTACK_PROCESS_TYPE;
 
 	setTacticNo(actor->getCombatTactic());
+	actor->setToStartOfAnim(Animation::stand);
 }
 
 AttackProcess::~AttackProcess() {
@@ -158,10 +180,13 @@ void AttackProcess::run() {
 	Actor *a = getActor(_itemNum);
 	Actor *target = getActor(_target);
 
-	if (!a || !a->hasFlags(Item::FLG_FASTAREA) || a->isDead() || !_tacticDatReadStream) {
+	if (!a || a->isDead() || !_tacticDatReadStream) {
 		terminate();
 		return;
 	}
+
+	if (!a->hasFlags(Item::FLG_FASTAREA))
+		return;
 
 	if (_tactic == 0) {
 		genericAttack();
@@ -238,7 +263,7 @@ void AttackProcess::run() {
 			int32 x, y, z;
 			a->getHomePosition(x, y, z);
 			ProcId pid = Kernel::get_instance()->addProcess(
-					   new CruPathfinderProcess(a, x, y, z, 100, 0x40, true));
+					   new CruPathfinderProcess(a, x, y, z, 100, 0x80, true));
 			waitFor(pid);
 			return;
 		}
@@ -248,7 +273,7 @@ void AttackProcess::run() {
 			int32 x, y, z;
 			target->getLocation(x, y, z);
 			ProcId pid = Kernel::get_instance()->addProcess(
-					   new CruPathfinderProcess(a, x, y, z, 12, 0x40, true));
+					   new CruPathfinderProcess(a, x, y, z, 12, 0x80, true));
 			waitFor(pid);
 			return;
 		}
@@ -263,7 +288,7 @@ void AttackProcess::run() {
 			int32 y = (ty + ay) / 2;
 			int32 z = (tz + az) / 2;
 			ProcId pid = Kernel::get_instance()->addProcess(
-					   new CruPathfinderProcess(a, x, y, z, 12, 0x40, true));
+					   new CruPathfinderProcess(a, x, y, z, 12, 0x80, true));
 			waitFor(pid);
 			return;
 		}
@@ -391,7 +416,7 @@ void AttackProcess::run() {
 
 				if (itemFrame == targetFrame && (targetQ == 0 || itemQlo == targetQ)) {
 					ProcId pid = Kernel::get_instance()->addProcess(
-						 new CruPathfinderProcess(a, founditem, 100, 0x40, true));
+						 new CruPathfinderProcess(a, founditem, 100, 0x80, true));
 					waitFor(pid);
 					break;
 				}
@@ -529,7 +554,7 @@ void AttackProcess::genericAttack() {
 
 	AudioProcess *audio = AudioProcess::get_instance();
 	const Direction curdir = a->getDir();
-	const int32 now = Kernel::get_instance()->getTickNum();
+	const int32 ticknow = Kernel::get_instance()->getTickNum();
 	int wpnField8 = wpn ? wpn->getShapeInfo()->_weaponInfo->_field8 : 1;
 	const uint16 controlledNPC = World::get_instance()->getControlledNPCNum();
 	Direction targetdir = dir_invalid;
@@ -552,7 +577,7 @@ void AttackProcess::genericAttack() {
 			y += -0x1ff + randomOf(0x400);
 			_field96 = true;
 			const ProcId pid = Kernel::get_instance()->addProcess(
-								new CruPathfinderProcess(a, x, y, z, 12, 0x40, true));
+								new CruPathfinderProcess(a, x, y, z, 12, 0x80, true));
 			// add a tiny delay to avoid tight loops
 			Process *delayproc = new DelayProcess(2);
 			Kernel::get_instance()->addProcess(delayproc);
@@ -569,7 +594,7 @@ void AttackProcess::genericAttack() {
 		}
 		DirectionMode standDirMode = a->animDirMode(anim);
 		if (_timer3set) {
-			if (_timer3 >= now) {
+			if (_timer3 >= ticknow) {
 				if (a->isInCombat()) {
 					if (randomOf(3) != 0) {
 						const Animation::Sequence lastanim = a->getLastAnim();
@@ -581,13 +606,11 @@ void AttackProcess::genericAttack() {
 					}
 
 					if (randomOf(3) == 0) {
-						// TODO: this should be a random dir based on some
-						// NPC field and stuff.
-						a->turnTowardDir(Direction_TurnByDelta(curdir, getRandom() % 8, dirmode_8dirs));
+						a->turnTowardDir(Direction_TurnByDelta(curdir, randomOf(8), dirmode_8dirs));
 						return;
 					}
 
-					if (_target == 0)
+					if (!a->hasActorFlags(Actor::ACT_WEAPONREADY))
 						return;
 
 					if (curdir != a->getDirToItemCentre(*target))
@@ -602,13 +625,13 @@ void AttackProcess::genericAttack() {
 					_wpnField8 = wpnField8;
 					if (_wpnField8 < 3) {
 						_wpnField8 = 1;
-					} else if ((_doubleDelay && (getRandom() % 2 == 0)) || (getRandom() % 5 == 0)) {
+					} else if ((_doubleDelay && (randomOf(2) == 0)) || (randomOf(5) == 0)) {
 						a->setAttackAimFlag(true);
 						_wpnField8 *= 4;
 					}
-					_fireTimestamp = now;
+					_fireTimestamp = ticknow;
 					if (_timer4 == 0)
-						_timer4 = now;
+						_timer4 = ticknow;
 
 					const ProcId animpid = a->doAnim(Animation::attack, dir_current); // fire small weapon.
 					if (animpid == 0) {
@@ -637,8 +660,7 @@ void AttackProcess::genericAttack() {
 		target->getLocation(tpt);
 		const int32 dist = apt.maxDistXYZ(tpt);
 		const int32 zdiff = abs(a->getZ() - target->getZ());
-		// FIXME: is this the right function??
-		const bool onscreen = a->isOnScreen();
+		const bool onscreen = a->isPartlyOnScreen(); // note: original uses "isMajorityOnScreen", this is close enough.
 		if ((!_isActivity9orB && !onscreen) || (dist <= zdiff)) {
 			pathfindToItemInNPCData();
 			return;
@@ -646,10 +668,10 @@ void AttackProcess::genericAttack() {
 		if (targetdir == curdir) {
 			const uint16 rnd = randomOf(10);
 			const uint32 frameno = Kernel::get_instance()->getFrameNum();
-			const uint32 timeoutfinish = target->getAttackMoveTimeoutFinish();
+			const uint32 timeoutfinish = target->getAttackMoveTimeoutFinishFrame();
 
 			if (!onscreen ||
-				(!_field96 && !timer4and5Update(now) && frameno < timeoutfinish
+				(!_field96 && !timer4and5Update(ticknow) && frameno < timeoutfinish
 				 && rnd > 2 && (!_isActivityAorB || rnd > 3))) {
 				sleep(0x14);
 				return;
@@ -657,27 +679,27 @@ void AttackProcess::genericAttack() {
 
 			_field96 = false;
 			bool ready;
-			if (now - a->getLastTimeWasHit() < 120)
-				ready = checkReady(now, targetdir);
-			else
+			if (ticknow - a->getLastTickWasHit() <= 120)
 				ready = true;
+			else
+				ready = checkReady(ticknow, targetdir);
 
-			if (_timer2set && (randomOf(5) == 0 || checkTimer2PlusDelayElapsed(now))) {
+			if (_timer2set && (randomOf(5) == 0 || checkTimer2PlusDelayElapsed(ticknow))) {
 				_timer2set = false;
 			}
 
 			if (!ready) {
-				if (_isActivity9orB == 0)
+				if (!_isActivity9orB)
 					pathfindToItemInNPCData();
 				else
 					sleep(0xf);
 				return;
 			}
 
-			checkRandomAttackSound(now, a->getShape());
+			checkRandomAttackSound(ticknow, a->getShape());
 
 			if (!a->hasActorFlags(Actor::ACT_WEAPONREADY)) {
-				_timer4 = now;
+				_timer4 = ticknow;
 				a->doAnim(Animation::readyWeapon, dir_current); // ready small wpn
 				return;
 			}
@@ -689,15 +711,17 @@ void AttackProcess::genericAttack() {
 				_soundNo = -1;
 			}
 
-			const int32 t5elapsed = now - _timer5;
+			const int32 t5elapsed = ticknow - _timer5;
 			if (t5elapsed > _wpnBasedTimeout) {
-				const int32 fireelapsed = now - _fireTimestamp;
+				const int32 fireelapsed = ticknow - _fireTimestamp;
 				if (fireelapsed <= _difficultyBasedTimeout) {
 					sleep(_difficultyBasedTimeout - fireelapsed);
 					return;
 				}
 
-				if (wpn) {
+				if (!wpn) {
+					_wpnField8 = 1;
+				} else {
 					_wpnField8 = wpnField8;
 					if (_wpnField8 > 2 && ((_doubleDelay && randomOf(2) == 0) || randomOf(5) == 0)) {
 						a->setAttackAimFlag(true);
@@ -705,9 +729,9 @@ void AttackProcess::genericAttack() {
 					}
 				}
 
-				_fireTimestamp = now;
+				_fireTimestamp = ticknow;
 				if (_timer4 == 0) {
-					_timer4 = now;
+					_timer4 = ticknow;
 				}
 
 				const ProcId firepid = a->doAnim(Animation::attack, dir_current); // Fire SmallWpn
@@ -725,27 +749,27 @@ void AttackProcess::genericAttack() {
 				return;
 			}
 		} else {
-			bool local_1b;
-			if (!timer4and5Update(now) && !_field7f) {
+			bool ready;
+			if (!timer4and5Update(ticknow) && !_field7f) {
 				if (standDirMode != dirmode_16dirs) {
 					targetdir = a->getDirToItemCentre(*target);
 				}
-				local_1b = a->fireDistance(target, targetdir, 0, 0, 0);
-				if (local_1b)
-					timeNowToTimerVal2(now);
+				ready = a->fireDistance(target, targetdir, 0, 0, 0);
+				if (ready)
+					timeNowToTimerVal2(ticknow);
 			} else {
-				timeNowToTimerVal2(now);
-				local_1b = true;
+				timeNowToTimerVal2(ticknow);
+				ready = true;
 				_field7f = false;
 			}
 
 			// 5a flag 1 set?
-			if (!a->hasActorFlags(Actor::ACT_WEAPONREADY) && local_1b) {
-				_timer4 = now;
+			if (!a->hasActorFlags(Actor::ACT_WEAPONREADY) && ready) {
+				_timer4 = ticknow;
 				a->doAnim(Animation::readyWeapon, dir_current); // ready SmallWpn
 				return;
 			}
-			if (local_1b || _isActivity9orB) {
+			if (ready || _isActivity9orB) {
 				a->turnTowardDir(targetdir);
 				return;
 			}
@@ -754,9 +778,91 @@ void AttackProcess::genericAttack() {
 	}
 }
 
+void AttackProcess::checkRandomAttackSoundRegret(const Actor *actor) {
+	AudioProcess *audio = AudioProcess::get_instance();
+
+	if (World::get_instance()->getControlledNPCNum() != 1)
+		return;
+
+	if (actor->isDead())
+		return;
+
+	if (audio->isSFXPlayingForObject(-1, actor->getObjId()))
+		return;
+
+	uint32 shapeno = actor->getShape();
+	int16 sndno = -1;
+	// The order here is pretty random, how it comes out of the disasm.
+	switch (shapeno) {
+	  case 0x4e0:
+		  sndno = RANDOM_ELEM(REG_SFX_8);
+		  break;
+	  case 899:
+		  sndno = RANDOM_ELEM(REG_SFX_14);
+		  break;
+	  case 900:
+		  sndno = RANDOM_ELEM(REG_SFX_7);
+		  break;
+	  case 0x4d1:
+	  case 0x528:
+		  sndno = RANDOM_ELEM(REG_SFX_3);
+		  break;
+	  case 0x344:
+		  sndno = RANDOM_ELEM(REG_SFX_13);
+		  break;
+	  case 0x371:
+	  case 0x62f:
+	  case 0x630:
+		  sndno = RANDOM_ELEM(REG_SFX_2);
+		  break;
+	  case 0x2f5:
+		  sndno = RANDOM_ELEM(REG_SFX_9);
+		  break;
+	  case 0x2f6:
+		  sndno = RANDOM_ELEM(REG_SFX_12);
+		  break;
+	  case 0x2f7:
+	  case 0x595:
+		  sndno = RANDOM_ELEM(REG_SFX_11);
+		  break;
+	  case 0x2df:
+		  sndno = RANDOM_ELEM(REG_SFX_6);
+		  break;
+	  case 0x597:
+		  sndno = RANDOM_ELEM(REG_SFX_10);
+		  break;
+	  case 0x5b1:
+		  sndno = RANDOM_ELEM(REG_SFX_15);
+		  break;
+	  case 0x5ff:
+	  case 0x5d7:
+		  sndno = RANDOM_ELEM(REG_SFX_5);
+		  break;
+	  case 0x1b4:
+	  case 0x625:
+		  sndno = RANDOM_ELEM(REG_SFX_4);
+		  break;
+	  case 0x5f0:
+	  case 0x308:
+		  sndno = RANDOM_ELEM(REG_SFX_1);
+		  break;
+	  default:
+		  break;
+	}
+
+	if (sndno != -1 && _lastAttackSound != sndno && _lastLastAttackSound != sndno) {
+		_lastLastAttackSound = _lastAttackSound;
+		_lastAttackSound = sndno;
+		_soundNo = sndno;
+		audio->playSFX(sndno, 0x80, actor->getObjId(), 1);
+	}
+}
+
 void AttackProcess::checkRandomAttackSound(int now, uint32 shapeno) {
-	if (GAME_IS_REGRET)
-		warning("TODO: checkRandomAttackSound: Update for No Regret");
+	if (GAME_IS_REGRET) {
+		checkRandomAttackSoundRegret(getActor(_itemNum));
+		return;
+	}
 	AudioProcess *audio = AudioProcess::get_instance();
 	int16 attacksound = -1;
 	if (!_playedStartSound) {
@@ -764,21 +870,21 @@ void AttackProcess::checkRandomAttackSound(int now, uint32 shapeno) {
 		if (randomOf(3) == 0) {
 			switch(shapeno) {
 				case 0x371:
-					attacksound = RANDOM_ELEM(ATTACK_SFX_3);
+					attacksound = RANDOM_ELEM(REM_SFX_3);
 					break;
 				case 0x1b4:
-					attacksound = RANDOM_ELEM(ATTACK_SFX_5);
+					attacksound = RANDOM_ELEM(REM_SFX_5);
 					break;
 				case 0x2fd:
 				case 0x319:
-					attacksound = RANDOM_ELEM(ATTACK_SFX_1);
+					attacksound = RANDOM_ELEM(REM_SFX_1);
 					break;
 				case 900:
-					attacksound = RANDOM_ELEM(ATTACK_SFX_2);
+					attacksound = RANDOM_ELEM(REM_SFX_2);
 					break;
 				case 0x4d1:
 				case 0x528:
-					attacksound = RANDOM_ELEM(ATTACK_SFX_4);
+					attacksound = RANDOM_ELEM(REM_SFX_4);
 					break;
 				default:
 					break;
@@ -787,9 +893,9 @@ void AttackProcess::checkRandomAttackSound(int now, uint32 shapeno) {
 	} else {
 		if (readyForNextSound(now)) {
 			if (shapeno == 0x2df)
-				attacksound = RANDOM_ELEM(ATTACK_SFX_6);
+				attacksound = RANDOM_ELEM(REM_SFX_6);
 			else if (shapeno == 899)
-				attacksound = RANDOM_ELEM(ATTACK_SFX_7);
+				attacksound = RANDOM_ELEM(REM_SFX_7);
 		}
 	}
 
@@ -811,7 +917,7 @@ bool AttackProcess::checkTimer2PlusDelayElapsed(int now) {
 	int delay = 60;
 	if (_doubleDelay)
 		delay *= 2;
-	return (now > _timer2 + delay);
+	return (now >= _timer2 + delay);
 }
 
 void AttackProcess::setAttackData(uint16 off, uint16 val) {
@@ -837,7 +943,7 @@ void AttackProcess::pathfindToItemInNPCData() {
 	Actor *a = getActor(_itemNum);
 	Actor *target = getActor(_target);
 
-	Process *pathproc = new CruPathfinderProcess(a, target, 12, 0x40, false);
+	Process *pathproc = new CruPathfinderProcess(a, target, 12, 0x80, false);
 	// In case pathfinding fails delay for a bit to ensure we don't get
 	// stuck in a tight loop using all the cpu
 	Process *delayproc = new DelayProcess(10);

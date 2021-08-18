@@ -86,6 +86,8 @@ public:
 
 	virtual bool isReady() const { Common::StackLock lock(_mutex); return _mixerReady; }
 
+	virtual Common::Mutex &mutex() { return _mutex; }
+
 	virtual void playStream(
 		SoundType type,
 		SoundHandle *handle,
@@ -118,6 +120,8 @@ public:
 
 	virtual uint32 getSoundElapsedTime(SoundHandle handle);
 	virtual Timestamp getElapsedTime(SoundHandle handle);
+
+	virtual void loopChannel(SoundHandle handle);
 
 	virtual bool hasActiveChannelOfType(SoundType type);
 

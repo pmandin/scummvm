@@ -23,6 +23,7 @@
 #include "common/stream.h"
 #include "common/textconsole.h"
 #include "graphics/managed_surface.h"
+#include "graphics/macgui/macfontmanager.h"
 #include "graphics/fonts/macfont.h"
 
 #define DEBUGSCALING 0
@@ -89,6 +90,7 @@ MacFontFamily::MacFontFamily() {
 	_ffOffsets = nullptr;
 	_ffNumBBoxes = 0;
 	_ffNumKerns = 0;
+	_ffNumStyleWidths = 0;
 }
 
 MacFontFamily::~MacFontFamily() {
@@ -168,11 +170,31 @@ bool MacFontFamily::load(Common::SeekableReadStream &stream) {
 	}
 
 	if (_ffWTabOff) {
-		// TODO: Read widths table
+		stream.seek(_ffWTabOff);
+
+		_ffNumStyleWidths = stream.readUint16BE() + 1;
+		_ffStyleWidths.resize(_ffNumStyleWidths);
+
+		debug(10, "style widths entries: %d", _ffNumStyleWidths);
+
+		for (uint i = 0; i < _ffNumStyleWidths; i++) {
+			uint size = _ffLastChar - _ffFirstChar + 3;
+			_ffStyleWidths[i]._style = stream.readUint16BE();
+			_ffStyleWidths[i]._widths.resize(size);
+
+			for (uint j = 0; j < size; j++)
+				_ffStyleWidths[i]._widths[j] = stream.readUint16BE();
+		}
 	}
 
 	if (_ffStylOff) {
-		// TODO: Read styles table
+		// looks like this part is not useful for now.
+		// stream.seek(_ffStylOff);
+
+		/*uint16 classFlag =*/ stream.readUint16BE();
+		/*uint8 plainIndex =*/ stream.readSByte();
+		/*uint8 boldIndex =*/ stream.readSByte();
+		/*uint8 italicIndex =*/ stream.readSByte();
 	}
 
 	if (_ffKernOff) {
@@ -203,6 +225,17 @@ bool MacFontFamily::load(Common::SeekableReadStream &stream) {
 	}
 
 	return true;
+ }
+
+ int MacFontFamily::getGlyphWidth(uint style, uint c) {
+	 for (uint i = 0; i < _ffStyleWidths.size(); i++) {
+		 if (_ffKernEntries[i]._style == style) {
+			 if (c < _ffFirstChar || c > _ffLastChar)
+				 return -1;
+			 return _ffStyleWidths[i]._widths[c - _ffFirstChar];
+		 }
+	 }
+	 return -1;
  }
 
  int MacFontFamily::getKerningOffset(uint style, int32 left, uint32 right) const {
@@ -269,6 +302,9 @@ bool MacFONTFont::loadFont(Common::SeekableReadStream &stream, MacFontFamily *fa
 
 	_data._surfHeight = _data._fRectHeight;
 
+	// i use this as a flag to indicate whether the font is generated. see more detail on drawChar.
+	_data._slant = 0; // only used in generated font
+
 	if (getDepth(_data._fontType) != 1) {
 		warning("MacFONTFont: %dbpp fonts are not supported", getDepth(_data._fontType));
 
@@ -329,7 +365,7 @@ bool MacFONTFont::loadFont(Common::SeekableReadStream &stream, MacFontFamily *fa
 		warning("Skipping glyph-width table");
 
 		for (uint16 i = 0; i < glyphCount; i++)
-			stream.readUint16BE();
+			_data._glyphs[i].width1 = stream.readUint16BE();
 	}
 
 	if (_data._fontType & kFontTypeImageHeightTable) {
@@ -348,6 +384,16 @@ int MacFONTFont::getCharWidth(uint32 chr) const {
 	if (!glyph)
 		return _data._maxWidth;
 
+	// this part looks wrong
+	//	if (_data._fontType & kFontTypeGlyphWidthTable) {
+	//		return glyph->width1;
+	//	} else {
+	//		if (_data._family) {
+	//			int width = _data._family->getGlyphWidth(_data._style, chr);
+	//			if (width != -1)
+	//				return (width * 1000L + (1 << 11)) >> 12;
+	//		}
+	//	}
 	return glyph->width;
 }
 
@@ -371,10 +417,29 @@ void MacFONTFont::drawChar(Surface *dst, uint32 chr, int x, int y, uint32 color)
 	uint16 xStart = (x < 0) ? -x : 0;
 	uint16 xStop = glyph->bitmapWidth;
 
+	// due to the way we are handling the generated fonts. we only add the kerning offset for the original font
+	if (!_data._slant)
+		x += glyph->kerningOffset;
+
+	if (x >= dst->w)
+		return;
+
 	if (y + _data._fRectHeight >= dst->h)
 		yStop = dst->h - y;
 	if (x + glyph->bitmapWidth >= dst->w)
 		xStop = dst->w - x;
+
+	// for the underLine font, we need to draw the line at the whole area, which includes the kerning space.
+	if ((_data._slant & kMacFontUnderline) && glyph->kerningOffset) {
+		for (uint16 j = 1; j <= glyph->kerningOffset; j++) {
+			if (dst->format.bytesPerPixel == 1)
+				*((byte *)dst->getBasePtr(x - j, y + _data._ascent + 2)) = color;
+			else if (dst->format.bytesPerPixel == 2)
+				*((uint16 *)dst->getBasePtr(x - j, y + _data._ascent + 2)) = color;
+			else if (dst->format.bytesPerPixel == 4)
+				*((uint32 *)dst->getBasePtr(x - j, y + _data._ascent + 2)) = color;
+		}
+	}
 
 	for (uint16 i = yStart; i < yStop; i++) {
 		byte *srcRow = _data._bitImage + i * _data._rowWords;
@@ -422,8 +487,11 @@ bool dododo;
 static void magnifyGray(Surface *src, int *dstGray, int width, int height, float scale);
 static void makeBold(Surface *src, int *dstGray, MacGlyph *glyph, int height);
 static void makeOutline(Surface *src, Surface *dst, MacGlyph *glyph, int height);
+static void makeItalic(Surface *src, Surface *dst, MacGlyph *glyph, int height);
+static void makeUnderLine(Surface *src, MacGlyph *glyph, int ascent);
+static void makeShadow(Surface *src, Surface *dst, MacGlyph *glyph, int height);
 
-MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bold, bool italic, bool outline) {
+MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, int slant) {
 	if (!src) {
 		warning("Empty font reference in scale font");
 		return NULL;
@@ -455,7 +523,6 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 	data._nDescent = (int)((float)src->_data._nDescent * scale);
 	data._fRectWidth = (int)((float)src->_data._fRectWidth * scale + data._lastChar * 2);
 	data._fRectHeight = (int)((float)src->_data._fRectHeight * scale);
-	data._surfHeight = data._fRectHeight + 2;	// Outline
 	data._owTLoc = src->_data._owTLoc;
 	data._ascent = (int)((float)src->_data._ascent * scale);
 	data._descent = (int)((float)src->_data._descent * scale);
@@ -467,8 +534,32 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 
 	data._glyphs.resize(src->_data._glyphs.size());
 
+	// when we are generating the slant fonts. e.g. italic font, underLine font. we set this. more detail is in drawChar
+	data._slant = slant;
+
+	// update the height, for shadow and outline font, we are drawing the outline, thus we may have 2 more pixel height
+	// for the underLine, we are drawing the line at ascent + 2, so we shall extend the height when we need.
+	if ((slant & kMacFontShadow) || (slant & kMacFontOutline))
+		data._fRectHeight += 2;
+	else if (slant & kMacFontUnderline) {
+		data._fRectHeight = MAX((int)data._fRectHeight, data._ascent + 2);
+	}
+
+	data._surfHeight = data._fRectHeight;
+
 	// Determine width of the bit image table
 	int newBitmapWidth = 0;
+
+	// add the offset which we may use when we are making fonts
+	int bitmapOffset = 2;
+
+	// for italic, we need to calc our self. for shadow, it's 3
+	// for bold and outline, it's 2
+	if (slant & kMacFontItalic)
+		bitmapOffset = (data._fRectHeight - 1) / SLANTDEEP;
+	else if (slant & kMacFontShadow)
+		bitmapOffset++;
+
 	for (uint i = 0; i < src->_data._glyphs.size() + 1; i++) {
 		MacGlyph *glyph = (i == src->_data._glyphs.size()) ? &data._defaultChar : &data._glyphs[i];
 		const MacGlyph *srcglyph = (i == src->_data._glyphs.size()) ? &src->_data._defaultChar : &src->_data._glyphs[i];
@@ -479,13 +570,14 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 		glyph->bitmapOffset = newBitmapWidth;
 
 		// Align width to a byte
-		newBitmapWidth += (glyph->bitmapWidth + 7 + 2) & ~0x7; // Add 2 pixels for italic and bold
+		newBitmapWidth += (glyph->bitmapWidth + 7 + bitmapOffset) & ~0x7;
 	}
 
 	data._rowWords = newBitmapWidth;
 
 	uint bitImageSize = data._rowWords * data._fRectHeight;
 	data._bitImage = new byte[bitImageSize];
+	memset(data._bitImage, 0, bitImageSize * sizeof(byte));
 
 	int dstPitch = data._rowWords;
 
@@ -510,7 +602,7 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 		for (int y = 0; y < data._fRectHeight; y++) {
 			byte *dst = (byte *)srcSurf.getBasePtr(0, y);
 
-			for (int x = 0; x < glyph->width; x++, grayPtr++, dst++) {
+			for (int x = 0; x < glyph->bitmapWidth; x++, grayPtr++, dst++) {
 #if DEBUGSCALING
 				if (i == ccc) {
 					if (*grayPtr)
@@ -530,15 +622,15 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 #endif
 		}
 
-		if (bold) {
+		if (slant & kMacFontBold) {
 			memset(dstGray, 0, dstGraySize * sizeof(int));
 			makeBold(&srcSurf, dstGray, glyph, data._fRectHeight);
 
 			for (uint16 y = 0; y < data._fRectHeight; y++) {
-				int *srcPtr = &dstGray[y * glyph->width];
+				int *srcPtr = &dstGray[y * glyph->bitmapWidth];
 				byte *dstPtr = (byte *)srcSurf.getBasePtr(0, y);
 
-				for (uint16 x = 0; x < glyph->width; x++, srcPtr++, dstPtr++) {
+				for (uint16 x = 0; x < glyph->bitmapWidth; x++, srcPtr++, dstPtr++) {
 					if (*srcPtr)
 						*dstPtr = 1;
 
@@ -555,8 +647,24 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 			}
 		}
 
-		if (outline) {
+		if (slant & kMacFontOutline) {
+			tmpSurf.fillRect(Common::Rect(tmpSurf.w, tmpSurf.h), 0);
 			makeOutline(&srcSurf, &tmpSurf, glyph, data._fRectHeight);
+			srcSurf.copyFrom(tmpSurf);
+		}
+
+		if (slant & kMacFontItalic) {
+			tmpSurf.fillRect(Common::Rect(tmpSurf.w, tmpSurf.h), 0);
+			makeItalic(&srcSurf, &tmpSurf, glyph, data._fRectHeight);
+			srcSurf.copyFrom(tmpSurf);
+		}
+
+		if (slant & kMacFontUnderline)
+			makeUnderLine(&srcSurf, glyph, data._ascent);
+
+		if (slant & kMacFontShadow) {
+			tmpSurf.fillRect(Common::Rect(tmpSurf.w, tmpSurf.h), 0);
+			makeShadow(&srcSurf, &tmpSurf, glyph, data._fRectHeight);
 			srcSurf.copyFrom(tmpSurf);
 		}
 
@@ -567,7 +675,7 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 			byte *srcPtr = (byte *)srcSurf.getBasePtr(0, y);
 			byte b = 0;
 
-			for (int x = 0; x < glyph->width; x++, srcPtr++) {
+			for (int x = 0; x < glyph->bitmapWidth; x++, srcPtr++) {
 				b <<= 1;
 
 				if (*srcPtr == 1)
@@ -589,13 +697,13 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, bool bo
 			}
 #endif
 
-			if (((glyph->width - 1) % 8)) {
+			if (((glyph->bitmapWidth - 1) % 8)) {
 #if DEBUGSCALING
 				if (i == ccc)
 					debugN("  --- %02x (w: %d bw: %d << %d)", b, glyph->width, glyph->bitmapWidth, 7 - ((glyph->width - 1) % 8));
 #endif
 
-				b <<= 7 - ((glyph->width - 1) % 8);
+				b <<= 7 - ((glyph->bitmapWidth - 1) % 8);
 				*dst = b;
 
 #if DEBUGSCALING
@@ -675,15 +783,16 @@ static void magnifyGray(Surface *src, int *dstGray, int width, int height, float
 
 static void makeBold(Surface *src, int *dstGray, MacGlyph *glyph, int height) {
 	glyph->width++;
+	glyph->bitmapWidth++;
 
 	for (uint16 y = 0; y < height; y++) {
 		byte *srcPtr = (byte *)src->getBasePtr(0, y);
-		int *dst = &dstGray[y * glyph->width];
+		int *dst = &dstGray[y * glyph->bitmapWidth];
 
-		for (uint16 x = 0; x < glyph->width; x++, srcPtr++, dst++) {
+		for (uint16 x = 0; x < glyph->bitmapWidth; x++, srcPtr++, dst++) {
 			bool left = x ? *(srcPtr - 1) == 1 : false;
 			bool center = *srcPtr == 1;
-			bool right = x > glyph->width - 1 ? false : *(srcPtr + 1) == 1;
+			bool right = x > glyph->bitmapWidth - 1 ? false : *(srcPtr + 1) == 1;
 
 			bool edge, bold, res;
 
@@ -697,21 +806,96 @@ static void makeBold(Surface *src, int *dstGray, MacGlyph *glyph, int height) {
 }
 
 static void makeOutline(Surface *src, Surface *dst, MacGlyph *glyph, int height) {
-	glyph->width += 2;
-	glyph->height++;
+	glyph->bitmapWidth += 2;
+	glyph->width++;
 
-	for (uint16 y = 0; y < height + 1; y++) {
+	int dx[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
+	int dy[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+	for (uint16 y = 0; y < height + 2; y++) {
 		byte *srcPtr = (byte *)src->getBasePtr(0, y);
-		byte *srcPtr2 = (byte *)src->getBasePtr(0, (y == height ? 0 : y + 1));
 		byte *dstPtr = (byte *)dst->getBasePtr(0, y);
 
-		for (uint16 x = 0; x < glyph->width; x++, dstPtr++) {
-			byte pixX, pixR, pixB;
-			pixX = (x == 0 || x == glyph->width - 2) ? 0 : *srcPtr++;
-			pixB = (x == 0 || x == glyph->width - 2 || y == height) ? 0 : *srcPtr2++;
-			pixR = (x == glyph->width - 1) ? 0 : *srcPtr;
+		for (uint16 x = 0; x < glyph->bitmapWidth; x++, dstPtr++, srcPtr++) {
+			if (*srcPtr)
+				continue;
+			// for every white pixel, if there is black pixel around it. It means that the white pixel is boundary, then we draw it as black pixel.
+			for (int i = 0; i < 8; i++) {
+				int nx = x + dx[i];
+				int ny = y + dy[i];
+				if (nx >= src->w || nx < 0 || ny >= src->h || ny < 0)
+					continue;
 
-			*dstPtr = (pixX ^ pixR) | (pixX ^ pixB);
+				if (*((byte *)src->getBasePtr(nx, ny))) {
+					*dstPtr = 1;
+					break;
+				}
+			}
+		}
+	}
+}
+
+static void makeItalic(Surface *src, Surface *dst, MacGlyph *glyph, int height) {
+	int dw = (height - 1) / SLANTDEEP;
+
+	for (uint16 y = 0; y < height; y++) {
+		int dx = dw - y / SLANTDEEP;
+		byte *srcPtr = (byte *)src->getBasePtr(0, y);
+		byte *dstPtr = (byte *)dst->getBasePtr(dx, y);
+
+		for (uint16 x = 0; x < glyph->width; x++, srcPtr++, dstPtr++) {
+			*dstPtr = *srcPtr;
+		}
+	}
+	glyph->bitmapWidth += dw;
+	glyph->kerningOffset -= dw / 2;
+}
+
+static void makeUnderLine(Surface *src, MacGlyph *glyph, int ascent) {
+	// this case is for space, which has the same number of kerning offset and width.
+	// inorder to draw the underLine for space, we need to disable the kerning offset of it.
+	if (glyph->width == glyph->kerningOffset)
+		glyph->kerningOffset = 0;
+
+	for (int x = 0; x < glyph->width; x++)
+		*((byte *) src->getBasePtr(x, ascent + 2)) = 1;
+}
+
+static void makeShadow(Surface *src, Surface *dst, MacGlyph *glyph, int height) {
+	// makeShadow looks like just the outLine font with one more shadow at right-most edge and lowest edge
+	makeOutline(src, dst, glyph, height);
+	glyph->bitmapWidth++;
+	glyph->width++;
+
+	// right to left
+	for (uint16 y = 0; y < height + 2; y++) {
+		for (int x = dst->w - 1; x >= 0; x--) {
+			byte *dstPtr = (byte *)dst->getBasePtr(x, y);
+			if (*dstPtr)
+				continue;
+
+			// check the left pixel. if it's black, then we black the current one and break.
+			byte *left = (byte *)dst->getBasePtr(MAX(x - 1, 0), y);
+			if (*left) {
+				*dstPtr = 1;
+				break;
+			}
+		}
+	}
+
+	// down to up
+	for (uint16 x = 0; x < glyph->bitmapWidth; x++) {
+		for (int y = dst->h - 1; y >= 0; y--) {
+			byte *dstPtr = (byte *) dst->getBasePtr(x, y);
+
+			if (*dstPtr)
+				continue;
+
+			byte *up = (byte *)dst->getBasePtr(x, MAX(y - 1, 0));
+			if (*up) {
+				*dstPtr = 1;
+				break;
+			}
 		}
 	}
 }

@@ -58,7 +58,7 @@ public:
 	using WinResources::loadFromEXE;
 
 	/** Load from a stream. */
-	bool loadFromEXE(SeekableReadStream *stream);
+	bool loadFromEXE(SeekableReadStream *stream, DisposeAfterUse::Flag disposeFileHandle = DisposeAfterUse::YES);
 
 	/** Return a list of resource types. */
 	const Array<WinResourceID> getTypeList() const;
@@ -78,6 +78,9 @@ public:
 	/** Get a string from a string resource. */
 	String loadString(uint32 stringID);
 
+protected:
+	VersionInfo *parseVersionInfo(SeekableReadStream *stream);
+
 private:
 	struct Section {
 		uint32 virtualAddress;
@@ -88,6 +91,7 @@ private:
 	HashMap<String, Section, IgnoreCase_Hash, IgnoreCase_EqualTo> _sections;
 
 	SeekableReadStream *_exe;
+	DisposeAfterUse::Flag _disposeFileHandle;
 
 	void parseResourceLevel(Section &section, uint32 offset, int level);
 	WinResourceID _curType, _curID, _curLang;

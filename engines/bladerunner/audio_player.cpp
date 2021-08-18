@@ -48,6 +48,9 @@ AudioPlayer::AudioPlayer(BladeRunnerEngine *vm) {
 		_tracks[i].stream = nullptr;
 	}
 
+	// _sfxVolume here sets a percentage to be appied on the specified track volume
+	// before sending it to the audio player
+	// (setting _sfxVolume to 100 renders it indifferent)
 	_sfxVolume = BLADERUNNER_ORIGINAL_SETTINGS ? 65 : 100;
 }
 
@@ -66,7 +69,7 @@ void AudioPlayer::stopAll() {
 	}
 }
 
-void AudioPlayer::adjustVolume(int track, int volume, uint32 delay, bool overrideVolume) {
+void AudioPlayer::adjustVolume(int track, int volume, uint32 delaySeconds, bool overrideVolume) {
 	if (track < 0 || track >= kTracks || !_tracks[track].isActive || _tracks[track].channel == -1) {
 		return;
 	}
@@ -77,21 +80,23 @@ void AudioPlayer::adjustVolume(int track, int volume, uint32 delay, bool overrid
 	}
 
 	_tracks[track].volume = actualVolume;
-	_vm->_audioMixer->adjustVolume(_tracks[track].channel, actualVolume, 60u * delay);
+	_vm->_audioMixer->adjustVolume(_tracks[track].channel, actualVolume, 60u * delaySeconds);
 }
 
-void AudioPlayer::adjustPan(int track, int pan, uint32 delay) {
+void AudioPlayer::adjustPan(int track, int pan, uint32 delaySeconds) {
 	if (track < 0 || track >= kTracks || !_tracks[track].isActive || _tracks[track].channel == -1) {
 		return;
 	}
 
 	_tracks[track].pan = pan;
-	_vm->_audioMixer->adjustPan(_tracks[track].channel, pan, 60u * delay);
+	_vm->_audioMixer->adjustPan(_tracks[track].channel, pan, 60u * delaySeconds);
 }
 
-void AudioPlayer::setVolume(int volume) {
-	_sfxVolume = volume;
-}
+// We no longer set the _sfxVolume (audio player's default volume percent) via a public method
+// It is set in AudioPlayer::AudioPlayer() constructor and keeps its value constant.
+//void AudioPlayer::setVolume(int volume) {
+//	_sfxVolume = volume;
+//}
 
 int AudioPlayer::getVolume() const {
 	return _sfxVolume;
@@ -140,7 +145,7 @@ int AudioPlayer::playAud(const Common::String &name, int volume, int panStart, i
 
 	for (int i = 0; i != kTracks; ++i) {
 		if (!isActive(i)) {
-			//debug ("Assigned track %i to %s", i, name.c_str());
+			//debug("Assigned track %i to %s", i, name.c_str());
 			track = i;
 			break;
 		}
@@ -155,14 +160,14 @@ int AudioPlayer::playAud(const Common::String &name, int volume, int panStart, i
 	 * the new priority
 	 */
 	if (track == -1 && lowestPriority < priority) {
-		//debug ("Stop lowest priority  track (with lower prio: %d %d), for %s %d!", lowestPriorityTrack, lowestPriority, name.c_str(), priority);
+		//debug("Stop lowest priority  track (with lower prio: %d %d), for %s %d!", lowestPriorityTrack, lowestPriority, name.c_str(), priority);
 		stop(lowestPriorityTrack, true);
 		track = lowestPriorityTrack;
 	}
 
 	/* If there's still no available track, give up */
 	if (track == -1) {
-		//debug ("No available track for %s %d - giving up", name.c_str(), priority);
+		//debug("No available track for %s %d - giving up", name.c_str(), priority);
 		return -1;
 	}
 
@@ -171,7 +176,7 @@ int AudioPlayer::playAud(const Common::String &name, int volume, int panStart, i
 	if (!_vm->_audioCache->findByHash(hash)) {
 		Common::SeekableReadStream *r = _vm->getResourceStream(name);
 		if (!r) {
-			//debug ("Could not get stream for %s %d - giving up", name.c_str(), priority);
+			//debug("Could not get stream for %s %d - giving up", name.c_str(), priority);
 			return -1;
 		}
 
@@ -179,7 +184,7 @@ int AudioPlayer::playAud(const Common::String &name, int volume, int panStart, i
 		while (!_vm->_audioCache->canAllocate(size)) {
 			if (!_vm->_audioCache->dropOldest()) {
 				delete r;
-				//debug ("No available mem in cache for %s %d - giving up", name.c_str(), priority);
+				//debug("No available mem in cache for %s %d - giving up", name.c_str(), priority);
 				return -1;
 			}
 		}
@@ -208,12 +213,12 @@ int AudioPlayer::playAud(const Common::String &name, int volume, int panStart, i
 
 	if (channel == -1) {
 		delete audioStream;
-		//debug ("No available channel for %s %d - giving up", name.c_str(), priority);
+		//debug("No available channel for %s %d - giving up", name.c_str(), priority);
 		return -1;
 	}
 
 	if (panStart != panEnd) {
-		_vm->_audioMixer->adjustPan(channel, panEnd, (60 * audioStream->getLength()) / 1000);
+		_vm->_audioMixer->adjustPan(channel, panEnd, (60u * audioStream->getLength()) / 1000u);
 	}
 
 	_tracks[track].isActive = true;
@@ -248,7 +253,9 @@ uint32 AudioPlayer::getLength(int track) const {
 
 void AudioPlayer::stop(int track, bool immediately) {
 	if (isActive(track)) {
-		_vm->_audioMixer->stop(_tracks[track].channel, immediately ? 0 : 60);
+		// If parameter "immediately" is not set,
+		// the delay for audio stop is 1 second (multiplied by 60u as expected by AudioMixer::stop())
+		_vm->_audioMixer->stop(_tracks[track].channel, immediately ? 0u : 60u);
 	}
 }
 

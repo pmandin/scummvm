@@ -41,16 +41,22 @@ private:
 public:
 	priority_queue() {}
 
-	bool empty() const { return _container.empty(); }
+	bool empty() const {
+		return _container.empty();
+	}
 
-	const T &top() const { return _container.front(); }
+	const T &top() const {
+		return _container.front();
+	}
 
 	void push(const T &item) {
 		_container.push_back(item);
 		Common::sort(_container.begin(), _container.end(), _comparitor);
 	}
 
-	void pop() { _container.remove_at(0); }
+	void pop() {
+		_container.remove_at(0);
+	}
 };
 
 } // namespace std

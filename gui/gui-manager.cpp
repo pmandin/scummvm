@@ -53,7 +53,8 @@ namespace GUI {
 enum {
 	kDoubleClickDelay = 500, // milliseconds
 	kCursorAnimateDelay = 250,
-	kTooltipDelay = 1250
+	kTooltipDelay = 1250,
+	kTooltipSameWidgetDelay = 7000
 };
 
 // Constructor
@@ -108,34 +109,25 @@ GuiManager::~GuiManager() {
 void GuiManager::computeScaleFactor() {
 	uint16 w = g_system->getOverlayWidth();
 	uint16 h = g_system->getOverlayHeight();
-	uint scale = g_system->getFeatureState(OSystem::kFeatureHiDPI) ? 2 : 1;
 
-	_baseHeight = 0;	// Clean up from previous iteration
+	_scaleFactor = g_system->getHiDPIScreenFactor();
+	if (ConfMan.hasKey("gui_scale"))
+		_scaleFactor *= ConfMan.getInt("gui_scale") / 100.f;
 
-	if (ConfMan.hasKey("gui_base")) {
-		_baseHeight = ConfMan.getInt("gui_base");
-
-		if (h < _baseHeight)
-			_baseHeight = 0; // Switch to auto for lower resolutions
-	}
-
-	if (_baseHeight == 0) {	// auto
-		if (h < 240 * scale) {	// 320 x 200
-			_baseHeight = MIN<int16>(200, h);
-		} else if (h < 400 * scale) {	// 320 x 240
-			_baseHeight = 240;
-		} else if (h < 480 * scale) {	// 640 x 400
-			_baseHeight = 400;
-		} else if (h < 720 * scale) {	// 640 x 480
-			_baseHeight = 480;
-		} else {				// 960 x 720
-			_baseHeight = 720;
-		}
-	}
-
-	_scaleFactor = (float)h / (float)_baseHeight;
-
+	_baseHeight = (int16)((float)h / _scaleFactor);
 	_baseWidth = (int16)((float)w / _scaleFactor);
+
+	// Never go below 320x200. Our GUI layout is not designed to go below that.
+	if (_baseHeight < 200) {
+		_baseHeight = 200;
+		_scaleFactor = (float)h / (float)_baseHeight;
+		_baseWidth = (int16)((float)w / _scaleFactor);
+	}
+	if (_baseWidth < 320) {
+		_baseWidth = 320;
+		_scaleFactor = (float)w / (float)_baseWidth;
+		_baseHeight = (int16)((float)h / _scaleFactor);
+	}
 
 	if (_theme)
 		_theme->setBaseResolution(_baseWidth, _baseHeight, _scaleFactor);
@@ -286,8 +278,13 @@ void GuiManager::redraw() {
 	// Tanoku: Do not apply shading more than once when opening many dialogs
 	// on top of each other. Screen ends up being too dark and it's a
 	// performance hog.
-	if (_redrawStatus == kRedrawOpenDialog && _dialogStack.size() > 3)
+	if (_redrawStatus == kRedrawOpenDialog && _dialogStack.size() > 2)
 		shading = ThemeEngine::kShadingNone;
+
+	// Reset any custom RTL paddings set by stacked dialogs when we go back to the top
+	if (useRTL() && _dialogStack.size() == 1) {
+		setDialogPaddings(0, 0);
+	}
 
 	switch (_redrawStatus) {
 		case kRedrawCloseDialog:
@@ -440,13 +437,38 @@ void GuiManager::runLoop() {
 				++it;
 		}
 
-		if (_lastMousePosition.time + kTooltipDelay < _system->getMillis(true)) {
+		// Handle tooltip for the widget under the mouse cursor.
+		// 1. Only try to show a tooltip if the mouse cursor was actually moved
+		//    and sufficient time (kTooltipDelay) passed since mouse cursor rested in-place.
+		//    Note, Dialog objects acquiring or losing focus lead to a _lastMousePosition update,
+		//    which may lead to a change of its time and x,y coordinate values.
+		//    See: GuiManager::giveFocusToDialog()
+		//    We avoid updating _lastMousePosition when giving focus to the Tooltip object
+		//    by having the Tooltip objects set a false value for their (inherited) member
+		//    var _mouseUpdatedOnFocus (in Tooltip::setup()).
+		//    However, when the tooltip loses focus, _lastMousePosition will be updated.
+		//    If the mouse had stayed in the same position in the meantime,
+		//    then at the time of the tooltip losing focus
+		//    the _lastMousePosition.time will be new, but the x,y cordinates
+		//    will be the same as the stored ones in _lastTooltipShown.
+		// 2. If the mouse was moved but ended on the same (tooltip enabled) widget,
+		//    then delay showing the tooltip based on the value of kTooltipSameWidgetDelay.
+		uint32 systemMillisNowForTooltipCheck = _system->getMillis(true);
+		if ((_lastTooltipShown.x != _lastMousePosition.x || _lastTooltipShown.y != _lastMousePosition.y)
+		    && _lastMousePosition.time + kTooltipDelay < systemMillisNowForTooltipCheck) {
 			Widget *wdg = activeDialog->findWidget(_lastMousePosition.x, _lastMousePosition.y);
-			if (wdg && wdg->hasTooltip() && !(wdg->getFlags() & WIDGET_PRESSED)) {
-				Tooltip *tooltip = new Tooltip();
-				tooltip->setup(activeDialog, wdg, _lastMousePosition.x, _lastMousePosition.y);
-				tooltip->runModal();
-				delete tooltip;
+			if (wdg && wdg->hasTooltip() && !(wdg->getFlags() & WIDGET_PRESSED)
+			    && (_lastTooltipShown.wdg != wdg || _lastTooltipShown.time + kTooltipSameWidgetDelay < systemMillisNowForTooltipCheck)) {
+				_lastTooltipShown.time = systemMillisNowForTooltipCheck;
+				_lastTooltipShown.wdg  = wdg;
+				_lastTooltipShown.x = _lastMousePosition.x;
+				_lastTooltipShown.y = _lastMousePosition.y;
+				if (wdg->getType() != kEditTextWidget || activeDialog->getFocusWidget() != wdg) {
+					Tooltip *tooltip = new Tooltip();
+					tooltip->setup(activeDialog, wdg, _lastMousePosition.x, _lastMousePosition.y);
+					tooltip->runModal();
+					delete tooltip;
+				}
 			}
 		}
 
@@ -690,7 +712,9 @@ void GuiManager::giveFocusToDialog(Dialog *dialog) {
 	int16 dialogX = _globalMousePosition.x - dialog->_x;
 	int16 dialogY = _globalMousePosition.y - dialog->_y;
 	dialog->receivedFocus(dialogX, dialogY);
-	setLastMousePos(dialogX, dialogY);
+	if (dialog->isMouseUpdatedOnFocus()) {
+		setLastMousePos(dialogX, dialogY);
+	}
 }
 
 void GuiManager::setLastMousePos(int16 x, int16 y) {
@@ -726,8 +750,6 @@ void GuiManager::initTextToSpeech() {
 		return;
 #ifdef USE_TRANSLATION
 	Common::String currentLanguage = TransMan.getCurrentLanguage();
-	if (currentLanguage == "C")
-		currentLanguage = "en";
 	ttsMan->setLanguage(currentLanguage);
 #endif
 	int volume = (ConfMan.getInt("speech_volume", "scummvm") * 100) / 256;

@@ -71,7 +71,7 @@ SymbianFilesystemNode::SymbianFilesystemNode(const Common::String &path) {
 	TPtrC8 ptr((const unsigned char*)_path.c_str(),_path.size());
 	fname.Copy(ptr);
 
-	if (dynamic_cast<OSystem_SDL_Symbian *>(g_system)->FsSession().Entry(fname, fileAttribs) == KErrNone) {
+	if (FsSession().Entry(fname, fileAttribs) == KErrNone) {
 		_isValid = true;
 		_isDirectory = fileAttribs.IsDir();
 	} else {
@@ -88,7 +88,7 @@ bool SymbianFilesystemNode::exists() const {
 	TFileName fname;
 	TPtrC8 ptr((const unsigned char*) _path.c_str(), _path.size());
 	fname.Copy(ptr);
-	bool fileExists = BaflUtils::FileExists(dynamic_cast<OSystem_SDL_Symbian *> (g_system)->FsSession(), fname);
+	bool fileExists = BaflUtils::FileExists(FsSession(), fname);
 	if (!fileExists) {
 		TParsePtrC parser(fname);
 		if (parser.PathPresent() && parser.Path().Compare(_L("\\")) == KErrNone && !parser.NameOrExtPresent()) {
@@ -122,12 +122,11 @@ AbstractFSNode *SymbianFilesystemNode::getChild(const Common::String &n) const {
 bool SymbianFilesystemNode::getChildren(AbstractFSList &myList, ListMode mode, bool hidden) const {
 	assert(_isDirectory);
 
-	//TODO: honor the hidden flag
+	// TODO: honor the hidden flag.
 
 	if (_isPseudoRoot) {
-		// Drives enumeration
-		// TODO: check if can use static_cast in next release
-		RFs& fs = dynamic_cast<OSystem_SDL_Symbian *>(g_system)->FsSession();
+		// Drives enumeration.
+		RFs &fs = FsSession();
 		TInt driveNumber;
 		TChar driveLetter;
 		TUint driveLetterValue;
@@ -145,7 +144,7 @@ bool SymbianFilesystemNode::getChildren(AbstractFSList &myList, ListMode mode, b
 			driveLetterValue = driveLetter;
 
 			if (volumeInfo.iName.Length() > 0) {
-				driveLabel8.Copy(volumeInfo.iName); // 16 to 8bit des // enabling this line alone gives KERN-EXEC 3 with non-optimized GCC? WHY? grrr
+				driveLabel8.Copy(volumeInfo.iName); // 8bit to 16 des // Enabling this line alone gives KERN-EXEC 3 with non-optimized GCC? WHY? Grrr...
 				driveString8.Format(_L8("Drive %c: (%S)"), driveLetterValue, &driveLabel8);
 			} else {
 				driveString8.Format(_L8("Drive %c:"), driveLetterValue);
@@ -172,8 +171,7 @@ bool SymbianFilesystemNode::getChildren(AbstractFSList &myList, ListMode mode, b
 		if (_path.lastChar() != '\\')
 			fname.Append('\\');
 
-		// TODO: check if can use static_cast in next release
-		if (dynamic_cast<OSystem_SDL_Symbian *>(g_system)->FsSession().GetDir(fname, KEntryAttNormal|KEntryAttDir, 0, dirPtr) == KErrNone) {
+		if (FsSession().GetDir(fname, KEntryAttNormal|KEntryAttDir, 0, dirPtr) == KErrNone) {
 			CleanupStack::PushL(dirPtr);
 			TInt cnt = dirPtr->Count();
 			for (TInt loop = 0; loop < cnt; loop++) {
@@ -191,7 +189,7 @@ bool SymbianFilesystemNode::getChildren(AbstractFSList &myList, ListMode mode, b
 				entry._path +=(char *)nameBuf.PtrZ();
 				entry._isDirectory = fileentry.IsDir();
 
-				// Honor the chosen mode
+				// Honor the chosen mode.
 				if ((mode == Common::FSNode::kListFilesOnly && entry._isDirectory) ||
 					(mode == Common::FSNode::kListDirectoriesOnly && !entry._isDirectory))
 					continue;
@@ -230,7 +228,7 @@ Common::SeekableReadStream *SymbianFilesystemNode::createReadStream() {
 	return SymbianStdioStream::makeFromPath(getPath(), false);
 }
 
-Common::WriteStream *SymbianFilesystemNode::createWriteStream() {
+Common::SeekableWriteStream *SymbianFilesystemNode::createWriteStream() {
 	return SymbianStdioStream::makeFromPath(getPath(), true);
 }
 

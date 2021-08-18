@@ -27,12 +27,13 @@
 //
 //=============================================================================
 
-#ifndef AGS_ENGINE_SCRIPT_SCRIPTAPI_H
-#define AGS_ENGINE_SCRIPT_SCRIPTAPI_H
+#ifndef AGS_ENGINE_SCRIPT_SCRIPT_API_H
+#define AGS_ENGINE_SCRIPT_SCRIPT_API_H
 
+//include <stdarg.h>
 #include "ags/shared/core/types.h"
 #include "ags/engine/ac/runtime_defines.h"
-#include "ags/engine/ac/statobj/agsstaticobject.h"
+#include "ags/engine/ac/statobj/ags_static_object.h"
 #include "ags/shared/debugging/out.h"
 
 namespace AGS3 {
@@ -47,7 +48,7 @@ typedef RuntimeScriptValue ScriptAPIObjectFunction(void *self, const RuntimeScri
 // Uses EITHER sc_args/sc_argc or varg_ptr as parameter list, whichever is not
 // NULL, with varg_ptr having HIGHER priority.
 const char *ScriptSprintf(char *buffer, size_t buf_length, const char *format,
-	const RuntimeScriptValue *sc_args, int32_t sc_argc, va_list *varg_ptr);
+                          const RuntimeScriptValue *sc_args, int32_t sc_argc, va_list *varg_ptr);
 // Sprintf that takes script values as arguments
 inline const char *ScriptSprintf(char *buffer, size_t buf_length, const char *format, const RuntimeScriptValue *args, int32_t argc) {
 	return ScriptSprintf(buffer, buf_length, format, args, argc, nullptr);
@@ -81,7 +82,7 @@ inline const char *ScriptVSprintf(char *buffer, size_t buf_length, const char *f
 	return RuntimeScriptValue()
 
 //-----------------------------------------------------------------------------
-// Calls to ScriptSprintf
+// Calls to ScriptSprintf with automatic translation
 
 #define API_SCALL_SCRIPT_SPRINTF(FUNCTION, PARAM_COUNT) \
 	ASSERT_PARAM_COUNT(FUNCTION, PARAM_COUNT); \
@@ -92,6 +93,15 @@ inline const char *ScriptVSprintf(char *buffer, size_t buf_length, const char *f
 	ASSERT_OBJ_PARAM_COUNT(METHOD, PARAM_COUNT); \
 	char ScSfBuffer[STD_BUFFER_SIZE]; \
 	const char *scsf_buffer = ScriptSprintf(ScSfBuffer, STD_BUFFER_SIZE, get_translation(params[PARAM_COUNT - 1].Ptr), params + PARAM_COUNT, param_count - PARAM_COUNT)
+
+//-----------------------------------------------------------------------------
+// Calls to ScriptSprintf without translation
+
+#define API_SCALL_SCRIPT_SPRINTF_PURE(FUNCTION, PARAM_COUNT) \
+    ASSERT_PARAM_COUNT(FUNCTION, PARAM_COUNT); \
+    char ScSfBuffer[STD_BUFFER_SIZE]; \
+    const char *scsf_buffer = ScriptSprintf(ScSfBuffer, STD_BUFFER_SIZE, params[PARAM_COUNT - 1].Ptr, params + PARAM_COUNT, param_count - PARAM_COUNT)
+
 
 //-----------------------------------------------------------------------------
 // Calls to ScriptSprintfV (unsafe plugin variant)
@@ -274,6 +284,10 @@ inline const char *ScriptVSprintf(char *buffer, size_t buf_length, const char *f
 #define API_SCALL_BOOL_OBJ(FUNCTION, P1CLASS) \
 	ASSERT_PARAM_COUNT(FUNCTION, 1); \
 	return RuntimeScriptValue().SetInt32AsBool(FUNCTION((P1CLASS*)params[0].Ptr))
+
+#define API_SCALL_BOOL_PINT(FUNCTION) \
+    ASSERT_PARAM_COUNT(FUNCTION, 1); \
+    return RuntimeScriptValue().SetInt32AsBool(FUNCTION(params[0].IValue))
 
 #define API_SCALL_BOOL_POBJ_PINT(FUNCTION, P1CLASS) \
 	ASSERT_PARAM_COUNT(FUNCTION, 2); \

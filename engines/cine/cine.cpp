@@ -70,8 +70,6 @@ CineEngine::~CineEngine() {
 	if (getGameType() == Cine::GType_OS) {
 		freeErrmessDat();
 	}
-
-	DebugMan.clearAllDebugChannels();
 }
 
 void CineEngine::syncSoundSettings() {
@@ -102,8 +100,12 @@ Common::Error CineEngine::run() {
 	// Initialize backend
 	initGraphics(320, 200);
 
-	if (g_cine->getGameType() == GType_FW && (g_cine->getFeatures() & GF_CD))
-		checkCD();
+	if (g_cine->getGameType() == GType_FW && (g_cine->getFeatures() & GF_CD)) {
+		if (!existExtractedCDAudioFiles()
+		    && !isDataAndCDAudioReadFromSameCD()) {
+			warnMissingExtractedCDAudio();
+		}
+	}
 
 	if (getPlatform() == Common::kPlatformDOS) {
 		g_sound = new PCSound(_mixer, this);

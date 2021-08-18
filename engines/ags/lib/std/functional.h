@@ -39,6 +39,18 @@ struct binary_function { // base class for binary functions
 	using result_type = _Result;
 };
 
+template <typename _Fty>
+struct function {
+	_Fty *_fn;
+
+	function() : _fn(nullptr) {}
+	function(_Fty *fn) : _fn(fn) {}
+
+	operator _Fty &() {
+		return *_fn;
+	}
+};
+
 } // namespace std
 } // namespace AGS3
 

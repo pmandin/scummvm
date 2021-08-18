@@ -24,7 +24,7 @@
 #define AGS_PLUGINS_AGS_SPRITE_FONT_SPR_FONT_RENDERER_H
 
 #include "ags/plugins/ags_sprite_font/sprite_font.h"
-#include "ags/plugins/agsplugin.h"
+#include "ags/plugins/ags_plugin.h"
 #include "ags/lib/std/vector.h"
 
 namespace AGS3 {
@@ -32,9 +32,16 @@ namespace Plugins {
 namespace AGSSpriteFont {
 
 class SpriteFontRenderer : public IAGSFontRenderer {
+protected:
+	IAGSEngine *_engine;
+	SpriteFont *getFontFor(int fontNum);
+	void Draw(BITMAP *src, BITMAP *dest, int destx, int desty, int srcx, int srcy, int width, int height);
+	std::vector<SpriteFont *> _fonts;
+
 public:
 	SpriteFontRenderer(IAGSEngine *engine);
-	virtual ~SpriteFontRenderer(void);
+	virtual ~SpriteFontRenderer();
+
 	bool LoadFromDisk(int fontNumber, int fontSize) override {
 		return true;
 	}
@@ -46,12 +53,6 @@ public:
 	void AdjustYCoordinateForFont(int *ycoord, int fontNumber) override { }
 	void EnsureTextValidForFont(char *text, int fontNumber) override;
 	void SetSpriteFont(int fontNum, int sprite, int rows, int columns, int charWidth, int charHeight, int charMin, int charMax, bool use32bit);
-
-protected:
-	SpriteFont *getFontFor(int fontNum);
-	void Draw(BITMAP *src, BITMAP *dest, int destx, int desty, int srcx, int srcy, int width, int height);
-	std::vector<SpriteFont * > _fonts;
-	IAGSEngine *_engine;
 };
 
 } // namespace AGSSpriteFont

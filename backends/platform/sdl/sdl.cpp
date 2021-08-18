@@ -72,22 +72,6 @@
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 #include <SDL_clipboard.h>
 #endif
-struct LegacyGraphicsMode {
-	const char *name;
-	const char *oldName;
-};
-
-// Table for using old names for scalers in the configuration
-// to keep compatibility with old config files.
-static const LegacyGraphicsMode s_legacyGraphicsModes[] = {
-	{ "supereagle2x", "supereagle" },
-	{ "dotmatrix2x", "dotmatrix" },
-	{ "sai2x", "2xsai" },
-	{ "normal1x", "1x" },
-	{ "normal2x", "2x" },
-	{ "normal3x", "3x" },
-	{ "supersai2x", "super2xsai" },
-};
 
 OSystem_SDL::OSystem_SDL()
 	:
@@ -253,30 +237,7 @@ void OSystem_SDL::initBackend() {
 	}
 
 	// Search for legacy gfx_mode and replace it
-	if (ConfMan.hasKey("gfx_mode")) {
-		Common::String gfxMode(ConfMan.get("gfx_mode"));
-		for (uint i = 0; i < ARRAYSIZE(s_legacyGraphicsModes); ++i) {
-			if (gfxMode == s_legacyGraphicsModes[i].oldName) {
-				ConfMan.set("gfx_mode", s_legacyGraphicsModes[i].name);
-				break;
-			}
-		}
-	}
-	// Look in all game domains as well
-#if 0
-	Common::ConfigManager::DomainMap &dm = ConfMan.getGameDomains();
-	for (Common::ConfigManager::DomainMap::iterator domain = dm.begin(); domain != dm.end(); ++domain) {
-		Common::ConfigManager::Domain::const_iterator gm = domain->_value.find("gfx_mode");
-		if (gm != domain->_value.end()) {
-			for (uint i = 0; i < ARRAYSIZE(s_legacyGraphicsModes); ++i) {
-				if (gm->_value == s_legacyGraphicsModes[i].oldName) {
-					gm->_value = s_legacyGraphicsModes[i].name;
-					break;
-				}
-			}
-		}
-	}
-#endif
+	ScalerMan.updateOldSettings();
 
 	if (_graphicsManager == 0) {
 #ifdef USE_OPENGL
@@ -288,9 +249,17 @@ void OSystem_SDL::initBackend() {
 		// subclass does not want any switching of graphics managers anyway.
 		setupGraphicsModes();
 
-		if (ConfMan.hasKey("gfx_mode")) {
+		Common::String gfxMode(ConfMan.get("gfx_mode"));
+		// "normal" and "default" are a special case for the default graphics mode.
+		// See OSystem::setGraphicsMode(const char *name) implementation.
+		if (gfxMode.empty() || !gfxMode.compareToIgnoreCase("normal") || !gfxMode.compareToIgnoreCase("default")) {
+			// If the default GraphicsManager is OpenGL, create the OpenGL graphics manager
+			if (getDefaultGraphicsManager() == GraphicsManagerOpenGL) {
+				_graphicsManager = new OpenGLSdlGraphicsManager(_eventSource, _window);
+				_graphicsMode = _defaultGLMode;
+			}
+		} else {
 			// If the gfx_mode is from OpenGL, create the OpenGL graphics manager
-			Common::String gfxMode(ConfMan.get("gfx_mode"));
 			for (uint i = _firstGLMode; i < _graphicsModeIds.size(); ++i) {
 				if (!scumm_stricmp(_graphicsModes[i].name, gfxMode.c_str())) {
 					_graphicsManager = new OpenGLSdlGraphicsManager(_eventSource, _window);
@@ -604,16 +573,17 @@ Common::String OSystem_SDL::getSystemLanguage() const {
 	// Detect the language from the locale
 	if (locale.empty()) {
 		return BaseBackend::getSystemLanguage();
+	} else if (locale == "C" || locale == "POSIX") {
+		return "en_US";
 	} else {
 		int length = 0;
 
-		// Strip out additional information, like
-		// ".UTF-8" or the like. We do this, since
-		// our translation languages are usually
-		// specified without any charset information.
+		// Assume the locale is in the form language[_territory[.codeset]][@modifier].
+		// On macOS the format is different (it looks like C/UTF-8/C/C/C/C), but we
+		// have a different implementation of getSystemLanguage for macOS anyway, so
+		// we don't have to handle it here.
+		// Strip out additional information, like ".UTF-8" or the like.
 		for (int size = locale.size(); length < size; ++length) {
-			// TODO: Check whether "@" should really be checked
-			// here.
 			if (locale[length] == '.' || locale[length] == ' ' || locale[length] == '@')
 				break;
 		}
@@ -647,6 +617,26 @@ bool OSystem_SDL::setTextInClipboard(const Common::U32String &text) {
 	Common::String utf8Text = text.encode();
 	return SDL_SetClipboardText(utf8Text.c_str()) == 0;
 }
+
+void OSystem_SDL::messageBox(LogMessageType::Type type, const char *message) {
+	Uint32 flags = 0;
+
+	switch (type) {
+	case LogMessageType::kError:
+		flags = SDL_MESSAGEBOX_ERROR;
+		break;
+	case LogMessageType::kWarning:
+		flags = SDL_MESSAGEBOX_WARNING;
+		break;
+	case LogMessageType::kInfo:
+	case LogMessageType::kDebug:
+	default:
+		flags = SDL_MESSAGEBOX_INFORMATION;
+		break;
+	}
+
+	SDL_ShowSimpleMessageBox(flags, "ScummVM", message, _window ? _window->getSDLWindow() : nullptr);
+}
 #endif
 
 #if SDL_VERSION_ATLEAST(2, 0, 14)
@@ -677,7 +667,7 @@ void OSystem_SDL::delayMillis(uint msecs) {
 		SDL_Delay(msecs);
 }
 
-void OSystem_SDL::getTimeAndDate(TimeDate &td) const {
+void OSystem_SDL::getTimeAndDate(TimeDate &td, bool skipRecord) const {
 	time_t curTime = time(0);
 	struct tm t = *localtime(&curTime);
 	td.tm_sec = t.tm_sec;
@@ -687,6 +677,10 @@ void OSystem_SDL::getTimeAndDate(TimeDate &td) const {
 	td.tm_mon = t.tm_mon;
 	td.tm_year = t.tm_year;
 	td.tm_wday = t.tm_wday;
+
+#ifdef ENABLE_EVENTRECORDER
+	g_eventRec.processTimeAndDate(td, skipRecord);
+#endif
 }
 
 MixerManager *OSystem_SDL::getMixerManager() {
@@ -746,8 +740,8 @@ int OSystem_SDL::getDefaultGraphicsMode() const {
 	if (_graphicsModes.empty()) {
 		return _graphicsManager->getDefaultGraphicsMode();
 	} else {
-		// Return the default graphics mode from the current graphics manager
-		if (_graphicsMode < _firstGLMode)
+		// Return the default graphics mode
+		if (getDefaultGraphicsManager() == GraphicsManagerSDL)
 			return _defaultSDLMode;
 		else
 			return _defaultGLMode;

@@ -53,6 +53,9 @@ struct color {
 
 	void readFromFile(AGS::Shared::Stream *file);
 	void writeToFile(AGS::Shared::Stream *file) const;
+	void clear() {
+		r = g = b = filler = 0;
+	}
 } PACKED_STRUCT;
 
 typedef color RGB;
@@ -84,7 +87,6 @@ enum BlenderMode {
 AL_ARRAY(const int, _rgb_scale_5);
 AL_ARRAY(const int, _rgb_scale_6);
 
-AL_FUNC(void, set_color, (int idx, AL_CONST RGB *p));
 AL_FUNC(void, set_palette, (AL_CONST PALETTE p));
 AL_FUNC(void, set_palette_range, (AL_CONST PALETTE p, int from, int to, int retracesync));
 

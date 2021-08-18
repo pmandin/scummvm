@@ -170,8 +170,6 @@ void TestbedEngine::pushTestsuites(Common::Array<Testsuite *> &testsuiteList) {
 
 TestbedEngine::~TestbedEngine() {
 	ConfParams.deleteWriteStream();
-	// Remove all of our debug levels here
-	DebugMan.clearAllDebugChannels();
 
 	for (Common::Array<Testsuite *>::const_iterator i = _testsuiteList.begin(); i != _testsuiteList.end(); ++i) {
 		delete (*i);
@@ -197,7 +195,7 @@ void TestbedEngine::invokeTestsuites(TestbedConfigManager &cfMan) {
 			(*iter)->execute();
 		}
 		if ((*iter)->getNumTests() == (*iter)->getNumTestsPassed()) {
-			AchMan.setAchievement((*iter)->getName(), (*iter)->getDescription());
+			AchMan.setAchievement((*iter)->getName());
 			checkForAllAchievements();
 		}
 	}
@@ -210,7 +208,7 @@ void TestbedEngine::checkForAllAchievements() {
 			return;
 		}
 	}
-	AchMan.setAchievement("EVERYTHINGWORKS", "Everything works!");
+	AchMan.setAchievement("EVERYTHINGWORKS");
 }
 
 Common::Error TestbedEngine::run() {
@@ -223,7 +221,10 @@ Common::Error TestbedEngine::run() {
 	initGraphics(320, 200);
 
 	// Initialize achievements manager
-	AchMan.setActiveDomain(Common::UNK_ACHIEVEMENTS, "testbed");
+	Common::AchievementsInfo info;
+	info.platform = Common::UNK_ACHIEVEMENTS;
+	info.appId = "testbed";
+	AchMan.setActiveDomain(info);
 
 	// As of now we are using GUI::MessageDialog for interaction, Test if it works.
 	// interactive mode could also be modified by a config parameter "non-interactive=1"

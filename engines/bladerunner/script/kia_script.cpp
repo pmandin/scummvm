@@ -484,6 +484,10 @@ void KIAScript::SCRIPT_KIA_DLL_Play_Clue_Asset_Script(int notUsed, int clueId) {
 	case kClueDektorasCard:
 		KIA_Play_Slice_Model(kModelAnimationDektorasCard);
 		break;
+	case kClueCrazysInvolvement:
+		// RESTORED CONTENT
+		KIA_Play_Slice_Model(kModelAnimationLetter);
+		break;
 	case kClueGrigoriansNote:
 		KIA_Play_Slice_Model(kModelAnimationGrigoriansNote);
 		break;
@@ -916,7 +920,7 @@ void KIAScript::SCRIPT_KIA_DLL_Play_Clue_Asset_Script(int notUsed, int clueId) {
 		KIA_Play_Photograph(1);
 		KIA_Play_Actor_Dialogue(kActorVoiceOver, 4260);
 		break;
-	case kClueClovisflowers:
+	case kClueClovisFlowers:
 		KIA_Play_Photograph(3);
 		KIA_Play_Actor_Dialogue(kActorVoiceOver, 4230);
 		break;

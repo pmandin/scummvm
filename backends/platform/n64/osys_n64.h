@@ -169,7 +169,7 @@ public:
 	virtual void hideOverlay();
 	virtual bool isOverlayVisible() const { return _overlayVisible; }
 	virtual void clearOverlay();
-	virtual void grabOverlay(void *buf, int pitch);
+	virtual void grabOverlay(Graphics::Surface &surface);
 	virtual void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h);
 	virtual int16 getOverlayHeight();
 	virtual int16 getOverlayWidth();
@@ -195,7 +195,7 @@ public:
 	virtual void quit();
 
 	virtual Audio::Mixer *getMixer();
-	virtual void getTimeAndDate(TimeDate &t) const;
+	virtual void getTimeAndDate(TimeDate &t, bool skipRecord = false) const;
 	virtual void setTimerCallback(TimerProc callback, int interval);
 	virtual void logMessage(LogMessageType::Type type, const char *message);
 

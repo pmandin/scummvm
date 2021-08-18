@@ -80,7 +80,7 @@ SuperSpriteProcess::SuperSpriteProcess(int shape, int frame, int sx, int sy, int
 			Actor *srcnpc = dynamic_cast<Actor *>(srcitem);
 			Actor *controlled = getControlledActor();
 			const uint32 frameno = Kernel::get_instance()->getFrameNum();
-			const uint32 timeoutfinish = controlled ? controlled->getAttackMoveTimeoutFinish() : 0;
+			const uint32 timeoutfinish = controlled ? controlled->getAttackMoveTimeoutFinishFrame() : 0;
 			if (!srcnpc || !srcnpc->getAttackAimFlag()) {
 				if (!srcnpc || frameno < timeoutfinish) {
 					if (!srcnpc && (controlled && controlled->isKneeling())) {
@@ -414,11 +414,18 @@ void SuperSpriteProcess::advanceFrame() {
 		Item *sprite = getItem(_spriteNo);
 		assert(sprite);
 		sprite->move(_nextpt);
+		uint32 frame = sprite->getFrame() + 1;
 		if (_fireType == 0xe) {
-			uint32 frame = sprite->getFrame();
-			frame++;
 			if (frame > 0x4b)
 				frame = 0x47;
+			sprite->setFrame(frame);
+		} else if (_fireType == 0x11) { // No Regret only
+			if (frame % 6 == 0)
+				frame = frame - 5;
+			sprite->setFrame(frame);
+		} else if (_fireType == 0x14) { // No Regret only
+			if ((frame - 0xdb) % 3 == 0)
+				frame = frame - 2;
 			sprite->setFrame(frame);
 		}
 	}
@@ -486,7 +493,7 @@ bool SuperSpriteProcess::loadData(Common::ReadStream *rs, uint32 version) {
 	if (!Process::loadData(rs, version)) return false;
 
 	_shape = static_cast<int>(rs->readUint32LE());
-	_frame = rs->readUint16LE();
+	_frame = rs->readUint32LE();
 	_nowpt.loadData(rs, version);
 	_nextpt.loadData(rs, version);
 	_pt3.loadData(rs, version);

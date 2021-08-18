@@ -23,9 +23,8 @@
 #ifndef DIRECTOR_LINGO_OBJECT_H
 #define DIRECTOR_LINGO_OBJECT_H
 
-// FIXME: Basic Lingo types like Datum should probably be in a separate, smaller header
+#include "director/director.h"
 #include "director/lingo/lingo.h"
-#include "director/lingo/lingo-gr.h"
 
 namespace Director {
 
@@ -87,6 +86,11 @@ protected:
 
 public:
 	static void initMethods(MethodProto protos[]) {
+		if (_methods) {
+			warning("Object::initMethods: Methods already initialized");
+			return;
+		}
+
 		_methods = new SymbolHash;
 		for (MethodProto *mtd = protos; mtd->name; mtd++) {
 			if (mtd->version > g_lingo->_vm->getVersion())
@@ -188,7 +192,6 @@ SymbolHash *Object<Derived>::_methods = nullptr;
 
 class ScriptContext : public Object<ScriptContext> {
 public:
-	LingoArchive *_archive;
 	ScriptType _scriptType;
 	int _id;
 	Common::Array<Common::String> _functionNames; // used by cb_localcall
@@ -199,7 +202,7 @@ public:
 	Common::HashMap<uint32, Datum> _objArray;
 
 public:
-	ScriptContext(Common::String name, LingoArchive *archive = nullptr, ScriptType type = kNoneScript, int id = 0);
+	ScriptContext(Common::String name, ScriptType type = kNoneScript, int id = 0);
 	ScriptContext(const ScriptContext &sc);
 	~ScriptContext() override;
 
@@ -212,7 +215,7 @@ public:
 	Datum getProp(const Common::String &propName) override;
 	bool setProp(const Common::String &propName, const Datum &value) override;
 
-	Symbol define(Common::String &name, int nargs, ScriptData *code, Common::Array<Common::String> *argNames, Common::Array<Common::String> *varNames);
+	Symbol define(const Common::String &name, ScriptData *code, Common::Array<Common::String> *argNames, Common::Array<Common::String> *varNames);
 };
 
 namespace LM {

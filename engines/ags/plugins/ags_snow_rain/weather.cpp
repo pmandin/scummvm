@@ -49,15 +49,10 @@ void View::syncGame(Serializer &s) {
 
 /*------------------------------------------------------------------*/
 
-Weather::Weather() : _mIsSnow(false) {
+Weather::Weather(bool IsSnow, int32 &scrWidth, int32 &scrHeight, IAGSEngine *&engine) :
+		_mIsSnow(IsSnow), _screenWidth(scrWidth), _screenHeight(scrHeight), _engine(engine) {
 	Initialize();
 }
-
-Weather::Weather(bool IsSnow) : _mIsSnow(IsSnow) {
-	Initialize();
-}
-
-Weather::~Weather() {}
 
 void Weather::Update() {
 	if (_mTargetAmount > _mAmount)
@@ -105,7 +100,7 @@ void Weather::UpdateWithDrift() {
 	for (i = 0; i < _mAmount * 2; i++) {
 		_mParticles[i].y += _mParticles[i].speed;
 		drift = _mParticles[i].drift * sin((float)(_mParticles[i].y +
-			_mParticles[i].drift_offset) * _mParticles[i].drift_speed * 2.0f * PI / 360.0f);
+		                                   _mParticles[i].drift_offset) * _mParticles[i].drift_speed * 2.0f * PI / 360.0f);
 
 		if (signum(_mWindSpeed) == signum(drift))
 			_mParticles[i].x += _mWindSpeed;

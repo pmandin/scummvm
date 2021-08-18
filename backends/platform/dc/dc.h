@@ -142,7 +142,7 @@ public:
   void delayMillis(uint msecs);
 
   // Get the current time and date. Correspond to time()+localtime().
-  void getTimeAndDate(TimeDate &t) const;
+  void getTimeAndDate(TimeDate &td, bool skipRecord = false) const;
 
   // Get the next event.
   // Returns true if an event was retrieved.
@@ -158,7 +158,7 @@ public:
   void showOverlay();
   void hideOverlay();
   void clearOverlay();
-  void grabOverlay(void *buf, int pitch);
+  void grabOverlay(Graphics::Surface &surface);
   void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h);
   virtual Graphics::PixelFormat getOverlayFormat() const { return Graphics::PixelFormat(2, 4, 4, 4, 4, 8, 4, 0, 12); }
 
@@ -179,9 +179,9 @@ public:
   void mouseToSoftKbd(int x, int y, int &rx, int &ry) const;
 
   // Filesystem
-  AbstractFSNode *makeRootFileNode() const;
-  AbstractFSNode *makeCurrentDirectoryFileNode() const;
-  AbstractFSNode *makeFileNodePath(const Common::String &path) const;
+  AbstractFSNode *makeRootFileNode() const override;
+  AbstractFSNode *makeCurrentDirectoryFileNode() const override;
+  AbstractFSNode *makeFileNodePath(const Common::String &path) const override;
 
  private:
 

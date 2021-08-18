@@ -64,10 +64,10 @@ const char *opcodeNames[] = {
 	"SetVariable",
 	"IncrementScriptVariable",
 	"ProcessVariable3",
-	"AddRemoveReactionHive",
+	"AddRemoveInventoryItem",
 	"UNUSED (19)",
 	"UNUSED (20)",
-	"SetCounterFromActorReactions",
+	"SetCounterIfInventoryOmits",
 	"UNUSED (22)",
 	"PrepareMovie",
 	"SetClearGameFlag",
@@ -276,7 +276,7 @@ void Encounter::run(int32 encounterIndex, ObjectId objectId1, ObjectId objectId2
 		_wasPlayerDisabled = true;
 	} else {
 		_wasPlayerDisabled = false;
-		player->updateStatus(kActorStatusDisabled);
+		player->changeStatus(kActorStatusDisabled);
 	}
 
 	_shouldEnablePlayer = false;
@@ -307,7 +307,7 @@ void Encounter::exitEncounter() {
 		_shouldEnablePlayer = true;
 
 	if (getSharedData()->getFlag(kFlagEncounterDisablePlayerOnExit))
-		getScene()->getActor()->updateStatus(kActorStatusDisabled);
+		getScene()->getActor()->changeStatus(kActorStatusDisabled);
 
 	getSharedData()->setFlag(kFlagEncounterDisablePlayerOnExit, false);
 
@@ -483,21 +483,12 @@ bool Encounter::update() {
 }
 
 bool Encounter::key(const AsylumEvent &evt) {
-	switch (evt.kbd.keycode) {
-	default:
-		break;
-
-	case Common::KEYCODE_TAB:
-		getScreen()->takeScreenshot();
-		break;
-
-	case Common::KEYCODE_ESCAPE:
+	if (evt.kbd.keycode == Common::KEYCODE_ESCAPE) {
 		if (!isSpeaking()
 		 && _isDialogOpen
 		 && !getSpeech()->getTextData()
 		 && !getSpeech()->getTextDataPos())
 			_shouldCloseDialog = true;
-		break;
 	}
 
 	return true;
@@ -614,7 +605,7 @@ void Encounter::choose(int32 index) {
 		_value1 = (_item->keywords[index] & KEYWORD_MASK);
 		setVariable(1, _value1);
 
-		if (strcmp("Goodbye", getText()->get(MAKE_RESOURCE(kResourcePackText, 3681 + index))))
+		if (strcmp("Goodbye", getText()->get(MAKE_RESOURCE(kResourcePackText, 3681 + _value1))))
 			if (_index != 79)
 				BYTE1(_item->keywords[index]) |= kKeywordOptionsDisabled;
 
@@ -1242,8 +1233,8 @@ void Encounter::setupEntities(bool type4) {
 	if (_actorIndex) {
 		Actor *actor = getScene()->getActor(_actorIndex);
 
-		if (actor->isDefaultDirection(20))
-			actor->updateStatus(type4 ? kActorStatusDisabled : kActorStatus8);
+		if (actor->canChangeStatus(20))
+			actor->changeStatus(type4 ? kActorStatusDisabled : kActorStatus8);
 
 		return;
 	}
@@ -1631,15 +1622,15 @@ void Encounter::runScript() {
 			}
 			break;
 
-		case kOpcodeAddRemoveReactionHive:
+		case kOpcodeAddRemoveInventoryItem:
 			if (entry.param1)
-				getScene()->getActor()->removeReactionHive(getVariableInv(entry.param2), _scriptData.vars[1]);
+				getScene()->getActor()->inventory.remove(getVariableInv(entry.param2), _scriptData.vars[1]);
 			else
-				getScene()->getActor()->addReactionHive(getVariableInv(entry.param2), _scriptData.vars[1]);
+				getScene()->getActor()->inventory.add(getVariableInv(entry.param2), _scriptData.vars[1]);
 			break;
 
-		case kOpcodeSetCounterFromActorReactions:
-			_scriptData.counter = getScene()->getActor()->hasMoreReactions(getVariableInv(entry.param2), _scriptData.vars[1]) ? 0 : 1;
+		case kOpcodeSetCounterIfInventoryOmits:
+			_scriptData.counter = getScene()->getActor()->inventory.contains(getVariableInv(entry.param2), _scriptData.vars[1]) ? 0 : 1;
 			break;
 
 		case kOpcodePrepareMovie:

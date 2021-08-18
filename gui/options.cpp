@@ -64,6 +64,7 @@
 #endif
 
 #include "graphics/renderer.h"
+#include "graphics/scalerplugin.h"
 
 namespace GUI {
 
@@ -81,6 +82,7 @@ enum {
 	kSavePathClearCmd		= 'clsp',
 	kChooseThemeDirCmd		= 'chth',
 	kThemePathClearCmd		= 'clth',
+	kBrowserPathClearCmd	= 'clbr',
 	kChooseExtraDirCmd		= 'chex',
 	kExtraPathClearCmd		= 'clex',
 	kChoosePluginsDirCmd	= 'chpl',
@@ -90,6 +92,7 @@ enum {
 	kKbdMouseSpeedChanged	= 'kmsc',
 	kJoystickDeadzoneChanged= 'jodc',
 	kGraphicsTabContainerReflowCmd = 'gtcr',
+	kScalerPopUpCmd			= 'scPU',
 	kFullscreenToggled		= 'oful'
 };
 
@@ -131,8 +134,8 @@ static const char *savePeriodLabels[] = { _s("Never"), _s("Every 5 mins"), _s("E
 static const int savePeriodValues[] = { 0, 5 * 60, 10 * 60, 15 * 60, 30 * 60, -1 };
 
 static const char *guiBaseLabels[] = {
-	// I18N: Automatic GUI scaling
-	_s("Auto"),
+	// I18N: Very large GUI scale
+	_s("Very large"),
 	// I18N: Large GUI scale
 	_s("Large"),
 	// I18N: Medium GUI scale
@@ -141,7 +144,7 @@ static const char *guiBaseLabels[] = {
 	_s("Small"),
 	nullptr
 };
-static const int guiBaseValues[] = { 0, 240, 480, 720, -1 };
+static const int guiBaseValues[] = { 150, 125, 100, 75, -1 };
 
 // The keyboard mouse speed values range from 0 to 7 and correspond to speeds shown in the label
 // "10" (value 3) is the default speed corresponding to the speed before introduction of this control
@@ -159,10 +162,6 @@ OptionsDialog::OptionsDialog(const Common::String &domain, const Common::String 
 
 OptionsDialog::~OptionsDialog() {
 	delete _subToggleGroup;
-	if (g_gui.useRTL()) {
-		g_gui.setDialogPaddings(0, 0);
-		g_gui.scheduleTopDialogRedraw();
-	}
 }
 
 void OptionsDialog::init() {
@@ -185,6 +184,9 @@ void OptionsDialog::init() {
 	_renderModePopUpDesc = nullptr;
 	_stretchPopUp = nullptr;
 	_stretchPopUpDesc = nullptr;
+	_scalerPopUp = nullptr;
+	_scalerPopUpDesc = nullptr;
+	_scaleFactorPopUp = nullptr;
 	_fullscreenCheckbox = nullptr;
 	_filteringCheckbox = nullptr;
 	_aspectCheckbox = nullptr;
@@ -348,6 +350,37 @@ void OptionsDialog::build() {
 		} else {
 			_stretchPopUpDesc->setVisible(false);
 			_stretchPopUp->setVisible(false);
+		}
+
+		_scalerPopUp->setSelected(0);
+		_scaleFactorPopUp->setSelected(0);
+
+		if (g_system->hasFeature(OSystem::kFeatureScalers)) {
+			if (ConfMan.hasKey("scaler", _domain)) {
+				const PluginList &scalerPlugins = ScalerMan.getPlugins();
+				Common::String scaler(ConfMan.get("scaler", _domain));
+
+				for (uint scalerIndex = 0; scalerIndex < scalerPlugins.size(); scalerIndex++) {
+					if (scumm_stricmp(scalerPlugins[scalerIndex]->get<ScalerPluginObject>().getName(), scaler.c_str()) != 0)
+						continue;
+
+					_scalerPopUp->setSelectedTag(scalerIndex);
+					updateScaleFactors(scalerIndex);
+
+					if (ConfMan.hasKey("scale_factor", _domain)) {
+						int scaleFactor = ConfMan.getInt("scale_factor", _domain);
+						if (scalerPlugins[scalerIndex]->get<ScalerPluginObject>().hasFactor(scaleFactor))
+							_scaleFactorPopUp->setSelectedTag(scaleFactor);
+					}
+
+					break;
+				}
+
+			}
+		} else {
+			_scalerPopUpDesc->setVisible(false);
+			_scalerPopUp->setVisible(false);
+			_scaleFactorPopUp->setVisible(false);
 		}
 
 		// Fullscreen setting
@@ -587,6 +620,31 @@ void OptionsDialog::apply() {
 					graphicsModeChanged = true;
 			}
 
+			isSet = false;
+			const PluginList &scalerPlugins = ScalerMan.getPlugins();
+			if ((int32)_scalerPopUp->getSelectedTag() >= 0) {
+				const char *name = scalerPlugins[_scalerPopUp->getSelectedTag()]->get<ScalerPluginObject>().getName();
+				if (ConfMan.get("scaler", _domain) != name)
+					graphicsModeChanged = true;
+				ConfMan.set("scaler", name, _domain);
+
+				int factor = _scaleFactorPopUp->getSelectedTag();
+				if (ConfMan.getInt("scale_factor", _domain) != factor)
+					graphicsModeChanged = true;
+				ConfMan.setInt("scale_factor", factor, _domain);
+				isSet = true;
+			}
+			if (!isSet) {
+				ConfMan.removeKey("scaler", _domain);
+				ConfMan.removeKey("scale_factor", _domain);
+
+				uint defaultScaler = g_system->getDefaultScaler();
+				if (g_system->getScaler() != defaultScaler)
+					graphicsModeChanged = true;
+				else if (scalerPlugins[defaultScaler]->get<ScalerPluginObject>().getFactor() != g_system->getDefaultScaleFactor())
+					graphicsModeChanged = true;
+			}
+
 			if (_rendererTypePopUp->getSelectedTag() > 0) {
 				Graphics::RendererType selected = (Graphics::RendererType) _rendererTypePopUp->getSelectedTag();
 				ConfMan.set("renderer", Graphics::getRendererTypeCode(selected), _domain);
@@ -607,6 +665,8 @@ void OptionsDialog::apply() {
 			ConfMan.removeKey("aspect_ratio", _domain);
 			ConfMan.removeKey("gfx_mode", _domain);
 			ConfMan.removeKey("stretch_mode", _domain);
+			ConfMan.removeKey("scaler", _domain);
+			ConfMan.removeKey("scale_factor", _domain);
 			ConfMan.removeKey("render_mode", _domain);
 			ConfMan.removeKey("renderer", _domain);
 			ConfMan.removeKey("antialiasing", _domain);
@@ -647,6 +707,7 @@ void OptionsDialog::apply() {
 		g_system->beginGFXTransaction();
 		g_system->setGraphicsMode(ConfMan.get("gfx_mode", _domain).c_str());
 		g_system->setStretchMode(ConfMan.get("stretch_mode", _domain).c_str());
+		g_system->setScaler(ConfMan.get("scaler", _domain).c_str(), ConfMan.getInt("scale_factor", _domain));
 
 		if (ConfMan.hasKey("aspect_ratio"))
 			g_system->setFeatureState(OSystem::kFeatureAspectRatioCorrection, ConfMan.getBool("aspect_ratio", _domain));
@@ -967,6 +1028,10 @@ void OptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data
 	case kGraphicsTabContainerReflowCmd:
 		setupGraphicsTab();
 		break;
+	case kScalerPopUpCmd:
+		updateScaleFactors(data);
+		g_gui.scheduleTopDialogRedraw();
+		break;
 	case kApplyCmd:
 		apply();
 		break;
@@ -1007,6 +1072,9 @@ void OptionsDialog::setGraphicSettingsState(bool enabled) {
 	_renderModePopUp->setEnabled(enabled);
 	_stretchPopUpDesc->setEnabled(enabled);
 	_stretchPopUp->setEnabled(enabled);
+	_scalerPopUpDesc->setEnabled(enabled);
+	_scalerPopUp->setEnabled(enabled);
+	_scaleFactorPopUp->setEnabled(enabled);
 	_vsyncCheckbox->setEnabled(enabled);
 	_filteringCheckbox->setEnabled(enabled);
 	_rendererTypePopUpDesc->setEnabled(enabled);
@@ -1189,31 +1257,29 @@ void OptionsDialog::addKeyMapperControls(GuiObject *boss, const Common::String &
 	_keymapperWidget = new Common::RemapWidget(boss, prefix + "Container", keymaps);
 }
 
-void OptionsDialog::addAchievementsControls(GuiObject *boss, const Common::String &prefix, const Common::AchievementsInfo &info) {
-	Common::String achDomainId = ConfMan.get("achievements", _domain);
-	AchMan.setActiveDomain(info.platform, info.appId);
-
+void OptionsDialog::addAchievementsControls(GuiObject *boss, const Common::String &prefix) {
 	GUI::ScrollContainerWidget *scrollContainer;
 	scrollContainer = new GUI::ScrollContainerWidget(boss, prefix + "Container", "");
 	scrollContainer->setBackgroundType(GUI::ThemeEngine::kWidgetBackgroundNo);
 
 	uint16 nAchieved = 0;
 	uint16 nHidden = 0;
-	uint16 nMax = info.descriptions.size();
+	uint16 nMax = AchMan.getAchievementCount();
 
 	uint16 lineHeight = g_gui.xmlEval()->getVar("Globals.Line.Height");
 	uint16 yStep = lineHeight;
-	uint16 ySmallStep = yStep/3;
-	uint16 yPos = lineHeight + yStep*3;
+	uint16 ySmallStep = yStep / 3;
+	uint16 yPos = lineHeight + yStep * 3;
 	uint16 progressBarWidth = 240;
 	uint16 width = g_system->getOverlayWidth() <= 320 ? 240 : 410;
-	uint16 descrDelta = g_system->getOverlayWidth() <= 320 ? 25 : 30;
+	uint16 commentDelta = g_system->getOverlayWidth() <= 320 ? 25 : 30;
 
 	for (int16 viewAchieved = 1; viewAchieved >= 0; viewAchieved--) {
 		// run this twice, first view all achieved, then view all non-hidden & non-achieved
 
 		for (uint16 idx = 0; idx < nMax ; idx++) {
-			int16 isAchieved = AchMan.isAchieved(info.descriptions[idx].id) ? 1 : 0;
+			const Common::AchievementDescription *descr = AchMan.getAchievementDescription(idx);
+			int16 isAchieved = AchMan.isAchieved(descr->id) ? 1 : 0;
 
 			if (isAchieved != viewAchieved) {
 				continue;
@@ -1223,19 +1289,19 @@ void OptionsDialog::addAchievementsControls(GuiObject *boss, const Common::Strin
 				nAchieved++;
 			}
 
-			if (!isAchieved && info.descriptions[idx].isHidden) {
+			if (!isAchieved && descr->isHidden) {
 				nHidden++;
 				continue;
 			}
 
 			CheckboxWidget *checkBox;
-			checkBox = new CheckboxWidget(scrollContainer, lineHeight, yPos, width, yStep, Common::U32String(info.descriptions[idx].title));
+			checkBox = new CheckboxWidget(scrollContainer, lineHeight, yPos, width, yStep, Common::U32String(descr->title));
 			checkBox->setEnabled(false);
 			checkBox->setState(isAchieved);
 			yPos += yStep;
 
-	        if (info.descriptions[idx].comment && strlen(info.descriptions[idx].comment) > 0) {
-				new StaticTextWidget(scrollContainer, lineHeight + descrDelta, yPos, width - descrDelta, yStep, Common::U32String(info.descriptions[idx].comment), Graphics::kTextAlignStart, Common::U32String(), ThemeEngine::kFontStyleNormal);
+	        if (!descr->comment.empty()) {
+				new StaticTextWidget(scrollContainer, lineHeight + commentDelta, yPos, width - commentDelta, yStep, Common::U32String(descr->comment), Graphics::kTextAlignStart, Common::U32String(), ThemeEngine::kFontStyleNormal);
 				yPos += yStep;
 			}
 
@@ -1258,6 +1324,33 @@ void OptionsDialog::addAchievementsControls(GuiObject *boss, const Common::Strin
 		progressBar->setValue(nAchieved);
 		progressBar->setMaxValue(nMax);
 		progressBar->setEnabled(false);
+	}
+}
+
+void OptionsDialog::addStatisticsControls(GuiObject *boss, const Common::String &prefix) {
+	GUI::ScrollContainerWidget *scrollContainer;
+	scrollContainer = new GUI::ScrollContainerWidget(boss, prefix + "Container", "");
+	scrollContainer->setBackgroundType(GUI::ThemeEngine::kWidgetBackgroundNo);
+
+	uint16 nMax = AchMan.getStatCount();
+
+	uint16 lineHeight = g_gui.xmlEval()->getVar("Globals.Line.Height");
+	uint16 yStep = lineHeight;
+	uint16 ySmallStep = yStep / 3;
+	uint16 yPos = lineHeight;
+	uint16 width = g_system->getOverlayWidth() <= 320 ? 240 : 410;
+
+	for (uint16 idx = 0; idx < nMax ; idx++) {
+		const Common::StatDescription *descr = AchMan.getStatDescription(idx);
+
+		const Common::String &key = descr->comment.empty() ? descr->id : descr->comment;
+		Common::String value = AchMan.getStatRaw(descr->id);
+
+		Common::U32String str = Common::U32String::format("%s: %s", key.c_str(), value.c_str());
+		new StaticTextWidget(scrollContainer, lineHeight, yPos, width, yStep, str, Graphics::kTextAlignStart);
+
+		yPos += yStep;
+		yPos += ySmallStep;
 	}
 }
 
@@ -1327,6 +1420,20 @@ void OptionsDialog::addGraphicControls(GuiObject *boss, const Common::String &pr
 		_stretchPopUp->appendEntry(_c(sm->description, context), sm->id);
 		sm++;
 	}
+
+	// The Scaler popup
+	const PluginList &scalerPlugins = ScalerMan.getPlugins();
+	_scalerPopUpDesc = new StaticTextWidget(boss, prefix + "grScalerPopupDesc", _("Scaler:"));
+	_scalerPopUp = new PopUpWidget(boss, prefix + "grScalerPopup", Common::U32String(), kScalerPopUpCmd);
+
+	_scalerPopUp->appendEntry(_("<default>"));
+	_scalerPopUp->appendEntry(Common::U32String());
+	for (uint scalerIndex = 0; scalerIndex < scalerPlugins.size(); scalerIndex++) {
+		_scalerPopUp->appendEntry(_c(scalerPlugins[scalerIndex]->get<ScalerPluginObject>().getPrettyName(), context), scalerIndex);
+	}
+
+	_scaleFactorPopUp = new PopUpWidget(boss, prefix + "grScaleFactorPopup");
+	updateScaleFactors(_scalerPopUp->getSelectedTag());
 
 	// Fullscreen checkbox
 	_fullscreenCheckbox = new CheckboxWidget(boss, prefix + "grFullscreenCheckbox", _("Fullscreen mode"), Common::U32String(), kFullscreenToggled);
@@ -1697,6 +1804,33 @@ void OptionsDialog::setupGraphicsTab() {
 	_aspectCheckbox->setVisible(true);
 	_renderModePopUpDesc->setVisible(true);
 	_renderModePopUp->setVisible(true);
+
+	if (g_system->hasFeature(OSystem::kFeatureScalers)) {
+		_scalerPopUpDesc->setVisible(true);
+		_scalerPopUp->setVisible(true);
+		_scaleFactorPopUp->setVisible(true);
+	} else {
+		_scalerPopUpDesc->setVisible(false);
+		_scalerPopUp->setVisible(false);
+		_scaleFactorPopUp->setVisible(false);
+	}
+}
+
+void OptionsDialog::updateScaleFactors(uint32 tag) {
+	if ((int32)tag >= 0) {
+		const PluginList &scalerPlugins = ScalerMan.getPlugins();
+		const Common::Array<uint> &factors = scalerPlugins[tag]->get<ScalerPluginObject>().getFactors();
+
+		_scaleFactorPopUp->clearEntries();
+		for (Common::Array<uint>::const_iterator it = factors.begin(); it != factors.end(); it++) {
+			_scaleFactorPopUp->appendEntry(Common::U32String::format("%dx", (*it)), (*it));
+		}
+		_scaleFactorPopUp->setSelectedTag(scalerPlugins[tag]->get<ScalerPluginObject>().getFactor());
+	} else {
+		_scaleFactorPopUp->clearEntries();
+		_scaleFactorPopUp->appendEntry(_("<default>"));
+		_scaleFactorPopUp->setSelected(0);
+	}
 }
 
 #pragma mark -
@@ -1717,6 +1851,8 @@ GlobalOptionsDialog::GlobalOptionsDialog(LauncherDialog *launcher)
 	_pluginsPath = nullptr;
 	_pluginsPathClearButton = nullptr;
 #endif
+	_browserPath = nullptr;
+	_browserPathClearButton = nullptr;
 	_curTheme = nullptr;
 	_guiBasePopUpDesc = nullptr;
 	_guiBasePopUp = nullptr;
@@ -1998,8 +2134,8 @@ void GlobalOptionsDialog::build() {
 #endif
 
 	// Misc Tab
-	_guiBasePopUp->setSelected(1);
-	int value = ConfMan.getInt("gui_base");
+	_guiBasePopUp->setSelected(2);
+	int value = ConfMan.getInt("gui_scale");
 	for (int i = 0; guiBaseLabels[i]; i++) {
 		if (value == guiBaseValues[i])
 			_guiBasePopUp->setSelected(i);
@@ -2091,6 +2227,14 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 	if (confPath.empty())
 		confPath = g_system->getDefaultConfigFileName();
 	new StaticTextWidget(boss, prefix + "ConfigPath", _("ScummVM config path: ") + confPath, confPath);
+
+	Common::U32String browserPath = _("<default>");
+	if (ConfMan.hasKey("browser_lastpath"))
+		browserPath = ConfMan.get("browser_lastpath");
+
+	// I18N: Referring to the last path memorized when adding a game
+	_browserPath = new StaticTextWidget(boss, prefix + "BrowserPath", _("Last browser path: ") + browserPath, browserPath);
+	_browserPathClearButton = addClearButton(boss, prefix + "BrowserPathClearButton", kBrowserPathClearCmd);
 }
 
 void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String &prefix, bool lowres) {
@@ -2373,9 +2517,9 @@ void GlobalOptionsDialog::apply() {
 #endif // USE_SDL_NET
 #endif // USE_CLOUD
 
-	int oldGuiBase = ConfMan.getInt("gui_base");
-	ConfMan.setInt("gui_base", _guiBasePopUp->getSelectedTag(), _domain);
-	if (oldGuiBase != (int)_guiBasePopUp->getSelectedTag())
+	int oldGuiScale = ConfMan.getInt("gui_scale");
+	ConfMan.setInt("gui_scale", _guiBasePopUp->getSelectedTag(), _domain);
+	if (oldGuiScale != (int)_guiBasePopUp->getSelectedTag())
 		g_gui.computeScaleFactor();
 
 	ConfMan.setInt("autosave_period", _autosavePeriodPopUp->getSelectedTag(), _domain);
@@ -2500,11 +2644,7 @@ void GlobalOptionsDialog::apply() {
 	if (ttsMan) {
 #ifdef USE_TRANSLATION
 		if (newLang != oldLang) {
-			if (newLang == "C")
-				ttsMan->setLanguage("en");
-			else {
-				ttsMan->setLanguage(newLang);
-			}
+			ttsMan->setLanguage(newLang);
 			_ttsVoiceSelectionPopUp->setSelected(0);
 		}
 #else
@@ -2627,6 +2767,12 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 		_pluginsPath->setLabel(_c("None", "path"));
 		break;
 #endif
+	case kBrowserPathClearCmd:
+		ConfMan.removeKey("browser_lastpath", Common::ConfigManager::kApplicationDomain);
+		ConfMan.flushToDisk();
+		_browserPath->setLabel(_("Last browser path: ") + _("<default>"));
+
+		break;
 #ifdef USE_CLOUD
 #ifdef USE_SDL_NET
 	case kRootPathClearCmd:
@@ -2895,6 +3041,11 @@ void GlobalOptionsDialog::reflowLayout() {
 		_extraPathClearButton->setNext(nullptr);
 		delete _extraPathClearButton;
 		_extraPathClearButton = addClearButton(_tabWidget, "GlobalOptions_Paths.ExtraPathClearButton", kExtraPathClearCmd);
+
+		_tabWidget->removeWidget(_browserPathClearButton);
+		_browserPathClearButton->setNext(nullptr);
+		delete _browserPathClearButton;
+		_browserPathClearButton = addClearButton(_tabWidget, "GlobalOptions_Paths.BrowserPathClearButton", kBrowserPathClearCmd);
 	}
 
 	_tabWidget->setActiveTab(activeTab);

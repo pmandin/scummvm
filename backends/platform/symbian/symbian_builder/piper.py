@@ -21,17 +21,20 @@
 
 
 from __future__ import with_statement
-import os, subprocess, Queue, threading, errno
+import os, subprocess, Queue, threading, errno, time
 import multiprocessing as mp
-from prj_generator import SafeWriteFile
 
 from common_names import *
+
+# Workaround for "threading bug in strptime"
+#see - https://stackoverflow.com/questions/32245560/module-object-has-no-attribute-strptime-with-several-threads-python/46401422
+import _strptime
 
 prj_template = "PRJ_MMPFILES\n%s"
 prj_path = "paralell_build"
 
 
-def tread_func(q):
+def thread_func(q):
    while True:
       fileName = q.get()
       if fileName is None:  # EOF?
@@ -47,22 +50,37 @@ def tread_func(q):
 
       fname = os.path.join(mmps, fileName)
       fname = os.path.join("..", fname)
-      fname = os.path.join("..", fname) # point to mmp file in mmp folder
+      fname = os.path.join("..", fname) # Point to mmp file in port specific folder.
       tmp = os.path.join(pth, "bld.inf")
       SafeWriteFile(tmp, prj_template %fname)
 
       cmd = subprocess.Popen('bldmake bldfiles', stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=pth, shell=True)
       out, err = cmd.communicate()
-      print "err: %s\n\n" %err
+      if len(err) > 0:
+         print "err: %s\n\n" %err
+      # Clean build directory from previous build.
+      cmd = subprocess.Popen('abld reallyclean gcce urel', stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=pth, shell=True)
+      cmd.communicate()
+
+      # Needed because datetime.now() returns the same time for every call.
+      start = time.strftime("%H:%M:%S")
       cmd = subprocess.Popen('abld build gcce urel', stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=pth, shell=True)
       out1, err1 = cmd.communicate()
-      # I hope it correctly store logs in parallel tasks
-      SafeWriteFile(build_log, out + out1, mode = 'a')
-      SafeWriteFile(build_err, err + err1, mode = 'a')
 
+      end = time.strftime("%H:%M:%S" )
+      start_dt = datetime.strptime(start, '%H:%M:%S')
+      end_dt = datetime.strptime(end, '%H:%M:%S')
+      diff = (end_dt - start_dt)
+
+      out = out + out1
+      err = err + err1
+      # After cmd.communicate() we have ugly 'crcrlf' line endings.
+      AppendToFile(build_log, out.replace(u"\r", u""))
+      AppendToFile(build_err, err.replace(u"\r", u""))
+      AppendToFile(build_time, "Engine %s build time: %s.\n" %(fileName, str(diff)) )
+      print "Engine %s done!" %fileName
 
 def build_mmp(try_fix = False):
-   q = Queue.Queue()
    fileNames = os.listdir(mmps)
    fileNames = [x for x in fileNames if ".mmp" in x]
    if try_fix:
@@ -71,13 +89,22 @@ def build_mmp(try_fix = False):
    else:
       SafeWriteFile(os.path.join(mmps, whitelist), fileNames)
 
+   q = Queue.Queue()
    for fileName in fileNames:
       q.put(fileName)
-   print q.qsize()
-   threads = [ threading.Thread(target=tread_func, args=(q, )) for i in range(mp.cpu_count()) ]
+
+   t_count = mp.cpu_count() + 2
+   if t_count > q.qsize():
+      t_count = q.qsize()
+
+   print "Queue size: %s" %q.qsize()
+   print "Thread count: %s" %t_count
+   threads = [threading.Thread(target=thread_func, args=(q, )) for i in range(t_count)]
    for thread in threads:
       thread.start()
       q.put(None)  # one EOF marker for each thread
+   for thread in threads:
+      thread.join()
 
 
 if __name__ == "__main__":

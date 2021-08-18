@@ -27,17 +27,17 @@
 //
 //=============================================================================
 
-#ifndef AGS_ENGINE_AC_DRAWSOFTWARE_H
-#define AGS_ENGINE_AC_DRAWSOFTWARE_H
+#ifndef AGS_ENGINE_AC_DRAW_SOFTWARE_H
+#define AGS_ENGINE_AC_DRAW_SOFTWARE_H
 
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/engine/gfx/ddb.h"
 #include "ags/shared/util/geometry.h"
-#include "ags/engine/util/scaling.h"
+#include "ags/shared/util/scaling.h"
 
 namespace AGS3 {
 
-using AGS::Engine::PlaneScaling;
+using AGS::Shared::PlaneScaling;
 
 // TODO: choose these values depending on game resolution?
 #define MAXDIRTYREGIONS 25
@@ -87,6 +87,8 @@ struct DirtyRects {
 	void Reset();
 };
 
+// Sets global viewport offset (used for legacy letterbox)
+void set_invalidrects_globaloffs(int x, int y);
 // Inits dirty rects array for the given room camera/viewport pair
 // View_index indicates the room viewport (>= 0) or the main viewport (-1)
 void init_invalid_regions(int view_index, const Size &surf_size, const Rect &viewport);
@@ -100,7 +102,10 @@ void set_invalidrects_cameraoffs(int view_index, int x, int y);
 void invalidate_all_rects();
 // Mark the whole camera surface dirty
 void invalidate_all_camera_rects(int view_index);
+// Mark certain rectangle dirty; in_room tells if coordinates are room viewport or screen coords
 void invalidate_rect_ds(int x1, int y1, int x2, int y2, bool in_room);
+// Mark rectangle dirty, treat pos as global screen coords (not offset by legacy letterbox mode)
+void invalidate_rect_global(int x1, int y1, int x2, int y2);
 // Paints the black screen background in the regions marked as dirty
 void update_black_invreg_and_reset(AGS::Shared::Bitmap *ds);
 // Copies the room regions marked as dirty from source (src) to destination (ds) with the given offset (x, y)

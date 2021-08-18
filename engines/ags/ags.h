@@ -26,6 +26,7 @@
 #include "common/scummsys.h"
 #include "common/system.h"
 #include "common/error.h"
+#include "common/fs.h"
 #include "common/random.h"
 #include "common/hash-str.h"
 #include "common/util.h"
@@ -49,6 +50,9 @@ namespace AGS {
  * @brief Engine to run Adventure Game Studio games.
  */
 
+/* Synced up to upstream: 3.6.0.7
+ * bcf598aa4ea6de69a84505b7c844f7bdcf44596b
+ */
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
 
@@ -64,8 +68,6 @@ private:
 public:
 	EventsManager *_events;
 	Music *_music;
-	Graphics::Screen *_rawScreen;
-	::AGS3::BITMAP *_screen;
 	::AGS3::GFX_DRIVER *_gfxDriver;
 	::AGS3::AGS::Engine::Mutex _sMutex;
 	::AGS3::AGS::Engine::Mutex _soundCacheMutex;
@@ -113,16 +115,37 @@ public:
 	}
 
 	/**
-	 * Setse up the graphics mode
+	 * Returns a pixel format for the given color depth.
 	 */
-	void setGraphicsMode(size_t w, size_t h);
+	bool getPixelFormat(int depth, Graphics::PixelFormat &format) const;
+
+	/**
+	 * Sets up the graphics mode
+	 */
+	void setGraphicsMode(size_t w, size_t h, int depth);
 
 	bool hasFeature(EngineFeature f) const override {
 		return
-			(f == kSupportsLoadingDuringRuntime) ||
-			(f == kSupportsSavingDuringRuntime) ||
-			(f == kSupportsReturnToLauncher);
+		    (f == kSupportsLoadingDuringRuntime) ||
+		    (f == kSupportsSavingDuringRuntime) ||
+		    (f == kSupportsReturnToLauncher);
 	};
+
+	/**
+	 * Returns true if the selected game is an unsupported one
+	 * earlier than version 2.5
+	 */
+	bool isUnsupportedPre25() const;
+
+	/*
+	 * Returns true if the game has data files greater than 2Gb
+	 */
+	bool is64BitGame() const;
+
+	/**
+	 * Returns the game folder as a ScummVM filesystem node
+	 */
+	Common::FSNode getGameFolder();
 
 	/**
 	 * Indicate whether a game state can be loaded.
@@ -146,7 +169,6 @@ public:
 };
 
 extern AGSEngine *g_vm;
-#define screen ::AGS::g_vm->_screen
 #define gfx_driver ::AGS::g_vm->_gfxDriver
 #define SHOULD_QUIT ::AGS::g_vm->shouldQuit()
 

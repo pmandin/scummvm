@@ -39,6 +39,7 @@
 #include "ultima/ultima8/world/get_object.h"
 #include "ultima/ultima8/world/target_reticle_process.h"
 #include "ultima/ultima8/audio/audio_process.h"
+#include "ultima/ultima8/world/snap_process.h"
 
 namespace Ultima {
 namespace Ultima8 {
@@ -77,6 +78,10 @@ void World::clear() {
 	if (_currentMap)
 		delete _currentMap;
 	_currentMap = nullptr;
+
+	_alertActive = false;
+	_controlledNPCNum = 1;
+	_vargasShield = 5000;
 }
 
 void World::reset() {
@@ -110,10 +115,9 @@ bool World::switchMap(uint32 newmap) {
 
 	// Map switching procedure:
 
-	// get rid of camera
 	// stop all sound effects (except speech, such as Guardian barks)
 	// notify all gumps of a map change
-	// delete any _ethereal objects
+	// delete any ethereal objects
 	// write back CurrentMap to the old map, which
 	//   deletes all disposable items
 	//   deletes the EggHatcher
@@ -126,11 +130,7 @@ bool World::switchMap(uint32 newmap) {
 	//   assigns objIDs to nonfixed items
 	//   creates an EggHatcher and notifies it of all eggs
 	//   sets up all NPCs in the new map
-	// reset camera
-
-
-	// kill camera
-	CameraProcess::ResetCameraProcess();
+	// update camera if needed
 
 	AudioProcess *ap = AudioProcess::get_instance();
 	if (ap) ap->stopAllExceptSpeech();
@@ -174,9 +174,16 @@ bool World::switchMap(uint32 newmap) {
 
 	_currentMap->loadMap(_maps[newmap]);
 
-	// reset camera
-	CameraProcess::SetCameraProcess(new CameraProcess(1));
-	CameraProcess::SetEarthquake(0);
+	// update camera if needed (u8 only)
+	// TODO: This may not even be needed, but do it just in case the
+	// camera was looking at something else during teleport.
+	if (GAME_IS_U8) {
+		CameraProcess *camera = CameraProcess::GetCameraProcess();
+		if (camera && camera->getItemNum() != 1) {
+			CameraProcess::SetCameraProcess(new CameraProcess(1));
+		}
+		CameraProcess::SetEarthquake(0);
+	}
 
 	return true;
 }
@@ -414,6 +421,15 @@ void World::setAlertActive(bool active)
 	assert(GAME_IS_CRUSADER);
 	_alertActive = active;
 
+	if (GAME_IS_REMORSE) {
+		setAlertActiveRemorse(active);
+	} else {
+		setAlertActiveRegret(active);
+	}
+}
+
+void World::setAlertActiveRemorse(bool active)
+{
 	// Replicate the behavior of the original game.
 	LOOPSCRIPT(script,
 		LS_OR(
@@ -431,6 +447,7 @@ void World::setAlertActive(bool active)
 	for (uint32 i = 0; i < itemlist.getSize(); i++) {
 		uint16 itemid = itemlist.getuint16(i);
 		Item *item = getItem(itemid);
+		assert(item);
 		int frame = item->getFrame();
 		if (_alertActive) {
 			if (item->getShape() == 0x477) {
@@ -450,20 +467,63 @@ void World::setAlertActive(bool active)
 	}
 }
 
+void World::setAlertActiveRegret(bool active)
+{
+	setAlertActiveRemorse(active);
+
+	LOOPSCRIPT(offscript, LS_OR(LS_SHAPE_EQUAL(0x660), LS_SHAPE_EQUAL(0x661)));
+	LOOPSCRIPT(onscript, LS_OR(LS_SHAPE_EQUAL(0x662), LS_SHAPE_EQUAL(0x663)));
+
+	const uint8 *script = active ? onscript : offscript;
+	// note: size should be the same, but just to be explicit.
+	int scriptlen = active ? sizeof(onscript) : sizeof(offscript);
+
+	UCList itemlist(2);
+	_world->getCurrentMap()->areaSearch(&itemlist, script, scriptlen,
+										nullptr, 0xffff, false);
+	for (uint32 i = 0; i < itemlist.getSize(); i++) {
+		uint16 itemid = itemlist.getuint16(i);
+		Item *item = getItem(itemid);
+		assert(item);
+		switch (item->getShape()) {
+			case 0x660:
+				item->setShape(0x663);
+				break;
+			case 0x661:
+				item->setShape(0x662);
+				break;
+			case 0x662:
+				item->setShape(0x661);
+				break;
+			case 0x663:
+				item->setShape(0x660);
+				break;
+			default:
+				warning("unexpected shape %d returned from search", item->getShape());
+				break;
+		}
+		item->setFrame(0);
+	}
+}
+
 void World::setControlledNPCNum(uint16 num) {
 	uint16 oldnpc = _controlledNPCNum;
 	_controlledNPCNum = num;
-	CameraProcess::SetCameraProcess(new CameraProcess(num));
 	Actor *previous = getActor(oldnpc);
 	if (previous && !previous->isDead() && previous->isInCombat()) {
 		previous->clearInCombat();
 	}
 
 	Actor *controlled = getActor(num);
-	if (controlled && num != 1) {
-		Kernel::get_instance()->killProcesses(num, Kernel::PROC_TYPE_ALL, true);
-		if (controlled->isInCombat())
-			controlled->clearInCombat();
+	if (controlled) {
+		if (num != 1) {
+			Kernel::get_instance()->killProcesses(num, Kernel::PROC_TYPE_ALL, true);
+			if (controlled->isInCombat())
+				controlled->clearInCombat();
+		}
+		int32 x, y, z;
+		controlled->getCentre(x, y, z);
+		CameraProcess::SetCameraProcess(new CameraProcess(x, y, z));
 	}
 
 	TargetReticleProcess *t = TargetReticleProcess::get_instance();

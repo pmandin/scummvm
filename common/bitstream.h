@@ -144,7 +144,7 @@ public:
 	    _stream(stream), _disposeAfterUse(disposeAfterUse), _bitContainer(0), _bitsLeft(0), _pos(0) {
 
 		if ((valueBits != 8) && (valueBits != 16) && (valueBits != 32))
-			error("BitStreamImpl: Invalid memory layout %d, %d, %d", valueBits, isLE, MSB2LSB);
+			error("BitStreamImpl: Invalid memory layout %d, %d, %d", valueBits, int(isLE), int(MSB2LSB));
 
 		_size = (_stream->size() & ~((uint32) ((valueBits >> 3) - 1))) * 8;
 	}
@@ -154,7 +154,7 @@ public:
 	    _stream(&stream), _disposeAfterUse(DisposeAfterUse::NO), _bitContainer(0), _bitsLeft(0), _pos(0) {
 
 		if ((valueBits != 8) && (valueBits != 16) && (valueBits != 32))
-			error("BitStreamImpl: Invalid memory layout %d, %d, %d", valueBits, isLE, MSB2LSB);
+			error("BitStreamImpl: Invalid memory layout %d, %d, %d", valueBits, int(isLE), int(MSB2LSB));
 
 		_size = (_stream->size() & ~((uint32) ((valueBits >> 3) - 1))) * 8;
 	}
@@ -265,12 +265,12 @@ public:
 	}
 
 	/** Return the stream position in bits. */
-	uint32 pos() const {
+	uint64 pos() const {
 		return _pos;
 	}
 
 	/** Return the stream size in bits. */
-	uint32 size() const {
+	uint64 size() const {
 		return _size;
 	}
 
@@ -325,11 +325,11 @@ public:
 		return false;
 	}
 
-	int32 pos() const {
+	int64 pos() const {
 		return _pos;
 	}
 
-	int32 size() const {
+	int64 size() const {
 		return _size;
 	}
 

@@ -145,21 +145,6 @@ int IMuseDigital::startSound(int soundId, const char *soundName, int soundType, 
 	} else if (_vm->_game.id == GID_CMI) {
 		// Tweak the default gain reduction to about 4 dB
 		track->gainRedFadeDest = 127 * 290;
-		if (track->soundId / 1000 == 1) { // State
-			for (l = 0; _comiStateMusicTable[l].soundId != -1; l++) {
-				if ((_comiStateMusicTable[l].soundId == track->soundId)) {
-					track->loopShiftType = _comiStateMusicTable[l].shiftLoop;
-					break;
-				}
-			}
-		} else if (track->soundId / 1000 == 2) { // Sequence
-			for (l = 0; _comiSeqMusicTable[l].soundId != -1; l++) {
-				if ((_comiSeqMusicTable[l].soundId == track->soundId)) {
-					track->loopShiftType = _comiSeqMusicTable[l].shiftLoop;
-					break;
-				}
-			}
-		}
 	}
 
 	int bits = 0, freq = 0, channels = 0;
@@ -193,8 +178,17 @@ int IMuseDigital::startSound(int soundId, const char *soundName, int soundType, 
 			if (_vm->_actorToPrintStrFor != 0xFF && _vm->_actorToPrintStrFor != 0) {
 				Actor *a = _vm->derefActor(_vm->_actorToPrintStrFor, "IMuseDigital::startSound");
 				freq = (freq * a->_talkFrequency) / 256;
-				track->pan = a->_talkPan;
-				track->vol = a->_talkVolume * 1000;
+
+				if (a->_talkPan <= 127)
+					track->pan = a->_talkPan;
+				else
+					track->pan = 64;
+
+				if (a->_talkVolume <= 127)
+					track->vol = a->_talkVolume * 1000;
+				else
+					track->vol = 127 * 1000;
+
 				// Keep track of the current actor in COMI:
 				// This is necessary since pan and volume settings for actors
 				// are often changed AFTER the speech sound is started,
@@ -276,9 +270,6 @@ void IMuseDigital::setVolume(int soundId, int volume) {
 	Common::StackLock lock(_mutex, "IMuseDigital::setVolume()");
 	debug(5, "IMuseDigital::setVolume(%d, %d)", soundId, volume);
 
-	if (_vm->_game.id == GID_CMI && volume > 127)
-		volume = volume / 2;
-
 	for (int l = 0; l < MAX_DIGITAL_TRACKS; l++) {
 		Track *track = _track[l];
 		if (track->used && !track->toBeRemoved && (track->soundId == soundId)) {
@@ -317,15 +308,6 @@ int IMuseDigital::getCurMusicSoundId() {
 void IMuseDigital::setPan(int soundId, int pan) {
 	Common::StackLock lock(_mutex, "IMuseDigital::setPan()");
 	debug(5, "IMuseDigital::setPan(%d, %d)", soundId, pan);
-
-	// Sometimes, COMI scumm scripts try to set pan values in the range 0-255
-	// instead of 0-128. I sincerely have no idea why and what exactly is the
-	// correct way of handling these cases (does it happen on a sound by sound basis?).
-	// Until someone properly reverse engineers the engine, this fix works fine for
-	// those sounds (e.g. the cannon fire SFX in Part 1 minigame, the bell sound
-	// in Plunder Town).
-	if (_vm->_game.id == GID_CMI && pan > 127)
-		pan = pan / 2;
 
 	for (int l = 0; l < MAX_DIGITAL_TRACKS; l++) {
 		Track *track = _track[l];

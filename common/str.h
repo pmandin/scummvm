@@ -141,12 +141,12 @@ public:
 	 *
 	 * @param pat Glob pattern.
 	 * @param ignoreCase Whether to ignore the case when doing pattern match
-	 * @param pathMode Whether to use path mode, i.e., whether slashes must be matched explicitly.
+	 * @param wildcardExclusions Characters which are excluded from wildcards and must be matched explicitly.
 	 *
 	 * @return true if str matches the pattern, false otherwise.
 	 */
-	bool matchString(const char *pat, bool ignoreCase = false, bool pathMode = false) const;
-	bool matchString(const String &pat, bool ignoreCase = false, bool pathMode = false) const;
+	bool matchString(const char *pat, bool ignoreCase = false, const char *wildcardExclusions = NULL) const;
+	bool matchString(const String &pat, bool ignoreCase = false, const char *wildcardExclusions = NULL) const;
 
 	/**@{
 	 * Functions to replace some amount of chars with chars from some other string.
@@ -185,7 +185,7 @@ public:
 	 * except that it stores the result in (variably sized) String
 	 * instead of a fixed size buffer.
 	 */
-	static String format(const char *fmt, ...) GCC_PRINTF(1, 2);
+	static String format(MSVC_PRINTF const char *fmt, ...) GCC_PRINTF(1, 2);
 
 	/**
 	 * Print formatted data into a String object. Similar to vsprintf,
@@ -329,11 +329,11 @@ String normalizePath(const String &path, const char sep);
  * @param str Text to be matched against the given pattern.
  * @param pat Glob pattern.
  * @param ignoreCase Whether to ignore the case when doing pattern match
- * @param pathMode Whether to use path mode, i.e., whether slashes must be matched explicitly.
+ * @param wildcardExclusions Characters which are excluded from wildcards and must be matched explicitly.
  *
  * @return true if str matches the pattern, false otherwise.
  */
-bool matchString(const char *str, const char *pat, bool ignoreCase = false, bool pathMode = false);
+bool matchString(const char *str, const char *pat, bool ignoreCase = false, const char *wildcardExclusions = NULL);
 
 /**
  * Function which replaces substring with the other. It happens in place.
@@ -349,8 +349,11 @@ void replace(Common::String &source, const Common::String &what, const Common::S
  * Take a 32 bit value and turn it into a four character string, where each of
  * the four bytes is turned into one character. Most significant byte is printed
  * first.
+ *
+ * @param tag tag value to convert
+ * @param nonPrintable indicate if non-printable characters need to be printed as octals
  */
-String tag2string(uint32 tag);
+String tag2string(uint32 tag, bool nonPrintable = false);
 
 /**
  * Copy up to size - 1 characters from src to dst and also zero terminate the
@@ -406,6 +409,13 @@ size_t strnlen(const char *src, size_t maxSize);
  * copying or printing it.
  */
 #define tag2str(x)	Common::tag2string(x).c_str()
+
+/**
+ * Convenience wrapper for tag2string with non-printable characters which "returns" a C string.
+ * Note: It is *NOT* safe to do anything with the return value other than directly
+ * copying or printing it.
+ */
+#define tag2strP(x)	Common::tag2string(x, true).c_str()
 
 /**
  * Converts string with all non-printable characters properly escaped

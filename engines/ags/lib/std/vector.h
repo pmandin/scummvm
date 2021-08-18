@@ -105,7 +105,7 @@ public:
 	}
 
 	iterator erase(iterator first,
-	        iterator last) {
+				   iterator last) {
 		Common::copy(last, this->_storage + this->_size, first);
 
 		int count = (last - first);
@@ -138,6 +138,12 @@ public:
 		}
 	}
 
+	const_iterator cbegin() {
+		return this->begin();
+	}
+	const_iterator cend() {
+		return this->end();
+	}
 	reverse_iterator rbegin() {
 		return reverse_iterator(this, (int)Common::Array<T>::size() - 1);
 	}

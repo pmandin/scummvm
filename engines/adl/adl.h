@@ -57,6 +57,7 @@ namespace Adl {
 Common::String getDiskImageName(const AdlGameDescription &adlDesc, byte volume);
 GameType getGameType(const AdlGameDescription &desc);
 GameVersion getGameVersion(const AdlGameDescription &desc);
+Common::Language getLanguage(const AdlGameDescription &desc);
 Common::Platform getPlatform(const AdlGameDescription &desc);
 
 class Console;
@@ -66,6 +67,13 @@ class ScriptEnv;
 
 enum kDebugChannels {
 	kDebugChannelScript = 1 << 0
+};
+
+enum ADLAction {
+	kADLActionNone,
+	kADLActionQuit,
+
+	kADLActionCount
 };
 
 // Save and restore opcodes
@@ -257,16 +265,18 @@ protected:
 	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave = false) override;
 	bool canSaveGameStateCurrently() override;
 	virtual Common::String getSaveStateName(int slot) const override;
+	int getAutosaveSlot() const override { return 15; }
 
 	Common::String getDiskImageName(byte volume) const { return Adl::getDiskImageName(*_gameDescription, volume); }
 	GameType getGameType() const { return Adl::getGameType(*_gameDescription); }
 	GameVersion getGameVersion() const { return Adl::getGameVersion(*_gameDescription); }
+	Common::Language getLanguage() const { return Adl::getLanguage(*_gameDescription); }
 	virtual void gameLoop();
 	virtual void loadState(Common::ReadStream &stream);
 	virtual void saveState(Common::WriteStream &stream);
 	Common::String readString(Common::ReadStream &stream, byte until = 0) const;
 	Common::String readStringAt(Common::SeekableReadStream &stream, uint offset, byte until = 0) const;
-	void openFile(Common::File &file, const Common::String &name) const;
+	void extractExeStrings(Common::ReadStream &stream, uint16 printAddr, Common::StringArray &strings) const;
 
 	virtual void printString(const Common::String &str) = 0;
 	virtual Common::String loadMessage(uint idx) const = 0;
@@ -277,7 +287,8 @@ protected:
 	virtual Common::String getLine();
 	Common::String inputString(byte prompt = 0) const;
 	byte inputKey(bool showCursor = true) const;
-	void getInput(uint &verb, uint &noun);
+	virtual void getInput(uint &verb, uint &noun);
+	Common::String getWord(const Common::String &line, uint &index) const;
 
 	virtual Common::String formatVerbError(const Common::String &verb) const;
 	virtual Common::String formatNounError(const Common::String &verb, const Common::String &noun) const;
@@ -413,6 +424,8 @@ protected:
 		Common::String lineFeeds;
 	} _strings;
 
+	uint32 _verbErrorPos, _nounErrorPos;
+
 	struct {
 		uint cantGoThere;
 		uint dontUnderstand;
@@ -456,7 +469,6 @@ private:
 
 	// Text input
 	byte convertKey(uint16 ascii) const;
-	Common::String getWord(const Common::String &line, uint &index) const;
 
 	byte _saveVerb, _saveNoun, _restoreVerb, _restoreNoun;
 };

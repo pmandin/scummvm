@@ -64,13 +64,13 @@
 // Hit, reject
 #define GAMEFLAG_VIDEO_BAFFE5 215
 // Twinsun explosion (on top of the well)
-#define GAMEFLAG_VIDEO_EXPLOD 216
+#define GAMEFLAG_VIDEO_EXPLODE 216
 // Clear water lake
 #define GAMEFLAG_VIDEO_GLASS2 217
 // Twinsen in Well of Sendell
 #define GAMEFLAG_VIDEO_SENDEL 218
 // Twinsun explosion
-#define GAMEFLAG_VIDEO_EXPLOD2 219
+#define GAMEFLAG_VIDEO_EXPLODE2 219
 
 namespace TwinE {
 
@@ -81,7 +81,7 @@ struct I16Vec3 {
 	int16 z = 0;
 };
 #include "common/pack-end.h"
-static_assert(sizeof(I16Vec3) == 6, "Unexpected pointTab size");
+STATIC_ASSERT(sizeof(I16Vec3) == 6, "Unexpected pointTab size");
 
 struct IVec3 {
 	constexpr IVec3() : x(0), y(0), z(0) {}
@@ -120,6 +120,32 @@ inline constexpr IVec3 operator-(const IVec3 &lhs, const IVec3 &rhs) {
 	return IVec3{lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z};
 }
 
+inline constexpr IVec3 operator-(const IVec3 &v) {
+	return IVec3{-v.x, -v.y, -v.z};
+}
+
+/**
+ * Get distance value in 2D
+ * @param x1 Actor 1 X coordinate
+ * @param z1 Actor 1 Z coordinate
+ * @param x2 Actor 2 X coordinate
+ * @param z2 Actor 2 Z coordinate
+ */
+int32 getDistance2D(int32 x1, int32 z1, int32 x2, int32 z2);
+int32 getDistance2D(const IVec3 &v1, const IVec3 &v2);
+
+/**
+ * Get distance value in 3D
+ * @param x1 Actor 1 X coordinate
+ * @param y1 Actor 1 Y coordinate
+ * @param z1 Actor 1 Z coordinate
+ * @param x2 Actor 2 X coordinate
+ * @param y2 Actor 2 Y coordinate
+ * @param z2 Actor 2 Z coordinate
+ */
+int32 getDistance3D(int32 x1, int32 y1, int32 z1, int32 x2, int32 y2, int32 z2);
+int32 getDistance3D(const IVec3 &v1, const IVec3 &v2);
+
 /**
  * @brief Axis aligned bounding box
  */
@@ -133,7 +159,7 @@ struct ActorBoundingBox {
 	bool hasBoundingBox = false;
 };
 
-enum ActionType {
+enum class ActionType : uint8 {
 	ACTION_NOP = 0,
 	ACTION_BODY = 1,
 	ACTION_BODP = 2,
@@ -279,6 +305,9 @@ enum class ZoneType {
 	kText = 5,     // Displays text message
 	kLadder = 6    // Hero can climb on it
 };
+
+#define SCENE_CEILING_GRID_FADE_1 (-1)
+#define SCENE_CEILING_GRID_FADE_2 (-2)
 
 enum LBA1SceneId {
 	Citadel_Island_Prison = 0,
@@ -499,7 +528,7 @@ enum InventoryItems {
 	kMrMiesPass = 11,
 	kiProtoPack = 12,
 	kSnowboard = 13,
-	kiPinguin = 14,
+	kiPenguin = 14,
 	kGasItem = 15,
 	kPirateFlag = 16,
 	kMagicFlute = 17,

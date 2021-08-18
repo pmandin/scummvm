@@ -22,25 +22,30 @@
 
 #include "ags/engine/ac/dynobj/cc_hotspot.h"
 #include "ags/engine/ac/hotspot.h"
-#include "ags/engine/ac/gamestate.h"
+#include "ags/engine/ac/game_state.h"
 #include "ags/engine/ac/global_hotspot.h"
 #include "ags/engine/ac/global_translation.h"
 #include "ags/engine/ac/properties.h"
 #include "ags/engine/ac/room.h"
-#include "ags/engine/ac/roomstatus.h"
+#include "ags/engine/ac/room_status.h"
 #include "ags/engine/ac/string.h"
-#include "ags/shared/game/roomstruct.h"
+#include "ags/shared/game/room_struct.h"
 #include "ags/shared/gfx/bitmap.h"
-#include "ags/engine/script/runtimescriptvalue.h"
+#include "ags/engine/script/runtime_script_value.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
-#include "ags/engine/ac/dynobj/scriptstring.h"
+#include "ags/engine/ac/dynobj/script_string.h"
 #include "ags/globals.h"
 
 namespace AGS3 {
 
 using namespace AGS::Shared;
+
+
+
+
+
 
 void Hotspot_SetEnabled(ScriptHotspot *hss, int newval) {
 	if (newval)
@@ -78,7 +83,7 @@ void Hotspot_GetName(ScriptHotspot *hss, char *buffer) {
 }
 
 const char *Hotspot_GetName_New(ScriptHotspot *hss) {
-	return CreateNewScriptString(get_translation(_GP(thisroom).Hotspots[hss->id].Name));
+	return CreateNewScriptString(get_translation(_GP(thisroom).Hotspots[hss->id].Name.GetCStr()));
 }
 
 bool Hotspot_IsInteractionAvailable(ScriptHotspot *hhot, int mood) {
@@ -127,8 +132,6 @@ int get_hotspot_at(int xpp, int ypp) {
 // Script API Functions
 //
 //=============================================================================
-
-
 
 RuntimeScriptValue Sc_GetHotspotAtRoom(const RuntimeScriptValue *params, int32_t param_count) {
 	API_SCALL_OBJ_PINT2(ScriptHotspot, _GP(ccDynamicHotspot), GetHotspotAtRoom);
@@ -231,22 +234,6 @@ void RegisterHotspotAPI() {
 	ccAddExternalObjectFunction("Hotspot::get_Name", Sc_Hotspot_GetName_New);
 	ccAddExternalObjectFunction("Hotspot::get_WalkToX", Sc_Hotspot_GetWalkToX);
 	ccAddExternalObjectFunction("Hotspot::get_WalkToY", Sc_Hotspot_GetWalkToY);
-
-	/* ----------------------- Registering unsafe exports for plugins -----------------------*/
-
-	ccAddExternalFunctionForPlugin("Hotspot::GetAtRoomXY^2", (void *)GetHotspotAtRoom);
-	ccAddExternalFunctionForPlugin("Hotspot::GetAtScreenXY^2", (void *)GetHotspotAtScreen);
-	ccAddExternalFunctionForPlugin("Hotspot::GetName^1", (void *)Hotspot_GetName);
-	ccAddExternalFunctionForPlugin("Hotspot::GetProperty^1", (void *)Hotspot_GetProperty);
-	ccAddExternalFunctionForPlugin("Hotspot::GetPropertyText^2", (void *)Hotspot_GetPropertyText);
-	ccAddExternalFunctionForPlugin("Hotspot::GetTextProperty^1", (void *)Hotspot_GetTextProperty);
-	ccAddExternalFunctionForPlugin("Hotspot::RunInteraction^1", (void *)Hotspot_RunInteraction);
-	ccAddExternalFunctionForPlugin("Hotspot::get_Enabled", (void *)Hotspot_GetEnabled);
-	ccAddExternalFunctionForPlugin("Hotspot::set_Enabled", (void *)Hotspot_SetEnabled);
-	ccAddExternalFunctionForPlugin("Hotspot::get_ID", (void *)Hotspot_GetID);
-	ccAddExternalFunctionForPlugin("Hotspot::get_Name", (void *)Hotspot_GetName_New);
-	ccAddExternalFunctionForPlugin("Hotspot::get_WalkToX", (void *)Hotspot_GetWalkToX);
-	ccAddExternalFunctionForPlugin("Hotspot::get_WalkToY", (void *)Hotspot_GetWalkToY);
 }
 
 } // namespace AGS3

@@ -65,6 +65,7 @@ inline void outputConfigurationType(const BuildSetup &setup, std::ostream &proje
 		project << "\t\t<ConfigurationType>StaticLibrary</ConfigurationType>\n";
 	}
 	project << "\t\t<PlatformToolset>" << (config == "LLVM" ? msvc.toolsetLLVM : msvc.toolsetMSVC ) << "</PlatformToolset>\n";
+	project << "\t\t<CharacterSet>" << (setup.useWindowsUnicode ? "Unicode" : "NotSet") << "</CharacterSet>\n";
 	if (msvc.version >= 16 && config == "Analysis") {
 		project << "\t\t<EnableASAN>true</EnableASAN>\n";
 	}	
@@ -439,7 +440,7 @@ void MSBuildProvider::createBuildProp(const BuildSetup &setup, bool isRelease, M
 		           << "\t\t\t<BufferSecurityCheck>false</BufferSecurityCheck>\n"
 		           << "\t\t\t<DebugInformationFormat></DebugInformationFormat>\n"
 		           << "\t\t\t<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>\n"
-		           << "\t\t\t<EnablePREfast>" << (configuration == "Analysis" ? "true" : "false") << "</EnablePREfast>\n"
+		           << "\t\t\t<EnablePREfast>false</EnablePREfast>\n"
 		           << "\t\t</ClCompile>\n"
 		           << "\t\t<Lib>\n"
 		           << "\t\t\t<LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>\n"

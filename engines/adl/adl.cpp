@@ -84,6 +84,8 @@ AdlEngine::AdlEngine(OSystem *syst, const AdlGameDescription *gd) :
 		_display(nullptr),
 		_graphics(nullptr),
 		_textMode(false),
+		_verbErrorPos(19),
+		_nounErrorPos(30),
 		_linesPrinted(0),
 		_isRestarting(false),
 		_isRestoring(false),
@@ -106,17 +108,15 @@ AdlEngine::AdlEngine(OSystem *syst, const AdlGameDescription *gd) :
 
 bool AdlEngine::pollEvent(Common::Event &event) const {
 	if (g_system->getEventManager()->pollEvent(event)) {
-		if (event.type != Common::EVENT_KEYDOWN)
-			return false;
-
-		if (event.kbd.flags & Common::KBD_CTRL) {
-			if (event.kbd.keycode == Common::KEYCODE_q) {
+		if (event.type == Common::EVENT_CUSTOM_ENGINE_ACTION_START) {
+			if (event.customType == kADLActionQuit) {
 				quitGame();
-				return false;
 			}
+			return false;
 		}
 
-		return true;
+		if (event.type == Common::EVENT_KEYDOWN)
+			return true;
 	}
 
 	return false;
@@ -145,9 +145,22 @@ Common::String AdlEngine::readStringAt(Common::SeekableReadStream &stream, uint 
 	return readString(stream, until);
 }
 
-void AdlEngine::openFile(Common::File &file, const Common::String &name) const {
-	if (!file.open(name))
-		error("Error opening '%s'", name.c_str());
+void AdlEngine::extractExeStrings(Common::ReadStream &stream, uint16 printAddr, Common::StringArray &strings) const {
+	uint32 window = 0;
+
+	for (;;) {
+		window <<= 8;
+		window |= stream.readByte();
+
+		if (stream.eos())
+			return;
+
+		if (stream.err())
+			error("Failed to extract strings from game executable");
+
+		if ((window & 0xffffff) == (0x200000U | printAddr))
+			strings.push_back(readString(stream));
+	}
 }
 
 void AdlEngine::printMessage(uint idx) {
@@ -1068,17 +1081,24 @@ Common::String AdlEngine::getWord(const Common::String &line, uint &index) const
 
 Common::String AdlEngine::formatVerbError(const Common::String &verb) const {
 	Common::String err = _strings.verbError;
-	for (uint i = 0; i < verb.size(); ++i)
-		err.setChar(verb[i], i + 19);
+
+	if (_verbErrorPos + verb.size() > err.size())
+		error("Failed to format verb error string");
+
+	err.replace(_verbErrorPos, verb.size(), verb);
+
 	return err;
 }
 
 Common::String AdlEngine::formatNounError(const Common::String &verb, const Common::String &noun) const {
 	Common::String err = _strings.nounError;
-	for (uint i = 0; i < verb.size(); ++i)
-		err.setChar(verb[i], i + 19);
-	for (uint i = 0; i < noun.size(); ++i)
-		err.setChar(noun[i], i + 30);
+
+	if (_verbErrorPos + verb.size() > err.size() || _nounErrorPos + noun.size() > err.size())
+		error("Failed to format noun error string");
+
+	err.replace(_verbErrorPos, verb.size(), verb);
+	err.replace(_nounErrorPos, noun.size(), noun);
+
 	return err;
 }
 

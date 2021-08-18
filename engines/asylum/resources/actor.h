@@ -30,6 +30,8 @@
 
 #include "asylum/shared.h"
 
+#include "asylum/resources/inventory.h"
+
 namespace Asylum {
 
 class AsylumEngine;
@@ -92,7 +94,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////
 	int32 flags;
 	int32 actionType; // ActionType enum value
-
+	Inventory inventory;
 
 	void setActionIndex2(int32 index) { _actionIdx2 = index; }
 	void setObjectIndex(int32 index) { _objectIndex = index; }
@@ -102,14 +104,12 @@ public:
 	void setLastScreenUpdate(int32 tick) { _lastScreenUpdate = tick; }
 	void setNumberFlag01(int32 number) { _numberFlag01 = number; }
 	void setPriority(int32 priority) { _priority = priority; }
-	void setReaction(int32 index, int32 val) { _reaction[index] = val; }
 	void setResourceId(ResourceId id) { _resourceId = id; }
 	void setSoundResourceId(ResourceId id) { _soundResourceId = id; }
 	void setStatus(ActorStatus status) { _status = status; }
 	void setTransparency(int32 val) { _transparency = val; }
 	void setTickCount(int32 tickCount) { _tickCount = tickCount; }
 
-	void setField638(int32 val) { _field_638 = val; }
 	void setField934(int32 val) { _field_934 = val; }
 	void setField938(int32 val) { _field_938 = val; }
 	void setField944(int32 val) { _field_944 = val; }
@@ -126,7 +126,6 @@ public:
 	Common::Point *getPoint1() { return &_point1; }
 	Common::Point *getPoint2() { return &_point2; }
 	int32          getPriority() { return _priority; }
-	int32          getReactionValue(uint32 index) { return _reaction[index]; }
 	ResourceId     getResourceId() { return _resourceId; }
 	ResourceId     getResourcesId(uint32 index) { return _graphicResourceIds[index]; }
 	int32          getScriptIndex() { return _scriptIndex; }
@@ -135,7 +134,6 @@ public:
 	ActorStatus    getStatus()    { return _status; }
 	int32          getTickCount() { return _tickCount; }
 
-	int32          getField638() { return _field_638; }
 	int32          getField934() { return _field_934; }
 	int32          getField944() { return _field_944; }
 	int32          getField948() { return _field_948; }
@@ -205,30 +203,30 @@ public:
 	/**
 	 * Enables the actor
 	 */
-	void enable() { updateStatus(kActorStatusEnabled); }
+	void enable() { changeStatus(kActorStatusEnabled); }
 
 	/**
-	 * Updates the actor status.
+	 * Changes the actor status.
 	 *
 	 * @param status The status.
 	 */
-	void updateStatus(ActorStatus status);
+	void changeStatus(ActorStatus status);
 
 	/////////////////////////////////////////////////////////////////////////
 	// Direction & position
 	/////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Updates the actor direction, using the values set by script
+	 * Updates the actor's mirror image.
 	 */
-	void updateDirection();
+	void updateReflectionData();
 
 	/**
 	 * Updates resource Id using the actor direction.
 	 *
 	 * @param direction The direction.
 	 */
-	void updateFromDirection(ActorDirection direction);
+	void changeDirection(ActorDirection direction);
 
 	/**
 	 * Face a target from a certain direction
@@ -249,13 +247,13 @@ public:
 	void setPosition(int16 newX, int16 newY, ActorDirection newDirection, uint32 frame);
 
 	/**
-	 * Query if the passed direction is default direction.
+	 * Query if a graphic resource is present.
 	 *
 	 * @param index Zero-based index of the graphic resource.
 	 *
-	 * @return true if default direction, false if not.
+	 * @return true if the graphic resource is present.
 	 */
-	bool isDefaultDirection(int index) const;
+	bool canChangeStatus(int index) const;
 
 	/**
 	 * Adjust coordinates.
@@ -287,31 +285,27 @@ public:
 	 */
 	void clearFields();
 
-	// Unknown methods
-	bool process(const Common::Point &point);
-	void processStatus(int16 actorX, int16 actorY, bool doSpeech);
-	void processNext(ActorIndex nextActor, int32 actionAreaId, ActorDirection nextDirection, const Common::Point &nextPosition, bool invertPriority, const Common::Point &nextPositionOffset);
-	bool canInteract(Common::Point *point, int32* param);
+	bool canReach(const Common::Point &point);
+	void forceTo(int16 actorX, int16 actorY, bool doSpeech);
+	void setupReflectionData(ActorIndex nextActor, int32 actionAreaId, ActorDirection nextDirection, const Common::Point &nextPosition, bool invertPriority, const Common::Point &nextPositionOffset);
+	bool aNicePlaceToTalk(Common::Point *point, int32* param);
 	bool canMove(Common::Point *point, ActorDirection direction, uint32 count, bool hasDelta);
 	void move(ActorDirection dir, uint32 distance);
-	void addReactionHive(int32 reactionIndex, int32 numberValue01Add);
-	void removeReactionHive(int32 reactionIndex, int32 numberValue01Substract);
-	bool hasMoreReactions(int32 reactionIndex, int32 testNumberValue01) const;
-	bool canMoveCheckActors(Common::Point *point, ActorDirection direction);
-	void updateAndDraw();
-	void update_409230();
+	bool testActorCollision(Common::Point *point, ActorDirection direction);
+	void drawInventory();
+	void stopWalking();
 
 	/**
 	 * Query if the object resource is present in the resource table between indices 10 & 20
 	 *
 	 * @return true if resource present between 15 & 20, false if not.
 	 */
-	bool isResourcePresent() const;
+	bool checkBoredStatus() const;
 
 	//////////////////////////////////////////////////////////////////////////
 	// Static update methods
 	//////////////////////////////////////////////////////////////////////////
-	static void enableActorsChapter2(AsylumEngine *engine);
+	static void crowsReturn(AsylumEngine *engine);
 
 	/**
 	 * Updates the player appearance in chapter 9.
@@ -319,27 +313,27 @@ public:
 	 * @param [in,out] engine If non-null, the engine.
 	 * @param nextPlayer 	  The next player index
 	 */
-	static void updatePlayerChapter9(AsylumEngine *engine, int nextPlayer);
+	static void morphInto(AsylumEngine *engine, int nextPlayer);
 
 	/**
-	 * Gets a direction using the angle between the two points.
+	 * Gets a direction using the angle between the two vectors.
 	 *
 	 * @param vec1 The first vector.
 	 * @param vec2 The second vector.
 	 *
 	 * @return The direction
 	 */
-	static ActorDirection directionFromAngle(const Common::Point &vec1, const Common::Point &vec2);
+	static ActorDirection getAngle(const Common::Point &vec1, const Common::Point &vec2);
 
 	/**
-	 * Get the euclidean distance between the two vectors
+	 * Gets the euclidean distance between two points.
 	 *
-	 * @param vec1 The first vector.
-	 * @param vec2 The second vector.
+	 * @param point1 The first point.
+	 * @param point2 The second point.
 	 *
 	 * @return the distance.
 	 */
-	static uint32 euclidianDistance(const Common::Point &vec1, const Common::Point &vec2);
+	static uint32 euclidianDistance(const Common::Point &point1, const Common::Point &point2);
 
 	// Serializable
 	void saveLoadWithSerializer(Common::Serializer &s);
@@ -374,8 +368,6 @@ private:
 	int32  _field_60;
 	int32  _actionIdx3;
 	// TODO field_68 till field_617
-	int32  _reaction[8];
-	int32  _field_638;
 	ResourceId _walkingSound1;
 	ResourceId _walkingSound2;
 	ResourceId _walkingSound3;
@@ -429,57 +421,57 @@ private:
 	//////////////////////////////////////////////////////////////////////////
 	// Update methods
 	//////////////////////////////////////////////////////////////////////////
-	void updateStatus3_19();
-	void updateStatus19_Player();
+	void updateStatusInteracting();
+	void checkPumpkinDeath();
 	void updatePumpkin(GameFlag flagToCheck, GameFlag flagToSet, ObjectId objectToUpdate, ObjectId objectToDisable);
 
 	void updateStatusEnabled();
 	void updateStatusEnabledProcessStatus(int16 testX, int16 testY, uint32 counter, int16 setX, int16 setY);
 
-	void updateStatus9();
+	void updateStatusBored();
 
-	void updateStatus12_Chapter2();
-	void updateStatus12_Chapter2_Actor11();
-	void updateStatus12_Chapter11();
+	void CrowClosesIn();
+	void ScareCrowClosesIn();
+	void TentacleRises();
 
-	void updateStatus14();
-	void updateStatus14_Chapter2();
-	void updateStatus14_Chapter2_Helper();
-	void updateStatus14_Chapter11();
+	void updateStatusEnabled2();
+	void CrowHoveringBeforeKill();
+	void CrowStatusQuo();
+	void TentacleWigglesForSarah();
 
-	void updateStatus15_Chapter2();
-	void updateStatus15_Chapter2_Helper();
-	void updateStatus15_Chapter2_Player();
-	void updateStatus15_Chapter2_Player_Helper();
-	bool updateStatus15_isNoVisibleOrStatus17();
-	void updateStatus15_Chapter2_Actor11();
-	bool updateStatus15_Chapter2_Actor11_Helper(ActorIndex actorIndex1, ActorIndex actorIndex2);
-	void updateStatus15_Chapter11();
-	void updateStatus15_Chapter11_Player();
+	void CrowDives();
+	void MaxGetsHit();
+	void MaxAttacks();
+	void checkScareCrowDeath();
+	bool checkCrowDeath();
+	void ScareCrowAttacks();
+	bool actorsIntersect(ActorIndex actorIndex1, ActorIndex actorIndex2);
+	void TentacleWhips();
+	void SarahAttacks();
 
-	void updateStatus16_Chapter2();
-	void updateStatus16_Chapter11();
+	void MaxGetsSome();
+	void SarahGetsSome();
 
-	void updateStatus17_Chapter2();
+	void TentacleDies();
 
-	void updateStatus18_Chapter2();
-	void updateStatus18_Chapter2_Actor11();
+	void CrowSwoops();
+	void ScareCrowRetreats();
 
-	void updateStatus21();
+	void updateStatusMorphing();
 
-	void updateFinish();
+	void actionAreaCheck();
 
 	//////////////////////////////////////////////////////////////////////////
 	// Path finding functions
 	//////////////////////////////////////////////////////////////////////////
 	uint32 _frameNumber;
-	bool processActionLeft(Common::Point source, const Common::Point &destination, Common::Array<int> *actions);
-	bool processActionAll(Common::Point source,  const Common::Point &destination, Common::Array<int> *actions);
-	bool processActionTop(Common::Point source,  const Common::Point &destination, Common::Array<int> *actions);
-	bool processActionDown(Common::Point source, const Common::Point &destination, Common::Array<int> *actions);
-	bool processAction(const Common::Point &source, Common::Array<int> *actions, Common::Point *point, ActorDirection direction, const Common::Point &destination, bool *flag);
-	bool checkPath(Common::Array<int> *actions, const Common::Point &point, ActorDirection direction, int16 loopcount);
-	bool checkAllActions(const Common::Point &pt, Common::Array<int> *actions);
+	bool findLeftPath(Common::Point source, const Common::Point &destination, Common::Array<int> *actions);
+	bool findRightPath(Common::Point source,  const Common::Point &destination, Common::Array<int> *actions);
+	bool findUpPath(Common::Point source,  const Common::Point &destination, Common::Array<int> *actions);
+	bool findDownPath(Common::Point source, const Common::Point &destination, Common::Array<int> *actions);
+	bool tryDirection(const Common::Point &source, Common::Array<int> *actions, Common::Point *point, ActorDirection direction, const Common::Point &destination, bool *flag);
+	bool canGetToDest(Common::Array<int> *actions, const Common::Point &point, ActorDirection direction, int16 loopcount);
+	bool testPolyInLink(const Common::Point &pt, Common::Array<int> *actions);
 
 	//////////////////////////////////////////////////////////////////////////
 	// Misc
@@ -497,26 +489,16 @@ private:
 	 */
 	void setVolume();
 
-	/**
-	 * Updates the coordinates.
-	 *
-	 * @param vec1 The first vector.
-	 * @param vec2 The second vector.
-	 */
-	void updateCoordinates(const Common::Point &vec1, Common::Point vec2);
+	void TentacleBlocksSarah(const Common::Point &vec1, Common::Point vec2);
+	void SarahDies();
 
 	/**
-	 * Hide Actor 0 and reset Actor 1 frame index
-	 */
-	void resetActors();
-
-	/**
-	 * Updates the actor "number" data if the reaction is "1".
+	 * Updates the actor "number" data if the item is "1".
 	 *
-	 * @param reaction The reaction.
+	 * @param item     The item.
 	 * @param point    The coordinates
 	 */
-	void updateNumbers(int32 reaction, const Common::Point &point);
+	void updateNumbers(uint item, const Common::Point &point);
 
 	/**
 	 * Determine if the supplied point is in the action area
@@ -547,24 +529,24 @@ private:
 	DrawFlags getGraphicsFlags();
 
 	/**
-	 * Gets the absolute distance for a frame.
+	 * Gets the absolute value of the walk increment for a frame.
 	 *
 	 * @param direction  The direction.
 	 * @param frameIndex Zero-based index of the frame.
 	 *
-	 * @return The distance for the frame.
+	 * @return The absolute value of the walk increment.
 	 */
-	int32 getAbsoluteDistanceForFrame(ActorDirection direction, uint32 frameIndex) const;
+	int32 getStride(ActorDirection direction, uint32 frameIndex) const;
 
-		/**
-	 * Gets the distance for a frame.
+	/**
+	 * Gets the walk increment for a frame.
 	 *
 	 * @param direction  The direction.
 	 * @param frameIndex Zero-based index of the frame.
 	 *
-	 * @return The distance for the frame.
+	 * @return The walk increment.
 	 */
-	int32 getDistanceForFrame(ActorDirection direction, uint32 frameIndex) const;
+	int32 getWalkIncrement(ActorDirection direction, uint32 frameIndex) const;
 
 	/**
 	 * Updates the coordinates depending on the direction.
@@ -573,7 +555,7 @@ private:
 	 * @param delta 		 The delta.
 	 * @param [in,out] point If non-null, the point.
 	 */
-	static void updateCoordinatesForDirection(ActorDirection direction, int16 delta, Common::Point *point);
+	static void incPosition(ActorDirection direction, int16 delta, Common::Point *point);
 
 	/**
 	 * Get the angle between the two vectors
@@ -583,59 +565,46 @@ private:
 	 *
 	 * @return the angle
 	 */
-	static int32 angleFromVectors(const Common::Point &vec1, const Common::Point &vec2);
+	static int32 getAngleOfVector(const Common::Point &vec1, const Common::Point &vec2);
 
 	/**
-	 * Create a new rect using the point, depending on the actor direction
+	 * Computes the Scare Crow's strike zone.
 	 *
-	 * @param rect          The rectangle.
+	 * @param rect          The strike zone.
 	 * @param direction 	The direction.
 	 * @param point 		The point.
 	 */
-	static void rectFromDirection(Common::Rect *rect, ActorDirection direction, const Common::Point &point);
+	static void getCrowStrikeZone(Common::Rect *rect, ActorDirection direction, const Common::Point &point);
 
 	/**
-	 * Compares the angle between two vectors
+	 * Determines the direction of the shortest rotation between two vectors.
 	 *
 	 * @param vec1 The first vector.
 	 * @param vec2 The second vector.
 	 *
-	 * @return true if ...
+	 * @return true if CCW, false if CW.
 	 */
-	static bool compareAngles(const Common::Point &vec1, const Common::Point &vec2);
+	static bool determineLeftOrRight(const Common::Point &vec1, const Common::Point &vec2);
 
 	/**
-	 * Compares vector vec to two other vectors.
+	 * Gets the adjustment for the X-coordinate of the supplied point.
 	 *
-	 * @param vec1 The first vector.
-	 * @param vec2 The second vector.
-	 * @param vec  The vector to check
+	 * @param rect  The rectangle.
+	 * @param point The test point.
 	 *
-	 * @return true if vec is between vec1 and vec2.
+	 * @return value depending on the horizontal position of the point relative to the rectangle.
 	 */
-	static bool compare(const Common::Point &vec1, const Common::Point &vec2, const Common::Point &vec);
+	static int16 pointInRectXAdjust(const Common::Rect &rect, const Common::Point &point);
 
 	/**
-	 * Compare vectors
+	 * Gets the adjustment for the Y-coordinate of the supplied point.
 	 *
-	 * @param vec1 The first vector.
-	 * @param vec2 The second vector.
-	 * @param vec  The vector.
+	 * @param rect  The rectangle.
+	 * @param point The test point.
 	 *
-	 * @return value depending on whether vec.x is superior or inferior to each vector x coordinate
+	 * @return value depending on the vertical position of the point relative to the rectangle.
 	 */
-	static int16 compareX(const Common::Point &vec1, const Common::Point &vec2, const Common::Point &vec);
-
-	/**
-	 * Compare vectors
-	 *
-	 * @param vec1 The first vector.
-	 * @param vec2 The second vector.
-	 * @param vec  The vector.
-	 *
-	 * @return value depending on whether vec.y is superior or inferior to each vector y coordinate
-	 */
-	static int16 compareY(const Common::Point &vec1, const Common::Point &vec2, const Common::Point &vec);
+	static int16 pointInRectYAdjust(const Common::Rect &rect, const Common::Point &point);
 
 }; // end of class MainActor
 

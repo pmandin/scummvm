@@ -32,7 +32,7 @@
 #define AGS_ENGINE_AC_OBJECT_H
 
 #include "ags/shared/ac/common_defines.h"
-#include "ags/engine/ac/dynobj/scriptobject.h"
+#include "ags/engine/ac/dynobj/script_object.h"
 
 namespace AGS3 {
 
@@ -47,6 +47,7 @@ using namespace AGS; // FIXME later
 extern AGS_INLINE int is_valid_object(int obtest);
 int     Object_IsCollidingWithObject(ScriptObject *objj, ScriptObject *obj2);
 ScriptObject *GetObjectAtScreen(int xx, int yy);
+ScriptObject *GetObjectAtRoom(int x, int y);
 void    Object_Tint(ScriptObject *objj, int red, int green, int blue, int saturation, int luminance);
 void    Object_RemoveTint(ScriptObject *objj);
 void    Object_SetView(ScriptObject *objj, int view, int loop, int frame);

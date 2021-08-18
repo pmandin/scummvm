@@ -23,6 +23,8 @@
 #ifndef GRAPHICS_MACGUI_MACFONTMANAGER_H
 #define GRAPHICS_MACGUI_MACFONTMANAGER_H
 
+#include "common/language.h"
+
 #include "graphics/fontman.h"
 
 namespace Common {
@@ -33,6 +35,7 @@ namespace Common {
 namespace Graphics {
 
 class MacFONTFont;
+class MacFontFamily;
 
 enum {
 	kMacFontNonStandard = -1,
@@ -66,10 +69,19 @@ enum {
 
 class Font;
 
+struct FontInfo {
+	Common::Language lang;
+	Common::CodePage encoding;
+	int aliasForId;
+	Common::String name;
+
+	FontInfo() : lang(Common::UNK_LANG), encoding(Common::kCodePageInvalid), aliasForId(-1) {}
+};
+
 class MacFont {
 public:
 	MacFont(int id = kMacFontChicago, int size = 12, int slant = kMacFontRegular, FontManager::FontUsage fallback = Graphics::FontManager::kBigGUIFont) {
-		_id = id == 3 ? 1 : id;	// Substitude duplicate "Geneva"
+		_id = id;
 		_size = size ? size : 12;
 		_slant = slant;
 		_fallback = fallback;
@@ -79,6 +91,7 @@ public:
 	}
 
 	int getId() const { return _id; };
+	void setId(int id) { _id = id; }
 	int getSize() const { return _size; }
 	int getSlant() const { return _slant; }
 	Common::String getName() { return _name; }
@@ -105,8 +118,10 @@ private:
 
 class MacFontManager {
 public:
-	MacFontManager(uint32 mode);
+	MacFontManager(uint32 mode, Common::Language language);
 	~MacFontManager();
+
+	void setLocalizedFonts();
 
 	/**
 	 * Accessor method to check the presence of built-in fonts.
@@ -127,22 +142,33 @@ public:
 	 * @param size size of the font
 	 * @return the font name or NULL if ID goes beyond the mapping
 	 */
-	const Common::String getFontName(int id, int size, int slant = kMacFontRegular, bool tryGen = false);
+	const Common::String getFontName(uint16 id, int size, int slant = kMacFontRegular, bool tryGen = false);
 	const Common::String getFontName(MacFont &font);
 	int getFontIdByName(Common::String name);
+
+	Common::Language getFontLanguage(uint16 id);
+	Common::CodePage getFontEncoding(uint16 id);
+	int getFontAliasForId(uint16 id);
+	Common::String getFontName(uint16 id);
 
 	void loadFonts(Common::SeekableReadStream *stream);
 	void loadFonts(const Common::String &fileName);
 	void loadFonts(Common::MacResManager *fontFile);
 
-	void registerFontMapping(uint16 id, Common::String name);
-	void clearFontMapping();
+	/**
+	 * Register a font name if it doesn't already exist.
+	 * @param name name of the font
+	 * @return the font's ID
+	 */
+	int registerFontName(Common::String name, int preferredId = -1);
 
 	void forceBuiltinFonts() { _builtInFonts = true; }
+	int parseSlantFromName(const Common::String &name);
 
 private:
 	void loadFontsBDF();
 	void loadFonts();
+	void loadJapaneseFonts();
 
 	void generateFontSubstitute(MacFont &macFont);
 	void generateFONTFont(MacFont &toFont, MacFont &fromFont);
@@ -153,20 +179,21 @@ private:
 
 private:
 	bool _builtInFonts;
+	bool _japaneseFontsLoaded;
 	uint32 _mode;
+	Common::Language _language;
 	Common::HashMap<Common::String, MacFont *> _fontRegistry;
+	Common::HashMap<Common::String, MacFontFamily *> _fontFamilies;
 
+	Common::HashMap<int, FontInfo *> _fontInfo;
 	Common::HashMap<Common::String, int> _fontIds;
-
-	Common::HashMap<uint16, Common::String> _extraFontNames;
-	Common::HashMap<Common::String, int> _extraFontIds;
 
 	int parseFontSlant(Common::String slant);
 
 	/* Unicode font */
 	Common::HashMap<int, const Graphics::Font *> _uniFonts;
 
-	Common::HashMap<int, Common::SeekableReadStream *> _ttfData;
+	Common::HashMap<Common::String, Common::SeekableReadStream *> _ttfData;
 };
 
 } // End of namespace Graphics

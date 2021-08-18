@@ -24,20 +24,27 @@
 #define ULTIMA8_AUDIO_MIDI_PLAYER_H
 
 #include "audio/mixer.h"
-#include "audio/midiplayer.h"
+#include "audio/mididrv_ms.h"
+#include "audio/midiparser.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-class MidiPlayer : public Audio::MidiPlayer {
+class MidiPlayer {
 public:
 	MidiPlayer();
-	~MidiPlayer() override;
+	~MidiPlayer();
 
 	/**
 	 * Load the specified music data
 	 */
-	void load(byte *data, size_t size, int seqNo, bool speedHack);
+	void load(byte *data, size_t size, int seqNo);
+
+	/**
+	 * Load the XMIDI data containing the transition tracks.
+	 * Call this function before calling playTransition.
+	 */
+	void loadTransitionData(byte *data, size_t size);
 
 	/**
 	 * Play the specified music track, starting at the
@@ -45,6 +52,45 @@ public:
 	 * beginning.
 	 */
 	void play(int trackNo, int branchNo);
+
+	/**
+	 * Plays the specified transition track. If overlay is specified, the
+	 * transition is overlaid on the currently playing music track and this
+	 * track is stopped when the transition ends. If overlay is not specified,
+	 * the currently playing music track is stopped before the transition is
+	 * started.
+	 */
+	void playTransition(int trackNo, bool overlay);
+
+	/**
+	 * Stop the currently playing track.
+	 */
+	void stop();
+
+	/**
+	 * Pause or resume playback of the current track.
+	 */
+	void pause(bool pause);
+
+	/**
+	 * Returns true if a track is playing.
+	 */
+	bool isPlaying();
+
+	/**
+	 * Starts a fade-out of the specified duration (in milliseconds).
+	 */
+	void startFadeOut(uint16 length);
+
+	/**
+	 * Returns true if the music is currently fading.
+	 */
+	bool isFading();
+
+	/**
+	 * Synchronizes the user volume settings with those of the game.
+	 */
+	void syncSoundSettings();
 
 	/**
 	 * Sets whether the music should loop
@@ -67,8 +113,17 @@ public:
 		assert(seq == 0 || seq == 1);
 		return _callbackData[seq];
 	}
+
+	void onTimer();
+	static void timerCallback(void *data);
+
 private:
+	MidiDriver_Multisource *_driver;
+	MidiParser *_parser;
+	MidiParser *_transitionParser;
+
 	bool _isFMSynth;
+	bool _playingTransition;
 	static byte _callbackData[2];
 };
 

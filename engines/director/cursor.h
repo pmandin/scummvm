@@ -33,15 +33,21 @@ class MacCursor;
 
 namespace Director {
 
+struct CursorRef;
+
 class Cursor : public Graphics::MacCursor {
  public:
 	Cursor();
 
-	void readFromCast(uint cursorId, uint maskId);
-	void readFromResource(int resourceId);
+	CursorRef getRef();
 
-	bool isEmpty() { return !(_cursorResId || _cursorCastId); }
+	void readFromCast(CastMemberID cursorId, CastMemberID maskId);
+	void readFromResource(int resourceId);
+	void readBuiltinType(int resourceId);
+
+	bool isEmpty() { return _cursorResId == 0 && _cursorCastId.member == 0; }
 	bool operator==(const Cursor &c);
+	bool operator==(const CursorRef &c);
 
 	virtual byte getKeyColor() const override { return _keyColor; }
 	virtual const byte *getPalette() const override { return _usePalette ? _palette : nullptr; }
@@ -50,15 +56,28 @@ class Cursor : public Graphics::MacCursor {
 	Graphics::MacCursorType _cursorType;
 	int _cursorResId;
 
-	uint _cursorCastId;
-	uint _cursorMaskId;
+	CastMemberID _cursorCastId;
+	CastMemberID _cursorMaskId;
 
 private:
-	void resetCursor(Graphics::MacCursorType type, bool shouldClear = false, int resId = 0, uint castId = 0, uint maskId = 0);
+	void resetCursor(Graphics::MacCursorType type, bool shouldClear = false, int resId = 0, CastMemberID castId = CastMemberID(0, 0), CastMemberID maskId = CastMemberID(0, 0));
 
 private:
 	bool _usePalette;
 	byte _keyColor;
+};
+
+// CursorRef acts as a reference to a cursor.
+// Doesn't contain a surface, palette, etc. like the cursor itself.
+struct CursorRef {
+	CursorRef();
+	bool operator==(const Cursor &c);
+	bool operator==(const CursorRef &c);
+
+	Graphics::MacCursorType _cursorType;
+	int _cursorResId;
+	CastMemberID _cursorCastId;
+	CastMemberID _cursorMaskId;
 };
 
 } // End of namespace Director

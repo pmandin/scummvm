@@ -20,24 +20,18 @@
  *
  */
 
-#include "ags/lib/allegro.h"
 #include "ags/plugins/ags_tcp_ip/ags_tcp_ip.h"
 
 namespace AGS3 {
 namespace Plugins {
 namespace AGSTcpIp {
 
-
-AGSTcpIp::AGSTcpIp() : PluginBase() {
-	DLL_METHOD(AGS_GetPluginName);
-	DLL_METHOD(AGS_EngineStartup);
-}
-
 const char *AGSTcpIp::AGS_GetPluginName() {
 	return "TCP/IP (a-v-o)";
 }
 
 void AGSTcpIp::AGS_EngineStartup(IAGSEngine *engine) {
+	PluginBase::AGS_EngineStartup(engine);
 }
 
 } // namespace AGSTcpIp

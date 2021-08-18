@@ -31,7 +31,6 @@
 #include "common/tokenizer.h"
 #include "common/translation.h"
 
-#include "engines/util.h"
 #include "engines/wintermute/ad/ad_game.h"
 #include "engines/wintermute/wintermute.h"
 #include "engines/wintermute/debugger.h"
@@ -81,9 +80,6 @@ WintermuteEngine::~WintermuteEngine() {
 	deinit();
 	delete _game;
 	//_debugger deleted by Engine
-
-	// Remove all of our debug levels here
-	DebugMan.clearAllDebugChannels();
 }
 
 bool WintermuteEngine::hasFeature(EngineFeature f) const {
@@ -105,21 +101,6 @@ bool WintermuteEngine::hasFeature(EngineFeature f) const {
 }
 
 Common::Error WintermuteEngine::run() {
-	// Initialize graphics using following:
-	Graphics::PixelFormat format(4, 8, 8, 8, 8, 24, 16, 8, 0);
-	if (_gameDescription->adDesc.flags & GF_LOWSPEC_ASSETS) {
-		initGraphics(320, 240, &format);
-#ifdef ENABLE_FOXTAIL
-	} else if (BaseEngine::isFoxTailCheck(_gameDescription->targetExecutable)) {
-		initGraphics(640, 360, &format);
-#endif
-	} else {
-		initGraphics(800, 600, &format);
-	}
-	if (g_system->getScreenFormat() != format) {
-		return Common::kUnsupportedColorMode;
-	}
-
 	// Create debugger console. It requires GFX to be initialized
 	_dbgController = new DebuggerController(this);
 	_debugger = new Console(this);
@@ -198,7 +179,7 @@ int WintermuteEngine::init() {
 	#ifndef ENABLE_WME3D
 	// check if game require 3D capabilities
 	if (instance.getFlags() & GF_3D) {
-		GUI::MessageDialog dialog(_("This game requires 3D capabilities that are out ScummVM scope. As such, it"
+		GUI::MessageDialog dialog(_("This game requires 3D capabilities, which is not compiled in. As such, it"
 			" is likely to be unplayable totally or partially."), _("Start anyway"), _("Cancel"));
 		if (dialog.runModal() != GUI::kMessageOK) {
 			delete _game;
@@ -215,7 +196,8 @@ int WintermuteEngine::init() {
 
 	#ifdef ENABLE_WME3D
 	Common::ArchiveMemberList actors3d;
-	_game->_playing3DGame = BaseEngine::instance().getFileManager()->listMatchingPackageMembers(actors3d, "*.act3d");
+	_game->_playing3DGame = instance.getFlags() & GF_3D;
+	_game->_playing3DGame |= BaseEngine::instance().getFileManager()->listMatchingPackageMembers(actors3d, "*.act3d");
 	#endif
 	instance.setGameRef(_game);
 	BasePlatform::initialize(this, _game, 0, nullptr);

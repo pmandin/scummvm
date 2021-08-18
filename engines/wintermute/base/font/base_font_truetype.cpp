@@ -38,6 +38,7 @@
 #include "engines/wintermute/wintermute.h"
 #include "graphics/fonts/ttf.h"
 #include "graphics/fontman.h"
+#include "common/unicode-bidi.h"
 #include "common/unzip.h"
 
 namespace Wintermute {
@@ -234,7 +235,7 @@ void BaseFontTT::drawText(const byte *text, int x, int y, int width, TTextAlign 
 				color = BYTETORGBA(RGBCOLGetR(color), RGBCOLGetG(color), RGBCOLGetB(color), RGBCOLGetA(renderer->_forceAlphaColor));
 				renderer->_forceAlphaColor = 0;
 			}
-			surface->displayTransOffset(x, y - textOffset, rc, color, Graphics::BLEND_NORMAL, false, false, _layers[i]->_offsetX, _layers[i]->_offsetY);
+			surface->displayTrans(x, y - textOffset, rc, color, Graphics::BLEND_NORMAL, false, false, _layers[i]->_offsetX, _layers[i]->_offsetY);
 
 			renderer->_forceAlphaColor = origForceAlpha;
 		}
@@ -276,7 +277,13 @@ BaseSurface *BaseFontTT::renderTextToTexture(const WideString &text, int width, 
 	Common::Array<WideString>::iterator it;
 	int heightOffset = 0;
 	for (it = lines.begin(); it != lines.end(); ++it) {
-		_font->drawString(surface, *it, 0, heightOffset, width, useColor, alignment);
+		WideString str;
+		if (_gameRef->_textRTL) {
+			str = Common::convertBiDiU32String(*it, Common::BIDI_PAR_RTL);
+		} else {
+			str = Common::convertBiDiU32String(*it, Common::BIDI_PAR_LTR);
+		}
+		_font->drawString(surface, str, 0, heightOffset, width, useColor, alignment);
 		heightOffset += (int)_lineHeight;
 	}
 

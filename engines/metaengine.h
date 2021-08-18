@@ -369,29 +369,20 @@ public:
 	virtual Common::Array<Common::Keymap *> initKeymaps(const char *target) const;
 
 	/**
-	 * Return the extra GUI options used by the target.
-	 */
-	virtual const ExtraGuiOptions getExtraGuiOptions(const Common::String &target) const {
-		return ExtraGuiOptions();
-	}
-
-	/**
 	 * Return a GUI widget container for configuring the specified target options.
 	 *
-	 * Engines can build custom option dialogs from here, but by default a simple widget
-	 * allowing to configure the extra GUI options is used.
+	 * Engines can build custom option dialogs from here.
 	 *
-	 * The engine that builds the Engines tab in the Edit Game dialog uses a MetaEngineDetection.
-	 * The engine that specifies a custom dialog when a game is running uses a MetaEngine.
-	 *
-	 * Engines are not supposed to have an Engine tab in the Edit Game dialog
-	 * can return nullptr.
+	 * Engines that don't have an Engine tab in the Edit Game dialog, or that use
+	 * ExtraGuiOptions in MetaEngineDetection can return nullptr.
 	 *
 	 * @param boss    The widget or dialog that the returned widget is a child of.
 	 * @param name    The name that the returned widget must use.
 	 * @param target  Name of a config manager target.
 	 */
-	virtual GUI::OptionsContainerWidget *buildEngineOptionsWidgetDynamic(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const;
+	virtual GUI::OptionsContainerWidget *buildEngineOptionsWidgetDynamic(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const {
+		return nullptr;
+	}
 
 	/**
 	 * MetaEngine feature flags.
@@ -495,14 +486,21 @@ public:
 	/**
 	 * Return a list of achievement descriptions for the specified target.
 	 *
-	 * The default implementation returns an empty list.
-	 *
 	 * @param target  Name of a config manager target.
 	 *
 	 * @return A list of achievement descriptions for an engine plugin and target.
 	 */
-	virtual const Common::AchievementsInfo getAchievementsInfo(const Common::String &target) const {
-		return Common::AchievementsInfo();
+	virtual const Common::AchievementsInfo getAchievementsInfo(const Common::String &target) const;
+
+	/**
+	 * Return the achievement descriptions.
+	 *
+	 * @note The default implementation returns @c nullptr
+	 *
+	 * @return a list of achievement descriptions for an engine.
+	 */
+	virtual const Common::AchievementDescriptionList* getAchievementDescriptionList() const {
+		return nullptr;
 	}
 
 	/**
@@ -516,6 +514,11 @@ public:
 	 * Write the extended savegame header to the given savegame file.
 	 */
 	void appendExtendedSave(Common::OutSaveFile *saveFile, uint32 playtime, Common::String desc, bool isAutosave);
+
+	/**
+	 * Write the extended savegame header to the given WriteStream.
+	 */
+	void appendExtendedSaveToStream(Common::WriteStream *saveFile, uint32 playtime, Common::String desc, bool isAutosave, uint32 offset = 0);
 
 	/**
 	 * Parse the extended savegame header to retrieve the SaveStateDescriptor information.

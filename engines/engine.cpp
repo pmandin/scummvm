@@ -20,12 +20,10 @@
  *
  */
 
-#define FORBIDDEN_SYMBOL_EXCEPTION_getcwd
-
 #if defined(WIN32) && !defined(__SYMBIAN32__)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <direct.h>
+#include "backends/platform/sdl/win32/win32_wrapper.h"
 #endif
 
 #include "engines/engine.h"
@@ -81,7 +79,9 @@ static void defaultOutputFormatter(char *dst, const char *src, size_t dstSize) {
 	}
 }
 
-static void defaultErrorHandler(const char *msg) {
+static bool defaultErrorHandler(const char *msg) {
+	bool handled = false;
+
 	// Unless this error -originated- within the debugger itself, we
 	// now invoke the debugger, if available / supported.
 	if (g_engine) {
@@ -94,6 +94,7 @@ static void defaultErrorHandler(const char *msg) {
 		if (debugger && !debugger->isActive()) {
 			debugger->attach(msg);
 			debugger->onFrame();
+			handled = true;
 		}
 
 
@@ -102,6 +103,8 @@ static void defaultErrorHandler(const char *msg) {
 #endif
 
 	}
+
+	return handled;
 }
 
 // Chained games manager
@@ -214,6 +217,9 @@ void initCommonGFX() {
 
 		if (gameDomain->contains("stretch_mode"))
 			g_system->setStretchMode(ConfMan.get("stretch_mode").c_str());
+
+		if (gameDomain->contains("scaler") || gameDomain->contains("scale_factor"))
+			g_system->setScaler(ConfMan.get("scaler").c_str(), ConfMan.getInt("scale_factor"));
 
 		if (gameDomain->contains("shader"))
 			g_system->setShader(ConfMan.get("shader").c_str());
@@ -454,25 +460,39 @@ void GUIErrorMessageFormat(Common::U32String fmt, ...) {
 	GUIErrorMessage(msg);
 }
 
-void Engine::checkCD() {
+/**
+ * Checks if supported (extracted) audio files are found.
+ *
+ * @return			true if audio files of the expected naming scheme are found, as long as ScummVM
+ *					is also built with support to the respective audio format (eg. ogg, flac, mad/mp3)
+ */
+bool Engine::existExtractedCDAudioFiles() {
 #ifdef USE_VORBIS
 	if (Common::File::exists("track1.ogg") ||
 	    Common::File::exists("track01.ogg"))
-		return;
+		return true;
 #endif
 #ifdef USE_FLAC
 	if (Common::File::exists("track1.fla")  ||
 	    Common::File::exists("track1.flac") ||
 	    Common::File::exists("track01.fla") ||
 	    Common::File::exists("track01.flac"))
-		return;
+		return true;
 #endif
 #ifdef USE_MAD
 	if (Common::File::exists("track1.mp3") ||
 	    Common::File::exists("track01.mp3"))
-		return;
+		return true;
 #endif
+	return false;
+}
 
+/**
+ * Displays a warning on Windows version of ScummVM, if game data 
+ * are read from the same CD drive which should also play game CD audio.
+ * @return			true, if this case is applicable and the warning is displayed
+ */
+bool Engine::isDataAndCDAudioReadFromSameCD() {
 #if defined(WIN32) && !defined(__SYMBIAN32__)
 	// It is a known bug under Windows that games that play CD audio cause
 	// ScummVM to crash if the data files are read from the same CD. Check
@@ -480,48 +500,52 @@ void Engine::checkCD() {
 
 	// If we can find a compressed audio track, then it should be ok even
 	// if it's running from CD.
-	char buffer[MAXPATHLEN];
-	int i;
-
+	char driveLetter;
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
-
-	if (gameDataDir.getPath().empty()) {
+	if (!gameDataDir.getPath().empty()) {
+		driveLetter = gameDataDir.getPath()[0];
+	} else {
 		// That's it! I give up!
-		if (getcwd(buffer, MAXPATHLEN) == NULL)
-			return;
-	} else
-		Common::strlcpy(buffer, gameDataDir.getPath().c_str(), sizeof(buffer));
-
-	for (i = 0; i < MAXPATHLEN - 1; i++) {
-		if (buffer[i] == '\\')
-			break;
+		Common::FSNode currentDir(".");
+		if (!currentDir.getPath().empty()) {
+			driveLetter = currentDir.getPath()[0];
+		} else {
+			return false;
+		}
 	}
 
-	buffer[i + 1] = 0;
-
-	if (GetDriveType(buffer) == DRIVE_CDROM) {
+	if (Win32::isDriveCD(driveLetter)) {
 		GUI::MessageDialog dialog(
 			_("You appear to be playing this game directly\n"
 			"from the CD. This is known to cause problems,\n"
 			"and it is therefore recommended that you copy\n"
 			"the data files to your hard disk instead.\n"
-			"See the Documentation (CD audio) for details."), _("OK"));
+			"See the documentation (CD audio) for details."), _("OK"));
 		dialog.runModal();
-	} else {
-#endif // defined(WIN32) && !defined(__SYMBIAN32__)
-		// If we reached here, the game has audio tracks,
-		// it's not ran from the CD and the tracks have not
-		// been ripped.
-		GUI::MessageDialog dialog(
-			_("This game has audio tracks in its disk. These\n"
-			"tracks need to be ripped from the disk using\n"
-			"an appropriate CD audio extracting tool in\n"
-			"order to listen to the game's music.\n"
-			"See the Documentation (CD audio) for details."), _("OK"));
-		dialog.runModal();
-#if defined(WIN32) && !defined(__SYMBIAN32__)
+		return true;
 	}
 #endif // defined(WIN32) && !defined(__SYMBIAN32__)
+	return false;
+}
+
+/**
+ * Displays a warning, for the case when the game has CD audio but 
+ * no extracted (ripped) audio files were found.
+ *
+ * This method only shows the warning. It does not check for the
+ * existence of the ripped audio files.
+ */
+void Engine::warnMissingExtractedCDAudio() {
+	// Display a modal informative dialogue for the case when:
+	// - The game has audio tracks,
+	// - and the tracks have not been ripped.
+	GUI::MessageDialog dialog(
+		_("This game has audio tracks on its CD. These\n"
+		"tracks need to be ripped from the CD using\n"
+		"an appropriate CD audio extracting tool in\n"
+		"order to listen to the game's music.\n"
+		"See the documentation (CD audio) for details."), _("OK"));
+	dialog.runModal();
 }
 
 void Engine::handleAutoSave() {
@@ -534,6 +558,11 @@ void Engine::handleAutoSave() {
 }
 
 void Engine::saveAutosaveIfEnabled() {
+	// Reset the last autosave time first.
+	// Doing it here rather than after saving the game prevents recursive calls if saving the game
+	// causes the engine to poll events (as is the case with the AGS engine for example).
+	_lastAutosaveTime = _system->getMillis();
+
 	if (_autosaveInterval != 0) {
 		bool saveFlag = canSaveAutosaveCurrently();
 
@@ -553,13 +582,9 @@ void Engine::saveAutosaveIfEnabled() {
 		if (!saveFlag) {
 			// Set the next autosave interval to be in 5 minutes, rather than whatever
 			// full autosave interval the user has selected
-			_lastAutosaveTime = _system->getMillis() + (5 * 60 * 1000) - _autosaveInterval;
-			return;
+			_lastAutosaveTime += (5 * 60 * 1000) - _autosaveInterval;
 		}
 	}
-
-	// Reset the last autosave time
-	_lastAutosaveTime = _system->getMillis();
 }
 
 void Engine::errorString(const char *buf1, char *buf2, int size) {

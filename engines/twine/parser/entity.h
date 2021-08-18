@@ -42,7 +42,7 @@ struct EntityAnim {
 	int animIndex;
 
 	struct Action {
-		uint8 type = 0;
+		ActionType type = ActionType::ACTION_NOP;
 		uint8 animFrame = 0;
 		int16 sampleIndex = 0;
 		int16 frequency = 0;
@@ -75,8 +75,11 @@ private:
 	bool loadBody(Common::SeekableReadStream &stream);
 	bool loadAnim(Common::SeekableReadStream &stream);
 
+protected:
+	void reset() override;
+
 public:
-	bool loadFromStream(Common::SeekableReadStream &stream) override;
+	bool loadFromStream(Common::SeekableReadStream &stream, bool lba1) override;
 
 	const Common::Array<EntityAnim::Action> *getActions(AnimationTypes animation) const;
 	const EntityBody *getBody(const int index) const;

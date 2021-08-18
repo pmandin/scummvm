@@ -20,20 +20,21 @@
  *
  */
 
-#ifndef AGS_ENGINE_GAME_SAVEGAMEINTERNAL_H
-#define AGS_ENGINE_GAME_SAVEGAMEINTERNAL_H
+#ifndef AGS_ENGINE_GAME_SAVEGAME_INTERNAL_H
+#define AGS_ENGINE_GAME_SAVEGAME_INTERNAL_H
 
 #include "ags/lib/std/memory.h"
 #include "ags/lib/std/vector.h"
 #include "ags/shared/ac/common_defines.h"
+#include "ags/shared/game/room_struct.h"
 #include "ags/shared/gfx/bitmap.h"
-#include "ags/engine/media/audio/audiodefines.h"
+#include "ags/engine/media/audio/audio_defines.h"
 
 namespace AGS3 {
 namespace AGS {
 namespace Engine {
 
-using Shared::Bitmap;
+using AGS::Shared::Bitmap;
 
 typedef std::shared_ptr<Bitmap> PBitmap;
 

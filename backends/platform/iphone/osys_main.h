@@ -29,7 +29,6 @@
 #include "common/events.h"
 #include "audio/mixer_intern.h"
 #include "backends/fs/posix/posix-fs-factory.h"
-#include "graphics/colormasks.h"
 #include "graphics/palette.h"
 
 #include <AudioToolbox/AudioQueue.h>
@@ -151,11 +150,11 @@ public:
 	virtual void hideOverlay();
 	virtual bool isOverlayVisible() const { return _videoContext->overlayVisible; }
 	virtual void clearOverlay();
-	virtual void grabOverlay(void *buf, int pitch);
+	virtual void grabOverlay(Graphics::Surface &surface);
 	virtual void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h);
 	virtual int16 getOverlayHeight();
 	virtual int16 getOverlayWidth();
-	virtual Graphics::PixelFormat getOverlayFormat() const { return Graphics::createPixelFormat<5551>(); }
+	virtual Graphics::PixelFormat getOverlayFormat() const;
 
 	virtual bool showMouse(bool visible);
 
@@ -174,7 +173,7 @@ public:
 	virtual void quit();
 
 	virtual void addSysArchivesToSearchSet(Common::SearchSet &s, int priority = 0);
-	virtual void getTimeAndDate(TimeDate &t) const;
+	virtual void getTimeAndDate(TimeDate &td, bool skipRecord = false) const;
 
 	virtual Audio::Mixer *getMixer();
 

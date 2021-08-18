@@ -41,6 +41,7 @@ namespace Director {
 const int SCALE_THRESHOLD = 0x100;
 
 class Channel;
+class MacArchive;
 struct MacShape;
 
 struct TransParams {
@@ -87,12 +88,12 @@ struct TransParams {
 };
 
 class Window : public Graphics::MacWindow, public Object<Window> {
- public:
+public:
 	Window(int id, bool scrollable, bool resizable, bool editable, Graphics::MacWindowManager *wm, DirectorEngine *vm, bool isStage);
 	~Window();
 
 	bool render(bool forceRedraw = false, Graphics::ManagedSurface *blitTo = nullptr);
-	void invertChannel(Channel *channel);
+	void invertChannel(Channel *channel, const Common::Rect &destRect);
 
 	bool needsAppliedColor(DirectorPlotData *pd);
 	void setStageColor(uint32 stageColor, bool forceReset = false);
@@ -116,6 +117,7 @@ class Window : public Graphics::MacWindow, public Object<Window> {
 	Archive *getMainArchive() const { return _mainArchive; }
 	Movie *getCurrentMovie() const { return _currentMovie; }
 	Common::String getCurrentPath() const { return _currentPath; }
+	DirectorSound *getSoundManager() const { return _soundManager; }
 
 	virtual void setVisible(bool visible, bool silent = false) override;
 	bool setNextMovie(Common::String &movieFilenameRaw);
@@ -128,6 +130,8 @@ class Window : public Graphics::MacWindow, public Object<Window> {
 	void updateBorderType();
 
 	bool step();
+
+	Common::String getSharedCastPath();
 
 	// events.cpp
 	virtual bool processEvent(Common::Event &event) override;
@@ -143,6 +147,7 @@ class Window : public Graphics::MacWindow, public Object<Window> {
 	// resource.cpp
 	Common::Error loadInitialMovie();
 	void probeProjector(const Common::String &movie);
+	void probeMacBinary(MacArchive *archive);
 	Archive *openMainArchive(const Common::String movie);
 	void loadEXE(const Common::String movie);
 	void loadEXEv3(Common::SeekableReadStream *stream);
@@ -151,6 +156,7 @@ class Window : public Graphics::MacWindow, public Object<Window> {
 	void loadEXEv7(Common::SeekableReadStream *stream);
 	void loadEXERIFX(Common::SeekableReadStream *stream, uint32 offset);
 	void loadMac(const Common::String movie);
+	void loadStartMovieXLibs();
 
 	// lingo/lingo-object.cpp
 	Common::String asString() override;
@@ -169,10 +175,20 @@ public:
 	Common::List<MovieReference> _movieStack;
 	bool _newMovieStarted;
 
+	// saved Lingo state
+	Common::Array<CFrame *> _callstack;
+	uint _retPC;
+	ScriptData *_retScript;
+	ScriptContext *_retContext;
+	bool _retFreezeContext;
+	DatumHash *_retLocalVars;
+	Datum _retMe;
+
 private:
 	uint32 _stageColor;
 
 	DirectorEngine *_vm;
+	DirectorSound *_soundManager;
 	bool _isStage;
 	Archive *_mainArchive;
 	Common::MacResManager *_macBinary;

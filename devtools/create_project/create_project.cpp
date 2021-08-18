@@ -22,12 +22,6 @@
 
 #define ENABLE_XCODE
 
-// HACK to allow building with the SDL backend on MinGW
-// see bug #3412 "TOOLS: MinGW tools building broken"
-#ifdef main
-#undef main
-#endif // main
-
 #if (defined(_WIN32) || defined(WIN32)) && !defined(__GNUC__)
 #define USE_WIN32_API
 #endif
@@ -289,6 +283,10 @@ int main(int argc, char *argv[]) {
 			setup.useSDL2 = false;
 		} else if (!std::strcmp(argv[i], "--use-canonical-lib-names")) {
 			setup.useCanonicalLibNames = true;
+		} else if (!std::strcmp(argv[i], "--use-windows-unicode")) {
+			setup.useWindowsUnicode = true;
+		} else if (!std::strcmp(argv[i], "--use-windows-ansi")) {
+			setup.useWindowsUnicode = false;
 		} else {
 			std::cerr << "ERROR: Unknown parameter \"" << argv[i] << "\"\n";
 			return -1;
@@ -407,6 +405,8 @@ int main(int argc, char *argv[]) {
 				setup.defines.push_back("USE_SPARKLE");
 			else if (backendWin32 && !strcmp(i->name, "libcurl"))
 				setup.defines.push_back("CURL_STATICLIB");
+			else if (!strcmp(i->name, "fluidlite"))
+				setup.defines.push_back("USE_FLUIDSYNTH");
 		}
 	}
 
@@ -723,6 +723,10 @@ void displayHelp(const char *exe) {
 	        "                            (default: false)\n"
 	        " --use-canonical-lib-names  Use canonical library names for linking. This makes it easy to use\n"
 	        "                            e.g. vcpkg-provided libraries\n"
+	        "                            (default: false)\n"
+	        " --use-windows-unicode      Use Windows Unicode APIs\n"
+	        "                            (default: true)\n"
+	        " --use-windows-ansi         Use Windows ANSI APIs\n"
 	        "                            (default: false)\n"
 	        "\n"
 	        "Engines settings:\n"
@@ -1234,13 +1238,13 @@ int getInstalledMSVC() {
 	// Use the registry to get the latest version
 	if (latest == 0) {
 		HKEY key;
-		LONG err = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7", 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &key);
+		LONG err = RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7"), 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &key);
 		if (err == ERROR_SUCCESS && key != NULL) {
 			const MSVCList msvc = getAllMSVCVersions();
 			for (MSVCList::const_reverse_iterator i = msvc.rbegin(); i != msvc.rend(); ++i) {
 				std::ostringstream version;
 				version << i->version << ".0";
-				err = RegQueryValueEx(key, version.str().c_str(), NULL, NULL, NULL, NULL);
+				err = RegQueryValueExA(key, version.str().c_str(), NULL, NULL, NULL, NULL);
 				if (err == ERROR_SUCCESS) {
 					latest = i->version;
 					break;
@@ -1396,8 +1400,8 @@ bool compareNodes(const FileNode *l, const FileNode *r) {
 FileList listDirectory(const std::string &dir) {
 	FileList result;
 #if defined(_WIN32) || defined(WIN32)
-	WIN32_FIND_DATA fileInformation;
-	HANDLE fileHandle = FindFirstFile((dir + "/*").c_str(), &fileInformation);
+	WIN32_FIND_DATAA fileInformation;
+	HANDLE fileHandle = FindFirstFileA((dir + "/*").c_str(), &fileInformation);
 
 	if (fileHandle == INVALID_HANDLE_VALUE)
 		return result;
@@ -1407,7 +1411,7 @@ FileList listDirectory(const std::string &dir) {
 			continue;
 
 		result.push_back(FSNode(fileInformation.cFileName, (fileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0));
-	} while (FindNextFile(fileHandle, &fileInformation) == TRUE);
+	} while (FindNextFileA(fileHandle, &fileInformation) == TRUE);
 
 	FindClose(fileHandle);
 #else
@@ -1435,7 +1439,7 @@ FileList listDirectory(const std::string &dir) {
 
 void createDirectory(const std::string &dir) {
 #if defined(_WIN32) || defined(WIN32)
-	if (!CreateDirectory(dir.c_str(), NULL)) {
+	if (!CreateDirectoryA(dir.c_str(), NULL)) {
 		if (GetLastError() != ERROR_ALREADY_EXISTS) {
 			error("Could not create folder \"" + dir + "\"");
 		}
@@ -2001,7 +2005,7 @@ void ProjectProvider::createModuleList(const std::string &moduleDir, const Strin
 	}
 
 	if (forDetection) {
-		int p = moduleRootDir.find('/');
+		std::string::size_type p = moduleRootDir.find('/');
 		std::string engineName = moduleRootDir.substr(p + 1);
 		std::string engineNameUpper;
 

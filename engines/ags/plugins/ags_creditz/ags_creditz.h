@@ -23,7 +23,7 @@
 #ifndef AGS_PLUGINS_AGSCREDITZ_AGSCREDITZ_H
 #define AGS_PLUGINS_AGSCREDITZ_AGSCREDITZ_H
 
-#include "ags/plugins/plugin_base.h"
+#include "ags/plugins/ags_plugin.h"
 #include "ags/plugins/ags_creditz/drawing.h"
 #include "common/array.h"
 #include "common/rect.h"
@@ -94,7 +94,24 @@ struct SingleStatic {
 typedef Common::Array<Credit> CreditArray;
 typedef Common::Array<StCredit> StCreditArray;
 
-struct State {
+class AGSCreditz : public PluginBase, public Drawing {
+private:
+	int drawCredit(int sequence, int credit);
+	void doCredits();
+	int countLines(const Common::String &text);
+	Common::String extractParameter(Common::String &line, const Common::String &separator);
+	void specialEffect(int sequence, int credit, const Common::String &text,
+							  int font, int color, int32 x_pos);
+	void drawStEffects(int sequence, int id, int style);
+	void speeder(int sequence);
+
+protected:
+	enum Version {
+		VERSION_11 = 11, VERSION_20 = 20
+	};
+
+	Version _version;
+	PluginMethod _playSound;
 	CreditArray _credits[10];
 	StCreditArray _stCredits[10];
 	bool _creditsRunning = 0, _paused = 0, _staticCredits = 0;
@@ -112,37 +129,15 @@ struct State {
 	int32 _screenWidth = 0, _screenHeight = 0, _screenColorDepth = 0;
 	int32 _staticScreenWidth = 0;
 	bool _staticWidthMatches = false;
-};
 
-class AGSCreditz : public PluginBase, public Drawing {
-private:
-	static int drawCredit(int sequence, int credit);
-	static void doCredits();
-	static int countLines(const Common::String &text);
-	static Common::String extractParameter(Common::String &line, const Common::String &separator);
-	static void specialEffect(int sequence, int credit, const Common::String &text,
-		int font, int color, int32 x_pos);
-	static void drawStEffects(int sequence, int id, int style);
-	static void speeder(int sequence);
-
-protected:
-	enum Version {
-		VERSION_11 = 11, VERSION_20 = 20
-	};
-
-	static Version _version;
-	static State *_state;
-	static IAGSEngine *_engine;
-	static IntFunction _playSound;
-
-	static void draw();
-	static void calculateSequenceHeight(int sequence);
-	static int VGACheck(int value);
-	static void startSequence(int sequence);
+	void draw();
+	void calculateSequenceHeight(int sequence);
+	int VGACheck(int value);
+	void startSequence(int sequence);
 
 public:
-	AGSCreditz();
-	~AGSCreditz();
+	AGSCreditz() : PluginBase(), Drawing() {}
+	virtual ~AGSCreditz() {}
 };
 
 } // namespace AGSCreditz

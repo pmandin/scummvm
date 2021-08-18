@@ -83,7 +83,9 @@ struct PACKFILE {
 	virtual long pack_fwrite(AL_CONST void *p, long n) = 0;
 	virtual int pack_feof() = 0;
 	virtual int pack_ferror() = 0;
-	virtual void *pack_get_userdata() const { return nullptr; }
+	virtual void *pack_get_userdata() const {
+		return nullptr;
+	}
 
 	PACKFILE *pack_fopen_chunk(int pack);
 	PACKFILE *pack_fclose_chunk();
@@ -97,7 +99,7 @@ struct PACKFILE {
 	long pack_mputl(long l);
 	char *pack_fgets(char *p, int max);
 	int pack_fputs(AL_CONST char *p);
-};
+	};
 
 struct ScummVMPackFile : public PACKFILE {
 public:
@@ -145,9 +147,9 @@ public:
 	int pack_ferror() override {
 		return _stream->err();
 	}
-};
+	};
 
-struct VTablePackFile : public PACKFILE {
+	struct VTablePackFile : public PACKFILE {
 	AL_CONST PACKFILE_VTABLE *_vTable;
 	void *_userData;
 
@@ -196,6 +198,7 @@ struct VTablePackFile : public PACKFILE {
 	}
 };
 
+extern void set_filename_encoding(int);
 extern char *fix_filename_case(char *path);
 extern char *fix_filename_slashes(char *path);
 extern char *append_filename(char *dest, const char *path, const char *filename, int size);

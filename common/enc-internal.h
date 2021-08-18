@@ -35,11 +35,13 @@ extern const uint16 kWindows1255ConversionTable[128];
 extern const uint16 kWindows1256ConversionTable[128];
 extern const uint16 kWindows1257ConversionTable[128];
 extern const uint16 kMacCentralEuropeConversionTable[128];
+extern const uint16 kMacRomanConversionTable[128];
 extern const uint16 kLatin1ConversionTable[128];
 extern const uint16 kLatin2ConversionTable[128];
 extern const uint16 kISO5ConversionTable[128];
 extern const uint16 kASCIIConversionTable[128];
 extern const uint16 kDos850ConversionTable[128];
+extern const uint16 kDos862ConversionTable[128];
 extern const uint16 kDos866ConversionTable[128];
 
 }

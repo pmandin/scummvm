@@ -151,6 +151,7 @@ protected:
 		Common::Point point3;
 		int32 deltaXFactor, deltaYFactor;
 		uint16 xfrac, yfrac;
+		uint16 xAdd, yAdd;
 
 		void reset() {
 			dest.x = dest.y = 0;
@@ -164,6 +165,8 @@ protected:
 			deltaYFactor = 0;
 			xfrac = 0;
 			yfrac = 0;
+			xAdd = 0;
+			yAdd = 0;
 		}
 	};
 
@@ -326,13 +329,23 @@ protected:
 
 class Actor_v3 : public Actor {
 public:
-	Actor_v3(ScummEngine *scumm, int id) : Actor(scumm, id) {}
+	Actor_v3(ScummEngine *scumm, int id) : Actor(scumm, id), _stepX(1), _stepThreshold(0), _facingXYratio(scumm->_game.version == 3 ? 3 : 1) {}
 
+	void initActor(int mode) override;
 	void walkActor() override;
 
+	void saveLoadWithSerializer(Common::Serializer &ser) override;
+
 protected:
+	int calcMovementFactor(const Common::Point& next);
+	int actorWalkStep();
+
 	void setupActorScale() override;
 	void findPathTowardsOld(byte box, byte box2, byte box3, Common::Point &p2, Common::Point &p3);
+
+private:
+	uint _stepX, _stepThreshold;
+	const int _facingXYratio;
 };
 
 class Actor_v2 : public Actor_v3 {

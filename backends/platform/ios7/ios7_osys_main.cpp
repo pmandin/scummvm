@@ -199,8 +199,6 @@ bool OSystem_iOS7::getFeatureState(Feature f) {
 		return _videoContext->asprectRatioCorrection;
 	case kFeatureVirtualKeyboard:
 		return isKeyboardShown();
-	case kFeatureHiDPI:
-		return true;
 
 	default:
 		return false;
@@ -314,7 +312,7 @@ void OSystem_iOS7::setTimerCallback(TimerProc callback, int interval) {
 void OSystem_iOS7::quit() {
 }
 
-void OSystem_iOS7::getTimeAndDate(TimeDate &td) const {
+void OSystem_iOS7::getTimeAndDate(TimeDate &td, bool skipRecord) const {
 	time_t curTime = time(0);
 	struct tm t = *localtime(&curTime);
 	td.tm_sec = t.tm_sec;

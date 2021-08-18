@@ -32,8 +32,8 @@ namespace AGS3 {
 class BITMAP {
 private:
 	Graphics::ManagedSurface *_owner;
-public:
-	uint16 &w, &h, &pitch;
+	public:
+	int16 &w, &h, &pitch;
 	Graphics::PixelFormat &format;
 	bool clip;
 	int ct, cb, cl, cr;
@@ -68,6 +68,10 @@ public:
 		if (format.bytesPerPixel == 1)
 			return 0;
 		return format.ARGBToColor(0, 255, 0, 255);
+	}
+
+	inline const Common::Point getOffsetFromOwner() const {
+		return _owner->getOffsetFromOwner();
 	}
 
 	int getpixel(int x, int y) const;
@@ -106,17 +110,21 @@ public:
 	 * Draws the passed surface onto this one
 	 */
 	void draw(const BITMAP *srcBitmap, const Common::Rect &srcRect,
-		int dstX, int dstY, bool horizFlip, bool vertFlip,
-		bool skipTrans, int srcAlpha, int tintRed = -1, int tintGreen = -1,
-		int tintBlue = -1);
+			  int dstX, int dstY, bool horizFlip, bool vertFlip,
+			  bool skipTrans, int srcAlpha, int tintRed = -1, int tintGreen = -1,
+			  int tintBlue = -1);
 
 	/**
 	 * Stretches and draws the passed surface onto this one
 	 */
 	void stretchDraw(const BITMAP *srcBitmap, const Common::Rect &srcRect,
-		const Common::Rect &destRect, bool skipTrans, int srcAlpha);
+					 const Common::Rect &destRect, bool skipTrans, int srcAlpha);
 
-private:
+	inline bool isSubBitmap() const {
+		return _owner->disposeAfterUse() == DisposeAfterUse::NO;
+	}
+
+	private:
 	// True color blender functions
 	// In Allegro all the blender functions are of the form
 	// unsigned int blender_func(unsigned long x, unsigned long y, unsigned long n)
@@ -126,18 +134,23 @@ private:
 
 
 	inline void rgbBlend(uint8 rSrc, uint8 gSrc, uint8 bSrc, uint8 &rDest, uint8 &gDest, uint8 &bDest, uint32 alpha) const {
-		// Original logic has uint32 src and dst colors as RGB888
-		// if (alpha)
-		//     ++alpha;
-		// uint32 res = ((src & 0xFF00FF) - (dst & 0xFF00FF)) * alpha / 256 + dst;
-		// dst &= 0x00FF00;
-		// src &= 0x00FF00;
-		// uint32 g = (src - dst) * alpha / 256 + dst;
-		// return (res & 0xFF00FF) | (g & 0x00FF00)
-		double sAlpha = (double)(alpha & 0xff) / 255.0;
-		rDest = static_cast<uint8>(rSrc * sAlpha + rDest * (1. - sAlpha));
-		gDest = static_cast<uint8>(gSrc * sAlpha + gDest * (1. - sAlpha));
-		bDest = static_cast<uint8>(bSrc * sAlpha + bDest * (1. - sAlpha));
+		// Note: the original's handling varies slightly for R & B vs G.
+		// We need to exactly replicate it to ensure Lamplight City's
+		// calendar puzzle works correctly
+		if (alpha)
+			alpha++;
+
+		uint32 x = ((uint32)rSrc << 16) | ((uint32)gSrc << 8) | (uint32)bSrc;
+		uint32 y = ((uint32)rDest << 16) | ((uint32)gDest << 8) | (uint32)bDest;
+
+		uint32 res = ((x & 0xFF00FF) - (y & 0xFF00FF)) * alpha / 256 + y;
+		y &= 0xFF00;
+		x &= 0xFF00;
+		uint32 g = (x - y) * alpha / 256 + y;
+
+		rDest = (res >> 16) & 0xff;
+		gDest = (g >> 8) & 0xff;
+		bDest = res & 0xff;
 	}
 
 	inline void argbBlend(uint32 aSrc, uint8 rSrc, uint8 gSrc, uint8 bSrc, uint8 &aDest, uint8 &rDest, uint8 &gDest, uint8 &bDest) const {
@@ -250,7 +263,7 @@ private:
 	}
 
 	// kTintBlenderMode and kTintLightBlenderMode
-	void blendTintSprite(uint8 aSrc, uint8 rSrc, uint8 gSrc, uint8 bSrc, uint8 &aDest, uint8 &rDest, uint8 &gDest, uint8 &bDest, uint32 alpha, bool light) const ;
+	void blendTintSprite(uint8 aSrc, uint8 rSrc, uint8 gSrc, uint8 bSrc, uint8 &aDest, uint8 &rDest, uint8 &gDest, uint8 &bDest, uint32 alpha, bool light) const;
 
 
 	inline uint32 getColor(const byte *data, byte bpp) const {
@@ -273,13 +286,13 @@ private:
 class Surface : public Graphics::ManagedSurface, public BITMAP {
 public:
 	Surface(int width, int height, const Graphics::PixelFormat &pixelFormat) :
-			Graphics::ManagedSurface(width, height, pixelFormat), BITMAP(this) {
+		Graphics::ManagedSurface(width, height, pixelFormat), BITMAP(this) {
 		// Allegro uses 255, 0, 255 RGB as the transparent color
 		if (pixelFormat.bytesPerPixel == 2 || pixelFormat.bytesPerPixel == 4)
 			setTransparentColor(pixelFormat.RGBToColor(255, 0, 255));
 	}
 	Surface(Graphics::ManagedSurface &surf, const Common::Rect &bounds) :
-			Graphics::ManagedSurface(surf, bounds), BITMAP(this) {
+		Graphics::ManagedSurface(surf, bounds), BITMAP(this) {
 		// Allegro uses 255, 0, 255 RGB as the transparent color
 		if (surf.format.bytesPerPixel == 2 || surf.format.bytesPerPixel == 4)
 			setTransparentColor(surf.format.RGBToColor(255, 0, 255));

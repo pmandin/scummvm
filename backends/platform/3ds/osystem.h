@@ -115,7 +115,7 @@ public:
 
 	virtual uint32 getMillis(bool skipRecord = false);
 	virtual void delayMillis(uint msecs);
-	virtual void getTimeAndDate(TimeDate &t) const;
+	virtual void getTimeAndDate(TimeDate &td, bool skipRecord = false) const;
 
 	virtual MutexRef createMutex();
 	virtual void lockMutex(MutexRef mutex);
@@ -162,7 +162,7 @@ public:
 	bool isOverlayVisible() const { return _overlayVisible; }
 	Graphics::PixelFormat getOverlayFormat() const;
 	void clearOverlay();
-	void grabOverlay(void *buf, int pitch);
+	void grabOverlay(Graphics::Surface &surface);
 	void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w,
 	                       int h);
 	virtual int16 getOverlayHeight();

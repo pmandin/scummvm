@@ -86,12 +86,12 @@ public:
 
 	// Misc
 	void clear();
+	void clearDefaultColor() { memset(_mainPalette, 0, 3); setupPalette(NULL, 0, 0); }
 	void drawWideScreenBars(int16 barSize) const;
 	void fillRect(int16 x, int16 y, int16 x2, int16 y2, uint32 color);
 	void copyBackBufferToScreen();
 	void setFlag(int16 val) { _flag = (val < -1) ? -1 : val; }
 	int16 getFlag() { return _flag; }
-	void takeScreenshot();
 
 	// Palette
 	void setPalette(ResourceId id);
@@ -175,8 +175,7 @@ private:
 	void stopPaletteFadeTimer();
 
 	// Graphic queue
-	void graphicsSelectionSort();
-	void swapGraphicItem(int32 item1, int32 item2);
+	static bool graphicQueueItemComparator(const GraphicQueueItem &item1, const GraphicQueueItem &item2);
 
 	// Misc
 	void clip(Common::Rect *source, Common::Rect *destination, int32 flags) const;

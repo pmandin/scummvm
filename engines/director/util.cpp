@@ -23,17 +23,23 @@
 #include "common/file.h"
 #include "common/keyboard.h"
 #include "common/memstream.h"
+#include "common/punycode.h"
+#include "common/tokenizer.h"
 #include "common/zlib.h"
 
+#include "graphics/macgui/macwindowmanager.h"
+#include "graphics/macgui/macfontmanager.h"
+
 #include "director/director.h"
+#include "director/movie.h"
 #include "director/util.h"
 
 namespace Director {
 
-static struct KeyCodeMapping {
+static struct MacKeyCodeMapping {
 	Common::KeyCode scummvm;
 	int mac;
-} keyCodeMappings[] = {
+} MackeyCodeMappings[] = {
 	{ Common::KEYCODE_ESCAPE,		53 },
 	{ Common::KEYCODE_F1,			122 },
 	{ Common::KEYCODE_F2,			120 },
@@ -158,9 +164,124 @@ static struct KeyCodeMapping {
 	{ Common::KEYCODE_INVALID,		0 }
 };
 
+static struct WinKeyCodeMapping {
+	Common::KeyCode scummvm;
+	int win;
+} WinkeyCodeMappings[] = {
+	{ Common::KEYCODE_BACKSPACE,	0x08 },
+	{ Common::KEYCODE_TAB,			0x09 },
+	{ Common::KEYCODE_CAPSLOCK,		0x14 },
+
+	{ Common::KEYCODE_SPACE,		0x20 },
+	{ Common::KEYCODE_MENU,			0x12 },
+	{ Common::KEYCODE_CANCEL, 		0x03 },
+	{ Common::KEYCODE_RETURN,		0x0D },
+	{ Common::KEYCODE_PAUSE,		0x13 },
+	{ Common::KEYCODE_CAPSLOCK,		0x14 },
+	{ Common::KEYCODE_PRINT,		0x2A },
+
+	{ Common::KEYCODE_0,			0x30 },
+	{ Common::KEYCODE_1,			0x31 },
+	{ Common::KEYCODE_2,			0x32 },
+	{ Common::KEYCODE_3,			0x33 },
+	{ Common::KEYCODE_4,			0x34 },
+	{ Common::KEYCODE_5,			0x35 },
+	{ Common::KEYCODE_6,			0x36 },
+	{ Common::KEYCODE_7,			0x37 },
+	{ Common::KEYCODE_8,			0x38 },
+	{ Common::KEYCODE_9,			0x39 },
+
+	{ Common::KEYCODE_a,			0x41 },
+	{ Common::KEYCODE_b,			0x42 },
+	{ Common::KEYCODE_c,			0x43 },
+	{ Common::KEYCODE_d,			0x44 },
+	{ Common::KEYCODE_e,			0x45 },
+	{ Common::KEYCODE_f,			0x46 },
+	{ Common::KEYCODE_g,			0x47 },
+	{ Common::KEYCODE_h,			0x48 },
+	{ Common::KEYCODE_i,			0x49 },
+	{ Common::KEYCODE_j,			0x4A },
+	{ Common::KEYCODE_k,			0x4B },
+	{ Common::KEYCODE_l,			0x4C },
+	{ Common::KEYCODE_m,			0x4D },
+	{ Common::KEYCODE_n,			0x4E },
+	{ Common::KEYCODE_o,			0x4F },
+	{ Common::KEYCODE_p,			0x50 },
+	{ Common::KEYCODE_q,			0x51 },
+	{ Common::KEYCODE_r,			0x52 },
+	{ Common::KEYCODE_s,			0x53 },
+	{ Common::KEYCODE_t,			0x54 },
+	{ Common::KEYCODE_u,			0x55 },
+	{ Common::KEYCODE_v,			0x56 },
+	{ Common::KEYCODE_w,			0x57 },
+	{ Common::KEYCODE_x,			0x58 },
+	{ Common::KEYCODE_y,			0x59 },
+	{ Common::KEYCODE_z,			0x5A },
+
+	{ Common::KEYCODE_KP0,			0x60 },
+	{ Common::KEYCODE_KP1,			0x61 },
+	{ Common::KEYCODE_KP2,			0x62 },
+	{ Common::KEYCODE_KP3,			0x63 },
+	{ Common::KEYCODE_KP4,			0x64 },
+	{ Common::KEYCODE_KP5,			0x65 },
+	{ Common::KEYCODE_KP6,			0x66 },
+	{ Common::KEYCODE_KP7,			0x67 },
+	{ Common::KEYCODE_KP8,			0x68 },
+	{ Common::KEYCODE_KP9,			0x69 },
+
+	{ Common::KEYCODE_KP_PLUS,		0x6B },
+	{ Common::KEYCODE_KP_MULTIPLY,	0x6A },
+	{ Common::KEYCODE_KP_DIVIDE,	0x6F },
+	{ Common::KEYCODE_KP_MINUS,		0x6D },
+
+	{ Common::KEYCODE_F1,			0x70 },
+	{ Common::KEYCODE_F2,			0x71 },
+	{ Common::KEYCODE_F3,			0x72 },
+	{ Common::KEYCODE_F4,			0x73 },
+	{ Common::KEYCODE_F5,			0x74 },
+	{ Common::KEYCODE_F6,			0x75 },
+	{ Common::KEYCODE_F7,			0x76 },
+	{ Common::KEYCODE_F8,			0x77 },
+	{ Common::KEYCODE_F9,			0x78 },
+	{ Common::KEYCODE_F10,			0x79 },
+	{ Common::KEYCODE_F11,			0x7A },
+	{ Common::KEYCODE_F12,			0x7B },
+	{ Common::KEYCODE_F13,			0x7C },
+	{ Common::KEYCODE_F14,			0x7D },
+	{ Common::KEYCODE_F15,			0x7E },
+	{ Common::KEYCODE_F16,			0x7F },
+	{ Common::KEYCODE_F17,			0x80 },
+	{ Common::KEYCODE_F18,			0x81 },
+
+	{ Common::KEYCODE_LEFT,			0x25 },
+	{ Common::KEYCODE_RIGHT,		0x27 },
+	{ Common::KEYCODE_DOWN,			0x28 },
+	{ Common::KEYCODE_UP,			0x26 },
+
+	{ Common::KEYCODE_NUMLOCK,		0x90 },
+	{ Common::KEYCODE_SCROLLOCK,	0x91 },
+	{ Common::KEYCODE_SLEEP,		0x5F },
+	{ Common::KEYCODE_INSERT,		0x2D },
+	{ Common::KEYCODE_HELP,			0x2F },
+	{ Common::KEYCODE_SELECT, 		0x29 },
+	{ Common::KEYCODE_HOME,			0x24 },
+	{ Common::KEYCODE_PRINT,		0x2A },
+	{ Common::KEYCODE_ESCAPE, 		0x18 },
+	{ Common::KEYCODE_PAGEUP,		0x21 },
+	{ Common::KEYCODE_DELETE,		0x2E },
+	{ Common::KEYCODE_END,			0x23 },
+	{ Common::KEYCODE_PAGEDOWN,		0x22 },
+
+	{ Common::KEYCODE_INVALID,		0 }
+};
+
 void DirectorEngine::loadKeyCodes() {
-	for (KeyCodeMapping *k = keyCodeMappings; k->scummvm != Common::KEYCODE_INVALID; k++) {
-		_macKeyCodes[k->scummvm] = k->mac;
+	if (g_director->getPlatform() == Common::kPlatformWindows) {
+		for (WinKeyCodeMapping *k = WinkeyCodeMappings; k->scummvm != Common::KEYCODE_INVALID; k++)
+			_KeyCodes[k->scummvm] = k->win;
+	} else {
+		for (MacKeyCodeMapping *k = MackeyCodeMappings; k->scummvm != Common::KEYCODE_INVALID; k++)
+			_KeyCodes[k->scummvm] = k->mac;
 	}
 }
 
@@ -200,44 +321,13 @@ char *numToCastNum(int num) {
 	return res;
 }
 
-// This is table for built-in Macintosh font lowercasing.
-// '.' means that the symbol should be not changed, rest
-// of the symbols are stripping the diacritics
-// The table starts from 0x80
-//
-// TODO: Check it for correctness.
-static char lowerCaseConvert[] =
-"aacenoua" // 80
-"aaaaacee" // 88
-"eeiiiino" // 90
-"oooouuuu" // 98
-"........" // a0
-".......o" // a8
-"........" // b0
-".......o" // b8
-"........" // c0
-".. aao.." // c8
-"--.....y";// d0-d8
+Common::String CastMemberID::asString() const {
+	Common::String res = Common::String::format("member %d", member);
 
-Common::String toLowercaseMac(const Common::String &s) {
-	Common::String res;
-	const unsigned char *p = (const unsigned char *)s.c_str();
-
-	while (*p) {
-		if (*p >= 0x80 && *p <= 0xd8) {
-			if (lowerCaseConvert[*p - 0x80] != '.')
-				res += lowerCaseConvert[*p - 0x80];
-			else
-				res += *p;
-		} else if (*p < 0x80) {
-			res += tolower(*p);
-		} else {
-			warning("Unacceptable symbol in toLowercaseMac: %c", *p);
-
-			res += *p;
-		}
-		p++;
-	}
+	if (g_director->getVersion() < 400 || g_director->getCurrentMovie()->_allowOutdatedLingo)
+		res += "(" + Common::String(numToCastNum(member)) + ")";
+	else if (g_director->getVersion() >= 500)
+		res += Common::String::format(" of castLib %d", castLib);
 
 	return res;
 }
@@ -246,46 +336,36 @@ Common::String convertPath(Common::String &path) {
 	if (path.empty())
 		return path;
 
-	if (!path.contains(':') && !path.contains('/') && !path.contains('\\') && !path.contains('@')) {
+	if (!path.contains(':') && !path.contains('\\') && !path.contains('@')) {
 		return path;
 	}
 
 	Common::String res;
 	uint32 idx = 0;
 
-	if (path.hasPrefix("::")) { // Root of the filesystem
-		res = "..\\";
+	if (path.hasPrefix("::")) { // Parent directory
 		idx = 2;
 	} else if (path.hasPrefix("@:")) { // Root of the game
-		res = ".\\";
 		idx = 2;
-	} else {
-		res = ".\\";
-
-		if (path[0] == ':')
-			idx = 1;
+	} else if (path.size() >= 3
+					&& Common::isAlpha(path[0])
+					&& path[1] == ':'
+					&& path[2] == '\\') { // Windows drive letter
+		idx = 3;
+	} else if (path[0] == ':') {
+		idx = 1;
 	}
 
-	while (idx != path.size()) {
-		if (path[idx] == ':')
-			res += '\\';
-		else if (path[idx] == '/')
-			res += ':';
+	while (idx < path.size()) {
+		if (path[idx] == ':' || path[idx] == '\\')
+			res += g_director->_dirSeparator;
 		else
 			res += path[idx];
 
 		idx++;
 	}
 
-	// And now convert everything to Unix style paths
-	Common::String res1;
-	for (idx = 0; idx < res.size(); idx++)
-		if (res[idx] == '\\')
-			res1 += '/';
-		else
-			res1 += res[idx];
-
-	return res1;
+	return res;
 }
 
 Common::String unixToMacPath(const Common::String &path) {
@@ -303,7 +383,7 @@ Common::String unixToMacPath(const Common::String &path) {
 
 Common::String getPath(Common::String path, Common::String cwd) {
 	const char *s;
-	if ((s = strrchr(path.c_str(), '/'))) {
+	if ((s = strrchr(path.c_str(), g_director->_dirSeparator))) {
 		return Common::String(path.c_str(), s + 1);
 	}
 
@@ -312,17 +392,31 @@ Common::String getPath(Common::String path, Common::String cwd) {
 
 bool testPath(Common::String &path, bool directory) {
 	if (directory) {
-		// TOOD: This directory-searching branch only works for one level from the
-		// current directory, but it fixes current game loading issues.
-		if (path.contains('/'))
-			return false;
+		Common::FSNode d = Common::FSNode(*g_director->getGameDataDir());
 
-		Common::FSNode d = Common::FSNode(*g_director->getGameDataDir()).getChild(path);
+		// check for the game data dir
+		if (!path.contains(g_director->_dirSeparator) && path.equalsIgnoreCase(d.getName())) {
+			path = "";
+			return true;
+		}
+
+		Common::StringTokenizer directory_list(path, Common::String(g_director->_dirSeparator));
+
+		if (d.getChild(directory_list.nextToken()).exists()) {
+			// then this part is for the "relative to current directory"
+			// we find the child directory recursively
+			directory_list.reset();
+			while (!directory_list.empty() && d.exists())
+				d = d.getChild(directory_list.nextToken());
+		} else {
+			return false;
+		}
+
 		return d.exists();
 	}
 
 	Common::File f;
-	if (f.open(path)) {
+	if (f.open(Common::Path(path, g_director->_dirSeparator))) {
 		if (f.size())
 			return true;
 		f.close();
@@ -330,18 +424,18 @@ bool testPath(Common::String &path, bool directory) {
 	return false;
 }
 
+// if we are finding the file path, then this func will return exactly the executable file path
+// if we are finding the directory path, then we will get the path relative to the game data dir.
+// e.g. if we have game data dir as SSwarlock, then "A:SSwarlock" -> "", "A:SSwarlock:Nav" -> "Nav"
 Common::String pathMakeRelative(Common::String path, bool recursive, bool addexts, bool directory) {
 	Common::String initialPath(path);
-
-	if (testPath(initialPath, directory))
-		return initialPath;
 
 	if (recursive) // first level
 		initialPath = convertPath(initialPath);
 
 	debug(2, "pathMakeRelative(): s1 %s -> %s", path.c_str(), initialPath.c_str());
 
-	initialPath = Common::normalizePath(g_director->getCurrentPath() + initialPath, '/');
+	initialPath = Common::normalizePath(g_director->getCurrentPath() + initialPath, g_director->_dirSeparator);
 	Common::String convPath = initialPath;
 
 	debug(2, "pathMakeRelative(): s2 %s", convPath.c_str());
@@ -355,8 +449,8 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 	// Now try to search the file
 	bool opened = false;
 
-	while (convPath.contains('/')) {
-		int pos = convPath.find('/');
+	while (convPath.contains(g_director->_dirSeparator)) {
+		int pos = convPath.find(g_director->_dirSeparator);
 		convPath = Common::String(&convPath.c_str()[pos + 1]);
 
 		debug(2, "pathMakeRelative(): s3 try %s", convPath.c_str());
@@ -381,8 +475,8 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 			return initialPath;
 
 		// Now try to search the file
-		while (convPath.contains('/')) {
-			int pos = convPath.find('/');
+		while (convPath.contains(g_director->_dirSeparator)) {
+			int pos = convPath.find(g_director->_dirSeparator);
 			convPath = Common::String(&convPath.c_str()[pos + 1]);
 
 			debug(2, "pathMakeRelative(): s5 try %s", convPath.c_str());
@@ -409,7 +503,7 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 			Common::String component;
 
 			while (*ptr) {
-				if (*ptr == '/') {
+				if (*ptr == g_director->_dirSeparator) {
 					if (component.equals(".")) {
 						convPath += component;
 					} else {
@@ -417,12 +511,24 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 					}
 
 					component.clear();
-					convPath += '/';
+					convPath += g_director->_dirSeparator;
 				} else {
 					component += *ptr;
 				}
 
 				ptr++;
+			}
+
+			if (hasExtension(component)) {
+				Common::String nameWithoutExt = component.substr(0, component.size() - 4);
+				Common::String ext = component.substr(component.size() - 4);
+				Common::String newpath = convPath + convertMacFilename(nameWithoutExt.c_str()) + ext;
+
+				debug(2, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
+				Common::String res = pathMakeRelative(newpath, false, false);
+
+				if (testPath(res))
+					return res;
 			}
 
 			if (addexts)
@@ -445,10 +551,21 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 		return initialPath;
 }
 
+bool hasExtension(Common::String filename) {
+	uint len = filename.size();
+	return len >= 4 && filename[len - 4] == '.'
+					&& Common::isAlpha(filename[len - 3])
+					&& Common::isAlpha(filename[len - 2])
+					&& Common::isAlpha(filename[len - 1]);
+}
+
 Common::String testExtensions(Common::String component, Common::String initialPath, Common::String convPath) {
-	const char *exts[] = { ".MMM", ".DIR", ".DXR", 0 };
+	const char *extsD3[] = { ".MMM", 0 };
+	const char *extsD4[] = { ".DIR", ".DXR", 0 };
+
+	const char **exts = (g_director->getVersion() >= 400) ? extsD4 : extsD3;
 	for (int i = 0; exts[i]; ++i) {
-		Common::String newpath = convPath + (strcmp(exts[i], ".MMM") == 0 ?  convertMacFilename(component.c_str()) : component.c_str()) + exts[i];
+		Common::String newpath = convPath + convertMacFilename(component.c_str()) + exts[i];
 
 		debug(2, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
 		Common::String res = pathMakeRelative(newpath, false, false);
@@ -461,8 +578,8 @@ Common::String testExtensions(Common::String component, Common::String initialPa
 }
 
 Common::String getFileName(Common::String path) {
-	while (path.contains('/')) {
-		int pos = path.find('/');
+	while (path.contains(g_director->_dirSeparator)) {
+		int pos = path.find(g_director->_dirSeparator);
 		path = Common::String(&path.c_str()[pos + 1]);
 	}
 	return path;
@@ -508,7 +625,7 @@ Common::String stripMacPath(const char *name) {
 	const char *ptr = name;
 
 	while (ptr <= end) {
-		if (myIsAlnum(*ptr) || myIsFATChar(*ptr) || *ptr == '/') {
+		if (myIsAlnum(*ptr) || myIsFATChar(*ptr) || *ptr == g_director->_dirSeparator) {
 			res += *ptr;
 		}
 		ptr++;
@@ -522,59 +639,73 @@ Common::String convertMacFilename(const char *name) {
 
 	int origlen = strlen(name);
 
-	// Remove trailing spaces
-	const char *ptr = &name[origlen - 1];
-	while (myIsSpace(*ptr))
-		ptr--;
+	if (g_director->getVersion() < 400) {
+		// Remove trailing spaces
+		const char *ptr = &name[origlen - 1];
+		while (myIsSpace(*ptr))
+			ptr--;
 
-	int numDigits = 0;
-	char digits[10];
+		int numDigits = 0;
+		char digits[10];
 
-	// Count trailing digits, but leave front letter
-	while (myIsDigit(*ptr) && (numDigits < (8 - 1)))
-		digits[++numDigits] = *ptr--;
+		// Count trailing digits, but leave front letter
+		while (myIsDigit(*ptr) && (numDigits < (8 - 1)))
+			digits[++numDigits] = *ptr--;
 
-	// Count file name without vowels, spaces and digits in-between
-	ptr = name;
-	int cnt = 0;
-	while (cnt < (8 - numDigits) && ptr < &name[origlen]) {
-		char c = toupper(*ptr++);
+		// Count file name without vowels, spaces and digits in-between
+		ptr = name;
+		int cnt = 0;
+		while (cnt < (8 - numDigits) && ptr < &name[origlen]) {
+			char c = toupper(*ptr++);
 
-		if ((myIsVowel(c) && (cnt != 0)) || myIsSpace(c) || myIsDigit(c))
-			continue;
-
-		if ((c != '_') && !myIsAlnum(c))
-			continue;
-
-		cnt++;
-	}
-
-	// Make sure all trailing digits fit
-	int numVowels = 8 - (numDigits + cnt);
-	ptr = name;
-
-	// Put enough characters from beginning
-	for (cnt = 0; cnt < (8 - numDigits) && ptr < &name[origlen];) {
-		char c = toupper(*ptr++);
-
-		if (myIsVowel(c) && (cnt != 0)) {
-			if (numVowels > 0)
-				numVowels--;
-			else
+			if ((myIsVowel(c) && (cnt != 0)) || myIsSpace(c) || myIsDigit(c))
 				continue;
+
+			if ((c != '_') && !myIsAlnum(c))
+				continue;
+
+			cnt++;
 		}
 
-		if (myIsSpace(c) || myIsDigit(c) || ((c != '_') && !myIsAlnum(c)))
-			continue;
+		// Make sure all trailing digits fit
+		int numVowels = 8 - (numDigits + cnt);
+		ptr = name;
 
-		res += c;
+		// Put enough characters from beginning
+		for (cnt = 0; cnt < (8 - numDigits) && ptr < &name[origlen];) {
+			char c = toupper(*ptr++);
 
-		cnt++;
+			if (myIsVowel(c) && (cnt != 0)) {
+				if (numVowels > 0)
+					numVowels--;
+				else
+					continue;
+			}
+
+			if (myIsSpace(c) || myIsDigit(c) || ((c != '_') && !myIsAlnum(c)))
+				continue;
+
+			res += c;
+
+			cnt++;
+		}
+
+		// Now attach all digits
+		while (numDigits)
+			res += digits[numDigits--];
+	} else {
+		const char *ptr = name;
+		for (int cnt = 0; cnt < 8 && ptr < &name[origlen];) {
+			char c = toupper(*ptr++);
+
+			if (myIsSpace(c) || (!myIsAlnum(c) && !myIsFATChar(c)))
+				continue;
+
+			res += c;
+
+			cnt++;
+		}
 	}
-
-	// Now attach all digits
-	while (numDigits)
-		res += digits[numDigits--];
 
 	return res;
 }
@@ -691,6 +822,155 @@ Common::SeekableReadStreamEndian *readZlibData(Common::SeekableReadStream &strea
 # else
 	return nullptr;
 # endif
+}
+
+uint16 humanVersion(uint16 ver) {
+	if (ver >= kFileVer1201)
+		return 1201;
+	if (ver >= kFileVer1200)
+		return 1200;
+	if (ver >= kFileVer1150)
+		return 1150;
+	if (ver >= kFileVer1100)
+		return 1100;
+	if (ver >= kFileVer1000)
+		return 1000;
+	if (ver >= kFileVer850)
+		return 850;
+	if (ver >= kFileVer800)
+		return 800;
+	if (ver >= kFileVer700)
+		return 700;
+	if (ver >= kFileVer600)
+		return 600;
+	if (ver >= kFileVer500)
+		return 500;
+	if (ver >= kFileVer404)
+		return 404;
+	if (ver >= kFileVer400)
+		return 400;
+	if (ver >= kFileVer310)
+		return 310;
+	if (ver >= kFileVer300)
+		return 300;
+	return 200;
+}
+
+Common::Platform platformFromID(uint16 id) {
+	switch (id) {
+	case 1:
+		return Common::kPlatformMacintosh;
+	case 2:
+		return Common::kPlatformWindows;
+	default:
+		warning("platformFromID: Unknown platform ID %d", id);
+		break;
+	}
+	return Common::kPlatformUnknown;
+}
+
+bool isButtonSprite(SpriteType spriteType) {
+	return spriteType == kButtonSprite || spriteType == kCheckboxSprite || spriteType == kRadioButtonSprite;
+}
+
+Common::CodePage getEncoding(Common::Platform platform, Common::Language language) {
+	switch (language) {
+	case Common::JA_JPN:
+		return Common::kWindows932; // Shift JIS
+	default:
+		break;
+	}
+	return (platform == Common::kPlatformWindows)
+				? Common::kWindows1252
+				: Common::kMacRoman;
+}
+
+Common::CodePage detectFontEncoding(Common::Platform platform, uint16 fontId) {
+	return getEncoding(platform, g_director->_wm->_fontMan->getFontLanguage(fontId));
+}
+
+int charToNum(Common::u32char_type_t ch) {
+	Common::String encodedCh = Common::U32String(ch).encode(g_director->getPlatformEncoding());
+	int res = 0;
+	while (encodedCh.size()) {
+		res = (res << 8) | (byte)encodedCh.firstChar();
+		encodedCh.deleteChar(0);
+	}
+	return res;
+}
+
+Common::u32char_type_t numToChar(int num) {
+	Common::String encodedCh;
+	while (num) {
+		encodedCh.insertChar((char)(num & 0xFF), 0);
+		num >>= 8;
+	}
+	Common::U32String str = encodedCh.decode(g_director->getPlatformEncoding());
+	return str.lastChar();
+}
+
+int compareStrings(const Common::String &s1, const Common::String &s2) {
+	Common::U32String u32S1 = s1.decode(Common::kUtf8);
+	Common::U32String u32S2 = s2.decode(Common::kUtf8);
+	const Common::u32char_type_t *p1 = u32S1.c_str();
+	const Common::u32char_type_t *p2 = u32S2.c_str();
+	uint32 c1, c2;
+	while ((c1 = charToNum(*p1)) && (c2 = charToNum(*p2)) && c1 == c2) {
+		p1++;
+		p2++;
+	}
+	return c1 - c2;
+}
+
+Common::String encodePathForDump(const Common::String &path) {
+	return punycode_encodepath(Common::Path(path, g_director->_dirSeparator)).toString();
+}
+
+Common::String utf8ToPrintable(const Common::String &str) {
+	return Common::toPrintable(Common::U32String(str));
+}
+
+Common::String castTypeToString(const CastType &type) {
+	Common::String res;
+	switch(type) {
+	case kCastBitmap:
+		res = "bitmap";
+		break;
+	case kCastPalette:
+		res = "palette";
+		break;
+	case kCastButton:
+		res = "button";
+		break;
+	case kCastPicture:
+		res = "picture";
+		break;
+	case kCastDigitalVideo:
+		res = "digitalVideo";
+		break;
+	case kCastLingoScript:
+		res = "script";
+		break;
+	case kCastShape:
+		res = "shape";
+		break;
+	case kCastFilmLoop:
+		res = "filmLoop";
+		break;
+	case kCastSound:
+		res = "sound";
+		break;
+	case kCastMovie:
+		res = "movie";
+		break;
+	case kCastText:
+		res = "text";
+		break;
+	default:
+		res = "empty";
+		break;
+	}
+	return res;
 }
 
 } // End of namespace Director

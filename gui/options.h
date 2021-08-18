@@ -91,7 +91,8 @@ protected:
 
 	void addControlControls(GuiObject *boss, const Common::String &prefix);
 	void addKeyMapperControls(GuiObject *boss, const Common::String &prefix, const Common::Array<Common::Keymap *> &keymaps, const Common::String &domain);
-	void addAchievementsControls(GuiObject *boss, const Common::String &prefix, const Common::AchievementsInfo &info);
+	void addAchievementsControls(GuiObject *boss, const Common::String &prefix);
+	void addStatisticsControls(GuiObject *boss, const Common::String &prefix);
 	void addGraphicControls(GuiObject *boss, const Common::String &prefix);
 	void addShaderControls(GuiObject *boss, const Common::String &prefix);
 	void addAudioControls(GuiObject *boss, const Common::String &prefix);
@@ -111,6 +112,7 @@ protected:
 	void setSubtitleSettingsState(bool enabled);
 
 	virtual void setupGraphicsTab();
+	void updateScaleFactors(uint32 tag);
 
 	bool loadMusicDeviceSetting(PopUpWidget *popup, Common::String setting, MusicType preferredType = MT_AUTO);
 	void saveMusicDeviceSetting(PopUpWidget *popup, Common::String setting);
@@ -151,6 +153,8 @@ private:
 	PopUpWidget *_gfxPopUp;
 	StaticTextWidget *_stretchPopUpDesc;
 	PopUpWidget *_stretchPopUp;
+	StaticTextWidget *_scalerPopUpDesc;
+	PopUpWidget *_scalerPopUp, *_scaleFactorPopUp;
 	CheckboxWidget *_fullscreenCheckbox;
 	CheckboxWidget *_filteringCheckbox;
 	CheckboxWidget *_aspectCheckbox;
@@ -285,6 +289,8 @@ protected:
 	StaticTextWidget *_pluginsPath;
 	ButtonWidget	 *_pluginsPathClearButton;
 #endif
+	StaticTextWidget *_browserPath;
+	ButtonWidget	 *_browserPathClearButton;
 
 	void addPathsControls(GuiObject *boss, const Common::String &prefix, bool lowres);
 

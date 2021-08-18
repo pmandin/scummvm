@@ -46,11 +46,10 @@
 //
 //=============================================================================
 
-#include "ags/lib/std/utility.h"
 #include "ags/lib/std/vector.h"
 #include "ags/engine/ac/draw_software.h"
 #include "ags/shared/gfx/bitmap.h"
-#include "ags/engine/util/scaling.h"
+#include "ags/shared/util/scaling.h"
 #include "ags/globals.h"
 
 namespace AGS3 {
@@ -118,10 +117,13 @@ void DirtyRects::Reset() {
 		DirtyRows[i].numSpans = 0;
 }
 
-
 void dispose_invalid_regions(bool /* room_only */) {
 	_GP(RoomCamRects).clear();
 	_GP(RoomCamPositions).clear();
+}
+
+void set_invalidrects_globaloffs(int x, int y) {
+	_GP(GlobalOffs) = Point(x, y);
 }
 
 void init_invalid_regions(int view_index, const Size &surf_size, const Rect &viewport) {
@@ -230,7 +232,7 @@ void invalidate_rect_on_surf(int x1, int y1, int x2, int y2, DirtyRects &rects) 
 			dirtyRow[a].numSpans++;
 		} else {
 			// didn't fit in an existing span, and there are none spare
-			int nearestDist = 99999, nearestWas = -1, extendLeft = 0;
+			int nearestDist = 99999, nearestWas = -1, extendLeft = false;
 			int tleft, tright;
 			// find the nearest span, and enlarge that to include this rect
 			for (s = 0; s < dirtyRow[a].numSpans; s++) {
@@ -275,6 +277,7 @@ void invalidate_rect_ds(DirtyRects &rects, int x1, int y1, int x2, int y2, bool 
 		y1 = rects.Screen2DirtySurf.Y.ScalePt(y1);
 		y2 = rects.Screen2DirtySurf.Y.ScalePt(y2);
 	} else {
+		// Transform only from camera pos to room background
 		x1 -= rects.Room2Screen.X.GetSrcOffset();
 		y1 -= rects.Room2Screen.Y.GetSrcOffset();
 		x2 -= rects.Room2Screen.X.GetSrcOffset();
@@ -285,8 +288,20 @@ void invalidate_rect_ds(DirtyRects &rects, int x1, int y1, int x2, int y2, bool 
 }
 
 void invalidate_rect_ds(int x1, int y1, int x2, int y2, bool in_room) {
+	if (!in_room) { // convert from game viewport to global screen coords
+		x1 += _GP(GlobalOffs).X;
+		x2 += _GP(GlobalOffs).X;
+		y1 += _GP(GlobalOffs).Y;
+		y2 += _GP(GlobalOffs).Y;
+	}
+
 	for (auto &rects : _GP(RoomCamRects))
 		invalidate_rect_ds(rects, x1, y1, x2, y2, in_room);
+}
+
+void invalidate_rect_global(int x1, int y1, int x2, int y2) {
+	for (auto &rects : _GP(RoomCamRects))
+		invalidate_rect_ds(rects, x1, y1, x2, y2, false);
 }
 
 // Note that this function is denied to perform any kind of scaling or other transformation
@@ -313,7 +328,7 @@ void update_invalid_region(Bitmap *ds, Bitmap *src, const DirtyRects &rects, boo
 		const int surf_height = rects.SurfaceSize.Height;
 		// TODO: is this IsMemoryBitmap check is still relevant?
 		// If bitmaps properties match and no transform required other than linear offset
-		if ((src->GetColorDepth() == ds->GetColorDepth()) && (ds->IsMemoryBitmap())) {
+		if (src->GetColorDepth() == ds->GetColorDepth()) {
 			const int bypp = src->GetBPP();
 			// do the fast memory copy
 			for (int i = 0; i < surf_height; i++) {
@@ -356,7 +371,7 @@ void update_invalid_region(Bitmap *ds, color_t fill_color, const DirtyRects &rec
 		const std::vector<IRRow> &dirtyRow = rects.DirtyRows;
 		const int surf_height = rects.SurfaceSize.Height;
 		{
-			const PlaneScaling &tf = rects.Room2Screen;
+			const AGS::Shared::PlaneScaling &tf = rects.Room2Screen;
 			for (int i = 0, rowsInOne = 1; i < surf_height; i += rowsInOne, rowsInOne = 1) {
 				// if there are rows with identical masks, do them all in one go
 				// TODO: what is this for? may this be done at the invalidate_rect merge step?
@@ -382,7 +397,7 @@ void update_black_invreg_and_reset(Bitmap *ds) {
 }
 
 void update_room_invreg_and_reset(int view_index, Bitmap *ds, Bitmap *src, bool no_transform) {
-	if (view_index < 0 || _GP(RoomCamRects).empty())
+	if (view_index < 0 || _GP(RoomCamRects).size() == 0)
 		return;
 
 	update_invalid_region(ds, src, _GP(RoomCamRects)[view_index], no_transform);

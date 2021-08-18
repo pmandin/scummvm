@@ -25,6 +25,7 @@
 #include "video/qt_decoder.h"
 
 #include "director/director.h"
+#include "director/cast.h"
 #include "director/castmember.h"
 #include "director/cursor.h"
 #include "director/channel.h"
@@ -32,6 +33,7 @@
 #include "director/sound.h"
 #include "director/window.h"
 #include "director/stxt.h"
+#include "director/sprite.h"
 
 namespace Director {
 
@@ -40,7 +42,6 @@ CastMember::CastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndi
 	_cast = cast;
 	_castId = castId;
 	_hilite = false;
-	_autoHilite = false;
 	_purgePriority = 3;
 	_size = stream.size();
 	_flags1 = 0;
@@ -48,6 +49,12 @@ CastMember::CastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndi
 	_modified = true;
 
 	_objType = kCastMemberObj;
+
+	_widget = nullptr;
+}
+
+CastMemberInfo *CastMember::getInfo() {
+	return _cast->getCastMemberInfo(_castId);
 }
 
 
@@ -68,10 +75,8 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 	_clut = kClutSystemMac;
 	_bitsPerPixel = 0;
 
-	if (version < 400) {
-		_flags1 = flags1;	// region: 0 - auto, 1 - matte, 2 - disabled, 8 - no auto
-		if (_flags1 >> 4 == 0x0)
-			_autoHilite = true;
+	if (version < kFileVer400) {
+		_flags1 = flags1;	// region: 0 - auto, 1 - matte, 2 - disabled
 
 		_bytes = stream.readUint16();
 		_initialRect = Movie::readRect(stream);
@@ -91,7 +96,7 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 		if (_pitch % 16)
 			_pitch += 16 - (_initialRect.width() % 16);
 
-	} else if (version >= 400 && version < 500) {
+	} else if (version >= kFileVer400 && version < kFileVer500) {
 		_flags1 = flags1;
 		_pitch = stream.readUint16();
 		_pitch &= 0x0fff;
@@ -123,8 +128,6 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 		if (_bitsPerPixel == 1)
 			_pitch *= 8;
 
-		_autoHilite = (_flags2 % 4 != 0);
-
 		int tail = 0;
 		byte buf[256];
 
@@ -142,7 +145,7 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 			debug("BitmapCastMember: tail");
 			Common::hexdump(buf, tail);
 		}
-	} else if (version >= 500) {
+	} else if (version >= kFileVer500) {
 		uint16 count = stream.readUint16();
 		for (uint16 cc = 0; cc < count; cc++)
 			stream.readUint32();
@@ -173,23 +176,55 @@ BitmapCastMember::~BitmapCastMember() {
 		delete _matte;
 }
 
-Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel *channel) {
+Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) {
 	if (!_img) {
 		warning("BitmapCastMember::createWidget: No image decoder");
 		return nullptr;
 	}
 
+	// skip creating widget when the bbox is not available, maybe we should create it using initialRect
+	if (!bbox.width() || !bbox.height())
+		return nullptr;
+
 	Graphics::MacWidget *widget = new Graphics::MacWidget(g_director->getCurrentWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, false);
-	widget->getSurface()->blitFrom(*_img->getSurface());
+
+	// scale for drawing a different size sprite
+	copyStretchImg(widget->getSurface()->surfacePtr(), bbox);
+
 	return widget;
 }
 
-void BitmapCastMember::createMatte() {
+void BitmapCastMember::copyStretchImg(Graphics::Surface *surface, const Common::Rect &bbox) {
+	if (bbox.width() != _initialRect.width() || bbox.height() != _initialRect.height()) {
+
+		int scaleX = SCALE_THRESHOLD * _initialRect.width() / bbox.width();
+		int scaleY = SCALE_THRESHOLD * _initialRect.height() / bbox.height();
+
+		for (int y = 0, scaleYCtr = 0; y < bbox.height(); y++, scaleYCtr += scaleY) {
+			if (g_director->_wm->_pixelformat.bytesPerPixel == 1) {
+				for (int x = 0, scaleXCtr = 0; x < bbox.width(); x++, scaleXCtr += scaleX) {
+					const byte *src = (const byte *)_img->getSurface()->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
+					*(byte *)surface->getBasePtr(x, y) = *src;
+				}
+			} else {
+				for (int x = 0, scaleXCtr = 0; x < bbox.width(); x++, scaleXCtr += scaleX) {
+					const int *src = (const int *)_img->getSurface()->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
+					*(int *)surface->getBasePtr(x, y) = *src;
+				}
+			}
+		}
+	} else {
+		surface->copyFrom(*_img->getSurface());
+	}
+}
+
+void BitmapCastMember::createMatte(Common::Rect &bbox) {
 	// Like background trans, but all white pixels NOT ENCLOSED by coloured pixels
 	// are transparent
 	Graphics::Surface tmp;
-	tmp.create(_initialRect.width(), _initialRect.height(), g_director->_pixelformat);
-	tmp.copyFrom(*_img->getSurface());
+	tmp.create(bbox.width(), bbox.height(), g_director->_pixelformat);
+
+	copyStretchImg(&tmp, bbox);
 
 	_noMatte = true;
 
@@ -240,10 +275,16 @@ void BitmapCastMember::createMatte() {
 	tmp.free();
 }
 
-Graphics::Surface *BitmapCastMember::getMatte() {
+Graphics::Surface *BitmapCastMember::getMatte(Common::Rect &bbox) {
 	// Lazy loading of mattes
 	if (!_matte && !_noMatte) {
-		createMatte();
+		createMatte(bbox);
+	}
+
+	// check for the scale matte
+	Graphics::Surface *surface = _matte ? _matte->getMask() : nullptr;
+	if (surface && (surface->w != bbox.width() || surface->h != bbox.height())) {
+		createMatte(bbox);
 	}
 
 	return _matte ? _matte->getMask() : nullptr;
@@ -259,6 +300,7 @@ DigitalVideoCastMember::DigitalVideoCastMember(Cast *cast, uint16 castId, Common
 	_type = kCastDigitalVideo;
 	_video = nullptr;
 	_lastFrame = nullptr;
+	_channel = nullptr;
 
 	_getFirstFrame = false;
 	_duration = 0;
@@ -317,7 +359,7 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 	_video = new Video::QuickTimeDecoder();
 
 	debugC(2, kDebugLoading | kDebugImages, "Loading video %s", path.c_str());
-	bool result = _video->loadFile(path);
+	bool result = _video->loadFile(Common::Path(path, g_director->_dirSeparator));
 
 	if (result && g_director->_pixelformat.bytesPerPixel == 1) {
 		// Director supports playing back RGB and paletted video in 256 colour mode.
@@ -346,6 +388,11 @@ bool DigitalVideoCastMember::isModified() {
 void DigitalVideoCastMember::startVideo(Channel *channel) {
 	_channel = channel;
 
+	if (!_video || !_video->isVideoLoaded()) {
+		warning("DigitalVideoCastMember::startVideo: No video %s", !_video ? "decoder" : "loaded");
+		return;
+	}
+
 	if (_pausedAtStart) {
 		_getFirstFrame = true;
 	} else {
@@ -366,7 +413,18 @@ void DigitalVideoCastMember::startVideo(Channel *channel) {
 	_duration = getMovieTotalTime();
 }
 
-Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Channel *channel) {
+void DigitalVideoCastMember::stopVideo(Channel *channel) {
+	if (!_video || !_video->isVideoLoaded()) {
+		warning("DigitalVideoCastMember::stopVideo: No video decoder");
+		return;
+	}
+
+	_video->stop();
+
+	debugC(2, kDebugImages, "STOPPING VIDEO %s", _filename.c_str());
+}
+
+Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) {
 	Graphics::MacWidget *widget = new Graphics::MacWidget(g_director->getCurrentWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, false);
 
 	_channel = channel;
@@ -415,6 +473,17 @@ Graphics::MacWidget *DigitalVideoCastMember::createWidget(Common::Rect &bbox, Ch
 	}
 
 	return widget;
+}
+
+uint DigitalVideoCastMember::getDuration() {
+	if (!_video || !_video->isVideoLoaded()) {
+		Common::String path = getCast()->getVideoPath(_castId);
+		if (!path.empty())
+			loadVideo(pathMakeRelative(path));
+
+		_duration = getMovieTotalTime();
+	}
+	return _duration;
 }
 
 uint DigitalVideoCastMember::getMovieCurrentTime() {
@@ -526,12 +595,15 @@ TextCastMember::TextCastMember(Cast *cast, uint16 castId, Common::SeekableReadSt
 	_bgpalinfo1 = _bgpalinfo2 = _bgpalinfo3 = 0;
 	_fgpalinfo1 = _fgpalinfo2 = _fgpalinfo3 = 0xff;
 
-	if (version < 400) {
+	// seems like the line spacing is default to 1 in D4
+	_lineSpacing = g_director->getVersion() >= 400 ? 1 : 0;
+
+	if (version < kFileVer400) {
 		_flags1 = flags1; // region: 0 - auto, 1 - matte, 2 - disabled
 		_borderSize = static_cast<SizeType>(stream.readByte());
 		_gutterSize = static_cast<SizeType>(stream.readByte());
 		_boxShadow = static_cast<SizeType>(stream.readByte());
-		byte pad1 = stream.readByte();
+		_textType = static_cast<TextType>(stream.readByte());
 		_textAlign = static_cast<TextAlignType>(stream.readUint16());
 		_bgpalinfo1 = stream.readUint16();
 		_bgpalinfo2 = stream.readUint16();
@@ -542,7 +614,7 @@ TextCastMember::TextCastMember(Cast *cast, uint16 castId, Common::SeekableReadSt
 		uint16 pad4 = 0;
 		uint16 totalTextHeight;
 
-		if (version >= 200 && version < 300) {
+		if (version < kFileVer300) {
 			pad2 = stream.readUint16();
 			if (pad2 != 0) { // In D2 there are values
 				warning("TextCastMember: pad2: %x", pad2);
@@ -561,18 +633,19 @@ TextCastMember::TextCastMember(Cast *cast, uint16 castId, Common::SeekableReadSt
 			pad2 = stream.readUint16();
 			_initialRect = Movie::readRect(stream);
 			pad3 = stream.readUint16();
-			pad4 = stream.readUint16();
+			_textFlags = stream.readUint16(); // 1: editable, 2: auto tab, 4: don't wrap
+			_editable = _textFlags & 0x1;
 			totalTextHeight = stream.readUint16();
 		}
 
-		debugC(2, kDebugLoading, "TextCastMember(): flags1: %d, border: %d gutter: %d shadow: %d pad1: %x align: %04x",
-				_flags1, _borderSize, _gutterSize, _boxShadow, pad1, _textAlign);
+		debugC(2, kDebugLoading, "TextCastMember(): flags1: %d, border: %d gutter: %d shadow: %d textType: %d align: %04x",
+				_flags1, _borderSize, _gutterSize, _boxShadow, _textType, _textAlign);
 		debugC(2, kDebugLoading, "TextCastMember(): background rgb: 0x%04x 0x%04x 0x%04x, pad2: %x pad3: %d pad4: %d shadow: %d flags: %d totHeight: %d",
 				_bgpalinfo1, _bgpalinfo2, _bgpalinfo3, pad2, pad3, pad4, _textShadow, _textFlags, totalTextHeight);
 		if (debugChannelSet(2, kDebugLoading)) {
 			_initialRect.debugPrint(2, "TextCastMember(): rect:");
 		}
-	} else if (version >= 400 && version < 500) {
+	} else if (version >= kFileVer400 && version < kFileVer500) {
 		_flags1 = flags1;
 		_borderSize = static_cast<SizeType>(stream.readByte());
 		_gutterSize = static_cast<SizeType>(stream.readByte());
@@ -589,10 +662,18 @@ TextCastMember::TextCastMember(Cast *cast, uint16 castId, Common::SeekableReadSt
 		_initialRect = Movie::readRect(stream);
 		_maxHeight = stream.readUint16();
 		_textShadow = static_cast<SizeType>(stream.readByte());
-		_textFlags = stream.readByte();
+		_textFlags = stream.readByte(); // 1: editable, 2: auto tab 4: don't wrap
+		_editable = _textFlags & 0x1;
 
 		_textHeight = stream.readUint16();
 		_textSlant = 0;
+		debugC(2, kDebugLoading, "TextCastMember(): flags1: %d, border: %d gutter: %d shadow: %d textType: %d align: %04x",
+				_flags1, _borderSize, _gutterSize, _boxShadow, _textType, _textAlign);
+		debugC(2, kDebugLoading, "TextCastMember(): background rgb: 0x%04x 0x%04x 0x%04x, shadow: %d flags: %d textHeight: %d",
+				_bgpalinfo1, _bgpalinfo2, _bgpalinfo3, _textShadow, _textFlags, _textHeight);
+		if (debugChannelSet(2, kDebugLoading)) {
+			_initialRect.debugPrint(2, "TextCastMember(): rect:");
+		}
 	} else {
 		_fontId = 1;
 
@@ -622,7 +703,7 @@ TextCastMember::TextCastMember(Cast *cast, uint16 castId, Common::SeekableReadSt
 	if (asButton) {
 		_type = kCastButton;
 
-		if (version < 500) {
+		if (version < kFileVer500) {
 			_buttonType = static_cast<ButtonType>(stream.readUint16BE() - 1);
 		} else {
 			warning("TextCastMember(): Attempting to initialize >D4 button castmember");
@@ -641,6 +722,12 @@ void TextCastMember::setColors(uint32 *fgcolor, uint32 *bgcolor) {
 
 	if (bgcolor)
 		_bgcolor = *bgcolor;
+
+	// if we want to keep the format unchanged, then we need to modify _ftext as well
+	if (_widget)
+		((Graphics::MacText *)_widget)->setColors(_fgcolor, _bgcolor);
+	else
+		_modified = true;
 }
 
 Graphics::TextAlign TextCastMember::getAlignment() {
@@ -666,26 +753,53 @@ void TextCastMember::importStxt(const Stxt *stxt) {
 	_ptext = stxt->_ptext;
 }
 
-Graphics::MacWidget *TextCastMember::createWidget(Common::Rect &bbox, Channel *channel) {
+Graphics::MacWidget *TextCastMember::createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) {
 	Graphics::MacFont *macFont = new Graphics::MacFont(_fontId, _fontSize, _textSlant);
 	Graphics::MacWidget *widget = nullptr;
+	Common::Rect dims(bbox);
 
-	switch (_type) {
+	CastType type = _type;
+	ButtonType buttonType = _buttonType;
+
+	// WORKAROUND: In D2/D3 there can be text casts that have button
+	// information set in the sprite.
+	if (type == kCastText && isButtonSprite(spriteType)) {
+		type = kCastButton;
+		buttonType = ButtonType(spriteType - 8);
+	}
+
+	switch (type) {
 	case kCastText:
-		widget = new Graphics::MacText(g_director->getCurrentWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, _ftext, macFont, getForeColor(), getBackColor(), bbox.width(), getAlignment(), 0, _borderSize, _gutterSize, _boxShadow, _textShadow);
+		// for mactext, we can expand now, but we can't shrink. so we may pass the small size when we have adjustToFit text style
+		if (_textType == kTextTypeAdjustToFit) {
+			dims.right = MIN<int>(dims.right, dims.left + _initialRect.width());
+			dims.bottom = MIN<int>(dims.bottom, dims.top + _initialRect.height());
+		} else if (_textType == kTextTypeFixed){
+			// use initialRect to create widget for fixed style text, this maybe related to version.
+			dims.right = MAX<int>(dims.right, dims.left + _initialRect.width());
+			dims.bottom = MAX<int>(dims.bottom, dims.top + _initialRect.height());
+		}
+		widget = new Graphics::MacText(g_director->getCurrentWindow(), bbox.left, bbox.top, dims.width(), dims.height(), g_director->_wm, _ftext, macFont, getForeColor(), getBackColor(), _initialRect.width(), getAlignment(), _lineSpacing, _borderSize, _gutterSize, _boxShadow, _textShadow, _textType == kTextTypeFixed);
+		((Graphics::MacText *)widget)->setSelRange(g_director->getCurrentMovie()->_selStart, g_director->getCurrentMovie()->_selEnd);
+		((Graphics::MacText *)widget)->setEditable(channel->_sprite->_editable);
 		((Graphics::MacText *)widget)->draw();
-		((Graphics::MacText *)widget)->_focusable = _editable;
-		((Graphics::MacText *)widget)->setEditable(_editable);
-		((Graphics::MacText *)widget)->_selectable = _editable;
+
+		// since we disable the ability of setActive in setEdtiable, then we need to set active widget manually
+		if (channel->_sprite->_editable) {
+			Graphics::MacWidget *activeWidget = g_director->_wm->getActiveWidget();
+			if (activeWidget == nullptr || !activeWidget->isEditable())
+				g_director->_wm->setActiveWidget(widget);
+		}
 		break;
 
 	case kCastButton:
 		// note that we use _initialRect for the dimensions of the button;
 		// the values provided in the sprite bounding box are ignored
-		widget = new Graphics::MacButton(Graphics::MacButtonType(_buttonType), getAlignment(), g_director->getCurrentWindow(), bbox.left, bbox.top, _initialRect.width(), _initialRect.height(), g_director->_wm, _ftext, macFont, getForeColor(), 0xff);
-		((Graphics::MacButton *)widget)->draw();
+		widget = new Graphics::MacButton(Graphics::MacButtonType(buttonType), getAlignment(), g_director->getCurrentWindow(), bbox.left, bbox.top, _initialRect.width(), _initialRect.height(), g_director->_wm, _ftext, macFont, getForeColor(), 0xff);
 		widget->_focusable = true;
 
+		((Graphics::MacButton *)widget)->setHilite(_hilite);
+		((Graphics::MacButton *)widget)->setCheckBoxType(g_director->getCurrentMovie()->_checkBoxType);
 		((Graphics::MacButton *)widget)->draw();
 		break;
 
@@ -705,34 +819,62 @@ void TextCastMember::importRTE(byte *text) {
 	//child2 is positional?
 }
 
-void TextCastMember::setText(const char *text) {
+void TextCastMember::setText(const Common::U32String &text) {
 	// Do nothing if text did not change
 	if (_ptext.equals(text))
 		return;
 
 	// If text has changed, use the cached formatting from first STXT in this castmember.
-	Common::String formatting = Common::String::format("\001\016%04x%02x%04x%04x%04x%04x", _fontId, _textSlant, _fontSize, _fgpalinfo1, _fgpalinfo2, _fgpalinfo3);
+	Common::U32String formatting = Common::String::format("\001\016%04x%02x%04x%04x%04x%04x", _fontId, _textSlant, _fontSize, _fgpalinfo1, _fgpalinfo2, _fgpalinfo3);
 	_ptext = text;
 	_ftext = formatting + text;
 
-	_modified = true;
+	// if we have the link to widget, then we modify it directly.
+	// thus we can reach the immediate changing effect
+	if (_widget) {
+		((Graphics::MacText *)_widget)->setText(_ftext);
+		((Graphics::MacText *)_widget)->draw();
+		g_director->getCurrentWindow()->addDirtyRect(_widget->_dims);
+	} else {
+		_modified = true;
+	}
 }
 
-Common::String TextCastMember::getText() {
+// D4 dictionary book said this is line spacing
+int TextCastMember::getTextHeight() {
+	if (_widget)
+		return ((Graphics::MacText *)_widget)->getLineSpacing();
+	else
+		return _lineSpacing;
+	return 0;
+}
+
+// this should be amend when we have some where using this function
+int TextCastMember::getTextSize() {
+	if (_widget)
+		return ((Graphics::MacText *)_widget)->getTextSize();
+	else
+		return _fontSize;
+	return 0;
+}
+
+Common::U32String TextCastMember::getText() {
 	return _ptext;
 }
 
-bool TextCastMember::isEditable() {
-	return _editable;
-}
-
-void TextCastMember::setEditable(bool editable) {
-	_editable = editable;
+void TextCastMember::setTextSize(int textSize) {
+	if (_widget) {
+		((Graphics::MacText *)_widget)->setTextSize(textSize);
+		((Graphics::MacText *)_widget)->draw();
+	} else {
+		_fontSize = textSize;
+		_modified = true;
+	}
 }
 
 void TextCastMember::updateFromWidget(Graphics::MacWidget *widget) {
 	if (widget && _type == kCastText) {
-		_ptext = ((Graphics::MacText *)widget)->getEditedString().encode();
+		_ptext = ((Graphics::MacText *)widget)->getEditedString();
 	}
 }
 
@@ -749,7 +891,7 @@ ShapeCastMember::ShapeCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 
 	_ink = kInkTypeCopy;
 
-	if (version < 400) {
+	if (version < kFileVer400) {
 		unk1 = stream.readByte();
 		_shapeType = static_cast<ShapeType>(stream.readByte());
 		_initialRect = Movie::readRect(stream);
@@ -761,7 +903,7 @@ ShapeCastMember::ShapeCastMember(Cast *cast, uint16 castId, Common::SeekableRead
 		_ink = static_cast<InkType>(_fillType & 0x3f);
 		_lineThickness = stream.readByte();
 		_lineDirection = stream.readByte();
-	} else if (version >= 400 && version < 500) {
+	} else if (version >= kFileVer400 && version < kFileVer500) {
 		unk1 = stream.readByte();
 		_shapeType = static_cast<ShapeType>(stream.readByte());
 		_initialRect = Movie::readRect(stream);
@@ -805,9 +947,9 @@ ScriptCastMember::ScriptCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 	_type = kCastLingoScript;
 	_scriptType = kNoneScript;
 
-	if (version < 400) {
+	if (version < kFileVer400) {
 		error("Unhandled Script cast");
-	} else if (version >= 400 && version < 500) {
+	} else if (version >= kFileVer400 && version < kFileVer500) {
 		byte unk1 = stream.readByte();
 		byte type = stream.readByte();
 
@@ -826,7 +968,7 @@ ScriptCastMember::ScriptCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 
 		stream.readByte(); // There should be no more data
 		assert(stream.eos());
-	} else if (version >= 500) {
+	} else if (version >= kFileVer500) {
 		stream.readByte();
 		stream.readByte();
 

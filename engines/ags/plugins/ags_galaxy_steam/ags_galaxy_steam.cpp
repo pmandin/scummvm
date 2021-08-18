@@ -29,117 +29,152 @@ namespace AGS3 {
 namespace Plugins {
 namespace AGSGalaxySteam {
 
-AGS2Client::AGS2Client() : PluginBase() {
-	DLL_METHOD(AGS_EngineStartup);
-}
-
 void AGS2Client::AGS_EngineStartup(IAGSEngine *engine) {
-	SCRIPT_METHOD_EXT(AGS2Client::IsAchievementAchieved^1, IsAchievementAchieved);
-	SCRIPT_METHOD_EXT(AGS2Client::SetAchievementAchieved^1, SetAchievementAchieved);
-	SCRIPT_METHOD_EXT(AGS2Client::ResetAchievement^1, ResetAchievement);
-	SCRIPT_METHOD_EXT(AGS2Client::GetIntStat^1, GetIntStat);
-	SCRIPT_METHOD_EXT(AGS2Client::GetFloatStat^1, GetFloatStat);
-	SCRIPT_METHOD_EXT(AGS2Client::GetAverageRateStat^1, GetAverageRateStat);
-	SCRIPT_METHOD_EXT(AGS2Client::SetIntStat^2, SetIntStat);
-	SCRIPT_METHOD_EXT(AGS2Client::SetFloatStat^2, SetFloatStat);
-	SCRIPT_METHOD_EXT(AGS2Client::UpdateAverageRateStat^3, UpdateAverageRateStat);
-	SCRIPT_METHOD_EXT(AGS2Client::ResetStatsAndAchievements^0, ResetStatsAndAchievements);
-	SCRIPT_METHOD_EXT(AGS2Client::get_Initialized, get_Initialized);
-	SCRIPT_METHOD_EXT(AGS2Client::get_CurrentLeaderboardName, get_CurrentLeaderboardName);
-	SCRIPT_METHOD_EXT(AGS2Client::RequestLeaderboard^3, RequestLeaderboard);
-	SCRIPT_METHOD_EXT(AGS2Client::UploadScore^1, UploadScore);
-	SCRIPT_METHOD_EXT(AGS2Client::geti_LeaderboardNames, geti_LeaderboardNames);
-	SCRIPT_METHOD_EXT(AGS2Client::geti_LeaderboardScores, geti_LeaderboardScores);
-	SCRIPT_METHOD_EXT(AGS2Client::get_LeaderboardCount, get_LeaderboardCount);
-	SCRIPT_METHOD_EXT(AGS2Client::GetUserName^0, GetUserName);
-	SCRIPT_METHOD_EXT(AGS2Client::GetCurrentGameLanguage^0, GetCurrentGameLanguage);
-	SCRIPT_METHOD_EXT(AGS2Client::FindLeaderboard^1, FindLeaderboard);
-	SCRIPT_METHOD_EXT(AGS2Client::Initialize^2, Initialize);
+	PluginBase::AGS_EngineStartup(engine);
+
+	SCRIPT_METHOD(AGS2Client::IsAchievementAchieved^1, AGS2Client::IsAchievementAchieved);
+	SCRIPT_METHOD(AGS2Client::SetAchievementAchieved^1, AGS2Client::SetAchievementAchieved);
+	SCRIPT_METHOD(AGS2Client::ResetAchievement^1, AGS2Client::ResetAchievement);
+	SCRIPT_METHOD(AGS2Client::GetIntStat^1, AGS2Client::GetIntStat);
+	SCRIPT_METHOD(AGS2Client::GetFloatStat^1, AGS2Client::GetFloatStat);
+	SCRIPT_METHOD(AGS2Client::GetAverageRateStat^1, AGS2Client::GetAverageRateStat);
+	SCRIPT_METHOD(AGS2Client::SetIntStat^2, AGS2Client::SetIntStat);
+	SCRIPT_METHOD(AGS2Client::SetFloatStat^2, AGS2Client::SetFloatStat);
+	SCRIPT_METHOD(AGS2Client::UpdateAverageRateStat^3, AGS2Client::UpdateAverageRateStat);
+	SCRIPT_METHOD(AGS2Client::ResetStatsAndAchievements^0, AGS2Client::ResetStatsAndAchievements);
+	SCRIPT_METHOD(AGS2Client::get_Initialized, AGS2Client::get_Initialized);
+	SCRIPT_METHOD(AGS2Client::get_CurrentLeaderboardName, AGS2Client::get_CurrentLeaderboardName);
+	SCRIPT_METHOD(AGS2Client::RequestLeaderboard^3, AGS2Client::RequestLeaderboard);
+	SCRIPT_METHOD(AGS2Client::UploadScore^1, AGS2Client::UploadScore);
+	SCRIPT_METHOD(AGS2Client::geti_LeaderboardNames, AGS2Client::geti_LeaderboardNames);
+	SCRIPT_METHOD(AGS2Client::geti_LeaderboardScores, AGS2Client::geti_LeaderboardScores);
+	SCRIPT_METHOD(AGS2Client::get_LeaderboardCount, AGS2Client::get_LeaderboardCount);
+	SCRIPT_METHOD(AGS2Client::GetUserName^0, AGS2Client::GetUserName);
+	SCRIPT_METHOD(AGS2Client::GetCurrentGameLanguage^0, AGS2Client::GetCurrentGameLanguage);
+	SCRIPT_METHOD(AGS2Client::FindLeaderboard^1, AGS2Client::FindLeaderboard);
+	SCRIPT_METHOD(AGS2Client::Initialize^2, AGS2Client::Initialize);
+
+	Common::String gameTarget = ConfMan.getActiveDomainName();
+	const MetaEngine *meta = ::AGS::g_vm->getMetaEngine();
+	AchMan.setActiveDomain(meta->getAchievementsInfo(gameTarget));
 }
 
 void AGS2Client::IsAchievementAchieved(ScriptMethodParams &params) {
-	params._result = false;
+	PARAMS1(char *, id);
+	params._result = AchMan.isAchieved(id);
 }
 
 void AGS2Client::SetAchievementAchieved(ScriptMethodParams &params) {
-	params._result = false;
+	PARAMS1(char *, id);
+	params._result = AchMan.setAchievement(id);
 }
 
 void AGS2Client::ResetAchievement(ScriptMethodParams &params) {
-	params._result = false;
+	PARAMS1(char *, id);
+	params._result = AchMan.clearAchievement(id);
 }
 
 void AGS2Client::GetIntStat(ScriptMethodParams &params) {
-	params._result = 0;
+	PARAMS1(char *, id);
+	params._result = AchMan.getStatInt(id);
 }
 
 void AGS2Client::GetFloatStat(ScriptMethodParams &params) {
-	params._result = 0;
+	PARAMS1(char *, id);
+	params._result = PARAM_FROM_FLOAT(AchMan.getStatFloat(id));
 }
 
 void AGS2Client::GetAverageRateStat(ScriptMethodParams &params) {
-	params._result = 0;
+	PARAMS1(char *, id);
+	params._result = PARAM_FROM_FLOAT(AchMan.getAverageRateStatFloat(id));
 }
 
 void AGS2Client::SetIntStat(ScriptMethodParams &params) {
-	params._result = 0;
+	PARAMS2(char *, id, int, value);
+	params._result = AchMan.setStatInt(id, value);
 }
 
 void AGS2Client::SetFloatStat(ScriptMethodParams &params) {
-	params._result = 0;
+	PARAMS2(char *, id, int32, value);
+	params._result = AchMan.setStatFloat(id, PARAM_TO_FLOAT(value));
 }
 
 void AGS2Client::UpdateAverageRateStat(ScriptMethodParams &params) {
-	params._result = 0;
+	PARAMS3(char *, id, int32, count, int32, times);
+	params._result = AchMan.updateAverageRateStatFloat(id, PARAM_TO_FLOAT(count), PARAM_TO_FLOAT(times));
 }
 
 void AGS2Client::ResetStatsAndAchievements(ScriptMethodParams &params) {
+	AchMan.resetAllAchievements();
+	AchMan.resetAllStats();
 }
 
 void AGS2Client::get_Initialized(ScriptMethodParams &params) {
-	params._result = 0;
+	// TODO: remove this after GetCurrentGameLanguage() is implemented
+	if (ConfMan.get("gameid") == "heroinesquest" ||
+		ConfMan.get("gameid") == "killyourself"
+	) {
+		warning("AGS2Client::get_Initialized() is returning fake value to avoid calling GetCurrentGameLanguage() by game");
+		params._result = 0;
+		return;
+	}
+
+	params._result = AchMan.isReady();
 }
 
 void AGS2Client::get_CurrentLeaderboardName(ScriptMethodParams &params) {
+	warning("AGS2Client::get_CurrentLeaderboardName() is not implemented");
+	params._result = 0;
 }
 
 void AGS2Client::RequestLeaderboard(ScriptMethodParams &params) {
+	warning("AGS2Client::RequestLeaderboard() is not implemented");
+	params._result = 0;
 }
 
 void AGS2Client::UploadScore(ScriptMethodParams &params) {
+	warning("AGS2Client::UploadScore() is not implemented");
 	params._result = 0;
 }
 
 void AGS2Client::geti_LeaderboardNames(ScriptMethodParams &params) {
+	warning("AGS2Client::geti_LeaderboardNames() is not implemented");
+	params._result = 0;
 }
 
 void AGS2Client::geti_LeaderboardScores(ScriptMethodParams &params) {
+	warning("AGS2Client::geti_LeaderboardScores() is not implemented");
 	params._result = 0;
 }
 
 void AGS2Client::get_LeaderboardCount(ScriptMethodParams &params) {
+	warning("AGS2Client::get_LeaderboardCount() is not implemented");
 	params._result = 0;
 }
 
 void AGS2Client::GetUserName(ScriptMethodParams &params) {
+	warning("AGS2Client::GetUserName() is not implemented");
+	params._result = 0;
 }
 
 void AGS2Client::GetCurrentGameLanguage(ScriptMethodParams &params) {
+	warning("AGS2Client::GetCurrentGameLanguage() is not implemented");
+	params._result = 0;
 }
 
 void AGS2Client::FindLeaderboard(ScriptMethodParams &params) {
+	warning("AGS2Client::FindLeaderboard() is not implemented");
+	params._result = 0;
 }
 
 void AGS2Client::Initialize(ScriptMethodParams &params) {
+	PARAMS2(char *, clientId, char *, clientSecret);
+	AchMan.setSpecialString("clientId", clientId);
+	AchMan.setSpecialString("clientSecret", clientSecret);
 	params._result = 0;
 }
 
 /*------------------------------------------------------------------*/
-
-AGSGalaxy::AGSGalaxy() : AGS2Client() {
-	DLL_METHOD(AGS_GetPluginName);
-	DLL_METHOD(AGS_EngineStartup);
-}
 
 const char *AGSGalaxy::AGS_GetPluginName() {
 	return "AGSGalaxy";
@@ -148,136 +183,29 @@ const char *AGSGalaxy::AGS_GetPluginName() {
 void AGSGalaxy::AGS_EngineStartup(IAGSEngine *engine) {
 	AGS2Client::AGS_EngineStartup(engine);
 
-	SCRIPT_METHOD_EXT(AGSGalaxy::IsAchievementAchieved^1, IsAchievementAchieved);
-	SCRIPT_METHOD_EXT(AGSGalaxy::SetAchievementAchieved^1, SetAchievementAchieved);
-	SCRIPT_METHOD_EXT(AGSGalaxy::ResetAchievement^1, ResetAchievement);
-	SCRIPT_METHOD_EXT(AGSGalaxy::GetIntStat^1, GetIntStat);
-	SCRIPT_METHOD_EXT(AGSGalaxy::GetFloatStat^1, GetFloatStat);
-	SCRIPT_METHOD_EXT(AGSGalaxy::GetAverageRateStat^1, GetAverageRateStat);
-	SCRIPT_METHOD_EXT(AGSGalaxy::SetIntStat^2, SetIntStat);
-	SCRIPT_METHOD_EXT(AGSGalaxy::SetFloatStat^2, SetFloatStat);
-	SCRIPT_METHOD_EXT(AGSGalaxy::UpdateAverageRateStat^3, UpdateAverageRateStat);
-	SCRIPT_METHOD_EXT(AGSGalaxy::ResetStatsAndAchievements^0, ResetStatsAndAchievements);
-	SCRIPT_METHOD_EXT(AGSGalaxy::get_Initialized, get_Initialized);
-	SCRIPT_METHOD_EXT(AGSGalaxy::get_CurrentLeaderboardName, get_CurrentLeaderboardName);
-	SCRIPT_METHOD_EXT(AGSGalaxy::RequestLeaderboard^3, RequestLeaderboard);
-	SCRIPT_METHOD_EXT(AGSGalaxy::UploadScore^1, UploadScore);
-	SCRIPT_METHOD_EXT(AGSGalaxy::geti_LeaderboardNames, geti_LeaderboardNames);
-	SCRIPT_METHOD_EXT(AGSGalaxy::geti_LeaderboardScores, geti_LeaderboardScores);
-	SCRIPT_METHOD_EXT(AGSGalaxy::get_LeaderboardCount, get_LeaderboardCount);
-	SCRIPT_METHOD_EXT(AGSGalaxy::GetUserName^0, GetUserName);
-	SCRIPT_METHOD_EXT(AGSGalaxy::GetCurrentGameLanguage^0, GetCurrentGameLanguage);
-	SCRIPT_METHOD_EXT(AGSGalaxy::Initialize^2, Initialize);
-
-	Common::String gameTarget = ConfMan.getActiveDomainName();
-	const MetaEngine *meta = ::AGS::g_vm->getMetaEngine();
-	Common::AchievementsInfo achievementsInfo = meta->getAchievementsInfo(gameTarget);
-	const Common::String target = achievementsInfo.appId;
-	if (!target.empty()) {
-		AchMan.setActiveDomain(Common::GALAXY_ACHIEVEMENTS, target);
-	} else {
-		warning("Unknown game accessing SteamAPI. All achievements will be ignored.");
-		AchMan.unsetActiveDomain();
-	}
-}
-
-void AGSGalaxy::IsAchievementAchieved(ScriptMethodParams &params) {
-	PARAMS1(char *, id);
-	params._result = AchMan.isAchieved(id);
-}
-
-void AGSGalaxy::SetAchievementAchieved(ScriptMethodParams &params) {
-	PARAMS1(char *, id);
-
-	Common::String gameTarget = ConfMan.getActiveDomainName();
-	const MetaEngine *meta = ::AGS::g_vm->getMetaEngine();
-	Common::AchievementsInfo achievementsInfo = meta->getAchievementsInfo(gameTarget);
-
-	Common::String msg = id;
-	for (uint32 i = 0; i < achievementsInfo.descriptions.size(); i++) {
-		if (strcmp(achievementsInfo.descriptions[i].id, id) == 0) {
-			msg = achievementsInfo.descriptions[i].title;
-		}
-	}
-
-	params._result = AchMan.setAchievement(id, msg);
-}
-
-void AGSGalaxy::ResetAchievement(ScriptMethodParams &params) {
-	PARAMS1(char *, id);
-	params._result = AchMan.clearAchievement(id);
-}
-
-void AGSGalaxy::GetIntStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::GetFloatStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::GetAverageRateStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::SetIntStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::SetFloatStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::UpdateAverageRateStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::ResetStatsAndAchievements(ScriptMethodParams &params) {
-	AchMan.resetAllAchievements();
-	AchMan.resetAllStats();
-}
-
-void AGSGalaxy::get_Initialized(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::get_CurrentLeaderboardName(ScriptMethodParams &params) {
-}
-
-void AGSGalaxy::RequestLeaderboard(ScriptMethodParams &params) {
-}
-
-void AGSGalaxy::UploadScore(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::geti_LeaderboardNames(ScriptMethodParams &params) {
-}
-
-void AGSGalaxy::geti_LeaderboardScores(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::get_LeaderboardCount(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSGalaxy::GetUserName(ScriptMethodParams &params) {
-}
-
-void AGSGalaxy::GetCurrentGameLanguage(ScriptMethodParams &params) {
-}
-
-void AGSGalaxy::Initialize(ScriptMethodParams &params) {
-	params._result = 0;
+	SCRIPT_METHOD(AGSGalaxy::IsAchievementAchieved^1, AGSGalaxy::IsAchievementAchieved);
+	SCRIPT_METHOD(AGSGalaxy::SetAchievementAchieved^1, AGSGalaxy::SetAchievementAchieved);
+	SCRIPT_METHOD(AGSGalaxy::ResetAchievement^1, AGSGalaxy::ResetAchievement);
+	SCRIPT_METHOD(AGSGalaxy::GetIntStat^1, AGSGalaxy::GetIntStat);
+	SCRIPT_METHOD(AGSGalaxy::GetFloatStat^1, AGSGalaxy::GetFloatStat);
+	SCRIPT_METHOD(AGSGalaxy::GetAverageRateStat^1, AGSGalaxy::GetAverageRateStat);
+	SCRIPT_METHOD(AGSGalaxy::SetIntStat^2, AGSGalaxy::SetIntStat);
+	SCRIPT_METHOD(AGSGalaxy::SetFloatStat^2, AGSGalaxy::SetFloatStat);
+	SCRIPT_METHOD(AGSGalaxy::UpdateAverageRateStat^3, AGSGalaxy::UpdateAverageRateStat);
+	SCRIPT_METHOD(AGSGalaxy::ResetStatsAndAchievements^0, AGSGalaxy::ResetStatsAndAchievements);
+	SCRIPT_METHOD(AGSGalaxy::get_Initialized, AGSGalaxy::get_Initialized);
+	SCRIPT_METHOD(AGSGalaxy::get_CurrentLeaderboardName, AGSGalaxy::get_CurrentLeaderboardName);
+	SCRIPT_METHOD(AGSGalaxy::RequestLeaderboard^3, AGSGalaxy::RequestLeaderboard);
+	SCRIPT_METHOD(AGSGalaxy::UploadScore^1, AGSGalaxy::UploadScore);
+	SCRIPT_METHOD(AGSGalaxy::geti_LeaderboardNames, AGSGalaxy::geti_LeaderboardNames);
+	SCRIPT_METHOD(AGSGalaxy::geti_LeaderboardScores, AGSGalaxy::geti_LeaderboardScores);
+	SCRIPT_METHOD(AGSGalaxy::get_LeaderboardCount, AGSGalaxy::get_LeaderboardCount);
+	SCRIPT_METHOD(AGSGalaxy::GetUserName^0, AGSGalaxy::GetUserName);
+	SCRIPT_METHOD(AGSGalaxy::GetCurrentGameLanguage^0, AGSGalaxy::GetCurrentGameLanguage);
+	SCRIPT_METHOD(AGSGalaxy::Initialize^2, AGSGalaxy::Initialize);
 }
 
 /*------------------------------------------------------------------*/
-
-AGSSteam::AGSSteam() : AGS2Client() {
-	DLL_METHOD(AGS_GetPluginName);
-	DLL_METHOD(AGS_EngineStartup);
-}
 
 const char *AGSSteam::AGS_GetPluginName() {
 	return "AGSSteam";
@@ -286,128 +214,26 @@ const char *AGSSteam::AGS_GetPluginName() {
 void AGSSteam::AGS_EngineStartup(IAGSEngine *engine) {
 	AGS2Client::AGS_EngineStartup(engine);
 
-	SCRIPT_METHOD_EXT(AGSteam::IsAchievementAchieved^1, IsAchievementAchieved);
-	SCRIPT_METHOD_EXT(AGSteam::SetAchievementAchieved^1, SetAchievementAchieved);
-	SCRIPT_METHOD_EXT(AGSteam::ResetAchievement^1, ResetAchievement);
-	SCRIPT_METHOD_EXT(AGSteam::GetIntStat^1, GetIntStat);
-	SCRIPT_METHOD_EXT(AGSteam::GetFloatStat^1, GetFloatStat);
-	SCRIPT_METHOD_EXT(AGSteam::GetAverageRateStat^1, GetAverageRateStat);
-	SCRIPT_METHOD_EXT(AGSteam::SetIntStat^2, SetIntStat);
-	SCRIPT_METHOD_EXT(AGSteam::SetFloatStat^2, SetFloatStat);
-	SCRIPT_METHOD_EXT(AGSteam::UpdateAverageRateStat^3, UpdateAverageRateStat);
-	SCRIPT_METHOD_EXT(AGSteam::ResetStatsAndAchievements^0, ResetStatsAndAchievements);
-	SCRIPT_METHOD_EXT(AGSteam::get_Initialized, get_Initialized);
-	SCRIPT_METHOD_EXT(AGSteam::get_CurrentLeaderboardName, get_CurrentLeaderboardName);
-	SCRIPT_METHOD_EXT(AGSteam::RequestLeaderboard^3, RequestLeaderboard);
-	SCRIPT_METHOD_EXT(AGSteam::UploadScore^1, UploadScore);
-	SCRIPT_METHOD_EXT(AGSteam::geti_LeaderboardNames, geti_LeaderboardNames);
-	SCRIPT_METHOD_EXT(AGSteam::geti_LeaderboardScores, geti_LeaderboardScores);
-	SCRIPT_METHOD_EXT(AGSteam::get_LeaderboardCount, get_LeaderboardCount);
-	SCRIPT_METHOD_EXT(AGSteam::GetUserName^0, GetUserName);
-	SCRIPT_METHOD_EXT(AGSteam::GetCurrentGameLanguage^0, GetCurrentGameLanguage);
-	SCRIPT_METHOD_EXT(AGSteam::FindLeaderboard^1, FindLeaderboard);
-
-	Common::String gameTarget = ConfMan.getActiveDomainName();
-	const MetaEngine *meta = ::AGS::g_vm->getMetaEngine();
-	Common::AchievementsInfo achievementsInfo = meta->getAchievementsInfo(gameTarget);
-	const Common::String target = achievementsInfo.appId;
-	if (!target.empty()) {
-		AchMan.setActiveDomain(Common::STEAM_ACHIEVEMENTS, target);
-	} else {
-		warning("Unknown game accessing SteamAPI. All achievements will be ignored.");
-		AchMan.unsetActiveDomain();
-	}
-}
-
-void AGSSteam::IsAchievementAchieved(ScriptMethodParams &params) {
-	PARAMS1(char *, id);
-	params._result = AchMan.isAchieved(id);
-}
-
-void AGSSteam::SetAchievementAchieved(ScriptMethodParams &params) {
-	PARAMS1(char *, id);
-
-	Common::String gameTarget = ConfMan.getActiveDomainName();
-	const MetaEngine *meta = ::AGS::g_vm->getMetaEngine();
-	Common::AchievementsInfo achievementsInfo = meta->getAchievementsInfo(gameTarget);
-
-	Common::String msg = id;
-	for (uint32 i = 0; i < achievementsInfo.descriptions.size(); i++) {
-		if (strcmp(achievementsInfo.descriptions[i].id, id) == 0) {
-			msg = achievementsInfo.descriptions[i].title;
-		}
-	}
-
-	params._result = AchMan.setAchievement(id, msg);
-}
-
-void AGSSteam::ResetAchievement(ScriptMethodParams &params) {
-	PARAMS1(char *, id);
-	params._result = AchMan.clearAchievement(id);
-}
-
-void AGSSteam::GetIntStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::GetFloatStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::GetAverageRateStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::SetIntStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::SetFloatStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::UpdateAverageRateStat(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::ResetStatsAndAchievements(ScriptMethodParams &params) {
-	AchMan.resetAllAchievements();
-	AchMan.resetAllStats();
-}
-
-void AGSSteam::get_Initialized(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::get_CurrentLeaderboardName(ScriptMethodParams &params) {
-}
-
-void AGSSteam::RequestLeaderboard(ScriptMethodParams &params) {
-}
-
-void AGSSteam::UploadScore(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::geti_LeaderboardNames(ScriptMethodParams &params) {
-}
-
-void AGSSteam::geti_LeaderboardScores(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::get_LeaderboardCount(ScriptMethodParams &params) {
-	params._result = 0;
-}
-
-void AGSSteam::GetUserName(ScriptMethodParams &params) {
-}
-
-void AGSSteam::GetCurrentGameLanguage(ScriptMethodParams &params) {
-}
-
-void AGSSteam::FindLeaderboard(ScriptMethodParams &params) {
-	params._result = 0;
+	SCRIPT_METHOD(AGSteam::IsAchievementAchieved^1, AGSSteam::IsAchievementAchieved);
+	SCRIPT_METHOD(AGSteam::SetAchievementAchieved^1, AGSSteam::SetAchievementAchieved);
+	SCRIPT_METHOD(AGSteam::ResetAchievement^1, AGSSteam::ResetAchievement);
+	SCRIPT_METHOD(AGSteam::GetIntStat^1, AGSSteam::GetIntStat);
+	SCRIPT_METHOD(AGSteam::GetFloatStat^1, AGSSteam::GetFloatStat);
+	SCRIPT_METHOD(AGSteam::GetAverageRateStat^1, AGSSteam::GetAverageRateStat);
+	SCRIPT_METHOD(AGSteam::SetIntStat^2, AGSSteam::SetIntStat);
+	SCRIPT_METHOD(AGSteam::SetFloatStat^2, AGSSteam::SetFloatStat);
+	SCRIPT_METHOD(AGSteam::UpdateAverageRateStat^3, AGSSteam::UpdateAverageRateStat);
+	SCRIPT_METHOD(AGSteam::ResetStatsAndAchievements^0, AGSSteam::ResetStatsAndAchievements);
+	SCRIPT_METHOD(AGSteam::get_Initialized, AGSSteam::get_Initialized);
+	SCRIPT_METHOD(AGSteam::get_CurrentLeaderboardName, AGSSteam::get_CurrentLeaderboardName);
+	SCRIPT_METHOD(AGSteam::RequestLeaderboard^3, AGSSteam::RequestLeaderboard);
+	SCRIPT_METHOD(AGSteam::UploadScore^1, AGSSteam::UploadScore);
+	SCRIPT_METHOD(AGSteam::geti_LeaderboardNames, AGSSteam::geti_LeaderboardNames);
+	SCRIPT_METHOD(AGSteam::geti_LeaderboardScores, AGSSteam::geti_LeaderboardScores);
+	SCRIPT_METHOD(AGSteam::get_LeaderboardCount, AGSSteam::get_LeaderboardCount);
+	SCRIPT_METHOD(AGSteam::GetUserName^0, AGSSteam::GetUserName);
+	SCRIPT_METHOD(AGSteam::GetCurrentGameLanguage^0, AGSSteam::GetCurrentGameLanguage);
+	SCRIPT_METHOD(AGSteam::FindLeaderboard^1, AGSSteam::FindLeaderboard);
 }
 
 } // namespace AGSGalaxySteam

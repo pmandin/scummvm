@@ -81,6 +81,7 @@ public:
 	uint16 frequency() const { return _header.freq; }
 
 	bool getLoopBeginAndEndFrame(int loop, int *begin, int *end);
+	int  getLoopIdFromFrame(int frame);
 
 	struct Header {
 		uint16 version;     // 0x00
@@ -237,6 +238,8 @@ public:
 	};
 
 	class VQAAudioTrack {
+		static const uint     kSizeInShortsAllocatedToAudioFrame = 2940; // 4 * 735
+		static const uint     kSizeInBytesOfCompressedAudioFrame = 735;
 	public:
 		VQAAudioTrack(VQADecoder *vqaDecoder);
 		~VQAAudioTrack();
@@ -250,7 +253,7 @@ public:
 	private:
 		uint16               _frequency;
 		ADPCMWestwoodDecoder _adpcmDecoder;
-		uint8                _compressedAudioFrame[735];
+		uint8                _compressedAudioFrame[kSizeInBytesOfCompressedAudioFrame];
 	};
 };
 

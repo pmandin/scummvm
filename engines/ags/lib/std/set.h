@@ -50,7 +50,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	set() : Common::SortedArray<T, const T &>(ComparatorFn) {}
+	set() : Common::SortedArray<T, const T & >(ComparatorFn) {}
 
 	/**
 	 * Locate an item in the set
@@ -79,7 +79,7 @@ public:
 		for (const_iterator it = this->begin(); it != this->end(); ++it) {
 			if (*it == item)
 				++total;
-			else if (!ComparatorFn (item, *it))
+			else if (!ComparatorFn(item, *it))
 				// Passed beyond possibility of matches
 				break;
 		}

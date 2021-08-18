@@ -50,48 +50,6 @@ Retired Project Leaders
 Engine Teams
 ************
 
-SCUMM
-^^^^^
-
-.. list-table::
-   :widths: 35 65
-
-   * - Torbjörn Andersson
-     -
-   * - James Brown
-     - (retired)
-   * - Jonathan Gray
-     - (retired)
-   * - Vincent Hamm
-     - (retired)
-   * - Max Horn
-     - (retired)
-   * - Travis Howell
-     -
-   * - Paweł Kołodziejski
-     - Codecs, iMUSE, Smush, etc.
-   * - Gregory Montoir
-     - (retired)
-   * - Eugene Sandulenko
-     - FT INSANE, MM NES, MM C64, game detection, Herc/CGA
-   * - Ludvig Strigeus
-     - (retired)
-
-HE
-^^
-
-.. list-table::
-   :widths: 35 65
-
-   * - Jonathan Gray
-     - (retired)
-   * - Travis Howell
-     -
-   * - Gregory Montoir
-     - (retired)
-   * - Eugene Sandulenko
-     -
-
 Access
 ^^^^^^
 
@@ -473,17 +431,8 @@ DreamWeb
    * - Willem Jan Palenstijn
      -
 
-Fullpipe
-^^^^^^^^
-
-.. list-table::
-   :widths: 35 65
-
-   * - Eugene Sandulenko
-     -
-
-ScummGlk
-^^^^^^^^
+Glk
+^^^
 
 .. list-table::
    :widths: 35 65
@@ -812,6 +761,15 @@ Neverhood
    * - Filippos Karapetis
      -
 
+NGI
+^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Eugene Sandulenko
+     -
+
 Parallaction
 ^^^^^^^^^^^^
 
@@ -940,6 +898,48 @@ SCI
    * - Lars Skovlund
      -
    * - Colin Snover
+     -
+
+SCUMM
+^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Torbjörn Andersson
+     -
+   * - James Brown
+     - (retired)
+   * - Jonathan Gray
+     - (retired)
+   * - Vincent Hamm
+     - (retired)
+   * - Max Horn
+     - (retired)
+   * - Travis Howell
+     -
+   * - Paweł Kołodziejski
+     - Codecs, iMUSE, Smush, etc.
+   * - Gregory Montoir
+     - (retired)
+   * - Eugene Sandulenko
+     - FT INSANE, MM NES, MM C64, game detection, Herc/CGA
+   * - Ludvig Strigeus
+     - (retired)
+
+SCUMM HE
+^^^^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Jonathan Gray
+     - (retired)
+   * - Travis Howell
+     -
+   * - Gregory Montoir
+     - (retired)
+   * - Eugene Sandulenko
      -
 
 Sherlock
@@ -1121,6 +1121,21 @@ Touché
 
    * - Gregory Montoir
      - (retired)
+
+Trecision
+^^^^^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Daniel Albano
+     -
+   * - Arnaud Boutonné
+     -
+   * - Thomas Fach-Pedersen
+     - Smacker video support
+   * - Filippos Karapetis
+     -
 
 TsAGE
 ^^^^^
@@ -1795,6 +1810,8 @@ Win32
 
    * - Travis Howell
      -
+   * - Lothar Serra Mari
+     -
 
 Win64
 ^^^^^
@@ -1806,6 +1823,8 @@ Win64
      - (retired)
    * - Johannes Schickel
      - (retired)
+   * - Lothar Serra Mari
+     -
 
 GUI Translations
 ****************
@@ -1993,7 +2012,7 @@ Portuguese
 .. list-table::
    :widths: 35 65
 
-   * - Daniel
+   * - Daniel Albano
      -
 
 Russian
@@ -2489,4 +2508,6 @@ Tim Schafer, for obvious reasons, and everybody else who helped make Grim Fandan
 Bret Mogilefsky, for managing to create a SPUTM-style 3D LUA engine, and avoiding the horrible hack it could have been.
 
 Benjamin Haisch, for emimeshviewer, which our EMI code borrows heavily from.
+
+Fabrizio Lagorio from Trecision S.p.A., for finding and providing the source code of many of their games.
 

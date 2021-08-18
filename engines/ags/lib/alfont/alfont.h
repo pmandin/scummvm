@@ -40,8 +40,8 @@ struct ALFONT_FONT {
 
 	~ALFONT_FONT() {
 		for (Common::HashMap<int, Graphics::Font *>::iterator it = _fonts.begin();
-			it != _fonts.end(); ++it)
-			delete (*it)._value;
+				it != _fonts.end(); ++it)
+			delete(*it)._value;
 	}
 
 	Graphics::Font *getFont();

@@ -71,7 +71,7 @@ static const char HELP_STRING[] =
 	"  -z, --list-games         Display list of supported games and exit\n"
 	"  --list-all-games         Display list of all detected games and exit\n"
 	"  -t, --list-targets       Display list of configured targets and exit\n"
-	"  --list-engines           Display list of suppported engines and exit\n"
+	"  --list-engines           Display list of supported engines and exit\n"
 	"  --list-all-engines       Display list of all detection engines and exit\n"
 	"  --list-debugflags=engine Display list of engine specified debugflags\n"
 	"                           if engine=global or engine is not specified, then it will list global debugflags\n"
@@ -86,6 +86,8 @@ static const char HELP_STRING[] =
 	"                           Use --path=PATH to specify a directory.\n"
 	"  --game=ID                In combination with --add or --detect only adds or attempts to\n"
 	"                           detect the game with id ID.\n"
+	"  --engine=ID              In combination with --list-games or --list-all-games only lists\n"
+	"                           games for this engine.\n"
 	"  --auto-detect            Display a list of games from current or specified directory\n"
 	"                           and start the first one. Use --path=PATH to specify a directory.\n"
 	"  --recursive              In combination with --add or --detect recurse down all subdirectories\n"
@@ -101,10 +103,11 @@ static const char HELP_STRING[] =
 	"  -x, --save-slot[=NUM]    Save game slot to load (default: autosave)\n"
 	"  -f, --fullscreen         Force full-screen mode\n"
 	"  -F, --no-fullscreen      Force windowed mode\n"
-	"  -g, --gfx-mode=MODE      Select graphics scaler (1x,2x,3x,2xsai,super2xsai,\n"
-	"                           supereagle,advmame2x,advmame3x,hq2x,hq3x,tv2x,\n"
-	"                           dotmatrix)\n"
+	"  -g, --gfx-mode=MODE      Select graphics mode\n"
 	"  --stretch-mode=MODE      Select stretch mode (center, integral, fit, stretch)\n"
+	"  --scaler=MODE            Select graphics scaler (normal,hq,edge,advmame,sai,\n"
+	"                           supersai,supereagle,pm,dotmatrix,tv2x)\n"
+	"  --scale-factor=FACTOR    Factor to scale the graphics by\n"
 	"  --filtering              Force filtered graphics mode\n"
 	"  --no-filtering           Force unfiltered graphics mode\n"
 #ifdef USE_OPENGL
@@ -165,7 +168,7 @@ static const char HELP_STRING[] =
 	"                           (default: enabled)\n"
 	"  --render-mode=MODE       Enable additional render modes (hercGreen, hercAmber,\n"
 	"                           cga, ega, vga, amiga, fmtowns, pc9821, pc9801, 2gs,\n"
-	"                           atari, macintosh)\n"
+	"                           atari, macintosh, macintoshbw)\n"
 #ifdef ENABLE_EVENTRECORDER
 	"  --record-mode=MODE       Specify record mode for event recorder (record, playback,\n"
 	"                           passthrough [default])\n"
@@ -208,7 +211,7 @@ static const char HELP_STRING[] =
 
 static const char *s_appName = "scummvm";
 
-static void NORETURN_PRE usage(const char *s, ...) GCC_PRINTF(1, 2) NORETURN_POST;
+static void NORETURN_PRE usage(MSVC_PRINTF const char *s, ...) GCC_PRINTF(1, 2) NORETURN_POST;
 
 static void usage(const char *s, ...) {
 	char buf[STRINGBUFLEN];
@@ -246,6 +249,8 @@ void registerDefaults() {
 	ConfMan.registerDefault("render_mode", "default");
 	ConfMan.registerDefault("desired_screen_aspect_ratio", "auto");
 	ConfMan.registerDefault("stretch_mode", "default");
+	ConfMan.registerDefault("scaler", "default");
+	ConfMan.registerDefault("scale_factor", -1);
 	ConfMan.registerDefault("shader", "default");
 	ConfMan.registerDefault("show_fps", false);
 	ConfMan.registerDefault("dirtyrects", true);
@@ -661,6 +666,12 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			DO_LONG_OPTION("stretch-mode")
 			END_OPTION
 
+			DO_LONG_OPTION("scaler")
+			END_OPTION
+
+			DO_LONG_OPTION_INT("scale-factor")
+			END_OPTION
+
 			DO_LONG_OPTION("shader")
 			END_OPTION
 
@@ -791,6 +802,9 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			DO_LONG_OPTION("game")
 			END_OPTION
 
+			DO_LONG_OPTION("engine")
+			END_OPTION
+
 			DO_LONG_OPTION_BOOL("recursive")
 			END_OPTION
 
@@ -857,7 +871,9 @@ unknownOption:
 }
 
 /** List all available game IDs, i.e. all games which any loaded plugin supports. */
-static void listGames() {
+static void listGames(const Common::String &engineID) {
+	const bool all = engineID.empty();
+
 	printf("Game ID                        Full Title                                                 \n"
 	       "------------------------------ -----------------------------------------------------------\n");
 
@@ -869,25 +885,31 @@ static void listGames() {
 			continue;
 		}
 
-		PlainGameList list = p->get<MetaEngineDetection>().getSupportedGames();
-		for (PlainGameList::const_iterator v = list.begin(); v != list.end(); ++v) {
-			printf("%-30s %s\n", buildQualifiedGameName(p->get<MetaEngineDetection>().getEngineId(), v->gameId).c_str(), v->description);
+		if (all || (p->getEngineId() == engineID)) {
+			PlainGameList list = p->get<MetaEngineDetection>().getSupportedGames();
+			for (PlainGameList::const_iterator v = list.begin(); v != list.end(); ++v) {
+				printf("%-30s %s\n", buildQualifiedGameName(p->get<MetaEngineDetection>().getEngineId(), v->gameId).c_str(), v->description);
+			}
 		}
 	}
 }
 
 /** List all known game IDs, i.e. all games which can be detected. */
-static void listAllGames() {
+static void listAllGames(const Common::String &engineID) {
+	const bool any = engineID.empty();
+
 	printf("Game ID                        Full Title                                                 \n"
 	       "------------------------------ -----------------------------------------------------------\n");
 
 	const PluginList &plugins = EngineMan.getPlugins();
 	for (PluginList::const_iterator iter = plugins.begin(); iter != plugins.end(); ++iter) {
-		const MetaEngineDetection &metaengine = (*iter)->get<MetaEngineDetection>();
+		const MetaEngineDetection &metaEngine = (*iter)->get<MetaEngineDetection>();
 
-		PlainGameList list = metaengine.getSupportedGames();
-		for (PlainGameList::const_iterator v = list.begin(); v != list.end(); ++v) {
-			printf("%-30s %s\n", buildQualifiedGameName(metaengine.getEngineId(), v->gameId).c_str(), v->description);
+		if (any || (metaEngine.getEngineId() == engineID)) {
+			PlainGameList list = metaEngine.getSupportedGames();
+			for (PlainGameList::const_iterator v = list.begin(); v != list.end(); ++v) {
+				printf("%-30s %s\n", buildQualifiedGameName(metaEngine.getEngineId(), v->gameId).c_str(), v->description);
+			}
 		}
 	}
 }
@@ -966,7 +988,7 @@ static void printDebugFlags(const DebugChannelDef *debugChannels) {
 /** List debug flags*/
 static void listDebugFlags(const Common::String &engineID) {
 	if (engineID == "global")
-		printDebugFlags(globalDebugChannels);
+		printDebugFlags(gDebugChannels);
 	else {
 		const PluginList &plugins = EngineMan.getPlugins();
 		for (PluginList::const_iterator iter = plugins.begin(); iter != plugins.end(); ++iter) {
@@ -1487,10 +1509,10 @@ bool processSettings(Common::String &command, Common::StringMap &settings, Commo
 		listDebugFlags(settings["list-debugflags"]);
 		return true;
 	} else if (command == "list-games") {
-		listGames();
+		listGames(settings["engine"]);
 		return true;
 	} else if (command == "list-all-games") {
-		listAllGames();
+		listAllGames(settings["engine"]);
 		return true;
 	} else if (command == "list-engines") {
 		listEngines();

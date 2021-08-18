@@ -13,16 +13,14 @@ jobs:
           - platform: win32
             triplet: x86-windows
             arch: x86
-            # fribidi is disabled due to timeouts when installing the package
-            configFlags: --enable-faad --enable-mpeg2 --enable-discord --disable-fribidi
-            vcpkgPackages: 'curl discord-rpc faad2 fluidsynth freetype glew libflac libjpeg-turbo libmad libmpeg2 libogg libpng libtheora libvorbis sdl2 sdl2-net zlib giflib'
+            configFlags: --enable-faad --enable-mpeg2 --enable-discord
+            vcpkgPackages: 'curl discord-rpc faad2 fluidsynth freetype glew libflac libjpeg-turbo libmad libmpeg2 libogg libpng libtheora libvorbis sdl2 sdl2-net zlib giflib fribidi'
             useNasm: 'true'
           - platform: x64
             arch: x64
             triplet: x64-windows
-            # fribidi is disabled due to timeouts when installing the package
-            configFlags: --enable-faad --enable-mpeg2 --enable-discord --disable-fribidi
-            vcpkgPackages: 'curl discord-rpc faad2 fluidsynth freetype glew libflac libjpeg-turbo libmad libmpeg2 libogg libpng libtheora libvorbis sdl2 sdl2-net zlib giflib'
+            configFlags: --enable-faad --enable-mpeg2 --enable-discord
+            vcpkgPackages: 'curl discord-rpc faad2 fluidsynth freetype glew libflac libjpeg-turbo libmad libmpeg2 libogg libpng libtheora libvorbis sdl2 sdl2-net zlib giflib fribidi'
           - platform: arm64
             arch: arm64
             triplet: arm64-windows
@@ -31,7 +29,7 @@ jobs:
             configFlags: --enable-faad --enable-mpeg2 --enable-discord --disable-fribidi --disable-opengl
             vcpkgPackages: 'curl discord-rpc faad2 fluidsynth freetype libflac libjpeg-turbo libmad libmpeg2 libogg libpng libtheora libvorbis sdl2 sdl2-net zlib giflib'
     env:
-      CONFIGURATION: Release
+      CONFIGURATION: Debug
       PLATFORM: ${{ matrix.platform }}
     steps:
       - name: Checkout
@@ -39,10 +37,10 @@ jobs:
       - uses: ilammy/setup-nasm@v1
         if: ${{ matrix.useNasm }} == 'true'
       - name: Install vcpkg and packages
-        uses: lukka/run-vcpkg@v6
+        uses: lukka/run-vcpkg@v7
         id: runvcpkg
         with:
-          vcpkgGitCommitId: 0bf3923f9fab4001c00f0f429682a0853b5749e0
+          vcpkgGitCommitId: b67fab9861239e33b722b9a44f5c96dec6ca807e
           vcpkgTriplet: '${{ matrix.triplet }}'
           vcpkgArguments: '${{ matrix.vcpkgPackages }}'
 #      - name: Upload libs
@@ -65,19 +63,20 @@ jobs:
           ls
       - name: set SCUMMVM_LIBS env variable
         run: |
-          echo "SCUMMVM_LIBS=${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}\\installed\\${{ matrix.triplet }}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "SCUMMVM_LIBS=${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}\\installed\\${{ matrix.triplet }}\\debug" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Copy-Item "${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}\\installed\\${{ matrix.triplet }}\\include" -Destination "${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}\\installed\\${{ matrix.triplet }}\\debug" -Recurse
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.0.2
       - name: Build scummvm
         run: |
           cd build-scummvm
           ls
-          msbuild scummvm.sln /m /p:BuildInParallel=true /p:Configuration=Release /p:PreferredToolArchitecture=x64 /p:Platform=${{ matrix.platform }}
+          msbuild scummvm.sln /m /p:BuildInParallel=true /p:Configuration=${{ env.CONFIGURATION }} /p:PreferredToolArchitecture=x64 /p:Platform=${{ matrix.platform }}
 #      - name: Upload scummvm
 #        uses: actions/upload-artifact@v2
 #        with:
 #          name: scummvm-${{ matrix.arch }}
-#          path: build-scummvm/Release${{ matrix.arch }}/*.exe
+#          path: build-scummvm/${{ env.CONFIGURATION }}${{ matrix.arch }}/*.exe
 #      - name: Upload scummvm libs
 #        uses: actions/upload-artifact@v2
 #        with:
@@ -87,7 +86,7 @@ jobs:
 #        uses: actions/upload-artifact@v2
 #        with:
 #          name: symbols-${{ matrix.arch }}
-#          path: build-scummvm/Release${{ matrix.arch }}/*.pdb
+#          path: build-scummvm/${{ env.CONFIGURATION }}${{ matrix.arch }}/*.pdb
 #      - name: Upload scummvm libs symbols
 #        uses: actions/upload-artifact@v2
 #        with:
@@ -95,7 +94,7 @@ jobs:
 #          path: ${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}\\installed\\${{ matrix.triplet }}\\bin\\*.pdb
   xcode:
     name: Xcode
-    runs-on: macOS-latest
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -108,6 +107,9 @@ jobs:
             buildFlags: -scheme ScummVM-iOS CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO
             configFlags: --disable-nasm --disable-opengl --disable-theora --disable-taskbar --disable-tts --disable-fribidi
             packagesUrl: https://downloads.scummvm.org/frs/build/scummvm-ios7-libs-v2.zip
+    env:
+      BUILDCACHE_MAX_CACHE_SIZE: 2000000000
+      BUILDCACHE_HARD_LINKS: true
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -132,7 +134,52 @@ jobs:
         run: |
           ./devtools/create_project/xcode/build/Release/create_project . --xcode --enable-all-engines ${{ matrix.configflags }}
           ls
+      - name: Build cache
+        uses: mikehardy/buildcache-action@v1
+        with:
+          cache_key: ${{ matrix.platform }}
       - name: Build scummvm
         run: |
-          xcodebuild build -project scummvm.xcodeproj ${{ matrix.buildFlags }}
+          xcodebuild CC=clang CPLUSPLUS=clang++ LD=clang LDPLUSPLUS=clang++ build -project scummvm.xcodeproj ${{ matrix.buildFlags }}
           ls
+  ubuntu:
+    name: Ubuntu
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-latest
+            sdlConfig: sdl2-config
+            configFlags: --enable-c++11
+            aptPackages: 'libsdl2-dev libsdl2-net-dev liba52-dev libjpeg-turbo8-dev libmpeg2-4-dev libogg-dev libvorbis-dev libflac-dev libmad0-dev libpng-dev libtheora-dev libfaad-dev libfluidsynth-dev libfreetype6-dev zlib1g-dev libfribidi-dev libglew-dev libcurl4-openssl-dev libgtk-3-dev libspeechd-dev libsndio-dev libunity-dev'
+          - platform: ubuntu-18.04
+            sdlConfig: sdl-config
+            configFlags: --disable-c++11
+            aptPackages: 'libsdl1.2-dev libsdl-net1.2-dev liba52-dev libjpeg-turbo8-dev libmpeg2-4-dev libogg-dev libvorbis-dev libflac-dev libmad0-dev libpng-dev libtheora-dev libfaad-dev libfluidsynth-dev libfreetype6-dev zlib1g-dev libfribidi-dev libglew-dev libcurl4-openssl-dev libgtk-3-dev libspeechd-dev libsndio-dev libunity-dev'
+    env:
+      SDL_CONFIG: ${{ matrix.sdlConfig }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install ${{ matrix.aptPackages }}
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1
+        with:
+          key: ${{ matrix.platform }}
+          max-size: 1G
+      - name: Call configure
+        run: |
+          CXX='ccache g++' ./configure --enable-all-engines ${{ matrix.configflags }}
+      - name: Build scummvm
+        run: |
+          make -j2
+      - name: Build tests
+        run: |
+          make test
+      - name: Build devtools
+        run: |
+          make devtools

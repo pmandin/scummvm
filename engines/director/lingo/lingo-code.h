@@ -57,14 +57,16 @@ void c_starts();
 void c_intersects();
 void c_within();
 Datum chunkRef(ChunkType type, int startChunk, int endChunk, const Datum &src);
+Datum lastChunk(ChunkType type, const Datum &src);
+Datum readChunkRef(const Datum &src);
 void c_of();
-void c_charOf();
+void c_charToOfRef();
 void c_charToOf();
-void c_itemOf();
+void c_itemToOfRef();
 void c_itemToOf();
-void c_lineOf();
+void c_lineToOfRef();
 void c_lineToOf();
-void c_wordOf();
+void c_wordToOfRef();
 void c_wordToOf();
 
 void c_constpush();
@@ -74,7 +76,15 @@ void c_floatpush();
 void c_stringpush();
 void c_symbolpush();
 void c_namepush();
+void c_varrefpush();
+void c_globalrefpush();
+void c_localrefpush();
+void c_proprefpush();
 void c_varpush();
+void c_globalinit();
+void c_globalpush();
+void c_localpush();
+void c_proppush();
 void c_argcpush();
 void c_argcnoretpush();
 void c_arraypush();
@@ -83,8 +93,6 @@ void c_stackpeek();
 void c_stackdrop();
 void c_assign();
 bool verify(const Symbol &s);
-void c_eval();
-void c_setImmediate();
 
 void c_swap();
 
@@ -123,15 +131,12 @@ void c_procret();
 
 void c_mci();
 void c_mciwait();
-void c_goto();
-void c_gotoloop();
-void c_gotonext();
-void c_gotoprevious();
-
-void c_play();
 
 void c_open();
+void c_delete();
 void c_hilite();
+void c_field();
+void c_fieldref();
 
 // custom instructions for testing
 void c_asserterror();
@@ -145,7 +150,7 @@ void cb_unk2();
 // bytecode-related instructions
 void cb_call();
 void cb_delete();
-void cb_field();
+void cb_hilite();
 void cb_globalassign();
 void cb_globalpush();
 void cb_list();

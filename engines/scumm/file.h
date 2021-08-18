@@ -38,12 +38,12 @@ public:
 	BaseScummFile() : _encbyte(0) {}
 	void setEnc(byte value) { _encbyte = value; }
 
-	bool open(const Common::String &filename) override = 0;
+	bool open(const Common::Path &filename) override = 0;
 	virtual bool openSubFile(const Common::String &filename) = 0;
 
-	int32 pos() const override = 0;
-	int32 size() const override = 0;
-	bool seek(int32 offs, int whence = SEEK_SET) override = 0;
+	int64 pos() const override = 0;
+	int64 size() const override = 0;
+	bool seek(int64 offs, int whence = SEEK_SET) override = 0;
 
 // Unused
 #if 0
@@ -64,15 +64,15 @@ protected:
 public:
 	ScummFile();
 
-	bool open(const Common::String &filename) override;
+	bool open(const Common::Path &filename) override;
 	bool openSubFile(const Common::String &filename) override;
 
 	void clearErr() override { _myEos = false; BaseScummFile::clearErr(); }
 
 	bool eos() const override;
-	int32 pos() const override;
-	int32 size() const override;
-	bool seek(int32 offs, int whence = SEEK_SET) override;
+	int64 pos() const override;
+	int64 size() const override;
+	bool seek(int64 offs, int whence = SEEK_SET) override;
 	uint32 read(void *dataPtr, uint32 dataSize) override;
 };
 
@@ -109,14 +109,14 @@ private:
 public:
 	ScummDiskImage(const char *disk1, const char *disk2, GameSettings game);
 
-	bool open(const Common::String &filename) override;
+	bool open(const Common::Path &filename) override;
 	bool openSubFile(const Common::String &filename) override;
 
 	void close() override;
 	bool eos() const override { return _stream->eos(); }
-	int32 pos() const override { return _stream->pos(); }
-	int32 size() const override { return _stream->size(); }
-	bool seek(int32 offs, int whence = SEEK_SET) override { return _stream->seek(offs, whence); }
+	int64 pos() const override { return _stream->pos(); }
+	int64 size() const override { return _stream->size(); }
+	bool seek(int64 offs, int whence = SEEK_SET) override { return _stream->seek(offs, whence); }
 	uint32 read(void *dataPtr, uint32 dataSize) override;
 };
 
@@ -138,7 +138,7 @@ private:
 public:
 	ScummSteamFile(const SteamIndexFile &indexFile) : ScummFile(), _indexFile(indexFile) {}
 
-	bool open(const Common::String &filename) override;
+	bool open(const Common::Path &filename) override;
 };
 
 } // End of namespace Scumm

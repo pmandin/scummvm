@@ -29,13 +29,14 @@
 #include "director/castmember.h"
 #include "director/movie.h"
 #include "director/util.h"
+#include "director/window.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-code.h"
+#include "director/lingo/lingo-codegen.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-bytecode.h"
 #include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-the.h"
-#include "director/lingo/lingo-gr.h"
 
 namespace Director {
 
@@ -63,80 +64,80 @@ static LingoV4Bytecode lingoV4[] = {
 	{ 0x15, LC::c_contains,		"" },
 	{ 0x16, LC::c_starts,		"" },
 	{ 0x17, LC::c_of,			"" },
-	{ 0x18, LC::c_hilite,		"" },
+	{ 0x18, LC::cb_hilite,		"" },
 	{ 0x19, LC::c_intersects,	"" },
 	{ 0x1a, LC::c_within,		"" },
-	{ 0x1b, LC::cb_field,		"" },
+	{ 0x1b, LC::c_field,		"" },
 	{ 0x1c, LC::c_tell,			"" },
 	{ 0x1d, LC::c_telldone,		"" },
 	{ 0x1e, LC::cb_list,		"" },
 	{ 0x1f, LC::cb_proplist,	"" },
-	{ 0x41, LC::c_intpush,		"b" },
+	{ 0x41, LC::c_intpush,		"B" },
 	{ 0x42, LC::c_argcnoretpush,"b" },
 	{ 0x43, LC::c_argcpush,		"b" },
 	// 0x44, push a constant
-	{ 0x45, LC::c_namepush,		"b" },
-	{ 0x46, LC::cb_varrefpush,  "b" },
-	{ 0x48, LC::cb_globalpush,	"b" }, // used in event scripts
-	{ 0x49, LC::cb_globalpush,	"b" },
-	{ 0x4a, LC::cb_thepush,		"b" },
-	{ 0x4b, LC::cb_varpush,		"bpa" },
-	{ 0x4c, LC::cb_varpush,		"bpv" },
-	{ 0x4e, LC::cb_globalassign,"b" }, // used in event scripts
-	{ 0x4f, LC::cb_globalassign,"b" },
-	{ 0x50, LC::cb_theassign,	"b" },
-	{ 0x51, LC::cb_varassign,	"bpa" },
-	{ 0x52, LC::cb_varassign,	"bpv" },
+	{ 0x45, LC::c_namepush,		"bN" },
+	{ 0x46, LC::cb_varrefpush,  "bN" },
+	{ 0x48, LC::cb_globalpush,	"bN" }, // used in event scripts
+	{ 0x49, LC::cb_globalpush,	"bN" },
+	{ 0x4a, LC::cb_thepush,		"bN" },
+	{ 0x4b, LC::cb_varpush,		"bpaN" },
+	{ 0x4c, LC::cb_varpush,		"bpvN" },
+	{ 0x4e, LC::cb_globalassign,"bN" }, // used in event scripts
+	{ 0x4f, LC::cb_globalassign,"bN" },
+	{ 0x50, LC::cb_theassign,	"bN" },
+	{ 0x51, LC::cb_varassign,	"bpaN" },
+	{ 0x52, LC::cb_varassign,	"bpvN" },
 	{ 0x53, LC::c_jump,			"jb" },
 	{ 0x54, LC::c_jump,			"jbn" },
 	{ 0x55, LC::c_jumpifz,		"jb" },
 	{ 0x56, LC::cb_localcall,	"b" },
-	{ 0x57, LC::cb_call,		"b" },
+	{ 0x57, LC::cb_call,		"bN" },
 	{ 0x58, LC::cb_objectcall,  "b" },
 	{ 0x59, LC::cb_v4assign,	"b" },
 	{ 0x5a, LC::cb_v4assign2,	"b" },
 	{ 0x5b, LC::cb_delete, 		"b" },
 	{ 0x5c, LC::cb_v4theentitypush, "b" },
 	{ 0x5d, LC::cb_v4theentityassign, "b" },
-	{ 0x5f, LC::cb_thepush2,	"b" },
-	{ 0x60, LC::cb_theassign2,	"b" },
-	{ 0x61, LC::cb_objectfieldpush, "b" },
-	{ 0x62, LC::cb_objectfieldassign, "b" },
-	{ 0x63, LC::cb_call,		"b" }, // tellcall
+	{ 0x5f, LC::cb_thepush2,	"bN" },
+	{ 0x60, LC::cb_theassign2,	"bN" },
+	{ 0x61, LC::cb_objectfieldpush, "bN" },
+	{ 0x62, LC::cb_objectfieldassign, "bN" },
+	{ 0x63, LC::cb_call,		"bN" }, // tellcall
 	{ 0x64, LC::c_stackpeek, 	"b" },
 	{ 0x65, LC::c_stackdrop, 	"b" },
-	{ 0x66, LC::cb_v4theentitynamepush, "b" },
-	{ 0x81, LC::c_intpush,		"w" },
+	{ 0x66, LC::cb_v4theentitynamepush, "bN" },
+	{ 0x81, LC::c_intpush,		"W" },
 	{ 0x82, LC::c_argcnoretpush,"w" },
 	{ 0x83, LC::c_argcpush,		"w" },
 	// 0x84, push a constant
-	{ 0x85, LC::c_namepush,		"w" },
-	{ 0x86, LC::cb_varrefpush,  "w" },
-	{ 0x88, LC::cb_globalpush,	"w" }, // used in event scripts
-	{ 0x89, LC::cb_globalpush,	"w" },
-	{ 0x8a, LC::cb_thepush,		"w" },
-	{ 0x8b, LC::cb_varpush,		"wpa" },
-	{ 0x8c, LC::cb_varpush,		"wpv" },
-	{ 0x8e, LC::cb_globalassign,"w" }, // used in event scripts
-	{ 0x8f, LC::cb_globalassign,"w" },
-	{ 0x90, LC::cb_theassign, 	"w" },
-	{ 0x91, LC::cb_varassign,	"wpa" },
-	{ 0x92, LC::cb_varassign,	"wpv" },
+	{ 0x85, LC::c_namepush,		"wN" },
+	{ 0x86, LC::cb_varrefpush,  "wN" },
+	{ 0x88, LC::cb_globalpush,	"wN" }, // used in event scripts
+	{ 0x89, LC::cb_globalpush,	"wN" },
+	{ 0x8a, LC::cb_thepush,		"wN" },
+	{ 0x8b, LC::cb_varpush,		"wpaN" },
+	{ 0x8c, LC::cb_varpush,		"wpvN" },
+	{ 0x8e, LC::cb_globalassign,"wN" }, // used in event scripts
+	{ 0x8f, LC::cb_globalassign,"wN" },
+	{ 0x90, LC::cb_theassign, 	"wN" },
+	{ 0x91, LC::cb_varassign,	"wpaN" },
+	{ 0x92, LC::cb_varassign,	"wpvN" },
 	{ 0x93, LC::c_jump,			"jw" },
 	{ 0x94, LC::c_jump,			"jwn" },
 	{ 0x95, LC::c_jumpifz,		"jw" },
 	{ 0x96, LC::cb_localcall,	"w" },
-	{ 0x97, LC::cb_call,		"w" },
+	{ 0x97, LC::cb_call,		"wN" },
 	{ 0x98, LC::cb_objectcall,  "w" },
 	{ 0x99, LC::cb_v4assign,	"w" },
 	{ 0x9a, LC::cb_v4assign2,	"w" },
 	{ 0x9c, LC::cb_v4theentitypush, "w" },
 	{ 0x9d, LC::cb_v4theentityassign, "w" },
-	{ 0x9f, LC::cb_thepush2, 	"w" },
-	{ 0xa0, LC::cb_theassign2, "w" },
-	{ 0xa1, LC::cb_objectfieldpush, "w" },
-	{ 0xa2, LC::cb_objectfieldassign, "w" },
-	{ 0xa6, LC::cb_v4theentitynamepush, "w" },
+	{ 0x9f, LC::cb_thepush2, 	"wN" },
+	{ 0xa0, LC::cb_theassign2, "wN" },
+	{ 0xa1, LC::cb_objectfieldpush, "wN" },
+	{ 0xa2, LC::cb_objectfieldassign, "wN" },
+	{ 0xa6, LC::cb_v4theentitynamepush, "wN" },
 	{ 0, 0, 0 }
 };
 
@@ -236,7 +237,7 @@ static LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x07, 0x1a, kTheSoundLevel,		kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x1b, kTheStageColor,		kTheNOField,		true, kTEANOArgs },
 //	{ 0x07, 0x1c, ????,					kTheNOField,		true, kTEANOArgs },
-	{ 0x07, 0x1d, kTheStillDown,		kTheNOField,		true, kTEANOArgs },
+	{ 0x07, 0x1d, kTheSwitchColorDepth,	kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x1e, kTheTimeoutKeyDown,	kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x1f, kTheTimeoutLength,	kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x20, kTheTimeoutMouse,		kTheNOField,		true, kTEANOArgs },
@@ -257,6 +258,13 @@ static LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x09, 0x11, kTheCast,				kTheForeColor,		true, kTEAItemId },
 	{ 0x09, 0x12, kTheCast,				kTheBackColor,		true, kTEAItemId },
 
+	// the chunk of cast
+	{ 0x0a, 0x03, kTheChunk,			kTheTextStyle,		true, kTEAChunk },
+	{ 0x0a, 0x04, kTheChunk,			kTheTextFont,		true, kTEAChunk },
+	{ 0x0a, 0x05, kTheChunk,			kTheTextHeight,		true, kTEAChunk },
+	{ 0x0a, 0x07, kTheChunk,			kTheTextSize,		true, kTEAChunk },
+	{ 0x0a, 0x11, kTheChunk,			kTheForeColor,		true, kTEAChunk },
+
 	{ 0x0b, 0x01, kTheField,			kTheName,			true, kTEAItemId },
 	{ 0x0b, 0x02, kTheField,			kTheText,			true, kTEAItemId },
 	{ 0x0b, 0x03, kTheField,			kTheTextStyle,		true, kTEAItemId },
@@ -266,6 +274,13 @@ static LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x0b, 0x07, kTheField,			kTheTextSize,		true, kTEAItemId },
 	{ 0x0b, 0x09, kTheField,			kTheHilite,			true, kTEAItemId },
 	{ 0x0b, 0x11, kTheField,			kTheForeColor,		true, kTEAItemId },
+
+	// the chunk of field
+	{ 0x0c, 0x03, kTheChunk,			kTheTextStyle,		true, kTEAChunk },
+	{ 0x0c, 0x04, kTheChunk,			kTheTextFont,		true, kTEAChunk },
+	{ 0x0c, 0x05, kTheChunk,			kTheTextHeight,		true, kTEAChunk },
+	{ 0x0c, 0x07, kTheChunk,			kTheTextSize,		true, kTEAChunk },
+	{ 0x0c, 0x11, kTheChunk,			kTheForeColor,		true, kTEAChunk },
 
 	{ 0x0d, 0x0c, kTheCast,				kTheLoop,			true, kTEAItemId },
 	{ 0x0d, 0x0d, kTheCast,				kTheDuration,		true, kTEAItemId },
@@ -312,16 +327,18 @@ Datum Lingo::findVarV4(int varType, const Datum &id) {
 	case 1: // global
 	case 2: // global
 	case 3: // property/instance
-		if (id.type == VAR) {
+		if (id.type == SYMBOL) {
 			res = id;
+			res.type = (varType == 3) ? PROPREF : GLOBALREF;
 		} else {
-			warning("BUILDBOT: findVarV4: expected ID for var type %d to be VAR, got %s", varType, id.type2str());
+			warning("BUILDBOT: findVarV4: expected ID for var type %d to be SYMBOL, got %s", varType, id.type2str());
 		}
 		break;
 	case 4: // arg
 	case 5: // local
 		{
-			if (g_lingo->_callstack.empty()) {
+			Common::Array<CFrame *> &callstack = _vm->getCurrentWindow()->_callstack;
+			if (callstack.empty()) {
 				warning("BUILDBOT: findVarV4: no call frame");
 				return res;
 			}
@@ -331,19 +348,19 @@ Datum Lingo::findVarV4(int varType, const Datum &id) {
 			}
 			int varIndex = id.asInt() / 6;
 			Common::Array<Common::String> *varNames = (varType == 4)
-				? _callstack.back()->sp.argNames
-				: _callstack.back()->sp.varNames;
+				? callstack.back()->sp.argNames
+				: callstack.back()->sp.varNames;
 
 			if (varIndex < (int)varNames->size()) {
 				res = (*varNames)[varIndex];
-				res.type = VAR;
+				res.type = LOCALREF;
 			} else {
 				warning("BUILDBOT: findVarV4: invalid var ID %d for var type %d (too high)", id.asInt(), varType);
 			}
 		}
 		break;
 	case 6: // field
-		res = id.asCastId();
+		res = id.asMemberID();
 		res.type = FIELDREF;
 		break;
 	default:
@@ -372,15 +389,21 @@ void LC::cb_unk2() {
 }
 
 void LC::cb_delete() {
-	g_lingo->readInt();
-	g_lingo->printSTUBWithArglist("cb_delete", 9);
-	g_lingo->dropStack(9);
+	int varType = g_lingo->readInt();
+	Datum varID = g_lingo->pop();
+	Datum var = g_lingo->findVarV4(varType, varID);
+	Datum chunkRef = readChunkRef(var);
+	g_lingo->push(chunkRef);
+	LC::c_delete();
 }
 
-void LC::cb_field() {
-	LB::b_field(1);
+void LC::cb_hilite() {
+	Datum fieldID = g_lingo->pop().asMemberID();
+	fieldID.type = FIELDREF;
+	Datum chunkRef = readChunkRef(fieldID);
+	g_lingo->push(chunkRef);
+	LC::c_hilite();
 }
-
 
 void LC::cb_localcall() {
 	int functionId = g_lingo->readInt();
@@ -402,11 +425,11 @@ void LC::cb_localcall() {
 
 void LC::cb_objectcall() {
 	int varType = g_lingo->readInt();
-	Datum varId = g_lingo->pop(false);
+	Datum varId = g_lingo->pop();
 	Datum nargs = g_lingo->pop();
 
 	Datum var = g_lingo->findVarV4(varType, varId);
-	if (var.type != VAR) {
+	if (!var.isVarRef()) {
 		warning("cb_objectcall: first arg did not resolve to variable");
 		return;
 	}
@@ -420,7 +443,7 @@ void LC::cb_objectcall() {
 		Datum &firstArg = g_lingo->_stack[g_lingo->_stack.size() - nargs.u.i];
 		// The first arg could be either a method name or a variable name
 		if (firstArg.type == SYMBOL) {
-			firstArg.type = VAR;
+			firstArg.type = VARREF;
 		}
 	}
 
@@ -432,7 +455,7 @@ void LC::cb_v4assign() {
 	int arg = g_lingo->readInt();
 	int op = (arg >> 4) & 0xF;
 	int varType = arg & 0xF;
-	Datum varId = g_lingo->pop(false);
+	Datum varId = g_lingo->pop();
 
 	Datum var = g_lingo->findVarV4(varType, varId);
 	g_lingo->push(var);
@@ -479,7 +502,7 @@ void LC::cb_proplist() {
 
 	Datum result;
 	result.type = PARRAY;
-	result.u.parr = new PropertyArray;
+	result.u.parr = new PArray;
 	arraySize /= 2;
 
 	for (int i = 0; i < arraySize; i++) {
@@ -487,7 +510,7 @@ void LC::cb_proplist() {
 		Datum p = g_lingo->pop();
 
 		PCell cell = PCell(p, v);
-		result.u.parr->insert_at(0, cell);
+		result.u.parr->arr.insert_at(0, cell);
 	};
 
 	if (nargs.u.i % 2)
@@ -498,8 +521,7 @@ void LC::cb_proplist() {
 
 
 void LC::cb_call() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 
 	Datum nargs = g_lingo->pop();
 	if ((nargs.type == ARGC) || (nargs.type == ARGCNORET)) {
@@ -513,56 +535,46 @@ void LC::cb_call() {
 
 
 void LC::cb_globalpush() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	Datum target(name);
-	target.type = VAR;
+	target.type = GLOBALREF;
 	debugC(3, kDebugLingoExec, "cb_globalpush: pushing %s to stack", name.c_str());
-	Datum result = g_lingo->varFetch(target, true);
+	Datum result = g_lingo->varFetch(target);
 	g_lingo->push(result);
 }
 
 
 void LC::cb_globalassign() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	Datum target(name);
-	target.type = VAR;
+	target.type = GLOBALREF;
 	debugC(3, kDebugLingoExec, "cb_globalassign: assigning to %s", name.c_str());
 	Datum source = g_lingo->pop();
-	// Lingo lets you declare globals inside a method.
-	// This doesn't define them in the script list, but you can still
-	// read and write to them???
-	g_lingo->varCreate(name, true);
-	g_lingo->varAssign(target, source, true);
+	g_lingo->varAssign(target, source);
 }
 
 void LC::cb_objectfieldassign() {
-	int fieldNameId = g_lingo->readInt();
-	Common::String fieldName = g_lingo->_currentArchive->getName(fieldNameId);
+	Common::String fieldName = g_lingo->readString();
 	Datum value = g_lingo->pop();
 	Datum object = g_lingo->pop();
 	g_lingo->setObjectProp(object, fieldName, value);
 }
 
 void LC::cb_objectfieldpush() {
-	int fieldNameId = g_lingo->readInt();
-	Common::String fieldName = g_lingo->_currentArchive->getName(fieldNameId);
+	Common::String fieldName = g_lingo->readString();
 	Datum object = g_lingo->pop();
-	g_lingo->push(g_lingo->getObjectProp(object, fieldName));
+	g_lingo->getObjectProp(object, fieldName);
 }
 
 void LC::cb_varrefpush() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	Datum result(name);
-	result.type = VAR;
+	result.type = SYMBOL;
 	g_lingo->push(result);
 }
 
 void LC::cb_theassign() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	Datum value = g_lingo->pop();
 	if (g_lingo->_currentMe.type == OBJECT) {
 		if (g_lingo->_currentMe.u.obj->hasProp(name)) {
@@ -576,15 +588,13 @@ void LC::cb_theassign() {
 }
 
 void LC::cb_theassign2() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	Datum value = g_lingo->pop();
 	warning("STUB: cb_theassign2(%s, %s)", name.c_str(), value.asString().c_str());
 }
 
 void LC::cb_thepush() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	if (g_lingo->_currentMe.type == OBJECT) {
 		if (g_lingo->_currentMe.u.obj->hasProp(name)) {
 			g_lingo->push(g_lingo->_currentMe.u.obj->getProp(name));
@@ -600,9 +610,8 @@ void LC::cb_thepush() {
 }
 
 void LC::cb_thepush2() {
-	int nameId = g_lingo->readInt();
 	Datum result;
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	if (g_lingo->_theEntities.contains(name)) {
 		TheEntity *entity = g_lingo->_theEntities[name];
 		Datum id;
@@ -618,32 +627,54 @@ void LC::cb_thepush2() {
 }
 
 void LC::cb_varpush() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	Datum target(name);
-	target.type = VAR;
+	target.type = LOCALREF;
 	debugC(3, kDebugLingoExec, "cb_varpush: pushing %s to stack", name.c_str());
-	Datum result = g_lingo->varFetch(target, false);
+	Datum result = g_lingo->varFetch(target);
 	g_lingo->push(result);
 }
 
 
 void LC::cb_varassign() {
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 	Datum target(name);
-	target.type = VAR;
+	target.type = LOCALREF;
 	debugC(3, kDebugLingoExec, "cb_varassign: assigning to %s", name.c_str());
 	Datum source = g_lingo->pop();
 	// Local variables should be initialised by the script, no varCreate here
-	g_lingo->varAssign(target, source, false);
+	g_lingo->varAssign(target, source);
 }
 
 
 void LC::cb_v4assign2() {
-	g_lingo->readInt();
-	g_lingo->printSTUBWithArglist("cb_v4assign2", 10);
-	g_lingo->dropStack(10);
+int arg = g_lingo->readInt();
+	int op = (arg >> 4) & 0xF;
+	int varType = arg & 0xF;
+	Datum varId = g_lingo->pop();
+
+	Datum var = g_lingo->findVarV4(varType, varId);
+	Datum ref = readChunkRef(var);
+	g_lingo->push(ref);
+
+	switch (op) {
+	case 1:
+		// put value into chunk
+		LC::c_assign();
+		break;
+	case 2:
+		// put value after chunk
+		LC::c_putafter();
+		break;
+	case 3:
+		// put value before chunk
+		LC::c_putbefore();
+		break;
+	default:
+		warning("cb_v4assign2: unknown operator %d", op);
+		g_lingo->pop();
+		break;
+	}
 }
 
 
@@ -679,8 +710,31 @@ void LC::cb_v4theentitypush() {
 			break;
 		case kTEAString:
 			{
-				/*Datum stringArg = */g_lingo->pop();
-				warning("cb_v4theentitypush: STUB: kTEAString");
+				Datum stringArg = g_lingo->pop();
+				ChunkType chunkType = kChunkChar;
+				switch (entity) {
+				case kTheChars:
+					chunkType = kChunkChar;
+					break;
+				case kTheWords:
+					chunkType = kChunkWord;
+					break;
+				case kTheLines:
+					chunkType = kChunkLine;
+					break;
+				case kTheItems:
+					chunkType = kChunkItem;
+					break;
+				}
+				Datum chunkRef = LC::lastChunk(chunkType, stringArg);
+				switch (field) {
+				case kTheLast:
+					result = chunkRef.eval();
+					break;
+				case kTheNumber:
+					result = chunkRef.u.cref->startChunk;
+					break;
+				}
 			}
 			break;
 		case kTEAMenuIdItemId:
@@ -688,6 +742,14 @@ void LC::cb_v4theentitypush() {
 				/*Datum menuId = */g_lingo->pop();
 				/*Datum itemId = */g_lingo->pop();
 				warning("cb_v4theentitypush: STUB: kTEAMenuIdItemId");
+			}
+			break;
+		case kTEAChunk:
+			{
+				Datum fieldRef = g_lingo->pop().asMemberID();
+				fieldRef.type = FIELDREF;
+				Datum chunkRef = readChunkRef(fieldRef);
+				result = g_lingo->getTheEntity(entity, chunkRef, field);
 			}
 			break;
 		default:
@@ -715,8 +777,7 @@ void LC::cb_v4theentitynamepush() {
 		warning("cb_v4theentitynamepush: first arg should be of type ARGC or ARGCNORET, not %s", nargs.type2str());
 	}
 
-	int nameId = g_lingo->readInt();
-	Common::String name = g_lingo->_currentArchive->getName(nameId);
+	Common::String name = g_lingo->readString();
 
 	Datum id;
 	id.u.s = NULL;
@@ -783,9 +844,17 @@ void LC::cb_v4theentityassign() {
 		break;
 	case kTEAMenuIdItemId:
 		{
-			/*Datum menuId = */g_lingo->pop();
-			/*Datum itemId = */g_lingo->pop();
-			warning("cb_v4theentityassign: STUB: kTEAMenuIdItemId");
+			Datum menuId = g_lingo->pop();
+			Datum itemId = g_lingo->pop();
+			g_lingo->setTheMenuItemEntity(entity, menuId, field, itemId, value);
+		}
+		break;
+	case kTEAChunk:
+		{
+			Datum fieldRef = g_lingo->pop().asMemberID();
+			fieldRef.type = FIELDREF;
+			Datum chunkRef = readChunkRef(fieldRef);
+			g_lingo->setTheEntity(entity, chunkRef, field, value);
 		}
 		break;
 	default:
@@ -801,7 +870,7 @@ void LC::cb_zeropush() {
 	g_lingo->push(d);
 }
 
-ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, LingoArchive *archive, const Common::String &archName) {
+ScriptContext *LingoCompiler::compileLingoV4(Common::SeekableReadStreamEndian &stream, LingoArchive *archive, const Common::String &archName, uint16 version) {
 	if (stream.size() < 0x5c) {
 		warning("Lscr header too small");
 		return nullptr;
@@ -885,14 +954,14 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 	// initialise the script
 	ScriptType scriptType = kCastScript;
 	Common::String castName;
-	CastMember *member = g_director->getCurrentMovie()->getCastMemberByScriptId(scriptId);
+	CastMember *member = archive->cast->getCastMemberByScriptId(scriptId);
 	int castId;
 	if (member) {
 		if (member->_type == kCastLingoScript)
 			scriptType = ((ScriptCastMember *)member)->_scriptType;
 
 		castId = member->getID();
-		CastMemberInfo *info = g_director->getCurrentMovie()->getCastMemberInfo(castId);
+		CastMemberInfo *info = member->getInfo();
 		if (info)
 			castName = info->name;
 	} else {
@@ -914,12 +983,12 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 		}
 		debugC(1, kDebugCompile, "Add V4 script %d: factory '%s'", scriptId, factoryName.c_str());
 
-		sc = _assemblyContext = new ScriptContext(factoryName, _assemblyArchive, scriptType, castId);
-		codeFactory(factoryName);
+		sc = _assemblyContext = new ScriptContext(factoryName, scriptType, castId);
+		registerFactory(factoryName);
 	} else {
 		debugC(1, kDebugCompile, "Add V4 script %d: %s %d", scriptId, scriptType2str(scriptType), castId);
 
-		sc = _assemblyContext = new ScriptContext(!castName.empty() ? castName : Common::String::format("%d", castId), _assemblyArchive, scriptType, castId);
+		sc = _assemblyContext = new ScriptContext(!castName.empty() ? castName : Common::String::format("%d", castId), scriptType, castId);
 	}
 
 	// initialise each property
@@ -954,8 +1023,8 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 		if (0 <= index && index < (int16)archive->names.size()) {
 			const char *name = archive->names[index].c_str();
 			debugC(5, kDebugLoading, "%d: %s", i, name);
-			if (!_globalvars.contains(name)) {
-				_globalvars[name] = Datum();
+			if (!g_lingo->_globalvars.contains(name)) {
+				g_lingo->_globalvars[name] = Datum();
 			} else {
 				warning("Global %d (%s) already defined", i, name);
 			}
@@ -990,7 +1059,7 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 	for (uint16 i = 0; i < constsCount; i++) {
 		Datum constant;
 		uint32 constType = 0;
-		if (_vm->getVersion() >= 500) {
+		if (version >= kFileVer500) {
 			constType = stream.readUint32();
 		} else {
 			constType = (uint32)stream.readUint16();
@@ -999,8 +1068,7 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 		switch (constType) {
 		case 1: // String type
 			{
-				constant.type = STRING;
-				constant.u.s = new Common::String();
+				Common::String str;
 				uint32 pointer = value;
 				if (pointer + 4 > constsStoreSize) {
 					error("Constant string is too small");
@@ -1014,12 +1082,10 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 					break;
 				}
 				while (pointer < end) {
-					if (constsStore[pointer] == '\r') {
-						*constant.u.s += '\n';
-					} else if (constsStore[pointer] == '\0') {
+					if (constsStore[pointer] == '\0') {
 						break;
 					} else {
-						*constant.u.s += constsStore[pointer];
+						str += constsStore[pointer];
 					}
 					pointer += 1;
 				}
@@ -1027,6 +1093,8 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 					warning("Constant string has no null terminator");
 					break;
 				}
+				constant.type = STRING;
+				constant.u.s = new Common::String(archive->cast->decodeString(str), Common::kUtf8);
 			}
 			break;
 		case 4: // Integer type
@@ -1109,7 +1177,7 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 	bool skipdump = false;
 
 	if (ConfMan.getBool("dump_scripts")) {
-		Common::String buf = dumpScriptName(archName.c_str(), scriptType, castId, "lscr");
+		Common::String buf = dumpScriptName(encodePathForDump(archName).c_str(), scriptType, castId, "lscr");
 
 		if (!out.open(buf, true)) {
 			warning("Lingo::addCodeV4(): Can not open dump file %s", buf.c_str());
@@ -1250,13 +1318,13 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 				Datum constant = _assemblyContext->_constants[arg];
 				switch (constant.type) {
 				case INT:
-					g_lingo->code1(LC::c_intpush);
+					code1(LC::c_intpush);
 					break;
 				case FLOAT:
-					g_lingo->code1(LC::c_floatpush);
+					code1(LC::c_floatpush);
 					break;
 				case STRING:
-					g_lingo->code1(LC::c_stringpush);
+					code1(LC::c_stringpush);
 					break;
 				default:
 					error("Unknown constant type %d", constant.type);
@@ -1270,31 +1338,38 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 				}
 				switch (constant.type) {
 				case INT:
-					g_lingo->codeInt(constant.u.i);
+					codeInt(constant.u.i);
 					break;
 				case FLOAT:
-					g_lingo->codeFloat(constant.u.f);
+					codeFloat(constant.u.f);
 					break;
 				case STRING:
-					g_lingo->codeString(constant.u.s->c_str());
+					codeString(constant.u.s->c_str());
 					break;
 				default:
 					error("Unknown constant type %d", constant.type);
 					break;
 				}
-			} else if (_lingoV4.contains(opcode)) {
+			} else if (g_lingo->_lingoV4.contains(opcode)) {
 				offsetList.push_back(_currentAssembly->size());
-				g_lingo->code1(_lingoV4[opcode]->func);
+				code1(g_lingo->_lingoV4[opcode]->func);
 
-				size_t argc = strlen(_lingoV4[opcode]->proto);
+				size_t argc = strlen(g_lingo->_lingoV4[opcode]->proto);
 				if (argc) {
+					bool codeName = false;
 					int arg = 0;
 					for (uint c = 0; c < argc; c++) {
-						switch (_lingoV4[opcode]->proto[c]) {
+						switch (g_lingo->_lingoV4[opcode]->proto[c]) {
 						case 'b':
 							// read one uint8 as an argument
 							offsetList.push_back(_currentAssembly->size());
 							arg = (uint8)codeStore[pointer];
+							pointer += 1;
+							break;
+						case 'B':
+							// read one int8 as an argument
+							offsetList.push_back(_currentAssembly->size());
+							arg = (int8)codeStore[pointer];
 							pointer += 1;
 							break;
 						case 'w':
@@ -1302,6 +1377,13 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 							offsetList.push_back(_currentAssembly->size());
 							offsetList.push_back(_currentAssembly->size());
 							arg = (uint16)READ_BE_UINT16(&codeStore[pointer]);
+							pointer += 2;
+							break;
+						case 'W':
+							// read one int16 as an argument
+							offsetList.push_back(_currentAssembly->size());
+							offsetList.push_back(_currentAssembly->size());
+							arg = (int16)READ_BE_INT16(&codeStore[pointer]);
 							pointer += 2;
 							break;
 						case 'n':
@@ -1337,43 +1419,51 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 							// argument refers to a code offset; fix alignment in post
 							jumpList.push_back(offsetList.size());
 							break;
+						case 'N':
+							// argument is a name in the name table
+							codeName = true;
+							break;
 						default:
 							break;
 						}
 					}
-					g_lingo->codeInt(arg);
+					if (codeName) {
+						codeString(_assemblyArchive->getName(arg).c_str());
+					} else {
+						codeInt(arg);
+					}
 				}
 			} else {
 				// unimplemented instruction
 				if (opcode < 0x40) { // 1 byte instruction
 					debugC(5, kDebugCompile, "Unimplemented opcode: 0x%02x", opcode);
 					offsetList.push_back(_currentAssembly->size());
-					g_lingo->code1(LC::cb_unk);
-					g_lingo->codeInt(opcode);
+					code1(LC::cb_unk);
+					codeInt(opcode);
 				} else if (opcode < 0x80) { // 2 byte instruction
 					debugC(5, kDebugCompile, "Unimplemented opcode: 0x%02x (%d)", opcode, (uint)codeStore[pointer]);
 					offsetList.push_back(_currentAssembly->size());
-					g_lingo->code1(LC::cb_unk1);
-					g_lingo->codeInt(opcode);
+					code1(LC::cb_unk1);
+					codeInt(opcode);
 					offsetList.push_back(_currentAssembly->size());
-					g_lingo->codeInt((uint)codeStore[pointer]);
+					codeInt((uint)codeStore[pointer]);
 					pointer += 1;
 				} else { // 3 byte instruction
 					debugC(5, kDebugCompile, "Unimplemented opcode: 0x%02x (%d, %d)", opcode, (uint)codeStore[pointer], (uint)codeStore[pointer+1]);
 					offsetList.push_back(_currentAssembly->size());
-					g_lingo->code1(LC::cb_unk2);
-					g_lingo->codeInt(opcode);
+					code1(LC::cb_unk2);
+					codeInt(opcode);
 					offsetList.push_back(_currentAssembly->size());
-					g_lingo->codeInt((uint)codeStore[pointer]);
+					codeInt((uint)codeStore[pointer]);
 					offsetList.push_back(_currentAssembly->size());
-					g_lingo->codeInt((uint)codeStore[pointer+1]);
+					codeInt((uint)codeStore[pointer+1]);
 					pointer += 2;
 				}
 			}
 		}
 
 		// Add backstop
-		g_lingo->code1(STOP);
+		code1(STOP);
 
 		// Rewrite every offset flagged as a jump based on the new code alignment.
 		for (uint j = 0; j < jumpList.size(); j++) {
@@ -1397,13 +1487,13 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 			functionName = archive->names[nameIndex];
 		} else if (i == 0 && (scriptFlags & kScriptFlagEventScript)) {
 			// event script (lingo not contained within a handler)
-			functionName = _eventHandlerTypes[kEventGeneric];
+			functionName = g_lingo->_eventHandlerTypes[kEventGeneric];
 		}
 
 		Symbol sym;
 		if (!functionName.empty()) {
 			debugC(5, kDebugLoading, "Function %d binding: %s()", i, functionName.c_str());
-			sym = _assemblyContext->define(functionName, argCount, _currentAssembly, argNames, varNames);
+			sym = _assemblyContext->define(functionName, _currentAssembly, argNames, varNames);
 		} else {
 			warning("Function has unknown name id %d, skipping define", nameIndex);
 			sym.name = new Common::String();
@@ -1433,7 +1523,7 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 			uint pc = 0;
 			while (pc < _currentAssembly->size()) {
 				uint spc = pc;
-				Common::String instr = decodeInstruction(_assemblyArchive, _currentAssembly, pc, &pc);
+				Common::String instr = g_lingo->decodeInstruction(_currentAssembly, pc, &pc);
 				out.writeString(Common::String::format("[%5d] %s\n", spc, instr.c_str()));
 			}
 			out.writeString(Common::String::format("<end code>\n\n"));
@@ -1441,6 +1531,15 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 
 		_assemblyContext->_functionNames.push_back(*sym.name);
 		_currentAssembly = nullptr;
+	}
+
+	if (!_assemblyContext->isFactory()) {
+		// Register this context's functions with the containing archive.
+		for (SymbolHash::iterator it = _assemblyContext->_functionHandlers.begin(); it != _assemblyContext->_functionHandlers.end(); ++it) {
+			if (!_assemblyArchive->functionHandlers.contains(it->_key)) {
+				_assemblyArchive->functionHandlers[it->_key] = it->_value;
+			}
+		}
 	}
 
 	if (!skipdump && ConfMan.getBool("dump_scripts")) {
@@ -1454,8 +1553,8 @@ ScriptContext *Lingo::compileLingoV4(Common::SeekableReadStreamEndian &stream, L
 	return sc;
 }
 
-void LingoArchive::addCodeV4(Common::SeekableReadStreamEndian &stream, uint16 lctxIndex, const Common::String &archName) {
-	ScriptContext *ctx = g_lingo->compileLingoV4(stream, this, archName);
+void LingoArchive::addCodeV4(Common::SeekableReadStreamEndian &stream, uint16 lctxIndex, const Common::String &archName, uint16 version) {
+	ScriptContext *ctx = g_lingo->_compiler->compileLingoV4(stream, this, archName, version);
 	if (ctx) {
 		lctxContexts[lctxIndex] = ctx;
 		*ctx->_refCount += 1;

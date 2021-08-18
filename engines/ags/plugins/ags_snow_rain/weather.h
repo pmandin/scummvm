@@ -68,6 +68,9 @@ private:
 	void ClipToRange(int &variable, int min, int max);
 
 	bool _mIsSnow;
+	int32 &_screenWidth;
+	int32 &_screenHeight;
+	IAGSEngine *&_engine;
 
 	int _mMinDrift = 0;
 	int _mMaxDrift = 0;
@@ -100,9 +103,7 @@ private:
 	bool _mViewsInitialized;
 
 public:
-	Weather();
-	Weather(bool IsSnow);
-	~Weather();
+	Weather(bool IsSnow, int32 &scrWidth, int32 &scrHeight, IAGSEngine *&engine);
 
 	void Initialize();
 	void InitializeParticles();
@@ -125,7 +126,6 @@ public:
 	void SetBaseline(int top, int bottom);
 	void SetAmount(int amount);
 	void SetFallSpeed(int min_value, int max_value);
-
 };
 
 } // namespace AGSSnowRain

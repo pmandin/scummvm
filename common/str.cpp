@@ -180,12 +180,12 @@ bool String::contains(char32_t x) const {
 
 #ifndef SCUMMVM_UTIL
 
-bool String::matchString(const char *pat, bool ignoreCase, bool pathMode) const {
-	return Common::matchString(c_str(), pat, ignoreCase, pathMode);
+bool String::matchString(const char *pat, bool ignoreCase, const char *wildcardExclusions) const {
+	return Common::matchString(c_str(), pat, ignoreCase, wildcardExclusions);
 }
 
-bool String::matchString(const String &pat, bool ignoreCase, bool pathMode) const {
-	return Common::matchString(c_str(), pat.c_str(), ignoreCase, pathMode);
+bool String::matchString(const String &pat, bool ignoreCase, const char *wildcardExclusions) const {
+	return Common::matchString(c_str(), pat.c_str(), ignoreCase, wildcardExclusions);
 }
 
 #endif
@@ -600,7 +600,7 @@ String normalizePath(const String &path, const char sep) {
 
 #ifndef SCUMMVM_UTIL
 
-bool matchString(const char *str, const char *pat, bool ignoreCase, bool pathMode) {
+bool matchString(const char *str, const char *pat, bool ignoreCase, const char *wildcardExclusions) {
 	assert(str);
 	assert(pat);
 
@@ -609,7 +609,7 @@ bool matchString(const char *str, const char *pat, bool ignoreCase, bool pathMod
 	bool escaped = false;
 
 	for (;;) {
-		if (pathMode && *str == '/') {
+		if (wildcardExclusions && strchr(wildcardExclusions, *str)) {
 			p = nullptr;
 			q = nullptr;
 			if (*pat == '?')
@@ -689,19 +689,24 @@ void replace(Common::String &source, const Common::String &what, const Common::S
 	}
 }
 
-String tag2string(uint32 tag) {
-	char str[5];
-	str[0] = (char)(tag >> 24);
-	str[1] = (char)(tag >> 16);
-	str[2] = (char)(tag >> 8);
-	str[3] = (char)tag;
-	str[4] = '\0';
-	// Replace non-printable chars by dot
-	for (int i = 0; i < 4; ++i) {
-		if (!Common::isPrint(str[i]))
-			str[i] = '.';
+String tag2string(uint32 tag, bool nonPrintable) {
+	Common::String res;
+
+	for (int i = 3; i >= 0; i--) {
+		byte b = (tag >> (8 * i)) & 0xff;
+
+		if (!Common::isPrint(b)) {
+			if (nonPrintable) {
+				res += Common::String::format("\\%03o", b);
+			} else {
+				res += '.';
+			}
+		} else {
+			res += b;
+		}
 	}
-	return String(str);
+
+	return res;
 }
 
 #endif

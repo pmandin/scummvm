@@ -79,14 +79,14 @@ private:
 public:
 	ScummNESFile();
 
-	bool open(const Common::String &filename) override;
+	bool open(const Common::Path &filename) override;
 	bool openSubFile(const Common::String &filename) override;
 
 	void close() override;
 	bool eos() const override { return _stream->eos(); }
-	int32 pos() const override { return _stream->pos(); }
-	int32 size() const override { return _stream->size(); }
-	bool seek(int32 offs, int whence = SEEK_SET) override { return _stream->seek(offs, whence); }
+	int64 pos() const override { return _stream->pos(); }
+	int64 size() const override { return _stream->size(); }
+	bool seek(int64 offs, int whence = SEEK_SET) override { return _stream->seek(offs, whence); }
 	uint32 read(void *dataPtr, uint32 dataSize) override;
 };
 

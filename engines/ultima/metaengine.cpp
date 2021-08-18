@@ -27,6 +27,7 @@
 #include "common/savefile.h"
 #include "common/str-array.h"
 #include "common/memstream.h"
+#include "common/translation.h"
 #include "ultima/shared/early/ultima_early.h"
 #include "ultima/ultima4/ultima4.h"
 #include "ultima/ultima4/meta_engine.h"
@@ -91,16 +92,6 @@ Common::KeymapArray UltimaMetaEngine::initKeymaps(const char *target) const {
 		return Ultima::Ultima8::MetaEngine::initKeymaps(gameId);
 
 	return Common::KeymapArray();
-}
-
-const ExtraGuiOptions UltimaMetaEngine::getExtraGuiOptions(const Common::String& target) const
-{
-	const Common::String gameId = getGameId(target);
-	if (gameId == "ultima8" || gameId == "remorse" || gameId == "regret")
-		return Ultima::Ultima8::MetaEngine::getExtraGuiOptions(gameId);
-
-	ExtraGuiOptions options;
-	return options;
 }
 
 Common::String UltimaMetaEngine::getGameId(const Common::String& target) {

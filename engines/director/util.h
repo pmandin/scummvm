@@ -32,8 +32,6 @@ namespace Director {
 int castNumToNum(const char *str);
 char *numToCastNum(int num);
 
-Common::String toLowercaseMac(const Common::String &s);
-
 Common::String convertPath(Common::String &path);
 
 Common::String unixToMacPath(const Common::String &path);
@@ -43,6 +41,8 @@ Common::String getPath(Common::String path, Common::String cwd);
 bool testPath(Common::String &path, bool directory = false);
 
 Common::String pathMakeRelative(Common::String path, bool recursive = true, bool addexts = true, bool directory = false);
+
+bool hasExtension(Common::String filename);
 
 Common::String testExtensions(Common::String component, Common::String initialPath, Common::String convPath);
 
@@ -54,7 +54,9 @@ Common::String convertMacFilename(const char *name);
 
 Common::String dumpScriptName(const char *prefix, int type, int id, const char *ext);
 
-bool processQuitEvent(bool click = false); // events.cpp
+bool isButtonSprite(SpriteType spriteType);
+
+Common::String castTypeToString(const CastType &type);
 
 class RandomState {
 public:
@@ -79,6 +81,21 @@ private:
 uint32 readVarInt(Common::SeekableReadStream &stream);
 
 Common::SeekableReadStreamEndian *readZlibData(Common::SeekableReadStream &stream, unsigned long len, unsigned long *outLen, bool bigEndian);
+
+uint16 humanVersion(uint16 ver);
+
+Common::Platform platformFromID(uint16 id);
+
+Common::CodePage getEncoding(Common::Platform platform, Common::Language language);
+Common::CodePage detectFontEncoding(Common::Platform platform, uint16 fontId);
+
+int charToNum(Common::u32char_type_t ch);
+Common::u32char_type_t numToChar(int num);
+int compareStrings(const Common::String &s1, const Common::String &s2);
+
+Common::String encodePathForDump(const Common::String &path);
+
+Common::String utf8ToPrintable(const Common::String &str);
 
 } // End of namespace Director
 

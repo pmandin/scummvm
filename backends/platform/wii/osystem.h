@@ -178,7 +178,7 @@ public:
 	virtual void hideOverlay() override;
 	virtual bool isOverlayVisible() const override { return _overlayVisible; }
 	virtual void clearOverlay() override;
-	virtual void grabOverlay(void *buf, int pitch) override;
+	virtual void grabOverlay(Graphics::Surface &surface) override;
 	virtual void copyRectToOverlay(const void *buf, int pitch,
 									int x, int y, int w, int h) override;
 	virtual int16 getOverlayWidth() override;
@@ -208,7 +208,7 @@ public:
 
 	virtual Audio::Mixer *getMixer() override;
 	virtual FilesystemFactory *getFilesystemFactory() override;
-	virtual void getTimeAndDate(TimeDate &t) const override;
+	virtual void getTimeAndDate(TimeDate &td, bool skipRecord = false) const override;
 
 	virtual void logMessage(LogMessageType::Type type, const char *message) override;
 

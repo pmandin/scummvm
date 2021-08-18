@@ -37,20 +37,23 @@ MacButton::MacButton(MacButtonType buttonType, TextAlign textAlignment, MacWidge
 	MacText(parent, x, y, w, h, wm, s, macFont, fgcolor, bgcolor, w, textAlignment), _pd(Graphics::MacPlotData(_composeSurface, nullptr, &_wm->getPatterns(), 1, 0, 0, 1, 0, true)) {
 
 	_buttonType = buttonType;
+	init();
+}
 
-	switch (buttonType) {
+void MacButton::init() {
+	_invertInner = false;
+	_checkBoxType = 0;
+	_checkBoxAccess = 0;
+
+	switch (_buttonType) {
 	case kCheckBox:
-		_alignOffset.x += 16;
 		_dims.right += 16;
 		break;
 	case kRound:
-		_alignOffset.x += 2;
-		_alignOffset.y += 2;
-		_dims.right += 2;
+		_dims.right += 4;
 		_dims.bottom += 4;
 		break;
 	case kRadio:
-		_alignOffset.x += 16;
 		_dims.right += 16;
 		break;
 	}
@@ -65,9 +68,10 @@ void MacButton::setActive(bool active) {
 
 	MacWidget::setActive(active);
 	if (_composeSurface)
-		invertOuter();
+		_contentIsDirty = true;
 }
 
+// whether to use getDrawPixel or getDrawInvertPixel to draw invert pixel, maybe depends on the pattle we are using
 void MacButton::invertOuter() {
 	Common::Rect r(_dims.width() - 1, _dims.height() - 1);
 
@@ -84,18 +88,36 @@ void MacButton::invertOuter() {
 		Graphics::drawEllipse(r.left + 1, r.top + 3, r.left + 10, r.top + 12, 0, false, _wm->getDrawPixel(), &_pd);
 		break;
 	}
+}
 
+void MacButton::setCheckBoxType(int type) {
+	if (_checkBoxType == type)
+		return;
+	_checkBoxType = type;
 	_contentIsDirty = true;
 }
 
 void MacButton::invertInner() {
 	Common::Rect r(_dims.width() - 1, _dims.height() - 1);
+	Common::Rect checkbox;
 
 	switch (_buttonType) {
 	case kCheckBox:
-		Graphics::drawLine(r.left + 1, r.top + 3, r.left + 9, r.top + 11, 0, _wm->getDrawPixel(), &_pd);
-		Graphics::drawLine(r.left + 1, r.top + 11, r.left + 9, r.top + 3, 0, _wm->getDrawPixel(), &_pd);
-		(_wm->getDrawPixel())(5, 7, 0, &_pd);
+		switch (_checkBoxType) {
+		case kCBNormal:
+			Graphics::drawLine(r.left + 1, r.top + 3, r.left + 9, r.top + 11, 0, _wm->getDrawPixel(), &_pd);
+			Graphics::drawLine(r.left + 1, r.top + 11, r.left + 9, r.top + 3, 0, _wm->getDrawPixel(), &_pd);
+			(_wm->getDrawInvertPixel())(5, 7, 0, &_pd);
+			break;
+		case kCBInsetBlack:
+			checkbox = Common::Rect(r.left + 2, r.top + 4, r.left + 2 + 6, r.top + 4 + 6);
+			Graphics::drawFilledRect(checkbox, 0, _wm->getDrawPixel(), &_pd);
+			break;
+		case kCBFilledBlack:
+			checkbox = Common::Rect(r.left + 1, r.top + 3, r.left + 1 + 8, r.top + 3 + 8);
+			Graphics::drawFilledRect(checkbox, 0, _wm->getDrawPixel(), &_pd);
+			break;
+		}
 		break;
 	case kRound:
 		break;
@@ -103,12 +125,17 @@ void MacButton::invertInner() {
 		Graphics::drawEllipse(r.left + 3, r.top + 5, r.left + 8, r.top + 10, 0, true, _wm->getDrawPixel(), &_pd);
 		break;
 	}
+}
 
+void MacButton::setHilite(bool hilite) {
+	if (hilite == _invertInner)
+		return;
+	_invertInner = hilite;
 	_contentIsDirty = true;
 }
 
 bool MacButton::draw(bool forceRedraw) {
-	if ((!_contentIsDirty && !forceRedraw) || _active)
+	if (!_contentIsDirty && !forceRedraw)
 		return false;
 
 	MacText::draw();
@@ -123,12 +150,17 @@ bool MacButton::draw(bool forceRedraw) {
 		break;
 	}
 	case kRound:
-		Graphics::drawRoundRect(r, 4, 0, _active, _wm->getDrawPixel(), &pd);
+		Graphics::drawRoundRect(r, 4, 0, false, _wm->getDrawPixel(), &pd);
 		break;
 	case kRadio:
 		Graphics::drawEllipse(r.left, r.top + 2, r.left + 11, r.top + 13, 0, false, _wm->getDrawPixel(), &pd);
 		break;
 	}
+
+	if (_active)
+		invertOuter();
+	if (_invertInner)
+		invertInner();
 
 	return true;
 }
@@ -137,7 +169,7 @@ bool MacButton::draw(ManagedSurface *g, bool forceRedraw) {
 	if (!MacButton::draw(forceRedraw))
 		return false;
 
-	g->transBlitFrom(*_composeSurface, _composeSurface->getBounds(), Common::Point(_dims.left - 2, _dims.top - 2), _wm->_colorGreen2);
+	g->transBlitFrom(*_composeSurface, _composeSurface->getBounds(), Common::Point(_dims.left, _dims.top), _wm->_colorGreen2);
 
 	return true;
 }
@@ -148,18 +180,37 @@ bool MacButton::processEvent(Common::Event &event) {
 		if (_wm->_mouseDown) {
 			if (_wm->_mode & kWMModeButtonDialogStyle)
 				return true;
-			else if (!_dims.contains(_wm->_lastClickPos))
-				return false;
+			else if (!_wm->_hilitingWidget)
+				return true;
+			// hovered widget in macwindow will help us set the button status to non-active.
+			// so we only care about setting active here is ok.
 
 			setActive(true);
 		}
 		break;
 	case Common::EVENT_LBUTTONDOWN:
 		setActive(true);
+		_wm->_hilitingWidget = true;
 		break;
 	case Common::EVENT_LBUTTONUP:
 		setActive(false);
-		invertInner();
+
+		switch (_checkBoxAccess) {
+		case 0:
+			_invertInner = !_invertInner;
+			break;
+		case 1:
+			_invertInner = true;
+			break;
+		case 2:
+			// no op, type 2 will prevent user from setting checkboxes
+			break;
+		default:
+			warning("MacButton::processEvent can not handle checkBoxAccess with type %d", _checkBoxAccess);
+			break;
+		}
+
+		_wm->_hilitingWidget = false;
 		break;
 	default:
 		warning("MacButton:: processEvent: Event not handled");
@@ -167,8 +218,24 @@ bool MacButton::processEvent(Common::Event &event) {
 	return false;
 }
 
+// we won't have the text with _border and _gutter in macbutton now.
+// so for the override of calculateOffset, we are passing the border and gutter which depends on buttonType
+// maybe we can cache this for optimization
 Common::Point MacButton::calculateOffset() {
-	return Common::Point(_alignOffset.x + _border + _gutter, _alignOffset.y + _border + _gutter/2);
+	int x = 0, y = 0;
+	switch (_buttonType) {
+	case kCheckBox:
+		x = 16;
+		break;
+	case kRound:
+		x = 2;
+		y = 2;
+		break;
+	case kRadio:
+		x = 16;
+		break;
+	}
+	return Common::Point(x, y);
 }
 
 } // End of namespace Graphics

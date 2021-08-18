@@ -23,7 +23,7 @@
 #ifndef AGS_PLUGINS_AGS_GALAXY_STEAM_AGS_GALAXY_STEAM_H
 #define AGS_PLUGINS_AGS_GALAXY_STEAM_AGS_GALAXY_STEAM_H
 
-#include "ags/plugins/plugin_base.h"
+#include "ags/plugins/ags_plugin.h"
 #include "common/array.h"
 #include "common/rect.h"
 #include "common/str.h"
@@ -34,96 +34,55 @@ namespace Plugins {
 namespace AGSGalaxySteam {
 
 class AGS2Client : public PluginBase {
+	SCRIPT_HASH(AGS2Client)
 protected:
-	static void IsAchievementAchieved(ScriptMethodParams &params);
-	static void SetAchievementAchieved(ScriptMethodParams &params);
-	static void ResetAchievement(ScriptMethodParams &params);
-	static void GetIntStat(ScriptMethodParams &params);
-	static void GetFloatStat(ScriptMethodParams &params);
-	static void GetAverageRateStat(ScriptMethodParams &params);
-	static void SetIntStat(ScriptMethodParams &params);
-	static void SetFloatStat(ScriptMethodParams &params);
-	static void UpdateAverageRateStat(ScriptMethodParams &params);
-	static void ResetStatsAndAchievements(ScriptMethodParams &params);
-	static void get_Initialized(ScriptMethodParams &params);
-	static void get_CurrentLeaderboardName(ScriptMethodParams &params);
-	static void RequestLeaderboard(ScriptMethodParams &params);
-	static void UploadScore(ScriptMethodParams &params);
-	static void geti_LeaderboardNames(ScriptMethodParams &params);
-	static void geti_LeaderboardScores(ScriptMethodParams &params);
-	static void get_LeaderboardCount(ScriptMethodParams &params);
-	static void GetUserName(ScriptMethodParams &params);
-	static void GetCurrentGameLanguage(ScriptMethodParams &params);
-	static void FindLeaderboard(ScriptMethodParams &params);
-	static void Initialize(ScriptMethodParams &params);
-
-protected:
-	static void AGS_EngineStartup(IAGSEngine *engine);
+	void IsAchievementAchieved(ScriptMethodParams &params);
+	void SetAchievementAchieved(ScriptMethodParams &params);
+	void ResetAchievement(ScriptMethodParams &params);
+	void GetIntStat(ScriptMethodParams &params);
+	void GetFloatStat(ScriptMethodParams &params);
+	void GetAverageRateStat(ScriptMethodParams &params);
+	void SetIntStat(ScriptMethodParams &params);
+	void SetFloatStat(ScriptMethodParams &params);
+	void UpdateAverageRateStat(ScriptMethodParams &params);
+	void ResetStatsAndAchievements(ScriptMethodParams &params);
+	void get_Initialized(ScriptMethodParams &params);
+	void get_CurrentLeaderboardName(ScriptMethodParams &params);
+	void RequestLeaderboard(ScriptMethodParams &params);
+	void UploadScore(ScriptMethodParams &params);
+	void geti_LeaderboardNames(ScriptMethodParams &params);
+	void geti_LeaderboardScores(ScriptMethodParams &params);
+	void get_LeaderboardCount(ScriptMethodParams &params);
+	void GetUserName(ScriptMethodParams &params);
+	void GetCurrentGameLanguage(ScriptMethodParams &params);
+	void FindLeaderboard(ScriptMethodParams &params);
+	void Initialize(ScriptMethodParams &params);
 
 public:
-	AGS2Client();
+	AGS2Client() : PluginBase() {}
+	virtual ~AGS2Client() {}
+
+	void AGS_EngineStartup(IAGSEngine *engine) override;
 };
 
 class AGSGalaxy : public AGS2Client {
-private:
-	static const char *AGS_GetPluginName();
-	static void AGS_EngineStartup(IAGSEngine *engine);
-
-	static void IsAchievementAchieved(ScriptMethodParams &params);
-	static void SetAchievementAchieved(ScriptMethodParams &params);
-	static void ResetAchievement(ScriptMethodParams &params);
-	static void GetIntStat(ScriptMethodParams &params);
-	static void GetFloatStat(ScriptMethodParams &params);
-	static void GetAverageRateStat(ScriptMethodParams &params);
-	static void SetIntStat(ScriptMethodParams &params);
-	static void SetFloatStat(ScriptMethodParams &params);
-	static void UpdateAverageRateStat(ScriptMethodParams &params);
-	static void ResetStatsAndAchievements(ScriptMethodParams &params);
-	static void get_Initialized(ScriptMethodParams &params);
-	static void get_CurrentLeaderboardName(ScriptMethodParams &params);
-	static void RequestLeaderboard(ScriptMethodParams &params);
-	static void UploadScore(ScriptMethodParams &params);
-	static void geti_LeaderboardNames(ScriptMethodParams &params);
-	static void geti_LeaderboardScores(ScriptMethodParams &params);
-	static void get_LeaderboardCount(ScriptMethodParams &params);
-	static void GetUserName(ScriptMethodParams &params);
-	static void GetCurrentGameLanguage(ScriptMethodParams &params);
-	static void Initialize(ScriptMethodParams &params);
-
+	SCRIPT_HASH_SUB(AGSGalaxy, AGS2Client)
 public:
-	AGSGalaxy();
+	AGSGalaxy() : AGS2Client() {}
+	virtual ~AGSGalaxy() {}
+
+	const char *AGS_GetPluginName() override;
+	void AGS_EngineStartup(IAGSEngine *engine) override;
 };
 
 class AGSSteam : public AGS2Client {
-private:
-	static const char *AGS_GetPluginName();
-
-protected:
-	static void AGS_EngineStartup(IAGSEngine *engine);
-
-	static void IsAchievementAchieved(ScriptMethodParams &params);
-	static void SetAchievementAchieved(ScriptMethodParams &params);
-	static void ResetAchievement(ScriptMethodParams &params);
-	static void GetIntStat(ScriptMethodParams &params);
-	static void GetFloatStat(ScriptMethodParams &params);
-	static void GetAverageRateStat(ScriptMethodParams &params);
-	static void SetIntStat(ScriptMethodParams &params);
-	static void SetFloatStat(ScriptMethodParams &params);
-	static void UpdateAverageRateStat(ScriptMethodParams &params);
-	static void ResetStatsAndAchievements(ScriptMethodParams &params);
-	static void get_Initialized(ScriptMethodParams &params);
-	static void get_CurrentLeaderboardName(ScriptMethodParams &params);
-	static void RequestLeaderboard(ScriptMethodParams &params);
-	static void UploadScore(ScriptMethodParams &params);
-	static void geti_LeaderboardNames(ScriptMethodParams &params);
-	static void geti_LeaderboardScores(ScriptMethodParams &params);
-	static void get_LeaderboardCount(ScriptMethodParams &params);
-	static void GetUserName(ScriptMethodParams &params);
-	static void GetCurrentGameLanguage(ScriptMethodParams &params);
-	static void FindLeaderboard(ScriptMethodParams &params);
-
+	SCRIPT_HASH_SUB(AGSSteam, AGS2Client)
 public:
-	AGSSteam();
+	AGSSteam() : AGS2Client() {}
+	virtual ~AGSSteam() {}
+
+	const char *AGS_GetPluginName() override;
+	void AGS_EngineStartup(IAGSEngine *engine) override;
 };
 
 } // namespace AGSGalaxySteam

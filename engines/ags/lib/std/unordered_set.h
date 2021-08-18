@@ -24,7 +24,7 @@
 #define AGS_STD_UNORDERED_SET_H
 
 #include "common/array.h"
-//#include <unordered_set>
+//#include "ags/lib/std/unordered_set.h"
 
 namespace AGS3 {
 namespace std {
@@ -38,7 +38,7 @@ class unordered_set : public Common::Array<T> {
 private:
 	Hash _hash;
 	Pred _comparitor;
-public:
+	public:
 	struct Entry {
 		const T &_value;
 		Entry(const T &item) : _value(item) {}

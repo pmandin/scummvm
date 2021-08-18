@@ -48,51 +48,67 @@ void color::writeToFile(AGS::Shared::Stream *file) const {
 	file->WriteByte(filler);
 }
 
+static void convertPalette(const PALETTE src, byte dest[PALETTE_SIZE]) {
+	const color *cSrc = (const color *)src;
+	for (int i = 0; i < PALETTE_COUNT; ++i, cSrc++, dest += 3) {
+		dest[0] = VGA_COLOR_TRANS(cSrc->r);
+		dest[1] = VGA_COLOR_TRANS(cSrc->g);
+		dest[2] = VGA_COLOR_TRANS(cSrc->b);
+	}
+}
 
-void set_color(int idx, const RGB *p) {
-	_G(current_palette)[idx] = *p;
+static void applyPalette() {
+	if (g_system->getScreenFormat().bytesPerPixel == 1) {
+		byte pal[PALETTE_SIZE];
+		convertPalette(_G(current_palette), pal);
+		g_system->getPaletteManager()->setPalette(pal, 0, PALETTE_COUNT);
+	}
 }
 
 void set_palette(const PALETTE p) {
 	for (int idx = 0; idx < PAL_SIZE; ++idx)
 		_G(current_palette)[idx] = p[idx];
+
+	applyPalette();
 }
 
 void set_palette_range(const PALETTE p, int from, int to, int retracesync) {
 	for (int i = from; i <= to; ++i) {
 		_G(current_palette)[i] = p[i];
 	}
+
+	applyPalette();
 }
 
 int makecol15(int r, int g, int b) {
 	return (((r >> 3) << _G(_rgb_r_shift_15)) |
-		((g >> 3) << _G(_rgb_g_shift_15)) |
-		((b >> 3) << _G(_rgb_b_shift_15)));
+	        ((g >> 3) << _G(_rgb_g_shift_15)) |
+	        ((b >> 3) << _G(_rgb_b_shift_15)));
 }
 
 int makecol16(int r, int g, int b) {
 	return (((r >> 3) << _G(_rgb_r_shift_16)) |
-		((g >> 2) << _G(_rgb_g_shift_16)) |
-		((b >> 3) << _G(_rgb_b_shift_16)));
+	        ((g >> 2) << _G(_rgb_g_shift_16)) |
+	        ((b >> 3) << _G(_rgb_b_shift_16)));
 }
 
 int makecol24(int r, int g, int b) {
 	return ((r << _G(_rgb_r_shift_24)) |
-		(g << _G(_rgb_g_shift_24)) |
-		(b << _G(_rgb_b_shift_24)));
+	        (g << _G(_rgb_g_shift_24)) |
+	        (b << _G(_rgb_b_shift_24)));
 }
 
 int makecol32(int r, int g, int b) {
 	return ((r << _G(_rgb_r_shift_32)) |
-		(g << _G(_rgb_g_shift_32)) |
-		(b << _G(_rgb_b_shift_32)));
+	        (g << _G(_rgb_g_shift_32)) |
+	        (b << _G(_rgb_b_shift_32)));
 }
 
 int makeacol32(int r, int g, int b, int a) {
 	return ((r << _G(_rgb_r_shift_32)) |
-		(g << _G(_rgb_g_shift_32)) |
-		(b << _G(_rgb_b_shift_32)) |
-		(a << _G(_rgb_a_shift_32)));
+	        (g << _G(_rgb_g_shift_32)) |
+	        (b << _G(_rgb_b_shift_32)) |
+	        (a << _G(_rgb_a_shift_32)));
 }
 
 int getr8(int c) {
@@ -108,7 +124,7 @@ int getb8(int c) {
 }
 
 int getr15(int c) {
-   return _rgb_scale_5[(c >> _G(_rgb_r_shift_15)) & 0x1F];
+	return _rgb_scale_5[(c >> _G(_rgb_r_shift_15)) & 0x1F];
 }
 
 int getg15(int c) {
@@ -116,19 +132,19 @@ int getg15(int c) {
 }
 
 int getb15(int c) {
-   return _rgb_scale_5[(c >> _G(_rgb_b_shift_15)) & 0x1F];
+	return _rgb_scale_5[(c >> _G(_rgb_b_shift_15)) & 0x1F];
 }
 
 int getr16(int c) {
-   return _rgb_scale_5[(c >> _G(_rgb_r_shift_16)) & 0x1F];
+	return _rgb_scale_5[(c >> _G(_rgb_r_shift_16)) & 0x1F];
 }
 
 int getg16(int c) {
-   return _rgb_scale_6[(c >> _G(_rgb_g_shift_16)) & 0x3F];
+	return _rgb_scale_6[(c >> _G(_rgb_g_shift_16)) & 0x3F];
 }
 
 int getb16(int c) {
-   return _rgb_scale_5[(c >> _G(_rgb_b_shift_16)) & 0x1F];
+	return _rgb_scale_5[(c >> _G(_rgb_b_shift_16)) & 0x1F];
 }
 
 int getr24(int c) {
@@ -168,15 +184,15 @@ int makecol8(byte r, byte g, byte b) {
 }
 
 void get_color(int idx, RGB *p) {
-	warning("TODO: get_color");
+	*p = _G(current_palette)[idx];
 }
 
 void get_palette(PALETTE p) {
-	warning("TODO: get_palette");
+	*p = *_G(current_palette);
 }
 
 void get_palette_range(PALETTE p, int from, int to) {
-	warning("TODO: get_palette_range");
+	Common::copy(&_G(current_palette)[from], &_G(current_palette)[to + 1], &p[from]);
 }
 
 void fade_interpolate(AL_CONST PALETTE source, AL_CONST PALETTE dest, PALETTE output, int pos, int from, int to) {
@@ -191,7 +207,7 @@ void select_palette(AL_CONST PALETTE p) {
 		_G(current_palette)[c] = p[c];
 	}
 
-	// TODO: See if the remainder of Allegro's select_palette method is needed for AGS
+	applyPalette();
 }
 
 void unselect_palette(void) {
@@ -199,6 +215,8 @@ void unselect_palette(void) {
 
 	for (c = 0; c < PAL_SIZE; c++)
 		_G(current_palette)[c] = _G(prev_current_palette)[c];
+
+	applyPalette();
 }
 
 void set_blender_mode(BlenderMode m, int r, int g, int b, int a) {
@@ -633,54 +651,54 @@ void create_rgb_table(RGB_MAP *table, AL_CONST PALETTE pal, void (*callback)(int
 
 	/* macro add adds to single linked list */
 #define add(i)    (next[(i)] == UNUSED ? (next[(i)] = LAST, \
-		     (first != LAST ? (next[last] = (i)) : (first = (i))), \
-		     (last = (i))) : 0)
+                   (first != LAST ? (next[last] = (i)) : (first = (i))), \
+                   (last = (i))) : 0)
 
-   /* same but w/o checking for first element */
+	/* same but w/o checking for first element */
 #define add1(i)   (next[(i)] == UNUSED ? (next[(i)] = LAST, \
-		     next[last] = (i), \
-		     (last = (i))) : 0)
+                   next[last] = (i), \
+                   (last = (i))) : 0)
 
-   /* calculates distance between two colors */
+	/* calculates distance between two colors */
 #define dist(a1, a2, a3, b1, b2, b3) \
-		     (col_diff[ ((a2) - (b2)) & 0x7F] + \
-		     (col_diff + 128)[((a1) - (b1)) & 0x7F] + \
-		     (col_diff + 256)[((a3) - (b3)) & 0x7F])
+	(col_diff[ ((a2) - (b2)) & 0x7F] + \
+	 (col_diff + 128)[((a1) - (b1)) & 0x7F] + \
+	 (col_diff + 256)[((a3) - (b3)) & 0x7F])
 
-   /* converts r,g,b to position in array and back */
+	/* converts r,g,b to position in array and back */
 #define pos(r, g, b) \
-		     (((r) / 2) * 32 * 32 + ((g) / 2) * 32 + ((b) / 2))
+	(((r) / 2) * 32 * 32 + ((g) / 2) * 32 + ((b) / 2))
 
 #define depos(pal, r, g, b) \
-		     ((b) = ((pal) & 31) * 2, \
-		      (g) = (((pal) >> 5) & 31) * 2, \
-		      (r) = (((pal) >> 10) & 31) * 2)
+	((b) = ((pal) & 31) * 2, \
+	 (g) = (((pal) >> 5) & 31) * 2, \
+	 (r) = (((pal) >> 10) & 31) * 2)
 
-   /* is current color better than pal1? */
+	/* is current color better than pal1? */
 #define better(r1, g1, b1, pal1) \
-		     (((int)dist((r1), (g1), (b1), \
-				 (pal1).r, (pal1).g, (pal1).b)) > (int)dist2)
+	(((int)dist((r1), (g1), (b1), \
+	            (pal1).r, (pal1).g, (pal1).b)) > (int)dist2)
 
-   /* checking of position */
+	/* checking of position */
 #define dopos(rp, gp, bp, ts) \
-	  if ((rp > -1 || r > 0) && (rp < 1 || r < 61) && \
-	  (gp > -1 || g > 0) && (gp < 1 || g < 61) && \
-	  (bp > -1 || b > 0) && (bp < 1 || b < 61)) { \
-	 i = first + rp * 32 * 32 + gp * 32 + bp; \
-		 if (!data[i]) { \
-	    data[i] = val; \
-	    add1(i); \
-	 } \
-	 else if ((ts) && (data[i] != val)) { \
-	    dist2 = (rp ? (col_diff+128)[(r+2*rp-pal[val].r) & 0x7F] : r2) + \
-		    (gp ? (col_diff    )[(g+2*gp-pal[val].g) & 0x7F] : g2) + \
-		    (bp ? (col_diff+256)[(b+2*bp-pal[val].b) & 0x7F] : b2); \
-	    if (better((r+2*rp), (g+2*gp), (b+2*bp), pal[data[i]])) { \
-	       data[i] = val; \
-	       add1(i); \
-	    } \
-	 } \
-	  }
+	if ((rp > -1 || r > 0) && (rp < 1 || r < 61) && \
+	        (gp > -1 || g > 0) && (gp < 1 || g < 61) && \
+	        (bp > -1 || b > 0) && (bp < 1 || b < 61)) { \
+		i = first + rp * 32 * 32 + gp * 32 + bp; \
+		if (!data[i]) { \
+			data[i] = val; \
+			add1(i); \
+		} \
+		else if ((ts) && (data[i] != val)) { \
+			dist2 = (rp ? (col_diff+128)[(r+2*rp-pal[val].r) & 0x7F] : r2) + \
+			        (gp ? (col_diff    )[(g+2*gp-pal[val].g) & 0x7F] : g2) + \
+			        (bp ? (col_diff+256)[(b+2*bp-pal[val].b) & 0x7F] : b2); \
+			if (better((r+2*rp), (g+2*gp), (b+2*bp), pal[data[i]])) { \
+				data[i] = val; \
+				add1(i); \
+			} \
+		} \
+	}
 
 	int i, curr, r, g, b, val, dist2;
 	unsigned int r2, g2, b2;
@@ -919,16 +937,16 @@ void create_trans_table(COLOR_MAP *table, AL_CONST PALETTE pal, int r, int g, in
 
 		if (_G(rgb_map)) {
 			for (y = 0; y < PAL_SIZE; y++) {
-				tr = (i + *(q++)) >> 9;
-				tg = (j + *(q++)) >> 9;
-				tb = (k + *(q++)) >> 9;
+				tr = (i + * (q++)) >> 9;
+				tg = (j + * (q++)) >> 9;
+				tb = (k + * (q++)) >> 9;
 				p[y] = _G(rgb_map)->data[tr][tg][tb];
 			}
 		} else {
 			for (y = 0; y < PAL_SIZE; y++) {
-				tr = (i + *(q++)) >> 8;
-				tg = (j + *(q++)) >> 8;
-				tb = (k + *(q++)) >> 8;
+				tr = (i + * (q++)) >> 8;
+				tg = (j + * (q++)) >> 8;
+				tb = (k + * (q++)) >> 8;
 				p[y] = bestfit_color(pal, tr, tg, tb);
 			}
 		}

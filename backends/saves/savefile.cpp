@@ -52,8 +52,32 @@ uint32 OutSaveFile::write(const void *dataPtr, uint32 dataSize) {
 	return _wrapped->write(dataPtr, dataSize);
 }
 
-int32 OutSaveFile::pos() const {
+int64 OutSaveFile::pos() const {
 	return _wrapped->pos();
+}
+
+bool OutSaveFile::seek(int64 offset, int whence) {
+	Common::SeekableWriteStream *sws =
+		dynamic_cast<Common::SeekableWriteStream *>(_wrapped);
+
+	if (sws) {
+		return sws->seek(offset, whence);
+	} else {
+		warning("Seeking isn't supported for compressed save files");
+		return false;
+	}
+}
+
+int64 OutSaveFile::size() const {
+	Common::SeekableWriteStream *sws =
+		dynamic_cast<Common::SeekableWriteStream *>(_wrapped);
+
+	if (sws) {
+		return sws->size();
+	} else {
+		warning("Size isn't supported for compressed save files");
+		return -1;
+	}
 }
 
 bool SaveFileManager::copySavefile(const String &oldFilename, const String &newFilename, bool compress) {

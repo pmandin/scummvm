@@ -307,7 +307,7 @@ static void printGoodSectors(Common::Array<bool> &goodSectors, uint sectorsPerTr
 
 static Common::SeekableReadStream *readImage_NIB(Common::File &f, bool dos33, uint tracks = 35) {
 	if (f.size() != 35 * kNibTrackLen) {
-		warning("NIB: image '%s' has invalid size of %d bytes", f.getName(), f.size());
+		warning("NIB: image '%s' has invalid size of %d bytes", f.getName(), (int)f.size());
 		return nullptr;
 	}
 
@@ -543,7 +543,7 @@ bool DiskImage::open(const Common::String &filename) {
 		return false;
 
 	if (_stream->size() != expectedSize)
-		error("Unrecognized disk image '%s' of size %d bytes (expected %d bytes)", filename.c_str(), _stream->size(), expectedSize);
+		error("Unrecognized disk image '%s' of size %d bytes (expected %d bytes)", filename.c_str(), (int)_stream->size(), expectedSize);
 
 	return true;
 }
@@ -684,10 +684,21 @@ void Files_AppleDOS::readSectorList(TrackSector start, Common::Array<TrackSector
 	}
 }
 
-void Files_AppleDOS::readVTOC(uint trackVTOC) {
-	Common::ScopedPtr<Common::SeekableReadStream> stream(_disk->createReadStream(trackVTOC, 0x00));
+void Files_AppleDOS::readVTOC() {
+	Common::ScopedPtr<Common::SeekableReadStream> stream(_disk->createReadStream(0x11, 0x00));
 	stream->readByte();
 	byte track = stream->readByte();
+
+	if (!track) {
+		// VTOC probably obfuscated, try track 0x10
+		stream.reset(_disk->createReadStream(0x10, 0x00));
+		stream->readByte();
+		track = stream->readByte();
+	}
+
+	if (!track)
+		error("VTOC not found");
+
 	byte sector = stream->readByte();
 
 	while (track != 0) {
@@ -815,12 +826,12 @@ Common::SeekableReadStream *Files_AppleDOS::createReadStream(const Common::Strin
 	return new Common::SeekableSubReadStream(stream, offset, stream->size(), DisposeAfterUse::YES);
 }
 
-bool Files_AppleDOS::open(const Common::String &filename, uint trackVTOC) {
+bool Files_AppleDOS::open(const Common::String &filename) {
 	_disk = new DiskImage();
 	if (!_disk->open(filename))
 		return false;
 
-	readVTOC(trackVTOC);
+	readVTOC();
 	return true;
 }
 

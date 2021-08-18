@@ -394,6 +394,7 @@ dig	The Dig
 	ebdd2fbc995a321605375dc57766db79	16304	ru	All	-	With Subtitles	-	sev
 	35a2d3040fa512f8232d9e443319d84d	659335495	en	Mac	-	-	Mac bundle	Fingolfin
 	21a6592322f92550f144f68a8a4e685e	-1	fr	Mac	-	-	Mac bundle	kaminari
+	92887c157dc7e5d637937c1069481f55	659863292	jp	Mac	-	-	Max bundle	sev
 
 	362c1d281fb9899254cda66ad246c66a	3472	en	All	Demo	Demo	-	Fingolfin
 	cd9c05e755d7bf8e9b9590ad1ebe273e	45156007	en	Mac	Demo	Demo	Mac bundle	Fingolfin
@@ -761,6 +762,7 @@ socks	Pajama Sam's Sock Works
 	19263586f749a560c1adf8b3393a9593	-1	ru	Windows	HE 85	-	-	sev
 	4bfa4a43684bcb437f7fb47f457a0aa5	-1	nl	All	HE 99	-	-	daniel9
 	8de13897f0121c79d29a2377159f9ad0	-1	en	Windows	HE 99	Updated	-	Aziraphale Jasra
+	b2bc1df014ca9a563396cce691e9f23a	13668	fr	Windows	HE 99	-	-	sev
 
 puttrace	Putt-Putt Enters the Race
 	981e1e1891f2be7e25a01f50ae55a5af	-1	us	All	HE 98	-	-	Kirben

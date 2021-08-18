@@ -40,10 +40,12 @@ PEResources::~PEResources() {
 void PEResources::clear() {
 	_sections.clear();
 	_resources.clear();
-	delete _exe; _exe = nullptr;
+	if (_disposeFileHandle == DisposeAfterUse::YES)
+		delete _exe;
+	_exe = nullptr;
 }
 
-bool PEResources::loadFromEXE(SeekableReadStream *stream) {
+bool PEResources::loadFromEXE(SeekableReadStream *stream, DisposeAfterUse::Flag disposeFileHandle) {
 	clear();
 
 	if (!stream)
@@ -255,6 +257,45 @@ String PEResources::loadString(uint32 stringID) {
 
 	delete stream;
 	return string;
+}
+
+WinResources::VersionInfo *PEResources::parseVersionInfo(SeekableReadStream *res) {
+	VersionInfo *info = new VersionInfo;
+
+	while (res->pos() < res->size() && !res->eos()) {
+		while (res->pos() % 4 && !res->eos()) // Pad to 4
+			res->readByte();
+
+		/* uint16 len = */ res->readUint16LE();
+		uint16 valLen = res->readUint16LE();
+		uint16 type = res->readUint16LE();
+		uint16 c;
+
+		Common::U32String key;
+		while ((c = res->readUint16LE()) != 0 && !res->eos())
+			key += c;
+
+		while (res->pos() % 4 && !res->eos()) // Pad to 4
+			res->readByte();
+
+		if (res->eos())
+			break;
+
+		if (type != 0) {	// text
+			Common::U32String value;
+			for (int j = 0; j < valLen; j++)
+				value += res->readUint16LE();
+
+			info->hash.setVal(key.encode(), value);
+		} else {
+			if (key == "VS_VERSION_INFO") {
+				if (!info->readVSVersionInfo(res))
+					return info;
+			}
+		}
+	}
+
+	return info;
 }
 
 } // End of namespace Common

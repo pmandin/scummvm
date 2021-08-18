@@ -20,7 +20,9 @@
  *
  */
 
+#include "common/md5.h"
 #include "common/str.h"
+#include "common/memstream.h"
 #include "common/macresman.h"
 #ifndef MACOSX
 #include "common/config-manager.h"
@@ -700,6 +702,8 @@ int ScummEngine::loadResource(ResType type, ResId idx) {
 
 	applyWorkaroundIfNeeded(type, idx);
 
+	// NB: The workaround may have changed the resource size, so don't rely on 'size' after this.
+
 	// dump the resource if requested
 	if (_dumpScripts && type == rtScript) {
 		dumpResource("script-", idx, getResourceAddress(rtScript, idx));
@@ -1178,7 +1182,7 @@ void ScummEngine_v5::readMAXS(int blockSize) {
 	_numArray = 50;
 	_numVerbs = 100;
 	// Used to be 50, which wasn't enough for MI2 and FOA. See bugs
-	// #933610, #936323 and #941275.
+	// #1591, #1600 and #1607.
 	_numNewNames = 150;
 	_objectRoomTable = NULL;
 
@@ -1645,13 +1649,14 @@ const char *nameOfResType(ResType type) {
 	}
 }
 
-
 void ScummEngine::applyWorkaroundIfNeeded(ResType type, int idx) {
+	int size = getResourceSize(type, idx);
+
 	// WORKAROUND: FM-TOWNS Zak used the extra 40 pixels at the bottom to increase the inventory to 10 items
 	// if we trim to 200 pixels, we can show only 6 items
 	// therefore we patch the inventory script (20)
 	// replacing the 5 occurences of 10 as limit to 6
-	if (_game.platform == Common::kPlatformFMTowns && _game.id == GID_ZAK && ConfMan.getBool("trim_fmtowns_to_200_pixels"))
+	if (_game.platform == Common::kPlatformFMTowns && _game.id == GID_ZAK && ConfMan.getBool("trim_fmtowns_to_200_pixels")) {
 		if (type == rtScript && idx == 20) {
 			byte *ptr = getResourceAddress(rtScript, idx);
 			for (int cnt = 5; cnt; ptr++) {
@@ -1661,6 +1666,266 @@ void ScummEngine::applyWorkaroundIfNeeded(ResType type, int idx) {
 				}
 			}
 		}
+	}
+
+	// WORKAROUND: The Mac version of Monkey Island 2 that was distributed
+	// on CD as the LucasArts Adventure Game Pack II is missing the part of
+	// the boot script that shows the copy protection and difficulty
+	// selection screen. Presumably it didn't include the code wheel. In
+	// fact, none of the games on this CD have any copy protection.
+	//
+	// The games on the first Game Pack CD does have copy protection, but
+	// since I only own the discs I can neither confirm nor deny if the
+	// necessary documentation was included.
+	//
+	// However, this means that there is no way to pick the difficulty
+	// level. Since ScummVM bypasses the copy protection check, there is
+	// no harm in showing the screen by simply re-inserging the missing
+	// part of the script.
+
+	else if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformMacintosh && type == rtScript && idx == 1 && size == 6718) {
+		byte *unpatchedScript = getResourceAddress(type, idx);
+
+		const byte patch[] = {
+0x48, 0x00, 0x40, 0x00, 0x00, 0x13, 0x00, // if (Local[0] == 0) {
+0x33, 0x03, 0x00, 0x00, 0xc8, 0x00,       //     SetScreen(0,200);
+0x0a, 0x82, 0xff,                         //     startScript(130,[]);
+0x80,                                     //     breakHere();
+0x68, 0x00, 0x00, 0x82,                   //     VAR_RESULT = isScriptRunning(130);
+0x28, 0x00, 0x00, 0xf6, 0xff,             //     unless (!VAR_RESULT) goto 0955;
+                                          // }
+0x48, 0x00, 0x40, 0x3f, 0xe1, 0x1d, 0x00, // if (Local[0] == -7873) [
+0x1a, 0x32, 0x00, 0x3f, 0x01,             //     VAR_MAINMENU_KEY = 319;
+0x33, 0x03, 0x00, 0x00, 0xc8, 0x00,       //     SetScreen(0,200);
+0x0a, 0x82, 0xff,                         //     startScript(130,[]);
+0x80,                                     //     breakHere();
+0x68, 0x00, 0x00, 0x82,                   //     VAR_RESULT = isScriptRunning(130);
+0x28, 0x00, 0x00, 0xf6, 0xff,             //     unless (!VAR_RESULT) goto 0955;
+0x1a, 0x00, 0x40, 0x00, 0x00              //     Local[0] = 0;
+                                          // }
+		};
+
+		byte *patchedScript = new byte[6780];
+
+		memcpy(patchedScript, unpatchedScript, 2350);
+		memcpy(patchedScript + 2350, patch, sizeof(patch));
+		memcpy(patchedScript + 2350 + sizeof(patch), unpatchedScript + 2350, 6718 - 2350);
+
+		WRITE_BE_UINT32(patchedScript + 4, 6780);
+
+		// Just to be completely safe, check that the patched script now
+		// matches the boot script from the other known Mac version.
+		// Only if it does can we replace the unpatched script.
+
+		if (verifyMI2MacBootScript(patchedScript, 6780)) {
+			byte *newResource = _res->createResource(type, idx, 6780);
+			memcpy(newResource, patchedScript, 6780);
+		} else
+			warning("Could not patch MI2 Mac boot script");
+
+		delete[] patchedScript;
+	} else
+
+	// For some reason, the CD version of Monkey Island 1 removes some of
+	// the text when giving the wimpy idol to the cannibals. It looks like
+	// a mistake, because one of the text that is printed is immediately
+	// overwritten. This probably affects all CD versions, so we just have
+	// to add further patches as they are reported.
+
+	if (_game.id == GID_MONKEY && type == rtRoom && idx == 25) {
+		tryPatchMI1CannibalScript(getResourceAddress(type, idx), size);
+	} else
+
+	// There is a cracked version of Maniac Mansion v2 that attempts to
+	// remove the security door copy protection. With it, any code is
+	// accepted as long as you get the last digit wrong. Unfortunately,
+	// it changes a script that is used by all keypads in the game, which
+	// means some puzzles are completely nerfed.
+	//
+	// Even worse, this is the version that GOG and Steam are selling. No,
+	// seriously! I've reported this as a bug, but it remains unclear
+	// whether or not they will fix it.
+
+	if (_game.id == GID_MANIAC && _game.version == 2 && _game.platform == Common::kPlatformDOS && type == rtScript && idx == 44 && size == 199) {
+		byte *data = getResourceAddress(type, idx);
+
+		if (data[184] == 0) {
+			Common::MemoryReadStream stream(data, size);
+			Common::String md5 = Common::computeStreamMD5AsString(stream);
+
+			if (md5 == "11adc9b47497b26ac2b9627e0982b3fe") {
+				warning("Removing bad copy protection crack from keypad script");
+				data[184] = 1;
+			}
+		}
+	}
+}
+
+bool ScummEngine::verifyMI2MacBootScript() {
+	return verifyMI2MacBootScript(getResourceAddress(rtScript, 1), getResourceSize(rtScript, 1));
+}
+
+bool ScummEngine::verifyMI2MacBootScript(byte *buf, int size) {
+	if (size == 6780) {
+		Common::MemoryReadStream stream(buf, size);
+		Common::String md5 = Common::computeStreamMD5AsString(stream);
+
+		if (md5 != "92b1cb7902b57d02b8e7434903d8508b") {
+			warning("Unexpected MI2 Mac boot script checksum: %s", md5.c_str());
+			return false;
+		}
+	} else {
+		warning("Unexpected MI2 Mac boot script length: %d", size);
+		return false;
+	}
+	return true;
+}
+
+bool ScummEngine::tryPatchMI1CannibalScript(byte *buf, int size) {
+	assert(_game.id == GID_MONKEY);
+
+	// The room resource is a collection of resources. We need to know the
+	// offset to the initial LSCR tag of the room-25-205 script, and its
+	// length up to (but not including) the LSCR tag of the next script.
+	// Furthermore we need to know the offset and length of the part of
+	// the script that we are going to replace. As an illustration, this
+	// is what that part of script looks like in the English CD version:
+	//
+	// [009C] (AE) WaitForMessage();
+	// [009E] (14) print(3,[Text("Oooh, that's nice.")]);
+	// [00B4] (14) print(3,[Text("And it says, `Made by Lemonhead`^" +
+	//             wait() + "^just like one of mine!" + wait() +
+	//             "We should take this to the Great Monkey.")]);
+	// [011C] (AE) WaitForMessage();
+	//
+	// What we want to do is make it behave like the script from the VGA
+	// floppy version:
+	//
+	// [009E] (AE) WaitForMessage();
+	// [00A0] (14) print(3,[Text("Oooh, that's nice." + wait() +
+	//             "Simple.  Just like one of mine." + wait() +
+	//             "And little.  Like mine.")]);
+	// [00F0] (AE) WaitForMessage();
+	// [00F2] (14) print(3,[Text("And it says, `Made by Lemonhead`^" +
+	//             wait() + "^just like one of mine!" + wait() +
+	//             "We should take this to the Great Monkey.")]);
+	// [015A] (AE) WaitForMessage();
+	//
+	// So we want to adjust the message, and insert a WaitForMessage().
+	// Unfortunately there isn't enough space to do that, and rather than
+	// modifying the length of the whole resource (which is easy to get
+	// wrong), we insert a placeholder message that gets replaced by
+	// decodeParseString().
+	//
+	// There should be enough space to do this even if we only change the
+	// first message. Any leftover space in the message is padded with
+	// spaces, since I can't find any NOP opcode.
+
+	int expectedSize = -1;
+	int scriptOffset = -1;
+	int scriptLength = -1;
+	Common::String expectedMd5;
+	int patchOffset = -1;
+	int patchLength = -1;
+	byte lang[3];
+
+	switch (_language) {
+	case Common::EN_ANY:
+		expectedSize = 82906;
+		scriptOffset = 73883;
+		scriptLength = 607;
+		expectedMd5 = "98b1126a836ef5bfefff10b605b20555";
+		patchOffset = 167;
+		patchLength = 22;
+		lang[0] = 'E';
+		lang[1] = 'N';
+		lang[2] = 'G';
+
+		// The Macintosh resource is 4 bytes shorter, which affects
+		// the script offset as well. Otherwise, both Mac versions
+		// that I have are identical to the DOS CD version in this
+		// particular case.
+
+		if (_game.platform == Common::kPlatformMacintosh) {
+			expectedSize -= 4;
+			scriptOffset -= 4;
+		} else if (_game.platform == Common::kPlatformFMTowns) {
+			expectedSize = 82817;
+			scriptOffset = 73794;
+		}
+		break;
+	case Common::DE_DEU:
+		expectedSize = 83554;
+		scriptOffset = 74198;
+		scriptLength = 632;
+		expectedMd5 = "27d6d8eab4e0f66792e10769090ae047";
+		patchOffset = 170;
+		patchLength = 23;
+		lang[0] = 'D';
+		lang[1] = 'E';
+		lang[2] = 'U';
+		break;
+	case Common::IT_ITA:
+		expectedSize = 83211;
+		scriptOffset = 73998;
+		scriptLength = 602;
+		expectedMd5 = "39eb6116d67f2318f31d6fa98df2e931";
+		patchOffset = 161;
+		patchLength = 20;
+		lang[0] = 'I';
+		lang[1] = 'T';
+		lang[2] = 'A';
+		break;
+	default:
+		return false;
+	}
+
+	// Note that the patch will not apply to the "Ultimate Talkie" edition
+	// since that script has been patched to a different length.
+
+	if (size == expectedSize) {
+		// There isn't enough space in the script for the revised
+		// texts, so these abbreviations will be expanded in
+		// decodeParseString().
+		const byte patchData[] = {
+			0x14, 0x03, 0x0F,       // print(3,[Text("/LH.$$$/");
+			0x2F, 0x4C, 0x48, 0x2E,
+			0x24, 0x24, 0x24, 0x2F  // No terminating 0x00!
+		};
+
+		byte *scriptPtr = buf + scriptOffset;
+
+		// Check that the data is a local script.
+		if (READ_BE_UINT32(scriptPtr) != MKTAG('L','S','C','R'))
+			return false;
+
+		// Check that the first instruction to be patched is o5_print
+		if (scriptPtr[patchOffset] != 0x14)
+			return false;
+
+		// Check that the MD5 sum matches a known patchable script.
+		Common::MemoryReadStream stream(buf + scriptOffset, scriptLength);
+		Common::String md5 = Common::computeStreamMD5AsString(stream);
+
+		if (md5 != expectedMd5)
+			return false;
+
+		// Insert the script patch and tag it with the appropriate
+		// language.
+
+		memcpy(scriptPtr + patchOffset, patchData, sizeof(patchData));
+		memcpy(scriptPtr + patchOffset + 7, lang, sizeof(lang));
+
+		// Pad the rest of the replaced script part with spaces before
+		// terminating the string. Finally, add WaitForMessage().
+
+		memset(scriptPtr + patchOffset + sizeof(patchData), 32, patchLength - sizeof(patchData) - 3);
+		scriptPtr[patchOffset + patchLength - 3] = 0;
+		scriptPtr[patchOffset + patchLength - 2] = 0xAE;
+		scriptPtr[patchOffset + patchLength - 1] = 0x02;
+	}
+
+	return true;
 }
 
 

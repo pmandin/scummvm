@@ -35,6 +35,10 @@ enum AGSDebugChannels {
 	kDebugScript   = 1 << 4
 };
 
+enum GameFlag {
+	GAMEFLAG_FORCE_AA = 1
+};
+
 struct PluginVersion {
 	const char *_plugin;
 	int _version;
@@ -85,7 +89,7 @@ public:
 
 	DetectedGames detectGames(const Common::FSList &fslist) const override;
 
-	ADDetectedGame fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist) const override;
+	ADDetectedGame fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist, ADDetectedGameExtraInfo **extra = nullptr) const override;
 
 	bool canPlayUnknownVariants() const override {
 		return true;

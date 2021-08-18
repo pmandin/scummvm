@@ -24,34 +24,35 @@
 #include "ags/shared/ac/common.h"
 #include "ags/engine/ac/draw.h"
 #include "ags/engine/ac/event.h"
-#include "ags/engine/ac/gamesetup.h"
-#include "ags/shared/ac/gamesetupstruct.h"
+#include "ags/engine/ac/game_setup.h"
+#include "ags/shared/ac/game_setup_struct.h"
+#include "ags/engine/ac/game_state.h"
 #include "ags/engine/ac/global_character.h"
 #include "ags/engine/ac/global_game.h"
 #include "ags/engine/ac/global_gui.h"
-#include "ags/engine/ac/global_inventoryitem.h"
+#include "ags/engine/ac/global_inventory_item.h"
 #include "ags/engine/ac/global_screen.h"
-#include "ags/engine/ac/guicontrol.h"
-#include "ags/shared/ac/interfacebutton.h"
-#include "ags/engine/ac/invwindow.h"
+#include "ags/engine/ac/gui_control.h"
+#include "ags/shared/ac/interface_button.h"
+#include "ags/engine/ac/inv_window.h"
 #include "ags/engine/ac/mouse.h"
 #include "ags/engine/ac/runtime_defines.h"
 #include "ags/engine/ac/system.h"
-#include "ags/engine/ac/dynobj/cc_guiobject.h"
-#include "ags/engine/ac/dynobj/scriptgui.h"
+#include "ags/engine/ac/dynobj/cc_gui_object.h"
+#include "ags/engine/ac/dynobj/script_gui.h"
 #include "ags/engine/script/cc_instance.h"
 #include "ags/engine/debugging/debug_log.h"
-#include "ags/engine/device/mousew32.h"
+#include "ags/engine/device/mouse_w32.h"
 #include "ags/engine/gfx/gfxfilter.h"
-#include "ags/shared/gui/guibutton.h"
-#include "ags/shared/gui/guimain.h"
+#include "ags/shared/gui/gui_button.h"
+#include "ags/shared/gui/gui_main.h"
 #include "ags/engine/script/script.h"
 #include "ags/engine/script/script_runtime.h"
-#include "ags/engine/gfx/graphicsdriver.h"
+#include "ags/engine/gfx/graphics_driver.h"
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/engine/ac/dynobj/cc_gui.h"
-#include "ags/engine/ac/dynobj/cc_guiobject.h"
-#include "ags/engine/script/runtimescriptvalue.h"
+#include "ags/engine/ac/dynobj/cc_gui_object.h"
+#include "ags/engine/script/runtime_script_value.h"
 #include "ags/shared/util/string_compat.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
@@ -63,8 +64,7 @@ namespace AGS3 {
 using namespace AGS::Shared;
 using namespace AGS::Engine;
 
-ScriptGUI *GUI_AsTextWindow(ScriptGUI *tehgui) {
-	// Internally both GUI and TextWindow are implemented by same class
+ScriptGUI *GUI_AsTextWindow(ScriptGUI *tehgui) { // Internally both GUI and TextWindow are implemented by same class
 	return _GP(guis)[tehgui->id].IsTextWindow() ? &_G(scrGui)[tehgui->id] : nullptr;
 }
 
@@ -86,6 +86,10 @@ int GUI_GetVisible(ScriptGUI *tehgui) {
 	// Prior to 3.5.0 PopupY guis overrided Visible property and set it to 0 when auto-hidden;
 	// in order to simulate same behavior we only return positive if such gui is popped up:
 	return (_GP(guis)[tehgui->id].IsDisplayed()) ? 1 : 0;
+}
+
+bool GUI_GetShown(ScriptGUI *tehgui) {
+	return _GP(guis)[tehgui->id].IsDisplayed();
 }
 
 int GUI_GetX(ScriptGUI *tehgui) {
@@ -124,7 +128,7 @@ void GUI_SetSize(ScriptGUI *sgui, int widd, int hitt) {
 
 	recreate_guibg_image(tehgui);
 
-	_G(guis_need_update) = 1;
+	tehgui->MarkChanged();
 }
 
 int GUI_GetWidth(ScriptGUI *sgui) {
@@ -208,7 +212,7 @@ void GUI_Centre(ScriptGUI *sgui) {
 void GUI_SetBackgroundGraphic(ScriptGUI *tehgui, int slotn) {
 	if (_GP(guis)[tehgui->id].BgImage != slotn) {
 		_GP(guis)[tehgui->id].BgImage = slotn;
-		_G(guis_need_update) = 1;
+		_GP(guis)[tehgui->id].MarkChanged();
 	}
 }
 
@@ -221,7 +225,7 @@ int GUI_GetBackgroundGraphic(ScriptGUI *tehgui) {
 void GUI_SetBackgroundColor(ScriptGUI *tehgui, int newcol) {
 	if (_GP(guis)[tehgui->id].BgColor != newcol) {
 		_GP(guis)[tehgui->id].BgColor = newcol;
-		_G(guis_need_update) = 1;
+		_GP(guis)[tehgui->id].MarkChanged();
 	}
 }
 
@@ -234,7 +238,7 @@ void GUI_SetBorderColor(ScriptGUI *tehgui, int newcol) {
 		return;
 	if (_GP(guis)[tehgui->id].FgColor != newcol) {
 		_GP(guis)[tehgui->id].FgColor = newcol;
-		_G(guis_need_update) = 1;
+		_GP(guis)[tehgui->id].MarkChanged();
 	}
 }
 
@@ -249,7 +253,7 @@ void GUI_SetTextColor(ScriptGUI *tehgui, int newcol) {
 		return;
 	if (_GP(guis)[tehgui->id].FgColor != newcol) {
 		_GP(guis)[tehgui->id].FgColor = newcol;
-		_G(guis_need_update) = 1;
+		_GP(guis)[tehgui->id].MarkChanged();
 	}
 }
 
@@ -310,15 +314,14 @@ void remove_popup_interface(int ifacenum) {
 		set_default_cursor();
 
 	if (ifacenum == _G(mouse_on_iface)) _G(mouse_on_iface) = -1;
-	_G(guis_need_update) = 1;
 }
 
 void process_interface_click(int ifce, int btn, int mbut) {
 	if (btn < 0) {
 		// click on GUI background
-		QueueScriptFunction(kScInstGame, _GP(guis)[ifce].OnClickHandler, 2,
-			RuntimeScriptValue().SetDynamicObject(&_G(scrGui)[ifce], &_GP(ccDynamicGUI)),
-			RuntimeScriptValue().SetInt32(mbut));
+		QueueScriptFunction(kScInstGame, _GP(guis)[ifce].OnClickHandler.GetCStr(), 2,
+		                    RuntimeScriptValue().SetDynamicObject(&_G(scrGui)[ifce], &_GP(ccDynamicGUI)),
+		                    RuntimeScriptValue().SetInt32(mbut));
 		return;
 	}
 
@@ -340,20 +343,20 @@ void process_interface_click(int ifce, int btn, int mbut) {
 		// if the object has a special handler script then run it;
 		// otherwise, run interface_click
 		if ((theObj->GetEventCount() > 0) &&
-			(!theObj->EventHandlers[0].IsEmpty()) &&
-			(!_G(gameinst)->GetSymbolAddress(theObj->EventHandlers[0]).IsNull())) {
+		        (!theObj->EventHandlers[0].IsEmpty()) &&
+		        (!_G(gameinst)->GetSymbolAddress(theObj->EventHandlers[0].GetCStr()).IsNull())) {
 			// control-specific event handler
-			if (strchr(theObj->GetEventArgs(0), ',') != nullptr)
-				QueueScriptFunction(kScInstGame, theObj->EventHandlers[0], 2,
-					RuntimeScriptValue().SetDynamicObject(theObj, &_GP(ccDynamicGUIObject)),
-					RuntimeScriptValue().SetInt32(mbut));
+			if (strchr(theObj->GetEventArgs(0).GetCStr(), ',') != nullptr)
+				QueueScriptFunction(kScInstGame, theObj->EventHandlers[0].GetCStr(), 2,
+				                    RuntimeScriptValue().SetDynamicObject(theObj, &_GP(ccDynamicGUIObject)),
+				                    RuntimeScriptValue().SetInt32(mbut));
 			else
-				QueueScriptFunction(kScInstGame, theObj->EventHandlers[0], 1,
-					RuntimeScriptValue().SetDynamicObject(theObj, &_GP(ccDynamicGUIObject)));
+				QueueScriptFunction(kScInstGame, theObj->EventHandlers[0].GetCStr(), 1,
+				                    RuntimeScriptValue().SetDynamicObject(theObj, &_GP(ccDynamicGUIObject)));
 		} else
 			QueueScriptFunction(kScInstGame, "interface_click", 2,
-				RuntimeScriptValue().SetInt32(ifce),
-				RuntimeScriptValue().SetInt32(btn));
+			                    RuntimeScriptValue().SetInt32(ifce),
+			                    RuntimeScriptValue().SetInt32(btn));
 	}
 }
 
@@ -488,12 +491,15 @@ void update_gui_disabled_status() {
 	}
 
 	if (all_buttons_was != _G(all_buttons_disabled)) {
-		// GUIs might have been removed/added
+		// As controls become enabled we must notify parent GUIs
+		// to let them reset control-under-mouse detection
 		for (int aa = 0; aa < _GP(game).numgui; aa++) {
-			_GP(guis)[aa].OnControlPositionChanged();
+			_GP(guis)[aa].OnControlPositionChanged(); // this marks GUI as changed too
 		}
-		_G(guis_need_update) = 1;
-		invalidate_screen();
+
+		if (_G(gui_disabled_style) != GUIDIS_UNCHANGED) {
+			invalidate_screen();
+		}
 	}
 }
 
@@ -508,7 +514,7 @@ int adjust_x_for_guis(int xx, int yy) {
 		if ((_GP(guis)[aa].X > xx) || (_GP(guis)[aa].Y > yy) || (_GP(guis)[aa].Y + _GP(guis)[aa].Height < yy))
 			continue;
 		// totally transparent GUI, ignore
-		if ((_GP(guis)[aa].BgColor == 0) && (_GP(guis)[aa].BgImage < 1))
+		if (((_GP(guis)[aa].BgColor == 0) && (_GP(guis)[aa].BgImage < 1)) || (_GP(guis)[aa].Transparency == 255))
 			continue;
 
 		// try to deal with full-width GUIs across the top
@@ -531,7 +537,7 @@ int adjust_y_for_guis(int yy) {
 		if (_GP(guis)[aa].Y > yy)
 			continue;
 		// totally transparent GUI, ignore
-		if ((_GP(guis)[aa].BgColor == 0) && (_GP(guis)[aa].BgImage < 1))
+		if (((_GP(guis)[aa].BgColor == 0) && (_GP(guis)[aa].BgImage < 1)) || (_GP(guis)[aa].Transparency == 255))
 			continue;
 
 		// try to deal with full-height GUIs down the left or right
@@ -577,8 +583,7 @@ int gui_on_mouse_move() {
 			if (_GP(guis)[guin].IsInteractableAt(_G(mousex), _G(mousey))) mouse_over_gui = guin;
 
 			if (_GP(guis)[guin].PopupStyle != kGUIPopupMouseY) continue;
-			if (_G(is_complete_overlay) > 0) break; // interfaces disabled
-			//    if (_GP(play).disabled_user_interface>0) break;
+			if (_GP(play).complete_overlay_on > 0) break;  // interfaces disabled			//    if (_GP(play).disabled_user_interface>0) break;
 			if (_G(ifacepopped) == guin) continue;
 			if (!_GP(guis)[guin].IsVisible()) continue;
 			// Don't allow it to be popped up while skipping cutscene
@@ -587,7 +592,6 @@ int gui_on_mouse_move() {
 			if (_G(mousey) < _GP(guis)[guin].PopupAtMouseY) {
 				set_mouse_cursor(CURS_ARROW);
 				_GP(guis)[guin].SetConceal(false);
-				_G(guis_need_update) = 1;
 				_G(ifacepopped) = guin;
 				PauseGame();
 				break;
@@ -632,7 +636,7 @@ void gui_on_mouse_up(const int wasongui, const int wasbutdown) {
 					// Let the script handle the click
 					// LEFTINV is 5, RIGHTINV is 6
 					force_event(EV_TEXTSCRIPT, TS_MCLICK, wasbutdown + 4);
-				} else if (wasbutdown == 2) // right-click is always Look
+				} else if (wasbutdown == 2)  // right-click is always Look
 					run_event_block_inv(iit, 0);
 				else if (_G(cur_mode) == MODE_HAND)
 					SetActiveInventory(iit);
@@ -846,6 +850,10 @@ RuntimeScriptValue Sc_GUI_ProcessClick(const RuntimeScriptValue *params, int32_t
 	API_SCALL_VOID_PINT3(GUI_ProcessClick);
 }
 
+RuntimeScriptValue Sc_GUI_GetShown(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_BOOL(ScriptGUI, GUI_GetShown);
+}
+
 void RegisterGUIAPI() {
 	ccAddExternalObjectFunction("GUI::Centre^0", Sc_GUI_Centre);
 	ccAddExternalObjectFunction("GUI::Click^1", Sc_GUI_Click);
@@ -886,34 +894,7 @@ void RegisterGUIAPI() {
 	ccAddExternalObjectFunction("GUI::set_Y", Sc_GUI_SetY);
 	ccAddExternalObjectFunction("GUI::get_ZOrder", Sc_GUI_GetZOrder);
 	ccAddExternalObjectFunction("GUI::set_ZOrder", Sc_GUI_SetZOrder);
-
-	/* ----------------------- Registering unsafe exports for plugins -----------------------*/
-
-	ccAddExternalFunctionForPlugin("GUI::Centre^0", (void *)GUI_Centre);
-	ccAddExternalFunctionForPlugin("GUI::GetAtScreenXY^2", (void *)GetGUIAtLocation);
-	ccAddExternalFunctionForPlugin("GUI::SetPosition^2", (void *)GUI_SetPosition);
-	ccAddExternalFunctionForPlugin("GUI::SetSize^2", (void *)GUI_SetSize);
-	ccAddExternalFunctionForPlugin("GUI::get_BackgroundGraphic", (void *)GUI_GetBackgroundGraphic);
-	ccAddExternalFunctionForPlugin("GUI::set_BackgroundGraphic", (void *)GUI_SetBackgroundGraphic);
-	ccAddExternalFunctionForPlugin("GUI::get_Clickable", (void *)GUI_GetClickable);
-	ccAddExternalFunctionForPlugin("GUI::set_Clickable", (void *)GUI_SetClickable);
-	ccAddExternalFunctionForPlugin("GUI::get_ControlCount", (void *)GUI_GetControlCount);
-	ccAddExternalFunctionForPlugin("GUI::geti_Controls", (void *)GUI_GetiControls);
-	ccAddExternalFunctionForPlugin("GUI::get_Height", (void *)GUI_GetHeight);
-	ccAddExternalFunctionForPlugin("GUI::set_Height", (void *)GUI_SetHeight);
-	ccAddExternalFunctionForPlugin("GUI::get_ID", (void *)GUI_GetID);
-	ccAddExternalFunctionForPlugin("GUI::get_Transparency", (void *)GUI_GetTransparency);
-	ccAddExternalFunctionForPlugin("GUI::set_Transparency", (void *)GUI_SetTransparency);
-	ccAddExternalFunctionForPlugin("GUI::get_Visible", (void *)GUI_GetVisible);
-	ccAddExternalFunctionForPlugin("GUI::set_Visible", (void *)GUI_SetVisible);
-	ccAddExternalFunctionForPlugin("GUI::get_Width", (void *)GUI_GetWidth);
-	ccAddExternalFunctionForPlugin("GUI::set_Width", (void *)GUI_SetWidth);
-	ccAddExternalFunctionForPlugin("GUI::get_X", (void *)GUI_GetX);
-	ccAddExternalFunctionForPlugin("GUI::set_X", (void *)GUI_SetX);
-	ccAddExternalFunctionForPlugin("GUI::get_Y", (void *)GUI_GetY);
-	ccAddExternalFunctionForPlugin("GUI::set_Y", (void *)GUI_SetY);
-	ccAddExternalFunctionForPlugin("GUI::get_ZOrder", (void *)GUI_GetZOrder);
-	ccAddExternalFunctionForPlugin("GUI::set_ZOrder", (void *)GUI_SetZOrder);
+	ccAddExternalObjectFunction("GUI::get_Shown", Sc_GUI_GetShown);
 }
 
 } // namespace AGS3

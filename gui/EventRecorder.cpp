@@ -75,7 +75,15 @@ EventRecorder::EventRecorder() {
 	_fakeMixerManager = nullptr;
 	_initialized = false;
 	_needRedraw = false;
+	_processingMillis = false;
 	_fastPlayback = false;
+	_lastTimeDate.tm_sec = 0;
+	_lastTimeDate.tm_min = 0;
+	_lastTimeDate.tm_hour = 0;
+	_lastTimeDate.tm_mday = 0;
+	_lastTimeDate.tm_mon = 0;
+	_lastTimeDate.tm_year = 0;
+	_lastTimeDate.tm_wday = 0;
 
 	_fakeTimer = 0;
 	_savedState = false;
@@ -107,7 +115,9 @@ void EventRecorder::deinit() {
 	_controlPanel->close();
 	delete _controlPanel;
 	debugC(1, kDebugLevelEventRec, "playback:action=stopplayback");
-	g_system->getEventManager()->getEventDispatcher()->unregisterSource(this);
+	Common::EventDispatcher *eventDispater = g_system->getEventManager()->getEventDispatcher();
+	eventDispater->unregisterSource(this);
+	eventDispater->ignoreSources(false);
 	_recordMode = kPassthrough;
 	_playbackFile->close();
 	delete _playbackFile;
@@ -116,14 +126,51 @@ void EventRecorder::deinit() {
 	DebugMan.disableDebugChannel("EventRec");
 }
 
-void EventRecorder::processMillis(uint32 &millis, bool skipRecord) {
+void EventRecorder::processTimeAndDate(TimeDate &td, bool skipRecord) {
 	if (!_initialized) {
 		return;
 	}
 	if (skipRecord) {
+		td = _lastTimeDate;
+		return;
+	}
+	Common::RecorderEvent timeDateEvent;
+	switch (_recordMode) {
+	case kRecorderRecord:
+		timeDateEvent.recordedtype = Common::kRecorderEventTypeTimeDate;
+		timeDateEvent.timeDate = td;
+		_lastTimeDate = td;
+		_playbackFile->writeEvent(timeDateEvent);
+		break;
+	case kRecorderPlayback:
+		if (_nextEvent.recordedtype != Common::kRecorderEventTypeTimeDate) {
+			// just re-use any previous date time value
+			td = _lastTimeDate;
+			return;
+		}
+		_lastTimeDate = _nextEvent.timeDate;
+		td = _lastTimeDate;
+		debug(3, "timedate event");
+
+		_nextEvent = _playbackFile->getNextEvent();
+		break;
+	case kRecorderPlaybackPause:
+		td = _lastTimeDate;
+		break;
+	default:
+		break;
+	}
+}
+
+void EventRecorder::processMillis(uint32 &millis, bool skipRecord) {
+	if (!_initialized) {
+		return;
+	}
+	if (skipRecord || _processingMillis) {
 		millis = _fakeTimer;
 		return;
 	}
+	// to prevent calling this recursively
 	if (_recordMode == kRecorderPlaybackPause) {
 		millis = _fakeTimer;
 	}
@@ -143,22 +190,25 @@ void EventRecorder::processMillis(uint32 &millis, bool skipRecord) {
 		_timerManager->handler();
 		break;
 	case kRecorderPlayback:
-		updateSubsystems();
-		if (_nextEvent.recordedtype == Common::kRecorderEventTypeTimer) {
-			_fakeTimer = _nextEvent.time;
-			_nextEvent = _playbackFile->getNextEvent();
-			_timerManager->handler();
-		} else {
-			if (_nextEvent.type == Common::EVENT_RETURN_TO_LAUNCHER) {
-				error("playback:action=stopplayback");
-			} else {
-				uint32 seconds = _fakeTimer / 1000;
-				Common::String screenTime = Common::String::format("%.2d:%.2d:%.2d", seconds / 3600 % 24, seconds / 60 % 60, seconds % 60);
-				error("playback:action=error reason=\"synchronization error\" time = %s", screenTime.c_str());
-			}
+		if (_nextEvent.recordedtype != Common::kRecorderEventTypeTimer) {
+			// just re-use any previous millis value
+			// this might happen if you have EventSource instances registered, that
+			// are querying the millis by themselves, too. If the EventRecorder::poll
+			// is registered and thus dispatched after those EventSource instances, it
+			// might look like it ran out-of-sync.
+			millis = _fakeTimer;
+			return;
 		}
+		_processingMillis = true;
+		_fakeTimer = _nextEvent.time;
 		millis = _fakeTimer;
+		debug(3, "millis event: %u", millis);
+
+		updateSubsystems();
+		_nextEvent = _playbackFile->getNextEvent();
+		_timerManager->handler();
 		_controlPanel->setReplayedTime(_fakeTimer);
+		_processingMillis = false;
 		break;
 	case kRecorderPlaybackPause:
 		millis = _fakeTimer;
@@ -182,11 +232,15 @@ bool EventRecorder::pollEvent(Common::Event &ev) {
 	if ((_recordMode != kRecorderPlayback) || !_initialized)
 		return false;
 
-	if ((_nextEvent.recordedtype == Common::kRecorderEventTypeTimer) || (_nextEvent.type ==  Common::EVENT_INVALID)) {
+	if (_nextEvent.recordedtype == Common::kRecorderEventTypeTimer
+	 || _nextEvent.recordedtype == Common::kRecorderEventTypeTimeDate
+	 || _nextEvent.type == Common::EVENT_INVALID) {
 		return false;
 	}
 
-	switch (_nextEvent.type) {
+	ev = _nextEvent;
+	_nextEvent = _playbackFile->getNextEvent();
+	switch (ev.type) {
 	case Common::EVENT_MOUSEMOVE:
 	case Common::EVENT_LBUTTONDOWN:
 	case Common::EVENT_LBUTTONUP:
@@ -194,13 +248,11 @@ bool EventRecorder::pollEvent(Common::Event &ev) {
 	case Common::EVENT_RBUTTONUP:
 	case Common::EVENT_WHEELUP:
 	case Common::EVENT_WHEELDOWN:
-		g_system->warpMouse(_nextEvent.mouse.x, _nextEvent.mouse.y);
+		g_system->warpMouse(ev.mouse.x, ev.mouse.y);
 		break;
 	default:
 		break;
 	}
-	ev = _nextEvent;
-	_nextEvent = _playbackFile->getNextEvent();
 	return true;
 }
 
@@ -234,17 +286,18 @@ void EventRecorder::RegisterEventSource() {
 }
 
 uint32 EventRecorder::getRandomSeed(const Common::String &name) {
+	if (_recordMode == kRecorderPlayback) {
+		return _playbackFile->getHeader().randomSourceRecords[name];
+	}
 	uint32 result = g_system->getMillis();
 	if (_recordMode == kRecorderRecord) {
 		_playbackFile->getHeader().randomSourceRecords[name] = result;
-	} else if (_recordMode == kRecorderPlayback) {
-		result = _playbackFile->getHeader().randomSourceRecords[name];
 	}
 	return result;
 }
 
 Common::String EventRecorder::generateRecordFileName(const Common::String &target) {
-	Common::String pattern(target+".r??");
+	Common::String pattern(target + ".r??");
 	Common::StringArray files = g_system->getSavefileManager()->listSavefiles(pattern);
 	for (int i = 0; i < kMaxRecordsNames; ++i) {
 		Common::String recordName = Common::String::format("%s.r%02d", target.c_str(), i);
@@ -273,8 +326,11 @@ void EventRecorder::init(const Common::String &recordFileName, RecordMode mode) 
 	}
 	if (_recordMode == kRecorderPlayback) {
 		debugC(1, kDebugLevelEventRec, "playback:action=\"Load file\" filename=%s", recordFileName.c_str());
+		Common::EventDispatcher *eventDispater = g_system->getEventManager()->getEventDispatcher();
+		eventDispater->clearEvents();
+		eventDispater->ignoreSources(true);
+		eventDispater->registerSource(this, false);
 	}
-	g_system->getEventManager()->getEventDispatcher()->registerSource(this, false);
 	_screenshotPeriod = ConfMan.getInt("screenshot_period");
 	if (_screenshotPeriod == 0) {
 		_screenshotPeriod = kDefaultScreenshotPeriod;
@@ -306,9 +362,8 @@ void EventRecorder::init(const Common::String &recordFileName, RecordMode mode) 
 /**
  * Opens or creates file depend of recording mode.
  *
- *@param id of recording or playing back game
- *@return true in case of success, false in case of error
- *
+ * @param id of recording or playing back game
+ * @return true in case of success, false in case of error
  */
 bool EventRecorder::openRecordFile(const Common::String &fileName) {
 	bool result;
@@ -445,9 +500,6 @@ bool EventRecorder::notifyEvent(const Common::Event &ev) {
 	evt.mouse.y = evt.mouse.y * (g_system->getOverlayHeight() / g_system->getHeight());
 	switch (_recordMode) {
 	case kRecorderPlayback:
-		if (!ev.kbdRepeat) {
-			return true;
-		}
 		return false;
 	case kRecorderRecord:
 		g_gui.processEvent(evt, _controlPanel);
@@ -537,7 +589,6 @@ Common::SeekableReadStream *EventRecorder::processSaveStream(const Common::Strin
 		return saveFile;
 	default:
 		return nullptr;
-		break;
 	}
 }
 
@@ -555,6 +606,7 @@ void EventRecorder::preDrawOverlayGui() {
 		RecordMode oldMode = _recordMode;
 		_recordMode = kPassthrough;
 		g_system->showOverlay();
+		g_gui.checkScreenChange();
 		g_gui.theme()->clearAll();
 		g_gui.theme()->drawToBackbuffer();
 		_controlPanel->drawDialog(kDrawLayerBackground);
@@ -579,7 +631,7 @@ Common::StringArray EventRecorder::listSaveFiles(const Common::String &pattern) 
 	if (_recordMode == kRecorderPlayback) {
 		Common::StringArray result;
 		for (Common::HashMap<Common::String, Common::PlaybackFile::SaveFileBuffer>::iterator  i = _playbackFile->getHeader().saveFiles.begin(); i != _playbackFile->getHeader().saveFiles.end(); ++i) {
-			if (i->_key.matchString(pattern, false, true)) {
+			if (i->_key.matchString(pattern, false, "/")) {
 				result.push_back(i->_key);
 			}
 		}
@@ -600,7 +652,7 @@ void EventRecorder::setFileHeader() {
 		setAuthor("Unknown Author");
 	}
 	if (_name.empty()) {
-		g_eventRec.setName(Common::String::format("%.2d.%.2d.%.4d ", t.tm_mday, t.tm_mon, 1900 + t.tm_year) + desc.description);
+		g_eventRec.setName(Common::String::format("%.2d.%.2d.%.4d ", t.tm_mday, t.tm_mon + 1, 1900 + t.tm_year) + desc.description);
 	}
 	_playbackFile->getHeader().author = _author;
 	_playbackFile->getHeader().notes = _desc;

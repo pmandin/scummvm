@@ -73,11 +73,15 @@ struct Trajectory {
 class TrajectoryData : public Parser {
 private:
 	Common::Array<Trajectory> _trajectories;
-
+protected:
+	void reset() override;
 public:
-	bool loadFromStream(Common::SeekableReadStream &stream) override;
+	bool loadFromStream(Common::SeekableReadStream &stream, bool lba1) override;
 
-	const Trajectory *getTrajectory(int index) const {
+	const Trajectory *getTrajectory(uint index) const {
+		if (index >= _trajectories.size()) {
+			return nullptr;
+		}
 		return &_trajectories[index];
 	}
 

@@ -23,57 +23,56 @@
 #ifndef AGS_PLUGINS_AGS_SNOW_RAIN_AGS_SNOW_RAIN_H
 #define AGS_PLUGINS_AGS_SNOW_RAIN_AGS_SNOW_RAIN_H
 
-#include "ags/plugins/plugin_base.h"
+#include "ags/plugins/ags_plugin.h"
 #include "ags/plugins/ags_snow_rain/weather.h"
 
 namespace AGS3 {
 namespace Plugins {
 namespace AGSSnowRain {
 
-extern IAGSEngine *_engine;
-extern int32 _screenWidth;
-extern int32 _screenHeight;
-extern int32 _screenColorDepth;
-
 /**
  * This is not the original AGS SnowRain plugin, but a workalike
  * plugin created for the AGS engine PSP port.
  */
 class AGSSnowRain : public PluginBase {
+	SCRIPT_HASH(AGSSnowRain)
 private:
-	static Weather *_rain;
-	static Weather *_snow;
-private:
-	static const char *AGS_GetPluginName();
-	static void AGS_EngineStartup(IAGSEngine *lpEngine);
-	static void AGS_EngineShutdown();
-	static int64 AGS_EngineOnEvent(int event, NumberPtr data);
+	int32 _screenWidth = 320;
+	int32 _screenHeight = 200;
+	int32 _screenColorDepth = 32;
+	Weather _rain;
+	Weather _snow;
 
 private:
-	static void srSetWindSpeed(ScriptMethodParams &params);
-	static void srSetBaseline(ScriptMethodParams &params);
-	static void srSetSnowDriftRange(ScriptMethodParams &params);
-	static void srSetSnowDriftSpeed(ScriptMethodParams &params);
-	static void srChangeSnowAmount(ScriptMethodParams &params);
-	static void srSetSnowView(ScriptMethodParams &params);
-	static void srSetSnowDefaultView(ScriptMethodParams &params);
-	static void srSetSnowTransparency(ScriptMethodParams &params);
-	static void srSetSnowWindSpeed(ScriptMethodParams &params);
-	static void srSetSnowBaseline(ScriptMethodParams &params);
-	static void srSetSnowAmount(ScriptMethodParams &params);
-	static void srSetSnowFallSpeed(ScriptMethodParams &params);
-	static void srSetRainDriftRange(ScriptMethodParams &params);
-	static void srSetRainDriftSpeed(ScriptMethodParams &params);
-	static void srChangeRainAmount(ScriptMethodParams &params);
-	static void srSetRainView(ScriptMethodParams &params);
-	static void srSetRainDefaultView(ScriptMethodParams &params);
-	static void srSetRainTransparency(ScriptMethodParams &params);
-	static void srSetRainWindSpeed(ScriptMethodParams &params);
-	static void srSetRainBaseline(ScriptMethodParams &params);
-	static void srSetRainAmount(ScriptMethodParams &params);
-	static void srSetRainFallSpeed(ScriptMethodParams &params);
+	void srSetWindSpeed(ScriptMethodParams &params);
+	void srSetBaseline(ScriptMethodParams &params);
+	void srSetSnowDriftRange(ScriptMethodParams &params);
+	void srSetSnowDriftSpeed(ScriptMethodParams &params);
+	void srChangeSnowAmount(ScriptMethodParams &params);
+	void srSetSnowView(ScriptMethodParams &params);
+	void srSetSnowDefaultView(ScriptMethodParams &params);
+	void srSetSnowTransparency(ScriptMethodParams &params);
+	void srSetSnowWindSpeed(ScriptMethodParams &params);
+	void srSetSnowBaseline(ScriptMethodParams &params);
+	void srSetSnowAmount(ScriptMethodParams &params);
+	void srSetSnowFallSpeed(ScriptMethodParams &params);
+	void srSetRainDriftRange(ScriptMethodParams &params);
+	void srSetRainDriftSpeed(ScriptMethodParams &params);
+	void srChangeRainAmount(ScriptMethodParams &params);
+	void srSetRainView(ScriptMethodParams &params);
+	void srSetRainDefaultView(ScriptMethodParams &params);
+	void srSetRainTransparency(ScriptMethodParams &params);
+	void srSetRainWindSpeed(ScriptMethodParams &params);
+	void srSetRainBaseline(ScriptMethodParams &params);
+	void srSetRainAmount(ScriptMethodParams &params);
+	void srSetRainFallSpeed(ScriptMethodParams &params);
 public:
 	AGSSnowRain();
+	virtual ~AGSSnowRain() {}
+
+	const char *AGS_GetPluginName() override;
+	void AGS_EngineStartup(IAGSEngine *lpEngine) override;
+	int64 AGS_EngineOnEvent(int event, NumberPtr data) override;
 };
 
 } // namespace AGSSnowRain

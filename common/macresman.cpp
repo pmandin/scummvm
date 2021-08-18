@@ -21,6 +21,7 @@
  */
 
 #include "common/scummsys.h"
+#include "common/crc.h"
 #include "common/debug.h"
 #include "common/util.h"
 #include "common/file.h"
@@ -115,11 +116,11 @@ String MacResManager::computeResForkMD5AsString(uint32 length) const {
 	return computeStreamMD5AsString(resForkStream, MIN<uint32>(length, _resForkSize));
 }
 
-bool MacResManager::open(const String &fileName) {
+bool MacResManager::open(const Path &fileName) {
 	return open(fileName, SearchMan);
 }
 
-bool MacResManager::open(const String &fileName, Archive &archive) {
+bool MacResManager::open(const Path &fileName, Archive &archive) {
 	close();
 
 #ifdef MACOSX
@@ -140,7 +141,7 @@ bool MacResManager::open(const String &fileName, Archive &archive) {
 #endif
 
 	// Prefer standalone files first, starting with raw forks
-	SeekableReadStream *stream = archive.createReadStreamForMember(fileName + ".rsrc");
+	SeekableReadStream *stream = archive.createReadStreamForMember(fileName.append(".rsrc"));
 	if (stream && loadFromRawFork(*stream)) {
 		_baseFileName = fileName;
 		return true;
@@ -156,7 +157,7 @@ bool MacResManager::open(const String &fileName, Archive &archive) {
 	delete stream;
 
 	// Check .bin for MacBinary next
-	stream = archive.createReadStreamForMember(fileName + ".bin");
+	stream = archive.createReadStreamForMember(fileName.append(".bin"));
 	if (stream && loadFromMacBinary(*stream)) {
 		_baseFileName = fileName;
 		return true;
@@ -185,18 +186,18 @@ bool MacResManager::open(const String &fileName, Archive &archive) {
 	return false;
 }
 
-bool MacResManager::exists(const String &fileName) {
+bool MacResManager::exists(const Path &fileName) {
 	// Try the file name by itself
 	if (File::exists(fileName))
 		return true;
 
 	// Try the .rsrc extension
-	if (File::exists(fileName + ".rsrc"))
+	if (File::exists(fileName.append(".rsrc")))
 		return true;
 
 	// Check if we have a MacBinary file
 	File tempFile;
-	if (tempFile.open(fileName + ".bin") && isMacBinary(tempFile))
+	if (tempFile.open(fileName.append(".bin")) && isMacBinary(tempFile))
 		return true;
 
 	// Check if we have an AppleDouble file
@@ -254,7 +255,7 @@ void MacResManager::listFiles(StringArray &files, const String &pattern) {
 
 		// Strip AppleDouble '._' prefix if applicable.
 		bool isAppleDoubleName = false;
-		const String filenameAppleDoubleStripped = disassembleAppleDoubleName(filename, &isAppleDoubleName);
+		const String filenameAppleDoubleStripped = disassembleAppleDoubleName(filename, &isAppleDoubleName).toString();
 
 		if (isAppleDoubleName) {
 			SeekableReadStream *stream = (*i)->createReadStream();
@@ -306,6 +307,14 @@ bool MacResManager::isMacBinary(SeekableReadStream &stream) {
 	int resForkOffset = -1;
 
 	if (stream.read(infoHeader, MBI_INFOHDR) != MBI_INFOHDR)
+		return false;
+
+	CRC_BINHEX crc;
+	crc.init();
+	uint16 checkSum = crc.crcFast(infoHeader, 124);
+
+	// Sanity check on the CRC. Some movies could look like MacBinary
+	if (checkSum != READ_BE_UINT16(&infoHeader[124]))
 		return false;
 
 	if (infoHeader[MBI_ZERO1] == 0 && infoHeader[MBI_ZERO2] == 0 &&
@@ -606,39 +615,41 @@ void MacResManager::readMap() {
 	}
 }
 
-String MacResManager::constructAppleDoubleName(String name) {
+Path MacResManager::constructAppleDoubleName(Path name) {
 	// Insert "._" before the last portion of a path name
-	for (int i = name.size() - 1; i >= 0; i--) {
+	String rawName = name.rawString();
+	for (int i = rawName.size() - 1; i >= 0; i--) {
 		if (i == 0) {
-			name.insertChar('_', 0);
-			name.insertChar('.', 0);
-		} else if (name[i] == '/') {
-			name.insertChar('_', i + 1);
-			name.insertChar('.', i + 1);
+			rawName.insertChar('_', 0);
+			rawName.insertChar('.', 0);
+		} else if (rawName[i] == DIR_SEPARATOR) {
+			rawName.insertChar('_', i + 1);
+			rawName.insertChar('.', i + 1);
 			break;
 		}
 	}
 
-	return name;
+	return Path(rawName, DIR_SEPARATOR);
 }
 
-String MacResManager::disassembleAppleDoubleName(String name, bool *isAppleDouble) {
+Path MacResManager::disassembleAppleDoubleName(Path name, bool *isAppleDouble) {
 	if (isAppleDouble) {
 		*isAppleDouble = false;
 	}
 
 	// Remove "._" before the last portion of a path name.
-	for (int i = name.size() - 1; i >= 0; --i) {
+	String rawName = name.rawString();
+	for (int i = rawName.size() - 1; i >= 0; --i) {
 		if (i == 0) {
-			if (name.size() > 2 && name[0] == '.' && name[1] == '_') {
-				name.erase(0, 2);
+			if (rawName.size() > 2 && rawName[0] == '.' && rawName[1] == '_') {
+				rawName.erase(0, 2);
 				if (isAppleDouble) {
 					*isAppleDouble = true;
 				}
 			}
-		} else if (name[i] == '/') {
-			if ((uint)(i + 2) < name.size() && name[i + 1] == '.' && name[i + 2] == '_') {
-				name.erase(i + 1, 2);
+		} else if (rawName[i] == DIR_SEPARATOR) {
+			if ((uint)(i + 2) < rawName.size() && rawName[i + 1] == '.' && rawName[i + 2] == '_') {
+				rawName.erase(i + 1, 2);
 				if (isAppleDouble) {
 					*isAppleDouble = true;
 				}
@@ -647,7 +658,7 @@ String MacResManager::disassembleAppleDoubleName(String name, bool *isAppleDoubl
 		}
 	}
 
-	return name;
+	return Path(rawName, DIR_SEPARATOR);
 }
 
 void MacResManager::dumpRaw() {
@@ -666,7 +677,7 @@ void MacResManager::dumpRaw() {
 				dataSize = len;
 			}
 
-			Common::String filename = Common::String::format("./dumps/%s-%s-%d", _baseFileName.c_str(), tag2str(_resTypes[i].id), j);
+			Common::String filename = Common::String::format("./dumps/%s-%s-%d", _baseFileName.toString().c_str(), tag2str(_resTypes[i].id), j);
 			_stream->read(data, len);
 
 			if (!out.open(filename)) {

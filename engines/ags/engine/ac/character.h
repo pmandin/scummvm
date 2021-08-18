@@ -23,11 +23,11 @@
 #ifndef AGS_ENGINE_AC_CHARACTER_H
 #define AGS_ENGINE_AC_CHARACTER_H
 
-#include "ags/shared/ac/characterinfo.h"
-#include "ags/engine/ac/characterextras.h"
-#include "ags/engine/ac/dynobj/scriptobject.h"
-#include "ags/engine/ac/dynobj/scriptinvitem.h"
-#include "ags/engine/ac/dynobj/scriptoverlay.h"
+#include "ags/shared/ac/character_info.h"
+#include "ags/engine/ac/character_extras.h"
+#include "ags/engine/ac/dynobj/script_object.h"
+#include "ags/engine/ac/dynobj/script_inv_item.h"
+#include "ags/engine/ac/dynobj/script_overlay.h"
 #include "ags/engine/game/viewport.h"
 #include "ags/shared/util/geometry.h"
 
@@ -53,7 +53,9 @@ bool    Character_IsInteractionAvailable(CharacterInfo *cchar, int mood);
 void    Character_LockView(CharacterInfo *chap, int vii);
 void    Character_LockViewEx(CharacterInfo *chap, int vii, int stopMoving);
 void    Character_LockViewAligned(CharacterInfo *chap, int vii, int loop, int align);
+void    Character_LockViewAligned_Old(CharacterInfo *chap, int vii, int loop, int align);
 void    Character_LockViewAlignedEx(CharacterInfo *chap, int vii, int loop, int align, int stopMoving);
+void    Character_LockViewAlignedEx_Old(CharacterInfo *chap, int vii, int loop, int align, int stopMoving);
 void    Character_LockViewFrame(CharacterInfo *chaa, int view, int loop, int frame);
 void    Character_LockViewFrameEx(CharacterInfo *chaa, int view, int loop, int frame, int stopMoving);
 void    Character_LockViewOffset(CharacterInfo *chap, int vii, int xoffs, int yoffs);
@@ -62,6 +64,7 @@ void    Character_LoseInventory(CharacterInfo *chap, ScriptInvItem *invi);
 void    Character_PlaceOnWalkableArea(CharacterInfo *chap);
 void    Character_RemoveTint(CharacterInfo *chaa);
 int     Character_GetHasExplicitTint(CharacterInfo *chaa);
+int     Character_GetHasExplicitTint_Old(CharacterInfo *ch);
 void    Character_Say(CharacterInfo *chaa, const char *text);
 void    Character_SayAt(CharacterInfo *chaa, int x, int y, int width, const char *texx);
 ScriptOverlay *Character_SayBackground(CharacterInfo *chaa, const char *texx);
@@ -107,6 +110,8 @@ int     Character_GetDiagonalWalking(CharacterInfo *chaa);
 void    Character_SetDiagonalWalking(CharacterInfo *chaa, int yesorno);
 int     Character_GetClickable(CharacterInfo *chaa);
 void    Character_SetClickable(CharacterInfo *chaa, int clik);
+int     Character_GetDestinationX(CharacterInfo *chaa);
+int     Character_GetDestinationY(CharacterInfo *chaa);
 int     Character_GetID(CharacterInfo *chaa);
 int     Character_GetFrame(CharacterInfo *chaa);
 void    Character_SetFrame(CharacterInfo *chaa, int newval);
@@ -184,8 +189,10 @@ void fix_player_sprite(MoveList *cmls, CharacterInfo *chinf);
 // Check whether two characters have walked into each other
 int  has_hit_another_character(int sourceChar);
 int  doNextCharMoveStep(CharacterInfo *chi, int &char_index, CharacterExtras *chex);
-int  find_nearest_walkable_area_within(int32_t *xx, int32_t *yy, int range, int step);
-void find_nearest_walkable_area(int32_t *xx, int32_t *yy);
+// Tells if character is currently moving, in eWalkableAreas mode
+bool is_char_walking_ndirect(CharacterInfo *chi);
+int  find_nearest_walkable_area_within(int *xx, int *yy, int range, int step);
+void find_nearest_walkable_area(int *xx, int *yy);
 void walk_character(int chac, int tox, int toy, int ignwal, bool autoWalkAnims);
 void FindReasonableLoopForCharacter(CharacterInfo *chap);
 void walk_or_move_character(CharacterInfo *chaa, int x, int y, int blocking, int direct, bool isWalk);
@@ -195,6 +202,7 @@ void setup_player_character(int charid);
 void CheckViewFrameForCharacter(CharacterInfo *chi);
 Shared::Bitmap *GetCharacterImage(int charid, int *isFlipped);
 CharacterInfo *GetCharacterAtScreen(int xx, int yy);
+CharacterInfo *GetCharacterAtRoom(int x, int y);
 // Get character ID at the given room coordinates
 int is_pos_on_character(int xx, int yy);
 void get_char_blocking_rect(int charid, int *x1, int *y1, int *width, int *y2);
@@ -220,7 +228,7 @@ Rect GetCharacterRoomBBox(int charid, bool use_frame_0 = false);
 PViewport FindNearestViewport(int charid);
 
 // order of loops to turn character in circle from down to down
-extern const int turnlooporder[8];
+extern int turnlooporder[8];
 
 } // namespace AGS3
 

@@ -343,6 +343,11 @@ void ScummEngine::initScreens(int b, int h) {
 	}
 #endif
 
+	if (_macScreen) {
+		_macScreen->fillRect(Common::Rect(_macScreen->w, _macScreen->h), 0);
+		clearTextSurface();
+	}
+
 	if (!getResourceAddress(rtBuffer, 4)) {
 		// Since the size of screen 3 is fixed, there is no need to reallocate
 		// it if its size changed.
@@ -1124,6 +1129,11 @@ void ScummEngine::restoreCharsetBg() {
 		_charset->_str.left = -1;
 		_charset->_left = -1;
 
+		if (_macScreen && _game.id == GID_INDY3 && _charset->_textScreenID == kTextVirtScreen) {
+			mac_undrawIndy3TextBox();
+			return;
+		}
+
 		// Restore background on the whole text area. This code is based on
 		// restoreBackground(), but was changed to only restore those parts which are
 		// currently covered by the charset mask.
@@ -1150,7 +1160,7 @@ void ScummEngine::restoreCharsetBg() {
 				memset(screenBuf, 0, vs->h * vs->pitch);
 		}
 
-		if (vs->hasTwoBuffers) {
+		if (vs->hasTwoBuffers || _macScreen) {
 			// Clean out the charset mask
 			clearTextSurface();
 		}
@@ -1923,7 +1933,7 @@ bool Gdi::drawStrip(byte *dstPtr, VirtScreen *vs, int x, int y, const int width,
 	// Do some input verification and make sure the strip/strip offset
 	// are actually valid. Normally, this should never be a problem,
 	// but if e.g. a savegame gets corrupted, we can easily get into
-	// trouble here. See also bug #795214.
+	// trouble here. See also bug #1191.
 	int offset = -1, smapLen;
 	if (_vm->_game.features & GF_16COLOR) {
 		smapLen = READ_LE_UINT16(smap_ptr);
@@ -4085,7 +4095,7 @@ void ScummEngine::dissolveEffect(int width, int height) {
 void ScummEngine::scrollEffect(int dir) {
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	// The FM-Towns versions use smooth scrolling here, but only for left and right.
-	if (_game.platform == Common::kPlatformFMTowns && dir > 1) {
+	if (_enableSmoothScrolling && dir > 1) {
 		towns_scriptScrollEffect((dir & 1) * 2 - 1);
 		return;
 	}

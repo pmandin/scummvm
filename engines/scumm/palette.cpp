@@ -25,6 +25,7 @@
 #include "common/textconsole.h"
 #include "common/util.h"
 
+#include "graphics/macega.h"
 #include "graphics/palette.h"
 
 #include "scumm/resource.h"
@@ -137,20 +138,6 @@ void ScummEngine::resetPalette() {
 		0xFF, 0x99, 0x99, 	0xFF, 0x55, 0xFF, 	0xFF, 0xFF, 0x77, 	0xFF, 0xFF, 0xFF
 	};
 
-	// Theoreticaly, it should be possible to get the palette from the
-	// game's "clut" reosurce. But when I try that, I still get the wrong
-	// colours. This table is based on what Basilisk II draws.
-
-// 6 = brown
-// 11 = bright cyan
-
-	static const byte tableMacPalette[] = {
-		0x00, 0x00, 0x00,	0x00, 0x00, 0xBE,	0x00, 0xBE, 0x00,	0x00, 0xBE, 0xBE,
-		0xBE, 0x00, 0x00,	0xBE, 0x00, 0xBE,	0xBE, 0x75, 0x00,	0xBE, 0xBE, 0xBE,
-		0x75, 0x75, 0x75,	0x75, 0x75, 0xFC,	0x75, 0xFC, 0x75,	0x75, 0xFC, 0xFC,
-		0xFC, 0x75, 0x75,	0xFC, 0x75, 0xFC,	0xFC, 0xFC, 0x75,	0xFC, 0xFC, 0xFC
-	};
-
 	static const byte tableEGAPalette[] = {
 		0x00, 0x00, 0x00, 	0x00, 0x00, 0xAA, 	0x00, 0xAA, 0x00, 	0x00, 0xAA, 0xAA,
 		0xAA, 0x00, 0x00, 	0xAA, 0x00, 0xAA, 	0xAA, 0x55, 0x00, 	0xAA, 0xAA, 0xAA,
@@ -228,6 +215,10 @@ void ScummEngine::resetPalette() {
 
 		switch (_renderMode) {
 		case Common::kRenderEGA:
+		case Common::kRenderMacintoshBW:
+			// Use EGA palette for MacintoshBW, because that makes
+			// white 0xFFFFFF there. The Mac EGA palette, would
+			// make it 0xFCFCFC.
 			setPaletteFromTable(tableEGAPalette, sizeof(tableEGAPalette) / 3);
 			break;
 
@@ -253,8 +244,8 @@ void ScummEngine::resetPalette() {
 		default:
 			if ((_game.platform == Common::kPlatformAmiga) || (_game.platform == Common::kPlatformAtariST))
 				setPaletteFromTable(tableAmigaPalette, sizeof(tableAmigaPalette) / 3);
-			else if (_game.id == GID_LOOM && _game.platform == Common::kPlatformMacintosh)
-				setPaletteFromTable(tableMacPalette, sizeof(tableMacPalette) / 3);
+			else if ((_game.id == GID_LOOM || _game.id == GID_INDY3) && _game.platform == Common::kPlatformMacintosh)
+				setPaletteFromTable(Graphics::macEGAPalette, sizeof(Graphics::macEGAPalette) / 3);
 			else
 				setPaletteFromTable(tableEGAPalette, sizeof(tableEGAPalette) / 3);
 		}
@@ -1432,7 +1423,11 @@ void ScummEngine::updatePalette() {
 		for (i = _palDirtyMin; i <= _palDirtyMax; i++) {
 			byte *data;
 
-			if (_game.features & GF_SMALL_HEADER && _game.version > 2)
+			// In b/w Mac rendering mode, the shadow palette is
+			// handled by the renderer itself. See comment in
+			// mac_drawStripToScreen().
+
+			if (_game.features & GF_SMALL_HEADER && _game.version > 2 && _renderMode != Common::kRenderMacintoshBW)
 				data = _currentPalette + _shadowPalette[i] * 3;
 			else
 				data = _currentPalette + i * 3;

@@ -67,7 +67,6 @@ class WriteStream;
 class HardwareInputSet;
 class Keymap;
 class KeymapperDefaultBindings;
-class Encoding;
 
 typedef Array<Keymap *> KeymapArray;
 }
@@ -138,7 +137,6 @@ enum Type {
  * - Sound output
  */
 class OSystem : Common::NonCopyable {
-	friend class Common::Encoding;
 protected:
 	OSystem();
 	virtual ~OSystem();
@@ -365,11 +363,6 @@ public:
 		kFeatureFilteringMode,
 
 		/**
-		 * Indicates that GUI runs in HiDPI mode
-		 */
-		kFeatureHiDPI,
-
-		/**
 		 * Indicate if stretch modes are supported by the backend.
 		 */
 		kFeatureStretchMode,
@@ -485,6 +478,11 @@ public:
 		* Change analog joystick deadzone.
 		*/
 		kFeatureJoystickDeadzone,
+
+		/**
+		* Scalers.
+		*/
+		kFeatureScalers,
 
 		/**
 		* Shaders.
@@ -861,6 +859,60 @@ public:
 	 */
 	virtual int getStretchMode() const { return 0; }
 
+	/**
+	 * Return the ID of the 'default' scaler.
+	 *
+	 * This mode is set by the client code when no user overrides
+	 * are present (i.e. if no custom scaler is selected using the
+	 * command line or a config file).
+	 *
+	 * @return ID of the 'default' scaler.
+	 */
+	virtual uint getDefaultScaler() const { return 0; }
+
+	/**
+	 * Return the 'default' scale factor.
+	 *
+	 * This mode is set by the client code when no user overrides
+	 * are present (i.e. if no custom shader mode is selected using
+	 * the command line or a config file).
+	 *
+	 * @return The 'default' scale factor.
+	 */
+	virtual uint getDefaultScaleFactor() const { return 1; }
+
+	/**
+	 * Switch to the specified scaler.
+	 *
+	 * If switching to the new mode fails, this method returns false.
+	 *
+	 * @param mode ID of the new scaler.
+	 * @param factor The scale factor to use
+	 *
+	 * @return True if the switch was successful, false otherwise.
+	 */
+	virtual bool setScaler(uint mode, int factor) { return false; }
+
+	/**
+	 * Switch to the scaler with the given name.
+	 *
+	 * If @p name is unknown, or if switching to the new mode fails,
+	 * this method returns false.
+	 *
+	 * @param name Name of the new scaler.
+	 * @param factor The scale factor to use
+	 *
+	 * @return True if the switch was successful, false otherwise.
+	 */
+	virtual bool setScaler(const char *name, int factor) { return false; }
+
+	/**
+	 * Determine which stretch mode is currently active.
+	 *
+	 * @return ID of the active stretch mode.
+	 */
+	virtual uint getScaler() const { return 0; }
+
 
 	/**
 	 * Set the size and color format of the virtual screen.
@@ -994,6 +1046,12 @@ public:
 	 * For more information, see @ref PaletteManager.
 	 */
 	virtual PaletteManager *getPaletteManager() = 0;
+
+	/**
+	 * Return the scale factor for HiDPI screens.
+	 * Returns 1 for non-HiDPI screens, or if HiDPI display is not supported by the backend.
+	 */
+	virtual float getHiDPIScreenFactor() const { return 1.0f; }
 
 	/**
 	 * Blit a bitmap to the virtual screen.
@@ -1171,11 +1229,12 @@ public:
 	virtual void clearOverlay() = 0;
 
 	/**
-	 * Copy the content of the overlay into a buffer provided by the caller.
+	 * Copy the content of the overlay into a surface provided by the
+	 * caller.
 	 *
 	 * This is only used to implement fake alpha blending.
 	 */
-	virtual void grabOverlay(void *buf, int pitch) = 0;
+	virtual void grabOverlay(Graphics::Surface &surface) = 0;
 
 	/**
 	 * Blit a graphics buffer to the overlay.
@@ -1308,7 +1367,7 @@ public:
 	 * On many systems, this corresponds to the combination of time()
 	 * and localtime().
 	 */
-	virtual void getTimeAndDate(TimeDate &t) const = 0;
+	virtual void getTimeAndDate(TimeDate &td, bool skipRecord = false) const = 0;
 
 	/**
 	 * Return the timer manager singleton.
@@ -1667,6 +1726,14 @@ public:
 	virtual void logMessage(LogMessageType::Type type, const char *message) = 0;
 
 	/**
+	 * Display a dialog box containing the given message.
+	 *
+	 * @param type    Type of the message.
+	 * @param message The message itself.
+	 */
+	virtual void messageBox(LogMessageType::Type type, const char *message) {}
+
+	/**
 	 * Open the log file in a way that allows the user to review it,
 	 * and possibly email it (or parts of it) to the ScummVM team,
 	 * for example as part of a bug report.
@@ -1741,16 +1808,17 @@ public:
 	virtual bool openUrl(const Common::String &url) {return false; }
 
 	/**
-	 * Return the locale of the system.
+	 * Return the language of the system.
 	 *
-	 * This returns the currently set locale of the system on which
+	 * This returns the currently set language of the system on which
 	 * ScummVM is run.
 	 *
-	 * The format of the locale is language_country. These should match
-	 * the POSIX locale values.
+	 * The format is an ISO 639 language code, optionally followed by an ISO 3166-1 country code
+	 * in the form language_country.
 	 *
 	 * For information about POSIX locales, see the following link:
-	 * https://en.wikipedia.org/wiki/Locale_(computer_software)#POSIX_platforms
+	 * https://en.wikipedia.org/wiki/ISO_639
+	 * https://en.wikipedia.org/wiki/ISO_3166-1
 	 *
 	 * The default implementation returns "en_US".
 	 *

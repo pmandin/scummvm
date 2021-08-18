@@ -677,11 +677,13 @@ AIEntTypeInfo aiEntList[] = {
 	{ END_AI_TYPES,			nullptr,					nullptr,					nullptr,					nullptr }
 };
 
-FuncLookUp aiFuncList[] = {
+static struct {
+	FuncPtr function;
+	const char *funcName;
+} aiFuncList[] = {
 	{aiPlayerInit,				"aiPlayerInit"},
 	{aiPlayerInit2,				"aiPlayerInit2"},
 	{aiPlayerAction,			"aiPlayerAction"},
-	{(FuncPtr)aiPlayerDraw,		"aiPlayerDraw"},
 	{aiGemAttackInit,			"aiGemAttackInit"},
 	{aiGemAttackAction,			"aiGemAttackAction"},
 	{aiDollyInit,				"aiDollyInit"},
@@ -760,14 +762,12 @@ FuncLookUp aiFuncList[] = {
 	{aiShockBotInit,			"aiShockBotInit"},
 	{aiShockBotInit2,			"aiShockBotInit2"},
 	{aiShockBotAction,			"aiShockBotAction"},
-	{(FuncPtr)aiShockBotShock,	"aiShockBotShock"},
 	{aiOmniBotMissileInit,		"aiOmniBotMissileInit"},
 	{aiOmniBotMissileInit2,		"aiOmniBotMissileInit2"},
 	{aiOmniBotMissileAction,	"aiOmniBotMissileAction"},
 	{aiSlugAttackInit,			"aiSlugAttackInit"},
 	{aiSlugAttackInit2,			"aiSlugAttackInit2"},
 	{aiSlugAttackAction,		"aiSlugAttackAction"},
-	{(FuncPtr)aiSlugAttackDraw, "aiSlugAttackDraw"},
 	{aiDeadWorkerInit,			"aiDeadWorkerInit"},
 	{aiDeadWorkerInit2,			"aiDeadWorkerInit2"},
 	{aiWorkerInit,				"aiWorkerInit"},
@@ -795,13 +795,11 @@ FuncLookUp aiFuncList[] = {
 	{aiOmniBotAction,			"aiOmniBotAction"},
 	{aiOmniBotMove,				"aiOmniBotMove"},
 	{aiLaserAction,				"aiLaserAction"},
-	{(FuncPtr)aiLaserDraw,		"aiLaserDraw"},
 	{aiLaserInit,				"aiLaserInit"},
 	{aiLaserInit2,				"aiLaserInit2"},
 	{aiDiverterInit,			"aiDiverterInit"},
 	{aiDiverterInit2,			"aiDiverterInit2"},
 	{aiDiverterAction,			"aiDiverterAction"},
-	{(FuncPtr)aiDiverterDraw,	"aiDiverterDraw"},
 	{aiRightBotInit,			"aiRightBotInit"},
 	{aiRightBotInit2,			"aiRightBotInit2"},
 	{aiRightBotAction,			"aiRightBotAction"},
@@ -815,12 +813,10 @@ FuncLookUp aiFuncList[] = {
 	{aiMeerkatLookAround,		"aiMeerkatLookAround" },
 	{aiMeerkatInit,				"aiMeerkatInit"},
 	{aiMeerkatInit2,			"aiMeerkatInit2"},
-	{(FuncPtr)aiMeerkatDraw,	"aiMeerkatDraw"},
 	{aiMeerkatAction,			"aiMeerkatAction"},
 	{aiFatFrogInit,				"aiFatFrogInit"},
 	{aiFatFrogInit2,			"aiFatFrogInit2"},
 	{aiFatFrogAction,			"aiFatFrogAction"},
-	{(FuncPtr)aiFatFrogTongueDraw, "aiFatFrogTongueDraw"},
 	{aiGoodFairyInit,			"aiGoodFairyInit"},
 	{aiGoodFairyInit2,			"aiGoodFairyInit2"},
 	{aiGoodFairyAction,			"aiGoodFairyAction"},
@@ -831,7 +827,6 @@ FuncLookUp aiFuncList[] = {
 	{aiGatePuddleInit2,			"aiGatePuddleInit2"},
 	{aiGatePuddleAction,		"aiGatePuddleAction"},
 	{aiIcePuffSnowballAction,	"aiIcePuffSnowballAction" },
-	{(FuncPtr)aiIcePuffSnowballDraw,	"aiIcePuffSnowballDraw"},
 	{aiIcePuffInit,				"aiIcePuffInit"},
 	{aiIcePuffInit2,			"aiIcePuffInit2"},
 	{aiIcePuffAction,			"aiIcePuffAction"},
@@ -843,7 +838,6 @@ FuncLookUp aiFuncList[] = {
 	{aiDragonAction,			"aiDragonAction"},
 	{aiDragonUse,				"aiDragonUse"	},
 	{aiDragonWake,				"aiDragonWake"},
-	{(FuncPtr)aiDragonDraw,		"aiDragonDraw"},
 	{aiEnvelopeGreenInit,		"aiEnvelopeGreenInit"},
 	{aiEnvelopeGreenInit2,		"aiEnvelopeGreenInit2"},
 	{aiGemBlueInit,				"aiGemBlueInit"},
@@ -901,6 +895,22 @@ FuncLookUp aiFuncList[] = {
 	{aiIceBlockInit,			"aiIceBlockInit"},
 	{aiIceBlockInit2,			"aiIceBlockInit2"},
 	{aiIceBlockAction,			"aiIceBlockAction"},
+	{nullptr, nullptr}
+};
+
+static struct {
+	EntFuncPtr function;
+	const char *funcName;
+} aiEntFuncList[] = {
+	{aiPlayerDraw,			"aiPlayerDraw"},
+	{aiShockBotShock,		"aiShockBotShock"},
+	{aiSlugAttackDraw,		"aiSlugAttackDraw"},
+	{aiLaserDraw,			"aiLaserDraw"},
+	{aiDiverterDraw,		"aiDiverterDraw"},
+	{aiMeerkatDraw,			"aiMeerkatDraw"},
+	{aiFatFrogTongueDraw,	"aiFatFrogTongueDraw"},
+	{aiIcePuffSnowballDraw,	"aiIcePuffSnowballDraw"},
+	{aiDragonDraw,			"aiDragonDraw"},
 	{nullptr, nullptr}
 };
 
@@ -1246,7 +1256,7 @@ void AI::clearPersistent() {
 	_numGems = _numGooCups = _numMonkeystones = _numInventory = _numDeliveries = 0;
 }
 
-const char *AI::funcLookUp(void(*function)(AIEntity *e)) {
+const char *AI::funcLookUp(FuncPtr function) {
 	if (!function)
 		return nullptr;
 
@@ -1254,6 +1264,12 @@ const char *AI::funcLookUp(void(*function)(AIEntity *e)) {
 	while (aiFuncList[i].funcName) {
 		if (aiFuncList[i].function == function)
 			return aiFuncList[i].funcName;
+		i++;
+	}
+	i = 0;
+	while (aiEntFuncList[i].funcName) {
+		if ((FuncPtr)aiEntFuncList[i].function == function)
+			return aiEntFuncList[i].funcName;
 		i++;
 	}
 	return nullptr;
@@ -1267,6 +1283,12 @@ FuncPtr AI::funcLookUp(const char *function) {
 	while (aiFuncList[i].funcName) {
 		if (!scumm_stricmp(aiFuncList[i].funcName, function))
 			return aiFuncList[i].function;
+		i++;
+	}
+	i = 0;
+	while (aiEntFuncList[i].funcName) {
+		if (!scumm_stricmp(aiEntFuncList[i].funcName, function))
+			return (FuncPtr)aiEntFuncList[i].function;
 		i++;
 	}
 	return nullptr;

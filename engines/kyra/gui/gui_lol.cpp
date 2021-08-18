@@ -2233,6 +2233,9 @@ int GUI_LoL::runMenu(Menu &menu) {
 	uint8 hasSpecialButtons = 0;
 	_saveSlotsListUpdateNeeded = true;
 
+	Common::Keymap *const lolKeyboardKeymap = _vm->_eventMan->getKeymapper()->getKeymap(LoLEngine::kKeyboardKeymapName);
+	assert(lolKeyboardKeymap);
+
 	while (_displayMenu) {
 		_vm->_mouseX = _vm->_mouseY = 0;
 
@@ -2397,6 +2400,12 @@ int GUI_LoL::runMenu(Menu &menu) {
 			f = _screen->setFont(f);
 			_screen->fillRect((d->sx << 3) + fC, d->sy, (d->sx << 3) + fC + wW, d->sy + d->h - (_vm->gameFlags().use16ColorMode ? 2 : 1), d->unk8, 0);
 			_screen->setCurPage(pg);
+
+			// Disable keyboard keymap during text input (save menu)
+			lolKeyboardKeymap->setEnabled(false);
+		} else if (_lastMenu == &_savenameMenu) {
+			// Restore keyboard keymap after text input (save menu)
+			lolKeyboardKeymap->setEnabled(true);
 		}
 
 		while (!_newMenu && _displayMenu) {
@@ -2520,6 +2529,14 @@ void GUI_LoL::setupSaveMenuSlots(Menu &menu, int num) {
 				fC = _screen->getTextWidth(s);
 			}
 
+			if (_vm->gameFlags().lang == Common::JA_JPN) {
+				// Strip special characters from GMM save dialog which might get misinterpreted as SJIS
+				for (uint ii = 0; ii < strlen(s); ++ii) {
+					if (s[ii] < 32) // due to the signed char type this will also clean up everything >= 0x80
+						s[ii] = ' ';
+				}
+			}
+
 			menu.item[i].itemString = s;
 			s += (strlen(s) + 1);
 			menu.item[i].saveSlot = _saveSlots[i + _savegameOffset - slotOffs];
@@ -2558,11 +2575,6 @@ int GUI_LoL::getInput() {
 	if (!_displayMenu)
 		return 0;
 
-	// Disable the keymap during text input
-	Common::Keymapper *const mapper = _vm->_eventMan->getKeymapper();
-	Common::Keymap *const lolKeymap = mapper->getKeymap(LoLEngine::kKeymapName);
-	lolKeymap->setEnabled(false);
-
 	Common::Point p = _vm->getMousePos();
 	_vm->_mouseX = p.x;
 	_vm->_mouseY = p.y;
@@ -2599,8 +2611,6 @@ int GUI_LoL::getInput() {
 		_displayMenu = false;
 
 	_vm->delay(8);
-
-	lolKeymap->setEnabled(true);
 
 	return inputFlag & 0x8000 ? 1 : 0;
 }
@@ -2834,7 +2844,7 @@ int GUI_LoL::clickedSavenameMenu(Button *button) {
 	updateMenuButton(button);
 	if (button->arg == _savenameMenu.item[0].itemId) {
 
-		Util::convertDOSToISO(_saveDescription);
+		Util::convertDOSToUTF8(_saveDescription, 5120 - (int)((uint8*)_saveDescription - _vm->_tempBuffer5120));
 
 		int slot = _menuResult == -2 ? getNextSavegameSlot() : _menuResult - 1;
 		Graphics::Surface thumb;

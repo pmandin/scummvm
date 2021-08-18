@@ -50,13 +50,12 @@ public:
 
 	void run() override;
 
-	// Paint the Gump
 	void PaintThis(RenderSurface *, int32 lerp_factor, bool scaled) override;
 
 	bool OnKeyDown(int key, int mod) override;
 
 	static ProcId U8MovieViewer(Common::SeekableReadStream *rs, bool fade, bool introMusicHack, bool noScale);
-	static MovieGump *CruMovieViewer(const Std::string fname, int x, int y, const byte *pal, Gump *parent);
+	static MovieGump *CruMovieViewer(const Std::string fname, int x, int y, const byte *pal, Gump *parent, uint16 frameshape);
 
 	bool loadData(Common::ReadStream *rs);
 	void saveData(Common::WriteStream *ws) override;
@@ -69,17 +68,26 @@ public:
 protected:
 	MoviePlayer *_player;
 
-	// Load subtitles with format detection
+	/// Load subtitles with format detection
 	void loadSubtitles(Common::SeekableReadStream *rs);
 
-	// Load subtitles from a txt file (No Remorse format)
+	/// Load subtitles from a txt file (No Remorse format)
 	void loadTXTSubs(Common::SeekableReadStream *rs);
 
-	// Load subtitles from a iff file (No Regret format)
+	/// Load subtitles from a iff file (No Regret format)
 	void loadIFFSubs(Common::SeekableReadStream *rs);
 
+	/// Update the offset of the player if a shape has been set
+	void ClearPlayerOffset();
+
+	/// Subtitles, by frame number.  Only used for Crusader movies.
 	Common::HashMap<int, Common::String> _subtitles;
+
+	/// Last widget used for displaying subtitles.
 	uint16 _subtitleWidget;
+
+	/// Last frame that was displayed, so we can catch up subtitles.
+	int _lastFrameNo;
 
 };
 

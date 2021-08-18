@@ -24,7 +24,7 @@
 #define AGS_PLUGINS_AGS_SPRITE_FONT_VAR_WIDTH_FONT_H
 
 #include "ags/plugins/ags_sprite_font/character_entry.h"
-#include "ags/plugins/agsplugin.h"
+#include "ags/plugins/ags_plugin.h"
 #include "ags/lib/std/map.h"
 
 namespace AGS3 {
@@ -33,17 +33,17 @@ namespace AGSSpriteFont {
 
 class VariableWidthFont {
 public:
-	VariableWidthFont(void);
-	~VariableWidthFont(void);
+	int SpriteNumber = 0;
+	int FontReplaced = 0;
+	int Spacing = 0;
+	int LineHeightAdjust = 0;
+	int LineSpacingAdjust = 0;
+	int LineSpacingOverride = 0;
+	std::map<char, CharacterEntry> characters;
+
+public:
 	void SetGlyph(int character, int x, int y, int width, int height);
 	void SetLineHeightAdjust(int LineHeight, int SpacingHeight, int SpacingOverride);
-	int SpriteNumber;
-	int FontReplaced;
-	int Spacing;
-	int LineHeightAdjust;
-	int LineSpacingAdjust;
-	int LineSpacingOverride;
-	std::map<char, CharacterEntry> characters;
 };
 
 } // namespace AGSSpriteFont

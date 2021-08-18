@@ -56,10 +56,12 @@ void IMuseDigital::parseScriptCmds(int cmd, int b, int c, int d, int e, int f, i
 			setPriority(soundId, d);
 			break;
 		case 0x600: // set volume
-			setVolume(soundId, d);
+			if (d >= 0 && d <= 127)
+				setVolume(soundId, d);
 			break;
 		case 0x700: // set pan
-			setPan(soundId, d);
+			if (d >= 0 && d <= 127)
+				setPan(soundId, d);
 			break;
 		default:
 			warning("IMuseDigital::doCommand SetParam DEFAULT command %d", sub_cmd);
@@ -165,9 +167,6 @@ void IMuseDigital::flushTrack(Track *track) {
 	if (!_mixer->isSoundHandleActive(track->mixChanHandle)) {
 		track->reset();
 	}
-
-	if (_vm->_game.id == GID_CMI && track->trackId < MAX_DIGITAL_TRACKS)
-		_scheduledCrossfades[track->trackId].scheduled = false;
 }
 
 void IMuseDigital::flushTracks() {
@@ -177,8 +176,6 @@ void IMuseDigital::flushTracks() {
 		Track *track = _track[l];
 		if (track->used && track->toBeRemoved && !_mixer->isSoundHandleActive(track->mixChanHandle)) {
 			debug(5, "flushTracks() - trackId:%d, soundId:%d", track->trackId, track->soundId);
-			if (_vm->_game.id == GID_CMI && l < MAX_DIGITAL_TRACKS)
-				_scheduledCrossfades[track->trackId].scheduled = false;
 			track->reset();
 		}
 	}

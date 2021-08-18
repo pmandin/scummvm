@@ -86,16 +86,17 @@ struct MacMenuItem {
 	char shortcut;
 	int shortcutPos;
 	bool enabled;
+	bool checked;
 	Common::Rect bbox;
 
 	MacMenuSubMenu *submenu;
 
-	MacMenuItem(const Common::String &t, int a = -1, int s = 0, char sh = 0, int sp = -1, bool e = true) :
+	MacMenuItem(const Common::String &t, int a = -1, int s = 0, char sh = 0, int sp = -1, bool e = true, bool c = false) :
 			text(t), unicode(false), action(a), style(s), shortcut(sh),
-			shortcutPos(sp), enabled(e), submenu(nullptr) {}
-	MacMenuItem(const Common::U32String &t, int a = -1, int s = 0, char sh = 0, int sp = -1, bool e = true) :
+			shortcutPos(sp), enabled(e), submenu(nullptr), checked(c) {}
+	MacMenuItem(const Common::U32String &t, int a = -1, int s = 0, char sh = 0, int sp = -1, bool e = true, bool c = false) :
 			unicodeText(t), unicode(true), action(a), style(s), shortcut(sh),
-			shortcutPos(sp), enabled(e), submenu(nullptr) {}
+			shortcutPos(sp), enabled(e), submenu(nullptr), checked(c) {}
 
 	~MacMenuItem() {
 		if (submenu)
@@ -358,7 +359,7 @@ MacMenuSubMenu *MacMenu::getSubmenu(MacMenuSubMenu *submenu, int index) {
 	}
 }
 
-int MacMenu::addMenuItem(MacMenuSubMenu *submenu, const Common::String &text, int action, int style, char shortcut, bool enabled) {
+int MacMenu::addMenuItem(MacMenuSubMenu *submenu, const Common::String &text, int action, int style, char shortcut, bool enabled, bool checked) {
 	_dimensionsDirty = true;
 
 	if (submenu == nullptr) {
@@ -370,12 +371,12 @@ int MacMenu::addMenuItem(MacMenuSubMenu *submenu, const Common::String &text, in
 
 	_dimensionsDirty = true;
 
-	submenu->items.push_back(new MacMenuItem(text, action, style, shortcut, -1, enabled));
+	submenu->items.push_back(new MacMenuItem(text, action, style, shortcut, -1, enabled, checked));
 
 	return submenu->items.size() - 1;
 }
 
-int MacMenu::addMenuItem(MacMenuSubMenu *submenu, const Common::U32String &text, int action, int style, char shortcut, bool enabled) {
+int MacMenu::addMenuItem(MacMenuSubMenu *submenu, const Common::U32String &text, int action, int style, char shortcut, bool enabled, bool checked) {
 	_dimensionsDirty = true;
 
 	Common::U32String amp("&");
@@ -402,7 +403,7 @@ int MacMenu::addMenuItem(MacMenuSubMenu *submenu, const Common::U32String &text,
 		return _items.size() - 1;
 	}
 
-	submenu->items.push_back(new MacMenuItem(res, action, style, shortcut, shortcutPos, enabled));
+	submenu->items.push_back(new MacMenuItem(res, action, style, shortcut, shortcutPos, enabled, checked));
 
 	return submenu->items.size() - 1;
 }
@@ -485,6 +486,185 @@ void MacMenu::loadMenuBarResource(Common::MacResManager *resFork, uint16 id) {
 	}
 }
 
+void MacMenu::setCheckMark(const Common::String &menuId, const Common::String &itemId, bool checkMark) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->checked = checkMark;
+		_contentIsDirty = true;
+	}
+}
+
+void MacMenu::setEnabled(const Common::String &menuId, const Common::String &itemId, bool enabled) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->enabled = enabled;
+		_contentIsDirty = true;
+	}
+}
+
+void MacMenu::setName(const Common::String &menuId, const Common::String &itemId, const Common::String &name) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->text = name;
+		_contentIsDirty = true;
+	}
+}
+
+void MacMenu::setCheckMark(int menuId, int itemId, bool checkMark) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->checked = checkMark;
+		_contentIsDirty = true;
+	}
+}
+
+void MacMenu::setEnabled(int menuId, int itemId, bool enabled) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->enabled = enabled;
+		_contentIsDirty = true;
+	}
+}
+
+void MacMenu::setName(int menuId, int itemId, const Common::String &name) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->text = name;
+		_contentIsDirty = true;
+	}
+}
+
+void MacMenu::setAction(const Common::String &menuId, const Common::String &itemId, int actionId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->action = actionId;
+	}
+}
+
+void MacMenu::setAction(int menuId, int itemId, int actionId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	if (item) {
+		item->action = actionId;
+	}
+}
+
+bool MacMenu::getCheckMark(int menuId, int itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	// if item doesn't exist, this will be warned at findMenuItem
+	return item ? item->checked : false;
+}
+
+bool MacMenu::getCheckMark(const Common::String &menuId, const Common::String &itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	return item ? item->checked : false;
+}
+
+bool MacMenu::getEnabled(int menuId, int itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	return item ? item->enabled : false;
+}
+
+bool MacMenu::getEnabled(const Common::String &menuId, const Common::String &itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	return item ? item->enabled : false;
+}
+
+Common::String MacMenu::getName(int menuId, int itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	return item ? item->text : Common::String();
+}
+
+Common::String MacMenu::getName(const Common::String &menuId, const Common::String &itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	return item ? item->text : Common::String();
+}
+
+int MacMenu::getAction(int menuId, int itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	return item ? item->action : 0;
+}
+
+int MacMenu::getAction(const Common::String &menuId, const Common::String &itemId) {
+	MacMenuItem *item = findMenuItem(menuId, itemId);
+
+	return item ? item->action : 0;
+}
+
+MacMenuItem *MacMenu::findMenuItem(const Common::String &menuId, const Common::String &itemId) {
+	// TODO: support arbitrary level menu item finding
+	// only support 2 level finding now.
+
+	MacMenuItem *menu = nullptr;
+	for (uint i = 0; i < _items.size(); i++) {
+		// TODO: support unicode text menu
+		// didn't support unicode item finding yet
+		if (!_items[i]->unicode) {
+			if (_items[i]->text.equalsIgnoreCase(menuId)) {
+				menu = _items[i];
+				break;
+			}
+		}
+	}
+
+	if (!menu) {
+		warning("MacMenu::findMenuItem: can not find menu with id %s", menuId.c_str());
+		return nullptr;
+	}
+
+	if (!menu->submenu) {
+		warning("MacMenu::findMenuItem: menu %s doesn't have submenu", menuId.c_str());
+		return nullptr;
+	}
+
+	for (uint i = 0; i < menu->submenu->items.size(); i++) {
+		if (!menu->submenu->items[i]->unicode) {
+			if (menu->submenu->items[i]->text.equalsIgnoreCase(itemId))
+				return menu->submenu->items[i];
+		}
+	}
+
+	warning("MacMenu::findMenuItem: menu %s doesn't have item with id %s", menuId.c_str(), itemId.c_str());
+	return nullptr;
+}
+
+MacMenuItem *MacMenu::findMenuItem(int menuId, int itemId) {
+	MacMenuItem *menu = nullptr;
+
+	if ((uint)menuId < _items.size())
+		menu = _items[menuId];
+
+	if (!menu) {
+		warning("MacMenu::findMenuItem: menuId %d out of bounds", menuId);
+		return nullptr;
+	}
+
+	if (!menu->submenu) {
+		warning("MacMenu::findMenuItem: menu %d doesn't have submenu", menuId);
+		return nullptr;
+	}
+
+	if ((uint)itemId < menu->submenu->items.size())
+		return menu->submenu->items[itemId];
+
+	warning("MacMenu::findMenuItem: itemId %d out of bounds in menu %d", itemId, menuId);
+	return nullptr;
+}
+
 void MacMenu::clearSubMenu(int id) {
 	MacMenuItem *menu = _items[id];
 
@@ -531,6 +711,7 @@ void MacMenu::createSubMenuFromString(int id, const char *str, int commandId) {
 			addMenuItem(submenu, NULL, 0);
 		} else {
 			bool enabled = true;
+			bool checked = false;
 			int style = 0;
 			char shortcut = 0;
 			const char *shortPtr = strrchr(item.c_str(), '/');
@@ -540,7 +721,9 @@ void MacMenu::createSubMenuFromString(int id, const char *str, int commandId) {
 					item.deleteChar(shortPtr - item.c_str());
 					item.deleteChar(shortPtr - item.c_str());
 				} else {
-					error("MacMenu::createSubMenuFromString(): Unexpected shortcut: '%s', item '%s' in menu '%s'", shortPtr, item.c_str(), string.c_str());
+					// if we only have one / without shortcut key, we skip it.
+					item.deleteChar(shortPtr - item.c_str());
+					// error("MacMenu::createSubMenuFromString(): Unexpected shortcut: '%s', item '%s' in menu '%s'", shortPtr, item.c_str(), string.c_str());
 				}
 			}
 
@@ -567,7 +750,8 @@ void MacMenu::createSubMenuFromString(int id, const char *str, int commandId) {
 
 			Common::String tmpitem(item);
 			tmpitem.trim();
-			if (tmpitem.size() > 0 && tmpitem[0] == '(') {
+			// is that any places locate a parenthese will disable the item, or only the first char and last char counts.
+			if (tmpitem.size() > 0 && (tmpitem[0] == '(' || tmpitem.lastChar() == '(')) {
 				enabled = false;
 
 				for (uint j = 0; j < item.size(); j++)
@@ -575,9 +759,13 @@ void MacMenu::createSubMenuFromString(int id, const char *str, int commandId) {
 						item.deleteChar(j);
 						break;
 					}
+			} else if (tmpitem.size() >= 2 && tmpitem[0] == '!' && (uint8)tmpitem[1] == 195) {
+				// this is the !√ situation, we need to set item checked, 195 represent √ in director
+				checked = true;
+				item = item.substr(2, Common::String::npos);
 			}
 
-			addMenuItem(submenu, item, commandId, style, shortcut, enabled);
+			addMenuItem(submenu, item, commandId, style, shortcut, enabled, checked);
 		}
 
 		item.clear();
@@ -850,12 +1038,12 @@ bool MacMenu::draw(ManagedSurface *g, bool forceRedraw) {
 			int accOff = _align == kTextAlignRight ? it->bbox.width() - _font->getStringWidth(it->unicodeText) : 0;
 			Common::UnicodeBiDiText utxt(it->unicodeText);
 
-			_font->drawString(&_screen, utxt.visual, x, y, it->bbox.width(), color, _align);
+			_font->drawString(&_screen, utxt.visual, x, y, it->bbox.width(), color, _align, 0, true);
 			underlineAccelerator(&_screen, _font, utxt, x + accOff, y, it->shortcutPos, color);
 		} else {
 			const Font *font = getMenuFont(it->style);
 
-			font->drawString(&_screen, it->text, x, y, it->bbox.width(), color);
+			font->drawString(&_screen, it->text, x, y, it->bbox.width(), color, Graphics::kTextAlignLeft, 0, true);
 		}
 	}
 
@@ -934,12 +1122,22 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 
 			if (menu->items[i]->unicode) {
 				Common::UnicodeBiDiText utxt(unicodeText);
-				_font->drawString(s, utxt.visual, tx, ty, r->width(), color, _align);
+				_font->drawString(s, utxt.visual, tx, ty, r->width(), color, _align, 0, true);
 				underlineAccelerator(s, _font, utxt, tx + accOff, ty, shortcutPos, color);
 			} else {
 				const Font *font = getMenuFont(menu->items[i]->style);
 
-				font->drawString(s, text, tx, ty, r->width(), color);
+				font->drawString(s, text, tx, ty, r->width(), color, Graphics::kTextAlignLeft, 0, true);
+			}
+
+			if (menu->items[i]->checked) {
+				const Font *font = getMenuFont(menu->items[i]->style);
+
+				int padding = _align == kTextAlignRight ? -_menuRightDropdownPadding: _menuLeftDropdownPadding;
+				int offset = padding - font->getCharWidth(195);
+
+				// calculating the padding and offset, we draw the √ at the center
+				font->drawChar(s, 195, tx - padding + offset, ty, color);
 			}
 
 			if (!acceleratorText.empty() && shortcutPos == -1)
@@ -953,8 +1151,8 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 				// fake it here
 				for (int ii = 0; ii < _tempSurface.h; ii++) {
 					const byte *src = (const byte *)_tempSurface.getBasePtr(0, ii);
-					byte *dst = (byte *)_screen.getBasePtr(x, y+ii);
-					byte pat = _wm->getPatterns()[kPatternCheckers2 - 1][ii % 8];
+					byte *dst = (byte *)_screen.getBasePtr(x, y + ii);
+					byte pat = _wm->getBuiltinPatterns()[kPatternCheckers2 - 1][ii % 8];
 					for (int j = 0; j < r->width(); j++) {
 						if (*src != _wm->_colorGreen && (pat & (1 << (7 - (x + j) % 8))))
 							*dst = *src;
@@ -963,6 +1161,7 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 					}
 				}
 			}
+
 		} else { // Delimiter
 			bool flip = r->left & 2;
 			byte *ptr = (byte *)_screen.getBasePtr(r->left + 1, y + _menuDropdownItemHeight / 2);
@@ -1138,9 +1337,9 @@ bool MacMenu::mouseClick(int x, int y) {
 				uint w = _menustack.back()->bbox.width() + 2;
 				uint h = _menustack.back()->bbox.height() + 2;
 
-				if (x1 + w > _wm->_screenCopy->w)
+				if (x1 + (int)w > _wm->_screenCopy->w)
 					w = _wm->_screenCopy->w - 1 - x1;
-				if (y1 + h > _wm->_screenCopy->h)
+				if (y1 + (int)h > _wm->_screenCopy->h)
 					h = _wm->_screenCopy->h - 1 - y1;
 
 				g_system->copyRectToScreen(_wm->_screenCopy->getBasePtr(x1, y1), _wm->_screenCopy->pitch, x1, y1, w, h);

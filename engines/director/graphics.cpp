@@ -119,18 +119,13 @@ void DirectorEngine::clearPalettes() {
 	}
 }
 
-void DirectorEngine::setCursor(int type) {
+void DirectorEngine::setCursor(DirectorCursor type) {
 	switch (type) {
-	case kCursorDefault:
-		_wm->popCursor();
-		break;
-
 	case kCursorMouseDown:
-		_wm->pushCustomCursor(mouseDown, 16, 16, 0, 0, 3);
+		_wm->replaceCustomCursor(mouseDown, 16, 16, 0, 0, 3);
 		break;
-
 	case kCursorMouseUp:
-		_wm->pushCustomCursor(mouseUp, 16, 16, 0, 0, 3);
+		_wm->replaceCustomCursor(mouseUp, 16, 16, 0, 0, 3);
 		break;
 	}
 }
@@ -155,7 +150,7 @@ void inkDrawPixel(int x, int y, int src, void *data) {
 
 	if (p->ms) {
 		// Get the pixel that macDrawPixel will give us, but store it to apply the
-		// ink later.
+		// ink later
 		tmpDst = *dst;
 		(p->_wm->getDrawPixel())(x, y, src, p->ms->pd);
 		src = *dst;
@@ -247,9 +242,6 @@ void inkDrawPixel(int x, int y, int src, void *data) {
 		break;
 		// Arithmetic ink types
 	default: {
-		if ((uint32)src == p->colorWhite)
-			break;
-
 		byte rSrc, gSrc, bSrc;
 		byte rDst, gDst, bDst;
 
@@ -264,7 +256,9 @@ void inkDrawPixel(int x, int y, int src, void *data) {
 				*dst = p->_wm->findBestColor(MIN((rSrc + rDst), 0xff), MIN((gSrc + gDst), 0xff), MIN((bSrc + bDst), 0xff));
 			break;
 		case kInkTypeAdd:
-				*dst = p->_wm->findBestColor(abs(rSrc + rDst) % 0xff + 1, abs(gSrc + gDst) % 0xff + 1, abs(bSrc + bDst) % 0xff + 1);
+			// in basilisk, D3.1 is exactly using this method, adding color directly without preventing the overflow.
+			// but i think min(src + dst, 255) will give us a better visual effect
+				*dst = p->_wm->findBestColor(rSrc + rDst, gSrc + gDst, bSrc + bDst);
 			break;
 		case kInkTypeSubPin:
 				*dst = p->_wm->findBestColor(MAX(rSrc - rDst, 0), MAX(gSrc - gDst, 0), MAX(bSrc - bDst, 0));

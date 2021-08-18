@@ -51,11 +51,11 @@ namespace AGS3 {
 #define SWITCH_OUT            1
 
 struct GFX_MODE {
-	int width, height, bpp;
+int width, height, bpp;
 };
 
 struct GFX_MODE_LIST {
-	int num_modes;                /* number of gfx modes */
+	int num_modes;          /* number of gfx modes */
 	GFX_MODE *mode;         /* pointer to the actual mode list array */
 };
 
@@ -112,7 +112,7 @@ struct GFX_DRIVER {
 	AL_METHOD(void, destroy_video_bitmap, (BITMAP *bitmap));
 	AL_METHOD(int, show_video_bitmap, (BITMAP *bitmap));
 	AL_METHOD(int, request_video_bitmap, (BITMAP *bitmap));
-	AL_METHOD( BITMAP *, create_system_bitmap, (int width, int height));
+	AL_METHOD(BITMAP *, create_system_bitmap, (int width, int height));
 	AL_METHOD(void, destroy_system_bitmap, (BITMAP *bitmap));
 	AL_METHOD(int, set_mouse_sprite, (BITMAP *sprite, int xfocus, int yfocus));
 	AL_METHOD(int, show_mouse, (BITMAP *bmp, int x, int y));
@@ -142,8 +142,12 @@ extern GFX_MODE_LIST *get_gfx_mode_list(int card);
 extern void destroy_gfx_mode_list(GFX_MODE_LIST *list);
 
 inline void vsync() {}
-inline int set_display_switch_callback(int dir, AL_METHOD(void, cb, (void))) { return 0; }
-inline int set_display_switch_mode(int v) { return -1; }
+inline int set_display_switch_callback(int dir, AL_METHOD(void, cb, (void))) {
+	return 0;
+}
+inline int set_display_switch_mode(int v) {
+	return -1;
+}
 
 } // namespace AGS3
 

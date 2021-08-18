@@ -21,8 +21,9 @@
  */
 
 #include "common/algorithm.h"
+#include "graphics/transform_tools.h"
+#include "engines/wintermute/base/base_engine.h"
 #include "engines/wintermute/base/gfx/base_image.h"
-#include "graphics/transparent_surface.h"
 
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
 
@@ -93,14 +94,7 @@ bool BaseSurfaceOpenGL3D::displayTransZoom(int x, int y, Rect32 rect, float zoom
 	return true;
 }
 
-bool BaseSurfaceOpenGL3D::displayTrans(int x, int y, Rect32 rect, uint32 alpha, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY) {
-	prepareToDraw();
-
-	_renderer->drawSprite(*this, rect, 100, 100, Vector2(x, y), alpha, false, blendMode, mirrorX, mirrorY);
-	return true;
-}
-
-bool BaseSurfaceOpenGL3D::displayTransOffset(int x, int y, Rect32 rect, uint32 alpha, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY, int offsetX, int offsetY) {
+bool BaseSurfaceOpenGL3D::displayTrans(int x, int y, Rect32 rect, uint32 alpha, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY, int offsetX, int offsetY) {
 	prepareToDraw();
 
 	_renderer->drawSprite(*this, rect, 100, 100, Vector2(x + offsetX, y + offsetY), alpha, false, blendMode, mirrorX, mirrorY);
@@ -114,8 +108,16 @@ bool BaseSurfaceOpenGL3D::display(int x, int y, Rect32 rect, Graphics::TSpriteBl
 	return true;
 }
 
-bool BaseSurfaceOpenGL3D::displayTransform(int x, int y, Rect32 rect, Rect32 newRect, const Graphics::TransformStruct &transform) {
+bool BaseSurfaceOpenGL3D::displayTransRotate(int x, int y, uint32 angle, int32 hotspotX, int32 hotspotY, Rect32 rect, float zoomX, float zoomY, uint32 alpha, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY) {
 	prepareToDraw();
+
+	Common::Point newHotspot;
+	Common::Rect oldRect(rect.left, rect.top, rect.right, rect.bottom);
+	Graphics::TransformStruct transform = Graphics::TransformStruct(zoomX, zoomY, angle, hotspotX, hotspotY, blendMode, alpha, mirrorX, mirrorY, 0, 0);
+	Graphics::TransformTools::newRect(oldRect, transform, &newHotspot);
+
+	x -= newHotspot.x;
+	y -= newHotspot.y;
 
 	Vector2 position(x, y);
 	Vector2 rotation;
@@ -124,11 +126,6 @@ bool BaseSurfaceOpenGL3D::displayTransform(int x, int y, Rect32 rect, Rect32 new
 	Vector2 scale(transform._zoom.x / 100.0f, transform._zoom.y / 100.0f);
 
 	_renderer->drawSpriteEx(*this, rect, position, rotation, scale, transform._angle, transform._rgbaMod, transform._alphaDisable, transform._blendMode, transform.getMirrorX(), transform.getMirrorY());
-	return true;
-}
-
-bool BaseSurfaceOpenGL3D::displayZoom(int x, int y, Rect32 rect, float zoomX, float zoomY, uint32 alpha, bool transparent, Graphics::TSpriteBlendMode blendMode, bool mirrorX, bool mirrorY) {
-	warning("BaseSurfaceOpenGL3D::displayZoom not yet implemented");
 	return true;
 }
 
@@ -178,11 +175,19 @@ bool BaseSurfaceOpenGL3D::create(const Common::String &filename, bool defaultCK,
 
 	_imageData = img.getSurface()->convertTo(OpenGL::TextureGL::getRGBAPixelFormat(), img.getPalette());
 
-	if (_filename.hasSuffix(".bmp") && img.getSurface()->format.bytesPerPixel == 4) {
-		// 32 bpp BMPs have nothing useful in their alpha-channel -> color-key
+	if (BaseEngine::instance().getTargetExecutable() < WME_LITE) {
+		// WME 1.x always use colorkey, even for images with transparency
+		needsColorKey = true;
+		replaceAlpha = false;
+	} else if (BaseEngine::instance().isFoxTail()) {
+		// FoxTail does not use colorkey
+		needsColorKey = false;
+	} else if (_filename.hasSuffix(".bmp")) {
+		// generic WME Lite ignores alpha channel for BMPs
 		needsColorKey = true;
 		replaceAlpha = false;
 	} else if (img.getSurface()->format.aBits() == 0) {
+		// generic WME Lite does not use colorkey for non-BMPs with transparency
 		needsColorKey = true;
 	}
 

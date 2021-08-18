@@ -24,7 +24,8 @@ TEST_LIBS += test/null_osystem.o \
 	backends/fs/windows/windows-fs.o \
 	backends/fs/abstract-fs.o \
 	backends/fs/stdiostream.o \
-	backends/modular-backend.o
+	backends/modular-backend.o \
+	backends/platform/sdl/win32/win32_wrapper.o
 endif
 
 TEST_LIBS +=	audio/libaudio.a math/libmath.a common/libcommon.a image/libimage.a graphics/libgraphics.a
@@ -40,7 +41,7 @@ ifeq ($(ENABLE_ULTIMA), STATIC_PLUGIN)
 endif
 
 #
-TEST_FLAGS   := --runner=StdioPrinter --no-std --no-eh --include=$(srcdir)/test/cxxtest_mingw.h
+TEST_FLAGS   := --runner=StdioPrinter --no-std --no-eh
 TEST_CFLAGS  := $(CFLAGS) -I$(srcdir)/test/cxxtest
 TEST_LDFLAGS := $(LDFLAGS) $(LIBS)
 TEST_CXXFLAGS := $(filter-out -Wglobal-constructors,$(CXXFLAGS))

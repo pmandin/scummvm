@@ -73,6 +73,8 @@ public:
 	virtual bool hasTextInClipboard() override;
 	virtual Common::U32String getTextFromClipboard() override;
 	virtual bool setTextInClipboard(const Common::U32String &text) override;
+
+	virtual void messageBox(LogMessageType::Type type, const char *message) override;
 #endif
 
 #if SDL_VERSION_ATLEAST(2, 0, 14)
@@ -83,7 +85,7 @@ public:
 	virtual void addSysArchivesToSearchSet(Common::SearchSet &s, int priority = 0) override;
 	virtual uint32 getMillis(bool skipRecord = false) override;
 	virtual void delayMillis(uint msecs) override;
-	virtual void getTimeAndDate(TimeDate &td) const override;
+	virtual void getTimeAndDate(TimeDate &td, bool skipRecord = false) const override;
 	virtual MixerManager *getMixerManager() override;
 	virtual Common::TimerManager *getTimerManager() override;
 	virtual Common::SaveFileManager *getSavefileManager() override;
@@ -172,6 +174,8 @@ protected:
 	 */
 	void clearGraphicsModes();
 
+	enum GraphicsManagerType { GraphicsManagerSDL, GraphicsManagerOpenGL };
+	virtual GraphicsManagerType getDefaultGraphicsManager() const { return GraphicsManagerSDL; }
 	virtual const OSystem::GraphicsMode *getSupportedGraphicsModes() const override;
 	virtual int getDefaultGraphicsMode() const override;
 	virtual bool setGraphicsMode(int mode, uint flags) override;

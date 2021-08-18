@@ -27,6 +27,13 @@
 
 #include "backends/fs/stdiostream.h"
 
+// for Windows unicode fopen(): _wfopen()
+#if defined(WIN32) && defined(UNICODE)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include "backends/platform/sdl/win32/win32_wrapper.h"
+#endif
+
 StdioStream::StdioStream(void *handle) : _handle(handle) {
 	assert(handle);
 }
@@ -47,21 +54,45 @@ bool StdioStream::eos() const {
 	return feof((FILE *)_handle) != 0;
 }
 
-int32 StdioStream::pos() const {
+int64 StdioStream::pos() const {
+#if defined(WIN32)
+	return _ftelli64((FILE *)_handle);
+#elif defined(__linux__) || defined(__APPLE__)
+	return ftello((FILE *)_handle);
+#else
 	return ftell((FILE *)_handle);
+#endif
 }
 
-int32 StdioStream::size() const {
-	int32 oldPos = ftell((FILE *)_handle);
+int64 StdioStream::size() const {
+#if defined(WIN32)
+	int64 oldPos = _ftelli64((FILE *)_handle);
+	_fseeki64((FILE *)_handle, 0, SEEK_END);
+	int64 length = _ftelli64((FILE *)_handle);
+	_fseeki64((FILE *)_handle, oldPos, SEEK_SET);
+#elif defined(__linux__) || defined(__APPLE__)
+	int64 oldPos = ftello((FILE *)_handle);
+	fseeko((FILE *)_handle, 0, SEEK_END);
+	int64 length = ftello((FILE *)_handle);
+	fseeko((FILE *)_handle, oldPos, SEEK_SET);
+#else
+	int64 oldPos = ftell((FILE *)_handle);
 	fseek((FILE *)_handle, 0, SEEK_END);
-	int32 length = ftell((FILE *)_handle);
+	int64 length = ftell((FILE *)_handle);
 	fseek((FILE *)_handle, oldPos, SEEK_SET);
+#endif
 
 	return length;
 }
 
-bool StdioStream::seek(int32 offs, int whence) {
+bool StdioStream::seek(int64 offs, int whence) {
+#if defined(WIN32)
+	return _fseeki64((FILE *)_handle, offs, whence) == 0;
+#elif defined(__linux__) || defined(__APPLE__)
+	return fseeko((FILE *)_handle, offs, whence) == 0;
+#else
 	return fseek((FILE *)_handle, offs, whence) == 0;
+#endif
 }
 
 uint32 StdioStream::read(void *ptr, uint32 len) {
@@ -85,7 +116,13 @@ bool StdioStream::flush() {
 }
 
 StdioStream *StdioStream::makeFromPath(const Common::String &path, bool writeMode) {
+#if defined(WIN32) && defined(UNICODE)
+	wchar_t *wPath = Win32::stringToTchar(path);
+	FILE *handle = _wfopen(wPath, writeMode ? L"wb" : L"rb");
+	free(wPath);
+#else
 	FILE *handle = fopen(path.c_str(), writeMode ? "wb" : "rb");
+#endif
 
 	if (handle)
 		return new StdioStream(handle);

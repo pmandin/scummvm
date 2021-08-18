@@ -23,11 +23,12 @@
 #include "ags/engine/ac/global_region.h"
 #include "ags/shared/ac/common.h"
 #include "ags/shared/ac/game_version.h"
+#include "ags/engine/ac/game_state.h"
 #include "ags/engine/ac/region.h"
 #include "ags/engine/ac/room.h"
-#include "ags/engine/ac/roomstatus.h"
+#include "ags/engine/ac/room_status.h"
 #include "ags/engine/debugging/debug_log.h"
-#include "ags/shared/game/roomstruct.h"
+#include "ags/shared/game/room_struct.h"
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/engine/script/script.h"
 #include "ags/globals.h"
@@ -76,7 +77,7 @@ void SetRegionTint(int area, int red, int green, int blue, int amount, int lumin
 		quit("!SetRegionTint: invalid region");
 
 	if ((red < 0) || (red > 255) || (green < 0) || (green > 255) ||
-		(blue < 0) || (blue > 255)) {
+	        (blue < 0) || (blue > 255)) {
 		quit("!SetRegionTint: RGB values must be 0-255");
 	}
 
@@ -97,9 +98,9 @@ void SetRegionTint(int area, int red, int green, int blue, int amount, int lumin
 	blue -= 100;*/
 
 	_GP(thisroom).Regions[area].Tint = (red & 0xFF) |
-		((green & 0xFF) << 8) |
-		((blue & 0XFF) << 16) |
-		((amount & 0xFF) << 24);
+	                                   ((green & 0xFF) << 8) |
+	                                   ((blue & 0XFF) << 16) |
+	                                   ((amount & 0xFF) << 24);
 	_GP(thisroom).Regions[area].Light = (luminance * 25) / 10;
 }
 

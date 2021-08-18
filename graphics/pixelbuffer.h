@@ -27,7 +27,6 @@
 #include "common/endian.h"
 #include "common/textconsole.h"
 
-#include "graphics/colormasks.h"
 #include "graphics/pixelformat.h"
 
 namespace Graphics {
@@ -43,24 +42,6 @@ namespace Graphics {
 
 class PixelBuffer {
 public:
-	/**
-	 * Create a PixelBuffer.
-	 * Convenience syntax for PixelBuffer(createPixelFormat<format>(), buffersize, dispose).
-	 */
-	template<int format>
-	inline static PixelBuffer createBuffer(int buffersize, DisposeAfterUse::Flag dispose) {
-		return PixelBuffer(createPixelFormat<format>(), buffersize, dispose);
-	}
-
-	/**
-	 * Create a PixelBuffer.
-	 * Convenience syntax for PixelBuffer(createPixelFormat<format>(), buffer).
-	 */
-	template<int format>
-	inline static PixelBuffer createBuffer(byte *buffer) {
-		return PixelBuffer(createPixelFormat<format>(), buffer);
-	}
-
 	/**
 	 * Construct an empty PixelBuffer.
 	 */
@@ -151,7 +132,7 @@ public:
 			((uint32 *) _buffer)[pixel] = value;
 			return;
 		}
-		error("setPixelAt: Unhandled bytesPerPixel %i", _format.bytesPerPixel);
+		error("setPixelAt: Unhandled bytesPerPixel %d", int(_format.bytesPerPixel));
 	}
 	/**
 	 * Set the value of a pixel. The pixel will be converted from a pixel in another PixelBuffer,
@@ -227,7 +208,7 @@ public:
 		case 4:
 			return ((uint32 *) _buffer)[i];
 		}
-		error("getValueAt: Unhandled bytesPerPixel %i", _format.bytesPerPixel);
+		error("getValueAt: Unhandled bytesPerPixel %d", int(_format.bytesPerPixel));
 	}
 	/**
 	 * Return the RGB value of the pixel at the given index.

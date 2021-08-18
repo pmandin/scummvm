@@ -257,7 +257,7 @@ void SceneScriptHF05::SceneFrameAdvanced(int frame) {
 
 	case 179:
 		Sound_Play(kSfxCAREXPL1, 90,   0,   0, 50);
-		Music_Play(kMusicBatl226M, 50, 0, 2, -1, 0, 0);
+		Music_Play(kMusicBatl226M, 50, 0, 2, -1, kMusicLoopPlayOnce, 0);
 		break;
 
 	case 186:
@@ -326,7 +326,7 @@ void SceneScriptHF05::PlayerWalkedIn() {
 			 && !Game_Flag_Query(kFlagHF05PoliceArrived)
 			) {
 				Game_Flag_Set(kFlagHF05PoliceArrived);
-				Music_Play(kMusicBatl226M, 40, 0, 2, -1, 0, 0);
+				Music_Play(kMusicBatl226M, 40, 0, 2, -1, kMusicLoopPlayOnce, 0);
 				Actor_Says(kActorOfficerGrayford, 200, kAnimationModeTalk);
 				Actor_Says(kActorOfficerGrayford, 210, kAnimationModeTalk);
 				Actor_Set_Goal_Number(kActorOfficerLeary, kGoalOfficerLearyPoliceWait120SecondsToAttackHF05);
@@ -370,7 +370,7 @@ void SceneScriptHF05::PlayerWalkedOut() {
 		Actor_Set_Goal_Number(kActorCrazylegs, kGoalCrazyLegsLeavesShowroom);
 	}
 	Ambient_Sounds_Remove_All_Non_Looping_Sounds(true);
-	Ambient_Sounds_Remove_All_Looping_Sounds(1);
+	Ambient_Sounds_Remove_All_Looping_Sounds(1u);
 }
 
 void SceneScriptHF05::DialogueQueueFlushed(int a1) {
@@ -393,11 +393,23 @@ void SceneScriptHF05::talkWithCrazyLegs2() {
 
 void SceneScriptHF05::dialogueWithCrazylegs1() {
 	Dialogue_Menu_Clear_List();
+#if BLADERUNNER_ORIGINAL_BUGS
 	if (Actor_Clue_Query(kActorMcCoy, kClueGrigoriansNote) // cut feature? there is no way how to obtain this clue
 	 && Global_Variable_Query(kVariableChapter) == 3
 	) {
 		DM_Add_To_List_Never_Repeat_Once_Selected(1180, 3, 6, 7); // ADVERTISEMENT
 	}
+#else
+	if (Actor_Clue_Query(kActorMcCoy, kClueCrazysInvolvement)
+	 && Global_Variable_Query(kVariableChapter) == 3
+	) {
+		// This dialogue point does not talk about Grigorian's Note
+		// but rather a Note that CrazyLegs wrote on one of his flyers
+		// kClueCrazysInvolvement is only acquired in _cutContent (Restored Content) mode
+		// so no need to add that extra check in the if clause.
+		DM_Add_To_List_Never_Repeat_Once_Selected(1180, 3, 6, 7); // ADVERTISEMENT
+	}
+#endif // BLADERUNNER_ORIGINAL_BUGS
 	if (Actor_Clue_Query(kActorMcCoy, kClueCrazylegsInterview1)) {
 		// kClueCrazylegsInterview1 is acquired (after bug fix)
 		// only when Dektora has bought the car (kClueCarRegistration1)
@@ -456,8 +468,16 @@ void SceneScriptHF05::dialogueWithCrazylegs1() {
 	switch (answer) {
 	case 1180: // ADVERTISEMENT
 		Actor_Says(kActorMcCoy, 1890, 23);
+		if (_vm->_cutContent) {
+			// McCoy shows the sales pamphlet (from Dektora's Vanity drawer) to CrazyLegs
+			Item_Pickup_Spin_Effect_From_Actor(kModelAnimationTyrellSalesPamphlet, kActorMcCoy, 0, 0);
+		}
 		Actor_Says(kActorCrazylegs, 510, kAnimationModeTalk);
 		Actor_Says(kActorMcCoy, 1920, 23);
+		if (_vm->_cutContent) {
+			// McCoy shows the note he found inside the sales pamphlet (from Dektora's Vanity drawer) to CrazyLegs
+			Item_Pickup_Spin_Effect_From_Actor(kModelAnimationLetter, kActorMcCoy, 0, 0);
+		}
 		Actor_Says(kActorMcCoy, 1925, kAnimationModeTalk);
 		Actor_Says(kActorCrazylegs, 530, 12);
 		Actor_Says(kActorMcCoy, 1930, 18);
@@ -587,6 +607,8 @@ void SceneScriptHF05::dialogueWithCrazylegs2() { // cut feature? it is impossibl
 		Actor_Says(kActorMcCoy, 1995, kAnimationModeTalk);
 		Game_Flag_Set(kFlagCrazylegsArrested);
 		Actor_Put_In_Set(kActorCrazylegs, kSetPS09);
+		// This XYZ is awry (won't show Crazylegs inside a cell or at all in the PS09 scene)
+		// but it is eventually overridden by the PS09 script, which puts Crazylegs at the right spot
 		Actor_Set_At_XYZ(kActorCrazylegs, -315.15f, 0.0f, 241.06f, 583);
 		Actor_Set_Goal_Number(kActorCrazylegs, kGoalCrazyLegsIsArrested);
 		Game_Flag_Set(kFlagCrazylegsArrestedTalk);
@@ -791,15 +813,15 @@ void SceneScriptHF05::talkWithCrazyLegs1() {
 
 void SceneScriptHF05::addAmbientSounds() {
 	Ambient_Sounds_Add_Sound(kSfxSIREN2, 20, 80, 20, 100, -100, 100, -101, -101, 0, 0);
-	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    250, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    330, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    340, 5, 90, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    360, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorOfficerGrayford, 380, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorOfficerGrayford, 510, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorDispatcher,       80, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorDispatcher,      160, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
-	Ambient_Sounds_Add_Speech_Sound(kActorDispatcher,      280, 5, 70, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    250, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    330, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    340, 5u, 90u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorOfficerLeary,    360, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorOfficerGrayford, 380, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorOfficerGrayford, 510, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorDispatcher,       80, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorDispatcher,      160, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
+	Ambient_Sounds_Add_Speech_Sound(kActorDispatcher,      280, 5u, 70u, 7, 10, -50, 50, -101, -101, 1, 1);
 }
 
 int SceneScriptHF05::getCompanionActor() {

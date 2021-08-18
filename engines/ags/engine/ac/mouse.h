@@ -23,7 +23,7 @@
 #ifndef AGS_ENGINE_AC_MOUSE_H
 #define AGS_ENGINE_AC_MOUSE_H
 
-#include "ags/engine/ac/dynobj/scriptmouse.h"
+#include "ags/engine/ac/dynobj/script_mouse.h"
 
 namespace AGS3 {
 
@@ -31,11 +31,6 @@ namespace AGS3 {
 #define DOMOUSE_ENABLE 1
 #define DOMOUSE_DISABLE 2
 #define DOMOUSE_NOCURSOR 5
-// are these mouse buttons? ;/
-// note: also defined in ac_cscidialog as const ints
-#define NONE -1
-#define LEFT  0
-#define RIGHT 1
 
 void Mouse_SetVisible(int isOn);
 int Mouse_GetVisible();
@@ -46,10 +41,12 @@ void Mouse_ChangeModeView(int curs, int newview);
 void SetMousePosition(int newx, int newy);
 int GetCursorMode();
 void SetNextCursor();
+void SetPreviousCursor();
 // permanently change cursor graphic
 void ChangeCursorGraphic(int curs, int newslot);
 void ChangeCursorHotspot(int curs, int x, int y);
 int IsButtonDown(int which);
+int IsModeEnabled(int which);
 void SetMouseBounds(int x1, int y1, int x2, int y2);
 void RefreshMouse();
 // mouse cursor functions:

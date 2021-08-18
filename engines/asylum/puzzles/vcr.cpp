@@ -110,19 +110,11 @@ bool PuzzleVCR::update(const AsylumEvent &evt)  {
 }
 
 bool PuzzleVCR::key(const AsylumEvent &evt) {
-	switch (evt.kbd.keycode) {
-	default:
-		getSound()->stop(getWorld()->graphicResourceIds[47]);
-		getScreen()->clearGraphicsInQueue();
-		getScreen()->clear();
+	getSound()->stop(getWorld()->graphicResourceIds[47]);
+	getScreen()->clearGraphicsInQueue();
+	getScreen()->clear();
 
-		_vm->switchEventHandler(getScene());
-		break;
-
-	case Common::KEYCODE_TAB:
-		getScreen()->takeScreenshot();
-		break;
-	}
+	_vm->switchEventHandler(getScene());
 
 	return true;
 }
@@ -334,8 +326,11 @@ void PuzzleVCR::updateScreen(const AsylumEvent &) {
 		getScreen()->draw(getWorld()->graphicResourceIds[0]);
 		getScreen()->drawGraphicsInQueue();
 
-		for (int16 barSize = 0; barSize < 84; barSize += 4)
+		getScreen()->clearDefaultColor();
+		for (int16 barSize = 0; barSize < 84; barSize += 4) {
 			getScreen()->drawWideScreenBars(barSize);
+			_vm->_system->updateScreen();
+		}
 
 		// Palette fade
 		getScreen()->paletteFade(0, 25, 10);

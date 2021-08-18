@@ -22,12 +22,12 @@
 
 #include "ags/engine/ac/textbox.h"
 #include "ags/shared/ac/common.h"
-#include "ags/shared/ac/gamesetupstruct.h"
+#include "ags/shared/ac/game_setup_struct.h"
 #include "ags/engine/ac/string.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
-#include "ags/engine/ac/dynobj/scriptstring.h"
+#include "ags/engine/ac/dynobj/script_string.h"
 #include "ags/globals.h"
 
 namespace AGS3 {
@@ -35,17 +35,17 @@ namespace AGS3 {
 // ** TEXT BOX FUNCTIONS
 
 const char *TextBox_GetText_New(GUITextBox *texbox) {
-	return CreateNewScriptString(texbox->Text);
+	return CreateNewScriptString(texbox->Text.GetCStr());
 }
 
 void TextBox_GetText(GUITextBox *texbox, char *buffer) {
-	strcpy(buffer, texbox->Text);
+	strcpy(buffer, texbox->Text.GetCStr());
 }
 
 void TextBox_SetText(GUITextBox *texbox, const char *newtex) {
-	if (strcmp(texbox->Text, newtex)) {
+	if (texbox->Text != newtex) {
 		texbox->Text = newtex;
-		_G(guis_need_update) = 1;
+		texbox->NotifyParentChanged();
 	}
 }
 
@@ -56,7 +56,7 @@ int TextBox_GetTextColor(GUITextBox *guit) {
 void TextBox_SetTextColor(GUITextBox *guit, int colr) {
 	if (guit->TextColor != colr) {
 		guit->TextColor = colr;
-		_G(guis_need_update) = 1;
+		guit->NotifyParentChanged();
 	}
 }
 
@@ -70,7 +70,7 @@ void TextBox_SetFont(GUITextBox *guit, int fontnum) {
 
 	if (guit->Font != fontnum) {
 		guit->Font = fontnum;
-		_G(guis_need_update) = 1;
+		guit->NotifyParentChanged();
 	}
 }
 
@@ -81,7 +81,7 @@ bool TextBox_GetShowBorder(GUITextBox *guit) {
 void TextBox_SetShowBorder(GUITextBox *guit, bool on) {
 	if (guit->IsBorderShown() != on) {
 		guit->SetShowBorder(on);
-		_G(guis_need_update) = 1;
+		guit->NotifyParentChanged();
 	}
 }
 
@@ -90,8 +90,6 @@ void TextBox_SetShowBorder(GUITextBox *guit, bool on) {
 // Script API Functions
 //
 //=============================================================================
-
-
 
 // void (GUITextBox *texbox, char *buffer)
 RuntimeScriptValue Sc_TextBox_GetText(void *self, const RuntimeScriptValue *params, int32_t param_count) {
@@ -149,17 +147,6 @@ void RegisterTextBoxAPI() {
 	ccAddExternalObjectFunction("TextBox::set_Text", Sc_TextBox_SetText);
 	ccAddExternalObjectFunction("TextBox::get_TextColor", Sc_TextBox_GetTextColor);
 	ccAddExternalObjectFunction("TextBox::set_TextColor", Sc_TextBox_SetTextColor);
-
-	/* ----------------------- Registering unsafe exports for plugins -----------------------*/
-
-	ccAddExternalFunctionForPlugin("TextBox::GetText^1", (void *)TextBox_GetText);
-	ccAddExternalFunctionForPlugin("TextBox::SetText^1", (void *)TextBox_SetText);
-	ccAddExternalFunctionForPlugin("TextBox::get_Font", (void *)TextBox_GetFont);
-	ccAddExternalFunctionForPlugin("TextBox::set_Font", (void *)TextBox_SetFont);
-	ccAddExternalFunctionForPlugin("TextBox::get_Text", (void *)TextBox_GetText_New);
-	ccAddExternalFunctionForPlugin("TextBox::set_Text", (void *)TextBox_SetText);
-	ccAddExternalFunctionForPlugin("TextBox::get_TextColor", (void *)TextBox_GetTextColor);
-	ccAddExternalFunctionForPlugin("TextBox::set_TextColor", (void *)TextBox_SetTextColor);
 }
 
 } // namespace AGS3

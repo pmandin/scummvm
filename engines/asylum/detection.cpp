@@ -23,7 +23,7 @@
 #include "engines/advancedDetector.h"
 #include "base/plugins.h"
 
-#include "asylum/detection_table.h"
+#include "asylum/detection_tables.h"
 #include "asylum/console.h"
 
 static const DebugChannelDef debugFlagList[] = {
@@ -48,23 +48,23 @@ class AsylumMetaEngineDetection : public AdvancedMetaEngineDetection {
 public:
 	AsylumMetaEngineDetection() : AdvancedMetaEngineDetection(Asylum::gameDescriptions, sizeof(ADGameDescription), asylumGames) {
 		_md5Bytes = 0;
-		_maxScanDepth = 2;
+		_maxScanDepth = 3;
 		_directoryGlobs = Asylum::directoryGlobs;
 	}
 
-	ADDetectedGame fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist) const {
+	ADDetectedGame fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist, ADDetectedGameExtraInfo **extra) const override {
 		return detectGameFilebased(allFiles, Asylum::fileBasedFallback);
 	}
 
-	const char *getEngineId() const {
+	const char *getEngineId() const override {
 		return "asylum";
 	}
 
-	const char *getName() const {
+	const char *getName() const override {
 		return "Sanitarium";
 	}
 
-	const char *getOriginalCopyright() const {
+	const char *getOriginalCopyright() const override {
 		return "Sanitarium (c) ASC Games";
 	}
 

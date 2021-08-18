@@ -38,21 +38,23 @@
 #include "ags/shared/script/script_common.h"
 #include "ags/shared/script/cc_error.h"
 #include "ags/shared/script/cc_options.h"
-#include "ags/engine/script/systemimports.h"
-#include "ags/plugins/agsplugin.h"
-#include "ags/engine/ac/dynobj/cc_dynamicarray.h"
-#include "ags/engine/ac/statobj/staticobject.h"
+#include "ags/engine/ac/dynobj/cc_dynamic_array.h"
+#include "ags/engine/script/system_imports.h"
+#include "ags/engine/ac/statobj/static_object.h"
+#include "ags/plugins/ags_plugin.h"
 #include "ags/plugins/plugin_base.h"
 #include "ags/globals.h"
 
 namespace AGS3 {
 
+// static const char ccRunnerCopyright[] = "ScriptExecuter32 v" SCOM_VERSIONSTR " (c) 2001 Chris Jones";
+
 bool ccAddExternalStaticFunction(const String &name, ScriptAPIFunction *pfn) {
 	return _GP(simp).add(name, RuntimeScriptValue().SetStaticFunction(pfn), nullptr) == 0;
 }
 
-bool ccAddExternalPluginFunction(const String &name, void *pfn) {
-	return _GP(simp).add(name, RuntimeScriptValue().SetPluginFunction(pfn), nullptr) == 0;
+bool ccAddExternalPluginFunction(const String &name, Plugins::ScriptContainer *instance) {
+	return _GP(simp).add(name, RuntimeScriptValue().SetPluginMethod(instance, name), nullptr) == 0;
 }
 
 bool ccAddExternalStaticObject(const String &name, void *ptr, ICCStaticObject *manager) {
@@ -96,22 +98,23 @@ void *ccGetSymbolAddress(const String &name) {
 	return nullptr;
 }
 
-bool ccAddExternalFunctionForPlugin(const String &name, void *pfn) {
-	return _GP(simp_for_plugin).add(name, RuntimeScriptValue().SetPluginFunction(pfn), nullptr) == 0;
+bool ccAddExternalFunctionForPlugin(const String &name, Plugins::ScriptContainer *instance) {
+	return _GP(simp_for_plugin).add(name, RuntimeScriptValue().SetPluginMethod(instance, name), nullptr) == 0;
 }
 
-void *ccGetSymbolAddressForPlugin(const String &name) {
+Plugins::PluginMethod ccGetSymbolAddressForPlugin(const String &name) {
 	const ScriptImport *import = _GP(simp_for_plugin).getByName(name);
 	if (import) {
-		return import->Value.Ptr;
+		return Plugins::PluginMethod((Plugins::ScriptContainer *)import->Value.Ptr, name);
 	} else {
 		// Also search the internal symbol table for non-function symbols
 		import = _GP(simp).getByName(name);
 		if (import) {
-			return import->Value.Ptr;
+			return Plugins::PluginMethod((Plugins::ScriptContainer *)import->Value.Ptr, name);
 		}
 	}
-	return nullptr;
+
+	return Plugins::PluginMethod();
 }
 
 // If a while loop does this many iterations without the
@@ -130,9 +133,10 @@ void ccSetDebugHook(new_line_hook_type jibble) {
 	_G(new_line_hook) = jibble;
 }
 
-int call_function(intptr_t addr, const RuntimeScriptValue *object, int numparm, const RuntimeScriptValue *parms) {
-	if (!addr) {
-		cc_error("null function pointer in call_function");
+int call_function(const Plugins::PluginMethod &method,
+		const RuntimeScriptValue *object, int numparm, const RuntimeScriptValue *parms) {
+	if (!method) {
+		cc_error("invalid method in call_function");
 		return -1;
 	}
 	if (numparm > 0 && !parms) {
@@ -162,7 +166,7 @@ int call_function(intptr_t addr, const RuntimeScriptValue *object, int numparm, 
 
 	// AN IMPORTANT NOTE ON PARAMS
 	// The original AGS interpreter did a bunch of dodgy function pointers with
-	// varying numbers of parameters, which were all int64_t. To simply matters
+	// varying numbers of parameters, which were all intptr_t. To simply matters
 	// now that we only supported plugins implemented in code, and not DLLs,
 	// we use a simplified Common::Array containing the parameters and result
 
@@ -171,21 +175,12 @@ int call_function(intptr_t addr, const RuntimeScriptValue *object, int numparm, 
 		return -1;
 	} else {
 		// Build the parameters
-		ScriptMethodParams params;
+		Plugins::ScriptMethodParams params;
 		for (int i = 0; i < numparm; ++i)
 			params.push_back(parm_value[i]);
 
 		// Call the method
-		Plugins::PluginMethod fparam = (Plugins::PluginMethod)addr;
-		fparam(params);
-
-		// TODO: Though some script methods return pointers, the call_function only
-		// supports a 32-bit result. In case they're actually used by any game, the
-		// guard below will throw a wobbly if they're more than 32-bits
-		if ((int64)params._result._ptr > 0xffffffff)
-			error("Uhandled 64-bit pointer result from plugin method call");
-
-		return params._result;
+		return method(params);
 	}
 }
 

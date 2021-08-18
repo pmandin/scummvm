@@ -334,23 +334,21 @@ void AndroidGraphicsManager::clearOverlay() {
 	_overlay_texture->fillBuffer(0);
 }
 
-void AndroidGraphicsManager::grabOverlay(void *buf, int pitch) const {
+void AndroidGraphicsManager::grabOverlay(Graphics::Surface &surface) const {
 	ENTER("%p, %d", buf, pitch);
 
 	GLTHREADCHECK;
 
-	const Graphics::Surface *surface = _overlay_texture->surface_const();
-	assert(surface->format.bytesPerPixel == sizeof(uint16));
+	const Graphics::Surface *overlaySurface = _overlay_texture->surface_const();
 
-	byte *dst = (byte *)buf;
-	const byte *src = (const byte *)surface->getPixels();
-	uint h = surface->h;
+	assert(surface.w >= overlaySurface->w);
+	assert(surface.h >= overlaySurface->h);
+	assert(surface.format.bytesPerPixel == sizeof(uint16));
+	assert(overlaySurface->format.bytesPerPixel == sizeof(uint16));
 
-	do {
-		memcpy(dst, src, surface->w * surface->format.bytesPerPixel);
-		src += surface->pitch;
-		dst += pitch;
-	} while (--h);
+	const byte *src = (const byte *)overlaySurface->getPixels();
+	byte *dst = (byte *)surface.getPixels();
+	Graphics::copyBlit(dst, src, surface.pitch, overlaySurface->pitch, w, h, sizeof(uint16));
 }
 
 void AndroidGraphicsManager::copyRectToOverlay(const void *buf, int pitch,

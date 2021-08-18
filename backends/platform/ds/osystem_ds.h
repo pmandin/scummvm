@@ -109,7 +109,7 @@ public:
 	virtual void hideOverlay();
 	virtual bool isOverlayVisible() const;
 	virtual void clearOverlay();
-	virtual void grabOverlay(void *buf, int pitch);
+	virtual void grabOverlay(Graphics::Surface &surface);
 	virtual void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h);
 	virtual int16 getOverlayHeight();
 	virtual int16 getOverlayWidth();
@@ -125,7 +125,7 @@ public:
 
 	virtual uint32 getMillis(bool skipRecord = false);
 	virtual void delayMillis(uint msecs);
-	virtual void getTimeAndDate(TimeDate &t) const;
+	virtual void getTimeAndDate(TimeDate &td, bool skipRecord = false) const;
 	void doTimerCallback(int interval = 10);
 
 	virtual Common::EventSource *getDefaultEventSource() { return _eventSource; }

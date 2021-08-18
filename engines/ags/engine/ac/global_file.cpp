@@ -28,7 +28,6 @@
 #include "ags/engine/ac/string.h"
 #include "ags/engine/debugging/debug_log.h"
 #include "ags/shared/util/directory.h"
-#include "ags/shared/util/filestream.h"
 #include "ags/shared/util/path.h"
 #include "ags/shared/util/stream.h"
 
@@ -59,7 +58,7 @@ int32_t FindFreeFileSlot() {
 	}
 
 	if (useindx >= num_open_script_files &&
-		num_open_script_files >= MAX_OPEN_SCRIPT_FILES) {
+	        num_open_script_files >= MAX_OPEN_SCRIPT_FILES) {
 		quit("!FileOpen: tried to open more than 10 files simultaneously - close some first");
 		return -1;
 	}
@@ -81,9 +80,8 @@ int32_t FileOpen(const char *fnmm, Shared::FileOpenMode open_mode, Shared::FileW
 	}
 
 	Stream *s = File::OpenFile(rp.FullPath, open_mode, work_mode);
-	if (!s && !rp.AltPath.IsEmpty() && rp.AltPath.Compare(rp.FullPath) != 0) {
+	if (!s && !rp.AltPath.IsEmpty() && rp.AltPath.Compare(rp.FullPath) != 0)
 		s = File::OpenFile(rp.AltPath, open_mode, work_mode);
-	}
 
 	valid_handles[useindx].stream = s;
 	if (valid_handles[useindx].stream == nullptr)
@@ -103,14 +101,15 @@ void FileClose(int32_t handle) {
 }
 void FileWrite(int32_t handle, const char *towrite) {
 	Stream *out = get_valid_file_stream_from_handle(handle, "FileWrite");
-	out->WriteInt32(strlen(towrite) + 1);
-	out->Write(towrite, strlen(towrite) + 1);
+	size_t len = strlen(towrite);
+	out->WriteInt32(len + 1); // write with null-terminator
+	out->Write(towrite, len + 1);
 }
 void FileWriteRawLine(int32_t handle, const char *towrite) {
 	Stream *out = get_valid_file_stream_from_handle(handle, "FileWriteRawLine");
 	out->Write(towrite, strlen(towrite));
-	out->WriteInt8(13);
-	out->WriteInt8(10);
+	out->WriteInt8('\r');
+	out->WriteInt8('\n');
 }
 void FileRead(int32_t handle, char *toread) {
 	VALIDATE_STRING(toread);
@@ -119,10 +118,16 @@ void FileRead(int32_t handle, char *toread) {
 		toread[0] = 0;
 		return;
 	}
-	int lle = in->ReadInt32();
-	if ((lle >= 200) | (lle < 1)) quit("!FileRead: file was not written by FileWrite");
+
+	size_t lle = (uint32_t)in->ReadInt32();
+	// This tests for the legacy string (limited by 200 chars)
+	if ((lle >= 200) | (lle < 1)) {
+		debug_script_warn("FileRead: file was not written by FileWrite");
+		return;
+	}
 	in->Read(toread, lle);
 }
+
 int FileIsEOF(int32_t handle) {
 	Stream *stream = get_valid_file_stream_from_handle(handle, "FileIsEOF");
 	if (stream->EOS())
@@ -154,26 +159,32 @@ int FileReadInt(int32_t handle) {
 	Stream *in = get_valid_file_stream_from_handle(handle, "FileReadInt");
 	if (in->EOS())
 		return -1;
-	if (in->ReadInt8() != 'I')
-		quit("!FileReadInt: File read back in wrong order");
+	if (in->ReadInt8() != 'I') {
+		debug_script_warn("FileReadInt: File read back in wrong order");
+		return -1;
+	}
+
 	return in->ReadInt32();
 }
+
 char FileReadRawChar(int32_t handle) {
 	Stream *in = get_valid_file_stream_from_handle(handle, "FileReadRawChar");
 	if (in->EOS())
 		return -1;
 	return in->ReadInt8();
 }
+
 int FileReadRawInt(int32_t handle) {
 	Stream *in = get_valid_file_stream_from_handle(handle, "FileReadRawInt");
 	if (in->EOS())
 		return -1;
 	return in->ReadInt32();
 }
+
 void FileWriteRawChar(int32_t handle, int chartoWrite) {
 	Stream *out = get_valid_file_stream_from_handle(handle, "FileWriteRawChar");
 	if ((chartoWrite < 0) || (chartoWrite > 255))
-		quit("!FileWriteRawChar: can only write values 0-255");
+		debug_script_warn("!FileWriteRawChar: can only write values 0-255");
 
 	out->WriteInt8(chartoWrite);
 }

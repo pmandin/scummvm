@@ -166,6 +166,7 @@ ifdef USE_DOCKTILEPLUGIN
 	mkdir -p $(bundle_name)/Contents/PlugIns
 	cp -r scummvm.docktileplugin $(bundle_name)/Contents/PlugIns/
 endif
+	codesign -s - --deep --force $(bundle_name)
 
 ifdef USE_DOCKTILEPLUGIN
 bundle: scummvm-static scummvm.docktileplugin bundle-pack
@@ -176,6 +177,8 @@ endif
 iphonebundle: iphone
 	mkdir -p $(bundle_name)
 	cp $(srcdir)/dists/iphone/Info.plist $(bundle_name)/
+	sed -i'' -e 's/$$(PRODUCT_BUNDLE_IDENTIFIER)/org.scummvm.scummvm/' $(bundle_name)/Info.plist
+	sed -i'' -e 's/$$(EXECUTABLE_NAME)/ScummVM/' $(bundle_name)/Info.plist
 	cp $(DIST_FILES_DOCS) $(bundle_name)/
 	cp $(DIST_FILES_THEMES) $(bundle_name)/
 ifdef DIST_FILES_NETWORKING
@@ -188,12 +191,12 @@ ifdef DIST_FILES_VKEYBD
 	cp $(DIST_FILES_VKEYBD) $(bundle_name)/
 endif
 	$(STRIP) scummvm
-	ldid -S scummvm
 	chmod 755 scummvm
 	cp scummvm $(bundle_name)/ScummVM
 	cp $(srcdir)/dists/iphone/icon.png $(bundle_name)/
 	cp $(srcdir)/dists/iphone/icon-72.png $(bundle_name)/
 	cp $(srcdir)/dists/iphone/Default.png $(bundle_name)/
+	codesign -s - --deep --force $(bundle_name)
 
 ios7bundle: iphone
 	mkdir -p $(bundle_name)
@@ -290,6 +293,7 @@ ios7bundle: iphone
 		s==0 {print $$0}\
 		s > 0 { s-- }' $(srcdir)/dists/ios7/Info.plist >$(bundle_name)/Info.plist
 	sed -i'' -e 's/$$(PRODUCT_BUNDLE_IDENTIFIER)/org.scummvm.scummvm/' $(bundle_name)/Info.plist
+	sed -i'' -e 's/$$(EXECUTABLE_NAME)/ScummVM/' $(bundle_name)/Info.plist
 	sed -i'' -e '/UILaunchStoryboardName/{N;d;}' $(bundle_name)/Info.plist
 	cp $(DIST_FILES_DOCS) $(bundle_name)/
 	cp $(DIST_FILES_THEMES) $(bundle_name)/
@@ -303,7 +307,6 @@ ifdef DIST_FILES_VKEYBD
 	cp $(DIST_FILES_VKEYBD) $(bundle_name)/
 endif
 	$(STRIP) scummvm
-	ldid -S scummvm
 	chmod 755 scummvm
 	cp scummvm $(bundle_name)/ScummVM
 	cp $(srcdir)/dists/ios7/Images.xcassets/AppIcon.appiconset/icon4-29@2x.png $(bundle_name)/AppIcon29x29@2x.png
@@ -327,6 +330,7 @@ endif
 	cp $(srcdir)/dists/ios7/Images.xcassets/LaunchImage.launchimage/ScummVM-splash-1242x2208.png $(bundle_name)/LaunchImage-800-Portrait-736h@3x.png
 	cp $(srcdir)/dists/ios7/Images.xcassets/LaunchImage.launchimage/ScummVM-splash-2208x1242.png $(bundle_name)/LaunchImage-800-Landscape-736h@3x.png
 	cp $(srcdir)/dists/ios7/Images.xcassets/LaunchImage.launchimage/ScummVM-splash-750x1334.png $(bundle_name)/LaunchImage-800-667h@2x.png
+	codesign -s - --deep --force $(bundle_name)
 
 
 ifndef WITHOUT_SDL
@@ -545,13 +549,13 @@ else ifeq "$(CUR_BRANCH)" ""
 	$(error You must be on a release branch)
 endif
 	@echo Creating Code::Blocks project files...
-	@cd $(srcdir)/dists/codeblocks && ../../devtools/create_project/create_project ../.. --codeblocks >/dev/null && git add -f engines/plugins_table.h *.workspace *.cbp
+	@cd $(srcdir)/dists/codeblocks && $(PWD)/devtools/create_project/create_project ../.. --codeblocks >/dev/null && git add -f engines/*.h *.workspace *.cbp
 	@echo Creating MSVC project files...
-	@cd $(srcdir)/dists/msvc && ../../devtools/create_project/create_project ../.. --use-canonical-lib-names --msvc-version 12 --msvc >/dev/null && git add -f engines/plugins_table.h *.sln *.vcxproj *.vcxproj.filters *.props
+	@cd $(srcdir)/dists/msvc && $(PWD)/devtools/create_project/create_project ../.. --use-canonical-lib-names --msvc-version 12 --msvc >/dev/null && git add -f engines/*.h *.sln *.vcxproj *.vcxproj.filters *.props
 	@echo
 	@echo All is done.
 	@echo Now run
-	@echo "\tgit commit -m 'DISTS: Generated Code::Blocks and MSVC project files'"
+	@echo -e "\tgit commit -m 'DISTS: Generated Code::Blocks and MSVC project files'"
 
 # Mark special targets as phony
 .PHONY: deb bundle osxsnap install uninstall

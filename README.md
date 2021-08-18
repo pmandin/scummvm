@@ -1,4 +1,4 @@
-# [ScummVM README](https://www.scummvm.org/) · [![Build Status](https://travis-ci.org/scummvm/scummvm.svg?branch=master)](https://travis-ci.org/scummvm/scummvm) ![CI](https://github.com/scummvm/scummvm/workflows/CI/badge.svg) [![Translation status](https://translations.scummvm.org/widgets/scummvm/-/scummvm/svg-badge.svg)](https://translations.scummvm.org/engage/scummvm/?utm_source=widget) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md#pull-requests) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e06e5b18f8464fef859b5a7f78d10357)](https://www.codacy.com/gh/scummvm/scummvm/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=scummvm/scummvm&amp;utm_campaign=Badge_Grade)
+# [ScummVM README](https://www.scummvm.org/) · [![CI](https://github.com/scummvm/scummvm/actions/workflows/ci.yml/badge.svg)](https://github.com/scummvm/scummvm/actions/workflows/ci.yml) [![Translation status](https://translations.scummvm.org/widgets/scummvm/-/scummvm/svg-badge.svg)](https://translations.scummvm.org/engage/scummvm/?utm_source=widget) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md#pull-requests) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e06e5b18f8464fef859b5a7f78d10357)](https://www.codacy.com/gh/scummvm/scummvm/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=scummvm/scummvm&amp;utm_campaign=Badge_Grade)
 
 ## About ScummVM
 
@@ -35,9 +35,9 @@ For the impatient among you, here is how to get ScummVM running in five simple s
 
 ## Reporting a bug
 
-To report a bug, go to the ScummVM [Issue Tracker](https://bugs.scummvm.org/>) and log in with your GitHub account.
+To report a bug, go to the ScummVM [Issue Tracker](https://bugs.scummvm.org/) and log in with your GitHub account.
 
-Please make sure the bug is reproducible, and still occurs in the latest git/Daily build version. Also check the [compatibility list](https://www.scummvm.org/compatibility/) for that game, to ensure the issue is not already known. Please do not report bugs for games that are not listed as completeable on the [Supported Games](https://wiki.scummvm.org/index.php?title=Category:Supported_Games>) wiki page, or on the compatibility list. We already know those games have bugs!
+Please make sure the bug is reproducible, and still occurs in the latest git/Daily build version. Also check the [compatibility list](https://www.scummvm.org/compatibility/) for that game, to ensure the issue is not already known. Please do not report bugs for games that are not listed as completable on the [Supported Games](https://wiki.scummvm.org/index.php?title=Category:Supported_Games>) wiki page, or on the compatibility list. We already know those games have bugs!
 
 Please include the following information in the bug report:
 

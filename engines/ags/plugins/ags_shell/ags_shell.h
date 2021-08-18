@@ -23,24 +23,23 @@
 #ifndef AGS_PLUGINS_AGS_SHELL_H
 #define AGS_PLUGINS_AGS_SHELL_H
 
-#include "ags/plugins/plugin_base.h"
+#include "ags/plugins/ags_plugin.h"
 
 namespace AGS3 {
 namespace Plugins {
 namespace AGSShell {
 
 class AGSShell : public PluginBase {
+	SCRIPT_HASH(AGSShell)
 private:
-	static IAGSEngine *_engine;
-private:
-	static const char *AGS_GetPluginName();
-	static void AGS_EngineStartup(IAGSEngine *lpEngine);
-
-private:
-	static void ShellExecute(ScriptMethodParams &params);
+	void ShellExecute(ScriptMethodParams &params);
 
 public:
-	AGSShell();
+	AGSShell() : PluginBase() {}
+	virtual ~AGSShell() {}
+
+	const char *AGS_GetPluginName() override;
+	void AGS_EngineStartup(IAGSEngine *lpEngine) override;
 };
 
 } // namespace AGSShell

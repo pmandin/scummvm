@@ -23,7 +23,8 @@
 #ifndef AGS_ENGINE_AC_STRING_H
 #define AGS_ENGINE_AC_STRING_H
 
-#include "ags/engine/ac/dynobj/cc_dynamicobject.h"
+//include <stdarg.h>
+#include "ags/engine/ac/dynobj/cc_dynamic_object.h"
 
 namespace AGS3 {
 
@@ -39,13 +40,14 @@ const char *String_Truncate(const char *thisString, int length);
 const char *String_Substring(const char *thisString, int index, int length);
 int String_CompareTo(const char *thisString, const char *otherString, bool caseSensitive);
 int String_StartsWith(const char *thisString, const char *checkForString, bool caseSensitive);
-int String_EndsWith(const char *thisString, const char *checkForString, bool caseSensitive);
+int String_EfndsWith(const char *thisString, const char *checkForString, bool caseSensitive);
 const char *String_Replace(const char *thisString, const char *lookForText, const char *replaceWithText, bool caseSensitive);
 const char *String_LowerCase(const char *thisString);
 const char *String_UpperCase(const char *thisString);
 int String_GetChars(const char *texx, int index);
 int StringToInt(const char *stino);
 int StrContains(const char *s1, const char *s2);
+int String_EndsWith(const char *thisString, const char *checkForString, bool caseSensitive);
 
 //=============================================================================
 

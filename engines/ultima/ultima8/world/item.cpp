@@ -232,7 +232,7 @@ void Item::move(int32 X, int32 Y, int32 Z) {
 	if (!dest_fast && (_flags & Item::FLG_FASTAREA)) {
 		_extendedFlags |= EXT_LERP_NOPREV;
 		if (_extendedFlags & EXT_CAMERA)
-			CameraProcess::GetCameraProcess()->ItemMoved();
+			CameraProcess::GetCameraProcess()->itemMoved();
 		else
 			leaveFastArea();
 
@@ -247,7 +247,7 @@ void Item::move(int32 X, int32 Y, int32 Z) {
 	// If we are being followed, notify the camera that we moved
 	// Note that we don't need to
 	if (_extendedFlags & EXT_CAMERA)
-		CameraProcess::GetCameraProcess()->ItemMoved();
+		CameraProcess::GetCameraProcess()->itemMoved();
 
 	if (_extendedFlags & EXT_TARGET)
 		TargetReticleProcess::get_instance()->itemMoved(this);
@@ -1194,9 +1194,6 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 	if (!GAME_IS_CRUSADER)
 		return 0;
 
-	if (GAME_IS_REGRET)
-		warning("Item::fireWeapon: TODO: Update for Regret (different firetypes)");
-
 	ix += x;
 	iy += y;
 	iz += z;
@@ -1229,7 +1226,7 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 		return 0;
 	}
 
-	int spriteframe = 0; // fire types 1, 2, 0xb, 0xd
+	int spriteframe = 0; // fire types 1, 2, 7, 8, 0xb, 0xd
 	switch (firetype) {
 	case 3:
 	case 9:
@@ -1246,7 +1243,24 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 		spriteframe = 0x47 + getRandom() % 5;
 		break;
 	case 0xf:
+	case 0x12: // No Regret only
+	case 0x13: // No Regret only
 		spriteframe = 0x4c;
+		break;
+	case 0x10: // No Regret only
+		spriteframe = dir + 0x50;
+		break;
+	case 0x11: // No Regret only
+		spriteframe = dir * 6 + 0x78;
+		break;
+	case 0x14: // No Regret only
+		spriteframe = dir * 3 + 0xdc;
+		break;
+	case 0x15: // No Regret only
+		spriteframe = dir + 100;
+		break;
+	case 0x16: // No Regret only
+		spriteframe = dir + 0x11;
 		break;
 	default:
 		break;
@@ -1317,7 +1331,7 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 	return spriteprocpid;
 }
 
-uint16 Item::fireDistance(const Item *other, Direction dir, int16 xoff, int16 yoff, int16 zoff) {
+uint16 Item::fireDistance(const Item *other, Direction dir, int16 xoff, int16 yoff, int16 zoff) const {
 	if (!other)
 		return 0;
 
@@ -1335,13 +1349,13 @@ uint16 Item::fireDistance(const Item *other, Direction dir, int16 xoff, int16 yo
 	int16 yoff2 = 0;
 	int16 zoff2 = 0;
 	bool other_offsets = false;
-	Actor *a = dynamic_cast<Actor *>(this);
+	const Actor *a = dynamic_cast<const Actor *>(this);
 	if (a) {
 		Animation::Sequence anim;
 		bool kneeling = a->isKneeling();
 		bool smallwpn = true;
-		MainActor *ma = dynamic_cast<MainActor *>(this);
-		Item *wpn = getItem(a->getActiveWeapon());
+		const MainActor *ma = dynamic_cast<const MainActor *>(this);
+		const Item *wpn = getItem(a->getActiveWeapon());
 		if (wpn && wpn->getShapeInfo()->_weaponInfo) {
 			smallwpn = wpn->getShapeInfo()->_weaponInfo->_small;
 		}
@@ -1352,8 +1366,7 @@ uint16 Item::fireDistance(const Item *other, Direction dir, int16 xoff, int16 yo
 			else
 				anim = Animation::kneelAndFireLargeWeapon;
 		} else {
-			// TODO: fireLarge seems to be different ID in Regret, check me.
-			if (ma || smallwpn)
+			if (smallwpn || !ma)
 				anim = Animation::fireSmallWeapon;
 			else
 				anim = Animation::fireLargeWeapon;
@@ -1414,9 +1427,11 @@ uint16 Item::fireDistance(const Item *other, Direction dir, int16 xoff, int16 yo
 			Std::list<CurrentMap::SweepItem> collisions;
 			Std::list<CurrentMap::SweepItem>::iterator it;
 			cm->sweepTest(start, end, dims, ShapeInfo::SI_SOLID,
-						   _objId, false, &collisions);
+						   _objId, true, &collisions);
 			for (it = collisions.begin(); it != collisions.end(); it++) {
 				if (it->_item == getObjId())
+					continue;
+				if (it->_touching)
 					continue;
 				if (it->_item != other->getObjId())
 					break;
@@ -1427,7 +1442,10 @@ uint16 Item::fireDistance(const Item *other, Direction dir, int16 xoff, int16 yo
 			}
 		}
 	}
-	return dist / 32;
+
+	if (!dist)
+		return 0;
+	return dist < 32 ? 1 : dist / 32;
 }
 
 int32 Item::getTargetZRelativeToAttackerZ(int32 otherz) const {
@@ -1807,10 +1825,11 @@ void Item::animateItem() {
 
 
 // Called when an item has entered the fast area
-void Item::enterFastArea() {
+uint32 Item::enterFastArea() {
+	uint16 retval = 0;
 	//!! HACK to get rid of endless SFX loops
 	if (_shape == 0x2c8 && GAME_IS_U8)
-		return;
+		return 0;
 
 	const ShapeInfo *si = getShapeInfo();
 
@@ -1836,13 +1855,12 @@ void Item::enterFastArea() {
 			// certain global is set.  For now just skip that.
 
 			//
-			// TODO: Check this. The original games only call usecode for actors or
-			// NOISY types.  Calling for all types like this shouldn't cause any issues
-			// as long as all the types which implement event F are NPC or NOISY.
-			// Should confirm if that is the case.
+			// NOTE: Original games only call usecode for actors or NOISY
+			// types.  We call for all types to fix an usecode bug in
+			// Crusader: No Remorse.  See note about it below.
 			//
 			// if (actor || si->_flags & ShapeInfo::SI_NOISY)
-			callUsecodeEvent_enterFastArea();
+			retval = callUsecodeEvent_enterFastArea();
 		}
 	}
 
@@ -1859,6 +1877,25 @@ void Item::enterFastArea() {
 
 	// We're fast!
 	_flags |= FLG_FASTAREA;
+
+	//
+	// WORKAROUND: Crusader: No Remorse usecode has one place (REB_EGG, after
+	// randomly creating 0x34D REB_COUP (rebel couple) at the bar) where this
+	// is called with an "implies" but the enterFastArea event code never
+	// returns.  Every other instance this is "spawn"ed.
+	//
+	// In the original this bug is never triggered as enterFastArea intrinsic
+	// does not call usecode event unless the shape is SI_NOISY (REB_COUP is
+	// not). The result is the rebel couple do not start moving until you move
+	// near them and trigger their event, then enterFastArea function is
+	// spawned directly.
+	//
+	// Work around both problems by always calling event above and return 0.
+	//
+	if (_shape == 0x34D && GAME_IS_REMORSE)
+		return 0;
+
+	return retval;
 }
 
 // Called when an item is leaving the fast area
@@ -2069,6 +2106,12 @@ void Item::grab() {
 
 
 void Item::hurl(int xs, int ys, int zs, int grav) {
+	if (_parent) {
+		// Should be removed from the container first??
+		// This will break otherwise as location is 0,0,0
+		warning("Ignoring hurl for contained item %d.", _objId);
+		return;
+	}
 	// crusader sleeps existing gravity at first
 	bool do_sleep = GAME_IS_CRUSADER && (_gravityPid == 0);
 	GravityProcess *p = ensureGravityProcess();
@@ -2691,6 +2734,11 @@ uint32 Item::I_setShape(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_UINT16(shape);
 	if (!item) return 0;
 
+#if 0
+	debug(6, "Item::setShape: objid %04X shape (%d -> %d)",
+		  item->getObjId(), item->getShape(), shape);
+#endif
+
 	item->setShape(shape);
 	return 0;
 }
@@ -3024,7 +3072,7 @@ uint32 Item::I_enterFastArea(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_ITEM_FROM_PTR(item);
 	if (!item) return 0;
 
-	return item->callUsecodeEvent_enterFastArea();
+	return item->enterFastArea();
 }
 
 uint32 Item::I_cast(const uint8 *args, unsigned int /*argsize*/) {
@@ -3324,8 +3372,8 @@ uint32 Item::I_create(const uint8 *args, unsigned int /*argsize*/) {
 	uint16 objID = newitem->getObjId();
 
 #if 0
-	pout << "Item::create: created item " << objID << " (" << shape
-	     << "," << frame << ")" << Std::endl;
+	debug(6, "Item::create: objid %04X shape (%d, %d)",
+		  objID, shape, frame);
 #endif
 
 	newitem->moveToEtherealVoid();
@@ -3880,7 +3928,7 @@ uint32 Item::I_getRangeIfVisible(const uint8 *args, unsigned int /*argsize*/) {
 		return 0;
 
 	// Somewhat arbitrary maths in here to replicate Crusader behavior.
-	int range = item->getRangeIfVisible(*other) / 16;
+	int range = item->getRangeIfVisible(*other) / 32;
 	if ((range & 0xf) != 0)
 		range++;
 

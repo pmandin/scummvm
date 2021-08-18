@@ -51,9 +51,14 @@ public:
 	//! when Crusader is kneeling.
 	const ShapeInfo *getShapeInfoFromGameInstance() const override;
 
+	void move(int32 X, int32 Y, int32 Z) override;
+
 	//! Add item to avatar's inventory, but with some extra logic to do things like combine
 	//! ammo and credits, use batteries, etc.
 	int16 addItemCru(Item *item, bool showtoast);
+
+	//! Remove a single item - only called from an intrinsic
+	bool removeItemCru(Item *item);
 
 	//! teleport to the given location on the given map
 	void teleport(int mapNum, int32 x, int32 y, int32 z) override;
@@ -123,6 +128,14 @@ public:
 		setMana(getMaxEnergy());
 	}
 
+	void setShieldType(uint16 shieldtype) {
+		_shieldType = shieldtype;
+	}
+
+	uint16 getShieldType() {
+		return _shieldType;
+	}
+
 	bool hasKeycard(int num) const;
 	void addKeycard(int bitno);
 
@@ -134,16 +147,16 @@ public:
 		return _activeInvItem;
 	}
 
-	//!< Swap to the next active weapon (in Crusader)
+	//! Swap to the next active weapon (Crusader)
 	void nextWeapon();
 
-	//!< Swap to the next inventory item (in Crusader)
+	//! Swap to the next inventory item (Crusader)
 	void nextInvItem();
 
 	//! Check if we can absorb a hit with the shield. Returns the modified damage value.
 	int receiveShieldHit(int damage, uint16 damage_type) override;
 
-	//! Detonate used bomb
+	//! Detonate used bomb (Crusader)
 	void detonateBomb();
 
 	bool loadData(Common::ReadStream *rs, uint32 version);
@@ -164,6 +177,7 @@ public:
 	INTRINSIC(I_addItemCru);
 	INTRINSIC(I_getNumberOfCredits);
 	INTRINSIC(I_switchMap);
+	INTRINSIC(I_removeItemCru);
 
 	void getWeaponOverlay(const WeaponOverlayFrame *&frame, uint32 &shape);
 
@@ -184,7 +198,9 @@ protected:
 
 	Std::string _name;
 
+	//! Process for a shield zap animation sprite
 	uint16 _shieldSpriteProc;
+	//! Type of shield (only used in Crusader)
 	uint16 _shieldType;
 
 	static ShapeInfo *_kneelingShapeInfo;

@@ -373,7 +373,7 @@ bool ThemeEngine::init() {
 void ThemeEngine::clearAll() {
 	if (_initOk) {
 		_system->clearOverlay();
-		_system->grabOverlay(_backBuffer.getPixels(), _backBuffer.pitch);
+		_system->grabOverlay(*_backBuffer.surfacePtr());
 	}
 }
 
@@ -526,14 +526,14 @@ bool ThemeEngine::addFont(TextData textId, const Common::String &language, const
 	if (!language.empty()) {
 #ifdef USE_TRANSLATION
 		Common::String cl = TransMan.getCurrentLanguage();
+#else
+		Common::String cl("en");
+#endif
 		if (!cl.matchString(language, true))
 			return true;	// Skip
 
 		if (_texts[textId] != nullptr)	// We already loaded something
 			return true;
-#else
-		return true;	// Safely ignore
-#endif
 	}
 
 	if (_texts[textId] != nullptr)
@@ -562,7 +562,7 @@ bool ThemeEngine::addFont(TextData textId, const Common::String &language, const
 			if (!_texts[textId]->_fontPtr) {
 				error("Couldn't load font '%s'/'%s'", file.c_str(), scalableFile.c_str());
 #ifdef USE_TRANSLATION
-				TransMan.setLanguage("C");
+				TransMan.setLanguage("en");
 				Common::TextToSpeechManager *ttsMan;
 				if ((ttsMan = g_system->getTextToSpeechManager()) != nullptr)
 					ttsMan->setLanguage("en");
@@ -578,7 +578,7 @@ bool ThemeEngine::addFont(TextData textId, const Common::String &language, const
 			// However, still returns false here, probably to avoid ugly / garbage glyphs side-effects
 			// FIXME If we return false anyway why would we attempt the fall-back in the first place?
 #ifdef USE_TRANSLATION
-			TransMan.setLanguage("C");
+			TransMan.setLanguage("en");
 			Common::TextToSpeechManager *ttsMan;
 			if ((ttsMan = g_system->getTextToSpeechManager()) != nullptr)
 				ttsMan->setLanguage("en");
@@ -1066,6 +1066,12 @@ void ThemeEngine::drawDropDownButton(const Common::Rect &r, uint32 dropdownWidth
 	Common::Rect textRect = r;
 	textRect.left  = r.left  + dropdownWidth;
 	textRect.right = r.right - dropdownWidth;
+
+	// Don't draw text if we don't have enough room for it
+	if (!textRect.isValidRect()) {
+		return;
+	}
+
 	drawDDText(getTextData(dd), getTextColor(dd), textRect, str, false, true, convertTextAlignH(_widgets[dd]->_textAlignH, rtl),
 	           _widgets[dd]->_textAlignV);
 }

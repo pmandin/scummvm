@@ -301,7 +301,7 @@ void AIScriptIzo::Retired(int byActorId) {
 		Player_Set_Combat_Mode(false);
 		Loop_Actor_Walk_To_XYZ(kActorMcCoy, -12.0f, -41.58f, 72.0f, 0, true, false, false);
 		Ambient_Sounds_Remove_All_Non_Looping_Sounds(true);
-		Ambient_Sounds_Remove_All_Looping_Sounds(1);
+		Ambient_Sounds_Remove_All_Looping_Sounds(1u);
 		Game_Flag_Set(kFlagKP07toKP06);
 		Game_Flag_Reset(kFlagMcCoyIsHelpingReplicants);
 		Set_Enter(kSetKP05_KP06, kSceneKP06);
@@ -316,7 +316,7 @@ int AIScriptIzo::GetFriendlinessModifierIfGetsClue(int otherActorId, int clueId)
 }
 
 bool AIScriptIzo::GoalChanged(int currentGoalNumber, int newGoalNumber) {
-	if (newGoalNumber == 200
+	if (newGoalNumber == kGoalIzoEscapedSteeleKnows
 	 || newGoalNumber == kGoalIzoDie
 	 || newGoalNumber == kGoalIzoDieHidden
 	 || newGoalNumber == kGoalIzoGotArrested
@@ -487,7 +487,7 @@ bool AIScriptIzo::GoalChanged(int currentGoalNumber, int newGoalNumber) {
 #endif // BLADERUNNER_ORIGINAL_BUGS
 		return true;
 
-	case 200:
+	case kGoalIzoEscapedSteeleKnows:
 		Game_Flag_Set(kFlagDNARowAvailable);
 		return true;
 

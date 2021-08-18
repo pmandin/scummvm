@@ -134,8 +134,7 @@ static const Plugin *detectPlugin() {
 	// Query the plugin for the game descriptor
 	printf("   Looking for a plugin supporting this target... %s\n", plugin->getName());
 	const MetaEngineDetection &metaEngine = plugin->get<MetaEngineDetection>();
-	DebugMan.debugFlagsClear();
-	DebugMan.debugFlagsRegister(metaEngine.getDebugChannels());
+	DebugMan.addAllDebugChannels(metaEngine.getDebugChannels());
 	PlainGameDescriptor game = metaEngine.findGame(gameId.c_str());
 	if (!game.gameId) {
 		warning("'%s' is an invalid game ID for the engine '%s'. Use the --list-games option to list supported game IDs", gameId.c_str(), engineId.c_str());
@@ -155,7 +154,7 @@ void saveLastLaunchedTarget(const Common::String &target) {
 }
 
 // TODO: specify the possible return values here
-static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, OSystem &system, const Common::String &edebuglevels) {
+static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, OSystem &system, const Common::String &debugLevels) {
 	assert(plugin);
 	assert(enginePlugin);
 
@@ -194,10 +193,8 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 		metaEngineDetection.registerDefaultSettings(target);
 	}
 
-	// clear the flag and add the global ones
-	DebugMan.debugFlagsClear();
 	// before we instantiate the engine, we register debug channels for it
-	DebugMan.debugFlagsRegister(metaEngineDetection.getDebugChannels());
+	DebugMan.addAllDebugChannels(metaEngineDetection.getDebugChannels());
 
 	// Create the game's MetaEngine.
 	MetaEngine &metaEngine = enginePlugin->get<MetaEngine>();
@@ -222,6 +219,7 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 			ConfMan.removeGameDomain(target.c_str());
 		}
 
+		DebugMan.removeAllDebugChannels();
 		return err;
 	}
 
@@ -271,7 +269,7 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 
 	// On creation the engine should have set up all debug levels so we can use
 	// the command line arguments here
-	Common::StringTokenizer tokenizer(edebuglevels, " ,");
+	Common::StringTokenizer tokenizer(debugLevels, " ,");
 	while (!tokenizer.empty()) {
 		Common::String token = tokenizer.nextToken();
 		if (token.equalsIgnoreCase("all"))
@@ -321,8 +319,7 @@ static Common::Error runGame(const Plugin *plugin, const Plugin *enginePlugin, O
 	// Free up memory
 	delete engine;
 
-	// We clear all debug levels again even though the engine should do it
-	DebugMan.clearAllDebugChannels();
+	DebugMan.removeAllDebugChannels();
 
 	// Reset the file/directory mappings
 	SearchMan.clear();
@@ -346,6 +343,7 @@ static void setupGraphics(OSystem &system) {
 		system.setGraphicsMode(ConfMan.get("gfx_mode").c_str());
 		system.setStretchMode(ConfMan.get("stretch_mode").c_str());
 		system.setShader(ConfMan.get("shader").c_str());
+		system.setScaler(ConfMan.get("scaler").c_str(), ConfMan.getInt("scale_factor"));
 
 		system.initSize(320, 200);
 
@@ -443,6 +441,16 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 		gDebugChannelsOnly = true;
 
 
+	// Now we want to enable global flags if any
+	Common::StringTokenizer tokenizer(specialDebug, " ,");
+	while (!tokenizer.empty()) {
+		Common::String token = tokenizer.nextToken();
+		if (token.equalsIgnoreCase("all"))
+			DebugMan.enableAllDebugChannels();
+		else
+			DebugMan.enableDebugChannel(token);
+	}
+
 	ConfMan.registerDefault("always_run_fallback_detection_extern", true);
 	PluginManager::instance().init();
  	PluginManager::instance().loadAllPlugins(); // load plugins for cached plugin manager
@@ -518,8 +526,6 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 	system.getAudioCDManager();
 	MusicManager::instance();
 	Common::DebugManager::instance();
-	// set the global debug flags as soon as we instantiate the debug mannager
-	DebugMan.debugFlagsClear();
 
 	// Init the event manager. As the virtual keyboard is loaded here, it must
 	// take place after the backend is initiated and the screen has been setup

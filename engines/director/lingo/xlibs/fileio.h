@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef DIRECTOR_LINGO_XOBJECT_FILEIO_H
-#define DIRECTOR_LINGO_XOBJECT_FILEIO_H
+#ifndef DIRECTOR_LINGO_XLIBS_FILEIO_H
+#define DIRECTOR_LINGO_XLIBS_FILEIO_H
 
 namespace Common {
 class SeekableReadStream;
@@ -68,20 +68,30 @@ public:
 };
 
 namespace FileIO {
+	extern const char *xlibName;
+	extern const char *fileNames[];
+
+	void open(int type);
+	void close(int type);
+
 	bool charInMatchString(char ch, const Common::String &matchString);
-	void initialize(int type);
 	void saveFileError();
 	void m_delete(int nargs);
 	void m_dispose(int nargs);
+	void m_error(int nargs);
 	void m_fileName(int nargs);
+	void m_getFinderInfo(int nargs);
 	void m_getLength(int nargs);
 	void m_getPosition(int nargs);
 	void m_new(int nargs);
 	void m_readChar(int nargs);
+	void m_readFile(int nargs);
 	void m_readLine(int nargs);
 	void m_readToken(int nargs);
 	void m_readWord(int nargs);
+	void m_setFinderInfo(int nargs);
 	void m_setPosition(int nargs);
+	void m_status(int nargs);
 	void m_writeChar(int nargs);
 	void m_writeString(int nards);
 

@@ -58,7 +58,9 @@ public:
 	milliseconds() : duration(0) {}
 	milliseconds(uint32 val) : duration(val) {}
 
-	static milliseconds zero() { return milliseconds(); }
+	static milliseconds zero() {
+		return milliseconds();
+	}
 };
 
 class microseconds : public duration {

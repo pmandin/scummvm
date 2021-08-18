@@ -65,36 +65,39 @@ public:
 	Frame *getFrame() const { return _frame; }
 	Score *getScore() const { return _score; }
 
-	void updateCast();
+	void updateEditable();
 
 	bool respondsToMouse();
 	bool isActive();
 	bool shouldHilite();
+	bool checkSpriteType();
 
 	uint16 getPattern();
 	void setPattern(uint16 pattern);
 
-	void setCast(uint16 castid);
+	void setCast(CastMemberID memberID);
 	bool isQDShape();
+	Graphics::Surface *getQDMatte();
+	void createQDMatte();
 
 	Frame *_frame;
 	Score *_score;
 	Movie *_movie;
 
-	uint16 _scriptId;
-	uint16 _scriptCastIndex;
-	byte _colorcode;  // x40 editable, 0x80 moveable
+	Graphics::FloodFill *_matte; // matte for quickdraw shape
+
+	CastMemberID _scriptId;
+	byte _colorcode; // x40 editable, 0x80 moveable
 	byte _blendAmount;
 	uint32 _unk3;
 
 	bool _enabled;
-	uint16 _castIndex;
 	SpriteType _spriteType;
 	byte _inkData;
 	InkType _ink;
 	uint16 _trails;
 
-	uint16 _castId;
+	CastMemberID _castId;
 	uint16 _pattern;
 	CastMember *_cast;
 

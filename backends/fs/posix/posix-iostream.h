@@ -28,7 +28,7 @@
 /**
  * A file input / output stream using POSIX interfaces
  */
-class PosixIoStream : public StdioStream {
+class PosixIoStream final : public StdioStream {
 public:
 #if defined(ANDROID_PLAIN_PORT)
 	bool createdWithSAF;
@@ -39,10 +39,10 @@ public:
 	PosixIoStream(void *handle);
 #if defined(ANDROID_PLAIN_PORT)
 	PosixIoStream(void *handle, bool bCreatedWithSAF, Common::String sHackyFilename);
-	~PosixIoStream();
+	~PosixIoStream() override;
 #endif
 
-	int32 size() const override;
+	int64 size() const override;
 };
 
 #endif

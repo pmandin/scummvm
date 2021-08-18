@@ -30,6 +30,8 @@
 
 namespace Graphics {
 
+#define SLANTDEEP 2
+
 class MacFontFamily {
 public:
 	MacFontFamily();
@@ -37,6 +39,7 @@ public:
 
 	bool load(Common::SeekableReadStream &stream);
 	int getKerningOffset(uint style, int32 left, uint32 right) const;
+	int getGlyphWidth(uint style, uint c);
 
 	struct AsscEntry {
 		uint16 _fontSize;
@@ -96,21 +99,31 @@ private:
 
 	uint16 _ffNumKerns;
 	Common::Array<KernEntry> _ffKernEntries;
+
+	struct StyleWidthEntry {
+		uint16 _style;
+		Common::Array<uint16> _widths;
+	};
+
+	uint16 _ffNumStyleWidths;
+	Common::Array<StyleWidthEntry> _ffStyleWidths;
 };
 
 struct MacGlyph {
 	void clear() {
 		bitmapOffset = 0;
-		width = 0;
+		width1 = 0;
 		height = 0;
 		bitmapWidth = 0;
 		kerningOffset = 0;
+		width = 0;
 	}
 
 	uint16 bitmapOffset;
-	byte width;
 	uint16 height;
 	uint16 bitmapWidth;
+	uint16 width1;	// this width is from glyph-table, which has the higher priority
+	byte width;	// this width is from width/offset table
 	int kerningOffset;
 };
 
@@ -138,6 +151,9 @@ struct MacFONTdata {
 	MacFontFamily *_family;
 	int _size;
 	int _style;
+
+	// currently only available in generated fonts
+	int _slant;
 };
 
 /**
@@ -161,7 +177,7 @@ public:
 
 	int getFontSize() const { return _data._size; }
 
-	static MacFONTFont *scaleFont(const MacFONTFont *src, int newSize, bool bold = false, bool italic = false, bool outline = false);
+	static MacFONTFont *scaleFont(const MacFONTFont *src, int newSize, int slant);
 	static void testBlit(const MacFONTFont *src, ManagedSurface *dst, int color, int x0, int y0, int width);
 
 private:

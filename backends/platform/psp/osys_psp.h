@@ -106,7 +106,7 @@ public:
 	void hideOverlay();
 	bool isOverlayVisible() const;
 	void clearOverlay();
-	void grabOverlay(void *buf, int pitch);
+	void grabOverlay(Graphics::Surface &surface);
 	void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h);
 	int16 getOverlayHeight();
 	int16 getOverlayWidth();
@@ -138,7 +138,7 @@ public:
 
 	// Misc
 	FilesystemFactory *getFilesystemFactory() { return &PSPFilesystemFactory::instance(); }
-	void getTimeAndDate(TimeDate &t) const;
+	void getTimeAndDate(TimeDate &td, bool skipRecord = false) const;
 	virtual void engineDone();
 
 	void quit();

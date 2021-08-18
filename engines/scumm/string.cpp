@@ -55,6 +55,23 @@ namespace Scumm {
 void ScummEngine::printString(int m, const byte *msg) {
 	switch (m) {
 	case 0:
+		// WORKAROUND bug #12734: The script tries to clear the currently
+		// displayed message after Rapp gives you the map, but that means
+		// you'll never see Guybrush's reaction to finding a map piece.
+		//
+		// It's a bit hard to pin down the exact case, since it happens
+		// at a few different points during the script. We limit it to
+		// when the player has the map piece.
+		//
+		// We have to do it here, because we don't want to delay the
+		// animation of Rapp turning back to Ashes.
+		if (_game.id == GID_MONKEY2 && _roomResource == 19 &&
+			vm.slot[_currentScript].number == 203 &&
+			_actorToPrintStrFor == 255 && strcmp((const char *)msg, " ") == 0 &&
+			getOwner(200) == VAR(VAR_EGO) && VAR(VAR_HAVE_MSG)) {
+			return;
+		}
+
 		actorTalk(msg);
 		break;
 	case 1:
@@ -75,7 +92,7 @@ void ScummEngine::printString(int m, const byte *msg) {
 void ScummEngine_v8::printString(int m, const byte *msg) {
 	if (m == 4) {
 		const StringTab &st = _string[m];
-		enqueueText(msg, st.xpos, st.ypos, st.color, st.charset, st.center);
+		enqueueText(msg, st.xpos, st.ypos, st.color, st.charset, st.center, st.wrapping);
 	} else {
 		ScummEngine::printString(m, msg);
 	}
@@ -99,7 +116,7 @@ void ScummEngine::debugMessage(const byte *msg) {
 		b = buffer[10] | (buffer[11] << 8) | (buffer[14] << 16) | (buffer[15] << 24);
 
 		// Sam and Max uses a caching system, printing empty messages
-		// and setting VAR_V6_SOUNDMODE beforehand. See patch 609791.
+		// and setting VAR_V6_SOUNDMODE beforehand. See patch #8051.
 		if (_game.id == GID_SAMNMAX)
 			channel = VAR(VAR_V6_SOUNDMODE);
 
@@ -128,7 +145,7 @@ void ScummEngine::showMessageDialog(const byte *msg) {
 #pragma mark -
 
 
-void ScummEngine_v6::enqueueText(const byte *text, int x, int y, byte color, byte charset, bool center) {
+void ScummEngine_v6::enqueueText(const byte *text, int x, int y, byte color, byte charset, bool center, bool wrapped) {
 	BlastText &bt = _blastTextQueue[_blastTextQueuePos++];
 	assert(_blastTextQueuePos <= ARRAYSIZE(_blastTextQueue));
 
@@ -144,6 +161,26 @@ void ScummEngine_v6::enqueueText(const byte *text, int x, int y, byte color, byt
 	}
 
 	convertMessageToString(text, bt.text, sizeof(bt.text));
+
+	// HACK: This corrects the vertical placement of the object descriptions in COMI. The original text renderer does this in the same way
+	// we do in smush_font.cpp, lines 338 - 344: The dimensions of the whole block of text get measured first and then the necessary changes
+	// will be made before printing. Unfortunately, the way our ScummEngine_v7::CHARSET_1() is implemented we can't properly adjust
+	// the y postion there: If we have already printed several lines of text and then realize that we're getting out of bounds then it is too
+	// late, we can't move up the text we've already printed. The same applies to horizontal fixes: if we have already printed several lines
+	// and then encounter a line that is out of bounds we can't move the whole block to the left or right any more (as we should).
+	// Possible TODO: moving the measuring logic contained in SmushFont::drawStringWrap() to ScummEngine_v6 to make it available here, too.
+	if (_game.id == GID_CMI && wrapped) {
+		int of = _charset->getCurID();
+		_charset->setCurID(charset);
+		// Note that this won't detect (and measure correctly) 1-byte characters contained
+		// in 2-byte strings. For now, I trust that it won't happen with the object strings.
+		int clipHeight = _charset->getCharHeight(*bt.text) + 1;
+		_charset->setCurID(of);
+
+		clipHeight = clipHeight + clipHeight / 2;
+		y = MIN<int>(y, 470 - clipHeight);
+	}
+
 	bt.xpos = x;
 	bt.ypos = y;
 	bt.color = color;
@@ -184,7 +221,7 @@ void ScummEngine_v6::drawBlastTexts() {
 			do {
 				c = *buf++;
 
-				// FIXME: This is a workaround for bugs #864030 and #2440:
+				// FIXME: This is a workaround for bugs #1347 and #2440:
 				// In COMI, some text contains ASCII character 11 = 0xB. It's
 				// not quite clear what it is good for; so for now we just ignore
 				// it, which seems to match the original engine (BTW, traditionally,
@@ -486,7 +523,7 @@ bool ScummEngine::newLine() {
 	return true;
 }
 
-void ScummEngine::fakeBidiString(byte *ltext, bool ignoreVerb) {
+void ScummEngine::fakeBidiString(byte *ltext, bool ignoreVerb) const {
 	// Provides custom made BiDi mechanism.
 	// Reverses texts on each line marked by control characters (considering different control characters used in verbs panel)
 	// While preserving original order of numbers (also negative numbers and comma separated)
@@ -741,6 +778,9 @@ void ScummEngine::CHARSET_1() {
 		fakeBidiString(_charsetBuffer + _charsetBufPos, true);
 	}
 
+	bool createTextBox = (_macScreen && _game.id == GID_INDY3);
+	bool drawTextBox = false;
+
 	while (handleNextCharsetCode(a, &c)) {
 		if (c == 0) {
 			// End of text reached, set _haveMsg accordingly
@@ -774,6 +814,13 @@ void ScummEngine::CHARSET_1() {
 
 		_charset->_left = _nextLeft;
 		_charset->_top = _nextTop;
+
+		if (createTextBox) {
+			if (!_keepText)
+				mac_createIndy3TextBox(a);
+			createTextBox = false;
+			drawTextBox = true;
+		}
 
 		if (_game.version >= 7) {
 #ifdef ENABLE_SCUMM_7_8
@@ -813,6 +860,9 @@ void ScummEngine::CHARSET_1() {
 			_nextLeft = _charset->_left;
 			_nextTop = _charset->_top;
 		}
+
+		if (drawTextBox)
+			mac_drawIndy3TextBox();
 
 		if (_game.version <= 2) {
 			_talkDelay += _defaultTalkDelay;
@@ -1023,8 +1073,8 @@ void ScummEngine::drawString(int a, const byte *msg) {
 	_charset->setCurID(_string[a].charset);
 
 	// HACK: Correct positions of text in books in Indy3 Mac.
-	// See also bug #8759.
-	if (_game.id == GID_INDY3 && _game.platform == Common::kPlatformMacintosh && a == 1) {
+	// See also bug #8759. Not needed when using the Mac font.
+	if (_game.id == GID_INDY3 && _game.platform == Common::kPlatformMacintosh && a == 1 && !_macScreen) {
 		if (_currentRoom == 75) {
 			// Grail Diary Page 1 (Library)
 			if (_charset->_startLeft < 160)
@@ -1235,7 +1285,7 @@ int ScummEngine::convertMessageToString(const byte *msg, byte *dst, int dstSize)
 		if (chr == 0xFF) {
 			chr = src[num++];
 
-			// WORKAROUND for bug #985948, a script bug in Indy3. Apparently,
+			// WORKAROUND for bug #1675, a script bug in Indy3. Apparently,
 			// a german 'sz' was encoded incorrectly as 0xFF2E. We replace
 			// this by the correct encoding here. See also ScummEngine::resStrLen().
 			if (_game.id == GID_INDY3 && chr == 0x2E) {
@@ -1732,7 +1782,7 @@ void ScummEngine_v7::loadLanguageBundle() {
 			while (*ptr == '\n' || *ptr == '\r')
 				*ptr++ = 0;
 
-			// Convert '\n' code to a newline. See also bug #902415.
+			// Convert '\n' code to a newline. See also bug #1487.
 			char *src, *dst;
 			src = dst = _languageBuffer + _languageIndex[i].offset;
 			while (*src) {
@@ -2060,6 +2110,40 @@ void ScummEngine::translateText(const byte *text, byte *trans_buff) {
 
 	// Default: just copy the string
 	memcpy(trans_buff, text, resStrLen(text) + 1);
+}
+
+bool ScummEngine::reverseIfNeeded(const byte *text, byte *reverseBuf) const {
+	if (_language != Common::HE_ISR)
+		return false;
+	if (_game.id != GID_LOOM && _game.id != GID_ZAK)
+		return false;
+	strcpy(reinterpret_cast<char *>(reverseBuf), reinterpret_cast<const char *>(text));
+	fakeBidiString(reverseBuf, true);
+	return true;
+}
+
+Common::CodePage ScummEngine::getDialogCodePage() const {
+	switch (_language) {
+	case Common::KO_KOR:
+		return Common::kWindows949;
+	case Common::JA_JPN:
+		return Common::kWindows932;
+	case Common::ZH_TWN:
+	case Common::ZH_CNA:
+		return Common::kWindows950;
+	case Common::RU_RUS:
+		return Common::kDos866;
+	case Common::HE_ISR:
+		switch (_game.id) {
+		case GID_LOOM:
+		case GID_ZAK:
+			return Common::kDos862;
+		default:
+			return Common::kWindows1255;
+		}
+	default:
+		return Common::kCodePageInvalid;
+	}
 }
 
 } // End of namespace Scumm

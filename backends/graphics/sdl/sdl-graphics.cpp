@@ -85,7 +85,7 @@ bool SdlGraphicsManager::setState(const State &state) {
 		// pixel format instead.
 		Graphics::PixelFormat format = state.pixelFormat;
 		Common::List<Graphics::PixelFormat> supportedFormats = getSupportedFormats();
-		if (Common::find(supportedFormats.begin(), supportedFormats.end(), format) == supportedFormats.end())
+		if (!supportedFormats.empty() && Common::find(supportedFormats.begin(), supportedFormats.end(), format) == supportedFormats.end())
 			format = supportedFormats.front();
 		initSize(state.screenWidth, state.screenHeight, &format);
 #else
@@ -121,17 +121,17 @@ Common::Rect SdlGraphicsManager::getPreferredFullscreenResolution() {
 
 bool SdlGraphicsManager::defaultGraphicsModeConfig() const {
 	const Common::ConfigManager::Domain *transientDomain = ConfMan.getDomain(Common::ConfigManager::kTransientDomain);
-	if (transientDomain && transientDomain->contains("gfx_mode")) {
-		const Common::String &mode = transientDomain->getVal("gfx_mode");
-		if (!mode.equalsIgnoreCase("normal") && !mode.equalsIgnoreCase("default")) {
+	if (transientDomain && transientDomain->contains("scaler")) {
+		const Common::String &mode = transientDomain->getVal("scaler");
+		if (!mode.equalsIgnoreCase("default")) {
 			return false;
 		}
 	}
 
 	const Common::ConfigManager::Domain *gameDomain = ConfMan.getActiveDomain();
-	if (gameDomain && gameDomain->contains("gfx_mode")) {
-		const Common::String &mode = gameDomain->getVal("gfx_mode");
-		if (!mode.equalsIgnoreCase("normal") && !mode.equalsIgnoreCase("default")) {
+	if (gameDomain && gameDomain->contains("scaler")) {
+		const Common::String &mode = gameDomain->getVal("scaler");
+		if (!mode.equalsIgnoreCase("default")) {
 			return false;
 		}
 	}
@@ -227,10 +227,19 @@ bool SdlGraphicsManager::notifyMousePosition(Common::Point &mouse) {
 	mouse.y = CLIP<int16>(mouse.y, 0, _windowHeight - 1);
 
 	int showCursor = SDL_DISABLE;
-	// DPI aware scaling to mouse position
-	uint scale = getFeatureState(BaseBackend::kFeatureHiDPI) ? 2 : 1;
-	mouse.x *= scale;
-	mouse.y *= scale;
+	// Currently on macOS we need to scale the events for HiDPI screen, but on
+	// Windows we do not. We can find out if we need to do it by querying the
+	// SDL window size vs the SDL drawable size.
+	float dpiScale = 1.f;
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	int windowWidth, windowHeight;
+	SDL_GetWindowSize(_window->getSDLWindow(), &windowWidth, &windowHeight);
+	int realWidth, realHeight;
+	SDL_GL_GetDrawableSize(_window->getSDLWindow(), &realWidth, &realHeight);
+	dpiScale = (float)realWidth / (float)windowWidth;
+#endif
+	mouse.x = (int)(mouse.x * dpiScale + 0.5f);
+	mouse.y = (int)(mouse.y * dpiScale + 0.5f);
 	bool valid = true;
 	if (_activeArea.drawRect.contains(mouse)) {
 		_cursorLastInActiveArea = true;
@@ -354,11 +363,19 @@ void SdlGraphicsManager::saveScreenshot() {
 			debug("Saved screenshot '%s' in current directory", filename.c_str());
 		else
 			debug("Saved screenshot '%s' in directory '%s'", filename.c_str(), screenshotsPath.c_str());
+
+#ifdef USE_OSD
+		displayMessageOnOSD(Common::U32String::format(_("Saved screenshot '%s'"), filename.c_str()));
+#endif
 	} else {
 		if (screenshotsPath.empty())
 			warning("Could not save screenshot in current directory");
 		else
 			warning("Could not save screenshot in directory '%s'", screenshotsPath.c_str());
+
+#ifdef USE_OSD
+		displayMessageOnOSD(_("Could not save screenshot"));
+#endif
 	}
 }
 

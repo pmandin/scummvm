@@ -20,65 +20,57 @@
  *
  */
 
+#include "common/config-manager.h"
+#include "common/savefile.h"
+#include "ags/lib/std/algorithm.h"
 #include "ags/lib/std/set.h"
+#include "ags/lib/allegro.h" // find files
 #include "ags/engine/ac/listbox.h"
 #include "ags/shared/ac/common.h"
 #include "ags/engine/ac/game.h"
-#include "ags/shared/ac/gamesetupstruct.h"
-#include "ags/engine/ac/gamestate.h"
+#include "ags/shared/ac/game_setup_struct.h"
+#include "ags/engine/ac/game_state.h"
 #include "ags/engine/ac/global_game.h"
 #include "ags/engine/ac/path_helper.h"
 #include "ags/engine/ac/string.h"
-#include "ags/shared/gui/guimain.h"
+#include "ags/shared/gui/gui_main.h"
 #include "ags/engine/debugging/debug_log.h"
-
-#include "ags/shared/debugging/out.h"
 #include "ags/shared/util/path.h"
+#include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
-#include "ags/engine/ac/dynobj/scriptstring.h"
-#include "ags/globals.h"
+#include "ags/engine/ac/dynobj/script_string.h"
 #include "ags/ags.h"
-#include "common/fs.h"
-#include "common/savefile.h"
-#include "common/config-manager.h"
+#include "ags/globals.h"
 
 namespace AGS3 {
 
 using namespace AGS::Shared;
-
-
-
 
 // *** LIST BOX FUNCTIONS
 
 int ListBox_AddItem(GUIListBox *lbb, const char *text) {
 	if (lbb->AddItem(text) < 0)
 		return 0;
-
-	_G(guis_need_update) = 1;
 	return 1;
 }
 
 int ListBox_InsertItemAt(GUIListBox *lbb, int index, const char *text) {
 	if (lbb->InsertItem(index, text) < 0)
 		return 0;
-
-	_G(guis_need_update) = 1;
 	return 1;
 }
 
 void ListBox_Clear(GUIListBox *listbox) {
 	listbox->Clear();
-	_G(guis_need_update) = 1;
 }
 
 void FillDirList(std::set<String> &files, const String &path) {
 	String dirName = Path::GetDirectoryPath(path);
 	String filePattern = Path::get_filename(path);
 
-	if (dirName.CompareLeftNoCase(get_install_dir()) == 0) {
-		String subDir = dirName.Mid(get_install_dir().GetLength());
+	if (dirName.CompareLeftNoCase(_GP(ResPaths).DataDir) == 0) {
+		String subDir = dirName.Mid(_GP(ResPaths).DataDir.GetLength());
 		if (!subDir.IsEmpty() && subDir[0u] == '/')
 			subDir.ClipLeft(1);
 		dirName = ConfMan.get("path");
@@ -88,12 +80,11 @@ void FillDirList(std::set<String> &files, const String &path) {
 		for (uint idx = 0; idx < matches.size(); ++idx)
 			files.insert(matches[idx]);
 		return;
-
 	}
 
-	Common::FSDirectory dir(dirName);
+	Common::FSDirectory dir(dirName.GetCStr());
 	Common::ArchiveMemberList fileList;
-	dir.listMatchingMembers(fileList, filePattern);
+	dir.listMatchingMembers(fileList, filePattern.GetCStr());
 	for (Common::ArchiveMemberList::iterator iter = fileList.begin(); iter != fileList.end(); ++iter) {
 		files.insert((*iter)->getName());
 	}
@@ -101,7 +92,6 @@ void FillDirList(std::set<String> &files, const String &path) {
 
 void ListBox_FillDirList(GUIListBox *listbox, const char *filemask) {
 	listbox->Clear();
-	_G(guis_need_update) = 1;
 
 	ResolvedPath rp;
 	if (!ResolveScriptPath(filemask, true, rp))
@@ -112,6 +102,7 @@ void ListBox_FillDirList(GUIListBox *listbox, const char *filemask) {
 	if (!rp.AltPath.IsEmpty() && rp.AltPath.Compare(rp.FullPath) != 0)
 		FillDirList(files, rp.AltPath);
 
+	// TODO: method for adding item batch to speed up update
 	for (std::set<String>::const_iterator it = files.begin(); it != files.end(); ++it) {
 		listbox->AddItem(*it);
 	}
@@ -132,32 +123,29 @@ int ListBox_FillSaveGameList(GUIListBox *listbox) {
 	// parse the date string, but for now, sort by decreasing slot number, which
 	// should work better than the default sort by increasing slot.
 	Common::sort(saveList.begin(), saveList.end(),
-		[](const SaveStateDescriptor &x, const SaveStateDescriptor &y) {return x.getSaveSlot() > y.getSaveSlot(); });
+	[](const SaveStateDescriptor & x, const SaveStateDescriptor & y) {
+		return x.getSaveSlot() > y.getSaveSlot();
+	});
 
+	// fill in the list box
 	listbox->Clear();
-
-	int numsaves = 0;
-	for (uint idx = 0; idx < saveList.size(); ++idx) {
-		if (numsaves >= MAXSAVEGAMES)
-			break;
-
-		int saveGameSlot = saveList[idx].getSaveSlot();
-		Common::String desc = saveList[idx].getDescription();
+	// TODO: method for adding item batch to speed up update
+	for (const auto &item : saveList) {
+		int slot = item.getSaveSlot();
+		Common::String desc = item.getDescription();
 
 		listbox->AddItem(desc);
-		listbox->SavedGameIndex[numsaves] = saveGameSlot;
-		numsaves++;
+		listbox->SavedGameIndex[listbox->ItemCount - 1] = slot;
 	}
 
 	// update the global savegameindex[] array for backward compatibilty
-	for (int nn = 0; nn < numsaves; nn++) {
-		_GP(play).filenumbers[nn] = listbox->SavedGameIndex[nn];
+	for (size_t n = 0; n < saveList.size(); ++n) {
+		_GP(play).filenumbers[n] = saveList[n].getSaveSlot();
 	}
 
-	_G(guis_need_update) = 1;
 	listbox->SetSvgIndex(true);
 
-	if (numsaves >= MAXSAVEGAMES)
+	if (saveList.size() >= MAXSAVEGAMES)
 		return 1;
 	return 0;
 }
@@ -180,7 +168,7 @@ int ListBox_GetItemAtLocation(GUIListBox *listbox, int x, int y) {
 char *ListBox_GetItemText(GUIListBox *listbox, int index, char *buffer) {
 	if ((index < 0) || (index >= listbox->ItemCount))
 		quit("!ListBoxGetItemText: invalid item specified");
-	strncpy(buffer, listbox->Items[index], 198);
+	strncpy(buffer, listbox->Items[index].GetCStr(), 198);
 	buffer[199] = 0;
 	return buffer;
 }
@@ -189,16 +177,15 @@ const char *ListBox_GetItems(GUIListBox *listbox, int index) {
 	if ((index < 0) || (index >= listbox->ItemCount))
 		quit("!ListBox.Items: invalid index specified");
 
-	return CreateNewScriptString(listbox->Items[index]);
+	return CreateNewScriptString(listbox->Items[index].GetCStr());
 }
 
 void ListBox_SetItemText(GUIListBox *listbox, int index, const char *newtext) {
 	if ((index < 0) || (index >= listbox->ItemCount))
 		quit("!ListBoxSetItemText: invalid item specified");
 
-	if (strcmp(listbox->Items[index], newtext)) {
+	if (strcmp(listbox->Items[index].GetCStr(), newtext)) {
 		listbox->SetItemText(index, newtext);
-		_G(guis_need_update) = 1;
 	}
 }
 
@@ -208,7 +195,6 @@ void ListBox_RemoveItem(GUIListBox *listbox, int itemIndex) {
 		quit("!ListBoxRemove: invalid listindex specified");
 
 	listbox->RemoveItem(itemIndex);
-	_G(guis_need_update) = 1;
 }
 
 int ListBox_GetItemCount(GUIListBox *listbox) {
@@ -226,7 +212,6 @@ void ListBox_SetFont(GUIListBox *listbox, int newfont) {
 
 	if (newfont != listbox->Font) {
 		listbox->SetFont(newfont);
-		_G(guis_need_update) = 1;
 	}
 
 }
@@ -238,7 +223,6 @@ bool ListBox_GetShowBorder(GUIListBox *listbox) {
 void ListBox_SetShowBorder(GUIListBox *listbox, bool newValue) {
 	if (listbox->IsBorderShown() != newValue) {
 		listbox->SetShowBorder(newValue);
-		_G(guis_need_update) = 1;
 	}
 }
 
@@ -249,7 +233,6 @@ bool ListBox_GetShowScrollArrows(GUIListBox *listbox) {
 void ListBox_SetShowScrollArrows(GUIListBox *listbox, bool newValue) {
 	if (listbox->AreArrowsShown() != newValue) {
 		listbox->SetShowArrows(newValue);
-		_G(guis_need_update) = 1;
 	}
 }
 
@@ -276,7 +259,7 @@ int ListBox_GetSelectedBackColor(GUIListBox *listbox) {
 void ListBox_SetSelectedBackColor(GUIListBox *listbox, int colr) {
 	if (listbox->SelectedBgColor != colr) {
 		listbox->SelectedBgColor = colr;
-		_G(guis_need_update) = 1;
+		listbox->NotifyParentChanged();
 	}
 }
 
@@ -287,7 +270,7 @@ int ListBox_GetSelectedTextColor(GUIListBox *listbox) {
 void ListBox_SetSelectedTextColor(GUIListBox *listbox, int colr) {
 	if (listbox->SelectedTextColor != colr) {
 		listbox->SelectedTextColor = colr;
-		_G(guis_need_update) = 1;
+		listbox->NotifyParentChanged();
 	}
 }
 
@@ -298,7 +281,7 @@ int ListBox_GetTextAlignment(GUIListBox *listbox) {
 void ListBox_SetTextAlignment(GUIListBox *listbox, int align) {
 	if (listbox->TextAlignment != align) {
 		listbox->TextAlignment = (HorAlignment)align;
-		_G(guis_need_update) = 1;
+		listbox->NotifyParentChanged();
 	}
 }
 
@@ -309,7 +292,7 @@ int ListBox_GetTextColor(GUIListBox *listbox) {
 void ListBox_SetTextColor(GUIListBox *listbox, int colr) {
 	if (listbox->TextColor != colr) {
 		listbox->TextColor = colr;
-		_G(guis_need_update) = 1;
+		listbox->NotifyParentChanged();
 	}
 }
 
@@ -332,7 +315,7 @@ void ListBox_SetSelectedIndex(GUIListBox *guisl, int newsel) {
 			if (newsel >= guisl->TopItem + guisl->VisibleItemCount)
 				guisl->TopItem = (newsel - guisl->VisibleItemCount) + 1;
 		}
-		_G(guis_need_update) = 1;
+		guisl->NotifyParentChanged();
 	}
 
 }
@@ -348,7 +331,7 @@ void ListBox_SetTopItem(GUIListBox *guisl, int item) {
 		quit("!ListBoxSetTopItem: tried to set top to beyond top or bottom of list");
 
 	guisl->TopItem = item;
-	_G(guis_need_update) = 1;
+	guisl->NotifyParentChanged();
 }
 
 int ListBox_GetRowCount(GUIListBox *listbox) {
@@ -358,14 +341,14 @@ int ListBox_GetRowCount(GUIListBox *listbox) {
 void ListBox_ScrollDown(GUIListBox *listbox) {
 	if (listbox->TopItem + listbox->VisibleItemCount < listbox->ItemCount) {
 		listbox->TopItem++;
-		_G(guis_need_update) = 1;
+		listbox->NotifyParentChanged();
 	}
 }
 
 void ListBox_ScrollUp(GUIListBox *listbox) {
 	if (listbox->TopItem > 0) {
 		listbox->TopItem--;
-		_G(guis_need_update) = 1;
+		listbox->NotifyParentChanged();
 	}
 }
 
@@ -375,7 +358,6 @@ GUIListBox *is_valid_listbox(int guin, int objn) {
 	if ((objn < 0) | (objn >= _GP(guis)[guin].GetControlCount())) quit("!ListBox: invalid object number");
 	if (_GP(guis)[guin].GetControlType(objn) != kGUIListBox)
 		quit("!ListBox: specified control is not a list box");
-	_G(guis_need_update) = 1;
 	return (GUIListBox *)_GP(guis)[guin].GetControl(objn);
 }
 
@@ -384,8 +366,6 @@ GUIListBox *is_valid_listbox(int guin, int objn) {
 // Script API Functions
 //
 //=============================================================================
-
-
 
 // int (GUIListBox *lbb, const char *text)
 RuntimeScriptValue Sc_ListBox_AddItem(void *self, const RuntimeScriptValue *params, int32_t param_count) {
@@ -607,35 +587,6 @@ void RegisterListBoxAPI() {
 	ccAddExternalObjectFunction("ListBox::set_TextColor", Sc_ListBox_SetTextColor);
 	ccAddExternalObjectFunction("ListBox::get_TopItem", Sc_ListBox_GetTopItem);
 	ccAddExternalObjectFunction("ListBox::set_TopItem", Sc_ListBox_SetTopItem);
-
-	/* ----------------------- Registering unsafe exports for plugins -----------------------*/
-
-	ccAddExternalFunctionForPlugin("ListBox::AddItem^1", (void *)ListBox_AddItem);
-	ccAddExternalFunctionForPlugin("ListBox::Clear^0", (void *)ListBox_Clear);
-	ccAddExternalFunctionForPlugin("ListBox::FillDirList^1", (void *)ListBox_FillDirList);
-	ccAddExternalFunctionForPlugin("ListBox::FillSaveGameList^0", (void *)ListBox_FillSaveGameList);
-	ccAddExternalFunctionForPlugin("ListBox::GetItemAtLocation^2", (void *)ListBox_GetItemAtLocation);
-	ccAddExternalFunctionForPlugin("ListBox::GetItemText^2", (void *)ListBox_GetItemText);
-	ccAddExternalFunctionForPlugin("ListBox::InsertItemAt^2", (void *)ListBox_InsertItemAt);
-	ccAddExternalFunctionForPlugin("ListBox::RemoveItem^1", (void *)ListBox_RemoveItem);
-	ccAddExternalFunctionForPlugin("ListBox::ScrollDown^0", (void *)ListBox_ScrollDown);
-	ccAddExternalFunctionForPlugin("ListBox::ScrollUp^0", (void *)ListBox_ScrollUp);
-	ccAddExternalFunctionForPlugin("ListBox::SetItemText^2", (void *)ListBox_SetItemText);
-	ccAddExternalFunctionForPlugin("ListBox::get_Font", (void *)ListBox_GetFont);
-	ccAddExternalFunctionForPlugin("ListBox::set_Font", (void *)ListBox_SetFont);
-	ccAddExternalFunctionForPlugin("ListBox::get_HideBorder", (void *)ListBox_GetHideBorder);
-	ccAddExternalFunctionForPlugin("ListBox::set_HideBorder", (void *)ListBox_SetHideBorder);
-	ccAddExternalFunctionForPlugin("ListBox::get_HideScrollArrows", (void *)ListBox_GetHideScrollArrows);
-	ccAddExternalFunctionForPlugin("ListBox::set_HideScrollArrows", (void *)ListBox_SetHideScrollArrows);
-	ccAddExternalFunctionForPlugin("ListBox::get_ItemCount", (void *)ListBox_GetItemCount);
-	ccAddExternalFunctionForPlugin("ListBox::geti_Items", (void *)ListBox_GetItems);
-	ccAddExternalFunctionForPlugin("ListBox::seti_Items", (void *)ListBox_SetItemText);
-	ccAddExternalFunctionForPlugin("ListBox::get_RowCount", (void *)ListBox_GetRowCount);
-	ccAddExternalFunctionForPlugin("ListBox::geti_SaveGameSlots", (void *)ListBox_GetSaveGameSlots);
-	ccAddExternalFunctionForPlugin("ListBox::get_SelectedIndex", (void *)ListBox_GetSelectedIndex);
-	ccAddExternalFunctionForPlugin("ListBox::set_SelectedIndex", (void *)ListBox_SetSelectedIndex);
-	ccAddExternalFunctionForPlugin("ListBox::get_TopItem", (void *)ListBox_GetTopItem);
-	ccAddExternalFunctionForPlugin("ListBox::set_TopItem", (void *)ListBox_SetTopItem);
 }
 
 } // namespace AGS3

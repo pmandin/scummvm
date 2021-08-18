@@ -22,6 +22,9 @@
 /* This code is based on Nine Patch code by Matthew Leverton
    taken from https://github.com/konforce/Allegro-Nine-Patch
 
+   You may read more about the image format here:
+      https://radleymarx.com/2011/simple-guide-to-9-patch
+
    Copyright (C) 2011 Matthew Leverton
 
    Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -287,8 +290,8 @@ void NinePatchBitmap::blit(Graphics::Surface &target, int dx, int dy, int dw, in
 		_cached_colors.clear();
 
 		if (palette) {
-			for (uint i = 0; i < srf->w; ++i) {
-				for (uint j = 0; j < srf->h; ++j) {
+			for (int i = 0; i < srf->w; ++i) {
+				for (int j = 0; j < srf->h; ++j) {
 					uint32 color = *(uint32*)srf->getBasePtr(i, j);
 					if (color != transColor) {
 						*((byte *)target.getBasePtr(i, j)) = closestGrayscale(color, palette, numColors);
@@ -296,8 +299,8 @@ void NinePatchBitmap::blit(Graphics::Surface &target, int dx, int dy, int dw, in
 				}
 			}
 		} else {
-			for (uint i = 0; i < srf->w; ++i) {
-				for (uint j = 0; j < srf->h; ++j) {
+			for (int i = 0; i < srf->w; ++i) {
+				for (int j = 0; j < srf->h; ++j) {
 					uint32 color = *(uint32*)srf->getBasePtr(i, j);
 					byte a, r, g, b;
 					_bmp->format.colorToARGB(color, a, r, g, b);

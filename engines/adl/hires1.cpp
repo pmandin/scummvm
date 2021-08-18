@@ -25,6 +25,7 @@
 #include "common/error.h"
 #include "common/file.h"
 #include "common/stream.h"
+#include "common/memstream.h"
 #include "common/ptr.h"
 
 #include "adl/adl.h"
@@ -52,26 +53,10 @@ namespace Adl {
 #define IDI_HR1_MSG_DONT_HAVE_IT       127
 #define IDI_HR1_MSG_GETTING_DARK         7
 
-#define IDI_HR1_OFS_STR_ENTER_COMMAND   0x5bbc
-#define IDI_HR1_OFS_STR_VERB_ERROR      0x5b4f
-#define IDI_HR1_OFS_STR_NOUN_ERROR      0x5b8e
-#define IDI_HR1_OFS_STR_PLAY_AGAIN      0x5f1e
-#define IDI_HR1_OFS_STR_CANT_GO_THERE   0x6c0a
-#define IDI_HR1_OFS_STR_DONT_HAVE_IT    0x6c31
-#define IDI_HR1_OFS_STR_DONT_UNDERSTAND 0x6c51
-#define IDI_HR1_OFS_STR_GETTING_DARK    0x6c7c
-#define IDI_HR1_OFS_STR_PRESS_RETURN    0x5f68
-#define IDI_HR1_OFS_STR_LINE_FEEDS      0x59d4
-
 #define IDI_HR1_OFS_PD_TEXT_0    0x005d
 #define IDI_HR1_OFS_PD_TEXT_1    0x012b
 #define IDI_HR1_OFS_PD_TEXT_2    0x016d
 #define IDI_HR1_OFS_PD_TEXT_3    0x0259
-
-#define IDI_HR1_OFS_INTRO_TEXT   0x0066
-#define IDI_HR1_OFS_GAME_OR_HELP 0x000f
-
-#define IDI_HR1_OFS_LOGO_0       0x1003
 
 #define IDI_HR1_OFS_ITEMS        0x0100
 #define IDI_HR1_OFS_ROOMS        0x050a
@@ -83,9 +68,6 @@ namespace Adl {
 #define IDI_HR1_OFS_ITEM_OFFSETS 0x68ff
 #define IDI_HR1_OFS_SHAPES       0x4f00
 
-#define IDI_HR1_OFS_VERBS        0x3800
-#define IDI_HR1_OFS_NOUNS        0x0f00
-
 class HiRes1Engine : public AdlEngine {
 public:
 	HiRes1Engine(OSystem *syst, const AdlGameDescription *gd) :
@@ -94,7 +76,7 @@ public:
 			_messageDelay(true) { }
 	~HiRes1Engine() override { delete _files; }
 
-private:
+protected:
 	// AdlEngine
 	void runIntro() override;
 	void init() override;
@@ -108,7 +90,7 @@ private:
 	void loadRoom(byte roomNr) override;
 	void showRoom() override;
 
-	void showInstructions(Common::SeekableReadStream &stream, const uint pages[], bool goHome);
+	void showInstructions(Common::SeekableReadStream &stream);
 	void wordWrap(Common::String &str) const;
 
 	Files *_files;
@@ -125,26 +107,43 @@ private:
 	} _gameStrings;
 };
 
-void HiRes1Engine::showInstructions(Common::SeekableReadStream &stream, const uint pages[], bool goHome) {
+void HiRes1Engine::showInstructions(Common::SeekableReadStream &stream) {
 	_display->setMode(Display::kModeText);
 
-	uint page = 0;
-	while (pages[page] != 0) {
-		if (goHome)
+	for (;;) {
+		byte opc = stream.readByte();
+
+		if (opc != 0x20)
+			error("Error reading instructions");
+
+		uint16 addr = stream.readUint16BE();
+
+		if (addr == 0x58fc) {
+			// HOME
 			_display->home();
+		} else if (addr == 0x6ffd) {
+			// GETLN1
+			inputString();
 
-		uint count = pages[page++];
-		for (uint i = 0; i < count; ++i) {
-			_display->printString(readString(stream));
-			stream.seek(3, SEEK_CUR);
+			if (shouldQuit())
+				return;
+		} else {
+			// We assume print string call (addr varies per game)
+			Common::String str = readString(stream);
+
+			if (stream.err() || stream.eos())
+				error("Error reading instructions");
+
+			// Ctrl-D signifies system command (main binary would be loaded here)
+			size_t posChr4 = str.findFirstOf(_display->asciiToNative(4));
+
+			if (posChr4 != str.npos) {
+				_display->printString(str.substr(0, posChr4));
+				return;
+			}
+
+			_display->printString(str);
 		}
-
-		inputString();
-
-		if (shouldQuit())
-			return;
-
-		stream.seek((goHome ? 6 : 3), SEEK_CUR);
 	}
 }
 
@@ -153,7 +152,12 @@ void HiRes1Engine::runIntro() {
 
 	// Early version have no bitmap in 'AUTO LOAD OBJ'
 	if (getGameVersion() >= GAME_VER_HR1_COARSE) {
-		stream->seek(IDI_HR1_OFS_LOGO_0);
+		// Later binaries have a MIXEDON prepended to it, by skipping it
+		// we can use the same offsets for both variants
+		if (stream->readUint16BE() == 0xad53)
+			stream.reset(_files->createReadStream(IDS_HR1_EXE_0, 3));
+
+		stream->seek(0x1000);
 		_display->setMode(Display::kModeGraphics);
 		static_cast<Display_A2 *>(_display)->loadFrameBuffer(*stream);
 		_display->renderGraphics();
@@ -171,11 +175,13 @@ void HiRes1Engine::runIntro() {
 
 	// Show the PD disclaimer for the PD release
 	if (getGameVersion() == GAME_VER_HR1_PD) {
-		// The PD release on the Roberta Williams Anthology disc has a PDE
-		// splash screen. The original HELLO file has been renamed to
-		// MYSTERY.HELLO. It's unclear whether or not this splash screen
-		// was present in the original PD release back in 1987.
-		StreamPtr basic(_files->createReadStream("MYSTERY.HELLO"));
+		// The P.D.E. version on the Roberta Williams Anthology has a renamed HELLO file
+		const char *fileName = "MYSTERY.HELLO";
+
+		if (!_files->exists(fileName))
+			fileName = "HELLO";
+
+		StreamPtr basic(_files->createReadStream(fileName));
 
 		_display->setMode(Display::kModeText);
 		_display->home();
@@ -199,10 +205,18 @@ void HiRes1Engine::runIntro() {
 
 	_display->setMode(Display::kModeMixed);
 
-	str = readStringAt(*stream, IDI_HR1_OFS_GAME_OR_HELP);
+	str = readStringAt(*stream, 0xc);
 
 	if (getGameVersion() >= GAME_VER_HR1_COARSE) {
 		bool instructions = false;
+
+		char keyInstr = 'I';
+		char keyGame = 'G';
+
+		if (getLanguage() == Common::FR_FRA) {
+			keyInstr = 'M';
+			keyGame = 'J';
+		}
 
 		while (1) {
 			_display->printString(str);
@@ -214,26 +228,25 @@ void HiRes1Engine::runIntro() {
 			if (s.empty())
 				continue;
 
-			if (s[0] == _display->asciiToNative('I')) {
+			if (s[0] == _display->asciiToNative(keyInstr)) {
 				instructions = true;
 				break;
-			} else if (s[0] == _display->asciiToNative('G')) {
+			} else if (s[0] == _display->asciiToNative(keyGame)) {
 				break;
 			}
 		}
 
 		if (instructions) {
-			// This version shows the last page during the loading of the game
-			// We wait for a key instead (even though there's no prompt for that).
-			const uint pages[] = { 6, 6, 4, 5, 8, 7, 0 };
-			stream->seek(IDI_HR1_OFS_INTRO_TEXT);
-			showInstructions(*stream, pages, true);
+			stream->seek(0x5d);
+			showInstructions(*stream);
 			_display->printAsciiString("\r");
 		}
 	} else {
-		const uint pages[] = { 6, 6, 8, 6, 0 };
-		stream->seek(6);
-		showInstructions(*stream, pages, false);
+		// This version shows the last page during the loading of the game
+		// We wait for a key instead (even though there's no prompt for that).
+		stream->seek(3);
+		showInstructions(*stream);
+		inputString();
 	}
 
 	stream.reset(_files->createReadStream(IDS_HR1_EXE_1));
@@ -252,8 +265,6 @@ void HiRes1Engine::runIntro() {
 		// This does mean we need to push out some extra line feeds to clear the screen
 		_display->printString(_strings.lineFeeds);
 		inputKey();
-		if (shouldQuit())
-			return;
 	}
 }
 
@@ -262,30 +273,35 @@ void HiRes1Engine::init() {
 		_files = new Files_Plain();
 	} else {
 		Files_AppleDOS *files = new Files_AppleDOS();
-		// The 2nd release obfuscates the VTOC (same may be true for the 1st release)
-		if (!files->open(getDiskImageName(0), (getGameVersion() == GAME_VER_HR1_COARSE ? 16 : 17)))
+		if (!files->open(getDiskImageName(0)))
 			error("Failed to open '%s'", getDiskImageName(0).c_str());
 		_files = files;
 	}
 
 	_graphics = new GraphicsMan_v1<Display_A2>(*static_cast<Display_A2 *>(_display));
-	_display->moveCursorTo(Common::Point(0, 3));
+	_display->moveCursorTo(Common::Point(0, 23)); // DOS 3.3
 
 	StreamPtr stream(_files->createReadStream(IDS_HR1_EXE_1));
 
+	Common::StringArray exeStrings;
+	extractExeStrings(*stream, 0x1576, exeStrings);
+
+	if (exeStrings.size() != 18)
+		error("Failed to load strings from executable");
+
 	// Some messages have overrides inside the executable
-	_gameStrings.cantGoThere = readStringAt(*stream, IDI_HR1_OFS_STR_CANT_GO_THERE);
-	_gameStrings.dontHaveIt = readStringAt(*stream, IDI_HR1_OFS_STR_DONT_HAVE_IT);
-	_gameStrings.dontUnderstand = readStringAt(*stream, IDI_HR1_OFS_STR_DONT_UNDERSTAND);
-	_gameStrings.gettingDark = readStringAt(*stream, IDI_HR1_OFS_STR_GETTING_DARK);
+	_gameStrings.cantGoThere = exeStrings[12];
+	_gameStrings.dontHaveIt = exeStrings[13];
+	_gameStrings.dontUnderstand = exeStrings[14];
+	_gameStrings.gettingDark = exeStrings[15];
 
 	// Load other strings from executable
-	_strings.enterCommand = readStringAt(*stream, IDI_HR1_OFS_STR_ENTER_COMMAND);
-	_strings.verbError = readStringAt(*stream, IDI_HR1_OFS_STR_VERB_ERROR);
-	_strings.nounError = readStringAt(*stream, IDI_HR1_OFS_STR_NOUN_ERROR);
-	_strings.playAgain = readStringAt(*stream, IDI_HR1_OFS_STR_PLAY_AGAIN);
-	_strings.pressReturn = readStringAt(*stream, IDI_HR1_OFS_STR_PRESS_RETURN);
-	_strings.lineFeeds = readStringAt(*stream, IDI_HR1_OFS_STR_LINE_FEEDS);
+	_strings.enterCommand = exeStrings[5];
+	_strings.verbError = exeStrings[3];
+	_strings.nounError = exeStrings[4];
+	_strings.playAgain = exeStrings[8];
+	_strings.pressReturn = exeStrings[10];
+	_strings.lineFeeds = exeStrings[1];
 
 	// Set message IDs
 	_messageIds.cantGoThere = IDI_HR1_MSG_CANT_GO_THERE;
@@ -294,10 +310,20 @@ void HiRes1Engine::init() {
 	_messageIds.itemNotHere = IDI_HR1_MSG_ITEM_NOT_HERE;
 	_messageIds.thanksForPlaying = IDI_HR1_MSG_THANKS_FOR_PLAYING;
 
+	if (getLanguage() == Common::FR_FRA) {
+		_verbErrorPos = 15;
+		_nounErrorPos = 31;
+	}
+
 	// Load message offsets
 	stream->seek(IDI_HR1_OFS_MSGS);
 	for (uint i = 0; i < IDI_HR1_NUM_MESSAGES; ++i)
 		_messages.push_back(_files->getDataBlock(IDS_HR1_MESSAGES, stream->readUint16LE()));
+
+	// The French version has 5 additional strings
+	if (getLanguage() == Common::FR_FRA)
+		for (uint i = 0; i < 5; ++i)
+			_messages.push_back(_files->getDataBlock(IDS_HR1_MESSAGES, stream->readUint16LE()));
 
 	// Load picture data from executable
 	stream->seek(IDI_HR1_OFS_PICS);
@@ -328,10 +354,10 @@ void HiRes1Engine::init() {
 	if (stream->eos() || stream->err())
 		error("Failed to read game data from '" IDS_HR1_EXE_1 "'");
 
-	stream->seek(IDI_HR1_OFS_VERBS);
+	stream->seek(getLanguage() == Common::FR_FRA ? 0x900 : 0x3800);
 	loadWords(*stream, _verbs, _priVerbs);
 
-	stream->seek(IDI_HR1_OFS_NOUNS);
+	stream->seek(0xf00);
 	loadWords(*stream, _nouns, _priNouns);
 }
 
@@ -393,7 +419,7 @@ void HiRes1Engine::printString(const Common::String &str) {
 	_display->printString(wrap);
 
 	if (_messageDelay)
-		delay(14 * 166018 / 1000);
+		delay(getLanguage() == Common::FR_FRA ? 2900 : 2250);
 }
 
 Common::String HiRes1Engine::loadMessage(uint idx) const {
@@ -403,29 +429,39 @@ Common::String HiRes1Engine::loadMessage(uint idx) const {
 }
 
 void HiRes1Engine::printMessage(uint idx) {
-	// Messages with hardcoded overrides don't delay after printing.
-	// It's unclear if this is a bug or not. In some cases the result
-	// is that these strings will scroll past the four-line text window
-	// before the user gets a chance to read them.
-	// NOTE: later games seem to wait for a key when the text window
-	// overflows and don't use delays. It might be better to use
-	// that system for this game as well.
+	// In the English version, messages with hardcoded overrides don't delay
+	// after printing. It's unclear if this is a bug or not. In most cases
+	// the slow drawing of the room will give the player a chance to read
+	// it. This isn't the case in ScummVM however, so we add a delay after
+	// these messages.
+
+	// In the French version, messages with hardcoded overrides delay
+	// based on string length. This leads to overly long delays on longer
+	// strings. This might be a bug, since other messages have a fixed
+	// delay (that is slightly longer than the English version).
+	// We've chosen to stick with fixed delays here as well.
+
+	// NOTE: Later games wait for a key when the text window overflows and
+	// don't use delays. It might be better to use that system for this game
+	// as well.
 	switch (idx) {
 	case IDI_HR1_MSG_CANT_GO_THERE:
 		_display->printString(_gameStrings.cantGoThere);
-		return;
+		break;
 	case IDI_HR1_MSG_DONT_HAVE_IT:
 		_display->printString(_gameStrings.dontHaveIt);
-		return;
+		break;
 	case IDI_HR1_MSG_DONT_UNDERSTAND:
 		_display->printString(_gameStrings.dontUnderstand);
-		return;
+		break;
 	case IDI_HR1_MSG_GETTING_DARK:
 		_display->printString(_gameStrings.gettingDark);
-		return;
+		break;
 	default:
-		printString(loadMessage(idx));
+		return printString(loadMessage(idx));
 	}
+
+	delay(1500);
 }
 
 void HiRes1Engine::drawItems() {
@@ -503,7 +539,116 @@ void HiRes1Engine::wordWrap(Common::String &str) const {
 	}
 }
 
+class HiRes1Engine_VF : public HiRes1Engine {
+public:
+	HiRes1Engine_VF(OSystem *syst, const AdlGameDescription *gd) :
+			HiRes1Engine(syst, gd) { }
+
+private:
+	// AdlEngine
+	void runIntro() override;
+	void getInput(uint &verb, uint &noun) override;
+};
+
+void HiRes1Engine_VF::getInput(uint &verb, uint &noun) {
+	// This version has a modified "parser"
+	while (1) {
+		_display->printString(_strings.enterCommand);
+		const Common::String line = getLine();
+
+		if (shouldQuit() || _isRestoring)
+			return;
+
+		uint index = 0;
+		Common::String verbString = getWord(line, index);
+
+		if (!_verbs.contains(verbString)) {
+			// If the verb is not found and it looks like an imperative, try to build the infinitive
+			const size_t ezPos = verbString.find("\xc5\xda"); // "EZ"
+
+			bool found = false;
+
+			if (ezPos != verbString.npos) {
+				const char *suf[] = { "\xc5\xd2", "\xc9\xd2", "\xd2\xc5", nullptr }; // "ER", "IR", "RE"
+
+				for (uint i = 0; suf[i]; ++i) {
+					verbString.replace(ezPos, 2, suf[i]);
+					if (_verbs.contains(verbString)) {
+						found = true;
+						break;
+					}
+				}
+			}
+
+			if (!found) {
+				_display->printString(formatVerbError(verbString));
+				continue;
+			}
+		}
+
+		verb = _verbs[verbString];
+
+		while (1) {
+			// Go over all nouns to find one we know. At the end of the string,
+			// it will always match the empty word (which is in the noun list).
+
+			// The original has a code path to return a noun error here, but
+			// it appears to be non-functional.
+			const Common::String nounString = getWord(line, index);
+
+			if (_nouns.contains(nounString)) {
+				noun = _nouns[nounString];
+				return;
+			}
+		}
+	}
+}
+
+void HiRes1Engine_VF::runIntro() {
+	StreamPtr stream(_files->createReadStream(IDS_HR1_EXE_0));
+
+	stream->seek(0x1000);
+
+	// Title image is one padding byte short, so we first read it into a buffer
+	const uint frameBufferSize = 0x2000;
+	byte *const frameBuffer = (byte *)malloc(frameBufferSize);
+
+	if (stream->read(frameBuffer, frameBufferSize - 1) < frameBufferSize - 1)
+		error("Failed to read title image");
+
+	// Set missing byte
+	frameBuffer[frameBufferSize - 1] = 0;
+	Common::MemoryReadStream frameBufferStream(frameBuffer, frameBufferSize, DisposeAfterUse::YES);
+
+	_display->setMode(Display::kModeGraphics);
+	static_cast<Display_A2 *>(_display)->loadFrameBuffer(frameBufferStream);
+	_display->renderGraphics();
+
+	_display->setMode(Display::kModeMixed);
+
+	Common::String str = readStringAt(*stream, 0xf);
+
+	while (1) {
+		_display->printString(str);
+		const char key = inputKey();
+
+		if (shouldQuit())
+			return;
+
+		if (key == _display->asciiToNative('M')) {
+			stream->seek(0x75);
+			showInstructions(*stream);
+			return;
+		} else if (key == _display->asciiToNative('J')) {
+			return;
+		}
+	}
+}
+
 Engine *HiRes1Engine_create(OSystem *syst, const AdlGameDescription *gd) {
+	if (gd->version == GAME_VER_HR1_VF2)
+		return new HiRes1Engine_VF(syst, gd);
+
 	return new HiRes1Engine(syst, gd);
 }
 

@@ -103,7 +103,7 @@ reg_t kDeviceInfo(EngineState *s, int argc, reg_t *argv) {
 		Common::String path2_s = s->_segMan->getString(argv[2]);
 		debug(3, "K_DEVICE_INFO_PATHS_EQUAL(%s,%s)", path1_s.c_str(), path2_s.c_str());
 
-		return make_reg(0, Common::matchString(path2_s.c_str(), path1_s.c_str(), false, true));
+		return make_reg(0, Common::matchString(path2_s.c_str(), path1_s.c_str(), false, "/"));
 		}
 		break;
 
@@ -773,6 +773,7 @@ reg_t kFileIOSeek(EngineState *s, int argc, reg_t *argv) {
 	FileHandle *f = getFileFromHandle(s, handle);
 
 	if (f && f->_in) {
+		offset = MIN<int16>(offset, f->_in->size());
 		const bool success = f->_in->seek(offset, whence);
 		if (getSciVersion() >= SCI_VERSION_2) {
 			if (success) {
@@ -875,6 +876,15 @@ reg_t kFileIOExists(EngineState *s, int argc, reg_t *argv) {
 			exists = true;
 	}
 
+	// GK1 easter egg at the Voodoo Hounfour in script 805. In this easter
+	// egg, Gabriel draws a doodle of Jane Jensen in the whiteboard, if the
+	// player uses the operate action below the whiteboard's eraser. This
+	// easter egg looks for a file named "buster" to be present, so that it
+	// is enabled. We always report that this file exists, to unlock the
+	// easter egg.
+	if (!exists && name == "buster")
+		exists = true;
+	
 	// Special case for non-English versions of LSL5: The English version of
 	// LSL5 calls kFileIO(), case K_FILEIO_OPEN for reading to check if
 	// memory.drv exists (which is where the game's password is stored). If

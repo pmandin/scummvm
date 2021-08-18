@@ -37,6 +37,7 @@ enum TheEntityType {
 	kTheChars,
 	kTheCheckBoxAccess,
 	kTheCheckBoxType,
+	kTheChunk,
 	kTheClickLoc,
 	kTheClickOn,
 	kTheColorDepth,
@@ -238,6 +239,7 @@ struct TheEntity {
 	const char *name;
 	bool hasId;
 	int version;
+	bool isFunction;
 };
 
 struct TheEntityField {

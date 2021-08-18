@@ -63,6 +63,10 @@ public:
 	virtual int getDefaultStretchMode() const { return 0; }
 	virtual bool setStretchMode(int mode) { return false; }
 	virtual int getStretchMode() const { return 0; }
+	virtual uint getDefaultScaler() const { return 0; }
+	virtual uint getDefaultScaleFactor() const { return 1; }
+	virtual bool setScaler(uint mode, int factor) { return false; }
+	virtual uint getScaler() const { return 0; }
 
 #ifdef USE_RGB_COLOR
 	virtual Graphics::PixelFormat getScreenFormat() const = 0;
@@ -93,10 +97,11 @@ public:
 	virtual bool isOverlayVisible() const = 0;
 	virtual Graphics::PixelFormat getOverlayFormat() const = 0;
 	virtual void clearOverlay() = 0;
-	virtual void grabOverlay(void *buf, int pitch) const = 0;
+	virtual void grabOverlay(Graphics::Surface &surface) const = 0;
 	virtual void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) = 0;
 	virtual int16 getOverlayHeight() const = 0;
 	virtual int16 getOverlayWidth() const = 0;
+	virtual float getHiDPIScreenFactor() const { return 1.0f; }
 
 	virtual bool showMouse(bool visible) = 0;
 	virtual void warpMouse(int x, int y) = 0;

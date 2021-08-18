@@ -104,9 +104,10 @@ bool DIBDecoder::loadStream(Common::SeekableReadStream &stream) {
 * BITD
 ****************************/
 
-BITDDecoder::BITDDecoder(int w, int h, uint16 bitsPerPixel, uint16 pitch, const byte *palette) {
+BITDDecoder::BITDDecoder(int w, int h, uint16 bitsPerPixel, uint16 pitch, const byte *palette, uint16 version) {
 	_surface = new Graphics::Surface();
 	_pitch = pitch;
+	_version = version;
 
 	if (_pitch < w) {
 		warning("BITDDecoder: pitch is too small: %d < %d", _pitch, w);
@@ -143,46 +144,56 @@ void BITDDecoder::loadPalette(Common::SeekableReadStream &stream) {
 }
 
 void BITDDecoder::convertPixelIntoSurface(void* surfacePointer, uint fromBpp, uint toBpp, int red, int green, int blue) {
-	// Initial implementation of 32-bit images to palettised sprites.
-	switch (fromBpp) {
-	case 4:
+	if (_version < kFileVer400) {
 		switch (toBpp) {
 		case 1:
-			if (red == 255 && blue == 255 && green == 255) {
-				*((byte*)surfacePointer) = 255;
-			} else if (red == 0 && blue == 0 && green == 0) {
-				*((byte*)surfacePointer) = 0;
-			} else {
-				for (byte p = 0; p < _paletteColorCount; p++) {
-					if (_palette[p * 3 + 0] == red &&
-						_palette[p * 3 + 1] == green &&
-						_palette[p * 3 + 2] == blue) {
-						*((byte*)surfacePointer) = p;
-					}
-				}
-			}
-			break;
+			*((byte*)surfacePointer) = g_director->_wm->findBestColor(red, blue, green);
+			return;
 
-		default:
-			warning("BITDDecoder::convertPixelIntoSurface(): conversion from %d to %d not implemented",
-				fromBpp, toBpp);
+		case 4:
+			*((uint32 *)surfacePointer) = g_director->_wm->findBestColor(red, blue, green);
+			return;
+
 		}
-		break;
+	} else {
+		// it looks like the blue channel and green channel are reversed in D4
+		switch (toBpp) {
+		case 1:
+			*((byte*)surfacePointer) = g_director->_wm->findBestColor(red, green, blue);
+			return;
 
-	default:
-		warning("BITDDecoder::convertPixelIntoSurface(): could not convert from %d to %d",
-			fromBpp, toBpp);
-		break;
+		case 4:
+			*((uint32 *)surfacePointer) = g_director->_wm->findBestColor(red, green, blue);
+			return;
+
+		}
 	}
+	warning("BITDDecoder::convertPixelIntoSurface(): conversion from %d to %d not implemented", fromBpp, toBpp);
 }
 
 bool BITDDecoder::loadStream(Common::SeekableReadStream &stream) {
 	int x = 0, y = 0;
 
-	Common::Array<int> pixels;
+	Common::Array<uint> pixels;
 	// If the stream has exactly the required number of bits for this image,
 	// we assume it is uncompressed.
-	if (stream.size() == _pitch * _surface->h * _bitsPerPixel / 8) {
+	// logic above does not fit the situation when _bitsPerPixel == 1, need to fix.
+	int bytesNeed = _surface->w * _surface->h * _bitsPerPixel / 8;
+	bool skipCompression = false;
+	if (_bitsPerPixel != 1) {
+		if (_version < kFileVer300) {
+			skipCompression = stream.size() >= bytesNeed;
+		} else if (_version < kFileVer400) {
+			// for D3, looks like it will round up the _surface->w to align 2
+			// not sure whether D2 will have the same logic.
+			// check lzone-mac data/r-c/tank.a-1 and lzone-mac data/r-a/station-b.01.
+			if (_surface->w & 1)
+				bytesNeed += _surface->h * _bitsPerPixel / 8;
+			skipCompression = stream.size() == bytesNeed;
+		}
+	}
+
+	if ((stream.size() == _pitch * _surface->h * _bitsPerPixel / 8) || skipCompression) {
 		debugC(6, kDebugImages, "Skipping compression");
 		for (int i = 0; i < stream.size(); i++) {
 			pixels.push_back((int)stream.readByte());
@@ -191,26 +202,21 @@ bool BITDDecoder::loadStream(Common::SeekableReadStream &stream) {
 		while (!stream.eos()) {
 			// TODO: D3 32-bit bitmap casts seem to just be ARGB pixels in a row and not RLE.
 			// Determine how to distinguish these different types. Maybe stage version.
-			if (_bitsPerPixel == 32) {
-				int data = stream.readByte();
-				pixels.push_back(data);
-			} else {
-				int data = stream.readByte();
-				int len = data + 1;
-				if ((data & 0x80) != 0) {
-					len = ((data ^ 0xFF) & 0xff) + 2;
-					data = stream.readByte();
-					for (int p = 0; p < len; p++) {
-						pixels.push_back(data);
-					}
-				} else {
-					for (int p = 0; p < len; p++) {
-						data = stream.readByte();
-						pixels.push_back(data);
-					}
+			// for D4, 32-bit bitmap is RLE, and the encoding format is every line contains the a? r g b at the same line of the original image.
+			// i.e. for every line, we shall combine 4 parts to create the original image.
+			int data = stream.readByte();
+			int len = data + 1;
+			if ((data & 0x80) != 0) {
+				len = ((data ^ 0xFF) & 0xff) + 2;
+				data = stream.readByte();
+				for (int p = 0; p < len; p++) {
+					pixels.push_back(data);
 				}
-				if (_bitsPerPixel == 32 && pixels.size() % (_surface->w * 3) == 0)
-					stream.readUint16BE();
+			} else {
+				for (int p = 0; p < len; p++) {
+					data = stream.readByte();
+					pixels.push_back(data);
+				}
 			}
 		}
 	}
@@ -219,15 +225,19 @@ bool BITDDecoder::loadStream(Common::SeekableReadStream &stream) {
 		int tail = (_surface->w * _surface->h * _bitsPerPixel / 8) - pixels.size();
 
 		warning("BITDDecoder::loadStream(): premature end of stream (%d of %d pixels)",
-			pixels.size(), pixels.size() + tail);
+				pixels.size(), pixels.size() + tail);
 
 		for (int i = 0; i < tail; i++)
 			pixels.push_back(0);
 	}
 
 	int offset = 0;
-	if (_surface->w < (pixels.size() / _surface->h))
+	if (_bitsPerPixel == 8 && _surface->w < (int)(pixels.size() / _surface->h))
 		offset = (pixels.size() / _surface->h) - _surface->w;
+	// looks like the data want to round up to 2, so we either got offset 1 or 0.
+	// but we may met situation when the pixel size is exactly equals to w * h, thus we add a check here.
+	if (offset)
+		offset = _surface->w % 2;
 
 	uint32 color;
 	bool paletted = (g_director->_pixelformat.bytesPerPixel == 1);
@@ -258,7 +268,9 @@ bool BITDDecoder::loadStream(Common::SeekableReadStream &stream) {
 					break;
 
 				case 16:
-					*((uint16*)_surface->getBasePtr(x, y)) = _surface->format.RGBToColor(
+					convertPixelIntoSurface(_surface->getBasePtr(x, y),
+						(_bitsPerPixel / 8),
+						_surface->format.bytesPerPixel,
 						(pixels[((y * _surface->w) * 2) + x] & 0x7c) << 1,
 						(pixels[((y * _surface->w) * 2) + x] & 0x03) << 6 |
 						(pixels[((y * _surface->w) * 2) + (_surface->w) + x] & 0xe0) >> 2,
@@ -270,9 +282,9 @@ bool BITDDecoder::loadStream(Common::SeekableReadStream &stream) {
 					convertPixelIntoSurface(_surface->getBasePtr(x, y),
 						(_bitsPerPixel / 8),
 						_surface->format.bytesPerPixel,
-						pixels[(((y * (_surface->w * 4))) + ((x * 4) + 1))],
-						pixels[(((y * (_surface->w * 4))) + ((x * 4) + 2))],
-						pixels[(((y * (_surface->w * 4))) + ((x * 4) + 3))]);
+						pixels[(((y * _surface->w * 4)) + (x + _surface->w))],
+						pixels[(((y * _surface->w * 4)) + (x + 2 * _surface->w))],
+						pixels[(((y * _surface->w * 4)) + (x + 3 * _surface->w))]);
 					x++;
 					break;
 

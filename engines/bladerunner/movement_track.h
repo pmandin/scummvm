@@ -37,6 +37,7 @@ class MovementTrack {
 
 	struct Entry {
 		int     waypointId;
+		// delay specifies how long (in milliseconds) to stay at the target waypoint (when reached)
 		int32   delay;
 		int     angle;
 		bool    run;
@@ -51,15 +52,15 @@ class MovementTrack {
 public:
 	MovementTrack();
 	~MovementTrack();
-	int append(int waypointId, int32 delay, bool run);
-	int append(int waypointId, int32 delay, int angle, bool run);
+	int append(int waypointId, int32 delayMillis, bool run);
+	int append(int waypointId, int32 delayMillis, int angle, bool run);
 	void flush();
 	void repeat();
 	void pause();
 	void unpause();
 	bool isPaused() const;
 	bool hasNext() const;
-	bool next(int *waypointId, int32 *delay, int *angle, bool *run);
+	bool next(int *waypointId, int32 *delayMillis, int *angle, bool *run);
 
 	void save(SaveFileWriteStream &f);
 	void load(SaveFileReadStream &f);

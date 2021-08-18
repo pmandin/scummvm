@@ -52,12 +52,22 @@ SeekableReadStream *ReadStream::readStream(uint32 dataSize) {
 	return new MemoryReadStream((byte *)buf, dataSize, DisposeAfterUse::YES);
 }
 
-Common::String ReadStream::readString(char terminator) {
+Common::String ReadStream::readString(char terminator, size_t len) {
 	Common::String result;
 	char c;
+	bool end = false;
+	size_t bytesRead = 0;
 
-	while ((c = (char)readByte()) != terminator && !eos())
-		result += c;
+	while (bytesRead < len && !(end && len == Common::String::npos)) {
+		c = (char)readByte();
+		if (eos())
+			break;
+		if (c == terminator)
+			end = true;
+		if (!end)
+			result += c;
+		bytesRead++;
+	}
 
 	return result;
 }
@@ -98,7 +108,7 @@ uint32 MemoryReadStream::read(void *dataPtr, uint32 dataSize) {
 	return dataSize;
 }
 
-bool MemoryReadStream::seek(int32 offs, int whence) {
+bool MemoryReadStream::seek(int64 offs, int whence) {
 	// Pre-Condition
 	assert(_pos <= _size);
 	switch (whence) {
@@ -235,7 +245,7 @@ SeekableSubReadStream::SeekableSubReadStream(SeekableReadStream *parentStream, u
 	_eos = false;
 }
 
-bool SeekableSubReadStream::seek(int32 offset, int whence) {
+bool SeekableSubReadStream::seek(int64 offset, int whence) {
 	assert(_pos >= _begin);
 	assert(_pos <= _end);
 
@@ -406,10 +416,10 @@ protected:
 public:
 	BufferedSeekableReadStream(SeekableReadStream *parentStream, uint32 bufSize, DisposeAfterUse::Flag disposeParentStream = DisposeAfterUse::NO);
 
-	virtual int32 pos() const { return _parentStream->pos() - (_bufSize - _pos); }
-	virtual int32 size() const { return _parentStream->size(); }
+	virtual int64 pos() const { return _parentStream->pos() - (_bufSize - _pos); }
+	virtual int64 size() const { return _parentStream->size(); }
 
-	virtual bool seek(int32 offset, int whence = SEEK_SET);
+	virtual bool seek(int64 offset, int whence = SEEK_SET);
 };
 
 BufferedSeekableReadStream::BufferedSeekableReadStream(SeekableReadStream *parentStream, uint32 bufSize, DisposeAfterUse::Flag disposeParentStream)
@@ -417,7 +427,7 @@ BufferedSeekableReadStream::BufferedSeekableReadStream(SeekableReadStream *paren
 	_parentStream(parentStream) {
 }
 
-bool BufferedSeekableReadStream::seek(int32 offset, int whence) {
+bool BufferedSeekableReadStream::seek(int64 offset, int whence) {
 	// If it is a "local" seek, we may get away with "seeking" around
 	// in the buffer only.
 	_eos = false; // seeking always cancels EOS
@@ -476,7 +486,7 @@ namespace {
 /**
  * Wrapper class which adds buffering to any WriteStream.
  */
-class BufferedWriteStream : public WriteStream {
+class BufferedWriteStream : public SeekableWriteStream {
 protected:
 	WriteStream *_parentStream;
 	byte *_buf;
@@ -521,7 +531,7 @@ public:
 		delete[] _buf;
 	}
 
-	virtual uint32 write(const void *dataPtr, uint32 dataSize) {
+	uint32 write(const void *dataPtr, uint32 dataSize) override {
 		// check if we have enough space for writing to the buffer
 		if (_bufSize - _pos >= dataSize) {
 			memcpy(_buf + _pos, dataPtr, dataSize);
@@ -539,13 +549,32 @@ public:
 		return dataSize;
 	}
 
-	virtual bool flush() { return flushBuffer(); }
+	bool flush() override { return flushBuffer(); }
 
-	virtual int32 pos() const { return _pos; }
+	int64 pos() const override { return _pos; }
 
+	bool seek(int64 offset, int whence) override {
+		flush();
+
+		Common::SeekableWriteStream *sws =
+			dynamic_cast<Common::SeekableWriteStream *>(_parentStream);
+		return sws ? sws->seek(offset, whence) : false;
+	}
+
+	int64 size() const override {
+		Common::SeekableWriteStream *sws =
+			dynamic_cast<Common::SeekableWriteStream *>(_parentStream);
+		return sws ? MAX(sws->pos() + _pos, sws->size()) : -1;
+	}
 };
 
 } // End of anonymous namespace
+
+SeekableWriteStream *wrapBufferedWriteStream(SeekableWriteStream *parentStream, uint32 bufSize) {
+	if (parentStream)
+		return new BufferedWriteStream(parentStream, bufSize);
+	return nullptr;
+}
 
 WriteStream *wrapBufferedWriteStream(WriteStream *parentStream, uint32 bufSize) {
 	if (parentStream)

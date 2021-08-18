@@ -34,7 +34,7 @@ uint32 InFRAMSave::read(void *buf, uint32 cnt) {
 	return framfs_read(buf, 1, cnt, fd);
 }
 
-bool InFRAMSave::seek(int32 offs, int whence) {
+bool InFRAMSave::seek(int64 offs, int whence) {
 	framfs_seek(fd, offs, whence);
 
 	return true;
@@ -58,7 +58,7 @@ Common::StringArray FRAMSaveManager::listSavefiles(const Common::String &pattern
 
 	while ((dp = framfs_readdir(dirp)) != NULL) {
 		fname = new Common::String(dp->entryname);
-		if (fname->matchString(pattern, false, false))
+		if (fname->matchString(pattern, false, NULL))
 			list.push_back(dp->entryname);
 
 		delete fname;

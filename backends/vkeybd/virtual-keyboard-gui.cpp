@@ -178,7 +178,7 @@ void VirtualKeyboardGUI::run() {
 		_system->clearOverlay();
 	}
 	_overlayBackup.create(_screenW, _screenH, _system->getOverlayFormat());
-	_system->grabOverlay(_overlayBackup.getPixels(), _overlayBackup.pitch);
+	_system->grabOverlay(_overlayBackup);
 
 	setupCursor();
 
@@ -279,7 +279,7 @@ void VirtualKeyboardGUI::screenChanged() {
 		_screenH = newScreenH;
 
 		_overlayBackup.create(_screenW, _screenH, _system->getOverlayFormat());
-		_system->grabOverlay(_overlayBackup.getPixels(), _overlayBackup.pitch);
+		_system->grabOverlay(_overlayBackup);
 
 		if (!_kbd->checkModeResolutions()) {
 			_displaying = false;
@@ -441,7 +441,7 @@ void VirtualKeyboardGUI::updateDisplay() {
 
 	// draw to display surface
 	_dispSurface.fillRect(Rect(_dispSurface.w, _dispSurface.h), _dispBackColor);
-	_dispFont->drawString(&_dispSurface, dispText, 0, 0, _dispSurface.w, _dispForeColor);
+	_dispFont->drawString(&_dispSurface, dispText, 0, 0, _dispSurface.w, _dispForeColor, Graphics::kTextAlignLeft, 0, true);
 
 	String beforeCaret(wholeText.c_str() + _dispI, wholeText.c_str() + cursorPos);
 	_caretX = _dispFont->getStringWidth(beforeCaret);

@@ -29,6 +29,7 @@
 #include "common/serializer.h"
 #include "common/system.h"
 
+#include "engines/advancedDetector.h"
 #include "engines/engine.h"
 
 #include "asylum/resources/data.h"
@@ -63,7 +64,6 @@ class Cursor;
 class Encounter;
 class Menu;
 class Puzzles;
-class Reaction;
 class ResourceManager;
 class Savegame;
 class Scene;
@@ -142,7 +142,6 @@ public:
 	Cursor          *cursor()    { return _cursor; }
 	Encounter       *encounter() { return _encounter; }
 	Menu            *menu()      { return _menu; }
-	Reaction        *reaction()  { return _reaction; }
 	ResourceManager *resource()  { return _resource; }
 	Savegame        *savegame()  { return _savegame; }
 	Scene           *scene()     { return _scene; }
@@ -163,6 +162,7 @@ public:
 	void toggleGameFlag(GameFlag flag);
 	bool isGameFlagSet(GameFlag flag) const;
 	bool isGameFlagNotSet(GameFlag flag) const;
+	bool areGameFlagsSet(uint from, uint to) const;
 	void resetFlags();
 
 	// Misc
@@ -170,6 +170,10 @@ public:
 	uint getRandomBit()      { return _rnd->getRandomBit(); }
 
 	bool rectContains(const int16 (*rectPtr)[4], const Common::Point &p) const;
+
+	// Steam achievements
+	void unlockAchievement(const Common::String &id);
+	void checkAchievements();
 
 	/**
 	 * Switch message handler.
@@ -190,18 +194,10 @@ public:
 	 */
 	void updateReverseStereo();
 
-	/**
-	 * Gets an inventory ring point
-	 *
-	 * @param nPoints Number of Points
-	 * @param index   Point index
-	 *
-	 * @return        Inventory ring point
-	 */
-	Common::Point getInventoryRingPoint(uint32 nPoints, uint32 index) const;
-
 	// Serializable
 	void saveLoadWithSerializer(Common::Serializer &s);
+
+	bool checkGameVersion(const char *version) { return !strcmp(_gameDescription->extra, version); }
 
 private:
 	const ADGameDescription *_gameDescription;
@@ -214,7 +210,6 @@ private:
 	Cursor          *_cursor;
 	Encounter       *_encounter;
 	Menu            *_menu;
-	Reaction        *_reaction;
 	ResourceManager *_resource;
 	Savegame        *_savegame;
 	Scene           *_scene;

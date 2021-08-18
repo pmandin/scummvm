@@ -38,7 +38,6 @@
 #include "director/util.h"
 
 #include "director/lingo/lingo.h"
-#include "director/lingo/lingo-gr.h"
 
 
 namespace Director {
@@ -170,7 +169,7 @@ void Lingo::func_mci(const Common::String &name) {
 			uint32 from = strtol(params[1].c_str(), 0, 10);
 			uint32 to = strtol(params[2].c_str(), 0, 10);
 
-			_vm->getSoundManager()->playMCI(*_audioAliases[params[0]], from, to);
+			_vm->getCurrentWindow()->getSoundManager()->playMCI(*_audioAliases[params[0]], from, to);
 		}
 		break;
 	default:
@@ -188,44 +187,49 @@ void Lingo::func_goto(Datum &frame, Datum &movie) {
 	if (!_vm->getCurrentMovie())
 		return;
 
+	if (movie.type == VOID && frame.type == VOID)
+		return;
+
+	Window *stage = _vm->getCurrentWindow();
+	Score *score = _vm->getCurrentMovie()->getScore();
+
+	_vm->_skipFrameAdvance = true;
+
+	// If there isn't already frozen Lingo (e.g. from a previous func_goto we haven't yet unfrozen),
+	// freeze this script context. We'll return to it after entering the next frame.
+	if (!g_lingo->hasFrozenContext()) {
+		g_lingo->_freezeContext = true;
+	}
+
 	if (movie.type != VOID) {
 		Common::String movieFilenameRaw = movie.asString();
-		Window *stage = _vm->getCurrentWindow();
 
 		if (!stage->setNextMovie(movieFilenameRaw))
 			return;
 
-		stage->getCurrentMovie()->getScore()->_playState = kPlayStopped;
+		score->_playState = kPlayStopped;
 
 		stage->_nextMovie.frameS.clear();
 		stage->_nextMovie.frameI = -1;
 
-		if (frame.type == VOID)
-			return;
-
 		if (frame.type == STRING) {
 			stage->_nextMovie.frameS = *frame.u.s;
-			return;
+		} else if (frame.type != VOID) {
+			stage->_nextMovie.frameI = frame.asInt();
 		}
 
-		stage->_nextMovie.frameI = frame.asInt();
+		// Set cursor to watch.
+		score->_defaultCursor.readFromResource(4);
+		score->renderCursor(stage->getMousePos());
 
 		return;
 	}
-
-	if (frame.type == VOID)
-		return;
-
-	_vm->_skipFrameAdvance = true;
 
 	if (frame.type == STRING) {
-		if (_vm->getCurrentMovie())
-			_vm->getCurrentMovie()->getScore()->setStartToLabel(*frame.u.s);
-		return;
+		score->setStartToLabel(*frame.u.s);
+	} else {
+		score->setCurrentFrame(frame.asInt());
 	}
-
-	if (_vm->getCurrentMovie())
-		_vm->getCurrentMovie()->getScore()->setCurrentFrame(frame.asInt());
 }
 
 void Lingo::func_gotoloop() {
@@ -295,29 +299,35 @@ void Lingo::func_play(Datum &frame, Datum &movie) {
 		return;
 	}
 
+	if (movie.type != VOID) {
+		ref.movie = _vm->getCurrentMovie()->_movieArchive->getPathName();
+	}
 	ref.frameI = _vm->getCurrentMovie()->getScore()->getCurrentFrame();
+
+	// if we are issuing play command from script channel script. then play done should return to next frame
+	if (g_lingo->_currentChannelId == 0)
+		ref.frameI++;
 
 	stage->_movieStack.push_back(ref);
 
 	func_goto(frame, movie);
 }
 
-void Lingo::func_cursor(int cursorId, int maskId) {
-	Cursor cursor;
+void Lingo::func_cursor(CastMemberID cursorId, CastMemberID maskId) {
+	Score *score = _vm->getCurrentMovie()->getScore();
+	score->_defaultCursor.readFromCast(cursorId, maskId);
+	score->_cursorDirty = true;
+}
 
-	if (maskId == -1) {
-		cursor.readFromResource(cursorId);
-	} else {
-		cursor.readFromCast(cursorId, maskId);
-	}
-
-	// TODO: Figure out why there are artifacts here
-	_vm->_wm->replaceCursor(cursor._cursorType, ((Graphics::Cursor *)&cursor));
+void Lingo::func_cursor(int cursorId) {
+	Score *score = _vm->getCurrentMovie()->getScore();
+	score->_defaultCursor.readFromResource(cursorId);
+	score->_cursorDirty = true;
 }
 
 void Lingo::func_beep(int repeats) {
 	for (int r = 1; r <= repeats; r++) {
-		_vm->getSoundManager()->systemBeep();
+		_vm->getCurrentWindow()->getSoundManager()->systemBeep();
 		if (r < repeats)
 			g_system->delayMillis(400);
 	}

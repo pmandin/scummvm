@@ -82,7 +82,8 @@ Player::Player() :
 	_se(0),
 	_vol_chan(0),
 	_abort(false),
-	_music_tick(0) {
+	_music_tick(0),
+	_parserType(kParserTypeNone) {
 }
 
 Player::~Player() {
@@ -151,9 +152,9 @@ void Player::clear() {
 
 	if (_parser) {
 		_parser->unloadMusic();
-		delete _parser;
-		_parser = 0;
+		_parser->setMidiDriver(NULL);
 	}
+
 	uninit_parts();
 	_se->ImFireAllTriggers(_id);
 	_active = false;
@@ -181,17 +182,28 @@ int Player::start_seq_sound(int sound, bool reset_vars) {
 	ptr = _se->findStartOfSound(sound);
 	if (ptr == NULL)
 		return -1;
-	delete _parser;
 
 	if (!memcmp(ptr, "RO", 2)) {
 		// Old style 'RO' resource
-		_parser = MidiParser_createRO();
+		if (_parserType != kParserTypeRO) {
+			delete _parser;
+			_parser = MidiParser_createRO();
+			_parserType = kParserTypeRO;
+		}
 	} else if (!memcmp(ptr, "FORM", 4)) {
 		// Humongous Games XMIDI resource
-		_parser = MidiParser::createParser_XMIDI();
+		if (_parserType != kParserTypeXMI) {
+			delete _parser;
+			_parser = MidiParser::createParser_XMIDI();
+			_parserType = kParserTypeXMI;
+		}
 	} else {
 		// SCUMM SMF resource
-		_parser = MidiParser::createParser_SMF();
+		if (_parserType != kParserTypeSMF) {
+			delete _parser;
+			_parser = MidiParser::createParser_SMF();
+			_parserType = kParserTypeSMF;
+		}
 	}
 
 	_parser->setMidiDriver(this);
@@ -1009,7 +1021,7 @@ void Player::fixAfterLoad() {
 	_midi = _se->getBestMidiDriver(_id);
 	if (!_midi) {
 		clear();
-	} else {
+	} else {		
 		start_seq_sound(_id, false);
 		setSpeed(_speed);
 		if (_parser)
@@ -1045,6 +1057,7 @@ void Player::saveLoadWithSerializer(Common::Serializer &s) {
 	if (!s.isSaving() && _parser) {
 		delete _parser;
 		_parser = 0;
+		_parserType = kParserTypeNone;
 	}
 	_music_tick = _parser ? _parser->getTick() : 0;
 

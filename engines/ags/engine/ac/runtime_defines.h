@@ -20,8 +20,10 @@
  *
  */
 
-#ifndef AGS_ENGINE_AC_RUNTIMEDEFINES_H
-#define AGS_ENGINE_AC_RUNTIMEDEFINES_H
+#ifndef AGS_ENGINE_AC_RUNTIME_DEFINES_H
+#define AGS_ENGINE_AC_RUNTIME_DEFINES_H
+
+#include "ags/shared/ac/common_defines.h"
 
 namespace AGS3 {
 
@@ -31,7 +33,7 @@ namespace AGS3 {
 #undef MAX_TIMERS
 #endif
 
-// Max script string length
+// Max old-style script string length
 #define MAX_MAXSTRLEN 200
 #define MAXGLOBALVARS 50
 
@@ -110,12 +112,14 @@ const int LegacyRoomVolumeFactor = 30;
 #define OVER_TEXTMSG  1
 #define OVER_COMPLETE 2
 #define OVER_PICTURE  3
+#define OVER_TEXTSPEECH 4
 #define OVER_CUSTOM   100
 #define OVR_AUTOPLACE 30000
 #define FOR_ANIMATION 1
 #define FOR_SCRIPT    2
 #define FOR_EXITLOOP  3
 #define CHMLSOFFS (MAX_ROOM_OBJECTS+1)    // reserve this many movelists for objects & stuff
+#define MAX_SCREEN_OVERLAYS 20
 #define abort_all_conditions _G(restrict_until)
 #define MAX_SCRIPT_AT_ONCE 10
 #define EVENT_NONE       0
@@ -157,8 +161,8 @@ const int LegacyRoomVolumeFactor = 30;
 
 #define MAX_OPEN_SCRIPT_FILES 10
 
-} // namespace AGS3
+#define RETURN_CONTINUE 1
 
-#include "ags/shared/ac/common_defines.h"
+} // namespace AGS3
 
 #endif

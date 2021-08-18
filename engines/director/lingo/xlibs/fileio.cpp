@@ -32,35 +32,48 @@
 
 namespace Director {
 
-static const char *xlibName = "FileIO";
+const char *FileIO::xlibName = "FileIO";
+const char *FileIO::fileNames[] = {
+	"FileIO",
+	0
+};
 
 static MethodProto xlibMethods[] = {
 	{ "delete",					FileIO::m_delete,			 0, 0,	200 },	// D2
+	{ "error",					FileIO::m_error,			 1, 1,	200 },	// D2
 	{ "fileName",				FileIO::m_fileName,			 0, 0,	200 },	// D2
+	{ "getFinderInfo",			FileIO::m_getFinderInfo,	 0, 0,	200 },	// D2
 	{ "getLength",				FileIO::m_getLength,		 0, 0,	200 },	// D2
 	{ "getPosition",			FileIO::m_getPosition,		 0, 0,	200 },	// D2
 	{ "new",					FileIO::m_new,				 2, 2,	200 },	// D2
 	{ "readChar",				FileIO::m_readChar,			 0, 0,	200 },	// D2
+	{ "readFile",				FileIO::m_readFile,			 0, 0,	200 },	// D2
 	{ "readLine",				FileIO::m_readLine,			 0, 0,	200 },	// D2
 	{ "readToken",				FileIO::m_readToken,		 2, 2,	200 },	// D2
 	{ "readWord",				FileIO::m_readWord,			 0, 0,	200 },	// D2
+	{ "setFinderInfo",			FileIO::m_setFinderInfo,	 2, 2,	200 },	// D2
 	{ "setPosition",			FileIO::m_setPosition,		 1, 1,	200 },	// D2
+	{ "status",					FileIO::m_status,			 0, 0,	200 },	// D2
 	{ "writeChar",				FileIO::m_writeChar,		 1, 1,	200 },	// D2
 	{ "writeString",			FileIO::m_writeString,		 1, 1,	200 },	// D2
 	{ 0, 0, 0, 0, 0 }
 };
 
-void FileIO::initialize(int type) {
-	FileObject::initMethods(xlibMethods);
-	if (type & kXObj) {
-		if (!g_lingo->_globalvars.contains(xlibName)) {
-			FileObject *xobj = new FileObject(kXObj);
-			g_lingo->_globalvars[xlibName] = xobj;
-		} else {
-			warning("FileIO XObject already initialized");
-		}
+void FileIO::open(int type) {
+	if (type == kXObj) {
+		FileObject::initMethods(xlibMethods);
+		FileObject *xobj = new FileObject(kXObj);
+		g_lingo->_globalvars[xlibName] = xobj;
+	} else if (type == kXtraObj) {
+		// TODO - Implement Xtra
 	}
-	if (type & kXtraObj) {
+}
+
+void FileIO::close(int type) {
+	if (type == kXObj) {
+		FileObject::cleanupMethods();
+		g_lingo->_globalvars[xlibName] = Datum();
+	} else if (type == kXtraObj) {
 		// TODO - Implement Xtra
 	}
 }
@@ -279,6 +292,24 @@ void FileIO::m_readToken(int nargs) {
 	g_lingo->push(Datum(tok));
 }
 
+void FileIO::m_readFile(int nargs) {
+	FileObject *me = static_cast<FileObject *>(g_lingo->_currentMe.u.obj);
+
+	if (!me->_inStream || me->_inStream->eos() || me->_inStream->err()) {
+		g_lingo->push(Datum(""));
+		return;
+	}
+
+	Common::String res;
+	char ch = me->_inStream->readByte();
+	while (!me->_inStream->eos() && !me->_inStream->err()) {
+		res += ch;
+		ch = me->_inStream->readByte();
+	}
+
+	g_lingo->push(res);
+}
+
 // Write
 
 void FileIO::m_writeChar(int nargs) {
@@ -307,7 +338,19 @@ void FileIO::m_writeString(int nargs) {
 	g_lingo->push(Datum(kErrorNone));
 }
 
-// Other
+// Getters/Setters
+
+void FileIO::m_getFinderInfo(int nargs) {
+	g_lingo->printSTUBWithArglist("FileIO::m_getFinderInfo", nargs);
+	g_lingo->dropStack(nargs);
+	g_lingo->push(Datum());
+}
+
+void FileIO::m_setFinderInfo(int nargs) {
+	g_lingo->printSTUBWithArglist("FileIO::m_setFinderInfo", nargs);
+	g_lingo->dropStack(nargs);
+	g_lingo->push(Datum());
+}
 
 void FileIO::m_getPosition(int nargs) {
 	FileObject *me = static_cast<FileObject *>(g_lingo->_currentMe.u.obj);
@@ -372,6 +415,20 @@ void FileIO::m_fileName(int nargs) {
 		g_lingo->push(Datum(kErrorFileNotOpen));
 	}
 }
+
+void FileIO::m_error(int nargs) {
+	g_lingo->printSTUBWithArglist("FileIO::m_error", nargs);
+	g_lingo->dropStack(nargs);
+	g_lingo->push(Datum());
+}
+
+void FileIO::m_status(int nargs) {
+	g_lingo->printSTUBWithArglist("FileIO::m_status", nargs);
+	g_lingo->dropStack(nargs);
+	g_lingo->push(Datum());
+}
+
+// Other
 
 void FileIO::m_delete(int nargs) {
 	FileObject *me = static_cast<FileObject *>(g_lingo->_currentMe.u.obj);

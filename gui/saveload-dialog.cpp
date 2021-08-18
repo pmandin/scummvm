@@ -463,7 +463,8 @@ void SaveLoadChooserSimple::handleCommand(CommandSender *sender, uint32 cmd, uin
 		updateSelection(true);
 		break;
 	case kDelCmd:
-		if (selItem >= 0 && _delSupport) {
+	case kListItemRemovalRequestCmd:
+		if (_deleteButton->isEnabled()) {
 			MessageDialog alert(_("Do you really want to delete this saved game?"),
 								_("Delete"), _("Cancel"));
 			if (alert.runModal() == kMessageOK) {
@@ -587,7 +588,7 @@ void SaveLoadChooserSimple::updateSelection(bool redraw) {
 
 		if (_thumbnailSupport) {
 			const Graphics::Surface *thumb = desc.getThumbnail();
-			if (thumb)
+			if (thumb && _gfxWidget->isVisible())
 				_gfxWidget->setGfx(thumb, true);
 		}
 

@@ -168,7 +168,7 @@ Common::OutSaveFile *DefaultSaveFileManager::openForSaving(const Common::String 
 	}
 
 	// Open the file for saving.
-	Common::WriteStream *const sf = fileNode.createWriteStream();
+	Common::SeekableWriteStream *const sf = fileNode.createWriteStream();
 	if (!sf)
 		return nullptr;
 	Common::OutSaveFile *const result = new Common::OutSaveFile(compress ? Common::wrapCompressedWriteStream(sf) : sf);
@@ -229,7 +229,7 @@ Common::String DefaultSaveFileManager::getSavePath() const {
 	// Try to use game specific savepath from config
 	dir = ConfMan.get("savepath");
 
-	// Work around a bug (#999122) in the original 0.6.1 release of
+	// Work around a bug (#1689) in the original 0.6.1 release of
 	// ScummVM, which would insert a bad savepath value into config files.
 	if (dir == "None") {
 		ConfMan.removeKey("savepath", ConfMan.getActiveDomainName());
@@ -309,8 +309,9 @@ Common::HashMap<Common::String, uint32> DefaultSaveFileManager::loadTimestamps()
 	while (!file->eos()) {
 		//read filename into buffer (reading until the first ' ')
 		Common::String buffer;
-		while (!file->eos()) {
+		while (true) {
 			byte b = file->readByte();
+			if (file->eos()) break;
 			if (b == ' ') break;
 			buffer += (char)b;
 		}
@@ -320,8 +321,9 @@ Common::HashMap<Common::String, uint32> DefaultSaveFileManager::loadTimestamps()
 		while (true) {
 			bool lineEnded = false;
 			buffer = "";
-			while (!file->eos()) {
+			while (true) {
 				byte b = file->readByte();
+				if (file->eos()) break;
 				if (b == ' ' || b == '\n' || b == '\r') {
 					lineEnded = (b == '\n');
 					break;

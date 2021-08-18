@@ -44,243 +44,199 @@
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-code.h"
+#include "director/lingo/lingo-codegen.h"
 #include "director/lingo/lingo-object.h"
-#include "director/lingo/lingo-gr.h"
+#include "director/lingo/lingo-utils.h"
 
 namespace Director {
 
-#define ARGNUMCHECK(n) \
-	if (nargs != (n)) { \
-		warning("%s: expected %d argument%s, got %d", __FUNCTION__, (n), ((n) == 1 ? "" : "s"), nargs); \
-		g_lingo->dropStack(nargs); \
-		return; \
-	}
-
-#define TYPECHECK(datum,t) \
-	if ((datum).type != (t)) { \
-		warning("%s: %s arg should be of type %s, not %s", __FUNCTION__, #datum, #t, (datum).type2str()); \
-		return; \
-	}
-
-#define TYPECHECK2(datum, t1, t2)	\
-	if ((datum).type != (t1) && (datum).type != (t2)) { \
-		warning("%s: %s arg should be of type %s or %s, not %s", __FUNCTION__, #datum, #t1, #t2, (datum).type2str()); \
-		return; \
-	}
-
-#define TYPECHECK3(datum, t1, t2, t3)	\
-	if ((datum).type != (t1) && (datum).type != (t2) && (datum).type != (t3)) { \
-		warning("%s: %s arg should be of type %s, %s, or %s, not %s", __FUNCTION__, #datum, #t1, #t2, #t3, (datum).type2str()); \
-		return; \
-	}
-
-#define ARRBOUNDSCHECK(idx,array) \
-	if ((idx)-1 < 0 || (idx) > (int)(array).u.farr->size()) { \
-		warning("%s: index out of bounds (%d of %d)", __FUNCTION__, (idx), (array).u.farr->size()); \
-		return; \
-	}
-
-static struct BuiltinProto {
-	const char *name;
-	void (*func)(int);
-	int minArgs;	// -1 -- arglist
-	int maxArgs;
-	bool parens;
-	int version;
-	SymbolType type;
-} builtins[] = {
+static BuiltinProto builtins[] = {
 	// Math
-	{ "abs",			LB::b_abs,			1, 1, true, 200, FBLTIN },	// D2 function
-	{ "atan",			LB::b_atan,			1, 1, true, 400, FBLTIN },	//			D4 f
-	{ "cos",			LB::b_cos,			1, 1, true, 400, FBLTIN },	//			D4 f
-	{ "exp",			LB::b_exp,			1, 1, true, 400, FBLTIN },	//			D4 f
-	{ "float",			LB::b_float,		1, 1, true, 400, FBLTIN },	//			D4 f
-	{ "integer",		LB::b_integer,		1, 1, true, 300, FBLTIN },	//		D3 f
-	{ "log",			LB::b_log,			1, 1, true, 400, FBLTIN },	//			D4 f
-	{ "pi",				LB::b_pi,			0, 0, true, 400, FBLTIN },	//			D4 f
-	{ "power",			LB::b_power,		2, 2, true, 400, FBLTIN },	//			D4 f
-	{ "random",			LB::b_random,		1, 1, true, 200, FBLTIN },	// D2 f
-	{ "sin",			LB::b_sin,			1, 1, true, 400, FBLTIN },	//			D4 f
-	{ "sqrt",			LB::b_sqrt,			1, 1, true, 200, FBLTIN },	// D2 f
-	{ "tan",			LB::b_tan,			1, 1, true, 400, FBLTIN },	//			D4 f
+	{ "abs",			LB::b_abs,			1, 1, 200, FBLTIN },	// D2 function
+	{ "atan",			LB::b_atan,			1, 1, 400, FBLTIN },	//			D4 f
+	{ "cos",			LB::b_cos,			1, 1, 400, FBLTIN },	//			D4 f
+	{ "exp",			LB::b_exp,			1, 1, 400, FBLTIN },	//			D4 f
+	{ "float",			LB::b_float,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "integer",		LB::b_integer,		1, 1, 300, FBLTIN },	//		D3 f
+	{ "log",			LB::b_log,			1, 1, 400, FBLTIN },	//			D4 f
+	{ "pi",				LB::b_pi,			0, 0, 400, FBLTIN },	//			D4 f
+	{ "power",			LB::b_power,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "random",			LB::b_random,		1, 1, 200, FBLTIN },	// D2 f
+	{ "sin",			LB::b_sin,			1, 1, 400, FBLTIN },	//			D4 f
+	{ "sqrt",			LB::b_sqrt,			1, 1, 200, FBLTIN },	// D2 f
+	{ "tan",			LB::b_tan,			1, 1, 400, FBLTIN },	//			D4 f
 	// String
-	{ "chars",			LB::b_chars,		3, 3, true, 200, FBLTIN },	// D2 f
-	{ "charToNum",		LB::b_charToNum,	1, 1, true, 200, FBLTIN },	// D2 f
-	{ "delete",			LB::b_delete,		1, 1, true, 300, CBLTIN },	//		D3 command
-	{ "hilite",			LB::b_hilite,		1, 1, true, 300, CBLTIN },	//		D3 c
-	{ "length",			LB::b_length,		1, 1, true, 200, FBLTIN },	// D2 f
-	{ "numToChar",		LB::b_numToChar,	1, 1, true, 200, FBLTIN },	// D2 f
-	{ "offset",			LB::b_offset,		2, 3, true, 200, FBLTIN },	// D2 f
-	{ "string",			LB::b_string,		1, 1, true, 200, FBLTIN },	// D2 f
-	{ "value",		 	LB::b_value,		1, 1, true, 200, FBLTIN },	// D2 f
+	{ "chars",			LB::b_chars,		3, 3, 200, FBLTIN },	// D2 f
+	{ "charToNum",		LB::b_charToNum,	1, 1, 200, FBLTIN },	// D2 f
+	{ "length",			LB::b_length,		1, 1, 200, FBLTIN },	// D2 f
+	{ "numToChar",		LB::b_numToChar,	1, 1, 200, FBLTIN },	// D2 f
+	{ "offset",			LB::b_offset,		2, 3, 200, FBLTIN },	// D2 f
+	{ "string",			LB::b_string,		1, 1, 200, FBLTIN },	// D2 f
+	{ "value",		 	LB::b_value,		1, 1, 200, FBLTIN },	// D2 f
 	// Lists
-	{ "add",			LB::b_add,			2, 2, false, 400, HBLTIN },	//			D4 handler
-	{ "addAt",			LB::b_addAt,		3, 3, false, 400, HBLTIN },	//			D4 h
-	{ "addProp",		LB::b_addProp,		3, 3, false, 400, HBLTIN },	//			D4 h
-	{ "append",			LB::b_append,		2, 2, false, 400, HBLTIN },	//			D4 h
-	{ "count",			LB::b_count,		1, 1, true,  400, FBLTIN },	//			D4 f
-	{ "deleteAt",		LB::b_deleteAt,		2, 2, false, 400, HBLTIN },	//			D4 h
-	{ "deleteProp",		LB::b_deleteProp,	2, 2, false, 400, HBLTIN },	//			D4 h
-	{ "findPos",		LB::b_findPos,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "findPosNear",	LB::b_findPosNear,	2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "getaProp",		LB::b_getaProp,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "getAt",			LB::b_getAt,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "getLast",		LB::b_getLast,		1, 1, true,  400, FBLTIN },	//			D4 f
-	{ "getOne",			LB::b_getOne,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "getPos",			LB::b_getPos,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "getProp",		LB::b_getProp,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "getPropAt",		LB::b_getPropAt,	2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "list",			LB::b_list,			-1, 0, true, 400, FBLTIN },	//			D4 f
-	{ "listP",			LB::b_listP,		1, 1, true,  400, FBLTIN },	//			D4 f
-	{ "max",			LB::b_max,			-1,0, true,  400, FBLTIN },	//			D4 f
-	{ "min",			LB::b_min,			-1,0, true,  400, FBLTIN },	//			D4 f
-	{ "setaProp",		LB::b_setaProp,		3, 3, false, 400, HBLTIN },	//			D4 h
-	{ "setAt",			LB::b_setAt,		3, 3, false, 400, HBLTIN },	//			D4 h
-	{ "setProp",		LB::b_setProp,		3, 3, false, 400, HBLTIN },	//			D4 h
-	{ "sort",			LB::b_sort,			1, 1, false, 400, HBLTIN },	//			D4 h
+	{ "add",			LB::b_add,			2, 2, 400, HBLTIN },	//			D4 handler
+	{ "addAt",			LB::b_addAt,		3, 3, 400, HBLTIN },	//			D4 h
+	{ "addProp",		LB::b_addProp,		3, 3, 400, HBLTIN },	//			D4 h
+	{ "append",			LB::b_append,		2, 2, 400, HBLTIN },	//			D4 h
+	{ "count",			LB::b_count,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "deleteAt",		LB::b_deleteAt,		2, 2, 400, HBLTIN },	//			D4 h
+	{ "deleteProp",		LB::b_deleteProp,	2, 2, 400, HBLTIN },	//			D4 h
+	{ "findPos",		LB::b_findPos,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "findPosNear",	LB::b_findPosNear,	2, 2, 400, FBLTIN },	//			D4 f
+	{ "getaProp",		LB::b_getaProp,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "getAt",			LB::b_getAt,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "getLast",		LB::b_getLast,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "getOne",			LB::b_getOne,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "getPos",			LB::b_getPos,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "getProp",		LB::b_getProp,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "getPropAt",		LB::b_getPropAt,	2, 2, 400, FBLTIN },	//			D4 f
+	{ "list",			LB::b_list,			-1, 0, 400, FBLTIN },	//			D4 f
+	{ "listP",			LB::b_listP,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "max",			LB::b_max,			-1,0, 400, FBLTIN },	//			D4 f
+	{ "min",			LB::b_min,			-1,0, 400, FBLTIN },	//			D4 f
+	{ "setaProp",		LB::b_setaProp,		3, 3, 400, HBLTIN },	//			D4 h
+	{ "setAt",			LB::b_setAt,		3, 3, 400, HBLTIN },	//			D4 h
+	{ "setProp",		LB::b_setProp,		3, 3, 400, HBLTIN },	//			D4 h
+	{ "sort",			LB::b_sort,			1, 1, 400, HBLTIN },	//			D4 h
 	// Files
-	{ "closeDA",	 	LB::b_closeDA, 		0, 0, false, 200, CBLTIN },	// D2 c
-	{ "closeResFile",	LB::b_closeResFile,	0, 1, false, 200, CBLTIN },	// D2 c
-	{ "closeXlib",		LB::b_closeXlib,	0, 1, false, 200, CBLTIN },	// D2 c
-	{ "getNthFileNameInFolder",LB::b_getNthFileNameInFolder,2,2,true,400,FBLTIN }, //D4 f
-	{ "open",			LB::b_open,			1, 2, false, 200, CBLTIN },	// D2 c
-	{ "openDA",	 		LB::b_openDA, 		1, 1, false, 200, CBLTIN },	// D2 c
-	{ "openResFile",	LB::b_openResFile,	1, 1, false, 200, CBLTIN },	// D2 c
-	{ "openXlib",		LB::b_openXlib,		1, 1, false, 200, CBLTIN },	// D2 c
-	{ "saveMovie",		LB::b_saveMovie,	1, 1, false, 400, CBLTIN },	//			D4 c
-	{ "setCallBack",	LB::b_setCallBack,	2, 2, false, 300, CBLTIN },	//		D3 c
-	{ "showResFile",	LB::b_showResFile,	0, 1, false, 200, CBLTIN },	// D2 c
-	{ "showXlib",		LB::b_showXlib,		0, 1, false, 200, CBLTIN },	// D2 c
-	{ "xFactoryList",	LB::b_xFactoryList,	1, 1, true,  300, FBLTIN },	//		D3 f
+	{ "closeDA",	 	LB::b_closeDA, 		0, 0, 200, CBLTIN },	// D2 c
+	{ "closeResFile",	LB::b_closeResFile,	0, 1, 200, CBLTIN },	// D2 c
+	{ "closeXlib",		LB::b_closeXlib,	0, 1, 200, CBLTIN },	// D2 c
+	{ "getNthFileNameInFolder",LB::b_getNthFileNameInFolder,2,2,400,FBLTIN }, //D4 f
+	{ "open",			LB::b_open,			1, 2, 200, CBLTIN },	// D2 c
+	{ "openDA",	 		LB::b_openDA, 		1, 1, 200, CBLTIN },	// D2 c
+	{ "openResFile",	LB::b_openResFile,	1, 1, 200, CBLTIN },	// D2 c
+	{ "openXlib",		LB::b_openXlib,		1, 1, 200, CBLTIN },	// D2 c
+	{ "saveMovie",		LB::b_saveMovie,	1, 1, 400, CBLTIN },	//			D4 c
+	{ "setCallBack",	LB::b_setCallBack,	2, 2, 200, CBLTIN },	// D2 c
+	{ "showResFile",	LB::b_showResFile,	0, 1, 200, CBLTIN },	// D2 c
+	{ "showXlib",		LB::b_showXlib,		0, 1, 200, CBLTIN },	// D2 c
+	{ "xFactoryList",	LB::b_xFactoryList,	1, 1, 300, FBLTIN },	//		D3 f
 	// Control
-	{ "abort",			LB::b_abort,		0, 0, false, 400, CBLTIN },	//			D4 c
-	{ "continue",		LB::b_continue,		0, 0, false, 200, CBLTIN },	// D2 c
-	{ "dontPassEvent",	LB::b_dontPassEvent,0, 0, false, 200, CBLTIN },	// D2 c
-	{ "delay",	 		LB::b_delay,		1, 1, false, 200, CBLTIN },	// D2 c
-	{ "do",		 		LB::b_do,			1, 1, false, 200, CBLTIN },	// D2 c
-	{ "go",		 		LB::b_go,			1, 2, false, 400, CBLTIN },	// 			D4 c
-	{ "halt",	 		LB::b_halt,			0, 0, false, 400, CBLTIN },	//			D4 c
-	{ "nothing",		LB::b_nothing,		0, 0, false, 200, CBLTIN },	// D2 c
-	{ "pass",			LB::b_pass,			0, 0, false, 400, CBLTIN },	//			D4 c
-	{ "pause",			LB::b_pause,		0, 0, false, 200, CBLTIN },	// D2 c
-	{ "play",			LB::b_play,			0, 2, false, 200, CBLTIN },	// D2 c
-	{ "playAccel",		LB::b_playAccel,	-1,0, false, 200, CBLTIN },	// D2
+	{ "abort",			LB::b_abort,		0, 0, 400, CBLTIN },	//			D4 c
+	{ "continue",		LB::b_continue,		0, 0, 200, CBLTIN },	// D2 c
+	{ "dontPassEvent",	LB::b_dontPassEvent,0, 0, 200, CBLTIN },	// D2 c
+	{ "delay",	 		LB::b_delay,		1, 1, 200, CBLTIN },	// D2 c
+	{ "do",		 		LB::b_do,			1, 1, 200, CBLTIN },	// D2 c
+	{ "go",		 		LB::b_go,			1, 2, 200, CBLTIN },	// D2 c
+	{ "halt",	 		LB::b_halt,			0, 0, 400, CBLTIN },	//			D4 c
+	{ "nothing",		LB::b_nothing,		0, 0, 200, CBLTIN },	// D2 c
+	{ "pass",			LB::b_pass,			0, 0, 400, CBLTIN },	//			D4 c
+	{ "pause",			LB::b_pause,		0, 0, 200, CBLTIN },	// D2 c
+	{ "play",			LB::b_play,			0, 2, 200, CBLTIN },	// D2 c
+	{ "playAccel",		LB::b_playAccel,	-1,0, 200, CBLTIN },	// D2
 		// play done													// D2
-	{ "preLoad",		LB::b_preLoad,		-1,0, false, 300, CBLTIN },	//		D3.1 c
-	{ "preLoadCast",	LB::b_preLoadCast,	-1,0, false, 300, CBLTIN },	//		D3.1 c
-	{ "quit",			LB::b_quit,			0, 0, false, 200, CBLTIN },	// D2 c
-	{ "restart",		LB::b_restart,		0, 0, false, 200, CBLTIN },	// D2 c
-	{ "return",			LB::b_return,		0, 1, false, 200, CBLTIN },	// D2 f
-	{ "scummvm_returnNumber", LB::b_returnNumber, 1, 1, false, 200, CBLTIN }, // D2 f
-	{ "shutDown",		LB::b_shutDown,		0, 0, false, 200, CBLTIN },	// D2 c
-	{ "startTimer",		LB::b_startTimer,	0, 0, false, 200, CBLTIN },	// D2 c
+	{ "preLoad",		LB::b_preLoad,		-1,0, 300, CBLTIN },	//		D3.1 c
+	{ "preLoadCast",	LB::b_preLoadCast,	-1,0, 300, CBLTIN },	//		D3.1 c
+	{ "quit",			LB::b_quit,			0, 0, 200, CBLTIN },	// D2 c
+	{ "restart",		LB::b_restart,		0, 0, 200, CBLTIN },	// D2 c
+	{ "return",			LB::b_return,		0, 1, 200, CBLTIN },	// D2 f
+	{ "shutDown",		LB::b_shutDown,		0, 0, 200, CBLTIN },	// D2 c
+	{ "startTimer",		LB::b_startTimer,	0, 0, 200, CBLTIN },	// D2 c
 		// when keyDown													// D2
 		// when mouseDown												// D2
 		// when mouseUp													// D2
 		// when timeOut													// D2
 	// Types
-	{ "factory",		LB::b_factory,		1, 1, true,  300, FBLTIN },	//		D3
-	{ "floatP",			LB::b_floatP,		1, 1, true,  300, FBLTIN },	//		D3
-	{ "ilk",	 		LB::b_ilk,			1, 2, false, 400, FBLTIN },	//			D4 f
-	{ "integerp",		LB::b_integerp,		1, 1, true,  200, FBLTIN },	// D2 f
-	{ "objectp",		LB::b_objectp,		1, 1, true,  200, FBLTIN },	// D2 f
-	{ "pictureP",		LB::b_pictureP,		1, 1, true,  400, FBLTIN },	//			D4 f
-	{ "stringp",		LB::b_stringp,		1, 1, true,  200, FBLTIN },	// D2 f
-	{ "symbolp",		LB::b_symbolp,		1, 1, true,  200, FBLTIN },	// D2 f
-	{ "voidP",			LB::b_voidP,		1, 1, true,  400, FBLTIN },	//			D4 f
+	{ "factory",		LB::b_factory,		1, 1, 300, FBLTIN },	//		D3
+	{ "floatP",			LB::b_floatP,		1, 1, 300, FBLTIN },	//		D3
+	{ "ilk",	 		LB::b_ilk,			1, 2, 400, FBLTIN },	//			D4 f
+	{ "integerp",		LB::b_integerp,		1, 1, 200, FBLTIN },	// D2 f
+	{ "objectp",		LB::b_objectp,		1, 1, 200, FBLTIN },	// D2 f
+	{ "pictureP",		LB::b_pictureP,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "stringp",		LB::b_stringp,		1, 1, 200, FBLTIN },	// D2 f
+	{ "symbolp",		LB::b_symbolp,		1, 1, 200, FBLTIN },	// D2 f
+	{ "voidP",			LB::b_voidP,		1, 1, 400, FBLTIN },	//			D4 f
 	// Misc
-	{ "alert",	 		LB::b_alert,		1, 1, false, 200, CBLTIN },	// D2 c
-	{ "clearGlobals",	LB::b_clearGlobals,	0, 0, false, 300, CBLTIN },	//		D3.1 c
-	{ "cursor",	 		LB::b_cursor,		1, 1, false, 200, CBLTIN },	// D2 c
-	{ "framesToHMS",	LB::b_framesToHMS,	4, 4, false, 300, FBLTIN },	//		D3 f
-	{ "HMStoFrames",	LB::b_HMStoFrames,	4, 4, false, 300, FBLTIN },	//		D3 f
-	{ "param",	 		LB::b_param,		1, 1, true,  400, FBLTIN },	//			D4 f
-	{ "printFrom",	 	LB::b_printFrom,	-1,0, false, 200, CBLTIN },	// D2 c
-	{ "put",			LB::b_put,			-1,0, false, 200, CBLTIN },	// D2
+	{ "alert",	 		LB::b_alert,		1, 1, 200, CBLTIN },	// D2 c
+	{ "clearGlobals",	LB::b_clearGlobals,	0, 0, 300, CBLTIN },	//		D3.1 c
+	{ "cursor",	 		LB::b_cursor,		1, 1, 200, CBLTIN },	// D2 c
+	{ "framesToHMS",	LB::b_framesToHMS,	4, 4, 300, FBLTIN },	//		D3 f
+	{ "HMStoFrames",	LB::b_HMStoFrames,	4, 4, 300, FBLTIN },	//		D3 f
+	{ "param",	 		LB::b_param,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "printFrom",	 	LB::b_printFrom,	-1,0, 200, CBLTIN },	// D2 c
+	{ "put",			LB::b_put,			-1,0, 200, CBLTIN },	// D2
 		// set															// D2
-	{ "showGlobals",	LB::b_showGlobals,	0, 0, false, 200, CBLTIN },	// D2 c
-	{ "showLocals",		LB::b_showLocals,	0, 0, false, 200, CBLTIN },	// D2 c
+	{ "showGlobals",	LB::b_showGlobals,	0, 0, 200, CBLTIN },	// D2 c
+	{ "showLocals",		LB::b_showLocals,	0, 0, 200, CBLTIN },	// D2 c
 	// Score
-	{ "constrainH",		LB::b_constrainH,	2, 2, true,  200, FBLTIN },	// D2 f
-	{ "constrainV",		LB::b_constrainV,	2, 2, true,  200, FBLTIN },	// D2 f
-	{ "copyToClipBoard",LB::b_copyToClipBoard,1,1, false, 400, CBLTIN }, //			D4 c
-	{ "duplicate",		LB::b_duplicate,	1, 2, false, 400, CBLTIN },	//			D4 c
-	{ "editableText",	LB::b_editableText,	0, 0, false, 200, CBLTIN },	// D2, FIXME: the field in D4+
-	{ "erase",			LB::b_erase,		1, 1, false, 400, CBLTIN },	//			D4 c
-	{ "findEmpty",		LB::b_findEmpty,	1, 1, true,  400, FBLTIN },	//			D4 f
+	{ "constrainH",		LB::b_constrainH,	2, 2, 200, FBLTIN },	// D2 f
+	{ "constrainV",		LB::b_constrainV,	2, 2, 200, FBLTIN },	// D2 f
+	{ "copyToClipBoard",LB::b_copyToClipBoard,1,1, 400, CBLTIN }, //			D4 c
+	{ "duplicate",		LB::b_duplicate,	1, 2, 400, CBLTIN },	//			D4 c
+	{ "editableText",	LB::b_editableText,	0, 0, 200, CBLTIN },	// D2, FIXME: the field in D4+
+	{ "erase",			LB::b_erase,		1, 1, 400, CBLTIN },	//			D4 c
+	{ "findEmpty",		LB::b_findEmpty,	1, 1, 400, FBLTIN },	//			D4 f
 		// go															// D2
-	{ "importFileInto",	LB::b_importFileInto,2, 2, false, 400, CBLTIN }, //			D4 c
-	{ "installMenu",	LB::b_installMenu,	1, 1, false, 200, CBLTIN },	// D2 c
-	{ "label",			LB::b_label,		1, 1, true,  200, FBLTIN },	// D2 f
-	{ "marker",			LB::b_marker,		1, 1, true,  200, FBLTIN },	// D2 f
-	{ "move",			LB::b_move,			1, 2, false, 400, CBLTIN },	//			D4 c
-	{ "moveableSprite",	LB::b_moveableSprite,0, 0, false, 200, CBLTIN },// D2, FIXME: the field in D4+
-	{ "pasteClipBoardInto",LB::b_pasteClipBoardInto,1,1,false,400,CBLTIN },//		D4 c
-	{ "puppetPalette",	LB::b_puppetPalette, -1,0, false, 200, CBLTIN },// D2 c
-	{ "puppetSound",	LB::b_puppetSound,	-1,0, false, 200, CBLTIN },	// D2 c
-	{ "puppetSprite",	LB::b_puppetSprite,	-1,0, false, 200, CBLTIN },	// D2 c
-	{ "puppetTempo",	LB::b_puppetTempo,	1, 1, false, 200, CBLTIN },	// D2 c
-	{ "puppetTransition",LB::b_puppetTransition,-1,0,false,200, CBLTIN },// D2 c
-	{ "ramNeeded",		LB::b_ramNeeded,	2, 2, true,  300, FBLTIN },	//		D3.1 f
-	{ "rollOver",		LB::b_rollOver,		1, 1, true,  299, FBLTIN },	// D2 f
-	{ "spriteBox",		LB::b_spriteBox,	-1,0, false, 200, CBLTIN },	// D2 c
-	{ "unLoad",			LB::b_unLoad,		0, 2, false, 300, CBLTIN },	//		D3.1 c
-	{ "unLoadCast",		LB::b_unLoadCast,	0, 2, false, 300, CBLTIN },	//		D3.1 c
-	{ "updateStage",	LB::b_updateStage,	0, 0, false, 200, CBLTIN },	// D2 c
-	{ "zoomBox",		LB::b_zoomBox,		-1,0, false, 200, CBLTIN },	// D2 c
+	{ "importFileInto",	LB::b_importFileInto,2, 2, 400, CBLTIN }, //			D4 c
+	{ "installMenu",	LB::b_installMenu,	1, 1, 200, CBLTIN },	// D2 c
+	{ "label",			LB::b_label,		1, 1, 200, FBLTIN },	// D2 f
+	{ "marker",			LB::b_marker,		1, 1, 200, FBLTIN },	// D2 f
+	{ "move",			LB::b_move,			1, 2, 400, CBLTIN },	//			D4 c
+	{ "moveableSprite",	LB::b_moveableSprite,0, 0, 200, CBLTIN },// D2, FIXME: the field in D4+
+	{ "pasteClipBoardInto",LB::b_pasteClipBoardInto,1,1,400,CBLTIN },//		D4 c
+	{ "puppetPalette",	LB::b_puppetPalette, -1,0, 200, CBLTIN },// D2 c
+	{ "puppetSound",	LB::b_puppetSound,	-1,0, 200, CBLTIN },	// D2 c
+	{ "puppetSprite",	LB::b_puppetSprite,	-1,0, 200, CBLTIN },	// D2 c
+	{ "puppetTempo",	LB::b_puppetTempo,	1, 1, 200, CBLTIN },	// D2 c
+	{ "puppetTransition",LB::b_puppetTransition,-1,0,200, CBLTIN },// D2 c
+	{ "ramNeeded",		LB::b_ramNeeded,	2, 2, 300, FBLTIN },	//		D3.1 f
+	{ "rollOver",		LB::b_rollOver,		1, 1, 200, FBLTIN },	// D2 f
+	{ "spriteBox",		LB::b_spriteBox,	5, 5, 200, CBLTIN },	// D2 c
+	{ "unLoad",			LB::b_unLoad,		0, 2, 300, CBLTIN },	//		D3.1 c
+	{ "unLoadCast",		LB::b_unLoadCast,	0, 2, 300, CBLTIN },	//		D3.1 c
+	{ "updateStage",	LB::b_updateStage,	0, 0, 200, CBLTIN },	// D2 c
+	{ "zoomBox",		LB::b_zoomBox,		-1,0, 200, CBLTIN },	// D2 c
+	{"immediateSprite", LB::b_immediateSprite, -1, 0, 200, CBLTIN}, // D2 c
 	// Point
-	{ "point",			LB::b_point,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "inside",			LB::b_inside,		2, 2, true,  400, FBLTIN },	//			D4 f
-	{ "intersect",		LB::b_intersect,	2, 2, false, 400, FBLTIN },	//			D4 f
-	{ "map",			LB::b_map,			3, 3, true,  400, FBLTIN },	//			D4 f
-	{ "rect",			LB::b_rect,			4, 4, true,  400, FBLTIN },	//			D4 f
-	{ "union",			LB::b_union,		2, 2, true,  400, FBLTIN },	//			D4 f
+	{ "point",			LB::b_point,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "inside",			LB::b_inside,		2, 2, 400, FBLTIN },	//			D4 f
+	{ "intersect",		LB::b_intersect,	2, 2, 400, FBLTIN },	//			D4 f
+	{ "map",			LB::b_map,			3, 3, 400, FBLTIN },	//			D4 f
+	{ "rect",			LB::b_rect,			2, 4, 400, FBLTIN },	//			D4 f
+	{ "union",			LB::b_union,		2, 2, 400, FBLTIN },	//			D4 f
 	// Sound
-	{ "beep",	 		LB::b_beep,			0, 1, false, 200, CBLTIN },	// D2
-	{ "mci",	 		LB::b_mci,			1, 1, false, 300, CBLTIN },	//		D3.1 c
-	{ "mciwait",		LB::b_mciwait,		1, 1, false, 400, CBLTIN },	//			D4 c
-	{ "sound",			LB::b_sound,		2, 3, false, 300, CBLTIN },	//		D3 c
-	{ "soundBusy",		LB::b_soundBusy,	1, 1, true,  300, FBLTIN },	//		D3 f
+	{ "beep",	 		LB::b_beep,			0, 1, 200, CBLTIN },	// D2
+	{ "mci",	 		LB::b_mci,			1, 1, 300, CBLTIN },	//		D3.1 c
+	{ "mciwait",		LB::b_mciwait,		1, 1, 400, CBLTIN },	//			D4 c
+	{ "sound",			LB::b_sound,		2, 3, 300, CBLTIN },	//		D3 c
+	{ "soundBusy",		LB::b_soundBusy,	1, 1, 300, FBLTIN },	//		D3 f
 	// Constants
-	{ "backspace",		LB::b_backspace,	0, 0, false, 200, KBLTIN },	// D2 konstant
-	{ "empty",			LB::b_empty,		0, 0, false, 200, KBLTIN },	// D2 k
-	{ "enter",			LB::b_enter,		0, 0, false, 200, KBLTIN },	// D2 k
-	{ "false",			LB::b_false,		0, 0, false, 200, KBLTIN },	// D2 k
-	{ "quote",			LB::b_quote,		0, 0, false, 200, KBLTIN },	// D2 k
-	{ "return",			LB::b_returnconst,	0, 0, false, 200, KBLTIN },	// D2 k
-	{ "tab",			LB::b_tab,			0, 0, false, 200, KBLTIN },	// D2 k
-	{ "true",			LB::b_true,			0, 0, false, 200, KBLTIN },	// D2 k
-	{ "version",		LB::b_version,		0, 0, false, 300, KBLTIN },	//		D3 k
+	{ "backspace",		LB::b_backspace,	0, 0, 200, KBLTIN },	// D2 konstant
+	{ "empty",			LB::b_empty,		0, 0, 200, KBLTIN },	// D2 k
+	{ "enter",			LB::b_enter,		0, 0, 200, KBLTIN },	// D2 k
+	{ "false",			LB::b_false,		0, 0, 200, KBLTIN },	// D2 k
+	{ "quote",			LB::b_quote,		0, 0, 200, KBLTIN },	// D2 k
+	{ "return",			LB::b_returnconst,	0, 0, 200, KBLTIN },	// D2 k
+	{ "tab",			LB::b_tab,			0, 0, 200, KBLTIN },	// D2 k
+	{ "true",			LB::b_true,			0, 0, 200, KBLTIN },	// D2 k
+	{ "version",		LB::b_version,		0, 0, 300, KBLTIN },	//		D3 k
 	// References
-	{ "cast",			LB::b_cast,			1, 1, false, 400, FBLTIN },	//			D4 f
-	{ "field",			LB::b_field,		1, 1, false, 300, FBLTIN },	//		D3 f
-	{ "script",			LB::b_script,		1, 1, false, 400, FBLTIN },	//			D4 f
-	{ "window",			LB::b_window,		1, 1, false, 400, FBLTIN },	//			D4 f
+	{ "cast",			LB::b_cast,			1, 1, 400, FBLTIN },	//			D4 f
+	{ "script",			LB::b_script,		1, 1, 400, FBLTIN },	//			D4 f
+	{ "window",			LB::b_window,		1, 1, 400, FBLTIN },	//			D4 f
 	// Chunk operations
-	{ "numberOfChars",	LB::b_numberofchars,1, 1, false, 300, FBLTIN },	//			D3 f
-	{ "numberOfItems",	LB::b_numberofitems,1, 1, false, 300, FBLTIN },	//			D3 f
-	{ "numberOfLines",	LB::b_numberoflines,1, 1, false, 300, FBLTIN },	//			D3 f
-	{ "numberOfWords",	LB::b_numberofwords,1, 1, false, 300, FBLTIN },	//			D3 f
-	{ "lastCharOf",		LB::b_lastcharof,	1, 1, false, 400, FBLTIN },	//			D4 f
-	{ "lastItemOf",		LB::b_lastitemof,	1, 1, false, 400, FBLTIN },	//			D4 f
-	{ "lastLineOf",		LB::b_lastlineof,	1, 1, false, 400, FBLTIN },	//			D4 f
-	{ "lastWordOf",		LB::b_lastwordof,	1, 1, false, 400, FBLTIN },	//			D4 f
+	{ "numberOfChars",	LB::b_numberofchars,1, 1, 300, FBLTIN },	//			D3 f
+	{ "numberOfItems",	LB::b_numberofitems,1, 1, 300, FBLTIN },	//			D3 f
+	{ "numberOfLines",	LB::b_numberoflines,1, 1, 300, FBLTIN },	//			D3 f
+	{ "numberOfWords",	LB::b_numberofwords,1, 1, 300, FBLTIN },	//			D3 f
 
 	// ScummVM Asserts: Used for testing ScummVM's Lingo implementation
-	{ "scummvmAssert",	LB::b_scummvmassert,1, 2, true,  200, HBLTIN },
-	{ "scummvmAssertEqual",	LB::b_scummvmassertequal,2,3,true,200,HBLTIN },
+	{ "scummvmAssert",	LB::b_scummvmassert,1, 2, 200, HBLTIN },
+	{ "scummvmAssertEqual",	LB::b_scummvmassertequal,2,3,200,HBLTIN },
 
-	// XCOD/XFCN (HyperCard), normally exposed
-	{ "GetVolumes", LB::b_getVolumes, 0, 0, true, 400, FBLTIN },
+	// XCMD/XFCN (HyperCard), normally exposed
+	{ "GetVolumes", LB::b_getVolumes, 0, 0, 400, FBLTIN },
 
-	// Used in "Eastern Mind", normally a TheEntity
-	{ "colorQD", LB::b_colorQD, 0, 0, true, 300, FBLTIN },
-
-	{ 0, 0, 0, 0, false, 0, VOIDSYM }
+	{ 0, 0, 0, 0, 0, VOIDSYM }
 };
 
 void Lingo::initBuiltIns() {
-	for (BuiltinProto *blt = builtins; blt->name; blt++) {
+	initBuiltIns(builtins);
+}
+
+void Lingo::initBuiltIns(BuiltinProto protos[]) {
+	for (BuiltinProto *blt = protos; blt->name; blt++) {
 		if (blt->version > _vm->getVersion())
 			continue;
 
@@ -290,7 +246,7 @@ void Lingo::initBuiltIns() {
 		sym.type = blt->type;
 		sym.nargs = blt->minArgs;
 		sym.maxArgs = blt->maxArgs;
-		sym.parens = blt->parens;
+
 		sym.u.bltin = blt->func;
 
 		switch (blt->type) {
@@ -318,6 +274,27 @@ void Lingo::cleanupBuiltIns() {
 	_builtinConsts.clear();
 }
 
+void Lingo::cleanupBuiltIns(BuiltinProto protos[]) {
+	for (BuiltinProto *blt = protos; blt->name; blt++) {
+		switch (blt->type) {
+		case CBLTIN:
+			_builtinCmds.erase(blt->name);
+			break;
+		case FBLTIN:
+			_builtinFuncs.erase(blt->name);
+			break;
+		case HBLTIN:
+			_builtinCmds.erase(blt->name);
+			_builtinFuncs.erase(blt->name);
+			break;
+		case KBLTIN:
+			_builtinConsts.erase(blt->name);
+		default:
+			break;
+		}
+	}
+}
+
 void Lingo::printSTUBWithArglist(const char *funcname, int nargs, const char *prefix) {
 	Common::String s(funcname);
 
@@ -338,7 +315,7 @@ void Lingo::printSTUBWithArglist(const char *funcname, int nargs, const char *pr
 }
 
 void Lingo::convertVOIDtoString(int arg, int nargs) {
-	if (_stack[_stack.size() - nargs + arg].type == VOIDSYM) {
+	if (_stack[_stack.size() - nargs + arg].type == VOID) {
 		if (_stack[_stack.size() - nargs + arg].u.s != NULL)
 			g_lingo->_stack[_stack.size() - nargs + arg].type = STRING;
 		else
@@ -403,10 +380,14 @@ void LB::b_integer(int nargs) {
 	Datum d = g_lingo->pop();
 	Datum res;
 
-	if (g_director->getVersion() < 500) {	// Note that D4 behaves differently from asInt()
-		res = (int)(d.u.f + 0.5);		// Yes, +0.5 even for negative numbers
+	if (d.type == FLOAT) {
+		if (g_director->getVersion() < 500) {	// Note that D4 behaves differently from asInt()
+			res = (int)(d.u.f + 0.5);		// Yes, +0.5 even for negative numbers
+		} else {
+			res = (int)round(d.u.f);
+		}
 	} else {
-		res = (int)round(d.u.f);
+		res = d.asInt();
 	}
 
 	g_lingo->push(res);
@@ -472,20 +453,19 @@ void LB::b_chars(int nargs) {
 	int to = d3.asInt();
 	int from = d2.asInt();
 
-	Common::String src = s.asString();
+	Common::U32String src = s.asString().decode(Common::kUtf8);
 
-	int len = strlen(src.c_str());
+	int len = src.size();
 	int f = MAX(0, MIN(len, from - 1));
 	int t = MAX(0, MIN(len, to));
 
-	Common::String result;
+	Common::String res;
 	if (f > t) {
-		result = Common::String("");
+		res = Common::String("");
 	} else {
-		result = Common::String(&(src.c_str()[f]), &(src.c_str()[t]));
+		res = src.substr(f, t - f).encode(Common::kUtf8);
 	}
 
-	Datum res(result);
 	g_lingo->push(res);
 }
 
@@ -494,50 +474,27 @@ void LB::b_charToNum(int nargs) {
 
 	TYPECHECK(d, STRING);
 
-	int chr = (uint8)d.u.s->c_str()[0];
+	Common::U32String str = d.asString().decode(Common::kUtf8);
+	if (str.size() == 0) {
+		g_lingo->push(0);
+		return;
+	}
 
-	Datum res(chr);
-	g_lingo->push(res);
-}
-
-void LB::b_delete(int nargs) {
-	Datum d = g_lingo->pop();
-
-	Datum res(d.asInt());
-
-	warning("STUB: b_delete");
-
-	g_lingo->push(res);
-}
-
-void LB::b_hilite(int nargs) {
-	Datum d = g_lingo->pop();
-
-	Datum res(d.asInt());
-
-	warning("STUB: b_hilite");
-
-	g_lingo->push(res);
+	g_lingo->push(charToNum(str[0]));
 }
 
 void LB::b_length(int nargs) {
 	Datum d = g_lingo->pop();
 	TYPECHECK(d, STRING);
 
-	int len = strlen(d.asString().c_str());
-
-	Datum res(len);
+	Common::U32String src = d.asString().decode(Common::kUtf8);
+	int res = src.size();
 	g_lingo->push(res);
 }
 
 void LB::b_numToChar(int nargs) {
-	Datum d = g_lingo->pop();
-
-	char result[2];
-	result[0] = (char)d.asInt();
-	result[1] = 0;
-
-	g_lingo->push(Datum(Common::String(result)));
+	int num = g_lingo->pop().asInt();
+	g_lingo->push(Common::U32String(numToChar(num)).encode(Common::kUtf8));
 }
 
 void LB::b_offset(int nargs) {
@@ -545,12 +502,15 @@ void LB::b_offset(int nargs) {
 		b_offsetRect(nargs);
 		return;
 	}
-	Common::String target = g_lingo->pop().asString();
 	Common::String source = g_lingo->pop().asString();
+	Common::String target = g_lingo->pop().asString();
 
-	warning("STUB: b_offset()");
+	const char *str = strstr(source.c_str(), target.c_str());
 
-	g_lingo->push(Datum(0));
+	if (str == nullptr)
+		g_lingo->push(Datum(0));
+	else
+		g_lingo->push(Datum(int(str - source.c_str() + 1)));
 }
 
 void LB::b_string(int nargs) {
@@ -566,9 +526,9 @@ void LB::b_value(int nargs) {
 		g_lingo->push(Datum(0));
 		return;
 	}
-	Common::String code = "scummvm_returnNumber " + expr;
+	Common::String code = "return " + expr;
 	// Compile the code to an anonymous function and call it
-	ScriptContext *sc = g_lingo->compileAnonymous(code.c_str());
+	ScriptContext *sc = g_lingo->_compiler->compileAnonymous(code);
 	Symbol sym = sc->_eventHandlers[kEventGeneric];
 	LC::call(sym, 0, true);
 }
@@ -583,8 +543,6 @@ void LB::b_add(int nargs) {
 }
 
 void LB::b_addAt(int nargs) {
-	ARGNUMCHECK(3);
-
 	Datum value = g_lingo->pop();
 	Datum indexD = g_lingo->pop();
 	Datum list = g_lingo->pop();
@@ -593,17 +551,15 @@ void LB::b_addAt(int nargs) {
 	int index = indexD.asInt();
 	TYPECHECK(list, ARRAY);
 
-	int size = list.u.farr->size();
+	int size = list.u.farr->arr.size();
 	if (index > size) {
 		for (int i = 0; i < index - size - 1; i++)
-			list.u.farr->push_back(Datum(0));
+			list.u.farr->arr.push_back(Datum(0));
 	}
-	list.u.farr->insert_at(index - 1, value);
+	list.u.farr->arr.insert_at(index - 1, value);
 }
 
 void LB::b_addProp(int nargs) {
-	ARGNUMCHECK(3);
-
 	Datum value = g_lingo->pop();
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
@@ -611,33 +567,61 @@ void LB::b_addProp(int nargs) {
 	TYPECHECK(list, PARRAY);
 
 	PCell cell = PCell(prop, value);
-	list.u.parr->push_back(cell);
+	list.u.parr->arr.push_back(cell);
+
+	if (list.u.parr->_sorted) {
+		if (list.u.parr->arr.empty())
+			list.u.parr->arr.push_back(cell);
+		else {
+			uint pos = list.u.parr->arr.size();
+			for (uint i = 0; i < list.u.parr->arr.size(); i++) {
+				if (list.u.parr->arr[i].p.asString() > cell.p.asString()) {
+					pos = i;
+					break;
+				}
+			}
+			list.u.parr->arr.insert_at(pos, cell);
+		}
+	} else {
+		list.u.parr->arr.push_back(cell);
+	}
 }
 
 void LB::b_append(int nargs) {
-	ARGNUMCHECK(2);
-
 	Datum value = g_lingo->pop();
 	Datum list = g_lingo->pop();
 
 	TYPECHECK(list, ARRAY);
 
-	list.u.farr->push_back(value);
+	if (list.u.farr->_sorted) {
+		if (list.u.farr->arr.empty())
+			list.u.farr->arr.push_back(value);
+		else {
+			uint pos = list.u.farr->arr.size();
+			for (uint i = 0; i < list.u.farr->arr.size(); i++) {
+				if (list.u.farr->arr[i].asInt() > value.asInt()) {
+					pos = i;
+					break;
+				}
+			}
+			list.u.farr->arr.insert_at(pos, value);
+		}
+	} else {
+		list.u.farr->arr.push_back(value);
+	}
 }
 
 void LB::b_count(int nargs) {
-	ARGNUMCHECK(1);
-
 	Datum list = g_lingo->pop();
 	Datum result;
 	result.type = INT;
 
 	switch (list.type) {
 	case ARRAY:
-		result.u.i = list.u.farr->size();
+		result.u.i = list.u.farr->arr.size();
 		break;
 	case PARRAY:
-		result.u.i = list.u.parr->size();
+		result.u.i = list.u.parr->arr.size();
 		break;
 	default:
 		TYPECHECK2(list, ARRAY, PARRAY);
@@ -647,8 +631,6 @@ void LB::b_count(int nargs) {
 }
 
 void LB::b_deleteAt(int nargs) {
-	ARGNUMCHECK(2);
-
 	Datum indexD = g_lingo->pop();
 	Datum list = g_lingo->pop();
 	TYPECHECK2(indexD, INT, FLOAT);
@@ -657,10 +639,10 @@ void LB::b_deleteAt(int nargs) {
 
 	switch (list.type) {
 	case ARRAY:
-		list.u.farr->remove_at(index - 1);
+		list.u.farr->arr.remove_at(index - 1);
 		break;
 	case PARRAY:
-		list.u.parr->remove_at(index - 1);
+		list.u.parr->arr.remove_at(index - 1);
 		break;
 	default:
 		break;
@@ -668,8 +650,6 @@ void LB::b_deleteAt(int nargs) {
 }
 
 void LB::b_deleteProp(int nargs) {
-	ARGNUMCHECK(2);
-
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
 	TYPECHECK2(list, ARRAY, PARRAY);
@@ -683,7 +663,7 @@ void LB::b_deleteProp(int nargs) {
 	case PARRAY: {
 		int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
 		if (index > 0) {
-			list.u.parr->remove_at(index - 1);
+			list.u.parr->arr.remove_at(index - 1);
 		}
 		break;
 	}
@@ -693,8 +673,6 @@ void LB::b_deleteProp(int nargs) {
 }
 
 void LB::b_findPos(int nargs) {
-	ARGNUMCHECK(2);
-
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
 	Datum d(0);
@@ -710,8 +688,6 @@ void LB::b_findPos(int nargs) {
 }
 
 void LB::b_findPosNear(int nargs) {
-	ARGNUMCHECK(2);
-
 	Common::String prop = g_lingo->pop().asString();
 	Datum list = g_lingo->pop();
 	Datum res(0);
@@ -720,8 +696,8 @@ void LB::b_findPosNear(int nargs) {
 	// FIXME: Integrate with compareTo framework
 	prop.toLowercase();
 
-	for (uint i = 0; i < list.u.parr->size(); i++) {
-		Datum p = list.u.parr->operator[](i).p;
+	for (uint i = 0; i < list.u.parr->arr.size(); i++) {
+		Datum p = list.u.parr->arr[i].p;
 		Common::String tgt = p.asString();
 		tgt.toLowercase();
 		if (tgt.find(prop.c_str()) == 0) {
@@ -734,7 +710,6 @@ void LB::b_findPosNear(int nargs) {
 }
 
 void LB::b_getaProp(int nargs) {
-	ARGNUMCHECK(2);
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
 
@@ -748,7 +723,7 @@ void LB::b_getaProp(int nargs) {
 		Datum d;
 		int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
 		if (index > 0) {
-			d = list.u.parr->operator[](index - 1).v;
+			d = list.u.parr->arr[index - 1].v;
 		}
 		g_lingo->push(d);
 		break;
@@ -759,8 +734,6 @@ void LB::b_getaProp(int nargs) {
 }
 
 void LB::b_getAt(int nargs) {
-	ARGNUMCHECK(2);
-
 	Datum indexD = g_lingo->pop();
 	TYPECHECK2(indexD, INT, FLOAT);
 	Datum list = g_lingo->pop();
@@ -769,11 +742,11 @@ void LB::b_getAt(int nargs) {
 	switch (list.type) {
 	case ARRAY:
 		ARRBOUNDSCHECK(index, list);
-		g_lingo->push(list.u.farr->operator[](index - 1));
+		g_lingo->push(list.u.farr->arr[index - 1]);
 		break;
 	case PARRAY:
 		ARRBOUNDSCHECK(index, list);
-		g_lingo->push(list.u.parr->operator[](index - 1).v);
+		g_lingo->push(list.u.parr->arr[index - 1].v);
 		break;
 	default:
 		TYPECHECK2(list, ARRAY, PARRAY);
@@ -781,15 +754,13 @@ void LB::b_getAt(int nargs) {
 }
 
 void LB::b_getLast(int nargs) {
-	ARGNUMCHECK(1);
-
 	Datum list = g_lingo->pop();
 	switch (list.type) {
 	case ARRAY:
-		g_lingo->push(list.u.farr->back());
+		g_lingo->push(list.u.farr->arr.back());
 		break;
 	case PARRAY:
-		g_lingo->push(list.u.parr->back().v);
+		g_lingo->push(list.u.parr->arr.back().v);
 		break;
 	default:
 		TYPECHECK(list, ARRAY);
@@ -797,7 +768,6 @@ void LB::b_getLast(int nargs) {
 }
 
 void LB::b_getOne(int nargs) {
-	ARGNUMCHECK(2);
 	Datum val = g_lingo->pop();
 	Datum list = g_lingo->pop();
 
@@ -811,7 +781,7 @@ void LB::b_getOne(int nargs) {
 		Datum d;
 		int index = LC::compareArrays(LC::eqData, list, val, true, true).u.i;
 		if (index > 0) {
-			d = list.u.parr->operator[](index - 1).p;
+			d = list.u.parr->arr[index - 1].p;
 		}
 		g_lingo->push(d);
 		break;
@@ -822,7 +792,6 @@ void LB::b_getOne(int nargs) {
 }
 
 void LB::b_getPos(int nargs) {
-	ARGNUMCHECK(2);
 	Datum val = g_lingo->pop();
 	Datum list = g_lingo->pop();
 	TYPECHECK2(list, ARRAY, PARRAY);
@@ -852,7 +821,6 @@ void LB::b_getPos(int nargs) {
 }
 
 void LB::b_getProp(int nargs) {
-	ARGNUMCHECK(2);
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
 	TYPECHECK2(list, ARRAY, PARRAY);
@@ -866,7 +834,7 @@ void LB::b_getProp(int nargs) {
 	case PARRAY: {
 		int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
 		if (index > 0) {
-			g_lingo->push(list.u.parr->operator[](index - 1).v);
+			g_lingo->push(list.u.parr->arr[index - 1].v);
 		} else {
 			error("b_getProp: Property %s not found", prop.asString().c_str());
 		}
@@ -878,30 +846,27 @@ void LB::b_getProp(int nargs) {
 }
 
 void LB::b_getPropAt(int nargs) {
-	ARGNUMCHECK(2);
-
 	Datum indexD = g_lingo->pop();
 	Datum list = g_lingo->pop();
 	TYPECHECK2(indexD, INT, FLOAT);
 	TYPECHECK(list, PARRAY);
 	int index = indexD.asInt();
 
-	g_lingo->push(list.u.parr->operator[](index - 1).p);
+	g_lingo->push(list.u.parr->arr[index - 1].p);
 }
 
 void LB::b_list(int nargs) {
 	Datum result;
 	result.type = ARRAY;
-	result.u.farr = new DatumArray;
+	result.u.farr = new FArray;
 
 	for (int i = 0; i < nargs; i++)
-		result.u.farr->insert_at(0, g_lingo->pop());
+		result.u.farr->arr.insert_at(0, g_lingo->pop());
 
 	g_lingo->push(result);
 }
 
 void LB::b_listP(int nargs) {
-	ARGNUMCHECK(1);
 	Datum list = g_lingo->pop();
 	Datum d(0);
 	if (list.type == ARRAY || list.type == PARRAY) {
@@ -918,9 +883,9 @@ void LB::b_max(int nargs) {
 	if (nargs == 1) {
 		Datum d = g_lingo->pop();
 		if (d.type == ARRAY) {
-			uint arrsize = d.u.farr->size();
+			uint arrsize = d.u.farr->arr.size();
 			for (uint i = 0; i < arrsize; i++) {
-				Datum item = d.u.farr->operator[](i);
+				Datum item = d.u.farr->arr[i];
 				if (i == 0 || item.compareTo(max) > 0) {
 					max = item;
 				}
@@ -951,9 +916,9 @@ void LB::b_min(int nargs) {
 	if (nargs == 1) {
 		Datum d = g_lingo->pop();
 		if (d.type == ARRAY) {
-			uint arrsize = d.u.farr->size();
+			uint arrsize = d.u.farr->arr.size();
 			for (uint i = 0; i < arrsize; i++) {
-				Datum item = d.u.farr->operator[](i);
+				Datum item = d.u.farr->arr[i];
 				if (i == 0 || item.compareTo(min) < 0) {
 					min = item;
 				}
@@ -977,7 +942,6 @@ void LB::b_min(int nargs) {
 }
 
 void LB::b_setaProp(int nargs) {
-	ARGNUMCHECK(3);
 	Datum value = g_lingo->pop();
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
@@ -992,10 +956,10 @@ void LB::b_setaProp(int nargs) {
 	case PARRAY: {
 		int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
 		if (index > 0) {
-			list.u.parr->operator[](index - 1).v = value;
+			list.u.parr->arr[index - 1].v = value;
 		} else {
 			PCell cell = PCell(prop, value);
-			list.u.parr->push_back(cell);
+			list.u.parr->arr.push_back(cell);
 		}
 		break;
 	}
@@ -1005,7 +969,6 @@ void LB::b_setaProp(int nargs) {
 }
 
 void LB::b_setAt(int nargs) {
-	ARGNUMCHECK(3);
 	Datum value = g_lingo->pop();
 	Datum indexD = g_lingo->pop();
 	Datum list = g_lingo->pop();
@@ -1016,18 +979,18 @@ void LB::b_setAt(int nargs) {
 
 	switch (list.type) {
 	case ARRAY:
-		if ((uint)index <= list.u.farr->size()) {
-			list.u.farr->operator[](index - 1) = value;
+		if ((uint)index <= list.u.farr->arr.size()) {
+			list.u.farr->arr[index - 1] = value;
 		} else {
-			int inserts = index - list.u.farr->size();
+			int inserts = index - list.u.farr->arr.size();
 			while (--inserts)
-				list.u.farr->push_back(Datum(0));
-			list.u.farr->push_back(value);
+				list.u.farr->arr.push_back(Datum(0));
+			list.u.farr->arr.push_back(value);
 		}
 		break;
 	case PARRAY:
 		ARRBOUNDSCHECK(index, list);
-		list.u.parr->operator[](index - 1).v = value;
+		list.u.parr->arr[index - 1].v = value;
 		break;
 	default:
 		break;
@@ -1035,7 +998,6 @@ void LB::b_setAt(int nargs) {
 }
 
 void LB::b_setProp(int nargs) {
-	ARGNUMCHECK(3);
 	Datum value = g_lingo->pop();
 	Datum prop = g_lingo->pop();
 	Datum list = g_lingo->pop();
@@ -1043,15 +1005,38 @@ void LB::b_setProp(int nargs) {
 
 	int index = LC::compareArrays(LC::eqData, list, prop, true).u.i;
 	if (index > 0) {
-		list.u.parr->operator[](index - 1).v = value;
+		list.u.parr->arr[index - 1].v = value;
 	} else {
 		warning("b_setProp: Property not found");
 	}
 }
 
+static bool sortArrayHelper(const Datum &lhs, const Datum &rhs) {
+	return lhs.asInt() < rhs.asInt();
+}
+
+static bool sortPArrayHelper(const PCell &lhs, const PCell &rhs) {
+	return lhs.p.asString() < rhs.p.asString();
+}
+
 void LB::b_sort(int nargs) {
-	g_lingo->printSTUBWithArglist("b_sort", nargs);
-	g_lingo->dropStack(nargs);
+	// in D4 manual, p266. linear list is sorted by values
+	// property list is sorted alphabetically by properties
+	// once the list is sorted, it maintains it's sort order even when we add new variables using add command
+	// see b_append to get more details.
+	Datum list = g_lingo->pop();
+
+	if (list.type == ARRAY) {
+		Common::sort(list.u.farr->arr.begin(), list.u.farr->arr.end(), sortArrayHelper);
+		list.u.farr->_sorted = true;
+
+	} else if (list.type == PARRAY) {
+		Common::sort(list.u.parr->arr.begin(), list.u.parr->arr.end(), sortPArrayHelper);
+		list.u.parr->_sorted = true;
+
+	} else {
+		warning("LB::b_sort can not handle argument of type %s", list.type2str());
+	}
 }
 
 
@@ -1075,34 +1060,20 @@ void LB::b_closeResFile(int nargs) {
 
 void LB::b_closeXlib(int nargs) {
 	Datum d = g_lingo->pop();
-
-	warning("STUB: b_closeXlib(%s)", d.asString().c_str());
+	Common::String xlibName = d.asString();
+	g_lingo->closeXLib(xlibName);
 }
 
 void LB::b_getNthFileNameInFolder(int nargs) {
-	ARGNUMCHECK(2);
-
 	int fileNum = g_lingo->pop().asInt() - 1;
 	Common::String path = pathMakeRelative(g_lingo->pop().asString(), true, false, true);
-	Common::StringTokenizer directory_list(path, "/");
+	// for directory, we either return the correct path, which we can access recursively.
+	// or we get a wrong path, which will lead us to a non-exist file node
 
+	Common::StringTokenizer directory_list(path, "/");
 	Common::FSNode d = Common::FSNode(*g_director->getGameDataDir());
-	if (d.getChild(directory_list.nextToken()).exists()) {
-		// then this part is for the "relative to current directory"
-		// we find the child directory recursively
-		directory_list.reset();
-		while (!directory_list.empty() && d.exists())
-			d = d.getChild(directory_list.nextToken());
-	} else {
-		// we first match the path with game data dir
-		while (!directory_list.empty())
-			if (directory_list.nextToken().equalsIgnoreCase(d.getName()))
-				break;
-		// then we go deep to the end of path
-		// skip the current directory which is the game data directory
-		directory_list.nextToken();
-		while (!directory_list.empty() && d.exists())
-			d = d.getChild(directory_list.nextToken());
+	while (d.exists() && !directory_list.empty()) {
+		d = d.getChild(directory_list.nextToken());
 	}
 
 	Datum r;
@@ -1171,6 +1142,8 @@ void LB::b_saveMovie(int nargs) {
 }
 
 void LB::b_setCallBack(int nargs) {
+	for (int i = 0; i < nargs; i++)
+		g_lingo->pop();
 	warning("STUB: b_setCallBack");
 }
 
@@ -1219,8 +1192,10 @@ void LB::b_delay(int nargs) {
 }
 
 void LB::b_do(int nargs) {
-	Datum d = g_lingo->pop();
-	warning("STUB: b_do(%s)", d.asString().c_str());
+	Common::String code = g_lingo->pop().asString();
+	ScriptContext *sc = g_lingo->_compiler->compileAnonymous(code);
+	Symbol sym = sc->_eventHandlers[kEventGeneric];
+	LC::call(sym, 0, false);
 }
 
 void LB::b_go(int nargs) {
@@ -1315,7 +1290,7 @@ void LB::b_play(int nargs) {
 		// fall through
 	case 1:
 		frame = g_lingo->pop();
-		if (!(frame.type == INT && frame.u.i == 0) && nargs == 1)
+		if (!(frame.type == INT && frame.u.i == 0 && nargs == 1))
 			break;
 		// fall through
 	case 0:
@@ -1363,19 +1338,125 @@ void LB::b_preLoadCast(int nargs) {
 }
 
 void LB::b_framesToHMS(int nargs) {
-	g_lingo->printSTUBWithArglist("b_framesToHMS", nargs);
+	int fractionalSeconds = g_lingo->pop().asInt();
+	int dropFrame = g_lingo->pop().asInt();
+	int fps = g_lingo->pop().asInt();
+	int frames = g_lingo->pop().asInt();
 
-	g_lingo->dropStack(nargs);
+	if (fps <= 0)
+		fps = -fps;
 
-	g_lingo->push(Datum(0));
+	bool negative = frames < 0;
+	if (negative)
+		frames = -frames;
+
+	int framesPerMin = 60 * fps;
+	int framesPerHour = 60 * framesPerMin;
+
+	if (dropFrame)
+		warning("STUB: b_framesToHMS: Unhandled dropFrame option");
+
+	int h = MIN(frames / framesPerHour, 99);
+	int m = (frames % framesPerHour) / framesPerMin;
+	int s = (frames % framesPerMin) / fps;
+
+	int residual;
+	if (fractionalSeconds) {
+		int ms = (1000 * (frames % fps)) / fps;
+		residual = (ms + 5) / 10; // round to nearest centisecond
+	} else {
+		residual = frames % fps;
+	}
+
+	Common::String hms = Common::String::format(
+		"%c%02d:%02d:%02d.%02d%c",
+		negative ? '-' : ' ',
+		h, m, s, residual,
+		dropFrame ? 'd' : ' '
+	);
+
+	g_lingo->push(hms);
 }
 
 void LB::b_HMStoFrames(int nargs) {
-	g_lingo->printSTUBWithArglist("b_HMStoFrames", nargs);
+	// The original implementation of this accepts some really weird,
+	// seemingly malformed input strings.
+	// (Try, for example, "12345678901234567890")
+	// It's probably not worth supporting them all unless we need to,
+	// so only well-formed input is handled right now.
 
-	g_lingo->dropStack(nargs);
+	int fractionalSeconds = g_lingo->pop().asInt();
+	int dropFrame = g_lingo->pop().asInt();
+	int fps = g_lingo->pop().asInt();
+	Common::String hms = g_lingo->pop().asString();
 
-	g_lingo->push(Datum(0));
+	if (fps <= 0)
+		fps = 1;
+
+	const char *ptr = hms.c_str();
+	while (Common::isSpace(*ptr))
+		ptr++;
+
+	// read sign
+	bool negative = false;
+	if (*ptr == '-') {
+		negative = true;
+		ptr++;
+	}
+
+	// read HH, MM, and SS
+	int secs = 0;
+	for (int i = 0; i < 3; i++) {
+		if (*ptr == ':' || Common::isSpace(*ptr))
+			ptr ++;
+
+		if (!Common::isDigit(*ptr))
+			break;
+
+		int part = 0;
+		for (int j = 0; j < 2 && Common::isDigit(*ptr); j++) {
+			part = (10 * part) + (*ptr - '0');
+			ptr++;
+		}
+		secs = (60 * secs) + part;
+	}
+	int frames = secs * fps;
+
+	// read FF
+	if (*ptr == '.') {
+		ptr++;
+
+		int part = 0;
+		for (int i = 0; i < 2 && Common::isDigit(*ptr); i++) {
+			part = (10 * part) + (*ptr - '0');
+			ptr++;
+		}
+		if (fractionalSeconds) {
+			frames += (part * fps + 50) / 100; // round to nearest frame
+		} else {
+			frames += part;
+		}
+	}
+
+	// read D
+	if (*ptr == 'd' || *ptr == 'D') {
+		ptr++;
+		dropFrame = 1;
+	}
+
+	while (Common::isSpace(*ptr))
+		ptr++;
+
+	if (*ptr != '\0')
+		warning("b_HMStoFrames: Unexpected character '%c'", *ptr);
+
+	if (dropFrame)
+		warning("STUB: b_HMStoFrames: Unhandled dropFrame option");
+
+	if (negative)
+		frames = -frames;
+
+	g_lingo->push(frames);
 }
 
 void LB::b_param(int nargs) {
@@ -1398,7 +1479,7 @@ void LB::b_quit(int nargs) {
 }
 
 void LB::b_return(int nargs) {
-	CFrame *fp = g_lingo->_callstack.back();
+	CFrame *fp = g_director->getCurrentWindow()->_callstack.back();
 
 	Datum retVal;
 	if (nargs > 0) {
@@ -1416,16 +1497,6 @@ void LB::b_return(int nargs) {
 		g_lingo->push(retVal);
 	}
 
-	LC::c_procret();
-}
-
-void LB::b_returnNumber(int nargs) {
-	Datum d = g_lingo->pop();
-	// Only return numeric values
-	if (d.type == INT || d.type == FLOAT)
-		g_lingo->push(d);
-	else
-		g_lingo->push(Datum());
 	LC::c_procret();
 }
 
@@ -1450,8 +1521,8 @@ void LB::b_startTimer(int nargs) {
 ///////////////////
 void LB::b_factory(int nargs) {
 	Datum factoryName = g_lingo->pop();
-	factoryName.type = VAR;
-	Datum o = g_lingo->varFetch(factoryName, true);
+	factoryName.type = GLOBALREF;
+	Datum o = g_lingo->varFetch(factoryName);
 	if (o.type == OBJECT && (o.u.obj->getObjType() & (kFactoryObj | kXObj))
 			&& o.u.obj->getName().equalsIgnoreCase(*factoryName.u.s) && o.u.obj->getInheritanceLevel() == 1) {
 		g_lingo->push(o);
@@ -1518,13 +1589,19 @@ void LB::b_voidP(int nargs) {
 // Misc
 ///////////////////
 void LB::b_alert(int nargs) {
-	ARGNUMCHECK(1);
 	Datum d = g_lingo->pop();
 
 	Common::String alert = d.asString();
 	warning("b_alert(%s)", alert.c_str());
 
+	if (g_director->getGameGID() == GID_TEST) {
+		warning("b_alert: Skipping due to tests");
+
+		return;
+	}
+
 	if (!debugChannelSet(-1, kDebugFewFramesOnly)) {
+		g_director->_wm->clearHandlingWidgets();
 		GUI::MessageDialog dialog(alert.c_str(), "OK");
 		dialog.runModal();
 	}
@@ -1540,12 +1617,12 @@ void LB::b_cursor(int nargs) {
 	Datum d = g_lingo->pop();
 
 	if (d.type == ARRAY) {
-		Datum sprite = d.u.farr->operator[](0);
-		Datum mask = d.u.farr->operator[](1);
+		Datum sprite = d.u.farr->arr[0];
+		Datum mask = d.u.farr->arr[1];
 
-		g_lingo->func_cursor(sprite.asCastId(), mask.asCastId());
+		g_lingo->func_cursor(sprite.asMemberID(), mask.asMemberID());
 	} else {
-		g_lingo->func_cursor(d.asInt(), -1);
+		g_lingo->func_cursor(d.asInt());
 	}
 }
 
@@ -1575,19 +1652,40 @@ void LB::b_showLocals(int nargs) {
 void LB::b_constrainH(int nargs) {
 	Datum num = g_lingo->pop();
 	Datum sprite = g_lingo->pop();
+	Score *score = g_director->getCurrentMovie()->getScore();
+	int res = 0;
+	if (score) {
+		Channel *ch = score->getChannelById(sprite.asInt());
+		if (ch) {
+			res = CLIP<int> (num.asInt(), ch->getBbox().left, ch->getBbox().right);
+		} else {
+			warning("b_constrainH: cannot find channel %d", sprite.asInt());
+		}
+	} else {
+		warning("b_constrainH: no score");
+	}
 
-	warning("STUB: b_constrainH(%d, %d)", sprite.asInt(), num.asInt());
-
-	g_lingo->push(Datum(0));
+	g_lingo->push(Datum(res));
 }
 
 void LB::b_constrainV(int nargs) {
 	Datum num = g_lingo->pop();
 	Datum sprite = g_lingo->pop();
 
-	warning("STUB: b_constrainV(%d, %d)", sprite.asInt(), num.asInt());
+	Score *score = g_director->getCurrentMovie()->getScore();
+	int res = 0;
+	if (score) {
+		Channel *ch = score->getChannelById(sprite.asInt());
+		if (ch) {
+			res = CLIP<int> (num.asInt(), ch->getBbox().top, ch->getBbox().bottom);
+		} else {
+			warning("b_constrainH: cannot find channel %d", sprite.asInt());
+		}
+	} else {
+		warning("b_constrainV: no score");
+	}
 
-	g_lingo->push(Datum(0));
+	g_lingo->push(Datum(res));
 }
 
 void LB::b_copyToClipBoard(int nargs) {
@@ -1615,6 +1713,7 @@ void LB::b_editableText(int nargs) {
 		Datum sprite = g_lingo->pop();
 		if ((uint)sprite.asInt() < sc->_channels.size()) {
 			sc->getSpriteById(sprite.asInt())->_editable = state.asInt();
+			sc->getOriginalSpriteById(sprite.asInt())->_editable = state.asInt();
 		} else {
 			warning("b_editableText: sprite index out of bounds");
 		}
@@ -1626,6 +1725,7 @@ void LB::b_editableText(int nargs) {
 			return;
 		}
 		sc->getSpriteById(g_lingo->_currentChannelId)->_editable = true;
+		sc->getOriginalSpriteById(g_lingo->_currentChannelId)->_editable = true;
 	} else {
 		warning("b_editableText: unexpectedly received %d arguments", nargs);
 		g_lingo->dropStack(nargs);
@@ -1653,32 +1753,32 @@ void LB::b_importFileInto(int nargs) {
 }
 
 void menuCommandsCallback(int action, Common::String &text, void *data) {
-	g_director->getCurrentMovie()->registerEvent(kEventMenuCallback, action);
+	g_director->getCurrentMovie()->queueUserEvent(kEventMenuCallback, action);
 }
 
 void LB::b_installMenu(int nargs) {
 	// installMenu castNum
 	Datum d = g_lingo->pop();
 
-	int castId = d.asCastId();
-
-	if (castId == 0) {
+	CastMemberID memberID = d.asMemberID();
+	if (memberID.member == 0) {
 		g_director->_wm->removeMenu();
 		return;
 	}
 
-	CastMember *member = g_director->getCurrentMovie()->getCastMember(castId);
+	CastMember *member = g_director->getCurrentMovie()->getCastMember(memberID);
 	if (!member) {
-		g_lingo->lingoError("installMenu: Unknown cast number #%d", castId);
+		g_lingo->lingoError("installMenu: Unknown %s", memberID.asString().c_str());
 		return;
 	}
 	if (member->_type != kCastText) {
-		g_lingo->lingoError("installMenu: Cast member %d is not a field", castId);
+		g_lingo->lingoError("installMenu: %s is not a field", memberID.asString().c_str());
 		return;
 	}
 	TextCastMember *field = static_cast<TextCastMember *>(member);
 
-	Common::String menuStxt = g_lingo->codePreprocessor(field->getText().c_str(), field->getCast()->_lingoArchive, kNoneScript, castId, true);
+	// TODO: We should process the U32String instead of encoding it to Mac Roman first
+	Common::String menuStxt = g_lingo->_compiler->codePreprocessor(field->getText(), field->getCast()->_lingoArchive, kNoneScript, memberID, true).encode(Common::kMacRoman);
 	Common::String line;
 	int linenum = -1; // We increment it before processing
 
@@ -1758,7 +1858,7 @@ void LB::b_installMenu(int nargs) {
 				while (mainArchive->getScriptContext(kEventScript, commandId)) {
 					commandId++;
 				}
-				mainArchive->addCode(command.c_str(), kEventScript, commandId);
+				mainArchive->addCode(command.decode(Common::kMacRoman), kEventScript, commandId);
 				submenuText += Common::String::format("[%d];", commandId);
 			} else {
 				submenuText += ';';
@@ -1782,8 +1882,14 @@ void LB::b_label(int nargs) {
 }
 
 void LB::b_marker(int nargs) {
+	// marker functions as label when the input is a string
 	Datum d = g_lingo->pop();
-	int marker = g_lingo->func_marker(d.asInt());
+	int marker;
+	if (d.type == STRING) {
+		marker = g_lingo->func_label(d);
+	} else {
+		marker = g_lingo->func_marker(d.asInt());
+	}
 	g_lingo->push(marker);
 }
 
@@ -1794,7 +1900,8 @@ void LB::b_move(int nargs) {
 }
 
 void LB::b_moveableSprite(int nargs) {
-	Frame *frame = g_director->getCurrentMovie()->getScore()->_frames[g_director->getCurrentMovie()->getScore()->getCurrentFrame()];
+	Score *sc = g_director->getCurrentMovie()->getScore();
+	Frame *frame = sc->_frames[g_director->getCurrentMovie()->getScore()->getCurrentFrame()];
 
 	if (g_lingo->_currentChannelId == -1) {
 		warning("b_moveableSprite: channel Id is missing");
@@ -1802,6 +1909,9 @@ void LB::b_moveableSprite(int nargs) {
 		return;
 	}
 
+	// since we are using value copying, in order to make it taking effect immediately. we modify the sprites in channel
+	if (sc->_channels[g_lingo->_currentChannelId])
+		sc->_channels[g_lingo->_currentChannelId]->_sprite->_moveable = true;
 	frame->_sprites[g_lingo->_currentChannelId]->_moveable = true;
 }
 
@@ -1841,14 +1951,10 @@ void LB::b_puppetPalette(int nargs) {
 				palette = kClutNTSC;
 			} else if (palStr.equalsIgnoreCase("Metallic")) {
 				palette = kClutMetallic;
-			} else {
-				CastMember *member = g_director->getCurrentMovie()->getCastMemberByName(palStr);
-
-				if (member && member->_type == kCastPalette)
-					palette = ((PaletteCastMember *)member)->getPaletteId();
 			}
-		} else {
-			CastMember *member = g_director->getCurrentMovie()->getCastMember(d.asInt());
+		}
+		if (!palette) {
+			CastMember *member = g_director->getCurrentMovie()->getCastMember(d.asMemberID());
 
 			if (member && member->_type == kCastPalette)
 				palette = ((PaletteCastMember *)member)->getPaletteId();
@@ -1864,8 +1970,15 @@ void LB::b_puppetPalette(int nargs) {
 		g_director->getCurrentMovie()->getScore()->_puppetPalette = true;
 	} else {
 		// Setting puppetPalette to 0 disables it (Lingo Dictionary, 226)
-		g_director->setPalette(g_director->getCurrentMovie()->getScore()->_lastPalette);
+		Score *sc = g_director->getCurrentMovie()->getScore();
 		g_director->getCurrentMovie()->getScore()->_puppetPalette = false;
+
+		// FIXME: set system palette decided by platform, should be fixed after windows palette is working.
+		// try to set mac system palette if lastPalette is 0.
+		if (sc->_lastPalette == 0)
+			g_director->setPalette(-1);
+		else
+			g_director->setPalette(sc->resolvePaletteId(sc->_lastPalette));
 	}
 
 	// TODO: Implement advanced features that use these.
@@ -1880,22 +1993,85 @@ void LB::b_puppetSound(int nargs) {
 		return;
 	}
 
-	DirectorSound *sound = g_director->getSoundManager();
-	Datum castMember = g_lingo->pop();
+	DirectorSound *sound = g_director->getCurrentWindow()->getSoundManager();
 	Score *score = g_director->getCurrentMovie()->getScore();
-
-	int channel = 1;
-	if (nargs == 2) {
-		channel = g_lingo->pop().asInt();
-	}
 
 	if (!score) {
 		warning("b_puppetSound(): no score");
 		return;
 	}
 
-	int castId = castMember.asCastId();
-	sound->playCastMember(castId, channel);
+	// Most variants of puppetSound don't actually play the sound
+	// until the playback head moves or updateStage is called.
+	// So we'll just queue it to be played later.
+
+	if (nargs == 1) {
+		CastMemberID castMember = g_lingo->pop().asMemberID();
+
+		// in D2 manual p206, puppetSound 0 will turn off the puppet status of sound
+		sound->setPuppetSound(castMember, 1);
+	} else {
+		if (g_director->getVersion() < 400) {
+			// in D2/3/3.1 interactivity manual, 2 args represent the menu and submenu sounds
+			int submenu = g_lingo->pop().asInt();
+			int menu = g_lingo->pop().asInt();
+
+			if (menu < kMinSampledMenu || menu > kMaxSampledMenu)
+				warning("LB::puppetSound: menu number is not available");
+
+			sound->setPuppetSound(SoundID(kSoundExternal, menu, submenu), 1);
+		} else {
+			// Two-argument puppetSound is undocumented in D4.
+			// It is however documented in the D5 Lingo dictionary.
+			CastMemberID castMember = g_lingo->pop().asMemberID();
+			int channel = g_lingo->pop().asInt();
+			sound->setPuppetSound(castMember, channel);
+
+			// The D4 two-arg variant of puppetSound plays
+			// immediately for some inexplicable reason.
+			sound->playPuppetSound(channel);
+		}
+	}
+}
+
+void LB::b_immediateSprite(int nargs) {
+	Score *sc = g_director->getCurrentMovie()->getScore();
+	if (!sc) {
+		warning("b_immediateSprite: no score");
+		g_lingo->dropStack(nargs);
+		return;
+	}
+
+	if (nargs == 2) {
+		Datum state = g_lingo->pop();
+		Datum sprite = g_lingo->pop();
+
+		Sprite *sp = sc->getSpriteById(sprite.asInt());
+		if ((uint)sprite.asInt() < sc->_channels.size()) {
+			if (sc->getNextFrame() && !sp->_immediate) {
+				// same as puppetSprite
+				Channel *channel = sc->getChannelById(sprite.asInt());
+
+				channel->replaceSprite(sc->_frames[sc->getNextFrame()]->_sprites[sprite.asInt()]);
+				channel->_dirty = true;
+			}
+
+			sc->getSpriteById(sprite.asInt())->_immediate = (bool)state.asInt();
+		} else {
+			warning("b_immediateSprite: sprite index out of bounds");
+		}
+	} else if (nargs == 0 && g_director->getVersion() < 400) {
+		g_lingo->dropStack(nargs);
+
+		if (g_lingo->_currentChannelId == -1) {
+			warning("b_immediateSprite: channel Id is missing");
+			return;
+		}
+		sc->getSpriteById(g_lingo->_currentChannelId)->_immediate = true;
+	} else {
+		warning("b_immediateSprite: unexpectedly received %d arguments", nargs);
+		g_lingo->dropStack(nargs);
+	}
 }
 
 void LB::b_puppetSprite(int nargs) {
@@ -2010,8 +2186,6 @@ void LB::b_rollOver(int nargs) {
 }
 
 void LB::b_spriteBox(int nargs) {
-	ARGNUMCHECK(5);
-
 	int b = g_lingo->pop().asInt();
 	int r = g_lingo->pop().asInt();
 	int t = g_lingo->pop().asInt();
@@ -2102,8 +2276,6 @@ void LB::b_zoomBox(int nargs) {
 }
 
 void LB::b_updateStage(int nargs) {
-	ARGNUMCHECK(0);
-
 	if (g_director->getGameGID() == GID_TEST) {
 		warning("b_updateStage: Skipping due to tests");
 
@@ -2118,12 +2290,22 @@ void LB::b_updateStage(int nargs) {
 	}
 
 	Score *score = movie->getScore();
-	if (movie->_videoPlayback) {
-		movie->getScore()->renderFrame(movie->getScore()->getCurrentFrame(), kRenderNoWindowRender);
+
+	score->renderSprites(score->getCurrentFrame());
+	if (movie->_videoPlayback)
+		score->renderVideo();
+
+	movie->getWindow()->render();
+
+	// play any puppet sounds that have been queued
+	score->playSoundChannel(score->getCurrentFrame());
+
+	if (score->_cursorDirty) {
+		score->renderCursor(movie->getWindow()->getMousePos());
+		score->_cursorDirty = false;
 	}
 
-	if (movie->getWindow()->render())
-		g_director->draw();
+	g_director->draw();
 
 	if (debugChannelSet(-1, kDebugFewFramesOnly)) {
 		score->_framesRan++;
@@ -2144,38 +2326,77 @@ void LB::b_point(int nargs) {
 	Datum x(g_lingo->pop().asFloat());
 	Datum d;
 
-	d.u.farr = new DatumArray;
+	d.u.farr = new FArray;
 
-	d.u.farr->push_back(x);
-	d.u.farr->push_back(y);
+	d.u.farr->arr.push_back(x);
+	d.u.farr->arr.push_back(y);
 	d.type = POINT;
 
 	g_lingo->push(d);
 }
 
 void LB::b_rect(int nargs) {
-	g_lingo->printSTUBWithArglist("b_rect", nargs);
+	Datum d(0);
 
-	g_lingo->dropStack(nargs);
+	if (nargs == 4) {
+		Datum bottom(g_lingo->pop().asInt());
+		Datum right(g_lingo->pop().asInt());
+		Datum top(g_lingo->pop().asInt());
+		Datum left(g_lingo->pop().asInt());
 
-	g_lingo->push(Datum(0));
+		d.u.farr = new FArray;
+		d.u.farr->arr.push_back(left);
+		d.u.farr->arr.push_back(top);
+		d.u.farr->arr.push_back(right);
+		d.u.farr->arr.push_back(bottom);
+		d.type = RECT;
+	} else if (nargs == 2) {
+		Datum p2 = g_lingo->pop();
+		Datum p1 = g_lingo->pop();
+
+		if (p2.type == POINT && p1.type == POINT) {
+			d.u.farr = new FArray;
+			d.u.farr->arr.push_back(p1.u.farr->arr[0]);
+			d.u.farr->arr.push_back(p1.u.farr->arr[1]);
+			d.u.farr->arr.push_back(p2.u.farr->arr[0]);
+			d.u.farr->arr.push_back(p2.u.farr->arr[1]);
+			d.type = RECT;
+		} else
+			warning("LB::b_rect: Rect need 2 Point variable as argument");
+
+	} else {
+		warning("LB::b_rect: Rect doesn't support %d args", nargs);
+		g_lingo->dropStack(nargs);
+	}
+
+	g_lingo->push(d);
 }
 
 
 void LB::b_intersect(int nargs) {
-	g_lingo->printSTUBWithArglist("b_intersect", nargs);
+	Datum d;
+	Datum r2 = g_lingo->pop();
+	Datum r1 = g_lingo->pop();
+	Common::Rect rect1(r1.u.farr->arr[0].asInt(), r1.u.farr->arr[1].asInt(), r1.u.farr->arr[2].asInt(), r1.u.farr->arr[3].asInt());
+	Common::Rect rect2(r2.u.farr->arr[0].asInt(), r2.u.farr->arr[1].asInt(), r2.u.farr->arr[2].asInt(), r2.u.farr->arr[3].asInt());
 
-	g_lingo->dropStack(nargs);
+	d.type = INT;
+	d.u.i = rect1.intersects(rect2);
 
-	g_lingo->push(Datum(0));
+	g_lingo->push(d);
 }
 
 void LB::b_inside(int nargs) {
-	g_lingo->printSTUBWithArglist("b_inside", nargs);
+	Datum d;
+	Datum r2 = g_lingo->pop();
+	Datum p1 = g_lingo->pop();
+	Common::Rect rect2(r2.u.farr->arr[0].asInt(), r2.u.farr->arr[1].asInt(), r2.u.farr->arr[2].asInt(), r2.u.farr->arr[3].asInt());
+	Common::Point point1(p1.u.farr->arr[0].asInt(), p1.u.farr->arr[1].asInt());
 
-	g_lingo->dropStack(nargs);
+	d.type = INT;
+	d.u.i = rect2.contains(point1);
 
-	g_lingo->push(Datum(0));
+	g_lingo->push(d);
 }
 
 void LB::b_map(int nargs) {
@@ -2260,6 +2481,8 @@ void LB::b_sound(int nargs) {
 		return;
 	}
 
+	DirectorSound *soundManager = g_director->getCurrentWindow()->getSoundManager();
+
 	if (verb.u.s->equalsIgnoreCase("close") || verb.u.s->equalsIgnoreCase("stop")) {
 		if (nargs != 2) {
 			warning("sound %s: expected 1 argument, got %d", verb.u.s->c_str(), nargs - 1);
@@ -2267,7 +2490,7 @@ void LB::b_sound(int nargs) {
 		}
 
 		TYPECHECK(firstArg, INT);
-		g_director->getSoundManager()->stopSound(firstArg.u.i);
+		soundManager->stopSound(firstArg.u.i);
 	} else if (verb.u.s->equalsIgnoreCase("fadeIn")) {
 		if (nargs > 2) {
 			TYPECHECK(secondArg, INT);
@@ -2277,7 +2500,7 @@ void LB::b_sound(int nargs) {
 		}
 
 		TYPECHECK(firstArg, INT);
-		g_director->getSoundManager()->registerFade(firstArg.u.i, true, ticks);
+		soundManager->registerFade(firstArg.u.i, true, ticks);
 		g_director->getCurrentMovie()->getScore()->_activeFade = firstArg.u.i;
 		return;
 	} else if (verb.u.s->equalsIgnoreCase("fadeOut")) {
@@ -2289,7 +2512,7 @@ void LB::b_sound(int nargs) {
 		}
 
 		TYPECHECK(firstArg, INT);
-		g_director->getSoundManager()->registerFade(firstArg.u.i, false, ticks);
+		soundManager->registerFade(firstArg.u.i, false, ticks);
 		g_director->getCurrentMovie()->getScore()->_activeFade = firstArg.u.i;
 		return;
 	} else if (verb.u.s->equalsIgnoreCase("playFile")) {
@@ -2298,16 +2521,14 @@ void LB::b_sound(int nargs) {
 		TYPECHECK(firstArg, INT);
 		TYPECHECK(secondArg, STRING);
 
-		g_director->getSoundManager()->playFile(pathMakeRelative(*secondArg.u.s), firstArg.u.i);
+		soundManager->playFile(pathMakeRelative(*secondArg.u.s), firstArg.u.i);
 	} else {
 		warning("b_sound: unknown verb %s", verb.u.s->c_str());
 	}
 }
 
 void LB::b_soundBusy(int nargs) {
-	ARGNUMCHECK(1);
-
-	DirectorSound *sound = g_director->getSoundManager();
+	DirectorSound *sound = g_director->getCurrentWindow()->getSoundManager();
 	Datum whichChannel = g_lingo->pop();
 
 	TYPECHECK(whichChannel, INT);
@@ -2331,7 +2552,7 @@ void LB::b_empty(int nargs) {
 }
 
 void LB::b_enter(int nargs) {
-	g_lingo->push(Datum(Common::String("\n")));
+	g_lingo->push(Datum(Common::String("\03")));
 }
 
 void LB::b_false(int nargs) {
@@ -2343,7 +2564,7 @@ void LB::b_quote(int nargs) {
 }
 
 void LB::b_returnconst(int nargs) {
-	g_lingo->push(Datum(Common::String("\n")));
+	g_lingo->push(Datum(Common::String("\r")));
 }
 
 void LB::b_tab(int nargs) {
@@ -2372,33 +2593,26 @@ void LB::b_version(int nargs) {
 ///////////////////
 void LB::b_cast(int nargs) {
 	Datum d = g_lingo->pop();
-	Datum res = d.asCastId();
+	Datum res = d.asMemberID();
 	res.type = CASTREF;
-	g_lingo->push(res);
-}
-
-void LB::b_field(int nargs) {
-	Datum d = g_lingo->pop();
-	Datum res = d.asCastId();
-	res.type = FIELDREF;
 	g_lingo->push(res);
 }
 
 void LB::b_script(int nargs) {
 	Datum d = g_lingo->pop();
-	int castId = d.asCastId();
-	CastMember *cast = g_director->getCurrentMovie()->getCastMember(castId);
+	CastMemberID memberID = d.asMemberID();
+	CastMember *cast = g_director->getCurrentMovie()->getCastMember(memberID);
 
 	if (cast) {
 		ScriptContext *script = nullptr;
 
 		if (cast->_type == kCastLingoScript) {
 			// script cast can be either a movie script or score script
-			script = g_director->getCurrentMovie()->getScriptContext(kMovieScript, castId);
+			script = g_director->getCurrentMovie()->getScriptContext(kMovieScript, memberID);
 			if (!script)
-				script = g_director->getCurrentMovie()->getScriptContext(kScoreScript, castId);
+				script = g_director->getCurrentMovie()->getScriptContext(kScoreScript, memberID);
 		} else {
-			g_director->getCurrentMovie()->getScriptContext(kCastScript, castId);
+			g_director->getCurrentMovie()->getScriptContext(kCastScript, memberID);
 		}
 
 		if (script) {
@@ -2413,13 +2627,13 @@ void LB::b_script(int nargs) {
 void LB::b_window(int nargs) {
 	Datum d = g_lingo->pop();
 	Common::String windowName = d.asString();
-	DatumArray *windowList = g_lingo->_windowList.u.farr;
+	FArray *windowList = g_lingo->_windowList.u.farr;
 
-	for (uint i = 0; i < windowList->size(); i++) {
-		if ((*windowList)[i].type != OBJECT || (*windowList)[i].u.obj->getObjType() != kWindowObj)
+	for (uint i = 0; i < windowList->arr.size(); i++) {
+		if (windowList->arr[i].type != OBJECT || windowList->arr[i].u.obj->getObjType() != kWindowObj)
 			continue;
 
-		Window *window = static_cast<Window *>((*windowList)[i].u.obj);
+		Window *window = static_cast<Window *>(windowList->arr[i].u.obj);
 		if (window->getName().equalsIgnoreCase(windowName)) {
 			g_lingo->push(window);
 			return;
@@ -2433,118 +2647,32 @@ void LB::b_window(int nargs) {
 	window->resize(1, 1, true);
 	window->setVisible(false, true);
 	wm->addWindowInitialized(window);
-	windowList->push_back(window);
+	windowList->arr.push_back(window);
 	g_lingo->push(window);
 }
 
 void LB::b_numberofchars(int nargs) {
 	Datum d = g_lingo->pop();
-
-	int len = strlen(d.asString().c_str());
-
-	Datum res(len);
-	g_lingo->push(res);
+	Datum chunkRef = LC::lastChunk(kChunkChar, d);
+	g_lingo->push(chunkRef.u.cref->startChunk);
 }
 
 void LB::b_numberofitems(int nargs) {
 	Datum d = g_lingo->pop();
-
-	int numberofitems = 1;
-	Common::String contents = d.asString();
-	for (uint32 i = 0;  i < contents.size(); i++) {
-		if (contents[i] == g_lingo->_itemDelimiter)
-			numberofitems++;
-	}
-
-	Datum res(numberofitems);
-	g_lingo->push(res);
+	Datum chunkRef = LC::lastChunk(kChunkItem, d);
+	g_lingo->push(chunkRef.u.cref->startChunk);
 }
 
 void LB::b_numberoflines(int nargs) {
 	Datum d = g_lingo->pop();
-
-	int numberoflines = 1;
-	Common::String contents = d.asString();
-	for (uint32 i = 0; i < contents.size(); i++) {
-		if (contents[i] == '\n')
-			numberoflines++;
-	}
-
-	Datum res(numberoflines);
-	g_lingo->push(res);
+	Datum chunkRef = LC::lastChunk(kChunkLine, d);
+	g_lingo->push(chunkRef.u.cref->startChunk);
 }
 
 void LB::b_numberofwords(int nargs) {
 	Datum d = g_lingo->pop();
-
-	int numberofwords = 0;
-	Common::String contents = d.asString();
-	if (contents.empty()) {
-		g_lingo->push(Datum(0));
-		return;
-	}
-	for (uint32 i = 1; i < contents.size(); i++) {
-		if (Common::isSpace(contents[i]) && !Common::isSpace(contents[i - 1]))
-			numberofwords++;
-	}
-	// Count the last word
-	if (!Common::isSpace(contents[contents.size() - 1]))
-		numberofwords++;
-
-	Datum res(numberofwords);
-	g_lingo->push(res);
-}
-
-void LB::b_lastcharof(int nargs) {
-	Datum d = g_lingo->pop();
-	if (d.type != STRING) {
-		warning("LB::b_lastcharof(): Called with wrong data type: %s", d.type2str());
-		g_lingo->push(Datum(""));
-		return;
-	}
-
-	Common::String contents = d.asString();
-	Common::String res;
-	if (contents.size() != 0)
-		res = contents.lastChar();
-	g_lingo->push(Datum(res));
-}
-
-void LB::b_lastitemof(int nargs) {
-	Datum d = g_lingo->pop();
-	if (d.type != STRING) {
-		warning("LB::b_lastitemof(): Called with wrong data type: %s", d.type2str());
-		g_lingo->push(Datum(""));
-		return;
-	}
-
-	Common::String res;
-	Common::String chunkExpr = d.asString();
-	uint pos = chunkExpr.findLastOf(g_lingo->_itemDelimiter);
-	if (pos == Common::String::npos) {
-		res = chunkExpr;
-	} else {
-		pos++; // skip the item delimiter
-		res = chunkExpr.substr(pos , chunkExpr.size() - pos);
-	}
-
-	g_lingo->push(Datum(res));
-}
-
-void LB::b_lastlineof(int nargs) {
-	Datum d = g_lingo->pop();
-
-	warning("STUB: b_lastlineof");
-
-	g_lingo->push(Datum(0));
-}
-
-void LB::b_lastwordof(int nargs) {
-	Datum d = g_lingo->pop();
-
-	warning("STUB: b_lastwordof");
-
-	g_lingo->push(Datum(0));
+	Datum chunkRef = LC::lastChunk(kChunkWord, d);
+	g_lingo->push(chunkRef.u.cref->startChunk);
 }
 
 void LB::b_scummvmassert(int nargs) {
@@ -2570,20 +2698,14 @@ void LB::b_scummvmassertequal(int nargs) {
 }
 
 void LB::b_getVolumes(int nargs) {
-	ARGNUMCHECK(0);
-
 	// Right now, only "Journeyman Project 2: Buried in Time" is known to check
 	// for its volume name.
 	Datum d;
 	d.type = ARRAY;
-	d.u.farr = new DatumArray;
-	d.u.farr->push_back(Datum("Buried in Time\252 1"));
+	d.u.farr = new FArray;
+	d.u.farr->arr.push_back(Datum("Buried in Time\252 1"));
 
 	g_lingo->push(d);
-}
-
-void LB::b_colorQD(int nargs) {
-	g_lingo->push(Datum(1));
 }
 
 } // End of namespace Director

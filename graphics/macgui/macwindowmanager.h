@@ -25,6 +25,7 @@
 
 #include "common/hashmap.h"
 #include "common/list.h"
+#include "common/stack.h"
 #include "common/events.h"
 
 #include "graphics/font.h"
@@ -141,7 +142,7 @@ typedef void (* MacDrawPixPtr)(int, int, int, void *);
  */
 class MacWindowManager {
 public:
-	MacWindowManager(uint32 mode = 0, MacPatterns *patterns = nullptr);
+	MacWindowManager(uint32 mode = 0, MacPatterns *patterns = nullptr, Common::Language language = Common::UNK_LANG);
 	~MacWindowManager();
 
 	MacDrawPixPtr getDrawPixel();
@@ -172,6 +173,7 @@ public:
 	MacWindow *addWindow(bool scrollable, bool resizable, bool editable);
 	MacTextWindow *addTextWindow(const MacFont *font, int fgcolor, int bgcolor, int maxWidth, TextAlign textAlignment, MacMenu *menu, bool cursorHandler = true);
 	MacTextWindow *addTextWindow(const Font *font, int fgcolor, int bgcolor, int maxWidth, TextAlign textAlignment, MacMenu *menu, bool cursorHandler = true);
+	void resizeScreen(int w, int h);
 
 	/**
 	 * Adds a window that has already been initialized to the registry.
@@ -271,22 +273,25 @@ public:
 	 */
 	void setActiveWidget(MacWidget *widget);
 
+	MacPatterns  &getBuiltinPatterns() { return _builtinPatterns; }
+
 	MacWidget *getActiveWidget() { return _activeWidget; }
 
 	Common::Rect getScreenBounds() { return _screen ? _screen->getBounds() : _screenDims; }
 
 	void clearWidgetRefs(MacWidget *widget);
 
+private:
+	void replaceCursorType(MacCursorType type);
+
+public:
+	MacCursorType getCursorType() const;
+
 	void pushCursor(MacCursorType type, Cursor *cursor = nullptr);
 	void replaceCursor(MacCursorType type, Cursor *cursor = nullptr);
 
-	void pushArrowCursor();
-	void pushBeamCursor();
-	void pushCrossHairCursor();
-	void pushCrossBarCursor();
-	void pushWatchCursor();
-
 	void pushCustomCursor(const byte *data, int w, int h, int hx, int hy, int transcolor);
+	void replaceCustomCursor(const byte *data, int w, int h, int hx, int hy, int transcolor);
 	void pushCustomCursor(const Graphics::Cursor *cursor);
 	void popCursor();
 
@@ -299,7 +304,10 @@ public:
 
 	void passPalette(const byte *palette, uint size);
 	uint findBestColor(byte cr, byte cg, byte cb);
+	uint findBestColor(uint32 color);
 	void decomposeColor(uint32 color, byte &r, byte &g, byte &b);
+
+	uint inverter(uint src);
 
 	const byte *getPalette() { return _palette; }
 	uint getPaletteSize() { return _paletteSize; }
@@ -315,9 +323,43 @@ public:
 	Common::SeekableReadStream *getBorderFile(byte windowType, uint32 flags);
 	Common::SeekableReadStream *getFile(const Common::String &filename);
 
+	void setTextInClipboard(const Common::U32String &str);
+	/**
+	 * get text from WM clipboard or the global clipboard
+	 * @param size will change to the length of real text in clipboard
+	 * @return the text in clipboard, which may contained the format
+	 */
+	Common::U32String getTextFromClipboard(const Common::U32String &format = Common::U32String(), int *size = nullptr);
+
+	/**
+	 * reset events for current widgets. i.e. we reset those variables which are used for handling events for macwidgets.
+	 * e.g. we clear the active widget, set mouse down false, clear the hoveredWidget
+	 * this function should be called when we are going to other level to handling events. thus wm may not handle events correctly.
+	 */
+	void clearHandlingWidgets();
+
+	void setMenuItemCheckMark(const Common::String &menuId, const Common::String &itemId, bool checkMark);
+	void setMenuItemCheckMark(int menuId, int itemId, bool checkMark);
+	void setMenuItemEnabled(const Common::String &menuId, const Common::String &itemId, bool enabled);
+	void setMenuItemEnabled(int menuId, int itemId, bool enabled);
+	void setMenuItemName(const Common::String &menuId, const Common::String &itemId, const Common::String &name);
+	void setMenuItemName(int menuId, int itemId, const Common::String &name);
+	void setMenuItemAction(const Common::String &menuId, const Common::String &itemId, int actionId);
+	void setMenuItemAction(int menuId, int itemId, int actionId);
+
+	bool getMenuItemCheckMark(const Common::String &menuId, const Common::String &itemId);
+	bool getMenuItemCheckMark(int menuId, int itemId);
+	bool getMenuItemEnabled(const Common::String &menuId, const Common::String &itemId);
+	bool getMenuItemEnabled(int menuId, int itemId);
+	Common::String getMenuItemName(const Common::String &menuId, const Common::String &itemId);
+	Common::String getMenuItemName(int menuId, int itemId);
+	int getMenuItemAction(const Common::String &menuId, const Common::String &itemId);
+	int getMenuItemAction(int menuId, int itemId);
+
 public:
 	MacFontManager *_fontMan;
 	uint32 _mode;
+	Common::Language _language;
 
 	Common::Point _lastClickPos;
 	Common::Point _lastMousePos;
@@ -329,6 +371,10 @@ public:
 	uint32 _colorBlack, _colorGray80, _colorGray88, _colorGrayEE, _colorWhite, _colorGreen, _colorGreen2;
 
 	MacWidget *_hoveredWidget;
+
+	// we use it to indicate whether we are clicking the hilite-able widget.
+	// In list style button mode, we will highlight the subsequent buttons only when we've clicked the hilite-able button initially
+	bool _hilitingWidget;
 
 private:
 	void loadDesktop();
@@ -363,7 +409,10 @@ private:
 
 	bool _fullRefresh;
 
+	bool _inEditableArea;
+
 	MacPatterns _patterns;
+	MacPatterns _builtinPatterns;
 	byte *_palette;
 	uint _paletteSize;
 
@@ -375,7 +424,7 @@ private:
 	void (*_redrawEngineCallback)(void *engine);
 
 	MacCursorType _tempType;
-	MacCursorType _cursorType;
+	Common::Stack<MacCursorType> _cursorTypeStack;
 	Cursor *_cursor;
 
 	MacWidget *_activeWidget;
@@ -383,9 +432,12 @@ private:
 	PauseToken *_screenCopyPauseToken;
 
 	Common::Array<ZoomBox *> _zoomBoxes;
-	Common::HashMap<uint32, uint> _colorHash;
+	Common::HashMap<uint, uint> _colorHash;
+	Common::HashMap<uint, uint> _invertColorHash;
 
 	Common::Archive *_dataBundle;
+
+	Common::U32String _clipboard;
 };
 
 } // End of namespace Graphics
