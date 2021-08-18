@@ -143,7 +143,7 @@ void GfxTinyGL::releaseMovieFrame() {
 void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette) {
 	int height = frame->h;
 	int width = frame->w;
-	byte *bitmap = (byte *)frame->getPixels();
+	/*byte *bitmap = (byte *)frame->getPixels();*/
 
 	TGLenum format;
 	TGLenum dataType;
@@ -384,6 +384,18 @@ void GfxTinyGL::setModelview(float fromX, float fromY, float fromZ,
 	tglMultMatrixf(mLookAt.getData());
 
 	tglTranslatef(-fromX, -fromY, -fromZ);
+}
+
+void GfxTinyGL::loadIdentity(void) {
+	tglLoadIdentity();
+}
+
+void GfxTinyGL::pushMatrix(void) {
+	tglPushMatrix();
+}
+
+void GfxTinyGL::popMatrix(void) {
+	tglPopMatrix();
 }
 
 void GfxTinyGL::rotate(float angle, float ax, float ay, float az) {

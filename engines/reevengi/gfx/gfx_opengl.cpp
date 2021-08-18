@@ -506,6 +506,18 @@ void GfxOpenGL::setModelview(float fromX, float fromY, float fromZ,
 	glTranslatef(-fromX, -fromY, -fromZ);
 }
 
+void GfxOpenGL::loadIdentity(void) {
+	glLoadIdentity();
+}
+
+void GfxOpenGL::pushMatrix(void) {
+	glPushMatrix();
+}
+
+void GfxOpenGL::popMatrix(void) {
+	glPopMatrix();
+}
+
 void GfxOpenGL::rotate(float angle, float ax, float ay, float az) {
 	glRotatef(angle, ax, ay, az);
 }
