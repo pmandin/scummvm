@@ -38,6 +38,7 @@ class GfxBase;
 class TimDecoder;
 class Clock;
 class Room;
+class Entity;
 
 enum ReevengiGameType {
 	RType_None,
@@ -79,6 +80,9 @@ protected:
 	Room *_roomScene;
 	void destroyRoom(void);
 	virtual void loadRoom(void);
+
+	// Entity
+	virtual Entity *loadEntity(int numEntity);
 
 	// Player
 	float _playerX, _playerY, _playerZ, _playerA;
