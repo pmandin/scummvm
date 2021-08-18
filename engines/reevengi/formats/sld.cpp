@@ -103,7 +103,7 @@ uint32 SldFileStream::read(void *dataPtr, uint32 dataSize) {
 	return sizeRead;
 }
 
-bool SldFileStream::seek(int32 offs, int whence) {
+bool SldFileStream::seek(int64 offs, int whence) {
 	switch(whence) {
 		case SEEK_SET:
 			_pos = offs;
