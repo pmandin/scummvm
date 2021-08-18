@@ -52,10 +52,10 @@ private:
 
 	bool eos() const { return _pos>=_size; }
 
-	int32 pos() const { return _pos; }
-	int32 size() const { return _size; }
+	int64 pos() const { return _pos; }
+	int64 size() const { return _size; }
 
-	bool seek(int32 offs, int whence = SEEK_SET);
+	bool seek(int64 offs, int whence = SEEK_SET);
 
 	// Depack file
 	void depackFile(void);

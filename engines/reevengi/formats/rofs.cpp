@@ -77,8 +77,8 @@ void RofsArchive::close() {
 	_map.clear();
 }
 
-bool RofsArchive::hasFile(const Common::String &name) const {
-	return _map.contains(name);
+bool RofsArchive::hasFile(const Common::Path &name) const {
+	return _map.contains(name.toString());
 }
 
 int RofsArchive::listMembers(Common::ArchiveMemberList &list) const {
@@ -88,15 +88,15 @@ int RofsArchive::listMembers(Common::ArchiveMemberList &list) const {
 	return _map.size();
 }
 
-const Common::ArchiveMemberPtr RofsArchive::getMember(const Common::String &name) const {
-	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name, this));
+const Common::ArchiveMemberPtr RofsArchive::getMember(const Common::Path &name) const {
+	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name.toString(), this));
 }
 
-Common::SeekableReadStream *RofsArchive::createReadStreamForMember(const Common::String &name) const {
-	if (!_stream || !_map.contains(name))
+Common::SeekableReadStream *RofsArchive::createReadStreamForMember(const Common::Path &name) const {
+	if (!_stream || !_map.contains(name.toString()))
 		return nullptr;
 
-	const RofsFileEntry &entry = _map[name];
+	const RofsFileEntry &entry = _map[name.toString()];
 
 	Common::SeekableSubReadStream subStream(_stream, entry.offset, entry.offset + entry.compressedSize);
 
@@ -220,7 +220,7 @@ uint32 RofsFileStream::read(void *dataPtr, uint32 dataSize) {
 	return sizeRead;
 }
 
-bool RofsFileStream::seek(int32 offs, int whence) {
+bool RofsFileStream::seek(int64 offs, int whence) {
 	switch(whence) {
 		case SEEK_SET:
 			_pos = offs;

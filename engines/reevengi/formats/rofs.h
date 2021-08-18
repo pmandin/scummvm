@@ -30,6 +30,7 @@
 #include "common/file.h"
 #include "common/hash-str.h"
 #include "common/hashmap.h"
+#include "common/path.h"
 #include "common/str.h"
 
 namespace Reevengi {
@@ -51,10 +52,10 @@ public:
 	bool isOpen() const { return _stream != 0; }
 
 	// Common::Archive API implementation
-	bool hasFile(const Common::String &name) const override;
+	bool hasFile(const Common::Path &name) const override;
 	int listMembers(Common::ArchiveMemberList &list) const override;
-	const Common::ArchiveMemberPtr getMember(const Common::String &name) const override;
-	Common::SeekableReadStream *createReadStreamForMember(const Common::String &name) const override;
+	const Common::ArchiveMemberPtr getMember(const Common::Path &name) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &name) const override;
 
 private:
 	Common::SeekableReadStream *_stream;
@@ -85,10 +86,10 @@ private:
 
 	bool eos() const { return _pos>=_entry.uncompressedSize; }
 
-	int32 pos() const { return _pos; }
-	int32 size() const { return _entry.uncompressedSize; }
+	int64 pos() const { return _pos; }
+	int64 size() const { return _entry.uncompressedSize; }
 
-	bool seek(int32 offs, int whence = SEEK_SET);
+	bool seek(int64 offs, int whence = SEEK_SET);
 
 	// Decrypt file
 	void decryptFile(void);
