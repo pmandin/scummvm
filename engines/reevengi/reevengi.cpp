@@ -44,6 +44,7 @@
 #include "engines/reevengi/formats/pak.h"
 #include "engines/reevengi/formats/tim.h"
 #include "engines/reevengi/game/clock.h"
+#include "engines/reevengi/game/entity.h"
 #include "engines/reevengi/game/room.h"
 #include "engines/reevengi/gfx/gfx_base.h"
 #include "engines/reevengi/gfx/gfx_opengl.h"
@@ -447,6 +448,11 @@ void ReevengiEngine::loadBgMaskImage(void) {
 	if (bgSurf) {
 		g_driver->prepareMaskedFrame(bgSurf, timPalette);
 	}
+}
+
+Entity *ReevengiEngine::loadEntity(int numEntity)
+{
+	return nullptr;
 }
 
 void ReevengiEngine::destroyRoom(void) {

@@ -27,6 +27,7 @@
 #include "engines/reevengi/formats/pak.h"
 #include "engines/reevengi/formats/bss.h"
 #include "engines/reevengi/re1/re1.h"
+#include "engines/reevengi/re1/entity.h"
 #include "engines/reevengi/re1/room.h"
 
 namespace Reevengi {
@@ -54,6 +55,10 @@ static const char *RE1_ROOM = "%s%s/stage%d/room%d%02x0.rdt";
 static const char *RE1PCGAME_BG = "%s/stage%d/rc%d%02x%d.pak";
 
 static const char *RE1PSX_BG = "psx%s/stage%d/room%d%02x.bss";
+
+static const char *RE1_MODEL1 = "%s%s/enemy/char1%d.emd";
+static const char *RE1_MODEL2 = "%s%s/enemy/em10%02x.emd";
+static const char *RE1_MODEL3 = "%s%s/enemy/em11%02x.emd";
 
 RE1Engine::RE1Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc) {
@@ -239,6 +244,41 @@ void RE1Engine::loadRoom(void) {
 		_roomScene = new RE1Room(stream);
 	}
 	delete stream;
+}
+
+Entity *RE1Engine::loadEntity(int numEntity) {
+	char filePath[64];
+	const char *filename = RE1_MODEL1;
+	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+	Entity *newEntity = nullptr;
+
+	debug(3, "re1: loadEntity(%d)", numEntity);
+
+	if (numEntity>0x03) {
+		filename = RE1_MODEL2;
+		numEntity -= 4;
+		if (numEntity>0x15) {
+			numEntity += 0x20-0x16;
+		}
+		if (numEntity>0x2e) {
+			numEntity += 1;
+		}
+	}
+	if (numEntity>0x31) {
+		filename = RE1_MODEL3;
+		numEntity -= 0x32;
+	}
+
+	sprintf(filePath, filename, isPsx ? "psx" : "", re1_country[_country], numEntity);
+
+	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
+	if (stream) {
+		//debug(3, "loaded %s", filePath);
+		newEntity = (Entity *) new RE1Entity(stream);
+	}
+	delete stream;
+
+	return newEntity;
 }
 
 } // end of namespace Reevengi

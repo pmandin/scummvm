@@ -20,34 +20,15 @@
  *
  */
 
-#ifndef REEVENGI_RE1_ENGINE_H
-#define REEVENGI_RE1_ENGINE_H
+#include "common/debug.h"
+//#include "common/file.h"
 
-#include "engines/advancedDetector.h"
-
-#include "engines/reevengi/reevengi.h"
+#include "engines/reevengi/re1/entity.h"
 
 namespace Reevengi {
 
-class RE1Engine : public ReevengiEngine {
-public:
-	RE1Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc);
-	virtual ~RE1Engine();
+RE1Entity::RE1Entity(Common::SeekableReadStream *stream): Entity(stream) {
+	//
+}
 
-protected:
-	void initPreRun(void);
-	void loadBgImage(void);
-	void loadBgMaskImage(void);
-	void loadRoom(void);
-	Entity *loadEntity(int numEntity);
-
-private:
-	int _country;
-
-	void loadBgImagePc(int stage, int width = 320, int height = 240);
-	void loadBgImagePsx(int stage, int width = 320, int height = 240);
-};
-
-} // end of namespace Reevengi
-
-#endif
+} // End of namespace Reevengi
