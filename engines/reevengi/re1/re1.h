@@ -39,7 +39,7 @@ protected:
 	void loadBgImage(void);
 	void loadBgMaskImage(void);
 	void loadRoom(void);
-	Entity *loadEntity(int numEntity);
+	Entity *loadEntity(int numEntity, int isPlayer);
 
 private:
 	int _country;
