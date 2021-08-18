@@ -24,6 +24,7 @@
 //#include "common/file.h"
 
 #include "engines/reevengi/game/entity.h"
+#include "engines/reevengi/gfx/gfx_base.h"
 
 namespace Reevengi {
 
@@ -47,8 +48,43 @@ Entity::~Entity() {
 	_emdSize = 0;
 }
 
+void Entity::draw(int x, int y, int z, int a) {
+	if (!_emdPtr)
+		return;
+
+	g_driver->loadIdentity();
+	g_driver->translate(x,y,z);
+	g_driver->rotate((a * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
+
+	drawMesh(0);
+}
+
 int Entity::getNumAnims(void) {
 	return 0;
+}
+
+int Entity::getNumChildren(int numMesh) {
+	return 0;
+}
+
+int Entity::getChild(int numMesh, int numChild) {
+	return 0;
+}
+
+void Entity::drawMesh(int numMesh) {
+	int i, numChildren, childMesh;
+
+	g_driver->pushMatrix();
+
+	// render mesh
+
+	// render children
+	numChildren = getNumChildren(numMesh);
+	for (i=0; i<numChildren; i++) {
+		drawMesh(getChild(numMesh, i));
+	}
+
+	g_driver->popMatrix();
 }
 
 } // End of namespace Reevengi

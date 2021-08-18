@@ -35,7 +35,9 @@ public:
 	RE1Entity(Common::SeekableReadStream *stream);
 
 protected:
-	int getNumAnims(void);
+	int getNumAnims(void) override;
+	int getNumChildren(int numMesh) override;
+	int getChild(int numMesh, int numChild) override;
 };
 
 } // End of namespace Reevengi

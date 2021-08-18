@@ -33,6 +33,8 @@ public:
 	Entity(Common::SeekableReadStream *stream);
 	virtual ~Entity();
 
+	void draw(int x, int y, int z, int a);
+
 protected:
 	// raw data file for entity
 	byte *_emdPtr;
@@ -42,6 +44,10 @@ protected:
 	int _numFrame;	/* Frame in animation */
 
 	virtual int getNumAnims(void);
+	virtual int getNumChildren(int numMesh);
+	virtual int getChild(int numMesh, int numChild);
+
+	virtual void drawMesh(int numMesh);
 };
 
 } // End of namespace Reevengi

@@ -109,7 +109,7 @@ typedef struct {
 } emd_mesh_object_t;
 
 RE1Entity::RE1Entity(Common::SeekableReadStream *stream): Entity(stream) {
-	//
+	//debug(3, "re1: %d anims", getNumAnims());
 }
 
 int RE1Entity::getNumAnims(void) {
@@ -131,6 +131,52 @@ int RE1Entity::getNumAnims(void) {
 		(&((char *) (_emdPtr))[anim_offset]);
 
 	return (FROM_LE_16((emd_anim_header->offset) / sizeof(emd_anim_header_t)));
+}
+
+int RE1Entity::getNumChildren(int numMesh) {
+	uint32 *hdr_offsets, skel_offset;
+	emd_skel_header_t *emd_skel_header;
+	emd_skel_data_t *emd_skel_data;
+
+	if (!_emdPtr)
+		return 0;
+
+	hdr_offsets = (uint32 *)
+		(&((char *) (_emdPtr))[_emdSize-16]);
+
+	/* Offset 0: Skeleton */
+	skel_offset = FROM_LE_32(hdr_offsets[EMD_SKELETON]);
+
+	emd_skel_header = (emd_skel_header_t *)
+		(&((char *) (_emdPtr))[skel_offset]);
+	emd_skel_data = (emd_skel_data_t *)
+		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->relpos_offset)]);
+
+	return (FROM_LE_16(emd_skel_data[numMesh].num_mesh));
+}
+
+int RE1Entity::getChild(int numMesh, int numChild) {
+	uint32 *hdr_offsets, skel_offset;
+	emd_skel_header_t *emd_skel_header;
+	emd_skel_data_t *emd_skel_data;
+	uint8 *mesh_numbers;
+
+	if (!_emdPtr)
+		return 0;
+
+	hdr_offsets = (uint32 *)
+		(&((char *) (_emdPtr))[_emdSize-16]);
+
+	/* Offset 0: Skeleton */
+	skel_offset = FROM_LE_32(hdr_offsets[EMD_SKELETON]);
+
+	emd_skel_header = (emd_skel_header_t *)
+		(&((char *) (_emdPtr))[skel_offset]);
+	emd_skel_data = (emd_skel_data_t *)
+		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->relpos_offset)]);
+
+	mesh_numbers = (uint8 *) emd_skel_data;
+	return mesh_numbers[FROM_LE_16(emd_skel_data[numMesh].offset)+numChild];
 }
 
 } // End of namespace Reevengi
