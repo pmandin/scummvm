@@ -40,6 +40,8 @@ protected:
 
 	int _numAnim;	/* Animation in entity */
 	int _numFrame;	/* Frame in animation */
+
+	virtual int getNumAnims(void);
 };
 
 } // End of namespace Reevengi

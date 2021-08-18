@@ -47,4 +47,8 @@ Entity::~Entity() {
 	_emdSize = 0;
 }
 
+int Entity::getNumAnims(void) {
+	return 0;
+}
+
 } // End of namespace Reevengi
