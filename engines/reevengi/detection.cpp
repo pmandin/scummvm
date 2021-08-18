@@ -23,16 +23,12 @@
 #include "engines/advancedDetector.h"
 
 #include "engines/reevengi/reevengi.h"
+#include "engines/reevengi/detection.h"
 #include "engines/reevengi/re1/re1.h"
 #include "engines/reevengi/re2/re2.h"
 #include "engines/reevengi/re3/re3.h"
 
 namespace Reevengi {
-
-struct ReevengiGameDescription {
-	ADGameDescription desc;
-	ReevengiGameType gameType;
-};
 
 static const PlainGameDescriptor reevengiGames[] = {
 	{ "re1", "Resident Evil" },
@@ -161,29 +157,8 @@ public:
 		return "reevengi";
 	}
 
-	const char *getOriginalCopyright() const /*override*/ {
+	const char *getOriginalCopyright() const override {
 		return "(C) Capcom";
-	}
-
-	bool createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const /*override*/ {
-		const ReevengiGameDescription *gd = (const ReevengiGameDescription *)desc;
-
-		switch(gd->gameType) {
-			case RType_None:
-				break;
-			case RType_RE1:
-				*engine = new RE1Engine(syst, gd->gameType, &(gd->desc));
-				break;
-			case RType_RE2_LEON:
-			case RType_RE2_CLAIRE:
-				*engine = new RE2Engine(syst, gd->gameType, &(gd->desc));
-				break;
-			case RType_RE3:
-				*engine = new RE3Engine(syst, gd->gameType, &(gd->desc));
-				break;
-		}
-
-		return engine != nullptr;
 	}
 };
 
