@@ -33,6 +33,9 @@ namespace Reevengi {
 class RE1Entity : public Entity {
 public:
 	RE1Entity(Common::SeekableReadStream *stream);
+
+protected:
+	int getNumAnims(void);
 };
 
 } // End of namespace Reevengi
