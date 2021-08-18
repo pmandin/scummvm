@@ -39,7 +39,6 @@ Room::Room(Common::SeekableReadStream *stream) {
 	adf.write(_roomPtr, _roomSize);
 	adf.close();
 */
-	postLoad();
 }
 
 Room::~Room() {
@@ -73,10 +72,6 @@ void Room::drawCamBoundary(int curCam) {
 }
 
 void Room::drawMasks(int numCamera) {
-	//
-}
-
-void Room::postLoad(void) {
 	//
 }
 
