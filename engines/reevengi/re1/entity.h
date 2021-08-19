@@ -38,6 +38,8 @@ protected:
 	int getNumAnims(void) override;
 	int getNumChildren(int numMesh) override;
 	int getChild(int numMesh, int numChild) override;
+
+	void drawMesh(int numMesh) override;
 };
 
 } // End of namespace Reevengi

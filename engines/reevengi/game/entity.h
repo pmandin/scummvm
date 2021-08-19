@@ -48,6 +48,8 @@ protected:
 	virtual int getChild(int numMesh, int numChild);
 
 	virtual void drawMesh(int numMesh);
+
+	virtual void drawNode(int numMesh);
 };
 
 } // End of namespace Reevengi

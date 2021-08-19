@@ -56,7 +56,7 @@ void Entity::draw(int x, int y, int z, int a) {
 	g_driver->translate(x,y,z);
 	g_driver->rotate((a * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
 
-	drawMesh(0);
+	drawNode(0);
 }
 
 int Entity::getNumAnims(void) {
@@ -72,16 +72,21 @@ int Entity::getChild(int numMesh, int numChild) {
 }
 
 void Entity::drawMesh(int numMesh) {
-	int i, numChildren, childMesh;
+	//
+}
+
+void Entity::drawNode(int numMesh) {
+	int i, numChildren;
 
 	g_driver->pushMatrix();
 
 	// render mesh
+	drawMesh(numMesh);
 
 	// render children
 	numChildren = getNumChildren(numMesh);
 	for (i=0; i<numChildren; i++) {
-		drawMesh(getChild(numMesh, i));
+		drawNode(getChild(numMesh, i));
 	}
 
 	g_driver->popMatrix();
