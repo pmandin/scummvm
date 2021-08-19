@@ -93,6 +93,10 @@ public:
 	virtual void rotate(float angle, float ax, float ay, float az) = 0;
 	virtual void translate(float tx, float ty, float tz) = 0 ;
 
+	virtual void beginTriangles(void) = 0;
+	virtual void beginQuads(void) = 0;
+	virtual void endPrim(void) = 0;
+
 	virtual void setBlending(bool enable) =0;
 	virtual void setColor(float r, float g, float b) =0;
 	virtual void setColorMask(bool enable) =0;

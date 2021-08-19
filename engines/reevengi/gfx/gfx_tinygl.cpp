@@ -406,6 +406,18 @@ void GfxTinyGL::translate(float tx, float ty, float tz) {
 	tglTranslatef(tx, ty, tz);
 }
 
+void GfxTinyGL::beginTriangles(void) {
+	tglBegin(TGL_TRIANGLES);
+}
+
+void GfxTinyGL::beginQuads(void) {
+	tglBegin(TGL_QUADS);
+}
+
+void GfxTinyGL::endPrim(void) {
+	tglEnd();
+}
+
 void GfxTinyGL::setBlending(bool enable) {
 	if (enable) {
 		tglEnable(TGL_BLEND);

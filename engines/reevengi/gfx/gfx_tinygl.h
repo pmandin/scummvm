@@ -63,6 +63,10 @@ public:
 	void rotate(float angle, float ax, float ay, float az) override;
 	void translate(float tx, float ty, float tz) override;
 
+	void beginTriangles(void) override;
+	void beginQuads(void) override;
+	void endPrim(void) override;
+
 	void setBlending(bool enable) override;
 	void setColor(float r, float g, float b) override;
 	void setColorMask(bool enable) override;

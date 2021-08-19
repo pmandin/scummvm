@@ -526,6 +526,18 @@ void GfxOpenGL::translate(float tx, float ty, float tz) {
 	glTranslatef(tx, ty, tz);
 }
 
+void GfxOpenGL::beginTriangles(void) {
+	glBegin(GL_TRIANGLES);
+}
+
+void GfxOpenGL::beginQuads(void) {
+	glBegin(GL_QUADS);
+}
+
+void GfxOpenGL::endPrim(void) {
+	glEnd();
+}
+
 void GfxOpenGL::setBlending(bool enable) {
 	if (enable) {
 		glEnable(GL_BLEND);
