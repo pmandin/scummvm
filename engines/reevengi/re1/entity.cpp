@@ -206,8 +206,63 @@ void RE1Entity::drawMesh(int numMesh) {
 
 	emd_mesh_object = &emd_mesh_object[numMesh];
 	for (i=0; i<emd_mesh_object->triangles.mesh_count; i++) {
+		emd_vertex_t *emd_vtx, *emd_nor;
+		emd_triangle_t *emd_tri_idx;
+		int idx_vtx, idx_nor;
+
+		/* Vertex array */
+		emd_vtx = (emd_vertex_t *)
+			(&((char *) _emdPtr)[mesh_offset+FROM_LE_32(emd_mesh_object->triangles.vtx_offset)]);
+
+		/* Normal array */
+		emd_nor = (emd_vertex_t *)
+			(&((char *) _emdPtr)[mesh_offset+FROM_LE_32(emd_mesh_object->triangles.nor_offset)]);
+
+		/* Vertices index */
+		emd_tri_idx = (emd_triangle_t *)
+			(&((char *) _emdPtr)[mesh_offset+FROM_LE_32(emd_mesh_object->triangles.mesh_offset)]);
+
 		g_driver->beginTriangles();
-		// TODO
+
+		idx_nor = FROM_LE_16(emd_tri_idx[i].n0);
+		g_driver->normal3f(
+			FROM_LE_16(emd_nor[idx_nor].x),
+			FROM_LE_16(emd_nor[idx_nor].y),
+			FROM_LE_16(emd_nor[idx_nor].z)
+		);
+		idx_vtx = FROM_LE_16(emd_tri_idx[i].v0);
+		g_driver->vertex3f(
+			FROM_LE_16(emd_vtx[idx_vtx].x),
+			FROM_LE_16(emd_vtx[idx_vtx].y),
+			FROM_LE_16(emd_vtx[idx_vtx].z)
+		);
+
+		idx_nor = FROM_LE_16(emd_tri_idx[i].n1);
+		g_driver->normal3f(
+			FROM_LE_16(emd_nor[idx_nor].x),
+			FROM_LE_16(emd_nor[idx_nor].y),
+			FROM_LE_16(emd_nor[idx_nor].z)
+		);
+		idx_vtx = FROM_LE_16(emd_tri_idx[i].v1);
+		g_driver->vertex3f(
+			FROM_LE_16(emd_vtx[idx_vtx].x),
+			FROM_LE_16(emd_vtx[idx_vtx].y),
+			FROM_LE_16(emd_vtx[idx_vtx].z)
+		);
+
+		idx_nor = FROM_LE_16(emd_tri_idx[i].n2);
+		g_driver->normal3f(
+			FROM_LE_16(emd_nor[idx_nor].x),
+			FROM_LE_16(emd_nor[idx_nor].y),
+			FROM_LE_16(emd_nor[idx_nor].z)
+		);
+		idx_vtx = FROM_LE_16(emd_tri_idx[i].v2);
+		g_driver->vertex3f(
+			FROM_LE_16(emd_vtx[idx_vtx].x),
+			FROM_LE_16(emd_vtx[idx_vtx].y),
+			FROM_LE_16(emd_vtx[idx_vtx].z)
+		);
+
 		g_driver->endPrim();
 	}
 }
