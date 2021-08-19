@@ -414,6 +414,14 @@ void GfxTinyGL::beginQuads(void) {
 	tglBegin(TGL_QUADS);
 }
 
+void GfxTinyGL::normal3f(float x, float y, float z) {
+	tglNormal3f(x, y, z);
+}
+
+void GfxTinyGL::vertex3f(float x, float y, float z) {
+	tglVertex3f(x, y, z);
+}
+
 void GfxTinyGL::endPrim(void) {
 	tglEnd();
 }
