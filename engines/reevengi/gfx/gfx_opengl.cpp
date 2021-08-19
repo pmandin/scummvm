@@ -534,6 +534,14 @@ void GfxOpenGL::beginQuads(void) {
 	glBegin(GL_QUADS);
 }
 
+void GfxOpenGL::normal3f(float x, float y, float z) {
+	glNormal3f(x, y, z);
+}
+
+void GfxOpenGL::vertex3f(float x, float y, float z) {
+	glVertex3f(x, y, z);
+}
+
 void GfxOpenGL::endPrim(void) {
 	glEnd();
 }
