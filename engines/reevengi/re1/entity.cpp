@@ -23,6 +23,7 @@
 #include "common/debug.h"
 //#include "common/file.h"
 
+#include "engines/reevengi/gfx/gfx_base.h"
 #include "engines/reevengi/re1/entity.h"
 
 namespace Reevengi {
@@ -177,6 +178,38 @@ int RE1Entity::getChild(int numMesh, int numChild) {
 
 	mesh_numbers = (uint8 *) emd_skel_data;
 	return mesh_numbers[FROM_LE_16(emd_skel_data[numMesh].offset)+numChild];
+}
+
+void RE1Entity::drawMesh(int numMesh) {
+	uint32 *hdr_offsets, mesh_offset;
+	emd_mesh_header_t *emd_mesh_header;
+	emd_mesh_object_t *emd_mesh_object;
+	uint i;
+
+	if (!_emdPtr)
+		return;
+
+	hdr_offsets = (uint32 *)
+		(&((char *) (_emdPtr))[_emdSize-16]);
+
+	/* Offset 2: Meshes */
+	mesh_offset = FROM_LE_32(hdr_offsets[EMD_MESHES]);
+	emd_mesh_header = (emd_mesh_header_t *)
+		(&((char *) _emdPtr)[mesh_offset]);
+
+	if ((uint) numMesh>=FROM_LE_32(emd_mesh_header->num_objects))
+		return;
+
+	mesh_offset += sizeof(emd_mesh_header_t);
+	emd_mesh_object = (emd_mesh_object_t *)
+		(&((char *) _emdPtr)[mesh_offset]);
+
+	emd_mesh_object = &emd_mesh_object[numMesh];
+	for (i=0; i<emd_mesh_object->triangles.mesh_count; i++) {
+		g_driver->beginTriangles();
+		// TODO
+		g_driver->endPrim();
+	}
 }
 
 } // End of namespace Reevengi
