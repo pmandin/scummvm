@@ -456,6 +456,14 @@ void GfxTinyGL::setDepth(bool enable) {
 	}
 }
 
+void GfxTinyGL::setTexture2d(bool enable) {
+	if (enable) {
+		tglEnable(TGL_TEXTURE_2D);
+	} else {
+		tglDisable(TGL_TEXTURE_2D);
+	}
+}
+
 void GfxTinyGL::line(Math::Vector3d v0, Math::Vector3d v1) {
 	tglDisable(TGL_LIGHTING);
 	tglDisable(TGL_TEXTURE_2D);
