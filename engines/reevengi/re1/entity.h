@@ -35,6 +35,8 @@ public:
 	RE1Entity(Common::SeekableReadStream *stream);
 
 protected:
+	void *getEmdSection(int numSection) override;
+
 	int getNumAnims(void) override;
 	int getNumChildren(int numMesh) override;
 	int getChild(int numMesh, int numChild) override;
