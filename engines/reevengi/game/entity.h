@@ -26,12 +26,16 @@
 #include "common/stream.h"
 #include "math/vector2d.h"
 
+#include "engines/reevengi/formats/tim.h"
+
 namespace Reevengi {
 
 class Entity {
 public:
 	Entity(Common::SeekableReadStream *stream);
 	virtual ~Entity();
+
+	TimDecoder *timTexture;
 
 	void draw(int x, int y, int z, int a);
 
