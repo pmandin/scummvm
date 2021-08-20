@@ -538,6 +538,10 @@ void GfxOpenGL::normal3f(float x, float y, float z) {
 	glNormal3f(x, y, z);
 }
 
+void GfxOpenGL::texCoord2f(float s, float r) {
+	glTexCoord2f(s, r);
+}
+
 void GfxOpenGL::vertex3f(float x, float y, float z) {
 	glVertex3f(x, y, z);
 }
