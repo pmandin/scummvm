@@ -35,11 +35,11 @@ public:
 	virtual ~RE1Engine();
 
 protected:
-	void initPreRun(void);
-	void loadBgImage(void);
-	void loadBgMaskImage(void);
-	void loadRoom(void);
-	Entity *loadEntity(int numEntity, int isPlayer);
+	void initPreRun(void) override;
+	void loadBgImage(void) override;
+	void loadBgMaskImage(void) override;
+	void loadRoom(void) override;
+	Entity *loadEntity(int numEntity, int isPlayer) override;
 
 private:
 	int _country;
