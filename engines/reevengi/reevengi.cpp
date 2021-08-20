@@ -169,6 +169,10 @@ Common::Error ReevengiEngine::run() {
 		//testDrawGrid();
 		testDrawOrigin();
 		testDrawPlayer();
+		if (entity) {
+			g_driver->setColor(1.0, 1.0, 1.0);
+			entity->draw(_playerX, _playerY, _playerZ, _playerA);
+		}
 		testView3DEnd();
 
 		// Tell the system to update the screen.

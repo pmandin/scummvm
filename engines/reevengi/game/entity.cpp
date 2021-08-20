@@ -52,7 +52,6 @@ void Entity::draw(int x, int y, int z, int a) {
 	if (!_emdPtr)
 		return;
 
-	g_driver->loadIdentity();
 	g_driver->translate(x,y,z);
 	g_driver->rotate((a * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
 
