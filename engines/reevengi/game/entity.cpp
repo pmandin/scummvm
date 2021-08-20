@@ -70,6 +70,10 @@ void Entity::draw(int x, int y, int z, int a) {
 	g_driver->setTexture2d(false);
 }
 
+void *Entity::getEmdSection(int numSection) {
+	return nullptr;
+}
+
 int Entity::getNumAnims(void) {
 	return 0;
 }

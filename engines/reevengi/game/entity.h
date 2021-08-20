@@ -49,6 +49,8 @@ protected:
 
 	void setTexture(int numTexId);
 
+	virtual void *getEmdSection(int numSection);
+
 	virtual int getNumAnims(void);
 	virtual int getNumChildren(int numMesh);
 	virtual int getChild(int numMesh, int numChild);

@@ -46,6 +46,13 @@ typedef struct {
 /* Section 0 Skeleton */
 
 typedef struct {
+	uint16	bone_offset;
+	uint16	anim_offset;
+	uint16	count;
+	uint16	size;
+} emd_skel_header_t;
+
+typedef struct {
 	int16	x,y,z;
 } emd_skel_relpos_t;
 
@@ -53,13 +60,6 @@ typedef struct {
 	uint16	num_mesh;
 	uint16	offset;
 } emd_skel_bone_t;
-
-typedef struct {
-	uint16	bone_offset;
-	uint16	anim_offset;
-	uint16	count;
-	uint16	size;
-} emd_skel_header_t;
 
 /* Section 1 Animations */
 
@@ -137,51 +137,48 @@ RE1Entity::RE1Entity(Common::SeekableReadStream *stream): Entity(stream) {
 	}
 }
 
+void *RE1Entity::getEmdSection(int numSection) {
+	uint32 *hdr_offsets;
+
+	if (!_emdPtr)
+		return nullptr;
+
+	hdr_offsets = (uint32 *)
+		(&((char *) (_emdPtr))[_emdSize-16]);
+
+	return (void *)
+		(&((char *) (_emdPtr))[FROM_LE_32(hdr_offsets[numSection])]);
+}
+
 int RE1Entity::getNumAnims(void) {
-	uint32 *hdr_offsets, anim_offset;
 	emd_anim_header_t *emd_anim_header;
 
 	if (!_emdPtr)
 		return 0;
 
-	/*emd_header = (emd_header_t *) this->emd_file;*/
-
-	hdr_offsets = (uint32 *)
-		(&((char *) (_emdPtr))[_emdSize-16]);
-
 	/* Offset 1: Animation frames */
-	anim_offset = FROM_LE_32(hdr_offsets[EMD_ANIM_FRAMES]);
-
-	emd_anim_header = (emd_anim_header_t *)
-		(&((char *) (_emdPtr))[anim_offset]);
+	emd_anim_header = (emd_anim_header_t *) getEmdSection(EMD_ANIM_FRAMES);
 
 	return (FROM_LE_16((emd_anim_header->offset) / sizeof(emd_anim_header_t)));
 }
 
 int RE1Entity::getNumChildren(int numMesh) {
-	uint32 *hdr_offsets, skel_offset;
 	emd_skel_header_t *emd_skel_header;
 	emd_skel_bone_t *emd_skel_bone;
 
 	if (!_emdPtr)
 		return 0;
 
-	hdr_offsets = (uint32 *)
-		(&((char *) (_emdPtr))[_emdSize-16]);
-
 	/* Offset 0: Skeleton */
-	skel_offset = FROM_LE_32(hdr_offsets[EMD_SKELETON]);
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(EMD_SKELETON);
 
-	emd_skel_header = (emd_skel_header_t *)
-		(&((char *) (_emdPtr))[skel_offset]);
 	emd_skel_bone = (emd_skel_bone_t *)
-		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->bone_offset)]);
+		(&((char *) (emd_skel_header))[FROM_LE_16(emd_skel_header->bone_offset)]);
 
 	return (FROM_LE_16(emd_skel_bone[numMesh].num_mesh));
 }
 
 int RE1Entity::getChild(int numMesh, int numChild) {
-	uint32 *hdr_offsets, skel_offset;
 	emd_skel_header_t *emd_skel_header;
 	emd_skel_bone_t *emd_skel_bone;
 	uint8 *mesh_numbers;
@@ -189,16 +186,11 @@ int RE1Entity::getChild(int numMesh, int numChild) {
 	if (!_emdPtr)
 		return 0;
 
-	hdr_offsets = (uint32 *)
-		(&((char *) (_emdPtr))[_emdSize-16]);
-
 	/* Offset 0: Skeleton */
-	skel_offset = FROM_LE_32(hdr_offsets[EMD_SKELETON]);
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(EMD_SKELETON);
 
-	emd_skel_header = (emd_skel_header_t *)
-		(&((char *) (_emdPtr))[skel_offset]);
 	emd_skel_bone = (emd_skel_bone_t *)
-		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->bone_offset)]);
+		(&((char *) (emd_skel_header))[FROM_LE_16(emd_skel_header->bone_offset)]);
 
 	mesh_numbers = (uint8 *) emd_skel_bone;
 	return mesh_numbers[FROM_LE_16(emd_skel_bone[numMesh].offset)+numChild];
@@ -206,21 +198,18 @@ int RE1Entity::getChild(int numMesh, int numChild) {
 
 void RE1Entity::drawMesh(int numMesh) {
 	uint32 *hdr_offsets, skel_offset, mesh_offset;
+	emd_skel_header_t *emd_skel_header;
 	emd_skel_relpos_t *emd_skel_relpos;
+	emd_mesh_header_t *emd_mesh_header;
 	emd_mesh_t *emd_mesh, *emd_mesh_array;
 	uint i, tx_w, tx_h;
 
 	if (!_emdPtr)
 		return;
 
-	hdr_offsets = (uint32 *)
-		(&((char *) (_emdPtr))[_emdSize-16]);
-
 	/* Offset 0: Skeleton */
-	skel_offset = FROM_LE_32(hdr_offsets[EMD_SKELETON]);
-
-	emd_skel_relpos = (emd_skel_relpos_t *)
-		(&((char *) (_emdPtr))[skel_offset+sizeof(emd_skel_header_t)]);
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(EMD_SKELETON);
+	emd_skel_relpos = (emd_skel_relpos_t *) &emd_skel_header[1];
 	emd_skel_relpos = &emd_skel_relpos[numMesh];
 
 	g_driver->translate(
@@ -232,18 +221,10 @@ void RE1Entity::drawMesh(int numMesh) {
 	// TODO: Handle animation
 
 	/* Offset 2: Meshes */
-	mesh_offset = FROM_LE_32(hdr_offsets[EMD_MESHES]);
-	/*emd_mesh_header = (emd_mesh_header_t *)
-		(&((char *) _emdPtr)[mesh_offset]);*/
-
-	/*if ((uint) numMesh>=FROM_LE_32(emd_mesh_header->num_objects))
-		return;*/
-
-	mesh_offset += sizeof(emd_mesh_header_t);
-	emd_mesh_array = (emd_mesh_t *)
-		(&((char *) _emdPtr)[mesh_offset]);
-
+	emd_mesh_header = (emd_mesh_header_t *) getEmdSection(EMD_MESHES);
+	emd_mesh_array = (emd_mesh_t *) &emd_mesh_header[1];
 	emd_mesh = &emd_mesh_array[numMesh];
+
 	/*debug(3, "mesh %d: %d", numMesh, FROM_LE_32(emd_mesh->mesh_count));
 	debug(3, " vtx 0x%08x", FROM_LE_32(emd_mesh->vtx_offset));
 	debug(3, " nor 0x%08x", FROM_LE_32(emd_mesh->nor_offset));
