@@ -47,6 +47,8 @@ protected:
 	int _numAnim;	/* Animation in entity */
 	int _numFrame;	/* Frame in animation */
 
+	void setTexture(int numTexId);
+
 	virtual int getNumAnims(void);
 	virtual int getNumChildren(int numMesh);
 	virtual int getChild(int numMesh, int numChild);
@@ -56,9 +58,7 @@ protected:
 	virtual void drawNode(int numMesh);
 
 private:
-	uint32 _texId;
-
-	void setTexture(void);
+	uint32 _texId[4];
 };
 
 } // End of namespace Reevengi
