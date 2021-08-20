@@ -54,6 +54,11 @@ protected:
 	virtual void drawMesh(int numMesh);
 
 	virtual void drawNode(int numMesh);
+
+private:
+	uint32 _texId;
+
+	void setTexture(void);
 };
 
 } // End of namespace Reevengi
