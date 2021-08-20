@@ -43,11 +43,6 @@ typedef struct {
 } emd_header_t;
 
 typedef struct {
-	uint16	count;
-	uint16	offset;
-} emd_anim_header_t;
-
-typedef struct {
 	int16	x,y,z;
 } emd_skel_relpos_t;
 
@@ -63,16 +58,38 @@ typedef struct {
 	uint16	size;
 } emd_skel_header_t;
 
+/* Section 1 Animations */
+
+typedef struct {
+	uint16	count;
+	uint16	offset;
+} emd_anim_header_t;
+
 typedef struct {
 	int16	pos[3];
 	int16	speed[3];
 
 	/* 16 bits values for angles following */
+	/* int16 angles[3*n] */
 } emd_skel_anim_t;
 
+/* Section 2 Meshes */
+
 typedef struct {
-	int16 x,y,z,w;
-} emd_vertex_t;
+	uint32 length;
+	uint32 dummy;
+	uint32 num_objects;
+} emd_mesh_header_t;
+
+typedef struct {
+	uint32	vtx_offset;	/* offset to emd_vertex_t array */
+	uint32	vtx_count;
+	uint32	nor_offset;	/* offset to emd_vertex_t array */
+	uint32	nor_count;
+	uint32	mesh_offset;/* offset to emd_triangle_t array */
+	uint32	mesh_count;
+	uint32	dummy;
+} emd_mesh_t;
 
 typedef struct {
 	uint32 id;
@@ -90,24 +107,8 @@ typedef struct {
 } emd_triangle_t;
 
 typedef struct {
-	uint32	vtx_offset;
-	uint32	vtx_count;
-	uint32	nor_offset;
-	uint32	nor_count;
-	uint32	mesh_offset;
-	uint32	mesh_count;
-	uint32	dummy;
-} emd_mesh_t;
-
-typedef struct {
-	uint32 length;
-	uint32 dummy;
-	uint32 num_objects;
-} emd_mesh_header_t;
-
-typedef struct {
-	emd_mesh_t triangles;
-} emd_mesh_object_t;
+	int16 x,y,z,w;
+} emd_vertex_t;
 
 RE1Entity::RE1Entity(Common::SeekableReadStream *stream): Entity(stream) {
 	//debug(3, "re1: %d anims", getNumAnims());
@@ -182,8 +183,8 @@ int RE1Entity::getChild(int numMesh, int numChild) {
 
 void RE1Entity::drawMesh(int numMesh) {
 	uint32 *hdr_offsets, mesh_offset;
-	emd_mesh_header_t *emd_mesh_header;
-	emd_mesh_object_t *emd_mesh_object;
+	//emd_mesh_header_t *emd_mesh_header;
+	emd_mesh_t *emd_mesh, *emd_mesh_array;
 	uint i;
 
 	if (!_emdPtr)
@@ -194,73 +195,78 @@ void RE1Entity::drawMesh(int numMesh) {
 
 	/* Offset 2: Meshes */
 	mesh_offset = FROM_LE_32(hdr_offsets[EMD_MESHES]);
-	emd_mesh_header = (emd_mesh_header_t *)
-		(&((char *) _emdPtr)[mesh_offset]);
+	/*emd_mesh_header = (emd_mesh_header_t *)
+		(&((char *) _emdPtr)[mesh_offset]);*/
 
-	if ((uint) numMesh>=FROM_LE_32(emd_mesh_header->num_objects))
-		return;
+	/*if ((uint) numMesh>=FROM_LE_32(emd_mesh_header->num_objects))
+		return;*/
 
 	mesh_offset += sizeof(emd_mesh_header_t);
-	emd_mesh_object = (emd_mesh_object_t *)
+	emd_mesh_array = (emd_mesh_t *)
 		(&((char *) _emdPtr)[mesh_offset]);
 
-	emd_mesh_object = &emd_mesh_object[numMesh];
-	for (i=0; i<emd_mesh_object->triangles.mesh_count; i++) {
+	emd_mesh = &emd_mesh_array[numMesh];
+	/*debug(3, "mesh %d: %d", numMesh, FROM_LE_32(emd_mesh->mesh_count));
+	debug(3, " vtx 0x%08x", FROM_LE_32(emd_mesh->vtx_offset));
+	debug(3, " nor 0x%08x", FROM_LE_32(emd_mesh->nor_offset));
+	debug(3, " msh 0x%08x", FROM_LE_32(emd_mesh->mesh_offset));*/
+
+	for (i=0; i<FROM_LE_32(emd_mesh->mesh_count); i++) {
 		emd_vertex_t *emd_vtx, *emd_nor;
 		emd_triangle_t *emd_tri_idx;
 		int idx_vtx, idx_nor;
 
 		/* Vertex array */
 		emd_vtx = (emd_vertex_t *)
-			(&((char *) _emdPtr)[mesh_offset+FROM_LE_32(emd_mesh_object->triangles.vtx_offset)]);
+			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->vtx_offset)]);
 
 		/* Normal array */
 		emd_nor = (emd_vertex_t *)
-			(&((char *) _emdPtr)[mesh_offset+FROM_LE_32(emd_mesh_object->triangles.nor_offset)]);
+			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->nor_offset)]);
 
 		/* Vertices index */
 		emd_tri_idx = (emd_triangle_t *)
-			(&((char *) _emdPtr)[mesh_offset+FROM_LE_32(emd_mesh_object->triangles.mesh_offset)]);
+			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->mesh_offset)]);
 
 		g_driver->beginTriangles();
 
 		idx_nor = FROM_LE_16(emd_tri_idx[i].n0);
 		g_driver->normal3f(
-			FROM_LE_16(emd_nor[idx_nor].x),
-			FROM_LE_16(emd_nor[idx_nor].y),
-			FROM_LE_16(emd_nor[idx_nor].z)
+			(int16) FROM_LE_16(emd_nor[idx_nor].x),
+			(int16) FROM_LE_16(emd_nor[idx_nor].y),
+			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
 		idx_vtx = FROM_LE_16(emd_tri_idx[i].v0);
 		g_driver->vertex3f(
-			FROM_LE_16(emd_vtx[idx_vtx].x),
-			FROM_LE_16(emd_vtx[idx_vtx].y),
-			FROM_LE_16(emd_vtx[idx_vtx].z)
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].z)
 		);
 
 		idx_nor = FROM_LE_16(emd_tri_idx[i].n1);
 		g_driver->normal3f(
-			FROM_LE_16(emd_nor[idx_nor].x),
-			FROM_LE_16(emd_nor[idx_nor].y),
-			FROM_LE_16(emd_nor[idx_nor].z)
+			(int16) FROM_LE_16(emd_nor[idx_nor].x),
+			(int16) FROM_LE_16(emd_nor[idx_nor].y),
+			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
 		idx_vtx = FROM_LE_16(emd_tri_idx[i].v1);
 		g_driver->vertex3f(
-			FROM_LE_16(emd_vtx[idx_vtx].x),
-			FROM_LE_16(emd_vtx[idx_vtx].y),
-			FROM_LE_16(emd_vtx[idx_vtx].z)
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].z)
 		);
 
 		idx_nor = FROM_LE_16(emd_tri_idx[i].n2);
 		g_driver->normal3f(
-			FROM_LE_16(emd_nor[idx_nor].x),
-			FROM_LE_16(emd_nor[idx_nor].y),
-			FROM_LE_16(emd_nor[idx_nor].z)
+			(int16) FROM_LE_16(emd_nor[idx_nor].x),
+			(int16) FROM_LE_16(emd_nor[idx_nor].y),
+			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
 		idx_vtx = FROM_LE_16(emd_tri_idx[i].v2);
 		g_driver->vertex3f(
-			FROM_LE_16(emd_vtx[idx_vtx].x),
-			FROM_LE_16(emd_vtx[idx_vtx].y),
-			FROM_LE_16(emd_vtx[idx_vtx].z)
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].z)
 		);
 
 		g_driver->endPrim();

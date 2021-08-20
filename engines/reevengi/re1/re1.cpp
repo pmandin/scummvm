@@ -63,7 +63,7 @@ static const char *RE1_MODEL3 = "%s%s/enemy/em11%02x.emd";
 RE1Engine::RE1Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc) {
 	_room = 6;
-	_camera = 1;
+	_camera = 6;
 
 	_country = 8;
 }
@@ -257,15 +257,9 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 
 	if (!isPlayer) {
 		filename = RE1_MODEL2;
-		if (numEntity>=0x16) {
-			numEntity += 0x20-0x16;
-		}
-		if (numEntity>=0x2f) {
-			numEntity += 0x30-0x2f;
-		}
-		if (numEntity>=0x34) {
+		if (numEntity>=0x40) {
 			filename = RE1_MODEL3;
-			numEntity -= 0x34;
+			numEntity -= 0x40;
 		}
 	}
 
