@@ -177,7 +177,7 @@ uint16 TimDecoder::readPixel(uint16 color) {
 bool TimDecoder::readColorMap(Common::SeekableReadStream &tim, byte imageType) {
 	_colorMap = new byte[3 * _colorMapCount * _colorMapLength];
 	byte *_colorMapFill = _colorMap;
-	_timPalette = new uint16[256];
+	_timPalette = new uint16[256 * _colorMapCount];
 
 	for (int j = 0; j < _colorMapCount; j++) {
 		for (int i = 0; i < _colorMapLength; i++) {
@@ -185,9 +185,7 @@ bool TimDecoder::readColorMap(Common::SeekableReadStream &tim, byte imageType) {
 			Graphics::PixelFormat format(2, 5, 5, 5, 1, 11, 6, 1, 0);
 
 			uint16 color = readPixel(tim);
-			if (j==0) {
-				_timPalette[i] = color;
-			}
+			_timPalette[j*256+i] = color;
 			format.colorToARGB(color, a, r, g, b);
 
 #ifdef SCUMM_LITTLE_ENDIAN
