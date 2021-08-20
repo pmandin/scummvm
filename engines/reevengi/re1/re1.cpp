@@ -253,7 +253,7 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
 	Entity *newEntity = nullptr;
 
-	debug(3, "re1: loadEntity(%d)", numEntity);
+	debug(3, "re1: loadEntity(%d, %d)", numEntity, isPlayer);
 
 	if (!isPlayer) {
 		filename = RE1_MODEL2;
@@ -267,7 +267,7 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
-		debug(3, "re1: loaded %s", filePath);
+		//debug(3, "re1: loaded %s", filePath);
 		newEntity = (Entity *) new RE1Entity(stream);
 	}
 	delete stream;
