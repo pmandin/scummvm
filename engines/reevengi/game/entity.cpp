@@ -29,7 +29,7 @@
 namespace Reevengi {
 
 Entity::Entity(Common::SeekableReadStream *stream): _numAnim(0), _numFrame(0),
-	timTexture(nullptr) {
+	timTexture(nullptr), _texId(0xffffffff) {
 	stream->seek(0);
 	_emdSize = stream->size();
 
@@ -57,6 +57,7 @@ void Entity::draw(int x, int y, int z, int a) {
 	g_driver->rotate((a * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
 
 	g_driver->setTexture2d(true);
+	setTexture();
 	drawNode(0);
 	g_driver->setTexture2d(false);
 }
@@ -92,6 +93,26 @@ void Entity::drawNode(int numMesh) {
 	}
 
 	g_driver->popMatrix();
+}
+
+void Entity::setTexture(void) {
+	if (!timTexture)
+		return;
+
+	g_driver->MatrixModeTexture();
+	g_driver->loadIdentity();
+
+	if (_texId==0xffffffff) {
+		// Initialize texture
+		_texId = g_driver->genTexture();
+		g_driver->bindTexture(_texId);
+
+		g_driver->createTexture(timTexture->getSurface(), timTexture->getTimPalette());
+	} else {
+		g_driver->bindTexture(_texId);
+	}
+
+	g_driver->MatrixModeModelview();
 }
 
 } // End of namespace Reevengi
