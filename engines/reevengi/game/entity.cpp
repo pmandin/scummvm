@@ -29,12 +29,17 @@
 namespace Reevengi {
 
 Entity::Entity(Common::SeekableReadStream *stream): _numAnim(0), _numFrame(0),
-	timTexture(nullptr), _texId(0xffffffff) {
+	timTexture(nullptr) {
 	stream->seek(0);
 	_emdSize = stream->size();
 
 	_emdPtr = new byte[_emdSize];
 	stream->read(_emdPtr, _emdSize);
+
+	for (int i=0; i<4; i++) {
+		_texId[i] = 0xffffffff;
+	}
+
 /*
 	Common::DumpFile adf;
 	adf.open("room.rdt");
@@ -57,7 +62,10 @@ void Entity::draw(int x, int y, int z, int a) {
 	g_driver->rotate((a * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
 
 	g_driver->setTexture2d(true);
-	setTexture();
+	g_driver->MatrixModeTexture();
+	g_driver->loadIdentity();
+	g_driver->MatrixModeModelview();
+
 	drawNode(0);
 	g_driver->setTexture2d(false);
 }
@@ -95,24 +103,20 @@ void Entity::drawNode(int numMesh) {
 	g_driver->popMatrix();
 }
 
-void Entity::setTexture(void) {
+void Entity::setTexture(int numTexId) {
 	if (!timTexture)
 		return;
 
-	g_driver->MatrixModeTexture();
-	g_driver->loadIdentity();
-
-	if (_texId==0xffffffff) {
+	if (_texId[numTexId]==0xffffffff) {
 		// Initialize texture
-		_texId = g_driver->genTexture();
-		g_driver->bindTexture(_texId);
+		_texId[numTexId] = g_driver->genTexture();
+		g_driver->bindTexture(_texId[numTexId]);
 
-		g_driver->createTexture(timTexture->getSurface(), timTexture->getTimPalette());
+		uint16 *timPalette = timTexture->getTimPalette();
+		g_driver->createTexture(timTexture->getSurface(), &timPalette[256*numTexId]);
 	} else {
-		g_driver->bindTexture(_texId);
+		g_driver->bindTexture(_texId[numTexId]);
 	}
-
-	g_driver->MatrixModeModelview();
 }
 
 } // End of namespace Reevengi

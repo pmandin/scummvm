@@ -260,6 +260,8 @@ void RE1Entity::drawMesh(int numMesh) {
 		}
 	}
 
+	uint16 clutid = 255, new_clutid;
+
 	for (i=0; i<FROM_LE_32(emd_mesh->mesh_count); i++) {
 		emd_vertex_t *emd_vtx, *emd_nor;
 		emd_triangle_t *emd_tri;
@@ -278,6 +280,12 @@ void RE1Entity::drawMesh(int numMesh) {
 			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->mesh_offset)]);
 
 		tx_page = (FROM_LE_16(emd_tri[i].page)<<1) & 0xff;
+
+		new_clutid = FROM_LE_16(emd_tri[i].clutid) & 3;
+		if (clutid != new_clutid) {
+			setTexture(new_clutid);
+			clutid = new_clutid;
+		}
 
 		g_driver->beginTriangles();
 
