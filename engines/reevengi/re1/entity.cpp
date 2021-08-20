@@ -42,6 +42,8 @@ typedef struct {
 	uint32 length;
 } emd_header_t;
 
+/* Section 0 Skeleton */
+
 typedef struct {
 	int16	x,y,z;
 } emd_skel_relpos_t;
@@ -49,10 +51,10 @@ typedef struct {
 typedef struct {
 	uint16	num_mesh;
 	uint16	offset;
-} emd_skel_data_t;
+} emd_skel_bone_t;
 
 typedef struct {
-	uint16	relpos_offset;
+	uint16	bone_offset;
 	uint16	anim_offset;
 	uint16	count;
 	uint16	size;
@@ -138,7 +140,7 @@ int RE1Entity::getNumAnims(void) {
 int RE1Entity::getNumChildren(int numMesh) {
 	uint32 *hdr_offsets, skel_offset;
 	emd_skel_header_t *emd_skel_header;
-	emd_skel_data_t *emd_skel_data;
+	emd_skel_bone_t *emd_skel_bone;
 
 	if (!_emdPtr)
 		return 0;
@@ -151,16 +153,16 @@ int RE1Entity::getNumChildren(int numMesh) {
 
 	emd_skel_header = (emd_skel_header_t *)
 		(&((char *) (_emdPtr))[skel_offset]);
-	emd_skel_data = (emd_skel_data_t *)
-		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->relpos_offset)]);
+	emd_skel_bone = (emd_skel_bone_t *)
+		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->bone_offset)]);
 
-	return (FROM_LE_16(emd_skel_data[numMesh].num_mesh));
+	return (FROM_LE_16(emd_skel_bone[numMesh].num_mesh));
 }
 
 int RE1Entity::getChild(int numMesh, int numChild) {
 	uint32 *hdr_offsets, skel_offset;
 	emd_skel_header_t *emd_skel_header;
-	emd_skel_data_t *emd_skel_data;
+	emd_skel_bone_t *emd_skel_bone;
 	uint8 *mesh_numbers;
 
 	if (!_emdPtr)
@@ -174,16 +176,16 @@ int RE1Entity::getChild(int numMesh, int numChild) {
 
 	emd_skel_header = (emd_skel_header_t *)
 		(&((char *) (_emdPtr))[skel_offset]);
-	emd_skel_data = (emd_skel_data_t *)
-		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->relpos_offset)]);
+	emd_skel_bone = (emd_skel_bone_t *)
+		(&((char *) (_emdPtr))[skel_offset+FROM_LE_16(emd_skel_header->bone_offset)]);
 
-	mesh_numbers = (uint8 *) emd_skel_data;
-	return mesh_numbers[FROM_LE_16(emd_skel_data[numMesh].offset)+numChild];
+	mesh_numbers = (uint8 *) emd_skel_bone;
+	return mesh_numbers[FROM_LE_16(emd_skel_bone[numMesh].offset)+numChild];
 }
 
 void RE1Entity::drawMesh(int numMesh) {
-	uint32 *hdr_offsets, mesh_offset;
-	//emd_mesh_header_t *emd_mesh_header;
+	uint32 *hdr_offsets, skel_offset, mesh_offset;
+	emd_skel_relpos_t *emd_skel_relpos;
 	emd_mesh_t *emd_mesh, *emd_mesh_array;
 	uint i;
 
@@ -192,6 +194,21 @@ void RE1Entity::drawMesh(int numMesh) {
 
 	hdr_offsets = (uint32 *)
 		(&((char *) (_emdPtr))[_emdSize-16]);
+
+	/* Offset 0: Skeleton */
+	skel_offset = FROM_LE_32(hdr_offsets[EMD_SKELETON]);
+
+	emd_skel_relpos = (emd_skel_relpos_t *)
+		(&((char *) (_emdPtr))[skel_offset+sizeof(emd_skel_header_t)]);
+	emd_skel_relpos = &emd_skel_relpos[numMesh];
+
+	g_driver->translate(
+		(int16) FROM_LE_16(emd_skel_relpos->x),
+		(int16) FROM_LE_16(emd_skel_relpos->y),
+		(int16) FROM_LE_16(emd_skel_relpos->z)
+	);
+
+	// TODO: Handle animation
 
 	/* Offset 2: Meshes */
 	mesh_offset = FROM_LE_32(hdr_offsets[EMD_MESHES]);
