@@ -28,7 +28,8 @@
 
 namespace Reevengi {
 
-Entity::Entity(Common::SeekableReadStream *stream): _numAnim(0), _numFrame(0) {
+Entity::Entity(Common::SeekableReadStream *stream): _numAnim(0), _numFrame(0),
+	timTexture(nullptr) {
 	stream->seek(0);
 	_emdSize = stream->size();
 
@@ -55,7 +56,9 @@ void Entity::draw(int x, int y, int z, int a) {
 	g_driver->translate(x,y,z);
 	g_driver->rotate((a * 360.0f) / 4096.0f, 0.0f, 1.0f, 0.0f);
 
+	g_driver->setTexture2d(true);
 	drawNode(0);
+	g_driver->setTexture2d(false);
 }
 
 int Entity::getNumAnims(void) {
