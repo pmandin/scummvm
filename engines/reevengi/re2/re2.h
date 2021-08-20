@@ -26,6 +26,7 @@
 #include "engines/advancedDetector.h"
 
 #include "engines/reevengi/reevengi.h"
+#include "engines/reevengi/game/entity.h"
 
 namespace Reevengi {
 
@@ -35,10 +36,11 @@ public:
 	virtual ~RE2Engine();
 
 protected:
-	void initPreRun(void);
-	void loadBgImage(void);
-	void loadBgMaskImage(void);
-	void loadRoom(void);
+	void initPreRun(void) override;
+	void loadBgImage(void) override;
+	void loadBgMaskImage(void) override;
+	void loadRoom(void) override;
+	Entity *loadEntity(int numEntity, int isPlayer) override;
 
 private:
 	char _country;
@@ -50,6 +52,9 @@ private:
 	void loadBgMaskImagePcDemo(void);
 	void loadBgMaskImagePcGame(void);
 	void loadBgMaskImagePsx(void);
+
+	Entity *loadEntityPc(int numEntity, int isPlayer);
+	Entity *loadEntityPsx(int numEntity, int isPlayer);
 };
 
 } // end of namespace Reevengi

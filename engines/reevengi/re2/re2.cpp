@@ -29,6 +29,7 @@
 #include "engines/reevengi/formats/bss.h"
 #include "engines/reevengi/formats/bss_sld.h"
 #include "engines/reevengi/re2/re2.h"
+#include "engines/reevengi/re2/entity.h"
 #include "engines/reevengi/re2/room.h"
 
 namespace Reevengi {
@@ -41,6 +42,8 @@ static const char *RE2PCDEMO_BG = "common/stage%d/rc%d%02x%1x.adt";
 static const char *RE2PCDEMO_BGMASK = "common/stage%d/rs%d%02x%1x.adt";
 
 static const char *RE2PSX_BG = "common/bss/room%d%02x.bss";
+
+static const char *RE2PC_MODEL = "pl%d/emd%d/em%d%02x.%s";
 
 RE2Engine::RE2Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc), _country('u') {
@@ -358,6 +361,67 @@ void RE2Engine::loadRoom(void) {
 		_roomScene = new RE2Room(stream);
 	}
 	delete stream;
+}
+
+Entity *RE2Engine::loadEntity(int numEntity, int isPlayer) {
+	Entity *newEntity = nullptr;
+
+	debug(3, "re2: loadEntity(%d,%d)", numEntity, isPlayer);
+
+	if (isPlayer) {
+		// FIXME: Player is in pl%d/pld/xxx
+		return newEntity;
+	}
+
+	switch(_gameDesc.platform) {
+		case Common::kPlatformWindows:
+			{
+				newEntity = loadEntityPc(numEntity, isPlayer);
+			}
+			break;
+		case Common::kPlatformPSX:
+			{
+				newEntity = loadEntityPsx(numEntity, isPlayer);
+			}
+			break;
+		default:
+			break;
+	}
+
+	return newEntity;
+}
+
+Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
+	char filePath[64];
+	Common::SeekableReadStream *stream;
+	Entity *newEntity = nullptr;
+
+	// Load EMD model
+
+	sprintf(filePath, RE2PC_MODEL, _character, _character, _character, numEntity, "emd");
+
+	stream = SearchMan.createReadStreamForMember(filePath);
+	if (stream) {
+		newEntity = (Entity *) new RE2Entity(stream);
+	}
+	delete stream;
+
+	// Load TIM texture
+
+	sprintf(filePath, RE2PC_MODEL, _character, _character, _character, numEntity, "tim");
+
+	stream = SearchMan.createReadStreamForMember(filePath);
+	if (newEntity && stream) {
+		newEntity->timTexture = new TimDecoder();
+		newEntity->timTexture->loadStream(*stream);
+	}
+	delete stream;
+
+	return newEntity;
+}
+
+Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
+	return nullptr;
 }
 
 } // end of namespace Reevengi
