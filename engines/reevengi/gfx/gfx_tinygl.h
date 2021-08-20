@@ -57,7 +57,8 @@ public:
 	void setModelview(float fromX, float fromY, float fromZ,
 		float toX, float toY, float toZ,
 		float upX, float upY, float upZ) override;
-	void setTextureMtx(void) override;
+	void MatrixModeModelview(void) override;
+	void MatrixModeTexture(void) override;
 	void loadIdentity(void) override;
 	void pushMatrix(void) override;
 	void popMatrix(void) override;
@@ -73,6 +74,7 @@ public:
 
 	uint genTexture(void) override;
 	void bindTexture(uint texId) override;
+	void createTexture(const Graphics::Surface *frame, uint16* timPalette = nullptr) override;
 
 	void setBlending(bool enable) override;
 	void setColor(float r, float g, float b) override;

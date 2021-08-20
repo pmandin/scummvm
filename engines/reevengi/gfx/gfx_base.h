@@ -87,7 +87,8 @@ public:
 	virtual void setProjection(float angle, float aspect, float zNear, float zFar) = 0;
 	virtual void setModelview(float fromX, float fromY, float fromZ,
 		float toX, float toY, float toZ, float upX, float upY, float upZ) = 0;
-	virtual void setTextureMtx(void) = 0;
+	virtual void MatrixModeModelview(void) = 0;
+	virtual void MatrixModeTexture(void) = 0;
 	virtual void loadIdentity(void) = 0;
 	virtual void pushMatrix(void) = 0;
 	virtual void popMatrix(void) = 0;
@@ -103,6 +104,7 @@ public:
 
 	virtual uint genTexture(void) = 0;
 	virtual void bindTexture(uint texId) = 0;
+	virtual void createTexture(const Graphics::Surface *frame, uint16* timPalette = nullptr) = 0;
 
 	virtual void setBlending(bool enable) =0;
 	virtual void setColor(float r, float g, float b) =0;
