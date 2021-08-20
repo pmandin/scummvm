@@ -74,6 +74,7 @@ public:
 	void beginTriangles(void) override;
 	void beginQuads(void) override;
 	void normal3f(float x, float y, float z) override;
+	void texCoord2f(float s, float r) override;
 	void vertex3f(float x, float y, float z) override;
 	void endPrim(void) override;
 

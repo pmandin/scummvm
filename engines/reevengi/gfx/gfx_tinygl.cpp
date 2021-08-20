@@ -418,6 +418,10 @@ void GfxTinyGL::normal3f(float x, float y, float z) {
 	tglNormal3f(x, y, z);
 }
 
+void GfxTinyGL::texCoord2f(float s, float r) {
+	tglTexCoord2f(s, r);
+}
+
 void GfxTinyGL::vertex3f(float x, float y, float z) {
 	tglVertex3f(x, y, z);
 }

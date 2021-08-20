@@ -96,6 +96,7 @@ public:
 	virtual void beginTriangles(void) = 0;
 	virtual void beginQuads(void) = 0;
 	virtual void normal3f(float x, float y, float z) = 0;
+	virtual void texCoord2f(float s, float r) = 0;
 	virtual void vertex3f(float x, float y, float z) = 0;
 	virtual void endPrim(void) = 0;
 
