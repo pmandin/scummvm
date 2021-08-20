@@ -81,6 +81,7 @@ public:
 	void setColor(float r, float g, float b) override;
 	void setColorMask(bool enable) override;
 	void setDepth(bool enable) override;
+	void setTexture2d(bool enable) override;
 
 	void line(Math::Vector3d v0, Math::Vector3d v1) override;
 

@@ -576,6 +576,14 @@ void GfxOpenGL::setDepth(bool enable) {
 	}
 }
 
+void GfxOpenGL::setTexture2d(bool enable) {
+	if (enable) {
+		glEnable(GL_TEXTURE_2D);
+	} else {
+		glDisable(GL_TEXTURE_2D);
+	}
+}
+
 void GfxOpenGL::line(Math::Vector3d v0, Math::Vector3d v1) {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);

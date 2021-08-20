@@ -103,6 +103,7 @@ public:
 	virtual void setColor(float r, float g, float b) =0;
 	virtual void setColorMask(bool enable) =0;
 	virtual void setDepth(bool enable) =0;
+	virtual void setTexture2d(bool enable) = 0;
 
 	virtual void line(Math::Vector3d v0, Math::Vector3d v1) =0;
 
