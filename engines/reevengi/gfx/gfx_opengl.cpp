@@ -506,11 +506,12 @@ void GfxOpenGL::setModelview(float fromX, float fromY, float fromZ,
 	glTranslatef(-fromX, -fromY, -fromZ);
 }
 
-void GfxOpenGL::setTextureMtx(void) {
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
-
+void GfxOpenGL::MatrixModeModelview(void) {
 	glMatrixMode(GL_MODELVIEW);
+}
+
+void GfxOpenGL::MatrixModeTexture(void) {
+	glMatrixMode(GL_TEXTURE);
 }
 
 void GfxOpenGL::loadIdentity(void) {
@@ -567,6 +568,65 @@ uint GfxOpenGL::genTexture(void) {
 
 void GfxOpenGL::bindTexture(uint texId) {
 	glBindTexture(GL_TEXTURE_2D, texId);
+}
+
+void GfxOpenGL::createTexture(const Graphics::Surface *frame, uint16* timPalette) {
+	GLenum format, dataType;
+
+	if (!frame)
+		return;
+
+	if (frame->format == Graphics::PixelFormat(1, 0, 0, 0, 0, 0, 0, 0, 0)) {
+		format = GL_COLOR_INDEX;
+		dataType = GL_UNSIGNED_BYTE;
+	} else {
+		error("Unknown pixelformat: Bpp: %d RBits: %d GBits: %d BBits: %d ABits: %d RShift: %d GShift: %d BShift: %d AShift: %d",
+			frame->format.bytesPerPixel,
+			-(frame->format.rLoss - 8),
+			-(frame->format.gLoss - 8),
+			-(frame->format.bLoss - 8),
+			-(frame->format.aLoss - 8),
+			frame->format.rShift,
+			frame->format.gShift,
+			frame->format.bShift,
+			frame->format.aShift);
+	}
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+	glPixelStorei(GL_UNPACK_ALIGNMENT, frame->format.bytesPerPixel);
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, frame->w);
+
+	// Upload palette
+	if ((frame->format.bytesPerPixel==1) && timPalette) {
+		GLfloat mapR[256], mapG[256], mapB[256], mapA[256];
+		Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
+
+		memset(mapR, 0, sizeof(mapR));
+		memset(mapG, 0, sizeof(mapG));
+		memset(mapB, 0, sizeof(mapB));
+		memset(mapA, 0, sizeof(mapA));
+		for (int i=0; i<256; i++) {
+			byte r, g, b, a;
+			uint16 color = *timPalette++;
+			fmtTimPal.colorToARGB(color, a, r, g, b);
+
+			mapR[i] = r / 255.0f;
+			mapG[i] = g / 255.0f;
+			mapB[i] = b / 255.0f;
+			mapA[i] = a / 255.0f;
+		}
+		glPixelTransferi(GL_MAP_COLOR, GL_TRUE);
+		glPixelMapfv(GL_PIXEL_MAP_I_TO_R, 256, mapR);
+		glPixelMapfv(GL_PIXEL_MAP_I_TO_G, 256, mapG);
+		glPixelMapfv(GL_PIXEL_MAP_I_TO_B, 256, mapB);
+		glPixelMapfv(GL_PIXEL_MAP_I_TO_A, 256, mapA);
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, frame->w, frame->h, 0, format, dataType, frame->getPixels());
 }
 
 void GfxOpenGL::setBlending(bool enable) {

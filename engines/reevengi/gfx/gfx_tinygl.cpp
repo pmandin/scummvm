@@ -386,11 +386,12 @@ void GfxTinyGL::setModelview(float fromX, float fromY, float fromZ,
 	tglTranslatef(-fromX, -fromY, -fromZ);
 }
 
-void GfxTinyGL::setTextureMtx(void) {
-	tglMatrixMode(TGL_TEXTURE);
-	tglLoadIdentity();
-
+void GfxTinyGL::MatrixModeModelview(void) {
 	tglMatrixMode(TGL_MODELVIEW);
+}
+
+void GfxTinyGL::MatrixModeTexture(void) {
+	tglMatrixMode(TGL_TEXTURE);
 }
 
 void GfxTinyGL::loadIdentity(void) {
@@ -447,6 +448,34 @@ uint GfxTinyGL::genTexture(void) {
 
 void GfxTinyGL::bindTexture(uint texId) {
 	tglBindTexture(TGL_TEXTURE_2D, texId);
+}
+
+void GfxTinyGL::createTexture(const Graphics::Surface *frame, uint16* timPalette) {
+	TGLenum format, dataType;
+
+	if (!frame)
+		return;
+
+	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MAG_FILTER, TGL_NEAREST);
+	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MIN_FILTER, TGL_NEAREST);
+	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_S, TGL_CLAMP);
+	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_T, TGL_CLAMP);
+
+	if (frame->format == Graphics::PixelFormat(1, 0, 0, 0, 0, 0, 0, 0, 0)) {
+		format = TGL_COLOR_INDEX;
+		dataType = TGL_UNSIGNED_BYTE;
+	} else {
+		error("Unknown pixelformat: Bpp: %d RBits: %d GBits: %d BBits: %d ABits: %d RShift: %d GShift: %d BShift: %d AShift: %d",
+			frame->format.bytesPerPixel,
+			-(frame->format.rLoss - 8),
+			-(frame->format.gLoss - 8),
+			-(frame->format.bLoss - 8),
+			-(frame->format.aLoss - 8),
+			frame->format.rShift,
+			frame->format.gShift,
+			frame->format.bShift,
+			frame->format.aShift);
+	}
 }
 
 void GfxTinyGL::setBlending(bool enable) {
