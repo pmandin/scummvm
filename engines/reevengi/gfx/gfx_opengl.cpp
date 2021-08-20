@@ -506,6 +506,13 @@ void GfxOpenGL::setModelview(float fromX, float fromY, float fromZ,
 	glTranslatef(-fromX, -fromY, -fromZ);
 }
 
+void GfxOpenGL::setTextureMtx(void) {
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+
+	glMatrixMode(GL_MODELVIEW);
+}
+
 void GfxOpenGL::loadIdentity(void) {
 	glLoadIdentity();
 }
@@ -548,6 +555,18 @@ void GfxOpenGL::vertex3f(float x, float y, float z) {
 
 void GfxOpenGL::endPrim(void) {
 	glEnd();
+}
+
+uint GfxOpenGL::genTexture(void) {
+	GLuint _newTexId[1];
+
+	glGenTextures(1, _newTexId);
+
+	return _newTexId[0];
+}
+
+void GfxOpenGL::bindTexture(uint texId) {
+	glBindTexture(GL_TEXTURE_2D, texId);
 }
 
 void GfxOpenGL::setBlending(bool enable) {

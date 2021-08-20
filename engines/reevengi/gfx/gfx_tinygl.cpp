@@ -386,6 +386,13 @@ void GfxTinyGL::setModelview(float fromX, float fromY, float fromZ,
 	tglTranslatef(-fromX, -fromY, -fromZ);
 }
 
+void GfxTinyGL::setTextureMtx(void) {
+	tglMatrixMode(TGL_TEXTURE);
+	tglLoadIdentity();
+
+	tglMatrixMode(TGL_MODELVIEW);
+}
+
 void GfxTinyGL::loadIdentity(void) {
 	tglLoadIdentity();
 }
@@ -428,6 +435,18 @@ void GfxTinyGL::vertex3f(float x, float y, float z) {
 
 void GfxTinyGL::endPrim(void) {
 	tglEnd();
+}
+
+uint GfxTinyGL::genTexture(void) {
+	TGLuint _newTexId[1];
+
+	tglGenTextures(1, _newTexId);
+
+	return _newTexId[0];
+}
+
+void GfxTinyGL::bindTexture(uint texId) {
+	tglBindTexture(TGL_TEXTURE_2D, texId);
 }
 
 void GfxTinyGL::setBlending(bool enable) {

@@ -65,6 +65,7 @@ public:
 	void setProjection(float angle, float aspect, float zNear, float zFar) override;
 	void setModelview(float fromX, float fromY, float fromZ,
 		float toX, float toY, float toZ, float upX, float upY, float upZ) override;
+	void setTextureMtx(void) override;
 	void loadIdentity(void) override;
 	void pushMatrix(void) override;
 	void popMatrix(void) override;
@@ -77,6 +78,9 @@ public:
 	void texCoord2f(float s, float r) override;
 	void vertex3f(float x, float y, float z) override;
 	void endPrim(void) override;
+
+	uint genTexture(void) override;
+	void bindTexture(uint texId) override;
 
 	void setBlending(bool enable) override;
 	void setColor(float r, float g, float b) override;
