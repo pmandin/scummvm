@@ -43,7 +43,8 @@ static const char *RE2PCDEMO_BGMASK = "common/stage%d/rs%d%02x%1x.adt";
 
 static const char *RE2PSX_BG = "common/bss/room%d%02x.bss";
 
-static const char *RE2PC_MODEL = "pl%d/emd%d/em%d%02x.%s";
+static const char *RE2PC_MODEL1 = "pl%d/pld/pl%02x.pld";
+static const char *RE2PC_MODEL2 = "pl%d/emd%d/em%d%02x.%s";
 
 RE2Engine::RE2Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc), _country('u') {
@@ -368,11 +369,6 @@ Entity *RE2Engine::loadEntity(int numEntity, int isPlayer) {
 
 	debug(3, "re2: loadEntity(%d,%d)", numEntity, isPlayer);
 
-	if (isPlayer) {
-		// FIXME: Player is in pl%d/pld/xxx
-		return newEntity;
-	}
-
 	switch(_gameDesc.platform) {
 		case Common::kPlatformWindows:
 			{
@@ -398,7 +394,14 @@ Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
 
 	// Load EMD model
 
-	sprintf(filePath, RE2PC_MODEL, _character, _character, _character, numEntity, "emd");
+	if (isPlayer) {
+		sprintf(filePath, RE2PC_MODEL1, _character, numEntity);
+		// TODO: Different structure
+		return nullptr;
+	} else {
+		sprintf(filePath, RE2PC_MODEL2, _character, _character, _character, numEntity, "emd");
+	}
+	debug(3, "re2: loadEntityPc(\"%s\")", filePath);
 
 	stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
@@ -408,14 +411,19 @@ Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
 
 	// Load TIM texture
 
-	sprintf(filePath, RE2PC_MODEL, _character, _character, _character, numEntity, "tim");
+	if (isPlayer) {
+		// TODO: TIM file embedded in pld file
+	} else {
+		sprintf(filePath, RE2PC_MODEL2, _character, _character, _character, numEntity, "tim");
+		debug(3, "re2: loadEntityPc(\"%s\")", filePath);
 
-	stream = SearchMan.createReadStreamForMember(filePath);
-	if (newEntity && stream) {
-		newEntity->timTexture = new TimDecoder();
-		newEntity->timTexture->loadStream(*stream);
+		stream = SearchMan.createReadStreamForMember(filePath);
+		if (newEntity && stream) {
+			newEntity->timTexture = new TimDecoder();
+			newEntity->timTexture->loadStream(*stream);
+		}
+		delete stream;
 	}
-	delete stream;
 
 	return newEntity;
 }

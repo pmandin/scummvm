@@ -133,7 +133,8 @@ Common::Error ReevengiEngine::run() {
 
 	bool fullscreen = ConfMan.getBool("fullscreen");
 	g_driver = createRenderer(640, 480, fullscreen);
-	Entity *entity = loadEntity(0, 1);
+	//Entity *entity = loadEntity(0, 1);	/* RE1 */
+	Entity *entity = loadEntity(0x10, 0);	/* RE2 */
 
 	//TimDecoder *my_image = testLoadImage();
 	//testLoadMovie();

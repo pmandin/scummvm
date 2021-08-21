@@ -101,6 +101,7 @@ void Entity::drawNode(int numMesh) {
 	// render children
 	numChildren = getNumChildren(numMesh);
 	for (i=0; i<numChildren; i++) {
+		//debug(3, "mesh %d: %d", numMesh, getChild(numMesh, i));
 		drawNode(getChild(numMesh, i));
 	}
 
