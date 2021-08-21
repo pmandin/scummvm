@@ -191,11 +191,11 @@ RofsFileStream::RofsFileStream(const RofsFileEntry *entry, Common::SeekableReadS
 	_fileBuffer = new byte[_entry.uncompressedSize];
 	memset(_fileBuffer, 0, _entry.uncompressedSize);
 
-	decryptFile();
-	if (_entry.compressed) {
+	decryptFile(_entry.compressed);
+	/*if (_entry.compressed) {
 		_arcStream->seek(0);
 		depackFile();
-	}
+	}*/
 /*
 	Common::DumpFile adf;
 	adf.open("img0.jpg");
@@ -257,7 +257,7 @@ const unsigned short base_array[64]={
 	0x02d9, 0x0263, 0x0164, 0x0290
 };
 
-void RofsFileStream::decryptFile(void) {
+void RofsFileStream::decryptFile(bool isCompressed) {
 	uint16 fileOffset = _arcStream->readUint16LE();
 	//debug(3, "offset 0x%08x", fileOffset);
 
@@ -283,6 +283,14 @@ void RofsFileStream::decryptFile(void) {
 
 		_arcStream->read(&_fileBuffer[offset], blockLen);
 		decryptBlock(&_fileBuffer[offset], blockKey, blockLen);
+
+		if (isCompressed) {
+			uint32 dstBlock = 32768;
+			depack_block(&_fileBuffer[offset], blockLen, &dstBlock);
+			if (dstBlock!=0) {
+				blockLen = dstBlock;
+			}
+		}
 
 		offset += blockLen;
 	}
@@ -322,58 +330,36 @@ uint8 RofsFileStream::nextKey(uint32 *key)
 
 // RofsFileStream depacking, LZSS like routine
 
-void RofsFileStream::depackFile(void) {
-	uint16 fileOffset = _arcStream->readUint16LE();
-	//debug(3, "offset 0x%08x", fileOffset);
-
-	uint16 numBlocks = _arcStream->readUint16LE();
-	//debug(3, "blocks: %d", numBlocks);
-
-	_arcStream->skip(4+8);	// Uncompressed size + Hi_Comp/Not_Comp string
-
-	uint32 *keyInfo = new uint32[2*numBlocks];
-
-	/* Read key info */
-	for(int i=0; i<2*numBlocks; i++) {
-		keyInfo[i] = _arcStream->readUint32LE();
-	}
-
-	byte *dst = new byte[_entry.uncompressedSize];
-
-	_arcStream->seek(fileOffset);
-	int32 offset = 0;
-	for(int i=0; i<numBlocks; i++) {
-		uint32 blockLen = keyInfo[i+numBlocks];
-
-		/* Depacked blocks are 32KB max */
-		depackBlock(&dst[offset], 32768, &_fileBuffer[offset], blockLen);
-
-		offset += blockLen;
-	}
-
-	//debug(3, "done");
-	delete keyInfo;
-
-	/* Swap buffers */
-	delete _fileBuffer;
-	_fileBuffer = dst;
-}
-
-void RofsFileStream::depackBlock(uint8 *dst, int dstLength, uint8 *src, int srcLength) {
-	int srcNumBit, srcIndex, tmpIndex, dstIndex;
+void RofsFileStream::depack_block(uint8 *dst, uint32 srcLength, uint32 *dstLength)
+{
+	uint32 srcNumBit, srcIndex, tmpIndex, dstIndex;
 	int i, value, value2, tmpStart, tmpLength;
-	uint8 tmp4k[4096+256];
+	uint8 *src, *tmp4k;
+
+	tmp4k = new uint8[4096+256];
 
 	for (i=0; i<256; i++) {
  		memset(&tmp4k[i*16], i, 16);
 	}
 	memset(&tmp4k[4096], 0, 256);
 
+	/* Copy source to a temp copy */
+	src = (uint8 *) malloc(srcLength);
+	if (!src) {
+		error("Can not allocate memory for depacking\n");
+		*dstLength = 0;
+		delete tmp4k;
+		return;
+	}
+	memcpy(src, dst, srcLength);
+
+	/*printf("Depacking %08x to %08x, len %d\n", src,dst,length);*/
+
 	srcNumBit = 0;
 	srcIndex = 0;
 	tmpIndex = 0;
 	dstIndex = 0;
-	while ((srcIndex<srcLength) && (dstIndex<dstLength)) {
+	while ((srcIndex<srcLength) && (dstIndex<*dstLength)) {
 		srcNumBit++;
 
 		value = src[srcIndex++] << srcNumBit;
@@ -397,8 +383,8 @@ void RofsFileStream::depackBlock(uint8 *dst, int dstLength, uint8 *src, int srcL
 			tmpStart = (value2 >> 4) & 0xfff;
 			tmpStart |= (value & 0xff) << 4;
 
-			if (dstIndex+tmpLength > dstLength) {
-				tmpLength = dstLength-dstIndex;
+			if (dstIndex+tmpLength > *dstLength) {
+				tmpLength = (*dstLength)-dstIndex;
 			}
 
 			memcpy(&dst[dstIndex], &tmp4k[tmpStart], tmpLength);
@@ -412,6 +398,12 @@ void RofsFileStream::depackBlock(uint8 *dst, int dstLength, uint8 *src, int srcL
 			tmpIndex = 0;
 		}
 	}
+
+	/*printf("Depacked to %d len\n", dstIndex);*/
+
+	free(src);
+	*dstLength = dstIndex;
+	delete tmp4k;
 }
 
 } // End of namespace Reevengi

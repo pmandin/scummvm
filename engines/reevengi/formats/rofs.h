@@ -92,13 +92,12 @@ private:
 	bool seek(int64 offs, int whence = SEEK_SET);
 
 	// Decrypt file
-	void decryptFile(void);
+	void decryptFile(bool isCompressed);
 	void decryptBlock(byte *src, uint32 key, uint32 length);
 	uint8 nextKey(uint32 *key);
 
 	// Depack file
-	void depackFile(void);
-	void depackBlock(uint8 *dst, int dstLength, uint8 *src, int srcLength);
+	void depack_block(uint8 *dst, uint32 srcLength, uint32 *dstLength);
 };
 
 } // End of namespace Reevengi
