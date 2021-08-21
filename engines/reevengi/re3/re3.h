@@ -35,10 +35,11 @@ public:
 	virtual ~RE3Engine();
 
 protected:
-	void initPreRun(void);
-	void loadBgImage(void);
-	void loadBgMaskImage(void);
-	void loadRoom(void);
+	void initPreRun(void) override;
+	void loadBgImage(void) override;
+	void loadBgMaskImage(void) override;
+	void loadRoom(void) override;
+	Entity *loadEntity(int numEntity, int isPlayer) override;
 
 private:
 	char _country;
@@ -51,6 +52,9 @@ private:
 
 	void loadRoomPc(void);
 	void loadRoomPsx(void);
+
+	Entity *loadEntityPc(int numEntity, int isPlayer);
+	Entity *loadEntityPsx(int numEntity, int isPlayer);
 };
 
 } // end of namespace Reevengi
