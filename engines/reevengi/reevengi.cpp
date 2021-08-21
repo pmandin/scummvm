@@ -58,7 +58,7 @@ GfxBase *g_driver = nullptr;
 ReevengiEngine::ReevengiEngine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *gameDesc) :
 	Engine(syst), _gameType(gameType), _character(0), _softRenderer(true),
 	_stage(1), _room(0), _camera(0), _bgImage(nullptr),_bgMaskImage(nullptr), _roomScene(nullptr),
-	_playerX(0), _playerY(0), _playerZ(0), _playerA(0), _playerMove(0), _playerTic(0) {
+	_playerX(0), _playerY(400), _playerZ(0), _playerA(0), _playerMove(0), _playerTic(0) {
 	memcpy(&_gameDesc, gameDesc, sizeof(_gameDesc));
 	g_movie = nullptr;
 	_clock = new Clock();

@@ -244,6 +244,7 @@ void RE2Engine::loadBgMaskImagePcDemo(void) {
 	char filePath[64];
 
 	sprintf(filePath, RE2PCDEMO_BGMASK, _stage, _stage, _room, _camera);
+	debug(3, "re2: loadBgMaskImagePcDemo(\"%s\")", filePath);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
