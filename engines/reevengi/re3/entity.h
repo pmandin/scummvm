@@ -20,43 +20,30 @@
  *
  */
 
-#ifndef REEVENGI_RE3_ENGINE_H
-#define REEVENGI_RE3_ENGINE_H
+#ifndef REEVENGI_RE3ENTITY_H
+#define REEVENGI_RE3ENTITY_H
 
-#include "engines/advancedDetector.h"
+#include "common/stream.h"
+//#include "math/vector2d.h"
 
-#include "engines/reevengi/reevengi.h"
+#include "engines/reevengi/game/entity.h"
 
 namespace Reevengi {
 
-class RE3Engine : public ReevengiEngine {
+class RE3Entity : public Entity {
 public:
-	RE3Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc);
-	virtual ~RE3Engine();
+	RE3Entity(Common::SeekableReadStream *stream);
 
 protected:
-	void initPreRun(void) override;
-	void loadBgImage(void) override;
-	void loadBgMaskImage(void) override;
-	void loadRoom(void) override;
-	Entity *loadEntity(int numEntity, int isPlayer) override;
+	void *getEmdSection(int numSection) override;
 
-private:
-	char _country;
+	int getNumAnims(void) override;
+	int getNumChildren(int numMesh) override;
+	int getChild(int numMesh, int numChild) override;
 
-	void loadBgImagePc(void);
-	void loadBgImagePsx(void);
-
-	void loadBgMaskImagePc(void);
-	void loadBgMaskImagePsx(void);
-
-	void loadRoomPc(void);
-	void loadRoomPsx(void);
-
-	Entity *loadEntityPc(int numEntity, int isPlayer);
-	Entity *loadEntityPsx(int numEntity, int isPlayer);
+	void drawMesh(int numMesh) override;
 };
 
-} // end of namespace Reevengi
+} // End of namespace Reevengi
 
 #endif

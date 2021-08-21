@@ -33,6 +33,7 @@
 #include "engines/reevengi/formats/sld.h"
 #include "engines/reevengi/formats/tim.h"
 #include "engines/reevengi/re3/re3.h"
+#include "engines/reevengi/re3/entity.h"
 #include "engines/reevengi/re3/room.h"
 
 namespace Reevengi {
@@ -46,6 +47,8 @@ static const char *RE3PC_ROOM = "data_%c/rdt/r%d%02x.rdt";
 
 static const char *RE3PSX_BG = "cd_data/stage%d/r%d%02x.bss";
 static const char *RE3PSX_ROOM = "cd_data/stage%d/r%d%02x.ard";
+
+static const char *RE3PC_MODEL = "room/emd/em%02x.%s";
 
 RE3Engine::RE3Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc), _country('u') {
@@ -331,6 +334,73 @@ void RE3Engine::loadRoomPsx(void) {
 		delete ard;
 	}
 	delete stream;
+}
+
+Entity *RE3Engine::loadEntity(int numEntity, int isPlayer) {
+	Entity *newEntity = nullptr;
+
+	debug(3, "re3: loadEntity(%d,%d)", numEntity, isPlayer);
+
+	switch(_gameDesc.platform) {
+		case Common::kPlatformWindows:
+			{
+				newEntity = loadEntityPc(numEntity, isPlayer);
+			}
+			break;
+		case Common::kPlatformPSX:
+			{
+				newEntity = loadEntityPsx(numEntity, isPlayer);
+			}
+			break;
+		default:
+			break;
+	}
+
+	return newEntity;
+}
+
+Entity *RE3Engine::loadEntityPc(int numEntity, int isPlayer) {
+	char filePath[64];
+	Common::SeekableReadStream *stream;
+	Entity *newEntity = nullptr;
+
+	// Load EMD model
+
+	if (isPlayer) {
+		// TODO: Different structure
+		return nullptr;
+	} else {
+		sprintf(filePath, RE3PC_MODEL, numEntity, "emd");
+	}
+	debug(3, "re3: loadEntityPc(\"%s\")", filePath);
+
+	stream = SearchMan.createReadStreamForMember(filePath);
+	if (stream) {
+		newEntity = (Entity *) new RE3Entity(stream);
+	}
+	delete stream;
+
+	// Load TIM texture
+
+	if (isPlayer) {
+		// TODO: TIM file embedded in pld file
+	} else {
+		sprintf(filePath, RE3PC_MODEL, numEntity, "tim");
+		debug(3, "re2: loadEntityPc(\"%s\")", filePath);
+
+		stream = SearchMan.createReadStreamForMember(filePath);
+		if (newEntity && stream) {
+			newEntity->timTexture = new TimDecoder();
+			newEntity->timTexture->loadStream(*stream);
+		}
+		delete stream;
+	}
+
+	return newEntity;
+}
+
+Entity *RE3Engine::loadEntityPsx(int numEntity, int isPlayer) {
+	return nullptr;
 }
 
 } // end of namespace Reevengi

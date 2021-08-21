@@ -29,6 +29,7 @@ MODULE_OBJS := \
 	re2/entity.o \
 	re2/room.o \
 	re3/re3.o \
+	re3/entity.o \
 	re3/room.o
 
 # This module can be built as a plugin
