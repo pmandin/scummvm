@@ -230,9 +230,9 @@ void RE3Entity::drawMesh(int numMesh) {
 	uint16 clutid = 255, new_clutid;
 
 	/*debug(3, "mesh: %d vtx (%04x)", FROM_LE_32(emd_mesh->vtx_count), FROM_LE_32(emd_mesh->vtx_offset));
-	debug(3, "mesh: %d nor (%04x)", FROM_LE_32(emd_mesh->nor_count), FROM_LE_32(emd_mesh->nor_offset));
-	debug(3, "mesh: %d tri (%04x)", FROM_LE_32(emd_mesh->mesh_count), FROM_LE_32(emd_mesh->mesh_offset));
-	debug(3, "mesh:    tex (%04x)", FROM_LE_32(emd_mesh->tex_offset));*/
+	debug(3, "mesh:    nor (%04x)", FROM_LE_32(emd_mesh->nor_offset));
+	debug(3, "mesh: %d tri (%04x)", FROM_LE_32(emd_mesh->tri_count), FROM_LE_32(emd_mesh->tri_offset));
+	debug(3, "mesh: %d quad (%04x)", FROM_LE_32(emd_mesh->quad_count), FROM_LE_32(emd_mesh->quad_offset));*/
 
 	/* Draw triangles */
 	for (i=0; i<FROM_LE_32(emd_mesh->tri_count); i++) {
@@ -266,13 +266,12 @@ void RE3Entity::drawMesh(int numMesh) {
 			(float) (emd_tri[i].tu0 + tx_page) / tx_w,
 			(float) emd_tri[i].tv0 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_tri[i].v0);
+		idx_vtx = idx_nor = FROM_LE_16(emd_tri[i].v0);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
-		idx_vtx = FROM_LE_16(emd_tri[i].v0);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
@@ -283,13 +282,12 @@ void RE3Entity::drawMesh(int numMesh) {
 			(float) (emd_tri[i].tu1 + tx_page) / tx_w,
 			(float) emd_tri[i].tv1 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_tri[i].v1);
+		idx_vtx = idx_nor = FROM_LE_16(emd_tri[i].v1);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
-		idx_vtx = FROM_LE_16(emd_tri[i].v1);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
@@ -300,13 +298,12 @@ void RE3Entity::drawMesh(int numMesh) {
 			(float) (emd_tri[i].tu2 + tx_page) / tx_w,
 			(float) emd_tri[i].tv2 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_tri[i].v2);
+		idx_vtx = idx_nor = FROM_LE_16(emd_tri[i].v2);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
-		idx_vtx = FROM_LE_16(emd_tri[i].v2);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
@@ -317,7 +314,6 @@ void RE3Entity::drawMesh(int numMesh) {
 	}
 
 	/* Draw quads */
-	emd_mesh++;
 	for (i=0; i<FROM_LE_32(emd_mesh->quad_count); i++) {
 		emd_vertex_t *emd_vtx, *emd_nor;
 		emd_quad_t *emd_quad;
@@ -349,13 +345,12 @@ void RE3Entity::drawMesh(int numMesh) {
 			(float) (emd_quad[i].tu0 + tx_page) / tx_w,
 			(float) emd_quad[i].tv0 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].v0);
+		idx_vtx = idx_nor = FROM_LE_16(emd_quad[i].v0);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
-		idx_vtx = FROM_LE_16(emd_quad[i].v0);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
@@ -366,13 +361,12 @@ void RE3Entity::drawMesh(int numMesh) {
 			(float) (emd_quad[i].tu1 + tx_page) / tx_w,
 			(float) emd_quad[i].tv1 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].v1);
+		idx_vtx = idx_nor = FROM_LE_16(emd_quad[i].v1);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
-		idx_vtx = FROM_LE_16(emd_quad[i].v1);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
@@ -383,13 +377,12 @@ void RE3Entity::drawMesh(int numMesh) {
 			(float) (emd_quad[i].tu3 + tx_page) / tx_w,
 			(float) emd_quad[i].tv3 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].v3);
+		idx_vtx = idx_nor = FROM_LE_16(emd_quad[i].v3);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
-		idx_vtx = FROM_LE_16(emd_quad[i].v3);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
@@ -400,13 +393,12 @@ void RE3Entity::drawMesh(int numMesh) {
 			(float) (emd_quad[i].tu2 + tx_page) / tx_w,
 			(float) emd_quad[i].tv2 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].v2);
+		idx_vtx = idx_nor = FROM_LE_16(emd_quad[i].v2);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
-		idx_vtx = FROM_LE_16(emd_quad[i].v2);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
