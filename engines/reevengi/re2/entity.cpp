@@ -117,6 +117,7 @@ typedef struct {
 	uint16 dummy;
 } emd_triangle_tex_t;
 
+/* NOTE: Quad draw order: vtx 0,1,3,2 */
 typedef struct {
 	uint16	n0,v0;
 	uint16	n1,v1;
@@ -241,6 +242,11 @@ void RE2Entity::drawMesh(int numMesh) {
 	}
 
 	uint16 clutid = 255, new_clutid;
+
+	/*debug(3, "mesh: %d vtx (%04x)", FROM_LE_32(emd_mesh->vtx_count), FROM_LE_32(emd_mesh->vtx_offset));
+	debug(3, "mesh: %d nor (%04x)", FROM_LE_32(emd_mesh->nor_count), FROM_LE_32(emd_mesh->nor_offset));
+	debug(3, "mesh: %d tri (%04x)", FROM_LE_32(emd_mesh->mesh_count), FROM_LE_32(emd_mesh->mesh_offset));
+	debug(3, "mesh:    tex (%04x)", FROM_LE_32(emd_mesh->tex_offset));*/
 
 	/* Draw triangles */
 	for (i=0; i<FROM_LE_32(emd_mesh->mesh_count); i++) {
@@ -398,23 +404,6 @@ void RE2Entity::drawMesh(int numMesh) {
 		);
 
 		g_driver->texCoord2f(
-			(float) (emd_quad_tex[i].tu2 + tx_page) / tx_w,
-			(float) emd_quad_tex[i].tv2 / tx_h
-		);
-		idx_nor = FROM_LE_16(emd_quad[i].n2);
-		g_driver->normal3f(
-			(int16) FROM_LE_16(emd_nor[idx_nor].x),
-			(int16) FROM_LE_16(emd_nor[idx_nor].y),
-			(int16) FROM_LE_16(emd_nor[idx_nor].z)
-		);
-		idx_vtx = FROM_LE_16(emd_quad[i].v2);
-		g_driver->vertex3f(
-			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
-			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
-			(int16) FROM_LE_16(emd_vtx[idx_vtx].z)
-		);
-
-		g_driver->texCoord2f(
 			(float) (emd_quad_tex[i].tu3 + tx_page) / tx_w,
 			(float) emd_quad_tex[i].tv3 / tx_h
 		);
@@ -425,6 +414,23 @@ void RE2Entity::drawMesh(int numMesh) {
 			(int16) FROM_LE_16(emd_nor[idx_nor].z)
 		);
 		idx_vtx = FROM_LE_16(emd_quad[i].v3);
+		g_driver->vertex3f(
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
+			(int16) FROM_LE_16(emd_vtx[idx_vtx].z)
+		);
+
+		g_driver->texCoord2f(
+			(float) (emd_quad_tex[i].tu2 + tx_page) / tx_w,
+			(float) emd_quad_tex[i].tv2 / tx_h
+		);
+		idx_nor = FROM_LE_16(emd_quad[i].n2);
+		g_driver->normal3f(
+			(int16) FROM_LE_16(emd_nor[idx_nor].x),
+			(int16) FROM_LE_16(emd_nor[idx_nor].y),
+			(int16) FROM_LE_16(emd_nor[idx_nor].z)
+		);
+		idx_vtx = FROM_LE_16(emd_quad[i].v2);
 		g_driver->vertex3f(
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].x),
 			(int16) FROM_LE_16(emd_vtx[idx_vtx].y),
