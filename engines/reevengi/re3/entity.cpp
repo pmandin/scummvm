@@ -115,7 +115,7 @@ typedef struct {
 	uint16	dummy4;
 	uint16	tri_count;
 	uint16	quad_count;
-} emd_mesh_object_t;
+} emd_mesh_t;
 
 typedef struct {
 	uint32 length;
@@ -143,8 +143,6 @@ void *RE3Entity::getEmdSection(int numSection) {
 }
 
 int RE3Entity::getNumAnims(void) {
-	return 0;
-#if 0
 	emd_anim_header_t *emd_anim_header;
 
 	if (!_emdPtr)
@@ -153,12 +151,9 @@ int RE3Entity::getNumAnims(void) {
 	emd_anim_header = (emd_anim_header_t *) getEmdSection(EMD_ANIM_FRAMES);
 
 	return (FROM_LE_16(emd_anim_header->offset) / sizeof(emd_anim_header_t));
-#endif
 }
 
 int RE3Entity::getNumChildren(int numMesh) {
-	return 0;
-#if 0
 	emd_skel_header_t *emd_skel_header;
 	emd_skel_data_t *emd_skel_data;
 
@@ -172,12 +167,9 @@ int RE3Entity::getNumChildren(int numMesh) {
 		(&((char *) (emd_skel_header))[FROM_LE_16(emd_skel_header->relpos_offset)]);
 
 	return FROM_LE_16(emd_skel_data[numMesh].num_mesh);
-#endif
 }
 
 int RE3Entity::getChild(int numMesh, int numChild) {
-	return 0;
-#if 0
 	emd_skel_header_t *emd_skel_header;
 	emd_skel_data_t *emd_skel_data;
 	uint8 *mesh_numbers;
@@ -193,15 +185,13 @@ int RE3Entity::getChild(int numMesh, int numChild) {
 
 	mesh_numbers = (uint8 *) emd_skel_data;
 	return mesh_numbers[FROM_LE_16(emd_skel_data[numMesh].offset)+numChild];
-#endif
 }
 
 void RE3Entity::drawMesh(int numMesh) {
-#if 0
 	emd_skel_header_t *emd_skel_header;
 	emd_skel_relpos_t *emd_skel_relpos;
 	emd_mesh_header_t *emd_mesh_header;
-	emd_mesh_object_t *emd_mesh_array;
+	emd_mesh_t *emd_mesh_array;
 	emd_mesh_t *emd_mesh;
 	uint i, tx_w, tx_h;
 
@@ -223,7 +213,7 @@ void RE3Entity::drawMesh(int numMesh) {
 
 	/* Offset 7: Meshes */
 	emd_mesh_header = (emd_mesh_header_t *) getEmdSection(EMD_MESHES);
-	emd_mesh_array = (emd_mesh_object_t *) &emd_mesh_header[1];
+	emd_mesh_array = (emd_mesh_t *) &emd_mesh_header[1];
 	emd_mesh = (emd_mesh_t *) &emd_mesh_array[numMesh];
 
 	/* Texture dimensions */
@@ -245,10 +235,9 @@ void RE3Entity::drawMesh(int numMesh) {
 	debug(3, "mesh:    tex (%04x)", FROM_LE_32(emd_mesh->tex_offset));*/
 
 	/* Draw triangles */
-	for (i=0; i<FROM_LE_32(emd_mesh->mesh_count); i++) {
+	for (i=0; i<FROM_LE_32(emd_mesh->tri_count); i++) {
 		emd_vertex_t *emd_vtx, *emd_nor;
 		emd_triangle_t *emd_tri;
-		emd_triangle_tex_t *emd_tri_tex;
 		int idx_vtx, idx_nor, tx_page;
 
 		/* Vertex array */
@@ -259,17 +248,13 @@ void RE3Entity::drawMesh(int numMesh) {
 		emd_nor = (emd_vertex_t *)
 			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->nor_offset)]);
 
-		/* Vertices,normal index */
+		/* Vertices,normal index, texcoord */
 		emd_tri = (emd_triangle_t *)
-			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->mesh_offset)]);
+			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->tri_offset)]);
 
-		/* Texcoord array */
-		emd_tri_tex = (emd_triangle_tex_t *)
-			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->tex_offset)]);
+		tx_page = (FROM_LE_16(emd_tri[i].page)<<1) & 0xff;
 
-		tx_page = (FROM_LE_16(emd_tri_tex[i].page)<<1) & 0xff;
-
-		new_clutid = FROM_LE_16(emd_tri_tex[i].clutid) & 3;
+		new_clutid = FROM_LE_16(emd_tri[i].clutid) & 3;
 		if (clutid != new_clutid) {
 			setTexture(new_clutid);
 			clutid = new_clutid;
@@ -278,10 +263,10 @@ void RE3Entity::drawMesh(int numMesh) {
 		g_driver->beginTriangles();
 
 		g_driver->texCoord2f(
-			(float) (emd_tri_tex[i].tu0 + tx_page) / tx_w,
-			(float) emd_tri_tex[i].tv0 / tx_h
+			(float) (emd_tri[i].tu0 + tx_page) / tx_w,
+			(float) emd_tri[i].tv0 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_tri[i].n0);
+		idx_nor = FROM_LE_16(emd_tri[i].v0);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
@@ -295,10 +280,10 @@ void RE3Entity::drawMesh(int numMesh) {
 		);
 
 		g_driver->texCoord2f(
-			(float) (emd_tri_tex[i].tu1 + tx_page) / tx_w,
-			(float) emd_tri_tex[i].tv1 / tx_h
+			(float) (emd_tri[i].tu1 + tx_page) / tx_w,
+			(float) emd_tri[i].tv1 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_tri[i].n1);
+		idx_nor = FROM_LE_16(emd_tri[i].v1);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
@@ -312,10 +297,10 @@ void RE3Entity::drawMesh(int numMesh) {
 		);
 
 		g_driver->texCoord2f(
-			(float) (emd_tri_tex[i].tu2 + tx_page) / tx_w,
-			(float) emd_tri_tex[i].tv2 / tx_h
+			(float) (emd_tri[i].tu2 + tx_page) / tx_w,
+			(float) emd_tri[i].tv2 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_tri[i].n2);
+		idx_nor = FROM_LE_16(emd_tri[i].v2);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
@@ -333,10 +318,9 @@ void RE3Entity::drawMesh(int numMesh) {
 
 	/* Draw quads */
 	emd_mesh++;
-	for (i=0; i<FROM_LE_32(emd_mesh->mesh_count); i++) {
+	for (i=0; i<FROM_LE_32(emd_mesh->quad_count); i++) {
 		emd_vertex_t *emd_vtx, *emd_nor;
 		emd_quad_t *emd_quad;
-		emd_quad_tex_t *emd_quad_tex;
 		int idx_vtx, idx_nor, tx_page;
 
 		/* Vertex array */
@@ -347,17 +331,13 @@ void RE3Entity::drawMesh(int numMesh) {
 		emd_nor = (emd_vertex_t *)
 			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->nor_offset)]);
 
-		/* Vertices,normal index */
+		/* Vertices,normal index, texcoord */
 		emd_quad = (emd_quad_t *)
-			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->mesh_offset)]);
+			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->quad_offset)]);
 
-		/* Texcoord array */
-		emd_quad_tex = (emd_quad_tex_t *)
-			(&((char *) emd_mesh_array)[FROM_LE_32(emd_mesh->tex_offset)]);
+		tx_page = (FROM_LE_16(emd_quad[i].page)<<1) & 0xff;
 
-		tx_page = (FROM_LE_16(emd_quad_tex[i].page)<<1) & 0xff;
-
-		new_clutid = FROM_LE_16(emd_quad_tex[i].clutid) & 3;
+		new_clutid = FROM_LE_16(emd_quad[i].clutid) & 3;
 		if (clutid != new_clutid) {
 			setTexture(new_clutid);
 			clutid = new_clutid;
@@ -366,10 +346,10 @@ void RE3Entity::drawMesh(int numMesh) {
 		g_driver->beginQuads();
 
 		g_driver->texCoord2f(
-			(float) (emd_quad_tex[i].tu0 + tx_page) / tx_w,
-			(float) emd_quad_tex[i].tv0 / tx_h
+			(float) (emd_quad[i].tu0 + tx_page) / tx_w,
+			(float) emd_quad[i].tv0 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].n0);
+		idx_nor = FROM_LE_16(emd_quad[i].v0);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
@@ -383,10 +363,10 @@ void RE3Entity::drawMesh(int numMesh) {
 		);
 
 		g_driver->texCoord2f(
-			(float) (emd_quad_tex[i].tu1 + tx_page) / tx_w,
-			(float) emd_quad_tex[i].tv1 / tx_h
+			(float) (emd_quad[i].tu1 + tx_page) / tx_w,
+			(float) emd_quad[i].tv1 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].n1);
+		idx_nor = FROM_LE_16(emd_quad[i].v1);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
@@ -400,10 +380,10 @@ void RE3Entity::drawMesh(int numMesh) {
 		);
 
 		g_driver->texCoord2f(
-			(float) (emd_quad_tex[i].tu3 + tx_page) / tx_w,
-			(float) emd_quad_tex[i].tv3 / tx_h
+			(float) (emd_quad[i].tu3 + tx_page) / tx_w,
+			(float) emd_quad[i].tv3 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].n3);
+		idx_nor = FROM_LE_16(emd_quad[i].v3);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
@@ -417,10 +397,10 @@ void RE3Entity::drawMesh(int numMesh) {
 		);
 
 		g_driver->texCoord2f(
-			(float) (emd_quad_tex[i].tu2 + tx_page) / tx_w,
-			(float) emd_quad_tex[i].tv2 / tx_h
+			(float) (emd_quad[i].tu2 + tx_page) / tx_w,
+			(float) emd_quad[i].tv2 / tx_h
 		);
-		idx_nor = FROM_LE_16(emd_quad[i].n2);
+		idx_nor = FROM_LE_16(emd_quad[i].v2);
 		g_driver->normal3f(
 			(int16) FROM_LE_16(emd_nor[idx_nor].x),
 			(int16) FROM_LE_16(emd_nor[idx_nor].y),
@@ -435,7 +415,6 @@ void RE3Entity::drawMesh(int numMesh) {
 
 		g_driver->endPrim();
 	}
-#endif
 }
 
 } // End of namespace Reevengi
