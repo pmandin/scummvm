@@ -24,7 +24,7 @@
 #define REEVENGI_RE2ENTITY_H
 
 #include "common/stream.h"
-#include "math/vector2d.h"
+//#include "math/vector2d.h"
 
 #include "engines/reevengi/game/entity.h"
 
