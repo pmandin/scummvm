@@ -8,6 +8,7 @@ MODULE_OBJS := \
 	formats/ard.o \
 	formats/bss.o \
 	formats/bss_sld.o \
+	formats/ems.o \
 	formats/pak.o \
 	formats/rofs.o \
 	formats/sld.o \

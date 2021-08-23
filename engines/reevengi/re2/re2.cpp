@@ -28,6 +28,7 @@
 #include "engines/reevengi/formats/adt.h"
 #include "engines/reevengi/formats/bss.h"
 #include "engines/reevengi/formats/bss_sld.h"
+#include "engines/reevengi/formats/ems.h"
 #include "engines/reevengi/re2/re2.h"
 #include "engines/reevengi/re2/entity.h"
 #include "engines/reevengi/re2/entity_emd.h"
@@ -49,9 +50,12 @@ static const char *RE2PC_MODEL1 = "pl%d/pld/pl%02x.pld";
 static const char *RE2PC_MODEL2 = "pl%d/emd%d/em%d%02x.%s";
 
 static const char *RE2PSX_MODEL1 = "pl%d/pld/pl%02x.pld";
+static const char *RE2PSX_MODEL2 = "pl%d/pld/cdemd%d.ems";
 
 RE2Engine::RE2Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
-		ReevengiEngine(syst, gameType, desc), _country('u') {
+		ReevengiEngine(syst, gameType, desc), _country('u'),
+		_emsArchive0(nullptr), _emsStream0(nullptr),
+		_emsArchive1(nullptr), _emsStream1(nullptr) {
 	if (gameType == RType_RE2_CLAIRE) {
 		_character = 1;
 	}
@@ -59,9 +63,18 @@ RE2Engine::RE2Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescr
 	/* Game B: start in room 4 */
 
 	/* Demo: only stage 1 and 2 */
+
+	/*_playerX = -19025.0f;
+	_playerY = 200.0f;
+	_playerZ = -20861.0f;
+	_playerA = 337.0f;*/
 }
 
 RE2Engine::~RE2Engine() {
+	delete _emsArchive0;
+	delete _emsStream0;
+	delete _emsArchive1;
+	delete _emsStream1;
 }
 
 void RE2Engine::initPreRun(void) {
@@ -84,7 +97,6 @@ void RE2Engine::initPreRun(void) {
 	if (SearchMan.hasFile(filePath)) {
 		_country = 't';
 	}
-
 }
 
 void RE2Engine::loadBgImage(void) {
@@ -444,28 +456,74 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 
 	if (isPlayer) {
 		sprintf(filePath, RE2PSX_MODEL1, _character, numEntity);
-	} else {
-		// TODO: Handle ems archive
-		return nullptr;
-	}
-	debug(3, "re2: loadEntityPsx(\"%s\")", filePath);
 
-	stream = SearchMan.createReadStreamForMember(filePath);
-	if (stream) {
-		if (isPlayer) {
+		debug(3, "re2: loadEntityPsx(\"%s\")", filePath);
+
+		stream = SearchMan.createReadStreamForMember(filePath);
+		if (stream) {
 			newEntity = (Entity *) new RE2EntityPld(stream);
-		} else {
-			// TODO: Handle ems archive
 		}
-	}
-	delete stream;
-
-	// Load TIM texture
-
-	if (isPlayer) {
-		// TIM file embedded in pld file
+		delete stream;
 	} else {
-		// TODO: Handle ems archive
+		if (!_emsArchive0) {
+			sprintf(filePath, RE2PSX_MODEL2, _character, 0);
+			_emsStream0 = SearchMan.createReadStreamForMember(filePath);
+			if (_emsStream0) {
+				_emsArchive0 = new EmsArchive(_emsStream0);
+			}
+		}
+
+		if (_emsArchive0) {
+			debug(3, "re2:ems0: loadEntityPsx(\"em0%02x.emd\")", numEntity);
+
+			// Load EMD
+			stream = _emsArchive0->createReadStreamForMember(numEntity, 0);
+			if (stream) {
+				newEntity = (Entity *) new RE2EntityEmd(stream);
+			}
+			delete stream;
+
+			// Load TIM
+			if (newEntity) {
+				debug(3, "re2:ems0: loadEntityPsx(\"em0%02x.tim\")", numEntity);
+
+				stream = _emsArchive0->createReadStreamForMember(numEntity, 1);
+				if (stream) {
+					newEntity->timTexture = new TimDecoder();
+					newEntity->timTexture->loadStream(*stream);
+				}
+				delete stream;
+			}
+		}
+
+		if (!_emsArchive1) {
+			sprintf(filePath, RE2PSX_MODEL2, _character, 1);
+			_emsStream1 = SearchMan.createReadStreamForMember(filePath);
+			if (_emsStream1) {
+				_emsArchive1 = new EmsArchive(_emsStream1);
+			}
+		}
+
+		if (_emsArchive1 && !newEntity) {
+			debug(3, "re2:ems1: loadEntityPsx(\"em0%02x.emd\")", numEntity);
+
+			stream = _emsArchive1->createReadStreamForMember(numEntity, 0);
+			if (stream) {
+				newEntity = (Entity *) new RE2EntityEmd(stream);
+			}
+			delete stream;
+
+			if (newEntity) {
+				debug(3, "re2:ems1: loadEntityPsx(\"em0%02x.tim\")", numEntity);
+
+				stream = _emsArchive1->createReadStreamForMember(numEntity, 1);
+				if (stream) {
+					newEntity->timTexture = new TimDecoder();
+					newEntity->timTexture->loadStream(*stream);
+				}
+				delete stream;
+			}
+		}
 	}
 
 	return newEntity;

@@ -26,6 +26,7 @@
 #include "engines/advancedDetector.h"
 
 #include "engines/reevengi/reevengi.h"
+#include "engines/reevengi/formats/ems.h"
 #include "engines/reevengi/game/entity.h"
 
 namespace Reevengi {
@@ -44,6 +45,8 @@ protected:
 
 private:
 	char _country;
+	Common::SeekableReadStream *_emsStream0, *_emsStream1;
+	EmsArchive *_emsArchive0, *_emsArchive1;
 
 	void loadBgImagePcDemo(void);
 	void loadBgImagePcGame(void);
