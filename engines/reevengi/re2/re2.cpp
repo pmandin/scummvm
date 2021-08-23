@@ -48,6 +48,8 @@ static const char *RE2PSX_BG = "common/bss/room%d%02x.bss";
 static const char *RE2PC_MODEL1 = "pl%d/pld/pl%02x.pld";
 static const char *RE2PC_MODEL2 = "pl%d/emd%d/em%d%02x.%s";
 
+static const char *RE2PSX_MODEL1 = "pl%d/pld/pl%02x.pld";
+
 RE2Engine::RE2Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc), _country('u') {
 	if (gameType == RType_RE2_CLAIRE) {
@@ -434,7 +436,39 @@ Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
 }
 
 Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
-	return nullptr;
+	char filePath[64];
+	Common::SeekableReadStream *stream;
+	Entity *newEntity = nullptr;
+
+	// Load EMD model
+
+	if (isPlayer) {
+		sprintf(filePath, RE2PSX_MODEL1, _character, numEntity);
+	} else {
+		// TODO: Handle ems archive
+		return nullptr;
+	}
+	debug(3, "re2: loadEntityPsx(\"%s\")", filePath);
+
+	stream = SearchMan.createReadStreamForMember(filePath);
+	if (stream) {
+		if (isPlayer) {
+			newEntity = (Entity *) new RE2EntityPld(stream);
+		} else {
+			// TODO: Handle ems archive
+		}
+	}
+	delete stream;
+
+	// Load TIM texture
+
+	if (isPlayer) {
+		// TIM file embedded in pld file
+	} else {
+		// TODO: Handle ems archive
+	}
+
+	return newEntity;
 }
 
 } // end of namespace Reevengi
