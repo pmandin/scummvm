@@ -20,36 +20,36 @@
  *
  */
 
-#ifndef REEVENGI_RE2ENTITY_H
-#define REEVENGI_RE2ENTITY_H
+#include "common/debug.h"
+//#include "common/file.h"
+#include "common/memstream.h"
 
-#include "common/stream.h"
-//#include "math/vector2d.h"
-
-#include "engines/reevengi/game/entity.h"
+#include "engines/reevengi/gfx/gfx_base.h"
+#include "engines/reevengi/re2/entity_emd.h"
 
 namespace Reevengi {
 
-class RE2Entity : public Entity {
-public:
-	RE2Entity(Common::SeekableReadStream *stream);
+/*--- Defines ---*/
 
-protected:
-	static const int ENTITY_ANIM_FRAMES=0;
-	static const int ENTITY_SKELETON=1;
-	static const int ENTITY_MESHES=2;
-	static const int ENTITY_TEXTURE=3;
+#define EMD_ANIM_FRAMES 1
+#define EMD_SKELETON 2
+#define EMD_MESHES 7
 
-	virtual int getNumSection(int sectionType);
-	void *getEmdSection(int numSection) override;
+RE2EntityEmd::RE2EntityEmd(Common::SeekableReadStream *stream): RE2Entity(stream) {
+	//
+}
 
-	int getNumAnims(void) override;
-	int getNumChildren(int numMesh) override;
-	int getChild(int numMesh, int numChild) override;
+int RE2EntityEmd::getNumSection(int sectionType) {
+	switch (sectionType) {
+		case ENTITY_ANIM_FRAMES:
+			return EMD_ANIM_FRAMES;
+		case ENTITY_SKELETON:
+			return EMD_SKELETON;
+		case ENTITY_MESHES:
+			return EMD_MESHES;
+	}
 
-	void drawMesh(int numMesh) override;
-};
+	return -1;
+}
 
 } // End of namespace Reevengi
-
-#endif

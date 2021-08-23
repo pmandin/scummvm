@@ -20,34 +20,21 @@
  *
  */
 
-#ifndef REEVENGI_RE2ENTITY_H
-#define REEVENGI_RE2ENTITY_H
+#ifndef REEVENGI_RE2ENTITY_PLD_H
+#define REEVENGI_RE2ENTITY_PLD_H
 
 #include "common/stream.h"
-//#include "math/vector2d.h"
 
-#include "engines/reevengi/game/entity.h"
+#include "engines/reevengi/re2/entity.h"
 
 namespace Reevengi {
 
-class RE2Entity : public Entity {
+class RE2EntityPld : public RE2Entity {
 public:
-	RE2Entity(Common::SeekableReadStream *stream);
+	RE2EntityPld(Common::SeekableReadStream *stream);
 
 protected:
-	static const int ENTITY_ANIM_FRAMES=0;
-	static const int ENTITY_SKELETON=1;
-	static const int ENTITY_MESHES=2;
-	static const int ENTITY_TEXTURE=3;
-
-	virtual int getNumSection(int sectionType);
-	void *getEmdSection(int numSection) override;
-
-	int getNumAnims(void) override;
-	int getNumChildren(int numMesh) override;
-	int getChild(int numMesh, int numChild) override;
-
-	void drawMesh(int numMesh) override;
+	int getNumSection(int sectionType) override;
 };
 
 } // End of namespace Reevengi
