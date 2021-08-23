@@ -140,11 +140,17 @@ RE2Entity::RE2Entity(Common::SeekableReadStream *stream): Entity(stream) {
 	//
 }
 
+int RE2Entity::getNumSection(int sectionType) {
+	return -1;
+}
+
 void *RE2Entity::getEmdSection(int numSection) {
 	emd_header_t *emd_header;
 	uint32 *hdr_offsets;
 
 	if (!_emdPtr)
+		return nullptr;
+	if (numSection<0)
 		return nullptr;
 
 	emd_header = (emd_header_t *) _emdPtr;
@@ -162,7 +168,7 @@ int RE2Entity::getNumAnims(void) {
 	if (!_emdPtr)
 		return 0;
 
-	emd_anim_header = (emd_anim_header_t *) getEmdSection(EMD_ANIM_FRAMES);
+	emd_anim_header = (emd_anim_header_t *) getEmdSection(getNumSection(ENTITY_ANIM_FRAMES));
 
 	return (FROM_LE_16(emd_anim_header->offset) / sizeof(emd_anim_header_t));
 }
@@ -175,7 +181,7 @@ int RE2Entity::getNumChildren(int numMesh) {
 		return 0;
 
 	/* Offset 2: Skeleton */
-	emd_skel_header = (emd_skel_header_t *) getEmdSection(EMD_SKELETON);
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(getNumSection(ENTITY_SKELETON));
 
 	emd_skel_data = (emd_skel_data_t *)
 		(&((char *) (emd_skel_header))[FROM_LE_16(emd_skel_header->relpos_offset)]);
@@ -192,7 +198,7 @@ int RE2Entity::getChild(int numMesh, int numChild) {
 		return 0;
 
 	/* Offset 2: Skeleton */
-	emd_skel_header = (emd_skel_header_t *) getEmdSection(EMD_SKELETON);
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(getNumSection(ENTITY_SKELETON));
 
 	emd_skel_data = (emd_skel_data_t *)
 		(&((char *) (emd_skel_header))[FROM_LE_16(emd_skel_header->relpos_offset)]);
@@ -213,7 +219,7 @@ void RE2Entity::drawMesh(int numMesh) {
 		return;
 
 	/* Offset 0: Skeleton */
-	emd_skel_header = (emd_skel_header_t *) getEmdSection(EMD_SKELETON);
+	emd_skel_header = (emd_skel_header_t *) getEmdSection(getNumSection(ENTITY_SKELETON));
 	emd_skel_relpos = (emd_skel_relpos_t *) &emd_skel_header[1];
 	emd_skel_relpos = &emd_skel_relpos[numMesh];
 
@@ -226,7 +232,7 @@ void RE2Entity::drawMesh(int numMesh) {
 	// TODO: Handle animation
 
 	/* Offset 7: Meshes */
-	emd_mesh_header = (emd_mesh_header_t *) getEmdSection(EMD_MESHES);
+	emd_mesh_header = (emd_mesh_header_t *) getEmdSection(getNumSection(ENTITY_MESHES));
 	emd_mesh_array = (emd_mesh_object_t *) &emd_mesh_header[1];
 	emd_mesh = (emd_mesh_t *) &emd_mesh_array[numMesh];
 

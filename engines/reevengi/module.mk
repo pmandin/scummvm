@@ -27,6 +27,8 @@ MODULE_OBJS := \
 	re1/room.o \
 	re2/re2.o \
 	re2/entity.o \
+	re2/entity_emd.o \
+	re2/entity_pld.o \
 	re2/room.o \
 	re3/re3.o \
 	re3/entity.o \

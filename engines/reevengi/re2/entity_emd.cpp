@@ -1,0 +1,55 @@
+/* ResidualVM - A 3D game interpreter
+ *
+ * ResidualVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the AUTHORS
+ * file distributed with this source distribution.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *
+ */
+
+#include "common/debug.h"
+//#include "common/file.h"
+#include "common/memstream.h"
+
+#include "engines/reevengi/gfx/gfx_base.h"
+#include "engines/reevengi/re2/entity_emd.h"
+
+namespace Reevengi {
+
+/*--- Defines ---*/
+
+#define EMD_ANIM_FRAMES 1
+#define EMD_SKELETON 2
+#define EMD_MESHES 7
+
+RE2EntityEmd::RE2EntityEmd(Common::SeekableReadStream *stream): RE2Entity(stream) {
+	//
+}
+
+int RE2EntityEmd::getNumSection(int sectionType) {
+	switch (sectionType) {
+		case ENTITY_ANIM_FRAMES:
+			return EMD_ANIM_FRAMES;
+		case ENTITY_SKELETON:
+			return EMD_SKELETON;
+		case ENTITY_MESHES:
+			return EMD_MESHES;
+	}
+
+	return -1;
+}
+
+} // End of namespace Reevengi

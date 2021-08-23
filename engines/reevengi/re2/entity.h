@@ -35,6 +35,12 @@ public:
 	RE2Entity(Common::SeekableReadStream *stream);
 
 protected:
+	static const int ENTITY_ANIM_FRAMES=0;
+	static const int ENTITY_SKELETON=1;
+	static const int ENTITY_MESHES=2;
+	static const int ENTITY_TEXTURE=3;
+
+	virtual int getNumSection(int sectionType);
 	void *getEmdSection(int numSection) override;
 
 	int getNumAnims(void) override;

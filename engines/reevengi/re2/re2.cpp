@@ -30,6 +30,8 @@
 #include "engines/reevengi/formats/bss_sld.h"
 #include "engines/reevengi/re2/re2.h"
 #include "engines/reevengi/re2/entity.h"
+#include "engines/reevengi/re2/entity_emd.h"
+#include "engines/reevengi/re2/entity_pld.h"
 #include "engines/reevengi/re2/room.h"
 
 namespace Reevengi {
@@ -397,8 +399,6 @@ Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
 
 	if (isPlayer) {
 		sprintf(filePath, RE2PC_MODEL1, _character, numEntity);
-		// TODO: Different structure
-		return nullptr;
 	} else {
 		sprintf(filePath, RE2PC_MODEL2, _character, _character, _character, numEntity, "emd");
 	}
@@ -406,14 +406,18 @@ Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
 
 	stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
-		newEntity = (Entity *) new RE2Entity(stream);
+		if (isPlayer) {
+			newEntity = (Entity *) new RE2EntityPld(stream);
+		} else {
+			newEntity = (Entity *) new RE2EntityEmd(stream);
+		}
 	}
 	delete stream;
 
 	// Load TIM texture
 
 	if (isPlayer) {
-		// TODO: TIM file embedded in pld file
+		// TIM file embedded in pld file
 	} else {
 		sprintf(filePath, RE2PC_MODEL2, _character, _character, _character, numEntity, "tim");
 		debug(3, "re2: loadEntityPc(\"%s\")", filePath);
