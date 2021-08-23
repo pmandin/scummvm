@@ -32,13 +32,12 @@ public:
 	EmsArchive(Common::SeekableReadStream *stream);
 	virtual ~EmsArchive();
 
-	Common::SeekableReadStream *createReadStreamForMember(int numFile) const;
+	Common::SeekableReadStream *createReadStreamForMember(int numModel, int fileType) const;
 
 private:
 	Common::SeekableReadStream *_stream;
-	int _numFiles;
 
-	void scanArchive(void);
+	//void scanArchive(void);
 };
 
 } // End of namespace Reevengi
