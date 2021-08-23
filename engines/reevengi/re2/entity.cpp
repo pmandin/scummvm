@@ -29,12 +29,6 @@
 
 namespace Reevengi {
 
-/*--- Defines ---*/
-
-#define EMD_ANIM_FRAMES 1
-#define EMD_SKELETON 2
-#define EMD_MESHES 7
-
 /*--- Types ---*/
 
 typedef struct {
