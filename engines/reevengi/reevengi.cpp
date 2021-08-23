@@ -231,6 +231,10 @@ void ReevengiEngine::processEvents(void) {
 				//StarkUserInterface->handleKeyPress(e.kbd);
 			}
 
+		} else if (e.type == Common::EVENT_JOYAXIS_MOTION) {
+			// TODO
+		} else if (e.type == Common::EVENT_JOYBUTTON_DOWN || e.type == Common::EVENT_JOYBUTTON_UP) {
+			// TODO
 		} else if (e.type == Common::EVENT_SCREEN_CHANGED) {
 			//debug(3, "onScreenChanged");
 			onScreenChanged();
