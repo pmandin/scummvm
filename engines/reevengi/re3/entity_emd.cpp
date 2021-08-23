@@ -20,36 +20,36 @@
  *
  */
 
-#ifndef REEVENGI_RE3ENTITY_H
-#define REEVENGI_RE3ENTITY_H
+#include "common/debug.h"
+//#include "common/file.h"
+#include "common/memstream.h"
 
-#include "common/stream.h"
-//#include "math/vector2d.h"
-
-#include "engines/reevengi/game/entity.h"
+#include "engines/reevengi/gfx/gfx_base.h"
+#include "engines/reevengi/re3/entity_emd.h"
 
 namespace Reevengi {
 
-class RE3Entity : public Entity {
-public:
-	RE3Entity(Common::SeekableReadStream *stream);
+/*--- Defines ---*/
 
-protected:
-	static const int ENTITY_ANIM_FRAMES=0;
-	static const int ENTITY_SKELETON=1;
-	static const int ENTITY_MESHES=2;
-	static const int ENTITY_TEXTURE=3;
+#define EMD_ANIM_FRAMES 2
+#define EMD_SKELETON 3
+#define EMD_MESHES 14
 
-	virtual int getNumSection(int sectionType);
-	void *getEmdSection(int numSection) override;
+RE3EntityEmd::RE3EntityEmd(Common::SeekableReadStream *stream): RE3Entity(stream) {
+	//
+}
 
-	int getNumAnims(void) override;
-	int getNumChildren(int numMesh) override;
-	int getChild(int numMesh, int numChild) override;
+int RE3EntityEmd::getNumSection(int sectionType) {
+	switch (sectionType) {
+		case ENTITY_ANIM_FRAMES:
+			return EMD_ANIM_FRAMES;
+		case ENTITY_SKELETON:
+			return EMD_SKELETON;
+		case ENTITY_MESHES:
+			return EMD_MESHES;
+	}
 
-	void drawMesh(int numMesh) override;
-};
+	return -1;
+}
 
 } // End of namespace Reevengi
-
-#endif

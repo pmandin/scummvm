@@ -34,6 +34,8 @@
 #include "engines/reevengi/formats/tim.h"
 #include "engines/reevengi/re3/re3.h"
 #include "engines/reevengi/re3/entity.h"
+#include "engines/reevengi/re3/entity_emd.h"
+#include "engines/reevengi/re3/entity_pld.h"
 #include "engines/reevengi/re3/room.h"
 
 namespace Reevengi {
@@ -48,7 +50,8 @@ static const char *RE3PC_ROOM = "data_%c/rdt/r%d%02x.rdt";
 static const char *RE3PSX_BG = "cd_data/stage%d/r%d%02x.bss";
 static const char *RE3PSX_ROOM = "cd_data/stage%d/r%d%02x.ard";
 
-static const char *RE3PC_MODEL = "room/emd/em%02x.%s";
+static const char *RE3PC_MODEL1 = "data/pld/pl%02x.pld";
+static const char *RE3PC_MODEL2 = "room/emd/em%02x.%s";
 
 RE3Engine::RE3Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc), _country('u') {
@@ -367,25 +370,28 @@ Entity *RE3Engine::loadEntityPc(int numEntity, int isPlayer) {
 	// Load EMD model
 
 	if (isPlayer) {
-		// TODO: Different structure
-		return nullptr;
+		sprintf(filePath, RE3PC_MODEL1, numEntity);
 	} else {
-		sprintf(filePath, RE3PC_MODEL, numEntity, "emd");
+		sprintf(filePath, RE3PC_MODEL2, numEntity, "emd");
 	}
 	debug(3, "re3: loadEntityPc(\"%s\")", filePath);
 
 	stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
-		newEntity = (Entity *) new RE3Entity(stream);
+		if (isPlayer) {
+			newEntity = (Entity *) new RE3EntityPld(stream);
+		} else {
+			newEntity = (Entity *) new RE3EntityEmd(stream);
+		}
 	}
 	delete stream;
 
 	// Load TIM texture
 
 	if (isPlayer) {
-		// TODO: TIM file embedded in pld file
+		// NOTE: TIM file embedded in pld file
 	} else {
-		sprintf(filePath, RE3PC_MODEL, numEntity, "tim");
+		sprintf(filePath, RE3PC_MODEL2, numEntity, "tim");
 		debug(3, "re2: loadEntityPc(\"%s\")", filePath);
 
 		stream = SearchMan.createReadStreamForMember(filePath);
