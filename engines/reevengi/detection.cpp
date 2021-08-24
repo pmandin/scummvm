@@ -102,6 +102,7 @@ static const ReevengiGameDescription gameDescriptions[] = {
 	REEVENGI_ENTRY("re2", ADGF_DEMO, Common::JA_JPN, Common::kPlatformPSX, "slps_009.99", "Trial Edition", RType_RE2_LEON)
 	REEVENGI_ENTRY("re2", ADGF_DEMO, Common::EN_USA, Common::kPlatformPSX, "slus_900.09", "Preview", RType_RE2_LEON)
 	REEVENGI_ENTRY("re2", ADGF_DEMO, Common::EN_GRB, Common::kPlatformPSX, "sced_011.14", "Preview", RType_RE2_LEON)
+	REEVENGI_ENTRY("re2", ADGF_DEMO, Common::EN_GRB, Common::kPlatformPSX, "psx.exe", "Beta v2", RType_RE2_LEON)
 	REEVENGI_ENTRY("re2", ADGF_NO_FLAGS, Common::EN_GRB, Common::kPlatformPSX, "sles_009.72", "Leon", RType_RE2_LEON)
 	REEVENGI_ENTRY("re2", ADGF_NO_FLAGS, Common::FR_FRA, Common::kPlatformPSX, "sles_009.73", "Leon", RType_RE2_LEON)
 	REEVENGI_ENTRY("re2", ADGF_NO_FLAGS, Common::DE_DEU, Common::kPlatformPSX, "sles_009.74", "Leon", RType_RE2_LEON)
