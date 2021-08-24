@@ -1037,6 +1037,13 @@ void EmsArchive::scanArchive(void) {
 					myStart, myStart + length);
 
 				debug(3, "\t{\"%s\", 0x00, 1, %d, 0}, /* 0x%08x */", computeStreamMD5AsString(*subStream).c_str(), length, myStart);
+
+				if ((length & 0x7ff)!=0) {
+					length &= -0x800;
+				} else {
+					length -= 0x800;
+				}
+				startOffset = myStart + length;
 			}
 		} else if (tmp>=0x100) {
 			/* EMD file */
@@ -1050,6 +1057,13 @@ void EmsArchive::scanArchive(void) {
 					myStart, myStart + length);
 
 				debug(3, "\t{\"%s\", 0x00, 0, %d, 0}, /* 0x%08x */", computeStreamMD5AsString(*subStream).c_str(), length, myStart);
+
+				if ((length & 0x7ff)!=0) {
+					length &= -0x800;
+				} else {
+					length -= 0x800;
+				}
+				startOffset = myStart + length;
 			}
 		}
 	}
