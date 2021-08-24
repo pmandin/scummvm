@@ -465,9 +465,15 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 		}
 		delete stream;
 	} else {
+		int numCdEmd = -1;
+
 		if (!_emsArchive0) {
-			sprintf(filePath, RE2PSX_MODEL2, _character, 0);
+			sprintf(filePath, RE2PSX_MODEL2, _character, ++numCdEmd);
 			_emsStream0 = SearchMan.createReadStreamForMember(filePath);
+			while ((!_emsStream0) && (numCdEmd<8)) {
+				sprintf(filePath, RE2PSX_MODEL2, _character, ++numCdEmd);
+				_emsStream0 = SearchMan.createReadStreamForMember(filePath);
+			}
 			if (_emsStream0) {
 				_emsArchive0 = new EmsArchive(_emsStream0);
 			}
@@ -497,8 +503,12 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 		}
 
 		if (!_emsArchive1) {
-			sprintf(filePath, RE2PSX_MODEL2, _character, 1);
+			sprintf(filePath, RE2PSX_MODEL2, _character, ++numCdEmd);
 			_emsStream1 = SearchMan.createReadStreamForMember(filePath);
+			while ((!_emsStream1) && (numCdEmd<8)) {
+				sprintf(filePath, RE2PSX_MODEL2, _character, ++numCdEmd);
+				_emsStream1 = SearchMan.createReadStreamForMember(filePath);
+			}
 			if (_emsStream1) {
 				_emsArchive1 = new EmsArchive(_emsStream1);
 			}
