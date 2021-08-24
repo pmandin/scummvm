@@ -37,7 +37,7 @@ public:
 private:
 	Common::SeekableReadStream *_stream;
 
-	//void scanArchive(void);
+	void scanArchive(void);
 };
 
 } // End of namespace Reevengi
