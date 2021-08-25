@@ -21,40 +21,30 @@ sub GenerateDefines {
 }
 
 sub GenerateTypeFields {
-	my ($node) = @_
+	my ($node) = @_;
 
 	foreach my $child ( $node->getChildnodes ) {
-        if ( $child->nodeType() != XML_ELEMENT_NODE ) {
+		if ( $child->nodeType() != XML_ELEMENT_NODE ) {
 			next;
-        }
-
-        print "\t", $child->nodeName(), ":", $child->textContent(), "\n";
-    }
-/*
-	for (child = node->children; child; child = child->next) {
-		if (child->type != XML_ELEMENT_NODE) {
-			continue;
+		}
+		if ( $child->nodeName ne "field" ) {
+			next;
 		}
 
-		if (strcmp(child->name, "field")!=0) {
-			continue;
-		}
+		my $field_name = $child->getAttribute('name');
+		my $field_type = $child->getAttribute('type');
+		my $field_array = $child->getAttribute('array');
 
-		field_name = xmlGetProp(child, "name");
-		field_type = xmlGetProp(child, "type");
-		field_array = xmlGetProp(child, "array");
-
-		if (strcmp(field_type, "union")==0) {
-			printf("\t%s_u\t%s;\n", field_name, field_name);
+		if ( $field_type eq "union" ) {
+			printf("\t%s_u\t%s;\n", $field_name, $field_name);
 		} else {
-			if (field_array) {
-				printf("\t%s\t%s[%s];\n", field_type, field_name, field_array);
+			if ($field_array) {
+				printf("\t%s\t%s[%s];\n", lc $field_type, $field_name, $field_array);
 			} else {
-				printf("\t%s\t%s;\n", field_type, field_name);
+				printf("\t%s\t%s;\n", lc $field_type, $field_name);
 			}
 		}
 	}
-*/
 }
 
 sub GenerateTypes {
@@ -70,7 +60,7 @@ sub GenerateTypes {
 
 		printf(	"\n".
 			"typedef struct {\n");
-		GenerateTypeFields($e);
+		&GenerateTypeFields($e);
 		printf("} script_inst_%s_t;\n", $inst_name_low);
 	}
 
@@ -109,10 +99,10 @@ my $dom = XML::LibXML->load_xml(
 #}
 
 if ($ARGV[1] eq "--defines") {
-	GenerateDefines( $dom );
+	&GenerateDefines( $dom );
 }
 if ($ARGV[1] eq "--types") {
-	GenerateTypes( $dom );
+	&GenerateTypes( $dom );
 }
 if ($ARGV[1] eq "--enums") {
 	print "enums\n";
