@@ -84,6 +84,56 @@ sub GenerateTypes {
 	printf("};\n");
 }
 
+sub GenerateEnumValues {
+	my ($node) = @_;
+	my $first_value = 1;
+
+	foreach my $child ( $node->getChildnodes ) {
+		if ( $child->nodeType() != XML_ELEMENT_NODE ) {
+			next;
+		}
+
+		if ( $child->nodeName ne "value") {
+			continue;
+		}
+
+		my $value_name = $child->getAttribute('name');
+		my $value_id = $child->getAttribute('id');
+
+		printf("\t%s{%s,\t\"%s\"}\n",
+			$first_value ? "" : ",",
+			$value_id, $value_name);
+
+		$first_value = 0;
+	}
+}
+
+sub GenerateEnums {
+	my ($xml) = @_;
+
+	printf(	"\n".
+		"/* Enums */\n".
+		"\n".
+		"typedef struct {\n".
+		"\tuint8 id;\n".
+		"\tconst char *name;\n".
+		"} scd_enum_t;\n");
+
+	my $nodes= $xml->findnodes( "/scd/*");
+	foreach my $e (@$nodes) {
+		if ($e->nodeName ne "enum") {
+			next;
+		}
+
+		my $enum_name = $e->getAttribute('name');
+
+		printf(	"\n".
+			"static const scd_enum_t scd_enum_%s_names[]={\n", $enum_name);
+		&GenerateEnumValues( $e );
+		printf("};\n");
+	}
+}
+
 # Read parameters
 if (scalar(@ARGV)<2) {
 	printf STDERR "Parameters: xml2scl.pl /path/to/scdN.xml [--defines|--types|--enums|--dumps|--lengths|--rewiki]\n";
@@ -105,7 +155,7 @@ if ($ARGV[1] eq "--types") {
 	&GenerateTypes( $dom );
 }
 if ($ARGV[1] eq "--enums") {
-	print "enums\n";
+	&GenerateEnums( $dom );
 }
 if ($ARGV[1] eq "--dumps") {
 	print "dumps\n";
