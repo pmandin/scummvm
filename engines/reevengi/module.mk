@@ -14,6 +14,7 @@ MODULE_OBJS := \
 	formats/sld.o \
 	formats/tim.o \
 	game/clock.o \
+	game/door.o \
 	game/entity.o \
 	game/room.o \
 	gfx/gfx_base.o \
