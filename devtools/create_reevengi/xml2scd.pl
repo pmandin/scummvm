@@ -22,6 +22,39 @@ sub GenerateDefines {
 
 sub GenerateTypeFields {
 	my ($node) = @_
+
+	foreach my $child ( $node->getChildnodes ) {
+        if ( $child->nodeType() != XML_ELEMENT_NODE ) {
+			next;
+        }
+
+        print "\t", $child->nodeName(), ":", $child->textContent(), "\n";
+    }
+/*
+	for (child = node->children; child; child = child->next) {
+		if (child->type != XML_ELEMENT_NODE) {
+			continue;
+		}
+
+		if (strcmp(child->name, "field")!=0) {
+			continue;
+		}
+
+		field_name = xmlGetProp(child, "name");
+		field_type = xmlGetProp(child, "type");
+		field_array = xmlGetProp(child, "array");
+
+		if (strcmp(field_type, "union")==0) {
+			printf("\t%s_u\t%s;\n", field_name, field_name);
+		} else {
+			if (field_array) {
+				printf("\t%s\t%s[%s];\n", field_type, field_name, field_array);
+			} else {
+				printf("\t%s\t%s;\n", field_type, field_name);
+			}
+		}
+	}
+*/
 }
 
 sub GenerateTypes {
