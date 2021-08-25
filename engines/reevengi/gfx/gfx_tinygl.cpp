@@ -192,6 +192,10 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 
 	// remove if already exist
 	if (_maskNumTex > 0) {
+		for (int i=0; i<_maskNumTex; i++) {
+			delete _maskBitmaps[i];
+		}
+		delete _maskBitmaps;
 		tglDeleteTextures(_maskNumTex, _maskTexIds);
 		delete[] _maskTexIds;
 		_maskNumTex = 0;
@@ -202,6 +206,7 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 	_maskNumTex = _maskTexPitch *
 				   ((height + (BITMAP_TEXTURE_SIZE - 1)) / BITMAP_TEXTURE_SIZE);
 	_maskTexIds = new TGLuint[_maskNumTex];
+	_maskBitmaps = new void *[_maskNumTex];
 	tglGenTextures(_maskNumTex, _maskTexIds);
 	for (int i = 0; i < _maskNumTex; i++) {
 		tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[i]);
@@ -209,15 +214,12 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MIN_FILTER, TGL_NEAREST);
 		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_S, TGL_CLAMP);
 		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_T, TGL_CLAMP);
-		tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, format, dataType, nullptr);
+		_maskBitmaps[i] = new uint8[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE * bytesPerPixel];
+		tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, format, dataType, _maskBitmaps[i]);
 	}
 
-	tglPixelStorei(TGL_UNPACK_ALIGNMENT, bytesPerPixel); // 16 bit RGB 565 bitmap/32 bit BGR
-	tglPixelStorei(TGL_UNPACK_ROW_LENGTH, width);
-
-#if 1
 	// FIXME: Handle paletted texture
-#else
+#if 0
 	// Upload palette
 	if ((bytesPerPixel==1) && timPalette) {
 		TGLfloat mapR[256], mapG[256], mapB[256], mapA[256];
@@ -243,23 +245,10 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 		tglPixelMapfv(TGL_PIXEL_MAP_I_TO_B, 256, mapB);
 		tglPixelMapfv(TGL_PIXEL_MAP_I_TO_A, 256, mapA);
 	}
-
-	int curTexIdx = 0;
-	for (int y = 0; y < height; y += BITMAP_TEXTURE_SIZE) {
-		for (int x = 0; x < width; x += BITMAP_TEXTURE_SIZE) {
-			int t_width = (x + BITMAP_TEXTURE_SIZE >= width) ? (width - x) : BITMAP_TEXTURE_SIZE;
-			int t_height = (y + BITMAP_TEXTURE_SIZE >= height) ? (height - y) : BITMAP_TEXTURE_SIZE;
-			tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[curTexIdx]);
-			tglTexSubImage2D(TGL_TEXTURE_2D, 0, 0, 0, t_width, t_height, format, dataType, bitmap + (y * bytesPerPixel * width) + (bytesPerPixel * x));
-			curTexIdx++;
-		}
-	}
-
-	tglPixelTransferi(TGL_MAP_COLOR, TGL_FALSE);
 #endif
 
-	tglPixelStorei(TGL_UNPACK_ALIGNMENT, 4);
-	tglPixelStorei(TGL_UNPACK_ROW_LENGTH, 0);
+	// FIXME: Not supported by TinyGL
+//	tglPixelTransferi(TGL_MAP_COLOR, TGL_FALSE);
 
 	_maskWidth = width; //(int)(width * _scaleW);
 	_maskHeight = height; //(int)(height * _scaleH);
