@@ -389,8 +389,6 @@ void GfxOpenGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 }
 
 void GfxOpenGL::drawMaskedFrame(int srcX, int srcY, int dstX, int dstY, int w, int h, int depth) {
-	//debug(3, "glMask: %d,%d->%d,%d %dx%d %d", srcX,srcY, dstX,dstY, w,h, depth);
-
 	int sysW = _screenWidth;
 	int sysH = _screenHeight;
 
