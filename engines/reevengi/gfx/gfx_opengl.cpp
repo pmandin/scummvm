@@ -55,27 +55,32 @@ GfxOpenGL::~GfxOpenGL() {
 	//delete[] _storedDisplay;
 }
 
-byte *GfxOpenGL::setupScreen(int screenW, int screenH, bool fullscreen) {
+void GfxOpenGL::setupScreen(int screenW, int screenH) {
 	_screenWidth = screenW;
 	_screenHeight = screenH;
 	_scaleW = _screenWidth / (float)_gameWidth;
 	_scaleH = _screenHeight / (float)_gameHeight;
 
-	g_system->showMouse(!fullscreen);
+	/*_globalScaleW = _screenWidth / (float)_globalWidth;
+	_globalScaleH = _screenHeight / (float)_globalHeight;
+
+	_useDepthShader = false;
+	_useDimShader = false;*/
+
+	g_system->showMouse(false);
 
 	//int screenSize = _screenWidth * _screenHeight * 4;
 	//_storedDisplay = new byte[screenSize];
 	//memset(_storedDisplay, 0, screenSize);
 	_smushNumTex = 0;
 
+	/* _currentShadowArray = nullptr; */
 	glViewport(0, 0, _screenWidth, _screenHeight);
 
 	GLfloat ambientSource[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientSource);
 	GLfloat diffuseReflectance[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseReflectance);
-
-	return nullptr;
 }
 
 const char *GfxOpenGL::getVideoDeviceName() {

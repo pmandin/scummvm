@@ -37,24 +37,25 @@ GfxBase *CreateGfxTinyGL() {
 	return new GfxTinyGL();
 }
 
-GfxTinyGL::GfxTinyGL() {
+GfxTinyGL::GfxTinyGL(): _zb(nullptr), _smushImage(nullptr),
+	_maskNumTex(0) {
+	for (int i=0; i<16; i++) {
+		_maskBitmaps[i] = nullptr;
+	}
 }
 
 GfxTinyGL::~GfxTinyGL() {
+	releaseMaskedFrame();
+	releaseMovieFrame();
 }
 
-byte *GfxTinyGL::setupScreen(int screenW, int screenH, bool fullscreen) {
-	//Graphics::PixelBuffer buf = g_system->getScreenPixelBuffer();
-	byte *buffer = nullptr; //buf.getRawBuffer();
-
+void GfxTinyGL::setupScreen(int screenW, int screenH) {
 	_screenWidth = screenW;
 	_screenHeight = screenH;
 	_scaleW = _screenWidth / (float)_gameWidth;
 	_scaleH = _screenHeight / (float)_gameHeight;
 
-	debug(3, "%dx%d -> %dx%d", _gameWidth, _gameHeight, _screenWidth, _screenHeight);
-
-	g_system->showMouse(!fullscreen);
+	g_system->showMouse(false);
 
 	_pixelFormat = g_system->getScreenFormat();
 	debug("INFO: TinyGL front buffer pixel format: %s", _pixelFormat.toString().c_str());
@@ -65,14 +66,12 @@ byte *GfxTinyGL::setupScreen(int screenW, int screenH, bool fullscreen) {
 	_storedDisplay.create(_pixelFormat, _gameWidth * _gameHeight, DisposeAfterUse::YES);
 	_storedDisplay.clear(_gameWidth * _gameHeight);
 
-	//_currentShadowArray = nullptr;
+	/* _currentShadowArray = nullptr; */
 
 	TGLfloat ambientSource[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	tglLightModelfv(TGL_LIGHT_MODEL_AMBIENT, ambientSource);
 	TGLfloat diffuseReflectance[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	tglMaterialfv(TGL_FRONT, TGL_DIFFUSE, diffuseReflectance);
-
-	return buffer;
 }
 
 const char *GfxTinyGL::getVideoDeviceName() {
@@ -91,6 +90,7 @@ void GfxTinyGL::flipBuffer() {
 	TinyGL::tglPresentBuffer();
 	g_system->copyRectToScreen(_zb->getPixelBuffer(), _zb->linesize,
 	                           0, 0, _zb->xsize, _zb->ysize);
+
 	g_system->updateScreen();
 }
 
@@ -103,7 +103,7 @@ bool GfxTinyGL::supportsShaders() {
 }
 
 void GfxTinyGL::prepareMovieFrame(Graphics::Surface *frame) {
-	if (_smushImage == nullptr)
+	if (!_smushImage)
 		_smushImage = Graphics::tglGenBlitImage();
 	Graphics::tglUploadBlitImage(_smushImage, *frame, 0, false);
 
@@ -190,65 +190,51 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 			frame->format.aShift);
 	}
 
-	// remove if already exist
-	if (_maskNumTex > 0) {
-		for (int i=0; i<_maskNumTex; i++) {
-			delete _maskBitmaps[i];
-		}
-		delete _maskBitmaps;
-		tglDeleteTextures(_maskNumTex, _maskTexIds);
-		delete[] _maskTexIds;
-		_maskNumTex = 0;
-	}
+	releaseMaskedFrame();
 
 	// create texture
 	_maskTexPitch = ((width + (BITMAP_TEXTURE_SIZE - 1)) / BITMAP_TEXTURE_SIZE);
 	_maskNumTex = _maskTexPitch *
 				   ((height + (BITMAP_TEXTURE_SIZE - 1)) / BITMAP_TEXTURE_SIZE);
 	_maskTexIds = new TGLuint[_maskNumTex];
-	_maskBitmaps = new void *[_maskNumTex];
 	tglGenTextures(_maskNumTex, _maskTexIds);
 	for (int i = 0; i < _maskNumTex; i++) {
+		TGLenum txFormat = format;
+		TGLenum txDataType = dataType;
+
 		tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[i]);
 		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MAG_FILTER, TGL_NEAREST);
 		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MIN_FILTER, TGL_NEAREST);
 		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_S, TGL_CLAMP);
 		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_T, TGL_CLAMP);
-		_maskBitmaps[i] = new uint8[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE * bytesPerPixel];
-		tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, format, dataType, _maskBitmaps[i]);
-	}
 
-	// FIXME: Handle paletted texture
+		if (format == TGL_COLOR_INDEX) {
+			// FIXME: Does not work with paletted texture, convert to some argb texture
+			txFormat = TGL_BGRA;
+			txDataType = TGL_UNSIGNED_SHORT_1_5_5_5_REV;
+			Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
+			Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 10, 5, 0, 15);
+
+			_maskBitmaps[i] = new uint8[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE * 2];
+
+			/* Convert part of texture, we only need Alpha channel */
 #if 0
-	// Upload palette
-	if ((bytesPerPixel==1) && timPalette) {
-		TGLfloat mapR[256], mapG[256], mapB[256], mapA[256];
-		Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
-
-		memset(mapR, 0, sizeof(mapR));
-		memset(mapG, 0, sizeof(mapG));
-		memset(mapB, 0, sizeof(mapB));
-		memset(mapA, 0, sizeof(mapA));
-		for (int i=0; i<256; i++) {
-			byte r, g, b, a;
-			uint16 color = *timPalette++;
-			fmtTimPal.colorToARGB(color, a, r, g, b);
-
-			mapR[i] = r / 255.0f;
-			mapG[i] = g / 255.0f;
-			mapB[i] = b / 255.0f;
-			mapA[i] = a / 255.0f;
-		}
-		tglPixelTransferi(TGL_MAP_COLOR, TGL_TRUE);
-		tglPixelMapfv(TGL_PIXEL_MAP_I_TO_R, 256, mapR);
-		tglPixelMapfv(TGL_PIXEL_MAP_I_TO_G, 256, mapG);
-		tglPixelMapfv(TGL_PIXEL_MAP_I_TO_B, 256, mapB);
-		tglPixelMapfv(TGL_PIXEL_MAP_I_TO_A, 256, mapA);
-	}
+			uint16 *dstBitmap = (uint16 *) _maskBitmaps[i];
+			for (int y=0; y<BITMAP_TEXTURE_SIZE; y++) {
+				for (int x=0; y<BITMAP_TEXTURE_SIZE; x++) {
+					byte r, g, b, a;
+					uint16 color = timPalette[0];
+					fmtTimPal.colorToARGB(color, a, r, g, b);
+					*dstBitmap++ = dstFormat.ARGBToColor(a, r, g, b);
+				}
+			}
 #endif
+		} else {
+			_maskBitmaps[i] = new uint8[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE * bytesPerPixel];
+		}
 
-	// FIXME: Not supported by TinyGL
-//	tglPixelTransferi(TGL_MAP_COLOR, TGL_FALSE);
+		tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, txFormat, txDataType, _maskBitmaps[i]);
+	}
 
 	_maskWidth = width; //(int)(width * _scaleW);
 	_maskHeight = height; //(int)(height * _scaleH);
@@ -256,6 +242,8 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 
 void GfxTinyGL::drawMaskedFrame(int srcX, int srcY, int dstX, int dstY, int w, int h, int depth) {
 	//debug(3, "tglMask: %d,%d %dx%d %d", rect.top, rect.left, rect.width(), rect.height(), depth);
+
+	return;
 
 	int sysW = _screenWidth;
 	int sysH = _screenHeight;
@@ -346,6 +334,9 @@ void GfxTinyGL::drawMaskedFrame(int srcX, int srcY, int dstX, int dstY, int w, i
 
 void GfxTinyGL::releaseMaskedFrame(void) {
 	if (_maskNumTex > 0) {
+		for (int i=0; i<_maskNumTex; i++) {
+			delete _maskBitmaps[i];
+		}
 		tglDeleteTextures(_maskNumTex, _maskTexIds);
 		delete[] _maskTexIds;
 		_maskNumTex = 0;
