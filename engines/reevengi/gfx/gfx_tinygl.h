@@ -92,7 +92,6 @@ private:
 
 	int _maskNumTex, _maskTexPitch;
 	TGLuint *_maskTexIds;
-	void *_maskBitmaps[16];
 };
 
 } // End of namespace Reevengi

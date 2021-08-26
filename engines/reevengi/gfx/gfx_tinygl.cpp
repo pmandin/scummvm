@@ -39,9 +39,7 @@ GfxBase *CreateGfxTinyGL() {
 
 GfxTinyGL::GfxTinyGL(): _zb(nullptr), _smushImage(nullptr),
 	_maskNumTex(0) {
-	for (int i=0; i<16; i++) {
-		_maskBitmaps[i] = nullptr;
-	}
+	//
 }
 
 GfxTinyGL::~GfxTinyGL() {
@@ -143,7 +141,7 @@ void GfxTinyGL::releaseMovieFrame() {
 void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette) {
 	int height = frame->h;
 	int width = frame->w;
-	/*byte *bitmap = (byte *)frame->getPixels();*/
+	uint16 *maskBitmap;
 
 	TGLenum format;
 	TGLenum dataType;
@@ -198,42 +196,56 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 				   ((height + (BITMAP_TEXTURE_SIZE - 1)) / BITMAP_TEXTURE_SIZE);
 	_maskTexIds = new TGLuint[_maskNumTex];
 	tglGenTextures(_maskNumTex, _maskTexIds);
-	for (int i = 0; i < _maskNumTex; i++) {
-		TGLenum txFormat = format;
-		TGLenum txDataType = dataType;
 
-		tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[i]);
-		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MAG_FILTER, TGL_NEAREST);
-		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MIN_FILTER, TGL_NEAREST);
-		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_S, TGL_CLAMP);
-		tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_T, TGL_CLAMP);
+	int i = 0;
+	for (int y = 0; y < height; y += BITMAP_TEXTURE_SIZE) {
+		for (int x = 0; x < width; x += BITMAP_TEXTURE_SIZE) {
+			int t_width = (x + BITMAP_TEXTURE_SIZE >= width) ? (width - x) : BITMAP_TEXTURE_SIZE;
+			int t_height = (y + BITMAP_TEXTURE_SIZE >= height) ? (height - y) : BITMAP_TEXTURE_SIZE;
+			TGLenum txFormat = format;
+			TGLenum txDataType = dataType;
 
-		if (format == TGL_COLOR_INDEX) {
-			// FIXME: Does not work with paletted texture, convert to some argb texture
-			txFormat = TGL_BGRA;
-			txDataType = TGL_UNSIGNED_SHORT_1_5_5_5_REV;
-			Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
-			Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 10, 5, 0, 15);
+			tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[i]);
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MAG_FILTER, TGL_NEAREST);
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MIN_FILTER, TGL_NEAREST);
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_S, TGL_CLAMP);
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_T, TGL_CLAMP);
 
-			_maskBitmaps[i] = new uint8[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE * 2];
+			if (format == TGL_COLOR_INDEX) {
+				// Does not work with paletted texture, convert to some argb texture
+				txFormat = TGL_BGRA;
+				txDataType = TGL_UNSIGNED_SHORT_1_5_5_5_REV;
+				Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
+				Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 10, 5, 0, 15);
 
-			/* Convert part of texture, we only need Alpha channel */
-#if 0
-			uint16 *dstBitmap = (uint16 *) _maskBitmaps[i];
-			for (int y=0; y<BITMAP_TEXTURE_SIZE; y++) {
-				for (int x=0; y<BITMAP_TEXTURE_SIZE; x++) {
-					byte r, g, b, a;
-					uint16 color = timPalette[0];
-					fmtTimPal.colorToARGB(color, a, r, g, b);
-					*dstBitmap++ = dstFormat.ARGBToColor(a, r, g, b);
+				maskBitmap = new uint16[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE];
+
+				/* Convert part of texture, we only need Alpha channel */
+				uint16 *dstBitmap = maskBitmap;
+				uint8 *srcBitmap = (uint8 *) frame->getBasePtr(0, 0);
+				for (int sy=0; sy<t_height; sy++) {
+					uint8 *srcLine = srcBitmap;
+					uint16 *dstLine = dstBitmap;
+					for (int sx=0; sx<t_width; sx++) {
+						byte r, g, b, a;
+						uint16 color = timPalette[ *srcLine++ ];
+						fmtTimPal.colorToARGB(color, a, r, g, b);
+						*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+					}
+					srcBitmap += frame->pitch;
+					dstBitmap += BITMAP_TEXTURE_SIZE;
 				}
-			}
-#endif
-		} else {
-			_maskBitmaps[i] = new uint8[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE * bytesPerPixel];
-		}
+			} else {
+				maskBitmap = new uint16[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE];
 
-		tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, txFormat, txDataType, _maskBitmaps[i]);
+				// FIXME: Copy part of texture from frame to maskBitmap
+			}
+
+			tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, txFormat, txDataType, maskBitmap);
+			delete[] maskBitmap;
+
+			i++;
+		}
 	}
 
 	_maskWidth = width; //(int)(width * _scaleW);
@@ -241,10 +253,6 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 }
 
 void GfxTinyGL::drawMaskedFrame(int srcX, int srcY, int dstX, int dstY, int w, int h, int depth) {
-	//debug(3, "tglMask: %d,%d %dx%d %d", rect.top, rect.left, rect.width(), rect.height(), depth);
-
-	return;
-
 	int sysW = _screenWidth;
 	int sysH = _screenHeight;
 
@@ -334,9 +342,6 @@ void GfxTinyGL::drawMaskedFrame(int srcX, int srcY, int dstX, int dstY, int w, i
 
 void GfxTinyGL::releaseMaskedFrame(void) {
 	if (_maskNumTex > 0) {
-		for (int i=0; i<_maskNumTex; i++) {
-			delete _maskBitmaps[i];
-		}
 		tglDeleteTextures(_maskNumTex, _maskTexIds);
 		delete[] _maskTexIds;
 		_maskNumTex = 0;
