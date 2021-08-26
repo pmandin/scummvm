@@ -132,6 +132,7 @@ void RE2Engine::loadBgImagePcDemo(void) {
 	char filePath[64];
 
 	sprintf(filePath, RE2PCDEMO_BG, _stage, _stage, _room, _camera);
+	debug(3, "re2: loadBgImagePcDemo(\"%s\")", filePath);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {

@@ -129,53 +129,61 @@ void ReevengiEngine::initPreRun(void) {
 }
 
 Common::Error ReevengiEngine::run() {
+	bool fullscreen = ConfMan.getBool("fullscreen");
+	Entity *entity = nullptr;
+	bool movieMode = false;
+
 	initPreRun();
 
-	bool fullscreen = ConfMan.getBool("fullscreen");
 	g_driver = createRenderer(640, 480, fullscreen);
-	//Entity *entity = loadEntity(0, 1);	/* RE1 */
-	Entity *entity = loadEntity(0x10, 0);	/* RE2 */
-	//Entity *entity = loadEntity(0, 1);	/* RE3 */
 
-	//TimDecoder *my_image = testLoadImage();
-	//testLoadMovie();
-	loadRoom();
-#if 1
-	if (_roomScene) {
-		RdtCameraPos_t camera;
-		_roomScene->getCameraPos(_camera, &camera);
+	if (movieMode) {
+		testLoadMovie();
+	} else {
+		//entity = loadEntity(0, 1);	/* RE1 */
+		entity = loadEntity(0x10, 0);	/* RE2 */
+		//entity = loadEntity(0, 1);	/* RE3 */
 
-		/* Reset player pos */
-		_playerX = (camera.toX + camera.fromX) / 2;
-		_playerY = (camera.toY + camera.fromY) / 2;
-		_playerZ = (camera.toZ + camera.fromZ) / 2;
+		loadRoom();
+		if (_roomScene) {
+			RdtCameraPos_t camera;
+			_roomScene->getCameraPos(_camera, &camera);
 
-		debug(3, "%d cameras, pos %.3f,%.3f,%.3f", _roomScene->getNumCameras(), _playerX,_playerY,_playerZ);
+			/* Reset player pos */
+			_playerX = (camera.toX + camera.fromX) / 2;
+			_playerY = 400; //(camera.toY + camera.fromY) / 2;
+			_playerZ = (camera.toZ + camera.fromZ) / 2;
+
+			debug(3, "%d cameras, pos %.3f,%.3f,%.3f", _roomScene->getNumCameras(), _playerX,_playerY,_playerZ);
+		}
+
+		loadBgImage();
+		loadBgMaskImage();
 	}
-#endif
-	loadBgImage();
-	loadBgMaskImage();
 
 	while (!shouldQuit()) {
 		g_driver->clearScreen();
 
-		if (_bgImage) {
-			testDisplayImage(_bgImage);
+		if (movieMode) {
+			testPlayMovie();
+		} else {
+			if (_bgImage) {
+				testDisplayImage(_bgImage);
+			}
+			if (_bgMaskImage) {
+				testDisplayMaskImage(_bgMaskImage);
+			}
+
+			testView3DBegin();
+			testDrawGrid();
+			testDrawOrigin();
+			testDrawPlayer();
+			if (entity) {
+				g_driver->setColor(1.0, 1.0, 1.0);
+				entity->draw(_playerX, _playerY, _playerZ, _playerA);
+			}
+			testView3DEnd();
 		}
-		if (_bgMaskImage) {
-			testDisplayMaskImage(_bgMaskImage);
-		}
-		//testDisplayImage(my_image);
-		//testPlayMovie();
-		testView3DBegin();
-		//testDrawGrid();
-		testDrawOrigin();
-		testDrawPlayer();
-		if (entity) {
-			g_driver->setColor(1.0, 1.0, 1.0);
-			entity->draw(_playerX, _playerY, _playerZ, _playerA);
-		}
-		testView3DEnd();
 
 		// Tell the system to update the screen.
 		g_driver->flipBuffer();
@@ -188,7 +196,6 @@ Common::Error ReevengiEngine::run() {
 	}
 
 	g_driver->releaseMovieFrame();
-	//delete my_image;
 	delete entity;
 
 	return Common::kNoError;
@@ -476,32 +483,6 @@ void ReevengiEngine::loadRoom(void) {
 	//
 }
 
-TimDecoder *ReevengiEngine::testLoadImage(void) {
-	/*debug(3, "loading jopt06.tim");
-	Common::SeekableReadStream *s1 = SearchMan.createReadStreamForMember("jopt06.tim");
-	TimDecoder *my_image1 = new TimDecoder();
-	my_image1->loadStream(*s1);*/
-
-	debug(3, "loading gwarning.adt");
-	Common::SeekableReadStream *s3 = SearchMan.createReadStreamForMember("common/datp/gwarning.adt");
-	AdtDecoder *my_image1 = new AdtDecoder();
-	my_image1->loadStream(*s3);
-
-	/*debug(3, "loading rc1060.pak");
-	Common::SeekableReadStream *s2 = SearchMan.createReadStreamForMember("rc1060.pak");
-	PakDecoder *my_image1 = new PakDecoder();
-	my_image1->loadStream(*s2);*/
-
-	if (my_image1) {
-		Graphics::Surface *surf = (Graphics::Surface *) my_image1->getSurface();
-		if (surf) {
-			g_driver->prepareMovieFrame(surf);
-		}
-	}
-
-	return my_image1;
-}
-
 void ReevengiEngine::testDisplayImage(Image::ImageDecoder *img) {
 	g_driver->drawMovieFrame(0, 0);
 }
@@ -514,17 +495,22 @@ void ReevengiEngine::testDisplayMaskImage(Image::ImageDecoder *img) {
 }
 
 void ReevengiEngine::testLoadMovie(void) {
+	//RE1 PS1
 	g_movie = CreatePsxPlayer();
 	g_movie->play("capcom.str", false, 0, 0);
+
+	//RE2 PC
 	//g_movie = CreateAviPlayer();
-	//g_movie->play("sample.avi", false, 0, 0);
+	//g_movie->play("pl0/zmovie/titlele.bin", false, 0, 0);
+
+	//RE3 PC
 	//g_movie = CreateMpegPlayer();
 	//g_movie->play("zmovie/roopne.dat", false, 0, 0);
 }
 
 void ReevengiEngine::testPlayMovie(void) {
-
-	//if (g_movie->getMovieTime()>1000) { g_movie->pause(true); }
+	if (!g_movie)
+		return;
 
 	if (g_movie->isPlaying() /*&& _movieSetup == _currSet->getCurrSetup()->_name*/) {
 		//_movieTime = g_movie->getMovieTime();
