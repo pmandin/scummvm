@@ -91,6 +91,8 @@ static const ReevengiGameDescription gameDescriptions[] = {
 	REEVENGI_ENTRY("re1", ADGF_NO_FLAGS, Common::EN_USA, Common::kPlatformPSX, "slus_005.51", "Director's Cut", RType_RE1)
 	REEVENGI_ENTRY("re1", ADGF_NO_FLAGS, Common::EN_USA, Common::kPlatformPSX, "slus_007.47", "Director's Cut Dual Shock", RType_RE1)
 
+	REEVENGI_ENTRY("re1", ADGF_NO_FLAGS, Common::EN_USA, Common::kPlatformSaturn, "bu_load.prg", "", RType_RE1)
+
 	REEVENGI_ENTRY("re2", ADGF_NO_FLAGS, Common::EN_ANY, Common::kPlatformWindows, "pl0/zmovie/r108l.bin", "Leon", RType_RE2_LEON)
 	REEVENGI_ENTRY("re2", ADGF_NO_FLAGS, Common::EN_ANY, Common::kPlatformWindows, "pl1/zmovie/r108l.bin", "Claire", RType_RE2_CLAIRE)
 	REEVENGI_ENTRY("re2", ADGF_DEMO, Common::EN_ANY, Common::kPlatformWindows, "regist/leonp.exe", "Preview", RType_RE2_LEON)
