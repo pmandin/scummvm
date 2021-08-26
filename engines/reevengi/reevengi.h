@@ -97,7 +97,6 @@ private:
 	void processEventsKeyDown(Common::Event e);
 	void processEventsKeyDownRepeat(Common::Event e);
 
-	TimDecoder *testLoadImage(void);
 	void testDisplayImage(Image::ImageDecoder *img);
 	void testDisplayMaskImage(Image::ImageDecoder *img);
 	void testLoadMovie(void);
