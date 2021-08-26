@@ -34,7 +34,7 @@ public:
 	GfxTinyGL();
 	virtual ~GfxTinyGL();
 
-	byte *setupScreen(int screenW, int screenH, bool fullscreen) override;
+	void setupScreen(int screenW, int screenH) override;
 
 	const char *getVideoDeviceName() /*override*/;
 
@@ -92,7 +92,7 @@ private:
 
 	int _maskNumTex, _maskTexPitch;
 	TGLuint *_maskTexIds;
-	void **_maskBitmaps;
+	void *_maskBitmaps[16];
 };
 
 } // End of namespace Reevengi

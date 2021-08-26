@@ -45,9 +45,8 @@ public:
 	 *
 	 * @param screenW       the width of the context
 	 * @param screenH       the height of the context
-	 * @param fullscreen    true if fullscreen is desired, false otherwise.
 	 */
-	virtual byte *setupScreen(int screenW, int screenH, bool fullscreen) = 0;
+	virtual void setupScreen(int screenW, int screenH) = 0;
 
 	virtual void clearScreen() = 0;
 

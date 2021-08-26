@@ -87,12 +87,20 @@ GfxBase *ReevengiEngine::createRenderer(int screenW, int screenH, bool fullscree
 	Graphics::RendererType desiredRendererType = Graphics::parseRendererTypeCode(rendererConfig);
 	Graphics::RendererType matchingRendererType = Graphics::getBestMatchingAvailableRendererType(desiredRendererType);
 
-	_softRenderer = matchingRendererType == Graphics::kRendererTypeTinyGL;
-	initGraphics3d(screenW, screenH); //, fullscreen, !_softRenderer);
+	_softRenderer = (matchingRendererType == Graphics::kRendererTypeTinyGL);
+	if (!_softRenderer) {
+		initGraphics3d(screenW, screenH);
+	} else {
+		initGraphics(screenW, screenH, nullptr);
+	}
 
-#if defined(USE_OPENGL)
+#if defined(USE_OPENGL_GAME) /*|| defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)*/
+	bool backendCapableOpenGL = g_system->hasFeature(OSystem::kFeatureOpenGLForGame);
+#endif
+
+#if defined(USE_OPENGL_GAME)
 	// Check the OpenGL context actually supports shaders
-	if (matchingRendererType == Graphics::kRendererTypeOpenGLShaders && !OpenGLContext.shadersSupported) {
+	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders && !OpenGLContext.shadersSupported) {
 		matchingRendererType = Graphics::kRendererTypeOpenGL;
 	}
 #endif
@@ -104,12 +112,12 @@ GfxBase *ReevengiEngine::createRenderer(int screenW, int screenH, bool fullscree
 
 	GfxBase *renderer = nullptr;
 /*#if defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
-	if (matchingRendererType == Graphics::kRendererTypeOpenGLShaders) {
+	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders) {
 		renderer = CreateGfxOpenGLShader();
 	}
 #endif*/
-#if defined(USE_OPENGL) /*&& !defined(USE_GLES2)*/
-	if (matchingRendererType == Graphics::kRendererTypeOpenGL) {
+#if defined(USE_OPENGL_GAME) /*&& !defined(USE_GLES2)*/
+	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGL) {
 		renderer = CreateGfxOpenGL();
 	}
 #endif
@@ -121,7 +129,7 @@ GfxBase *ReevengiEngine::createRenderer(int screenW, int screenH, bool fullscree
 		error("Unable to create a '%s' renderer", rendererConfig.c_str());
 	}
 
-	renderer->setupScreen(screenW, screenH, fullscreen);
+	renderer->setupScreen(screenW, screenH);
 	return renderer;
 }
 
@@ -140,8 +148,8 @@ Common::Error ReevengiEngine::run() {
 	if (movieMode) {
 		testLoadMovie();
 	} else {
-		//entity = loadEntity(0, 1);	/* RE1 */
-		entity = loadEntity(0x10, 0);	/* RE2 */
+		entity = loadEntity(0, 0);	/* RE1 */
+		//entity = loadEntity(0x10, 0);	/* RE2 */
 		//entity = loadEntity(0, 1);	/* RE3 */
 
 		loadRoom();
@@ -156,13 +164,14 @@ Common::Error ReevengiEngine::run() {
 
 			debug(3, "%d cameras, pos %.3f,%.3f,%.3f", _roomScene->getNumCameras(), _playerX,_playerY,_playerZ);
 		}
-
 		loadBgImage();
 		loadBgMaskImage();
 	}
 
 	while (!shouldQuit()) {
 		g_driver->clearScreen();
+
+		g_driver->setTexture2d(true);
 
 		if (movieMode) {
 			testPlayMovie();
@@ -517,7 +526,6 @@ void ReevengiEngine::testPlayMovie(void) {
 		if (g_movie->isUpdateNeeded()) {
 			Graphics::Surface *frame = g_movie->getDstSurface();
 			if (frame) {
-				//g_driver->clearScreen();
 				g_driver->prepareMovieFrame(frame);
 			}
 			g_movie->clearUpdateNeeded();
