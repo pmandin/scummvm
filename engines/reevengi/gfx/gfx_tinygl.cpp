@@ -436,7 +436,9 @@ void GfxTinyGL::bindTexture(uint texId) {
 }
 
 void GfxTinyGL::createTexture(const Graphics::Surface *frame, uint16* timPalette) {
-	TGLenum format, dataType;
+	TGLenum format = TGL_RGBA;
+	TGLenum dataType = TGL_UNSIGNED_BYTE;
+	uint16 *maskBitmap = nullptr;
 
 	if (!frame)
 		return;
@@ -447,8 +449,30 @@ void GfxTinyGL::createTexture(const Graphics::Surface *frame, uint16* timPalette
 	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_T, TGL_CLAMP);
 
 	if (frame->format == Graphics::PixelFormat(1, 0, 0, 0, 0, 0, 0, 0, 0)) {
-		format = TGL_COLOR_INDEX;
-		dataType = TGL_UNSIGNED_BYTE;
+		/* Convert to R5G5B5A1 texture */
+		format = TGL_BGRA;
+		dataType = TGL_UNSIGNED_SHORT_1_5_5_5_REV;
+		Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
+		Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 10, 5, 0, 15);
+
+		maskBitmap = new uint16[frame->w * frame->h];
+
+		/* Convert part of texture, we only need Alpha channel */
+		uint16 *dstBitmap = maskBitmap;
+		uint8 *srcBitmap = (uint8 *) frame->getPixels();
+		for (int sy=0; sy<frame->h; sy++) {
+			uint8 *srcLine = srcBitmap;
+			uint16 *dstLine = dstBitmap;
+			for (int sx=0; sx<frame->w; sx++) {
+				byte r, g, b, a;
+				uint16 color = timPalette[ *srcLine++ ];
+				fmtTimPal.colorToARGB(color, a, r, g, b);
+				*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+			}
+			srcBitmap += frame->pitch;
+			dstBitmap += frame->w;
+		}
+
 	} else {
 		error("Unknown pixelformat: Bpp: %d RBits: %d GBits: %d BBits: %d ABits: %d RShift: %d GShift: %d BShift: %d AShift: %d",
 			frame->format.bytesPerPixel,
@@ -461,6 +485,9 @@ void GfxTinyGL::createTexture(const Graphics::Surface *frame, uint16* timPalette
 			frame->format.bShift,
 			frame->format.aShift);
 	}
+
+	tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, frame->w, frame->h, 0, format, dataType, maskBitmap);
+	delete[] maskBitmap;
 }
 
 void GfxTinyGL::setBlending(bool enable) {
