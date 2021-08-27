@@ -47,6 +47,10 @@ Room::~Room() {
 	_roomSize = 0;
 }
 
+void *Room::getRdtSection(int numSection) {
+	return nullptr;
+}
+
 int Room::getNumCameras(void) {
 	return 0;
 }
