@@ -54,6 +54,8 @@ protected:
 	byte *_roomPtr;
 	int32 _roomSize;
 
+	virtual void*getRdtSection(int numSection);
+
 	bool isInside(Math::Vector2d pos, Math::Vector2d quad[4]);
 };
 

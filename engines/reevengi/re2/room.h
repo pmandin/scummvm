@@ -43,6 +43,9 @@ public:
 	void drawCamBoundary(int curCam);
 
 	void drawMasks(int numCamera);
+
+protected:
+	void *getRdtSection(int numSection) override;
 };
 
 } // End of namespace Reevengi

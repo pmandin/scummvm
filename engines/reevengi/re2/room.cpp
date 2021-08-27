@@ -137,6 +137,18 @@ RE2Room::RE2Room(Common::SeekableReadStream *stream): Room(stream) {
 	//
 }
 
+void *RE2Room::getRdtSection(int numSection) {
+	if (!_roomPtr)
+		return nullptr;
+	if (numSection<0)
+		return nullptr;
+
+	uint32 offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[numSection] );
+
+	return (void *)
+		(&((char *) (_roomPtr))[offset]);
+}
+
 int RE2Room::getNumCameras(void) {
 	if (!_roomPtr)
 		return 0;
@@ -148,8 +160,7 @@ void RE2Room::getCameraPos(int numCamera, RdtCameraPos_t *cameraPos) {
 	if (!_roomPtr)
 		return;
 
-	int32 offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[RDT2_OFFSET_CAMERAS] );
-	rdt2_rid_t *cameraPosArray = (rdt2_rid_t *) ((byte *) &_roomPtr[offset]);
+	rdt2_rid_t *cameraPosArray = (rdt2_rid_t *) getRdtSection(RDT2_OFFSET_CAMERAS);
 
 	cameraPos->fromX = FROM_LE_32( cameraPosArray[numCamera].fromX );
 	cameraPos->fromY = FROM_LE_32( cameraPosArray[numCamera].fromY );
@@ -164,8 +175,7 @@ int RE2Room::checkCamSwitch(int curCam, Math::Vector2d fromPos, Math::Vector2d t
 	if (!_roomPtr)
 		return -1;
 
-	int32 offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[RDT2_OFFSET_CAM_SWITCHES] );
-	rdt2_rvd_t *camSwitchArray = (rdt2_rvd_t *) ((byte *) &_roomPtr[offset]);
+	rdt2_rvd_t *camSwitchArray = (rdt2_rvd_t *) getRdtSection(RDT2_OFFSET_CAM_SWITCHES);
 	int prevFrom = -1;
 
 	while (FROM_LE_16(camSwitchArray->const0) != 0xffff) {
@@ -203,8 +213,7 @@ void RE2Room::drawCamSwitch(int curCam) {
 
 	g_driver->setColor(1.0, 0.75, 0.25);
 
-	int32 offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[RDT2_OFFSET_CAM_SWITCHES] );
-	rdt2_rvd_t *camSwitchArray = (rdt2_rvd_t *) ((byte *) &_roomPtr[offset]);
+	rdt2_rvd_t *camSwitchArray = (rdt2_rvd_t *) getRdtSection(RDT2_OFFSET_CAM_SWITCHES);
 	int prevFrom = -1;
 
 	while (FROM_LE_16(camSwitchArray->const0) != 0xffff) {
@@ -240,8 +249,7 @@ bool RE2Room::checkCamBoundary(int curCam, Math::Vector2d fromPos, Math::Vector2
 	if (!_roomPtr)
 		return false;
 
-	int32 offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[RDT2_OFFSET_CAM_SWITCHES] );
-	rdt2_rvd_t *camBoundaryArray = (rdt2_rvd_t *) ((byte *) &_roomPtr[offset]);
+	rdt2_rvd_t *camBoundaryArray = (rdt2_rvd_t *) getRdtSection(RDT2_OFFSET_CAM_SWITCHES);
 	int prevFrom = -1;
 
 	while (FROM_LE_16(camBoundaryArray->const0) != 0xffff) {
@@ -279,8 +287,7 @@ void RE2Room::drawCamBoundary(int curCam) {
 
 	g_driver->setColor(1.0, 0.0, 0.0);
 
-	int32 offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[RDT2_OFFSET_CAM_SWITCHES] );
-	rdt2_rvd_t *camBoundaryArray = (rdt2_rvd_t *) ((byte *) &_roomPtr[offset]);
+	rdt2_rvd_t *camBoundaryArray = (rdt2_rvd_t *) getRdtSection(RDT2_OFFSET_CAM_SWITCHES);
 	int prevFrom = -1;
 
 	while (FROM_LE_16(camBoundaryArray->const0) != 0xffff) {
@@ -316,10 +323,9 @@ void RE2Room::drawMasks(int numCamera) {
 	if (!_roomPtr)
 		return;
 
-	int32 offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[RDT2_OFFSET_CAMERAS] );
-	rdt2_rid_t *cameraPosArray = (rdt2_rid_t *) ((byte *) &_roomPtr[offset]);
+	rdt2_rid_t *cameraPosArray = (rdt2_rid_t *) getRdtSection(RDT2_OFFSET_CAMERAS);
 
-	offset = FROM_LE_32( cameraPosArray[numCamera].priOffset );
+	int32 offset = FROM_LE_32( cameraPosArray[numCamera].priOffset );
 	if (offset == -1)
 		return;
 
