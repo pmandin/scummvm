@@ -40,6 +40,7 @@
 #include "saga2/saveload.h"
 #include "saga2/display.h"
 #include "saga2/tile.h"
+#include "saga2/vpal.h"
 
 namespace Saga2 {
 
@@ -55,7 +56,6 @@ TowerLayer tower[fullyInitialized] = {
 	{ delayedErrInitialized,     &initDelayedErrors,    &termDelayedErrors },
 	{ activeErrInitialized,      &initActiveErrors,     &termActiveErrors },
 	{ configTestInitialized,     &initSystemConfig,     &termTowerBase },
-	{ memoryInitialized,         &initMemPool,          &termMemPool },
 	{ introInitialized,          &initPlayIntro,        &termPlayOutro },
 	{ timerInitialized,          &initSystemTimer,      &termSystemTimer },
 	{ audioInitialized,          &initAudio,            &termAudio},
@@ -90,19 +90,14 @@ TowerLayer tower[fullyInitialized] = {
  * ===================================================================== */
 
 //#include "saga2/loadmsg.h"
-bool initGUIMessagers(void);
-void cleanupMessagers(void);
-void cleanupGUIMessagers(void);
-bool initMemPool(void);
-void cleanupMemPool(void);
-bool openResources(void);
-void closeResources(void);
-void initServers(void);
-void cleanupServers(void);
-void initMagic(void);
-void cleanupMagic(void);
-void cleanupMousePointer(void);
-void resetInputDevices(void);
+bool initGUIMessagers();
+void cleanupGUIMessagers();
+bool openResources();
+void closeResources();
+void initMagic();
+void cleanupMagic();
+void cleanupMousePointer();
+void resetInputDevices();
 
 extern hResContext      *tileRes;       // tile resource handle
 extern hResContext      *listRes;
@@ -123,15 +118,6 @@ INITIALIZER(initSystemConfig) {
 }
 
 // uses null cleanup
-
-// ------------------------------------------------------------------------
-
-extern INITIALIZER(initMemPool);
-
-TERMINATOR(termMemPool) {
-	cleanupMemPool();                       // deallocate memory buffers
-}
-
 
 // ------------------------------------------------------------------------
 
@@ -248,7 +234,7 @@ TERMINATOR(termResourceHandles) {
 // ------------------------------------------------------------------------
 
 INITIALIZER(initPalettes) {
-	loadPalettes();
+	g_vm->_pal->loadPalettes();
 	return true;
 }
 
@@ -470,7 +456,6 @@ TERMINATOR(termGameMode) {
 
 
 // ------------------------------------------------------------------------
-void RMemFastCleanup(void);
 
 INITIALIZER(initTop) {
 	niceScreenStartup();

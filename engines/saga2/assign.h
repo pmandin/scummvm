@@ -55,8 +55,8 @@ class ActorAssignment {
 		hasAssignment   = (1 << 3)
 	};
 
-	uint16  startFrame,     //  Time in day when this was constructed
-	        endFrame;       //  End time of the assignment
+	uint16  _startFrame,     //  Time in day when this was constructed
+	        _endFrame;       //  End time of the assignment
 
 	Actor *_actor;
 
@@ -67,35 +67,35 @@ public:
 	ActorAssignment(Actor *a, Common::SeekableReadStream *stream);
 
 	//  Destructor
-	virtual ~ActorAssignment(void);
+	virtual ~ActorAssignment();
 
 	//  Return the number of bytes need to archive the data in this
 	//  assignment
-	virtual int32 archiveSize(void) const;
+	virtual int32 archiveSize() const;
 
 	virtual void write(Common::MemoryWriteStreamDynamic *out) const;
 
 	//  Construct a TaskStack for this assignment
-	TaskStack *createTask(void);
+	TaskStack *createTask();
 
 	//  This function is called to notify the assignment of the
 	//  completion of a task which the assignment had created.
 	virtual void handleTaskCompletion(TaskResult result);
 
 	//  Determine if assignment's time limit is up
-	virtual bool isValid(void);
+	virtual bool isValid();
 
 	//  Return a pointer to the actor to which this assignment belongs
-	Actor *getActor(void) const;
+	Actor *getActor() const;
 
 	//  Return an integer representing the class of this assignment
-	virtual int16 type(void) const = 0;
+	virtual int16 type() const = 0;
 
 protected:
-	void startTask(void);
+	void startTask();
 
 	//  Determine if this assignment needs to create a task at this time
-	virtual bool taskNeeded(void);
+	virtual bool taskNeeded();
 
 	//  Create a Task for this assignment
 	virtual Task *getTask(TaskStack *ts) = 0;
@@ -106,12 +106,12 @@ protected:
  * ===================================================================== */
 
 class PatrolRouteAssignment : public ActorAssignment {
-	int16   routeNo,            //  Patrol route number
-	        startingWayPoint,   //  Way point at which to start (-1 = default)
-	        endingWayPoint;     //  Way point at which to end (-1 = default)
-	uint8   routeFlags,         //  Flags indicating how patrol route should
+	int16   _routeNo,            //  Patrol route number
+	        _startingWayPoint,   //  Way point at which to start (-1 = default)
+	        _endingWayPoint;     //  Way point at which to end (-1 = default)
+	uint8   _routeFlags,         //  Flags indicating how patrol route should
 	        //  be followed
-	        flags;              //  Flags representing the state of this
+	        _flags;              //  Flags representing the state of this
 	//  assignment
 
 	enum {
@@ -132,23 +132,23 @@ public:
 
 	//  Return the number of bytes need to archive the data in this
 	//  assignment
-	int32 archiveSize(void) const;
+	int32 archiveSize() const;
 
 	void write(Common::MemoryWriteStreamDynamic *out) const;
 
 	//  Return an integer representing the type of this assignment
-	int16 type(void) const;
+	int16 type() const;
 
 	//  This function is called to notify the assignment of the
 	//  completion of a task which the assignment had created.
 	void handleTaskCompletion(TaskResult result);
 
 	//  Determine if assignment is still valid
-	bool isValid(void);
+	bool isValid();
 
 protected:
 	//  Determine if this assignment needs to create a task at this time
-	bool taskNeeded(void);
+	bool taskNeeded();
 
 	//  Construct a Task for this assignment
 	Task *getTask(TaskStack *ts);
@@ -159,8 +159,8 @@ protected:
  * ===================================================================== */
 
 class HuntToBeNearLocationAssignment : public ActorAssignment {
-	TargetPlaceHolder   targetMem;
-	uint16              range;
+	TargetPlaceHolder   _targetMem;
+	uint16              _range;
 
 	//  An initialization function which provides a common ground for
 	//  the initial constructors.
@@ -200,19 +200,19 @@ public:
 
 	//  Return the number of bytes need to archive the data in this
 	//  assignment
-	int32 archiveSize(void) const;
+	int32 archiveSize() const;
 
 	void write(Common::MemoryWriteStreamDynamic *out) const;
 
-	int16 type(void) const;
+	int16 type() const;
 
 protected:
-	bool taskNeeded(void);
+	bool taskNeeded();
 
 	Task *getTask(TaskStack *ts);
 
-	const Target *getTarget(void) const {
-		return (const Target *)targetMem;
+	const Target *getTarget() const {
+		return (const Target *)_targetMem;
 	}
 };
 
@@ -221,9 +221,9 @@ protected:
  * ===================================================================== */
 
 class HuntToBeNearActorAssignment : public ActorAssignment {
-	TargetPlaceHolder   targetMem;
-	uint16              range;
-	uint8               flags;
+	TargetPlaceHolder   _targetMem;
+	uint16              _range;
+	uint8               _flags;
 
 	enum {
 		track           = (1 << 0)  //  This hunt is a track.
@@ -279,19 +279,19 @@ public:
 
 	//  Return the number of bytes need to archive the data in this
 	//  assignment
-	int32 archiveSize(void) const;
+	int32 archiveSize() const;
 
 	void write(Common::MemoryWriteStreamDynamic *out) const;
 
-	int16 type(void) const;
+	int16 type() const;
 
 protected:
-	bool taskNeeded(void);
+	bool taskNeeded();
 
 	Task *getTask(TaskStack *ts);
 
-	const ActorTarget *getTarget(void) const {
-		return (const ActorTarget *)targetMem;
+	const ActorTarget *getTarget() const {
+		return (const ActorTarget *)_targetMem;
 	}
 };
 
@@ -300,8 +300,8 @@ protected:
  * ===================================================================== */
 
 class HuntToKillAssignment : public ActorAssignment {
-	TargetPlaceHolder   targetMem;
-	uint8               flags;
+	TargetPlaceHolder   _targetMem;
+	uint8               _flags;
 
 	enum {
 		track           = (1 << 0), //  This hunt is a track.
@@ -350,23 +350,23 @@ public:
 
 	//  Return the number of bytes need to archive the data in this
 	//  assignment
-	int32 archiveSize(void) const;
+	int32 archiveSize() const;
 
 	void write(Common::MemoryWriteStreamDynamic *out) const;
 
 	//  Determine if assignment's time limit is up or if the actor is
 	//  already dead
-	bool isValid(void);
+	bool isValid();
 
-	int16 type(void) const;
+	int16 type() const;
 
 protected:
-	bool taskNeeded(void);
+	bool taskNeeded();
 
 	Task *getTask(TaskStack *ts);
 
-	const ActorTarget *getTarget(void) const {
-		return (const ActorTarget *)targetMem;
+	const ActorTarget *getTarget() const {
+		return (const ActorTarget *)_targetMem;
 	}
 };
 
@@ -377,26 +377,26 @@ protected:
 class TetheredAssignment : public ActorAssignment {
 protected:
 	//  Tether region
-	int16       minU,   //  Minimum U coordinate in tether
-	            minV,   //  Minimum V coordinate in tether
-	            maxU,   //  Maximum U coordinate in tether
-	            maxV;   //  Maximum V coordinate in tether
+	int16       _minU,   //  Minimum U coordinate in tether
+	            _minV,   //  Minimum V coordinate in tether
+	            _maxU,   //  Maximum U coordinate in tether
+	            _maxV;   //  Maximum V coordinate in tether
 
 public:
 	//  Constructor -- initial assignment construction
 	TetheredAssignment(Actor *a, uint16 until, const TileRegion &reg) :
 		ActorAssignment(a, until),
-		minU(reg.min.u),
-		minV(reg.min.v),
-		maxU(reg.max.u),
-		maxV(reg.max.v) {
+		_minU(reg.min.u),
+		_minV(reg.min.v),
+		_maxU(reg.max.u),
+		_maxV(reg.max.v) {
 	}
 
 	TetheredAssignment(Actor *a, Common::SeekableReadStream *stream);
 
 	//  Return the number of bytes need to archive the data in this
 	//  assignment
-	int32 archiveSize(void) const;
+	int32 archiveSize() const;
 
 	void write(Common::MemoryWriteStreamDynamic *out) const;
 };
@@ -413,7 +413,7 @@ public:
 	TetheredWanderAssignment(Actor *a, Common::SeekableReadStream *stream) : TetheredAssignment(a, stream) {}
 
 	//  Return an integer representing the type of this assignment
-	int16 type(void) const;
+	int16 type() const;
 
 protected:
 	//  Construct a Task for this assignment
@@ -425,7 +425,7 @@ protected:
  * ===================================================================== */
 
 class AttendAssignment : public ActorAssignment {
-	GameObject      *obj;   //  Object to which to attend
+	GameObject      *_obj;   //  Object to which to attend
 
 public:
 	//  Constructor -- initial assignment construction
@@ -435,12 +435,12 @@ public:
 
 	//  Return the number of bytes need to archive the data in this
 	//  assignment
-	int32 archiveSize(void) const;
+	int32 archiveSize() const;
 
 	void write(Common::MemoryWriteStreamDynamic *out) const;
 
 	//  Return an integer representing the type of this assignment
-	int16 type(void) const;
+	int16 type() const;
 
 protected:
 	//  Construct a Task for this assignment

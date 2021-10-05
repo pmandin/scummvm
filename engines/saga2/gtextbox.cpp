@@ -68,7 +68,7 @@ extern gFont        *mainFont;
 *
 *   /h2/NOTIFICATIONS
 *       This class sends a gEventNewValue whenever the text box becomes
-*       deactivated. If the deactivation occured because of the user
+*       deactivated. If the deactivation occurred because of the user
 *       hitting return, then the value of the event will be 1; In all
 *       other cases it is zero.
 *
@@ -367,7 +367,7 @@ bool gTextBox::activate(gEventType why) {
 
 //-----------------------------------------------------------------------
 
-void gTextBox::deactivate(void) {
+void gTextBox::deactivate() {
 	selected = 0;
 	isActiveCtl = false;
 	draw();
@@ -386,7 +386,7 @@ void gTextBox::prepareEdit(int which) {
 
 //-----------------------------------------------------------------------
 
-bool gTextBox::changed(void) {
+bool gTextBox::changed() {
 	if (undoBuffer && editing) {
 		return memcmp(undoBuffer, fieldStrings[index], currentLen[index] + 1);
 	}
@@ -395,7 +395,7 @@ bool gTextBox::changed(void) {
 
 //-----------------------------------------------------------------------
 
-void gTextBox::commitEdit(void) {
+void gTextBox::commitEdit() {
 	if (undoBuffer && changed()) {
 		memcpy(undoBuffer, fieldStrings[index], currentLen[index] + 1);
 		undoLen = currentLen[index];
@@ -407,7 +407,7 @@ void gTextBox::commitEdit(void) {
 
 //-----------------------------------------------------------------------
 
-void gTextBox::revertEdit(void) {
+void gTextBox::revertEdit() {
 	if (undoBuffer && changed()) {
 		cursorPos = anchorPos = currentLen[index] = undoLen;
 		memcpy(fieldStrings[index], undoBuffer, currentLen[index] + 1);
@@ -458,7 +458,7 @@ void gTextBox::scroll(int8 req) {
 		Rect16  textBoxExtent   = editRect;
 
 		// setup the editing extent
-		textBoxExtent.y = (fontOffset * visIndex)  + extent.y;
+		textBoxExtent.y = (fontOffset * visIndex)  + _extent.y;
 
 		setEditExtent(textBoxExtent);
 		fullRedraw = true;
@@ -548,13 +548,13 @@ void gTextBox::selectionMove(int howMany) {
 
 //-----------------------------------------------------------------------
 
-void gTextBox::scrollUp(void) {
+void gTextBox::scrollUp() {
 	selectionUp(linesPerPage - 2);
 }
 
 //-----------------------------------------------------------------------
 
-void gTextBox::scrollDown(void) {
+void gTextBox::scrollDown() {
 	selectionDown(linesPerPage - 2);
 }
 
@@ -568,7 +568,7 @@ bool gTextBox::pointerHit(gPanelMessage &msg) {
 	int16 newPos;
 
 
-	if (Rect16(0, 0, extent.width, extent.height).ptInside(pos)) {
+	if (Rect16(0, 0, _extent.width, _extent.height).ptInside(pos)) {
 		int8    newIndex;
 		// get the position of the line
 		newIndex = clamp(0, pos.y / fontOffset, linesPerPage - 1);
@@ -800,11 +800,11 @@ bool gTextBox::keyStroke(gPanelMessage &msg) {
 		//  Now, redraw the contents.
 
 		SAVE_GPORT_STATE(port);                  // save pen color, etc.
-		g_vm->_pointer->hide(port, extent);              // hide mouse pointer
+		g_vm->_pointer->hide(port, _extent);              // hide mouse pointer
 
 		drawContents();                         // draw the string
 
-		g_vm->_pointer->show(port, extent);              // show mouse pointer
+		g_vm->_pointer->show(port, _extent);              // show mouse pointer
 
 		return true;
 	}
@@ -818,7 +818,7 @@ bool gTextBox::keyStroke(gPanelMessage &msg) {
 
 //-----------------------------------------------------------------------
 
-bool gTextBox::tabSelect(void) {
+bool gTextBox::tabSelect() {
 	return true;
 }
 
@@ -854,14 +854,14 @@ void gTextBox::handleTimerTick(int32 tick) {
 		if (tick - blinkStart > blinkTime) {
 			gPort   &port = window.windowPort;
 			SAVE_GPORT_STATE(port);                  // save pen color, etc.
-			g_vm->_pointer->hide(port, extent);              // hide mouse pointer
+			g_vm->_pointer->hide(port, _extent);              // hide mouse pointer
 
 			port.setPenMap(port.penMap);
 			port.setStyle(0);
 			port.setColor(blinkState ? blinkColor0 : blinkColor1);
 			port.fillRect(editRect.x + blinkX - ((blinkWide + 1) / 2), editRect.y + 1, blinkWide, editRect.height - 1);
 
-			g_vm->_pointer->show(port, extent);              // show mouse pointer
+			g_vm->_pointer->show(port, _extent);              // show mouse pointer
 
 			blinkState = !blinkState;
 			blinkStart = tick;
@@ -881,7 +881,7 @@ void gTextBox::editRectFill(gPort &fillPort, gPen *pen) {
 
 //-----------------------------------------------------------------------
 
-void gTextBox::drawContents(void) {
+void gTextBox::drawContents() {
 	int16 cPos, aPos;
 	assert(textFont);
 	assert(fontColorBack != -1);
@@ -987,7 +987,7 @@ void gTextBox::drawContents(void) {
 
 //-----------------------------------------------------------------------
 
-void gTextBox::drawClipped(void) {
+void gTextBox::drawClipped() {
 	gPort           &port = window.windowPort;
 	Rect16          rect = window.getExtent();
 
@@ -1002,7 +1002,7 @@ void gTextBox::drawClipped(void) {
 	WriteStatusF(11, "Entry %d[%d] (%d:%d)", index, currentLen[index], cursorPos, anchorPos);
 
 	SAVE_GPORT_STATE(port);                  // save pen color, etc.
-	g_vm->_pointer->hide(port, extent);              // hide mouse pointer
+	g_vm->_pointer->hide(port, _extent);              // hide mouse pointer
 
 	if (fullRedraw) {
 		drawAll(port, Point16(0, 0), Rect16(0, 0, rect.width, rect.height));
@@ -1018,7 +1018,7 @@ void gTextBox::drawClipped(void) {
 		drawAll(port, Point16(0, 0), Rect16(0, 0, rect.width, rect.height));
 	}
 
-	g_vm->_pointer->show(port, extent);              // show mouse pointer
+	g_vm->_pointer->show(port, _extent);              // show mouse pointer
 
 }
 
@@ -1093,7 +1093,7 @@ void gTextBox::drawAll(gPort &port,
 			port.setMode(drawModeMatte);
 
 			port.bltPixels(*tempPort.map, 0, 0,
-			               extent.x + 1, extent.y + 1,
+			               _extent.x + 1, _extent.y + 1,
 			               bufRect.width, bufRect.height);
 
 		}

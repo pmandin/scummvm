@@ -46,11 +46,11 @@ static const uint buttonHorizontalMargin = 25;
 static const uint buttonVerticalMargin   = 5;
 static const Color textColor = Color(0xFF, 0xFF, 0xFF);
 
-DialogBox::DialogBox(Gfx::Driver *gfx, Cursor *cursor) :
+DialogBox::DialogBox(StarkEngine *vm, Gfx::Driver *gfx, Cursor *cursor) :
 		Window(gfx, cursor),
 		_foregroundTexture(nullptr),
 		_confirmCallback(nullptr) {
-
+	_vm = vm;
 	_surfaceRenderer = gfx->createSurfaceRenderer();
 
 	Graphics::Surface *background = loadBackground();
@@ -220,6 +220,16 @@ Graphics::Surface *DialogBox::loadBackground() {
 	Common::PEResources executable;
 	if (!executable.loadFromEXE("game.exe") && !executable.loadFromEXE("game.dll")) {
 		warning("Unable to load 'game.exe' to read the modal dialog background image");
+		return nullptr;
+	}
+
+	// As of Aug 2021:
+	// Steam version of The Longest Journey is 1.0.0.161 "Enno's two-CD Version"
+	// GOG version of The Longest Journey is 1.0.0.142 "RC1" (Special Build: "Paper Sun")
+	// Steam's game.exe does not contain a valid resource for the background bitmap id 147
+	// so we skip trying to retrieve it.
+	if (_vm->getGameFlags() & GF_MISSING_EXE_RESOURCES) {
+		warning("Steam version does not contain the modal dialog background bitmap in 'game.exe'. Using fallback color for dialog background...");
 		return nullptr;
 	}
 

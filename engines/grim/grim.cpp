@@ -281,6 +281,13 @@ GfxBase *GrimEngine::createRenderer(int screenW, int screenH) {
 	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders && !OpenGLContext.shadersSupported) {
 		matchingRendererType = Graphics::kRendererTypeOpenGL;
 	}
+
+	// For Grim Fandango, OpenGL renderer without shaders is preferred
+	if (desiredRendererType == Graphics::kRendererTypeDefault &&
+	    matchingRendererType == Graphics::kRendererTypeOpenGLShaders &&
+	    getGameType() == GType_GRIM) {
+		matchingRendererType = Graphics::kRendererTypeOpenGL;
+	}
 #endif
 
 	if (matchingRendererType != desiredRendererType && desiredRendererType != Graphics::kRendererTypeDefault) {
@@ -348,7 +355,7 @@ Common::Error GrimEngine::run() {
 			GType_MONKEY4 == getGameType() ? "Escape From Monkey Island" : "Grim Fandango"
 			 );
 			GUI::MessageDialog msg(confirmString, _("Yes"), _("No"));
-			if (!msg.runModal()) {
+			if (msg.runModal() != GUI::kMessageOK) {
 				return Common::kUserCanceled;
 			}
 		}
@@ -1115,6 +1122,13 @@ void GrimEngine::mainLoop() {
 			g_sound->setMusicState(g_imuseState);
 			g_imuseState = -1;
 		}
+
+#if defined(__EMSCRIPTEN__)
+		// If SDL_HINT_EMSCRIPTEN_ASYNCIFY is enabled, SDL pauses the application and gives
+		// back control to the browser automatically by calling emscripten_sleep via SDL_Delay.
+		// Without this the page would completely lock up.
+		g_system->delayMillis(0);
+#endif
 
 		uint32 endTime = g_system->getMillis();
 		if (startTime > endTime)

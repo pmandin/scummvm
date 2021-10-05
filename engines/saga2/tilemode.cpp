@@ -67,12 +67,12 @@ public:
 	void setSticky(bool s) {
 		sticky = s;
 	}
-	bool isSticky(void) {
+	bool isSticky() {
 		return sticky;
 	}
 
 private:
-	void deactivate(void);
+	void deactivate();
 
 //	void pointerMove( gPanelMessage &msg );
 	bool pointerHit(gPanelMessage &msg);
@@ -87,7 +87,7 @@ private:
 //int16 OptionsDialog( bool disableSaveResume=false );
 
 extern int16        speechButtonCount;      // count of speech buttons
-extern void         abortSpeech(void);
+extern void         abortSpeech();
 
 extern const uint32 imageGroupID = MKTAG('I', 'M', 'A', 'G');
 
@@ -97,28 +97,28 @@ extern int16                    cycleCount;
 extern int32                lastUpdateTime;         // time of last display update
 
 //Prototypes For Tile Mode GameMode Object Init
-void TileModeHandleTask(void);
+void TileModeHandleTask();
 void TileModeHandleKey(int16 key, int16 qual);
 
-void initTileBanks(void);
-void freeAllTileBanks(void);
+void initTileBanks();
+void freeAllTileBanks();
 
 void navigateDirect(TilePoint pick, bool runFlag);
 void navigatePath(TilePoint pick);
 
 void moveActors(int32 deltaTime);
 
-void drawMainDisplay(void);
-void updateMainDisplay(void);
+void drawMainDisplay();
+void updateMainDisplay();
 
 #if DEBUG
-void soundTest1(void);
-void soundTest2(void);
-void voiceTest1(void);
-void voiceTest2(void);
+void soundTest1();
+void soundTest2();
+void voiceTest1();
+void voiceTest2();
 #endif
 
-void toggleMusic(void);
+void toggleMusic();
 
 #if CHEATMOVE
 void cheatMove(int16 key);
@@ -208,11 +208,6 @@ extern hResContext          *imageRes;              // image resource handle
 
 //  Combat related data
 static bool         aggressiveActFlag = false;  //  Indicates wether or not
-//  there has been an
-//  aggressive act
-static CalenderTime timeOfLastAggressiveAct;    //  Used to determine the
-//  mode state
-
 static bool         inCombat,
        combatPaused;
 
@@ -234,7 +229,7 @@ static StaticWindow mainWindowDecorations[] = {
    TileMode utility functions
  * ===================================================================== */
 
-bool InCombatPauseKludge(void) {
+bool InCombatPauseKludge() {
 	return (inCombat && combatPaused);
 }
 
@@ -257,7 +252,7 @@ char luckyKey(char *choices) {
 //-----------------------------------------------------------------------
 //	This function performs all combat pausing tasks
 
-static void pauseCombat(void) {
+static void pauseCombat() {
 	pauseCalender();
 	pauseBackgroundSimulation();
 	pauseInterruptableMotions();
@@ -271,7 +266,7 @@ static void pauseCombat(void) {
 //-----------------------------------------------------------------------
 //	This function performs all combat un-pausing tasks
 
-static void resumeCombat(void) {
+static void resumeCombat() {
 	setCenterActorIndicator(false);
 
 	resumeActorTasks();
@@ -285,7 +280,7 @@ static void resumeCombat(void) {
 //-----------------------------------------------------------------------
 //	This function performs all combat initialization tasks
 
-static void startCombat(void) {
+static void startCombat() {
 	if (g_vm->_autoAggression)
 		autoAdjustAggression();
 
@@ -296,7 +291,7 @@ static void startCombat(void) {
 //-----------------------------------------------------------------------
 //	This function performs all combat cleanup tasks
 
-static void endCombat(void) {
+static void endCombat() {
 	if (combatPaused) {
 		combatPaused = false;
 		resumeCombat();
@@ -308,27 +303,27 @@ static void endCombat(void) {
 
 //-----------------------------------------------------------------------
 
-void toggleAutoAggression(void) {
+void toggleAutoAggression() {
 	g_vm->_autoAggression = !g_vm->_autoAggression;
 	updateAutoAggressionButton(g_vm->_autoAggression);
 }
 
 //-----------------------------------------------------------------------
 
-bool isAutoAggressionSet(void) {
+bool isAutoAggressionSet() {
 	return g_vm->_autoAggression;
 }
 
 //-----------------------------------------------------------------------
 
-void toggleAutoWeapon(void) {
+void toggleAutoWeapon() {
 	g_vm->_autoWeapon = !g_vm->_autoWeapon;
 	updateAutoWeaponButton(g_vm->_autoWeapon);
 }
 
 //-----------------------------------------------------------------------
 
-bool isAutoWeaponSet(void) {
+bool isAutoWeaponSet() {
 	return g_vm->_autoWeapon;
 }
 
@@ -343,7 +338,7 @@ void logAggressiveAct(ObjectID attackerID, ObjectID attackeeID) {
 			handlePlayerActorAttacked(playerID);
 
 		aggressiveActFlag = true;
-		timeOfLastAggressiveAct = calender;
+		*g_vm->_tmm->_timeOfLastAggressiveAct = *g_vm->_calender;
 	}
 }
 
@@ -351,28 +346,28 @@ void logAggressiveAct(ObjectID attackerID, ObjectID attackeeID) {
 //	Determine how much time has elapsed since the last aggressive act
 //	involving a player actor
 
-uint16 timeSinceLastAggressiveAct(void) {
-	return aggressiveActFlag ? calender - timeOfLastAggressiveAct : maxuint16;
+uint16 timeSinceLastAggressiveAct() {
+	return aggressiveActFlag ? *g_vm->_calender - *g_vm->_tmm->_timeOfLastAggressiveAct : maxuint16;
 }
 
 //-----------------------------------------------------------------------
 //	Determine if there are any enemies within the active regions.
 
-bool areThereActiveEnemies(void) {
+bool areThereActiveEnemies() {
 	ActiveRegionObjectIterator  iter;
 	GameObject                  *obj = nullptr;
 
 	for (iter.first(&obj); obj != NULL; iter.next(&obj)) {
 		if (isActor(obj)
 		        &&  !((Actor *)obj)->isDead()
-		        && ((Actor *)obj)->disposition == dispositionEnemy)
+		        && ((Actor *)obj)->_disposition == dispositionEnemy)
 			return true;
 	}
 
 	return false;
 }
 
-void CheckCombatMood(void) {
+void CheckCombatMood() {
 	GameObject          *obj;
 	TilePoint           centerLoc;
 	ActiveRegion        *ar;
@@ -401,8 +396,8 @@ void CheckCombatMood(void) {
 	for (iter8.first(&obj); obj != NULL; iter8.next(&obj)) {
 		if (isActor(obj)
 		        &&  !((Actor *)obj)->isDead()
-		        && ((Actor *)obj)->disposition == dispositionEnemy) {
-			if (agress || !(((Actor *)obj)->flags & Actor::afraid)) {
+		        && ((Actor *)obj)->_disposition == dispositionEnemy) {
+			if (agress || !(((Actor *)obj)->_flags & Actor::afraid)) {
 				incrementActiveFaction((Actor *) obj);
 				wasHostile = true;
 			}
@@ -414,7 +409,7 @@ void CheckCombatMood(void) {
 //-----------------------------------------------------------------------
 //	This function evaluates the mouse state in the standard manner
 
-static void evalMouseState(void) {
+static void evalMouseState() {
 	GameObject      *obj = GameObject::objectAddress(pickedObject);
 	Actor           *a = getCenterActor();
 	bool            interruptable = a->isInterruptable();
@@ -578,7 +573,7 @@ static void evalMouseState(void) {
 		if (g_vm->_mouseInfo->getIntent() == GrabInfo::WalkTo) {
 			if (g_vm->_mouseInfo->getDoable()
 			        &&  !navigationDelayed) {
-				MotionTask  *mt = a->moveTask;
+				MotionTask  *mt = a->_moveTask;
 
 				if (mt == NULL || !mt->isWalk()) {
 					navigateDirect(walkToPos, runFlag);
@@ -599,7 +594,7 @@ static void evalMouseState(void) {
 //-----------------------------------------------------------------------
 //	Initialize the tile mode state
 
-void initTileModeState(void) {
+void initTileModeState() {
 	assert(uiKeysEnabled);
 
 	aggressiveActFlag = false;
@@ -623,7 +618,7 @@ void saveTileModeState(Common::OutSaveFile *outS) {
 	debugC(3, kDebugSaveload, "... combatPaused = %d", combatPaused);
 
 	if (aggressiveActFlag)
-		timeOfLastAggressiveAct.write(out);
+		g_vm->_tmm->_timeOfLastAggressiveAct->write(out);
 	CHUNK_END;
 }
 
@@ -640,7 +635,7 @@ void loadTileModeState(Common::InSaveFile *in) {
 	debugC(3, kDebugSaveload, "... combatPaused = %d", combatPaused);
 
 	if (aggressiveActFlag)
-		timeOfLastAggressiveAct.read(in);
+		g_vm->_tmm->_timeOfLastAggressiveAct->read(in);
 
 	tileLockFlag = false;
 }
@@ -652,7 +647,7 @@ void loadTileModeState(Common::InSaveFile *in) {
 //-----------------------------------------------------------------------
 //	Initialize the Tile mode
 
-void TileModeSetup(void) {
+void TileModeSetup() {
 	//  Load in decorative panels for the main window (for this mode)
 	mainWindow->setDecorations(mainWindowDecorations, ARRAYSIZE(mainWindowDecorations), imageRes);
 
@@ -677,7 +672,7 @@ void TileModeSetup(void) {
 //-----------------------------------------------------------------------
 //	Cleanup function for Tile mode
 
-void TileModeCleanup(void) {
+void TileModeCleanup() {
 	//Disable Tile Mode Specific Controls
 	tileControls->enable(false);
 
@@ -705,7 +700,7 @@ static int postDisplayFrame = 3;
 //  We need to test if UI is locked, so as to not pause combat
 extern int          lockUINest;
 
-void TileModeHandleTask(void) {
+void TileModeHandleTask() {
 	bool taskChek = false;
 	//  Run any SAGA scripts which are waiting to run.
 	dispatchScripts();
@@ -767,13 +762,13 @@ void TileModeHandleTask(void) {
 
 		// do an alarm check for container views
 		if (containerObjTextAlarm.check()) {
-			ContainerView::objTextAlarm = true;
+			g_vm->_cnm->_objTextAlarm = true;
 		}
 
-		if (ContainerView::objTextAlarm == true) {
+		if (g_vm->_cnm->_objTextAlarm == true) {
 			// if the mouse is in a container...
-			if (ContainerView::mouseInView) {
-				g_vm->_mouseInfo->setText(ContainerView::mouseText);
+			if (g_vm->_cnm->_mouseInView) {
+				g_vm->_mouseInfo->setText(g_vm->_cnm->_mouseText);
 			}
 		}
 
@@ -899,7 +894,7 @@ void TileModeHandleTask(void) {
 
 extern void toggleAgression(PlayerActorID bro, bool all);
 extern void toggleBanding(PlayerActorID bro, bool all);
-extern void toggleIndivMode(void);
+extern void toggleIndivMode();
 
 void TileModeHandleKey(int16 key, int16 qual) {
 	TilePoint Pos, ActorTP;
@@ -1262,8 +1257,8 @@ static APPFUNC(cmdClickTileMap) {
 				if (g_vm->_mouseInfo->getIntent() == GrabInfo::WalkTo) {
 					Actor   *a = getCenterActor();
 
-					if (a->moveTask && a->moveTask->isWalk())
-						a->moveTask->finishWalk();
+					if (a->_moveTask && a->_moveTask->isWalk())
+						a->_moveTask->finishWalk();
 				}
 				navigationDelayed = false;
 			} else {
@@ -1359,7 +1354,7 @@ void navigatePath(TilePoint pick) {
 	if (a) {
 		if (a->isMoving())
 			//  if motion task already exists, change the target
-			a->moveTask->changeTarget(pick);
+			a->_moveTask->changeTarget(pick);
 		else
 			//  else create a new motion task
 			MotionTask::walkTo(*a, pick, false, false);
@@ -1447,7 +1442,7 @@ gStickyDragControl::gStickyDragControl(gPanelList &list, const Rect16 &box,
 	sticky = false;
 }
 
-void gStickyDragControl::deactivate(void) {
+void gStickyDragControl::deactivate() {
 	if (sticky) setMouseImage(kMouseArrowImage, 0, 0);
 	sticky = false;
 	gGenericControl::deactivate();
@@ -1469,9 +1464,17 @@ void gStickyDragControl::pointerRelease(gPanelMessage &msg) {
 		gGenericControl::pointerRelease(msg);
 }
 
-void noStickyMap(void) {
+void noStickyMap() {
 	((gPanel *)tileMapControl)->deactivate();
 	mousePressed = false;
+}
+
+TileModeManager::TileModeManager() {
+	_timeOfLastAggressiveAct = new CalenderTime;
+}
+
+TileModeManager::~TileModeManager() {
+	delete _timeOfLastAggressiveAct;
 }
 
 } // end of namespace Saga2

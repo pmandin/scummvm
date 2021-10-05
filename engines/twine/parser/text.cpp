@@ -31,10 +31,10 @@ namespace TwinE {
 
 void TextData::initCustomTexts(TextBankId textBankId) {
 	if (textBankId == TextBankId::Options_and_menus) {
-		add(textBankId, TextEntry{_sc("High resolution on", "Options menu"), -1, TextId::kCustomHighResOptionOn});
-		add(textBankId, TextEntry{_sc("High resolution off", "Options menu"), -1, TextId::kCustomHighResOptionOff});
-		add(textBankId, TextEntry{_sc("Wall collision on", "Options menu"), -1, TextId::kCustomWallCollisionOn});
-		add(textBankId, TextEntry{_sc("Wall collision off", "Options menu"), -1, TextId::kCustomWallCollisionOff});
+		add(textBankId, TextEntry{_c("High resolution on", "Options menu"), -1, TextId::kCustomHighResOptionOn});
+		add(textBankId, TextEntry{_c("High resolution off", "Options menu"), -1, TextId::kCustomHighResOptionOff});
+		add(textBankId, TextEntry{_c("Wall collision on", "Options menu"), -1, TextId::kCustomWallCollisionOn});
+		add(textBankId, TextEntry{_c("Wall collision off", "Options menu"), -1, TextId::kCustomWallCollisionOff});
 	}
 }
 
@@ -57,13 +57,20 @@ bool TextData::loadFromHQR(const char *name, TextBankId textBankId, int language
 
 	for (int entry = 0; entry < numIdxEntries; ++entry) {
 		const TextId textIdx = (TextId)indexStream->readUint16LE();
-		const uint16 start = offsetStream->readUint16LE();
+		uint16 start = offsetStream->readUint16LE();
 		const int32 offsetPos = offsetStream->pos();
 		const uint16 end = offsetStream->readUint16LE();
+
+		if (!lba1) {
+			++start;
+		}
 		offsetStream->seek(start);
 		Common::String result;
 		for (int16 i = start; i < end - 1; ++i) {
 			const char c = (char)offsetStream->readByte();
+			if (c == '\0') {
+				break;
+			}
 			result += c;
 		}
 		add(textBankId, TextEntry{result, entry, textIdx});

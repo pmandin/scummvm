@@ -23,12 +23,13 @@
 #include "twine/script/script_life_v1.h"
 #include "common/memstream.h"
 #include "common/stream.h"
+#include "twine/debugger/debug_scene.h"
 #include "twine/scene/actor.h"
 #include "twine/scene/animations.h"
 #include "twine/audio/music.h"
 #include "twine/audio/sound.h"
 #include "twine/scene/collision.h"
-#include "twine/flamovies.h"
+#include "twine/movies.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/holomap.h"
@@ -40,6 +41,7 @@
 #include "twine/renderer/renderer.h"
 #include "twine/renderer/screens.h"
 #include "twine/resources/resources.h"
+#include "twine/scene/extra.h"
 #include "twine/scene/scene.h"
 #include "twine/shared.h"
 #include "twine/text.h"
@@ -130,7 +132,7 @@ enum LifeScriptConditions {
 };
 
 /**
- * Returns @c 1 Condition value size (1 byte), @c 2 Condition value size (2 byes)
+ * Returns @c 1 Condition value size (1 byte), @c 2 Condition value size (2 bytes)
  */
 static int32 processLifeConditions(TwinEEngine *engine, LifeScriptContext &ctx) {
 	int32 conditionValueSize = 1;
@@ -656,7 +658,7 @@ static int32 lMESSAGE(TwinEEngine *engine, LifeScriptContext &ctx) {
 	engine->_text->setFontCrossColor(ctx.actor->_talkColor);
 	engine->_scene->_talkingActor = ctx.actorIdx;
 	engine->_text->drawTextProgressive(textIdx);
-	if (engine->_scene->_currentSceneIdx == LBA1SceneId::Principal_Island_Library && engine->_scene->_talkingActor == 8)/* && (*(short *)lifeScriptPosition == 0xe2 [226])*/ {
+	if (engine->_scene->_currentSceneIdx == LBA1SceneId::Principal_Island_Library && engine->_scene->_talkingActor == 8 && textIdx == TextId::kStarWarsFanBoy) {
 		engine->unlockAchievement("LBA_ACH_008");
 	}
 	engine->_redraw->redrawEngineActions(true);
@@ -1576,7 +1578,7 @@ static int32 lSET_NORMAL_PAL(TwinEEngine *engine, LifeScriptContext &ctx) {
 static int32 lMESSAGE_SENDELL(TwinEEngine *engine, LifeScriptContext &ctx) {
 	ScopedEngineFreeze scoped(engine);
 	engine->_screens->fadeToBlack(engine->_screens->_paletteRGBA);
-	engine->_screens->loadImage(RESSHQR_TWINSEN_ZOE_SENDELLIMG, RESSHQR_TWINSEN_ZOE_SENDELLPAL);
+	engine->_screens->loadImage(TwineImage(Resources::HQR_RESS_FILE, 25, 26));
 	engine->_text->textClipFull();
 	engine->_text->setFontCrossColor(COLOR_WHITE);
 	engine->_text->_drawTextBoxBackground = false;
@@ -1865,7 +1867,7 @@ void ScriptLife::processLifeScript(int32 actorIdx) {
 		if (scriptOpcode < ARRAYSIZE(function_map)) {
 			end = function_map[scriptOpcode].function(_engine, ctx);
 		} else {
-			error("Actor %d with wrong offset/opcode - Offset: %d (opcode: %i)", actorIdx, (int)ctx.stream.pos() - 1, scriptOpcode);
+			error("Actor %d with wrong offset/opcode - Offset: %d/%d (opcode: %i)", actorIdx, (int)ctx.stream.pos() - 1, (int)ctx.stream.size(), scriptOpcode);
 		}
 
 		if (end < 0) {

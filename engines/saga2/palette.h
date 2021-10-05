@@ -27,53 +27,16 @@
 #ifndef SAGA2_PALETTE_H
 #define SAGA2_PALETTE_H
 
+#include "saga2/vpal.h"
+
 namespace Saga2 {
-
-/* ===================================================================== *
-   Typedefs
- * ===================================================================== */
-
-typedef gPalette        *gPalettePtr;
-
-/* ===================================================================== *
-   Exports
- * ===================================================================== */
-
-//  Global palette resource handles
-extern gPalettePtr   midnightPalette,
-       noonPalette,
-       darkPalette;
 
 /* ===================================================================== *
    Function prototypes
  * ===================================================================== */
 
-//  Initialize global palette resources
-void loadPalettes(void);
-//  Dump global palette resources
-void cleanupPalettes(void);
-
-//  Begin fade up/down
-void beginFade(gPalettePtr newPalette, int32 fadeDuration);
-//  Update state of palette fade up/down
-bool updatePalette(void);
-
-//  Linearly interpolate between two specified palettes
-void createPalette(
-    gPalettePtr newP,
-    gPalettePtr srcP,
-    gPalettePtr dstP,
-    int32       elapsedTime,
-    int32       totalTime);
-//  Set the current palette
-void setCurrentPalette(gPalettePtr newPal);
-//  Return the current palette
-void getCurrentPalette(gPalettePtr pal);
-
-void setPaletteToBlack(void);
-
 //  Initialize the state of the current palette and fade up/down.
-void initPaletteState(void);
+void initPaletteState();
 //  Save the current state of the current palette and fade up/down in
 //  a save file.
 void savePaletteState(Common::OutSaveFile *outS);
@@ -81,7 +44,7 @@ void savePaletteState(Common::OutSaveFile *outS);
 //  up/down from a save file.
 void loadPaletteState(Common::InSaveFile *in);
 //  Cleanup the palette
-inline void cleanupPaletteState(void) { /* do nothing */ }
+inline void cleanupPaletteState() { /* do nothing */ }
 
 } // end of namespace Saga2
 

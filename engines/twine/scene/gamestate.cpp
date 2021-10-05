@@ -111,9 +111,9 @@ void GameState::initEngineVars() {
 	initGameStateVars();
 	initHeroVars();
 
-	_engine->_scene->_newHeroPos.x = 0x2000;
-	_engine->_scene->_newHeroPos.y = 0x1800;
-	_engine->_scene->_newHeroPos.z = 0x2000;
+	_engine->_scene->_newHeroPos.x = 16 * BRICK_SIZE;
+	_engine->_scene->_newHeroPos.y = 24 * BRICK_HEIGHT;
+	_engine->_scene->_newHeroPos.z = 16 * BRICK_SIZE;
 
 	_engine->_scene->_currentSceneIdx = SCENE_CEILING_GRID_FADE_1;
 	_engine->_scene->_needChangeScene = LBA1SceneId::Citadel_Island_Prison;
@@ -281,8 +281,14 @@ bool GameState::saveGame(Common::WriteStream *file) {
 }
 
 void GameState::setGameFlag(uint8 index, uint8 value) {
+	if (_gameStateFlags[index] == value) {
+		return;
+	}
 	debug(2, "Set gameStateFlags[%u]=%u", index, value);
 	_gameStateFlags[index] = value;
+	if (!value) {
+		return;
+	}
 
 	if ((index == GAMEFLAG_VIDEO_BAFFE || index == GAMEFLAG_VIDEO_BAFFE2 || index == GAMEFLAG_VIDEO_BAFFE3 || index == GAMEFLAG_VIDEO_BAFFE5) &&
 		_gameStateFlags[GAMEFLAG_VIDEO_BAFFE] != 0 && _gameStateFlags[GAMEFLAG_VIDEO_BAFFE2] != 0 && _gameStateFlags[GAMEFLAG_VIDEO_BAFFE3] != 0 && _gameStateFlags[GAMEFLAG_VIDEO_BAFFE5] != 0) {
@@ -611,6 +617,16 @@ int16 GameState::setLeafBoxes(int16 val) {
 
 void GameState::addLeafBoxes(int16 val) {
 	setLeafBoxes(_inventoryNumLeafsBox + val);
+}
+
+void GameState::clearGameFlags() {
+	debug(2, "Clear all gameStateFlags");
+	Common::fill(&_gameStateFlags[0], &_gameStateFlags[NUM_GAME_FLAGS], 0);
+}
+
+uint8 GameState::hasGameFlag(uint8 index) const {
+	debug(6, "Query gameStateFlags[%u]=%u", index, _gameStateFlags[index]);
+	return _gameStateFlags[index];
 }
 
 } // namespace TwinE

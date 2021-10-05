@@ -27,13 +27,14 @@
 #include "twine/parser/blocklibrary.h"
 #include "twine/parser/sprite.h"
 #include "twine/shared.h"
-#include "twine/twine.h"
 
 namespace Graphics {
 class ManagedSurface;
 }
 
 namespace TwinE {
+
+class ActorStruct;
 
 /** Block fragment entry */
 struct BlockEntry {
@@ -179,14 +180,13 @@ private:
 	const BrickEntry* getBrickEntry(int32 j, int32 i) const;
 
 	const IVec3 &updateCollisionCoordinates(int32 x, int32 y, int32 z);
+
+	BlockEntry getBlockEntry(int32 x, int32 y, int32 z) const;
 public:
 	Grid(TwinEEngine *engine);
 	~Grid();
 
 	void init(int32 w, int32 h);
-
-	/** Grid block entry types */
-	typedef struct BlockEntry blockMap[GRID_SIZE_X][GRID_SIZE_Z][GRID_SIZE_Y];
 
 	/**
 	 * search down until either ground is found or lower border of the cube is reached
@@ -299,10 +299,6 @@ public:
 
 	inline ShapeType getBrickShapeFull(const IVec3 &pos, int32 y2) {
 		return getBrickShapeFull(pos.x, pos.y, pos.z, y2);
-	}
-
-	inline uint8 getBrickSoundType(const IVec3 &pos) {
-		return getBrickSoundType(pos.x, pos.y, pos.z);
 	}
 };
 

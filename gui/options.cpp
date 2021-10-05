@@ -38,6 +38,7 @@
 #include "common/config-manager.h"
 #include "common/gui_options.h"
 #include "common/rendermode.h"
+#include "common/savefile.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "common/translation.h"
@@ -1920,6 +1921,9 @@ GlobalOptionsDialog::GlobalOptionsDialog(LauncherDialog *launcher)
 	_ttsCheckbox = nullptr;
 	_ttsVoiceSelectionPopUp = nullptr;
 #endif
+#ifdef USE_DISCORD
+	_discordRpcCheckbox = nullptr;
+#endif
 }
 
 GlobalOptionsDialog::~GlobalOptionsDialog() {
@@ -2286,6 +2290,15 @@ void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String 
 
 	_guiConfirmExit->setState(ConfMan.getBool("confirm_exit", _domain));
 
+#ifdef USE_DISCORD
+	_discordRpcCheckbox = new CheckboxWidget(boss, prefix + "DiscordRpc",
+		_("Enable Discord integration"),
+		_("Show information about the games you are playing on Discord if the Discord client is running.")
+	);
+
+	_discordRpcCheckbox->setState(ConfMan.getBool("discord_rpc", _domain));
+#endif
+
 	// TODO: joystick setting
 
 #ifdef USE_TRANSLATION
@@ -2476,6 +2489,93 @@ void GlobalOptionsDialog::addAccessibilityControls(GuiObject *boss, const Common
 }
 #endif // USE_TTS
 
+struct ExistingSave {
+	MetaEngine *metaEngine;
+	Common::String target;
+	SaveStateDescriptor desc;
+
+	ExistingSave(MetaEngine *_metaEngine, const Common::String &_target, const SaveStateDescriptor &_desc) :
+		metaEngine(_metaEngine),
+		target(_target),
+		desc(_desc)
+	{}
+};
+
+bool GlobalOptionsDialog::updateAutosavePeriod(int newValue) {
+	const int oldAutosavePeriod = ConfMan.getInt("autosave_period");
+	if (oldAutosavePeriod != 0 || newValue <= 0)
+		return true;
+	typedef Common::Array<ExistingSave> ExistingSaveList;
+	ExistingSaveList saveList;
+	using Common::ConfigManager;
+	const int maxListSize = 10;
+	bool hasMore = false;
+	const ConfigManager::DomainMap &domains = ConfMan.getGameDomains();
+	for (ConfigManager::DomainMap::const_iterator it = domains.begin(), end = domains.end(); it != end; ++it) {
+		const Common::String target = it->_key;
+		const ConfigManager::Domain domain = it->_value;
+		const Common::String engine = domain["engineid"];
+		if (const Plugin *detectionPlugin = EngineMan.findPlugin(engine)) {
+			if (const Plugin *plugin = PluginMan.getEngineFromMetaEngine(detectionPlugin)) {
+				MetaEngine &metaEngine = plugin->get<MetaEngine>();
+				const int autoSaveSlot = metaEngine.getAutosaveSlot();
+				if (autoSaveSlot < 0)
+					continue;
+				SaveStateDescriptor desc = metaEngine.querySaveMetaInfos(target.c_str(), autoSaveSlot);
+				if (desc.getSaveSlot() != -1 && !desc.getDescription().empty() && !desc.hasAutosaveName()) {
+					if (saveList.size() >= maxListSize) {
+						hasMore = true;
+						break;
+					}
+					saveList.push_back(ExistingSave(&metaEngine, target, desc));
+				}
+			}
+		}
+	}
+	if (!saveList.empty()) {
+		Common::U32StringArray altButtons;
+		altButtons.push_back(_("Ignore"));
+		altButtons.push_back(_("Disable autosave"));
+		Common::U32String message = _("WARNING: Autosave was enabled. Some of your games have existing "
+				  "saved games on the autosave slot. You can either move the "
+				  "existing saves to new slots, disable autosave, or ignore (you "
+				  "will be prompted when autosave is about to overwrite a save).\n"
+				  "List of games:\n");
+		for (ExistingSaveList::const_iterator it = saveList.begin(), end = saveList.end(); it != end; ++it)
+			message += Common::U32String(it->target) + Common::U32String(": ") + it->desc.getDescription() + "\n";
+		message.deleteLastChar();
+		if (hasMore)
+			message += _("\nAnd more...");
+		GUI::MessageDialog warn(message, _("Move"), altButtons);
+		switch (warn.runModal()) {
+		case GUI::kMessageOK: {
+			ExistingSaveList failedSaves;
+			for (ExistingSaveList::const_iterator it = saveList.begin(), end = saveList.end(); it != end; ++it) {
+				if (it->metaEngine->copySaveFileToFreeSlot(it->target.c_str(), it->desc.getSaveSlot())) {
+					g_system->getSavefileManager()->removeSavefile(
+							it->metaEngine->getSavegameFile(it->desc.getSaveSlot(), it->target.c_str()));
+				} else {
+					failedSaves.push_back(*it);
+				}
+			}
+			if (!failedSaves.empty()) {
+				Common::U32String failMessage = _("ERROR: Failed to move the following saved games:\n");
+				for (ExistingSaveList::const_iterator it = failedSaves.begin(), end = failedSaves.end(); it != end; ++it)
+					failMessage += Common::U32String(it->target) + Common::U32String(": ") + it->desc.getDescription() + "\n";
+				failMessage.deleteLastChar();
+				GUI::MessageDialog(failMessage).runModal();
+			}
+			break;
+		}
+		case GUI::kMessageAlt:
+			break;
+		case GUI::kMessageAlt + 1:
+			return false;
+		}
+	}
+	return true;
+}
+
 void GlobalOptionsDialog::apply() {
 	OptionsDialog::apply();
 
@@ -2522,7 +2622,11 @@ void GlobalOptionsDialog::apply() {
 	if (oldGuiScale != (int)_guiBasePopUp->getSelectedTag())
 		g_gui.computeScaleFactor();
 
-	ConfMan.setInt("autosave_period", _autosavePeriodPopUp->getSelectedTag(), _domain);
+	const int autosavePeriod = _autosavePeriodPopUp->getSelectedTag();
+	if (updateAutosavePeriod(autosavePeriod))
+		ConfMan.setInt("autosave_period", autosavePeriod, _domain);
+	else
+		_autosavePeriodPopUp->setSelected(0);
 
 #ifdef USE_UPDATES
 	ConfMan.setInt("updates_check", _updatesPopUp->getSelectedTag());
@@ -2577,13 +2681,12 @@ void GlobalOptionsDialog::apply() {
 	int selectedLang = _guiLanguagePopUp->getSelectedTag();
 	Common::String oldLang = ConfMan.get("gui_language");
 	Common::String newLang = TransMan.getLangById(selectedLang);
-	Common::String newCharset;
 	if (newLang != oldLang) {
 		TransMan.setLanguage(newLang);
 		ConfMan.set("gui_language", newLang);
-		newCharset = TransMan.getCurrentCharset();
 		isRebuildNeeded = true;
 	}
+	bool wantsBuiltinLang = TransMan.currentIsBuiltinLanguage();
 
 	bool guiUseGameLanguage = _guiLanguageUseGameLanguageCheckbox->getState();
 	ConfMan.setBool("gui_use_game_language", guiUseGameLanguage, _domain);
@@ -2600,6 +2703,11 @@ void GlobalOptionsDialog::apply() {
 	if (_guiConfirmExit) {
 		ConfMan.setBool("confirm_exit", _guiConfirmExit->getState(), _domain);
 	}
+#ifdef USE_DISCORD
+	if (_discordRpcCheckbox) {
+		ConfMan.setBool("discord_rpc", _discordRpcCheckbox->getState(), _domain);
+	}
+#endif // USE_DISCORD
 
 	GUI::ThemeEngine::GraphicsMode gfxMode = (GUI::ThemeEngine::GraphicsMode)_rendererPopUp->getSelectedTag();
 	Common::String oldGfxConfig = ConfMan.get("gui_renderer");
@@ -2622,12 +2730,15 @@ void GlobalOptionsDialog::apply() {
 		newGfxConfig = oldGfxConfig;
 		ConfMan.set("gui_renderer", newGfxConfig, _domain);
 #ifdef USE_TRANSLATION
-		bool isCharsetEqual = (newCharset == TransMan.getCurrentCharset());
+		// One reason for failing to load the theme is if we want a language other than
+		// the builtin language and the theme does not have unicode fonts for those.
+		// We can detect this case as it falls back to the builtin language.
+		bool themeLangIssue = (!wantsBuiltinLang && TransMan.currentIsBuiltinLanguage());
 		TransMan.setLanguage(oldLang);
 		_guiLanguagePopUp->setSelectedTag(selectedLang);
 		ConfMan.set("gui_language", oldLang);
 
-		if (!isCharsetEqual)
+		if (themeLangIssue)
 			errorMessage = _("Theme does not support selected language!");
 		else
 #endif // USE_TRANSLATION

@@ -42,7 +42,6 @@
 #include "ags/engine/ac/mouse.h"
 #include "ags/engine/ac/room.h"
 #include "ags/engine/ac/room_object.h"
-#include "ags/shared/gui/gui_main.h"
 #include "ags/shared/script/cc_error.h"
 #include "ags/shared/script/cc_options.h"
 #include "ags/engine/debugging/debugger.h"
@@ -115,7 +114,7 @@ void run_function_on_non_blocking_thread(NonBlockingScriptFunction *funcToRun) {
 
 // Returns 0 normally, or -1 to indicate that the NewInteraction has
 // become invalid and don't run another interaction on it
-// (eg. a room change occured)
+// (eg. a room change occurred)
 int run_interaction_event(Interaction *nint, int evnt, int chkAny, int isInv) {
 
 	if (evnt < 0 || (size_t)evnt >= nint->Events.size() ||
@@ -155,7 +154,7 @@ int run_interaction_event(Interaction *nint, int evnt, int chkAny, int isInv) {
 
 // Returns 0 normally, or -1 to indicate that the NewInteraction has
 // become invalid and don't run another interaction on it
-// (eg. a room change occured)
+// (eg. a room change occurred)
 int run_interaction_script(InteractionScripts *nint, int evnt, int chkAny, int isInv) {
 
 	if ((nint->ScriptFuncNames[evnt] == nullptr) || (nint->ScriptFuncNames[evnt][0u] == 0)) {

@@ -1215,6 +1215,23 @@ void ScummEngine_v5::o5_getRandomNr() {
 void ScummEngine_v5::o5_isScriptRunning() {
 	getResultPos();
 	setResult(isScriptRunning(getVarOrDirectByte(PARAM_1)));
+
+    // WORKAROUND bug #346 (also occurs in original): Object stopped with active cutscene
+    // In script 204 room 25 (Cannibal Village) a crash can occur when you are
+    // expected to give something to the cannibals, but instead look at certain
+    // items like the compass or kidnap note. Those inventory items contain little
+    // cutscenes and are abrubtly stopped by the endcutscene in script 204 at 0x0060.
+    // This patch changes the the result of isScriptRunning(164) to also wait for
+    // any inventory scripts that are in a cutscene state, preventing the crash.
+	if (_game.id == GID_MONKEY && vm.slot[_currentScript].number == 204 && _currentRoom == 25) {
+		ScriptSlot *ss = vm.slot;
+		for (int i = 0; i < NUM_SCRIPT_SLOT; i++, ss++) {
+			if (ss->status != ssDead && ss->where == WIO_INVENTORY && ss->cutsceneOverride) {
+				setResult(1);
+				return;
+			}
+		}
+	}
 }
 
 void ScummEngine_v5::o5_getVerbEntrypoint() {
@@ -1365,6 +1382,16 @@ void ScummEngine_v5::o5_loadRoom() {
 	int room;
 
 	room = getVarOrDirectByte(PARAM_1);
+
+	// WORKAROUND bug #12420 (also occurs in original) Broken window and coat missing
+	// This happens when you skip the cutscenes in the beginning, in particular
+	// the one where Indy enters the office for the first time. If object 23 (National
+	// Archeology) is in possession of Indy (owner == 1) then it's safe to force the
+	// coat (object 24) and broken window (object 25) into the room.
+	if (_game.id == GID_INDY4 && room == 1 && _objectOwnerTable[23] == 1) {
+		putState(24, 1);
+		putState(25, 1);
+	}
 
 	// For small header games, we only call startScene if the room
 	// actually changed. This avoid unwanted (wrong) fades in Zak256
@@ -2071,6 +2098,21 @@ void ScummEngine_v5::o5_setCameraAt() {
 }
 
 void ScummEngine_v5::o5_setObjectName() {
+	// WORKAROUND bug #10571 (also occurs in original) Object stopped with active cutscene
+	// Script 68 contains the code for handling the mugs. The issue occurs when a mug
+	// changes state. It will call setObjectName for the new state which in its turn
+	// restarts objects in inventory. Some objects (kidnap note) can be in a cutscene state
+	// what causes a crash if the object gets restarted. This workaroud waits for cutscenes
+	// to end, preventing the crash.
+	if (_game.id == GID_MONKEY && vm.slot[_currentScript].number == 68) {
+		ScriptSlot *ss = vm.slot;
+		for (int i = 0; i < NUM_SCRIPT_SLOT; i++, ss++) {
+			if (ss->status != ssDead && ss->where == WIO_INVENTORY && ss->cutsceneOverride) {
+				_scriptPointer--;
+				return o5_breakHere();
+			}
+		}
+	}
 	int obj = getVarOrDirectWord(PARAM_1);
 	setObjectName(obj);
 }
@@ -2885,6 +2927,11 @@ void ScummEngine_v5::printPatchedMI1CannibalString(int textSlot, const byte *ptr
 			"Oooh, che bello.\xFF\x03"
 			"Semplice.  Proprio come uno dei miei.\xFF\x03"
 			"E piccolo.  Come il mio.";
+	} else if (strncmp((const char *)ptr, "/LH.ESP/", 8) == 0) {
+		msg =
+			"Oooh, qu\x82 bonito.\xFF\x03"
+			"Simple.  Como uno de los m\xA1os.\xFF\x03"
+			"Y peque\xA4o, como los m\xA1os.";
 	}
 
 	printString(textSlot, (const byte *)msg);

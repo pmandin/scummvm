@@ -35,16 +35,23 @@
 #include "saga2/saga2.h"
 #include "saga2/fta.h"
 
+#include "saga2/actor.h"
+#include "saga2/audio.h"
 #include "saga2/band.h"
 #include "saga2/beegee.h"
+#include "saga2/calender.h"
 #include "saga2/contain.h"
+#include "saga2/detection.h"
 #include "saga2/dispnode.h"
 #include "saga2/gdraw.h"
 #include "saga2/imagcach.h"
 #include "saga2/mouseimg.h"
 #include "saga2/motion.h"
+#include "saga2/music.h"
 #include "saga2/panel.h"
 #include "saga2/spelshow.h"
+#include "saga2/tilemode.h"
+#include "saga2/vpal.h"
 
 namespace Saga2 {
 
@@ -52,8 +59,8 @@ void main_saga2();
 
 Saga2Engine *g_vm;
 
-Saga2Engine::Saga2Engine(OSystem *syst)
-	: Engine(syst) {
+Saga2Engine::Saga2Engine(OSystem *syst, const SAGA2GameDescription *desc)
+	: Engine(syst), _gameDescription(desc) {
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
 
 	// Don't forget to register your random source
@@ -63,20 +70,36 @@ Saga2Engine::Saga2Engine(OSystem *syst)
 
 	_console = nullptr;
 	_renderer = nullptr;
+	_audio = nullptr;
+	_pal = nullptr;
+	_act = nullptr;
+	_calender = nullptr;
+	_tmm = nullptr;
+	_cnm = nullptr;
+
 	_bandList = nullptr;
 	_mouseInfo = nullptr;
 	_smkDecoder = nullptr;
 	_videoX = _videoY = 0;
 	_loadedWeapons = 0;
 
+	_gameRunning = true;
 	_autoAggression = true;
 	_autoWeapon = true;
 	_showNight = true;
 	_speechText = true;
+	_speechVoice = true;
+
 	_showPosition = false;
 	_showStats = false;
+	_showStatusMsg = false;
 	_teleportOnClick = false;
 	_teleportOnMap = false;
+
+	_indivControlsFlag = false;
+	_userControlsSetup = false;
+	_fadeDepth = 1;
+	_currentMapNum = 0;
 
 	SearchMan.addSubDirectoryMatching(gameDataDir, "res");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "dos/drivers"); // For Miles Sound files
@@ -98,7 +121,6 @@ Saga2Engine::Saga2Engine(OSystem *syst)
 
 	_edpList = nullptr;
 	_sdpList = nullptr;
-	_containerList = nullptr;
 	_tileImageBanks = nullptr;
 	_stackList = nullptr;
 	_taskList = nullptr;
@@ -114,6 +136,11 @@ Saga2Engine::~Saga2Engine() {
 	// Dispose your resources here
 	delete _rnd;
 	delete _renderer;
+	delete _pal;
+	delete _act;
+	delete _calender;
+	delete _tmm;
+	delete _cnm;
 
 	delete _imageCache;
 	delete _mTaskList;
@@ -132,16 +159,21 @@ Common::Error Saga2Engine::run() {
 	// Initialize graphics using following:
 	initGraphics(640, 480);
 
-	_containerList = new ContainerList;
-
 	_console = new Console(this);
 	setDebugger(_console);
 
 	_renderer = new Renderer();
 
+	_pal = new PaletteManager;
+	_act = new ActorManager;
+	_calender = new CalenderTime;
+	_tmm = new TileModeManager;
+	_cnm = new ContainerManager;
+
 	readConfig();
 
-	loadExeResources();
+	if (getGameId() == GID_FTA2)
+		loadExeResources();
 
 	main_saga2();
 
@@ -152,7 +184,16 @@ bool Saga2Engine::hasFeature(EngineFeature f) const {
 	return
 		(f == kSupportsReturnToLauncher) ||
 		(f == kSupportsLoadingDuringRuntime) ||
-		(f == kSupportsSavingDuringRuntime);
+		(f == kSupportsSavingDuringRuntime) ||
+		(f == kSupportsSubtitleOptions);
+}
+
+int Saga2Engine::getGameId() const {
+	return _gameDescription->gameId;
+}
+
+const ADGameFileDescription *Saga2Engine::getFilesDescriptions() const {
+	return _gameDescription->desc.filesDescriptions;
 }
 
 Common::Error Saga2Engine::loadGameStream(Common::SeekableReadStream *stream) {
@@ -187,9 +228,9 @@ Common::Error Saga2Engine::saveGameState(int slot, const Common::String &desc, b
 	_renderer->saveBackBuffer(kBeforeTakingThumbnail);
 
 	if (_renderer->hasSavedBackBuffer(kBeforeOpeningMenu))
-		_renderer->restoreSavedBackBuffer(kBeforeOpeningMenu);
+		_renderer->popSavedBackBuffer(kBeforeOpeningMenu);
 
-	getMetaEngine()->appendExtendedSaveToStream(out, g_vm->getTotalPlayTime() / 1000, desc, false, pos);
+	getMetaEngine()->appendExtendedSaveToStream(out, g_vm->getTotalPlayTime() / 1000, desc, isAutosave, pos);
 
 	_renderer->popSavedBackBuffer(kBeforeTakingThumbnail);
 	CHUNK_END;
@@ -204,9 +245,26 @@ Common::Error Saga2Engine::saveGameState(int slot, const Common::String &desc, b
 }
 
 Common::Error Saga2Engine::loadGameState(int slot) {
-	loadSavedGameState(slot);
+	loadGame(slot);
 
 	return Common::kNoError;
+}
+
+void Saga2Engine::syncSoundSettings() {
+	Engine::syncSoundSettings();
+
+	_speechText = true;
+
+	if (ConfMan.hasKey("subtitles"))
+		_speechText = ConfMan.getBool("subtitles");
+
+	_speechVoice = true;
+
+	if (ConfMan.hasKey("speech_mute"))
+		_speechVoice = !ConfMan.getBool("speech_mute");
+
+	if (_audio)
+		_audio->_music->syncSoundSettings();
 }
 
 void Saga2Engine::syncGameStream(Common::Serializer &s) {
@@ -352,11 +410,6 @@ void Saga2Engine::readConfig() {
 
 	if (ConfMan.hasKey("show_night"))
 		_showNight = ConfMan.getBool("show_night");
-
-	_speechText = true;
-
-	if (ConfMan.hasKey("subtitles"))
-		_speechText = ConfMan.getBool("subtitles");
 
 	syncSoundSettings();
 }

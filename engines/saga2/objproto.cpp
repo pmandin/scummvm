@@ -62,7 +62,7 @@ extern bool     massAndBulkCount;
    Functions
  * ===================================================================== */
 
-ObjectID ProtoObj::placeObject(void) {
+ObjectID ProtoObj::placeObject() {
 	return 2;
 }
 
@@ -86,7 +86,7 @@ bool ProtoObj::isTwoHanded(ObjectID) {
 }
 
 //  Determine if this type of object is a missile
-bool ProtoObj::isMissile(void) {
+bool ProtoObj::isMissile() {
 	return false;
 }
 
@@ -785,7 +785,7 @@ void ProtoObj::getColorTranslation(ColorTable map) {
 	buildColorTable(map, colorMap, ARRAYSIZE(colorMap));
 }
 
-uint16  ProtoObj::containmentSet(void) {
+uint16  ProtoObj::containmentSet() {
 	return 0; // the prototye object is not contained in anything
 }
 
@@ -904,13 +904,13 @@ GameObject *ProtoObj::getSpell(ObjectID) {
 }
 
 //  Determine if this type of object can block an attack
-bool ProtoObj::canBlock(void) {
+bool ProtoObj::canBlock() {
 	return false;
 }
 
 //  Return a mask of bits indicating the directions relative to the
 //  wielders facing in which this object can defend
-uint8 ProtoObj::defenseDirMask(void) {
+uint8 ProtoObj::defenseDirMask() {
 	return 0;
 }
 
@@ -1004,7 +1004,7 @@ uint16 ProtoObj::bulkCapacity(GameObject *) {
    InventoryProto class
  * ==================================================================== */
 
-uint16 InventoryProto::containmentSet(void) {
+uint16 InventoryProto::containmentSet() {
 	return isTangible;
 }
 
@@ -1201,7 +1201,7 @@ bool InventoryProto::acceptStrikeAction(
 //
 //	};
 
-uint16 PhysicalContainerProto::containmentSet(void) {
+uint16 PhysicalContainerProto::containmentSet() {
 	return InventoryProto::containmentSet() | isContainer;
 }
 
@@ -1258,14 +1258,14 @@ bool PhysicalContainerProto::openAction(ObjectID dObj, ObjectID) {
 	cn = CreateContainerNode(dObj, false);
 	cn->markForShow();                                      //  Deferred open
 	dObjPtr->_data.objectFlags |= objectOpen;         //  Set open bit;
-	g_vm->_containerList->setUpdate(dObjPtr->IDParent());
+	g_vm->_cnm->setUpdate(dObjPtr->IDParent());
 
 	return true;
 }
 
 bool PhysicalContainerProto::closeAction(ObjectID dObj, ObjectID) {
 	GameObject      *dObjPtr = GameObject::objectAddress(dObj);
-	ContainerNode   *cn = g_vm->_containerList->find(dObj, ContainerNode::physicalType);
+	ContainerNode   *cn = g_vm->_cnm->find(dObj, ContainerNode::physicalType);
 
 	assert(dObjPtr->isOpen());
 	assert(cn);
@@ -1275,7 +1275,7 @@ bool PhysicalContainerProto::closeAction(ObjectID dObj, ObjectID) {
 
 	//  Clear open bit
 	dObjPtr->_data.objectFlags &= ~objectOpen;
-	g_vm->_containerList->setUpdate(dObjPtr->IDParent());
+	g_vm->_cnm->setUpdate(dObjPtr->IDParent());
 
 	return true;
 }
@@ -1465,7 +1465,7 @@ bool KeyProto::useOnAction(ObjectID dObj, ObjectID enactor, ActiveItem *withTAI)
    BottleProto class
  * ==================================================================== */
 
-uint16 BottleProto::containmentSet(void) {
+uint16 BottleProto::containmentSet() {
 	return InventoryProto::containmentSet() | isBottle;
 }
 
@@ -1479,7 +1479,7 @@ bool BottleProto::useAction(ObjectID dObj, ObjectID enactor) {
    FoodProto class
  * ==================================================================== */
 
-uint16 FoodProto::containmentSet(void) {
+uint16 FoodProto::containmentSet() {
 	return InventoryProto::containmentSet() | isFood;
 }
 
@@ -1491,7 +1491,7 @@ bool FoodProto::useAction(ObjectID dObj, ObjectID enactor) {
    WearableProto class
  * ==================================================================== */
 
-uint16 WearableProto::containmentSet(void) {
+uint16 WearableProto::containmentSet() {
 	return InventoryProto::containmentSet() | isWearable;
 }
 
@@ -1499,11 +1499,11 @@ uint16 WearableProto::containmentSet(void) {
    WeaponProto class
  * ==================================================================== */
 
-weaponID WeaponProto::getWeaponID(void) {
+weaponID WeaponProto::getWeaponID() {
 	return weaponDamage;
 }
 
-uint16 WeaponProto::containmentSet(void) {
+uint16 WeaponProto::containmentSet() {
 	return InventoryProto::containmentSet() | isWeapon;
 }
 
@@ -1521,8 +1521,8 @@ bool WeaponProto::isObjectBeingUsed(GameObject *obj) {
 	if (wielder != Nothing) {
 		Actor *a = (Actor *)GameObject::objectAddress(wielder);
 
-		if (a->rightHandObject == obj->thisID()
-		        ||  a->leftHandObject == obj->thisID())
+		if (a->_rightHandObject == obj->thisID()
+		        ||  a->_leftHandObject == obj->thisID())
 			return true;
 	}
 	return false;
@@ -1542,13 +1542,13 @@ bool MeleeWeaponProto::useAction(ObjectID dObj, ObjectID enactor) {
 
 	if (enactor != dObjPtr->IDParent()) return false;
 
-	if (dObj == a->rightHandObject)
+	if (dObj == a->_rightHandObject)
 		a->holdInRightHand(Nothing);
 	else {
 		GameObject      *leftHandObjectPtr;
 
-		leftHandObjectPtr = a->leftHandObject != Nothing
-		                    ?   GameObject::objectAddress(a->leftHandObject)
+		leftHandObjectPtr = a->_leftHandObject != Nothing
+		                    ?   GameObject::objectAddress(a->_leftHandObject)
 		                    :   NULL;
 
 		if (dObjPtr->proto()->isTwoHanded(enactor)
@@ -1686,13 +1686,13 @@ void MeleeWeaponProto::initiateDefense(
 }
 
 //  Melee weapons can block an attack
-bool MeleeWeaponProto::canBlock(void) {
+bool MeleeWeaponProto::canBlock() {
 	return true;
 }
 
 //  Return a mask of bits indicating the directions relative to the
 //  wielders facing in which this object can defend
-uint8 MeleeWeaponProto::defenseDirMask(void) {
+uint8 MeleeWeaponProto::defenseDirMask() {
 	return 1 << dirUp;
 }
 
@@ -1710,7 +1710,7 @@ uint8 MeleeWeaponProto::weaponRating(
 
 	//  If the wielder is on screen yet does not have the attack frames
 	//  for this weapon then this weapon is useless
-	if (wielder->appearance != NULL
+	if (wielder->_appearance != NULL
 	        &&  !wielder->isActionAvailable(fightStanceAction(wielderID)))
 		return 0;
 
@@ -1748,19 +1748,19 @@ bool MeleeWeaponProto::useSlotAvailable(GameObject *obj, Actor *a) {
 	assert(isObject(obj) && obj->proto() == this);
 	assert(isActor(a));
 
-	if (a->rightHandObject == Nothing) {
-		if (a->leftHandObject != Nothing) {
-			assert(isObject(a->leftHandObject));
+	if (a->_rightHandObject == Nothing) {
+		if (a->_leftHandObject != Nothing) {
+			assert(isObject(a->_leftHandObject));
 
 			GameObject      *leftHandObjectPtr;
 
-			leftHandObjectPtr = GameObject::objectAddress(a->leftHandObject);
+			leftHandObjectPtr = GameObject::objectAddress(a->_leftHandObject);
 			return      !isTwoHanded(a->thisID())
 			            &&  !leftHandObjectPtr->proto()->isTwoHanded(a->thisID());
 		}
 		return true;
 	}
-	assert(isObject(a->rightHandObject));
+	assert(isObject(a->_rightHandObject));
 
 	return false;
 }
@@ -1854,7 +1854,7 @@ bool BowProto::useAction(ObjectID dObj, ObjectID enactor) {
 
 	//  If this object is in the enactor's left hand remove it else
 	//  place it into his left hand
-	if (a->leftHandObject == dObj)
+	if (a->_leftHandObject == dObj)
 		a->holdInLeftHand(Nothing);
 	else {
 		a->holdInRightHand(Nothing);
@@ -1916,7 +1916,7 @@ bool BowProto::useSlotAvailable(GameObject *obj, Actor *a) {
 	assert(isObject(obj) && obj->proto() == this);
 	assert(isActor(a));
 
-	return a->leftHandObject == Nothing && a->rightHandObject == Nothing;
+	return a->_leftHandObject == Nothing && a->_rightHandObject == Nothing;
 }
 
 //-----------------------------------------------------------------------
@@ -1935,7 +1935,7 @@ uint8 BowProto::weaponRating(
 
 	//  If the wielder is on screen yet does not have the attack frames
 	//  for this weapon then this weapon is useless
-	if (wielder->appearance != NULL
+	if (wielder->_appearance != NULL
 	        &&  !wielder->isActionAvailable(fightStanceAction(wielderID)))
 		return 0;
 
@@ -1972,7 +1972,7 @@ bool WeaponWandProto::useAction(ObjectID dObj, ObjectID enactor) {
 
 	//  If this object is in the enactor's left hand remove it else
 	//  place it into his left hand
-	if (a->leftHandObject == dObj)
+	if (a->_leftHandObject == dObj)
 		a->holdInLeftHand(Nothing);
 	else {
 		a->holdInRightHand(Nothing);
@@ -2006,7 +2006,7 @@ bool WeaponWandProto::useSlotAvailable(GameObject *obj, Actor *a) {
 	assert(isObject(obj) && obj->proto() == this);
 	assert(isActor(a));
 
-	return a->leftHandObject == Nothing && a->rightHandObject == Nothing;
+	return a->_leftHandObject == Nothing && a->_rightHandObject == Nothing;
 }
 
 //-----------------------------------------------------------------------
@@ -2024,7 +2024,7 @@ uint8 WeaponWandProto::weaponRating(
 
 	//  If the wielder is on screen yet does not have the attack frames
 	//  for this weapon then this weapon is useless
-	if (wielder->appearance != NULL
+	if (wielder->_appearance != NULL
 	        &&  !wielder->isActionAvailable(fightStanceAction(wielderID)))
 		return 0;
 
@@ -2087,7 +2087,7 @@ uint8 ProjectileProto::weaponRating(
 }
 
 //  Projectiles are missiles
-bool ProjectileProto::isMissile(void) {
+bool ProjectileProto::isMissile() {
 	return true;
 }
 
@@ -2170,7 +2170,7 @@ void ArrowProto::applySkillGrowth(ObjectID enactor, uint8 points) {
    ArmorProto class
  * ==================================================================== */
 
-uint16 ArmorProto::containmentSet(void) {
+uint16 ArmorProto::containmentSet() {
 	return InventoryProto::containmentSet() | isWearable | isArmor;
 }
 
@@ -2199,7 +2199,7 @@ bool ArmorProto::isObjectBeingUsed(GameObject *obj) {
 		ObjectID    id = obj->thisID();
 
 		for (int i = 0; i < ARMOR_COUNT; i++) {
-			if (a->armorObjects[i] == id) return true;
+			if (a->_armorObjects[i] == id) return true;
 		}
 	}
 	return false;
@@ -2213,7 +2213,7 @@ bool ArmorProto::useSlotAvailable(GameObject *obj, Actor *a) {
 	assert(isObject(obj) || obj->proto() == this);
 	assert(isActor(a));
 
-	return a->armorObjects[whereWearable] == Nothing;
+	return a->_armorObjects[whereWearable] == Nothing;
 }
 
 //-----------------------------------------------------------------------
@@ -2232,12 +2232,12 @@ bool ArmorProto::useAction(ObjectID dObj, ObjectID enactor) {
 
 	int16       slot = whereWearable;
 
-	if (a->armorObjects[slot] == dObj)
+	if (a->_armorObjects[slot] == dObj)
 		a->wear(Nothing, slot);
 	else
 		a->wear(dObj, slot);
 
-	g_vm->_containerList->setUpdate(obj->IDParent());
+	g_vm->_cnm->setUpdate(obj->IDParent());
 
 	return true;
 }
@@ -2246,7 +2246,7 @@ bool ArmorProto::useAction(ObjectID dObj, ObjectID enactor) {
    ShieldProto class
  * ==================================================================== */
 
-uint16 ShieldProto::containmentSet(void) {
+uint16 ShieldProto::containmentSet() {
 	return InventoryProto::containmentSet() | isWearable | isArmor;
 }
 
@@ -2260,16 +2260,16 @@ bool ShieldProto::useAction(ObjectID dObj, ObjectID enactor) {
 
 	if (enactor != dObjPtr->IDParent()) return false;
 
-	if (a->rightHandObject != Nothing) {
-		assert(isObject(a->rightHandObject));
+	if (a->_rightHandObject != Nothing) {
+		assert(isObject(a->_rightHandObject));
 		GameObject  *rightHandObjectPtr =
-		    GameObject::objectAddress(a->rightHandObject);
+		    GameObject::objectAddress(a->_rightHandObject);
 
 		if (rightHandObjectPtr->proto()->isTwoHanded(enactor))
 			return false;
 	}
 
-	a->holdInLeftHand(dObj != a->leftHandObject ? dObj : Nothing);
+	a->holdInLeftHand(dObj != a->_leftHandObject ? dObj : Nothing);
 
 	return true;
 }
@@ -2307,13 +2307,13 @@ void ShieldProto::initiateDefense(
 
 
 //  Shields can block an attack
-bool ShieldProto::canBlock(void) {
+bool ShieldProto::canBlock() {
 	return true;
 }
 
 //  Return a mask of bits indicating the directions relative to the
 //  wielders facing in which this object can defend
-uint8 ShieldProto::defenseDirMask(void) {
+uint8 ShieldProto::defenseDirMask() {
 	return (1 << dirUp) | (1 << dirUpLeft);
 }
 
@@ -2326,8 +2326,8 @@ bool ShieldProto::isObjectBeingUsed(GameObject *obj) {
 	if (wielder != Nothing) {
 		Actor *a = (Actor *)GameObject::objectAddress(wielder);
 
-		if (a->rightHandObject == obj->thisID()
-		        ||  a->leftHandObject == obj->thisID())
+		if (a->_rightHandObject == obj->thisID()
+		        ||  a->_leftHandObject == obj->thisID())
 			return true;
 	}
 	return false;
@@ -2341,13 +2341,13 @@ bool ShieldProto::useSlotAvailable(GameObject *obj, Actor *a) {
 	assert(isObject(obj) || obj->proto() == this);
 	assert(isActor(a));
 
-	if (a->leftHandObject == Nothing) {
-		if (a->rightHandObject != Nothing) {
-			assert(isObject(a->rightHandObject));
+	if (a->_leftHandObject == Nothing) {
+		if (a->_rightHandObject != Nothing) {
+			assert(isObject(a->_rightHandObject));
 
 			GameObject      *rightHandObjectPtr;
 
-			rightHandObjectPtr = GameObject::objectAddress(a->rightHandObject);
+			rightHandObjectPtr = GameObject::objectAddress(a->_rightHandObject);
 			return !rightHandObjectPtr->proto()->isTwoHanded(a->thisID());
 		}
 
@@ -2417,7 +2417,7 @@ bool ToolProto::useOnAction(ObjectID, ObjectID, ObjectID) {
    DocumentProto class
  * ==================================================================== */
 
-uint16 DocumentProto::containmentSet(void) {
+uint16 DocumentProto::containmentSet() {
 	return InventoryProto::containmentSet() | isDocument;
 }
 
@@ -2468,7 +2468,7 @@ bool AutoMapProto::openAction(ObjectID, ObjectID) {
    IntangibleObjProto class
  * ==================================================================== */
 
-uint16 IntangibleObjProto::containmentSet(void) {
+uint16 IntangibleObjProto::containmentSet() {
 	return isIntangible;
 }
 
@@ -2552,7 +2552,7 @@ bool IntangibleObjProto::acceptDropAction(
 	return false;
 }
 
-ObjectID IntangibleObjProto::placeObject(void) {
+ObjectID IntangibleObjProto::placeObject() {
 	//return Container That It Inserted Itself Into
 	return 2;
 }
@@ -2593,7 +2593,7 @@ ObjectSpriteInfo IntangibleObjProto::getSprite(
    IdeaProto class
  * ==================================================================== */
 
-uint16 IdeaProto::containmentSet(void) {
+uint16 IdeaProto::containmentSet() {
 	//Maybe I Could Use This ID And Call IntanobjProt For Setting IsIntangible
 	return isConcept | isIntangible;
 }
@@ -2602,7 +2602,7 @@ uint16 IdeaProto::containmentSet(void) {
    MemoryProto class
  * ==================================================================== */
 
-uint16 MemoryProto::containmentSet(void) {
+uint16 MemoryProto::containmentSet() {
 	//Maybe I Could Use This ID And Call IntanobjProt For Setting IsIntangible
 	return isConcept | isIntangible;
 }
@@ -2611,7 +2611,7 @@ uint16 MemoryProto::containmentSet(void) {
    PsychProto class
  * ==================================================================== */
 
-uint16 PsychProto::containmentSet(void) {
+uint16 PsychProto::containmentSet() {
 	//Maybe I Could Use This ID And Call IntanobjProt For Setting IsIntangible
 	return isPsych | isIntangible;
 }
@@ -2621,7 +2621,7 @@ uint16 PsychProto::containmentSet(void) {
  * ==================================================================== */
 
 
-uint16 SkillProto::containmentSet(void) {
+uint16 SkillProto::containmentSet() {
 	//Maybe I Could Use This ID And Call IntanobjProt For Setting IsIntangible
 	return isSkill | isIntangible;
 }
@@ -2737,7 +2737,7 @@ bool SkillProto::implementAction(SpellID dObj, ObjectID enactor, Location &loc) 
    EnchantmentProto class
  * ==================================================================== */
 
-uint16 EnchantmentProto::containmentSet(void) {
+uint16 EnchantmentProto::containmentSet() {
 	return isEnchantment;
 }
 
@@ -2788,7 +2788,7 @@ void EnchantmentProto::doBackgroundUpdate(GameObject *obj) {
    GeneratorProto
  * ======================================================================== */
 
-uint16 GeneratorProto::containmentSet(void) {
+uint16 GeneratorProto::containmentSet() {
 	return isIntangible;
 }
 
@@ -2927,7 +2927,7 @@ bool IntangibleContainerProto::openAction(ObjectID dObj, ObjectID enactor) {
 }
 
 bool IntangibleContainerProto::closeAction(ObjectID dObj, ObjectID) {
-	ContainerNode *cn = g_vm->_containerList->find(dObj, ContainerNode::mentalType);
+	ContainerNode *cn = g_vm->_cnm->find(dObj, ContainerNode::mentalType);
 
 	assert(cn);
 
@@ -2937,7 +2937,7 @@ bool IntangibleContainerProto::closeAction(ObjectID dObj, ObjectID) {
 	return true;
 }
 
-uint16 IntangibleContainerProto::containmentSet(void) {
+uint16 IntangibleContainerProto::containmentSet() {
 	return isContainer | isIntangible;
 }
 /* ==================================================================== *

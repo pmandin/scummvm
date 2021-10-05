@@ -1280,7 +1280,7 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 		if (this != getControlledActor()) {
 			target = getControlledActor();
 		} else {
-			target = currentmap->findBestTargetItem(ix, iy, dir, dirmode);
+			target = currentmap->findBestTargetItem(ix, iy, iz - z, dir, dirmode);
 		}
 	}
 
@@ -1302,7 +1302,7 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 		SuperSpriteProcess *ssp;
 		CrosshairProcess *chp = CrosshairProcess::get_instance();
 		assert(chp);
-		Item *crosshair = getItem(chp->getItemNum());
+		const Item *crosshair = getItem(chp->getItemNum());
 		int32 ssx, ssy, ssz;
 		if (tx != -1) {
 			// Shoot toward the target
@@ -1402,7 +1402,7 @@ uint16 Item::fireDistance(const Item *other, Direction dir, int16 xoff, int16 yo
 
 	int32 dist = 0;
 
-	CurrentMap *cm = World::get_instance()->getCurrentMap();
+	const CurrentMap *cm = World::get_instance()->getCurrentMap();
 	if (!cm)
 		return 0;
 
@@ -1475,7 +1475,7 @@ int32 Item::getTargetZRelativeToAttackerZ(int32 otherz) const {
 
 
 unsigned int Item::countNearby(uint32 shape, uint16 range) {
-	CurrentMap *currentmap = World::get_instance()->getCurrentMap();
+	const CurrentMap *currentmap = World::get_instance()->getCurrentMap();
 	UCList itemlist(2);
 	LOOPSCRIPT(script, LS_SHAPE_EQUAL(shape));
 	currentmap->areaSearch(&itemlist, script, sizeof(script),
@@ -3004,23 +3004,30 @@ uint32 Item::I_getWeightIncludingContents(const uint8 *args,
 uint32 Item::I_bark(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_ITEM_FROM_PTR(item);
 	ARG_STRING(str);
-	if (id_item == 666) item = getItem(1);
-	if (!item) return 0;    // Hack!
+	if (id_item == 666)
+		item = getItem(1);
+
+	if (!item) {
+		// Hack! Items should always be valid?
+		warning("skipping bark of '%s' because item invalid.", str.c_str());
+		return 0;
+	}
 
 	uint32 shapenum = item->getShape();
-	if (id_item == 666) shapenum = 666; // Hack for guardian barks
-	Gump *_gump = new BarkGump(item->getObjId(), str, shapenum);
+	if (id_item == 666)
+		shapenum = 666; // Hack for guardian barks
+	Gump *gump = new BarkGump(item->getObjId(), str, shapenum);
 
 	if (item->getObjId() < 256) { // CONSTANT!
 		GumpNotifyProcess *notifyproc;
 		notifyproc = new ActorBarkNotifyProcess(item->getObjId());
 		Kernel::get_instance()->addProcess(notifyproc);
-		_gump->SetNotifyProcess(notifyproc);
+		gump->SetNotifyProcess(notifyproc);
 	}
 
-	_gump->InitGump(0);
+	gump->InitGump(0);
 
-	return _gump->GetNotifyProcess()->getPid();
+	return gump->GetNotifyProcess()->getPid();
 }
 
 uint32 Item::I_look(const uint8 *args, unsigned int /*argsize*/) {
@@ -3153,7 +3160,7 @@ uint32 Item::I_legalCreateAtCoords(const uint8 *args, unsigned int /*argsize*/) 
 	ARG_UINT16(frame);
 	ARG_UINT16(x);
 	ARG_UINT16(y);
-	ARG_UINT16(z);
+	ARG_UINT8(z);
 
 	if (GAME_IS_CRUSADER) {
 		x *= 2;
@@ -3350,7 +3357,7 @@ uint32 Item::I_push(const uint8 *args, unsigned int /*argsize*/) {
 		return 0;
 
 	#if 0
-		perr << "Pushing item to ethereal void: " << item->getShape() << "," << item->getFrame() << Std::endl;
+		perr << "Pushing item to ethereal void: id: " << item->getObjId() << " shp: " << item->getShape() << "," << item->getFrame() << Std::endl;
 	#endif
 
 	item->moveToEtherealVoid();
@@ -3416,7 +3423,7 @@ uint32 Item::I_popToCoords(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_NULL32(); // ARG_ITEM_FROM_PTR(item); // unused
 	ARG_UINT16(x);
 	ARG_UINT16(y);
-	ARG_UINT16(z);
+	ARG_UINT8(z);
 
 	World *w = World::get_instance();
 
@@ -3514,7 +3521,7 @@ uint32 Item::I_move(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_ITEM_FROM_PTR(item);
 	ARG_UINT16(x);
 	ARG_UINT16(y);
-	ARG_UINT16(z);
+	ARG_UINT8(z);
 	if (!item)
 		return 0;
 
@@ -3874,7 +3881,7 @@ uint32 Item::I_explode(const uint8 *args, unsigned int argsize) {
 uint32 Item::I_igniteChaos(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_UINT16(x);
 	ARG_UINT16(y);
-	ARG_NULL8();
+	ARG_NULL8(); // z, unused
 
 	assert(GAME_IS_U8);
 

@@ -54,7 +54,6 @@ static gFont    *mbButtonFont = &ThinFix8Font;
    Imports
  * ===================================================================== */
 
-extern bool             gameRunning;        // true while game running
 extern BackWindow       *mainWindow;
 
 /* ===================================================================== *
@@ -79,7 +78,7 @@ inline Rect16 butBox(int n, int i) {
    Main message box code
  * ===================================================================== */
 
-bool userDialogAvailable(void);
+bool userDialogAvailable();
 int16 userDialog(const char *title, const char *msg, const char *btnMsg1, const char *btnMsg2, const char *btnMsg3);
 
 // ------------------------------------------------------------------------
@@ -164,7 +163,7 @@ ErrorWindow::ErrorWindow(const char *msg, const char *btnMsg1, const char *btnMs
 
 }
 
-int16 ErrorWindow::getResult(void) {
+int16 ErrorWindow::getResult() {
 	open();
 	draw();
 	EventLoop(rInfo.running, true);
@@ -224,28 +223,28 @@ SimpleWindow::SimpleWindow(const Rect16 &r,
 	title = stitle;
 }
 
-SimpleWindow::~SimpleWindow(void) {
+SimpleWindow::~SimpleWindow() {
 	GameMode::SetStack(prevModeStackPtr, prevModeStackCtr);
 }
 
-bool SimpleWindow::isModal(void) {
+bool SimpleWindow::isModal() {
 	return true;
 }
 
 void SimpleWindow::update(const Rect16 &) {
 }
 
-void SimpleWindow::draw(void) {
-	g_vm->_pointer->hide(g_vm->_mainPort, extent);              // hide mouse pointer
-	drawClipped(g_vm->_mainPort, Point16(0, 0), extent);
-	g_vm->_pointer->show(g_vm->_mainPort, extent);              // show mouse pointer
+void SimpleWindow::draw() {
+	g_vm->_pointer->hide(g_vm->_mainPort, _extent);              // hide mouse pointer
+	drawClipped(g_vm->_mainPort, Point16(0, 0), _extent);
+	g_vm->_pointer->show(g_vm->_mainPort, _extent);              // show mouse pointer
 }
 
 void SimpleWindow::drawClipped(
     gPort         &port,
     const Point16 &p,
     const Rect16  &r) {
-	Rect16          box = extent;
+	Rect16          box = _extent;
 	//gFont             *buttonFont=&Onyx10Font;
 	int16           textPos = textPosHigh;
 	//textPallete       pal( 33+9, 36+9, 41+9, 34+9, 40+9, 43+9 );
@@ -257,14 +256,14 @@ void SimpleWindow::drawClipped(
 	box.height -= 100;
 
 	SAVE_GPORT_STATE(port);                  // save pen color, etc.
-	g_vm->_pointer->hide(port, extent);              // hide mouse pointer
+	g_vm->_pointer->hide(port, _extent);              // hide mouse pointer
 
-	DrawOutlineFrame(port,  extent, windowColor);
+	DrawOutlineFrame(port,  _extent, windowColor);
 	writeWrappedPlaqText(port, box, mbButtonFont, textPos, pal, false, title);
 
 	gWindow::drawClipped(port, p, r);
 
-	g_vm->_pointer->show(port, extent);              // show mouse pointer
+	g_vm->_pointer->show(port, _extent);              // show mouse pointer
 }
 
 /* ===================================================================== *
@@ -352,7 +351,7 @@ SimpleButton::SimpleButton(gWindow &win, const Rect16 &box, const char *title_, 
 	window = &win;
 }
 
-void SimpleButton::deactivate(void) {
+void SimpleButton::deactivate() {
 	selected = 0;
 	draw();
 	gPanel::deactivate();
@@ -393,16 +392,16 @@ void SimpleButton::pointerDrag(gPanelMessage &msg) {
 	}
 }
 
-void SimpleButton::draw(void) {
+void SimpleButton::draw() {
 	gDisplayPort    &port = window->windowPort;
 	Rect16  rect = window->getExtent();
 
 	SAVE_GPORT_STATE(port);                  // save pen color, etc.
-	g_vm->_pointer->hide(port, extent);              // hide mouse pointer
+	g_vm->_pointer->hide(port, _extent);              // hide mouse pointer
 	drawClipped(port,
 	            Point16(0, 0),
 	            Rect16(0, 0, rect.width, rect.height));
-	g_vm->_pointer->show(port, extent);              // show mouse pointer
+	g_vm->_pointer->show(port, _extent);              // show mouse pointer
 }
 
 void SimpleButton::drawClipped(
@@ -411,22 +410,22 @@ void SimpleButton::drawClipped(
     const Rect16 &) {
 	Rect16          base = window->getExtent();
 
-	Rect16          box = Rect16(extent.x + 1,
-	                             extent.y + 1,
-	                             extent.width - 2,
-	                             extent.height - 2);
+	Rect16          box = Rect16(_extent.x + 1,
+	                             _extent.y + 1,
+	                             _extent.width - 2,
+	                             _extent.height - 2);
 	box.x += base.x;
 	box.y += base.y;
 
 	SAVE_GPORT_STATE(port);                  // save pen color, etc.
-	g_vm->_pointer->hide(port, extent);              // hide mouse pointer
+	g_vm->_pointer->hide(port, _extent);              // hide mouse pointer
 
 	SimpleWindow::DrawOutlineFrame(port,                     // draw outer frame
 	                               box,
 	                               buttonColor);
 
 	drawTitle((enum text_positions)0);
-	g_vm->_pointer->show(port, extent);              // show mouse pointer
+	g_vm->_pointer->show(port, _extent);              // show mouse pointer
 }
 
 } // end of namespace Saga2

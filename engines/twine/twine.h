@@ -50,9 +50,6 @@ namespace TwinE {
 /** Default frames per second */
 #define DEFAULT_FRAMES_PER_SECOND 20
 
-/** Number of colors used in the game */
-#define NUMOFCOLORS 256
-
 #define ORIGINAL_WIDTH 640
 #define ORIGINAL_HEIGHT 480
 
@@ -133,7 +130,7 @@ class Grid;
 class Movements;
 class Interface;
 class Menu;
-class FlaMovies;
+class Movies;
 class MenuOptions;
 class Music;
 class Redraw;
@@ -248,6 +245,7 @@ public:
 
 	bool isLBA1() const { return _gameType == TwineGameType::GType_LBA; }
 	bool isLBA2() const { return _gameType == TwineGameType::GType_LBA2; }
+	bool isMod() const { return (_gameFlags & TwinE::TF_MOD) != 0; }
 	bool isDemo() const { return (_gameFlags & ADGF_DEMO) != 0; };
 	const char *getGameId() const;
 
@@ -262,7 +260,7 @@ public:
 	Movements *_movements;
 	Interface *_interface;
 	Menu *_menu;
-	FlaMovies *_flaMovies;
+	Movies *_flaMovies;
 	MenuOptions *_menuOptions;
 	Music *_music;
 	Redraw *_redraw;

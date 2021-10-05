@@ -29,6 +29,8 @@
 #include "common/events.h"
 #include "common/file.h"
 
+#include "engines/util.h"
+
 #include "audio/mixer.h"
 #include "graphics/palette.h"
 
@@ -130,7 +132,7 @@ Common::String CryOmni3DEngine::prepareFileName(const Common::String &baseName,
 
 void CryOmni3DEngine::playHNM(const Common::String &filename, Audio::Mixer::SoundType soundType,
 							  HNMCallback beforeDraw, HNMCallback afterDraw) {
-	const char *const extensions[] = { "hns", "hnm", nullptr };
+	const char *const extensions[] = { "hns", "hnm", "ubb", nullptr };
 	Common::String fname(prepareFileName(filename, extensions));
 
 	byte *currentPalette = new byte[256 * 3];
@@ -488,4 +490,19 @@ void CryOmni3DEngine::fillSurface(byte color) {
 	g_system->fillScreen(color);
 	g_system->updateScreen();
 }
+
+Common::Error CryOmni3DEngine_HNMPlayer::run() {
+	CryOmni3DEngine::run();
+
+	initGraphics(640, 480);
+
+	syncSoundSettings();
+
+	for (int i = 0; _gameDescription->desc.filesDescriptions[i].fileName; i++) {
+		playHNM(_gameDescription->desc.filesDescriptions[i].fileName, Audio::Mixer::kMusicSoundType);
+	}
+
+	return Common::kNoError;
+}
+
 } // End of namespace CryOmni3D

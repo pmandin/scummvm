@@ -37,7 +37,7 @@
 #include "graphics/pixelformat.h"
 
 
-#define SCUMMVM_THEME_VERSION_STR "SCUMMVM_STX0.8.50"
+#define SCUMMVM_THEME_VERSION_STR "SCUMMVM_STX0.8.51"
 
 class OSystem;
 
@@ -672,10 +672,10 @@ protected:
 	*/
 	void unloadExtraFont();
 
-	const Graphics::Font *loadScalableFont(const Common::String &filename, const Common::String &charset, const int pointsize, Common::String &name);
+	const Graphics::Font *loadScalableFont(const Common::String &filename, const int pointsize, Common::String &name);
 	const Graphics::Font *loadFont(const Common::String &filename, Common::String &name);
 	Common::String genCacheFilename(const Common::String &filename) const;
-	const Graphics::Font *loadFont(const Common::String &filename, const Common::String &scalableFilename, const Common::String &charset, const int pointsize, const bool makeLocalizedFont);
+	const Graphics::Font *loadFont(const Common::String &filename, const Common::String &scalableFilename, const int pointsize, const bool makeLocalizedFont);
 
 	/**
 	 * Dirty Screen handling function.

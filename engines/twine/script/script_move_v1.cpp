@@ -24,10 +24,9 @@
 #include "common/memstream.h"
 #include "common/textconsole.h"
 #include "common/util.h"
-#include "twine/scene/actor.h"
 #include "twine/scene/animations.h"
 #include "twine/audio/sound.h"
-#include "twine/flamovies.h"
+#include "twine/movies.h"
 #include "twine/scene/movements.h"
 #include "twine/renderer/redraw.h"
 #include "twine/renderer/renderer.h"
@@ -703,7 +702,7 @@ void ScriptMove::processMoveScript(int32 actorIdx) {
 		if (scriptOpcode < ARRAYSIZE(function_map)) {
 			end = function_map[scriptOpcode].function(_engine, ctx);
 		} else {
-			error("Actor %d with wrong offset/opcode - Offset: %d (opcode: %u)", actorIdx, (int)ctx.stream.pos() - 1, scriptOpcode);
+			error("Actor %d with wrong offset/opcode - Offset: %d/%d (opcode: %u)", actorIdx, (int)ctx.stream.pos() - 1, (int)ctx.stream.size(), scriptOpcode);
 		}
 
 		if (end < 0) {

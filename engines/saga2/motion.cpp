@@ -50,7 +50,7 @@ bool    interruptableMotionsPaused;
  * ===================================================================== */
 
 bool unstickObject(GameObject *obj);
-int32 currentGamePerformance(void);
+int32 currentGamePerformance();
 
 /* ===================================================================== *
    Functions
@@ -154,7 +154,7 @@ int32 getPathFindIQ(GameObject *obj) {
 		else {
 			if (objRoofRipped(obj))
 				pfIQ = 75;
-			else if (a->disposition == 1)
+			else if (a->_disposition == 1)
 				pfIQ = 250;
 			else
 				pfIQ = 100;
@@ -347,7 +347,7 @@ uint8 computeTurnFrames(Direction fromDir, Direction toDir) {
 //-----------------------------------------------------------------------
 //	Initialize the MotionTaskList
 
-MotionTaskList::MotionTaskList(void) {
+MotionTaskList::MotionTaskList() {
 	_nextMT = _list.end();
 }
 
@@ -376,7 +376,7 @@ void MotionTaskList::read(Common::InSaveFile *in) {
 //	Return the number of bytes needed to archive the motion tasks
 //	in a buffer
 
-int32 MotionTaskList::archiveSize(void) {
+int32 MotionTaskList::archiveSize() {
 	//  Initilialize with sizeof motion task count
 	int32       size = sizeof(int16);
 
@@ -400,7 +400,7 @@ void MotionTaskList::write(Common::MemoryWriteStreamDynamic *out) {
 //-----------------------------------------------------------------------
 //	Cleanup the motion tasks
 
-void MotionTaskList::cleanup(void) {
+void MotionTaskList::cleanup() {
 	for (Common::List<MotionTask *>::iterator it = _list.begin(); it != _list.end(); ++it) {
 		abortPathFind(*it);
 		(*it)->pathFindTask = NULL;
@@ -448,7 +448,7 @@ MotionTask *MotionTaskList::newTask(GameObject *obj) {
 		_list.push_back(mt);
 
 		if (isActor(obj))
-			((Actor *)obj)->moveTask = mt;
+			((Actor *)obj)->_moveTask = mt;
 	}
 
 	obj->_data.objectFlags |= objectMoving;
@@ -483,7 +483,7 @@ void MotionTask::read(Common::InSaveFile *in) {
 
 	//  If the object is an actor, plug this motion task into the actor
 	if (object && isActor(object))
-		((Actor *)object)->moveTask = this;
+		((Actor *)object)->_moveTask = this;
 
 	if (motionType == motionTypeWalk
 	        ||  prevMotionType == motionTypeWalk) {
@@ -714,7 +714,7 @@ void MotionTask::read(Common::InSaveFile *in) {
 //-----------------------------------------------------------------------
 //	Return the number of bytes needed to archive this MotionTask
 
-int32 MotionTask::archiveSize(void) {
+int32 MotionTask::archiveSize() {
 	int32       size = 0;
 
 	size =      sizeof(motionType)
@@ -1081,8 +1081,8 @@ void MotionTask::remove(int16 returnVal) {
 	if (isActor(object)) {
 		Actor   *a = (Actor *)object;
 
-		a->moveTask = NULL;
-		a->cycleCount = g_vm->_rnd->getRandomNumber(19);
+		a->_moveTask = NULL;
+		a->_cycleCount = g_vm->_rnd->getRandomNumber(19);
 
 		//  Make sure the actor is not left in a permanently
 		//  uninterruptable state with no motion task to reset it
@@ -1101,7 +1101,7 @@ void MotionTask::remove(int16 returnVal) {
 //-----------------------------------------------------------------------
 //	Determine the immediate target _data.location
 
-TilePoint MotionTask::getImmediateTarget(void) {
+TilePoint MotionTask::getImmediateTarget() {
 	if (immediateLocation != Nowhere)
 		return immediateLocation;
 
@@ -1113,7 +1113,7 @@ TilePoint MotionTask::getImmediateTarget(void) {
 	if (flags & agitated)
 		dir = direction;
 	else
-		dir = ((Actor *)object)->currentFacing;
+		dir = ((Actor *)object)->_currentFacing;
 
 	return  object->_data.location
 	        +   incDirTable[dir] * kTileUVSize;
@@ -1245,8 +1245,8 @@ void MotionTask::shootObject(
 		if (isActor(&target)) {
 			Actor       *targetActor = (Actor *)&target;
 
-			if (targetActor->moveTask != NULL) {
-				MotionTask      *targetMotion = targetActor->moveTask;
+			if (targetActor->_moveTask != NULL) {
+				MotionTask      *targetMotion = targetActor->_moveTask;
 
 				if (targetMotion->motionType == motionTypeWalk)
 					vector += targetMotion->velocity * turns;
@@ -1629,7 +1629,7 @@ void MotionTask::dropObjectOnTAI(
 //	Determine if this MotionTask is a reflex ( motion over which an actor
 //	has no control )
 
-bool MotionTask::isReflex(void) {
+bool MotionTask::isReflex() {
 	return      motionType == motionTypeThrown
 	            ||  motionType == motionTypeFall
 	            ||  motionType == motionTypeLand
@@ -1896,7 +1896,7 @@ void MotionTask::die(Actor &a) {
 //-----------------------------------------------------------------------
 //	Determine if this MotionTask is a defensive motion
 
-bool MotionTask::isDefense(void) {
+bool MotionTask::isDefense() {
 	return      motionType == motionTypeOneHandedParry
 	            ||  motionType == motionTypeTwoHandedParry
 	            ||  motionType == motionTypeShieldParry
@@ -1906,7 +1906,7 @@ bool MotionTask::isDefense(void) {
 //-----------------------------------------------------------------------
 //	Determine if this MotionTask is an offensive motion
 
-bool MotionTask::isAttack(void) {
+bool MotionTask::isAttack() {
 	return      isMeleeAttack()
 	            ||  motionType == motionTypeFireBow
 	            ||  motionType == motionTypeCastSpell
@@ -1916,7 +1916,7 @@ bool MotionTask::isAttack(void) {
 //-----------------------------------------------------------------------
 //	Determine if this MotionTask is an offensive melee motion
 
-bool MotionTask::isMeleeAttack(void) {
+bool MotionTask::isMeleeAttack() {
 	return      motionType == motionTypeOneHandedSwing
 	            ||  motionType == motionTypeTwoHandedSwing;
 }
@@ -1924,14 +1924,14 @@ bool MotionTask::isMeleeAttack(void) {
 //-----------------------------------------------------------------------
 //	Determine if this MotionTask is a walk motion
 
-bool MotionTask::isWalk(void) {
+bool MotionTask::isWalk() {
 	return prevMotionType == motionTypeWalk;
 }
 
 //-----------------------------------------------------------------------
 //	Return the wandering tether region
 
-TileRegion MotionTask::getTether(void) {
+TileRegion MotionTask::getTether() {
 	TileRegion  reg;
 
 	if (flags & tethered) {
@@ -2001,7 +2001,7 @@ void MotionTask::changeDirectTarget(const TilePoint &newPos, bool run) {
 }
 
 //  Cancel actor movement if walking...
-void MotionTask::finishWalk(void) {
+void MotionTask::finishWalk() {
 	//  If the actor is in a running state
 	if (motionType == motionTypeWalk) {
 		remove();
@@ -2018,11 +2018,11 @@ void MotionTask::finishWalk(void) {
 }
 
 //  Cancel actor movement if talking...
-void MotionTask::finishTalking(void) {
+void MotionTask::finishTalking() {
 	if (motionType == motionTypeTalk) {
 		if (isActor(object)) {
 			Actor   *a = (Actor *)object;
-			if (a->currentAnimation != actionStand)
+			if (a->_currentAnimation != actionStand)
 				a->setAction(actionStand, 0);
 		}
 		remove();
@@ -2032,7 +2032,7 @@ void MotionTask::finishTalking(void) {
 //-----------------------------------------------------------------------
 //	Handle actions for characters and objects in free-fall
 
-void MotionTask::ballisticAction(void) {
+void MotionTask::ballisticAction() {
 	TilePoint       totalVelocity,          // total velocity vector
 	                stepVelocity,           // sub-velocity vector
 	                location,
@@ -2298,7 +2298,7 @@ void MotionTask::ballisticAction(void) {
 //-----------------------------------------------------------------------
 //	Get the coordinates of the next waypoint.
 
-bool MotionTask::nextWayPoint(void) {
+bool MotionTask::nextWayPoint() {
 	//  If the pathfinder hasn't managed to determine waypoints
 	//  yet, then return failure.
 //	if ( ( flags & pathFind ) && pathCount < 0 ) return false;
@@ -2374,7 +2374,7 @@ bool MotionTask::checkWalk(
 //-----------------------------------------------------------------------
 //	Handle actions for characters walking and running
 
-void MotionTask::walkAction(void) {
+void MotionTask::walkAction() {
 	enum WalkType {
 		walkNormal  = 0,
 		walkSlow,
@@ -2401,7 +2401,7 @@ void MotionTask::walkAction(void) {
 
 	assert(isActor(object));
 	a = (Actor *)object;
-	aa = a->appearance;
+	aa = a->_appearance;
 
 	if (a->isImmobile()) {
 		remove(motionWalkBlocked);
@@ -2539,13 +2539,13 @@ void MotionTask::walkAction(void) {
 	moveBlocked = false;
 
 	if (moveTaskDone || moveTaskWaiting) {
-		movementDirection = a->currentFacing;
+		movementDirection = a->_currentFacing;
 	} else if (targetDist == 0 && ABS(targetVector.z) > kMaxStepHeight) {
 		if (pathFindTask) {
-			movementDirection = a->currentFacing;
+			movementDirection = a->_currentFacing;
 			moveTaskWaiting = true;
 		} else {
-			movementDirection = a->currentFacing;
+			movementDirection = a->_currentFacing;
 			moveBlocked = true;
 		}
 	} else if (targetDist <= speed) {
@@ -2564,7 +2564,7 @@ void MotionTask::walkAction(void) {
 		//  Determine the direction the character must spin
 		//  to be at the correct movement angle.
 		directionAngle =
-		    (((movementDirection - a->currentFacing) + 4) & 7) - 4;
+		    (((movementDirection - a->_currentFacing) + 4) & 7) - 4;
 
 		//  Test terrain. Note that if the character is spinning more than 1
 		//  octant this frame, then they cannot move so a terrain test is unneeded.
@@ -2579,7 +2579,7 @@ void MotionTask::walkAction(void) {
 					if (pathFindTask)
 						moveTaskWaiting = true;
 					else {
-						movementDirection = a->currentFacing;
+						movementDirection = a->_currentFacing;
 						moveBlocked = true;
 					}
 					/*                  if (!(flags & pathFind) || nextWayPoint() == false)
@@ -2679,7 +2679,7 @@ void MotionTask::walkAction(void) {
 			if (pathFindTask)
 				moveTaskWaiting = true;
 			else {
-				movementDirection = a->currentFacing;
+				movementDirection = a->_currentFacing;
 				moveBlocked = true;
 			}
 		}
@@ -2687,19 +2687,19 @@ void MotionTask::walkAction(void) {
 
 	//  REM: Test the terrain at the new spot.
 
-	if (movementDirection != a->currentFacing) {
+	if (movementDirection != a->_currentFacing) {
 		//  Determine the direction the character must spin
 		//  to be at the correct movement angle.
 		directionAngle =
-		    (((movementDirection - a->currentFacing) + 4) & 7) - 4;
+		    (((movementDirection - a->_currentFacing) + 4) & 7) - 4;
 
 		//  If the direction is at a right angle or behind
 		//  the character, then they cannot move.
 
 		if (directionAngle < 0) {
-			a->currentFacing = spinRight(a->currentFacing);
+			a->_currentFacing = spinRight(a->_currentFacing);
 		} else {
-			a->currentFacing = spinLeft(a->currentFacing);
+			a->_currentFacing = spinLeft(a->_currentFacing);
 		}
 	}
 
@@ -2728,7 +2728,7 @@ void MotionTask::walkAction(void) {
 		} else
 			remove(motionWalkBlocked);
 	} else if (moveTaskWaiting
-	           ||  movementDirection != a->currentFacing) {
+	           ||  movementDirection != a->_currentFacing) {
 		//  When he starts running again, then have him walk only.
 		runCount = MAX<int16>(runCount, 8);
 
@@ -2775,11 +2775,11 @@ void MotionTask::walkAction(void) {
 				else
 					stairsDir = 7;
 
-				if (a->currentFacing == stairsDir) {
+				if (a->_currentFacing == stairsDir) {
 					//  walk up stairs
 					newAction = actionSpecial7;
 					flags |= onStairs;
-				} else if (a->currentFacing == ((stairsDir - 4) & 0x7)) {
+				} else if (a->_currentFacing == ((stairsDir - 4) & 0x7)) {
 					//  walk down stairs
 					newAction = actionSpecial8;
 					flags |= onStairs;
@@ -2800,7 +2800,7 @@ void MotionTask::walkAction(void) {
 			//  Determine if the new action is running
 			//  or walking.
 
-			if (a->currentAnimation == newAction) {
+			if (a->_currentAnimation == newAction) {
 				//  If we are already doing that action, then
 				//  just continue doing it.
 				if (walkType != walkSlow)
@@ -2810,10 +2810,10 @@ void MotionTask::walkAction(void) {
 						a->nextAnimationFrame();
 					flags ^= nextAnim;
 				}
-			} else if (a->currentAnimation == actionWalk
-			           ||  a->currentAnimation == actionRun
-			           ||  a->currentAnimation == actionSpecial7
-			           ||  a->currentAnimation == actionSpecial8) {
+			} else if (a->_currentAnimation == actionWalk
+			           ||  a->_currentAnimation == actionRun
+			           ||  a->_currentAnimation == actionSpecial7
+			           ||  a->_currentAnimation == actionSpecial8) {
 				//  If we are running instead of walking or
 				//  vice versa, then change to the new action
 				//  but don't break stride
@@ -2843,7 +2843,7 @@ void MotionTask::walkAction(void) {
 //-----------------------------------------------------------------------
 //	Climb up a ladder
 
-void MotionTask::upLadderAction(void) {
+void MotionTask::upLadderAction() {
 	Actor               *a = (Actor *)object;
 
 	if (flags & reset) {
@@ -2929,14 +2929,14 @@ void MotionTask::upLadderAction(void) {
 
 		TilePoint   newLoc;
 
-		newLoc = loc + incDirTable[a->currentFacing] * crossSection * 2;
+		newLoc = loc + incDirTable[a->_currentFacing] * crossSection * 2;
 		newLoc.z = tileSlopeHeight(newLoc, a);
 
 		if (!checkBlocked(a, newLoc))
 			a->move(newLoc);
 		else {
 			newLoc =    loc
-			            +       incDirTable[(a->currentFacing - 2) & 7]
+			            +       incDirTable[(a->_currentFacing - 2) & 7]
 			            *   crossSection * 2;
 			newLoc.z = tileSlopeHeight(newLoc, a);
 
@@ -2944,7 +2944,7 @@ void MotionTask::upLadderAction(void) {
 				a->move(newLoc);
 			else {
 				newLoc =    loc
-				            +       incDirTable[(a->currentFacing + 2) & 7]
+				            +       incDirTable[(a->_currentFacing + 2) & 7]
 				            *   crossSection * 2;
 				newLoc.z = tileSlopeHeight(newLoc, a);
 
@@ -2952,7 +2952,7 @@ void MotionTask::upLadderAction(void) {
 					a->move(newLoc);
 				else {
 					newLoc =    loc
-					            +       incDirTable[a->currentFacing]
+					            +       incDirTable[a->_currentFacing]
 					            *   crossSection * 2;
 					newLoc.z = tileSlopeHeight(newLoc, a);
 					a->move(newLoc);
@@ -2970,7 +2970,7 @@ void MotionTask::upLadderAction(void) {
 //-----------------------------------------------------------------------
 //	Climb down a ladder
 
-void MotionTask::downLadderAction(void) {
+void MotionTask::downLadderAction() {
 	Actor               *a = (Actor *)object;
 
 	if (flags & reset) {
@@ -3050,14 +3050,14 @@ void MotionTask::downLadderAction(void) {
 
 		TilePoint   newLoc;
 
-		newLoc = loc - incDirTable[a->currentFacing] * kTileUVSize;
+		newLoc = loc - incDirTable[a->_currentFacing] * kTileUVSize;
 		newLoc.z = tileSlopeHeight(newLoc, a);
 
 		if (!checkBlocked(a, newLoc))
 			a->move(newLoc);
 		else {
 			newLoc =    loc
-			            -       incDirTable[(a->currentFacing - 2) & 7]
+			            -       incDirTable[(a->_currentFacing - 2) & 7]
 			            *   kTileUVSize;
 			newLoc.z = tileSlopeHeight(newLoc, a);
 
@@ -3065,7 +3065,7 @@ void MotionTask::downLadderAction(void) {
 				a->move(newLoc);
 			else {
 				newLoc =    loc
-				            -       incDirTable[(a->currentFacing + 2) & 7]
+				            -       incDirTable[(a->_currentFacing + 2) & 7]
 				            *   kTileUVSize;
 				newLoc.z = tileSlopeHeight(newLoc, a);
 
@@ -3073,7 +3073,7 @@ void MotionTask::downLadderAction(void) {
 					a->move(newLoc);
 				else {
 					newLoc =    loc
-					            -       incDirTable[a->currentFacing]
+					            -       incDirTable[a->_currentFacing]
 					            *   kTileUVSize;
 					newLoc.z = tileSlopeHeight(newLoc, a);
 					a->move(newLoc);
@@ -3089,7 +3089,7 @@ void MotionTask::downLadderAction(void) {
 }
 
 //  Go through the giving motions
-void MotionTask::giveAction(void) {
+void MotionTask::giveAction() {
 	Actor       *a = (Actor *)object;
 	Direction   targetDir = (targetObj->getLocation()
 	                         -   a->getLocation()).quickDir();
@@ -3099,7 +3099,7 @@ void MotionTask::giveAction(void) {
 		flags &= ~reset;
 	}
 
-	if (a->currentFacing != targetDir)
+	if (a->_currentFacing != targetDir)
 		a->turn(targetDir);
 	else if (a->nextAnimationFrame())
 		remove(motionCompleted);
@@ -3124,7 +3124,7 @@ struct CombatMotionSet {
 	uint16      listSize;       //  Size of array
 
 	//  Select randome element from the array
-	uint8 selectRandom(void) const {
+	uint8 selectRandom() const {
 		return list[g_vm->_rnd->getRandomNumber(listSize - 1)];
 	}
 };
@@ -3173,7 +3173,7 @@ const CombatMotionSet twoHandedLowSwingSet = {
 //-----------------------------------------------------------------------
 //  Handle all two handed swing motions
 
-void MotionTask::twoHandedSwingAction(void) {
+void MotionTask::twoHandedSwingAction() {
 	//  If the reset flag is set, initialize the motion
 	if (flags & reset) {
 		//  Let the game engine know about this aggressive act
@@ -3224,7 +3224,7 @@ void MotionTask::twoHandedSwingAction(void) {
 		combatMotionType = availableSet->selectRandom();
 		actorAnimation = animationTypeArray[combatMotionType];
 
-		if (a->appearance != NULL
+		if (a->_appearance != NULL
 		        &&  a->isActionAvailable(actorAnimation)) {
 			//  Compute the number of frames in the animation before the
 			//  actual strike
@@ -3244,7 +3244,7 @@ void MotionTask::twoHandedSwingAction(void) {
 		}
 
 		a->setActionPoints(
-		    computeTurnFrames(a->currentFacing, direction) + 10);
+		    computeTurnFrames(a->_currentFacing, direction) + 10);
 
 		flags &= ~reset;
 	} else
@@ -3288,7 +3288,7 @@ const CombatMotionSet oneHandedLowSwingSet = {
 //-----------------------------------------------------------------------
 //  Handle all one handed swing motions
 
-void MotionTask::oneHandedSwingAction(void) {
+void MotionTask::oneHandedSwingAction() {
 	if (flags & reset) {
 		//  Let the game engine know about this aggressive act
 		logAggressiveAct(object->thisID(), targetObj->thisID());
@@ -3340,7 +3340,7 @@ void MotionTask::oneHandedSwingAction(void) {
 		        else*/
 		{
 			actorAnimation = animationTypeArray[combatMotionType];
-			if (a->appearance != NULL
+			if (a->_appearance != NULL
 			        &&  a->isActionAvailable(actorAnimation)) {
 				//  Compute the number of frames in the animation before the
 				//  actual strike
@@ -3364,7 +3364,7 @@ void MotionTask::oneHandedSwingAction(void) {
 		a->setActionPoints(actionCounter * 2);
 
 		a->setActionPoints(
-		    computeTurnFrames(a->currentFacing, direction) + 10);
+		    computeTurnFrames(a->_currentFacing, direction) + 10);
 
 		flags &= ~reset;
 	} else
@@ -3376,13 +3376,13 @@ void MotionTask::oneHandedSwingAction(void) {
 //	Compute the number of frames before the actual strike in an
 //	offensive melee motion
 
-uint16 MotionTask::framesUntilStrike(void) {
+uint16 MotionTask::framesUntilStrike() {
 	//  If the melee action has not been initialized, return a safe value
 	if (flags & reset) return maxuint16;
 
 	uint16          turnFrames;
 
-	turnFrames = (direction - ((Actor *)object)->currentFacing) & 0x7;
+	turnFrames = (direction - ((Actor *)object)->_currentFacing) & 0x7;
 	if (turnFrames > 4) turnFrames = 8 - turnFrames;
 
 	return turnFrames + actionCounter;
@@ -3403,10 +3403,10 @@ GameObject *MotionTask::blockingObject(Actor *thisAttacker) {
 //-----------------------------------------------------------------------
 //  Handle bow firing motions
 
-void MotionTask::fireBowAction(void) {
+void MotionTask::fireBowAction() {
 	Actor       *a = (Actor *)object;
 
-	assert(a->leftHandObject != Nothing);
+	assert(a->_leftHandObject != Nothing);
 
 	//  Initialize the bow firing motion
 	if (flags & reset) {
@@ -3416,7 +3416,7 @@ void MotionTask::fireBowAction(void) {
 		//  Compute the direction to the target
 		direction = (targetObj->getLocation() - a->getLocation()).quickDir();
 
-		if (a->appearance != NULL
+		if (a->_appearance != NULL
 		        &&  a->isActionAvailable(actionFireBow)) {
 			//  Calculate the number of frames in the animation before the
 			//  projectile is actually fired
@@ -3435,18 +3435,18 @@ void MotionTask::fireBowAction(void) {
 		}
 
 		a->setActionPoints(
-		    computeTurnFrames(a->currentFacing, direction) + 10);
+		    computeTurnFrames(a->_currentFacing, direction) + 10);
 
-		if (a->currentFacing != direction)
+		if (a->_currentFacing != direction)
 			a->turn(direction);
 
 		flags &= ~reset;
-	} else if (a->currentFacing != direction)
+	} else if (a->_currentFacing != direction)
 		a->turn(direction);
 	else {
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		//  If the action counter has reached zero, get a projectile and
@@ -3454,13 +3454,13 @@ void MotionTask::fireBowAction(void) {
 		if (actionCounter == 0) {
 			GameObject  *missileWeapon;
 
-			missileWeapon = GameObject::objectAddress(a->leftHandObject);
+			missileWeapon = GameObject::objectAddress(a->_leftHandObject);
 			if (missileWeapon != NULL) {
 				GameObject  *proj;
 
 				//  Ask the missile weapon's prototype to get a projectile
 				proj =  missileWeapon->proto()->getProjectile(
-				            a->leftHandObject,
+				            a->_leftHandObject,
 				            a->thisID());
 
 				//  Shoot the projectile
@@ -3470,14 +3470,14 @@ void MotionTask::fireBowAction(void) {
 					            projCrossSection = proj->proto()->crossSection;
 					ObjectID    projID;
 
-					actorLoc.u +=       incDirTable[a->currentFacing].u
+					actorLoc.u +=       incDirTable[a->_currentFacing].u
 					                    * (actorCrossSection + projCrossSection);
-					actorLoc.v +=       incDirTable[a->currentFacing].v
+					actorLoc.v +=       incDirTable[a->_currentFacing].v
 					                    * (actorCrossSection + projCrossSection);
 					actorLoc.z += a->proto()->height * 7 / 8;
 
 					if ((projID =   proj->extractMerged(Location(actorLoc, a->IDParent()), 1)) !=  Nothing) {
-						g_vm->_containerList->setUpdate(a->thisID());
+						g_vm->_cnm->setUpdate(a->thisID());
 						proj = GameObject::objectAddress(projID);
 						shootObject(*proj, *a, *targetObj, 16);
 					}
@@ -3503,15 +3503,15 @@ void MotionTask::fireBowAction(void) {
 //-----------------------------------------------------------------------
 //  Handle spell casting motions
 
-void MotionTask::castSpellAction(void) {
+void MotionTask::castSpellAction() {
 	Actor       *a = (Actor *)object;
 
 	//  Turn until facing the target
-	if (a->currentFacing != direction)
+	if (a->_currentFacing != direction)
 		a->turn(direction);
 	else {
 		if (flags & reset) {
-			if (a->appearance != NULL
+			if (a->_appearance != NULL
 			        &&  a->isActionAvailable(actionCastSpell)) {
 				//  Calculate the number of frames in the animation before the
 				//  spell is case
@@ -3534,7 +3534,7 @@ void MotionTask::castSpellAction(void) {
 
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		if (actionCounter == 0) {
@@ -3568,7 +3568,7 @@ void MotionTask::castSpellAction(void) {
 //-----------------------------------------------------------------------
 //  Handle wand using motions
 
-void MotionTask::useWandAction(void) {
+void MotionTask::useWandAction() {
 	//  Initialize the wand using motion
 	if (flags & reset) {
 		//  Let the game engine know about this aggressive act
@@ -3578,7 +3578,7 @@ void MotionTask::useWandAction(void) {
 
 		direction = (targetObj->getLocation() - a->getLocation()).quickDir();
 
-		if (a->appearance != NULL
+		if (a->_appearance != NULL
 		        &&  a->isActionAvailable(actionUseWand)) {
 			actionCounter = a->animationFrames(actionUseWand, direction) - 1;
 			a->setAction(actionUseWand, 0);
@@ -3595,7 +3595,7 @@ void MotionTask::useWandAction(void) {
 		}
 
 		a->setActionPoints(
-		    computeTurnFrames(a->currentFacing, direction) + 10);
+		    computeTurnFrames(a->_currentFacing, direction) + 10);
 
 		flags &= ~reset;
 	}
@@ -3606,14 +3606,14 @@ void MotionTask::useWandAction(void) {
 //-----------------------------------------------------------------------
 //	Handle two handed parrying motions
 
-void MotionTask::twoHandedParryAction(void) {
+void MotionTask::twoHandedParryAction() {
 	if (flags & reset) {
 		Actor       *a = (Actor *)object;
 		int16       animationFrames;
 
 		direction = (d.attacker->getLocation() - a->getLocation()).quickDir();
 
-		if (a->appearance != NULL
+		if (a->_appearance != NULL
 		        &&  a->isActionAvailable(actionTwoHandParry)) {
 			a->setAction(actionTwoHandParry, 0);
 			animationFrames = a->animationFrames(actionTwoHandParry, direction);
@@ -3630,7 +3630,7 @@ void MotionTask::twoHandedParryAction(void) {
 		}
 
 		a->setActionPoints(
-		    computeTurnFrames(a->currentFacing, direction)
+		    computeTurnFrames(a->_currentFacing, direction)
 		    +   animationFrames + 1);
 
 		flags &= ~reset;
@@ -3641,7 +3641,7 @@ void MotionTask::twoHandedParryAction(void) {
 //-----------------------------------------------------------------------
 //	Handle one handed parrying motions
 
-void MotionTask::oneHandedParryAction(void) {
+void MotionTask::oneHandedParryAction() {
 	if (flags & reset) {
 		Actor       *a = (Actor *)object;
 		int16       animationFrames;
@@ -3649,7 +3649,7 @@ void MotionTask::oneHandedParryAction(void) {
 		direction = (d.attacker->getLocation() - a->getLocation()).quickDir();
 
 		combatMotionType = oneHandedParryHigh;
-		if (a->appearance != NULL
+		if (a->_appearance != NULL
 		        &&  a->isActionAvailable(actionParryHigh)) {
 			a->setAction(actionParryHigh, 0);
 			animationFrames = a->animationFrames(actionParryHigh, direction);
@@ -3666,7 +3666,7 @@ void MotionTask::oneHandedParryAction(void) {
 		}
 
 		a->setActionPoints(
-		    computeTurnFrames(a->currentFacing, direction)
+		    computeTurnFrames(a->_currentFacing, direction)
 		    +   animationFrames + 1);
 
 		flags &= ~reset;
@@ -3677,14 +3677,14 @@ void MotionTask::oneHandedParryAction(void) {
 //-----------------------------------------------------------------------
 //	Handle shield parrying motions
 
-void MotionTask::shieldParryAction(void) {
+void MotionTask::shieldParryAction() {
 	if (flags & reset) {
 		Actor       *a = (Actor *)object;
 		int16       animationFrames;
 
 		direction = (d.attacker->getLocation() - a->getLocation()).quickDir();
 
-		if (a->appearance != NULL
+		if (a->_appearance != NULL
 		        &&  a->isActionAvailable(actionShieldParry)) {
 			a->setAction(actionShieldParry, 0);
 			animationFrames = a->animationFrames(actionShieldParry, direction);
@@ -3701,7 +3701,7 @@ void MotionTask::shieldParryAction(void) {
 		}
 
 		a->setActionPoints(
-		    computeTurnFrames(a->currentFacing, direction)
+		    computeTurnFrames(a->_currentFacing, direction)
 		    +   animationFrames + 1);
 
 		flags &= ~reset;
@@ -3712,9 +3712,9 @@ void MotionTask::shieldParryAction(void) {
 //-----------------------------------------------------------------------
 //	Handle dodging motions
 
-void MotionTask::dodgeAction(void) {
+void MotionTask::dodgeAction() {
 	Actor           *a = (Actor *)object;
-	MotionTask      *attackerMotion = d.attacker->moveTask;
+	MotionTask      *attackerMotion = d.attacker->_moveTask;
 
 	if (flags & reset) {
 		//  If the attacker is not attacking, we're done
@@ -3729,10 +3729,10 @@ void MotionTask::dodgeAction(void) {
 		if (attackerMotion->framesUntilStrike() <= 2) {
 			int16       animationFrames;
 
-			if (a->appearance != NULL
-			        &&  a->isActionAvailable(actionJumpUp, a->currentFacing)) {
+			if (a->_appearance != NULL
+			        &&  a->isActionAvailable(actionJumpUp, a->_currentFacing)) {
 				a->setAction(actionJumpUp, 0);
-				animationFrames = a->animationFrames(actionJumpUp, a->currentFacing);
+				animationFrames = a->animationFrames(actionJumpUp, a->_currentFacing);
 
 				//  Set this flag to indicate that the animation is actually
 				//  being played
@@ -3753,7 +3753,7 @@ void MotionTask::dodgeAction(void) {
 	} else {
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		if (flags & nextAnim) {
@@ -3774,7 +3774,7 @@ void MotionTask::dodgeAction(void) {
 //-----------------------------------------------------------------------
 //	Handle accept hit motions
 
-void MotionTask::acceptHitAction(void) {
+void MotionTask::acceptHitAction() {
 	Actor           *a = (Actor *)object;
 
 	if (flags & reset) {
@@ -3782,13 +3782,13 @@ void MotionTask::acceptHitAction(void) {
 		StandingTileInfo    sti;
 		int16               animationFrames;
 
-		a->currentFacing =
+		a->_currentFacing =
 		    (d.attacker->getWorldLocation() - a->getLocation()).quickDir();
 
-		if (a->appearance != NULL
-		        &&  a->isActionAvailable(actionHit, a->currentFacing)) {
+		if (a->_appearance != NULL
+		        &&  a->isActionAvailable(actionHit, a->_currentFacing)) {
 			a->setAction(actionHit, 0);
-			animationFrames = a->animationFrames(actionHit, a->currentFacing);
+			animationFrames = a->animationFrames(actionHit, a->_currentFacing);
 
 			//  Set this flag to indicate that the animation is actually
 			//  being played
@@ -3805,7 +3805,7 @@ void MotionTask::acceptHitAction(void) {
 
 		if (g_vm->_rnd->getRandomNumber(1)) {
 			//  Calculate the new position to knock the actor back to
-			newLoc += dirTable[(a->currentFacing - 4) & 0x7];
+			newLoc += dirTable[(a->_currentFacing - 4) & 0x7];
 
 			//  If the actor is not blocked, move him back
 			if (!checkBlocked(a, newLoc)) {
@@ -3819,7 +3819,7 @@ void MotionTask::acceptHitAction(void) {
 	} else {
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		if (flags & nextAnim) {
@@ -3832,7 +3832,7 @@ void MotionTask::acceptHitAction(void) {
 //-----------------------------------------------------------------------
 //	Handle fall down motions
 
-void MotionTask::fallDownAction(void) {
+void MotionTask::fallDownAction() {
 	Actor           *a = (Actor *)object;
 
 	if (flags & reset) {
@@ -3840,15 +3840,15 @@ void MotionTask::fallDownAction(void) {
 		StandingTileInfo    sti;
 		int16               animationFrames;
 
-		a->currentFacing =
+		a->_currentFacing =
 		    (d.attacker->getWorldLocation() - a->getLocation()).quickDir();
 
-		if (a->appearance != NULL
-		        &&  a->isActionAvailable(actionKnockedDown, a->currentFacing)) {
+		if (a->_appearance != NULL
+		        &&  a->isActionAvailable(actionKnockedDown, a->_currentFacing)) {
 			a->setAction(actionKnockedDown, 0);
 			animationFrames =   a->animationFrames(
 			                        actionKnockedDown,
-			                        a->currentFacing);
+			                        a->_currentFacing);
 
 			//  Set this flag to indicate that the animation is actually
 			//  being played
@@ -3865,7 +3865,7 @@ void MotionTask::fallDownAction(void) {
 
 		if (g_vm->_rnd->getRandomNumber(1)) {
 			//  Calculate the new position to knock the actor back to
-			newLoc += dirTable[(a->currentFacing - 4) & 0x7];
+			newLoc += dirTable[(a->_currentFacing - 4) & 0x7];
 			newLoc.z = tileSlopeHeight(newLoc, a, &sti);
 
 			//  If the actor is not blocked, move him back
@@ -3879,7 +3879,7 @@ void MotionTask::fallDownAction(void) {
 	} else {
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		if (flags & nextAnim) {
@@ -3893,16 +3893,16 @@ void MotionTask::fallDownAction(void) {
 //  Generic offensive melee code.  Called by twoHandedSwingAction()
 //	and oneHandedSwingAction()
 
-void MotionTask::offensiveMeleeAction(void) {
+void MotionTask::offensiveMeleeAction() {
 	Actor       *a = (Actor *)object;
 
 	//  Turn until facing the target
-	if (a->currentFacing != direction)
+	if (a->_currentFacing != direction)
 		a->turn(direction);
 	else {
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		//  If the action counter has reached zero, use the weapon on
@@ -3932,16 +3932,16 @@ void MotionTask::offensiveMeleeAction(void) {
 //-----------------------------------------------------------------------
 //  Generic magic weapon code.  Called by useWandAction().
 
-void MotionTask::useMagicWeaponAction(void) {
+void MotionTask::useMagicWeaponAction() {
 	Actor       *a = (Actor *)object;
 
 	//  Turn until facing the target
-	if (a->currentFacing != direction)
+	if (a->_currentFacing != direction)
 		a->turn(direction);
 	else {
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		//  If the action counter has reached zero, get a spell and
@@ -3987,9 +3987,9 @@ void MotionTask::useMagicWeaponAction(void) {
 //	Generic defensive melee code.  Called by twoHandedParryAction(),
 //	oneHandedParryAction() and shieldParryAction().
 
-void MotionTask::defensiveMeleeAction(void) {
+void MotionTask::defensiveMeleeAction() {
 	Actor           *a = (Actor *)object;
-	MotionTask      *attackerMotion = d.attacker->moveTask;
+	MotionTask      *attackerMotion = d.attacker->_moveTask;
 
 	//  Determine if the blocking action has been initiated
 	if (!(d.defenseFlags & blocking)) {
@@ -4002,7 +4002,7 @@ void MotionTask::defensiveMeleeAction(void) {
 		}
 
 		//  turn towards attacker
-		if (a->currentFacing != direction)
+		if (a->_currentFacing != direction)
 			a->turn(direction);
 
 		//  If the strike is about to land start the blocking motion
@@ -4011,7 +4011,7 @@ void MotionTask::defensiveMeleeAction(void) {
 	} else {
 		//  If the actors appearance becomes NULL, make sure this action
 		//  no longer depends upon the animation
-		if ((flags & nextAnim) && a->appearance == NULL)
+		if ((flags & nextAnim) && a->_appearance == NULL)
 			flags &= ~nextAnim;
 
 		//  Run through the animation frames
@@ -4029,7 +4029,7 @@ void MotionTask::defensiveMeleeAction(void) {
 //-----------------------------------------------------------------------
 //	Routine to update positions of all moving objects using MotionTasks
 
-void MotionTask::updatePositions(void) {
+void MotionTask::updatePositions() {
 	TilePoint       targetVector;
 	TilePoint       fallVelocity, terminalVelocity(15, 15, 0);
 	TilePoint       curLoc;
@@ -4084,21 +4084,21 @@ void MotionTask::updatePositions(void) {
 
 			if (mt->flags & reset) {
 				a->setAction(actionStand, 0);
-				a->cycleCount = g_vm->_rnd->getRandomNumber(3);
+				a->_cycleCount = g_vm->_rnd->getRandomNumber(3);
 				mt->flags &= ~(reset | nextAnim);
 			}
-			if (a->cycleCount == 0) {
+			if (a->_cycleCount == 0) {
 				a->setAction(actionTalk, 0);
 				mt->flags |= nextAnim;
-				a->cycleCount = -1;
+				a->_cycleCount = -1;
 			} else if (mt->flags & nextAnim) {
 				if (a->nextAnimationFrame()) {
 					a->setAction(actionStand, 0);
-					a->cycleCount = g_vm->_rnd->getRandomNumber(3);
+					a->_cycleCount = g_vm->_rnd->getRandomNumber(3);
 					mt->flags &= ~nextAnim;
 				}
 			} else
-				a->cycleCount--;
+				a->_cycleCount--;
 			break;
 
 		case motionTypeLand:
@@ -4239,7 +4239,7 @@ void MotionTask::updatePositions(void) {
 				) {
 					mt->direction = (mt->o.indirectObject->getLocation()
 					                 -   a->getLocation()).quickDir();
-					if (a->currentFacing != mt->direction)
+					if (a->_currentFacing != mt->direction)
 						a->turn(mt->direction);
 					else {
 						//  The actor will now be uniterruptable
@@ -4294,7 +4294,7 @@ void MotionTask::updatePositions(void) {
 				mt->flags &= ~reset;
 			}
 
-			if (a->currentFacing != mt->direction)
+			if (a->_currentFacing != mt->direction)
 				a->turn(mt->direction);
 			else {
 				//  The actor will now be uniterruptable
@@ -4314,7 +4314,7 @@ void MotionTask::updatePositions(void) {
 				mt->flags &= ~reset;
 			}
 
-			if (a->currentFacing != mt->direction)
+			if (a->_currentFacing != mt->direction)
 				a->turn(mt->direction);
 			else {
 				//  The actor will now be uniterruptable
@@ -4354,7 +4354,7 @@ void MotionTask::updatePositions(void) {
 				mt->flags &= ~reset;
 			}
 
-			if (a->currentFacing != mt->direction)
+			if (a->_currentFacing != mt->direction)
 				a->turn(mt->direction);
 			else {
 				//  The actor will now be uniterruptable
@@ -4372,7 +4372,7 @@ void MotionTask::updatePositions(void) {
 					mt->flags &= ~reset;
 				}
 
-				if (a->currentFacing != mt->direction)
+				if (a->_currentFacing != mt->direction)
 					a->turn(mt->direction);
 				else {
 					//  The actor will now be uniterruptable
@@ -4406,7 +4406,7 @@ void MotionTask::updatePositions(void) {
 			if (isWorld(mt->o.indirectObject->IDParent())) {
 				mt->direction = (mt->o.indirectObject->getLocation()
 				                 -   a->getLocation()).quickDir();
-				if (a->currentFacing != mt->direction)
+				if (a->_currentFacing != mt->direction)
 					a->turn(mt->direction);
 				else {
 					//  The actor will now be uniterruptable
@@ -4444,7 +4444,7 @@ void MotionTask::updatePositions(void) {
 				mt->flags &= ~reset;
 			}
 
-			if (a->currentFacing != mt->direction)
+			if (a->_currentFacing != mt->direction)
 				a->turn(mt->direction);
 			else {
 				//  The actor will now be uniterruptable
@@ -4752,7 +4752,7 @@ bool checkLadder(Actor *a, const TilePoint &loc) {
 
 		if (footPrintMask & ladderMask) {
 			if (!(~ladderMask & 0xF000)) {
-				a->currentFacing = 7;
+				a->_currentFacing = 7;
 				a->move(
 				    TilePoint(
 				        (tileLoc.u << kTileUVShift)
@@ -4761,14 +4761,14 @@ bool checkLadder(Actor *a, const TilePoint &loc) {
 				        (tileLoc.v << kTileUVShift) + kTileUVSize / 2,
 				        loc.z));
 			} else if (!(~ladderMask & 0x000F)) {
-				a->currentFacing = 3;
+				a->_currentFacing = 3;
 				a->move(
 				    TilePoint(
 				        (tileLoc.u << kTileUVShift) + crossSection,
 				        (tileLoc.v << kTileUVShift) + kTileUVSize / 2,
 				        loc.z));
 			} else if (!(~ladderMask & 0x8888)) {
-				a->currentFacing = 1;
+				a->_currentFacing = 1;
 				a->move(
 				    TilePoint(
 				        (tileLoc.u << kTileUVShift) + kTileUVSize / 2,
@@ -4777,7 +4777,7 @@ bool checkLadder(Actor *a, const TilePoint &loc) {
 				        -   crossSection,
 				        loc.z));
 			} else {
-				a->currentFacing = 3;
+				a->_currentFacing = 3;
 				a->move(
 				    TilePoint(
 				        (tileLoc.u << kTileUVShift) + kTileUVSize / 2,
@@ -4799,11 +4799,11 @@ bool checkLadder(Actor *a, const TilePoint &loc) {
 }
 
 
-void pauseInterruptableMotions(void) {
+void pauseInterruptableMotions() {
 	interruptableMotionsPaused = true;
 }
 
-void resumeInterruptableMotions(void) {
+void resumeInterruptableMotions() {
 	interruptableMotionsPaused = false;
 }
 
@@ -4814,7 +4814,7 @@ void resumeInterruptableMotions(void) {
 //-----------------------------------------------------------------------
 //	Initialize the motion task list
 
-void initMotionTasks(void) {
+void initMotionTasks() {
 	//  Simply call the default MotionTaskList constructor
 	//new (g_vm->_mTaskList) MotionTaskList;
 }
@@ -4844,7 +4844,7 @@ void loadMotionTasks(Common::InSaveFile *in, int32 chunkSize) {
 //-----------------------------------------------------------------------
 //	Cleanup the motion task list
 
-void cleanupMotionTasks(void) {
+void cleanupMotionTasks() {
 	//  Simply call stackList's cleanup
 	g_vm->_mTaskList->cleanup();
 }

@@ -99,11 +99,11 @@ ResourceLoader::ResourceLoader() {
 			if (g_grim->getGameType() == GType_GRIM) {
 				errorMessage = _("The original patch of Grim Fandango\n"
 								"is missing. Please download it from\n"
-								"https://scummvm.org/frs/extras/patches/gfupd101.exe\n"
+								"https://downloads.scummvm.org/frs/extras/patches/gfupd101.exe\n"
 								"and put it in the game data files directory");
 			} else if (g_grim->getGameType() == GType_MONKEY4) {
 				errorMessage = _("The original patch of Escape from Monkey Island is missing. \n"
-								"Please download it from https://scummvm.org/frs/extras/patches/\n"
+								"Please download it from https://downloads.scummvm.org/frs/extras/patches/\n"
 								"and put it in the game data files directory.\n"
 								"Pay attention to download the correct version according to the game's language");
 			}
@@ -160,7 +160,6 @@ ResourceLoader::ResourceLoader() {
 		SearchMan.listMatchingMembers(files, emi_patches_filename);
 
 		if (g_grim->getGameFlags() & ADGF_DEMO) {
-			SearchMan.listMatchingMembers(files, "i9n.lab");
 			SearchMan.listMatchingMembers(files, "lip.lab");
 			SearchMan.listMatchingMembers(files, "MagDemo.lab");
 			SearchMan.listMatchingMembers(files, "tile.lab");

@@ -118,6 +118,9 @@ void GuiManager::computeScaleFactor() {
 	_baseWidth = (int16)((float)w / _scaleFactor);
 
 	// Never go below 320x200. Our GUI layout is not designed to go below that.
+	// On the DS, this causes issues at 256x192 due to the use of non-scalable
+	// BDF fonts.
+#ifndef __DS__
 	if (_baseHeight < 200) {
 		_baseHeight = 200;
 		_scaleFactor = (float)h / (float)_baseHeight;
@@ -128,6 +131,7 @@ void GuiManager::computeScaleFactor() {
 		_scaleFactor = (float)w / (float)_baseWidth;
 		_baseHeight = (int16)((float)h / _scaleFactor);
 	}
+#endif
 
 	if (_theme)
 		_theme->setBaseResolution(_baseWidth, _baseHeight, _scaleFactor);
@@ -364,7 +368,7 @@ void GuiManager::runLoop() {
 
 #ifdef ENABLE_EVENTRECORDER
 	// Suspend recording while GUI is shown
-	g_eventRec.suspendRecording();
+	g_eventRec.acquireRecording();
 #endif
 
 	if (!_stateIsSaved) {
@@ -501,7 +505,7 @@ void GuiManager::runLoop() {
 
 #ifdef ENABLE_EVENTRECORDER
 	// Resume recording once GUI is shown
-	g_eventRec.resumeRecording();
+	g_eventRec.releaseRecording();
 #endif
 }
 
@@ -617,6 +621,13 @@ bool GuiManager::checkScreenChange() {
 }
 
 void GuiManager::screenChange() {
+#ifdef ENABLE_EVENTRECORDER
+	// Suspend recording while GUI is redrawn.
+	// We need this in addition to the lock in runLoop, as EVENT_SCREEN_CHANGED can
+	// be fired by in-game GUI components (such as the event recorder itself)
+	g_eventRec.acquireRecording();
+#endif
+
 	_lastScreenChangeID = _system->getScreenChangeID();
 
 	computeScaleFactor();
@@ -634,6 +645,11 @@ void GuiManager::screenChange() {
 	_redrawStatus = kRedrawFull;
 	redraw();
 	_system->updateScreen();
+
+#ifdef ENABLE_EVENTRECORDER
+	// Resume recording once GUI has redrawn
+	g_eventRec.releaseRecording();
+#endif
 }
 
 void GuiManager::processEvent(const Common::Event &event, Dialog *const activeDialog) {

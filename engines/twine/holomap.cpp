@@ -21,6 +21,7 @@
  */
 
 #include "twine/holomap.h"
+#include "common/algorithm.h"
 #include "common/debug.h"
 #include "common/memstream.h"
 #include "common/stream.h"
@@ -121,51 +122,52 @@ void Holomap::clearHolomapPosition(int32 locationIdx) {
 }
 
 void Holomap::loadHolomapGFX() {
-	_engine->_screens->loadCustomPalette(RESSHQR_HOLOPAL);
+	constexpr TwineResource resource(Resources::HQR_RESS_FILE, RESSHQR_HOLOPAL);
+	_engine->_screens->loadCustomPalette(resource);
 
-	int32 j = 576;
-	for (int32 i = 0; i < 96; i += 3, j += 3) {
+	int32 j = HOLOMAP_PALETTE_INDEX * 3;
+	const int32 n = NUM_HOLOMAPCOLORS * 3;
+	for (int32 i = 0; i < n; i += 3, j += 3) {
 		_paletteHolomap[i + 0] = _engine->_screens->_palette[j + 0];
 		_paletteHolomap[i + 1] = _engine->_screens->_palette[j + 1];
 		_paletteHolomap[i + 2] = _engine->_screens->_palette[j + 2];
 	}
 
-	j = 576;
-	for (int32 i = 96; i < 189; i += 3, j += 3) {
+	j = HOLOMAP_PALETTE_INDEX * 3;
+	for (int32 i = n; i < 2 * n - 3; i += 3, j += 3) {
 		_paletteHolomap[i + 0] = _engine->_screens->_palette[j + 0];
 		_paletteHolomap[i + 1] = _engine->_screens->_palette[j + 1];
 		_paletteHolomap[i + 2] = _engine->_screens->_palette[j + 2];
 	}
 
 	prepareHolomapProjectedPositions();
-	prepareHolomapSurface();
+
+	Common::SeekableReadStream *surfaceStream = HQR::makeReadStream(TwineResource(Resources::HQR_RESS_FILE, RESSHQR_HOLOSURFACE));
+	if (surfaceStream == nullptr) {
+		error("Failed to load holomap surface");
+	}
+	prepareHolomapSurface(surfaceStream);
+	delete surfaceStream;
 	_holomapPaletteIndex = 0;
 }
 
-static int sortHolomapSurfaceCoordsByDepth(const void *a1, const void *a2) {
-	return (int)*(const int16 *)a1 - (int)*(const int16 *)a2;
-}
-
-// verified with disassembly
-void Holomap::prepareHolomapSurface() {
-	Common::MemoryReadStream stream(_engine->_resources->_holomapSurfacePtr, _engine->_resources->_holomapSurfaceSize);
+void Holomap::prepareHolomapSurface(Common::SeekableReadStream *holomapSurfaceStream) {
 	int holomapSurfaceArrayIdx = 0;
 	_engine->_renderer->setBaseRotation(0, 0, 0);
 	for (int angle = -ANGLE_90; angle <= ANGLE_90; angle += ANGLE_11_25) {
 		int rotation = 0;
 		for (int i = 0; i <= ANGLE_11_25; ++i, rotation += ANGLE_11_25) {
-			const int32 rotX = stream.readByte();
-			const IVec3& rotVec = _engine->_renderer->getHolomapRotation(rotX, angle, rotation);
+			const int32 rotX = holomapSurfaceStream->readByte();
+			const IVec3 &rotVec = _engine->_renderer->getHolomapRotation(rotX, angle, rotation);
 			_holomapSurface[holomapSurfaceArrayIdx].x = rotVec.x;
 			_holomapSurface[holomapSurfaceArrayIdx].y = rotVec.y;
 			_holomapSurface[holomapSurfaceArrayIdx].z = rotVec.z;
 			++holomapSurfaceArrayIdx;
 		}
 	}
-	assert(stream.eos());
+	assert(holomapSurfaceStream->eos());
 }
 
-// verified with disassembly
 void Holomap::prepareHolomapProjectedPositions() {
 	int projectedIndex = 0;
 	for (int32 angle = -ANGLE_90; angle <= ANGLE_90; angle += ANGLE_11_25) {
@@ -190,15 +192,14 @@ void Holomap::prepareHolomapProjectedPositions() {
 	}
 }
 
-// verified with disassembly
 void Holomap::prepareHolomapPolygons() {
 	int holomapSortArrayIdx = 0;
 	int holomapSurfaceArrayIdx = 0;
 	_projectedSurfaceIndex = 0;
 	for (int32 angle = -ANGLE_90; angle <= ANGLE_90; angle += ANGLE_11_25) {
-		int rotation = 0;
+		int rotation = ANGLE_0;
 		for (int32 stepWidth = 0; stepWidth < ANGLE_11_25; ++stepWidth) {
-			IVec3* vec = &_holomapSurface[holomapSurfaceArrayIdx++];
+			IVec3 *vec = &_holomapSurface[holomapSurfaceArrayIdx++];
 			const IVec3 &destPos = _engine->_renderer->getBaseRotationPosition(vec->x, vec->y, vec->z);
 			if (angle != ANGLE_90) {
 				_holomapSort[holomapSortArrayIdx].z = destPos.z;
@@ -211,7 +212,7 @@ void Holomap::prepareHolomapPolygons() {
 			rotation += ANGLE_11_25;
 			++_projectedSurfaceIndex;
 		}
-		IVec3* vec = &_holomapSurface[holomapSurfaceArrayIdx++];
+		IVec3 *vec = &_holomapSurface[holomapSurfaceArrayIdx++];
 		const IVec3 &destPos = _engine->_renderer->getBaseRotationPosition(vec->x, vec->y, vec->z);
 		const IVec3 &projPos = _engine->_renderer->projectPositionOnScreen(destPos);
 		_projectedSurfacePositions[_projectedSurfaceIndex].x1 = projPos.x;
@@ -222,7 +223,7 @@ void Holomap::prepareHolomapPolygons() {
 	assert(holomapSortArrayIdx == ARRAYSIZE(_holomapSort));
 	assert(holomapSurfaceArrayIdx == ARRAYSIZE(_holomapSurface));
 	assert(_projectedSurfaceIndex == ARRAYSIZE(_projectedSurfacePositions));
-	qsort(_holomapSort, ARRAYSIZE(_holomapSort), sizeof(HolomapSort), sortHolomapSurfaceCoordsByDepth);
+	Common::sort(_holomapSort, _holomapSort + ARRAYSIZE(_holomapSort), [](const HolomapSort &a, const HolomapSort &b) { return a.z < b.z; });
 }
 
 bool Holomap::isTriangleVisible(const Vertex *vertices) const {
@@ -233,7 +234,7 @@ bool Holomap::isTriangleVisible(const Vertex *vertices) const {
 	return iVar2 - iVar1 != 0 && iVar1 <= iVar2;
 }
 
-void Holomap::renderHolomapSurfacePolygons() {
+void Holomap::renderHolomapSurfacePolygons(uint8 *holomapImage, uint32 holomapImageSize) {
 	prepareHolomapPolygons();
 	for (int32 i = 0; i < ARRAYSIZE(_holomapSort); ++i) {
 		assert(_holomapSort[i].projectedPosIdx + 34 < _projectedSurfaceIndex);
@@ -255,7 +256,7 @@ void Holomap::renderHolomapSurfacePolygons() {
 			vertexCoordinates2[1].y = pos2.y2;
 			vertexCoordinates2[2].x = pos3.x2;
 			vertexCoordinates2[2].y = pos3.y2;
-			_engine->_renderer->renderHolomapVertices(vertexCoordinates, vertexCoordinates2);
+			_engine->_renderer->renderHolomapVertices(vertexCoordinates, vertexCoordinates2, holomapImage, holomapImageSize);
 		}
 		const HolomapProjectedPos &pos4 = _projectedSurfacePositions[_holomapSort[i].projectedPosIdx + 33];
 		const HolomapProjectedPos &pos5 = _projectedSurfacePositions[_holomapSort[i].projectedPosIdx + 34];
@@ -274,7 +275,7 @@ void Holomap::renderHolomapSurfacePolygons() {
 			vertexCoordinates2[1].y = pos5.y2;
 			vertexCoordinates2[2].x = pos6.x2;
 			vertexCoordinates2[2].y = pos6.y2;
-			_engine->_renderer->renderHolomapVertices(vertexCoordinates, vertexCoordinates2);
+			_engine->_renderer->renderHolomapVertices(vertexCoordinates, vertexCoordinates2, holomapImage, holomapImageSize);
 		}
 	}
 }
@@ -313,7 +314,7 @@ void Holomap::renderHolomapVehicle(uint &frameNumber, ActorMoveStruct &move, Ani
 	}
 	const Common::Rect rect(0, _engine->height() - 280, 200, _engine->height() - 1);
 	_engine->_renderer->setCameraPosition(rect.width() / 2, _engine->height() - 80, 128, 900, 900);
-	_engine->_renderer->setCameraAngle(0, 0, 0, 60, 128, 0, 30000);
+	_engine->_renderer->setCameraAngle(0, 0, 0, 60, 128, 0, distance(30000));
 	_engine->_renderer->setLightVector(-60, 128, 0);
 	// background of the vehicle
 	_engine->_interface->drawFilledRect(rect, COLOR_BLACK);
@@ -344,7 +345,13 @@ void Holomap::drawHolomapTrajectory(int32 trajectoryIndex) {
 	_engine->_renderer->setCameraPosition(cameraPosX, cameraPosY, 128, 1024, 1024);
 	_engine->_renderer->setCameraAngle(0, 0, 0, data->pos.x, data->pos.y, data->pos.z, distance(zDistanceTrajectory));
 
-	renderHolomapSurfacePolygons();
+	constexpr TwineResource holomapImageRes(Resources::HQR_RESS_FILE, RESSHQR_HOLOIMG);
+	uint8 *holomapImagePtr = nullptr;
+	const int32 holomapImageSize = HQR::getAllocEntry(&holomapImagePtr, holomapImageRes);
+	if (holomapImageSize == 0) {
+		error("Failed to load holomap image");
+	}
+	renderHolomapSurfacePolygons(holomapImagePtr, holomapImageSize);
 
 	const Location &loc = _locations[data->locationIdx];
 	renderHolomapPointModel(data->pos, loc.angle.x, loc.angle.y);
@@ -371,8 +378,8 @@ void Holomap::drawHolomapTrajectory(int32 trajectoryIndex) {
 
 		if (!fadeInPalette && waterPaletteChangeTimer < _engine->_lbaTime) {
 			// animate the water surface
-			_engine->setPalette(192, 32, &_paletteHolomap[3 * _holomapPaletteIndex++]);
-			if (_holomapPaletteIndex == 32) {
+			_engine->setPalette(HOLOMAP_PALETTE_INDEX, NUM_HOLOMAPCOLORS, &_paletteHolomap[3 * _holomapPaletteIndex++]);
+			if (_holomapPaletteIndex == NUM_HOLOMAPCOLORS) {
 				_holomapPaletteIndex = 0;
 			}
 			waterPaletteChangeTimer = _engine->_lbaTime + 3;
@@ -419,18 +426,19 @@ void Holomap::drawHolomapTrajectory(int32 trajectoryIndex) {
 
 	_engine->_text->initSceneTextBank();
 	_engine->_input->enableKeyMap(mainKeyMapId);
+
+	free(holomapImagePtr);
 }
 
 int32 Holomap::getNextHolomapLocation(int32 currentLocation, int32 dir) const {
 	const int32 idx = currentLocation;
-	int32 i = currentLocation + dir;
-	if (i < 0) {
-		i = NUM_LOCATIONS - 1;
-	} else {
-		i %= NUM_LOCATIONS;
-	}
-	for (; i != idx; i = (i + dir) % NUM_LOCATIONS) {
-		if (_engine->_gameState->_holomapFlags[i] & HOLOMAP_ACTIVE) {
+	for (int32 i = currentLocation + dir; i != idx; i += dir) {
+		if (i < 0) {
+			i = NUM_LOCATIONS - 1;
+		} else {
+			i %= NUM_LOCATIONS;
+		}
+		if (i == _engine->_scene->_currentSceneIdx || (_engine->_gameState->_holomapFlags[i] & HOLOMAP_ACTIVE) != 0u) {
 			return i;
 		}
 	}
@@ -450,14 +458,14 @@ void Holomap::renderLocations(int xRot, int yRot, int zRot, bool lower) {
 			_engine->_renderer->setBaseRotationPos(0, 0, distance(zDistanceHolomap));
 			const IVec3 &destPos3 = _engine->_renderer->getBaseRotationPosition(destPos);
 			const IVec3 &destPos4 = _engine->_renderer->getBaseRotationPosition(destPos2);
+			bool visible;
 			if (lower) {
-				if (destPos3.z > destPos4.z) {
-					continue;
-				}
+				visible = destPos3.z <= destPos4.z;
 			} else {
-				if (destPos4.z > destPos3.z) {
-					continue;
-				}
+				visible = destPos4.z <= destPos3.z;
+			}
+			if (!visible) {
+				continue;
 			}
 			uint8 flags = _engine->_gameState->_holomapFlags[locationIdx] & HOLOMAP_ARROW;
 			if (locationIdx == _engine->_scene->_currentSceneIdx) {
@@ -501,6 +509,7 @@ void Holomap::processHolomap() {
 	const int32 betaLightTmp = _engine->_scene->_betaLight;
 
 	_engine->exitSceneryView();
+	_engine->_gameState->initEngineProjections();
 
 	_engine->_screens->fadeToBlack(_engine->_screens->_paletteRGBA);
 	_engine->_sound->stopSamples();
@@ -516,6 +525,13 @@ void Holomap::processHolomap() {
 	const int32 cameraPosX = _engine->width() / 2;
 	const int32 cameraPosY = scale(190);
 	_engine->_renderer->setCameraPosition(cameraPosX, cameraPosY, 128, 1024, 1024);
+
+	constexpr TwineResource holomapImageRes(Resources::HQR_RESS_FILE, RESSHQR_HOLOIMG);
+	uint8 *holomapImagePtr = nullptr;
+	const int32 holomapImageSize = HQR::getAllocEntry(&holomapImagePtr, holomapImageRes);
+	if (holomapImageSize == 0) {
+		error("Failed to load holomap image");
+	}
 
 	int32 currentLocation = _engine->_scene->_currentSceneIdx;
 	_engine->_text->drawHolomapLocation(_locations[currentLocation].textIndex);
@@ -537,7 +553,7 @@ void Holomap::processHolomap() {
 
 		if (_engine->_input->toggleActionIfActive(TwinEActionType::HolomapPrev)) {
 			const int32 nextLocation = getNextHolomapLocation(currentLocation, -1);
-			if (nextLocation != -1) {
+			if (nextLocation != -1 && currentLocation != nextLocation) {
 				currentLocation = nextLocation;
 				_engine->_text->drawHolomapLocation(_locations[currentLocation].textIndex);
 				time = _engine->_lbaTime;
@@ -545,7 +561,7 @@ void Holomap::processHolomap() {
 			}
 		} else if (_engine->_input->toggleActionIfActive(TwinEActionType::HolomapNext)) {
 			const int32 nextLocation = getNextHolomapLocation(currentLocation, 1);
-			if (nextLocation != -1) {
+			if (nextLocation != -1 && currentLocation != nextLocation) {
 				currentLocation = nextLocation;
 				_engine->_text->drawHolomapLocation(_locations[currentLocation].textIndex);
 				time = _engine->_lbaTime;
@@ -582,8 +598,8 @@ void Holomap::processHolomap() {
 
 		if (!fadeInPalette && waterPaletteChangeTimer < _engine->_lbaTime) {
 			// animate the water surface
-			_engine->setPalette(192, 32, &_paletteHolomap[3 * _holomapPaletteIndex++]);
-			if (_holomapPaletteIndex == 32) {
+			_engine->setPalette(HOLOMAP_PALETTE_INDEX, NUM_HOLOMAPCOLORS, &_paletteHolomap[3 * _holomapPaletteIndex++]);
+			if (_holomapPaletteIndex == NUM_HOLOMAPCOLORS) {
 				_holomapPaletteIndex = 0;
 			}
 			waterPaletteChangeTimer = _engine->_lbaTime + 3;
@@ -599,7 +615,7 @@ void Holomap::processHolomap() {
 			renderLocations(xRot, yRot, 0, false);
 			_engine->_renderer->setBaseRotation(xRot, yRot, 0, true);
 			_engine->_renderer->setBaseRotationPos(0, 0, distance(zDistanceHolomap));
-			renderHolomapSurfacePolygons();
+			renderHolomapSurfacePolygons(holomapImagePtr, holomapImageSize);
 			renderLocations(xRot, yRot, 0, true);
 			drawHolomapText(_engine->width() / 2, 25, "HoloMap");
 			if (rotate) {
@@ -614,10 +630,6 @@ void Holomap::processHolomap() {
 
 		++_engine->_lbaTime;
 
-		// TODO: text afterwards on top (not before as it is currently implemented)?
-		// pos 0x140,0x19?
-
-		//_engine->restoreFrontBuffer();
 		if (fadeInPalette) {
 			fadeInPalette = false;
 			_engine->_screens->fadeToPal(_engine->_screens->_paletteRGBACustom);
@@ -635,6 +647,13 @@ void Holomap::processHolomap() {
 
 	_engine->_input->enableKeyMap(mainKeyMapId);
 	_engine->_text->initSceneTextBank();
+
+	free(holomapImagePtr);
+}
+
+const char *Holomap::getLocationName(int index) const {
+	assert(index >= 0 && index <= ARRAYSIZE(_locations));
+	return _locations[index].name;
 }
 
 } // namespace TwinE

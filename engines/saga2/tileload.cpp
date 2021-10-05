@@ -40,7 +40,6 @@ const uint16 tileBankCount = 64;
 const uint32 tileImageID = MKTAG('T', 'I', 'L',  0);
 
 
-extern int16                currentMapNum;
 extern hResource           *objResFile;
 extern hResContext          *tileRes;       // tile resource handle
 
@@ -51,7 +50,7 @@ static byte *tileResLoad(hResID i, bool asynch = false) {
 		return nullptr;
 }
 
-void freeAllTileBanks(void) {
+void freeAllTileBanks() {
 	g_vm->_tileImageBanks->flush();
 }
 
@@ -59,7 +58,7 @@ void updateHandleRefs(const TilePoint &) { //, StandingTileInfo *stiResult )
 	g_vm->_tileImageBanks->flush();
 }
 
-void initTileBanks(void) {
+void initTileBanks() {
 	g_vm->_tileImageBanks = new HandleArray(tileBankCount, tileResLoad, tileImageID);
 }
 
@@ -121,7 +120,7 @@ void drawPlatform(
 					uint8 *imageData;
 					int16 trFlags;
 
-					TileInfo *ti = p.fetchTile(currentMapNum, pCoords, origin, &imageData, h, trFlags);
+					TileInfo *ti = p.fetchTile(g_vm->_currentMapNum, pCoords, origin, &imageData, h, trFlags);
 					if (ti == NULL)
 						continue;
 

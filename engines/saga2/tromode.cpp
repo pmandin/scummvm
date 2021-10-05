@@ -31,6 +31,7 @@
 #include "saga2/player.h"
 #include "saga2/display.h"
 #include "saga2/panel.h"
+#include "saga2/vpal.h"
 
 namespace Saga2 {
 
@@ -51,27 +52,24 @@ namespace Saga2 {
 #define VIDEO_X 0
 #define VIDEO_Y 0
 
-extern bool gameRunning;
 extern bool allPlayerActorsDead;
 
 int16 OptionsDialog(bool disableSaveResume = false);
-void SystemEventLoop(void);
-void freeAllTileBanks(void);
-void resetInputDevices(void);
-void blackOut(void);
-void quickSavePalette(void);
-void quickRestorePalette(void);
+void SystemEventLoop();
+void freeAllTileBanks();
+void resetInputDevices();
+void blackOut();
 void cursorFullHide(bool onOff);
 
-static void doIntro(void);
+static void doIntro();
 static void doWintro(int16 whichOne);
-static void doLostro(void);
+static void doLostro();
 
-static void waitForVideo(void);
-void waitForInput(void);
+static void waitForVideo();
+void waitForInput();
 
-static void TroModeSetup(void);
-static void TroModeCleanup(void);
+static void TroModeSetup();
+static void TroModeCleanup();
 
 static bool abortFlag = false;
 //DO_OUTRO_IN_CLEANUP
@@ -80,7 +78,7 @@ static int whichOutro = -1;
 // ------------------------------------------------------------------------
 // Play intro video
 
-void setIntroMode(void) {
+void setIntroMode() {
 	blackOut();
 	if (!abortFlag) {
 		TroModeSetup();
@@ -94,7 +92,7 @@ void setIntroMode(void) {
 // ------------------------------------------------------------------------
 // Play outro video
 
-void setOutroMode(void) {
+void setOutroMode() {
 }
 
 // ------------------------------------------------------------------------
@@ -113,7 +111,7 @@ void fadeDown();
 void fadeUp();
 void dumpGBASE(char *msg);
 
-void setLostroMode(void) {
+void setLostroMode() {
 	abortFlag = false;
 	allPlayerActorsDead = false;
 	if (GameMode::newmodeFlag)
@@ -137,17 +135,17 @@ void setLostroMode(void) {
    Entry & termination
  * ===================================================================== */
 
-void TroModeExternEvent(void) {
+void TroModeExternEvent() {
 	abortFlag = true;
 }
 
 // ------------------------------------------------------------------------
 // Entry code
 
-static void TroModeSetup(void) {
+static void TroModeSetup() {
 	suspendAudio();
 	g_vm->_pointer->hide();
-	quickSavePalette();
+	g_vm->_pal->quickSavePalette();
 	blackOut();
 	displayDisable(PlayingVideo);
 	pushVidState();
@@ -158,12 +156,12 @@ static void TroModeSetup(void) {
 // ------------------------------------------------------------------------
 // Exit
 
-static void TroModeCleanup(void) {
+static void TroModeCleanup() {
 	g_vm->endVideo();
 	popVidState();
 	displayEnable(PlayingVideo);
 	blackOut();
-	quickRestorePalette();
+	g_vm->_pal->quickRestorePalette();
 	resumeAudio();
 	g_vm->_pointer->show();
 //	g_vm->_pointer->manditoryShow();                     //  hide mouse pointer
@@ -177,7 +175,7 @@ static void TroModeCleanup(void) {
 // ------------------------------------------------------------------------
 // Wait till a video completes
 
-static void waitForVideo(void) {
+static void waitForVideo() {
 	while (g_vm->checkVideo()) {
 		SystemEventLoop();
 		if (abortFlag)
@@ -190,7 +188,7 @@ static void waitForVideo(void) {
 // ------------------------------------------------------------------------
 // Wait till the user hits a key or clicks or screams or whatever
 
-void waitForInput(void) {
+void waitForInput() {
 	abortFlag = false;
 	while (!abortFlag) {
 		SystemEventLoop();
@@ -224,7 +222,7 @@ static void playAVideo(const char *fileName, int x, int y) { //, int16 from, int
 // ------------------------------------------------------------------------
 // intro video(s)
 
-static void doIntro(void) {
+static void doIntro() {
 	playAVideo(INTRO_VID1, 0, 0);
 	abortFlag = false;
 	playAVideo(INTRO_VID2, 0, 0);
@@ -253,7 +251,7 @@ static void doWintro(int16 whichOne) {
 // ------------------------------------------------------------------------
 // lost
 
-static void doLostro(void) {
+static void doLostro() {
 	playAVideo(LOSE_VID, 0, 0);
 }
 

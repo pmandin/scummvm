@@ -31,14 +31,13 @@ namespace Saga2 {
 
 class Actor;
 class Band;
-const int       maxBandMembers = 32;
 
 /* ===================================================================== *
    Function prototypes
  * ===================================================================== */
 
 //  Allocate a new band
-Band *newBand(void);
+Band *newBand();
 Band *newBand(BandID id);
 
 //  Delete a previously allocated band
@@ -50,11 +49,11 @@ BandID getBandID(Band *b);
 Band *getBandAddress(BandID id);
 
 //  Initialize the band list
-void initBands(void);
+void initBands();
 void saveBands(Common::OutSaveFile *outS);
 void loadBands(Common::InSaveFile *in, int32 chunkSize);
 //  Cleanup the band list
-void cleanupBands(void);
+void cleanupBands();
 
 /* ===================================================================== *
    BandList class
@@ -71,22 +70,22 @@ public:
 	Band *_list[kNumBands];
 
 	//  Constructor -- initial construction
-	BandList(void);
+	BandList();
 
 	//  Destructor
-	~BandList(void);
+	~BandList();
 
 	void read(Common::InSaveFile *in);
 
 	//  Return the number of bytes necessary to archive this task list
 	//  in a buffer
-	int32 archiveSize(void);
+	int32 archiveSize();
 
 	void write(Common::MemoryWriteStreamDynamic *out);
 
 	//  Place a Band from the inactive list into the active
 	//  list.
-	Band *newBand(void);
+	Band *newBand();
 	Band *newBand(BandID id);
 
 	void addBand(Band *band);
@@ -115,10 +114,14 @@ public:
  * ===================================================================== */
 
 class Band {
-	Actor       *leader;
+	enum {
+		kMaxBandMembers = 32
+	};
 
-	int16       memberCount;
-	Actor       *members[maxBandMembers];
+	Actor       *_leader;
+
+	int16       _memberCount;
+	Actor       *_members[kMaxBandMembers];
 
 public:
 
@@ -131,17 +134,17 @@ public:
 
 	//  Return the number of bytes needed to archive this object in a
 	//  buffer
-	int32 archiveSize(void);
+	int32 archiveSize();
 
 	void write(Common::MemoryWriteStreamDynamic *out);
 
-	Actor *getLeader(void) {
-		return leader;
+	Actor *getLeader() {
+		return _leader;
 	}
 
 	bool add(Actor *newMember) {
-		if (memberCount < ARRAYSIZE(members)) {
-			members[memberCount++] = newMember;
+		if (_memberCount < ARRAYSIZE(_members)) {
+			_members[_memberCount++] = newMember;
 			return true;
 		} else
 			return false;
@@ -150,12 +153,12 @@ public:
 	void remove(Actor *member) {
 		int     i;
 
-		for (i = 0; i < memberCount; i++) {
-			if (members[i] == member) {
-				memberCount--;
+		for (i = 0; i < _memberCount; i++) {
+			if (_members[i] == member) {
+				_memberCount--;
 
-				for (; i < memberCount; i++)
-					members[i] = members[i + 1];
+				for (; i < _memberCount; i++)
+					_members[i] = _members[i + 1];
 
 				break;
 			}
@@ -163,21 +166,21 @@ public:
 	}
 
 	void remove(int index) {
-		assert(index < memberCount);
+		assert(index < _memberCount);
 
 		int     i;
 
-		memberCount--;
+		_memberCount--;
 
-		for (i = index; i < memberCount; i++)
-			members[i] = members[i + 1];
+		for (i = index; i < _memberCount; i++)
+			_members[i] = _members[i + 1];
 	}
 
-	int size(void) {
-		return memberCount;
+	int size() {
+		return _memberCount;
 	}
 	Actor *const &operator [](int index) {
-		return members[index];
+		return _members[index];
 	}
 };
 

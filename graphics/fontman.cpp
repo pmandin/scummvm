@@ -69,14 +69,8 @@ const struct {
 } builtinFontNames[] = {
 	{ "builtinConsole", FontManager::kConsoleFont },
 	{ "fixed5x8.bdf", FontManager::kConsoleFont },
-	{ "fixed5x8-iso-8859-1.bdf", FontManager::kConsoleFont },
-	{ "fixed5x8-ascii.bdf", FontManager::kConsoleFont },
 	{ "clR6x12.bdf", FontManager::kGUIFont },
-	{ "clR6x12-iso-8859-1.bdf", FontManager::kGUIFont },
-	{ "clR6x12-ascii.bdf", FontManager::kGUIFont },
 	{ "helvB12.bdf", FontManager::kBigGUIFont },
-	{ "helvB12-iso-8859-1.bdf", FontManager::kBigGUIFont },
-	{ "helvB12-ascii.bdf", FontManager::kBigGUIFont },
 	{ 0, FontManager::kConsoleFont }
 };
 
@@ -193,32 +187,6 @@ const Font *FontManager::getFontByUsage(FontUsage usage) const {
 	}
 
 	return 0;
-}
-
-Common::String FontManager::genLocalizedFontFilename(const Common::String &filename) const {
-#ifndef USE_TRANSLATION
-	return filename;
-#else
-	// We will transform the font filename in the following way:
-	//   name.bdf
-	//  will become:
-	//   name-charset.bdf
-	// Note that name should not contain any dot here!
-
-	// In the first step we look for the dot. In case there is none we will
-	// return the normal filename.
-	Common::String::const_iterator dot = Common::find(filename.begin(), filename.end(), '.');
-	if (dot == filename.end())
-		return filename;
-
-	// Put the translated font filename string back together.
-	Common::String result(filename.begin(), dot);
-	result += '-';
-	result += TransMan.getCurrentCharset();
-	result += dot;
-
-	return result;
-#endif
 }
 
 } // End of namespace Graphics

@@ -135,7 +135,9 @@ bool Bitmap::SaveToFile(const char *filename, const void *palette) {
 	size_t lastSlash = name.findLastOf('/');
 	if (lastSlash != Common::String::npos)
 		name = name.substr(lastSlash + 1);
-	name = ConfMan.getActiveDomainName() + "-" + name;
+	Common::String gameTarget = ConfMan.getActiveDomainName();
+	if (!name.hasPrefixIgnoreCase(gameTarget))
+		name = gameTarget + "-" + name;
 
 	Common::OutSaveFile *out = g_system->getSavefileManager()->openForSaving(name, false);
 	assert(out);
@@ -162,6 +164,10 @@ color_t Bitmap::GetCompatibleColor(color_t color) {
 
 void Bitmap::SetClip(const Rect &rc) {
 	set_clip_rect(_alBitmap, rc.Left, rc.Top, rc.Right, rc.Bottom);
+}
+
+void Bitmap::ResetClip() {
+	set_clip_rect(_alBitmap, 0, 0, _alBitmap->w - 1, _alBitmap->h - 1);
 }
 
 Rect Bitmap::GetClip() const {

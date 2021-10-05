@@ -32,6 +32,7 @@
 #include "graphics/surface.h"
 
 #include "sci/sci.h"
+#include "sci/dialogs.h"
 #include "sci/engine/kernel.h"
 #include "sci/engine/savegame.h"
 #include "sci/engine/script.h"
@@ -282,6 +283,9 @@ public:
 	// A fallback detection method. This is not ideal as all detection lives in MetaEngine, but
 	// here fb detection has many engine dependencies.
 	virtual ADDetectedGame fallbackDetectExtern(uint md5Bytes, const FileMap &allFiles, const Common::FSList &fslist, ADDetectedGameExtraInfo **extra) const override;
+
+	void registerDefaultSettings(const Common::String &target) const override;
+	GUI::OptionsContainerWidget *buildEngineOptionsWidgetDynamic(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const override;
 };
 
 Common::Error SciMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
@@ -353,12 +357,8 @@ SaveStateList SciMetaEngine::listSaves(const char *target) const {
 				}
 				SaveStateDescriptor descriptor(slotNr, meta.name);
 
-				if (slotNr == 0) {
-					// ScummVM auto-save slot
-					descriptor.setWriteProtectedFlag(true);
+				if (descriptor.isAutosave()) {
 					hasAutosave = true;
-				} else {
-					descriptor.setWriteProtectedFlag(false);
 				}
 
 				saveList.push_back(descriptor);
@@ -382,15 +382,6 @@ SaveStateDescriptor SciMetaEngine::querySaveMetaInfos(const char *target, int sl
 	const Common::String fileName = Common::String::format("%s.%03d", target, slotNr);
 	Common::InSaveFile *in = g_system->getSavefileManager()->openForLoading(fileName);
 	SaveStateDescriptor descriptor(slotNr, "");
-
-	if (slotNr == 0) {
-		// ScummVM auto-save slot
-		descriptor.setWriteProtectedFlag(true);
-		descriptor.setDeletableFlag(false);
-	} else {
-		descriptor.setWriteProtectedFlag(false);
-		descriptor.setDeletableFlag(true);
-	}
 
 	if (in) {
 		SavegameMetadata meta;
@@ -716,6 +707,18 @@ ADDetectedGame SciMetaEngine::fallbackDetectExtern(uint md5Bytes, const FileMap 
 	constructFallbackDetectionEntry(gameId, platform, sciVersion, language, gameViews == kViewEga, isCD, isDemo);
 
 	return ADDetectedGame(&s_fallbackDesc);
+}
+
+void SciMetaEngine::registerDefaultSettings(const Common::String &target) const {
+	for (const ADExtraGuiOptionsMap *entry = optionsList; entry->guioFlag; ++entry)
+		ConfMan.registerDefault(entry->option.configOption, entry->option.defaultState);
+
+	for (const PopUpOptionsMap *entry = popUpOptionsList; entry->guioFlag; ++entry)
+		ConfMan.registerDefault(entry->configOption, entry->defaultState);
+}
+
+GUI::OptionsContainerWidget *SciMetaEngine::buildEngineOptionsWidgetDynamic(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const {
+	return new OptionsWidget(boss, name, target);
 }
 
 } // End of namespace Sci

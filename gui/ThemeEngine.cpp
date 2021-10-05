@@ -347,7 +347,7 @@ bool ThemeEngine::init() {
 			if (member) {
 				_themeArchive = Common::makeZipArchive(member->createReadStream());
 				if (!_themeArchive) {
-					warning("Failed to open Zip archive '%s'.", member->getDisplayName().c_str());
+					warning("Failed to open Zip archive '%s'.", member->getName().c_str());
 				}
 			} else {
 				_themeArchive = Common::makeZipArchive(node);
@@ -544,52 +544,22 @@ bool ThemeEngine::addFont(TextData textId, const Common::String &language, const
 	if (file == "default") {
 		_texts[textId]->_fontPtr = _font;
 	} else {
-		Common::String localized = FontMan.genLocalizedFontFilename(file);
-		const Common::String charset
-#ifdef USE_TRANSLATION
-		                            (textId == kTextDataExtraLang ? "" : TransMan.getCurrentCharset())
-#endif
-		                            ;
-
-		// Try localized fonts
-		_texts[textId]->_fontPtr = loadFont(localized, scalableFile, charset, pointsize, textId == kTextDataDefault);
+		_texts[textId]->_fontPtr = loadFont(file, scalableFile, pointsize, textId == kTextDataDefault);
 
 		if (!_texts[textId]->_fontPtr) {
-			warning("Failed to load localized font '%s'", localized.c_str());
-			// Try standard fonts
-			_texts[textId]->_fontPtr = loadFont(file, scalableFile, Common::String(), pointsize, textId == kTextDataDefault);
-
-			if (!_texts[textId]->_fontPtr) {
-				error("Couldn't load font '%s'/'%s'", file.c_str(), scalableFile.c_str());
-#ifdef USE_TRANSLATION
-				TransMan.setLanguage("en");
-				Common::TextToSpeechManager *ttsMan;
-				if ((ttsMan = g_system->getTextToSpeechManager()) != nullptr)
-					ttsMan->setLanguage("en");
-#endif // USE_TRANSLATION
-
-				// No font, cleanup TextDrawData
-				delete _texts[textId];
-				_texts[textId] = nullptr;
-
-				return false; // fall-back attempt failed
-			}
-			// Success in fall-back attempt to standard (non-localized) font.
-			// However, still returns false here, probably to avoid ugly / garbage glyphs side-effects
-			// FIXME If we return false anyway why would we attempt the fall-back in the first place?
+			warning("Couldn't load font '%s'/'%s'", file.c_str(), scalableFile.empty()? "(none)" : scalableFile.c_str());
 #ifdef USE_TRANSLATION
 			TransMan.setLanguage("en");
 			Common::TextToSpeechManager *ttsMan;
 			if ((ttsMan = g_system->getTextToSpeechManager()) != nullptr)
 				ttsMan->setLanguage("en");
 #endif // USE_TRANSLATION
-			// Returning true here, would allow falling back to standard fonts for the missing ones,
-			// but that leads to "garbage" glyphs being displayed on screen for non-Latin languages
+
 			// No font, cleanup TextDrawData
 			delete _texts[textId];
 			_texts[textId] = nullptr;
 
-			return false;
+			return false; // fall-back attempt failed
 		}
 	}
 
@@ -919,13 +889,13 @@ bool ThemeEngine::loadThemeXML(const Common::String &themeId) {
 		assert((*i)->getName().hasSuffix(".stx"));
 
 		if (_parser->loadStream((*i)->createReadStream()) == false) {
-			warning("Failed to load STX file '%s'", (*i)->getDisplayName().c_str());
+			warning("Failed to load STX file '%s'", (*i)->getName().c_str());
 			_parser->close();
 			return false;
 		}
 
 		if (_parser->parse() == false) {
-			warning("Failed to parse STX file '%s'", (*i)->getDisplayName().c_str());
+			warning("Failed to parse STX file '%s'", (*i)->getName().c_str());
 			_parser->close();
 			return false;
 		}
@@ -1663,9 +1633,9 @@ DrawData ThemeEngine::parseDrawDataId(const Common::String &name) const {
  * External data loading
  *********************************************************/
 
-const Graphics::Font *ThemeEngine::loadScalableFont(const Common::String &filename, const Common::String &charset, const int pointsize, Common::String &name) {
+const Graphics::Font *ThemeEngine::loadScalableFont(const Common::String &filename, const int pointsize, Common::String &name) {
 #ifdef USE_FREETYPE2
-	name = Common::String::format("%s-%s@%d", filename.c_str(), charset.c_str(), pointsize);
+	name = Common::String::format("%s@%d", filename.c_str(), pointsize);
 
 	// Try already loaded fonts.
 	const Graphics::Font *font = FontMan.getFontByName(name);
@@ -1729,16 +1699,21 @@ const Graphics::Font *ThemeEngine::loadFont(const Common::String &filename, Comm
 	return nullptr;
 }
 
-const Graphics::Font *ThemeEngine::loadFont(const Common::String &filename, const Common::String &scalableFilename, const Common::String &charset, const int pointsize, const bool makeLocalizedFont) {
+const Graphics::Font *ThemeEngine::loadFont(const Common::String &filename, const Common::String &scalableFilename, const int pointsize, const bool makeLocalizedFont) {
 	Common::String fontName;
 
 	const Graphics::Font *font = nullptr;
 
 	// Prefer scalable fonts over non-scalable fonts
 	if (!scalableFilename.empty())
-		font = loadScalableFont(scalableFilename, charset, pointsize, fontName);
+		font = loadScalableFont(scalableFilename, pointsize, fontName);
 
-	if (!font)
+	// We can use non-scalable fonts, but only for English
+	bool allowNonScalable = true;
+#ifdef USE_TRANSLATION
+	allowNonScalable = TransMan.currentIsBuiltinLanguage();
+#endif
+	if (!font && allowNonScalable)
 		font = loadFont(filename, fontName);
 
 	// If the font is successfully loaded store it in the font manager.
@@ -1913,7 +1888,7 @@ void ThemeEngine::listUsableThemes(Common::Archive &archive, Common::List<ThemeD
 		td.name.clear();
 		if (themeConfigUsable(**i, td.name)) {
 			td.filename = (*i)->getName();
-			td.id = (*i)->getDisplayName();
+			td.id = (*i)->getName();
 
 			// If the name of the node object also contains
 			// the ".zip" suffix, we will strip it.

@@ -21,6 +21,7 @@
  */
 
 #include "common/file.h"
+#include "common/fs.h"
 #include "common/keyboard.h"
 #include "common/memstream.h"
 #include "common/punycode.h"
@@ -391,37 +392,49 @@ Common::String getPath(Common::String path, Common::String cwd) {
 }
 
 bool testPath(Common::String &path, bool directory) {
-	if (directory) {
-		Common::FSNode d = Common::FSNode(*g_director->getGameDataDir());
+	Common::FSNode d = Common::FSNode(*g_director->getGameDataDir());
 
-		// check for the game data dir
-		if (!path.contains(g_director->_dirSeparator) && path.equalsIgnoreCase(d.getName())) {
-			path = "";
-			return true;
-		}
-
-		Common::StringTokenizer directory_list(path, Common::String(g_director->_dirSeparator));
-
-		if (d.getChild(directory_list.nextToken()).exists()) {
-			// then this part is for the "relative to current directory"
-			// we find the child directory recursively
-			directory_list.reset();
-			while (!directory_list.empty() && d.exists())
-				d = d.getChild(directory_list.nextToken());
-		} else {
+	// check for the game data dir
+	if (!path.contains(g_director->_dirSeparator) && path.equalsIgnoreCase(d.getName())) {
+		if (!directory)
 			return false;
+		path = "";
+		return true;
+	}
+
+	Common::StringTokenizer directory_list(path, Common::String(g_director->_dirSeparator));
+	Common::String newPath;
+
+	Common::FSList fslist;
+	while (!directory_list.empty()) {
+		Common::String token = directory_list.nextToken();
+		fslist.clear();
+		Common::FSNode::ListMode mode = Common::FSNode::kListDirectoriesOnly;
+		if (directory_list.empty() && !directory) {
+			mode = Common::FSNode::kListFilesOnly;
 		}
+		d.getChildren(fslist, mode);
 
-		return d.exists();
-	}
+		bool exists = false;
+		for (Common::FSList::iterator i = fslist.begin(); i != fslist.end(); ++i) {
+			// for each element in the path, choose the first FSNode
+			// with a case-insensitive matcing name
+			if (i->getName().equalsIgnoreCase(token)) {
+				exists = true;
+				newPath += i->getName();
+				if (!directory_list.empty())
+					newPath += (g_director->_dirSeparator);
 
-	Common::File f;
-	if (f.open(Common::Path(path, g_director->_dirSeparator))) {
-		if (f.size())
-			return true;
-		f.close();
+				d = Common::FSNode(*i);
+				break;
+			}
+		}
+		if (!exists)
+			return false;
 	}
-	return false;
+	// write back path with correct case
+	path = newPath;
+	return true;
 }
 
 // if we are finding the file path, then this func will return exactly the executable file path
@@ -433,12 +446,12 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 	if (recursive) // first level
 		initialPath = convertPath(initialPath);
 
-	debug(2, "pathMakeRelative(): s1 %s -> %s", path.c_str(), initialPath.c_str());
+	debug(9, "pathMakeRelative(): s1 %s -> %s", path.c_str(), initialPath.c_str());
 
 	initialPath = Common::normalizePath(g_director->getCurrentPath() + initialPath, g_director->_dirSeparator);
 	Common::String convPath = initialPath;
 
-	debug(2, "pathMakeRelative(): s2 %s", convPath.c_str());
+	debug(9, "pathMakeRelative(): s2 %s", convPath.c_str());
 
 	// Strip the leading whitespace from the path
 	initialPath.trim();
@@ -453,12 +466,12 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 		int pos = convPath.find(g_director->_dirSeparator);
 		convPath = Common::String(&convPath.c_str()[pos + 1]);
 
-		debug(2, "pathMakeRelative(): s3 try %s", convPath.c_str());
+		debug(9, "pathMakeRelative(): s3 try %s", convPath.c_str());
 
 		if (!testPath(convPath, directory))
 			continue;
 
-		debug(2, "pathMakeRelative(): s3 converted %s -> %s", path.c_str(), convPath.c_str());
+		debug(9, "pathMakeRelative(): s3 converted %s -> %s", path.c_str(), convPath.c_str());
 
 		opened = true;
 
@@ -469,7 +482,7 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 		// Try stripping all of the characters not allowed in FAT
 		convPath = stripMacPath(initialPath.c_str());
 
-		debug(2, "pathMakeRelative(): s4 %s", convPath.c_str());
+		debug(9, "pathMakeRelative(): s4 %s", convPath.c_str());
 
 		if (testPath(initialPath, directory))
 			return initialPath;
@@ -479,12 +492,12 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 			int pos = convPath.find(g_director->_dirSeparator);
 			convPath = Common::String(&convPath.c_str()[pos + 1]);
 
-			debug(2, "pathMakeRelative(): s5 try %s", convPath.c_str());
+			debug(9, "pathMakeRelative(): s5 try %s", convPath.c_str());
 
 			if (!testPath(convPath, directory))
 				continue;
 
-			debug(2, "pathMakeRelative(): s5 converted %s -> %s", path.c_str(), convPath.c_str());
+			debug(9, "pathMakeRelative(): s5 converted %s -> %s", path.c_str(), convPath.c_str());
 
 			opened = true;
 
@@ -524,7 +537,7 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 				Common::String ext = component.substr(component.size() - 4);
 				Common::String newpath = convPath + convertMacFilename(nameWithoutExt.c_str()) + ext;
 
-				debug(2, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
+				debug(9, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
 				Common::String res = pathMakeRelative(newpath, false, false);
 
 				if (testPath(res))
@@ -567,7 +580,7 @@ Common::String testExtensions(Common::String component, Common::String initialPa
 	for (int i = 0; exts[i]; ++i) {
 		Common::String newpath = convPath + convertMacFilename(component.c_str()) + exts[i];
 
-		debug(2, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
+		debug(9, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
 		Common::String res = pathMakeRelative(newpath, false, false);
 
 		if (testPath(res))

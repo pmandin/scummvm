@@ -43,7 +43,7 @@ extern ReadyContainerView   *TrioCviews[kNumViews];
 extern ReadyContainerView   *indivCviewTop, *indivCviewBot;
 extern ContainerNode        *indivReadyNode;
 
-void updateMainDisplay(void);
+void updateMainDisplay();
 
 TilePoint selectNearbySite(
     ObjectID        worldID,
@@ -74,12 +74,12 @@ bool                    brotherBandingEnabled;
 //-----------------------------------------------------------------------
 //	Resolve the banding state of this actor
 
-void PlayerActor::resolveBanding(void) {
+void PlayerActor::resolveBanding() {
 	Actor *follower         = getActor();
 	Actor *centerActor_     = getCenterActor();
 
 	// if already following, tell the actor to cease and desist
-	if (follower->leader) {
+	if (follower->_leader) {
 		follower->disband();
 	}
 
@@ -96,22 +96,22 @@ void PlayerActor::resolveBanding(void) {
 //-----------------------------------------------------------------------
 //	Re-evaluate the portrait type for this player actor
 
-void PlayerActor::recalcPortraitType(void) {
+void PlayerActor::recalcPortraitType() {
 	PortraitType    pType;
 	Actor           *a = getActor();
 	ActorAttributes &stats = getBaseStats();
 
 	if (a->isDead())
 		pType = kPortraitDead;
-	else if (a->enchantmentFlags & (1 << actorAsleep))
+	else if (a->_enchantmentFlags & (1 << actorAsleep))
 		pType = kPortraitAsleep;
-	else if (stats.vitality >= a->effectiveStats.vitality * 3)
+	else if (stats.vitality >= a->_effectiveStats.vitality * 3)
 		pType = kPortraitWounded;
-	else if (a->enchantmentFlags & ((1 << actorDiseased) | (1 << actorPoisoned)))
+	else if (a->_enchantmentFlags & ((1 << actorDiseased) | (1 << actorPoisoned)))
 		pType = kPortraitSick;
-	else if (stats.vitality * 2 > a->effectiveStats.vitality * 3)
+	else if (stats.vitality * 2 > a->_effectiveStats.vitality * 3)
 		pType = kPortraitOuch;
-	else if (a->enchantmentFlags & ((1 << actorParalyzed) | (1 << actorFear) | (1 << actorBlind)))
+	else if (a->_enchantmentFlags & ((1 << actorParalyzed) | (1 << actorFear) | (1 << actorBlind)))
 		pType = kPortraitConfused;
 	else if (isAggressive())
 		pType = kPortraitAngry;
@@ -123,19 +123,19 @@ void PlayerActor::recalcPortraitType(void) {
 }
 
 
-void PlayerActor::recoveryUpdate(void) { // change name to recovery update
+void PlayerActor::recoveryUpdate() { // change name to recovery update
 	manaUpdate();
 	AttribUpdate();
 }
 
 
 
-void PlayerActor::AttribUpdate(void) {
+void PlayerActor::AttribUpdate() {
 	// get the actor pointer for this character
 	Actor *actor = getActor();
 
 	// get the effective stats for this player actor
-	ActorAttributes *effStats = &actor->effectiveStats;
+	ActorAttributes *effStats = &actor->_effectiveStats;
 
 	for (int16 i = 0; i < numSkills; i++) {
 		// go through each skill and update as needed
@@ -177,7 +177,7 @@ void PlayerActor::stdAttribUpdate(uint8 &stat, uint8 baseStat, int16 index) {
 	}
 }
 
-void PlayerActor::manaUpdate(void) {
+void PlayerActor::manaUpdate() {
 	const   int numManas        = 6;
 	const   int minMana         = 0;
 
@@ -185,12 +185,12 @@ void PlayerActor::manaUpdate(void) {
 	Actor *actor = getActor();
 
 	// get indirections for each of the effective mana types
-	int16 *effectiveMana[numManas] = { &actor->effectiveStats.redMana,
-	                                     &actor->effectiveStats.orangeMana,
-	                                     &actor->effectiveStats.yellowMana,
-	                                     &actor->effectiveStats.greenMana,
-	                                     &actor->effectiveStats.blueMana,
-	                                     &actor->effectiveStats.violetMana
+	int16 *effectiveMana[numManas] = { &actor->_effectiveStats.redMana,
+	                                     &actor->_effectiveStats.orangeMana,
+	                                     &actor->_effectiveStats.yellowMana,
+	                                     &actor->_effectiveStats.greenMana,
+	                                     &actor->_effectiveStats.blueMana,
+	                                     &actor->_effectiveStats.violetMana
 	                                   };
 
 	// get indirections for each of the base mana types
@@ -467,12 +467,12 @@ uint8 PlayerActor::getStatIndex(SkillProto *proto) {
 	return stat;
 }
 
-ActorAttributes *PlayerActor::getEffStats(void) {
+ActorAttributes *PlayerActor::getEffStats() {
 	// get the actor pointer for this character
 	Actor *actor = getActor();
 
 	// get the effective stats for this player actor
-	ActorAttributes *effStats = &actor->effectiveStats;
+	ActorAttributes *effStats = &actor->_effectiveStats;
 
 	// valid?
 	assert(effStats);
@@ -484,7 +484,7 @@ ActorAttributes *PlayerActor::getEffStats(void) {
 //-----------------------------------------------------------------------
 //	Notify the user of attack if necessary
 
-void PlayerActor::handleAttacked(void) {
+void PlayerActor::handleAttacked() {
 	if (!notifiedOfAttack) {
 		StatusMsg(ATTACK_STATUS, getActor()->objName());
 		notifiedOfAttack = true;
@@ -519,21 +519,21 @@ PlayerActorID getPlayerActorID(PlayerActor *p) {
 //-----------------------------------------------------------------------
 //	Return a pointer the center actor's Actor structure
 
-Actor *getCenterActor(void) {
+Actor *getCenterActor() {
 	return g_vm->_playerList[centerActor]->getActor();
 }
 
 //-----------------------------------------------------------------------
 //  Return the center actor's object ID
 
-ObjectID getCenterActorID(void) {
+ObjectID getCenterActorID() {
 	return ActorBaseID + centerActor;
 }
 
 //-----------------------------------------------------------------------
 //  Return the center actor's player actor ID
 
-PlayerActorID getCenterActorPlayerID(void) {
+PlayerActorID getCenterActorPlayerID() {
 	return centerActor;
 }
 
@@ -541,7 +541,7 @@ PlayerActorID getCenterActorPlayerID(void) {
 //	Set a new center actor based upon a PlayerActor ID
 
 void setCenterActor(PlayerActorID newCenter) {
-	extern void setEnchantmentDisplay(void);
+	extern void setEnchantmentDisplay();
 
 	assert(newCenter < kPlayerActors);
 
@@ -556,7 +556,7 @@ void setCenterActor(PlayerActorID newCenter) {
 	getCenterActor()->setFightStance(false);
 
 	// get rid of any following assignments the center actor might have
-	if (a->leader) {
+	if (a->_leader) {
 		a->disband();
 	}
 
@@ -564,13 +564,13 @@ void setCenterActor(PlayerActorID newCenter) {
 	viewCenterObject = g_vm->_playerList[centerActor]->getActorID();
 
 	indivReadyNode->changeOwner(newCenter);
-	g_vm->_containerList->setPlayerNum(newCenter);
+	g_vm->_cnm->setPlayerNum(newCenter);
 	setEnchantmentDisplay();
 
-	if (a->curTask != NULL) {
-		a->curTask->abortTask();
-		delete a->curTask;
-		a->curTask = NULL;
+	if (a->_curTask != NULL) {
+		a->_curTask->abortTask();
+		delete a->_curTask;
+		a->_curTask = NULL;
 	}
 
 	//  Set the new centers fight stance based upon his aggression state
@@ -589,8 +589,8 @@ void setCenterActor(PlayerActorID newCenter) {
 //	Set a new center actor based upon an Actor address
 
 void setCenterActor(Actor *newCenter) {
-	assert(newCenter->disposition >= dispositionPlayer);
-	setCenterActor(newCenter->disposition - dispositionPlayer);
+	assert(newCenter->_disposition >= dispositionPlayer);
+	setCenterActor(newCenter->_disposition - dispositionPlayer);
 }
 
 //-----------------------------------------------------------------------
@@ -604,7 +604,7 @@ void setCenterActor(PlayerActor *newCenter) {
 //-----------------------------------------------------------------------
 //	Return the coordinates of the current center actor
 
-TilePoint centerActorCoords(void) {
+TilePoint centerActorCoords() {
 	Actor           *a;
 
 	a = g_vm->_playerList[centerActor]->getActor();
@@ -647,7 +647,7 @@ bool isAggressive(PlayerActorID player) {
 //	Adjust the player actors aggression setting based upon their
 //	proximity to enemies
 
-void autoAdjustAggression(void) {
+void autoAdjustAggression() {
 	PlayerActorID       i;
 
 	//  Iterate through all player actors
@@ -674,7 +674,7 @@ void autoAdjustAggression(void) {
 
 					a = (Actor *)obj;
 
-					if (a->disposition == dispositionEnemy) {
+					if (a->_disposition == dispositionEnemy) {
 						enemiesPresent = true;
 						break;
 					}
@@ -757,8 +757,8 @@ int16 getPortraitType(PlayerActorID id) {
 //	Given an actor, returns the corresponding player Actor ID
 
 bool actorToPlayerID(Actor *a, PlayerActorID &result) {
-	if (a->disposition >= dispositionPlayer) {
-		result = a->disposition - dispositionPlayer;
+	if (a->_disposition >= dispositionPlayer) {
+		result = a->_disposition - dispositionPlayer;
 		return true;
 	}
 
@@ -770,8 +770,8 @@ bool actorIDToPlayerID(ObjectID id, PlayerActorID &result) {
 
 	Actor       *a = (Actor *)GameObject::objectAddress(id);
 
-	if (a->disposition >= dispositionPlayer) {
-		result = a->disposition - dispositionPlayer;
+	if (a->_disposition >= dispositionPlayer) {
+		result = a->_disposition - dispositionPlayer;
 		return true;
 	}
 
@@ -817,7 +817,8 @@ void transportCenterBand(const Location &loc) {
 	LivingPlayerActorIterator   iter;
 
 	center->move(loc);
-	if (center->moveTask != NULL) center->moveTask->finishWalk();
+	if (center->_moveTask != NULL)
+		center->_moveTask->finishWalk();
 
 	for (player = iter.first();
 	        player != NULL;
@@ -843,7 +844,8 @@ void transportCenterBand(const Location &loc) {
 
 			if (dest != Nowhere) {
 				a->move(Location(dest, loc.context));
-				if (a->moveTask != NULL) a->moveTask->finishWalk();
+				if (a->_moveTask != NULL)
+					a->_moveTask->finishWalk();
 				player->resolveBanding();
 			}
 		}
@@ -864,7 +866,7 @@ void handlePlayerActorAttacked(PlayerActorID id) {
 
 //-----------------------------------------------------------------------
 
-void handleEndOfCombat(void) {
+void handleEndOfCombat() {
 	PlayerActorID       i;
 
 	//  Iterate through all player actors
@@ -894,7 +896,7 @@ struct PlayerActorArchive {
 //-----------------------------------------------------------------------
 //	Initialize the player list
 
-void initPlayerActors(void) {
+void initPlayerActors() {
 	g_vm->_playerList.push_back(new PlayerActor(ActorBaseID + 0)); // Julian
 	g_vm->_playerList.push_back(new PlayerActor(ActorBaseID + 1)); // Philip
 	g_vm->_playerList.push_back(new PlayerActor(ActorBaseID + 2)); // Kevin
@@ -925,7 +927,7 @@ void initPlayerActors(void) {
 
 		//  Set the actor's disposition field to reflect that that
 		//  actor is a player actor
-		a->disposition = dispositionPlayer + i;
+		a->_disposition = dispositionPlayer + i;
 
 		//  Turn on banding for player actors
 		setBanded(i, true);
@@ -1022,7 +1024,7 @@ void loadPlayerActors(Common::InSaveFile *in) {
 //-----------------------------------------------------------------------
 //	Cleanup the player actor list
 
-void cleanupPlayerActors(void) {
+void cleanupPlayerActors() {
 	cleanupReadyContainers();
 }
 
@@ -1040,7 +1042,7 @@ struct CenterActorArchive {
 //-----------------------------------------------------------------------
 //	Initialize the center actor ID and view object ID
 
-void initCenterActor(void) {
+void initCenterActor() {
 	centerActor = FTA_JULIAN;
 	viewCenterObject = g_vm->_playerList[centerActor]->getActorID();
 
@@ -1076,24 +1078,24 @@ void loadCenterActor(Common::InSaveFile *in) {
 //-----------------------------------------------------------------------
 //	Iterates through all player actors
 
-PlayerActor *PlayerActorIterator::first(void) {
+PlayerActor *PlayerActorIterator::first() {
 	index = 0;
 	return g_vm->_playerList[index++];
 }
 
-PlayerActor *PlayerActorIterator::next(void) {
+PlayerActor *PlayerActorIterator::next() {
 	return (index < kPlayerActors) ? g_vm->_playerList[index++] : NULL;
 }
 
 //-----------------------------------------------------------------------
 //	Iterates through all player actors that are not dead.
 
-PlayerActor *LivingPlayerActorIterator::first(void) {
+PlayerActor *LivingPlayerActorIterator::first() {
 	index = 0;
 	return LivingPlayerActorIterator::next();
 }
 
-PlayerActor *LivingPlayerActorIterator::next(void) {
+PlayerActor *LivingPlayerActorIterator::next() {
 	if (index >= kPlayerActors)
 		return nullptr;
 

@@ -46,6 +46,11 @@
 
 namespace Saga2 {
 
+void updateMainDisplay();
+void fadeUp();
+void fadeDown();
+void enablePaletteChanges();
+
 const ChunkID   gameID = MKTAG('F', 'T', 'A', '2');
 
 void SaveFileHeader::read(Common::InSaveFile *in) {
@@ -106,11 +111,10 @@ void SaveFileHeader::write(Common::OutSaveFile *out) {
 //----------------------------------------------------------------------
 //	Load initial game state
 
-void initGameState(void) {
+void initGameState() {
 	pauseTimer();
 
 	initGlobals();
-	initTimer();
 	initCalender();
 	initWorlds();
 	initActors();
@@ -128,7 +132,6 @@ void initGameState(void) {
 	initTileTasks();
 	initSpeechTasks();
 	initActiveRegions();
-	initTimers();
 	initSensors();
 	initTempActorCount();
 	initMissions();
@@ -513,10 +516,27 @@ void loadSavedGameState(int16 saveNo) {
 	resumeTimer();
 }
 
+void loadGame(int16 saveNo) {
+	disableUserControls();
+	cleanupGameState();
+	fadeDown();
+	loadSavedGameState(saveNo);
+	if (GameMode::newmodeFlag)
+		GameMode::update();
+	updateActiveRegions();
+	enableUserControls();
+	updateMainDisplay();
+	drawMainDisplay();
+	enablePaletteChanges();
+	updateAllUserControls();
+	fadeUp();
+	reDrawScreen();
+}
+
 //----------------------------------------------------------------------
 //	Cleanup the game state
 
-void cleanupGameState(void) {
+void cleanupGameState() {
 	cleanupContainerNodes();
 	cleanupPaletteState();
 	cleanupUIState();
@@ -544,7 +564,6 @@ void cleanupGameState(void) {
 	cleanupObjects();
 	cleanupActors();
 	cleanupWorlds();
-	cleanupTimer();
 	cleanupGlobals();
 }
 
@@ -560,7 +579,7 @@ void checkRestartGame(const char *exeName) {
 }
 
 
-void loadRestartGame(void) {
+void loadRestartGame() {
 	loadSavedGameState(999);
 }
 

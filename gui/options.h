@@ -317,6 +317,7 @@ protected:
 	PopUpWidget *_updatesPopUp;
 #endif
 
+	bool updateAutosavePeriod(int newValue);
 	void addMiscControls(GuiObject *boss, const Common::String &prefix, bool lowres);
 
 #ifdef USE_CLOUD
@@ -392,6 +393,10 @@ protected:
 	PopUpWidget *_ttsVoiceSelectionPopUp;
 
 	void addAccessibilityControls(GuiObject *boss, const Common::String &prefix);
+#endif
+#ifdef USE_DISCORD
+	bool _enableDiscordRpc;
+	CheckboxWidget *_discordRpcCheckbox;
 #endif
 };
 

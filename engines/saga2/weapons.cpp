@@ -46,7 +46,7 @@ namespace Saga2 {
 //    which relate to spell casting
 //
 
-static void loadWeaponData(void);
+static void loadWeaponData();
 
 ProtoEffect *createNewProtoEffect(Common::SeekableReadStream *stream) {
 	ProtoEffect *pe = NULL;
@@ -116,11 +116,11 @@ ProtoEffect *createNewProtoEffect(Common::SeekableReadStream *stream) {
 	return pe;
 }
 
-void initWeapons(void) {
+void initWeapons() {
 	loadWeaponData();
 }
 
-void cleanupWeapons(void) {
+void cleanupWeapons() {
 	for (int i = 0; i < kMaxWeapons; i++)
 		g_vm->_weaponRack[i].killEffects();
 }
@@ -128,7 +128,7 @@ void cleanupWeapons(void) {
 WeaponStuff &getWeapon(weaponID i) {
 	if (i < g_vm->_loadedWeapons)
 		return g_vm->_weaponRack[i];
-	return g_vm->_weaponRack[nullWeapon];
+	return g_vm->_weaponRack[kNullWeapon];
 }
 
 GameObject *getShieldItem(GameObject *defender) {
@@ -143,7 +143,7 @@ GameObject *getShieldItem(GameObject *defender) {
 /* ===================================================================== *
    WeaponProtoEffect member functions
  * ===================================================================== */
-WeaponProtoEffect::~WeaponProtoEffect(void) {
+WeaponProtoEffect::~WeaponProtoEffect() {
 	if (_effect != NULL)
 		delete _effect;
 }
@@ -173,7 +173,7 @@ void WeaponStrikeEffect::implement(Actor *enactor, GameObject *target, GameObjec
 
 WeaponStuff::WeaponStuff() {
 	_effects = NULL;
-	_master = nullWeapon;
+	_master = kNullWeapon;
 }
 
 WeaponStuff::~WeaponStuff() {
@@ -183,10 +183,10 @@ WeaponStuff::~WeaponStuff() {
 		_effects = _effects->_next;
 		delete curEffect;
 	}
-	_master = nullWeapon;
+	_master = kNullWeapon;
 }
 
-void WeaponStuff::killEffects(void) {
+void WeaponStuff::killEffects() {
 	while (_effects != NULL) {
 		WeaponEffect *curEffect = _effects;
 
@@ -252,7 +252,7 @@ void WeaponStuff::implement(Actor *enactor, GameObject *target, GameObject *stri
 
 //-----------------------------------------------------------------------
 
-static void loadWeaponData(void) {
+static void loadWeaponData() {
 	hResContext *spellRes = auxResFile->newContext(MKTAG('I', 'T', 'E', 'M'), "weapon resources");
 	if (spellRes == NULL || !spellRes->_valid)
 		error("Error accessing weapon resource group.");

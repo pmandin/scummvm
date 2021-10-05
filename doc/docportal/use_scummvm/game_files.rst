@@ -47,8 +47,14 @@ CD audio
 In most cases, ScummVM can use CD audio directly from the game CD. If you don't always want to insert the game CD to use the CD audio, you can extract the audio tracks from the CD and save them locally:
 
 1. Extract the CD audio tracks in WAV or AIFF format.
-2. Convert the tracks to either MP3, FLAC or OGG file formats.
+2. Convert the tracks to either MP3, FLAC, M4A or OGG file formats.
 3. Place the converted audio files in the same folder that contains the other game datafiles.
+4. You can name them in several ways:
+
+   1. track01.ogg - track12.ogg
+   2. track1.ogg - track12.ogg
+   3. track_01.ogg - track_12.ogg
+   4. track_1.ogg - track_12.ogg
 
 .. tip::
 
@@ -59,19 +65,5 @@ In most cases, ScummVM can use CD audio directly from the game CD. If you don't 
 
 Macintosh games
 ==================
-
-All LucasArts SCUMM games also exist in versions for the Macintosh. Most of the newer games shipped with only a single data file; ScummVM can use this file like it does any other data file. Some discs shipped with hidden files. To view hidden files in macOS, press :kbd:`Cmd+Shift+.` in a Finder window.
-
-Mac uses a different file system to other systems (HFS+), so to access the CD or floppy disc on a Windows or Linux system you need additional software to view and copy the files.
-
-For Windows, `HFS Explorer <http://www.catacombae.org/hfsexplorer/>`_  is a basic and free option, which gives you read-only access to HFS drives. Use the installer rather than the zip file, to ensure it is installed correctly.
-
-For Linux, hfsplus gives you read-only access to HFS drives. To use hfsplus, use the command line:
-
-   1. Install hfsplus using the software manager. On Debian-based distributions, use ``sudo apt install hfsplus``.
-   2. Find the game disc by running ``sudo fdisk -l`` and finding the one with type ``Apple HFS/HFS+``. In this example, this is ``/dev/fd0``.
-   3. Create a mount point, for example: ``sudo mkdir /media/macgamedrive``
-   4. Mount the device to that moint point: ``sudo mount -t hfsplus /dev/fd0 /media/macgamedrive``
-   5. Access the device at ``/media/macgamedrive``.
-
+Many of the supported games also exist in versions for the Macintosh, however it can be tricky to extract the correct files from a Macintosh floppy or CD, especially if you are using Windows or Linux. See :doc:`../use_scummvm/mac_game_files` for an in-depth how-to guide. 
 

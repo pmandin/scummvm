@@ -50,7 +50,7 @@ struct SaveFileHeader {
 		kHeaderSize = 128
 	};
 
-	ChunkID gameID;                     //  ID of game (FTA2 of DINO).
+	ChunkID gameID;                     //  ID of game (FTA2 or DINO)
 	Common::String saveName;            //  The long name of the saved
 
 	void read(Common::InSaveFile *in);
@@ -58,7 +58,7 @@ struct SaveFileHeader {
 };
 
 //  Load initial game state
-void initGameState(void);
+void initGameState();
 
 //  Save the current game state
 void saveGame(Common::OutSaveFile *out, Common::String saveName);
@@ -66,11 +66,14 @@ void saveGame(Common::OutSaveFile *out, Common::String saveName);
 //  Load a previously saved game state
 void loadSavedGameState(int16 saveNo);
 
+// Perform a cleanup and load process with fade-in
+void loadGame(int16 saveNo);
+
 //  Cleanup the game state
-void cleanupGameState(void);
+void cleanupGameState();
 
 void checkRestartGame(const char *exeName);
-void loadRestartGame(void);
+void loadRestartGame();
 
 } // end of namespace Saga2
 

@@ -24,22 +24,20 @@
 #include "common/endian.h"
 #include "common/memstream.h"
 #include "common/stream.h"
-#include "common/system.h"
-#include "common/textconsole.h"
 #include "common/util.h"
 #include "twine/audio/sound.h"
+#include "twine/debugger/debug_scene.h"
 #include "twine/parser/anim.h"
 #include "twine/parser/entity.h"
 #include "twine/renderer/renderer.h"
 #include "twine/resources/resources.h"
-#include "twine/scene/actor.h"
 #include "twine/scene/collision.h"
+#include "twine/scene/extra.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/scene/movements.h"
 #include "twine/scene/scene.h"
 #include "twine/shared.h"
-#include "twine/twine.h"
 
 namespace TwinE {
 
@@ -320,9 +318,14 @@ void Animations::processAnimActions(int32 actorIdx) {
 			}
 			break;
 		case ActionType::ACTION_LEFT_STEP:
-		case ActionType::ACTION_RIGHT_STEP:
 			if (action.animFrame == actor->_animPosition && (actor->_brickSound & 0xF0U) != 0xF0U) {
 				const int16 sampleIdx = (actor->_brickSound & 0x0FU) + Samples::WalkFloorBegin;
+				_engine->_sound->playSample(sampleIdx, 1, actor->pos(), actorIdx);
+			}
+			break;
+		case ActionType::ACTION_RIGHT_STEP:
+			if (action.animFrame == actor->_animPosition && (actor->_brickSound & 0xF0U) != 0xF0U) {
+				const int16 sampleIdx = (actor->_brickSound & 0x0FU) + Samples::WalkFloorRightBegin;
 				_engine->_sound->playSample(sampleIdx, 1, actor->pos(), actorIdx);
 			}
 			break;

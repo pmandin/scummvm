@@ -28,6 +28,7 @@
 #include "common/serializer.h"
 #include "common/system.h"
 
+#include "engines/advancedDetector.h"
 #include "engines/engine.h"
 
 #include "saga2/console.h"
@@ -46,7 +47,7 @@ class MemoryWriteStreamDynamic;
 
 namespace Saga2 {
 
-class ContainerList;
+class ContainerManager;
 class Timer;
 class TimerList;
 class BandList;
@@ -77,6 +78,13 @@ class TaskList;
 class Deejay;
 class frameSmoother;
 class frameCounter;
+class CMapFeature;
+class AudioInterface;
+class PaletteManager;
+class ActorManager;
+class CalenderTime;
+class TileModeManager;
+struct SAGA2GameDescription;
 
 enum {
 	kDebugResources = 1 << 0,
@@ -99,17 +107,20 @@ enum {
 
 class Saga2Engine : public Engine {
 public:
-	Saga2Engine(OSystem *syst);
+	Saga2Engine(OSystem *syst, const SAGA2GameDescription *desc);
 	~Saga2Engine();
 
 	Common::Error run() override;
 	bool hasFeature(EngineFeature f) const override;
+	const ADGameFileDescription *getFilesDescriptions() const;
+	int getGameId() const;
 	bool canLoadGameStateCurrently() override { return true; }
 	bool canSaveGameStateCurrently() override { return true; }
 	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
 	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
 	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave) override;
 	Common::Error loadGameState(int slot) override;
+	void syncSoundSettings() override;
 
 	Common::String getSavegameFile(int num);
 
@@ -118,11 +129,10 @@ public:
 	void loadExeResources();
 	void freeExeResources();
 
-	// itevideo.cpp
 	void startVideo(const char *fileName, int x, int y);
-	bool checkVideo(void);
-	void endVideo(void);
-	void abortVideo(void);
+	bool checkVideo();
+	void endVideo();
+	void abortVideo();
 
 	void readConfig();
 	void saveConfig();
@@ -132,14 +142,20 @@ public:
 	Common::RandomSource *_rnd;
 	Console *_console;
 	Renderer *_renderer;
+	AudioInterface *_audio;
+	PaletteManager *_pal;
+	ActorManager *_act;
+	CalenderTime *_calender;
+	TileModeManager *_tmm;
+	ContainerManager *_cnm;
 
 	WeaponStuff _weaponRack[kMaxWeapons];
 	weaponID _loadedWeapons;
 	Common::Array<char *> _nameList;
-	Common::Array<Actor *> _actorList;
 	Common::Array<PlayerActor *> _playerList;
 	Common::Array<ProtoObj *> _objectProtos;
 	Common::Array<ActorProto *> _actorProtos;
+	Common::Array<CMapFeature *> _mapFeatures;
 	Common::List<TimerList *> _timerLists;
 	Common::List<Timer *> _timers;
 	Common::List<ActorAppearance *> _appearanceLRU;
@@ -154,7 +170,6 @@ public:
 	GrabInfo *_mouseInfo;
 	EffectDisplayPrototypeList *_edpList;
 	SpellDisplayPrototypeList *_sdpList;
-	ContainerList *_containerList;
 	DisplayNodeList *_mainDisplayList;
 	SpellDisplayList *_activeSpells;
 	gMousePointer *_pointer;
@@ -173,17 +188,27 @@ public:
 	gPort _backPort;
 	gPixelMap _tileDrawMap;
 
+	bool _gameRunning;
 	bool _autoAggression;
 	bool _autoWeapon;
 	bool _showNight;
 	bool _speechText;
+	bool _speechVoice;
+
 	bool _teleportOnClick;
 	bool _teleportOnMap;
-
 	bool _showPosition;
 	bool _showStats;
+	bool _showStatusMsg;
+
+	bool _indivControlsFlag;
+	bool _userControlsSetup;
+	int _fadeDepth;
+	int _currentMapNum;
+
 
 private:
+	const SAGA2GameDescription *_gameDescription;
 	Video::SmackerDecoder *_smkDecoder;
 	int _videoX, _videoY;
 };

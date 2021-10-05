@@ -23,15 +23,24 @@
 #ifndef TWINE_HOLOMAP_H
 #define TWINE_HOLOMAP_H
 
-#include "twine/renderer/renderer.h"
+#include "twine/shared.h"
 #include "common/scummsys.h"
-#include "twine/twine.h"
+
+#define NUM_HOLOMAPCOLORS 32
+#define HOLOMAP_PALETTE_INDEX 192
+
+namespace Common {
+class SeekableReadStream;
+}
 
 namespace TwinE {
 
-#define NUM_LOCATIONS 150
-
 class TwinEEngine;
+class BodyData;
+class AnimData;
+struct ActorMoveStruct;
+struct Vertex;
+struct AnimTimerDataStruct;
 
 /**
  * The Holomap shows the hero position. The arrows (@c RESSHQR_HOLOARROWMDL) represent important places in your quest - they automatically disappear once that part of
@@ -84,10 +93,10 @@ private:
 	 * Renders a holomap path with single path points appearing slowly one after another
 	 */
 	void renderHolomapPointModel(const IVec3 &angle, int32 x, int32 y);
-	void prepareHolomapSurface();
+	void prepareHolomapSurface(Common::SeekableReadStream *holomapSurfaceStream);
 	void prepareHolomapProjectedPositions();
 	void prepareHolomapPolygons();
-	void renderHolomapSurfacePolygons();
+	void renderHolomapSurfacePolygons(uint8 *holomapImage, uint32 holomapImageSize);
 	void renderHolomapVehicle(uint &frameNumber, ActorMoveStruct &move, AnimTimerDataStruct &animTimerData, BodyData &bodyData, AnimData &animData);
 
 	/**
@@ -123,11 +132,6 @@ public:
 	/** Main holomap process loop */
 	void processHolomap();
 };
-
-inline const char *Holomap::getLocationName(int index) const {
-	assert(index >= 0 && index <= ARRAYSIZE(_locations));
-	return _locations[index].name;
-}
 
 } // namespace TwinE
 

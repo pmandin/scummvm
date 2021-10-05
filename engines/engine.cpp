@@ -47,6 +47,7 @@
 #include "common/translation.h"
 #include "common/singleton.h"
 
+#include "backends/audiocd/audiocd.h"
 #include "backends/keymapper/action.h"
 #include "backends/keymapper/keymapper.h"
 #include "base/version.h"
@@ -54,6 +55,7 @@
 #include "gui/gui-manager.h"
 #include "gui/debugger.h"
 #include "gui/dialog.h"
+#include "gui/EventRecorder.h"
 #include "gui/message.h"
 #include "gui/saveload.h"
 
@@ -148,6 +150,7 @@ Engine::Engine(OSystem *syst)
 		_pauseLevel(0),
 		_pauseStartTime(0),
 		_saveSlotToLoad(-1),
+		_autoSaving(false),
 		_engineStartTime(_system->getMillis()),
 		_mainMenuDialog(NULL),
 		_debugger(NULL),
@@ -243,30 +246,47 @@ void splashScreen() {
 	}
 
 	g_system->showOverlay();
+	float scaleFactor = g_system->getHiDPIScreenFactor();
+	int16 overlayWidth = g_system->getOverlayWidth();
+	int16 overlayHeight = g_system->getOverlayHeight();
+	int16 scaledW = (int16)(overlayWidth / scaleFactor);
+	int16 scaledH = (int16)(overlayHeight / scaleFactor);
 
 	// Fill with orange
 	Graphics::Surface screen;
-	screen.create(g_system->getOverlayWidth(), g_system->getOverlayHeight(), g_system->getOverlayFormat());
+	screen.create(scaledW, scaledH, g_system->getOverlayFormat());
 	screen.fillRect(Common::Rect(screen.w, screen.h), screen.format.ARGBToColor(0xff, 0xcc, 0x66, 0x00));
-
-	// Load logo
-	Graphics::Surface *logo = bitmap.getSurface()->convertTo(g_system->getOverlayFormat(), bitmap.getPalette());
-	int lx = MAX((g_system->getOverlayWidth() - logo->w) / 2, 0);
-	int ly = MAX((g_system->getOverlayHeight() - logo->h) / 2, 0);
 
 	// Print version information
 	const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
 	int w = font->getStringWidth(gScummVMVersionDate);
-	int x = g_system->getOverlayWidth() - w - 5; // lx + logo->w - w + 5;
-	int y = g_system->getOverlayHeight() - font->getFontHeight() - 5; //ly + logo->h + 5;
+	int x = screen.w - w - 5;
+	int y = screen.h - font->getFontHeight() - 5;
 	font->drawString(&screen, gScummVMVersionDate, x, y, w, screen.format.ARGBToColor(0xff, 0, 0, 0));
 
-	g_system->copyRectToOverlay(screen.getPixels(), screen.pitch, 0, 0, screen.w, screen.h);
+	// Scale if needed and copy to overlay
+	if (screen.w != overlayWidth) {
+		Graphics::Surface *scaledScreen = screen.scale(overlayWidth, overlayHeight, false);
+		g_system->copyRectToOverlay(scaledScreen->getPixels(), scaledScreen->pitch, 0, 0, scaledScreen->w, scaledScreen->h);
+		scaledScreen->free();
+		delete scaledScreen;
+	} else
+		g_system->copyRectToOverlay(screen.getPixels(), screen.pitch, 0, 0, screen.w, screen.h);
 	screen.free();
 
 	// Draw logo
-	int lw = MIN<uint16>(logo->w, g_system->getOverlayWidth() - lx);
-	int lh = MIN<uint16>(logo->h, g_system->getOverlayHeight() - ly);
+	Graphics::Surface *logo = bitmap.getSurface()->convertTo(g_system->getOverlayFormat(), bitmap.getPalette());
+	if (scaleFactor != 1.0f) {
+		Graphics::Surface *tmp = logo->scale(int16(logo->w * scaleFactor), int16(logo->h * scaleFactor), true);
+		logo->free();
+		delete logo;
+		logo = tmp;
+	}
+
+	int lx = MAX((overlayWidth - logo->w) / 2, 0);
+	int ly = MAX((overlayHeight - logo->h) / 2, 0);
+	int lw = MIN<uint16>(logo->w, overlayWidth - lx);
+	int lh = MIN<uint16>(logo->h, overlayHeight - ly);
 
 	g_system->copyRectToOverlay(logo->getPixels(), logo->pitch, lx, ly, lw, lh);
 	logo->free();
@@ -467,28 +487,11 @@ void GUIErrorMessageFormat(Common::U32String fmt, ...) {
  *					is also built with support to the respective audio format (eg. ogg, flac, mad/mp3)
  */
 bool Engine::existExtractedCDAudioFiles() {
-#ifdef USE_VORBIS
-	if (Common::File::exists("track1.ogg") ||
-	    Common::File::exists("track01.ogg"))
-		return true;
-#endif
-#ifdef USE_FLAC
-	if (Common::File::exists("track1.fla")  ||
-	    Common::File::exists("track1.flac") ||
-	    Common::File::exists("track01.fla") ||
-	    Common::File::exists("track01.flac"))
-		return true;
-#endif
-#ifdef USE_MAD
-	if (Common::File::exists("track1.mp3") ||
-	    Common::File::exists("track01.mp3"))
-		return true;
-#endif
-	return false;
+	return g_system->getAudioCDManager()->existExtractedCDAudioFiles();
 }
 
 /**
- * Displays a warning on Windows version of ScummVM, if game data 
+ * Displays a warning on Windows version of ScummVM, if game data
  * are read from the same CD drive which should also play game CD audio.
  * @return			true, if this case is applicable and the warning is displayed
  */
@@ -529,7 +532,7 @@ bool Engine::isDataAndCDAudioReadFromSameCD() {
 }
 
 /**
- * Displays a warning, for the case when the game has CD audio but 
+ * Displays a warning, for the case when the game has CD audio but
  * no extracted (ripped) audio files were found.
  *
  * This method only shows the warning. It does not check for the
@@ -549,6 +552,10 @@ void Engine::warnMissingExtractedCDAudio() {
 }
 
 void Engine::handleAutoSave() {
+#ifdef ENABLE_EVENTRECORDER
+	if (!g_eventRec.processAutosave())
+		return;
+#endif
 	const int diff = _system->getMillis() - _lastAutosaveTime;
 
 	if (_autosaveInterval != 0 && diff > (_autosaveInterval * 1000)) {
@@ -557,34 +564,71 @@ void Engine::handleAutoSave() {
 	}
 }
 
-void Engine::saveAutosaveIfEnabled() {
-	// Reset the last autosave time first.
-	// Doing it here rather than after saving the game prevents recursive calls if saving the game
-	// causes the engine to poll events (as is the case with the AGS engine for example).
-	_lastAutosaveTime = _system->getMillis();
-
-	if (_autosaveInterval != 0) {
-		bool saveFlag = canSaveAutosaveCurrently();
-
-		if (saveFlag) {
-			// First check for an existing savegame in the slot, and if present, if it's an autosave
-			SaveStateDescriptor desc = getMetaEngine()->querySaveMetaInfos(
-				_targetName.c_str(), getAutosaveSlot());
-			saveFlag = desc.getSaveSlot() == -1 || desc.isAutosave();
+bool Engine::warnBeforeOverwritingAutosave() {
+	SaveStateDescriptor desc = getMetaEngine()->querySaveMetaInfos(
+		_targetName.c_str(), getAutosaveSlot());
+	if (desc.getSaveSlot() == -1)
+		return true;
+	if (desc.hasAutosaveName())
+		return true;
+	Common::U32StringArray altButtons;
+	altButtons.push_back(_("Overwrite"));
+	altButtons.push_back(_("Cancel autosave"));
+	const Common::U32String message = Common::U32String::format(
+				_("WARNING: The autosave slot has a saved game named %S. "
+				  "You can either move the existing save to a new slot, "
+				  "Overwrite the existing save, "
+				  "or cancel autosave (will not prompt again until restart)"), desc.getDescription().c_str());
+	GUI::MessageDialog warn(message, _("Move"), altButtons);
+	switch (runDialog(warn)) {
+	case GUI::kMessageOK:
+		if (!getMetaEngine()->copySaveFileToFreeSlot(_targetName.c_str(), getAutosaveSlot())) {
+			GUI::MessageDialog error(_("ERROR: Could not copy the savegame to a new slot"));
+			error.runModal();
+			return false;
 		}
-
-		if (saveFlag && saveGameState(getAutosaveSlot(), Common::convertFromU32String(_("Autosave")), true).getCode() != Common::kNoError) {
-			// Couldn't autosave at the designated time
-			g_system->displayMessageOnOSD(_("Error occurred making autosave"));
-			saveFlag = false;
-		}
-
-		if (!saveFlag) {
-			// Set the next autosave interval to be in 5 minutes, rather than whatever
-			// full autosave interval the user has selected
-			_lastAutosaveTime += (5 * 60 * 1000) - _autosaveInterval;
-		}
+		return true;
+	case GUI::kMessageAlt: // Overwrite
+		return true;
+	case GUI::kMessageAlt + 1: // Cancel autosave
+		_autosaveInterval = 0;
+		return false;
+	default: // Hitting Escape returns -1. On this case, don't save but do prompt again later.
+		return false;
 	}
+}
+
+void Engine::saveAutosaveIfEnabled() {
+	// Prevents recursive calls if saving the game causes the engine to poll events
+	// (as is the case with the AGS engine for example, or when showing a prompt).
+	if (_autoSaving || _autosaveInterval == 0)
+		return;
+	const int autoSaveSlot = getAutosaveSlot();
+	if (autoSaveSlot < 0)
+		return;
+	_autoSaving = true;
+
+	bool saveFlag = canSaveAutosaveCurrently();
+	const Common::String autoSaveName = Common::convertFromU32String(_("Autosave"));
+
+	// First check for an existing savegame in the slot, and if present, if it's an autosave
+	if (saveFlag)
+		saveFlag = warnBeforeOverwritingAutosave();
+
+	if (saveFlag && saveGameState(autoSaveSlot, autoSaveName, true).getCode() != Common::kNoError) {
+		// Couldn't autosave at the designated time
+		g_system->displayMessageOnOSD(_("Error occurred making autosave"));
+		saveFlag = false;
+	}
+
+	if (saveFlag) {
+		_lastAutosaveTime = _system->getMillis();
+	} else {
+		// Set the next autosave interval to be in 5 minutes, rather than whatever
+		// full autosave interval the user has selected
+		_lastAutosaveTime += (5 * 60 * 1000) - _autosaveInterval;
+	}
+	_autoSaving = false;
 }
 
 void Engine::errorString(const char *buf1, char *buf2, int size) {

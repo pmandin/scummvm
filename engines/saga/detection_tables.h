@@ -341,6 +341,33 @@ static const SAGAGameDescription gameDescriptions[] = {
 		NULL,
 	},
 
+	// Inherit the earth - MAC CD First edition
+	{
+		{
+			"ite",
+			"CD",
+			{
+				{"ite resources.bin",	GAME_RESOURCEFILE | GAME_MACBINARY,	"473768a17d843de5126d608b26ed7250", -1},
+				{"ite scripts.bin",		GAME_SCRIPTFILE | GAME_MACBINARY,	"294cad2d7bb6cd7dd602c9a5867873d7", -1},
+				{"ite sounds.bin",		GAME_SOUNDFILE | GAME_MACBINARY,	"178fa322aeb8eb51bba821eb128e037b", -1},
+				{"ite music.bin",		GAME_MUSICFILE_GM | GAME_MACBINARY,	"023fddf96a39edeaed647f16947de9c1", -1},
+				//{"ite voices.bin",		GAME_VOICEFILE | GAME_MACBINARY,	"dba92ae7d57e942250fe135609708369", -1},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformMacintosh,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_8BIT_UNSIGNED_PCM,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITEWINDEMO_GameFonts),
+		ITEWINDEMO_GameFonts,
+		NULL,
+	},
+
 	// Inherit the earth - MAC CD Wyrmkeep version
 	{
 		{
@@ -462,6 +489,7 @@ static const SAGAGameDescription gameDescriptions[] = {
 				// TODO: add size for ite.rsc
 				{"ite.rsc",						GAME_RESOURCEFILE,					"a6433e34b97b15e64fe8214651012db9", -1},
 				{"scripts.rsc",					GAME_SCRIPTFILE,					"a891405405edefc69c9d6c420c868b84", -1},
+				{"voices.rsc",					GAME_VOICEFILE,						"41bb6b95d792dde5196bdb78740895a6", -1},
 				AD_LISTEND
 			},
 			Common::IT_ITA,
@@ -478,7 +506,60 @@ static const SAGAGameDescription gameDescriptions[] = {
 		NULL,
 	},
 
+	// Inherit the earth - Wyrmkeep Windows CD version
+	// Reported by eriktorbjorn
+	{
+		{
+			"ite",
+			"Windows CD Version",
+			{
+				{"ite.rsc",		GAME_RESOURCEFILE,	"8f4315a9bb10ec839253108a032c8b54", 8928678},
+				{"scripts.rsc",	GAME_SCRIPTFILE,	"a891405405edefc69c9d6c420c868b84", -1},
+				{"cave.mid",	0,					"f7619359323058b61ec44fa8ce7888e5", 4441},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_EXTRA_ITE_CREDITS,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		ITEPatch_Files,
+	},
+
+	// Inherit the earth - Wyrmkeep Linux CD version
+	// Reported by eriktorbjorn
+	{
+		{
+			"ite",
+			"Linux CD Version",
+			{
+				{"ite.rsc",		GAME_RESOURCEFILE,		"8f4315a9bb10ec839253108a032c8b54", 8928678},
+				{"scripts.rsc",	GAME_SCRIPTFILE,		"a891405405edefc69c9d6c420c868b84", -1},
+				{"music.rsc",	GAME_DIGITALMUSICFILE,	"d6454756517f042f01210458abe8edd4", 52894196},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformLinux,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_EXTRA_ITE_CREDITS,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		ITEPatch_Files,
+	},
+
 	// Inherit the earth - Windows/Linux/DOS CD version
+	// FIXME Unclear which version(s) this matches - Windows and Linux versions have separate entries above.
 	{
 		{
 			"ite",
@@ -502,7 +583,58 @@ static const SAGAGameDescription gameDescriptions[] = {
 		ITEPatch_Files,
 	},
 
+	// Inherit the earth - Wyrmkeep Italian Windows CD version (fan translation)
+	{
+		{
+			"ite",
+			"Windows CD Version",
+			{
+				{"ite.rsc",		GAME_RESOURCEFILE,	"8f4315a9bb10ec839253108a032c8b54", 8929956},
+				{"scripts.rsc",	GAME_SCRIPTFILE,	"a891405405edefc69c9d6c420c868b84", 350243},
+				{"cave.mid",	GAME_RESOURCEFILE,	"f7619359323058b61ec44fa8ce7888e5", 4441},
+				AD_LISTEND
+			},
+			Common::IT_ITA,
+			Common::kPlatformWindows,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		0,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		ITEPatch_Files,
+	},
+
+	// Inherit the earth - Wyrmkeep Italian Linux CD version (fan translation)
+	{
+		{
+			"ite",
+			"Linux CD Version",
+			{
+				{"ite.rsc",		GAME_RESOURCEFILE,		"8f4315a9bb10ec839253108a032c8b54", 8929956},
+				{"scripts.rsc",	GAME_SCRIPTFILE,		"a891405405edefc69c9d6c420c868b84", 350243},
+				{"music.rsc",	GAME_DIGITALMUSICFILE,	"d6454756517f042f01210458abe8edd4", 52894196},
+				AD_LISTEND
+			},
+			Common::IT_ITA,
+			Common::kPlatformLinux,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		0,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		ITEPatch_Files,
+	},
+
 	// Inherit the earth - Italian Windows/Linux/DOS CD version (fan translation)
+	// FIXME Unclear which version(s) this matches - Windows and Linux versions have separate entries above.
 	{
 		{
 			"ite",
@@ -526,7 +658,58 @@ static const SAGAGameDescription gameDescriptions[] = {
 		ITEPatch_Files,
 	},
 
+	// Inherit the earth - Wyrmkeep French Windows CD version (fan translation)
+	{
+		{
+			"ite",
+			"Windows CD Version",
+			{
+				{"ite.rsc",		GAME_RESOURCEFILE,	"8f4315a9bb10ec839253108a032c8b54", 8929384},
+				{"scripts.rsc",	GAME_SCRIPTFILE,	"a891405405edefc69c9d6c420c868b84", 355877},
+				{"cave.mid",	GAME_RESOURCEFILE,	"f7619359323058b61ec44fa8ce7888e5", 4441},
+				AD_LISTEND
+			},
+			Common::FR_FRA,
+			Common::kPlatformWindows,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		0,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		ITEPatch_Files,
+	},
+
+	// Inherit the earth - Wyrmkeep French Linux CD version (fan translation)
+	{
+		{
+			"ite",
+			"Linux CD Version",
+			{
+				{"ite.rsc",		GAME_RESOURCEFILE,		"8f4315a9bb10ec839253108a032c8b54", 8929384},
+				{"scripts.rsc",	GAME_SCRIPTFILE,		"a891405405edefc69c9d6c420c868b84", 355877},
+				{"music.rsc",	GAME_DIGITALMUSICFILE,	"d6454756517f042f01210458abe8edd4", 52894196},
+				AD_LISTEND
+			},
+			Common::FR_FRA,
+			Common::kPlatformLinux,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		0,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		ITEPatch_Files,
+	},
+
 	// Inherit the earth - French Windows/Linux/DOS CD version (fan translation)
+	// FIXME Unclear which version(s) this matches - Windows and Linux versions have separate entries above.
 	{
 		{
 			"ite",
@@ -614,7 +797,7 @@ static const SAGAGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_CD | ADGF_UNSUPPORTED,
+			ADGF_CD | ADGF_DEMO | ADGF_UNSUPPORTED,
 			GUIO0()
 		},
 		GID_ITE,
@@ -624,6 +807,58 @@ static const SAGAGameDescription gameDescriptions[] = {
 		ARRAYSIZE(ITE_GameFonts),
 		ITE_GameFonts,
 		NULL,
+	},
+
+	// Inherit the earth - macOS Trial
+	// Linux trial version uses same resources a Wyrmkeep Multi-OS
+	{
+		{
+			"ite",
+			// I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
+			_s("macOS Trial version is not supported"),
+			{
+				{"ite_i.rsc",		GAME_RESOURCEFILE,	"a6433e34b97b15e64fe8214651012db9", 8927169},
+				{"scripts_i.rsc",	GAME_SCRIPTFILE,	"bbf929f1e6d6f2af30c41d078798f5c1", 335927},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformMacintosh,
+			ADGF_CD | ADGF_DEMO | ADGF_UNSUPPORTED,
+			GUIO0()
+		},
+		GID_ITE,
+		0,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		NULL,
+	},
+
+	// Inherit the earth - Pocket PC Trial
+	{
+		{
+			"ite",
+			// I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
+			_s("Pocket PC Trial version is not supported"),
+			{
+				{"ite.rsc",			GAME_RESOURCEFILE,	"a6433e34b97b15e64fe8214651012db9", 8927169},
+				{"scripts.rsc",		GAME_SCRIPTFILE,	"a891405405edefc69c9d6c420c868b84", 335927},
+				{"voicesv.rsc",		GAME_VOICEFILE,		"7e751eaab3b3127cec5a360e94cafd8b", 43744418},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformPocketPC,
+			ADGF_DEMO | ADGF_UNSUPPORTED,
+			GUIO0()
+		},
+		GID_ITE,
+		0,
+		ITE_DEFAULT_SCENE,
+		&ITE_Resources,
+		ARRAYSIZE(ITE_GameFonts),
+		ITE_GameFonts,
+		ITEPatch_Files,
 	},
 
 	// Inherit the Earth - Japanese PC-98 CD version

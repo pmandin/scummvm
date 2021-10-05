@@ -44,15 +44,15 @@ namespace Saga2 {
 // the appfunc helper functions will eventually be merged into an object
 // that will handle all of the trasitive portion of the UI.
 
-void SetupUserControls(void);
-void CleanupButtonImages(void);
-void CleanupUserControls(void);
+void SetupUserControls();
+void CleanupButtonImages();
+void CleanupUserControls();
 void SetupContainerViews(ContainerWindow *viewWindow);
 void **loadButtonRes(hResContext *con, int16 resID, int16 numRes);
 void **loadButtonRes(hResContext *con, int16 resID, int16 numRes, char a, char b, char c);
 void **loadImageRes(hResContext *con, int16 resID, int16 numRes, char a, char b, char c);
 void unloadImageRes(void **images, int16 numRes);
-bool isIndivMode(void);
+bool isIndivMode();
 
 // temp >>>
 uint16 getPlayerActorWeightRatio(PlayerActor *player, uint16 &maxRatio, bool bReturnMaxRatio);
@@ -64,10 +64,10 @@ void GetTotalMassBulk(GameObject *obj, uint16 &totalMass, uint16 &totalBulk);
 
 // appfunc helpers
 void setIndivBtns(uint16 broNum);
-void setTrioBtns(void);
+void setTrioBtns();
 void setCenterBtns(uint16 whichBrother);
 void setControlPanelsToIndividualMode(uint16 whichBrother);
-void setControlPanelsToTrioMode(void);
+void setControlPanelsToTrioMode();
 void setCenterBrother(uint16 whichBrother);
 void toggleBrotherBanding(uint16 whichBrother);
 uint16 translatePanID(uint16 ID);
@@ -75,23 +75,23 @@ void updateBrotherPortrait(uint16 brotherID, int16 pType);
 void updateBrotherAggressionButton(uint16 brotherID, bool aggressive);
 void updateBrotherBandingButton(uint16 brotherID, bool banded);
 void updateBrotherRadioButtons(uint16 brotherID);
-void updateReadyContainers(void);
+void updateReadyContainers();
 void updateBrotherArmor(uint16 brotherID);
 
-void updateAllUserControls(void);
+void updateAllUserControls();
 void updateBrotherControls(PlayerActorID brotherID);
-void enableUserControls(void);
-void disableUserControls(void);
+void enableUserControls();
+void disableUserControls();
 
 bool isBrotherDead(PlayerActorID brotherID);
 
 // update functions
-void updateIndicators(void);
+void updateIndicators();
 
-void initUIState(void);
+void initUIState();
 void saveUIState(Common::OutSaveFile *outS);
 void loadUIState(Common::InSaveFile *in);
-void cleanupUIState(void);
+void cleanupUIState();
 
 //  Varargs function to write to the status line.
 void StatusMsg(const char *msg, ...);      // frametime def
@@ -203,7 +203,7 @@ public:
 	void enable(bool);
 	void invalidate(Rect16 *unused = nullptr);
 
-	void draw(void);
+	void draw();
 	virtual void drawClipped(gPort &,
 	                         const Point16 &,
 	                         const Rect16 &);
@@ -240,12 +240,12 @@ private:
 public:
 	CStatusLine(gPanelList &, const Rect16 &, const char *, gFont *,
 	            int16, textPallete, int32, int16, AppFunc *cmd = NULL);
-	~CStatusLine(void);
+	~CStatusLine();
 
 	void setLine(char *, uint32 frameTime);
-	void experationCheck(void);
+	void experationCheck();
 
-	void clear(void);
+	void clear();
 };
 
 
@@ -269,14 +269,14 @@ private:
 	PortraitType    currentState[kNumViews + 1];
 	uint16          numButtons;
 	uint16          _numViews;
-	gMultCompButton **buttons;
-	gMultCompButton *indivButton;
+	GfxMultCompButton **buttons;
+	GfxMultCompButton *indivButton;
 
 	void setPortrait(uint16);
 
 public:
 	// button array, number of buttons per view, num views
-	CPortrait(gMultCompButton *[], gMultCompButton *, const uint16, uint16);
+	CPortrait(GfxMultCompButton *[], GfxMultCompButton *, const uint16, uint16);
 
 	void ORset(uint16, PortraitType type);
 	void set(uint16 brotherID, PortraitType type);
@@ -332,8 +332,8 @@ private:
 	void **pieIndImag;
 
 	// image control buttons
-	gCompImage          *pieMass;
-	gCompImage          *pieBulk;
+	GfxCompImage          *pieMass;
+	GfxCompImage          *pieBulk;
 
 
 public:
@@ -343,12 +343,12 @@ public:
 	}
 
 	CMassWeightIndicator(gPanelList *, const Point16 &, uint16 type = 1, bool death = false);
-	~CMassWeightIndicator(void);
+	~CMassWeightIndicator();
 
-	uint16 getMassPieDiv(void) {
+	uint16 getMassPieDiv() {
 		return pieMass->getMax();
 	}
-	uint16 getBulkPieDiv(void) {
+	uint16 getBulkPieDiv() {
 		return pieBulk->getMax();
 	}
 
@@ -358,12 +358,12 @@ public:
 	void setBulkPie(uint16 val) {
 		pieBulk->setCurrent(val);
 	}
-	void recalculate(void);
-	static void update(void);
+	void recalculate();
+	static void update();
 };
 
 
-class CManaIndicator : public gCompImage {
+class CManaIndicator : public GfxCompImage {
 public:
 
 	// sizes of the mana star images
@@ -525,7 +525,7 @@ protected:
 
 public:
 	CManaIndicator(gPanelList &list);
-	~CManaIndicator(void);
+	~CManaIndicator();
 
 	// this updates the star and ring position info
 	bool update(PlayerActor *player);
@@ -540,12 +540,12 @@ public:
 	//  |3 4 5|
 	//  -------
 	Rect16  getManaRegionRect(int8 region);
-	int     getNumManaRegions(void) {
+	int     getNumManaRegions() {
 		return numManaRegions;
 	}
 
 	// drawing routines
-	void draw(void);
+	void draw();
 	virtual void drawClipped(gPort &, const Point16 &, const Rect16 &);
 };
 
@@ -584,8 +584,8 @@ private:
 	hResContext *healthRes;
 
 	// buttons
-	gCompImage          *starBtns[numControls];
-	gCompImage          *indivStarBtn;
+	GfxCompImage          *starBtns[numControls];
+	GfxCompImage          *indivStarBtn;
 
 	// array of pointer to the star imagery
 	void **starImag;
@@ -593,7 +593,7 @@ private:
 	// health star frame imagery
 	void *starFrameImag;
 
-	void updateStar(gCompImage *starCtl, int32 bro, int32 baseVitality, int32 curVitality);
+	void updateStar(GfxCompImage *starCtl, int32 bro, int32 baseVitality, int32 curVitality);
 
 public:
 	uint16  starIDs[3];
@@ -602,10 +602,10 @@ public:
 public:
 
 	CHealthIndicator(AppFunc *cmd);
-	~CHealthIndicator(void);
+	~CHealthIndicator();
 
 
-	void update(void);
+	void update();
 };
 
 

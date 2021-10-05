@@ -183,14 +183,19 @@ public:
 	const TLangArray getSupportedLanguageNames() const;
 
 	/**
-	 * Return the charset specified by the selected translation language.
-	 */
-	String getCurrentCharset() const;
-
-	/**
 	 * Return the currently selected translation language.
 	 */
 	String getCurrentLanguage() const;
+
+	/**
+	 * Return the id of the selected translation language.
+	 */
+	int getCurrentLanguageId() const;
+
+	/**
+	 * Return true if the current language is the builtin language and false if it is another language.
+	 */
+	bool currentIsBuiltinLanguage() const;
 
 private:
 	/**

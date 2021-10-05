@@ -121,11 +121,7 @@ bool Movie::processEvent(Common::Event &event) {
 			g_director->getCurrentWindow()->setDirty(true);
 			g_director->getCurrentWindow()->addDirtyRect(sc->_channels[_currentHiliteChannelId]->getBbox());
 			_currentHiliteChannelId = 0;
-			_currentHandlingChannelId = 0;
 		}
-
-		if (_currentHandlingChannelId && !sc->_channels[_currentHandlingChannelId]->getBbox().contains(pos))
-			_currentHandlingChannelId = 0;
 
 		// for the list style button, we still have chance to trigger events though button.
 		if (!(g_director->_wm->_mode & Graphics::kWMModeButtonDialogStyle) && g_director->_wm->_mouseDown && g_director->_wm->_hilitingWidget) {
@@ -134,7 +130,6 @@ bool Movie::processEvent(Common::Event &event) {
 			else
 				spriteId = sc->getMouseSpriteIDFromPos(pos);
 
-			_currentHandlingChannelId = spriteId;
 			if (spriteId > 0 && sc->_channels[spriteId]->_sprite->shouldHilite()) {
 				_currentHiliteChannelId = spriteId;
 				g_director->getCurrentWindow()->setDirty(true);
@@ -155,6 +150,7 @@ bool Movie::processEvent(Common::Event &event) {
 		return true;
 
 	case Common::EVENT_LBUTTONDOWN:
+	case Common::EVENT_RBUTTONDOWN:
 		if (sc->_waitForClick) {
 			sc->_waitForClick = false;
 			sc->renderCursor(_window->getMousePos(), true);
@@ -169,10 +165,10 @@ bool Movie::processEvent(Common::Event &event) {
 			else
 				spriteId = sc->getMouseSpriteIDFromPos(pos);
 
-			// is this variable unused here?
+			// Set `the clickOn` Lingo property.
+			// Even in D4, `the clickOn` uses the old "active" sprite instead of mouse sprite.
 			_currentClickOnSpriteId = sc->getActiveSpriteIDFromPos(pos);
 
-			_currentHandlingChannelId = spriteId;
 			if (spriteId > 0 && sc->_channels[spriteId]->_sprite->shouldHilite()) {
 				_currentHiliteChannelId = spriteId;
 				g_director->_wm->_hilitingWidget = true;
@@ -180,7 +176,12 @@ bool Movie::processEvent(Common::Event &event) {
 				g_director->getCurrentWindow()->addDirtyRect(sc->_channels[_currentHiliteChannelId]->getBbox());
 			}
 
+			CastMember *cast = getCastMember(sc->_channels[spriteId]->_sprite->_castId);
+			if (cast && cast->_type == kCastButton)
+				_mouseDownWasInButton = true;
+
 			_lastEventTime = g_director->getMacTicks();
+			_lastClickTime2 = _lastClickTime;
 			_lastClickTime = _lastEventTime;
 			_lastClickPos = pos;
 			if (_timeOutMouse)
@@ -198,7 +199,13 @@ bool Movie::processEvent(Common::Event &event) {
 		return true;
 
 	case Common::EVENT_LBUTTONUP:
+	case Common::EVENT_RBUTTONUP:
 		pos = _window->getMousePos();
+
+		if (g_director->getVersion() < 400)
+			spriteId = sc->getActiveSpriteIDFromPos(pos);
+		else
+			spriteId = sc->getMouseSpriteIDFromPos(pos);
 
 		if (_currentHiliteChannelId && sc->_channels[_currentHiliteChannelId]) {
 			g_director->getCurrentWindow()->setDirty(true);
@@ -207,21 +214,26 @@ bool Movie::processEvent(Common::Event &event) {
 
 		g_director->_wm->_hilitingWidget = false;
 
-		debugC(3, kDebugEvents, "event: Button Up @(%d, %d), movie '%s', sprite id: %d", pos.x, pos.y, _macName.c_str(), _currentHandlingChannelId);
+		debugC(3, kDebugEvents, "event: Button Up @(%d, %d), movie '%s', sprite id: %d", pos.x, pos.y, _macName.c_str(), spriteId);
 
 		_currentDraggedChannel = nullptr;
 
-		if (_currentHandlingChannelId) {
-			CastMember *cast = getCastMember(sc->_channels[_currentHandlingChannelId]->_sprite->_castId);
+		// If this is a button cast member, and the last mouse down event was in a button
+		// (any button), flip this button's hilite flag.
+		// Now you might think, "Wait, we don't flip this flag in the mouseDown event.
+		// And why any button??? This doesn't make any sense."
+		// No, it doesn't make sense, but it's what Director does.
+		if (_mouseDownWasInButton) {
+			CastMember *cast = getCastMember(sc->_channels[spriteId]->_sprite->_castId);
 			if (cast && cast->_type == kCastButton)
 				cast->_hilite = !cast->_hilite;
 		}
 
-		queueUserEvent(kEventMouseUp, _currentHandlingChannelId);
+		queueUserEvent(kEventMouseUp, spriteId);
 		sc->renderCursor(pos);
 
 		_currentHiliteChannelId = 0;
-		_currentHandlingChannelId = 0;
+		_mouseDownWasInButton = false;
 		return true;
 
 	case Common::EVENT_KEYDOWN:

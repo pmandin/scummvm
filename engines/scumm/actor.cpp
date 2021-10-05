@@ -553,8 +553,8 @@ int Actor_v3::calcMovementFactor(const Common::Point& next) {
 	if (diffY < 0)
 		deltaYFactor = -deltaYFactor;
 
-	_walkdata.xfrac = _walkdata.xAdd = diffX / deltaXFactor;
-	_walkdata.yfrac = _walkdata.yAdd = diffY / deltaYFactor;
+	_walkdata.xfrac = _walkdata.xAdd = deltaXFactor ? diffX / deltaXFactor : 0;
+	_walkdata.yfrac = _walkdata.yAdd = deltaYFactor ? diffY / deltaYFactor : 0;
 	_walkdata.cur = _pos;
 	_walkdata.next = next;
 	_walkdata.deltaXFactor = deltaXFactor;
@@ -587,7 +587,11 @@ int Actor::actorWalkStep() {
 	int distY = ABS(_walkdata.next.y - _walkdata.cur.y);
 
 	if (ABS(_pos.x - _walkdata.cur.x) >= distX && ABS(_pos.y - _walkdata.cur.y) >= distY) {
-		_moving &= ~MF_IN_LEG;
+		// I have checked that only the v7/8 games have this different (non-)handling of the moving flag. Our code was
+		// correct for the lower versions. For COMI this fixes one part of the issues that caused ticket #4424 (wrong
+		// movement data being reported by ScummEngine_v8::o8_wait()).
+		if (_vm->_game.version < 7)
+			_moving &= ~MF_IN_LEG;
 		return 0;
 	}
 
@@ -801,10 +805,12 @@ void Actor::startWalkActor(int destX, int destY, int dir) {
 			abr.box = kInvalidBox;
 			_walkbox = kInvalidBox;
 		} else {
-			if (_vm->checkXYInBoxBounds(_walkdata.destbox, abr.x, abr.y)) {
-				abr.box = _walkdata.destbox;
-			} else {
-				abr = adjustXYToBeInBox(abr.x, abr.y);
+			if (_vm->_game.version < 7) {
+				if (_vm->checkXYInBoxBounds(_walkdata.destbox, abr.x, abr.y)) {
+					abr.box = _walkdata.destbox;
+				} else {
+					abr = adjustXYToBeInBox(abr.x, abr.y);
+				}
 			}
 			if (_moving && _walkdata.destdir == dir && _walkdata.dest.x == abr.x && _walkdata.dest.y == abr.y)
 				return;
@@ -910,7 +916,10 @@ void Actor::walkActor() {
 			if (_facing != new_dir)
 				setDirection(new_dir);
 			else
-				_moving = 0;
+				// I have checked that only the v7/8 games have this different handling of the moving flag. Our code was
+				// correct for the lower versions. For COMI this fixes one part of the issues that caused ticket #4424
+				// (wrong movement data being reported by ScummEngine_v8::o8_wait()).
+				_moving = (_vm->_game.version >= 7) ? (_moving & ~MF_TURN) : 0;
 			return;
 		}
 
@@ -2877,6 +2886,14 @@ void ScummEngine_v7::actorTalk(const byte *msg) {
 			a->runActorTalkScript(a->_talkStartFrame);
 		}
 		_charsetColor = a->_talkColor;
+
+		// This is what the original COMI CJK interpreter does here.
+		if (_game.id == GID_CMI && _useCJKMode) {
+			if (a->_number == 1 && _currentRoom == 15)
+				_charsetColor = 28;
+			else if (a->_talkColor == 22)
+				_charsetColor = 5;
+		}
 	}
 
 	_charsetBufPos = 0;
@@ -3803,8 +3820,8 @@ void Actor_v3::saveLoadWithSerializer(Common::Serializer &s) {
 			_walkdata.deltaXFactor = -_walkdata.deltaXFactor;
 		if (diffY < 0)
 			_walkdata.deltaYFactor = -_walkdata.deltaYFactor;
-		_walkdata.xfrac = _walkdata.xAdd = diffX / _walkdata.deltaXFactor;
-		_walkdata.yfrac = _walkdata.yAdd = diffY / _walkdata.deltaYFactor;
+		_walkdata.xfrac = _walkdata.xAdd = _walkdata.deltaXFactor ? diffX / _walkdata.deltaXFactor : 0;
+		_walkdata.yfrac = _walkdata.yAdd = _walkdata.deltaYFactor ? diffY / _walkdata.deltaYFactor : 0;
 
 	} else {
 		s.syncAsUint16LE(_walkdata.xAdd, VER(rev));

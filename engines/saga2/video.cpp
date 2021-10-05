@@ -61,7 +61,7 @@ void Saga2Engine::startVideo(const char *fileName, int x, int y) {
 	_smkDecoder->start();
 }
 
-bool Saga2Engine::checkVideo(void) {
+bool Saga2Engine::checkVideo() {
 	if (!_smkDecoder)
 		return false;
 
@@ -77,13 +77,14 @@ bool Saga2Engine::checkVideo(void) {
 				g_system->getPaletteManager()->setPalette(_smkDecoder->getPalette(), 0, 256);
 
 			g_system->updateScreen();
+			g_system->delayMillis(10);
 		}
 	}
 
 	return true;
 }
 
-void Saga2Engine::abortVideo(void) {
+void Saga2Engine::abortVideo() {
 	endVideo();
 }
 

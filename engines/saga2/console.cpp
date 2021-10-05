@@ -35,12 +35,8 @@
 
 namespace Saga2 {
 
-#define MAX_MAP_FEATURES 128
-
-extern pCMapFeature mapFeatures[];
 extern GameObject *objectList;
 extern WorldMapData *mapList;
-extern int16 currentMapNum;
 
 Console::Console(Saga2Engine *vm) : GUI::Debugger() {
 	_vm = vm;
@@ -84,6 +80,8 @@ Console::Console(Saga2Engine *vm) : GUI::Debugger() {
 	registerCmd("list_places", WRAP_METHOD(Console, cmdListPlaces));
 
 	registerCmd("stats", WRAP_METHOD(Console, cmdStats));
+
+	registerCmd("status_msg", WRAP_METHOD(Console, cmdStatusMsg));
 
 	registerCmd("dump_map", WRAP_METHOD(Console, cmdDumpMap));
 
@@ -226,6 +224,17 @@ bool Console::cmdStats(int argc, const char **argv) {
 	return true;
 }
 
+bool Console::cmdStatusMsg(int argc, const char **argv) {
+	if (argc != 2)
+		debugPrintf("Usage: %s <1/0>\n", argv[0]);
+	else {
+		bool show = atoi(argv[1]);
+		_vm->_showStatusMsg = show;
+	}
+
+	return true;
+}
+
 bool Console::cmdTeleportOnClick(int argc, const char **argv) {
 	if (argc != 2)
 		debugPrintf("Usage: %s <1/0>\n", argv[0]);
@@ -353,9 +362,15 @@ bool Console::cmdGotoPlace(int argc, const char **argv) {
 	if (argc != 2)
 		debugPrintf("Usage: %s <place id>\n", argv[0]);
 	else {
-		int placeID = atoi(argv[1]);
-		int u = mapFeatures[placeID]->getU();
-		int v = mapFeatures[placeID]->getV();
+		uint placeID = atoi(argv[1]);
+
+		if (placeID > g_vm->_mapFeatures.size()) {
+			debugPrintf("Invalid place id > %d", g_vm->_mapFeatures.size());
+			return true;
+		}
+
+		int u = g_vm->_mapFeatures[placeID]->getU();
+		int v = g_vm->_mapFeatures[placeID]->getV();
 
 		Actor *a = getCenterActor();
 
@@ -376,9 +391,9 @@ bool Console::cmdListPlaces(int argc, const char **argv) {
 	if (argc != 1)
 		debugPrintf("Usage: %s\n", argv[0]);
 	else {
-		for (int i = 0; i < MAX_MAP_FEATURES; ++i) {
-			if (mapFeatures[i])
-				debugPrintf("%d: %s\n", i, mapFeatures[i]->getText());
+		for (uint i = 0; i < g_vm->_mapFeatures.size(); ++i) {
+			if (g_vm->_mapFeatures[i])
+				debugPrintf("%d: %s\n", i, g_vm->_mapFeatures[i]->getText());
 		}
 	}
 
@@ -391,8 +406,6 @@ bool Console::cmdDumpMap(int argc, const char **argv) {
 	else {
 		gPixelMap drawMap;
 		drawMap.size = _vm->_tileDrawMap.size * atoi(argv[1]);
-		//drawMap.size.x = mapList[currentMapNum].mapHeight;
-		//drawMap.size.y = mapList[currentMapNum].mapHeight;
 		drawMap.data = new uint8[drawMap.bytes()]();
 		drawMetaTiles(drawMap);
 
