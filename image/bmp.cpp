@@ -78,8 +78,8 @@ bool BitmapDecoder::loadStream(Common::SeekableReadStream &stream) {
 	}
 
 	uint32 infoSize = stream.readUint32LE();
-	if (infoSize != 40 && infoSize != 108) {
-		warning("Only Windows v3 & v4 bitmaps are supported");
+	if (infoSize != 40 && infoSize != 52 && infoSize != 56 && infoSize != 108 && infoSize != 124) {
+		warning("Only Windows v1-v5 bitmaps are supported, unknown header: %d", infoSize);
 		return false;
 	}
 
@@ -97,7 +97,7 @@ bool BitmapDecoder::loadStream(Common::SeekableReadStream &stream) {
 	/* uint16 planes = */ stream.readUint16LE();
 	uint16 bitsPerPixel = stream.readUint16LE();
 
-	if (bitsPerPixel != 8 && bitsPerPixel != 24 && bitsPerPixel != 32) {
+	if (bitsPerPixel != 4 && bitsPerPixel != 8 && bitsPerPixel != 24 && bitsPerPixel != 32) {
 		warning("%dbpp bitmaps not supported", bitsPerPixel);
 		return false;
 	}
@@ -109,9 +109,11 @@ bool BitmapDecoder::loadStream(Common::SeekableReadStream &stream) {
 	_paletteColorCount = stream.readUint32LE();
 	/* uint32 colorsImportant = */ stream.readUint32LE();
 
-	if (bitsPerPixel == 8) {
+	stream.seek(infoSize - 40, SEEK_CUR);
+
+	if (bitsPerPixel == 4 || bitsPerPixel == 8) {
 		if (_paletteColorCount == 0)
-			_paletteColorCount = 256;
+			_paletteColorCount = bitsPerPixel == 8 ? 256 : 16;
 
 		// Read the palette
 		_palette = new byte[_paletteColorCount * 3];

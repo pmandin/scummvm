@@ -65,7 +65,7 @@ void Screen_EoB::loadSpecialAmigaCPS(const char *fileName, int destPage, bool is
 	const uint8 *file = _vm->resource()->fileData(fileName, &fileSize);
 
 	if (!file)
-		error("Screen_EoB::loadSpecialAmigaCPS(): Failed to load file '%s'", file);
+		error("Screen_EoB::loadSpecialAmigaCPS(): Failed to load file '%s'", fileName);
 
 	uint32 inSize = READ_BE_UINT32(file);
 	const uint8 *pos = file;
@@ -278,7 +278,7 @@ void AmigaDOSFont::errorDialog(int index) {
 	if (index == 0) {
 		::GUI::displayErrorDialog(_(
 			"This AMIGA version requires the following font files:\n\nEOBF6.FONT\nEOBF6/6\nEOBF8.FONT\nEOBF8/8\n\n"
-			"If you used the orginal installer for the installation these files\nshould be located in the AmigaDOS system 'Fonts/' folder.\n"
+			"If you used the original installer for the installation these files\nshould be located in the AmigaDOS system 'Fonts/' folder.\n"
 			"Please copy them into the EOB game data directory.\n"
 		));
 

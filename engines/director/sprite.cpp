@@ -35,8 +35,8 @@ namespace Director {
 
 Sprite::Sprite(Frame *frame) {
 	_frame = frame;
-	_score = _frame->getScore();
-	_movie = _score->getMovie();
+	_score = _frame ? _frame->getScore() : nullptr;
+	_movie = _score ? _score->getMovie() : nullptr;
 
 	_scriptId = CastMemberID(0, 0);
 	_colorcode = 0;
@@ -71,8 +71,61 @@ Sprite::Sprite(Frame *frame) {
 	_stretch = 0;
 }
 
+Sprite& Sprite::operator=(const Sprite &sprite) {
+	if (this == &sprite) {
+		return *this;
+	}
+
+	this->~Sprite();
+
+	_frame = sprite._frame;
+	_score = sprite._score;
+	_movie = sprite._movie;
+
+	_scriptId = sprite._scriptId;
+	_colorcode = sprite._colorcode;
+	_blendAmount = sprite._blendAmount;
+	_unk3 = sprite._unk3;
+
+	_enabled = sprite._enabled;
+	_castId = sprite._castId;
+	_pattern = sprite._pattern;
+
+	_spriteType = sprite._spriteType;
+	_inkData = sprite._inkData;
+	_ink = sprite._ink;
+	_trails = sprite._trails;
+
+	_cast = sprite._cast;
+	_matte = nullptr;
+
+	_thickness = sprite._thickness;
+	_startPoint = sprite._startPoint;
+	_width = sprite._width;
+	_height = sprite._height;
+	_moveable = sprite._moveable;
+	_editable = sprite._editable;
+	_puppet = sprite._puppet;
+	_immediate = sprite._immediate;
+	_backColor = sprite._backColor;
+	_foreColor = sprite._foreColor;
+
+	_blend = sprite._blend;
+
+	_volume = sprite._volume;
+	_stretch = sprite._stretch;
+
+	return *this;
+}
+
+Sprite::Sprite(const Sprite &sprite) {
+	_matte = nullptr;
+	*this = sprite;
+}
+
 Sprite::~Sprite() {
-	delete _matte;
+	if (_matte)
+		delete _matte;
 }
 
 bool Sprite::isQDShape() {
@@ -146,6 +199,120 @@ Graphics::Surface *Sprite::getQDMatte() {
 	if (!_matte)
 		createQDMatte();
 	return _matte ? _matte->getMask() : nullptr;
+}
+
+MacShape *Sprite::getShape() {
+	if (!isQDShape() && (_cast && _cast->_type != kCastShape))
+		return nullptr;
+
+	MacShape *shape = new MacShape();
+
+	shape->ink = _ink;
+	shape->spriteType = _spriteType;
+	shape->foreColor = _foreColor;
+	shape->backColor = _backColor;
+	shape->lineSize = _thickness & 0x3;
+	shape->pattern = getPattern();
+
+	if (g_director->getVersion() >= 300 && shape->spriteType == kCastMemberSprite) {
+		if (!_cast) {
+			warning("Sprite::getShape(): kCastMemberSprite has no cast defined");
+			delete shape;
+			return nullptr;
+		}
+
+		ShapeCastMember *sc = (ShapeCastMember *)_cast;
+		switch (sc->_shapeType) {
+		case kShapeRectangle:
+			shape->spriteType = sc->_fillType ? kRectangleSprite : kOutlinedRectangleSprite;
+			break;
+		case kShapeRoundRect:
+			shape->spriteType = sc->_fillType ? kRoundedRectangleSprite : kOutlinedRoundedRectangleSprite;
+			break;
+		case kShapeOval:
+			shape->spriteType = sc->_fillType ? kOvalSprite : kOutlinedOvalSprite;
+			break;
+		case kShapeLine:
+			shape->spriteType = sc->_lineDirection == 6 ? kLineBottomTopSprite : kLineTopBottomSprite;
+			break;
+		default:
+			break;
+		}
+
+		if (g_director->getVersion() >= 400) {
+			shape->foreColor = sc->getForeColor();
+			shape->backColor = sc->getBackColor();
+			shape->lineSize = sc->_lineThickness;
+			shape->ink = sc->_ink;
+		}
+	}
+
+	// for outlined shapes, line thickness of 1 means invisible.
+	shape->lineSize -= 1;
+
+	return shape;
+}
+
+uint32 Sprite::getBackColor() {
+	if (!_cast)
+		return _backColor;
+
+	switch (_cast->_type) {
+	case kCastText:
+	case kCastButton:
+	case kCastShape: {
+		return _cast->getBackColor();
+	}
+	default:
+		return _backColor;
+	}
+}
+
+uint32 Sprite::getForeColor() {
+	if (!_cast)
+		return _foreColor;
+
+	switch (_cast->_type) {
+	case kCastText:
+	case kCastButton:
+	case kCastShape: {
+		return _cast->getForeColor();
+	}
+	default:
+		return _foreColor;
+	}
+}
+
+Common::Point Sprite::getRegistrationOffset() {
+	Common::Point result(0, 0);
+	if (!_cast)
+		return result;
+
+	switch (_cast->_type) {
+	case kCastBitmap:
+		{
+			BitmapCastMember *bc = (BitmapCastMember *)(_cast);
+
+			Common::Point point(0, 0);
+			// stretch the offset
+			if (!_stretch && (_width != bc->_initialRect.width() || _height != bc->_initialRect.height())) {
+				result.x = (bc->_initialRect.left - bc->_regX) * _width / bc->_initialRect.width();
+				result.y = (bc->_initialRect.top - bc->_regY) * _height / bc->_initialRect.height();
+			} else {
+				result.x = bc->_initialRect.left - bc->_regX;
+				result.y = bc->_initialRect.top - bc->_regY;
+			}
+		}
+		break;
+	case kCastDigitalVideo:
+	case kCastFilmLoop:
+		result.x = _cast->_initialRect.width() >> 1;
+		result.y = _cast->_initialRect.height() >> 1;
+		break;
+	default:
+		break;
+	}
+	return result;
 }
 
 void Sprite::updateEditable() {
@@ -307,18 +474,26 @@ void Sprite::setCast(CastMemberID memberID) {
 		// them properly.
 		Common::Rect dims = _cast->getInitialRect();
 		// strange logic here, need to be fixed
-		if (_cast->_type == kCastBitmap) {
+		switch (_cast->_type) {
+		case kCastBitmap:
 			// for the stretched sprites, we need the original size to get the correct bbox offset.
 			// there are two stretch situation here.
 			// 1. stretch happened when creating the widget, there is no lingo participated. we will use the original sprite size to create widget. check copyStretchImg
 			// 2. stretch set by lingo. this time we need to store the original dims because we will create the original sprite and stretch it when bliting. check inkBlitStretchSurface
-			if (!(_inkData & 0x80) || _stretch) {
-				_width = dims.width();
-				_height = dims.height();
+			{
+				if (!(_inkData & 0x80) || _stretch) {
+					_width = dims.width();
+					_height = dims.height();
+				}
 			}
-		} else if (_cast->_type != kCastShape && _cast->_type != kCastText) {
+			break;
+		case kCastShape:
+		case kCastText: 	// fall-through
+			break;
+		default:
 			_width = dims.width();
 			_height = dims.height();
+			break;
 		}
 
 	} else {

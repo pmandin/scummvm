@@ -142,6 +142,24 @@ public:
 
 	void registerDefaultSettings(const Common::String &target) const override;
 	GUI::OptionsContainerWidget *buildEngineOptionsWidgetDynamic(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const override;
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (!target)
+			target = getEngineId();
+		Common::String gameId = ConfMan.get("gameid", target);
+		const char *suffix;
+		// Saved games are only supported in Myst/Riven currently.
+		if (gameId == "myst")
+			suffix = "mys";
+		else if (gameId == "riven")
+			suffix = "rvn";
+		else
+			return MetaEngine::getSavegameFile(saveGameIdx, target);
+
+		if (saveGameIdx == kSavegameFilePattern)
+			return Common::String::format("%s-###.%s", gameId.c_str(), suffix);
+		else
+			return Common::String::format("%s-%03d.%s", gameId.c_str(), saveGameIdx, suffix);
+	}
 };
 
 bool MohawkMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -171,7 +189,7 @@ SaveStateList MohawkMetaEngine::listSavesForPrefix(const char *prefix, const cha
 
 		int slotNum = atoi(slot);
 
-		saveList.push_back(SaveStateDescriptor(slotNum, ""));
+		saveList.push_back(SaveStateDescriptor(this, slotNum, ""));
 	}
 
 	Common::sort(saveList.begin(), saveList.end(), SaveStateDescriptorSlotComparator());
@@ -233,7 +251,7 @@ SaveStateDescriptor MohawkMetaEngine::querySaveMetaInfos(const char *target, int
 
 #ifdef ENABLE_MYST
 	if (gameId == "myst") {
-		return Mohawk::MystGameState::querySaveMetaInfos(slot);
+		return Mohawk::MystGameState::querySaveMetaInfos(this, slot);
 	}
 #endif
 #ifdef ENABLE_RIVEN

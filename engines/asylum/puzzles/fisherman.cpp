@@ -47,11 +47,11 @@ const int16 puzzleFishermanPolygons[31][2] = {
 PuzzleFisherman::PuzzleFisherman(AsylumEngine *engine) : Puzzle(engine) {
 	memset(&_state, 0, sizeof(_state));
 
-	_dword_45AAD4 = false;
+	_resetPressed = false;
 	_counter = 0;
 
-	_dword_45A12C = 0;
-	_dword_45A130 = false;
+	_pauseTimer = 0;
+	_allowClick = false;
 }
 
 PuzzleFisherman::~PuzzleFisherman() {
@@ -61,7 +61,7 @@ void PuzzleFisherman::saveLoadWithSerializer(Common::Serializer &s) {
 	for (int i = 0; i < ARRAYSIZE(_state); i++)
 		s.syncAsSint32LE(_state[i]);
 
-	s.syncAsSint32LE(_dword_45AAD4);
+	s.syncAsSint32LE(_resetPressed);
 	s.syncAsSint32LE(_counter);
 }
 
@@ -80,16 +80,14 @@ bool PuzzleFisherman::init(const AsylumEvent &evt)  {
 		_counter = 0;
 	}
 
-	_dword_45A130 = false;
+	_allowClick = false;
 	getScreen()->setPalette(getWorld()->graphicResourceIds[39]);
 	getScreen()->setGammaLevel(getWorld()->graphicResourceIds[39]);
 
 	return mouseLeftDown(evt);
 }
 
-bool PuzzleFisherman::update(const AsylumEvent &)  {
-	updateCursor();
-
+void PuzzleFisherman::updateScreen()  {
 	// Draw background
 	getScreen()->clearGraphicsInQueue();
 	getScreen()->fillRect(0, 0, 640, 480, 251);
@@ -101,31 +99,32 @@ bool PuzzleFisherman::update(const AsylumEvent &)  {
 			getScreen()->addGraphicToQueue(getWorld()->graphicResourceIds[40 + i], 0, &puzzleFishermanPolygons[i], kDrawFlagNone, 0, 1);
 	}
 
-	getScreen()->drawGraphicsInQueue();
+	_allowClick = true;
 
-	_dword_45A130 = true;
-	getScreen()->copyBackBufferToScreen();
+	if (_resetPressed) {
+		++_pauseTimer;
 
-	if (_dword_45AAD4 == 1) {
-		++_dword_45A12C;
-
-		if (_dword_45A12C > 5) {
+		if (_pauseTimer > 5) {
 			// Reset state
 			memset(&_state, 0, sizeof(_state));
 
 			for (uint32 i = 0; i < 6; i++)
 				_vm->clearGameFlag((GameFlag)(kGameFlag801 + i));
 
-			_dword_45A130 = true;
-			_dword_45A12C = 0;
+			_resetPressed = false;
+			_allowClick = true;
+			_pauseTimer = 0;
+			// Original bug: if the Sun button was pressed last,
+			// the correct order of buttons wouldn't work until another reset
+			_counter = 0;
 		}
 	}
 
 	if (_counter == 6) {
-		++_dword_45A12C;
+		++_pauseTimer;
 
-		if (_dword_45A12C > 10) {
-			_dword_45A12C = 0;
+		if (_pauseTimer > 10) {
+			_pauseTimer = 0;
 
 			_vm->setGameFlag(kGameFlag619);
 			getScreen()->setPalette(getWorld()->currentPaletteId);
@@ -133,18 +132,16 @@ bool PuzzleFisherman::update(const AsylumEvent &)  {
 			_vm->switchEventHandler(getScene());
 		}
 	}
-
-	return true;
 }
 
 bool PuzzleFisherman::mouseLeftDown(const AsylumEvent &evt) {
-	if (!_dword_45A130)
+	if (!_allowClick)
 		return false;
 
 	for (uint32 i = 0; i < 6; i++) {
 		if (hitTest(&puzzleFishermanPolygons[i * 4 + 7], evt.mouse)) {
 			if (!_state[i]) {
-				getSound()->playSound(getWorld()->graphicResourceIds[9], false, Config.sfxVolume - 10);
+				getSound()->playSound(getWorld()->soundResourceIds[9], false, Config.sfxVolume - 10);
 				_state[i] = true;
 				setFlags(i);
 			}
@@ -155,16 +152,16 @@ bool PuzzleFisherman::mouseLeftDown(const AsylumEvent &evt) {
 	 && puzzleFishermanPolygons[6][1] < evt.mouse.y
 	 && puzzleFishermanPolygons[6][0] + 70 > evt.mouse.x
 	 && puzzleFishermanPolygons[6][1] + 30 > evt.mouse.y) {
-		 getSound()->playSound(getWorld()->graphicResourceIds[10], false, Config.sfxVolume - 10);
+		 getSound()->playSound(getWorld()->soundResourceIds[10], false, Config.sfxVolume - 10);
 
 		 for (uint32 i = 0; i < 6; i++)
 			 _vm->clearGameFlag((GameFlag)(kGameFlag801 + i));
 
-		 _dword_45AAD4 = true;
+		 _resetPressed = true;
 	}
 
-	if (_dword_45AAD4)
-		_dword_45A130 = false;
+	if (_resetPressed)
+		_allowClick = false;
 
 	return true;
 }
@@ -237,7 +234,7 @@ void PuzzleFisherman::setFlags(uint32 index) {
 	case 3:
 		_vm->setGameFlag(kGameFlag804);
 		if (_counter == 5) {
-			_dword_45A130 = false;
+			_allowClick = false;
 			_counter = 6;
 		} else {
 			_counter = 0;

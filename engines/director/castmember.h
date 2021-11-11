@@ -26,6 +26,7 @@
 #include "graphics/font.h"
 
 #include "director/archive.h"
+#include "director/sprite.h"
 #include "director/stxt.h"
 
 #include "director/lingo/lingo-object.h"
@@ -58,6 +59,7 @@ class AudioDecoder;
 struct CastMemberInfo;
 class Channel;
 struct Resource;
+class Sprite;
 class Stxt;
 
 class CastMember : public Object<CastMember> {
@@ -187,6 +189,32 @@ public:
 	Graphics::Surface *_lastFrame;
 
 	Channel *_channel;
+};
+
+
+struct FilmLoopFrame {
+	Common::HashMap<int, Sprite> sprites;
+};
+
+class FilmLoopCastMember : public CastMember {
+public:
+	FilmLoopCastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndian &stream, uint16 version);
+	~FilmLoopCastMember();
+
+	virtual bool isModified() override;
+	//virtual Graphics::MacWidget *createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) override;
+
+	Common::Array<Channel> *getSubChannels(Common::Rect &bbox, Channel *channel);
+
+	void loadFilmLoopData(Common::SeekableReadStreamEndian &stream);
+
+	bool _enableSound;
+	bool _looping;
+	bool _crop;
+	bool _center;
+
+	Common::Array<FilmLoopFrame> _frames;
+	Common::Array<Channel> _subchannels;
 };
 
 class SoundCastMember : public CastMember {

@@ -51,6 +51,14 @@ public:
 	int getMaximumSaveSlot() const override;
 	SaveStateList listSaves(const char *target) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (!target)
+			target = getEngineId();
+		if (saveGameIdx == kSavegameFilePattern)
+			return Common::String::format("%s.###", target); // There is also sav0.mor for slot 0
+		else
+			return Mortevielle::MortevielleEngine::generateSaveFilename(target, saveGameIdx);
+	}
 };
 
 Common::Error MortevielleMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
@@ -76,12 +84,12 @@ bool MortevielleMetaEngine::hasFeature(MetaEngineFeature f) const {
 int MortevielleMetaEngine::getMaximumSaveSlot() const { return 99; }
 
 SaveStateList MortevielleMetaEngine::listSaves(const char *target) const {
-	return Mortevielle::SavegameManager::listSaves(target);
+	return Mortevielle::SavegameManager::listSaves(this, target);
 }
 
 SaveStateDescriptor MortevielleMetaEngine::querySaveMetaInfos(const char *target, int slot) const {
 	Common::String filename = Mortevielle::MortevielleEngine::generateSaveFilename(target, slot);
-	return Mortevielle::SavegameManager::querySaveMetaInfos(filename);
+	return Mortevielle::SavegameManager::querySaveMetaInfos(this, filename);
 }
 
 #if PLUGIN_ENABLED_DYNAMIC(MORTEVIELLE)

@@ -111,7 +111,7 @@ static Director::DirectorGameDescription s_fallbackDesc = {
 		AD_ENTRY1(0, 0),
 		Common::UNK_LANG,
 		Common::kPlatformWindows,
-		ADGF_NO_FLAGS,
+		ADGF_TAILMD5,	// We calculate tail of the projector
 		GUIO0()
 	},
 	Director::GID_GENERIC,
@@ -129,7 +129,7 @@ ADDetectedGame DirectorMetaEngineDetection::fallbackDetect(const FileMap &allFil
 	desc->desc.gameId = "director";
 	desc->desc.extra = "";
 	desc->desc.language = Common::UNK_LANG;
-	desc->desc.flags = ADGF_NO_FLAGS;
+	desc->desc.flags = ADGF_TAILMD5;
 	desc->desc.platform = Common::kPlatformWindows;
 	desc->desc.guiOptions = GUIO0();
 	desc->desc.filesDescriptions[0].fileName = 0;
@@ -275,7 +275,7 @@ ADDetectedGame DirectorMetaEngineDetection::fallbackDetect(const FileMap &allFil
 		Common::strlcpy(s_fallbackExtraBuf, extra.c_str(), sizeof(s_fallbackExtraBuf) - 1);
 		desc->desc.extra = s_fallbackExtraBuf;
 
-		warning("Director fallback detection %s", extra.c_str());
+		warning("Director fallback detection %s (uses tail MD5)", extra.c_str());
 
 		ADDetectedGame game(&desc->desc);
 

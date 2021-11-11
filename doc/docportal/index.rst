@@ -52,6 +52,7 @@
       advanced_topics/configuration_file
       advanced_topics/understand_audio
       advanced_topics/understand_graphics
+      advanced_topics/understand_search_box
 
 .. toctree::
       :caption: Help
@@ -169,6 +170,8 @@ We also have guides on how to get ScummVM running on a wide range of other platf
       :doc:`other_platforms/amigaos_4`
 
       :doc:`other_platforms/atari`
+
+      :doc:`other_platforms/morphos`
 
       :doc:`other_platforms/risc_os`
 

@@ -660,9 +660,8 @@ void Kernel::mapFunctions(GameFeatures *features) {
 					error("k%s[%x]: no subfunctions found for requested version %s", kernelName.c_str(), id, getSciVersionDesc(mySubVersion));
 				// Now allocate required memory and go through it again
 				_kernelFuncs[id].subFunctionCount = subFunctionCount;
-				KernelSubFunction *subFunctions = new KernelSubFunction[subFunctionCount];
+				KernelSubFunction *subFunctions = new KernelSubFunction[subFunctionCount]();
 				_kernelFuncs[id].subFunctions = subFunctions;
-				memset(subFunctions, 0, sizeof(KernelSubFunction) * subFunctionCount);
 				// And fill this info out
 				kernelSubMap = kernelMap->subFunctions;
 				uint kernelSubNr = 0;
@@ -865,9 +864,8 @@ void Kernel::loadKernelNames(GameFeatures *features) {
 			_kernelNames[id] = "Dummy";
 		}
 
-		// Used by Hoyle5 script patches to remove CPU spinning on kGetTime
-		// (this repurposes the existing SCI16 kWait call that was removed in SCI32)
-		_kernelNames[kScummVMWaitId] = "Wait";
+		// Used by SCI32 script patches to remove CPU spinning on kGetTime
+		_kernelNames[kScummVMSleepId] = "ScummVMSleep";
 
 		// Used by GuestAdditions to support integrated save/load dialogue
 		_kernelNames[kScummVMSaveLoadId] = "ScummVMSaveLoad";

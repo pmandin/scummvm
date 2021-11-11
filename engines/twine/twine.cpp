@@ -131,19 +131,19 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	SearchMan.addSubDirectoryMatching(gameDataDir, "vox");
 	if (isLBA2()) {
 		SearchMan.addSubDirectoryMatching(gameDataDir, "video");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "music");
 	}
-	if (flags & TF_DOTEMU_ENHANCED) {
+	if (isDotEmuEnhanced()) {
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/hqr");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/fla");
 		if (_gameLang == Common::Language::DE_DEU) {
 			SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/de_voice");
-		}
-		if (_gameLang == Common::Language::EN_ANY || _gameLang == Common::Language::EN_GRB || _gameLang == Common::Language::EN_USA) {
+		} else if (_gameLang == Common::Language::EN_ANY || _gameLang == Common::Language::EN_GRB || _gameLang == Common::Language::EN_USA) {
 			SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/en_voice");
-		}
-		if (_gameLang == Common::Language::FR_FRA) {
+		} else if (_gameLang == Common::Language::FR_FRA) {
 			SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/fr_voice");
 		}
+		SearchMan.addSubDirectoryMatching(gameDataDir, "resources");
 #ifdef USE_MAD
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/music");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/midi_mp3");
@@ -163,7 +163,7 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_movements = new Movements(this);
 	_interface = new Interface(this);
 	_menu = new Menu(this);
-	_flaMovies = new Movies(this);
+	_movie = new Movies(this);
 	_menuOptions = new MenuOptions(this);
 	_music = new Music(this);
 	_redraw = new Redraw(this);
@@ -194,7 +194,7 @@ TwinEEngine::~TwinEEngine() {
 	delete _movements;
 	delete _interface;
 	delete _menu;
-	delete _flaMovies;
+	delete _movie;
 	delete _menuOptions;
 	delete _music;
 	delete _redraw;
@@ -245,8 +245,8 @@ Common::Error TwinEEngine::run() {
 	AchMan.setActiveDomain(getMetaEngine()->getAchievementsInfo(gameTarget));
 
 	syncSoundSettings();
-	int32 w = ORIGINAL_WIDTH;
-	int32 h = ORIGINAL_HEIGHT;
+	int32 w = originalWidth();
+	int32 h = originalHeight();
 	const bool highRes = ConfMan.getBool("usehighres");
 	if (highRes) {
 		w = 1024;
@@ -375,7 +375,8 @@ void TwinEEngine::autoSave() {
 void TwinEEngine::allocVideoMemory(int32 w, int32 h) {
 	const Graphics::PixelFormat format = Graphics::PixelFormat::createFormatCLUT8();
 
-	_imageBuffer.create(ORIGINAL_WIDTH, ORIGINAL_HEIGHT, format); // original lba1 resolution for a lot of images.
+	// original resolution of the game
+	_imageBuffer.create(originalWidth(), originalHeight(), format);
 
 	_workVideoBuffer.create(w, h, format);
 	_frontVideoBuffer.create(w, h, format);
@@ -518,9 +519,9 @@ void TwinEEngine::initEngine() {
 
 	if (!abort) {
 		if (isLBA1()) {
-			_flaMovies->playFlaMovie(FLA_DRAGON3);
+			_movie->playMovie(FLA_DRAGON3);
 		} else {
-			_flaMovies->playSmkMovie(16);
+			_movie->playMovie("INTRO");
 		}
 	}
 	_input->enableKeyMap(uiKeyMapId);
@@ -633,7 +634,7 @@ void TwinEEngine::processInventoryAction() {
 				_actor->setBehaviour(HeroBehaviourType::kNormal);
 			}
 			_actor->initModelActor(BodyType::btSabre, OWN_ACTOR_SCENE_INDEX);
-			_animations->initAnim(AnimationTypes::kSabreUnknown, AnimType::kAnimationType_1, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
+			_animations->initAnim(AnimationTypes::kSabreUnknown, AnimType::kAnimationThen, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 
 			_gameState->_usingSabre = true;
 		}
@@ -715,14 +716,18 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	readKeys();
 
 	if (!_queuedFlaMovie.empty()) {
-		_flaMovies->playFlaMovie(_queuedFlaMovie.c_str());
+		_movie->playMovie(_queuedFlaMovie.c_str());
 		_queuedFlaMovie.clear();
 	}
 
 	if (_scene->_needChangeScene > -1) {
 		if (!isMod() && isDemo() && isLBA1()) {
-			// the demo only has these two scenes
-			if (_scene->_needChangeScene != LBA1SceneId::Citadel_Island_Prison && _scene->_needChangeScene != LBA1SceneId::Citadel_Island_outside_the_citadel) {
+			// the demo only has these scenes
+			if (_scene->_needChangeScene != LBA1SceneId::Citadel_Island_Prison
+			 && _scene->_needChangeScene != LBA1SceneId::Citadel_Island_outside_the_citadel
+			 && _scene->_needChangeScene != LBA1SceneId::Citadel_Island_near_the_tavern) {
+				// TODO: PlayMidiFile(6);
+				// TODO: Credits();
 				return 1;
 			}
 		}
@@ -875,7 +880,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		if (actor->_life == 0) {
 			if (IS_HERO(a)) {
-				_animations->initAnim(AnimationTypes::kLandDeath, AnimType::kAnimationType_4, AnimationTypes::kStanding, 0);
+				_animations->initAnim(AnimationTypes::kLandDeath, AnimType::kAnimationSet, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 				actor->_controlMode = ControlMode::kNoMove;
 			} else {
 				_sound->playSample(Samples::Explode, 1, actor->pos(), a);
@@ -918,12 +923,12 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			const uint8 brickSound = _grid->getBrickSoundType(actor->_pos.x, actor->_pos.y - 1, actor->_pos.z);
 			actor->_brickSound = brickSound;
 
-			if (brickSound == 0xF1U) {
+			if (brickSound == WATER_BRICK) {
 				if (IS_HERO(a)) {
 					// we are dying if we aren't using the protopack to fly over water
 					if (_actor->_heroBehaviour != HeroBehaviourType::kProtoPack || actor->_anim != AnimationTypes::kForward) {
 						if (!_actor->_cropBottomScreen) {
-							_animations->initAnim(AnimationTypes::kDrawn, AnimType::kAnimationType_4, AnimationTypes::kStanding, 0);
+							_animations->initAnim(AnimationTypes::kDrawn, AnimType::kAnimationSet, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 						}
 						const IVec3 &projPos = _renderer->projectPositionOnScreen(actor->pos() - _grid->_camera);
 						actor->_controlMode = ControlMode::kNoMove;
@@ -1154,6 +1159,10 @@ void TwinEEngine::drawText(int32 x, int32 y, const Common::String &text, bool ce
 	                 x, y, width,
 	                 _frontVideoBuffer.format.RGBToColor(255, 255, 255),
 	                 center ? Graphics::kTextAlignCenter : Graphics::kTextAlignLeft, 0, true);
+}
+
+Common::Language TwinEEngine::getGameLang() const {
+	return _gameLang;
 }
 
 const char *TwinEEngine::getGameId() const {

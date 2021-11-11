@@ -36,7 +36,7 @@
 
 namespace Made {
 
-ScriptFunctions::ScriptFunctions(MadeEngine *vm) : _vm(vm), _soundStarted(false) {
+ScriptFunctions::ScriptFunctions(MadeEngine *vm) : _vm(vm), _soundStarted(false), _gameAudioVolume(Audio::Mixer::kMaxChannelVolume) {
 	// Initialize the two tone generators
 	_pcSpeaker1 = new Audio::PCSpeaker();
 	_pcSpeaker2 = new Audio::PCSpeaker();
@@ -252,12 +252,17 @@ int16 ScriptFunctions::sfPlaySound(int16 argc, int16 *argv) {
 	}
 	if (soundNum > 0) {
 		SoundResource *soundRes = _vm->_res->getSound(soundNum);
-		_vm->_mixer->playStream(Audio::Mixer::kPlainSoundType, &_audioStreamHandle,
-			soundRes->getAudioStream(_vm->_soundRate, false));
+		_vm->_mixer->playStream(Audio::Mixer::kSFXSoundType, &_audioStreamHandle,
+			soundRes->getAudioStream(_vm->_soundRate, false), -1, _gameAudioVolume);
 		_vm->_soundEnergyArray = soundRes->getSoundEnergyArray();
 		_vm->_soundEnergyIndex = 0;
 		_soundStarted = true;
 		_soundResource = soundRes;
+		// The sound length in milliseconds for purpose of checking if the
+		// sound is still playing. This is 100 ms shorter than the actual
+		// length (see sfSoundPlaying).
+		uint32 soundLength = (_soundResource->getSoundSize() * 1000 / _vm->_soundRate);
+		_soundCheckLength = soundLength > 100 ? soundLength - 100 : 0;
 	}
 	return 0;
 }
@@ -614,10 +619,28 @@ int16 ScriptFunctions::sfSetSpriteMask(int16 argc, int16 *argv) {
 }
 
 int16 ScriptFunctions::sfSoundPlaying(int16 argc, int16 *argv) {
-	if (_vm->_mixer->isSoundHandleActive(_audioStreamHandle))
-		return 1;
-	else
-		return 0;
+	if (_vm->getGameID() == GID_RTZ) {
+		if (!_vm->_mixer->isSoundHandleActive(_audioStreamHandle))
+			return 0;
+
+		// For looping sounds the game script regularly checks if the sound has
+		// finished playing, then plays it again. This works in the original
+		// interpreter (possibly because it checks the first buffer of double-
+		// buffered sound output); it does not work in ScummVM because the
+		// mixer will return if the sound has actually stopped playing. This
+		// causes an audible gap when the sound loops.
+		// For this reason this function checks against the sound check length,
+		// which is 100ms less than the actual sound length. Not sure if this
+		// is necessary or desirable for games other than Return to Zork.
+		int playedMsec = _vm->_mixer->getElapsedTime(_audioStreamHandle).msecs();
+		return playedMsec > _soundCheckLength ? 0 : 1;
+	} else {
+		if (_vm->_mixer->isSoundHandleActive(_audioStreamHandle))
+			return 1;
+		else
+			return 0;
+	}
+
 }
 
 void ScriptFunctions::stopSound() {
@@ -641,8 +664,8 @@ int16 ScriptFunctions::sfPlayVoice(int16 argc, int16 *argv) {
 	stopSound();
 	if (soundNum > 0) {
 		_soundResource = _vm->_res->getSound(soundNum);
-		_vm->_mixer->playStream(Audio::Mixer::kPlainSoundType, &_audioStreamHandle,
-			_soundResource->getAudioStream(_vm->_soundRate, false));
+		_vm->_mixer->playStream(Audio::Mixer::kSFXSoundType, &_audioStreamHandle,
+			_soundResource->getAudioStream(_vm->_soundRate, false), -1, _gameAudioVolume);
 		_vm->_autoStopSound = true;
 		_soundStarted = true;
 	}
@@ -1013,8 +1036,9 @@ int16 ScriptFunctions::sfPlaceMenu(int16 argc, int16 *argv) {
 }
 
 int16 ScriptFunctions::sfSetSoundVolume(int16 argc, int16 *argv) {
-	_vm->_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, argv[0] * 25);
-	_vm->_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, argv[0] * 25);
+	_gameAudioVolume = argv[0] * 25;
+	if (_vm->_mixer->isSoundHandleActive(_audioStreamHandle))
+		_vm->_mixer->setChannelVolume(_audioStreamHandle, _gameAudioVolume);
 	return 0;
 }
 
@@ -1039,7 +1063,7 @@ int16 ScriptFunctions::sfIsSlowSystem(int16 argc, int16 *argv) {
 	// There are 2 versions of each video: one with sound, and one without
 	// An example is FINTRO00.PMV (with sound) and FINTRO01.PMV (without sound)
 	// One could maybe think about returning 1 here on actually slower systems.
-	return 0;
+	return _vm->_introMusicDigital ? 0 : 1;
 }
 
 } // End of namespace Made

@@ -486,7 +486,7 @@ void KyraEngine_MR::playStudioSFX(const char *str) {
 		return;
 
 	const int strSize = strlen(str) - 1;
-	if (_flags.lang == Common::ZH_CNA) {
+	if (_flags.lang == Common::ZH_CNA || _flags.lang == Common::ZH_TWN) {
 		// WORKAROUND: The studio sfx is broken in the original, since it still has the
 		// check for '!' and '?' even if the language is set to Chinese. I have fixed this here...
 		if (str[strSize] != '\x80' || !(str[strSize - 1] == '\x81' || str[strSize - 1] == '\x91'))
@@ -568,8 +568,7 @@ void KyraEngine_MR::startup() {
 
 	_screen->_curPage = 0;
 
-	_talkObjectList = new TalkObject[88];
-	memset(_talkObjectList, 0, sizeof(TalkObject)*88);
+	_talkObjectList = new TalkObject[88]();
 	for (int i = 0; i < 88; ++i)
 		_talkObjectList[i].sceneId = 0xFF;
 
@@ -603,9 +602,8 @@ void KyraEngine_MR::startup() {
 	memset(_newSceneDlgState, 0, sizeof(_newSceneDlgState));
 	memset(_conversationState, -1, sizeof(_conversationState));
 
-	_sceneList = new SceneDesc[98];
+	_sceneList = new SceneDesc[98]();
 	assert(_sceneList);
-	memset(_sceneList, 0, sizeof(SceneDesc)*98);
 	_sceneListSize = 98;
 
 	runStartupScript(1, 0);
@@ -1416,10 +1414,9 @@ void KyraEngine_MR::writeSettings() {
 		break;
 
 	case 3:
-		_flags.lang = Common::ZH_CNA;
+		_flags.lang = _langIntern ? Common::ZH_TWN : Common::ZH_CNA;
 		break;
 
-	case 0:
 	default:
 		_flags.lang = Common::EN_ANY;
 	}

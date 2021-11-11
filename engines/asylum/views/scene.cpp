@@ -257,7 +257,7 @@ void Scene::load(ResourcePackId packId) {
 	snprintf(filename, 10, SCENE_FILE_MASK, _packId);
 
 	char sceneTag[6];
-	Common::File* fd = new Common::File;
+	Common::File *fd = new Common::File;
 
 	if (!Common::File::exists(filename))
 		error("Scene file doesn't exist %s", filename);
@@ -505,12 +505,22 @@ bool Scene::key(const AsylumEvent &evt) {
 			getActor()->setLastScreenUpdate(_vm->screenUpdateCount);
 		}
 		break;
+
+	case Common::KEYCODE_m:
+		g_debugScrolling = !g_debugScrolling;
+		break;
 	}
 
 	return true;
 }
 
 bool Scene::clickDown(const AsylumEvent &evt) {
+	if (g_debugScrolling) {
+		g_debugScrolling = 0;
+		getActor()->setPosition(_ws->xLeft + evt.mouse.x, _ws->yTop + evt.mouse.y, getActor()->getDirection(), getActor()->getFrameIndex());
+		return true;
+	}
+
 	_vm->lastScreenUpdate = 0;
 
 	if (getSharedData()->getFlag(kFlag2)) {
@@ -606,16 +616,14 @@ bool Scene::updateScreen() {
 	if (updateScene())
 		return true;
 
+#if 0
 	if (Config.performance <= 4) {
-		// TODO when Config.performance <= 4, we need to skip drawing frames to screen
-
-		if (drawScene())
-			return true;
-
+		// TODO: implement skip drawing frames to screen
 	} else {
+#endif
 		if (drawScene())
 			return true;
-	}
+	//}
 
 	getActor()->drawNumber();
 
@@ -840,6 +848,10 @@ void Scene::updateAmbientSounds() {
 
 		for (int32 f = 0; f < 6; f++) {
 			int32 gameFlag = snd->flagNum[f];
+
+			if (!gameFlag)
+				break;
+
 			if (gameFlag == 99999)
 				continue;
 
@@ -855,6 +867,7 @@ void Scene::updateAmbientSounds() {
 				}
 			}
 		}
+
 		if (processSound) {
 			if (_vm->sound()->isPlaying(snd->resourceId)) {
 
@@ -894,9 +907,6 @@ void Scene::updateAmbientSounds() {
 						} else {
 							int32 tmpVol = volume + (int32)_vm->getRandom(500) * ((_vm->getRandom(100) >= 50) ? -1 : 1);
 
-							if (tmpVol <= -10000)
-								tmpVol = -10000;
-
 							if (tmpVol >= 0)
 								tmpVol = 0;
 							else if (tmpVol <= -10000)
@@ -906,7 +916,7 @@ void Scene::updateAmbientSounds() {
 						}
 					}
 				} else if (LOBYTE(snd->flags) & 4) {
-					if (ambientTick > _vm->getTick()) {
+					if (ambientTick < _vm->getTick()) {
 						if (snd->nextTick >= 0)
 							getSharedData()->setAmbientTick(i, (uint32)((int32)_vm->getTick() + snd->nextTick * 60000));
 						else
@@ -2083,7 +2093,7 @@ void Scene::adjustCoordinates(Common::Point *point) {
 	point->y = _ws->yTop  + getCursor()->position().y;
 }
 
-Actor* Scene::getActor(ActorIndex index) {
+Actor *Scene::getActor(ActorIndex index) {
 	if (!_ws)
 		error("[Scene::getActor] WorldStats not initialized properly!");
 
@@ -2379,21 +2389,18 @@ void Scene::preload() {
 		return;
 
 	SceneTitle *title = new SceneTitle(_vm);
-	title->load();
 	getCursor()->hide();
+	title->load();
 
 	do {
 		title->update(_vm->getTick());
 
-		getScreen()->copyBackBufferToScreen();
 		g_system->updateScreen();
-
 		g_system->delayMillis(10);
 
 		// Poll events (this ensure we don't freeze the screen)
 		Common::Event ev;
 		_vm->getEventManager()->pollEvent(ev);
-
 	} while (!title->loadingComplete());
 
 	delete title;

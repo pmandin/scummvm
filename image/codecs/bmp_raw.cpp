@@ -28,8 +28,8 @@
 
 namespace Image {
 
-BitmapRawDecoder::BitmapRawDecoder(int width, int height, int bitsPerPixel, bool flip) : Codec(),
-		_width(width), _height(height), _bitsPerPixel(bitsPerPixel), _flip(flip) {
+BitmapRawDecoder::BitmapRawDecoder(int width, int height, int bitsPerPixel, bool ignoreAlpha, bool flip) : Codec(),
+		_width(width), _height(height), _bitsPerPixel(bitsPerPixel), _ignoreAlpha(ignoreAlpha), _flip(flip)  {
 	_surface.create(_width, _height, getPixelFormat());
 }
 
@@ -46,6 +46,9 @@ const Graphics::Surface *BitmapRawDecoder::decodeFrame(Common::SeekableReadStrea
 	if (_bitsPerPixel == 1) {
 		srcPitch = (_width + 7) / 8;
 		extraDataLength = (srcPitch % 2) ? 2 - (srcPitch % 2) : 0;
+	} else if (_bitsPerPixel == 4) {
+		srcPitch = (_width + 1) / 2;
+		extraDataLength = (srcPitch % 4) ? 4 - (srcPitch % 4) : 0;
 	}
 
 	if (_bitsPerPixel == 1) {
@@ -114,11 +117,15 @@ const Graphics::Surface *BitmapRawDecoder::decodeFrame(Common::SeekableReadStrea
 				byte b = stream.readByte();
 				byte g = stream.readByte();
 				byte r = stream.readByte();
-				// Ignore the last byte, as in v3 it is unused
-				// and should thus NOT be used as alpha.
-				// ref: http://msdn.microsoft.com/en-us/library/windows/desktop/dd183376%28v=vs.85%29.aspx
-				stream.readByte();
-				uint32 color = format.RGBToColor(r, g, b);
+
+				uint32 color;
+				if (_ignoreAlpha) {
+					stream.readByte();
+					color = format.RGBToColor(r, g, b);
+				} else {
+					byte a = stream.readByte();
+					color = format.ARGBToColor(a, r, g, b);
+				}
 
 				*((uint32 *)dst) = color;
 				dst += format.bytesPerPixel;

@@ -53,6 +53,7 @@ bool DragonsMetaEngine::hasFeature(MetaEngineFeature f) const {
 			(f == kSupportsLoadingDuringStartup) ||
 			(f == kSavesSupportMetaInfo) ||
 			(f == kSavesSupportThumbnail) ||
+			(f == kSimpleSavesNames) ||
 			(f == kSavesSupportCreationDate);
 }
 
@@ -69,7 +70,7 @@ SaveStateList DragonsMetaEngine::listSaves(const char *target) const {
 	Common::SaveFileManager *saveFileMan = g_system->getSavefileManager();
 	Dragons::SaveHeader header;
 	Common::String pattern = target;
-	pattern += ".???";
+	pattern += ".###";
 	Common::StringArray filenames;
 	filenames = saveFileMan->listSavefiles(pattern.c_str());
 	SaveStateList saveList;
@@ -80,7 +81,7 @@ SaveStateList DragonsMetaEngine::listSaves(const char *target) const {
 			Common::InSaveFile *in = saveFileMan->openForLoading(file->c_str());
 			if (in) {
 				if (Dragons::DragonsEngine::readSaveHeader(in, header) == Dragons::kRSHENoError) {
-					saveList.push_back(SaveStateDescriptor(slotNum, header.description));
+					saveList.push_back(SaveStateDescriptor(this, slotNum, header.description));
 				}
 				delete in;
 			}
@@ -99,7 +100,7 @@ SaveStateDescriptor DragonsMetaEngine::querySaveMetaInfos(const char *target, in
 		error = Dragons::DragonsEngine::readSaveHeader(in, header, false);
 		delete in;
 		if (error == Dragons::kRSHENoError) {
-			SaveStateDescriptor desc(slot, header.description);
+			SaveStateDescriptor desc(this, slot, header.description);
 			desc.setThumbnail(header.thumbnail);
 			desc.setSaveDate(header.saveDate & 0xFFFF, (header.saveDate >> 16) & 0xFF, (header.saveDate >> 24) & 0xFF);
 			desc.setSaveTime((header.saveTime >> 16) & 0xFF, (header.saveTime >> 8) & 0xFF);

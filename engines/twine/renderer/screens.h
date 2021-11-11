@@ -96,6 +96,7 @@ public:
 	 * @param index \a RESS.HQR entry index (starting from 0)
 	 * @param paletteIndex \a RESS.HQR entry index of the palette for the given image. This is often the @c index + 1
 	 * @param seconds number of seconds to delay
+	 * @return @c true if aborted
 	 */
 	bool loadImageDelay(TwineImage image, int32 seconds);
 
@@ -112,14 +113,15 @@ public:
 	void fadeOut(const uint32 *palette);
 
 	/**
-	 * Calculate a new color component according with an intensity
-	 * @param modifier color compenent
-	 * @param color color value
-	 * @param param unknown
-	 * @param intensity intensity value to adjust
-	 * @return new color component
+	 * Linear interpolation of the given value between start and end
+	 * @param value color component
+	 * @param start lower range
+	 * @param end upper range
+	 * @param t the location in given range
+	 * @return the lerped value
+	 * @note Doesn't clamp
 	 */
-	int32 crossDot(int32 modifier, int32 color, int32 param, int32 intensity);
+	int32 lerp(int32 value, int32 start, int32 end, int32 t);
 
 	/**
 	 * Adjust between two palettes

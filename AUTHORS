@@ -5,6 +5,7 @@ ScummVM Team
      Pawel Kolodziejski
      Eugene Sandulenko
      Einar Johan T. Somaaen
+     Lothar Serra Mari
 
   PR Office
   ---------
@@ -657,6 +658,7 @@ ScummVM Team
        Robin Watts                    - ARM assembly routines for nice
                                         speedups on several ports;
                                         improvements to the sound mixer
+       Trembyle                       - Archivist
 
   Website (code)
   --------------
@@ -673,7 +675,6 @@ ScummVM Team
      Eugene Sandulenko              - Forum, IRC channel, Screen Shots and
                                       Mailing list maintainer
      John Willis
-     Matan Bareket                  - Site maintainer
 
   Website (content)
   -----------------
@@ -699,6 +700,7 @@ ScummVM Team
      Jeremy Newman                  - Former webmaster
      Lionel Ulmer                   - Port: X11
      Won Star                       - Former GP32 porter
+     Matan Bareket                  - Website, Infrastructure, UI/UX
 
 Other contributions
 *******************

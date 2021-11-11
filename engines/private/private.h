@@ -168,11 +168,12 @@ public:
 	void initFuncs();
 
 	// User input
-	void selectPauseMovie(Common::Point);
+	void selectPauseGame(Common::Point);
 	void selectMask(Common::Point);
 	void selectExit(Common::Point);
 	void selectLoadGame(Common::Point);
 	void selectSaveGame(Common::Point);
+	void resumeGame();
 
 	// Cursors
 	bool cursorPauseMovie(Common::Point);
@@ -202,13 +203,7 @@ public:
 	Graphics::Surface *decodeImage(const Common::String &file);
 	const byte *decodePalette(const Common::String &name);
 	void loadImage(const Common::String &file, int x, int y);
-	void composeImagePalette(Graphics::Surface *surf, const byte *palette);
-	void composeImagePalette(const Graphics::Surface *surf, const byte *palette);
-	void includePalette(const byte *palette, int start);
-	int _paletteIndex;
-	Common::HashMap <uint32, int> _colorToIndex;
-	Common::HashMap <int, uint32> _indexToColor;
-	void drawScreenFrame();
+	void drawScreenFrame(const byte *videoPalette);
 
 	// Cursors
 	void changeCursor(const Common::String &);
@@ -222,11 +217,13 @@ public:
 	void fillRect(uint32, Common::Rect);
 	bool inMask(Graphics::Surface *, Common::Point);
 	uint32 _transparentColor;
-	Common::Rect screenRect;
+	Common::Rect _screenRect;
 	Common::String _framePath;
 	Graphics::Surface *_frameImage;
+	Graphics::Surface *_mframeImage;
 	byte *_framePalette;
 	Common::String _nextVS;
+	Common::String _currentVS;
 	Common::Point _origin;
 	void drawScreen();
 

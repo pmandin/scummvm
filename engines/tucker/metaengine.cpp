@@ -68,7 +68,7 @@ public:
 				Common::InSaveFile *in = g_system->getSavefileManager()->openForLoading(*file);
 				if (in) {
 					if (Tucker::TuckerEngine::readSavegameHeader(in, header) == Tucker::TuckerEngine::kSavegameNoError) {
-						saveList.push_back(SaveStateDescriptor(slot, header.description));
+						saveList.push_back(SaveStateDescriptor(this, slot, header.description));
 					}
 
 					delete in;
@@ -109,7 +109,7 @@ public:
 			return SaveStateDescriptor();
 		}
 
-		SaveStateDescriptor desc(slot, header.description);
+		SaveStateDescriptor desc(this, slot, header.description);
 
 		if (slot == Tucker::kAutoSaveSlot) {
 			bool autosaveAllowed = Tucker::TuckerEngine::isAutosaveAllowed(target);
@@ -144,6 +144,12 @@ public:
 
 		delete file;
 		return desc;
+	}
+
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (!target)
+			target = getEngineId();
+		return Tucker::generateGameStateFileName(target, saveGameIdx, saveGameIdx == kSavegameFilePattern);
 	}
 };
 

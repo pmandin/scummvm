@@ -24,6 +24,16 @@
 #define GROOVIE_SCRIPT_H
 
 #include "groovie/groovie.h"
+#ifdef ENABLE_GROOVIE2
+#include "groovie/logic/beehive.h"
+#include "groovie/logic/cake.h"
+#include "groovie/logic/gallery.h"
+#include "groovie/logic/mousetrap.h"
+#include "groovie/logic/othello.h"
+#include "groovie/logic/pente.h"
+#include "groovie/logic/triangle.h"
+#include "groovie/logic/winerack.h"
+#endif
 
 #include "common/random.h"
 #include "common/rect.h"
@@ -42,7 +52,6 @@ class CellGame;
 class Debugger;
 class GroovieEngine;
 class TlcGame;
-class T11hGame;
 
 class Script {
 	friend class Debugger;
@@ -134,7 +143,6 @@ private:
 	// Special classes depending on played game
 	CellGame *_cellGame;
 	TlcGame *_tlcGame;
-	T11hGame *_t11hGame;
 
 	// Helper functions
 	uint8 getCodeByte(uint16 address);
@@ -238,6 +246,7 @@ private:
 	void o_musicdelay();
 	void o_hotspot_outrect();
 	void o_stub56();
+	void o_wipemaskfromstring58();
 	void o_stub59();
 
 	void o2_bf0on();
@@ -257,6 +266,17 @@ private:
 	void o2_playsound();
 	void o2_check_sounds_overlays();
 	void o2_preview_loadgame();
+
+#ifdef ENABLE_GROOVIE2
+	BeehiveGame _beehive;
+	CakeGame _cake;
+	GalleryGame _gallery;
+	MouseTrapGame _mouseTrap;
+	OthelloGame _othello;
+	PenteGame _pente;
+	TriangleGame _triangle;
+	WineRackGame _wineRack;
+#endif
 };
 
 } // End of Groovie namespace

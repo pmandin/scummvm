@@ -163,7 +163,7 @@ bool MacFontFamily::load(Common::SeekableReadStream &stream) {
 			_ffBBoxes[i]._right  = stream.readSint16BE();
 			_ffBBoxes[i]._top    = stream.readSint16BE();
 
-			debug(10, "style: %d left: %g bottom: %g rigth: %g top: %g", _ffBBoxes[i]._style,
+			debug(10, "style: %d left: %g bottom: %g right: %g top: %g", _ffBBoxes[i]._style,
 					_ffBBoxes[i]._left / (double)(1<<12), _ffBBoxes[i]._bottom / (double)(1<<12),
 					_ffBBoxes[i]._right / (double)(1<<12), _ffBBoxes[i]._top / (double)(1<<12));
 		}
@@ -576,8 +576,7 @@ MacFONTFont *MacFONTFont::scaleFont(const MacFONTFont *src, int newSize, int sla
 	data._rowWords = newBitmapWidth;
 
 	uint bitImageSize = data._rowWords * data._fRectHeight;
-	data._bitImage = new byte[bitImageSize];
-	memset(data._bitImage, 0, bitImageSize * sizeof(byte));
+	data._bitImage = new byte[bitImageSize]();
 
 	int dstPitch = data._rowWords;
 

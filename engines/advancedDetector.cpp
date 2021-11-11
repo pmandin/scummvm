@@ -186,6 +186,16 @@ DetectedGame AdvancedMetaEngineDetection::toDetectedGame(const ADDetectedGame &a
 	game.hasUnknownFiles = adGame.hasUnknownFiles;
 	game.matchedFiles = adGame.matchedFiles;
 
+	// Now specify the computation method for each file entry.
+	// TODO: This could be potentially overridden by use of upper part of adGame.fileType
+	// so, individual files could have their own computation method
+	for (FilePropertiesMap::iterator file = game.matchedFiles.begin(); file != game.matchedFiles.end(); ++file) {
+		if (desc->flags & ADGF_MACRESFORK)
+			file->_value.md5prop = (MD5Properties)(file->_value.md5prop | kMD5MacResFork);
+		if (desc->flags & ADGF_TAILMD5)
+			file->_value.md5prop = (MD5Properties)(file->_value.md5prop | kMD5Tail);
+	}
+
 	if (extraInfo && !extraInfo->targetID.empty()) {
 		game.preferredTarget = generatePreferredTarget(desc, _maxAutogenLength, extraInfo->targetID);
 	} else {
@@ -486,10 +496,23 @@ namespace Common {
 	DECLARE_SINGLETON(MD5CacheManager);
 }
 
+// Sync with engines/game.cpp
+static char flagsToMD5Prefix(uint32 flags) {
+	if (flags & ADGF_MACRESFORK) {
+		if (flags & ADGF_TAILMD5)
+			return 'e';
+		return 'm';
+	}
+	if (flags & ADGF_TAILMD5)
+		return 't';
+
+	return 'f';
+}
+
+static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::FileMap &allFiles, const ADGameDescription &game, const Common::String fname, FileProperties &fileProps);
+
 bool AdvancedMetaEngineDetection::getFileProperties(const FileMap &allFiles, const ADGameDescription &game, const Common::String fname, FileProperties &fileProps) const {
-	// FIXME/TODO: We don't handle the case that a file is listed as a regular
-	// file and as one with resource fork.
-	Common::String hashname = Common::String::format("%s:%d", fname.c_str(), _md5Bytes);
+	Common::String hashname = Common::String::format("%c:%s:%d", flagsToMD5Prefix(game.flags), fname.c_str(), _md5Bytes);
 
 	if (MD5Man.contains(hashname)) {
 		fileProps.md5 = MD5Man.getMD5(hashname);
@@ -497,44 +520,21 @@ bool AdvancedMetaEngineDetection::getFileProperties(const FileMap &allFiles, con
 		return true;
 	}
 
-	if (game.flags & ADGF_MACRESFORK) {
-		FileMapArchive fileMapArchive(allFiles);
+	bool res = getFilePropertiesIntern(_md5Bytes, allFiles, game, fname, fileProps);
 
-		Common::MacResManager macResMan;
-
-		if (!macResMan.open(fname, fileMapArchive))
-			return false;
-
-		fileProps.md5 = macResMan.computeResForkMD5AsString(_md5Bytes);
-		fileProps.size = macResMan.getResForkDataSize();
-
-		if (fileProps.size != 0) {
-			MD5Man.setMD5(hashname, fileProps.md5);
-			MD5Man.setSize(hashname, fileProps.size);
-			return true;
-		}
+	if (res) {
+		MD5Man.setMD5(hashname, fileProps.md5);
+		MD5Man.setSize(hashname, fileProps.size);
 	}
 
-	if (!allFiles.contains(fname))
-		return false;
-
-	Common::File testFile;
-
-	if (!testFile.open(allFiles[fname]))
-		return false;
-
-	fileProps.md5 = Common::computeStreamMD5AsString(testFile, _md5Bytes);
-	fileProps.size = testFile.size();
-	MD5Man.setMD5(hashname, fileProps.md5);
-	MD5Man.setSize(hashname, fileProps.size);
-
-	return true;
+	return res;
 }
 
 bool AdvancedMetaEngine::getFilePropertiesExtern(uint md5Bytes, const FileMap &allFiles, const ADGameDescription &game, const Common::String fname, FileProperties &fileProps) const {
-	// FIXME/TODO: We don't handle the case that a file is listed as a regular
-	// file and as one with resource fork.
+	return getFilePropertiesIntern(md5Bytes, allFiles, game, fname, fileProps);
+}
 
+static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::FileMap &allFiles, const ADGameDescription &game, const Common::String fname, FileProperties &fileProps) {
 	if (game.flags & ADGF_MACRESFORK) {
 		FileMapArchive fileMapArchive(allFiles);
 
@@ -543,7 +543,7 @@ bool AdvancedMetaEngine::getFilePropertiesExtern(uint md5Bytes, const FileMap &a
 		if (!macResMan.open(fname, fileMapArchive))
 			return false;
 
-		fileProps.md5 = macResMan.computeResForkMD5AsString(md5Bytes);
+		fileProps.md5 = macResMan.computeResForkMD5AsString(md5Bytes, ((game.flags & ADGF_TAILMD5) != 0));
 		fileProps.size = macResMan.getResForkDataSize();
 
 		if (fileProps.size != 0)
@@ -558,6 +558,11 @@ bool AdvancedMetaEngine::getFilePropertiesExtern(uint md5Bytes, const FileMap &a
 	if (!testFile.open(allFiles[fname]))
 		return false;
 
+	if (game.flags & ADGF_TAILMD5) {
+		if (testFile.size() > md5Bytes)
+			testFile.seek(-(int64)md5Bytes, SEEK_END);
+	}
+
 	fileProps.size = testFile.size();
 	fileProps.md5 = Common::computeStreamMD5AsString(testFile, md5Bytes);
 	return true;
@@ -571,7 +576,7 @@ ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &pa
 	const ADGameDescription *g;
 	const byte *descPtr;
 
-	debugC(3, kDebugGlobalDetection, "Starting detection in dir '%s'", parent.getPath().c_str());
+	debugC(3, kDebugGlobalDetection, "Starting detection for engine '%s' in dir '%s'", getEngineId(), parent.getPath().c_str());
 
 	// Check which files are included in some ADGameDescription *and* whether
 	// they are present. Compute MD5s and file sizes for the available files.
@@ -580,18 +585,19 @@ ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &pa
 
 		for (fileDesc = g->filesDescriptions; fileDesc->fileName; fileDesc++) {
 			Common::String fname = Common::punycode_decodefilename(fileDesc->fileName);
+			Common::String key = Common::String::format("%c:%s", flagsToMD5Prefix(g->flags), fname.c_str());
 
-			if (filesProps.contains(fname))
+			if (filesProps.contains(key))
 				continue;
 
 			FileProperties tmp;
 			if (getFileProperties(allFiles, *g, fname, tmp)) {
-				debugC(3, kDebugGlobalDetection, "> '%s': '%s'", fname.c_str(), tmp.md5.c_str());
+				debugC(3, kDebugGlobalDetection, "> '%s': '%s' %ld", key.c_str(), tmp.md5.c_str(), long(tmp.size));
 			}
 
 			// Both positive and negative results are cached to avoid
 			// repeatedly checking for files.
-			filesProps[fname] = tmp;
+			filesProps[key] = tmp;
 		}
 	}
 
@@ -621,25 +627,26 @@ ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &pa
 		// Try to match all files for this game
 		for (fileDesc = game.desc->filesDescriptions; fileDesc->fileName; fileDesc++) {
 			Common::String tstr = Common::punycode_decodefilename(fileDesc->fileName);
+			Common::String key = Common::String::format("%c:%s", flagsToMD5Prefix(g->flags), tstr.c_str());
 
-			if (!filesProps.contains(tstr) || filesProps[tstr].size == -1) {
+			if (!filesProps.contains(key) || filesProps[key].size == -1) {
 				allFilesPresent = false;
 				break;
 			}
 
-			game.matchedFiles[tstr] = filesProps[tstr];
+			game.matchedFiles[tstr] = filesProps[key];
 
 			if (game.hasUnknownFiles)
 				continue;
 
-			if (fileDesc->md5 != nullptr && fileDesc->md5 != filesProps[tstr].md5) {
-				debugC(3, kDebugGlobalDetection, "MD5 Mismatch. Skipping (%s) (%s)", fileDesc->md5, filesProps[tstr].md5.c_str());
+			if (fileDesc->md5 != nullptr && fileDesc->md5 != filesProps[key].md5) {
+				debugC(3, kDebugGlobalDetection, "MD5 Mismatch. Skipping (%s) (%s)", fileDesc->md5, filesProps[key].md5.c_str());
 				game.hasUnknownFiles = true;
 				continue;
 			}
 
-			if (fileDesc->fileSize != -1 && fileDesc->fileSize != filesProps[tstr].size) {
-				debugC(3, kDebugGlobalDetection, "Size Mismatch. Skipping");
+			if (fileDesc->fileSize != -1 && fileDesc->fileSize != filesProps[key].size) {
+				debugC(3, kDebugGlobalDetection, "Size Mismatch. Skipping (%ld) (%ld)", long(fileDesc->fileSize), long(filesProps[key].size));
 				game.hasUnknownFiles = true;
 				continue;
 			}
@@ -684,6 +691,8 @@ ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &pa
 			 getPlatformDescription(g->platform), getLanguageDescription(g->language), i);
 		}
 	}
+
+	debugC(2, "Totally found %d matches", matched.size());
 
 	return matched;
 }

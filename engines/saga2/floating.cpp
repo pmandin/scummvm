@@ -25,6 +25,7 @@
  */
 
 #include "saga2/saga2.h"
+#include "saga2/detection.h"
 #include "saga2/floating.h"
 #include "saga2/objects.h"
 #include "saga2/imagcach.h"
@@ -181,6 +182,11 @@ void DecoratedWindow::setDecorations(
 		delete[] decorations;
 
 	decorations = new WindowDecoration[numDecorations];
+
+	if (g_vm->getGameId() == GID_DINO) {
+		warning("TODO: setDecorations() for Dino");
+		return;
+	}
 
 	//  For each "decorative panel" within the frame of the window
 
@@ -720,7 +726,7 @@ void drawFloatingWindows(gPort &port, const Point16 &offset, const Rect16 &clip)
 			oldExtent = bound(newExtent, oldExtent);
 			updateWindowSection(oldExtent);
 		} else {
-			//  Otherwise, update new and old positions seperately
+			//  Otherwise, update new and old positions separately
 
 			updateWindowSection(newExtent);
 			updateWindowSection(oldExtent);

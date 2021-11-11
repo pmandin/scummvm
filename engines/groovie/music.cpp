@@ -27,7 +27,6 @@
 #include "groovie/groovie.h"
 #include "groovie/resource.h"
 #include "groovie/logic/tlcgame.h"
-#include "groovie/logic/clangame.h"
 
 #include "backends/audiocd/audiocd.h"
 #include "common/config-manager.h"
@@ -772,8 +771,8 @@ void MusicPlayerTlc::updateVolume() {
 	_vm->_system->getMixer()->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, _userVolume * _gameVolume / 100);
 }
 
-void MusicPlayerTlc::unload() {
-	MusicPlayer::unload();
+void MusicPlayerTlc::unload(bool updateState) {
+	MusicPlayer::unload(updateState);
 
 	_vm->_system->getMixer()->stopHandle(_handle);
 	if (_file) {
@@ -808,8 +807,10 @@ bool MusicPlayerTlc::load(uint32 fileref, bool loop) {
 	if (_file->isOpen()) {
 		if (filename.hasSuffix(".m4a"))
 			seekStream = Audio::makeQuickTimeStream(_file, DisposeAfterUse::NO);
+#ifdef USE_MAD
 		else
 			seekStream = Audio::makeMP3Stream(_file, DisposeAfterUse::NO);
+#endif
 	} else {
 		delete _file;
 		_file = NULL;
@@ -837,12 +838,21 @@ bool MusicPlayerTlc::load(uint32 fileref, bool loop) {
 	return true;
 }
 
+// This a list of files for background music. This list is hardcoded in the Clandestiny player.
+const char *kClanMusicFiles[] = {
+	"mbf_arb1", "mbf_arm1", "mbf_bal1", "mbf_c2p2", "act18mus", "act15mus", "act21mus",
+	"act05mus", "act04mus", "act23mus", "act17mus", "act03mus", "act06mus", "act19mus",
+	"act07mus", "mbf_mne1", "act24mus", "act24mus", "act14mus", "act20mus", "act15mus",
+	"act13mus", "act08mus", "mbf_uph1", "mbf_uph1", "act19mus", "mbf_bol1", "mbf_cbk1",
+	"mbf_glf1", "mbf_bro1", "mbf_c1r1", "mbf_c1r1", "mbf_c1r1", "mbf_c1r1", "mbf_c2r1",
+	"mbf_c2r1", "mbf_c2r1", "mbf_c2r1", "mbf_c3r1", "mbf_c3r1", "mbf_c3r1", "mbf_c4r1",
+	"mbf_c4r1", "mbf_c1p2", "mbf_c3p3", "mbf_c1p3", "mbf_bro1", "mbf_c1p1", "act17mus",
+	"mbf_c2p2", "mbf_c2p1", "act10mus", "mbf_c1p1", "mbf_mne1", "mbf_c3p3", "act17mus",
+	"mbf_c3p2", "mbf_c3p1", "act25mus", "mbf_c4p2", "mbf_c4p1"
+};
+
 Common::String MusicPlayerClan::getFilename(uint32 fileref) {
-#ifdef ENABLE_GROOVIE2
-	return ClanGame::getClanMusicFilename(fileref);
-#else
-	return "";
-#endif
+	return kClanMusicFiles[fileref];
 }
 
 } // End of Groovie namespace

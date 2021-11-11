@@ -50,6 +50,9 @@ MadeEngine::MadeEngine(OSystem *syst, const MadeGameDescription *gameDesc) : Eng
 	_soundEnergyArray = 0;
 	_musicBeatStart = 0;
 	_cdTimeStart = 0;
+	_introMusicDigital = true;
+	if (ConfMan.hasKey("intro_music_digital"))
+		_introMusicDigital = ConfMan.getBool("intro_music_digital");
 
 	_rnd = new Common::RandomSource("made");
 
@@ -109,13 +112,7 @@ MadeEngine::~MadeEngine() {
 void MadeEngine::syncSoundSettings() {
 	Engine::syncSoundSettings();
 
-	bool mute = false;
-	if (ConfMan.hasKey("mute"))
-		mute = ConfMan.getBool("mute");
-
-	_music->setVolume(mute ? 0 : ConfMan.getInt("music_volume"));
-	_mixer->setVolumeForSoundType(Audio::Mixer::kPlainSoundType,
-									mute ? 0 : ConfMan.getInt("sfx_volume"));
+	_music->syncSoundSettings();
 }
 
 int16 MadeEngine::getTicks() {
@@ -254,7 +251,7 @@ void MadeEngine::handleEvents() {
 }
 
 Common::Error MadeEngine::run() {
-	_music = new MusicPlayer(getGameID() == GID_RTZ);
+	_music = new MusicPlayer(this, getGameID() == GID_RTZ);
 	syncSoundSettings();
 
 	// Initialize backend
@@ -313,7 +310,21 @@ Common::Error MadeEngine::run() {
 	_script->runScript(_dat->getMainCodeObjectIndex());
 #endif
 
+	_music->close();
+
 	return Common::kNoError;
+}
+
+void MadeEngine::pauseEngineIntern(bool pause) {
+	Engine::pauseEngineIntern(pause);
+
+	if (pause) {
+		if (_music)
+			_music->pause();
+	} else {
+		if (_music)
+			_music->resume();
+	}
 }
 
 } // End of namespace Made

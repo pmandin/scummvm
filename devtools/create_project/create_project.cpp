@@ -44,7 +44,6 @@
 #include "codeblocks.h"
 #include "msbuild.h"
 #include "msvc.h"
-#include "visualstudio.h"
 #include "xcode.h"
 
 #include <algorithm>
@@ -73,6 +72,13 @@ namespace {
  * @return Converted path.
  */
 std::string unifyPath(const std::string &path);
+
+/**
+ * Removes trailing slash from path if it exists
+ *
+ * @param path Path string.
+ */
+void removeTrailingSlash(std::string& path);
 
 /**
  * Display the help text for the program.
@@ -114,9 +120,7 @@ int main(int argc, char *argv[]) {
 
 	BuildSetup setup;
 	setup.srcDir = unifyPath(srcDir);
-
-	if (setup.srcDir.at(setup.srcDir.size() - 1) == '/')
-		setup.srcDir.erase(setup.srcDir.size() - 1);
+	removeTrailingSlash(setup.srcDir);
 
 	setup.filePrefix = setup.srcDir;
 	setup.outputDir = '.';
@@ -258,8 +262,7 @@ int main(int argc, char *argv[]) {
 			}
 
 			setup.filePrefix = unifyPath(argv[++i]);
-			if (setup.filePrefix.at(setup.filePrefix.size() - 1) == '/')
-				setup.filePrefix.erase(setup.filePrefix.size() - 1);
+			removeTrailingSlash(setup.filePrefix);
 		} else if (!std::strcmp(argv[i], "--output-dir")) {
 			if (i + 1 >= argc) {
 				std::cerr << "ERROR: Missing \"path\" parameter for \"--output-dir\"!\n";
@@ -267,9 +270,23 @@ int main(int argc, char *argv[]) {
 			}
 
 			setup.outputDir = unifyPath(argv[++i]);
-			if (setup.outputDir.at(setup.outputDir.size() - 1) == '/')
-				setup.outputDir.erase(setup.outputDir.size() - 1);
-
+			removeTrailingSlash(setup.outputDir);
+		} else if (!std::strcmp(argv[i], "--include-dir")) {
+			if (i + 1 >= argc) {
+				std::cerr << "ERROR: Missing \"path\" parameter for \"--include-dir\"!\n";
+				return -1;
+			}
+			std::string includeDir = unifyPath(argv[++i]);
+			removeTrailingSlash(includeDir);
+			setup.includeDirs.push_back(includeDir);
+		} else if (!std::strcmp(argv[i], "--library-dir")) {
+			if (i + 1 >= argc) {
+				std::cerr << "ERROR: Missing \"path\" parameter for \"--library-dir\"!\n";
+				return -1;
+			}
+			std::string libraryDir = unifyPath(argv[++i]);
+			removeTrailingSlash(libraryDir);
+			setup.libraryDirs.push_back(libraryDir);
 		} else if (!std::strcmp(argv[i], "--build-events")) {
 			setup.runBuildEvents = true;
 		} else if (!std::strcmp(argv[i], "--installer")) {
@@ -611,10 +628,7 @@ int main(int argc, char *argv[]) {
 
 		projectWarnings["sci"].push_back("4373");
 
-		if (msvcVersion == 9)
-			provider = new CreateProjectTool::VisualStudioProvider(globalWarnings, projectWarnings, msvcVersion, *msvc);
-		else
-			provider = new CreateProjectTool::MSBuildProvider(globalWarnings, projectWarnings, msvcVersion, *msvc);
+		provider = new CreateProjectTool::MSBuildProvider(globalWarnings, projectWarnings, msvcVersion, *msvc);
 
 		break;
 
@@ -678,6 +692,11 @@ std::string unifyPath(const std::string &path) {
 	return result;
 }
 
+void removeTrailingSlash(std::string& path) {
+	if (path.size() > 0 && path.at(path.size() - 1) == '/')
+		path.erase(path.size() - 1);
+}
+
 void displayHelp(const char *exe) {
 	using std::cout;
 
@@ -702,6 +721,8 @@ void displayHelp(const char *exe) {
 	        " --output-dir path          overwrite path, where the project files are placed\n"
 	        "                            By default this is \".\", i.e. the current working\n"
 	        "                            directory\n"
+			" --include-dir path         add a path to the include search path"
+			" --library-dir path         add a path to the library search path"
 	        "\n"
 	        "MSVC specific settings:\n"
 	        " --msvc-version version     set the targeted MSVC version. Possible values:\n";
@@ -1093,8 +1114,8 @@ const Feature s_features[] = {
 	{     "text-console", "USE_TEXT_CONSOLE_FOR_DEBUGGER", false, false, "Text console debugger" }, // This feature is always applied in xcode projects
 	{              "tts",                       "USE_TTS", false, true,  "Text to speech support"},
 	{"builtin-resources",             "BUILTIN_RESOURCES", false, true,  "include resources (e.g. engine data, fonts) into the binary"},
+	{   "detection-full",                "DETECTION_FULL", false, true,  "Include detection objects for all engines" },
 	{ "detection-static", "USE_DETECTION_FEATURES_STATIC", false, true,  "Static linking of detection objects for engines."},
-	{            "cxx11",                     "USE_CXX11", false, true,  "Compile with c++11 support"}
 };
 
 const Tool s_tools[] = {
@@ -1114,13 +1135,13 @@ const Tool s_tools[] = {
 
 const MSVCVersion s_msvc[] = {
 //    Ver    Name                     Solution                     Project    Toolset    LLVM
-	{  9,    "Visual Studio 2008",    "10.00",          "2008",     "4.0",     "v90",    "LLVM-vs2008" },
 	{ 10,    "Visual Studio 2010",    "11.00",          "2010",     "4.0",    "v100",    "LLVM-vs2010" },
 	{ 11,    "Visual Studio 2012",    "11.00",          "2012",     "4.0",    "v110",    "LLVM-vs2012" },
 	{ 12,    "Visual Studio 2013",    "12.00",          "2013",    "12.0",    "v120",    "LLVM-vs2013" },
 	{ 14,    "Visual Studio 2015",    "12.00",            "14",    "14.0",    "v140",    "LLVM-vs2014" },
 	{ 15,    "Visual Studio 2017",    "12.00",            "15",    "15.0",    "v141",    "llvm"        },
-	{ 16,    "Visual Studio 2019",    "12.00",    "Version 16",    "16.0",    "v142",    "llvm"        }
+	{ 16,    "Visual Studio 2019",    "12.00",    "Version 16",    "16.0",    "v142",    "llvm"        },
+	{ 17,    "Visual Studio 2022",    "12.00",    "Version 17",    "17.0",    "v143",    "llvm"        }
 };
 
 const char *s_msvc_arch_names[] = {"arm64", "x86", "x64"};
@@ -1571,10 +1592,15 @@ void ProjectProvider::createProject(BuildSetup &setup) {
 		ex.clear();
 		std::vector<std::string> detectionModuleDirs;
 		detectionModuleDirs.reserve(setup.engines.size());
+		bool detectAllEngines = getFeatureBuildState("detection-full", setup.features);
 
 		for (EngineDescList::const_iterator i = setup.engines.begin(), end = setup.engines.end(); i != end; ++i) {
 			// We ignore all sub engines here because they require no special handling.
 			if (isSubEngine(i->name, setup.engines)) {
+				continue;
+			}
+			// If we're not detecting all engines then ignore the disabled ones
+			if (!(detectAllEngines || i->enable)) {
 				continue;
 			}
 			detectionModuleDirs.push_back(setup.srcDir + "/engines/" + i->name);
@@ -2133,7 +2159,9 @@ void ProjectProvider::createEnginePluginsTable(const BuildSetup &setup) {
 		                   << "LINK_PLUGIN(" << engineName << ")\n"
 		                   << "#endif\n";
 
-		detectionTable << "LINK_PLUGIN(" << engineName << "_DETECTION)\n";
+		detectionTable << "#if defined(ENABLE_" << engineName << ") || defined(DETECTION_FULL)\n"
+					   << "LINK_PLUGIN(" << engineName << "_DETECTION)\n"
+					   << "#endif\n";
 	}
 }
 } // namespace CreateProjectTool

@@ -272,7 +272,7 @@ Common::Error BladeRunnerEngine::loadGameState(int slot) {
 
 	setTotalPlayTime(header._playTime);
 	// this essentially does something similar with setTotalPlayTime
-	// reseting and updating Blade Runner's _pauseStart and offset before starting a loaded game
+	// resetting and updating Blade Runner's _pauseStart and offset before starting a loaded game
 	_time->resetPauseStart();
 
 	loadGame(*saveFile, header._version);
@@ -350,7 +350,7 @@ Common::Error BladeRunnerEngine::run() {
 
 	_system->showMouse(true);
 
-	bool hasSavegames = !SaveFileManager::list(_targetName).empty();
+	bool hasSavegames = !SaveFileManager::list(getMetaEngine(), _targetName).empty();
 
 	if (!startup(hasSavegames)) {
 		// shutting down
@@ -2401,7 +2401,7 @@ void BladeRunnerEngine::autoSaveGame(int textId, bool endgame) {
 	}
 	_gameIsAutoSaving = true;
 
-	SaveStateList saveList = BladeRunner::SaveFileManager::list(getTargetName());
+	SaveStateList saveList = BladeRunner::SaveFileManager::list(getMetaEngine(), getTargetName());
 
 	// Find first available save slot
 	int slot = -1;

@@ -193,6 +193,7 @@ static const char *const selectorNameTable[] = {
 	"advanceCurIcon", // QFG4
 	"amount",       // QFG4
 	"cue",          // QFG4
+	"drop",         // QFG4
 	"getCursor",    // QFG4
 	"heading",      // QFG4
 	"moveSpeed",    // QFG4
@@ -322,6 +323,7 @@ enum ScriptPatcherSelectors {
 	SELECTOR_advanceCurIcon,
 	SELECTOR_amount,
 	SELECTOR_cue,
+	SELECTOR_drop,
 	SELECTOR_getCursor,
 	SELECTOR_heading,
 	SELECTOR_moveSpeed,
@@ -1797,8 +1799,9 @@ static const uint16 freddypharkasPatchIntroScaling[] = {
 	0x35, 0x0a,                      // ldi 0a
 	0xa3, 0x02,                      // sal local[2]
 	// start of new inner loop
-	0x39, 0x00,                      // pushi 00
-	0x43, 0x2c, 0x00,                // callk GameIsRestarting (add this to trigger our speed throttler)
+	0x78,                            // push1
+	0x76,                            // push0
+	0x43, 0x2c, 0x02,                // callk GameIsRestarting 02 (add this to trigger our speed throttler)
 	PATCH_ADDTOOFFSET(+47),          // skip almost all of inner loop
 	0x33, 0xca,                      // jmp [inner loop start]
 	PATCH_END
@@ -2168,9 +2171,54 @@ static const uint16 hoyle4PatchCrazyEightsSound[] = {
 	PATCH_END
 };
 
+// In Gin Rummy, sound 404 plays when undercutting the computer but it gets
+//  interrupted. layEmOut:changeState sets a half-second delay, which is long
+//  enough for the undercut sound when the computer wins, but not this one.
+//
+// We fix this by increasing the delay to a full second when playing sound 404.
+//
+// Applies to: All versions
+// Responsible method: layEmOut:changeState(11)
+static const uint16 hoyle4SignatureGinUndercutSound[] = {
+	0x30, SIG_UINT16(0x0027),          // bnt 0027
+	SIG_ADDTOOFFSET(+11),
+	0x30, SIG_UINT16(0x000e),          // bnt 000e
+	SIG_ADDTOOFFSET(+11),
+	0x32, SIG_UINT16(0x000b),          // jmp 000b
+	0x39, SIG_SELECTOR8(play),         // pushi play
+	0x78,                              // push1
+	SIG_MAGICDWORD,
+	0x38, SIG_UINT16(0x0194),          // pushi 0194
+	0x80, SIG_UINT16(0x012a),          // lag 012a
+	0x4a, 0x06,                        // send 06 [ sound play: 404 ]
+	0x35, 0x1e,                        // ldi 1e
+	0x65, 0x20,                        // aTop ticks [ ticks = 30 ]
+	0x32, SIG_UINT16(0x000c),          // jmp 000c [ toss, ret ]
+	SIG_END
+};
+
+static const uint16 hoyle4PatchGinUndercutSound[] = {
+	0x30, PATCH_UINT16(0x002a),        // bnt 002a
+	PATCH_ADDTOOFFSET(+11),
+	0x30, PATCH_UINT16(0x000d),        // bnt 000d
+	PATCH_ADDTOOFFSET(+11),
+	0x33, 0x0f,                        // jmp 0f
+	0x39, PATCH_SELECTOR8(play),       // pushi play
+	0x78,                              // push1
+	0x38, PATCH_UINT16(0x0194),        // pushi 0194
+	0x80, PATCH_UINT16(0x012a),        // lag 012a
+	0x4a, 0x06,                        // send 06 [ sound play: 404 ]
+	0x35, 0x3c,                        // ldi 3c
+	0x33, 0x02,                        // jmp 02 [ ticks = 60 ]
+	0x35, 0x1e,                        // ldi 1e
+	0x65, 0x20,                        // aTop ticks [ ticks = 30 ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                         patch
 static const SciScriptPatcherEntry hoyle4Signatures[] = {
 	{  true,   100, "crazy eights sound",                          1, hoyle4SignatureCrazyEightsSound,  hoyle4PatchCrazyEightsSound },
+	{  true,   400, "gin undercut sound",                          1, hoyle4SignatureGinUndercutSound,  hoyle4PatchGinUndercutSound },
 	{  true,   733, "bridge arithmetic against object",            1, hoyle4SignatureBridgeArithmetic,  hoyle4PatchBridgeArithmetic },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
@@ -2181,10 +2229,9 @@ static const SciScriptPatcherEntry hoyle4Signatures[] = {
 
 // Several scripts in Hoyle5 contain a subroutine which spins on kGetTime until
 // a certain number of ticks elapse. Since this wastes CPU and makes ScummVM
-// unresponsive, the kWait kernel function (which was removed in SCI2) is
-// reintroduced for Hoyle5, and the spin subroutines are patched here to call
-// that function instead.
-// Applies to at least: English Demo
+// unresponsive, we replace this with a call to kScummVMSleep for the requested
+// number of ticks.
+// Applies to at least: English Demo, English PC, English Mac
 static const uint16 hoyle5SignatureSpinLoop[] = {
 	SIG_MAGICDWORD,
 	0x76,                         // push0
@@ -2199,7 +2246,7 @@ static const uint16 hoyle5SignatureSpinLoop[] = {
 static const uint16 hoyle5PatchSpinLoop[] = {
 	0x78,                                     // push1
 	0x8f, 0x01,                               // lsp param[1]
-	0x43, kScummVMWaitId, PATCH_UINT16(0x02), // callk Wait, $2
+	0x43, kScummVMSleepId, PATCH_UINT16(0x02),// callk ScummVMSleep, $2
 	0x48,                                     // ret
 	PATCH_END
 };
@@ -3976,6 +4023,33 @@ static const SciScriptPatcherEntry gk1Signatures[] = {
 #pragma mark -
 #pragma mark Gabriel Knight 2
 
+// GK2 uses a kGetTime spin loop to delay for half a second while displaying
+//  the "bad" cursor when clicking an item on something it can't be used on.
+//  This leaves ScummVM unresponsive without displaying the cursor.
+//
+// We fix this by replacing the spin loop with a call to kScummVMSleep.
+//
+// Applies to: All versions
+// Responsible method: GKHotCursor:flashBad
+static const uint16 gk2FlashBadCursorSignature[] = {
+	0x8d, SIG_MAGICDWORD, 0x00,     // lst 00
+	0x76,                           // push0
+	0x43, 0x79, SIG_UINT16(0x0000), // callk GetTime 00
+	0x1e,                           // gt?
+	0x31, 0x02,                     // bnt 02 [ exit loop ]
+	0x33, 0xf4,                     // jmp f4 [ continue loop ]
+	SIG_END
+};
+
+static const uint16 gk2FlashBadCursorPatch[] = {
+	0x78,                           // push1
+	0x39, 0x1e,                     // pushi 1e [ half a second ]
+	0x43, kScummVMSleepId,          // callk ScummVMSleep 02
+	      PATCH_UINT16(0x0002),
+	0x32, PATCH_UINT16(0x0002),     // jmp 0002 [ exit loop ]
+	PATCH_END
+};
+
 // GK2's inventory scrolls smoothly when the mouse is held down in the original
 //  due to an inner loop in ScrollButton:track, but this causes slow scrolling
 //  in our interpreter since we throttle kFrameOut. The script's inner loop is
@@ -4423,6 +4497,7 @@ static const SciScriptPatcherEntry gk2Signatures[] = {
 	{  true,  8617, "fix wagner painting message",                         2, gk2WagnerPaintingMessageSignature, gk2WagnerPaintingMessagePatch },
 	{  true, 64928, "Narrator lockup fix",                                 1, sciNarratorLockupSignature,        sciNarratorLockupPatch },
 	{  true, 64928, "Narrator lockup fix",                                 1, sciNarratorLockupLineSignature,    sciNarratorLockupLinePatch },
+	{  true, 64962, "flash bad cursor spin loop",                          1, gk2FlashBadCursorSignature,        gk2FlashBadCursorPatch },
 	{  true, 64990, "increase number of save games (1/2)",                 1, sci2NumSavesSignature1,            sci2NumSavesPatch1 },
 	{  true, 64990, "increase number of save games (2/2)",                 1, sci2NumSavesSignature2,            sci2NumSavesPatch2 },
 	{  true, 64990, "disable change directory button",                     1, sci2ChangeDirSignature,            sci2ChangeDirPatch },
@@ -5675,8 +5750,9 @@ static const uint16 kq6SignatureTalkingInventory[] = {
 
 static const uint16 kq6PatchTalkingInventory[] = {
 	PATCH_ADDTOOFFSET(+2),
-	0x39, 0x00,                         // pushi 00
-	0x43, 0x2c, 0x00,                   // callk GameIsRestarting [ custom throttling ]
+	0x78,                               // push1
+	0x76,                               // push0
+	0x43, 0x2c, 0x02,                   // callk GameIsRestarting 02 [ custom throttling ]
 	0x34, PATCH_UINT16(0x0000),         // ldi 0000 [ exit loop ]
 	PATCH_END
 };
@@ -6579,7 +6655,7 @@ static const uint16 kq7BenchmarkPatch[] = {
 // maxes out the CPU for no reason, and keeps the engine from polling for
 // events (which may make the window appear nonresponsive to the OS).
 //
-// We replace the loop with a call to kWait().
+// We replace the loop with a call to kScummVMSleep.
 //
 // Applies to at least: KQ7 English 2.00b
 // Responsible method: KQ7CD::pragmaFail in script 0
@@ -6596,8 +6672,8 @@ static const uint16 kq7PragmaFailSpinSignature[] = {
 static const uint16 kq7PragmaFailSpinPatch[] = {
 	0x78,                                     // push1
 	0x39, 0x12,                               // pushi 18 (~300ms)
-	0x43, kScummVMWaitId, PATCH_UINT16(0x02), // callk Wait, 2
-	0x33, 0x16,                               // jmp [to setCursor]
+	0x43, kScummVMSleepId, PATCH_UINT16(0x02),// callk ScummVMSleep, 2
+	0x35, 0x00,                               // ldi 0 [ exit loop ]
 	PATCH_END
 };
 
@@ -10287,7 +10363,7 @@ static const SciScriptPatcherEntry phantasmagoriaSignatures[] = {
 
 // The game uses a spin loop when navigating to and from Curtis's computer in
 // the office, and when entering passwords, which causes the mouse to appear
-// unresponsive. Replace the spin loop with a call to ScummVM kWait.
+// unresponsive. Replace the spin loop with a call to kScummVMSleep.
 // Applies to at least: US English
 // Responsible method: Script 3000 localproc 2ee4, script 63019 localproc 4f04
 static const uint16 phant2WaitParam1Signature[] = {
@@ -10302,7 +10378,7 @@ static const uint16 phant2WaitParam1Signature[] = {
 static const uint16 phant2WaitParam1Patch[] = {
 	0x78,                                     // push1
 	0x8f, 0x01,                               // lsp param[1]
-	0x43, kScummVMWaitId, PATCH_UINT16(0x02), // callk Wait, 2
+	0x43, kScummVMSleepId, PATCH_UINT16(0x02),// callk ScummVMSleep, 2
 	0x48,                                     // ret
 	PATCH_END
 };
@@ -10330,7 +10406,7 @@ static const uint16 phant2SlowIFadePatch[] = {
 
 // The game uses a spin loop during music transitions which causes the mouse to
 // appear unresponsive during scene changes. Replace the spin loop with a call
-// to ScummVM kWait.
+// to kScummVMSleep.
 // Applies to at least: US English
 // Responsible method: P2SongPlyr::wait4Fade
 static const uint16 phant2Wait4FadeSignature[] = {
@@ -10345,7 +10421,7 @@ static const uint16 phant2Wait4FadeSignature[] = {
 static const uint16 phant2Wait4FadePatch[] = {
 	0x78,                                     // push1
 	0x8d, 0x00,                               // lst temp[0]
-	0x43, kScummVMWaitId, PATCH_UINT16(0x02), // callk Wait, 2
+	0x43, kScummVMSleepId, PATCH_UINT16(0x02),// callk ScummVMSleep, 2
 	0x48,                                     // ret
 	PATCH_END
 };
@@ -10417,13 +10493,13 @@ static const uint16 phant2RatboyPatch[] = {
 	0x78,                                     // push1
 	0x35, 0x1e,                               // ldi $1e
 	0x36,                                     // push
-	0x43, kScummVMWaitId, PATCH_UINT16(0x02), // callk Wait, $2
+	0x43, kScummVMSleepId, PATCH_UINT16(0x02),// callk ScummVMSleep, $2
 	0x33, 0x14,                               // jmp [to next outer loop]
 	PATCH_END
 };
 
 // The game uses a spin loop during the floating head easter egg, which causes
-//  the mouse to appear unresponsive. Replace the inner loop with kWait.
+//  the mouse to appear unresponsive. Replace the inner loop with kScummVMSleep.
 //
 // Applies to at least: US English
 // Responsible method: bigScript:changeState
@@ -10441,7 +10517,7 @@ static const uint16 phant2FloatingHeadSignature[] = {
 static const uint16 phant2FloatingHeadPatch[] = {
 	0x78,                                     // push1
 	0x39, 0x3c,                               // pushi 3c [ 1 second ]
-	0x43, kScummVMWaitId, PATCH_UINT16(0x02), // callk Wait, 2
+	0x43, kScummVMSleepId, PATCH_UINT16(0x02),// callk ScummVMSleep, 2
 	0x33, 0x04,                               // jmp 04
 	PATCH_END
 };
@@ -10557,7 +10633,7 @@ static const uint16 phant2SlowScrollSignature[] = {
 static const uint16 phant2SlowScrollPatch[] = {
 	0x78,                                     // push1
 	0x39, 0x03,                               // pushi 3
-	0x43, kScummVMWaitId, PATCH_UINT16(0x02), // callk Wait, 2
+	0x43, kScummVMSleepId, PATCH_UINT16(0x02),// callk ScummVMSleep, 2
 	0x33, 0x13,                               // jmp [end of loop]
 	PATCH_END
 };
@@ -13262,23 +13338,23 @@ static const uint16 qfg3SignatureCombatSpeedThrottling1[] = {
 
 static const uint16 qfg3PatchCombatSpeedThrottling1[] = {
 	0x76,                               // push0  (no link, freed +2 bytes)
-	0x43, 0x42, 0x00,                   // callk GetTime, 0d
+	0x43, 0x42, 0x00,                   // callk GetTime, 00
 	0xa1, 0x58,                         // sag global[88] (no push, leave time in acc)
 	0x8b, 0x01,                         // lsl local[1] (stack up the local instead, freed +1 byte)
+	0xa3, 0x01,                         // sal local[1] (update with new time)
 	0x1c,                               // ne?
-	0x31, 0x0c,                         // bnt 12d [after sal]
+	0x31, 0x08,                         // bnt 08 [ GameIsRestarting  0 ]
 										//
 	0x81, 0xd2,                         // lag global[210] (load into acc instead of stack)
 	0x76,                               // push0 (push0 instead of ldi 0, freed +1 byte)
 	0x22,                               // lt? (flip the comparison)
-	0x31, 0x06,                         // bnt 6d [after sal]
+	0x31, 0x02,                         // bnt 02 [ GameIsRestarting  0 ]
 										//
 	0xe1, 0xd2,                         // -ag global[210]
-	0x81, 0x58,                         // lag global[88]
-	0xa3, 0x01,                         // sal local[1]
-
-	0x76,                               // push0 (0 call args)
-	0x43, 0x2c, 0x00,                   // callk GameIsRestarting, 0d (add this to trigger our speed throttler)
+										//
+	0x39, 0x01,                         // push 01
+	0x76,                               // push0
+	0x43, 0x2c, 0x02,                   // callk GameIsRestarting, 02 (add this to trigger our speed throttler)
 	PATCH_END
 };
 
@@ -17772,6 +17848,158 @@ static const uint16 qfg4BoneCageTellerPatch[] = {
 	PATCH_END
 };
 
+// When finding the battle axe in the wraith mound in room 575, the inventory
+//  view isn't updated from the old sword. theSword:show contains the logic to
+//  set the loop and cel based on the state property but this code doesn't run.
+//  hero:get also contains this logic but it also doesn't run since a fighter
+//  already has the sword at this point.
+//
+// We fix this by replacing a redundant inventory check with a call to hero:drop
+//  so that the sword is removed from and re-added to inventory. This causes
+//  hero:get to update theSword's cel and loop based on the new state property.
+//  This patch avoids touching the final bnt instruction as that instruction's
+//  size is different in the NRS fan patch.
+//
+// Applies to: All versions
+// Responsible method: sSearch:changeState(4)
+static const uint16 qfg4BattleAxeViewSignature[] = {
+	0x7a,                               // push2
+	SIG_ADDTOOFFSET(+13),
+	SIG_MAGICDWORD,
+	0x38, SIG_SELECTOR16(has),          // pushi has
+	0x78,                               // push1
+	0x39, 0x13,                         // pushi 13 [ theSword ]
+	0x81, 0x00,                         // lag 00
+	0x4a, SIG_UINT16(0x0006),           // send 06 [ hero has: 19 ]
+	0x18,                               // not
+	SIG_END                             // bnt [ skips hero get: 19 1 ]
+};
+
+static const uint16 qfg4BattleAxeViewPatch[] = {
+	PATCH_ADDTOOFFSET(+14),
+	0x38, PATCH_SELECTOR16(drop),       // pushi drop [ drop theSword, forcing cel refresh ]
+	PATCH_ADDTOOFFSET(+8),
+	0x00,                               // bnot [ set acc to true, don't skip hero get: 19 1 ]
+	PATCH_END
+};
+
+// When a magic user searches the wraith mound in room 590 they find metal armor
+//  but the inventory view isn't updated from the leather armor. As with the
+//  battle axe patch above, theArmor:show and hero:get contain the logic to
+//  update this view but neither method runs.
+//
+// We fix this like the battle axe by calling hero:drop and hero:get to update
+//  the armor's view based on its new state property.
+//
+// Applies to: All versions
+// Responsible method: sSearch:changeState(4)
+static const uint16 qfg4MetalArmorViewSignature[] = {
+	SIG_MAGICDWORD,
+	0x38, SIG_SELECTOR16(has),          // pushi has
+	0x78,                               // push1
+	0x39, 0x11,                         // pushi 11 [ theArmor ]
+	0x81, 0x00,                         // lag 00
+	0x4a, SIG_UINT16(0x0006),           // send 06 [ hero has: 17 ]
+	0x18,                               // not
+	SIG_END                             // bnt [ skips hero get: 17 1 ]
+};
+
+static const uint16 qfg4MetalArmorViewPatch[] = {
+	0x38, PATCH_SELECTOR16(drop),       // pushi drop [ drop theArmor, forcing cel refresh ]
+	PATCH_ADDTOOFFSET(+8),
+	0x00,                               // bnot [ set acc to true, don't skip hero get: 17 1 ]
+	PATCH_END
+};
+
+
+// When finding the magic sword in the wraith mound in room 575, the inventory
+//  view isn't updated from the old sword. theSword:show contains the logic to
+//  set the loop and cel based on the state property but this code doesn't run.
+//
+// We fix this by setting the cel when updating the sword's state. The loop is
+//  zero for all sword states and doesn't need to be updated.
+//
+// Applies to: All versions
+// Responsible method: sSearch:changeState(4)
+static const uint16 qfg4MagicSwordViewSignature[] = {
+	0x3c,                               // dup
+	0x35, 0x03,                         // ldi 03
+	0x1a,                               // eq?
+	0x30, SIG_ADDTOOFFSET(+2),          // bnt [ end of switch ]
+	SIG_MAGICDWORD,
+	0x39, SIG_SELECTOR8(state),         // pushi state
+	0x78,                               // push1
+	0x39, 0x03,                         // pushi 03
+	SIG_ADDTOOFFSET(+10),
+	0x4a, SIG_UINT16(0x0006),           // send 06 [ theSword state: 3 (magic sword) ]
+	SIG_END
+};
+
+static const uint16 qfg4MagicSwordViewPatch[] = {
+	0x38, PATCH_SELECTOR16(cel),        // pushi cel
+	0x78,                               // push1
+	0x38, PATCH_UINT16(0x000e),         // pushi 000e
+	PATCH_ADDTOOFFSET(+15),
+	0x4a, PATCH_UINT16(0x000c),         // send 0c [ theSword cel: 14 state: 3 (magic sword) ]
+	PATCH_END
+};
+
+// When the Burgomeister gives the magic shield, the inventory view isn't
+//  updated from the old shield. theShield:show contains the logic to set the
+//  loop and cel based on the state property but this code doesn't run.
+//
+// We fix this by setting the loop and cel when updating the shield's state.
+//
+// Applies to: All versions
+// Responsible method: sGetShield:changeState(3)
+static const uint16 qfg4MagicShieldViewSignature[] = {
+	SIG_MAGICDWORD,
+	0x39, SIG_SELECTOR8(state),         // pushi state
+	0x78,                               // push1
+	0x78,                               // push1
+	SIG_ADDTOOFFSET(+10),
+	0x4a, SIG_UINT16(0x0006),           // send 06 [ theShield state: 1 (magic shield) ]
+	0x38, SIG_SELECTOR16(dispose),      // pushi dispose
+	0x76,                               // push0
+	0x38, SIG_ADDTOOFFSET(+2),          // pushi actions
+	0x76,                               // push0
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa burgoMeister
+	0x4a, SIG_UINT16(0x0004),           // send 04 [ burgoMeter actions? (burgoTeller) ]
+	0x4a, SIG_UINT16(0x0004),           // send 04 [ burgoTeller dispose: ]
+	0x38, SIG_SELECTOR16(dispose),      // pushi dispose
+	0x76,                               // push0
+	0x38, SIG_ADDTOOFFSET(+2),          // pushi actions
+	0x76,                               // push0
+	0x81, 0x00,                         // lag 00
+	0x4a, SIG_UINT16(0x0004),           // send 04 [ hero actions? (heroTeller) ]
+	0x4a, SIG_UINT16(0x0004),           // send 04 [ heroTeller dispose: ]
+	SIG_ADDTOOFFSET(+32),
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa  heroTeller
+	SIG_ADDTOOFFSET(+23),
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa  burgoTeller
+	SIG_END
+};
+
+static const uint16 qfg4MagicShieldViewPatch[] = {
+	PATCH_ADDTOOFFSET(+14),
+	0x38, PATCH_SELECTOR16(loop),       // pushi loop
+	0x78,                               // push1
+	0x38, PATCH_UINT16(0x0008),         // pushi 0008
+	0x38, PATCH_SELECTOR16(cel),        // pushi cel
+	0x78,                               // push1
+	0x39, 0x0d,                         // pushi 0d
+	0x4a, PATCH_UINT16(0x0012),         // send 12 [ theShield state: 1 (magic shield) loop: 8 cel: 13 ]
+	0x38, PATCH_SELECTOR16(dispose),    // pushi dispose
+	0x76,                               // push0
+	0x72, PATCH_GETORIGINALUINT16(+109),// lofsa burgoTeller
+	0x4a, PATCH_UINT16(0x0004),         // send 04 [ burgoTeller dispose: ]
+	0x38, PATCH_SELECTOR16(dispose),    // pushi dispose
+	0x76,                               // push0
+	0x72, PATCH_GETORIGINALUINT16(+83), // lofsa heroTeller
+	0x4a, PATCH_UINT16(0x0004),         // send 04 [ heroTeller dispose: ]
+	PATCH_END
+};
+
 //          script, description,                                     signature                      patch
 static const SciScriptPatcherEntry qfg4Signatures[] = {
 	{  true,     0, "prevent autosave from deleting save games",   1, qfg4AutosaveSignature,         qfg4AutosavePatch },
@@ -17792,6 +18020,9 @@ static const SciScriptPatcherEntry qfg4Signatures[] = {
 	{  true,    51, "fix necrotaur blackout",                      1, qfg4NecrotaurBlackoutSignature,qfg4NecrotaurBlackoutPatch },
 	{  true,    51, "CD: fix necrotaur capture",                   3, qfg4NecrotaurCaptureSignature, qfg4NecrotaurCapturePatch },
 	{  true,    53, "NRS: fix wraith lockup",                      1, qfg4WraithLockupNrsSignature,  qfg4WraithLockupNrsPatch },
+	{  true,    53, "fix battle axe view",                         1, qfg4BattleAxeViewSignature,    qfg4BattleAxeViewPatch },
+	{  true,    53, "fix metal armor view",                        1, qfg4MetalArmorViewSignature,   qfg4MetalArmorViewPatch },
+	{  true,    53, "fix magic sword view",                        1, qfg4MagicSwordViewSignature,   qfg4MagicSwordViewPatch },
 	{  true,    83, "fix incorrect array type",                    1, qfg4TrapArrayTypeSignature,    qfg4TrapArrayTypePatch },
 	{  true,   140, "fix character selection",                     1, qfg4CharacterSelectSignature,  qfg4CharacterSelectPatch },
 	{  true,   250, "fix hectapus death lockup",                   1, qfg4HectapusDeathSignature,    qfg4HectapusDeathPatch },
@@ -17801,6 +18032,7 @@ static const SciScriptPatcherEntry qfg4Signatures[] = {
 	{  true,   290, "fix chase repeating",                         1, qfg4ChaseRepeatsSignature,     qfg4ChaseRepeatsPatch },
 	{  true,   290, "fix bridge secret exit",                      1, qfg4BridgeSecretExitSignature, qfg4BridgeSecretExitPatch },
 	{  true,   300, "fix empty burgomeister room teller",          1, qfg4EmptyBurgoRoomSignature,   qfg4EmptyBurgoRoomPatch },
+	{  true,   300, "fix magic shield view",                       1, qfg4MagicShieldViewSignature,  qfg4MagicShieldViewPatch },
 	{  true,   320, "fix pathfinding at the inn",                  1, qfg4InnPathfindingSignature,   qfg4InnPathfindingPatch },
 	{  true,   320, "fix talking to absent innkeeper",             1, qfg4AbsentInnkeeperSignature,  qfg4AbsentInnkeeperPatch },
 	{  true,   320, "CD: fix domovoi never appearing",             1, qfg4DomovoiInnSignature,       qfg4DomovoiInnPatch },
@@ -21923,8 +22155,7 @@ void ScriptPatcher::initSignature(const SciScriptPatcherEntry *patchTable) {
 	while (curEntry->signatureData) {
 		patchEntryCount++; curEntry++;
 	}
-	_runtimeTable = new SciScriptPatcherRuntimeEntry[patchEntryCount];
-	memset(_runtimeTable, 0, sizeof(SciScriptPatcherRuntimeEntry) * patchEntryCount);
+	_runtimeTable = new SciScriptPatcherRuntimeEntry[patchEntryCount]();
 
 	curEntry = patchTable;
 	curRuntimeEntry = _runtimeTable;

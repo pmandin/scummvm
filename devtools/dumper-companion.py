@@ -102,12 +102,15 @@ def decode_macjapanese(text: ByteString) -> str:
         elif (0x81 <= hi <= 0x9F) or (0xE0 <= hi <= 0xFC):  # two-byte sequence
             lo = next(i_text, None)
             if lo is None:
-                raise Exception("Mac Japanese sequence missing second byte")
-            hi_key = hex(hi)[2:]
+                print(f"WARNING: Mac Japanese sequence missing second byte 0x{hi:02x}, decoding as MacRoman")
+                res += int.to_bytes(hi, 1, 'little').decode('mac-roman')
+                hi = next(i_text, None)
+                continue
+            hi_key = f'{hi:02x}'
             lo_key = lo - 0x40
             if decode_map.get(hi_key) is None or decode_map[hi_key][lo_key] is None:
                 raise Exception(
-                    f"No mapping for Mac Japanese sequence 0x{hi_key}{hex(lo)[2:]}"
+                    f"No mapping for MacJapanese sequence 0x{hi_key}{lo:02x}"
                 )
             assert_tmp = decode_map[hi_key][lo_key]
             assert assert_tmp  # mypy assert
@@ -116,14 +119,14 @@ def decode_macjapanese(text: ByteString) -> str:
             res += "\u00A0"
         elif 0xA1 <= hi <= 0xDF:  # Katakana
             res += chr(hi - 0xA1 + 0xFF61)
-        elif hi == 0xFD:  # copyrig  ht sign
+        elif hi == 0xFD:  # copyright sign
             res += "\u00A9"
         elif hi == 0xFE:  # trade mark sign
             res += "\u2122"
         elif hi == 0xFF:  # halfwidth horizontal ellipsis
             res += "\u2026\uF87F"
         else:
-            raise Exception(f"No mapping for Mac Japanese sequece {hex(hi)}")
+            raise Exception(f"No mapping for MacJapanese sequence 0x{hi:02x}")
         hi = next(i_text, None)
     return res
 
@@ -132,8 +135,7 @@ def file_to_macbin(f: machfs.File, name: ByteString) -> bytes:
     oldFlags = f.flags >> 8
     newFlags = f.flags & 0xFF
     macbin = pack(
-        ">xB63s4s4sBxHHHBxIIIIHB14xIHBB",
-        len(name),
+        ">x64p4s4sBxHHHBxIIIIHB14xIHBB",
         name,
         f.type,
         f.creator,
@@ -380,7 +382,7 @@ def collect_forks(args: argparse.Namespace) -> int:
                 file = machfs.File()
 
                 # Set the file times and convert them to Mac epoch
-                info = os.stat(filename)
+                info = os.stat(filepath)
                 file.crdate = 2082844800 + int(info.st_birthtime)
                 file.mddate = 2082844800 + int(info.st_mtime)
 
@@ -481,7 +483,10 @@ def generate_parser() -> argparse.ArgumentParser:
 if __name__ == "__main__":
     parser = generate_parser()
     args = parser.parse_args()
-    exit(args.func(args))
+    try:
+        exit(args.func(args))
+    except AttributeError:
+        parser.error("too few arguments")
 
 ### Test functions
 
@@ -498,6 +503,9 @@ def test_decode_mac_japanese():
         [
             b"QuickTime\xfe \x89\xb9\x90F\x91\xce\x89\x9e\x95\\",
             "QuickTime™ 音色対応表",
+        ],
+        [
+            b"Asant\x8e", "Asanté"
         ]
     ]
     for input, expected in checks:
@@ -529,6 +537,18 @@ def test_decode_name():
         ["ends with dot .", "xn--ends with dot .-"],
         ["ends with space ", "xn--ends with space -"],
         ["バッドデイ(Power PC)", "xn--(Power PC)-jx4ilmwb1a7h"],
+        ["Hello*", "xn--Hello-la10a"],
+        ["File I/O", "xn--File IO-oa82b"],
+        ["HDにｺﾋﾟｰして下さい。G3", "xn--HDG3-rw3c5o2dpa9kzb2170dd4tzyda5j4k"],
+        ["Buried in Time™ Demo", "xn--Buried in Time Demo-eo0l"],
+        ["•Main Menu", "xn--Main Menu-zd0e"],
+        ["Spaceship Warlock™", "xn--Spaceship Warlock-306j"],
+        ["ワロビージャックの大冒険<デモ>", "xn--baa0pja0512dela6bueub9gshf1k1a1rt742c060a2x4u"],
+        ["Jönssonligan går på djupet.exe", "xn--Jnssonligan gr p djupet.exe-glcd70c"],
+        ["Jönssonligan.exe", "xn--Jnssonligan.exe-8sb"],
+        ["G3フォルダ", "xn--G3-3g4axdtexf"],
+        ["Where \\ Do <you> Want / To: G* ? ;Unless=nowhere,or|\"(everything)/\":*|\\?%<>,;=", "xn--Where  Do you Want  To G  ;Unless=nowhere,or(everything),;=-5baedgdcbtamaaaaaaaaa99woa3wnnmb82aqb71ekb9g3c1f1cyb7bx6rfcv2pxa"],
+        ["Buried in Timeｪ Demo", "xn--Buried in Time Demo-yp97h"],
     ]
     for input, output in checks:
         assert punyencode(input) == output
@@ -542,6 +562,7 @@ def test_needs_punyencoding():
         ["バッドデイ(Power PC)", False],
         ["ends_with_dot .", True],
         ["ends_with_space ", True],
+        ["Big[test]", False]
     ]
     for input, expected in checks:
         assert needs_punyencoding(input) == expected

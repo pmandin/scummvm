@@ -59,8 +59,13 @@ public:
 		return Common::kNoError;
 	}
 
-	static Common::String generateGameStateFileName(const char *target, int slot) {
-		return Common::String::format("%s.%02d", target, slot);
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (!target)
+			target = getEngineId();
+		if (saveGameIdx == kSavegameFilePattern)
+			return Common::String::format("%s.##", target);
+		else
+			return Common::String::format("%s.%02d", target, saveGameIdx);
 	}
 
 	SaveStateList listSaves(const char *target) const override {
@@ -81,7 +86,7 @@ public:
 				in->seek(0);
 				in->read(buf, 24);
 				buf[24] = 0;
-				saveList.push_back(SaveStateDescriptor(slot, buf));
+				saveList.push_back(SaveStateDescriptor(this, slot, buf));
 			}
 		}
 		// Sort saves based on slot number.
@@ -94,12 +99,11 @@ public:
 	}
 
 	void removeSaveState(const char *target, int slot) const override {
-		Common::String filename = generateGameStateFileName(target, slot);
-		g_system->getSavefileManager()->removeSavefile(filename);
+		g_system->getSavefileManager()->removeSavefile(getSavegameFile(slot, target));
 	}
 
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override {
-		Common::String filename = generateGameStateFileName(target, slot);
+		Common::String filename = getSavegameFile(slot, target);
 		Common::ScopedPtr<Common::InSaveFile> in(g_system->getSavefileManager()->openForLoading(filename));
 		if (!in)
 			return SaveStateDescriptor();
@@ -113,9 +117,9 @@ public:
 
 		in->seek(TeenAgent::saveStateSize);
 		if (!Graphics::checkThumbnailHeader(*in))
-			return SaveStateDescriptor(slot, desc);
+			return SaveStateDescriptor(this, slot, desc);
 
-		SaveStateDescriptor ssd(slot, desc);
+		SaveStateDescriptor ssd(this, slot, desc);
 
 		//checking for the thumbnail
 		Graphics::Surface *thumbnail;

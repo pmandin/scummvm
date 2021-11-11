@@ -66,7 +66,7 @@ public:
 				description = stream.readString();
 			}
 
-			saveList.push_back(SaveStateDescriptor(slot, description));
+			saveList.push_back(SaveStateDescriptor(this, slot, description));
 		}
 
 		Common::sort(saveList.begin(), saveList.end(), SaveStateDescriptorSlotComparator());
@@ -117,6 +117,15 @@ public:
 	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override {
 		*engine = new StarkEngine(syst, desc);
 		return Common::kNoError;
+	}
+
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (!target)
+			target = getEngineId();
+		if (saveGameIdx == kSavegameFilePattern)
+			return Common::String::format("%s-###.tlj", target);
+		else
+			return StarkEngine::formatSaveName(target, saveGameIdx);
 	}
 };
 

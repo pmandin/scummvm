@@ -39,7 +39,7 @@
 
 namespace Kyra {
 
-#define RESFILE_VERSION 110
+#define RESFILE_VERSION 111
 
 namespace {
 bool checkKyraDat(Common::SeekableReadStream *file) {
@@ -87,15 +87,16 @@ byte getGameID(const GameFlags &flags) {
 }
 
 const IndexTable iLanguageTable[] = {
-	{ Common::EN_ANY, 1 },
-	{ Common::FR_FRA, 2 },
-	{ Common::DE_DEU, 3 },
-	{ Common::ES_ESP, 4 },
-	{ Common::IT_ITA, 5 },
-	{ Common::JA_JPN, 6 },
-	{ Common::RU_RUS, 7 },
-	{ Common::HE_ISR, 8 },
-	{ Common::ZH_CNA, 9 },
+	{ Common::EN_ANY,  1 },
+	{ Common::FR_FRA,  2 },
+	{ Common::DE_DEU,  3 },
+	{ Common::ES_ESP,  4 },
+	{ Common::IT_ITA,  5 },
+	{ Common::JA_JPN,  6 },
+	{ Common::RU_RUS,  7 },
+	{ Common::HE_ISR,  8 },
+	{ Common::ZH_CNA,  9 },
+	{ Common::ZH_TWN, 10 },
 	{ -1, -1 }
 };
 
@@ -817,9 +818,7 @@ void KyraEngine_LoK::initStaticResource() {
 	const char *const *soundFilesIntro = _staticres->loadStrings(k1AudioTracksIntro, soundFilesIntroSize);
 	const int32 *cdaTable = (const int32 *)_staticres->loadRawData(k1TownsCDATable, cdaTableSize);
 
-	// FIXME: It seems Kyra1 MAC CD includes AdLib and MIDI music and sfx, thus we enable
-	// support for those for now. (Based on ticket #9008 "Support for Mac Kyrandia 1 CD" by satz).
-	if (_flags.platform == Common::kPlatformDOS || _flags.platform == Common::kPlatformMacintosh) {
+	if (_flags.platform == Common::kPlatformDOS) {
 		SoundResourceInfo_PC resInfoIntro(soundFilesIntro, soundFilesIntroSize);
 		SoundResourceInfo_PC resInfoIngame(soundFiles, soundFilesSize);
 		_sound->initAudioResourceInfo(kMusicIntro, &resInfoIntro);
@@ -1289,6 +1288,30 @@ const int8 KyraEngine_LoK::_amigaTrackMap[] = {
 };
 
 const int KyraEngine_LoK::_amigaTrackMapSize = ARRAYSIZE(KyraEngine_LoK::_amigaTrackMap);
+
+const int8 KyraEngine_LoK::_macHQTrackMap[] = {
+	 0,  1, 39, 26, 31, 30, 33, 33,
+	34, 17, 27, 42, 37, 29, 25, 24,
+	23, 40, 38, 35, 28, 21, 41, 15,
+	 3, 15, 43, 25, 33, 21, 30, 22,
+	15,  3, 33, 11, 12, 13, 14, 36,
+	36, 36,  3,  3,  3, 44,  3, 45,
+	 3,  3,  3,  3,  3,  3, 33,  0
+};
+
+const int KyraEngine_LoK::_macHQTrackMapSize = ARRAYSIZE(KyraEngine_LoK::_macHQTrackMap);
+
+const int8 KyraEngine_LoK::_macLQTrackMap[] = {
+	 0,  1, 32, 26, 31, 30, 33, 33,
+	32, 17, 27, 32, 25, 29, 25, 24,
+	23, 26, 26, 30, 28, 21, 21, 15,
+	 3, 15, 23, 25, 33, 21, 30, 22,
+	15,  3, 33, 11, 12, 13, 14, 22,
+	22, 22,  3,  3,  3, 23,  3, 23,
+	 3,  3,  3,  3,  3,  3, 33,  0
+};
+
+const int KyraEngine_LoK::_macLQTrackMapSize = ARRAYSIZE(KyraEngine_LoK::_macLQTrackMap);
 
 // kyra engine v2 static data
 

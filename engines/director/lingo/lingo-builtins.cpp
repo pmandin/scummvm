@@ -1059,6 +1059,11 @@ void LB::b_closeResFile(int nargs) {
 }
 
 void LB::b_closeXlib(int nargs) {
+	if (nargs ==0) { // Close all Xlibs
+		g_lingo->closeOpenXLibs();
+		return;
+	}
+
 	Datum d = g_lingo->pop();
 	Common::String xlibName = d.asString();
 	g_lingo->closeXLib(xlibName);
@@ -1080,7 +1085,7 @@ void LB::b_getNthFileNameInFolder(int nargs) {
 	if (d.exists()) {
 		Common::FSList f;
 		if (!d.getChildren(f, Common::FSNode::kListAll)) {
-			warning("Cannot acces directory %s", path.c_str());
+			warning("Cannot access directory %s", path.c_str());
 		} else {
 			if ((uint)fileNum < f.size()) {
 				// here, we sort all the fileNames
@@ -1331,7 +1336,11 @@ void LB::b_preLoadCast(int nargs) {
 	// We always pretend we preloaded all cast
 	// Returning the number of the last cast successfully "loaded"
 
-	g_lingo->_theResult = g_lingo->pop();
+	if (nargs > 1) {
+		g_lingo->_theResult = g_lingo->pop();
+	} else {
+		g_lingo->_theResult = 1;
+	}
 
 	if (nargs == 2)
 		g_lingo->pop();

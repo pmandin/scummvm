@@ -181,7 +181,6 @@ _test_cxx11=no
 _debug_build=auto
 _release_build=auto
 _optimizations=auto
-_use_cxx11=yes
 _verbose_build=no
 _text_console=no
 _mt32emu=yes
@@ -284,7 +283,6 @@ add_feature vorbis "Vorbis file support" "_vorbis _tremor"
 add_feature zlib "zlib" "_zlib"
 add_feature lua "lua" "_lua"
 add_feature fribidi "FriBidi" "_fribidi"
-add_feature cxx11 "c++11" "_use_cxx11"
 add_feature test_cxx11 "Test C++11" "_test_cxx11"
 
 # Directories for installing ScummVM.
@@ -784,8 +782,8 @@ Usage: $0 [OPTIONS]...
 Configuration:
   -h, --help              display this help and exit
   --backend=BACKEND       backend to build (3ds, android, dc, dingux, ds, gcw0,
-                          gph, iphone, ios7, ios7-arm64, maemo, n64, null, openpandora,
-                          psp, psp2, samsungtv, sdl, switch, wii) [sdl]
+                          gph, iphone, ios7, ios7-arm64, maemo, n64, null, opendingux,
+                          openpandora, psp, psp2, samsungtv, sdl, switch, wii) [sdl]
 
 Installation directories:
   --prefix=PREFIX         install architecture-independent files in PREFIX
@@ -831,6 +829,7 @@ Special configuration feature:
                                            ios7-arm64 for Apple iPhone / iPad (iOS >= 7, 64-bit)
                                            maemo for Nokia Maemo
                                            n64 for Nintendo 64
+                                           opendingux for Opendingux Beta
                                            openpandora for OpenPandora
                                            ouya for OUYA
                                            ps3 for PlayStation 3
@@ -860,7 +859,6 @@ Optional Features:
   --enable-static          build a static binary instead of using shared objects
   --enable-detection-static  build detection features into executable (default)
   --enable-detection-dynamic build detection features into a library
-  --enable-c++11           build as C++11 if the compiler allows that
   --disable-debug          disable building with debugging symbols
   --enable-Werror          treat warnings as errors
   --enable-release         enable building in release mode (this activates
@@ -1335,12 +1333,6 @@ for ac_option in $@; do
 	--backend=*)
 		_backend=`echo $ac_option | cut -d '=' -f 2`
 		;;
-	--enable-c++11)
-		_use_cxx11=yes
-		;;
-	--disable-c++11)
-		_use_cxx11=no
-		;;
 	--enable-debug)
 		_debug_build=yes
 		;;
@@ -1584,7 +1576,7 @@ caanoo)
 	_host_cpu=arm
 	_host_alias=arm-none-linux-gnueabi
 	;;
-dingux | gcw0)
+dingux | gcw0 | opendingux)
 	_host_os=linux
 	_host_cpu=mipsel
 	_host_alias=mipsel-linux
@@ -1726,8 +1718,6 @@ switch)
 	datarootdir='${prefix}/data'
 	datadir='${datarootdir}'
 	docdir='${prefix}/doc'
-	# Switch SDK has C++11 constructs so we must enable it
-	_use_cxx11=yes
 	;;
 wasm32-*)
 	_endian=little # the endian check below fails, but emscripten is always little endian anyway
@@ -2046,6 +2036,23 @@ fi
 LD=$CXX
 
 #
+# Check whether the compiler supports C++11
+#
+echo_n "Checking if compiler supports C++11... "
+have_cxx11=no
+cat > $TMPC << EOF
+int main(int argc, char *argv[]) { if (argv == nullptr) return -1; else return 0; }
+EOF
+cc_check -std=c++11 && have_cxx11=yes
+echo $have_cxx11
+
+if test "$have_cxx11" = "no" ; then
+	echo
+	echo "ScummVM requires C++11 compiler support. Please ensure your compiler supports it"
+	exit 1
+fi
+
+#
 # Determine the compiler version
 #
 echocheck "compiler version"
@@ -2094,13 +2101,8 @@ if test "$have_gcc" = yes; then
 		cxx_version=`gcc_get_define __clang_version__`
 		cxx_version="`echo "${cxx_version}" | sed -e 's/"\([^ ]*\) .*/\1/'`"
 		cxx_version="clang $cxx_version, ok"
-	elif test "$_cxx_major" -eq 2 && test "$_cxx_minor" -ge 95 || \
-	   test "$_cxx_major" -gt 2 ; then
-		cxx_version="$cxx_version, ok"
-		cxx_verc_fail=no
 	else
-		cxx_version="$cxx_version, bad"
-		cxx_verc_fail=yes
+		cxx_version="GCC $cxx_version, ok"
 	fi
 elif test "$have_icc" = yes; then
 	cxx_version="`( $CXX -dumpversion ) 2>/dev/null`"
@@ -2114,35 +2116,33 @@ else
 		cxx_version="`echo "${cxx_version}" | sed -ne 's/^.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*$/\1/gp'`"
 		if test -z "${cxx_version}"; then
 			cxx_version="not found"
-			cxx_verc_fail=yes
 		fi
 		echo non-gcc compiler version ${cxx_version}
 	else
 		cxx_version="not found"
-		cxx_verc_fail=yes
-		echo found non-gcc compiler version ${cxx_version}
+		echo non-gcc compiler version ${cxx_version}
 	fi
+	cxx_verc_fail=yes
 
 	case $_host_os in
 		irix*)
 			case $cxx_version in
 				7.4.4*)
 					# We just assume this is SGI MIPSpro
+					cxx_version="assumed SGI MIPSpro $cxx_version, ok"
+					cxx_verc_fail=no
 					_cxx_major=7
 					_cxx_minor=4
-					cxx_verc_fail=no
 					add_line_to_config_mk 'CXX_UPDATE_DEP_FLAG = -MDupdate "$(*D)/$(DEPDIR)/$(*F).d"'
 					add_line_to_config_mk '-include Makedepend'
 					;;
 				*)
 					cxx_version="$cxx_version, bad"
-					cxx_verc_fail=yes
 					;;
 			esac
 			;;
 		*)
 			cxx_version="$cxx_version, bad"
-			cxx_verc_fail=yes
 			;;
 	esac
 fi
@@ -2155,75 +2155,63 @@ echo "$cxx_version"
 if test "$cxx_verc_fail" = yes ; then
 	echo
 	echo "The version of your compiler is not supported at this time"
-	echo "Please ensure you are using GCC >= 2.95"
 	exit 1
-fi
-
-#
-# Check whether the compiler supports C++11
-#
-have_cxx11=no
-cat > $TMPC << EOF
-int main(int argc, char *argv[]) { if (argv == nullptr) return -1; else return 0; }
-EOF
-cc_check -std=c++11 && have_cxx11=yes
-if test "$_use_cxx11" = "yes" ; then
-	_use_cxx11=$have_cxx11
 fi
 
 #
 # Setup compiler specific CXXFLAGS now that we know the compiler version.
 # Foremost, this means enabling various warnings.
-# In addition, we set CXX_UPDATE_DEP_FLAG for GCC >= 3.0 and for ICC.
+# In addition, we set CXX_UPDATE_DEP_FLAG for GCC and ICC.
 #
+# By default compile with strict C++
+std_variant=c++
+pedantic=no
 if test "$have_gcc" = yes ; then
-	if test "$_cxx_major" -ge "3" ; then
-		# Try to use ANSI mode when C++11 is disabled.
-		if test "$_use_cxx11" = "no" ; then
-			append_var CXXFLAGS "-ansi"
-		fi
-		case $_host_os in
-		# newlib-based system include files suppress non-C89 function
-		# declarations under __STRICT_ANSI__, undefine it
-		3ds | amigaos* | android | androidsdl | dreamcast | ds | gamecube | mingw* | mint* | n64 | psp | ps3 | psp2 | switch | wii )
-			append_var CXXFLAGS "-U__STRICT_ANSI__"
-			;;
-		*)
-			;;
-		esac
-		append_var CXXFLAGS "-W -Wno-unused-parameter"
-		add_line_to_config_mk 'HAVE_GCC3 = 1'
-		add_line_to_config_mk 'CXX_UPDATE_DEP_FLAG = -MMD -MF "$(*D)/$(DEPDIR)/$(*F).d" -MQ "$@" -MP'
-	fi;
+	# By default, we add -pedantic to the CXXFLAGS to catch some potentially
+	# non-portable constructs, like use of GNU extensions.
+	# However, some platforms use GNU extensions in system header files, so
+	# for these we must not use -pedantic.
+	pedantic=yes
 
-	if test "$_cxx_major" -eq 4 && test "$_cxx_minor" -ge 3 || \
-	   test "$_cxx_major" -gt 4 ; then
-		append_var CXXFLAGS "-Wno-empty-body"
-	else
-		append_var CXXFLAGS "-Wconversion"
-	fi;
+	case $_host_os in
+	# newlib-based system include files suppress non-C89 function
+	# declarations under __STRICT_ANSI__, undefine it
+	3ds | android | androidsdl | gamecube | psp | switch | wii)
+		std_variant=gnu++
+		pedantic=no
+		;;
+	amigaos* | dreamcast | ds | mingw* | mint* | n64 | ps3 | psp2)
+		std_variant=gnu++
+		;;
+	*)
+		;;
+	esac
+	append_var CXXFLAGS "-W -Wno-unused-parameter"
+	add_line_to_config_mk 'CXX_UPDATE_DEP_FLAG = -MMD -MF "$(*D)/$(DEPDIR)/$(*F).d" -MQ "$@" -MP'
+
+	append_var CXXFLAGS "-Wno-empty-body"
 	append_var CXXFLAGS "-fno-operator-names"
 elif test "$have_icc" = yes ; then
+	# ICC does not support pedantic, while GCC and clang do.
 	add_line_to_config_mk 'CXX_UPDATE_DEP_FLAG = -MMD -MF "$(*D)/$(DEPDIR)/$(*F).d" -MQ "$@" -MP'
 fi;
 
 #
-# Update status about C++11 mode
+# Set status about C++11 mode
 #
-echo_n "Building as C++11... "
-if test "$_use_cxx11" = "yes" ; then
-	append_var CXXFLAGS "-std=c++11"
+append_var CXXFLAGS "-std=${std_variant}11"
+
+if test "$pedantic" = yes ; then
+	append_var CXXFLAGS "-pedantic"
 fi
-echo $_use_cxx11
-define_in_config_if_yes "$_use_cxx11" 'USE_CXX11'
 
 #
 # Additional tests for C++11 features that may not be present
 #
-if test "$_use_cxx11" = "yes" ; then
-	# Check if initializer list is available
-	echo_n "Checking if C++11 initializer list is available... "
-	cat > $TMPC << EOF
+
+# Check if initializer list is available
+echo_n "Checking if C++11 initializer list is available... "
+cat > $TMPC << EOF
 #include <initializer_list>
 #include <cstddef>
 class FOO {
@@ -2233,30 +2221,29 @@ public:
 };
 int main(int argc, char *argv[]) { return 0; }
 EOF
-	cc_check
-	if test "$TMPR" -eq 0; then
-		echo yes
-	else
-		echo no
-		define_in_config_if_yes yes 'NO_CXX11_INITIALIZER_LIST'
-	fi
+cc_check
+if test "$TMPR" -eq 0; then
+	echo yes
+else
+	echo no
+	define_in_config_if_yes yes 'NO_CXX11_INITIALIZER_LIST'
+fi
 
-	# Check if std::nullptr_t is available
-	echo_n "Checking if C++11 std::nullptr_t is available..."
-	cat > $TMPC << EOF
+# Check if std::nullptr_t is available
+echo_n "Checking if C++11 std::nullptr_t is available..."
+cat > $TMPC << EOF
 #include <cstddef>
 int main(int argc, char *argv[]) {
 	std::nullptr_t i = nullptr;
 	return 0;
 }
 EOF
-	cc_check
-        if test "$TMPR" -eq 0; then
-                echo yes
-        else
-                echo no
-                define_in_config_if_yes yes 'NO_CXX11_NULLPTR_T'
-        fi
+cc_check
+if test "$TMPR" -eq 0; then
+		echo yes
+else
+		echo no
+		define_in_config_if_yes yes 'NO_CXX11_NULLPTR_T'
 fi
 
 #
@@ -2310,22 +2297,6 @@ if test "$_release_build" = yes; then
 	# an build for a release version.
 	append_var DEFINES "-DRELEASE_BUILD"
 fi
-
-# By default, we add -pedantic to the CXXFLAGS to catch some potentially
-# non-portable constructs, like use of GNU extensions.
-# However, some platforms use GNU extensions in system header files, so
-# for these we must not use -pedantic.
-case $_host_os in
-3ds | android | androidsdl | gamecube | psp | switch | wii)
-	;;
-*)
-	# ICC does not support pedantic, while GCC and clang do.
-	if test "$have_icc" = no ; then
-		# We *do* want the 'long long' extension.
-		append_var CXXFLAGS "-pedantic -Wno-long-long"
-	fi
-	;;
-esac
 
 # If possible, we want to use -Wglobal-constructors
 # However, not all compilers support that, so check whether the active one does.
@@ -3520,6 +3491,30 @@ if test -n "$_host"; then
 			_build_hq_scalers=no
 			_mt32emu=no
 			;;
+		opendingux)
+			_sysroot=`$CXX --print-sysroot`
+			_sdlpath=$_sysroot/usr/bin
+			append_var DEFINES  "-DDINGUX -DOPENDINGUX -DREDUCE_MEMORY_USAGE"
+			append_var CXXFLAGS "-ffast-math -fdata-sections -ffunction-sections -mplt -mno-shared"
+			append_var LDFLAGS  "-ffast-math -fdata-sections -ffunction-sections -mplt -mno-shared"
+			append_var LDFLAGS  "-O3 -Wl,--as-needed,--gc-sections"
+			_vkeybd=yes
+			_alsa=no
+			_vorbis=no
+			_mt32emu=no
+			_timidity=no
+			_fluidsynth=no
+			_theoradec=no
+			_seq_midi=no
+			_nuked_opl=no
+			_curl=no
+			_cloud=no
+			_sdlnet=no
+			_optimization_level=-O3
+			_backend="opendingux"
+			_port_mk="backends/platform/sdl/opendingux/opendingux.mk"
+			add_line_to_config_mk 'OPENDINGUX = 1'
+			;;
 		openpandora)
 			# Use -O3 on the OpenPandora for optimized builds.
 			if test "$_optimizations" = yes; then
@@ -3716,6 +3711,11 @@ case $_backend in
 		append_var DEFINES "-DUSE_NULL_DRIVER"
 		_text_console=yes
 		;;
+	opendingux)
+		_sdlconfig=sdl-config
+		_sdl=auto
+		append_var MODULES "backends/platform/sdl"
+		;;
 	openpandora)
 		append_var DEFINES "-DOPENPANDORA"
 		append_var DEFINES "-DREDUCE_MEMORY_USAGE"
@@ -3905,7 +3905,7 @@ fi
 # Enable 16bit support only for backends which support it
 #
 case $_backend in
-	3ds | android | android3d | androidsdl | dingux | dc | ds | gph | iphone | ios7 | maemo | null | openpandora | psp | psp2 | samsungtv | sdl | switch | wii)
+	3ds | android | android3d | androidsdl | dingux | dc | ds | gph | iphone | ios7 | maemo | null | opendingux | openpandora | psp | psp2 | samsungtv | sdl | switch | wii)
 		if test "$_16bit" = auto ; then
 			_16bit=yes
 		else

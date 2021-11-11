@@ -42,8 +42,13 @@ public:
 	virtual ~ResMan() {}
 
 	Common::SeekableReadStream *open(uint32 fileRef);
+	Common::SeekableReadStream *open(const ResInfo &resInfo);
 
-	virtual uint32 getRef(Common::String name, Common::String scriptname = "") = 0;
+	void dumpResource(const Common::String &fileName);
+	void dumpResource(uint32 fileRef, const Common::String &fileName);
+	void dumpResource(Common::SeekableReadStream *inFile, const Common::String &fileName, bool dispose = true);
+
+	virtual uint32 getRef(Common::String name) = 0;
 	virtual bool getResInfo(uint32 fileRef, ResInfo &resInfo) = 0;
 
 protected:
@@ -57,7 +62,7 @@ public:
 	ResMan_t7g(Common::MacResManager *macResFork = 0);
 	~ResMan_t7g() override {}
 
-	uint32 getRef(Common::String name, Common::String scriptname) override;
+	uint32 getRef(Common::String name) override;
 	bool getResInfo(uint32 fileRef, ResInfo &resInfo) override;
 
 private:
@@ -69,7 +74,7 @@ public:
 	ResMan_v2();
 	~ResMan_v2() override {}
 
-	uint32 getRef(Common::String name, Common::String scriptname) override;
+	uint32 getRef(Common::String name) override;
 	bool getResInfo(uint32 fileRef, ResInfo &resInfo) override;
 };
 

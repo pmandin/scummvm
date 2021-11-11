@@ -35,6 +35,7 @@
 #include "twine/scene/animations.h"
 #include "twine/audio/music.h"
 #include "twine/audio/sound.h"
+#include "twine/movies.h"
 #include "twine/scene/gamestate.h"
 #include "twine/scene/grid.h"
 #include "twine/resources/hqr.h"
@@ -78,13 +79,22 @@ enum MenuButtonTypesEnum {
 
 namespace _priv {
 
-static MenuSettings createMainMenu() {
+static MenuSettings createMainMenu(bool lba1) {
 	MenuSettings settings;
 	settings.setButtonsBoxHeight(200);
-	settings.addButton(TextId::kNewGame);
-	settings.addButton(TextId::kContinueGame);
-	settings.addButton(TextId::kOptions);
-	settings.addButton(TextId::kQuit);
+	if (lba1) {
+		settings.addButton(TextId::kNewGame);
+		settings.addButton(TextId::kContinueGame);
+		settings.addButton(TextId::kOptions);
+		settings.addButton(TextId::kQuit);
+	} else {
+		settings.addButton(TextId::toContinueGame);
+		settings.addButton(TextId::toNewGame);
+		settings.addButton(TextId::toLoadGame);
+		settings.addButton(TextId::toSauver);
+		settings.addButton(TextId::toOptions);
+		settings.addButton(TextId::toQuit);
+	}
 	return settings;
 }
 
@@ -105,7 +115,7 @@ static MenuSettings createGiveUpSaveMenu() {
 	return settings;
 }
 
-static MenuSettings createOptionsMenu() {
+static MenuSettings createOptionsMenu(bool lba1) {
 	MenuSettings settings;
 	settings.addButton(TextId::kReturnMenu);
 	settings.addButton(TextId::kVolumeSettings);
@@ -159,12 +169,12 @@ const char *MenuSettings::getButtonText(Text *text, int buttonIndex) {
 Menu::Menu(TwinEEngine *engine) {
 	_engine = engine;
 
-	_optionsMenuState = _priv::createOptionsMenu();
+	_optionsMenuState = _priv::createOptionsMenu(engine->isLBA1());
 	_giveUpMenuWithSaveState = _priv::createGiveUpSaveMenu();
 	_volumeMenuState = _priv::createVolumeMenu();
 	_saveManageMenuState = _priv::createSaveManageMenu();
 	_giveUpMenuState = _priv::createGiveUpMenu();
-	_mainMenuState = _priv::createMainMenu();
+	_mainMenuState = _priv::createMainMenu(engine->isLBA1());
 	_advOptionsMenuState = _priv::createAdvancedOptionsMenu();
 
 	Common::fill(&_behaviourAnimState[0], &_behaviourAnimState[4], 0);
@@ -256,22 +266,22 @@ void Menu::drawButtonGfx(const MenuSettings *menuSettings, const Common::Rect &r
 			switch (buttonId) {
 			case MenuButtonTypes::kMusicVolume: {
 				const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
-				newWidth = _engine->_screens->crossDot(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, volume);
+				newWidth = _engine->_screens->lerp(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, volume);
 				break;
 			}
 			case MenuButtonTypes::kSoundVolume: {
 				const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
-				newWidth = _engine->_screens->crossDot(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, volume);
+				newWidth = _engine->_screens->lerp(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, volume);
 				break;
 			}
 			case MenuButtonTypes::kCDVolume: {
 				const AudioCDManager::Status status = _engine->_system->getAudioCDManager()->getStatus();
-				newWidth = _engine->_screens->crossDot(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, status.volume);
+				newWidth = _engine->_screens->lerp(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, status.volume);
 				break;
 			}
 			case MenuButtonTypes::kSpeechVolume: {
 				const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType);
-				newWidth = _engine->_screens->crossDot(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, volume);
+				newWidth = _engine->_screens->lerp(rect.left, rect.right, Audio::Mixer::kMaxMixerVolume, volume);
 				break;
 			}
 			}
@@ -590,16 +600,26 @@ int32 Menu::processMenu(MenuSettings *menuSettings, bool showCredits) {
 			startMillis = loopMillis;
 		}
 		if (showCredits && loopMillis - startMillis > 11650) {
+			// TODO: lba2 only show the credits only in the main menu and you could force it by pressing shift+c
+			// TODO: lba2 has a cd audio track (2) for the credits
 			_engine->_menuOptions->showCredits();
-			// TODO the original game also performs these actions:
-			// play FLA_DRAGON3 fla
-			// display RESSHQR_INTROSCREEN1IMG
-			// display RESSHQR_INTROSCREEN2IMG
-			// display RESSHQR_INTROSCREEN3IMG
-			// play FLA_BATEAU fla
-			// if version == EUROPE_VERSION display RESSHQR_LBAIMG else display RESSHQR_RELLENTIMG
-			// display adeline logo
-			// pressing any key during these actions will abort everything and return to the menu
+			if (_engine->_movie->playMovie(FLA_DRAGON3)) {
+				if (!_engine->_screens->loadImageDelay(TwineImage(Resources::HQR_RESS_FILE, 15, 16), 3)) {
+					if (!_engine->_screens->loadImageDelay(TwineImage(Resources::HQR_RESS_FILE, 17, 18), 3)) {
+						if (!_engine->_screens->loadImageDelay(TwineImage(Resources::HQR_RESS_FILE, 19, 20), 3)) {
+							if (_engine->_movie->playMovie(FLA_BATEAU)) {
+								if (_engine->_cfgfile.Version == USA_VERSION) {
+									_engine->_screens->loadImageDelay(_engine->_resources->relentLogo(), 3);
+								} else {
+									_engine->_screens->loadImageDelay(_engine->_resources->lbaLogo(), 3);
+								}
+								_engine->_screens->adelineLogo();
+							}
+						}
+					}
+				}
+			}
+			_engine->_text->initTextBank(TextBankId::Options_and_menus);
 			startMillis = _engine->_system->getMillis();
 			_engine->_screens->loadMenuImage(false);
 		}
@@ -757,23 +777,30 @@ EngineState Menu::run() {
 	FrameMarker frame(_engine);
 	_engine->_text->initTextBank(TextBankId::Options_and_menus);
 
-	_engine->_music->playTrackMusic(9); // LBA's Theme
+	if (_engine->isLBA1()) {
+		_engine->_music->playTrackMusic(9); // LBA's Theme
+	} else {
+		_engine->_music->playTrackMusic(6); // LBA2's Theme
+	}
 	_engine->_sound->stopSamples();
 
 	ScopedCursor scoped(_engine);
 	switch (processMenu(&_mainMenuState)) {
+	case (int32)TextId::toNewGame:
 	case (int32)TextId::kNewGame: {
 		if (_engine->_menuOptions->newGameMenu()) {
 			return EngineState::GameLoop;
 		}
 		break;
 	}
+	case (int32)TextId::toContinueGame:
 	case (int32)TextId::kContinueGame: {
 		if (_engine->_menuOptions->continueGameMenu()) {
 			return EngineState::LoadedGame;
 		}
 		break;
 	}
+	case (int32)TextId::toOptions:
 	case (int32)TextId::kOptions: {
 		optionsMenu();
 		break;
@@ -783,6 +810,7 @@ EngineState Menu::run() {
 		break;
 	}
 	case (int32)TextId::kQuit:
+	case (int32)TextId::toQuit:
 	case kQuitEngine:
 		debug("quit the game");
 		return EngineState::QuitGame;
@@ -832,7 +860,7 @@ int32 Menu::giveupMenu() {
 void Menu::drawHealthBar(int32 left, int32 right, int32 top, int32 barLeftPadding, int32 barHeight) {
 	_engine->_grid->drawSprite(left, top + 3, _engine->_resources->_spriteData[SPRITEHQR_LIFEPOINTS]);
 	const int32 barLeft = left + barLeftPadding;
-	const int32 healthBarRight = _engine->_screens->crossDot(barLeft, right, 50, _engine->_scene->_sceneHero->_life);
+	const int32 healthBarRight = _engine->_screens->lerp(barLeft, right, 50, _engine->_scene->_sceneHero->_life);
 	const int32 barBottom = top + barHeight;
 	_engine->_interface->drawFilledRect(Common::Rect(barLeft, top, healthBarRight, barBottom), COLOR_91);
 	drawRectBorders(Common::Rect(barLeft, top, right, barBottom));
@@ -841,13 +869,13 @@ void Menu::drawHealthBar(int32 left, int32 right, int32 top, int32 barLeftPaddin
 void Menu::drawCloverLeafs(int32 newBoxLeft, int32 boxRight, int32 top) {
 	// Clover leaf boxes
 	for (int32 i = 0; i < _engine->_gameState->_inventoryNumLeafsBox; i++) {
-		const int32 leftSpritePos = _engine->_screens->crossDot(newBoxLeft, boxRight, 10, i);
+		const int32 leftSpritePos = _engine->_screens->lerp(newBoxLeft, boxRight, 10, i);
 		_engine->_grid->drawSprite(leftSpritePos, top + 58, _engine->_resources->_spriteData[SPRITEHQR_CLOVERLEAFBOX]);
 	}
 
 	// Clover leafs
 	for (int32 i = 0; i < _engine->_gameState->_inventoryNumLeafs; i++) {
-		const int32 leftSpritePos = _engine->_screens->crossDot(newBoxLeft, boxRight, 10, i);
+		const int32 leftSpritePos = _engine->_screens->lerp(newBoxLeft, boxRight, 10, i);
 		_engine->_grid->drawSprite(leftSpritePos + 2, top + 60, _engine->_resources->_spriteData[SPRITEHQR_CLOVERLEAF]);
 	}
 }
@@ -865,7 +893,7 @@ void Menu::drawMagicPointsBar(int32 left, int32 right, int32 top, int32 barLeftP
 	}
 	const int32 barLeft = left + barLeftPadding;
 	const int32 barBottom = top + barHeight;
-	const int32 barRight = _engine->_screens->crossDot(barLeft, right, 80, _engine->_gameState->_inventoryMagicPoints);
+	const int32 barRight = _engine->_screens->lerp(barLeft, right, 80, _engine->_gameState->_inventoryMagicPoints);
 	const Common::Rect pointsRect(barLeft, top, barRight, barBottom);
 	_engine->_interface->drawFilledRect(pointsRect, COLOR_75);
 	drawRectBorders(barLeft, top, barLeft + _engine->_gameState->_magicLevelIdx * 80, barBottom);
@@ -1146,6 +1174,7 @@ void Menu::drawInventoryItems(int32 left, int32 top) {
 	for (int32 item = 0; item < NUM_INVENTORY_ITEMS; item++) {
 		drawItem(left, top, item);
 	}
+	_engine->_interface->resetClip();
 }
 
 void Menu::processInventoryMenu() {

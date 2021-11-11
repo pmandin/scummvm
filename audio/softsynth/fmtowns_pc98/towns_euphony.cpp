@@ -246,13 +246,18 @@ void EuphonyPlayer::reset() {
 
 	resetTempo();
 
+	// NB: Original did _tempoControlMode == 1 check here.
+	//     Not required as this was the original driver's offering of
+	//     alternative methods for the timed update calllbacks.
+	//     Not required in the ScummVM implmentation as the outcome is
+	//     identical.
+#if 0
 	if (_tempoControlMode == 1) {
-		//if (///)
-		//  return;
-		sendTempo(_defaultTempo);
-	} else {
-		sendTempo(_defaultTempo);
+		if (/*???*/)
+			return;
 	}
+#endif
+	sendTempo(_defaultTempo);
 
 	resetAllControls();
 }

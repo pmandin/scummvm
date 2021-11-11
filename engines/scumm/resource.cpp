@@ -839,12 +839,11 @@ byte *ResourceManager::createResource(ResType type, ResId idx, uint32 size) {
 
 	expireResources(size);
 
-	byte *ptr = new byte[size + SAFETY_AREA];
+	byte *ptr = new byte[size + SAFETY_AREA]();
 	if (ptr == NULL) {
 		error("createResource(%s,%d): Out of memory while allocating %d", nameOfResType(type), idx, size);
 	}
 
-	memset(ptr, 0, size + SAFETY_AREA);
 	_allocatedSize += size;
 
 	_types[type][idx]._address = ptr;
@@ -1655,7 +1654,7 @@ void ScummEngine::applyWorkaroundIfNeeded(ResType type, int idx) {
 	// WORKAROUND: FM-TOWNS Zak used the extra 40 pixels at the bottom to increase the inventory to 10 items
 	// if we trim to 200 pixels, we can show only 6 items
 	// therefore we patch the inventory script (20)
-	// replacing the 5 occurences of 10 as limit to 6
+	// replacing the 5 occurrences of 10 as limit to 6
 	if (_game.platform == Common::kPlatformFMTowns && _game.id == GID_ZAK && ConfMan.getBool("trim_fmtowns_to_200_pixels")) {
 		if (type == rtScript && idx == 20) {
 			byte *ptr = getResourceAddress(rtScript, idx);

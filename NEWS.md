@@ -3,11 +3,35 @@ For a more comprehensive changelog of the latest experimental code, see:
 
 #### 2.6.0 (XXXX-XX-XX)
 
+ General:
+   - Now ScummVM requires C++11 for building.
+   - Implemented enhanced filtering in the Search box. See "Understanding
+     the search box" in the documentation for details.
+
+ AGOS:
+   - Fixed old Waxworks AdLib music regression.
+
+ AGS:
+   - Detection list updates.
+
  Dreamweb:
    - Added text to speech for dialogs and object descriptions.
 
+ Kyra:
+   - Added support for the Traditional Chinese version of Legend of Kyrandia 3.
+   - Added sound support for the Macintosh version of Legend of Kyrandia
+
  Supernova:
    - Added text to speech for dialogs and object descriptions.
+
+ SCUMM:
+   - Improved support for the high-resolution text in the 16-color Macintosh
+     versions of Loom and Indiana Jones and the Last Crusade.
+
+ Xeen:
+   - Fix crash on startup loading constants from xeen.ccs
+   - Fix spell selection aborting when characters were switched
+   - Fixed some bad memory accesses
 
 #### 2.5.0 "Twenty years ago today..." (2021-10-09)
 
@@ -116,6 +140,7 @@ For a more comprehensive changelog of the latest experimental code, see:
  SAGA:
    - Added support for ITE GOG Mac CD v1.1.
    - Added support for ITE PC-98 Japanese.
+   - Fixed digitized music not looping in Inherit the Earth.
 
  SCI:
    - Added RGB rendering mode (16/32bpp) for SCI0 - SCI1.1 games, which addresses palette
@@ -924,7 +949,7 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  SCUMM:
    - Fixed missing translations in the in-game quit and restart dialogs in Pajama Sam 1.
-   - Fixed visual glitches in DOTT that occured after loading a savegame with the stereo
+   - Fixed visual glitches in DOTT that occurred after loading a savegame with the stereo
      in Green Tentacle's room turned on.
    - Improved timing and pathfinding in Maniac Mansion (C64 and Apple II versions).
    - Added support for the Dutch demo of Let's Explore the Airport with Buzzy.
@@ -955,7 +980,7 @@ For a more comprehensive changelog of the latest experimental code, see:
  General:
    - Removed TESTING flag from several supported games.
    - Added Chinese Pinyin translation.
-   - Fixed cursor stuttering in the launcher that occured on some systems.
+   - Fixed cursor stuttering in the launcher that occurred on some systems.
 
  BBVS:
    - Fixed game restart.

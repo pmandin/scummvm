@@ -23,14 +23,18 @@
 #include "engines/stark/gfx/driver.h"
 #include "engines/stark/gfx/opengl.h"
 #include "engines/stark/gfx/opengls.h"
+#include "engines/stark/gfx/tinygl.h"
 
 #include "common/config-manager.h"
+#include "common/translation.h"
 
 #include "graphics/renderer.h"
 #include "graphics/surface.h"
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
 #include "graphics/opengl/context.h"
 #endif
+
+#include "gui/error.h"
 
 #include "engines/util.h"
 
@@ -55,7 +59,7 @@ Driver *Driver::create() {
 
 	if (matchingRendererType != desiredRendererType && desiredRendererType != Graphics::kRendererTypeDefault) {
 		// Display a warning if unable to use the desired renderer
-		warning("Unable to create a '%s' renderer", rendererConfig.c_str());
+		warning("Unable to match a '%s' renderer", rendererConfig.c_str());
 	}
 
 	Driver *driver = nullptr;
@@ -73,13 +77,14 @@ Driver *Driver::create() {
 	}
 #endif
 	if (matchingRendererType == Graphics::kRendererTypeTinyGL) {
-		//driver = CreateTinyGLDriver();
-		error("This game does not currently support software rendering");
+		//driver = new TinyGLDriver();
 	}
 
 	if (driver)
 		return driver;
-	error("No renderers have been found for this game");
+	warning("No renderers have been found for this game");
+	GUI::displayErrorDialog(Common::U32String::format(_("No renderers have been found for this game")));
+	return driver;
 }
 
 const Graphics::PixelFormat Driver::getRGBAPixelFormat() {

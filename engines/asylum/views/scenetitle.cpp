@@ -56,6 +56,7 @@ void SceneTitle::load() {
 	_done = false;
 
 	update(_start);
+	getScreen()->stopPaletteFadeAndSet(getWorld()->sceneTitlePaletteResourceId, 5, 50);
 }
 
 void SceneTitle::update(int32 tick) {
@@ -65,6 +66,7 @@ void SceneTitle::update(int32 tick) {
 	getScreen()->draw(getWorld()->sceneTitleGraphicResourceId);
 	getScreen()->draw(MAKE_RESOURCE(kResourcePackSound, 17), _spinnerFrameIndex, Common::Point((int16)(((_spinnerProgress / 590.0) * 580.0) - 290), 0), kDrawFlagNone, false);
 	getText()->drawCentered(Common::Point(320, 30), 24, MAKE_RESOURCE(kResourcePackText, getWorld()->chapter + 1811));
+	getScreen()->copyBackBufferToScreen();
 
 	// This is not from the original. It's just some arbitrary math to throttle the progress indicator.
 	//
@@ -72,13 +74,8 @@ void SceneTitle::update(int32 tick) {
 	// of buffering the various scene resource. Since we don't actually buffer content like the original,
 	// but load on demand from offset/length within a ResourcePack, the progress indicator is effectively
 	// useless. It's just in here as "eye candy" :P
-	if ((tick - _start) % 500 > 100) {
-#ifdef DEBUG
+	if ((tick - _start) % 500 > 100)
 		_spinnerProgress += 10;
-#else
-		_spinnerProgress += 35;
-#endif
-	}
 
 	_spinnerFrameIndex++;
 

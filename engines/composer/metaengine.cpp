@@ -76,6 +76,14 @@ public:
 
 	int getMaximumSaveSlot() const override;
 	SaveStateList listSaves(const char* target) const override;
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (!target)
+			target = getEngineId();
+		if (saveGameIdx == kSavegameFilePattern)
+			return Common::String::format("%s.##", target);
+		else
+			return Common::String::format("%s.%02d", target, saveGameIdx);
+	}
 };
 
 Common::Error ComposerMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
@@ -103,9 +111,8 @@ SaveStateList ComposerMetaEngine::listSaves(const char *target) const {
 	Common::SaveFileManager *saveFileMan = g_system->getSavefileManager();
 	Common::StringArray filenames;
 	Common::String saveDesc;
-	Common::String pattern = Common::String::format("%s.##", target);
 
-	filenames = saveFileMan->listSavefiles(pattern);
+	filenames = saveFileMan->listSavefiles(getSavegameFilePattern(target));
 
 	SaveStateList saveList;
 	for (Common::StringArray::const_iterator file = filenames.begin(); file != filenames.end(); ++file) {
@@ -116,7 +123,7 @@ SaveStateList ComposerMetaEngine::listSaves(const char *target) const {
 			Common::InSaveFile *in = saveFileMan->openForLoading(*file);
 			if (in) {
 				saveDesc = getSaveName(in);
-				saveList.push_back(SaveStateDescriptor(slotNum, saveDesc));
+				saveList.push_back(SaveStateDescriptor(this, slotNum, saveDesc));
 				delete in;
 			}
 		}

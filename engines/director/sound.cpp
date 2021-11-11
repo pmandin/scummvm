@@ -25,6 +25,7 @@
 // License: GNU GPL v2 (see COPYING file for details)
 
 #include "common/file.h"
+#include "common/macresman.h"
 #include "common/substream.h"
 
 #include "audio/decoders/wave.h"
@@ -766,15 +767,24 @@ bool SNDDecoder::hasLoopBounds() {
 AudioFileDecoder::AudioFileDecoder(Common::String &path)
 		: AudioDecoder() {
 	_path = path;
+	_macresman = nullptr;
+}
+
+AudioFileDecoder::~AudioFileDecoder() {
+	delete _macresman;
 }
 
 Audio::AudioStream *AudioFileDecoder::getAudioStream(bool looping, bool forPuppet, DisposeAfterUse::Flag disposeAfterUse) {
 	if (_path.empty())
 		return nullptr;
 
-	Common::File *file = new Common::File();
-	if (!file->open(Common::Path(pathMakeRelative(_path), g_director->_dirSeparator))) {
+	_macresman = new Common::MacResManager();
+	_macresman->open(Common::Path(pathMakeRelative(_path), g_director->_dirSeparator));
+	Common::SeekableReadStream *file = _macresman->getDataFork();
+
+	if (file == nullptr) {
 		warning("Failed to open %s", _path.c_str());
+		delete file;
 		return nullptr;
 	}
 	uint32 magic1 = file->readUint32BE();
@@ -791,6 +801,7 @@ Audio::AudioStream *AudioFileDecoder::getAudioStream(bool looping, bool forPuppe
 		stream = Audio::makeAIFFStream(file, disposeAfterUse);
 	} else {
 		warning("Unknown file type for %s", _path.c_str());
+		delete file;
 	}
 
 	if (stream) {

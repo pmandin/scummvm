@@ -38,14 +38,16 @@
 #include "graphics/thumbnail.h"
 
 Common::String MetaEngine::getSavegameFile(int saveGameIdx, const char *target) const {
+	if (!target)
+		target = getEngineId();
 	if (saveGameIdx == kSavegameFilePattern) {
 		// Pattern requested
-		const char *pattern = hasFeature(kSavesUseExtendedFormat) ? "%s.###" : "%s.s##";
-		return Common::String::format(pattern, target == nullptr ? getEngineId() : target);
+		const char *pattern = hasFeature(kSimpleSavesNames) ? "%s.###" : "%s.s##";
+		return Common::String::format(pattern, target);
 	} else {
 		// Specific filename requested
-		const char *pattern = hasFeature(kSavesUseExtendedFormat) ? "%s.%03d" : "%s.s%02d";
-		return Common::String::format(pattern, target == nullptr ? getEngineId() : target, saveGameIdx);
+		const char *pattern = hasFeature(kSimpleSavesNames) ? "%s.%03d" : "%s.s%02d";
+		return Common::String::format(pattern, target, saveGameIdx);
 	}
 }
 
@@ -165,6 +167,7 @@ bool MetaEngine::hasFeature(MetaEngineFeature f) const {
 		(f == kSavesSupportCreationDate) ||
 		(f == kSavesSupportPlayTime) ||
 		(f == kSupportsLoadingDuringStartup) ||
+		(f == kSimpleSavesNames) ||
 		(f == kSavesUseExtendedFormat);
 }
 
@@ -361,7 +364,7 @@ SaveStateList MetaEngine::listSaves(const char *target, bool saveMode) const {
 
 	// No autosave yet. We want to add a dummy one in so that it can be marked as
 	// write protected, and thus be prevented from being saved in
-	SaveStateDescriptor desc(autosaveSlot, _("Autosave"));
+	SaveStateDescriptor desc(this, autosaveSlot, _("Autosave"));
 	saveList.push_back(desc);
 	Common::sort(saveList.begin(), saveList.end(), SaveStateDescriptorSlotComparator());
 
@@ -409,7 +412,7 @@ SaveStateDescriptor MetaEngine::querySaveMetaInfos(const char *target, int slot)
 		}
 
 		// Create the return descriptor
-		SaveStateDescriptor desc(slot, Common::U32String());
+		SaveStateDescriptor desc(this, slot, Common::U32String());
 		parseSavegameHeader(&header, &desc);
 		desc.setThumbnail(header.thumbnail);
 		return desc;

@@ -20,6 +20,8 @@ Project Leaders
      -
    * - Einar Johan T. Sømåen
      -
+   * - Lothar Serra Mari
+     -
 
 PR Office
 *********
@@ -1643,6 +1645,8 @@ Miscellaneous
      - Sound improvements
    * - Robin Watts
      - ARM assembly routines for nice speedups on several ports; improvements to the sound mixer
+   * - Trembyle
+     - Archivist
 
 Website (code)
 **************
@@ -1673,8 +1677,6 @@ Website (maintenance)
      - Forum, IRC channel, Screen Shots and Mailing list maintainer
    * - John Willis
      -
-   * - Matan Bareket
-     - Site maintainer
 
 Website (content)
 *****************
@@ -1720,6 +1722,8 @@ Retired Team Members
      - Port: X11
    * - Won Star
      - Former GP32 porter
+   * - Matan Bareket
+     - Website, Infrastructure, UI/UX
 
 Other contributions
 ===================

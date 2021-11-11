@@ -190,6 +190,9 @@ Common::Error KyraEngine_LoK::init() {
 	if (_flags.platform == Common::kPlatformAmiga) {
 		_trackMap = _amigaTrackMap;
 		_trackMapSize = _amigaTrackMapSize;
+	} else if (_flags.platform == Common::kPlatformMacintosh) {
+		_trackMap = _macHQTrackMap;
+		_trackMapSize = _macHQTrackMapSize;
 	} else {
 		_trackMap = _dosTrackMap;
 		_trackMapSize = _dosTrackMapSize;
@@ -204,9 +207,8 @@ Common::Error KyraEngine_LoK::init() {
 
 	_paletteChanged = 1;
 	_currentCharacter = 0;
-	_characterList = new Character[11];
+	_characterList = new Character[11]();
 	assert(_characterList);
-	memset(_characterList, 0, sizeof(Character) * 11);
 
 	for (int i = 0; i < 11; ++i)
 		memset(_characterList[i].inventoryItems, 0xFF, sizeof(_characterList[i].inventoryItems));
@@ -364,10 +366,8 @@ void KyraEngine_LoK::startup() {
 		_shapes[361 + i] = new byte[size];
 	}
 
-	_itemBkgBackUp[0] = new uint8[_screen->getRectSize(3, 24)];
-	memset(_itemBkgBackUp[0], 0, _screen->getRectSize(3, 24));
-	_itemBkgBackUp[1] = new uint8[_screen->getRectSize(4, 32)];
-	memset(_itemBkgBackUp[1], 0, _screen->getRectSize(4, 32));
+	_itemBkgBackUp[0] = new uint8[_screen->getRectSize(3, 24)]();
+	_itemBkgBackUp[1] = new uint8[_screen->getRectSize(4, 32)]();
 
 	for (int i = 0; i < _roomTableSize; ++i) {
 		for (int item = 0; item < 12; ++item) {
@@ -444,7 +444,9 @@ void KyraEngine_LoK::mainLoop() {
 
 		if (_deathHandler != -1) {
 			snd_playWanderScoreViaMap(0, 1);
-			snd_playSoundEffect(49);
+ 			snd_playSoundEffect(49);
+			if (_flags.platform == Common::kPlatformMacintosh)
+				_sound->playTrack(15);
 			_screen->setMouseCursor(1, 1, _shapes[0]);
 			removeHandItem();
 			_gui->buttonMenuCallback(0);

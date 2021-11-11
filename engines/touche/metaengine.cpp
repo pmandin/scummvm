@@ -40,6 +40,11 @@ public:
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;
 	void removeSaveState(const char *target, int slot) const override;
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (!target)
+			target = getEngineId();
+		return Touche::generateGameStateFileName(target, saveGameIdx, saveGameIdx == kSavegameFilePattern);
+	}
 };
 
 bool ToucheMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -82,7 +87,7 @@ SaveStateList ToucheMetaEngine::listSaves(const char *target) const {
 				char description[64];
 				Touche::readGameStateDescription(in, description, sizeof(description) - 1);
 				if (description[0]) {
-					saveList.push_back(SaveStateDescriptor(slot, description));
+					saveList.push_back(SaveStateDescriptor(this, slot, description));
 				}
 				delete in;
 			}

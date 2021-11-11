@@ -33,7 +33,6 @@
 #include "groovie/saveload.h"
 #include "groovie/logic/cell.h"
 #include "groovie/logic/tlcgame.h"
-#include "groovie/logic/t11hgame.h"
 
 #include "gui/saveload.h"
 
@@ -74,7 +73,7 @@ const byte t7gMidiInitScript[] = {
 Script::Script(GroovieEngine *vm, EngineVersion version) :
 	_code(NULL), _savedCode(NULL), _stacktop(0), _debugger(NULL), _vm(vm),
 	_videoFile(NULL), _videoRef(UINT_MAX), _cellGame(NULL), _lastCursor(0xff),
-	_version(version), _random("GroovieScripts"), _tlcGame(0), _t11hGame(0) {
+	_version(version), _random("GroovieScripts"), _tlcGame(0) {
 
 	// Initialize the opcode set depending on the engine version
 	if (version == kGroovieT7G) {
@@ -118,7 +117,6 @@ Script::~Script() {
 	delete _videoFile;
 	delete _cellGame;
 	delete _tlcGame;
-	delete _t11hGame;
 }
 
 void Script::setVariable(uint16 variablenum, byte value) {
@@ -240,11 +238,18 @@ void Script::directGameLoad(int slot) {
 			midiInitScript = t7gMidiInitScript;
 			midiInitScriptSize = sizeof(t7gMidiInitScript);
 		}
-	} else {
-		// 11th Hour
+	} else if (_version == kGroovieT11H) {
 		setVariable(0xF, slot);
-		// FIXME: This bypasses a lot of the game's initialization procedure
-		targetInstruction = 0xE78E;
+		_currentInstruction = 0xE78D;
+		return;
+	} else if (_version == kGroovieCDY) {
+		setVariable(0x1, slot);
+		_currentInstruction = 0x9EBF;
+		return;
+	} else if (_version == kGroovieUHP) {
+		setVariable(0x19, slot);
+		_currentInstruction = 0x23B4;
+		return;
 	}
 
 	if (midiInitScript && !_vm->_musicPlayer->isMidiInit()) {
@@ -424,11 +429,8 @@ uint32 Script::getVideoRefString(Common::String &resName) {
 
 	debugCN(0, kDebugScript, "%s", resName.c_str());
 
-	// Extract the script name.
-	Common::String scriptname(_scriptFile.c_str(), _scriptFile.size() - 4);
-
 	// Get the fileref of the resource
-	return _vm->_resMan->getRef(resName, scriptname);
+	return _vm->_resMan->getRef(resName);
 }
 
 bool Script::hotspot(Common::Rect rect, uint16 address, uint8 cursor) {
@@ -790,7 +792,13 @@ bool Script::playvideofromref(uint32 fileref, bool loopUntilAudioDone) {
 		}
 
 		// Try to open the new file
-		_videoFile = _vm->_resMan->open(fileref);
+		ResInfo resInfo;
+		if (!_vm->_resMan->getResInfo(fileref, resInfo)) {
+			error("Groovie::Script: Couldn't find resource info for fileref %d", fileref);
+			return true;
+		}
+
+		_videoFile = _vm->_resMan->open(resInfo);
 
 		if (_videoFile) {
 			_videoRef = fileref;
@@ -798,6 +806,10 @@ bool Script::playvideofromref(uint32 fileref, bool loopUntilAudioDone) {
 			// Filename check as sometimes teeth used for puzzle movements (bishops)
 			if (_version == kGroovieT7G && (_lastCursor == 7 || _lastCursor == 4) && _scriptFile == "script.grv")
 				_bitflags |= (1 << 15);
+			// act, door and trailer use a variation of motion blocks in the ROQ decoder.
+			// Original clan engine specifically references these files by name to set the flag
+			else if (_version == kGroovieCDY && (resInfo.filename.hasPrefix("act") || resInfo.filename.hasPrefix("door")))
+				_bitflags |= (1 << 14);
 			_vm->_videoPlayer->load(_videoFile, _bitflags);
 		} else {
 			error("Groovie::Script: Couldn't open file");
@@ -1126,7 +1138,14 @@ void Script::o_sleep() {
 
 	debugC(1, kDebugScript, "Groovie::Script: SLEEP 0x%04X (%d ms)", time, time*3);
 
-	_vm->_system->delayMillis(time * 3);
+	uint32 endTime = _vm->_system->getMillis() + time * 3;
+
+	Common::Event ev;
+	while (_vm->_system->getMillis() < endTime) {
+		_vm->_system->getEventManager()->pollEvent(ev);
+		_vm->_system->updateScreen();
+		_vm->_system->delayMillis(10);
+	}
 }
 
 void Script::o_strcmpnejmp() {			// 0x1A
@@ -1984,6 +2003,12 @@ void Script::o2_setbackgroundsong() {
 void Script::o2_videofromref() {
 	uint32 fileref = readScript32bits();
 
+	// Skip the 11th Hour intro videos on right mouse click, instead of
+	// fast-forwarding them. This has the same effect as pressing 'p' twice in
+	// the skulls screen after the Groovie logo
+	if (_version == kGroovieT11H && fileref == 4926 && fileref != _videoRef)
+		_videoSkipAddress = 1417;
+
 	// Show the debug information just when starting the playback
 	if (fileref != _videoRef) {
 		debugC(1, kDebugScript, "Groovie::Script: VIDEOFROMREF(0x%08X) (Not fully imp): Play video file from ref", fileref);
@@ -2055,19 +2080,20 @@ void Script::o2_setvideoskip() {
 	debugC(1, kDebugScript, "Groovie::Script: SetVideoSkip (0x%04X)", _videoSkipAddress);
 }
 
-// This function depends on the actual game played. So it is different for 
-// T7G, 11H, TLC, ...
+// This function depends on the actual game played. There was an initial version
+// for T7G, and then it kept being expanded in newer games (11H, Clan, UHP). This
+// means that newer games contained logic used in older ones (e.g. Clandestiny
+// and UHP include the hardcoded puzzle logic of 11H).
 void Script::o_gamelogic() {
 	uint8 param = readScript8bits();
+	debugC(1, kDebugScript, "Groovie::Script: Mini game logic, param %d", param);
 
 	switch (_version) {
 	case kGroovieT7G:
 		if (!_cellGame)
 			_cellGame = new CellGame;
 
-		debugC(1, kDebugScript, "Groovie::Script: CELL MOVE var[0x%02X]", param);
-
-		_cellGame->playStauf(2, param, &_variables[0x19]);
+		_cellGame->run(param, &_variables[0x19]);
 
 		// Set the movement origin
 		setVariable(0, _cellGame->getStartY()); // y
@@ -2078,26 +2104,50 @@ void Script::o_gamelogic() {
 		break;
 
 #ifdef ENABLE_GROOVIE2
+	case kGroovieT11H:
+	case kGroovieCDY:
+	case kGroovieUHP:
+		switch (param) {
+		case 1:	// 11H Cake puzzle in the dining room (tb.grv)
+			_cake.run(_variables);
+			break;
+		case 2:	// 11H/UHP Beehive puzzle in the top room (hs.grv)
+			_beehive.run(_variables);
+			break;
+		case 3:	// 11H Gallery puzzle in the modern art painting (bs.grv)
+			_gallery.run(_variables);
+			break;
+		case 4:	// 11H Triangle puzzle in the chapel (tx.grv)
+			_triangle.run(_variables);
+			break;
+		case 5: // 11H/UHP Mouse trap puzzle in the lab (al.grv)
+			_mouseTrap.run(_variables);
+			break;
+		case 6: // 11H Pente puzzle at the end of the game (pt.grv)
+			_pente.run(_variables);
+			break;
+		case 7:	// Clan Wine rack puzzle
+			_wineRack.run(_variables);
+			break;
+		case 8:	// Clan/UHP Othello/Reversi puzzle
+			_othello.run(_variables);
+			break;
+		default:
+			debugC(1, kDebugScript, "Groovie::Script: Op42 (0x%02X): Invalid -> NOP", param);
+		}
+		break;
+
 	case kGroovieTLC:
 		if (!_tlcGame)
 			_tlcGame = new TlcGame(_variables);
 
 		_tlcGame->handleOp(param);
 		break;
-
-	case kGroovieT11H:
-	case kGroovieUHP:
-		if (!_t11hGame)
-			_t11hGame = new T11hGame(_variables);
-
-		// TODO: Separate UHP game logic in 11th Hour / Clandestiny
-		_t11hGame->handleOp(param);
-		break;
-
 #endif
+
 	default:
-		debugC(1, kDebugScript, "Groovie::Script: GameSpecial (0x%02X)", param);
-		warning("Groovie::Script: OpCode 0x42 for (GameSpecial) current game not implemented yet.");
+		warning("Groovie::Script: OpCode 0x42 (param %d) for current game is not implemented yet.", param);
+		break;
 	}
 }
 
@@ -2129,6 +2179,26 @@ void Script::o2_playsound() {
 	}
 
 	playBackgroundSound(fileref, loops);
+}
+
+void Script::o_wipemaskfromstring58() {
+	// used in pente when pieces are captured
+	Common::String vidName;
+	uint16 instStart = _currentInstruction;
+	uint32 fileref = getVideoRefString(vidName);
+	setBitFlag(10, true);
+
+	// Show the debug information just when starting the playback
+	if (fileref != _videoRef) {
+		debugC(0, kDebugScript, "Groovie::Script: WIPEMASKFROMSTRING58 %d ('%s')", fileref, vidName.c_str());
+		debugC(2, kDebugVideo, "\nGroovie::Script: @0x%04X: Playing mask video %d ('%s') via 0x58 (o_wipemaskfromstring58)", instStart - 1, fileref, vidName.c_str());
+	}
+
+	// Play the video
+	if (!playvideofromref(fileref)) {
+		// Move _currentInstruction back
+		_currentInstruction = instStart - 1;
+	}
 }
 
 void Script::o2_check_sounds_overlays() {
@@ -2344,7 +2414,7 @@ Script::OpcodeFunc Script::_opcodesV2[NUM_OPCODES] = {
 	&Script::o2_setscriptend,
 	&Script::o2_playsound,
 	&Script::o_invalid,
-	&Script::o_invalid, // 0x58
+	&Script::o_wipemaskfromstring58, // 0x58
 	&Script::o2_check_sounds_overlays,
 	&Script::o2_preview_loadgame
 };

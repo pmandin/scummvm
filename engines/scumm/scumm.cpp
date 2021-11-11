@@ -539,7 +539,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		if (ConfMan.getBool("aspect_ratio") && !ConfMan.getBool("trim_fmtowns_to_200_pixels")) {
 			GUI::MessageDialog dialog(
 				_("You have enabled 'aspect ratio correction'. However, FM-TOWNS' natural resolution is 320x240, which doesn't allow aspect ratio correction.\n"
-				  "Aspect ratio correction can be acheived by trimming the resolution to 320x200, under 'engine' tab."));
+				  "Aspect ratio correction can be achieved by trimming the resolution to 320x200, under 'engine' tab."));
 			dialog.runModal();
 		}
 
@@ -1661,9 +1661,10 @@ void ScummEngine::setupCharsetRenderer(const Common::String &macFontFile) {
 #endif
 		if (_game.platform == Common::kPlatformFMTowns)
 			_charset = new CharsetRendererTownsV3(this);
-		else if (_game.platform == Common::kPlatformMacintosh && !macFontFile.empty())
-			_charset = new CharsetRendererMac(this, macFontFile);
-		else
+		else if (_game.platform == Common::kPlatformMacintosh && !macFontFile.empty()) {
+			bool correctFontSpacing = _game.id == GID_LOOM || ConfMan.getBool("mac_v3_correct_font_spacing");
+			_charset = new CharsetRendererMac(this, macFontFile, correctFontSpacing);
+		} else
 			_charset = new CharsetRendererV3(this);
 #ifdef ENABLE_SCUMM_7_8
 	} else if (_game.version == 8) {

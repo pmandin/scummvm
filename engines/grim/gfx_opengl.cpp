@@ -139,8 +139,7 @@ void GfxOpenGL::setupScreen(int screenW, int screenH) {
 	g_system->showMouse(false);
 
 	int screenSize = _screenWidth * _screenHeight * 4;
-	_storedDisplay = new byte[screenSize];
-	memset(_storedDisplay, 0, screenSize);
+	_storedDisplay = new byte[screenSize]();
 	_smushNumTex = 0;
 
 	_currentShadowArray = nullptr;
@@ -1366,11 +1365,9 @@ void GfxOpenGL::createFont(Font *font) {
 		size = 64;
 
 	uint arraySize = size * size * bpp * charsWide * charsHigh;
-	byte *temp = new byte[arraySize];
+	byte *temp = new byte[arraySize]();
 	if (!temp)
 		error("Could not allocate %d bytes", arraySize);
-
-	memset(temp, 0, arraySize);
 
 	FontUserData *userData = new FontUserData;
 	font->setUserData(userData);
@@ -1426,7 +1423,7 @@ struct TextObjectUserData {
 };
 
 void GfxOpenGL::createTextObject(TextObject *text) {
-	if (g_grim->getGameType() != GType_GRIM || !(g_grim->getGameFlags() & ADGF_REMASTERED))
+	if (g_grim->getGameType() != GType_GRIM || !g_grim->isRemastered())
 		return;
 
 #ifdef USE_FREETYPE2
@@ -1489,7 +1486,7 @@ void GfxOpenGL::drawTextObject(const TextObject *text) {
 	glColor3ub(color.getRed(), color.getGreen(), color.getBlue());
 	const FontUserData *userData = (const FontUserData *)font->getUserData();
 	if (!userData) {
-		if (g_grim->getGameType() != GType_GRIM || !(g_grim->getGameFlags() & ADGF_REMASTERED))
+		if (g_grim->getGameType() != GType_GRIM || !g_grim->isRemastered())
 			error("Could not get font userdata");
 #ifdef USE_FREETYPE2
 		const FontTTF *f = static_cast<const FontTTF *>(font);
@@ -1591,7 +1588,7 @@ void GfxOpenGL::drawTextObject(const TextObject *text) {
 }
 
 void GfxOpenGL::destroyTextObject(TextObject *text) {
-	if (g_grim->getGameType() != GType_GRIM || !(g_grim->getGameFlags() & ADGF_REMASTERED))
+	if (g_grim->getGameType() != GType_GRIM || !g_grim->isRemastered())
 		return;
 
 	TextObjectUserData *ud = (TextObjectUserData *)const_cast<void *>(text->getUserData());

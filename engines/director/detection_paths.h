@@ -184,6 +184,22 @@ const char *directoryGlobs[] = {
 	"bin",
 	"adam resources",				// ADAM Software Products
 	"material",						// NY Yankees Yearbook
+	"PANTOS",						// Pantos Story
+	"Pickle's Book",
+	"keron Folder",					// Ultra Resort Keroncuel Mac
+	"KERONFOL",						// Ultra Resort Keroncuel Win
+	"start",						// Ursa Minor Blue
+	"PEPPERON",						// Four Seasons in Pepperon Village
+	"YBR",							// Yellow Brick Road
+	"PINK GEAR",					// Pink Gear 2
+	"NAV",
+	"SSWARLCK",						// Spaceship Warlock (Windows)
+	"InsMilo",						// Milo and the Magical Stones
+	"dir",
+	"CHRISTMAS PRESENT",			// Christmas Present
+	"Subotnick Hummingbirds",		// All My Hummingbirds Have Alibis
+	"Silly Noisy House Folder",		// A Silly Noisy House
+	"Installer Files",				// Encarta '95
 	0
 };
 

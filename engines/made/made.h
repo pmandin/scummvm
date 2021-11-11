@@ -92,6 +92,7 @@ public:
 
 	uint32 _musicBeatStart;
 	uint32 _cdTimeStart;
+	bool _introMusicDigital;
 
 	int32 _timers[50];
 	int16 getTicks();
@@ -107,6 +108,8 @@ public:
 
 	void handleEvents();
 
+protected:
+	void pauseEngineIntern(bool pause);
 };
 
 } // End of namespace Made

@@ -94,7 +94,7 @@ void KIASectionSave::open() {
 
 	_scrollBox->show();
 
-	_saveList = SaveFileManager::list(_vm->getTargetName());
+	_saveList = SaveFileManager::list(_vm->getMetaEngine(), _vm->getTargetName());
 
 	bool ableToSaveGame = true;
 
@@ -112,7 +112,7 @@ void KIASectionSave::open() {
 		}
 
 		for (uint i = 0; i < _saveList.size(); ++i) {
-			_scrollBox->addLine(_saveList[i].getDescription(), i, 0);
+			_scrollBox->addLine(_saveList[i].getDescription().encode(Common::kDos850), i, 0);
 		}
 
 		if (ableToSaveGame) {
@@ -186,7 +186,7 @@ void KIASectionSave::draw(Graphics::Surface &surface) {
 	if (selectedLineId != _hoveredLineId) {
 		if (selectedLineId >= 0 && selectedLineId < (int)_saveList.size() && _displayingLineId != selectedLineId) {
 			if (_timeLeft == 0u) {
-				SaveStateDescriptor desc = SaveFileManager::queryMetaInfos(_vm->getTargetName(), selectedLineId);
+				SaveStateDescriptor desc = SaveFileManager::queryMetaInfos(_vm->getMetaEngine(), _vm->getTargetName(), selectedLineId);
 				const Graphics::Surface *thumbnail = desc.getThumbnail();
 				if (thumbnail != nullptr) {
 					_vm->_kia->playImage(*thumbnail);
@@ -206,7 +206,7 @@ void KIASectionSave::draw(Graphics::Surface &surface) {
 		if (_timeLeft) {
 			uint32 timeDiff = now - _timeLast; // unsigned difference is intentional
 			if (timeDiff >= _timeLeft) {
-				SaveStateDescriptor desc = SaveFileManager::queryMetaInfos(_vm->getTargetName(), _saveList[selectedLineId].getSaveSlot());
+				SaveStateDescriptor desc = SaveFileManager::queryMetaInfos(_vm->getMetaEngine(), _vm->getTargetName(), _saveList[selectedLineId].getSaveSlot());
 				const Graphics::Surface *thumbnail = desc.getThumbnail();
 				if (thumbnail != nullptr) {
 					_vm->_kia->playImage(*thumbnail);
@@ -296,7 +296,7 @@ void KIASectionSave::scrollBoxCallback(void *callbackData, void *source, int lin
 		if (self->_selectedLineId == self->_newSaveLineId) {
 			self->_inputBox->setText("");
 		} else {
-			self->_inputBox->setText(self->_saveList[self->_selectedLineId].getDescription());
+			self->_inputBox->setText(self->_saveList[self->_selectedLineId].getDescription().encode(Common::kDos850));
 		}
 
 		self->_vm->_audioPlayer->playAud(self->_vm->_gameInfo->getSfxTrack(kSfxSPNBEEP3), 40, 0, 0, 50, 0);
@@ -405,7 +405,7 @@ void KIASectionSave::save() {
 	}
 
 	BladeRunner::SaveFileHeader header;
-	header._name = _inputBox->getText();
+	header._name = Common::U32String(_inputBox->getText()).encode(Common::kUtf8);
 	header._playTime = _vm->getTotalPlayTime();
 
 	BladeRunner::SaveFileManager::writeHeader(*saveFile, header);

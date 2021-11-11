@@ -30,7 +30,6 @@ RM = rm -f
 RM_REC = rm -rf
 AR = sh-elf-ar cru
 RANLIB = sh-elf-ranlib
-HAVE_GCC3 = true
 USE_RGB_COLOR = true
 
 ifdef DYNAMIC_MODULES
@@ -67,7 +66,8 @@ ENABLE_TOUCHE = $(ENABLED)
 ENABLE_TUCKER = $(ENABLED)
 
 OBJS :=	dcmain.o time.o display.o audio.o input.o selector.o icon.o \
-	label.o vmsave.o softkbd.o dcloader.o cache.o dc-fs.o plugins.o
+	label.o vmsave.o softkbd.o dcloader.o cache.o dc-fs.o plugins.o \
+	dcutils.o
 
 MODULE_DIRS += ./
 

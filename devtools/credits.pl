@@ -507,6 +507,7 @@ begin_credits("Credits");
 				add_person("Pawe&#322; Ko&#322;odziejski", "aquadran", "");
 				add_person("Eugene Sandulenko", "sev", "");
 				add_person("Einar Johan T. S&oslash;m&aring;en", "somaen", "");
+				add_person("Lothar Serra Mari", "lotharsm", "");
 			end_persons();
 		end_section();
 
@@ -676,6 +677,7 @@ begin_credits("Credits");
 				add_person("Chris Page", "cp88", "Return to launcher, savestate improvements, leak fixes, ... (GSoC 2008 task) (retired)");
 				add_person("Coen Rampen", "NMIError", "Sound improvements");
 				add_person("Robin Watts", "robinwatts", "ARM assembly routines for nice speedups on several ports; improvements to the sound mixer");
+				add_person("", "Trembyle", "Archivist");
 			end_section();
 		end_section();
 
@@ -694,7 +696,6 @@ begin_credits("Credits");
 				add_person("Jordi Vilalta Prat", "jvprat", "Wiki maintainer");
 				add_person("Eugene Sandulenko", "sev", "Forum, IRC channel, Screen Shots and Mailing list maintainer");
 				add_person("John Willis", "DJWillis", "");
-				add_person("Matan Bareket", "mataniko", "Site maintainer");
 			end_persons();
 		end_section();
 
@@ -722,6 +723,7 @@ begin_credits("Credits");
 				add_person("Jeremy Newman", "laxdragon", "Former webmaster");
 				add_person("Lionel Ulmer", "bbrox", "Port: X11");
 				add_person("Won Star", "wonst719", "Former GP32 porter");
+        add_person("Matan Bareket", "mataniko", "Website, Infrastructure, UI/UX");
 			end_persons();
 		end_section();
 	end_section();

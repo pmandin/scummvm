@@ -43,6 +43,12 @@ public:
 	int getMaximumSaveSlot() const override;
 	void removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
+	Common::String getSavegameFile(int saveGameIdx, const char *target) const override {
+		if (saveGameIdx == kSavegameFilePattern)
+			return Common::String::format("DREAMWEB.D##");
+		else
+			return Common::String::format("DREAMWEB.D%02d", saveGameIdx);
+	}
 };
 
 bool DreamWebMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -92,7 +98,7 @@ SaveStateList DreamWebMetaEngine::listSaves(const char *target) const {
 		delete stream;
 
 		int slotNum = atoi(file.c_str() + file.size() - 2);
-		SaveStateDescriptor sd(slotNum, name);
+		SaveStateDescriptor sd(this, slotNum, name);
 		saveList.push_back(sd);
 	}
 
@@ -123,7 +129,7 @@ SaveStateDescriptor DreamWebMetaEngine::querySaveMetaInfos(const char *target, i
 		for (i = 0; i < descSize; i++)
 			saveName += (char)in->readByte();
 
-		SaveStateDescriptor desc(slot, saveName);
+		SaveStateDescriptor desc(this, slot, saveName);
 
 		// Check if there is a ScummVM data block
 		if (header.len(6) == SCUMMVM_BLOCK_MAGIC_SIZE) {

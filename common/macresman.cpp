@@ -98,11 +98,11 @@ uint32 MacResManager::getResForkDataSize() const {
 	if (!hasResFork())
 		return 0;
 
-	_stream->seek(_resForkOffset + 4);
+	_stream->seek(_resForkOffset + 8);
 	return _stream->readUint32BE();
 }
 
-String MacResManager::computeResForkMD5AsString(uint32 length) const {
+String MacResManager::computeResForkMD5AsString(uint32 length, bool tail) const {
 	if (!hasResFork())
 		return String();
 
@@ -113,6 +113,9 @@ String MacResManager::computeResForkMD5AsString(uint32 length) const {
 
 
 	SeekableSubReadStream resForkStream(_stream, dataOffset, dataOffset + dataLength);
+	if (tail && dataLength > length)
+		resForkStream.seek(-(int64)length, SEEK_END);
+
 	return computeStreamMD5AsString(resForkStream, MIN<uint32>(length, _resForkSize));
 }
 

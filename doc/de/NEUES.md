@@ -4,11 +4,26 @@ Programmcodes finden Sie auf Englisch unter:
 
 #### 2.6.0 (DD.MM.YYYY)
 
+ Allgemein:
+   - ScummVM benötigt nun C++11, um gebaut werden zu können.
+   - Unterstützung für verbesserte Filter in der Such-Box hinzugefügt.
+     Weitere Informationen findest Du in der Dokumentation unnter "Unterstanding the search box".
+
  Dreamweb:
    - Unterstützung für Sprachausgabe in Dialogen und für Objektbeschreibungen hinzugefügt.
 
+ Kyra:
+   - Unterstützung für die chinesische Version von Legend of Kyrandia 3 hinzugefügt.
+
  Supernova:
    - Unterstützung für Sprachausgabe in Dialogen und für Objektbeschreibungen hinzugefügt.
+
+ SCUMM:
+   - Verbesserte Unterstützung für hochauflösenden Text in den 16-Farben-Macintosh-
+     Versionen von Loom und Indiana Jones and the Last Crusade.
+
+ Xeen:
+   - Absturz beim Laden von Kostanten aus xeen.ccs behoben.
 
 
 #### 2.5.0 "Vor genau zwanzig Jahren..." (09.10.2021)

@@ -88,9 +88,13 @@ void UIInputBox::hide() {
 }
 
 void UIInputBox::handleKeyDown(const Common::KeyState &kbd) {
+	// The values that the KeyState::ascii field receives from the SDL backend are actually ISO 8859-1 encoded. They need to be
+	// reencoded to DOS so as to match the game font encoding (although we currently use UIInputBox::charIsValid() to block most
+	// extra characters, so it might not make much of a difference).
+	char kc = Common::U32String(Common::String::format("%c", kbd.ascii), Common::kISO8859_1).encode(Common::kDos850).firstChar();
 	if (_isVisible) {
-		if (charIsValid(kbd) && _text.size() < _maxLength) {
-			_text += kbd.ascii;
+		if (charIsValid(kc) && _text.size() < _maxLength) {
+			_text += kc;
 		} else if (kbd.keycode == Common::KEYCODE_BACKSPACE) {
 			_text.deleteLastChar();
 		} else if (kbd.keycode == Common::KEYCODE_RETURN && !_text.empty()) {
@@ -101,18 +105,18 @@ void UIInputBox::handleKeyDown(const Common::KeyState &kbd) {
 	}
 }
 
-bool UIInputBox::charIsValid(const Common::KeyState &kbd) {
-	return kbd.ascii >= ' '
-		&& kbd.ascii != '<'
-		&& kbd.ascii != '>'
-		&& kbd.ascii != ':'
-		&& kbd.ascii != '"'
-		&& kbd.ascii != '/'
-		&& kbd.ascii != '\\'
-		&& kbd.ascii != '|'
-		&& kbd.ascii != '?'
-		&& kbd.ascii != '*'
-		&& kbd.ascii <= '~';// || kbd.ascii == '¡' || kbd.ascii == 'ß');
+bool UIInputBox::charIsValid(char kc) {
+	return kc >= ' '
+		&& kc != '<'
+		&& kc != '>'
+		&& kc != ':'
+		&& kc != '"'
+		&& kc != '/'
+		&& kc != '\\'
+		&& kc != '|'
+		&& kc != '?'
+		&& kc != '*'
+		&& kc <= '~';// || kc == '¡' || kc == 'ß');
 }
 
 } // End of namespace BladeRunner

@@ -41,9 +41,8 @@ static const DebugChannelDef debugFlagList[] = {
 	{Groovie::kDebugCursor, "Cursor", "Debug cursor decompression / switching"},
 	{Groovie::kDebugMIDI, "MIDI", "Debug MIDI / XMIDI files"},
 	{Groovie::kDebugScriptvars, "Scriptvars", "Print out any change to script variables"},
-	{Groovie::kDebugCell, "Cell", "Debug the cell game (in the microscope)"},
+	{Groovie::kDebugLogic, "Logic", "Debug the AI puzzles in the logic folder and TLC questionnaires"},
 	{Groovie::kDebugFast, "Fast", "Play videos quickly, with no sound (unstable)"},
-	{Groovie::kDebugTlcGame, "TLCGame", "Debug the questionnaires in TLC"},
 	DEBUG_CHANNEL_END
 };
 
@@ -60,7 +59,7 @@ static const PlainGameDescriptor groovieGames[] = {
 
 static const GroovieGameDescription gameDescriptions[] = {
 	// groovie.cpp requires the first file to be the main .grv file for v2 games, might as well stick to that convention for v1 games from now on too
-	
+
 	// The 7th Guest DOS English
 	{
 		{
@@ -76,7 +75,7 @@ static const GroovieGameDescription gameDescriptions[] = {
 	{
 		{
 			"t7g", "",
-			AD_ENTRY2s("script.grv", NULL, -1,
+			AD_ENTRY2s("script.grv", NULL, -1,				// FIXMEMD5
 						"T7GMac", "acdc4a58dd3f007f65e99b99d78e0bce", 1814029),
 			Common::EN_ANY, Common::kPlatformMacintosh, ADGF_MACRESFORK,
 			GUIO7(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_NOASPECT, GUIO_NOSFX, GAMEOPTION_T7G_FAST_MOVIE_SPEED, GAMEOPTION_ORIGINAL_SAVELOAD)
@@ -282,7 +281,7 @@ static const GroovieGameDescription gameDescriptions[] = {
 			AD_ENTRY2s("clanmain.grv", "dd424120fa1daa9d6b576d0ba22a4936", 54253,
 						"ACT01MUS.MPG", NULL, -1),
 			Common::EN_ANY, Common::kPlatformWindows, ADGF_UNSTABLE,
-			GUIO3(GUIO_NOMIDI, GUIO_NOLAUNCHLOAD, GUIO_NOASPECT)
+			GUIO2(GUIO_NOMIDI, GUIO_NOASPECT)
 		},
 		kGroovieCDY
 	},
@@ -294,7 +293,7 @@ static const GroovieGameDescription gameDescriptions[] = {
             AD_ENTRY2s("CLANMAIN.GRV", "dd424120fa1daa9d6b576d0ba22a4936", 54253,
                        "ACT01MUS.m4a", NULL, -1),
             Common::EN_ANY, Common::kPlatformUnknown, ADGF_UNSTABLE,
-            GUIO3(GUIO_NOMIDI, GUIO_NOLAUNCHLOAD, GUIO_NOASPECT)
+            GUIO2(GUIO_NOMIDI, GUIO_NOASPECT)
         },
         kGroovieCDY
     },

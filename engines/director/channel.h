@@ -39,6 +39,8 @@ class Cursor;
 class Channel {
 public:
 	Channel(Sprite *sp, int priority = 0);
+	Channel(const Channel &channel);
+	Channel& operator=(const Channel &channel);
 	~Channel();
 
 	DirectorPlotData getPlotData();
@@ -81,6 +83,12 @@ public:
 
 	void updateVideoTime();
 
+	// used for film loops
+	bool hasSubChannels();
+	Common::Array<Channel> *getSubChannels();
+
+	void addRegistrationOffset(Common::Point &pos, bool subtract = false);
+
 public:
 	Sprite *_sprite;
 	Cursor _cursor;
@@ -97,20 +105,19 @@ public:
 	int _width;
 	int _height;
 
-	// Using in digital movie sprites
+	// Used in digital movie sprites
 	double _movieRate;
 	int _movieTime;
 	int _startTime;
 	int _stopTime;
 
+	// Used in film loops
+	uint _filmLoopFrame;
+
 private:
 	Graphics::ManagedSurface *getSurface();
-	MacShape *getShape();
 	Common::Point getPosition();
-	uint32 getForeColor();
-	uint32 getBackColor();
 
-	void addRegistrationOffset(Common::Point &pos, bool subtract = false);
 };
 
 } // End of namespace Director

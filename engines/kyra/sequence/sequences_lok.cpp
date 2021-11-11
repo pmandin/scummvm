@@ -106,7 +106,7 @@ void KyraEngine_LoK::seq_intro() {
 
 	_seq->setCopyViewOffs(true);
 	_screen->setFont(_flags.lang == Common::JA_JPN ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
-	if (_flags.platform != Common::kPlatformFMTowns && _flags.platform != Common::kPlatformPC98 && _flags.platform != Common::kPlatformAmiga)
+	if (_flags.platform == Common::kPlatformDOS || _flags.platform == Common::kPlatformMacintosh)
 		snd_playTheme(0, 2);
 	_text->setTalkCoords(144);
 
@@ -1039,9 +1039,9 @@ int KyraEngine_LoK::seq_playEnd() {
 		snd_playWanderScoreViaMap(50, 1);
 		setupPanPages();
 
-		if (_flags.platform == Common::kPlatformAmiga) {
+		if (_flags.platform == Common::kPlatformAmiga || _flags.platform == Common::kPlatformMacintosh) {
 			_sound->loadSoundFile(kMusicFinale);
-
+			_sound->selectAudioResourceSet(kMusicFinale);
 			// The original started song 0 directly here. Since our player
 			// uses 0, 1 for stop and fade we start song 0 with 2
 			_sound->playTrack(2);
@@ -1221,7 +1221,9 @@ struct CreditsLine {
 
 void KyraEngine_LoK::seq_playCredits() {
 	static const uint8 colorMap[] = { 0, 0, 0xC, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	static const char stringTerms[] = { 0x5, 0xD, 0x0};
+	static const char stringTermsDef[] = { 0x5, 0xD, 0x0};
+	static const char stringTermsMac[] = { 0x5, 0xA, 0x0 };
+	const char *stringTerms = (_flags.platform == Common::kPlatformMacintosh) ? stringTermsMac : stringTermsDef;
 
 	typedef Common::List<CreditsLine> CreditsLineList;
 	CreditsLineList lines;
@@ -1685,9 +1687,8 @@ int KyraEngine_LoK::handleBeadState() {
 				_beadState1.width = ((_beadState1.width2 + 7) >> 3) + 1;
 				_beadState1.height = _animator->fetchAnimHeight(_panPagesTable[19], 256);
 				if (!_endSequenceBackUpRect) {
-					_endSequenceBackUpRect = new uint8[(_beadState1.width * _beadState1.height) << 3];
+					_endSequenceBackUpRect = new uint8[(_beadState1.width * _beadState1.height) << 3]();
 					assert(_endSequenceBackUpRect);
-					memset(_endSequenceBackUpRect, 0, ((_beadState1.width * _beadState1.height) << 3) * sizeof(uint8));
 				}
 				x = _beadState1.x = 60;
 				y = _beadState1.y = 40;

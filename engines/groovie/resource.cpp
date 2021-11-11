@@ -26,6 +26,7 @@
 #include "common/macresman.h"
 #include "common/substream.h"
 #include "common/textconsole.h"
+#include "common/config-manager.h"
 
 #include "groovie/resource.h"
 #include "groovie/groovie.h"
@@ -41,13 +42,18 @@ Common::SeekableReadStream *ResMan::open(uint32 fileRef) {
 		return NULL;
 	}
 
+	debugC(1, kDebugResource, "Groovie::Resource: Opening resource %d", fileRef);
+	return open(resInfo);
+}
+
+Common::SeekableReadStream *ResMan::open(const ResInfo &resInfo) {
 	// Do we know the name of the required GJD?
 	if (resInfo.gjd >= _gjds.size()) {
 		error("Groovie::Resource: Unknown GJD %d", resInfo.gjd);
 		return NULL;
 	}
 
-	debugC(1, kDebugResource, "Groovie::Resource: Opening resource 0x%04X (%s, %d, %d, %d)", fileRef, _gjds[resInfo.gjd].c_str(), resInfo.offset, resInfo.size, resInfo.disks);
+	debugC(1, kDebugResource, "Groovie::Resource: Opening resource (%s, %d, %d, %d)", _gjds[resInfo.gjd].c_str(), resInfo.offset, resInfo.size, resInfo.disks);
 
 	// Does it exist?
 	if (!Common::File::exists(_gjds[resInfo.gjd])) {
@@ -69,9 +75,43 @@ Common::SeekableReadStream *ResMan::open(uint32 fileRef) {
 	}
 
 	// Returning the resource substream
-	return new Common::SeekableSubReadStream(gjdFile, resInfo.offset, resInfo.offset + resInfo.size, DisposeAfterUse::YES);
+	Common::SeekableSubReadStream *file = new Common::SeekableSubReadStream(gjdFile, resInfo.offset, resInfo.offset + resInfo.size, DisposeAfterUse::YES);
+	if (ConfMan.getBool("dump_resources")) {
+		dumpResource(file, resInfo.filename, false);
+	}
+	return file;
 }
 
+void ResMan::dumpResource(const Common::String &fileName) {
+	uint32 fileRef = getRef(fileName);
+	dumpResource(fileRef, fileName);
+}
+
+void ResMan::dumpResource(uint32 fileRef, const Common::String &fileName) {
+	Common::SeekableReadStream *inFile = open(fileRef);
+	dumpResource(inFile, fileName);
+}
+
+void ResMan::dumpResource(Common::SeekableReadStream *inFile, const Common::String &fileName, bool dispose) {
+	Common::DumpFile outFile;
+	outFile.open(fileName);
+
+	int64 totalSize = inFile->size();
+	byte *data = new byte[totalSize];
+	inFile->read(data, totalSize);
+
+	outFile.write(data, totalSize);
+	outFile.flush();
+
+	delete[] data;
+
+	if (dispose)
+		delete inFile;
+	else
+		inFile->seek(0);
+
+	outFile.close();
+}
 
 // ResMan_t7g
 
@@ -92,7 +132,7 @@ ResMan_t7g::ResMan_t7g(Common::MacResManager *macResFork) : _macResFork(macResFo
 	}
 }
 
-uint32 ResMan_t7g::getRef(Common::String name, Common::String scriptname) {
+uint32 ResMan_t7g::getRef(Common::String name) {
 	// Get the name of the RL file
 	Common::String rlFileName(t7g_gjds[_lastGjd]);
 	rlFileName += ".rl";
@@ -219,12 +259,12 @@ ResMan_v2::ResMan_v2() {
 	indexfile.close();
 }
 
-uint32 ResMan_v2::getRef(Common::String name, Common::String scriptname) {
+uint32 ResMan_v2::getRef(Common::String name) {
 	// Open the RL file
 	Common::File rlFile;
 	if (!rlFile.open("dir.rl")) {
 		error("Groovie::Resource: Couldn't open dir.rl");
-		return false;
+		return (uint32)-1;
 	}
 
 	// resources are always in lowercase

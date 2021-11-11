@@ -101,13 +101,12 @@ bool VideoPlayer::handleEvent(const AsylumEvent &evt) {
 			getScreen()->fillRect(0, 400, 640, 80, 0);
 
 			if (_subtitleIndex >= 0) {
-				char *text1 = getText()->get((ResourceId)_currentMovie);
+				char *text = getText()->get(_subtitles[_subtitleIndex].resourceId);
 
-				int16 y = (int16)(10 * (44 - getText()->draw(0, 99, kTextCalculate, Common::Point(10, 400), 20, 620, text1)));
+				int16 y = (int16)(10 * (44 - getText()->draw(0, 99, kTextCalculate, Common::Point(10, 400), 20, 620, text)));
 				if (y <= 400)
 					y = 405;
 
-				char *text = getText()->get(_subtitles[_subtitleIndex].resourceId);
 				getText()->draw(0, 99, kTextCenter, Common::Point(10, y), 20, 620, text);
 
 				if (_vm->checkGameVersion("Steam")) {
@@ -193,7 +192,8 @@ void VideoPlayer::play(const Common::String &filename, bool showSubtitles) {
 	_decoder->start();
 
 	if (_vm->checkGameVersion("Steam") || _vm->isAltDemo()) {
-		Graphics::PixelFormat decoderFormat = _decoder->getPixelFormat();
+		Graphics::PixelFormat decoderFormat = Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
+		_decoder->setDefaultHighColorFormat(decoderFormat);
 		initGraphics(640, 480, &decoderFormat);
 	}
 

@@ -43,7 +43,6 @@
 #include "engines/stark/services/gamechapter.h"
 #include "engines/stark/services/gamemessage.h"
 #include "engines/stark/gfx/driver.h"
-#include "engines/stark/gfx/framelimiter.h"
 
 #include "audio/mixer.h"
 #include "common/config-manager.h"
@@ -55,6 +54,8 @@
 #include "common/system.h"
 #include "common/translation.h"
 #include "engines/advancedDetector.h"
+#include "graphics/renderer.h"
+#include "graphics/framelimiter.h"
 #include "gui/message.h"
 
 namespace Stark {
@@ -93,7 +94,7 @@ StarkEngine::~StarkEngine() {
 
 Common::Error StarkEngine::run() {
 	setDebugger(new Console());
-	_frameLimiter = new Gfx::FrameLimiter(_system, ConfMan.getInt("engine_speed"));
+	_frameLimiter = new Graphics::FrameLimiter(_system, ConfMan.getInt("engine_speed"));
 
 	// Get the screen prepared
 	Gfx::Driver *gfx = Gfx::Driver::create();
@@ -326,10 +327,16 @@ void StarkEngine::checkRecommendedDatafiles() {
 }
 
 bool StarkEngine::hasFeature(EngineFeature f) const {
+	// The TinyGL renderer does not support arbitrary resolutions for now
+	Common::String rendererConfig = ConfMan.get("renderer");
+	Graphics::RendererType desiredRendererType = Graphics::parseRendererTypeCode(rendererConfig);
+	Graphics::RendererType matchingRendererType = Graphics::getBestMatchingAvailableRendererType(desiredRendererType);
+	bool softRenderer = matchingRendererType == Graphics::kRendererTypeTinyGL;
+
 	return
 		(f == kSupportsLoadingDuringRuntime) ||
 		(f == kSupportsSavingDuringRuntime) ||
-		(f == kSupportsArbitraryResolutions) ||
+		(f == kSupportsArbitraryResolutions && !softRenderer) ||
 		(f == kSupportsReturnToLauncher);
 }
 

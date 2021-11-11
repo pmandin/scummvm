@@ -76,6 +76,8 @@ public:
 	int getMaximumSaveSlot() const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 	void removeSaveState(const char *target, int slot) const override;
+
+	// TODO: Add getSavegameFile(). See comments in loadGameState and removeSaveState
 };
 
 bool TinselMetaEngine::hasFeature(MetaEngineFeature f) const {
@@ -112,7 +114,7 @@ SaveStateDescriptor TinselMetaEngine::querySaveMetaInfos(const char *target, int
 	file->read(saveDesc, sizeof(saveDesc));
 
 	saveDesc[SG_DESC_LEN - 1] = 0;
-	SaveStateDescriptor desc(slot, saveDesc);
+	SaveStateDescriptor desc(this, slot, saveDesc);
 
 	int8 tm_year = file->readUint16LE();
 	int8 tm_mon = file->readSByte();
@@ -159,7 +161,7 @@ SaveStateList TinselMetaEngine::listSaves(const char *target) const {
 
 			saveDesc[SG_DESC_LEN - 1] = 0;
 
-			saveList.push_back(SaveStateDescriptor(slotNum, saveDesc));
+			saveList.push_back(SaveStateDescriptor(this, slotNum, saveDesc));
 			delete in;
 		}
 	}

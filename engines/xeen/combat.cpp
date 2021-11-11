@@ -29,39 +29,56 @@
 
 namespace Xeen {
 
-static const int MONSTER_GRID_X[48] = {
-	1, 1, 1, 0, -1, -1, -1, 1, 1, 1, 0, -1,
-	-1, -1, 1, 1, 1, 0, -1, -1, -1, 1, 1, 1,
-	0, -1, -1, -1, 1, 1, 1, 0, -1, -1, -1, 1,
-	1, 1, 0, -1, -1, -1, 1, 1, 1, 0, -1, -1
+#define GRID_SIZE  (7 * 7)
+
+static const int MONSTER_GRID_X[GRID_SIZE] = {
+	1, 1, 1, 0, -1, -1, -1,
+	1, 1, 1, 0, -1, -1, -1,
+	1, 1, 1, 0, -1, -1, -1,
+	1, 1, 1, 0, -1, -1, -1,
+	1, 1, 1, 0, -1, -1, -1,
+	1, 1, 1, 0, -1, -1, -1,
+	1, 1, 1, 0, -1, -1, -1,
 };
 
-static const int MONSTER_GRID_Y[48] = {
-	0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 0,
-	0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-	0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0
+static const int MONSTER_GRID_Y[GRID_SIZE] = {
+	0, 0, 0, -1, 0, 0, 0,
+	0, 0, 0, -1, 0, 0, 0,
+	0, 0, 0, -1, 0, 0, 0,
+	0, 0, 0,  0, 0, 0, 0,
+	0, 0, 0, +1, 0, 0, 0,
+	0, 0, 0, +1, 0, 0, 0,
+	0, 0, 0, +1, 0, 0, 0,
 };
 
-static const int MONSTER_GRID3[48] = {
-	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-	- 1, -1, -1, -1, -1, -1, -1, -1, -1, 1, 1, 1,
-	0, -1, -1, -1, 1, 1, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+static const int MONSTER_GRID3[GRID_SIZE] = {
+	-1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1,
+	+1, +1, +1,  0, -1, -1, -1,
+	+1, +1, +1, +1, +1, +1, +1,
+	+1, +1, +1, +1, +1, +1, +1,
+	+1, +1, +1, +1, +1, +1, +1,
 };
 
-static const int MONSTER_GRID_BITINDEX1[48] = {
-	1, 1, 1, 2, 3, 3, 3, 1, 1, 1, 2, 3,
-	3, 3, 1, 1, 1, 2, 3, 3, 3, 1, 1, 1,
-	0, 3, 3, 3, 1, 1, 1, 0, 3, 3, 3, 1,
-	1, 1, 0, 3, 3, 3, 1, 1, 1, 0, 3, 3
+static const int MONSTER_GRID_BITINDEX1[GRID_SIZE] = {
+	1, 1, 1, 2, 3, 3, 3,
+	1, 1, 1, 2, 3, 3, 3,
+	1, 1, 1, 2, 3, 3, 3,
+	1, 1, 1, 0, 3, 3, 3,
+	1, 1, 1, 0, 3, 3, 3,
+	1, 1, 1, 0, 3, 3, 3,
+	1, 1, 1, 0, 3, 3, 3,
 };
 
-static const int MONSTER_GRID_BITINDEX2[48] = {
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-	2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1,
-	0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+static const int MONSTER_GRID_BITINDEX2[GRID_SIZE] = {
+	2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2,
+        1, 1, 1, 0, 3, 3, 3,
+        0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0,
 };
 
 static const int ATTACK_TYPE_FX[23] = {
@@ -94,7 +111,7 @@ static const int MONSTER_ITEM_RANGES[6] = { 10, 20, 50, 100, 100, 100 };
 Combat::Combat(XeenEngine *vm): _vm(vm), _missVoc("miss.voc") {
 	Common::fill(&_attackMonsters[0], &_attackMonsters[26], 0);
 	Common::fill(&_shootingRow[0], &_shootingRow[MAX_PARTY_COUNT], 0);
-	Common::fill(&_monsterMap[0][0], &_monsterMap[32][32], 0);
+	Common::fill(&_monsterMap[0][0], &_monsterMap[31][32], 0);
 	Common::fill(&_monsterMoved[0], &_monsterMoved[MAX_NUM_MONSTERS], false);
 	Common::fill(&_rangeAttacking[0], &_rangeAttacking[MAX_NUM_MONSTERS], false);
 	Common::fill(&_gmonHit[0], &_gmonHit[36], 0);
@@ -452,7 +469,7 @@ void Combat::moveMonsters() {
 	if (intf._charsShooting)
 		return;
 
-	Common::fill(&_monsterMap[0][0], &_monsterMap[32][32], 0);
+	Common::fill(&_monsterMap[0][0], &_monsterMap[31][32], 0);
 	Common::fill(&_monsterMoved[0], &_monsterMoved[MAX_NUM_MONSTERS], false);
 	Common::fill(&_rangeAttacking[0], &_rangeAttacking[MAX_NUM_MONSTERS], false);
 	Common::fill(&_gmonHit[0], &_gmonHit[36], -1);

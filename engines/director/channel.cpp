@@ -28,6 +28,7 @@
 #include "director/channel.h"
 #include "director/sprite.h"
 #include "director/castmember.h"
+#include "director/types.h"
 #include "director/window.h"
 
 #include "graphics/macgui/mactext.h"
@@ -42,19 +43,21 @@ Channel::Channel(Sprite *sp, int priority) {
 		_sprite = new Sprite(*sp);
 
 	_widget = nullptr;
-	_currentPoint = sp->_startPoint;
+	_currentPoint = _sprite ? _sprite->_startPoint : Common::Point(0, 0);
 	_delta = Common::Point(0, 0);
 	_constraint = 0;
 	_mask = nullptr;
 
 	_priority = priority;
-	_width = _sprite->_width;
-	_height = _sprite->_height;
+	_width = _sprite ? _sprite->_width : 0;
+	_height = _sprite ? _sprite->_height : 0;
 
 	_movieRate = 0.0;
 	_movieTime = 0;
 	_startTime = 0;
 	_stopTime = 0;
+
+	_filmLoopFrame = 0;
 
 	_visible = true;
 	_dirty = true;
@@ -62,14 +65,48 @@ Channel::Channel(Sprite *sp, int priority) {
 	_sprite->updateEditable();
 }
 
+Channel::Channel(const Channel &channel) {
+	*this = channel;
+}
+
+Channel& Channel::operator=(const Channel &channel) {
+	_sprite = channel._sprite ? new Sprite(*channel._sprite) : nullptr;
+
+	_widget = nullptr;
+	_currentPoint = channel._currentPoint;
+	_delta = channel._delta;
+	_constraint = channel._constraint;
+	_mask = nullptr;
+
+	_priority = channel._priority;
+	_width = channel._width;
+	_height = channel._height;
+
+	_movieRate = channel._movieRate;
+	_movieTime = channel._movieTime;
+	_startTime = channel._startTime;
+	_stopTime = channel._stopTime;
+
+	_filmLoopFrame = channel._filmLoopFrame;
+
+	_visible = channel._visible;
+	_dirty = channel._dirty;
+
+	return *this;
+}
+
+
 Channel::~Channel() {
-	delete _widget;
-	delete _mask;
-	delete _sprite;
+	if (_widget)
+		delete _widget;
+	if (_mask)
+		delete _mask;
+	if (_sprite)
+		delete _sprite;
 }
 
 DirectorPlotData Channel::getPlotData() {
-	DirectorPlotData pd(g_director->_wm, _sprite->_spriteType, _sprite->_ink, _sprite->_blend, getBackColor(), getForeColor());
+	DirectorPlotData pd(g_director->_wm, _sprite->_spriteType, _sprite->_ink, _sprite->_blend, _sprite->getBackColor(), _sprite->getForeColor());
 	pd.colorWhite = pd._wm->_colorWhite;
 	pd.colorBlack = pd._wm->_colorBlack;
 	pd.dst = nullptr;
@@ -77,7 +114,7 @@ DirectorPlotData Channel::getPlotData() {
 	pd.srf = getSurface();
 	if (!pd.srf && _sprite->_spriteType != kBitmapSprite) {
 		// Shapes come colourized from macDrawPixel
-		pd.ms = getShape();
+		pd.ms = _sprite->getShape();
 		pd.applyColor = false;
 	} else {
 		pd.setApplyColor();
@@ -338,6 +375,18 @@ void Channel::setClean(Sprite *nextSprite, int spriteId, bool partial) {
 					((DigitalVideoCastMember *)nextSprite->_cast)->loadVideo(pathMakeRelative(path, true, false));
 					((DigitalVideoCastMember *)nextSprite->_cast)->startVideo(this);
 				}
+			} else if (nextSprite->_cast->_type == kCastFilmLoop) {
+				// brand new film loop, reset the frame counter
+				_filmLoopFrame = 0;
+			}
+		}
+
+		// if the next sprite in the channel shares the cast member
+		if (nextSprite->_cast && _sprite->_castId == nextSprite->_castId) {
+			if (nextSprite->_cast->_type == kCastFilmLoop) {
+				// increment the film loop counter
+				_filmLoopFrame += 1;
+				_filmLoopFrame %= ((FilmLoopCastMember *)nextSprite->_cast)->_frames.size();
 			}
 		}
 
@@ -570,29 +619,21 @@ void Channel::addRegistrationOffset(Common::Point &pos, bool subtract) {
 		return;
 
 	switch (_sprite->_cast->_type) {
-	case kCastBitmap: {
-		BitmapCastMember *bc = (BitmapCastMember *)(_sprite->_cast);
-
-		Common::Point point(0, 0);
-		// stretch the offset
-		if (!_sprite->_stretch && (_width != bc->_initialRect.width() || _height != bc->_initialRect.height())) {
-			point.x = (bc->_initialRect.left - bc->_regX) * _width / bc->_initialRect.width();
-			point.y = (bc->_initialRect.top - bc->_regY) * _height / bc->_initialRect.height();
-		} else {
-			point.x = bc->_initialRect.left - bc->_regX;
-			point.y = bc->_initialRect.top - bc->_regY;
+	case kCastBitmap:
+		{
+			if (subtract)
+				pos -= _sprite->getRegistrationOffset();
+			else
+				pos += _sprite->getRegistrationOffset();
 		}
-		if (subtract)
-			pos -= point;
-		else
-			pos += point;
-	} break;
-	case kCastDigitalVideo:
-		pos -= Common::Point(_sprite->_cast->_initialRect.width() >> 1, _sprite->_cast->_initialRect.height() >> 1);
 		break;
+	case kCastDigitalVideo:
+	case kCastFilmLoop:
+		pos -= _sprite->getRegistrationOffset();
 	default:
 		break;
 	}
+	return;
 }
 
 void Channel::addDelta(Common::Point pos) {
@@ -694,86 +735,20 @@ Common::Point Channel::getPosition() {
 	return res;
 }
 
-MacShape *Channel::getShape() {
-	if (!_sprite->isQDShape() && (_sprite->_cast && _sprite->_cast->_type != kCastShape))
+bool Channel::hasSubChannels() {
+	if ((_sprite->_cast) && (_sprite->_cast->_type == kCastFilmLoop)) {
+		return true;
+	}
+	return false;
+}
+
+Common::Array<Channel> *Channel::getSubChannels() {
+	if ((!_sprite->_cast) || (_sprite->_cast->_type != kCastFilmLoop)) {
+		warning("Channel doesn't have any sub-channels");
 		return nullptr;
-
-	MacShape *shape = new MacShape();
-
-	shape->ink = _sprite->_ink;
-	shape->spriteType = _sprite->_spriteType;
-	shape->foreColor = _sprite->_foreColor;
-	shape->backColor = _sprite->_backColor;
-	shape->lineSize = _sprite->_thickness & 0x3;
-	shape->pattern = _sprite->getPattern();
-
-	if (g_director->getVersion() >= 300 && shape->spriteType == kCastMemberSprite) {
-		if (!_sprite->_cast) {
-			warning("Channel::getShape(): kCastMemberSprite has no cast defined");
-			delete shape;
-			return nullptr;
-		}
-
-		ShapeCastMember *sc = (ShapeCastMember *)_sprite->_cast;
-		switch (sc->_shapeType) {
-		case kShapeRectangle:
-			shape->spriteType = sc->_fillType ? kRectangleSprite : kOutlinedRectangleSprite;
-			break;
-		case kShapeRoundRect:
-			shape->spriteType = sc->_fillType ? kRoundedRectangleSprite : kOutlinedRoundedRectangleSprite;
-			break;
-		case kShapeOval:
-			shape->spriteType = sc->_fillType ? kOvalSprite : kOutlinedOvalSprite;
-			break;
-		case kShapeLine:
-			shape->spriteType = sc->_lineDirection == 6 ? kLineBottomTopSprite : kLineTopBottomSprite;
-			break;
-		default:
-			break;
-		}
-
-		if (g_director->getVersion() >= 400) {
-			shape->foreColor = sc->getForeColor();
-			shape->backColor = sc->getBackColor();
-			shape->lineSize = sc->_lineThickness;
-			shape->ink = sc->_ink;
-		}
 	}
-
-	// for outlined shapes, line thickness of 1 means invisible.
-	shape->lineSize -= 1;
-
-	return shape;
-}
-
-uint32 Channel::getBackColor() {
-	if (!_sprite->_cast)
-		return _sprite->_backColor;
-
-	switch (_sprite->_cast->_type) {
-	case kCastText:
-	case kCastButton:
-	case kCastShape: {
-		return _sprite->_cast->getBackColor();
-	}
-	default:
-		return _sprite->_backColor;
-	}
-}
-
-uint32 Channel::getForeColor() {
-	if (!_sprite->_cast)
-		return _sprite->_foreColor;
-
-	switch (_sprite->_cast->_type) {
-	case kCastText:
-	case kCastButton:
-	case kCastShape: {
-		return _sprite->_cast->getForeColor();
-	}
-	default:
-		return _sprite->_foreColor;
-	}
+	Common::Rect bbox = getBbox();
+	return ((FilmLoopCastMember *)_sprite->_cast)->getSubChannels(bbox, this);
 }
 
 } // End of namespace Director

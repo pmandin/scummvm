@@ -238,6 +238,7 @@ Console::Console(SciEngine *engine) : GUI::Debugger(),
 	registerCmd("vmvars",				WRAP_METHOD(Console, cmdVMVars));					// alias
 	registerCmd("vv",					WRAP_METHOD(Console, cmdVMVars));					// alias
 	registerCmd("stack",				WRAP_METHOD(Console, cmdStack));
+	registerCmd("st",					WRAP_METHOD(Console, cmdStack));					// alias
 	registerCmd("value_type",			WRAP_METHOD(Console, cmdValueType));
 	registerCmd("view_listnode",		WRAP_METHOD(Console, cmdViewListNode));
 	registerCmd("view_reference",		WRAP_METHOD(Console, cmdViewReference));
@@ -438,7 +439,7 @@ bool Console::cmdHelp(int argc, const char **argv) {
 	debugPrintf(" script_said - Shows all said - strings inside a specified script\n");
 	debugPrintf(" vm_varlist / vmvarlist / vl - Shows the addresses of variables in the VM\n");
 	debugPrintf(" vm_vars / vmvars / vv - Displays or changes variables in the VM\n");
-	debugPrintf(" stack - Lists the specified number of stack elements\n");
+	debugPrintf(" stack / st - Lists the specified number of stack elements\n");
 	debugPrintf(" value_type - Determines the type of a value\n");
 	debugPrintf(" view_listnode - Examines the list node at the given address\n");
 	debugPrintf(" view_reference / vr - Examines an arbitrary reference\n");
@@ -1662,7 +1663,7 @@ bool Console::cmdListSaves(int argc, const char **argv) {
 }
 
 bool Console::cmdClassTable(int argc, const char **argv) {
-	debugPrintf("Available classes (parse a parameter to filter the table by a specific class):\n");
+	debugPrintf("Available classes (pass a parameter to filter the table by a specific class):\n");
 
 	for (uint i = 0; i < _engine->_gamestate->_segMan->classTableSize(); i++) {
 		Class temp = _engine->_gamestate->_segMan->_classTable[i];
@@ -1673,7 +1674,9 @@ bool Console::cmdClassTable(int argc, const char **argv) {
 						className,
 						PRINT_REG(temp.reg),
 						temp.script);
-			} else debugPrintf(" Class 0x%x (not loaded; can't get name) (script %d)\n", i, temp.script);
+			}
+		} else if (argc == 1) {
+			debugPrintf(" Class 0x%x (not loaded; can't get name) (script %d)\n", i, temp.script);
 		}
 	}
 
@@ -3654,7 +3657,7 @@ void Console::printKernelCallsFound(int kernelFuncNum, bool showFoundScripts) {
 	Common::sort(resources.begin(), resources.end());
 
 	if (showFoundScripts)
-		debugPrintf("%d scripts found, dissassembling...\n", resources.size());
+		debugPrintf("%d scripts found, disassembling...\n", resources.size());
 
 	int scriptSegment;
 	Script *script;

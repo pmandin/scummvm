@@ -456,52 +456,6 @@ int CharsetRendererClassic::getCharWidth(uint16 chr) {
 }
 
 int CharsetRenderer::getStringWidth(int arg, const byte *text, uint strLenMax) {
-	if (_vm->_game.id == GID_CMI) {
-		// SCUMM7 games actually use the same implemention (minus the strLenMax parameter). If
-		// any text placement bugs in one of these games come up it might be worth to look at
-		// that. Or simply for the fact that we could get rid of SmushFont::getStringWidth()...
-		if (!strLenMax)
-			return 0;
-
-		int maxWidth = 0;
-		int width = 0;
-
-		while (*text && strLenMax) {
-			while (text[0] == '^') {
-				switch (text[1]) {
-				case 'f':
-					// We should change the font on the fly at this point
-					// which would result in a different width result.
-					// This has never been observed in the game though, and
-					// as such, we don't handle it.
-					text += 4;
-					break;
-				case 'c':
-					text += 5;
-					break;
-				default:
-					error("CharsetRenderer::getStringWidth(): Invalid escape code in text string");
-				}
-			}
-
-			if (is2ByteCharacter(_vm->_language, *text)) {
-				width += _vm->_2byteWidth + (_vm->_language != Common::JA_JPN ? 1 : 0);
-				++text;
-				--strLenMax;
-			} else if (*text == '\n') {
-				maxWidth = MAX<int>(width, maxWidth);
-				width = 0;
-			} else if (*text != '\r' && *text != _vm->_newLineCharacter) {
-				width += getCharWidth(*text);
-			}
-
-			++text;
-			--strLenMax;
-		}
-
-		return MAX<int>(width, maxWidth);
-	}
-
 	int pos = 0;
 	int width = 1;
 	int chr;
@@ -537,8 +491,7 @@ int CharsetRenderer::getStringWidth(int arg, const byte *text, uint strLenMax) {
 				if (chr == 8) { // 'Verb on next line'
 					if (arg == 1)
 						break;
-					while (text[pos++] == ' ')
-					;
+					while (text[pos++] == ' ') {}
 					continue;
 				}
 				if (chr == 10 || chr == 21 || chr == 12 || chr == 13) {
@@ -1375,7 +1328,7 @@ void CharsetRendererTownsV3::drawBits1(Graphics::Surface &dest, int x, int y, co
 	}
 
 	if (y + height > dest.h)
-		error("Trying to draw below screen boundries");
+		error("Trying to draw below screen boundaries");
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 #ifdef USE_RGB_COLOR
@@ -1549,9 +1502,10 @@ void CharsetRendererPCE::setDrawCharIntern(uint16 chr) {
 }
 #endif
 
-CharsetRendererMac::CharsetRendererMac(ScummEngine *vm, const Common::String &fontFile)
+CharsetRendererMac::CharsetRendererMac(ScummEngine *vm, const Common::String &fontFile, bool correctFontSpacing)
 	 : CharsetRendererCommon(vm) {
 
+	_correctFontSpacing = correctFontSpacing;
 	_pad = false;
 	_glyphSurface = NULL;
 
@@ -1666,18 +1620,37 @@ void CharsetRendererMac::setCurID(int32 id) {
 	_curId = id;
 }
 
+int CharsetRendererMac::getStringWidth(int arg, const byte *text, uint strLenMax) {
+	int pos = 0;
+	int width = 0;
+	int chr;
+
+	while ((chr = text[pos++]) != 0) {
+		// The only control codes I've seen in use are line breaks in
+		// Loom. In Indy 3, I haven't seen anything at all like it.
+		if (chr == 255) {
+			chr = text[pos++];
+			if (chr == 1) // 'Newline'
+				break;
+			warning("getStringWidth: Unexpected escape sequence %d", chr);
+		} else {
+			width += getDrawWidthIntern(chr);
+		}
+	}
+
+	return width / 2;
+}
+
+int CharsetRendererMac::getDrawWidthIntern(uint16 chr) {
+	return _macFonts[_curId].getCharWidth(chr);
+}
+
 // HACK: Usually, we want the approximate width and height in the unscaled
 //       graphics resolution. But for font 1 in Indiana Jones and the Last
 //       crusade we want the actual dimensions for drawing the text boxes.
 
 int CharsetRendererMac::getFontHeight() {
 	int height = _macFonts[_curId].getFontHeight();
-	if (_curId == 0 && _vm->_game.id == GID_INDY3) {
-		// For font 0, round up the height. It's still not quite as
-		// widely spaced as in the original, but I think it looks fine.
-		if (height & 1)
-			height++;
-	}
 
         // If we ever need the height for font 1 in Last Crusade (we don't at
 	// the moment), we need the actual height.
@@ -1688,7 +1661,7 @@ int CharsetRendererMac::getFontHeight() {
 }
 
 int CharsetRendererMac::getCharWidth(uint16 chr) {
-	int width = _macFonts[_curId].getCharWidth(chr);
+	int width = getDrawWidthIntern(chr);
 
 	// For font 1 in Last Crusade, we want the real width. It is used for
 	// text box titles, which are drawn outside the normal font rendering.
@@ -1793,16 +1766,27 @@ void CharsetRendererMac::printChar(int chr, bool ignoreCharsetMask) {
 
 	// Mark the virtual screen as dirty, using downscaled coordinates.
 
-	int left, right, top, bottom;
+	int left, right, top, bottom, width;
+
+	width = getDrawWidthIntern(chr);
+
+	// HACK: Indiana Jones and the Last Crusade uses incorrect spacing
+	// betweeen letters. Note that this incorrect spacing does not extend
+	// to the text boxes, nor does it seem to be used when figuring out
+	// the width of a string (e.g. to center text on screen). It is,
+	// however, used for things like the Grail Diary.
+
+	if (!_correctFontSpacing && !drawToTextBox && (width & 1))
+		width++;
 
 	if (enableShadow) {
 		left = macLeft / 2;
-		right = (macLeft + _macFonts[_curId].getCharWidth(chr) + 3) / 2;
+		right = (macLeft + width + 3) / 2;
 		top = macTop / 2;
 		bottom = (macTop + _macFonts[_curId].getFontHeight() + 3) / 2;
 	} else {
 		left = (macLeft + 1) / 2;
-		right = (macLeft + _macFonts[_curId].getCharWidth(chr) + 1) / 2;
+		right = (macLeft + width + 1) / 2;
 		top = (macTop + 1) / 2;
 		bottom = (macTop + _macFonts[_curId].getFontHeight() + 1) / 2;
 	}
@@ -1833,7 +1817,7 @@ void CharsetRendererMac::printChar(int chr, bool ignoreCharsetMask) {
 	// The next character may have to be adjusted to compensate for
 	// rounding errors.
 
-	macLeft += _macFonts[_curId].getCharWidth(chr);
+	macLeft += width;
 	if (macLeft & 1)
 		_pad = true;
 
@@ -1864,6 +1848,11 @@ byte CharsetRendererMac::getTextShadowColor() {
 }
 
 void CharsetRendererMac::printCharInternal(int chr, int color, bool shadow, int x, int y) {
+	if (_vm->_game.id == GID_LOOM) {
+		x++;
+		y++;
+	}
+
 	if (shadow) {
 		byte shadowColor = getTextShadowColor();
 
@@ -1874,25 +1863,25 @@ void CharsetRendererMac::printCharInternal(int chr, int color, bool shadow, int 
 			// particularly good anyway). This seems to match the
 			// original look for normal text.
 
-			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x + 2, y, 0);
-			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x, y + 2, 0);
-			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x + 3, y + 3, 0);
+			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x + 1, y - 1, 0);
+			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x - 1, y + 1, 0);
+			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x + 2, y + 2, 0);
 
 			if (color != -1) {
-				_macFonts[_curId].drawChar(_vm->_macScreen, chr, x + 2, y, shadowColor);
-				_macFonts[_curId].drawChar(_vm->_macScreen, chr, x, y + 2, shadowColor);
-				_macFonts[_curId].drawChar(_vm->_macScreen, chr, x + 3, y + 3, shadowColor);
+				_macFonts[_curId].drawChar(_vm->_macScreen, chr, x + 1, y - 1, shadowColor);
+				_macFonts[_curId].drawChar(_vm->_macScreen, chr, x - 1, y + 1, shadowColor);
+				_macFonts[_curId].drawChar(_vm->_macScreen, chr, x + 2, y + 2, shadowColor);
 			}
 		} else {
 			// Indy 3 uses simpler shadowing, and doesn't need the
 			// "draw only on text surface" hack.
 
-			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x + 2, y + 2, 0);
-			_macFonts[_curId].drawChar(_vm->_macScreen, chr, x + 2, y + 2, shadowColor);
+			_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x + 1, y + 1, 0);
+			_macFonts[_curId].drawChar(_vm->_macScreen, chr, x + 1, y + 1, shadowColor);
 		}
 	}
 
-	_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x + 1, y + 1, 0);
+	_macFonts[_curId].drawChar(&_vm->_textSurface, chr, x, y, 0);
 
 	if (color != -1) {
 		color = getTextColor();
@@ -1902,7 +1891,7 @@ void CharsetRendererMac::printCharInternal(int chr, int color, bool shadow, int 
 			_macFonts[_curId].drawChar(_glyphSurface, chr, 0, 0, 15);
 
 			byte *src = (byte *)_glyphSurface->getBasePtr(0, 0);
-			byte *dst = (byte *)_vm->_macScreen->getBasePtr(x + 1, y + 1);
+			byte *dst = (byte *)_vm->_macScreen->getBasePtr(x, y);
 
 			for (int h = 0; h < _glyphSurface->h; h++) {
 				bool pixel = ((y + h + 1) & 1) == 0;
@@ -1920,7 +1909,7 @@ void CharsetRendererMac::printCharInternal(int chr, int color, bool shadow, int 
 				dst += _vm->_macScreen->pitch;
 			}
 		} else {
-			_macFonts[_curId].drawChar(_vm->_macScreen, chr, x + 1, y + 1, color);
+			_macFonts[_curId].drawChar(_vm->_macScreen, chr, x, y, color);
 		}
 	}
 }
@@ -1932,6 +1921,14 @@ void CharsetRendererMac::printCharToTextBox(int chr, int color, int x, int y) {
 
 	if (_vm->_renderMode == Common::kRenderMacintoshBW)
 		color = 15;
+
+	// Since we're working with unscaled coordinates most of the time, the
+	// lines of the text box weren't spaced quite as much as in the
+	// original. I thought no one would notice, but I was wrong. This is
+	// the best way I can think of to fix that.
+
+	if (y > 0)
+		y = 17;
 
 	_macFonts[_curId].drawChar(_vm->_macIndy3TextBox, chr, x + 5, y + 11, color);
 }
@@ -2006,6 +2003,52 @@ int CharsetRendererNut::getFontHeight() {
 	// FIXME / TODO: how to implement this properly???
 	assert(_current);
 	return _current->getCharHeight('|');
+}
+
+int CharsetRendererNut::getStringWidth(int arg, const byte *text, uint strLenMax) {
+	// SCUMM7 games actually use the same implemention (minus the strLenMax parameter). If
+	// any text placement bugs in one of these games come up it might be worth to look at
+	// that. Or simply for the fact that we could get rid of SmushFont::getStringWidth()...
+	if (!strLenMax)
+		return 0;
+
+	int maxWidth = 0;
+	int width = 0;
+
+	while (*text && strLenMax) {
+		while (text[0] == '^') {
+			switch (text[1]) {
+			case 'f':
+				// We should change the font on the fly at this point
+				// which would result in a different width result.
+				// This has never been observed in the game though, and
+				// as such, we don't handle it.
+				text += 4;
+				break;
+			case 'c':
+				text += 5;
+				break;
+			default:
+				error("CharsetRenderer::getStringWidth(): Invalid escape code in text string");
+			}
+		}
+
+		if (is2ByteCharacter(_vm->_language, *text)) {
+			width += _vm->_2byteWidth + (_vm->_language != Common::JA_JPN ? 1 : 0);
+			++text;
+			--strLenMax;
+		} else if (*text == '\n') {
+			maxWidth = MAX<int>(width, maxWidth);
+			width = 0;
+		} else if (*text != '\r' && *text != _vm->_newLineCharacter) {
+			width += getCharWidth(*text);
+		}
+
+		++text;
+		--strLenMax;
+	}
+
+	return MAX<int>(width, maxWidth);
 }
 
 void CharsetRendererNut::printChar(int chr, bool ignoreCharsetMask) {

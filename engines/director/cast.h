@@ -42,6 +42,7 @@ struct LingoArchive;
 struct Resource;
 class Stxt;
 class BitmapCastMember;
+class FilmLoopCastMember;
 class ScriptCastMember;
 class ShapeCastMember;
 class TextCastMember;
@@ -104,7 +105,7 @@ public:
 	void dumpScript(const char *script, ScriptType type, uint16 id);
 	PaletteV4 loadPalette(Common::SeekableReadStreamEndian &stream);
 
-	Common::CodePage getPlatformEncoding();
+	Common::CodePage getFileEncoding();
 	Common::U32String decodeString(const Common::String &str);
 
 private:

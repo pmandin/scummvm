@@ -65,9 +65,16 @@ static inline void copyPixel(byte *dst, const byte *src) {
 	*(uint32 *)dst = *(const uint32 *)src;
 }
 
-// Overwrites one pixel of destination regardless of the alpha value
+// Overwrites one pixel of destination if the src pixel is visible
 static inline void copyPixelIfAlpha(byte *dst, const byte *src) {
 	if (src[kAIndex] > 0) {
+		copyPixel(dst, src);
+	}
+}
+
+// Overwrites one pixel if it's part of the mask
+static inline void copyPixelIfMask(byte *dst, const byte *mask, const byte *src) {
+	if (mask[kAIndex] > 0) {
 		copyPixel(dst, src);
 	}
 }
@@ -138,8 +145,11 @@ uint16 ROQPlayer::loadInternal() {
 
 	// Flags:
 	// - 2 For overlay videos, show the whole video
+	// - 14 Manual flag indication alternate motion copy decoder
 	_flagOne = ((_flags & (1 << 1)) != 0);
 	_flagTwo = ((_flags & (1 << 2)) != 0);
+	_altMotionDecoder = ((_flags & (1 << 14)) != 0);
+	_flagMasked = ((_flags & (1 << 10)) != 0);
 
 	// Read the file header
 	ROQBlockHeader blockHeader;
@@ -247,7 +257,13 @@ void ROQPlayer::buildShowBuf() {
 
 	// Select the destination buffer according to the given flags
 	int destOffset = 0;
-	Graphics::Surface *destBuf;
+	Graphics::Surface *maskBuf = NULL;
+	Graphics::Surface *srcBuf = _currBuf;
+	Graphics::Surface *destBuf = NULL;
+	if (_flagMasked) {
+		srcBuf = _bg;
+		maskBuf = _currBuf;
+	}
 	if (_flagOne) {
 		if (_flagTwo) {
 			destBuf = _overBuf;
@@ -264,17 +280,24 @@ void ROQPlayer::buildShowBuf() {
 	int startX, startY, stopX, stopY;
 	calcStartStop(startX, stopX, _origX, _screen->w);
 	calcStartStop(startY, stopY, _origY, _screen->h);
-	assert(destBuf->format == _currBuf->format);
+	assert(destBuf->format == srcBuf->format);
 	assert(destBuf->format == _overBuf->format);
 	assert(destBuf->format.bytesPerPixel == 4);
 
 	for (int line = startY; line < stopY; line++) {
-		byte *in = (byte *)_currBuf->getBasePtr(MAX(0, -_origX) / _scaleX, (line - _origY) / _scaleY);
+		byte *in = (byte *)srcBuf->getBasePtr(MAX(0, -_origX) / _scaleX, (line - _origY) / _scaleY);
 		byte *inOvr = (byte *)_overBuf->getBasePtr(startX, line);
 		byte *out = (byte *)destBuf->getBasePtr(startX, line + destOffset);
+		byte *mask = NULL;
+		if (_flagMasked) {
+			mask = (byte *)maskBuf->getBasePtr(MAX(0, -_origX) / _scaleX, (line - _origY) / _scaleY);
+		}
+
 
 		for (int x = startX; x < stopX; x++) {
-			if (destBuf == _overBuf) {
+			if (_flagMasked) {
+				copyPixelIfMask(out, mask, in);
+			} else if (destBuf == _overBuf) {
 				copyPixelIfAlpha(out, in);
 			} else {
 				copyPixelWithA(out, in);
@@ -294,6 +317,8 @@ void ROQPlayer::buildShowBuf() {
 			inOvr += _screen->format.bytesPerPixel;
 			if (!(x % _scaleX))
 				in += _screen->format.bytesPerPixel;
+			if (mask)
+				mask += _screen->format.bytesPerPixel;
 		}
 	}
 
@@ -433,9 +458,10 @@ bool ROQPlayer::processBlock() {
 		_file->skip(blockHeader.size);
 	}
 
-	if (endpos != _file->pos())
+	if (endpos != _file->pos()) {
 		warning("Groovie::ROQ: BLOCK %04x Should have ended at %d, and has ended at %d", blockHeader.type, endpos, (int)_file->pos());
-
+		_file->seek(endpos);
+	}
 	// End the frame when the graphics have been modified or when there's an error
 	return endframe || !ok;
 }
@@ -557,8 +583,8 @@ bool ROQPlayer::processBlockQuadVector(ROQBlockHeader &blockHeader) {
 	debugC(5, kDebugVideo, "Groovie::ROQ: Processing quad vector block");
 
 	// Get the mean motion vectors
-	int8 Mx = blockHeader.param >> 8;
-	int8 My = blockHeader.param & 0xFF;
+	_motionOffX = blockHeader.param >> 8;
+	_motionOffY = blockHeader.param & 0xFF;
 
 	// Calculate where the block should end
 	int32 endpos =_file->pos() + blockHeader.size;
@@ -572,7 +598,7 @@ bool ROQPlayer::processBlockQuadVector(ROQBlockHeader &blockHeader) {
 			// Traverse the macroblock in 8x8 blocks
 			for (int blockY = 0; blockY < 16; blockY += 8) {
 				for (int blockX = 0; blockX < 16; blockX += 8) {
-					processBlockQuadVectorBlock(macroX + blockX, macroY + blockY, Mx, My);
+					processBlockQuadVectorBlock(macroX + blockX, macroY + blockY);
 				}
 			}
 		}
@@ -589,16 +615,16 @@ bool ROQPlayer::processBlockQuadVector(ROQBlockHeader &blockHeader) {
 	return true;
 }
 
-void ROQPlayer::processBlockQuadVectorBlock(int baseX, int baseY, int8 Mx, int8 My) {
+void ROQPlayer::processBlockQuadVectorBlock(int baseX, int baseY) {
 	uint16 codingType = getCodingType();
 	switch (codingType) {
 	case 0: // MOT: Skip block
 		break;
 	case 1: { // FCC: Copy an existing block
 		byte argument = _file->readByte();
-		int16 DDx = 8 - (argument >> 4);
-		int16 DDy = 8 - (argument & 0x0F);
-		copy(8, baseX, baseY, DDx - Mx, DDy - My);
+		int16 dx = 8 - (argument >> 4);
+		int16 dy = 8 - (argument & 0x0F);
+		copy(8, baseX, baseY, dx, dy);
 		break;
 	}
 	case 2: // SLD: Quad vector quantisation
@@ -609,7 +635,7 @@ void ROQPlayer::processBlockQuadVectorBlock(int baseX, int baseY, int8 Mx, int8 
 		// Traverse the block in 4x4 sub-blocks
 		for (int subBlockY = 0; subBlockY < 8; subBlockY += 4) {
 			for (int subBlockX = 0; subBlockX < 8; subBlockX += 4) {
-				processBlockQuadVectorBlockSub(baseX + subBlockX, baseY + subBlockY, Mx, My);
+				processBlockQuadVectorBlockSub(baseX + subBlockX, baseY + subBlockY);
 			}
 		}
 		break;
@@ -618,7 +644,7 @@ void ROQPlayer::processBlockQuadVectorBlock(int baseX, int baseY, int8 Mx, int8 
 	}
 }
 
-void ROQPlayer::processBlockQuadVectorBlockSub(int baseX, int baseY, int8 Mx, int8 My) {
+void ROQPlayer::processBlockQuadVectorBlockSub(int baseX, int baseY) {
 	debugC(6, kDebugVideo, "Groovie::ROQ: Processing quad vector sub block");
 
 	uint16 codingType = getCodingType();
@@ -627,9 +653,9 @@ void ROQPlayer::processBlockQuadVectorBlockSub(int baseX, int baseY, int8 Mx, in
 		break;
 	case 1: { // FCC: Copy an existing block
 		byte argument = _file->readByte();
-		int16 DDx = 8 - (argument >> 4);
-		int16 DDy = 8 - (argument & 0x0F);
-		copy(4, baseX, baseY, DDx - Mx, DDy - My);
+		int16 dx = 8 - (argument >> 4);
+		int16 dy = 8 - (argument & 0x0F);
+		copy(4, baseX, baseY, dx, dy);
 		break;
 	}
 	case 2: // SLD: Quad vector quantisation
@@ -835,9 +861,14 @@ void ROQPlayer::paint8(byte i, int destx, int desty) {
 	}
 }
 
-void ROQPlayer::copy(byte size, int destx, int desty, int offx, int offy) {
-	offx *= _offScale / _scaleX;
-	offy *= _offScale / _scaleY;
+ void ROQPlayer::copy(byte size, int destx, int desty, int dx, int dy) {
+	int offx = (dx - _motionOffX) * (_offScale / _scaleX);
+	int offy = (dy - _motionOffY) * (_offScale / _scaleY);
+
+	if (_altMotionDecoder) {
+		offx *= 2;
+		offy *= 2;
+	}
 
 	// Get the beginning of the first line
 	byte *dst = (byte *)_currBuf->getBasePtr(destx, desty);

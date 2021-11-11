@@ -201,10 +201,11 @@ protected:
 	Common::U32String		_label;
 	Graphics::TextAlign		_align;
 	ThemeEngine::FontStyle	_font;
+	bool _useEllipsis;
 
 public:
-	StaticTextWidget(GuiObject *boss, int x, int y, int w, int h, const Common::U32String &text, Graphics::TextAlign align, const Common::U32String &tooltip = Common::U32String(), ThemeEngine::FontStyle font = ThemeEngine::kFontStyleBold, Common::Language lang = Common::UNK_LANG);
-	StaticTextWidget(GuiObject *boss, const Common::String &name, const Common::U32String &text, const Common::U32String &tooltip = Common::U32String(), ThemeEngine::FontStyle font = ThemeEngine::kFontStyleBold, Common::Language lang = Common::UNK_LANG);
+	StaticTextWidget(GuiObject *boss, int x, int y, int w, int h, const Common::U32String &text, Graphics::TextAlign align, const Common::U32String &tooltip = Common::U32String(), ThemeEngine::FontStyle font = ThemeEngine::kFontStyleBold, Common::Language lang = Common::UNK_LANG, bool useEllipsis = true);
+	StaticTextWidget(GuiObject *boss, const Common::String &name, const Common::U32String &text, const Common::U32String &tooltip = Common::U32String(), ThemeEngine::FontStyle font = ThemeEngine::kFontStyleBold, Common::Language lang = Common::UNK_LANG, bool useEllipsis = true);
 	void setValue(int value);
 	void setLabel(const Common::U32String &label);
 	void handleMouseEntered(int button) override	{ readLabel(); }
@@ -313,6 +314,7 @@ protected:
 class CheckboxWidget : public ButtonWidget {
 protected:
 	bool	_state;
+	int _spacing;
 public:
 	CheckboxWidget(GuiObject *boss, int x, int y, int w, int h, const Common::U32String &label, const Common::U32String &tooltip = Common::U32String(), uint32 cmd = 0, uint8 hotkey = 0);
 	CheckboxWidget(GuiObject *boss, const Common::String &name, const Common::U32String &label, const Common::U32String &tooltip = Common::U32String(), uint32 cmd = 0, uint8 hotkey = 0);
@@ -357,6 +359,7 @@ protected:
 class RadiobuttonWidget : public ButtonWidget {
 protected:
 	bool	_state;
+	int _spacing;
 	int _value;
 
 public:

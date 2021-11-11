@@ -733,7 +733,7 @@ static int32 lCAM_FOLLOW(TwinEEngine *engine, LifeScriptContext &ctx) {
 static int32 lSET_BEHAVIOUR(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const HeroBehaviourType behavior = (HeroBehaviourType)ctx.stream.readByte();
 
-	engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, 0);
+	engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, OWN_ACTOR_SCENE_INDEX);
 	engine->_actor->setBehaviour(behavior);
 
 	return 0;
@@ -1199,7 +1199,7 @@ static int32 lPLAY_FLA(TwinEEngine *engine, LifeScriptContext &ctx) {
 		}
 	} while (true);
 
-	engine->_flaMovies->playFlaMovie(movie);
+	engine->_movie->playMovie(movie);
 	engine->setPalette(engine->_screens->_paletteRGBA);
 	engine->_screens->clearScreen();
 

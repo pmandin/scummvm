@@ -97,7 +97,7 @@ public:
 	virtual void printChar(int chr, bool ignoreCharsetMask) = 0;
 	virtual void drawChar(int chr, Graphics::Surface &s, int x, int y) {}
 
-	int getStringWidth(int a, const byte *str, uint strLenMax = 100000);
+	virtual int getStringWidth(int arg, const byte *text, uint strLenMax = 100000);
 	void addLinebreaks(int a, byte *str, int pos, int maxwidth);
 	void translateColor();
 
@@ -278,8 +278,12 @@ public:
 class CharsetRendererMac : public CharsetRendererCommon {
 protected:
 	Graphics::MacFONTFont _macFonts[2];
+	bool _correctFontSpacing;
 	bool _pad;
 	int _lastTop;
+
+
+	int getDrawWidthIntern(uint16 chr);
 
 	void printCharInternal(int chr, int color, bool shadow, int x, int y);
 	void printCharToTextBox(int chr, int color, int x, int y);
@@ -290,10 +294,12 @@ protected:
 	Graphics::Surface *_glyphSurface;
 
 public:
-	CharsetRendererMac(ScummEngine *vm, const Common::String &fontFile);
+	CharsetRendererMac(ScummEngine *vm, const Common::String &fontFile, bool correctFontSpacing);
 	~CharsetRendererMac() override;
 
 	void setCurID(int32 id) override;
+
+	int getStringWidth(int arg, const byte *text, uint strLenMax = 100000) override;
 	int getFontHeight() override;
 	int getCharWidth(uint16 chr) override;
 	void printChar(int chr, bool ignoreCharsetMask) override;
@@ -315,6 +321,7 @@ public:
 
 	void setCurID(int32 id) override;
 
+	int getStringWidth(int arg, const byte *text, uint strLenMax = 1000000) override;
 	int getFontHeight() override;
 	int getCharHeight(byte chr) override;
 	int getCharWidth(uint16 chr) override;

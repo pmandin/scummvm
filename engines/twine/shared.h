@@ -190,7 +190,7 @@ enum class ActionType : uint8 {
 	ACTION_THROW_3D = 18,
 	ACTION_THROW_3D_ALPHA = 19,
 	ACTION_THROW_3D_SEARCH = 20,
-	ACTION_UNKNOWN_21 = 21,
+	ACTION_THROW_3D_MAGIC = 21,
 	ACTION_LAST
 };
 
@@ -262,15 +262,15 @@ enum class AnimationTypes {
 
 enum class AnimType {
 	kAnimationTypeLoop = 0,
-	kAnimationType_1 = 1,
+	kAnimationThen = 1,
 	// play animation and let animExtra follow as next animation
 	// if there is already a next animation set - replace the value
-	kAnimationType_2 = 2,
+	kAnimationAllThen = 2,
 	// replace animation and let the current animation follow
-	kAnimationType_3 = 3,
+	kAnimationInsert = 3,
 	// play animation and let animExtra follow as next animation
 	// but don't take the current state in account
-	kAnimationType_4 = 4
+	kAnimationSet = 4
 };
 
 /** Hero behaviour
@@ -533,7 +533,16 @@ enum class TextId : int16 {
 	kCustomHighResOptionOn = -2,
 	kCustomHighResOptionOff = -3,
 	kCustomWallCollisionOn = -4,
-	kCustomWallCollisionOff = -5
+	kCustomWallCollisionOff = -5,
+
+	// ------ lba2
+
+	toContinueGame = 70,
+	toNewGame = 71,
+	toLoadGame = 72,
+	toSauver = 73,
+	toOptions = 74,
+	toQuit = 75
 };
 
 enum InventoryItems {
