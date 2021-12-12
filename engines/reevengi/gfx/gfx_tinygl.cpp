@@ -26,6 +26,8 @@
 #include "common/system.h"
 #include "math/glmath.h"
 
+#include "graphics/surface.h"
+
 #include "engines/reevengi/gfx/gfx_base.h"
 #include "engines/reevengi/gfx/gfx_tinygl.h"
 
@@ -37,7 +39,7 @@ GfxBase *CreateGfxTinyGL() {
 	return new GfxTinyGL();
 }
 
-GfxTinyGL::GfxTinyGL(): _zb(nullptr), _smushImage(nullptr),
+GfxTinyGL::GfxTinyGL(): _smushImage(nullptr),
 	_maskNumTex(0) {
 	//
 }
@@ -57,12 +59,10 @@ void GfxTinyGL::setupScreen(int screenW, int screenH) {
 
 	_pixelFormat = g_system->getScreenFormat();
 	debug("INFO: TinyGL front buffer pixel format: %s", _pixelFormat.toString().c_str());
-	_zb = new TinyGL::FrameBuffer(screenW, screenH, _pixelFormat);
-	TinyGL::glInit(_zb, 256);
-	tglEnableDirtyRects(ConfMan.getBool("dirtyrects"));
+	TinyGL::createContext(screenW, screenH, _pixelFormat, 256, true, ConfMan.getBool("dirtyrects"));
 
-	_storedDisplay.create(_pixelFormat, _gameWidth * _gameHeight, DisposeAfterUse::YES);
-	_storedDisplay.clear(_gameWidth * _gameHeight);
+	_storedDisplay = new Graphics::Surface;
+	_storedDisplay->create(_gameWidth, _gameHeight, _pixelFormat);
 
 	/* _currentShadowArray = nullptr; */
 
@@ -85,9 +85,18 @@ void GfxTinyGL::clearDepthBuffer() {
 }
 
 void GfxTinyGL::flipBuffer() {
-	TinyGL::tglPresentBuffer();
-	g_system->copyRectToScreen(_zb->getPixelBuffer(), _zb->linesize,
-	                           0, 0, _zb->xsize, _zb->ysize);
+	Common::List<Common::Rect> dirtyAreas;
+	TinyGL::presentBuffer(dirtyAreas);
+
+	Graphics::Surface glBuffer;
+	TinyGL::getSurfaceRef(glBuffer);
+
+	if (!dirtyAreas.empty()) {
+		for (Common::List<Common::Rect>::iterator itRect = dirtyAreas.begin(); itRect != dirtyAreas.end(); ++itRect) {
+			g_system->copyRectToScreen(glBuffer.getBasePtr((*itRect).left, (*itRect).top), glBuffer.pitch,
+			                           (*itRect).left, (*itRect).top, (*itRect).width(), (*itRect).height());
+		}
+	}
 
 	g_system->updateScreen();
 }
@@ -102,8 +111,8 @@ bool GfxTinyGL::supportsShaders() {
 
 void GfxTinyGL::prepareMovieFrame(Graphics::Surface *frame) {
 	if (!_smushImage)
-		_smushImage = Graphics::tglGenBlitImage();
-	Graphics::tglUploadBlitImage(_smushImage, *frame, 0, false);
+		_smushImage = tglGenBlitImage();
+	tglUploadBlitImage(_smushImage, *frame, 0, false);
 
 	_smushWidth = frame->w;
 	_smushHeight = frame->h;
@@ -124,18 +133,18 @@ void GfxTinyGL::drawMovieFrame(int offsetX, int offsetY) {
 	offsetY += (sysH-movH)>>1;
 
 	if ((movW==_smushWidth) && (movH==_smushHeight)) {
-		Graphics::tglBlitFast(_smushImage, offsetX, offsetY);
+		tglBlitFast(_smushImage, offsetX, offsetY);
 		return;
 	}
 
-	Graphics::BlitTransform bltTransform(offsetX, offsetY);
+	TinyGL::BlitTransform bltTransform(offsetX, offsetY);
 	bltTransform.scale(movW, movH);
 
-	Graphics::tglBlit(_smushImage, bltTransform);
+	tglBlit(_smushImage, bltTransform);
 }
 
 void GfxTinyGL::releaseMovieFrame() {
-	Graphics::tglDeleteBlitImage(_smushImage);
+	tglDeleteBlitImage(_smushImage);
 }
 
 void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette) {

@@ -25,7 +25,7 @@
 
 #include "engines/reevengi/gfx/gfx_base.h"
 
-#include "graphics/tinygl/zgl.h"
+#include "graphics/tinygl/tinygl.h"
 
 namespace Reevengi {
 
@@ -85,10 +85,9 @@ public:
 	void line(Math::Vector3d v0, Math::Vector3d v1) override;
 
 private:
-	TinyGL::FrameBuffer *_zb;
 	Graphics::PixelFormat _pixelFormat;
-	Graphics::PixelBuffer _storedDisplay;
-	Graphics::BlitImage *_smushImage;
+	Graphics::Surface *_storedDisplay;
+	TinyGL::BlitImage *_smushImage;
 
 	int _maskNumTex, _maskTexPitch;
 	TGLuint *_maskTexIds;

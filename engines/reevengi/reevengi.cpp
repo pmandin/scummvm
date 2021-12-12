@@ -27,7 +27,7 @@
 #include "common/scummsys.h"
 #include "common/system.h"
 #include "engines/util.h"
-#include "graphics/pixelbuffer.h"
+//#include "graphics/pixelbuffer.h"
 #include "graphics/renderer.h"
 #include "graphics/screen.h"
 #include "graphics/surface.h"
