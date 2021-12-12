@@ -200,10 +200,6 @@ static const char HELP_STRING[] =
 	"  --tempo=NUM              Set music tempo (in percent, 50-200) for SCUMM games\n"
 	"                           (default: 100)\n"
 #endif
-#if (defined(ENABLE_SCUMM) && defined(ENABLE_SCUMM_7_8)) || defined(ENABLE_GRIM)
-	"  --dimuse-tempo=NUM       Set internal Digital iMuse tempo (10 - 100) per second\n"
-	"                           (default: 10)\n"
-#endif
 	"  --engine-speed=NUM       Set frame per second limit (0 - 100), 0 = no limit\n"
 	"                           (default: 60)\n"
 	"                           Grim Fandango or Escape from Monkey Island\n"
@@ -308,10 +304,6 @@ void registerDefaults() {
 #ifdef ENABLE_SCUMM
 	ConfMan.registerDefault("tempo", 0);
 #endif
-#if (defined(ENABLE_SCUMM) && defined(ENABLE_SCUMM_7_8)) || defined(ENABLE_GRIM)
-	ConfMan.registerDefault("dimuse_tempo", 10);
-#endif
-
 #if defined(ENABLE_SKY) || defined(ENABLE_QUEEN)
 	ConfMan.registerDefault("alt_intro", false);
 #endif
@@ -331,6 +323,7 @@ void registerDefaults() {
 	ConfMan.registerDefault("gui_browser_show_hidden", false);
 	ConfMan.registerDefault("gui_browser_native", true);
 	ConfMan.registerDefault("gui_return_to_launcher_at_exit", false);
+	ConfMan.registerDefault("gui_launcher_chooser", "list");
 	// Specify threshold for scanning directories in the launcher
 	// If number of game entries in scummvm.ini exceeds the specified
 	// number, then skip scanning. -1 = scan always
@@ -519,7 +512,7 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 	// Iterate over all command line arguments and parse them into our string map.
 	for (int i = 1; i < argc; ++i) {
 		s = argv[i];
-		s2 = (i < argc-1) ? argv[i+1] : 0;
+		s2 = (i < argc-1) ? argv[i+1] : nullptr;
 
 		if (s[0] != '-') {
 			// The argument doesn't start with a dash, so it's not an option.
@@ -840,10 +833,7 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			DO_LONG_OPTION_INT("tempo")
 			END_OPTION
 #endif
-#if (defined(ENABLE_SCUMM) && defined(ENABLE_SCUMM_7_8)) || defined(ENABLE_GRIM)
-			DO_LONG_OPTION_INT("dimuse-tempo")
-			END_OPTION
-#endif
+
 #if defined(ENABLE_SCUMM) || defined(ENABLE_GROOVIE)
 			DO_LONG_OPTION_BOOL("demo-mode")
 			END_OPTION
@@ -1462,7 +1452,7 @@ void upgradeTargets() {
 		DetectionResults detectionResults = EngineMan.detectGames(files);
 		DetectedGames candidates = detectionResults.listRecognizedGames();
 
-		DetectedGame *g = 0;
+		DetectedGame *g = nullptr;
 
 		// We proceed as follows:
 		// * If detection failed to produce candidates, skip.

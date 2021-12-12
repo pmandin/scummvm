@@ -39,10 +39,9 @@
 #include "backends/keymapper/keymap.h"
 #include "backends/keymapper/standard-actions.h"
 
-#include "graphics/pixelbuffer.h"
 #include "graphics/renderer.h"
 
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 #include "graphics/opengl/context.h"
 #endif
 
@@ -272,7 +271,7 @@ GfxBase *GrimEngine::createRenderer(int screenW, int screenH) {
 		initGraphics(screenW, screenH, nullptr);
 	}
 
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 	bool backendCapableOpenGL = g_system->hasFeature(OSystem::kFeatureOpenGLForGame);
 #endif
 
@@ -296,20 +295,21 @@ GfxBase *GrimEngine::createRenderer(int screenW, int screenH) {
 	}
 
 	GfxBase *renderer = nullptr;
-#if defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
+#if defined(USE_OPENGL_SHADERS)
 	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders) {
 		renderer = CreateGfxOpenGLShader();
 	}
 #endif
-#if defined(USE_OPENGL_GAME) && !defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME)
 	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGL) {
 		renderer = CreateGfxOpenGL();
 	}
 #endif
+#if defined(USE_TINYGL)
 	if (matchingRendererType == Graphics::kRendererTypeTinyGL) {
 		renderer = CreateGfxTinyGL();
 	}
-
+#endif
 	if (!renderer) {
 		error("Unable to create a '%s' renderer", rendererConfig.c_str());
 	}
@@ -478,22 +478,22 @@ Common::KeymapArray GrimEngine::initKeymapsGrim(const char *target) {
 	engineKeyMap->addAction(act);
 
 	act = new Action("EXAM", _("Examine"));
-	act->setKeyEvent(KeyState(KEYCODE_s, 'e'));
+	act->setKeyEvent(KeyState(KEYCODE_e, 'e'));
 	act->addDefaultInputMapping("JOY_X");
 	engineKeyMap->addAction(act);
 
 	act = new Action("BUSE", _("Use/Talk"));
-	act->setKeyEvent(KeyState(KEYCODE_w, 'u'));
+	act->setKeyEvent(KeyState(KEYCODE_u, 'u'));
 	act->addDefaultInputMapping("JOY_A");
 	engineKeyMap->addAction(act);
 
 	act = new Action("PICK", _("Pick up/Put away"));
-	act->setKeyEvent(KeyState(KEYCODE_a, 'p'));
+	act->setKeyEvent(KeyState(KEYCODE_p, 'p'));
 	act->addDefaultInputMapping("JOY_B");
 	engineKeyMap->addAction(act);
 
 	act = new Action("INVT", _("Inventory"));
-	act->setKeyEvent(KeyState(KEYCODE_d, 'i'));
+	act->setKeyEvent(KeyState(KEYCODE_i, 'i'));
 	act->addDefaultInputMapping("JOY_Y");
 	engineKeyMap->addAction(act);
 
@@ -570,7 +570,7 @@ Common::KeymapArray GrimEngine::initKeymapsEMI(const char *target) {
 	engineKeyMap->addAction(act);
 
 	act = new Action("EXAM", _("Examine/Look"));
-	act->setKeyEvent(KeyState(KEYCODE_l, 'e'));
+	act->setKeyEvent(KeyState(KEYCODE_e, 'e'));
 	act->addDefaultInputMapping("JOY_X");
 	engineKeyMap->addAction(act);
 
@@ -580,7 +580,7 @@ Common::KeymapArray GrimEngine::initKeymapsEMI(const char *target) {
 	engineKeyMap->addAction(act);
 
 	act = new Action("PICK", _("Pick up/Put away"));
-	act->setKeyEvent(KeyState(KEYCODE_KP_PLUS, 'p'));
+	act->setKeyEvent(KeyState(KEYCODE_KP_PLUS, '+'));
 	act->addDefaultInputMapping("JOY_B");
 	engineKeyMap->addAction(act);
 
@@ -1314,7 +1314,7 @@ void GrimEngine::storeSaveGameImage(SaveGame *state) {
 		int size = screenshot->getWidth() * screenshot->getHeight();
 		screenshot->setActiveImage(0);
 		screenshot->getBitmapData()->convertToColorFormat(image_format);
-		uint16 *data = (uint16 *)screenshot->getData().getRawBuffer();
+		const uint16 *data = (const uint16 *)screenshot->getData().getPixels();
 		for (int l = 0; l < size; l++) {
 			state->writeLEUint16(data[l]);
 		}

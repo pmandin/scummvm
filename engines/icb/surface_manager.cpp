@@ -41,9 +41,6 @@
 
 #include "engines/util.h"
 
-#include "graphics/tinygl/zgl.h"
-#include "graphics/tinygl/zblit.h"
-
 namespace ICB {
 
 #define FIRST_CLIENT_SURFACE 2
@@ -62,7 +59,7 @@ _surface::~_surface() {
 }
 
 _surface::_surface() {
-	m_dds = NULL;
+	m_dds = nullptr;
 	m_name = "Created";
 	m_width = 0;
 	m_height = 0;
@@ -72,7 +69,7 @@ _surface::_surface() {
 void _surface_manager::PrintDebugLabel(const char *mess, uint32 c) {
 	static int32 y = 100;
 
-	if (mess == NULL) {
+	if (mess == nullptr) {
 		y = c;
 	} else {
 		/*      Get_surface_DC( working_buffer_id, dc );
@@ -116,7 +113,7 @@ void _surface_manager::PrintTimer(char label, uint32 time, uint32 limit) {
 
 _surface_manager::_surface_manager() {
 	// Setup uninitialized pointers
-	screenSurface = NULL;
+	screenSurface = nullptr;
 
 	// set these up only once
 	full_rect.left = 0;
@@ -244,19 +241,15 @@ void _surface_manager::Flip() {
 
 	flipTime = GetMicroTimer();
 
-	Graphics::PixelBuffer srcBuf;
-	srcBuf.set(screenSurface->format, (byte *)screenSurface->getPixels());
-	Graphics::PixelBuffer dstBuf;
-	dstBuf.create(g_system->getScreenFormat(), screenSurface->w * screenSurface->h, DisposeAfterUse::YES);
-	dstBuf.copyBuffer(0, screenSurface->w * screenSurface->h, srcBuf);
-
-	g_system->copyRectToScreen(dstBuf.getRawBuffer(), screenSurface->pitch,
-	                           0, 0, screenSurface->w, screenSurface->h);
+	Graphics::Surface *dstBuf = screenSurface->convertTo(g_system->getScreenFormat());
+	g_system->copyRectToScreen(dstBuf->getPixels(), dstBuf->pitch, 0, 0, dstBuf->w, dstBuf->h);
 	g_system->updateScreen();
+	dstBuf->free();
+	delete dstBuf;
 
 	flipTime = GetMicroTimer() - flipTime;
 
-	PrintDebugLabel(NULL, 0x00000000);
+	PrintDebugLabel(nullptr, 0x00000000);
 	PrintTimer('\0', 0, 0);
 }
 
@@ -264,7 +257,7 @@ void _surface_manager::Flip() {
 uint32 _surface_manager::Create_new_surface(const char *name, uint32 width, uint32 height, uint32 /*type*/) {
 	// Find the next free slot
 	uint32 slot;
-	for (slot = FIRST_CLIENT_SURFACE; slot < m_Surfaces.GetNoItems() && m_Surfaces[slot] != NULL; slot++)
+	for (slot = FIRST_CLIENT_SURFACE; slot < m_Surfaces.GetNoItems() && m_Surfaces[slot] != nullptr; slot++)
 		;
 
 	// Create the new surface structure
@@ -282,17 +275,17 @@ uint32 _surface_manager::Create_new_surface(const char *name, uint32 width, uint
 		return slot;
 
 	delete m_Surfaces[slot];
-	m_Surfaces[slot] = NULL;
+	m_Surfaces[slot] = nullptr;
 
 	return 0;
 }
 
 void _surface_manager::Kill_surface(uint32 s_id) {
-	if (m_Surfaces[s_id] == NULL)
+	if (m_Surfaces[s_id] == nullptr)
 		return; // Already killed
 
 	delete m_Surfaces[s_id];
-	m_Surfaces[s_id] = NULL;
+	m_Surfaces[s_id] = nullptr;
 }
 
 uint8 *_surface_manager::Lock_surface(uint32 s_id) {

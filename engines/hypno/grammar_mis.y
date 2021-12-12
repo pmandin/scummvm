@@ -62,7 +62,7 @@ using namespace Hypno;
 %token<s> NAME FILENAME FLAG COMMENT GSSWITCH COMMAND WALNTOK
 %token<i> NUM
 %token HOTSTOK CUTSTOK BACKTOK INTRTOK RETTOK TIMETOK PALETOK BBOXTOK OVERTOK MICETOK PLAYTOK ENDTOK 
-%token MENUTOK SMENTOK ESCPTOK NRTOK AMBITOK SWPTTOK
+%token MENUTOK SMENTOK ESCPTOK NRTOK AMBITOK SWPTTOK MPTRTOK
 %token GLOBTOK TONTOK TOFFTOK
 %token TALKTOK INACTOK FDTOK BOXXTOK ESCAPETOK SECONDTOK INTROTOK DEFAULTTOK
 %token<s> PG PA PD PH PF PE PP PI PL PS
@@ -86,7 +86,7 @@ lines: line lines
 	; 
 
 
-line: MENUTOK mflag mflag  {
+line: MENUTOK mflag mflag mflag {
 		Hotspot *hot = new Hotspot(MakeMenu, $2); 
 		debugC(1, kHypnoDebugParser, "MENU %s %s", $2, $3);
 		Hotspots *cur = stack->back();
@@ -199,6 +199,9 @@ line: MENUTOK mflag mflag  {
 		Hotspot *hot = &cur->back();
 		hot->actions.push_back(a);
 	}
+	|  MPTRTOK FILENAME NUM NUM NUM NUM NUM {
+		debugC(1, kHypnoDebugParser, "MPTR %s %d %d %d %d %d", $2, $3, $4, $5, $6, $7);
+	}
 	|  TALKTOK alloctalk talk { 
 		Hotspots *cur = stack->back();
 		Hotspot *hot = &cur->back();
@@ -239,10 +242,10 @@ talk: INACTOK talk {
 	| ESCAPETOK {
 		talk_action->escape = true; 
 		debugC(1, kHypnoDebugParser, "ESCAPE"); }
-	| SECONDTOK FILENAME NUM NUM {
+	| SECONDTOK FILENAME NUM NUM flag {
 		talk_action->second = $2;
 		talk_action->secondPos = Common::Point($3, $4); 
-		debugC(1, kHypnoDebugParser, "SECOND %s %d %d", $2, $3, $4); }
+		debugC(1, kHypnoDebugParser, "SECOND %s %d %d '%s'", $2, $3, $4, $5); }
 	| INTROTOK FILENAME NUM NUM { 
 		talk_action->intro = $2;
 		talk_action->introPos = Common::Point($3, $4);
@@ -277,13 +280,13 @@ talk: INACTOK talk {
 		talk_cmd.num = atoi($1+2)-1;
 		talk_action->commands.push_back(talk_cmd); 
 		debugC(1, kHypnoDebugParser, "%s", $1); }
-	| PP NUM NUM talk { 
+	| PP NUM NUM flag talk { 
 		TalkCommand talk_cmd;
 		talk_cmd.command = "P";
 		talk_cmd.path = $1+2;
 		talk_cmd.position = Common::Point($2, $3);
 		talk_action->commands.push_back(talk_cmd);
-		debugC(1, kHypnoDebugParser, "%s %d %d", $1, $2, $3); }
+		debugC(1, kHypnoDebugParser, "%s %d %d '%s'", $1, $2, $3, $4); }
 	| PI NUM NUM talk { 
 		TalkCommand talk_cmd;
 		talk_cmd.command = "I";

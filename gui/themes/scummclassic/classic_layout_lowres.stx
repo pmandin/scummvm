@@ -59,6 +59,7 @@
 
 		<def var = 'Checkbox.Spacing' value = '5' scalable = 'yes'/>
 		<def var = 'Radiobutton.Spacing' value = '5' scalable = 'yes'/>
+		<def var = 'GridSupported' value = '0'/>
 
 		<widget name = 'OptionsLabel'
 				size = '120, Globals.Line.Height'
@@ -146,6 +147,15 @@
 				<widget name = 'SearchClearButton'
 						height = 'Globals.Line.Height'
 						width = 'Globals.Line.Height'
+				/>
+				<widget name = 'laGroupPopupDesc'
+						type = 'OptionsLabel'
+						height = 'Globals.Line.Height'
+						textalign = 'end'
+				/>
+				<widget name = 'laGroupPopup'
+						width = '150'
+						type = 'PopUp'
 				/>
 				<space />
 			</layout>
@@ -572,6 +582,18 @@
 				/>
 			</layout>
 			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '16'>
+				<widget name = 'IconButton'
+						type = 'Button'
+				/>
+				<widget name = 'IconPath'
+						height = 'Globals.Line.Height'
+				/>
+				<widget name = 'IconPathClearButton'
+						height = 'Globals.Line.Height'
+						width = 'Globals.Line.Height'
+				/>
+			</layout>
+			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '16'>
 				<widget name = 'ExtraButton'
 						type = 'Button'
 				/>
@@ -702,6 +724,9 @@
 						type = 'Button'
 				/>
 			</layout>
+			<widget name = 'UpdateIconsButton'
+					type = 'Button'
+			/>
 		</layout>
 	</dialog>
 
@@ -893,7 +918,42 @@
 		</layout>
 	</dialog>
 
-	<dialog name = 'GlobalOptions_Cloud_DownloadDialog' overlays = 'Dialog.GlobalOptions'>
+	<dialog name = 'GlobalOptions_DownloadIconsDialog' overlays = 'Dialog.GlobalOptions' shading = 'dim'>
+		<layout type = 'vertical' padding = '8, 8, 8, 4' spacing = '8'>
+			<widget name = 'StatusText'
+					height = 'Globals.Line.Height'
+			/>
+			<widget name = 'ErrorText'
+					height = 'Globals.Line.Height'
+			/>
+			<widget name = 'ProgressBar'
+					height = 'Globals.Button.Height'
+			/>
+			<space size = '1'/>
+			<widget name = 'PercentText'
+					height = 'Globals.Line.Height'
+					textalign = 'center'
+			/>
+			<widget name = 'DownloadSize'
+					height = 'Globals.Line.Height'
+			/>
+			<widget name = 'DownloadSpeed'
+					height = 'Globals.Line.Height'
+			/>
+			<space/>
+			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '6'>
+				<widget name = 'MainButton'
+						type = 'Button'
+				/>
+				<space/>
+				<widget name = 'CloseButton'
+						type = 'Button'
+				/>
+			</layout>
+		</layout>
+	</dialog>
+
+	<dialog name = 'GlobalOptions_Cloud_DownloadDialog' overlays = 'Dialog.GlobalOptions' shading = 'dim'>
 		<layout type = 'vertical' padding = '8, 8, 8, 4' spacing = '8'>
 			<widget name = 'RemoteDirectory'
 					height = 'Globals.Line.Height'
@@ -928,7 +988,7 @@
 		</layout>
 	</dialog>
 
-	<dialog name = 'GlobalOptions_Cloud_ConnectionWizard' overlays = 'Dialog.GlobalOptions'>
+	<dialog name = 'GlobalOptions_Cloud_ConnectionWizard' overlays = 'Dialog.GlobalOptions' shading = 'dim'>
 		<layout type = 'vertical' padding = '0, 0, 0, 0'>
 			<widget name = 'Container'/>
 		</layout>

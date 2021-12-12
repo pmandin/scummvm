@@ -67,6 +67,9 @@ void Grid::init(int32 w, int32 h) {
 }
 
 void Grid::copyGridMask(int32 index, int32 x, int32 y, const Graphics::ManagedSurface &buffer) {
+	if (_engine->_debugGrid->_disableGridRendering) {
+		return;
+	}
 	uint8 *ptr = _brickMaskTable[index];
 
 	int32 left = x + *(ptr + 2);
@@ -472,7 +475,7 @@ bool Grid::drawSprite(int32 index, int32 posX, int32 posY, const uint8 *ptr) {
 
 bool Grid::drawSprite(int32 posX, int32 posY, const SpriteData &ptr, int spriteIndex) {
 	const int32 left = posX + ptr.offsetX(spriteIndex);
-	if (left > _engine->_interface->_clip.right) {
+	if (left >= _engine->_interface->_clip.right) {
 		return false;
 	}
 	const int32 right = ptr.surface(spriteIndex).w + left;
@@ -480,7 +483,7 @@ bool Grid::drawSprite(int32 posX, int32 posY, const SpriteData &ptr, int spriteI
 		return false;
 	}
 	const int32 top = posY + ptr.offsetY(spriteIndex);
-	if (top > _engine->_interface->_clip.bottom) {
+	if (top >= _engine->_interface->_clip.bottom) {
 		return false;
 	}
 	const int32 bottom = ptr.surface(spriteIndex).h + top;
@@ -495,12 +498,15 @@ bool Grid::drawSprite(int32 posX, int32 posY, const SpriteData &ptr, int spriteI
 
 // WARNING: Rewrite this function to have better performance
 bool Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, const uint8 *ptr, bool isSprite) {
+	if (_engine->_debugGrid->_disableGridRendering) {
+		return false;
+	}
 	if (!_engine->_interface->_clip.isValidRect()) {
 		return false;
 	}
 
 	const int32 left = posX + *(ptr + 2);
-	if (left > _engine->_interface->_clip.right) {
+	if (left >= _engine->_interface->_clip.right) {
 		return false;
 	}
 	const int32 right = *ptr + left;
@@ -508,7 +514,7 @@ bool Grid::drawBrickSprite(int32 index, int32 posX, int32 posY, const uint8 *ptr
 		return false;
 	}
 	const int32 top = posY + *(ptr + 3);
-	if (top > _engine->_interface->_clip.bottom) {
+	if (top >= _engine->_interface->_clip.bottom) {
 		return false;
 	}
 	const int32 bottom = (int32)*(ptr + 1) + top;
@@ -607,9 +613,9 @@ const BlockData *Grid::getBlockLibrary(int32 blockIdx) const {
 	return _currentBlockLibrary.getLayout(blockIdx - 1);
 }
 
-void Grid::getBrickPos(int32 x, int32 y, int32 z) {
-	_brickPixelPosX = (x - z) * 24 + _engine->width() / 2 - GRID_SIZE_X / 2;
-	_brickPixelPosY = ((x + z) * 12) - (y * 15) + _engine->height() / 2 - GRID_SIZE_Y;
+void Grid::getBrickPos(int32 x, int32 y, int32 z, int32 &posx, int32 &posy) const {
+	posx = (x - z) * 24 + _engine->width() / 2 - GRID_SIZE_X / 2;
+	posy = ((x + z) * 12) - (y * 15) + _engine->height() / 2 - GRID_SIZE_Y;
 }
 
 void Grid::drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y, int32 z) {
@@ -621,25 +627,28 @@ void Grid::drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y,
 		return;
 	}
 
-	getBrickPos(x - _newCamera.x, y - _newCamera.y, z - _newCamera.z);
+	int32 brickPixelPosX = 0;
+	int32 brickPixelPosY = 0;
 
-	if (_brickPixelPosX < -24) {
+	getBrickPos(x - _newCamera.x, y - _newCamera.y, z - _newCamera.z, brickPixelPosX, brickPixelPosY);
+
+	if (brickPixelPosX < -24) {
 		return;
 	}
-	if (_brickPixelPosX >= _engine->width()) {
+	if (brickPixelPosX >= _engine->width()) {
 		return;
 	}
-	if (_brickPixelPosY < -38) {
+	if (brickPixelPosY < -38) {
 		return;
 	}
-	if (_brickPixelPosY >= _engine->height()) {
+	if (brickPixelPosY >= _engine->height()) {
 		return;
 	}
 
 	// draw the background brick
-	drawBrick(brickIdx - 1, _brickPixelPosX, _brickPixelPosY);
+	drawBrick(brickIdx - 1, brickPixelPosX, brickPixelPosY);
 
-	int32 brickBuffIdx = (_brickPixelPosX + 24) / 24;
+	int32 brickBuffIdx = (brickPixelPosX + 24) / 24;
 
 	if (_brickInfoBuffer[brickBuffIdx] >= MAXBRICKS) {
 		warning("GRID: brick buffer exceeded");
@@ -651,8 +660,8 @@ void Grid::drawColumnGrid(int32 blockIdx, int32 brickBlockIdx, int32 x, int32 y,
 	currBrickEntry->x = x;
 	currBrickEntry->y = y;
 	currBrickEntry->z = z;
-	currBrickEntry->posX = _brickPixelPosX;
-	currBrickEntry->posY = _brickPixelPosY;
+	currBrickEntry->posX = brickPixelPosX;
+	currBrickEntry->posY = brickPixelPosY;
 	currBrickEntry->index = brickIdx - 1;
 	currBrickEntry->shape = brickShape;
 	currBrickEntry->sound = brickSound;
@@ -728,67 +737,40 @@ const IVec3 &Grid::updateCollisionCoordinates(int32 x, int32 y, int32 z) {
 ShapeType Grid::getBrickShapeFull(int32 x, int32 y, int32 z, int32 y2) {
 	const IVec3 &collision = updateCollisionCoordinates(x, y, z);
 
-	if (collision.x < 0 || collision.x >= GRID_SIZE_X) {
-		return ShapeType::kNone;
-	}
-
 	if (collision.y <= -1) {
 		return ShapeType::kSolid;
 	}
 
-	if (collision.y < 0 || collision.y >= GRID_SIZE_Y || collision.z < 0 || collision.z >= GRID_SIZE_Z) {
+	if (collision.x < 0 || collision.x >= GRID_SIZE_X || collision.z < 0 || collision.z >= GRID_SIZE_Z) {
 		return ShapeType::kNone;
 	}
 
 	uint8 *blockBufferPtr = _blockBuffer;
 	blockBufferPtr += collision.x * GRID_SIZE_Y * 2;
 	blockBufferPtr += collision.y * 2;
-	blockBufferPtr += (collision.z * GRID_SIZE_X * 2) * GRID_SIZE_Y;
+	blockBufferPtr += collision.z * (GRID_SIZE_X * GRID_SIZE_Y * 2);
 
 	uint8 blockIdx = *blockBufferPtr;
 
+	ShapeType brickShape;
 	if (blockIdx) {
 		const uint8 tmpBrickIdx = *(blockBufferPtr + 1);
 		const BlockDataEntry *blockPtr = getBlockPointer(blockIdx, tmpBrickIdx);
-		const ShapeType brickShape = (ShapeType)blockPtr->brickShape;
-
-		const int32 newY = (y2 + (BRICK_HEIGHT - 1)) / BRICK_HEIGHT;
-		int32 currY = collision.y;
-
-		for (int32 i = 0; i < newY; i++) {
-			if (currY >= GRID_SIZE_Y) {
-				return brickShape;
-			}
-
-			blockBufferPtr += 2;
-			currY++;
-
-			if (READ_LE_INT16(blockBufferPtr) != 0) {
-				return ShapeType::kSolid;
-			}
-		}
-
-		return brickShape;
+		brickShape = (ShapeType)blockPtr->brickShape;
+	} else {
+		brickShape = (ShapeType) * (blockBufferPtr + 1);
 	}
-	const ShapeType brickShape = (ShapeType) * (blockBufferPtr + 1);
 
-	const int32 newY = (y2 + (BRICK_HEIGHT - 1)) / BRICK_HEIGHT;
-	int32 currY = collision.y;
-
-	for (int32 i = 0; i < newY; i++) {
-		if (currY >= GRID_SIZE_Y) {
-			return brickShape;
-		}
-
+	int32 ymax = (y2 + (BRICK_HEIGHT - 1)) / BRICK_HEIGHT;
+	// check full height
+	for (y = collision.y; ymax > 0 && y < (GRID_SIZE_Y - 1); --ymax, y++) {
 		blockBufferPtr += 2;
-		currY++;
-
-		if (READ_LE_INT16(blockBufferPtr) != 0) {
+		if (READ_LE_INT16(blockBufferPtr)) {
 			return ShapeType::kSolid;
 		}
 	}
 
-	return ShapeType::kNone;
+	return brickShape;
 }
 
 uint8 Grid::getBrickSoundType(int32 x, int32 y, int32 z) {

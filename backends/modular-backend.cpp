@@ -25,22 +25,20 @@
 #include "backends/audiocd/audiocd.h"
 #include "backends/graphics/graphics.h"
 #include "backends/mixer/mixer.h"
-#include "backends/mutex/mutex.h"
 #include "gui/EventRecorder.h"
 
 #include "common/timer.h"
 #include "graphics/pixelformat.h"
-#include "graphics/pixelbuffer.h"
 
 ModularGraphicsBackend::ModularGraphicsBackend()
 	:
-	_graphicsManager(0) {
+	_graphicsManager(nullptr) {
 
 }
 
 ModularGraphicsBackend::~ModularGraphicsBackend() {
 	delete _graphicsManager;
-	_graphicsManager = 0;
+	_graphicsManager = nullptr;
 }
 
 bool ModularGraphicsBackend::hasFeature(Feature f) {
@@ -122,6 +120,10 @@ bool ModularGraphicsBackend::setScaler(uint mode, int factor) {
 
 uint ModularGraphicsBackend::getScaler() const {
 	return _graphicsManager->getScaler();
+}
+
+uint ModularGraphicsBackend::getScaleFactor() const {
+	return _graphicsManager->getScaleFactor();
 }
 
 #ifdef USE_RGB_COLOR
@@ -294,16 +296,16 @@ void ModularGraphicsBackend::saveScreenshot() {
 
 ModularMixerBackend::ModularMixerBackend()
 	:
-	_mixerManager(0) {
+	_mixerManager(nullptr) {
 
 }
 
 ModularMixerBackend::~ModularMixerBackend() {
 	// _audiocdManager needs to be deleted before _mixerManager to avoid a crash.
 	delete _audiocdManager;
-	_audiocdManager = 0;
+	_audiocdManager = nullptr;
 	delete _mixerManager;
-	_mixerManager = 0;
+	_mixerManager = nullptr;
 }
 
 MixerManager *ModularMixerBackend::getMixerManager() {
@@ -316,37 +318,3 @@ Audio::Mixer *ModularMixerBackend::getMixer() {
 	return getMixerManager()->getMixer();
 }
 
-
-ModularMutexBackend::ModularMutexBackend()
-	:
-	_mutexManager(0) {
-
-}
-
-ModularMutexBackend::~ModularMutexBackend() {
-	// _timerManager needs to be deleted before _mutexManager to avoid a crash.
-	delete _timerManager;
-	_timerManager = 0;
-	delete _mutexManager;
-	_mutexManager = 0;
-}
-
-OSystem::MutexRef ModularMutexBackend::createMutex() {
-	assert(_mutexManager);
-	return _mutexManager->createMutex();
-}
-
-void ModularMutexBackend::lockMutex(MutexRef mutex) {
-	assert(_mutexManager);
-	_mutexManager->lockMutex(mutex);
-}
-
-void ModularMutexBackend::unlockMutex(MutexRef mutex) {
-	assert(_mutexManager);
-	_mutexManager->unlockMutex(mutex);
-}
-
-void ModularMutexBackend::deleteMutex(MutexRef mutex) {
-	assert(_mutexManager);
-	_mutexManager->deleteMutex(mutex);
-}

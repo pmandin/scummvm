@@ -162,7 +162,7 @@ _fluidlite=auto
 _glew=auto
 _opengl_mode=auto
 _opengl_game=auto
-_opengl_game_classic=no
+_opengl_game_classic=auto
 _opengl_game_shaders=auto
 _opengl_game_es2=no
 _tinygl=yes
@@ -829,7 +829,9 @@ Special configuration feature:
                                            ios7-arm64 for Apple iPhone / iPad (iOS >= 7, 64-bit)
                                            maemo for Nokia Maemo
                                            n64 for Nintendo 64
-                                           opendingux for Opendingux Beta
+                                           opendingux-gcw0 for GCW0 with Opendingux Beta
+                                           opendingux-lepus for Lepus with Opendingux Beta
+                                           opendingux-rg99 for RG99 with Opendingux Beta
                                            openpandora for OpenPandora
                                            ouya for OUYA
                                            ps3 for PlayStation 3
@@ -1168,6 +1170,7 @@ for ac_option in $@; do
 	--enable-glew)                _glew=yes              ;;
 	--disable-glew)               _glew=no               ;;
 	--disable-opengl-game)        _opengl_game=no        ;;
+	--disable-opengl-game-classic) _opengl_game_classic=no ;;
 	--disable-opengl-game-shaders) _opengl_game_shaders=no ;;
 	--force-opengl-game-es2)      _opengl_game_es2=yes   ;;
 	--enable-tinygl)              _tinygl=yes            ;;
@@ -1576,7 +1579,7 @@ caanoo)
 	_host_cpu=arm
 	_host_alias=arm-none-linux-gnueabi
 	;;
-dingux | gcw0 | opendingux)
+dingux | gcw0 | opendingux-*)
 	_host_os=linux
 	_host_cpu=mipsel
 	_host_alias=mipsel-linux
@@ -3158,7 +3161,6 @@ if test -n "$_host"; then
 				_backend="android"
 			fi
 			_port_mk="backends/platform/$_backend/android.mk"
-			_build_scalers=no
 			_build_aspect=no
 			_seq_midi=no
 			_timidity=no
@@ -3270,22 +3272,12 @@ if test -n "$_host"; then
 			append_var LDFLAGS "-Xlinker --rpath-link=$RPI_ROOT/usr/lib/arm-linux-gnueabihf/pulseaudio"
 			append_var LDFLAGS "-Xlinker --rpath-link=$RPI_ROOT/usr/lib/arm-linux-gnueabihf"
 			append_var LDFLAGS "-Xlinker --rpath-link=$RPI_ROOT/lib/arm-linux-gnueabihf"
-			append_var LDFLAGS "-Xlinker --rpath-link=$RPI_ROOT/opt/vc/lib"
-			append_var LDFLAGS "-L$RPI_ROOT/opt/vc/lib"
 			append_var CXXFLAGS "-isystem $RPI_ROOT/usr/include/arm-linux-gnueabihf"
 			append_var CXXFLAGS "-I$RPI_ROOT/usr/include"
-			# This is so optional OpenGL ES includes are found.
-			append_var CXXFLAGS "-I$RPI_ROOT/opt/vc/include"
 			# We prefer SDL2 on the Raspberry Pi: acceleration now depends on it
 			# since SDL2 manages dispmanx/GLES2 very well internally.
 			# SDL1 is bit-rotten on this platform.
 			_sdlconfig=sdl2-config
-			# OpenGL ES support is mature enough as to be the best option on
-			# the Raspberry Pi, so it's enabled by default.
-			# The Raspberry Pi always supports OpenGL ES 2.0 contexts, thus we
-			# take advantage of those.
-			_opengl_mode=gles2
-			_opengl_game_es2=yes
 			;;
 		dreamcast)
 			append_var DEFINES "-DDISABLE_DEFAULT_SAVEFILEMANAGER"
@@ -3491,7 +3483,7 @@ if test -n "$_host"; then
 			_build_hq_scalers=no
 			_mt32emu=no
 			;;
-		opendingux)
+		opendingux-*)
 			_sysroot=`$CXX --print-sysroot`
 			_sdlpath=$_sysroot/usr/bin
 			append_var DEFINES  "-DDINGUX -DOPENDINGUX -DREDUCE_MEMORY_USAGE"
@@ -3514,6 +3506,25 @@ if test -n "$_host"; then
 			_backend="opendingux"
 			_port_mk="backends/platform/sdl/opendingux/opendingux.mk"
 			add_line_to_config_mk 'OPENDINGUX = 1'
+			add_line_to_config_mk "OPENDINGUX_TARGET = ${_host#opendingux-}"
+			case "$_host" in
+				opendingux-gcw0)
+					;;
+				opendingux-lepus)
+					append_var DEFINES "-DLEPUS"
+					_highres=no
+					_build_hq_scalers=no
+					;;
+				opendingux-rg99)
+					append_var DEFINES "-DRS90 -DDISABLE_FANCY_THEMES"
+					_16bit=no
+					_highres=no
+					_build_hq_scalers=no
+					;;
+				*)
+					echo "WARNING: Unknown OpenDingux target"
+					;;
+			esac
 			;;
 		openpandora)
 			# Use -O3 on the OpenPandora for optimized builds.
@@ -3981,7 +3992,7 @@ case $_host_os in
 	amigaos* | cygwin* | dreamcast | ds | gamecube | mingw* | morphos | n64 | ps3 | psp2 | psp | riscos | wii)
 		_posix=no
 		;;
-	3ds | android | androidsdl | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | solaris* | sunos* | switch | uclinux*)
+	3ds | android | androidsdl | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | serenity* | solaris* | sunos* | switch | uclinux*)
 		_posix=yes
 		;;
 	os2-emx*)
@@ -5341,8 +5352,9 @@ esac
 if test "$_opengl_mode" = auto ; then
 	case $_backend in
 		android)
-			# Android always runs in GLES mode
-			_opengl_mode=gles
+			# We require API level 16 while GLES2 APIs have been added in level 8 so we are safe for compilation
+			_opengl_mode=gles2
+			_opengl_game_es2=yes
 			;;
 		sdl)
 			case $_sdlversion in
@@ -5467,7 +5479,8 @@ echocheck "OpenGL for game"
 
 if test "$_opengl_game" = auto ; then
 	_opengl_game=no
-	if (test "$_backend" = "sdl" && test "$_opengl" = yes) || test "$_backend" = "android3d" || test "$_backend" = "switch" || test "$_backend" = "raspberrypi"; then
+	if (test "$_backend" = "sdl" && test "$_opengl" = yes) || test "$_backend" = "android" || test "$_backend" = "android3d" \
+		|| test "$_backend" = "switch"; then
 		# Try different header filenames
 		# 1) GL/gl.h         This is usually used on POSIX and Windows systems
 		# 2) OpenGL/gl.h     This is used on Mac OS X
@@ -5508,8 +5521,7 @@ EOF
 			if cc_check_no_clean $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS $lib
 				then
 				_opengl_game_es2=yes
-				append_var LIBS "$lib"
-				append_var LIBS_3D "$lib"
+				append_var OPENGL_LIBS "$lib"
 				break
 			fi
 		done
@@ -5535,7 +5547,9 @@ EOF
 		append_var INCLUDES "$OPENGL_CFLAGS"
 		append_var LIBS "$OPENGL_LIBS"
 		append_var LIBS_3D "$OPENGL_LIBS"
-		_opengl_game_classic=yes
+		if test "$_opengl_game_classic" = auto ; then
+			_opengl_game_classic=yes
+		fi
 		if test "$_opengl_game_shaders" = auto; then
 			_opengl_game_shaders=$_glew
 		fi
@@ -5543,7 +5557,16 @@ EOF
 			echo "WARNING: OpenGL Shader support requires GLEW!"
 			_opengl_game_shaders=no
 		fi
+	elif test "$_opengl_game_es2" = "yes" ; then
+		append_var INCLUDES "$OPENGL_CFLAGS"
+		append_var LIBS "$OPENGL_LIBS"
+		append_var LIBS_3D "$OPENGL_LIBS"
+		_opengl_game_classic=no
+		if test "$_opengl_game_shaders" = auto ; then
+			_opengl_game_shaders=yes
+		fi
 	else
+		_opengl_game_classic=no
 		_opengl_game_shaders=no
 	fi
 	cc_check_clean
@@ -6132,7 +6155,7 @@ case $_host_os in
 		# -lgcc is carefully placed here - we want to catch
 		# all toolchain symbols in *our* libraries rather
 		# than pick up anything unhygenic from the Android libs.
-		LIBS="-Wl,-Bstatic $static_libs -Wl,-Bdynamic -lgcc $system_libs -llog -landroid -lGLESv1_CM"
+		LIBS="-Wl,-Bstatic $static_libs -Wl,-Bdynamic -lgcc $system_libs -llog -landroid -lGLESv2"
 		;;
 	ds)
 		# Moved -Wl,--gc-sections here to avoid it interfering with the library checks

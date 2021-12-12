@@ -54,6 +54,8 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 	// Feed an event to ScummVM.  Safe to call from other threads.
 	final public native void pushEvent(int type, int arg1, int arg2, int arg3,
 										int arg4, int arg5, int arg6);
+	// Update the 3D touch controls
+	final public native void updateTouch(int action, int ptr, int x, int y);
 
 	final public native String getNativeVersionInfo();
 
@@ -68,6 +70,7 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 	abstract protected void setWindowCaption(String caption);
 	abstract protected void showVirtualKeyboard(boolean enable);
 	abstract protected void showKeyboardControl(boolean enable);
+	abstract protected void setTouch3DMode(boolean touch3DMode);
 	abstract protected void showSAFRevokePermsControl(boolean enable);
 	abstract protected String[] getSysArchives();
 	abstract protected String[] getAllStorageLocations();
@@ -192,8 +195,11 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 		// devices so we have to filter/rank the configs ourselves.
 		_egl_config = chooseEglConfig(configs);
 
+		int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+		int[] attrib_list = { EGL_CONTEXT_CLIENT_VERSION, 2,
+		                      EGL10.EGL_NONE };
 		_egl_context = _egl.eglCreateContext(_egl_display, _egl_config,
-											EGL10.EGL_NO_CONTEXT, null);
+		                                     EGL10.EGL_NO_CONTEXT, attrib_list);
 
 		if (_egl_context == EGL10.EGL_NO_CONTEXT)
 			throw new Exception(String.format(Locale.ROOT, "Failed to create context: 0x%x",
@@ -291,6 +297,10 @@ public abstract class ScummVM implements SurfaceHolder.Callback, Runnable {
 				_buffer_size,
 				AudioTrack.MODE_STREAM,
 				AudioManager.AUDIO_SESSION_ID_GENERATE);
+
+			// Keep track of the actual obtained audio buffer size, if supported
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+				_buffer_size = _audio_track.getBufferSizeInFrames();
 		} else {
 			//support for Android KitKat or lower
 			_audio_track = new AudioTrack(AudioManager.STREAM_MUSIC,

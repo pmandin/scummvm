@@ -22,27 +22,27 @@
 
 #include "common/scummsys.h"
 
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 
 #include "graphics/opengl/surfacerenderer.h"
 
 #include "graphics/opengl/context.h"
 #include "graphics/opengl/texture.h"
 
-#if defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_SHADERS)
 #include "graphics/opengl/shader.h"
 #endif
 
 namespace OpenGL {
 
 SurfaceRenderer *createBestSurfaceRenderer() {
-#if defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_SHADERS)
 	if (OpenGLContext.shadersSupported) {
 		return new ShaderSurfaceRenderer();
 	}
 #endif
 
-#ifndef USE_GLES2
+#if defined(USE_OPENGL_GAME)
 	return new FixedSurfaceRenderer();
 #else
 	error("Could not create an appropriate surface renderer for the current OpenGL context");
@@ -71,14 +71,14 @@ void SurfaceRenderer::enableAlphaBlending(bool enable) {
 	_alphaBlending = enable;
 }
 
-#ifndef USE_GLES2
+#if defined(USE_OPENGL_GAME)
 
 FixedSurfaceRenderer::~FixedSurfaceRenderer() {
 }
 
 void FixedSurfaceRenderer::prepareState() {
 	// Save current state
-	glPushAttrib(GL_TRANSFORM_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_SCISSOR_BIT);
+	glPushAttrib(GL_TRANSFORM_BIT | GL_VIEWPORT_BIT | GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_SCISSOR_BIT | GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
 
 	// prepare view
 	glMatrixMode(GL_PROJECTION);
@@ -145,7 +145,7 @@ void FixedSurfaceRenderer::restorePreviousState() {
 
 #endif
 
-#if defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_SHADERS)
 
 ShaderSurfaceRenderer::ShaderSurfaceRenderer() {
 	const GLfloat vertices[] = {
@@ -166,8 +166,13 @@ ShaderSurfaceRenderer::ShaderSurfaceRenderer() {
 void ShaderSurfaceRenderer::prepareState() {
 	_boxShader->use();
 
+	_prevStateDepthTest = glIsEnabled(GL_DEPTH_TEST);
 	glDisable(GL_DEPTH_TEST);
+	glGetBooleanv(GL_DEPTH_WRITEMASK, &_prevStateDepthWriteMask);
 	glDepthMask(GL_FALSE);
+	_prevStateBlend = glIsEnabled(GL_BLEND);
+	glGetIntegerv(GL_BLEND_SRC_ALPHA, &_prevStateBlendFunc);
+	glGetIntegerv(GL_VIEWPORT, _prevStateViewport);
 }
 
 void ShaderSurfaceRenderer::render(const TextureGL *tex, const Math::Rect2d &dest) {
@@ -186,13 +191,14 @@ void ShaderSurfaceRenderer::render(const TextureGL *tex, const Math::Rect2d &des
 }
 
 void ShaderSurfaceRenderer::restorePreviousState() {
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_TRUE);
+	_prevStateDepthTest ? glEnable(GL_DEPTH_TEST) : glDisable(GL_DEPTH_TEST);
+	glDepthMask(_prevStateDepthWriteMask);
+	_prevStateBlend ? glEnable(GL_BLEND) : glDisable(GL_BLEND);
+	glBlendFunc(GL_BLEND_SRC_ALPHA, _prevStateBlendFunc);
+	glViewport(_prevStateViewport[0], _prevStateViewport[1], _prevStateViewport[2], _prevStateViewport[3]);
 
 	_flipY = false;
-	if (_alphaBlending) {
-		enableAlphaBlending(false);
-	}
+	_alphaBlending = false;
 
 	_boxShader->unbind();
 }

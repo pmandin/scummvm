@@ -24,12 +24,14 @@
 #include <windows.h>
 #include <shellapi.h> // for CommandLineToArgvW()
 #if defined(__GNUC__) && defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
- // required for SHGetSpecialFolderPath in shlobj.h
-#define _WIN32_IE 0x400
+ // required for SHGetSpecialFolderPath and SHGFP_TYPE_CURRENT in shlobj.h
+#define _WIN32_IE 0x500
 #endif
 #include <shlobj.h>
+#include <tchar.h>
 
 #include "common/scummsys.h"
+#include "common/textconsole.h"
 #include "backends/platform/sdl/win32/win32_wrapper.h"
 
 // VerSetConditionMask, VerifyVersionInfo and SHGetFolderPath didn't appear until Windows 2000,
@@ -38,7 +40,7 @@ ULONGLONG VerSetConditionMaskFunc(ULONGLONG dwlConditionMask, DWORD dwTypeMask, 
 	typedef ULONGLONG(WINAPI *VerSetConditionMaskFunction)(ULONGLONG conditionMask, DWORD typeMask, BYTE conditionOperator);
 
 	VerSetConditionMaskFunction verSetConditionMask = (VerSetConditionMaskFunction)(void *)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "VerSetConditionMask");
-	if (verSetConditionMask == NULL)
+	if (verSetConditionMask == nullptr)
 		return 0;
 
 	return verSetConditionMask(dwlConditionMask, dwTypeMask, dwConditionMask);
@@ -48,7 +50,7 @@ BOOL VerifyVersionInfoFunc(LPOSVERSIONINFOEXA lpVersionInformation, DWORD dwType
 	typedef BOOL(WINAPI *VerifyVersionInfoFunction)(LPOSVERSIONINFOEXA versionInformation, DWORD typeMask, DWORDLONG conditionMask);
 
 	VerifyVersionInfoFunction verifyVersionInfo = (VerifyVersionInfoFunction)(void *)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "VerifyVersionInfoA");
-	if (verifyVersionInfo == NULL)
+	if (verifyVersionInfo == nullptr)
 		return FALSE;
 
 	return verifyVersionInfo(lpVersionInformation, dwTypeMask, dwlConditionMask);
@@ -71,6 +73,33 @@ HRESULT SHGetFolderPathFunc(HWND hwnd, int csidl, HANDLE hToken, DWORD dwFlags, 
 }
 
 namespace Win32 {
+
+bool getApplicationDataDirectory(TCHAR *applicationDataDirectory) {
+	if (SHGetFolderPathFunc(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, applicationDataDirectory) != S_OK) {
+		warning("Unable to access application data directory");
+		return false;
+	}
+
+	_tcscat(applicationDataDirectory, TEXT("\\ScummVM"));
+	if (!CreateDirectory(applicationDataDirectory, NULL)) {
+		if (GetLastError() != ERROR_ALREADY_EXISTS) {
+			error("Cannot create ScummVM application data folder");
+		}
+	}
+
+	return true;
+}
+
+void getProcessDirectory(TCHAR *processDirectory, DWORD size) {
+	GetModuleFileName(NULL, processDirectory, size);
+	processDirectory[size - 1] = '\0'; // termination not guaranteed
+
+	// remove executable and final path separator
+	TCHAR *lastSeparator = _tcsrchr(processDirectory, '\\');
+	if (lastSeparator != NULL) {
+		*lastSeparator = '\0';
+	}
+}
 
 bool confirmWindowsVersion(int majorVersion, int minorVersion) {
 	OSVERSIONINFOEXA versionInfo;
@@ -100,7 +129,7 @@ wchar_t *ansiToUnicode(const char *s) {
 #else
 	uint codePage = CP_UTF8;
 #endif
-	DWORD size = MultiByteToWideChar(codePage, 0, s, -1, NULL, 0);
+	DWORD size = MultiByteToWideChar(codePage, 0, s, -1, nullptr, 0);
 
 	if (size > 0) {
 		LPWSTR result = (LPWSTR)calloc(size, sizeof(WCHAR));
@@ -108,7 +137,7 @@ wchar_t *ansiToUnicode(const char *s) {
 			return result;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 char *unicodeToAnsi(const wchar_t *s) {
@@ -117,15 +146,15 @@ char *unicodeToAnsi(const wchar_t *s) {
 #else
 	uint codePage = CP_UTF8;
 #endif
-	DWORD size = WideCharToMultiByte(codePage, 0, s, -1, NULL, 0, 0, 0);
+	DWORD size = WideCharToMultiByte(codePage, 0, s, -1, nullptr, 0, nullptr, nullptr);
 
 	if (size > 0) {
 		char *result = (char *)calloc(size, sizeof(char));
-		if (WideCharToMultiByte(codePage, 0, s, -1, result, size, 0, 0) != 0)
+		if (WideCharToMultiByte(codePage, 0, s, -1, result, size, nullptr, nullptr) != 0)
 			return result;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 TCHAR *stringToTchar(const Common::String& s) {
@@ -159,7 +188,7 @@ char **getArgvUtf8(int *argc) {
 	for (int i = 0; i < *argc; ++i) {
 		argv[i] = Win32::unicodeToAnsi(wargv[i]);
 	}
-	argv[*argc] = NULL; // null terminated array
+	argv[*argc] = nullptr; // null terminated array
 
 	LocalFree(wargv);
 	return argv;
@@ -173,4 +202,4 @@ void freeArgvUtf8(int argc, char **argv) {
 }
 #endif
 
-}
+} // End of namespace Win32

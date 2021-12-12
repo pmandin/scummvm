@@ -247,11 +247,11 @@ const KYRAGameDescription adGameDescs[] = {
 	{ // from trembyle
 		{
 			"kyra1",
-			msg_missingLangResources, // Reason for being unsupported
+			"Extracted",
 			AD_ENTRY1("GEMCUT.EMC", "3f319d6908830a46ff42229a39a2c7ec"),
 			Common::ZH_TWN,
 			Common::kPlatformDOS,
-			ADGF_UNSUPPORTED,
+			ADGF_NO_FLAGS,
 			GUIO5(GUIO_NOSPEECH, GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIPCSPK, GUIO_RENDERVGA)
 		},
 		KYRA1_FLOPPY_FLAGS
@@ -323,6 +323,19 @@ const KYRAGameDescription adGameDescs[] = {
 			GUIO3(GUIO_NOSPEECH, GUIO_MIDIGM, GUIO_RENDERVGA)
 		},
 		KYRA1_FLOPPY_FLAGS
+	},
+
+	{
+		{
+			"kyra1",
+			"StuffIt",
+			AD_ENTRY1s("xn--Install Legend of Kyrandia-jf8p", "1d763e991c787431cac3786afbbdae72", 53899),
+			Common::EN_ANY,
+			Common::kPlatformMacintosh,
+			ADGF_MACRESFORK,
+			GUIO3(GUIO_NOSPEECH, GUIO_MIDIGM, GUIO_RENDERVGA)
+		},
+		KYRA1_FLOPPY_CMP_FLAGS
 	},
 
 	{ // FM-TOWNS version
@@ -635,11 +648,11 @@ const KYRAGameDescription adGameDescs[] = {
 	{ // Floppy version extracted
 		{
 			"kyra2",
-			msg_missingLangResources, // Reason for being unsupported
+			"Extracted",
 			AD_ENTRY1("FATE.PAK", "5bfc4dd48778ca1f3a9e001e345a9774"),
 			Common::ZH_TWN,
 			Common::kPlatformDOS,
-			ADGF_UNSUPPORTED,
+			ADGF_NO_FLAGS,
 			GUIO6(GUIO_NOSPEECH, GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_MIDIPCSPK, GUIO_RENDERVGA)
 		},
 		KYRA2_FLOPPY_FLAGS
@@ -1188,7 +1201,7 @@ const KYRAGameDescription adGameDescs[] = {
 			0,
 			AD_ENTRY2s("ONETIME.PAK", "93b4ca2847ab7cfe52188cbde2ffe561", -1,
 					   "WESTWOOD.001", "c782e09a3b80510962af1426acf5a130", -1),
-			Common::ZH_CNA,
+			Common::ZH_CHN,
 			Common::kPlatformDOS,
 			ADGF_DROPLANGUAGE,
 			GUIO5(GUIO_NOMIDI, GUIO_RENDERVGA, GAMEOPTION_KYRA3_AUDIENCE, GAMEOPTION_KYRA3_SKIP, GAMEOPTION_KYRA3_HELIUM)
@@ -1262,7 +1275,7 @@ const KYRAGameDescription adGameDescs[] = {
 				{ "AUD.PAK", 0, 0, -1 },
 				AD_LISTEND
 			},
-			Common::ZH_CNA,
+			Common::ZH_CHN,
 			Common::kPlatformDOS,
 			ADGF_DROPLANGUAGE,
 			GUIO5(GUIO_NOMIDI, GUIO_RENDERVGA, GAMEOPTION_KYRA3_AUDIENCE, GAMEOPTION_KYRA3_SKIP, GAMEOPTION_KYRA3_HELIUM)
@@ -1787,7 +1800,7 @@ const KYRAGameDescription adGameDescs[] = {
 			"Extracted",
 			AD_ENTRY2s("GENERAL.PAK",  "f2c305bfb10c08371e947ab4d0a2f5f5", -1,
 					   "CHAPTER7.PAK", "f3cbab6d945ceda35149a5c9a324a8fe", -1),
-			Common::ZH_CNA,
+			Common::ZH_CHN,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
 			GUIO9(GUIO_NOSPEECH, GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_MIDIPCSPK, GUIO_RENDERVGA, GAMEOPTION_LOL_SCROLLING, GAMEOPTION_LOL_CURSORS, GAMEOPTION_LOL_SAVENAMES)

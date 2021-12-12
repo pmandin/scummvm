@@ -20,13 +20,13 @@
  *
  */
 
-#include "engines/stark/gfx/tinygl.h"
 
 #include "common/system.h"
 #include "common/config-manager.h"
 
 #include "math/matrix4.h"
 
+#include "engines/stark/gfx/tinygl.h"
 #include "engines/stark/gfx/tinyglactor.h"
 #include "engines/stark/gfx/tinyglprop.h"
 #include "engines/stark/gfx/tinyglsurface.h"
@@ -36,7 +36,6 @@
 #include "engines/stark/scene.h"
 #include "engines/stark/services/services.h"
 
-#include "graphics/pixelbuffer.h"
 #include "graphics/surface.h"
 
 namespace Stark {
@@ -46,15 +45,13 @@ TinyGLDriver::TinyGLDriver() {
 }
 
 TinyGLDriver::~TinyGLDriver() {
+	TinyGL::destroyContext();
 }
 
 void TinyGLDriver::init() {
 	computeScreenViewport();
 
-	_fb = new TinyGL::FrameBuffer(kOriginalWidth, kOriginalHeight, g_system->getScreenFormat());
-	TinyGL::glInit(_fb, 512);
-	//tglEnableDirtyRects(ConfMan.getBool("dirtyrects"));
-	tglEnableDirtyRects(false);
+	TinyGL::createContext(kOriginalWidth, kOriginalHeight, g_system->getScreenFormat(), 512, true, ConfMan.getBool("dirtyrects"));
 
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
@@ -92,12 +89,23 @@ void TinyGLDriver::setViewport(const Common::Rect &rect) {
 }
 
 void TinyGLDriver::clearScreen() {
-	tglClear(TGL_COLOR_BUFFER_BIT | TGL_DEPTH_BUFFER_BIT);
+	tglClear(TGL_COLOR_BUFFER_BIT | TGL_DEPTH_BUFFER_BIT | TGL_STENCIL_BUFFER_BIT);
 }
 
 void TinyGLDriver::flipBuffer() {
-	TinyGL::tglPresentBuffer();
-	g_system->copyRectToScreen(_fb->getPixelBuffer(), _fb->linesize, 0, 0, _fb->xsize, _fb->ysize);
+	Common::List<Common::Rect> dirtyAreas;
+	TinyGL::presentBuffer(dirtyAreas);
+
+	Graphics::Surface glBuffer;
+	TinyGL::getSurfaceRef(glBuffer);
+
+	if (!dirtyAreas.empty()) {
+		for (Common::List<Common::Rect>::iterator itRect = dirtyAreas.begin(); itRect != dirtyAreas.end(); ++itRect) {
+			g_system->copyRectToScreen(glBuffer.getBasePtr((*itRect).left, (*itRect).top), glBuffer.pitch,
+			                           (*itRect).left, (*itRect).top, (*itRect).width(), (*itRect).height());
+		}
+	}
+
 	g_system->updateScreen();
 }
 
@@ -157,6 +165,11 @@ void TinyGLDriver::end2DMode() {
 void TinyGLDriver::set3DMode() {
 	tglEnable(TGL_DEPTH_TEST);
 	tglDepthFunc(TGL_LESS);
+
+	// Stencil test are only used in rendering shadows
+	// They are manually enabled and disabled there
+	tglStencilFunc(TGL_EQUAL, 0, 0xFF);
+	tglStencilOp(TGL_KEEP, TGL_KEEP, TGL_INCR);
 }
 
 bool TinyGLDriver::computeLightsEnabled() {
@@ -172,13 +185,13 @@ Common::Rect TinyGLDriver::getUnscaledViewport() const {
 }
 
 Graphics::Surface *TinyGLDriver::getViewportScreenshot() const {
-	Graphics::Surface *tmp = new Graphics::Surface();
-	tmp->create(_viewport.width(), _viewport.height(), getRGBAPixelFormat());
+	Graphics::Surface *tmp = TinyGL::copyToBuffer(getRGBAPixelFormat());
 	Graphics::Surface *s = new Graphics::Surface();
 	s->create(_viewport.width(), _viewport.height(), getRGBAPixelFormat());
-	Graphics::PixelBuffer buf(tmp->format, (byte *)tmp->getPixels());
-	_fb->copyToBuffer(buf);
-	s->copyRectToSurface(tmp->getBasePtr(_viewport.left, _viewport.top), tmp->pitch, 0, 0, _viewport.width(), _viewport.height());
+	byte *src = (byte *)tmp->getPixels();
+	s->copyRectToSurface(src + tmp->pitch * _viewport.top + _viewport.left * tmp->format.bytesPerPixel,
+	                     tmp->pitch, 0, 0, _viewport.width(), _viewport.height());
+	tmp->free();
 	delete tmp;
 	return s;
 }

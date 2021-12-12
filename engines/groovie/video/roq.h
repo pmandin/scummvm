@@ -69,7 +69,7 @@ private:
 	bool processBlockSoundMono(ROQBlockHeader &blockHeader);
 	bool processBlockSoundStereo(ROQBlockHeader &blockHeader);
 	bool processBlockAudioContainer(ROQBlockHeader &blockHeader);
-	bool playFirstFrame() { return _flagOne; }; // _alpha && !_flagTwo; }
+	bool playFirstFrame() { return _flagNoPlay; }; // _alpha && !_flagOverlay; }
 
 	void paint2(byte i, int destx, int desty);
 	void paint4(byte i, int destx, int desty);
@@ -78,7 +78,7 @@ private:
 
 	// Origin
 	int16 _origX, _origY;
-	int16 _screenOffset;
+	//int16 _screenOffset;
 	void calcStartStop(int &start, int &stop, int origin, int length);
 
 	// Block coding type
@@ -93,12 +93,13 @@ private:
 	byte _codebook4[256 * 4];
 
 	// Flags
-	bool _flagOne;	 //!< Play only first frame and do not print the image to the screen
-	bool _flagTwo;	 //!< If _flagOne is set. Copy frame to the foreground otherwise to the background
+	bool _flagNoPlay;	 //!< Play only first frame and do not print the image to the screen
+	bool _flagOverlay;	 //!< If _flagNoPlay is set. Copy frame to the foreground otherwise to the background
 	bool _altMotionDecoder; // Some ROQ vids use a variation on the copy codeblock
 	bool _flagMasked; //!< Clear the video instead of play it, used in pente
 
 	// Buffers
+	void redrawRestoreArea(int screenOffset);
 	void buildShowBuf();
 	byte _scaleX, _scaleY;
 	byte _offScale;

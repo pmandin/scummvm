@@ -39,7 +39,7 @@
 
 
 enum {
-	kKyraDatVersion = 111
+	kKyraDatVersion = 115
 };
 
 const ExtractFilename extractFilenames[] = {
@@ -153,7 +153,7 @@ const ExtractFilename extractFilenames[] = {
 	{ k1SpecialPalette32, kRawData, false },
 	{ k1SpecialPalette33, kRawData, false },
 
-	// CREDITS (used in FM-TOWNS and AMIGA)
+	// CREDITS (used in FM-TOWNS, AMIGA, Chinese DOS)
 	{ k1CreditsStrings, kRawData, true },
 
 	// FM-TOWNS specific
@@ -165,6 +165,9 @@ const ExtractFilename extractFilenames[] = {
 	// PC98 specific
 	{ k1PC98StoryStrings, kStringList, true },
 	{ k1PC98IntroSfx, kRawData, false },
+
+	// Chinese version specific
+	{ k1TwoByteFontLookupTable, kRawDataBe16, true },
 
 	// AMIGA specific
 	{ k1AmigaIntroSFXTable, kAmigaSfxTable, false },
@@ -196,7 +199,7 @@ const ExtractFilename extractFilenames[] = {
 	{ k2IngameTimJpStrings, kStringList, false },
 	{ k2IngameShapeAnimData, k2ItemAnimDefinition, false },
 	{ k2IngameTlkDemoStrings, kStringList, true },
-
+	{ k2FontData, kRawData, true },
 
 	// MALCOLM'S REVENGE
 	{ k3MainMenuStrings, kStringList, true },
@@ -207,7 +210,6 @@ const ExtractFilename extractFilenames[] = {
 	{ k3ItemAnimData, k2ItemAnimDefinition, false },
 	{ k3ItemMagicTable, kRawData, false },
 	{ k3ItemStringMap, kRawData, false },
-	{ k3FontData, kRawData, true },
 	{ k3VqaSubtitlesIntro, kStringList, true },
 	{ k3VqaSubtitlesBoat, kStringList, true },
 
@@ -1163,7 +1165,7 @@ const ExtractFilename *getFilenameDesc(const int id) {
 		if (i->id == id)
 			return i;
 	}
-	return 0;
+	return nullptr;
 }
 
 bool isLangSpecific(const int id) {
@@ -1199,7 +1201,7 @@ const TypeTable languageTable[] = {
 	{ JA_JPN,  6 },
 	{ RU_RUS,  7 },
 	{ HE_ISR,  8 },
-	{ ZH_CNA,  9 },
+	{ ZH_CHN,  9 },
 	{ ZH_TWN, 10 },
 	{ -1, -1 }
 };

@@ -84,7 +84,7 @@
 #ifdef ENABLE_WME3D
 #include "graphics/renderer.h"
 #include "engines/util.h"
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 #include "graphics/opengl/context.h"
 #endif
 #endif
@@ -514,7 +514,7 @@ bool BaseGame::initialize2() { // we know whether we are going to be accelerated
 		return STATUS_OK;
 	}
 
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 	initGraphics3d(_settings->getResWidth(), _settings->getResHeight());
 	bool backendCapableOpenGL = g_system->hasFeature(OSystem::kFeatureOpenGLForGame);
 #endif
@@ -531,22 +531,24 @@ bool BaseGame::initialize2() { // we know whether we are going to be accelerated
 		warning("Unable to create a '%s' renderer", rendererConfig.c_str());
 	}
 
-#if defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_SHADERS)
 	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders) {
 		_renderer3D = makeOpenGL3DShaderRenderer(this);
 	}
-#endif // defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
+#endif // defined(USE_OPENGL_SHADERS)
 #if defined(USE_OPENGL_GAME)
 	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGL) {
 		_renderer3D = makeOpenGL3DRenderer(this);
 	}
 #endif // defined(USE_OPENGL)
+#if defined(USE_TINYGL)
 	if (_playing3DGame && matchingRendererType == Graphics::kRendererTypeTinyGL) {
 		_renderer3D = nullptr;// TODO: makeTinyGL3DRenderer(this);
 		error("3D software renderered is not supported yet");
 	}
+#endif
 	_renderer = _renderer3D;
-#if !defined(USE_OPENGL_GAME) && !defined(USE_OPENGL_SHADERS) && !defined(USE_GLES2)
+#if !defined(USE_OPENGL_GAME) && !defined(USE_OPENGL_SHADERS)
 	if (!_playing3DGame && !_renderer3D)
 		_renderer = makeOSystemRenderer(this);
 #endif
@@ -2841,7 +2843,7 @@ ScValue *BaseGame::scGetProperty(const Common::String &name) {
 		case Common::CZ_CZE:
 			_scValue->setString("czech");
 			break;
-		case Common::DA_DAN:
+		case Common::DA_DNK:
 			_scValue->setString("danish");
 			break;
 		case Common::DE_DEU:
@@ -2856,7 +2858,7 @@ ScValue *BaseGame::scGetProperty(const Common::String &name) {
 		case Common::FR_FRA:
 			_scValue->setString("french");
 			break;
-		case Common::GR_GRE:
+		case Common::EL_GRC:
 			_scValue->setString("greek");
 			break;
 		case Common::HU_HUN:
@@ -2880,7 +2882,7 @@ ScValue *BaseGame::scGetProperty(const Common::String &name) {
 		case Common::PT_BRA:
 			_scValue->setString("brazilian");
 			break;
-		case Common::PT_POR:
+		case Common::PT_PRT:
 			_scValue->setString("portuguese");
 			break;
 		case Common::PL_POL:
@@ -2895,7 +2897,7 @@ ScValue *BaseGame::scGetProperty(const Common::String &name) {
 		case Common::UA_UKR:
 			_scValue->setString("ukrainian");
 			break;
-		case Common::ZH_CNA:
+		case Common::ZH_CHN:
 			_scValue->setString("schinese");
 			break;
 		case Common::ZH_TWN:

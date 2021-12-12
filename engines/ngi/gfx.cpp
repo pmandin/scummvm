@@ -108,6 +108,10 @@ PictureObject::PictureObject(PictureObject *src) : GameObject(src) {
 	_objtype = kObjTypePictureObject;
 }
 
+PictureObject::~PictureObject() {
+	delete _picture;
+}
+
 bool PictureObject::load(MfcArchive &file, bool bigPicture) {
 	debugC(5, kDebugLoading, "PictureObject::load()");
 	GameObject::load(file);
@@ -378,7 +382,7 @@ bool GameObject::setPicAniInfo(const PicAniInfo &picAniInfo) {
 		if (picAniInfo.staticsId) {
 			ani->_statics = ani->getStaticsById(picAniInfo.staticsId);
 		} else {
-			ani->_statics = 0;
+			ani->_statics = nullptr;
 		}
 
 		if (picAniInfo.movementId) {
@@ -386,7 +390,7 @@ bool GameObject::setPicAniInfo(const PicAniInfo &picAniInfo) {
 			if (ani->_movement)
 				ani->_movement->setDynamicPhaseIndex(picAniInfo.dynamicPhaseIndex);
 		} else {
-			ani->_movement = 0;
+			ani->_movement = nullptr;
 		}
 
 		ani->setOXY(picAniInfo.ox, picAniInfo.oy);
@@ -682,7 +686,7 @@ int Picture::getPixelAtPosEx(int x, int y) {
 	// TODO: It looks like this doesn't really work.
 	if (x < (g_nmi->_pictureScale + _width - 1) / g_nmi->_pictureScale &&
 			y < (g_nmi->_pictureScale + _height - 1) / g_nmi->_pictureScale &&
-			_memoryObject2 != 0 && _memoryObject2->_rows != 0)
+			_memoryObject2 != nullptr && _memoryObject2->_rows != nullptr)
 		return _memoryObject2->_rows[x][2 * y];
 
 	return 0;
@@ -708,15 +712,15 @@ Bitmap::Bitmap(const Bitmap &src) {
 	_type = src._type;
 	_width = src._width;
 	_height = src._height;
-	_surface = src._surface;
 	_flipping = src._flipping;
-	_surface = src._surface;
+	_surface = new Graphics::TransparentSurface, Graphics::SurfaceDeleter();
+	_surface->create(_width, _height, Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+	_surface->copyFrom(*src._surface);
 }
 
 Bitmap::~Bitmap() {
-	// TODO: This is a hack because Graphics::Surface has terrible resource
-	// management
-	//_surface->free();
+	_surface->free();
+	delete _surface;
 }
 
 void Bitmap::load(Common::ReadStream *s) {
@@ -1129,8 +1133,8 @@ void Shadows::init() {
 	StaticANIObject *st;
 	Movement *mov;
 
-	if (scene && (st = scene->getStaticANIObject1ById(_staticAniObjectId, -1)) != 0
-		&& ((mov = st->getMovementById(_movementId)) != 0))
+	if (scene && (st = scene->getStaticANIObject1ById(_staticAniObjectId, -1)) != nullptr
+		&& ((mov = st->getMovementById(_movementId)) != nullptr))
 		initMovement(mov);
 }
 
@@ -1163,7 +1167,7 @@ DynamicPhase *Shadows::findSize(int width, int height) {
 	int min = 1000;
 
 	if (!_items.size())
-		return 0;
+		return nullptr;
 
 	for (uint i = 0; i < _items.size(); i++) {
 		int w = abs(width - _items[i].width);

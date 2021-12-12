@@ -26,30 +26,31 @@
  * It also has modifications by the ResidualVM-team, which are covered under the GPLv2 (or later).
  */
 
-#define FORBIDDEN_SYMBOL_EXCEPTION_FILE
-#define FORBIDDEN_SYMBOL_EXCEPTION_fprintf
-#define FORBIDDEN_SYMBOL_EXCEPTION_fputc
-#define FORBIDDEN_SYMBOL_EXCEPTION_stderr
+#include "common/streamdebug.h"
 
 #include "graphics/tinygl/zgl.h"
 
 namespace TinyGL {
 
+#define ADD_OP(aa, bb, ff) \
+static void glop ## aa (GLContext *c, GLParam *p) \
+{                                                 \
+	c->glop ## aa (p);                            \
+}
+#include "graphics/tinygl/opinfo.h"
+
 static const char *op_table_str[] = {
 #define ADD_OP(a, b, c) "gl" #a " " #c,
-
 #include "graphics/tinygl/opinfo.h"
 };
 
 static void (*op_table_func[])(GLContext *, GLParam *) = {
 #define ADD_OP(a, b, c) glop ## a ,
-
 #include "graphics/tinygl/opinfo.h"
 };
 
 static int op_table_size[] = {
 #define ADD_OP(a, b, c) b + 1 ,
-
 #include "graphics/tinygl/opinfo.h"
 };
 
@@ -96,9 +97,10 @@ static GLList *alloc_list(GLContext *c, int list) {
 	return l;
 }
 
-void gl_print_op(FILE *f, GLParam *p) {
+static void gl_print_op(GLParam *p) {
 	int op;
 	const char *s;
+	Common::StreamDebug debug = streamDbg();
 
 	op = p[0].op;
 	p++;
@@ -108,31 +110,30 @@ void gl_print_op(FILE *f, GLParam *p) {
 			s++;
 			switch (*s++) {
 			case 'f':
-				fprintf(f, "%g", p[0].f);
+				debug << p[0].f;
 				break;
 			default:
-				fprintf(f, "%d", p[0].i);
+				debug << p[0].i;
 				break;
 			}
 			p++;
 		} else {
-			fputc(*s, f);
+			debug << *s;
 			s++;
 		}
 	}
-	fprintf(f, "\n");
+	debug << "\n";
 }
 
-
-void gl_compile_op(GLContext *c, GLParam *p) {
+void GLContext::gl_compile_op(GLParam *p) {
 	int op, op_size;
 	GLParamBuffer *ob, *ob1;
 	int index;
 
 	op = p[0].op;
 	op_size = op_table_size[op];
-	index = c->current_op_buffer_index;
-	ob = c->current_op_buffer;
+	index = current_op_buffer_index;
+	ob = current_op_buffer;
 
 	// we should be able to add a NextBuffer opcode
 	if ((index + op_size) > (OP_BUFFER_MAX_SIZE - 2)) {
@@ -144,7 +145,7 @@ void gl_compile_op(GLContext *c, GLParam *p) {
 		ob->ops[index].op = OP_NextBuffer;
 		ob->ops[index + 1].p = (void *)ob1;
 
-		c->current_op_buffer = ob1;
+		current_op_buffer = ob1;
 		ob = ob1;
 		index = 0;
 	}
@@ -153,41 +154,41 @@ void gl_compile_op(GLContext *c, GLParam *p) {
 		ob->ops[index] = p[i];
 		index++;
 	}
-	c->current_op_buffer_index = index;
+	current_op_buffer_index = index;
 }
 
-void gl_add_op(GLParam *p) {
+void GLContext::gl_add_op(GLParam *p) {
 	GLContext *c = gl_get_context();
 	int op;
 
 	op = p[0].op;
-	if (c->exec_flag) {
+	if (exec_flag) {
 		op_table_func[op](c, p);
 	}
-	if (c->compile_flag) {
-		gl_compile_op(c, p);
+	if (compile_flag) {
+		gl_compile_op(p);
 	}
-	if (c->print_flag) {
-		gl_print_op(stderr, p);
+	if (print_flag) {
+		gl_print_op(p);
 	}
 }
 
 // this opcode is never called directly
-void glopEndList(GLContext *, GLParam *) {
+void GLContext::glopEndList(GLParam *) {
 	assert(0);
 }
 
 // this opcode is never called directly
-void glopNextBuffer(GLContext *, GLParam *) {
+void GLContext::glopNextBuffer(GLParam *) {
 	assert(0);
 }
 
-void glopCallList(GLContext *c, GLParam *p) {
+void GLContext::glopCallList(GLParam *p) {
 	GLList *l;
 	int list, op;
 
 	list = p[1].ui;
-	l = find_list(c, list);
+	l = find_list(this, list);
 	if (!l)
 		error("list %d not defined", list);
 	p = l->first_op_buffer->ops;
@@ -199,13 +200,13 @@ void glopCallList(GLContext *c, GLParam *p) {
 		if (op == OP_NextBuffer) {
 			p = (GLParam *)p[1].p;
 		} else {
-			op_table_func[op](c, p);
+			op_table_func[op](this, p);
 			p += op_table_size[op];
 		}
 	}
 }
 
-void glNewList(unsigned int list, int mode) {
+void tglNewList(unsigned int list, int mode) {
 	GLList *l;
 	GLContext *c = gl_get_context();
 
@@ -224,7 +225,7 @@ void glNewList(unsigned int list, int mode) {
 	c->exec_flag = (mode == TGL_COMPILE_AND_EXECUTE);
 }
 
-void glEndList() {
+void tglEndList() {
 	GLContext *c = gl_get_context();
 	GLParam p[1];
 
@@ -232,20 +233,20 @@ void glEndList() {
 
 	// end of list
 	p[0].op = OP_EndList;
-	gl_compile_op(c, p);
+	c->gl_compile_op(p);
 
 	c->compile_flag = 0;
 	c->exec_flag = 1;
 }
 
-int glIsList(unsigned int list) {
+int tglIsList(unsigned int list) {
 	GLContext *c = gl_get_context();
 	GLList *l = find_list(c, list);
 
 	return (l != NULL);
 }
 
-unsigned int glGenLists(int range) {
+unsigned int tglGenLists(int range) {
 	GLContext *c = gl_get_context();
 	int count, list;
 	GLList **lists;

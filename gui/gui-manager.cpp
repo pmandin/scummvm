@@ -25,9 +25,11 @@
 #include "common/util.h"
 #include "common/config-manager.h"
 #include "common/algorithm.h"
+#include "common/file.h"
 #include "common/rect.h"
 #include "common/textconsole.h"
 #include "common/translation.h"
+#include "common/unzip.h"
 #include "gui/EventRecorder.h"
 
 #include "backends/keymapper/action.h"
@@ -85,6 +87,7 @@ GuiManager::GuiManager() : _redrawStatus(kRedrawDisabled), _stateIsSaved(false),
 #endif // USE_TRANSLATION
 
 	initTextToSpeech();
+	initIconsSet();
 
 	ConfMan.registerDefault("gui_theme", "scummremastered");
 	Common::String themefile(ConfMan.get("gui_theme"));
@@ -104,6 +107,69 @@ GuiManager::GuiManager() : _redrawStatus(kRedrawDisabled), _stateIsSaved(false),
 
 GuiManager::~GuiManager() {
 	delete _theme;
+}
+
+struct ArchiveMemberListBackComparator {
+	bool operator()(const Common::ArchiveMemberPtr &a, const Common::ArchiveMemberPtr &b) {
+		return a->getName() > b->getName();
+	}
+};
+void GuiManager::initIconsSet() {
+	Common::Archive *dat = nullptr;
+
+	_iconsSet.clear();
+
+	if (ConfMan.hasKey("iconspath")) {
+		Common::FSDirectory *iconDir = new Common::FSDirectory(ConfMan.get("iconspath"));
+		Common::ArchiveMemberList iconFiles;
+
+		iconDir->listMatchingMembers(iconFiles, "gui-icons*.dat");
+		Common::sort(iconFiles.begin(), iconFiles.end(), ArchiveMemberListBackComparator());
+
+		for (Common::ArchiveMemberList::iterator ic = iconFiles.begin(); ic != iconFiles.end(); ++ic) {
+			debug(2, "GUI: Loaded icon file: %s", (*ic)->getName().c_str());
+
+			dat = Common::makeZipArchive((*ic)->createReadStream());
+
+			if (dat) {
+				_iconsSet.add((*ic)->getName(), dat);
+			}
+		}
+
+		delete iconDir;
+	}
+
+	const char fname[] = "gui-icons.dat";
+	Common::File *file = new Common::File;
+
+	if (ConfMan.hasKey("themepath")) {
+		Common::FSNode *fs = new Common::FSNode(normalizePath(ConfMan.get("themepath") + "/" + fname, '/'));
+
+		if (!fs->exists()) {
+			delete fs;
+		} else {
+			dat = Common::makeZipArchive(*fs);
+		}
+	}
+
+	if (!dat && !file->isOpen() && ConfMan.hasKey("iconspath"))
+		file->open(normalizePath(ConfMan.get("iconspath") + "/" + fname, '/'));
+
+	if (!dat && !file->isOpen())
+		file->open(fname);
+
+	if (!dat && file->isOpen())
+		dat = Common::makeZipArchive(file);
+
+	if (!dat) {
+		warning("GUI: Could not find '%s'", fname);
+		delete file;
+		return;
+	}
+
+	_iconsSet.add(fname, dat, 0, false); // Do not autofree
+
+	debug(2, "GUI: Loaded icon file: %s", fname);
 }
 
 void GuiManager::computeScaleFactor() {
@@ -342,7 +408,7 @@ Dialog *GuiManager::getTopDialog() const {
 	return _dialogStack.top();
 }
 
-void GuiManager::addToTrash(GuiObject* object, Dialog* parent) {
+void GuiManager::addToTrash(GuiObject* object, Dialog *parent) {
 	debug(7, "Adding Gui Object %p to trash", (void *)object);
 	GuiObjectTrashItem t;
 	t.object = object;
@@ -356,6 +422,14 @@ void GuiManager::addToTrash(GuiObject* object, Dialog* parent) {
 			}
 		}
 	}
+
+	for (auto it = _guiObjectTrash.begin(); it != _guiObjectTrash.end(); ++it) {
+		if (it->object == object) {
+			debug(6, "The object %p was already scheduled for deletion, skipping", (void *)(*it).object);
+			return;
+		}
+	}
+
 	_guiObjectTrash.push_back(t);
 }
 
@@ -478,10 +552,17 @@ void GuiManager::runLoop() {
 
 		redraw();
 
-		// Delay until the allocated frame time is elapsed to match the target frame rate
-		uint32 actualFrameDuration = _system->getMillis(true) - frameStartTime;
-		if (actualFrameDuration < targetFrameDuration) {
-			_system->delayMillis(targetFrameDuration - actualFrameDuration);
+		// Delay until the allocated frame time is elapsed to match the target frame rate.
+		// In case we have vsync enabled, we should rely on vsync to do take care about frame times.
+		// With vsync enabled, we currently have to force a frame time of 1ms since otherwise
+		// CPU usage will skyrocket on one thread as soon as no updateScreen(); calls happening.
+		if (g_system->getFeatureState(OSystem::kFeatureVSync)) {
+			_system->delayMillis(1);
+		} else {
+			uint32 actualFrameDuration = _system->getMillis(true) - frameStartTime;
+			if (actualFrameDuration < targetFrameDuration) {
+				_system->delayMillis(targetFrameDuration - actualFrameDuration);
+			}
 		}
 		_system->updateScreen();
 	}

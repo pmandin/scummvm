@@ -20,13 +20,15 @@
  *
  */
 
+#include "kyra/engine/util.h"
+#include "kyra/resource/resource.h"
 #include "kyra/sound/sound_intern.h"
 #include "kyra/sound/sound_mac_res.h"
 #include "kyra/sound/drivers/halestorm.h"
 
 #include "common/config-manager.h"
 #include "common/macresman.h"
-#include "common/punycode.h"
+#include "common/stuffit.h"
 
 #include "audio/mixer.h"
 
@@ -37,62 +39,37 @@
 
 namespace Kyra {
 
-SoundMacRes::SoundMacRes() : _macRes(0) {
-	_macRes = new Common::MacResManager();
+SoundMacRes::SoundMacRes(KyraEngine_v1 *vm) : _resMan(0), _stuffItArchive(nullptr) {
+	_resMan = new Common::MacResManager[2];
+
+	if (vm->gameFlags().useInstallerPackage) {
+		Common::String str = Util::findMacResourceFile("Install Legend of Kyrandia");
+		if (str.empty())
+			error("SoundMacRes::SoundMacRes(): Could not find Legend of Kyrandia installer file");
+		_stuffItArchive = vm->resource()->getCachedArchive(str);
+		if (!_stuffItArchive)
+			error("SoundMacRes::SoundMacRes(): Failed to load Legend of Kyrandia installer file");
+	}
 }
 
 SoundMacRes::~SoundMacRes() {
-	delete _macRes;
+	delete[] _resMan;
 }
 
 bool SoundMacRes::init() {
-	if (!_macRes)
+	if (!_resMan)
 		return false;
 
-	// The original executable has a TM char as its last character (character 0xaa
-	// from Mac code page). Depending on the emulator or platform used to copy the
-	// file it might have been reencoded to something else. So I look for multiple
-	// versions, also for punycode encoded files and also for the case where the
-	// user might have just removed the last character by renaming the file.
-
-	const char *const tryExeNames[] = {
-		"Legend of Kyrandia\xaa",
-		"Legend of Kyrandia"
-	};
-
-	const Common::CodePage tryCodePages[] = {
-		Common::kMacRoman,
-		Common::kISO8859_1
-	};
-
-	for (int i = 0; i < ARRAYSIZE(tryCodePages); ++i) {
-		for (int ii = 0; ii < ARRAYSIZE(tryExeNames); ++ii) {
-			Common::U32String fn(tryExeNames[ii], tryCodePages[i]);
-			_kyraMacExe = fn.encode(Common::kUtf8);
-			if (_macRes->exists(_kyraMacExe))
-				break;
-			_kyraMacExe = Common::punycode_encodefilename(fn);
-			if (_macRes->exists(_kyraMacExe))
-				break;
-			_kyraMacExe.clear();
-		}
-		if (!_kyraMacExe.empty())
-			break;
-	}
+	_kyraMacExe = _stuffItArchive ? "Legend of Kyrandia\xaa" : Util::findMacResourceFile("Legend of Kyrandia");
 
 	if (_kyraMacExe.empty()) {
 		warning("SoundMacRes::init(): Legend of Kyrandia resource fork not found");
 		return false;
 	}
 
-	setQuality(true);
-
-	for (Common::StringArray::iterator i = _resFiles.begin(); i != _resFiles.end(); ++i) {
-		if (!_macRes->exists(*i)) {
-			warning("SoundMacRes::init(): Error opening data file: '%s'", i->c_str());
-			return false;
-		}
-	}
+	// This will also test whether the resource containers are available.
+	if (!setQuality(true))
+		return false;
 
 	// Test actual resource fork reading...
 	Common::SeekableReadStream *test = getResource(2, 'SMOD');
@@ -113,23 +90,44 @@ bool SoundMacRes::init() {
 }
 
 Common::SeekableReadStream *SoundMacRes::getResource(uint16 id, uint32 type) {
-	Common::SeekableReadStream *res = 0;
-	for (Common::StringArray::iterator i = _resFiles.begin(); i != _resFiles.end(); ++i) {
-		if (!_macRes->open(Common::Path(*i)))
-			warning("SoundMacRes::getResource(): Error opening data file: '%s'", i->c_str());
-		if ((res = _macRes->getResource(type, id)))
+	Common::StackLock lock(_mutex);
+	Common::SeekableReadStream *res = nullptr;
+
+	for (int i = 0; i < 2; ++i) {
+		if ((res = _resMan[i].getResource(type, id)))
 			break;
 	}
+
 	return res;
 }
 
-void SoundMacRes::setQuality(bool hi) {
-	_resFiles.clear();
-	_resFiles.push_back(hi ? "HQ_Music.res" : "LQ_Music.res");
-	_resFiles.push_back(_kyraMacExe);
+bool SoundMacRes::setQuality(bool hi) {
+	Common::StackLock lock(_mutex);
+	Common::String s[2];
+	s[0] = hi ? "HQ_Music.res" : "LQ_Music.res";
+	s[1] = _kyraMacExe;
+	int err = 0;
+
+	if (_stuffItArchive) {
+		for (int i = 0; i < 2; ++i)
+			err |= (_resMan[i].open(Common::Path(s[i]), *_stuffItArchive) ? 0 : (1 << i));
+	} else {
+		for (int i = 0; i < 2; ++i)
+			err |= (_resMan[i].open(Common::Path(s[i])) ? 0 : (1 << i));
+	}
+
+	if (err) {
+		for (int i = 0; i < 2; ++i) {
+			if (err & (1 << i))
+				warning("SoundMacRes::setQuality(): Error opening resource container: '%s'", s[i].c_str());
+		}
+		return false;
+	}
+
+	return true;
 }
 
-SoundMac::SoundMac(KyraEngine_v1 *vm, Audio::Mixer *mixer) : Sound(vm, mixer), _driver(0), _res(0), _currentResourceSet(-1), _resIDMusic(0), _ready(false) {
+SoundMac::SoundMac(KyraEngine_v1 *vm, Audio::Mixer *mixer) : Sound(vm, mixer), _driver(nullptr), _res(nullptr), _currentResourceSet(-1), _resIDMusic(nullptr), _ready(false) {
 }
 
 SoundMac::~SoundMac() {
@@ -142,7 +140,10 @@ Sound::kType SoundMac::getMusicType() const {
 }
 
 bool SoundMac::init(bool hiQuality) {
-	_res = new SoundMacRes();
+	if (_ready)
+		return true;
+
+	_res = new SoundMacRes(_vm);
 	if (!(_res && _res->init()))
 		return false;
 
@@ -153,7 +154,10 @@ bool SoundMac::init(bool hiQuality) {
 
 	setQuality(hiQuality);
 
-	return (_ready = true);
+	_ready = true;
+	updateVolumeSettings();
+
+	return true;
 }
 
 void SoundMac::selectAudioResourceSet(int set) {
@@ -183,7 +187,10 @@ void SoundMac::playTrack(uint8 track) {
 		beginFadeOut();
 		return;
 	} else if (_currentResourceSet == kMusicFinale && track == 2) {
-		_driver->doCommand(1, 0x12c);
+		_driver->doCommand(HalestormDriver::kSongPlayLoop, 0x12c);
+		return;
+	} else if (_currentResourceSet == kMusicFinale && track == 4) {
+		_driver->doCommand(HalestormDriver::kSongPlayLoop, 0x12d);
 		return;
 	} else {
 		track -= 11;
@@ -191,12 +198,12 @@ void SoundMac::playTrack(uint8 track) {
 		loop = _musicLoopTable[track];
 	}
 
-	_driver->doCommand(loop, _resIDMusic[track]);
+	_driver->doCommand(loop ? HalestormDriver::kSongPlayLoop : HalestormDriver::kSongPlayOnce, _resIDMusic[track]);
 }
 
 void SoundMac::haltTrack() {
 	if (_ready)
-		_driver->doCommand(2);
+		_driver->doCommand(HalestormDriver::kSongAbort);
 }
 
 void SoundMac::playSoundEffect(uint16 track, uint8) {
@@ -214,23 +221,18 @@ void SoundMac::playSoundEffect(uint16 track, uint8) {
 }
 
 bool SoundMac::isPlaying() const {
-	return _ready && _driver->doCommand(3);
+	return _ready && _driver->doCommand(HalestormDriver::kSongIsPlaying);
 }
 
 void SoundMac::beginFadeOut() {
 	if (!_ready)
 		return;
 
-	if (_currentResourceSet == kMusicIngame) {
-		haltTrack();
-		return;
-	}
-
-	_driver->doCommand(10, 30);
-	while (_driver->doCommand(12) >= 16)
+	_driver->doCommand(HalestormDriver::kSongFadeOut, 30);
+	while (_driver->doCommand(HalestormDriver::kSongFadeGetState) >= 16)
 		_vm->delay(8);
-	_driver->doCommand(2);
-	_driver->doCommand(11, 30);
+	_driver->doCommand(HalestormDriver::kSongAbort);
+	_driver->doCommand(HalestormDriver::kSongFadeReset, 256);
 }
 
 void SoundMac::updateVolumeSettings() {
@@ -253,7 +255,7 @@ void SoundMac::setQuality(bool hi) {
 	if (!(_driver && _res))
 		return;
 
-	_driver->doCommand(2);
+	_driver->doCommand(HalestormDriver::kSongAbort);
 	_driver->stopAllSoundEffects();
 	_driver->releaseSamples();
 
@@ -261,10 +263,10 @@ void SoundMac::setQuality(bool hi) {
 
 	if (hi) {
 		_driver->changeSystemVoices(7, 4, 1);
-		_driver->doCommand(14, 3);
+		_driver->doCommand(HalestormDriver::kSetRateAndIntrplMode, 3);
 	} else {
 		_driver->changeSystemVoices(4, 3, 1);
-		_driver->doCommand(14, 2);
+		_driver->doCommand(HalestormDriver::kSetRateAndIntrplMode, 2);
 	}
 
 	_driver->registerSamples(resIds, true);

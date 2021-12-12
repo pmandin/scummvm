@@ -23,34 +23,61 @@
 #ifndef GUI_LAUNCHER_DIALOG_H
 #define GUI_LAUNCHER_DIALOG_H
 
+// Disable the grid for platforms that disable fancy themes
+#ifdef DISABLE_FANCY_THEMES
+#define DISABLE_LAUNCHERDISPLAY_GRID
+#endif
+#define kSwitchLauncherDialog -2
+
 #include "gui/dialog.h"
+#include "gui/widgets/popup.h"
+#include "gui/MetadataParser.h"
+
 #include "engines/game.h"
 
 namespace GUI {
 
+enum LauncherDisplayType {
+	kLauncherDisplayList = 1,
+	kLauncherDisplayGrid = 2
+};
+
+enum GroupingMethod {
+	kGroupByNone,
+	kGroupByFirstLetter,
+	kGroupByEngine,
+	kGroupBySeries,
+	kGroupByCompany,
+	kGroupByLanguage,
+	kGroupByPlatform
+};
+
 class BrowserDialog;
 class CommandSender;
-class ListWidget;
+class GroupedListWidget;
+class ContainerWidget;
+class EntryContainerWidget;
+class GridWidget;
 class ButtonWidget;
 class PicButtonWidget;
 class GraphicsWidget;
 class StaticTextWidget;
 class EditTextWidget;
 class SaveLoadChooser;
+class PopUpWidget;
 
 class LauncherDialog : public Dialog {
-	typedef Common::String String;
-	typedef Common::Array<Common::String> StringArray;
-
-	typedef Common::U32String U32String;
-	typedef Common::Array<Common::U32String> U32StringArray;
 public:
-	LauncherDialog();
+	LauncherDialog(const Common::String &dialogName);
 	~LauncherDialog() override;
 
 	void rebuild();
 
 	void handleCommand(CommandSender *sender, uint32 cmd, uint32 data) override;
+
+	virtual LauncherDisplayType getType() const = 0;
+
+	int run();
 
 	void handleKeyDown(Common::KeyState state) override;
 	void handleKeyUp(Common::KeyState state) override;
@@ -59,22 +86,39 @@ public:
 	Common::String getGameConfig(int item, Common::String key);
 protected:
 	EditTextWidget  *_searchWidget;
-	ListWidget		*_list;
-	Widget			*_startButton;
-	ButtonWidget	*_loadButton;
-	Widget			*_editButton;
-	Widget			*_removeButton;
 #ifndef DISABLE_FANCY_THEMES
 	GraphicsWidget		*_logo;
 	GraphicsWidget		*_searchPic;
+	GraphicsWidget		*_groupPic;
 #endif
 	StaticTextWidget	*_searchDesc;
 	ButtonWidget	*_searchClearButton;
-	StringArray		_domains;
+	ButtonWidget	*_addButton;
+	Widget			*_removeButton;
+	Widget			*_startButton;
+	ButtonWidget	*_loadButton;
+	Widget			*_editButton;
+	Common::StringArray		_domains;
 	BrowserDialog	*_browser;
 	SaveLoadChooser	*_loadDialog;
+	PopUpWidget		*_grpChooserPopup;
+	StaticTextWidget	*_grpChooserDesc;
+	GroupingMethod	_groupBy;
+	Common::String	_title;
+	Common::String	_search;
+	MetadataParser	_metadataParser;
 
-	String _search;
+#ifndef DISABLE_LAUNCHERDISPLAY_GRID
+	ButtonWidget		*_listButton;
+	ButtonWidget		*_gridButton;
+
+	/**
+	 * Create two buttons to choose between grid display and list display
+	 * in the launcher.
+	 */
+	void addLayoutChooserButtons();
+	ButtonWidget *createSwitchButton(const Common::String &name, const Common::U32String &desc, const Common::U32String &tooltip, const char *image, uint32 cmd = 0);
+#endif // !DISABLE_LAUNCHERDISPLAY_GRID
 
 	void reflowLayout() override;
 
@@ -82,11 +126,11 @@ protected:
 	 * Fill the list widget with all currently configured targets, and trigger
 	 * a redraw.
 	 */
-	void updateListing();
+	virtual void updateListing() = 0;
 
-	void updateButtons();
+	virtual void updateButtons() = 0;
 
-	void build();
+	virtual void build();
 	void clean();
 
 	void open() override;
@@ -124,9 +168,22 @@ protected:
 	 *
 	 * @target	name of target to select
 	 */
-	void selectTarget(const String &target);
+	virtual void selectTarget(const Common::String &target) = 0;
+	virtual int getSelected() = 0;
 private:
 	bool checkModifier(int modifier);
+};
+
+class LauncherChooser {
+protected:
+	LauncherDialog *_impl;
+
+public:
+	LauncherChooser();
+	~LauncherChooser();
+
+	int runModal();
+	void selectLauncher();
 };
 
 } // End of namespace GUI

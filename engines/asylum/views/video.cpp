@@ -252,7 +252,7 @@ void VideoPlayer::play(const Common::String &filename, bool showSubtitles) {
 
 void VideoPlayer::setupPalette() {
 	getScreen()->setMainPalette(_decoder->getPalette());
-	getScreen()->setupPalette(NULL, 0, 0);
+	getScreen()->setupPalette(nullptr, 0, 0);
 }
 
 void VideoPlayer::loadSubtitles() {
@@ -268,7 +268,7 @@ void VideoPlayer::loadSubtitles() {
 	buffer[fileSize] = 0;
 
 	char *start = strstr(buffer, movieToken);
-	char *line = 0;
+	char *line = nullptr;
 
 	if (start) {
 		start += 20; // skip token, newline and "CAPTION = "
@@ -285,19 +285,25 @@ void VideoPlayer::loadSubtitles() {
 			VideoSubtitle newSubtitle;
 			newSubtitle.frameStart = atoi(tok);
 
-			tok = strtok(NULL, " ");
+			tok = strtok(nullptr, " ");
 			if (!tok)
 				error("[Video::loadSubtitles] Invalid subtitle (frame end missing)!");
 
 			newSubtitle.frameEnd = atoi(tok);
 
-			tok = strtok(NULL, " ");
+			tok = strtok(nullptr, " ");
 			if (!tok)
 				error("[Video::loadSubtitles] Invalid subtitle (resource id missing)!");
 
-			newSubtitle.resourceId = (ResourceId)(atoi(tok) + video_subtitle_resourceIds[_currentMovie]);
+			int index = atoi(tok);
 
-			tok = strtok(NULL, " ");
+			// Original bug: index starts from 1 instead of 0
+			if (_currentMovie == 36)
+				index--;
+
+			newSubtitle.resourceId = (ResourceId)(index + video_subtitle_resourceIds[_currentMovie]);
+
+			tok = strtok(nullptr, " ");
 
 			_subtitles.push_back(newSubtitle);
 		}

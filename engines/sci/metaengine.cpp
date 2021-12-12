@@ -282,7 +282,7 @@ public:
 
 	// A fallback detection method. This is not ideal as all detection lives in MetaEngine, but
 	// here fb detection has many engine dependencies.
-	virtual ADDetectedGame fallbackDetectExtern(uint md5Bytes, const FileMap &allFiles, const Common::FSList &fslist, ADDetectedGameExtraInfo **extra) const override;
+	ADDetectedGame fallbackDetectExtern(uint md5Bytes, const FileMap &allFiles, const Common::FSList &fslist, ADDetectedGameExtraInfo **extra) const override;
 
 	void registerDefaultSettings(const Common::String &target) const override;
 	GUI::OptionsContainerWidget *buildEngineOptionsWidgetDynamic(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const override;
@@ -508,7 +508,7 @@ static char s_fallbackGameIdBuf[256];
 static ADGameDescription s_fallbackDesc = {
 	"",
 	"",
-	AD_ENTRY1(0, 0), // This should always be AD_ENTRY1(0, 0) in the fallback descriptor
+	AD_ENTRY1(nullptr, nullptr), // This should always be AD_ENTRY1(0, 0) in the fallback descriptor
 	Common::UNK_LANG,
 	Common::kPlatformDOS,
 	ADGF_NO_FLAGS,

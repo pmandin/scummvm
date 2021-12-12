@@ -73,7 +73,7 @@ enum {
 
 #define NUM_SHAKE_POSITIONS 8
 static const int8 shake_positions[NUM_SHAKE_POSITIONS] = {
-	0, 1 * 2, 2 * 2, 1 * 2, 0 * 2, 2 * 2, 3 * 2, 1 * 2
+	0, 1, 2, 1, 0, 2, 3, 1
 };
 
 /**
@@ -220,7 +220,7 @@ Gdi::Gdi(ScummEngine *vm) : _vm(vm) {
 Gdi::~Gdi() {
 }
 
-GdiHE::GdiHE(ScummEngine *vm) : Gdi(vm), _tmskPtr(0) {
+GdiHE::GdiHE(ScummEngine *vm) : Gdi(vm), _tmskPtr(nullptr) {
 }
 
 
@@ -245,7 +245,7 @@ GdiV1::GdiV1(ScummEngine *vm) : Gdi(vm) {
 }
 
 GdiV2::GdiV2(ScummEngine *vm) : Gdi(vm) {
-	_roomStrips = 0;
+	_roomStrips = nullptr;
 }
 
 GdiV2::~GdiV2() {
@@ -403,7 +403,7 @@ void ScummEngine::initVirtScreen(VirtScreenNumber slot, int top, int width, int 
 	vs->h = height;
 	vs->hasTwoBuffers = twobufs;
 	vs->xstart = 0;
-	vs->backBuf = NULL;
+	vs->backBuf = nullptr;
 	if (_game.features & GF_16BIT_COLOR)
 		vs->format = Graphics::PixelFormat(2, 5, 5, 5, 0, 10, 5, 0, 0);
 	else
@@ -456,7 +456,7 @@ VirtScreen *ScummEngine::findVirtScreen(int y) {
 			return vs;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void ScummEngine::markRectAsDirty(VirtScreenNumber virt, int left, int right, int top, int bottom, int dirtybit) {
@@ -531,15 +531,6 @@ void ScummEngine::drawDirtyScreenParts() {
 		vs->setDirtyRange(vs->h, 0);
 	} else {
 		updateDirtyScreen(kMainVirtScreen);
-	}
-
-	// Handle shaking
-	if (_shakeEnabled) {
-		_shakeFrame = (_shakeFrame + 1) % NUM_SHAKE_POSITIONS;
-		_system->setShakePos(0, shake_positions[_shakeFrame]);
-	} else if (!_shakeEnabled &&_shakeFrame != 0) {
-		_shakeFrame = 0;
-		_system->setShakePos(0, 0);
 	}
 }
 
@@ -1043,7 +1034,7 @@ void ScummEngine::restoreBackground(Common::Rect rect, byte backColor) {
 	if (rect.left >= rect.right || rect.top >= rect.bottom)
 		return;
 
-	if ((vs = findVirtScreen(rect.top)) == NULL)
+	if ((vs = findVirtScreen(rect.top)) == nullptr)
 		return;
 
 	if (rect.left > vs->w)
@@ -1201,8 +1192,8 @@ byte *Gdi::getMaskBuffer(int x, int y, int z) {
 static void blit(byte *dst, int dstPitch, const byte *src, int srcPitch, int w, int h, uint8 bitDepth) {
 	assert(w > 0);
 	assert(h > 0);
-	assert(src != NULL);
-	assert(dst != NULL);
+	assert(src != nullptr);
+	assert(dst != nullptr);
 
 	if ((w * bitDepth == srcPitch) && (w * bitDepth == dstPitch)) {
 		memcpy(dst, src, w * h * bitDepth);
@@ -1217,7 +1208,7 @@ static void blit(byte *dst, int dstPitch, const byte *src, int srcPitch, int w, 
 
 static void fill(byte *dst, int dstPitch, uint16 color, int w, int h, uint8 bitDepth) {
 	assert(h > 0);
-	assert(dst != NULL);
+	assert(dst != nullptr);
 
 	if (bitDepth == 2) {
 		do {
@@ -1288,7 +1279,7 @@ void ScummEngine::drawBox(int x, int y, int x2, int y2, int color) {
 	VirtScreen *vs;
 	byte *backbuff, *bgbuff;
 
-	if ((vs = findVirtScreen(y)) == NULL)
+	if ((vs = findVirtScreen(y)) == nullptr)
 		return;
 
 	// Indy4 Amiga always uses the room or verb palette map to match colors to
@@ -1448,7 +1439,7 @@ void ScummEngine::moveScreen(int dx, int dy, int height) {
 
 void ScummEngine_v5::clearFlashlight() {
 	_flashlight.isDrawn = false;
-	_flashlight.buffer = NULL;
+	_flashlight.buffer = nullptr;
 }
 
 void ScummEngine_v5::drawFlashlight() {
@@ -1593,7 +1584,7 @@ void GdiHE::prepareDrawBitmap(const byte *ptr, VirtScreen *vs,
 	if (_vm->_game.heversion >= 72) {
 		_tmskPtr = _vm->findResource(MKTAG('T','M','S','K'), ptr);
 	} else
-		_tmskPtr = 0;
+		_tmskPtr = nullptr;
 }
 
 void GdiV1::prepareDrawBitmap(const byte *ptr, VirtScreen *vs,
@@ -1632,7 +1623,7 @@ void GdiV2::prepareDrawBitmap(const byte *ptr, VirtScreen *vs,
 	// difficult to draw only parts of a room/object. We handle the V2 graphics
 	// differently from all other (newer) graphic formats for this reason.
 	//
-	StripTable *table = (_objectMode ? 0 : _roomStrips);
+	StripTable *table = (_objectMode ? nullptr : _roomStrips);
 	const int left = (stripnr * 8);
 	const int right = left + (numstrip * 8);
 	byte *dst;
@@ -1762,7 +1753,7 @@ int Gdi::getZPlanes(const byte *ptr, const byte *zplane_list[9], bool bmapImage)
 		assert(numzbuf <= 9);
 
 		if (_vm->_game.id == GID_LOOM && _vm->_game.platform == Common::kPlatformPCEngine) {
-			zplane_list[1] = 0;
+			zplane_list[1] = nullptr;
 		} else if (_vm->_game.features & GF_SMALL_HEADER) {
 			if (_vm->_game.features & GF_16COLOR)
 				zplane_list[1] = ptr + READ_LE_UINT16(ptr);
@@ -1770,7 +1761,7 @@ int Gdi::getZPlanes(const byte *ptr, const byte *zplane_list[9], bool bmapImage)
 				zplane_list[1] = ptr + READ_LE_UINT32(ptr);
 				if (_vm->_game.features & GF_OLD256) {
 					if (0 == READ_LE_UINT32(zplane_list[1]))
-						zplane_list[1] = 0;
+						zplane_list[1] = nullptr;
 				}
 			}
 			for (i = 2; i < numzbuf; i++) {
@@ -3250,7 +3241,7 @@ void GdiV1::decodeV1Gfx(const byte *src, byte *dst, int size) const {
 StripTable *GdiV2::generateStripTable(const byte *src, int width, int height, StripTable *table) const {
 
 	// If no strip table was given to use, allocate a new one
-	if (table == 0)
+	if (table == nullptr)
 		table = (StripTable *)calloc(1, sizeof(StripTable));
 
 	const byte *bitmapStart = src;
@@ -4008,7 +3999,7 @@ void ScummEngine::dissolveEffect(int width, int height) {
 		h++;
 
 	offsets = (int *) malloc(w * h * sizeof(int));
-	if (offsets == NULL)
+	if (offsets == nullptr)
 		error("dissolveEffect: out of memory");
 
 	// Create a permutation of offsets into the frame buffer
@@ -4034,7 +4025,7 @@ void ScummEngine::dissolveEffect(int width, int height) {
 				offsets[i++] = y * vs->pitch + x;
 
 		offsets2 = (int *) malloc(w * h * sizeof(int));
-		if (offsets2 == NULL)
+		if (offsets2 == nullptr)
 			error("dissolveEffect: out of memory");
 
 		memcpy(offsets2, offsets, w * h * sizeof(int));
@@ -4209,6 +4200,34 @@ void ScummEngine::unkScreenEffect6() {
 		dissolveEffect(1, 1);
 	else
 		dissolveEffect(8, 4);
+}
+
+void ScummEngine::updateScreenShakeEffect() {
+	if (!_shakeEnabled) {
+		if (_shakeFrame) {
+			_shakeFrame = 0;
+			_system->setShakePos(0, 0);
+		}
+		_shakeNextTick = _shakeTickCounter = 0;
+		return;
+	}
+
+	uint32 now = _system->getMillis();
+	if (!_shakeNextTick)
+		_shakeNextTick = now;
+
+	while (now >= _shakeNextTick) {
+		_shakeFrame = (_shakeFrame + 1) % NUM_SHAKE_POSITIONS;
+		_system->setShakePos(0, -shake_positions[_shakeFrame] * _textSurfaceMultiplier);
+		// In DOTT (and probably all other imuse games) this runs on the imuse timer which is a PIT 0 Timer at 291.304 Hz.
+		// Apparently it is the same timer setting for all sound drivers although it is set up not in the main executable
+		// but inside each respective ims driver during the driver load/init process. The screen shakes update every 8 ticks.
+		// LOOM uses either 236.696 Hz at 8 ticks delay or 473.297 Hz at 16 ticks delay, depending on the sound card selection.
+		// The outcome is the same...
+		_shakeTickCounter += ((1000000000 / _shakeTimerRate) * 8);
+		_shakeNextTick += (_shakeTickCounter / 1000);
+		_shakeTickCounter %= 1000;
+	}
 }
 
 } // End of namespace Scumm

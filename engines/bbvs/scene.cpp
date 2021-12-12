@@ -91,12 +91,12 @@ void BbvsEngine::initScene(bool sounds) {
 	_currCameraNum = 0;
 	_walkMousePos.x = -1;
 	_walkMousePos.y = -1;
-	_currAction = 0;
+	_currAction = nullptr;
 	_currActionCommandIndex = -1;
 	_currActionCommandTimeStamp = 0;
 	_dialogSlotCount = 0;
-	_buttheadObject = 0;
-	_beavisObject = 0;
+	_buttheadObject = nullptr;
+	_beavisObject = nullptr;
 
 	memset(_backgroundSoundsActive, 0, sizeof(_backgroundSoundsActive));
 
@@ -215,7 +215,7 @@ bool BbvsEngine::changeScene() {
 		_sceneVisited[_currSceneNum] = 1;
 		_playVideoNumber = _newSceneNum - 30;
 		_currSceneNum = _newSceneNum;
-		if (_gameDescription->flags & ADGF_DEMO)
+		if (isDemo())
 			_newSceneNum = kAfterVideoSceneNumDemo[_playVideoNumber];
 		else
 			_newSceneNum = kAfterVideoSceneNum[_playVideoNumber];

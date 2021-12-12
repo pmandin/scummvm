@@ -28,40 +28,15 @@ static const PlainGameDescriptor asylumGames[] = {
 namespace Asylum {
 
 static const char *directoryGlobs[] = {
-	"Data",
-	"DE",
-	"EN",
-	"FR",
 	"Vids",
 	0
 };
 
 static const ADGameDescription gameDescriptions[] = {
 	{
-		// Sanitarium - English Demo
+		// English CD version (unpatched)
 		"asylum",
-		"Demo",
-		AD_ENTRY2s("SNTRM.DAT", "6a8079e0b49affc99d148624fbb584a1", 326,
-				   "RES.000",   "57446ce089c6f9decb7f3faf41d09edf", 9022),
-		Common::EN_ANY,
-		Common::kPlatformWindows,
-		ADGF_DEMO | ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-		GUIO0()
-	},
-	{
-		// Sanitarium - English Alt Demo
-		"asylum",
-		"Demo",
-		AD_ENTRY2s("ASYLUM.DAT", "6a8079e0b49affc99d148624fbb584a1", 326,
-				   "RES.000",    "a527449397576a019cdd4884a96403e2", 9012),
-		Common::EN_ANY,
-		Common::kPlatformWindows,
-		ADGF_DEMO | ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-		GUIO0()
-	},
-	{
-		"asylum",
-		"Unpatched",
+		"CD Unpatched",
 		{
 			{"SNTRM.DAT", 0, "7cfcc457c1f579fbf9878ac175d29374", 8930},
 			{"RES.000",   0, "4d13f1412f9e7dd3eaf0a58f0e00e662", 272057},
@@ -70,12 +45,14 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// English CD version (patched)
+		// Level 2 Lockout Bug patch was applied
 		"asylum",
-		"Patched", // Level 2 Lockout Bug patch was applied
+		"CD Patched",
 		{
 			{"SNTRM.DAT", 0, "7cfcc457c1f579fbf9878ac175d29374", 8930},
 			{"RES.000",   0, "4d13f1412f9e7dd3eaf0a58f0e00e662", 272057},
@@ -84,10 +61,11 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// English GOG.com version
 		"asylum",
 		"GOG.com",
 		{
@@ -99,10 +77,11 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// French GOG.com version
 		"asylum",
 		"GOG.com",
 		{
@@ -114,10 +93,11 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::FR_FRA,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// English Steam version
 		"asylum",
 		"Steam",
 		{
@@ -129,10 +109,11 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// German Steam version
 		"asylum",
 		"Steam",
 		{
@@ -144,10 +125,11 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::DE_DEU,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// French Steam version
 		"asylum",
 		"Steam",
 		{
@@ -159,12 +141,13 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::FR_FRA,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// French CD version
 		"asylum",
-		"French Version",
+		"CD",
 		{
 			{"SNTRM.DAT", 0, "e09a12543c6ede1727c8ecffb74e7fd2", 8930},
 			{"RES.000",   0, "2a4677ee3fd7bfa3161e16cd59371238", 277931},
@@ -173,12 +156,28 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::FR_FRA,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	{
+		// German CD version
 		"asylum",
-		"Russian Version",
+		"CD",
+		{
+			{"SNTRM.DAT", 0, "f427fda37a0e29afd4acf982c4cb9fb0", 8930},
+			{"RES.000",   0, "058ea2fca583c27a8e3d7ccc16a9a3bd", 285660},
+			{"SCN.006",   0, "3a5b54da08198012dc0614114782d5fb", 2918330},
+			AD_LISTEND
+		},
+		Common::DE_DEU,
+		Common::kPlatformWindows,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO0()
+	},
+	{
+		// Russian CD version
+		"asylum",
+		"CD",
 		{
 			{"SNTRM.DAT", 0, "7cfcc457c1f579fbf9878ac175d29374", 8930},
 			{"RES.000",   0, "1f8a262bf8b3035bd3cfda24068c4651", 263624},
@@ -187,7 +186,76 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::RU_RUS,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO0()
+	},
+	{
+		// Unofficial Russian translation (Fargus Multimedia)
+		"asylum",
+		"GOG.com",
+		{
+			{"SNTRM.DAT", 0, "7cfcc457c1f579fbf9878ac175d29374", 8930},
+			{"RES.000",   0, "1f7b3734a8da87464ce3765bd79be208", 247149},
+			{"SCN.006",   0, "3a5b54da08198012dc0614114782d5fb", 2918330},
+			{"MOV000.SMK", 0, NULL, -1},
+			AD_LISTEND
+		},
+		Common::RU_RUS,
+		Common::kPlatformWindows,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO0()
+	},
+	{
+		// Unofficial Russian translation (Fargus Multimedia)
+		"asylum",
+		"Steam",
+		{
+			{"SNTRM.DAT", 0, "7cfcc457c1f579fbf9878ac175d29374", 8930},
+			{"RES.000",   0, "1f7b3734a8da87464ce3765bd79be208", 247149},
+			{"SCN.006",   0, "3a5b54da08198012dc0614114782d5fb", 2918330},
+			{"MOV000_2_SMK.ogv", 0, NULL, -1},
+			AD_LISTEND
+		},
+		Common::RU_RUS,
+		Common::kPlatformWindows,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO0()
+	},
+	{
+		// Spanish fanmade translation
+		"asylum",
+		"Fanmade",
+		{
+			{"SNTRM.DAT", 0, "7cfcc457c1f579fbf9878ac175d29374", 8930},
+			{"RES.000",   0, "4a112c41f58ac89b472be8cbfe82ab4b", 272057},
+			{"SCN.006",   0, "3a5b54da08198012dc0614114782d5fb", 2918330},
+			AD_LISTEND
+		},
+		Common::ES_ESP,
+		Common::kPlatformWindows,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO0()
+	},
+	{
+		// English Demo
+		"asylum",
+		"Demo",
+		AD_ENTRY2s("SNTRM.DAT", "6a8079e0b49affc99d148624fbb584a1", 326,
+				   "RES.000",   "57446ce089c6f9decb7f3faf41d09edf", 9022),
+		Common::EN_ANY,
+		Common::kPlatformWindows,
+		ADGF_DEMO | ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO0()
+	},
+	{
+		// English Alt Demo
+		"asylum",
+		"Demo",
+		AD_ENTRY2s("ASYLUM.DAT", "6a8079e0b49affc99d148624fbb584a1", 326,
+				   "RES.000",    "a527449397576a019cdd4884a96403e2", 9012),
+		Common::EN_ANY,
+		Common::kPlatformWindows,
+		ADGF_DEMO | ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO0()
 	},
 	AD_TABLE_END_MARKER

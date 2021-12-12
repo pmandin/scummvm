@@ -24,10 +24,9 @@
 #include "common/system.h"
 #include "common/config-manager.h"
 
-#if defined(USE_OPENGL_GAME) && !defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME)
 
 #include "graphics/surface.h"
-#include "graphics/pixelbuffer.h"
 
 #include "math/glmath.h"
 
@@ -298,7 +297,7 @@ bool GfxOpenGL::supportsShaders() {
 	return false;
 }
 
-static void glShadowProjection(const Math::Vector3d &light, const Math::Vector3d &plane, const Math::Vector3d &normal, bool dontNegate) {
+static void shadowProjection(const Math::Vector3d &light, const Math::Vector3d &plane, const Math::Vector3d &normal, bool dontNegate) {
 	// Based on GPL shadow projection example by
 	// (c) 2002-2003 Phaetos <phaetos@gaffga.de>
 	float d, c;
@@ -563,23 +562,18 @@ void GfxOpenGL::startActorDraw(const Actor *actor) {
 	}
 
 	if (_currentShadowArray) {
-		// TODO find out why shadowMask at device in woods is null
-		if (!_currentShadowArray->shadowMask) {
-			_currentShadowArray->shadowMask = new byte[_screenWidth * _screenHeight];
-			_currentShadowArray->shadowMaskSize = _screenWidth * _screenHeight;
-		}
 		Sector *shadowSector = _currentShadowArray->planeList.front().sector;
 		glDepthMask(GL_FALSE);
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glDisable(GL_LIGHTING);
 		glDisable(GL_TEXTURE_2D);
-// 		glColor3f(0.0f, 1.0f, 0.0f); // debug draw color
+		// glColor3f(0.0f, 1.0f, 0.0f); // debug draw color
 		if (g_grim->getGameType() == GType_GRIM) {
 			glColor3ub(_shadowColorR, _shadowColorG, _shadowColorB);
 		} else {
 			glColor3ub(_currentShadowArray->color.getRed(), _currentShadowArray->color.getGreen(), _currentShadowArray->color.getBlue());
 		}
-		glShadowProjection(_currentShadowArray->pos, shadowSector->getVertices()[0], shadowSector->getNormal(), _currentShadowArray->dontNegate);
+		shadowProjection(_currentShadowArray->pos, shadowSector->getVertices()[0], shadowSector->getNormal(), _currentShadowArray->dontNegate);
 	}
 
 	const float alpha = actor->getEffectiveAlpha();
@@ -1062,7 +1056,7 @@ void GfxOpenGL::createBitmap(BitmapData *bitmap) {
 
 	if (bitmap->_format != 1) {
 		for (int pic = 0; pic < bitmap->_numImages; pic++) {
-			uint16 *zbufPtr = reinterpret_cast<uint16 *>(bitmap->getImageData(pic).getRawBuffer());
+			uint16 *zbufPtr = reinterpret_cast<uint16 *>(const_cast<void  *>(bitmap->getImageData(pic).getPixels()));
 			for (int i = 0; i < (bitmap->_width * bitmap->_height); i++) {
 				uint16 val = READ_LE_UINT16(zbufPtr + i);
 				// fix the value if it is incorrectly set to the bitmap transparency color
@@ -1115,7 +1109,7 @@ void GfxOpenGL::createBitmap(BitmapData *bitmap) {
 					texData = new byte[bytes * bitmap->_width * bitmap->_height];
 				// Convert data to 32-bit RGBA format
 				byte *texDataPtr = texData;
-				uint16 *bitmapData = reinterpret_cast<uint16 *>(bitmap->getImageData(pic).getRawBuffer());
+				uint16 *bitmapData = (uint16 *)const_cast<void *>(bitmap->getImageData(pic).getPixels());
 				for (int i = 0; i < bitmap->_width * bitmap->_height; i++, texDataPtr += bytes, bitmapData++) {
 					uint16 pixel = *bitmapData;
 					int r = pixel >> 11;
@@ -1134,9 +1128,9 @@ void GfxOpenGL::createBitmap(BitmapData *bitmap) {
 				texOut = texData;
 			} else if (bitmap->_format == 1 && bitmap->_colorFormat == BM_RGB1555) {
 				bitmap->convertToColorFormat(pic, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
-				texOut = (byte *)bitmap->getImageData(pic).getRawBuffer();
+				texOut = (byte *)const_cast<void *>(bitmap->getImageData(pic).getPixels());
 			} else {
-				texOut = (byte *)bitmap->getImageData(pic).getRawBuffer();
+				texOut = (byte *)const_cast<void *>(bitmap->getImageData(pic).getPixels());
 			}
 
 			for (int i = 0; i < bitmap->_numTex; i++) {
@@ -1253,7 +1247,7 @@ void GfxOpenGL::drawBitmap(const Bitmap *bitmap, int dx, int dy, uint32 layer) {
 	if (bitmap->getFormat() == 5 && !_useDepthShader) {
 		// Only draw the manual zbuffer when enabled
 		if (bitmap->getActiveImage() - 1 < bitmap->getNumImages()) {
-			drawDepthBitmap(dx, dy, bitmap->getWidth(), bitmap->getHeight(), (char *)bitmap->getData(bitmap->getActiveImage() - 1).getRawBuffer());
+			drawDepthBitmap(dx, dy, bitmap->getWidth(), bitmap->getHeight(), (const char *)bitmap->getData(bitmap->getActiveImage() - 1).getPixels());
 		} else {
 			warning("zbuffer image has index out of bounds! %d/%d", bitmap->getActiveImage(), bitmap->getNumImages());
 		}
@@ -1621,32 +1615,7 @@ void GfxOpenGL::createTexture(Texture *texture, const uint8 *data, const CMap *c
 			}
 		}
 	} else {
-#ifdef SCUMM_BIG_ENDIAN
-		// Copy and swap
-		for (int y = 0; y < texture->_height; y++) {
-			for (int x = 0; x < texture->_width; x++) {
-				uint32 pixel = (y * texture->_width + x) * texture->_bpp;
-				for (int b = 0; b < texture->_bpp; b++) {
-					texdata[pixel + b] = data[pixel + (texture->_bpp - 1) - b];
-				}
-			}
-		}
-#else
 		memcpy(texdata, data, texture->_width * texture->_height * texture->_bpp);
-#endif
-	}
-
-	GLuint format = 0;
-	GLuint internalFormat = 0;
-	if (texture->_colorFormat == BM_RGBA) {
-		format = GL_RGBA;
-		internalFormat = GL_RGBA;
-	} else if (texture->_colorFormat == BM_BGRA) {
-		format = GL_BGRA;
-		internalFormat = GL_RGBA;
-	} else {    // The only other colorFormat we load right now is BGR
-		format = GL_BGR;
-		internalFormat = GL_RGB;
 	}
 
 	GLuint *textures = (GLuint *)texture->_texture;
@@ -1663,7 +1632,7 @@ void GfxOpenGL::createTexture(Texture *texture, const uint8 *data, const CMap *c
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, texture->_width, texture->_height, 0, format, GL_UNSIGNED_BYTE, texdata);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->_width, texture->_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texdata);
 	delete[] texdata;
 }
 
@@ -1691,7 +1660,7 @@ void GfxOpenGL::destroyTexture(Texture *texture) {
 	}
 }
 
-void GfxOpenGL::drawDepthBitmap(int x, int y, int w, int h, char *data) {
+void GfxOpenGL::drawDepthBitmap(int x, int y, int w, int h, const char *data) {
 	//if (num != 0) {
 	//  warning("Animation not handled yet in GL texture path");
 	//}
@@ -1918,13 +1887,16 @@ void GfxOpenGL::drawEmergString(int x, int y, const char *text, const Color &fgC
 }
 
 Bitmap *GfxOpenGL::getScreenshot(int w, int h, bool useStored) {
-	Graphics::PixelBuffer src(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), _screenWidth * _screenHeight, DisposeAfterUse::YES);
+	Graphics::Surface src;
+	src.create(_screenWidth, _screenHeight, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
 	if (useStored) {
-		memcpy(src.getRawBuffer(), _storedDisplay, _screenWidth * _screenHeight * 4);
+		memcpy(src.getPixels(), _storedDisplay, _screenWidth * _screenHeight * 4);
 	} else {
-		glReadPixels(0, 0, _screenWidth, _screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, src.getRawBuffer());
+		glReadPixels(0, 0, _screenWidth, _screenHeight, GL_RGBA, GL_UNSIGNED_BYTE, src.getPixels());
 	}
-	return createScreenshotBitmap(src, w, h, false);
+	Bitmap *bmp = createScreenshotBitmap(&src, w, h, false);
+	src.free();
+	return bmp;
 }
 
 void GfxOpenGL::storeDisplay() {

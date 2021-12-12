@@ -56,14 +56,12 @@ const static char *sceneVariables[] = {
 	"GS_COMBATJSON",
 	"GS_COMBATLEVEL",
 	"GS_PUZZLELEVEL",
-	NULL
+	nullptr
 };
 
 void HypnoEngine::loadSceneLevel(const Common::String &current, const Common::String &next, const Common::String &prefix) {
 	debugC(1, kHypnoDebugParser, "Parsing %s", current.c_str());
 	Common::String name = convertPath(current);
-	// if (!prefix.empty())
-	// 	name = prefix + "/" + name;
 
 	Common::File test;
 	if (!test.open(name.c_str()))
@@ -87,13 +85,19 @@ void HypnoEngine::loadSceneLevel(const Common::String &current, const Common::St
 void HypnoEngine::resetSceneState() {
 	uint32 i = 0;
 	while (sceneVariables[i]) {
-		_sceneState[sceneVariables[i]] = 0;
+		// Preserve difficulty level variables
+		if (sceneVariables[i] != Common::String("GS_COMBATLEVEL") && sceneVariables[i] != Common::String("GS_PUZZLELEVEL"))
+			_sceneState[sceneVariables[i]] = 0;
 		i++;
 	}
 }
 
 bool HypnoEngine::checkSceneCompleted() {
-	return _sceneState["GS_LEVELCOMPLETE"];
+	return _sceneState["GS_LEVELCOMPLETE"] || _sceneState["GS_LEVELWON"];
+}
+
+bool HypnoEngine::checkLevelWon() {
+	return _sceneState["GS_LEVELWON"];
 }
 
 // Hotspots
@@ -214,7 +218,11 @@ bool HypnoEngine::hoverHotspot(Common::Point mousePos) {
 	return false;
 }
 
+Common::String HypnoEngine::findNextLevel(const Transition *trans) { error("no code!"); }
+Common::String HypnoEngine::findNextLevel(const Common::String &level) { error("no code!"); }
+
 void HypnoEngine::runTransition(Transition *trans) {
+	Common::String nextLevel = findNextLevel(trans);
 	if (!trans->frameImage.empty()) {
 		debugC(1, kHypnoDebugScene, "Rendering %s frame in transaction", trans->frameImage.c_str());
 		Graphics::Surface *frame = decodeFrame(trans->frameImage, trans->frameNumber);
@@ -225,20 +233,15 @@ void HypnoEngine::runTransition(Transition *trans) {
 		delete frame;
 		sframe->free();
 		delete sframe;
-		Common::String *ptr = new Common::String(trans->level);
+		Common::String *ptr = new Common::String(nextLevel);
 		if (!installTimer(2 * 1000000, ptr)) // 2 seconds
 			error("Failed to install timer");
 	} else
-		_nextLevel = trans->level;
+		_nextLevel = nextLevel;
 }
 
 
 void HypnoEngine::runScene(Scene *scene) {
-	_nextLoopingVideoToPlay.clear();
-	_nextParallelVideoToPlay.clear();
-	_nextSequentialVideoToPlay.clear();
-	_intros.clear();
-
 	_refreshConversation = false;
 	_conversation.clear();
 	Common::Event event;
@@ -259,8 +262,14 @@ void HypnoEngine::runScene(Scene *scene) {
 			case Common::EVENT_KEYDOWN:
 				if (event.kbd.keycode == Common::KEYCODE_ESCAPE) {
 					for (Videos::iterator it = _videosPlaying.begin(); it != _videosPlaying.end(); ++it) {
-						if (it->decoder)
+						if (it->decoder) {
 							skipVideo(*it);
+							if (it->scaled) {
+								runMenu(*stack.back());
+								drawScreen();
+							}
+						}
+
 					}
 					_videosPlaying.clear();
 
@@ -377,13 +386,26 @@ void HypnoEngine::runScene(Scene *scene) {
 			}
 		}
 
-		if (checkSceneCompleted()) {
+		if (checkSceneCompleted() || checkLevelWon()) {
+			if(!checkLevelWon() && stack.size() > 1) {
+				debug("Executing escape instead of ending the scene");
+				runEscape();
+				_sceneState["GS_LEVELCOMPLETE"] = 0;
+				continue;
+			}
+
 			// Make sure all the videos are played before we finish
 			enableLoopingVideos = false;
 			if (_conversation.empty() && 
 				_videosPlaying.empty() && 
 				_nextSequentialVideoToPlay.empty() && 
 				_nextParallelVideoToPlay.empty()) {
+				if (checkLevelWon()) {
+					debugC(1, kHypnoDebugScene, "Resetting level variables");
+					resetSceneState();
+				}
+				_sceneState["GS_LEVELCOMPLETE"] = 0;
+
 				debugC(1, kHypnoDebugScene, "Wining level and jumping to %s", scene->levelIfWin.c_str());
 				if (_nextLevel.empty()) {
 					assert(!scene->levelIfWin.empty());
@@ -402,13 +424,13 @@ void HypnoEngine::runScene(Scene *scene) {
 			debugC(1, kHypnoDebugScene, "Removing a hotspot list!");
 			stack.pop_back();
 			runMenu(*stack.back());
-			_nextHotsToRemove = NULL;
+			_nextHotsToRemove = nullptr;
 			drawScreen();
 		} else if (_nextHotsToAdd) {
 			debugC(1, kHypnoDebugScene, "Adding a hotspot list!");
 			stack.push_back(_nextHotsToAdd);
 			runMenu(*stack.back());
-			_nextHotsToAdd = NULL;
+			_nextHotsToAdd = nullptr;
 			drawScreen();
 		}
 
@@ -426,6 +448,27 @@ void HypnoEngine::runScene(Scene *scene) {
 		if (it->decoder)
 			skipVideo(*it);
 	}
+
+	for (Videos::iterator it = _nextParallelVideoToPlay.begin(); it != _nextParallelVideoToPlay.end(); ++it) {
+		if (it->decoder)
+			skipVideo(*it);
+	}
+
+	for (Videos::iterator it = _nextSequentialVideoToPlay.begin(); it != _nextSequentialVideoToPlay.end(); ++it) {
+		if (it->decoder)
+			skipVideo(*it);
+	}
+
+	for (Videos::iterator it = _escapeSequentialVideoToPlay.begin(); it != _escapeSequentialVideoToPlay.end(); ++it) {
+		if (it->decoder)
+			skipVideo(*it);
+	}
+
+	_nextLoopingVideoToPlay.clear();
+	_nextParallelVideoToPlay.clear();
+	_nextSequentialVideoToPlay.clear();
+	_escapeSequentialVideoToPlay.clear();
+	_intros.clear();
 }
 
 void HypnoEngine::showConversation() { error("Not implemented"); }

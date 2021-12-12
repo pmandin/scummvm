@@ -30,7 +30,7 @@ static const PlainGameDescriptor petkaGames[] = {
 	{"petka_demo", "Red Comrades Demo"},
 	{"petka1", "Red Comrades 1: Save the Galaxy"},
 	{"petka2", "Red Comrades 2: For the Great Justice"},
-	{0, 0}
+	{nullptr, nullptr}
 };
 
 static const DebugChannelDef debugFlagList[] = {
@@ -54,15 +54,15 @@ public:
 		return "petka";
 	}
 
-	virtual const char *getName() const override {
+	const char *getName() const override {
 		return "Red Comrades";
 	}
 
-	virtual const char *getOriginalCopyright() const override {
+	const char *getOriginalCopyright() const override {
 		return "Red Comrades (C) S.K.I.F.";
 	}
 
-	virtual const DebugChannelDef *getDebugChannels() const override {
+	const DebugChannelDef *getDebugChannels() const override {
 		return debugFlagList;
 	}
 };

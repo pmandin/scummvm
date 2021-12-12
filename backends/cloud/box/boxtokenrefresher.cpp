@@ -108,7 +108,7 @@ void BoxTokenRefresher::finishJson(Common::JSONValue *json) {
 	CurlJsonRequest::finishJson(json);
 }
 
-void BoxTokenRefresher::finishError(Networking::ErrorResponse error) {
+void BoxTokenRefresher::finishError(Networking::ErrorResponse error, Networking::RequestState state) {
 	if (error.httpResponseCode == 401) { // invalid_token
 		pause();
 		_parentStorage->refreshAccessToken(new Common::Callback<BoxTokenRefresher, Storage::BoolResponse>(this, &BoxTokenRefresher::tokenRefreshed));
@@ -124,7 +124,7 @@ void BoxTokenRefresher::finishError(Networking::ErrorResponse error) {
 void BoxTokenRefresher::setHeaders(Common::Array<Common::String> &headers) {
 	_headers = headers;
 	curl_slist_free_all(_headersList);
-	_headersList = 0;
+	_headersList = nullptr;
 	for (uint32 i = 0; i < headers.size(); ++i)
 		CurlJsonRequest::addHeader(headers[i]);
 }

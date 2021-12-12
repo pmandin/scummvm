@@ -39,7 +39,6 @@
 
 #include "audio/mixer.h"
 
-#include "graphics/pixelbuffer.h"
 
 namespace ICB {
 
@@ -57,7 +56,7 @@ IcbEngine::IcbEngine(OSystem *syst, const ADGameDescription *gameDesc) : Engine(
 
 IcbEngine::~IcbEngine() {
 	delete _randomSource;
-	g_icb = NULL;
+	g_icb = nullptr;
 }
 
 Common::KeymapArray IcbEngine::initKeymapsIcb(const char *target) {

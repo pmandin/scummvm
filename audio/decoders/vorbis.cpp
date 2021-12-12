@@ -108,14 +108,14 @@ public:
 	VorbisStream(Common::SeekableReadStream *inStream, DisposeAfterUse::Flag dispose);
 	~VorbisStream();
 
-	int readBuffer(int16 *buffer, const int numSamples);
+	int readBuffer(int16 *buffer, const int numSamples) override;
 
-	bool endOfData() const		{ return _pos >= _bufferEnd; }
-	bool isStereo() const		{ return _isStereo; }
-	int getRate() const			{ return _rate; }
+	bool endOfData() const override		{ return _pos >= _bufferEnd; }
+	bool isStereo() const override		{ return _isStereo; }
+	int getRate() const override			{ return _rate; }
 
-	bool seek(const Timestamp &where);
-	Timestamp getLength() const { return _length; }
+	bool seek(const Timestamp &where) override;
+	Timestamp getLength() const override { return _length; }
 protected:
 	bool refill();
 };
@@ -125,7 +125,7 @@ VorbisStream::VorbisStream(Common::SeekableReadStream *inStream, DisposeAfterUse
 	_length(0, 1000),
 	_bufferEnd(ARRAYEND(_buffer)) {
 
-	int res = ov_open_callbacks(inStream, &_ovFile, NULL, 0, g_stream_wrap);
+	int res = ov_open_callbacks(inStream, &_ovFile, nullptr, 0, g_stream_wrap);
 	if (res < 0) {
 		warning("Could not create Vorbis stream (%d)", res);
 		_pos = _bufferEnd;
@@ -206,7 +206,7 @@ bool VorbisStream::refill() {
 						0,
 						2,	// 16 bit
 						1,	// signed
-						NULL);
+						nullptr);
 #endif
 #endif
 		if (result == OV_HOLE) {
@@ -246,7 +246,7 @@ SeekableAudioStream *makeVorbisStream(
 	SeekableAudioStream *s = new VorbisStream(stream, disposeAfterUse);
 	if (s && s->endOfData()) {
 		delete s;
-		return 0;
+		return nullptr;
 	} else {
 		return s;
 	}

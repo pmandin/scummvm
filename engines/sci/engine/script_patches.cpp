@@ -207,7 +207,7 @@ static const char *const selectorNameTable[] = {
 	"vol",          // SQ6
 	"walkIconItem", // SQ6
 #endif
-	NULL
+	nullptr
 };
 
 enum ScriptPatcherSelectors {
@@ -6444,12 +6444,34 @@ static const uint16 kq6PatchFeatureEventHandling[] = {
 	PATCH_END
 };
 
+// KQ6 Mac sets a three second delay before playing its QuickTime opening movie
+//  in order to sync it with the music, but setting Script:seconds produces
+//  inconsistent delays. (See GK1 cartoon timing patches.) Converting the delay
+//  from seconds to ticks results in consistent timing in sync with the movie.
+//
+// Applies to: English Mac only
+// Responsible method: showMovie:changeState(2)
+static const uint16 kq6MacSignatureMacOpeningMovieDelay[] = {
+	SIG_MAGICDWORD,
+	0x35, 0x03,                         // ldi 03
+	0x65, 0x1c,                         // aTop seconds [ seconds = 3 ]
+	0x33, 0x24,                         // jmp 24       [ end of method ]
+	SIG_END
+};
+
+static const uint16 kq6MacPatchMacOpeningMovieDelay[] = {
+	0x34, PATCH_UINT16(0x00b4),         // ldi 00b4
+	0x64, PATCH_UINT16(0x0020),         // aTop ticks [ ticks = 180 ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                                 patch
 static const SciScriptPatcherEntry kq6Signatures[] = {
 	{  true,    52, "CD: Girl In The Tower playback",                 1, kq6CDSignatureGirlInTheTowerPlayback,     kq6CDPatchGirlInTheTowerPlayback },
 	{  true,    80, "fix guard dog music",                            1, kq6SignatureGuardDogMusic,                kq6PatchGuardDogMusic },
 	{  true,    87, "fix Drink Me bottle",                            1, kq6SignatureDrinkMeFix,                   kq6PatchDrinkMeFix },
 	{ false,    87, "Mac: Drink Me pic",                              1, kq6SignatureMacDrinkMePic,                kq6PatchMacDrinkMePic },
+	{  true,   105, "Mac: opening movie delay",                       1, kq6MacSignatureMacOpeningMovieDelay,      kq6MacPatchMacOpeningMovieDelay },
 	{  true,   281, "fix pawnshop genie eye",                         1, kq6SignaturePawnshopGenieEye,             kq6PatchPawnshopGenieEye },
 	{  true,   300, "fix floating off steps",                         2, kq6SignatureCliffStepFloatFix,            kq6PatchCliffStepFloatFix },
 	{  true,   300, "fix floating off steps",                         2, kq6SignatureCliffItemFloatFix,            kq6PatchCliffItemFloatFix },
@@ -18126,6 +18148,34 @@ static const SciScriptPatcherEntry qfg4Signatures[] = {
 
 #endif
 
+// ===========================================================================
+// Space Quest 3
+
+// In an early version of SQ3, the end credits get stuck before the last three
+//  screens of text. The credits script is missing state 16 and never advances
+//  to state 17. We fix this by incrementing the state property.
+//
+// Responsible method: endScript:changeState
+// Applies to: English PC 1.0P
+static const uint16 sq3EndCreditsSignature[] = {
+	SIG_MAGICDWORD,
+	0x3c,                               // dup
+	0x35, 0x0f,                         // ldi 0f [ state 15 ]
+	0x1a,                               // eq?
+	SIG_ADDTOOFFSET(+21),
+	0x32, SIG_ADDTOOFFSET(+2),          // jmp [ end of method ]
+	0x3c,                               // dup
+	0x35, 0x11,                         // ldi 11 [ state 17 ]
+	0x1a,                               // eq?
+	SIG_END
+};
+
+static const uint16 sq3EndCreditsPatch[] = {
+	PATCH_ADDTOOFFSET(+25),
+	0x6a, PATCH_UINT16(0x000a),         // ipToa state [ state = 16 ]
+	PATCH_END
+};
+
 // Space Quest 3 has some strings hard coded in the scripts file
 // We need to patch them for the Hebrew translation
 
@@ -18153,10 +18203,11 @@ static const uint16 sq3HebrewStatusBarNamePatch[] = {
 	PATCH_END
 };
 
-//          script, description,                                      signature                                      patch
+//         script, description,                                      signature                                      patch
 static const SciScriptPatcherEntry sq3Signatures[] = {
-	{  false,   0, "Hebrew: Replace name in status bar",    1, sq3HebrewStatusBarNameSignature,                     sq3HebrewStatusBarNamePatch },
-	{  false, 996, "Hebrew: Replace 'Enter input' prompt",  1, sq3HebrewEnterInputSignature,                        sq3HebrewEnterInputPatch },
+	{ false,   0, "Hebrew: Replace name in status bar",    1, sq3HebrewStatusBarNameSignature,                     sq3HebrewStatusBarNamePatch },
+	{  true, 117, "Fix end credits",                       1, sq3EndCreditsSignature,                              sq3EndCreditsPatch },
+	{ false, 996, "Hebrew: Replace 'Enter input' prompt",  1, sq3HebrewEnterInputSignature,                        sq3HebrewEnterInputPatch },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
 
@@ -21773,7 +21824,7 @@ ScriptPatcher::ScriptPatcher() {
 	for (selectorNr = 0; selectorNr < selectorCount; selectorNr++)
 		_selectorIdTable[selectorNr] = -1;
 
-	_runtimeTable = NULL;
+	_runtimeTable = nullptr;
 	_isMacSci11 = false;
 }
 
@@ -22196,9 +22247,9 @@ void ScriptPatcher::enablePatch(const SciScriptPatcherEntry *patchTable, const c
 }
 
 void ScriptPatcher::processScript(uint16 scriptNr, SciSpan<byte> scriptData) {
-	const SciScriptPatcherEntry *signatureTable = NULL;
-	const SciScriptPatcherEntry *curEntry = NULL;
-	SciScriptPatcherRuntimeEntry *curRuntimeEntry = NULL;
+	const SciScriptPatcherEntry *signatureTable = nullptr;
+	const SciScriptPatcherEntry *curEntry = nullptr;
+	SciScriptPatcherRuntimeEntry *curRuntimeEntry = nullptr;
 	const Sci::SciGameId gameId = g_sci->getGameId();
 
 	switch (gameId) {

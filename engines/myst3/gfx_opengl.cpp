@@ -23,7 +23,7 @@
 #include "common/rect.h"
 #include "common/textconsole.h"
 
-#if defined(USE_OPENGL_GAME) && !defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME)
 
 #include "graphics/opengl/context.h"
 #include "graphics/surface.h"
@@ -45,13 +45,8 @@ OpenGLRenderer::OpenGLRenderer(OSystem *system) :
 OpenGLRenderer::~OpenGLRenderer() {
 }
 
-Texture *OpenGLRenderer::createTexture(const Graphics::Surface *surface) {
+Texture *OpenGLRenderer::createTexture3D(const Graphics::Surface *surface) {
 	return new OpenGLTexture(surface);
-}
-
-void OpenGLRenderer::freeTexture(Texture *texture) {
-	OpenGLTexture *glTexture = static_cast<OpenGLTexture *>(texture);
-	delete glTexture;
 }
 
 void OpenGLRenderer::init() {

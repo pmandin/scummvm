@@ -45,15 +45,15 @@ public:
 	void deinit();
 
 	// AudioStream API
-	int readBuffer(int16 *buffer, const int numSamples) { return _audStream->readBuffer(buffer, numSamples); }
-	bool isStereo() const { return _audStream->isStereo(); }
-	int getRate() const { return _audStream->getRate(); }
-	bool endOfData() const { return _audStream->endOfData(); }
-	bool endOfStream() const { return _audStream->endOfStream(); }
+	int readBuffer(int16 *buffer, const int numSamples) override { return _audStream->readBuffer(buffer, numSamples); }
+	bool isStereo() const override { return _audStream->isStereo(); }
+	int getRate() const override { return _audStream->getRate(); }
+	bool endOfData() const override { return _audStream->endOfData(); }
+	bool endOfStream() const override { return _audStream->endOfStream(); }
 
 	// PacketizedAudioStream API
-	void queuePacket(Common::SeekableReadStream *data);
-	void finish() { _audStream->finish(); }
+	void queuePacket(Common::SeekableReadStream *data) override;
+	void finish() override { _audStream->finish(); }
 
 private:
 	Common::ScopedPtr<QueuingAudioStream> _audStream;
@@ -66,7 +66,7 @@ private:
 	double _audioGain;
 };
 
-AC3Stream::AC3Stream(double decibel) : _a52State(0), _frameSize(0), _inBufPtr(0), _flags(0), _sampleRate(0) {
+AC3Stream::AC3Stream(double decibel) : _a52State(nullptr), _frameSize(0), _inBufPtr(nullptr), _flags(0), _sampleRate(0) {
 	_audioGain = pow(2, decibel / 6);
 }
 
@@ -117,7 +117,7 @@ void AC3Stream::deinit() {
 
 	_audStream.reset();
 	a52_free(_a52State);
-	_a52State = 0;
+	_a52State = nullptr;
 }
 
 void AC3Stream::queuePacket(Common::SeekableReadStream *data) {
@@ -195,7 +195,7 @@ void AC3Stream::queuePacket(Common::SeekableReadStream *data) {
 PacketizedAudioStream *makeAC3Stream(Common::SeekableReadStream &firstPacket, double decibel) {
 	Common::ScopedPtr<AC3Stream> stream(new AC3Stream(decibel));
 	if (!stream->init(firstPacket))
-		return 0;
+		return nullptr;
 
 	return stream.release();
 }

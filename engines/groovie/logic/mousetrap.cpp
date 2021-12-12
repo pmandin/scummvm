@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv2 license mentioned above, MojoTouch has exclusively licensed
+ * this code on November 10th, 2021, to be use in closed-source products.
+ * Therefore, any contributions (commits) to it will also be dual-licensed.
+ *
  */
 
 #include "groovie/groovie.h"
@@ -25,7 +31,7 @@
 
 namespace Groovie {
 
-MouseTrapGame::MouseTrapGame() : _random("MouseTrapGame") {
+MouseTrapGame::MouseTrapGame(bool easierAi) : _random("MouseTrapGame") {
 	_mouseTrapCounter = _mouseTrapCounter1 = 0;
 	_mouseTrapX = _mouseTrapY = 0;
 	memset(_mouseTrapRoute, 0, 75);
@@ -33,6 +39,7 @@ MouseTrapGame::MouseTrapGame() : _random("MouseTrapGame") {
 	_mouseTrapPosX = _mouseTrapPosY = 0;
 	memset(_mouseTrapCells, 0, 31);
 	_mouseTrapNumSteps = 0;
+	_easierAi = easierAi;
 }
 
 void MouseTrapGame::run(byte *scriptVariables) {
@@ -549,6 +556,9 @@ void MouseTrapGame::goFarthest(int8 *x, int8 *y) {
 			flipField(x1, y1);
 
 			int8 dist = calcDistanceToExit();
+
+			if (_easierAi)
+				dist += _random.getRandomNumber(2);
 
 			if (_mouseTrapNumSteps && _random.getRandomNumber(1) != 0)
 				dist += 3;

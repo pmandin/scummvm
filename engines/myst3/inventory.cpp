@@ -43,19 +43,19 @@ const Inventory::ItemData Inventory::_availableItems[8] = {
 Inventory::Inventory(Myst3Engine *vm) :
 		Window(),
 		_vm(vm),
-		_texture(0) {
+		_texture(nullptr) {
 	_scaled = !_vm->isWideScreenModEnabled();
 	initializeTexture();
 }
 
 Inventory::~Inventory() {
-	_vm->_gfx->freeTexture(_texture);
+	delete _texture;
 }
 
 void Inventory::initializeTexture() {
 	Graphics::Surface *s = _vm->loadTexture(1204);
 
-	_texture = _vm->_gfx->createTexture(s);
+	_texture = _vm->_gfx->createTexture2D(s);
 
 	s->free();
 	delete s;
@@ -327,7 +327,7 @@ void Inventory::updateCursor() {
 
 DragItem::DragItem(Myst3Engine *vm, uint id):
 		_vm(vm),
-		_texture(0),
+		_texture(nullptr),
 		_frame(1) {
 	// Draw on the whole screen
 	_isConstrainedToWindow = false;
@@ -345,11 +345,11 @@ DragItem::DragItem(Myst3Engine *vm, uint id):
 	_bink.start();
 
 	const Graphics::Surface *frame = _bink.decodeNextFrame();
-	_texture = _vm->_gfx->createTexture(frame);
+	_texture = _vm->_gfx->createTexture2D(frame);
 }
 
 DragItem::~DragItem() {
-	_vm->_gfx->freeTexture(_texture);
+	delete _texture;
 }
 
 void DragItem::drawOverlay() {

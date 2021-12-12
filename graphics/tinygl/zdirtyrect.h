@@ -20,30 +20,24 @@
  *
  */
 
-/*
- * This file is based on, or a modified version of code from TinyGL (C) 1997-1998 Fabrice Bellard,
- * which is licensed under the zlib-license (see LICENSE).
- * It also has modifications by the ResidualVM-team, which are covered under the GPLv2 (or later).
- */
+#ifndef GRAPHICS_TINYGL_ZRECT_H
+#define GRAPHICS_TINYGL_ZRECT_H
 
-#ifndef GRAPHICS_TINYGL_ZRECT_H_
-#define GRAPHICS_TINYGL_ZRECT_H_
-
+#include "common/types.h"
 #include "common/rect.h"
-#include "graphics/tinygl/zblit.h"
 #include "common/array.h"
 
+#include "graphics/tinygl/zblit.h"
+
 namespace TinyGL {
-	struct GLContext;
-	struct GLVertex;
-	struct GLTexture;
-}
 
 namespace Internal {
-	void *allocateFrame(int size);
+void *allocateFrame(int size);
 }
 
-namespace Graphics {
+struct GLContext;
+struct GLVertex;
+struct GLTexture;
 
 class DrawCall {
 public:
@@ -72,20 +66,20 @@ private:
 
 class ClearBufferDrawCall : public DrawCall {
 public:
-	ClearBufferDrawCall(bool clearZBuffer, int zValue, bool clearColorBuffer, int rValue, int gValue, int bValue);
+	ClearBufferDrawCall(bool clearZBuffer, int zValue, bool clearColorBuffer, int rValue, int gValue, int bValue, bool clearStencilBuffer, int stencilValue);
 	virtual ~ClearBufferDrawCall() { }
 	bool operator==(const ClearBufferDrawCall &other) const;
 	virtual void execute(bool restoreState) const;
 	virtual void execute(const Common::Rect &clippingRectangle, bool restoreState) const;
 
 	void *operator new(size_t size) {
-		return ::Internal::allocateFrame(size);
+		return Internal::allocateFrame(size);
 	}
 
 	void operator delete(void *p) { }
 private:
-	bool _clearZBuffer, _clearColorBuffer;
-	int _rValue, _gValue, _bValue, _zValue;
+	bool _clearZBuffer, _clearColorBuffer, _clearStencilBuffer;
+	int _rValue, _gValue, _bValue, _zValue, _stencilValue;
 };
 
 // Encapsulate a rasterization call: it might execute either a triangle or line rasterization.
@@ -98,45 +92,55 @@ public:
 	virtual void execute(const Common::Rect &clippingRectangle, bool restoreState) const;
 
 	void *operator new(size_t size) {
-		return ::Internal::allocateFrame(size);
+		return Internal::allocateFrame(size);
 	}
 
 	void operator delete(void *p) { }
 private:
 	void computeDirtyRegion();
-	typedef void (*gl_draw_triangle_func_ptr)(TinyGL::GLContext *c, TinyGL::GLVertex *p0, TinyGL::GLVertex *p1, TinyGL::GLVertex *p2);
+	typedef void (*gl_draw_triangle_func_ptr)(GLContext *c, TinyGL::GLVertex *p0, TinyGL::GLVertex *p1, TinyGL::GLVertex *p2);
 	int _vertexCount;
-	TinyGL::GLVertex *_vertex;
+	GLVertex *_vertex;
 	gl_draw_triangle_func_ptr _drawTriangleFront, _drawTriangleBack;
 
 	struct RasterizationState {
 		int beginType;
 		int currentFrontFace;
 		int cullFaceEnabled;
-		int colorMask;
-		int depthTest;
+		bool colorMaskRed;
+		bool colorMaskGreen;
+		bool colorMaskBlue;
+		bool colorMaskAlpha;
+		bool depthTestEnabled;
 		int depthFunction;
-		int depthWrite;
-		int shadowMode;
-		int texture2DEnabled;
+		int depthWriteMask;
+		bool texture2DEnabled;
 		int currentShadeModel;
 		int polygonModeBack;
 		int polygonModeFront;
 		int lightingEnabled;
 		bool enableBlending;
-		int sfactor, dfactor;
+		int sfactor;
+		int dfactor;
 		int textureVersion;
-		int depthTestEnabled;
 		int offsetStates;
 		float offsetFactor;
 		float offsetUnits;
 		float viewportTranslation[3];
 		float viewportScaling[3];
-		bool alphaTest;
-		int alphaFunc, alphaRefValue;
+		bool alphaTestEnabled;
+		int alphaFunc;
+		int alphaRefValue;
+		bool stencilTestEnabled;
+		int stencilTestFunc;
+		int stencilValue;
+		uint stencilMask;
+		uint stencilWriteMask;
+		int stencilSfail;
+		int stencilDpfail;
+		int stencilDppass;
 		TinyGL::GLTexture *texture;
-		unsigned int wrapS, wrapT;
-		unsigned char *shadowMaskBuf;
+		uint wrapS, wrapT;
 
 		bool operator==(const RasterizationState &other) const;
 	};
@@ -166,7 +170,7 @@ public:
 	BlittingMode getBlittingMode() const { return _mode; }
 
 	void *operator new(size_t size) {
-		return ::Internal::allocateFrame(size);
+		return Internal::allocateFrame(size);
 	}
 
 	void operator delete(void *p) { }
@@ -185,13 +189,14 @@ private:
 		int depthTestEnabled;
 
 		bool operator==(const BlittingState &other) const {
-			return	enableBlending == other.enableBlending &&
-					sfactor == other.sfactor &&
-					dfactor == other.dfactor &&
-					alphaTest == other.alphaTest &&
-					alphaFunc == other.alphaFunc &&
-					alphaRefValue == other.alphaRefValue &&
-					depthTestEnabled == other.depthTestEnabled;
+			return
+				enableBlending == other.enableBlending &&
+				sfactor == other.sfactor &&
+				dfactor == other.dfactor &&
+				alphaTest == other.alphaTest &&
+				alphaFunc == other.alphaFunc &&
+				alphaRefValue == other.alphaRefValue &&
+				depthTestEnabled == other.depthTestEnabled;
 		}
 	};
 
@@ -201,6 +206,6 @@ private:
 	BlittingState _blitState;
 };
 
-} // end of namespace Graphics
+} // end of namespace TinyGL
 
 #endif

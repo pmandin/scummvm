@@ -514,7 +514,7 @@ void ScalpelUserInterface::clearInfo() {
 void ScalpelUserInterface::clearWindow() {
 	if (_windowOpen) {
 		_vm->_screen->vgaBar(Common::Rect(3, CONTROLS_Y + 11, SHERLOCK_SCREEN_WIDTH - 2,
-			SHERLOCK_SCREEN_HEIGHT - 2), INV_BACKGROUND);
+			SHERLOCK_SCREEN_HEIGHT - 1), INV_BACKGROUND);
 	}
 }
 
@@ -841,7 +841,7 @@ void ScalpelUserInterface::doEnvControl() {
 				if (saves.promptForDescription(_selector)) {
 					saves.saveGame(_selector, saves._savegames[_selector]);
 
-					banishWindow(1);
+					banishWindow();
 					_windowBounds.top = CONTROLS_Y1;
 					_key = _oldKey = -1;
 					_keyPress = '\0';
@@ -995,7 +995,7 @@ void ScalpelUserInterface::doEnvControl() {
 				return;
 			} else {
 				screen.buttonPrint(Common::Point(184, CONTROLS_Y), COMMAND_HIGHLIGHTED, true, saves._fixedTextQuitGameNo);
-				banishWindow(1);
+				banishWindow();
 				_windowBounds.top = CONTROLS_Y1;
 				_key = -1;
 			}
@@ -1266,17 +1266,18 @@ void ScalpelUserInterface::doLookControl() {
 	_keyboardInput = (_keyPress != '\0');
 
 	if (events._released || events._rightReleased || _keyboardInput) {
+		// Is there any remaining text to display?
+		if (!_descStr.empty()) {
+			printObjectDesc(_descStr, false);
+		}
 		// Is an inventory object being looked at?
-		if (!_invLookFlag) {
-			// Is there any remaining text to display?
-			if (!_descStr.empty()) {
-				printObjectDesc(_descStr, false);
-			} else if (!_lookHelp) {
+		else if (!_invLookFlag) {
+			if (!_lookHelp) {
 				// Need to close the window and depress the Look button
 				Common::Point pt(MENU_POINTS[0][0], MENU_POINTS[0][1]);
 				offsetButton3DO(pt, 0);
 				screen._backBuffer2.SHblitFrom((*_controls)[0], pt);
-				banishWindow(true);
+				banishWindow();
 
 				_windowBounds.top = CONTROLS_Y1;
 				_key = _oldKey = _hotkeyLook;
@@ -1288,7 +1289,7 @@ void ScalpelUserInterface::doLookControl() {
 				drawInterface();
 			} else {
 				events.setCursor(ARROW);
-				banishWindow(true);
+				banishWindow();
 				_windowBounds.top = CONTROLS_Y1;
 				_key = _oldKey = -1;
 				_temp = _oldTemp = 0;
@@ -1303,7 +1304,7 @@ void ScalpelUserInterface::doLookControl() {
 				Common::Rect(0, CONTROLS_Y1, SHERLOCK_SCREEN_WIDTH, SHERLOCK_SCREEN_HEIGHT));
 
 			inv.drawInventory(INVENTORY_DONT_DISPLAY);
-			banishWindow(true);
+			banishWindow();
 
 			// Restore the ui
 			screen._backBuffer2.SHblitFrom(tempSurface, Common::Point(0, CONTROLS_Y1));
@@ -1930,7 +1931,7 @@ void ScalpelUserInterface::printObjectDesc(const Common::String &str, bool first
 					Common::Rect(pt.x, pt.y, pt.x + tempSurface.width(), pt.y + tempSurface.height()));
 				screen._backBuffer2.SHtransBlitFrom((*_controls)[0], pt);
 
-				banishWindow(1);
+				banishWindow();
 				events.setCursor(MAGNIFY);
 				_windowBounds.top = CONTROLS_Y1;
 				_key = _oldKey = _hotkeyLook;
@@ -1941,7 +1942,7 @@ void ScalpelUserInterface::printObjectDesc(const Common::String &str, bool first
 				screen._backBuffer2.SHblitFrom(tempSurface, pt);
 			} else {
 				events.setCursor(ARROW);
-				banishWindow(true);
+				banishWindow();
 				_windowBounds.top = CONTROLS_Y1;
 				_key = _oldKey = -1;
 				_temp = _oldTemp = 0;
@@ -1957,7 +1958,7 @@ void ScalpelUserInterface::printObjectDesc(const Common::String &str, bool first
 			inv.loadInv();
 			inv.putInv(SLAM_SECONDARY_BUFFER);
 			inv.freeInv();
-			banishWindow(1);
+			banishWindow();
 
 			_windowBounds.top = CONTROLS_Y1;
 			_key = _oldKey = _hotkeyInventory;
@@ -1990,7 +1991,7 @@ void ScalpelUserInterface::printObjectDesc(const Common::String &str, bool first
 
 	// Clear background
 	bb.fillRect(Common::Rect(2, CONTROLS_Y + 10, SHERLOCK_SCREEN_WIDTH - 2,
-		SHERLOCK_SCREEN_HEIGHT - 2), INV_BACKGROUND);
+		SHERLOCK_SCREEN_HEIGHT - 1), INV_BACKGROUND);
 
 	_windowBounds.top = CONTROLS_Y;
 	events.clearEvents();

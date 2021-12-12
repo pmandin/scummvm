@@ -28,6 +28,7 @@
 #include "common/hashmap.h"
 #include "common/str.h"
 #include "common/list.h"
+#include "common/macresman.h"
 #include "common/stream.h"
 
 namespace Kyra {
@@ -140,6 +141,11 @@ public:
 class InstallerLoader {
 public:
 	static Common::Archive *load(Resource *owner, const Common::String &filename, const Common::String &extension, const uint8 offset);
+};
+
+class StuffItLoader {
+public:
+	static Common::Archive *load(Resource *owner, const Common::String &filename, Common::MacResManager *macResMan);
 };
 
 class EndianAwareStreamWrapper : public Common::SeekableReadStreamEndian {

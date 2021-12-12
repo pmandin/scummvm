@@ -125,9 +125,6 @@ extern console_err_ostream<char> *pperr;
  * Debugger base class
  */
 class Debugger : public Shared::Debugger {
-public:
-	typedef Common::String ArgsType;
-	typedef Std::vector<ArgsType> ArgvType;
 private:
 	// Standard Output Stream Object
 	console_ostream<char> _strOut;
@@ -226,6 +223,7 @@ private:
 	bool cmdUseMedikit(int argc, const char **argv);
 	bool cmdUseEnergyCube(int argc, const char **argv);
 	bool cmdDetonateBomb(int argc, const char **argv);
+	bool cmdDropWeapon(int argc, const char **argv);
 	bool cmdStartSelection(int argc, const char **argv);
 	bool cmdUseSelection(int argc, const char **argv);
 	bool cmdGrabItems(int argc, const char **argv);
@@ -283,8 +281,8 @@ public:
 	Debugger();
 	~Debugger() override;
 
-	void executeCommand(const ArgsType &args);
-	void executeCommand(const ArgvType &argv);
+	void executeCommand(const Common::String &args);
+	void executeCommand(const Common::Array<Common::String> &argv);
 };
 
 extern Debugger *g_debugger;

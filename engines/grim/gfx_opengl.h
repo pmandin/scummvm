@@ -27,14 +27,7 @@
 
 #ifdef USE_OPENGL_GAME
 
-#ifdef USE_GLEW
-#include <GL/glew.h>
-#elif defined (SDL_BACKEND) && !defined(__amigaos4__)
-#include <SDL_opengl.h>
-#undef ARRAYSIZE
-#else
-#include <GL/gl.h>
-#endif
+#include "graphics/opengl/system_headers.h"
 
 namespace Grim {
 
@@ -135,7 +128,7 @@ public:
 
 protected:
 	void createSpecialtyTextureFromScreen(uint id, uint8 *data, int x, int y, int width, int height) override;
-	void drawDepthBitmap(int x, int y, int w, int h, char *data);
+	void drawDepthBitmap(int x, int y, int w, int h, const char *data);
 	void initExtensions();
 private:
 	GLuint _emergFont;

@@ -48,9 +48,9 @@ GfxBase *CreateGfxTinyGL() {
 }
 
 GfxTinyGL::GfxTinyGL() :
-		_zb(nullptr), _alpha(1.f),
-		_currentActor(nullptr), _smushImage(nullptr) {
-	_storedDisplay = nullptr;
+		_alpha(1.f),
+		_currentActor(nullptr), _smushImage(nullptr),
+		_storedDisplay(nullptr) {
 	// TGL_LEQUAL as tglDepthFunc ensures that subsequent drawing attempts for
 	// the same triangles are not ignored by the depth test.
 	// That's necessary for EMI where some models have multiple faces which
@@ -63,17 +63,16 @@ GfxTinyGL::GfxTinyGL() :
 }
 
 GfxTinyGL::~GfxTinyGL() {
+	_storedDisplay->free();
+	delete _storedDisplay;
 	releaseMovieFrame();
 	for (unsigned int i = 0; i < _numSpecialtyTextures; i++) {
 		destroyTexture(&_specialtyTextures[i]);
 	}
 	for (int i = 0; i < 96; i++) {
-		Graphics::tglDeleteBlitImage(_emergFont[i]);
+		tglDeleteBlitImage(_emergFont[i]);
 	}
-	if (_zb) {
-		TinyGL::glClose();
-		delete _zb;
-	}
+	TinyGL::destroyContext();
 }
 
 void GfxTinyGL::setupScreen(int screenW, int screenH) {
@@ -86,12 +85,10 @@ void GfxTinyGL::setupScreen(int screenW, int screenH) {
 
 	_pixelFormat = g_system->getScreenFormat();
 	debug("INFO: TinyGL front buffer pixel format: %s", _pixelFormat.toString().c_str());
-	_zb = new TinyGL::FrameBuffer(screenW, screenH, _pixelFormat);
-	TinyGL::glInit(_zb, 256);
-	tglEnableDirtyRects(ConfMan.getBool("dirtyrects"));
+	TinyGL::createContext(screenW, screenH, _pixelFormat, 256, true, ConfMan.getBool("dirtyrects"));
 
-	_storedDisplay.create(_pixelFormat, _gameWidth * _gameHeight, DisposeAfterUse::YES);
-	_storedDisplay.clear(_gameWidth * _gameHeight);
+	_storedDisplay = new Graphics::Surface;
+	_storedDisplay->create(_gameWidth, _gameHeight, _pixelFormat);
 
 	_currentShadowArray = nullptr;
 
@@ -99,6 +96,10 @@ void GfxTinyGL::setupScreen(int screenW, int screenH) {
 	tglLightModelfv(TGL_LIGHT_MODEL_AMBIENT, ambientSource);
 	TGLfloat diffuseReflectance[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	tglMaterialfv(TGL_FRONT, TGL_DIFFUSE, diffuseReflectance);
+	
+	tglClearStencil(0xff);
+	tglStencilFunc(TGL_ALWAYS, 1, 0xff);
+	tglStencilOp(TGL_REPLACE, TGL_REPLACE, TGL_REPLACE);
 }
 
 const char *GfxTinyGL::getVideoDeviceName() {
@@ -164,7 +165,7 @@ Math::Matrix4 GfxTinyGL::getProjection() {
 }
 
 void GfxTinyGL::clearScreen() {
-	tglClear(TGL_COLOR_BUFFER_BIT | TGL_DEPTH_BUFFER_BIT);
+	tglClear(TGL_COLOR_BUFFER_BIT | TGL_DEPTH_BUFFER_BIT | TGL_STENCIL_BUFFER_BIT);
 }
 
 void GfxTinyGL::clearDepthBuffer() {
@@ -172,9 +173,19 @@ void GfxTinyGL::clearDepthBuffer() {
 }
 
 void GfxTinyGL::flipBuffer() {
-	TinyGL::tglPresentBuffer();
-	g_system->copyRectToScreen(_zb->getPixelBuffer(), _zb->linesize,
-	                           0, 0, _zb->xsize, _zb->ysize);
+	Common::List<Common::Rect> dirtyAreas;
+	TinyGL::presentBuffer(dirtyAreas);
+
+	Graphics::Surface glBuffer;
+	TinyGL::getSurfaceRef(glBuffer);
+
+	if (!dirtyAreas.empty()) {
+		for (Common::List<Common::Rect>::iterator itRect = dirtyAreas.begin(); itRect != dirtyAreas.end(); ++itRect) {
+			g_system->copyRectToScreen(glBuffer.getBasePtr((*itRect).left, (*itRect).top), glBuffer.pitch,
+			                           (*itRect).left, (*itRect).top, (*itRect).width(), (*itRect).height());
+		}
+	}
+
 	g_system->updateScreen();
 }
 
@@ -186,7 +197,7 @@ bool GfxTinyGL::supportsShaders() {
 	return false;
 }
 
-static void tglShadowProjection(const Math::Vector3d &light, const Math::Vector3d &plane, const Math::Vector3d &normal, bool dontNegate) {
+static void shadowProjection(const Math::Vector3d &light, const Math::Vector3d &plane, const Math::Vector3d &normal, bool dontNegate) {
 	// Based on GPL shadow projection example by
 	// (c) 2002-2003 Phaetos <phaetos@gaffga.de>
 	float d, c;
@@ -442,6 +453,7 @@ void GfxTinyGL::getActorScreenBBox(const Actor *actor, Common::Point &p1, Common
 void GfxTinyGL::startActorDraw(const Actor *actor) {
 	_currentActor = actor;
 	tglEnable(TGL_TEXTURE_2D);
+	tglEnable(TGL_LIGHTING);
 	tglMatrixMode(TGL_PROJECTION);
 	tglPushMatrix();
 	tglMatrixMode(TGL_MODELVIEW);
@@ -454,23 +466,18 @@ void GfxTinyGL::startActorDraw(const Actor *actor) {
 	}
 
 	if (_currentShadowArray) {
+		Sector *shadowSector = _currentShadowArray->planeList.front().sector;
 		tglDepthMask(TGL_FALSE);
-		// TODO find out why shadowMask at device in woods is null
-		if (!_currentShadowArray->shadowMask) {
-			_currentShadowArray->shadowMask = new byte[_gameWidth * _gameHeight];
-			_currentShadowArray->shadowMaskSize = _gameWidth * _gameHeight;
-		}
-		assert(_currentShadowArray->shadowMask);
-		//tglSetShadowColor(255, 255, 255);
+		tglEnable(TGL_POLYGON_OFFSET_FILL);
+		tglDisable(TGL_LIGHTING);
+		tglDisable(TGL_TEXTURE_2D);
+		// tglColor3f(0.0f, 1.0f, 0.0f); // debug draw color
 		if (g_grim->getGameType() == GType_GRIM) {
-			tglSetShadowColor(_shadowColorR, _shadowColorG, _shadowColorB);
+			tglColor3ub(_shadowColorR, _shadowColorG, _shadowColorB);
 		} else {
-			tglSetShadowColor(_currentShadowArray->color.getRed(), _currentShadowArray->color.getGreen(), _currentShadowArray->color.getBlue());
+			tglColor3ub(_currentShadowArray->color.getRed(), _currentShadowArray->color.getGreen(), _currentShadowArray->color.getBlue());
 		}
-		tglSetShadowMaskBuf(_currentShadowArray->shadowMask);
-		SectorListType::iterator i = _currentShadowArray->planeList.begin();
-		Sector *shadowSector = i->sector;
-		tglShadowProjection(_currentShadowArray->pos, shadowSector->getVertices()[0], shadowSector->getNormal(), _currentShadowArray->dontNegate);
+		shadowProjection(_currentShadowArray->pos, shadowSector->getVertices()[0], shadowSector->getNormal(), _currentShadowArray->dontNegate);
 	}
 
 	const float alpha = actor->getEffectiveAlpha();
@@ -530,19 +537,19 @@ void GfxTinyGL::finishActorDraw() {
 	}
 
 	if (_currentShadowArray) {
-		tglSetShadowMaskBuf(nullptr);
+		tglEnable(TGL_LIGHTING);
+		tglColor3f(1.0f, 1.0f, 1.0f);
+		tglDisable(TGL_POLYGON_OFFSET_FILL);
 	}
 
 	if (g_grim->getGameType() == GType_MONKEY4) {
 		tglDisable(TGL_CULL_FACE);
 	}
 
-	tglColorMask(TGL_TRUE, TGL_TRUE, TGL_TRUE, TGL_TRUE);
 	_currentActor = nullptr;
 }
 
 void GfxTinyGL::drawShadowPlanes() {
-	tglEnable(TGL_SHADOW_MASK_MODE);
 	tglDepthMask(TGL_FALSE);
 	tglPushMatrix();
 
@@ -552,13 +559,14 @@ void GfxTinyGL::drawShadowPlanes() {
 		tglTranslatef(-_currentPos.x(), -_currentPos.y(), -_currentPos.z());
 	}
 
-	if (!_currentShadowArray->shadowMask) {
-		_currentShadowArray->shadowMask = new byte[_gameWidth * _gameHeight];
-		_currentShadowArray->shadowMaskSize = _gameWidth * _gameHeight;
-	}
-	memset(_currentShadowArray->shadowMask, 0, _gameWidth * _gameHeight);
+	tglColorMask(TGL_FALSE, TGL_FALSE, TGL_FALSE, TGL_FALSE);
+	tglDepthMask(TGL_FALSE);
 
-	tglSetShadowMaskBuf(_currentShadowArray->shadowMask);
+	tglEnable(TGL_STENCIL_TEST);
+	tglDisable(TGL_LIGHTING);
+	tglDisable(TGL_TEXTURE_2D);
+	tglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
 	_currentShadowArray->planeList.begin();
 	for (SectorListType::iterator i = _currentShadowArray->planeList.begin(); i != _currentShadowArray->planeList.end(); ++i) {
 		Sector *shadowSector = i->sector;
@@ -568,21 +576,20 @@ void GfxTinyGL::drawShadowPlanes() {
 		}
 		tglEnd();
 	}
-	tglSetShadowMaskBuf(nullptr);
-	tglDisable(TGL_SHADOW_MASK_MODE);
-	tglDepthMask(TGL_TRUE);
+
+	tglDisable(TGL_STENCIL_TEST);
+	tglColorMask(TGL_TRUE, TGL_TRUE, TGL_TRUE, TGL_TRUE);
 
 	tglPopMatrix();
 }
 
 void GfxTinyGL::setShadowMode() {
 	GfxBase::setShadowMode();
-	tglEnable(TGL_SHADOW_MODE);
 }
 
 void GfxTinyGL::clearShadowMode() {
 	GfxBase::clearShadowMode();
-	tglDisable(TGL_SHADOW_MODE);
+
 	tglDepthMask(TGL_TRUE);
 }
 
@@ -831,7 +838,6 @@ void GfxTinyGL::disableLights() {
 }
 
 void GfxTinyGL::setupLight(Light *light, int lightId) {
-	assert(lightId < T_MAX_LIGHTS);
 	tglEnable(TGL_LIGHTING);
 	float lightColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	float lightPos[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -881,13 +887,15 @@ void GfxTinyGL::turnOffLight(int lightId) {
 }
 
 void GfxTinyGL::createBitmap(BitmapData *bitmap) {
-	Graphics::BlitImage **imgs = new Graphics::BlitImage*[bitmap->_numImages];
+	TinyGL::BlitImage **imgs = new TinyGL::BlitImage*[bitmap->_numImages];
 	bitmap->_texIds = (void *)imgs;
 
 	if (bitmap->_format != 1) {
 		for (int pic = 0; pic < bitmap->_numImages; pic++) {
-			uint32 *buf = new uint32[bitmap->_width * bitmap->_height];
-			uint16 *bufPtr = reinterpret_cast<uint16 *>(bitmap->getImageData(pic).getRawBuffer());
+			Graphics::Surface buffer;
+			buffer.create(bitmap->_width, bitmap->_height, Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+			uint32 *buf = (uint32 *)buffer.getPixels();
+			const uint16 *bufPtr = (const uint16 *)(bitmap->getImageData(pic).getPixels());
 			for (int i = 0; i < (bitmap->_width * bitmap->_height); i++) {
 				uint16 val = READ_LE_UINT16(bufPtr + i);
 				// fix the value if it is incorrectly set to the bitmap transparency color
@@ -896,29 +904,43 @@ void GfxTinyGL::createBitmap(BitmapData *bitmap) {
 				}
 				buf[i] = ((uint32)val) * 0x10000 / 100 / (0x10000 - val) << 14;
 			}
-			delete[] bufPtr;
-			bitmap->_data[pic] = Graphics::PixelBuffer(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), (byte *)buf);
-			imgs[pic] = Graphics::tglGenBlitImage();
-			const Graphics::PixelBuffer &imageBuffer = bitmap->getImageData(pic);
-			Graphics::Surface sourceSurface;
-			sourceSurface.setPixels(imageBuffer.getRawBuffer());
-			sourceSurface.format = imageBuffer.getFormat();
-			sourceSurface.w = bitmap->_width;
-			sourceSurface.h = bitmap->_height;
-			sourceSurface.pitch = sourceSurface.w * imageBuffer.getFormat().bytesPerPixel;
-			Graphics::tglUploadBlitImage(imgs[pic], sourceSurface, 0, false);
+			bitmap->_data[pic].free();
+			bitmap->_data[pic] = buffer;
+			imgs[pic] = tglGenBlitImage();
+			tglUploadBlitImage(imgs[pic], bitmap->_data[pic], 0, false);
 		}
 	} else {
 		for (int i = 0; i < bitmap->_numImages; ++i) {
-			imgs[i] = Graphics::tglGenBlitImage();
-			const Graphics::PixelBuffer &imageBuffer = bitmap->getImageData(i);
-			Graphics::Surface sourceSurface;
-			sourceSurface.setPixels(imageBuffer.getRawBuffer());
-			sourceSurface.format = imageBuffer.getFormat();
-			sourceSurface.w = bitmap->_width;
-			sourceSurface.h = bitmap->_height;
-			sourceSurface.pitch = sourceSurface.w * imageBuffer.getFormat().bytesPerPixel;
-			Graphics::tglUploadBlitImage(imgs[i], sourceSurface, sourceSurface.format.ARGBToColor(0, 255, 0, 255), true);
+			imgs[i] = tglGenBlitImage();
+			const Graphics::Surface &imageBuffer = bitmap->getImageData(i);
+#ifdef SCUMM_BIG_ENDIAN
+			if (g_grim->getGameType() == GType_MONKEY4 && imageBuffer.format.bytesPerPixel == 2) {
+				Graphics::Surface buffer;
+				buffer.create(bitmap->_width, bitmap->_height, imageBuffer.format);
+				uint16 *bufSrc = (uint16 *)const_cast<void *>(imageBuffer.getPixels());
+				uint16 *bufDst = (uint16 *)(buffer.getPixels());
+				for (int f = 0; f < (bitmap->_width * bitmap->_height); f++) {
+					uint16 val = SWAP_BYTES_16(bufSrc[f]);
+					bufDst[f] = val;
+				}
+				tglUploadBlitImage(imgs[i], buffer, buffer.format.ARGBToColor(0, 255, 0, 255), true);
+				buffer.free();
+			} else if (g_grim->getGameType() == GType_MONKEY4 && imageBuffer.format.bytesPerPixel == 4) {
+				Graphics::Surface buffer;
+				buffer.create(bitmap->_width, bitmap->_height, imageBuffer.format);
+				uint32 *bufSrc = (uint32 *)const_cast<void *>(imageBuffer.getPixels());
+				uint32 *bufDst = (uint32 *)(buffer.getPixels());
+				for (int f = 0; f < (bitmap->_width * bitmap->_height); f++) {
+					uint32 val = SWAP_BYTES_32(bufSrc[f]);
+					bufDst[f] = val;
+				}
+				tglUploadBlitImage(imgs[i], buffer, buffer.format.ARGBToColor(0, 255, 0, 255), true);
+				buffer.free();
+			} else
+#endif
+			{
+				tglUploadBlitImage(imgs[i], imageBuffer, imageBuffer.format.ARGBToColor(0, 255, 0, 255), true);
+			}
 		}
 	}
 }
@@ -934,7 +956,7 @@ void GfxTinyGL::drawBitmap(const Bitmap *bitmap, int x, int y, uint32 layer) {
 		BitmapData *data = bitmap->_data;
 		float *texc = data->_texc;
 
-		Graphics::BlitImage **b = (Graphics::BlitImage **)bitmap->getTexIds();
+		TinyGL::BlitImage **b = (TinyGL::BlitImage **)bitmap->getTexIds();
 
 		assert(layer < data->_numLayers);
 		uint32 offset = data->_layers[layer]._offset;
@@ -954,10 +976,10 @@ void GfxTinyGL::drawBitmap(const Bitmap *bitmap, int x, int y, uint32 layer) {
 				int srcX = texc[ntex + 2] * bitmap->getWidth();
 				int srcY = texc[ntex + 3] * bitmap->getHeight();
 
-				Graphics::BlitTransform transform(x + dx1, y + dy1);
+				TinyGL::BlitTransform transform(x + dx1, y + dy1);
 				transform.sourceRectangle(srcX, srcY, dx2 - dx1, dy2 - dy1);
 				transform.tint(1.0f, 1.0f - _dimLevel, 1.0f - _dimLevel, 1.0f  - _dimLevel);
-				Graphics::tglBlit(b[texId], transform);
+				tglBlit(b[texId], transform);
 				ntex += 16;
 			}
 		}
@@ -974,26 +996,26 @@ void GfxTinyGL::drawBitmap(const Bitmap *bitmap, int x, int y, uint32 layer) {
 	assert(bitmap->getActiveImage() > 0);
 	const int num = bitmap->getActiveImage() - 1;
 
-	Graphics::BlitImage **b = (Graphics::BlitImage **)bitmap->getTexIds();
+	TinyGL::BlitImage **b = (TinyGL::BlitImage **)bitmap->getTexIds();
 
 	if (bitmap->getFormat() == 1) {
 		if (bitmap->getHasTransparency()) {
 			tglEnable(TGL_BLEND);
 			tglBlendFunc(TGL_SRC_ALPHA, TGL_ONE_MINUS_SRC_ALPHA);
 		}
-		Graphics::tglBlit(b[num], x, y);
+		tglBlit(b[num], x, y);
 		if (bitmap->getHasTransparency()) {
 			tglDisable(TGL_BLEND);
 		}
 	} else {
-		Graphics::tglBlitZBuffer(b[num], x, y);
+		tglBlitZBuffer(b[num], x, y);
 	}
 }
 
 void GfxTinyGL::destroyBitmap(BitmapData *bitmap) {
-	Graphics::BlitImage **imgs = (Graphics::BlitImage **)bitmap->_texIds;
+	TinyGL::BlitImage **imgs = (TinyGL::BlitImage **)bitmap->_texIds;
 	for (int pic = 0; pic < bitmap->_numImages; pic++) {
-		Graphics::tglDeleteBlitImage(imgs[pic]);
+		tglDeleteBlitImage(imgs[pic]);
 	}
 	delete[] imgs;
 }
@@ -1005,7 +1027,7 @@ void GfxTinyGL::destroyFont(Font *font) {
 }
 
 struct TextObjectData {
-	Graphics::BlitImage *image;
+	TinyGL::BlitImage *image;
 	int width, height, x, y;
 };
 
@@ -1051,33 +1073,27 @@ void GfxTinyGL::createTextObject(TextObject *text) {
 			startColumn += font->getCharKernedWidth(ch);
 		}
 
-		Graphics::PixelBuffer buf(_pixelFormat, width * height, DisposeAfterUse::YES);
+		Graphics::Surface buf;
+		buf.create(width, height, _pixelFormat);
 
 		uint8 *bitmapData = _textBitmap;
-
-		int txData = 0;
-		for (int i = 0; i < width * height; i++, txData++, bitmapData++) {
-			byte pixel = *bitmapData;
-			if (pixel == 0x00) {
-				buf.setPixelAt(txData, kKitmapColorkey);
-			} else if (pixel == 0x80) {
-				buf.setPixelAt(txData, blackColor);
-			} else if (pixel == 0xFF) {
-				buf.setPixelAt(txData, color);
+		for (int iy = 0; iy < height; iy++) {
+			for (int ix = 0; ix < width; ix++, bitmapData++) {
+				byte pixel = *bitmapData;
+				if (pixel == 0x00) {
+					buf.setPixel(ix, iy, kKitmapColorkey);
+				} else if (pixel == 0x80) {
+					buf.setPixel(ix, iy, blackColor);
+				} else if (pixel == 0xFF) {
+					buf.setPixel(ix, iy, color);
+				}
 			}
 		}
 
 		userData[j].width = width;
 		userData[j].height = height;
-
-		Graphics::Surface sourceSurface;
-		sourceSurface.setPixels(buf.getRawBuffer());
-		sourceSurface.format = buf.getFormat();
-		sourceSurface.w = width;
-		sourceSurface.h = height;
-		sourceSurface.pitch = sourceSurface.w * buf.getFormat().bytesPerPixel;
-		userData[j].image = Graphics::tglGenBlitImage();
-		Graphics::tglUploadBlitImage(userData[j].image, sourceSurface, kKitmapColorkey, true);
+		userData[j].image = tglGenBlitImage();
+		tglUploadBlitImage(userData[j].image, buf, kKitmapColorkey, true);
 		userData[j].x = text->getLineX(j);
 		userData[j].y = text->getLineY(j);
 
@@ -1087,6 +1103,7 @@ void GfxTinyGL::createTextObject(TextObject *text) {
 				userData[j].y = 0;
 		}
 
+		buf.free();
 		delete[] _textBitmap;
 	}
 }
@@ -1098,7 +1115,7 @@ void GfxTinyGL::drawTextObject(const TextObject *text) {
 		tglBlendFunc(TGL_SRC_ALPHA, TGL_ONE_MINUS_SRC_ALPHA);
 		int numLines = text->getNumLines();
 		for (int i = 0; i < numLines; ++i) {
-			Graphics::tglBlit(userData[i].image, userData[i].x, userData[i].y);
+			tglBlit(userData[i].image, userData[i].x, userData[i].y);
 		}
 		tglDisable(TGL_BLEND);
 	}
@@ -1109,7 +1126,7 @@ void GfxTinyGL::destroyTextObject(TextObject *text) {
 	if (userData) {
 		int numLines = text->getNumLines();
 		for (int i = 0; i < numLines; ++i) {
-			Graphics::tglDeleteBlitImage(userData[i].image);
+			tglDeleteBlitImage(userData[i].image);
 		}
 		delete[] userData;
 	}
@@ -1139,31 +1156,7 @@ void GfxTinyGL::createTexture(Texture *texture, const uint8 *data, const CMap *c
 			}
 		}
 	} else {
-#ifdef SCUMM_BIG_ENDIAN
-		// Copy and swap
-		for (int y = 0; y < texture->_height; y++) {
-			for (int x = 0; x < texture->_width; x++) {
-				uint32 pixel = (y * texture->_width + x) * texture->_bpp;
-				for (int b = 0; b < texture->_bpp; b++) {
-					texdata[pixel + b] = data[pixel + (texture->_bpp - 1) - b];
-				}
-			}
-		}
-#else
 		memcpy(texdata, data, texture->_width * texture->_height * texture->_bpp);
-#endif
-	}
-
-	TGLuint format = 0;
-//	TGLuint internalFormat = 0;
-	if (texture->_colorFormat == BM_RGBA) {
-		format = TGL_RGBA;
-//		internalFormat = TGL_RGBA;
-	} else if (texture->_colorFormat == BM_BGRA) {
-		format = TGL_BGRA;
-	} else {    // The only other colorFormat we load right now is BGR
-		format = TGL_BGR;
-//		internalFormat = TGL_RGB;
 	}
 
 	TGLuint *textures = (TGLuint *)texture->_texture;
@@ -1175,7 +1168,7 @@ void GfxTinyGL::createTexture(Texture *texture, const uint8 *data, const CMap *c
 
 	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MAG_FILTER, TGL_LINEAR);
 	tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MIN_FILTER, TGL_LINEAR);
-	tglTexImage2D(TGL_TEXTURE_2D, 0, 3, texture->_width, texture->_height, 0, format, TGL_UNSIGNED_BYTE, texdata);
+	tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, texture->_width, texture->_height, 0, TGL_RGBA, TGL_UNSIGNED_BYTE, texdata);
 	delete[] texdata;
 }
 
@@ -1205,16 +1198,16 @@ void GfxTinyGL::destroyTexture(Texture *texture) {
 
 void GfxTinyGL::prepareMovieFrame(Graphics::Surface *frame) {
 	if (_smushImage == nullptr)
-		_smushImage = Graphics::tglGenBlitImage();
-	Graphics::tglUploadBlitImage(_smushImage, *frame, 0, false);
+		_smushImage = tglGenBlitImage();
+	tglUploadBlitImage(_smushImage, *frame, 0, false);
 }
 
 void GfxTinyGL::drawMovieFrame(int offsetX, int offsetY) {
-	Graphics::tglBlitFast(_smushImage, offsetX, offsetY);
+	tglBlitFast(_smushImage, offsetX, offsetY);
 }
 
 void GfxTinyGL::releaseMovieFrame() {
-	Graphics::tglDeleteBlitImage(_smushImage);
+	tglDeleteBlitImage(_smushImage);
 }
 
 void GfxTinyGL::loadEmergFont() {
@@ -1224,7 +1217,7 @@ void GfxTinyGL::loadEmergFont() {
 	uint32 color = textureFormat.ARGBToColor(255, 255, 255, 255);
 	uint32 colorTransparent = textureFormat.ARGBToColor(0, 255, 255, 255);
 	for (int i = 0; i < 96; i++) {
-		_emergFont[i] = Graphics::tglGenBlitImage();
+		_emergFont[i] = tglGenBlitImage();
 		const uint8 *ptr = Font::emerFont[i];
 		for (int py = 0; py < 13; py++) {
 				int line = ptr[12 - py];
@@ -1234,7 +1227,7 @@ void GfxTinyGL::loadEmergFont() {
 					*(uint32 *)characterSurface.getBasePtr(px, py) = pixel ? color : colorTransparent;
 				}
 		}
-		Graphics::tglUploadBlitImage(_emergFont[i], characterSurface, 0, false);
+		tglUploadBlitImage(_emergFont[i], characterSurface, 0, false);
 	}
 	characterSurface.free();
 }
@@ -1245,21 +1238,24 @@ void GfxTinyGL::drawEmergString(int x, int y, const char *text, const Color &fgC
 	for (int l = 0; l < length; l++) {
 		int c = text[l];
 		assert(c >= 32 && c <= 127);
-		Graphics::BlitTransform transform(x, y);
+		TinyGL::BlitTransform transform(x, y);
 		transform.tint(1.0f, fgColor.getRed() / 255.0f, fgColor.getGreen() / 255.0f, fgColor.getBlue() / 255.0f);
-		Graphics::tglBlit(_emergFont[c - 32], transform);
+		tglBlit(_emergFont[c - 32], transform);
 		x += 10;
 	}
 }
 
 Bitmap *GfxTinyGL::getScreenshot(int w, int h, bool useStored) {
+	Bitmap *bmp;
 	if (useStored) {
-		return createScreenshotBitmap(_storedDisplay, w, h, true);
+		bmp = createScreenshotBitmap(_storedDisplay, w, h, true);
 	} else {
-		Graphics::PixelBuffer src(_pixelFormat, _screenWidth * _screenHeight, DisposeAfterUse::YES);
-		_zb->copyToBuffer(src);
-		return createScreenshotBitmap(src, w, h, true);
+		Graphics::Surface *src = TinyGL::copyToBuffer(_pixelFormat);
+		bmp = createScreenshotBitmap(src, w, h, true);
+		src->free();
+		delete src;
 	}
+	return bmp;
 }
 
 void GfxTinyGL::createSpecialtyTextureFromScreen(uint id, uint8 *data, int x, int y, int width, int height) {
@@ -1268,8 +1264,10 @@ void GfxTinyGL::createSpecialtyTextureFromScreen(uint id, uint8 *data, int x, in
 }
 
 void GfxTinyGL::storeDisplay() {
-	TinyGL::tglPresentBuffer();
-	_zb->copyToBuffer(_storedDisplay);
+	TinyGL::presentBuffer();
+	_storedDisplay->free();
+	delete _storedDisplay;
+	_storedDisplay = TinyGL::copyToBuffer(_pixelFormat);
 }
 
 void GfxTinyGL::copyStoredToDisplay() {
@@ -1511,6 +1509,8 @@ void GfxTinyGL::readPixels(int x, int y, int width, int height, uint8 *buffer) {
 	assert(x < _screenWidth);
 	assert(y < _screenHeight);
 
+	Graphics::Surface glBuffer;
+	TinyGL::getSurfaceRef(glBuffer);
 	uint8 r, g, b;
 	int pos = x + y * _screenWidth;
 	for (int i = 0; i < height; ++i) {
@@ -1518,7 +1518,8 @@ void GfxTinyGL::readPixels(int x, int y, int width, int height, uint8 *buffer) {
 			if ((j + x) >= _screenWidth || (i + y) >= _screenHeight) {
 				buffer[0] = buffer[1] = buffer[2] = 0;
 			} else {
-				_zb->readPixelRGB(pos + j, r, g, b);
+				uint32 pixel = glBuffer.getPixel(j, i);
+				glBuffer.format.colorToRGB(pixel, r, g, b);
 				buffer[0] = r;
 				buffer[1] = g;
 				buffer[2] = b;

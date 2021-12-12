@@ -23,21 +23,33 @@
 #ifndef GFX_TINYGL_TEXTURE_H
 #define GFX_TINYGL_TEXTURE_H
 
-#include "graphics/surface.h"
-#include "graphics/tinygl/zgl.h"
 #include "common/textconsole.h"
 
+#include "graphics/surface.h"
+#include "graphics/tinygl/tinygl.h"
+
 #include "engines/myst3/gfx.h"
-#include "graphics/tinygl/zblit.h"
 
 namespace Myst3 {
 
-class TinyGLTexture : public Texture {
+class TinyGLTexture2D : public Texture {
 public:
-	TinyGLTexture(const Graphics::Surface *surface);
-	virtual ~TinyGLTexture();
+	TinyGLTexture2D(const Graphics::Surface *surface);
+	virtual ~TinyGLTexture2D();
 
-	Graphics::BlitImage *getBlitTexture() const;
+	TinyGL::BlitImage *getBlitTexture() const;
+
+	void update(const Graphics::Surface *surface) override;
+	void updatePartial(const Graphics::Surface *surface, const Common::Rect &rect) override;
+
+private:
+	TinyGL::BlitImage *_blitImage;
+};
+
+class TinyGLTexture3D : public Texture {
+public:
+	TinyGLTexture3D(const Graphics::Surface *surface);
+	virtual ~TinyGLTexture3D();
 
 	void update(const Graphics::Surface *surface) override;
 	void updatePartial(const Graphics::Surface *surface, const Common::Rect &rect) override;
@@ -45,8 +57,6 @@ public:
 	TGLuint id;
 	TGLuint internalFormat;
 	TGLuint sourceFormat;
-private:
-	Graphics::BlitImage *_blitImage;
 };
 
 } // End of namespace Myst3

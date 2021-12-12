@@ -67,7 +67,6 @@ Menu::Menu(AsylumEngine *vm): _vm(vm) {
 	_dword_456288 = 0;
 	_caretBlink = 0;
 	_startIndex = 0;
-	_creditsFrameIndex = 0;
 	_showMovie = false;
 	memset(&_iconFrames, 0, sizeof(_iconFrames));
 
@@ -79,6 +78,23 @@ Menu::Menu(AsylumEngine *vm): _vm(vm) {
 	// Savegames
 	_prefixWidth = 0;
 	_loadingDuringStartup = false;
+
+	// Credits
+	_creditsFrameIndex = 0;
+	switch (_vm->getLanguage()) {
+	default:
+	case Common::EN_ANY:
+		_creditsNumSteps = 8688;
+		break;
+
+	case Common::DE_DEU:
+		_creditsNumSteps = 6840;
+		break;
+
+	case Common::FR_FRA:
+		_creditsNumSteps = 6384;
+		break;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -203,7 +219,7 @@ void Menu::stopTestSounds() {
 }
 
 void Menu::adjustMasterVolume(int32 delta) const {
-	int32 *volume = NULL;
+	int32 *volume = nullptr;
 	int32 volumeIndex = 1;
 
 	do {
@@ -719,6 +735,14 @@ void Menu::updateNewGame() {
 	getText()->draw(MAKE_RESOURCE(kResourcePackText, 1323));
 }
 
+void Menu::adjustCoordinates(Common::Point &point) {
+	if (!g_system->isOverlayVisible())
+		return;
+
+	point.x *= 640.0 / g_system->getOverlayWidth();
+	point.y *= 480.0 / g_system->getOverlayHeight();
+}
+
 bool Menu::hasThumbnail(int index) {
 	if (getSaveLoad()->hasSavegame(index + _startIndex))
 		return _vm->getMetaEngine()->querySaveMetaInfos(_vm->getTargetName().c_str(), index + _startIndex).getThumbnail();
@@ -742,7 +766,14 @@ void Menu::showThumbnail(int index) {
 	overlay.create(overlayWidth, overlayHeight, overlayFormat);
 	if (!g_system->hasFeature(OSystem::kFeatureOverlaySupportsAlpha)) {
 		Graphics::Surface *screen = getScreen()->getSurface().convertTo(overlayFormat, getScreen()->getPalette());
-		overlay.copyRectToSurface(screen->getPixels(), screen->pitch, 0, 0, 640, 480);
+		if (screen->w != overlayWidth || screen->h != overlayHeight) {
+			Graphics::Surface *screen1 = screen->scale(overlayWidth, overlayHeight);
+			overlay.copyRectToSurface(screen1->getPixels(), screen1->pitch, 0, 0, screen1->w, screen1->h);
+			screen1->free();
+			delete screen1;
+		} else {
+			overlay.copyRectToSurface(screen->getPixels(), screen->pitch, 0, 0, 640, 480);
+		}
 		screen->free();
 		delete screen;
 	}
@@ -760,14 +791,7 @@ void Menu::showThumbnail(int index) {
 
 void Menu::updateLoadGame() {
 	Common::Point cursor = getCursor()->position();
-
-	if (g_system->isOverlayVisible()
-	 && g_system->getFeatureState(OSystem::kFeatureFullscreenMode)
-	 && ConfMan.get("gfx_mode") == "opengl") {
-
-		cursor.x *= 640.0 / g_system->getOverlayWidth();
-		cursor.y *= 480.0 / g_system->getOverlayHeight();
-	}
+	adjustCoordinates(cursor);
 
 	char text[100];
 
@@ -1586,7 +1610,7 @@ void Menu::updateShowCredits() {
 
 		step += 24;
 		++index;
-	} while (step < 8688);
+	} while (step < _creditsNumSteps);
 
 	if (_vm->isGameFlagSet(kGameFlagFinishGame)) {
 		if (!_dword_455D4C && !getSound()->isPlaying(MAKE_RESOURCE(kResourcePackShared, 56))) {
@@ -1597,7 +1621,7 @@ void Menu::updateShowCredits() {
 	}
 
 	_startIndex -= 2;
-	if (_startIndex < -8712)   // 8688 + 24
+	if (_startIndex < -(_creditsNumSteps + 24))
 		closeCredits();
 }
 
@@ -1623,14 +1647,7 @@ void Menu::clickNewGame() {
 
 void Menu::clickLoadGame() {
 	Common::Point cursor = getCursor()->position();
-
-	if (g_system->isOverlayVisible()
-	 && g_system->getFeatureState(OSystem::kFeatureFullscreenMode)
-	 && ConfMan.get("gfx_mode") == "opengl") {
-
-		cursor.x *= 640.0 / g_system->getOverlayWidth();
-		cursor.y *= 480.0 / g_system->getOverlayHeight();
-	}
+	adjustCoordinates(cursor);
 
 	g_system->hideOverlay();
 
@@ -1641,7 +1658,7 @@ void Menu::clickLoadGame() {
 			 && cursor.y >= 273 && cursor.y <= (273 + 24))
 				_dword_455C80 = false;
 		} else {
-			_vm->startGame(getSaveLoad()->getScenePack(), AsylumEngine::kStartGameLoad);
+			(void)_vm->startGame(getSaveLoad()->getScenePack(), AsylumEngine::kStartGameLoad);
 		}
 		return;
 	}

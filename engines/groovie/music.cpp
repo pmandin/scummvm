@@ -58,6 +58,9 @@ MusicPlayer::~MusicPlayer() {
 void MusicPlayer::playSong(uint32 fileref) {
 	Common::StackLock lock(_mutex);
 
+	if (_isPlaying)
+		unload();
+
 	// Set the volumes
 	_fadingEndVolume = 100;
 	_gameVolume = 100;
@@ -274,7 +277,7 @@ void MusicPlayer::stopCreditsIOS() {
 // MusicPlayerMidi
 
 MusicPlayerMidi::MusicPlayerMidi(GroovieEngine *vm) :
-	MusicPlayer(vm), _midiParser(NULL), _data(NULL), _driver(NULL) {
+	MusicPlayer(vm), _midiParser(nullptr), _data(nullptr), _driver(nullptr) {
 	// Initialize the channel volumes
 	for (int i = 0; i < 0x10; i++) {
 		_chanVolumes[i] = 0x7F;
@@ -284,7 +287,7 @@ MusicPlayerMidi::MusicPlayerMidi(GroovieEngine *vm) :
 MusicPlayerMidi::~MusicPlayerMidi() {
 	// Stop the callback
 	if (_driver)
-		_driver->setTimerCallback(NULL, NULL);
+		_driver->setTimerCallback(nullptr, nullptr);
 
 	Common::StackLock lock(_mutex);
 
@@ -389,7 +392,7 @@ void MusicPlayerMidi::unload(bool updateState) {
 
 	// Unload the data
 	delete[] _data;
-	_data = NULL;
+	_data = nullptr;
 }
 
 bool MusicPlayerMidi::loadParser(Common::SeekableReadStream *stream, bool loop) {
@@ -422,14 +425,14 @@ bool MusicPlayerMidi::loadParser(Common::SeekableReadStream *stream, bool loop) 
 // MusicPlayerXMI
 
 MusicPlayerXMI::MusicPlayerXMI(GroovieEngine *vm, const Common::String &gtlName) :
-		MusicPlayerMidi(vm), _multisourceDriver(0), _milesXmidiTimbres(0) {
+		MusicPlayerMidi(vm), _multisourceDriver(nullptr), _milesXmidiTimbres(nullptr) {
 
 	// Create the driver
 	MidiDriver::DeviceHandle dev = MidiDriver::detectDevice(MDT_MIDI | MDT_ADLIB | MDT_PREFER_GM);
 	MusicType musicType = MidiDriver::getMusicType(dev);
 	if (musicType == MT_GM && ConfMan.getBool("native_mt32"))
 		musicType = MT_MT32;
-	_driver = NULL;
+	_driver = nullptr;
 
 	_musicType = 0;
 
@@ -459,14 +462,30 @@ MusicPlayerXMI::MusicPlayerXMI(GroovieEngine *vm, const Common::String &gtlName)
 	assert(_driver);
 
 	// Create the parser
-	_midiParser = MidiParser::createParser_XMIDI(NULL, NULL, 0);
+	_midiParser = MidiParser::createParser_XMIDI(nullptr, nullptr, 0);
+
+	_multisourceDriver->property(MidiDriver::PROP_USER_VOLUME_SCALING, true);
+	_multisourceDriver->property(MidiDriver::PROP_MILES_VERSION,
+		_vm->getEngineVersion() == kGroovieT7G ? Audio::MILES_VERSION_2 : Audio::MILES_VERSION_3);
+	if (_vm->getEngineVersion() == kGroovieT7G && musicType == MT_GM)
+		// The 7th Guest GM init sets drumkit to 0x30 (Orchestra) and relies on
+		// this remaining set; tracks don't set this at start. Some tracks
+		// temporarily change the drumkit; if playback is stopped at the wrong
+		// time this will cause the changed drumkit to remain in effect.
+		// Set a default drumkit value to make sure it is set correctly at the
+		// start of each track.
+		_multisourceDriver->setControllerDefault(MidiDriver_Multisource::CONTROLLER_DEFAULT_DRUMKIT, 0x30);
+	if (_vm->getEngineVersion() == kGroovieT11H)
+		// Some The 11th Hour tracks use modulation, but not all tracks reset
+		// it at start. Set a default value to make sure it is reset at the
+		// start of each track.
+		_multisourceDriver->setControllerDefault(MidiDriver_Multisource::CONTROLLER_DEFAULT_MODULATION, 0);
 
 	int result = _driver->open();
 	if (result > 0 && result != MidiDriver::MERR_ALREADY_OPEN)
 		error("Opening MidiDriver failed with error code %i", result);
 
 	_multisourceDriver->setSourceNeutralVolume(0, 100);
-	_multisourceDriver->property(MidiDriver::PROP_USER_VOLUME_SCALING, true);
 
 	// Set the parser's driver
 	_midiParser->setMidiDriver(this);
@@ -758,7 +777,7 @@ bool MusicPlayerIOS::load(uint32 fileref, bool loop) {
 
 
 MusicPlayerTlc::MusicPlayerTlc(GroovieEngine *vm) : MusicPlayer(vm) {
-	_file = NULL;
+	_file = nullptr;
 	vm->getTimerManager()->installTimerProc(&onTimer, 50 * 1000, this, "groovieMusic");
 }
 
@@ -778,7 +797,7 @@ void MusicPlayerTlc::unload(bool updateState) {
 	if (_file) {
 		delete _file;
 	}
-	_file = NULL;
+	_file = nullptr;
 }
 
 Common::String MusicPlayerTlc::getFilename(uint32 fileref) {
@@ -803,7 +822,7 @@ bool MusicPlayerTlc::load(uint32 fileref, bool loop) {
 
 	// Create the audio stream from fileref
 	_file->open(filename);
-	Audio::SeekableAudioStream *seekStream = NULL;
+	Audio::SeekableAudioStream *seekStream = nullptr;
 	if (_file->isOpen()) {
 		if (filename.hasSuffix(".m4a"))
 			seekStream = Audio::makeQuickTimeStream(_file, DisposeAfterUse::NO);
@@ -813,7 +832,7 @@ bool MusicPlayerTlc::load(uint32 fileref, bool loop) {
 #endif
 	} else {
 		delete _file;
-		_file = NULL;
+		_file = nullptr;
 	}
 
 	if (!seekStream) {

@@ -36,7 +36,7 @@ friend void freeResamplerModel(FloatSampleProvider &model, FloatSampleProvider &
 public:
 	CascadeStage(FloatSampleProvider &source, ResamplerStage &resamplerStage);
 
-	void getOutputSamples(FloatSample *outBuffer, unsigned int size);
+	void getOutputSamples(FloatSample *outBuffer, unsigned int size) override;
 
 protected:
 	ResamplerStage &resamplerStage;
@@ -120,7 +120,7 @@ void ResamplerModel::freeResamplerModel(FloatSampleProvider &model, FloatSampleP
 	FloatSampleProvider *currentStage = &model;
 	while (currentStage != &source) {
 		CascadeStage *cascadeStage = dynamic_cast<CascadeStage *>(currentStage);
-		if (cascadeStage == NULL) return;
+		if (cascadeStage == nullptr) return;
 		FloatSampleProvider &prevStage = cascadeStage->source;
 		delete currentStage;
 		currentStage = &prevStage;

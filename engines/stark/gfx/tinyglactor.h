@@ -27,7 +27,7 @@
 #include "engines/stark/visual/actor.h"
 #include "engines/stark/gfx/tinygl.h"
 
-#include "graphics/tinygl/zgl.h"
+#include "graphics/tinygl/tinygl.h"
 
 #include "common/hashmap.h"
 #include "common/hash-ptr.h"
@@ -36,8 +36,6 @@ namespace Stark {
 namespace Gfx {
 
 class TinyGLDriver;
-
-#include "common/pack-start.h"
 
 struct _ActorVertex {
 	float pos1x;
@@ -66,10 +64,8 @@ struct _ActorVertex {
 	float r;
 	float g;
 	float b;
-} PACKED_STRUCT;
+};
 typedef _ActorVertex ActorVertex;
-
-#include "common/pack-end.h"
 
 class TinyGLActorRenderer : public VisualActor {
 public:

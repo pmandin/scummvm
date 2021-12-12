@@ -240,8 +240,6 @@ public:
 protected:
 	const uint8 *_colorMap;
 	Common::SharedPtr<Graphics::FontSJIS> _font;
-	int _sjisWidth, _asciiWidth;
-	int _fontHeight;
 	const bool _drawOutline;
 	int _style;
 
@@ -255,30 +253,124 @@ private:
 	const int _sjisWidthOffset;
 };
 
-class Big5Font : public Font {
+class ChineseFont : public Font {
 public:
-	Big5Font(const uint8 *oneByteData, int pitch);
-	~Big5Font() override;
+	ChineseFont(int pitch, int renderWidth, int renderHeight, int spacingWidth, int spacingHeight, int extraSpacingWidth, int extraSpacingHeight);
+	~ChineseFont() override;
 
-	Type getType() const override { return kBIG5; }
+	virtual Type getType() const override { return kBIG5; }
 
 	bool load(Common::SeekableReadStream &data) override;
-	int getHeight() const override { return _border ? 16 : 14; }
-	int getWidth() const override { return 18; }
-	int getCharWidth(uint16 c) const override;
-	void setColorMap(const uint8 *src) override;
+
 	void setStyles(int styles) override { _border = (styles & kStyleBorder); }
+	int getHeight() const override { return _spacingHeight + (_border ? _borderExtraSpacingHeight : 0); }
+	int getWidth() const override { return _spacingWidth + (_border ? _borderExtraSpacingWidth : 0); }
+	int getCharWidth(uint16 c) const override { return hasGlyphForCharacter(c) ? getWidth() : -1; }
+	int getCharHeight(uint16 c) const override { return hasGlyphForCharacter(c) ? _renderHeight + (_border ? _borderExtraSpacingHeight : 0) : -1; }
+	void setColorMap(const uint8 *src) override;
+	void drawChar(uint16 c, byte *dst, int pitch, int) const override;
+
+protected:
+	uint16 _textColor[2];
+	bool _pixelColorShading;
+	const uint8 *_colorMap;
+	bool _border;
+
+private:
+	virtual bool hasGlyphForCharacter(uint16 c) const = 0;
+	virtual uint32 getFontOffset(uint16 c) const = 0;
+	virtual void processColorMap() = 0;
+
+	const int _spacingWidth, _spacingHeight;
+	const int _borderExtraSpacingWidth, _borderExtraSpacingHeight;
+	const int _renderWidth, _renderHeight;
+
+	const uint8 *_glyphData;
+	uint32 _glyphDataSize;
+	const uint16 _pitch;
+};
+
+class ChineseOneByteFontLoK final : public ChineseFont {
+public:
+	ChineseOneByteFontLoK(int pitch);
+private:
+	bool hasGlyphForCharacter(uint16 c) const override { return !(c & 0x80); }
+	uint32 getFontOffset(uint16 c) const override { return (c & 0x7F) * 14; }
+	void processColorMap() override;
+};
+
+class ChineseTwoByteFontLoK final : public ChineseFont {
+public:
+	ChineseTwoByteFontLoK(int pitch, const uint16 *lookupTable, uint32 lookupTableSize);
+private:
+	bool hasGlyphForCharacter(uint16 c) const override;
+	uint32 getFontOffset(uint16 c) const override;
+	void processColorMap() override;
+
+	const uint16 *_lookupTable;
+	uint32 _lookupTableSize;
+};
+
+class ChineseOneByteFontMR final : public ChineseFont {
+public:
+	ChineseOneByteFontMR(int pitch) : ChineseFont(pitch, 7, 14, 9, 14, 0, 2) {}
+private:
+	bool hasGlyphForCharacter(uint16 c) const override { return (c == 0x6187) || !(c & 0x80); }
+	uint32 getFontOffset(uint16 c) const override { return ((c == 0x6187) ? 128 : (c & 0x7F)) * 14; }
+	void processColorMap() override;
+};
+
+class ChineseTwoByteFontMR final : public ChineseFont {
+public:
+	ChineseTwoByteFontMR(int pitch) : ChineseFont(pitch, 15, 14, 18, 14, 0, 2) {}
+private:
+	bool hasGlyphForCharacter(uint16 c) const override { return (c != 0x6187) && (c & 0x80); }
+	uint32 getFontOffset(uint16 c) const override;
+	void processColorMap() override;
+};
+
+class ChineseOneByteFontHOF final : public ChineseFont {
+public:
+	ChineseOneByteFontHOF(int pitch) : ChineseFont(pitch, 8, 14, 9, 15, 0, 0) {}
+private:
+	bool hasGlyphForCharacter(uint16 c) const override { return !(c & 0x80); }
+	uint32 getFontOffset(uint16 c) const override { return (c & 0x7F) * 14; }
+	void processColorMap() override;
+};
+
+class ChineseTwoByteFontHOF final : public ChineseFont {
+public:
+	ChineseTwoByteFontHOF(int pitch) : ChineseFont(pitch, 16, 14, 18, 15, 0, 0) {}
+private:
+	bool hasGlyphForCharacter(uint16 c) const override { return (c & 0x80); }
+	uint32 getFontOffset(uint16 c) const override;
+	void processColorMap() override;
+};
+
+class MultiSubsetFont final : public Font {
+public:
+	MultiSubsetFont(Common::Array<Font*> *subsets) : Font(), _subsets(subsets) {}
+	~MultiSubsetFont() override;
+	Type getType() const override { return kBIG5; }
+
+	// Caveat: This method will try to load a font into the first subset slot it finds.
+	// It expects the load method of the subset font to return false if the slot has
+	// already been filled. It will then try the next slot. So, unlike other fonts the
+	// subset fonts cannot be allowed to call the load method as often as they want
+	// (which we never did anyway - we only ever load each font exactly one time).
+	// But this also means that different 
+	bool load(Common::SeekableReadStream &data) override;
+
+	void setStyles(int styles) override;
+	int getHeight() const override;
+	int getWidth() const override;
+	int getCharWidth(uint16 c) const override;
+	int getCharHeight(uint16 c) const override;
+	void setColorMap(const uint8 *src) override;
 	void drawChar(uint16 c, byte *dst, int pitch, int) const override;
 
 private:
-	const uint8 *_oneByteData;
-	const uint8 *_twoByteData;
-	uint32 _twoByteNumChar;
-	uint32 _twoByteDataSize;
-	const uint8 *_colorMap;
-	uint16 _textColor[2];
-	const uint16 _pitch;
-	bool _border;
+	Common::Array<Font*> *_subsets;
 };
 
 /**
@@ -416,7 +508,10 @@ public:
 		SCREEN_PAGE_SIZE = 320 * 200 + 1024,
 		SCREEN_OVL_SJIS_SIZE = 640 * 400,
 		SCREEN_PAGE_NUM = 16,
-		SCREEN_OVLS_NUM = 6
+		SCREEN_OVLS_NUM = 6,
+
+		SCREEN_IDLEREFRESH_RESTART_MSEC = 250,
+		SCREEN_IDLEREFRESH_RATE_MSEC = 16
 	};
 
 	enum CopyRegionFlags {
@@ -461,7 +556,11 @@ public:
 	virtual void setResolution();
 	virtual void enableHiColorMode(bool enabled);
 
+	// refresh
 	void updateScreen();
+	void updateBackendScreen(bool force);
+
+	uint32 _idleUpdateTimer;
 
 	// debug functions
 	bool queryScreenDebug() const { return _debugEnabled; }
@@ -557,6 +656,8 @@ public:
 	uint16 _textMarginRight;
 
 	const ScreenDim *_curDim;
+
+	Common::String _lineBreakChars;
 
 	// shape handling
 	uint8 *encodeShape(int x, int y, int w, int h, int flags);

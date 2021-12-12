@@ -61,18 +61,19 @@ const struct GameOpt {
 
 	{ GUIO_NOASPECT,     "noAspect" },
 
-	{ GUIO_RENDERHERCGREEN, "hercGreen" },
-	{ GUIO_RENDERHERCAMBER, "hercAmber" },
-	{ GUIO_RENDERCGA,       "cga" },
-	{ GUIO_RENDEREGA,       "ega" },
-	{ GUIO_RENDERVGA,       "vga" },
-	{ GUIO_RENDERAMIGA,     "amiga" },
-	{ GUIO_RENDERFMTOWNS,   "fmtowns" },
-	{ GUIO_RENDERPC9821,    "pc9821" },
-	{ GUIO_RENDERPC9801,    "pc9801" },
-	{ GUIO_RENDERAPPLE2GS,  "2gs" },
-	{ GUIO_RENDERATARIST,   "atari" },
-	{ GUIO_RENDERMACINTOSH, "macintosh" },
+	{ GUIO_RENDERHERCGREEN,		"hercGreen" },
+	{ GUIO_RENDERHERCAMBER,		"hercAmber" },
+	{ GUIO_RENDERCGA,			"cga" },
+	{ GUIO_RENDEREGA,			"ega" },
+	{ GUIO_RENDERVGA,			"vga" },
+	{ GUIO_RENDERAMIGA,			"amiga" },
+	{ GUIO_RENDERFMTOWNS,		"fmtowns" },
+	{ GUIO_RENDERPC9821,		"pc9821" },
+	{ GUIO_RENDERPC9801,		 "pc9801" },
+	{ GUIO_RENDERAPPLE2GS,		"2gs" },
+	{ GUIO_RENDERATARIST,		"atari" },
+	{ GUIO_RENDERMACINTOSH,		"macintosh" },
+	{ GUIO_RENDERMACINTOSHBW,	"macintoshbw" },
 
 	{ GUIO_GAMEOPTIONS1, "gameOption1" },
 	{ GUIO_GAMEOPTIONS2, "gameOption2" },
@@ -111,9 +112,16 @@ bool checkGameGUIOption(const String &option, const String &str) {
 String parseGameGUIOptions(const String &str) {
 	String res;
 
-	for (int i = 0; g_gameOptions[i].desc; i++)
-		if (str.contains(g_gameOptions[i].desc))
-			res += g_gameOptions[i].option;
+	for (int i = 0; g_gameOptions[i].desc; i++) {
+		for (uint32 ii = 0; ii < str.size(); ++ii) {
+			uint32 c_end = str.find(' ', ii);
+			if (c_end == (uint32)-1)
+				c_end = str.size();
+			if (str.substr(ii, c_end - ii).equals((g_gameOptions[i].desc)))
+				res += g_gameOptions[i].option;
+			ii = c_end;
+		}
+	}
 
 	return res;
 }

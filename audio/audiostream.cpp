@@ -67,7 +67,7 @@ static const StreamFileFormat STREAM_FILEFORMATS[] = {
 };
 
 SeekableAudioStream *SeekableAudioStream::openStreamFile(const Common::String &basename) {
-	SeekableAudioStream *stream = NULL;
+	SeekableAudioStream *stream = nullptr;
 	Common::File *fileHandle = new Common::File();
 
 	for (int i = 0; i < ARRAYSIZE(STREAM_FILEFORMATS); ++i) {
@@ -76,14 +76,14 @@ SeekableAudioStream *SeekableAudioStream::openStreamFile(const Common::String &b
 		if (fileHandle->isOpen()) {
 			// Create the stream object
 			stream = STREAM_FILEFORMATS[i].openStreamFile(fileHandle, DisposeAfterUse::YES);
-			fileHandle = 0;
+			fileHandle = nullptr;
 			break;
 		}
 	}
 
 	delete fileHandle;
 
-	if (stream == NULL)
+	if (stream == nullptr)
 		debug(1, "SeekableAudioStream::openStreamFile: Could not open compressed AudioFile %s", basename.c_str());
 
 	return stream;
@@ -161,7 +161,7 @@ AudioStream *makeLoopingAudioStream(SeekableAudioStream *stream, Timestamp start
 		if (start >= end) {
 			warning("makeLoopingAudioStream: start (%d) >= end (%d)", start.msecs(), end.msecs());
 			delete stream;
-			return 0;
+			return nullptr;
 		}
 
 		return makeLoopingAudioStream(new SubSeekableAudioStream(stream, start, end), loops);
@@ -331,29 +331,29 @@ public:
 	~QueuingAudioStreamImpl();
 
 	// Implement the AudioStream API
-	virtual int readBuffer(int16 *buffer, const int numSamples);
-	virtual bool isStereo() const { return _stereo; }
-	virtual int getRate() const { return _rate; }
+	int readBuffer(int16 *buffer, const int numSamples) override;
+	bool isStereo() const override { return _stereo; }
+	int getRate() const override { return _rate; }
 
-	virtual bool endOfData() const {
+	bool endOfData() const override {
 		Common::StackLock lock(_mutex);
 		return _queue.empty() || _queue.front()._stream->endOfData();
 	}
 
-	virtual bool endOfStream() const {
+	bool endOfStream() const override {
 		Common::StackLock lock(_mutex);
 		return _finished && _queue.empty();
 	}
 
 	// Implement the QueuingAudioStream API
-	virtual void queueAudioStream(AudioStream *stream, DisposeAfterUse::Flag disposeAfterUse);
+	void queueAudioStream(AudioStream *stream, DisposeAfterUse::Flag disposeAfterUse) override;
 
-	virtual void finish() {
+	void finish() override {
 		Common::StackLock lock(_mutex);
 		_finished = true;
 	}
 
-	uint32 numQueuedStreams() const {
+	uint32 numQueuedStreams() const override {
 		Common::StackLock lock(_mutex);
 		return _queue.size();
 	}
@@ -443,17 +443,17 @@ public:
 			delete _parentStream;
 	}
 
-	int readBuffer(int16 *buffer, const int numSamples) {
+	int readBuffer(int16 *buffer, const int numSamples) override {
 		// Cap us off so we don't read past _totalSamples
 		int samplesRead = _parentStream->readBuffer(buffer, MIN<int>(numSamples, _totalSamples - _samplesRead));
 		_samplesRead += samplesRead;
 		return samplesRead;
 	}
 
-	bool endOfData() const { return _parentStream->endOfData() || reachedLimit(); }
-	bool endOfStream() const { return _parentStream->endOfStream() || reachedLimit(); }
-	bool isStereo() const { return _parentStream->isStereo(); }
-	int getRate() const { return _parentStream->getRate(); }
+	bool endOfData() const override { return _parentStream->endOfData() || reachedLimit(); }
+	bool endOfStream() const override { return _parentStream->endOfStream() || reachedLimit(); }
+	bool isStereo() const override { return _parentStream->isStereo(); }
+	int getRate() const override { return _parentStream->getRate(); }
 
 private:
 	int getChannels() const { return isStereo() ? 2 : 1; }
@@ -474,10 +474,10 @@ AudioStream *makeLimitingAudioStream(AudioStream *parentStream, const Timestamp 
  */
 class NullAudioStream : public AudioStream {
 public:
-	bool isStereo() const { return false; }
-	int getRate() const;
-	int readBuffer(int16 *data, const int numSamples) { return 0; }
-	bool endOfData() const { return true; }
+	bool isStereo() const override { return false; }
+	int getRate() const override;
+	int readBuffer(int16 *data, const int numSamples) override { return 0; }
+	bool endOfData() const override { return true; }
 };
 
 int NullAudioStream::getRate() const {

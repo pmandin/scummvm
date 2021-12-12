@@ -57,6 +57,7 @@
 #ifdef USE_LIBCURL
 #include "backends/cloud/cloudmanager.h"
 #include "gui/downloaddialog.h"
+#include "gui/downloadiconsdialog.h"
 #endif
 
 #ifdef USE_SDL_NET
@@ -82,13 +83,16 @@ enum {
 	kChooseSaveDirCmd		= 'chos',
 	kSavePathClearCmd		= 'clsp',
 	kChooseThemeDirCmd		= 'chth',
+	kChooseIconDirCmd		= 'chic',
 	kThemePathClearCmd		= 'clth',
 	kBrowserPathClearCmd	= 'clbr',
+	kIconPathClearCmd		= 'clic',
 	kChooseExtraDirCmd		= 'chex',
 	kExtraPathClearCmd		= 'clex',
 	kChoosePluginsDirCmd	= 'chpl',
 	kPluginsPathClearCmd	= 'clpl',
 	kChooseThemeCmd			= 'chtf',
+	kUpdateIconsCmd			= 'upic',
 	kUpdatesCheckCmd		= 'updc',
 	kKbdMouseSpeedChanged	= 'kmsc',
 	kJoystickDeadzoneChanged= 'jodc',
@@ -646,9 +650,10 @@ void OptionsDialog::apply() {
 				ConfMan.removeKey("scale_factor", _domain);
 
 				uint defaultScaler = g_system->getDefaultScaler();
+				uint defaultScaleFactor = g_system->getDefaultScaleFactor();
 				if (g_system->getScaler() != defaultScaler)
 					graphicsModeChanged = true;
-				else if (scalerPlugins[defaultScaler]->get<ScalerPluginObject>().getFactor() != g_system->getDefaultScaleFactor())
+				else if (g_system->getScaleFactor() != defaultScaleFactor)
 					graphicsModeChanged = true;
 			}
 
@@ -928,7 +933,7 @@ void OptionsDialog::apply() {
 
 				ConfMan.setBool("subtitles", subtitles, _domain);
 				ConfMan.setBool("speech_mute", speech_mute, _domain);
-			} else {
+			} else if (!_domain.empty()) {
 				ConfMan.removeKey("subtitles", _domain);
 				ConfMan.removeKey("speech_mute", _domain);
 			}
@@ -1857,7 +1862,12 @@ void OptionsDialog::updateScaleFactors(uint32 tag) {
 		for (Common::Array<uint>::const_iterator it = factors.begin(); it != factors.end(); it++) {
 			_scaleFactorPopUp->appendEntry(Common::U32String::format("%dx", (*it)), (*it));
 		}
-		_scaleFactorPopUp->setSelectedTag(scalerPlugins[tag]->get<ScalerPluginObject>().getFactor());
+
+		if (g_system->getScaler() == tag) {
+			_scaleFactorPopUp->setSelectedTag(g_system->getScaleFactor());
+		} else {
+			_scaleFactorPopUp->setSelectedTag(scalerPlugins[tag]->get<ScalerPluginObject>().getDefaultFactor());
+		}
 	} else {
 		_scaleFactorPopUp->clearEntries();
 		_scaleFactorPopUp->appendEntry(_("<default>"));
@@ -1877,6 +1887,8 @@ GlobalOptionsDialog::GlobalOptionsDialog(LauncherDialog *launcher)
 	_savePathClearButton = nullptr;
 	_themePath = nullptr;
 	_themePathClearButton = nullptr;
+	_iconPath = nullptr;
+	_iconPathClearButton = nullptr;
 	_extraPath = nullptr;
 	_extraPathClearButton = nullptr;
 #ifdef DYNAMIC_MODULES
@@ -2138,6 +2150,7 @@ void GlobalOptionsDialog::build() {
 	// Set _savePath to the current save path
 	Common::String savePath(ConfMan.get("savepath", _domain));
 	Common::String themePath(ConfMan.get("themepath", _domain));
+	Common::String iconPath(ConfMan.get("iconspath", _domain));
 	Common::String extraPath(ConfMan.get("extrapath", _domain));
 
 	if (savePath.empty() || !ConfMan.hasKey("savepath", _domain)) {
@@ -2150,6 +2163,12 @@ void GlobalOptionsDialog::build() {
 		_themePath->setLabel(_c("None", "path"));
 	} else {
 		_themePath->setLabel(themePath);
+	}
+
+	if (iconPath.empty() || !ConfMan.hasKey("iconspath", _domain)) {
+		_iconPath->setLabel(_c("None", "path"));
+	} else {
+		_iconPath->setLabel(iconPath);
 	}
 
 	if (extraPath.empty() || !ConfMan.hasKey("extrapath", _domain)) {
@@ -2238,6 +2257,14 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 	_themePath = new StaticTextWidget(boss, prefix + "ThemePath", _c("None", "path"));
 
 	_themePathClearButton = addClearButton(boss, prefix + "ThemePathClearButton", kThemePathClearCmd);
+
+	if (!lowres)
+		new ButtonWidget(boss, prefix + "IconButton", _("Icon Path:"), Common::U32String(), kChooseIconDirCmd);
+	else
+		new ButtonWidget(boss, prefix + "IconButton", _c("Icon Path:", "lowres"), Common::U32String(), kChooseIconDirCmd);
+	_iconPath = new StaticTextWidget(boss, prefix + "IconPath", _c("None", "path"));
+
+	_iconPathClearButton = addClearButton(boss, prefix + "IconPathClearButton", kIconPathClearCmd);
 
 	if (!lowres)
 		new ButtonWidget(boss, prefix + "ExtraButton", _("Extra Path:"), _("Specifies path to additional data used by all games or ScummVM"), kChooseExtraDirCmd);
@@ -2380,19 +2407,27 @@ void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String 
 	}
 
 #ifdef USE_UPDATES
-	_updatesPopUpDesc = new StaticTextWidget(boss, prefix + "UpdatesPopupDesc", _("Update check:"), _("How often to check ScummVM updates"));
-	_updatesPopUp = new PopUpWidget(boss, prefix + "UpdatesPopup");
+	if (g_system->getUpdateManager()) {
+		_updatesPopUpDesc = new StaticTextWidget(boss, prefix + "UpdatesPopupDesc", _("Update check:"), _("How often to check ScummVM updates"));
+		_updatesPopUp = new PopUpWidget(boss, prefix + "UpdatesPopup");
 
-	const int *vals = Common::UpdateManager::getUpdateIntervals();
-	while (*vals != -1) {
-		_updatesPopUp->appendEntry(Common::UpdateManager::updateIntervalToString(*vals), *vals);
-		vals++;
+		const int *vals = Common::UpdateManager::getUpdateIntervals();
+		while (*vals != -1) {
+			_updatesPopUp->appendEntry(Common::UpdateManager::updateIntervalToString(*vals), *vals);
+			vals++;
+		}
+
+		_updatesPopUp->setSelectedTag(Common::UpdateManager::normalizeInterval(ConfMan.getInt("updates_check")));
+
+		new ButtonWidget(boss, prefix + "UpdatesCheckManuallyButton", _("Check now"), Common::U32String(), kUpdatesCheckCmd);
 	}
-
-	_updatesPopUp->setSelectedTag(Common::UpdateManager::normalizeInterval(ConfMan.getInt("updates_check")));
-
-	new ButtonWidget(boss, prefix + "UpdatesCheckManuallyButton", _("Check now"), Common::U32String(), kUpdatesCheckCmd);
 #endif // USE_UPDATES
+
+#ifdef USE_CLOUD
+#ifdef USE_LIBCURL
+	new ButtonWidget(boss, prefix + "UpdateIconsButton", _("Update Icons"), Common::U32String(), kUpdateIconsCmd);
+#endif
+#endif
 }
 
 #ifdef USE_CLOUD
@@ -2545,7 +2580,9 @@ bool GlobalOptionsDialog::updateAutosavePeriod(int newValue) {
 	for (ConfigManager::DomainMap::const_iterator it = domains.begin(), end = domains.end(); it != end; ++it) {
 		const Common::String target = it->_key;
 		const ConfigManager::Domain domain = it->_value;
-		const Common::String engine = domain["engineid"];
+		// note that engineid isn't present on games that predate it
+		// and haven't been run since it was introduced.
+		const Common::String engine = domain.getValOrDefault("engineid");
 		if (const Plugin *detectionPlugin = EngineMan.findPlugin(engine)) {
 			if (const Plugin *plugin = PluginMan.getEngineFromMetaEngine(detectionPlugin)) {
 				MetaEngine &metaEngine = plugin->get<MetaEngine>();
@@ -2624,6 +2661,12 @@ void GlobalOptionsDialog::apply() {
 	else
 		ConfMan.removeKey("themepath", _domain);
 
+	Common::U32String iconPath(_iconPath->getLabel());
+	if (!iconPath.empty() && (iconPath != _c("None", "path")))
+		ConfMan.set("iconspath", iconPath.encode(), _domain);
+	else
+		ConfMan.removeKey("iconspath", _domain);
+
 	Common::U32String extraPath(_extraPath->getLabel());
 	if (!extraPath.empty() && (extraPath != _c("None", "path")))
 		ConfMan.set("extrapath", extraPath.encode(), _domain);
@@ -2660,9 +2703,9 @@ void GlobalOptionsDialog::apply() {
 		_autosavePeriodPopUp->setSelected(0);
 
 #ifdef USE_UPDATES
-	ConfMan.setInt("updates_check", _updatesPopUp->getSelectedTag());
-
 	if (g_system->getUpdateManager()) {
+		ConfMan.setInt("updates_check", _updatesPopUp->getSelectedTag());
+
 		if (_updatesPopUp->getSelectedTag() == Common::UpdateManager::kUpdateIntervalNotSupported) {
 			g_system->getUpdateManager()->setAutomaticallyChecksForUpdates(Common::UpdateManager::kUpdateStateDisabled);
 		} else {
@@ -2856,6 +2899,16 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 		}
 		break;
 	}
+	case kChooseIconDirCmd: {
+		BrowserDialog browser(_("Select directory for GUI launcher thumbnails"), true);
+		if (browser.runModal() > 0) {
+			// User made his choice...
+			Common::FSNode dir(browser.getResult());
+			_iconPath->setLabel(dir.getPath());
+			g_gui.scheduleTopDialogRedraw();
+		}
+		break;
+	}
 	case kChooseExtraDirCmd: {
 		BrowserDialog browser(_("Select directory for extra files"), true);
 		if (browser.runModal() > 0) {
@@ -2894,9 +2947,26 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 		break;
 	}
 #endif
+
+#ifdef USE_LIBCURL
+	case kUpdateIconsCmd: {
+		DownloadIconsDialog dia;
+
+		if (dia.runModal() > 0) {
+			if (_launcher && _launcher->getType() == kLauncherDisplayGrid)
+				_launcher->rebuild();
+		}
+
+		break;
+	}
+#endif
+
 #endif
 	case kThemePathClearCmd:
 		_themePath->setLabel(_c("None", "path"));
+		break;
+	case kIconPathClearCmd:
+		_iconPath->setLabel(_c("None", "path"));
 		break;
 	case kExtraPathClearCmd:
 		_extraPath->setLabel(_c("None", "path"));
@@ -3178,6 +3248,11 @@ void GlobalOptionsDialog::reflowLayout() {
 		_themePathClearButton->setNext(nullptr);
 		delete _themePathClearButton;
 		_themePathClearButton = addClearButton(_tabWidget, "GlobalOptions_Paths.ThemePathClearButton", kThemePathClearCmd);
+
+		_tabWidget->removeWidget(_iconPathClearButton);
+		_iconPathClearButton->setNext(nullptr);
+		delete _iconPathClearButton;
+		_iconPathClearButton = addClearButton(_tabWidget, "GlobalOptions_Paths.IconPathClearButton", kIconPathClearCmd);
 
 		_tabWidget->removeWidget(_extraPathClearButton);
 		_extraPathClearButton->setNext(nullptr);

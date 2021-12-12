@@ -39,7 +39,7 @@
 #include "common/rect.h"
 #include "common/textconsole.h"
 
-#if defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
+#if defined(USE_OPENGL_SHADERS)
 
 #include "graphics/surface.h"
 
@@ -115,13 +115,8 @@ ShaderRenderer::~ShaderRenderer() {
 	delete _textShader;
 }
 
-Texture *ShaderRenderer::createTexture(const Graphics::Surface *surface) {
+Texture *ShaderRenderer::createTexture3D(const Graphics::Surface *surface) {
 	return new OpenGLTexture(surface);
-}
-
-void ShaderRenderer::freeTexture(Texture *texture) {
-	OpenGLTexture *glTexture = static_cast<OpenGLTexture *>(texture);
-	delete glTexture;
 }
 
 void ShaderRenderer::init() {
@@ -131,7 +126,7 @@ void ShaderRenderer::init() {
 
 	glEnable(GL_DEPTH_TEST);
 
-	static const char* attributes[] = { "position", "texcoord", NULL };
+	static const char* attributes[] = { "position", "texcoord", nullptr };
 	_boxShader = OpenGL::ShaderGL::fromFiles("myst3_box", attributes);
 	_boxVBO = OpenGL::ShaderGL::createBuffer(GL_ARRAY_BUFFER, sizeof(boxVertices), boxVertices);
 	_boxShader->enableVertexAttribute("position", _boxVBO, 2, GL_FLOAT, GL_TRUE, 2 * sizeof(float), 0);
@@ -143,12 +138,12 @@ void ShaderRenderer::init() {
 	_cubeShader->enableVertexAttribute("position", _cubeVBO, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 2 * sizeof(float));
 
 	_rect3dShader = OpenGL::ShaderGL::fromFiles("myst3_cube", attributes);
-	_rect3dVBO = OpenGL::ShaderGL::createBuffer(GL_ARRAY_BUFFER, 20 * sizeof(float), NULL);
+	_rect3dVBO = OpenGL::ShaderGL::createBuffer(GL_ARRAY_BUFFER, 20 * sizeof(float), nullptr);
 	_rect3dShader->enableVertexAttribute("texcoord", _rect3dVBO, 2, GL_FLOAT, GL_TRUE, 5 * sizeof(float), 0);
 	_rect3dShader->enableVertexAttribute("position", _rect3dVBO, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 2 * sizeof(float));
 
 	_textShader = OpenGL::ShaderGL::fromFiles("myst3_text", attributes);
-	_textVBO = OpenGL::ShaderGL::createBuffer(GL_ARRAY_BUFFER, 100 * 16 * sizeof(float), NULL, GL_DYNAMIC_DRAW);
+	_textVBO = OpenGL::ShaderGL::createBuffer(GL_ARRAY_BUFFER, 100 * 16 * sizeof(float), nullptr, GL_DYNAMIC_DRAW);
 	_textShader->enableVertexAttribute("texcoord", _textVBO, 2, GL_FLOAT, GL_TRUE, 4 * sizeof(float), 0);
 	_textShader->enableVertexAttribute("position", _textVBO, 2, GL_FLOAT, GL_TRUE, 4 * sizeof(float), 2 * sizeof(float));
 
@@ -305,7 +300,7 @@ void ShaderRenderer::draw2DText(const Common::String &text, const Common::Point 
 	_textShader->use();
 	glBindTexture(GL_TEXTURE_2D, glFont->id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _quadEBO);
-	glDrawElements(GL_TRIANGLES, 6 * textToDraw.size(), GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, 6 * textToDraw.size(), GL_UNSIGNED_SHORT, nullptr);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisable(GL_BLEND);

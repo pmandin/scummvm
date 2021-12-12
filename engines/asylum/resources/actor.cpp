@@ -479,7 +479,7 @@ void Actor::update() {
 	case kActorStatusDisabled:
 		_frameIndex = (_frameIndex + 1) % _frameCount;
 
-		if (_vm->screenUpdateCount - _lastScreenUpdate > 300) {
+		if (_vm->screenUpdateCount > _lastScreenUpdate + 300) {
 			if (_vm->getRandom(100) < 50) {
 				if (!getSpeech()->getSoundResourceId() || !getSound()->isPlaying(getSpeech()->getSoundResourceId())) {
 					if (canChangeStatus(10))
@@ -507,7 +507,7 @@ void Actor::update() {
 				break;
 
 			case 1:
-				getSpecial()->run(NULL, _index);
+				getSpecial()->run(nullptr, _index);
 				return;
 
 			case 10:
@@ -548,18 +548,6 @@ void Actor::update() {
 		} else if (canMove(&point, DIR(_direction + 6), dist, false)) {
 			move(DIR(_direction + 6), dist);
 		}
-
-		// Finish
-		if (_soundResourceId != kResourceNone && getSound()->isPlaying(_soundResourceId))
-			setVolume();
-
-		if (_index != getSharedData()->getPlayerIndex() && getWorld()->chapter != kChapter9)
-			getSpecial()->run(NULL, _index);
-
-		updateReflectionData();
-
-		if (_field_944 != 5)
-			actionAreaCheck();
 
 		}
 		break;
@@ -608,18 +596,6 @@ void Actor::update() {
 				}
 			}
 		}
-
-		// Finish
-		if (_soundResourceId != kResourceNone && getSound()->isPlaying(_soundResourceId))
-			setVolume();
-
-		if (_index != getSharedData()->getPlayerIndex() && getWorld()->chapter != kChapter9)
-			getSpecial()->run(NULL, _index);
-
-		updateReflectionData();
-
-		if (_field_944 != 5)
-			actionAreaCheck();
 
 		}
 		break;
@@ -670,11 +646,12 @@ void Actor::update() {
 		break;
 	}
 
+	// Finish
 	if (_soundResourceId && getSound()->isPlaying(_soundResourceId))
 		setVolume();
 
 	if (_index != getSharedData()->getPlayerIndex() && getWorld()->chapter != kChapter9)
-		getSpecial()->run(NULL, _index);
+		getSpecial()->run(nullptr, _index);
 
 	updateReflectionData();
 
@@ -2123,7 +2100,7 @@ void Actor::updateStatusEnabled() {
 
 	_frameIndex = (_frameIndex + 1) % _frameCount;
 
-	if (_vm->screenUpdateCount - _lastScreenUpdate > 300) {
+	if (_vm->screenUpdateCount > _lastScreenUpdate + 300) {
 		// All actors except Crow and Armed Max
 		if (strcmp((char *)&_name, "Crow") && strcmp((char *)_name, "Armed Max")) {
 			if (_vm->getRandom(100) < 50
@@ -2137,7 +2114,7 @@ void Actor::updateStatusEnabled() {
 
 	// Actor: Player
 	if (_index == getSharedData()->getPlayerIndex()) {
-		if (_vm->lastScreenUpdate && (_vm->screenUpdateCount - _vm->lastScreenUpdate) > 500) {
+		if (_vm->lastScreenUpdate && (_vm->screenUpdateCount > _vm->lastScreenUpdate + 500)) {
 
 			if (_vm->isGameFlagNotSet(kGameFlagScriptProcessing)
 			 && isVisible()
@@ -3213,7 +3190,10 @@ void Actor::actionAreaCheck() {
 	ActionArea *area = getWorld()->actions[areaIndex];
 	ActionArea *actorArea = getWorld()->actions[_actionIdx3];
 
-	if ((area->flags & 1) && !getSharedData()->getFlag(kFlagSkipScriptProcessing)) {
+	if (!(area->flags & 1))
+		return;
+
+	if (!getSharedData()->getFlag(kFlagSkipScriptProcessing)) {
 		debugC(kDebugLevelScripts, "[Script] Entered ActionArea (idx: %d, name: %s)", areaIndex, area->name);
 		debugC(kDebugLevelScripts, "[Script] Queuing Script #1 (idx: %d) for Actor (idx: %d)", actorArea->scriptIndex2, _index);
 		getScript()->queueScript(actorArea->scriptIndex2, _index);
@@ -3223,11 +3203,11 @@ void Actor::actionAreaCheck() {
 
 	if (!area->paletteResourceId || area->paletteResourceId == actorArea->paletteResourceId || _index) {
 		if (area->paletteResourceId != actorArea->paletteResourceId && !_index)
-			_vm->screen()->startPaletteFade(getWorld()->currentPaletteId, 100, 3);
+			_vm->screen()->queuePaletteFade(getWorld()->currentPaletteId, 100, 3);
 
 		_actionIdx3 = areaIndex;
 	} else {
-		_vm->screen()->startPaletteFade(area->paletteResourceId, 50, 3);
+		_vm->screen()->queuePaletteFade(area->paletteResourceId, 50, 3);
 		_actionIdx3 = areaIndex;
 	}
 }
@@ -3817,7 +3797,7 @@ int32 Actor::getWalkIncrement(ActorDirection dir, uint32 frameIndex) const {
 
 	switch (dir) {
 	default:
-		error("[Actor::getWalkIncrement] Invalid direction");
+		error("[Actor::getWalkIncrement] Invalid direction %d", dir);
 
 	case kDirectionN:
 		return -_distancesNS[frameIndex];

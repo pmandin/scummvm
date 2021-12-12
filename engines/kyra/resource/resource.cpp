@@ -20,6 +20,7 @@
  *
  */
 
+#include "kyra/engine/util.h"
 #include "kyra/resource/resource.h"
 #include "kyra/resource/resource_intern.h"
 
@@ -28,8 +29,11 @@
 
 namespace Kyra {
 
-Resource::Resource(KyraEngine_v1 *vm) : _archiveCache(), _files(), _archiveFiles(), _protectedFiles(), _loaders(), _vm(vm), _bigEndianPlatForm(vm->gameFlags().platform == Common::kPlatformAmiga || vm->gameFlags().platform == Common::kPlatformSegaCD) {
+Resource::Resource(KyraEngine_v1 *vm) : _archiveCache(), _files(), _archiveFiles(), _protectedFiles(), _macResMan(), _loaders(), _vm(vm), _bigEndianPlatForm(vm->gameFlags().platform == Common::kPlatformAmiga || vm->gameFlags().platform == Common::kPlatformSegaCD) {
 	initializeLoaders();
+
+	if (_vm->gameFlags().useInstallerPackage)
+		_macResMan = new Common::MacResManager();
 
 	// Initialize directories for playing from CD or with original
 	// directory structure
@@ -52,6 +56,7 @@ Resource::~Resource() {
 	for (ArchiveMap::iterator i = _archiveCache.begin(); i != _archiveCache.end(); ++i)
 		delete i->_value;
 	_archiveCache.clear();
+	delete _macResMan;
 }
 
 bool Resource::reset() {
@@ -62,7 +67,27 @@ bool Resource::reset() {
 	if (!dir.exists() || !dir.isDirectory())
 		error("invalid game path '%s'", dir.getPath().c_str());
 
-	if (_vm->game() == GI_KYRA1 || _vm->game() == GI_EOB1) {
+	if (_vm->game() == GI_KYRA1 && _vm->gameFlags().platform == Common::kPlatformMacintosh && _vm->gameFlags().useInstallerPackage) {
+		Common::String kyraInstaller = Util::findMacResourceFile("Install Legend of Kyrandia");
+
+		if (kyraInstaller.empty()) {
+			error("Could not find Legend of Kyrandia installer file");
+		}
+
+		Common::Archive *archive = loadStuffItArchive(kyraInstaller);
+		if (!archive)
+			error("Failed to load Legend of Kyrandia installer file");
+
+		_files.add("installer", archive, 0, false);
+
+		Common::ArchiveMemberList members;
+		archive->listMatchingMembers(members, "*.PAK");
+		for (Common::ArchiveMemberList::const_iterator it = members.begin(); it != members.end(); ++it) {
+			Common::String name = (*it)->getName();
+			Common::Archive *pak = loadArchive(name, *it);
+			_files.add(name, pak, 0, false);
+		}
+	} else if (_vm->game() == GI_KYRA1 || _vm->game() == GI_EOB1) {
 		// We only need kyra.dat for the demo.
 		if (_vm->gameFlags().isDemo && !_vm->gameFlags().isTalkie)
 			return true;
@@ -72,7 +97,7 @@ bool Resource::reset() {
 			static const char *const list[] = {
 				"ADL.PAK", "CHAPTER1.VRM", "COL.PAK", "FINALE.PAK", "INTRO1.PAK", "INTRO2.PAK",
 				"INTRO3.PAK", "INTRO4.PAK", "MISC.PAK", "SND.PAK", "STARTUP.PAK", "XMI.PAK",
-				"CAVE.APK", "DRAGON1.APK", "DRAGON2.APK", "LAGOON.APK", 0
+				"CAVE.APK", "DRAGON1.APK", "DRAGON2.APK", "LAGOON.APK", nullptr
 			};
 
 			loadProtectedFiles(list);
@@ -136,7 +161,7 @@ bool Resource::reset() {
 
 		if (!_vm->gameFlags().isTalkie && !_vm->gameFlags().isDemo) {
 			static const char *const list[] = {
-				"GENERAL.PAK", 0
+				"GENERAL.PAK", nullptr
 			};
 
 			loadProtectedFiles(list);
@@ -280,7 +305,7 @@ void Resource::listFiles(const Common::String &pattern, Common::ArchiveMemberLis
 uint8 *Resource::fileData(const char *file, uint32 *size) {
 	Common::SeekableReadStream *stream = createReadStream(file);
 	if (!stream)
-		return 0;
+		return nullptr;
 
 	uint32 bufferSize = stream->size();
 	uint8 *buffer = new uint8[bufferSize];
@@ -321,13 +346,18 @@ bool Resource::loadFileToBuf(const char *file, void *buf, uint32 maxSize) {
 	return true;
 }
 
+Common::Archive *Resource::getCachedArchive(const Common::String &file) const {
+	ArchiveMap::iterator a = _archiveCache.find(file);
+	return a != _archiveCache.end() ? a->_value : 0;
+}
+
 Common::SeekableReadStream *Resource::createReadStream(const Common::String &file) {
 	return _files.createReadStreamForMember(file);
 }
 
 Common::SeekableReadStreamEndian *Resource::createEndianAwareReadStream(const Common::String &file, int endianness) {
 	Common::SeekableReadStream *stream = _files.createReadStreamForMember(file);
-	return stream ? new EndianAwareStreamWrapper(stream, (endianness == kForceBE) ? true : (endianness == kForceLE ? false : _bigEndianPlatForm)) : 0;
+	return stream ? new EndianAwareStreamWrapper(stream, (endianness == kForceBE) ? true : (endianness == kForceLE ? false : _bigEndianPlatForm)) : nullptr;
 }
 
 Common::Archive *Resource::loadArchive(const Common::String &name, Common::ArchiveMemberPtr member) {
@@ -338,9 +368,9 @@ Common::Archive *Resource::loadArchive(const Common::String &name, Common::Archi
 	Common::SeekableReadStream *stream = member->createReadStream();
 
 	if (!stream)
-		return 0;
+		return nullptr;
 
-	Common::Archive *archive = 0;
+	Common::Archive *archive = nullptr;
 	for (LoaderList::const_iterator i = _loaders.begin(); i != _loaders.end(); ++i) {
 		if ((*i)->checkFilename(name)) {
 			if ((*i)->isLoadable(name, *stream)) {
@@ -356,7 +386,7 @@ Common::Archive *Resource::loadArchive(const Common::String &name, Common::Archi
 	delete stream;
 
 	if (!archive)
-		return 0;
+		return nullptr;
 
 	_archiveCache[name] = archive;
 	return archive;
@@ -369,7 +399,20 @@ Common::Archive *Resource::loadInstallerArchive(const Common::String &file, cons
 
 	Common::Archive *archive = InstallerLoader::load(this, file, ext, offset);
 	if (!archive)
-		return 0;
+		return nullptr;
+
+	_archiveCache[file] = archive;
+	return archive;
+}
+
+Common::Archive *Resource::loadStuffItArchive(const Common::String &file) {
+	ArchiveMap::iterator cachedArchive = _archiveCache.find(file);
+	if (cachedArchive != _archiveCache.end())
+		return cachedArchive->_value;
+
+	Common::Archive *archive = StuffItLoader::load(this, file, _macResMan);
+	if (!archive)
+		return nullptr;
 
 	_archiveCache[file] = archive;
 	return archive;

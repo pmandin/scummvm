@@ -59,7 +59,7 @@ void SdlGraphicsManager::deactivateManager() {
 		g_system->getEventManager()->getEventDispatcher()->unregisterObserver(this);
 	}
 
-	_eventSource->setGraphicsManager(0);
+	_eventSource->setGraphicsManager(nullptr);
 }
 
 SdlGraphicsManager::State SdlGraphicsManager::getState() const {
@@ -280,6 +280,10 @@ void SdlGraphicsManager::setSystemMousePosition(const int x, const int y) {
 		const Common::Point mouse = convertWindowToVirtual(x, y);
 		_eventSource->fakeWarpMouse(mouse.x, mouse.y);
 	}
+}
+
+void SdlGraphicsManager::notifyActiveAreaChanged() {
+	_window->setMouseRect(_activeArea.drawRect);
 }
 
 void SdlGraphicsManager::handleResizeImpl(const int width, const int height) {

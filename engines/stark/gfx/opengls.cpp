@@ -26,7 +26,7 @@
 
 #include "math/matrix4.h"
 
-#if defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
+#if defined(USE_OPENGL_SHADERS)
 
 #include "engines/stark/gfx/openglsactor.h"
 #include "engines/stark/gfx/openglsprop.h"
@@ -34,7 +34,6 @@
 #include "engines/stark/gfx/openglsfade.h"
 #include "engines/stark/gfx/opengltexture.h"
 
-#include "graphics/pixelbuffer.h"
 #include "graphics/surface.h"
 #include "graphics/opengl/shader.h"
 
@@ -238,4 +237,4 @@ Graphics::Surface *OpenGLSDriver::getViewportScreenshot() const {
 } // End of namespace Gfx
 } // End of namespace Stark
 
-#endif // defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
+#endif // defined(USE_OPENGL_SHADERS)

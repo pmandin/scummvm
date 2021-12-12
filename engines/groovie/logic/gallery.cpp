@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv2 license mentioned above, MojoTouch has exclusively licensed
+ * this code on November 10th, 2021, to be use in closed-source products.
+ * Therefore, any contributions (commits) to it will also be dual-licensed.
+ *
  */
 
 #include "groovie/groovie.h"
@@ -177,7 +183,9 @@ byte GalleryGame::galleryAI(byte *pieceStatus, int depth) {
 			}
 		}
 		if (v9 == v10)
-			return 1;// I believe 1 means this is an optimal move
+			return 1; // I believe 1 means this is an optimal move
+		else if (_easierAi && v9 * 3 >= v10 * 2)
+			return 1; // close enough to an optimal move?
 		else
 			return (v8 + 102 * v9) / v10;// otherwise, higher numbers are better
 	}

@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv2 license mentioned above, MojoTouch has exclusively licensed
+ * this code on November 10th, 2021, to be use in closed-source products.
+ * Therefore, any contributions (commits) to it will also be dual-licensed.
+ *
  */
 
 #ifndef GROOVIE_LOGIC_WINERACK_H
@@ -45,16 +51,20 @@ private:
 	int8 findEmptySpot();
 	void sub05(int8 player, int8 *moves);
 	int8 sub06(int8 *moves1, int8 *moves2);
-	uint32 sub09();
+	uint32 didPlayerWin();
 	void sub10(int8 endPos, int8 pos, int unused, int player, int *val);
 	void sub11(int8 pos, int8 *candidates);
-	uint32 sub12();
+	uint32 didAiWin();
 	void sub13(int8 cell, int8 player, int8 *moves1, int8 *moves2);
 	void sub15(int8 cell, int8 *candidates);
 	void sub16(int8 cell, int8 *candidates);
 	int8 countEmtpy(int8 *moves);
 	int8 randomMoveStart();
 	int8 randomMoveStart2();
+
+	void testWinCondition(byte player, int baseX, int baseY);
+	void testGame(uint32 seed, Common::Array<int> moves, bool playerWin);
+	void runTests();
 
 	int _totalBottles;
 	byte _wineRackGrid[100];

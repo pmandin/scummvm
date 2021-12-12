@@ -21,7 +21,6 @@
  */
 
 #include "engines/stark/gfx/tinygltexture.h"
-
 #include "engines/stark/gfx/driver.h"
 
 #include "graphics/surface.h"
@@ -67,8 +66,7 @@ void TinyGlTexture::updateLevel(uint32 level, const Graphics::Surface *surface, 
 		convertedSurface->free();
 		delete convertedSurface;
 	} else {
-		assert(surface->format == Driver::getRGBAPixelFormat());
-
+		// Convert the surface to texture format
 		tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, surface->w, surface->h, 0, TGL_RGBA, TGL_UNSIGNED_BYTE, const_cast<void *>(surface->getPixels()));
 	}
 }

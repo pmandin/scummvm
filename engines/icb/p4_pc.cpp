@@ -239,7 +239,7 @@ void InitEngine(const char *lpCmdLine) {
 
 	// ok, see if the special gameScript is present
 	// if so set the stub mode to GameScript mode
-	if (gs.Init_game_script() && strstr(lpCmdLine, "mission") == NULL) {
+	if (gs.Init_game_script() && strstr(lpCmdLine, "mission") == nullptr) {
 		// GameScript mode
 		// unless there is a console.icb file we dont allow debugging
 
@@ -287,14 +287,17 @@ bool mainLoopIteration() {
 	while (g_system->getEventManager()->pollEvent(event)) {
 		switch (event.type) {
 		case Common::EVENT_KEYDOWN: {
+			// FIXME: All branches execute effectively the same code
+#if 0
 			// Pass ENTER and BACKSPACE KEYDOWN events to WriteKey() so the save menu in options_manager_pc.cpp can see them.
 			if (event.kbd.keycode == Common::KEYCODE_RETURN) {
 				WriteKey((char)event.kbd.keycode);
 			} else if (event.kbd.keycode == Common::KEYCODE_BACKSPACE) {
 				WriteKey((char)event.kbd.keycode);
 			} else {
+#endif
 				WriteKey(event.kbd.keycode);
-			}
+			//}
 			setKeyState(event.kbd.keycode, true);
 			break;
 		}

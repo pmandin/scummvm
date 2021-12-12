@@ -28,16 +28,16 @@
 
 class TownsEmuMusicPlugin : public MusicPluginObject {
 public:
-	const char *getName() const {
+	const char *getName() const override {
 		return _s("FM-Towns Audio");
 	}
 
-	const char *getId() const {
+	const char *getId() const override {
 		return "towns";
 	}
 
-	MusicDevices getDevices() const;
-	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const;
+	MusicDevices getDevices() const override;
+	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const override;
 };
 
 MusicDevices TownsEmuMusicPlugin::getDevices() const {
@@ -47,22 +47,22 @@ MusicDevices TownsEmuMusicPlugin::getDevices() const {
 }
 
 Common::Error TownsEmuMusicPlugin::createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle) const {
-	*mididriver = 0;
+	*mididriver = nullptr;
 	return Common::kUnknownError;
 }
 
 class PC98EmuMusicPlugin : public MusicPluginObject {
 public:
-	const char *getName() const {
+	const char *getName() const override {
 		return _s("PC-98 Audio");
 	}
 
-	const char *getId() const {
+	const char *getId() const override {
 		return "pc98";
 	}
 
-	MusicDevices getDevices() const;
-	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const;
+	MusicDevices getDevices() const override;
+	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const override;
 };
 
 MusicDevices PC98EmuMusicPlugin::getDevices() const {
@@ -72,22 +72,22 @@ MusicDevices PC98EmuMusicPlugin::getDevices() const {
 }
 
 Common::Error PC98EmuMusicPlugin::createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle) const {
-	*mididriver = 0;
+	*mididriver = nullptr;
 	return Common::kUnknownError;
 }
 
 class SegaCDSoundPlugin : public MusicPluginObject {
 public:
-	const char *getName() const {
+	const char *getName() const override {
 		return _s("SegaCD Audio");
 	}
 
-	const char *getId() const {
+	const char *getId() const override {
 		return "segacd";
 	}
 
-	MusicDevices getDevices() const;
-	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const;
+	MusicDevices getDevices() const override;
+	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const override;
 };
 
 MusicDevices SegaCDSoundPlugin::getDevices() const {
@@ -97,7 +97,7 @@ MusicDevices SegaCDSoundPlugin::getDevices() const {
 }
 
 Common::Error SegaCDSoundPlugin::createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle) const {
-	*mididriver = 0;
+	*mididriver = nullptr;
 	return Common::kUnknownError;
 }
 

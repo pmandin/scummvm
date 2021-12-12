@@ -51,6 +51,7 @@ namespace GUI {
 const char *const ThemeEngine::kImageLogo = "logo.bmp";
 const char *const ThemeEngine::kImageLogoSmall = "logo_small.bmp";
 const char *const ThemeEngine::kImageSearch = "search.bmp";
+const char *const ThemeEngine::kImageGroup = "groupbtn.bmp";
 const char *const ThemeEngine::kImageEraser = "eraser.bmp";
 const char *const ThemeEngine::kImageDelButton = "delbtn.bmp";
 const char *const ThemeEngine::kImageList = "list.bmp";
@@ -121,6 +122,9 @@ static const DrawDataInfo kDrawDataDefaults[] = {
 	{kDDDefaultBackground,            "default_bg",           kDrawLayerBackground,   kDDNone},
 	{kDDTextSelectionBackground,      "text_selection",       kDrawLayerForeground,  kDDNone},
 	{kDDTextSelectionFocusBackground, "text_selection_focus", kDrawLayerForeground,  kDDNone},
+	{kDDThumbnailBackground,    	  "thumb_bg",   		  kDrawLayerForeground,   kDDNone},
+	{kDDGridItemIdle,    	  	 	  "griditem_bg",   		  kDrawLayerForeground,   kDDNone},
+	{kDDGridItemHover,    	  	  	  "griditem_hover_bg",	  kDrawLayerForeground,   kDDNone},
 
 	{kDDWidgetBackgroundDefault,    "widget_default",   kDrawLayerBackground,   kDDNone},
 	{kDDWidgetBackgroundSmall,      "widget_small",     kDrawLayerBackground,   kDDNone},
@@ -584,7 +588,7 @@ Common::Array<Common::Language> getLangIdentifiers(const Common::String &languag
 		{ "ja", Common::JA_JPN },
 		{ "ko", Common::KO_KOR },
 		{ "zh", Common::ZH_ANY },
-		{ "zh", Common::ZH_CNA },
+		{ "zh", Common::ZH_CHN },
 		{ "zh", Common::ZH_TWN }
 	};
 
@@ -659,6 +663,7 @@ bool ThemeEngine::addBitmap(const Common::String &filename, const Common::String
 			Common::SeekableReadStream *stream = (*i)->createReadStream();
 			if (stream) {
 				image = new Graphics::SVGBitmap(stream);
+				delete stream;
 				break;
 			}
 		}
@@ -774,7 +779,7 @@ void ThemeEngine::loadTheme(const Common::String &themeId) {
 
 	for (int i = 0; i < kDrawDataMAX; ++i) {
 		if (_widgets[i] == nullptr) {
-			warning("Missing data asset: '%s'", kDrawDataDefaults[i].name);
+			warning("Missing data asset: '%s' in theme '%s", kDrawDataDefaults[i].name, themeId.c_str());
 		} else {
 			_widgets[i]->calcBackgroundOffset();
 		}
@@ -1271,6 +1276,18 @@ void ThemeEngine::drawWidgetBackground(const Common::Rect &r, WidgetBackground b
 		drawDD(kDDWidgetBackgroundSlider, r);
 		break;
 
+	case kThumbnailBackground:
+		drawDD(kDDThumbnailBackground, r);
+		break;
+
+	case kGridItemBackground:
+		drawDD(kDDGridItemIdle, r);
+		break;
+
+	case kGridItemHighlight:
+		drawDD(kDDGridItemHover, r);
+		break;
+
 	default:
 		drawDD(kDDWidgetBackgroundDefault, r);
 		break;
@@ -1422,6 +1439,22 @@ void ThemeEngine::drawChar(const Common::Rect &r, byte ch, const Graphics::Font 
 	restoreBackground(charArea);
 	font->drawChar(&_screen, ch, charArea.left, charArea.top, rgbColor);
 	addDirtyRect(charArea);
+}
+
+void ThemeEngine::drawFoldIndicator(const Common::Rect &r, bool expanded) {
+	Graphics::VectorRenderer::TriangleOrientation orient;
+	if (_layerToDraw == kDrawLayerBackground)
+		return;
+
+	if (expanded)
+		orient = Graphics::VectorRenderer::kTriangleDown;
+	else
+		orient = Graphics::VectorRenderer::kTriangleRight;
+
+	_vectorRenderer->setFillMode(Graphics::VectorRenderer::kFillForeground);
+	_vectorRenderer->setFgColor(_textColors[kTextColorNormal]->r, _textColors[kTextColorNormal]->g, _textColors[kTextColorNormal]->b);
+	_vectorRenderer->drawTriangle(r.left + r.width() / 4, r.top + r.height() / 4, r.width() / 2, r.height() / 2, orient);
+	addDirtyRect(r);
 }
 
 void ThemeEngine::debugWidgetPosition(const char *name, const Common::Rect &r) {
@@ -2063,6 +2096,10 @@ Common::Rect ThemeEngine::swapClipRect(const Common::Rect &newRect) {
 	Common::Rect oldRect = _clip;
 	_clip = newRect;
 	return oldRect;
+}
+
+const Common::Rect ThemeEngine::getClipRect() {
+	return _clip;
 }
 
 void ThemeEngine::disableClipRect() {

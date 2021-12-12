@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv2 license mentioned above, MojoTouch has exclusively licensed
+ * this code on November 10th, 2021, to be use in closed-source products.
+ * Therefore, any contributions (commits) to it will also be dual-licensed.
+ *
  */
 
 #include "groovie/groovie.h"
@@ -29,9 +35,6 @@ namespace {
 extern const int8 beehiveLogicTable1[368];
 extern const int8 beehiveLogicTable2[800];
 }
-
-Common::Array<int> overrideMoves;
-uint overrideIndex = 0;
 
 void BeehiveGame::overrideClick(byte *vars) {
 	if (overrideIndex >= overrideMoves.size())
@@ -306,8 +309,12 @@ void BeehiveGame::sub07(int8 *a1, int8 *a2, int8 *a3, int8 *a4, int8 *a5, int8 *
 	int8 params[4];
 
 	*a4 = 0;
-	if (calcMove(_beehiveState, -125, -1, 4, 0, params) == 125
-			&& (*a4 = 1, calcMove(_beehiveState, -125, -1, 4, 1, params) == 125)) {
+	int8 depth = 4;
+	if (_easierAi)
+		depth = 1;
+
+	if (calcMove(_beehiveState, -125, -1, depth, 0, params) == 125
+			&& (*a4 = 1, calcMove(_beehiveState, -125, -1, depth, 1, params) == 125)) {
 		*a1 = -1;
 		*a2 = -1;
 		for (int i = 0; i < HEXCOUNT; ++i) {
@@ -326,8 +333,12 @@ void BeehiveGame::sub08(int8 *a1, int8 *a2, int8 *a3, int8 *a4, int8 *a5, int8 *
 	int8 params[4];
 
 	*a4 = 0;
-	if (calcMove(_beehiveState, 125, 1, 4, 0, params) == -125
-			&& (*a4 = 1, calcMove(_beehiveState, 125, 1, 4, 1, params) == -125)) {
+	int8 depth = 4;
+	if (_easierAi)
+		depth = 1;
+
+	if (calcMove(_beehiveState, 125, 1, depth, 0, params) == -125
+			&& (*a4 = 1, calcMove(_beehiveState, 125, 1, depth, 1, params) == -125)) {
 		*a1 = -1;
 		*a2 = -1;
 		for (int i = 0; i < HEXCOUNT; ++i) {
@@ -817,6 +828,7 @@ void BeehiveGame::tests() {
 		/**/ 25, 23, /**/ 46, 31, /**/ 31, 30, /**/ 52, 38, /**/ 29, 12, /**/ 31, 39, /**/ 35, 28, /**/ 49, 32,
 		/**/ 31, 40, /**/ 39, 47, /**/ 20, 19, /**/ 29, 37, /**/ 57, 58, /**/ 53, 46, /**/ 53, 52
 	};
+	overrideIndex = 0;
 }
 
 } // End of Groovie namespace

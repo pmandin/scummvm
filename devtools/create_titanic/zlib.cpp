@@ -83,7 +83,7 @@ bool inflateZlibHeaderless(byte *dst, uint dstLen, const byte *src, uint srcLen,
 		return false;
 
 	// Set the dictionary, if provided
-	if (dict != 0) {
+	if (dict != nullptr) {
 		err = inflateSetDictionary(&stream, const_cast<byte *>(dict), dictLen);
 		if (err != Z_OK)
 			return false;
@@ -180,7 +180,7 @@ protected:
 public:
 
 	GZipReadStream(SeekableReadStream *w, uint32 knownSize = 0) : _wrapped(w), _stream() {
-		assert(w != 0);
+		assert(w != nullptr);
 
 		// Verify file header is correct
 		w->seek(0, SEEK_SET);
@@ -219,13 +219,13 @@ public:
 		inflateEnd(&_stream);
 	}
 
-	bool err() const { return (_zlibErr != Z_OK) && (_zlibErr != Z_STREAM_END); }
-	void clearErr() {
+	bool err() const override { return (_zlibErr != Z_OK) && (_zlibErr != Z_STREAM_END); }
+	void clearErr() override {
 		// only reset _eos; I/O errors are not recoverable
 		_eos = false;
 	}
 
-	uint32 read(void *dataPtr, uint32 dataSize) {
+	uint32 read(void *dataPtr, uint32 dataSize) override {
 		_stream.next_out = (byte *)dataPtr;
 		_stream.avail_out = dataSize;
 
@@ -248,16 +248,16 @@ public:
 		return dataSize - _stream.avail_out;
 	}
 
-	bool eos() const {
+	bool eos() const override {
 		return _eos;
 	}
-	int64 pos() const {
+	int64 pos() const override {
 		return _pos;
 	}
-	int64 size() const {
+	int64 size() const override {
 		return _origSize;
 	}
-	bool seek(int64 offset, int whence = SEEK_SET) {
+	bool seek(int64 offset, int whence = SEEK_SET) override {
 		int32 newPos = 0;
 		switch (whence) {
 		default:
@@ -349,7 +349,7 @@ protected:
 
 public:
 	GZipWriteStream(WriteStream *w) : _wrapped(w), _stream(), _pos(0) {
-		assert(w != 0);
+		assert(w != nullptr);
 
 		// Adding 16 to windowBits indicates to zlib that it is supposed to
 		// write gzip headers. This feature was added in zlib 1.2.0.4,
@@ -366,7 +366,7 @@ public:
 		_stream.next_out = _buf;
 		_stream.avail_out = BUFSIZE;
 		_stream.avail_in = 0;
-		_stream.next_in = 0;
+		_stream.next_in = nullptr;
 	}
 
 	~GZipWriteStream() {
@@ -374,18 +374,18 @@ public:
 		deflateEnd(&_stream);
 	}
 
-	bool err() const {
+	bool err() const override {
 		// CHECKME: does Z_STREAM_END make sense here?
 		return (_zlibErr != Z_OK && _zlibErr != Z_STREAM_END) || _wrapped->err();
 	}
 
-	void clearErr() {
+	void clearErr() override {
 		// Note: we don't reset the _zlibErr here, as it is not
 		// clear in general how
 		_wrapped->clearErr();
 	}
 
-	void finalize() {
+	void finalize() override {
 		if (_zlibErr != Z_OK)
 			return;
 
@@ -405,7 +405,7 @@ public:
 		_wrapped->finalize();
 	}
 
-	uint32 write(const void *dataPtr, uint32 dataSize) {
+	uint32 write(const void *dataPtr, uint32 dataSize) override {
 		if (err())
 			return 0;
 
@@ -422,7 +422,7 @@ public:
 		return dataSize - _stream.avail_in;
 	}
 
-	virtual int64 pos() const { return _pos; }
+	int64 pos() const override { return _pos; }
 };
 
 #endif	// USE_ZLIB

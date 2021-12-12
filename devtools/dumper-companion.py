@@ -22,6 +22,7 @@ from binascii import crc_hqx
 from pathlib import Path
 from struct import pack, unpack
 from typing import Any, ByteString, List, Tuple
+import unicodedata
 
 import machfs
 
@@ -102,16 +103,16 @@ def decode_macjapanese(text: ByteString) -> str:
         elif (0x81 <= hi <= 0x9F) or (0xE0 <= hi <= 0xFC):  # two-byte sequence
             lo = next(i_text, None)
             if lo is None:
-                print(f"WARNING: Mac Japanese sequence missing second byte 0x{hi:02x}, decoding as MacRoman")
-                res += int.to_bytes(hi, 1, 'little').decode('mac-roman')
-                hi = next(i_text, None)
-                continue
+                print(f"WARNING: Mac Japanese sequence missing second byte 0x{hi:02x}")
+                return text.decode('mac-roman')
             hi_key = f'{hi:02x}'
             lo_key = lo - 0x40
-            if decode_map.get(hi_key) is None or decode_map[hi_key][lo_key] is None:
-                raise Exception(
-                    f"No mapping for MacJapanese sequence 0x{hi_key}{lo:02x}"
-                )
+            if lo_key < 0:
+                print(f"WARNING: second byte out of range 0x{lo:02x}")
+                return text.decode('mac-roman')
+            elif decode_map.get(hi_key) is None or decode_map[hi_key][lo_key] is None:
+                print(f"WARNING: No mapping for MacJapanese sequence 0x{hi_key}{lo:02x}")
+                return text.decode('mac-roman')
             assert_tmp = decode_map[hi_key][lo_key]
             assert assert_tmp  # mypy assert
             res += assert_tmp
@@ -284,6 +285,7 @@ def extract_volume(args: argparse.Namespace) -> int:
 
     destination_dir.mkdir(parents=True, exist_ok=True)
     for hpath, obj in vol.iter_paths():
+        # Encode the path
         upath = destination_dir
         for el in hpath:
             if japanese:
@@ -293,8 +295,11 @@ def extract_volume(args: argparse.Namespace) -> int:
 
             upath /= el
 
+        # Write the file to disk
         if isinstance(obj, machfs.Folder):
             upath.mkdir(exist_ok=True)
+            # Set the modified time for folders
+            os.utime(upath, (obj.mddate - 2082844800, obj.mddate - 2082844800))
         else:
             print(upath)
             file = obj.data
@@ -302,14 +307,21 @@ def extract_volume(args: argparse.Namespace) -> int:
                 file = file_to_macbin(obj, hpath[-1].encode("mac_roman"))
             upath.write_bytes(file)
             os.utime(upath, (obj.mddate - 2082844800, obj.mddate - 2082844800))
+            # This needs to be done after writing files as writing files resets
+            # the parent folder's modified time that was set before
+            parent_folder_modtime = vol.get(hpath[:-1]).mddate - 2082844800
+            os.utime(upath.parent, (parent_folder_modtime, parent_folder_modtime))
     return 0
 
 
-def punyencode_paths(paths: List[Path], verbose: bool = False) -> int:
+def punyencode_paths(paths: List[Path], verbose: bool = False, source_encoding: str = None) -> int:
     """Rename filepaths to their punyencoded names"""
     count = 0
     for path in paths:
-        new_name = punyencode(path.name)
+        if source_encoding is not None:
+            new_name = punyencode(demojibake_hfs_bytestring(bytes(path.name, "utf8"), source_encoding))
+        else:
+            new_name = punyencode(path.name)
         if path.stem != new_name:
             count += 1
             new_path = path.parent / new_name
@@ -319,13 +331,45 @@ def punyencode_paths(paths: List[Path], verbose: bool = False) -> int:
     return count
 
 
+def demojibake_hfs_bytestring(s: ByteString, encoding: str):
+    """
+    Takes misinterpreted bytestrings from macOS and transforms
+    them into the correct interpretation.
+    When not able to figure out the correct encoding for legacy
+    non-Unicode HFS filesystems, which is most of the time, macOS
+    interprets filenames as though they're MacRoman. Once mounted,
+    the files are presented via all of the macOS filesystem APIs
+    as though they're UTF-8.
+    This is great for Western European languages, but falls over for
+    other languages. For example, Japanese filenames will be rendered
+    as gibberish (mojibake). This can be fixed by normalizing the
+    filenames' UTF-8 encoding, transforming it back to "MacRoman",
+    then correctly reinterpreting via the correct encoding.
+    """
+    return decode_bytestring(
+        # macOS renders paths as NFD, but to correctly translate
+        # this back to the original MacRoman, we first have to
+        # renormalize it to NFC.
+        unicodedata.normalize('NFC', s.decode('utf8')).encode('macroman'),
+        encoding
+    )
+
+
+def decode_bytestring(s: ByteString, encoding: str):
+    """Wrapper for decode() that can dispatch to decode_macjapanese"""
+    if encoding == "mac_japanese":
+        return decode_macjapanese(s)
+    else:
+        return s.decode(encoding)
+
+
 def punyencode_arg(args: argparse.Namespace) -> int:
     """wrapper function"""
     punyencode_dir(args.directory, verbose=True)
     return 0
 
 
-def punyencode_dir(directory: Path, verbose: bool = False) -> int:
+def punyencode_dir(directory: Path, verbose: bool = False, source_encoding: str = None) -> int:
     """
     Recursively punyencode all directory and filenames
 
@@ -333,6 +377,8 @@ def punyencode_dir(directory: Path, verbose: bool = False) -> int:
     """
     files: List[Path] = []
     dirs: List[Path] = []
+    if source_encoding is not None:
+        directory = Path(demojibake_hfs_bytestring(directory, source_encoding))
     path_glob = directory.glob("**/*")
     for item in path_glob:
         if item.is_file():
@@ -342,19 +388,19 @@ def punyencode_dir(directory: Path, verbose: bool = False) -> int:
 
     dirs.reverse()  # start renaming with the one at the bottom
 
-    count = punyencode_paths(files, verbose=verbose)
-    count += punyencode_paths(dirs, verbose=verbose)
+    count = punyencode_paths(files, verbose=verbose, source_encoding=source_encoding)
+    count += punyencode_paths(dirs, verbose=verbose, source_encoding=source_encoding)
     return count
 
 
-def has_resource_fork(dirpath: str, filename: str) -> bool:
+def has_resource_fork(dirpath: bytes, filename: bytes) -> bool:
     """
     Check if file has a resource fork
 
     Ease of compatibility between macOS and linux
     """
     filepath = os.path.join(dirpath, filename)
-    return os.path.exists(os.path.join(filepath, "..namedfork/rsrc"))
+    return os.path.exists(os.path.join(filepath, bytes("..namedfork/rsrc", "utf8")))
 
 
 def collect_forks(args: argparse.Namespace) -> int:
@@ -364,7 +410,7 @@ def collect_forks(args: argparse.Namespace) -> int:
     - combine them with the data fork when it's available
     - punyencode the filename when requested
     """
-    directory: Path = args.dir
+    directory: bytes = bytes(args.dir)
     punify: bool = args.punycode
     count_resources = 0
     count_renames = 0
@@ -373,7 +419,7 @@ def collect_forks(args: argparse.Namespace) -> int:
             if has_resource_fork(dirpath, filename):
                 print(f"Resource in {filename}")
                 count_resources += 1
-                resource_filename = filename + "/..namedfork/rsrc"
+                resource_filename = filename + bytes("/..namedfork/rsrc", "utf8")
                 to_filename = filename
 
                 filepath = os.path.join(dirpath, filename)
@@ -400,7 +446,7 @@ def collect_forks(args: argparse.Namespace) -> int:
                 with open(filepath, "rb") as data:
                     file.data = data.read()
                 with open(filepath, "wb") as to_file:
-                    to_file.write(file_to_macbin(file, to_filename.encode("mac_roman")))
+                    to_file.write(file_to_macbin(file, to_filename))
 
                     if to_filename != filename:
                         os.remove(filepath)  # Remove the original file
@@ -410,7 +456,7 @@ def collect_forks(args: argparse.Namespace) -> int:
                         (info.st_mtime, info.st_mtime),
                     )
     if punify:
-        count_renames = punyencode_dir(directory, verbose=True)
+        count_renames = punyencode_dir(directory, verbose=True, source_encoding=args.source_encoding)
 
     print(f"Macbinary {count_resources}, Renamed {count_renames} files")
     return 0
@@ -473,6 +519,12 @@ def generate_parser() -> argparse.ArgumentParser:
             help="encode pathnames into punycode",
         )
         parser_macbinary.add_argument(
+            "--source-encoding",
+            metavar="source_encoding",
+            type=str,
+            help="encoding used for filenames in this path",
+        )
+        parser_macbinary.add_argument(
             "dir", metavar="directory", type=Path, help="input directory"
         )
         parser_macbinary.set_defaults(func=collect_forks)
@@ -484,9 +536,10 @@ if __name__ == "__main__":
     parser = generate_parser()
     args = parser.parse_args()
     try:
-        exit(args.func(args))
+        f = args.func
     except AttributeError:
         parser.error("too few arguments")
+    exit(f(args))
 
 ### Test functions
 
@@ -549,6 +602,7 @@ def test_decode_name():
         ["G3フォルダ", "xn--G3-3g4axdtexf"],
         ["Where \\ Do <you> Want / To: G* ? ;Unless=nowhere,or|\"(everything)/\":*|\\?%<>,;=", "xn--Where  Do you Want  To G  ;Unless=nowhere,or(everything),;=-5baedgdcbtamaaaaaaaaa99woa3wnnmb82aqb71ekb9g3c1f1cyb7bx6rfcv2pxa"],
         ["Buried in Timeｪ Demo", "xn--Buried in Time Demo-yp97h"],
+        ["ぱそすけPPC", "xn--PPC-873bpbxa3l"]
     ]
     for input, output in checks:
         assert punyencode(input) == output

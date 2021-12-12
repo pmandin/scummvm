@@ -30,41 +30,58 @@
 
 #include <pthread.h>
 
+/**
+ * pthreads mutex implementation
+ */
+class PthreadMutexInternal final : public Common::MutexInternal {
+public:
+	PthreadMutexInternal();
+	~PthreadMutexInternal() override;
 
-OSystem::MutexRef PthreadMutexManager::createMutex() {
+	bool lock() override;
+	bool unlock() override;
+
+private:
+	pthread_mutex_t _mutex;
+};
+
+
+PthreadMutexInternal::PthreadMutexInternal() {
 	pthread_mutexattr_t attr;
 
 	pthread_mutexattr_init(&attr);
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
 
-	pthread_mutex_t *mutex = new pthread_mutex_t;
-
-	if (pthread_mutex_init(mutex, &attr) != 0) {
+	if (pthread_mutex_init(&_mutex, &attr) != 0) {
 		warning("pthread_mutex_init() failed");
-		delete mutex;
-		return NULL;
 	}
-
-	return (OSystem::MutexRef)mutex;
 }
 
-void PthreadMutexManager::lockMutex(OSystem::MutexRef mutex) {
-	if (pthread_mutex_lock((pthread_mutex_t *)mutex) != 0)
-		warning("pthread_mutex_lock() failed");
-}
-
-void PthreadMutexManager::unlockMutex(OSystem::MutexRef mutex) {
-	if (pthread_mutex_unlock((pthread_mutex_t *)mutex) != 0)
-		warning("pthread_mutex_unlock() failed");
-}
-
-void PthreadMutexManager::deleteMutex(OSystem::MutexRef mutex) {
-	pthread_mutex_t *m = (pthread_mutex_t *)mutex;
-
-	if (pthread_mutex_destroy(m) != 0)
+PthreadMutexInternal::~PthreadMutexInternal() {
+	if (pthread_mutex_destroy(&_mutex) != 0)
 		warning("pthread_mutex_destroy() failed");
-	else
-		delete m;
+}
+
+bool PthreadMutexInternal::lock() {
+	if (pthread_mutex_lock(&_mutex) != 0) {
+		warning("pthread_mutex_lock() failed");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool PthreadMutexInternal::unlock() {
+	if (pthread_mutex_unlock(&_mutex) != 0) {
+		warning("pthread_mutex_unlock() failed");
+		return false;
+	} else {
+		return true;
+	}
+}
+
+Common::MutexInternal *createPthreadMutexInternal() {
+	return new PthreadMutexInternal();
 }
 
 #endif

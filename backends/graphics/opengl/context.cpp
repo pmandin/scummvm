@@ -97,7 +97,7 @@ void OpenGLGraphicsManager::initializeGLContext() {
 
 #ifdef USE_BUILTIN_OPENGL
 #define GL_FUNC_DEF(ret, name, param) g_context.name = &name
-#define GL_FUNC_2_DEF GL_FUNC_DEF
+// GL_FUNC2_DEF will be defined in opengl-func.h
 #else
 #define GL_FUNC_DEF GL_EXT_FUNC_DEF
 #define GL_FUNC_2_DEF(ret, name, extName, param) \
@@ -207,6 +207,10 @@ void OpenGLGraphicsManager::initializeGLContext() {
 	}
 
 	// Log features supported by GL context.
+	if (g_context.shadersSupported)
+		debug(5, "GLSL version: %s", g_context.glGetString(GL_SHADING_LANGUAGE_VERSION));
+	debug(5, "OpenGL vendor: %s", g_context.glGetString(GL_VENDOR));
+	debug(5, "OpenGL renderer: %s", g_context.glGetString(GL_RENDERER));
 	debug(5, "OpenGL: NPOT texture support: %d", g_context.NPOTSupported);
 	debug(5, "OpenGL: Shader support: %d", g_context.shadersSupported);
 	debug(5, "OpenGL: Multitexture support: %d", g_context.multitextureSupported);

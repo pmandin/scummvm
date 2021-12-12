@@ -3,10 +3,15 @@ For a more comprehensive changelog of the latest experimental code, see:
 
 #### 2.6.0 (XXXX-XX-XX)
 
+ New games:
+   - Added support for Sanitarium.
+
  General:
    - Now ScummVM requires C++11 for building.
    - Implemented enhanced filtering in the Search box. See "Understanding
      the search box" in the documentation for details.
+   - Implemented Icon view in GUI [GSoC task]
+   - Scalers are now supported with the OpenGL graphics mode.
 
  AGOS:
    - Fixed old Waxworks AdLib music regression.
@@ -18,20 +23,43 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added text to speech for dialogs and object descriptions.
 
  Kyra:
-   - Added support for the Traditional Chinese version of Legend of Kyrandia 3.
-   - Added sound support for the Macintosh version of Legend of Kyrandia
+   - Added support for the Traditional Chinese versions of Legend of Kyrandia 1 - 3.
+   - Added sound support for the Macintosh version of Legend of Kyrandia.
+   - Added support for playing the the Macintosh non-talkie version of Legend
+     of Kyrandia 1 directly from the files on the CD. This means you no longer
+     have to run the installer to extract the data files.
 
  Supernova:
    - Added text to speech for dialogs and object descriptions.
 
  SCUMM:
+   - New Digital iMUSE engine.
    - Improved support for the high-resolution text in the 16-color Macintosh
      versions of Loom and Indiana Jones and the Last Crusade.
+   - Fixed crash when loading savegames from Humongous Entertainment games.
+
+ Sherlock:
+   - Fix crash using matches on lab table.
+   - Fix character animation in Rose Tattoo.
+   - Fix glitch opening map in Rose Tattoo.
+   - Fix bell pull sound in Serrated Scalpel.
+   - Fix inventory not updating in Serrated Scalpel after examining watch.
+   - Fix fog overlay at Cleopatra's Needle in Rose Tattoo.
+   - Fix graphic issues in Serrated Scalpel looking at items whilst inventory is open.
 
  Xeen:
-   - Fix crash on startup loading constants from xeen.ccs
-   - Fix spell selection aborting when characters were switched
-   - Fixed some bad memory accesses
+   - Fix crash on startup loading constants from xeen.ccs.
+   - Fix spell selection aborting when characters were switched.
+   - Fixed some bad memory accesses.
+   - Various sound fixes.
+
+ macOS port:
+   - Added support for displaying OSD messages on the Touch Bar.
+
+ Windows port:
+   - Added "Portable Mode" in which the executable's directory is used to store
+     application files if a scummvm.ini file is present, instead of the user's
+     profile directory.
 
 #### 2.5.0 "Twenty years ago today..." (2021-10-09)
 

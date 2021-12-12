@@ -38,10 +38,10 @@ Movie::Movie(Myst3Engine *vm, uint16 id) :
 		_posV(0),
 		_startFrame(0),
 		_endFrame(0),
-		_texture(0),
+		_texture(nullptr),
 		_force2d(false),
 		_forceOpaque(false),
-		_subtitles(0),
+		_subtitles(nullptr),
 		_volume(0),
 		_additiveBlending(false),
 		_transparency(100) {
@@ -96,6 +96,7 @@ void Movie::loadPosition(const ResourceDescription::VideoData &videoData) {
 	static const float scale = 50.0f;
 
 	_is3D = _vm->_state->getViewType() == kCube;
+	assert(!_texture);
 
 	Math::Vector3d planeDirection = videoData.v1;
 	planeDirection.normalize();
@@ -171,8 +172,10 @@ void Movie::drawNextFrameToTexture() {
 	if (frame) {
 		if (_texture)
 			_texture->update(frame);
+		else if (_is3D)
+			_texture = _vm->_gfx->createTexture3D(frame);
 		else
-			_texture = _vm->_gfx->createTexture(frame);
+			_texture = _vm->_gfx->createTexture2D(frame);
 	}
 }
 
@@ -205,7 +208,7 @@ void Movie::pause(bool p) {
 
 Movie::~Movie() {
 	if (_texture)
-		_vm->_gfx->freeTexture(_texture);
+		delete _texture;
 
 	delete _subtitles;
 }
@@ -213,6 +216,8 @@ Movie::~Movie() {
 void Movie::setForce2d(bool b) {
 	_force2d = b;
 	if (_force2d) {
+		if (_is3D)
+			delete _texture;
 		_is3D = false;
 	}
 }
@@ -473,7 +478,7 @@ SimpleMovie::~SimpleMovie() {
 ProjectorMovie::ProjectorMovie(Myst3Engine *vm, uint16 id, Graphics::Surface *background) :
 		ScriptedMovie(vm, id),
 		_background(background),
-	_frame(0) {
+	_frame(nullptr) {
 	_enabled = true;
 
 	for (uint i = 0; i < kBlurIterations; i++) {
@@ -560,8 +565,10 @@ void ProjectorMovie::update() {
 
 	if (_texture)
 		_texture->update(_frame);
+	else if (_is3D)
+		_texture = _vm->_gfx->createTexture3D(_frame);
 	else
-		_texture = _vm->_gfx->createTexture(_frame);
+		_texture = _vm->_gfx->createTexture2D(_frame);
 }
 
 } // End of namespace Myst3

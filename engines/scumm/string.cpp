@@ -29,7 +29,7 @@
 #include "scumm/charset.h"
 #include "scumm/dialogs.h"
 #include "scumm/file.h"
-#include "scumm/imuse_digi/dimuse.h"
+#include "scumm/imuse_digi/dimuse_engine.h"
 #ifdef ENABLE_HE
 #include "scumm/he/intern_he.h"
 #include "scumm/he/localizer.h"
@@ -644,7 +644,7 @@ void ScummEngine::CHARSET_1() {
 			return;
 	}
 
-	a = NULL;
+	a = nullptr;
 	if (getTalkingActor() != 0xFF)
 		a = derefActorSafe(getTalkingActor(), "CHARSET_1");
 
@@ -1107,13 +1107,13 @@ void ScummEngine::drawString(int a, const byte *msg) {
 	if (_game.version >= 4) {
 		// trim from the right
 		byte *tmp = buf;
-		space = NULL;
+		space = nullptr;
 		while (*tmp) {
 			if (*tmp == ' ') {
 				if (!space)
 					space = tmp;
 			} else {
-				space = NULL;
+				space = nullptr;
 			}
 			tmp++;
 		}
@@ -1246,7 +1246,7 @@ int ScummEngine::convertMessageToString(const byte *msg, byte *dst, int dstSize)
 	start = dst;
 	end = dst + dstSize;
 
-	if (msg == NULL) {
+	if (msg == nullptr) {
 		debug(0, "Bad message in convertMessageToString, ignoring");
 		return 0;
 	}
@@ -1828,7 +1828,7 @@ void ScummEngine_v7::playSpeech(const byte *ptr) {
 
 		_sound->stopTalkSound();
 		_imuseDigital->stopSound(kTalkSoundID);
-		_imuseDigital->startVoice(kTalkSoundID, pointerStr.c_str());
+		_imuseDigital->startVoice(kTalkSoundID, pointerStr.c_str(), _actorToPrintStrFor);
 		_sound->talkSound(0, 0, 2);
 	}
 }
@@ -2142,7 +2142,7 @@ Common::CodePage ScummEngine::getDialogCodePage() const {
 	case Common::JA_JPN:
 		return Common::kWindows932;
 	case Common::ZH_TWN:
-	case Common::ZH_CNA:
+	case Common::ZH_CHN:
 		return Common::kWindows950;
 	case Common::RU_RUS:
 		return Common::kDos866;

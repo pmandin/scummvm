@@ -158,6 +158,7 @@ Debugger::Debugger() : Shared::Debugger() {
 	registerCmd("MainActor::useMedikit", WRAP_METHOD(Debugger, cmdUseMedikit));
 	registerCmd("MainActor::useEnergyCube", WRAP_METHOD(Debugger, cmdUseEnergyCube));
 	registerCmd("MainActor::detonateBomb", WRAP_METHOD(Debugger, cmdDetonateBomb));
+	registerCmd("MainActor::dropWeapon", WRAP_METHOD(Debugger, cmdDropWeapon));
 	registerCmd("MainActor::toggleCombat", WRAP_METHOD(Debugger, cmdToggleCombat));
 	registerCmd("ItemSelectionProcess::startSelection", WRAP_METHOD(Debugger, cmdStartSelection));
 	registerCmd("ItemSelectionProcess::useSelectedItem", WRAP_METHOD(Debugger, cmdUseSelection));
@@ -214,14 +215,14 @@ Debugger::~Debugger() {
 }
 
 
-void Debugger::executeCommand(const ArgsType &args) {
-	ArgvType argv;
+void Debugger::executeCommand(const Common::String &args) {
+	Common::Array<Common::String> argv;
 	StringToArgv(args, argv);
 
 	executeCommand(argv);
 }
 
-void Debugger::executeCommand(const ArgvType &argv) {
+void Debugger::executeCommand(const Common::Array<Common::String> &argv) {
 	if (argv.empty())
 		return;
 
@@ -1146,6 +1147,22 @@ bool Debugger::cmdDetonateBomb(int argc, const char **argv) {
 
 	MainActor *av = getMainActor();
 	av->detonateBomb();
+	return false;
+}
+
+bool Debugger::cmdDropWeapon(int argc, const char **argv) {
+	if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
+		debugPrintf("Can't drop weapon: avatarInStasis\n");
+		return false;
+	}
+
+	// Only if controlling avatar.
+	if (!_isAvatarControlled()) {
+		return false;
+	}
+
+	MainActor *av = getMainActor();
+	av->dropWeapon();
 	return false;
 }
 

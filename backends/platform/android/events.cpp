@@ -41,8 +41,8 @@
 
 #include <android/input.h>
 
+#include "backends/graphics/android/android-graphics.h"
 #include "backends/platform/android/android.h"
-#include "backends/platform/android/graphics.h"
 #include "backends/platform/android/jni-android.h"
 
 // floating point. use sparingly
@@ -557,7 +557,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 
 			e.type = Common::EVENT_MOUSEMOVE;
 
-			e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+			e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 
 			{
 				int16 *c;
@@ -601,7 +601,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 				return;
 			}
 
-			e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+			e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 
 			pushEvent(e);
 
@@ -610,7 +610,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 
 	case JE_DOWN:
 //		LOGD("JE_DOWN");
-		_touch_pt_down = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+		_touch_pt_down = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 		_touch_pt_scroll.x = -1;
 		_touch_pt_scroll.y = -1;
 		break;
@@ -648,7 +648,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 		e.type = Common::EVENT_MOUSEMOVE;
 
 		if (_touchpad_mode) {
-			e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+			e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 		} else {
 			e.mouse.x = arg1;
 			e.mouse.y = arg2;
@@ -720,7 +720,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 		e.type = Common::EVENT_MOUSEMOVE;
 
 		if (_touchpad_mode) {
-			e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+			e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 		} else {
 			e.mouse.x = arg1;
 			e.mouse.y = arg2;
@@ -789,7 +789,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 		e.type = Common::EVENT_MOUSEMOVE;
 
 		if (_touchpad_mode) {
-			e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+			e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 		} else {
 			e.mouse.x = arg3;
 			e.mouse.y = arg4;
@@ -880,7 +880,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 					return;
 				}
 
-//				e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+//				e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 //
 //				_event_queue_lock->lock();
 //
@@ -972,7 +972,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 		return;
 
 	case JE_BALL:
-		e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+		e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 
 		switch (arg1) {
 		case AMOTION_EVENT_ACTION_DOWN:
@@ -1129,7 +1129,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 				break;
 			}
 
-			e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+			e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 
 			break;
 
@@ -1156,7 +1156,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 		switch (arg1) {
 		// AMOTION_EVENT_ACTION_MOVE is 2 in NDK (https://developer.android.com/ndk/reference/group/input)
 		case AMOTION_EVENT_ACTION_MOVE:
-			e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+			e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 			e.type = Common::EVENT_MOUSEMOVE;
 
 			// already multiplied by 100
@@ -1192,7 +1192,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 					break;
 				}
 
-				e.mouse = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->getMousePosition();
+				e.mouse = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
 
 				break;
 
@@ -1245,15 +1245,15 @@ bool OSystem_Android::pollEvent(Common::Event &event) {
 
 			if (JNI::egl_surface_width > 0 && JNI::egl_surface_height > 0) {
 				// surface changed
-				dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->deinitSurface();
-				dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->initSurface();
+				dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->deinitSurface();
+				dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->initSurface();
 
 				event.type = Common::EVENT_SCREEN_CHANGED;
 
 				return true;
 			} else {
 				// surface lost
-				dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->deinitSurface();
+				dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->deinitSurface();
 			}
 		}
 
@@ -1287,7 +1287,7 @@ bool OSystem_Android::pollEvent(Common::Event &event) {
 
 	if (Common::isMouseEvent(event)) {
 		if (_graphicsManager)
-			return dynamic_cast<AndroidGraphicsManager *>(_graphicsManager)->notifyMousePosition(event.mouse);
+			return dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->notifyMousePosition(event.mouse);
 	}
 
 	return true;
@@ -1296,6 +1296,13 @@ bool OSystem_Android::pollEvent(Common::Event &event) {
 void OSystem_Android::pushEvent(const Common::Event &event) {
 	_event_queue_lock->lock();
 	_event_queue.push(event);
+	_event_queue_lock->unlock();
+}
+
+void OSystem_Android::pushEvent(const Common::Event &event1, const Common::Event &event2) {
+	_event_queue_lock->lock();
+	_event_queue.push(event1);
+	_event_queue.push(event2);
 	_event_queue_lock->unlock();
 }
 

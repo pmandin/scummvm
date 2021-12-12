@@ -70,12 +70,9 @@ MenuGump::MenuGump(bool nameEntryMode)
 	PaletteManager *palman = PaletteManager::get_instance();
 	palman->getTransformMatrix(_oldPalTransform, PaletteManager::Pal_Game);
 	palman->untransformPalette(PaletteManager::Pal_Game);
-
-	MetaEngine::setGameMenuActive(true);
 }
 
 MenuGump::~MenuGump() {
-	MetaEngine::setGameMenuActive(false);
 }
 
 
@@ -260,18 +257,13 @@ bool MenuGump::OnTextInput(int unicode) {
 
 //static
 void MenuGump::showMenu() {
-	Gump *gump = Ultima8Engine::get_instance()->getMenuGump();
-
-	if (gump) {
-		gump->Close();
-	} else {
-		if (GAME_IS_U8)
-			gump = new MenuGump();
-		else
-			gump = new CruMenuGump();
-		gump->InitGump(0);
-		gump->setRelativePosition(CENTER);
-	}
+	ModalGump *gump;
+	if (GAME_IS_U8)
+		gump = new MenuGump();
+	else
+		gump = new CruMenuGump();
+	gump->InitGump(0);
+	gump->setRelativePosition(CENTER);
 }
 
 //static

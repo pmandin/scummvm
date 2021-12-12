@@ -75,8 +75,9 @@ MODULE_OBJS += \
 	networking/curl/curlrequest.o \
 	networking/curl/curljsonrequest.o \
 	networking/curl/postrequest.o \
-	networking/curl/sessionrequest.o \
-	networking/curl/request.o
+	networking/curl/request.o \
+	networking/curl/session.o \
+	networking/curl/sessionrequest.o
 endif
 
 ifdef USE_SDL_NET
@@ -224,8 +225,16 @@ endif
 
 endif
 
+ifeq ($(BACKEND),3ds)
+MODULE_OBJS += \
+	mutex/3ds/3ds-mutex.o
+endif
+
 ifeq ($(BACKEND),android)
 MODULE_OBJS += \
+	graphics/android/android-graphics.o \
+	graphics3d/android/android-graphics3d.o \
+	graphics3d/android/texture.o \
 	mutex/pthread/pthread-mutex.o
 endif
 
@@ -371,6 +380,7 @@ ifeq ($(BACKEND),wii)
 MODULE_OBJS += \
 	fs/wii/wii-fs.o \
 	fs/wii/wii-fs-factory.o \
+	mutex/wii/wii-mutex.o \
 	plugins/wii/wii-provider.o
 endif
 

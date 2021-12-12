@@ -26,14 +26,14 @@ namespace ICB {
 
 static const PlainGameDescriptor icbGames[] = {
 	{ "icb", "In Cold Blood" },
-	{ 0, 0 }
+	{ nullptr, nullptr }
 };
 
 static const char *directoryGlobs[] = {
 	"engine",
 	"linc",
 	"demo",
-	0
+	nullptr
 };
 
 static const ADGameDescription gameDescriptions[] = {
@@ -84,13 +84,13 @@ public:
 		_directoryGlobs = directoryGlobs;
 	}
 
-	virtual const char *getName() const override { return "In Cold Blood Engine"; }
+	const char *getName() const override { return "In Cold Blood Engine"; }
 
 	const char *getEngineId() const override {
 		return "icb";
 	}
 
-	virtual const char *getOriginalCopyright() const override { return "(C) 2000 Revolution Software Ltd"; }
+	const char *getOriginalCopyright() const override { return "(C) 2000 Revolution Software Ltd"; }
 };
 
 } // End of namespace ICB

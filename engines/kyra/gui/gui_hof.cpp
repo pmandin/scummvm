@@ -34,7 +34,7 @@ namespace Kyra {
 
 void KyraEngine_HoF::loadButtonShapes() {
 	const uint8 *src = _screen->getCPagePtr(3);
-	_screen->loadBitmap("_BUTTONS.CSH", 3, 3, 0);
+	_screen->loadBitmap("_BUTTONS.CSH", 3, 3, nullptr);
 
 	_gui->_scrollUpButton.data0ShapePtr = _buttonShapes[0] = _screen->makeShapeCopy(src, 0);
 	_gui->_scrollUpButton.data2ShapePtr = _buttonShapes[1] = _screen->makeShapeCopy(src, 1);
@@ -108,6 +108,14 @@ Common::String GUI_HoF::getMenuItemLabel(const MenuItem &menuItem) {
 }
 
 Common::String GUI_HoF::getTableString(int id, bool decode) {
+	// Apparently, these were forgotten to translate in the text files...
+	if (_vm->gameFlags().lang == Common::ZH_TWN) {
+		if (id == 18)
+			return Common::String(_saveLoadStringsZH[1]);
+		else if (id == 42)
+			return Common::String(_saveLoadStringsZH[0]);
+	}
+
 	return _vm->getTableString(id, _vm->_optionsBuffer, decode);
 }
 
@@ -258,31 +266,46 @@ void KyraEngine_HoF::redrawInventory(int page) {
 
 void KyraEngine_HoF::scrollInventoryWheel() {
 	WSAMovie_v2 movie(this);
-	movie.open("INVWHEEL.WSA", 0, 0);
+	movie.open("INVWHEEL.WSA", 0, nullptr);
 	int frames = movie.opened() ? movie.frames() : 6;
 	memcpy(_screenBuffer, _screen->getCPagePtr(2), 64000);
 	uint8 overlay[0x100];
 	_screen->generateOverlay(_screen->getPalette(0), overlay, 0, 50);
-	_screen->copyRegion(0x46, 0x90, 0x46, 0x79, 0x71, 0x17, 0, 2, Screen::CR_NO_P_CHECK);
+
+	int ry2 = 121;
+	int rh = 23;
+	int rh2 = 46;
+	int rm = 981;
+	// The Chinese version needs a couple of extra pixels for the text display.
+	// at the bottom. This means that the animation has to be clipped a bit, so
+	// that it does not collide with the text.
+	if (_flags.lang == Common::ZH_TWN) {
+		ry2 = 123;
+		rh = 21;
+		rh2 = 42;
+		rm = 896;
+	}
+
+	_screen->copyRegion(70, 144, 70, ry2, 113, rh, 0, 2, Screen::CR_NO_P_CHECK);
 	snd_playSoundEffect(0x25);
 
 	bool breakFlag = false;
 	for (int i = 0; i <= 6 && !breakFlag; ++i) {
 		if (movie.opened()) {
-			movie.displayFrame(i % frames, 0, 0, 0, 0, 0, 0);
+			movie.displayFrame(i % frames, 0, 0, 0, 0, nullptr, nullptr);
 			_screen->updateScreen();
 		}
 
 		uint32 endTime = _system->getMillis() + _tickLength;
 
-		int y = (i * 981) >> 8;
-		if (y >= 23 || i == 6) {
-			y = 23;
+		int y = (i * rm) >> 8;
+		if (y >= rh || i == 6) {
+			y = rh;
 			breakFlag = true;
 		}
 
-		_screen->applyOverlay(0x46, 0x79, 0x71, 0x17, 2, overlay);
-		_screen->copyRegion(0x46, y+0x79, 0x46, 0x90, 0x71, 0x2E, 2, 0, Screen::CR_NO_P_CHECK);
+		_screen->applyOverlay(70, ry2, 113, rh, 2, overlay);
+		_screen->copyRegion(70, y+ry2, 70, 144, 113, rh2, 2, 0, Screen::CR_NO_P_CHECK);
 		_screen->updateScreen();
 
 		delayUntil(endTime);
@@ -332,7 +355,7 @@ int KyraEngine_HoF::bookButton(Button *button) {
 	}
 
 	_screen->hideMouse();
-	showMessage(0, 0xCF);
+	showMessage(nullptr, 0xCF);
 	displayInvWsaLastFrame();
 	_bookNewPage = _bookCurPage;
 
@@ -421,29 +444,29 @@ void KyraEngine_HoF::loadBookBkgd() {
 			strcpy(filename, "_BOOKA.CPS");
 	}
 
-	_screen->loadBitmap(filename, 3, 3, 0);
+	_screen->loadBitmap(filename, 3, 3, nullptr);
 }
 
 void KyraEngine_HoF::showBookPage() {
 	char filename[16];
 
 	sprintf(filename, "PAGE%.01X.%s", _bookCurPage, _languageExtension[_lang]);
-	uint8 *leftPage = _res->fileData(filename, 0);
+	uint8 *leftPage = _res->fileData(filename, nullptr);
 	if (!leftPage) {
 		// some floppy version use a TXT extension
 		sprintf(filename, "PAGE%.01X.TXT", _bookCurPage);
-		leftPage = _res->fileData(filename, 0);
+		leftPage = _res->fileData(filename, nullptr);
 	}
 
 	int leftPageY = _bookPageYOffset[_bookCurPage];
 
 	sprintf(filename, "PAGE%.01X.%s", _bookCurPage+1, _languageExtension[_lang]);
-	uint8 *rightPage = 0;
+	uint8 *rightPage = nullptr;
 	if (_bookCurPage != _bookMaxPage) {
-		rightPage = _res->fileData(filename, 0);
+		rightPage = _res->fileData(filename, nullptr);
 		if (!rightPage) {
 			sprintf(filename, "PAGE%.01X.TXT", _bookCurPage);
-			rightPage = _res->fileData(filename, 0);
+			rightPage = _res->fileData(filename, nullptr);
 		}
 	}
 
@@ -476,7 +499,7 @@ void KyraEngine_HoF::bookLoop() {
 	GUI_V2_BUTTON(bookButtons[4], 0x28, 0, 0, 1, 1, 1, 0x4487, 0, 0xAA, 0x08, 0x8E, 0xB4, 0xC7, 0xCF, 0xC7, 0xCF, 0xC7, 0xCF, 0);
 	bookButtons[4].buttonCallback = BUTTON_FUNCTOR(KyraEngine_HoF, this, &KyraEngine_HoF::bookNextPage);
 
-	Button *buttonList = 0;
+	Button *buttonList = nullptr;
 
 	for (uint i = 0; i < ARRAYSIZE(bookButtons); ++i)
 		buttonList = _gui->addButtonToList(buttonList, &bookButtons[i]);
@@ -521,7 +544,7 @@ void KyraEngine_HoF::bookPrintText(int dstPage, const uint8 *str, int x, int y, 
 	_screen->_curPage = dstPage;
 
 	_screen->setTextColor(_bookTextColorMap, 0, 3);
-	Screen::FontId oldFont = _screen->setFont(_flags.lang == Common::JA_JPN ? Screen::FID_SJIS_FNT : Screen::FID_BOOKFONT_FNT);
+	Screen::FontId oldFont = _screen->setFont(_bookFont);
 	_screen->_charSpacing = -2;
 
 	Common::String strr((const char *)str);
@@ -581,7 +604,7 @@ int KyraEngine_HoF::cauldronClearButton(Button *button) {
 	snd_playSoundEffect(0x25);
 	loadInvWsa("PULL.WSA", 1, 6, 0, -1, -1, 1);
 	loadInvWsa("CAULD00.WSA", 1, 7, 0, 0xD4, 0x0F, 1);
-	showMessage(0, 0xCF);
+	showMessage(nullptr, 0xCF);
 	setCauldronState(0, 0);
 	clearCauldronTable();
 	snd_playSoundEffect(0x57);
@@ -638,7 +661,7 @@ int KyraEngine_HoF::cauldronButton(Button *button) {
 				snd_playSoundEffect(0x6C);
 				++_cauldronUseCount;
 				if (_cauldronStateTable[_cauldronState] <= _cauldronUseCount && _cauldronUseCount) {
-					showMessage(0, 0xCF);
+					showMessage(nullptr, 0xCF);
 					setCauldronState(0, true);
 					clearCauldronTable();
 				}
@@ -672,7 +695,7 @@ int GUI_HoF::optionsButton(Button *button) {
 	if (!_screen->isMouseVisible() && button)
 		return 0;
 
-	_vm->showMessage(0, 0xCF);
+	_vm->showMessage(nullptr, 0xCF);
 
 	if (_vm->_mouseState < -1) {
 		_vm->_mouseState = -1;
@@ -709,7 +732,7 @@ int GUI_HoF::optionsButton(Button *button) {
 
 		_loadedSave = false;
 
-		loadMenu(0);
+		loadMenu(nullptr);
 
 		if (_loadedSave) {
 			if (_restartGame)
@@ -1139,7 +1162,7 @@ int GUI_HoF::loadMenu(Button *caller) {
 	}
 
 	_savegameOffset = 0;
-	setupSavegameNames(_loadMenu, 5);
+	setupSavegameNames(_loadMenu, _saveLoadNumSlots);
 	initMenu(_loadMenu);
 	_isLoadMenu = true;
 	_noLoadProcess = false;

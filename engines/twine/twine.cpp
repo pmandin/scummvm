@@ -70,6 +70,7 @@
 #include "twine/scene/scene.h"
 #include "twine/script/script_life_v1.h"
 #include "twine/script/script_move_v1.h"
+#include "twine/slideshow.h"
 #include "twine/text.h"
 
 namespace TwinE {
@@ -104,7 +105,7 @@ FrameMarker::~FrameMarker() {
 	const uint32 frameTime = end - _start;
 	const uint32 maxDelay = 1000 / _fps;
 	if (frameTime > maxDelay) {
-		debug("Frame took longer than the max allowed time: %u (max is %u)", frameTime, maxDelay);
+		debug(5, "Frame took longer than the max allowed time: %u (max is %u)", frameTime, maxDelay);
 		return;
 	}
 	const uint32 waitMillis = maxDelay - frameTime;
@@ -255,8 +256,14 @@ Common::Error TwinEEngine::run() {
 
 	initGraphics(w, h);
 	allocVideoMemory(w, h);
+	if (isLBASlideShow()) {
+		playSlideShow(this);
+		return Common::kNoError;
+	}
+	_renderer->init(w, h);
+	_grid->init(w, h);
 	initAll();
-	initEngine();
+	playIntro();
 	_sound->stopSamples();
 	saveFrontBuffer();
 
@@ -380,8 +387,6 @@ void TwinEEngine::allocVideoMemory(int32 w, int32 h) {
 
 	_workVideoBuffer.create(w, h, format);
 	_frontVideoBuffer.create(w, h, format);
-	_renderer->init(w, h);
-	_grid->init(w, h);
 }
 
 static int getLanguageTypeIndex(const char *languageName) {
@@ -452,7 +457,6 @@ void TwinEEngine::initConfigurations() {
 	_cfgfile.Mouse = ConfGetIntOrDefault("mouse", true);
 
 	_cfgfile.UseAutoSaving = ConfGetBoolOrDefault("useautosaving", false);
-	_cfgfile.CrossFade = ConfGetBoolOrDefault("crossfade", false);
 	_cfgfile.WallCollision = ConfGetBoolOrDefault("wallcollision", false);
 
 	_actor->_autoAggressive = ConfGetBoolOrDefault("combatauto", true);
@@ -466,7 +470,6 @@ void TwinEEngine::initConfigurations() {
 	debug(1, "Fps:            %i", _cfgfile.Fps);
 	debug(1, "Debug:          %s", (_cfgfile.Debug ? "true" : "false"));
 	debug(1, "UseAutoSaving:  %s", (_cfgfile.UseAutoSaving ? "true" : "false"));
-	debug(1, "CrossFade:      %s", (_cfgfile.CrossFade ? "true" : "false"));
 	debug(1, "WallCollision:  %s", (_cfgfile.WallCollision ? "true" : "false"));
 	debug(1, "AutoAggressive: %s", (_actor->_autoAggressive ? "true" : "false"));
 	debug(1, "ShadowMode:     %i", _cfgfile.ShadowMode);
@@ -478,12 +481,7 @@ void TwinEEngine::queueMovie(const char *filename) {
 	_queuedFlaMovie = filename;
 }
 
-void TwinEEngine::initEngine() {
-	_screens->clearScreen();
-
-	// Check if LBA CD-Rom is on drive
-	_music->initCdrom();
-
+void TwinEEngine::playIntro() {
 	_input->enableKeyMap(cutsceneKeyMapId);
 	// Display company logo
 	bool abort = false;
@@ -524,9 +522,6 @@ void TwinEEngine::initEngine() {
 			_movie->playMovie("INTRO");
 		}
 	}
-	_input->enableKeyMap(uiKeyMapId);
-
-	_screens->loadMenuImage();
 }
 
 void TwinEEngine::initSceneryView() {
@@ -549,6 +544,11 @@ void TwinEEngine::initAll() {
 	_resources->initResources();
 
 	exitSceneryView();
+
+	_screens->clearScreen();
+
+	// Check if LBA CD-Rom is on drive
+	_music->initCdrom();
 }
 
 int TwinEEngine::getRandomNumber(uint max) {
@@ -710,7 +710,9 @@ void TwinEEngine::processOptionsMenu() {
 }
 
 int32 TwinEEngine::runGameEngine() { // mainLoopInteration
-	FrameMarker frame(this, 0);
+	g_system->delayMillis(2);
+
+	FrameMarker frame(this, 60);
 	_input->enableKeyMap(mainKeyMapId);
 
 	readKeys();
@@ -1024,13 +1026,8 @@ bool TwinEEngine::gameEngineLoop() {
 	_movements->setActorAngle(ANGLE_0, -ANGLE_90, ANGLE_1, &_loopMovePtr);
 
 	while (_quitGame == -1) {
-		uint32 start = g_system->getMillis();
-
-		while (g_system->getMillis() < start + _cfgfile.Fps) {
-			if (runGameEngine()) {
-				return true;
-			}
-			g_system->delayMillis(1);
+		if (runGameEngine()) {
+			return true;
 		}
 		_lbaTime++;
 		if (shouldQuit()) {
@@ -1112,38 +1109,6 @@ void TwinEEngine::copyBlockPhys(int32 left, int32 top, int32 right, int32 bottom
 		return;
 	}
 	_frontVideoBuffer.addDirtyRect(Common::Rect(left, top, right, bottom));
-}
-
-void TwinEEngine::crossFade(const uint32 *palette) {
-	Graphics::ManagedSurface backupSurface;
-	Graphics::ManagedSurface newSurface;
-	Graphics::ManagedSurface tempSurface;
-	Graphics::ManagedSurface surfaceTable;
-
-	Graphics::PixelFormat fmt(4, 8, 8, 8, 8, 24, 16, 8, 0);
-	backupSurface.create(_frontVideoBuffer.w, _frontVideoBuffer.h, fmt);
-	newSurface.create(_frontVideoBuffer.w, _frontVideoBuffer.h, fmt);
-	tempSurface.create(_frontVideoBuffer.w, _frontVideoBuffer.h, Graphics::PixelFormat::createFormatCLUT8());
-	tempSurface.setPalette(palette, 0, NUMOFCOLORS);
-
-	surfaceTable.create(_frontVideoBuffer.w, _frontVideoBuffer.h, fmt);
-
-	backupSurface.transBlitFrom(_frontVideoBuffer);
-	newSurface.transBlitFrom(tempSurface);
-
-	for (int32 i = 0; i < 8; i++) {
-		surfaceTable.blitFrom(backupSurface);
-		surfaceTable.transBlitFrom(newSurface, 0, false, 0, i * NUMOFCOLORS / 8);
-		_frontVideoBuffer.blitFrom(surfaceTable);
-		delaySkip(50);
-	}
-
-	_frontVideoBuffer.blitFrom(newSurface);
-
-	backupSurface.free();
-	newSurface.free();
-	tempSurface.free();
-	surfaceTable.free();
 }
 
 void TwinEEngine::readKeys() {

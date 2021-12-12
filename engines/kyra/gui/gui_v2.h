@@ -194,6 +194,8 @@ protected:
 	int clickSaveSlot(Button *caller);
 	int cancelSaveMenu(Button *caller);
 
+	int _saveLoadNumSlots;
+
 	// delete menu
 	int _slotToDelete;
 	int deleteMenu(Button *caller);
@@ -220,6 +222,9 @@ protected:
 	bool checkSavegameDescription(const char *buffer, int size);
 	int getCharWidth(uint8 c);
 	void drawTextfieldBlock(int x, int y, uint8 c);
+
+	Screen::FontId _saveMenuFont;
+	Common::Rect _saveMenuCursor;
 
 	// choice menu
 	bool _choice;

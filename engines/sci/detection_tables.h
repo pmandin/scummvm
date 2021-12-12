@@ -2404,6 +2404,22 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_UNDITHER	},
 
+	// Laura Bow - Hebrew fan translation - by https://github.com/adventurebrew/HebrewAdventure
+	// based on English DOS 3.5" Floppy (from "The Roberta Williams Anthology"/1996)
+	// SCI interpreter version 0.000.631
+	{ "laurabow", "", {
+		{"resource.map", 0, "4e511f47d9893fa529d6621a93fa0030", 8478},
+		{"resource.001", 0, "e45c888d9c7c04aec0a20e9f820b79ff", 515788},
+		{"resource.002", 0, "e45c888d9c7c04aec0a20e9f820b79ff", 721381},
+		{"resource.003", 0, "e45c888d9c7c04aec0a20e9f820b79ff", 667468},
+		{"resource.004", 0, "e45c888d9c7c04aec0a20e9f820b79ff", 683807},
+		{"PATCHES/font.000", 0, "5053e202adbd7a4fdebb30b2ea76ce27", 2835},
+		{"PATCHES/font.001", 0, "f65565f3375ac9972c96fd81c3eb491e", 2709},
+		{"PATCHES/font.004", 0, "4dfbf96cba4c181e9d52eb9e49570b1d", 2256},
+		{"PATCHES/font.008", 0, "8abefd3b44827ff26e2ad298f9e76a2b", 3029},
+		AD_LISTEND},
+		Common::HE_ISR, Common::kPlatformDOS, 0, GUIO_STD16_UNDITHER },
+
 	// Laura Bow - English DOS (from FRG)
 	// SCI interpreter version 0.000.631
 	{"laurabow", "", {
@@ -5015,6 +5031,23 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.004", 0, "e19ea4ad131472f9238590f2e1d40289", 1203051},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_SQ1_ENGLISH_PC },
+
+	// Space Quest 1 VGA Remake - Hebrew fan translation - by https://github.com/adventurebrew/HebrewAdventure
+	// based on English DOS (from the Space Quest Collection)
+	// Executable scanning reports "T.A00.081", VERSION file reports "2.000"
+	// SCI interpreter version 1.000.510 (just a guess)
+	{ "sq1sci", "SCI", {
+		{"resource.map", 0, "38a74d8f555a2da9ca4f21d14e3c1d33", 5913},
+		{"resource.000", 0, "e9d866534f8c84de82e25f2631ff258c", 1016436},
+		{"resource.001", 0, "a89b7b52064c75b1985b289edc2f5c69", 1038757},
+		{"resource.002", 0, "a9e847c687529481f3a22b9bf01f45f7", 1169831},
+		{"resource.003", 0, "c47600e50c6fc591957ae0c5020ee7b8", 1213262},
+		{"resource.004", 0, "e19ea4ad131472f9238590f2e1d40289", 1203051},
+		{"PATCHES/4.fon", 0, "b1b10d8efabfab6e8f74132f3a10e3c0", 2140},
+		{"PATCHES/60.fon", 0, "22a2ae157d0bc52351c9a0ecf024b041", 2947},
+		{"PATCHES/61.fon", 0, "685dffc61480d7c73d0fb2ff77b11e57", 2949},
+		AD_LISTEND},
+		Common::HE_ISR, Common::kPlatformDOS, 0, GUIO_SQ1_ENGLISH_PC },
 
 	// Space Quest 1 VGA Remake - Russian DOS (from ncuxonaT in bug report #10156)
 	// VERSION file reports "2.000"

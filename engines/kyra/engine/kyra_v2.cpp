@@ -36,7 +36,7 @@ KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const Engi
 	_lastProcessedSceneScript = 0;
 	_specialSceneScriptRunFlag = false;
 
-	_itemList = 0;
+	_itemList = nullptr;
 	_itemListSize = 0;
 
 	_characterShapeFile = -1;
@@ -48,7 +48,7 @@ KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const Engi
 
 	Common::fill(_sceneSpecialScriptsTimer, ARRAYEND(_sceneSpecialScriptsTimer), 0);
 
-	_animObjects = 0;
+	_animObjects = nullptr;
 
 	_runFlag = true;
 	_showOutro = false;
@@ -56,7 +56,7 @@ KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const Engi
 	_animNeedUpdate = false;
 
 	_animShapeCount = 0;
-	_animShapeFiledata = 0;
+	_animShapeFiledata = nullptr;
 
 	_vocHigh = -1;
 	_chatVocHigh = -1;
@@ -67,7 +67,7 @@ KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const Engi
 
 	memset(_hiddenItems, -1, sizeof(_hiddenItems));
 
-	_screenBuffer = 0;
+	_screenBuffer = nullptr;
 
 	memset(&_mainCharacter, 0, sizeof(_mainCharacter));
 	memset(&_mainCharacter.inventory, -1, sizeof(_mainCharacter.inventory));
@@ -99,9 +99,12 @@ KyraEngine_v2::KyraEngine_v2(OSystem *system, const GameFlags &flags, const Engi
 
 	case Common::ZH_TWN:
 		_langIntern = 1;
+		if (!_flags.hasExtraLanguage) // HOF Floppy uses ENG extensions...
+			break;
 		// fall through
+
 	case Common::JA_JPN:
-	case Common::ZH_CNA:
+	case Common::ZH_CHN:
 		_lang = 3;
 		break;
 
@@ -195,7 +198,7 @@ void KyraEngine_v2::remShapeFromPool(int idx) {
 uint8 *KyraEngine_v2::getShapePtr(int shape) const {
 	ShapeMap::iterator iter = _gameShapes.find(shape);
 	if (iter == _gameShapes.end())
-		return 0;
+		return nullptr;
 	return iter->_value;
 }
 
@@ -231,7 +234,7 @@ void KyraEngine_v2::moveCharacter(int facing, int x, int y) {
 }
 
 void KyraEngine_v2::updateCharPosWithUpdate() {
-	updateCharPos(0, 0);
+	updateCharPos(nullptr, 0);
 	update();
 }
 

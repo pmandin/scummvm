@@ -75,7 +75,7 @@ TwinEMidiPlayer::TwinEMidiPlayer(TwinEEngine* engine) : _engine(engine) {
 	}
 }
 
-void TwinEMidiPlayer::play(byte *buf, int size) {
+void TwinEMidiPlayer::play(byte *buf, int size, bool loop) {
 	if (_parser == nullptr) {
 		if (_engine->_cfgfile.MidiType == MIDIFILE_DOS) {
 			_parser = MidiParser::createParser_XMIDI();
@@ -95,8 +95,7 @@ void TwinEMidiPlayer::play(byte *buf, int size) {
 
 	syncVolume();
 
-	// All the tracks are supposed to loop
-	_isLooping = true;
+	_isLooping = loop;
 	_isPlaying = true;
 }
 
@@ -121,7 +120,6 @@ void Music::musicFadeOut() {
 }
 
 static const char *musicTracksLba2[] = {
-	""
 	"",
 	"TADPCM1",
 	"TADPCM2",
@@ -173,6 +171,9 @@ bool Music::playTrackMusicCd(int32 track) {
 	}
 
 	AudioCDManager *cdrom = g_system->getAudioCDManager();
+	if (_engine->isDotEmuEnhanced()) {
+		track += 1;
+	}
 	return cdrom->play(track, 1, 0, 0);
 }
 
@@ -245,7 +246,7 @@ bool Music::playMidiMusic(int32 midiIdx, int32 loop) {
 	}
 
 	if (_engine->isDotEmuEnhanced()) {
-		const Common::String &trackName = Common::String::format("lba1-%02i", midiIdx);
+		const Common::String &trackName = Common::String::format("lba1-%02i", midiIdx + 1);
 		Audio::SeekableAudioStream *stream = Audio::SeekableAudioStream::openStreamFile(trackName);
 		if (stream != nullptr) {
 			const int volume = _engine->_system->getMixer()->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
@@ -261,7 +262,7 @@ bool Music::playMidiMusic(int32 midiIdx, int32 loop) {
 		return false;
 	}
 	debug("Play midi file for index %i", midiIdx);
-	_midiPlayer.play(midiPtr, midiSize);
+	_midiPlayer.play(midiPtr, midiSize, loop == 0 || loop > 1);
 	return true;
 }
 

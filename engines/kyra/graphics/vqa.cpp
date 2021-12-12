@@ -92,7 +92,7 @@ bool VQADecoder::loadStream(Common::SeekableReadStream *stream) {
 	bool foundVQHD = false;
 	bool foundFINF = false;
 
-	VQAAudioTrack *audioTrack = NULL;
+	VQAAudioTrack *audioTrack = nullptr;
 
 	// The information we need is stored in two chunks: VQHD and FINF. We
 	// need both of them before we can begin decoding the movie.
@@ -654,7 +654,7 @@ void VQAMovie::play() {
 				_system->copyRectToScreen((const byte *)surface->getBasePtr(0, 0), surface->pitch, x, y, width, height);
 			}
 
-			_system->updateScreen();
+			_screen->updateBackendScreen(true);
 			_system->delayMillis(10);
 		}
 	}

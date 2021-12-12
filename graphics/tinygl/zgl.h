@@ -35,6 +35,8 @@
 #include "common/list.h"
 #include "common/scummsys.h"
 
+#include "graphics/pixelformat.h"
+#include "graphics/surface.h"
 #include "graphics/tinygl/gl.h"
 #include "graphics/tinygl/zbuffer.h"
 #include "graphics/tinygl/zmath.h"
@@ -191,6 +193,11 @@ struct GLTexture {
 	bool disposed;
 };
 
+struct tglColorAssociation {
+	Graphics::PixelFormat pf;
+	TGLuint format;
+	TGLuint type;
+};
 
 // shared state
 
@@ -260,6 +267,16 @@ struct GLContext {
 	FrameBuffer *fb;
 	Common::Rect renderRect;
 
+	// blending
+	bool blending_enabled;
+	int source_blending_factor;
+	int destination_blending_factor;
+
+	// alpha blending
+	bool alpha_test_enabled;
+	int alpha_test_func;
+	int alpha_test_ref_val;
+
 	// Internal texture size
 	int _textureSize;
 
@@ -279,11 +296,13 @@ struct GLContext {
 
 	// textures
 	GLTexture *current_texture;
+	uint maxTextureName;
 	int texture_2d_enabled;
 	int texture_mag_filter;
 	int texture_min_filter;
 	unsigned int texture_wrap_s;
 	unsigned int texture_wrap_t;
+	Common::Array<struct tglColorAssociation> colorAssociationList;
 
 	// shared state
 	GLSharedState shared_state;
@@ -334,6 +353,7 @@ struct GLContext {
 	// clear
 	float clear_depth;
 	Vector4 clear_color;
+	int clear_stencil;
 
 	// current vertex state
 	Vector4 current_color;
@@ -371,8 +391,6 @@ struct GLContext {
 	float offset_units;
 	int offset_states;
 
-	int shadow_mode;
-
 	// specular buffer. could probably be shared between contexts,
 	// but that wouldn't be 100% thread safe
 	GLSpecBuf *specbuf_first;
@@ -382,86 +400,106 @@ struct GLContext {
 	// opaque structure for user's use
 	void *opaque;
 	// resize viewport function
-	int (*gl_resize_viewport)(GLContext *c, int *xsize, int *ysize);
+	int (*gl_resize_viewport)(int *xsize, int *ysize);
 
 	// depth test
-	int depth_test;
-	int color_mask;
+	bool depth_test_enabled;
+	int depth_func;
+	bool depth_write_mask;
+
+	// stencil
+	bool stencil_test_enabled;
+	int stencil_test_func;
+	int stencil_ref_val;
+	uint stencil_mask;
+	uint stencil_write_mask;
+	int stencil_sfail;
+	int stencil_dpfail;
+	int stencil_dppass;
+
+	bool color_mask_red;
+	bool color_mask_green;
+	bool color_mask_blue;
+	bool color_mask_alpha;
 
 	Common::Rect _scissorRect;
 
 	bool _enableDirtyRectangles;
 
 	// blit test
-	Common::List<Graphics::BlitImage *> _blitImages;
+	Common::List<BlitImage *> _blitImages;
 
 	// Draw call queue
-	Common::List<Graphics::DrawCall *> _drawCallsQueue;
-	Common::List<Graphics::DrawCall *> _previousFrameDrawCallsQueue;
+	Common::List<DrawCall *> _drawCallsQueue;
+	Common::List<DrawCall *> _previousFrameDrawCallsQueue;
 	int _currentAllocatorIndex;
 	LinearAllocator _drawCallAllocator[2];
+	bool _debugRectsEnabled;
+
+public:
+	// The glob* functions exposed to public, however they are only for internal use.
+	// Calling them from outside of TinyGL is forbidden
+	#define ADD_OP(a, b, d) void glop ## a (GLParam *p);
+	#include "graphics/tinygl/opinfo.h"
+
+	void gl_add_op(GLParam *p);
+	void gl_compile_op(GLParam *p);
+
+	void gl_eval_viewport();
+	void gl_transform_to_viewport(GLVertex *v);
+	void gl_draw_triangle(GLVertex *p0, GLVertex *p1, GLVertex *p2);
+	void gl_draw_line(GLVertex *p0, GLVertex *p1);
+	void gl_draw_point(GLVertex *p0);
+
+	static void gl_draw_triangle_point(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
+	static void gl_draw_triangle_line(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
+	static void gl_draw_triangle_fill(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
+	static void gl_draw_triangle_select(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
+	void gl_draw_triangle_clip(GLVertex *p0, GLVertex *p1, GLVertex *p2, int clip_bit);
+
+	void gl_add_select(unsigned int zmin, unsigned int zmax);
+	void gl_add_select1(int z1, int z2, int z3);
+	void gl_enable_disable_light(int light, int v);
+	void gl_shade_vertex(GLVertex *v);
+
+	void glInitTextures();
+	void glEndTextures();
+	GLTexture *alloc_texture(uint h);
+	void free_texture(uint h);
+	void free_texture(GLTexture *t);
+
+	void gl_resizeImage(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest,
+				const Graphics::PixelBuffer &src, int xsize_src, int ysize_src);
+	void gl_resizeImageNoInterpolate(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest, const Graphics::PixelBuffer &src, int xsize_src, int ysize_src);
+
+	void issueDrawCall(DrawCall *drawCall);
+	void disposeResources();
+	void disposeDrawCallLists();
+
+	void presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas);
+	void presentBufferSimple(Common::List<Common::Rect> &dirtyAreas);
+	
+	GLSpecBuf *specbuf_get_buffer(const int shininess_i, const float shininess);
+	void specbuf_cleanup();
+
+	void initSharedState();
+	void endSharedState();
+
+	void init(int screenW, int screenH, Graphics::PixelFormat pixelFormat, int textureSize, bool enableStencilBuffer, bool dirtyRectsEnable = true);
+	void deinit();
 };
 
 extern GLContext *gl_ctx;
-
-void gl_add_op(GLParam *p);
-
-// clip.c
-void gl_transform_to_viewport(GLContext *c, GLVertex *v);
-void gl_draw_triangle(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
-void gl_draw_line(GLContext *c, GLVertex *p0, GLVertex *p1);
-void gl_draw_point(GLContext *c, GLVertex *p0);
-
-void gl_draw_triangle_point(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
-void gl_draw_triangle_line(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
-void gl_draw_triangle_fill(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
-void gl_draw_triangle_select(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
+GLContext *gl_get_context();
 
 // matrix.c
 void gl_print_matrix(const float *m);
-
-// light.c
-void gl_add_select(GLContext *c, unsigned int zmin, unsigned int zmax);
-void gl_enable_disable_light(GLContext *c, int light, int v);
-void gl_shade_vertex(GLContext *c, GLVertex *v);
-
-void glInitTextures(GLContext *c);
-void glEndTextures(GLContext *c);
-GLTexture *alloc_texture(GLContext *c, int h);
-void free_texture(GLContext *c, int h);
-void free_texture(GLContext *c, GLTexture *t);
-
-// image_util.c
-void gl_resizeImage(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest,
-		    const Graphics::PixelBuffer &src, int xsize_src, int ysize_src);
-void gl_resizeImageNoInterpolate(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest,
-				 const Graphics::PixelBuffer &src, int xsize_src, int ysize_src);
-
-void tglIssueDrawCall(Graphics::DrawCall *drawCall);
-
-// zdirtyrect.cpp
-void tglDisposeResources(GLContext *c);
-void tglDisposeDrawCallLists(TinyGL::GLContext *c);
-
-GLContext *gl_get_context();
-
-// specular buffer "api"
-GLSpecBuf *specbuf_get_buffer(GLContext *c, const int shininess_i, const float shininess);
-void specbuf_cleanup(GLContext *c); // free all memory used
-
-void glInit(void *zbuffer, int textureSize);
-void glClose();
 
 #ifdef DEBUG
 #define dprintf fprintf
 #else
 #define dprintf
 #endif
-
-// glopXXX functions
-
-#define ADD_OP(a,b,c) void glop ## a (GLContext *, GLParam *);
-#include "graphics/tinygl/opinfo.h"
 
 // this clip epsilon is needed to avoid some rounding errors after
 // several clipping stages

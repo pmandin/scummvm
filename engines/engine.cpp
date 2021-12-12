@@ -486,8 +486,8 @@ void GUIErrorMessageFormat(Common::U32String fmt, ...) {
  * @return			true if audio files of the expected naming scheme are found, as long as ScummVM
  *					is also built with support to the respective audio format (eg. ogg, flac, mad/mp3)
  */
-bool Engine::existExtractedCDAudioFiles() {
-	return g_system->getAudioCDManager()->existExtractedCDAudioFiles();
+bool Engine::existExtractedCDAudioFiles(uint track) {
+	return g_system->getAudioCDManager()->existExtractedCDAudioFiles(track);
 }
 
 /**
@@ -567,9 +567,7 @@ void Engine::handleAutoSave() {
 bool Engine::warnBeforeOverwritingAutosave() {
 	SaveStateDescriptor desc = getMetaEngine()->querySaveMetaInfos(
 		_targetName.c_str(), getAutosaveSlot());
-	if (desc.getSaveSlot() == -1)
-		return true;
-	if (desc.hasAutosaveName())
+	if (!desc.isValid() || desc.hasAutosaveName())
 		return true;
 	Common::U32StringArray altButtons;
 	altButtons.push_back(_("Overwrite"));

@@ -73,8 +73,8 @@ Paula::~Paula() {
 void Paula::clearVoice(byte voice) {
 	assert(voice < NUM_VOICES);
 
-	_voice[voice].data = 0;
-	_voice[voice].dataRepeat = 0;
+	_voice[voice].data = nullptr;
+	_voice[voice].dataRepeat = nullptr;
 	_voice[voice].length = 0;
 	_voice[voice].lengthRepeat = 0;
 	_voice[voice].period = 0;
@@ -300,15 +300,15 @@ float Paula::filterCalculateA0(int rate, int cutoff) {
 
 class AmigaMusicPlugin : public NullMusicPlugin {
 public:
-	const char *getName() const {
+	const char *getName() const override {
 		return _s("Amiga Audio emulator");
 	}
 
-	const char *getId() const {
+	const char *getId() const override {
 		return "amiga";
 	}
 
-	MusicDevices getDevices() const;
+	MusicDevices getDevices() const override;
 };
 
 MusicDevices AmigaMusicPlugin::getDevices() const {

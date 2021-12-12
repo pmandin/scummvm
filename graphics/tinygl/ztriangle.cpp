@@ -35,20 +35,48 @@ namespace TinyGL {
 
 static const int NB_INTERP = 8;
 
-template <bool kDepthWrite, bool kEnableAlphaTest, bool kEnableScissor, bool kEnableBlending>
-FORCEINLINE static void putPixelFlat(FrameBuffer *buffer, int buf, unsigned int *pz, int _a,
-									 int x, int y, unsigned int &z, unsigned int &r, unsigned int &g, unsigned int &b, unsigned int &a, int &dzdx) {
-	if ((!kEnableScissor || !buffer->scissorPixel(x + _a, y)) && buffer->compareDepth(z, pz[_a])) {
+template <bool kDepthWrite, bool kEnableAlphaTest, bool kEnableScissor, bool kEnableBlending, bool kStencilEnabled>
+FORCEINLINE void FrameBuffer::putPixelFlat(FrameBuffer *buffer, int buf, unsigned int *pz, byte *ps, int _a,
+	                                   int x, int y, unsigned int &z, unsigned int &r, unsigned int &g, unsigned int &b, unsigned int &a, int &dzdx) {
+	if (kEnableScissor && buffer->scissorPixel(x + _a, y)) {
+		return;
+	}
+	if (kStencilEnabled) {
+		bool stencilResult = stencilTest(ps[_a]);
+		if (!stencilResult) {
+			stencilOp(false, true, ps + _a);
+			return;
+		}
+	}
+	bool depthTestResult = buffer->compareDepth(z, pz[_a]);
+	if (kStencilEnabled) {
+		stencilOp(true, depthTestResult, ps + _a);
+	}
+	if (depthTestResult) {
 		buffer->writePixel<kEnableAlphaTest, kEnableBlending, kDepthWrite>(buf + _a, a >> (ZB_POINT_ALPHA_BITS - 8), r >> (ZB_POINT_RED_BITS - 8), g >> (ZB_POINT_GREEN_BITS - 8), b >> (ZB_POINT_BLUE_BITS - 8), z);
 	}
 	z += dzdx;
 }
 
-template <bool kDepthWrite, bool kEnableAlphaTest, bool kEnableScissor, bool kEnableBlending>
-FORCEINLINE static void putPixelSmooth(FrameBuffer *buffer, int buf, unsigned int *pz, int _a,
-									   int x, int y, unsigned int &z, unsigned int &r, unsigned int &g, unsigned int &b, unsigned int &a,
-									   int &dzdx, int &drdx, int &dgdx, int &dbdx, unsigned int dadx) {
-	if ((!kEnableScissor || !buffer->scissorPixel(x + _a, y)) && buffer->compareDepth(z, pz[_a])) {
+template <bool kDepthWrite, bool kEnableAlphaTest, bool kEnableScissor, bool kEnableBlending, bool kStencilEnabled>
+FORCEINLINE void FrameBuffer::putPixelSmooth(FrameBuffer *buffer, int buf, unsigned int *pz, byte *ps, int _a,
+	                                     int x, int y, unsigned int &z, unsigned int &r, unsigned int &g, unsigned int &b, unsigned int &a,
+	                                     int &dzdx, int &drdx, int &dgdx, int &dbdx, unsigned int dadx) {
+	if (kEnableScissor && buffer->scissorPixel(x + _a, y)) {
+		return;
+	}
+	if (kStencilEnabled) {
+		bool stencilResult = stencilTest(ps[_a]);
+		if (!stencilResult) {
+			stencilOp(false, true, ps + _a);
+			return;
+		}
+	}
+	bool depthTestResult = buffer->compareDepth(z, pz[_a]);
+	if (kStencilEnabled) {
+		stencilOp(true, depthTestResult, ps + _a);
+	}
+	if (depthTestResult) {
 		buffer->writePixel<kEnableAlphaTest, kEnableBlending, kDepthWrite>(buf + _a, a >> (ZB_POINT_ALPHA_BITS - 8), r >> (ZB_POINT_RED_BITS - 8), g >> (ZB_POINT_GREEN_BITS - 8), b >> (ZB_POINT_BLUE_BITS - 8), z);
 	}
 	z += dzdx;
@@ -58,30 +86,49 @@ FORCEINLINE static void putPixelSmooth(FrameBuffer *buffer, int buf, unsigned in
 	b += dbdx;
 }
 
-template <bool kDepthWrite, bool kEnableScissor>
-FORCEINLINE static void putPixelDepth(FrameBuffer *buffer, int buf, unsigned int *pz, int _a, int x, int y, unsigned int &z, int &dzdx) {
-	if ((!kEnableScissor || !buffer->scissorPixel(x + _a, y)) && buffer->compareDepth(z, pz[_a])) {
-		if (kDepthWrite) {
-			pz[_a] = z;
+template <bool kDepthWrite, bool kEnableScissor, bool kStencilEnabled>
+FORCEINLINE void FrameBuffer::putPixelDepth(FrameBuffer *buffer, int buf, unsigned int *pz, byte *ps, int _a, int x, int y, unsigned int &z, int &dzdx) {
+	if (kEnableScissor && buffer->scissorPixel(x + _a, y)) {
+		return;
+	}
+	if (kStencilEnabled) {
+		bool stencilResult = stencilTest(ps[_a]);
+		if (!stencilResult) {
+			stencilOp(false, true, ps + _a);
+			return;
 		}
 	}
-	z += dzdx;
-}
-
-template <bool kDepthWrite, bool kAlphaTestEnabled, bool kEnableScissor, bool kBlendingEnabled>
-FORCEINLINE static void putPixelShadow(FrameBuffer *buffer, int buf, unsigned int *pz, int _a, int x, int y, unsigned int &z, unsigned int &r, unsigned int &g, unsigned int &b, int &dzdx, unsigned char *pm) {
-	if ((!kEnableScissor || !buffer->scissorPixel(x + _a, y)) && buffer->compareDepth(z, pz[_a]) && pm[_a]) {
-		buffer->writePixel<kAlphaTestEnabled, kBlendingEnabled, kDepthWrite>(buf + _a, 255, r >> (ZB_POINT_RED_BITS - 8), g >> (ZB_POINT_GREEN_BITS - 8), b >> (ZB_POINT_BLUE_BITS - 8), z);
+	bool depthTestResult = buffer->compareDepth(z, pz[_a]);
+	if (kStencilEnabled) {
+		stencilOp(true, depthTestResult, ps + _a);
+	}
+	if (kDepthWrite && depthTestResult) {
+		pz[_a] = z;
 	}
 	z += dzdx;
 }
 
-template <bool kDepthWrite, bool kLightsMode, bool kSmoothMode, bool kEnableAlphaTest, bool kEnableScissor, bool kEnableBlending>
-FORCEINLINE static void putPixelTextureMappingPerspective(FrameBuffer *buffer, int buf,
-						const Graphics::TexelBuffer *texture, unsigned int wrap_s, unsigned int wrap_t, unsigned int *pz, int _a,
-						int x, int y, unsigned int &z, int &t, int &s, unsigned int &r, unsigned int &g, unsigned int &b, unsigned int &a,
-						int &dzdx, int &dsdx, int &dtdx, int &drdx, int &dgdx, int &dbdx, unsigned int dadx) {
-	if ((!kEnableScissor || !buffer->scissorPixel(x + _a, y)) && buffer->compareDepth(z, pz[_a])) {
+template <bool kDepthWrite, bool kLightsMode, bool kSmoothMode, bool kEnableAlphaTest, bool kEnableScissor, bool kEnableBlending, bool kStencilEnabled>
+FORCEINLINE void FrameBuffer::putPixelTextureMappingPerspective(FrameBuffer *buffer, int buf, const Graphics::TexelBuffer *texture,
+	                                                        unsigned int wrap_s, unsigned int wrap_t, unsigned int *pz, byte *ps, int _a,
+	                                                        int x, int y, unsigned int &z, int &t, int &s,
+	                                                        unsigned int &r, unsigned int &g, unsigned int &b, unsigned int &a,
+	                                                        int &dzdx, int &dsdx, int &dtdx, int &drdx, int &dgdx, int &dbdx, unsigned int dadx) {
+	if (kEnableScissor && buffer->scissorPixel(x + _a, y)) {
+		return;
+	}
+	if (kStencilEnabled) {
+		bool stencilResult = stencilTest(ps[_a]);
+		if (!stencilResult) {
+			stencilOp(false, true, ps + _a);
+			return;
+		}
+	}
+	bool depthTestResult = buffer->compareDepth(z, pz[_a]);
+	if (kStencilEnabled) {
+		stencilOp(true, depthTestResult, ps + _a);
+	}
+	if (depthTestResult) {
 		uint8 c_a, c_r, c_g, c_b;
 		texture->getARGBAt(wrap_s, wrap_t, s, t, c_a, c_r, c_g, c_b);
 		if (kLightsMode) {
@@ -107,15 +154,15 @@ FORCEINLINE static void putPixelTextureMappingPerspective(FrameBuffer *buffer, i
 	}
 }
 
-template <bool kInterpRGB, bool kInterpZ, bool kInterpST, bool kInterpSTZ, int kDrawLogic, bool kDepthWrite, bool kAlphaTestEnabled, bool kEnableScissor, bool kBlendingEnabled>
+template <bool kInterpRGB, bool kInterpZ, bool kInterpST, bool kInterpSTZ, int kDrawLogic, bool kDepthWrite, bool kAlphaTestEnabled, bool kEnableScissor, bool kBlendingEnabled, bool kStencilEnabled>
 void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint *p2) {
 	const Graphics::TexelBuffer *texture;
 	float fdzdx = 0, fndzdx = 0, ndszdx = 0, ndtzdx = 0;
 
 	ZBufferPoint *tp, *pr1 = 0, *pr2 = 0, *l1 = 0, *l2 = 0;
 	float fdx1, fdx2, fdy1, fdy2, fz0, d1, d2;
-	unsigned int *pz1 = NULL;
-	unsigned char *pm1 = NULL;
+	uint *pz1 = nullptr;
+	byte *ps1 = nullptr;
 	int part, update_left = 1, update_right = 1;
 
 	int nb_lines, dx1, dy1, tmp, dx2, dy2, y;
@@ -239,19 +286,13 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 
 	// screen coordinates
 
-	int pp1 = xsize * p0->y;
-	pz1 = _zbuf + p0->y * xsize;
+	int pp1 = _pbufWidth * p0->y;
+	pz1 = _zbuf + p0->y * _pbufWidth;
+	if (kStencilEnabled) {
+		ps1 = _sbuf + p0->y * _pbufWidth;
+	}
 
 	switch (kDrawLogic) {
-	case DRAW_SHADOW_MASK:
-		pm1 = shadow_mask_buf + p0->y * xsize;
-		break;
-	case DRAW_SHADOW:
-		pm1 = shadow_mask_buf + p0->y * xsize;
-		r1 = shadow_color_r;
-		g1 = shadow_color_g;
-		b1 = shadow_color_b;
-		break;
 	case DRAW_DEPTH_ONLY:
 		break;
 	case DRAW_FLAT:
@@ -267,7 +308,7 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 	}
 
 	if ((kInterpST || kInterpSTZ) && (kDrawLogic == DRAW_FLAT || kDrawLogic == DRAW_SMOOTH)) {
-		texture = current_texture;
+		texture = _currentTexture;
 		fdzdx = (float)dzdx;
 		fndzdx = NB_INTERP * fdzdx;
 		ndszdx = NB_INTERP * dszdx;
@@ -368,11 +409,11 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 		while (nb_lines > 0) {
 			int x = x1;
 			{
-				if (kDrawLogic == DRAW_DEPTH_ONLY ||
-						(kDrawLogic == DRAW_FLAT && !(kInterpST || kInterpSTZ))) {
+				if (kDrawLogic == DRAW_DEPTH_ONLY || (kDrawLogic == DRAW_FLAT && !(kInterpST || kInterpSTZ))) {
 					int pp;
 					int n;
 					unsigned int *pz;
+					byte *ps = nullptr;
 					unsigned int z, a;
 					int buf = pp1 + x1;
 					unsigned int r = r1;
@@ -384,25 +425,31 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 						pz = pz1 + x1;
 						z = z1;
 					}
+					if (kStencilEnabled) {
+						ps = ps1 + x1;
+					}
 					if (kDrawLogic == DRAW_FLAT) {
 						a = a1;
 					}
 					while (n >= 3) {
 						if (kDrawLogic == DRAW_DEPTH_ONLY) {
-							putPixelDepth<kDepthWrite, kEnableScissor>(this, buf, pz, 0, x, y, z, dzdx);
-							putPixelDepth<kDepthWrite, kEnableScissor>(this, buf, pz, 1, x, y, z, dzdx);
-							putPixelDepth<kDepthWrite, kEnableScissor>(this, buf, pz, 2, x, y, z, dzdx);
-							putPixelDepth<kDepthWrite, kEnableScissor>(this, buf, pz, 3, x, y, z, dzdx);
+							putPixelDepth<kDepthWrite, kEnableScissor, kStencilEnabled>(this, buf, pz, ps, 0, x, y, z, dzdx);
+							putPixelDepth<kDepthWrite, kEnableScissor, kStencilEnabled>(this, buf, pz, ps, 1, x, y, z, dzdx);
+							putPixelDepth<kDepthWrite, kEnableScissor, kStencilEnabled>(this, buf, pz, ps, 2, x, y, z, dzdx);
+							putPixelDepth<kDepthWrite, kEnableScissor, kStencilEnabled>(this, buf, pz, ps, 3, x, y, z, dzdx);
 							buf += 4;
 						}
 						if (kDrawLogic == DRAW_FLAT) {
-							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, pp, pz, 0, x, y, z, r, g, b, a, dzdx);
-							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, pp, pz, 1, x, y, z, r, g, b, a, dzdx);
-							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, pp, pz, 2, x, y, z, r, g, g, a, dzdx);
-							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, pp, pz, 3, x, y, z, r, g, b, a, dzdx);
+							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, pp, pz, ps, 0, x, y, z, r, g, b, a, dzdx);
+							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, pp, pz, ps, 1, x, y, z, r, g, b, a, dzdx);
+							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, pp, pz, ps, 2, x, y, z, r, g, g, a, dzdx);
+							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, pp, pz, ps, 3, x, y, z, r, g, b, a, dzdx);
 						}
 						if (kInterpZ) {
 							pz += 4;
+						}
+						if (kStencilEnabled) {
+							ps += 4;
 						}
 						pp += 4;
 						n -= 4;
@@ -410,106 +457,64 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 					}
 					while (n >= 0) {
 						if (kDrawLogic == DRAW_DEPTH_ONLY) {
-							putPixelDepth<kDepthWrite, kEnableScissor>(this, buf, pz, 0, x, y, z, dzdx);
+							putPixelDepth<kDepthWrite, kEnableScissor, kStencilEnabled>(this, buf, pz, ps, 0, x, y, z, dzdx);
 							buf ++;
 						}
 						if (kDrawLogic == DRAW_FLAT) {
-							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, pp, pz, 0, x, y, z, r, g, b, a, dzdx);
+							putPixelFlat<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, pp, pz, ps, 0, x, y, z, r, g, b, a, dzdx);
 						}
 						if (kInterpZ) {
 							pz += 1;
+						}
+						if (kStencilEnabled) {
+							ps += 1;
 						}
 						pp += 1;
 						n -= 1;
 						x += 1;
 					}
-				} else if (kDrawLogic == DRAW_SHADOW_MASK) {
-					unsigned char *pm;
-					int n;
-
-					n = (x2 >> 16) - x1;
-					pm = pm1 + x1;
-					while (n >= 3) {
-						pm[0] = 0xff;
-						pm[1] = 0xff;
-						pm[2] = 0xff;
-						pm[3] = 0xff;
-						pm += 4;
-						n -= 4;
-						x += 4;
-					}
-					while (n >= 0) {
-						pm[0] = 0xff;
-						pm += 1;
-						n -= 1;
-						x += 1;
-					}
-				} else if (kDrawLogic == DRAW_SHADOW) {
-					unsigned char *pm;
-					int n;
-					unsigned int *pz;
-					unsigned int z;
-					unsigned int r = r1;
-					unsigned int g = g1;
-					unsigned int b = b1;
-
-					n = (x2 >> 16) - x1;
-
-					int buf = pp1 + x1;
-
-					pm = pm1 + x1;
-					pz = pz1 + x1;
-					z = z1;
-					while (n >= 3) {
-						putPixelShadow<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 0, x, y, z, r, g, b, dzdx, pm);
-						putPixelShadow<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 1, x, y, z, r, g, b, dzdx, pm);
-						putPixelShadow<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 2, x, y, z, r, g, b, dzdx, pm);
-						putPixelShadow<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 3, x, y, z, r, g, b, dzdx, pm);
-						pz += 4;
-						pm += 4;
-						buf += 4;
-						n -= 4;
-						x += 4;
-					}
-					while (n >= 0) {
-						putPixelShadow<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 0, x, y, z, r, g, b, dzdx, pm);
-						pz += 1;
-						pm += 1;
-						buf += 1;
-						n -= 1;
-						x += 1;
-					}
 				} else if (kDrawLogic == DRAW_SMOOTH && !(kInterpST || kInterpSTZ)) {
 					unsigned int *pz;
+					byte *ps = nullptr;
 					int buf = pp1 + x1;
 					unsigned int z, r, g, b, a;
 					int n;
 					n = (x2 >> 16) - x1;
 					pz = pz1 + x1;
+					if (kStencilEnabled) {
+						ps = ps1 + x1;
+					}
 					z = z1;
 					r = r1;
 					g = g1;
 					b = b1;
 					a = a1;
 					while (n >= 3) {
-						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 0, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
-						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 1, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
-						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 2, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
-						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 3, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
+						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, buf, pz, ps, 0, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
+						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, buf, pz, ps, 1, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
+						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, buf, pz, ps, 2, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
+						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, buf, pz, ps, 3, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
 						pz += 4;
+						if (kStencilEnabled) {
+							ps += 4;
+						}
 						buf += 4;
 						n -= 4;
 						x += 4;
 					}
 					while (n >= 0) {
-						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, pz, 0, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
+						putPixelSmooth<kDepthWrite, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>(this, buf, pz, ps, 0, x, y, z, r, g, b, a, dzdx, drdx, dgdx, dbdx, dadx);
 						buf += 1;
 						pz += 1;
+						if (kStencilEnabled) {
+							ps += 1;
+						}
 						n -= 1;
 						x += 1;
 					}
 				} else if (kInterpST || kInterpSTZ) {
 					unsigned int *pz;
+					byte *ps = nullptr;
 					int s, t;
 					unsigned int z, r, g, b, a;
 					int n;
@@ -523,6 +528,9 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 					int buf = pp1 + x1;
 
 					pz = pz1 + x1;
+					if (kStencilEnabled) {
+						ps = ps1 + x1;
+					}
 					z = z1;
 					sz = sz1;
 					tz = tz1;
@@ -543,10 +551,13 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 							zinv = (float)(1.0 / fz);
 						}
 						for (int _a = 0; _a < NB_INTERP; _a++) {
-							putPixelTextureMappingPerspective<kDepthWrite, kInterpRGB, kDrawLogic == DRAW_SMOOTH, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, texture, wrapS, wrapT,
-							                           pz, _a, x, y, z, t, s, r, g, b, a, dzdx, dsdx, dtdx, drdx, dgdx, dbdx, dadx);
+							putPixelTextureMappingPerspective<kDepthWrite, kInterpRGB, kDrawLogic == DRAW_SMOOTH, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>
+							                                  (this, buf, texture, _wrapS, _wrapT, pz, ps, _a, x, y, z, t, s, r, g, b, a, dzdx, dsdx, dtdx, drdx, dgdx, dbdx, dadx);
 						}
 						pz += NB_INTERP;
+						if (kStencilEnabled) {
+							ps += NB_INTERP;
+						}
 						buf += NB_INTERP;
 						n -= NB_INTERP;
 						x += NB_INTERP;
@@ -565,9 +576,12 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 					}
 
 					while (n >= 0) {
-						putPixelTextureMappingPerspective<kDepthWrite, kInterpRGB, kDrawLogic == DRAW_SMOOTH, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled>(this, buf, texture, wrapS, wrapT,
-						                           pz, 0, x, y, z, t, s, r, g, b, a, dzdx, dsdx, dtdx, drdx, dgdx, dbdx, dadx);
+						putPixelTextureMappingPerspective<kDepthWrite, kInterpRGB, kDrawLogic == DRAW_SMOOTH, kAlphaTestEnabled, kEnableScissor, kBlendingEnabled, kStencilEnabled>
+						                                  (this, buf, texture, _wrapS, _wrapT, pz, ps, 0, x, y, z, t, s, r, g, b, a, dzdx, dsdx, dtdx, drdx, dgdx, dbdx, dadx);
 						pz += 1;
+						if (kStencilEnabled) {
+							ps += 1;
+						}
 						buf += 1;
 						n -= 1;
 						x += 1;
@@ -616,14 +630,24 @@ void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint 
 			x2 += dx2dy2;
 
 			// screen coordinates
-			pp1 += xsize;
-			pz1 += xsize;
+			pp1 += _pbufWidth;
+			pz1 += _pbufWidth;
+			if (kStencilEnabled) {
+				ps1 += _pbufWidth;
+			}
 
-			if (kDrawLogic == DRAW_SHADOW || kDrawLogic == DRAW_SHADOW_MASK)
-				pm1 = pm1 + xsize;
 			nb_lines--;
 			y++;
 		}
+	}
+}
+
+template <bool kInterpRGB, bool kInterpZ, bool kInterpST, bool kInterpSTZ, int kDrawMode, bool kDepthWrite, bool kEnableAlphaTest, bool kEnableScissor, bool kEnableBlending>
+void FrameBuffer::fillTriangle(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint *p2) {
+	if (_sbuf && _stencilTestEnabled) {
+		fillTriangle<kInterpRGB, kInterpZ, kInterpST, kInterpSTZ, kDrawMode, kDepthWrite, kEnableAlphaTest, kEnableScissor, kEnableBlending, true>(p0, p1, p2);
+	} else {
+		fillTriangle<kInterpRGB, kInterpZ, kInterpST, kInterpSTZ, kDrawMode, kDepthWrite, kEnableAlphaTest, kEnableScissor, kEnableBlending, false>(p0, p1, p2);
 	}
 }
 
@@ -717,28 +741,6 @@ void FrameBuffer::fillTriangleTextureMappingPerspectiveFlat(ZBufferPoint *p0, ZB
 		fillTriangle<interpRGB, interpZ, interpST, interpSTZ, DRAW_FLAT, true>(p0, p1, p2);
 	else
 		fillTriangle<interpRGB, interpZ, interpST, interpSTZ, DRAW_FLAT, false>(p0, p1, p2);
-}
-
-void FrameBuffer::fillTriangleFlatShadowMask(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint *p2) {
-	const bool interpZ = true;
-	const bool interpRGB = false;
-	const bool interpST = false;
-	const bool interpSTZ = false;
-	if (_depthWrite && _depthTestEnabled)
-		fillTriangle<interpRGB, interpZ, interpST, interpSTZ, DRAW_SHADOW_MASK, true>(p0, p1, p2);
-	else
-		fillTriangle<interpRGB, interpZ, interpST, interpSTZ, DRAW_SHADOW_MASK, false>(p0, p1, p2);
-}
-
-void FrameBuffer::fillTriangleFlatShadow(ZBufferPoint *p0, ZBufferPoint *p1, ZBufferPoint *p2) {
-	const bool interpZ = true;
-	const bool interpRGB = false;
-	const bool interpST = false;
-	const bool interpSTZ = false;
-	if (_depthWrite && _depthTestEnabled)
-		fillTriangle<interpRGB, interpZ, interpST, interpSTZ, DRAW_SHADOW, true>(p0, p1, p2);
-	else
-		fillTriangle<interpRGB, interpZ, interpST, interpSTZ, DRAW_SHADOW, false>(p0, p1, p2);
 }
 
 } // end of namespace TinyGL

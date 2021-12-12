@@ -25,8 +25,6 @@
  *
  */
 
-#define FORBIDDEN_SYMBOL_EXCEPTION_time
-
 #include "engines/icb/icb.h"
 #include "engines/icb/options_manager_pc.h"
 #include "engines/icb/movie_pc.h"
@@ -74,7 +72,7 @@ _rgb g_drawSelectedDark;
 #define CTRL_ACTOR_Y -15
 #define CTRL_ACTOR_Z -100
 
-#define REFRESH_LIMITER 15000
+#define REFRESH_LIMITER 15
 
 // External declaration in header
 _MOVIESLOT g_movieLibrary[TOTAL_NUMBER_OF_MOVIES];
@@ -366,7 +364,7 @@ void LoadAMovieShot(uint32 slot_id, uint32 to_surface_id) {
 }
 
 OptionsManager::OptionsManager() {
-	m_global_text = NULL; // Clear global text pointer
+	m_global_text = nullptr; // Clear global text pointer
 
 	InitialiseGlobalColours();
 
@@ -394,10 +392,10 @@ OptionsManager::OptionsManager() {
 	m_warpDirection = TRUE8;
 
 	memset(m_fontName, 0, ENGINE_STRING_LEN);
-	m_font_file = NULL;
-	m_fontPalette = NULL;
+	m_font_file = nullptr;
+	m_fontPalette = nullptr;
 	m_fontHeight = 20;
-	m_currentSprite = NULL;
+	m_currentSprite = nullptr;
 
 	m_selectedShade.red = 202;
 	m_selectedShade.green = 0;
@@ -410,7 +408,7 @@ OptionsManager::OptionsManager() {
 	m_fullscreen.top = 0;
 	m_fullscreen.bottom = SCREEN_DEPTH;
 
-	m_global_text = NULL;
+	m_global_text = nullptr;
 
 	// Explicitly set alpha:
 	m_drawColour.alpha = 0;
@@ -652,7 +650,7 @@ void OptionsManager::StartGameOverOptions() {
 	LoadBitmapFont();
 
 	// Error check
-	if (g_mission == NULL)
+	if (g_mission == nullptr)
 		Fatal_error("OptionsManager::StartGameOverOptions() needs to know what mission is running (ie Can't have mission == NULL)");
 
 	// Figure out what mission is running
@@ -899,7 +897,7 @@ void OptionsManager::StartMainOptions(void) {
 
 	// Need to calculate bracket dimesions
 	uint32 int32estWidth = 0;
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	for (uint32 i = 0; i < NUMBER_OF_MAIN_TOP_CHOICES; i++) {
 		switch (i) {
@@ -1051,7 +1049,7 @@ void OptionsManager::InitialiseInGameOptions(void) {
 
 	// Need to calculate bracket dimesions
 	uint32 int32estWidth = 0;
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	for (uint32 i = 0; i < NUMBER_OF_IN_GAME_TOP_CHOICES; i++) {
 		switch (i) {
@@ -1181,7 +1179,7 @@ void OptionsManager::GrabThumbnailImage() {
 }
 
 void OptionsManager::DrawGameOverScreen() {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	switch (m_activeMenu) {
 	case GAME_OVER:
@@ -1225,7 +1223,7 @@ void OptionsManager::DrawInGameOptionsScreen() {
 	bool8 animating;
 	uint32 pitch;
 	uint8 *surface_address;
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 temp;
 	pxString str;
 	int32 icon_x, icon_y;
@@ -1492,7 +1490,7 @@ void OptionsManager::DrawInGameOptionsScreen() {
 }
 
 void OptionsManager::DrawQuitGameConfirmScreen(uint32 surface_id) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 halfScreen = SCREEN_WIDTH / 2;
 	uint32 temp;
 
@@ -1523,7 +1521,7 @@ void OptionsManager::DrawQuitGameConfirmScreen(uint32 surface_id) {
 }
 
 void OptionsManager::DrawOverwriteSaveConfirmScreen(uint32 surface_id) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 halfScreen = SCREEN_WIDTH / 2;
 	uint32 temp;
 
@@ -1552,7 +1550,7 @@ void OptionsManager::DrawOverwriteSaveConfirmScreen(uint32 surface_id) {
 void OptionsManager::DrawMainOptionsScreen(uint32 surface_id) {
 	uint32 pitch;
 	uint8 *surface_address;
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	// With bink compression updating only portions of the screen per cycle we
 	// need to draw things that beint32 on top to another surface then blit with
@@ -1684,7 +1682,7 @@ void OptionsManager::DrawMainOptionsScreen(uint32 surface_id) {
 }
 
 void OptionsManager::CycleMainOptionsLogic() {
-	uint32 totalTime = GetMicroTimer();
+	uint32 totalTime = g_system->getMillis();
 
 	if (g_titleScreenInitialCount == 0) {
 		g_titleScreenInitialCount = g_system->getMillis();
@@ -1769,28 +1767,28 @@ void OptionsManager::CycleMainOptionsLogic() {
 		if (g_skipBackgroundDrawOverFrames != 0)
 			return;
 
-		movieTime = GetMicroTimer();
+		movieTime = g_system->getMillis();
 		// Now we need to draw a frame of the title movie as our backdrop (to its own private buffer)
 		g_personalSequenceManager->drawFrame(m_myScreenSurfaceID);
-		movieTime = GetMicroTimer() - movieTime;
+		movieTime = g_system->getMillis() - movieTime;
 
-		movieblitTime = GetMicroTimer();
+		movieblitTime = g_system->getMillis();
 
 		// Now blit the movie frame without transparency to the working buffer
 		surface_manager->Blit_surface_to_surface(m_myScreenSurfaceID, working_buffer_id, &m_movieRect, &m_movieRect, 0);
 
-		movieblitTime = GetMicroTimer() - movieblitTime;
+		movieblitTime = g_system->getMillis() - movieblitTime;
 
-		drawTime = GetMicroTimer();
+		drawTime = g_system->getMillis();
 
 		// And draw the options on top
 		if (!AnimateBracketsToBox(m_warpDirection, working_buffer_id))
 			DrawMainOptionsScreen(working_buffer_id);
 
-		drawTime = GetMicroTimer() - drawTime;
+		drawTime = g_system->getMillis() - drawTime;
 	}
 
-	totalTime = GetMicroTimer() - totalTime;
+	totalTime = g_system->getMillis() - totalTime;
 }
 
 void OptionsManager::CycleLogic() {
@@ -2791,7 +2789,7 @@ void OptionsManager::DoChoice() {
 		case SLOT2:
 		case SLOT3:
 		case SLOT4:
-			if (m_slots[m_slotOffset + m_GAMESLOT_selected] != NULL) {
+			if (m_slots[m_slotOffset + m_GAMESLOT_selected] != nullptr) {
 				MakeFullSaveFilename(m_slotOffset + m_GAMESLOT_selected, buff);
 				// LOAD THIS INDEX FILE:
 
@@ -3101,7 +3099,7 @@ void OptionsManager::DoChoice() {
 			m_editing = TRUE8;
 			m_letJoystickQuitEdit = FALSE8;
 			// If the slot contains data, copy the label into our editing buffer else use default name
-			if (m_slots[m_slotOffset + m_GAMESLOT_selected] != NULL) {
+			if (m_slots[m_slotOffset + m_GAMESLOT_selected] != nullptr) {
 				// Wish to edit an existing slot label
 				strcpy(m_editBuffer, m_slots[m_slotOffset + m_GAMESLOT_selected]->label);
 				// Record this ex-time played so we restore if if the action is cancelled
@@ -3147,7 +3145,7 @@ void OptionsManager::DoChoice() {
 			if (m_emptySlotFlag == 0) {
 				// Slot was previously empty so delete on cancellation
 				delete m_slots[m_slotOffset + m_GAMESLOT_selected];
-				m_slots[m_slotOffset + m_GAMESLOT_selected] = NULL;
+				m_slots[m_slotOffset + m_GAMESLOT_selected] = nullptr;
 			} else {
 				// Just need to restore time played to cancel
 				m_slots[m_slotOffset + m_GAMESLOT_selected]->secondsPlayed = m_emptySlotFlag;
@@ -3446,7 +3444,7 @@ void OptionsManager::InitialiseSlots() {
 
 	// Set all slots by default to empty
 	for (uint32 i = 0; i < TOTAL_NUMBER_OF_GAME_SLOTS; i++) {
-		m_slots[i] = NULL;
+		m_slots[i] = nullptr;
 
 		// Now look for any valid game files and set corresponding info
 
@@ -3465,7 +3463,7 @@ void OptionsManager::InitialiseSlots() {
 		// Now we must get the label and time from the file and set accordingly
 		Common::SeekableReadStream *stream = openDiskFileForBinaryStreamRead(buff);
 
-		if (stream == NULL)
+		if (stream == nullptr)
 			Fatal_error(pxVString("Failed to open save file: %s", buff));
 
 		// Get storage for this slot
@@ -3485,15 +3483,15 @@ void OptionsManager::InitialiseSlots() {
 
 void OptionsManager::DestroySlots() {
 	for (uint32 i = 0; i < TOTAL_NUMBER_OF_GAME_SLOTS; i++) {
-		if (m_slots[i] != NULL) {
+		if (m_slots[i] != nullptr) {
 			delete m_slots[i];
-			m_slots[i] = NULL;
+			m_slots[i] = nullptr;
 		}
 	}
 }
 
 void OptionsManager::DrawGameSlots(uint32 slotOffset, uint32 surface_id /* = working_buffer_id*/) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 temp;
 	pxString str;
 
@@ -3523,7 +3521,7 @@ void OptionsManager::DrawGameSlots(uint32 slotOffset, uint32 surface_id /* = wor
 		DrawRectangle((bool8)(m_GAMESLOT_selected == slot), id_wPos + 9, h - 1, 65, 49, ad, pitch);
 
 		// Followed by label and time played if the slot is in use
-		if (m_slots[slotOffset + slot] == NULL) {
+		if (m_slots[slotOffset + slot] == nullptr) {
 			if ((m_editing) && (m_GAMESLOT_selected == slot)) {
 				// Unlock the surface for the thumbnail blit
 				surface_manager->Unlock_surface(surface_id);
@@ -3570,14 +3568,14 @@ void OptionsManager::DrawGameSlots(uint32 slotOffset, uint32 surface_id /* = wor
 				// Are we to draw current thumbnails or the preloaded next thumbnails (paging animation)
 				if (slotOffset == m_slotOffset) {
 					if (m_GAMESLOT_selected == slot)
-						surface_manager->Blit_surface_to_surface(m_thumbSurfaceIDs[slot], surface_id, NULL, &dest);
+						surface_manager->Blit_surface_to_surface(m_thumbSurfaceIDs[slot], surface_id, nullptr, &dest);
 					else
-						surface_manager->Blit_surface_to_surface(m_grayThumbSurfaceIDs[slot], surface_id, NULL, &dest);
+						surface_manager->Blit_surface_to_surface(m_grayThumbSurfaceIDs[slot], surface_id, nullptr, &dest);
 				} else {
 					if (m_GAMESLOT_selected == slot)
-						surface_manager->Blit_surface_to_surface(m_thumbSurfaceIDs[slot + 4], surface_id, NULL, &dest);
+						surface_manager->Blit_surface_to_surface(m_thumbSurfaceIDs[slot + 4], surface_id, nullptr, &dest);
 					else
-						surface_manager->Blit_surface_to_surface(m_grayThumbSurfaceIDs[slot + 4], surface_id, NULL, &dest);
+						surface_manager->Blit_surface_to_surface(m_grayThumbSurfaceIDs[slot + 4], surface_id, nullptr, &dest);
 				}
 
 				// Lock it back up again and continue
@@ -3604,7 +3602,7 @@ void OptionsManager::DrawGameSlots(uint32 slotOffset, uint32 surface_id /* = wor
 }
 
 void OptionsManager::DrawMovieSlots(uint32 offset, uint32 surface_id /* = working_buffer_id*/) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	LRECT dest;
 	uint32 selectedMovie;
 	uint32 selectedMovieSlot;
@@ -3642,14 +3640,14 @@ void OptionsManager::DrawMovieSlots(uint32 offset, uint32 surface_id /* = workin
 		if (g_movieLibrary[selectedMovie].visible) {
 			if (offset == m_movieOffset) {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 			} else {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 			}
 		}
 		firstColumnX += 120;
@@ -3676,14 +3674,14 @@ void OptionsManager::DrawMovieSlots(uint32 offset, uint32 surface_id /* = workin
 		if (g_movieLibrary[selectedMovie].visible) {
 			if (offset == m_movieOffset) {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 			} else {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 			}
 		}
 		firstColumnX += 120;
@@ -3710,14 +3708,14 @@ void OptionsManager::DrawMovieSlots(uint32 offset, uint32 surface_id /* = workin
 		if (g_movieLibrary[selectedMovie].visible) {
 			if (offset == m_movieOffset) {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 			} else {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 			}
 		}
 		firstColumnX += 120;
@@ -3744,14 +3742,14 @@ void OptionsManager::DrawMovieSlots(uint32 offset, uint32 surface_id /* = workin
 		if (g_movieLibrary[selectedMovie].visible) {
 			if (offset == m_movieOffset) {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot], surface_id, nullptr, &dest);
 			} else {
 				if (m_M_MOVIE_selected == (M_MOVIE_CHOICES)selectedMovieSlot)
-					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_movieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 				else
-					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, NULL, &dest);
+					surface_manager->Blit_surface_to_surface(m_grayMovieSurfaceIDs[selectedMovieSlot + 12], surface_id, nullptr, &dest);
 			}
 		}
 		firstRowY += 75;
@@ -3786,7 +3784,7 @@ void OptionsManager::DrawMovieSlots(uint32 offset, uint32 surface_id /* = workin
 }
 
 void OptionsManager::DrawMainLoadScreen(uint32 surface_id) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 temp;
 	pxString str;
 	int32 icon_x = 60;
@@ -3829,7 +3827,7 @@ void OptionsManager::DrawMainLoadScreen(uint32 surface_id) {
 }
 
 void OptionsManager::DrawMovieScreen(uint32 surface_id) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 temp;
 	int32 icon_x = 40;
 	int32 icon_y = (SCREEN_DEPTH / 2) - (m_fontHeight / 2);
@@ -3873,7 +3871,7 @@ void OptionsManager::DrawMovieScreen(uint32 surface_id) {
 }
 
 void OptionsManager::DrawExtrasScreen(uint32 surface_id) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	uint8 *ad = surface_manager->Lock_surface(surface_id);
 	uint32 pitch = surface_manager->Get_pitch(surface_id);
@@ -3914,7 +3912,7 @@ void OptionsManager::DrawWidescreenBorders() {
 }
 
 void OptionsManager::DrawPlaySelectScreen(uint32 surface_id) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	// Some of this is disabled for demos
 	int32 demo = g_globalScriptVariables->GetVariable("demo");
@@ -3973,7 +3971,7 @@ void OptionsManager::DrawPlaySelectScreen(uint32 surface_id) {
 }
 
 void OptionsManager::DrawProfileSelectScreen(uint32 surface_id) {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	uint8 *ad = surface_manager->Lock_surface(surface_id);
 	uint32 pitch = surface_manager->Get_pitch(surface_id);
@@ -4023,7 +4021,7 @@ void OptionsManager::InitialiseAProfile() {
 
 	// Need to calculate printing margin
 	m_margin = 0;
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	// This ensures correct spacing for any translations
 	for (uint32 i = 0; i < 5; i++) {
@@ -4066,7 +4064,7 @@ void OptionsManager::InitialiseAProfile() {
 	m_profileScrollingLine = -1;
 
 	// Setup the character drawing stuff here using m_M_PROFILES_selected ...
-	const char *character_name = NULL;
+	const char *character_name = nullptr;
 	const char *outfit_name = "outfit";
 	const char *anim_name = "walk";
 	int16 rx = 0;
@@ -4171,10 +4169,10 @@ void OptionsManager::InitialiseAProfile() {
 
 void OptionsManager::DrawProfileScreen(uint32 surface_id) {
 	// Timing code to lock the refresh rate at a constant
-	uint32 t = GetMicroTimer();
+	uint32 t = g_system->getMillis();
 
-	const char *msg = NULL;
-	const char *prefix = NULL;
+	const char *msg = nullptr;
+	const char *prefix = nullptr;
 	uint32 temp;
 	pxString label;
 
@@ -4230,7 +4228,7 @@ void OptionsManager::DrawProfileScreen(uint32 surface_id) {
 	label.Format("%s%s", prefix, "info");
 	msg = GetTextFromReference(HashString(label));
 
-	if (msg == NULL)
+	if (msg == nullptr)
 		msg = "Please update 'globals\\translations\\' files";
 
 	// Get some storage from the stack
@@ -4401,10 +4399,10 @@ void OptionsManager::DrawProfileScreen(uint32 surface_id) {
 	surface_manager->Unlock_surface(surface_id);
 
 	// Timing code to lock the refresh rate at a constant
-	t = GetMicroTimer() - t;
-	int32 r = 40000 - t;
-	if (t < 40000) {
-		g_system->delayMillis(r / 1000);
+	t = g_system->getMillis() - t;
+	int32 r = 40 - t;
+	if (t < 40) {
+		g_system->delayMillis(r);
 	}
 }
 
@@ -4555,7 +4553,7 @@ void OptionsManager::GetKeyAssignment() {
 }
 
 void OptionsManager::InitialiseControlsScreen() {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	// Need to calculate printing margin
 	m_margin = 0;
@@ -4578,7 +4576,7 @@ void OptionsManager::InitialiseControlsScreen() {
 }
 
 void OptionsManager::DrawControllerConfiguration() {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 halfScreen = SCREEN_WIDTH / 2;
 	uint32 temp;
 	pxString sentence;
@@ -4627,7 +4625,7 @@ void OptionsManager::DrawControllerConfiguration() {
 }
 
 void OptionsManager::DrawGameOptions() {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 
 	uint8 *ad = surface_manager->Lock_surface(working_buffer_id);
 	uint32 pitch = surface_manager->Get_pitch(working_buffer_id);
@@ -4651,7 +4649,7 @@ void OptionsManager::DrawGameOptions() {
 }
 
 void OptionsManager::DrawAudioSettings() {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 halfScreen = SCREEN_WIDTH / 2;
 	uint32 temp;
 	LRECT repairRect;
@@ -4711,7 +4709,7 @@ void OptionsManager::DrawAudioSettings() {
 }
 
 void OptionsManager::DrawVideoSettings() {
-	const char *msg = NULL;
+	const char *msg = nullptr;
 	uint32 halfScreen = SCREEN_WIDTH / 2;
 	uint32 temp;
 	LRECT repairRect;
@@ -4796,7 +4794,7 @@ void OptionsManager::AnimateSlotsPaging() {
 	// Only perform dirty rectangle refresh in-game (ie no movie)
 	if (m_useDirtyRects) {
 		// Time lock code
-		t = GetMicroTimer();
+		t = g_system->getMillis();
 		// Calculate dirty rectangle
 		repairRect.left = 0;
 		repairRect.right = SCREEN_WIDTH;
@@ -4986,11 +4984,11 @@ void OptionsManager::AnimateSlotsPaging() {
 
 	if (m_useDirtyRects) {
 		// Lock refresh time
-		t = GetMicroTimer() - t;
+		t = g_system->getMillis() - t;
 
 		int32 r = REFRESH_LIMITER - t;
 		if (t < REFRESH_LIMITER) {
-			g_system->delayMillis(r / 1000);
+			g_system->delayMillis(r);
 		}
 	}
 }
@@ -5057,7 +5055,7 @@ bool8 OptionsManager::AnimateBracketsToBox(bool8 forwards, uint32 surface_id) {
 	// Only perform dirty rectangle refresh in-game (ie no movie)
 	if (m_useDirtyRects) {
 		// Time lock code
-		t = GetMicroTimer();
+		t = g_system->getMillis();
 		// Calculate dirty rectangle (needs to be quite fat to cope with other languages)
 		repairRect.left = m_targetBox.left - 50;
 		repairRect.right = m_targetBox.right + 50;
@@ -5162,11 +5160,11 @@ bool8 OptionsManager::AnimateBracketsToBox(bool8 forwards, uint32 surface_id) {
 
 	if (m_useDirtyRects) {
 		// Lock refresh time
-		t = GetMicroTimer() - t;
+		t = g_system->getMillis() - t;
 
 		int32 r = REFRESH_LIMITER - t;
 		if (t < REFRESH_LIMITER) {
-			g_system->delayMillis(r / 1000);
+			g_system->delayMillis(r);
 		}
 	}
 
@@ -5188,7 +5186,7 @@ bool8 OptionsManager::AnimateThoseBrackets(bool8 forwards) {
 			return FALSE8;
 	}
 	// Time lock code
-	uint32 t = GetMicroTimer();
+	uint32 t = g_system->getMillis();
 
 	LRECT repairRect;
 	repairRect.left = m_optionsBox.left - 1;
@@ -5332,11 +5330,11 @@ bool8 OptionsManager::AnimateThoseBrackets(bool8 forwards) {
 		m_autoAnimating--;
 
 	// Lock refresh time
-	t = GetMicroTimer() - t;
+	t = g_system->getMillis() - t;
 
 	if (t < REFRESH_LIMITER) {
 		int32 r = REFRESH_LIMITER - t;
-		g_system->delayMillis(r / 1000);
+		g_system->delayMillis(r);
 	}
 
 	return TRUE8;
@@ -5510,7 +5508,7 @@ void OptionsManager::DrawRectangle(bool8 selected, uint32 x, uint32 y, uint32 wi
 }
 
 const char *OptionsManager::GetTextFromReference(uint32 hashRef) {
-	char *textLine = NULL;
+	char *textLine = nullptr;
 
 	// Get the text via a label
 	if (m_global_text)
@@ -5591,7 +5589,7 @@ void OptionsManager::LoadGlobalTextFile() {
 	if (tt) {
 		// Ok, translators mode has been activated
 		// Only load the global text if it hasn't been loaded already
-		if (m_global_text == NULL)
+		if (m_global_text == nullptr)
 			m_global_text = LoadTranslatedFile("global", "global\\global\\");
 	} else
 		m_global_text = (_linked_data_file *)rs1->Res_open(textFileName, buf_hash, globalClusterFile, globalClusterHash);
@@ -5646,7 +5644,7 @@ void OptionsManager::DisplayText(uint8 *ad, uint32 pitch, const char *str, int32
 	int32 initialX;
 
 	// Ensure font is loaded as this function can be used outside this module
-	if (m_font_file == NULL) {
+	if (m_font_file == nullptr) {
 		LoadBitmapFont();
 	}
 
@@ -6085,7 +6083,7 @@ void OptionsManager::DrawSlideShow() {
 				m_pageOn_from.left = (WADGE_INCREMENTS + m_slideWadger) * 20;
 
 				// Stretchy blit
-				surface_manager->Blit_surface_to_surface(m_mySlotSurface1ID, working_buffer_id, &m_pageOn_from, NULL, 0);
+				surface_manager->Blit_surface_to_surface(m_mySlotSurface1ID, working_buffer_id, &m_pageOn_from, nullptr, 0);
 			}
 
 			m_slideWadger++;
@@ -6108,7 +6106,7 @@ void OptionsManager::DrawSlideShow() {
 				m_pageOn_from.right = SCREEN_WIDTH - ((WADGE_INCREMENTS - m_slideWadger) * 20);
 
 				// Stretchy blit
-				surface_manager->Blit_surface_to_surface(m_mySlotSurface1ID, working_buffer_id, &m_pageOn_from, NULL, 0);
+				surface_manager->Blit_surface_to_surface(m_mySlotSurface1ID, working_buffer_id, &m_pageOn_from, nullptr, 0);
 			}
 
 			m_slideWadger--;
@@ -6205,7 +6203,7 @@ void OptionsManager::DrawSlideShow() {
 		delete binkDecoder;
 
 		// Update the screen
-		surface_manager->Blit_surface_to_surface(m_mySlotSurface1ID, working_buffer_id, NULL, NULL, 0);
+		surface_manager->Blit_surface_to_surface(m_mySlotSurface1ID, working_buffer_id, nullptr, nullptr, 0);
 
 		// Now ensure the slide surroundings are the correct colour at this cycle
 
@@ -6317,7 +6315,7 @@ uint32 GetFileSz(const char *path) {
 }
 
 Crediter::Crediter()
-	: m_creditsFile(NULL), m_numberOfBytes(0), m_endOfCredits(0), m_currentHeight(0), m_cursor(0), m_scrollOffset(0), m_logoSurfaceID(0), m_logoDraw(0), m_logoAttached(0),
+	: m_creditsFile(nullptr), m_numberOfBytes(0), m_endOfCredits(0), m_currentHeight(0), m_cursor(0), m_scrollOffset(0), m_logoSurfaceID(0), m_logoDraw(0), m_logoAttached(0),
 	  m_movieSurfaceID(0), m_movieBackdrop(FALSE8), m_loopingMovie(FALSE8), m_frameStart(0), m_totalMovieFrames(0) {
 	memset(m_theData, 0, MAX_BYTESIZE_OF_CREDITS_FILE);
 	m_movieRect.left = m_movieRect.right = m_movieRect.bottom = m_movieRect.top = 0;
@@ -6379,7 +6377,7 @@ void Crediter::Initialise(const char *textFileName, const char *movieFileName, b
 	}
 
 	// Now sort out the movie to play as the backdrop
-	if (movieFileName == NULL) {
+	if (movieFileName == nullptr) {
 		m_movieBackdrop = FALSE8;
 	} else {
 		// Safety check
@@ -6596,7 +6594,7 @@ linesDone:
 		logo_rect.left = halfScreenW - 30;
 		logo_rect.right = logo_rect.left + 60;
 
-		surface_manager->Blit_surface_to_surface(m_logoSurfaceID, working_buffer_id, NULL, &logo_rect, 0);
+		surface_manager->Blit_surface_to_surface(m_logoSurfaceID, working_buffer_id, nullptr, &logo_rect, 0);
 	}
 
 	// Draw border rects

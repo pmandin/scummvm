@@ -64,7 +64,7 @@ void DefaultAudioCDManager::fillPotentialTrackNames(Common::Array<Common::String
 	trackNames.push_back(Common::String::format("track_%02d", track));
 }
 
-bool DefaultAudioCDManager::existExtractedCDAudioFiles() {
+bool DefaultAudioCDManager::existExtractedCDAudioFiles(uint track) {
 	// keep this in sync with STREAM_FILEFORMATS
 	const char *extensions[] = {
 #ifdef USE_VORBIS
@@ -82,7 +82,7 @@ bool DefaultAudioCDManager::existExtractedCDAudioFiles() {
 	};
 
 	Common::Array<Common::String> trackNames;
-	fillPotentialTrackNames(trackNames, 1);
+	fillPotentialTrackNames(trackNames, track);
 
 	for (Common::Array<Common::String>::iterator i = trackNames.begin(); i != trackNames.end(); ++i) {
 		for (const char **ext = extensions; *ext; ++ext) {
@@ -110,13 +110,13 @@ bool DefaultAudioCDManager::play(int track, int numLoops, int startFrame, int du
 		// the requested track.
 		Common::Array<Common::String> trackNames;
 		fillPotentialTrackNames(trackNames, track);
-		Audio::SeekableAudioStream *stream = 0;
+		Audio::SeekableAudioStream *stream = nullptr;
 
 		for (Common::Array<Common::String>::iterator i = trackNames.begin(); !stream && i != trackNames.end(); ++i) {
 			stream = Audio::SeekableAudioStream::openStreamFile(*i);
 		}
 
-		if (stream != 0) {
+		if (stream != nullptr) {
 			Audio::Timestamp start = Audio::Timestamp(0, startFrame, 75);
 			Audio::Timestamp end = duration ? Audio::Timestamp(0, startFrame + duration, 75) : stream->getLength();
 

@@ -69,7 +69,7 @@ int MidiDriver_WIN::open() {
 	if (_isOpen)
 		return MERR_ALREADY_OPEN;
 
-	_streamEvent = CreateEvent(NULL, true, true, NULL);
+	_streamEvent = CreateEvent(nullptr, true, true, nullptr);
 	MMRESULT res = midiOutOpen((HMIDIOUT *)&_mo, _device, (DWORD_PTR)_streamEvent, 0, CALLBACK_EVENT);
 	if (res != MMSYSERR_NOERROR) {
 		check_error(res);
@@ -165,16 +165,16 @@ void MidiDriver_WIN::check_error(MMRESULT result) {
 
 class WindowsMusicPlugin : public MusicPluginObject {
 public:
-	const char *getName() const {
+	const char *getName() const override {
 		return _s("Windows MIDI");
 	}
 
-	const char *getId() const {
+	const char *getId() const override {
 		return "windows";
 	}
 
-	MusicDevices getDevices() const;
-	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const;
+	MusicDevices getDevices() const override;
+	Common::Error createInstance(MidiDriver **mididriver, MidiDriver::DeviceHandle = 0) const override;
 };
 
 MusicDevices WindowsMusicPlugin::getDevices() const {

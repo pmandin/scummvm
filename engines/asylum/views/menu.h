@@ -117,6 +117,7 @@ private:
 	int32            _caretBlink;
 	int32            _startIndex;
 	int32            _creditsFrameIndex;
+	int32            _creditsNumSteps;
 	bool             _showMovie;
 	uint32           _iconFrames[12];
 
@@ -207,6 +208,7 @@ private:
 	bool click(const AsylumEvent &evt);
 
 	// Thumbnails
+	void adjustCoordinates(Common::Point &point);
 	bool hasThumbnail(int index);
 	void showThumbnail(int index);
 

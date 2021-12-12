@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv2 license mentioned above, MojoTouch has exclusively licensed
+ * this code on November 10th, 2021, to be use in closed-source products.
+ * Therefore, any contributions (commits) to it will also be dual-licensed.
+ *
  */
 
 #ifndef GROOVIE_LOGIC_BEEHIVE_H
@@ -38,10 +44,12 @@ namespace Groovie {
  */
 class BeehiveGame {
 public:
-	BeehiveGame() {
+	BeehiveGame(bool easierAi) {
 #if 0
+		_easierAi = false;
 		tests();
 #endif
+		_easierAi = easierAi;
 	}
 	~BeehiveGame() {}
 
@@ -72,6 +80,9 @@ private:
 	#define HEXCOUNT 61
 	int8 _beehiveState[HEXCOUNT];
 
+	Common::Array<int> overrideMoves;
+	uint overrideIndex;
+	bool _easierAi;
 };
 
 } // End of Groovie namespace

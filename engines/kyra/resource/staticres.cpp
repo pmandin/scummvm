@@ -39,7 +39,7 @@
 
 namespace Kyra {
 
-#define RESFILE_VERSION 111
+#define RESFILE_VERSION 115
 
 namespace {
 bool checkKyraDat(Common::SeekableReadStream *file) {
@@ -95,7 +95,7 @@ const IndexTable iLanguageTable[] = {
 	{ Common::JA_JPN,  6 },
 	{ Common::RU_RUS,  7 },
 	{ Common::HE_ISR,  8 },
-	{ Common::ZH_CNA,  9 },
+	{ Common::ZH_CHN,  9 },
 	{ Common::ZH_TWN, 10 },
 	{ -1, -1 }
 };
@@ -110,7 +110,7 @@ const IndexTable iPlatformTable[] = {
 	{ Common::kPlatformFMTowns, 2 },
 	{ Common::kPlatformPC98, 3 },
 	{ Common::kPlatformSegaCD, 4 },
-	{ Common::kPlatformMacintosh, 0 }, // HACK: Should be type "4", but as long as we can't extract Macintosh data, we need to use DOS data.
+	{ Common::kPlatformMacintosh, 5 },
 	{ -1, -1 }
 };
 
@@ -150,7 +150,7 @@ bool StaticResource::loadStaticResourceFile() {
 			continue;
 		}
 
-		delete file; file = 0;
+		delete file; file = nullptr;
 
 		if (!res->loadPakFile(staticDataFilename(), *i))
 			continue;
@@ -209,7 +209,7 @@ bool StaticResource::tryKyraDatLoad() {
 	}
 
 	delete index;
-	index = 0;
+	index = nullptr;
 
 	if (!found)
 		return false;
@@ -266,8 +266,8 @@ bool StaticResource::init() {
 		{ kLoLCompassData, proc(loadDummy), proc(freeDummy) },
 		{ kLoLFlightShpData, proc(loadDummy), proc(freeDummy) },
 #endif
-#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 		{ kRawDataBe16, proc(loadRawDataBe16), proc(freeRawDataBe16) },
+#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 		{ kRawDataBe32, proc(loadRawDataBe32), proc(freeRawDataBe32) },
 #endif
 #ifdef ENABLE_LOL
@@ -282,7 +282,7 @@ bool StaticResource::init() {
 		{ kEoBNpcData, proc(loadEoBNpcData), proc(freeEoBNpcData) },
 #endif
 
-		{ 0, 0, 0 }
+		{ 0, nullptr, nullptr }
 	};
 #undef proc
 	_fileLoader = fileTypeTable;
@@ -326,6 +326,10 @@ const ItemAnimDefinition *StaticResource::loadItemAnimDefinition(int id, int &en
 	return (const ItemAnimDefinition *)getData(id, k2ItemAnimDefinition, entries);
 }
 
+const uint16 *StaticResource::loadRawDataBe16(int id, int &entries) {
+	return (const uint16 *)getData(id, kRawDataBe16, entries);
+}
+
 bool StaticResource::prefetchId(int id) {
 	if (id == -1) {
 		for (DataMap::const_iterator i = _dataTable.begin(); i != _dataTable.end(); ++i) {
@@ -335,7 +339,7 @@ bool StaticResource::prefetchId(int id) {
 		return true;
 	}
 
-	const void *ptr = 0;
+	const void *ptr = nullptr;
 	int type = -1, size = -1;
 
 	if (checkResList(id, type, ptr, size))
@@ -396,36 +400,36 @@ bool StaticResource::checkResList(int id, int &type, const void *&ptr, int &size
 
 const StaticResource::FileType *StaticResource::getFiletype(int type) {
 	if (!_fileLoader)
-		return 0;
+		return nullptr;
 
 	for (int i = 0; _fileLoader[i].load; ++i) {
 		if (_fileLoader[i].type == type)
 			return &_fileLoader[i];
 	}
 
-	return 0;
+	return nullptr;
 }
 
 const void *StaticResource::getData(int id, int requesttype, int &size) {
-	const void *ptr = 0;
+	const void *ptr = nullptr;
 	int type = -1;
 	size = 0;
 
 	if (checkResList(id, type, ptr, size)) {
 		if (type == requesttype)
 			return ptr;
-		return 0;
+		return nullptr;
 	}
 
 	if (!prefetchId(id))
-		return 0;
+		return nullptr;
 
 	if (checkResList(id, type, ptr, size)) {
 		if (type == requesttype)
 			return ptr;
 	}
 
-	return 0;
+	return nullptr;
 }
 
 bool StaticResource::loadDummy(Common::SeekableReadStream &stream, void *&ptr, int &size) {
@@ -582,7 +586,7 @@ bool StaticResource::loadHoFSequenceData(Common::SeekableReadStream &stream, voi
 			size += (num_c * sizeof(FrameControl));
 
 		} else {
-			tmp_n[i].wsaControl = 0;
+			tmp_n[i].wsaControl = nullptr;
 		}
 	}
 
@@ -636,13 +640,25 @@ bool StaticResource::loadItemAnimDefinition(Common::SeekableReadStream &stream, 
 	return true;
 }
 
+bool StaticResource::loadRawDataBe16(Common::SeekableReadStream &stream, void *&ptr, int &size) {
+	size = stream.size() >> 1;
+
+	uint16 *r = new uint16[size];
+
+	for (int i = 0; i < size; i++)
+		r[i] = stream.readUint16BE();
+
+	ptr = r;
+	return true;
+}
+
 void StaticResource::freeDummy(void *&ptr, int &size) {
 }
 
 void StaticResource::freeRawData(void *&ptr, int &size) {
 	uint8 *data = (uint8 *)ptr;
 	delete[] data;
-	ptr = 0;
+	ptr = nullptr;
 	size = 0;
 }
 
@@ -651,28 +667,28 @@ void StaticResource::freeStringTable(void *&ptr, int &size) {
 	while (size--)
 		delete[] data[size];
 	delete[] data;
-	ptr = 0;
+	ptr = nullptr;
 	size = 0;
 }
 
 void StaticResource::freeShapeTable(void *&ptr, int &size) {
 	Shape *data = (Shape *)ptr;
 	delete[] data;
-	ptr = 0;
+	ptr = nullptr;
 	size = 0;
 }
 
 void StaticResource::freeAmigaSfxTable(void *&ptr, int &size) {
 	AmigaSfxTable *data = (AmigaSfxTable *)ptr;
 	delete[] data;
-	ptr = 0;
+	ptr = nullptr;
 	size = 0;
 }
 
 void StaticResource::freeRoomTable(void *&ptr, int &size) {
 	Room *data = (Room *)ptr;
 	delete[] data;
-	ptr = 0;
+	ptr = nullptr;
 	size = 0;
 }
 
@@ -692,7 +708,7 @@ void StaticResource::freeHoFSequenceData(void *&ptr, int &size) {
 	delete[] h->nestedSeq;
 
 	delete h;
-	ptr = 0;
+	ptr = nullptr;
 	size = 0;
 }
 
@@ -701,7 +717,7 @@ void StaticResource::freeHoFSeqItemAnimData(void *&ptr, int &size) {
 	for (int i = 0; i < size; i++)
 		delete[] d[i].frames;
 	delete[] d;
-	ptr = 0;
+	ptr = nullptr;
 	size = 0;
 }
 
@@ -710,6 +726,13 @@ void StaticResource::freeItemAnimDefinition(void *&ptr, int &size) {
 	for (int i = 0; i < size; i++)
 		delete[] d[i].frames;
 	delete[] d;
+	ptr = nullptr;
+	size = 0;
+}
+
+void StaticResource::freeRawDataBe16(void *&ptr, int &size) {
+	uint16 *data = (uint16 *)ptr;
+	delete[] data;
 	ptr = 0;
 	size = 0;
 }
@@ -720,7 +743,20 @@ void KyraEngine_LoK::initStaticResource() {
 	int temp = 0;
 	_seq_Forest = _staticres->loadRawData(k1ForestSeq, temp);
 	_seq_KallakWriting = _staticres->loadRawData(k1KallakWritingSeq, temp);
+
 	_seq_KyrandiaLogo = _staticres->loadRawData(k1KyrandiaLogoSeq, temp);
+	uint8 *kyraLogo = new uint8[temp];
+	memcpy(kyraLogo, _seq_KyrandiaLogo, temp);
+	// The Kyrandia logo has been modified for the Chinese version and unfortunately
+	// this includes the sequence data. The data is currently not treated as language
+	// specific in KYRA.DAT and I want to keep it that way, since all other version
+	// use the exact same data. We just patch the data...
+	if (_flags.lang == Common::ZH_TWN) {
+		kyraLogo[30] = kyraLogo[86] = 0x0d;
+		kyraLogo[45] = kyraLogo[60] = kyraLogo[64] = 0x0e;
+	}
+	_seq_KyrandiaLogo = kyraLogo;
+
 	_seq_KallakMalcolm = _staticres->loadRawData(k1KallakMalcolmSeq, temp);
 	_seq_MalcolmTree = _staticres->loadRawData(k1MalcolmTreeSeq, temp);
 	_seq_WestwoodLogo = _staticres->loadRawData(k1WestwoodLogoSeq, temp);
@@ -791,7 +827,7 @@ void KyraEngine_LoK::initStaticResource() {
 		assert(_roomTable);
 
 		memcpy(_roomTable, tempRoomList, _roomTableSize * sizeof(Room));
-		tempRoomList = 0;
+		tempRoomList = nullptr;
 
 		_staticres->unloadId(k1RoomList);
 	}
@@ -804,7 +840,7 @@ void KyraEngine_LoK::initStaticResource() {
 		assert(_defaultShapeTable);
 
 		memcpy(_defaultShapeTable, tempShapeTable, _defaultShapeTableSize * sizeof(Shape));
-		tempShapeTable = 0;
+		tempShapeTable = nullptr;
 
 		_staticres->unloadId(k1DefaultShapes);
 	}
@@ -837,7 +873,7 @@ void KyraEngine_LoK::initStaticResource() {
 }
 
 void KyraEngine_LoK::loadMouseShapes() {
-	_screen->loadBitmap("MOUSE.CPS", 3, 3, 0);
+	_screen->loadBitmap("MOUSE.CPS", 3, 3, nullptr);
 	_screen->_curPage = 2;
 	_shapes[0] = _screen->encodeShape(0, 0, 8, 10, 0);
 	_shapes[1] = _screen->encodeShape(0, 0x17, 0x20, 7, 0);
@@ -847,7 +883,7 @@ void KyraEngine_LoK::loadMouseShapes() {
 	_shapes[5] = _screen->encodeShape(0x80, 0x12, 0x10, 11, 0);
 	_shapes[6] = _screen->encodeShape(0x90, 0x12, 0x10, 10, 0);
 	_shapes[360] = _screen->encodeShape(0x28, 0, 0x10, 13, 0);
-	_screen->setMouseCursor(1, 1, 0);
+	_screen->setMouseCursor(1, 1, nullptr);
 	_screen->setMouseCursor(1, 1, _shapes[0]);
 	_screen->setShapePages(5, 3);
 }
@@ -860,12 +896,12 @@ void KyraEngine_LoK::loadCharacterShapes() {
 		assert(i < _defaultShapeTableSize);
 		Shape *shape = &_defaultShapeTable[i];
 		if (shape->imageIndex == 0xFF) {
-			_shapes[i + 7] = 0;
+			_shapes[i + 7] = nullptr;
 			continue;
 		}
 		if (shape->imageIndex != curImage) {
 			assert(shape->imageIndex < _characterImageTableSize);
-			_screen->loadBitmap(_characterImageTable[shape->imageIndex], 3, 3, 0);
+			_screen->loadBitmap(_characterImageTable[shape->imageIndex], 3, 3, nullptr);
 			curImage = shape->imageIndex;
 		}
 		_shapes[i + 7] = _screen->encodeShape(shape->x << 3, shape->y, shape->w << 3, shape->h, 1);
@@ -874,7 +910,7 @@ void KyraEngine_LoK::loadCharacterShapes() {
 }
 
 void KyraEngine_LoK::loadSpecialEffectShapes() {
-	_screen->loadBitmap("EFFECTS.CPS", 3, 3, 0);
+	_screen->loadBitmap("EFFECTS.CPS", 3, 3, nullptr);
 	_screen->_curPage = 2;
 
 	int currShape;
@@ -894,10 +930,10 @@ void KyraEngine_LoK::loadSpecialEffectShapes() {
 void KyraEngine_LoK::loadItems() {
 	int shape;
 
-	_screen->loadBitmap("JEWELS3.CPS", 3, 3, 0);
+	_screen->loadBitmap("JEWELS3.CPS", 3, 3, nullptr);
 	_screen->_curPage = 2;
 
-	_shapes[323] = 0;
+	_shapes[323] = nullptr;
 
 	for (shape = 1; shape < 6; shape++)
 		_shapes[323 + shape] = _screen->encodeShape((shape - 1) * 32, 0, 32, 17, 0);
@@ -921,7 +957,7 @@ void KyraEngine_LoK::loadItems() {
 		_shapes[shape] = _screen->encodeShape((shape - 355) * 32, 85,  32, 17, 0);
 
 
-	_screen->loadBitmap("ITEMS.CPS", 3, 3, 0);
+	_screen->loadBitmap("ITEMS.CPS", 3, 3, nullptr);
 	_screen->_curPage = 2;
 
 	for (int i = 0; i < 107; i++) {
@@ -937,7 +973,7 @@ void KyraEngine_LoK::loadItems() {
 }
 
 void KyraEngine_LoK::loadButtonShapes() {
-	_screen->loadBitmap("BUTTONS2.CPS", 3, 3, 0);
+	_screen->loadBitmap("BUTTONS2.CPS", 3, 3, nullptr);
 	_screen->_curPage = 2;
 	_gui->_scrollUpButton.data0ShapePtr = _screen->encodeShape(0, 0, 24, 14, 1);
 	_gui->_scrollUpButton.data1ShapePtr = _screen->encodeShape(24, 0, 24, 14, 1);
@@ -951,23 +987,15 @@ void KyraEngine_LoK::loadButtonShapes() {
 void KyraEngine_LoK::loadMainScreen(int page) {
 	_screen->clearPage(page);
 
-	if (((_flags.lang == Common::EN_ANY || _flags.lang == Common::RU_RUS) && !_flags.isTalkie && _flags.platform == Common::kPlatformDOS) || _flags.platform == Common::kPlatformAmiga)
-		_screen->loadBitmap("MAIN15.CPS", page, page, &_screen->getPalette(0));
-	else if (_flags.lang == Common::EN_ANY || _flags.lang == Common::JA_JPN || (_flags.isTalkie && _flags.lang == Common::IT_ITA))
-		_screen->loadBitmap("MAIN_ENG.CPS", page, page, 0);
-	else if (_flags.lang == Common::FR_FRA || (_flags.lang == Common::ES_ESP && _flags.isTalkie)  /* Spanish fan made over French CD version */ )
-		_screen->loadBitmap("MAIN_FRE.CPS", page, page, 0);
-	else if (_flags.lang == Common::DE_DEU)
-		_screen->loadBitmap("MAIN_GER.CPS", page, page, 0);
-	else if (_flags.lang == Common::ES_ESP)
-		_screen->loadBitmap("MAIN_SPA.CPS", page, page, 0);
-	else if (_flags.lang == Common::IT_ITA)
-		_screen->loadBitmap("MAIN_ITA.CPS", page, page, 0);
-	else if (_flags.lang == Common::RU_RUS)
-		_screen->loadBitmap("MAIN_ENG.CPS", page, page, 0);
-	else if (_flags.lang == Common::HE_ISR)
-		_screen->loadBitmap("MAIN_HEB.CPS", page, page, 0);
-	else
+	bool success = false;
+	static const char *pattern[] = { "15", "_ENG", "_FRE", "_GER", "_SPA", "_ITA", "_HEB", "" };
+	for (int i = 0; i < ARRAYSIZE(pattern) && !success; ++i) {
+		Common::String tryFile = Common::String::format("MAIN%s.CPS", pattern[i]);
+		if ((success = _res->exists(tryFile.c_str())))
+			_screen->loadBitmap(tryFile.c_str(), page, page, i == 0 ? &_screen->getPalette(0) : 0);
+	}
+
+	if (!success)
 		warning("no main graphics file found");
 
 	_screen->copyRegion(0, 0, 0, 0, 320, 200, page, 0, Screen::CR_NO_P_CHECK);
@@ -1004,16 +1032,16 @@ void KyraEngine_HoF::initStaticResource() {
 		_sound->initAudioResourceInfo(kMusicIngame, &resInfoIngame);
 		_sound->initAudioResourceInfo(kMusicFinale, &resInfoFinale);
 	} else if (_flags.platform == Common::kPlatformFMTowns) {
-		SoundResourceInfo_TownsPC98V2 resInfoIntro(0, 0, "intro%d.twn", (const uint16*)_cdaTrackTableIntro, _cdaTrackTableIntroSize >> 1);
-		SoundResourceInfo_TownsPC98V2 resInfoIngame(0, 0, "km%02d.twn", (const uint16*)_cdaTrackTableIngame, _cdaTrackTableIngameSize >> 1);
-		SoundResourceInfo_TownsPC98V2 resInfoFinale(0, 0, "finale%d.twn", (const uint16*)_cdaTrackTableFinale, _cdaTrackTableFinaleSize >> 1);
+		SoundResourceInfo_TownsPC98V2 resInfoIntro(nullptr, 0, "intro%d.twn", (const uint16*)_cdaTrackTableIntro, _cdaTrackTableIntroSize >> 1);
+		SoundResourceInfo_TownsPC98V2 resInfoIngame(nullptr, 0, "km%02d.twn", (const uint16*)_cdaTrackTableIngame, _cdaTrackTableIngameSize >> 1);
+		SoundResourceInfo_TownsPC98V2 resInfoFinale(nullptr, 0, "finale%d.twn", (const uint16*)_cdaTrackTableFinale, _cdaTrackTableFinaleSize >> 1);
 		_sound->initAudioResourceInfo(kMusicIntro, &resInfoIntro);
 		_sound->initAudioResourceInfo(kMusicIngame, &resInfoIngame);
 		_sound->initAudioResourceInfo(kMusicFinale, &resInfoFinale);
 	} else if (_flags.platform == Common::kPlatformPC98) {
-		SoundResourceInfo_TownsPC98V2 resInfoIntro(0, 0, "intro%d.86", 0, 0);
-		SoundResourceInfo_TownsPC98V2 resInfoIngame(0, 0, "km%02d.86", 0, 0);
-		SoundResourceInfo_TownsPC98V2 resInfoFinale(0, 0, "finale%d.86", 0, 0);
+		SoundResourceInfo_TownsPC98V2 resInfoIntro(nullptr, 0, "intro%d.86", nullptr, 0);
+		SoundResourceInfo_TownsPC98V2 resInfoIngame(nullptr, 0, "km%02d.86", nullptr, 0);
+		SoundResourceInfo_TownsPC98V2 resInfoFinale(nullptr, 0, "finale%d.86", nullptr, 0);
 		_sound->initAudioResourceInfo(kMusicIntro, &resInfoIntro);
 		_sound->initAudioResourceInfo(kMusicIngame, &resInfoIngame);
 		_sound->initAudioResourceInfo(kMusicFinale, &resInfoFinale);
@@ -1069,7 +1097,8 @@ const ScreenDim Screen_HoF::_screenDimTable[] = {
 	{ 0x00, 0x00, 0x28, 0x88, 0xC7, 0xCF, 0x00, 0x00 },
 	{ 0x00, 0x08, 0x28, 0xB8, 0xC7, 0xCF, 0x00, 0x00 },
 	{ 0x01, 0x28, 0x26, 0x46, 0xC7, 0xCC, 0x00, 0x00 },
-	{ 0x0A, 0x96, 0x14, 0x30, 0x19, 0xF0, 0x00, 0x00 }  // menu, just present for current menu code
+	{ 0x0A, 0x96, 0x14, 0x30, 0x19, 0xF0, 0x00, 0x00 }, // menu, just present for current menu code
+	{ 0x0B, 0x96, 0x10, 0x30, 0x19, 0xF0, 0x00, 0x00 }, // Chinese menu
 };
 
 const int Screen_HoF::_screenDimTableCount = ARRAYSIZE(Screen_HoF::_screenDimTable);
@@ -1127,12 +1156,16 @@ void GUI_LoK::initStaticResource() {
 	Button::Callback loadGameMenuFunctor = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::loadGameMenu);
 	Button::Callback cancelSubMenuFunctor = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::cancelSubMenu);
 
+	int menuItemYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 27 : 30;
+	int menuItemYInc = _vm->gameFlags().lang == Common::ZH_TWN ? 20 : 17;
+	int menuItemHeight = _vm->gameFlags().lang == Common::ZH_TWN ? 19 : 15;
+
 	GUI_V1_MENU(_menu[0], -1, -1, 0x100, 0x8B, 248, 249, 250, 0, 251, -1, 8, 0, 5, -1, -1, -1, -1);
-	GUI_V1_MENU_ITEM(_menu[0].item[0], 1, 0, 0, 0, -1, -1, 0x1E, 0xDC, 0x0F, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[0].item[1], 1, 0, 0, 0, -1, -1, 0x2F, 0xDC, 0x0F, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[0].item[2], 1, 0, 0, 0, -1, -1, 0x40, 0xDC, 0x0F, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[0].item[3], 1, 0, 0, 0, -1, -1, 0x51, 0xDC, 0x0F, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[0].item[4], 1, 0, 0, 0, -1,  0, 0x6E, 0xDC, 0x0F, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[0].item[0], 1, 0, 0, 0, -1, -1, menuItemYStart, 0xDC, menuItemHeight, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[0].item[1], 1, 0, 0, 0, -1, -1, menuItemYStart + menuItemYInc, 0xDC, menuItemHeight, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[0].item[2], 1, 0, 0, 0, -1, -1, menuItemYStart + menuItemYInc * 2, 0xDC, menuItemHeight, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[0].item[3], 1, 0, 0, 0, -1, -1, menuItemYStart + menuItemYInc * 3, 0xDC, menuItemHeight, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[0].item[4], 1, 0, 0, 0, -1,  0, 0x6E, 0xDC, menuItemHeight, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
 	_menu[0].item[0].callback = loadGameMenuFunctor;
 	_menu[0].item[1].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::saveGameMenu);
 	_menu[0].item[2].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::gameControlsMenu);
@@ -1140,39 +1173,54 @@ void GUI_LoK::initStaticResource() {
 	_menu[0].item[4].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::resumeGame);
 
 	GUI_V1_MENU(_menu[1], -1, -1, 0x140, 0x38, 248, 249, 250, 0, 254, -1, 8, 0, 2, -1, -1, -1, -1);
-	GUI_V1_MENU_ITEM(_menu[1].item[0], 1, 0, 0, 0, 0x18, 0, 0x1E, 0x48, 0x0F, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[1].item[1], 1, 0, 0, 0, 0xD8, 0, 0x1E, 0x48, 0x0F, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[1].item[0], 1, 0, 0, 0, 0x18, 0, 0x1E, 0x48, menuItemHeight, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[1].item[1], 1, 0, 0, 0, 0xD8, 0, 0x1E, 0x48, menuItemHeight, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
 	_menu[1].item[0].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::quitConfirmYes);
 	_menu[1].item[1].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::quitConfirmNo);
 
-	GUI_V1_MENU(_menu[2], -1, -1, 0x120, 0xA0, 248, 249, 250, 0, 251, -1, 8, 0, 6, 132, 22, 132, 124);
-	GUI_V1_MENU_ITEM(_menu[2].item[0], 1, 0, 0, 0, -1, 255, 0x27, 0x100, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[2].item[1], 1, 0, 0, 0, -1, 255, 0x38, 0x100, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[2].item[2], 1, 0, 0, 0, -1, 255, 0x49, 0x100, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[2].item[3], 1, 0, 0, 0, -1, 255, 0x5A, 0x100, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[2].item[4], 1, 0, 0, 0, -1, 255, 0x6B, 0x100, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[2].item[5], 1, 0, 0, 0, 0xB8, 0, 0x86, 0x58, 0x0F, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	menuItemYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 40 : 39;
+	int labelYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 5 : 8;
+
+	GUI_V1_MENU(_menu[2], -1, -1, 0x120, 0xA0, 248, 249, 250, 0, 251, -1, labelYStart, 0, 6, 132, 22, 132, 124);
+	GUI_V1_MENU_ITEM(_menu[2].item[0], 1, 0, 0, 0, -1, 255, menuItemYStart, 0x100, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[2].item[1], 1, 0, 0, 0, -1, 255, menuItemYStart + menuItemYInc, 0x100, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[2].item[2], 1, 0, 0, 0, -1, 255, menuItemYStart + menuItemYInc * 2, 0x100, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[2].item[3], 1, 0, 0, 0, -1, 255, menuItemYStart + menuItemYInc * 3, 0x100, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[2].item[4], 1, 0, 0, 0, -1, 255, menuItemYStart + menuItemYInc * 4, 0x100, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[2].item[5], 1, 0, 0, 0, 0xB8, 0, 0x86, 0x58, menuItemHeight, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
 	_menu[2].item[5].callback = cancelSubMenuFunctor;
 
-	GUI_V1_MENU(_menu[3], -1, -1, 288, 67, 248, 249, 250, 0, 251, -1, 8, 0, 2, -1, -1, -1, -1);
-	GUI_V1_MENU_ITEM(_menu[3].item[0], 1, 0, 0, 0, 24, 0, 44, 85, 15, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[3].item[1], 1, 0, 0, 0, 179, 0, 44, 85, 15, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	if (_vm->gameFlags().lang == Common::ZH_TWN)
+		_menu[2].item[4].enabled = false;
+
+	int menuHeight = _vm->gameFlags().lang == Common::ZH_TWN ? 80 : 67;
+	labelYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 50 : 44;
+
+	GUI_V1_MENU(_menu[3], -1, -1, 288, menuHeight, 248, 249, 250, 0, 251, -1, 8, 0, 2, -1, -1, -1, -1);
+	GUI_V1_MENU_ITEM(_menu[3].item[0], 1, 0, 0, 0, 22, 0, labelYStart, 88, menuItemHeight, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[3].item[1], 1, 0, 0, 0, 184, 0, labelYStart, 88, menuItemHeight, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
 	_menu[3].item[0].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::savegameConfirm);
 	_menu[3].item[1].callback = cancelSubMenuFunctor;
 
+	menuItemYInc = _vm->gameFlags().lang == Common::ZH_TWN ? 21 : 17;
+
 	GUI_V1_MENU(_menu[4], -1, -1, 0xD0, 0x4C, 248, 249, 250, 0, 251, -1, 8, 0, 2, -1, -1, -1, -1);
-	GUI_V1_MENU_ITEM(_menu[4].item[0], 1, 0, 0, 0, -1, -1, 0x1E, 0xB4, 0x0F, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[4].item[1], 1, 0, 0, 0, -1, -1, 0x2F, 0xB4, 0x0F, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[4].item[0], 1, 0, 0, 0, -1, -1, 0x1E, 0xB4, menuItemHeight, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[4].item[1], 1, 0, 0, 0, -1, -1, 0x1E + menuItemYInc, 0xB4, menuItemHeight, 252, 253, -1, 0, 248, 249, 250, -1, 0, 0, 0, 0, 0);
 	_menu[4].item[0].callback = loadGameMenuFunctor;
 	_menu[4].item[1].callback = quitPlayingFunctor;
 
+	menuItemYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 27 : 30;
+	menuItemYInc = _vm->gameFlags().lang == Common::ZH_TWN ? 20 : 17;
+	labelYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 29 : 32;
+
 	GUI_V1_MENU(_menu[5], -1, -1, 0x130, 0x99, 248, 249, 250, 0, 251, -1, 8, 0, 6, -1, -1, -1, -1);
-	GUI_V1_MENU_ITEM(_menu[5].item[0], 1, 0, 0, 0, 0xA5, 0, 0x1E, 0x80, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, 0x20, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[5].item[1], 1, 0, 0, 0, 0xA5, 0, 0x2F, 0x80, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, 0x31, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[5].item[2], 1, 0, 0, 0, 0xA5, 0, 0x40, 0x80, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, 0x42, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[5].item[3], 1, 0, 0, 0, 0xA5, 0, 0x51, 0x80, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, 0x53, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[5].item[4], 1, 0, 0, 0, 0xA5, 0, 0x62, 0x80, 0x0F, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, 0x65, 0, 0);
-	GUI_V1_MENU_ITEM(_menu[5].item[5], 1, 0, 0, 0,   -1, 0, 0x7F, 0x6C, 0x0F, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[5].item[0], 1, 0, 0, 0, 0xA5, 0, menuItemYStart, 0x80, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, labelYStart, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[5].item[1], 1, 0, 0, 0, 0xA5, 0, menuItemYStart + menuItemYInc, 0x80, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, labelYStart + menuItemYInc, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[5].item[2], 1, 0, 0, 0, 0xA5, 0, menuItemYStart + menuItemYInc * 2, 0x80, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, labelYStart + menuItemYInc * 2, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[5].item[3], 1, 0, 0, 0, 0xA5, 0, menuItemYStart + menuItemYInc * 3, 0x80, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, labelYStart + menuItemYInc * 3, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[5].item[4], 1, 0, 0, 0, 0xA5, 0, menuItemYStart + menuItemYInc * 4, 0x80, menuItemHeight, 252, 253, 5, 0, 248, 249, 250, -1, 0, 0x10, 0x65, 0, 0);
+	GUI_V1_MENU_ITEM(_menu[5].item[5], 1, 0, 0, 0,   -1, 0, 0x7F, 0x6C, menuItemHeight, 252, 253, -1, 255, 248, 249, 250, -1, 0, 0, 0, 0, 0);
 	_menu[5].item[0].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::controlsChangeMusic);
 	_menu[5].item[1].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::controlsChangeSounds);
 	_menu[5].item[2].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::controlsChangeWalk);
@@ -1233,7 +1281,7 @@ void KyraEngine_LoK::setupButtonData() {
 
 	for (int i = 1; i < 15; ++i)
 		_buttonDataListPtr[i - 1] = &_buttonData[i];
-	_buttonDataListPtr[14] = 0;
+	_buttonDataListPtr[14] = nullptr;
 }
 
 const uint8 KyraEngine_LoK::_magicMouseItemStartFrame[] = {
@@ -1526,6 +1574,11 @@ const int16 KyraEngine_HoF::_keyboardSounds[190] = {
 	 -1, 197,  -1, 205, 152, 139,  -1,  -1,  -1,  -1
 };
 
+const char *const GUI_HoF::_saveLoadStringsZH[2] = {
+	"[ ""\xb7\x82\x9c\x83\x9d\x83\xae\x82\xaf\x82"" ]",
+	"[ ""\xb8\x80\x81\x83\xbe\x82"" ]"
+};
+
 void KyraEngine_HoF::initInventoryButtonList() {
 	delete[] _inventoryButtons;
 
@@ -1589,20 +1642,24 @@ void GUI_HoF::initStaticData() {
 
 	const uint16 *menuStr = _vm->gameFlags().isTalkie ? _menuStringsTalkie : _menuStringsOther;
 
+	int menuItemYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 27 : 30;
+	int menuItemYInc = _vm->gameFlags().lang == Common::ZH_TWN ? 20 : 17;
+	int menuItemHeight = _vm->gameFlags().lang == Common::ZH_TWN ? 19 : 15;
+
 	GUI_V2_MENU(_mainMenu, -1, -1, 0x100, 0xAC, 0xF8, 0xF9, 0xFA, menuStr[0 * 8], 0xFB, -1, 8, 0, 7, -1, -1, -1, -1);
-	GUI_V2_MENU_ITEM(_mainMenu.item[0], 1, 0x02, -1, 0x1E, 0xDC, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_mainMenu.item[0], 1, 0x02, -1, menuItemYStart, 0xDC, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_mainMenu.item[0].callback = clickLoadMenuFunctor;
-	GUI_V2_MENU_ITEM(_mainMenu.item[1], 1, 0x03, -1, 0x2F, 0xDC, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_mainMenu.item[1], 1, 0x03, -1, menuItemYStart + menuItemYInc, 0xDC, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_mainMenu.item[1].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::saveMenu);
-	GUI_V2_MENU_ITEM(_mainMenu.item[2], 1, 0x23, -1, 0x40, 0xDC, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_mainMenu.item[2], 1, 0x23, -1, menuItemYStart + menuItemYInc * 2, 0xDC, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_mainMenu.item[2].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::deleteMenu);
-	GUI_V2_MENU_ITEM(_mainMenu.item[3], 1, 0x04, -1, 0x51, 0xDC, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_mainMenu.item[3], 1, 0x04, -1, menuItemYStart + menuItemYInc * 3, 0xDC, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_mainMenu.item[3].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::gameOptionsTalkie);
-	GUI_V2_MENU_ITEM(_mainMenu.item[4], 1, 0x25, -1, 0x62, 0xDC, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_mainMenu.item[4], 1, 0x25, -1, menuItemYStart + menuItemYInc * 4, 0xDC, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_mainMenu.item[4].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::audioOptions);
-	GUI_V2_MENU_ITEM(_mainMenu.item[5], 1, 0x05, -1, 0x73, 0xDC, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_mainMenu.item[5], 1, 0x05, -1, menuItemYStart + menuItemYInc * 5, 0xDC, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_mainMenu.item[5].callback = clickQuitGameFunctor;
-	GUI_V2_MENU_ITEM(_mainMenu.item[6], 1, 0x06, -1, 0x90, 0xDC, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_mainMenu.item[6], 1, 0x06, -1, 0x90, 0xDC, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_mainMenu.item[6].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::resumeGame);
 	for (int i = 0; i < 7; ++i)
 		_mainMenu.item[i].itemId = menuStr[0 * 8 + i + 1];
@@ -1630,11 +1687,11 @@ void GUI_HoF::initStaticData() {
 		_gameOptions.item[3].callback = clickQuitOptionsFunctor;
 	} else {
 		_gameOptions.numberOfItems = 5;
-		GUI_V2_MENU_ITEM(_gameOptions.item[0], 0, 0x2B, 0xA0, 0x1E, 0x74, 0x0F, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x1F, 0x10, 0x20, 0);
-		GUI_V2_MENU_ITEM(_gameOptions.item[1], 0, 0x2C, 0xA0, 0x2F, 0x74, 0x0F, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x20, 0x10, 0x31, 0);
-		GUI_V2_MENU_ITEM(_gameOptions.item[2], 0, 0x2D, 0xA0, 0x40, 0x74, 0x0F, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x1D, 0x10, 0x42, 0);
-		GUI_V2_MENU_ITEM(_gameOptions.item[3], 0, 0x2E, 0xA0, 0x51, 0x74, 0x0F, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x1E, 0x10, 0x53, 0);
-		GUI_V2_MENU_ITEM(_gameOptions.item[4], 1, 0x18, -1, 0x6E, 0x6C, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+		GUI_V2_MENU_ITEM(_gameOptions.item[0], 0, 0x2B, 0xA0, menuItemYStart, 0x74, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x1F, 0x10, 0x20, 0);
+		GUI_V2_MENU_ITEM(_gameOptions.item[1], 0, 0x2C, 0xA0, menuItemYStart + menuItemYInc, 0x74, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x20, 0x10, 0x31, 0);
+		GUI_V2_MENU_ITEM(_gameOptions.item[2], 0, 0x2D, 0xA0, menuItemYStart + menuItemYInc * 2, 0x74, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x1D, 0x10, 0x42, 0);
+		GUI_V2_MENU_ITEM(_gameOptions.item[3], 0, 0x2E, 0xA0, menuItemYStart + menuItemYInc * 3, 0x74, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0x1E, 0x10, 0x53, 0);
+		GUI_V2_MENU_ITEM(_gameOptions.item[4], 1, 0x18, -1, 0x6E, 0x6C, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 		_gameOptions.item[4].callback = clickQuitOptionsFunctor;
 	}
 
@@ -1655,57 +1712,67 @@ void GUI_HoF::initStaticData() {
 		_audioOptions.item[i].itemId = menuStr[2 * 8 + i + 1];
 
 	GUI_V2_MENU(_choiceMenu, -1, -1, 0x140, 0x38, 0xF8, 0xF9, 0xFA, 0, 0xFE, -1, 8, 0, 2, -1, -1, -1, -1);
-	GUI_V2_MENU_ITEM(_choiceMenu.item[0], 1, 0x14, 0x18, 0x1E, 0x48, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_choiceMenu.item[0], 1, 0x14, 0x18, 30, 0x48, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_choiceMenu.item[0].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::choiceYes);
-	GUI_V2_MENU_ITEM(_choiceMenu.item[1], 1, 0x13, 0xD8, 0x1E, 0x48, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_choiceMenu.item[1], 1, 0x13, 0xD8, 30, 0x48, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_choiceMenu.item[1].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::choiceNo);
 	for (int i = 2; i <= 6; ++i)
 		_choiceMenu.item[i].enabled = false;
 	for (int i = 0; i < 7; ++i)
 		_choiceMenu.item[i].itemId = menuStr[3 * 8 + i + 1];
 
-	GUI_V2_MENU(_loadMenu, -1, -1, 0x120, 0xA0, 0xF8, 0xF9, 0xFA, menuStr[4 * 8], 0xFB, -1, 8, 0, 6, 0x84, 0x16, 0x84, 0x7C);
-	GUI_V2_MENU_ITEM(_loadMenu.item[0], 1, 0x29, -1, 0x27, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_loadMenu.item[1], 1, 0x2A, -1, 0x38, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_loadMenu.item[2], 1, 0x2B, -1, 0x49, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_loadMenu.item[3], 1, 0x2C, -1, 0x5A, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_loadMenu.item[4], 1, 0x2D, -1, 0x6B, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	menuItemYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 45 : 39;
+	int menuItemScrollArrowY1 = _vm->gameFlags().lang == Common::ZH_TWN ? 26 : 22;
+	int menuItemScrollArrowY2 = _vm->gameFlags().lang == Common::ZH_TWN ? 131 : 124;
+
+
+	GUI_V2_MENU(_loadMenu, -1, -1, 0x120, 0xA0, 0xF8, 0xF9, 0xFA, menuStr[4 * 8], 0xFB, -1, 8, 0, 6, 0x84, menuItemScrollArrowY1, 0x84, menuItemScrollArrowY2);
+	GUI_V2_MENU_ITEM(_loadMenu.item[0], 1, 0x29, -1, menuItemYStart, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_loadMenu.item[1], 1, 0x2A, -1, menuItemYStart + menuItemYInc * 1, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_loadMenu.item[2], 1, 0x2B, -1, menuItemYStart + menuItemYInc * 2, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_loadMenu.item[3], 1, 0x2C, -1, menuItemYStart + menuItemYInc * 3, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_loadMenu.item[4], 1, 0x2D, -1, menuItemYStart + menuItemYInc * 4, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	for (int i = 0; i <= 4; ++i)
 		_loadMenu.item[i].callback = clickLoadSlotFunctor;
-	GUI_V2_MENU_ITEM(_loadMenu.item[5], 1, 0x0B, 0xB8, 0x86, 0x58, 0xF, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_loadMenu.item[5], 1, 0x0B, 0xB8, 0x86, 0x58, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_loadMenu.item[5].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::cancelLoadMenu);
 	_loadMenu.item[6].enabled = false;
 	for (int i = 0; i < 7; ++i)
 		_loadMenu.item[i].itemId = menuStr[4 * 8 + i + 1];
 
-	GUI_V2_MENU(_saveMenu, -1, -1, 0x120, 0xA0, 0xF8, 0xF9, 0xFA, menuStr[5 * 8], 0xFB, -1, 8, 0, 6, 0x84, 0x16, 0x84, 0x7C);
-	GUI_V2_MENU_ITEM(_saveMenu.item[0], 1, 0x29, -1, 0x27, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_saveMenu.item[1], 1, 0x2A, -1, 0x38, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_saveMenu.item[2], 1, 0x2B, -1, 0x49, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_saveMenu.item[3], 1, 0x2C, -1, 0x5A, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
-	GUI_V2_MENU_ITEM(_saveMenu.item[4], 1, 0x2D, -1, 0x6B, 0x100, 0xF, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU(_saveMenu, -1, -1, 0x120, 0xA0, 0xF8, 0xF9, 0xFA, menuStr[5 * 8], 0xFB, -1, 8, 0, 6, 0x84, menuItemScrollArrowY1, 0x84, menuItemScrollArrowY2);
+	GUI_V2_MENU_ITEM(_saveMenu.item[0], 1, 0x29, -1, menuItemYStart, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_saveMenu.item[1], 1, 0x2A, -1, menuItemYStart + menuItemYInc * 1, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_saveMenu.item[2], 1, 0x2B, -1, menuItemYStart + menuItemYInc * 2, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_saveMenu.item[3], 1, 0x2C, -1, menuItemYStart + menuItemYInc * 3, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_saveMenu.item[4], 1, 0x2D, -1, menuItemYStart + menuItemYInc * 4, 0x100, menuItemHeight, 0xFC, 0xFD, 5, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	for (int i = 0; i <= 4; ++i)
 		_saveMenu.item[i].callback = clickSaveSlotFunctor;
-	GUI_V2_MENU_ITEM(_saveMenu.item[5], 1, 0x0B, 0xB8, 0x86, 0x58, 0xF, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_saveMenu.item[5], 1, 0x0B, 0xB8, 0x86, 0x58, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_saveMenu.item[5].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::cancelSaveMenu);
 	_saveMenu.item[6].enabled = false;
 	for (int i = 0; i < 7; ++i)
 		_saveMenu.item[i].itemId = menuStr[5 * 8 + i + 1];
 
+	if (_vm->gameFlags().lang == Common::ZH_TWN)
+		_loadMenu.item[4].enabled = _saveMenu.item[4].enabled = false;
+
 	GUI_V2_MENU(_savenameMenu, -1, -1, 0x140, 0x43, 0xF8, 0xF9, 0xFA, menuStr[6 * 8], 0xFB, -1, 8, 0, 2, -1, -1, -1, -1);
-	GUI_V2_MENU_ITEM(_savenameMenu.item[0], 1, 0xD, 0x18, 0x2C, 0x58, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_savenameMenu.item[0], 1, 0xD, 0x18, 0x2C, 0x58, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_savenameMenu.item[0].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::finishSavename);
-	GUI_V2_MENU_ITEM(_savenameMenu.item[1], 1, 0xB, 0xD0, 0x2C, 0x58, 0x0F, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_savenameMenu.item[1], 1, 0xB, 0xD0, 0x2C, 0x58, menuItemHeight, 0xFC, 0xFD, -1, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_savenameMenu.item[1].callback = BUTTON_FUNCTOR(GUI_HoF, this, &GUI_HoF::cancelSavename);
 	for (int i = 2; i <= 6; ++i)
 		_savenameMenu.item[i].enabled = false;
 	for (int i = 0; i < 7; ++i)
 		_savenameMenu.item[i].itemId = menuStr[6 * 8 + i + 1];
 
+	menuItemYStart = _vm->gameFlags().lang == Common::ZH_TWN ? 27 : 30;
+
 	GUI_V2_MENU(_deathMenu, -1, -1, 0xD0, 0x4C, 0xF8, 0xF9, 0xFA, menuStr[7 * 8], 0xFB, -1, 8, 0, 2, -1, -1, -1, -1);
-	GUI_V2_MENU_ITEM(_deathMenu.item[0], 1, 2, -1, 0x1E, 0xB4, 0x0F, 0xFC, 0xFD, 8, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_deathMenu.item[0], 1, 2, -1, menuItemYStart, 0xB4, menuItemHeight, 0xFC, 0xFD, 8, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_deathMenu.item[0].callback = clickLoadMenuFunctor;
-	GUI_V2_MENU_ITEM(_deathMenu.item[1], 1, 5, -1, 0x2F, 0xB4, 0x0F, 0xFC, 0xFD, 8, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
+	GUI_V2_MENU_ITEM(_deathMenu.item[1], 1, 5, -1, menuItemYStart + menuItemYInc, 0xB4, menuItemHeight, 0xFC, 0xFD, 8, 0xF8, 0xF9, 0xFA, -1, 0, 0, 0, 0);
 	_deathMenu.item[1].callback = clickQuitGameFunctor;
 	for (int i = 2; i <= 6; ++i)
 		_deathMenu.item[i].enabled = false;

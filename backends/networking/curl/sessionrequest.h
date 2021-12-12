@@ -25,11 +25,27 @@
 
 #include "backends/networking/curl/curlrequest.h"
 #include "common/memstream.h"
-#include "common/json.h"
+
+namespace Common {
+class DumpFile;
+class JSONValue;
+}
 
 namespace Networking {
 
 #define CURL_SESSION_REQUEST_BUFFER_SIZE 512 * 1024
+
+struct SessionFileResponse {
+	byte *buffer;
+	uint32 len;
+	bool eos;
+};
+
+/**
+ * @brief Class for reading file and storing locally
+ *
+ * @return Returns SessionFileResponse in the callback
+ */
 
 class SessionRequest: public CurlRequest {
 protected:
@@ -37,23 +53,27 @@ protected:
 	byte *_buffer;
 	char *_text;
 	bool _started, _complete, _success;
+	bool _binary;
+	Common::DumpFile *_localFile;
+	SessionFileResponse _response;
 
 	bool reuseStream();
 
 	/** Prepares raw bytes from _contentsStream. */
 	char *getPreparedContents();
 
-	virtual void finishError(ErrorResponse error);
+	virtual void finishError(ErrorResponse error, RequestState state = PAUSED);
 	virtual void finishSuccess();
+	void openLocalFile(Common::String localFile);
 
 public:
-	SessionRequest(Common::String url, DataCallback cb = nullptr, ErrorCallback ecb = nullptr);
+	SessionRequest(Common::String url, Common::String localFile, DataCallback cb = nullptr, ErrorCallback ecb = nullptr, bool binary = false);
 	virtual ~SessionRequest();
 
 	void start();
 	void startAndWait();
 
-	void reuse(Common::String url, DataCallback cb = nullptr, ErrorCallback ecb = nullptr);
+	void reuse(Common::String url, Common::String localFile, DataCallback cb = nullptr, ErrorCallback ecb = nullptr, bool binary = false);
 
 	virtual void handle();
 	virtual void restart();
@@ -61,11 +81,21 @@ public:
 	/** This request DOES NOT delete automatically after calling callbacks. It gets PAUSED, and in order to make it FINISHED (i.e. delete), this method MUST be called. */
 	void close();
 
+	/**
+	 * @brief Closes the current request and removes any unfinished files
+	 *
+	 */
+	void abortRequest();
+
 	bool complete();
 	bool success();
 
 	char *text();
 	Common::JSONValue *json();
+
+	byte *getData() { return _contentsStream.getData(); }
+	uint32 getSize() { return _contentsStream.size(); }
+
 };
 
 } // End of namespace Networking

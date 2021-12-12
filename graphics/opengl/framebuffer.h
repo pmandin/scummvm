@@ -26,7 +26,7 @@
 #include "graphics/opengl/system_headers.h"
 #include "graphics/opengl/texture.h"
 
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 
 namespace OpenGL {
 
@@ -53,6 +53,7 @@ private:
 	void init();
 	GLuint _renderBuffers[2];
 	GLuint _frameBuffer;
+	GLint _prevStateViewport[4];
 };
 
 #if !defined(USE_GLES2) && !defined(AMIGAOS) && !defined(__MORPHOS__)
@@ -70,11 +71,12 @@ private:
 	GLuint _msColorId;
 	GLuint _msDepthId;
 	GLuint _msSamples;
+	GLint _prevStateViewport[4];
 };
 #endif
 
 } // End of namespace OpenGL
 
-#endif // defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#endif // defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 
 #endif

@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv2 license mentioned above, MojoTouch has exclusively licensed
+ * this code on November 10th, 2021, to be use in closed-source products.
+ * Therefore, any contributions (commits) to it will also be dual-licensed.
+ *
  */
 
 #include "groovie/logic/pente.h"
@@ -115,7 +121,7 @@ void PenteGame::buildLookupTable() {
 
 void PenteGame::penteDeInit() {
 	delete _table;
-	_table = NULL;
+	_table = nullptr;
 }
 
 void PenteGame::penteInit(uint width, uint height, uint length) {
@@ -636,7 +642,7 @@ void PenteGame::opQueryPiece(byte *vars) {
 
 void PenteGame::run(byte *vars) {
 	byte op = vars[4];
-	if (_table == NULL && op != 0) {
+	if (_table == nullptr && op != 0) {
 		penteInit(20, 15, 5);
 	}
 	debugC(kDebugLogic, "penteOp vars[4]: %d", (int)op);
@@ -673,8 +679,11 @@ void PenteGame::run(byte *vars) {
 		aiDepth = 5;
 	}
 
-	if (aiDepth != 2)
+	if (aiDepth != 2) {
+		if (_easierAi && aiDepth > 2)
+			aiDepth = 2;
 		_previousMove = aiGetBestMove(aiDepth);
+	}
 	else
 		warning("pente unknown else");
 
@@ -687,14 +696,16 @@ void PenteGame::run(byte *vars) {
 	moveXYToVars(x, y, vars[0], vars[1], vars[2]);
 }
 
-PenteGame::PenteGame() : _random("PenteGame") {
-	_table = NULL;
+PenteGame::PenteGame(bool easierAi) : _random("PenteGame") {
+	_table = nullptr;
 	_nextCapturedSpot = -1;
 	_animateCapturesBitMask = 0;
 	_previousMove = 0;
 #if 0
+	_easierAi = false;
 	test();
 #endif
+	_easierAi = easierAi;
 }
 
 void PenteGame::test() {

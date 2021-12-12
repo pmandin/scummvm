@@ -1918,3 +1918,14 @@ static const char *const k1AudioTracksIntroDOS[1] = {
 
 static const StringListProvider k1AudioTracksIntroDOSProvider = { ARRAYSIZE(k1AudioTracksIntroDOS), k1AudioTracksIntroDOS };
 
+static const uint16 k1TwoByteFontLookupTableDOS[] = {
+	0
+};
+
+static const Uint16Provider k1TwoByteFontLookupTableDOSProvider = { ARRAYSIZE(k1TwoByteFontLookupTableDOS), k1TwoByteFontLookupTableDOS };
+
+static const uint8 k1k1CreditsStringsDummyDOS[] = {
+	0
+};
+
+static const ByteProvider k1k1CreditsStringsDummyDOSProvider = { ARRAYSIZE(k1k1CreditsStringsDummyDOS), k1k1CreditsStringsDummyDOS };

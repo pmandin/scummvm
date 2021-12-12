@@ -1,29 +1,65 @@
-Umfangreichere Informationen über die Änderungen des aktuellen experimentellen
-Programmcodes finden Sie auf Englisch unter:
+Umfangreichere Informationen über die Änderungen des aktuellen Codes findest Du unter:
         https://github.com/scummvm/scummvm/commits/
 
 #### 2.6.0 (DD.MM.YYYY)
+
+ Neue Spiele:
+   - Unterstützung für Sanitarium hinzugefügt.
 
  Allgemein:
    - ScummVM benötigt nun C++11, um gebaut werden zu können.
    - Unterstützung für verbesserte Filter in der Such-Box hinzugefügt.
      Weitere Informationen findest Du in der Dokumentation unnter "Unterstanding the search box".
+   - Icon-Ansicht zur Benutzeroberfläche hinzugefügt [GSoC-Aufgabe].
+   - Scaler werden jetzt auch im OpenGL-Grafikmodus unterstützt.
+
+ AGOS:
+   - Fehler in der AdLib-Musikwiedergabe von Waxworks AdLib behoben.
+
+ AGS:
+   - Anpassungen an den Erkennungs-Einträgen der Spiele durchgeführt.
 
  Dreamweb:
    - Unterstützung für Sprachausgabe in Dialogen und für Objektbeschreibungen hinzugefügt.
 
  Kyra:
-   - Unterstützung für die chinesische Version von Legend of Kyrandia 3 hinzugefügt.
+   - Unterstützung für die chinesischen Versionen von Legend of Kyrandia 1 - 3 hinzugefügt.
+   - Unterstützung für Audio-Ausgabe in der Macintosh-Version von Legend of Kyrandia hinzugefügt.
+   - Die Macintosh-Version (ohne Sprachausgabe) von Legend of Kyrandia 1 kann nun direkt von
+     den Dateien auf der CD gespielt werden. Das bedeutet, dass Du nicht mehr den Installer
+     ausführen musst, um die Dateien zu extrahieren.
 
  Supernova:
    - Unterstützung für Sprachausgabe in Dialogen und für Objektbeschreibungen hinzugefügt.
 
  SCUMM:
+   - Neue Digital iMUSE-Engine hinzugefügt.
    - Verbesserte Unterstützung für hochauflösenden Text in den 16-Farben-Macintosh-
      Versionen von Loom und Indiana Jones and the Last Crusade.
+   - Absturz beim Laden von Spielständen von Humongous Entertainment-Spielen behoben.
+
+ Sherlock:
+   - Absturz behoben, der auftritt, wenn die Streichhölzer mit dem Labor-Tisch benutzt werden.
+   - Fehlerhafte Charakter-Animation in Rose Tattoo behoben.
+   - Fehler beim Öffnen der Karte in Rose Tattoo behoben.
+   - Der Klang der Klingelschnur in Serrated Scalpel wird nun korrekt abgespielt.
+   - Das Inventar wird nun korrekt aktualisiert, wenn in Serrated Scalpel die Uhr untersucht wird.
+   - Nebel-Overlay von Kleopatras Nadel in Rose Tatoo korrigiert.Fix fog overlay at Cleopatra's Needle in Rose Tattoo.
+   - Grafikfehler in Serrated Scalpel behoben, der auftritt, wenn Gegenstände untersucht werden, während das Inventar geöffnet ist.
 
  Xeen:
    - Absturz beim Laden von Kostanten aus xeen.ccs behoben.
+   - Abbruch der Zauberspruch-Auswahl beim Wechsel der Charaktere korrigiert.
+   - Korrektur einiger fehlerhafter Speicher-Zugriffe.
+   - Mehrere Fehlerkorrekturen im Zusammenhang mit der Audio-Wiedergabe.
+
+ macOS-Port:
+   - Unterstützung für die Anzeige von OSD-Nachrichten in der Touch Bar hinzugefügt.
+
+ Windows-Portierung:
+   - "Portabler Modus" hinzugefügt, der die von ScummVM erstellten Dateien (Spielstände, Screenshots...)
+     nicht wie üblich im Benutzerprofil-Ordner, sondern in dem Verzeichnis ablegt, in welchem sich
+     die ScummVM-Programmdatei befindet, sofern dort eine scummvm.ini-Datei existiert.
 
 
 #### 2.5.0 "Vor genau zwanzig Jahren..." (09.10.2021)

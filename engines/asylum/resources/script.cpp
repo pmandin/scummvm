@@ -177,7 +177,7 @@ ScriptManager::ScriptManager(AsylumEngine *engine) : _vm(engine) {
 	ADD_OPCODE(PlaySpeechScene2);
 	ADD_OPCODE(MoveScenePositionFromActor);
 	ADD_OPCODE(PaletteFade);
-	ADD_OPCODE(StartPaletteFadeThread);
+	ADD_OPCODE(QueuePaletteFade);
 	ADD_OPCODE(PlaySoundUpdateObject);
 	ADD_OPCODE(ActorFaceTarget);
 	ADD_OPCODE(HideMatteBars);
@@ -268,6 +268,12 @@ void ScriptManager::load(Common::SeekableReadStream *stream) {
 		_scripts[34].commands[13].param1 =  453;
 		_scripts[43].commands[ 9].param1 =  455;
 	}
+
+	// Patch for Demo lockup bug
+	if (_vm->checkGameVersion("Demo")) {
+		_scripts[1].commands[6].param2 = 151;
+		_scripts[1].commands[6].param3 = 332;
+	}
 }
 
 void ScriptManager::saveLoadWithSerializer(Common::Serializer &s) {
@@ -298,9 +304,9 @@ void ScriptManager::reset(uint32 count) {
 	_exit = false;
 	_processNextEntry = false;
 
-	_lastProcessedCmd = NULL;
-	_currentScript = NULL;
-	_currentQueueEntry = NULL;
+	_lastProcessedCmd = nullptr;
+	_currentScript = nullptr;
+	_currentQueueEntry = nullptr;
 }
 
 void ScriptManager::resetQueue() {
@@ -392,7 +398,7 @@ bool ScriptManager::process() {
 
 				// Run script
 				for (;;) {
-					ScriptEntry *cmd = NULL;
+					ScriptEntry *cmd = nullptr;
 					uint32 cmdIndex = 0;
 
 					if (_processNextEntry)
@@ -629,11 +635,6 @@ END_OPCODE
 IMPLEMENT_OPCODE(SetActorPosition)
 	Actor *actor = getScene()->getActor(cmd->param1);
 
-	if (_vm->checkGameVersion("Demo") && cmd->param2 == 150 && cmd->param3 == 337) {
-		actor->setPosition(151, 332, (ActorDirection)cmd->param4, (uint32)cmd->param5);
-		return;
-	}
-
 	actor->setPosition((int16)cmd->param2, (int16)cmd->param3, (ActorDirection)cmd->param4, (uint32)cmd->param5);
 END_OPCODE
 
@@ -723,14 +724,15 @@ END_OPCODE
 // Opcode 0x13
 IMPLEMENT_OPCODE(JumpAndSetDirection)
 	Actor *actor = getScene()->getActor(cmd->param1);
+	ActorDirection newDirection = (ActorDirection)(cmd->param4 & 7);
 
 	if (actor->getStatus() != kActorStatusWalkingTo && actor->getStatus() != kActorStatusWalkingTo2) {
 		if (cmd->param5 != 2) {
 
 			if (cmd->param2 == -1 || cmd->param3 == -1) {
-				actor->changeDirection((ActorDirection)cmd->param4);
+				actor->changeDirection(newDirection);
 			} else if ((actor->getPoint1()->x + actor->getPoint2()->x) == cmd->param2 && (actor->getPoint1()->y + actor->getPoint2()->y) == cmd->param3) {
-				actor->changeDirection((ActorDirection)cmd->param4);
+				actor->changeDirection(newDirection);
 			} else {
 				actor->forceTo((int16)cmd->param2, (int16)cmd->param3, (bool)cmd->param6);
 
@@ -744,7 +746,7 @@ IMPLEMENT_OPCODE(JumpAndSetDirection)
 			_processNextEntry = false;
 
 			if ((actor->getPoint1()->x + actor->getPoint2()->x) == cmd->param2 && (actor->getPoint1()->y + actor->getPoint2()->y) == cmd->param3)
-				actor->changeDirection((ActorDirection)cmd->param4);
+				actor->changeDirection(newDirection);
 		}
 	} else {
 		if (cmd->param5 == 2)
@@ -1500,8 +1502,8 @@ END_OPCODE
 
 //////////////////////////////////////////////////////////////////////////
 // Opcode 0x45
-IMPLEMENT_OPCODE(StartPaletteFadeThread)
-	getScreen()->startPaletteFade(getWorld()->currentPaletteId, cmd->param1, cmd->param2);
+IMPLEMENT_OPCODE(QueuePaletteFade)
+	getScreen()->queuePaletteFade(getWorld()->currentPaletteId, cmd->param1, cmd->param2);
 END_OPCODE
 
 //////////////////////////////////////////////////////////////////////////
@@ -1986,7 +1988,7 @@ void ScriptManager::enableObject(ScriptEntry *cmd, ObjectTransparency type) {
 	int32 *param = &cmd->param4;
 	for (int i = 0; i < 6; i++) {
 		Object *object = getWorld()->getObjectById((ObjectId)*param);
-		if (object != NULL)
+		if (object != nullptr)
 			object->setTransparency(transparency);
 
 		++param;

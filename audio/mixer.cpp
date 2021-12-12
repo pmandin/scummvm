@@ -177,13 +177,13 @@ private:
 #pragma mark --- Mixer ---
 #pragma mark -
 
-MixerImpl::MixerImpl(uint sampleRate)
-	: _mutex(), _sampleRate(sampleRate), _mixerReady(false), _handleSeed(0), _soundTypeSettings() {
+MixerImpl::MixerImpl(uint sampleRate, uint outBufSize)
+	: _mutex(), _sampleRate(sampleRate), _outBufSize(outBufSize), _mixerReady(false), _handleSeed(0), _soundTypeSettings() {
 
 	assert(sampleRate > 0);
 
 	for (int i = 0; i != NUM_CHANNELS; i++)
-		_channels[i] = 0;
+		_channels[i] = nullptr;
 }
 
 MixerImpl::~MixerImpl() {
@@ -201,10 +201,14 @@ uint MixerImpl::getOutputRate() const {
 	return _sampleRate;
 }
 
+uint MixerImpl::getOutputBufSize() const {
+	return _outBufSize;
+}
+
 void MixerImpl::insertChannel(SoundHandle *handle, Channel *chan) {
 	int index = -1;
 	for (int i = 0; i != NUM_CHANNELS; i++) {
-		if (_channels[i] == 0) {
+		if (_channels[i] == nullptr) {
 			index = i;
 			break;
 		}
@@ -236,7 +240,7 @@ void MixerImpl::playStream(
 			bool reverseStereo) {
 	Common::StackLock lock(_mutex);
 
-	if (stream == 0) {
+	if (stream == nullptr) {
 		warning("stream is 0");
 		return;
 	}
@@ -247,7 +251,7 @@ void MixerImpl::playStream(
 	// Prevent duplicate sounds
 	if (id != -1) {
 		for (int i = 0; i != NUM_CHANNELS; i++)
-			if (_channels[i] != 0 && _channels[i]->getId() == id) {
+			if (_channels[i] != nullptr && _channels[i]->getId() == id) {
 				// Delete the stream if were asked to auto-dispose it.
 				// Note: This could cause trouble if the client code does not
 				// yet expect the stream to be gone. The primary example to
@@ -293,7 +297,7 @@ int MixerImpl::mixCallback(byte *samples, uint len) {
 		if (_channels[i]) {
 			if (_channels[i]->isFinished()) {
 				delete _channels[i];
-				_channels[i] = 0;
+				_channels[i] = nullptr;
 			} else if (!_channels[i]->isPaused()) {
 				tmp = _channels[i]->mix(buf, len);
 
@@ -308,9 +312,9 @@ int MixerImpl::mixCallback(byte *samples, uint len) {
 void MixerImpl::stopAll() {
 	Common::StackLock lock(_mutex);
 	for (int i = 0; i != NUM_CHANNELS; i++) {
-		if (_channels[i] != 0 && !_channels[i]->isPermanent()) {
+		if (_channels[i] != nullptr && !_channels[i]->isPermanent()) {
 			delete _channels[i];
-			_channels[i] = 0;
+			_channels[i] = nullptr;
 		}
 	}
 }
@@ -318,9 +322,9 @@ void MixerImpl::stopAll() {
 void MixerImpl::stopID(int id) {
 	Common::StackLock lock(_mutex);
 	for (int i = 0; i != NUM_CHANNELS; i++) {
-		if (_channels[i] != 0 && _channels[i]->getId() == id) {
+		if (_channels[i] != nullptr && _channels[i]->getId() == id) {
 			delete _channels[i];
-			_channels[i] = 0;
+			_channels[i] = nullptr;
 		}
 	}
 }
@@ -334,7 +338,7 @@ void MixerImpl::stopHandle(SoundHandle handle) {
 		return;
 
 	delete _channels[index];
-	_channels[index] = 0;
+	_channels[index] = nullptr;
 }
 
 void MixerImpl::muteSoundType(SoundType type, bool mute) {
@@ -415,7 +419,7 @@ void MixerImpl::loopChannel(SoundHandle handle) {
 void MixerImpl::pauseAll(bool paused) {
 	Common::StackLock lock(_mutex);
 	for (int i = 0; i != NUM_CHANNELS; i++) {
-		if (_channels[i] != 0) {
+		if (_channels[i] != nullptr) {
 			_channels[i]->pause(paused);
 		}
 	}
@@ -424,7 +428,7 @@ void MixerImpl::pauseAll(bool paused) {
 void MixerImpl::pauseID(int id, bool paused) {
 	Common::StackLock lock(_mutex);
 	for (int i = 0; i != NUM_CHANNELS; i++) {
-		if (_channels[i] != 0 && _channels[i]->getId() == id) {
+		if (_channels[i] != nullptr && _channels[i]->getId() == id) {
 			_channels[i]->pause(paused);
 			return;
 		}
@@ -515,7 +519,7 @@ Channel::Channel(Mixer *mixer, Mixer::SoundType type, AudioStream *stream,
 				 DisposeAfterUse::Flag autofreeStream, bool reverseStereo, int id, bool permanent)
 	: _type(type), _mixer(mixer), _id(id), _permanent(permanent), _volume(Mixer::kMaxChannelVolume),
 	  _balance(0), _pauseLevel(0), _samplesConsumed(0), _samplesDecoded(0), _mixerTimeStamp(0),
-	  _pauseStartTime(0), _pauseTime(0), _converter(0), _volL(0), _volR(0),
+	  _pauseStartTime(0), _pauseTime(0), _converter(nullptr), _volL(0), _volR(0),
 	  _stream(stream, autofreeStream) {
 	assert(mixer);
 	assert(stream);

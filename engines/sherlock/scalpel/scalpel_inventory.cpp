@@ -81,9 +81,9 @@ void ScalpelInventory::drawInventory(InvNewMode mode) {
 	bb.fillRect(Common::Rect(0, CONTROLS_Y1 + 10, 2, SHERLOCK_SCREEN_HEIGHT), BORDER_COLOR);
 	bb.fillRect(Common::Rect(SHERLOCK_SCREEN_WIDTH - 2, CONTROLS_Y1 + 10,
 		SHERLOCK_SCREEN_WIDTH, SHERLOCK_SCREEN_HEIGHT), BORDER_COLOR);
-	bb.fillRect(Common::Rect(0, SHERLOCK_SCREEN_HEIGHT - 2, SHERLOCK_SCREEN_WIDTH,
+	bb.fillRect(Common::Rect(0, SHERLOCK_SCREEN_HEIGHT - 1, SHERLOCK_SCREEN_WIDTH,
 		SHERLOCK_SCREEN_HEIGHT), BORDER_COLOR);
-	bb.fillRect(Common::Rect(2, CONTROLS_Y1 + 10, SHERLOCK_SCREEN_WIDTH - 2, SHERLOCK_SCREEN_HEIGHT - 2),
+	bb.fillRect(Common::Rect(2, CONTROLS_Y1 + 10, SHERLOCK_SCREEN_WIDTH - 2, SHERLOCK_SCREEN_HEIGHT - 1),
 		INV_BACKGROUND);
 
 	// Draw the buttons
@@ -251,7 +251,7 @@ void ScalpelInventory::putInv(InvSlamMode slamIt) {
 	// Iterate through displaying up to 6 objects at a time
 	for (int idx = _invIndex; idx < _holdings && (idx - _invIndex) < (int)_invShapes.size(); ++idx) {
 		int itemNum = idx - _invIndex;
-		Surface &bb = slamIt == SLAM_SECONDARY_BUFFER ? screen._backBuffer2 : screen._backBuffer1;
+		Surface &bb = (slamIt == SLAM_SECONDARY_BUFFER) ? screen._backBuffer2 : *screen.getBackBuffer();
 		Common::Rect r(8 + itemNum * 52, 165, 51 + itemNum * 52, 194);
 
 		// Draw the background

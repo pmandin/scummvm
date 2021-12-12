@@ -77,7 +77,7 @@ protected:
 	bool _alphaBlending;
 };
 
-#ifndef USE_GLES2
+#if defined(USE_OPENGL_GAME)
 
 class FixedSurfaceRenderer : public SurfaceRenderer {
 public:
@@ -91,7 +91,7 @@ public:
 
 #endif
 
-#if defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_SHADERS)
 
 class ShaderSurfaceRenderer : public SurfaceRenderer {
 public:
@@ -106,6 +106,11 @@ public:
 private:
 	ShaderGL *_boxShader;
 	GLuint _boxVerticesVBO;
+	GLboolean _prevStateDepthTest;
+	GLboolean _prevStateDepthWriteMask;
+	GLboolean _prevStateBlend;
+	GLint _prevStateBlendFunc;
+	GLint _prevStateViewport[4];
 };
 
 #endif

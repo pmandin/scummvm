@@ -25,6 +25,7 @@
 #include "common/textconsole.h"
 
 #include "graphics/surface.h"
+#include "graphics/tinygl/tinygl.h"
 
 #include "math/vector2d.h"
 #include "math/glmath.h"
@@ -32,7 +33,6 @@
 #include "engines/myst3/gfx.h"
 #include "engines/myst3/gfx_tinygl.h"
 #include "engines/myst3/gfx_tinygl_texture.h"
-#include "graphics/tinygl/zblit.h"
 
 namespace Myst3 {
 
@@ -41,30 +41,28 @@ Renderer *CreateGfxTinyGL(OSystem *system) {
 }
 
 TinyGLRenderer::TinyGLRenderer(OSystem *system) :
-		Renderer(system),
-		_fb(NULL) {
+		Renderer(system) {
 }
 
 TinyGLRenderer::~TinyGLRenderer() {
+	TinyGL::destroyContext();
 }
 
-Texture *TinyGLRenderer::createTexture(const Graphics::Surface *surface) {
-	return new TinyGLTexture(surface);
+Texture *TinyGLRenderer::createTexture2D(const Graphics::Surface *surface) {
+	return new TinyGLTexture2D(surface);
 }
 
-void TinyGLRenderer::freeTexture(Texture *texture) {
-	TinyGLTexture *glTexture = static_cast<TinyGLTexture *>(texture);
-	delete glTexture;
+Texture *TinyGLRenderer::createTexture3D(const Graphics::Surface *surface) {
+	return new TinyGLTexture3D(surface);
 }
+
 
 void TinyGLRenderer::init() {
 	debug("Initializing Software 3D Renderer");
 
 	computeScreenViewport();
 
-	_fb = new TinyGL::FrameBuffer(kOriginalWidth, kOriginalHeight, g_system->getScreenFormat());
-	TinyGL::glInit(_fb, 512);
-	tglEnableDirtyRects(ConfMan.getBool("dirtyrects"));
+	TinyGL::createContext(kOriginalWidth, kOriginalHeight, g_system->getScreenFormat(), 512, false, ConfMan.getBool("dirtyrects"));
 
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
@@ -87,17 +85,16 @@ void TinyGLRenderer::selectTargetWindow(Window *window, bool is3D, bool scaled) 
 		// No window found ...
 		if (scaled) {
 			// ... in scaled mode draw in the original game screen area
-			Common::Rect vp = viewport();
-			tglViewport(vp.left, _system->getHeight() - vp.top - vp.height(), vp.width(), vp.height());
+			_viewport = viewport();
 		} else {
 			// ... otherwise, draw on the whole screen
-			tglViewport(0, 0, _system->getWidth(), _system->getHeight());
+			_viewport = Common::Rect(_system->getWidth(), _system->getHeight());
 		}
 	} else {
 		// Found a window, draw inside it
-		Common::Rect vp = window->getPosition();
-		tglViewport(vp.left, _system->getHeight() - vp.top - vp.height(), vp.width(), vp.height());
+		_viewport = window->getPosition();
 	}
+	tglViewport(_viewport.left, _system->getHeight() - _viewport.top - _viewport.height(), _viewport.width(), _viewport.height());
 
 	if (is3D) {
 		tglMatrixMode(TGL_PROJECTION);
@@ -151,6 +148,8 @@ void TinyGLRenderer::drawRect2D(const Common::Rect &rect, uint8 a, uint8 r, uint
 
 void TinyGLRenderer::drawTexturedRect2D(const Common::Rect &screenRect, const Common::Rect &textureRect,
 		Texture *texture, float transparency, bool additiveBlending) {
+	TinyGLTexture2D *glTexture = static_cast<TinyGLTexture2D *>(texture);
+
 	const float sLeft = screenRect.left;
 	const float sTop = screenRect.top;
 	const float sWidth = screenRect.width();
@@ -167,24 +166,21 @@ void TinyGLRenderer::drawTexturedRect2D(const Common::Rect &screenRect, const Co
 		transparency = 1.0;
 	}
 
-	// HACK: tglBlit is not affected by the viewport, so we offset the draw coordinates here
-	int viewPort[4];
-	tglGetIntegerv(TGL_VIEWPORT, viewPort);
-
 	tglEnable(TGL_TEXTURE_2D);
 	tglDepthMask(TGL_FALSE);
 
-	Graphics::BlitTransform transform(sLeft + viewPort[0], sTop + viewPort[1]);
+	// HACK: tglBlit is not affected by the viewport, so we offset the draw coordinates here
+	TinyGL::BlitTransform transform(sLeft + _viewport.left, sTop + _viewport.top);
 	transform.sourceRectangle(textureRect.left, textureRect.top, sWidth, sHeight);
 	transform.tint(transparency);
-	tglBlit(((TinyGLTexture *)texture)->getBlitTexture(), transform);
+	tglBlit(glTexture->getBlitTexture(), transform);
 
 	tglDisable(TGL_BLEND);
 	tglDepthMask(TGL_TRUE);
 }
 
 void TinyGLRenderer::draw2DText(const Common::String &text, const Common::Point &position) {
-	TinyGLTexture *glFont = static_cast<TinyGLTexture *>(_font);
+	TinyGLTexture2D *glFont = static_cast<TinyGLTexture2D *>(_font);
 
 	// The font only has uppercase letters
 	Common::String textToDraw = text;
@@ -197,7 +193,6 @@ void TinyGLRenderer::draw2DText(const Common::String &text, const Common::Point 
 	tglDepthMask(TGL_FALSE);
 
 	tglColor3f(1.0f, 1.0f, 1.0f);
-	tglBindTexture(TGL_TEXTURE_2D, glFont->id);
 
 	int x = position.x;
 	int y = position.y;
@@ -207,10 +202,10 @@ void TinyGLRenderer::draw2DText(const Common::String &text, const Common::Point 
 		int w = textureRect.width();
 		int h = textureRect.height();
 
-		Graphics::BlitTransform transform(x, y);
+		TinyGL::BlitTransform transform(x, y);
 		transform.sourceRectangle(textureRect.left, textureRect.top, w, h);
 		transform.flip(true, false);
-		Graphics::tglBlit(glFont->getBlitTexture(), transform);
+		tglBlit(glFont->getBlitTexture(), transform);
 
 		x += textureRect.width() - 3;
 	}
@@ -221,7 +216,7 @@ void TinyGLRenderer::draw2DText(const Common::String &text, const Common::Point 
 }
 
 void TinyGLRenderer::drawFace(uint face, Texture *texture) {
-	TinyGLTexture *glTexture = static_cast<TinyGLTexture *>(texture);
+	TinyGLTexture3D *glTexture = static_cast<TinyGLTexture3D *>(texture);
 
 	tglBindTexture(TGL_TEXTURE_2D, glTexture->id);
 	tglBegin(TGL_TRIANGLE_STRIP);
@@ -246,7 +241,7 @@ void TinyGLRenderer::drawCube(Texture **textures) {
 void TinyGLRenderer::drawTexturedRect3D(const Math::Vector3d &topLeft, const Math::Vector3d &bottomLeft,
 		const Math::Vector3d &topRight, const Math::Vector3d &bottomRight, Texture *texture) {
 
-	TinyGLTexture *glTexture = static_cast<TinyGLTexture *>(texture);
+	TinyGLTexture3D *glTexture = static_cast<TinyGLTexture3D *>(texture);
 
 	tglBlendFunc(TGL_SRC_ALPHA, TGL_ONE_MINUS_SRC_ALPHA);
 	tglEnable(TGL_BLEND);
@@ -273,17 +268,22 @@ void TinyGLRenderer::drawTexturedRect3D(const Math::Vector3d &topLeft, const Mat
 }
 
 Graphics::Surface *TinyGLRenderer::getScreenshot() {
-	Graphics::Surface *s = new Graphics::Surface();
-	s->create(kOriginalWidth, kOriginalHeight, Texture::getRGBAPixelFormat());
-	Graphics::PixelBuffer buf(s->format, (byte *)s->getPixels());
-	_fb->copyToBuffer(buf);
-	return s;
+	return TinyGL::copyToBuffer(Texture::getRGBAPixelFormat());
 }
 
 void TinyGLRenderer::flipBuffer() {
-	TinyGL::tglPresentBuffer();
-	g_system->copyRectToScreen(_fb->getPixelBuffer(), _fb->linesize,
-	                           0, 0, _fb->xsize, _fb->ysize);
+	Common::List<Common::Rect> dirtyAreas;
+	TinyGL::presentBuffer(dirtyAreas);
+
+	Graphics::Surface glBuffer;
+	TinyGL::getSurfaceRef(glBuffer);
+
+	if (!dirtyAreas.empty()) {
+		for (Common::List<Common::Rect>::iterator itRect = dirtyAreas.begin(); itRect != dirtyAreas.end(); ++itRect) {
+			g_system->copyRectToScreen(glBuffer.getBasePtr((*itRect).left, (*itRect).top), glBuffer.pitch,
+			                           (*itRect).left, (*itRect).top, (*itRect).width(), (*itRect).height());
+		}
+	}
 }
 
 } // End of namespace Myst3

@@ -20,50 +20,43 @@
  *
  */
 
-/*
- * This file is based on, or a modified version of code from TinyGL (C) 1997-1998 Fabrice Bellard,
- * which is licensed under the zlib-license (see LICENSE).
- * It also has modifications by the ResidualVM-team, which are covered under the GPLv2 (or later).
- */
-
 #include "graphics/tinygl/zdirtyrect.h"
 #include "graphics/tinygl/zgl.h"
 #include "graphics/tinygl/gl.h"
+
 #include "common/debug.h"
 #include "common/math.h"
 
 namespace TinyGL {
 
-void tglIssueDrawCall(Graphics::DrawCall *drawCall) {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
-	if (c->_enableDirtyRectangles && drawCall->getDirtyRegion().isEmpty())
+void GLContext::issueDrawCall(DrawCall *drawCall) {
+	if (_enableDirtyRectangles && drawCall->getDirtyRegion().isEmpty())
 		return;
-	c->_drawCallsQueue.push_back(drawCall);
+	_drawCallsQueue.push_back(drawCall);
 }
 
-#if TGL_DIRTY_RECT_SHOW
-static void tglDrawRectangle(Common::Rect rect, int r, int g, int b) {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+static void debugDrawRectangle(Common::Rect rect, int r, int g, int b) {
+	GLContext *c = gl_get_context();
+	int fbWidth = c->fb->getPixelBufferWidth();
 
 	if (rect.left < 0)
 		rect.left = 0;
-	if (rect.right >= c->fb->xsize)
-		rect.right = c->fb->xsize - 1;
+	if (rect.right >= fbWidth)
+		rect.right = fbWidth - 1;
 	if (rect.top < 0)
 		rect.top = 0;
-	if (rect.bottom >= c->fb->ysize)
-		rect.bottom = c->fb->ysize - 1;
+	if (rect.bottom >= c->fb->getPixelBufferHeight())
+		rect.bottom = c->fb->getPixelBufferHeight() - 1;
 
-	for(int x = rect.left; x < rect.right; x++) {
-		c->fb->writePixel(rect.top * c->fb->xsize + x, 255, r, g, b);
-		c->fb->writePixel((rect.bottom - 1) * c->fb->xsize + x, 255, r, g, b);
+	for (int x = rect.left; x < rect.right; x++) {
+		c->fb->writePixel(rect.top * fbWidth + x, 255, r, g, b);
+		c->fb->writePixel((rect.bottom - 1) * fbWidth + x, 255, r, g, b);
 	}
-	for(int y = rect.top; y < rect.bottom; y++) {
-		c->fb->writePixel(y * c->fb->xsize + rect.left, 255, r, g, b);
-		c->fb->writePixel(y * c->fb->xsize + rect.right - 1, 255, r, g, b);
+	for (int y = rect.top; y < rect.bottom; y++) {
+		c->fb->writePixel(y * fbWidth + rect.left, 255, r, g, b);
+		c->fb->writePixel(y * fbWidth + rect.right - 1, 255, r, g, b);
 	}
 }
-#endif
 
 struct DirtyRectangle {
 	Common::Rect rectangle;
@@ -71,24 +64,23 @@ struct DirtyRectangle {
 
 	DirtyRectangle() { }
 	DirtyRectangle(Common::Rect rect, int red, int green, int blue) {
-		this->rectangle = rect;
-		this->r = red;
-		this->g = green;
-		this->b = blue;
+		rectangle = rect;
+		r = red;
+		g = green;
+		b = blue;
 	}
 };
 
-
-void tglDisposeResources(TinyGL::GLContext *c) {
+void GLContext::disposeResources() {
 	// Dispose textures and resources.
 	bool allDisposed = true;
 	do {
 		allDisposed = true;
 		for (int i = 0; i < TEXTURE_HASH_TABLE_SIZE; i++) {
-			TinyGL::GLTexture *t = c->shared_state.texture_hash_table[i];
+			GLTexture *t = shared_state.texture_hash_table[i];
 			while (t) {
 				if (t->disposed) {
-					TinyGL::free_texture(c, t);
+					free_texture(t);
 					allDisposed = false;
 					break;
 				}
@@ -98,43 +90,43 @@ void tglDisposeResources(TinyGL::GLContext *c) {
 
 	} while (allDisposed == false);
 
-	Graphics::Internal::tglCleanupImages();
+	Internal::tglCleanupImages();
 }
 
-void tglDisposeDrawCallLists(TinyGL::GLContext *c) {
-	typedef Common::List<Graphics::DrawCall *>::const_iterator DrawCallIterator;
-	for (DrawCallIterator it = c->_previousFrameDrawCallsQueue.begin(); it != c->_previousFrameDrawCallsQueue.end(); ++it) {
+void GLContext::disposeDrawCallLists() {
+	typedef Common::List<DrawCall *>::const_iterator DrawCallIterator;
+	for (DrawCallIterator it = _previousFrameDrawCallsQueue.begin(); it != _previousFrameDrawCallsQueue.end(); ++it) {
 		delete *it;
 	}
-	c->_previousFrameDrawCallsQueue.clear();
-	for (DrawCallIterator it = c->_drawCallsQueue.begin(); it != c->_drawCallsQueue.end(); ++it) {
+	_previousFrameDrawCallsQueue.clear();
+	for (DrawCallIterator it = _drawCallsQueue.begin(); it != _drawCallsQueue.end(); ++it) {
 		delete *it;
 	}
-	c->_drawCallsQueue.clear();
+	_drawCallsQueue.clear();
 }
 
-static inline void _appendDirtyRectangle(const Graphics::DrawCall &call, Common::List<DirtyRectangle> &rectangles, int r, int g, int b) {
+static inline void _appendDirtyRectangle(const DrawCall &call, Common::List<DirtyRectangle> &rectangles, int r, int g, int b) {
 	Common::Rect dirty_region = call.getDirtyRegion();
 	if (rectangles.empty() || dirty_region != rectangles.back().rectangle)
 		rectangles.push_back(DirtyRectangle(dirty_region, r, g, b));
 }
 
-static void tglPresentBufferDirtyRects(TinyGL::GLContext *c) {
-	typedef Common::List<Graphics::DrawCall *>::const_iterator DrawCallIterator;
-	typedef Common::List<TinyGL::DirtyRectangle>::iterator RectangleIterator;
+void GLContext::presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas) {
+	typedef Common::List<DrawCall *>::const_iterator DrawCallIterator;
+	typedef Common::List<DirtyRectangle>::iterator RectangleIterator;
 
 	Common::List<DirtyRectangle> rectangles;
 
-	DrawCallIterator itFrame = c->_drawCallsQueue.begin();
-	DrawCallIterator endFrame = c->_drawCallsQueue.end();
-	DrawCallIterator itPrevFrame = c->_previousFrameDrawCallsQueue.begin();
-	DrawCallIterator endPrevFrame = c->_previousFrameDrawCallsQueue.end();
+	DrawCallIterator itFrame = _drawCallsQueue.begin();
+	DrawCallIterator endFrame = _drawCallsQueue.end();
+	DrawCallIterator itPrevFrame = _previousFrameDrawCallsQueue.begin();
+	DrawCallIterator endPrevFrame = _previousFrameDrawCallsQueue.end();
 
 	// Compare draw calls.
 	for ( ; itPrevFrame != endPrevFrame && itFrame != endFrame;
 		++itPrevFrame, ++itFrame) {
-			const Graphics::DrawCall &currentCall = **itFrame;
-			const Graphics::DrawCall &previousCall = **itPrevFrame;
+			const DrawCall &currentCall = **itFrame;
+			const DrawCall &previousCall = **itPrevFrame;
 
 			if (previousCall != currentCall) {
 				_appendDirtyRectangle(previousCall, rectangles, 255, 255, 255);
@@ -190,12 +182,16 @@ static void tglPresentBufferDirtyRects(TinyGL::GLContext *c) {
 	}
 
 	for (RectangleIterator it1 = rectangles.begin(); it1 != rectangles.end(); ++it1) {
-		(*it1).rectangle.clip(c->renderRect);
+		(*it1).rectangle.clip(renderRect);
 	}
 
 	if (!rectangles.empty()) {
+		for (RectangleIterator itRect = rectangles.begin(); itRect != rectangles.end(); ++itRect) {
+			dirtyAreas.push_back((*itRect).rectangle);
+		}
+
 		// Execute draw calls.
-		for (DrawCallIterator it = c->_drawCallsQueue.begin(); it != c->_drawCallsQueue.end(); ++it) {
+		for (DrawCallIterator it = _drawCallsQueue.begin(); it != _drawCallsQueue.end(); ++it) {
 			Common::Rect drawCallRegion = (*it)->getDirtyRegion();
 			for (RectangleIterator itRect = rectangles.begin(); itRect != rectangles.end(); ++itRect) {
 				Common::Rect dirtyRegion = (*itRect).rectangle;
@@ -204,68 +200,69 @@ static void tglPresentBufferDirtyRects(TinyGL::GLContext *c) {
 				}
 			}
 		}
-#if TGL_DIRTY_RECT_SHOW
-		// Draw debug rectangles.
-		// Note: white rectangles are rectangle that contained other rectangles
-		// blue rectangles are rectangle merged from other rectangles
-		// red rectangles are original dirty rects
 
-		bool blendingEnabled = c->fb->isBlendingEnabled();
-		bool alphaTestEnabled = c->fb->isAlphaTestEnabled();
-		c->fb->enableBlending(false);
-		c->fb->enableAlphaTest(false);
+		if (_debugRectsEnabled) {
+			// Draw debug rectangles.
+			// Note: white rectangles are rectangle that contained other rectangles
+			// blue rectangles are rectangle merged from other rectangles
+			// red rectangles are original dirty rects
 
-		for (RectangleIterator it = rectangles.begin(); it != rectangles.end(); ++it) {
-			tglDrawRectangle((*it).rectangle, (*it).r, (*it).g, (*it).b);
+			fb->enableBlending(false);
+			fb->enableAlphaTest(false);
+
+			for (RectangleIterator it = rectangles.begin(); it != rectangles.end(); ++it) {
+				debugDrawRectangle((*it).rectangle, (*it).r, (*it).g, (*it).b);
+			}
+
+			fb->enableBlending(blending_enabled);
+			fb->enableAlphaTest(alpha_test_enabled);
 		}
-
-		c->fb->enableBlending(blendingEnabled);
-		c->fb->enableAlphaTest(alphaTestEnabled);
-#endif
 	}
 
 	// Dispose not necessary draw calls.
-	for (DrawCallIterator it = c->_previousFrameDrawCallsQueue.begin(); it != c->_previousFrameDrawCallsQueue.end(); ++it) {
+	for (DrawCallIterator it = _previousFrameDrawCallsQueue.begin(); it !=  _previousFrameDrawCallsQueue.end(); ++it) {
 		delete *it;
 	}
 
-	c->_previousFrameDrawCallsQueue = c->_drawCallsQueue;
-	c->_drawCallsQueue.clear();
+	_previousFrameDrawCallsQueue = _drawCallsQueue;
+	_drawCallsQueue.clear();
 
+	disposeResources();
 
-	tglDisposeResources(c);
-
-	c->_currentAllocatorIndex = (c->_currentAllocatorIndex + 1) & 0x1;
-	c->_drawCallAllocator[c->_currentAllocatorIndex].reset();
+	_currentAllocatorIndex = (_currentAllocatorIndex + 1) & 0x1;
+	_drawCallAllocator[_currentAllocatorIndex].reset();
 }
 
-static void tglPresentBufferSimple(TinyGL::GLContext *c) {
-	typedef Common::List<Graphics::DrawCall *>::const_iterator DrawCallIterator;
+void GLContext::presentBufferSimple(Common::List<Common::Rect> &dirtyAreas) {
+	typedef Common::List<DrawCall *>::const_iterator DrawCallIterator;
 
-	for (DrawCallIterator it = c->_drawCallsQueue.begin(); it != c->_drawCallsQueue.end(); ++it) {
+	dirtyAreas.push_back(Common::Rect(fb->getPixelBufferWidth(), fb->getPixelBufferHeight()));
+
+	for (DrawCallIterator it = _drawCallsQueue.begin(); it != _drawCallsQueue.end(); ++it) {
 		(*it)->execute(true);
 		delete *it;
 	}
 
-	c->_drawCallsQueue.clear();
+	_drawCallsQueue.clear();
 
-	tglDisposeResources(c);
+	disposeResources();
 
-	c->_drawCallAllocator[c->_currentAllocatorIndex].reset();
+	_drawCallAllocator[_currentAllocatorIndex].reset();
 }
 
-void tglPresentBuffer() {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+void presentBuffer(Common::List<Common::Rect> &dirtyAreas) {
+	GLContext *c = gl_get_context();
 	if (c->_enableDirtyRectangles) {
-		tglPresentBufferDirtyRects(c);
+		c->presentBufferDirtyRects(dirtyAreas);
 	} else {
-		tglPresentBufferSimple(c);
+		c->presentBufferSimple(dirtyAreas);
 	}
 }
 
-} // end of namespace TinyGL
-
-namespace Graphics {
+void presentBuffer() {
+	Common::List<Common::Rect> dirtyAreas;
+	presentBuffer(dirtyAreas);
+}
 
 bool DrawCall::operator==(const DrawCall &other) const {
 	if (_type == other._type) {
@@ -287,13 +284,14 @@ bool DrawCall::operator==(const DrawCall &other) const {
 	}
 }
 
+
 RasterizationDrawCall::RasterizationDrawCall() : DrawCall(DrawCall_Rasterization) {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+	GLContext *c = gl_get_context();
 	_vertexCount = c->vertex_cnt;
-	_vertex = (TinyGL::GLVertex *) ::Internal::allocateFrame(_vertexCount * sizeof(TinyGL::GLVertex));
+	_vertex = (GLVertex *) Internal::allocateFrame(_vertexCount * sizeof(GLVertex));
 	_drawTriangleFront = c->draw_triangle_front;
 	_drawTriangleBack = c->draw_triangle_back;
-	memcpy(_vertex, c->vertex, sizeof(TinyGL::GLVertex) * _vertexCount);
+	memcpy(_vertex, c->vertex, sizeof(GLVertex) * _vertexCount);
 	_state = captureState();
 	if (c->_enableDirtyRectangles) {
 		computeDirtyRegion();
@@ -308,14 +306,14 @@ void RasterizationDrawCall::computeDirtyRegion() {
 	}
 
 	if (!clip_code) {
-		TinyGL::GLContext *c = TinyGL::gl_get_context();
-		int xmax = c->fb->xsize - 1;
-		int ymax = c->fb->ysize - 1;
+		GLContext *c = gl_get_context();
+		int xmax = c->fb->getPixelBufferWidth() - 1;
+		int ymax = c->fb->getPixelBufferHeight() - 1;
 		int left = xmax, right = 0, top = ymax, bottom = 0;
 		for (int i = 0; i < _vertexCount; i++) {
-			TinyGL::GLVertex *v = &_vertex[i];
+			GLVertex *v = &_vertex[i];
 			if (v->clip_code)
-				gl_transform_to_viewport(c, v);
+				c->gl_transform_to_viewport(v);
 			left =   MIN(left,   v->clip_code & 0x1 ?    0 : v->zp.x);
 			right =  MAX(right,  v->clip_code & 0x2 ? xmax : v->zp.x);
 			bottom = MAX(bottom, v->clip_code & 0x4 ? ymax : v->zp.y);
@@ -334,7 +332,7 @@ void RasterizationDrawCall::computeDirtyRegion() {
 }
 
 void RasterizationDrawCall::execute(bool restoreState) const {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+	GLContext *c = gl_get_context();
 
 	RasterizationDrawCall::RasterizationState backupState;
 	if (restoreState) {
@@ -342,13 +340,13 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 	}
 	applyState(_state);
 
-	TinyGL::GLVertex *prevVertex = c->vertex;
+	GLVertex *prevVertex = c->vertex;
 	int prevVertexCount = c->vertex_cnt;
 
 	c->vertex = _vertex;
 	c->vertex_cnt = _vertexCount;
-	c->draw_triangle_front = (TinyGL::gl_draw_triangle_func)_drawTriangleFront;
-	c->draw_triangle_back = (TinyGL::gl_draw_triangle_func)_drawTriangleBack;
+	c->draw_triangle_front = (gl_draw_triangle_func)_drawTriangleFront;
+	c->draw_triangle_back = (gl_draw_triangle_func)_drawTriangleBack;
 
 	int n = c->vertex_n;
 	int cnt = c->vertex_cnt;
@@ -356,25 +354,25 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 	switch (c->begin_type) {
 	case TGL_POINTS:
 		for(int i = 0; i < cnt; i++) {
-			gl_draw_point(c, &c->vertex[i]);
+			c->gl_draw_point(&c->vertex[i]);
 		}
 		break;
 	case TGL_LINES:
 		for(int i = 0; i < cnt / 2; i++) {
-			gl_draw_line(c, &c->vertex[i * 2], &c->vertex[i * 2 + 1]);
+			c->gl_draw_line(&c->vertex[i * 2], &c->vertex[i * 2 + 1]);
 		}
 		break;
 	case TGL_LINE_LOOP:
-		gl_draw_line(c, &c->vertex[cnt - 1], &c->vertex[0]);
+		c->gl_draw_line(&c->vertex[cnt - 1], &c->vertex[0]);
 		// Fall through...
 	case TGL_LINE_STRIP:
 		for(int i = 0; i < cnt - 1; i++) {
-			gl_draw_line(c, &c->vertex[i], &c->vertex[i + 1]);
+			c->gl_draw_line(&c->vertex[i], &c->vertex[i + 1]);
 		}
 		break;
 	case TGL_TRIANGLES:
 		for(int i = 0; i < cnt; i += 3) {
-			gl_draw_triangle(c, &c->vertex[i], &c->vertex[i + 1], &c->vertex[i + 2]);
+			c->gl_draw_triangle(&c->vertex[i], &c->vertex[i + 1], &c->vertex[i + 2]);
 		}
 		break;
 	case TGL_TRIANGLE_STRIP:
@@ -382,10 +380,10 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 			// needed to respect triangle orientation
 			switch (cnt & 1) {
 			case 0:
-				gl_draw_triangle(c, &c->vertex[2], &c->vertex[1], &c->vertex[0]);
+				c->gl_draw_triangle(&c->vertex[2], &c->vertex[1], &c->vertex[0]);
 				break;
 			case 1:
-				gl_draw_triangle(c, &c->vertex[0], &c->vertex[1], &c->vertex[2]);
+				c->gl_draw_triangle(&c->vertex[0], &c->vertex[1], &c->vertex[2]);
 				break;
 			}
 			cnt--;
@@ -394,22 +392,22 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 		break;
 	case TGL_TRIANGLE_FAN:
 		for(int i = 1; i < cnt; i += 2) {
-			gl_draw_triangle(c, &c->vertex[0], &c->vertex[i], &c->vertex[i + 1]);
+			c->gl_draw_triangle(&c->vertex[0], &c->vertex[i], &c->vertex[i + 1]);
 		}
 		break;
 	case TGL_QUADS:
 		for(int i = 0; i < cnt; i += 4) {
 			c->vertex[i + 2].edge_flag = 0;
-			gl_draw_triangle(c, &c->vertex[i], &c->vertex[i + 1], &c->vertex[i + 2]);
+			c->gl_draw_triangle(&c->vertex[i], &c->vertex[i + 1], &c->vertex[i + 2]);
 			c->vertex[i + 2].edge_flag = 1;
 			c->vertex[i + 0].edge_flag = 0;
-			gl_draw_triangle(c, &c->vertex[i], &c->vertex[i + 2], &c->vertex[i + 3]);
+			c->gl_draw_triangle(&c->vertex[i], &c->vertex[i + 2], &c->vertex[i + 3]);
 		}
 		break;
 	case TGL_QUAD_STRIP:
 		for( ; n >= 4; n -= 2) {
-			gl_draw_triangle(c, &c->vertex[0], &c->vertex[1], &c->vertex[2]);
-			gl_draw_triangle(c, &c->vertex[1], &c->vertex[3], &c->vertex[2]);
+			c->gl_draw_triangle(&c->vertex[0], &c->vertex[1], &c->vertex[2]);
+			c->gl_draw_triangle(&c->vertex[1], &c->vertex[3], &c->vertex[2]);
 			for (int i = 0; i < 2; i++) {
 				c->vertex[i] = c->vertex[i + 2];
 			}
@@ -417,7 +415,7 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 		break;
 	case TGL_POLYGON: {
 		for (int i = c->vertex_cnt; i >= 3; i--) {
-			gl_draw_triangle(c, &c->vertex[i - 1], &c->vertex[0], &c->vertex[i - 2]);
+			c->gl_draw_triangle(&c->vertex[i - 1], &c->vertex[0], &c->vertex[i - 2]);
 		}
 		break;
 	}
@@ -435,34 +433,43 @@ void RasterizationDrawCall::execute(bool restoreState) const {
 
 RasterizationDrawCall::RasterizationState RasterizationDrawCall::captureState() const {
 	RasterizationState state;
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
-	state.alphaTest = c->fb->isAlphaTestEnabled();
-	c->fb->getBlendingFactors(state.sfactor, state.dfactor);
-	state.enableBlending = c->fb->isBlendingEnabled();
-	state.alphaFunc = c->fb->getAlphaTestFunc();
-	state.alphaRefValue = c->fb->getAlphaTestRefVal();
-
-	state.cullFaceEnabled = c->cull_face_enabled;
-	state.beginType = c->begin_type;
-	state.colorMask = c->color_mask;
-	state.currentFrontFace = c->current_front_face;
-	state.currentShadeModel = c->current_shade_model;
-	state.depthTest = c->depth_test;
+	GLContext *c = gl_get_context();
+	state.enableBlending = c->blending_enabled;
+	state.sfactor = c->source_blending_factor;
+	state.dfactor = c->destination_blending_factor;
+	state.alphaTestEnabled = c->alpha_test_enabled;
+	state.alphaFunc = c->alpha_test_func;
+	state.alphaRefValue = c->alpha_test_ref_val;
+	state.depthTestEnabled = c->depth_test_enabled;
+	state.depthFunction = c->depth_func;
+	state.depthWriteMask = c->depth_write_mask;
+	state.stencilTestEnabled = c->stencil_test_enabled;
+	state.stencilTestFunc = c->stencil_test_func;
+	state.stencilValue = c->stencil_ref_val;
+	state.stencilMask = c->stencil_mask;
+	state.stencilWriteMask = c->stencil_write_mask;
+	state.stencilSfail = c->stencil_sfail;
+	state.stencilDpfail = c->stencil_dpfail;
+	state.stencilDppass = c->stencil_dppass;
 	state.offsetStates = c->offset_states;
 	state.offsetFactor = c->offset_factor;
 	state.offsetUnits = c->offset_units;
+
+	state.cullFaceEnabled = c->cull_face_enabled;
+	state.beginType = c->begin_type;
+	state.colorMaskRed = c->color_mask_red;
+	state.colorMaskGreen = c->color_mask_green;
+	state.colorMaskBlue = c->color_mask_blue;
+	state.colorMaskAlpha = c->color_mask_alpha;
+	state.currentFrontFace = c->current_front_face;
+	state.currentShadeModel = c->current_shade_model;
 	state.polygonModeBack = c->polygon_mode_back;
 	state.polygonModeFront = c->polygon_mode_front;
-	state.shadowMode = c->shadow_mode;
 	state.texture2DEnabled = c->texture_2d_enabled;
 	state.texture = c->current_texture;
 	state.wrapS = c->texture_wrap_s;
 	state.wrapT = c->texture_wrap_t;
-	state.shadowMaskBuf = c->fb->shadow_mask_buf;
-	state.depthFunction = c->fb->getDepthFunc();
-	state.depthWrite = c->fb->getDepthWrite();
 	state.lightingEnabled = c->lighting_enabled;
-	state.depthTestEnabled = c->fb->getDepthTestEnabled();
 	if (c->current_texture != nullptr)
 		state.textureVersion = c->current_texture->versionNumber;
 
@@ -473,40 +480,65 @@ RasterizationDrawCall::RasterizationState RasterizationDrawCall::captureState() 
 }
 
 void RasterizationDrawCall::applyState(const RasterizationDrawCall::RasterizationState &state) const {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
-	c->fb->setBlendingFactors(state.sfactor, state.dfactor);
+	GLContext *c = gl_get_context();
 	c->fb->enableBlending(state.enableBlending);
-	c->fb->enableAlphaTest(state.alphaTest);
+	c->fb->setBlendingFactors(state.sfactor, state.dfactor);
+	c->fb->enableAlphaTest(state.alphaTestEnabled);
 	c->fb->setAlphaTestFunc(state.alphaFunc, state.alphaRefValue);
 	c->fb->setDepthFunc(state.depthFunction);
-	c->fb->enableDepthWrite(state.depthWrite);
+	c->fb->enableDepthWrite(state.depthWriteMask);
 	c->fb->enableDepthTest(state.depthTestEnabled);
+	c->fb->enableStencilTest(state.stencilTestEnabled);
+	c->fb->setStencilWriteMask(state.stencilWriteMask);
+	c->fb->setStencilTestFunc(state.stencilTestFunc, state.stencilValue, state.stencilMask);
+	c->fb->setStencilOp(state.stencilSfail, state.stencilDpfail, state.stencilDppass);
 	c->fb->setOffsetStates(state.offsetStates);
 	c->fb->setOffsetFactor(state.offsetFactor);
 	c->fb->setOffsetUnits(state.offsetUnits);
 
+	c->blending_enabled = state.enableBlending;
+	c->source_blending_factor = state.sfactor;
+	c->destination_blending_factor = state.dfactor;
+	c->alpha_test_enabled = state.alphaTestEnabled;
+	c->alpha_test_func = state.alphaFunc;
+	c->alpha_test_ref_val = state.alphaRefValue;
+	c->depth_test_enabled = state.depthTestEnabled;
+	c->depth_func = state.depthFunction;
+	c->depth_write_mask = state.depthWriteMask;
+	c->stencil_test_enabled = state.stencilTestEnabled;
+	c->stencil_test_func = state.stencilTestFunc;
+	c->stencil_ref_val = state.stencilValue;
+	c->stencil_mask = state.stencilMask;
+	c->stencil_write_mask = state.stencilWriteMask;
+	c->stencil_sfail = state.stencilSfail;
+	c->stencil_dpfail = state.stencilDpfail;
+	c->stencil_dppass = state.stencilDppass;
+	c->offset_states = state.offsetStates;
+	c->offset_factor = state.offsetFactor;
+	c->offset_units = state.offsetUnits;
+
 	c->lighting_enabled = state.lightingEnabled;
 	c->cull_face_enabled = state.cullFaceEnabled;
 	c->begin_type = state.beginType;
-	c->color_mask = state.colorMask;
+	c->color_mask_red = state.colorMaskRed;
+	c->color_mask_green = state.colorMaskGreen;
+	c->color_mask_blue = state.colorMaskBlue;
+	c->color_mask_alpha = state.colorMaskAlpha;
 	c->current_front_face = state.currentFrontFace;
 	c->current_shade_model = state.currentShadeModel;
-	c->depth_test = state.depthTest;
 	c->polygon_mode_back = state.polygonModeBack;
 	c->polygon_mode_front = state.polygonModeFront;
-	c->shadow_mode = state.shadowMode;
 	c->texture_2d_enabled = state.texture2DEnabled;
 	c->current_texture = state.texture;
 	c->texture_wrap_s = state.wrapS;
 	c->texture_wrap_t = state.wrapT;
-	c->fb->shadow_mask_buf = state.shadowMaskBuf;
 
 	memcpy(c->viewport.scale._v, state.viewportScaling, sizeof(c->viewport.scale._v));
 	memcpy(c->viewport.trans._v, state.viewportTranslation, sizeof(c->viewport.trans._v));
 }
 
 void RasterizationDrawCall::execute(const Common::Rect &clippingRectangle, bool restoreState) const {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+	TinyGL::GLContext *c = gl_get_context();
 	c->fb->setScissorRectangle(clippingRectangle);
 	execute(restoreState);
 	c->fb->resetScissorRectangle();
@@ -527,11 +559,12 @@ bool RasterizationDrawCall::operator==(const RasterizationDrawCall &other) const
 	return false;
 }
 
-BlittingDrawCall::BlittingDrawCall(Graphics::BlitImage *image, const BlitTransform &transform, BlittingMode blittingMode) : DrawCall(DrawCall_Blitting), _transform(transform), _mode(blittingMode), _image(image) {
+
+BlittingDrawCall::BlittingDrawCall(BlitImage *image, const BlitTransform &transform, BlittingMode blittingMode) : DrawCall(DrawCall_Blitting), _transform(transform), _mode(blittingMode), _image(image) {
 	tglIncBlitImageRef(image);
 	_blitState = captureState();
 	_imageVersion = tglGetBlitImageVersion(image);
-	if (TinyGL::gl_get_context()->_enableDirtyRectangles) {
+	if (gl_get_context()->_enableDirtyRectangles) {
 		computeDirtyRegion();
 	}
 }
@@ -548,17 +581,17 @@ void BlittingDrawCall::execute(bool restoreState) const {
 	applyState(_blitState);
 
 	switch (_mode) {
-	case Graphics::BlittingDrawCall::BlitMode_Regular:
-		Graphics::Internal::tglBlit(_image, _transform);
+	case BlittingDrawCall::BlitMode_Regular:
+		Internal::tglBlit(_image, _transform);
 		break;
-	case Graphics::BlittingDrawCall::BlitMode_NoBlend:
-		Graphics::Internal::tglBlitNoBlend(_image, _transform);
+	case BlittingDrawCall::BlitMode_NoBlend:
+		Internal::tglBlitNoBlend(_image, _transform);
 		break;
-	case Graphics::BlittingDrawCall::BlitMode_Fast:
-		Graphics::Internal::tglBlitFast(_image, _transform._destinationRectangle.left, _transform._destinationRectangle.top);
+	case BlittingDrawCall::BlitMode_Fast:
+		Internal::tglBlitFast(_image, _transform._destinationRectangle.left, _transform._destinationRectangle.top);
 		break;
-	case Graphics::BlittingDrawCall::BlitMode_ZBuffer:
-		Graphics::Internal::tglBlitZBuffer(_image, _transform._destinationRectangle.left, _transform._destinationRectangle.top);
+	case BlittingDrawCall::BlitMode_ZBuffer:
+		Internal::tglBlitZBuffer(_image, _transform._destinationRectangle.left, _transform._destinationRectangle.top);
 		break;
 	default:
 		break;
@@ -569,30 +602,39 @@ void BlittingDrawCall::execute(bool restoreState) const {
 }
 
 void BlittingDrawCall::execute(const Common::Rect &clippingRectangle, bool restoreState) const {
-	Graphics::Internal::tglBlitSetScissorRect(clippingRectangle);
+	Internal::tglBlitSetScissorRect(clippingRectangle);
 	execute(restoreState);
-	Graphics::Internal::tglBlitResetScissorRect();
+	Internal::tglBlitResetScissorRect();
 }
 
 BlittingDrawCall::BlittingState BlittingDrawCall::captureState() const {
 	BlittingState state;
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
-	state.alphaTest = c->fb->isAlphaTestEnabled();
-	c->fb->getBlendingFactors(state.sfactor, state.dfactor);
-	state.enableBlending = c->fb->isBlendingEnabled();
-	state.alphaFunc = c->fb->getAlphaTestFunc();
-	state.alphaRefValue = c->fb->getAlphaTestRefVal();
-	state.depthTestEnabled = c->fb->getDepthTestEnabled();
+	TinyGL::GLContext *c = gl_get_context();
+	state.enableBlending = c->blending_enabled;
+	state.sfactor = c->source_blending_factor;
+	state.dfactor = c->destination_blending_factor;
+	state.alphaTest = c->alpha_test_enabled;
+	state.alphaFunc = c->alpha_test_func;
+	state.alphaRefValue = c->alpha_test_ref_val;
+	state.depthTestEnabled = c->depth_test_enabled;
 	return state;
 }
 
 void BlittingDrawCall::applyState(const BlittingState &state) const {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
-	c->fb->setBlendingFactors(state.sfactor, state.dfactor);
+	TinyGL::GLContext *c = gl_get_context();
 	c->fb->enableBlending(state.enableBlending);
+	c->fb->setBlendingFactors(state.sfactor, state.dfactor);
 	c->fb->enableAlphaTest(state.alphaTest);
 	c->fb->setAlphaTestFunc(state.alphaFunc, state.alphaRefValue);
 	c->fb->enableDepthTest(state.depthTestEnabled);
+
+	c->blending_enabled = state.enableBlending;
+	c->source_blending_factor = state.sfactor;
+	c->destination_blending_factor = state.dfactor;
+	c->alpha_test_enabled = state.alphaTest;
+	c->alpha_test_func = state.alphaFunc;
+	c->alpha_test_ref_val = state.alphaRefValue;
+	c->depth_test_enabled = state.depthTestEnabled;
 }
 
 void BlittingDrawCall::computeDirtyRegion() {
@@ -621,86 +663,105 @@ void BlittingDrawCall::computeDirtyRegion() {
 			_transform._destinationRectangle.left + blitWidth + 1,
 			_transform._destinationRectangle.top + blitHeight + 1
 		);
-		_dirtyRegion.clip(TinyGL::gl_get_context()->renderRect);
+		_dirtyRegion.clip(gl_get_context()->renderRect);
 	}
 }
 
 bool BlittingDrawCall::operator==(const BlittingDrawCall &other) const {
-	return	_mode == other._mode &&
-			_image == other._image &&
-			_transform == other._transform &&
-			_blitState == other._blitState &&
-			_imageVersion == tglGetBlitImageVersion(other._image);
+	return
+		_mode == other._mode &&
+		_image == other._image &&
+		_transform == other._transform &&
+		_blitState == other._blitState &&
+		_imageVersion == tglGetBlitImageVersion(other._image);
 }
 
-ClearBufferDrawCall::ClearBufferDrawCall(bool clearZBuffer, int zValue, bool clearColorBuffer, int rValue, int gValue, int bValue)
-	: _clearZBuffer(clearZBuffer), _clearColorBuffer(clearColorBuffer), _zValue(zValue), _rValue(rValue), _gValue(gValue), _bValue(bValue), DrawCall(DrawCall_Clear) {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+
+ClearBufferDrawCall::ClearBufferDrawCall(bool clearZBuffer, int zValue,
+	                                 bool clearColorBuffer, int rValue, int gValue, int bValue,
+	                                 bool clearStencilBuffer, int stencilValue)
+	: _clearZBuffer(clearZBuffer), _clearColorBuffer(clearColorBuffer), _zValue(zValue),
+	  _rValue(rValue), _gValue(gValue), _bValue(bValue), _clearStencilBuffer(clearStencilBuffer),
+	  _stencilValue(stencilValue), DrawCall(DrawCall_Clear) {
+	TinyGL::GLContext *c = gl_get_context();
 	if (c->_enableDirtyRectangles) {
 		_dirtyRegion = c->renderRect;
 	}
 }
 
 void ClearBufferDrawCall::execute(bool restoreState) const {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
-	c->fb->clear(_clearZBuffer, _zValue, _clearColorBuffer, _rValue, _gValue, _bValue);
+	TinyGL::GLContext *c = gl_get_context();
+	c->fb->clear(_clearZBuffer, _zValue, _clearColorBuffer, _rValue, _gValue, _bValue, _clearStencilBuffer, _stencilValue);
 }
 
 void ClearBufferDrawCall::execute(const Common::Rect &clippingRectangle, bool restoreState) const {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+	TinyGL::GLContext *c = gl_get_context();
 	Common::Rect clearRect = clippingRectangle.findIntersectingRect(getDirtyRegion());
-	c->fb->clearRegion(clearRect.left, clearRect.top, clearRect.width(), clearRect.height(), _clearZBuffer, _zValue, _clearColorBuffer, _rValue, _gValue, _bValue);
+	c->fb->clearRegion(clearRect.left, clearRect.top, clearRect.width(), clearRect.height(),
+	                   _clearZBuffer, _zValue, _clearColorBuffer, _rValue, _gValue, _bValue,
+	                   _clearStencilBuffer, _stencilValue);
 }
 
 bool ClearBufferDrawCall::operator==(const ClearBufferDrawCall &other) const {
-	return	_clearZBuffer == other._clearZBuffer &&
-			_clearColorBuffer == other._clearColorBuffer &&
-			_rValue == other._rValue &&
-			_gValue == other._gValue &&
-			_bValue == other._bValue &&
-			_zValue == other._zValue;
+	return
+		_clearZBuffer == other._clearZBuffer &&
+		_clearColorBuffer == other._clearColorBuffer &&
+		_clearStencilBuffer == other._clearStencilBuffer &&
+		_rValue == other._rValue &&
+		_gValue == other._gValue &&
+		_bValue == other._bValue &&
+		_zValue == other._zValue &&
+		_stencilValue == other._stencilValue;
 }
 
 
 bool RasterizationDrawCall::RasterizationState::operator==(const RasterizationState &other) const {
-	return	beginType == other.beginType &&
-			currentFrontFace == other.currentFrontFace &&
-			cullFaceEnabled == other.cullFaceEnabled &&
-			colorMask == other.colorMask &&
-			depthTest == other.depthTest &&
-			offsetStates == other.offsetStates &&
-			offsetFactor == other.offsetFactor &&
-			offsetUnits == other.offsetUnits &&
-			depthFunction == other.depthFunction &&
-			depthWrite == other.depthWrite &&
-			shadowMode == other.shadowMode &&
-			texture2DEnabled == other.texture2DEnabled &&
-			currentShadeModel == other.currentShadeModel &&
-			polygonModeBack == other.polygonModeBack &&
-			polygonModeFront == other.polygonModeFront &&
-			lightingEnabled == other.lightingEnabled &&
-			enableBlending == other.enableBlending &&
-			sfactor == other.sfactor &&
-			dfactor == other.dfactor &&
-			alphaTest == other.alphaTest &&
-			alphaFunc == other.alphaFunc &&
-			alphaRefValue == other.alphaRefValue &&
-			texture == other.texture &&
-			shadowMaskBuf == other.shadowMaskBuf &&
-			viewportTranslation[0] == other.viewportTranslation[0] &&
-			viewportTranslation[1] == other.viewportTranslation[1] &&
-			viewportTranslation[2] == other.viewportTranslation[2] &&
-			viewportScaling[0] == other.viewportScaling[0] &&
-			viewportScaling[1] == other.viewportScaling[1] &&
-			viewportScaling[2] == other.viewportScaling[2] &&
-			depthTestEnabled == other.depthTestEnabled &&
-			textureVersion == texture->versionNumber;
+	return
+		enableBlending == other.enableBlending &&
+		sfactor == other.sfactor &&
+		dfactor == other.dfactor &&
+		alphaTestEnabled == other.alphaTestEnabled &&
+		alphaFunc == other.alphaFunc &&
+		alphaRefValue == other.alphaRefValue &&
+		depthTestEnabled == other.depthTestEnabled &&
+		depthFunction == other.depthFunction &&
+		depthWriteMask == other.depthWriteMask &&
+		stencilTestEnabled == other.stencilTestEnabled &&
+		stencilTestFunc == other.stencilTestFunc &&
+		stencilValue == other.stencilValue &&
+		stencilMask == other.stencilMask &&
+		stencilWriteMask == other.stencilWriteMask &&
+		stencilSfail == other.stencilSfail &&
+		stencilDpfail == other.stencilDpfail &&
+		stencilDppass == other.stencilDppass &&
+		offsetStates == other.offsetStates &&
+		offsetFactor == other.offsetFactor &&
+		offsetUnits == other.offsetUnits &&
+		lightingEnabled == other.lightingEnabled &&
+		cullFaceEnabled == other.cullFaceEnabled &&
+		beginType == other.beginType &&
+		colorMaskRed == other.colorMaskRed &&
+		colorMaskGreen == other.colorMaskGreen &&
+		colorMaskBlue == other.colorMaskBlue &&
+		colorMaskAlpha == other.colorMaskAlpha &&
+		currentFrontFace == other.currentFrontFace &&
+		currentShadeModel == other.currentShadeModel &&
+		polygonModeBack == other.polygonModeBack &&
+		polygonModeFront == other.polygonModeFront &&
+		texture2DEnabled == other.texture2DEnabled &&
+		texture == other.texture &&
+		textureVersion == texture->versionNumber &&
+		viewportTranslation[0] == other.viewportTranslation[0] &&
+		viewportTranslation[1] == other.viewportTranslation[1] &&
+		viewportTranslation[2] == other.viewportTranslation[2] &&
+		viewportScaling[0] == other.viewportScaling[0] &&
+		viewportScaling[1] == other.viewportScaling[1] &&
+		viewportScaling[2] == other.viewportScaling[2];
 }
-
-} // end of namespace Graphics
-
 
 void *Internal::allocateFrame(int size) {
-	TinyGL::GLContext *c = TinyGL::gl_get_context();
+	GLContext *c = gl_get_context();
 	return c->_drawCallAllocator[c->_currentAllocatorIndex].allocate(size);
 }
+
+} // end of namespace TinyGL

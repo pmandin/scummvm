@@ -29,6 +29,7 @@
 
 static const PlainGameDescriptor twineGames[] = {
 	{ "lba", "Little Big Adventure" },
+	{ "lbashow", "Little Big Adventure Freeware Slide Show" },
 	{ "lba2", "Little Big Adventure 2" },
 	{ nullptr,  nullptr }
 };
@@ -272,6 +273,17 @@ static const ADGameDescription twineGameDescriptions[] = {
 		GUIO1(GUIO_NONE)
 	},
 
+	// Virgin Asia cd release - english only
+	{
+		"lba",
+		"Virgin Asia CD release",
+		AD_ENTRY1s("text.hqr", "5b8329ebd078adc92979d04987692e9b", 442921),
+		Common::EN_GRB,
+		Common::kPlatformDOS,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NONE)
+	},
+
 	// Little Big Adventure - DotEmu Version (Steam)
 	// LBA.DOT
 	// 11 October 2011 at 17:30
@@ -315,6 +327,53 @@ static const ADGameDescription twineGameDescriptions[] = {
 		"lba",
 		"DotEmu Version (Steam)",
 		AD_ENTRY1s("LBA.DOT", "6dc00342c80bc41b4ff5a43c560c7abc", 380666496),
+		Common::ES_ESP,
+		Common::kPlatformDOS,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NONE)
+	},
+
+	// Little Big Adventure (CD Spanish)
+	{
+		"lba",
+		"",
+		AD_ENTRY1s("text.hqr", "ae7343552f8fbd17a1fc6cea2197a912", 248654),
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NONE)
+	},
+	{
+		"lba",
+		"",
+		AD_ENTRY1s("text.hqr", "ae7343552f8fbd17a1fc6cea2197a912", 248654),
+		Common::FR_FRA,
+		Common::kPlatformDOS,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NONE)
+	},
+	{
+		"lba",
+		"",
+		AD_ENTRY1s("text.hqr", "ae7343552f8fbd17a1fc6cea2197a912", 248654),
+		Common::DE_DEU,
+		Common::kPlatformDOS,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NONE)
+	},
+	{
+		"lba",
+		"",
+		AD_ENTRY1s("text.hqr", "ae7343552f8fbd17a1fc6cea2197a912", 248654),
+		Common::IT_ITA,
+		Common::kPlatformDOS,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NONE)
+	},
+	{
+		"lba",
+		"",
+		AD_ENTRY1s("text.hqr", "ae7343552f8fbd17a1fc6cea2197a912", 248654),
 		Common::ES_ESP,
 		Common::kPlatformDOS,
 		ADGF_NO_FLAGS,
@@ -453,7 +512,7 @@ static const ADGameDescription twineGameDescriptions[] = {
 		"lba",
 		"Fan Translation by xesf",
 		AD_ENTRY1s("TEXT.HQR", "2a8df71946aa9ee4c777a9d6414b89ce", 282308),
-		Common::PT_POR,
+		Common::PT_PRT,
 		Common::kPlatformDOS,
 		ADGF_NO_FLAGS,
 		GUIO1(GUIO_NONE)
@@ -538,6 +597,18 @@ static const ADGameDescription twineGameDescriptions[] = {
 		GUIO1(GUIO_NONE)
 	},
 
+	// LBA Freeware Slide Show
+	// 4 Apr 1994
+	{
+		"lbashow",
+		"LBA Freeware Slide Show",
+		AD_ENTRY1s("LBA_SHOW.EXE", "c1a887e38283d43f271249ad9f2a73ef", 85928),
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NONE)
+	},
+
 	// Little Big Adventure 2
 
 	// Little Big Adventure 2 - Original European Version (EN, FR, DE, IT, ES)
@@ -597,13 +668,6 @@ static const ExtraGuiOption OptWallCollision = {
 	_s("Enable wall collisions"),
 	_s("Enable the original wall collision damage"),
 	"wallcollision",
-	false
-};
-
-static const ExtraGuiOption OptCrossFade = {
-	_s("Enable cross fade"),
-	_s("Enable cross fading of images and scenes"),
-	"crossfade",
 	false
 };
 
@@ -710,7 +774,6 @@ public:
 const ExtraGuiOptions TwinEMetaEngineDetection::getExtraGuiOptions(const Common::String &target) const {
 	ExtraGuiOptions options;
 	options.push_back(OptWallCollision);
-	options.push_back(OptCrossFade);
 	options.push_back(OptDisableSaveMenu);
 	options.push_back(OptMouse);
 	options.push_back(OptHighRes);

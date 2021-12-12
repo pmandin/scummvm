@@ -59,8 +59,8 @@ private:
 
 FontSubtitles::FontSubtitles(Myst3Engine *vm) :
 	Subtitles(vm),
-	_font(0),
-	_surface(0),
+	_font(nullptr),
+	_surface(nullptr),
 	_scale(1.0),
 	_charset(nullptr) {
 }
@@ -239,7 +239,7 @@ void FontSubtitles::createTexture() {
 	}
 
 	if (!_texture) {
-		_texture = _vm->_gfx->createTexture(_surface);
+		_texture = _vm->_gfx->createTexture2D(_surface);
 	}
 }
 
@@ -376,7 +376,7 @@ void MovieSubtitles::drawToTexture(const Phrase *phrase) {
 	const Graphics::Surface *surface = _bink.decodeNextFrame();
 
 	if (!_texture) {
-		_texture = _vm->_gfx->createTexture(surface);
+		_texture = _vm->_gfx->createTexture2D(surface);
 	} else {
 		_texture->update(surface);
 	}
@@ -385,7 +385,7 @@ void MovieSubtitles::drawToTexture(const Phrase *phrase) {
 Subtitles::Subtitles(Myst3Engine *vm) :
 		Window(),
 		_vm(vm),
-		_texture(0),
+		_texture(nullptr),
 		_frame(-1) {
 	_scaled = !_vm->isWideScreenModEnabled();
 }
@@ -507,7 +507,7 @@ Subtitles *Subtitles::create(Myst3Engine *vm, uint32 id) {
 
 	if (!s->loadSubtitles(id)) {
 		delete s;
-		return 0;
+		return nullptr;
 	}
 
 	s->loadResources();
@@ -517,7 +517,7 @@ Subtitles *Subtitles::create(Myst3Engine *vm, uint32 id) {
 
 void Subtitles::freeTexture() {
 	if (_texture) {
-		_vm->_gfx->freeTexture(_texture);
+		delete _texture;
 		_texture = nullptr;
 	}
 }

@@ -34,6 +34,7 @@
 #include "common/str.h"
 #include "common/system.h"
 #include "common/timer.h"
+#include "engines/advancedDetector.h"
 #include "engines/util.h"
 #include "image/bmp.h"
 
@@ -63,6 +64,10 @@ HypnoEngine::HypnoEngine(OSystem *syst, const ADGameDescription *gd)
 	  _screenW(640), _screenH(480) {
 	_rnd = new Common::RandomSource("hypno");
 
+	if (gd->extra)
+		_variant = gd->extra;
+	else
+		_variant = "FullGame";
 	g_hypno = this;
 	g_parsedArc = new ArcadeShooting();
 	_defaultCursor = "";
@@ -130,17 +135,17 @@ Common::Error HypnoEngine::run() {
 	_compositeSurface->create(_screenW, _screenH, _pixelFormat);
 
 	// Main event loop
-	Common::Event event;
-	Common::Point mousePos;
 	loadAssets();
-	_nextLevel = "<start>";
+	//resetSceneState();
+
+	assert(!_nextLevel.empty());
 	while (!shouldQuit()) {
-		//debug("nextLevel: %s", _nextLevel.c_str());
+		debug("nextLevel: %s", _nextLevel.c_str());
 		_defaultCursor = "";
 		_prefixDir = "";
 		_videosPlaying.clear();
 		if (!_nextLevel.empty()) {
-			_currentLevel = _nextLevel;
+			_currentLevel = findNextLevel(_nextLevel);
 			_nextLevel = "";
 			runLevel(_currentLevel);
 		}
@@ -158,6 +163,7 @@ void HypnoEngine::runLevel(Common::String &name) {
 
 	// Play intros
 	disableCursor();
+	debug("Number of videos to play: %d", _levels[name]->intros.size());
 	for (Filenames::iterator it = _levels[name]->intros.begin(); it != _levels[name]->intros.end(); ++it) {
 		MVideo v(*it, Common::Point(0, 0), false, true, false);
 		runIntro(v);
@@ -172,12 +178,10 @@ void HypnoEngine::runLevel(Common::String &name) {
 		runArcade((ArcadeShooting *) _levels[name]);
 	} else if (_levels[name]->type == CodeLevel) {
 		debugC(1, kHypnoDebugScene, "Executing hardcoded level %s", name.c_str());
-		//resetSceneState(); // TODO: is this required?
 		// Resolution depends on the game
 		runCode((Code *) _levels[name]);
 	} else if (_levels[name]->type == SceneLevel) {
-		debugC(1, kHypnoDebugScene, "Executing scene level %s", name.c_str());
-		resetSceneState();
+		debugC(1, kHypnoDebugScene, "Executing scene level %s with next level: %s", name.c_str(), _levels[name]->levelIfWin.c_str());
 		changeScreenMode("640x480");
 		runScene((Scene *) _levels[name]);
 	} else {
@@ -189,7 +193,7 @@ void HypnoEngine::runIntros(Videos &videos) {
 	debugC(1, kHypnoDebugScene, "Starting run intros with %d videos!", videos.size());
 	Common::Event event;
 	stopSound();
-	defaultCursor();
+	//defaultCursor();
 
 	for (Videos::iterator it = videos.begin(); it != videos.end(); ++it) {
 		playVideo(*it);
@@ -464,7 +468,8 @@ void HypnoEngine::playSound(const Common::String &filename, uint32 loops) {
 	if (file->open(name)) {
 		stream = new Audio::LoopingAudioStream(Audio::makeRawStream(file, 22050, Audio::FLAG_UNSIGNED, DisposeAfterUse::YES), loops);
 		_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundHandle, stream, -1, Audio::Mixer::kMaxChannelVolume);
-	}
+	} else
+		debugC(1, kHypnoDebugMedia, "%s not found!", name.c_str());
 }
 
 void HypnoEngine::stopSound() {

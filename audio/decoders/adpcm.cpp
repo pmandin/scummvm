@@ -590,7 +590,7 @@ public:
 		StatelessPacketizedAudioStream(rate, channels), _type(type), _blockAlign(blockAlign) {}
 
 protected:
-	AudioStream *makeStream(Common::SeekableReadStream *data);
+	AudioStream *makeStream(Common::SeekableReadStream *data) override;
 
 private:
 	ADPCMType _type;
@@ -607,7 +607,7 @@ PacketizedAudioStream *makePacketizedADPCMStream(ADPCMType type, int rate, int c
 	case kADPCMOki:
 	case kADPCMXA:
 	case kADPCMDVI:
-		return 0;
+		return nullptr;
 	default:
 		break;
 	}

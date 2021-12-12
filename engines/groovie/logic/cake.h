@@ -18,6 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
+ *
+ * This file is dual-licensed.
+ * In addition to the GPLv2 license mentioned above, MojoTouch has exclusively licensed
+ * this code on November 10th, 2021, to be use in closed-source products.
+ * Therefore, any contributions (commits) to it will also be dual-licensed.
+ *
  */
 
 #ifndef GROOVIE_LOGIC_CAKE_H
@@ -33,7 +39,7 @@ namespace Groovie {
  */
 class CakeGame {
 public:
-	CakeGame();
+	CakeGame(bool easierAi);
 	void run(byte *scriptVariables);
 
 private:
@@ -69,6 +75,7 @@ private:
 	bool _hasCheated;
 
 	LinesMappings _map;//!< ID numbers for all of the potential victory lines for each spot on the board
+	bool _easierAi;
 
 	void restart();
 	void setLineNum(uint x, uint y, uint index);

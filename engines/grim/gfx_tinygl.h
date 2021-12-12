@@ -25,14 +25,17 @@
 
 #include "engines/grim/gfx_base.h"
 
-#include "graphics/tinygl/zgl.h"
+#include "graphics/tinygl/tinygl.h"
+
+namespace Graphics {
+struct Surface;
+}
 
 namespace Grim {
 
 class ModelNode;
 class Mesh;
 class MeshFace;
-class BlitImage;
 
 class GfxTinyGL : public GfxBase {
 public:
@@ -128,11 +131,10 @@ protected:
 	void createSpecialtyTextureFromScreen(uint id, uint8 *data, int x, int y, int width, int height) override;
 
 private:
-	TinyGL::FrameBuffer *_zb;
 	Graphics::PixelFormat _pixelFormat;
-	Graphics::BlitImage *_emergFont[96];
-	Graphics::BlitImage *_smushImage;
-	Graphics::PixelBuffer _storedDisplay;
+	TinyGL::BlitImage *_emergFont[96];
+	TinyGL::BlitImage *_smushImage;
+	Graphics::Surface *_storedDisplay;
 	float _alpha;
 	const Actor *_currentActor;
 	TGLenum _depthFunc;

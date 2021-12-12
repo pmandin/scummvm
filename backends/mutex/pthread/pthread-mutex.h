@@ -23,18 +23,8 @@
 #ifndef BACKENDS_MUTEX_PTHREAD_H
 #define BACKENDS_MUTEX_PTHREAD_H
 
-#include "backends/mutex/mutex.h"
+#include "common/mutex.h"
 
-/**
- * pthreads mutex manager
- */
-class PthreadMutexManager : public MutexManager {
-public:
-	virtual OSystem::MutexRef createMutex() override;
-	virtual void lockMutex(OSystem::MutexRef mutex) override;
-	virtual void unlockMutex(OSystem::MutexRef mutex) override;
-	virtual void deleteMutex(OSystem::MutexRef mutex) override;
-};
-
+Common::MutexInternal *createPthreadMutexInternal();
 
 #endif

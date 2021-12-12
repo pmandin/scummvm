@@ -51,7 +51,7 @@ public:
 	int getMaximumSaveSlot() const override;
 	void removeSaveState(const char *target, int slot) const override;
 	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
-	virtual int getAutosaveSlot() const override { return 999; }
+	int getAutosaveSlot() const override { return 999; }
 
 	Common::KeymapArray initKeymaps(const char *target) const override;
 };
@@ -193,7 +193,8 @@ void KyraMetaEngine::removeSaveState(const char *target, int slot) const {
 SaveStateDescriptor KyraMetaEngine::querySaveMetaInfos(const char *target, int slot) const {
 	Common::String filename = Kyra::KyraEngine_v1::getSavegameFilename(target, slot);
 	Common::InSaveFile *in = g_system->getSavefileManager()->openForLoading(filename);
-	const bool nonKyraGame = ConfMan.getDomain(target)->getVal("gameid").equalsIgnoreCase("lol") || ConfMan.getDomain(target)->getVal("gameid").equalsIgnoreCase("eob") || ConfMan.getDomain(target)->getVal("gameid").equalsIgnoreCase("eob2");
+	const Common::String gameId = ConfMan.getDomain(target)->getVal("gameid");
+	const bool nonKyraGame = gameId.equalsIgnoreCase("lol") || gameId.equalsIgnoreCase("eob") || gameId.equalsIgnoreCase("eob2");
 
 	if (in) {
 		Kyra::KyraEngine_v1::SaveHeader header;
@@ -213,7 +214,7 @@ SaveStateDescriptor KyraMetaEngine::querySaveMetaInfos(const char *target, int s
 			// The same goes for the 'Autosave', which is slot 999. Slot 0 will also
 			// be protected in Kyra 1-3, since it's the 'restart game' save.
 			desc.setWriteProtectedFlag((slot == 0 && !nonKyraGame) || slot >= 990);
-			if (slot == 0 && !nonKyraGame)
+			if (slot == getAutosaveSlot())
 				desc.setAutosave(true);
 			desc.setThumbnail(header.thumbnail);
 
@@ -227,7 +228,7 @@ SaveStateDescriptor KyraMetaEngine::querySaveMetaInfos(const char *target, int s
 	// The same goes for the 'Autosave', which is slot 999. Slot 0 will also
 	// be protected in Kyra 1-3, since it's the 'restart game' save.
 	desc.setWriteProtectedFlag((slot == 0 && !nonKyraGame) || slot >= 990);
-	if (slot == 0 && !nonKyraGame)
+	if (slot == getAutosaveSlot())
 		desc.setAutosave(true);
 
 	return desc;

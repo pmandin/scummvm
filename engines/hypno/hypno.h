@@ -59,6 +59,15 @@ enum {
 
 typedef Common::Array<Graphics::Surface *> Frames;
 
+// Player positions
+
+enum PlayerPosition {
+	PlayerTop = 'T',
+	PlayerBottom = 'B',
+	PlayerLeft = 'L',
+	PlayerRight = 'R'
+};
+
 class HypnoEngine : public Engine {
 private:
 	Common::RandomSource *_rnd;
@@ -72,6 +81,7 @@ public:
 	bool isDemo() const;
 	Common::Language _language;
 	Common::Platform _platform;
+	Common::String _variant;
 
 	Audio::SoundHandle _soundHandle;
 	Common::InstallShieldV3 _installerArchive;
@@ -82,6 +92,7 @@ public:
 	Common::HashMap<Common::String, int> _sceneState;
 	void resetSceneState();
 	bool checkSceneCompleted();
+	bool checkLevelWon();
 	void runLevel(Common::String &name);
 	void runScene(Scene *scene);
 	void runArcade(ArcadeShooting *arc);
@@ -169,6 +180,8 @@ public:
 	// levels
 	Common::String _nextLevel;
 	Common::String _currentLevel;
+	virtual Common::String findNextLevel(const Common::String &level);
+	virtual Common::String findNextLevel(const Transition *trans);
 	uint32 _levelId;
 
 	// hotspots
@@ -193,7 +206,8 @@ public:
 
 	// Arcade
 	Common::String _arcadeMode;
-	uint32 _playerPosition;
+	uint32 _currentPlayerPosition;
+	uint32 _lastPlayerPosition;
 	int detectTarget(const Common::Point &mousePos);
 	virtual bool clickedPrimaryShoot(const Common::Point &mousePos);
 	virtual bool clickedSecondaryShoot(const Common::Point &mousePos);
@@ -202,13 +216,14 @@ public:
 	virtual void hitPlayer();
 	Common::String _difficulty; 
 
-	void drawCursorArcade(const Common::Point &mousePos);
+	virtual void drawCursorArcade(const Common::Point &mousePos);
 	virtual void drawPlayer();
 	virtual void drawHealth();
 	int _health;
 	int _maxHealth;
 	int _score;
 	Filename _shootSound;
+	Filename _hitSound;
 	Shoots _shoots;
 	Frames _playerFrames;
 	int _playerFrameIdx;
@@ -252,6 +267,9 @@ public:
 	void drawPlayer() override;
 	void drawHealth() override;
 	void runCode(Code *code) override;
+	Common::String findNextLevel(const Common::String &level) override;
+	Common::String findNextLevel(const Transition *trans) override;
+
 
 private:
 	void runMainMenu(Code *code);
@@ -263,11 +281,15 @@ public:
 	void loadAssets() override;
 	void loadAssetsDemo();
 	void loadAssetsFullGame();
+	void showCredits() override;
 
+	void drawCursorArcade(const Common::Point &mousePos) override;
 	void drawShoot(const Common::Point &target) override;
 	void drawPlayer() override;
 	void drawHealth() override;
 	void runCode(Code *code) override;
+	Common::String findNextLevel(const Common::String &level) override;
+	Common::String findNextLevel(const Transition *trans) override;
 
 	void showConversation() override;
 	void rightClickedConversation(const Common::Point &mousePos) override;
@@ -275,6 +297,7 @@ public:
 
 private:
 	void runMatrix(Code *code);
+	void runNote(Code *code);
 };
 
 class BoyzEngine : public HypnoEngine {

@@ -4,6 +4,7 @@ gui/about.cpp
 gui/browser.cpp
 gui/chooser.cpp
 gui/downloaddialog.cpp
+gui/downloadiconsdialog.cpp
 gui/editgamedialog.cpp
 gui/editrecorddialog.cpp
 gui/filebrowser-dialog.cpp
@@ -23,6 +24,8 @@ gui/ThemeEngine.cpp
 gui/unknown-game-dialog.cpp
 gui/updates-dialog.cpp
 gui/widget.cpp
+gui/widgets/grid.cpp
+gui/widgets/groupedlist.cpp
 
 base/main.cpp
 
@@ -30,6 +33,7 @@ common/achievements.cpp
 common/error.cpp
 common/rendermode.cpp
 common/updates.cpp
+common/util.cpp
 
 dists/scummvm.appdata.xml.cpp
 

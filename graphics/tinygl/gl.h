@@ -328,6 +328,8 @@ enum {
 	TGL_REPLACE                     = 0x1E01,
 	TGL_INCR                        = 0x1E02,
 	TGL_DECR                        = 0x1E03,
+	TGL_INCR_WRAP                   = 0x8507,
+	TGL_DECR_WRAP                   = 0x8508,
 
 	// Buffers, Pixel Drawing/Reading
 	TGL_NONE                        = 0,
@@ -537,8 +539,8 @@ enum {
 	TGL_NEAREST                     = 0x2600,
 	TGL_REPEAT                      = 0x2901,
 	TGL_CLAMP                       = 0x2900,
-	TGL_CLAMP_TO_EDGE		= 0x812F,
-	TGL_MIRRORED_REPEAT		= 0x8370,
+	TGL_CLAMP_TO_EDGE               = 0x812F,
+	TGL_MIRRORED_REPEAT             = 0x8370,
 	TGL_S                           = 0x2000,
 	TGL_T                           = 0x2001,
 	TGL_R                           = 0x2002,
@@ -593,6 +595,8 @@ enum {
 	TGL_UNSIGNED_INT_8_8_8_8_REV    = 0x8367,
 	TGL_UNSIGNED_SHORT_5_5_5_1      = 0x8034,
 	TGL_UNSIGNED_SHORT_1_5_5_5_REV  = 0x8366,
+	TGL_UNSIGNED_SHORT_4_4_4_4      = 0x8033,
+	TGL_UNSIGNED_SHORT_4_4_4_4_REV  = 0x8365,
 
 	// Utility
 	TGL_VENDOR                      = 0x1F00,
@@ -718,28 +722,28 @@ void tglPolygonMode(int face, int mode);
 void tglBegin(int type);
 void tglEnd();
 
-#define PROTO_GL1(name)				\
-void tgl ## name ## 1f(float);		\
-void tgl ## name ## 1d(double);		\
-void tgl ## name ## 1fv(const float *);	\
+#define PROTO_GL1(name)                   \
+void tgl ## name ## 1f(float);            \
+void tgl ## name ## 1d(double);           \
+void tgl ## name ## 1fv(const float *);   \
 void tgl ## name ## 1dv(const double *);
 
-#define PROTO_GL2(name)					\
-void tgl ## name ## 2f(float, float);	\
-void tgl ## name ## 2d(double, double);	\
-void tgl ## name ## 2fv(const float *);		\
+#define PROTO_GL2(name)                   \
+void tgl ## name ## 2f(float, float);     \
+void tgl ## name ## 2d(double, double);   \
+void tgl ## name ## 2fv(const float *);   \
 void tgl ## name ## 2dv(const double *);
 
-#define PROTO_GL3(name)							\
-void tgl ## name ## 3f(float, float, float);	\
-void tgl ## name ## 3d(double, double, double);	\
-void tgl ## name ## 3fv(const float *);				\
+#define PROTO_GL3(name)                         \
+void tgl ## name ## 3f(float, float, float);    \
+void tgl ## name ## 3d(double, double, double); \
+void tgl ## name ## 3fv(const float *);         \
 void tgl ## name ## 3dv(const double *);
 
-#define PROTO_GL4(name)									\
-void tgl ## name ## 4f(float, float, float, float);		\
-void tgl ## name ## 4d(double, double, double, double);	\
-void tgl ## name ## 4fv(const float *);						\
+#define PROTO_GL4(name)                                 \
+void tgl ## name ## 4f(float, float, float, float);     \
+void tgl ## name ## 4d(double, double, double, double); \
+void tgl ## name ## 4fv(const float *);                 \
 void tgl ## name ## 4dv(const double *);
 
 PROTO_GL2(Vertex)
@@ -750,7 +754,7 @@ PROTO_GL3(Color)
 PROTO_GL4(Color)
 void tglColor3ub(unsigned char r, unsigned char g, unsigned char b);
 void tglColor4ub(unsigned char r, unsigned char g, unsigned char b,
-				 unsigned char a);
+                 unsigned char a);
 
 PROTO_GL3(Normal)
 
@@ -774,7 +778,7 @@ void tglScalef(float x, float y, float z);
 
 void tglViewport(int x, int y, int width, int height);
 void tglFrustum(double left, double right, double bottom, double top,
-				double nearv, double farv);
+                double nearv, double farv);
 void tglOrtho(double left, double right, double bottom, double top, double zNear, double zFar);
 
 // lists
@@ -788,6 +792,12 @@ void tglCallList(unsigned int list);
 void tglClear(int mask);
 void tglClearColor(float r, float g, float b, float a);
 void tglClearDepth(double depth);
+void tglClearStencil(TGLint s);
+
+// stencil buffer
+void tglStencilFunc(TGLenum func, TGLint ref, TGLuint mask);
+void tglStencilOp(TGLenum sfail, TGLenum dpfail, TGLenum dppass);
+void tglStencilMask(TGLuint mask);
 
 // selection
 int tglRenderMode(int mode);
@@ -803,8 +813,8 @@ void tglGenTextures(int n, unsigned int *textures);
 void tglDeleteTextures(int n, const unsigned int *textures);
 void tglBindTexture(int target, int texture);
 void tglTexImage2D(int target, int level, int components,
-				   int width, int height, int border,
-				   int format, int type, void *pixels);
+                   int width, int height, int border,
+                   int format, int type, void *pixels);
 void tglTexEnvi(int target, int pname, int param);
 void tglTexParameteri(int target, int pname, int param);
 void tglPixelStorei(int pname, int param);
@@ -847,16 +857,7 @@ void tglTexCoordPointer(TGLint size, TGLenum type, TGLsizei stride, const TGLvoi
 // polygon offset
 void tglPolygonOffset(TGLfloat factor, TGLfloat units);
 
-// custom extension
-void tglSetShadowMaskBuf(unsigned char *buf);
-void tglSetShadowColor(unsigned char r, unsigned char g, unsigned char b);
-void tglEnableDirtyRects(bool enable);
+// custom extensions
 void tglDebug(int mode);
-
-namespace TinyGL {
-
-void tglPresentBuffer();
-
-} // end of namespace TinyGL
 
 #endif

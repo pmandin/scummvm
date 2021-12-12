@@ -81,7 +81,7 @@ byte *getData(uint32 offset) {
 }
 
 const char *getStringP(uint32 offset) {
-	return offset != 0 ? (const char*)getData(offset) : NULL;
+	return offset != 0 ? (const char*)getData(offset) : nullptr;
 }
 
 uint32 calcHash(const char *value) {
@@ -393,7 +393,7 @@ class RectList : public StaticDataList<RectItem> {
 class MessageList : public StaticDataList<MessageItem> {
 public:
 
-	virtual bool specialLoadList(uint32 count, uint32 offset) {
+	bool specialLoadList(uint32 count, uint32 offset) override {
 		// Special code for message lists which are set at runtime (but otherwise constant)
 		switch (offset) {
 		// Scene 1002 rings

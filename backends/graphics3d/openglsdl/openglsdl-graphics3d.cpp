@@ -22,7 +22,7 @@
 
 #include "common/scummsys.h"
 
-#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 
 #include "backends/graphics3d/openglsdl/openglsdl-graphics3d.h"
 
@@ -31,7 +31,6 @@
 #include "common/file.h"
 #include "engines/engine.h"
 #include "graphics/conversion.h"
-#include "graphics/pixelbuffer.h"
 #include "graphics/opengl/context.h"
 #include "graphics/opengl/framebuffer.h"
 #include "graphics/opengl/surfacerenderer.h"
@@ -533,10 +532,10 @@ bool OpenGLSdlGraphics3dManager::isVSyncEnabled() const {
 }
 
 void OpenGLSdlGraphics3dManager::drawOverlay() {
+	_surfaceRenderer->prepareState();
+
 	glViewport(0, 0, _overlayScreen->getWidth(), _overlayScreen->getHeight());
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-	_surfaceRenderer->prepareState();
 
 	if (_overlayBackground) {
 		_overlayBackground->draw(_surfaceRenderer);
@@ -565,9 +564,9 @@ OpenGL::FrameBuffer *OpenGLSdlGraphics3dManager::createFramebuffer(uint width, u
 void OpenGLSdlGraphics3dManager::updateScreen() {
 	if (_frameBuffer) {
 		_frameBuffer->detach();
+		_surfaceRenderer->prepareState();
 		glViewport(0, 0, _overlayScreen->getWidth(), _overlayScreen->getHeight());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		_surfaceRenderer->prepareState();
 		_surfaceRenderer->render(_frameBuffer, _gameRect);
 		_surfaceRenderer->restorePreviousState();
 	}

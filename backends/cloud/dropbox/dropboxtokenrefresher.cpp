@@ -98,7 +98,7 @@ void DropboxTokenRefresher::finishJson(Common::JSONValue *json) {
 	CurlJsonRequest::finishJson(json);
 }
 
-void DropboxTokenRefresher::finishError(Networking::ErrorResponse error) {
+void DropboxTokenRefresher::finishError(Networking::ErrorResponse error, Networking::RequestState state) {
 	if (error.httpResponseCode == 401) {
 		pause();
 		_parentStorage->refreshAccessToken(new Common::Callback<DropboxTokenRefresher, Storage::BoolResponse>(this, &DropboxTokenRefresher::tokenRefreshed));
@@ -111,7 +111,7 @@ void DropboxTokenRefresher::finishError(Networking::ErrorResponse error) {
 void DropboxTokenRefresher::setHeaders(Common::Array<Common::String> &headers) {
 	_headers = headers;
 	curl_slist_free_all(_headersList);
-	_headersList = 0;
+	_headersList = nullptr;
 	for (uint32 i = 0; i < headers.size(); ++i)
 		CurlJsonRequest::addHeader(headers[i]);
 }

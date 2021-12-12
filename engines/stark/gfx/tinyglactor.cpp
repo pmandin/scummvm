@@ -21,7 +21,6 @@
  */
 
 #include "engines/stark/gfx/tinyglactor.h"
-
 #include "engines/stark/model/model.h"
 #include "engines/stark/model/animhandler.h"
 #include "engines/stark/scene.h"
@@ -257,30 +256,24 @@ void TinyGLActorRenderer::render(const Math::Vector3d &position, float direction
 
 	if (drawShadow) {
 		tglEnable(TGL_BLEND);
+		tglEnable(TGL_STENCIL_TEST);
 		tglDisable(TGL_TEXTURE_2D);
-
-		tglMatrixMode(TGL_PROJECTION);
-		tglLoadMatrixf(projectionMatrix.getData());
-
-		tglMatrixMode(TGL_MODELVIEW);
-		tglLoadMatrixf(mvp.getData());
 
 		tglColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 
 		for (Common::Array<Face *>::const_iterator face = faces.begin(); face != faces.end(); ++face) {
-			auto vertexIndices = _faceEBO[*face];
-
 			tglEnableClientState(TGL_VERTEX_ARRAY);
 
 			tglVertexPointer(3, TGL_FLOAT, sizeof(ActorVertex), &_faceVBO[0].sx);
 
-			tglDrawElements(TGL_TRIANGLES, (*face)->vertexIndices.size(), TGL_UNSIGNED_INT, vertexIndices);
+			tglDrawElements(TGL_TRIANGLES, (*face)->vertexIndices.size(), TGL_UNSIGNED_INT, _faceEBO[*face]);
 
 			tglDisableClientState(TGL_VERTEX_ARRAY);
 		}
 
 		tglEnable(TGL_TEXTURE_2D);
 		tglDisable(TGL_BLEND);
+		tglDisable(TGL_STENCIL_TEST);
 	}
 }
 

@@ -101,23 +101,28 @@ void HypnoEngine::runEscape() {
 
 void HypnoEngine::runCutscene(Cutscene *a) {
 	stopSound();
-	disableCursor();
+	defaultCursor();
 	_music.clear();
 	_nextSequentialVideoToPlay.push_back(MVideo(a->path, Common::Point(0, 0), false, true, false));
 }
 
 bool HypnoEngine::runGlobal(Global *a) {
+	debugC(1, kHypnoDebugScene, "Runing global with command %s and variable %s", a->command.c_str(), a->variable.c_str());
 	if (a->command == "TURNON")
 		_sceneState[a->variable] = 1;
 	else if (a->command == "TURNOFF")
 		_sceneState[a->variable] = 0;
 	else if (a->command == "TOGGLE")
 		_sceneState[a->variable] = !_sceneState[a->variable];
-	else if (a->command == "CHECK")
+	else if (a->command == "CHECK") {
+		if (!_sceneState[a->variable]) // Clear any video to play
+			_nextSequentialVideoToPlay.clear();
 		return _sceneState[a->variable];
-	else if (a->command == "NCHECK")
+	} else if (a->command == "NCHECK") {
+		if (_sceneState[a->variable]) // Clear any video to play
+			_nextSequentialVideoToPlay.clear();
 		return !_sceneState[a->variable];
-	else
+	} else
 		error("Invalid command %s", a->command.c_str());
 	return true;
 }
@@ -165,6 +170,7 @@ void HypnoEngine::runQuit(Quit *a) {
 }
 
 void HypnoEngine::runChangeLevel(ChangeLevel *a) {
+	debugC(1, kHypnoDebugScene, "Next level is '%s'", a->level.c_str());	
 	_nextLevel = a->level;
 }
 

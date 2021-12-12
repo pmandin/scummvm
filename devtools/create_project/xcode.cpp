@@ -220,7 +220,7 @@ XcodeProvider::Group *XcodeProvider::Group::getChildGroup(const std::string &nam
 }
 
 XcodeProvider::Group *XcodeProvider::touchGroupsForPath(const std::string &path) {
-	if (_rootSourceGroup == NULL) {
+	if (_rootSourceGroup == nullptr) {
 		assert(path == _projectRoot);
 		_rootSourceGroup = new Group(this, "Sources", path, path);
 		_groups.add(_rootSourceGroup);
@@ -272,7 +272,7 @@ void XcodeProvider::addBuildFile(const std::string &id, const std::string &name,
 
 XcodeProvider::XcodeProvider(StringList &global_warnings, std::map<std::string, StringList> &project_warnings, const int version)
 	: ProjectProvider(global_warnings, project_warnings, version) {
-	_rootSourceGroup = NULL;
+	_rootSourceGroup = nullptr;
 }
 
 void XcodeProvider::addResourceFiles(const BuildSetup &setup, StringList &includeList, StringList &excludeList) {
@@ -828,6 +828,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles() const {
 		files.push_back("gui/themes/scummmodern.zip");
 		files.push_back("gui/themes/scummremastered.zip");
 		files.push_back("gui/themes/residualvm.zip");
+		files.push_back("gui/themes/gui-icons.dat");
 		files.push_back("gui/themes/translations.dat");
 		files.push_back("dists/engine-data/access.dat");
 		files.push_back("dists/engine-data/achievements.dat");
@@ -997,6 +998,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ValueList scummvm_WarningCFlags;
 	scummvm_WarningCFlags.push_back("-Wno-multichar");
 	scummvm_WarningCFlags.push_back("-Wno-undefined-var-template");
+	scummvm_WarningCFlags.push_back("-Wno-pragma-pack");
 	scummvm_WarningCFlags.push_back("-Wc++11-extensions");
 	ADD_SETTING_LIST(scummvm_Debug, "WARNING_CFLAGS", scummvm_WarningCFlags, kSettingsQuoteVariable | kSettingsAsList, 5);
 	ValueList scummvm_defines(_defines);
@@ -1018,6 +1020,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ADD_SETTING_QUOTE(scummvm_Debug, "OTHER_CFLAGS", "");
 	ADD_SETTING_QUOTE(scummvm_Debug, "OTHER_LDFLAGS", "");
 	ADD_SETTING(scummvm_Debug, "ENABLE_TESTABILITY", "YES");
+	ADD_SETTING_QUOTE(scummvm_Debug, "VALIDATE_WORKSPACE_SKIPPED_SDK_FRAMEWORKS", "OpenGL OpenGLES");
 
 	scummvm_Debug_Object->addProperty("name", "Debug", "", kSettingsNoValue);
 	scummvm_Debug_Object->_properties["buildSettings"] = scummvm_Debug;

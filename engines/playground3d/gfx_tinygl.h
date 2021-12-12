@@ -28,7 +28,7 @@
 
 #include "math/vector3d.h"
 
-#include "graphics/tinygl/zgl.h"
+#include "graphics/tinygl/tinygl.h"
 
 #include "engines/playground3d/gfx.h"
 
@@ -39,21 +39,37 @@ public:
 	TinyGLRenderer(OSystem *_system);
 	virtual ~TinyGLRenderer();
 
-	virtual void init() override;
+	void init() override;
+	void deinit() override;
 
-	virtual void clear(const Math::Vector4d &clearColor) override;
+	void clear(const Math::Vector4d &clearColor) override;
+	void loadTextureRGB(Graphics::Surface *texture) override;
+	void loadTextureRGBA(Graphics::Surface *texture) override;
+	void loadTextureRGB565(Graphics::Surface *texture) override;
+	void loadTextureRGBA5551(Graphics::Surface *texture) override;
+	void loadTextureRGBA4444(Graphics::Surface *texture) override;
 
-	virtual void setupViewport(int x, int y, int width, int height) override;
-	virtual void drawCube(const Math::Vector3d &pos, const Math::Vector3d &roll) override;
-	virtual void drawPolyOffsetTest(const Math::Vector3d &pos, const Math::Vector3d &roll) override;
-	virtual void dimRegionInOut(float fade) override;
-	virtual void drawInViewport() override;
+	void setupViewport(int x, int y, int width, int height) override;
+	void drawCube(const Math::Vector3d &pos, const Math::Vector3d &roll) override;
+	void drawPolyOffsetTest(const Math::Vector3d &pos, const Math::Vector3d &roll) override;
+	void dimRegionInOut(float fade) override;
+	void drawInViewport() override;
+	void drawRgbaTexture() override;
 
-	virtual void flipBuffer() override;
+	void flipBuffer() override;
 
 private:
-	TinyGL::FrameBuffer *_fb;
 	Math::Vector3d _pos;
+	TGLuint _textureRgbaId[5];
+	TGLuint _textureRgbId[5];
+	TGLuint _textureRgb565Id[2];
+	TGLuint _textureRgba5551Id[2];
+	TGLuint _textureRgba4444Id[2];
+	TinyGL::BlitImage *_blitImageRgba;
+	TinyGL::BlitImage *_blitImageRgb;
+	TinyGL::BlitImage *_blitImageRgb565;
+	TinyGL::BlitImage *_blitImageRgba5551;
+	TinyGL::BlitImage *_blitImageRgba4444;
 
 	void drawFace(uint face);
 };

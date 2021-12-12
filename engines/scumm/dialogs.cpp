@@ -38,7 +38,6 @@
 #include "scumm/sound.h"
 #include "scumm/scumm.h"
 #include "scumm/imuse/imuse.h"
-#include "scumm/imuse_digi/dimuse.h"
 #include "scumm/verbs.h"
 
 #ifndef DISABLE_HELP
@@ -376,7 +375,7 @@ static bool isCJKLanguage(Common::Language lang) {
 	case Common::KO_KOR:
 	case Common::JA_JPN:
 	case Common::ZH_TWN:
-	case Common::ZH_CNA:
+	case Common::ZH_CHN:
 		return true;
 	default:
 		return false;

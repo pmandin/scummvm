@@ -45,15 +45,15 @@ namespace TwinE {
 /** FLA Frame Opcode types */
 enum FlaFrameOpcode {
 	kLoadPalette = 1,
-	kFade = 2,
+	kInfo = 2,
 	kPlaySample = 3,
 	kSampleBalance = 4,
 	kStopSample = 5,
 	kDeltaFrame = 6,
 	kBlackFrame = 7,
-	kKeyFrame = 8,
+	kBrownFrame = 8,
 	kCopy = 9,
-	kCopy2 = 16
+	kFliCopy = 16
 };
 
 /** FLA movie sample structure */
@@ -164,25 +164,25 @@ void Movies::scaleFla2x() {
 void Movies::processFrame() {
 	FLASampleStruct sample;
 
-	_frameData.videoSize = _file.readSint16LE();
-	_frameData.frameVar0 = _file.readSint32LE();
-	if (_frameData.frameVar0 > _engine->_imageBuffer.w * _engine->_imageBuffer.h) {
-		warning("Skipping video frame - it would exceed the screen buffer: %i", _frameData.frameVar0);
+	_frameData.nbFrames = _file.readSint16LE();
+	_frameData.offsetNextFrame = _file.readSint32LE();
+	if (_frameData.offsetNextFrame > _engine->_imageBuffer.w * _engine->_imageBuffer.h) {
+		warning("Skipping video frame - it would exceed the screen buffer: %i", _frameData.offsetNextFrame);
 		return;
 	}
 
 	uint8 *outBuf = (uint8 *)_engine->_imageBuffer.getPixels();
-	_file.read(outBuf, _frameData.frameVar0);
+	_file.read(outBuf, _frameData.offsetNextFrame);
 
-	if ((int32)_frameData.videoSize <= 0) {
+	if ((int32)_frameData.nbFrames <= 0) {
 		return;
 	}
 
-	Common::MemoryReadStream stream(outBuf, _frameData.frameVar0);
-	for (int32 frame = 0; frame < _frameData.videoSize; ++frame) {
+	Common::MemoryReadStream stream(outBuf, _frameData.offsetNextFrame);
+	for (int32 frame = 0; frame < _frameData.nbFrames; ++frame) {
 		const uint16 opcode = stream.readUint16LE();
 		const uint16 opcodeBlockSize = stream.readUint16LE();
-		const int32 pos = stream.pos();
+		const int64 pos = stream.pos();
 
 		switch (opcode) {
 		case kLoadPalette: {
@@ -192,7 +192,7 @@ void Movies::processFrame() {
 			stream.read(dest, numOfColor * 3);
 			break;
 		}
-		case kFade: {
+		case kInfo: {
 			int16 innerOpcpde = stream.readSint16LE();
 			switch (innerOpcpde) {
 			case 1: // fla flute
@@ -211,6 +211,7 @@ void Movies::processFrame() {
 				_flaPaletteVar = true;
 				break;
 			case 4:
+				// TODO: fade out for 1 second before we stop it
 				_engine->_music->stopMidiMusic();
 				break;
 			}
@@ -242,17 +243,17 @@ void Movies::processFrame() {
 			}
 			break;
 		}
-		case kKeyFrame: {
-			drawKeyFrame(stream, FLASCREEN_WIDTH, FLASCREEN_HEIGHT);
+		case kBrownFrame: {
+			drawKeyFrame(stream, FLASCREEN_WIDTH, _flaHeaderData.ysize);
 			break;
 		}
 		case kBlackFrame: {
-			const Common::Rect rect(0, 0, 79, 199);
+			const Common::Rect rect(0, 0, FLASCREEN_WIDTH - 1, FLASCREEN_HEIGHT - 1);
 			_engine->_interface->drawFilledRect(rect, 0);
 			break;
 		}
 		case kCopy:
-		case kCopy2: {
+		case kFliCopy: {
 			const Common::Rect rect(0, 0, 80, 200);
 			byte *ptr = (byte *)_engine->_frontVideoBuffer.getPixels();
 			for (int y = rect.top; y < rect.bottom; ++y) {
@@ -267,6 +268,7 @@ void Movies::processFrame() {
 		case kSampleBalance: {
 			/* int16 num = */ stream.readSint16LE();
 			/* uint8 offset = */ stream.readByte();
+			stream.skip(1); // padding
 			/* int16 balance = */ stream.readSint16LE();
 			/* uint8 volumeLeft = */ stream.readByte();
 			/* uint8 volumeRight = */ stream.readByte();
@@ -373,8 +375,6 @@ bool Movies::playMovie(const char *name) {
 		return true;
 	}
 
-	_engine->_music->stopMusic();
-
 	_fadeOut = -1;
 	_fadeOutFrames = 0;
 
@@ -386,18 +386,18 @@ bool Movies::playMovie(const char *name) {
 	}
 
 	const uint32 version = _file.readUint32LE();
-	_file.skip(2);
+	_file.skip(2); // version field is 5 bytes - and one padding byte
 	_flaHeaderData.numOfFrames = _file.readUint32LE();
 	_flaHeaderData.speed = _file.readByte();
-	_flaHeaderData.var1 = _file.readByte();
-	debug(2, "Unknown byte in fla file: %i", _flaHeaderData.var1);
+	_file.skip(1); // padding byte
 	_flaHeaderData.xsize = _file.readUint16LE();
 	_flaHeaderData.ysize = _file.readUint16LE();
 
 	_samplesInFla = (int16)_file.readUint16LE();
-	const uint16 unk2 = _file.readUint16LE();
-	debug(2, "Unknown uint16 in fla file: %i", unk2);
+	/*const uint16 offsetFrame1 =*/ _file.readUint16LE();
 
+	// sample number int16
+	// loop int16
 	_file.skip(4 * _samplesInFla);
 
 	bool finished = false;
@@ -446,11 +446,7 @@ bool Movies::playMovie(const char *name) {
 		} while (!_engine->_input->toggleAbortAction());
 	}
 
-	if (_engine->_cfgfile.CrossFade) {
-		_engine->crossFade(_engine->_screens->_paletteRGBACustom);
-	} else {
-		_engine->_screens->fadeToBlack(_engine->_screens->_paletteRGBACustom);
-	}
+	_engine->_screens->fadeToBlack(_engine->_screens->_paletteRGBACustom);
 
 	_engine->_sound->stopSamples();
 	return finished;

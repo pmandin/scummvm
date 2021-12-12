@@ -46,7 +46,7 @@ public:
 	}
 
 	bool loadData(Common::ReadStream *rs, uint32 version);
-	virtual void saveData(Common::WriteStream *ws) override;
+	void saveData(Common::WriteStream *ws) override;
 
 	bool hasMovementFlags(uint32 flags) const {
 		return (_movementFlags & flags) != 0;
@@ -57,7 +57,9 @@ public:
 	virtual void clearMovementFlag(uint32 mask) {
 		_movementFlags &= ~mask;
 	}
-
+	void resetMovementFlags() {
+		_movementFlags = 0;
+	}
 	void onMouseDown(int button, int32 mx, int32 my);
 	void onMouseUp(int button);
 

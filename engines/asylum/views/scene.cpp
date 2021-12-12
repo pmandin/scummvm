@@ -53,11 +53,12 @@ namespace Asylum {
 int g_debugActors;
 int g_debugObjects;
 int g_debugPolygons;
+int g_debugPolygonIndex;
 int g_debugSceneRects;
 int g_debugScrolling;
 
 Scene::Scene(AsylumEngine *engine): _vm(engine),
-	_polygons(NULL), _ws(NULL) {
+	_polygons(nullptr), _ws(nullptr) {
 
 	// Initialize data
 	_packId = kResourcePackInvalid;
@@ -74,6 +75,7 @@ Scene::Scene(AsylumEngine *engine): _vm(engine),
 	g_debugActors = 0;
 	g_debugObjects  = 0;
 	g_debugPolygons  = 0;
+	g_debugPolygonIndex = 0;
 	g_debugSceneRects = 0;
 	g_debugScrolling = 0;
 }
@@ -530,6 +532,8 @@ bool Scene::clickDown(const AsylumEvent &evt) {
 	}
 
 	Actor *player = getActor();
+	player->setLastScreenUpdate(_vm->screenUpdateCount);
+
 	switch (evt.type) {
 	default:
 		break;
@@ -851,9 +855,6 @@ void Scene::updateAmbientSounds() {
 
 			if (!gameFlag)
 				break;
-
-			if (gameFlag == 99999)
-				continue;
 
 			if (gameFlag >= 0) {
 				if (_vm->isGameFlagNotSet((GameFlag)gameFlag)) {
@@ -2155,7 +2156,7 @@ bool Scene::updateSceneCoordinates(int32 tX, int32 tY, int32 A0, bool checkScene
 		if (diffY)
 			getSharedData()->setSceneOffsetAdd((int16)Common::Rational(*coord3 * diffX, diffY).toInt());
 
-		if (param != NULL && abs(diffY) <= abs(*coord3)) {
+		if (param != nullptr && abs(diffY) <= abs(*coord3)) {
 			*targetX = -1;
 			*param = 0;
 			return true;
@@ -2166,7 +2167,7 @@ bool Scene::updateSceneCoordinates(int32 tX, int32 tY, int32 A0, bool checkScene
 
 		getSharedData()->setSceneOffsetAdd((int16)Common::Rational(*coord3 * diffY, diffX).toInt());
 
-		if (param != NULL && abs(diffX) <= abs(*coord3)) {
+		if (param != nullptr && abs(diffX) <= abs(*coord3)) {
 			*targetX = -1;
 			return true;
 		}
@@ -2451,6 +2452,8 @@ bool Scene::drawScene() {
 		debugShowActors();
 	if (g_debugPolygons)
 		debugShowPolygons();
+	if (g_debugPolygonIndex)
+		debugHighlightPolygon(g_debugPolygonIndex);
 	if (g_debugObjects)
 		debugShowObjects();
 	if (g_debugSceneRects)

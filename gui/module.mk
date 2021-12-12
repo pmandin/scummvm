@@ -15,6 +15,7 @@ MODULE_OBJS := \
 	launcher.o \
 	massadd.o \
 	message.o \
+	MetadataParser.o \
 	object.o \
 	options.o \
 	predictivedialog.o \
@@ -27,12 +28,14 @@ MODULE_OBJS := \
 	ThemeParser.o \
 	Tooltip.o \
 	unknown-game-dialog.o \
+	widget.o \
 	animation/Animation.o \
 	animation/RepeatAnimationWrapper.o \
 	animation/SequenceAnimationComposite.o \
-	widget.o \
 	widgets/editable.o \
 	widgets/edittext.o \
+	widgets/grid.o \
+	widgets/groupedlist.o \
 	widgets/list.o \
 	widgets/popup.o \
 	widgets/scrollbar.o \
@@ -43,6 +46,7 @@ ifdef USE_CLOUD
 ifdef USE_LIBCURL
 MODULE_OBJS += \
 	downloaddialog.o \
+	downloadiconsdialog.o \
 	remotebrowser.o
 endif
 endif

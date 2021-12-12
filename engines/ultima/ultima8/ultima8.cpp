@@ -462,8 +462,6 @@ void Ultima8Engine::shutdownGame(bool reloading) {
 
 	// Save config here....
 
-	_textModes.clear();
-
 	// reset mouse cursor
 	_mouse->popAllCursors();
 	_mouse->pushMouseCursor();
@@ -728,29 +726,46 @@ void Ultima8Engine::changeVideoMode(int width, int height) {
 	GraphicSysInit();
 }
 
-void Ultima8Engine::enterTextMode(Gump *gump) {
-	if (!_textModes.empty()) {
-		_textModes.remove(gump->getObjId());
-	}
-	_textModes.push_front(gump->getObjId());
-
-	MetaEngine::setTextInputActive(true);
-}
-
-void Ultima8Engine::leaveTextMode(Gump *gump) {
-	if (!_textModes.empty())
-		_textModes.remove(gump->getObjId());
-
-	if (_textModes.empty())
-		MetaEngine::setTextInputActive(false);
-}
-
 void Ultima8Engine::handleEvent(const Common::Event &event) {
+	Gump *gump = _desktopGump->FindGump<ModalGump>();
+	if (gump) {
+		_avatarMoverProcess->resetMovementFlags();
+	}
+
+	Common::Keymapper *const keymapper = _eventMan->getKeymapper();
+	keymapper->setEnabledKeymapType(gump ? Common::Keymap::kKeymapTypeGui : Common::Keymap::kKeymapTypeGame);
+
 	switch (event.type) {
 	case Common::EVENT_KEYDOWN:
+		if (gump) {
+			// Paste from Clip-Board on Ctrl-V - Note this should be a flag of some sort
+			if (event.kbd.keycode == Common::KEYCODE_v && (event.kbd.flags & Common::KBD_CTRL)) {
+				if (!g_system->hasTextInClipboard())
+					return;
+
+				Common::String text = g_system->getTextFromClipboard();
+
+				// Only read the first line of text
+				while (!text.empty() && text.firstChar() >= ' ')
+					gump->OnTextInput(text.firstChar());
+
+				return;
+			}
+
+			if (event.kbd.ascii >= ' ' &&
+				event.kbd.ascii <= 255 &&
+				!(event.kbd.ascii >= 0x7F && // control chars
+					event.kbd.ascii <= 0x9F)) {
+				gump->OnTextInput(event.kbd.ascii);
+			}
+
+			gump->OnKeyDown(event.kbd.keycode, event.kbd.flags);
+		}
 		break;
 	case Common::EVENT_KEYUP:
-		// Any system keys not in the bindings can be handled here
+		if (gump) {
+			gump->OnKeyUp(event.kbd.keycode);
+		}
 		break;
 
 	case Common::EVENT_MOUSEMOVE:
@@ -787,11 +802,11 @@ void Ultima8Engine::handleEvent(const Common::Event &event) {
 
 	case Common::EVENT_CUSTOM_ENGINE_ACTION_START:
 		MetaEngine::pressAction((KeybindingAction)event.customType);
-		return;
+		break;
 
 	case Common::EVENT_CUSTOM_ENGINE_ACTION_END:
 		MetaEngine::releaseAction((KeybindingAction)event.customType);
-		return;
+		break;
 
 	case Common::EVENT_QUIT:
 	case Common::EVENT_RETURN_TO_LAUNCHER:
@@ -800,55 +815,6 @@ void Ultima8Engine::handleEvent(const Common::Event &event) {
 
 	default:
 		break;
-	}
-
-	// Text mode input. A few hacks here
-	Gump *gump = nullptr;
-	while (!_textModes.empty()) {
-		gump = dynamic_cast<Gump *>(_objectManager->getObject(_textModes.front()));
-		if (gump)
-			break;
-
-		_textModes.pop_front();
-		if (_textModes.empty()) {
-			MetaEngine::setTextInputActive(false);
-		}
-	}
-
-	if (gump) {
-		switch (event.type) {
-		case Common::EVENT_KEYDOWN:
-			// Paste from Clip-Board on Ctrl-V - Note this should be a flag of some sort
-			if (event.kbd.keycode == Common::KEYCODE_v && (event.kbd.flags & Common::KBD_CTRL)) {
-				if (!g_system->hasTextInClipboard())
-					return;
-
-				Common::String text = g_system->getTextFromClipboard();
-
-				// Only read the first line of text
-				while (!text.empty() && text.firstChar() >= ' ')
-					gump->OnTextInput(text.firstChar());
-
-				return;
-			}
-
-			if (event.kbd.ascii >= ' ' &&
-				event.kbd.ascii <= 255 &&
-				!(event.kbd.ascii >= 0x7F && // control chars
-					event.kbd.ascii <= 0x9F)) {
-				gump->OnTextInput(event.kbd.ascii);
-			}
-
-			gump->OnKeyDown(event.kbd.keycode, event.kbd.flags);
-			return;
-
-		case Common::EVENT_KEYUP:
-			gump->OnKeyUp(event.kbd.keycode);
-			return;
-
-		default:
-			break;
-		}
 	}
 }
 
@@ -1126,9 +1092,6 @@ void Ultima8Engine::resetEngine() {
 	_desktopGump = nullptr;
 	_gameMapGump = nullptr;
 	_inverterGump = nullptr;
-
-	_textModes.clear();
-	MetaEngine::setTextInputActive(false);
 
 	// reset mouse cursor
 	_mouse->popAllCursors();
@@ -1709,13 +1672,6 @@ void Ultima8Engine::showSplashScreen() {
 	// Handle a single event to get the splash screen shown
 	Common::Event event;
 	_events->pollEvent(event);
-}
-
-Gump *Ultima8Engine::getMenuGump() const {
-	if (_textModes.empty())
-		return nullptr;
-
-	return dynamic_cast<Gump *>(_objectManager->getObject(_textModes.front()));
 }
 
 } // End of namespace Ultima8

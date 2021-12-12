@@ -30,6 +30,7 @@
 #include "common/list.h"
 #include "common/hash-str.h"
 #include "common/hashmap.h"
+#include "common/macresman.h"
 #include "common/stream.h"
 #include "common/ptr.h"
 #include "common/archive.h"
@@ -84,6 +85,9 @@ public:
 	Common::SeekableReadStreamEndian *createEndianAwareReadStream(const Common::String &file, int endianness = kPlatformEndianness);
 
 	bool loadFileToBuf(const char *file, void *buf, uint32 maxSize);
+
+	Common::Archive *getCachedArchive(const Common::String &file) const;
+
 protected:
 	typedef Common::HashMap<Common::String, Common::Archive *, Common::CaseSensitiveString_Hash, Common::CaseSensitiveString_EqualTo> ArchiveMap;
 	ArchiveMap _archiveCache;
@@ -92,8 +96,11 @@ protected:
 	Common::SearchSet _archiveFiles;
 	Common::SearchSet _protectedFiles;
 
+	Common::MacResManager *_macResMan;
+
 	Common::Archive *loadArchive(const Common::String &name, Common::ArchiveMemberPtr member);
 	Common::Archive *loadInstallerArchive(const Common::String &file, const Common::String &ext, const uint8 offset);
+	Common::Archive *loadStuffItArchive(const Common::String &file);
 
 	bool loadProtectedFiles(const char *const * list);
 
@@ -227,6 +234,8 @@ enum KyraResources {
 	k1AmigaIntroSFXTable,
 	k1AmigaGameSFXTable,
 
+	k1TwoByteFontLookupTable,
+
 	k2SeqplayPakFiles,
 	k2SeqplayCredits,
 	k2SeqplayCreditsSpecial,
@@ -249,6 +258,7 @@ enum KyraResources {
 	k2IngameTimJpStrings,
 	k2IngameShapeAnimData,
 	k2IngameTlkDemoStrings,
+	k2FontData,
 
 	k3MainMenuStrings,
 	k3MusicFiles,
@@ -258,7 +268,6 @@ enum KyraResources {
 	k3ItemAnimData,
 	k3ItemMagicTable,
 	k3ItemStringMap,
-	k3FontData,
 
 	k3VqaSubtitlesIntro,
 	k3VqaSubtitlesBoat,
@@ -1249,8 +1258,8 @@ public:
 	const HoFSeqData *loadHoFSequenceData(int id, int &entries);
 	const HoFSeqItemAnimData *loadHoFSeqItemAnimData(int id, int &entries);
 	const ItemAnimDefinition *loadItemAnimDefinition(int id, int &entries);
-#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 	const uint16 *loadRawDataBe16(int id, int &entries);
+#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 	const uint32 *loadRawDataBe32(int id, int &entries);
 #endif // (ENABLE_EOB || ENABLE_LOL)
 #ifdef ENABLE_LOL
@@ -1292,8 +1301,8 @@ private:
 	bool loadHoFSequenceData(Common::SeekableReadStream &stream, void *&ptr, int &size);
 	bool loadHoFSeqItemAnimData(Common::SeekableReadStream &stream, void *&ptr, int &size);
 	bool loadItemAnimDefinition(Common::SeekableReadStream &stream, void *&ptr, int &size);
-#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 	bool loadRawDataBe16(Common::SeekableReadStream &stream, void *&ptr, int &size);
+#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 	bool loadRawDataBe32(Common::SeekableReadStream &stream, void *&ptr, int &size);
 #endif // (ENABLE_LOL || ENABLE_EOB)
 #ifdef ENABLE_LOL
@@ -1318,8 +1327,8 @@ private:
 	void freeHoFSequenceData(void *&ptr, int &size);
 	void freeHoFSeqItemAnimData(void *&ptr, int &size);
 	void freeItemAnimDefinition(void *&ptr, int &size);
-#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 	void freeRawDataBe16(void *&ptr, int &size);
+#if defined(ENABLE_EOB) || defined(ENABLE_LOL)
 	void freeRawDataBe32(void *&ptr, int &size);
 #endif // (ENABLE_EOB || ENABLE_LOL)
 #ifdef ENABLE_LOL

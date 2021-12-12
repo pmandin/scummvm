@@ -20,6 +20,7 @@
  *
  */
 
+#include "common/punycode.h"
 #include "director/director.h"
 #include "director/cast.h"
 #include "director/movie.h"
@@ -173,6 +174,22 @@ struct ScriptPatch {
 	{"snh", "", kPlatformWindows, "SNHstart", kMovieScript, 0, 0,
 			14, "set mytest3 = FileIO(mnew, \"read\" mymovie)", "set mytest3 = FileIO(mnew, \"read\", mymovie)"},
 
+	// Ambiguous syntax that's parsed differently between D3 and later versions
+	{"henachoco03", "", kPlatformMacintosh, "xn--oj7cxalkre7cjz1d2agc0e8b1cm", kMovieScript, 0, 0,
+			183, "locaobject(mLHizikaraHand (rhenka + 1),dotti)", "locaobject(mLHizikaraHand,(rhenka + 1),dotti)"},
+	{"henachoco03", "", kPlatformMacintosh, "xn--oj7cxalkre7cjz1d2agc0e8b1cm", kMovieScript, 0, 0,
+			196, "locaobject(mRHizikaraHand (rhenka + 1),dotti)", "locaobject(mRHizikaraHand,(rhenka + 1),dotti)"},
+
+	// Same patch applied to the demos, with different line numbers
+	{"henachoco03", "Trial Version", kPlatformMacintosh, "ITA Choco", kMovieScript, 0, 0,
+			123, "locaobject(mLHizikaraHand (rhenka + 1),dotti)", "locaobject(mLHizikaraHand,(rhenka + 1),dotti)"},
+	{"henachoco03", "Trial Version", kPlatformMacintosh, "ITA Choco", kMovieScript, 0, 0,
+			136, "locaobject(mRHizikaraHand (rhenka + 1),dotti)", "locaobject(mRHizikaraHand,(rhenka + 1),dotti)"},
+	{"henachoco03", "Demo", kPlatformMacintosh, "Muzukashiihon", kMovieScript, 0, 0,
+			123, "locaobject(mLHizikaraHand (rhenka + 1),dotti)", "locaobject(mLHizikaraHand,(rhenka + 1),dotti)"},
+	{"henachoco03", "Demo", kPlatformMacintosh, "Muzukashiihon", kMovieScript, 0, 0,
+			136, "locaobject(mRHizikaraHand (rhenka + 1),dotti)", "locaobject(mRHizikaraHand,(rhenka + 1),dotti)"},
+
 	{nullptr, nullptr, kPlatformUnknown, nullptr, kNoneScript, 0, 0, 0, nullptr, nullptr}
 };
 
@@ -193,7 +210,8 @@ Common::U32String LingoCompiler::patchLingoCode(const Common::U32String &line, L
 		}
 
 		// Now expensive ones
-		if (movie.compareToIgnoreCase(patch->movie) || strcmp(patch->gameId, g_director->getGameId())
+		U32String moviename = punycode_decode(patch->movie);
+		if (movie.compareToIgnoreCase(moviename) || strcmp(patch->gameId, g_director->getGameId())
 				|| (patch->extra && strcmp(patch->extra, g_director->getExtra()))) {
 			patch++;
 			continue;

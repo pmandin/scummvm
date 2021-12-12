@@ -35,6 +35,9 @@
 #include "graphics/palette.h"
 #include "graphics/sjis.h"
 
+
+#define KYRA_SCREEN_IDLE_REFRESH
+
 namespace Kyra {
 
 Screen::Screen(KyraEngine_v1 *vm, OSystem *system, const ScreenDim *dimTable, const int dimTableSize)
@@ -58,15 +61,15 @@ Screen::Screen(KyraEngine_v1 *vm, OSystem *system, const ScreenDim *dimTable, co
 	_renderMode = Common::kRenderDefault;
 	_sjisMixedFontMode = false;
 
-	_screenPalette = _internFadePalette = 0;
-	_animBlockPtr = _textRenderBuffer = 0;
+	_screenPalette = _internFadePalette = nullptr;
+	_animBlockPtr = _textRenderBuffer = nullptr;
 	_textRenderBufferSize = 0;
 
 	_useHiColorScreen = _vm->gameFlags().useHiColorMode;
 	_useShapeShading = true;
 	_screenPageSize = SCREEN_PAGE_SIZE;
-	_16bitPalette = 0;
-	_16bitConversionPalette = 0;
+	_16bitPalette = nullptr;
+	_16bitConversionPalette = nullptr;
 	_16bitShadingLevel = 0;
 	_bytesPerPixel = 1;
 	_4bitPixelPacking = _useAmigaExtraColors = _isAmiga = _isSegaCD = _use16ColorMode = false;
@@ -76,10 +79,13 @@ Screen::Screen(KyraEngine_v1 *vm, OSystem *system, const ScreenDim *dimTable, co
 	_fontStyles = 0;
 	_paletteChanged = true;
 	_textMarginRight = SCREEN_W;
-	_customDimTable = 0;
-	_curDim = 0;
+	_customDimTable = nullptr;
+	_curDim = nullptr;
 
+	_lineBreakChars = (_vm->gameFlags().platform == Common::kPlatformMacintosh) ? "\n\r" : "\r";
 	_yTransOffs = 0;
+
+	_idleUpdateTimer = 0;
 }
 
 Screen::~Screen() {
@@ -243,13 +249,13 @@ bool Screen::init() {
 	memset(_customDimTable, 0, sizeof(ScreenDim *) * _dimTableCount);
 
 	_curDimIndex = -1;
-	_curDim = 0;
+	_curDim = nullptr;
 	_charSpacing = 0;
 	_lineSpacing = 0;
 	for (int i = 0; i < ARRAYSIZE(_textColorsMap); ++i)
 		_textColorsMap[i] = i;
 	_textColorsMap16bit[0] = _textColorsMap16bit[1] = 0;
-	_animBlockPtr = NULL;
+	_animBlockPtr = nullptr;
 	_animBlockSize = 0;
 	_mouseLockCount = 1;
 	CursorMan.showMouse(false);
@@ -324,7 +330,7 @@ void Screen::enableHiColorMode(bool enabled) {
 			_16bitPalette = new uint16[1024];
 		memset(_16bitPalette, 0, 1024 * sizeof(uint16));
 		delete[] _16bitConversionPalette;
-		_16bitConversionPalette = 0;
+		_16bitConversionPalette = nullptr;
 		_bytesPerPixel = 2;
 	} else {
 		if (_useHiColorScreen) {
@@ -334,7 +340,7 @@ void Screen::enableHiColorMode(bool enabled) {
 		}
 
 		delete[] _16bitPalette;
-		_16bitPalette = 0;
+		_16bitPalette = nullptr;
 		_bytesPerPixel = 1;
 	}
 
@@ -362,8 +368,21 @@ void Screen::updateScreen() {
 	}
 
 	if (needRealUpdate)
-		_system->updateScreen();
+		updateBackendScreen(true);
 }
+
+#ifdef KYRA_SCREEN_IDLE_REFRESH
+void Screen::updateBackendScreen(bool force) {
+	if (force || _system->getMillis() >= _idleUpdateTimer) {
+		_system->updateScreen();
+		_idleUpdateTimer = _system->getMillis() + (force ? SCREEN_IDLEREFRESH_RESTART_MSEC : SCREEN_IDLEREFRESH_RATE_MSEC);
+	}
+}
+#else
+void Screen::updateBackendScreen(bool) {
+	_system->updateScreen();
+}
+#endif
 
 void Screen::updateDirtyRects() {
 	if (_forceFullUpdate) {
@@ -788,7 +807,7 @@ void Screen::fadePalette(const Palette &pal, int delay, const UpdateFunctor *upF
 		else if (_useHiColorScreen)
 			updateScreen();
 		else
-			_system->updateScreen();
+			updateBackendScreen(true);
 
 		if (!refreshed)
 			break;
@@ -911,7 +930,7 @@ void Screen::setScreenPalette(const Palette &pal) {
 			Graphics::PixelFormat pixelFormat = _system->getScreenFormat();
 			for (int i = 0; i < 256; ++i)
 				_16bitConversionPalette[i] = pixelFormat.RGBToColor(screenPal[i * 3], screenPal[i * 3 + 1], screenPal[i * 3 + 2]);
-			// The whole Surface has to be converted again after each palette chance
+			// The whole Surface has to be converted again after each palette change
 			_forceFullUpdate = true;
 		}
 		return;
@@ -1150,7 +1169,7 @@ void Screen::shuffleScreen(int sx, int sy, int w, int h, int srcPage, int dstPag
 
 	if (_vm->shouldQuit()) {
 		copyRegion(sx, sy, sx, sy, w, h, srcPage, dstPage);
-		_system->updateScreen();
+		updateBackendScreen(true);
 	}
 }
 
@@ -1337,13 +1356,35 @@ bool Screen::loadFont(FontId fontId, const char *filename) {
 	int temp = 0;
 
 	if (!fnt) {
-		if (_vm->game() == GI_KYRA1 && _isAmiga)
+		if (_vm->game() == GI_KYRA1 && _isAmiga) {
 			fnt = new AMIGAFont();
-		else if (_vm->game() == GI_KYRA3 && fontId == FID_CHINESE_FNT)
-			fnt = new Big5Font(_vm->staticres()->loadRawData(k3FontData, temp), SCREEN_W);
-		else
+		} else if (fontId == FID_CHINESE_FNT) {
+			Common::Array<Font*> *fa = new Common::Array<Font*>;
+			if (_vm->game() == GI_KYRA1) {
+				const uint16 *lookupTable = _vm->staticres()->loadRawDataBe16(k1TwoByteFontLookupTable, temp);
+				fa->push_back(new ChineseOneByteFontLoK(SCREEN_W));
+				fa->push_back(new ChineseTwoByteFontLoK(SCREEN_W, lookupTable, temp));
+				fnt = new MultiSubsetFont(fa);
+			} else {
+				Font *fn1 = 0;
+				Font *fn2 = 0;
+				if (_vm->game() == GI_KYRA2) {
+					fn1 = new ChineseOneByteFontHOF(SCREEN_W);
+					fn2 = new ChineseTwoByteFontHOF(SCREEN_W);
+				} else {
+					fn1 = new ChineseOneByteFontMR(SCREEN_W);
+					fn2 = new ChineseTwoByteFontMR(SCREEN_W);
+				}
+				fa->push_back(fn1);
+				fa->push_back(fn2);
+				fnt = new MultiSubsetFont(fa);
+				const uint8 *oneByteData = _vm->staticres()->loadRawData(k2FontData, temp);
+				Common::MemoryReadStream str(oneByteData, temp);
+				fnt->load(str);
+			}
+		} else {
 			fnt = new DOSFont();
-
+		}
 		assert(fnt);
 	}
 
@@ -1352,6 +1393,7 @@ bool Screen::loadFont(FontId fontId, const char *filename) {
 		error("Font file '%s' is missing", filename);
 
 	bool ret = fnt->load(*file);
+
 	fnt->setColorMap(_textColorsMap);
 	delete file;
 	return ret;
@@ -1393,11 +1435,11 @@ int Screen::getTextWidth(const char *str, bool nextWordOnly) {
 		if (_sjisMixedFontMode && curType == Font::kASCII)
 			setFont((*str & 0x80) ? ((_vm->game() == GI_EOB2 && curFont == FID_6_FNT) ? FID_SJIS_SMALL_FNT : FID_SJIS_FNT) : curFont);
 
-		uint c = fetchChar(str);
+		uint16 c = fetchChar(str);
 
 		if (c == 0 || (nextWordOnly && (c == 2 || c == 6 || c == 13 || c == 32 || c == 0x4081))) {
 			break;
-		} else if (c == '\r') {
+		} else if (c < 128 && _lineBreakChars.contains((char)c)) {
 			if (curLineLen > maxLineLen)
 				maxLineLen = curLineLen;
 			else
@@ -1451,12 +1493,12 @@ void Screen::printText(const char *str, int x, int y, uint8 color1, uint8 color2
 		if (_sjisMixedFontMode && curType == Font::kASCII)
 			setFont((*str & 0x80) ? ((_vm->game() == GI_EOB2 && curFont == FID_6_FNT) ? FID_SJIS_SMALL_FNT : FID_SJIS_FNT) : curFont);
 
-		uint c = fetchChar(str);
+		uint16 c = fetchChar(str);
 		charHeight = MAX<int>(charHeight, getCharHeight(c));
 
 		if (c == 0) {
 			break;
-		} else if (c == '\r') {
+		} else if (c < 128 && _lineBreakChars.contains((char)c)) {
 			x = x_start;
 			y += (charHeight + _lineSpacing);
 		} else {
@@ -1501,7 +1543,7 @@ void Screen::drawChar(uint16 c, int x, int y, int pitch) {
 
 	const bool useOverlay = fnt->usesOverlay();
 	const int charWidth = fnt->getCharWidth(c);
-	const int charHeight = fnt->getHeight();
+	const int charHeight = fnt->getCharHeight(c);
 
 	if (x < 0 || y < 0)
 		return;
@@ -1546,12 +1588,12 @@ void Screen::drawShape(uint8 pageNum, const uint8 *shapeData, int x, int y, int 
 		1, 3, 2, 5, 4, 3, 2, 1
 	};
 
-	_dsShapeFadingTable = 0;
+	_dsShapeFadingTable = nullptr;
 	_dsShapeFadingLevel = 0;
-	_dsColorTable = 0;
-	_dsTransparencyTable1 = 0;
-	_dsTransparencyTable2 = 0;
-	_dsBackgroundFadingTable = 0;
+	_dsColorTable = nullptr;
+	_dsTransparencyTable1 = nullptr;
+	_dsTransparencyTable2 = nullptr;
+	_dsBackgroundFadingTable = nullptr;
 	_dsDrawLayer = 0;
 
 	if (flags & DSF_CUSTOM_PALETTE) {
@@ -1632,7 +1674,7 @@ void Screen::drawShape(uint8 pageNum, const uint8 *shapeData, int x, int y, int 
 	static const DsPlotFunc dsPlotFunc[] = {
 		&Screen::drawShapePlotType0,		// used by Kyra 1 + 2
 		&Screen::drawShapePlotType1,		// used by Kyra 3
-		0,
+		nullptr,
 		&Screen::drawShapePlotType3_7,		// used by Kyra 3 (shadow)
 		&Screen::drawShapePlotType4,		// used by Kyra 1, 2 + 3
 		&Screen::drawShapePlotType5,		// used by Kyra 1
@@ -1640,27 +1682,27 @@ void Screen::drawShape(uint8 pageNum, const uint8 *shapeData, int x, int y, int 
 		&Screen::drawShapePlotType3_7,		// used by Kyra 1 (invisibility)
 		&Screen::drawShapePlotType8,		// used by Kyra 2
 		&Screen::drawShapePlotType9,		// used by Kyra 1 + 3
-		0,
+		nullptr,
 		&Screen::drawShapePlotType11_15,	// used by Kyra 1 (invisibility) + Kyra 3 (shadow)
 		&Screen::drawShapePlotType12,		// used by Kyra 2
 		&Screen::drawShapePlotType13,		// used by Kyra 1
 		&Screen::drawShapePlotType14,		// used by Kyra 1 (invisibility)
 		&Screen::drawShapePlotType11_15,	// used by Kyra 1 (invisibility)
 		&Screen::drawShapePlotType16,		// used by LoL PC-98/16 Colors (teleporters),
-		0, 0, 0,
+		nullptr, nullptr, nullptr,
 		&Screen::drawShapePlotType20,		// used by LoL (heal spell effect)
 		&Screen::drawShapePlotType21,		// used by LoL (white tower spirits)
-		0, 0, 0, 0,	0, 0, 0, 0, 0, 0,
-		0,
+		nullptr, nullptr, nullptr, nullptr,	nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+		nullptr,
 		&Screen::drawShapePlotType33,		// used by LoL (blood spots on the floor)
-		0, 0, 0,
+		nullptr, nullptr, nullptr,
 		&Screen::drawShapePlotType37,		// used by LoL (monsters)
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
 		&Screen::drawShapePlotType48,		// used by LoL (slime spots on the floor)
-		0, 0, 0,
+		nullptr, nullptr, nullptr,
 		&Screen::drawShapePlotType52,		// used by LoL (projectiles)
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0
+		nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+		nullptr
 	};
 
 	int scaleCounterV = 0;
@@ -1748,7 +1790,7 @@ void Screen::drawShape(uint8 pageNum, const uint8 *shapeData, int x, int y, int 
 		}
 
 		t *= -1;
-		const uint8 *srcBackUp = 0;
+		const uint8 *srcBackUp = nullptr;
 
 		do {
 			_dsOffscreenScaleVal1 = 0;
@@ -2741,7 +2783,7 @@ uint8 *Screen::encodeShape(int x, int y, int w, int h, int flags) {
 	uint8 table[274];
 	int tableIndex = 0;
 
-	uint8 *newShape = 0;
+	uint8 *newShape = nullptr;
 	newShape = new uint8[shapeSize+16];
 	assert(newShape);
 
@@ -2875,7 +2917,7 @@ uint8 *Screen::encodeShape(int x, int y, int w, int h, int flags) {
 int16 Screen::encodeShapeAndCalculateSize(uint8 *from, uint8 *to, int size_to) {
 	byte *fromPtrEnd = from + size_to;
 	bool skipPixel = true;
-	byte *tempPtr = 0;
+	byte *tempPtr = nullptr;
 	byte *toPtr = to;
 	byte *fromPtr = from;
 	byte *toPtr2 = to;
@@ -3027,7 +3069,7 @@ void Screen::showMouse() {
 
 		// We need to call OSystem::updateScreen here, else the mouse cursor
 		// will only be visible on mouse movment.
-		_system->updateScreen();
+		updateBackendScreen(true);
 	}
 
 	if (_mouseLockCount > 0)
@@ -3091,7 +3133,7 @@ void Screen::setMouseCursor(int x, int y, const byte *shape) {
 	// we do not use Screen::updateScreen here
 	// so we can be sure that changes to page 0
 	// are NOT updated on the real screen here
-	_system->updateScreen();
+	updateBackendScreen(true);
 }
 
 Palette &Screen::getPalette(int num) {
@@ -3242,7 +3284,7 @@ void Screen::shakeScreen(int times) {
 							_vm->quitGame();
 					}
 				}
-				_system->updateScreen();
+				updateBackendScreen(true);
 				now = _system->getMillis();
 				_system->delayMillis(MIN<uint>(end - now, 10));
 			}
@@ -3450,7 +3492,7 @@ byte *Screen::getOverlayPtr(int page) {
 			return _sjisOverlayPtrs[5];
 	}
 
-	return 0;
+	return nullptr;
 }
 
 void Screen::clearOverlayPage(int page) {
@@ -3568,10 +3610,10 @@ void Screen::crossFadeRegion(int x1, int y1, int x2, int y2, int w, int h, int s
 #pragma mark -
 
 DOSFont::DOSFont() {
-	_data = _widthTable = _heightTable = 0;
-	_colorMap = 0;
+	_data = _widthTable = _heightTable = nullptr;
+	_colorMap = nullptr;
 	_width = _height = _numGlyphs = 0;
-	_bitmapOffsets = 0;
+	_bitmapOffsets = nullptr;
 }
 
 bool DOSFont::load(Common::SeekableReadStream &file) {
@@ -3673,10 +3715,10 @@ void DOSFont::drawChar(uint16 c, byte *dst, int pitch, int) const {
 
 void DOSFont::unload() {
 	delete[] _data;
-	_data = _widthTable = _heightTable = 0;
-	_colorMap = 0;
+	_data = _widthTable = _heightTable = nullptr;
+	_colorMap = nullptr;
 	_width = _height = _numGlyphs = 0;
-	_bitmapOffsets = 0;
+	_bitmapOffsets = nullptr;
 }
 
 
@@ -3790,26 +3832,24 @@ void AMIGAFont::unload() {
 }
 
 SJISFont::SJISFont(Common::SharedPtr<Graphics::FontSJIS> &font, const uint8 invisColor, bool is16Color, bool drawOutline, int extraSpacing)
-	: _colorMap(0), _font(font), _invisColor(invisColor), _isTextMode(is16Color), _style(kStyleNone), _drawOutline(drawOutline), _sjisWidthOffset(extraSpacing) {
+	: _colorMap(nullptr), _font(font), _invisColor(invisColor), _isTextMode(is16Color), _style(kStyleNone), _drawOutline(drawOutline), _sjisWidthOffset(extraSpacing) {
 	assert(_font);
-	_sjisWidth = _font->getMaxFontWidth() >> 1;
-	_fontHeight = _font->getFontHeight() >> 1;
-	_asciiWidth = _font->getCharWidth('a') >> 1;
+	_font->setDrawingMode(_drawOutline ? Graphics::FontSJIS::kOutlineMode : Graphics::FontSJIS::kDefaultMode);
 }
 
 int SJISFont::getHeight() const {
-	return _fontHeight;
+	return _font->getFontHeight() >> 1;
 }
 
 int SJISFont::getWidth() const {
-	return _sjisWidth + _sjisWidthOffset;
+	return (_font->getMaxFontWidth() >> 1) + _sjisWidthOffset;
 }
 
 int SJISFont::getCharWidth(uint16 c) const {
 	if (c <= 0x7F || (c >= 0xA1 && c <= 0xDF))
-		return _asciiWidth;
+		return _font->getCharWidth('a') >> 1;
 	else
-		return _sjisWidth + _sjisWidthOffset;
+		return getWidth();
 }
 
 void SJISFont::setColorMap(const uint8 *src) {
@@ -3838,16 +3878,146 @@ void SJISFont::drawChar(uint16 c, byte *dst, int pitch, int) const {
 	_font->drawChar(dst, c, 640, 1, color1, color2, 640, 400);
 }
 
+ChineseFont::ChineseFont(int pitch, int renderWidth, int renderHeight, int spacingWidth, int spacingHeight, int extraSpacingWidth, int extraSpacingHeight) : Font(),
+	_renderWidth(renderWidth), _renderHeight(renderHeight), _spacingWidth(spacingWidth), _spacingHeight(spacingHeight), _pitch(pitch), _border(false),
+	_borderExtraSpacingWidth(extraSpacingWidth), _borderExtraSpacingHeight(extraSpacingHeight), _glyphData(0), _glyphDataSize(0), _pixelColorShading(true) {
+}
+
+ChineseFont::~ChineseFont() {
+	delete[] _glyphData;
+}
+
+bool ChineseFont::load(Common::SeekableReadStream &data) {
+	if (_glyphData)
+		return false;
+
+	if (!data.size())
+		return false;
+
+	_glyphDataSize = data.size();
+	uint8 *dst = new uint8[_glyphDataSize];
+	if (!dst)
+		return false;
+
+	data.read(dst, _glyphDataSize);
+	_glyphData = dst;
+
+	return true;
+}
+
+void ChineseFont::setColorMap(const uint8 *src) {
+	_colorMap = src;
+	processColorMap();
+}
+
+void ChineseFont::drawChar(uint16 c, byte *dst, int pitch, int) const {
+	static const int8 drawSeqNormal[4] = { 0, 0, 0, -1 };
+	static const int8 drawSeqOutline[19] = { 1, 0, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 0, -1 };
+
+	if (!hasGlyphForCharacter(c))
+		return;
+
+	uint32 offs = getFontOffset(c);
+	assert(offs < _glyphDataSize);
+	const uint8 *glyphData = _glyphData + offs;
+
+	for (const int8 *i = _border ? drawSeqOutline : drawSeqNormal; *i != -1; i += 3) {
+		const uint8 *data = glyphData;
+		uint8 *dst3 = dst;
+		dst = &dst3[i[0] + i[1] * _pitch];
+		for (int h = 0; h < _renderHeight; ++h) {
+			uint8 in = 0;
+			int bt = -1;
+			uint8 *dst2 = dst;
+			for (int x = 0; x < _renderWidth; ++x) {
+				if (bt == -1) {
+					in = *data++;
+					bt = 7;
+				}
+				if (in & (1 << (bt--))) {
+					if (_pixelColorShading)
+						*(uint16*)dst = _textColor[i[2]];
+					else
+						*dst = _textColor[i[2]] & 0xff;
+				}
+				dst++;
+			}
+			dst = dst2 + _pitch;
+		}
+		dst = dst3;
+	}
+}
+
+MultiSubsetFont::~MultiSubsetFont() {
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i)
+		delete (*i);
+	delete _subsets;
+}
+
+bool MultiSubsetFont::load(Common::SeekableReadStream &data) {
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i)
+		if ((*i)->load(data))
+			return true;
+	return false;
+}
+
+void MultiSubsetFont::setStyles(int styles) {
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i)
+		(*i)->setStyles(styles);
+}
+
+int MultiSubsetFont::getHeight() const {
+	int res = 0;
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i)
+		res = MAX<int>(res, (*i)->getHeight());
+	return res;
+}
+
+int MultiSubsetFont::getWidth() const {
+	int res = 0;
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i)
+		res = MAX<int>(res, (*i)->getWidth());
+	return res;
+}
+
+int MultiSubsetFont::getCharWidth(uint16 c) const {
+	int res = 0;
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i) {
+		if ((res = (*i)->getCharWidth(c)) != -1)
+			break;
+	}
+	return res > 0 ? res : 0;
+}
+
+int MultiSubsetFont::getCharHeight(uint16 c) const {
+	int res = 0;
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i) {
+		if ((res = (*i)->getCharHeight(c)) != -1)
+			break;
+	}
+	return res > 0 ? res : 0;
+}
+
+void MultiSubsetFont::setColorMap(const uint8 *src) {
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i)
+		(*i)->setColorMap(src);
+}
+
+void MultiSubsetFont::drawChar(uint16 c, byte *dst, int pitch, int) const {
+	for (Common::Array<Font*>::const_iterator i = _subsets->begin(); i != _subsets->end(); ++i)
+		(*i)->drawChar(c, dst, pitch, 0);
+}
+
 #pragma mark -
 
-Palette::Palette(const int numColors) : _palData(0), _numColors(numColors) {
+Palette::Palette(const int numColors) : _palData(nullptr), _numColors(numColors) {
 	_palData = new uint8[numColors * 3]();
 	assert(_palData);
 }
 
 Palette::~Palette() {
 	delete[] _palData;
-	_palData = 0;
+	_palData = nullptr;
 }
 
 void Palette::loadVGAPalette(Common::ReadStream &stream, int startIndex, int colors) {

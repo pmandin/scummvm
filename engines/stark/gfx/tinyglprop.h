@@ -27,7 +27,7 @@
 #include "engines/stark/visual/prop.h"
 #include "engines/stark/gfx/tinygl.h"
 
-#include "graphics/tinygl/zgl.h"
+#include "graphics/tinygl/tinygl.h"
 
 #include "common/hashmap.h"
 #include "common/hash-ptr.h"
@@ -37,8 +37,6 @@ namespace Stark {
 namespace Gfx {
 
 class Driver;
-
-#include "common/pack-start.h"
 
 struct _PropVertex {
 	float x;
@@ -54,10 +52,8 @@ struct _PropVertex {
 	float r;
 	float g;
 	float b;
-} PACKED_STRUCT;
+};
 typedef _PropVertex PropVertex;
-
-#include "common/pack-end.h"
 
 class TinyGLPropRenderer : public VisualProp {
 public:

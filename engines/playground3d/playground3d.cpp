@@ -45,9 +45,11 @@ bool Playground3dEngine::hasFeature(EngineFeature f) const {
 }
 
 Playground3dEngine::Playground3dEngine(OSystem *syst)
-		: Engine(syst), _system(syst), _frameLimiter(0),
+		: Engine(syst), _system(syst), _frameLimiter(nullptr),
 		_rotateAngleX(0), _rotateAngleY(0), _rotateAngleZ(0),
-		_clearColor(0.0f, 0.0f, 0.0f, 1.0f), _fade(1.0f), _fadeIn(false) {
+		_clearColor(0.0f, 0.0f, 0.0f, 1.0f), _fade(1.0f), _fadeIn(false),
+		_rgbaTexture(nullptr), _rgbTexture(nullptr), _rgb565Texture(nullptr),
+		_rgba5551Texture(nullptr), _rgba4444Texture(nullptr) {
 }
 
 Playground3dEngine::~Playground3dEngine() {
@@ -67,6 +69,7 @@ Common::Error Playground3dEngine::run() {
 	// 2 - rotated two triangles with depth offset
 	// 3 - fade in/out
 	// 4 - moving filled rectangle in viewport
+	// 5 - drawing RGBA pattern texture to check endian correctness
 	int testId = 1;
 
 	switch (testId) {
@@ -83,6 +86,25 @@ Common::Error Playground3dEngine::run() {
 		case 4:
 			_clearColor = Math::Vector4d(0.5f, 0.5f, 0.5f, 1.0f);
 			break;
+		case 5: {
+			_clearColor = Math::Vector4d(0.5f, 0.5f, 0.5f, 1.0f);
+#if defined(SCUMM_LITTLE_ENDIAN)
+			Graphics::PixelFormat pixelFormatRGBA(4, 8, 8, 8, 8, 0, 8, 16, 24);
+			Graphics::PixelFormat pixelFormatRGB(3, 8, 8, 8, 0, 0, 8, 16, 0);
+#else
+			Graphics::PixelFormat pixelFormatRGBA(4, 8, 8, 8, 8, 24, 16, 8, 0);
+			Graphics::PixelFormat pixelFormatRGB(3, 8, 8, 8, 0, 16, 8, 0, 0);
+#endif
+			Graphics::PixelFormat pixelFormatRGB565(2, 5, 6, 5, 0, 11, 5, 0, 0);
+			Graphics::PixelFormat pixelFormatRGB5551(2, 5, 5, 5, 1, 11, 6, 1, 0);
+			Graphics::PixelFormat pixelFormatRGB4444(2, 4, 4, 4, 4, 12, 8, 4, 0);
+			_rgbaTexture = generateRgbaTexture(120, 120, pixelFormatRGBA);
+			_rgbTexture = _rgbaTexture->convertTo(pixelFormatRGB);
+			_rgb565Texture = generateRgbaTexture(120, 120, pixelFormatRGB565);
+			_rgba5551Texture = generateRgbaTexture(120, 120, pixelFormatRGB5551);
+			_rgba4444Texture = generateRgbaTexture(120, 120, pixelFormatRGB4444);
+			break;
+		}
 		default:
 			assert(false);
 	}
@@ -92,6 +114,12 @@ Common::Error Playground3dEngine::run() {
 		drawFrame(testId);
 	}
 
+	delete _rgbaTexture;
+	delete _rgbTexture;
+	delete _rgb565Texture;
+	delete _rgba5551Texture;
+	delete _rgba4444Texture;
+	_gfx->deinit();
 	_system->showMouse(false);
 
 	return Common::kNoError;
@@ -105,6 +133,28 @@ void Playground3dEngine::processInput() {
 			_gfx->computeScreenViewport();
 		}
 	}
+}
+
+Graphics::Surface *Playground3dEngine::generateRgbaTexture(int width, int height, Graphics::PixelFormat format) {
+	Graphics::Surface *surface = new Graphics::Surface;
+	surface->create(width, height, format);
+	const int barW = width / 4;
+	Common::Rect r(0, 0, barW, height);
+	uint32 pixel = format.ARGBToColor(255, 255, 0, 0);
+	surface->fillRect(r, pixel);
+	r.left += barW;
+	r.right += barW;
+	pixel = format.ARGBToColor(255, 0, 255, 0);
+	surface->fillRect(r, pixel);
+	r.left += barW;
+	r.right += barW;
+	pixel = format.ARGBToColor(255, 0, 0, 255);
+	surface->fillRect(r, pixel);
+	r.left += barW;
+	r.right += barW;
+	pixel = format.ARGBToColor(128, 0, 0, 0);
+	surface->fillRect(r, pixel);
+	return surface;
 }
 
 void Playground3dEngine::drawAndRotateCube() {
@@ -148,6 +198,10 @@ void Playground3dEngine::drawInViewport() {
 	_gfx->drawInViewport();
 }
 
+void Playground3dEngine::drawRgbaTexture() {
+	_gfx->drawRgbaTexture();
+}
+
 void Playground3dEngine::drawFrame(int testId) {
 	_gfx->clear(_clearColor);
 
@@ -172,6 +226,14 @@ void Playground3dEngine::drawFrame(int testId) {
 		case 4:
 			_gfx->setupViewport(vp.left + 40, _system->getHeight() - vp.top - vp.height() + 40, vp.width() - 80, vp.height() - 80);
 			drawInViewport();
+			break;
+		case 5:
+			_gfx->loadTextureRGBA(_rgbaTexture);
+			_gfx->loadTextureRGB(_rgbTexture);
+			_gfx->loadTextureRGB565(_rgb565Texture);
+			_gfx->loadTextureRGBA5551(_rgba5551Texture);
+			_gfx->loadTextureRGBA4444(_rgba4444Texture);
+			drawRgbaTexture();
 			break;
 		default:
 			assert(false);

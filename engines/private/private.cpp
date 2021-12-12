@@ -43,7 +43,7 @@
 
 namespace Private {
 
-PrivateEngine *g_private = NULL;
+PrivateEngine *g_private = nullptr;
 extern int parse(const char *);
 
 PrivateEngine::PrivateEngine(OSystem *syst, const ADGameDescription *gd)
@@ -132,7 +132,7 @@ void PrivateEngine::initializePath(const Common::FSNode &gamePath) {
 Common::SeekableReadStream *PrivateEngine::loadAssets() {
 
 	Common::File *test = new Common::File();
-	Common::SeekableReadStream *file = NULL;
+	Common::SeekableReadStream *file = nullptr;
 
 	if (isDemo() && test->open("SUPPORT/ASSETS/DEMOGAME.WIN"))
 		file = test;
@@ -169,7 +169,7 @@ Common::SeekableReadStream *PrivateEngine::loadAssets() {
 			}
 		}
 	}
-	if (file == NULL)
+	if (file == nullptr)
 		error("Unknown version");
 	return file;
 }
@@ -217,10 +217,10 @@ Common::Error PrivateEngine::run() {
 	_compositeSurface->setTransparentColor(_transparentColor);
 
 	// Load the game frame once
-	_frameImage = decodeImage(_framePath);
-	_mframeImage = decodeImage(_framePath); 
+	byte *palette;
+	_frameImage = decodeImage(_framePath, nullptr);
+	_mframeImage = decodeImage(_framePath, &palette); 
 
-	const byte *palette = decodePalette(_framePath);
 	_framePalette = (byte *) malloc(3*256);
 	memcpy(_framePalette, palette, 3*256);
 
@@ -488,7 +488,7 @@ bool PrivateEngine::cursorExit(Common::Point mousePos) {
 }
 
 bool PrivateEngine::inMask(Graphics::Surface *surf, Common::Point mousePos) {
-	if (surf == NULL)
+	if (surf == nullptr)
 		return false;
 
 	mousePos = mousePos - _origin;
@@ -686,7 +686,7 @@ void PrivateEngine::selectMask(Common::Point mousePos) {
 				ns = m.nextSetting;
 			}
 
-			if (m.flag1 != NULL) { // TODO: check this
+			if (m.flag1 != nullptr) { // TODO: check this
 				setSymbol(m.flag1, 1);
 				// an item was taken
 				if (_toTake) {
@@ -695,7 +695,7 @@ void PrivateEngine::selectMask(Common::Point mousePos) {
 				}
 			}
 
-			if (m.flag2 != NULL) {
+			if (m.flag2 != nullptr) {
 				setSymbol(m.flag2, 1);
 			}
 			break;
@@ -708,7 +708,7 @@ void PrivateEngine::selectMask(Common::Point mousePos) {
 }
 
 void PrivateEngine::selectAMRadioArea(Common::Point mousePos) {
-	if (_AMRadioArea.surf == NULL)
+	if (_AMRadioArea.surf == nullptr)
 		return;
 
 	if (_AMRadio.empty())
@@ -722,7 +722,7 @@ void PrivateEngine::selectAMRadioArea(Common::Point mousePos) {
 }
 
 void PrivateEngine::selectPoliceRadioArea(Common::Point mousePos) {
-	if (_policeRadioArea.surf == NULL)
+	if (_policeRadioArea.surf == nullptr)
 		return;
 
 	if (_policeRadio.empty())
@@ -736,7 +736,7 @@ void PrivateEngine::selectPoliceRadioArea(Common::Point mousePos) {
 }
 
 void PrivateEngine::checkPhoneCall() {
-	if (_phoneArea.surf == NULL)
+	if (_phoneArea.surf == nullptr)
 		return;
 
 	if (_phone.empty())
@@ -747,7 +747,7 @@ void PrivateEngine::checkPhoneCall() {
 }
 
 void PrivateEngine::selectPhoneArea(Common::Point mousePos) {
-	if (_phoneArea.surf == NULL)
+	if (_phoneArea.surf == nullptr)
 		return;
 
 	if (_phone.empty())
@@ -778,7 +778,7 @@ void PrivateEngine::loadDossier() {
 }
 
 bool PrivateEngine::selectDossierNextSuspect(Common::Point mousePos) {
-	if (_dossierNextSuspectMask.surf == NULL)
+	if (_dossierNextSuspectMask.surf == nullptr)
 		return false;
 
 	if (inMask(_dossierNextSuspectMask.surf, mousePos)) {
@@ -796,7 +796,7 @@ bool PrivateEngine::selectDossierNextSuspect(Common::Point mousePos) {
 }
 
 bool PrivateEngine::selectDossierPrevSheet(Common::Point mousePos) {
-	if (_dossierNextSheetMask.surf == NULL)
+	if (_dossierNextSheetMask.surf == nullptr)
 		return false;
 
 	if (inMask(_dossierPrevSheetMask.surf, mousePos)) {
@@ -813,7 +813,7 @@ bool PrivateEngine::selectDossierPrevSheet(Common::Point mousePos) {
 }
 
 bool PrivateEngine::selectDossierNextSheet(Common::Point mousePos) {
-	if (_dossierNextSheetMask.surf == NULL)
+	if (_dossierNextSheetMask.surf == nullptr)
 		return false;
 
 	if (inMask(_dossierNextSheetMask.surf, mousePos)) {
@@ -831,7 +831,7 @@ bool PrivateEngine::selectDossierNextSheet(Common::Point mousePos) {
 }
 
 bool PrivateEngine::selectDossierPrevSuspect(Common::Point mousePos) {
-	if (_dossierPrevSuspectMask.surf == NULL)
+	if (_dossierPrevSuspectMask.surf == nullptr)
 		return false;
 
 	if (inMask(_dossierPrevSuspectMask.surf, mousePos)) {
@@ -849,7 +849,7 @@ bool PrivateEngine::selectDossierPrevSuspect(Common::Point mousePos) {
 }
 
 bool PrivateEngine::selectSafeDigit(Common::Point mousePos) {
-	if (_safeDigitArea[0].surf == NULL)
+	if (_safeDigitArea[0].surf == nullptr)
 		return false;
 
 	mousePos = mousePos - _origin;
@@ -876,8 +876,8 @@ void PrivateEngine::addSafeDigit(uint32 d, Common::Rect *rect) {
 	m.surf = loadMask(Common::String::format(_safeNumberPath.c_str(), _safeDigit[d]), _safeDigitRect[d].left, _safeDigitRect[d].top, true);
 	m.cursor = g_private->getExitCursor();
 	m.nextSetting = "";
-	m.flag1 = NULL;
-	m.flag2 = NULL;
+	m.flag1 = nullptr;
+	m.flag2 = nullptr;
 	_safeDigitArea[d] = m;
 	drawScreen();
 }
@@ -885,7 +885,7 @@ void PrivateEngine::addSafeDigit(uint32 d, Common::Rect *rect) {
 
 void PrivateEngine::renderSafeDigit(uint32 d) {
 
-	if (_safeDigitArea[d].surf != NULL) {
+	if (_safeDigitArea[d].surf != nullptr) {
 		_safeDigitArea[d].surf->free();
 		delete _safeDigitArea[d].surf;
 		_safeDigitArea[d].clear();
@@ -895,14 +895,14 @@ void PrivateEngine::renderSafeDigit(uint32 d) {
 	m.surf = loadMask(Common::String::format(_safeNumberPath.c_str(), _safeDigit[d]), _safeDigitRect[d].left, _safeDigitRect[d].top, true);
 	m.cursor = g_private->getExitCursor();
 	m.nextSetting = "";
-	m.flag1 = NULL;
-	m.flag2 = NULL;
+	m.flag1 = nullptr;
+	m.flag2 = nullptr;
 	_safeDigitArea[d] = m;
 	drawScreen();
 }
 
 void PrivateEngine::selectLoadGame(Common::Point mousePos) {
-	if (_loadGameMask.surf == NULL)
+	if (_loadGameMask.surf == nullptr)
 		return;
 
 	if (inMask(_loadGameMask.surf, mousePos)) {
@@ -911,7 +911,7 @@ void PrivateEngine::selectLoadGame(Common::Point mousePos) {
 }
 
 void PrivateEngine::selectSaveGame(Common::Point mousePos) {
-	if (_saveGameMask.surf == NULL)
+	if (_saveGameMask.surf == nullptr)
 		return;
 
 	if (inMask(_saveGameMask.surf, mousePos)) {
@@ -1184,7 +1184,7 @@ void PrivateEngine::playSound(const Common::String &name, uint loops, bool stopO
 		stopSound(true);
 	}
 
-	Audio::SoundHandle *sh = NULL;
+	Audio::SoundHandle *sh = nullptr;
 	if (background) {
 		_mixer->stopHandle(_bgSoundHandle);
 		sh = &_bgSoundHandle;
@@ -1232,7 +1232,7 @@ void PrivateEngine::stopSound(bool all) {
 	}
 }
 
-Graphics::Surface *PrivateEngine::decodeImage(const Common::String &name) {
+Graphics::Surface *PrivateEngine::decodeImage(const Common::String &name, byte **palette) {
 	debugC(1, kPrivateDebugFunction, "%s(%s)", __FUNCTION__, name.c_str());
 	Common::File file;
 	Common::String path = convertPath(name);
@@ -1240,24 +1240,75 @@ Graphics::Surface *PrivateEngine::decodeImage(const Common::String &name) {
 		error("unable to load image %s", path.c_str());
 
 	_image->loadStream(file);
-	return _image->getSurface()->convertTo(_pixelFormat, _image->getPalette());
+	const Graphics::Surface *oldImage = _image->getSurface();
+	Graphics::Surface *newImage;
+
+	const byte *oldPalette = _image->getPalette();
+	byte *currentPalette;
+
+	uint16 ncolors = _image->getPaletteColorCount();
+	if (ncolors < 256) { // For some reason, requires color remapping
+		currentPalette = (byte *) malloc(3*256);
+		drawScreen();
+		g_system->getPaletteManager()->grabPalette(currentPalette, 0, 256);
+		newImage = oldImage->convertTo(_pixelFormat, currentPalette);
+		remapImage(ncolors, oldImage, oldPalette, newImage, currentPalette);
+	} else {
+		currentPalette = const_cast<byte *>(oldPalette);
+		newImage = oldImage->convertTo(_pixelFormat, currentPalette);
+	}
+
+	if (palette != nullptr) {
+		*palette = currentPalette;
+	}
+
+	return newImage;
 }
 
-const byte *PrivateEngine::decodePalette(const Common::String &name) {
-	debugC(1, kPrivateDebugFunction, "%s(%s)", __FUNCTION__, name.c_str());
-	Common::File file;
-	Common::String path = convertPath(name);
-	if (!file.open(path))
-		error("unable to load image %s", path.c_str());
+void PrivateEngine::remapImage(uint16 ncolors, const Graphics::Surface *oldImage, const byte *oldPalette, Graphics::Surface *newImage, const byte *currentPalette) {
+	debugC(1, kPrivateDebugFunction, "%s(..)", __FUNCTION__);
+	byte paletteMap[256];
+	// Run through every color in old palette
+	for (int i = 0; i != ncolors; ++i) {
+		byte r0 = oldPalette[3 * i + 0];
+		byte g0 = oldPalette[3 * i + 1];
+		byte b0 = oldPalette[3 * i + 2];
 
-	_image->loadStream(file);
-	return _image->getPalette();
+		// Find the closest color in current palette
+		int closest_distance = 10000;
+		int closest_j = 0;
+		for (int j = 0; j != 256; ++j) {
+			byte r1 = currentPalette[3 * j + 0];
+			byte g1 = currentPalette[3 * j + 1];
+			byte b1 = currentPalette[3 * j + 2];
+
+			int distance = (MAX(r0, r1) - MIN(r0, r1))
+						+ (MAX(g0, g1) - MIN(g0, g1))
+						+ (MAX(b0, b1) - MIN(b0, b1));
+
+			if (distance < closest_distance) {
+				closest_distance = distance;
+				closest_j = j;
+			}
+		}
+		paletteMap[i] = closest_j;
+	}
+
+	const byte *src = (const byte*) oldImage->getPixels();
+	byte *dst = (byte *) newImage->getPixels();
+
+	int pitch = oldImage->pitch;
+	for (int y = 0; y != oldImage->h; ++y) {
+		for (int x = 0; x != oldImage->w; ++x) {
+			dst[y * pitch + x] = paletteMap[src[y * pitch + x]];
+		}
+	}
 }
 
 void PrivateEngine::loadImage(const Common::String &name, int x, int y) {
 	debugC(1, kPrivateDebugFunction, "%s(%s,%d,%d)", __FUNCTION__, name.c_str(), x, y);
-	Graphics::Surface *surf = decodeImage(name);
-	const byte *palette = decodePalette(name);
+	byte *palette;
+	Graphics::Surface *surf = decodeImage(name, &palette);
 	_compositeSurface->setPalette(palette, 0, 256);
 	_compositeSurface->setTransparentColor(_transparentColor);
 	_compositeSurface->transBlitFrom(*surf, _origin + Common::Point(x, y), _transparentColor);
@@ -1274,44 +1325,7 @@ void PrivateEngine::fillRect(uint32 color, Common::Rect rect) {
 
 void PrivateEngine::drawScreenFrame(const byte *newPalette) {
 	debugC(1, kPrivateDebugFunction, "%s(..)", __FUNCTION__);
-	byte paletteMap[256];
-
-	// Run through every color in frame palette
-	for (int i = 0; i != 256; ++i) {
-		byte r0 = _framePalette[3 * i + 0];
-		byte g0 = _framePalette[3 * i + 1];
-		byte b0 = _framePalette[3 * i + 2];
-
-		// Find the closest color in video palette
-		int closest_distance = 10000;
-		int closest_j = 0;
-		for (int j = 0; j != 256; ++j) {
-			byte r1 = newPalette[3 * j + 0];
-			byte g1 = newPalette[3 * j + 1];
-			byte b1 = newPalette[3 * j + 2];
-
-			int distance = (MAX(r0, r1) - MIN(r0, r1))
-			             + (MAX(g0, g1) - MIN(g0, g1))
-			             + (MAX(b0, b1) - MIN(b0, b1));
-
-			if (distance < closest_distance) {
-				closest_distance = distance;
-				closest_j = j;
-			}
-		}
-		paletteMap[i] = closest_j;
-	}
-
-	byte *src = (byte*)_frameImage->getPixels();
-	byte *dst = (byte*)_mframeImage->getPixels();
-
-	int pitch = _frameImage->pitch;
-	for (int y = 0; y != _frameImage->h; ++y) {
-		for (int x = 0; x != _frameImage->w; ++x) {
-			dst[y * pitch + x] = paletteMap[src[y * pitch + x]];
-		}
-	}
-
+	remapImage(256, _frameImage, _framePalette, _mframeImage, newPalette);
 	g_system->copyRectToScreen(_mframeImage->getPixels(), _mframeImage->pitch, 0, 0, _screenW, _screenH);
 }
 
@@ -1320,7 +1334,8 @@ Graphics::Surface *PrivateEngine::loadMask(const Common::String &name, int x, in
 	Graphics::Surface *surf = new Graphics::Surface();
 	surf->create(_screenW, _screenH, _pixelFormat);
 	surf->fillRect(_screenRect, _transparentColor);
-	Graphics::Surface *csurf = decodeImage(name);
+	byte *palette;
+	Graphics::Surface *csurf = decodeImage(name, &palette);
 
 	uint32 hdiff = 0;
 	uint32 wdiff = 0;
@@ -1332,16 +1347,16 @@ Graphics::Surface *PrivateEngine::loadMask(const Common::String &name, int x, in
 
 	Common::Rect crect(csurf->w - wdiff, csurf->h - hdiff);
 	surf->copyRectToSurface(*csurf, x, y, crect);
-	csurf->free();
-	delete csurf;
-	_image->destroy();
 
 	if (drawn) {
-		const byte *palette = decodePalette(name);
 		_compositeSurface->setPalette(palette, 0, 256);
 		_compositeSurface->setTransparentColor(_transparentColor);
 		drawMask(surf);
 	}
+
+	csurf->free();
+	delete csurf;
+	_image->destroy();
 
 	return surf;
 }
@@ -1369,12 +1384,19 @@ void PrivateEngine::drawScreen() {
 		g_system->copyRectToScreen(frame->getPixels(), frame->pitch, center.x, center.y, frame->w, frame->h);	
 	} else {
 		const byte *cPalette = (const byte *) _compositeSurface->getPalette();
-		for (int c = 0; c < 256; c++)
-			g_system->getPaletteManager()->setPalette(cPalette + 4*c, c, 1);
-		byte newPalette[3 * 256];
-		g_system->getPaletteManager()->grabPalette((byte *) &newPalette, 0, 256);
-		
+
+		byte newPalette[768];
+		for (int c = 0; c < 256; c++) { // This avoids any endianness issues
+				newPalette[c * 3 + 0] = cPalette[c * 4 + 0];
+				newPalette[c * 3 + 1] = cPalette[c * 4 + 1];
+				newPalette[c * 3 + 2] = cPalette[c * 4 + 2];
+		}
+
+		g_system->getPaletteManager()->setPalette(newPalette, 0, 256);
+
 		if (_mode == 1) {
+			// We can reuse newPalette
+			g_system->getPaletteManager()->grabPalette((byte *) &newPalette, 0, 256);
 			drawScreenFrame((byte *) &newPalette);
 		}
 

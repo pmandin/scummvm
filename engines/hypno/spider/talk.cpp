@@ -72,7 +72,6 @@ void SpiderEngine::showConversation() {
 			}
 			if (!path.empty()) {
 				activeFound = true;
-				frame = frame;
 				Graphics::Surface *surf = decodeFrame("dialog/" + path, frame);
 
 				drawImage(*speaker, x, y, false);
@@ -111,6 +110,15 @@ void SpiderEngine::showConversation() {
 		if (shouldEscape) {
 			runIntros(_escapeSequentialVideoToPlay);
 			_escapeSequentialVideoToPlay.clear();
+
+			// HACK
+			Hotspots *hots = stack.back();
+			if (hots->size() == 2) {
+				debugC(1, kHypnoDebugScene, "Level should end here, since there is nothing else to do");
+				Common::String variable = "GS_LEVELCOMPLETE";
+				_sceneState[variable] = 1;
+			}
+
 		}
 
 		drawScreen();
@@ -158,6 +166,13 @@ void SpiderEngine::leftClickedConversation(const Common::Point &mousePos) {
 			loadImage(a->background, a->backgroundPos.x, a->backgroundPos.y, false);
 		}
 	}
+
+	if (_sceneState["GS_LEVELCOMPLETE"]) {
+		debugC(1, kHypnoDebugScene, "Level is complete, cleaning variables");
+		resetSceneState();
+		_sceneState["GS_LEVELCOMPLETE"] = 1;
+	}
+
 	if (videos.size() > 0)
 		runIntros(videos);
 }

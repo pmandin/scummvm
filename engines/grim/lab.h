@@ -48,12 +48,12 @@ class Lab : public Common::Archive {
 public:
 	bool open(const Common::String &filename, bool keepStream = false);
 	Lab();
-	virtual ~Lab();
+	~Lab();
 	// Common::Archive implementation
-	virtual bool hasFile(const Common::Path &path) const override;
-	virtual int listMembers(Common::ArchiveMemberList &list) const override;
-	virtual const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
-	virtual Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
+	bool hasFile(const Common::Path &path) const override;
+	int listMembers(Common::ArchiveMemberList &list) const override;
+	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 
 private:
 	void parseGrimFileTable(Common::File *_f);

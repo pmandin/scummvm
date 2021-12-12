@@ -41,7 +41,7 @@ template<int bytesPerSample, bool isUnsigned, bool isLE>
 class RawStream : public SeekableAudioStream {
 public:
 	RawStream(int rate, bool stereo, DisposeAfterUse::Flag disposeStream, Common::SeekableReadStream *stream)
-		: _rate(rate), _isStereo(stereo), _playtime(0, rate), _stream(stream, disposeStream), _endOfData(false), _buffer(0) {
+		: _rate(rate), _isStereo(stereo), _playtime(0, rate), _stream(stream, disposeStream), _endOfData(false), _buffer(nullptr) {
 		// Setup our buffer for readBuffer
 		_buffer = new byte[kSampleBufferLength * bytesPerSample];
 		assert(_buffer);
@@ -54,15 +54,15 @@ public:
 		delete[] _buffer;
 	}
 
-	int readBuffer(int16 *buffer, const int numSamples);
+	int readBuffer(int16 *buffer, const int numSamples) override;
 
-	bool isStereo() const  { return _isStereo; }
-	bool endOfData() const { return _endOfData; }
+	bool isStereo() const override  { return _isStereo; }
+	bool endOfData() const override { return _endOfData; }
 
-	int getRate() const         { return _rate; }
-	Timestamp getLength() const { return _playtime; }
+	int getRate() const override         { return _rate; }
+	Timestamp getLength() const override { return _playtime; }
 
-	bool seek(const Timestamp &where);
+	bool seek(const Timestamp &where) override;
 private:
 	const int _rate;                                           ///< Sample rate of stream
 	const bool _isStereo;                                      ///< Whether this is an stereo stream
@@ -229,7 +229,7 @@ public:
 		StatelessPacketizedAudioStream(rate, ((flags & FLAG_STEREO) != 0) ? 2 : 1), _flags(flags) {}
 
 protected:
-	AudioStream *makeStream(Common::SeekableReadStream *data);
+	AudioStream *makeStream(Common::SeekableReadStream *data) override;
 
 private:
 	byte _flags;

@@ -116,7 +116,7 @@ void Cursor::loadAvailableCursors() {
 		}
 
 		// Create and store the texture
-		_textures.setVal(availableCursors[i].nodeID, _vm->_gfx->createTexture(surfaceRGBA));
+		_textures.setVal(availableCursors[i].nodeID, _vm->_gfx->createTexture2D(surfaceRGBA));
 
 		surfaceRGBA->free();
 		delete surfaceRGBA;
@@ -126,7 +126,7 @@ void Cursor::loadAvailableCursors() {
 Cursor::~Cursor() {
 	// Free cursors textures
 	for (TextureMap::iterator it = _textures.begin(); it != _textures.end(); it++) {
-		_vm->_gfx->freeTexture(it->_value);
+		delete it->_value;
 	}
 }
 

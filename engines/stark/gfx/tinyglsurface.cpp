@@ -24,7 +24,7 @@
 #include "engines/stark/gfx/tinyglbitmap.h"
 #include "engines/stark/gfx/texture.h"
 
-#include "graphics/tinygl/zblit.h"
+#include "graphics/tinygl/tinygl.h"
 
 namespace Stark {
 namespace Gfx {
@@ -42,6 +42,8 @@ void TinyGLSurfaceRenderer::render(const Texture *texture, const Common::Point &
 }
 
 void TinyGLSurfaceRenderer::render(const Texture *texture, const Common::Point &dest, uint width, uint height) {
+	if (width == 0 || height == 0)
+		return;
 	_gfx->start2DMode();
 
 	Math::Vector2d sizeWH;
@@ -55,14 +57,18 @@ void TinyGLSurfaceRenderer::render(const Texture *texture, const Common::Point &
 	auto viewport = Math::Vector2d(nativeViewport.width(), nativeViewport.height());
 	auto blitImage = ((TinyGlBitmap *)const_cast<Texture *>(texture))->getBlitTexture();
 	int blitTextureWidth, blitTextureHeight;
-	Graphics::tglGetBlitImageSize(blitImage, blitTextureWidth, blitTextureHeight);
+	tglGetBlitImageSize(blitImage, blitTextureWidth, blitTextureHeight);
 	int posX = viewport.getX() * verOffsetXY.getX() + nativeViewport.left;
 	int posY = viewport.getY() * verOffsetXY.getY() + nativeViewport.top;
-	int dstWidth = viewport.getX() * sizeWH.getX();
-	int dstHeight = viewport.getY() * sizeWH.getY();
-	Graphics::BlitTransform transform(posX, posY);
+	TinyGL::BlitTransform transform(posX, posY);
+
+	// WA for not clipped textues in prompt dialog
+	if (width == 256 && height == 256) {
+		blitTextureHeight = viewport.getY() - dest.y;
+		blitTextureWidth = viewport.getX() - dest.x;
+	}
+
 	transform.sourceRectangle(0, 0, blitTextureWidth, blitTextureHeight);
-	transform.scale(dstWidth, dstHeight);
 	transform.tint(1.0, 1.0 - _fadeLevel, 1.0 - _fadeLevel, 1.0 - _fadeLevel);
 	tglBlit(blitImage, transform);
 

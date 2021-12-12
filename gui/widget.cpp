@@ -95,6 +95,7 @@ void Widget::markAsDirty() {
 }
 
 void Widget::draw() {
+	Common::Rect oldClip;
 	if (!isVisible() || !_boss->isVisible())
 		return;
 
@@ -105,7 +106,8 @@ void Widget::draw() {
 		_x = getAbsX();
 		_y = getAbsY();
 
-		Common::Rect oldClip = g_gui.theme()->swapClipRect(_boss->getClipRect());
+		Common::Rect activeRect = g_gui.theme()->getClipRect();
+		oldClip = g_gui.theme()->swapClipRect(_boss->getClipRect().findIntersectingRect(activeRect));
 
 		if (g_gui.useRTL()) {
 			_x = g_system->getOverlayWidth() - _x - _w;
@@ -136,7 +138,6 @@ void Widget::draw() {
 		// Now perform the actual widget draw
 		drawWidget();
 
-		g_gui.theme()->swapClipRect(oldClip);
 
 		// Restore x/y
 		if (_flags & WIDGET_BORDER) {
@@ -157,6 +158,9 @@ void Widget::draw() {
 	while (w) {
 		w->draw();
 		w = w->_next;
+	}
+	if (!oldClip.isEmpty()) {
+		g_gui.theme()->swapClipRect(oldClip);
 	}
 }
 
@@ -555,7 +559,7 @@ const Graphics::ManagedSurface *scaleGfx(const Graphics::ManagedSurface *gfx, in
 	else
 		nw = gfx->w * yRatio;
 
-	if ((nw == w && nh == h) || (nw == gfx->w && nh == gfx->h))
+	if (nw == gfx->w && nh == gfx->h)
 		return gfx;
 
 	w = nw;

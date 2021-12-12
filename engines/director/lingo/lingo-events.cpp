@@ -76,7 +76,7 @@ struct EventHandlerType {
 
 	{ kEventGeneric,			"scummvm_generic" },
 
-	{ kEventNone, 0 }
+	{ kEventNone, nullptr }
 };
 
 void Lingo::initEventHandlerTypes() {
@@ -264,6 +264,14 @@ void Movie::queueEvent(Common::Queue<LingoEvent> &queue, LEvent event, int targe
 		case kEventStepMovie:
 		case kEventStopMovie:
 			queueMovieEvent(queue, event, eventId);
+			break;
+
+		// no-op; only handled by the primary event handler above
+		// empty case avoids them generating logs from the default
+		// unhandled event case below.
+		case kEventKeyUp:
+		case kEventKeyDown:
+		case kEventTimeout:
 			break;
 
 		default:

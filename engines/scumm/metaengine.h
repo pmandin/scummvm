@@ -26,11 +26,11 @@
 #include "engines/metaengine.h"
 
 class ScummMetaEngine : public MetaEngine {
-	virtual const char *getName() const override;
+	const char *getName() const override;
 
 	bool hasFeature(MetaEngineFeature f) const override;
 
-	Common::Error createInstance(OSystem *syst, Engine **engine) const override;
+	Common::Error createInstance(OSystem *syst, Engine **engine) override;
 
 	SaveStateList listSaves(const char *target) const override;
 	int getMaximumSaveSlot() const override;

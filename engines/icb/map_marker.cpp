@@ -25,8 +25,6 @@
  *
  */
 
-#define FORBIDDEN_SYMBOL_EXCEPTION_strncasecmp
-
 #include "engines/icb/common/px_common.h"
 #include "engines/icb/map_marker.h"
 #include "engines/icb/debug.h"
@@ -69,7 +67,7 @@ _map_marker *_marker::Fetch_marker_by_object_name(const char *name) {
 	}
 
 	// not found
-	return (NULL);
+	return (nullptr);
 }
 
 } // End of namespace ICB

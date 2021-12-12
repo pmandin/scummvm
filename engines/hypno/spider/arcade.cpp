@@ -35,10 +35,10 @@ static const int shootOriginIndex[9][2] = {
 
 void SpiderEngine::drawShoot(const Common::Point &target) {
 	uint32 c = _pixelFormat.RGBToColor(255, 255, 255);
-	uint32 ox;
-	uint32 oy;
+	uint32 ox = 0;
+	uint32 oy = 0;
 
-	if (_arcadeMode == "YC") {
+	if (_arcadeMode == "YC" || _arcadeMode == "YD") {
 		return; // Nothing to shoot
 	} else if (_arcadeMode == "YE") { 
 		ox = _screenW/2;
@@ -47,7 +47,9 @@ void SpiderEngine::drawShoot(const Common::Point &target) {
 		uint32 idx = MIN(2, target.x / (_screenW / 3)) + 3 * MIN(2, target.y / (_screenH / 3));
 		ox = 60  + shootOriginIndex[idx][0];
 		oy = 129 + shootOriginIndex[idx][1];
-	}
+	} else
+		error("Invalid arcade mode %s", _arcadeMode.c_str());
+
 	_compositeSurface->drawLine(ox, oy, target.x + 2, target.y, c);
 	_compositeSurface->drawLine(ox, oy, target.x, target.y, c);
 	_compositeSurface->drawLine(ox, oy, target.x - 2, target.y, c);
@@ -56,13 +58,86 @@ void SpiderEngine::drawShoot(const Common::Point &target) {
 }
 
 void SpiderEngine::drawPlayer() {
-	uint32 ox;
-	uint32 oy;
+	uint32 ox = 0;
+	uint32 oy = 0;
 
-	if (_arcadeMode == "YC") {
+	if (_arcadeMode == "YC" || _arcadeMode == "YD") {
+		disableCursor(); // Not sure this a good place
 		ox = 0;
 		oy = 0;
-		_playerFrameIdx = _playerPosition;
+
+		if (_playerFrameIdx < 0)
+			_playerFrameIdx = 0;
+		else if (_lastPlayerPosition != _currentPlayerPosition && (_playerFrameIdx % 4 == 0 || _playerFrameIdx % 4 == 3)) {
+
+			switch(_lastPlayerPosition) {
+				case PlayerLeft:
+					switch(_currentPlayerPosition) {
+						case PlayerTop:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 1;
+						break;
+						case PlayerBottom:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 13;
+						break;
+						case PlayerRight:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 45;
+						break;
+					}
+				break;
+				case PlayerRight:
+					switch(_currentPlayerPosition) {
+						case PlayerTop:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 5;
+						break;
+						case PlayerBottom:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 17;
+						break;
+						case PlayerLeft:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 33;
+						break;
+					}
+				break;
+				case PlayerBottom:
+					switch(_currentPlayerPosition) {
+						case PlayerTop:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 9;
+						break;
+						case PlayerLeft:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 29;
+						break;
+						case PlayerRight:
+							_lastPlayerPosition = _currentPlayerPosition;
+							_playerFrameIdx = 41;
+						break;
+					}
+				break;
+				case PlayerTop:
+					switch(_currentPlayerPosition) {
+						case PlayerBottom:
+							_playerFrameIdx = 21;
+						break;
+						case PlayerLeft:
+							_playerFrameIdx = 25;
+						break;
+						case PlayerRight:
+							_playerFrameIdx = 37;
+						break;
+					}
+				break;
+			}
+			_lastPlayerPosition = _currentPlayerPosition;
+		} else if (_playerFrameIdx % 4 != 0 && _playerFrameIdx % 4 != 3) {
+			_playerFrameIdx++;
+			_lastPlayerPosition = _currentPlayerPosition;
+		}
 	} else if (_arcadeMode == "YE") {
 		Common::Point mousePos = g_system->getEventManager()->getMousePos();
 		uint32 idx = mousePos.x / (_screenW / 5);
@@ -81,8 +156,16 @@ void SpiderEngine::drawPlayer() {
 			if (_playerFrameIdx >= (int)_playerFrames.size())
 				_playerFrameIdx = 0;
 		}
-	}
+	}  else
+		error("Invalid arcade mode %s", _arcadeMode.c_str());
+
 	drawImage(*_playerFrames[_playerFrameIdx], ox, oy, true);
+}
+
+void SpiderEngine::drawCursorArcade(const Common::Point &mousePos) {
+	if (_arcadeMode != "YC" && _arcadeMode != "YD") {
+		HypnoEngine::drawCursorArcade(mousePos);
+	}
 }
 
 void SpiderEngine::drawHealth() {

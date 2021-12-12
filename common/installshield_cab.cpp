@@ -64,10 +64,10 @@ public:
 	void close();
 
 	// Archive API implementation
-	virtual bool hasFile(const Path &path) const;
-	virtual int listMembers(ArchiveMemberList &list) const;
-	virtual const ArchiveMemberPtr getMember(const Path &path) const;
-	virtual SeekableReadStream *createReadStreamForMember(const Path &path) const;
+	bool hasFile(const Path &path) const override;
+	int listMembers(ArchiveMemberList &list) const override;
+	const ArchiveMemberPtr getMember(const Path &path) const override;
+	SeekableReadStream *createReadStreamForMember(const Path &path) const override;
 
 private:
 	struct FileEntry {
@@ -244,7 +244,7 @@ SeekableReadStream *InstallShieldCabinet::createReadStreamForMember(const Path &
 	ScopedPtr<SeekableReadStream> stream(SearchMan.createReadStreamForMember(getVolumeName((entry.volume == 0) ? 1 : entry.volume)));
 	if (!stream) {
 		warning("Failed to open volume for file '%s'", name.c_str());
-		return 0;
+		return nullptr;
 	}
 
 	if (!(entry.flags & 0x04)) {
@@ -291,7 +291,7 @@ Archive *makeInstallShieldArchive(const String &baseName) {
 	InstallShieldCabinet *cab = new InstallShieldCabinet();
 	if (!cab->open(baseName)) {
 		delete cab;
-		return 0;
+		return nullptr;
 	}
 
 	return cab;

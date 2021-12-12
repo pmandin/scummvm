@@ -31,25 +31,6 @@ namespace Scumm {
 
 namespace BundleCodecs {
 
-uint32 decode12BitsSample(const byte *src, byte **dst, uint32 size) {
-	uint32 loop_size = size / 3;
-	uint32 s_size = loop_size * 4;
-	byte *ptr = *dst = (byte *)malloc(s_size);
-	assert(ptr);
-
-	uint32 tmp;
-	while (loop_size--) {
-		byte v1 = *src++;
-		byte v2 = *src++;
-		byte v3 = *src++;
-		tmp = ((((v2 & 0x0f) << 8) | v1) << 4) - 0x8000;
-		WRITE_BE_UINT16(ptr, tmp); ptr += 2;
-		tmp = ((((v2 & 0xf0) << 4) | v3) << 4) - 0x8000;
-		WRITE_BE_UINT16(ptr, tmp); ptr += 2;
-	}
-	return s_size;
-}
-
 /*
  * The "IMC" codec below (see cases 13 & 15 in decompressCodec) is actually a
  * variant of the IMA codec, see also
@@ -60,8 +41,8 @@ uint32 decode12BitsSample(const byte *src, byte **dst, uint32 size) {
  * varies the size of each "packet" between 2 and 7 bits.
  */
 
-static byte *_destImcTable = NULL;
-static uint32 *_destImcTable2 = NULL;
+static byte *_destImcTable = nullptr;
+static uint32 *_destImcTable2 = nullptr;
 
 // This table is the "big brother" of Audio::ADPCMStream::_stepAdjustTable.
 static const byte imxOtherTable[6][64] = {
@@ -106,9 +87,9 @@ static const byte imxOtherTable[6][64] = {
 
 void releaseImcTables() {
 	free(_destImcTable);
-	_destImcTable = NULL;
+	_destImcTable = nullptr;
 	free(_destImcTable2);
-	_destImcTable2 = NULL;
+	_destImcTable2 = nullptr;
 }
 
 void initializeImcTables() {
@@ -305,7 +286,13 @@ int32 decompressADPCM(byte *compInput, byte *compOutput, int channels) {
 
 			// Clip outputWord to 16 bit signed, and write it into the destination stream
 			outputWord = CLIP<int32>(outputWord, -0x8000, 0x7fff);
-			WRITE_BE_UINT16(dst + destPos, outputWord);
+
+			// This is being written as-is (LE), without concerns regarding endianness:
+			// this is because the internal DiMUSE mixer handles the data in LE format,
+			// and we'll convert data to the appropriate format using the QueuingAudioStream flags
+			// when flushing the final audio data to the output stream (see IMuseDigital::waveOutWrite())
+			WRITE_UINT16(dst + destPos, outputWord);
+
 			destPos += channels << 1;
 
 			// Adjust the curTablePos

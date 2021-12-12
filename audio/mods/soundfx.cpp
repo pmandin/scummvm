@@ -62,7 +62,7 @@ protected:
 	void disablePaulaChannel(uint8 channel);
 	void setupPaulaChannel(uint8 channel, const int8 *data, uint16 len, uint16 repeatPos, uint16 repeatLen);
 
-	virtual void interrupt();
+	void interrupt() override;
 
 	uint8 _ticks;
 	uint16 _delay;
@@ -86,7 +86,7 @@ SoundFx::SoundFx(int rate, bool stereo, bool repeat, int periodScaleDivisor)
 	_curOrder = 0;
 	_curPos = 0;
 	memset(_ordersTable, 0, sizeof(_ordersTable));
-	_patternData = 0;
+	_patternData = nullptr;
 	memset(_effects, 0, sizeof(_effects));
 	_repeat = repeat;
 }
@@ -151,7 +151,7 @@ bool SoundFx::load(Common::SeekableReadStream *data, LoadSoundFxInstrumentCallba
 		} else {
 			if (ins->name[0]) {
 				ins->name[22] = '\0';
-				ins->data = (int8 *)(*loadCb)(ins->name, 0);
+				ins->data = (int8 *)(*loadCb)(ins->name, nullptr);
 				if (!ins->data) {
 					return false;
 				}
@@ -276,7 +276,7 @@ AudioStream *makeSoundFxStream(Common::SeekableReadStream *data, LoadSoundFxInst
 		return stream;
 	}
 	delete stream;
-	return 0;
+	return nullptr;
 }
 
 } // End of namespace Audio

@@ -27,7 +27,9 @@ namespace TwinE {
 
 enum TwineGameType {
 	GType_LBA = 1,
-	GType_LBA2 = 2
+	GType_LBA2 = 2,
+	// slideshow demo of lba1
+	GType_LBASHOW = 3
 };
 
 enum TwineFeatureFlags {

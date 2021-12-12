@@ -180,11 +180,12 @@ int KyraEngine_LoK::buttonAmuletCallback(Button *caller) {
 
 GUI_LoK::GUI_LoK(KyraEngine_LoK *vm, Screen_LoK *screen) : GUI_v1(vm), _vm(vm), _screen(screen) {
 	_lastScreenUpdate = 0;
-	_menu = 0;
+	_menu = nullptr;
 	_pressFlag = false;
 	initStaticResource();
 	_scrollUpFunctor = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::scrollUp);
 	_scrollDownFunctor = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::scrollDown);
+	_saveLoadNumSlots = (vm->gameFlags().lang == Common::ZH_TWN) ? 4 : 5;
 }
 
 GUI_LoK::~GUI_LoK() {
@@ -243,7 +244,7 @@ int GUI_LoK::processButtonList(Button *list, uint16 inputFlag, int8 mouseWheel) 
 
 		int x = list->x;
 		int y = list->y;
-		assert(_screen->getScreenDim(list->dimTableIndex) != 0);
+		assert(_screen->getScreenDim(list->dimTableIndex) != nullptr);
 
 		if (x < 0)
 			x += _screen->getScreenDim(list->dimTableIndex)->w << 3;
@@ -307,7 +308,7 @@ void GUI_LoK::processButton(Button *button) {
 		return;
 
 	int processType = 0;
-	const uint8 *shape = 0;
+	const uint8 *shape = nullptr;
 	Button::Callback callback;
 
 	int flags = (button->flags2 & 5);
@@ -333,7 +334,7 @@ void GUI_LoK::processButton(Button *button) {
 
 	int x = button->x;
 	int y = button->y;
-	assert(_screen->getScreenDim(button->dimTableIndex) != 0);
+	assert(_screen->getScreenDim(button->dimTableIndex) != nullptr);
 	if (x < 0)
 		x += _screen->getScreenDim(button->dimTableIndex)->w << 3;
 
@@ -503,7 +504,7 @@ int GUI_LoK::buttonMenuCallback(Button *caller) {
 
 	_toplevelMenu = 0;
 	if (_vm->_menuDirectlyToLoad) {
-		loadGameMenu(0);
+		loadGameMenu(nullptr);
 	} else {
 		if (!caller)
 			_toplevelMenu = 4;
@@ -534,7 +535,7 @@ void GUI_LoK::getInput() {
 	_vm->removeInputTop();
 
 	if (now - _lastScreenUpdate > 50) {
-		_vm->_system->updateScreen();
+		_screen->updateBackendScreen(true);
 		_lastScreenUpdate = now;
 	}
 
@@ -563,7 +564,7 @@ void GUI_LoK::setupSavegames(Menu &menu, int num) {
 	}
 
 	for (int i = startSlot; i < num; ++i)
-		menu.item[i].enabled = 0;
+		menu.item[i].enabled = false;
 
 	KyraEngine_LoK::SaveHeader header;
 	for (int i = startSlot; i < num && uint(_savegameOffset + i) < _saveSlots.size(); i++) {
@@ -589,7 +590,7 @@ void GUI_LoK::setupSavegames(Menu &menu, int num) {
 			}
 
 			menu.item[i].itemString = _savegameNames[i];
-			menu.item[i].enabled = 1;
+			menu.item[i].enabled = true;
 			menu.item[i].saveSlot = _saveSlots[i + _savegameOffset];
 			delete in;
 		}
@@ -611,7 +612,7 @@ int GUI_LoK::saveGameMenu(Button *button) {
 		_menu[2].item[i].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::saveGame);
 
 	_savegameOffset = 0;
-	setupSavegames(_menu[2], 5);
+	setupSavegames(_menu[2], _saveLoadNumSlots);
 
 	initMenu(_menu[2]);
 	updateAllMenuButtons();
@@ -655,7 +656,7 @@ int GUI_LoK::loadGameMenu(Button *button) {
 		_menu[2].item[i].callback = BUTTON_FUNCTOR(GUI_LoK, this, &GUI_LoK::loadGame);
 
 	_savegameOffset = 0;
-	setupSavegames(_menu[2], 5);
+	setupSavegames(_menu[2], _saveLoadNumSlots);
 
 	initMenu(_menu[2]);
 	updateAllMenuButtons();
@@ -687,12 +688,12 @@ int GUI_LoK::loadGameMenu(Button *button) {
 }
 
 void GUI_LoK::redrawTextfield() {
-	_screen->fillRect(38, 91, 287, 102, _vm->gameFlags().platform == Common::kPlatformAmiga ? 18 : 250);
+	_screen->fillRect(38, 91, 287, _vm->gameFlags().lang == Common::ZH_TWN ? 107 : 102, _vm->gameFlags().platform == Common::kPlatformAmiga ? 18 : 250);
 	_text->printText(_savegameName, 38, 92, 253, 0, 0);
 
 	_screen->_charSpacing = -2;
 	int width = _screen->getTextWidth(_savegameName);
-	_screen->fillRect(39 + width, 93, 45 + width, 100, _vm->gameFlags().platform == Common::kPlatformAmiga ? 31 : 254);
+	_screen->fillRect(39 + width, 93, 45 + width, _vm->gameFlags().lang == Common::ZH_TWN ? 105 : 100, _vm->gameFlags().platform == Common::kPlatformAmiga ? 31 : 254);
 	_screen->_charSpacing = 0;
 
 	_screen->updateScreen();
@@ -745,7 +746,7 @@ int GUI_LoK::saveGame(Button *button) {
 	_displaySubMenu = true;
 	_cancelSubMenu = false;
 
-	Screen::FontId cf = _screen->setFont(Screen::FID_8_FNT);
+	Screen::FontId cf = _screen->setFont(_vm->gameFlags().lang == Common::ZH_TWN ? Screen::FID_CHINESE_FNT : Screen::FID_8_FNT);
 
 	if (_savegameOffset == 0 && _vm->_gameToLoad == 0) {
 		_savegameName[0] = 0;
@@ -763,7 +764,7 @@ int GUI_LoK::saveGame(Button *button) {
 
 	while (_displaySubMenu && !_vm->shouldQuit()) {
 		checkTextfieldInput();
-		cf = _screen->setFont(Screen::FID_8_FNT);
+		cf = _screen->setFont(_vm->gameFlags().lang == Common::ZH_TWN ? Screen::FID_CHINESE_FNT : Screen::FID_8_FNT);
 		updateSavegameString();
 		_screen->setFont(cf);
 		processHighlights(_menu[3]);
@@ -966,7 +967,7 @@ void GUI_LoK::setupControls(Menu &menu) {
 			menu.item[4].labelString = _textSpeedString;
 		} else {
 			menu.item[4].enabled = 0;
-			menu.item[4].labelString = 0;
+			menu.item[4].labelString = nullptr;
 		}
 
 		switch (_vm->_configVoice) {
@@ -988,7 +989,7 @@ void GUI_LoK::setupControls(Menu &menu) {
 			clickableOffset = 5;
 
 		menu.item[4].enabled = 0;
-		menu.item[4].labelString = 0;
+		menu.item[4].labelString = nullptr;
 	}
 
 	switch (_vm->_configTextspeed) {
@@ -1064,7 +1065,7 @@ int GUI_LoK::scrollUp(Button *button) {
 
 	if (_savegameOffset > 0) {
 		_savegameOffset--;
-		setupSavegames(_menu[2], 5);
+		setupSavegames(_menu[2], _saveLoadNumSlots);
 		initMenu(_menu[2]);
 	}
 	return 0;
@@ -1074,9 +1075,9 @@ int GUI_LoK::scrollDown(Button *button) {
 	updateMenuButton(button);
 
 	_savegameOffset++;
-	if (uint(_savegameOffset + 5) >= _saveSlots.size())
-		_savegameOffset = MAX<int>(_saveSlots.size() - 5, 0);
-	setupSavegames(_menu[2], 5);
+	if (uint(_savegameOffset + _saveLoadNumSlots) >= _saveSlots.size())
+		_savegameOffset = MAX<int>(_saveSlots.size() - _saveLoadNumSlots, 0);
+	setupSavegames(_menu[2], _saveLoadNumSlots);
 	initMenu(_menu[2]);
 
 	return 0;
