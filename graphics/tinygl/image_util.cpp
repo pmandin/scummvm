@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -42,7 +41,7 @@ static inline int interpolate(int v00, int v01, int v10, int xf, int yf) {
 // TODO: more accurate resampling
 
 void GLContext::gl_resizeImage(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest,
-		    const Graphics::PixelBuffer &src, int xsize_src, int ysize_src) {
+	                       const Graphics::PixelBuffer &src, int xsize_src, int ysize_src) {
 	int point1_offset, point2_offset, point3_offset, dest_offset = 0;
 	int point_y_offset, point_offset;
 	float x1, y1, x1inc, y1inc;
@@ -91,15 +90,15 @@ void GLContext::gl_resizeImage(Graphics::PixelBuffer &dest, int xsize_dest, int 
 				} else
 					point2_offset = point_offset;
 			}
-			src.getARGBAt(point1_offset, r00, g00, b00, a00);
-			src.getARGBAt(point2_offset, r01, g01, b01, a01);
-			src.getARGBAt(point3_offset, r10, g10, b10, a10);
+			src.getARGBAt(point1_offset, a00, r00, g00, b00);
+			src.getARGBAt(point2_offset, a01, r01, g01, b01);
+			src.getARGBAt(point3_offset, a10, r10, g10, b10);
 			dest.setPixelAt(
 				dest_offset++,
+				interpolate(a00, a01, a10, xf, curr_yf),
 				interpolate(r00, r01, r10, xf, curr_yf),
 				interpolate(g00, g01, g10, xf, curr_yf),
-				interpolate(b00, b01, b10, xf, curr_yf),
-				interpolate(a00, a01, a10, xf, curr_yf)
+				interpolate(b00, b01, b10, xf, curr_yf)
 			);
 			x1 += x1inc;
 		}
@@ -111,7 +110,7 @@ void GLContext::gl_resizeImage(Graphics::PixelBuffer &dest, int xsize_dest, int 
 
 // resizing with no interlating nor nearest pixel
 void GLContext::gl_resizeImageNoInterpolate(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest,
-				 const Graphics::PixelBuffer &src, int xsize_src, int ysize_src) {
+	                                    const Graphics::PixelBuffer &src, int xsize_src, int ysize_src) {
 	int dest_offset = 0;
 	int x1, y1, x1inc, y1inc;
 	int yi;
@@ -125,8 +124,8 @@ void GLContext::gl_resizeImageNoInterpolate(Graphics::PixelBuffer &dest, int xsi
 		yi = (y1 >> FRAC_BITS) * xsize_src;
 		x1 = 0;
 		for (int x = 0; x < xsize_dest; x++) {
-			src.getARGBAt(yi + (x1 >> FRAC_BITS), r, g, b, a);
-			dest.setPixelAt(dest_offset++, r, g, b, a);
+			src.getARGBAt(yi + (x1 >> FRAC_BITS), a, r, g, b);
+			dest.setPixelAt(dest_offset++, a, r, g, b);
 			x1 += x1inc;
 		}
 		y1 += y1inc;

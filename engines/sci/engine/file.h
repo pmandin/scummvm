@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -36,7 +35,7 @@ enum kFileOpenMode {
 };
 
 enum {
-	kMaxSaveNameLength = 36, ///< Maximum length of a savegame name (including optional terminator character).
+	kMaxSaveNameLength = 36, ///< Maximum length of a savegame name (excluding terminator character)
 	kMaxNumSaveGames = 20 ///< Maximum number of savegames
 };
 
@@ -66,7 +65,11 @@ struct SavegameDesc {
 	int date;
 	int time;
 	int version;
-	char name[kMaxSaveNameLength];
+	// name is a null-terminated 36 character array in SCI16,
+	// but in SCI32 the 36th character can be used for text.
+	// At least Phant2 makes use of this. We add an element
+	// so that this string is always terminated internally.
+	char name[kMaxSaveNameLength + 1];
 	Common::String gameVersion;
 	uint32 script0Size;
 	uint32 gameObjectOffset;

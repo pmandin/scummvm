@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -40,16 +39,16 @@ static const int kHeroBeltMaxY = 471;
 
 static const TranscribedSound powerSounds[3][2] = {
 	{
-	    { "g0280nc0", _s("That's where hero power of strength will be stored when you earn it") },
-	    { "g0280ng0", _s("The power of strength will let you overcome obstacles but you'll need a complete set of hero powers to use it") }
+	    { "g0280nc0", _hs("That's where hero power of strength will be stored when you earn it") },
+	    { "g0280ng0", _hs("The power of strength will let you overcome obstacles but you'll need a complete set of hero powers to use it") }
 	},
 	{
-	    { "g0280nb0", _s("That's where hero power of stealth will be stored when you earn it") },
-	    { "g0280nf0", _s("The power of stealth allows you to sneak past things but you'll need a complete set of hero powers to use it") }
+	    { "g0280nb0", _hs("That's where hero power of stealth will be stored when you earn it") },
+	    { "g0280nf0", _hs("The power of stealth allows you to sneak past things but you'll need a complete set of hero powers to use it") }
 	},
 	{
-	    { "g0280ne0", _s("That's where hero power of wisdom will be stored when you earn it") },
-	    { "g0280nh0", _s("The power of wisdom will let you outwit and avoid deception but you'll need a complete set of hero powers to use it") }
+	    { "g0280ne0", _hs("That's where hero power of wisdom will be stored when you earn it") },
+	    { "g0280nh0", _hs("The power of wisdom will let you outwit and avoid deception but you'll need a complete set of hero powers to use it") }
 	},
 };
 
@@ -380,8 +379,10 @@ void HeroBelt::handleClick(Common::Point mousePos) {
 		if (q == inventoryName(i)) {
 			if (_holdingItem != kNone) {
 				if (persistent->_inventory[i] != kNone &&
-				    _holdingSlot != i)
+				    _holdingSlot != i) {
+					g_vm->fallbackClick();
 					return;
+				}
 				persistent->_inventory[_holdingSlot] = kNone;
 				persistent->_inventory[i] = _holdingItem;
 				_holdingItem = kNone;

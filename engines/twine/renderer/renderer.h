@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -39,7 +38,19 @@
 #define POLYGONTYPE_TRAME 6
 #define POLYGONTYPE_GOURAUD 7
 #define POLYGONTYPE_DITHER 8
-#define POLYGONTYPE_UNKNOWN 9
+#define POLYGONTYPE_OUTLINE 9
+
+#define MAT_TRISTE 0
+#define MAT_PIERRE 1
+#define MAT_COPPER 2
+#define MAT_BOPPER 3
+#define MAT_MARBRE 4
+#define MAT_TRANS 5
+#define MAT_TRAME 6
+#define MAT_FLAT 7
+#define MAT_GRANIT 8
+#define MAT_GOURAUD 9
+#define MAT_DITHER 10
 
 namespace TwinE {
 
@@ -162,7 +173,7 @@ private:
 	IMatrix3x3 _baseMatrix;
 	IMatrix3x3 _matricesTable[30 + 1];
 	IMatrix3x3 _shadeMatrix;
-	IVec3 _lightPos;
+	IVec3 _lightNorm;
 	IVec3 _baseRotPos;
 
 	RenderCommand _renderCmds[1000];

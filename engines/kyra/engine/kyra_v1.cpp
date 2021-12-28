@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -549,6 +548,8 @@ void KyraEngine_v1::delayWithTicks(int ticks) {
 void KyraEngine_v1::registerDefaultSettings() {
 	if (_flags.platform == Common::kPlatformFMTowns)
 		ConfMan.registerDefault("cdaudio", true);
+	else if (_flags.platform == Common::kPlatformMacintosh)
+		ConfMan.registerDefault("hqmusic", true);
 	if (_flags.fanLang != Common::UNK_LANG) {
 		// HACK/WORKAROUND: Since we can't use registerDefault here to overwrite
 		// the global subtitles settings, we're using this hack to enable subtitles
@@ -566,6 +567,8 @@ void KyraEngine_v1::readSettings() {
 	if (!ConfMan.getBool("music_mute")) {
 		if (_flags.platform == Common::kPlatformFMTowns)
 			_configMusic = ConfMan.getBool("cdaudio") ? 2 : 1;
+		else if (_flags.platform == Common::kPlatformMacintosh)
+			_configMusic = ConfMan.getBool("hqmusic") ? 1 : 2;
 		else
 			_configMusic = 1;
 	}
@@ -596,6 +599,8 @@ void KyraEngine_v1::writeSettings() {
 	ConfMan.setBool("music_mute", _configMusic == 0);
 	if (_flags.platform == Common::kPlatformFMTowns)
 		ConfMan.setBool("cdaudio", _configMusic == 2);
+	else if (_flags.platform == Common::kPlatformMacintosh)
+		ConfMan.setBool("hqmusic", _configMusic == 1);
 	ConfMan.setBool("sfx_mute", _configSounds == 0);
 
 	switch (_configVoice) {

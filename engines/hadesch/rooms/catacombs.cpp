@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -59,21 +58,21 @@ static const char *musicNames[] = {
 };
 
 static const TranscribedSound painSounds[] = {
-	{"SndPainBedtime", _s("It's bed time")},
-	{"SndPanicBoneHead", _s("Hey there, bonehead")},
-	{"SndPainRecognize", _s("Recognize the jewel?")} // Unclear
+	{"SndPainBedtime", _hs("It's bed time")},
+	{"SndPanicBoneHead", _hs("Hey there, bonehead")},
+	{"SndPainRecognize", _hs("Recognize the jewel?")} // Unclear
 };
 
 static const TranscribedSound painSounds2[] = {
-	{"SndPanicLightsOut", _s("He-he. Lights out") },
-	{"SndPainByeBye", _s("Bye-Bye")},
-	{"SndPanicMaybeHit", _s("Maybe it will hit ya")}
+	{"SndPanicLightsOut", _hs("He-he. Lights out") },
+	{"SndPainByeBye", _hs("Bye-Bye")},
+	{"SndPanicMaybeHit", _hs("Maybe it will hit ya")}
 };
 
 static const TranscribedSound guardSpeeches[] = {
-	{"T3220wA0", _s("Do you think we were going to let you just walk into Troy?")},
-	{"T3220wB0", _s("So sorry, noone is allowed in. So beat it")},
-	{"T3220wC0", _s("Hey, Troy is closed to all visitors. Take a hike")}
+	{"T3220wA0", _hs("Do you think we were going to let you just walk into Troy?")},
+	{"T3220wB0", _hs("So sorry, noone is allowed in. So beat it")},
+	{"T3220wC0", _hs("Hey, Troy is closed to all visitors. Take a hike")}
 };
 
 enum {

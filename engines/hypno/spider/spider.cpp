@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -152,44 +151,122 @@ void SpiderEngine::loadAssetsFullGame() {
 	cl = new ChangeLevel("c4"); // depens on the difficulty
 	sc->hots[4].actions.push_back(cl);
 
-	loadSceneLevel("int_roof.mi_", "recept.mi_", prefix);
+	loadSceneLevel("int_roof.mi_", "", prefix);
 	sc = (Scene *) _levels["int_roof.mi_"];
-	sc->intros.push_back("cine/leapup.smk");
+	cl = new ChangeLevel("<recept>");
+	sc->hots[1].actions.push_back(cl);
+	cl = new ChangeLevel("<boil_selector_1>");
+	sc->hots[2].actions.push_back(cl);
 	Overlay *over = (Overlay*) sc->hots[0].actions[2];
 	over->path = "int_alof\\ROOFB1.SMK"; // seems to be a bug?
 
-	loadSceneLevel("alofintr.mi_", "<boil_selector>", prefix);
-	
-	Transition *boil_selector = new Transition("boiler.mi_", "boilhard.mi_");
-	_levels["<boil_selector>"] = boil_selector;
-	_levels["<boil_selector>"]->intros.push_back("spider/cine/leapdown.smk");
+	loadSceneLevel("alofintr.mi_", "<boil_selector_1>", prefix);
+	sc = (Scene *) _levels["alofintr.mi_"];
+	sc->intros.push_back("cine/swc002as.smk");
+	// This is necessary, for some reason
+	Global *gl = new Global("GS_SWITCH1", "TURNON");	// alarm system
+	sc->hots[2].actions.push_back(gl);
+	gl = new Global("GS_SWITCH2", "TURNON");			// camera
+	sc->hots[2].actions.push_back(gl);
+	gl = new Global("GS_SWITCH3", "TURNON");			// lights recept
+	sc->hots[2].actions.push_back(gl);
+	gl = new Global("GS_SWITCH4", "TURNON");			// Side A door
+	sc->hots[2].actions.push_back(gl);
+	gl = new Global("GS_SWITCH5", "TURNON");			// Side B door
+	sc->hots[2].actions.push_back(gl);
+	gl = new Global("GS_SWITCH6", "TURNON");			// Office light
+	sc->hots[2].actions.push_back(gl);
+
+	Transition *boil_selector_1 = new Transition("boiler.mi_", "boilhard.mi_");
+	_levels["<boil_selector_1>"] = boil_selector_1;
+	_levels["<boil_selector_1>"]->intros.push_back("spider/cine/leapdown.smk");
+
+	Transition *boil_selector_2 = new Transition("boiler.mi_", "boilhard.mi_");
+	_levels["<boil_selector_2>"] = boil_selector_2;
 
 	loadSceneLevel("boiler.mi_", "", prefix);
 	sc = (Scene *) _levels["boiler.mi_"];
 	over = (Overlay*) sc->hots[0].actions[2];
 	over->path = "int_alof\\BOILB1.SMK"; // seems to be a bug?
+
+	Code *fuse_panel = new Code();
+	fuse_panel->name = "<fuse_panel>";
+	fuse_panel->levelIfWin = "<boil_selector_2>";
+	_levels["<fuse_panel>"] = fuse_panel;
+
+	Code *office = new Code();
+	office->name = "<office>";
+	_levels["<office>"] = office;
 	
-	cl = new ChangeLevel("int_roof.mi_");
+	cl = new ChangeLevel("<back_roof_1>");
 	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("<fuse_panel>");
+	sc->hots[3].actions.push_back(cl);
+
+	Transition *back_roof_1 = new Transition("int_roof.mi_");
+	_levels["<back_roof_1>"] = back_roof_1;
+	_levels["<back_roof_1>"]->intros.push_back("spider/cine/leapup.smk");
 
 	loadSceneLevel("boilhard.mi_", "", prefix);
 	sc = (Scene *) _levels["boilhard.mi_"];
 	over = (Overlay*) sc->hots[0].actions[2];
 	over->path = "int_alof\\BOILB1.SMK"; // seems to be a bug?
 
-	cl = new ChangeLevel("int_roof.mi_");
+	cl = new ChangeLevel("<back_roof_1>");
 	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("<fuse_panel>");
+	sc->hots[3].actions.push_back(cl);
+
+	Code *file_cabinet = new Code();
+	file_cabinet->name = "<file_cabinet>";
+	file_cabinet->levelIfWin = "<alveroff_selector>";
+	_levels["<file_cabinet>"] = file_cabinet;
 
 	loadSceneLevel("alverofh.mi_", "", prefix);
 	loadSceneLevel("alveroff.mi_", "", prefix);
+	sc = (Scene *) _levels["alveroff.mi_"];
+
+	cl = new ChangeLevel("<tape>");
+	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("<file_cabinet>");
+	sc->hots[3].actions.push_back(cl);
+
+	Transition *tape = new Transition("decide4.mi_");
+	_levels["<tape>"] = tape;
+	_levels["<tape>"]->intros.push_back("spider/cine/iaos001s.smk");
+
 	Transition *alveroff_selector = new Transition("alveroff.mi_", "alverofh.mi_");
 	_levels["<alveroff_selector>"] = alveroff_selector;
 
+	Code *recept = new Code();
+	recept->name = "<recept>";
+	_levels["<recept>"] = recept;
+
 	loadSceneLevel("recept.mi_", "", prefix);
 	sc = (Scene *) _levels["recept.mi_"];
+	sc->intros.push_back("cine/recpinto.smk");
 	over = (Overlay*) sc->hots[0].actions[2];
 	over->path = "int_alof\\rec0B1.SMK"; // seems to be a bug?
 
+	cl = new ChangeLevel("<back_roof_2>");
+	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("<door_a>");
+	sc->hots[3].actions.push_back(cl);
+
+	cl = new ChangeLevel("<office>");
+	sc->hots[4].actions.push_back(cl);
+
+	Transition *door_a = new Transition("<over_apt_5>");
+	door_a->intros.push_back("spider/cine/iobs002s.smk");
+	_levels["<door_a>"] = door_a;
+
+	Transition *back_roof_2 = new Transition("int_roof.mi_");
+	_levels["<back_roof_2>"] = back_roof_2;
+	_levels["<back_roof_2>"]->intros.push_back("spider/cine/recpout.smk");
 
 	loadArcadeLevel("c4.mi_", "c2", prefix);
 	loadArcadeLevel("c2.mi_", "decide4.mi_", prefix);
@@ -198,13 +275,20 @@ void SpiderEngine::loadAssetsFullGame() {
 
 	loadSceneLevel("decide4.mi_", "", prefix);
 	sc = (Scene *) _levels["decide4.mi_"];
+	sc->intros.push_back("cine/apts006s.smk");
 	cl = new ChangeLevel("ball1.mi_");
 	sc->hots[2].actions.push_back(cl);
 	cl = new ChangeLevel("c5"); // depens on the difficulty
 	sc->hots[4].actions.push_back(cl);
 
-	loadArcadeLevel("c5.mi_", "factory1.mi_", prefix);
-	loadArcadeLevel("c5h.mi_", "factory1.mi_", prefix);
+	loadArcadeLevel("c5.mi_", "<trans_apt_6>", prefix);
+	_levels["c5.mi_"]->intros.push_back("cine/ctss001s.smk");
+	loadArcadeLevel("c5h.mi_", "<trans_apt_6>", prefix);
+	_levels["c5h.mi_"]->intros.push_back("cine/ctss001s.smk");
+
+	Transition *trans_apt_6 = new Transition("factory1.mi_");
+	trans_apt_6->intros.push_back("spider/cine/apts06as.smk");
+	_levels["<trans_apt_6>"] = trans_apt_6;
 
 	loadSceneLevel("ball1.mi_", "<note>", prefix);
 	loadSceneLevel("ball2.mi_", "balcony.mi_", prefix);
@@ -216,44 +300,149 @@ void SpiderEngine::loadAssetsFullGame() {
 	_levels["<note>"] = note;
 
 	loadSceneLevel("factory1.mi_", "intercom.mi_", prefix);
+	_levels["factory1.mi_"]->intros.push_back("cine/swc003s.smk");
 	loadSceneLevel("intercom.mi_", "c3", prefix);
 
-	loadArcadeLevel("c3.mi_", "", prefix);
-	loadArcadeLevel("c3h.mi_", "", prefix);
+	loadArcadeLevel("c3.mi_", "c6", prefix);
+	_levels["c3.mi_"]->intros.push_back("cine/vrfs001s.smk");
 
-	loadSceneLevel("movie2.mi_", "", prefix);
-	//_levels["buspuz.mi_"]->intros.push_back("cine/ppv001s.smk");
-
-	// Transition *bus_transition = new Transition("buspuz.mi_");
-	// bankEasy->intros.push_back("spider/cine/dia002s.smk");
-	// _levels["<bus_transition>"] = bankEasy;
-
-	// Transition *bankHard = new Transition();
-	// bankHard->level = "buspuz.mi_";
-	// bankHard->intros.push_back("spider/cine/bals003s.smk");
-	// _levels["<bank_hard>"] = bankHard;
+	loadArcadeLevel("c3h.mi_", "c6", prefix);
+	_levels["c3h.mi_"]->intros.push_back("cine/vrfs001s.smk");
 
 	// Easy arcade levels
 
-	//loadArcadeLevel("c6.mi_", "", "spider");
-	// No c7 level?
-	loadArcadeLevel("c8.mi_", "", prefix);
-	loadArcadeLevel("c9.mi_", "", prefix);
+	loadArcadeLevel("c6.mi_", "<lock>", "spider");
+	_levels["c6.mi_"]->intros.push_back("cine/vrfs002s.smk");
+	_levels["c6.mi_"]->intros.push_back("cine/dia007s.smk");
+
+	Code *lock = new Code();
+	lock->name = "<lock>";
+	lock->levelIfWin = "movie2.mi_";
+	_levels["<lock>"] = lock;
+
+	loadSceneLevel("movie2.mi_", "decide5.mi_", prefix);
+	_levels["movie2.mi_"]->intros.push_back("cine/vrfs003s.smk");
+	loadSceneLevel("decide5.mi_", "", prefix);
+	sc = (Scene *) _levels["decide5.mi_"];
+
+	cl = new ChangeLevel("movie3.mi_");
+	sc->hots[2].actions.push_back(cl);
+
+	loadSceneLevel("movie3.mi_", "movie4.mi_", prefix);
+	_levels["movie3.mi_"]->intros.push_back("cine/imss001s.smk");
+	loadSceneLevel("movie4.mi_", "<fuse_box>", prefix);
+	_levels["movie4.mi_"]->intros.push_back("cine/imss002s.smk");
+	Code *fuse_box = new Code();
+	fuse_box->name = "<fuse_box>";
+	fuse_box->levelIfWin = "<trans_fuse_box>";
+	_levels["<fuse_box>"] = fuse_box;
+
+	Transition *trans_fuse_box = new Transition("decide6.mi_");
+	trans_fuse_box->intros.push_back("spider/cine/dia009s.smk");
+	trans_fuse_box->intros.push_back("spider/cine/imss003s.smk");
+	_levels["<trans_fuse_box>"] = trans_fuse_box;
+
+	loadSceneLevel("decide6.mi_", "", prefix);
+	sc = (Scene *) _levels["decide6.mi_"];
+
+	cl = new ChangeLevel("shoctalk.mi_");
+	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("decide10.mi_");
+	sc->hots[4].actions.push_back(cl);
+
+	loadSceneLevel("shoctalk.mi_", "decide7.mi_", prefix);
+	_levels["shoctalk.mi_"]->intros.push_back("cine/vrfs004s.smk");
+
+	loadSceneLevel("decide7.mi_", "", prefix);
+	sc = (Scene *) _levels["decide7.mi_"];
+
+	cl = new ChangeLevel("decide8.mi_");
+	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("c13.mi_");
+	sc->hots[4].actions.push_back(cl);
+
+	loadArcadeLevel("c13.mi_", "<after_c13>", prefix);
+	_levels["c13.mi_"]->intros.push_back("cine/spf007bs.smk");
+
+	loadArcadeLevel("c13h.mi_", "<after_c13>", prefix);
+	_levels["c13h.mi_"]->intros.push_back("cine/spf007bs.smk");
+
+	Transition *after_c13 = new Transition("c12");
+	after_c13->intros.push_back("spider/cine/vrfs06bs.smk");
+	_levels["<after_c13>"] = after_c13;
+
+	loadSceneLevel("decide8.mi_", "", prefix);
+	sc = (Scene *) _levels["decide8.mi_"];
+
+	cl = new ChangeLevel("c8");
+	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("c9"); // TODO
+	sc->hots[4].actions.push_back(cl);
+
+	loadArcadeLevel("c8.mi_", "<after_c8>", prefix);
+	_levels["c8.mi_"]->intros.push_back("cine/utns001s.smk");
+	loadArcadeLevel("c8h.mi_", "<after_c8>", prefix);
+	_levels["c8.mi_"]->intros.push_back("cine/utns001s.smk");
+
+	Transition *after_c8 = new Transition("c10");
+	after_c8->intros.push_back("spider/cine/utns002s");
+	_levels["<after_c8>"] = after_c8;
+
+	loadArcadeLevel("c9.mi_", "<after_c9>", prefix);
+	_levels["c9.mi_"]->intros.push_back("cine/vrfs005s.smk");
+	loadArcadeLevel("c9h.mi_", "<after_c9>", prefix);
+	_levels["c9h.mi_"]->intros.push_back("cine/vrfs005s.smk");
+
+	Transition *after_c9 = new Transition("c10");
+	after_c9->intros.push_back("spider/cine/utns006s.smk");
+	_levels["<after_c9>"] = after_c9;
+
 	loadArcadeLevel("c10.mi_", "", prefix);
-	loadArcadeLevel("c11.mi_", "", prefix);
+	_levels["c10.mi_"]->intros.push_back("cine/utns003s.smk");
+	loadArcadeLevel("c10h.mi_", "", prefix);
+	_levels["c10h.mi_"]->intros.push_back("cine/utns003s.smk");
+
+	Transition *after_c10 = new Transition("docoffic.mi_");
+	after_c10->intros.push_back("spider/cine/utns004s.smk");
+	_levels["<after_c10>"] = after_c10;
+
+	loadSceneLevel("docoffic.mi_", "decide9.mi_", prefix);
+	//_levels["docoffic.mi_"]->intros.push_back("cine/????.smk");
+
+	loadSceneLevel("decide9.mi_", "", prefix);
+
+	loadSceneLevel("decide10.mi_", "", prefix);
+	sc = (Scene *) _levels["decide10.mi_"];
+	sc->intros.push_back("cine/dia012s.smk");
+
+	cl = new ChangeLevel("docoffi1.mi_");
+	sc->hots[2].actions.push_back(cl);
+
+	cl = new ChangeLevel("<dont_believe_mason>");
+	sc->hots[4].actions.push_back(cl);
+
+	loadSceneLevel("docoffi1.mi_", "c12", prefix);
+	_levels["docoffi1.mi_"]->intros.push_back("cine/doocin2s.smk");
+
 	loadArcadeLevel("c12.mi_", "", prefix);
-	loadArcadeLevel("c13.mi_", "", prefix);
+	loadArcadeLevel("c12h.mi_", "", prefix);
+
+	// No c7 level?
+	loadArcadeLevel("c11.mi_", "", prefix);
 
 	// // Hard arcade levels
 
-	//loadArcadeLevel("c6h.mi_", "", "spider");
+	loadArcadeLevel("c6h.mi_", "<lock>", prefix);
+	_levels["c6h.mi_"]->intros.push_back("cine/vrfs002s.smk");
+	_levels["c6h.mi_"]->intros.push_back("cine/dia007s.smk");
+
 	// No c7h level?
-	loadArcadeLevel("c8h.mi_", "", prefix);
-	loadArcadeLevel("c9h.mi_", "", prefix);
-	loadArcadeLevel("c10h.mi_", "", prefix);
 	loadArcadeLevel("c11h.mi_", "", prefix);
-	loadArcadeLevel("c12h.mi_", "", prefix);
-	loadArcadeLevel("c13h.mi_", "", prefix);
+
+	loadSceneLevel("decide11.mi_", "", prefix);
 
 	// start level
 	Transition *start = new Transition("mainmenu.mi_");
@@ -264,7 +453,7 @@ void SpiderEngine::loadAssetsFullGame() {
 	sc = (Scene *) _levels["mainmenu.mi_"];
 	cl = new ChangeLevel("levels.mi_");
 	sc->hots[1].actions.push_back(cl);
-	
+
 	cl = new ChangeLevel("options.mi_");
 	sc->hots[4].actions.push_back(cl);
 
@@ -278,7 +467,7 @@ void SpiderEngine::loadAssetsFullGame() {
 	sc->hots[3].actions.push_back(cl);
 	sc->hots[4].actions.push_back(cl);
 
-	Global *gl = new Global("GS_LEVELWON", "TURNON");
+	gl = new Global("GS_LEVELWON", "TURNON");
 	sc->hots[5].actions.push_back(gl);
 	cl = new ChangeLevel("mainmenu.mi_");
 	sc->hots[6].actions.push_back(cl);
@@ -333,6 +522,15 @@ void SpiderEngine::loadAssetsFullGame() {
 	Transition *over_apt_1 = new Transition("tryagain.mi_");
 	over_apt_1->intros.push_back("spider/cine/apts01as.smk");
 	_levels["<over_apt_1>"] = over_apt_1;
+
+	Transition *over_apt_5 = new Transition("tryagain.mi_");
+	over_apt_5->intros.push_back("spider/cine/apts05as.smk");
+	_levels["<over_apt_5>"] = over_apt_5;
+
+	Transition *dont_believe_mason = new Transition("<credits>");
+	dont_believe_mason->intros.push_back("spider/cine/doos004s.smk");
+	_levels["<dont_believe_mason>"] = dont_believe_mason;
+	
 	_nextLevel = "<start>";
 }
 
@@ -403,301 +601,6 @@ void SpiderEngine::loadAssetsDemo() {
 	_levels["<puz_matr>"] = matrix;
 	_soundPath = "c_misc/sound.lib/";
 	_nextLevel = "<start>";
-}
-
-void SpiderEngine::runCode(Code *code) {
-	if (code->name == "<puz_matr>")
-		runMatrix(code);
-	else if (code->name == "<note>")
-		runNote(code);
-	else if (code->name == "<credits>")
-		showCredits();
-	else
-		error("invalid puzzle");
-}
-
-void SpiderEngine::runMatrix(Code *code) {
-	changeScreenMode("640x480");
-	Common::Point mousePos;
-	Common::Event event;
-
-	defaultCursor();
-	bool data[10][10] = {};
-	bool solution[10][10] = {
-		{0, 0, 0, 1, 1, 1, 1, 0, 0, 0},
-		{0, 0, 1, 1, 1, 1, 1, 1, 0, 0},
-		{0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-		{0, 1, 1, 0, 0, 0, 0, 1, 1, 0},
-		{0, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-		{0, 0, 1, 1, 1, 1, 1, 1, 0, 0},
-		{0, 0, 1, 1, 0, 0, 1, 1, 0, 0},
-		{0, 0, 1, 1, 0, 0, 1, 1, 0, 0},
-		{0, 0, 0, 1, 0, 0, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-	};
-	Common::Rect matrix(175, 96, 461, 385);
-	Common::Rect cell(0, 0, 27, 27);
-	uint32 activeColor = _pixelFormat.RGBToColor(0, 130, 0);
-	uint32 deactiveColor = _pixelFormat.RGBToColor(0, 0, 0);
-
-	MVideo *v;
-
-	if (isDemo()) {
-		loadImage("sixdemo/puz_matr/matrixbg.smk", 0, 0, false);
-		v = new MVideo("sixdemo/puz_matr/matintro.smk", Common::Point(0, 0), false, false, false);
-	} else {
-		loadImage("spider/puz_ally/matrixbg.smk", 0, 0, false);
-		v = new MVideo("spider/puz_ally/matintro.smk", Common::Point(0, 0), false, false, false);
-	}
-
-	playVideo(*v);
-	while (!shouldQuit()) {
-
-		while (g_system->getEventManager()->pollEvent(event)) {
-			mousePos = g_system->getEventManager()->getMousePos();
-			// Events
-			switch (event.type) {
-
-			case Common::EVENT_QUIT:
-			case Common::EVENT_RETURN_TO_LAUNCHER:
-				break;
-
-			case Common::EVENT_LBUTTONDOWN:
-				if (isDemo())
-					playSound("sixdemo/demo/sound.lib/matrix.raw", 1);
-				else
-					playSound("spider/sound.lib/matrix.raw", 1);
-
-				if (matrix.contains(mousePos)) {
-					int x = (mousePos.x - 175) / 29;
-					int y = (mousePos.y - 96) / 29;
-					cell.moveTo(175 + 29 * x + 1, 96 + 29 * y + 1);
-					_compositeSurface->fillRect(cell, data[x][y] ? deactiveColor : activeColor);
-					data[x][y] = !data[x][y];
-				}
-				break;
-
-			default:
-				break;
-			}
-		}
-
-		bool found = true;
-		for (int x = 0; x < 10; x++) {
-			for (int y = 0; y < 10; y++) {
-				if (data[x][y] != solution[y][x]) {
-					found = false;
-					break;
-				}
-			}
-			if (!found)
-				break;
-		}
-
-		if (found) {
-			if (isDemo())
-				playSound("sixdemo/demo/sound.lib/matrix_2.raw", 1);
-			else {
-				MVideo video("spider/cine/shv001s.smk", Common::Point(0, 0), false, false, false);
-				runIntro(video);
-			}
-
-			_nextLevel = code->levelIfWin;
-			return;
-		}
-
-		if (v->decoder->needsUpdate()) {
-			updateScreen(*v);
-		}
-
-		drawScreen();
-		g_system->delayMillis(10);
-	}
-}
-
-void SpiderEngine::runNote(Code *code) {
-	const char alphaES[] = "abcdefghijklmnopqrstuvwxyz~";
-	const char alphaEN[] = "abcdefghijklmnopqrstuvwxyz";
-
-	const char solEasyES1[] = "hable cpn el svtp z talwe a";
-	const char solEasyES2[] = "masz jane";
-	char placeEasyES[] = "????? ??? ?? ???? ? ????? ?";
-
-	const char solEasyEN1[] = "talk with the russian and save";
-	const char solEasyEN2[] = "mary jane";
-	char placeEasyEN[] = "????? ???? ??????? ????? ??? ????";
-
-	char placeEasy2[] = "???? ????";
-
-	const char solHardES1[] = "encvenuse a tmesdzakpw p tv";
-	const char solHardES2[] = "mvjes mpsisa";
-	char placeHardES[] = "????????? ? ?????????? ? ??";
-	char placeHardES2[] = "????? ??????";
-
-	const char solHardEN1[] = "find smerdyakov or your wife";
-	const char solHardEN2[] = "dies";
-	char placeHardEN[] = "???? ?????????? ?? ???? ??? ????";
-	char placeHardEN2[] = "???? ????";
-
-	changeScreenMode("640x480");
-	Common::Point mousePos;
-	Common::Event event;
-
-	defaultCursor();
-	Common::String alpha;
-	Common::String selected = " ";
-	char *firstSentence;
-	char *secondSentence;
-	Common::String firstSolution;
-	Common::String secondSolution;
-
-	switch (_language) {
-		case Common::EN_USA:
-			alpha = alphaEN;
-			if (_sceneState["GS_PUZZLELEVEL"] == 0) { // easy
-				firstSentence = (char*) &placeEasyEN;
-				secondSentence = (char*) &placeEasy2;
-				firstSolution = solEasyEN1;
-				secondSolution = solEasyEN2;
-			} else { // hard 
-				firstSentence = (char*) &placeHardEN;
-				secondSentence = (char*) &placeHardEN2;
-				firstSolution = solHardEN1;
-				secondSolution = solHardEN2;
-			}
-		break;
-	
-		case Common::ES_ESP:
-			alpha = alphaES;
-			if (_sceneState["GS_PUZZLELEVEL"] == 0) { // easy
-				firstSentence = (char*) &placeEasyES;
-				secondSentence = (char*) &placeEasy2;
-				firstSolution = solEasyES1; 
-				secondSolution = solEasyES2;
-			} else { // hard 
-				firstSentence = (char*) &placeHardES;
-				secondSentence = (char*) &placeHardES2;
-				firstSolution = solHardES1;
-				secondSolution = solHardES2;
-			}
-		break;
-		default:
-			error("Unsupported language");
-		break;
-	}
-
-	float firstSentenceLength = strlen(firstSentence);
-	float secondSentenceLength = strlen(secondSentence);
-	Common::Rect letterBox(22, 442, 554, 455); 
-	Common::Rect firstSentenceBox(21, 140, 560, 162); 
-	Common::Rect secondSentenceBox(21, 140, 196, 201); 
-
-	Frames letters = decodeFrames("spider/int_ball/letters.smk");
-	Common::Point size(letters[0]->w, letters[0]->h); 
-
-	if (_sceneState["GS_PUZZLELEVEL"] == 0) { // easy
-		MVideo v("spider/int_ball/ppv007es.smk", Common::Point(0, 0), false, false, false);
-		runIntro(v);
-		loadImage("spider/int_ball/enote.smk", 0, 0, false);
-	} else { // hard
-		MVideo v("spider/int_ball/ppv007hs.smk", Common::Point(0, 0), false, false, false);
-		runIntro(v);
-		loadImage("spider/int_ball/hnote.smk", 0, 0, false);
-	}
-	
-	while (!shouldQuit()) {
-
-		while (g_system->getEventManager()->pollEvent(event)) {
-			mousePos = g_system->getEventManager()->getMousePos();
-			uint32 o1x = 21;
-			uint32 o1y = 140;
-
-			uint32 o2x = 21;
-			uint32 o2y = 180;
-
-			// Events
-			switch (event.type) {
-
-			case Common::EVENT_QUIT:
-			case Common::EVENT_RETURN_TO_LAUNCHER:
-				break;
-
-			case Common::EVENT_LBUTTONDOWN:
-
-				if (letterBox.contains(mousePos)) {
-					uint32 idx = (mousePos.x - 21) / (letterBox.width() / (alpha.size()-1));
-					selected = alpha[idx];
-					//debug("%s", selected.c_str());
-				} else if (firstSentenceBox.contains(mousePos)) {
-					if (!selected.empty()) {
-						uint32 idx = float(mousePos.x - 21) / (firstSentenceBox.width() / firstSentenceLength);
-						//debug("idx: %d", idx);
-						if (firstSentence[idx] != ' ') {
-							firstSentence[idx] = selected[0];
-							//debug("%s", firstSentence);
-						}
-					}
-				} else if (secondSentenceBox.contains(mousePos)) {
-					if (!selected.empty()) {
-						uint32 idx = float(mousePos.x - 21) / (secondSentenceBox.width() / secondSentenceLength);
-						//debug("idx: %d", idx);
-						if (secondSentence[idx] != ' ') {
-							secondSentence[idx] = selected[0];
-							//debug("%s", secondSentence);
-						}
-					}
-				}
-
-				for (uint i = 0; i < strlen(firstSentence); i++) {
-					if (firstSentence[i] != '?' && firstSentence[i] != ' ') {
-						if (firstSentence[i] == '~')
-							drawImage(*letters[26], o1x, o1y, false); // ñ
-						else  
-							drawImage(*letters[firstSentence[i]-97], o1x, o1y, false);
-
-					}
-					o1x = o1x + size.x;
-				}
-
-				for (uint i = 0; i < strlen(secondSentence); i++) {
-					if (secondSentence[i] != '?' && secondSentence[i] != ' ') {
-						if (secondSentence[i] == '~')
-							drawImage(*letters[26], o2x, o2y, false); // ñ
-						else  
-							drawImage(*letters[secondSentence[i]-97], o2x, o2y, false);
-					}
-					o2x = o2x + size.x;
-				}
-
-				break;
-
-			default:
-				break;
-			}
-		}
-
-		if (firstSentence == firstSolution && secondSentence == secondSolution) {
-			if (_sceneState["GS_PUZZLELEVEL"] == 0 && Common::File::exists("spider/int_ball/ppv008es.smk")) {
-				MVideo v("spider/int_ball/ppv008es.smk", Common::Point(0, 0), false, false, false);
-				runIntro(v);
-			} else if (_sceneState["GS_PUZZLELEVEL"] == 1 && Common::File::exists("spider/int_ball/ppv008hs.smk")) {
-				MVideo v("spider/int_ball/ppv008hs.smk", Common::Point(0, 0), false, false, false);
-				runIntro(v);
-			}
-
-			_nextLevel = code->levelIfWin;
-			return;
-		}
-
-		drawScreen();
-		g_system->delayMillis(10);
-	}
-}
-
-void SpiderEngine::showCredits() {
-	changeScreenMode("640x480");
-	MVideo video("cine/credits.smk", Common::Point(0, 0), false, false, false);
-	runIntro(video);
 }
 
 Common::String SpiderEngine::findNextLevel(const Transition *trans) { 

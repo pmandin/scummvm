@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -31,7 +30,7 @@
 namespace TinyGL {
 
 template <bool kDepthWrite>
-FORCEINLINE void FrameBuffer::putPixel(unsigned int pixelOffset, int color, int x, int y, unsigned int z) {
+FORCEINLINE void FrameBuffer::putPixel(uint pixelOffset, int color, int x, int y, uint z) {
 	if (_enableScissor)
 		putPixel<kDepthWrite, true>(pixelOffset, color, x, y, z);
 	else
@@ -39,18 +38,18 @@ FORCEINLINE void FrameBuffer::putPixel(unsigned int pixelOffset, int color, int 
 }
 
 template <bool kDepthWrite, bool kEnableScissor>
-FORCEINLINE void FrameBuffer::putPixel(unsigned int pixelOffset, int color, int x, int y, unsigned int z) {
+FORCEINLINE void FrameBuffer::putPixel(uint pixelOffset, int color, int x, int y, uint z) {
 	if (kEnableScissor && scissorPixel(x, y)) {
 		return;
 	}
-	unsigned int *pz = _zbuf + pixelOffset;
+	uint *pz = _zbuf + pixelOffset;
 	if (compareDepth(z, *pz)) {
 		writePixel<true, true, kDepthWrite>(pixelOffset, color, z);
 	}
 }
 
 template <bool kEnableScissor>
-FORCEINLINE void FrameBuffer::putPixel(unsigned int pixelOffset, int color, int x, int y) {
+FORCEINLINE void FrameBuffer::putPixel(uint pixelOffset, int color, int x, int y) {
 	if (kEnableScissor && scissorPixel(x, y)) {
 		return;
 	}
@@ -142,9 +141,9 @@ void FrameBuffer::drawLine(const ZBufferPoint *p1, const ZBufferPoint *p2) {
 }
 
 void FrameBuffer::plot(ZBufferPoint *p) {
-	const unsigned int pixelOffset = p->y * _pbufWidth + p->x;
+	const uint pixelOffset = p->y * _pbufWidth + p->x;
 	const int col = RGB_TO_PIXEL(p->r, p->g, p->b);
-	const unsigned int z = p->z;
+	const uint z = p->z;
 	if (_depthWrite && _depthTestEnabled)
 		putPixel<true>(pixelOffset, col, p->x, p->y, z);
 	else

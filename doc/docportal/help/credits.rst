@@ -540,8 +540,8 @@ Groovie
    * - Jordi Vilalta Prat
      -
 
-Hades' Challenge
-^^^^^^^^^^^^^^^^
+Hades Challenge
+^^^^^^^^^^^^^^^
 
 .. list-table::
    :widths: 35 65
@@ -949,6 +949,8 @@ SCUMM
 
    * - Torbjörn Andersson
      -
+   * - Andrea Boscarino
+     - Digital iMUSE, various fixes
    * - James Brown
      - (retired)
    * - Jonathan Gray
@@ -1338,6 +1340,8 @@ Xeen
    :widths: 35 65
 
    * - Paul Gilbert
+     -
+   * - Benoit Pierre
      -
    * - David Goldsmith
      - (analysis)

@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -103,8 +102,9 @@ public:
 		Graphics::PixelBuffer _buf; // This is needed for the conversion.
 
 		Line() : _x(0), _y(0), _length(0), _pixels(nullptr) { }
-		Line(int x, int y, int length, byte *pixels, const Graphics::PixelFormat &textureFormat) : _buf(gl_get_context()->fb->getPixelFormat(), length, DisposeAfterUse::NO),
-					_x(x), _y(y), _length(length) {
+		Line(int x, int y, int length, byte *pixels, const Graphics::PixelFormat &textureFormat) :
+				_buf(gl_get_context()->fb->getPixelFormat(), length, DisposeAfterUse::NO),
+				_x(x), _y(y), _length(length) {
 			// Performing texture to screen conversion.
 			Graphics::PixelBuffer srcBuf(textureFormat, pixels);
 			_buf.copyBuffer(0, 0, length, srcBuf);
@@ -223,7 +223,7 @@ public:
 
 	template <bool kDisableBlending, bool kDisableColoring, bool kFlipVertical, bool kFlipHorizontal>
 	FORCEINLINE void tglBlitRotoScale(int dstX, int dstY, int width, int height, int srcX, int srcY, int srcWidth, int srcHeight, int rotation,
-		int originX, int originY, float aTint, float rTint, float gTint, float bTint);
+	                                  int originX, int originY, float aTint, float rTint, float gTint, float bTint);
 
 	//Utility function that calls the correct blitting function.
 	template <bool kDisableBlending, bool kDisableColoring, bool kDisableTransform, bool kFlipVertical, bool kFlipHorizontal, bool kEnableAlphaBlending>
@@ -362,7 +362,6 @@ FORCEINLINE void BlitImage::tglBlitRLE(int dstX, int dstY, int srcX, int srcY, i
 							c->fb->writePixel((dstX + x) + (dstY + (l._y - srcY)) * fbWidth, aDst * aTint, rDst * rTint, gDst * gTint, bDst * bTint);
 						}
 					}
-
 				}
 			}
 			lineIndex++;
@@ -458,7 +457,7 @@ FORCEINLINE void BlitImage::tglBlitSimple(int dstX, int dstY, int srcX, int srcY
 // filter to scale the blit image before copying it to the screen.
 template <bool kDisableBlending, bool kDisableColoring, bool kFlipVertical, bool kFlipHorizontal>
 FORCEINLINE void BlitImage::tglBlitScale(int dstX, int dstY, int width, int height, int srcX, int srcY, int srcWidth, int srcHeight,
-					 float aTint, float rTint, float gTint, float bTint) {
+	                                 float aTint, float rTint, float gTint, float bTint) {
 	GLContext *c = gl_get_context();
 
 	int clampWidth, clampHeight;
@@ -548,7 +547,7 @@ systems.
 
 template <bool kDisableBlending, bool kDisableColoring, bool kFlipVertical, bool kFlipHorizontal>
 FORCEINLINE void BlitImage::tglBlitRotoScale(int dstX, int dstY, int width, int height, int srcX, int srcY, int srcWidth, int srcHeight, int rotation,
-							 int originX, int originY, float aTint, float rTint, float gTint, float bTint) {
+	                                     int originX, int originY, float aTint, float rTint, float gTint, float bTint) {
 	GLContext *c = gl_get_context();
 
 	int clampWidth, clampHeight;

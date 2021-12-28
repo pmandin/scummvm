@@ -2,9 +2,15 @@ AUTHORS.txt
 COPYING.BSD.txt
 COPYING.FREEFONT.txt
 COPYING.LGPL.txt
+COPYING.ISC.txt
+COPYING.LUA.txt
+COPYING.MIT.txt
+COPYING.OFL.txt
+COPYING.TINYGL
 COPYING.txt
 COPYRIGHT.txt
 drascula.dat
+hadesch_translations.dat
 hugo.dat
 kyra.dat
 lure.dat

@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -298,27 +297,9 @@ void WidgetOptions::render(OptionRenderMode mode) {
 				str = Common::String::format("%s %s", FIXED(Music), OFF_ON[music._musicOn]);
 				break;
 
-			case 3: {
-				int num = (_surface.fontHeight() + 4) & 0xfe;
-				int sliderY = yp + num / 2 - 8;
-
-				_surface.fillRect(Common::Rect(4, sliderY - (num - 6) / 2, _surface.width() - 5,
-					sliderY - (num - 6) / 2 + num - 1), TRANSPARENCY);
-				_surface.fillRect(Common::Rect(_surface.widestChar(), sliderY + 2,
-					_surface.width() - _surface.widestChar() - 1, sliderY + 3), INFO_MIDDLE);
-				drawDialogRect(Common::Rect(_surface.widestChar(), sliderY, _surface.width() - _surface.widestChar(), sliderY + 6));
-
-				_surface.fillRect(Common::Rect(_midiSliderX - 1, sliderY - (num - 6) / 2 + 2,
-					_midiSliderX + 1, sliderY - (num - 6) / 2 + num - 3), INFO_MIDDLE);
-				drawDialogRect(Common::Rect(_midiSliderX - 3, sliderY - (num - 6) / 2,
-					_midiSliderX + 4, sliderY - (num - 6) / 2 + num));
-
-				if (_midiSliderX - 4 > _surface.widestChar())
-					_surface.fillRect(Common::Rect(_midiSliderX - 4, sliderY, _midiSliderX - 4, sliderY + 4), INFO_BOTTOM);
-				if (_midiSliderX + 4 < _surface.width() - _surface.widestChar())
-					_surface.fillRect(Common::Rect(_midiSliderX + 4, sliderY, _midiSliderX + 4, sliderY + 4), INFO_BOTTOM);
+			case 3:
+				drawSlider(yp, _midiSliderX);
 				break;
-			}
 
 			case 4:
 				str = Common::String::format("%s %s", FIXED(SoundEffects), OFF_ON[sound._digitized]);
@@ -328,25 +309,9 @@ void WidgetOptions::render(OptionRenderMode mode) {
 				str = Common::String::format("%s %s", FIXED(Voices), OFF_ON[sound._speechOn]);
 				break;
 
-			case 6: {
-				int num = (_surface.fontHeight() + 4) & 0xfe;
-				int sliderY = yp + num / 2 - 8;
-
-				_surface.fillRect(Common::Rect(4, sliderY - (num - 6) / 2, _surface.width() - 5,
-					sliderY - (num - 6) / 2 + num - 1), TRANSPARENCY);
-				_surface.fillRect(Common::Rect(_surface.widestChar(), sliderY + 2, _surface.width() - _surface.widestChar() - 1,
-					sliderY + 3), INFO_MIDDLE);
-				drawDialogRect(Common::Rect(_surface.widestChar(), sliderY, _surface.width() - _surface.widestChar(), sliderY + 6));
-				_surface.fillRect(Common::Rect(_digiSliderX - 1, sliderY - (num - 6) / 2 + 2, _digiSliderX + 1,
-					sliderY - (num - 6) / 2 + num - 3), INFO_MIDDLE);
-				drawDialogRect(Common::Rect(_digiSliderX - 3, sliderY - (num - 6) / 2, _digiSliderX + 4,
-					sliderY - (num - 6) / 2 + num));
-				if (_digiSliderX - 4 > _surface.widestChar())
-					_surface.fillRect(Common::Rect(_digiSliderX - 4, sliderY, _digiSliderX - 4, sliderY + 4), INFO_BOTTOM);
-				if (_digiSliderX + 4 < _surface.width() - _surface.widestChar())
-					_surface.fillRect(Common::Rect(_digiSliderX + 4, sliderY, _digiSliderX + 4, sliderY + 4), INFO_BOTTOM);
+			case 6:
+				drawSlider(yp, _digiSliderX);
 				break;
-			}
 
 			case 7:
 				if (!sound._voices) {
@@ -380,6 +345,27 @@ void WidgetOptions::render(OptionRenderMode mode) {
 			}
 		}
 	}
+}
+
+void WidgetOptions::drawSlider(int yp, int sliderX) {
+	int num = (_surface.fontHeight() + 4) & 0xfe;
+	int sliderY = yp + num / 2 - 8;
+
+	_surface.fillRect(Common::Rect(4, sliderY - (num - 6) / 2, _surface.width() - 5,
+		sliderY - (num - 6) / 2 + num - 1), TRANSPARENCY);
+	_surface.fillRect(Common::Rect(_surface.widestChar(), sliderY + 2,
+		_surface.width() - _surface.widestChar() - 1, sliderY + 4), INFO_MIDDLE);
+	drawDialogRect(Common::Rect(_surface.widestChar(), sliderY, _surface.width() - _surface.widestChar(), sliderY + 6));
+
+	_surface.fillRect(Common::Rect(sliderX - 1, sliderY - (num - 6) / 2 + 2,
+		sliderX + 2, sliderY - (num - 6) / 2 + num - 2), INFO_MIDDLE);
+	drawDialogRect(Common::Rect(sliderX - 3, sliderY - (num - 6) / 2,
+		sliderX + 4, sliderY - (num - 6) / 2 + num));
+
+	if (sliderX - 4 > _surface.widestChar())
+		_surface.fillRect(Common::Rect(sliderX - 4, sliderY, sliderX - 3, sliderY + 4), INFO_BOTTOM);
+	if (sliderX + 4 < _surface.width() - _surface.widestChar())
+		_surface.fillRect(Common::Rect(sliderX + 4, sliderY, sliderX + 5, sliderY + 4), INFO_BOTTOM);
 }
 
 } // End of namespace Tattoo

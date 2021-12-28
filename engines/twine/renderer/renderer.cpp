@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -65,8 +64,8 @@ void Renderer::init(int32 w, int32 h) {
 
 IVec3 &Renderer::projectPositionOnScreen(int32 cX, int32 cY, int32 cZ) {
 	if (_isUsingOrthoProjection) {
-		_projPos.x = ((cX - cZ) * 24) / BRICK_SIZE + _orthoProjPos.x;
-		_projPos.y = (((cX + cZ) * 12) - cY * 30) / BRICK_SIZE + _orthoProjPos.y;
+		_projPos.x = ((cX - cZ) * 24) / ISO_SCALE + _orthoProjPos.x;
+		_projPos.y = (((cX + cZ) * 12) - cY * 30) / ISO_SCALE + _orthoProjPos.y;
 		_projPos.z = cZ - cY - cX;
 		return _projPos;
 	}
@@ -172,7 +171,8 @@ IVec3 Renderer::getCameraAnglePositions(int32 x, int32 y, int32 z) {
 IVec3 Renderer::translateGroup(int32 x, int32 y, int32 z) {
 	const int32 vx = (_shadeMatrix.row1.x * x + _shadeMatrix.row1.y * y + _shadeMatrix.row1.z * z) / SCENE_SIZE_HALF;
 	const int32 vy = (_shadeMatrix.row2.x * x + _shadeMatrix.row2.y * y + _shadeMatrix.row2.z * z) / SCENE_SIZE_HALF;
-	return IVec3(vx, vy, vy);
+	const int32 vz = (_shadeMatrix.row3.x * x + _shadeMatrix.row3.y * y + _shadeMatrix.row3.z * z) / SCENE_SIZE_HALF;
+	return IVec3(vx, vy, vz);
 }
 
 void Renderer::setCameraAngle(int32 transPosX, int32 transPosY, int32 transPosZ, int32 rotPosX, int32 rotPosY, int32 rotPosZ, int32 param6) {
@@ -373,10 +373,10 @@ void Renderer::setLightVector(int32 angleX, int32 angleY, int32 angleZ) {
 	/*_cameraAngleX = angleX;
 	_cameraAngleY = angleY;
 	_cameraAngleZ = angleZ;*/
-
+	const int32 normalUnit = 64;
 	const IVec3 renderAngle(angleX, angleY, angleZ);
 	applyRotation(&_shadeMatrix, &_baseMatrix, renderAngle);
-	_lightPos = translateGroup(0, 0, 59);
+	_lightNorm = translateGroup(0, 0, normalUnit - 5);
 }
 
 static FORCEINLINE int16 clamp(int16 x, int16 a, int16 b) {
@@ -524,7 +524,7 @@ void Renderer::renderPolygonsCopper(int vtop, int32 vsize, uint16 color) const {
 				color += sens;
 			}
 		}
-		pDest += screenWidth;
+		out += screenWidth;
 	}
 }
 
@@ -1045,9 +1045,9 @@ bool Renderer::prepareCircle(int32 x, int32 y, int32 radius) {
 		return false;
 	}
 	int16 left = (int16)(x - radius);
-	int16 right = (int16)(y - radius);
-	int16 bottom = (int16)(x + radius);
-	int16 top = (int16)(y + radius);
+	int16 right = (int16)(x + radius);
+	int16 bottom = (int16)(y + radius);
+	int16 top = (int16)(y - radius);
 	const Common::Rect &clip = _engine->_interface->_clip;
 	int16 cleft = clip.left;
 	int16 cright = clip.right;
@@ -1058,14 +1058,14 @@ bool Renderer::prepareCircle(int32 x, int32 y, int32 radius) {
 		if (left < cleft) {
 			left = cleft;
 		}
-		if (bottom > cright) {
-			bottom = cright;
+		if (bottom > cbottom) {
+			bottom = cbottom;
 		}
-		if (right < ctop) {
-			right = ctop;
+		if (right > cright) {
+			right = cright;
 		}
-		if (top > cbottom) {
-			top = cbottom;
+		if (top < ctop) {
+			top = ctop;
 		}
 
 		int32 r = 0;
@@ -1184,7 +1184,7 @@ uint8 *Renderer::preparePolygons(const Common::Array<BodyPolygon> &polygons, int
 	const int16 maxWidth = _engine->width() - 1;
 
 	for (const BodyPolygon &polygon : polygons) {
-		const uint8 renderType = polygon.renderType;
+		const uint8 materialType = polygon.materialType;
 		const uint8 numVertices = polygon.indices.size();
 		assert(numVertices <= 16);
 		const int16 colorIndex = polygon.color;
@@ -1203,9 +1203,8 @@ uint8 *Renderer::preparePolygons(const Common::Array<BodyPolygon> &polygons, int
 
 		Vertex *vertex = vertices;
 
-		// TODO: RECHECK coordinates axis
-		if (renderType >= POLYGONTYPE_UNKNOWN) {
-			destinationPolygon->renderType = polygon.renderType - 2;
+		if (materialType >= MAT_GOURAUD) {
+			destinationPolygon->renderType = polygon.materialType - (MAT_GOURAUD - POLYGONTYPE_GOURAUD);
 			destinationPolygon->colorIndex = polygon.color;
 
 			for (int16 idx = 0; idx < numVertices; ++idx) {
@@ -1223,15 +1222,15 @@ uint8 *Renderer::preparePolygons(const Common::Array<BodyPolygon> &polygons, int
 				++vertex;
 			}
 		} else {
-			if (renderType >= POLYGONTYPE_GOURAUD) {
+			if (materialType >= MAT_FLAT) {
 				// only 1 shade value is used
-				destinationPolygon->renderType = renderType - POLYGONTYPE_GOURAUD;
+				destinationPolygon->renderType = materialType - MAT_FLAT;
 				const int16 shadeEntry = polygon.intensities[0];
 				const int16 shadeValue = colorIndex + modelData->shadeTable[shadeEntry];
 				destinationPolygon->colorIndex = shadeValue;
 			} else {
 				// no shade is used
-				destinationPolygon->renderType = renderType;
+				destinationPolygon->renderType = materialType;
 				destinationPolygon->colorIndex = colorIndex;
 			}
 
@@ -1304,7 +1303,7 @@ bool Renderer::renderModelElements(int32 numOfPrimitives, const BodyData &bodyDa
 
 			if (_isUsingOrthoProjection) {
 				// * sqrt(sx+sy) / 512 (isometric scale)
-				radius = (radius * 34) / 512;
+				radius = (radius * 34) / ISO_SCALE;
 			} else {
 				int32 delta = _cameraDepthOffset + sphere->z;
 				if (delta == 0) {
@@ -1393,8 +1392,8 @@ bool Renderer::renderAnimatedModel(ModelData *modelData, const BodyData &bodyDat
 			const int32 coZ = -(pointPtr->z + renderPos.z);
 
 			// TODO: use projectPositionOnScreen()
-			pointPtrDest->x = (coX + coZ) * 24 / BRICK_SIZE + _orthoProjPos.x;
-			pointPtrDest->y = (((coX - coZ) * 12) - coY * 30) / BRICK_SIZE + _orthoProjPos.y;
+			pointPtrDest->x = (coX + coZ) * 24 / ISO_SCALE + _orthoProjPos.x;
+			pointPtrDest->y = (((coX - coZ) * 12) - coY * 30) / ISO_SCALE + _orthoProjPos.y;
 			pointPtrDest->z = coZ - coX - coY;
 
 			if (pointPtrDest->x < modelRect.left) {
@@ -1494,7 +1493,7 @@ bool Renderer::renderAnimatedModel(ModelData *modelData, const BodyData &bodyDat
 			if (numOfShades) {
 				int32 numShades = numOfShades;
 
-				_shadeMatrix = *lightMatrix * _lightPos;
+				_shadeMatrix = *lightMatrix * _lightNorm;
 
 				do { // for each normal
 					const BodyShade &shadePtr = bodyData.getShade(shadeIndex);

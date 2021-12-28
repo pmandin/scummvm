@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
+ * ScummVM is the legal property of its developers, whose names
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -149,6 +148,8 @@ void GfxOpenGL::setupScreen(int screenW, int screenH) {
 	GLfloat diffuseReflectance[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseReflectance);
 
+	glClearStencil(~0);
+
 	if (g_grim->getGameType() == GType_GRIM) {
 		glPolygonOffset(-6.0, -6.0);
 	}
@@ -244,7 +245,7 @@ void GfxOpenGL::positionCamera(const Math::Vector3d &pos, const Math::Vector3d &
 }
 
 void GfxOpenGL::positionCamera(const Math::Vector3d &pos, const Math::Matrix4 &rot) {
-	glScaled(1, 1, -1);
+	glScaled(1.0f, 1.0f, -1.0f);
 	_currentPos = pos;
 	_currentRot = rot;
 }
@@ -497,6 +498,8 @@ void GfxOpenGL::getActorScreenBBox(const Actor *actor, Common::Point &p1, Common
 	// Set up the camera coordinate system
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
+
+	// Apply the view transform.
 	Math::Matrix4 worldRot = _currentRot;
 	glMultMatrixf(worldRot.getData());
 	glTranslatef(-_currentPos.x(), -_currentPos.y(), -_currentPos.z());
@@ -642,12 +645,7 @@ void GfxOpenGL::finishActorDraw() {
 		glDisable(GL_CULL_FACE);
 	}
 
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	_currentActor = nullptr;
-}
-
-void GfxOpenGL::setShadow(Shadow *shadow) {
-	_currentShadowArray = shadow;
 }
 
 void GfxOpenGL::drawShadowPlanes() {
@@ -671,18 +669,17 @@ void GfxOpenGL::drawShadowPlanes() {
 		glTranslatef(-_currentPos.x(), -_currentPos.y(), -_currentPos.z());
 	}
 
-
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDepthMask(GL_FALSE);
-	glClearStencil(~0);
-	glClear(GL_STENCIL_BUFFER_BIT);
 
+	glClear(GL_STENCIL_BUFFER_BIT);
 	glEnable(GL_STENCIL_TEST);
 	glStencilFunc(GL_ALWAYS, 1, (GLuint)~0);
 	glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
-	glColor4f(1, 1, 1, 1);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	for (SectorListType::iterator i = _currentShadowArray->planeList.begin(); i != _currentShadowArray->planeList.end(); ++i) {
 		Sector *shadowSector = i->sector;
 		glBegin(GL_POLYGON);
@@ -697,6 +694,10 @@ void GfxOpenGL::drawShadowPlanes() {
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
 	glPopMatrix();
+}
+
+void GfxOpenGL::setShadow(Shadow *shadow) {
+	_currentShadowArray = shadow;
 }
 
 void GfxOpenGL::setShadowMode() {
@@ -853,7 +854,7 @@ void GfxOpenGL::drawSprite(const Sprite *sprite) {
 	if (g_grim->getGameType() == GType_GRIM) {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GEQUAL, 0.5f);
-	}  else if (sprite->_flags2 & Sprite::AlphaTest) {
+	} else if (sprite->_flags2 & Sprite::AlphaTest) {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GEQUAL, 0.1f);
 	} else {
@@ -885,8 +886,8 @@ void GfxOpenGL::drawSprite(const Sprite *sprite) {
 			glTexCoord2f(sprite->_texCoordX[i], sprite->_texCoordY[i]);
 			glVertex3f(vertexX[i] * halfWidth, vertexY[i] * halfHeight, 0.0f);
 		}
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		glEnd();
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	} else {
 		// In Grim, the bottom edge of the sprite is at y=0 and
 		// the texture is flipped along the X-axis.
@@ -1184,7 +1185,7 @@ void GfxOpenGL::drawBitmap(const Bitmap *bitmap, int dx, int dy, uint32 layer) {
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(GL_FALSE);
 
-	        glColor3f(1.0f, 1.0f, 1.0f);
+		glColor3f(1.0f, 1.0f, 1.0f);
 
 		BitmapData *data = bitmap->_data;
 		GLuint *textures = (GLuint *)bitmap->getTexIds();

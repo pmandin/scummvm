@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -528,6 +527,7 @@ Common::Error HadeschEngine::run() {
 	_heroBelt = Common::SharedPtr<HeroBelt>(new HeroBelt());
 	_gfxContext = Common::SharedPtr<GfxContext8Bit>(new GfxContext8Bit(2 * kVideoWidth + 10, kVideoHeight + 50));
 	_isInOptions = false;
+	_lastFallbackSound = -1;
 
 	ConfMan.registerDefault("subtitles", "false");
 	ConfMan.registerDefault("sfx_volume", 192);
@@ -585,9 +585,11 @@ Common::Error HadeschEngine::run() {
 				}
 				const Common::String &q = getVideoRoom()->mapClick(event.mouse);
 				debug("handling click on <%s>", q.c_str());
-				if (getVideoRoom()->isHeroBeltEnabled() && _heroBelt->isHoldingItem())
-					getCurrentHandler()->handleClickWithItem(q, _heroBelt->getHoldingItem());
-				else {
+				if (getVideoRoom()->isHeroBeltEnabled() && _heroBelt->isHoldingItem()) {
+					if (!getCurrentHandler()->handleClickWithItem(q, _heroBelt->getHoldingItem())) {
+						fallbackClick();
+					}
+				} else {
 					getCurrentHandler()->handleAbsoluteClick(event.mouse);
 					getCurrentHandler()->handleClick(q);
 				}
@@ -708,6 +710,34 @@ bool HadeschEngine::hasFeature(EngineFeature f) const {
 		f == kSupportsLoadingDuringRuntime ||
 		f == kSupportsSavingDuringRuntime ||
 		f == kSupportsChangingOptionsDuringRuntime;
+}
+
+static const TranscribedSound fallbackSounds[] = {
+	{"G0080nA0", _hs("Ho, not there")},
+	{"G0080nB0", _hs("Nope")},
+	{"G0080nC0", _hs("Time out, kid. That doesn't work there")},
+	{"G0080nD0", _hs("How about something else?")},
+	{"G0080nE0", _hs("Eh-Eh")},
+	{"G0080nF0", _hs("Not that one")},
+	{"G0080nG0", _hs("Are you kidding? Try something else")},
+	{"G0080nH0", _hs("Enough already. Give something else a try")},
+	{"G0080nI0", _hs("Something else might work better")},
+	{"G0080nJ0", _hs("You can come up with a better answer than that")},
+};
+
+void HadeschEngine::fallbackClick() {
+	int soundId = -1;
+	if (_lastFallbackSound < 0)
+		soundId = getRnd().getRandomNumberRng(0, ARRAYSIZE(fallbackSounds) - 1);
+	else {
+		soundId = getRnd().getRandomNumberRng(0, ARRAYSIZE(fallbackSounds) - 2);
+		if (soundId >= _lastFallbackSound)
+			soundId++;
+	}
+
+	_lastFallbackSound = soundId;
+	Common::SharedPtr<VideoRoom> room = g_vm->getVideoRoom();
+	room->playSpeech(fallbackSounds[soundId]);
 }
 
 Common::Error HadeschEngine::loadGameStream(Common::SeekableReadStream *stream) {

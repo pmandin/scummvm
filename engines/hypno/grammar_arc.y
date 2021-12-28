@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -60,7 +59,7 @@ using namespace Hypno;
 %token<i> NUM
 // header
 %token COMMENT CTOK DTOK HTOK HETOK RETTOK QTOK ENCTOK
-%token PTOK FTOK TTOK TPTOK ATOK VTOK OTOK O1TOK NTOK RTOK ITOK JTOK ZTOK
+%token PTOK FTOK TTOK TPTOK ATOK VTOK OTOK ONTOK NTOK RTOK R0TOK ITOK JTOK ZTOK
 
 // body
 %token FNTOK NONETOK A0TOK P0TOK WTOK
@@ -91,7 +90,7 @@ hline: 	CTOK NUM {
 	| ATOK NUM NUM { debugC(1, kHypnoDebugParser, "A %d %d", $2, $3); }
 	| VTOK NUM NUM { debugC(1, kHypnoDebugParser, "V %d %d", $2, $3); }
 	| OTOK NUM NUM { debugC(1, kHypnoDebugParser, "O %d %d", $2, $3); }
-	| O1TOK NUM NUM { debugC(1, kHypnoDebugParser, "O1 %d %d", $2, $3); }
+	| ONTOK NUM NUM { debugC(1, kHypnoDebugParser, "ON %d %d", $2, $3); }
 	| TPTOK FILENAME NUM FILENAME {
 		g_parsedArc->transitionVideo = $2;
 		g_parsedArc->transitionTime = $3;
@@ -242,6 +241,7 @@ bline: FNTOK FILENAME {
 		debugC(1, kHypnoDebugParser, "A0 %d %d", $2, $3); 
 	}
 	| RTOK NUM NUM  { debugC(1, kHypnoDebugParser, "R %d %d", $2, $3); }
+	| R0TOK NUM NUM  { debugC(1, kHypnoDebugParser, "R0 %d %d", $2, $3); }
 	| BNTOK NUM NUM { debugC(1, kHypnoDebugParser, "BN %d %d", $2, $3); }
 	| KNTOK NUM NUM { 
 		//if (Common::String("K0") == $1)

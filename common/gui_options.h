@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -85,6 +84,22 @@
 #define GUIO_GAMEOPTIONS14   "\x3d"
 #define GUIO_GAMEOPTIONS15   "\x3e"
 #define GUIO_GAMEOPTIONS16   "\x3f"
+#define GUIO_GAMEOPTIONS17   "\x40"
+#define GUIO_GAMEOPTIONS18   "\x41"
+#define GUIO_GAMEOPTIONS19   "\x42"
+#define GUIO_GAMEOPTIONS20   "\x43"
+#define GUIO_GAMEOPTIONS21   "\x44"
+#define GUIO_GAMEOPTIONS22   "\x45"
+#define GUIO_GAMEOPTIONS23   "\x46"
+#define GUIO_GAMEOPTIONS24   "\x47"
+#define GUIO_GAMEOPTIONS25   "\x48"
+#define GUIO_GAMEOPTIONS26   "\x49"
+#define GUIO_GAMEOPTIONS27   "\x4a"
+#define GUIO_GAMEOPTIONS28   "\x4b"
+#define GUIO_GAMEOPTIONS29   "\x4c"
+#define GUIO_GAMEOPTIONS30   "\x4d"
+#define GUIO_GAMEOPTIONS31   "\x4e"
+#define GUIO_GAMEOPTIONS32   "\x4f"
 
 #define GUIO0() (GUIO_NONE)
 #define GUIO1(a) (a)

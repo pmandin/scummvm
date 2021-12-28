@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -79,7 +78,10 @@ MessageQueue *AniHandler::makeQueue(StaticANIObject *ani, int staticsIndex, int,
 	Common::Point point;
 	ExCommand *ex;
 
+#if 0
 	int i = 0;
+#endif
+
 	do {
 		subidx = startidx + endidx * _items[idx].statics.size();
 
@@ -117,6 +119,7 @@ MessageQueue *AniHandler::makeQueue(StaticANIObject *ani, int staticsIndex, int,
 
 		startidx = _items[idx].subItems[subidx].staticsIndex;
 
+#if 0
 		uint step;
 
 		if (_items[idx].subItems[subidx].movement->_currMovement)
@@ -125,6 +128,7 @@ MessageQueue *AniHandler::makeQueue(StaticANIObject *ani, int staticsIndex, int,
 			step = _items[idx].subItems[subidx].movement->_dynamicPhases.size();
 
 		i += step;
+#endif
 	} while (startidx != endidx);
 
 	return mq;

@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -2660,7 +2659,7 @@ void pop_stack() {
 	/* RESTORE THE CONTENTS OF called_name */
 	//for (counter = 0; counter < 256; counter++)
 	//called_name[counter] = backup[stack].called_name[counter];
-	strncpy(called_name, backup[stack].called_name, 1024);
+	strncpy(called_name, backup[stack].called_name, 1023);
 
 	/* RESTORE THE CONTENTS OF scope_criterion */
 	//for (counter = 0; counter < 21; counter++)
@@ -2746,7 +2745,7 @@ void push_stack(int32 file_pointer) {
 			backup[stack].text_buffer[counter] = text_buffer[counter];
 
 		/* MAKE A COPY OF THE CURRENT CONTENTS OF called_name */
-		strncpy(backup[stack].called_name, called_name, 1024);
+		strncpy(backup[stack].called_name, called_name, 1023);
 
 		// MAKE A COPY OF THE CURRENT CONTENTS OF scope_criterion
 		strncpy(backup[stack].scope_criterion, scope_criterion, 20);

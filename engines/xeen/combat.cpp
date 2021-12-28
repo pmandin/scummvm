@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -102,7 +101,7 @@ static const int POW_WEAPON_VOCS[35] = {
 	5, 5, 5, 1, 3, 2, 5, 1, 1, 1, 0, 0, 0, 2, 2
 };
 
-static const int MONSTER_ITEM_RANGES[6] = { 10, 20, 50, 100, 100, 100 };
+static const int MONSTER_ITEM_RANGES[7] = { 10, 20, 50, 100, 100, 100, 0 };
 
 #define monsterSavingThrow(MONINDEX) (_vm->getRandomNumber(1, 50 + (MONINDEX)) <= (MONINDEX))
 
@@ -1526,7 +1525,7 @@ void Combat::attack2(int damage, RangeType rangeType) {
 
 			int itemDrop = monsterData._itemDrop;
 			if (itemDrop) {
-				if (MONSTER_ITEM_RANGES[itemDrop] >= _vm->getRandomNumber(1, 100)) {
+				if (MONSTER_ITEM_RANGES[itemDrop - 1] >= _vm->getRandomNumber(1, 100)) {
 					Character tempChar;
 					int category = tempChar.makeItem(itemDrop, 0, 0);
 

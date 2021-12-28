@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -25,6 +24,8 @@
 #include "hadesch/video.h"
 #include "hadesch/ambient.h"
 #include "common/translation.h"
+
+#include "gui/message.h"
 
 namespace Hadesch {
 
@@ -500,9 +501,12 @@ public:
 		case 10065:
 			room->playAnim("t1350bb0", 501, PlayAnimParams::loop().partial(8, 11));
 			break;
-		case 10066:
+		case 10066: {
+		        GUI::MessageDialog dialog(_("The Troy minigame is not supported yet. Skipping"));
+			dialog.runModal();
 			g_vm->moveToRoom(kQuiz);
 			break;
+		}
 		case 10069:
 			// TODO: check this
 			room->playVideo("T1270BA0", 0, 10070, Common::Point(0, 216));

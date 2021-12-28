@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -41,7 +40,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -55,7 +54,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformMacintosh,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM | ADGF_MACRESFORK,
+		ADGF_TESTING | ADGF_DROPPLATFORM | ADGF_MACRESFORK,
 		GUIO1(GUIO_NOMIDI)
 
 	},
@@ -70,7 +69,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::RU_RUS,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO1(GUIO_NOMIDI)
 
 	},
@@ -84,7 +83,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::RU_RUS,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO1(GUIO_NOMIDI)
 
 	},
@@ -101,7 +100,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM | ADGF_PIRATED,
+		ADGF_DROPPLATFORM | ADGF_PIRATED,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -115,7 +114,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformWindows,
-		ADGF_UNSTABLE | ADGF_DROPPLATFORM | ADGF_PIRATED,
+		ADGF_DROPPLATFORM | ADGF_PIRATED,
 		GUIO1(GUIO_NOMIDI)
 	},
 	AD_TABLE_END_MARKER

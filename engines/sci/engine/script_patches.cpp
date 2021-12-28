@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -7073,9 +7072,58 @@ static const uint16 lighthouseMemoryCountPatch[] = {
 	PATCH_END
 };
 
+// In Lighthouse version 2.0, entering the submarine while the compass is out
+//  causes a message to be sent to a non-object. The PanelProps ppCompass and
+//  ppCompassFace are missing initialization code. Room 212 disposes of compass
+//  objects, but since they weren't correctly initialized, Feature:dispose
+//  attempts to remove them from a nonexistent Set in global 105.
+//
+// We fix this by patching the init methods of both compass objects to jump to
+//  ppOptions:init where there is a copy of the missing initialization code.
+//  This is effectively what Sierra did in their LITE2FIX patch.
+//
+// Applies to: Version 2.0
+// Responsible methods: ppCompass:init, ppCompassFace:init
+static const uint16 lighthouseCompassSignature[] = {
+	// ppCompass:init
+	0x4a, SIG_MAGICDWORD,               // send 10
+	      SIG_UINT16(0x0010),
+	0x48,                               // ret
+	0x00, 0x00,                         // unused padding
+	SIG_ADDTOOFFSET(+0x00fa),
+	// ppCompassFace:init
+	0x39, SIG_SELECTOR8(init),          // pushi init
+	0x76,                               // push0
+	0x59, 0x01,                         // &rest 01
+	0x57, 0x81, SIG_UINT16(0x0004),     // super 04 [ PanelProp init: 1 &rest ]
+	0x48,                               // ret
+	SIG_ADDTOOFFSET(+0x0b84),
+	// ppOptions:init
+	0x39, SIG_SELECTOR8(init),          // pushi init
+	0x76,                               // push0
+	0x59, 0x01,                         // &rest 01
+	0x57, 0x81, SIG_UINT16(0x0004),     // super 04 [ PanelProp init: 1 &rest ]
+	0x62, SIG_UINT16(0x01b6),           // pToa approachX
+	0x31, 0x16,                         // bnt 16
+	SIG_ADDTOOFFSET(+0x11),
+	0x35, 0x00,                         // ldi 00
+	0x64, SIG_UINT16(0x01b6),           // aTop approachX
+	0x48,                               // ret
+	SIG_END
+};
+
+static const uint16 lighthouseCompassPatch[] = {
+	PATCH_ADDTOOFFSET(+3),
+	0x32, PATCH_UINT16(0x0c91),         // jmp 0c91 [ ppCompass:init => ppOptions:init ]
+	PATCH_ADDTOOFFSET(+0x00fa),
+	0x32, PATCH_UINT16(0x0b8b),         // jmp 0b8b [ ppCompassFace:init => ppOptions:init ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                         patch
 static const SciScriptPatcherEntry lighthouseSignatures[] = {
 	{  true,     5, "fix bad globals clear after credits",         1, lighthouseFlagResetSignature,     lighthouseFlagResetPatch },
+	{  true,     9, "fix compass in submarine",                    1, lighthouseCompassSignature,       lighthouseCompassPatch },
 	{  true,   360, "fix slow computer memory counter",            1, lighthouseMemoryCountSignature,   lighthouseMemoryCountPatch },
 	{  true, 64928, "Narrator lockup fix",                         1, sciNarratorLockupSignature,       sciNarratorLockupPatch },
 	{  true, 64990, "increase number of save games (1/2)",         1, sci2NumSavesSignature1,           sci2NumSavesPatch1 },
@@ -11434,6 +11482,35 @@ static const uint16 pq3PatchHouseFireRepeats[] = {
 	PATCH_END
 };
 
+// Showing a second piece of evidence to the judge while having the locket in
+//  inventory locks up the game. The hands-off script givenTwo doesn't set a cue
+//  in state 5, preventing the script from ever advancing and the player from
+//  regaining control.
+//
+// We fix this by setting a 10 second delay as Sierra did in later versions.
+//
+// Applies to: English PC VGA Floppy
+// Responsible method: givenTwo:changeState(5)
+static const uint16 pq3SignatureJudgeEvidenceLockup[] = {
+	0x72, SIG_ADDTOOFFSET(+2),           // lofsa ijudge
+	0x36,                                // push
+	0x39, 0x2c,                          // pushi 2c
+	0x39, 0x10,                          // pushi 10
+	0x45, 0x10, SIG_MAGICDWORD, 0x06,    // callb proc0_16
+	0x32, SIG_UINT16(0x0022),            // jmp 0022 [ end of method ]
+	SIG_END
+};
+
+static const uint16 pq3PatchJudgeEvidenceLockup[] = {
+	0x74, PATCH_ADDTOOFFSET(+2),         // lofss ijudge
+	0x39, 0x2c,                          // pushi 2c
+	0x39, 0x10,                          // pushi 10
+	0x45, 0x10, 0x06,                    // callb proc0_16
+	0x35, 0x0a,                          // ldi 0a
+	0x65, 0x12,                          // aTop seconds [ seconds = 10 ]
+	PATCH_END
+};
+
 // When driving at high speeds, road signs don't always update. The scripts
 //  implicitly depend on the sign being already hidden before showing it, as
 //  they don't redraw the view. roadSignScript sets a three second timer before
@@ -11492,13 +11569,14 @@ static const uint16 pq3PatchNrsSpeedThrottle[] = {
 	PATCH_END
 };
 
-//          script, description,                                 signature                     patch
+//          script, description,                                 signature                          patch
 static const SciScriptPatcherEntry pq3Signatures[] = {
-	{  true,    25, "fix road sign updates",                  1, pq3SignatureRoadSignUpdates,  pq3PatchRoadSignUpdates },
-	{  true,    33, "prevent house fire repeating",           1, pq3SignatureHouseFireRepeats, pq3PatchHouseFireRepeats },
-	{  true,    36, "give locket missing points",             1, pq3SignatureGiveLocketPoints, pq3PatchGiveLocketPoints },
-	{  true,    36, "doctor mouth speed",                     1, pq3SignatureDoctorMouthSpeed, pq3PatchDoctorMouthSpeed },
-	{  true,   994, "NRS: remove speed throttle",             1, pq3SignatureNrsSpeedThrottle, pq3PatchNrsSpeedThrottle },
+	{  true,    25, "fix road sign updates",                  1, pq3SignatureRoadSignUpdates,       pq3PatchRoadSignUpdates },
+	{  true,    33, "prevent house fire repeating",           1, pq3SignatureHouseFireRepeats,      pq3PatchHouseFireRepeats },
+	{  true,    36, "give locket missing points",             1, pq3SignatureGiveLocketPoints,      pq3PatchGiveLocketPoints },
+	{  true,    36, "doctor mouth speed",                     1, pq3SignatureDoctorMouthSpeed,      pq3PatchDoctorMouthSpeed },
+	{  true,    44, "fix judge evidence lockup",              1, pq3SignatureJudgeEvidenceLockup,   pq3PatchJudgeEvidenceLockup },
+	{  true,   994, "NRS: remove speed throttle",             1, pq3SignatureNrsSpeedThrottle,      pq3PatchNrsSpeedThrottle },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
 

@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -32,6 +31,7 @@
 #include "twine/scene/scene.h"
 #include "twine/text.h"
 #include "twine/twine.h"
+#include "twine/audio/music.h"
 
 namespace TwinE {
 
@@ -42,6 +42,8 @@ TwinEConsole::TwinEConsole(TwinEEngine *engine) : _engine(engine), GUI::Debugger
 	registerCmd("give_gas", WRAP_METHOD(TwinEConsole, doGiveGas));
 	registerCmd("give_kashes", WRAP_METHOD(TwinEConsole, doGiveKashes));
 	registerCmd("play_video", WRAP_METHOD(TwinEConsole, doPlayVideo));
+	registerCmd("play_midi", WRAP_METHOD(TwinEConsole, doPlayMidi));
+	registerCmd("play_music", WRAP_METHOD(TwinEConsole, doPlayMusic));
 	registerCmd("change_scene", WRAP_METHOD(TwinEConsole, doChangeScene));
 	registerCmd("toggle_scenery_view", WRAP_METHOD(TwinEConsole, doToggleSceneryView));
 	registerCmd("magic_points", WRAP_METHOD(TwinEConsole, doAddMagicPoints));
@@ -347,6 +349,26 @@ bool TwinEConsole::doPlayVideo(int argc, const char **argv) {
 		return true;
 	}
 	_engine->queueMovie(argv[1]);
+	return true;
+}
+
+bool TwinEConsole::doPlayMidi(int argc, const char **argv) {
+	if (argc <= 1) {
+		debugPrintf("Expected to get a midi id as first parameter\n");
+		return true;
+	}
+	int newMidiIndex = atoi(argv[1]);
+	_engine->_music->playMidiMusic(newMidiIndex);
+	return true;
+}
+
+bool TwinEConsole::doPlayMusic(int argc, const char **argv) {
+	if (argc <= 1) {
+		debugPrintf("Expected to get a music track id as first parameter\n");
+		return true;
+	}
+	int newMusicTrackIndex = atoi(argv[1]);
+	_engine->_music->playTrackMusic(newMusicTrackIndex);
 	return true;
 }
 

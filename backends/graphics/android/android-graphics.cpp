@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -67,9 +66,17 @@ void AndroidGraphicsManager::initSurface() {
 	// Notify the OpenGL code about our context.
 	setContextType(OpenGL::kContextGLES2);
 
-	// We default to RGB565 and RGBA5551 which is closest to the actual output
-	// mode we setup.
-	notifyContextCreate(Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0), Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
+	if (JNI::egl_bits_per_pixel == 16) {
+		// We default to RGB565 and RGBA5551 which is closest to what we setup in Java side
+		notifyContextCreate(Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0), Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0));
+	} else {
+		// If not 16, this must be 24 or 32 bpp so make use of them
+#ifdef SCUMM_BIG_ENDIAN
+		notifyContextCreate(Graphics::PixelFormat(3, 8, 8, 8, 0, 16, 8, 0, 0), Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+#else
+		notifyContextCreate(Graphics::PixelFormat(3, 8, 8, 8, 0, 0, 8, 16, 0), Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+#endif
+	}
 
 	handleResize(JNI::egl_surface_width, JNI::egl_surface_height);
 }

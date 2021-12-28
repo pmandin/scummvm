@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -114,7 +113,6 @@ struct GLMaterial {
 	Vector4 specular;
 	bool has_specular;
 	float shininess;
-
 	// computed values
 	int shininess_i;
 	int do_specular;
@@ -132,7 +130,7 @@ union GLParam {
 	int op;
 	float f;
 	int i;
-	unsigned int ui;
+	uint ui;
 	void *p;
 };
 
@@ -177,7 +175,7 @@ struct GLVertex {
 };
 
 struct GLImage {
-	Graphics::TexelBuffer *pixmap;
+	TexelBuffer *pixmap;
 	int xsize, ysize;
 };
 
@@ -187,7 +185,7 @@ struct GLImage {
 
 struct GLTexture {
 	GLImage images[MAX_TEXTURE_LEVELS];
-	unsigned int handle;
+	uint handle;
 	int versionNumber;
 	struct GLTexture *next, *prev;
 	bool disposed;
@@ -244,7 +242,7 @@ public:
 		}
 		size_t returnPos = _memoryPosition;
 		_memoryPosition += size;
-		return ((char *)_memoryBuffer) + returnPos;
+		return ((byte *)_memoryBuffer) + returnPos;
 	}
 
 	void reset() {
@@ -300,8 +298,8 @@ struct GLContext {
 	int texture_2d_enabled;
 	int texture_mag_filter;
 	int texture_min_filter;
-	unsigned int texture_wrap_s;
-	unsigned int texture_wrap_t;
+	uint texture_wrap_s;
+	uint texture_wrap_t;
 	Common::Array<struct tglColorAssociation> colorAssociationList;
 
 	// shared state
@@ -340,14 +338,14 @@ struct GLContext {
 
 	// selection
 	int render_mode;
-	unsigned int *select_buffer;
+	uint *select_buffer;
 	int select_size;
-	unsigned int *select_ptr, *select_hit;
+	uint *select_ptr, *select_hit;
 	int select_overflow;
 	int select_hits;
 
 	// names
-	unsigned int name_stack[MAX_NAME_STACK_DEPTH];
+	uint name_stack[MAX_NAME_STACK_DEPTH];
 	int name_stack_size;
 
 	// clear
@@ -457,7 +455,7 @@ public:
 	static void gl_draw_triangle_select(GLContext *c, GLVertex *p0, GLVertex *p1, GLVertex *p2);
 	void gl_draw_triangle_clip(GLVertex *p0, GLVertex *p1, GLVertex *p2, int clip_bit);
 
-	void gl_add_select(unsigned int zmin, unsigned int zmax);
+	void gl_add_select(uint zmin, uint zmax);
 	void gl_add_select1(int z1, int z2, int z3);
 	void gl_enable_disable_light(int light, int v);
 	void gl_shade_vertex(GLVertex *v);

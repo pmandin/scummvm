@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -159,7 +158,7 @@ void GLContext::glopTexImage2D(GLParam *p) {
 		im->pixmap = nullptr;
 	}
 	if (pixels != NULL) {
-		unsigned int filter;
+		uint filter;
 		Graphics::PixelFormat pf;
 		bool found = false;
 		Common::Array<struct tglColorAssociation>::const_iterator it = colorAssociationList.begin();
@@ -196,14 +195,14 @@ void GLContext::glopTexImage2D(GLParam *p) {
 		case TGL_LINEAR_MIPMAP_NEAREST:
 		case TGL_LINEAR_MIPMAP_LINEAR:
 		case TGL_LINEAR:
-			im->pixmap = new Graphics::BilinearTexelBuffer(
+			im->pixmap = new BilinearTexelBuffer(
 				srcInternal,
 				width, height,
 				_textureSize
 			);
 			break;
 		default:
-			im->pixmap = new Graphics::NearestTexelBuffer(
+			im->pixmap = new NearestTexelBuffer(
 				srcInternal,
 				width, height,
 				_textureSize
@@ -289,7 +288,7 @@ void GLContext::glopPixelStore(GLParam *p) {
 
 } // end of namespace TinyGL
 
-void tglGenTextures(int n, unsigned int *textures) {
+void tglGenTextures(TGLsizei n, TGLuint *textures) {
 	TinyGL::GLContext *c = TinyGL::gl_get_context();
 
 	for (int i = 0; i < n; i++) {
@@ -298,7 +297,7 @@ void tglGenTextures(int n, unsigned int *textures) {
 	c->maxTextureName += n;
 }
 
-void tglDeleteTextures(int n, const unsigned int *textures) {
+void tglDeleteTextures(TGLsizei n, const TGLuint *textures) {
 	TinyGL::GLContext *c = TinyGL::gl_get_context();
 	TinyGL::GLTexture *t;
 

@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -31,8 +30,8 @@ namespace TinyGL {
 
 struct BlitTransform {
 	BlitTransform(int dstX, int dstY) : _rotation(0), _originX(0), _originY(0), _aTint(1.0f),
-				_rTint(1.0f), _gTint(1.0f), _bTint(1.0), _flipHorizontally(false),
-				_flipVertically(false) {
+	                                    _rTint(1.0f), _gTint(1.0f), _bTint(1.0), _flipHorizontally(false),
+	                                    _flipVertically(false) {
 		_destinationRectangle.translate(dstX, dstY);
 	}
 
@@ -49,12 +48,12 @@ struct BlitTransform {
 		_gTint = gTint;
 		_bTint = bTint;
 	}
-
+/*
 	void scale(int width, int height) {
 		_destinationRectangle.setWidth(width);
 		_destinationRectangle.setHeight(height);
 	}
-
+*/
 	void rotate(int rotation, int originX, int originY) {
 		_rotation = rotation;
 		_originX = originX;
@@ -67,7 +66,8 @@ struct BlitTransform {
 	}
 
 	bool operator==(const BlitTransform &other) const {
-		return _sourceRectangle == other._sourceRectangle && _destinationRectangle == other._destinationRectangle &&
+		return
+			_sourceRectangle == other._sourceRectangle && _destinationRectangle == other._destinationRectangle &&
 			_rotation == other._rotation && _originX == other._originX && _originY == other._originY &&
 			_aTint == other._aTint && _rTint == other._rTint && _gTint == other._gTint && _bTint == other._bTint &&
 			_flipHorizontally == other._flipHorizontally && _flipVertically == other._flipVertically;

@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,6 +24,7 @@
 #include "sci/engine/kernel.h"
 #include "sci/engine/seg_manager.h"
 #include "sci/engine/state.h"
+#include "sci/engine/tts.h"
 #include "sci/engine/workarounds.h"
 #include "sci/util.h"
 
@@ -314,6 +314,7 @@ int MessageState::nextMessage(reg_t buf) {
 			_lastReturned = record.tuple;
 			_lastReturnedModule = _cursorStack.getModule();
 			_cursorStack.top().seq++;
+			g_sci->_tts->setMessage(record.string);
 			return record.talker;
 		} else {
 			MessageTuple &t = _cursorStack.top();
@@ -323,9 +324,10 @@ int MessageState::nextMessage(reg_t buf) {
 	} else {
 		CursorStack stack = _cursorStack;
 
-		if (getRecord(stack, true, record))
+		if (getRecord(stack, true, record)) {
+			g_sci->_tts->setMessage(record.string);
 			return record.talker;
-		else
+		} else
 			return 0;
 	}
 }
@@ -348,6 +350,7 @@ bool MessageState::messageRef(int module, const MessageTuple &t, MessageTuple &r
 	stack.init(module, t);
 	if (getRecord(stack, false, record)) {
 		ref = record.refTuple;
+		g_sci->_tts->setMessage(record.string);
 		return true;
 	}
 

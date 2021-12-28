@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -81,6 +80,7 @@ void Paula::clearVoice(byte voice) {
 	_voice[voice].volume = 0;
 	_voice[voice].offset = Offset(0);
 	_voice[voice].dmaCount = 0;
+	_voice[voice].interrupt = false;
 }
 
 int Paula::readBuffer(int16 *buffer, const int numSamples) {
@@ -239,6 +239,15 @@ int Paula::readBufferIntern(int16 *buffer, const int numSamples) {
 
 				ch.data = ch.dataRepeat;
 				ch.length = ch.lengthRepeat;
+
+				// The Paula chip can generate an interrupt after it copies a channel's
+				// location and length values to its internal registers, signaling that
+				// it's safe to modify them. Some sound engines use this feature in order
+				// to control sound looping.
+				// NOTE: the real Paula would also do this during enableChannel() and in
+				// the middle of setChannelData(); for simplicity, we only do it here.
+				if (ch.interrupt)
+					interruptChannel(voice);
 			}
 
 			// If we have not yet generated enough samples, and looping is active: loop!

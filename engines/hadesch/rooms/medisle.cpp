@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -25,6 +24,8 @@
 #include "hadesch/video.h"
 #include "hadesch/ambient.h"
 #include "common/translation.h"
+
+#include "gui/message.h"
 
 namespace Hadesch {
 
@@ -69,11 +70,11 @@ static const char *itemSounds[] = {
 };
 
 static const TranscribedSound itemClickSounds[] = {
-	{"m1150ne0", _s("If Perseus looks directly at Medusa he will be turned to stone. Using the shield from my temple, he can look at her reflection instead") },
-	{"m1150nd0", _s("The sword from my temple will cut off Medusa's head") },
-	{"m1150na0", _s("Medusa's head must be brough back inside this magic bag") },
-	{"m1150nb0", _s("When Perseus wears the dark helmet, he will be invisible") },
-	{"m1150nc0", _s("Putting on the winged sandals will allow you to fly above and move quickly") }
+	{"m1150ne0", _hs("If Perseus looks directly at Medusa he will be turned to stone. Using the shield from my temple, he can look at her reflection instead") },
+	{"m1150nd0", _hs("The sword from my temple will cut off Medusa's head") },
+	{"m1150na0", _hs("Medusa's head must be brough back inside this magic bag") },
+	{"m1150nb0", _hs("When Perseus wears the dark helmet, he will be invisible") },
+	{"m1150nc0", _hs("Putting on the winged sandals will allow you to fly above and move quickly") }
 };
 
 static const char *perseusItemAnims[] = {
@@ -85,17 +86,17 @@ static const char *perseusItemAnims[] = {
 };
 
 static const TranscribedSound perseusItemSounds[] = {
-	{ "m1190na0", _s("Thanks. The shield is just what I needed") },
-	{ "m1180na0", _s("Yeah. The sword oughta do the trick") },
-	{ "m1220na0", _s("Alright. You've got the bag. Excellent") },
-	{ "m1210na0", _s("Yes, the helmet. You're doing great") },
-	{ "m1230na0", _s("Ok, you've found the sandals. I owe you big time") }
+	{ "m1190na0", _hs("Thanks. The shield is just what I needed") },
+	{ "m1180na0", _hs("Yeah. The sword oughta do the trick") },
+	{ "m1220na0", _hs("Alright. You've got the bag. Excellent") },
+	{ "m1210na0", _hs("Yes, the helmet. You're doing great") },
+	{ "m1230na0", _hs("Ok, you've found the sandals. I owe you big time") }
 };
 
 static const TranscribedSound eyeInsistSpeech[] = {
-	{"m2120wd0", _s("No, no. Where did he go?")},
-	{"m2120we0", _s("Feel around here. It's got to be near")},
-	{"m2120wf0", _s("If it's lost I'd cry but I don't have an eye")}
+	{"m2120wd0", _hs("No, no. Where did he go?")},
+	{"m2120we0", _hs("Feel around here. It's got to be near")},
+	{"m2120wf0", _hs("If it's lost I'd cry but I don't have an eye")}
 };
 
 struct StatuePiece {
@@ -188,27 +189,27 @@ static const struct {
 
 static const TranscribedSound kICanForetellTheFuture = {
 	"m2190wa0",
-	_s("I can foretell the future. You know, I always knew I was going to say that")
+	_hs("I can foretell the future. You know, I always knew I was going to say that")
 };
 
 static const TranscribedSound kGiveMeEyeOrIllPunchYouInTheEye = {
 	"m2190wb0",
-	_s("Give me the eye or I'll punch you in the eye")
+	_hs("Give me the eye or I'll punch you in the eye")
 };
 
 static const TranscribedSound kPunchingOwnEye = {
 	"m2190wc0",
-	_s("Oh yeah? Then you'll be punching your own eye")
+	_hs("Oh yeah? Then you'll be punching your own eye")
 };
 
 static const TranscribedSound kIllTakeTheEyeYouCanHaveOneOfMyEars = {
 	"m2190wd0",
-	_s("I'll take the eye you can have one of my ears")
+	_hs("I'll take the eye you can have one of my ears")
 };
 
 static const TranscribedSound kMedusaOnceBeauty = {
 	"m2210wa0",
-	_s("Medusa once was quite the beauty. Also vain and very snoody. Treated Athena awful bad and mad the goddess awfully mad. To snab the god is all it takes and now her hair is made of snakes")
+	_hs("Medusa once was quite the beauty. Also vain and very snoody. Treated Athena awful bad and mad the goddess awfully mad. To snab the god is all it takes and now her hair is made of snakes")
 }; // unclear
 
 static const struct {
@@ -642,8 +643,11 @@ TODO (medusa quest):
 			// TODO: arcade sequence
 			if (0) {
 				g_vm->moveToRoom(kMedusaPuzzle);
-			} else
+			} else {
+			        GUI::MessageDialog dialog(_("The Medusa minigame is not supported yet. Skipping"));
+			        dialog.runModal();
 				g_vm->moveToRoom(kQuiz);
+			}
 			break;
 		case 11024:
 			renderPerseus();

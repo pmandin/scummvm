@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  *
  *              Originally written by Syn9 in FreeBASIC with SDL
@@ -628,8 +627,6 @@ void GriffonEngine::saveLoadNew() {
 		"new game", "", "load", "return",
 	};
 
-	float y = 0.0;
-
 	_cloudAngle = 0;
 
 	int curRow = 0;
@@ -658,8 +655,6 @@ void GriffonEngine::saveLoadNew() {
 	// Main menu loop
 	do {
 		_videoBuffer->fillRect(Common::Rect(0, 0, _videoBuffer->w, _videoBuffer->h), 0);
-
-		y += 1 * _fpsr;
 
 		rcDest.left = 256 + 256 * cos(PI / 180 * _cloudAngle * 40);
 		rcDest.top = 192 + 192 * sin(PI / 180 * _cloudAngle * 40);

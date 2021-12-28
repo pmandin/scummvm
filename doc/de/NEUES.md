@@ -5,19 +5,14 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Neue Spiele:
    - Unterstützung für Sanitarium hinzugefügt.
+   - Unterstützung für Hades Challenge hinzugefügt.
 
  Allgemein:
+   - Die Lizenz des Projektes wurde auf GPLv3+ aktualisiert.
    - ScummVM benötigt nun C++11, um gebaut werden zu können.
    - Unterstützung für verbesserte Filter in der Such-Box hinzugefügt.
      Weitere Informationen findest Du in der Dokumentation unnter "Unterstanding the search box".
    - Icon-Ansicht zur Benutzeroberfläche hinzugefügt [GSoC-Aufgabe].
-   - Scaler werden jetzt auch im OpenGL-Grafikmodus unterstützt.
-
- AGOS:
-   - Fehler in der AdLib-Musikwiedergabe von Waxworks AdLib behoben.
-
- AGS:
-   - Anpassungen an den Erkennungs-Einträgen der Spiele durchgeführt.
 
  Dreamweb:
    - Unterstützung für Sprachausgabe in Dialogen und für Objektbeschreibungen hinzugefügt.
@@ -32,10 +27,52 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Supernova:
    - Unterstützung für Sprachausgabe in Dialogen und für Objektbeschreibungen hinzugefügt.
 
+ SCI:
+   - Unterstützung für Sprachausgabe in den Diskettenversionen von SCI-Spielen zugefügt.
+
  SCUMM:
    - Neue Digital iMUSE-Engine hinzugefügt.
+   - Der Musik-Player der Amiga-Versionen von Indy3 und Loom wurde neu entworfen, um dem Original-Code genauer zu entsprechen.
+
+ macOS-Port:
+   - Unterstützung für die Anzeige von OSD-Nachrichten in der Touch Bar hinzugefügt.
+
+ Windows-Portierung:
+   - "Portabler Modus" hinzugefügt, der die von ScummVM erstellten Dateien (Spielstände, Screenshots...)
+     nicht wie üblich im Benutzerprofil-Ordner, sondern in dem Verzeichnis ablegt, in welchem sich
+     die ScummVM-Programmdatei befindet, sofern dort eine scummvm.ini-Datei existiert.
+
+#### 2.5.1 (02.01.2022)
+
+ Allgemein:
+   - Das ResidualVM GUI-Theme wurde remastered.
+   - Fehler im Punycode-Handling wurde korrigiert.
+   - Prüfung, ob ein Spielstand im Autosave-Slot überschrieben werden soll, korrigiert.
+   - In den meisten Engines werden funktioniert das Verschieben eines Spielstands in einen neuen Slot nun korrekt.
+   - Scaler werden jetzt auch im OpenGL-Grafikmodus unterstützt.
+
+ AGOS:
+   - Fehler in der AdLib-Musikwiedergabe von Waxworks AdLib behoben.
+
+ AGS:
+   - Anpassungen an den Erkennungs-Einträgen der Spiele durchgeführt.
+
+ Grim:
+   - Fehlerhafter Standard-Wert für die "Sprechgeschwindigkeit" korrigiert.
+   - Schwarzen Bildschirm bei der Eingabe eines Spielstand-Namens korrigiert.
+   - OpenGL ohne Shader wird nun als Standard-Einstellung für Grim Fandango bevorzugt.
+
+ Kyra:
+   - Grafikfehler in Legend of Kyrandia 3 behoben.
+
+ SAGA:
+   - Fehler bei der Musikwiedergabe in Inherit the Earth behoben.
+
+ SCUMM:
    - Verbesserte Unterstützung für hochauflösenden Text in den 16-Farben-Macintosh-
      Versionen von Loom und Indiana Jones and the Last Crusade.
+   - Verbesserung der OPL3-Sound-Emulation für Sam&Max.
+   - Fehler bei der Musikwiedergabe in The Dig behoben.
    - Absturz beim Laden von Spielständen von Humongous Entertainment-Spielen behoben.
 
  Sherlock:
@@ -46,21 +83,30 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Das Inventar wird nun korrekt aktualisiert, wenn in Serrated Scalpel die Uhr untersucht wird.
    - Nebel-Overlay von Kleopatras Nadel in Rose Tatoo korrigiert.Fix fog overlay at Cleopatra's Needle in Rose Tattoo.
    - Grafikfehler in Serrated Scalpel behoben, der auftritt, wenn Gegenstände untersucht werden, während das Inventar geöffnet ist.
+   - Die Geschwindigkeit des Darts-Spiel in Serrated Scalpel ist nun näher am Original-Spiel.
+   - Absturz behoben, der auftritt, wenn der Cursor an das Ende einer Zeichenkette im Speichern-Dialog von Rose Tattoo bewegt wird.
+   - Ausstehende Tastenanschläge werden nun in der korrekten Reihenfolge behandelt.
+   - Absturz behoben, der auftritt, wenn die Entfernen-Taste im Speichern-Dialog von Rose Tattoo genutzt wird.
+   - Dialog-Fehler behoben, der auftritt, wenn Lord Brumwell zu sprechen beginnt, während das Inventar-Fenster geöffnet ist.
+   - Animationen werden am Ende einer Unterhaltung korrekt fortgesetzt. Dies behebt einen Fehler,
+     der dafür sorgt, dass Jock Mahoney oder Nobby Charleton sich nicht mehr bewegen können und
+     nicht mehr mit dir sprechen möchten.
+   - Mehrere Fehler in der Benutzeroberfläche in beiden Spielen korrigiert.
+
+ Stark:
+   - OpenGL-Renderer (ohne Shader) hinzugefügt.
+   - Unterstützung für den TinyGL-Renderer hinzugefügt.
+   - Behandlung der automatischen Speicherung von Spielständen korrigiert.
+
+ TwinE:
+   - Zahlreiche Fehlerkorrekturen und Verbesserung der Stabilität.
 
  Xeen:
    - Absturz beim Laden von Kostanten aus xeen.ccs behoben.
    - Abbruch der Zauberspruch-Auswahl beim Wechsel der Charaktere korrigiert.
    - Korrektur einiger fehlerhafter Speicher-Zugriffe.
    - Mehrere Fehlerkorrekturen im Zusammenhang mit der Audio-Wiedergabe.
-
- macOS-Port:
-   - Unterstützung für die Anzeige von OSD-Nachrichten in der Touch Bar hinzugefügt.
-
- Windows-Portierung:
-   - "Portabler Modus" hinzugefügt, der die von ScummVM erstellten Dateien (Spielstände, Screenshots...)
-     nicht wie üblich im Benutzerprofil-Ordner, sondern in dem Verzeichnis ablegt, in welchem sich
-     die ScummVM-Programmdatei befindet, sofern dort eine scummvm.ini-Datei existiert.
-
+   - Die Wahrscheinlichkeit, dass ein Monster einen Gegenstand fallen lässt, wurde korrigiert.
 
 #### 2.5.0 "Vor genau zwanzig Jahren..." (09.10.2021)
 

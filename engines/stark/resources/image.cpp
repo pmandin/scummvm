@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -27,6 +26,7 @@
 
 #include "engines/stark/debug.h"
 #include "engines/stark/formats/xrc.h"
+#include "engines/stark/gfx/driver.h"
 #include "engines/stark/resources/location.h"
 #include "engines/stark/services/archiveloader.h"
 #include "engines/stark/services/settings.h"
@@ -216,7 +216,7 @@ void ImageStill::initVisual() {
 
 	VisualImageXMG *visual = new VisualImageXMG(StarkGfx);
 
-	if (StarkSettings->isAssetsModEnabled() && loadPNGOverride(visual)) {
+	if (StarkSettings->isAssetsModEnabled() && StarkGfx->supportsModdedAssets() && loadPNGOverride(visual)) {
 		visual->readOriginalSize(xmgStream);
 	} else {
 		visual->load(xmgStream);
@@ -277,7 +277,7 @@ void ImageText::readData(Formats::XRCReadStream *stream) {
 	_color.r = stream->readByte();
 	_color.g = stream->readByte();
 	_color.b = stream->readByte();
-	_color.a = stream->readByte() | 0xFF;
+	_color.a = 0xFF; stream->readByte();
 	_font = stream->readUint32LE();
 
 	// WORKAROUND: Give more space to text in the Archives' computer

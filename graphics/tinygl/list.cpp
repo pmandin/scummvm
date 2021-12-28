@@ -1,13 +1,13 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -58,7 +57,7 @@ GLContext *gl_get_context() {
 	return gl_ctx;
 }
 
-static GLList *find_list(GLContext *c, unsigned int list) {
+static GLList *find_list(GLContext *c, uint list) {
 	return c->shared_state.lists[list];
 }
 
@@ -206,7 +205,7 @@ void GLContext::glopCallList(GLParam *p) {
 	}
 }
 
-void tglNewList(unsigned int list, int mode) {
+void tglNewList(TGLuint list, TGLenum mode) {
 	GLList *l;
 	GLContext *c = gl_get_context();
 
@@ -239,14 +238,14 @@ void tglEndList() {
 	c->exec_flag = 1;
 }
 
-int tglIsList(unsigned int list) {
+TGLboolean tglIsList(TGLuint list) {
 	GLContext *c = gl_get_context();
 	GLList *l = find_list(c, list);
 
-	return (l != NULL);
+	return (l != nullptr);
 }
 
-unsigned int tglGenLists(int range) {
+TGLuint tglGenLists(TGLsizei range) {
 	GLContext *c = gl_get_context();
 	int count, list;
 	GLList **lists;

@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -80,11 +79,11 @@ static const char *hadesIntroVideos[] = {
 };
 
 static const TranscribedSound h0090_names[] = {
-	{ "H0090wF0", _s("Congratulations. You've shown Mr Sour Grapes") },
-	{ "H0090wA0", _s("The enveloppe, please. And the winner is ... you. Hey, good job. That's showing him") },
-	{ "H0090wB0", _s("Way to go") },
+	{ "H0090wF0", _hs("Congratulations. You've shown Mr Sour Grapes") },
+	{ "H0090wA0", _hs("The enveloppe, please. And the winner is ... you. Hey, good job. That's showing him") },
+	{ "H0090wB0", _hs("Way to go") },
 	// Difficult to hear. Please someone check after me
-	{ "H0090wE0", _s("You're amazing. Or Hades is hard under the gollar") }
+	{ "H0090wE0", _hs("You're amazing. Or Hades is hard under the gollar") }
 };
 
 static const int kNumQuestions = 4;
@@ -146,7 +145,7 @@ public:
 			room->playSFXLoop("FlameSnd");
 			room->playMusicLoop("AmbientQuestionMusic");
 			smallAnim();
-			playHadesVideo(hadesIntroVideos[g_vm->getRnd().getRandomNumberRng(0, 5)],
+			playHadesVideo(hadesIntroVideos[g_vm->getRnd().getRandomNumberRng(0, ARRAYSIZE(hadesIntroVideos) - 1)],
 					kFirstQuestion);
 			break;
 		case kNextQuestion:

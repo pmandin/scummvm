@@ -1,13 +1,13 @@
-/* ResidualVM - Graphic Adventure Engine
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
+ * ScummVM is the legal property of its developers, whose names
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -119,6 +118,7 @@ public:
 
 protected:
 	void updateScreenRect();
+	void updateCursorScaling();
 	const GLESBaseTexture *getActiveTexture() const;
 	void clipMouse(Common::Point &p) const;
 
@@ -131,8 +131,6 @@ protected:
 	void *getProcAddress(const char *name) const;
 
 private:
-	void setCursorPaletteInternal(const byte *colors, uint start, uint num);
-	void disableCursorPalette();
 	void initOverlay();
 
 	enum FixupType {
@@ -151,8 +149,13 @@ private:
 	bool _force_redraw;
 
 	// Game layer
-	GLESBaseTexture *_game_texture;
+	GLESTexture *_game_texture;
 	OpenGL::FrameBuffer *_frame_buffer;
+
+#ifdef USE_RGB_COLOR
+	// Backup of the previous pixel format to pass it back when we leave 3d
+	Graphics::PixelFormat _2d_pixel_format;
+#endif
 
 	/**
 	 * The position of the mouse cursor, in window coordinates.
@@ -160,19 +163,19 @@ private:
 	int _cursorX, _cursorY;
 
 	// Overlay layer
-	GLES5551Texture *_overlay_background;
-	GLES5551Texture *_overlay_texture;
+	GLESTexture *_overlay_background;
+	GLESTexture *_overlay_texture;
 	bool _show_overlay;
 
 	// Mouse layer
 	GLESBaseTexture *_mouse_texture;
-	GLESBaseTexture *_mouse_texture_palette;
-	GLES5551Texture *_mouse_texture_rgb;
+	GLESFakePaletteTexture *_mouse_texture_palette;
+	GLESTexture *_mouse_texture_rgb;
 	Common::Point _mouse_hotspot;
-	uint32 _mouse_keycolor;
-	int _mouse_targetscale;
+	Common::Point _mouse_hotspot_scaled;
+	int _mouse_width_scaled, _mouse_height_scaled;
+	bool _mouse_dont_scale;
 	bool _show_mouse;
-	bool _use_mouse_palette;
 };
 
 #endif

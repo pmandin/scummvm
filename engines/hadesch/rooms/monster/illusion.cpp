@@ -4,10 +4,10 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,8 +15,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Copyright 2020 Google
  *
@@ -49,11 +48,11 @@ struct BirdInfo {
 };
 
 static const TranscribedSound fakePhilReplics[] = {
-	{"v7220xb0", _s("unclear utterance")}, // unclear
-	{"v7220xc0", _s("Hey, this was close, buddy")},
-	{"v7220xd0", _s("Get hold of thunderbolts")}, // unclear
-	{"v7220xe0", _s("Keep going, kid. You're doing great job")},
-	{"v7220xf0", _s("unclear utterance")} // unclear
+	{"v7220xb0", _hs("unclear utterance")}, // unclear
+	{"v7220xc0", _hs("Hey, this was close, buddy")},
+	{"v7220xd0", _hs("Get hold of thunderbolts")}, // unclear
+	{"v7220xe0", _hs("Keep going, kid. You're doing great job")},
+	{"v7220xf0", _hs("unclear utterance")} // unclear
 };
 
 static const BirdInfo birdInfo[] = {

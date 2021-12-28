@@ -1,7 +1,7 @@
-/* ResidualVM - A 3D game interpreter
+/* ScummVM - Graphic Adventure Engine
  *
- * ResidualVM is the legal property of its developers, whose names
- * are too numerous to list here. Please refer to the AUTHORS
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
  * Additional copyright for this file:
@@ -9,10 +9,10 @@
  * This code is based on source code created by Revolution Software,
  * used with permission.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,15 +20,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
 #include "common/memstream.h"
 #include "common/random.h"
-
-#include "image/jpeg.h"
 
 #include "engines/icb/p4_generic.h"
 #include "engines/icb/set.h"
@@ -43,6 +40,7 @@
 #include "engines/icb/sound/direct_sound.h"
 #include "engines/icb/sound/fx_manager.h"
 #include "engines/icb/icb.h"
+#include "engines/icb/jpeg_decode.h"
 #include "engines/icb/direct_input.h"
 
 namespace ICB {
@@ -705,14 +703,11 @@ void _set::Init_base_bitmap_buffers() {
 	uint8 *ptr = bgPtr + shadowTable[0];
 
 	// Decode the jpeg background
-	Image::JPEGDecoder decoder;
-	decoder.setOutputPixelFormat(Graphics::PixelFormat(4, 8, 8, 8, 8, 16, 8, 0, 24));
-	Common::SeekableReadStream *jpegStream = dynamic_cast<Common::SeekableReadStream *>(new Common::MemoryReadStream(ptr, 1024 * 1024, DisposeAfterUse::YES));
-	decoder.loadStream(*jpegStream);
-	const Graphics::Surface *jpegSurf = decoder.getSurface();
+	Graphics::Surface *jpegSurf = JpegDecode(ptr, 1024 * 1024);
+	assert(jpegSurf);
+	uint8 *surface_address = surface_manager->Lock_surface(bg_buffer_id);
 	int16 pitch = surface_manager->Get_pitch(bg_buffer_id);
 	uint32 height = surface_manager->Get_height(bg_buffer_id);
-	uint8 *surface_address = surface_manager->Lock_surface(bg_buffer_id);
 	for (int32 i = 0; i < jpegSurf->h; i++) {
 		if (i >= (int32)height) {
 			break;
@@ -720,7 +715,8 @@ void _set::Init_base_bitmap_buffers() {
 		memcpy(surface_address + i * pitch, jpegSurf->getBasePtr(0, i), MIN(jpegSurf->pitch, pitch));
 	}
 	surface_manager->Unlock_surface(bg_buffer_id);
-	delete jpegStream;
+	jpegSurf->free();
+	delete jpegSurf;
 
 	// find the start of the weather data
 	int32 *weatherPtr = (int32 *)(bgPtr + shadowTable[1]);
