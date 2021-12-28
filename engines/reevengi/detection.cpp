@@ -148,7 +148,7 @@ public:
 	ReevengiMetaEngineDetection() : AdvancedMetaEngineDetection(Reevengi::gameDescriptions, sizeof(Reevengi::ReevengiGameDescription), reevengiGames, nullptr) {
 		_maxScanDepth = 4;
 		_directoryGlobs = directoryGlobs;
-		//_matchFullPaths = true;
+		_flags = kADFlagMatchFullPaths;
 		_guiOptions = GUIO_NOMIDI;
 	}
 
