@@ -237,7 +237,7 @@ static int32 mGOTO_SYM_POINT(TwinEEngine *engine, MoveScriptContext &ctx) {
 	engine->_scene->_currentScriptValue = ctx.stream.readByte();
 
 	const IVec3 &sp = engine->_scene->_sceneTracks[engine->_scene->_currentScriptValue];
-	const int32 newAngle = ANGLE_180 + engine->_movements->getAngleAndSetTargetActorDistance(ctx.actor->_pos.x, ctx.actor->_pos.z, sp.x, sp.z);
+	const int32 newAngle = ANGLE_180 + engine->_movements->getAngleAndSetTargetActorDistance(ctx.actor->_pos, sp);
 
 	if (ctx.actor->_staticFlags.bIsSpriteActor) {
 		ctx.actor->_angle = newAngle;
@@ -406,14 +406,10 @@ static int32 mBETA(TwinEEngine *engine, MoveScriptContext &ctx) {
 	return 0;
 }
 
-/**
- * Open the door (left way) (Parameter = distance to open).
- * @note Opcode @c 0x15
- */
-static int32 mOPEN_LEFT(TwinEEngine *engine, MoveScriptContext &ctx) {
+static int32 mOPEN_GENERIC(TwinEEngine *engine, MoveScriptContext &ctx, int32 angle) {
 	const int16 doorStatus = ctx.stream.readSint16LE();
 	if (ctx.actor->_staticFlags.bIsSpriteActor && ctx.actor->_staticFlags.bUsesClipping) {
-		ctx.actor->_angle = ANGLE_270;
+		ctx.actor->_angle = angle;
 		ctx.actor->_doorStatus = doorStatus;
 		ctx.actor->_dynamicFlags.bIsSpriteMoving = 1;
 		ctx.actor->_speed = 1000;
@@ -423,6 +419,14 @@ static int32 mOPEN_LEFT(TwinEEngine *engine, MoveScriptContext &ctx) {
 		engine->unlockAchievement("LBA_ACH_009");
 	}
 	return 0;
+}
+
+/**
+ * Open the door (left way) (Parameter = distance to open).
+ * @note Opcode @c 0x15
+ */
+static int32 mOPEN_LEFT(TwinEEngine *engine, MoveScriptContext &ctx) {
+	return mOPEN_GENERIC(engine, ctx, ANGLE_270);
 }
 
 /**
@@ -430,18 +434,8 @@ static int32 mOPEN_LEFT(TwinEEngine *engine, MoveScriptContext &ctx) {
  * @note Opcode @c 0x16
  */
 static int32 mOPEN_RIGHT(TwinEEngine *engine, MoveScriptContext &ctx) {
-	const int16 doorStatus = ctx.stream.readSint16LE();
-	if (ctx.actor->_staticFlags.bIsSpriteActor && ctx.actor->_staticFlags.bUsesClipping) {
-		ctx.actor->_angle = ANGLE_90;
-		ctx.actor->_doorStatus = doorStatus;
-		ctx.actor->_dynamicFlags.bIsSpriteMoving = 1;
-		ctx.actor->_speed = 1000;
-		engine->_movements->setActorAngle(ANGLE_0, ANGLE_351, ANGLE_17, &ctx.actor->_move);
-	}
-	if (engine->_scene->_currentSceneIdx == LBA1SceneId::Proxima_Island_Museum && ctx.actor->_actorIdx == 16) {
-		engine->unlockAchievement("LBA_ACH_009");
-	}
-	return 0;
+	return mOPEN_GENERIC(engine, ctx, ANGLE_90);
+
 }
 
 /**
@@ -449,18 +443,8 @@ static int32 mOPEN_RIGHT(TwinEEngine *engine, MoveScriptContext &ctx) {
  * @note Opcode @c 0x17
  */
 static int32 mOPEN_UP(TwinEEngine *engine, MoveScriptContext &ctx) {
-	const int16 doorStatus = ctx.stream.readSint16LE();
-	if (ctx.actor->_staticFlags.bIsSpriteActor && ctx.actor->_staticFlags.bUsesClipping) {
-		ctx.actor->_angle = ANGLE_180;
-		ctx.actor->_doorStatus = doorStatus;
-		ctx.actor->_dynamicFlags.bIsSpriteMoving = 1;
-		ctx.actor->_speed = 1000;
-		engine->_movements->setActorAngle(ANGLE_0, ANGLE_351, ANGLE_17, &ctx.actor->_move);
-	}
-	if (engine->_scene->_currentSceneIdx == LBA1SceneId::Proxima_Island_Museum && ctx.actor->_actorIdx == 16) {
-		engine->unlockAchievement("LBA_ACH_009");
-	}
-	return 0;
+	return mOPEN_GENERIC(engine, ctx, ANGLE_180);
+
 }
 
 /**
@@ -468,18 +452,7 @@ static int32 mOPEN_UP(TwinEEngine *engine, MoveScriptContext &ctx) {
  * @note Opcode @c 0x18
  */
 static int32 mOPEN_DOWN(TwinEEngine *engine, MoveScriptContext &ctx) {
-	const int16 doorStatus = ctx.stream.readSint16LE();
-	if (ctx.actor->_staticFlags.bIsSpriteActor && ctx.actor->_staticFlags.bUsesClipping) {
-		ctx.actor->_angle = ANGLE_0;
-		ctx.actor->_doorStatus = doorStatus;
-		ctx.actor->_dynamicFlags.bIsSpriteMoving = 1;
-		ctx.actor->_speed = 1000;
-		engine->_movements->setActorAngle(ANGLE_0, ANGLE_351, ANGLE_17, &ctx.actor->_move);
-	}
-	if (engine->_scene->_currentSceneIdx == LBA1SceneId::Proxima_Island_Museum && ctx.actor->_actorIdx == 16) {
-		engine->unlockAchievement("LBA_ACH_009");
-	}
-	return 0;
+	return mOPEN_GENERIC(engine, ctx, ANGLE_0);
 }
 
 /**
@@ -700,6 +673,7 @@ void ScriptMove::processMoveScript(int32 actorIdx) {
 		const byte scriptOpcode = ctx.stream.readByte();
 		if (scriptOpcode < ARRAYSIZE(function_map)) {
 			end = function_map[scriptOpcode].function(_engine, ctx);
+			debug(3, "move script %s for actor %i (%i)", function_map[scriptOpcode].name, actorIdx, end);
 		} else {
 			error("Actor %d with wrong offset/opcode - Offset: %d/%d (opcode: %u)", actorIdx, (int)ctx.stream.pos() - 1, (int)ctx.stream.size(), scriptOpcode);
 		}

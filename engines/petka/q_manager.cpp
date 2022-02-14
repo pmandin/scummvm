@@ -81,7 +81,7 @@ void QManager::removeResource(uint32 id) {
 
 void QManager::clearUnneeded() {
 	for (auto it = _resourceMap.begin(); it != _resourceMap.end(); ++it) {
-		if (!_isAlwaysNeededMap.getVal(it->_key)) {
+		if (!_isAlwaysNeededMap.getValOrDefault(it->_key, false)) {
 			_resourceMap.erase(it);
 		}
 	}
@@ -117,7 +117,8 @@ Graphics::Surface *QManager::getSurface(uint32 id) {
 		return nullptr;
 	}
 
-	Graphics::Surface *s = loadBitmapSurface(*stream);
+	Common::ScopedPtr<Common::SeekableReadStream> preloaded_stream (stream->readStream(stream->size()));
+	Graphics::Surface *s = loadBitmapSurface(*preloaded_stream);
 	if (s) {
 		QResource &res = _resourceMap.getOrCreateVal(id);
 		res.type = QResource::kSurface;

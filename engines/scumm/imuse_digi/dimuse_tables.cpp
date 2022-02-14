@@ -541,6 +541,7 @@ const imuseFtStateTable _ftStateMusicTable[] = {
 	{"saveme",   2,  127,  "statePlaneControls"  },
 	{"",         4,  0,    "stateCliffHanger1"   },
 	{"",         4,  0,    "stateCliffHanger2"   },
+	{"",         0,  0,    ""                    },
 };
 
 const imuseFtNames _ftSeqNames[] = {
@@ -574,6 +575,7 @@ const imuseFtNames _ftSeqNames[] = {
 	{"seqNestolusAtRanch" },
 	{"seqRipLimo"         },
 	{"seqGorgeTurn"       },
+	{"seqStealRamp"       },
 	{"seqCavefishTalk"    },
 	{"seqArriveCorville"  },
 	{"seqSingleBunny"     },
@@ -595,7 +597,8 @@ const imuseFtNames _ftSeqNames[] = {
 	{"seqFanBunnies"      },
 	{"seqRipDead"         },
 	{"seqFuneral"         },
-	{"seqCredits"         }
+	{"seqCredits"         },
+	{""                   }
 };
 
 const imuseFtSeqTable _ftSeqMusicTable[] = {

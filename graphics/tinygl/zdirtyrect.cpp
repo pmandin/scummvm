@@ -34,9 +34,8 @@ void GLContext::issueDrawCall(DrawCall *drawCall) {
 	_drawCallsQueue.push_back(drawCall);
 }
 
-static void debugDrawRectangle(Common::Rect rect, int r, int g, int b) {
-	GLContext *c = gl_get_context();
-	int fbWidth = c->fb->getPixelBufferWidth();
+void GLContext::debugDrawRectangle(Common::Rect rect, int r, int g, int b) {
+	int fbWidth = fb->getPixelBufferWidth();
 
 	if (rect.left < 0)
 		rect.left = 0;
@@ -44,16 +43,16 @@ static void debugDrawRectangle(Common::Rect rect, int r, int g, int b) {
 		rect.right = fbWidth - 1;
 	if (rect.top < 0)
 		rect.top = 0;
-	if (rect.bottom >= c->fb->getPixelBufferHeight())
-		rect.bottom = c->fb->getPixelBufferHeight() - 1;
+	if (rect.bottom >= fb->getPixelBufferHeight())
+		rect.bottom = fb->getPixelBufferHeight() - 1;
 
 	for (int x = rect.left; x < rect.right; x++) {
-		c->fb->writePixel(rect.top * fbWidth + x, 255, r, g, b);
-		c->fb->writePixel((rect.bottom - 1) * fbWidth + x, 255, r, g, b);
+		fb->writePixel(rect.top * fbWidth + x, 255, r, g, b);
+		fb->writePixel((rect.bottom - 1) * fbWidth + x, 255, r, g, b);
 	}
 	for (int y = rect.top; y < rect.bottom; y++) {
-		c->fb->writePixel(y * fbWidth + rect.left, 255, r, g, b);
-		c->fb->writePixel(y * fbWidth + rect.right - 1, 255, r, g, b);
+		fb->writePixel(y * fbWidth + rect.left, 255, r, g, b);
+		fb->writePixel(y * fbWidth + rect.right - 1, 255, r, g, b);
 	}
 }
 
@@ -473,10 +472,7 @@ RasterizationDrawCall::RasterizationState RasterizationDrawCall::captureState() 
 	state.wrapS = c->texture_wrap_s;
 	state.wrapT = c->texture_wrap_t;
 	state.lightingEnabled = c->lighting_enabled;
-	if (c->current_texture != nullptr)
-		state.textureVersion = c->current_texture->versionNumber;
-	else
-		state.textureVersion = 0;
+	state.textureVersion = c->current_texture->versionNumber;
 
 	memcpy(state.viewportScaling, c->viewport.scale._v, sizeof(c->viewport.scale._v));
 	memcpy(state.viewportTranslation, c->viewport.trans._v, sizeof(c->viewport.trans._v));

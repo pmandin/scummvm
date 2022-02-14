@@ -28,7 +28,8 @@
 #include "common/fs.h"
 #include "common/str.h"
 
-#include "trecision/anim.h"
+#include "trecision/animmanager.h"
+#include "trecision/animtype.h"
 #include "trecision/actor.h"
 #include "trecision/console.h"
 #include "trecision/defines.h"
@@ -380,27 +381,27 @@ void TrecisionEngine::reEvent() {
 	_scheduler->doEvent(_curMessage->_class, _curMessage->_event, _curMessage->_priority, _curMessage->_u16Param1, _curMessage->_u16Param2, _curMessage->_u8Param, _curMessage->_u32Param);
 }
 
+Common::SeekableReadStreamEndian *TrecisionEngine::getLocStream() {
+	Common::String filename;
+
+	if (isAmiga()) {
+		filename = Common::String::format("%s.bm", _room[_curRoom]._baseName);
+		return readEndian(_dataFile.createReadStreamForMember(filename));
+	} else {
+		filename = Common::String::format("%s.cr", _room[_curRoom]._baseName);
+		return readEndian(_dataFile.createReadStreamForCompressedMember(filename));
+	}
+}
+
 void TrecisionEngine::readLoc() {
 	_soundMgr->stopAllExceptMusic();
 
 	_graphicsMgr->clearScreenBufferTop();
-
-	Common::String filename;
-	Common::SeekableReadStreamEndian *picFile;
-	if (isAmiga()) {
-		filename = Common::String::format("%s.bm", _room[_curRoom]._baseName);
-		picFile = readEndian(_dataFile.createReadStreamForMember(filename));
-	} else {
-		filename = Common::String::format("%s.cr", _room[_curRoom]._baseName);
-		picFile = readEndian(_dataFile.createReadStreamForCompressedMember(filename));
-	}
-
-	SObject bgInfo;
-	bgInfo.readRect(picFile);
-
-	_graphicsMgr->loadBackground(picFile, bgInfo._rect.width(), bgInfo._rect.height());
 	_sortTable.clear();
 	_sortTableReplay.clear();
+
+	Common::SeekableReadStreamEndian *picFile = getLocStream();
+	_graphicsMgr->loadBackground(picFile);
 	readObj(picFile);
 
 	_soundMgr->stopAll();
@@ -443,20 +444,8 @@ void TrecisionEngine::redrawRoom() {
 		}
 	}
 
-	Common::String filename;
-	Common::SeekableReadStreamEndian *picFile;
-	if (isAmiga()) {
-		filename = Common::String::format("%s.bm", _room[_curRoom]._baseName);
-		picFile = readEndian(_dataFile.createReadStreamForMember(filename));
-	} else {
-		filename = Common::String::format("%s.cr", _room[_curRoom]._baseName);
-		picFile = readEndian(_dataFile.createReadStreamForCompressedMember(filename));
-	}
-
-	SObject bgInfo;
-	bgInfo.readRect(picFile);
-
-	_graphicsMgr->loadBackground(picFile, bgInfo._rect.width(), bgInfo._rect.height());
+	Common::SeekableReadStreamEndian *picFile = getLocStream();
+	_graphicsMgr->loadBackground(picFile);
 	_sortTable.clear();
 	_sortTable = _sortTableReplay;
 

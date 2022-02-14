@@ -33,7 +33,7 @@
 #include "petka/interfaces/save_load.h"
 #include "petka/interfaces/panel.h"
 
-namespace Petka {
+namespace {
 
 // ПАНЕЛЬ УПРАВЛЕНИЯ
 const char *const kPanelObjName = "\xCF\xC0\xCD\xC5\xCB\xDC\x20\xD3\xCF\xD0\xC0\xC2\xCB\xC5\xCD\xC8\xDF";
@@ -43,6 +43,7 @@ const uint kLoadButtonIndex = 2;
 const uint kContinueButtonIndex = 3;
 const uint kExitButtonIndex = 4;
 const uint kSaveButtonIndex = 5;
+const uint kSafeObjectIndex = 6;
 const uint kSfxLabelIndex = 7;
 const uint kSubtitleButtonIndex = 8;
 const uint kSfxVolumeSliderIndex = 9;
@@ -62,37 +63,64 @@ const uint kIncSfxButtonIndex = 22;
 const uint kDecSpeedButtonIndex = 23;
 const uint kIncSpeedButtonIndex = 24;
 
+Common::Point getObjectPos(uint index)
+{
+	switch (index) {
+	case kNewGameButtonIndex:
+		return {0, 2};
+	case kLoadButtonIndex:
+		return {5, 70};
+	case kContinueButtonIndex:
+		return {5, 136};
+	case kExitButtonIndex:
+		return {22, 328};
+	case kSaveButtonIndex:
+		return {87, 224};
+	case kSafeObjectIndex:
+		return {118, 395};
+	case kSfxLabelIndex:
+		return {467, 71};
+	case kSubtitleButtonIndex:
+		return {432, 144};
+	case kSfxVolumeSliderIndex:
+		return {428, 29};
+	case kSpeedSliderIndex:
+		return {434, 170};
+	case kMusicLabelIndex:
+		return {297, 214};
+	case kSubtitleLabelIndex:
+		return {470, 139};
+	case kSpeechLabelIndex:
+		return {318, 87};
+	case kSpeedLabelIndex:
+		return {468, 172};
+	case kSpeechVolumeSliderIndex:
+		return {262, 31};
+	case kMusicVolumeSliderIndex:
+		return {231, 137};
+	// case kDecSpeechButtonIndex:
+	// case kIncSpeechButtonIndex:
+	// case kDecMusicButtonIndex:
+	// case kIncMusicButtonIndex:
+	// case kDecSfxButtonIndex:
+	// case kIncSfxButtonIndex:
+	// case kDecSpeedButtonIndex:
+	// case kIncSpeedButtonIndex:
+	default:
+		return {0, 0};
+	}
+}
+
+}
+
+namespace Petka {
+
 InterfacePanel::InterfacePanel() {
-	_objectPoints[0] = Common::Point(0, 2);
-	_objectPoints[1] = Common::Point(5, 70);
-	_objectPoints[2] = Common::Point(5, 136);
-	_objectPoints[3] = Common::Point(22, 328);
-	_objectPoints[4] = Common::Point(87, 224);
-	_objectPoints[5] = Common::Point(118, 395);
-	_objectPoints[6] = Common::Point(467, 71);
-	_objectPoints[7] = Common::Point(432, 144);
-	_objectPoints[8] = Common::Point(428, 29);
-	_objectPoints[9] = Common::Point(434, 170);
-	_objectPoints[10] = Common::Point(297, 214);
-	_objectPoints[11] = Common::Point(470, 139);
-	_objectPoints[12] = Common::Point(318, 87);
-	_objectPoints[13] = Common::Point(468, 172);
-	_objectPoints[14] = Common::Point(262, 31);
-	_objectPoints[15] = Common::Point(231, 137);
-	_objectPoints[16] = Common::Point(0, 0);
-	_objectPoints[17] = Common::Point(0, 0);
-	_objectPoints[18] = Common::Point(0, 0);
-	_objectPoints[19] = Common::Point(0, 0);
-	_objectPoints[20] = Common::Point(0, 0);
-	_objectPoints[21] = Common::Point(0, 0);
-	_objectPoints[22] = Common::Point(0, 0);
-	_objectPoints[23] = Common::Point(0, 0);
 	readSettings();
 }
 
 void InterfacePanel::start(int id) {
 	QSystem *sys = g_vm->getQSystem();
-	readSettings();
 
 	sys->getCase()->show(false);
 
@@ -102,27 +130,27 @@ void InterfacePanel::start(int id) {
 	InterfaceSaveLoad::saveScreen();
 
 	QObjectBG *bg = (QObjectBG *)sys->findObject(kPanelObjName);
+	const BGInfo *info = sys->_mainInterface->findBGInfo(bg->_id);
+
+	_objs.reserve(info->attachedObjIds.size() + 1);
 	_objs.push_back(bg);
 
-	const BGInfo *info = sys->_mainInterface->findBGInfo(bg->_id);
 	for (uint i = 0; i < info->attachedObjIds.size(); ++i) {
 		QMessageObject *obj = sys->findObject(info->attachedObjIds[i]);
 		FlicDecoder *flc = g_vm->resMgr()->getFlic(obj->_resourceId);
 		flc->setFrame(1);
+
+		const auto pos = getObjectPos(i + 1);
+		obj->_x = pos.x;
+		obj->_y = pos.y;
 		obj->_z = 1;
-		obj->_x = _objectPoints[i].x;
-		obj->_y = _objectPoints[i].y;
 		obj->_frame = 1;
 		obj->_animate = false;
-		obj->_isShown = true;
 		_objs.push_back(obj);
 	}
 
 	SubInterface::start(id);
-
-	updateSliders();
-	updateSubtitles();
-
+	onSettingsChanged();
 	sys->getCursor()->_animate = true;
 }
 
@@ -207,35 +235,27 @@ void InterfacePanel::onMouseMove(Common::Point p) {
 			continue;
 		obj->_frame = frame;
 
-		int pointIndex;
 		switch (i) {
 		case kDecSpeechButtonIndex:
 		case kIncSpeechButtonIndex:
-			pointIndex = kSpeechLabelIndex - 1;
-			obj = (QMessageObject *)_objs[kSpeechLabelIndex];
+			updateSprite(kSpeechLabelIndex, frame);
 			break;
 		case kDecMusicButtonIndex:
 		case kIncMusicButtonIndex:
-			pointIndex = kMusicLabelIndex - 1;
-			obj = (QMessageObject *)_objs[kMusicLabelIndex];
+			updateSprite(kMusicLabelIndex, frame);
 			break;
 		case kDecSfxButtonIndex:
 		case kIncSfxButtonIndex:
-			pointIndex = kSfxLabelIndex - 1;
-			obj = (QMessageObject *)_objs[kSfxLabelIndex];
+			updateSprite(kSfxLabelIndex, frame);
 			break;
 		case kIncSpeedButtonIndex:
 		case kDecSpeedButtonIndex:
-			pointIndex = kSpeedLabelIndex - 1;
-			obj = (QMessageObject *)_objs[kSpeedLabelIndex];
+			updateSprite(kSpeedLabelIndex, frame);
 			break;
 		default:
-			pointIndex = i - 1;
+			updateSprite(i, frame);
 			break;
 		}
-		FlicDecoder *flc = g_vm->resMgr()->getFlic(obj->_resourceId);
-		flc->setFrame(frame);
-		g_vm->videoSystem()->addDirtyRect(_objectPoints[pointIndex], *flc);
 	}
 	QObjectCursor *cursor = g_vm->getQSystem()->getCursor();
 	cursor->_isShown = true;
@@ -245,32 +265,17 @@ void InterfacePanel::onMouseMove(Common::Point p) {
 void InterfacePanel::updateSliders() {
 	applySettings();
 
-	FlicDecoder *flc = g_vm->resMgr()->getFlic(_objs[kSpeechVolumeSliderIndex]->_resourceId);
-	flc->setFrame(_speechFrame);
-	g_vm->videoSystem()->addDirtyRect(_objectPoints[kSpeechVolumeSliderIndex - 1], *flc);
-
-	flc = g_vm->resMgr()->getFlic(_objs[kMusicVolumeSliderIndex]->_resourceId);
-	flc->setFrame(_musicFrame);
-	g_vm->videoSystem()->addDirtyRect(_objectPoints[kMusicVolumeSliderIndex - 1], *flc);
-
-	flc = g_vm->resMgr()->getFlic(_objs[kSfxVolumeSliderIndex]->_resourceId);
-	flc->setFrame(_sfxFrame);
-	g_vm->videoSystem()->addDirtyRect(_objectPoints[kSfxVolumeSliderIndex - 1], *flc);
-
-	flc = g_vm->resMgr()->getFlic(_objs[kSpeedSliderIndex]->_resourceId);
-	flc->setFrame(_speedFrame);
-	g_vm->videoSystem()->addDirtyRect(_objectPoints[kSpeedSliderIndex - 1], *flc);
+	updateSprite(kSpeechVolumeSliderIndex, _speechFrame);
+	updateSprite(kMusicVolumeSliderIndex, _musicFrame);
+	updateSprite(kSfxVolumeSliderIndex, _sfxFrame);
+	updateSprite(kSpeedSliderIndex, _speedFrame);
 }
 
 void InterfacePanel::updateSubtitles() {
 	applySettings();
-	FlicDecoder *flc = g_vm->resMgr()->getFlic(_objs[kSubtitleButtonIndex]->_resourceId);
-	flc->setFrame(_subtitles == 0 ? 1 : 7);
-	g_vm->videoSystem()->addDirtyRect(_objectPoints[kSubtitleButtonIndex - 1], *flc);
 
-	flc = g_vm->resMgr()->getFlic(_objs[kSubtitleLabelIndex]->_resourceId);
-	flc->setFrame(_subtitles == 0 ? 1 : 2);
-	g_vm->videoSystem()->addDirtyRect(_objectPoints[kSubtitleLabelIndex - 1], *flc);
+	updateSprite(kSubtitleButtonIndex, _subtitles == 0 ? 1 : 7);
+	updateSprite(kSubtitleLabelIndex, _subtitles == 0 ? 1 : 2);
 }
 
 void InterfacePanel::readSettings() {
@@ -287,11 +292,32 @@ void InterfacePanel::applySettings() {
 	_sfxFrame = CLIP<int>(_sfxFrame, 1, 31);
 	_speedFrame = CLIP<int>(_speedFrame, 1, 26);
 
-	ConfMan.setInt("speech_volume", 255 * (_speechFrame - 1) / (31 - 1));
-	ConfMan.setInt("music_volume", 255 * (_musicFrame - 1) / (41 - 1));
-	ConfMan.setInt("sfx_volume", 255 * (_sfxFrame - 1) / (31 - 1));
-	ConfMan.setBool("subtitles", _subtitles);
-	ConfMan.setInt("petka_speed", 4 * (_speedFrame - 1));
+	const auto speechFrame = _speechFrame;
+	const auto musicFrame = _musicFrame;
+	const auto sfxFrame = _sfxFrame;
+	const auto speedFrame = _speedFrame;
+	const auto subtitles = _subtitles;
+
+	readSettings();
+
+	if (speechFrame != _speechFrame) {
+		ConfMan.setInt("speech_volume", 255 * (speechFrame - 1) / (31 - 1));
+	}
+	if (musicFrame != _musicFrame) {
+		ConfMan.setInt("music_volume", 255 * (musicFrame - 1) / (41 - 1));
+	}
+	if (sfxFrame != _sfxFrame) {
+		ConfMan.setInt("sfx_volume", 255 * (sfxFrame - 1) / (31 - 1));
+	}
+
+	ConfMan.setBool("subtitles", subtitles);
+
+	if (speedFrame != _speedFrame) {
+		ConfMan.setInt("petka_speed", 4 * (speedFrame - 1));
+	}
+
+	readSettings();
+
 	ConfMan.flushToDisk();
 	g_vm->syncSoundSettings();
 }
@@ -300,8 +326,21 @@ void InterfacePanel::onRightButtonDown(Common::Point p) {
 	stop();
 }
 
+void InterfacePanel::updateSprite(uint index, uint frame) const {
+	const auto *object = (QMessageObject *)(_objs[index]);
+	FlicDecoder *flc = g_vm->resMgr()->getFlic(object->_resourceId);
+	flc->setFrame(frame);
+	g_vm->videoSystem()->addDirtyRect(Common::Point(object->_x, object->_y), *flc);
+}
+
 int InterfacePanel::getHeroSpeed() {
 	return (_speedFrame * 100 - 100) / 25;
+}
+
+void InterfacePanel::onSettingsChanged() {
+	readSettings();
+	updateSliders();
+	updateSubtitles();
 }
 
 } // End of namespace Petka

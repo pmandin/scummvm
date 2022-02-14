@@ -210,6 +210,7 @@ ScummVM Team
     Grim:
        James Brown                    - Grim (retired)
        Giulio Camuffo                 - Grim (retired)
+       Daniel Schepler                - Initial engine contributor
        Dries Harnie                   - EMI
        Pawel Kolodziejski             - Grim
        Christian Krause               - EMI (retired)
@@ -219,6 +220,7 @@ ScummVM Team
 
     Groovie:
        Henry Bush
+       Ray Carro
        Scott Thomas
        Jordi Vilalta Prat
 
@@ -237,6 +239,9 @@ ScummVM Team
        Arnaud Boutonne
        Oystein Eftevaag
        Eugene Sandulenko
+
+    Hypno:
+       Gustavo Grieco
 
     ICB:
        Pawel Kolodziejski
@@ -606,7 +611,7 @@ ScummVM Team
        Cpasjuste
        rsn8887
 
-    SDL (Win/Linux/OS X/etc.):
+    SDL (Win/Linux/macOS/etc.):
        Max Horn                       - (retired)
        Eugene Sandulenko              - Asm routines, GFX layers
 

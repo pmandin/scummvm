@@ -96,7 +96,7 @@ void InterfaceMain::loadRoom(int id, bool fromSave) {
 	sys->_room = room;
 	_objs.push_back(room);
 
-	auto surface = resMgr->getSurface(room->_resourceId);
+	const auto *surface = resMgr->getSurface(room->_resourceId);
 	if (surface) {
 		assert(surface->w >= 640);
 		sys->_sceneWidth = MAX<int>(surface->w, 640);
@@ -258,10 +258,10 @@ void InterfaceMain::onMouseMove(Common::Point p) {
 	}
 }
 
-void InterfaceMain::setTextChoice(const Common::Array<Common::U32String> &choices, uint16 color, uint16 selectedColor) {
+void InterfaceMain::setTextChoice(const Common::Array<Common::U32String> &choices, uint16 color, uint16 outlineColor, uint16 selectedColor) {
 	removeTexts();
 	_objUnderCursor = nullptr;
-	_objs.push_back(new QTextChoice(choices, color, selectedColor));
+	_objs.push_back(new QTextChoice(choices, color, outlineColor, selectedColor));
 }
 
 void InterfaceMain::setTextDescription(const Common::U32String &text, int frame) {

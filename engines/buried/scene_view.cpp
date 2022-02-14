@@ -748,7 +748,7 @@ bool SceneViewWindow::timeSuitJump(int destination) {
 	jumpMovie->playToFrame(24);
 
 	while (!_vm->shouldQuit() && jumpMovie->getMode() != VideoWindow::kModeStopped && _vm->_sound->isInterfaceSoundPlaying()) {
-		_vm->yield();
+		_vm->yield(jumpMovie.get(), -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -795,7 +795,7 @@ bool SceneViewWindow::timeSuitJump(int destination) {
 	jumpMovie->playVideo();
 
 	while (!_vm->shouldQuit() && jumpMovie->getMode() != VideoWindow::kModeStopped)
-		_vm->yield();
+		_vm->yield(jumpMovie.get(), -1);
 
 	if (_vm->shouldQuit())
 		return true;
@@ -881,7 +881,7 @@ bool SceneViewWindow::timeSuitJump(int destination) {
 	jumpMovie->playToFrame(48);
 
 	while (!_vm->shouldQuit() && jumpMovie->getMode() != VideoWindow::kModeStopped && _vm->_sound->isInterfaceSoundPlaying()) {
-		_vm->yield();
+		_vm->yield(jumpMovie.get(), -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -913,24 +913,28 @@ bool SceneViewWindow::timeSuitJump(int destination) {
 	return true;
 }
 
+bool SceneViewWindow::moveToDestination(const DestinationScene &destinationData, int navFrame) {
+	if (navFrame >= 0) {
+		LocationStaticData destinationStaticData;
+		if (!getSceneStaticData(destinationData.destinationScene, destinationStaticData))
+			return false;
+
+		changeStillFrameMovie(_vm->getFilePath(destinationStaticData.location.timeZone, destinationStaticData.location.environment, SF_STILLS));
+
+		Graphics::Surface *newBackground = getStillFrameCopy(navFrame);
+		_vm->_gfx->crossBlit(_preBuffer, 0, 0, 432, 189, newBackground, 0, 0);
+		newBackground->free();
+		delete newBackground;
+	}
+	return true;
+}
+
 bool SceneViewWindow::playTransition(const DestinationScene &destinationData, int navFrame) {
 	// Call the appropriate function for the transition type
 	switch (destinationData.transitionType) {
 	case TRANSITION_PUSH:
 		if (_vm->isControlDown()) {
-			if (navFrame >= 0) {
-				LocationStaticData destinationStaticData;
-				if (!getSceneStaticData(destinationData.destinationScene, destinationStaticData))
-					return false;
-
-				changeStillFrameMovie(_vm->getFilePath(destinationStaticData.location.timeZone, destinationStaticData.location.environment, SF_STILLS));
-
-				Graphics::Surface *newBackground = getStillFrameCopy(navFrame);
-				_vm->_gfx->crossBlit(_preBuffer, 0, 0, 432, 189, newBackground, 0, 0);
-				newBackground->free();
-				delete newBackground;
-			}
-			return true;
+			return moveToDestination(destinationData, navFrame);
 		} else {
 			LocationStaticData destinationStaticData;
 			if (!getSceneStaticData(destinationData.destinationScene, destinationStaticData))
@@ -951,19 +955,7 @@ bool SceneViewWindow::playTransition(const DestinationScene &destinationData, in
 		}
 	case TRANSITION_WALK:
 		if (_vm->isControlDown()) {
-			if (navFrame >= 0) {
-				LocationStaticData destinationStaticData;
-				if (!getSceneStaticData(destinationData.destinationScene, destinationStaticData))
-					return false;
-
-				changeStillFrameMovie(_vm->getFilePath(destinationStaticData.location.timeZone, destinationStaticData.location.environment, SF_STILLS));
-
-				Graphics::Surface *newBackground = getStillFrameCopy(navFrame);
-				_vm->_gfx->crossBlit(_preBuffer, 0, 0, 432, 189, newBackground, 0, 0);
-				newBackground->free();
-				delete newBackground;
-			}
-			return true;
+			return moveToDestination(destinationData, navFrame);
 		} else {
 			// The demo has a hardcoded door open sound
 			// This, and the code below the walkTransition call, are glue around the
@@ -998,19 +990,7 @@ bool SceneViewWindow::playTransition(const DestinationScene &destinationData, in
 		}
 	case TRANSITION_VIDEO:
 		if (_vm->isControlDown() && false) { // TODO: debug mode check (maybe?)
-			if (navFrame >= 0) {
-				LocationStaticData destinationStaticData;
-				if (!getSceneStaticData(destinationData.destinationScene, destinationStaticData))
-					return false;
-
-				changeStillFrameMovie(_vm->getFilePath(destinationStaticData.location.timeZone, destinationStaticData.location.environment, SF_STILLS));
-
-				Graphics::Surface *newBackground = getStillFrameCopy(navFrame);
-				_vm->_gfx->crossBlit(_preBuffer, 0, 0, 432, 189, newBackground, 0, 0);
-				newBackground->free();
-				delete newBackground;
-			}
-			return true;
+			return moveToDestination(destinationData, navFrame);
 		} else {
 			return videoTransition(_currentScene->_staticData.location, destinationData, navFrame);
 		}
@@ -1078,7 +1058,7 @@ bool SceneViewWindow::videoTransition(const Location &location, DestinationScene
 	animationMovie->playToFrame(destinationData.transitionStartFrame + destinationData.transitionLength - 1);
 
 	while (!_vm->shouldQuit() && animationMovie->getMode() != VideoWindow::kModeStopped) {
-		_vm->yield();
+		_vm->yield(animationMovie.get(), -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -1145,7 +1125,7 @@ bool SceneViewWindow::walkTransition(const Location &location, const Destination
 
 	_walkMovie->playToFrame(destinationData.transitionStartFrame + destinationData.transitionLength - 1);
 	while (!_vm->shouldQuit() && _walkMovie->getMode() != VideoWindow::kModeStopped) {
-		_vm->yield();
+		_vm->yield(_walkMovie, -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -1186,7 +1166,7 @@ bool SceneViewWindow::pushTransition(Graphics::Surface *curBackground, Graphics:
 				memcpy(curBackground->getBasePtr(0, j), newBackground->getBasePtr(0, curBackground->h - (i + stripSize) + j), newBackground->w * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 1: // Push right
@@ -1197,7 +1177,7 @@ bool SceneViewWindow::pushTransition(Graphics::Surface *curBackground, Graphics:
 				memcpy(curBackground->getBasePtr(0, j), newBackground->getBasePtr(newBackground->w - (i + stripSize), j), stripSize * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 2: // Push left
@@ -1208,7 +1188,7 @@ bool SceneViewWindow::pushTransition(Graphics::Surface *curBackground, Graphics:
 				memcpy(curBackground->getBasePtr(curBackground->w - (int)stripSize, j), newBackground->getBasePtr(i, j), stripSize * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 3: // Push up
@@ -1219,7 +1199,7 @@ bool SceneViewWindow::pushTransition(Graphics::Surface *curBackground, Graphics:
 				memcpy(curBackground->getBasePtr(0, curBackground->h - stripSize + j), newBackground->getBasePtr(0, i + j), newBackground->w * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	}
@@ -1255,7 +1235,7 @@ bool SceneViewWindow::slideInTransition(Graphics::Surface *newBackground, int di
 				memcpy(_preBuffer->getBasePtr(0, j), newBackground->getBasePtr(0, DIB_FRAME_HEIGHT - j), newBackground->w * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 1: // Push right
@@ -1264,7 +1244,7 @@ bool SceneViewWindow::slideInTransition(Graphics::Surface *newBackground, int di
 				memcpy(_preBuffer->getBasePtr(0, j), newBackground->getBasePtr(DIB_FRAME_WIDTH - i, j), i * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 2: // Push left
@@ -1273,7 +1253,7 @@ bool SceneViewWindow::slideInTransition(Graphics::Surface *newBackground, int di
 				memcpy(_preBuffer->getBasePtr(0, DIB_FRAME_WIDTH - i), newBackground->getBasePtr(0, j), i * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 3: // Push up
@@ -1282,7 +1262,7 @@ bool SceneViewWindow::slideInTransition(Graphics::Surface *newBackground, int di
 				memcpy(_preBuffer->getBasePtr(0, DIB_FRAME_HEIGHT - j), newBackground->getBasePtr(0, j), newBackground->w * newBackground->format.bytesPerPixel);
 
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	}
@@ -1308,7 +1288,7 @@ bool SceneViewWindow::slideOutTransition(Graphics::Surface *newBackground, int d
 			_vm->_gfx->crossBlit(_preBuffer, 0, 0, 432, 189, newBackground, 0, 0);
 			_vm->_gfx->crossBlit(_preBuffer, 0, i, 432, 189 - i, &curBackground, 0, 0);
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 1: // Push right
@@ -1317,7 +1297,7 @@ bool SceneViewWindow::slideOutTransition(Graphics::Surface *newBackground, int d
 				_vm->_gfx->crossBlit(_preBuffer, i, 0, DIB_FRAME_WIDTH - i, 189, newBackground, i, 0);
 			_vm->_gfx->crossBlit(_preBuffer, 0, 0, i, 189, &curBackground, DIB_FRAME_WIDTH - i, 0);
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 2: // Push left
@@ -1325,7 +1305,7 @@ bool SceneViewWindow::slideOutTransition(Graphics::Surface *newBackground, int d
 			_vm->_gfx->crossBlit(_preBuffer, 0, 0, i, 189, newBackground, 0, 0);
 			_vm->_gfx->crossBlit(_preBuffer, i, 0, 432 - i, 189, &curBackground, 0, 0);
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	case 3: // Push up
@@ -1333,7 +1313,7 @@ bool SceneViewWindow::slideOutTransition(Graphics::Surface *newBackground, int d
 			_vm->_gfx->crossBlit(_preBuffer, 0, 0, 432, 189, newBackground, 0, 0);
 			_vm->_gfx->crossBlit(_preBuffer, 0, 189 - i, 432, i, &curBackground, 0, 0);
 			invalidateWindow(false);
-			_vm->yield();
+			_vm->yield(nullptr, -1);
 		}
 		break;
 	}
@@ -1436,84 +1416,26 @@ bool SceneViewWindow::closeCycleFrameMovie() {
 	return true;
 }
 
-int SceneViewWindow::getGlobalFlag(int offset) {
-	// TODO: Verify the offset
-	const byte *data = (const byte *)&_globalFlags;
-	return READ_UINT16(data + offset);
-}
-
-byte SceneViewWindow::getGlobalFlagByte(int offset) {
-	// TODO: Verify the offset
-
-	if (offset < 0)
-		return 0;
-
-	const byte *data = (const byte *)&_globalFlags;
-	return data[offset];
-}
-
-bool SceneViewWindow::setGlobalFlag(int offset, int value) {
-	// TODO: Verify the offset
-
-	byte *data = (byte *)&_globalFlags;
-	WRITE_UINT16(data + offset, value);
-	return true;
-}
-
-bool SceneViewWindow::setGlobalFlagByte(int offset, byte value) {
-	// TODO: Verify the offset
-
-	byte *data = (byte *)&_globalFlags;
-	data[offset] = value;
-	return true;
-}
-
-uint32 SceneViewWindow::getGlobalFlagDWord(int offset) {
-	// TODO: Verify the offset
-	const byte *data = (const byte *)&_globalFlags;
-	return READ_UINT32(data + offset);
-}
-
-bool SceneViewWindow::setGlobalFlagDWord(int offset, uint32 value) {
-	// TODO: Verify the offset
-
-	byte *data = (byte *)&_globalFlags;
-	WRITE_UINT32(data + offset, value);
-	return true;
-}
-
-bool SceneViewWindow::addNumberToGlobalFlagTable(int tableOffset, int curItemCountOffset, int maxItems, byte numberToAdd) {
-	// TODO: Rewrite this
-	byte *data = (byte *)&_globalFlags;
-	byte *itemCountPtr = data + curItemCountOffset;
-	int itemCount = *itemCountPtr;
-
-	if (itemCount >= maxItems)
+bool SceneViewWindow::addNumberToGlobalFlagTable(byte numberToAdd) {
+	if (_globalFlags.evcapNumCaptured >= 12)
 		return false;
 
-	byte *tableEntries = data + tableOffset;
-	for (int i = 0; i < itemCount; i++)
-		if (tableEntries[i] == numberToAdd)
+	for (int i = 0; i < _globalFlags.evcapNumCaptured; i++)
+		if (_globalFlags.evcapBaseID[i] == numberToAdd)
 			return false;
 
-	tableEntries[itemCount] = numberToAdd;
-	*itemCountPtr = itemCount + 1;
+	_globalFlags.evcapBaseID[_globalFlags.evcapNumCaptured] = numberToAdd;
+	_globalFlags.evcapNumCaptured++;
 	return true;
 }
 
-byte SceneViewWindow::getNumberFromGlobalFlagTable(int tableOffset, int tableIndex) {
-	const byte *data = (const byte *)&_globalFlags;
-	return data[tableOffset + tableIndex];
+byte SceneViewWindow::getNumberFromGlobalFlagTable(int tableIndex) {
+	return _globalFlags.evcapBaseID[tableIndex];
 }
 
-bool SceneViewWindow::isNumberInGlobalFlagTable(int tableOffset, int curItemCountOffset, byte numberToCheck) {
-	const byte *data = (const byte *)&_globalFlags;
-	int itemCount = *(data + curItemCountOffset);
-
-	const byte *tableEntries = data + tableOffset;
-
-	for (int i = 0; i < itemCount; i++)
-		if (tableEntries[i] == numberToCheck)
+bool SceneViewWindow::isNumberInGlobalFlagTable(byte numberToCheck) {
+	for (int i = 0; i < _globalFlags.evcapNumCaptured; i++)
+		if (_globalFlags.evcapBaseID[i] == numberToCheck)
 			return true;
 
 	return false;
@@ -1572,7 +1494,7 @@ bool SceneViewWindow::playSynchronousAnimation(int animationID) {
 	animationMovie->playToFrame(animDatabase[i].startFrame + animDatabase[i].frameCount - 1);
 
 	while (!_vm->shouldQuit() && animationMovie->getMode() != VideoWindow::kModeStopped) {
-		_vm->yield();
+		_vm->yield(animationMovie.get(), -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -1615,7 +1537,7 @@ bool SceneViewWindow::playSynchronousAnimationExtern(int animationID) {
 	animationMovie->playVideo();
 
 	while (!_vm->shouldQuit() && animationMovie->getMode() != VideoWindow::kModeStopped) {
-		_vm->yield();
+		_vm->yield(animationMovie.get(), -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -1679,7 +1601,7 @@ bool SceneViewWindow::playPlacedSynchronousAnimation(int animationID, int left, 
 	animationMovie->playToFrame(animDatabase[i].startFrame + animDatabase[i].frameCount - 1);
 
 	while (!_vm->shouldQuit() && animationMovie->getMode() != VideoWindow::kModeStopped) {
-		_vm->yield();
+		_vm->yield(animationMovie.get(), -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -1749,7 +1671,7 @@ bool SceneViewWindow::playClippedSynchronousAnimation(int animationID, int left,
 	animationMovie->playToFrame(animDatabase[i].startFrame + animDatabase[i].frameCount - 1);
 
 	while (!_vm->shouldQuit() && animationMovie->getMode() != VideoWindow::kModeStopped) {
-		_vm->yield();
+		_vm->yield(animationMovie.get(), -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -2041,6 +1963,40 @@ bool SceneViewWindow::retrieveAICommentEntry(const Location &commentLocation, in
 	return entryFound;
 }
 
+byte* SceneViewWindow::aiFlag(uint16 offset) {
+	switch (offset) {
+	case 93:
+		return &_globalFlags.faMNTazClicked;
+	case 94:
+		return &_globalFlags.faMNPongClicked;
+	case 95:
+		return &_globalFlags.faKIBirdsBobbed;
+	case 96:
+		return &_globalFlags.faKICoffeeSpilled;
+	default:
+		return nullptr;
+	}
+}
+
+byte SceneViewWindow::getAIFlag(uint16 offset) {
+	byte *flag = aiFlag(offset);
+	if (flag) {
+		return *flag;
+	} else {
+		warning("Unable to get AI flag with offset %d", offset);
+		return 0;
+	}
+}
+
+void SceneViewWindow::setAIFlag(uint16 offset, byte value) {
+	byte *flag = aiFlag(offset);
+	if (flag) {
+		*flag = value;
+	} else {
+		warning("Unable to set AI flag with offset %d", offset);
+	}
+}
+
 bool SceneViewWindow::checkAICommentDependencies(const Location &commentLocation, const AIComment &commentData) {
 	// Ignore comments designed for solely adventure mode in walkthrough mode
 	if (_globalFlags.generalWalkthroughMode == 1 && commentData.commentFlags & AI_COMMENT_DISABLE_IN_WALKTHROUGH)
@@ -2048,7 +2004,7 @@ bool SceneViewWindow::checkAICommentDependencies(const Location &commentLocation
 
 	byte flagValueA = 0;
 	if (commentData.commentFlags & AI_DEPENDENCY_FLAG_NON_BASE_DERIVED_A)
-		flagValueA = getGlobalFlagByte(commentData.dependencyFlagOffsetA);
+		flagValueA = getAIFlag(commentData.dependencyFlagOffsetA);
 	else
 		flagValueA = _globalFlags.aiData[commentData.dependencyFlagOffsetA];
 
@@ -2066,7 +2022,7 @@ bool SceneViewWindow::checkAICommentDependencies(const Location &commentLocation
 
 	byte flagValueB = 0;
 	if (commentData.commentFlags & AI_DEPENDENCY_FLAG_NON_BASE_DERIVED_B)
-		flagValueB = getGlobalFlagByte(commentData.dependencyFlagOffsetB);
+		flagValueB = getAIFlag(commentData.dependencyFlagOffsetB);
 	else
 		flagValueB = _globalFlags.aiData[commentData.dependencyFlagOffsetB];
 
@@ -2085,152 +2041,15 @@ bool SceneViewWindow::playAICommentFromData(const AIComment &commentData) {
 
 	Common::String commentFileName = "BITDATA/";
 
-	switch (commentData.location.timeZone) {
-	case 1: // Castle
-		commentFileName += "CASTLE/";
-
-		switch (commentData.location.environment) {
-		case 1:
-			commentFileName += "CGTT";
+	for (const AICommentInfo *info = s_aiCommentInfo; info->timeZone; ++info) {
+		if (info->timeZone == commentData.location.timeZone && info->environment == commentData.location.environment) {
+			commentFileName += info->filePath;
 			break;
-		case 2:
-			commentFileName += "CGTS";
-			break;
-		case 3:
-			commentFileName += "CGMW";
-			break;
-		case 4:
-			commentFileName += "CGMB";
-			break;
-		case 5:
-			commentFileName += "CGBS";
-			break;
-		case 6:
-			commentFileName += "CGKC";
-			break;
-		case 7:
-			commentFileName += "CGST";
-			break;
-		case 8:
-			commentFileName += "CGKS";
-			break;
-		case 9:
-			commentFileName += "CGSR";
-			break;
-		case 10:
-			commentFileName += "CGTR";
-			break;
-		default:
-			return false;
 		}
-		break;
-	case 2: // Mayan
-		commentFileName += "MAYAN/";
-
-		switch (commentData.location.environment) {
-		case 1:
-			commentFileName += "MYTP";
-			break;
-		case 2:
-			commentFileName += "MYMC";
-			break;
-		case 3:
-			commentFileName += "MYWG";
-			break;
-		case 4:
-			commentFileName += "MYWT";
-			break;
-		case 5:
-			commentFileName += "MYAG";
-			break;
-		case 6:
-			commentFileName += "MYDG";
-			break;
-		default:
-			return false;
-		}
-		break;
-	case 4: // Future Apartment
-		commentFileName += "FUTAPT/";
-
-		switch (commentData.location.environment) {
-		case 1:
-			commentFileName += "FAKI";
-			break;
-		case 2:
-			commentFileName += "FAER";
-			break;
-		case 3:
-			commentFileName += "FAMN";
-			break;
-		default:
-			return false;
-		}
-		break;
-	case 5: // Da Vinci
-		commentFileName += "DAVINCI/";
-
-		switch (commentData.location.environment) {
-		case 1:
-			commentFileName += "DSPT";
-			break;
-		case 2:
-			commentFileName += "DSCT";
-			break;
-		case 3:
-			commentFileName += "DSGD";
-			break;
-		case 4:
-			commentFileName += "DSWS";
-			break;
-		case 5:
-			commentFileName += "DSCY";
-			break;
-		default:
-			return false;
-		}
-		break;
-	case 6: // Space Station
-		commentFileName += "AILAB/";
-
-		switch (commentData.location.environment) {
-		case 1:
-			commentFileName += "AIHW";
-			break;
-		case 2:
-			commentFileName += "AICR";
-			break;
-		case 3:
-			commentFileName += "AIDB";
-			break;
-		case 4:
-			commentFileName += "AISC";
-			break;
-		case 5:
-			commentFileName += "AINX";
-			break;
-		case 6:
-			commentFileName += "AIIC";
-			break;
-		case 7:
-			commentFileName += "AISW";
-			break;
-		case 8:
-			commentFileName += "AIMR";
-			break;
-		case 9:
-			// There is no 9.
-			return false;
-		case 10:
-			commentFileName += "AIHW";
-			break;
-		default:
-			return false;
-		}
-		break;
-	default:
-		return false;
 	}
+
+	if (commentFileName == "BITDATA/")
+		return false;
 
 	commentFileName += "_";
 
@@ -2252,19 +2071,16 @@ bool SceneViewWindow::playAICommentFromData(const AIComment &commentData) {
 	if (playedSuccessfully) {
 		_lastAICommentFileName = commentFileName;
 
-		// This is pure evil. Ugh.
-		// The [g|s]etGlobalFlagByte nonsense, anyway.
-
 		byte flagValue = 0;
 		if (commentData.commentFlags & AI_STATUS_FLAG_NON_BASE_DERIVED)
-			flagValue = getGlobalFlagByte(commentData.statusFlagOffset);
+			flagValue = getAIFlag(commentData.statusFlagOffset);
 		else
 			flagValue = _globalFlags.aiData[commentData.statusFlagOffset];
 
 		flagValue++;
 
 		if (commentData.commentFlags & AI_STATUS_FLAG_NON_BASE_DERIVED)
-			setGlobalFlagByte(commentData.statusFlagOffset, flagValue);
+			setAIFlag(commentData.statusFlagOffset, flagValue);
 		else
 			_globalFlags.aiData[commentData.statusFlagOffset] = flagValue;
 
@@ -2475,12 +2291,6 @@ void SceneViewWindow::onKeyUp(const Common::KeyState &key, uint flags) {
 			return;
 		}
 		break;
-	case Common::KEYCODE_p:
-		if (key.flags & Common::KBD_CTRL) {
-			// TODO: Pause game
-			return;
-		}
-		break;
 	case Common::KEYCODE_q:
 		if (key.flags & Common::KBD_CTRL) {
 			// Return to main menu
@@ -2489,12 +2299,25 @@ void SceneViewWindow::onKeyUp(const Common::KeyState &key, uint flags) {
 			return;
 		}
 		break;
+	case Common::KEYCODE_d:
+		if (key.flags & Common::KBD_CTRL) {
+			// Current points (ScummVM enhancement - Agent evaluation
+			// from death screens)
+			_vm->showPoints();
+			return;
+		}
+		break;
 	case Common::KEYCODE_SPACE:
 		if (((GameUIWindow *)_parent)->_inventoryWindow->isItemInInventory(kItemBioChipAI) && _globalFlags.bcCloakingEnabled != 1) {
-			if (!_lastAICommentFileName.empty() && !_vm->_sound->isAsynchronousAICommentPlaying()) {
-				TempCursorChange cursorChange(kCursorWait);
-				_vm->_sound->playAsynchronousAIComment(_lastAICommentFileName);
+			if (!_lastAICommentFileName.empty()) {
+				if (!_vm->_sound->isAsynchronousAICommentPlaying()) {
+					TempCursorChange cursorChange(kCursorWait);
+					_vm->_sound->playAsynchronousAIComment(_lastAICommentFileName);
+				} else {
+					_vm->_sound->stopAsynchronousAIComment();
+				}
 			}
+
 			return;
 		}
 		break;

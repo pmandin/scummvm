@@ -95,7 +95,7 @@ bool FrameWindow::showTitleSequence() {
 
 	uint32 startTime = g_system->getMillis();
 	while (g_system->getMillis() < (startTime + 7000) && !_vm->hasMessage(this, kMessageTypeLButtonDown, kMessageTypeLButtonDown) && !_vm->shouldQuit())
-		_vm->yield();
+		_vm->yield(nullptr, -1);
 
 	_vm->_sound->stopInterfaceSound();
 	invalidateWindow();
@@ -117,7 +117,7 @@ bool FrameWindow::showTitleSequence() {
 	_vm->removeMouseMessages(video);
 
 	while (!_vm->shouldQuit() && video->getMode() != VideoWindow::kModeStopped && !_vm->hasMessage(this, kMessageTypeLButtonDown, kMessageTypeLButtonDown))
-		_vm->yield();
+		_vm->yield(video, -1);
 
 	delete video;
 
@@ -268,8 +268,13 @@ bool FrameWindow::showDeathScene(int deathSceneIndex, GlobalFlags &globalFlags, 
 
 	_vm->removeMouseMessages(this);
 
+	// Pass globalFlags by value to DeathWindow here, as they will be destroyed
+	// together with _mainChildWindow (a GameUIWindow, which contains the scene
+	// window, which holds the instance of the global flags)
+	DeathWindow *deathWindow = new DeathWindow(_vm, this, deathSceneIndex, globalFlags, itemArray);
+
 	delete _mainChildWindow;
-	_mainChildWindow = new DeathWindow(_vm, this, deathSceneIndex, globalFlags, itemArray);
+	_mainChildWindow = deathWindow;
 	_mainChildWindow->showWindow(kWindowShow);
 	_mainChildWindow->invalidateWindow(false);
 
@@ -282,8 +287,13 @@ bool FrameWindow::showCompletionScene(GlobalFlags &globalFlags) {
 
 	_vm->removeMouseMessages(this);
 
+	// Pass globalFlags by value to CompletionWindow here, as they will be destroyed
+	// together with _mainChildWindow (a GameUIWindow, which contains the scene
+	// window, which holds the instance of the global flags)
+	CompletionWindow *completionWindow = new CompletionWindow(_vm, this, globalFlags);
+
 	delete _mainChildWindow;
-	_mainChildWindow = new CompletionWindow(_vm, this, globalFlags);
+	_mainChildWindow = completionWindow;
 	_mainChildWindow->showWindow(kWindowShow);
 	_mainChildWindow->invalidateWindow(false);
 

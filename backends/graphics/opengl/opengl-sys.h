@@ -23,62 +23,15 @@
 #define BACKENDS_GRAPHICS_OPENGL_OPENGL_SYS_H
 
 #include "common/scummsys.h"
+#include "graphics/opengl/system_headers.h"
 
 #include "backends/graphics/opengl/debug.h"
-#ifdef SDL_BACKEND
-#include "backends/platform/sdl/sdl-sys.h"
-#endif
 
-// On OS X we only support GL contexts. The reason is that Apple's GL interface
-// uses "void *" for GLhandleARB which is not type compatible with GLint. This
-// kills our aliasing trick for extension functions and thus would force us to
-// supply two different Shader class implementations or introduce other
-// wrappers. OS X only supports GL contexts right now anyway (at least
-// according to SDL2 sources), thus it is not much of an issue.
-#if defined(MACOSX) && (!defined(USE_GLES_MODE) || USE_GLES_MODE != 0)
-//#warning "Only forced OpenGL mode is supported on Mac OS X. Overriding settings."
-#undef USE_GLES_MODE
-#define USE_GLES_MODE 0
-#endif
-
-// We allow to force GL or GLES modes on compile time.
-// For this the USE_GLES_MODE define is used. The following values represent
-// the given selection choices:
-//  0 - Force OpenGL context
-//  1 - Force OpenGL ES context
-//  2 - Force OpenGL ES 2.0 context
-#ifdef USE_GLES_MODE
-	#define USE_FORCED_GL    (USE_GLES_MODE == 0)
-	#define USE_FORCED_GLES  (USE_GLES_MODE == 1)
-	#define USE_FORCED_GLES2 (USE_GLES_MODE == 2)
-#else
-	#define USE_FORCED_GL    0
-	#define USE_FORCED_GLES  0
-	#define USE_FORCED_GLES2 0
-#endif
-
-#ifdef __ANDROID__
-	#include <GLES/gl.h>
-	#include <GLES2/gl2.h>
-	// These types are ScummVM specific
-	typedef GLuint GLprogram;
-	typedef GLuint GLshader;
-	#define USE_BUILTIN_OPENGL
-#else
-	#include "backends/graphics/opengl/opengl-defs.h"
-#endif
-
-#ifdef SDL_BACKEND
-	// Win32 needs OpenGL functions declared with APIENTRY.
-	// However, SDL does not define APIENTRY in it's SDL.h file on non-Windows
-	// targets, thus if it is not available, we just dummy define it.
-	#ifndef APIENTRY
-		#define APIENTRY
-	#endif
-	#define GL_CALL_CONV APIENTRY
-#else
-	#define GL_CALL_CONV
-#endif
+// This is an addition from us to alias ARB shader object extensions to
+// OpenGL (ES) 2.0 style functions. It only works when GLhandleARB and GLuint
+// are type compatible.
+typedef GLuint GLprogram;
+typedef GLuint GLshader;
 
 namespace OpenGL {
 
@@ -97,6 +50,9 @@ class Framebuffer;
 struct Context {
 	/** The type of the active context. */
 	ContextType type;
+
+	/** Whether the context is initialized or not. */
+	bool isInitialized;
 
 	/**
 	 * Reset context.
@@ -135,10 +91,6 @@ struct Context {
 	/** Whether texture coordinate edge clamping is available or not. */
 	bool textureEdgeClampSupported;
 
-#define GL_FUNC_DEF(ret, name, param) ret (GL_CALL_CONV *name)param
-#include "backends/graphics/opengl/opengl-func.h"
-#undef GL_FUNC_DEF
-
 	//
 	// Wrapper functionality to handle fixed-function pipelines and
 	// programmable pipelines in the same fashion.
@@ -172,13 +124,13 @@ extern Context g_context;
 
 } // End of namespace OpenGL
 
-#define GL_CALL(x)                 GL_WRAP_DEBUG(g_context.x, x)
+#define GL_CALL(x)                 GL_WRAP_DEBUG(x, x)
 #define GL_CALL_SAFE(func, params) \
 	do { \
-		if (g_context.func) { \
+		if (g_context.isInitialized) { \
 			GL_CALL(func params); \
 		} \
 	} while (0)
-#define GL_ASSIGN(var, x)          GL_WRAP_DEBUG(var = g_context.x, x)
+#define GL_ASSIGN(var, x)          GL_WRAP_DEBUG(var = x, x)
 
 #endif

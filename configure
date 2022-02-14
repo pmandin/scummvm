@@ -142,6 +142,7 @@ _tremolo=no
 _flac=auto
 _mad=auto
 _opl2lpt=no
+_retrowave=no
 _alsa=auto
 _seq_midi=auto
 _sndio=auto
@@ -158,12 +159,9 @@ _theoradec=auto
 _faad=auto
 _fluidsynth=auto
 _fluidlite=auto
-_glew=auto
 _opengl_mode=auto
-_opengl_game=auto
 _opengl_game_classic=auto
 _opengl_game_shaders=auto
-_opengl_game_es2=no
 _tinygl=yes
 _readline=auto
 _freetype2=auto
@@ -191,6 +189,7 @@ _build_aspect=yes
 _enable_prof=no
 _enable_asan=no
 _enable_tsan=no
+_enable_ubsan=no
 _global_constructors=no
 _no_undefined_var_template=no
 _no_pragma_pack=no
@@ -813,7 +812,6 @@ Special configuration feature:
                                            android-arm64-v8a for Android ARMv8-A (arm64-v8a)
                                            android-x86 for Android x86
                                            android-x86_64 for Android x86_64
-                                           androidsdl for Android with SDL backend
                                            caanoo for Caanoo
                                            dingux for Dingux
                                            raspberrypi for Raspberry Pi
@@ -860,6 +858,7 @@ Optional Features:
   --enable-static          build a static binary instead of using shared objects
   --enable-detection-static  build detection features into executable (default)
   --enable-detection-dynamic build detection features into a library
+  --disable-detection-full add detection only for the engines which were enabled
   --disable-debug          disable building with debugging symbols
   --enable-Werror          treat warnings as errors
   --enable-release         enable building in release mode (this activates
@@ -868,6 +867,7 @@ Optional Features:
   --enable-optimizations   enable optimizations
   --enable-asan            enable Address Sanitizer for memory-related debugging
   --enable-tsan            enable Thread Sanitizer for thread-related debugging
+  --enable-ubsan           enable Undefined Behavior Sanitizer for undefined-behavior-related debugging
   --enable-profiling       enable profiling
   --enable-plugins         enable the support for dynamic plugins
   --default-dynamic        make plugins dynamic by default
@@ -948,11 +948,8 @@ Optional Libraries:
 
   --with-opengl-prefix=DIR      prefix where OpenGL (ES) is installed (optional)
   --disable-opengl-game         disable OpenGL (ES) support in game [autodetect]
-  --disable-opengl-game-shaders disable use of modern OpenGL with shaders
-  --force-opengl-game-es2       only detect OpenGL ES2
-
-  --with-glew-prefix=DIR   prefix where GLEW is installed (optional)
-  --disable-glew           disable GLEW support [autodetect]
+  --disable-opengl-game-classic disable OpenGL classic support in game
+  --disable-opengl-game-shaders disable use of modern OpenGL with shaders in game
 
   --with-jpeg-prefix=DIR   Prefix where libjpeg is installed (optional)
   --disable-jpeg           disable JPEG decoder [autodetect]
@@ -979,14 +976,17 @@ Optional Libraries:
 
   --with-ieee1284-prefix=DIR prefix where libieee1284 is installed (optional)
   --enable-opl2lpt         enable OPL2LPT support
+  
+  --with-retrowave-prefix=DIR prefix where libretrowave is installed (optional)
+  --enable-retrowave       enable RetroWave OPL3 support
 
   --with-sparkle-prefix=DIR    prefix where sparkle is installed
-                           (OS X/Windows only - optional)
+                           (macOS/Windows only - optional)
   --disable-sparkle        disable sparkle automatic update support
-                           [OS X/Windows only - autodetect]
+                           [macOS/Windows only - autodetect]
 
   --disable-osx-dock-plugin    disable the NSDockTilePlugin support
-                               [Mac OS X only - autodetect]
+                               [macOS only - autodetect]
 
   --with-sdl-prefix=DIR    prefix where the SDL package is installed (optional)
                            e.g., if sdl-config script is at:
@@ -1106,6 +1106,8 @@ for ac_option in $@; do
 	--disable-tremor)             _tremor=no             ;;
 	--enable-opl2lpt)             _opl2lpt=yes           ;;
 	--disable-opl2lpt)            _opl2lpt=no            ;;
+	--enable-retrowave)           _retrowave=yes         ;;
+	--disable-retrowave)          _retrowave=no          ;;
 	--enable-flac)                _flac=yes              ;;
 	--disable-flac)               _flac=no               ;;
 	--enable-mad)                 _mad=yes               ;;
@@ -1166,21 +1168,21 @@ for ac_option in $@; do
 	--disable-tts)                _tts=no                ;;
 	--enable-gtk)                 _gtk=yes               ;;
 	--disable-gtk)                _gtk=no                ;;
-	--enable-glew)                _glew=yes              ;;
-	--disable-glew)               _glew=no               ;;
-	--disable-opengl-game)        _opengl_game=no        ;;
+	--opengl-mode=*)
+		_opengl_mode=`echo $ac_option | cut -d '=' -f 2`
+		;;
+	--disable-opengl-game)
+		_opengl_game_classic=no
+		_opengl_game_shaders=no
+		;;
 	--disable-opengl-game-classic) _opengl_game_classic=no ;;
 	--disable-opengl-game-shaders) _opengl_game_shaders=no ;;
-	--force-opengl-game-es2)      _opengl_game_es2=yes   ;;
 	--enable-tinygl)              _tinygl=yes            ;;
 	--disable-tinygl)             _tinygl=no             ;;
 	--enable-bink)                _bink=yes              ;;
 	--disable-bink)               _bink=no               ;;
 	--enable-discord)             _discord=yes           ;;
 	--disable-discord)            _discord=no            ;;
-	--opengl-mode=*)
-		_opengl_mode=`echo $ac_option | cut -d '=' -f 2`
-		;;
 	--enable-verbose-build)      _verbose_build=yes      ;;
 	--enable-plugins)            _dynamic_modules=yes    ;;
 	--default-dynamic)           _plugins_default=dynamic;;
@@ -1247,6 +1249,11 @@ for ac_option in $@; do
 		arg=`echo $ac_option | cut -d '=' -f 2`
 		IEEE1284_CFLAGS="-I$arg/include"
 		IEEE1284_LIBS="-L$arg/lib"
+		;;
+	--with-retrowave-prefix=*)
+		arg=`echo $ac_option | cut -d '=' -f 2`
+		RETROWAVE_CFLAGS="-I$arg/include"
+		RETROWAVE_LIBS="-L$arg/lib"
 		;;
 	--with-flac-prefix=*)
 		arg=`echo $ac_option | cut -d '=' -f 2`
@@ -1322,11 +1329,6 @@ for ac_option in $@; do
 		OPENGL_CFLAGS="-I$arg/include"
 		OPENGL_LIBS="-L$arg/lib"
 		;;
-	--with-glew-prefix=*)
-		arg=`echo $ac_option | cut -d '=' -f 2`
-		GLEW_CFLAGS="-I$arg/include"
-		GLEW_LIBS="-L$arg/lib"
-		;;
 	--with-discord-prefix=*)
 		arg=`echo $ac_option | cut -d '=' -f 2`
 		DISCORD_CFLAGS="-I$arg/include"
@@ -1373,6 +1375,9 @@ for ac_option in $@; do
 		;;
 	--enable-tsan)
 		_enable_tsan=yes
+		;;
+	--enable-ubsan)
+		_enable_ubsan=yes
 		;;
 	--no-builtin-resources)
 		_builtin_resources=no
@@ -1522,31 +1527,6 @@ android-x86)
 	;;
 android-x86_64)
 	_host_os=android
-	_host_cpu=x86_64
-	_host_alias=x86_64-linux-android
-	;;
-androidsdl-armeabi | androidsdl-armeabi-v7a)
-	_host_os=androidsdl
-	_host_cpu=arm
-	_host_alias=arm-linux-androideabi
-	;;
-androidsdl-arm64-v8a)
-	_host_os=androidsdl
-	_host_cpu=aarch64
-	_host_alias=aarch64-linux-android
-	;;
-androidsdl-mips)
-	_host_os=androidsdl
-	_host_cpu=mipsel
-	_host_alias=mipsel-linux-android
-	;;
-androidsdl-x86)
-	_host_os=androidsdl
-	_host_cpu=i686
-	_host_alias=i686-linux-android
-	;;
-androidsdl-x86_64)
-	_host_os=androidsdl
 	_host_cpu=x86_64
 	_host_alias=x86_64-linux-android
 	;;
@@ -1946,6 +1926,7 @@ if test "$_host_os" = android; then
 	# These values can get overriden below by environments variables
 	_ar="$_android_toolchain/bin/$_ar"
 	_as="$_android_toolchain/bin/$_as"
+	_dwp="$_android_toolchain/bin/$_dwp"
 	_ranlib="$_android_toolchain/bin/$_ranlib"
 	_strip="$_android_toolchain/bin/$_strip"
 	if test -z "$STRINGS"; then
@@ -2178,7 +2159,7 @@ if test "$have_gcc" = yes ; then
 	case $_host_os in
 	# newlib-based system include files suppress non-C89 function
 	# declarations under __STRICT_ANSI__, undefine it
-	3ds | android | androidsdl | gamecube | psp | switch | wii)
+	3ds | android | gamecube | psp | switch | wii)
 		std_variant=gnu++
 		pedantic=no
 		;;
@@ -2531,7 +2512,7 @@ case $_host_cpu in
 			openpandora)
 				define_in_config_if_yes yes 'USE_ARM_NEON_ASPECT_CORRECTOR'
 				;;
-			androidsdl-armeabi | arm-*riscos | caanoo | gp2x | gp2xwiz | maemo )
+			arm-*riscos | caanoo | gp2x | gp2xwiz | maemo )
 				define_in_config_if_yes yes 'USE_ARM_SCALER_ASM'
 				define_in_config_if_yes yes 'USE_ARM_SMUSH_ASM'
 				define_in_config_if_yes yes 'USE_ARM_GFX_ASM'
@@ -3017,9 +2998,11 @@ EOF
 		append_var CXXFLAGS "-mcpu=cell -mno-fp-in-toc -I$PSL1GHT/ppu/include -I$PS3DEV/portlibs/ppu/include"
 		append_var LDFLAGS "-L$PSL1GHT/ppu/lib -L$PS3DEV/portlibs/ppu/lib"
 		# The network libraries are statically linked and need to be specified in the following order
-		append_var SDL_NET_LIBS "-lSDL_net -lnet -lsysmodule"
+		append_var SDL_NET_LIBS "-lSDL2_net -lnet -lnetctl -lsysmodule"
 		add_line_to_config_mk 'PLAYSTATION3 = 1'
 		add_line_to_config_h "#define PREFIX \"${prefix}\""
+		# PS3 has no OpenGL support at all even though it's SDL based
+		_opengl_mode=none
 		;;
 	psp2)
 		_freetypepath="$VITASDK/arm-vita-eabi/bin"
@@ -3081,6 +3064,7 @@ EOF
 		_port_mk="backends/platform/sdl/riscos/riscos.mk"
 		_pandoc=yes
 		_sdlconfig=sdl-config
+		# RiscOS has no OpenGL support at all even though it's SDL based
 		_opengl_mode=none
 		;;
 	solaris*)
@@ -3156,22 +3140,11 @@ if test -n "$_host"; then
 			append_var LDFLAGS "-static-libstdc++"
 			HOSTEXEPRE=lib
 			HOSTEXEEXT=.so
-			if test "$_backend" != android3d; then
-				_backend="android"
-			fi
+			_backend="android"
 			_port_mk="backends/platform/$_backend/android.mk"
 			_build_aspect=no
 			_seq_midi=no
 			_timidity=no
-			;;
-		androidsdl | androidsdl-armeabi | androidsdl-armeabi-v7a | androidsdl-mips | androidsdl-x86 | androidsdl-arm64-v8a | androidsdl-x86_64)
-			DEFINES="$DEFINES -DANDROIDSDL"
-			_unix=yes
-			_build_aspect=no
-			_seq_midi=no
-			_timidity=no
-			_backend="androidsdl"
-			_port_mk="backends/platform/androidsdl/androidsdl.mk"
 			;;
 		arm-linux|arm*-linux-gnueabi|arm-*-linux)
 			;;
@@ -3257,8 +3230,6 @@ if test -n "$_host"; then
 			HOSTEXEEXT=.html
 			_ar="emar cr"
 			_ranlib="emranlib"
-			_opengl_mode=gles2
-			_opengl_game_es2=yes
 			;;
 		raspberrypi)
 			_libcurlpath=$RPI_ROOT/usr/bin
@@ -3499,8 +3470,6 @@ if test -n "$_host"; then
 			_seq_midi=no
 			_nuked_opl=no
 			_curl=no
-			_cloud=no
-			_sdlnet=no
 			_optimization_level=-O3
 			_backend="opendingux"
 			_port_mk="backends/platform/sdl/opendingux/opendingux.mk"
@@ -3596,8 +3565,6 @@ if test -n "$_host"; then
 			# graphics. But OpenGL works when it is enabled from the start.
 			# This might be related to a known crash on OpenGL de-init due
 			# to the OpenGL implementation on this platform.
-			_opengl_mode=gles2
-			_opengl_game_es2=yes
 			_vkeybd=yes
 			_port_mk="backends/platform/sdl/switch/switch.mk"
 			;;
@@ -3628,7 +3595,7 @@ fi
 case $_backend in
 	3ds)
 		;;
-	android | android3d)
+	android)
 		append_var DEFINES "-DREDUCE_MEMORY_USAGE"
 		append_var DEFINES "-DNONSTANDARD_PORT"
 		append_var INCLUDES '-I$(srcdir)/backends/platform/'$_backend
@@ -3640,9 +3607,6 @@ case $_backend in
 		if test "$_host" = ouya; then
 			_sdlnet=no
 		fi
-		;;
-	androidsdl)
-		_sdl=auto
 		;;
 	dc)
 		append_var INCLUDES '-I$(srcdir)/backends/platform/dc'
@@ -3915,7 +3879,7 @@ fi
 # Enable 16bit support only for backends which support it
 #
 case $_backend in
-	3ds | android | android3d | androidsdl | dingux | dc | ds | gph | iphone | ios7 | maemo | null | opendingux | openpandora | psp | psp2 | samsungtv | sdl | switch | wii)
+	3ds | android | dingux | dc | ds | gph | iphone | ios7 | maemo | null | opendingux | openpandora | psp | psp2 | samsungtv | sdl | switch | wii)
 		if test "$_16bit" = auto ; then
 			_16bit=yes
 		else
@@ -3991,7 +3955,7 @@ case $_host_os in
 	amigaos* | cygwin* | dreamcast | ds | gamecube | mingw* | morphos | n64 | ps3 | psp2 | psp | riscos | wii)
 		_posix=no
 		;;
-	3ds | android | androidsdl | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | serenity* | solaris* | sunos* | switch | uclinux*)
+	3ds | android | beos* | bsd* | darwin* | freebsd* | gnu* | gph-linux | haiku* | hpux* | iphone | ios7 | irix*| k*bsd*-gnu* | linux* | maemo | mint* | netbsd* | openbsd* | serenity* | solaris* | sunos* | switch | uclinux*)
 		_posix=yes
 		;;
 	os2-emx*)
@@ -4467,6 +4431,27 @@ if test "$_opl2lpt" = yes; then
 fi
 define_in_config_if_yes "$_opl2lpt" 'ENABLE_OPL2LPT'
 echo "$_opl2lpt"
+
+#
+# Check for retrowave for RetroWave OPL3
+#
+echocheck "RetroWave OPL3"
+if test "$_retrowave" = yes ; then
+	_retrowave=no
+	cat > $TMPC << EOF
+#include <RetroWaveLib/RetroWave.h>
+RetroWaveContext context;
+int main(void) { retrowave_init(&context); return 0; }
+EOF
+	cc_check $RETROWAVE_CFLAGS $RETROWAVE_LIBS -lretrowave && \
+	_retrowave=yes
+fi
+if test "$_retrowave" = yes; then
+	append_var LIBS "$RETROWAVE_LIBS -lretrowave"
+	append_var INCLUDES "$RETROWAVE_CFLAGS"
+fi
+define_in_config_if_yes "$_retrowave" 'USE_RETROWAVE'
+echo "$_retrowave"
 
 #
 # Check for FLAC
@@ -5000,7 +4985,7 @@ define_in_config_if_yes $_cloud 'USE_CLOUD'
 #
 case $_host_os in
 	darwin*)
-		# NSDockTilePlugIn was added in OS X 10.6, so will not be available when compiling on older OS X versions.
+		# NSDockTilePlugIn was added in OS X 10.6, so will not be available when compiling on older macOS versions.
 		echocheck "DockTilePlugin"
 		if test "$_osxdockplugin" = auto ; then
 			_osxdockplugin=no
@@ -5336,26 +5321,24 @@ define_in_config_if_yes "$_freetype2" "USE_FREETYPE2"
 #
 echocheck "OpenGL"
 
-case $_backend in
-	openpandora)
-		# Only enable OpenGL ES on the OpanPandora if --opengl-mode=gles is passed in explicitly.
-		if test "$_opengl_mode" = "gles" ; then
-			append_var LIBS "-lGLES_CM -lEGL -lX11"
-			append_var LIBS_3D "-lGLES_CM -lEGL -lX11"
-		else
-			_opengl_mode=none
-		fi
-		;;
-esac
+_opengl_glad=no
 
-if test "$_opengl_mode" = auto ; then
+if test "$_opengl_mode" != none ; then
 	case $_backend in
 		android)
 			# We require API level 16 while GLES2 APIs have been added in level 8 so we are safe for compilation
 			_opengl_mode=gles2
-			_opengl_game_es2=yes
+			_opengl_glad=yes
+			;;
+		openpandora)
+			# Enable GLES only if user explicitely requested it
+			# Backend is SDL based so GLAD is supported
+			test "$_opengl_mode" != "gles" && _opengl_mode=none
+			test "$_opengl_mode" != "none" && _opengl_glad=yes
 			;;
 		sdl)
+			# This case is for pure SDL backend. Many platforms overload it and create a new backend
+			# They still make use of SDL but it's handled below in the default case
 			case $_sdlversion in
 				1.2.*)
 					# Stock SDL 1.2 only supports OpenGL contexts.
@@ -5364,7 +5347,7 @@ if test "$_opengl_mode" = auto ; then
 
 				2.0.*)
 					# SDL2 supports both OpenGL + OpenGL ES contexts.
-					# However, Mac OS X only allows OpenGL context creation at
+					# However, macOS only allows OpenGL context creation at
 					# this time, thus we limit us to OpenGL on that platform.
 					case $_host_os in
 						darwin*)
@@ -5372,17 +5355,112 @@ if test "$_opengl_mode" = auto ; then
 							;;
 
 						*)
-							_opengl_mode=any
+							# As SDL2 supports everything, let the user choose if he wants to
+							test "$_opengl_mode" = "auto" && _opengl_mode=any
 							;;
 					esac
 					;;
 			esac
+			_opengl_glad=yes
 			;;
-
+		switch)
+			_opengl_mode=gles2
+			_opengl_glad=yes
+			;;
+		wasm*-emscripten)
+			_opengl_mode=gles2
+			;;
 		*)
-			_opengl_mode=none
+			# On all other platforms, by default don't enable OpenGL
+			test "$_opengl_mode" = "auto" && _opengl_mode=none
+			# We only support OpenGL on SDL based backends and Android (already handled)
+			test "$_sdl" = "no" && _opengl_mode=none
+			# If it's a SDL based backend and OpenGL is really enabled, use GLAD
+			test "$_opengl_mode" != "none" && test "$_sdl" != "no" && _opengl_glad=yes
 			;;
 	esac
+fi
+
+if test "$_opengl_glad" = "no" -a "$_opengl_mode" != "none"; then
+	# Try different header filenames
+	# 1) GL/gl.h         This is usually used on POSIX and Windows systems
+	# 2) OpenGL/gl.h     This is used on macOS
+	# 3) GLES2/gl2.h     This is used for OpenGL ES 2.x
+	_opengl_can_compile=no
+	for i in "GL/gl.h" "OpenGL/gl.h" "GLES2/gl2.h"; do
+		# Test the current header for OpenGL
+		if test "$_opengl_mode" = "gl" -o "$_opengl_mode" = "any" ; then
+			cat > $TMPC << EOF
+#include <$i>
+#include <stdio.h>
+int main(void) { printf("ANTIVIRUS FALSE POSITIVE WORKAROUND"); return GL_VERSION_1_1; }
+EOF
+			cc_check $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS && _opengl_can_compile=yes && break
+			# Desktop often has multiple implementations GL/GLES/GLES2
+		fi
+
+		# Test the current header for OpenGL ES2
+		if test "$_opengl_mode" = "gles2" -o "$_opengl_mode" = "any" ; then
+			cat > $TMPC << EOF
+#include <$i>
+int main(void) { return GL_ES_VERSION_2_0; }
+EOF
+			cc_check $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS && _opengl_can_compile=yes && _opengl_mode=gles2 && break
+		fi
+
+		# Test the current header for OpenGL ES
+		if test "$_opengl_mode" = "gles" -o "$_opengl_mode" = "any" ; then
+			cat > $TMPC << EOF
+#include <$i>
+int main(void) { return GL_VERSION_ES_CM_1_0; }
+EOF
+			cc_check $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS && _opengl_can_compile=yes && _opengl_mode=gles && break
+		fi
+	done
+
+	if test "$_opengl_can_compile" = yes; then
+		# Our simple test case
+		cat > $TMPC << EOF
+int main(void) { return 0; }
+EOF
+		_opengl_can_compile=no
+		# Try different library names
+		if test "$_opengl_mode" = "gles2" ; then
+			# 1) GLESv2    This is generally used by nearly all platforms for OpenGL ES 2
+			# 2) ogles2    This is used by AmigaOS4 for OpenGL ES 2
+			for lib in "-lGLESv2" "-logles2"; do
+				if cc_check_no_clean $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS $lib; then
+					append_var OPENGL_LIBS "$lib"
+					_opengl_can_compile=yes
+					break
+				fi
+			done
+		else
+			case $_host_os in
+			darwin*)
+				OPENGL_LIBS="-framework OpenGL"
+				;;
+			mingw*)
+				OPENGL_LIBS="-lopengl32"
+				;;
+			*)
+				OPENGL_LIBS="-lGL"
+				;;
+			esac
+			if cc_check_no_clean $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS; then
+				_opengl_can_compile=yes
+			fi
+		fi
+	fi
+
+	if test "$_opengl_can_compile" = yes ; then
+		append_var INCLUDES "$OPENGL_CFLAGS"
+		append_var LIBS "$OPENGL_LIBS"
+		append_var LIBS_3D "$OPENGL_LIBS"
+	fi
+	cc_check_clean
+elif test "$_opengl_glad" = "yes"; then
+	_opengl_can_compile=yes
 fi
 
 _opengl=yes
@@ -5426,167 +5504,51 @@ esac
 
 
 #
-# Check for GLEW
-#
-echocheck "GL Extension Wrangler (GLEW)"
-if test "$_glew" != "no" && test "$_opengl" = "no"; then
-	_glew=no
-	echo "cannot use GLEW without OpenGL"
-elif test "$_glew" != "no" && test "$_opengl_game_es2" = "yes"; then
-	_glew=no
-	echo "not needed with OpenGL ES v2"
-else
-
-	case $_host_os in
-	mingw*)
-		_GLEW_CFLAGS="-DGLEW_STATIC"
-		_GLEW_LIBS="-lglew32 -lopengl32"
-		;;
-	*)
-		_GLEW_LIBS="-lGLEW"
-		;;
-	esac
-
-	if test "$_glew" = auto; then
-		_glew=no
-		cat > $TMPC << EOF
-#include <GL/glew.h>
-int main(void) {
-	glewInit();
-	return 0;
-}
-EOF
-		cc_check $DEFINES $GLEW_CFLAGS $_GLEW_CFLAGS $GLEW_LIBS $_GLEW_LIBS && _glew=yes
-	fi
-
-	if test "$_glew" = yes ; then
-		append_var LIBS "$GLEW_LIBS $_GLEW_LIBS"
-		append_var INCLUDES "$GLEW_CFLAGS $_GLEW_CFLAGS"
-		append_var LIBS_3D "$GLEW_LIBS $_GLEW_LIBS"
-	fi
-
-	echo "$_glew"
-fi
-
-define_in_config_if_yes "$_glew" "USE_GLEW"
-
-
-#
 # Check for OpenGL (ES) for game
 #
 echocheck "OpenGL for game"
 
-if test "$_opengl_game" = auto ; then
-	_opengl_game=no
-	if (test "$_backend" = "sdl" && test "$_opengl" = yes) || test "$_backend" = "android" || test "$_backend" = "android3d" \
-		|| test "$_backend" = "switch"; then
-		# Try different header filenames
-		# 1) GL/gl.h         This is usually used on POSIX and Windows systems
-		# 2) OpenGL/gl.h     This is used on Mac OS X
-		# 3) GLES2/gl2.h     This is used for OpenGL ES 2.x
-		for i in "GL/gl.h" "OpenGL/gl.h" "GLES2/gl2.h"; do
-			# Test the current header for OpenGL
-			if test "$_opengl_game_es2" = no ; then
-				cat > $TMPC << EOF
-#include <$i>
-#include <stdio.h>
-int main(void) { printf("ANTIVIRUS FALSE POSITIVE WORKAROUND"); return GL_VERSION_1_1; }
-EOF
-				cc_check $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS && _opengl_game=yes && break
-			fi
-
-			# Test the current header for OpenGL ES2
-			cat > $TMPC << EOF
-#include <$i>
-int main(void) { return GL_ES_VERSION_2_0; }
-EOF
-			cc_check $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS && _opengl_game=yes && _opengl_game_es2=yes && break
-		done
-	fi
-fi
-
-if test "$_opengl_game" = yes ; then
-	# Our simple test case
-	cat > $TMPC << EOF
-int main(void) { return 0; }
-EOF
-	_opengl_game=no
-	# Try different library names
-	if test "$_opengl_game_es2" = yes ; then
-		# 1) GLESv2    This is generally used by nearly all platforms for OpenGL ES 2
-		# 2) ogles2    This is used by AmigaOS4 for OpenGL ES 2
-		_opengl_game_es2=no
-		for lib in "-lGLESv2" "-logles2"; do
-			if cc_check_no_clean $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS $lib
-				then
-				_opengl_game_es2=yes
-				append_var OPENGL_LIBS "$lib"
-				break
-			fi
-		done
-	else
-		case $_host_os in
-		darwin*)
-			OPENGL_LIBS="-framework OpenGL"
-			;;
-		mingw*)
-			OPENGL_LIBS="-lopengl32"
-			;;
-		*)
-			OPENGL_LIBS="-lGL"
-			;;
-		esac
-		if cc_check_no_clean $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS
-			then
-			_opengl_game=yes
-		fi
-	fi
-
-	if test "$_opengl_game" = yes ; then
-		append_var INCLUDES "$OPENGL_CFLAGS"
-		append_var LIBS "$OPENGL_LIBS"
-		append_var LIBS_3D "$OPENGL_LIBS"
-		if test "$_opengl_game_classic" = auto ; then
-			_opengl_game_classic=yes
-		fi
-		if test "$_opengl_game_shaders" = auto; then
-			_opengl_game_shaders=$_glew
-		fi
-		if test "$_opengl_game_shaders" = yes && test "$_opengl_game_es2" = no && test "$_glew" = no; then
-			echo "WARNING: OpenGL Shader support requires GLEW!"
-			_opengl_game_shaders=no
-		fi
-	elif test "$_opengl_game_es2" = "yes" ; then
-		append_var INCLUDES "$OPENGL_CFLAGS"
-		append_var LIBS "$OPENGL_LIBS"
-		append_var LIBS_3D "$OPENGL_LIBS"
+if test "$_opengl_can_compile" = "yes"; then
+	if test "$_opengl_mode" = "gles"; then
+		# GLES 1.x is not supported for 3D games
 		_opengl_game_classic=no
-		if test "$_opengl_game_shaders" = auto ; then
+		_opengl_game_shaders=no
+	elif test "$_opengl_mode" = "gles2"; then
+		# GLES2 doesn't support GL classic
+		_opengl_game_classic=no
+		if test "$_opengl_game_shaders" != "no"; then
 			_opengl_game_shaders=yes
 		fi
 	else
-		_opengl_game_classic=no
-		_opengl_game_shaders=no
+		# We can compile GL desktop
+		if test "$_opengl_game_classic" != "no"; then
+			_opengl_game_classic=yes
+		fi
+		if test "$_opengl_game_shaders" != "no"; then
+			_opengl_game_shaders=yes
+		fi
 	fi
-	cc_check_clean
+else
+	_opengl_game_classic=no
+	_opengl_game_shaders=no
 fi
 
-if test "$_opengl_game_es2" = "yes" ; then
-	echo "yes (OpenGL ES2)"
-else
-	if test "$_opengl_game_shaders" = "yes" ; then
-		echo "yes (shaders enabled)"
-	elif test "$_opengl_game_classic" = "yes" ; then
-		echo "yes (shaders disabled)"
+if test "$_opengl_game_shaders" = "yes" ; then
+	if test "$_opengl_mode" = "gles2" ; then
+		echo "yes (OpenGL ES2)"
 	else
-		echo "no"
+		echo "yes (shaders enabled)"
 	fi
+elif test "$_opengl_game_classic" = "yes" ; then
+	echo "yes (shaders disabled)"
+else
+	echo "no"
 fi
 
 define_in_config_if_yes "$_opengl" "USE_OPENGL"
+define_in_config_if_yes "$_opengl_glad" "USE_GLAD"
 define_in_config_if_yes "$_opengl_game_classic" "USE_OPENGL_GAME"
 define_in_config_if_yes "$_opengl_game_shaders" "USE_OPENGL_SHADERS"
-define_in_config_if_yes "$_opengl_game_es2" "USE_GLES2"
 
 if test "$_dynamic_modules" = yes ; then
 	case $_host_os in
@@ -5681,6 +5643,10 @@ if test "$_have_x86" = yes ; then
 				;;
 				*)
 					append_var NASMFLAGS "-f elf"
+					if $LD $LDFLAGS -Wl,--version 2>/dev/null | grep -q -e 'GNU gold'; then
+						# gold throws an internal error when nasm uses dwarf, force older stabs in this case
+						append_var NASMFLAGS "-F stabs"
+					fi
 				;;
 			esac
 			_nasm=yes
@@ -6011,6 +5977,14 @@ if test "$_enable_tsan" = yes ; then
 fi
 echo "$_enable_tsan"
 
+echo_n "Enabling Undefined Behavior Sanitizer... "
+
+if test "$_enable_ubsan" = yes ; then
+	append_var CXXFLAGS "-fsanitize=undefined"
+	append_var LDFLAGS "-fsanitize=undefined"
+fi
+echo "$_enable_ubsan"
+
 echo_n "Backend... "
 echo_n "$_backend"
 
@@ -6142,7 +6116,7 @@ case $_host_os in
 		system_libs=''
 		for lib in $LIBS; do
 			case $lib in
-			-lz|-lm|-ldl|-lGLESv2)
+			-lz|-lm|-ldl)
 				system_libs="$system_libs $lib"
 				;;
 			*)
@@ -6154,7 +6128,7 @@ case $_host_os in
 		# -lgcc is carefully placed here - we want to catch
 		# all toolchain symbols in *our* libraries rather
 		# than pick up anything unhygenic from the Android libs.
-		LIBS="-Wl,-Bstatic $static_libs -Wl,-Bdynamic -lgcc $system_libs -llog -landroid -lGLESv2"
+		LIBS="-Wl,-Bstatic $static_libs -Wl,-Bdynamic -lgcc $system_libs -llog -landroid -ljnigraphics -lEGL"
 		;;
 	ds)
 		# Moved -Wl,--gc-sections here to avoid it interfering with the library checks

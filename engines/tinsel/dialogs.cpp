@@ -886,7 +886,6 @@ bool Dialogs::LanguageChange() {
  */
 void Dialogs::PrimeSceneHopper() {
 	Common::File f;
-	char *pBuffer;
 	uint32 vSize;
 
 	// Open the file (it's on the CD)
@@ -901,33 +900,50 @@ void Dialogs::PrimeSceneHopper() {
 
 	// allocate a buffer for it all
 	assert(_pHopper == NULL);
-	uint32 size = f.size() - 8;
 
-	// make sure memory allocated
-	pBuffer = (char *)malloc(size);
-	if (pBuffer == NULL)
-		// cannot alloc buffer for index
-		error(NO_MEM, "Scene hopper data");
-
-	// load data
-	if (f.read(pBuffer, size) != size)
-		// file must be corrupt if we get to here
-		error(FILE_IS_CORRUPT, HOPPER_FILENAME);
-
-	// Set data pointers
-	_pHopper = (PHOPPER)pBuffer;
-	_pEntries = (PHOPENTRY)(pBuffer + vSize);
 	_numScenes = vSize / sizeof(HOPPER);
+
+	_pHopper = new HOPPER[_numScenes];
+
+	for (int i = 0; i < _numScenes; i++) {
+		_pHopper[i].hScene = FROM_32(f.readUint32LE());
+		_pHopper[i].hSceneDesc = FROM_32(f.readUint32LE());
+		_pHopper[i].numEntries = FROM_32(f.readUint32LE());
+		_pHopper[i].entryIndex = FROM_32(f.readUint32LE());
+
+		if (f.err()) {
+			// file must be corrupt if we get to here
+			error(FILE_IS_CORRUPT, HOPPER_FILENAME);
+		}
+	}
+
+	_pEntries = new HOPENTRY[_numScenes];
+
+	for (int i = 0; i < _numScenes; i++) {
+		_pEntries[i].eNumber = FROM_32(f.readUint32LE());
+		_pEntries[i].hDesc = FROM_32(f.readUint32LE());
+		_pEntries[i].flags = FROM_32(f.readUint32LE());
+
+		if (f.err()) {
+			// file must be corrupt if we get to here
+			error(FILE_IS_CORRUPT, HOPPER_FILENAME);
+		}
+	}
 
 	// close the file
 	f.close();
 }
 
 /**
- * Free the scene hopper data file
+ * Free the scene hopper data
  */
 void Dialogs::FreeSceneHopper() {
-	free(_pHopper);
+	delete[] _pEntries;
+	_pEntries = nullptr;
+
+	_pChosenScene = nullptr;
+
+	delete[] _pHopper;
 	_pHopper = nullptr;
 }
 
@@ -951,7 +967,7 @@ void Dialogs::FirstScene(int first) {
 	// Fill in the rest
 	for (i = 0; i < NUM_RGROUP_BOXES && i + first < _numScenes; i++) {
 		cd.box[i].textMethod = TM_STRINGNUM;
-		cd.box[i].ixText = FROM_32(_pHopper[i + first].hSceneDesc);
+		cd.box[i].ixText = _pHopper[i + first].hSceneDesc;
 	}
 	// Blank out the spare ones (if any)
 	while (i < NUM_RGROUP_BOXES) {
@@ -974,10 +990,10 @@ void Dialogs::SetChosenScene() {
 void Dialogs::FirstEntry(int first) {
 	int i;
 
-	_invD[INV_MENU].hInvTitle = FROM_32(_pChosenScene->hSceneDesc);
+	_invD[INV_MENU].hInvTitle = _pChosenScene->hSceneDesc;
 
 	// get number of entrances
-	_numEntries = FROM_32(_pChosenScene->numEntries);
+	_numEntries = _pChosenScene->numEntries;
 
 	// Force first to a sensible value
 	if (first > _numEntries - NUM_RGROUP_BOXES)
@@ -987,7 +1003,7 @@ void Dialogs::FirstEntry(int first) {
 
 	for (i = 0; i < NUM_RGROUP_BOXES && i < _numEntries; i++) {
 		cd.box[i].textMethod = TM_STRINGNUM;
-		cd.box[i].ixText = FROM_32(_pEntries[FROM_32(_pChosenScene->entryIndex) + i + first].hDesc);
+		cd.box[i].ixText = _pEntries[_pChosenScene->entryIndex + i + first].hDesc;
 	}
 	// Blank out the spare ones (if any)
 	while (i < NUM_RGROUP_BOXES) {
@@ -999,16 +1015,16 @@ void Dialogs::FirstEntry(int first) {
 }
 
 void Dialogs::HopAction() {
-	PHOPENTRY pEntry = _pEntries + FROM_32(_pChosenScene->entryIndex) + cd.selBox + cd.extraBase;
+	HOPENTRY *pEntry = _pEntries + _pChosenScene->entryIndex + cd.selBox + cd.extraBase;
 
-	uint32 hScene = FROM_32(_pChosenScene->hScene);
-	uint32 eNumber = FROM_32(pEntry->eNumber);
+	uint32 hScene = _pChosenScene->hScene;
+	uint32 eNumber = pEntry->eNumber;
 	debugC(DEBUG_BASIC, kTinselDebugAnimations, "Scene hopper chose scene %xh,%d\n", hScene, eNumber);
 
-	if (FROM_32(pEntry->flags) & fCall) {
+	if (pEntry->flags & fCall) {
 		SaveScene(Common::nullContext);
 		NewScene(Common::nullContext, _pChosenScene->hScene, pEntry->eNumber, TRANS_FADE);
-	} else if (FROM_32(pEntry->flags) & fHook)
+	} else if (pEntry->flags & fHook)
 		HookScene(hScene, eNumber, TRANS_FADE);
 	else
 		NewScene(Common::nullContext, hScene, eNumber, TRANS_CUT);
@@ -2153,21 +2169,17 @@ void Dialogs::AdjustTop() {
  * Insert an inventory icon object onto the display list.
  */
 OBJECT *Dialogs::AddInvObject(int num, const FREEL **pfreel, const FILM **pfilm) {
-	INV_OBJECT *invObj;    // Icon data
-	const MULTI_INIT *pmi; // Its INIT structure - from the reel
-	IMAGE *pim;            // ... you get the picture
-	OBJECT *pPlayObj;      // The object we insert
+	INV_OBJECT *invObj = GetInvObject(num);
+	const FILM *pFilm = (const FILM *)_vm->_handle->LockMem(invObj->hIconFilm);
+	const FREEL *pfr = (const FREEL *)&pFilm->reels[0];
+	const MULTI_INIT *pmi = (MULTI_INIT *)_vm->_handle->LockMem(FROM_32(pfr->mobj));
+	OBJECT *pPlayObj; // The object we insert
 
-	invObj = GetInvObject(num);
+	*pfreel = pfr;
+	*pfilm = pFilm;
+	PokeInPalette(pmi);
+	pPlayObj = MultiInitObject(pmi);	// Needs to be initialized after the palette is set
 
-	// Get pointer to image
-	pim = _vm->_cursor->GetImageFromFilm(invObj->hIconFilm, 0, pfreel, &pmi, pfilm);
-
-	// Poke in the background palette
-	pim->hImgPal = TO_32(_vm->_bg->BgPal());
-
-	// Set up the multi-object
-	pPlayObj = MultiInitObject(pmi);
 	MultiInsertObject(_vm->_bg->GetPlayfieldList(FIELD_STATUS), pPlayObj);
 
 	return pPlayObj;
@@ -2267,7 +2279,7 @@ void Dialogs::AddBackground(OBJECT **rect, int extraH, int extraV) {
 /**
  * Adds a title for a dialog
  */
-void Dialogs::AddTitle(POBJECT *title, int extraH) {
+void Dialogs::AddTitle(OBJECT **title, int extraH) {
 	int width = _TLwidth + extraH + _TRwidth + NM_BG_SIZ_X;
 
 	// Create text object using title string
@@ -2285,26 +2297,27 @@ void Dialogs::AddTitle(POBJECT *title, int extraH) {
  * Insert a part of the inventory window frame onto the display list.
  */
 OBJECT *Dialogs::AddObject(const FREEL *pfreel, int num) {
-	const MULTI_INIT *pmi; // Get the MULTI_INIT structure
-	IMAGE *pim;
+	const MULTI_INIT *pmi = (const MULTI_INIT *)_vm->_handle->LockMem(FROM_32(pfreel->mobj));
+	const FRAME *pFrame = (const FRAME *)_vm->_handle->LockMem(FROM_32(pmi->hMulFrame));
+	const IMAGE *pim;
 	OBJECT *pPlayObj;
 
-	// Get pointer to image
-	pim = _vm->_cursor->GetImageFromReel(pfreel, &pmi);
+	PokeInPalette(pmi);
 
-	// Poke in the background palette
-	pim->hImgPal = TO_32(_vm->_bg->BgPal());
+	pim = _vm->_handle->GetImage(READ_32(pFrame));
 
 	// Horrible bodge involving global variables to save
 	// width and/or height of some window frame components
 	if (num == _TL) {
-		_TLwidth = FROM_16(pim->imgWidth);
-		_TLheight = FROM_16(pim->imgHeight) & ~C16_FLAG_MASK;
+		_TLwidth = pim->imgWidth;
+		_TLheight = pim->imgHeight & ~C16_FLAG_MASK;
 	} else if (num == _TR) {
-		_TRwidth = FROM_16(pim->imgWidth);
+		_TRwidth = pim->imgWidth;
 	} else if (num == _BL) {
-		_BLheight = FROM_16(pim->imgHeight) & ~C16_FLAG_MASK;
+		_BLheight = pim->imgHeight & ~C16_FLAG_MASK;
 	}
+
+	delete pim;
 
 	// Set up and insert the multi-object
 	pPlayObj = MultiInitObject(pmi);
@@ -2990,16 +3003,13 @@ bool Dialogs::RePosition() {
  * and customise the cursor.
  */
 void Dialogs::AlterCursor(int num) {
-	const FREEL *pfreel;
-	IMAGE *pim;
+	const FILM *pFilm = (const FILM *)_vm->_handle->LockMem(_hWinParts);
+	const FREEL *pfr = (const FREEL *)&pFilm->reels[num];
+	const MULTI_INIT *pmi = (MULTI_INIT *)_vm->_handle->LockMem(FROM_32(pfr->mobj));
 
-	// Get pointer to image
-	pim = _vm->_cursor->GetImageFromFilm(_hWinParts, num, &pfreel);
+	PokeInPalette(pmi);
 
-	// Poke in the background palette
-	pim->hImgPal = TO_32(_vm->_bg->BgPal());
-
-	_vm->_cursor->SetTempCursor(FROM_32(pfreel->script));
+	_vm->_cursor->SetTempCursor(FROM_32(pfr->script));
 }
 
 /**
@@ -3114,7 +3124,7 @@ void Dialogs::InvCursor(InvCursorFN fn, int CurX, int CurY) {
 
 void Dialogs::ConvAction(int index) {
 	assert(_activeInv == INV_CONV); // not conv. window!
-	PMOVER pMover = TinselV2 ? GetMover(_vm->_actor->GetLeadId()) : NULL;
+	MOVER *pMover = TinselV2 ? GetMover(_vm->_actor->GetLeadId()) : NULL;
 
 	switch (index) {
 	case INV_NOICON:

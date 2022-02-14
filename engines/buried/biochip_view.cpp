@@ -38,14 +38,11 @@
 #include "common/error.h"
 #include "common/stream.h"
 #include "common/system.h"
-#include "common/translation.h"
 #include "graphics/surface.h"
-#include "gui/message.h"
 
 namespace Buried {
 
 BioChipMainViewWindow::BioChipMainViewWindow(BuriedEngine *vm, Window *parent, int currentBioChipID) : Window(vm, parent) {
-	_currentBioChipID = -1;
 	_rect = Common::Rect(0, 0, 432, 189);
 	_bioChipDisplayWindow = createBioChipSpecificViewWindow(currentBioChipID);
 	_currentBioChipID = currentBioChipID;
@@ -432,7 +429,7 @@ void EvidenceBioChipViewWindow::onLButtonUp(const Common::Point &point, uint fla
 		// Loop through the evidence piece regions, determining if we have another page to go to
 		for (int i = 0; i < 6; i++) {
 			if (_evidence[i].contains(point) && (_pageIndex * 6 + i) < itemCount) {
-				_status = ((SceneViewWindow *)getParent()->getParent())->getNumberFromGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), _pageIndex * 6 + i);
+				_status = ((SceneViewWindow *)getParent()->getParent())->getNumberFromGlobalFlagTable(_pageIndex * 6 + i);
 				invalidateWindow(false);
 				((GameUIWindow *)getParent()->getParent()->getParent())->_liveTextWindow->updateLiveText(_vm->getString(IDS_EC_DESC_TEXT_A + _status - 1), false);
 
@@ -473,7 +470,7 @@ bool EvidenceBioChipViewWindow::rebuildMainPrebuffer() {
 
 	for (int i = 0; i < 6; i++) {
 		if ((_pageIndex * 6 + i) < itemCount) {
-			frameIndex = ((SceneViewWindow *)getParent()->getParent())->getNumberFromGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), _pageIndex * 6 + i) - 1;
+			frameIndex = ((SceneViewWindow *)getParent()->getParent())->getNumberFromGlobalFlagTable(_pageIndex * 6 + i) - 1;
 			frame = _evidenceFrames.getFrame(frameIndex);
 
 			if (frame) {
@@ -520,9 +517,11 @@ private:
 	Graphics::Surface *_background;
 	Graphics::Surface *_cycleCheck;
 	Graphics::Surface *_caret;
+	PauseToken _pauseToken;
 };
 
 InterfaceBioChipViewWindow::InterfaceBioChipViewWindow(BuriedEngine *vm, Window *parent) : Window(vm, parent) {
+	_pauseToken = _vm->pauseEngine();
 	_save = Common::Rect(192, 37, 300, 74);
 	_pause = Common::Rect(192, 84, 300, 121);
 	_restore = Common::Rect(313, 37, 421, 74);
@@ -590,23 +589,10 @@ void InterfaceBioChipViewWindow::onLButtonDown(const Common::Point &point, uint 
 void InterfaceBioChipViewWindow::onLButtonUp(const Common::Point &point, uint flags) {
 	switch (_curRegion) {
 	case REGION_SAVE:
-		if (!_vm->isDemo())
-			_vm->runSaveDialog();
+		_vm->handleSaveDialog();
 		break;
 	case REGION_RESTORE:
-		if (!_vm->isDemo()) {
-			FrameWindow *frameWindow = (FrameWindow *)_vm->_mainWindow;
-			Common::Error result = _vm->runLoadDialog();
-
-			if (result.getCode() == Common::kUnknownError) {
-				// Try to get us back to the main menu at this point
-				frameWindow->showMainMenu();
-				return;
-			} else if (result.getCode() == Common::kNoError) {
-				// Loaded successfully
-				return;
-			}
-		}
+		_vm->handleRestoreDialog();
 		break;
 	case REGION_QUIT:
 		if (_vm->runQuitDialog()) {
@@ -615,15 +601,7 @@ void InterfaceBioChipViewWindow::onLButtonUp(const Common::Point &point, uint fl
 		}
 		break;
 	case REGION_PAUSE:
-		if (!_vm->isDemo()) {
-			((SceneViewWindow *)getParent()->getParent())->_paused = true;
-
-			// TODO: Would be nice to load the translated text from IDS_APP_MESSAGE_PAUSED_TEXT (9023)
-			GUI::MessageDialog dialog(_("Your game is now Paused.  Click OK to continue."));
-			dialog.runModal();
-
-			((SceneViewWindow *)getParent()->getParent())->_paused = false;
-		}
+		_vm->pauseGame();
 		break;
 	case REGION_FLICKER:
 		if (_flicker.contains(point)) {

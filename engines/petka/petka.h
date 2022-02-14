@@ -51,6 +51,10 @@ namespace Common {
 class SeekableReadStream;
 }
 
+namespace Graphics {
+class Font;
+}
+
 namespace Video {
 class VideoDecoder;
 }
@@ -92,7 +96,10 @@ public:
 
 	bool hasFeature(EngineFeature f) const override;
 
+	void applyGameSettings() override;
+
 	Common::SeekableReadStream *openFile(const Common::String &name, bool addCurrentPath);
+	Common::SeekableReadStream *openIniFile(const Common::String &name);
 
 	void playVideo(Common::SeekableReadStream *stream);
 	QSystem *getQSystem() const;
@@ -105,11 +112,18 @@ public:
 	Common::RandomSource &getRnd();
 	const Common::String &getSpeechPath();
 
+	Graphics::Font *getTextFont() const { return _textFont.get(); }
+	Graphics::Font *getDescriptionFont() const { return _descriptionFont.get(); }
+
+	void pushMouseMoveEvent();
+
 	Common::Error loadGameState(int slot) override;
 	bool canLoadGameStateCurrently() override;
 
 	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave) override;
 	bool canSaveGameStateCurrently() override;
+
+	int getAutosaveSlot() const override { return - 1;}
 
 	const ADGameDescription *const _desc;
 	Common::ScopedPtr<Common::MemoryReadStream> _thumbnail;
@@ -129,6 +143,8 @@ private:
 	Common::ScopedPtr<VideoSystem> _vsys;
 	Common::ScopedPtr<BigDialogue> _dialogMan;
 	Common::ScopedPtr<Video::VideoDecoder> _videoDec;
+	Common::ScopedPtr<Graphics::Font> _textFont;
+	Common::ScopedPtr<Graphics::Font> _descriptionFont;
 
 	Common::RandomSource _rnd;
 

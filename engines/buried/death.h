@@ -36,10 +36,11 @@ struct Surface;
 namespace Buried {
 
 class AVIFrames;
+class AgentEvaluation;
 
 class DeathWindow : public Window {
 public:
-	DeathWindow(BuriedEngine *vm, Window *parent, int deathSceneIndex, GlobalFlags &globalFlags, Common::Array<int> itemArray);
+	DeathWindow(BuriedEngine *vm, Window *parent, int deathSceneIndex, GlobalFlags globalFlags, Common::Array<int> itemArray);
 	~DeathWindow();
 
 	void onPaint();
@@ -65,10 +66,7 @@ private:
 	Graphics::Font *_textFontB;
 	int _fontHeightA, _fontHeightB;
 	bool _walkthroughMode;
-
-	Common::String _scoringTextDescriptions;
-	Common::String _scoringTextScores;
-	Common::String _scoringTextFinalScore;
+	AgentEvaluation *_agentEvaluation;
 };
 
 } // End of namespace Buried

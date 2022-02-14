@@ -28,6 +28,8 @@
 
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 
+#include "graphics/opengl/context.h"
+
 namespace OpenGL {
 	class FrameBuffer;
 	class SurfaceRenderer;
@@ -106,7 +108,6 @@ public:
 	void notifyResize(const int width, const int height) override;
 
 	bool gameNeedsAspectRatioCorrection() const override { return false; }
-	int getGraphicsModeScale(int mode) const override { return 1; }
 
 	void transformMouseCoordinates(Common::Point &point);
 	bool notifyMousePosition(Common::Point &mouse) override {
@@ -117,9 +118,12 @@ public:
 
 protected:
 #if SDL_VERSION_ATLEAST(2, 0, 0)
+	int _glContextProfileMask, _glContextMajor, _glContextMinor;
 	SDL_GLContext _glContext;
 	void deinitializeRenderer();
 #endif
+
+	OpenGL::ContextOGLType _glContextType;
 
 	bool _supportsFrameBuffer;
 

@@ -34,13 +34,27 @@
 
 namespace Hypno {
 
+typedef Common::String Filename;
+typedef Common::List<Filename> Filenames;
+
 class HypnoSmackerDecoder : public Video::SmackerDecoder {
 public:
 	bool loadStream(Common::SeekableReadStream *stream) override;
 };
 
-typedef Common::String Filename;
-typedef Common::List<Filename> Filenames;
+class MVideo {
+public:
+	MVideo(Filename, Common::Point, bool, bool, bool);
+	Filename path;
+	Common::Point position;
+	bool scaled;
+	bool transparent;
+	bool loop;
+	HypnoSmackerDecoder *decoder;
+	const Graphics::Surface *currentFrame;
+};
+
+typedef Common::Array<MVideo> Videos;
 
 enum HotspotType {
 	MakeMenu,
@@ -49,13 +63,18 @@ enum HotspotType {
 
 enum ActionType {
 	MiceAction,
+	TimerAction,	
 	PaletteAction,
 	BackgroundAction,
 	OverlayAction,
 	EscapeAction,
+	SaveAction,
+	LoadAction,
+	LoadCheckpointAction,
 	QuitAction,
 	CutsceneAction,
 	PlayAction,
+	IntroAction,
 	AmbientAction,
 	WalNAction,
 	GlobalAction,
@@ -76,31 +95,15 @@ class Hotspot;
 typedef Common::Array<Hotspot> Hotspots;
 typedef Common::Array<Hotspots *> HotspotsStack;
 
-class MVideo {
-public:
-	MVideo(Filename, Common::Point, bool, bool, bool);
-	Filename path;
-	Common::Point position;
-	bool scaled;
-	bool transparent;
-	bool loop;
-	HypnoSmackerDecoder *decoder;
-	const Graphics::Surface *currentFrame;
-};
-
-typedef Common::Array<MVideo> Videos;
-
 class Hotspot {
 public:
-	Hotspot(HotspotType type_, Common::String stype_, Common::Rect rect_ = Common::Rect(0, 0, 0, 0)) {
+	Hotspot(HotspotType type_, Common::Rect rect_ = Common::Rect(0, 0, 0, 0)) {
 		type = type_;
-		stype = stype_;
 		rect = rect_;
 		smenu = nullptr;
 	}
 	HotspotType type;
-	Common::String stype;
-	Common::String stypeFlag;
+	Common::String flags[3];
 	Common::Rect rect;
 	Common::String setting;
 	Actions actions;
@@ -116,6 +119,15 @@ public:
 	}
 	Filename path;
 	uint32 index;
+};
+
+class Timer : public Action {
+public:
+	Timer(uint32 delay_) {
+		type = TimerAction;
+		delay = delay_;
+	}
+	uint32 delay;
 };
 
 class Palette : public Action {
@@ -164,6 +176,27 @@ public:
 	}
 };
 
+class Save : public Action {
+public:
+	Save() {
+		type = SaveAction;
+	}
+};
+
+class Load : public Action {
+public:
+	Load() {
+		type = LoadAction;
+	}
+};
+
+class LoadCheckpoint : public Action {
+public:
+	LoadCheckpoint() {
+		type = LoadCheckpointAction;
+	}
+};
+
 class Quit : public Action {
 public:
 	Quit() {
@@ -175,6 +208,15 @@ class Cutscene : public Action {
 public:
 	Cutscene(Filename path_) {
 		type = CutsceneAction;
+		path = path_;
+	}
+	Filename path;
+};
+
+class Intro : public Action {
+public:
+	Intro(Filename path_) {
+		type = IntroAction;
 		path = path_;
 	}
 	Filename path;
@@ -256,6 +298,8 @@ public:
 	Talk()  {
 		type = TalkAction;
 		boxPos = Common::Point(0, 0);
+		escape = false;
+		active = true;
 	}
 	TalkCommands commands;
 	bool active;
@@ -288,6 +332,9 @@ enum LevelType {
 
 class Level {
 public:
+	Level() {
+		musicRate = 22050;
+	}
 	virtual ~Level() {} // needed to make Level polymorphic
 	LevelType type;
 	Filenames intros;
@@ -295,6 +342,7 @@ public:
 	Filename levelIfWin;
 	Filename levelIfLose;
 	Filename music;
+	uint32 musicRate;
 };
 
 class Scene : public Level {
@@ -310,6 +358,15 @@ public:
 	Shoot() {
 		destroyed = false;
 		video = nullptr;
+		timesToShoot = 0;
+		pointsToShoot = 0;
+		attackWeight = 0;
+		paletteOffset = 0;
+		paletteSize = 0;
+		obj1KillsCount = 0;
+		obj1MissesCount = 0;
+		animation = "NONE";
+		explosionAnimation = "";
 	}
 	Common::String name;
 	Filename animation;
@@ -320,14 +377,22 @@ public:
 	uint32 pointsToShoot;
 	uint32 attackWeight;
 
+	// Objectives
+	uint32 obj1KillsCount;
+	uint32 obj1MissesCount;
+
+	// Palette
+	uint32 paletteOffset;
+	uint32 paletteSize;
+
 	// Sounds
 	Filename deathSound;
 	Filename hitSound;
 
 	MVideo *video;
-	uint32 attackFrame;
-	uint32 explosionFrame;
-	
+	Common::List<uint32> attackFrames;
+	Common::List<uint32> explosionFrames;
+	Filename explosionAnimation;
 	bool destroyed;
 };
 
@@ -342,34 +407,83 @@ public:
 typedef Common::List<ShootInfo> ShootSequence;
 typedef Common::Array<Common::String> Sounds;
 
+enum SegmentType {
+	Straight,
+	Select3,
+	TurnLeft3,
+	Straight3,
+	TurnRight3,
+	Select2,
+	TurnLeft2,
+	TurnRight2,
+};
+
+class Segment {
+public:
+	Segment(byte type_, uint32 start_, uint32 size_)  {
+		type = type_;
+		start = start_;
+		size = size_;
+	}
+
+	byte type;
+	uint32 start;
+	uint32 size;
+};
+
+typedef Common::Array<Segment> Segments;
+
 class ArcadeShooting : public Level {
 public:
 	ArcadeShooting()  {
 		type = ArcadeLevel;
 		health = 100;
+		transitionTime = 0;
+		id = 0;
+		obj1KillsRequired = 0;
+		obj1MissesAllowed = 0;
+		obj2KillsRequired = 0;
+		obj2MissesAllowed = 0;
+		frameDelay = 0;
 	}
 	uint32 id;
+	uint32 frameDelay;
 	Common::String mode;
 	uint32 transitionTime;
+	Segments segments;
+
+	// Objectives
+	uint32 obj1KillsRequired;
+	uint32 obj1MissesAllowed;
+	uint32 obj2KillsRequired;
+	uint32 obj2MissesAllowed;
 
 	// Videos
 	Filename transitionVideo;
+	Filename transitionPalette;
 	Filename nextLevelVideo;
-	Filename defeatNoEnergyVideo;
+	Filename defeatNoEnergyFirstVideo;
+	Filename defeatNoEnergySecondVideo;
 	Filename defeatMissBossVideo;
+	Filename beforeVideo;
+	Filename briefingVideo;
 
-	Filename background;
+	Filename backgroundVideo;
+	Filename backgroundPalette;
 	Filename player;
 	int health;
 	Shoots shoots;
 	ShootSequence shootSequence;
 
-	// Sounds 
-	Filename backgroundSound;
+	// Sounds
 	Filename targetSound;
+	uint32 targetSoundRate;
 	Filename shootSound;
+	uint32 shootSoundRate;
 	Filename enemySound;
+	uint32 enemySoundRate;
 	Filename hitSound;
+	uint32 hitSoundRate;
 };
 
 class Transition : public Level {
@@ -379,12 +493,16 @@ public:
 		nextLevel = level;
 		levelEasy = "";
 		levelHard = "";
+		frameNumber = 0;
+		frameImage = "";
 	}
 	
 	Transition(Common::String easy, Common::String hard)  {
 		type = TransitionLevel;
 		levelEasy = easy;
 		levelHard = hard;
+		frameNumber = 0;
+		frameImage = "";
 	}
 	Common::String nextLevel;
 	Common::String levelEasy;
@@ -395,8 +513,9 @@ public:
 
 class Code : public Level {
 public:
-	Code()  {
+	Code(Common::String name_)  {
 		type = CodeLevel;
+		name = name_;
 	}
 	Common::String name;
 };

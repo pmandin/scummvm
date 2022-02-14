@@ -94,6 +94,7 @@ private:
 
 	// Save names
 	Common::String _saveNames[MAX_SAVES];
+	bool _wantAutosave;
 
 	// Code
 	byte *_code;
@@ -126,6 +127,8 @@ private:
 	uint16 _hotspotRightAction;
 	uint16 _hotspotLeftAction;
 	uint16 _hotspotSlot;
+	bool _fastForwarding;
+	void resetFastForward();
 
 	// Video
 	Common::SeekableReadStream *_videoFile;
@@ -158,7 +161,7 @@ private:
 
 	void loadgame(uint slot);
 	bool preview_loadgame(uint slot);
-	void savegame(uint slot);
+	void savegame(uint slot, const char name[27]);
 	bool playvideofromref(uint32 fileref, bool loopUntilAudioDone = false);
 	bool playBackgroundSound(uint32 fileref, uint32 loops);
 	void printString(Graphics::Surface *surface, const char *str);

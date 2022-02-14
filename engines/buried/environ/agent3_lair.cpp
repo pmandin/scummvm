@@ -67,6 +67,8 @@ LairEntry::LairEntry(BuriedEngine *vm, Window *viewWindow, const LocationStaticD
 }
 
 int LairEntry::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
+	const int effectsIndexBase = 2;	// same as kEffectsIndexBase in SoundManager
+
 	// Force enable frame cycling
 	((SceneViewWindow *)viewWindow)->forceEnableCycling(true);
 
@@ -133,7 +135,7 @@ int LairEntry::postEnterRoom(Window *viewWindow, const Location &priorLocation) 
 		}
 
 		_vm->_sound->timerCallback();
-		_vm->yield();
+		_vm->yield(nullptr, effectsIndexBase + _currentSoundID);
 	}
 
 	_vm->_sound->stopSoundEffect(_currentSoundID);
@@ -162,7 +164,7 @@ int LairEntry::postEnterRoom(Window *viewWindow, const Location &priorLocation) 
 		}
 
 		_vm->_sound->timerCallback();
-		_vm->yield();
+		_vm->yield(nullptr, effectsIndexBase + _currentSoundID);
 	}
 
 	_vm->_sound->stopSoundEffect(_currentSoundID);
@@ -281,6 +283,8 @@ int LairEntry::timerCallback(Window *viewWindow) {
 }
 
 int LairEntry::onCharacter(Window *viewWindow, const Common::KeyState &character) {
+	const int effectsIndexBase = 2; // same as kEffectsIndexBase in SoundManager
+
 	// Only accept input if we are beyond first voiceover
 	if (_passwordIndex <= 0)
 		return SC_TRUE;
@@ -336,12 +340,13 @@ int LairEntry::onCharacter(Window *viewWindow, const Common::KeyState &character
 					timerCallback(viewWindow);
 
 				_vm->_sound->timerCallback();
-				_vm->yield();
+				_vm->yield(nullptr, effectsIndexBase + _currentSoundID);
 			}
 
 			_vm->_sound->stopSoundEffect(_currentSoundID);
 			((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->removeItem(kItemBioChipAI);
 			((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->addItem(kItemBioChipBlank);
+			((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->swapAIBioChipIfActive();
 
 			_vm->_sound->setAmbientSound(_vm->getFilePath(3, 2, SF_AMBIENT), false, 64);
 			_passwordIndex = 5;
@@ -351,15 +356,16 @@ int LairEntry::onCharacter(Window *viewWindow, const Common::KeyState &character
 		}
 
 		// Watch out, some curse words in here
-		Common::String vulgarLangA = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_A) : "FUCKER";
-		Common::String vulgarLangB = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_B) : "SHITHEAD";
-		Common::String vulgarLangC = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_C) : "BITCH";
-		Common::String vulgarLangD = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_D) : "CUNT";
-		Common::String vulgarLangE = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_E) : "WHORE";
-		Common::String vulgarLangF = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_F) : "ASSHOLE";
-		Common::String vulgarLangG = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_G) : "TWAT";
-		Common::String vulgarLangH = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_H) : "FUCK";
-		Common::String vulgarLangI = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_VULGAR_LANG_I) : "SHIT";
+		bool newVersion = (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0));
+		Common::String vulgarLangA = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_A) : "FUCKER";
+		Common::String vulgarLangB = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_B) : "SHITHEAD";
+		Common::String vulgarLangC = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_C) : "BITCH";
+		Common::String vulgarLangD = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_D) : "CUNT";
+		Common::String vulgarLangE = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_E) : "WHORE";
+		Common::String vulgarLangF = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_F) : "ASSHOLE";
+		Common::String vulgarLangG = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_G) : "TWAT";
+		Common::String vulgarLangH = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_H) : "FUCK";
+		Common::String vulgarLangI = newVersion ? _vm->getString(IDS_AL_VULGAR_LANG_I) : "SHIT";
 
 		if (_passwordEntered == vulgarLangA || _passwordEntered == vulgarLangB || _passwordEntered == vulgarLangC ||
 				_passwordEntered == vulgarLangD || _passwordEntered == vulgarLangE || _passwordEntered == vulgarLangF ||
@@ -367,7 +373,7 @@ int LairEntry::onCharacter(Window *viewWindow, const Common::KeyState &character
 			liveText = _vm->getString(IDS_AGENT3_VIRUS_TEXT_A);
 			liveText += _passwordEntered;
 			liveText += _vm->getString(IDS_AGENT3_VIRUS_CURSOR);
-			liveText += (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0)) ? _vm->getString(IDS_AL_CASTRATION_TEXT) : "\nVULGAR LANGUAGE UNACCEPTABLE. CASTRATION TOOL ACTIVATED.";
+			liveText += newVersion ? _vm->getString(IDS_AL_CASTRATION_TEXT) : "\nVULGAR LANGUAGE UNACCEPTABLE. CASTRATION TOOL ACTIVATED.";
 			((SceneViewWindow  *)viewWindow)->displayLiveText(liveText, false);
 			_passwordIndex = 4;
 			_timerStart = 0;
@@ -577,7 +583,7 @@ int TransporterControls::onCharacter(Window *viewWindow, const Common::KeyState 
 					// Wait two seconds
 					uint32 startTime = g_system->getMillis();
 					while (!_vm->shouldQuit() && startTime + 2000 > g_system->getMillis())
-						_vm->yield();
+						_vm->yield(nullptr, -1);
 
 					// Move to a different depth to enter the transporter
 					DestinationScene newScene;
@@ -629,7 +635,7 @@ int TransporterControls::onCharacter(Window *viewWindow, const Common::KeyState 
 			// Wait two seconds
 			uint32 startTime = g_system->getMillis();
 			while (!_vm->shouldQuit() && startTime + 2000 > g_system->getMillis())
-				_vm->yield();
+				_vm->yield(nullptr, -1);
 
 			// Move to a different depth to enter the transporter
 			DestinationScene newScene;
@@ -965,12 +971,15 @@ bool SceneViewWindow::startAgent3LairAmbient(int oldTimeZone, int oldEnvironment
 }
 
 SceneBase *SceneViewWindow::constructAgent3LairSceneObject(Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	switch (sceneStaticData.classID) {
 	case 0:
 		// Default scene
 		break;
 	case 1:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 177, 96, 231, 184, kItemGeneratorCore, 15, offsetof(GlobalFlags, alRDTakenLiveCore));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 177, 96, 231, 184, kItemGeneratorCore, 15, globalFlags.alRDTakenLiveCore);
 	case 2:
 		return new GeneratorCoreZoom(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 3:

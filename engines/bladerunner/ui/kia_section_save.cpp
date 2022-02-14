@@ -101,7 +101,7 @@ void KIASectionSave::open() {
 
 	if (!_saveList.empty() || ableToSaveGame) {
 
-		_buttons->activate(nullptr, nullptr, nullptr, onButtonPressed, this);
+		_buttons->activate(onButtonHovered, nullptr, nullptr, onButtonPressed, this);
 		_inputBox->show();
 
 		_scrollBox->clearLines();
@@ -314,34 +314,37 @@ void  KIASectionSave::inputBoxCallback(void *callbackData, void *source) {
 	}
 }
 
+void KIASectionSave::onButtonHovered(int buttonId, void *callbackData) {
+	KIASectionSave *self = (KIASectionSave *)callbackData;
+	self->_vm->_audioPlayer->playAud(self->_vm->_gameInfo->getSfxTrack(kSfxTEXT3), 100, 0, 0, 50, 0);
+}
+
 void KIASectionSave::onButtonPressed(int buttonId, void *callbackData) {
 	KIASectionSave *self = (KIASectionSave *)callbackData;
 
 	if (buttonId == 0) {
-		if (self->_selectedLineId == self->_newSaveLineId)
-		{
+		if (self->_selectedLineId == self->_newSaveLineId) {
 			self->save();
-		}
-		else
-		{
+		} else {
 			self->changeState(kStateOverwrite);
 		}
 	} else if (buttonId == 1) {
 		self->changeState(kStateNormal);
 		self->_vm->_audioPlayer->playAud(self->_vm->_gameInfo->getSfxTrack(kSfxSPNBEEP6), 90, -50, -50, 50, 0);
 	} else if (buttonId == 2) {
-		if (self->_state == kStateOverwrite)
-		{
+		if (self->_state == kStateOverwrite) {
 			self->save();
-		}
-		else if (self->_state == kStateDelete)
-		{
+			self->changeState(kStateNormal);
+		} else if (self->_state == kStateDelete) {
 			self->deleteSave();
 		}
 	}
 }
 
 void KIASectionSave::changeState(State state) {
+	if (_state == state)
+		return;
+
 	_state = state;
 	if (state == kStateNormal) {
 		_buttons->resetImages();
@@ -377,6 +380,13 @@ void KIASectionSave::changeState(State state) {
 
 void KIASectionSave::save() {
 	int slot = -1;
+	// Do not allow empty string for saved game name
+	// Note: We do allow a series of blank spaces for name, though
+	//       (this is the behavior in the original game).
+	Common::String inpBoxTextStr = _inputBox->getText();
+	if (inpBoxTextStr.empty()) {
+		return;
+	}
 
 	if (_selectedLineId < (int)_saveList.size()) {
 		slot = _saveList[_selectedLineId].getSaveSlot();
@@ -404,7 +414,7 @@ void KIASectionSave::save() {
 	}
 
 	BladeRunner::SaveFileHeader header;
-	header._name = Common::U32String(_inputBox->getText()).encode(Common::kUtf8);
+	header._name = Common::U32String(inpBoxTextStr).encode(Common::kUtf8);
 	header._playTime = _vm->getTotalPlayTime();
 
 	BladeRunner::SaveFileManager::writeHeader(*saveFile, header);

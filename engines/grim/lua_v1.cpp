@@ -73,7 +73,7 @@ void Lua_V1::PrintDebug() {
 		if (!lua_isstring(strObj))
 			return;
 		msg += Common::String(lua_getstring(strObj));
-		debugN("%s", msg.c_str());
+		debugN("%s\n", msg.c_str());
 	}
 }
 
@@ -86,7 +86,7 @@ void Lua_V1::PrintError() {
 		if (!lua_isstring(strObj))
 			return;
 		msg += Common::String(lua_getstring(strObj));
-		debugN("%s", msg.c_str());
+		debugN("%s\n", msg.c_str());
 	}
 }
 
@@ -99,7 +99,7 @@ void Lua_V1::PrintWarning() {
 		if (!lua_isstring(strObj))
 			return;
 		msg += Common::String(lua_getstring(strObj));
-		debugN("%s", msg.c_str());
+		debugN("%s\n", msg.c_str());
 	}
 }
 
@@ -699,52 +699,77 @@ void Lua_V1::LockFont() {
 	lua_pushnil();
 }
 
+void Lua_V1::JustLoaded() {
+	if (g_grim->getJustSaveLoaded())
+		lua_pushnumber(1.0f);
+	else
+		lua_pushnil();
+	g_grim->setJustSaveLoaded(false);
+}
+
 void Lua_V1::EnableDebugKeys() {
 }
 
+void Lua_V1::FlushControls() {
+	g_grim->clearEventQueue();
+}
+
 void Lua_V1::LightMgrSetChange() {
-	// that seems only used when some control panel is opened
+	// nothing to implement
+	// lights manager for game debug purpose only
 }
 
 void Lua_V1::LightMgrStartup() {
-	// we will not implement this opcode
-}
-
-void Lua_V1::JustLoaded() {
-	Debug::error("OPCODE USAGE VERIFICATION: JustLoaded");
+	// nothing to implement
+	// lights manager for game debug purpose only
 }
 
 void Lua_V1::SetEmergencyFont() {
-	Debug::error("OPCODE USAGE VERIFICATION: SetEmergencyFont");
+	// nothing to implement
+	// originally this is used only for CD changing which is not supported here
 }
 
-
-// Stub function for builtin functions not yet implemented
-static void stubWarning(const char *funcName) {
-	warning("Stub function: %s", funcName);
+void Lua_V1::NukeResources() {
+	// nothing to implement
+	// originally this is used only for CD changing which is not supported here
 }
 
-#define STUB_FUNC(name) void name() { stubWarning(#name); }
+void Lua_V1::AttachToResources() {
+	// nothing to implement
+	// originally this is used only for CD changing which is not supported here
+}
 
-STUB_FUNC(Lua_V1::SetActorInvClipNode)
-STUB_FUNC(Lua_V1::NukeResources)
-STUB_FUNC(Lua_V1::ResetTextures)
-STUB_FUNC(Lua_V1::AttachToResources)
-STUB_FUNC(Lua_V1::DetachFromResources)
-STUB_FUNC(Lua_V1::SetActorClipPlane)
-STUB_FUNC(Lua_V1::SetActorClipActive)
-STUB_FUNC(Lua_V1::FlushControls)
-STUB_FUNC(Lua_V1::GetCameraLookVector)
+void Lua_V1::DetachFromResources() {
+	// nothing to implement
+	// originally this is used only for CD changing which is not supported here
+}
+
+void Lua_V1::SpewStartup() {
+	// nothing to implement
+	// originally this opcode launch external library 'spew.dll'
+}
+
+void Lua_V1::SetCameraInterest() {
+	// nothing to implement
+	// it's referenced once in Grim dead lua code
+}
+
+void Lua_V1::GetCameraLookVector() {
+	warning("Stub function: GetCameraLookVector");
+}
+
+void Lua_V1::GetCameraPosition() {
+	warning("Stub function: GetCameraPosition");
+}
+
+void Lua_V1::WorldToScreen() {
+	warning("Stub function: WorldToScreen");
+}
+
+#define STUB_FUNC(name) void name() {}
+
+// Stub functions not used in games
 STUB_FUNC(Lua_V1::SetCameraRoll)
-STUB_FUNC(Lua_V1::SetCameraInterest)
-STUB_FUNC(Lua_V1::GetCameraPosition)
-STUB_FUNC(Lua_V1::SpewStartup)
-STUB_FUNC(Lua_V1::WorldToScreen)
-STUB_FUNC(Lua_V1::SetActorRoll)
-STUB_FUNC(Lua_V1::SetActorFrustrumCull)
-STUB_FUNC(Lua_V1::DriveActorTo)
-STUB_FUNC(Lua_V1::GetTranslationMode)
-STUB_FUNC(Lua_V1::SetTranslationMode)
 STUB_FUNC(Lua_V1::WalkActorToAvoiding)
 STUB_FUNC(Lua_V1::GetActorChores)
 STUB_FUNC(Lua_V1::SetCameraPosition)

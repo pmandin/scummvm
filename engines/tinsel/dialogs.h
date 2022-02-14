@@ -156,24 +156,18 @@ struct INV_DEF {
 
 //----- Data pertinant to scene hoppers ------------------------
 
-#include "common/pack-start.h"	// START STRUCT PACKING
-
 struct HOPPER {
 	uint32		hScene;
 	SCNHANDLE	hSceneDesc;
 	uint32		numEntries;
 	uint32		entryIndex;
-} PACKED_STRUCT;
-typedef HOPPER *PHOPPER;
+};
 
 struct HOPENTRY {
 	uint32	eNumber;	// entrance number
 	SCNHANDLE hDesc;	// handle to entrance description
 	uint32	flags;
-} PACKED_STRUCT;
-typedef HOPENTRY *PHOPENTRY;
-
-#include "common/pack-end.h"	// END STRUCT PACKING
+};
 
 enum BTYPE {
 	RGROUP, ///< Radio button group - 1 is selectable at a time. Action on double click
@@ -390,7 +384,7 @@ private:
 	OBJECT *AddInvObject(int num, const FREEL **pfreel, const FILM **pfilm);
 	void AddBackground(OBJECT **rect, OBJECT **title, int extraH, int extraV, int textFrom);
 	void AddBackground(OBJECT **rect, int extraH, int extraV);
-	void AddTitle(POBJECT *title, int extraH);
+	void AddTitle(OBJECT **title, int extraH);
 	void AddSlider(OBJECT **slide, const FILM *pfilm);
 	void AddBox(int *pi, const int i);
 	void AddEWSlider(OBJECT **slide, const FILM *pfilm);
@@ -512,13 +506,13 @@ private:
 	bool _bMoveOnUnHide; // Set before start of conversation
 	    // - causes conversation to be started in a sensible place
 
-	PHOPPER _pHopper;
-	PHOPENTRY _pEntries;
+	HOPPER *_pHopper;
+	HOPENTRY *_pEntries;
 	int _numScenes;
 
 	int _numEntries;
 
-	PHOPPER _pChosenScene;
+	HOPPER *_pChosenScene;
 
 	int _lastChosenScene;
 	bool _bRemember;

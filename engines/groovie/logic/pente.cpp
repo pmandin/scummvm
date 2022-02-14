@@ -36,8 +36,8 @@ namespace Groovie {
 #undef UINT_MAX
 #endif
 const uint UINT_MAX = (uint)-1;
-const uint WIN_SCORE = 100000000;
-const uint CAPTURE_SCORE = 1000000;
+const int WIN_SCORE = 100000000;
+const int CAPTURE_SCORE = 1000000;
 const uint PLAYER = 79;
 const uint STAUF = 88;
 
@@ -48,8 +48,8 @@ struct pentePlayerTable {
 struct penteTable {
 	pentePlayerTable player;
 	pentePlayerTable stauf;
-	uint playerScore;
-	uint staufScore;
+	int playerScore;
+	int staufScore;
 	byte playerLines;
 	byte staufLines;
 	byte width;
@@ -139,16 +139,20 @@ void PenteGame::penteInit(uint width, uint height, uint length) {
 	memset(_table->numAdjacentPieces, 0, sizeof(_table->numAdjacentPieces));
 
 	_table->calcTouchingPieces = 1;
+
+	_nextCapturedSpot = -1;
+	_animateCapturesBitMask = 0;
+	_previousMove = 0;
 }
 
-uint &PenteGame::getPlayerTable(bool staufTurn, pentePlayerTable *&pt) {
+int &PenteGame::getPlayerTable(bool staufTurn, pentePlayerTable *&pt) {
 	pt = staufTurn ? &_table->stauf : &_table->player;
 	return staufTurn ? _table->staufScore : _table->playerScore;
 }
 
 void PenteGame::scoreLine(uint16 lineIndex, bool isStaufTurn, bool revert) {
 	pentePlayerTable *playerTable;
-	uint &score = getPlayerTable(isStaufTurn, playerTable);
+	int &score = getPlayerTable(isStaufTurn, playerTable);
 
 	int lineLength, mult;
 	if (revert) {
@@ -163,7 +167,7 @@ void PenteGame::scoreLine(uint16 lineIndex, bool isStaufTurn, bool revert) {
 		score = (int)score + (int)WIN_SCORE * mult;
 	} else {
 		pentePlayerTable *opponentTable;
-		uint &opponentScore = getPlayerTable(!isStaufTurn, opponentTable);
+		int &opponentScore = getPlayerTable(!isStaufTurn, opponentTable);
 		int opponentLineLength = opponentTable->lines[lineIndex];
 		if (lineLength == 0) {
 			opponentScore += (-(1 << ((byte)opponentLineLength & 0x1f))) * mult;
@@ -230,6 +234,7 @@ void PenteGame::calcTouchingPieces(byte moveX, byte moveY, bool revert) {
 }
 
 void PenteGame::updateScore(byte x, byte y, bool isStauf) {
+	assert(_table->boardState[x][y] == 0);
 	_table->boardState[x][y] = isStauf ? STAUF : PLAYER;
 	uint16 lines = _table->linesTable[x][y][0];
 
@@ -246,6 +251,7 @@ void PenteGame::updateScore(byte x, byte y, bool isStauf) {
 }
 
 void PenteGame::revertScore(byte x, byte y) {
+	assert(_table->boardState[x][y] != 0);
 	bool stauf_turn = _table->boardState[x][y] == STAUF;
 	_table->boardState[x][y] = 0;
 	_table->moveCounter--;
@@ -287,6 +293,7 @@ byte PenteGame::scoreCaptureSingle(byte x, byte y, int slopeX, int slopeY) {
 	if (boardState[x1][y1] != captive || boardState[x2][y2] != captive)
 		return 0;
 
+	// now we take away the points the captor had for these pieces
 	revertScore(x1, y1);
 	revertScore(x2, y2);
 	return 1;
@@ -318,7 +325,7 @@ uint PenteGame::scoreCapture(byte x, byte y) {
 		if ((i & 1) == 0)
 			continue;
 		pentePlayerTable *playerTable;
-		uint &score = getPlayerTable(isStauf, playerTable);
+		int &score = getPlayerTable(isStauf, playerTable);
 
 		int lineLength = ++playerTable->lines[_table->linesCounter];
 		if (_table->lineLength == lineLength) {
@@ -393,7 +400,7 @@ void PenteGame::revertCapture(byte x, byte y, byte bitMask) {
 			continue;
 
 		pentePlayerTable *playerTable;
-		uint &score = getPlayerTable(!isPlayer, playerTable);
+		int &score = getPlayerTable(!isPlayer, playerTable);
 
 		int linesCounter = --playerTable->lines[_table->linesCounter];
 
@@ -416,7 +423,7 @@ void PenteGame::revertCapture(byte x, byte y, byte bitMask) {
 
 int PenteGame::scoreMoveAndRevert(byte x, byte y, char depth, int parentScore, bool &gameOver) {
 	updateScore(x, y, _table->moveCounter % 2);
-	uint score = scoreCapture(x, y);
+	uint capturesMask = scoreCapture(x, y);
 
 	if (_table->playerScore >= WIN_SCORE || _table->staufScore >= WIN_SCORE)
 		gameOver = true;
@@ -433,8 +440,8 @@ int PenteGame::scoreMoveAndRevert(byte x, byte y, char depth, int parentScore, b
 			scoreDiff = _table->staufScore - _table->playerScore;
 		}
 	}
-	if (score != 0) {
-		revertCapture(x, y, score);
+	if (capturesMask != 0) {
+		revertCapture(x, y, capturesMask);
 	}
 	revertScore(x, y);
 	return scoreDiff;
@@ -642,6 +649,7 @@ void PenteGame::opQueryPiece(byte *vars) {
 void PenteGame::run(byte *vars) {
 	byte op = vars[4];
 	if (_table == nullptr && op != 0) {
+		debugC(kDebugLogic, "pente Init, seed %u", _random.getSeed());
 		penteInit(20, 15, 5);
 	}
 	debugC(kDebugLogic, "penteOp vars[4]: %d", (int)op);
@@ -762,11 +770,18 @@ void PenteGame::test() {
 			/*x=*/15, /*y=*/11, /*x=*/14, /*y=*/10, /*x=*/17, /*y=*/12, /*x=*/16, /*y=*/10, /*x=*/13, /*y=*/10, /*x=*/18, /*y=*/10
 		}, false);
 
+	for (uint32 i = 0; i < 10; i++)
+		testRandomGame(i);
+
+	_easierAi = true;
+	for (uint32 i = 10; i < 20; i++)
+		testRandomGame(i);
+
 	_random.setSeed(oldSeed);
 	warning("finished PenteGame::test()");
 }
 
-void PenteGame::testGame(uint32 seed, Common::Array<int> moves, bool playerWin) {
+bool PenteGame::testGame(uint32 seed, Common::Array<int> moves, bool playerWin) {
 	byte vars[1024];
 	byte &winner = vars[5];
 	byte &op = vars[4];
@@ -819,6 +834,58 @@ void PenteGame::testGame(uint32 seed, Common::Array<int> moves, bool playerWin) 
 		error("Stauf didn't win, winner: %d", (int)winner);
 
 	warning("finished PenteGame::testGame(%u, %u, %d)", seed, moves.size(), (int)playerWin);
+	return true;
+}
+
+void PenteGame::testRandomGame(uint32 seed) {
+	byte vars[1024];
+	byte &winner = vars[5];
+	byte &op = vars[4];
+
+	warning("starting PenteGame::testRandomGame(%u)", seed);
+	memset(vars, 0, sizeof(vars));
+	_random.setSeed(seed);
+
+	op = 0;
+	run(vars);
+
+	while (1) {
+		// Player makes a random move
+		int x, y;
+		do {
+			x = _random.getRandomNumber(19);
+			y = _random.getRandomNumber(14);
+		} while (_table != nullptr && _table->boardState[x][y]);
+
+		moveXYToVars(x, y, vars[0], vars[1], vars[2]);
+		op = 1;
+		run(vars);
+
+		do {
+			op = 2;
+			run(vars);
+		} while (winner == 1);
+
+		if (winner)
+			break;
+
+		// Stauf's move
+		op = 3;
+		run(vars);
+
+		do {
+			op = 4;
+			run(vars);
+		} while (winner == 1);
+
+		if (winner)
+			break;
+	}
+
+	if (winner != 2)
+		error("Stauf didn't win, winner: %d", (int)winner);
+
+	warning("finished PenteGame::testRandomGame(%u)", seed);
 }
 
 } // namespace Groovie

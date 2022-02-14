@@ -32,7 +32,7 @@
 
 namespace TinyGL {
 
-void gl_print_matrix(const float *m) {
+void GLContext::gl_print_matrix(const float *m) {
 	for (int i = 0; i < 4; i++) {
 		fprintf(stderr, "%f %f %f %f\n", m[i], m[4 + i], m[8 + i], m[12 + i]);
 	}
@@ -100,7 +100,6 @@ void GLContext::glopMultMatrix(GLParam *p) {
 	gl_matrix_update(this);
 }
 
-
 void GLContext::glopPushMatrix(GLParam *) {
 	int n = matrix_mode;
 	Matrix4 *m;
@@ -141,15 +140,18 @@ void GLContext::glopRotate(GLParam *p) {
 		m.identity();
 		break;
 	case 4:
-		if (u[0] < 0) angle = -angle;
+		if (u[0] < 0)
+			angle = -angle;
 		m.rotation(angle, 0);
 		break;
 	case 2:
-		if (u[1] < 0) angle = -angle;
+		if (u[1] < 0)
+			angle = -angle;
 		m.rotation(angle, 1);
 		break;
 	case 1:
-		if (u[2] < 0) angle = -angle;
+		if (u[2] < 0)
+			angle = -angle;
 		m.rotation(angle, 2);
 		break;
 	default: {

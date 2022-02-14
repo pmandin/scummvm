@@ -42,15 +42,16 @@ namespace Buried {
 
 class SwapStillOnFlag : public SceneBase {
 public:
-	SwapStillOnFlag(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-			int flagOffset = -1, int flagValue = -1);
+	SwapStillOnFlag(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation);
 };
 
-SwapStillOnFlag::SwapStillOnFlag(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-		int flagOffset, int flagValue) :
+SwapStillOnFlag::SwapStillOnFlag(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlagByte(flagOffset) >= flagValue) {
-		int curStillFrame = _staticData.navFrameIndex;
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.dsPTElevatorPresent >= 1) {
+			int curStillFrame = _staticData.navFrameIndex;
 		_staticData.navFrameIndex = _staticData.miscFrameIndex;
 		_staticData.miscFrameIndex = curStillFrame;
 	}
@@ -87,7 +88,7 @@ int CapturePaintingTowerFootprint::locateAttempted(Window *viewWindow, const Com
 			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(0);
 
 		// Attempt to add it to the biochip
-		if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), 12, DAVINCI_EVIDENCE_FOOTPRINT))
+		if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(DAVINCI_EVIDENCE_FOOTPRINT))
 			((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ACQUIRED));
 		else
 			((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
@@ -473,7 +474,7 @@ int PaintingTowerInsideDoor::specifyCursor(Window *viewWindow, const Common::Poi
 class WheelAssemblyItemAcquire : public SceneBase {
 public:
 	WheelAssemblyItemAcquire(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-			int left = 0, int top = 0, int right = 0, int bottom = 0, int itemID = 0, int clearStillFrame = 0, int itemFlagOffset = 0);
+			int left = 0, int top = 0, int right = 0, int bottom = 0, int itemID = 0, int clearStillFrame = 0);
 	int mouseDown(Window *viewWindow, const Common::Point &pointLocation) override;
 	int mouseUp(Window *viewWindow, const Common::Point &pointLocation) override;
 	int droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) override;
@@ -485,35 +486,38 @@ private:
 	int _fullFrameIndex;
 	int _clearFrameIndex;
 	int _itemID;
-	int _itemFlagOffset;
 	Common::Rect _zoomUpRegion;
 };
 
 WheelAssemblyItemAcquire::WheelAssemblyItemAcquire(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-		int left, int top, int right, int bottom, int itemID, int clearStillFrame, int itemFlagOffset) :
+		int left, int top, int right, int bottom, int itemID, int clearStillFrame) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	_itemPresent = true;
 	_itemID = itemID;
 	_acquireRegion = Common::Rect(left, top, right, bottom);
 	_fullFrameIndex = _staticData.navFrameIndex;
 	_clearFrameIndex = clearStillFrame;
-	_itemFlagOffset = itemFlagOffset;
 	_zoomUpRegion = Common::Rect(134, 168, 200, 189);
 
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlagByte(_itemFlagOffset) != 0) {
+	if (globalFlags.dsWSPickedUpWheelAssembly != 0) {
 		_itemPresent = false;
 		_staticData.navFrameIndex = _clearFrameIndex;
 	}
 }
 
 int WheelAssemblyItemAcquire::mouseDown(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (_itemPresent && _acquireRegion.contains(pointLocation)) {
 		_itemPresent = false;
 		_staticData.navFrameIndex = _clearFrameIndex;
 		viewWindow->invalidateWindow(false);
 
-		if (_itemFlagOffset >= 0)
-			((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_itemFlagOffset, 1);
+		globalFlags.dsWSPickedUpWheelAssembly = 1;
 
 		Common::Point ptInventoryWindow = viewWindow->convertPointToGlobal(pointLocation);
 		ptInventoryWindow = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->convertPointToLocal(ptInventoryWindow);
@@ -539,6 +543,9 @@ int WheelAssemblyItemAcquire::mouseUp(Window *viewWindow, const Common::Point &p
 }
 
 int WheelAssemblyItemAcquire::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (pointLocation.x == -1 && pointLocation.y == -1)
 		return SIC_REJECT;
 
@@ -546,8 +553,7 @@ int WheelAssemblyItemAcquire::droppedItem(Window *viewWindow, int itemID, const 
 		_itemPresent = true;
 		_staticData.navFrameIndex = _fullFrameIndex;
 
-		if (_itemFlagOffset >= 0)
-			((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_itemFlagOffset, 0);
+		globalFlags.dsWSPickedUpWheelAssembly = 0;
 
 		viewWindow->invalidateWindow(false);
 		return SIC_ACCEPT;
@@ -949,7 +955,7 @@ int CodexTowerLensEvidenceCapture::locateAttempted(Window *viewWindow, const Com
 			((SceneViewWindow *)viewWindow)->moveToDestination(destData);
 
 			// Add it to the list
-			if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), 12, DAVINCI_EVIDENCE_LENS_FILTER))
+			if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(DAVINCI_EVIDENCE_LENS_FILTER))
 				((SceneViewWindow *)viewWindow)->displayLiveText(vm->getString(IDS_MBT_EVIDENCE_ACQUIRED));
 			else
 				((SceneViewWindow *)viewWindow)->displayLiveText(vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
@@ -985,7 +991,7 @@ public:
 };
 
 CodexTowerGrabLens::CodexTowerGrabLens(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
-		GenericItemAcquire(vm, viewWindow, sceneStaticData, priorLocation, 200, 78, 262, 123, kItemLensFilter, 169, offsetof(GlobalFlags, dsCTRetrievedLens)) {
+		GenericItemAcquire(vm, viewWindow, sceneStaticData, priorLocation, 200, 78, 262, 123, kItemLensFilter, 169, ((SceneViewWindow *)viewWindow)->getGlobalFlags().dsCTRetrievedLens) {
 }
 
 int CodexTowerGrabLens::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
@@ -1069,7 +1075,6 @@ private:
 	int _fullFrameIndex;
 	int _clearFrameIndex;
 	int _itemID;
-	int _itemFlagOffset;
 	Common::Rect _eyeRegion;
 };
 
@@ -1080,7 +1085,6 @@ CodexTowerGrabHeart::CodexTowerGrabHeart(BuriedEngine *vm, Window *viewWindow, c
 	_acquireRegion = Common::Rect(214, 118, 270, 189);
 	_fullFrameIndex = _staticData.navFrameIndex;
 	_clearFrameIndex = 162;
-	_itemFlagOffset = offsetof(GlobalFlags, dsCTTakenHeart);
 	_eyeRegion = Common::Rect(248, 116, 286, 180);
 
 	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().dsCTTakenHeart != 0) {
@@ -1097,12 +1101,14 @@ int CodexTowerGrabHeart::postExitRoom(Window *viewWindow, const Location &newLoc
 }
 
 int CodexTowerGrabHeart::mouseDown(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (_acquireRegion.contains(pointLocation) && _itemPresent) {
 		_itemPresent = false;
 		_staticData.navFrameIndex = _clearFrameIndex;
 
-		if (_itemFlagOffset >= 0)
-			((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_itemFlagOffset, 1);
+		globalFlags.dsCTTakenHeart = 1;
 
 		// Call inventory drag start function
 		Common::Point ptInventoryWindow = viewWindow->convertPointToGlobal(pointLocation);
@@ -1129,6 +1135,9 @@ int CodexTowerGrabHeart::mouseUp(Window *viewWindow, const Common::Point &pointL
 }
 
 int CodexTowerGrabHeart::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (pointLocation.x == -1 && pointLocation.y == -1)
 		return SIC_REJECT;
 
@@ -1137,8 +1146,7 @@ int CodexTowerGrabHeart::droppedItem(Window *viewWindow, int itemID, const Commo
 		_itemPresent = true;
 		_staticData.navFrameIndex = _fullFrameIndex;
 
-		if (_itemFlagOffset >= 0)
-			((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_itemFlagOffset, 0);
+		globalFlags.dsCTTakenHeart = 0;
 
 		viewWindow->invalidateWindow();
 
@@ -1184,7 +1192,7 @@ ZoomInOnCodexes::ZoomInOnCodexes(BuriedEngine *vm, Window *viewWindow, const Loc
 
 int ZoomInOnCodexes::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
 	// If we have not yet captured the codex evidence, display a message
-	if (!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), DAVINCI_EVIDENCE_CODEX))
+	if (!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(DAVINCI_EVIDENCE_CODEX))
 		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
 
 	((SceneViewWindow *)viewWindow)->getGlobalFlags().dsCYFoundCodexes = 1;
@@ -1228,7 +1236,7 @@ int ZoomInOnCodexes::mouseUp(Window *viewWindow, const Common::Point &pointLocat
 }
 
 int ZoomInOnCodexes::locateAttempted(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1 && _middleCodex.contains(pointLocation) && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), DAVINCI_EVIDENCE_CODEX)) {
+	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1 && _middleCodex.contains(pointLocation) && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(DAVINCI_EVIDENCE_CODEX)) {
 		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_MUST_BE_REVEALED));
 		((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->disableEvidenceCapture();
 		return SC_TRUE;
@@ -1424,7 +1432,7 @@ int BrowseCodex::timerCallback(Window *viewWindow) {
 				((SceneViewWindow *)viewWindow)->playSynchronousAnimation(24);
 
 				// Attempt to add it to your evidence biochip
-				if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), 12, DAVINCI_EVIDENCE_CODEX))
+				if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(DAVINCI_EVIDENCE_CODEX))
 					((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_RIPPLE_DOCUMENTED));
 				else
 					((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
@@ -1445,7 +1453,7 @@ int BrowseCodex::timerCallback(Window *viewWindow) {
 }
 
 int BrowseCodex::locateAttempted(Window *viewWindow, const Common::Point &pointLocation) {
-	if (_lensStartFrame >= 0 && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), DAVINCI_EVIDENCE_CODEX)) {
+	if (_lensStartFrame >= 0 && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(DAVINCI_EVIDENCE_CODEX)) {
 		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_MUST_BE_REVEALED));
 		((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->disableEvidenceCapture();
 		return SC_TRUE;
@@ -1455,7 +1463,7 @@ int BrowseCodex::locateAttempted(Window *viewWindow, const Common::Point &pointL
 }
 
 int BrowseCodex::specifyCursor(Window *viewWindow, const Common::Point &pointLocation) {
-	if (_lensStartFrame >= 0 && ((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1 && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), DAVINCI_EVIDENCE_CODEX))
+	if (_lensStartFrame >= 0 && ((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1 && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(DAVINCI_EVIDENCE_CODEX))
 		return -2;
 
 	if (_top.contains(pointLocation) && (_curPage % 2) != 0)
@@ -1908,12 +1916,12 @@ PaintingTowerCapAgent::PaintingTowerCapAgent(BuriedEngine *vm, Window *viewWindo
 int PaintingTowerCapAgent::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
 	((SceneViewWindow *)viewWindow)->getGlobalFlags().dsPTBeenOnBalcony = 1;
 
-	if (!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), DAVINCI_EVIDENCE_AGENT3)) {
+	if (!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(DAVINCI_EVIDENCE_AGENT3)) {
 		// Play animation of capturing the evidence
 		((SceneViewWindow *)viewWindow)->playSynchronousAnimation(11);
 
 		// Attempt to add the evidence to the biochip
-		((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), 12, DAVINCI_EVIDENCE_AGENT3);
+		((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(DAVINCI_EVIDENCE_AGENT3);
 		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ACQUIRED));
 
 		// Turn off evidence capture
@@ -2346,7 +2354,7 @@ LensFilterNotify::LensFilterNotify(BuriedEngine *vm, Window *viewWindow, const L
 }
 
 int LensFilterNotify::postEnterRoom(Window *viewWindow, const Location &newLocation) {
-	if (newLocation.node != _staticData.location.node && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), DAVINCI_EVIDENCE_LENS_FILTER))
+	if (newLocation.node != _staticData.location.node && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(DAVINCI_EVIDENCE_LENS_FILTER))
 		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
 
 	return SC_TRUE;
@@ -2363,7 +2371,7 @@ CodexFormulaeNotify::CodexFormulaeNotify(BuriedEngine *vm, Window *viewWindow, c
 }
 
 int CodexFormulaeNotify::postEnterRoom(Window *viewWindow, const Location &newLocation) {
-	if (newLocation.node != _staticData.location.node && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), DAVINCI_EVIDENCE_CODEX))
+	if (newLocation.node != _staticData.location.node && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(DAVINCI_EVIDENCE_CODEX))
 		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
 
 	return SC_TRUE;
@@ -2584,6 +2592,10 @@ bool SceneViewWindow::checkCustomDaVinciAICommentDependencies(const Location &co
 }
 
 SceneBase *SceneViewWindow::constructDaVinciSceneObject(Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	byte dummyFlag = 0; // a dummy flag, used as a placeholder for writing (but not reading)
+
 	// Special scene for the trial version
 	if (_vm->isTrial())
 		return new TrialRecallScene(_vm, viewWindow, sceneStaticData, priorLocation);
@@ -2593,7 +2605,7 @@ SceneBase *SceneViewWindow::constructDaVinciSceneObject(Window *viewWindow, cons
 		// Default scene
 		break;
 	case 1:
-		return new SwapStillOnFlag(_vm, viewWindow, sceneStaticData, priorLocation, offsetof(GlobalFlags, dsPTElevatorPresent), 1);
+		return new SwapStillOnFlag(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 2:
 		return new DisplayMessageWithEvidenceWhenEnteringNode(_vm, viewWindow, sceneStaticData, priorLocation, DAVINCI_EVIDENCE_FOOTPRINT, IDS_MBT_EVIDENCE_PRESENT);
 	case 3:
@@ -2621,11 +2633,11 @@ SceneBase *SceneViewWindow::constructDaVinciSceneObject(Window *viewWindow, cons
 	case 14:
 		return new BasicDoor(_vm, viewWindow, sceneStaticData, priorLocation, 208, 0, 306, 189, 5, 3, 0, 2, 1, 1, TRANSITION_WALK, 11, 740, 23);
 	case 15:
-		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, -1, 13, kCursorFinger, 0, 0, 384, 189);
+		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, dummyFlag, 13, kCursorFinger, 0, 0, 384, 189);
 	case 16:
 		return new PlaySoundExitingFromScene(_vm, viewWindow, sceneStaticData, priorLocation, 14);
 	case 17:
-		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, offsetof(GlobalFlags, dsGDClickedOnCodexDoor), 13, kCursorFinger, 222, 0, 318, 189);
+		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, globalFlags.dsGDClickedOnCodexDoor, 13, kCursorFinger, 222, 0, 318, 189);
 	case 18:
 		return new BasicDoor(_vm, viewWindow, sceneStaticData, priorLocation, 216, 0, 324, 189, 5, 3, 2, 0, 1, 1, TRANSITION_WALK, 11, 833, 26);
 	case 19:
@@ -2645,21 +2657,21 @@ SceneBase *SceneViewWindow::constructDaVinciSceneObject(Window *viewWindow, cons
 	case 26:
 		return new ClickChangeScene(_vm, viewWindow, sceneStaticData, priorLocation, 0, 44, 232, 189, kCursorMagnifyingGlass, 5, 4, 4, 3, 0, 1, TRANSITION_VIDEO, 7, -1, -1);
 	case 27:
-		return new ClickChangeSceneSetFlag(_vm, viewWindow, sceneStaticData, priorLocation, 0, 0, 432, 189, kCursorPutDown, 5, 4, 4, 3, 0, 0, TRANSITION_VIDEO, 8, -1, -1, offsetof(GlobalFlags, dsWSSeenBallistaSketch));
+		return new ClickChangeSceneSetFlag(_vm, viewWindow, sceneStaticData, priorLocation, 0, 0, 432, 189, kCursorPutDown, 5, 4, 4, 3, 0, 0, TRANSITION_VIDEO, 8, -1, -1, globalFlags.dsWSSeenBallistaSketch);
 	case 28:
 		return new ClickChangeScene(_vm, viewWindow, sceneStaticData, priorLocation, 112, 52, 380, 189, kCursorMagnifyingGlass, 5, 4, 4, 2, 0, 1, TRANSITION_VIDEO, 9, -1, -1);
 	case 29:
-		return new ClickChangeSceneSetFlag(_vm, viewWindow, sceneStaticData, priorLocation, 0, 0, 432, 189, kCursorPutDown, 5, 4, 4, 2, 0, 0, TRANSITION_VIDEO, 10, -1, -1, offsetof(GlobalFlags, dsWSSeenBallistaSketch));
+		return new ClickChangeSceneSetFlag(_vm, viewWindow, sceneStaticData, priorLocation, 0, 0, 432, 189, kCursorPutDown, 5, 4, 4, 2, 0, 0, TRANSITION_VIDEO, 10, -1, -1, globalFlags.dsWSSeenBallistaSketch);
 	case 30:
 		return new ClickChangeScene(_vm, viewWindow, sceneStaticData, priorLocation, 96, 130, 222, 164, kCursorMagnifyingGlass, 5, 4, 7, 3, 1, 1, TRANSITION_VIDEO, 11, -1, -1 );
 	case 31:
 		return new ClickChangeScene(_vm, viewWindow, sceneStaticData, priorLocation, 0, 0, 432, 189, kCursorPutDown, 5, 4, 7, 3, 1, 0, TRANSITION_VIDEO, 12, -1, -1);
 	case 32:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 158, 90, 328, 162, kItemDriveAssembly, 145, offsetof(GlobalFlags, dsWSPickedUpGearAssembly));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 158, 90, 328, 162, kItemDriveAssembly, 145, globalFlags.dsWSPickedUpGearAssembly);
 	case 33:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 164, 126, 276, 160, kItemWoodenPegs, 96, offsetof(GlobalFlags, dsWSPickedUpPegs));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 164, 126, 276, 160, kItemWoodenPegs, 96, globalFlags.dsWSPickedUpPegs);
 	case 34:
-		return new WheelAssemblyItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 150, 150, 276, 189, kItemWheelAssembly, 100, offsetof(GlobalFlags, dsWSPickedUpWheelAssembly));
+		return new WheelAssemblyItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 150, 150, 276, 189, kItemWheelAssembly, 100);
 	case 35:
 		return new ViewSiegeCyclePlans(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 36:
@@ -2667,7 +2679,7 @@ SceneBase *SceneViewWindow::constructDaVinciSceneObject(Window *viewWindow, cons
 	case 37:
 		return new SiegeCycleTopView(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 38:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 130, 74, 182, 120, kItemCoilOfRope, 48, offsetof(GlobalFlags, dsGDTakenCoilOfRope));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 130, 74, 182, 120, kItemCoilOfRope, 48, globalFlags.dsGDTakenCoilOfRope);
 	case 39:
 		return new UnlockCodexTowerDoor(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 40:
@@ -2707,7 +2719,7 @@ SceneBase *SceneViewWindow::constructDaVinciSceneObject(Window *viewWindow, cons
 	case 57:
 		return new CourtyardCannon(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 58:
-		return new ClickPlayVideoSwitch(_vm, viewWindow, sceneStaticData, priorLocation, 1, kCursorFinger, offsetof(GlobalFlags, dsCYWeebleClicked), 200, 88, 270, 189);
+		return new ClickPlayVideoSwitch(_vm, viewWindow, sceneStaticData, priorLocation, 1, kCursorFinger, globalFlags.dsCYWeebleClicked, 200, 88, 270, 189);
 	case 59:
 		return new ClickPlayVideo(_vm, viewWindow, sceneStaticData, priorLocation, 2, kCursorFinger, 70, 136, 190, 189);
 	case 60:
@@ -2739,11 +2751,11 @@ SceneBase *SceneViewWindow::constructDaVinciSceneObject(Window *viewWindow, cons
 	case 73:
 		return new LensFilterNotify(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 74:
-		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, -1, 13, kCursorFinger, 140, 0, 432, 189);
+		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, dummyFlag, 13, kCursorFinger, 140, 0, 432, 189);
 	case 75:
-		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, offsetof(GlobalFlags, dsCYTriedElevator), 13, kCursorFinger, 140, 130, 432, 189);
+		return new ClickPlaySound(_vm, viewWindow, sceneStaticData, priorLocation, globalFlags.dsCYTriedElevator, 13, kCursorFinger, 140, 130, 432, 189);
 	case 76:
-		return new PlaySoundEnteringScene(_vm, viewWindow, sceneStaticData, priorLocation, 12, offsetof(GlobalFlags, dsCTPlayedBallistaFalling));
+		return new PlaySoundEnteringScene(_vm, viewWindow, sceneStaticData, priorLocation, 12, globalFlags.dsCTPlayedBallistaFalling);
 	case 77:
 		return new CodexFormulaeNotify(_vm, viewWindow, sceneStaticData, priorLocation);
 	default:

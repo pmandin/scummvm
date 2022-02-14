@@ -335,8 +335,6 @@ int main(int argc, char *argv[]) {
 	if (!getFeatureBuildState("opengl", setup.features)) {
 		setFeatureBuildState("opengl_game", setup.features, false);
 		setFeatureBuildState("opengl_shaders", setup.features, false);
-		setFeatureBuildState("opengles2", setup.features, false);
-		setFeatureBuildState("glew", setup.features, false);
 	}
 
 	// Disable engines for which we are missing dependencies
@@ -344,7 +342,9 @@ int main(int argc, char *argv[]) {
 		if (i->enable) {
 			for (StringList::const_iterator ef = i->requiredFeatures.begin(); ef != i->requiredFeatures.end(); ++ef) {
 				FeatureList::iterator feature = std::find(setup.features.begin(), setup.features.end(), *ef);
-				if (feature != setup.features.end() && !feature->enable) {
+				if (feature == setup.features.end()) {
+					std::cerr << "WARNING: Missing feature " << *ef << " from engine " << i->name << '\n';
+				} else if (!feature->enable) {
 					setEngineBuildState(i->name, setup.engines, false);
 					break;
 				}
@@ -439,6 +439,10 @@ int main(int argc, char *argv[]) {
 
 	if (setup.useStaticDetection) {
 		setup.defines.push_back("DETECTION_STATIC");
+	}
+
+	if (getFeatureBuildState("opengl", setup.features)) {
+		setup.defines.push_back("USE_GLAD");
 	}
 
 	// List of global warnings and map of project-specific warnings
@@ -927,11 +931,8 @@ StringList getEngineDefines(const EngineDescList &engines) {
 	StringList result;
 
 	for (EngineDescList::const_iterator i = engines.begin(); i != engines.end(); ++i) {
-		if (i->enable) {
-			std::string define = "ENABLE_" + i->name;
-			std::transform(define.begin(), define.end(), define.begin(), toupper);
-			result.push_back(define);
-		}
+		if (i->enable)
+			result.push_back("ENABLE_" + CreateProjectTool::toUpper(i->name));
 	}
 
 	return result;
@@ -1064,7 +1065,7 @@ namespace {
 // clang-format off
 const Feature s_features[] = {
 	// Libraries (must be added in generators)
-	{      "libz",        "USE_ZLIB", true, true,  "zlib (compression) support" },
+	{      "zlib",        "USE_ZLIB", true, true,  "zlib (compression) support" },
 	{       "mad",         "USE_MAD", true, true,  "libmad (MP3) support" },
 	{   "fribidi",     "USE_FRIBIDI", true, true,  "BiDi support" },
 	{       "ogg",         "USE_OGG", true, true,  "Ogg support" },
@@ -1074,16 +1075,16 @@ const Feature s_features[] = {
 	{       "png",         "USE_PNG", true, true,  "libpng support" },
 	{       "gif",         "USE_GIF", true, false, "libgif support" },
 	{      "faad",        "USE_FAAD", true, false, "AAC support" },
-	{     "mpeg2",       "USE_MPEG2", true, false, "MPEG-2 support" },
-	{    "theora",   "USE_THEORADEC", true, true,  "Theora decoding support" },
-	{  "freetype",   "USE_FREETYPE2", true, true,  "FreeType support" },
+	{     "mpeg2",       "USE_MPEG2", true, true,  "MPEG-2 support" },
+	{ "theoradec",   "USE_THEORADEC", true, true,  "Theora decoding support" },
+	{ "freetype2",   "USE_FREETYPE2", true, true,  "FreeType support" },
 	{      "jpeg",        "USE_JPEG", true, true,  "libjpeg support" },
 	{"fluidsynth",  "USE_FLUIDSYNTH", true, true,  "FluidSynth support" },
 	{ "fluidlite",   "USE_FLUIDLITE", true, false, "FluidLite support" },
 	{   "libcurl",     "USE_LIBCURL", true, true,  "libcurl support" },
 	{    "sdlnet",     "USE_SDL_NET", true, true,  "SDL_net support" },
 	{   "discord",     "USE_DISCORD", true, false, "Discord support" },
-	{      "glew",        "USE_GLEW", true, true,  "GLEW support" },
+	{ "retrowave",   "USE_RETROWAVE", true, false, "RetroWave OPL3 support" },
 
 	// Feature flags
 	{             "bink",                      "USE_BINK", false, true,  "Bink video support" },
@@ -1098,9 +1099,8 @@ const Feature s_features[] = {
 	{             "nasm",                      "USE_NASM", false, true,  "IA-32 assembly support" }, // This feature is special in the regard, that it needs additional handling.
 	{           "tinygl",                    "USE_TINYGL", false, true,  "TinyGL support" },
 	{           "opengl",                    "USE_OPENGL", false, true,  "OpenGL support" },
-	{      "opengl_game",               "USE_OPENGL_GAME", false, true,  "OpenGL support in 3d games" },
+	{      "opengl_game",               "USE_OPENGL_GAME", false, true,  "OpenGL support (classic) in 3d games" },
 	{   "opengl_shaders",            "USE_OPENGL_SHADERS", false, true,  "OpenGL support (shaders) in 3d games" },
-	{        "opengles2",                     "USE_GLES2", false, false, "forced OpenGL ES2 mode in 3d games" },
 	{          "taskbar",                   "USE_TASKBAR", false, true,  "Taskbar integration support" },
 	{            "cloud",                     "USE_CLOUD", false, true,  "Cloud integration support" },
 	{      "translation",               "USE_TRANSLATION", false, true,  "Translation support" },
@@ -1329,6 +1329,12 @@ std::string toString(int num) {
 	std::ostringstream os;
 	os << num;
 	return os.str();
+}
+
+std::string toUpper(const std::string &str) {
+	std::string res;
+	std::transform(str.begin(), str.end(), std::back_inserter(res), toupper);
+	return res;
 }
 
 /**
@@ -1646,6 +1652,7 @@ void ProjectProvider::createProject(BuildSetup &setup) {
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.LUA");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.MIT");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.TINYGL");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.GLAD");
 			in.push_back(setup.srcDir + "/COPYRIGHT");
 			in.push_back(setup.srcDir + "/NEWS.md");
 			in.push_back(setup.srcDir + "/README.md");
@@ -1799,7 +1806,7 @@ std::string ProjectProvider::getLastPathComponent(const std::string &path) {
 		return path.substr(pos + 1);
 }
 
-void ProjectProvider::addFilesToProject(const std::string &dir, std::ofstream &projectFile,
+void ProjectProvider::addFilesToProject(const std::string &dir, std::ostream &projectFile,
 										const StringList &includeList, const StringList &excludeList,
 										const std::string &filePrefix) {
 	FileNode *files = scanFiles(dir, includeList, excludeList);
@@ -2032,11 +2039,8 @@ void ProjectProvider::createModuleList(const std::string &moduleDir, const Strin
 	if (forDetection) {
 		std::string::size_type p = moduleRootDir.find('/');
 		std::string engineName = moduleRootDir.substr(p + 1);
-		std::string engineNameUpper;
+		std::string engineNameUpper = toUpper(engineName);
 
-		for (std::string::const_iterator i = engineName.begin(); i != engineName.end(); ++i) {
-			engineNameUpper += toupper(*i);
-		}
 		for (;;) {
 			std::getline(moduleMk, line);
 
@@ -2151,8 +2155,7 @@ void ProjectProvider::createEnginePluginsTable(const BuildSetup &setup) {
 		}
 
 		// Make the engine name all uppercase.
-		std::string engineName;
-		std::transform(i->name.begin(), i->name.end(), std::back_inserter(engineName), toupper);
+		const std::string engineName = toUpper(i->name);
 
 		enginePluginsTable << "#if PLUGIN_ENABLED_STATIC(" << engineName << ")\n"
 		                   << "LINK_PLUGIN(" << engineName << ")\n"

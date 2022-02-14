@@ -683,8 +683,7 @@ static int32 lSET_DIRMODE(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 controlMode = ctx.stream.readByte();
 
 	ctx.actor->_controlMode = (ControlMode)controlMode;
-	// TODO: should ControlMode::kSameXZ be taken into account, too - see processSameXZAction
-	if (ctx.actor->_controlMode == ControlMode::kFollow || ctx.actor->_controlMode == ControlMode::kFollow2) {
+	if (ctx.actor->_controlMode == ControlMode::kFollow) {
 		ctx.actor->_followedActor = ctx.stream.readByte();
 	}
 
@@ -1098,12 +1097,12 @@ static int32 lZOOM(TwinEEngine *engine, LifeScriptContext &ctx) {
 		engine->_screens->fadeToBlack(engine->_screens->_mainPaletteRGBA);
 		engine->initSceneryView();
 		engine->_screens->setBackPal();
-		engine->_screens->_lockPalette = true;
+		engine->_screens->_fadePalette = true;
 	} else if (!zoomScreen && engine->_redraw->_inSceneryView) {
 		engine->_screens->fadeToBlack(engine->_screens->_mainPaletteRGBA);
 		engine->exitSceneryView();
 		engine->_screens->setBackPal();
-		engine->_screens->_lockPalette = true;
+		engine->_screens->_fadePalette = true;
 		engine->_redraw->_reqBgRedraw = true;
 	}
 
@@ -1116,6 +1115,15 @@ static int32 lZOOM(TwinEEngine *engine, LifeScriptContext &ctx) {
  */
 static int32 lPOS_POINT(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 trackIdx = ctx.stream.readByte();
+	if (engine->_scene->_useScenePatches) {
+		if (IS_HERO(ctx.actorIdx) && engine->_scene->_currentSceneIdx == LBA1SceneId::Citadel_Island_Harbor && trackIdx == 8) {
+			ctx.stream.rewind(2);
+			ctx.stream.writeByte(0x34); // CHANGE_CUBE
+			ctx.stream.writeByte(LBA1SceneId::Principal_Island_Harbor);
+			ctx.stream.rewind(2);
+			return 0;
+		}
+	}
 	ctx.actor->_pos = engine->_scene->_sceneTracks[trackIdx];
 	return 0;
 }
@@ -1543,18 +1551,11 @@ static int32 lASK_CHOICE_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
 }
 
 /**
- * Set a dark palette.
+ * Set a dark palette (in the museum).
  * @note Opcode @c 0x5C
  */
 static int32 lSET_DARK_PAL(TwinEEngine *engine, LifeScriptContext &ctx) {
-	ScopedEngineFreeze scoped(engine);
-	// TODO: allocation in the game frame... cache it in Resource class
-	HQR::getEntry(engine->_screens->_palette, Resources::HQR_RESS_FILE, RESSHQR_DARKPAL);
-	if (!engine->_screens->_lockPalette) {
-		engine->_screens->convertPalToRGBA(engine->_screens->_palette, engine->_screens->_paletteRGBA);
-		engine->setPalette(engine->_screens->_paletteRGBA);
-	}
-	engine->_screens->_useAlternatePalette = true;
+	engine->_screens->setDarkPal();
 	return 0;
 }
 
@@ -1563,10 +1564,7 @@ static int32 lSET_DARK_PAL(TwinEEngine *engine, LifeScriptContext &ctx) {
  * @note Opcode @c 0x5D
  */
 static int32 lSET_NORMAL_PAL(TwinEEngine *engine, LifeScriptContext &ctx) {
-	engine->_screens->_useAlternatePalette = false;
-	if (!engine->_screens->_lockPalette) {
-		engine->setPalette(engine->_screens->_mainPaletteRGBA);
-	}
+	engine->_screens->setNormalPal();
 	return 0;
 }
 
@@ -1865,6 +1863,7 @@ void ScriptLife::processLifeScript(int32 actorIdx) {
 		const byte scriptOpcode = ctx.stream.readByte();
 		if (scriptOpcode < ARRAYSIZE(function_map)) {
 			end = function_map[scriptOpcode].function(_engine, ctx);
+			debug(3, "life script %s for actor %i (%i)", function_map[scriptOpcode].name, actorIdx, end);
 		} else {
 			error("Actor %d with wrong offset/opcode - Offset: %d/%d (opcode: %i)", actorIdx, (int)ctx.stream.pos() - 1, (int)ctx.stream.size(), scriptOpcode);
 		}

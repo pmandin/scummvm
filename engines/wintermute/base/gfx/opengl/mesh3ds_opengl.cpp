@@ -20,6 +20,7 @@
  */
 
 #include "engines/wintermute/wintypes.h"
+
 #include "graphics/opengl/system_headers.h"
 
 #if defined(USE_OPENGL_GAME)
@@ -46,6 +47,7 @@ void Mesh3DSOpenGL::render() {
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, sizeof(GeometryVertex), reinterpret_cast<byte *>(_vertexData));
 	glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_SHORT, _indexData);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 } // namespace Wintermute

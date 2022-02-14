@@ -28,7 +28,7 @@
 #include "tinsel/dialogs.h"	// INV_NOICON
 #include "tinsel/move.h"
 #include "tinsel/multiobj.h"
-#include "tinsel/object.h"	// for POBJECT
+#include "tinsel/object.h"	// for OBJECT *
 #include "tinsel/pcode.h"
 #include "tinsel/pid.h"
 #include "tinsel/play.h"
@@ -44,25 +44,6 @@
 #include "common/util.h"
 
 namespace Tinsel {
-
-#include "common/pack-start.h"	// START STRUCT PACKING
-
-/** actor struct - one per actor */
-struct T1_ACTOR_STRUC {
-	int32 masking;			///< type of actor masking
-	SCNHANDLE hActorId;		///< handle actor ID string index
-	SCNHANDLE hActorCode;	///< handle to actor script
-} PACKED_STRUCT;
-
-struct T2_ACTOR_STRUC {
-	SCNHANDLE hActorId;	// handle actor ID string index
-	SCNHANDLE hTagText;	// tag
-	int32 tagPortionV;	// defines tag area
-	int32 tagPortionH;	// defines tag area
-	SCNHANDLE hActorCode;	// handle to actor script
-} PACKED_STRUCT;
-
-#include "common/pack-end.h"	// END STRUCT PACKING
 
 #define RANGE_CHECK(num)	assert(num > 0 && num <= _numActors);
 
@@ -185,11 +166,10 @@ bool Actor::ActorIsGhost(int actor) {
 }
 
 struct ATP_INIT {
-	int		id;		// Actor number
-	TINSEL_EVENT	event;		// Event
-	PLR_EVENT	bev;		// Causal mouse event
-
-	PINT_CONTEXT	pic;
+	int             id;		// Actor number
+	TINSEL_EVENT    event;		// Event
+	PLR_EVENT       bev;		// Causal mouse event
+	INT_CONTEXT     *pic;
 };
 
 /**
@@ -213,8 +193,8 @@ int Actor::TaggedActorIndex(int actor) {
  * @param as			Actor structure
  * @param bRunScript	Flag for whether to run actor's script for the scene
  */
-void Actor::StartActor(const T1_ACTOR_STRUC *as, bool bRunScript) {
-	SCNHANDLE hActorId = FROM_32(as->hActorId);
+void Actor::StartActor(const ACTORDATA *ad, bool bRunScript) {
+	SCNHANDLE hActorId = ad->hActorId;
 
 	// Zero-out many things
 	_actorInfo[hActorId - 1].bHidden = false;
@@ -226,15 +206,15 @@ void Actor::StartActor(const T1_ACTOR_STRUC *as, bool bRunScript) {
 	_actorInfo[hActorId - 1].presObj = nullptr;
 
 	// Store current scene's parameters for this actor
-	_actorInfo[hActorId - 1].mtype = FROM_32(as->masking);
-	_actorInfo[hActorId - 1].actorCode = FROM_32(as->hActorCode);
+	_actorInfo[hActorId - 1].mtype = ad->masking;
+	_actorInfo[hActorId - 1].actorCode = ad->hActorCode;
 
 	// Run actor's script for this scene
 	if (bRunScript) {
 		if (_actorsOn)
 			_actorInfo[hActorId - 1].bAlive = true;
 
-		if (_actorInfo[hActorId - 1].bAlive && FROM_32(as->hActorCode))
+		if (_actorInfo[hActorId - 1].bAlive && ad->hActorCode)
 			ActorEvent(hActorId, STARTUP, PLR_NOEVENT);
 	}
 }
@@ -246,38 +226,41 @@ void Actor::StartActor(const T1_ACTOR_STRUC *as, bool bRunScript) {
  * @param bRunScript	Flag for whether to run actor scene scripts
  */
 void Actor::StartTaggedActors(SCNHANDLE ah, int numActors, bool bRunScript) {
-	int	i;
+	if (!TinselV2) {
+		// Tinsel 1 load variation
 
-	if (TinselV2) {
-		// Clear it all out for a fresh start
-		memset(_taggedActors, 0, sizeof(_taggedActors));
-		_numTaggedActors = numActors;
-	} else {
 		// Only actors with code blocks got (x, y) re-initialized, so...
-		for (i = 0; i < _numActors; i++) {
+		for (int i = 0; i < _numActors; i++) {
 			_actorInfo[i].x = _actorInfo[i].y = 0;
 			_actorInfo[i].mtype = 0;
 		}
-	}
 
-	if (!TinselV2) {
-		// Tinsel 1 load variation
-		const T1_ACTOR_STRUC *as = (const T1_ACTOR_STRUC *)_vm->_handle->LockMem(ah);
-		for (i = 0; i < numActors; i++, as++) {
-			StartActor(as, bRunScript);
+		const ACTORDATA *ad = _vm->_handle->GetActorData(ah, numActors);
+		for (int i = 0; i < numActors; i++) {
+			StartActor(&ad[i], bRunScript);
 		}
-	} else if (numActors > 0) {
+		delete[] ad;
+	} else {
 		// Tinsel 2 load variation
-		const T2_ACTOR_STRUC *as = (T2_ACTOR_STRUC *)_vm->_handle->LockMem(ah);
-		for (i = 0; i < numActors; i++, as++) {
-			assert(as->hActorCode);
+
+		// Clear it all out for a fresh start
+		memset(_taggedActors, 0, sizeof(_taggedActors));
+		_numTaggedActors = numActors;
+
+		if (numActors == 0)
+			return;
+
+		const ACTORDATA *ad = _vm->_handle->GetActorData(ah, numActors);
+
+		for (int i = 0; i < numActors; i++) {
+			assert(ad[i].hActorCode);
 
 			// Store current scene's parameters for this tagged actor
-			_taggedActors[i].id			= FROM_32(as->hActorId);
-			_taggedActors[i].hTagText	= FROM_32(as->hTagText);
-			_taggedActors[i].tagPortionV	= FROM_32(as->tagPortionV);
-			_taggedActors[i].tagPortionH	= FROM_32(as->tagPortionH);
-			_taggedActors[i].hActorCode	= FROM_32(as->hActorCode);
+			_taggedActors[i].id          = ad[i].hActorId;
+			_taggedActors[i].hTagText    = ad[i].hTagText;
+			_taggedActors[i].tagPortionV = ad[i].tagPortionV;
+			_taggedActors[i].tagPortionH = ad[i].tagPortionH;
+			_taggedActors[i].hActorCode  = ad[i].hActorCode;
 
 			// Run actor's script for this scene
 			if (bRunScript) {
@@ -286,6 +269,8 @@ void Actor::StartTaggedActors(SCNHANDLE ah, int numActors, bool bRunScript) {
 				ActorEvent(_taggedActors[i].id, STARTUP, false, 0);
 			}
 		}
+
+		delete[] ad;
 	}
 }
 
@@ -329,7 +314,7 @@ void Actor::DropActors() {
  * @param ano			Actor Id
  */
 void Actor::DisableActor(int ano) {
-	PMOVER	pActor;
+	MOVER *pActor;
 
 	assert(ano > 0 && ano <= _numActors); // illegal actor number
 
@@ -445,7 +430,7 @@ void Actor::FirstTaggedActor() {
  * or there are no more tagged actors to look at.
  */
 int Actor::NextTaggedActor() {
-	PMOVER	pActor;
+	MOVER *pActor;
 	bool	hid;
 
 	while (ti < _numActors) {
@@ -472,7 +457,7 @@ int Actor::NextTaggedActor() {
  * there are no more tagged actors to look at.
  */
 int Actor::NextTaggedActor(int previous) {
-	PMOVER  pMover;
+	MOVER *pMover;
 
 	// Convert actor number to index
 	if (!previous)
@@ -592,7 +577,7 @@ int Actor::GetLoopCount(int ano) {
 }
 
 void Actor::GetActorPos(int ano, int *x, int *y) {
-	PMOVER pActor;
+	MOVER *pActor;
 
 	assert((ano > 0 && ano <= _numActors) || ano == LEAD_ACTOR); // unknown actor
 
@@ -615,7 +600,7 @@ void Actor::GetActorPos(int ano, int *x, int *y) {
  */
 void Actor::GetActorMidTop(int ano, int *x, int *y) {
 	// Not used in JAPAN version
-	PMOVER pActor;
+	MOVER *pActor;
 
 	assert((ano > 0 && ano <= _numActors) || ano == LEAD_ACTOR); // unknown actor
 
@@ -666,7 +651,7 @@ int Actor::GetActorLeft(int ano) {
 	}
 
 	// Tinsel 2 version
-	PMOVER pMover = GetMover(ano);
+	MOVER *pMover = GetMover(ano);
 	int i;
 	bool bIsObj;
 	int left = 0;
@@ -708,7 +693,7 @@ int Actor::GetActorRight(int ano) {
 	}
 
 	// Tinsel 2 version
-	PMOVER pMover = GetMover(ano);
+	MOVER *pMover = GetMover(ano);
 	int i;
 	bool bIsObj;
 	int right = 0;
@@ -749,7 +734,7 @@ int Actor::GetActorTop(int ano) {
 	}
 
 	// Tinsel 2 version
-	PMOVER pMover = GetMover(ano);
+	MOVER *pMover = GetMover(ano);
 	int i;
 	bool bIsObj;
 	int top = 0;
@@ -790,7 +775,7 @@ int Actor::GetActorBottom(int ano) {
 	}
 
 	// Tinsel 2 version
-	PMOVER pMover = GetMover(ano);
+	MOVER *pMover = GetMover(ano);
 	int i;
 	bool bIsObj;
 	int bottom = 0;
@@ -830,7 +815,7 @@ bool Actor::ActorHidden(int ano) {
  * @param sf			sf
  */
 bool Actor::HideMovingActor(int ano, int sf) {
-	PMOVER pActor;
+	MOVER *pActor;
 
 	assert((ano > 0 && ano <= _numActors) || ano == LEAD_ACTOR); // illegal actor
 
@@ -852,7 +837,7 @@ bool Actor::HideMovingActor(int ano, int sf) {
  * @param ano			Actor Id
  */
 void Actor::unHideMovingActor(int ano) {
-	PMOVER pActor;
+	MOVER *pActor;
 
 	assert((ano > 0 && ano <= _numActors) || ano == LEAD_ACTOR); // illegal actor
 
@@ -870,7 +855,7 @@ void Actor::unHideMovingActor(int ano) {
  * actor's walk (if any) from the new co-ordinates.
  */
 void Actor::restoreMovement(int ano) {
-	PMOVER pActor;
+	MOVER *pActor;
 
 	assert(ano > 0 && ano <= _numActors); // illegal actor number
 
@@ -894,7 +879,7 @@ void Actor::restoreMovement(int ano) {
  * 'store_actor_reel_and/or_film_and/or_object()'
  */
 void Actor::storeActorReel(int ano, const FREEL *reel, SCNHANDLE hFilm, OBJECT *pobj, int reelnum, int x, int y) {
-	PMOVER pActor;
+	MOVER *pActor;
 
 	assert(ano > 0 && ano <= _numActors); // illegal actor number
 
@@ -1088,7 +1073,7 @@ uint32 Actor::GetActorZfactor(int ano) {
 /**
  * Store relevant information pertaining to currently existing actors.
  */
-int Actor::SaveActors(PSAVED_ACTOR sActorInfo) {
+int Actor::SaveActors(SAVED_ACTOR *sActorInfo) {
 	int	i, j, k;
 
 	for (i = 0, j = 0; i < _numActors; i++) {
@@ -1127,7 +1112,7 @@ int Actor::SaveActors(PSAVED_ACTOR sActorInfo) {
 /**
  * Restore actor data
  */
-void Actor::RestoreActors(int numActors, PSAVED_ACTOR sActorInfo) {
+void Actor::RestoreActors(int numActors, SAVED_ACTOR *sActorInfo) {
 	int	i, aIndex;
 
 	for (i = 0; i < numActors; i++) {
@@ -1636,7 +1621,7 @@ void ActorEvent(CORO_PARAM, int ano, TINSEL_EVENT tEvent, bool bWait, int myEsca
  * Shows the given actor
  */
 void ShowActor(CORO_PARAM, int ano) {
-	PMOVER pMover;
+	MOVER *pMover;
 	assert(ano > 0 && ano <= _vm->_actor->GetCount());
 
 	CORO_BEGIN_CONTEXT;
@@ -1665,7 +1650,7 @@ void ShowActor(CORO_PARAM, int ano) {
  * @param ano			Actor Id
  */
 void HideActor(CORO_PARAM, int ano) {
-	PMOVER pMover;
+	MOVER *pMover;
 	assert((ano > 0 && ano <= _vm->_actor->GetCount()) || ano == LEAD_ACTOR); // illegal actor
 
 	CORO_BEGIN_CONTEXT;

@@ -48,6 +48,7 @@
 #include "ultima/ultima8/world/bobo_boomer_process.h"
 #include "ultima/ultima8/world/world.h"
 #include "ultima/ultima8/world/current_map.h"
+#include "ultima/ultima8/world/coord_utils.h"
 #include "ultima/ultima8/world/sprite_process.h"
 #include "ultima/ultima8/world/target_reticle_process.h"
 #include "ultima/ultima8/world/item_selection_process.h"
@@ -793,7 +794,7 @@ uint16 Actor::setActivityCru(int activity) {
 		0x255, // PaceProcess
 		0x257, // LoiterProcess
 		// 0x258, // Stand Process (we don't have a process for this)
-		AttackProcess::ATTACK_PROCESS_TYPE,
+		AttackProcess::ATTACK_PROC_TYPE,
 		0x25e, // GuardProcess
 		0x25f  // SurrenderProcess
 	};
@@ -942,13 +943,15 @@ void Actor::receiveHitCru(uint16 other, Direction dir, int damage, uint16 damage
 		if (isBusy()) {
 			ActorAnimProcess *proc = dynamic_cast<ActorAnimProcess *>(Kernel::get_instance()->findProcess(_objId, ActorAnimProcess::ACTOR_ANIM_PROC_TYPE));
 			Animation::Sequence action = proc->getAction();
-			if (action == Animation::teleportIn || action == Animation::teleportOut || action == Animation::teleportInReplacement || action == Animation::teleportOutReplacement)
+			if (action == Animation::teleportIn || action == Animation::teleportOut ||
+				action == Animation::absAnim(Animation::teleportIn) ||
+				action == Animation::absAnim(Animation::teleportOut))
 				return;
 			currentanim = proc->getPid();
 		}
 
-		ProcId teleout = doAnimAfter(Animation::teleportOutReplacement, dir_current, currentanim);
-		doAnimAfter(Animation::teleportInReplacement, dir_current, teleout);
+		ProcId teleout = doAnimAfter(Animation::absAnim(Animation::teleportOut), dir_current, currentanim);
+		doAnimAfter(Animation::absAnim(Animation::teleportIn), dir_current, teleout);
 		int newval = MAX(0, static_cast<int>(world->getVargasShield()) - damage);
 		world->setVargasShield(static_cast<uint32>(newval));
 		return;
@@ -1047,7 +1050,7 @@ void Actor::receiveHitCru(uint16 other, Direction dir, int damage, uint16 damage
 				if (!(getRandom() % 3)) {
 					// Randomly stun the NPC for these damage types.
 					// CHECK ME: is this time accurate?
-					Process *attack = kernel->findProcess(_objId, AttackProcess::ATTACK_PROCESS_TYPE);
+					Process *attack = kernel->findProcess(_objId, AttackProcess::ATTACK_PROC_TYPE);
 					uint stun = ((getRandom() % 10) + 8) * 60;
 					if (attack && stun) {
 						Process *delay = new DelayProcess(stun);
@@ -1069,7 +1072,7 @@ void Actor::tookHitCru() {
 	if (!audio)
 		return;
 
-	if (lastanim == Animation::unknownAnim30 || lastanim == Animation::startRunLargeWeapon) {
+	if (lastanim == Animation::lookLeftCru || lastanim == Animation::lookRightCru) {
 		if (canSeeControlledActor(true)) {
 			if (getRandom() % 4)
 				setActivity(5);
@@ -1764,7 +1767,7 @@ bool Actor::isFalling() const {
 	return (proc && proc->is_active());
 }
 
-CombatProcess *Actor::getCombatProcess() {
+CombatProcess *Actor::getCombatProcess() const {
 	Process *p = Kernel::get_instance()->findProcess(_objId, 0xF2); // CONSTANT!
 	if (!p)
 		return nullptr;
@@ -1774,8 +1777,8 @@ CombatProcess *Actor::getCombatProcess() {
 	return cp;
 }
 
-AttackProcess *Actor::getAttackProcess() {
-	Process *p = Kernel::get_instance()->findProcess(_objId, AttackProcess::ATTACK_PROCESS_TYPE);
+AttackProcess *Actor::getAttackProcess() const {
+	Process *p = Kernel::get_instance()->findProcess(_objId, AttackProcess::ATTACK_PROC_TYPE);
 	if (!p)
 		return nullptr;
 	AttackProcess *ap = dynamic_cast<AttackProcess *>(p);
@@ -1878,27 +1881,26 @@ bool Actor::canSeeControlledActor(bool forcombat) {
 	Direction dirtocontrolled = getDirToItemCentre(*controlled);
 	Direction curdir = getDir();
 
-	/* TODO: There are extra checks in here in the original
 	if (forcombat) {
-		 Animation::Sequence lastanim = getLastAnim();
-		((lastanim == Animation::unknownAnim30 || lastanim == Animation::startRunLargeWeapon) && currentAnimFrame > 1)) {
-		 bool left;
-		 if (lastanim == Animation::unknownAnim30) {
-			left = false;
-			if (((currentdir != 8) && (currentdir != 10)) && (currentdir != 0xc))
-				left = true;
-		 } else {
-			left = true;
-			if (((currentdir != 8) && (currentdir != 10)) && (currentdir != 0xc)) {
+		Animation::Sequence lastanim = getLastAnim();
+		if ((lastanim == Animation::lookLeftCru || lastanim == Animation::lookRightCru) && _animFrame > 1) {
+			bool left;
+			if (lastanim == Animation::lookLeftCru) {
 				left = false;
-		 }
-		 if (leftflag) {
-			currentdir = Direction_TurnByDelta(curdir, -4, dirmode_16dirs);
-		 } else {
-			currentdir = Direction_TurnByDelta(curdir, 4, dirmode_16dirs);
-		 }
+				if (((curdir != 8) && (curdir != 10)) && (curdir != 0xc))
+					left = true;
+			} else {
+				left = true;
+				if (((curdir != 8) && (curdir != 10)) && (curdir != 0xc))
+					left = false;
+			}
+			if (left) {
+				curdir = Direction_TurnByDelta(curdir, -4, dirmode_16dirs);
+			} else {
+				curdir = Direction_TurnByDelta(curdir, 4, dirmode_16dirs);
+			}
+		}
 	}
-	*/
 
 	if (dirtocontrolled == curdir ||
 		dirtocontrolled == Direction_OneLeft(curdir, dirmode_16dirs) ||
@@ -1999,7 +2001,7 @@ void Actor::dumpInfo() const {
 	     << ", dex: " << _dexterity << ", int: " << _intelligence
 	     << ", ac: " << getArmourClass() << ", defense: " << ConsoleStream::hex
 	     << getDefenseType() << " align: " << getAlignment() << " enemy: "
-	     << getEnemyAlignment() << ", flags: " << _actorFlags
+	     << getEnemyAlignment() << ", flags: " << _actorFlags << ", activity: " << _currentActivityNo
 	     << ConsoleStream::dec << Std::endl;
 }
 
@@ -2121,10 +2123,7 @@ uint32 Actor::I_teleport(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_UINT16(newmap);
 	if (!actor) return 0;
 
-	if (GAME_IS_CRUSADER) {
-		newx *= 2;
-		newy *= 2;
-	}
+	World_FromUsecodeXY(newx, newy);
 
 	actor->teleport(newmap, newx, newy, newz);
 	return 0;
@@ -2134,8 +2133,8 @@ uint32 Actor::I_doAnim(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_ACTOR_FROM_PTR(actor);
 	ARG_UINT16(anim);
 	ARG_UINT16(dir); // seems to be 0-8
-	ARG_UINT16(unk1); // this is almost always 10000 in U8.Maybe speed-related?
-	ARG_UINT16(unk2); // appears to be 0 or 1. Some flag?
+	ARG_NULL16(); // uint16? almost always 10000 in U8. Seems to be "priority" or something?
+	ARG_NULL16(); // uint16? appears to be 0 or 1. Some flag?
 
 	if (!actor) return 0;
 
@@ -2548,10 +2547,7 @@ uint32 Actor::I_pathfindToPoint(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_NULL16(); // unknown. Only one instance of this in U8, values are 5,1.
 	if (!actor) return 0;
 
-	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
-	}
+	World_FromUsecodeXY(x, y);
 
 	return Kernel::get_instance()->addProcess(
 	           new PathfinderProcess(actor, x, y, z));
@@ -2597,7 +2593,8 @@ uint32 Actor::I_createActor(const uint8 *args, unsigned int /*argsize*/) {
 	UCMachine::get_instance()->assignPointer(ptr, buf, 2);
 
 #if 0
-	perr << "I_createActor: created actor #" << objID << " with shape " << shape << Std::endl;
+	perr << "I_createActor: created actor #" << objID << " shape "
+		 << shape << " frame " << frame << Std::endl;
 #endif
 
 	return objID;
@@ -2647,7 +2644,7 @@ uint32 Actor::I_createActorCru(const uint8 *args, unsigned int /*argsize*/) {
 		return 0;
 	}
 
-	newactor->setDir(Direction_FromUsecodeDir(dir));
+	newactor->setDir(static_cast<Direction>(dir * 2));
 
 	int32 x, y, z;
 	item->getLocation(x, y, z);

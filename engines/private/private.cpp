@@ -223,6 +223,13 @@ Common::Error PrivateEngine::run() {
 	_framePalette = (byte *) malloc(3*256);
 	memcpy(_framePalette, palette, 3*256);
 
+	byte *initialPalette;
+	Graphics::Surface *surf = decodeImage("inface/general/inface1.bmp", &initialPalette);
+	_compositeSurface->setPalette(initialPalette, 0, 256);
+	surf->free();
+	delete surf;
+	_image->destroy();
+
 	// Main event loop
 	Common::Event event;
 	Common::Point mousePos;
@@ -528,28 +535,28 @@ bool PrivateEngine::cursorPauseMovie(Common::Point mousePos) {
 }
 
 Common::String PrivateEngine::getPauseMovieSetting() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kPauseMovie";
 
 	return "k3";
 }
 
 Common::String PrivateEngine::getGoIntroSetting() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kGoIntro";
 
 	return "k1";
 }
 
 Common::String PrivateEngine::getAlternateGameVariable() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kAlternateGame";
 
 	return "k2";
 }
 
 Common::String PrivateEngine::getMainDesktopSetting() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kMainDesktop";
 
 	if (isDemo())
@@ -559,42 +566,42 @@ Common::String PrivateEngine::getMainDesktopSetting() {
 }
 
 Common::String PrivateEngine::getPoliceIndexVariable() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kPoliceIndex";
 
 	return "k0";
 }
 
 Common::String PrivateEngine::getPOGoBustMovieSetting() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kPOGoBustMovie";
 
 	return "k7";
 }
 
 Common::String PrivateEngine::getPoliceBustFromMOSetting() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kPoliceBustFromMO";
 
 	return "k6";
 }
 
 Common::String PrivateEngine::getWallSafeValueVariable() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kWallSafeValue";
 
 	return "k3";
 }
 
 Common::String PrivateEngine::getExitCursor() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kExit";
 
 	return "k5";
 }
 
 Common::String PrivateEngine::getInventoryCursor() {
-	if ((_language == Common::EN_USA || _language == Common::RU_RUS) && _platform != Common::kPlatformMacintosh)
+	if ((_language == Common::EN_USA || _language == Common::RU_RUS || _language == Common::KO_KOR) && _platform != Common::kPlatformMacintosh)
 		return "kInventory";
 
 	return "k7";
@@ -1246,7 +1253,7 @@ Graphics::Surface *PrivateEngine::decodeImage(const Common::String &name, byte *
 	byte *currentPalette;
 
 	uint16 ncolors = _image->getPaletteColorCount();
-	if (ncolors < 256) { // For some reason, requires color remapping
+	if (ncolors < 256 || path.hasPrefix("intro")) { // For some reason, requires color remapping
 		currentPalette = (byte *) malloc(3*256);
 		drawScreen();
 		g_system->getPaletteManager()->grabPalette(currentPalette, 0, 256);
@@ -1386,9 +1393,8 @@ void PrivateEngine::drawScreen() {
 
 		byte newPalette[768];
 		for (int c = 0; c < 256; c++) { // This avoids any endianness issues
-				newPalette[c * 3 + 0] = cPalette[c * 4 + 0];
-				newPalette[c * 3 + 1] = cPalette[c * 4 + 1];
-				newPalette[c * 3 + 2] = cPalette[c * 4 + 2];
+			uint32 y = READ_UINT32(&cPalette[c * 4]) & 0x00FFFFFF;
+			WRITE_LE_UINT24(&newPalette[c * 3], y);
 		}
 
 		g_system->getPaletteManager()->setPalette(newPalette, 0, 256);

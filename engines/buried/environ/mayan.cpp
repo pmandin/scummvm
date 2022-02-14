@@ -74,13 +74,16 @@ int PlaceCeramicBowl::droppedItem(Window *viewWindow, int itemID, const Common::
 }
 
 int PlaceCeramicBowl::timerCallback(Window *viewWindow) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (_dropped) {
-		if (((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCodeWheelStatus == 0) {
+		if (globalFlags.myTPCodeWheelStatus == 0) {
 			// Play slide death animation
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(4);
+			sceneView->playSynchronousAnimation(4);
 
 			// Notify the player of his gruesome death
-			((SceneViewWindow *)viewWindow)->showDeathScene(11);
+			sceneView->showDeathScene(11);
 			return SC_DEATH;
 		} else {
 			// Kill the ambient
@@ -98,7 +101,7 @@ int PlaceCeramicBowl::timerCallback(Window *viewWindow) {
 			newDest.transitionData = 3;
 			newDest.transitionStartFrame = -1;
 			newDest.transitionLength = -1;
-			((SceneViewWindow *)viewWindow)->moveToDestination(newDest);
+			sceneView->moveToDestination(newDest);
 		}
 	}
 
@@ -129,8 +132,11 @@ private:
 
 AdjustWheels::AdjustWheels(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
-	_curLeftFrame = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCodeWheelLeftIndex;
-	_curRightFrame = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCodeWheelRightIndex;
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	_curLeftFrame = globalFlags.myTPCodeWheelLeftIndex;
+	_curRightFrame = globalFlags.myTPCodeWheelRightIndex;
 	_leftUpRegion = Common::Rect(46, 0, 200, 70);
 	_leftDownRegion = Common::Rect(46, 106, 200, 189);
 	_rightUpRegion = Common::Rect(212, 0, 432, 66);
@@ -164,7 +170,10 @@ int AdjustWheels::paint(Window *viewWindow, Graphics::Surface *preBuffer) {
 }
 
 int AdjustWheels::gdiPaint(Window *viewWindow) {
-	if (_translateText && ((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (_translateText && globalFlags.bcTranslateEnabled == 1) {
 		Common::Rect absoluteRect = viewWindow->getAbsoluteRect();
 		Common::Rect rect(168, 70, 262, 108);
 		rect.translate(absoluteRect.left, absoluteRect.top);
@@ -175,6 +184,9 @@ int AdjustWheels::gdiPaint(Window *viewWindow) {
 }
 
 int AdjustWheels::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	// TODO: Wait between frames after figuring out timing
 
 	if (_leftUpRegion.contains(pointLocation) || _leftDownRegion.contains(pointLocation) ||
@@ -245,8 +257,8 @@ int AdjustWheels::mouseUp(Window *viewWindow, const Common::Point &pointLocation
 			viewWindow->invalidateWindow(false);
 		}
 
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCodeWheelLeftIndex = _curLeftFrame;
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCodeWheelRightIndex = _curRightFrame;
+		globalFlags.myTPCodeWheelLeftIndex = _curLeftFrame;
+		globalFlags.myTPCodeWheelRightIndex = _curRightFrame;
 
 		byte status = 0;
 		if (_curLeftFrame == 8 && _curRightFrame == 12)
@@ -268,7 +280,7 @@ int AdjustWheels::mouseUp(Window *viewWindow, const Common::Point &pointLocation
 		else if (_curLeftFrame == 10 && _curRightFrame == 28)
 			status = 1;
 
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCodeWheelStatus = status;
+		globalFlags.myTPCodeWheelStatus = status;
 
 		return SC_TRUE;
 	}
@@ -281,12 +293,15 @@ int AdjustWheels::mouseUp(Window *viewWindow, const Common::Point &pointLocation
 	newDest.transitionData = -1;
 	newDest.transitionStartFrame = -1;
 	newDest.transitionLength = -1;
-	((SceneViewWindow *)viewWindow)->moveToDestination(newDest);
+	sceneView->moveToDestination(newDest);
 	return SC_TRUE;
 }
 
 int AdjustWheels::mouseMove(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.bcTranslateEnabled == 1) {
 		Common::Rect translateTextRegion(168, 72, 260, 106);
 
 		if (translateTextRegion.contains(pointLocation)) {
@@ -295,8 +310,8 @@ int AdjustWheels::mouseMove(Window *viewWindow, const Common::Point &pointLocati
 				Common::String rightText = _vm->getString(IDMYTP_WHEELS_RIGHT_TRANS_TEXT_BASE + _curRightFrame / 2);
 				Common::String finalString = leftText + rightText;
 
-				if (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1 &&
-						((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCodeWheelStatus == 1) {
+				if (globalFlags.generalWalkthroughMode == 1 &&
+					globalFlags.myTPCodeWheelStatus == 1) {
 
 					if (_vm->getVersion() >= MAKEVERSION(1, 0, 4, 0))
 						finalString += _vm->getString(IDS_MYTP_WALKTHROUGH_HINT_TEXT);
@@ -304,7 +319,7 @@ int AdjustWheels::mouseMove(Window *viewWindow, const Common::Point &pointLocati
 						finalString += " (Mayan Sacred Day)";
 				}
 
-				((SceneViewWindow *)viewWindow)->displayTranslationText(finalString);
+				sceneView->displayTranslationText(finalString);
 				_translateText = true;
 				viewWindow->invalidateWindow(false);
 			}
@@ -347,7 +362,10 @@ DateCombinationRead::DateCombinationRead(BuriedEngine *vm, Window *viewWindow, c
 }
 
 int DateCombinationRead::gdiPaint(Window *viewWindow) {
-	if (_currentRegion >= 0 && ((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (_currentRegion >= 0 && globalFlags.bcTranslateEnabled == 1) {
 		Common::Rect absoluteRect = viewWindow->getAbsoluteRect();
 		int left = _currentRegion * 43 + 20 + absoluteRect.left;
 		Common::Rect rect(left, absoluteRect.top + 18, left + 43, absoluteRect.top + 110);
@@ -358,7 +376,10 @@ int DateCombinationRead::gdiPaint(Window *viewWindow) {
 }
 
 int DateCombinationRead::mouseMove(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.bcTranslateEnabled == 1) {
 		Common::Rect symbols(20, 18, 407, 110);
 
 		if (symbols.contains(pointLocation)) {
@@ -366,11 +387,11 @@ int DateCombinationRead::mouseMove(Window *viewWindow, const Common::Point &poin
 
 			if (_currentRegion != translatedSymbolIndex) {
 				// Update flags
-				((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPCalendarListTranslated = 1;
-				((SceneViewWindow *)viewWindow)->getGlobalFlags().myTPTextTranslated = 1;
+				globalFlags.myTPCalendarListTranslated = 1;
+				globalFlags.myTPTextTranslated = 1;
 
 				// Display the text
-				((SceneViewWindow *)viewWindow)->displayTranslationText(_vm->getString(IDMYTP_WALLS_COMBO_TRANS_TEXT_BASE + translatedSymbolIndex));
+				sceneView->displayTranslationText(_vm->getString(IDMYTP_WALLS_COMBO_TRANS_TEXT_BASE + translatedSymbolIndex));
 
 				// Reset the current region and redraw
 				_currentRegion = translatedSymbolIndex;
@@ -392,8 +413,8 @@ int DateCombinationRead::mouseMove(Window *viewWindow, const Common::Point &poin
 class ViewSingleTranslation : public SceneBase {
 public:
 	ViewSingleTranslation(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-			int translatedTextID = -1, int left = -1, int top = -1, int right = -1, int bottom = -1,
-			int flagAOffset = -1, int flagBOffset = -1, int visitedFlagOffset = -1);
+			int translatedTextID, int left, int top, int right, int bottom,
+			byte &flagA, byte &flagB, byte &visitedFlag);
 	int gdiPaint(Window *viewWindow) override;
 	int mouseUp(Window *viewWindow, const Common::Point &pointLocation) override;
 	int mouseMove(Window *viewWindow, const Common::Point &pointLocation) override;
@@ -403,29 +424,26 @@ private:
 	bool _textTranslated;
 	int _textID;
 	Common::Rect _clickableRegion;
-	int _flagAOffset;
-	int _flagBOffset;
-	int _visitedFlagOffset;
+	byte &_flagA;
+	byte &_flagB;
 };
 
 ViewSingleTranslation::ViewSingleTranslation(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
 		int translatedTextID, int left, int top, int right, int bottom,
-		int flagAOffset, int flagBOffset, int visitedFlagOffset) :
-		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+		byte &flagA, byte &flagB, byte &visitedFlag) :
+		SceneBase(vm, viewWindow, sceneStaticData, priorLocation),
+		_flagA(flagA), _flagB(flagB) {
 	_textTranslated = false;
 	_textID = translatedTextID;
 	_clickableRegion = Common::Rect(left, top, right, bottom);
-	_flagAOffset = flagAOffset;
-	_flagBOffset = flagBOffset;
-	_visitedFlagOffset = visitedFlagOffset;
-
-	if (_visitedFlagOffset >= 0)
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_visitedFlagOffset, 1);
+	visitedFlag = 1;
 }
 
 int ViewSingleTranslation::gdiPaint(Window *viewWindow) {
 	// Draw the translated box, if applicable
-	if (_textTranslated && ((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
+	if (_textTranslated && sceneView->getGlobalFlags().bcTranslateEnabled == 1) {
 		Common::Rect absoluteRect = viewWindow->getAbsoluteRect();
 		Common::Rect rect(_clickableRegion);
 		rect.translate(absoluteRect.left, absoluteRect.top);
@@ -436,11 +454,13 @@ int ViewSingleTranslation::gdiPaint(Window *viewWindow) {
 }
 
 int ViewSingleTranslation::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	if (_staticData.location.depth != 0) {
 		// If we're not at depth zero, move to depth zero
 		Location newLocation = _staticData.location;
 		newLocation.depth = 0;
-		((SceneViewWindow *)viewWindow)->jumpToScene(newLocation);
+		sceneView->jumpToScene(newLocation);
 		return SC_TRUE;
 	}
 
@@ -448,17 +468,17 @@ int ViewSingleTranslation::mouseUp(Window *viewWindow, const Common::Point &poin
 }
 
 int ViewSingleTranslation::mouseMove(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
+	if (sceneView->getGlobalFlags().bcTranslateEnabled == 1) {
 		if (_clickableRegion.contains(pointLocation)) {
 			// Make sure we didn't already render the text
 			if (!_textTranslated) {
-				if (_flagAOffset >= 0)
-					((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_flagAOffset, 1);
-				if (_flagBOffset >= 0)
-					((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_flagBOffset, 1);
+				_flagA = 1;
+				_flagB = 1;
 
 				// Load and display the text
-				((SceneViewWindow *)viewWindow)->displayTranslationText(_vm->getString(_textID));
+				sceneView->displayTranslationText(_vm->getString(_textID));
 				_textTranslated = true;
 				viewWindow->invalidateWindow(false);
 			}
@@ -506,6 +526,9 @@ GenericCavernDoorMainView::GenericCavernDoorMainView(BuriedEngine *vm, Window *v
 		int rightZoomDepth, int rightLeft, int rightTop, int rightRight, int rightBottom,
 		int offeringHeadZoomDepth, int offeringHeadLeft, int offeringHeadTop, int offeringHeadRight, int offeringHeadBottom) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	_topZoomDepth = topZoomDepth;
 	_rightZoomDepth = rightZoomDepth;
 	_offeringHeadZoomDepth = offeringHeadZoomDepth;
@@ -514,19 +537,24 @@ GenericCavernDoorMainView::GenericCavernDoorMainView(BuriedEngine *vm, Window *v
 	_offeringHeadZoomRegion = Common::Rect(offeringHeadLeft, offeringHeadTop, offeringHeadRight, offeringHeadBottom);
 
 	if (_staticData.location.node == 7)
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myMCViewedDeathGodDoor = 1;
+		globalFlags.myMCViewedDeathGodDoor = 1;
 }
 
 int GenericCavernDoorMainView::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
-	if (_staticData.location.node == 7 && (_staticData.location.timeZone != priorLocation.timeZone ||
-			_staticData.location.environment != priorLocation.environment || _staticData.location.node != priorLocation.node ||
-			_staticData.location.facing != priorLocation.facing || _staticData.location.orientation != priorLocation.orientation ||
-			_staticData.location.depth != priorLocation.depth) && !((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), MAYAN_EVIDENCE_BROKEN_GLASS_PYRAMID))
-		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	Location &loc = _staticData.location;
+
+	if (loc.node == 7 && (loc.timeZone != priorLocation.timeZone ||
+			loc.environment != priorLocation.environment || loc.node != priorLocation.node ||
+			loc.facing != priorLocation.facing || loc.orientation != priorLocation.orientation ||
+			loc.depth != priorLocation.depth) && !sceneView->isNumberInGlobalFlagTable(MAYAN_EVIDENCE_BROKEN_GLASS_PYRAMID))
+		sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
 	return SC_TRUE;
 }
 
 int GenericCavernDoorMainView::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	// Build a default structure
 	DestinationScene newDestination;
 	newDestination.destinationScene = _staticData.location;
@@ -537,19 +565,19 @@ int GenericCavernDoorMainView::mouseUp(Window *viewWindow, const Common::Point &
 
 	if (_topZoomRegion.contains(pointLocation)) {
 		newDestination.destinationScene.depth = _topZoomDepth;
-		((SceneViewWindow *)viewWindow)->moveToDestination(newDestination);
+		sceneView->moveToDestination(newDestination);
 		return SC_TRUE;
 	}
 
 	if (_rightZoomRegion.contains(pointLocation)) {
 		newDestination.destinationScene.depth = _rightZoomDepth;
-		((SceneViewWindow *)viewWindow)->moveToDestination(newDestination);
+		sceneView->moveToDestination(newDestination);
 		return SC_TRUE;
 	}
 
 	if (_offeringHeadZoomRegion.contains(pointLocation)) {
 		newDestination.destinationScene.depth = _offeringHeadZoomDepth;
-		((SceneViewWindow *)viewWindow)->moveToDestination(newDestination);
+		sceneView->moveToDestination(newDestination);
 		return SC_TRUE;
 	}
 
@@ -602,6 +630,8 @@ int GenericCavernDoorOfferingHead::draggingItem(Window *viewWindow, int itemID, 
 }
 
 int GenericCavernDoorOfferingHead::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	if (pointLocation.x == -1 && pointLocation.y == -1)
 		return SIC_REJECT;
 
@@ -611,71 +641,71 @@ int GenericCavernDoorOfferingHead::droppedItem(Window *viewWindow, int itemID, c
 	if (_dropRegion.contains(pointLocation)) {
 		switch (itemID) {
 		case kItemBalconyKey:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(2);
+			sceneView->playSynchronousAnimation(2);
 			break;
 		case kItemBloodyArrow:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(3);
+			sceneView->playSynchronousAnimation(3);
 			break;
 		case kItemObsidianBlock:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(5);
+			sceneView->playSynchronousAnimation(5);
 			break;
 		case kItemCoilOfRope:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(6);
+			sceneView->playSynchronousAnimation(6);
 			break;
 		case kItemCopperKey:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(7);
+			sceneView->playSynchronousAnimation(7);
 			break;
 		case kItemCopperMedallion:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(8);
+			sceneView->playSynchronousAnimation(8);
 			break;
 		case kItemCeramicBowl:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(9);
+			sceneView->playSynchronousAnimation(9);
 			break;
 		case kItemGrapplingHook:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(10);
+			sceneView->playSynchronousAnimation(10);
 			break;
 		case kItemHammer:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(11);
+			sceneView->playSynchronousAnimation(11);
 			break;
 		case kItemPreservedHeart:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(12);
+			sceneView->playSynchronousAnimation(12);
 			break;
 		case kItemJadeBlock:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(13);
+			sceneView->playSynchronousAnimation(13);
 			break;
 		case kItemLimestoneBlock:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(14);
+			sceneView->playSynchronousAnimation(14);
 			break;
 		case kItemMetalBar:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(15);
+			sceneView->playSynchronousAnimation(15);
 			break;
 		case kItemCavernSkull:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(16);
+			sceneView->playSynchronousAnimation(16);
 			break;
 		case kItemEntrySkull:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(17);
+			sceneView->playSynchronousAnimation(17);
 			break;
 		case kItemSpearSkull:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(18);
+			sceneView->playSynchronousAnimation(18);
 			break;
 		case kItemWaterCanFull:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(19);
+			sceneView->playSynchronousAnimation(19);
 			break;
 		case kItemWoodenPegs:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(20);
+			sceneView->playSynchronousAnimation(20);
 			break;
 		case kItemGoldCoins:
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(21);
+			sceneView->playSynchronousAnimation(21);
 			break;
 		}
 
 		// Reset the offering flag
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myMCTransMadeAnOffering = 1;
+		sceneView->getGlobalFlags().myMCTransMadeAnOffering = 1;
 
 		// If this was the correct offering, move to the open door scene
 		if (itemID == _correctOfferingID) {
 			_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 10), 128, false, true);
-			((SceneViewWindow *)viewWindow)->moveToDestination(_correctDestination);
+			sceneView->moveToDestination(_correctDestination);
 		}
 
 		// These items don't get consumed
@@ -689,9 +719,11 @@ int GenericCavernDoorOfferingHead::droppedItem(Window *viewWindow, int itemID, c
 }
 
 int GenericCavernDoorOfferingHead::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	Location newLocation = _staticData.location;
 	newLocation.depth = 0;
-	((SceneViewWindow *)viewWindow)->jumpToScene(newLocation);
+	sceneView->jumpToScene(newLocation);
 	return SC_TRUE;
 }
 
@@ -700,8 +732,11 @@ int GenericCavernDoorOfferingHead::specifyCursor(Window *viewWindow, const Commo
 }
 
 bool GenericCavernDoorOfferingHead::isValidItemToDrop(Window *viewWindow, int itemID) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	// If this is walkthrough mode, only accept the correct item
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1) {
+	if (globalFlags.generalWalkthroughMode == 1) {
 		if (itemID == _correctOfferingID || (_staticData.location.node == 8 && itemID == kItemBloodyArrow))
 			return true;
 
@@ -753,6 +788,9 @@ private:
 DeathGodCavernDoorOfferingHead::DeathGodCavernDoorOfferingHead(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
 		int correctOfferingDestDepth, int transitionType, int transitionData, int transitionStartFrame, int transitionLength) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	_correctDestination.destinationScene = _staticData.location;
 	_correctDestination.destinationScene.depth = correctOfferingDestDepth;
 	_correctDestination.transitionType = transitionType;
@@ -761,7 +799,7 @@ DeathGodCavernDoorOfferingHead::DeathGodCavernDoorOfferingHead(BuriedEngine *vm,
 	_correctDestination.transitionLength = transitionLength;
 	_dropRegion = Common::Rect(50, 76, 228, 182);
 
-	byte offerings = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myMCDeathGodOfferings;
+	byte offerings = globalFlags.myMCDeathGodOfferings;
 
 	if (offerings & 1) {
 		if (offerings & 2) {
@@ -785,21 +823,27 @@ DeathGodCavernDoorOfferingHead::DeathGodCavernDoorOfferingHead(BuriedEngine *vm,
 }
 
 int DeathGodCavernDoorOfferingHead::preExitRoom(Window *viewWindow, const Location &newLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	InventoryWindow *inventoryWindow = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow;
+
 	// Put any pieces placed in the head back in the inventory
-	byte &offerings = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myMCDeathGodOfferings;
+	byte &offerings = globalFlags.myMCDeathGodOfferings;
 
 	if (offerings & 1)
-		((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->addItem(kItemObsidianBlock);
+		inventoryWindow->addItem(kItemObsidianBlock);
 	if (offerings & 2)
-		((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->addItem(kItemJadeBlock);
+		inventoryWindow->addItem(kItemJadeBlock);
 	if (offerings & 4)
-		((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->addItem(kItemLimestoneBlock);
+		inventoryWindow->addItem(kItemLimestoneBlock);
 
 	offerings = 0;
 	return SC_TRUE;
 }
 
 int DeathGodCavernDoorOfferingHead::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	// Return to depth zero
 	DestinationScene newDest;
 	newDest.destinationScene = _staticData.location;
@@ -808,13 +852,16 @@ int DeathGodCavernDoorOfferingHead::mouseUp(Window *viewWindow, const Common::Po
 	newDest.transitionData = -1;
 	newDest.transitionStartFrame = -1;
 	newDest.transitionLength = -1;
-	((SceneViewWindow *)viewWindow)->moveToDestination(newDest);
+	sceneView->moveToDestination(newDest);
 	return SC_TRUE;
 }
 
 int DeathGodCavernDoorOfferingHead::draggingItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if ((itemID == kItemJadeBlock || itemID == kItemLimestoneBlock || itemID == kItemObsidianBlock) && _dropRegion.contains(pointLocation)) {
-		byte offerings = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myMCDeathGodOfferings;
+		byte offerings = globalFlags.myMCDeathGodOfferings;
 
 		if ((offerings & 1) != 0 && itemID == kItemObsidianBlock)
 			return 0;
@@ -830,11 +877,14 @@ int DeathGodCavernDoorOfferingHead::draggingItem(Window *viewWindow, int itemID,
 }
 
 int DeathGodCavernDoorOfferingHead::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (pointLocation.x == -1 && pointLocation.y == -1)
 		return SIC_REJECT;
 
 	if ((itemID == kItemJadeBlock || itemID == kItemLimestoneBlock || itemID == kItemObsidianBlock) && _dropRegion.contains(pointLocation)) {
-		byte &offerings = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myMCDeathGodOfferings;
+		byte &offerings = globalFlags.myMCDeathGodOfferings;
 
 		// Make sure we didn't already place the item
 		if ((offerings & 1) != 0 && itemID == kItemObsidianBlock)
@@ -879,7 +929,7 @@ int DeathGodCavernDoorOfferingHead::droppedItem(Window *viewWindow, int itemID, 
 
 		if ((offerings & 1) != 0 && (offerings & 2) != 0 && (offerings & 4) != 0) {
 			_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 10), 128, false, true);
-			((SceneViewWindow *)viewWindow)->moveToDestination(_correctDestination);
+			sceneView->moveToDestination(_correctDestination);
 		}
 
 		return SIC_ACCEPT;
@@ -905,17 +955,23 @@ private:
 
 WealthGodRopeDrop::WealthGodRopeDrop(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().myWGPlacedRope == 1)
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.myWGPlacedRope == 1)
 		_staticData.navFrameIndex = 121;
 
 	_dropRope = Common::Rect(222, 149, 282, 189);
 }
 
 int WealthGodRopeDrop::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().myWGPlacedRope != 0) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.myWGPlacedRope != 0) {
 		Location newLocation = _staticData.location;
 		newLocation.depth = 1;
-		((SceneViewWindow *)viewWindow)->jumpToScene(newLocation);
+		sceneView->jumpToScene(newLocation);
 	}
 
 	return SC_TRUE;
@@ -930,14 +986,17 @@ int WealthGodRopeDrop::draggingItem(Window *viewWindow, int itemID, const Common
 }
 
 int WealthGodRopeDrop::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (pointLocation.x == -1 && pointLocation.y == -1)
 		return SIC_REJECT;
 
 	if (_dropRope.contains(pointLocation) && (itemID == kItemCoilOfRope || itemID == kItemGrapplingHook)) {
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myWGPlacedRope = 1;
+		globalFlags.myWGPlacedRope = 1;
 		Location newLocation = _staticData.location;
 		newLocation.depth = 1;
-		((SceneViewWindow *)viewWindow)->jumpToScene(newLocation);
+		sceneView->jumpToScene(newLocation);
 		return SIC_ACCEPT;
 	}
 
@@ -951,8 +1010,11 @@ public:
 
 WaterGodInitialWalkSetFlag::WaterGodInitialWalkSetFlag(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	// Set flag on entry
-	((SceneViewWindow *)viewWindow)->getGlobalFlags().myWTCurrentBridgeStatus = 1;
+	globalFlags.myWTCurrentBridgeStatus = 1;
 }
 
 class WaterGodBridgeJump : public SceneBase {
@@ -984,6 +1046,9 @@ WaterGodBridgeJump::WaterGodBridgeJump(BuriedEngine *vm, Window *viewWindow, con
 		int movieFileNameID, int playingStartingFrame, int sequenceStartingFrame, int framesPerCycle,
 		int jumpFudgeFrames, int sequenceLength, bool jumpMidCycle, int frameOffsetToEndOfSwing) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	_movieID = movieFileNameID;
 	_playingStartingFrame = playingStartingFrame;
 	_startingMovieFrame = sequenceStartingFrame;
@@ -1004,10 +1069,12 @@ WaterGodBridgeJump::WaterGodBridgeJump(BuriedEngine *vm, Window *viewWindow, con
 	_staticData.destForward.transitionLength = -1;
 
 	// Set visited flag
-	((SceneViewWindow *)viewWindow)->getGlobalFlags().myWTSteppedOnSwings = 1;
+	globalFlags.myWTSteppedOnSwings = 1;
 }
 
 int WaterGodBridgeJump::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	// Raise the ambient sound
 	_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
 	uint32 ambientPos = _vm->_sound->getSecondaryAmbientPosition();
@@ -1015,16 +1082,18 @@ int WaterGodBridgeJump::postEnterRoom(Window *viewWindow, const Location &priorL
 	int frameStartingOffset = (ambientPos / 1838) % _sequenceLength + (_startingMovieFrame - _playingStartingFrame) % _sequenceLength;
 
 	// Load and start the new asynchronous animation
-	((SceneViewWindow *)viewWindow)->startAsynchronousAnimation(_movieID, _startingMovieFrame, _playingStartingFrame + frameStartingOffset, _sequenceLength, true);
+	sceneView->startAsynchronousAnimation(_movieID, _startingMovieFrame, _playingStartingFrame + frameStartingOffset, _sequenceLength, true);
 	return SC_TRUE;
 }
 
 int WaterGodBridgeJump::preExitRoom(Window *viewWindow, const Location &newLocation) {
-	_finalFrameIndex = ((SceneViewWindow *)viewWindow)->getAsynchronousAnimationCurrentPosition();
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
+	_finalFrameIndex = sceneView->getAsynchronousAnimationCurrentPosition();
 
 	// Moving to another node should kill the anim
 	if (newLocation.node != 4 || newLocation.timeZone != 2 || newLocation.environment != 4)
-		((SceneViewWindow *)viewWindow)->stopAsynchronousAnimation();
+		sceneView->stopAsynchronousAnimation();
 
 	// If we are walking into a node less than 5, kill the ambient
 	if (newLocation.node <= 3)
@@ -1034,6 +1103,8 @@ int WaterGodBridgeJump::preExitRoom(Window *viewWindow, const Location &newLocat
 }
 
 int WaterGodBridgeJump::postExitRoom(Window *viewWindow, const Location &newLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	if (newLocation.facing == _staticData.location.facing && newLocation.timeZone == _staticData.location.timeZone &&
 			newLocation.environment == _staticData.location.environment) {
 		if (_jumpMidCycle) {
@@ -1043,18 +1114,18 @@ int WaterGodBridgeJump::postExitRoom(Window *viewWindow, const Location &newLoca
 
 			if (diff > _framesPerCycle || diffB > _framesPerCycle || diffC > _jumpFudgeFrames * 2) {
 				if (_staticData.location.facing == 0)
-					((SceneViewWindow *)viewWindow)->showDeathScene(14);
+					sceneView->showDeathScene(14);
 				else
-					((SceneViewWindow *)viewWindow)->showDeathScene(15);
+					sceneView->showDeathScene(15);
 
 				return SC_DEATH;
 			}
 		} else {
 			if ((_finalFrameIndex - _playingStartingFrame) % _framesPerCycle > _jumpFudgeFrames && _framesPerCycle - (_finalFrameIndex - _playingStartingFrame) % _framesPerCycle > _jumpFudgeFrames) {
 				if (_staticData.location.facing == 0)
-					((SceneViewWindow *)viewWindow)->showDeathScene(14);
+					sceneView->showDeathScene(14);
 				else
-					((SceneViewWindow *)viewWindow)->showDeathScene(15);
+					sceneView->showDeathScene(15);
 
 				return SC_DEATH;
 			}
@@ -1065,10 +1136,13 @@ int WaterGodBridgeJump::postExitRoom(Window *viewWindow, const Location &newLoca
 }
 
 int WaterGodBridgeJump::timerCallback(Window *viewWindow) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	NavArrowWindow *navArrow = ((GameUIWindow *)viewWindow->getParent())->_navArrowWindow;
+
 	// If we have reached the end of the starting sequence, reset the arrows
-	if (_staticData.destForward.destinationScene.timeZone == -1 && ((SceneViewWindow *)viewWindow)->getAsynchronousAnimationCurrentPosition() >= _startingMovieFrame) {
+	if (_staticData.destForward.destinationScene.timeZone == -1 && sceneView->getAsynchronousAnimationCurrentPosition() >= _startingMovieFrame) {
 		_staticData.destForward = _savedDestForward;
-		((GameUIWindow *)viewWindow->getParent())->_navArrowWindow->updateAllArrows(_staticData);
+		navArrow->updateAllArrows(_staticData);
 	}
 
 	return SC_TRUE;
@@ -1101,13 +1175,29 @@ private:
 	int _stillFrames[4];
 	int _soundID;
 	int _headAnimations[4];
+	GlobalFlags &_globalFlags;
+
+	uint32 *headOpenedTime(byte headId);
+	uint32 getHeadOpenedTime(byte headId);
+	void setHeadOpenedTime(byte headId, uint32 value);
+	byte *headTouched(byte headId);
+	void setHeadTouched(byte value);
+	byte *headStatus(byte headId);
+	byte getHeadStatus();
+	byte getHeadStatus(byte headId);
+	void setHeadStatus(byte headId, byte value);
+	void setHeadStatus(byte value);
+	byte *headStatusSkullId(byte headId);
+	byte getHeadStatusSkullId();
+	void setHeadStatusSkullId(byte value);
 };
 
 ArrowGodHead::ArrowGodHead(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
 		int headID, int clickLeft, int clickTop, int clickRight, int clickBottom,
 		int emptyClosedStill, int emptyOpenStill, int fullClosedStill, int fullOpenStill,
 		int emptyClosedAnim, int emptyOpenAnim, int fullClosedAnim, int fullOpenAnim) :
-		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+		SceneBase(vm, viewWindow, sceneStaticData, priorLocation),
+		_globalFlags(((SceneViewWindow *)viewWindow)->getGlobalFlags()) {
 	_soundID = -1;
 	_headID = headID;
 	_skullRegion = Common::Rect(clickLeft, clickTop, clickRight, clickBottom);
@@ -1119,12 +1209,119 @@ ArrowGodHead::ArrowGodHead(BuriedEngine *vm, Window *viewWindow, const LocationS
 	_headAnimations[1] = emptyOpenAnim;
 	_headAnimations[2] = fullClosedAnim;
 	_headAnimations[3] = fullOpenAnim;
-	_staticData.navFrameIndex = _stillFrames[((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID)];
+	_staticData.navFrameIndex = _stillFrames[getHeadStatus()];
+}
+
+uint32 *ArrowGodHead::headOpenedTime(byte headId) {
+	switch (headId) {
+	case 0:
+		return &_globalFlags.myAGHeadAOpenedTime;
+	case 1:
+		return &_globalFlags.myAGHeadBOpenedTime;
+	case 2:
+		return &_globalFlags.myAGHeadCOpenedTime;
+	case 3:
+		return &_globalFlags.myAGHeadDOpenedTime;
+	default:
+		return nullptr;
+	}
+}
+
+uint32 ArrowGodHead::getHeadOpenedTime(byte headId) {
+	uint32 *openedTime = headOpenedTime(headId);
+	return openedTime ? *openedTime : 0;
+}
+
+void ArrowGodHead::setHeadOpenedTime(byte headId, uint32 value) {
+	uint32 *openedTime = headOpenedTime(headId);
+	if (openedTime)
+		*openedTime = value;
+}
+
+byte *ArrowGodHead::headTouched(byte headId) {
+	switch (headId) {
+	case 0:
+		return &_globalFlags.myAGHeadATouched;
+	case 1:
+		return &_globalFlags.myAGHeadBTouched;
+	case 2:
+		return &_globalFlags.myAGHeadCTouched;
+	case 3:
+		return &_globalFlags.myAGHeadDTouched;
+	default:
+		return nullptr;
+	}
+}
+
+void ArrowGodHead::setHeadTouched(byte value) {
+	byte *touched = headTouched(_headID);
+	if (touched)
+		*touched = value;
+}
+
+byte *ArrowGodHead::headStatus(byte headId) {
+	switch (headId) {
+	case 0:
+		return &_globalFlags.myAGHeadAStatus;
+	case 1:
+		return &_globalFlags.myAGHeadBStatus;
+	case 2:
+		return &_globalFlags.myAGHeadCStatus;
+	case 3:
+		return &_globalFlags.myAGHeadDStatus;
+	default:
+		return nullptr;
+	}
+}
+
+byte ArrowGodHead::getHeadStatus() {
+	return getHeadStatus(_headID);
+}
+
+byte ArrowGodHead::getHeadStatus(byte headId) {
+	byte *status = headStatus(headId);
+	return status ? *status : 0;
+}
+
+void ArrowGodHead::setHeadStatus(byte value) {
+	setHeadStatus(_headID, value);
+}
+
+void ArrowGodHead::setHeadStatus(byte headId, byte value) {
+	byte *status = headStatus(headId);
+	if (status)
+		*status = value;
+}
+
+byte *ArrowGodHead::headStatusSkullId(byte headId) {
+	switch (headId) {
+	case 0:
+		return &_globalFlags.myAGHeadAStatusSkullID;
+	case 1:
+		return &_globalFlags.myAGHeadBStatusSkullID;
+	case 2:
+		return &_globalFlags.myAGHeadCStatusSkullID;
+	case 3:
+		return &_globalFlags.myAGHeadDStatusSkullID;
+	default:
+		return nullptr;
+	}
+}
+
+byte ArrowGodHead::getHeadStatusSkullId() {
+	byte *status = headStatusSkullId(_headID);
+	return status ? *status : 0;
+}
+
+void ArrowGodHead::setHeadStatusSkullId(byte value) {
+	byte *status = headStatusSkullId(_headID);
+	if (status)
+		*status = value;
 }
 
 int ArrowGodHead::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
-	byte headAStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadAStatus;
-	byte headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+	byte headAStatus = _globalFlags.myAGHeadAStatus;
+	byte headDStatus = _globalFlags.myAGHeadDStatus;
 
 	if (_staticData.location.node == 0) {
 		if (headAStatus == 0)
@@ -1144,21 +1341,24 @@ int ArrowGodHead::postEnterRoom(Window *viewWindow, const Location &priorLocatio
 }
 
 int ArrowGodHead::mouseDown(Window *viewWindow, const Common::Point &pointLocation) {
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+	InventoryWindow *inventoryWindow = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow;
+
 	// For walkthrough mode, don't allow input
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
+	if (_globalFlags.generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
 		return SC_FALSE;
 
-	if (_skullRegion.contains(pointLocation) && ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID) == 3) {
-		byte skullIndex = ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatusSkullID) + _headID);
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatusSkullID) + _headID, 0);
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID, 1);
+	if (_skullRegion.contains(pointLocation) && getHeadStatus() == 3) {
+		byte skullIndex = getHeadStatusSkullId();
+		setHeadStatusSkullId(0);
+		setHeadStatus(1);
 		_staticData.navFrameIndex = _stillFrames[1];
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadATouched) + _headID, 1);
+		setHeadTouched(1);
 
 		// Begin dragging
-		Common::Point ptInventoryWindow = viewWindow->convertPointToWindow(pointLocation, ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow);
-		((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->startDraggingNewItem(skullIndex, ptInventoryWindow);
-		((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->sceneChanged();
+		Common::Point ptInventoryWindow = viewWindow->convertPointToWindow(pointLocation, inventoryWindow);
+		inventoryWindow->startDraggingNewItem(skullIndex, ptInventoryWindow);
+		bioChipRightWindow->sceneChanged();
 		return SC_TRUE;
 	}
 
@@ -1166,54 +1366,58 @@ int ArrowGodHead::mouseDown(Window *viewWindow, const Common::Point &pointLocati
 }
 
 int ArrowGodHead::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+	Location &loc = _staticData.location;
+
 	// For walkthrough mode, don't allow input
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
+	if (_globalFlags.generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
 		return SC_FALSE;
 
 	// Did we click on the head?
 	if (_skullRegion.contains(pointLocation)) {
-		byte headStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID);
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadATouched) + _headID, 1);
+		byte headStatus = getHeadStatus();
+		setHeadTouched(1);
 
 		if (headStatus & 1)
 			headStatus--;
 		else
 			headStatus++;
 
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID, headStatus);
+		setHeadStatus(headStatus);
 
 		// Play the proper movie
 		int currentSoundID = -1;
 		if (headStatus == 2)
-			currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 14), 128, false, true);
+			currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 14), 128, false, true);
 		else
-			currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 13), 128, false, true);
+			currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 13), 128, false, true);
 
 		if ((_headID == 1 || _headID == 2) && headStatus == 0) {
-			if (_staticData.location.node == 0)
-				_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 127);
+			if (loc.node == 0)
+				_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 127);
 			else
-				_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 96);
+				_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 96);
 		}
 
-		((SceneViewWindow *)viewWindow)->playSynchronousAnimation(_headAnimations[headStatus]);
+		sceneView->playSynchronousAnimation(_headAnimations[headStatus]);
 
 		_staticData.navFrameIndex = _stillFrames[headStatus];
 		viewWindow->invalidateWindow(false);
 
-		byte headAStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadAStatus;
-		byte headBStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadBStatus;
-		byte headCStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadCStatus;
-		byte headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+		byte headAStatus = _globalFlags.myAGHeadAStatus;
+		byte headBStatus = _globalFlags.myAGHeadBStatus;
+		byte headCStatus = _globalFlags.myAGHeadCStatus;
+		byte headDStatus = _globalFlags.myAGHeadDStatus;
 
-		if (_staticData.location.node == 0) {
+		if (loc.node == 0) {
 			if (headAStatus == 0)
 				_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
 			else if (headDStatus == 0)
 				_vm->_sound->adjustSecondaryAmbientSoundVolume(64, false, 0, 0);
 			else
 				_vm->_sound->adjustSecondaryAmbientSoundVolume(0, false, 0, 0);
-		} else if (_staticData.location.node == 2) {
+		} else if (loc.node == 2) {
 			if (headAStatus == 0 || headDStatus == 0)
 				_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
 			else
@@ -1222,15 +1426,15 @@ int ArrowGodHead::mouseUp(Window *viewWindow, const Common::Point &pointLocation
 
 		_vm->_sound->stopSoundEffect(currentSoundID);
 
-		if (_staticData.location.node == 0 && (headBStatus < 3 && headCStatus < 3))
-			_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 127);
-		else if (_staticData.location.node == 2 && (headBStatus < 3 && headCStatus < 3))
-			_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 96);
+		if (loc.node == 0 && (headBStatus < 3 && headCStatus < 3))
+			_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 127);
+		else if (loc.node == 2 && (headBStatus < 3 && headCStatus < 3))
+			_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 96);
 
 		if (headStatus & 1)
-			((SceneViewWindow *)viewWindow)->setGlobalFlagDWord(offsetof(GlobalFlags, myAGHeadAOpenedTime) + _headID * 4, g_system->getMillis());
+			setHeadOpenedTime(_headID, g_system->getMillis());
 
-		((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->sceneChanged();
+		bioChipRightWindow->sceneChanged();
 		return SC_TRUE;
 	}
 
@@ -1238,36 +1442,39 @@ int ArrowGodHead::mouseUp(Window *viewWindow, const Common::Point &pointLocation
 }
 
 int ArrowGodHead::draggingItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
+	if (_globalFlags.generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
 		return 0;
 
-	if ((itemID == kItemCavernSkull || itemID == kItemEntrySkull || itemID == kItemSpearSkull) && ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID) < 2 && _skullRegion.contains(pointLocation))
+	if ((itemID == kItemCavernSkull || itemID == kItemEntrySkull || itemID == kItemSpearSkull) && getHeadStatus() < 2 && _skullRegion.contains(pointLocation))
 		return 1;
 
 	return 0;
 }
 
 int ArrowGodHead::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+
+	if (_globalFlags.generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
 		return SIC_REJECT;
 
 	if (pointLocation.x == -1 && pointLocation.y == -1)
 		return SIC_REJECT;
 
-	if ((itemID == kItemCavernSkull || itemID == kItemEntrySkull || itemID == kItemSpearSkull) && ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID) == 1 && _skullRegion.contains(pointLocation)) {
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID, 2);
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadATouched) + _headID, 1);
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatusSkullID) + _headID, itemID);
+	if ((itemID == kItemCavernSkull || itemID == kItemEntrySkull || itemID == kItemSpearSkull) && getHeadStatus() == 1 && _skullRegion.contains(pointLocation)) {
+		setHeadStatus(2);
+		setHeadTouched(1);
+		setHeadStatusSkullId(itemID);
 
 		int currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 14), 128, false, true);
 
-		((SceneViewWindow *)viewWindow)->playSynchronousAnimation(_headAnimations[2]);
+		sceneView->playSynchronousAnimation(_headAnimations[2]);
 
 		_staticData.navFrameIndex = _stillFrames[2];
 		viewWindow->invalidateWindow(false);
 
-		byte headAStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadAStatus;
-		byte headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+		byte headAStatus = _globalFlags.myAGHeadAStatus;
+		byte headDStatus = _globalFlags.myAGHeadDStatus;
 
 		if (_staticData.location.node == 0) {
 			if (headAStatus == 0)
@@ -1285,7 +1492,7 @@ int ArrowGodHead::droppedItem(Window *viewWindow, int itemID, const Common::Poin
 
 		_vm->_sound->stopSoundEffect(currentSoundID);
 
-		((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->sceneChanged();
+		bioChipRightWindow->sceneChanged();
 		return SIC_ACCEPT;
 	}
 
@@ -1293,11 +1500,11 @@ int ArrowGodHead::droppedItem(Window *viewWindow, int itemID, const Common::Poin
 }
 
 int ArrowGodHead::specifyCursor(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
+	if (_globalFlags.generalWalkthroughMode == 1 && (_headID == 0 || _headID == 3))
 		return 0;
 
 	if (_skullRegion.contains(pointLocation)) {
-		if (((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + _headID) == 3)
+		if (getHeadStatus() == 3)
 			return kCursorOpenHand;
 
 		return kCursorFinger;
@@ -1307,47 +1514,51 @@ int ArrowGodHead::specifyCursor(Window *viewWindow, const Common::Point &pointLo
 }
 
 int ArrowGodHead::timerCallback(Window *viewWindow) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+	Location &loc = _staticData.location;
+
 	for (int i = 0; i < 4; i++) {
-		uint32 lastStartedTimer = ((SceneViewWindow *)viewWindow)->getGlobalFlagDWord(offsetof(GlobalFlags, myAGHeadAOpenedTime) + i * 4);
+		uint32 lastStartedTimer = getHeadOpenedTime(i);
 
 		if (lastStartedTimer > 0 && g_system->getMillis() > (lastStartedTimer + WAR_GOD_HEAD_TIMER_VALUE)) {
-			((SceneViewWindow *)viewWindow)->setGlobalFlagDWord(offsetof(GlobalFlags, myAGHeadAOpenedTime) + i * 4, 0);
+			setHeadOpenedTime(i, 0);
 
 			TempCursorChange cursorChange(kCursorWait);
 
 			if (i == _headID) {
-				byte status = ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + i);
+				byte status = getHeadStatus();
 
 				if (status & 1) {
 					status--;
-					((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + i, status);
+					setHeadStatus(status);
 
 					int currentSoundID = -1;
 					if (status == 2)
-						currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 14), 128, false, true);
+						currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 14), 128, false, true);
 					else
-						currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 13), 128, false, true);
+						currentSoundID = _vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 13), 128, false, true);
 
-					((SceneViewWindow *)viewWindow)->playSynchronousAnimation(_headAnimations[status]);
+					sceneView->playSynchronousAnimation(_headAnimations[status]);
 
 					_staticData.navFrameIndex = _stillFrames[status];
 					viewWindow->invalidateWindow(false);
 
 					_vm->_sound->stopSoundEffect(currentSoundID);
 
-					byte headAStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadAStatus;
-					byte headBStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadBStatus;
-					byte headCStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadCStatus;
-					byte headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+					byte headAStatus = _globalFlags.myAGHeadAStatus;
+					byte headBStatus = _globalFlags.myAGHeadBStatus;
+					byte headCStatus = _globalFlags.myAGHeadCStatus;
+					byte headDStatus = _globalFlags.myAGHeadDStatus;
 
-					if (_staticData.location.node == 0) {
+					if (loc.node == 0) {
 						if (headAStatus == 0)
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
 						else if (headDStatus == 0)
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(64, false, 0, 0);
 						else
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(0, false, 0, 0);
-					} else if (_staticData.location.node == 2) {
+					} else if (loc.node == 2) {
 						if (headAStatus == 0 || headDStatus == 0)
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
 						else
@@ -1356,37 +1567,37 @@ int ArrowGodHead::timerCallback(Window *viewWindow) {
 
 					// Play the door closing sound, if applicable
 					if (i == 1 || i == 2) {
-						if (_staticData.location.node == 0 && (headBStatus == 0 || headCStatus == 0))
-							_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 127);
-						else if (_staticData.location.node == 2 && (headBStatus == 0 || headCStatus == 0))
-							_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 96);
+						if (loc.node == 0 && (headBStatus == 0 || headCStatus == 0))
+							_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 127);
+						else if (loc.node == 2 && (headBStatus == 0 || headCStatus == 0))
+							_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 96);
 					}
 				}
 
-				((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->sceneChanged();
+				bioChipRightWindow->sceneChanged();
 			} else {
-				byte status = ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + i);
+				byte status = getHeadStatus(i);
 
 				if (status & 1) {
 					status--;
-					((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + i, status);
+					setHeadStatus(i, status);
 
 					if (status == 2)
-						_vm->_sound->playSynchronousSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 14), 128);
+						_vm->_sound->playSynchronousSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 14), 128);
 					else
-						_vm->_sound->playSynchronousSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 13), 128);
+						_vm->_sound->playSynchronousSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 13), 128);
 
-					byte headAStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadAStatus;
-					byte headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+					byte headAStatus = _globalFlags.myAGHeadAStatus;
+					byte headDStatus = _globalFlags.myAGHeadDStatus;
 
-					if (_staticData.location.node == 0) {
+					if (loc.node == 0) {
 						if (headAStatus == 0)
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
 						else if (headDStatus == 0)
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(64, false, 0, 0);
 						else
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(0, false, 0, 0);
-					} else if (_staticData.location.node == 2) {
+					} else if (loc.node == 2) {
 						if (headAStatus == 0 || headDStatus == 0)
 							_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
 						else
@@ -1394,13 +1605,13 @@ int ArrowGodHead::timerCallback(Window *viewWindow) {
 					}
 				}
 
-				((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->sceneChanged();
+				bioChipRightWindow->sceneChanged();
 
 				if (_headID == 1 || _headID == 2) {
-					if (_staticData.location.node == 0)
-						_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 127);
-					else if (_staticData.location.node == 2)
-						_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 11), 96);
+					if (loc.node == 0)
+						_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 127);
+					else if (loc.node == 2)
+						_vm->_sound->playSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, 11), 96);
 				}
 			}
 		}
@@ -1419,19 +1630,29 @@ public:
 private:
 	bool _scheduledDepthChange;
 	int _soundID;
+	GlobalFlags &_globalFlags;
 
 	bool adjustSpearVolume(Window *viewWindow);
+	uint32 *headOpenedTime(byte headId);
+	uint32 getHeadOpenedTime(byte headId);
+	void setHeadOpenedTime(byte headId, uint32 value);
+	byte *headStatus(byte headId);
+	byte getHeadStatus(byte headId);
+	void setHeadStatus(byte headId, byte value);
 };
 
 ArrowGodDepthChange::ArrowGodDepthChange(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
-		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+		SceneBase(vm, viewWindow, sceneStaticData, priorLocation),
+		_globalFlags(((SceneViewWindow *)viewWindow)->getGlobalFlags()) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
 	_scheduledDepthChange = false;
 	_soundID = -1;
 
-	byte headAStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadAStatus;
-	byte headBStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadBStatus;
-	byte headCStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadCStatus;
-	byte headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+	byte headAStatus = _globalFlags.myAGHeadAStatus;
+	byte headBStatus = _globalFlags.myAGHeadBStatus;
+	byte headCStatus = _globalFlags.myAGHeadCStatus;
+	byte headDStatus = _globalFlags.myAGHeadDStatus;
 
 	int targetDepth = 0;
 
@@ -1476,23 +1697,25 @@ ArrowGodDepthChange::ArrowGodDepthChange(BuriedEngine *vm, Window *viewWindow, c
 	if (_staticData.location.depth != targetDepth) {
 		Location newLocation = _staticData.location;
 		newLocation.depth = targetDepth;
-		((SceneViewWindow *)viewWindow)->getSceneStaticData(newLocation, _staticData);
+		sceneView->getSceneStaticData(newLocation, _staticData);
 		_frameCycleCount = _staticData.cycleStartFrame;
 
 		// Reload the frame files, if applicable
-		((SceneViewWindow *)viewWindow)->changeStillFrameMovie(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, SF_STILLS));
+		sceneView->changeStillFrameMovie(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, SF_STILLS));
 
 		if (_staticData.cycleStartFrame >= 0)
-			((SceneViewWindow *)viewWindow)->changeCycleFrameMovie(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, SF_CYCLES));
+			sceneView->changeCycleFrameMovie(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, SF_CYCLES));
 	}
 }
 
 int ArrowGodDepthChange::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
 	if (((priorLocation.depth >= 8 && priorLocation.depth <= 11) && _staticData.location.depth < 8) ||
 			((priorLocation.depth >= 4 && priorLocation.depth <= 7) && _staticData.location.depth < 4)) {
-		byte headBStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadBStatus;
-		byte headCStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadCStatus;
-		byte &headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+		SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+
+		byte headBStatus = _globalFlags.myAGHeadBStatus;
+		byte headCStatus = _globalFlags.myAGHeadCStatus;
+		byte &headDStatus = _globalFlags.myAGHeadDStatus;
 		byte doorLevelVolume = 0;
 
 		switch (_staticData.location.node) {
@@ -1508,7 +1731,7 @@ int ArrowGodDepthChange::postEnterRoom(Window *viewWindow, const Location &prior
 				_vm->_sound->playSynchronousSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 13), 128);
 				_scheduledDepthChange = true;
 				adjustSpearVolume(viewWindow);
-				((SceneViewWindow *)viewWindow)->jumpToScene(_staticData.location);
+				sceneView->jumpToScene(_staticData.location);
 				return SC_TRUE; // Original does not return here, but the status of this would be bad in that case
 			}
 			break;
@@ -1529,77 +1752,133 @@ int ArrowGodDepthChange::postEnterRoom(Window *viewWindow, const Location &prior
 }
 
 int ArrowGodDepthChange::postExitRoom(Window *viewWindow, const Location &newLocation) {
-	if (_staticData.location.timeZone == newLocation.timeZone &&
-			_staticData.location.environment == newLocation.environment &&
-			_staticData.location.node == newLocation.node &&
-			_staticData.location.facing == newLocation.facing &&
-			_staticData.location.orientation == newLocation.orientation &&
-			_staticData.location.depth == newLocation.depth &&
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	Location &loc = _staticData.location;
+
+	if (loc.timeZone == newLocation.timeZone &&
+			loc.environment == newLocation.environment &&
+			loc.node == newLocation.node &&
+			loc.facing == newLocation.facing &&
+			loc.orientation == newLocation.orientation &&
+			loc.depth == newLocation.depth &&
 			!_scheduledDepthChange) {
 		// Notify the player of his gruesome death
-		((SceneViewWindow *)viewWindow)->showDeathScene(13);
+		sceneView->showDeathScene(13);
 		return SC_DEATH;
 	}
 
 	return SC_TRUE;
 }
 
+uint32 *ArrowGodDepthChange::headOpenedTime(byte headId) {
+	switch (headId) {
+	case 0:
+		return &_globalFlags.myAGHeadAOpenedTime;
+	case 1:
+		return &_globalFlags.myAGHeadBOpenedTime;
+	case 2:
+		return &_globalFlags.myAGHeadCOpenedTime;
+	case 3:
+		return &_globalFlags.myAGHeadDOpenedTime;
+	default:
+		return nullptr;
+	}
+}
+
+uint32 ArrowGodDepthChange::getHeadOpenedTime(byte headId) {
+	uint32 *openedTime = headOpenedTime(headId);
+	return openedTime ? *openedTime : 0;
+}
+
+void ArrowGodDepthChange::setHeadOpenedTime(byte headId, uint32 value) {
+	uint32 *openedTime = headOpenedTime(headId);
+	if (openedTime)
+		*openedTime = value;
+}
+
+byte *ArrowGodDepthChange::headStatus(byte headId) {
+	switch (headId) {
+	case 0:
+		return &_globalFlags.myAGHeadAStatus;
+	case 1:
+		return &_globalFlags.myAGHeadBStatus;
+	case 2:
+		return &_globalFlags.myAGHeadCStatus;
+	case 3:
+		return &_globalFlags.myAGHeadDStatus;
+	default:
+		return nullptr;
+	}
+}
+
+byte ArrowGodDepthChange::getHeadStatus(byte headId) {
+	byte *status = headStatus(headId);
+	return status ? *status : 0;
+}
+
+void ArrowGodDepthChange::setHeadStatus(byte headId, byte value) {
+	byte *status = headStatus(headId);
+	if (status)
+		*status = value;
+}
+
 int ArrowGodDepthChange::timerCallback(Window *viewWindow) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+	Location &loc = _staticData.location;
+
 	SceneBase::timerCallback(viewWindow);
 
 	// Check to see if we moved into a death scene
-	if (_staticData.location.timeZone == 2 && _staticData.location.environment == 5 &&
-			_staticData.location.node == 1 && _staticData.location.facing == 3 &&
-			_staticData.location.orientation == 1 && (_staticData.location.depth == 1 ||
-			_staticData.location.depth == 3 || _staticData.location.depth == 11 ||
-			_staticData.location.depth == 7 || _staticData.location.depth == 5 ||
-			_staticData.location.depth == 9)) {
-		if (_staticData.location.depth == 1)
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(19);
+	if (loc.timeZone == 2 && loc.environment == 5 &&
+			loc.node == 1 && loc.facing == 3 &&
+			loc.orientation == 1 && (
+			loc.depth == 1 || loc.depth == 3 || loc.depth == 11 ||
+			loc.depth == 7 || loc.depth == 5 || loc.depth == 9)) {
+		if (loc.depth == 1)
+			sceneView->playSynchronousAnimation(19);
 
-		((SceneViewWindow *)viewWindow)->showDeathScene(13);
+		sceneView->showDeathScene(13);
 		return SC_DEATH;
 	}
 
-	if (_staticData.location.timeZone == 2 && _staticData.location.environment == 5 &&
-			_staticData.location.node == 3 && _staticData.location.facing == 3 &&
-			_staticData.location.orientation == 1 && (_staticData.location.depth == 2 ||
-			_staticData.location.depth == 3 || _staticData.location.depth == 11 ||
-			_staticData.location.depth == 10 || _staticData.location.depth == 6 ||
-			_staticData.location.depth == 7)) {
-		((SceneViewWindow *)viewWindow)->playSynchronousAnimation(17);
-		((SceneViewWindow *)viewWindow)->showDeathScene(13);
+	if (loc.timeZone == 2 && loc.environment == 5 &&
+			loc.node == 3 && loc.facing == 3 &&
+			loc.orientation == 1 && (
+			loc.depth == 2  || loc.depth == 3 || loc.depth == 11 ||
+			loc.depth == 10 || loc.depth == 6 || loc.depth == 7)) {
+		sceneView->playSynchronousAnimation(17);
+		sceneView->showDeathScene(13);
 		return SC_DEATH;
 	}
 
 	// Loop through the four heads
 	for (int i = 0; i < 4; i++) {
-		uint32 lastStartedTimer = ((SceneViewWindow *)viewWindow)->getGlobalFlagDWord(offsetof(GlobalFlags, myAGHeadAOpenedTime) + i * 4);
+		uint32 lastStartedTimer = getHeadOpenedTime(i);
 
 		// Check if there is a timer going for this head
 		if (lastStartedTimer > 0 && (g_system->getMillis() > (lastStartedTimer + WAR_GOD_HEAD_TIMER_VALUE) ||
-				i == 0 || (((SceneViewWindow *)viewWindow)->getGlobalFlags().generalWalkthroughMode == 1 && i == 1) ||
-				(((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + i) == 2 && i == 3))) {
-			((SceneViewWindow *)viewWindow)->setGlobalFlagDWord(offsetof(GlobalFlags, myAGHeadAOpenedTime) + i * 4, 0);
+				i == 0 || (_globalFlags.generalWalkthroughMode == 1 && i == 1) ||
+				(getHeadStatus(i) == 2 && i == 3))) {
+			setHeadOpenedTime(i, 0);
 			TempCursorChange cursorChange(kCursorWait);
-			byte status = ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + i);
+			byte status = getHeadStatus(i);
 
 			if (status & 1) {
 				status--;
-				((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, myAGHeadAStatus) + i, status);
-				_vm->_sound->playSynchronousSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, (status == 2) ? 14 : 13), 128);
+				setHeadStatus(i, status);
+				_vm->_sound->playSynchronousSoundEffect(_vm->getFilePath(loc.timeZone, loc.environment, (status == 2) ? 14 : 13), 128);
 				_scheduledDepthChange = true;
 				adjustSpearVolume(viewWindow);
 			}
 
-			((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->sceneChanged();
+			bioChipRightWindow->sceneChanged();
 		}
 	}
 
 	if (_scheduledDepthChange) {
 		_scheduledDepthChange = false;
-		Location location = _staticData.location;
-		((SceneViewWindow *)viewWindow)->jumpToScene(location);
+		sceneView->jumpToScene(loc);
 	}
 
 	return SC_TRUE;
@@ -1609,8 +1888,8 @@ bool ArrowGodDepthChange::adjustSpearVolume(Window *viewWindow) {
 	// TODO: Looks like there's a bug in the original. node == 3 should also be in here, I think
 	// Need to investigate
 	if (_staticData.location.node >= 0 && _staticData.location.node <= 2) {
-		byte headAStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadAStatus;
-		byte headDStatus = ((SceneViewWindow *)viewWindow)->getGlobalFlags().myAGHeadDStatus;
+		byte headAStatus = _globalFlags.myAGHeadAStatus;
+		byte headDStatus = _globalFlags.myAGHeadDStatus;
 
 		if (headAStatus == 0) {
 			_vm->_sound->adjustSecondaryAmbientSoundVolume(128, false, 0, 0);
@@ -1651,57 +1930,70 @@ DeathGodAltar::DeathGodAltar(BuriedEngine *vm, Window *viewWindow, const Locatio
 }
 
 int DeathGodAltar::postEnterRoom(Window *viewWindow, const Location &priorLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOfferedHeart == 1) {
-		if (!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), MAYAN_EVIDENCE_ENVIRON_CART)) {
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(3);
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	Location &loc = _staticData.location;
+
+	if (globalFlags.myDGOfferedHeart == 1) {
+		if (!sceneView->isNumberInGlobalFlagTable(MAYAN_EVIDENCE_ENVIRON_CART)) {
+			sceneView->playSynchronousAnimation(3);
 			_staticData.navFrameIndex = 51;
 			viewWindow->invalidateWindow(false);
 
-			if ((_staticData.location.timeZone != priorLocation.timeZone || _staticData.location.environment != priorLocation.environment ||
-					_staticData.location.node != priorLocation.node || _staticData.location.facing != priorLocation.facing ||
-					_staticData.location.orientation != priorLocation.orientation || _staticData.location.depth != priorLocation.depth) &&
-					!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), MAYAN_EVIDENCE_ENVIRON_CART))
-				((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
+			if ((loc.timeZone != priorLocation.timeZone || loc.environment != priorLocation.environment ||
+					loc.node != priorLocation.node || loc.facing != priorLocation.facing ||
+					loc.orientation != priorLocation.orientation || loc.depth != priorLocation.depth) &&
+					!sceneView->isNumberInGlobalFlagTable(MAYAN_EVIDENCE_ENVIRON_CART))
+				sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
 		}
-	} else if ((_staticData.location.timeZone != priorLocation.timeZone || _staticData.location.environment != priorLocation.environment ||
-			_staticData.location.node != priorLocation.node || _staticData.location.facing != priorLocation.facing ||
-			_staticData.location.orientation != priorLocation.orientation || _staticData.location.depth != priorLocation.depth) &&
-			!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), MAYAN_EVIDENCE_PHONY_BLOOD)) {
-		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
+	} else if ((loc.timeZone != priorLocation.timeZone || loc.environment != priorLocation.environment ||
+			loc.node != priorLocation.node || loc.facing != priorLocation.facing ||
+			loc.orientation != priorLocation.orientation || loc.depth != priorLocation.depth) &&
+			!sceneView->isNumberInGlobalFlagTable(MAYAN_EVIDENCE_PHONY_BLOOD)) {
+		sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
 	}
 
 	return SC_TRUE;
 }
 
 int DeathGodAltar::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
-	if (_puzzleBox.contains(pointLocation) && ((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOfferedHeart == 1 && ((SceneViewWindow *)viewWindow)->getGlobalFlags().takenEnvironCart == 0) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (_puzzleBox.contains(pointLocation) && globalFlags.myDGOfferedHeart == 1 && globalFlags.takenEnvironCart == 0) {
 		Location puzzleLocation = _staticData.location;
 		puzzleLocation.depth = 1;
-		((SceneViewWindow *)viewWindow)->jumpToScene(puzzleLocation);
+		sceneView->jumpToScene(puzzleLocation);
 	}
 
 	return SC_FALSE;
 }
 
 int DeathGodAltar::draggingItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
-	if (itemID == kItemPreservedHeart && ((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOfferedHeart == 0 && _heartPool.contains(pointLocation))
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (itemID == kItemPreservedHeart && globalFlags.myDGOfferedHeart == 0 && _heartPool.contains(pointLocation))
 		return 1;
 
 	return 0;
 }
 
 int DeathGodAltar::droppedItem(Window *viewWindow, int itemID, const Common::Point &pointLocation, int itemFlags) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (pointLocation.x == -1 && pointLocation.y == -1)
 		return SIC_REJECT;
 
-	if (itemID == kItemPreservedHeart && ((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOfferedHeart == 0 && _heartPool.contains(pointLocation)) {
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOfferedHeart = 1;
-		((SceneViewWindow *)viewWindow)->playSynchronousAnimation(2);
-		((SceneViewWindow *)viewWindow)->playSynchronousAnimation(3);
+	if (itemID == kItemPreservedHeart && globalFlags.myDGOfferedHeart == 0 && _heartPool.contains(pointLocation)) {
+		globalFlags.myDGOfferedHeart = 1;
+		sceneView->playSynchronousAnimation(2);
+		sceneView->playSynchronousAnimation(3);
 		_staticData.navFrameIndex = 51;
 
-		if (!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), MAYAN_EVIDENCE_ENVIRON_CART))
-			((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
+		if (!sceneView->isNumberInGlobalFlagTable(MAYAN_EVIDENCE_ENVIRON_CART))
+			sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_PRESENT));
 
 		return SIC_ACCEPT;
 	}
@@ -1710,9 +2002,12 @@ int DeathGodAltar::droppedItem(Window *viewWindow, int itemID, const Common::Poi
 }
 
 int DeathGodAltar::specifyCursor(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1) {
-		if (((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOfferedHeart == 1 &&
-				((SceneViewWindow *)viewWindow)->getGlobalFlags().takenEnvironCart == 0 &&
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.bcLocateEnabled == 1) {
+		if (globalFlags.myDGOfferedHeart == 1 &&
+				globalFlags.takenEnvironCart == 0 &&
 				_staticData.navFrameIndex == 51 && _puzzleBox.contains(pointLocation))
 			return -2;
 
@@ -1720,7 +2015,7 @@ int DeathGodAltar::specifyCursor(Window *viewWindow, const Common::Point &pointL
 			return -2;
 
 		return -1;
-	} else if (_puzzleBox.contains(pointLocation) && ((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOfferedHeart == 1 && ((SceneViewWindow *)viewWindow)->getGlobalFlags().takenEnvironCart == 0) {
+	} else if (_puzzleBox.contains(pointLocation) && globalFlags.myDGOfferedHeart == 1 && globalFlags.takenEnvironCart == 0) {
 		// This logic is broken in 1.04, 1.05, and 1.10. I fixed it here to match mouseUp
 		return kCursorFinger;
 	}
@@ -1729,26 +2024,30 @@ int DeathGodAltar::specifyCursor(Window *viewWindow, const Common::Point &pointL
 }
 
 int DeathGodAltar::locateAttempted(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1 &&
-			((SceneViewWindow *)viewWindow)->getGlobalFlags().takenEnvironCart == 0 &&
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+
+	if (globalFlags.bcLocateEnabled == 1 &&
+			globalFlags.takenEnvironCart == 0 &&
 			_puzzleBox.contains(pointLocation) && _staticData.navFrameIndex == 51 &&
-			!((SceneViewWindow *)viewWindow)->isNumberInGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), MAYAN_EVIDENCE_ENVIRON_CART)) {
-		((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_MUST_BE_REVEALED)); // All will be reveaaaaaaaaled (Yes, I used this joke twice now)
+			!sceneView->isNumberInGlobalFlagTable(MAYAN_EVIDENCE_ENVIRON_CART)) {
+		sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_MUST_BE_REVEALED)); // All will be reveaaaaaaaaled (Yes, I used this joke twice now)
 		return SC_TRUE;
 	}
 
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1) {
+	if (globalFlags.bcLocateEnabled == 1) {
 		if (_blood.contains(pointLocation)) {
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(6);
+			sceneView->playSynchronousAnimation(6);
 
 			// Attempt to add it to the biochip
-			if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), 12, MAYAN_EVIDENCE_PHONY_BLOOD))
-				((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ACQUIRED));
+			if (sceneView->addNumberToGlobalFlagTable(MAYAN_EVIDENCE_PHONY_BLOOD))
+				sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ACQUIRED));
 			else
-				((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
+				sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
 
 			// Disable capture
-			((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->disableEvidenceCapture();
+			bioChipRightWindow->disableEvidenceCapture();
 		}
 
 		return SC_TRUE;
@@ -1780,6 +2079,7 @@ private:
 
 DeathGodPuzzleBox::DeathGodPuzzleBox(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	Location &loc = _staticData.location;
 	_translateText = false;
 	_puzzleIndexes[0] = _puzzleIndexes[1] = _puzzleIndexes[2] = _puzzleIndexes[3] = 0;
 	_clickableRegions[0] = Common::Rect(30, 0, 111, 189);
@@ -1789,10 +2089,10 @@ DeathGodPuzzleBox::DeathGodPuzzleBox(BuriedEngine *vm, Window *viewWindow, const
 	_puzzleRightHandle = Common::Rect(380, 0, 432, 189);
 
 	// Load the spinner movies
-	_puzzleFrames[0].open(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 4));
-	_puzzleFrames[1].open(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 5));
-	_puzzleFrames[2].open(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 6));
-	_puzzleFrames[3].open(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 7));
+	_puzzleFrames[0].open(_vm->getFilePath(loc.timeZone, loc.environment, 4));
+	_puzzleFrames[1].open(_vm->getFilePath(loc.timeZone, loc.environment, 5));
+	_puzzleFrames[2].open(_vm->getFilePath(loc.timeZone, loc.environment, 6));
+	_puzzleFrames[3].open(_vm->getFilePath(loc.timeZone, loc.environment, 7));
 }
 
 DeathGodPuzzleBox::~DeathGodPuzzleBox() {
@@ -1818,7 +2118,10 @@ int DeathGodPuzzleBox::paint(Window *viewWindow, Graphics::Surface *preBuffer) {
 }
 
 int DeathGodPuzzleBox::gdiPaint(Window *viewWindow) {
-	if (_translateText && ((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (_translateText && globalFlags.bcTranslateEnabled == 1) {
 		Common::Rect absoluteRect = viewWindow->getAbsoluteRect();
 		Common::Rect rect(42, 64, 324, 125);
 		rect.translate(absoluteRect.left, absoluteRect.top);
@@ -1829,6 +2132,11 @@ int DeathGodPuzzleBox::gdiPaint(Window *viewWindow) {
 }
 
 int DeathGodPuzzleBox::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+	InventoryWindow *inventoryWindow = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow;
+
 	for (int i = 0; i < 4; i++) {
 		if (_clickableRegions[i].contains(pointLocation)) {
 			if (pointLocation.y - _clickableRegions[i].top > _clickableRegions[i].height() / 2) {
@@ -1876,40 +2184,40 @@ int DeathGodPuzzleBox::mouseUp(Window *viewWindow, const Common::Point &pointLoc
 			newDestination.transitionStartFrame = -1;
 			newDestination.transitionLength = -1;
 
-			if (((SceneViewWindow *)viewWindow)->getGlobalFlags().takenEnvironCart == 0)
+			if (globalFlags.takenEnvironCart == 0)
 				newDestination.transitionData = 4;
 			else
 				newDestination.transitionData = 5;
 
 			BuriedEngine *vm = _vm;
-			((SceneViewWindow *)viewWindow)->moveToDestination(newDestination);
+			sceneView->moveToDestination(newDestination);
 
 			// Play animation capturing the evidence
 			// FIXME: Is this right? Shouldn't this be if takenEnvironCart == 0 only?
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(7);
+			sceneView->playSynchronousAnimation(7);
 
 			// Attempt to add it to the biochip
-			if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), 12, MAYAN_EVIDENCE_ENVIRON_CART))
-				((SceneViewWindow *)viewWindow)->displayLiveText(vm->getString(IDS_MBT_EVIDENCE_RIPPLE_DOCUMENTED));
+			if (sceneView->addNumberToGlobalFlagTable(MAYAN_EVIDENCE_ENVIRON_CART))
+				sceneView->displayLiveText(vm->getString(IDS_MBT_EVIDENCE_RIPPLE_DOCUMENTED));
 			else
-				((SceneViewWindow *)viewWindow)->displayLiveText(vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
+				sceneView->displayLiveText(vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
 
 			// Disable capture
-			((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->disableEvidenceCapture();
+			bioChipRightWindow->disableEvidenceCapture();
 
 			// Set the scoring flag
-			((SceneViewWindow *)viewWindow)->getGlobalFlags().scoreCompletedDeathGod = 1;
-			((SceneViewWindow *)viewWindow)->getGlobalFlags().myDGOpenedPuzzleBox = 1;
+			globalFlags.scoreCompletedDeathGod = 1;
+			globalFlags.myDGOpenedPuzzleBox = 1;
 
 			// Play an Arthur comment
-			if (((SceneViewWindow *)viewWindow)->getGlobalFlags().takenEnvironCart == 0 && ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemBioChipAI))
+			if (globalFlags.takenEnvironCart == 0 && inventoryWindow->isItemInInventory(kItemBioChipAI))
 				vm->_sound->playSoundEffect("BITDATA/MAYAN/MYDG_C01.BTA"); // Broken in 1.01
 
 			return SC_TRUE;
 		} else {
 			// We did the puzzle incorrectly, so spin the wheels and kill the player
-			((SceneViewWindow *)viewWindow)->playPlacedSynchronousAnimation(8, 320, 0);
-			((SceneViewWindow *)viewWindow)->showDeathScene(12);
+			sceneView->playPlacedSynchronousAnimation(8, 320, 0);
+			sceneView->showDeathScene(12);
 			return SC_DEATH;
 		}
 	}
@@ -1918,7 +2226,10 @@ int DeathGodPuzzleBox::mouseUp(Window *viewWindow, const Common::Point &pointLoc
 }
 
 int DeathGodPuzzleBox::mouseMove(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcTranslateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.bcTranslateEnabled == 1) {
 		Common::Rect translateTextRegion(42, 64, 324, 126);
 
 		if (translateTextRegion.contains(pointLocation)) {
@@ -1931,7 +2242,7 @@ int DeathGodPuzzleBox::mouseMove(Window *viewWindow, const Common::Point &pointL
 				translatedText += ' ';
 				translatedText += _vm->getString(IDMYDG_PUZZLE_BOX_TRANS_TEXT_BASE + 30 + _puzzleIndexes[3] / 6);
 
-				((SceneViewWindow *)viewWindow)->displayTranslationText(translatedText);
+				sceneView->displayTranslationText(translatedText);
 
 				_translateText = true;
 				viewWindow->invalidateWindow(false);
@@ -1964,11 +2275,6 @@ int DeathGodPuzzleBox::specifyCursor(Window *viewWindow, const Common::Point &po
 }
 
 bool DeathGodPuzzleBox::isPuzzleSolved() const {
-	// TODO: Ask players for solutions for other languages
-	// clone2727 has the English, French, and Japanese source.
-	// clone2727 has the Italian and Spanish versions and solved the puzzle
-	// manually for those.
-
 	switch (_vm->getLanguage()) {
 	case Common::DE_DEU:
 	case Common::ES_ESP:
@@ -2005,19 +2311,23 @@ MainCavernGlassCapture::MainCavernGlassCapture(BuriedEngine *vm, Window *viewWin
 }
 
 int MainCavernGlassCapture::locateAttempted(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	BioChipRightWindow *bioChipRightWindow = ((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow;
+
+	if (globalFlags.bcLocateEnabled == 1) {
 		if (_glass.contains(pointLocation)) {
 			// Play the animation
-			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(22);
+			sceneView->playSynchronousAnimation(22);
 
 			// Attempt to add it to the biochip
-			if (((SceneViewWindow *)viewWindow)->addNumberToGlobalFlagTable(offsetof(GlobalFlags, evcapBaseID), offsetof(GlobalFlags, evcapNumCaptured), 12, MAYAN_EVIDENCE_BROKEN_GLASS_PYRAMID))
-				((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ACQUIRED));
+			if (sceneView->addNumberToGlobalFlagTable(MAYAN_EVIDENCE_BROKEN_GLASS_PYRAMID))
+				sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ACQUIRED));
 			else
-				((SceneViewWindow *)viewWindow)->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
+				sceneView->displayLiveText(_vm->getString(IDS_MBT_EVIDENCE_ALREADY_ACQUIRED));
 
 			// Disable capture
-			((GameUIWindow *)viewWindow->getParent())->_bioChipRightWindow->disableEvidenceCapture();
+			bioChipRightWindow->disableEvidenceCapture();
 		}
 
 		return SC_TRUE;
@@ -2027,7 +2337,10 @@ int MainCavernGlassCapture::locateAttempted(Window *viewWindow, const Common::Po
 }
 
 int MainCavernGlassCapture::specifyCursor(Window *viewWindow, const Common::Point &pointLocation) {
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlags().bcLocateEnabled == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if (globalFlags.bcLocateEnabled == 1) {
 		if (_glass.contains(pointLocation))
 			return -2;
 
@@ -2114,16 +2427,20 @@ private:
 WalkDualAmbientVolumeChange::WalkDualAmbientVolumeChange(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
 		byte newVolume, byte secondVolume, uint32 volumeChangeTime, int stepCount) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	Location &loc = _staticData.location;
+
 	_newVolume = newVolume;
 	_volumeChangeTime = volumeChangeTime;
 	_stepCount = stepCount;
 	_secondVolume = secondVolume;
 
 	// If we have stepped on the far ledge, set the flag
-	if (_staticData.location.timeZone == 2 && _staticData.location.environment == 4 &&
-			_staticData.location.node == 5 && _staticData.location.facing == 0 &&
-			_staticData.location.orientation == 1 && _staticData.location.depth == 0)
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myWTSteppedOnFarLedge = 1;
+	if (loc.timeZone == 2 && loc.environment == 4 &&
+			loc.node == 5 && loc.facing == 0 &&
+			loc.orientation == 1 && loc.depth == 0)
+		globalFlags.myWTSteppedOnFarLedge = 1;
 }
 
 int WalkDualAmbientVolumeChange::preExitRoom(Window *viewWindow, const Location &newLocation) {
@@ -2138,74 +2455,72 @@ int WalkDualAmbientVolumeChange::preExitRoom(Window *viewWindow, const Location 
 class SetVolumeAndFlag : public SceneBase {
 public:
 	SetVolumeAndFlag(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-			byte newVolume = 64, int flagOffset = -1, byte flagValue = 255);
+			byte newVolume, byte &flag, byte flagValue = 255);
 };
 
 SetVolumeAndFlag::SetVolumeAndFlag(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-		byte newVolume, int flagOffset, byte flagValue) :
+		byte newVolume, byte &flag, byte flagValue) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
 	_vm->_sound->adjustAmbientSoundVolume(newVolume, false, 0, 0);
-
-	if (flagOffset >= 0)
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(flagOffset, flagValue);
+	flag = flagValue;
 }
 
 bool SceneViewWindow::initializeMayanTimeZoneAndEnvironment(Window *viewWindow, int environment) {
+	InventoryWindow *inventoryWindow = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow;
+
 	if (environment == -1) {
-		GlobalFlags &flags = ((SceneViewWindow *)viewWindow)->getGlobalFlags();
+		_globalFlags.myTPCodeWheelStatus = _globalFlags.generalWalkthroughMode;
+		_globalFlags.myTPCodeWheelLeftIndex = _globalFlags.generalWalkthroughMode == 1 ? 8 : 0;
+		_globalFlags.myTPCodeWheelRightIndex = _globalFlags.generalWalkthroughMode == 1 ? 12 : 0;
+		_globalFlags.myMCDeathGodOfferings = 0;
+		_globalFlags.myWGPlacedRope = _globalFlags.generalWalkthroughMode;
+		_globalFlags.myWTCurrentBridgeStatus = 0;
+		_globalFlags.myAGHeadAStatus = _globalFlags.generalWalkthroughMode == 1 ? 2 : 0;
+		_globalFlags.myAGHeadBStatus = 0;
+		_globalFlags.myAGHeadCStatus = 0;
+		_globalFlags.myAGHeadDStatus = _globalFlags.generalWalkthroughMode == 1 ? 2 : 0;
+		_globalFlags.myAGHeadAStatusSkullID = _globalFlags.generalWalkthroughMode == 1 ? kItemCavernSkull : 0;
+		_globalFlags.myAGHeadBStatusSkullID = 0;
+		_globalFlags.myAGHeadCStatusSkullID = 0;
+		_globalFlags.myAGHeadDStatusSkullID = _globalFlags.generalWalkthroughMode == 1 ? kItemSpearSkull : 0;
+		_globalFlags.myAGTimerHeadID = 0;
+		_globalFlags.myAGTimerStartTime = 0;
+		_globalFlags.myDGOfferedHeart = 0;
+		_globalFlags.myAGHeadAOpenedTime = 0;
+		_globalFlags.myAGHeadBOpenedTime = 0;
+		_globalFlags.myAGHeadCOpenedTime = 0;
+		_globalFlags.myAGHeadDOpenedTime = 0;
 
-		flags.myTPCodeWheelStatus = flags.generalWalkthroughMode;
-		flags.myTPCodeWheelLeftIndex = flags.generalWalkthroughMode == 1 ? 8 : 0;
-		flags.myTPCodeWheelRightIndex = flags.generalWalkthroughMode == 1 ? 12 : 0;
-		flags.myMCDeathGodOfferings = 0;
-		flags.myWGPlacedRope = flags.generalWalkthroughMode;
-		flags.myWTCurrentBridgeStatus = 0;
-		flags.myAGHeadAStatus = flags.generalWalkthroughMode == 1 ? 2 : 0;
-		flags.myAGHeadBStatus = 0;
-		flags.myAGHeadCStatus = 0;
-		flags.myAGHeadDStatus = flags.generalWalkthroughMode == 1 ? 2 : 0;
-		flags.myAGHeadAStatusSkullID = flags.generalWalkthroughMode == 1 ? kItemCavernSkull : 0;
-		flags.myAGHeadBStatusSkullID = 0;
-		flags.myAGHeadCStatusSkullID = 0;
-		flags.myAGHeadDStatusSkullID = flags.generalWalkthroughMode == 1 ? kItemSpearSkull : 0;
-		flags.myAGTimerHeadID = 0;
-		flags.myAGTimerStartTime = 0;
-		flags.myDGOfferedHeart = 0;
-		flags.myAGHeadAOpenedTime = 0;
-		flags.myAGHeadBOpenedTime = 0;
-		flags.myAGHeadCOpenedTime = 0;
-		flags.myAGHeadDOpenedTime = 0;
+		_globalFlags.myPickedUpCeramicBowl = inventoryWindow->isItemInInventory(kItemCeramicBowl) ? 1 : 0;
+		_globalFlags.myMCPickedUpSkull = inventoryWindow->isItemInInventory(kItemCavernSkull) ? 1 : 0;
+		_globalFlags.myWGRetrievedJadeBlock = inventoryWindow->isItemInInventory(kItemJadeBlock) ? 1 : 0;
+		_globalFlags.myWTRetrievedLimestoneBlock = inventoryWindow->isItemInInventory(kItemLimestoneBlock) ? 1 : 0;
+		_globalFlags.myAGRetrievedEntrySkull = inventoryWindow->isItemInInventory(kItemEntrySkull) ? 1 : 0;
+		_globalFlags.myAGRetrievedSpearSkull = inventoryWindow->isItemInInventory(kItemSpearSkull) ? 1 : 0;
+		_globalFlags.myAGRetrievedCopperMedal = inventoryWindow->isItemInInventory(kItemCopperMedallion) ? 1 : 0;
+		_globalFlags.myAGRetrievedObsidianBlock = inventoryWindow->isItemInInventory(kItemObsidianBlock) ? 1 : 0;
+		_globalFlags.takenEnvironCart = inventoryWindow->isItemInInventory(kItemEnvironCart) ? 1 : 0;
 
-		flags.myPickedUpCeramicBowl = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemCeramicBowl) ? 1 : 0;
-		flags.myMCPickedUpSkull = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) ? 1 : 0;
-		flags.myWGRetrievedJadeBlock = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemJadeBlock) ? 1 : 0;
-		flags.myWTRetrievedLimestoneBlock = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemLimestoneBlock) ? 1 : 0;
-		flags.myAGRetrievedEntrySkull = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) ? 1 : 0;
-		flags.myAGRetrievedSpearSkull = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull) ? 1 : 0;
-		flags.myAGRetrievedCopperMedal = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemCopperMedallion) ? 1 : 0;
-		flags.myAGRetrievedObsidianBlock = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemObsidianBlock) ? 1 : 0;
-		flags.takenEnvironCart = ((GameUIWindow *)viewWindow->getParent())->_inventoryWindow->isItemInInventory(kItemEnvironCart) ? 1 : 0;
-
-		if (flags.generalWalkthroughMode == 1) {
-			flags.myMCPickedUpSkull = 1;
-			flags.myAGRetrievedSpearSkull = 1;
-			flags.myAGRetrievedCopperMedal = 1;
+		if (_globalFlags.generalWalkthroughMode == 1) {
+			_globalFlags.myMCPickedUpSkull = 1;
+			_globalFlags.myAGRetrievedSpearSkull = 1;
+			_globalFlags.myAGRetrievedCopperMedal = 1;
 		}
 	} else if (environment == 2) {
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().scoreEnteredMainCavern = 1;
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedMainCavern = 1;
+		_globalFlags.scoreEnteredMainCavern = 1;
+		_globalFlags.myVisitedMainCavern = 1;
 	} else if (environment == 3) {
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedWealthGod = 1;
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedSpecRooms = 1;
+		_globalFlags.myVisitedWealthGod = 1;
+		_globalFlags.myVisitedSpecRooms = 1;
 	} else if (environment == 4) {
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedWaterGod = 1;
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedSpecRooms = 1;
+		_globalFlags.myVisitedWaterGod = 1;
+		_globalFlags.myVisitedSpecRooms = 1;
 	} else if (environment == 5) {
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedArrowGod = 1;
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedSpecRooms = 1;
+		_globalFlags.myVisitedArrowGod = 1;
+		_globalFlags.myVisitedSpecRooms = 1;
 	} else if (environment == 6) {
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedDeathGod = 1;
-		((SceneViewWindow *)viewWindow)->getGlobalFlags().myVisitedSpecRooms = 1;
+		_globalFlags.myVisitedDeathGod = 1;
+		_globalFlags.myVisitedSpecRooms = 1;
 	}
 
 	return true;
@@ -2236,15 +2551,15 @@ bool SceneViewWindow::startMayanAmbient(int oldTimeZone, int oldEnvironment, int
 }
 
 bool SceneViewWindow::checkCustomMayanAICommentDependencies(const Location &commentLocation, const AIComment &commentData) {
-	//((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory
+	InventoryWindow *inventoryWindow = ((GameUIWindow *)getParent())->_inventoryWindow;
 
 	switch (commentData.dependencyFlagOffsetB) {
 	case 1: // Player hasn't translated any inscriptions
 		return _globalFlags.myTPTextTranslated == 0;
 	case 2: // Player hasn't translated any inscriptions, has translate biochip
-		return _globalFlags.myTPTextTranslated == 0 && ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemBioChipTranslate);
+		return _globalFlags.myTPTextTranslated == 0 && inventoryWindow->isItemInInventory(kItemBioChipTranslate);
 	case 3: // Player hasn't translated any inscriptions, doesn't have translate biochip
-		return _globalFlags.myTPTextTranslated == 0 && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemBioChipTranslate);
+		return _globalFlags.myTPTextTranslated == 0 && !inventoryWindow->isItemInInventory(kItemBioChipTranslate);
 	case 4: // Has translated inscription above calendar, calendar not set to sacred day, player has never been to main cavern
 		return _globalFlags.myTPCalendarTopTranslated == 1 && _globalFlags.myTPCodeWheelStatus == 0 && _globalFlags.myVisitedMainCavern == 0;
 	case 5: // Has translated inscription above calendar, calendar is set to sacred day, player has never been to main cavern
@@ -2254,7 +2569,7 @@ bool SceneViewWindow::checkCustomMayanAICommentDependencies(const Location &comm
 	case 7: // Player has never been to main cavern, calendar not set to sacred day
 		return _globalFlags.myVisitedMainCavern == 0 && _globalFlags.myTPCodeWheelStatus == 0;
 	case 8: // Ceramic bowl not in the inventory
-		return !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCeramicBowl);
+		return !inventoryWindow->isItemInInventory(kItemCeramicBowl);
 	case 9: // If node is not 5, 6, or 8
 		return commentLocation.node != 6 && commentLocation.node != 5 && commentLocation.node != 8;
 	case 10: // If node is not 1, 0, 7, or 8
@@ -2266,7 +2581,7 @@ bool SceneViewWindow::checkCustomMayanAICommentDependencies(const Location &comm
 	case 13: // Not any door, no translations
 		return _globalFlags.myVisitedSpecRooms == 0 && _globalFlags.myMCTransDoor == 0;
 	case 14: // Not any door, no translations, has translate chip
-		return _globalFlags.myVisitedSpecRooms == 0 && _globalFlags.myMCTransDoor == 0 && ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemBioChipTranslate);
+		return _globalFlags.myVisitedSpecRooms == 0 && _globalFlags.myMCTransDoor == 0 && inventoryWindow->isItemInInventory(kItemBioChipTranslate);
 	case 15: // Not any door, has translated arrow or translated water or translated wealth
 		return _globalFlags.myVisitedSpecRooms == 0 && (_globalFlags.myMCTransAGOffering == 1 || _globalFlags.myMCTransWGOffering == 1 || _globalFlags.myMCTransWTOffering == 1);
 	case 16: // Has translated wealth, has not been through wealth god door
@@ -2300,7 +2615,7 @@ bool SceneViewWindow::checkCustomMayanAICommentDependencies(const Location &comm
 	case 30: // Never put in heart
 		return _globalFlags.myDGOfferedHeart == 0;
 	case 31: // Never put in heart, no heart in inventory
-		return _globalFlags.myDGOfferedHeart == 0 && ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemPreservedHeart);
+		return _globalFlags.myDGOfferedHeart == 0 && inventoryWindow->isItemInInventory(kItemPreservedHeart);
 	case 32: // After put in heart, puzzle box never opened
 		return _globalFlags.myDGOfferedHeart == 1 && _globalFlags.myDGOpenedPuzzleBox == 0;
 	case 33: // After put in heart, puzzle box never opened, player has not translated 'Itzamna' inscription over inside door of temple
@@ -2316,25 +2631,25 @@ bool SceneViewWindow::checkCustomMayanAICommentDependencies(const Location &comm
 	case 38: // S1 jam, S2 not jam, S3 not jam, not altar
 		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGVisitedAltar == 0;
 	case 39: // S1 jam, S2 not jam, S3 not jam, S4 not jam, not altar, no skulls
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGVisitedAltar == 0 && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull);
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGVisitedAltar == 0 && !inventoryWindow->isItemInInventory(kItemCavernSkull) && !inventoryWindow->isItemInInventory(kItemEntrySkull) && !inventoryWindow->isItemInInventory(kItemSpearSkull);
 	case 40: // Before interacting with S3 or S4, not altar
 		return _globalFlags.myAGHeadCTouched == 0 && _globalFlags.myAGHeadDTouched == 0 && _globalFlags.myAGVisitedAltar == 0;
 	case 41: // S1 jam, S2 jam, S3 not jam, S4 not jam, after interacting with S3 and S4, not altar, no skulls
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 2 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGHeadCTouched == 1 && _globalFlags.myAGHeadDTouched == 1 && _globalFlags.myAGVisitedAltar == 0 && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull);
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 2 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGHeadCTouched == 1 && _globalFlags.myAGHeadDTouched == 1 && _globalFlags.myAGVisitedAltar == 0 && !inventoryWindow->isItemInInventory(kItemCavernSkull) && !inventoryWindow->isItemInInventory(kItemEntrySkull) && !inventoryWindow->isItemInInventory(kItemSpearSkull);
 	case 42: // S1 jam, S2 not jam, S3 not jam, S4 not jam, after interacting with S3 and S4, not altar, only 1 skull in inventory
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGHeadCTouched == 1 && _globalFlags.myAGHeadDTouched == 1 && _globalFlags.myAGVisitedAltar == 0 && (((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) ^ ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) ^ ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull));
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGHeadCTouched == 1 && _globalFlags.myAGHeadDTouched == 1 && _globalFlags.myAGVisitedAltar == 0 && (inventoryWindow->isItemInInventory(kItemCavernSkull) ^ inventoryWindow->isItemInInventory(kItemEntrySkull) ^ inventoryWindow->isItemInInventory(kItemSpearSkull));
 	case 43: // S1 jam, S2 jam, S3 not jam, S4 not jam, after interacting with S3 and S4, not altar, no skulls
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 2 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGHeadCTouched == 1 && _globalFlags.myAGHeadDTouched == 1 && _globalFlags.myAGVisitedAltar == 0 && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull);
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 2 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGHeadCTouched == 1 && _globalFlags.myAGHeadDTouched == 1 && _globalFlags.myAGVisitedAltar == 0 && !inventoryWindow->isItemInInventory(kItemCavernSkull) && !inventoryWindow->isItemInInventory(kItemEntrySkull) && !inventoryWindow->isItemInInventory(kItemSpearSkull);
 	case 44: // S1 jam, S2 not jam, S3 jam, S4 not jam, not altar, no skulls
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 2 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGVisitedAltar == 0 && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull);
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 2 && _globalFlags.myAGHeadDStatus == 0 && _globalFlags.myAGVisitedAltar == 0 && !inventoryWindow->isItemInInventory(kItemCavernSkull) && !inventoryWindow->isItemInInventory(kItemEntrySkull) && !inventoryWindow->isItemInInventory(kItemSpearSkull);
 	case 45: // S1 jam, S2 not jam, S3 not jam, S4 jam, not altar, no skulls
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0 && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) && !((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull);
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0 && !inventoryWindow->isItemInInventory(kItemCavernSkull) && !inventoryWindow->isItemInInventory(kItemEntrySkull) && !inventoryWindow->isItemInInventory(kItemSpearSkull);
 	case 46: // S1 jam, S2 not jam, S3 not jam, S4 jam, not altar, only 1 skull in inventory
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0 && (((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) ^ ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) ^ ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull));
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadBStatus == 0 && _globalFlags.myAGHeadCStatus == 0 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0 && (inventoryWindow->isItemInInventory(kItemCavernSkull) ^ inventoryWindow->isItemInInventory(kItemEntrySkull) ^ inventoryWindow->isItemInInventory(kItemSpearSkull));
 	case 47: // S1 jam, S3 jam, S4 jam, not altar
 		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadCStatus == 2 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0;
 	case 48: // S1 jam, S3 jam, not altar, only 1 skull in inventory
-		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadCStatus == 2 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0 && (((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemCavernSkull) ^ ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemEntrySkull) ^ ((GameUIWindow *)getParent())->_inventoryWindow->isItemInInventory(kItemSpearSkull));
+		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadCStatus == 2 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0 && (inventoryWindow->isItemInInventory(kItemCavernSkull) ^ inventoryWindow->isItemInInventory(kItemEntrySkull) ^ inventoryWindow->isItemInInventory(kItemSpearSkull));
 	case 49: // S1 jam, S2 jam, S3 jam, not altar
 		return _globalFlags.myAGHeadAStatus == 2 && _globalFlags.myAGHeadCStatus == 2 && _globalFlags.myAGHeadDStatus == 2 && _globalFlags.myAGVisitedAltar == 0;
 	case 50: // S1 not jam, S2 jam, not altar
@@ -2345,6 +2660,10 @@ bool SceneViewWindow::checkCustomMayanAICommentDependencies(const Location &comm
 }
 
 SceneBase *SceneViewWindow::constructMayanSceneObject(Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	byte dummyFlag = 0;	// a dummy flag, used as a placeholder for writing (but not reading)
+
 	// Special scene for the trial version
 	if (_vm->isTrial())
 		return new TrialRecallScene(_vm, viewWindow, sceneStaticData, priorLocation);
@@ -2356,7 +2675,7 @@ SceneBase *SceneViewWindow::constructMayanSceneObject(Window *viewWindow, const 
 	case 1:
 		return new VideoDeath(_vm, viewWindow, sceneStaticData, priorLocation, 10, IDS_HUMAN_PRESENCE_500METERS);
 	case 2:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 60, 134, 118, 180, kItemCeramicBowl, 96, offsetof(GlobalFlags, myPickedUpCeramicBowl));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 60, 134, 118, 180, kItemCeramicBowl, 96, globalFlags.myPickedUpCeramicBowl);
 	case 3:
 		return new PlaceCeramicBowl(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 4:
@@ -2366,59 +2685,59 @@ SceneBase *SceneViewWindow::constructMayanSceneObject(Window *viewWindow, const 
 	case 6:
 		return new DateCombinationRead(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 7:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_INNER_DOOR_TRANS_TEXT, 16, 6, 402, 110, offsetof(GlobalFlags, myTPTextTranslated), offsetof(GlobalFlags, myTPTransBreathOfItzamna));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_INNER_DOOR_TRANS_TEXT, 16, 6, 402, 110, globalFlags.myTPTextTranslated, globalFlags.myTPTransBreathOfItzamna, dummyFlag);
 	case 8:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_INNER_LEFT_TRANS_TEXT, 1, 6, 431, 98, offsetof(GlobalFlags, myTPTextTranslated));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_INNER_LEFT_TRANS_TEXT, 1, 6, 431, 98, globalFlags.myTPTextTranslated, dummyFlag, dummyFlag);
 	case 9:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_INNER_MIDDLE_TRANS_TEXT, 16, 8, 430, 114, offsetof(GlobalFlags, myTPTextTranslated), offsetof(GlobalFlags, myTPCalendarTopTranslated));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_INNER_MIDDLE_TRANS_TEXT, 16, 8, 430, 114, globalFlags.myTPTextTranslated, globalFlags.myTPCalendarTopTranslated, dummyFlag);
 	case 10:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_OUTER_SOUTHLEFT_TRANS_TEXT, 4, 55, 426, 95, offsetof(GlobalFlags, myTPTextTranslated));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_OUTER_SOUTHLEFT_TRANS_TEXT, 4, 55, 426, 95, globalFlags.myTPTextTranslated, dummyFlag, dummyFlag);
 	case 11:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_OUTER_WEST_TRANS_TEXT, 4, 72, 420, 108, offsetof(GlobalFlags, myTPTextTranslated));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_OUTER_WEST_TRANS_TEXT, 4, 72, 420, 108, globalFlags.myTPTextTranslated, dummyFlag, dummyFlag);
 	case 12:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_OUTER_NORTH_TRANS_TEXT, 6, 38, 428, 76, offsetof(GlobalFlags, myTPTextTranslated));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYTP_OUTER_NORTH_TRANS_TEXT, 6, 38, 428, 76, globalFlags.myTPTextTranslated, dummyFlag, dummyFlag);
 	case 13:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 140, 124, 174, 158, kItemCavernSkull, 3, offsetof(GlobalFlags, myMCPickedUpSkull));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 140, 124, 174, 158, kItemCavernSkull, 3, globalFlags.myMCPickedUpSkull);
 	case 14:
 		return new GenericCavernDoorMainView(_vm, viewWindow, sceneStaticData, priorLocation, 1, 126, 1, 306, 30, 2, 287, 30, 379, 82, 3, 275, 84, 401, 174);
 	case 15:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WG_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, offsetof(GlobalFlags, myMCTransDoor), offsetof(GlobalFlags, myWGTransDoorTop));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WG_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, globalFlags.myMCTransDoor, globalFlags.myWGTransDoorTop, dummyFlag);
 	case 16:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WG_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, offsetof(GlobalFlags, myMCTransDoor), offsetof(GlobalFlags, myMCTransWGOffering));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WG_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, globalFlags.myMCTransDoor, globalFlags.myMCTransWGOffering, dummyFlag);
 	case 17:
 		return new GenericCavernDoorOfferingHead(_vm, viewWindow, sceneStaticData, priorLocation, kItemGoldCoins, 4, TRANSITION_WALK, -1, 1082, 13);
 	case 18:
 		return new GenericCavernDoorMainView(_vm, viewWindow, sceneStaticData, priorLocation, 1, 126, 1, 306, 30, 2, 287, 30, 379, 82, 3, 275, 84, 401, 174);
 	case 19:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WATERGOD_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, offsetof(GlobalFlags, myMCTransDoor));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WATERGOD_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, globalFlags.myMCTransDoor, dummyFlag, dummyFlag);
 	case 20:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WATERGOD_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, offsetof(GlobalFlags, myMCTransDoor), offsetof(GlobalFlags, myMCTransWTOffering));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_WATERGOD_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, globalFlags.myMCTransDoor, globalFlags.myMCTransWTOffering, dummyFlag);
 	case 21:
 		return new GenericCavernDoorOfferingHead(_vm, viewWindow, sceneStaticData, priorLocation, kItemWaterCanFull, 4, TRANSITION_WALK, -1, 1125, 13);
 	case 22:
 		return new GenericCavernDoorMainView(_vm, viewWindow, sceneStaticData, priorLocation, 1, 126, 1, 306, 30, 2, 287, 30, 379, 82, 3, 275, 84, 401, 174);
 	case 23:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_AG_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, offsetof(GlobalFlags, myMCTransDoor));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_AG_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, globalFlags.myMCTransDoor, dummyFlag, dummyFlag);
 	case 24:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_AG_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, offsetof(GlobalFlags, myMCTransDoor), offsetof(GlobalFlags, myMCTransAGOffering));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_AG_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, globalFlags.myMCTransDoor, globalFlags.myMCTransAGOffering, dummyFlag);
 	case 25:
 		return new GenericCavernDoorOfferingHead(_vm, viewWindow, sceneStaticData, priorLocation, kItemBloodyArrow, 4, TRANSITION_WALK, -1, 1010, 12);
 	case 26:
 		return new GenericCavernDoorMainView(_vm, viewWindow, sceneStaticData, priorLocation, 1, 126, 1, 306, 30, 2, 287, 30, 379, 82, 3, 275, 84, 401, 174);
 	case 27:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_DEATHGOD_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, offsetof(GlobalFlags, myMCTransDoor));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_DEATHGOD_DOOR_TOP_TRANS_TEXT, 12, 128, 426, 156, globalFlags.myMCTransDoor, dummyFlag, dummyFlag);
 	case 28:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_DEATHGOD_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, offsetof(GlobalFlags, myMCTransDoor), offsetof(GlobalFlags, myMCTransDGOffering));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDMYMC_DEATHGOD_DOOR_RIGHT_TRANS_TEXT, 46, 1, 315, 188, globalFlags.myMCTransDoor, globalFlags.myMCTransDGOffering, dummyFlag);
 	case 29:
 		return new DeathGodCavernDoorOfferingHead(_vm, viewWindow, sceneStaticData, priorLocation, 4, TRANSITION_WALK, -1, 1045, 13);
 	case 30:
 		return new WealthGodRopeDrop(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 31:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 194, 106, 278, 126, kItemJadeBlock, 105, offsetof(GlobalFlags, myWGRetrievedJadeBlock));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 194, 106, 278, 126, kItemJadeBlock, 105, globalFlags.myWGRetrievedJadeBlock);
 	case 32:
 		return new BasicDoor(_vm, viewWindow, sceneStaticData, priorLocation, 140, 22, 306, 189, 2, 3, 0, 3, 1, 1, TRANSITION_WALK, -1, 264, 14, 14);
 	case 33:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 158, 88, 288, 116, kItemLimestoneBlock, 84, offsetof(GlobalFlags, myWTRetrievedLimestoneBlock));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 158, 88, 288, 116, kItemLimestoneBlock, 84, globalFlags.myWTRetrievedLimestoneBlock);
 	case 34:
 		return new BasicDoor(_vm, viewWindow, sceneStaticData, priorLocation, 80, 0, 332, 189, 2, 4, 0, 2, 1, 1, TRANSITION_WALK, -1, 401, 14, 14);
 	case 35:
@@ -2450,13 +2769,13 @@ SceneBase *SceneViewWindow::constructMayanSceneObject(Window *viewWindow, const 
 	case 50:
 		return new BasicDoor(_vm, viewWindow, sceneStaticData, priorLocation,106, 0, 294, 189, 2, 5, 0, 1, 1, 1, TRANSITION_WALK, -1, 427, 13, 11);
 	case 51:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 235, 144, 285, 181, kItemEntrySkull, 3, offsetof(GlobalFlags, myAGRetrievedEntrySkull));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 235, 144, 285, 181, kItemEntrySkull, 3, globalFlags.myAGRetrievedEntrySkull);
 	case 52:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 200, 138, 231, 185, kItemSpearSkull, 46, offsetof(GlobalFlags, myAGRetrievedSpearSkull));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 200, 138, 231, 185, kItemSpearSkull, 46, globalFlags.myAGRetrievedSpearSkull);
 	case 53:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 201, 4, 235, 22, kItemCopperMedallion, 45, offsetof(GlobalFlags, myAGRetrievedCopperMedal));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 201, 4, 235, 22, kItemCopperMedallion, 45, globalFlags.myAGRetrievedCopperMedal);
 	case 54:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 206, 110, 280, 142, kItemObsidianBlock, 72, offsetof(GlobalFlags, myAGRetrievedObsidianBlock));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 206, 110, 280, 142, kItemObsidianBlock, 72, globalFlags.myAGRetrievedObsidianBlock);
 	case 55:
 		return new ArrowGodHead(_vm, viewWindow, sceneStaticData, priorLocation, 0,  182, 87, 242, 189, 4, 75, 83, 79, 0, 2, 1, 3);
 	case 56:
@@ -2476,11 +2795,11 @@ SceneBase *SceneViewWindow::constructMayanSceneObject(Window *viewWindow, const 
 	case 67:
 		return new DeathGodPuzzleBox(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 68:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 206, 76, 246, 116, kItemEnvironCart, 53, offsetof(GlobalFlags, takenEnvironCart));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 206, 76, 246, 116, kItemEnvironCart, 53, globalFlags.takenEnvironCart);
 	case 69:
 		return new PlaySoundExitingFromScene(_vm, viewWindow, sceneStaticData, priorLocation, 10);
 	case 70:
-		return new PlayStingers(_vm, viewWindow, sceneStaticData, priorLocation, 128, offsetof(GlobalFlags, myMCStingerID), offsetof(GlobalFlags, myMCStingerChannelID), 11, 14);
+		return new PlayStingers(_vm, viewWindow, sceneStaticData, priorLocation, 128, globalFlags.myMCStingerID, globalFlags.myMCStingerChannelID, 11, 14);
 	case 71:
 		return new DisplayMessageWithEvidenceWhenEnteringNode(_vm, viewWindow, sceneStaticData, priorLocation, MAYAN_EVIDENCE_BROKEN_GLASS_PYRAMID, IDS_MBT_EVIDENCE_PRESENT);
 	case 72:
@@ -2508,11 +2827,11 @@ SceneBase *SceneViewWindow::constructMayanSceneObject(Window *viewWindow, const 
 	case 85:
 		return new WalkVolumeChange(_vm, viewWindow, sceneStaticData, priorLocation, 255, 0, -1, 10); // First param has to be wrong
 	case 86:
-		return new SetVolumeAndFlag(_vm, viewWindow, sceneStaticData, priorLocation, 64, offsetof(GlobalFlags, myWGSeenLowerPassage));
+		return new SetVolumeAndFlag(_vm, viewWindow, sceneStaticData, priorLocation, 64, globalFlags.myWGSeenLowerPassage);
 	case 87:
-		return new SetVolumeAndFlag(_vm, viewWindow, sceneStaticData, priorLocation, 64, offsetof(GlobalFlags, myWGCrossedRopeBridge));
+		return new SetVolumeAndFlag(_vm, viewWindow, sceneStaticData, priorLocation, 64, globalFlags.myWGCrossedRopeBridge);
 	case 88:
-		return new SetVolumeAndFlag(_vm, viewWindow, sceneStaticData, priorLocation, 64);
+		return new SetVolumeAndFlag(_vm, viewWindow, sceneStaticData, priorLocation, 64, dummyFlag);
 	case 90:
 		return new WalkVolumeChange(_vm, viewWindow, sceneStaticData, priorLocation, 40, 3160, 12, 14);
 	case 91:
@@ -2534,13 +2853,13 @@ SceneBase *SceneViewWindow::constructMayanSceneObject(Window *viewWindow, const 
 	case 121:
 		return new PlaySoundExitingFromScene(_vm, viewWindow, sceneStaticData, priorLocation, 14);
 	case 125:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 226, 90, 256, 104, kItemCopperMedallion, 15, offsetof(GlobalFlags, myAGRetrievedCopperMedal));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 226, 90, 256, 104, kItemCopperMedallion, 15, globalFlags.myAGRetrievedCopperMedal);
 	case 126:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDS_MY_AG_ALTAR_TEXT, 120, 44, 330, 72, -1, -1, offsetof(GlobalFlags, myAGVisitedAltar));
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDS_MY_AG_ALTAR_TEXT, 120, 44, 330, 72, dummyFlag, dummyFlag, globalFlags.myAGVisitedAltar);
 	case 127:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDS_MY_WG_ALTAR_TEXT, 118, 14, 338, 44);
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDS_MY_WG_ALTAR_TEXT, 118, 14, 338, 44, dummyFlag, dummyFlag, dummyFlag);
 	case 128:
-		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDS_MY_WT_ALTAR_TEXT, 106, 128, 344, 162);
+		return new ViewSingleTranslation(_vm, viewWindow, sceneStaticData, priorLocation, IDS_MY_WT_ALTAR_TEXT, 106, 128, 344, 162, dummyFlag, dummyFlag, dummyFlag);
 	default:
 		warning("Unknown Mayan scene object %d", sceneStaticData.classID);
 		break;

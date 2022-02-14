@@ -30,86 +30,63 @@
 
 namespace Trecision {
 
-#define MAXANIM  750
-#define MAXSMACK 3
-
-// SMACKER ANIMATION FLAGS
-#define SMKANIM_BKG 1
-#define SMKANIM_ICON 2
-#define SMKANIM_LOOP 4
-#define SMKANIM_OLD 8
-#define SMKANIM_ON 16
-
-enum SmackerType {
-	kSmackerBackground = 0,		// Scene background animations
-	kSmackerAction = 1,			// Main character action animations
-	kSmackerIcon = 2			// Smacker inventory animations
-};
-
 class TrecisionEngine;
 
-class NightlongSmackerDecoder : public Video::SmackerDecoder {
+class NightlongVideoDecoder : public Video::SmackerDecoder {
 public:
-	bool loadStream(Common::SeekableReadStream *stream) override;
 	void muteTrack(uint track, bool mute);
 	void setMute(bool mute);
-	bool forceSeekToFrame(uint frame);
-	bool endOfFrames() const;
+	virtual bool forceSeekToFrame(uint frame) { return false; }
+	virtual bool endOfFrames() const { return false; }
 };
 
-class AnimManager {
+class NightlongSmackerDecoder : public NightlongVideoDecoder {
 public:
-	AnimManager(TrecisionEngine *vm);
-	~AnimManager();
+	bool loadStream(Common::SeekableReadStream *stream) override;
+	bool forceSeekToFrame(uint frame) override;
+	bool endOfFrames() const override;
+};
+
+class NightlongAmigaDecoder : public NightlongVideoDecoder {
+public:
+	bool loadStream(Common::SeekableReadStream *stream) override;
+	bool forceSeekToFrame(uint frame) override;
+	bool endOfFrames() const override;
+	const Common::Rect *getNextDirtyRect() override;
 
 private:
-	TrecisionEngine *_vm;
+	Common::Rect _lastDirtyRect;
 
-	NightlongSmackerDecoder *_smkAnims[MAXSMACK];
-	uint16 _playingAnims[MAXSMACK];
+	void readNextPacket() override;
 
-	FastFile _animFile[MAXSMACK]; // nlanim.cd1 / nlanim.cd2 / nlanim.cd3
-	int _curCD;
-	bool _bgAnimRestarted;
+	class AmigaVideoTrack : public VideoTrack {
+	public:
+		AmigaVideoTrack(const Common::String &fileName);
 
-	void openSmk(int slot, Common::SeekableReadStream *stream);
-	void openSmkAnim(int slot, const Common::String &name);
-	void toggleMuteBgAnim(uint16 animation);
-	void closeSmk(int slot);
-	void drawFrame(NightlongSmackerDecoder *smkDecoder, uint16 x, uint16 y, bool updateScreen);
-	void drawFrameSubtitles(Graphics::Surface *surface, int frameNum);
-	void setVideoRange(NightlongSmackerDecoder *smkDecoder, int &startFrame, int &endFrame);
-	void refreshSmkAnim(uint16 animation);
-	void handleEndOfVideo(int animation, int slot);
-	bool shouldShowAnim(int animation, Common::Rect curRect);
+	private:
+		byte _palette[3 * 256];
+		int _curFrame;
+		uint32 _frameCount;
 
-	void drawSmkBackgroundFrame(int animation);
-	void drawSmkIconFrame(uint16 startIcon, uint16 iconNum);
-	void drawSmkActionFrame();
-	void swapCD(int cd);
-	void patchAnimTab();
+		uint16 getWidth() const override;
+		uint16 getHeight() const override;
+		Graphics::PixelFormat getPixelFormat() const override;
+		int getCurFrame() const override { return _curFrame; }
+		uint32 getNextFrameStartTime() const override;
+		const Graphics::Surface *decodeNextFrame() override;
+		int getFrameCount() const override { return _frameCount; }
+		const byte *getPalette() const override { return _palette; }
+		bool hasDirtyPalette() const override { return true; }
+	};
 
-public:
-	Common::Rect _animRect;
-	SAnim _animTab[MAXANIM];
-
-	void smkGoto(int slot, int frame);
-	void smkToggleAudio(int slot, bool on);
-	void smkToggleTrackAudio(int slot, int track, bool on);
-	int16 smkCurFrame(int slot);
-	void smkStop(uint16 slot);
-	void refreshActionAnimation() { refreshSmkAnim(_playingAnims[kSmackerAction]); }
-	bool isActionActive() const { return _playingAnims[kSmackerAction] != 0; }
-	void playMovie(const Common::String &filename, int startFrame = 0, int endFrame = -1, bool singleChoice = false);
-	void startFullMotion();
-	void stopFullMotion();
-
-	void refreshAnim(int box);
-	void startSmkAnim(uint16 animation);
-	void stopAllSmkAnims();
-
-	void syncGameStream(Common::Serializer &ser);
-	void loadAnimTab(Common::SeekableReadStreamEndian *stream);
+	class AmigaAudioTrack : public AudioTrack {
+	public:
+		AmigaAudioTrack(const Common::String &fileName);
+	private:
+		Audio::AudioStream *getAudioStream() const override { return _audioStream; }
+		Audio::AudioStream *_audioStream;
+	};
 };
+
 } // End of namespace Trecision
 #endif

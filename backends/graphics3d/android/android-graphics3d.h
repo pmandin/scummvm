@@ -23,13 +23,16 @@
 #define BACKENDS_GRAPHICS3D_ANDROID_ANDROID_GRAPHICS3D_H
 
 #include "common/scummsys.h"
-#include "graphics/opengl/framebuffer.h"
 
 #include "backends/graphics/graphics.h"
 #include "backends/graphics/android/android-graphics.h"
+#include "backends/graphics3d/opengl/framebuffer.h"
 #include "backends/graphics3d/android/texture.h"
 
-class AndroidGraphics3dManager : public GraphicsManager, public AndroidCommonGraphics {
+#include "backends/platform/android/touchcontrols.h"
+
+class AndroidGraphics3dManager :
+	public GraphicsManager, public AndroidCommonGraphics, public TouchControlsDrawer {
 public:
 	AndroidGraphics3dManager();
 	virtual ~AndroidGraphics3dManager();
@@ -116,6 +119,9 @@ public:
 	virtual Common::List<Graphics::PixelFormat> getSupportedFormats() const override;
 #endif
 
+	void touchControlNotifyChanged() override;
+	void touchControlDraw(int16 x, int16 y, int16 w, int16 h, const Common::Rect &clip) override;
+
 protected:
 	void updateScreenRect();
 	void updateCursorScaling();
@@ -127,8 +133,6 @@ protected:
 	bool loadVideoMode(uint requestedWidth, uint requestedHeight, const Graphics::PixelFormat &format);
 
 	void refreshScreen();
-
-	void *getProcAddress(const char *name) const;
 
 private:
 	void initOverlay();
@@ -176,6 +180,10 @@ private:
 	int _mouse_width_scaled, _mouse_height_scaled;
 	bool _mouse_dont_scale;
 	bool _show_mouse;
+
+	// Touch controls layer
+	GLESTexture *_touchcontrols_texture;
+	bool _old_touch_3d_mode;
 };
 
 #endif

@@ -26,20 +26,19 @@
 #include "engines/wintermute/math/rect32.h"
 #include "engines/wintermute/math/vector2.h"
 #include "engines/wintermute/dctypes.h"
+
 #include "graphics/transform_struct.h"
+
 #include "math/matrix4.h"
 #include "math/ray.h"
 
 #if defined(USE_OPENGL_GAME)
 
 #include "graphics/opengl/system_headers.h"
-#include "graphics/opengl/texture.h"
 
 namespace Wintermute {
 
 class BaseSurfaceOpenGL3D;
-
-#include "common/pack-start.h"
 
 struct SimpleShadowVertex {
 	float u;
@@ -50,9 +49,7 @@ struct SimpleShadowVertex {
 	float x;
 	float y;
 	float z;
-} PACKED_STRUCT;
-
-#include "common/pack-end.h"
+};
 
 class BaseRenderOpenGL3D : public BaseRenderer3D {
 public:

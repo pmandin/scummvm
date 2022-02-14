@@ -6,6 +6,7 @@ For a more comprehensive changelog of the latest experimental code, see:
  New games:
    - Added support for Sanitarium.
    - Added support for Hades Challenge.
+   - Added support for Marvel Comics Spider-Man: The Sinister Six.
 
  General:
    - The project license has been upgraded to GPLv3+.
@@ -13,6 +14,31 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Implemented enhanced filtering in the Search box. See "Understanding
      the search box" in the documentation for details.
    - Implemented Icon view in GUI (GSoC task).
+
+ AGI:
+   - Added support for Macintosh versions of Manhunter 1-2.
+
+ BBVS:
+   - Fixed the size of the main menu buttons being incorrect in some cases.
+   - Fixed crash at the end of the Hock-A-Loogie mini game.
+
+ Buried:
+   - Added support for skipping synchronous audio and video.
+   - The mouse pointer is now hidden during cutscenes.
+   - Implemented game pausing via Control-P.
+   - After saving, the player returns back to the game instead of the Biochip
+     menu.
+   - The game is now always paused when the Biochip menu or the save/restore
+     dialogs are open.
+   - Added metadata to saved games, including thumbnails, creation date and
+     play time.
+   - Saved games are now sorted by slot, like in other engines, instead of
+     being sorted alphabetically.
+   - The currently selected item is now stored in saved games.
+   - Comments from Arthur that play in the background can now be stopped with
+     the space key (the same key that replays Arthur's last comment).
+   - The agent evaluation (current points) can now be shown with Control-D.
+   - Fixed global flag corruption in death screens.
 
  Dreamweb:
    - Added text to speech for dialogs and object descriptions.
@@ -29,11 +55,34 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  SCI:
    - Added support for Text To Speech in SCI floppy games.
+   - Allow saving from the ScummVM Global Game Menu in the following games:
+     BRAIN1, BRAIN2, ECOQUEST1, ECOQUEST2, FAIRYTALES, PHARKAS, GK1, GK2, ICEMAN,
+     KQ1, KQ4, KQ5, KQ6, KQ7, LB1, LB2, LIGHTHOUSE, LONGBOW, LSL1, LSL2, LSL3,
+     LSL5, LSL6, LSL6HIRES, LSL7, PEPPER, PHANT2, PQ1, PQ2, PQ3, PQ4, PQSWAT,
+     QFG1, QFG1VGA, QFG2, QFG3, QFG4, SHIVERS, SQ1, SQ3, SQ4, SQ5, SQ6, TORIN.
 
  SCUMM:
    - New Digital iMUSE engine.
    - Rewrote music player for Amiga versions of Indy3 and Loom in accordance
      to the original code.
+   - Fix missing cursor in the 16-color Macintosh versions of Loom and Indiana
+     Jones and the Last Crusade after loading a savegame.
+   - It is now possible to replace the music in the floppy versions of Loom
+     with audio tracks. The ScummVM Wiki has a list of which parts of the Swan
+     Lake ballet the game uses.
+
+ Sherlock:
+   - Fixed slowdown in Serrated Scalpel intro when playing the game from a small
+     installation.
+   - Fixed UI glitches in Serrated Scalpel.
+
+ TwinE:
+   - Fixed a bug in the collision code that made the game unfinishable due to the
+     tank not moving any further in scene 63.
+   - Fixed light angle calculation which produced rendering artifacts in a few
+     scenes.
+   - Fixed polygon rendering method for the boat windows.
+   - Fixed wrong shooting direction for some actors.
 
  macOS port:
    - Added support for displaying OSD messages on the Touch Bar.

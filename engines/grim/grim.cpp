@@ -152,6 +152,7 @@ GrimEngine::GrimEngine(OSystem *syst, uint32 gameFlags, GrimGameType gameType, C
 	_fps[0] = 0;
 	_iris = new Iris();
 	_buildActiveActorsList = false;
+	_justSaveLoaded = false;
 
 	Color c(0, 0, 0);
 
@@ -517,6 +518,10 @@ Common::KeymapArray GrimEngine::initKeymapsGrim(const char *target) {
 	act = new Action("GMNU", _("Menu"));
 	act->setKeyEvent(KeyState(KEYCODE_F1));
 	act->addDefaultInputMapping("JOY_GUIDE");
+	engineKeyMap->addAction(act);
+
+	act = new Action("PAUSE", _("Pause"));
+	act->setKeyEvent(KeyState(KEYCODE_PAUSE));
 	engineKeyMap->addAction(act);
 
 	return Keymap::arrayOf(engineKeyMap);
@@ -1232,6 +1237,8 @@ void GrimEngine::savegameRestore() {
 
 	delete _savedState;
 
+	_justSaveLoaded = true;
+
 	//Re-read the values, since we may have been in some state that changed them when loading the savegame,
 	//e.g. running a cutscene, which sets the sfx volume to 0.
 	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, ConfMan.getInt("sfx_volume"));
@@ -1612,9 +1619,8 @@ void GrimEngine::setMode(EngineMode mode) {
 }
 
 void GrimEngine::clearEventQueue() {
-	Common::Event event;
-	while (g_system->getEventManager()->pollEvent(event)) {
-	}
+	g_system->getEventManager()->purgeKeyboardEvents();
+	g_system->getEventManager()->purgeMouseEvents();
 
 	for (int i = 0; i < KEYCODE_EXTRA_LAST; ++i) {
 		_controlsState[i] = false;

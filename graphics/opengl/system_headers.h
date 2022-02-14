@@ -24,38 +24,67 @@
 
 #include "common/scummsys.h"
 
-#ifdef USE_GLES2
+// On macOS we only support GL contexts. The reason is that Apple's GL interface
+// uses "void *" for GLhandleARB which is not type compatible with GLint. This
+// kills our aliasing trick for extension functions and thus would force us to
+// supply two different Shader class implementations or introduce other
+// wrappers. macOS only supports GL contexts right now anyway (at least
+// according to SDL2 sources), thus it is not much of an issue.
+#if defined(MACOSX) && (!defined(USE_GLES_MODE) || USE_GLES_MODE != 0)
+//#warning "Only forced OpenGL mode is supported on macOS. Overriding settings."
+#undef USE_GLES_MODE
+#define USE_GLES_MODE 0
+#endif
 
-#define GL_GLEXT_PROTOTYPES
-#ifdef IPHONE
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
+// We allow to force GL or GLES modes on compile time.
+// For this the USE_GLES_MODE define is used. The following values represent
+// the given selection choices:
+//  0 - Force OpenGL context
+//  1 - Force OpenGL ES context
+//  2 - Force OpenGL ES 2.0 context
+#ifdef USE_GLES_MODE
+	#define USE_FORCED_GL    (USE_GLES_MODE == 0)
+	#define USE_FORCED_GLES  (USE_GLES_MODE == 1)
+	#define USE_FORCED_GLES2 (USE_GLES_MODE == 2)
 #else
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-#endif
-#undef GL_GLEXT_PROTOTYPES
-
-#ifndef GL_BGRA
-#	define GL_BGRA GL_BGRA_EXT
+	#define USE_FORCED_GL    0
+	#define USE_FORCED_GLES  0
+	#define USE_FORCED_GLES2 0
 #endif
 
-#if !defined(GL_UNPACK_ROW_LENGTH)
-// The Android SDK does not declare GL_UNPACK_ROW_LENGTH_EXT
-#define GL_UNPACK_ROW_LENGTH 0x0CF2
+// Don't include any OpenGL stuff if we didn't enable it
+#ifdef USE_OPENGL
+#ifdef USE_GLAD
+
+	#include "graphics/opengl/glad.h"
+
+#elif USE_FORCED_GLES2
+
+	#define GL_GLEXT_PROTOTYPES
+	#if defined(IPHONE)
+		#include <OpenGLES/ES2/gl.h>
+		#include <OpenGLES/ES2/glext.h>
+	#else
+		#include <GLES2/gl2.h>
+		#include <GLES2/gl2ext.h>
+	#endif
+	#undef GL_GLEXT_PROTOTYPES
+
+	#ifndef GL_BGRA
+		#define GL_BGRA GL_BGRA_EXT
+	#endif
+
+	#if !defined(GL_UNPACK_ROW_LENGTH)
+		// The Android SDK does not declare GL_UNPACK_ROW_LENGTH_EXT
+		#define GL_UNPACK_ROW_LENGTH 0x0CF2
+	#endif
+
+	#if !defined(GL_MAX_SAMPLES)
+		// The Android SDK and SDL1 don't declare GL_MAX_SAMPLES
+		#define GL_MAX_SAMPLES 0x8D57
+	#endif
+
+#endif
 #endif
 
-#elif defined(USE_GLEW)
-#include <GL/glew.h>
-#elif defined(SDL_BACKEND) && defined(USE_OPENGL_GAME)
-#include <SDL_opengl.h>
-#elif defined(USE_OPENGL_GAME)
-#include <GL/gl.h>
-#endif
-
-#endif
-
-#if !defined(GL_MAX_SAMPLES)
-// The Android SDK and SDL1 don't declare GL_MAX_SAMPLES
-#define GL_MAX_SAMPLES 0x8D57
 #endif

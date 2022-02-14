@@ -79,7 +79,7 @@ ifeq ($(DYNAMIC_MODULES),1)
 	@for i in $(PLUGINS); do cp $$i ./dist-generic/scummvm; done
 endif
 
-# Special target to create a application wrapper for Mac OS X
+# Special target to create a application wrapper for macOS
 
 ifdef USE_DOCKTILEPLUGIN
 
@@ -461,11 +461,8 @@ endif
 OSX_STATIC_LIBS += -framework Sparkle -Wl,-rpath,@loader_path/../Frameworks
 endif
 endif
-ifdef USE_GLEW
-OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libGLEW.a
-endif
 
-# Special target to create a static linked binary for Mac OS X.
+# Special target to create a static linked binary for macOS.
 # We use -force_cpusubtype_ALL to ensure the binary runs on every
 # PowerPC machine.
 scummvm-static: $(DETECT_OBJS) $(OBJS)
@@ -482,7 +479,7 @@ iphone: $(DETECT_OBJS) $(OBJS)
 		-framework CoreFoundation -framework QuartzCore -framework Foundation \
 		-framework AudioToolbox -framework CoreAudio -framework SystemConfiguration -lobjc -lz
 
-# Special target to create a snapshot disk image for Mac OS X
+# Special target to create a snapshot disk image for macOS
 # TODO: Replace AUTHORS by Credits.rtf
 osxsnap: bundle
 	mkdir ScummVM-snapshot
@@ -496,6 +493,7 @@ osxsnap: bundle
 	mv ./ScummVM-snapshot/COPYING.LUA ./ScummVM-snapshot/License\ \(Lua\)
 	mv ./ScummVM-snapshot/COPYING.MIT ./ScummVM-snapshot/License\ \(MIT\)
 	mv ./ScummVM-snapshot/COPYING.TINYGL ./ScummVM-snapshot/License\ \(TinyGL\)
+	mv ./ScummVM-snapshot/COPYING.GLAD ./ScummVM-snapshot/License\ \(Glad\)
 	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/*
 	mkdir ScummVM-snapshot/doc
 	cp $(srcdir)/doc/QuickStart ./ScummVM-snapshot/doc/QuickStart

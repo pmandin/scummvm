@@ -32,6 +32,8 @@
 
 #include "sci/sci.h"
 #include "sci/dialogs.h"
+#include "sci/engine/features.h"
+#include "sci/engine/guest_additions.h"
 #include "sci/engine/kernel.h"
 #include "sci/engine/savegame.h"
 #include "sci/engine/script.h"
@@ -320,15 +322,8 @@ bool SciMetaEngine::hasFeature(MetaEngineFeature f) const {
 bool SciEngine::hasFeature(EngineFeature f) const {
 	return
 		(f == kSupportsReturnToLauncher) ||
-		(f == kSupportsLoadingDuringRuntime); // ||
-		//(f == kSupportsSavingDuringRuntime);
-		// We can't allow saving through ScummVM menu, because
-		//  a) lots of games don't like saving everywhere (e.g. castle of dr. brain)
-		//  b) some games even dont allow saving in certain rooms (e.g. lsl6)
-		//  c) somehow some games even get mad when doing this (execstackbase was 1 all of a sudden in lsl3)
-		//  d) for sci0/sci01 games we should at least wait till status bar got drawn, although this may not be enough
-		// we can't make sure that the scripts are fine with us saving at a specific location, doing so may work sometimes
-		//  and some other times it won't work.
+		(f == kSupportsLoadingDuringRuntime) ||
+		(f == kSupportsSavingDuringRuntime);
 }
 
 SaveStateList SciMetaEngine::listSaves(const char *target) const {
@@ -445,10 +440,8 @@ Common::Error SciEngine::loadGameState(int slot) {
 
 Common::Error SciEngine::saveGameState(int slot, const Common::String &desc, bool isAutosave) {
 	const char *version = "";
-	if (gamestate_save(_gamestate, slot, desc, version)) {
-		return Common::kNoError;
-	}
-	return Common::kWritingFailed;
+	g_sci->_soundCmd->pauseAll(false); // unpause music (we can't have it paused during save)
+	return gamestate_save(_gamestate, slot, desc, version) ? Common::kNoError : Common::kWritingFailed;
 }
 
 bool SciEngine::canLoadGameStateCurrently() {
@@ -467,8 +460,10 @@ bool SciEngine::canLoadGameStateCurrently() {
 }
 
 bool SciEngine::canSaveGameStateCurrently() {
-	// see comment about kSupportsSavingDuringRuntime in SciEngine::hasFeature
-	return false;
+	return
+		_features->canSaveFromGMM() &&
+		!_gamestate->executionStackBase &&
+		_guestAdditions->userHasControl();
 }
 
 } // End of namespace Sci

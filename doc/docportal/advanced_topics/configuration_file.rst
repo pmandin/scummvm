@@ -18,33 +18,10 @@ The configuration file saves to different default locations, depending on the pl
 	.. panels::
 		:column: col-lg-12 mb-2
 
-		95/98/ME
-		^^^^^^^^^^
-
-		``C:\WINDOWS\scummvm.ini``
-
-
-		---
-		:column: col-lg-12 mb-2
-
-		Windows NT4
-		^^^^^^^^^^^^
-
-		``C:\WINDOWS\Profiles\username\Application Data\ScummVM\scummvm.ini``
-
-		---
-		:column: col-lg-12 mb-2
-
-		Windows 2000/XP
-		^^^^^^^^^^^^^^^^^
-		``\Documents and Settings\username\Application Data\ScummVM\scummvm.ini``
-
-		---
-		:column: col-lg-12 mb-2
-
-		Window Vista/7/8/10
-		^^^^^^^^^^^^^^^^^^^^^^
 		``%APPDATA%\ScummVM\scummvm.ini``
+
+		For Windows 95/98/ME, the file is at ``C:\WINDOWS\scummvm.ini``
+
 
 .. tabbed:: macOS
 
@@ -391,7 +368,7 @@ There are many recognized configuration keys. In the table below, each key is ei
 		save_slot,integer,autosave, Specifies the saved game slot to load
 		":ref:`scalemakingofvideos <scale>`",boolean,false,
 		":ref:`scanlines <scan>`",boolean,false,
-		screenshotpath,string,,Specifies where screenshots are saved
+		screenshotpath,string,See :ref:`screenshotpath <screenshotpath>`,Specifies where screenshots are saved
 		sfx_mute,boolean,false, Mutes the game sound effects.
 		":ref:`sfx_volume <sfx>`",integer,192,
 		":ref:`shorty <shorty>`",boolean,false,
@@ -430,13 +407,40 @@ There are many recognized configuration keys. In the table below, each key is ei
 
 
 
+.. _screenshotpath:
+
+Screenshot path
+	The default location for the screenshotpath depends on your system.
 
 
+	.. tabbed:: Windows
+
+		.. panels::
+			:column: col-lg-12 mb-2
+
+			In ``Users\username\My Pictures\ScummVM Screenshots``
+
+	.. tabbed:: macOS
+
+		.. panels::
+			:column: col-lg-12 mb-2
+
+			On the Desktop.
 
 
+	.. tabbed:: Linux
 
+		.. panels::
+			:column: col-lg-12 mb-2
 
+			In the XDG Pictures user directory, for example ``~/Pictures/ScummVM Screenshots``
 
+	.. tabbed:: Any other OS
+
+		.. panels::
+			:column: col-lg-12 mb-2
+
+			In the current directory.
 
 
 

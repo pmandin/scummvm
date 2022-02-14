@@ -56,7 +56,7 @@ static const ADGameDescription gameDescriptions[] = {
 				"MISSIONS.LIB", "585704e26094cbaf14fbee90798e8d5d", 119945),
 		Common::EN_USA,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -66,7 +66,17 @@ static const ADGameDescription gameDescriptions[] = {
 				"MISSIONS.LIB", "585704e26094cbaf14fbee90798e8d5d", 119945),
 		Common::ES_ESP,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"sinistersix", // DE release
+		nullptr,
+		AD_ENTRY2s("Setup1.Sax", "86b6ae45f45a8273ef3116be6bac01f5", 9591164,
+				"MISSIONS.LIB", "585704e26094cbaf14fbee90798e8d5d", 119945),
+		Common::DE_DEU,
+		Common::kPlatformDOS,
+		ADGF_TESTING,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -86,6 +96,17 @@ static const ADGameDescription gameDescriptions[] = {
 				"wetdemo.exe", "15a6b1b3819ef002438df340509b5373", 458319,
 				"demo.exe", "15a6b1b3819ef002438df340509b5373", 533221),
 		Common::EN_USA,
+		Common::kPlatformDOS,
+		ADGF_TESTING | ADGF_DEMO,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"wetlands", // Wetlands Demo Hebrew
+		"Demo",
+		AD_ENTRY3s("wetlands.exe", "15a6b1b3819ef002438df340509b5373", 629503,
+				"wetdemo.exe", "15a6b1b3819ef002438df340509b5373", 458319,
+				"demo.exe", "15a6b1b3819ef002438df340509b5373", 533221),
+		Common::HE_ISR,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_DEMO,
 		GUIO1(GUIO_NOMIDI)
@@ -165,9 +186,17 @@ static const char *const directoryGlobs[] = {
 	nullptr
 };
 
+static const ExtraGuiOption hypnoExtraGuiOption = {
+	_s("Enable cheats"),
+	_s("Allow cheats using the C key."),
+	"cheats",
+	false
+};
+
 class HypnoMetaEngineDetection : public AdvancedMetaEngineDetection {
 public:
 	HypnoMetaEngineDetection() : AdvancedMetaEngineDetection(Hypno::gameDescriptions, sizeof(ADGameDescription), Hypno::hypnoGames) {
+		_guiOptions = GUIO1(GUIO_NOMIDI);
 		_maxScanDepth = 3;
 		_directoryGlobs = directoryGlobs;
 	}
@@ -188,7 +217,15 @@ public:
 	const DebugChannelDef *getDebugChannels() const override {
 		return debugFlagList;
 	}
+
+	const ExtraGuiOptions getExtraGuiOptions(const Common::String &target) const override;
 };
+
+const ExtraGuiOptions HypnoMetaEngineDetection::getExtraGuiOptions(const Common::String &target) const {
+	ExtraGuiOptions options;
+	options.push_back(hypnoExtraGuiOption);
+	return options;
+}
 
 REGISTER_PLUGIN_STATIC(HYPNO_DETECTION, PLUGIN_TYPE_ENGINE_DETECTION, HypnoMetaEngineDetection);
 

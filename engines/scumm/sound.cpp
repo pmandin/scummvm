@@ -54,10 +54,14 @@ struct MP3OffsetTable {					/* Compressed Sound (.SO3) */
 };
 
 
-Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer)
+Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer, bool useReplacementAudioTracks)
 	:
 	_vm(parent),
 	_mixer(mixer),
+	_useReplacementAudioTracks(useReplacementAudioTracks),
+	_replacementTrackStartTime(0),
+	_replacementTrackPauseTime(0),
+	_musicTimer(0),
 	_soundQuePos(0),
 	_soundQue2Pos(0),
 	_sfxFilename(),
@@ -95,6 +99,7 @@ Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer)
 	_loomSteamCD.balance = 0;
 
 	_isLoomSteam = _vm->_game.id == GID_LOOM && Common::File::exists("CDDA.SOU");
+	_loomOvertureTransition = DEFAULT_LOOM_OVERTURE_TRANSITION + ConfMan.getInt("loom_overture_ticks");
 
 	_loomSteamCDAudioHandle = new Audio::SoundHandle();
 	_talkChannelHandle = new Audio::SoundHandle();
@@ -106,6 +111,71 @@ Sound::~Sound() {
 	free(_offsetTable);
 	delete _loomSteamCDAudioHandle;
 	delete _talkChannelHandle;
+}
+
+bool Sound::isRolandLoom() const {
+	return
+		(_vm->_game.id == GID_LOOM) &&
+		(_vm->_game.version == 3) &&
+		(_vm->_game.platform == Common::kPlatformDOS) &&
+		(_vm->VAR(_vm->VAR_SOUNDCARD) == 4);
+}
+
+void Sound::updateMusicTimer() {
+	bool isLoomOverture = (isRolandLoom() && _currentCDSound == 56 && !(_vm->_game.features & GF_DEMO));
+
+	// If the replacement track has ended, reset the timer to 0 like when
+	// playing the original music. We make an exception for the Overture,
+	// since it may need to keep running after the track has ended.
+	//
+	// This is also why we can't query the CD audio manager for the current
+	// position. That, and the fact that the CD manager does not provide
+	// this information at the time of writing.
+
+	if (!pollCD() && !isLoomOverture) {
+		_musicTimer = 0;
+		return;
+	}
+
+	// Time is measured in "ticks", with ten ticks per second. This should
+	// be exact enough, while providing an easily understandable unit of
+	// measurement for the adjustment slider.
+
+	// The rate at which the timer is advanced is hard-coded for the Loom
+	// Overture. When playing the original music the rate is apparently
+	// based on the MIDI tempo of it. But at least for Loom, the Overture
+	// seems to be the only piece of music where timing matters.
+
+	// These are the values the timer will have to reach or exceed for the
+	// Overture to work correctly:
+
+	// 4   - Fade in the "OVERTURE" text
+	// 198 - Fade down the "OVERTURE" text
+	// 204 - Show the LucasFilm logo
+	// 278 - End the Overture
+
+	uint32 now = g_system->getMillis();
+	uint32 ticks = (now - _replacementTrackStartTime) / 100;
+
+	// If the track ends before the timer reaches 198, skip ahead. (If the
+	// timer didn't even reach 4 you weren't really trying, and must be
+	// punished for that!)
+
+	if (isLoomOverture && !pollCD()) {
+		uint32 fadeDownTick = TIMER_TO_TICKS(198);
+		if (ticks < fadeDownTick) {
+			_replacementTrackStartTime = now - 100 * fadeDownTick;
+			ticks = fadeDownTick;
+		}
+	}
+
+	_musicTimer = TICKS_TO_TIMER(ticks);
+
+	// But don't let the timer exceed 278 until the Overture has ended, or
+	// the music will be cut off.
+
+	if (isLoomOverture && pollCD() && _musicTimer >= 278)
+		_musicTimer = 277;
 }
 
 void Sound::addSoundToQueue(int sound, int heOffset, int heChannel, int heFlags, int heFreq, int hePan, int heVol) {
@@ -180,12 +250,84 @@ void Sound::processSoundQueues() {
 	_soundQuePos = 0;
 }
 
+int Sound::getReplacementAudioTrack(int soundID) {
+	int trackNr = -1;
+
+	if (_vm->_game.id == GID_LOOM) {
+		if (_vm->_game.features & GF_DEMO) {
+			// If I understand correctly, the shorter demo only
+			// has the Loom intro music. The longer demo has a
+			// couple of tracks that it will cycle through if
+			// you leave the demo running.
+
+			if (isRolandLoom())
+				soundID -= 10;
+
+			switch (soundID) {
+			case 19:
+				trackNr = 2;
+				break;
+			case 20:
+				trackNr = 4;
+				break;
+			case 21:
+				trackNr = 7;
+				break;
+			case 23:
+				trackNr = 8;
+				break;
+			case 26:
+				trackNr = 3;
+				break;
+			}
+		} else {
+			if (isRolandLoom())
+				soundID -= 32;
+
+			// The first track, the Overture, only exists as a
+			// Roland track.
+			if (soundID >= 24 && soundID <= 32) {
+				trackNr = soundID - 23;
+			} else if (soundID == 19) {
+				trackNr = 10;
+			} else if (soundID == 21) {
+				trackNr = 11;
+			}
+		}
+	}
+
+	if (trackNr != -1 && !_vm->existExtractedCDAudioFiles(trackNr))
+		trackNr = -1;
+
+	return trackNr;
+}
+
 void Sound::playSound(int soundID) {
 	byte *ptr;
 	byte *sound;
 	Audio::AudioStream *stream;
 	int size = -1;
 	int rate;
+
+	if (_useReplacementAudioTracks) {
+		// Note that music does not loop. Probably because it's likely
+		// to be interrupted by sound effects before it's over anyway.
+		//
+		// In the FM Towns version, music does play continuously (each
+		// track has two versions), probably because CD audio and sound
+		// effects are played independent of each other. Personally I
+		// find the game harder when the music is allowed to drown out
+		// the sound effects.
+
+		int trackNr = getReplacementAudioTrack(soundID);
+		if (trackNr != -1) {
+			_currentCDSound = soundID;
+			_replacementTrackStartTime = g_system->getMillis();
+			_musicTimer = 0;
+			g_system->getAudioCDManager()->play(trackNr, 1, 0, 0, true);
+			return;
+		}
+	}
 
 	if (_vm->_game.id == GID_LOOM && _vm->_game.platform == Common::kPlatformPCEngine) {
 		if (soundID >= 13 && soundID <= 32) {
@@ -881,6 +1023,8 @@ void Sound::stopSound(int sound) {
 
 	if (sound != 0 && sound == _currentCDSound) {
 		_currentCDSound = 0;
+		_musicTimer = 0;
+		_replacementTrackStartTime = 0;
 		stopCD();
 		stopCDTimer();
 	}
@@ -996,10 +1140,23 @@ void Sound::pauseSounds(bool pause) {
 		else
 			startCDTimer();
 	}
+
+	if (pause) {
+		if (!_replacementTrackPauseTime)
+			_replacementTrackPauseTime = g_system->getMillis();
+	} else {
+		_replacementTrackStartTime += (g_system->getMillis() - _replacementTrackPauseTime);
+		_replacementTrackPauseTime = 0;
+	}
 }
 
 bool Sound::isSfxFileCompressed() {
 	return !(_soundMode == kVOCMode);
+}
+
+bool Sound::hasSfxFile() const
+{
+	return !_sfxFilename.empty();
 }
 
 ScummFile *Sound::restoreDiMUSESpeechFile(const char *fileName) {
@@ -1132,6 +1289,9 @@ static void cd_timer_handler(void *refCon) {
 }
 
 void Sound::startCDTimer() {
+	if (_useReplacementAudioTracks)
+		return;
+
 	// This timer interval is based on two scenes: The Monkey Island 1
 	// intro, and the scene in Loom CD where Chaos appears. In both cases
 	// the game plays the scene as two separate sounds, even though both
@@ -1147,6 +1307,9 @@ void Sound::startCDTimer() {
 }
 
 void Sound::stopCDTimer() {
+	if (_useReplacementAudioTracks)
+		return;
+
 	_vm->getTimerManager()->removeTimerProc(&cd_timer_handler);
 }
 
@@ -1222,6 +1385,13 @@ AudioCDManager::Status Sound::getCDStatus() {
 void Sound::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncAsSint16LE(_currentCDSound, VER(35));
 	s.syncAsSint16LE(_currentMusic, VER(35));
+
+	if (s.isLoading() && _vm->VAR_MUSIC_TIMER != 0xFF) {
+		uint32 now = g_system->getMillis();
+		_musicTimer = _vm->VAR(_vm->VAR_MUSIC_TIMER);
+		_replacementTrackStartTime = now - 100 * TIMER_TO_TICKS(_musicTimer);
+		_replacementTrackPauseTime = now;
+	}
 }
 
 
@@ -1986,7 +2156,7 @@ int ScummEngine::readSoundResourceSmallHeader(ResId idx) {
 
 	debug(4, "readSoundResourceSmallHeader(%d)", idx);
 
-	if ((_game.id == GID_LOOM) && (_game.version == 3) && (_game.platform == Common::kPlatformDOS) && VAR(VAR_SOUNDCARD) == 4) {
+	if (_sound->isRolandLoom()) {
 		// Roland resources in Loom are tagless
 		// So we add an RO tag to allow imuse to detect format
 		byte *ptr, *src_ptr;

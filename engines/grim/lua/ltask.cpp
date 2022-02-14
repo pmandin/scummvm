@@ -1,10 +1,6 @@
 #define FORBIDDEN_SYMBOL_EXCEPTION_setjmp
 #define FORBIDDEN_SYMBOL_EXCEPTION_longjmp
 
-#ifdef _MSC_VER
-#pragma warning(disable:4611)
-#endif
-
 #include "engines/grim/lua/ltask.h"
 #include "engines/grim/lua/lapi.h"
 #include "engines/grim/lua/lauxlib.h"
@@ -18,10 +14,10 @@
 namespace Grim {
 
 void lua_taskinit(lua_Task *task, lua_Task *next, StkId tbase, int results) {
-	task->some_flag = 0;
+	task->executed = false;
 	task->next = next;
-	task->some_base = tbase;
-	task->some_results = results;
+	task->initBase = tbase;
+	task->initResults = results;
 }
 
 void lua_taskresume(lua_Task *task, Closure *closure, TProtoFunc *protofunc, StkId tbase) {
@@ -38,17 +34,7 @@ void start_script() {
 	lua_Type type = paramObj == LUA_NOOBJECT ? LUA_T_NIL : ttype(Address(paramObj));
 
 	if (paramObj == LUA_NOOBJECT || (type != LUA_T_CPROTO && type != LUA_T_PROTO)) {
-		if (g_grim->getGameType() == GType_MONKEY4) {
-			/* In the discussion with meathook (dlg_meathook2.lua),
-			 * start_script is called as start_script(meathook:shake_head(...)).
-			 * But start_script expects start_script(meathook.shake_head, shake_head, ...). */
-			warning("Bad argument to start_script, ignoring");
-			lua_pushnil();
-			return;
-		} else {
-			lua_error("Bad argument to start_script");
-			return;
-		}
+		return;
 	}
 
 	LState *state = luaM_new(LState);
@@ -173,16 +159,15 @@ void find_script() {
 	lua_Object paramObj = lua_getparam(1);
 	lua_Type type = paramObj == LUA_NOOBJECT ? LUA_T_NIL : ttype(Address(paramObj));
 
-	if (paramObj == LUA_NOOBJECT || (type != LUA_T_CPROTO && type != LUA_T_PROTO && type != LUA_T_TASK)) {
-		if (g_grim->getGameType() == GType_GRIM) {
-			lua_error("Bad argument to find_script");
-		} else {
-			ttype(lua_state->stack.top) = LUA_T_TASK;
-			nvalue(lua_state->stack.top) = lua_state->id;
-			incr_top;
-			lua_pushnumber(1.0f);
-			return;
-		}
+	if (type != LUA_T_CPROTO && type != LUA_T_PROTO && type != LUA_T_TASK && type != LUA_T_NIL)
+		lua_error("Bad argument to find_script");
+
+	if (type == LUA_T_NIL) {
+		ttype(lua_state->stack.top) = LUA_T_TASK;
+		nvalue(lua_state->stack.top) = lua_state->id;
+		incr_top;
+		lua_pushnumber(1.0f);
+		return;
 	}
 
 	if (type == LUA_T_TASK) {
@@ -249,7 +234,6 @@ void pause_scripts() {
 	bool p = false;
 	if (!lua_isnil(boolObj))
 		p = true;
-
 
 	for (t = lua_rootState->next; t != nullptr; t = t->next) {
 		if (lua_state != t) {
@@ -344,7 +328,7 @@ void runtasks(LState *const rootState) {
 		LState *nextState = nullptr;
 		bool stillRunning;
 		if (!lua_state->all_paused && !lua_state->updated && !lua_state->paused) {
-			jmp_buf	errorJmp;
+			jmp_buf errorJmp;
 			lua_state->errorJmp = &errorJmp;
 			if (setjmp(errorJmp)) {
 				lua_Task *t, *m;
@@ -357,7 +341,7 @@ void runtasks(LState *const rootState) {
 				lua_state->task = nullptr;
 			} else {
 				if (lua_state->task) {
-					stillRunning = luaD_call(lua_state->task->some_base, lua_state->task->some_results);
+					stillRunning = luaD_call(lua_state->task->initBase, lua_state->task->initResults);
 				} else {
 					StkId base = lua_state->Cstack.base;
 					luaD_openstack((lua_state->stack.top - lua_state->stack.stack) - base);

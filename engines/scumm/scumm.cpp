@@ -1129,7 +1129,7 @@ Common::Error ScummEngine::init() {
 #ifdef ENABLE_SCUMM_7_8
 #ifdef MACOSX
 	if (_game.version == 8 && !memcmp(gameDataDir.getPath().c_str(), "/Volumes/MONKEY3_", 17)) {
-		// Special case for COMI on Mac OS X. The mount points on OS X depend
+		// Special case for COMI on macOS. The mount points on macOS depend
 		// on the volume name. Hence if playing from CD, we'd get a problem.
 		// So if loading of a resource file fails, we fall back to the (fixed)
 		// CD mount points (/Volumes/MONKEY3_1 and /Volumes/MONKEY3_2).
@@ -1487,8 +1487,12 @@ Common::Error ScummEngine::init() {
 	resetScumm();
 	resetScummVars();
 
-	if (_game.version >= 5 && _game.version <= 7)
+	if (_game.version >= 5 && _game.version <= 7) {
 		_sound->setupSound();
+		// In case of talkie edition without sfx file, enable subtitles
+		if (!_sound->hasSfxFile() && !ConfMan.getBool("subtitles"))
+			ConfMan.setBool("subtitles", true);
+	}
 
 	syncSoundSettings();
 
@@ -1534,11 +1538,17 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 		_system->getAudioCDManager()->open();
 	}
 
+	bool useReplacementAudioTracks = (_game.id == GID_LOOM && !(_game.features & GF_AUDIOTRACKS));
+
+	if (useReplacementAudioTracks) {
+		_system->getAudioCDManager()->open();
+	}
+
 	// Create the sound manager
 	if (_game.heversion > 0)
 		_sound = new SoundHE(this, _mixer);
 	else
-		_sound = new Sound(this, _mixer);
+		_sound = new Sound(this, _mixer, useReplacementAudioTracks);
 
 	// Setup the music engine
 	setupMusic(_game.midi, macInstrumentFile);
@@ -2110,11 +2120,9 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 	   &&  (_game.platform == Common::kPlatformDOS) && _sound->_musicType == MDT_MIDI) {
 		Common::String fileName;
 		bool missingFile = false;
-		if (_game.id == GID_LOOM) {
+		if (_game.id == GID_LOOM && !(_game.features & GF_DEMO)) {
 			Common::File f;
-			// The Roland Update does have an 85.LFL, but we don't
-			// test for it since the demo doesn't have it.
-			for (char c = '2'; c <= '4'; c++) {
+			for (char c = '2'; c <= '5'; c++) {
 				fileName = "8";
 				fileName += c;
 				fileName += ".LFL";
@@ -2543,7 +2551,10 @@ void ScummEngine::scummLoop(int delta) {
 	if (_game.features & GF_AUDIOTRACKS) {
 		// Covered automatically by the Sound class
 	} else if (VAR_MUSIC_TIMER != 0xFF) {
-		if (_musicEngine) {
+		if (_sound->useReplacementAudioTracks() && _sound->getCurrentCDSound()) {
+			_sound->updateMusicTimer();
+			VAR(VAR_MUSIC_TIMER) = _sound->getMusicTimer();
+		} else if (_musicEngine) {
 			// The music engine generates the timer data for us.
 			VAR(VAR_MUSIC_TIMER) = _musicEngine->getMusicTimer();
 		}
@@ -2879,11 +2890,7 @@ void ScummEngine_v7::scummLoop_handleSound() {
 	ScummEngine_v6::scummLoop_handleSound();
 	if (_imuseDigital) {
 		_imuseDigital->flushTracks();
-		// In CoMI and the Dig the full (non-demo) version invoke refreshScripts()
-		if (!(_game.id == GID_FT) && !(_game.id == GID_DIG && _game.features & GF_DEMO))
-			_imuseDigital->refreshScripts();
-		else
-			_imuseDigital->diMUSEProcessStreams();
+		_imuseDigital->refreshScripts();
 	}
 
 	if (_smixer) {

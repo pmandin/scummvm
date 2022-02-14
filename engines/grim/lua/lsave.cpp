@@ -124,7 +124,6 @@ void lua_Save(SaveGame *savedState) {
 	int32 countElements = 0;
 	int32 maxStringLength = 0;
 
-
 	// Check for max length for strings and count them
 	for (i = 0; i < NUM_HASHS; i++) {
 		stringtable *tempStringTable = &string_root[i];
@@ -142,7 +141,6 @@ void lua_Save(SaveGame *savedState) {
 	}
 	// save number of strings
 	savedState->writeLESint32(countElements);
-
 
 	// save number of closures
 	countElements = 0;
@@ -324,7 +322,7 @@ void lua_Save(SaveGame *savedState) {
 		lua_Task *task = state->task;
 		int32 countTasks = 0, n = -1;
 		while (task) {
-			if (state->some_task && state->some_task == task)
+			if (state->prevTask && state->prevTask == task)
 				n = countTasks;
 			countTasks++;
 			task = task->next;
@@ -335,9 +333,9 @@ void lua_Save(SaveGame *savedState) {
 			savedState->writeLEUint64(makeIdFromPointer(task->cl).id);
 			savedState->writeLEUint64(makeIdFromPointer(task->tf).id);
 			savedState->writeLESint32(task->base);
-			savedState->writeLESint32(task->some_base);
-			savedState->writeLESint32(task->some_results);
-			savedState->writeBool(task->some_flag);
+			savedState->writeLESint32(task->initBase);
+			savedState->writeLESint32(task->initResults);
+			savedState->writeBool(task->executed);
 			int32 pcOffset = task->pc - task->tf->code;
 			savedState->writeLESint32(pcOffset);
 			savedState->writeLESint32(task->aux);
@@ -353,8 +351,8 @@ void lua_Save(SaveGame *savedState) {
 		pauseState |= state->paused ? LUA_SG_PAUSED : 0;
 		savedState->writeByte(pauseState);
 
-		savedState->writeLESint32(state->state_counter1);
-		savedState->writeLESint32(state->state_counter2);
+		savedState->writeLESint32(state->preventBreakCounter);
+		savedState->writeLESint32(state->callLevelCounter);
 
 		int32 stackLastSize = (state->stack.last - state->stack.stack) + 1;
 		savedState->writeLESint32(stackLastSize);

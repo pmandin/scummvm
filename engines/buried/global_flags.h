@@ -31,12 +31,6 @@ namespace Buried {
 
 // This is the struct that holds all the global variables for the game
 // Originally, it was just a 1024 byte block of data with offsets into it
-// (There clearly aren't enough variables)
-// For double-fun, they still need to be accessed by index for AI support
-// -> It therefore needs to be packed (Yes, this is totally evil)
-// This is all horrible, really. Avert your eyes.
-
-#include "common/pack-start.h"
 
 struct GlobalFlags {
 	byte cgWallExploded;                // 0
@@ -93,7 +87,8 @@ struct GlobalFlags {
 	byte myMCStingerChannelID;          // 54
 	byte faStingerID;                   // 55
 	byte faStingerChannelID;            // 56
-	byte unused0[3];                    // 57-59
+	uint16 curItem;                     // ScummVM enhancement, originally unused bytes 57-58
+	byte unused0;                       // 59
 	uint32 cgMWCatapultData;            // 60-63
 	uint32 cgMWCatapultOffset;          // 64-67
 	byte cgTSTriedDoor;                 // 68
@@ -316,9 +311,7 @@ struct GlobalFlags {
 	byte generalWalkthroughMode;        // 500
 	byte unused5[11];                   // 501-511
 	byte aiData[512];                   // 512-1023
-} PACKED_STRUCT;
-
-#include "common/pack-end.h"
+};
 
 enum {
 	kAIHWStartingValue = 100,

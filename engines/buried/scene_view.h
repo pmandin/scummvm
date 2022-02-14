@@ -98,15 +98,9 @@ public:
 	bool isCyclingEnabled() const { return _cycleEnabled || _forceCycleEnabled; }
 	bool closeCycleFrameMovie();
 
-	int getGlobalFlag(int offset);
-	byte getGlobalFlagByte(int offset);
-	bool setGlobalFlag(int offset, int value);
-	bool setGlobalFlagByte(int offset, byte value);
-	bool setGlobalFlagDWord(int offset, uint32 value);
-	uint32 getGlobalFlagDWord(int offset);
-	bool addNumberToGlobalFlagTable(int offset, int curItemCountOffset, int maxItems, byte numberToAdd);
-	byte getNumberFromGlobalFlagTable(int offset, int tableIndex);
-	bool isNumberInGlobalFlagTable(int offset, int curItemCountOffset, byte numberToCheck);
+	bool addNumberToGlobalFlagTable(byte numberToAdd);
+	byte getNumberFromGlobalFlagTable(int tableIndex);
+	bool isNumberInGlobalFlagTable(byte numberToCheck);
 
 	bool playSynchronousAnimation(int animationID);
 	bool playSynchronousAnimationExtern(int animationID);
@@ -166,6 +160,8 @@ public:
 
 	const SceneBase *getCurrentScene() const { return _currentScene; }
 
+	Common::Array<AIComment> getAICommentDatabase(int timeZone, int environment);
+
 private:
 	Graphics::Surface *_preBuffer;
 	SceneBase *_currentScene;
@@ -209,7 +205,8 @@ private:
 	SceneBase *constructSceneObject(Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation);
 
 	Common::Array<AnimEvent> getAnimationDatabase(int timeZone, int environment);
-	Common::Array<AIComment> getAICommentDatabase(int timeZone, int environment);
+
+	bool moveToDestination(const DestinationScene &destinationData, int navFrame);
 
 	// AI Lab
 	bool initializeAILabTimeZoneAndEnvironment(Window *viewWindow, int environment);
@@ -248,6 +245,10 @@ private:
 	bool initializeAlienTimeZoneAndEnvironment(Window *viewWindow, int environment);
 	bool startAlienAmbient(int oldTimeZone, int oldEnvironment, int environment, bool fade);
 	SceneBase *constructAlienSceneObject(Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation);
+
+	byte *aiFlag(uint16 offset);
+	byte getAIFlag(uint16 offset);
+	void setAIFlag(uint16 offset, byte value);
 };
 
 } // End of namespace Buried

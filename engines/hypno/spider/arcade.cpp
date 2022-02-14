@@ -24,6 +24,7 @@
 
 #include "common/events.h"
 #include "graphics/cursorman.h"
+#include "gui/message.h"
 
 namespace Hypno {
 
@@ -32,19 +33,32 @@ static const int oIndexYE[9] = {4, 3, 2, 1, 0};
 static const int shootOriginIndex[9][2] = {
 	{41, 3}, {51, 3}, {65, 6}, {68, 9}, {71, 22}, {57, 20}, {37, 14}, {37, 11}, {57, 20}};
 
+void SpiderEngine::hitPlayer() {
+	if (_playerFrameSep < (int)_playerFrames.size()) {
+		if (_playerFrameIdx < _playerFrameSep)
+			_playerFrameIdx = _playerFrameSep;
+	} else {
+		uint32 c = 250; // red
+		_compositeSurface->fillRect(Common::Rect(0, 0, 640, 480), c);
+		drawScreen();
+	}
+	// if (!_hitSound.empty())
+	//	playSound(_soundPath + _hitSound, 1);
+}
+
 void SpiderEngine::drawShoot(const Common::Point &target) {
-	uint32 c = _pixelFormat.RGBToColor(255, 255, 255);
+	uint32 c = 248; // white
 	uint32 ox = 0;
 	uint32 oy = 0;
 
 	if (_arcadeMode == "YC" || _arcadeMode == "YD") {
 		return; // Nothing to shoot
-	} else if (_arcadeMode == "YE" || _arcadeMode == "YF") { 
-		ox = _screenW/2;
-		oy = _screenH - _playerFrames[0]->h/2;
+	} else if (_arcadeMode == "YE" || _arcadeMode == "YF") {
+		ox = _screenW / 2;
+		oy = _screenH - _playerFrames[0]->h / 2;
 	} else if (_arcadeMode == "YB") {
 		uint32 idx = MIN(2, target.x / (_screenW / 3)) + 3 * MIN(2, target.y / (_screenH / 3));
-		ox = 60  + shootOriginIndex[idx][0];
+		ox = 60 + shootOriginIndex[idx][0];
 		oy = 129 + shootOriginIndex[idx][1];
 	} else
 		error("Invalid arcade mode %s", _arcadeMode.c_str());
@@ -69,67 +83,67 @@ void SpiderEngine::drawPlayer() {
 			_playerFrameIdx = 0;
 		else if (_lastPlayerPosition != _currentPlayerPosition && (_playerFrameIdx % 4 == 0 || _playerFrameIdx % 4 == 3)) {
 
-			switch(_lastPlayerPosition) {
-				case PlayerLeft:
-					switch(_currentPlayerPosition) {
-						case PlayerTop:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 1;
-						break;
-						case PlayerBottom:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 13;
-						break;
-						case PlayerRight:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 45;
-						break;
-					}
+			switch (_lastPlayerPosition) {
+			case kPlayerLeft:
+				switch (_currentPlayerPosition) {
+				case kPlayerTop:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 1;
+					break;
+				case kPlayerBottom:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 13;
+					break;
+				case kPlayerRight:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 45;
+					break;
+				}
 				break;
-				case PlayerRight:
-					switch(_currentPlayerPosition) {
-						case PlayerTop:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 5;
-						break;
-						case PlayerBottom:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 17;
-						break;
-						case PlayerLeft:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 33;
-						break;
-					}
+			case kPlayerRight:
+				switch (_currentPlayerPosition) {
+				case kPlayerTop:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 5;
+					break;
+				case kPlayerBottom:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 17;
+					break;
+				case kPlayerLeft:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 33;
+					break;
+				}
 				break;
-				case PlayerBottom:
-					switch(_currentPlayerPosition) {
-						case PlayerTop:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 9;
-						break;
-						case PlayerLeft:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 29;
-						break;
-						case PlayerRight:
-							_lastPlayerPosition = _currentPlayerPosition;
-							_playerFrameIdx = 41;
-						break;
-					}
+			case kPlayerBottom:
+				switch (_currentPlayerPosition) {
+				case kPlayerTop:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 9;
+					break;
+				case kPlayerLeft:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 29;
+					break;
+				case kPlayerRight:
+					_lastPlayerPosition = _currentPlayerPosition;
+					_playerFrameIdx = 41;
+					break;
+				}
 				break;
-				case PlayerTop:
-					switch(_currentPlayerPosition) {
-						case PlayerBottom:
-							_playerFrameIdx = 21;
-						break;
-						case PlayerLeft:
-							_playerFrameIdx = 25;
-						break;
-						case PlayerRight:
-							_playerFrameIdx = 37;
-						break;
-					}
+			case kPlayerTop:
+				switch (_currentPlayerPosition) {
+				case kPlayerBottom:
+					_playerFrameIdx = 21;
+					break;
+				case kPlayerLeft:
+					_playerFrameIdx = 25;
+					break;
+				case kPlayerRight:
+					_playerFrameIdx = 37;
+					break;
+				}
 				break;
 			}
 			_lastPlayerPosition = _currentPlayerPosition;
@@ -155,7 +169,7 @@ void SpiderEngine::drawPlayer() {
 			if (_playerFrameIdx >= (int)_playerFrames.size())
 				_playerFrameIdx = 0;
 		}
-	}  else
+	} else
 		error("Invalid arcade mode %s", _arcadeMode.c_str());
 
 	drawImage(*_playerFrames[_playerFrameIdx], ox, oy, true);
@@ -174,17 +188,37 @@ void SpiderEngine::drawHealth() {
 
 	r = Common::Rect(256, 152 + d, 272, 174);
 	if (d >= 11)
-		c = _pixelFormat.RGBToColor(255, 0, 0);
+		c = 250; // red
 	else
-		c = _pixelFormat.RGBToColor(32, 208, 32);
+		c = 251; // green
 
 	_compositeSurface->fillRect(r, c);
 
 	r = Common::Rect(256, 152, 272, 174);
-	c = _pixelFormat.RGBToColor(0, 0, 255);
+	c = 252; // blue
 	_compositeSurface->frameRect(r, c);
 
-	_font->drawString(_compositeSurface, "ENERGY", 248, 180, 38, c);
+	drawString("block05.fgx", "ENERGY", 248, 180, 38, c);
+}
+
+bool SpiderEngine::checkArcadeLevelCompleted(MVideo &background, Segment segment) {
+	if (_skipLevel)
+		return true;
+
+	if (_arcadeMode == "YF") {
+		if (!background.decoder || background.decoder->endOfVideo())
+			_health = 0;
+
+		if (_shoots.size() == 0)
+			return false;
+
+		for (Shoots::iterator it = _shoots.begin(); it != _shoots.end(); ++it)
+			if (!it->destroyed)
+				return false;
+
+		return true;
+	}
+	return !background.decoder || background.decoder->endOfVideo();
 }
 
 } // End of namespace Hypno

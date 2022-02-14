@@ -178,15 +178,13 @@ int IMuseDigital::dispatchRestoreStreamZones() {
 
 int IMuseDigital::dispatchAllocateSound(IMuseDigiTrack *trackPtr, int groupId) {
 	IMuseDigiDispatch *trackDispatch;
-	IMuseDigiDispatch *dispatchToDeallocate;
-	IMuseDigiStreamZone *streamZoneList;
 	int navigateMapResult;
 	int32 sizeToFeed = _isEarlyDiMUSE ? 0x800 : 0x4000;
 
 	trackDispatch = trackPtr->dispatchPtr;
 	trackDispatch->currentOffset = 0;
 	trackDispatch->audioRemaining = 0;
-	trackDispatch->fadeBuf = 0;
+	trackDispatch->fadeBuf = nullptr;
 
 	if (_isEarlyDiMUSE) {
 		trackDispatch->vocLoopStartingPoint = 0;
@@ -209,37 +207,20 @@ int IMuseDigital::dispatchAllocateSound(IMuseDigiTrack *trackPtr, int groupId) {
 		trackDispatch->streamZoneList = 0;
 		trackDispatch->streamErrFlag = 0;
 	} else {
-		trackDispatch->streamPtr = 0;
+		trackDispatch->streamPtr = nullptr;
 		if (_isEarlyDiMUSE)
 			return dispatchSeekToNextChunk(trackDispatch);
 	}
 
 	navigateMapResult = dispatchNavigateMap(trackDispatch);
-	if (!navigateMapResult || navigateMapResult == -3)
-		return 0;
-
-	// At this point, something went wrong, so deallocate what we have to...
-	debug(5, "IMuseDigital::dispatchAllocateSound(): problem starting sound (%d) in dispatch", trackPtr->soundId);
-
-	// Remove streamZones from list
-	dispatchToDeallocate = trackDispatch->trackPtr->dispatchPtr;
-	if (dispatchToDeallocate->streamPtr) {
-		streamZoneList = dispatchToDeallocate->streamZoneList;
-		streamerClearSoundInStream(dispatchToDeallocate->streamPtr);
-		if (dispatchToDeallocate->streamZoneList) {
-			do {
-				streamZoneList->useFlag = 0;
-				removeStreamZoneFromList(&dispatchToDeallocate->streamZoneList, streamZoneList);
-			} while (streamZoneList);
-		}
+	if (navigateMapResult && navigateMapResult != -3) {
+		// At this point, something went wrong, so let's release the dispatch
+		debug(5, "IMuseDigital::dispatchAllocateSound(): problem starting sound (%d) in dispatch", trackPtr->soundId);
+		dispatchRelease(trackPtr);
+		return -1;
 	}
 
-	if (!dispatchToDeallocate->fadeBuf)
-		return -1;
-
-	// Mark the fade corresponding to our fadeBuf as unused
-	dispatchDeallocateFade(dispatchToDeallocate, "dispatchAllocateSound");
-	return -1;
+	return 0;
 }
 
 int IMuseDigital::dispatchRelease(IMuseDigiTrack *trackPtr) {
@@ -265,11 +246,10 @@ int IMuseDigital::dispatchRelease(IMuseDigiTrack *trackPtr) {
 		}
 	}
 
-	if (!dispatchToDeallocate->fadeBuf)
-		return 0;
-
 	// Mark the fade corresponding to our fadeBuf as unused
-	dispatchDeallocateFade(dispatchToDeallocate, "dispatchRelease");
+	if (dispatchToDeallocate->fadeBuf)
+		dispatchDeallocateFade(dispatchToDeallocate, "dispatchRelease");
+
 	return 0;
 }
 
@@ -1156,7 +1136,6 @@ int IMuseDigital::dispatchConvertMap(uint8 *rawMap, uint8 *destMap) {
 			// Fill (or rather, swap32) the fields:
 			// - The 4 bytes string 'MAP '
 			// - Size of the map
-			//int dest = READ_BE_UINT32(destMap);
 			*(int32 *)destMap = READ_BE_UINT32(destMap);
 			*((int32 *)destMap + 1) = READ_BE_UINT32(destMap + 4);
 

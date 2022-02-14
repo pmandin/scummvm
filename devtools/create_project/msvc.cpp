@@ -56,7 +56,7 @@ std::string MSVCProvider::getLibraryFromFeature(const char *feature, const Build
 		// Libraries
 		{       "sdl", "SDL.lib",                   "SDLd.lib",      "winmm.lib imm32.lib version.lib setupapi.lib",    nullptr },
 		{      "sdl2", "SDL2.lib",                  "SDL2d.lib",     "winmm.lib imm32.lib version.lib setupapi.lib",    nullptr },
-		{      "libz", "zlib.lib",                  "zlibd.lib",     nullptr,                                           nullptr },
+		{      "zlib", "zlib.lib",                  "zlibd.lib",     nullptr,                                           nullptr },
 		{       "mad", "mad.lib",                   nullptr,         nullptr,                                           "libmad.lib" },
 		{   "fribidi", "fribidi.lib",               nullptr,         nullptr,                                           nullptr },
 		{       "ogg", "ogg.lib",                   nullptr,         nullptr,                                           "libogg_static.lib" },
@@ -66,8 +66,8 @@ std::string MSVCProvider::getLibraryFromFeature(const char *feature, const Build
 		{       "gif", "gif.lib",                   nullptr,         nullptr,                                           nullptr },
 		{      "faad", "faad.lib",                  nullptr,         nullptr,                                           "libfaad.lib" },
 		{     "mpeg2", "mpeg2.lib",                 nullptr,         nullptr,                                           "libmpeg2.lib" },
-		{    "theora", "theora.lib",                nullptr,         nullptr,                                           "libtheora_static.lib" },
-		{  "freetype", "freetype.lib",              "freetyped.lib", nullptr,                                           nullptr },
+		{ "theoradec", "theora.lib",                nullptr,         nullptr,                                           "libtheora_static.lib" },
+		{ "freetype2", "freetype.lib",              "freetyped.lib", nullptr,                                           nullptr },
 		{      "jpeg", "jpeg.lib",                  nullptr,         nullptr,                                           "jpeg-static.lib" },
 		{"fluidsynth", "fluidsynth.lib",            nullptr,         nullptr,                                           "libfluidsynth.lib" },
 		{ "fluidlite", "fluidlite.lib",             nullptr,         nullptr,                                           nullptr },
@@ -75,7 +75,7 @@ std::string MSVCProvider::getLibraryFromFeature(const char *feature, const Build
 		{    "sdlnet", "SDL_net.lib",               nullptr,         "iphlpapi.lib",                                    nullptr },
 		{   "sdl2net", "SDL2_net.lib",              nullptr,         "iphlpapi.lib",                                    "SDL_net.lib" },
 		{   "discord", "discord-rpc.lib",           nullptr,         nullptr,                                           nullptr },
-		{      "glew", "glew32.lib",                "glew32d.lib",   nullptr,                                           nullptr },
+		{ "retrowave", "retrowave.lib",             nullptr,         nullptr,                                           nullptr },
 		// Feature flags with library dependencies
 		{   "updates", "winsparkle.lib",            nullptr,         nullptr,                                           nullptr },
 		{       "tts", nullptr,                     nullptr,         "sapi.lib",                                        nullptr },

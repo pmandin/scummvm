@@ -32,6 +32,7 @@
 #include "graphics/font.h"
 #include "graphics/fontman.h"
 #include "graphics/managed_surface.h"
+#include "graphics/palette.h"
 
 #include "hypno/grammar.h"
 #include "hypno/libfile.h"
@@ -61,10 +62,10 @@ typedef Common::Array<Graphics::Surface *> Frames;
 // Player positions
 
 enum PlayerPosition {
-	PlayerTop = 'T',
-	PlayerBottom = 'B',
-	PlayerLeft = 'L',
-	PlayerRight = 'R'
+	kPlayerTop = 'T',
+	kPlayerBottom = 'B',
+	kPlayerLeft = 'L',
+	kPlayerRight = 'R'
 };
 
 class HypnoEngine : public Engine {
@@ -81,6 +82,7 @@ public:
 	Common::Language _language;
 	Common::Platform _platform;
 	Common::String _variant;
+	bool _cheatsEnabled;
 
 	Audio::SoundHandle _soundHandle;
 	Common::InstallShieldV3 _installerArchive;
@@ -94,6 +96,7 @@ public:
 	bool checkLevelWon();
 	void runLevel(Common::String &name);
 	void runScene(Scene *scene);
+	virtual void runBeforeArcade(ArcadeShooting *arc);
 	void runArcade(ArcadeShooting *arc);
 	// For some menus and hardcoded puzzles
 	virtual void runCode(Code *code);
@@ -109,7 +112,7 @@ public:
 	void splitArcadeFile(const Common::String &filename, Common::String &arc, Common::String &list);
 	void parseArcadeShooting(const Common::String &prefix, const Common::String &name, const Common::String &data);
 	ShootSequence parseShootList(const Common::String &name, const Common::String &data);
-	void loadArcadeLevel(const Common::String &current, const Common::String &next, const Common::String &prefix);
+	void loadArcadeLevel(const Common::String &current, const Common::String &nextWin, const Common::String &nextLose, const Common::String &prefix);
 	void loadSceneLevel(const Common::String &current, const Common::String &next, const Common::String &prefix);
 	LibFile *loadLib(const Filename &prefix, const Filename &filename, bool encrypted);
 
@@ -122,11 +125,11 @@ public:
 	bool cursorExit(Common::Point);
 	bool cursorMask(Common::Point);
 
-	bool canLoadGameStateCurrently() override { return false; }
+	virtual void loadGame(const Common::String &nextLevel, int puzzleDifficulty, int combatDifficulty);
+	bool canLoadGameStateCurrently() override { return (isDemo() ? false : true); }
 	bool canSaveAutosaveCurrently() override { return false; }
-	bool canSaveGameStateCurrently() override { return false; }
-
-	void syncGameStream(Common::Serializer &s);
+	bool canSaveGameStateCurrently() override { return (isDemo() ? false : true); }
+	Common::String _checkpoint;
 
 	Common::String _prefixDir;
 	Common::String convertPath(const Common::String &);
@@ -134,32 +137,41 @@ public:
 	void skipVideo(MVideo &video);
 
 	Common::File *fixSmackerHeader(Common::File *file);
-	Graphics::Surface *decodeFrame(const Common::String &name, int frame, bool convert = true);
+	Graphics::Surface *decodeFrame(const Common::String &name, int frame, byte **palette = nullptr);
 	Frames decodeFrames(const Common::String &name);
-	void loadImage(const Common::String &file, int x, int y, bool transparent, int frameNumber = 0);
+	void loadImage(const Common::String &file, int x, int y, bool transparent, bool palette = false, int frameNumber = 0);
 	void drawImage(Graphics::Surface &image, int x, int y, bool transparent);
+	void loadPalette(const Common::String &fname);
+	void loadPalette(const byte *palette, uint32 offset, uint32 size);
 
 	// Cursors
 	Common::String _defaultCursor;
 	void disableCursor();
 	void defaultCursor();
-	void changeCursor(const Common::String &cursor, uint32 n);
+	void changeCursor(const Common::String &cursor, uint32 n, bool centerCursor = false);
 	void changeCursor(const Common::String &cursor);
 
 	// Actions
-	void runMenu(Hotspots hs);
+	void runMenu(Hotspots *hs);
 	void runBackground(Background *a);
 	void runOverlay(Overlay *a);
 	void runMice(Mice *a);
 	void runEscape();
+	void runSave(Save *a);
+	void runLoad(Load *a);
+	void runLoadCheckpoint(LoadCheckpoint *a);
+	void runTimer(Timer *a);
 	void runQuit(Quit *a);
 	void runCutscene(Cutscene *a);
+	void runIntro(Intro *a);
 	void runPlay(Play *a);
+	void runPalette(Palette *a);
 	void runAmbient(Ambient *a);
 	void runWalN(WalN *a);
 	bool runGlobal(Global *a);
 	void runTalk(Talk *a);
 	void runChangeLevel(ChangeLevel *a);
+	virtual void drawBackToMenu(Hotspot *h);
 
 	// Screen
 	int _screenW, _screenH;
@@ -191,17 +203,15 @@ public:
 	// Movies
 	Videos _nextSequentialVideoToPlay;
 	Videos _nextParallelVideoToPlay;
-	Videos _nextLoopingVideoToPlay;
 	Videos _escapeSequentialVideoToPlay;
 	Videos _videosPlaying;
+	Videos _videosLooping;
 
 	// Sounds
 	Filename _soundPath;
 	Filename _music;
-	void playSound(const Filename &filename, uint32);
+	void playSound(const Filename &filename, uint32 loops, uint32 sampleRate = 22050);
 	void stopSound();
-	bool isSoundActive();
-	bool _noStopSounds;
 
 	// Arcade
 	Common::String _arcadeMode;
@@ -213,7 +223,9 @@ public:
 	virtual void drawShoot(const Common::Point &mousePos);
 	virtual void shoot(const Common::Point &mousePos);
 	virtual void hitPlayer();
-	Common::String _difficulty; 
+	virtual bool checkArcadeLevelCompleted(MVideo &background, Segment segment);
+	Common::String _difficulty;
+	bool _skipLevel;
 
 	virtual void drawCursorArcade(const Common::Point &mousePos);
 	virtual void drawPlayer();
@@ -221,13 +233,21 @@ public:
 	int _health;
 	int _maxHealth;
 	int _score;
+	int _lives;
 	Filename _shootSound;
 	Filename _hitSound;
 	Shoots _shoots;
 	Frames _playerFrames;
 	int _playerFrameIdx;
 	int _playerFrameSep;
-	const Graphics::Font *_font;
+
+	// Objectives
+	uint32 _obj1KillsCount;
+	uint32 _obj1MissesCount;
+
+	// Fonts
+	virtual void loadFonts();
+	virtual void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c);
 
 	// Conversation
 	Actions _conversation;
@@ -235,20 +255,23 @@ public:
 	virtual void showConversation();
 	virtual void rightClickedConversation(const Common::Point &mousePos);
 	virtual void leftClickedConversation(const Common::Point &mousePos);
-
+	virtual bool hoverConversation(const Common::Point &mousePos);
 	// Credits
 	virtual void showCredits();
 
 	// Timers
-	bool installTimer(uint32, Common::String *);
-	void removeTimer();
+	int32 _countdown;
+	bool _timerStarted;
+	bool startAlarm(uint32, Common::String *);
+	bool startCountdown(uint32);
+	void removeTimers();
 };
 
 struct chapterEntry {
-        int id;
-        int energyPos[2];
-		int scorePos[2];
-		int objectivesPos[2];
+	int id;
+	int energyPos[2];
+	int scorePos[2];
+	int objectivesPos[2];
 };
 
 class WetEngine : public HypnoEngine {
@@ -260,18 +283,26 @@ public:
 	void loadAssetsPCW();
 	void loadAssetsPCG();
 	void loadAssetsFullGame();
+	void loadFonts() override;
+	void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c) override;
+
 	void showCredits() override;
 	bool clickedSecondaryShoot(const Common::Point &mousePos) override;
 	void drawShoot(const Common::Point &target) override;
 	void drawPlayer() override;
 	void drawHealth() override;
+	void hitPlayer() override;
 	void runCode(Code *code) override;
 	Common::String findNextLevel(const Common::String &level) override;
 	Common::String findNextLevel(const Transition *trans) override;
 
-
+	void runBeforeArcade(ArcadeShooting *arc) override;
 private:
 	void runMainMenu(Code *code);
+	void runCheckLives(Code *code);
+
+	Common::BitArray _font05;
+	Common::BitArray _font08;
 };
 
 class SpiderEngine : public HypnoEngine {
@@ -286,16 +317,33 @@ public:
 	void drawShoot(const Common::Point &target) override;
 	void drawPlayer() override;
 	void drawHealth() override;
+	void hitPlayer() override;
+	bool checkArcadeLevelCompleted(MVideo &background, Segment segment) override;
+
+	void drawBackToMenu(Hotspot *h) override;
 	void runCode(Code *code) override;
 	Common::String findNextLevel(const Common::String &level) override;
 	Common::String findNextLevel(const Transition *trans) override;
 
+	void loadFonts() override;
+	void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c) override;
+
 	void showConversation() override;
 	void rightClickedConversation(const Common::Point &mousePos) override;
 	void leftClickedConversation(const Common::Point &mousePos) override;
+	bool hoverConversation(const Common::Point &mousePos) override;
+
+	void loadGame(const Common::String &nextLevel, int puzzleDifficulty, int combatDifficulty) override;
+	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
+	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
+	bool hasFeature(EngineFeature f) const override {
+		return (f == kSupportsSavingDuringRuntime || f == kSupportsLoadingDuringRuntime);
+	}
 
 private:
 	void runMatrix(Code *code);
+	void addIngredient(Code *code);
+	void checkMixture(Code *code);
 	void runNote(Code *code);
 	void runFusePanel(Code *code);
 	void runRecept(Code *code);
@@ -304,8 +352,18 @@ private:
 	void runLock(Code *code);
 	void runFuseBox(Code *code);
 
-	bool isFuseRust = true;
-	bool isFuseUnreadable = false;
+	bool _fuseState[2][10] = {};
+	bool _isFuseRust = true;
+	bool _isFuseUnreadable = false;
+	bool ingredients[7] = {};
+
+	Common::Rect _h1Area;
+	Common::Rect _h2Area;
+	Common::Rect _h3Area; 
+
+	Common::BitArray _font05;
+	Common::BitArray _font08;
+	const Graphics::Font *_font;
 };
 
 class BoyzEngine : public HypnoEngine {

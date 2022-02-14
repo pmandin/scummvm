@@ -118,7 +118,6 @@ struct GLMaterial {
 	int do_specular;
 };
 
-
 struct GLViewport {
 	int xmin, ymin, xsize, ysize;
 	Vector3 scale;
@@ -152,21 +151,22 @@ struct GLVertex {
 	Vector4 color;
 
 	// computed values
-	Vector4 ec;                // eye coordinates
-	Vector4 pc;                // coordinates in the normalized volume
+	Vector4 ec;           // eye coordinates
+	Vector4 pc;           // coordinates in the normalized volume
 	int clip_code;        // clip code
 	ZBufferPoint zp;      // integer coordinates for the rasterization
 
 	bool operator==(const GLVertex &other) const {
-		return	edge_flag == other.edge_flag &&
-				normal == other.normal &&
-				coord == other.coord &&
-				tex_coord == other.tex_coord &&
-				color == other.color &&
-				ec == other.ec &&
-				pc == other.pc &&
-				clip_code == other.clip_code &&
-				zp == other.zp;
+		return
+			edge_flag == other.edge_flag &&
+			normal == other.normal &&
+			coord == other.coord &&
+			tex_coord == other.tex_coord &&
+			color == other.color &&
+			ec == other.ec &&
+			pc == other.pc &&
+			clip_code == other.clip_code &&
+			zp == other.zp;
 	}
 
 	bool operator!=(const GLVertex &other) const {
@@ -295,7 +295,7 @@ struct GLContext {
 	// textures
 	GLTexture *current_texture;
 	uint maxTextureName;
-	int texture_2d_enabled;
+	bool texture_2d_enabled;
 	int texture_mag_filter;
 	int texture_min_filter;
 	uint texture_wrap_s;
@@ -434,6 +434,8 @@ struct GLContext {
 	LinearAllocator _drawCallAllocator[2];
 	bool _debugRectsEnabled;
 
+	void gl_vertex_transform(GLVertex *v);
+
 public:
 	// The glob* functions exposed to public, however they are only for internal use.
 	// Calling them from outside of TinyGL is forbidden
@@ -460,14 +462,18 @@ public:
 	void gl_enable_disable_light(int light, int v);
 	void gl_shade_vertex(GLVertex *v);
 
-	void glInitTextures();
-	void glEndTextures();
+	void gl_GetIntegerv(TGLenum pname, TGLint *data);
+	void gl_GetFloatv(TGLenum pname, TGLfloat *data);
+
 	GLTexture *alloc_texture(uint h);
+	GLTexture *find_texture(uint h);
 	void free_texture(uint h);
 	void free_texture(GLTexture *t);
+	void gl_GenTextures(TGLsizei n, TGLuint *textures);
+	void gl_DeleteTextures(TGLsizei n, const TGLuint *textures);
 
 	void gl_resizeImage(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest,
-				const Graphics::PixelBuffer &src, int xsize_src, int ysize_src);
+	                    const Graphics::PixelBuffer &src, int xsize_src, int ysize_src);
 	void gl_resizeImageNoInterpolate(Graphics::PixelBuffer &dest, int xsize_dest, int ysize_dest, const Graphics::PixelBuffer &src, int xsize_src, int ysize_src);
 
 	void issueDrawCall(DrawCall *drawCall);
@@ -476,28 +482,42 @@ public:
 
 	void presentBufferDirtyRects(Common::List<Common::Rect> &dirtyAreas);
 	void presentBufferSimple(Common::List<Common::Rect> &dirtyAreas);
-	
+
+	void debugDrawRectangle(Common::Rect rect, int r, int g, int b);
+
 	GLSpecBuf *specbuf_get_buffer(const int shininess_i, const float shininess);
 	void specbuf_cleanup();
+
+	TGLint gl_RenderMode(TGLenum mode);
+	void gl_SelectBuffer(TGLsizei size, TGLuint *buffer);
+
+	GLList *alloc_list(int list);
+	GLList *find_list(uint list);
+	void delete_list(int list);
+	void gl_NewList(TGLuint list, TGLenum mode);
+	void gl_EndList();
+	TGLboolean gl_IsList(TGLuint list);
+	TGLuint gl_GenLists(TGLsizei range);
 
 	void initSharedState();
 	void endSharedState();
 
 	void init(int screenW, int screenH, Graphics::PixelFormat pixelFormat, int textureSize, bool enableStencilBuffer, bool dirtyRectsEnable = true);
 	void deinit();
+
+	void gl_print_matrix(const float *m);
+	void gl_debug(int mode) {
+		print_flag = mode;
+	}
 };
 
 extern GLContext *gl_ctx;
 GLContext *gl_get_context();
 
-// matrix.c
-void gl_print_matrix(const float *m);
-
-#ifdef DEBUG
-#define dprintf fprintf
-#else
-#define dprintf
-#endif
+#define VERTEX_ARRAY    0x0001
+#define COLOR_ARRAY     0x0002
+#define NORMAL_ARRAY    0x0004
+#define TEXCOORD_ARRAY  0x0008
 
 // this clip epsilon is needed to avoid some rounding errors after
 // several clipping stages
@@ -509,6 +529,15 @@ static inline int gl_clipcode(float x, float y, float z, float w1) {
 
 	w = (float)(w1 * (1.0 + CLIP_EPSILON));
 	return (x < -w) | ((x > w) << 1) | ((y < -w) << 2) | ((y > w) << 3) | ((z < -w) << 4) | ((z > w) << 5);
+}
+
+static inline float clampf(float a, float min, float max) {
+	if (a < min)
+		return min;
+	if (a > max)
+		return max;
+	else
+		return a;
 }
 
 } // end of namespace TinyGL

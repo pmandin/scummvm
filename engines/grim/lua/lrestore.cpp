@@ -148,7 +148,7 @@ static void recreateObj(TObject *obj) {
 			assert(obj->value.f);
 		}
 	} else if (obj->ttype == LUA_T_NIL || obj->ttype == LUA_T_LINE || obj->ttype == LUA_T_NUMBER ||
-			obj->ttype == LUA_T_TASK || obj->ttype == LUA_T_USERDATA) {
+		   obj->ttype == LUA_T_TASK || obj->ttype == LUA_T_USERDATA) {
 		return;
 	} else {
 		if (obj->value.i == 0)
@@ -405,7 +405,7 @@ void lua_Restore(SaveGame *savedState) {
 		ptr.id = savedState->readLEUint64();
 		tempObj.value.ts = (TaggedString *)makePointerFromId(ptr);
 		recreateObj(&tempObj);
- 		tempString = (TaggedString *)tempObj.value.ts;
+		tempString = (TaggedString *)tempObj.value.ts;
 		assert(tempString);
 		tempListString->head.next = (GCnode *)tempString;
 		tempListString = tempString;
@@ -448,8 +448,7 @@ void lua_Restore(SaveGame *savedState) {
 	Mbuffsize = savedState->readLESint32();
 	Mbuffer = (char *)luaM_malloc(Mbuffsize);
 	savedState->read(Mbuffer, Mbuffsize);
-	int32 MbaseOffset;
-	MbaseOffset = savedState->readLESint32();
+	int32 MbaseOffset = savedState->readLESint32();
 	Mbuffbase = MbaseOffset + Mbuffer;
 	Mbuffnext = savedState->readLESint32();
 
@@ -499,9 +498,9 @@ void lua_Restore(SaveGame *savedState) {
 				task->tf = (TProtoFunc *)tempObj.value.tf;
 
 				task->base = savedState->readLESint32();
-				task->some_base = savedState->readLESint32();
-				task->some_results = savedState->readLESint32();
-				task->some_flag = savedState->readBool();
+				task->initBase = savedState->readLESint32();
+				task->initResults = savedState->readLESint32();
+				task->executed = savedState->readBool();
 				int32 pcOffset = savedState->readLESint32();
 				task->pc = task->tf->code + pcOffset;
 				task->aux = savedState->readLESint32();
@@ -512,11 +511,11 @@ void lua_Restore(SaveGame *savedState) {
 		}
 		int32 n = savedState->readLESint32();
 		if (n < 0) {
-			state->some_task = nullptr;
+			state->prevTask = nullptr;
 		} else {
-			state->some_task = state->task;
+			state->prevTask = state->task;
 			for (; n; n--)
-				state->some_task = state->some_task->next;
+				state->prevTask = state->prevTask->next;
 		}
 
 		state->updated = savedState->readBool();
@@ -525,8 +524,8 @@ void lua_Restore(SaveGame *savedState) {
 		state->all_paused = pauseState & LUA_SG_ALL_PAUSED;
 		state->paused = (pauseState & LUA_SG_PAUSED) ? true : false;
 
-		state->state_counter1 = savedState->readLESint32();
-		state->state_counter2 = savedState->readLESint32();
+		state->preventBreakCounter = savedState->readLESint32();
+		state->callLevelCounter = savedState->readLESint32();
 
 		int32 stackLastSize = savedState->readLESint32();
 		if (state->stack.stack)

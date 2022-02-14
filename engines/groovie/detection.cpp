@@ -62,11 +62,24 @@ static const PlainGameDescriptor groovieGames[] = {
 static const GroovieGameDescription gameDescriptions[] = {
 	// groovie.cpp requires the first file to be the main .grv file for v2 games, might as well stick to that convention for v1 games from now on too
 
+	// The 7th Guest 25th Anniversary
+	{
+		{
+			"t7g", "25th Anniversary Edition",
+			AD_ENTRY2s("script.grv", "d1b8033b40aa67c076039881eccce90d", 16659,
+						"AT.gjd", "bbaa95ce6e600a8ba5b2902326cd11f8", 28827446),
+			Common::EN_ANY, Common::kPlatformWindows, ADGF_UNSTABLE,
+			GUIO8(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_NOASPECT, GUIO_NOSFX, GAMEOPTION_T7G_FAST_MOVIE_SPEED, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI)
+		},
+		kGroovieT7G
+	},
+
 	// The 7th Guest DOS English
 	{
 		{
 			"t7g", "",
-			AD_ENTRY1s("script.grv", "d1b8033b40aa67c076039881eccce90d", 16659),
+			AD_ENTRY2s("script.grv", "d1b8033b40aa67c076039881eccce90d", 16659,
+						"AT.gjd", "bbaa95ce6e600a8ba5b2902326cd11f8", 45171574),
 			Common::EN_ANY, Common::kPlatformDOS, ADGF_NO_FLAGS,
 			GUIO8(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_NOASPECT, GUIO_NOSFX, GAMEOPTION_T7G_FAST_MOVIE_SPEED, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI)
 		},
@@ -127,6 +140,18 @@ static const GroovieGameDescription gameDescriptions[] = {
 			AD_ENTRY2s("script.grv", "bdb9a783d4debe477ac3856adc454c17", 62447,
 						"introd1.gjd", nullptr, -1),
 			Common::EN_ANY, Common::kPlatformWindows, ADGF_UNSTABLE,
+			GUIO7(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_NOASPECT, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI, GAMEOPTION_FINAL_HOUR)
+		},
+		kGroovieT11H
+	},
+
+	// The 11th Hour DOS/Windows German
+	{
+		{
+			"11h", "",
+			AD_ENTRY2s("script.grv", "560e90b47054639668e44a8b365fbe26", 62447,
+						"introd1.gjd", nullptr, -1),
+			Common::DE_DEU, Common::kPlatformWindows, ADGF_UNSTABLE,
 			GUIO7(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_NOASPECT, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI, GAMEOPTION_FINAL_HOUR)
 		},
 		kGroovieT11H
@@ -312,7 +337,7 @@ static const GroovieGameDescription gameDescriptions[] = {
 		kGroovieUHP
 	},
 
-	// Tender Loving Care PC English (CD-ROM)
+	// Tender Loving Care PC English (CD-ROM 1998-05-01)
 	{
 		{
 			"tlc", "CD",
@@ -324,11 +349,23 @@ static const GroovieGameDescription gameDescriptions[] = {
 		kGroovieTLC
 	},
 
-	// Tender Loving Care PC English (DVD-ROM)
+	// Tender Loving Care PC English (DVD-ROM 1998-08-26)
 	{
 		{
-			"tlc", "DVD",
+			"tlc", "DVD 1998-08-26",
 			AD_ENTRY2s("tlcmain.grv", "151af191015beb6f662919153e6c28d8", 17379,
+						"tlcnav.gjd", nullptr, -1),
+			Common::EN_ANY, Common::kPlatformWindows, ADGF_UNSTABLE,
+			GUIO2(GUIO_NOMIDI, GUIO_NOASPECT)
+		},
+		kGroovieTLC
+	},
+
+	// Tender Loving Care PC English (DVD-ROM 1998-06-12)
+	{
+		{
+			"tlc", "DVD 1998-06-12",
+			AD_ENTRY2s("tlcmain.grv", "8a591c47d24dde38615e6ea2e79b51a5", 17375,
 						"tlcnav.gjd", nullptr, -1),
 			Common::EN_ANY, Common::kPlatformWindows, ADGF_UNSTABLE,
 			GUIO2(GUIO_NOMIDI, GUIO_NOASPECT)

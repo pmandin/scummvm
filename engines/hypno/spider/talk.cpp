@@ -26,6 +26,7 @@ namespace Hypno {
 
 void SpiderEngine::showConversation() {
 	debugC(1, kHypnoDebugScene, "Showing conversation");
+	defaultCursor();
 	uint32 x = 0;
 	uint32 y = 0;
 	Graphics::Surface *speaker = decodeFrame("dialog/speaker3.smk", 0);
@@ -105,6 +106,7 @@ void SpiderEngine::showConversation() {
 
 		debugC(1, kHypnoDebugScene, "Clearing conversation");
 		_conversation.clear();
+		_music.clear();
 
 		if (shouldEscape) {
 			runIntros(_escapeSequentialVideoToPlay);
@@ -114,8 +116,8 @@ void SpiderEngine::showConversation() {
 			Hotspots *hots = stack.back();
 			if (hots->size() == 2) {
 				debugC(1, kHypnoDebugScene, "Level should end here, since there is nothing else to do");
-				Common::String variable = "GS_LEVELCOMPLETE";
-				_sceneState[variable] = 1;
+				_sceneState["GS_LEVELCOMPLETE"] = true;
+				_sceneState["GS_LEVELWON"] = true;
 			}
 
 		}
@@ -153,9 +155,7 @@ void SpiderEngine::leftClickedConversation(const Common::Point &mousePos) {
 					_sceneState[it->variable] = 1;
 					_refreshConversation = true;
 				} else if (it->command == "L") {
-					Common::String variable = "GS_LEVELCOMPLETE";
-					debugC(1, kHypnoDebugScene, "Enabling variable %s", variable.c_str());
-					_sceneState[variable] = 1;
+					_sceneState["GS_LEVELCOMPLETE"] = true;
 					_refreshConversation = true;
 				}
 
@@ -167,9 +167,10 @@ void SpiderEngine::leftClickedConversation(const Common::Point &mousePos) {
 	}
 
 	if (_sceneState["GS_LEVELCOMPLETE"]) {
-		debugC(1, kHypnoDebugScene, "Level is complete, cleaning variables");
+		debugC(1, kHypnoDebugScene, "Level is complete, clearing variables");
 		resetSceneState();
-		_sceneState["GS_LEVELCOMPLETE"] = 1;
+		_sceneState["GS_LEVELCOMPLETE"] = true;
+		_sceneState["GS_LEVELWON"] = true;
 	}
 
 	if (videos.size() > 0)
@@ -192,6 +193,19 @@ void SpiderEngine::rightClickedConversation(const Common::Point &mousePos) {
 	}
 	if (videos.size() > 0)
 		runIntros(videos);
+}
+
+bool SpiderEngine::hoverConversation(const Common::Point &mousePos) {
+	Mice mice(_defaultCursor, 1);
+
+	for (Actions::const_iterator itt = _conversation.begin(); itt != _conversation.end(); ++itt) {
+		Talk *a = (Talk *)*itt;
+		if (a->active && a->rect.contains(mousePos)) {
+			runMice(&mice);
+			return true;
+		}
+	}
+	return false;
 }
 
 } // End of namespace Hypno

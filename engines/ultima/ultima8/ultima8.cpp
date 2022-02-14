@@ -94,6 +94,8 @@
 #include "ultima/ultima8/gumps/shape_viewer_gump.h"
 #include "ultima/ultima8/meta_engine.h"
 
+//#define PAINT_TIMING 1
+
 namespace Ultima {
 namespace Ultima8 {
 
@@ -597,24 +599,28 @@ bool Ultima8Engine::runGame() {
 
 // Paint the _screen
 void Ultima8Engine::paint() {
+#ifdef PAINT_TIMING
 	static long prev = 0;
 	static long t = 0;
 	static long tdiff = 0;
 	static long tpaint = 0;
 	long now = g_system->getMillis();
 
-	if (!_screen) // need to worry if the graphics system has been started. Need nicer way.
-		return;
-
 	if (prev != 0)
 		tdiff += now - prev;
 	prev = now;
 	++t;
+#endif
+
+	if (!_screen) // need to worry if the graphics system has been started. Need nicer way.
+		return;
 
 	// Begin _painting
 	_screen->BeginPainting();
 
+#ifdef PAINT_TIMING
 	tpaint -= g_system->getMillis();
+#endif
 
 	Rect r;
 	_screen->GetSurfaceDims(r);
@@ -627,7 +633,13 @@ void Ultima8Engine::paint() {
 #endif
 
 	_desktopGump->Paint(_screen, _lerpFactor, false);
+#ifdef PAINT_TIMING
 	tpaint += g_system->getMillis();
+
+	if (t % 150 == 0) { // every ~5 seconds
+		debug("Ultima8Engine: Paint average %.03f millis", (float)tpaint / t);
+	}
+#endif
 
 	// Draw the mouse
 	_mouse->paint();
@@ -726,17 +738,21 @@ void Ultima8Engine::changeVideoMode(int width, int height) {
 }
 
 void Ultima8Engine::handleEvent(const Common::Event &event) {
-	Gump *gump = _desktopGump->FindGump<ModalGump>();
-	if (gump) {
+	// Handle the fact that we can get 2 modals stacking.
+	// We want the focussed one preferrably.
+	Gump *modal = dynamic_cast<ModalGump *>(_desktopGump->GetFocusChild());
+	if (!modal)
+		modal = _desktopGump->FindGump<ModalGump>();
+	if (modal) {
 		_avatarMoverProcess->resetMovementFlags();
 	}
 
 	Common::Keymapper *const keymapper = _eventMan->getKeymapper();
-	keymapper->setEnabledKeymapType(gump ? Common::Keymap::kKeymapTypeGui : Common::Keymap::kKeymapTypeGame);
+	keymapper->setEnabledKeymapType(modal ? Common::Keymap::kKeymapTypeGui : Common::Keymap::kKeymapTypeGame);
 
 	switch (event.type) {
 	case Common::EVENT_KEYDOWN:
-		if (gump) {
+		if (modal) {
 			// Paste from Clip-Board on Ctrl-V - Note this should be a flag of some sort
 			if (event.kbd.keycode == Common::KEYCODE_v && (event.kbd.flags & Common::KBD_CTRL)) {
 				if (!g_system->hasTextInClipboard())
@@ -746,7 +762,7 @@ void Ultima8Engine::handleEvent(const Common::Event &event) {
 
 				// Only read the first line of text
 				while (!text.empty() && text.firstChar() >= ' ')
-					gump->OnTextInput(text.firstChar());
+					modal->OnTextInput(text.firstChar());
 
 				return;
 			}
@@ -755,15 +771,15 @@ void Ultima8Engine::handleEvent(const Common::Event &event) {
 				event.kbd.ascii <= 255 &&
 				!(event.kbd.ascii >= 0x7F && // control chars
 					event.kbd.ascii <= 0x9F)) {
-				gump->OnTextInput(event.kbd.ascii);
+				modal->OnTextInput(event.kbd.ascii);
 			}
 
-			gump->OnKeyDown(event.kbd.keycode, event.kbd.flags);
+			modal->OnKeyDown(event.kbd.keycode, event.kbd.flags);
 		}
 		break;
 	case Common::EVENT_KEYUP:
-		if (gump) {
-			gump->OnKeyUp(event.kbd.keycode);
+		if (modal) {
+			modal->OnKeyUp(event.kbd.keycode);
 		}
 		break;
 

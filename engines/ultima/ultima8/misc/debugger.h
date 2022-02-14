@@ -173,6 +173,16 @@ private:
 	bool cmdStartAttack(int argc, const char **argv);
 	bool cmdStopAttack(int argc, const char **argv);
 
+	// One-shot Avatar mover commands
+	bool cmdShortJump(int argc, const char **argv);
+	bool cmdStepLeft(int argc, const char **argv);
+	bool cmdStepRight(int argc, const char **argv);
+	bool cmdStepForward(int argc, const char **argv);
+	bool cmdStepBack(int argc, const char **argv);
+	bool cmdRollLeft(int argc, const char **argv);
+	bool cmdRollRight(int argc, const char **argv);
+	bool cmdToggleCrouch(int argc, const char **argv);
+
 	bool cmdCameraOnAvatar(int argc, const char **argv);
 
 	// Audio Process

@@ -29,6 +29,15 @@
 #include "backends/audiocd/audiocd.h"
 #include "scumm/file.h"
 
+// The number of "ticks" (1/10th of a second) into the Overture that the
+// LucasFilm logo should appear. This corresponds to a timer value of 204.
+// The default value is selected to work well with the Ozawa recording.
+
+#define DEFAULT_LOOM_OVERTURE_TRANSITION 1160
+
+#define TICKS_TO_TIMER(x) ((((x) * 204) / _loomOvertureTransition) + 1)
+#define TIMER_TO_TICKS(x) ((((x) - 1) * _loomOvertureTransition) / 204)
+
 namespace Audio {
 class Mixer;
 class SoundHandle;
@@ -91,6 +100,11 @@ protected:
 	Audio::SoundHandle *_loomSteamCDAudioHandle;
 	bool _isLoomSteam;
 	AudioCDManager::Status _loomSteamCD;
+	bool _useReplacementAudioTracks;
+	int _musicTimer;
+	int _loomOvertureTransition;
+	uint32 _replacementTrackStartTime;
+	uint32 _replacementTrackPauseTime;
 
 public:
 	Audio::SoundHandle *_talkChannelHandle;	// Handle of mixer channel actor is talking on
@@ -102,7 +116,7 @@ public:
 	MidiDriverFlags _musicType;
 
 public:
-	Sound(ScummEngine *parent, Audio::Mixer *mixer);
+	Sound(ScummEngine *parent, Audio::Mixer *mixer, bool useReplacementAudioTracks);
 	~Sound() override;
 	virtual void addSoundToQueue(int sound, int heOffset = 0, int heChannel = 0, int heFlags = 0, int heFreq = 0, int hePan = 0, int heVol = 0);
 	virtual void addSoundToQueue2(int sound, int heOffset = 0, int heChannel = 0, int heFlags = 0, int heFreq = 0, int hePan = 0, int heVol = 0);
@@ -121,6 +135,7 @@ public:
 	virtual void setupSound();
 	void pauseSounds(bool pause);
 	bool isSfxFileCompressed();
+	bool hasSfxFile() const;
 	ScummFile *restoreDiMUSESpeechFile(const char *fileName);
 
 	void startCDTimer();
@@ -134,6 +149,11 @@ public:
 	AudioCDManager::Status getCDStatus();
 	int getCurrentCDSound() const { return _currentCDSound; }
 
+	bool isRolandLoom() const;
+	bool useReplacementAudioTracks() const { return _useReplacementAudioTracks; }
+	void updateMusicTimer();
+	int getMusicTimer() const { return _musicTimer; }
+
 	void saveLoadWithSerializer(Common::Serializer &ser) override;
 
 protected:
@@ -144,6 +164,8 @@ protected:
 	bool isSoundInQueue(int sound) const;
 
 	virtual void processSoundQueues();
+
+	int getReplacementAudioTrack(int soundID);
 };
 
 

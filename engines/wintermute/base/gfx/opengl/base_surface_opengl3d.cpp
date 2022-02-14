@@ -20,7 +20,9 @@
  */
 
 #include "common/algorithm.h"
+
 #include "graphics/transform_tools.h"
+
 #include "engines/wintermute/base/base_engine.h"
 #include "engines/wintermute/base/gfx/base_image.h"
 
@@ -172,7 +174,11 @@ bool BaseSurfaceOpenGL3D::create(const Common::String &filename, bool defaultCK,
 		delete _imageData;
 	}
 
-	_imageData = img.getSurface()->convertTo(OpenGL::TextureGL::getRGBAPixelFormat(), img.getPalette());
+#ifdef SCUMM_BIG_ENDIAN
+	_imageData = img.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0), img.getPalette());
+#else
+	_imageData = img.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), img.getPalette());
+#endif
 
 	if (BaseEngine::instance().getTargetExecutable() < WME_LITE) {
 		// WME 1.x always use colorkey, even for images with transparency
@@ -289,9 +295,9 @@ bool BaseSurfaceOpenGL3D::isTransparentAtLite(int x, int y) {
 		return false;
 	}
 
-	//TODO: Check for endianness issues
-	uint8 alpha = reinterpret_cast<uint8 *>(_imageData->getPixels())[y * _width * 4 + x * 4 + 3];
-	return alpha == 0;
+	uint8 a, r, g, b;
+	_imageData->format.colorToARGB(_imageData->getPixel(x, y), a, r, g, b);
+	return a == 0;
 }
 
 void BaseSurfaceOpenGL3D::setTexture() {

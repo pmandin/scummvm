@@ -514,6 +514,8 @@ Grim
      - Grim (retired)
    * - Giulio Camuffo
      - Grim (retired)
+   * - Daniel Schepler
+     - Initial engine contributor
    * - Dries Harnie
      - EMI
    * - Paweł Kołodziejski
@@ -534,6 +536,8 @@ Groovie
    :widths: 35 65
 
    * - Henry Bush
+     -
+   * - Ray Carro
      -
    * - Scott Thomas
      -
@@ -582,6 +586,15 @@ Hugo
    * - Oystein Eftevaag
      -
    * - Eugene Sandulenko
+     -
+
+Hypno
+^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Gustavo Grieco
      -
 
 ICB
@@ -1534,8 +1547,8 @@ PlayStation Vita
    * - rsn8887
      -
 
-SDL (Win/Linux/OS X/etc.)
-^^^^^^^^^^^^^^^^^^^^^^^^^
+SDL (Win/Linux/macOS/etc.)
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. list-table::
    :widths: 35 65

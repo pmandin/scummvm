@@ -64,6 +64,9 @@
 				size = '120, Globals.Line.Height'
 				textalign = 'end'
 		/>
+		<widget name = 'ShortOptionsLabel'
+				size = '60, Globals.Line.Height'
+		/>
 		<widget name = 'SmallLabel'
 				size = '20, Globals.Line.Height'
 		/>
@@ -83,6 +86,9 @@
 
 		<widget name = 'Slider'
 				size = '85, 12'
+		/>
+		<widget name = 'WideSlider'
+				size = '-1, 12'
 		/>
 		<widget name = 'PopUp'
 				size = '-1, 15'
@@ -262,13 +268,7 @@
 
 	<dialog name = 'GlobalOptions_Control' overlays = 'Dialog.GlobalOptions.TabWidget'>
 		<layout type = 'vertical' padding = '16, 16, 16, 16' spacing = '8'>
-			<widget name = 'grOnScreenCheckbox'
-					type = 'Checkbox'
-			/>
 			<widget name = 'grTouchpadCheckbox'
-					type = 'Checkbox'
-			/>
-			<widget name = 'grSwapMenuAndBackBtnsCheckbox'
 					type = 'Checkbox'
 			/>
 			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '10'>
@@ -1223,6 +1223,7 @@
 						type = 'PopUp'
 				/>
 			</layout>
+			<widget name = 'Container'/>
 		</layout>
 	</dialog>
 
@@ -1260,12 +1261,6 @@
 						height = 'Globals.Line.Height'
 				/>
 			</layout>
-		</layout>
-	</dialog>
-
-	<dialog name = 'GameOptions_Engine' overlays = 'Dialog.GameOptions.TabWidget'>
-		<layout type = 'vertical' padding = '0, 0, 0, 0'>
-			<widget name = 'Container'/>
 		</layout>
 	</dialog>
 

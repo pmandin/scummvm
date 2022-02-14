@@ -375,7 +375,7 @@ void XcodeProvider::outputMainProjectFile(const BuildSetup &setup) {
 //////////////////////////////////////////////////////////////////////////
 // Files
 //////////////////////////////////////////////////////////////////////////
-void XcodeProvider::writeFileListToProject(const FileNode &dir, std::ofstream &projectFile, const int indentation,
+void XcodeProvider::writeFileListToProject(const FileNode &dir, std::ostream &projectFile, const int indentation,
 										   const std::string &objPrefix, const std::string &filePrefix) {
 
 	// Ensure that top-level groups are generated for i.e. engines/
@@ -502,9 +502,9 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_THEORADEC")) {
 		DEF_LOCALLIB_STATIC("libtheoradec");
-	if (CONTAINS_DEFINE(setup.defines, "USE_GLEW")) {
-		DEF_LOCALLIB_STATIC("libGLEW");
 	}
+	if (CONTAINS_DEFINE(setup.defines, "USE_RETROWAVE")) {
+		DEF_LOCALLIB_STATIC("libretrowave");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_ZLIB")) {
 		DEF_SYSTBD("libz");
@@ -709,8 +709,8 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	if (CONTAINS_DEFINE(setup.defines, "USE_THEORADEC")) {
 		frameworks_osx.push_back("libtheoradec.a");
 	}
-	if (CONTAINS_DEFINE(setup.defines, "USE_GLEW")) {
-		frameworks_osx.push_back("libGLEW.a");
+	if (CONTAINS_DEFINE(setup.defines, "USE_RETROWAVE")) {
+		frameworks_osx.push_back("libretrowave.a");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_ZLIB")) {
 		frameworks_osx.push_back("libz.tbd");
@@ -871,6 +871,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles() const {
 		files.push_back("LICENSES/COPYING.LUA");
 		files.push_back("LICENSES/COPYING.MIT");
 		files.push_back("LICENSES/COPYING.TINYGL");
+		files.push_back("LICENSES/COPYING.GLAD");
 		files.push_back("NEWS.md");
 		files.push_back("README.md");
 	}
@@ -1309,13 +1310,12 @@ std::string XcodeProvider::md5(std::string key) {
 #endif
 
 std::string XcodeProvider::newHash() const {
-	std::string hash = createUUID();
+	std::string hash = toUpper(createUUID());
 
 	// Remove { and - from UUID and resize to 96-bits uppercase hex string
 	hash.erase(remove_if(hash.begin(), hash.end(), isSeparator), hash.end());
 
 	hash.resize(24);
-	std::transform(hash.begin(), hash.end(), hash.begin(), toupper);
 
 	return hash;
 }

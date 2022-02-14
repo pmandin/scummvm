@@ -31,8 +31,10 @@
 #include "ultima/ultima8/graphics/main_shape_archive.h"
 #include "ultima/ultima8/graphics/gump_shape_archive.h"
 #include "ultima/ultima8/graphics/shape.h"
+#include "ultima/ultima8/graphics/shape_frame.h"
 #include "ultima/ultima8/world/item_factory.h"
 #include "ultima/ultima8/world/current_map.h"
+#include "ultima/ultima8/world/coord_utils.h"
 #include "ultima/ultima8/world/fire_type.h"
 #include "ultima/ultima8/misc/direction_util.h"
 #include "ultima/ultima8/gumps/bark_gump.h"
@@ -53,6 +55,7 @@
 #include "ultima/ultima8/world/super_sprite_process.h"
 #include "ultima/ultima8/audio/audio_process.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
+#include "ultima/ultima8/world/actors/attack_process.h"
 #include "ultima/ultima8/world/missile_tracker.h"
 #include "ultima/ultima8/world/crosshair_process.h"
 #include "ultima/ultima8/world/actors/anim_action.h"
@@ -611,11 +614,15 @@ bool Item::isOnScreen() const {
 	int32 screeny = -1;
 	game_map->GetLocationOfItem(_objId, screenx, screeny);
 	game_map->GetDims(game_map_dims);
-	int32 xd, yd, zd;
-	getFootpadWorld(xd, yd, zd);
+	const Shape *shape = getShapeObject();
+	if (!shape)
+		return false;
+	const ShapeFrame *frame = shape->getFrame(getFrame());
+	if (!frame)
+		return false;
 
-	if (game_map_dims.contains(screenx, screeny) &&
-	    game_map_dims.contains(screenx + xd, screeny + yd)) {
+	if (game_map_dims.contains(screenx - frame->_xoff, screeny - frame->_yoff) &&
+	    game_map_dims.contains(screenx + frame->_width, screeny + frame->_height)) {
 		return true;
 	}
 
@@ -633,11 +640,15 @@ bool Item::isPartlyOnScreen() const {
 	int32 screeny = -1;
 	game_map->GetLocationOfItem(_objId, screenx, screeny);
 	game_map->GetDims(game_map_dims);
-	int32 xd, yd, zd;
-	getFootpadWorld(xd, yd, zd);
+	const Shape *shape = getShapeObject();
+	if (!shape)
+		return false;
+	const ShapeFrame *frame = shape->getFrame(getFrame());
+	if (!frame)
+		return false;
 
-	if (game_map_dims.contains(screenx, screeny) ||
-		game_map_dims.contains(screenx + xd, screeny + yd)) {
+	if (game_map_dims.contains(screenx - frame->_xoff, screeny - frame->_yoff) ||
+		game_map_dims.contains(screenx + frame->_width, screeny + frame->_height)) {
 		return true;
 	}
 
@@ -1269,15 +1280,34 @@ uint16 Item::fireWeapon(int32 x, int32 y, int32 z, Direction dir, int firetype, 
 	// is clean for both Item and Actor.
 	DirectionMode dirmode = dirmode_8dirs;
 	const Actor *thisactor = dynamic_cast<Actor *>(this);
+	Item *target = nullptr;
 	if (thisactor) {
-		// TODO: Get damage for active inventory item if not a weapon?
 		dirmode = thisactor->animDirMode(thisactor->getLastAnim());
+
+		// In the original code there is logic here deciding whether to get
+		// damage for the active weapon or some other item, but in the end
+		// it always gets random damage for the same firetype, so as far as
+		// I can tell it makes no difference.
+
+		// In No Regret, we get another chance to increase damage.  We also
+		// set target based on the npc attack rather than whatever controlled
+		// actor is.
+		if (GAME_IS_REGRET) {
+			if (damage < 2)
+				damage = firetypedat->getRandomDamage();
+
+			AttackProcess *attackproc = thisactor->getAttackProcess();
+			if (attackproc) {
+				target = getActor(attackproc->getTarget());
+			}
+		}
 	}
 
-	Item *target = nullptr;
 	if (findtarget) {
 		if (this != getControlledActor()) {
-			target = getControlledActor();
+			if (GAME_IS_REMORSE || !thisactor)
+				target = getControlledActor();
+			// else already set above to attackproc target
 		} else {
 			target = currentmap->findBestTargetItem(ix, iy, iz - z, dir, dirmode);
 		}
@@ -2608,8 +2638,8 @@ bool Item::loadData(Common::ReadStream *rs, uint32 version) {
 }
 
 
-uint32 Item::I_touch(const uint8 *args, unsigned int /*argsize*/) {
-	ARG_NULL32(); // ARG_ITEM_FROM_PTR(item);
+uint32 Item::I_touch(const uint8 */*args*/, unsigned int /*argsize*/) {
+	//ARG_NULL32(); // ARG_ITEM_FROM_PTR(item);
 
 	// Guess: this is used to make sure an item is painted in the original.
 	// Our renderer is different, making this intrinsic unnecessary.
@@ -2623,10 +2653,7 @@ uint32 Item::I_getX(const uint8 *args, unsigned int /*argsize*/) {
 
 	int32 x, y, z;
 	item->getLocationAbsolute(x, y, z);
-	if (GAME_IS_CRUSADER)
-		return x / 2;
-	else
-		return x;
+	return World_ToUsecodeCoord(x);
 }
 
 uint32 Item::I_getY(const uint8 *args, unsigned int /*argsize*/) {
@@ -2635,10 +2662,7 @@ uint32 Item::I_getY(const uint8 *args, unsigned int /*argsize*/) {
 
 	int32 x, y, z;
 	item->getLocationAbsolute(x, y, z);
-	if (GAME_IS_CRUSADER)
-		return y / 2;
-	else
-		return y;
+	return World_ToUsecodeCoord(y);
 }
 
 uint32 Item::I_getZ(const uint8 *args, unsigned int /*argsize*/) {
@@ -2657,16 +2681,10 @@ uint32 Item::I_getCX(const uint8 *args, unsigned int /*argsize*/) {
 	int32 x, y, z;
 	item->getLocationAbsolute(x, y, z);
 
-	int mul = 16;
-	if (GAME_IS_CRUSADER) {
-		x /= 2;
-		mul /= 2;
-	}
-
 	if (item->_flags & FLG_FLIPPED)
-		return x - item->getShapeInfo()->_y * mul;
+		return World_ToUsecodeCoord(x - item->getShapeInfo()->_y * 16);
 	else
-		return x - item->getShapeInfo()->_x * mul;
+		return World_ToUsecodeCoord(x - item->getShapeInfo()->_x * 16);
 }
 
 uint32 Item::I_getCY(const uint8 *args, unsigned int /*argsize*/) {
@@ -2676,16 +2694,10 @@ uint32 Item::I_getCY(const uint8 *args, unsigned int /*argsize*/) {
 	int32 x, y, z;
 	item->getLocationAbsolute(x, y, z);
 
-	int mul = 16;
-	if (GAME_IS_CRUSADER) {
-		y /= 2;
-		mul /= 2;
-	}
-
 	if (item->_flags & FLG_FLIPPED)
-		return y - item->getShapeInfo()->_x * mul;
+		return World_ToUsecodeCoord(y - item->getShapeInfo()->_x * 16);
 	else
-		return y - item->getShapeInfo()->_y * mul;
+		return World_ToUsecodeCoord(y - item->getShapeInfo()->_y * 16);
 }
 
 uint32 Item::I_getCZ(const uint8 *args, unsigned int /*argsize*/) {
@@ -2706,10 +2718,7 @@ uint32 Item::I_getPoint(const uint8 *args, unsigned int /*argsize*/) {
 	int32 x, y, z;
 	item->getLocationAbsolute(x, y, z);
 
-	if (GAME_IS_CRUSADER) {
-		x /= 2;
-		y /= 2;
-	}
+	World_ToUsecodeXY(x, y);
 
 	WorldPoint point;
 	point.setX(x);
@@ -3125,10 +3134,7 @@ uint32 Item::I_legalCreateAtPoint(const uint8 *args, unsigned int /*argsize*/) {
 	int32 y = point.getY();
 	int32 z = point.getZ();
 
-	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
-	}
+	World_FromUsecodeXY(x, y);
 
 	// check if item can exist
 	CurrentMap *cm = World::get_instance()->getCurrentMap();
@@ -3161,10 +3167,7 @@ uint32 Item::I_legalCreateAtCoords(const uint8 *args, unsigned int /*argsize*/) 
 	ARG_UINT16(y);
 	ARG_UINT8(z);
 
-	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
-	}
+	World_FromUsecodeXY(x, y);
 
 	// check if item can exist
 	CurrentMap *cm = World::get_instance()->getCurrentMap();
@@ -3195,7 +3198,7 @@ uint32 Item::I_legalCreateInCont(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_UINT16(shape);
 	ARG_UINT16(frame);
 	ARG_CONTAINER_FROM_ID(container);
-	ARG_UINT16(unknown); // ?
+	ARG_NULL16(); // unknown
 
 	uint8 buf[2];
 	buf[0] = 0;
@@ -3436,9 +3439,8 @@ uint32 Item::I_popToCoords(const uint8 *args, unsigned int /*argsize*/) {
 		return 0; // top item was invalid
 	}
 
+	World_FromUsecodeXY(x, y);
 	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
 		// HACK!!  DEATHFL::ordinal20 has a hack to add 1 to z for the death
 		// animation (falling into acid), but then our animation tracker
 		// detects a fall and stops animating.  Fight hacks with hacks..
@@ -3459,61 +3461,90 @@ uint32 Item::I_popToCoords(const uint8 *args, unsigned int /*argsize*/) {
 
 uint32 Item::I_popToContainer(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_NULL32(); // ARG_ITEM_FROM_PTR(item); // unused
-	ARG_CONTAINER_FROM_ID(container);
-
-	if (!container) {
-		perr << "Trying to pop item to invalid container (" << id_container << ")." << Std::endl;
-		return 0;
-	}
+	ARG_ITEM_FROM_ID(citem);
 
 	World *w = World::get_instance();
 
 	if (w->etherealEmpty())
 		return 0; // no items left on stack
 
-	uint16 _objId = w->etherealPeek();
-	Item *item = getItem(_objId);
+	uint16 objId = w->etherealPeek();
+	Item *item = getItem(objId);
 	if (!item) {
-		w->etherealRemove(_objId);
+		w->etherealRemove(objId);
 		return 0; // top item was invalid
 	}
 
-	item->moveToContainer(container);
+	Container *container = dynamic_cast<Container *>(citem);
+	if (container) {
+		item->moveToContainer(container);
+	} else if (citem) {
+		Point3 pt;
+		citem->getLocation(pt);
+		item->move(pt);
+	} else {
+		perr << "Trying to popToContainer to invalid container (" << id_citem << ")" << Std::endl;
+		item->dumpInfo();
+		// This object now has no home, destroy it - unless it doesn't think it's
+		// ethereal, in that case it is somehow there by mistake?
+		if (item->getFlags() & FLG_ETHEREAL) {
+			perr << "Destroying orphaned ethereal object (" << objId << ")" << Std::endl;
+			item->destroy();
+		} else {
+			perr << "Leaving orphaned ethereal object (" << objId << ")" << Std::endl;
+			w->etherealRemove(objId);
+		}
+	}
 
 	//! Anything else?
 
-	return _objId;
+	return objId;
 }
 
 uint32 Item::I_popToEnd(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_NULL32(); // ARG_ITEM_FROM_PTR(item); // unused
-	ARG_CONTAINER_FROM_ID(container);
-
-	if (!container) {
-		perr << "Trying to pop item to invalid container (" << id_container << ")." << Std::endl;
-		return 0;
-	}
+	ARG_ITEM_FROM_ID(citem);
 
 	World *w = World::get_instance();
 
 	if (w->etherealEmpty())
 		return 0; // no items left on stack
 
-	uint16 _objId = w->etherealPeek();
-	Item *item = getItem(_objId);
+	uint16 objId = w->etherealPeek();
+	Item *item = getItem(objId);
 	if (!item) {
-		w->etherealRemove(_objId);
+		w->etherealRemove(objId);
 		return 0; // top item was invalid
 	}
 
-	item->moveToContainer(container);
+	// TODO: This should also pop to container if citem is type 7 in Crusader
+	Container *container = dynamic_cast<Container *>(citem);
+	if (container) {
+		item->moveToContainer(container);
+	} else if (citem) {
+		Point3 pt;
+		citem->getLocation(pt);
+		item->move(pt);
+	} else {
+		perr << "Trying to popToEnd to invalid container (" << id_citem << ")" << Std::endl;
+		item->dumpInfo();
+		// This object now has no home, destroy it - unless it doesn't think it's
+		// ethereal, in that case it is somehow there by mistake?
+		if (item->getFlags() & FLG_ETHEREAL) {
+			perr << "Destroying orphaned ethereal object (" << objId << ")" << Std::endl;
+			item->destroy();
+		} else {
+			perr << "Leaving orphaned ethereal object (" << objId << ")" << Std::endl;
+			w->etherealRemove(objId);
+		}
+	}
 
 	//! Anything else?
 
 	//! This should probably be different from I_popToContainer, but
 	//! how exactly?
 
-	return _objId;
+	return objId;
 }
 
 uint32 Item::I_move(const uint8 *args, unsigned int /*argsize*/) {
@@ -3525,10 +3556,7 @@ uint32 Item::I_move(const uint8 *args, unsigned int /*argsize*/) {
 		return 0;
 
 	//! What should this do to ethereal items?
-	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
-	}
+	World_FromUsecodeXY(x, y);
 
 	#if 0
 		perr << "Moving item: " << item->getShape() << "," << item->getFrame() << " to (" << x << "," << y << "," << z << ")" << Std::endl;
@@ -3542,16 +3570,13 @@ uint32 Item::I_legalMoveToPoint(const uint8 *args, unsigned int argsize) {
 	ARG_ITEM_FROM_PTR(item);
 	ARG_WORLDPOINT(point);
 	ARG_UINT16(move_if_blocked); // 0/1
-	ARG_UINT16(unknown2); // always 0
+	ARG_NULL16(); // always 0
 
 	int32 x = point.getX();
 	int32 y = point.getY();
 	int32 z = point.getZ();
 
-	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
-	}
+	World_FromUsecodeXY(x, y);
 
 	if (!item)
 		return 0;
@@ -3588,7 +3613,7 @@ uint32 Item::I_legalMoveToPoint(const uint8 *args, unsigned int argsize) {
 uint32 Item::I_legalMoveToContainer(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_ITEM_FROM_PTR(item);
 	ARG_CONTAINER_FROM_PTR(container);
-	ARG_UINT16(unknown); // always 0
+	ARG_NULL16(); // always 0
 	if (!item || !container) return 0; // shouldn't happen?
 
 	// try to move item to container checking weight and volume
@@ -3642,10 +3667,7 @@ uint32 Item::I_getDirToCoords(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_UINT16(y);
 	if (!item) return 0;
 
-	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
-	}
+	World_FromUsecodeXY(x, y);
 
 	int32 ix, iy, iz;
 	item->getLocationAbsolute(ix, iy, iz);
@@ -3659,10 +3681,7 @@ uint32 Item::I_getDirFromCoords(const uint8 *args, unsigned int /*argsize*/) {
 	ARG_UINT16(y);
 	if (!item) return 0;
 
-	if (GAME_IS_CRUSADER) {
-		x *= 2;
-		y *= 2;
-	}
+	World_FromUsecodeXY(x, y);
 
 	int32 ix, iy, iz;
 	item->getLocationAbsolute(ix, iy, iz);
@@ -3996,7 +4015,9 @@ uint32 Item::I_fireWeapon(const uint8 *args, unsigned int /*argsize*/) {
 
 	if (!item) return 0;
 
-	return item->fireWeapon(x * 2, y * 2, z, Direction_FromUsecodeDir(dir), firetype, findtarget != 0);
+	World_FromUsecodeXY(x, y);
+
+	return item->fireWeapon(x, y, z, Direction_FromUsecodeDir(dir), firetype, findtarget != 0);
 }
 
 uint32 Item::I_fireDistance(const uint8 *args, unsigned int /*argsize*/) {
@@ -4011,7 +4032,8 @@ uint32 Item::I_fireDistance(const uint8 *args, unsigned int /*argsize*/) {
 
 	if (!item || !otheritem) return 0;
 
-	return item->fireDistance(otheritem, Direction_FromUsecodeDir(dir), xoff * 2, yoff * 2, zoff);
+	World_FromUsecodeXY(xoff, yoff);
+	return item->fireDistance(otheritem, Direction_FromUsecodeDir(dir), xoff, yoff, zoff);
 }
 
 } // End of namespace Ultima8

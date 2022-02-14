@@ -183,32 +183,28 @@ EditGameDialog::EditGameDialog(const Common::String &domain)
 	}
 
 	//
-	// 2) The engine tab (shown only if the engine implements one or there are custom engine options)
+	// 2) The engine's game settings (shown only if the engine implements one or there are custom engine options)
 	//
 
 	if (metaEnginePlugin) {
-		int tabId = tab->addTab(_("Engine"), "GameOptions_Engine");
-
 		const MetaEngineDetection &metaEngineDetection = metaEnginePlugin->get<MetaEngineDetection>();
 		metaEngineDetection.registerDefaultSettings(_domain);
 		if (enginePlugin) {
 			enginePlugin->get<MetaEngine>().registerDefaultSettings(_domain);
-			_engineOptions = enginePlugin->get<MetaEngine>().buildEngineOptionsWidgetDynamic(tab, "GameOptions_Engine.Container", _domain);
+			_engineOptions = enginePlugin->get<MetaEngine>().buildEngineOptionsWidgetDynamic(tab, "GameOptions_Game.Container", _domain);
 		}
 		if (!_engineOptions)
-			_engineOptions = metaEngineDetection.buildEngineOptionsWidgetStatic(tab, "GameOptions_Engine.Container", _domain);
+			_engineOptions = metaEngineDetection.buildEngineOptionsWidgetStatic(tab, "GameOptions_Game.Container", _domain);
 
 		if (_engineOptions) {
 			_engineOptions->setParentDialog(this);
-		} else {
-			tab->removeTab(tabId);
 		}
 	}
 
 	//
 	// 3) The graphics tab
 	//
-	_graphicsTabId = tab->addTab(g_system->getOverlayWidth() > 320 ? _("Graphics") : _("GFX"), "GameOptions_Graphics");
+	_graphicsTabId = tab->addTab(g_system->getOverlayWidth() > 320 ? _("Graphics") : _("GFX"), "GameOptions_Graphics", false);
 	ScrollContainerWidget *graphicsContainer = new ScrollContainerWidget(tab, "GameOptions_Graphics.Container", "GameOptions_Graphics_Container", kGraphicsTabContainerReflowCmd);
 	graphicsContainer->setBackgroundType(ThemeEngine::kWidgetBackgroundNo);
 	graphicsContainer->setTarget(this);
@@ -245,14 +241,14 @@ EditGameDialog::EditGameDialog(const Common::String &domain)
 	}
 
 	if (!keymaps.empty()) {
-		tab->addTab(_("Keymaps"), "GameOptions_KeyMapper");
+		tab->addTab(_("Keymaps"), "GameOptions_KeyMapper", false);
 		addKeyMapperControls(tab, "GameOptions_KeyMapper.", keymaps, domain);
 	}
 
 	//
 	// The backend tab (shown only if the backend implements one)
 	//
-	int backendTabId = tab->addTab(_("Backend"), "GameOptions_Backend");
+	int backendTabId = tab->addTab(_("Backend"), "GameOptions_Backend", false);
 
 	if (g_system->getOverlayWidth() > 320)
 		_globalBackendOverride = new CheckboxWidget(tab, "GameOptions_Backend.EnableTabCheckbox", _("Override global backend settings"), Common::U32String(), kCmdGlobalBackendOverride);
@@ -371,11 +367,11 @@ EditGameDialog::EditGameDialog(const Common::String &domain)
 		const MetaEngine &metaEngine = enginePlugin->get<MetaEngine>();
 		AchMan.setActiveDomain(metaEngine.getAchievementsInfo(domain));
 		if (AchMan.getAchievementCount()) {
-			tab->addTab(_("Achievements"), "GameOptions_Achievements");
+			tab->addTab(_("Achievements"), "GameOptions_Achievements", false);
 			addAchievementsControls(tab, "GameOptions_Achievements.");
 		}
 		if (AchMan.getStatCount()) {
-			tab->addTab(_("Statistics"), "GameOptions_Achievements");
+			tab->addTab(_("Statistics"), "GameOptions_Achievements", false);
 			addStatisticsControls(tab, "GameOptions_Achievements.");
 		}
 	}

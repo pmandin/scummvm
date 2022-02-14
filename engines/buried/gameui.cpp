@@ -85,7 +85,7 @@ bool GameUIWindow::startNewGameIntro(bool walkthrough) {
 
 	VideoWindow *video = new VideoWindow(_vm, this);
 
-	if (!video->openVideo(_vm->getFilePath(19972))) // FIXME: Why is this not a constant?
+	if (!video->openVideo(_vm->getFilePath(IDS_INTRO_FILENAME)))
 		error("Failed to load intro video");
 
 	video->setWindowPos(nullptr, 104, 145, 0, 0, kWindowPosNoSize | kWindowPosNoZOrder);
@@ -95,7 +95,7 @@ bool GameUIWindow::startNewGameIntro(bool walkthrough) {
 	video->playVideo();
 
 	while (!_vm->shouldQuit() && video->getMode() != VideoWindow::kModeStopped)
-		_vm->yield();
+		_vm->yield(video, -1);
 
 	delete video;
 
@@ -173,7 +173,7 @@ bool GameUIWindow::flashWarningLight() {
 
 	uint32 startTime = g_system->getMillis();
 	while (!_vm->shouldQuit() && (startTime + 200) > g_system->getMillis()) {
-		_vm->yield();
+		_vm->yield(nullptr, -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -188,7 +188,7 @@ bool GameUIWindow::flashWarningLight() {
 
 	startTime = g_system->getMillis();
 	while (!_vm->shouldQuit() && (startTime + 250) > g_system->getMillis()) {
-		_vm->yield();
+		_vm->yield(nullptr, -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -201,7 +201,7 @@ bool GameUIWindow::flashWarningLight() {
 
 	startTime = g_system->getMillis();
 	while (!_vm->shouldQuit() && (startTime + 250) > g_system->getMillis()) {
-		_vm->yield();
+		_vm->yield(nullptr, -1);
 		_vm->_sound->timerCallback();
 	}
 
@@ -292,6 +292,9 @@ void GameUIWindow::onEnable(bool enable) {
 }
 
 void GameUIWindow::onKeyUp(const Common::KeyState &key, uint flags) {
+	const bool cloakingDisabled = _sceneViewWindow->getGlobalFlags().bcCloakingEnabled != 1;
+	const bool interfaceMenuActive = (_bioChipRightWindow->getCurrentBioChip() == kItemBioChipInterface);
+
 	switch (key.keycode) {
 	case Common::KEYCODE_KP4:
 	case Common::KEYCODE_LEFT:
@@ -306,26 +309,24 @@ void GameUIWindow::onKeyUp(const Common::KeyState &key, uint flags) {
 			_navArrowWindow->sendMessage(new KeyUpMessage(key, flags));
 		break;
 	case Common::KEYCODE_s:
-		if ((key.flags & Common::KBD_CTRL) && _sceneViewWindow->getGlobalFlags().bcCloakingEnabled != 1) {
-			_bioChipRightWindow->changeCurrentBioChip(kItemBioChipInterface);
-			_bioChipRightWindow->invalidateWindow(false);
-			_bioChipRightWindow->sendMessage(new LButtonUpMessage(Common::Point(50, 130), 0));
-			_vm->runSaveDialog();
-			return;
-		}
-		// Fall through
+		if ((key.flags & Common::KBD_CTRL) && cloakingDisabled && !interfaceMenuActive) {
+			_vm->handleSaveDialog();
+		} else if (_sceneViewWindow)
+			_sceneViewWindow->sendMessage(new KeyUpMessage(key, flags));
+		break;
 	case Common::KEYCODE_o:
 	case Common::KEYCODE_l:
-		if ((key.flags & Common::KBD_CTRL) && _sceneViewWindow->getGlobalFlags().bcCloakingEnabled != 1) {
-			_bioChipRightWindow->changeCurrentBioChip(kItemBioChipInterface);
-			_bioChipRightWindow->invalidateWindow(false);
-			_bioChipRightWindow->sendMessage(new LButtonUpMessage(Common::Point(50, 130), 0));
-
-			if (_vm->runLoadDialog().getCode() == Common::kUnknownError)
-				((FrameWindow *)_vm->_mainWindow)->showMainMenu();
-			return;
-		}
-		// Fall through
+		if ((key.flags & Common::KBD_CTRL) && cloakingDisabled && !interfaceMenuActive) {
+			_vm->handleRestoreDialog();
+		} else if (_sceneViewWindow)
+			_sceneViewWindow->sendMessage(new KeyUpMessage(key, flags));
+		break;
+	case Common::KEYCODE_p:
+		if ((key.flags & Common::KBD_CTRL) && cloakingDisabled && !interfaceMenuActive)
+			_vm->pauseGame();
+		else if (_sceneViewWindow)
+			_sceneViewWindow->sendMessage(new KeyUpMessage(key, flags));
+		break;
 	default:
 		if (_sceneViewWindow)
 			_sceneViewWindow->sendMessage(new KeyUpMessage(key, flags));

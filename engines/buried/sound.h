@@ -49,7 +49,6 @@ public:
 	// AMBIENT SOUND CHANNEL FUNCTIONS
 	bool setAmbientSound(const Common::String &fileName = "", bool fade = false, byte finalVolumeLevel = 64);
 	bool adjustAmbientSoundVolume(byte newVolumeLevel, bool fade, byte steps, uint32 fadeLength);
-	uint32 getAmbientPosition();
 	bool isAmbientSoundPlaying();
 
 	bool setSecondaryAmbientSound(const Common::String &fileName = "", bool fade = false, byte finalVolumeLevel = 64);
@@ -61,6 +60,7 @@ public:
 	bool playSynchronousAIComment(const Common::String &fileName);
 	bool playAsynchronousAIComment(const Common::String &fileName);
 	bool isAsynchronousAICommentPlaying();
+	void stopAsynchronousAIComment();
 
 	// SOUND EFFECTS FUNCTIONS
 	int playSoundEffect(const Common::String &fileName, int volume = 127, bool loop = false, bool oneShot = true);
@@ -84,6 +84,7 @@ public:
 	// pause() is used for implementing pauseEngineIntern(). Since stop()/restart()
 	// are not re-entrant, they're not suitable for that purpose.
 	bool stop();
+	void stopSound(int soundId);
 	bool restart();
 	void pause(bool shouldPause);
 

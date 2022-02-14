@@ -29,37 +29,36 @@
 
 namespace TinyGL {
 
-TGLint tglRenderMode(TGLenum mode) {
-	GLContext *c = gl_get_context();
+TGLint GLContext::gl_RenderMode(TGLenum mode) {
 	int result = 0;
 
-	switch (c->render_mode) {
+	switch (render_mode) {
 	case TGL_RENDER:
 		break;
 	case TGL_SELECT:
-		if (c->select_overflow) {
-			result = -c->select_hits;
+		if (select_overflow) {
+			result = -select_hits;
 		} else {
-			result = c->select_hits;
+			result = select_hits;
 		}
-		c->select_overflow = 0;
-		c->select_ptr = c->select_buffer;
-		c->name_stack_size = 0;
+		select_overflow = 0;
+		select_ptr = select_buffer;
+		name_stack_size = 0;
 		break;
 	default:
 		assert(0);
 	}
 	switch (mode) {
 	case TGL_RENDER:
-		c->render_mode = TGL_RENDER;
+		render_mode = TGL_RENDER;
 		break;
 	case TGL_SELECT:
-		c->render_mode = TGL_SELECT;
-		assert(c->select_buffer != NULL);
-		c->select_ptr = c->select_buffer;
-		c->select_hits = 0;
-		c->select_overflow = 0;
-		c->select_hit = NULL;
+		render_mode = TGL_SELECT;
+		assert(select_buffer != nullptr);
+		select_ptr = select_buffer;
+		select_hits = 0;
+		select_overflow = 0;
+		select_hit = nullptr;
 		break;
 	default:
 		assert(0);
@@ -67,19 +66,17 @@ TGLint tglRenderMode(TGLenum mode) {
 	return result;
 }
 
-void tglSelectBuffer(TGLsizei size, TGLuint *buffer) {
-	GLContext *c = gl_get_context();
+void GLContext::gl_SelectBuffer(TGLsizei size, TGLuint *buffer) {
+	assert(render_mode != TGL_SELECT);
 
-	assert(c->render_mode != TGL_SELECT);
-
-	c->select_buffer = buffer;
-	c->select_size = size;
+	select_buffer = buffer;
+	select_size = size;
 }
 
 void GLContext::glopInitNames(GLParam *) {
 	if (render_mode == TGL_SELECT) {
 		name_stack_size = 0;
-		select_hit = NULL;
+		select_hit = nullptr;
 	}
 }
 
@@ -87,7 +84,7 @@ void GLContext::glopPushName(GLParam *p) {
 	if (render_mode == TGL_SELECT) {
 		assert(name_stack_size < MAX_NAME_STACK_DEPTH);
 		name_stack[name_stack_size++] = p[1].i;
-		select_hit = NULL;
+		select_hit = nullptr;
 	}
 }
 
@@ -95,7 +92,7 @@ void GLContext::glopPopName(GLParam *) {
 	if (render_mode == TGL_SELECT) {
 		assert(name_stack_size > 0);
 		name_stack_size--;
-		select_hit = NULL;
+		select_hit = nullptr;
 	}
 }
 
@@ -103,7 +100,7 @@ void GLContext::glopLoadName(GLParam *p) {
 	if (render_mode == TGL_SELECT) {
 		assert(name_stack_size > 0);
 		name_stack[name_stack_size - 1] = p[1].i;
-		select_hit = NULL;
+		select_hit = nullptr;
 	}
 }
 

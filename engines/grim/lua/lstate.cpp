@@ -70,15 +70,15 @@ static void lua_openthr() {
 	Mbuffer = nullptr;
 }
 
-#define STACK_UNIT	256
+#define STACK_UNIT      256
 
 void lua_stateinit(LState *state) {
 	state->prev = nullptr;
 	state->next = nullptr;
 	state->all_paused = 0;
 	state->paused = false;
-	state->state_counter1 = 0;
-	state->state_counter2 = 0;
+	state->preventBreakCounter = 0;
+	state->callLevelCounter = 0;
 	state->updated = false;
 
 	state->numCblocks = 0;
@@ -88,7 +88,7 @@ void lua_stateinit(LState *state) {
 	state->errorJmp = nullptr;
 	state->id = globalTaskSerialId++;
 	state->task = nullptr;
-	state->some_task = nullptr;
+	state->prevTask = nullptr;
 	state->taskFunc.ttype = LUA_T_NIL;
 	state->sleepFor = 0;
 
@@ -143,10 +143,16 @@ void callHook(lua_Function func, const char *filename, int32 line) {
 	FILE *output = stdout;
 	int i;
 
+	for (i = 0; i < lua_state->callLevelCounter; i++) {
+		fprintf(output, "  ");
+	}
+	fprintf(output, "id: %d ", lua_state->id);
 	type = lua_getobjname(func, &name);
 	if (func == LUA_NOOBJECT) {
-		fprintf(output, "%s\n", filename);
+		fprintf(output, "<< %s\n", filename);
 		return;
+	} else {
+		fprintf(output, ">> %s ", filename);
 	}
 
 	switch (*type) {
@@ -169,7 +175,8 @@ void callHook(lua_Function func, const char *filename, int32 line) {
 				} else
 					fprintf(output, "<userdata %d>", lua_getuserdata(lua_getparam(i)));
 			} else if (lua_isfunction(lua_getparam(i))) {
-				fprintf(output, "<function>");
+				lua_getobjname(lua_getparam(i), &name);
+				fprintf(output, "<function %s>", name);
 			} else if (lua_isnumber(lua_getparam(i)))
 				fprintf(output, "%g", lua_getnumber(lua_getparam(i)));
 			else if (lua_isstring(lua_getparam(i)))
@@ -189,7 +196,7 @@ void callHook(lua_Function func, const char *filename, int32 line) {
 			if (line == 0)
 				fprintf(output, "{START SCRIPT: %s}", filename);
 			else if (line < 0) {
-				fprintf(output, "%s", filename);
+				fprintf(output, "Unknown %s", filename);
 			} else
 				fprintf(output, "function (%s:%d)", filename, line);
 		}

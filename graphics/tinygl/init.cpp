@@ -121,10 +121,10 @@ void GLContext::init(int screenW, int screenH, Graphics::PixelFormat pixelFormat
 		l->norm_spot_direction = Vector3(0, 0, -1);
 		l->norm_position = Vector3(0, 0, 1);
 		l->enabled = 0;
-		l->next = NULL;
-		l->prev = NULL;
+		l->next = nullptr;
+		l->prev = nullptr;
 	}
-	first_light = NULL;
+	first_light = nullptr;
 	ambient_light_model = Vector4(0.2f, 0.2f, 0.2f, 1);
 	local_light_model = 0;
 	lighting_enabled = 0;
@@ -145,7 +145,21 @@ void GLContext::init(int screenW, int screenH, Graphics::PixelFormat pixelFormat
 	color_material_enabled = 0;
 
 	// textures
-	glInitTextures();
+	texture_2d_enabled = false;
+	current_texture = alloc_texture(0);
+	maxTextureName = 0;
+	texture_mag_filter = TGL_LINEAR;
+	texture_min_filter = TGL_NEAREST_MIPMAP_LINEAR;
+#if defined(SCUMM_LITTLE_ENDIAN)
+	colorAssociationList.push_back({Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24), TGL_RGBA, TGL_UNSIGNED_BYTE});
+	colorAssociationList.push_back({Graphics::PixelFormat(3, 8, 8, 8, 0, 0, 8, 16, 0),  TGL_RGB,  TGL_UNSIGNED_BYTE});
+#else
+	colorAssociationList.push_back({Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0), TGL_RGBA, TGL_UNSIGNED_BYTE});
+	colorAssociationList.push_back({Graphics::PixelFormat(3, 8, 8, 8, 0, 16, 8, 0, 0),  TGL_RGB,  TGL_UNSIGNED_BYTE});
+#endif
+	colorAssociationList.push_back({Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0),  TGL_RGB,  TGL_UNSIGNED_SHORT_5_6_5});
+	colorAssociationList.push_back({Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0),  TGL_RGBA, TGL_UNSIGNED_SHORT_5_5_5_1});
+	colorAssociationList.push_back({Graphics::PixelFormat(2, 4, 4, 4, 4, 12, 8, 4, 0),  TGL_RGBA, TGL_UNSIGNED_SHORT_4_4_4_4});
 
 	// default state
 	current_color = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -247,6 +261,10 @@ void GLContext::init(int screenW, int screenH, Graphics::PixelFormat pixelFormat
 	_debugRectsEnabled = false;
 
 	TinyGL::Internal::tglBlitResetScissorRect();
+}
+
+GLContext *gl_get_context() {
+	return gl_ctx;
 }
 
 void destroyContext() {

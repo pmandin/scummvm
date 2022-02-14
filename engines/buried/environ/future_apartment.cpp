@@ -40,7 +40,7 @@ namespace Buried {
 class OvenDoor : public SceneBase {
 public:
 	OvenDoor(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-			int openAnimID = 0, int closeAnimID = 0, int openFrame = 0, int closedFrame = 0, int flagOffset = 0,
+			int openAnimID = 0, int closeAnimID = 0, int openFrame = 0, int closedFrame = 0,
 			int left = 0, int top = 0, int right = 0, int bottom = 0);
 	int postExitRoom(Window *viewWindow, const Location &newLocation) override;
 	int mouseUp(Window *viewWindow, const Common::Point &pointLocation) override;
@@ -51,43 +51,52 @@ private:
 	int _closeAnimationID;
 	int _openFrame;
 	int _closedFrame;
-	int _flagOffset;
 	Common::Rect _clickableRegion;
 };
 
 OvenDoor::OvenDoor(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-		int openAnimID, int closeAnimID, int openFrame, int closedFrame, int flagOffset,
+		int openAnimID, int closeAnimID, int openFrame, int closedFrame,
 		int left, int top, int right, int bottom) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	_openAnimationID = openAnimID;
 	_closeAnimationID = closeAnimID;
 	_openFrame = openFrame;
 	_closedFrame = closedFrame;
-	_flagOffset = flagOffset;
 	_clickableRegion = Common::Rect(left, top, right, bottom);
 
-	if (((SceneViewWindow *)viewWindow)->getGlobalFlagByte(_flagOffset) == 1)
+	if (globalFlags.faKIOvenStatus == 1)
 		_staticData.navFrameIndex = _openFrame;
 	else
 		_staticData.navFrameIndex = _closedFrame;
 }
 
 int OvenDoor::postExitRoom(Window *viewWindow, const Location &newLocation) {
-	if ((newLocation.orientation == 0 || newLocation.facing != _staticData.location.facing || newLocation.node != _staticData.location.node) && ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(_flagOffset) == 1) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
+	if ((newLocation.orientation == 0 ||
+		newLocation.facing != _staticData.location.facing ||
+		newLocation.node != _staticData.location.node) && globalFlags.faKIOvenStatus == 1) {
 		if (_staticData.location.timeZone == newLocation.timeZone)
 			_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 7));
 
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_flagOffset, 0);
+		globalFlags.faKIOvenStatus = 0;
 	}
 
 	return SC_TRUE;
 }
 
 int OvenDoor::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+
 	if (_clickableRegion.contains(pointLocation)) {
-		if (((SceneViewWindow *)viewWindow)->getGlobalFlagByte(_flagOffset) == 1) {
+		if (globalFlags.faKIOvenStatus == 1) {
 			// Change the flag status
-			((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_flagOffset, 0);
+			globalFlags.faKIOvenStatus = 0;
 
 			// Play the specified animation
 			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(_closeAnimationID);
@@ -96,7 +105,7 @@ int OvenDoor::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
 			return SC_TRUE;
 		} else {
 			// Change the flag status
-			((SceneViewWindow *)viewWindow)->setGlobalFlagByte(_flagOffset, 1);
+			globalFlags.faKIOvenStatus = 1;
 
 			// Play the specified animation
 			((SceneViewWindow *)viewWindow)->playSynchronousAnimation(_openAnimationID);
@@ -489,9 +498,6 @@ int KitchenUnitShopNet::onCharacter(Window *viewWindow, const Common::KeyState &
 
 		if (character.keycode == Common::KEYCODE_BACKSPACE || character.keycode == Common::KEYCODE_DELETE) {
 			if (!_shopNetCode.empty()) {
-				// clone2727 asks why the sound effect is being played again
-				_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 9));
-
 				if (_shopNetCode.size() == 6 || _shopNetCode.size() == 11) {
 					_shopNetCode.deleteLastChar();
 					_shopNetCode.deleteLastChar();
@@ -630,12 +636,17 @@ private:
 	Common::Rect _replicateButton;
 	Graphics::Font *_textFont;
 	int _lineHeight;
+	GlobalFlags &_globalFlags;
 
 	void changeBackgroundBitmap();
+	byte *postBoxSlot(byte slot);
+	byte getPostBoxSlot(byte slot);
+	void setPostBoxSlot(byte slot, byte value);
 };
 
 KitchenUnitPostBox::KitchenUnitPostBox(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) :
-		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
+		SceneBase(vm, viewWindow, sceneStaticData, priorLocation),
+		_globalFlags(((SceneViewWindow *)viewWindow)->getGlobalFlags()) {
 	_packageCount = 0;
 	_selectedPackage = -1;
 	_menuButton = Common::Rect(49, 96, 121, 118);
@@ -667,6 +678,30 @@ void KitchenUnitPostBox::preDestructor() {
 	_textFont = nullptr;
 }
 
+byte *KitchenUnitPostBox::postBoxSlot(byte slot) {
+	switch (slot) {
+	case 0:
+		return &_globalFlags.faKIPostBoxSlotA;
+	case 1:
+		return &_globalFlags.faKIPostBoxSlotB;
+	case 2:
+		return &_globalFlags.faKIPostBoxSlotC;
+	default:
+		return nullptr;
+	}
+}
+
+byte KitchenUnitPostBox::getPostBoxSlot(byte slot) {
+	byte *s = postBoxSlot(slot);
+	return s ? *s : 0;
+}
+
+void KitchenUnitPostBox::setPostBoxSlot(byte slot, byte value) {
+	byte *s = postBoxSlot(slot);
+	if (s)
+		*s = value;
+}
+
 int KitchenUnitPostBox::mouseUp(Window *viewWindow, const Common::Point &pointLocation) {
 	if (_menuButton.contains(pointLocation)) {
 		_vm->_sound->playSoundEffect(_vm->getFilePath(_staticData.location.timeZone, _staticData.location.environment, 8));
@@ -692,7 +727,7 @@ int KitchenUnitPostBox::mouseUp(Window *viewWindow, const Common::Point &pointLo
 		newScene.transitionStartFrame = -1;
 		newScene.transitionLength = -1;
 
-		switch (((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, faKIPostBoxSlotA) + _selectedPackage)) {
+		switch (getPostBoxSlot(_selectedPackage)) {
 		case 2:
 			newScene.destinationScene.depth = 6;
 			newScene.transitionData = 9;
@@ -709,12 +744,12 @@ int KitchenUnitPostBox::mouseUp(Window *viewWindow, const Common::Point &pointLo
 
 		// Remove the item from the post box
 		for (int i = _selectedPackage; i < _packageCount - 1; i++) {
-			byte nextPackage = ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, faKIPostBoxSlotA) + i + 1);
-			((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, faKIPostBoxSlotA) + i, nextPackage);
+			byte nextPackage = getPostBoxSlot(i + 1);
+			setPostBoxSlot(i, nextPackage);
 		}
 
 		// Reset the last entry to 0
-		((SceneViewWindow *)viewWindow)->setGlobalFlagByte(offsetof(GlobalFlags, faKIPostBoxSlotA) + _packageCount - 1, 0);
+		setPostBoxSlot(_packageCount - 1, 0);
 
 		// Move to the destination scene
 		((SceneViewWindow *)viewWindow)->moveToDestination(newScene);
@@ -741,7 +776,7 @@ int KitchenUnitPostBox::gdiPaint(Window *viewWindow) {
 	for (int i = 0; i < _packageCount; i++) {
 		Common::String text;
 
-		switch (((SceneViewWindow *)viewWindow)->getGlobalFlagByte(offsetof(GlobalFlags, faKIPostBoxSlotA) + i)) {
+		switch (getPostBoxSlot(i)) {
 		case 2:
 			text = _vm->getString(IDFAKI_SN_TRANSLATE_CHIP_CODE_TITLE);
 			break;
@@ -1073,13 +1108,16 @@ int EnvironGenoVideo::specifyCursor(Window *viewWindow, const Common::Point &poi
 class FlagChangeBackground : public SceneBase {
 public:
 	FlagChangeBackground(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-			int flagOffset = -1, byte minFlagValue = 1, int newStillFrame = 0);
+			byte minFlagValue = 1, int newStillFrame = 0);
 };
 
 FlagChangeBackground::FlagChangeBackground(BuriedEngine *vm, Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation,
-		int flagOffset, byte minFlagValue, int newStillFrame) :
+		byte minFlagValue, int newStillFrame) :
 		SceneBase(vm, viewWindow, sceneStaticData, priorLocation) {
-	if (flagOffset >= 0 && ((SceneViewWindow *)viewWindow)->getGlobalFlagByte(flagOffset) >= minFlagValue)
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	
+	if (globalFlags.faERTakenRemoteControl >= minFlagValue)
 		_staticData.navFrameIndex = newStillFrame;
 }
 
@@ -1949,18 +1987,22 @@ bool SceneViewWindow::startFutureApartmentAmbient(int oldTimeZone, int oldEnviro
 }
 
 SceneBase *SceneViewWindow::constructFutureApartmentSceneObject(Window *viewWindow, const LocationStaticData &sceneStaticData, const Location &priorLocation) {
+	SceneViewWindow *sceneView = ((SceneViewWindow *)viewWindow);
+	GlobalFlags &globalFlags = sceneView->getGlobalFlags();
+	byte dummyFlag = 0; // a dummy flag, used as a placeholder for writing (but not reading)
+
 	switch (sceneStaticData.classID) {
 	case 0:
 		// Default scene
 		break;
 	case 1:
-		return new ClickPlayVideoSwitchAI(_vm, viewWindow, sceneStaticData, priorLocation, 0, kCursorFinger, offsetof(GlobalFlags, faKICoffeeSpilled), 212, 114, 246, 160);
+		return new ClickPlayVideoSwitchAI(_vm, viewWindow, sceneStaticData, priorLocation, 0, kCursorFinger, globalFlags.faKICoffeeSpilled, 212, 114, 246, 160);
 	case 2:
-		return new ClickPlayVideoSwitchAI(_vm, viewWindow, sceneStaticData, priorLocation, 1, kCursorFinger, offsetof(GlobalFlags, faKIBirdsBobbed), 150, 40, 260, 164);
+		return new ClickPlayVideoSwitchAI(_vm, viewWindow, sceneStaticData, priorLocation, 1, kCursorFinger, globalFlags.faKIBirdsBobbed, 150, 40, 260, 164);
 	case 3:
-		return new OvenDoor(_vm, viewWindow, sceneStaticData, priorLocation, 2, 3, 37, 25, offsetof(GlobalFlags, faKIOvenStatus), 0, 0, 270, 80);
+		return new OvenDoor(_vm, viewWindow, sceneStaticData, priorLocation, 2, 3, 37, 25, 0, 0, 270, 80);
 	case 4:
-		return new OvenDoor(_vm, viewWindow, sceneStaticData, priorLocation, 4, 5, 38, 26, offsetof(GlobalFlags, faKIOvenStatus), 0, 50, 300, 189);
+		return new OvenDoor(_vm, viewWindow, sceneStaticData, priorLocation, 4, 5, 38, 26, 0, 50, 300, 189);
 	case 5:
 		return new KitchenUnitTurnOn(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 6:
@@ -1974,11 +2016,11 @@ SceneBase *SceneViewWindow::constructFutureApartmentSceneObject(Window *viewWind
 	case 10:
 		return new KitchenUnitAutoChef(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 11:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 200, 83, 230, 116, kItemBioChipTranslate, 61, offsetof(GlobalFlags, faKITakenPostboxItem));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 200, 83, 230, 116, kItemBioChipTranslate, 61, globalFlags.faKITakenPostboxItem);
 	case 12:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 202, 80, 227, 155, kItemCheeseGirl, 59, offsetof(GlobalFlags, faKITakenPostboxItem));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 202, 80, 227, 155, kItemCheeseGirl, 59, globalFlags.faKITakenPostboxItem);
 	case 13:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 203, 111, 225, 129, kItemGenoSingleCart, 63, offsetof(GlobalFlags, faKITakenPostboxItem));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 203, 111, 225, 129, kItemGenoSingleCart, 63, globalFlags.faKITakenPostboxItem);
 	case 15:
 		return new ClickChangeScene(_vm, viewWindow, sceneStaticData, priorLocation, 134, 0, 300, 189, kCursorFinger, 4, 2, 2, 0, 1, 1, TRANSITION_VIDEO, 0, -1, -1);
 	case 16:
@@ -1996,15 +2038,15 @@ SceneBase *SceneViewWindow::constructFutureApartmentSceneObject(Window *viewWind
 	case 22:
 		return new InteractiveNewsNetwork(_vm, viewWindow, sceneStaticData, priorLocation, -1, 4, 2, 2, 0, 1, 1, TRANSITION_VIDEO, 4, -1, -1);
 	case 23:
-		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 81, 146, 134, 189, kItemRemoteControl, 45, offsetof(GlobalFlags, faERTakenRemoteControl));
+		return new GenericItemAcquire(_vm, viewWindow, sceneStaticData, priorLocation, 81, 146, 134, 189, kItemRemoteControl, 45, globalFlags.faERTakenRemoteControl);
 	case 24:
-		return new FlagChangeBackground(_vm, viewWindow, sceneStaticData, priorLocation, offsetof(GlobalFlags, faERTakenRemoteControl), 1, 33);
+		return new FlagChangeBackground(_vm, viewWindow, sceneStaticData, priorLocation, 1, 33);
 	case 25:
-		return new FlagChangeBackground(_vm, viewWindow, sceneStaticData, priorLocation, offsetof(GlobalFlags, faERTakenRemoteControl), 1, 21);
+		return new FlagChangeBackground(_vm, viewWindow, sceneStaticData, priorLocation, 1, 21);
 	case 26:
-		return new FlagChangeBackground(_vm, viewWindow, sceneStaticData, priorLocation, offsetof(GlobalFlags, faERTakenRemoteControl), 1, 9);
+		return new FlagChangeBackground(_vm, viewWindow, sceneStaticData, priorLocation, 1, 9);
 	case 30:
-		return new PlayStingers(_vm, viewWindow, sceneStaticData, priorLocation, 128, offsetof(GlobalFlags, faStingerID), offsetof(GlobalFlags, faStingerChannelID), 10, 14);
+		return new PlayStingers(_vm, viewWindow, sceneStaticData, priorLocation, 128, globalFlags.faStingerID, globalFlags.faStingerChannelID, 10, 14);
 	case 31:
 		return new ClickZoomInTopOfBookshelf(_vm, viewWindow, sceneStaticData, priorLocation);
 	case 32:
@@ -2032,9 +2074,9 @@ SceneBase *SceneViewWindow::constructFutureApartmentSceneObject(Window *viewWind
 	case 43:
 		return new ClickChangeScene(_vm, viewWindow, sceneStaticData, priorLocation, 0, 0, 432, 189, kCursorPutDown, 4, 3, 5, 0, 0, 0, TRANSITION_VIDEO, 29, -1, -1);
 	case 44:
-		return new ClickPlayLoopingVideoClip(_vm, viewWindow, sceneStaticData, priorLocation, kCursorFinger, 25, 120, 0, 299, 132, offsetof(GlobalFlags, faMNPongClicked), 1);
+		return new ClickPlayLoopingVideoClip(_vm, viewWindow, sceneStaticData, priorLocation, kCursorFinger, 25, 120, 0, 299, 132, globalFlags.faMNPongClicked, 1);
 	case 45:
-		return new ClickPlayLoopingVideoClip(_vm, viewWindow, sceneStaticData, priorLocation, kCursorFinger, 27, 0, 0, 432, 189);
+		return new ClickPlayLoopingVideoClip(_vm, viewWindow, sceneStaticData, priorLocation, kCursorFinger, 27, 0, 0, 432, 189, dummyFlag, 0);
 	case 46:
 		return new ClickChangeScene(_vm, viewWindow, sceneStaticData, priorLocation, 44, 26, 254, 144, kCursorMagnifyingGlass, 4, 3, 0, 2, 0, 1, TRANSITION_VIDEO, 30, -1, -1);
 	case 47:

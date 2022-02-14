@@ -52,16 +52,21 @@ public:
 	bool changeCurrentBioChip(int bioChipID);
 	bool showBioChipMainView();
 	bool destroyBioChipViewWindow();
+	void swapAIBioChipIfActive();
 	void sceneChanged();
 	void disableEvidenceCapture();
 	void jumpInitiated(bool redraw);
 	void jumpEnded(bool redraw);
+	void toggleBioChip();
+	int getCurrentBioChip() const;
 
 	void onPaint();
 	void onEnable(bool enable);
 	void onLButtonUp(const Common::Point &point, uint flags);
 
-	// clone2727 says: These are labeled as HACKS, so I assume they are.
+	// These are used to enable the help and comment buttons
+	// when the player finds Arthur, while he explains how
+	// these two buttons are used.
 	bool _forceHelp;
 	bool _forceComment;
 

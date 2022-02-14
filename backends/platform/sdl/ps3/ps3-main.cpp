@@ -27,10 +27,14 @@
 #include "base/main.h"
 
 #include <net/net.h>
+#include <sys/process.h>
+
+// Set program stack size from default 64KB to 256KB
+SYS_PROCESS_PARAM(1000, 0x40000)
 
 int main(int argc, char *argv[]) {
 
-#ifdef USE_LIBCURL
+#if defined(USE_LIBCURL) || defined(USE_SDL_NET)
 	netInitialize();
 #endif
 
@@ -51,7 +55,7 @@ int main(int argc, char *argv[]) {
 	// Free OSystem
 	g_system->destroy();
 
-#ifdef USE_LIBCURL
+#if defined(USE_LIBCURL) || defined(USE_SDL_NET)
 	netDeinitialize();
 #endif
 

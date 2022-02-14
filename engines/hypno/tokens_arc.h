@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,6 +30,10 @@
 
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
+
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_HYPNO_ARC_ENGINES_HYPNO_TOKENS_ARC_H_INCLUDED
 # define YY_HYPNO_ARC_ENGINES_HYPNO_TOKENS_ARC_H_INCLUDED
@@ -48,64 +53,73 @@
 extern int HYPNO_ARC_debug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef HYPNO_ARC_TOKENTYPE
 # define HYPNO_ARC_TOKENTYPE
   enum HYPNO_ARC_tokentype
   {
-    NAME = 258,
-    FILENAME = 259,
-    BNTOK = 260,
-    SNTOK = 261,
-    KNTOK = 262,
-    YXTOK = 263,
-    NUM = 264,
-    COMMENT = 265,
-    CTOK = 266,
-    DTOK = 267,
-    HTOK = 268,
-    HETOK = 269,
-    RETTOK = 270,
-    QTOK = 271,
-    ENCTOK = 272,
-    PTOK = 273,
-    FTOK = 274,
-    TTOK = 275,
-    TPTOK = 276,
-    ATOK = 277,
-    VTOK = 278,
-    OTOK = 279,
-    ONTOK = 280,
-    NTOK = 281,
-    RTOK = 282,
-    R0TOK = 283,
-    ITOK = 284,
-    JTOK = 285,
-    ZTOK = 286,
-    FNTOK = 287,
-    NONETOK = 288,
-    A0TOK = 289,
-    P0TOK = 290,
-    WTOK = 291,
-    XTOK = 292,
-    CB3TOK = 293,
-    C02TOK = 294
+    HYPNO_ARC_EMPTY = -2,
+    HYPNO_ARC_EOF = 0,             /* "end of file"  */
+    HYPNO_ARC_error = 256,         /* error  */
+    HYPNO_ARC_UNDEF = 257,         /* "invalid token"  */
+    NAME = 258,                    /* NAME  */
+    FILENAME = 259,                /* FILENAME  */
+    BNTOK = 260,                   /* BNTOK  */
+    SNTOK = 261,                   /* SNTOK  */
+    KNTOK = 262,                   /* KNTOK  */
+    YXTOK = 263,                   /* YXTOK  */
+    FNTOK = 264,                   /* FNTOK  */
+    ENCTOK = 265,                  /* ENCTOK  */
+    ONTOK = 266,                   /* ONTOK  */
+    NUM = 267,                     /* NUM  */
+    BYTE = 268,                    /* BYTE  */
+    COMMENT = 269,                 /* COMMENT  */
+    CTOK = 270,                    /* CTOK  */
+    DTOK = 271,                    /* DTOK  */
+    HTOK = 272,                    /* HTOK  */
+    HETOK = 273,                   /* HETOK  */
+    HLTOK = 274,                   /* HLTOK  */
+    HUTOK = 275,                   /* HUTOK  */
+    RETTOK = 276,                  /* RETTOK  */
+    QTOK = 277,                    /* QTOK  */
+    RESTOK = 278,                  /* RESTOK  */
+    PTOK = 279,                    /* PTOK  */
+    FTOK = 280,                    /* FTOK  */
+    TTOK = 281,                    /* TTOK  */
+    TPTOK = 282,                   /* TPTOK  */
+    ATOK = 283,                    /* ATOK  */
+    VTOK = 284,                    /* VTOK  */
+    OTOK = 285,                    /* OTOK  */
+    NTOK = 286,                    /* NTOK  */
+    NSTOK = 287,                   /* NSTOK  */
+    RTOK = 288,                    /* RTOK  */
+    R0TOK = 289,                   /* R0TOK  */
+    ITOK = 290,                    /* ITOK  */
+    JTOK = 291,                    /* JTOK  */
+    ZTOK = 292,                    /* ZTOK  */
+    NONETOK = 293,                 /* NONETOK  */
+    A0TOK = 294,                   /* A0TOK  */
+    P0TOK = 295,                   /* P0TOK  */
+    WTOK = 296,                    /* WTOK  */
+    XTOK = 297,                    /* XTOK  */
+    CB3TOK = 298,                  /* CB3TOK  */
+    C02TOK = 299                   /* C02TOK  */
   };
+  typedef enum HYPNO_ARC_tokentype HYPNO_ARC_token_kind_t;
 #endif
 
 /* Value type.  */
 #if ! defined HYPNO_ARC_STYPE && ! defined HYPNO_ARC_STYPE_IS_DECLARED
-
 union HYPNO_ARC_STYPE
 {
-#line 54 "engines/hypno/grammar_arc.y" /* yacc.c:1909  */
+#line 54 "engines/hypno/grammar_arc.y"
 
 	char *s; /* string value */
 	int i;	 /* integer value */
 
-#line 107 "engines/hypno/tokens_arc.h" /* yacc.c:1909  */
-};
+#line 121 "engines/hypno/tokens_arc.h"
 
+};
 typedef union HYPNO_ARC_STYPE HYPNO_ARC_STYPE;
 # define HYPNO_ARC_STYPE_IS_TRIVIAL 1
 # define HYPNO_ARC_STYPE_IS_DECLARED 1
@@ -114,6 +128,8 @@ typedef union HYPNO_ARC_STYPE HYPNO_ARC_STYPE;
 
 extern HYPNO_ARC_STYPE HYPNO_ARC_lval;
 
+
 int HYPNO_ARC_parse (void);
+
 
 #endif /* !YY_HYPNO_ARC_ENGINES_HYPNO_TOKENS_ARC_H_INCLUDED  */

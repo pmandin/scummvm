@@ -58,8 +58,10 @@ StringList getFeatureLibraries(const BuildSetup &setup) {
 	for (FeatureList::const_iterator i = setup.features.begin(); i != setup.features.end(); ++i) {
 		if (i->enable && i->library) {
 			std::string libname;
-			if (!std::strcmp(i->name, "libz") || !std::strcmp(i->name, "libcurl")) {
+			if (!std::strcmp(i->name, "libcurl")) {
 				libname = i->name;
+			} else if (!std::strcmp(i->name, "zlib")) {
+				libname = "libz";
 			} else if (!std::strcmp(i->name, "vorbis")) {
 				libname = "libvorbis";
 				libraries.push_back("libvorbisfile");
@@ -246,7 +248,7 @@ void CodeBlocksProvider::writeDefines(const StringList &defines, std::ofstream &
 		output << "\t\t\t\t\t<Add option=\"-D" << *i << "\" />\n";
 }
 
-void CodeBlocksProvider::writeFileListToProject(const FileNode &dir, std::ofstream &projectFile, const int indentation,
+void CodeBlocksProvider::writeFileListToProject(const FileNode &dir, std::ostream &projectFile, const int indentation,
 												const std::string &objPrefix, const std::string &filePrefix) {
 
 	for (FileNode::NodeList::const_iterator i = dir.children.begin(); i != dir.children.end(); ++i) {

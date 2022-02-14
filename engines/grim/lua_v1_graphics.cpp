@@ -555,4 +555,8 @@ void Lua_V1::PreRender() {
 	g_driver->renderZBitmaps(getbool(2));
 }
 
+void Lua_V1::ResetTextures() {
+	// nothing to implement here
+}
+
 } // end of namespace Grim

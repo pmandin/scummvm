@@ -19,12 +19,12 @@
  *
  */
 
+#include "common/substream.h"
 #include "common/config-manager.h"
 #include "common/debug-channels.h"
 #include "common/error.h"
 #include "common/events.h"
 #include "common/ini-file.h"
-#include "common/stream.h"
 #include "common/system.h"
 #include "common/file.h"
 
@@ -32,6 +32,8 @@
 #include "engines/util.h"
 
 #include "graphics/surface.h"
+#include "graphics/font.h"
+#include "graphics/fonts/ttf.h"
 
 #include "video/avi_decoder.h"
 
@@ -41,6 +43,7 @@
 #include "petka/petka.h"
 #include "petka/q_manager.h"
 #include "petka/interfaces/interface.h"
+#include "petka/interfaces/panel.h"
 #include "petka/q_system.h"
 #include "petka/big_dialogue.h"
 
@@ -70,6 +73,7 @@ Common::Error PetkaEngine::run() {
 	debug("PetkaEngine::run");
 	const Graphics::PixelFormat format(2, 5, 6, 5, 0, 11, 5, 0, 0);
 	initGraphics(640, 480, &format);
+	syncSoundSettings();
 
 	const char *const videos[] = {"buka.avi", "skif.avi", "adv.avi"};
 	for (uint i = 0; i < sizeof(videos) / sizeof(char *); ++i) {
@@ -86,6 +90,9 @@ Common::Error PetkaEngine::run() {
 	_soundMgr.reset(new SoundMgr(*this));
 	_vsys.reset(new VideoSystem(*this));
 	_resMgr.reset(new QManager(*this));
+
+	_textFont.reset(Graphics::loadTTFFontFromArchive("FreeSansBold.ttf", 20, Graphics::kTTFSizeModeCell));
+	_descriptionFont.reset(Graphics::loadTTFFontFromArchive("FreeSansBold.ttf", 16, Graphics::kTTFSizeModeCell));
 
 	loadPart(isDemo() ? 1 : 0);
 
@@ -129,6 +136,49 @@ Common::SeekableReadStream *PetkaEngine::openFile(const Common::String &name, bo
 	return _fileMgr->getFileStream(addCurrentPath ? _currentPath + name : name);
 }
 
+Common::SeekableReadStream *PetkaEngine::openIniFile(const Common::String &name) {
+	// Some lines in ini files have null terminators befoen CR+LF
+	class IniReadStream : public Common::SeekableSubReadStream
+	{
+	public:
+		IniReadStream(SeekableReadStream *parentStream, uint32 begin, uint32 end, DisposeAfterUse::Flag disposeParentStream = DisposeAfterUse::NO)
+			: SeekableSubReadStream(parentStream, begin, end, disposeParentStream) {}
+
+		char *readLine(char *buf, size_t bufSize, bool handleCR = true) override
+		{
+			memset(buf, '\0', bufSize);
+
+			if (!Common::SeekableSubReadStream::readLine(buf, bufSize, handleCR)) {
+				return nullptr;
+			}
+
+			char *null_term = nullptr;
+			for (uint i = 0; i < bufSize; ++i) {
+				if (buf[i] == '\n') {
+					if (null_term) {
+						null_term[0] = '\n';
+						null_term[1] = '\0';
+					}
+
+					return buf;
+				}
+
+				if (buf[i] == '\0' && !null_term) {
+					null_term = &buf[i];
+				}
+			}
+
+			return buf;
+		}
+	};
+
+
+	auto *file_stream = openFile(name, true);
+	if (!file_stream)
+		return nullptr;
+	return new IniReadStream(file_stream, 0, file_stream->size(), DisposeAfterUse::YES);
+}
+
 void PetkaEngine::loadStores() {
 	debug("PetkaEngine::loadStores");
 	_fileMgr->closeAll();
@@ -169,13 +219,15 @@ Common::RandomSource &PetkaEngine::getRnd() {
 }
 
 void PetkaEngine::playVideo(Common::SeekableReadStream *stream) {
+	if (!stream)
+		return;
+
 	PauseToken token = pauseEngine();
 	Graphics::PixelFormat fmt = _system->getScreenFormat();
 
 	_videoDec.reset(new Video::AVIDecoder);
 	if (!_videoDec->loadStream(stream)) {
-		_videoDec.reset();
-		return;
+		goto end;
 	}
 
 	_videoDec->start();
@@ -189,8 +241,7 @@ void PetkaEngine::playVideo(Common::SeekableReadStream *stream) {
 			case Common::EVENT_LBUTTONDOWN:
 			case Common::EVENT_RBUTTONDOWN:
 			case Common::EVENT_KEYDOWN:
-				_videoDec.reset();
-				return;
+				goto end;
 			default:
 				break;
 			}
@@ -208,6 +259,10 @@ void PetkaEngine::playVideo(Common::SeekableReadStream *stream) {
 		_system->delayMillis(15);
 	}
 
+end:
+	if (_vsys) {
+		_vsys->makeAllDirty();
+	}
 	_videoDec.reset();
 }
 
@@ -274,8 +329,8 @@ void PetkaEngine::loadChapter(byte chapter) {
 
 	_fileMgr->openStore(_chapterStoreName);
 
-	Common::ScopedPtr<Common::SeekableReadStream> namesStream(openFile("Names.ini", true));
-	Common::ScopedPtr<Common::SeekableReadStream> castStream(openFile("Cast.ini", true));
+	Common::ScopedPtr<Common::SeekableReadStream> namesStream(openIniFile("Names.ini"));
+	Common::ScopedPtr<Common::SeekableReadStream> castStream(openIniFile("Cast.ini"));
 
 	Common::INIFile namesIni;
 	Common::INIFile castIni;
@@ -308,7 +363,8 @@ bool PetkaEngine::hasFeature(EngineFeature f) const {
 		f == kSupportsReturnToLauncher ||
 		f == kSupportsLoadingDuringRuntime ||
 		f == kSupportsSavingDuringRuntime ||
-		f == kSupportsChangingOptionsDuringRuntime;
+		f == kSupportsChangingOptionsDuringRuntime ||
+		f == kSupportsSubtitleOptions;
 }
 
 void PetkaEngine::pauseEngineIntern(bool pause) {
@@ -319,6 +375,22 @@ void PetkaEngine::pauseEngineIntern(bool pause) {
 		_videoDec->pauseVideo(pause);
 
 	Engine::pauseEngineIntern(pause);
+}
+
+void PetkaEngine::pushMouseMoveEvent() {
+	Common::Event ev;
+	ev.type = Common::EVENT_MOUSEMOVE;
+	ev.mouse = g_system->getEventManager()->getMousePos();
+	_eventMan->pushEvent(ev);
+}
+
+void PetkaEngine::applyGameSettings() {
+	if (_qsystem->_currInterface == _qsystem->_panelInterface.get())
+	{
+		_qsystem->_panelInterface->onSettingsChanged();
+	}
+
+	Engine::applyGameSettings();
 }
 
 } // End of namespace Petka

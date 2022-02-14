@@ -849,4 +849,40 @@ bool GameFeatures::hasScriptObjectNames() const {
 	}
 }
 
+bool GameFeatures::canSaveFromGMM() const {
+	switch (g_sci->getGameId()) {
+	// ==== Demos/mini-games with no saving functionality ====
+	case GID_ASTROCHICKEN:
+	case GID_CHEST:
+	case GID_CHRISTMAS1988:
+	case GID_CHRISTMAS1990:
+	case GID_CHRISTMAS1992:
+	case GID_CNICK_KQ:
+	case GID_CNICK_LAURABOW:
+	case GID_CNICK_LONGBOW:
+	case GID_CNICK_LSL:
+	case GID_CNICK_SQ:
+	case GID_FUNSEEKER:
+	case GID_INNDEMO:
+	case GID_KQUESTIONS:
+	case GID_MSASTROCHICKEN:
+	// ==== Games with a different saving scheme =============
+	case GID_HOYLE1:
+	case GID_HOYLE2:
+	case GID_HOYLE3:
+	case GID_HOYLE4:
+	case GID_HOYLE5:
+	case GID_JONES:
+	case GID_MOTHERGOOSE:
+	case GID_MOTHERGOOSE256:
+	case GID_MOTHERGOOSEHIRES:
+	case GID_PHANTASMAGORIA:
+	case GID_RAMA:
+	case GID_SLATER:
+		return false;
+	default:
+		return true;
+	}
+}
+
 } // End of namespace Sci

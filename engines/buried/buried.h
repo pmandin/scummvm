@@ -65,7 +65,7 @@ class VideoWindow;
 
 class BuriedEngine : public ::Engine {
 protected:
-	Common::Error run();
+	Common::Error run() override;
 
 public:
 	BuriedEngine(OSystem *syst, const ADGameDescription *gamedesc);
@@ -82,8 +82,8 @@ public:
 	Common::String getLibraryName() const;
 	Common::Language getLanguage() const;
 
-	bool hasFeature(EngineFeature f) const;
-	void pauseEngineIntern(bool pause);
+	bool hasFeature(EngineFeature f) const override;
+	void pauseEngineIntern(bool pause) override;
 
 	// Resources
 	Common::String getString(uint32 stringID);
@@ -124,6 +124,7 @@ public:
 	// Messaging
 	void postMessageToWindow(Window *dest, Message *message);
 	void sendAllMessages();
+	void processAudioVideoSkipMessages(VideoWindow *video, int soundId);
 	void removeKeyboardMessages(Window *window);
 	void removeMouseMessages(Window *window);
 	void removeAllMessages(Window *window);
@@ -131,23 +132,25 @@ public:
 	bool hasMessage(Window *window, int messageBegin, int messageEnd) const;
 
 	// Miscellaneous
-	void yield();
+	void yield(VideoWindow *video, int soundId);
 	int getTransitionSpeed();
 	void setTransitionSpeed(int newSpeed);
 	void releaseCapture() { _captureWindow = 0; }
 	bool runQuitDialog();
 	bool isControlDown() const;
+	void pauseGame();
+	void showPoints();
 
 	// Save/Load
-	bool canLoadGameStateCurrently();
-	bool canSaveGameStateCurrently();
-	Common::Error loadGameState(int slot);
-	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave);
-	static Common::StringArray listSaveFiles();
-	bool loadState(Common::SeekableReadStream *saveFile, Location &location, GlobalFlags &flags, Common::Array<int> &inventoryItems);
-	bool saveState(Common::WriteStream *saveFile, Location &location, GlobalFlags &flags, Common::Array<int> &inventoryItems);
-	Common::Error runSaveDialog();
-	Common::Error runLoadDialog();
+	bool canLoadGameStateCurrently() override;
+	bool canSaveGameStateCurrently() override;
+	Common::String getSaveStateName(int slot) const override {
+		return Common::String::format("buried.%03d", slot);
+	}
+	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
+	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
+	void handleSaveDialog();
+	void handleRestoreDialog();
 
 private:
 	Common::WinResources *_mainEXE, *_library;
@@ -167,6 +170,7 @@ private:
 	VideoList _videos;
 
 	bool _yielding;
+	bool _allowVideoSkip;
 
 	struct MessageInfo { // I did think about calling this "Envelope"
 		Window *dest;
@@ -181,6 +185,10 @@ private:
 	// Saves
 	bool syncLocation(Common::Serializer &s, Location &location);
 	bool syncGlobalFlags(Common::Serializer &s, GlobalFlags &flags);
+	Common::Error syncSaveData(Common::Serializer &ser);
+	Common::Error syncSaveData(Common::Serializer &ser, Location &location, GlobalFlags &flags, Common::Array<int> &inventoryItems);
+	void checkForOriginalSavedGames();
+	void convertSavedGame(Common::String oldFile, Common::String newFile);
 };
 
 // Macro for creating a version field

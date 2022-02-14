@@ -144,7 +144,6 @@ MODULE_OBJS += \
 	events/sdl/sdl-events.o \
 	graphics/sdl/sdl-graphics.o \
 	graphics/surfacesdl/surfacesdl-graphics.o \
-	graphics3d/openglsdl/openglsdl-graphics3d.o \
 	mixer/sdl/sdl-mixer.o \
 	mutex/sdl/sdl-mutex.o \
 	plugins/sdl/sdl-provider.o \
@@ -158,7 +157,12 @@ endif
 
 ifdef USE_OPENGL
 MODULE_OBJS += \
-	graphics/openglsdl/openglsdl-graphics.o
+	graphics/openglsdl/openglsdl-graphics.o \
+	graphics3d/opengl/framebuffer.o \
+	graphics3d/opengl/surfacerenderer.o \
+	graphics3d/opengl/texture.o \
+	graphics3d/opengl/tiledsurface.o \
+	graphics3d/openglsdl/openglsdl-graphics3d.o
 endif
 
 ifdef USE_DISCORD
@@ -235,17 +239,11 @@ MODULE_OBJS += \
 	graphics/android/android-graphics.o \
 	graphics3d/android/android-graphics3d.o \
 	graphics3d/android/texture.o \
+	graphics3d/opengl/framebuffer.o \
+	graphics3d/opengl/surfacerenderer.o \
+	graphics3d/opengl/texture.o \
+	graphics3d/opengl/tiledsurface.o \
 	mutex/pthread/pthread-mutex.o
-endif
-
-ifeq ($(BACKEND),android3d)
-MODULE_OBJS += \
-	mutex/pthread/pthread-mutex.o
-endif
-
-ifeq ($(BACKEND),androidsdl)
-MODULE_OBJS += \
-	events/androidsdl/androidsdl-events.o
 endif
 
 ifdef AMIGAOS

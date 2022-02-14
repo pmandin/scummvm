@@ -88,6 +88,13 @@ Common::Error GroovieEngine::run() {
 			SearchMan.add("The 11th Hour Installer", archive);
 	}
 
+	// TODO: remove this when we figure out the potential intermittent save game bug
+	DebugMan.enableDebugChannel(kDebugScript);
+	DebugMan.enableDebugChannel(kDebugScriptvars);
+	DebugMan.enableDebugChannel(kDebugLogic);
+	if (gDebugLevel < 0)
+		gDebugLevel = 0;
+
 	_script = new Script(this, _gameDescription->version);
 
 	// Initialize the graphics
@@ -315,7 +322,7 @@ Common::Error GroovieEngine::run() {
 
 				// Wait a little bit between increments.  While mouse is moving, this triggers
 				// only negligably slower.
-				if (tmr >= 1000) {
+				if (tmr >= 500) {
 					_script->timerTick();
 					tmr = 0;
 				}

@@ -99,7 +99,8 @@ Item *ItemFactory::createItem(uint32 shape, uint32 frame, uint16 quality,
 		if (GAME_IS_CRUSADER) {
 			if (info->_damageInfo && info->_damageInfo->takesDamage()) {
 				item->setDamagePoints(info->_damageInfo->damagePoints());
-			}
+			} // else damage points is default 1 (set in Item constructor)
+
 			if (info->_family == ShapeInfo::SF_CRUWEAPON && info->_weaponInfo &&
 				info->_weaponInfo->_clipSize) {
 				item->setQuality(info->_weaponInfo->_clipSize);
@@ -125,11 +126,6 @@ static Actor *getActorForNpcNum(uint32 npcnum) {
 Actor *ItemFactory::createActor(uint32 shape, uint32 frame, uint16 quality,
 								uint16 flags, uint16 npcnum, uint16 mapnum,
 								uint32 extendedflags, bool objId) {
-	/*
-	    // This makes it rather hard to create new NPCs...
-	    if (npcnum == 0) // or do monsters have npcnum 0? we'll see...
-	        return nullptr;
-	*/
 	// New actor, no lerping
 	extendedflags |= Item::EXT_LERP_NOPREV;
 

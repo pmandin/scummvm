@@ -20,6 +20,7 @@
  */
 
 #include "trecision/actor.h"
+#include "trecision/animmanager.h"
 #include "trecision/defines.h"
 #include "trecision/dialog.h"
 #include "trecision/graphics.h"
@@ -420,7 +421,7 @@ void DialogManager::afterChoice() {
 			break;
 
 		case dF331:
-			_vm->_obj[oTUBET33]._lim = Common::Rect(0, 0, 0, 0);
+			_vm->_obj[oTUBET33]._area = Common::Rect(0, 0, 0, 0);
 			_vm->_textMgr->characterSay(kSentenceSecretPassage);
 			break;
 

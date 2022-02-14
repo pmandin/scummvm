@@ -36,10 +36,11 @@ struct Surface;
 namespace Buried {
 
 class VideoWindow;
+class AgentEvaluation;
 
 class CompletionWindow : public Window {
 public:
-	CompletionWindow(BuriedEngine *vm, Window *parent, GlobalFlags &globalFlags);
+	CompletionWindow(BuriedEngine *vm, Window *parent, GlobalFlags globalFlags);
 	~CompletionWindow();
 
 	void onPaint();
@@ -58,10 +59,7 @@ private:
 	Graphics::Font *_textFontB;
 	int _fontHeightA, _fontHeightB;
 	bool _walkthroughMode;
-
-	Common::String _scoringTextDescriptions;
-	Common::String _scoringTextScores;
-	Common::String _scoringTextFinalScore;
+	AgentEvaluation *_agentEvaluation;
 
 	VideoWindow *_gageVideo;
 };

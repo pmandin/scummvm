@@ -689,6 +689,15 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.msg", 0, "2f231d31af172ea72ed533fd112f971b", 133458},
 		AD_LISTEND},
 		Common::DE_DEU, Common::kPlatformDOS, 0, GUIO_STD16	},
+	
+	// Eco Quest 2 - Korean DOS Floppy (from swkim01)
+    // using swkim01's SCI Message Editor: http://github.com/swkim01/scime/
+    {"ecoquest2", "Floppy", {
+        {"resource.map", 0, "28fb7b6abb9fc1cb8882d7c2e701b63f", 5658},
+        {"resource.000", 0, "cc1d17e5637528dbe4a812699e1cbfc6", 4208192},
+        {"resource.msg", 0, "a0fbf7c183ea64f4bc224f71f2862aa0", 219798},
+        AD_LISTEND},
+        Common::KO_KOR, Common::kPlatformDOS, 0, GUIO_STD16 },
 
 	// Freddy Pharkas - English DOS demo (from FRG)
 	// SCI interpreter version 1.001.069
@@ -829,7 +838,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_GK1_FLOPPY },
 
-	// Gabriel Knight - English DOS Floppy (supplied my markcoolio in bug report #4269)
+	// Gabriel Knight - English DOS Floppy (supplied by markcoolio in bug report #4269)
 	// SCI interpreter version 2.000.000
 	{"gk1", "", {
 		{"resource.map", 0, "65e8c14092e4c9b3b3538b7602c8c5ec", 10783},
@@ -845,7 +854,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_GK1_FLOPPY },
 
-	// Gabriel Knight - German DOS Floppy (supplied my markcoolio in bug report #4268)
+	// Gabriel Knight - German DOS Floppy (supplied by markcoolio in bug report #4268)
 	// SCI interpreter version 2.000.000
 	{"gk1", "", {
 		{"resource.map", 0, "ad6508b0296b25c07b1f58828dc33696", 10789},
@@ -853,7 +862,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::DE_DEU, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_GK1_FLOPPY },
 
-	// Gabriel Knight - French DOS Floppy (supplied my kervala in bug report #6281)
+	// Gabriel Knight - French DOS Floppy (supplied by kervala in bug report #6281)
 	// SCI interpreter version 2.000.000
 	{"gk1", "", {
 		{"resource.map", 0, "236e36cc847cdeafdd5e5fa8cba916ed", 10801},
@@ -903,7 +912,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		Common::KO_KOR, Common::kPlatformWindows, ADGF_CD, GUIO_GK1_CD_WIN },
 
 	// Gabriel Knight - German DOS CD (from Tobis87)
-	// SCI interpreter version 2.000.000
+	// SCI interpreter version 2.000.000, VERSION file reports "1.000.000, April 25, 1994"
 	{"gk1", "CD", {
 		{"resource.map", 0, "a7d3e55114c65647310373cb390815ba", 11392},
 		{"resource.000", 0, "091cf08910780feabc56f8551b09cb36", 13400497},
@@ -974,6 +983,15 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"ressci.000", 0, "a19fc3604c6e5407abcf03d59ee87217", 168522221},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_GK2 },
+	
+	// Gabriel Knight 2 - Korean DOS (GOG version) (from swkim01)
+    // using swkim01's SCI Message Editor: http://github.com/swkim01/scime/
+    {"gk2", "", {
+        {"resmap.000", 0, "b996fa1e57389a1e179a00a0049de1f4", 8110},
+        {"ressci.000", 0, "a19fc3604c6e5407abcf03d59ee87217", 168522221},
+        {"resource.msg", 0, "1c4439abcfda38be40090a37a91ad7d2", 331954},
+        AD_LISTEND},
+        Common::KO_KOR, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_GK2 },
 
 	// Gabriel Knight 2 - English DOS (from jvprat)
 	// Executable scanning reports "2.100.002", VERSION file reports "1.1"

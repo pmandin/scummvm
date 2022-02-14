@@ -35,6 +35,8 @@ namespace Tinsel {
 struct FONT;
 struct MEMHANDLE;
 struct PALETTE;
+struct IMAGE;
+struct ACTORDATA;
 
 class Handle {
 public:
@@ -48,7 +50,10 @@ public:
 
 	FONT *GetFont(SCNHANDLE offset);
 	PALETTE *GetPalette(SCNHANDLE offset);
+	const IMAGE *GetImage(SCNHANDLE offset);
+	void SetImagePalette(SCNHANDLE offset, SCNHANDLE palHandle);
 	SCNHANDLE GetFontImageHandle(SCNHANDLE offset);
+	const ACTORDATA *GetActorData(SCNHANDLE offset, int numActors);
 	byte *LockMem(SCNHANDLE offset);
 
 	void LockScene(SCNHANDLE offset);

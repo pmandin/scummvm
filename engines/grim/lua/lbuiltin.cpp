@@ -56,11 +56,10 @@ static void nextvar() {
 
 static void foreachvar() {
 	TObject f = *luaA_Address(luaL_functionarg(1));
-	GCnode *g;
 	StkId name = lua_state->Cstack.base++;  // place to keep var name (to avoid GC)
 	ttype(lua_state->stack.stack + name) = LUA_T_NIL;
 	lua_state->stack.top++;
-	for (g = rootglobal.next; g; g = g->next) {
+	for (GCnode *g = rootglobal.next; g; g = g->next) {
 		TaggedString *s = (TaggedString *)g;
 		if (s->globalval.ttype != LUA_T_NIL) {
 			ttype(lua_state->stack.stack + name) = LUA_T_STRING;
@@ -68,9 +67,9 @@ static void foreachvar() {
 			luaA_pushobject(&f);
 			pushstring(s);
 			luaA_pushobject(&s->globalval);
-			lua_state->state_counter1++;
+			lua_state->preventBreakCounter++;
 			luaD_call((lua_state->stack.top - lua_state->stack.stack) - 2, 1);
-			lua_state->state_counter1--;
+			lua_state->preventBreakCounter--;
 			if (ttype(lua_state->stack.top - 1) != LUA_T_NIL)
 				return;
 			lua_state->stack.top--;
@@ -91,16 +90,15 @@ static void next() {
 static void foreach() {
 	TObject t = *luaA_Address(luaL_tablearg(1));
 	TObject f = *luaA_Address(luaL_functionarg(2));
-	int32 i;
-	for (i = 0; i < avalue(&t)->nhash; i++) {
+	for (int32 i = 0; i < avalue(&t)->nhash; i++) {
 		Node *nd = &(avalue(&t)->node[i]);
 		if (ttype(ref(nd)) != LUA_T_NIL && ttype(val(nd)) != LUA_T_NIL) {
 			luaA_pushobject(&f);
 			luaA_pushobject(ref(nd));
 			luaA_pushobject(val(nd));
-			lua_state->state_counter1++;
+			lua_state->preventBreakCounter++;
 			luaD_call((lua_state->stack.top - lua_state->stack.stack) - 2, 1);
-			lua_state->state_counter1--;
+			lua_state->preventBreakCounter--;
 			if (ttype(lua_state->stack.top - 1) != LUA_T_NIL)
 				return;
 			lua_state->stack.top--;
@@ -119,6 +117,7 @@ static void internaldostring() {
 static const char *to_string(lua_Object obj) {
 	char *buff = luaL_openspace(30);
 	TObject *o = luaA_Address(obj);
+
 	switch (ttype(o)) {
 	case LUA_T_NUMBER:
 	case LUA_T_STRING:
@@ -199,9 +198,8 @@ static void tonumber() {
 	} else {
 		const char *s = luaL_check_string(1);
 		char *e;
-		int32 n;
 		luaL_arg_check(0 <= base && base <= 36, 2, "base out of range");
-		n = (int32)strtol(s, &e, base);
+		int32 n = (int32)strtol(s, &e, base);
 		while (Common::isSpace(*e))
 			e++; // skip trailing spaces
 		if (*e)
