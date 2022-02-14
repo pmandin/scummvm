@@ -32,7 +32,7 @@
 #include "common/system.h"
 #include "math/glmath.h"
 
-#if defined(USE_OPENGL)
+#if defined(USE_OPENGL_GAME)
 
 #include "engines/reevengi/gfx/gfx_base.h"
 #include "engines/reevengi/gfx/gfx_opengl.h"

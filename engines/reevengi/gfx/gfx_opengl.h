@@ -25,8 +25,10 @@
 
 #include "engines/reevengi/gfx/gfx_base.h"
 
-#ifdef USE_OPENGL
+#if defined(USE_OPENGL_GAME)
 
+#include "graphics/opengl/system_headers.h"
+/*
 #ifdef USE_GLEW
 #include <GL/glew.h>
 #elif defined (SDL_BACKEND) && !defined(__amigaos4__)
@@ -35,6 +37,7 @@
 #else
 #include <GL/gl.h>
 #endif
+*/
 
 namespace Reevengi {
 
