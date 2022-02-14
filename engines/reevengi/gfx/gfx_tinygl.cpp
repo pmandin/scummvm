@@ -138,7 +138,8 @@ void GfxTinyGL::drawMovieFrame(int offsetX, int offsetY) {
 	}
 
 	TinyGL::BlitTransform bltTransform(offsetX, offsetY);
-	bltTransform.scale(movW, movH);
+	//FIXME bltTransform.scale no more available
+	// bltTransform.scale(movW, movH);
 
 	tglBlit(_smushImage, bltTransform);
 }
