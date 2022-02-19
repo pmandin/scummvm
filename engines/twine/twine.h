@@ -151,6 +151,12 @@ enum class EngineState {
 	QuitGame
 };
 
+enum class SceneLoopState {
+	Continue = -1,
+	ReturnToMenu = 0,
+	Finished = 1
+};
+
 struct ScopedEngineFreeze {
 	TwinEEngine *_engine;
 	ScopedEngineFreeze(TwinEEngine *engine);
@@ -177,6 +183,7 @@ class TwineScreen : public Graphics::Screen {
 private:
 	using Super = Graphics::Screen;
 	TwinEEngine *_engine;
+	int _lastFrame = -1;
 
 public:
 	TwineScreen(TwinEEngine *engine);
@@ -218,7 +225,7 @@ private:
 	 * Game engine main loop
 	 * @return true if we want to show credit sequence
 	 */
-	int32 runGameEngine();
+	bool runGameEngine();
 public:
 	TwinEEngine(OSystem *system, Common::Language language, uint32 flagsTwineGameType, TwineGameType gameType);
 	~TwinEEngine() override;
@@ -280,7 +287,7 @@ public:
 	ConfigFile _cfgfile;
 
 	int32 _frameCounter = 0;
-	int32 _quitGame = 0;
+	SceneLoopState _sceneLoopState = SceneLoopState::ReturnToMenu;
 	int32 _lbaTime = 0;
 
 	int32 _loopInventoryItem = 0;

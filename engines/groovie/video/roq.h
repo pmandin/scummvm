@@ -45,7 +45,7 @@ public:
 		return _soundHandle;
 	}
 
-	void drawString(Graphics::Surface *surface, const Common::String text, int posx, int posy, uint32 color) override;
+	void drawString(Graphics::Surface *surface, const Common::String text, int posx, int posy, uint32 color, bool blackBackground) override;
 	void copyfgtobg(uint8 arg) override;
 
 protected:
@@ -73,7 +73,7 @@ private:
 	bool processBlockAudioContainer(ROQBlockHeader &blockHeader);
 	bool playFirstFrame() { return _flagNoPlay; }; // _alpha && !_flagOverlay; }
 	void clearOverlay();
-	void dumpAllSurfaces();
+	void dumpAllSurfaces(const Common::String funcname);
 
 	void paint2(byte i, int destx, int desty);
 	void paint4(byte i, int destx, int desty);

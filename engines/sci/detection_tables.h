@@ -1178,6 +1178,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 
 	// Hoyle 1 - English Macintosh (supplied by Omer Mor)
 	// Executable scanning reports "x.yyy.zzz"
+	// Resource fork reports "Sierra Interpreter 0.022"
 	{"hoyle1", "", {
 		{"resource.map", 0, "e96963c2e34b21e2680fdaafb5d00a40", 8706},
 		{"resource.001", 0, "37b23afcf940ddbccfbe0b44080d9bc2", 611892},
@@ -1274,6 +1275,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 
 	// Hoyle 3 - English DOS Floppy (from jvprat)
 	// Executable scanning reports "x.yyy.zzz", Floppy label reports "1.0, 11.2.91", VERSION file reports "1.000"
+	// Also found on SierraOriginals CD as Hoyle Classic Board Games (1996)
 	// SCI interpreter version 1.000.510 (just a guess)
 	{"hoyle3", "", {
 		{"resource.map", 0, "7216a2972f9c595c45ab314941628e43", 2247},
@@ -1319,6 +1321,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 
 	// Hoyle 4 (Hoyle Classic Card Games) - English DOS/Win
 	// Supplied by abevi in bug report #5131
+	// VERSION file reports "2.000"
 	// Although this is a floppy game, it does have speech. (bug #13007)
 	{"hoyle4", "", {
 		{"resource.map", 0, "2b577c975cc8d8d43f61b6a756129fe3", 4352},
@@ -1350,6 +1353,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 								   GAMEOPTION_ORIGINAL_SAVELOAD )
 
 	// Hoyle 5 (Hoyle Classic Games) - Windows demo
+	// Executable scanning reports "2.100.002"
 	{"hoyle5", "Demo", {
 		{"ressci.000", 0, "98a39ae535dd01714ac313f8ba925045", 7260363},
 		{"resmap.000", 0, "10267a1542a73d527e50f0340549088b", 4900},
@@ -2357,7 +2361,8 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::RU_RUS, Common::kPlatformWindows, ADGF_NO_FLAGS, GUIO_KQ7 },
 
-	// King's Quest 7 - English DOS Non-Interactive Demo
+	// King's Quest 7 - English DOS/Win Non-Interactive Demo
+	// Demo from original PQ4CD release has only the Windows interpreter
 	// SCI interpreter version 2.100.002
 	{"kq7", "Demo", {
 		{"resource.map", 0, "b44f774108d63faa1d021101221c5a54", 1690},
@@ -4226,7 +4231,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 							  GAMEOPTION_ORIGINAL_SAVELOAD)
 #define GUIO_PQ4_MAC    GUIO1(GUIO_LINKSPEECHTOSFX)
 
-	// Police Quest 4 - English DOS CD (from the Police Quest Collection)
+	// Police Quest 4 - English DOS CD
 	// Executable scanning reports "2.100.002", VERSION file reports "1.100.000"
 	{"pq4", "CD", {
 		{"resource.map", 0, "379dfe80ed6bd16c47e4b950c4722eac", 11374},
@@ -4317,6 +4322,20 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 	{"pqswat", "", {
 		{"resmap.000", 0, "1c2563fee189885e29d9348f37306d94", 12175},
 		{"ressci.000", 0, "b2e1826ca81ce2e7e764587f5a14eee9", 127149181},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_PQSWAT },
+
+	// Police Quest: SWAT - English DOS/Windows
+	// Executable scanning reports "2.100.002", VERSION.TXT file reports "1.100"
+	{"pqswat", "", {
+		{"resmap.001", 0, "c2571ca6fc43f9a0b2d44c14aa2a39a3", 6955},
+		{"ressci.001", 0, "4550b56b6ea65c10c507b571abb43b97", 29312320},
+		{"resmap.002", 0, "808de8c5357f519ace8836a5e52d9e44", 6439},
+		{"ressci.002", 0, "672665bbe12be2aee44722495daca84e", 31599543},
+		{"resmap.003", 0, "3a8e446d7355789cdf0fe2cdf5e478db", 6841},
+		{"ressci.003", 0, "621621778cf754986e7f9f3f245b898b", 46510796},
+		{"resmap.004", 0, "98cd83681994e922a2f65031cf13fd49", 7069},
+		{"ressci.004", 0, "d28ad458276f42748f47ac27d0a0cc76", 50759885},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_PQSWAT },
 
@@ -4911,6 +4930,22 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 
 #undef GUIO_RAMA_DEMO
 #undef GUIO_RAMA
+
+	// The Realm - English Windows demo from the Space Quest Collection
+	// Executable scanning reports "2.100.002", VERSION file reports "2.184"
+	{"realm", "Demo", {
+		{"resmap.000", 0, "70ba2ff04a2b7fb2c52420ba7fbd47c2", 8338},
+		{"ressci.000", 0, "2a68edd064e5e4937b5e9c74b38f2082", 70611091},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformWindows, ADGF_DEMO | ADGF_UNSTABLE, GUIO1(GUIO_NONE) },
+
+	// The Realm - English Windows demo from SWAT 2 CD
+	// Executable scanning reports "2.100.002", version file reports "3.38"
+	{"realm", "Demo", {
+		{"resmap.000", 0, "cff25ac9b1a24b38b964c67d5c5dbcac", 2344},
+		{"ressci.000", 0, "93f0c4caa2461f383a656c6e81656efc", 431707},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformWindows, ADGF_DEMO | ADGF_UNSTABLE, GUIO1(GUIO_NONE) },
 
 #define GUIO_SHIVERS_DEMO GUIO6(GUIO_NOSUBTITLES, \
 								GUIO_NOMIDI, \
@@ -5808,7 +5843,15 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 							  GAMEOPTION_HQ_VIDEO)
 #define GUIO_TORIN_MAC  GUIO_TORIN
 
-	// Torin's Passage - English Windows Interactive Demo
+	// Torin's Passage - English DOS/Windows Early Demo
+	// SCI interpreter version 2.100.002
+	{"torin", "Demo", {
+		{"resmap.000", 0, "2f466e0dca27d2e6a85e422492a92915", 3403},
+		{"ressci.000", 0, "db3e290481c35c3224e9602e71e4a1f1", 5004165},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformWindows, ADGF_DEMO | ADGF_DROPPLATFORM, GUIO_TORIN_DEMO },
+
+	// Torin's Passage - English DOS/Windows Interactive Demo
 	// SCI interpreter version 2.100.002
 	{"torin", "Demo", {
 		{"resmap.000", 0, "9a3e172cde9963d0a969f26469318cec", 3403},

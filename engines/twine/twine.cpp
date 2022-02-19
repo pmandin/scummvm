@@ -115,11 +115,10 @@ TwineScreen::TwineScreen(TwinEEngine *engine) : _engine(engine) {
 }
 
 void TwineScreen::update() {
-	static int lastFrame = 0;
-	if (lastFrame == _engine->_frameCounter) {
+	if (_lastFrame == _engine->_frameCounter) {
 		return;
 	}
-	lastFrame = _engine->_frameCounter;
+	_lastFrame = _engine->_frameCounter;
 	Super::update();
 }
 
@@ -278,6 +277,22 @@ Common::Error TwinEEngine::run() {
 			}
 		}
 	}
+	if (ConfMan.hasKey("boot_param")) {
+		const int sceneIndex = ConfMan.getInt("boot_param");
+		if (sceneIndex < 0 || sceneIndex >= LBA1SceneId::SceneIdMax) {
+			warning("Scene index out of bounds\n");
+		} else {
+			debug("Boot parameter: %i\n", sceneIndex);
+			_gameState->initEngineVars();
+			_text->textClipSmall();
+			_text->_drawTextBoxBackground = true;
+			_text->_renderTextTriangle = false;
+			_scene->_needChangeScene = sceneIndex;
+			_scene->_heroPositionType = ScenePositionType::kScene;
+			_state = EngineState::GameLoop;
+		}
+	}
+
 	bool quitGame = false;
 	while (!quitGame && !shouldQuit()) {
 		readKeys();
@@ -308,8 +323,8 @@ Common::Error TwinEEngine::run() {
 			// this will enter the game and execute the commands in the file "debug"
 			_gameState->initEngineVars();
 			_text->textClipSmall();
-			_text->drawTextBoxBackground = true;
-			_text->renderTextTriangle = false;
+			_text->_drawTextBoxBackground = true;
+			_text->_renderTextTriangle = false;
 			if (!((TwinEConsole*)getDebugger())->exec("debug")) {
 				debug("Failed to execute debug file before entering the scene");
 			}
@@ -709,7 +724,7 @@ void TwinEEngine::processOptionsMenu() {
 	_redraw->redrawEngineActions(true);
 }
 
-int32 TwinEEngine::runGameEngine() { // mainLoopInteration
+bool TwinEEngine::runGameEngine() { // mainLoopInteration
 	g_system->delayMillis(2);
 
 	FrameMarker frame(this, 60);
@@ -729,8 +744,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			 && _scene->_needChangeScene != LBA1SceneId::Citadel_Island_outside_the_citadel
 			 && _scene->_needChangeScene != LBA1SceneId::Citadel_Island_near_the_tavern) {
 				// TODO: PlayMidiFile(6);
-				// TODO: Credits();
-				return 1;
+				return true;
 			}
 		}
 		_scene->changeScene();
@@ -743,7 +757,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	if (_menuOptions->canShowCredits) {
 		// TODO: if current music playing != 8, than play_track(8);
 		if (_input->toggleAbortAction()) {
-			return 1;
+			return true;
 		}
 	} else {
 		// Process give up menu - Press ESC
@@ -752,12 +766,12 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 			exitSceneryView();
 			const int giveUp = _menu->giveupMenu();
 			if (giveUp == kQuitEngine) {
-				return 0;
+				return false;
 			}
 			if (giveUp == 1) {
 				_redraw->redrawEngineActions(true);
-				_quitGame = 0;
-				return 0;
+				_sceneLoopState = SceneLoopState::ReturnToMenu;
+				return false;
 			}
 			_redraw->redrawEngineActions(true);
 		}
@@ -917,8 +931,8 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		processActorSamplePosition(a);
 
-		if (_quitGame != -1) {
-			return _quitGame;
+		if (_sceneLoopState != SceneLoopState::Continue) {
+			return _sceneLoopState == SceneLoopState::Finished;
 		}
 
 		if (actor->_staticFlags.bCanDrown) {
@@ -986,8 +1000,8 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 
 						autoSave();
 						_gameState->processGameoverAnimation();
-						_quitGame = 0;
-						return 0;
+						_sceneLoopState = SceneLoopState::ReturnToMenu;
+						return false;
 					}
 				}
 			} else {
@@ -999,7 +1013,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 
 		if (_scene->_needChangeScene != -1) {
-			return 0;
+			return false;
 		}
 	}
 
@@ -1017,7 +1031,7 @@ int32 TwinEEngine::runGameEngine() { // mainLoopInteration
 	_scene->_needChangeScene = SCENE_CEILING_GRID_FADE_1;
 	_redraw->_reqBgRedraw = false;
 
-	return 0;
+	return false;
 }
 
 bool TwinEEngine::gameEngineLoop() {
@@ -1025,7 +1039,7 @@ bool TwinEEngine::gameEngineLoop() {
 	_screens->_fadePalette = true;
 	_movements->setActorAngle(ANGLE_0, -ANGLE_90, ANGLE_1, &_loopMovePtr);
 
-	while (_quitGame == -1) {
+	while (_sceneLoopState == SceneLoopState::Continue) {
 		if (runGameEngine()) {
 			return true;
 		}

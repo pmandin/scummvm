@@ -78,7 +78,7 @@
 #define GAMEFLAG_VIDEO_EXPLODE2 219
 
 #define OWN_ACTOR_SCENE_INDEX 0
-#define IS_HERO(x) (x) == OWN_ACTOR_SCENE_INDEX
+#define IS_HERO(x) ((x) == OWN_ACTOR_SCENE_INDEX)
 
 namespace TwinE {
 
@@ -679,6 +679,10 @@ inline constexpr T bits(T value, uint8 offset, uint8 bits) {
 #define COLOR_WHITE 15
 #define COLOR_GOLD 155
 #define COLOR_158 158
+
+enum kDebugLevels {
+	kDebugScripts =   1 << 0
+};
 
 }
 

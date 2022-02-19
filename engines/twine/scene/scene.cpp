@@ -20,6 +20,7 @@
  */
 
 #include "twine/scene/scene.h"
+#include "common/file.h"
 #include "common/memstream.h"
 #include "common/stream.h"
 #include "common/util.h"
@@ -460,6 +461,26 @@ void Scene::reloadCurrentScene() {
 	_needChangeScene = _currentSceneIdx;
 }
 
+void Scene::dumpSceneScript(const char *type, int actorIdx, const uint8* script, int size) const {
+	Common::String fname = Common::String::format("./dumps/%i-%i.%s", _currentSceneIdx, actorIdx, type);
+	Common::DumpFile out;
+	if (!out.open(fname.c_str(), true)) {
+		warning("Scene::dumpSceneScript(): Can not open dump file %s", fname.c_str());
+	} else {
+		out.write(script, size);
+		out.flush();
+		out.close();
+	}
+}
+
+void Scene::dumpSceneScripts() const {
+	for (int32 a = 0; a < _sceneNumActors; ++a) {
+		const ActorStruct &actor = _sceneActors[a];
+		dumpSceneScript("life", a, actor._lifeScript, actor._lifeScriptSize);
+		dumpSceneScript("move", a, actor._moveScript, actor._moveScriptSize);
+	}
+}
+
 void Scene::changeScene() {
 	if (_engine->isLBA1()) {
 		if (_useScenePatches) {
@@ -518,6 +539,9 @@ void Scene::changeScene() {
 	_sceneHero->_labelIdx = -1;
 
 	initScene(_needChangeScene);
+	if (ConfMan.getBool("dump_scripts")) {
+		dumpSceneScripts();
+	}
 
 	if (_holomapTrajectory != -1) {
 		_engine->_holomap->drawHolomapTrajectory(_holomapTrajectory);
@@ -609,41 +633,42 @@ void Scene::initSceneVars() {
 
 void Scene::playSceneMusic() {
 	if (_currentSceneIdx == LBA1SceneId::Tippet_Island_Twinsun_Cafe && _engine->_gameState->hasArrivedHamalayi()) {
-		_engine->_music->playMidiMusic(8);
+		_engine->_music->playTrackMusic(8);
 	} else {
 		_engine->_music->playMidiMusic(_sceneMusic);
 	}
 }
 
 void Scene::processEnvironmentSound() {
-	if (_engine->_lbaTime >= _sampleAmbienceTime) {
-		int16 currentAmb = _engine->getRandomNumber(4); // random ambiance
+	if (_engine->_lbaTime < _sampleAmbienceTime) {
+		return;
+	}
+	int16 currentAmb = _engine->getRandomNumber(4); // random ambiance
 
-		for (int32 s = 0; s < 4; s++) {
-			if (!(_samplePlayed & (1 << currentAmb))) { // if not already played
-				_samplePlayed |= (1 << currentAmb);     // make sample played
+	for (int32 s = 0; s < 4; s++) {
+		if (!(_samplePlayed & (1 << currentAmb))) { // if not already played
+			_samplePlayed |= (1 << currentAmb);     // make sample played
 
-				if (_samplePlayed == 15) { // reset if all samples played
-					_samplePlayed = 0;
-				}
-
-				const int16 sampleIdx = _sampleAmbiance[currentAmb];
-				if (sampleIdx != -1) {
-					/*int16 decal = _sampleRound[currentAmb];*/
-					int16 repeat = _sampleRepeat[currentAmb];
-
-					_engine->_sound->playSample(sampleIdx, repeat, 110, -1, 110);
-					break;
-				}
+			if (_samplePlayed == 15) { // reset if all samples played
+				_samplePlayed = 0;
 			}
 
-			currentAmb++;    // try next ambiance
-			currentAmb &= 3; // loop in all 4 ambiances
+			const int16 sampleIdx = _sampleAmbiance[currentAmb];
+			if (sampleIdx != -1) {
+				/*int16 decal = _sampleRound[currentAmb];*/
+				int16 repeat = _sampleRepeat[currentAmb];
+
+				_engine->_sound->playSample(sampleIdx, repeat, 110, -1, 110);
+				break;
+			}
 		}
 
-		// compute next ambiance timer
-		_sampleAmbienceTime = _engine->_lbaTime + (_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay) * 50;
+		currentAmb++;    // try next ambiance
+		currentAmb &= 3; // loop in all 4 ambiances
 	}
+
+	// compute next ambiance timer
+	_sampleAmbienceTime = _engine->_lbaTime + (_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay) * 50;
 }
 
 void Scene::processZoneExtraBonus(ZoneStruct *zone) {
@@ -656,7 +681,7 @@ void Scene::processZoneExtraBonus(ZoneStruct *zone) {
 		return;
 	}
 
-	const int16 amount = zone->infoData.Bonus.amount;
+	const int32 amount = zone->infoData.Bonus.amount;
 	const int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(ABS(zone->maxs.x + zone->mins.x) / 2, ABS(zone->maxs.z + zone->mins.z) / 2, _sceneHero->_pos.x, _sceneHero->_pos.z);
 	const int32 index = _engine->_extra->addExtraBonus(ABS(zone->maxs.x + zone->mins.x) / 2, zone->maxs.y, ABS(zone->maxs.z + zone->mins.z) / 2, ANGLE_63, angle, bonusSprite, amount);
 

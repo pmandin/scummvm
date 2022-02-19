@@ -272,6 +272,8 @@ void Script::directGameLoad(int slot) {
 		_scriptFile = _savedScriptFile;
 	}
 
+	_videoSkipAddress = 0;
+
 	uint16 targetInstruction = 0;
 	const byte *midiInitScript = nullptr;
 	uint8 midiInitScriptSize = 0;
@@ -509,7 +511,7 @@ uint32 Script::getVideoRefString(Common::String &resName) {
 	// Add a trailing dot
 	resName += '.';
 
-	debugCN(1, kDebugScript, "%s", resName.c_str());
+	debugC(1, kDebugScript, "getVideoRefString %s", resName.c_str());
 
 	// Get the fileref of the resource
 	return _vm->_resMan->getRef(resName);
@@ -598,6 +600,9 @@ bool Script::preview_loadgame(uint slot) { // used by Clandestiny for the photos
 }
 
 bool Script::canDirectSave() const {
+	if (this->_vm->isDemo())
+		return false;
+
 	// Disallow when running a subscript (puzzle)
 	if (_savedCode == nullptr) {
 		// UHP appears not to use "room" variables(?)
@@ -700,7 +705,8 @@ void Script::printString(Graphics::Surface *surface, const char *str) {
 	if (_version == kGroovieT7G) {
 		_vm->_font->drawString(surface, message, 0, 16, 640, 0xE2, Graphics::kTextAlignCenter);
 	} else {
-		_vm->_videoPlayer->drawString(surface, Common::String(message), 190, 190, _vm->_pixelFormat.RGBToColor(0xff, 0x0A, 0x0A));
+		bool drawBackground = _version == kGroovieCDY;
+		_vm->_videoPlayer->drawString(surface, Common::String(message), 190, 190, _vm->_pixelFormat.RGBToColor(0xff, 0x0A, 0x0A), drawBackground);
 	}
 }
 
@@ -938,6 +944,9 @@ bool Script::playvideofromref(uint32 fileref, bool loopUntilAudioDone) {
 			// Original clan engine specifically references these files by name to set the flag
 			else if (_version == kGroovieCDY && (resInfo.filename.hasPrefix("act") || resInfo.filename.hasPrefix("door")))
 				_bitflags |= (1 << 14);
+			// HACK: Clandestiny bricks puzzle appears to use different behavior for copying the _overBuf to the _bg
+			if (_version == kGroovieCDY && _scriptFile == "26a_graf.grv")
+				_bitflags |= 1;
 			_vm->_videoPlayer->load(_videoFile, _bitflags);
 		} else {
 			error("Groovie::Script: Couldn't open file");
@@ -1183,8 +1192,8 @@ void Script::o_inputloopend() {
 	}
 
 	if (_wantAutosave && canDirectSave()) {
-		_vm->saveAutosaveIfEnabled();
 		_wantAutosave = false;
+		_vm->saveAutosaveIfEnabled();
 	}
 }
 
@@ -1925,6 +1934,7 @@ void Script::o_loadscript() {
 
 	// Save the variables
 	memcpy(_savedVariables, _variables + 0x107, 0x180);
+	_videoSkipAddress = 0;
 	resetFastForward();
 }
 
@@ -1992,6 +2002,7 @@ void Script::o_returnscript() {
 		_wantAutosave = val == 1;
 	}
 
+	_videoSkipAddress = 0;
 	resetFastForward();
 }
 
@@ -2104,7 +2115,8 @@ void Script::o2_printstring() {
 	debugC(1, kDebugScript, "Groovie::Script: PRINTSTRING (%d, %d): %s", posx, posy, text.c_str());
 
 	Graphics::Surface *gamescreen = _vm->_system->lockScreen();
-	_vm->_videoPlayer->drawString(gamescreen, text, posx, posy, col);
+	bool drawBackground = _version == kGroovieCDY;
+	_vm->_videoPlayer->drawString(gamescreen, text, posx, posy, col, drawBackground);
 	_vm->_system->unlockScreen();
 }
 
@@ -2157,7 +2169,7 @@ void Script::o2_videofromref() {
 		_videoSkipAddress = 1417;
 
 	if (_version == kGroovieT11H && fileref != _videoRef && !ConfMan.getBool("originalsaveload")) {
-		if (_currentInstruction == 0xE50A) {
+		if (_currentInstruction == 0xE50A && _scriptFile == "script.grv") {
 			// Load from the main menu
 			GUI::SaveLoadChooser *dialog = new GUI::SaveLoadChooser(_("Restore game:"), _("Restore"), false);
 			int slot = dialog->runModalWithCurrentTarget();
@@ -2170,7 +2182,7 @@ void Script::o2_videofromref() {
 			} else {
 				_currentInstruction = 0xBF37; // main menu
 			}
-		} else if (_currentInstruction == 0xE955) {
+		} else if (_currentInstruction == 0xE955 && _scriptFile == "script.grv") {
 			// Save from the main menu
 			GUI::SaveLoadChooser *dialog = new GUI::SaveLoadChooser(_("Save game:"), _("Save"), true);
 			int slot = dialog->runModalWithCurrentTarget();
@@ -2208,6 +2220,39 @@ void Script::o2_vdxtransition() {
 	if (fileref != _videoRef) {
 		debugC(1, kDebugScript, "Groovie::Script: VDX transition fileref = 0x%08X", fileref);
 		debugC(2, kDebugVideo, "\nGroovie::Script: @0x%04X: Playing video %d with transition via 0x1C (o2_vdxtransition)", _currentInstruction-5, fileref);
+	}
+
+	if (_version == kGroovieCDY && fileref != _videoRef && !ConfMan.getBool("originalsaveload")) {
+		if (_currentInstruction == 0x59 && _scriptFile == "save_cam.grv") {
+			// Save from the main menu
+			GUI::SaveLoadChooser *dialog = new GUI::SaveLoadChooser(_("Save game:"), _("Save"), true);
+			int slot = dialog->runModalWithCurrentTarget();
+			Common::String saveName = dialog->getResultString();
+			delete dialog;
+
+			if (slot >= 0) {
+				directGameSave(slot, saveName);
+			}
+
+			_currentInstruction = 0x162; // end of save_cam.grv
+			return;
+		}
+		// TODO: modern load menu needs to tell the user that slot 0 is for starting a new game
+#if 0
+		else if (_currentInstruction == 0xA12C && _scriptFile == "clanmain.grv") {
+			// Load from the main menu
+			GUI::SaveLoadChooser *dialog = new GUI::SaveLoadChooser(_("Restore game:"), _("Restore"), false);
+			int slot = dialog->runModalWithCurrentTarget();
+			delete dialog;
+
+			if (slot >= 0) {
+				directGameLoad(slot);
+			} else {
+				_currentInstruction = 0xA730;
+			}
+			return;
+		}
+#endif
 	}
 
 	// Set bit 1

@@ -229,17 +229,20 @@ void KIASectionSave::handleKeyUp(const Common::KeyState &kbd) {
 
 void KIASectionSave::handleKeyDown(const Common::KeyState &kbd) {
 	if (_state == kStateNormal) {
-		if (kbd.keycode == Common::KEYCODE_DELETE && _selectedLineId != _newSaveLineId) {
+		// Delete a saved game entry either with Delete key or numpad's (keypad's) Del key (when Num Lock Off)
+		if (_selectedLineId != _newSaveLineId
+		     && (    kbd.keycode == Common::KEYCODE_DELETE
+		         || (kbd.keycode == Common::KEYCODE_KP_PERIOD && !(kbd.flags & Common::KBD_NUM)))) {
 			changeState(kStateDelete);
 		}
 		_uiContainer->handleKeyDown(kbd);
 	} else if (_state == kStateOverwrite) {
-		if (kbd.keycode == Common::KEYCODE_RETURN) {
+		if (kbd.keycode == Common::KEYCODE_RETURN || kbd.keycode == Common::KEYCODE_KP_ENTER) {
 			save();
 			changeState(kStateNormal);
 		}
 	} else if (_state == kStateDelete) {
-		if (kbd.keycode == Common::KEYCODE_RETURN) {
+		if (kbd.keycode == Common::KEYCODE_RETURN || kbd.keycode == Common::KEYCODE_KP_ENTER) {
 			deleteSave();
 			changeState(kStateNormal);
 		}
