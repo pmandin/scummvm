@@ -44,6 +44,9 @@ bool PsxPlayer::loadFile(const Common::String &filename) {
 	_fname = filename;
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(_fname);
+	if (!stream)
+		return false;
+
 	if (_emul_cd) {
 		stream = new PsxCdStream(stream);
 	}
