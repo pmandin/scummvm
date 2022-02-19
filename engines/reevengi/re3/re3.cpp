@@ -57,6 +57,11 @@ static const char *RE3PSX_MODEL1 = "cd_data/pld/pl%02x.pld";
 
 RE3Engine::RE3Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *desc) :
 		ReevengiEngine(syst, gameType, desc), _country('u') {
+
+	/* Default entity */
+	_defEntity = 0;
+	_defIsPlayer = 1;
+
 	_room = 13;
 }
 

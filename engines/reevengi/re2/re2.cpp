@@ -60,6 +60,10 @@ RE2Engine::RE2Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescr
 		_character = 1;
 	}
 
+	/* Default entity */
+	_defEntity = 0x10;
+	_defIsPlayer = 0;
+
 	/* Game B: start in room 4 */
 
 	/* Demo: only stage 1 and 2 */

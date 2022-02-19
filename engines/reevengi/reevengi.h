@@ -82,6 +82,7 @@ protected:
 	virtual void loadRoom(void);
 
 	// Entity
+	int _defEntity, _defIsPlayer;
 	virtual Entity *loadEntity(int numEntity, int isPlayer);
 
 	// Player
