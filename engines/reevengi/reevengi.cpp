@@ -58,7 +58,8 @@ GfxBase *g_driver = nullptr;
 ReevengiEngine::ReevengiEngine(OSystem *syst, ReevengiGameType gameType, const ADGameDescription *gameDesc) :
 	Engine(syst), _gameType(gameType), _character(0), _softRenderer(true),
 	_stage(1), _room(0), _camera(0), _bgImage(nullptr),_bgMaskImage(nullptr), _roomScene(nullptr),
-	_playerX(0), _playerY(0), _playerZ(0), _playerA(0), _playerMove(0), _playerTic(0) {
+	_playerX(0), _playerY(0), _playerZ(0), _playerA(0), _playerMove(0), _playerTic(0),
+	_defEntity(0), _defIsPlayer(0) {
 	memcpy(&_gameDesc, gameDesc, sizeof(_gameDesc));
 	g_movie = nullptr;
 	_clock = new Clock();
@@ -148,9 +149,7 @@ Common::Error ReevengiEngine::run() {
 	if (movieMode) {
 		testLoadMovie();
 	} else {
-		entity = loadEntity(0, 0);	/* RE1 */
-		//entity = loadEntity(0x10, 0);	/* RE2 */
-		//entity = loadEntity(0, 1);	/* RE3 */
+		entity = loadEntity(_defEntity, _defIsPlayer);
 
 		loadRoom();
 		if (_roomScene) {
