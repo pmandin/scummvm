@@ -27,6 +27,125 @@
 
 namespace Hypno {
 
+void WetEngine::initSegment(ArcadeShooting *arc) {
+	if (_arcadeMode == "Y1") {
+		_segmentShootSequenceOffset = 0;
+		_segmentShootSequenceMax = 3;
+	} else if (_arcadeMode == "Y5") {
+		_segmentShootSequenceOffset = 1;
+		_segmentShootSequenceMax = 9;
+	} else {
+		_segmentShootSequenceOffset = 0;
+		_segmentShootSequenceMax = 0;
+	}
+
+	uint32 randomSegmentShootSequence = _segmentShootSequenceOffset + _rnd->getRandomNumber(_segmentShootSequenceMax);
+	debugC(1, kHypnoDebugArcade, "Select random sequence %d", randomSegmentShootSequence);
+	SegmentShoots segmentShoots = arc->shootSequence[randomSegmentShootSequence];
+	_shootSequence = segmentShoots.shootSequence;
+	_segmentRepetitionMax = segmentShoots.segmentRepetition; // Usually zero
+	_segmentRepetition = 0;
+	_segmentOffset = 0;
+	_segmentIdx = _segmentOffset;
+}
+
+void WetEngine::findNextSegment(ArcadeShooting *arc) {
+	debugC(1, kHypnoDebugArcade, "Repetition %d of %d", _segmentRepetition, _segmentRepetitionMax);
+	Common::Point mousePos = g_system->getEventManager()->getMousePos();
+	Segments segments = arc->segments;
+
+	if (_segmentRepetition < _segmentRepetitionMax) {
+		_segmentRepetition = _segmentRepetition + 1; 
+	} else {
+		_segmentRepetition = 0;
+		_segmentRepetitionMax = 0;
+		if (segments[_segmentIdx].type == 0xb3) {
+			if (_arcadeMode == "Y1") {
+				if (_rnd->getRandomBit())
+					_segmentIdx = _segmentIdx + 1;
+				else 
+					_segmentIdx = _segmentIdx + 5;
+			} else if (_arcadeMode == "Y5") {
+				int r = _rnd->getRandomNumber(4);
+				if (r == 0)
+					_segmentIdx = 1;
+				else
+					_segmentIdx = r + 4;
+
+				if (segments[_segmentIdx].type == 'L') {
+					_shootSequence = arc->shootSequence[11].shootSequence;
+					_segmentRepetitionMax = 0;
+				} else if (segments[_segmentIdx].type == 'R') {
+					_shootSequence = arc->shootSequence[12].shootSequence;
+					_segmentRepetitionMax = 0;
+				} else if (segments[_segmentIdx].type == 'A') {
+					_shootSequence = arc->shootSequence[15].shootSequence;
+					_segmentRepetitionMax = 0;
+				} else if (segments[_segmentIdx].type == 'P') {
+					r = _rnd->getRandomNumber(1);
+					_shootSequence = arc->shootSequence[13 + r].shootSequence; //13-14
+					_segmentRepetitionMax = 0;
+				}
+			} else
+				_segmentIdx = _segmentIdx + 1;
+
+		} else if (segments[_segmentIdx].type == 0xc5) {
+			if (_arcadeMode == "Y1") {
+				if (mousePos.x <= 100)
+					_segmentIdx = _segmentIdx + 1;
+				else if (mousePos.x >= 300)
+					_segmentIdx = _segmentIdx + 3;
+				else 
+					_segmentIdx = _segmentIdx + 2;
+			} else if (_arcadeMode == "Y5") {
+				if (mousePos.x <= 100)
+					_segmentIdx = _segmentIdx + 2;
+				else if (mousePos.x >= 300)
+					_segmentIdx = _segmentIdx + 3;
+				else 
+					_segmentIdx = _segmentIdx + 1;
+			} else
+				error("Invalid segment type for mode: %s", _arcadeMode.c_str());
+
+		} else if (segments[_segmentIdx].type == 0xc2) {
+			if (mousePos.x <= 160)
+				_segmentIdx = _segmentIdx + 1;
+			else 
+				_segmentIdx = _segmentIdx + 2;
+		} else if (segments[_segmentIdx].type == 0xcc) {
+			if (mousePos.x <= 160)
+				_segmentIdx = _segmentIdx + 1;
+			else 
+				_segmentIdx = _segmentIdx + 2;
+		} else {
+
+			// Objective checking
+			if (arc->objKillsRequired[_objIdx] > 0) {
+				if (_objKillsCount[_objIdx] >= arc->objKillsRequired[_objIdx] && _objMissesCount[_objIdx] <= arc->objMissesAllowed[_objIdx]) {
+					if (_objIdx == 0) {
+						_objIdx = 1;
+						if (_arcadeMode == "Y1") {
+							_segmentOffset = 8;
+							_segmentRepetition = 0;
+							_segmentShootSequenceOffset = 8;
+						}
+					} else {
+						_skipLevel = true; // RENAME
+						return;
+					}
+				}
+			}
+			_segmentIdx = _segmentOffset;
+			// select a new shoot sequence
+			uint32 randomSegmentShootSequence = _segmentShootSequenceOffset + _rnd->getRandomNumber(_segmentShootSequenceMax);
+			debugC(1, kHypnoDebugArcade, "Selected random sequence %d", randomSegmentShootSequence);
+			SegmentShoots segmentShoots = arc->shootSequence[randomSegmentShootSequence];
+			_shootSequence = segmentShoots.shootSequence;
+			_segmentRepetitionMax = segmentShoots.segmentRepetition; // Usually one
+		}
+	}
+}
+
 void WetEngine::runBeforeArcade(ArcadeShooting *arc) {
 	_checkpoint = _currentLevel;
 	MVideo *video;
@@ -81,6 +200,41 @@ void WetEngine::runBeforeArcade(ArcadeShooting *arc) {
 		runIntro(*video);
 		delete video;
 	}
+
+	if (!arc->player.empty()) {
+		_playerFrames = decodeFrames(arc->player);
+	}
+
+	if (arc->mode == "Y4" || arc->mode == "Y5")  { // These images are flipped, for some reason
+		for (Frames::iterator it = _playerFrames.begin(); it != _playerFrames.end(); ++it) {
+			for (int i = 0 ; i < (*it)->w ; i++) 
+				for (int j = 0 ; j < (*it)->h/2 ; j++) {
+					uint32 p1 = (*it)->getPixel(i, j);
+					uint32 p2 = (*it)->getPixel(i, (*it)->h - j - 1);
+					(*it)->setPixel(i, j, p2);
+					(*it)->setPixel(i, (*it)->h - j - 1, p1);
+				}
+		}
+	}
+
+	_playerFrameSep = 0;
+
+	for (Frames::iterator it =_playerFrames.begin(); it != _playerFrames.end(); ++it) {
+		if ((*it)->getPixel(0, 0) == 255)
+			break;
+		if ((*it)->getPixel(0, 0) == 252)
+			break;
+
+		_playerFrameSep++;
+	}
+
+	if (_playerFrameSep == (int)_playerFrames.size()) {
+		debugC(1, kHypnoDebugArcade, "No player separator frame found in %s! (size: %d)", arc->player.c_str(), _playerFrames.size());
+		//_playerFrameSep = -1;
+	} else 
+		debugC(1, kHypnoDebugArcade, "Separator frame found at %d", _playerFrameSep);
+
+	_playerFrameIdx = -1;
 }
 
 bool WetEngine::clickedSecondaryShoot(const Common::Point &mousePos) {
@@ -88,9 +242,11 @@ bool WetEngine::clickedSecondaryShoot(const Common::Point &mousePos) {
 }
 
 void WetEngine::hitPlayer() {
-	assert( _playerFrameSep < (int)_playerFrames.size());
-	if (_playerFrameIdx < _playerFrameSep)
-		_playerFrameIdx = _playerFrameSep;
+	if (_arcadeMode != "Y1" && _arcadeMode != "Y3" && _arcadeMode != "Y4" && _arcadeMode != "Y5") {
+		assert( _playerFrameSep < (int)_playerFrames.size());
+		if (_playerFrameIdx < _playerFrameSep)
+			_playerFrameIdx = _playerFrameSep;
+	}
 }
 
 void WetEngine::drawShoot(const Common::Point &mousePos) {
@@ -106,27 +262,27 @@ void WetEngine::drawShoot(const Common::Point &mousePos) {
 }
 
 void WetEngine::drawPlayer() {
-	if (_arcadeMode == "Y1")
+	// TARGET ACQUIRED frame
+	uint32 c = 251; // green
+	_compositeSurface->drawLine(113, 1, 119, 1, c);
+	_compositeSurface->drawLine(200, 1, 206, 1, c);
+
+	_compositeSurface->drawLine(113, 1, 113, 9, c);
+	_compositeSurface->drawLine(206, 1, 206, 9, c);
+
+	_compositeSurface->drawLine(113, 9, 119, 9, c);
+	_compositeSurface->drawLine(200, 9, 206, 9, c);
+
+	c = 250; // red ?
+	Common::Point mousePos = g_system->getEventManager()->getMousePos();
+	int i = detectTarget(mousePos);
+	if (i > 0)
+		drawString("block05.fgx", "TARGET  ACQUIRED", 116, 3, 80, c);
+
+	if (_arcadeMode == "Y1" || _arcadeMode == "Y3")
 		return;
 
 	if (_playerFrameIdx < _playerFrameSep) {
-		// TARGET ACQUIRED frame
-		uint32 c = 251; // green
-		_compositeSurface->drawLine(113, 1, 119, 1, c);
-		_compositeSurface->drawLine(200, 1, 206, 1, c);
-
-		_compositeSurface->drawLine(113, 1, 113, 9, c);
-		_compositeSurface->drawLine(206, 1, 206, 9, c);
-
-		_compositeSurface->drawLine(113, 9, 119, 9, c);
-		_compositeSurface->drawLine(200, 9, 206, 9, c);
-
-		c = 250; // red ?
-		Common::Point mousePos = g_system->getEventManager()->getMousePos();
-		int i = detectTarget(mousePos);
-		if (i > 0)
-			drawString("block05.fgx", "TARGET  ACQUIRED", 120, 1, 80, c);
-
 		_playerFrameIdx++;
 		_playerFrameIdx = _playerFrameIdx % _playerFrameSep;
 	} else {
@@ -135,23 +291,28 @@ void WetEngine::drawPlayer() {
 			_playerFrameIdx = 0;
 	}
 
+	if (_arcadeMode == "Y5")
+		_playerFrameIdx = 1;
+	else if (_arcadeMode == "Y4")
+		_playerFrameIdx = 2;
+
 	drawImage(*_playerFrames[_playerFrameIdx], 0, 200 - _playerFrames[_playerFrameIdx]->h + 1, true);
 }
 
 void WetEngine::drawHealth() {
-	if (_arcadeMode == "Y1")
-		return;
-
 	uint32 c = 253;
 	int p = (100 * _health) / _maxHealth;
 	int s = _score;
+	int mo = _objKillsCount[_objIdx];
+
 	if (_playerFrameIdx < _playerFrameSep) {
 		const chapterEntry *entry = _chapterTable[_levelId];
 		//uint32 id = _levelId;
-		drawString("block05.fgx", Common::String::format("ENERGY   %d%%", p), entry->energyPos[0], entry->energyPos[1], 65, c);
-		drawString("block05.fgx", Common::String::format("SCORE    %04d", s), entry->scorePos[0], entry->scorePos[1], 72, c);
+		drawString("block05.fgx", Common::String::format("ENERGY  %d%%", p), entry->energyPos[0], entry->energyPos[1], 65, c);
+		drawString("block05.fgx", Common::String::format("SCORE  %04d", s), entry->scorePos[0], entry->scorePos[1], 72, c);
 		// Objectives are always in the zero in the demo
-		//drawString("block05.fgx", Common::String::format("M.O.     0/0"), uiPos[id][2][0], uiPos[id][2][1], 60, c);
+		if (entry->objectivesPos[0] > 0 && entry->objectivesPos[1] > 0)
+			drawString("block05.fgx", Common::String::format("M.O.  %d/X", mo), entry->objectivesPos[0], entry->objectivesPos[1], 60, c);
 	}
 }
 

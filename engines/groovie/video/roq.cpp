@@ -295,7 +295,8 @@ void writeImage(const Common::String filename, Graphics::Surface &surface) {
 
 	Common::DumpFile out;
 	if (!out.open(tname)) {
-		error("failed to open %s", tname.c_str());
+		warning("failed to write debug image to %s", tname.c_str());
+		return;
 	}
 
 #ifdef USE_PNG
@@ -545,6 +546,7 @@ bool ROQPlayer::processBlock() {
 
 	if (endpos != _file->pos()) {
 		warning("Groovie::ROQ: BLOCK %04x Should have ended at %d, and has ended at %d", blockHeader.type, endpos, (int)_file->pos());
+		warning("Ensure you've copied the files correctly according to the wiki.");
 		_file->seek(endpos);
 	}
 	// End the frame when the graphics have been modified or when there's an error
@@ -602,9 +604,9 @@ bool ROQPlayer::processBlockInfo(ROQBlockHeader &blockHeader) {
 	debugC(2, kDebugVideo, "Groovie::ROQ: width=%d, height=%d, scaleX=%d, scaleY=%d, _offScale=%d, interl.=%d, _alpha=%d", width, height, _scaleX, _scaleY, _interlacedVideo, _offScale, _alpha);
 
 	// Switch from/to fullscreen, if needed
-	if (_screen->h != 480 && height == 480)
+	if (_screen->h != 480 && height * _scaleY == 480)
 		_vm->_graphicsMan->switchToFullScreen(true);
-	else if (_screen->h == 480 && height != 480)
+	else if (_screen->h == 480 && height * _scaleY != 480)
 		_vm->_graphicsMan->switchToFullScreen(false);
 
 	// TODO: Clear the buffers with black
@@ -897,10 +899,11 @@ byte ROQPlayer::getCodingType() {
 
 void ROQPlayer::paint2(byte i, int destx, int desty) {
 	if (i > _num2blocks) {
-		error("Groovie::ROQ: Invalid 2x2 block %d (%d available)", i, _num2blocks);
+		warning("Groovie::ROQ: Invalid 2x2 block %d (%d available)", i, _num2blocks);
+		return;
 	}
 
-	uint32 *block = _codebook2 + i * 4;
+	uint32 *block = &_codebook2[i * 4];
 	uint32 *ptr = (uint32 *)_currBuf->getBasePtr(destx, desty);
 	uint32 pitch = _currBuf->pitch / 4;
 
@@ -912,7 +915,8 @@ void ROQPlayer::paint2(byte i, int destx, int desty) {
 
 void ROQPlayer::paint4(byte i, int destx, int desty) {
 	if (i > _num4blocks) {
-		error("Groovie::ROQ: Invalid 4x4 block %d (%d available)", i, _num4blocks);
+		warning("Groovie::ROQ: Invalid 4x4 block %d (%d available)", i, _num4blocks);
+		return;
 	}
 
 	byte *block4 = &_codebook4[i * 4];
@@ -926,13 +930,14 @@ void ROQPlayer::paint4(byte i, int destx, int desty) {
 
 void ROQPlayer::paint8(byte i, int destx, int desty) {
 	if (i > _num4blocks) {
-		error("Groovie::ROQ: Invalid 4x4 block %d (%d available)", i, _num4blocks);
+		warning("Groovie::ROQ: Invalid 4x4 block %d (%d available)", i, _num4blocks);
+		return;
 	}
 
 	byte *block4 = &_codebook4[i * 4];
 	for (int y4 = 0; y4 < 2; y4++) {
 		for (int x4 = 0; x4 < 2; x4++) {
-			uint32 *block2 = _codebook2 + *block4++ * 4;
+			uint32 *block2 = &_codebook2[*block4++ * 4];
 
 			for (int y2 = 0; y2 < 2; y2++) {
 				for (int x2 = 0; x2 < 2; x2++) {

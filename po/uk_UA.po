@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.9.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-02-19 05:18+0000\n"
-"PO-Revision-Date: 2022-02-18 18:36+0000\n"
+"POT-Creation-Date: 2022-02-23 09:29+0000\n"
+"PO-Revision-Date: 2022-02-23 12:11+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Ukrainian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/uk/>\n"
@@ -94,7 +94,7 @@ msgstr "Вибрати"
 msgid "Select directory where to download game data"
 msgstr "Виберіть папку куди завантажувати файли гри"
 
-#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:272
+#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:283
 msgid "Select directory with game data"
 msgstr "Виберіть папку з файлами гри"
 
@@ -132,7 +132,7 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:152
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:395 gui/launcher.cpp:424 gui/launcher.cpp:467
+#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
 #: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
@@ -144,7 +144,7 @@ msgstr "Так"
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:153
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:395 gui/launcher.cpp:424 gui/launcher.cpp:467
+#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: engines/buried/buried.cpp:580 engines/grim/grim.cpp:357
 #: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
@@ -153,7 +153,7 @@ msgstr "Так"
 msgid "No"
 msgstr "Ні"
 
-#: gui/downloaddialog.cpp:136 gui/launcher.cpp:564
+#: gui/downloaddialog.cpp:136 gui/launcher.cpp:575
 msgid "ScummVM couldn't open the specified directory!"
 msgstr "ScummVM не може відкрити вказану папку!"
 
@@ -166,7 +166,7 @@ msgstr ""
 "назвою."
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
-#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:523 gui/launcher.cpp:527
+#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:534 gui/launcher.cpp:538
 #: gui/massadd.cpp:88 gui/options.cpp:2104 gui/saveload-dialog.cpp:1187
 #: engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
@@ -303,6 +303,7 @@ msgstr ""
 #: gui/options.cpp:1427 gui/options.cpp:1447 gui/options.cpp:1459
 #: gui/options.cpp:1838 gui/options.cpp:2256 gui/options.cpp:2329
 #: gui/options.cpp:2509 gui/options.cpp:2948 audio/null.cpp:40
+#: engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<за умовчанням>"
 
@@ -723,134 +724,140 @@ msgstr "Направо"
 msgid "???"
 msgstr "???"
 
-#: gui/launcher.cpp:192
-msgid "Select Group by"
-msgstr "Выбрать сортировку по группам"
-
-#: gui/launcher.cpp:197
-msgid "Group by: "
-msgstr "Групувати по: "
-
-#: gui/launcher.cpp:199
-msgid "Select a criteria to group the entries"
-msgstr "Оберіть критерій для групування"
-
 #. I18N: Group name for the game list
-#: gui/launcher.cpp:201
+#: gui/launcher.cpp:99
 msgctxt "group"
 msgid "None"
 msgstr "Не завдано"
 
 #. I18N: Group name for the game list, grouped by the first letter of the game title
-#: gui/launcher.cpp:203
+#: gui/launcher.cpp:101
+msgctxt "group"
 msgid "First letter"
 msgstr "Перша літера"
 
 #. I18N: Group name for the game list, grouped by game engine
-#: gui/launcher.cpp:205
+#: gui/launcher.cpp:103
+msgctxt "group"
 msgid "Engine"
 msgstr "Движок"
 
 #. I18N: Group name for the game list, grouped by game series
-#: gui/launcher.cpp:207
+#: gui/launcher.cpp:105
+msgctxt "group"
 msgid "Series"
 msgstr "Серія"
 
 #. I18N: Group name for the game list, grouped by game publisher
-#: gui/launcher.cpp:209
+#: gui/launcher.cpp:107
+msgctxt "group"
 msgid "Publisher"
 msgstr "Видавник"
 
 #. I18N: Group name for the game list, grouped by language
-#: gui/launcher.cpp:211
+#: gui/launcher.cpp:109
+msgctxt "group"
 msgid "Language"
 msgstr "Мова"
 
 #. I18N: Group name for the game list, grouped by game platform
-#: gui/launcher.cpp:213
+#: gui/launcher.cpp:111
+msgctxt "group"
 msgid "Platform"
 msgstr "Платформа"
 
-#: gui/launcher.cpp:229 engines/dialogs.cpp:94
+#: gui/launcher.cpp:210
+msgid "Select Group by"
+msgstr "Выбрать сортировку по группам"
+
+#: gui/launcher.cpp:215
+msgid "Group by: "
+msgstr "Групувати по: "
+
+#: gui/launcher.cpp:217
+msgid "Select a criteria to group the entries"
+msgstr "Оберіть критерій для групування"
+
+#: gui/launcher.cpp:240 engines/dialogs.cpp:94
 msgid "~Q~uit"
 msgstr "~В~ихід"
 
-#: gui/launcher.cpp:229 backends/platform/sdl/macosx/appmenu_osx.mm:229
+#: gui/launcher.cpp:240 backends/platform/sdl/macosx/appmenu_osx.mm:229
 msgid "Quit ScummVM"
 msgstr "Вихід зі ScummVM"
 
-#: gui/launcher.cpp:230
+#: gui/launcher.cpp:241
 msgid "A~b~out"
 msgstr "Про п~р~ограму"
 
-#: gui/launcher.cpp:230 backends/platform/sdl/macosx/appmenu_osx.mm:223
+#: gui/launcher.cpp:241 backends/platform/sdl/macosx/appmenu_osx.mm:223
 msgid "About ScummVM"
 msgstr "Про ScummVM"
 
-#: gui/launcher.cpp:232
+#: gui/launcher.cpp:243
 msgid "Global ~O~ptions..."
 msgstr "~Н~алаштування..."
 
-#: gui/launcher.cpp:232 gui/launcher.cpp:234
+#: gui/launcher.cpp:243 gui/launcher.cpp:245
 msgid "Change global ScummVM options"
 msgstr "Змінити глобальні налаштування ScummVM"
 
-#: gui/launcher.cpp:234
+#: gui/launcher.cpp:245
 msgctxt "lowres"
 msgid "Global ~O~pts..."
 msgstr "~Н~алашт..."
 
-#: gui/launcher.cpp:239
+#: gui/launcher.cpp:250
 msgid "~A~dd Game..."
 msgstr "~Д~одати гру..."
 
-#: gui/launcher.cpp:239 gui/launcher.cpp:247
+#: gui/launcher.cpp:250 gui/launcher.cpp:258
 msgid "Add games to the list"
 msgstr "Додати гри до списку"
 
-#: gui/launcher.cpp:240
+#: gui/launcher.cpp:251
 msgid "Mass Add..."
 msgstr "Дод. багато..."
 
-#: gui/launcher.cpp:244
+#: gui/launcher.cpp:255
 msgid "~R~emove Game"
 msgstr "~В~идалити гру"
 
-#: gui/launcher.cpp:244 gui/launcher.cpp:252
+#: gui/launcher.cpp:255 gui/launcher.cpp:263
 msgid "Remove game from the list. The game data files stay intact"
 msgstr "Видалити гру зі списку. Не видаляє гру з жорсткого диску"
 
-#: gui/launcher.cpp:247
+#: gui/launcher.cpp:258
 msgctxt "lowres"
 msgid "~A~dd Game..."
 msgstr "~Д~одати гру..."
 
-#: gui/launcher.cpp:248
+#: gui/launcher.cpp:259
 msgctxt "lowres"
 msgid "Mass Add..."
 msgstr "Дод. багато..."
 
-#: gui/launcher.cpp:252
+#: gui/launcher.cpp:263
 msgctxt "lowres"
 msgid "~R~emove Game"
 msgstr "~В~идалити гру"
 
-#: gui/launcher.cpp:260
+#: gui/launcher.cpp:271
 msgid "Search in game list"
 msgstr "Пошук у списку ігор"
 
-#: gui/launcher.cpp:264 gui/launcher.cpp:771
+#: gui/launcher.cpp:275 gui/launcher.cpp:782
 msgid "Search:"
 msgstr "Пошук:"
 
-#: gui/launcher.cpp:275 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/pegasus/pegasus.cpp:383 engines/trecision/saveload.cpp:253
 #: engines/tsage/scenes.cpp:630 engines/wage/saveload.cpp:741
 #: engines/xeen/saves.cpp:255
 msgid "Load game:"
 msgstr "Завантажити гру:"
 
-#: gui/launcher.cpp:275 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/parallaction/metaengine.cpp:127
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:383
 #: engines/scumm/dialogs.cpp:176 engines/trecision/saveload.cpp:253
@@ -859,11 +866,11 @@ msgstr "Завантажити гру:"
 msgid "Load"
 msgstr "Завантажити"
 
-#: gui/launcher.cpp:383
+#: gui/launcher.cpp:394
 msgid "This directory cannot be used yet, it is being downloaded into!"
 msgstr "Цю папку ще не можна використовувати, в неї іде завантаження!"
 
-#: gui/launcher.cpp:394
+#: gui/launcher.cpp:405
 msgid ""
 "Do you really want to run the mass game detector? This could potentially add "
 "a huge number of games."
@@ -871,111 +878,111 @@ msgstr ""
 "Чи ви дійсно хочете запустити пошук усіх ігор? Це потенційно може додати "
 "велику кількість ігор."
 
-#: gui/launcher.cpp:424
+#: gui/launcher.cpp:435
 msgid "Do you really want to remove this game configuration?"
 msgstr "Ви дійсно хочете видалити налаштування для цієї гри?"
 
-#: gui/launcher.cpp:466
+#: gui/launcher.cpp:477
 msgid "Do you want to load saved game?"
 msgstr "Ви хочете завантажити збережений стан гри?"
 
-#: gui/launcher.cpp:523
+#: gui/launcher.cpp:534
 msgid "This game does not support loading games from the launcher."
 msgstr "Ця гра не підтримує завантаження збережених ігор через головне меню."
 
-#: gui/launcher.cpp:527
+#: gui/launcher.cpp:538
 msgid "ScummVM could not find any engine capable of running the selected game!"
 msgstr "ScummVM не може знайти движок для запуску вибраної гри!"
 
-#: gui/launcher.cpp:583
+#: gui/launcher.cpp:594
 msgid "ScummVM could not find any game in the specified directory!"
 msgstr "ScummVM не може знайти гру у вказаній папці!"
 
 #. I18N: Unknown game variant
-#: gui/launcher.cpp:599
+#: gui/launcher.cpp:610
 msgid "Unknown variant"
 msgstr "Невідомий варіант"
 
-#: gui/launcher.cpp:605
+#: gui/launcher.cpp:616
 msgid "Pick the game:"
 msgstr "Виберіть гру:"
 
-#: gui/launcher.cpp:780
+#: gui/launcher.cpp:791
 msgid "Group by:"
 msgstr "Групувати по:"
 
-#: gui/launcher.cpp:820 gui/saveload-dialog.cpp:367
+#: gui/launcher.cpp:831 gui/saveload-dialog.cpp:367
 msgid "List view"
 msgstr "Вигляд списку"
 
-#: gui/launcher.cpp:821 gui/saveload-dialog.cpp:368
+#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:368
 msgid "Grid view"
 msgstr "Вигляд сітки"
 
-#: gui/launcher.cpp:975
+#: gui/launcher.cpp:986
 msgid "~S~tart"
 msgstr "З~а~пуск"
 
-#: gui/launcher.cpp:975
+#: gui/launcher.cpp:986
 msgid "Start selected game"
 msgstr "Запустити вибрану гру"
 
-#: gui/launcher.cpp:978
+#: gui/launcher.cpp:989
 msgid "~L~oad..."
 msgstr "~З~авантажити..."
 
-#: gui/launcher.cpp:978
+#: gui/launcher.cpp:989
 msgid "Load saved game for selected game"
 msgstr "Завантажити збережений стан для вибраної гри"
 
-#: gui/launcher.cpp:980
+#: gui/launcher.cpp:991
 msgid "Record..."
 msgstr "Запис..."
 
-#: gui/launcher.cpp:987
+#: gui/launcher.cpp:998
 msgid "~G~ame Options..."
 msgstr "Налашт. ~г~ри..."
 
-#: gui/launcher.cpp:987 gui/launcher.cpp:990
+#: gui/launcher.cpp:998 gui/launcher.cpp:1001
 msgid "Change game options"
 msgstr "Змінити налаштування гри"
 
-#: gui/launcher.cpp:990
+#: gui/launcher.cpp:1001
 msgctxt "lowres"
 msgid "~G~ame Opts..."
 msgstr "Нал. ~г~ри..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1112 gui/launcher.cpp:1299
+#: gui/launcher.cpp:1123 gui/launcher.cpp:1318
 msgid "Unknown Engine"
 msgstr "Невідомий движок"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1130 gui/launcher.cpp:1331
+#: gui/launcher.cpp:1141 gui/launcher.cpp:1350
 msgid "Unknown Publisher"
 msgstr "Невідомий видавник"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1148 gui/launcher.cpp:1317
+#: gui/launcher.cpp:1159 gui/launcher.cpp:1336
 msgid "No Series"
 msgstr "Без серії"
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1163 gui/launcher.cpp:1350
+#: gui/launcher.cpp:1174 gui/launcher.cpp:1369
 msgid "Language not detected"
 msgstr "Мова не визначена"
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1178 gui/launcher.cpp:1365
+#: gui/launcher.cpp:1189 gui/launcher.cpp:1384
 msgid "Platform not detected"
 msgstr "Платформа не визначена"
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1376 gui/widgets/groupedlist.cpp:122
+#: gui/launcher.cpp:1395 gui/widgets/groupedlist.cpp:122
 msgid "All"
 msgstr "Усі"
 
@@ -4044,7 +4051,7 @@ msgstr "Не емулюйте артефакти NTSC для тексту"
 
 #: engines/agi/detection.cpp:86 engines/cine/detection.cpp:51
 #: engines/drascula/detection.cpp:298 engines/dreamweb/detection.cpp:54
-#: engines/groovie/detection.cpp:276 engines/neverhood/detection.cpp:134
+#: engines/groovie/detection.cpp:285 engines/neverhood/detection.cpp:134
 #: engines/sherlock/detection.cpp:58 engines/toltecs/detection.cpp:212
 #: engines/trecision/detection.cpp:219 engines/ultima/detection.cpp:55
 #: engines/ultima/detection.cpp:106 engines/zvision/detection_tables.h:50
@@ -4053,7 +4060,7 @@ msgstr "Використовувати ориг. екрани збереженн
 
 #: engines/agi/detection.cpp:87 engines/cine/detection.cpp:52
 #: engines/drascula/detection.cpp:299 engines/dreamweb/detection.cpp:55
-#: engines/groovie/detection.cpp:277 engines/neverhood/detection.cpp:135
+#: engines/groovie/detection.cpp:286 engines/neverhood/detection.cpp:135
 #: engines/sherlock/detection.cpp:59 engines/toltecs/detection.cpp:213
 #: engines/trecision/detection.cpp:220 engines/ultima/detection.cpp:56
 #: engines/ultima/detection.cpp:107 engines/zvision/detection_tables.h:51
@@ -4221,6 +4228,23 @@ msgstr ""
 "MT32 на General MIDI. Але в результаті може\n"
 "статися, що деякі треки будуть грати неправильно."
 
+#: engines/ags/dialogs.cpp:58
+msgid "Game language:"
+msgstr "Мова гри.:"
+
+#: engines/ags/dialogs.cpp:58
+msgid "Language to use for multilingual games"
+msgstr "Мова для використання багатомовними грами"
+
+#: engines/ags/dialogs.cpp:78
+msgid "Force antialiased text"
+msgstr "Примусово шрифти зі згладжуванням"
+
+#: engines/ags/dialogs.cpp:78
+msgid "Use antialiasing to draw text even if the game does not ask for it"
+msgstr ""
+"Використовувати шрифти зі згладжуванням, навіть коли гра цього не запитувала"
+
 #: engines/ags/ags.cpp:127
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
@@ -4281,7 +4305,7 @@ msgstr "Не вдалося ініціалізувати ресурси"
 msgid "A required game resource was not found"
 msgstr "Потрібний ігровий ресурс не знайдено"
 
-#: engines/bladerunner/bladerunner.cpp:2331
+#: engines/bladerunner/bladerunner.cpp:2332
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4291,7 +4315,7 @@ msgstr ""
 "ви граєте в режимі оригінального вмісту. Режим буде налаштовано на "
 "Відновлений вміст для цього сеансу до повного виходу з гри."
 
-#: engines/bladerunner/bladerunner.cpp:2333
+#: engines/bladerunner/bladerunner.cpp:2334
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4301,7 +4325,7 @@ msgstr ""
 "у режимі відновленого вирізаного вмісту. Для цього сеансу буде налаштовано "
 "режим оригінального вмісту до повного виходу з гри."
 
-#: engines/bladerunner/bladerunner.cpp:2335
+#: engines/bladerunner/bladerunner.cpp:2336
 msgid "Continue"
 msgstr "Продовжуйте"
 
@@ -4367,7 +4391,7 @@ msgstr "Автор перекладу проти того, щоб його пе�
 
 #: engines/bladerunner/detection_tables.h:128 engines/cge/detection.cpp:56
 #: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
-#: engines/groovie/detection.cpp:96 engines/hypno/detection.cpp:165
+#: engines/groovie/detection.cpp:104 engines/hypno/detection.cpp:165
 #: engines/kyra/detection_tables.h:303 engines/lure/detection.cpp:249
 #: engines/mohawk/detection_tables.h:988 engines/mohawk/detection_tables.h:1094
 #: engines/mohawk/detection_tables.h:1109 engines/myst3/detection.cpp:142
@@ -5081,27 +5105,27 @@ msgstr ""
 "Також, копії гри з Steam та GOG містить вже скомбіновану версію "
 "FullMonkeyMap.imt"
 
-#: engines/groovie/detection.cpp:266
+#: engines/groovie/detection.cpp:275
 msgid "Fast movie speed"
 msgstr "Режим швидкого відео"
 
-#: engines/groovie/detection.cpp:267
+#: engines/groovie/detection.cpp:276
 msgid "Play movies at an increased speed"
 msgstr "Програвати відео з підвищенною швидкістю"
 
-#: engines/groovie/detection.cpp:286
+#: engines/groovie/detection.cpp:295
 msgid "Easier AI"
 msgstr "Полегшений AI"
 
-#: engines/groovie/detection.cpp:287
+#: engines/groovie/detection.cpp:296
 msgid "Decrease the difficulty of AI puzzles"
 msgstr "Знижує складність AI-головоломок"
 
-#: engines/groovie/detection.cpp:296
+#: engines/groovie/detection.cpp:305
 msgid "Updated Credits Music"
 msgstr "Поновлена кінцева музика"
 
-#: engines/groovie/detection.cpp:297
+#: engines/groovie/detection.cpp:306
 msgid ""
 "Play the song The Final Hour during the credits instead of reusing MIDI songs"
 msgstr ""
@@ -5598,7 +5622,7 @@ msgstr "Відвертий режим гри"
 msgid "~Z~ip Mode Activated"
 msgstr "Режим швидкого переходу активовано"
 
-#: engines/mohawk/dialogs.cpp:114
+#: engines/mohawk/dialogs.cpp:114 engines/mohawk/dialogs.cpp:358
 msgid ""
 "When activated, clicking on an item or area with the lightning bolt cursor "
 "takes you directly there, skipping intermediate screens. You can only 'Zip' "
@@ -5676,9 +5700,25 @@ msgstr "Нова мова стане доступна пілся перезап�
 msgid "~W~ater Effect Enabled"
 msgstr "Ефекти води увімкнено"
 
+#: engines/mohawk/dialogs.cpp:359
+msgid ""
+"Toggles the use of QuickTime videos for visual effects related to water "
+"surfaces (ripples, waves, etc.)."
+msgstr ""
+"Перемикає використання Quicktime відео для візуальних ефектів стосовно води "
+"(хвилі, бриж, тощо)."
+
 #: engines/mohawk/dialogs.cpp:361
 msgid "Transitions:"
 msgstr "Переходи:"
+
+#: engines/mohawk/dialogs.cpp:361
+msgid ""
+"Adjusts the speed of screen transitions. Disabling screen transitions will "
+"enable you to navigate more quickly through the game."
+msgstr ""
+"Задає швидкість переходів між екранами. Вимикання переходів дозволить вам "
+"швидше пересуватися у грі."
 
 #: engines/mohawk/dialogs.cpp:366
 msgid "Fastest"
@@ -6511,6 +6551,22 @@ msgstr "Ввімкнути плавну прокрутку"
 #: engines/scumm/detection.cpp:211
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(замість звичайної прокрутки у 8 пікселів)"
+
+#: engines/scumm/detection_internal.h:358
+msgid ""
+"This version of Monkey Island can't be played, because Limited Run Games "
+"provided corrupted DISK04.LEC and 903.LFL files.\n"
+"\n"
+"Please contact their technical support for replacement files, or look online "
+"for some guides which can help you recover valid files from the KryoFlux "
+"dumps that Limited Run Games also provided."
+msgstr ""
+"Ця версія Monkey Island не працює, тому що Limited Run Games постачає "
+"зіпсовані файли DISK04.LEC та 903.LFL.\n"
+"\n"
+"Будь-ласка, зверніться до їхної технічної підтримки за заміною цих файлів, "
+"або зверніться до онлайн-ресурсів, які допоможуть вам отримати ци файли з "
+"дампів KryoFlux, які також постачаються Limited Run Games."
 
 #: engines/scumm/dialogs.cpp:163
 #, c-format
@@ -8706,20 +8762,6 @@ msgstr ""
 
 #~ msgid "V-Sync in 3D Games"
 #~ msgstr "Вертикальна синхронізація у 3D іграх"
-
-#~ msgid "Game language:"
-#~ msgstr "Мова гри.:"
-
-#~ msgid "Language to use for multilingual games"
-#~ msgstr "Мова для використання багатомовними грами"
-
-#~ msgid "Force antialiased text"
-#~ msgstr "Примусово шрифти зі згладжуванням"
-
-#~ msgid "Use antialiasing to draw text even if the game does not ask for it"
-#~ msgstr ""
-#~ "Використовувати шрифти зі згладжуванням, навіть коли гра цього не "
-#~ "запитувала"
 
 #~ msgid "Skip EGA dithering pass (full color backgrounds)"
 #~ msgstr "Не робити растрування EGA (фони у повному кольорі)"

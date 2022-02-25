@@ -353,6 +353,20 @@ public:
 	Hotspots hots;
 };
 
+class FrameInfo {
+public:
+	FrameInfo(uint32 start_, uint32 length_) {
+		start = start_;
+		length = length_;
+	}
+
+	uint32 lastFrame() {
+		return start + length;
+	}
+	uint32 start;
+	uint32 length;
+};
+
 class Shoot {
 public:
 	Shoot() {
@@ -363,23 +377,26 @@ public:
 		attackWeight = 0;
 		paletteOffset = 0;
 		paletteSize = 0;
-		obj1KillsCount = 0;
-		obj1MissesCount = 0;
+		objKillsCount = 0;
+		objMissesCount = 0;
 		animation = "NONE";
 		explosionAnimation = "";
+		lastFrame = 1024;
 	}
 	Common::String name;
 	Filename animation;
 	Filename startSound;
 	Common::Point position;
+	Common::Point deathPosition;
+
 
 	uint32 timesToShoot;
 	uint32 pointsToShoot;
 	uint32 attackWeight;
 
 	// Objectives
-	uint32 obj1KillsCount;
-	uint32 obj1MissesCount;
+	uint32 objKillsCount;
+	uint32 objMissesCount;
 
 	// Palette
 	uint32 paletteOffset;
@@ -391,7 +408,9 @@ public:
 
 	MVideo *video;
 	Common::List<uint32> attackFrames;
-	Common::List<uint32> explosionFrames;
+	Common::Array<FrameInfo> bodyFrames;
+	Common::Array<FrameInfo> explosionFrames;
+	uint32 lastFrame;
 	Filename explosionAnimation;
 	bool destroyed;
 };
@@ -405,6 +424,17 @@ public:
 };
 
 typedef Common::List<ShootInfo> ShootSequence;
+
+class SegmentShoots {
+public:
+	SegmentShoots() {
+		segmentRepetition = 0;
+	}
+	ShootSequence shootSequence;
+	uint32 segmentRepetition;
+};
+
+typedef Common::Array<SegmentShoots> SegmentShootsSequence;
 typedef Common::Array<Common::String> Sounds;
 
 enum SegmentType {
@@ -424,11 +454,13 @@ public:
 		type = type_;
 		start = start_;
 		size = size_;
+		end = false;
 	}
 
 	byte type;
 	uint32 start;
 	uint32 size;
+	bool end;
 };
 
 typedef Common::Array<Segment> Segments;
@@ -440,10 +472,10 @@ public:
 		health = 100;
 		transitionTime = 0;
 		id = 0;
-		obj1KillsRequired = 0;
-		obj1MissesAllowed = 0;
-		obj2KillsRequired = 0;
-		obj2MissesAllowed = 0;
+		objKillsRequired[0] = 0;
+		objKillsRequired[1] = 0;
+		objMissesAllowed[0] = 0;
+		objMissesAllowed[1] = 0;
 		frameDelay = 0;
 	}
 	uint32 id;
@@ -453,10 +485,8 @@ public:
 	Segments segments;
 
 	// Objectives
-	uint32 obj1KillsRequired;
-	uint32 obj1MissesAllowed;
-	uint32 obj2KillsRequired;
-	uint32 obj2MissesAllowed;
+	uint32 objKillsRequired [2];
+	uint32 objMissesAllowed [2];
 
 	// Videos
 	Filename transitionVideo;
@@ -473,7 +503,7 @@ public:
 	Filename player;
 	int health;
 	Shoots shoots;
-	ShootSequence shootSequence;
+	SegmentShootsSequence shootSequence;
 
 	// Sounds
 	Filename targetSound;

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.3.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-02-19 05:18+0000\n"
-"PO-Revision-Date: 2022-02-17 12:23+0000\n"
+"POT-Creation-Date: 2022-02-23 09:29+0000\n"
+"PO-Revision-Date: 2022-02-23 12:11+0000\n"
 "Last-Translator: George Kormendi <grubycza@hotmail.com>\n"
 "Language-Team: Hungarian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/hu/>\n"
@@ -92,7 +92,7 @@ msgstr "Választ"
 msgid "Select directory where to download game data"
 msgstr "Válassz mappát, ahonnan letölthetõk a játék adatok"
 
-#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:272
+#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:283
 msgid "Select directory with game data"
 msgstr "Játékok helyének kiválasztása"
 
@@ -130,7 +130,7 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:152
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:395 gui/launcher.cpp:424 gui/launcher.cpp:467
+#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
 #: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
@@ -142,7 +142,7 @@ msgstr "Igen"
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:153
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:395 gui/launcher.cpp:424 gui/launcher.cpp:467
+#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: engines/buried/buried.cpp:580 engines/grim/grim.cpp:357
 #: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
@@ -151,7 +151,7 @@ msgstr "Igen"
 msgid "No"
 msgstr "Nem"
 
-#: gui/downloaddialog.cpp:136 gui/launcher.cpp:564
+#: gui/downloaddialog.cpp:136 gui/launcher.cpp:575
 msgid "ScummVM couldn't open the specified directory!"
 msgstr "ScummVM nem tudja megnyitni a választott mappát!"
 
@@ -164,7 +164,7 @@ msgstr ""
 "ugyanazzal a névvel."
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
-#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:523 gui/launcher.cpp:527
+#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:534 gui/launcher.cpp:538
 #: gui/massadd.cpp:88 gui/options.cpp:2104 gui/saveload-dialog.cpp:1187
 #: engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
@@ -299,6 +299,7 @@ msgstr ""
 #: gui/options.cpp:1427 gui/options.cpp:1447 gui/options.cpp:1459
 #: gui/options.cpp:1838 gui/options.cpp:2256 gui/options.cpp:2329
 #: gui/options.cpp:2509 gui/options.cpp:2948 audio/null.cpp:40
+#: engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<alapértelmezett>"
 
@@ -717,134 +718,140 @@ msgstr "Jobb"
 msgid "???"
 msgstr "???"
 
-#: gui/launcher.cpp:192
-msgid "Select Group by"
-msgstr "Csoportosítás kiválasztás"
-
-#: gui/launcher.cpp:197
-msgid "Group by: "
-msgstr "Csoportosít: "
-
-#: gui/launcher.cpp:199
-msgid "Select a criteria to group the entries"
-msgstr "Válassz feltételeket a csoportosításhoz"
-
 #. I18N: Group name for the game list
-#: gui/launcher.cpp:201
+#: gui/launcher.cpp:99
 msgctxt "group"
 msgid "None"
 msgstr "Egyik sem"
 
 #. I18N: Group name for the game list, grouped by the first letter of the game title
-#: gui/launcher.cpp:203
+#: gui/launcher.cpp:101
+msgctxt "group"
 msgid "First letter"
-msgstr "Elsõ betű"
+msgstr "Kezdőbetü"
 
 #. I18N: Group name for the game list, grouped by game engine
-#: gui/launcher.cpp:205
+#: gui/launcher.cpp:103
+msgctxt "group"
 msgid "Engine"
 msgstr "Motor"
 
 #. I18N: Group name for the game list, grouped by game series
-#: gui/launcher.cpp:207
+#: gui/launcher.cpp:105
+msgctxt "group"
 msgid "Series"
-msgstr "Sorozatok"
+msgstr "Sorozat"
 
 #. I18N: Group name for the game list, grouped by game publisher
-#: gui/launcher.cpp:209
+#: gui/launcher.cpp:107
+msgctxt "group"
 msgid "Publisher"
 msgstr "Kiadó"
 
 #. I18N: Group name for the game list, grouped by language
-#: gui/launcher.cpp:211
+#: gui/launcher.cpp:109
+msgctxt "group"
 msgid "Language"
 msgstr "Nyelv"
 
 #. I18N: Group name for the game list, grouped by game platform
-#: gui/launcher.cpp:213
+#: gui/launcher.cpp:111
+msgctxt "group"
 msgid "Platform"
 msgstr "Platform"
 
-#: gui/launcher.cpp:229 engines/dialogs.cpp:94
+#: gui/launcher.cpp:210
+msgid "Select Group by"
+msgstr "Csoportosítás kiválasztás"
+
+#: gui/launcher.cpp:215
+msgid "Group by: "
+msgstr "Csoportosít: "
+
+#: gui/launcher.cpp:217
+msgid "Select a criteria to group the entries"
+msgstr "Válassz feltételeket a csoportosításhoz"
+
+#: gui/launcher.cpp:240 engines/dialogs.cpp:94
 msgid "~Q~uit"
 msgstr "Kilépés"
 
-#: gui/launcher.cpp:229 backends/platform/sdl/macosx/appmenu_osx.mm:229
+#: gui/launcher.cpp:240 backends/platform/sdl/macosx/appmenu_osx.mm:229
 msgid "Quit ScummVM"
 msgstr "ScummVM bezárása"
 
-#: gui/launcher.cpp:230
+#: gui/launcher.cpp:241
 msgid "A~b~out"
 msgstr "Névjegy"
 
-#: gui/launcher.cpp:230 backends/platform/sdl/macosx/appmenu_osx.mm:223
+#: gui/launcher.cpp:241 backends/platform/sdl/macosx/appmenu_osx.mm:223
 msgid "About ScummVM"
 msgstr "ScummVM névjegy"
 
-#: gui/launcher.cpp:232
+#: gui/launcher.cpp:243
 msgid "Global ~O~ptions..."
 msgstr "Globális ~O~pciók..."
 
-#: gui/launcher.cpp:232 gui/launcher.cpp:234
+#: gui/launcher.cpp:243 gui/launcher.cpp:245
 msgid "Change global ScummVM options"
 msgstr "Globális ScummVM opciók cseréje"
 
-#: gui/launcher.cpp:234
+#: gui/launcher.cpp:245
 msgctxt "lowres"
 msgid "Global ~O~pts..."
 msgstr "Globális ~O~pciók..."
 
-#: gui/launcher.cpp:239
+#: gui/launcher.cpp:250
 msgid "~A~dd Game..."
 msgstr "Játék hozzáadás..."
 
-#: gui/launcher.cpp:239 gui/launcher.cpp:247
+#: gui/launcher.cpp:250 gui/launcher.cpp:258
 msgid "Add games to the list"
 msgstr "Játékok hozzáadása a listához"
 
-#: gui/launcher.cpp:240
+#: gui/launcher.cpp:251
 msgid "Mass Add..."
 msgstr "Masszív mód..."
 
-#: gui/launcher.cpp:244
+#: gui/launcher.cpp:255
 msgid "~R~emove Game"
 msgstr "Játék törlése"
 
-#: gui/launcher.cpp:244 gui/launcher.cpp:252
+#: gui/launcher.cpp:255 gui/launcher.cpp:263
 msgid "Remove game from the list. The game data files stay intact"
 msgstr "Törli a játék nevét a listáról. A játékfájlok megmaradnak"
 
-#: gui/launcher.cpp:247
+#: gui/launcher.cpp:258
 msgctxt "lowres"
 msgid "~A~dd Game..."
 msgstr "Játék hozzáadás..."
 
-#: gui/launcher.cpp:248
+#: gui/launcher.cpp:259
 msgctxt "lowres"
 msgid "Mass Add..."
 msgstr "Masszív mód..."
 
-#: gui/launcher.cpp:252
+#: gui/launcher.cpp:263
 msgctxt "lowres"
 msgid "~R~emove Game"
 msgstr "Játék törlése"
 
-#: gui/launcher.cpp:260
+#: gui/launcher.cpp:271
 msgid "Search in game list"
 msgstr "Keresés a játéklistában"
 
-#: gui/launcher.cpp:264 gui/launcher.cpp:771
+#: gui/launcher.cpp:275 gui/launcher.cpp:782
 msgid "Search:"
 msgstr "Keresés:"
 
-#: gui/launcher.cpp:275 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/pegasus/pegasus.cpp:383 engines/trecision/saveload.cpp:253
 #: engines/tsage/scenes.cpp:630 engines/wage/saveload.cpp:741
 #: engines/xeen/saves.cpp:255
 msgid "Load game:"
 msgstr "Játék betöltése:"
 
-#: gui/launcher.cpp:275 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/parallaction/metaengine.cpp:127
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:383
 #: engines/scumm/dialogs.cpp:176 engines/trecision/saveload.cpp:253
@@ -853,11 +860,11 @@ msgstr "Játék betöltése:"
 msgid "Load"
 msgstr "Betöltés"
 
-#: gui/launcher.cpp:383
+#: gui/launcher.cpp:394
 msgid "This directory cannot be used yet, it is being downloaded into!"
 msgstr "Ez a mappa nem használható még, éppen letöltés van folyamatban!"
 
-#: gui/launcher.cpp:394
+#: gui/launcher.cpp:405
 msgid ""
 "Do you really want to run the mass game detector? This could potentially add "
 "a huge number of games."
@@ -865,112 +872,112 @@ msgstr ""
 "Biztos hogy futtatod a Masszív játékdetektort? Ez potenciálisan sok játékot "
 "hozzáad a listához."
 
-#: gui/launcher.cpp:424
+#: gui/launcher.cpp:435
 msgid "Do you really want to remove this game configuration?"
 msgstr "Biztosan törölni akarod ezt a játékkonfigurációt?"
 
-#: gui/launcher.cpp:466
+#: gui/launcher.cpp:477
 msgid "Do you want to load saved game?"
 msgstr "Akarod hogy betöltésem a játékállást?"
 
-#: gui/launcher.cpp:523
+#: gui/launcher.cpp:534
 msgid "This game does not support loading games from the launcher."
 msgstr "Ez a játék nem támogatja a játékállás betöltést az indítóból."
 
-#: gui/launcher.cpp:527
+#: gui/launcher.cpp:538
 msgid "ScummVM could not find any engine capable of running the selected game!"
 msgstr ""
 "ScummVM nem talált olyan játékmotort ami a választott játékot támogatja!"
 
-#: gui/launcher.cpp:583
+#: gui/launcher.cpp:594
 msgid "ScummVM could not find any game in the specified directory!"
 msgstr "A ScummVM nem talált egy játékot sem a választott mappában!"
 
 #. I18N: Unknown game variant
-#: gui/launcher.cpp:599
+#: gui/launcher.cpp:610
 msgid "Unknown variant"
 msgstr "Ismeretlen változat"
 
-#: gui/launcher.cpp:605
+#: gui/launcher.cpp:616
 msgid "Pick the game:"
 msgstr "Válassztott játék:"
 
-#: gui/launcher.cpp:780
+#: gui/launcher.cpp:791
 msgid "Group by:"
 msgstr "Csoportosít:"
 
-#: gui/launcher.cpp:820 gui/saveload-dialog.cpp:367
+#: gui/launcher.cpp:831 gui/saveload-dialog.cpp:367
 msgid "List view"
 msgstr "Lista nézet"
 
-#: gui/launcher.cpp:821 gui/saveload-dialog.cpp:368
+#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:368
 msgid "Grid view"
 msgstr "Rács nézet"
 
-#: gui/launcher.cpp:975
+#: gui/launcher.cpp:986
 msgid "~S~tart"
 msgstr "Indítás"
 
-#: gui/launcher.cpp:975
+#: gui/launcher.cpp:986
 msgid "Start selected game"
 msgstr "A választott játék indítása"
 
-#: gui/launcher.cpp:978
+#: gui/launcher.cpp:989
 msgid "~L~oad..."
 msgstr "~B~etölt..."
 
-#: gui/launcher.cpp:978
+#: gui/launcher.cpp:989
 msgid "Load saved game for selected game"
 msgstr "Kimentett játékállás betöltése"
 
-#: gui/launcher.cpp:980
+#: gui/launcher.cpp:991
 msgid "Record..."
 msgstr "Felvétel..."
 
-#: gui/launcher.cpp:987
+#: gui/launcher.cpp:998
 msgid "~G~ame Options..."
 msgstr "Játék Opciók..."
 
-#: gui/launcher.cpp:987 gui/launcher.cpp:990
+#: gui/launcher.cpp:998 gui/launcher.cpp:1001
 msgid "Change game options"
 msgstr "Játék beállítások megváltoztatása"
 
-#: gui/launcher.cpp:990
+#: gui/launcher.cpp:1001
 msgctxt "lowres"
 msgid "~G~ame Opts..."
 msgstr "Játék Opciók..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1112 gui/launcher.cpp:1299
+#: gui/launcher.cpp:1123 gui/launcher.cpp:1318
 msgid "Unknown Engine"
 msgstr "Ismeretlen Motor"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1130 gui/launcher.cpp:1331
+#: gui/launcher.cpp:1141 gui/launcher.cpp:1350
 msgid "Unknown Publisher"
 msgstr "Ismeretlen Kiadó"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1148 gui/launcher.cpp:1317
+#: gui/launcher.cpp:1159 gui/launcher.cpp:1336
 msgid "No Series"
 msgstr "Nem Sorozat"
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1163 gui/launcher.cpp:1350
+#: gui/launcher.cpp:1174 gui/launcher.cpp:1369
 msgid "Language not detected"
 msgstr "Nyelv nincs észlelve"
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1178 gui/launcher.cpp:1365
+#: gui/launcher.cpp:1189 gui/launcher.cpp:1384
 msgid "Platform not detected"
 msgstr "Platform nincs észlelve"
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1376 gui/widgets/groupedlist.cpp:122
+#: gui/launcher.cpp:1395 gui/widgets/groupedlist.cpp:122
 msgid "All"
 msgstr "Mind"
 
@@ -4025,7 +4032,7 @@ msgstr "Ne emulálja az NTSC torzítást a szöveghez"
 
 #: engines/agi/detection.cpp:86 engines/cine/detection.cpp:51
 #: engines/drascula/detection.cpp:298 engines/dreamweb/detection.cpp:54
-#: engines/groovie/detection.cpp:276 engines/neverhood/detection.cpp:134
+#: engines/groovie/detection.cpp:285 engines/neverhood/detection.cpp:134
 #: engines/sherlock/detection.cpp:58 engines/toltecs/detection.cpp:212
 #: engines/trecision/detection.cpp:219 engines/ultima/detection.cpp:55
 #: engines/ultima/detection.cpp:106 engines/zvision/detection_tables.h:50
@@ -4034,7 +4041,7 @@ msgstr "Eredeti ment/tölt képernyõk használata"
 
 #: engines/agi/detection.cpp:87 engines/cine/detection.cpp:52
 #: engines/drascula/detection.cpp:299 engines/dreamweb/detection.cpp:55
-#: engines/groovie/detection.cpp:277 engines/neverhood/detection.cpp:135
+#: engines/groovie/detection.cpp:286 engines/neverhood/detection.cpp:135
 #: engines/sherlock/detection.cpp:59 engines/toltecs/detection.cpp:213
 #: engines/trecision/detection.cpp:220 engines/ultima/detection.cpp:56
 #: engines/ultima/detection.cpp:107 engines/zvision/detection_tables.h:51
@@ -4200,6 +4207,23 @@ msgstr ""
 "General MIDIre. Továbbra is lehetséges hogy\n"
 "néhány hangsáv helytelenül hangzik."
 
+#: engines/ags/dialogs.cpp:58
+msgid "Game language:"
+msgstr "Játék nyelve:"
+
+#: engines/ags/dialogs.cpp:58
+msgid "Language to use for multilingual games"
+msgstr "A többnyelvű játékokhoz használt nyelv"
+
+#: engines/ags/dialogs.cpp:78
+msgid "Force antialiased text"
+msgstr "Erőltetett élsimított szöveg"
+
+#: engines/ags/dialogs.cpp:78
+msgid "Use antialiasing to draw text even if the game does not ask for it"
+msgstr ""
+"Használjon élsimítást a szöveg rajzolásához, akkor is ha a játék nem kéri"
+
 #: engines/ags/ags.cpp:127
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
@@ -4262,7 +4286,7 @@ msgstr "Nem sikerült inicializálni az erõforrásokat"
 msgid "A required game resource was not found"
 msgstr "A szükséges játékforrás nem található"
 
-#: engines/bladerunner/bladerunner.cpp:2331
+#: engines/bladerunner/bladerunner.cpp:2332
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4272,7 +4296,7 @@ msgstr ""
 "de az eredeti tartalom módban játszol. Az üzemmódot a visszaállított vágott "
 "tartalomra állítom be, amíg teljesen ki nem lépsz a játékból."
 
-#: engines/bladerunner/bladerunner.cpp:2333
+#: engines/bladerunner/bladerunner.cpp:2334
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4282,7 +4306,7 @@ msgstr ""
 "visszaállított vágott tartalom módban játszol. Az üzemmódot eredeti tartalom "
 "módra állítom be, amíg teljesen ki nem lépsz a játékból."
 
-#: engines/bladerunner/bladerunner.cpp:2335
+#: engines/bladerunner/bladerunner.cpp:2336
 msgid "Continue"
 msgstr "Folytatás"
 
@@ -4349,7 +4373,7 @@ msgstr ""
 
 #: engines/bladerunner/detection_tables.h:128 engines/cge/detection.cpp:56
 #: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
-#: engines/groovie/detection.cpp:96 engines/hypno/detection.cpp:165
+#: engines/groovie/detection.cpp:104 engines/hypno/detection.cpp:165
 #: engines/kyra/detection_tables.h:303 engines/lure/detection.cpp:249
 #: engines/mohawk/detection_tables.h:988 engines/mohawk/detection_tables.h:1094
 #: engines/mohawk/detection_tables.h:1109 engines/myst3/detection.cpp:142
@@ -5061,27 +5085,27 @@ msgstr ""
 "Alternatív megoldásként a Steam vagy a GOG másolat kombinált FullMonkeyMap."
 "imt fájlját"
 
-#: engines/groovie/detection.cpp:266
+#: engines/groovie/detection.cpp:275
 msgid "Fast movie speed"
 msgstr "Gyors filmsebesség"
 
-#: engines/groovie/detection.cpp:267
+#: engines/groovie/detection.cpp:276
 msgid "Play movies at an increased speed"
 msgstr "Filmek lejátszása nagyobb sebességgel"
 
-#: engines/groovie/detection.cpp:286
+#: engines/groovie/detection.cpp:295
 msgid "Easier AI"
 msgstr "Egyszerűbb MI"
 
-#: engines/groovie/detection.cpp:287
+#: engines/groovie/detection.cpp:296
 msgid "Decrease the difficulty of AI puzzles"
 msgstr "Csökkenti az MI rejtvények nehézségét"
 
-#: engines/groovie/detection.cpp:296
+#: engines/groovie/detection.cpp:305
 msgid "Updated Credits Music"
 msgstr "Frissített Stáblista Zene"
 
-#: engines/groovie/detection.cpp:297
+#: engines/groovie/detection.cpp:306
 msgid ""
 "Play the song The Final Hour during the credits instead of reusing MIDI songs"
 msgstr ""
@@ -5580,7 +5604,7 @@ msgstr "Pajkos játékmód"
 msgid "~Z~ip Mode Activated"
 msgstr "~Z~ip Mód aktiválva"
 
-#: engines/mohawk/dialogs.cpp:114
+#: engines/mohawk/dialogs.cpp:114 engines/mohawk/dialogs.cpp:358
 msgid ""
 "When activated, clicking on an item or area with the lightning bolt cursor "
 "takes you directly there, skipping intermediate screens. You can only 'Zip' "
@@ -5659,9 +5683,25 @@ msgstr "Az új nyelv a játék újraindítása után kerül alkalmazásra."
 msgid "~W~ater Effect Enabled"
 msgstr "Vízeffektus engedélyezve"
 
+#: engines/mohawk/dialogs.cpp:359
+msgid ""
+"Toggles the use of QuickTime videos for visual effects related to water "
+"surfaces (ripples, waves, etc.)."
+msgstr ""
+"Bekapcsolja a QuickTime-videók használatát a vízfelületek vizuális "
+"effektusaihoz (fodrok, hullámok stb.)."
+
 #: engines/mohawk/dialogs.cpp:361
 msgid "Transitions:"
 msgstr "Átmenetek:"
+
+#: engines/mohawk/dialogs.cpp:361
+msgid ""
+"Adjusts the speed of screen transitions. Disabling screen transitions will "
+"enable you to navigate more quickly through the game."
+msgstr ""
+"Beállítja a képernyő átmenetek sebességét. A képernyőátmenetek "
+"kikapcsolásával gyorsabban navigálhat a játékban."
 
 #: engines/mohawk/dialogs.cpp:366
 msgid "Fastest"
@@ -6493,6 +6533,22 @@ msgstr "Finom görgetés engedélyezése"
 #: engines/scumm/detection.cpp:211
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(a normál 8 képpontos lépés görgetés helyett)"
+
+#: engines/scumm/detection_internal.h:358
+msgid ""
+"This version of Monkey Island can't be played, because Limited Run Games "
+"provided corrupted DISK04.LEC and 903.LFL files.\n"
+"\n"
+"Please contact their technical support for replacement files, or look online "
+"for some guides which can help you recover valid files from the KryoFlux "
+"dumps that Limited Run Games also provided."
+msgstr ""
+"A Monkey Island ezen verziója nem játszható le, mert a Limited Run Games "
+"sérült DISK04.LEC és 903.LFL fájlokat jelzett.\n"
+"\n"
+"Kérjük, lépj kapcsolatba a technikai támogatással a cserefájlokért, vagy "
+"keress online útmutatót, amely segíthet a fájlok helyreállításában a Limited "
+"Run Games által is biztosított KryoFlux másolatokból."
 
 #: engines/scumm/dialogs.cpp:163
 #, c-format
@@ -8698,19 +8754,6 @@ msgstr ""
 
 #~ msgid "V-Sync in 3D Games"
 #~ msgstr "V-Sync 3D játékokban"
-
-#~ msgid "Game language:"
-#~ msgstr "Játék nyelve:"
-
-#~ msgid "Language to use for multilingual games"
-#~ msgstr "A többnyelvű játékokhoz használt nyelv"
-
-#~ msgid "Force antialiased text"
-#~ msgstr "Erőltetett élsimított szöveg"
-
-#~ msgid "Use antialiasing to draw text even if the game does not ask for it"
-#~ msgstr ""
-#~ "Használjon élsimítást a szöveg rajzolásához, akkor is ha a játék nem kéri"
 
 #~ msgid "Skip EGA dithering pass (full color backgrounds)"
 #~ msgstr "EGA színmoduláció átugrása (Színes háttereknél)"

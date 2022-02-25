@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-02-19 05:18+0000\n"
-"PO-Revision-Date: 2022-02-13 15:27+0000\n"
+"POT-Creation-Date: 2022-02-23 09:29+0000\n"
+"PO-Revision-Date: 2022-02-23 20:45+0000\n"
 "Last-Translator: VAN-Gluon <van.gluonp@gmail.com>\n"
 "Language-Team: Japanese <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ja/>\n"
@@ -92,7 +92,7 @@ msgstr "選択"
 msgid "Select directory where to download game data"
 msgstr "ゲームデータのダウンロード先を選択"
 
-#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:272
+#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:283
 msgid "Select directory with game data"
 msgstr "ゲームデータのディレクトリーを選択"
 
@@ -128,7 +128,7 @@ msgstr "接続が制限されているようです。ダウンロードしても
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:152
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:395 gui/launcher.cpp:424 gui/launcher.cpp:467
+#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
 #: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
@@ -140,7 +140,7 @@ msgstr "はい"
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:153
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:395 gui/launcher.cpp:424 gui/launcher.cpp:467
+#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: engines/buried/buried.cpp:580 engines/grim/grim.cpp:357
 #: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
@@ -149,7 +149,7 @@ msgstr "はい"
 msgid "No"
 msgstr "いいえ"
 
-#: gui/downloaddialog.cpp:136 gui/launcher.cpp:564
+#: gui/downloaddialog.cpp:136 gui/launcher.cpp:575
 msgid "ScummVM couldn't open the specified directory!"
 msgstr "指定されたディレクトリーが開けませんでした!"
 
@@ -162,7 +162,7 @@ msgstr ""
 "ファイルが存在します。"
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
-#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:523 gui/launcher.cpp:527
+#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:534 gui/launcher.cpp:538
 #: gui/massadd.cpp:88 gui/options.cpp:2104 gui/saveload-dialog.cpp:1187
 #: engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
@@ -297,6 +297,7 @@ msgstr "ゲームの言語です。スペイン語版を英語版に変換はし
 #: gui/options.cpp:1427 gui/options.cpp:1447 gui/options.cpp:1459
 #: gui/options.cpp:1838 gui/options.cpp:2256 gui/options.cpp:2329
 #: gui/options.cpp:2509 gui/options.cpp:2948 audio/null.cpp:40
+#: engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<デフォルト>"
 
@@ -714,138 +715,140 @@ msgstr "右"
 msgid "???"
 msgstr "???"
 
-#: gui/launcher.cpp:192
-msgid "Select Group by"
-msgstr "グループを選択"
-
-#: gui/launcher.cpp:197
-msgid "Group by: "
-msgstr "グループ化: "
-
-#: gui/launcher.cpp:199
-msgid "Select a criteria to group the entries"
-msgstr "エントリーのグループ化基準を選択"
-
 #. I18N: Group name for the game list
-#: gui/launcher.cpp:201
+#: gui/launcher.cpp:99
 msgctxt "group"
 msgid "None"
 msgstr "なし"
 
 #. I18N: Group name for the game list, grouped by the first letter of the game title
-#: gui/launcher.cpp:203
+#: gui/launcher.cpp:101
+msgctxt "group"
 msgid "First letter"
 msgstr "頭文字"
 
 #. I18N: Group name for the game list, grouped by game engine
-#: gui/launcher.cpp:205
+#: gui/launcher.cpp:103
+msgctxt "group"
 msgid "Engine"
 msgstr "エンジン"
 
 #. I18N: Group name for the game list, grouped by game series
-#: gui/launcher.cpp:207
+#: gui/launcher.cpp:105
+msgctxt "group"
 msgid "Series"
 msgstr "シリーズ"
 
 #. I18N: Group name for the game list, grouped by game publisher
-#: gui/launcher.cpp:209
+#: gui/launcher.cpp:107
+msgctxt "group"
 msgid "Publisher"
 msgstr "販売元"
 
 #. I18N: Group name for the game list, grouped by language
-#: gui/launcher.cpp:211
+#: gui/launcher.cpp:109
+msgctxt "group"
 msgid "Language"
 msgstr "言語"
 
 #. I18N: Group name for the game list, grouped by game platform
-#: gui/launcher.cpp:213
+#: gui/launcher.cpp:111
+msgctxt "group"
 msgid "Platform"
 msgstr "機種"
 
-#: gui/launcher.cpp:229 engines/dialogs.cpp:94
+#: gui/launcher.cpp:210
+msgid "Select Group by"
+msgstr "グループを選択"
+
+#: gui/launcher.cpp:215
+msgid "Group by: "
+msgstr "グループ化: "
+
+#: gui/launcher.cpp:217
+msgid "Select a criteria to group the entries"
+msgstr "エントリーのグループ化基準を選択"
+
+#: gui/launcher.cpp:240 engines/dialogs.cpp:94
 msgid "~Q~uit"
 msgstr "終了(~Q~)"
 
-#: gui/launcher.cpp:229 backends/platform/sdl/macosx/appmenu_osx.mm:229
+#: gui/launcher.cpp:240 backends/platform/sdl/macosx/appmenu_osx.mm:229
 msgid "Quit ScummVM"
 msgstr "ScummVMを終了"
 
-#: gui/launcher.cpp:230
+#: gui/launcher.cpp:241
 msgid "A~b~out"
 msgstr "ScummVMについて(~b~)"
 
-#: gui/launcher.cpp:230 backends/platform/sdl/macosx/appmenu_osx.mm:223
+#: gui/launcher.cpp:241 backends/platform/sdl/macosx/appmenu_osx.mm:223
 msgid "About ScummVM"
 msgstr "ScummVMについて"
 
-#: gui/launcher.cpp:232
-#, fuzzy
-#| msgid "~O~ptions..."
+#: gui/launcher.cpp:243
 msgid "Global ~O~ptions..."
-msgstr "設定(~O~)..."
+msgstr "グローバル設定(~O~)..."
 
-#: gui/launcher.cpp:232 gui/launcher.cpp:234
+#: gui/launcher.cpp:243 gui/launcher.cpp:245
 msgid "Change global ScummVM options"
 msgstr "全般のScummVMの設定を変える"
 
-#: gui/launcher.cpp:234
-#, fuzzy
-#| msgid "~O~ptions..."
+#: gui/launcher.cpp:245
 msgctxt "lowres"
 msgid "Global ~O~pts..."
-msgstr "設定(~O~)..."
+msgstr "総合設定(~O~)..."
 
-#: gui/launcher.cpp:239
+#: gui/launcher.cpp:250
 msgid "~A~dd Game..."
 msgstr "ゲームを追加(~A~)..."
 
-#: gui/launcher.cpp:239 gui/launcher.cpp:247
+#: gui/launcher.cpp:250 gui/launcher.cpp:258
 msgid "Add games to the list"
 msgstr "リストにゲームを追加する"
 
-#: gui/launcher.cpp:240
+#: gui/launcher.cpp:251
 msgid "Mass Add..."
 msgstr "一括に追加..."
 
-#: gui/launcher.cpp:244
+#: gui/launcher.cpp:255
 msgid "~R~emove Game"
 msgstr "ゲームを削除(~R~)"
 
-#: gui/launcher.cpp:244 gui/launcher.cpp:252
+#: gui/launcher.cpp:255 gui/launcher.cpp:263
 msgid "Remove game from the list. The game data files stay intact"
 msgstr "リストからゲームを削除する。ゲームのデータファイルは削除されません"
 
-#: gui/launcher.cpp:247
+#: gui/launcher.cpp:258
 msgctxt "lowres"
 msgid "~A~dd Game..."
 msgstr "ゲームを追加(~A~)..."
 
-#: gui/launcher.cpp:248
+#: gui/launcher.cpp:259
 msgctxt "lowres"
 msgid "Mass Add..."
 msgstr "一括に追加..."
 
-#: gui/launcher.cpp:252
+#: gui/launcher.cpp:263
 msgctxt "lowres"
 msgid "~R~emove Game"
 msgstr "ゲームを削除(~R~)"
 
-#: gui/launcher.cpp:260
+#: gui/launcher.cpp:271
 msgid "Search in game list"
 msgstr "ゲームリストを検索する"
 
-#: gui/launcher.cpp:264 gui/launcher.cpp:771
+#: gui/launcher.cpp:275 gui/launcher.cpp:782
 msgid "Search:"
 msgstr "検索："
 
-#: gui/launcher.cpp:275 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/pegasus/pegasus.cpp:383 engines/trecision/saveload.cpp:253
 #: engines/tsage/scenes.cpp:630 engines/wage/saveload.cpp:741
 #: engines/xeen/saves.cpp:255
 msgid "Load game:"
 msgstr "ゲームをロード："
 
-#: gui/launcher.cpp:275 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/parallaction/metaengine.cpp:127
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:383
 #: engines/scumm/dialogs.cpp:176 engines/trecision/saveload.cpp:253
@@ -854,125 +857,121 @@ msgstr "ゲームをロード："
 msgid "Load"
 msgstr "ロート"
 
-#: gui/launcher.cpp:383
+#: gui/launcher.cpp:394
 msgid "This directory cannot be used yet, it is being downloaded into!"
 msgstr "このフォルダーはダウンロード中の為使えません！"
 
-#: gui/launcher.cpp:394
+#: gui/launcher.cpp:405
 msgid ""
 "Do you really want to run the mass game detector? This could potentially add "
 "a huge number of games."
 msgstr "一括にゲームを追加してもよろしいですか？大量に追加することもあります。"
 
-#: gui/launcher.cpp:424
+#: gui/launcher.cpp:435
 msgid "Do you really want to remove this game configuration?"
 msgstr "このゲームはリストから削除してもよろしいですか？"
 
-#: gui/launcher.cpp:466
+#: gui/launcher.cpp:477
 msgid "Do you want to load saved game?"
 msgstr "セーブデータをロードしますか？"
 
-#: gui/launcher.cpp:523
+#: gui/launcher.cpp:534
 msgid "This game does not support loading games from the launcher."
 msgstr "このゲームはランチャーからロードができません。"
 
-#: gui/launcher.cpp:527
+#: gui/launcher.cpp:538
 msgid "ScummVM could not find any engine capable of running the selected game!"
 msgstr "選択されたゲームを実行できるエンジンは見つかりませんでした！"
 
-#: gui/launcher.cpp:583
+#: gui/launcher.cpp:594
 msgid "ScummVM could not find any game in the specified directory!"
 msgstr "選択されたフォルダー内ゲームが認識できませんでした！"
 
 #. I18N: Unknown game variant
-#: gui/launcher.cpp:599
+#: gui/launcher.cpp:610
 msgid "Unknown variant"
 msgstr "未認識バージョン"
 
-#: gui/launcher.cpp:605
+#: gui/launcher.cpp:616
 msgid "Pick the game:"
 msgstr "ゲームを選択してください："
 
-#: gui/launcher.cpp:780
+#: gui/launcher.cpp:791
 msgid "Group by:"
 msgstr "グループ化:"
 
-#: gui/launcher.cpp:820 gui/saveload-dialog.cpp:367
+#: gui/launcher.cpp:831 gui/saveload-dialog.cpp:367
 msgid "List view"
 msgstr "リストで表示"
 
-#: gui/launcher.cpp:821 gui/saveload-dialog.cpp:368
+#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:368
 msgid "Grid view"
 msgstr "グリッドで表示"
 
-#: gui/launcher.cpp:975
+#: gui/launcher.cpp:986
 msgid "~S~tart"
 msgstr "開始(~S~)"
 
-#: gui/launcher.cpp:975
+#: gui/launcher.cpp:986
 msgid "Start selected game"
 msgstr "選択したゲームを開始する"
 
-#: gui/launcher.cpp:978
+#: gui/launcher.cpp:989
 msgid "~L~oad..."
 msgstr "ロード(~L~)..."
 
-#: gui/launcher.cpp:978
+#: gui/launcher.cpp:989
 msgid "Load saved game for selected game"
 msgstr "選択されたゲームのセーブデータをロードする"
 
-#: gui/launcher.cpp:980
+#: gui/launcher.cpp:991
 msgid "Record..."
 msgstr "記録..."
 
-#: gui/launcher.cpp:987
-#, fuzzy
-#| msgid "~O~ptions..."
+#: gui/launcher.cpp:998
 msgid "~G~ame Options..."
-msgstr "設定(~O~)..."
+msgstr "ゲーム設定(~G~)..."
 
-#: gui/launcher.cpp:987 gui/launcher.cpp:990
+#: gui/launcher.cpp:998 gui/launcher.cpp:1001
 msgid "Change game options"
 msgstr "ゲームの設定を変える"
 
-#: gui/launcher.cpp:990
-#, fuzzy
-#| msgid "~O~ptions..."
+#: gui/launcher.cpp:1001
 msgctxt "lowres"
 msgid "~G~ame Opts..."
-msgstr "設定(~O~)..."
+msgstr "ゲーム設定(~G~)..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1112 gui/launcher.cpp:1299
+#: gui/launcher.cpp:1123 gui/launcher.cpp:1318
 msgid "Unknown Engine"
 msgstr "不明なエンジン"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1130 gui/launcher.cpp:1331
+#: gui/launcher.cpp:1141 gui/launcher.cpp:1350
 msgid "Unknown Publisher"
 msgstr "不明な販売元"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1148 gui/launcher.cpp:1317
+#: gui/launcher.cpp:1159 gui/launcher.cpp:1336
 msgid "No Series"
 msgstr "シリーズなし"
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1163 gui/launcher.cpp:1350
+#: gui/launcher.cpp:1174 gui/launcher.cpp:1369
 msgid "Language not detected"
 msgstr "検出されない言語"
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1178 gui/launcher.cpp:1365
+#: gui/launcher.cpp:1189 gui/launcher.cpp:1384
 msgid "Platform not detected"
 msgstr "検出されない機種"
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1376 gui/widgets/groupedlist.cpp:122
+#: gui/launcher.cpp:1395 gui/widgets/groupedlist.cpp:122
 msgid "All"
 msgstr "すべて"
 
@@ -4010,7 +4009,7 @@ msgstr "テキストをNTSCコンポジットでエミュレートしない"
 
 #: engines/agi/detection.cpp:86 engines/cine/detection.cpp:51
 #: engines/drascula/detection.cpp:298 engines/dreamweb/detection.cpp:54
-#: engines/groovie/detection.cpp:276 engines/neverhood/detection.cpp:134
+#: engines/groovie/detection.cpp:285 engines/neverhood/detection.cpp:134
 #: engines/sherlock/detection.cpp:58 engines/toltecs/detection.cpp:212
 #: engines/trecision/detection.cpp:219 engines/ultima/detection.cpp:55
 #: engines/ultima/detection.cpp:106 engines/zvision/detection_tables.h:50
@@ -4019,7 +4018,7 @@ msgstr "オリジナルのセーブ/ロード画面を使用する"
 
 #: engines/agi/detection.cpp:87 engines/cine/detection.cpp:52
 #: engines/drascula/detection.cpp:299 engines/dreamweb/detection.cpp:55
-#: engines/groovie/detection.cpp:277 engines/neverhood/detection.cpp:135
+#: engines/groovie/detection.cpp:286 engines/neverhood/detection.cpp:135
 #: engines/sherlock/detection.cpp:59 engines/toltecs/detection.cpp:213
 #: engines/trecision/detection.cpp:220 engines/ultima/detection.cpp:56
 #: engines/ultima/detection.cpp:107 engines/zvision/detection_tables.h:51
@@ -4183,6 +4182,22 @@ msgstr ""
 "マッピングを試みます。\n"
 "一部のトラックは正しく聞こえない事があります。"
 
+#: engines/ags/dialogs.cpp:58
+msgid "Game language:"
+msgstr "ゲームの言語："
+
+#: engines/ags/dialogs.cpp:58
+msgid "Language to use for multilingual games"
+msgstr "多言語ゲームで使用する言語"
+
+#: engines/ags/dialogs.cpp:78
+msgid "Force antialiased text"
+msgstr "テキストを強制的にアンチエイリアス"
+
+#: engines/ags/dialogs.cpp:78
+msgid "Use antialiasing to draw text even if the game does not ask for it"
+msgstr "ゲームが要求していない場合でも、テキストにアンチエイリアシングを使用"
+
 #: engines/ags/ags.cpp:127
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
@@ -4243,7 +4258,7 @@ msgstr "リソースの初期化に失敗しました"
 msgid "A required game resource was not found"
 msgstr "必要なゲームリソースが見つかりませんでした"
 
-#: engines/bladerunner/bladerunner.cpp:2331
+#: engines/bladerunner/bladerunner.cpp:2332
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4253,7 +4268,7 @@ msgstr ""
 "ナルモードでプレイ中です。ゲームを完全に終了するまで、ディレクターズカット"
 "モードとして調整されます。"
 
-#: engines/bladerunner/bladerunner.cpp:2333
+#: engines/bladerunner/bladerunner.cpp:2334
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4263,7 +4278,7 @@ msgstr ""
 "カットモードでプレイ中です。ゲームを完全に終了するまで、オリジナルモードとし"
 "て調整されます。"
 
-#: engines/bladerunner/bladerunner.cpp:2335
+#: engines/bladerunner/bladerunner.cpp:2336
 msgid "Continue"
 msgstr "つづく"
 
@@ -4324,7 +4339,7 @@ msgstr "ファンの翻訳者は、ScummVMに翻訳が組み込まれる事を�
 
 #: engines/bladerunner/detection_tables.h:128 engines/cge/detection.cpp:56
 #: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
-#: engines/groovie/detection.cpp:96 engines/hypno/detection.cpp:165
+#: engines/groovie/detection.cpp:104 engines/hypno/detection.cpp:165
 #: engines/kyra/detection_tables.h:303 engines/lure/detection.cpp:249
 #: engines/mohawk/detection_tables.h:988 engines/mohawk/detection_tables.h:1094
 #: engines/mohawk/detection_tables.h:1109 engines/myst3/detection.cpp:142
@@ -5030,27 +5045,27 @@ msgstr ""
 "\n"
 "もしくは、SteamかGOG版から結合されたFullMonkeyMap.imtを取得してください"
 
-#: engines/groovie/detection.cpp:266
+#: engines/groovie/detection.cpp:275
 msgid "Fast movie speed"
 msgstr "高速なムービー再生"
 
-#: engines/groovie/detection.cpp:267
+#: engines/groovie/detection.cpp:276
 msgid "Play movies at an increased speed"
 msgstr "速度を上げてムービーを再生"
 
-#: engines/groovie/detection.cpp:286
+#: engines/groovie/detection.cpp:295
 msgid "Easier AI"
 msgstr "低難易度AI"
 
-#: engines/groovie/detection.cpp:287
+#: engines/groovie/detection.cpp:296
 msgid "Decrease the difficulty of AI puzzles"
 msgstr "AIパズルの難易度を下げる"
 
-#: engines/groovie/detection.cpp:296
+#: engines/groovie/detection.cpp:305
 msgid "Updated Credits Music"
 msgstr "クレジット曲をアップデート"
 
-#: engines/groovie/detection.cpp:297
+#: engines/groovie/detection.cpp:306
 msgid ""
 "Play the song The Final Hour during the credits instead of reusing MIDI songs"
 msgstr "クレジットでMIDI曲を再利用せず、代わりにThe Final Hourを流す"
@@ -5539,7 +5554,7 @@ msgstr "いたずらゲームモード"
 msgid "~Z~ip Mode Activated"
 msgstr "高速モードを有効化しました(~Z~)"
 
-#: engines/mohawk/dialogs.cpp:114
+#: engines/mohawk/dialogs.cpp:114 engines/mohawk/dialogs.cpp:358
 msgid ""
 "When activated, clicking on an item or area with the lightning bolt cursor "
 "takes you directly there, skipping intermediate screens. You can only 'Zip' "
@@ -5616,9 +5631,23 @@ msgstr "ゲームを再起動すると、新しい言語が適用されます。
 msgid "~W~ater Effect Enabled"
 msgstr "水のエフェクトを有効にする(~W~)"
 
+#: engines/mohawk/dialogs.cpp:359
+msgid ""
+"Toggles the use of QuickTime videos for visual effects related to water "
+"surfaces (ripples, waves, etc.)."
+msgstr ""
+"水面に関するエフェクト(波紋、波など)に対するQuickTimeビデオの使用を切り替えま"
+"す。"
+
 #: engines/mohawk/dialogs.cpp:361
 msgid "Transitions:"
 msgstr "トランジション："
+
+#: engines/mohawk/dialogs.cpp:361
+msgid ""
+"Adjusts the speed of screen transitions. Disabling screen transitions will "
+"enable you to navigate more quickly through the game."
+msgstr "画面遷移の速度を調整します。無効化すると、ゲームの速度が上がります。"
 
 #: engines/mohawk/dialogs.cpp:366
 msgid "Fastest"
@@ -6434,6 +6463,21 @@ msgstr "スムーズスクロールを有効化"
 #: engines/scumm/detection.cpp:211
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(通常の8px単位でのスクロールの代わりに)"
+
+#: engines/scumm/detection_internal.h:358
+msgid ""
+"This version of Monkey Island can't be played, because Limited Run Games "
+"provided corrupted DISK04.LEC and 903.LFL files.\n"
+"\n"
+"Please contact their technical support for replacement files, or look online "
+"for some guides which can help you recover valid files from the KryoFlux "
+"dumps that Limited Run Games also provided."
+msgstr ""
+"Limited Run Games提供のファイルDISK04.LECと903.LFLが破損しており、このバー"
+"ジョンのMonkey Islandはプレイできません。\n"
+"\n"
+"テクニカルサポートに連絡して修正版をもらうか、Limited Run Games提供のKryoFlux"
+"ダンプから有効なファイルを抽出するガイドをオンラインで検索してください。"
 
 #: engines/scumm/dialogs.cpp:163
 #, c-format
@@ -8627,19 +8671,6 @@ msgstr ""
 
 #~ msgid "V-Sync in 3D Games"
 #~ msgstr "3Dゲームで垂直同期"
-
-#~ msgid "Game language:"
-#~ msgstr "ゲームの言語："
-
-#~ msgid "Language to use for multilingual games"
-#~ msgstr "多言語ゲームで使用する言語"
-
-#~ msgid "Force antialiased text"
-#~ msgstr "テキストを強制的にアンチエイリアス"
-
-#~ msgid "Use antialiasing to draw text even if the game does not ask for it"
-#~ msgstr ""
-#~ "ゲームが要求していない場合でも、テキストにアンチエイリアシングを使用"
 
 #~ msgid "Skip EGA dithering pass (full color backgrounds)"
 #~ msgstr "EGAディザリングパスをスキップ(フルカラー背景)"

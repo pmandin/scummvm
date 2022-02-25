@@ -1364,7 +1364,38 @@ void ScummEngine_v5::o5_notEqualZero() {
 }
 
 void ScummEngine_v5::o5_equalZero() {
-	int a = getVar();
+	const byte *oldaddr = _scriptPointer - 1;
+	int a;
+
+	// WORKAROUND: Examining the dragon's pile of gold a second time causes
+	// Bobbin to animate as if he's talking, but no text is displayed. When
+	// running the game in an emulator, there's neither text nor animation
+	// when examining the pile again. While the symptoms are slightly
+	// different, this points to a script bug.
+	//
+	// I think this happens because in the PC Engine version the entire
+	// scene is a cutscene. In the EGA version, only the part where the
+	// dragon responds is. So the cutscene starts, the message is printed
+	// and then the cutscene immediately ends, which triggers an "end of
+	// cutscene" script. This is probably what clears the text.
+	//
+	// The script sets Bit[92] to indicate that the dragon has responded.
+	// If the bit has been set, we simulate a WaitForMessage() instruction
+	// here, so that the script pauses until the "Wow!" message is gone.
+
+	if (_game.id == GID_LOOM && _game.platform == Common::kPlatformPCEngine && vm.slot[_currentScript].number == 109) {
+		int var = fetchScriptWord();
+		a = readVar(var);
+
+		if (var == 32860 && a == 1 && VAR(VAR_HAVE_MSG)) {
+			_scriptPointer = oldaddr;
+			o5_breakHere();
+			return;
+		}
+	} else {
+		a = getVar();
+	}
+
 	jumpRelative(a == 0);
 }
 
@@ -2894,7 +2925,7 @@ void ScummEngine_v5::decodeParseString() {
 					strcpy(tmpBuf + diff, "5000");
 					strcpy(tmpBuf + diff + 4, tmp + sizeof("NCREDIT-NOTE-AMOUNT") - 1);
 					printString(textSlot, (byte *)tmpBuf);
-				} if (_game.id == GID_MONKEY && _roomResource == 25 && vm.slot[_currentScript].number == 205) {
+				} else if (_game.id == GID_MONKEY && _roomResource == 25 && vm.slot[_currentScript].number == 205) {
 					printPatchedMI1CannibalString(textSlot, _scriptPointer);
 				} else {
 					printString(textSlot, _scriptPointer);

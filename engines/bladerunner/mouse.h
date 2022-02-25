@@ -42,13 +42,15 @@ class Mouse {
 	int _x;
 	int _y;
 	int _disabledCounter;
-	int _lastFrameTime;
+	uint32 _lastFrameTime;
 	int _animCounter;
 
 	int _randomCountdownX;
 	int _randomCountdownY;
 	int _randomX;
 	int _randomY;
+
+	uint8 _drawModeBitFlags; // replaces the additive bool with a set of bit flags (including flags for additive mode)
 
 public:
 	Mouse(BladeRunnerEngine *vm);
@@ -68,10 +70,19 @@ public:
 	void updateCursorFrame();
 
 	void tick(int x, int y);
+	bool isRandomized() const;
 	bool isInactive() const;
 
-// private:
 	Vector3 getXYZ(int x, int y) const;
+
+	typedef enum mouseDrawFlags {
+		REDCROSSHAIRS    = 0x01,
+		YELLOWCROSSHAIRS = 0x02,
+		BLUECROSSHAIRS   = 0x04,
+		SPECIAL          = 0x08,
+		ADDITIVE_MODE0   = 0x10,
+		ADDITIVE_MODE1   = 0x20
+	} MouseDrawFlags;
 };
 
 } // End of namespace BladeRunner
