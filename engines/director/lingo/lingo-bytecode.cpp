@@ -173,7 +173,7 @@ static LingoV4TheEntity lingoV4TheEntity[] = {
 
 	{ 0x04, 0x01, kTheSoundEntity,		kTheVolume,			true, kTEAItemId },
 
-	{ 0x06, 0x01, kTheSprite,			kTheCursor,			true, kTEAItemId },
+	{ 0x06, 0x01, kTheSprite,			kTheType,			true, kTEAItemId },
 	{ 0x06, 0x02, kTheSprite,			kTheBackColor,		true, kTEAItemId },
 	{ 0x06, 0x03, kTheSprite,			kTheBottom,			true, kTEAItemId },
 	{ 0x06, 0x04, kTheSprite,			kTheCastNum,		true, kTEAItemId },
@@ -578,6 +578,7 @@ void LC::cb_varrefpush() {
 }
 
 void LC::cb_theassign() {
+	// cb_theassign is for setting script/factory-level properties
 	Common::String name = g_lingo->readString();
 	Datum value = g_lingo->pop();
 	if (g_lingo->_currentMe.type == OBJECT) {
@@ -592,9 +593,19 @@ void LC::cb_theassign() {
 }
 
 void LC::cb_theassign2() {
+	// cb_theassign2 is for setting movie-level properties
 	Common::String name = g_lingo->readString();
 	Datum value = g_lingo->pop();
-	warning("STUB: cb_theassign2(%s, %s)", name.c_str(), value.asString().c_str());
+
+	if (g_lingo->_theEntities.contains(name)) {
+		TheEntity *entity = g_lingo->_theEntities[name];
+		Datum id;
+		id.u.i = 0;
+		id.type = VOID;
+		g_lingo->setTheEntity(entity->entity, id, kTEANOArgs, value);
+	} else {
+		warning("LC::cb_theassign2 Can't assign theEntity: (%s)", name.c_str());
+	}
 }
 
 void LC::cb_thepush() {
@@ -1181,7 +1192,12 @@ ScriptContext *LingoCompiler::compileLingoV4(Common::SeekableReadStreamEndian &s
 	bool skipdump = false;
 
 	if (ConfMan.getBool("dump_scripts")) {
-		Common::String buf = dumpScriptName(encodePathForDump(archName).c_str(), scriptType, castId, "lscr");
+		Common::String buf;
+		if (scriptFlags & kScriptFlagFactoryDef) {
+			buf = dumpFactoryName(encodePathForDump(archName).c_str(), factoryName.c_str(), "lscr");
+		} else {
+			buf = dumpScriptName(encodePathForDump(archName).c_str(), scriptType, castId, "lscr");
+		}
 
 		if (!out.open(buf, true)) {
 			warning("Lingo::addCodeV4(): Can not open dump file %s", buf.c_str());

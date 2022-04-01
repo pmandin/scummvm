@@ -45,10 +45,6 @@
 
 namespace Saga2 {
 
-#define PROGRAM_ABOUT   PROGRAM_FULL_NAME "\r\n\r\n"\
-	" Version " VERSION_STAMP "\r\n"
-
-
 // dialog functions
 APPFUNC(cmdDialogQuit);
 APPFUNCV(cmdFileSave);
@@ -762,17 +758,12 @@ int16 FileDialog(int16 fileProcess) {
 /* ===================================================================== *
    Options dialog box
  * ===================================================================== */
-void reDrawScreen() ;
 void updateMainDisplay();
-void updateActiveRegions();
 void drawMainDisplay();
 void fadeUp();
 void fadeDown();
 void clearTileAreaPort();
 void displayUpdate();
-void disableUserControls();
-void enableUserControls();
-void updateAllUserControls();
 
 int16 OptionsDialog(bool disableSaveResume) {
 	// Save back buffer before opening the dialog

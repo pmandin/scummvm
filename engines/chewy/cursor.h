@@ -22,39 +22,31 @@
 #ifndef CHEWY_CURSOR_H
 #define CHEWY_CURSOR_H
 
-#include "chewy/chewy.h"
+#include "chewy/mcga_graphics.h"
+#include "chewy/ngstypes.h"
+#include "chewy/mouse.h"
 
 namespace Chewy {
-
-class SpriteResource;
-class Font;
-
-enum CurrentCursor {
-	kWalk,
-	kLook,
-	kUse,
-	kTalk,
-	kOther
-};
 
 class Cursor {
 public:
 	Cursor();
-	virtual ~Cursor();
+	Cursor(CurBlk *curblk);
+	~Cursor();
 
-	void setCursor(uint num, bool newCursor = true);
-	void showCursor();
-	void hideCursor();
-	void animateCursor();
-	void nextCursor();
-	CurrentCursor getCurrentCursor() const;
+	void plot_cur();
+	void show_cur();
+	void hide_cur();
+	void set_cur_ani(CurAni *ani);
+	void move(int16 x, int16 y);
 
-private:
-	uint _curCursor;
-	uint _curCursorFrame;
-	SpriteResource *_cursorSprites;
+	CurBlk *_curblk = nullptr;
+	CurAni *_ani = nullptr;
+	int _scrWidth = 0;
+	int16 _curAniCountdown = 0;
+	int16 _aniCount = 0;
 };
 
-} // End of namespace Chewy
+} // namespace Chewy
 
 #endif

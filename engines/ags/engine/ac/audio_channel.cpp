@@ -27,7 +27,7 @@
 #include "ags/shared/game/room_struct.h"
 #include "ags/engine/script/runtime_script_value.h"
 #include "ags/engine/media/audio/audio_system.h"
-
+#include "ags/shared/ac/game_setup_struct.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
@@ -46,15 +46,21 @@ int AudioChannel_GetIsPlaying(ScriptAudioChannel *channel) {
 		return 0;
 	}
 
-	return channel_is_playing(channel->id) ? 1 : 0;
+	return AudioChans::ChannelIsPlaying(channel->id) ? 1 : 0;
+}
+
+bool AudioChannel_GetIsPaused(ScriptAudioChannel *channel) {
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
+
+	if (ch) return ch->is_paused();
+	return false;
 }
 
 int AudioChannel_GetPanning(ScriptAudioChannel *channel) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
-		return ch->_panningAsPercentage;
+		return ch->get_panning();
 	}
 	return 0;
 }
@@ -63,28 +69,24 @@ void AudioChannel_SetPanning(ScriptAudioChannel *channel, int newPanning) {
 	if ((newPanning < -100) || (newPanning > 100))
 		quitprintf("!AudioChannel.Panning: panning value must be between -100 and 100 (passed=%d)", newPanning);
 
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
-		ch->set_panning(((newPanning + 100) * 255) / 200);
-		ch->_panningAsPercentage = newPanning;
+		ch->set_panning(newPanning);
 	}
 }
 
 ScriptAudioClip *AudioChannel_GetPlayingClip(ScriptAudioChannel *channel) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
-	if (ch) {
-		return (ScriptAudioClip *)ch->_sourceClip;
+	if (ch && ch->_sourceClipID >= 0) {
+		return &_GP(game).audioClips[ch->_sourceClipID];
 	}
 	return nullptr;
 }
 
 int AudioChannel_GetPosition(ScriptAudioChannel *channel) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
 		if (_GP(play).fast_forward)
@@ -96,8 +98,7 @@ int AudioChannel_GetPosition(ScriptAudioChannel *channel) {
 }
 
 int AudioChannel_GetPositionMs(ScriptAudioChannel *channel) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
 		if (_GP(play).fast_forward)
@@ -109,8 +110,7 @@ int AudioChannel_GetPositionMs(ScriptAudioChannel *channel) {
 }
 
 int AudioChannel_GetLengthMs(ScriptAudioChannel *channel) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
 		return ch->get_length_ms();
@@ -119,11 +119,10 @@ int AudioChannel_GetLengthMs(ScriptAudioChannel *channel) {
 }
 
 int AudioChannel_GetVolume(ScriptAudioChannel *channel) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
-		return ch->get_volume();
+		return ch->get_volume100();
 	}
 	return 0;
 }
@@ -132,18 +131,16 @@ int AudioChannel_SetVolume(ScriptAudioChannel *channel, int newVolume) {
 	if ((newVolume < 0) || (newVolume > 100))
 		quitprintf("!AudioChannel.Volume: new value out of range (supplied: %d, range: 0..100)", newVolume);
 
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
-		ch->set_volume_percent(newVolume);
+		ch->set_volume100(newVolume);
 	}
 	return 0;
 }
 
 int AudioChannel_GetSpeed(ScriptAudioChannel *channel) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
 		return ch->get_speed();
@@ -152,8 +149,7 @@ int AudioChannel_GetSpeed(ScriptAudioChannel *channel) {
 }
 
 void AudioChannel_SetSpeed(ScriptAudioChannel *channel, int new_speed) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
 		ch->set_speed(new_speed);
@@ -167,12 +163,21 @@ void AudioChannel_Stop(ScriptAudioChannel *channel) {
 		stop_or_fade_out_channel(channel->id, -1, nullptr);
 }
 
+void AudioChannel_Pause(ScriptAudioChannel *channel) {
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
+	if (ch) ch->pause();
+}
+
+void AudioChannel_Resume(ScriptAudioChannel *channel) {
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
+	if (ch) ch->resume();
+}
+
 void AudioChannel_Seek(ScriptAudioChannel *channel, int newPosition) {
 	if (newPosition < 0)
 		quitprintf("!AudioChannel.Seek: invalid seek position %d", newPosition);
 
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
 		ch->seek(newPosition);
@@ -180,8 +185,7 @@ void AudioChannel_Seek(ScriptAudioChannel *channel, int newPosition) {
 }
 
 void AudioChannel_SetRoomLocation(ScriptAudioChannel *channel, int xPos, int yPos) {
-	AudioChannelsLock lock;
-	auto *ch = lock.GetChannelIfPlaying(channel->id);
+	auto *ch = AudioChans::GetChannelIfPlaying(channel->id);
 
 	if (ch) {
 		int maxDist = ((xPos > _GP(thisroom).Width / 2) ? xPos : (_GP(thisroom).Width - xPos)) - AMBIENCE_FULL_DIST;
@@ -275,11 +279,26 @@ RuntimeScriptValue Sc_AudioChannel_SetSpeed(void *self, const RuntimeScriptValue
 	API_OBJCALL_VOID_PINT(ScriptAudioChannel, AudioChannel_SetSpeed);
 }
 
+RuntimeScriptValue Sc_AudioChannel_Pause(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_VOID(ScriptAudioChannel, AudioChannel_Pause);
+}
+
+RuntimeScriptValue Sc_AudioChannel_Resume(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_VOID(ScriptAudioChannel, AudioChannel_Resume);
+}
+
+RuntimeScriptValue Sc_AudioChannel_GetIsPaused(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_BOOL(ScriptAudioChannel, AudioChannel_GetIsPaused);
+}
+
 void RegisterAudioChannelAPI() {
+	ccAddExternalObjectFunction("AudioChannel::Pause^0", Sc_AudioChannel_Pause);
+	ccAddExternalObjectFunction("AudioChannel::Resume^0", Sc_AudioChannel_Resume);
 	ccAddExternalObjectFunction("AudioChannel::Seek^1", Sc_AudioChannel_Seek);
 	ccAddExternalObjectFunction("AudioChannel::SetRoomLocation^2", Sc_AudioChannel_SetRoomLocation);
 	ccAddExternalObjectFunction("AudioChannel::Stop^0", Sc_AudioChannel_Stop);
 	ccAddExternalObjectFunction("AudioChannel::get_ID", Sc_AudioChannel_GetID);
+	ccAddExternalObjectFunction("AudioChannel::get_IsPaused", Sc_AudioChannel_GetIsPaused);
 	ccAddExternalObjectFunction("AudioChannel::get_IsPlaying", Sc_AudioChannel_GetIsPlaying);
 	ccAddExternalObjectFunction("AudioChannel::get_LengthMs", Sc_AudioChannel_GetLengthMs);
 	ccAddExternalObjectFunction("AudioChannel::get_Panning", Sc_AudioChannel_GetPanning);

@@ -20,6 +20,7 @@
  */
 
 #include "ags/engine/ac/global_dynamic_sprite.h"
+#include "ags/engine/ac/asset_helper.h"
 #include "ags/engine/ac/draw.h"
 #include "ags/engine/ac/dynamic_sprite.h"
 #include "ags/engine/ac/path_helper.h"
@@ -38,9 +39,18 @@ int LoadImageFile(const char *filename) {
 	if (!ResolveScriptPath(filename, true, rp))
 		return 0;
 
-	Bitmap *loadedFile = BitmapHelper::LoadFromFile(rp.FullPath);
-	if (!loadedFile && !rp.AltPath.IsEmpty() && rp.AltPath.Compare(rp.FullPath) != 0)
-		loadedFile = BitmapHelper::LoadFromFile(rp.AltPath);
+	Bitmap *loadedFile;
+	if (rp.AssetMgr) {
+		PACKFILE *pf = PackfileFromAsset(AssetPath(rp.FullPath, "*"));
+		if (!pf)
+			return 0;
+		loadedFile = BitmapHelper::LoadFromFile(pf);
+	} else {
+		loadedFile = BitmapHelper::LoadFromFile(rp.FullPath);
+		if (!loadedFile && !rp.AltPath.IsEmpty() && rp.AltPath.Compare(rp.FullPath) != 0)
+			loadedFile = BitmapHelper::LoadFromFile(rp.AltPath);
+	}
+
 	if (!loadedFile)
 		return 0;
 
@@ -48,7 +58,7 @@ int LoadImageFile(const char *filename) {
 	if (gotSlot <= 0)
 		return 0;
 
-	add_dynamic_sprite(gotSlot, ReplaceBitmapWithSupportedFormat(loadedFile));
+	add_dynamic_sprite(gotSlot, PrepareSpriteForUse(loadedFile, false));
 
 	return gotSlot;
 }

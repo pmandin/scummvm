@@ -121,10 +121,9 @@ Globals::Globals() {
 	_AssetMgr = new std::unique_ptr<Shared::AssetManager>();
 
 	// audio.cpp globals
-	_audioChannels = new std::array<SOUNDCLIP *>(MAX_SOUND_CHANNELS + 1);
-	// TODO: double check that ambient sounds array actually needs +1
-	_ambient = new std::array<AmbientSound>(MAX_SOUND_CHANNELS + 1);
-	_scrAudioChannel = new ScriptAudioChannel[MAX_SOUND_CHANNELS + 1];
+	_audioChannels = new std::array<SOUNDCLIP *>(TOTAL_AUDIO_CHANNELS);
+	_ambient = new std::array<AmbientSound>(MAX_GAME_CHANNELS);
+	_scrAudioChannel = new ScriptAudioChannel[MAX_GAME_CHANNELS];
 
 	// button.cpp globals
 	_animbuts = new AnimatingGUIButton[MAX_ANIMATING_BUTTONS];
@@ -173,6 +172,15 @@ Globals::Globals() {
 	_dynamicallyCreatedSurfaces = new AGS::Shared::Bitmap *[MAX_DYNAMIC_SURFACES];
 	Common::fill(_dynamicallyCreatedSurfaces, _dynamicallyCreatedSurfaces +
 	             MAX_DYNAMIC_SURFACES, (AGS::Shared::Bitmap *)nullptr);
+
+	_actsps = new std::vector<Shared::Bitmap *>();
+	_actspsbmp = new std::vector<Engine::IDriverDependantBitmap *>();
+	_actspswb = new	std::vector<Shared::Bitmap *>();
+	_actspswbbmp = new std::vector<Engine::IDriverDependantBitmap *>();
+	_actspswbcache = new std::vector<CachedActSpsData>();
+	_guibg = new std::vector<Shared::Bitmap *>();
+	_guibgbmp = new std::vector<Engine::IDriverDependantBitmap *>();
+
 	_maincoltable = new COLOR_MAP();
 	_palette = new color[256];
 	for (int i = 0; i < PALETTE_COUNT; ++i)
@@ -211,7 +219,7 @@ Globals::Globals() {
 	_guis = new std::vector<AGS::Shared::GUIMain>();
 	_play = new GameState();
 	_game = new GameSetupStruct();
-	_spriteset = new SpriteCache(_game->SpriteInfos);
+	_spriteset = new AGS::Shared::SpriteCache(_game->SpriteInfos);
 	_thisroom = new AGS::Shared::RoomStruct();
 	_troom = new RoomStatus();
 	_usetup = new GameSetup();
@@ -220,6 +228,7 @@ Globals::Globals() {
 	_scrRegion = new ScriptRegion[MAX_ROOM_REGIONS];
 	_scrInv = new ScriptInvItem[MAX_INV];
 	_objcache = new ObjectCache[MAX_ROOM_OBJECTS];
+	_views = new std::vector<ViewStruct>();
 	_saveGameDirectory = AGS::Shared::SAVE_FOLDER_PREFIX;
 
 	// game_init.cpp globals
@@ -250,7 +259,6 @@ Globals::Globals() {
 	// graphics_mode.cpp globals
 	_SavedFullscreenSetting = new ActiveDisplaySetting();
 	_SavedWindowedSetting = new ActiveDisplaySetting();
-	_CurFrameSetup = new GameFrameSetup();
 	_GameScaling = new AGS::Shared::PlaneScaling();
 
 	// gui_button.cpp globals
@@ -294,7 +302,7 @@ Globals::Globals() {
 	_mouse = new Mouse();
 
 	// overlay.cpp globals
-	_screenover = new ScreenOverlay[MAX_SCREEN_OVERLAYS];
+	_screenover = new std::vector<ScreenOverlay>();
 
 	// plugins globals
 	_engineExports = new Plugins::Core::EngineExports();
@@ -310,6 +318,7 @@ Globals::Globals() {
 	// route_finder_impl.cpp globals
 	_navpoints = new int32_t[MAXNEEDSTAGES];
 	_nav = new Navigation();
+	_route_finder_impl = new std::unique_ptr<IRouteFinder>();
 
 	// screen.cpp globals
 	_old_palette = new color[256];
@@ -413,6 +422,13 @@ Globals::~Globals() {
 	delete _CameraDrawData;
 	delete _sprlist;
 	delete _thingsToDrawList;
+	delete _actsps;
+	delete _actspsbmp;
+	delete _actspswb;
+	delete _actspswbbmp;
+	delete _actspswbcache;
+	delete _guibg;
+	delete _guibgbmp;
 	delete[] _dynamicallyCreatedSurfaces;
 	delete[] _palette;
 	delete _maincoltable;
@@ -459,6 +475,7 @@ Globals::~Globals() {
 	delete[] _scrRegion;
 	delete[] _scrInv;
 	delete[] _objcache;
+	delete _views;
 
 	// game_init.cpp globals
 	delete _StaticCharacterArray;
@@ -487,7 +504,6 @@ Globals::~Globals() {
 	// graphics_mode.cpp globals
 	delete _SavedFullscreenSetting;
 	delete _SavedWindowedSetting;
-	delete _CurFrameSetup;
 	delete _GameScaling;
 
 	// gui_button.cpp globals
@@ -524,7 +540,7 @@ Globals::~Globals() {
 	delete _mouse;
 
 	// overlay.cpp globals
-	delete[] _screenover;
+	delete _screenover;
 
 	// plugins globals
 	delete _engineExports;

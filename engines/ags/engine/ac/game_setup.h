@@ -67,8 +67,9 @@ struct GameSetup {
 	String opt_audio_dir; // optional custom install audio dir path
 	String opt_voice_dir; // optional custom install voice-over dir path
 	//
-	String conf_path; // explicitly set path to config
+	String conf_path; // a read-only config path (if set the regular config is ignored)
 	bool   local_user_conf; // search for user config in the game directory
+	String user_conf_dir; // directory to read and write user config in
 	String user_data_dir; // directory to write savedgames and user files to
 	String shared_data_dir; // directory to write shared game files to
 	String translation;
@@ -83,7 +84,7 @@ struct GameSetup {
 	bool  RenderAtScreenRes; // render sprites at screen resolution, as opposed to native one
 	int   Supersampling;
 
-	ScreenSetup Screen;
+	DisplayModeSetup Screen;
 
 	GameSetup();
 };

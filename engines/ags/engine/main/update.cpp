@@ -220,20 +220,22 @@ void update_following_exactly_characters(int &numSheep, int *followingAsSheep) {
 
 void update_overlay_timers() {
 	// update overlay timers
-	for (int aa = 0; aa < _G(numscreenover); aa++) {
-		if (_G(screenover)[aa].timeout > 0) {
-			_G(screenover)[aa].timeout--;
-			if (_G(screenover)[aa].timeout == 0)
-				remove_screen_overlay(_G(screenover)[aa].type);
+	for (size_t i = 0; i < _GP(screenover).size();) {
+		if (_GP(screenover)[i].timeout > 0) {
+			_GP(screenover)[i].timeout--;
+			if (_GP(screenover)[i].timeout == 0) {
+				remove_screen_overlay_index(i);
+				continue;
+			}
 		}
+		i++;
 	}
 }
 
 void update_speech_and_messages() {
 	bool is_voice_playing = false;
 	if (_GP(play).speech_has_voice) {
-		AudioChannelsLock lock;
-		auto *ch = lock.GetChannel(SCHAN_SPEECH);
+		auto *ch = AudioChans::GetChannel(SCHAN_SPEECH);
 		is_voice_playing = ch && ch->is_playing();
 	}
 	// determine if speech text should be removed
@@ -273,8 +275,7 @@ void update_speech_and_messages() {
 void update_sierra_speech() {
 	int voice_pos_ms = -1;
 	if (_GP(play).speech_has_voice) {
-		AudioChannelsLock lock;
-		auto *ch = lock.GetChannel(SCHAN_SPEECH);
+		auto *ch = AudioChans::GetChannel(SCHAN_SPEECH);
 		voice_pos_ms = ch ? ch->get_pos_ms() : -1;
 	}
 	if ((_G(face_talking) >= 0) && (_GP(play).fast_forward == 0)) {
@@ -291,12 +292,12 @@ void update_sierra_speech() {
 				}
 			} else if (_G(facetalkchar)->blinktimer < 0) {
 				// currently playing blink anim
-				if (_G(facetalkchar)->blinktimer < ((0 - 6) - _G(views)[_G(facetalkchar)->blinkview].loops[_G(facetalkBlinkLoop)].frames[_G(facetalkchar)->blinkframe].speed)) {
+				if (_G(facetalkchar)->blinktimer < ((0 - 6) - _GP(views)[_G(facetalkchar)->blinkview].loops[_G(facetalkBlinkLoop)].frames[_G(facetalkchar)->blinkframe].speed)) {
 					// time to advance to next frame
 					_G(facetalkchar)->blinktimer = -1;
 					_G(facetalkchar)->blinkframe++;
 					updatedFrame = 2;
-					if (_G(facetalkchar)->blinkframe >= _G(views)[_G(facetalkchar)->blinkview].loops[_G(facetalkBlinkLoop)].numFrames) {
+					if (_G(facetalkchar)->blinkframe >= _GP(views)[_G(facetalkchar)->blinkview].loops[_G(facetalkBlinkLoop)].numFrames) {
 						_G(facetalkchar)->blinkframe = 0;
 						_G(facetalkchar)->blinktimer = _G(facetalkchar)->blinkinterval;
 					}
@@ -319,7 +320,7 @@ void update_sierra_speech() {
 					else
 						_G(facetalkframe) = _G(splipsync)[_G(curLipLine)].frame[_G(curLipLinePhoneme)];
 
-					if (_G(facetalkframe) >= _G(views)[_G(facetalkview)].loops[_G(facetalkloop)].numFrames)
+					if (_G(facetalkframe) >= _GP(views)[_G(facetalkview)].loops[_G(facetalkloop)].numFrames)
 						_G(facetalkframe) = 0;
 
 					updatedFrame |= 1;
@@ -351,11 +352,11 @@ void update_sierra_speech() {
 			} else {
 				// normal non-lip-sync
 				_G(facetalkframe)++;
-				if ((_G(facetalkframe) >= _G(views)[_G(facetalkview)].loops[_G(facetalkloop)].numFrames) ||
+				if ((_G(facetalkframe) >= _GP(views)[_G(facetalkview)].loops[_G(facetalkloop)].numFrames) ||
 				        (!_GP(play).speech_has_voice && (_GP(play).messagetime < 1) && (_GP(play).close_mouth_speech_time > 0))) {
 
-					if ((_G(facetalkframe) >= _G(views)[_G(facetalkview)].loops[_G(facetalkloop)].numFrames) &&
-					        (_G(views)[_G(facetalkview)].loops[_G(facetalkloop)].RunNextLoop())) {
+					if ((_G(facetalkframe) >= _GP(views)[_G(facetalkview)].loops[_G(facetalkloop)].numFrames) &&
+					        (_GP(views)[_G(facetalkview)].loops[_G(facetalkloop)].RunNextLoop())) {
 						_G(facetalkloop)++;
 					} else {
 						_G(facetalkloop) = 0;
@@ -365,7 +366,7 @@ void update_sierra_speech() {
 						_G(facetalkwait) = 999999;
 				}
 				if ((_G(facetalkframe) != 0) || (_G(facetalkrepeat) == 1))
-					_G(facetalkwait) = _G(views)[_G(facetalkview)].loops[_G(facetalkloop)].frames[_G(facetalkframe)].speed + GetCharacterSpeechAnimationDelay(_G(facetalkchar));
+					_G(facetalkwait) = _GP(views)[_G(facetalkview)].loops[_G(facetalkloop)].frames[_G(facetalkframe)].speed + GetCharacterSpeechAnimationDelay(_G(facetalkchar));
 			}
 			updatedFrame |= 1;
 		}
@@ -378,7 +379,7 @@ void update_sierra_speech() {
 			if (updatedFrame & 2)
 				CheckViewFrame(_G(facetalkchar)->blinkview, _G(facetalkBlinkLoop), _G(facetalkchar)->blinkframe);
 
-			int thisPic = _G(views)[_G(facetalkview)].loops[_G(facetalkloop)].frames[_G(facetalkframe)].pic;
+			int thisPic = _GP(views)[_G(facetalkview)].loops[_G(facetalkloop)].frames[_G(facetalkframe)].pic;
 			int view_frame_x = 0;
 			int view_frame_y = 0;
 
@@ -390,26 +391,26 @@ void update_sierra_speech() {
 				if (_G(facetalk_qfg4_override_placement_y)) {
 					view_frame_y = _GP(play).speech_portrait_y;
 				} else {
-					view_frame_y = (_G(screenover)[_G(face_talking)].pic->GetHeight() / 2) - (_GP(game).SpriteInfos[thisPic].Height / 2);
+					view_frame_y = (_GP(screenover)[_G(face_talking)].pic->GetHeight() / 2) - (_GP(game).SpriteInfos[thisPic].Height / 2);
 				}
-				_G(screenover)[_G(face_talking)].pic->Clear(0);
+				_GP(screenover)[_G(face_talking)].pic->Clear(0);
 			} else {
-				_G(screenover)[_G(face_talking)].pic->ClearTransparent();
+				_GP(screenover)[_G(face_talking)].pic->ClearTransparent();
 			}
 
-			Bitmap *frame_pic = _G(screenover)[_G(face_talking)].pic;
-			const ViewFrame *face_vf = &_G(views)[_G(facetalkview)].loops[_G(facetalkloop)].frames[_G(facetalkframe)];
+			Bitmap *frame_pic = _GP(screenover)[_G(face_talking)].pic;
+			const ViewFrame *face_vf = &_GP(views)[_G(facetalkview)].loops[_G(facetalkloop)].frames[_G(facetalkframe)];
 			bool face_has_alpha = (_GP(game).SpriteInfos[face_vf->pic].Flags & SPF_ALPHACHANNEL) != 0;
 			DrawViewFrame(frame_pic, face_vf, view_frame_x, view_frame_y);
 
 			if ((_G(facetalkchar)->blinkview > 0) && (_G(facetalkchar)->blinktimer < 0)) {
-				ViewFrame *blink_vf = &_G(views)[_G(facetalkchar)->blinkview].loops[_G(facetalkBlinkLoop)].frames[_G(facetalkchar)->blinkframe];
+				ViewFrame *blink_vf = &_GP(views)[_G(facetalkchar)->blinkview].loops[_G(facetalkBlinkLoop)].frames[_G(facetalkchar)->blinkframe];
 				face_has_alpha |= (_GP(game).SpriteInfos[blink_vf->pic].Flags & SPF_ALPHACHANNEL) != 0;
 				// draw the blinking sprite on top
 				DrawViewFrame(frame_pic, blink_vf, view_frame_x, view_frame_y, face_has_alpha);
 			}
 
-			_G(gfxDriver)->UpdateDDBFromBitmap(_G(screenover)[_G(face_talking)].bmp, _G(screenover)[_G(face_talking)].pic, face_has_alpha);
+			_G(gfxDriver)->UpdateDDBFromBitmap(_GP(screenover)[_G(face_talking)].bmp, _GP(screenover)[_G(face_talking)].pic, face_has_alpha);
 		}  // end if updatedFrame
 	}
 }

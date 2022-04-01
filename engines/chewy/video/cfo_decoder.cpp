@@ -20,11 +20,13 @@
  */
 
 #include "common/events.h"
+#include "common/stream.h"
 #include "common/system.h"
 #include "engines/engine.h"
 #include "graphics/palette.h"
 #include "video/flic_decoder.h"
-
+#include "chewy/globals.h"
+#include "chewy/mcga.h"
 #include "chewy/sound.h"
 #include "chewy/video/cfo_decoder.h"
 
@@ -92,6 +94,7 @@ CfoDecoder::CfoVideoTrack::~CfoVideoTrack() {
 	}
 
 	delete[] _musicData;
+	_musicData = nullptr;
 }
 
 void CfoDecoder::CfoVideoTrack::readHeader() {
@@ -194,7 +197,7 @@ void CfoDecoder::CfoVideoTrack::handleCustomFrame() {
 		case kChunkLoadMusic:
 			// Used in videos 0, 18, 34, 71
 			_musicSize = frameSize;
-			_musicData = new byte[frameSize];
+			_musicData = new uint8[frameSize];
 			_fileStream->read(_musicData, frameSize);
 			break;
 		case kChunkLoadRaw:
@@ -206,7 +209,7 @@ void CfoDecoder::CfoVideoTrack::handleCustomFrame() {
 			delete[] _soundEffects[number];
 
 			_soundEffectSize[number] = frameSize - 2;
-			_soundEffects[number] = new byte[frameSize - 2];
+			_soundEffects[number] = new uint8[frameSize - 2];
 			_fileStream->read(_soundEffects[number], frameSize - 2);
 			break;
 		case kChunkPlayMusic:
@@ -224,6 +227,7 @@ void CfoDecoder::CfoVideoTrack::handleCustomFrame() {
 
 			// Game videos do not restart music after stopping it
 			delete[] _musicData;
+			_musicData = nullptr;
 			_musicSize = 0;
 			break;
 		case kChunkWaitMusicEnd:
@@ -252,7 +256,7 @@ void CfoDecoder::CfoVideoTrack::handleCustomFrame() {
 			assert(number < MAX_SOUND_EFFECTS);
 
 			_sound->setSoundVolume(volume);
-			_sound->playSound(_soundEffects[number], _soundEffectSize[number], repeat, channel, DisposeAfterUse::NO);
+			_sound->playSound(_soundEffects[number], _soundEffectSize[number], channel, repeat, DisposeAfterUse::NO);
 			break;
 		case kChunkSetSoundVolume:
 			volume = _fileStream->readUint16LE() * Audio::Mixer::kMaxChannelVolume / 63;
@@ -276,9 +280,9 @@ void CfoDecoder::CfoVideoTrack::handleCustomFrame() {
 			break;
 		case kChunkMusicFadeOut:
 			// Used in videos 0, 71
-			warning("kChunkMusicFadeOut");
-			// TODO
-			_fileStream->skip(frameSize);
+			channel = _fileStream->readUint16LE();
+			// TODO: Reimplement
+			//_G(sndPlayer)->fadeOut(channel);
 			break;
 		case kChunkSetBalance:
 			channel = _fileStream->readUint16LE();
@@ -309,6 +313,7 @@ void CfoDecoder::CfoVideoTrack::fadeOut() {
 				--_palette[i * 3 + 2];
 		}
 
+		//setScummVMPalette(_palette, 0, 256);
 		g_system->getPaletteManager()->setPalette(_palette, 0, 256);
 		g_system->updateScreen();
 		g_system->delayMillis(10);

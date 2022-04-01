@@ -23,6 +23,7 @@
 #define CHEWY_SOUND_H
 
 #include "audio/mixer.h"
+#include "chewy/atds.h"
 #include "chewy/chewy.h"
 
 namespace Chewy {
@@ -36,25 +37,26 @@ public:
 	Sound(Audio::Mixer *mixer);
 	virtual ~Sound();
 
-	void playSound(int num, bool loop = false, uint channel = 0);
-	void playSound(byte *data, uint32 size, bool loop = false, uint channel = 0, DisposeAfterUse::Flag dispose = DisposeAfterUse::YES);
+	void playSound(int num, uint channel = 0, bool loop = false);
+	void playSound(uint8 *data, uint32 size, uint channel = 0, bool loop = false, DisposeAfterUse::Flag dispose = DisposeAfterUse::YES);
 	void pauseSound(uint channel);
 	void resumeSound(uint channel);
-	void stopSound(uint channel);
+	void stopSound(uint channel = 0);
+	void stopAllSounds();
 	bool isSoundActive(uint channel);
 	void setSoundVolume(uint volume);
 	void setSoundChannelVolume(uint channel, uint volume);
-	void setSoundChannelBalance(uint channel, uint balance);
+	void setSoundChannelBalance(uint channel, int8 balance);
 
 	void playMusic(int num, bool loop = false);
-	void playMusic(byte *data, uint32 size, bool loop = false, DisposeAfterUse::Flag dispose = DisposeAfterUse::YES);
+	void playMusic(uint8 *data, uint32 size, bool loop = false, DisposeAfterUse::Flag dispose = DisposeAfterUse::YES);
 	void pauseMusic();
 	void resumeMusic();
 	void stopMusic();
 	bool isMusicActive();
 	void setMusicVolume(uint volume);
 
-	void playSpeech(int num);
+	void playSpeech(int num, bool waitForFinish);
 	void pauseSpeech();
 	void resumeSpeech();
 	void stopSpeech();
@@ -62,6 +64,28 @@ public:
 	void setSpeechVolume(uint volume);
 
 	void stopAll();
+
+	/**
+	 * Helper method to wait until any playing speech is finished
+	 */
+	void waitForSpeechToFinish();
+
+	/**
+	 * Returns the speech, subtitles mode from the ScummVM config
+	 */
+	DisplayMode getSpeechSubtitlesMode() const;
+
+	bool soundEnabled() const;
+	void toggleSound(bool enable);
+
+	bool musicEnabled() const;
+	void toggleMusic(bool enable);
+
+	bool speechEnabled() const;
+	void toggleSpeech(bool enable);
+
+	bool subtitlesEnabled() const;
+	void toggleSubtitles(bool enable);
 
 private:
 	Audio::Mixer *_mixer;
@@ -72,7 +96,7 @@ private:
 	SoundResource *_speechRes;
 	SoundResource *_soundRes;
 
-	void convertTMFToMod(byte *tmfData, uint32 tmfSize, byte *modData, uint32 &modSize);
+	void convertTMFToMod(uint8 *tmfData, uint32 tmfSize, uint8 *modData, uint32 &modSize);
 };
 
 } // End of namespace Chewy

@@ -75,11 +75,18 @@ For a more comprehensive changelog of the latest experimental code, see:
    - It is now possible to replace the music in the floppy versions of Loom
      with audio tracks. The ScummVM Wiki has a list of which parts of the Swan
      Lake ballet the game uses.
+   - Some enhancements that ScummVM makes to games can now be disabled in the
+     game's settings. The old option to use correct character spacing in the
+     16-color Mac version of Indiana Jones and the Last Crusade is now included
+     in this setting instead.
 
  Sherlock:
    - Fixed slowdown in Serrated Scalpel intro when playing the game from a small
      installation.
    - Fixed UI glitches in Serrated Scalpel.
+
+ Titanic:
+   - Fixed not being able to see House in Starfield puzzle.
 
  TwinE:
    - Fixed a bug in the collision code that made the game unfinishable due to the

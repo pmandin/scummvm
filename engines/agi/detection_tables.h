@@ -951,6 +951,8 @@ static const AGIGameDescription gameDescriptions[] = {
 
 	FANMADE("Go West, Young Hippie", "ff31484ea465441cb5f3a0f8e956b716"),
 	FANMADE("Good Man (demo v3.41)", "3facd8a8f856b7b6e0f6c3200274d88c"),
+	FANMADE("Good Man (demo v4.0)", "d36f5d98cfcfd28cf7d4103906c59a77"),
+	FANMADE("Good Man (demo v4.0T)", "8184f70a5a33d4f407dfc8e9ddab99e9"),
 
 	GAME_LVFPNF("agi-fanmade", "Groza [AGDS sample]", "logdir", "421da3a18004122a966d64ab6bd86d2e", -1,
 	            Common::RU_RUS, 0x2440, GF_AGDS, GID_FANMADE, Common::kPlatformDOS, GType_V2, GAMEOPTIONS_DEFAULT), // Гроза
@@ -1074,6 +1076,7 @@ static const AGIGameDescription gameDescriptions[] = {
 	FANMADE("Tex McPhilip 1 - Quest For The Papacy", "3c74b9a24b51aa8020ac82bee3132266"),
 	FANMADE("Tex McPhilip 2 - Road To Divinity (v1.5)", "7387e8df854440bc26620ca0ea43af9a"),
 	FANMADE("Tex McPhilip 3 - A Destiny of Sin (Demo v0.25)", "992d12031a486ad84e592ff5d7c9d782"),
+	FANMADE("Tex McPhilip 3 - A Destiny of Sin (v1.02)", "587d15e1106e59c33053c01b301ffe05"),
 	FANMADE("The 13th Disciple (v1.00)", "887719ad59afce9a41ec057dbb73ad73"),
 	FANMADE("The 13th Disciple (v1.01)", "58e3ec1b9ac1a79901c472aaa59db832"),
 	FANMADE("The Adventures of a Crazed Hermit", "6e3086cbb794d3299a9c5a9792295511"),

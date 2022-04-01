@@ -33,7 +33,7 @@ The first step is to download the repository containing the code required to bui
 
 .. code-block:: bash
 
-    git clone --depth 1 -b branch-2-2-0 https://github.com/scummvm/scummvm.git
+    git clone https://github.com/scummvm/scummvm.git
 
 .. tip::
 
@@ -76,7 +76,7 @@ It's time to generate the Xcode project. Run the following on the command line:
 
 .. code::
 
-    ../scummvm/devtools/create_project/xcode/build/Release/create_project ../scummvm --xcode --enable-fluidsynth --disable-nasm --disable-opengl --disable-theora --disable-taskbar --disable-tts --disable-fribidi
+    ../scummvm/devtools/create_project/xcode/build/Release/create_project ../scummvm --xcode --enable-fluidsynth --disable-nasm --disable-opengl --disable-theoradec --disable-taskbar --disable-tts --disable-fribidi
 
 The resulting directory structure looks like this:
 

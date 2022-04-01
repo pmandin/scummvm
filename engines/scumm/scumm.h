@@ -314,6 +314,8 @@ public:
 	/** Central resource data. */
 	ResourceManager *_res;
 
+	bool _enableEnhancements;
+
 protected:
 	VirtualMachineState vm;
 
@@ -380,7 +382,7 @@ public:
 protected:
 	virtual void parseEvent(Common::Event event);
 
-	void waitForTimer(int msec_delay);
+	int waitForTimer(int msec_delay);
 	virtual void processInput();
 	virtual void processKeyboard(Common::KeyState lastKeyHit);
 	virtual void clearClickedStatus();
@@ -1397,6 +1399,7 @@ protected:
 	int _numCyclRects;
 	int _scrollRequest;
 	int _scrollDeltaAdjust;
+	bool _scrollNeedDeltaAdjust;
 	int _refreshDuration[20];
 	int _refreshArrayPos;
 	bool _refreshNeedCatchUp;

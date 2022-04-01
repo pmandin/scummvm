@@ -51,7 +51,6 @@ public:
 	bool transparent;
 	bool loop;
 	HypnoSmackerDecoder *decoder;
-	const Graphics::Surface *currentFrame;
 };
 
 typedef Common::Array<MVideo> Videos;
@@ -63,7 +62,7 @@ enum HotspotType {
 
 enum ActionType {
 	MiceAction,
-	TimerAction,	
+	TimerAction,
 	PaletteAction,
 	BackgroundAction,
 	OverlayAction,
@@ -372,7 +371,7 @@ public:
 	Shoot() {
 		destroyed = false;
 		video = nullptr;
-		timesToShoot = 0;
+		timesToShoot = 1;
 		pointsToShoot = 0;
 		attackWeight = 0;
 		paletteOffset = 0;
@@ -381,7 +380,9 @@ public:
 		objMissesCount = 0;
 		animation = "NONE";
 		explosionAnimation = "";
+		startFrame = 0;
 		lastFrame = 1024;
+		noEnemySound = false;
 	}
 	Common::String name;
 	Filename animation;
@@ -403,6 +404,7 @@ public:
 	uint32 paletteSize;
 
 	// Sounds
+	Filename enemySound;
 	Filename deathSound;
 	Filename hitSound;
 
@@ -410,9 +412,11 @@ public:
 	Common::List<uint32> attackFrames;
 	Common::Array<FrameInfo> bodyFrames;
 	Common::Array<FrameInfo> explosionFrames;
+	uint32 startFrame;
 	uint32 lastFrame;
 	Filename explosionAnimation;
 	bool destroyed;
+	bool noEnemySound;
 };
 
 typedef Common::Array<Shoot> Shoots;
@@ -470,7 +474,6 @@ public:
 	ArcadeShooting()  {
 		type = ArcadeLevel;
 		health = 100;
-		transitionTime = 0;
 		id = 0;
 		objKillsRequired[0] = 0;
 		objKillsRequired[1] = 0;
@@ -481,7 +484,7 @@ public:
 	uint32 id;
 	uint32 frameDelay;
 	Common::String mode;
-	uint32 transitionTime;
+	Common::List<uint32> transitionTimes;
 	Segments segments;
 
 	// Objectives
@@ -489,13 +492,18 @@ public:
 	uint32 objMissesAllowed [2];
 
 	// Videos
-	Filename transitionVideo;
-	Filename transitionPalette;
+	Common::List<Filename> transitionVideos;
+	Common::List<Filename> transitionPalettes;
 	Filename nextLevelVideo;
 	Filename defeatNoEnergyFirstVideo;
 	Filename defeatNoEnergySecondVideo;
 	Filename defeatMissBossVideo;
+	Filename hitBoss1Video;
+	Filename missBoss1Video;
+	Filename hitBoss2Video;
+	Filename missBoss2Video;
 	Filename beforeVideo;
+	Filename additionalVideo;
 	Filename briefingVideo;
 
 	Filename backgroundVideo;
@@ -526,7 +534,7 @@ public:
 		frameNumber = 0;
 		frameImage = "";
 	}
-	
+
 	Transition(Common::String easy, Common::String hard)  {
 		type = TransitionLevel;
 		levelEasy = easy;

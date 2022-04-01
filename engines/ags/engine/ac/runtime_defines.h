@@ -118,7 +118,6 @@ const int LegacyRoomVolumeFactor = 30;
 #define FOR_SCRIPT    2
 #define FOR_EXITLOOP  3
 #define CHMLSOFFS (MAX_ROOM_OBJECTS+1)    // reserve this many movelists for objects & stuff
-#define MAX_SCREEN_OVERLAYS 20
 #define abort_all_conditions _G(restrict_until)
 #define MAX_SCRIPT_AT_ONCE 10
 #define EVENT_NONE       0
@@ -139,11 +138,6 @@ const int LegacyRoomVolumeFactor = 30;
 #define TURNING_BACKWARDS 10000
 
 #define MAX_PLUGIN_OBJECT_READERS 50
-
-#define TRANS_ALPHA_CHANNEL 20000
-#define TRANS_OPAQUE        20001
-#define TRANS_RUN_PLUGIN    20002
-
 
 #define LOCTYPE_HOTSPOT 1
 #define LOCTYPE_CHAR 2

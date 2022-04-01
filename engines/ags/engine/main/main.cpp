@@ -20,7 +20,6 @@
  */
 
 #include "ags/shared/core/platform.h"
-#define AGS_PLATFORM_DEFINES_PSP_VARS (AGS_PLATFORM_OS_IOS || AGS_PLATFORM_OS_ANDROID)
 #include "ags/lib/std/set.h"
 #include "ags/lib/allegro.h" // allegro_exit
 #include "ags/shared/ac/common.h"
@@ -51,16 +50,6 @@ namespace AGS3 {
 using namespace AGS::Shared;
 using namespace AGS::Engine;
 
-void main_pre_init() {
-	_G(our_eip) = -999;
-	_GP(AssetMgr)->SetSearchPriority(Shared::kAssetPriorityDir);
-	_GP(play).takeover_data = 0;
-}
-
-void main_create_platform_driver() {
-	_G(platform) = AGSPlatformDriver::GetDriver();
-}
-
 // this needs to be updated if the "play" struct changes
 #define SVG_VERSION_BWCOMPAT_MAJOR      3
 #define SVG_VERSION_BWCOMPAT_MINOR      2
@@ -74,6 +63,8 @@ void main_create_platform_driver() {
 #define SVG_VERSION_FWCOMPAT_REVISION   1111
 
 void main_init(int argc, const char *argv[]) {
+	_G(our_eip) = -999;
+
 	// Init libraries: set text encoding
 	set_uformat(U_UTF8);
 	set_filename_encoding(U_UNICODE);
@@ -85,13 +76,12 @@ void main_init(int argc, const char *argv[]) {
 	_G(SavedgameLowestBackwardCompatVersion) = Version(SVG_VERSION_BWCOMPAT_MAJOR, SVG_VERSION_BWCOMPAT_MINOR, SVG_VERSION_BWCOMPAT_RELEASE, SVG_VERSION_BWCOMPAT_REVISION);
 	_G(SavedgameLowestForwardCompatVersion) = Version(SVG_VERSION_FWCOMPAT_MAJOR, SVG_VERSION_FWCOMPAT_MINOR, SVG_VERSION_FWCOMPAT_RELEASE, SVG_VERSION_FWCOMPAT_REVISION);
 
-	_GP(AssetMgr).reset(new AssetManager());
-	main_pre_init();
-	main_create_platform_driver();
-	_G(platform)->MainInitAdjustments();
+	_G(platform) = AGSPlatformDriver::GetDriver();
+	_G(platform)->SetCommandArgs(argv, argc);
+	_G(platform)->MainInit();
 
-	_G(global_argv) = argv;
-	_G(global_argc) = argc;
+	_GP(AssetMgr).reset(new AssetManager());
+	_GP(AssetMgr)->SetSearchPriority(Shared::kAssetPriorityDir);
 }
 
 String get_engine_string() {
@@ -190,7 +180,6 @@ void main_print_help() {
 }
 
 int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
-	int datafile_argv = 0;
 	for (int ee = 1; ee < argc; ++ee) {
 		const char *arg = argv[ee];
 		//
@@ -219,12 +208,15 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 		} else if ((ags_stricmp(arg, "--enabledebugger") == 0) && (argc > ee + 1)) {
 			strcpy(_G(editor_debugger_instance_token), argv[ee + 1]);
 			_G(editor_debugging_enabled) = 1;
-			_G(force_window) = 1;
 			ee++;
 		} else if (ags_stricmp(arg, "--conf") == 0 && (argc > ee + 1)) {
 			_GP(usetup).conf_path = argv[++ee];
 		} else if (ags_stricmp(arg, "--localuserconf") == 0) {
 			_GP(usetup).local_user_conf = true;
+		} else if (ags_stricmp(arg, "--localuserconf") == 0) {
+			_GP(usetup).user_conf_dir = ".";
+		} else if ((ags_stricmp(arg, "--user-conf-dir") == 0) && (argc > ee + 1)) {
+			_GP(usetup).user_conf_dir = argv[++ee];
 		} else if (ags_stricmp(arg, "--runfromide") == 0 && (argc > ee + 4)) {
 			_GP(usetup).install_dir = argv[ee + 1];
 			_GP(usetup).opt_data_dir = argv[ee + 2];
@@ -252,9 +244,9 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 		else if ((ags_stricmp(arg, "--shared-data-dir") == 0) && (argc > ee + 1))
 			cfg["misc"]["shared_data_dir"] = argv[++ee];
 		else if (ags_stricmp(arg, "--windowed") == 0)
-			_G(force_window) = 1;
+			cfg["graphics"]["windowed"] = "1";
 		else if (ags_stricmp(arg, "--fullscreen") == 0)
-			_G(force_window) = 2;
+			cfg["graphics"]["windowed"] = "0";
 		else if ((ags_stricmp(arg, "--gfxdriver") == 0) && (argc > ee + 1)) {
 			INIwritestring(cfg, "graphics", "driver", argv[++ee]);
 		} else if ((ags_stricmp(arg, "--gfxfilter") == 0) && (argc > ee + 1)) {
@@ -283,18 +275,10 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 			else
 				cfg["log"][logarg] = "";
 		}
-		//
-		// Special case: data file location
-		//
-		else if (arg[0] != '-') datafile_argv = ee;
 	}
 
-	if (datafile_argv > 0) {
-		_G(cmdGameDataPath) = GetPathFromCmdArg(datafile_argv);
-	} else {
-		// assign standard path for mobile/consoles (defined in their own platform implementation)
-		_G(cmdGameDataPath) = _G(psp_game_file_name);
-	}
+	// assign standard path (defined in their own platform implementation)
+	_G(cmdGameDataPath) = _G(psp_game_file_name);
 
 	if (_G(tellInfoKeys).size() > 0)
 		_G(justTellInfo) = true;
@@ -303,7 +287,7 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 }
 
 void main_set_gamedir(int argc, const char *argv[]) {
-	_G(appPath) = GetPathFromCmdArg(0);
+	_G(appPath) = Path::MakeAbsolutePath(_G(platform)->GetCommandArg(0));
 	_G(appDirectory) = Path::GetDirectoryPath(_G(appPath));
 
 	// TODO: remove following when supporting unicode paths
@@ -320,16 +304,6 @@ void main_set_gamedir(int argc, const char *argv[]) {
 		else
 			Debug::Printf(kDbgMsg_Error, "Unable to determine current directory: GetPathInASCII failed.\nArg: %s", cur_dir.GetCStr());
 	}
-}
-
-String GetPathFromCmdArg(int arg_index) {
-	if (arg_index < 0 || arg_index >= _G(global_argc))
-		return "";
-	String path = Path::GetCmdLinePathInASCII(_G(global_argv)[arg_index], arg_index);
-	if (!path.IsEmpty())
-		return Path::MakeAbsolutePath(path);
-	Debug::Printf(kDbgMsg_Error, "Unable to determine path: GetCmdLinePathInASCII failed.\nCommand line argument %i: %s", arg_index, _G(global_argv)[arg_index]);
-	return _G(global_argv)[arg_index];
 }
 
 } // namespace AGS3

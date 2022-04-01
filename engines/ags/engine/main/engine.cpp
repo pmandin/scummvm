@@ -84,6 +84,7 @@ using namespace AGS::Engine;
 
 bool engine_init_backend() {
 	_G(our_eip) = -199;
+	_G(platform)->PreBackendInit();
 	// Initialize SDL
 	Debug::Printf(kDbgMsg_Info, "Initializing backend libs");
 	if (sys_main_init()) {
@@ -174,18 +175,6 @@ bool engine_run_setup(const ConfigTree &cfg, int &app_res) {
 	return true;
 }
 
-void engine_force_window() {
-	// Force to run in a window, override the config file
-	// TODO: actually overwrite config tree instead
-	if (_G(force_window) == 1) {
-		_GP(usetup).Screen.DisplayMode.Windowed = true;
-		_GP(usetup).Screen.DisplayMode.ScreenSize.SizeDef = kScreenDef_ByGameScaling;
-	} else if (_G(force_window) == 2) {
-		_GP(usetup).Screen.DisplayMode.Windowed = false;
-		_GP(usetup).Screen.DisplayMode.ScreenSize.SizeDef = kScreenDef_MaxDisplay;
-	}
-}
-
 // Scans given directory for the AGS game config. If such config exists
 // and it contains data file name, then returns one.
 // Otherwise returns empty string.
@@ -214,9 +203,9 @@ String search_for_game_data_file(String &was_searching_in) {
 	              _G(cmdGameDataPath).GetCStr());
 	// 1. From command line argument, which may be a directory or actual file
 	if (!_G(cmdGameDataPath).IsEmpty()) {
-		if (Path::IsFile(_G(cmdGameDataPath)))
+		if (File::IsFile(_G(cmdGameDataPath)))
 			return _G(cmdGameDataPath); // this path is a file
-		if (!Path::IsDirectory(_G(cmdGameDataPath)))
+		if (!File::IsDirectory(_G(cmdGameDataPath)))
 			return ""; // path is neither file nor directory
 		was_searching_in = _G(cmdGameDataPath);
 		Debug::Printf("Searching in (cmd arg): %s", was_searching_in.GetCStr());
@@ -278,43 +267,22 @@ void engine_init_mouse() {
 }
 
 void engine_locate_speech_pak() {
-	_GP(play).want_speech = -2;
-
-	if (!_GP(usetup).no_speech_pack) {
-		String speech_file = "speech.vox";
-		String speech_filepath = find_assetlib(speech_file);
-		if (!speech_filepath.IsEmpty()) {
-			Debug::Printf("Initializing speech vox");
-			if (_GP(AssetMgr)->AddLibrary(speech_filepath) != Shared::kAssetNoError) {
-				_G(platform)->DisplayAlert("Unable to read voice pack, file could be corrupted or of unknown format.\nSpeech voice-over will be disabled.");
-				return;
-			}
-
-			Debug::Printf(kDbgMsg_Info, "Voice pack found and initialized.");
-			_GP(play).want_speech = 1;
-		} else if (Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).VoiceDir2) != 0) {
-			// If we have custom voice directory set, we will enable voice-over even if speech.vox does not exist
-			Debug::Printf(kDbgMsg_Info, "Voice pack was not found, but explicit voice directory is defined: enabling voice-over.");
-			_GP(play).want_speech = 1;
-		}
-		_GP(ResPaths).SpeechPak.Name = speech_file;
-		_GP(ResPaths).SpeechPak.Path = speech_filepath;
-	}
+	init_voicepak("");
 }
 
 void engine_locate_audio_pak() {
-	_GP(play).separate_music_lib = 0;
+	_GP(play).separate_music_lib = false;
 	String music_file = _GP(game).GetAudioVOXName();
 	String music_filepath = find_assetlib(music_file);
 	if (!music_filepath.IsEmpty()) {
 		if (_GP(AssetMgr)->AddLibrary(music_filepath) == kAssetNoError) {
 			Debug::Printf(kDbgMsg_Info, "%s found and initialized.", music_file.GetCStr());
-			_GP(play).separate_music_lib = 1;
+			_GP(play).separate_music_lib = true;
 			_GP(ResPaths).AudioPak.Name = music_file;
 			_GP(ResPaths).AudioPak.Path = music_filepath;
 		} else {
 			_G(platform)->DisplayAlert("Unable to initialize digital audio pack '%s', file could be corrupt or of unsupported format.",
-			                           music_file.GetCStr());
+				music_file.GetCStr());
 		}
 	} else if (Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).AudioDir2) != 0) {
 		Debug::Printf(kDbgMsg_Info, "Audio pack was not found, but explicit audio directory is defined.");
@@ -367,9 +335,8 @@ void engine_init_audio() {
 
 	if (_GP(usetup).audio_backend == 0) {
 		// all audio is disabled
-		// and the voice mode should not go to Voice Only
-		_GP(play).want_speech = -2;
-		_GP(play).separate_music_lib = 0;
+		_GP(play).voice_avail = false;
+		_GP(play).separate_music_lib = false;
 	}
 }
 
@@ -427,26 +394,25 @@ int engine_check_register_game() {
 	return 0;
 }
 
+// Replace special tokens inside a user path option
+static void resolve_configured_path(String &option) {
+	option.Replace("$GAMENAME$", _GP(game).gamename);
+}
+
 // Setup paths and directories that may be affected by user configuration
 void engine_init_user_directories() {
+	resolve_configured_path(_GP(usetup).user_data_dir);
+	resolve_configured_path(_GP(usetup).shared_data_dir);
+
+	if (!_GP(usetup).user_conf_dir.IsEmpty())
+		Debug::Printf(kDbgMsg_Info, "User config directory: %s", _GP(usetup).user_conf_dir.GetCStr());
 	if (!_GP(usetup).user_data_dir.IsEmpty())
 		Debug::Printf(kDbgMsg_Info, "User data directory: %s", _GP(usetup).user_data_dir.GetCStr());
 	if (!_GP(usetup).shared_data_dir.IsEmpty())
 		Debug::Printf(kDbgMsg_Info, "Shared data directory: %s", _GP(usetup).shared_data_dir.GetCStr());
 
-	// if end-user specified custom save path, use it
-	bool res = false;
-	if (!_GP(usetup).user_data_dir.IsEmpty()) {
-		res = SetCustomSaveParent(_GP(usetup).user_data_dir);
-		if (!res) {
-			Debug::Printf(kDbgMsg_Warn, "WARNING: custom user save path failed, using default system paths");
-			res = false;
-		}
-	}
-	// if there is no custom path, or if custom path failed, use default system path
-	if (!res) {
-		SetSaveGameDirectoryPath(Path::ConcatPaths(UserSavedgamesRootToken, _GP(game).saveGameFolderName));
-	}
+	// Initialize default save directory early, for we'll need it to set restart point
+	SetDefaultSaveDirectory();
 }
 
 #if AGS_PLATFORM_OS_ANDROID
@@ -512,7 +478,7 @@ int engine_check_disk_space() {
 
 int engine_check_font_was_loaded() {
 	if (!font_first_renderer_loaded()) {
-		_G(platform)->DisplayAlert("No game fonts found. At least one font is required to run the game.");
+		_G(platform)->DisplayAlert("No game fonts found. At least one font is required to run the _GP(game).");
 		_G(proper_exit) = 1;
 		return EXIT_ERROR;
 	}
@@ -577,9 +543,6 @@ void engine_init_game_settings() {
 
 	int ee;
 
-	for (ee = 0; ee < MAX_ROOM_OBJECTS + _GP(game).numcharacters; ee++)
-		_G(actsps)[ee] = nullptr;
-
 	for (ee = 0; ee < 256; ee++) {
 		if (_GP(game).paluses[ee] != PAL_BACKGROUND)
 			_G(palette)[ee] = _GP(game).defpal[ee];
@@ -602,9 +565,6 @@ void engine_init_game_settings() {
 	if (_G(playerchar)->view >= 0)
 		precache_view(_G(playerchar)->view);
 
-	for (ee = 0; ee < MAX_ROOM_OBJECTS; ee++)
-		_G(objcache)[ee].image = nullptr;
-
 	/*  dummygui.guiId = -1;
 	dummyguicontrol.guin = -1;
 	dummyguicontrol.objn = -1;*/
@@ -624,8 +584,8 @@ void engine_init_game_settings() {
 		_GP(game).chars[ee].activeinv = -1;
 		_GP(game).chars[ee].following = -1;
 		_GP(game).chars[ee].followinfo = 97 | (10 << 8);
-		_GP(game).chars[ee].idletime = 20; // can be overridden later with SetIdle or summink
-		_GP(game).chars[ee].idleleft = _GP(game).chars[ee].idletime;
+		if (_G(loaded_game_file_version) < kGameVersion_360)
+			_GP(game).chars[ee].idletime = 20; // default to 20 seconds		_GP(game).chars[ee].idleleft = _GP(game).chars[ee].idletime;
 		_GP(game).chars[ee].transparency = 0;
 		_GP(game).chars[ee].baseline = -1;
 		_GP(game).chars[ee].walkwaitcounter = 0;
@@ -636,20 +596,13 @@ void engine_init_game_settings() {
 			// set initial loop to 0
 			_GP(game).chars[ee].loop = 0;
 			// or to 1 if they don't have up/down frames
-			if (_G(views)[_GP(game).chars[ee].view].loops[0].numFrames < 1)
+			if (_GP(views)[_GP(game).chars[ee].view].loops[0].numFrames < 1)
 				_GP(game).chars[ee].loop = 1;
 		}
 		_G(charextra)[ee].process_idle_this_time = 0;
 		_G(charextra)[ee].invorder_count = 0;
 		_G(charextra)[ee].slow_move_counter = 0;
 		_G(charextra)[ee].animwait = 0;
-	}
-	// multiply up gui positions
-	_G(guibg) = (Bitmap **)malloc(sizeof(Bitmap *) * _GP(game).numgui);
-	_G(guibgbmp) = (IDriverDependantBitmap **)malloc(sizeof(IDriverDependantBitmap *) * _GP(game).numgui);
-	for (ee = 0; ee < _GP(game).numgui; ee++) {
-		_G(guibg)[ee] = nullptr;
-		_G(guibgbmp)[ee] = nullptr;
 	}
 
 	_G(our_eip) = -5;
@@ -720,6 +673,7 @@ void engine_init_game_settings() {
 	_GP(play).music_master_volume = 100 + LegacyMusicMasterVolumeAdjustment;
 	_GP(play).digital_master_volume = 100;
 	_GP(play).screen_flipped = 0;
+	_GP(play).speech_mode = kSpeech_VoiceText;
 	_GP(play).cant_skip_speech = user_to_internal_skip_speech((SkipSpeechStyle)_GP(game).options[OPT_NOSKIPTEXT]);
 	_GP(play).sound_volume = 255;
 	_GP(play).speech_volume = 255;
@@ -808,12 +762,13 @@ void engine_init_game_settings() {
 	// reset graphical script vars (they're still used by some games)
 	for (ee = 0; ee < MAXGLOBALVARS; ee++)
 		_GP(play).globalvars[ee] = 0;
-
+	for (ee = 0; ee < MAXGSVALUES; ee++)
+		_GP(play).globalscriptvars[ee] = 0;
 	for (ee = 0; ee < MAXGLOBALSTRINGS; ee++)
 		_GP(play).globalstrings[ee][0] = 0;
 
 	if (!_GP(usetup).translation.IsEmpty())
-		init_translation(_GP(usetup).translation, "", true);
+		Game_ChangeTranslation(_GP(usetup).translation.GetCStr());
 
 	update_invorder();
 	_G(displayed_room) = -10;
@@ -870,12 +825,12 @@ HError define_gamedata_location_checkall(String &data_path, String &startup_dir)
 	// First try if they provided a startup option
 	if (!_G(cmdGameDataPath).IsEmpty()) {
 		// If not a valid path - bail out
-		if (!Path::IsFileOrDir(_G(cmdGameDataPath)))
+		if (!File::IsFileOrDir(_G(cmdGameDataPath)))
 			return new Error(String::FromFormat("Provided game location is not a valid path.\n Cwd: %s\n Path: %s",
-			                                    Directory::GetCurrentDirectory().GetCStr(),
-			                                    _G(cmdGameDataPath).GetCStr()));
+			    Directory::GetCurrentDirectory().GetCStr(),
+			    _G(cmdGameDataPath).GetCStr()));
 		// If it's a file, then keep it and proceed
-		if (Path::IsFile(_G(cmdGameDataPath))) {
+		if (File::IsFile(_G(cmdGameDataPath))) {
 			Debug::Printf("Using provided game data path: %s", _G(cmdGameDataPath).GetCStr());
 			startup_dir = Path::GetDirectoryPath(_G(cmdGameDataPath));
 			data_path = _G(cmdGameDataPath);
@@ -977,13 +932,33 @@ void engine_read_config(ConfigTree &cfg) {
 	if (Path::ComparePaths(user_global_cfg_file, def_cfg_file) != 0)
 		IniUtil::Read(user_global_cfg_file, cfg);
 
+	// Handle directive to search for the user config inside the custom directory;
+		// this option may come either from command line or default/global config.
+	if (_GP(usetup).user_conf_dir.IsEmpty())
+		_GP(usetup).user_conf_dir = INIreadstring(cfg, "misc", "user_conf_dir");
+	if (_GP(usetup).user_conf_dir.IsEmpty()) // also try deprecated option
+		_GP(usetup).user_conf_dir = INIreadint(cfg, "misc", "localuserconf") != 0 ? "." : "";
+	// Test if the file is writeable, if it is then both engine and setup
+	// applications may actually use it fully as a user config, otherwise
+	// fallback to default behavior.
+	if (!_GP(usetup).user_conf_dir.IsEmpty()) {
+		resolve_configured_path(_GP(usetup).user_conf_dir);
+		if (Path::IsRelativePath(_GP(usetup).user_conf_dir))
+			_GP(usetup).user_conf_dir = Path::ConcatPaths(_GP(usetup).startup_dir, _GP(usetup).user_conf_dir);
+		if (!Directory::CreateDirectory(_GP(usetup).user_conf_dir) ||
+			!File::TestWriteFile(Path::ConcatPaths(_GP(usetup).user_conf_dir, DefaultConfigFileName))) {
+			Debug::Printf(kDbgMsg_Warn, "Write test failed at user config dir '%s', using default path.",
+				_GP(usetup).user_conf_dir.GetCStr());
+			_GP(usetup).user_conf_dir = "";
+		}
+	}
+
 	// Handle directive to search for the user config inside the game directory;
 	// this option may come either from command line or default/global config.
 	_GP(usetup).local_user_conf |= INIreadint(cfg, "misc", "localuserconf", 0) != 0;
-	if (_GP(usetup).local_user_conf) {
-		// Test if the file is writeable, if it is then both engine and setup
-		// applications may actually use it fully as a user config, otherwise
-		// fallback to default behavior.
+	if (_GP(usetup).local_user_conf) { // Test if the file is writeable, if it is then both engine and setup
+	  // applications may actually use it fully as a user config, otherwise
+	  // fallback to default behavior.
 		_GP(usetup).local_user_conf = File::TestWriteFile(def_cfg_file);
 	}
 
@@ -1112,7 +1087,6 @@ int initialize_engine(const ConfigTree &startup_opts) {
 	}
 	// Set up game options from user config
 	engine_set_config(cfg);
-	engine_force_window();
 	if (_G(justTellInfo)) {
 		engine_print_info(_G(tellInfoKeys), &cfg);
 		return EXIT_NORMAL;
@@ -1224,11 +1198,10 @@ int initialize_engine(const ConfigTree &startup_opts) {
 
 	initialize_start_and_play_game(_G(override_start_room), _G(loadSaveGameOnStartup));
 
-	quit("|bye!");
 	return EXIT_NORMAL;
 }
 
-bool engine_try_set_gfxmode_any(const ScreenSetup &setup) {
+bool engine_try_set_gfxmode_any(const DisplayModeSetup &setup) {
 	engine_shutdown_gfxmode();
 
 	const Size init_desktop = get_desktop_size();
@@ -1246,16 +1219,16 @@ bool engine_try_switch_windowed_gfxmode() {
 
 	// Keep previous mode in case we need to revert back
 	DisplayMode old_dm = _G(gfxDriver)->GetDisplayMode();
-	GameFrameSetup old_frame = graphics_mode_get_render_frame();
+	FrameScaleDef old_frame = graphics_mode_get_render_frame();
 
 	// Release engine resources that depend on display mode
 	engine_pre_gfxmode_release();
 
 	Size init_desktop = get_desktop_size();
-	bool switch_to_windowed = !old_dm.Windowed;
-	ActiveDisplaySetting setting = graphics_mode_get_last_setting(switch_to_windowed);
+	bool windowed = !old_dm.IsWindowed();
+	ActiveDisplaySetting setting = graphics_mode_get_last_setting(windowed);
 	DisplayMode last_opposite_mode = setting.Dm;
-	GameFrameSetup use_frame_setup = setting.FrameSetup;
+	FrameScaleDef frame = setting.Frame;
 
 	// If there are saved parameters for given mode (fullscreen/windowed)
 	// then use them, if there are not, get default setup for the new mode.
@@ -1263,27 +1236,26 @@ bool engine_try_switch_windowed_gfxmode() {
 	if (last_opposite_mode.IsValid()) {
 		res = graphics_mode_set_dm(last_opposite_mode);
 	} else {
-		// we need to clone from initial config, because not every parameter is set by graphics_mode_get_defaults()
-		DisplayModeSetup dm_setup = _GP(usetup).Screen.DisplayMode;
-		dm_setup.Windowed = !old_dm.Windowed;
-		graphics_mode_get_defaults(dm_setup.Windowed, dm_setup.ScreenSize, use_frame_setup);
-		res = graphics_mode_set_dm_any(_GP(game).GetGameRes(), dm_setup, old_dm.ColorDepth, use_frame_setup);
+		WindowSetup ws = windowed ? _GP(usetup).Screen.WinSetup : _GP(usetup).Screen.FsSetup;
+		frame = windowed ? _GP(usetup).Screen.WinGameFrame : _GP(usetup).Screen.FsGameFrame;
+		res = graphics_mode_set_dm_any(_GP(game).GetGameRes(), ws, old_dm.ColorDepth,
+			frame, _GP(usetup).Screen.Params);
 	}
 
 	// Apply corresponding frame render method
 	if (res)
-		res = graphics_mode_set_render_frame(use_frame_setup);
+		res = graphics_mode_set_render_frame(frame);
 
 	if (!res) {
 		// If failed, try switching back to previous gfx mode
 		res = graphics_mode_set_dm(old_dm) &&
-		      graphics_mode_set_render_frame(old_frame);
+			graphics_mode_set_render_frame(old_frame);
 	}
 
 	if (res) {
 		// If succeeded (with any case), update engine objects that rely on
 		// active display mode.
-		if (_G(gfxDriver)->GetDisplayMode().Windowed)
+		if (!_G(gfxDriver)->GetDisplayMode().IsRealFullscreen())
 			init_desktop = get_desktop_size();
 		engine_post_gfxmode_setup(init_desktop);
 	}

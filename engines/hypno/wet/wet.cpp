@@ -21,7 +21,7 @@
 
 #include "common/bitarray.h"
 #include "common/events.h"
-#include "common/config-manager.h"
+#include "common/savefile.h"
 
 #include "hypno/hypno.h"
 
@@ -30,10 +30,10 @@ namespace Hypno {
 static const chapterEntry rawChapterTable[] = {
 	{11, {44, 172}, {218, 172}, {0,   0}}, 		// c11
 	{10, {19, 3},   {246, 3}, 	{246, 11}}, 	// c10
-	{20, {44, 172}, {218, 172}, {0,   0}}, 		// c20
 	{21, {70, 160}, {180, 160}, {220, 185}}, 	// c21
 	{22, {70, 160}, {180, 160}, {220, 185}}, 	// c22
 	{23, {70, 160}, {180, 160}, {220, 185}}, 	// c23
+	{20, {128, 150}, {238, 150},{0,   0}}, 		// c20
 	{31, {70, 160}, {180, 160}, {220, 185}}, 	// c31
 	{32, {70, 160}, {180, 160}, {220, 185}}, 	// c32
 	{33, {70, 160}, {180, 160}, {220, 185}}, 	// c33
@@ -42,7 +42,7 @@ static const chapterEntry rawChapterTable[] = {
 	{42, {70, 160}, {180, 160}, {220, 185}}, 	// c42
 	{43, {70, 160}, {180, 160}, {220, 185}}, 	// c43
 	{44, {70, 160}, {180, 160}, {220, 185}}, 	// c44
-	{40, {70, 160}, {180, 160}, {220, 185}}, 	// c40
+	{40, {19, 3},   {246, 3}, 	{246, 11}}, 	// c40
 	{51, {60, 167}, {190, 167}, {135, 187}}, 	// c51
 	{52, {60, 167}, {190, 167}, {135, 187}}, 	// c52
 	{50, {19, 3},   {246, 3}, 	{246, 11}}, 	// c50 (fixed)
@@ -55,9 +55,14 @@ WetEngine::WetEngine(OSystem *syst, const ADGameDescription *gd) : HypnoEngine(s
 	_screenW = 320;
 	_screenH = 200;
 	_lives = 2;
- 
+	_lastLevel = 0;
+
+	_c40SegmentIdx = -1;
+	_c40lastTurn = -1;
+
     const chapterEntry *entry = rawChapterTable;
     while (entry->id) {
+		_ids.push_back(entry->id);
 		_chapterTable[entry->id] = entry;
 		entry++;
     }
@@ -126,7 +131,14 @@ void WetEngine::loadAssetsDemoDisc() {
 	start->hots = hs;
 	_levels["<start>"] = start;
 
-	Transition *intro = new Transition("c31");
+	Transition *intro;
+	if (_language == Common::EN_USA)
+		intro = new Transition("c31");
+	else if (_language == Common::HE_ISR)
+		intro = new Transition("c31.mis");
+	else
+		error("Unsupported language");
+
 	intro->intros.push_back("movie/nw_logo.smk");
 	intro->intros.push_back("movie/hypnotix.smk");
 	intro->intros.push_back("movie/wetlogo.smk");
@@ -243,11 +255,15 @@ void WetEngine::loadAssetsFullGame() {
 	_levels["<main_menu>"] = menu;
 	_levels["<main_menu>"]->levelIfWin = "<intros>";
 
+	Code *level_menu = new Code("<level_menu>");
+	_levels["<level_menu>"] = level_menu;
+	_levels["<level_menu>"]->levelIfWin = "?";
+
 	Transition *over = new Transition("<quit>");
 	over->intros.push_back("c_misc/gameover.smk");
 	_levels["<game_over>"] = over;
 
-	Transition *intros = new Transition("c11");
+	Transition *intros = new Transition("<level_menu>");
 	intros->intros.push_back("c_misc/stardate.smk");
 	intros->intros.push_back("c_misc/intros.smk");
 	intros->intros.push_back("c_misc/confs.smk");
@@ -255,6 +271,9 @@ void WetEngine::loadAssetsFullGame() {
 
 	Code *check_lives = new Code("<check_lives>");
 	_levels["<check_lives>"] = check_lives;
+
+	Code *end_credits = new Code("<credits>");
+	_levels["<credits>"] = end_credits;
 
 	loadArcadeLevel("c110.mi_", "c10", "<check_lives>", "");
 	loadArcadeLevel("c111.mi_", "c10", "<check_lives>", "");
@@ -284,9 +303,9 @@ void WetEngine::loadAssetsFullGame() {
 	loadArcadeLevel("c311.mi_", "c32", "<check_lives>", "");
 	loadArcadeLevel("c312.mi_", "c32", "<check_lives>", "");
 
-	loadArcadeLevel("c320.mi_", "c41", "<check_lives>", "");
-	loadArcadeLevel("c321.mi_", "c41", "<check_lives>", "");
-	loadArcadeLevel("c322.mi_", "c41", "<check_lives>", "");
+	loadArcadeLevel("c320.mi_", "c33", "<check_lives>", "");
+	loadArcadeLevel("c321.mi_", "c33", "<check_lives>", "");
+	loadArcadeLevel("c322.mi_", "c33", "<check_lives>", "");
 
 	loadArcadeLevel("c330.mi_", "c30", "<check_lives>", "");
 	loadArcadeLevel("c331.mi_", "c30", "<check_lives>", "");
@@ -316,9 +335,9 @@ void WetEngine::loadAssetsFullGame() {
 	loadArcadeLevel("c431.mi_", "c44", "<check_lives>", "");
 	loadArcadeLevel("c432.mi_", "c44", "<check_lives>", "");
 
-	loadArcadeLevel("c440.mi_", "c51", "<check_lives>", "");
-	loadArcadeLevel("c441.mi_", "c51", "<check_lives>", "");
-	loadArcadeLevel("c442.mi_", "c51", "<check_lives>", "");
+	loadArcadeLevel("c440.mi_", "c40", "<check_lives>", "");
+	loadArcadeLevel("c441.mi_", "c40", "<check_lives>", "");
+	loadArcadeLevel("c442.mi_", "c40", "<check_lives>", "");
 
 	loadArcadeLevel("c400.mi_", "c51", "<check_lives>", "");
 	arc = (ArcadeShooting*) _levels["c400.mi_"];
@@ -336,9 +355,9 @@ void WetEngine::loadAssetsFullGame() {
 	loadArcadeLevel("c511.mi_", "c52", "<check_lives>", "");
 	loadArcadeLevel("c512.mi_", "c52", "<check_lives>", "");
 
-	loadArcadeLevel("c520.mi_", "c61", "<check_lives>", "");
-	loadArcadeLevel("c521.mi_", "c61", "<check_lives>", "");
-	loadArcadeLevel("c522.mi_", "c61", "<check_lives>", "");
+	loadArcadeLevel("c520.mi_", "c50", "<check_lives>", "");
+	loadArcadeLevel("c521.mi_", "c50", "<check_lives>", "");
+	loadArcadeLevel("c522.mi_", "c50", "<check_lives>", "");
 
 	loadArcadeLevel("c500.mi_", "c61", "<check_lives>", "");
 	arc = (ArcadeShooting*) _levels["c500.mi_"];
@@ -356,9 +375,9 @@ void WetEngine::loadAssetsFullGame() {
 	loadArcadeLevel("c611.mi_", "c60", "<check_lives>", "");
 	loadArcadeLevel("c612.mi_", "c60", "<check_lives>", "");
 
-	loadArcadeLevel("c600.mi_", "<quit>", "<check_lives>", "");
-	loadArcadeLevel("c601.mi_", "<quit>", "<check_lives>", "");
-	loadArcadeLevel("c602.mi_", "<quit>", "<check_lives>", "");
+	loadArcadeLevel("c600.mi_", "<credits>", "<check_lives>", "");
+	loadArcadeLevel("c601.mi_", "<credits>", "<check_lives>", "");
+	loadArcadeLevel("c602.mi_", "<credits>", "<check_lives>", "");
 
 	loadLib("", "c_misc/fonts.lib", true);
 	loadFonts();
@@ -372,27 +391,10 @@ void WetEngine::showCredits() {
 		return;
 	}
 
-	if (!isDemo() || _variant == "Demo") {
-		MVideo video("c_misc/credits.smk", Common::Point(0, 0), false, false, false);
+	if (!isDemo() || _variant == "Demo" || _language == Common::EN_USA) {
+		MVideo video("c_misc/credits.smk", Common::Point(0, 0), false, true, false);
 		runIntro(video);
 	}
-}
-
-void WetEngine::runCode(Code *code) {
-	changeScreenMode("320x200");
-	if (code->name == "<main_menu>")
-		runMainMenu(code);
-	else if (code->name == "<check_lives>")
-		runCheckLives(code);
-	else
-		error("invalid hardcoded level: %s", code->name.c_str());
-}
-
-void WetEngine::runCheckLives(Code *code) {
-	if (_lives < 0)
-		_nextLevel = "<game_over>";
-	else
-		_nextLevel = _checkpoint;
 }
 
 void WetEngine::loadFonts() {
@@ -447,53 +449,82 @@ void WetEngine::drawString(const Common::String &font, const Common::String &str
 		error("Invalid font: '%s'", font.c_str());
 }
 
-void WetEngine::runMainMenu(Code *code) {
-	Common::Event event;
-	uint32 c = 252; // green
-	byte *palette;
-	Graphics::Surface *frame = decodeFrame("c_misc/menus.smk", 16, &palette);
-	loadPalette(palette, 0, 256);
-	Common::String _name = "";
-	drawImage(*frame, 0, 0, false);
-	drawString("scifi08.fgx", "ENTER NAME :", 48, 50, 100, c);
-	while (!shouldQuit()) {
+void WetEngine::saveProfile(const Common::String &name, int levelId) {
+	SaveStateList saves = getMetaEngine()->listSaves(_targetName.c_str());
 
-		while (g_system->getEventManager()->pollEvent(event)) {
-			// Events
-			switch (event.type) {
-
-			case Common::EVENT_QUIT:
-			case Common::EVENT_RETURN_TO_LAUNCHER:
-				break;
-
-			case Common::EVENT_KEYDOWN:
-				if (event.kbd.keycode == Common::KEYCODE_BACKSPACE)
-					_name.deleteLastChar();
-				else if (event.kbd.keycode == Common::KEYCODE_RETURN && !_name.empty()) {
-					_nextLevel = code->levelIfWin;
-					return;
-				}
-				else if (Common::isAlnum(event.kbd.keycode)) {
-					_name = _name + char(event.kbd.keycode - 32);
-				}
-
-				drawImage(*frame, 0, 0, false);
-				drawString("scifi08.fgx", "ENTER NAME :", 48, 50, 100, c);
-				drawString("scifi08.fgx", _name, 140, 50, 170, c);
-				break;
-
-
-			default:
-				break;
-			}
+	// Find the correct level index to before saving
+	for (uint32 i = 0; i < _ids.size(); i++) {
+		if (levelId == _ids[i]) {
+			if (_lastLevel < int(i))
+				_lastLevel = int(i);
+			break;
 		}
-
-		drawScreen();
-		g_system->delayMillis(10);
 	}
+
+	uint32 slot = 0;
+	for (SaveStateList::iterator save = saves.begin(); save != saves.end(); ++save) {
+		if (save->getDescription() == name)
+			break;
+		slot++;
+	}
+
+	saveGameState(slot, name, false);
 }
 
-Common::String WetEngine::findNextLevel(const Transition *trans) { 
+bool WetEngine::loadProfile(const Common::String &name) {
+	SaveStateList saves = getMetaEngine()->listSaves(_targetName.c_str());
+	uint32 slot = 0;
+	for (SaveStateList::iterator save = saves.begin(); save != saves.end(); ++save) {
+		if (save->getDescription() == name)
+			break;
+		slot++;
+	}
+
+	if (slot == saves.size()) {
+		debugC(1, kHypnoDebugMedia, "Failed to load %s", name.c_str());
+		return false;
+	}
+
+	loadGameState(slot);
+	return true;
+}
+
+Common::Error WetEngine::saveGameStream(Common::WriteStream *stream, bool isAutosave) {
+	if (isAutosave)
+		return Common::kNoError;
+
+	if (_lastLevel < 0 || _lastLevel >= 20)
+		error("Invalid last level!");
+
+	stream->writeString(_name);
+	stream->writeByte(0);
+
+	stream->writeString(_difficulty);
+	stream->writeByte(0);
+
+	stream->writeUint32LE(_lives);
+	stream->writeUint32LE(_score);
+
+	stream->writeUint32LE(_lastLevel);
+	return Common::kNoError;
+}
+
+Common::Error WetEngine::loadGameStream(Common::SeekableReadStream *stream) {
+	_name = stream->readString();
+	_difficulty = stream->readString();
+	_lives = stream->readUint32LE();
+	_score = stream->readUint32LE();
+	_lastLevel = stream->readUint32LE();
+
+	if (_lastLevel == 0)
+		_nextLevel = Common::String::format("c%d", _ids[0]);
+	else
+		_nextLevel = "<level_menu>";
+
+	return Common::kNoError;
+}
+
+Common::String WetEngine::findNextLevel(const Transition *trans) {
 	if (trans->nextLevel.empty())
 		error("Invalid transition!");
 	return trans->nextLevel;

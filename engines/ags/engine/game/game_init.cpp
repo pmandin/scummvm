@@ -36,6 +36,7 @@
 #include "ags/engine/ac/dynobj/all_script_classes.h"
 #include "ags/engine/ac/statobj/ags_static_object.h"
 #include "ags/engine/ac/statobj/static_array.h"
+#include "ags/shared/ac/view.h"
 #include "ags/shared/core/asset_manager.h"
 #include "ags/engine/debugging/debug_log.h"
 #include "ags/shared/debugging/out.h"
@@ -52,6 +53,7 @@
 #include "ags/engine/script/exports.h"
 #include "ags/engine/script/script.h"
 #include "ags/engine/script/script_runtime.h"
+#include "ags/shared/util/string_compat.h"
 #include "ags/shared/util/string_utils.h"
 #include "ags/engine/media/audio/audio_system.h"
 #include "ags/globals.h"
@@ -88,7 +90,7 @@ String GetGameInitErrorText(GameInitErrorType err) {
 
 // Initializes audio channels and clips and registers them in the script system
 void InitAndRegisterAudioObjects() {
-	for (int i = 0; i <= MAX_SOUND_CHANNELS; ++i) {
+	for (int i = 0; i < _GP(game).numGameChannels; ++i) {
 		_G(scrAudioChannel)[i].id = i;
 		ccRegisterManagedObject(&_G(scrAudioChannel)[i], &_GP(ccDynamicAudio));
 	}
@@ -256,29 +258,37 @@ HError InitAndRegisterGameEntities() {
 	return HError::None();
 }
 
-void LoadFonts(GameDataVersion data_ver) {
+void LoadFonts(GameSetupStruct &game, GameDataVersion data_ver) {
 	for (int i = 0; i < _GP(game).numfonts; ++i) {
 		FontInfo &finfo = _GP(game).fonts[i];
-		if (!wloadfont_size(i, finfo))
+		if (!load_font_size(i, finfo))
 			quitprintf("Unable to load font %d, no renderer could load a matching file", i);
 
 		const bool is_wfn = is_bitmap_font(i);
 		// Outline thickness corresponds to 1 game pixel by default;
-		// but if it's a scaled up bitmap font in a legacy hires game, then it equals to scale
-		if ((data_ver < kGameVersion_360) && _GP(game).IsLegacyHiRes()) {
+		// but if it's a scaled up bitmap font, then it equals to scale
+		if (data_ver < kGameVersion_360) {
 			if (is_wfn && (finfo.Outline == FONT_OUTLINE_AUTO)) {
 				set_font_outline(i, FONT_OUTLINE_AUTO, FontInfo::kSquared, get_font_scaling_mul(i));
 			}
 		}
+	}
 
-		// Backward compatibility: if the real font's height != formal height
-		// and there's no custom linespacing, then set linespacing = formal height.
+	// Additional fixups - after all the fonts are registered
+	for (int i = 0; i < _GP(game).numfonts; ++i) {
 		if (!is_bitmap_font(i)) {
-			int req_height = _GP(game).fonts[i].SizePt * _GP(game).fonts[i].SizeMultiplier;
-			int height = getfontheight(i);
-			if ((height != req_height) && (_GP(game).fonts[i].LineSpacing == 0)) {
-				set_font_linespacing(i, req_height + get_font_outline_padding(i));
-			}
+			// Check for the LucasFan font since it comes with an outline font that
+			// is drawn incorrectly with Freetype versions > 2.1.3.
+			// A simple workaround is to disable outline fonts for it and use
+			// automatic outline drawing.
+			const int outline_font = get_font_outline(i);
+			if (outline_font < 0)
+				continue;
+			const char *name = get_font_name(i);
+			const char *outline_name = get_font_name(outline_font);
+			if ((ags_stricmp(name, "LucasFan-Font") == 0) &&
+					(ags_stricmp(outline_name, "Arcade") == 0))
+				set_font_outline(i, FONT_OUTLINE_AUTO);
 		}
 	}
 }
@@ -324,8 +334,9 @@ void AllocScriptModules() {
 }
 
 HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion data_ver) {
-	const ScriptAPIVersion base_api = (ScriptAPIVersion)_GP(game).options[OPT_BASESCRIPTAPI];
-	const ScriptAPIVersion compat_api = (ScriptAPIVersion)_GP(game).options[OPT_SCRIPTCOMPATLEV];
+	GameSetupStruct &game = ents.Game;
+	const ScriptAPIVersion base_api = (ScriptAPIVersion)game.options[OPT_BASESCRIPTAPI];
+	const ScriptAPIVersion compat_api = (ScriptAPIVersion)game.options[OPT_SCRIPTCOMPATLEV];
 	if (data_ver >= kGameVersion_341) {
 		const char *base_api_name = GetScriptAPIName(base_api);
 		const char *compat_api_name = GetScriptAPIName(compat_api);
@@ -335,38 +346,43 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	}
 	// If the game was compiled using unsupported version of the script API,
 	// we warn about potential incompatibilities but proceed further.
-	if (_GP(game).options[OPT_BASESCRIPTAPI] > kScriptAPI_Current)
+	if (game.options[OPT_BASESCRIPTAPI] > kScriptAPI_Current)
 		_G(platform)->DisplayAlert("Warning: this game requests a higher version of AGS script API, it may not run correctly or run at all.");
 
 	//
 	// 1. Check that the loaded data is valid and compatible with the current
 	// engine capabilities.
 	//
-	if (_GP(game).numfonts == 0)
+	if (game.numfonts == 0)
 		return new GameInitError(kGameInitErr_NoFonts);
-	if (_GP(game).audioClipTypes.size() > MAX_AUDIO_TYPES)
+	if (game.audioClipTypes.size() > MAX_AUDIO_TYPES)
 		return new GameInitError(kGameInitErr_TooManyAudioTypes,
-			String::FromFormat("Required: %zu, max: %zu", _GP(game).audioClipTypes.size(), MAX_AUDIO_TYPES));
+			String::FromFormat("Required: %zu, max: %zu", game.audioClipTypes.size(), MAX_AUDIO_TYPES));
 
 	//
 	// 3. Allocate and init game objects
 	//
-	_G(charextra) = (CharacterExtras *)calloc(_GP(game).numcharacters, sizeof(CharacterExtras));
-	_G(charcache) = (CharacterCache *)calloc(1, sizeof(CharacterCache) * _GP(game).numcharacters + 5);
-	_G(mls) = (MoveList *)calloc(_GP(game).numcharacters + MAX_ROOM_OBJECTS + 1, sizeof(MoveList));
-	_G(actSpsCount) = _GP(game).numcharacters + MAX_ROOM_OBJECTS + 2;
-	_G(actsps) = (Bitmap **)calloc(_G(actSpsCount), sizeof(Bitmap *));
-	_G(actspsbmp) = (IDriverDependantBitmap **)calloc(_G(actSpsCount), sizeof(IDriverDependantBitmap *));
-	_G(actspswb) = (Bitmap **)calloc(_G(actSpsCount), sizeof(Bitmap *));
-	_G(actspswbbmp) = (IDriverDependantBitmap **)calloc(_G(actSpsCount), sizeof(IDriverDependantBitmap *));
-	_G(actspswbcache) = (CachedActSpsData *)calloc(_G(actSpsCount), sizeof(CachedActSpsData));
-	_GP(play).charProps.resize(_GP(game).numcharacters);
+	_G(charextra) = (CharacterExtras *)calloc(game.numcharacters, sizeof(CharacterExtras));
+	_G(charcache) = (CharacterCache *)calloc(1, sizeof(CharacterCache) * game.numcharacters + 5);
+	_G(mls) = (MoveList *)calloc(game.numcharacters + MAX_ROOM_OBJECTS + 1, sizeof(MoveList));
+	init_game_drawdata();
+	_GP(views) = std::move(ents.Views);
+
+	_GP(play).charProps.resize(game.numcharacters);
 	_G(old_dialog_scripts) = ents.OldDialogScripts;
 	_G(old_speech_lines) = ents.OldSpeechLines;
+
+	// Set number of game channels corresponding to the loaded game version
+	if (_G(loaded_game_file_version) < kGameVersion_360)
+		game.numGameChannels = MAX_GAME_CHANNELS_v320;
+	else
+		game.numGameChannels = MAX_GAME_CHANNELS;
+
 	HError err = InitAndRegisterGameEntities();
 	if (!err)
 		return new GameInitError(kGameInitErr_EntityInitFail, err);
-	LoadFonts(data_ver);
+	LoadFonts(game, data_ver);
+	LoadLipsyncData();
 
 	//
 	// 4. Initialize certain runtime variables
@@ -375,12 +391,12 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	_G(ifacepopped) = -1;
 
 	String svg_suffix;
-	if (_GP(game).saveGameFileExtension[0] != 0)
-		svg_suffix.Format(".%s", _GP(game).saveGameFileExtension);
+	if (game.saveGameFileExtension[0] != 0)
+		svg_suffix.Format(".%s", game.saveGameFileExtension);
 	set_save_game_suffix(svg_suffix);
 
-	_GP(play).score_sound = _GP(game).scoreClipID;
-	_GP(play).fade_effect = _GP(game).options[OPT_FADETYPE];
+	_GP(play).score_sound = game.scoreClipID;
+	_GP(play).fade_effect = game.options[OPT_FADETYPE];
 
 	//
 	// 5. Initialize runtime state of certain game objects
@@ -389,7 +405,7 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 		// labels are not clickable by default
 		_GP(guilabels)[i].SetClickable(false);
 	}
-	_GP(play).gui_draw_order = (int32_t *)calloc(_GP(game).numgui * sizeof(int), 1);
+	_GP(play).gui_draw_order = (int32_t *)calloc(game.numgui * sizeof(int), 1);
 	update_gui_zorder();
 	calculate_reserved_channel_count();
 

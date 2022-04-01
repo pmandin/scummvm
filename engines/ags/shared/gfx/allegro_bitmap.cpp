@@ -90,6 +90,16 @@ bool Bitmap::CreateSubBitmap(Bitmap *src, const Rect &rc) {
 	return _alBitmap != nullptr;
 }
 
+bool Bitmap::ResizeSubBitmap(int width, int height) {
+	if (!isSubBitmap())
+		return false;
+	// TODO: can't clamp to parent size, because subs do not keep parent ref;
+	// might require amending allegro bitmap struct
+	_alBitmap->w = _alBitmap->cr = width;
+	_alBitmap->h = _alBitmap->cb = height;
+	return true;
+}
+
 bool Bitmap::CreateCopy(Bitmap *src, int color_depth) {
 	if (Create(src->_alBitmap->w, src->_alBitmap->h, color_depth ? color_depth : bitmap_color_depth(src->_alBitmap))) {
 		blit(src->_alBitmap, _alBitmap, 0, 0, 0, 0, _alBitmap->w, _alBitmap->h);
@@ -117,6 +127,17 @@ bool Bitmap::LoadFromFile(const char *filename) {
 	Destroy();
 
 	BITMAP *al_bmp = load_bitmap(filename, nullptr);
+	if (al_bmp) {
+		_alBitmap = al_bmp;
+		_isDataOwner = true;
+	}
+	return _alBitmap != nullptr;
+}
+
+bool Bitmap::LoadFromFile(PACKFILE *pf) {
+	Destroy();
+
+	BITMAP *al_bmp = load_bitmap(pf, nullptr);
 	if (al_bmp) {
 		_alBitmap = al_bmp;
 		_isDataOwner = true;
@@ -196,6 +217,10 @@ void Bitmap::Blit(Bitmap *src, int src_x, int src_y, int dst_x, int dst_y, int w
 	} else {
 		blit(al_src_bmp, _alBitmap, src_x, src_y, dst_x, dst_y, width, height);
 	}
+}
+
+void Bitmap::MaskedBlit(Bitmap *src, int dst_x, int dst_y) {
+	draw_sprite(_alBitmap, src->_alBitmap, dst_x, dst_y);
 }
 
 void Bitmap::StretchBlt(Bitmap *src, const Rect &dst_rc, BitmapMaskOption mask) {

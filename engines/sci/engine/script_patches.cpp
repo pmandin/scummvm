@@ -104,6 +104,8 @@ static const char *const selectorNameTable[] = {
 	"handsOff",     // system selector
 	"handsOn",      // system selector
 	"type",         // system selector
+	"client",       // system selector
+	"state",        // system selector
 	"localize",     // Freddy Pharkas
 	"roomFlags",    // Iceman
 	"put",          // Police Quest 1 VGA
@@ -189,8 +191,8 @@ static const char *const selectorNameTable[] = {
 	"saveFilePtr",  // RAMA
 	"priority",     // RAMA
 	"plane",        // RAMA
-	"state",        // RAMA
 	"getSubscriberObj", // RAMA
+	"advance",      // QFG4
 	"advanceCurIcon", // QFG4
 	"amount",       // QFG4
 	"cue",          // QFG4
@@ -198,6 +200,7 @@ static const char *const selectorNameTable[] = {
 	"getCursor",    // QFG4
 	"heading",      // QFG4
 	"moveSpeed",    // QFG4
+	"retreat",      // QFG4
 	"sayMessage",   // QFG4
 	"setLooper",    // QFG4
 	"useStamina",   // QFG4
@@ -234,6 +237,8 @@ enum ScriptPatcherSelectors {
 	SELECTOR_handsOff,
 	SELECTOR_handsOn,
 	SELECTOR_type,
+	SELECTOR_client,
+	SELECTOR_state,
 	SELECTOR_localize,
 	SELECTOR_roomFlags,
 	SELECTOR_put,
@@ -320,8 +325,8 @@ enum ScriptPatcherSelectors {
 	SELECTOR_saveFilePtr,
 	SELECTOR_priority,
 	SELECTOR_plane,
-	SELECTOR_state,
 	SELECTOR_getSubscriberObj,
+	SELECTOR_advance,
 	SELECTOR_advanceCurIcon,
 	SELECTOR_amount,
 	SELECTOR_cue,
@@ -329,6 +334,7 @@ enum ScriptPatcherSelectors {
 	SELECTOR_getCursor,
 	SELECTOR_heading,
 	SELECTOR_moveSpeed,
+	SELECTOR_retreat,
 	SELECTOR_sayMessage,
 	SELECTOR_setLooper,
 	SELECTOR_useStamina,
@@ -5110,6 +5116,33 @@ static const uint16 kq5PatchCrispinIntroSignal[] = {
 	PATCH_END
 };
 
+// Clicking Look or Do on the bandit's campfire in room 216 of the PC-98 version
+//  crashes the game or displays the wrong message after attempting to process
+//  hundreds of uninitialized parameters. The script has four calle instructions
+//  with frame size operands that don't match the number of parameters passed on
+//  the stack. The first real parameter, 216, is interpreted as the parameter
+//  count and chaos ensues.
+//
+// We fix this by setting the correct frame size. These instructions are correct
+//  in the later FM-Towns version so this appears to be a compiler bug.
+//
+// Applies to: Japanese PC-98
+// Responsible methods: fire:handleEvent, fireRing:handleEvent
+static const uint16 kq5SignaturePc98CampfireMessages[] = {
+	0x35, SIG_ADDTOOFFSET(+1),       // ldi
+	SIG_MAGICDWORD,
+	0x36,                            // push
+	0x46, SIG_UINT16(0x02f7),        // calle proc759_0 [ print message, 1 parameter ]
+	      SIG_UINT16(0x0000), 0x02,
+	SIG_END
+};
+
+static const uint16 kq5PatchPc98CampfireMessages[] = {
+	PATCH_ADDTOOFFSET(+8),
+	0x04,                            // calle proc759_0 [ print message, 2 parameters ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                  patch
 static const SciScriptPatcherEntry kq5Signatures[] = {
 	{  true,     0, "CD: harpy volume change",                     1, kq5SignatureCdHarpyVolume,            kq5PatchCdHarpyVolume },
@@ -5118,6 +5151,7 @@ static const SciScriptPatcherEntry kq5Signatures[] = {
 	{  true,   124, "Multilingual: Ending glitching out",          3, kq5SignatureMultilingualEndingGlitch, kq5PatchMultilingualEndingGlitch },
 	{ false,   124, "Win: GM Music signal checks",                 4, kq5SignatureWinGMSignals,             kq5PatchWinGMSignals },
 	{  true,   200, "CD: witch cage init",                         1, kq5SignatureWitchCageInit,            kq5PatchWitchCageInit },
+	{  true,   216, "PC-98: campfire messages",                    4, kq5SignaturePc98CampfireMessages,     kq5PatchPc98CampfireMessages },
 	{  true,   973, "timer rollover",                              1, sciSignatureTimerRollover,            sciPatchTimerRollover },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
@@ -8124,6 +8158,48 @@ static const uint16 larry6HiresMacVolumeRestorePatch[] = {
 	PATCH_END
 };
 
+// Filling the whale oil lamp with cellulite locks up the game when the PATCHES
+//  directory is missing. The patch files for script 330 override a very broken
+//  version in the resource volumes that always goes into an infinite loop.
+//  Unfortunately, the Leisure Suit Larry Collection CD includes a RESOURCE.CFG
+//  with an incorrect path to the PATCHES directory. Sierra's fix was to issue a
+//  save file with a full oil lamp that was compatible with the broken scripts.
+//  This shouldn't affect ScummVM since we don't use RESOURCE.CFG, but something
+//  about the way the collection was packaged causes players to continue to miss
+//  this directory and not realize until it's too late. The lockup occurs late
+//  in the game and adding the missing patch files invalidates all saves. 
+//
+// We don't generally fix "bugs" that are consequences of not providing all of
+//  the game's data files, but this is a severe case that keeps coming up.
+//  Fortunately, the script bug is simple, so we might as well just patch it and
+//  allow the player to proceed.
+//
+// We mitigate this by patching fillLampScr:changeState(2) to increment its
+//  register property. This is the counter that's supposed to animate the lamp
+//  but instead register is never incremented and the loop never ends.
+//
+// Applies to: English PC CD when PATCHES is missing (TODO: check localizations)
+// Responsible method: fillLampScr:changeState(2)
+// Fixes bug: #10484
+static const uint16 larry6HiresWhaleOilLampSignature[] = {
+	0x39, SIG_SELECTOR8(loop),          // pushi loop
+	0x78,                               // push1
+	0x78,                               // push1
+	0x39, SIG_MAGICDWORD,               // pushi cel
+	      SIG_SELECTOR8(cel),
+	0x78,                               // push1
+	0x67, 0x26,                         // pTos register
+	0x81, 0x00,                         // lag 00
+	0x4a, SIG_UINT16(0x000c),           // send 0c [ ego loop: 1 cel: register ]
+	SIG_END
+};
+
+static const uint16 larry6HiresWhaleOilLampPatch[] = {
+	PATCH_ADDTOOFFSET(+7),
+	0x6f,                               // ipTos register [ increment register ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                             patch
 static const SciScriptPatcherEntry larry6HiresSignatures[] = {
 	{  true,     0, "disable mac volume restore",                  1, larry6HiresMacVolumeRestoreSignature, larry6HiresMacVolumeRestorePatch },
@@ -8131,6 +8207,7 @@ static const SciScriptPatcherEntry larry6HiresSignatures[] = {
 	{  true,    71, "disable volume reset on startup (2/2)",       1, larry6HiresVolumeResetSignature,      larry6HiresVolumeResetPatch },
 	{  true,    71, "disable video benchmarking",                  1, sci2BenchmarkSignature,               sci2BenchmarkPatch },
 	{  true,   270, "fix incorrect setScale call",                 1, larry6HiresSetScaleSignature,         larry6HiresSetScalePatch },
+	{  true,   330, "fix whale oil lamp lockup",                   1, larry6HiresWhaleOilLampSignature,     larry6HiresWhaleOilLampPatch },
 	{  true, 64928, "Narrator lockup fix",                         1, sciNarratorLockupSignature,           sciNarratorLockupPatch },
 	{  true, 64990, "increase number of save games (1/2)",         1, sci2NumSavesSignature1,               sci2NumSavesPatch1 },
 	{  true, 64990, "increase number of save games (2/2)",         1, sci2NumSavesSignature2,               sci2NumSavesPatch2 },
@@ -18215,6 +18292,65 @@ static const uint16 qfg4MagicShieldViewPatch[] = {
 	PATCH_END
 };
 
+// Pressing the up or down arrow keys on the character screen crashes the game.
+//  There are two character screens: the creation screen in room 140 and the
+//  read-only screen in script 15 that can be viewed during the game. Both are
+//  named charInitScreen and are similar. It appears that some event handling
+//  code from the former was copied into the latter. This code crashes upon
+//  attempting to select non-existent objects.
+//
+// We fix this by patching out the direction event handler.
+//
+// Applies to: All versions
+// Responsible method: charInitScreen:dispatchEvent
+static const uint16 qfg4CharScreenKeyboardSignature[] = {
+	SIG_MAGICDWORD,
+	0x8d, 0x02,                         // lst 02 [ event type ]
+	0x35, 0x10,                         // ldi 10 [ direction ]
+	0x12,                               // and
+	SIG_END
+};
+
+static const uint16 qfg4CharScreenKeyboardPatch[] = {
+	0x39, 0x00,                         // pushi 00 [ ignore direction events ]
+	PATCH_END
+};
+
+// Pressing arrow keys or tab on the death screen crashes the game. The screen
+//  has code that attempts to cycle through and select the current control, but
+//  it's quite confused. DeathControls is an IconBar and all the screen elements
+//  are DeathIcons, but icons are expected to be clickable things that can be
+//  selected and highlighted. This doesn't make sense for the static picture and
+//  text, and they don't have any of the properties necessary to make that work.
+//  When the common IconBar code attempts to select these, DeathIcon:highlight
+//  proptly crashes upon trying to use and draw non-existant objects.
+//
+// We fix this by patching out the broken control cycling on the death screen.
+//  Note that this code was unable to even highlight the real clickable icons.
+//
+// Applies to: All versions
+// Responsible method: DeathControls:dispatchEvents
+static const uint16 qfg4DeathScreenKeyboardSignature1[] = {
+	SIG_MAGICDWORD,
+	0x38, SIG_SELECTOR16(advance),      // pushi advance
+	0x76,                               // push0
+	0x54, SIG_UINT16(0x0004),           // send 04 [ self advance: ]
+	SIG_END
+};
+
+static const uint16 qfg4DeathScreenKeyboardSignature2[] = {
+	SIG_MAGICDWORD,
+	0x38, SIG_SELECTOR16(retreat),      // pushi retreat
+	0x76,                               // push0
+	0x54, SIG_UINT16(0x0004),           // send 04 [ self retreat: ]
+	SIG_END
+};
+
+static const uint16 qfg4DeathScreenKeyboardPatch[] = {
+	0x32, PATCH_UINT16(0x0004),         // jmp 0004 [ don't cycle control ]
+	PATCH_END
+};
+
 //          script, description,                                     signature                      patch
 static const SciScriptPatcherEntry qfg4Signatures[] = {
 	{  true,     0, "prevent autosave from deleting save games",   1, qfg4AutosaveSignature,         qfg4AutosavePatch },
@@ -18227,6 +18363,9 @@ static const SciScriptPatcherEntry qfg4Signatures[] = {
 	{  true,    11, "fix trigger after summon staff (1/2)",        1, qfg4TriggerStaffSignature1,    qfg4TriggerStaffPatch1 },
 	{  true,    11, "fix trigger after summon staff (2/2)",        1, qfg4TriggerStaffSignature2,    qfg4TriggerStaffPatch2 },
 	{  true,    13, "fix spell effect disposal",                   1, qfg4EffectDisposalSignature,   qfg4EffectDisposalPatch },
+	{  true,    15, "fix character screen keyboard crash",         1, qfg4CharScreenKeyboardSignature, qfg4CharScreenKeyboardPatch },
+	{  true,    26, "fix death screen keyboard crash",             3, qfg4DeathScreenKeyboardSignature1, qfg4DeathScreenKeyboardPatch },
+	{  true,    26, "fix death screen keyboard crash",             3, qfg4DeathScreenKeyboardSignature2, qfg4DeathScreenKeyboardPatch },
 	{  true,    28, "fix lingering rations icon after eating",     1, qfg4LeftoversSignature,        qfg4LeftoversPatch },
 	{  true,    31, "fix setScaler calls",                         1, qfg4SetScalerSignature,        qfg4SetScalerPatch },
 	{  true,    41, "fix conditional void calls",                  3, qfg4ConditionalVoidSignature,  qfg4ConditionalVoidPatch },
@@ -18369,6 +18508,57 @@ static const uint16 sq3EndCreditsPatch[] = {
 	PATCH_END
 };
 
+// In the ScumSoft office there are two announcement messages which randomly
+//  appear at most once per game, but they never appear in the later versions.
+//  This is due to a script bug that was exposed when Sierra upgraded the Script
+//  class in SQ3 version 1.018. The messages are displayed by the `announce`
+//  Script object, but announce is never properly initialized with setScript.
+//  This happened to work at first, but the newer Script:cue requires the client
+//  property to be set. This prevents announce:changeState from ever running.
+//
+// We fix this by setting announce:client when initializing the scumSoft region
+//  so that announce:changeState runs in all versions. We set announce as its
+//  own client since any object will do and this ensures there are no conflicts.
+//
+// Responsible method: scumSoft:init
+// Applies to: English PC 1.018, German PC, German Amiga, Macintosh
+// Fixes bug: #13318
+static const uint16 sq3AnnouncementsSignature[] = {
+	0x39, SIG_SELECTOR8(state),         // pushi state
+	SIG_MAGICDWORD,
+	0x78,                               // push1
+	0x89, 0xf2,                         // lsg f2
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa announce
+	0x4a, 0x06,                         // send 06 [ announce state: global242 ]
+	0x81, 0xe9,                         // lag e9
+	0x30, SIG_ADDTOOFFSET(+2),          // bnt [ end of method ]
+	0x89, 0x0c,                         // lsg 0c
+	0x35, 0x5a,                         // ldi 5a
+	0x1a,                               // eq?
+	0x30, SIG_UINT16(0x000f),           // bnt 000f
+	0x35, 0x00,                         // ldi 00
+	0xa1, 0xe9,                         // sag e9
+	0x35, 0x00,                         // ldi 00 [ redundant ]
+	SIG_END
+};
+
+static const uint16 sq3AnnouncementsPatch[] = {
+	PATCH_ADDTOOFFSET(+8),
+	0x39, PATCH_SELECTOR8(client),      // pushi client
+	0x78,                               // push1
+	0x36,                               // push
+	0x4a, 0x0c,                         // send 0c [ announce state: global242, client: announce ]
+	0x81, 0xe9,                         // lag e9
+	0x30, PATCH_GETORIGINALUINT16ADJUST(+13, -04), // bnt [ end of method ]
+	0x89, 0x0c,                         // lsg 0c
+	0x35, 0x5a,                         // ldi 5a
+	0x1a,                               // eq?
+	0x31, 0x0c,                         // bnt 0c
+	0x18,                               // not [ acc = 0 ]
+	0xa1, 0xe9,                         // sag e9
+	PATCH_END
+};
+
 // Space Quest 3 has some strings hard coded in the scripts file
 // We need to patch them for the Hebrew translation
 
@@ -18400,6 +18590,7 @@ static const uint16 sq3HebrewStatusBarNamePatch[] = {
 static const SciScriptPatcherEntry sq3Signatures[] = {
 	{ false,   0, "Hebrew: Replace name in status bar",    1, sq3HebrewStatusBarNameSignature,                     sq3HebrewStatusBarNamePatch },
 	{  true, 117, "Fix end credits",                       1, sq3EndCreditsSignature,                              sq3EndCreditsPatch },
+	{  true, 702, "Fix scumsoft announcements",            1, sq3AnnouncementsSignature,                           sq3AnnouncementsPatch },
 	{ false, 996, "Hebrew: Replace 'Enter input' prompt",  1, sq3HebrewEnterInputSignature,                        sq3HebrewEnterInputPatch },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
@@ -20021,6 +20212,72 @@ static const uint16 sq4FloppyPatchSoftwareStoreEasterEggs[] = {
 	PATCH_END
 };
 
+// In the laser beam hallway, the beams don't initialize their Look message
+//  correctly in the CD version. Instead of setting their lookStr property based
+//  on their loop, they set their noun property to the value it already has.
+//  This prevents the invisible beam message from ever occurring and prevents
+//  the visible beam message when re-entering the room.
+//
+// We fix this by setting the lookStr property for the correct message.
+//
+// Applies to: English PC CD
+// Responsible methods: beam0:init, beam1:init, beam2:init
+static const uint16 sq4CdSignatureLaserBeamMessages[] = {
+	SIG_MAGICDWORD,
+	0x63, 0x38,                         // pToa loop [ 1 if visible, 0 if invisible ]
+	0x31, 0x06,                         // bnt 06
+	0x35, 0x00,                         // ldi 00
+	0x65, 0x1a,                         // aTop noun [ noun = 0 (redundant) ]
+	0x33, 0x04,                         // jmp 04
+	0x35, 0x00,                         // ldi 00
+	0x65, 0x1a,                         // aTop noun [ noun = 0 (redundant) ]
+	SIG_END
+};
+
+static const uint16 sq4CdPatchLaserBeamMessages[] = {
+	PATCH_ADDTOOFFSET(+6),
+	0x35, 0x01,                         // ldi 01 [ "The laser beams glow in the smoky air." ]
+	0x33, 0x02,                         // jmp 02
+	0x35, 0x02,                         // ldi 02 [ "You see what looks like beam emitters, but no beams." ]
+	0x65, 0x66,                         // aTop lookStr
+	PATCH_END
+};
+
+// In the laser beam hallway in the CD version, the keypad doesn't rotate the
+//  beams by the correct amount at high CPU speeds. The faster the CPU speed,
+//  the less the beams rotate relative to the number entered by the user. This
+//  is a regression due to significant changes in the underlying Cycle class.
+//  Normally our speed throttler would take care of this, but the CD version
+//  also introduces an inner loop when the keypad is displayed.
+//
+// We fix this by calling kGameIsRestarting from within the keypad's inner
+//  loop so that speed throttling occurs and the rotation degrees are accurate.
+//
+// Applies to: English PC CD
+// Responsible method: keyPad:doit
+static const uint16 sq4CdSignatureLaserBeamSpeedThrottle[] = {
+	0x85, 0x00,                         // lat 00  [ redundant ]
+	SIG_MAGICDWORD,
+	0x4a, 0x04,                         // send 04 [ temp0 localize: ]
+	0x81, 0x4d,                         // lag 4d  [ PseudoMouse ]
+	0x31, 0x11,                         // bnt 11  [ branch never taken ]
+	0x39, SIG_ADDTOOFFSET(+1),          // pushi contains
+	0x78,                               // push1
+	0x36,                               // push    [ PseudoMouse ]
+	SIG_END
+};
+
+static const uint16 sq4CdPatchLaserBeamSpeedThrottle[] = {
+	0x4a, 0x04,                         // send 04 [ temp0 localize: ]
+	0x78,                               // push1
+	0x76,                               // push0
+	0x43, 0x2c, 0x02,                   // callk GameIsRestarting 02
+	0x39, PATCH_GETORIGINALBYTE(+9),    // pushi contains
+	0x78,                               // push1
+	0x89, 0x4d,                         // lsg 4d  [ PseudoMouse ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                                      patch
 static const SciScriptPatcherEntry sq4Signatures[] = {
 	{  true,     1, "Floppy: EGA intro delay fix",                    2, sq4SignatureEgaIntroDelay,                     sq4PatchEgaIntroDelay },
@@ -20058,6 +20315,8 @@ static const SciScriptPatcherEntry sq4Signatures[] = {
 	{  true,   410, "CD/Floppy: zero gravity blast fix",              1, sq4SignatureZeroGravityBlast,                  sq4PatchZeroGravityBlast },
 	{  true,   411, "CD/Floppy: zero gravity blast fix",              1, sq4SignatureZeroGravityBlast,                  sq4PatchZeroGravityBlast },
 	{ false,   531, "CD: disable timepod code for removed room",      1, sq4CdSignatureRemovedRoomTimepodCode,          sq4CdPatchRemovedRoomTimepodCode },
+	{  true,   541, "CD: laser beam messages",                        3, sq4CdSignatureLaserBeamMessages,               sq4CdPatchLaserBeamMessages },
+	{  true,   541, "CD: laser beam speed throttle",                  1, sq4CdSignatureLaserBeamSpeedThrottle,          sq4CdPatchLaserBeamSpeedThrottle },
 	{  true,   545, "CD: vohaul pocketpal text+speech fix",           1, sq4CdSignatureVohaulPocketPalTextSpeech,       sq4CdPatchVohaulPocketPalTextSpeech },
 	{  true,   610, "CD: biker bar door fix",                         1, sq4CdSignatureBikerBarDoor,                    sq4CdPatchBikerBarDoor },
 	{  true,   610, "CD: biker hands-on fix",                         3, sq4CdSignatureBikerHandsOn,                    sq4CdPatchBikerHandsOn },
@@ -20102,16 +20361,24 @@ static const uint16 sq1vgaPatchUlenceFlatsTimepodGfxGlitch[] = {
 	PATCH_END
 };
 
-// In Ulence Flats, there is a space ship, that you will use at some point.
+// In Ulence Flats, there is a space ship that you will use in room 45.
 //  Near that space ship are 2 force field generators. When you look at the top
 //  of those generators, the game will crash. This happens also in Sierra SCI.
-//  It's caused by a jump, that goes out of bounds.
+//  It's caused by a branch that goes out of bounds.
 //
-// We currently do not know if this was caused by a compiler glitch or if it
-//  was a developer error. Anyway we patch this glitchy code, so that the game
-//  won't crash anymore.
+// This was due to a compiler bug that produced bogus bnt targets when the body
+//  of the last switch or cond condition was empty. These appear in other games
+//  but in each case the final condition always evaluated to true, or was never
+//  reached, and so the bug went unnoticed. In this case it appears that the
+//  intended body of the else statement was a call to super:doVerb but instead
+//  it was entered as the final condition. This created an empty body and a
+//  condition which happened to evaluate to zero, and so a bogus branch was
+//  finally taken and crashed. The script was fixed in later versions and the
+//  compiler was fixed to no longer emit these broken bnt instructions.
 //
-// Applies to at least: English Floppy
+// We fix this by patching out the bogus branch instruction.
+//
+// Applies to: English PC VGA
 // Responsible method: radar1::doVerb
 // Fixes bug: #6816
 static const uint16 sq1vgaSignatureUlenceFlatsGeneratorGlitch[] = {

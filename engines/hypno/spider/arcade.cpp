@@ -31,7 +31,7 @@ namespace Hypno {
 static const int oIndexYB[9] = {0, 1, 2, 7, 8, 3, 6, 5, 4};
 static const int oIndexYE[9] = {4, 3, 2, 1, 0};
 static const int shootOriginIndex[9][2] = {
-	{41, 3}, {51, 3}, {65, 6}, {68, 9}, {71, 22}, {57, 20}, {37, 14}, {37, 11}, {57, 20}};
+	{41, 3}, {51, 3}, {65, 6}, {40, 16}, {58, 20}, {67, 10}, {37, 14}, {37, 15}, {67, 22}};
 
 void SpiderEngine::runBeforeArcade(ArcadeShooting *arc) {
 	assert(!arc->player.empty());
@@ -49,12 +49,21 @@ void SpiderEngine::runBeforeArcade(ArcadeShooting *arc) {
 
 	if (_playerFrameSep == (int)_playerFrames.size()) {
 		debugC(1, kHypnoDebugArcade, "No player separator frame found in %s! (size: %d)", arc->player.c_str(), _playerFrames.size());
-	} else 
+	} else
 		debugC(1, kHypnoDebugArcade, "Separator frame found at %d", _playerFrameSep);
 
 	_playerFrameIdx = -1;
 	_currentPlayerPosition = kPlayerLeft;
 	_lastPlayerPosition = kPlayerLeft;
+}
+
+void SpiderEngine::runAfterArcade(ArcadeShooting *arc) {
+	_checkpoint = _nextLevel;
+
+	if (_health <= 0) {
+		assert(_score >= _bonus);
+		_score -= _bonus;
+	}
 }
 
 void SpiderEngine::initSegment(ArcadeShooting *arc) {
@@ -84,8 +93,8 @@ void SpiderEngine::hitPlayer() {
 		_compositeSurface->fillRect(Common::Rect(0, 0, 640, 480), c);
 		drawScreen();
 	}
-	// if (!_hitSound.empty())
-	//	playSound(_soundPath + _hitSound, 1);
+	if (!_hitSound.empty())
+		playSound(_soundPath + _hitSound, 1, 11025);
 }
 
 void SpiderEngine::drawShoot(const Common::Point &target) {
@@ -189,9 +198,40 @@ void SpiderEngine::drawPlayer() {
 				break;
 			}
 			_lastPlayerPosition = _currentPlayerPosition;
-		} else if (_playerFrameIdx % 4 != 0 && _playerFrameIdx % 4 != 3) {
+		} else if (_playerFrameIdx < 48 && _playerFrameIdx % 4 != 0 && _playerFrameIdx % 4 != 3) {
 			_playerFrameIdx++;
 			_lastPlayerPosition = _currentPlayerPosition;
+		} else {
+			if (_arcadeMode == "YD") {
+				switch (_lastPlayerPosition) {
+				case kPlayerTop:
+					if ((_playerFrameIdx <= 11 && (_playerFrameIdx % 4 == 0 || _playerFrameIdx % 4 == 3)) || _playerFrameIdx >= 54)
+						_playerFrameIdx = 49;
+					else
+						_playerFrameIdx++;
+					break;
+
+				case kPlayerBottom:
+					if ((_playerFrameIdx <= 23  && (_playerFrameIdx % 4 == 0 || _playerFrameIdx % 4 == 3)) || _playerFrameIdx >= 65)
+						_playerFrameIdx = 60;
+					else
+						_playerFrameIdx++;
+					break;
+				case kPlayerLeft:
+					if ((_playerFrameIdx <= 35 && (_playerFrameIdx % 4 == 0 || _playerFrameIdx % 4 == 3)) || _playerFrameIdx >= 77)
+						_playerFrameIdx = 72;
+					else
+						_playerFrameIdx++;
+					break;
+
+				case kPlayerRight:
+					if ((_playerFrameIdx <= 47 && (_playerFrameIdx % 4 == 0 || _playerFrameIdx % 4 == 3)) || _playerFrameIdx >= 89)
+						_playerFrameIdx = 84;
+					else
+						_playerFrameIdx++;
+					break;
+				}
+			}
 		}
 	} else if (_arcadeMode == "YE" || _arcadeMode == "YF") {
 		Common::Point mousePos = g_system->getEventManager()->getMousePos();
@@ -242,26 +282,6 @@ void SpiderEngine::drawHealth() {
 	_compositeSurface->frameRect(r, c);
 
 	drawString("block05.fgx", "ENERGY", 248, 180, 38, c);
-}
-
-bool SpiderEngine::checkArcadeLevelCompleted(MVideo &background, Segment segment) {
-	if (_skipLevel)
-		return true;
-
-	if (_arcadeMode == "YF") {
-		if (!background.decoder || background.decoder->endOfVideo())
-			_health = 0;
-
-		if (_shoots.size() == 0)
-			return false;
-
-		for (Shoots::iterator it = _shoots.begin(); it != _shoots.end(); ++it)
-			if (!it->destroyed)
-				return false;
-
-		return true;
-	}
-	return !background.decoder || background.decoder->endOfVideo();
 }
 
 } // End of namespace Hypno

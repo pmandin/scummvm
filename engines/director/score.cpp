@@ -317,7 +317,7 @@ void Score::update() {
 
 		if (_waitForChannel) {
 			if (_soundManager->isChannelActive(_waitForChannel)) {
-				keepWaiting = true; 
+				keepWaiting = true;
 			} else {
 				_waitForChannel = 0;
 			}
@@ -556,8 +556,22 @@ void Score::renderSprites(uint16 frameId, RenderMode mode) {
 		}
 
 		if (channel->isDirty(nextSprite) || widgetRedrawn || mode == kRenderForceUpdate) {
-			if (!currentSprite->_trails)
+			if (currentSprite && !currentSprite->_trails)
 				_window->addDirtyRect(channel->getBbox());
+
+			if (currentSprite->_cast && currentSprite->_cast->_erase) {
+				auto cast = currentSprite->_cast->getCast()->_loadedCast;
+				for (auto it = cast->begin(); it != cast->end(); ++it) {
+					if (it->_value == currentSprite->_cast) {
+						cast->erase(it);
+						currentSprite->_cast->_erase = false;
+						break;
+					}
+				}
+
+				currentSprite->setCast(currentSprite->_castId);
+				nextSprite->setCast(nextSprite->_castId);
+			}
 
 			channel->setClean(nextSprite, i);
 			// Check again to see if a video has just been started by setClean.
@@ -936,7 +950,7 @@ void Score::loadLabels(Common::SeekableReadStreamEndian &stream) {
 				ch = '\n';
 			comment += ch;
 		}
-	
+
 		label = _movie->getCast()->decodeString(label).encode(Common::kUtf8);
 
 		_labels->insert(new Label(label, frame, comment));

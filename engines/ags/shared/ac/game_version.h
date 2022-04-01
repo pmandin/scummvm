@@ -113,6 +113,12 @@ Font custom line spacing.
 Sprites have "real" resolution. Expanded FontInfo data format.
 Option to allow legacy relative asset resolutions.
 
+3.6.0 :
+Format value is defined as AGS version represented as NN,NN,NN,NN.
+Fonts have adjustable outline
+3.6.0.11:
+New font load flags, control backward compatible font behavior
+
 */
 
 enum GameDataVersion {
@@ -146,7 +152,8 @@ enum GameDataVersion {
 	kGameVersion_341_2 = 49,
 	kGameVersion_350 = 50,
 	kGameVersion_360 = 3060000,
-	kGameVersion_Current = kGameVersion_350
+	kGameVersion_360_11 = 3060011,
+	kGameVersion_Current = kGameVersion_360_11
 };
 
 } // namespace AGS3

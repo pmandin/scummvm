@@ -62,6 +62,9 @@ int File_Exists(const char *fnmm) {
 	if (!ResolveScriptPath(fnmm, true, rp))
 		return 0;
 
+	if (rp.AssetMgr)
+		return _GP(AssetMgr)->DoesAssetExist(rp.FullPath);
+
 	return (File::TestReadFile(rp.FullPath) || File::TestReadFile(rp.AltPath)) ? 1 : 0;
 }
 
@@ -111,30 +114,49 @@ void File_WriteRawLine(sc_File *fil, const char *towrite) {
 	FileWriteRawLine(fil->handle, towrite);
 }
 
-void File_ReadRawLine(sc_File *fil, char *buffer) {
+// Reads line of chars until linebreak is met or buffer is filled;
+// returns whether reached the end of line (false in case not enough buffer);
+// guarantees null-terminator in the buffer.
+static bool File_ReadRawLineImpl(sc_File *fil, char *buffer, size_t buf_len) {
+	if (buf_len == 0) return false;
 	Stream *in = get_valid_file_stream_from_handle(fil->handle, "File.ReadRawLine");
-	check_strlen(buffer);
-	int i = 0;
-	while (i < _G(MAXSTRLEN) - 1) {
-		buffer[i] = in->ReadInt8();
-		if (buffer[i] == '\r') {
-			// CR -- skip LF and abort
-			in->ReadInt8();
-			break;
+	for (size_t i = 0; i < buf_len - 1; ++i) {
+		char c = in->ReadByte();
+		if (c < 0 || c == '\n') // EOF or LF
+		{
+			buffer[i] = 0;
+			return true;
 		}
-		if (buffer[i] == '\n')  // LF only -- abort
-			break;
-		if (in->EOS())  // EOF -- abort
-			break;
-		i++;
+		if (c == '\r') // CR or CRLF
+		{
+			c = in->ReadByte();
+			// Look for '\n', but it may be missing, which is also a valid case
+			if (c >= 0 && c != '\n') in->Seek(-1, kSeekCurrent);
+			buffer[i] = 0;
+			return true;
+		}
+		buffer[i] = c;
 	}
-	buffer[i] = 0;
+	buffer[buf_len - 1] = 0;
+	return false; // not enough buffer
+}
+
+void File_ReadRawLine(sc_File *fil, char *buffer) {
+	check_strlen(buffer);
+	File_ReadRawLineImpl(fil, buffer, _G(MAXSTRLEN));
 }
 
 const char *File_ReadRawLineBack(sc_File *fil) {
-	char readbuffer[MAX_MAXSTRLEN + 1];
-	File_ReadRawLine(fil, readbuffer);
-	return CreateNewScriptString(readbuffer);
+	char readbuffer[MAX_MAXSTRLEN];
+	if (File_ReadRawLineImpl(fil, readbuffer, MAX_MAXSTRLEN))
+		return CreateNewScriptString(readbuffer);
+	String sbuf = readbuffer;
+	bool done = false;
+	while (!done) {
+		done = File_ReadRawLineImpl(fil, readbuffer, MAX_MAXSTRLEN);
+		sbuf.Append(readbuffer);
+	};
+	return CreateNewScriptString(sbuf.GetCStr());
 }
 
 void File_ReadString(sc_File *fil, char *toread) {
@@ -206,6 +228,7 @@ const char *GameInstallRootToken = "$INSTALLDIR$";
 const char *UserSavedgamesRootToken = "$MYDOCS$";
 const char *GameSavedgamesDirToken = "$SAVEGAMEDIR$";
 const char *GameDataDirToken = "$APPDATADIR$";
+const char *GameAssetToken = "$DATA$";
 const char *UserConfigFileToken = "$CONFIGFILE$";
 
 void FixupFilename(char *filename) {
@@ -227,6 +250,12 @@ String PathFromInstallDir(const String &path) {
 	return path;
 }
 
+FSLocation PathFromInstallDir(const FSLocation &fsloc) {
+	if (is_relative_filename(fsloc.FullDir))
+		return FSLocation(_GP(ResPaths).DataDir).Rebase(fsloc.FullDir);
+	return fsloc;
+}
+
 String PreparePathForWriting(const FSLocation &fsloc, const String &filename) {
 	if (Directory::CreateAllDirectories(fsloc.BaseDir, fsloc.SubDir))
 		return Path::ConcatPaths(fsloc.FullDir, filename);
@@ -234,67 +263,79 @@ String PreparePathForWriting(const FSLocation &fsloc, const String &filename) {
 }
 
 FSLocation GetGlobalUserConfigDir() {
-	String dir = _G(platform)->GetUserGlobalConfigDirectory();
-	if (Path::IsRelativePath(dir)) // relative dir is resolved relative to the game data dir
-		return FSLocation(_GP(ResPaths).DataDir, dir);
-	return FSLocation(dir);
+	FSLocation dir = _G(platform)->GetUserGlobalConfigDirectory();
+	if (is_relative_filename(dir.FullDir)) // relative dir is resolved relative to the game data dir
+		return FSLocation(_GP(ResPaths).DataDir).Rebase(dir.FullDir);
+	return dir;
 }
 
 FSLocation GetGameUserConfigDir() {
-	String dir = _G(platform)->GetUserConfigDirectory();
-	if (Path::IsRelativePath(dir)) // relative dir is resolved relative to the game data dir
-		return FSLocation(_GP(ResPaths).DataDir, dir);
+	FSLocation dir = _G(platform)->GetUserConfigDirectory();
+	if (is_relative_filename(dir.FullDir)) // relative dir is resolved relative to the game data dir
+		return FSLocation(_GP(ResPaths).DataDir).Rebase(dir.FullDir);
 	else if (_GP(usetup).local_user_conf) // directive to use game dir location
 		return FSLocation(_GP(ResPaths).DataDir);
 	// For absolute dir, we assume it's a special directory prepared for AGS engine
-	// and therefore amend it with a game own subdir
-	return FSLocation(dir, _GP(game).saveGameFolderName);
+	// and therefore append a game's own subdir
+	return dir.Concat(_GP(game).saveGameFolderName);
 }
 
-// A helper function that deduces a data directory either using default system location,
-// or user option from config. In case of a default location a path is appended with
-// game's "save folder" name, which is meant to separate files from different games.
-static FSLocation MakeGameDataDir(const String &default_dir, const String &user_option) {
-	if (user_option.IsEmpty()) {
-		String dir = default_dir;
-		if (Path::IsRelativePath(dir)) // relative dir is resolved relative to the game data dir
-			return FSLocation(_GP(ResPaths).DataDir, dir);
-		// For absolute dir, we assume it's a special directory prepared for AGS engine
-		// and therefore amend it with a game own subdir
-		return FSLocation(dir, _GP(game).saveGameFolderName);
-	}
-	// If this location is set up by user config, then use it as is (resolving relative path if necessary)
-	String dir = user_option;
-	if (Path::IsSameOrSubDir(_GP(ResPaths).DataDir, dir)) // check if it's inside game dir
-		return FSLocation(_GP(ResPaths).DataDir, Path::MakeRelativePath(_GP(ResPaths).DataDir, dir));
-	dir = Path::MakeAbsolutePath(dir);
-	return FSLocation(dir);
+// Constructs data dir using rules for default system location
+inline FSLocation MakeDefaultDataDir(const FSLocation &def_dir) {
+	// Relative dir is resolved relative to the game data dir
+	if (is_relative_filename(def_dir.FullDir))
+		return FSLocation(_GP(ResPaths).DataDir).Rebase(def_dir.FullDir);
+	// For absolute dir, we assume it's a special directory prepared for AGS engine
+	// and therefore amend it with a game's own subdir (to separate files from different games)
+	return def_dir.Concat(_GP(game).saveGameFolderName);
+}
+
+// Constructs data dir using rules for the user-specified location
+inline FSLocation MakeUserDataDir(const String &user_dir) {
+	// If user-set location is inside game dir, then form a relative path
+	if (is_relative_filename(user_dir))
+		return FSLocation(_GP(ResPaths).DataDir).Rebase(user_dir);
+	// Otherwise treat it as an absolute path
+	return FSLocation(Path::MakeAbsolutePath(user_dir));
 }
 
 FSLocation GetGameAppDataDir() {
-	return MakeGameDataDir(_G(platform)->GetAllUsersDataDirectory(), _GP(usetup).shared_data_dir);
+	if (_GP(usetup).shared_data_dir.IsEmpty())
+		return MakeDefaultDataDir(_G(platform)->GetAllUsersDataDirectory());
+	return MakeUserDataDir(_GP(usetup).shared_data_dir);
 }
 
 FSLocation GetGameUserDataDir() {
-	return MakeGameDataDir(_G(platform)->GetUserSavedgamesDirectory(), _GP(usetup).user_data_dir);
+	if (_GP(usetup).user_data_dir.IsEmpty())
+		return MakeDefaultDataDir(_G(platform)->GetUserSavedgamesDirectory());
+	return MakeUserDataDir(_GP(usetup).user_data_dir);
 }
 
 bool ResolveScriptPath(const String &orig_sc_path, bool read_only, ResolvedPath &rp) {
 	debugC(::AGS::kDebugFilePath, "ResolveScriptPath(%s)", orig_sc_path.GetCStr());
 	rp = ResolvedPath();
 
-	bool is_absolute = !is_relative_filename(orig_sc_path.GetCStr());
-	if (is_absolute && !read_only) {
-		debug_script_warn("Attempt to access file '%s' denied (cannot write to absolute path)", orig_sc_path.GetCStr());
-		return false;
-	}
+	if (!Path::IsRelativePath(orig_sc_path)) {
+		if (!read_only) {
+			debug_script_warn("Attempt to access file '%s' denied (cannot write to absolute path)", orig_sc_path.GetCStr());
+			return false;
+		}
 
-	if (is_absolute) {
 		rp = ResolvedPath(orig_sc_path);
 		return true;
 	}
 
 	String sc_path = orig_sc_path;
+	if (sc_path.CompareLeft(GameAssetToken, strlen(GameAssetToken)) == 0) {
+		if (!read_only) {
+			debug_script_warn("Attempt to access file '%s' denied (cannot write to game assets)", orig_sc_path.GetCStr());
+			return false;
+		}
+		rp.FullPath = sc_path.Mid(strlen(GameAssetToken) + 1);
+		rp.AssetMgr = true;
+		return true;
+	}
+
 	FSLocation parent_dir;
 	String child_path;
 	String alt_path;
@@ -388,13 +429,8 @@ bool ResolveWritePathAndCreateDirs(const String &sc_path, ResolvedPath &rp) {
 	return true;
 }
 
-Stream *LocateAsset(const AssetPath &path, size_t &asset_size) {
-	String assetname = path.Name;
-	String filter = path.Filter;
-	soff_t asset_sz = 0;
-	Stream *asset_stream = _GP(AssetMgr)->OpenAsset(assetname, filter, &asset_sz);
-	asset_size = asset_sz;
-	return asset_stream;
+bool CreateFSDirs(const FSLocation &fs) {
+	return Directory::CreateAllDirectories(fs.BaseDir, fs.FullDir);
 }
 
 //
@@ -462,8 +498,9 @@ static PACKFILE_VTABLE ags_packfile_vtable = {
 };
 //
 
-PACKFILE *PackfileFromAsset(const AssetPath &path, size_t &asset_size) {
-	Stream *asset_stream = LocateAsset(path, asset_size);
+PACKFILE *PackfileFromAsset(const AssetPath &path) {
+	Stream *asset_stream = _GP(AssetMgr)->OpenAsset(path);
+	const size_t asset_size = asset_stream->GetLength();
 	if (asset_stream && asset_size > 0) {
 		AGS_PACKFILE_OBJ *obj = new AGS_PACKFILE_OBJ;
 		obj->stream.reset(asset_stream);
@@ -472,12 +509,6 @@ PACKFILE *PackfileFromAsset(const AssetPath &path, size_t &asset_size) {
 		return pack_fopen_vtable(&ags_packfile_vtable, obj);
 	}
 	return nullptr;
-}
-
-bool DoesAssetExistInLib(const AssetPath &path) {
-	String assetname = path.Name;
-	String filter = path.Filter;
-	return _GP(AssetMgr)->DoesAssetExist(assetname, filter);
 }
 
 String find_assetlib(const String &filename) {

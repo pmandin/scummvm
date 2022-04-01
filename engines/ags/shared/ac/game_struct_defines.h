@@ -104,7 +104,19 @@ namespace AGS3 {
 #define FFLG_LEGACY_SIZEMASK 0x3f
 #define MAX_LEGACY_FONT_SIZE 63
 // Contemporary font flags
-#define FFLG_SIZEMULTIPLIER  0x01  // size data means multiplier
+#define FFLG_SIZEMULTIPLIER        0x01  // size data means multiplier
+#define FFLG_DEFLINESPACING        0x02  // linespacing derived from the font height
+// Font load flags, primarily for backward compatibility:
+// REPORTNOMINALHEIGHT: get_font_height should return nominal font's height,
+// eq to "font size" parameter, otherwise returns real pixel height.
+#define FFLG_REPORTNOMINALHEIGHT   0x04
+// ASCENDFIXUP: do the TTF ascender fixup, where font's ascender is resized
+// to the nominal font's height.
+#define FFLG_ASCENDERFIXUP         0x08
+// Collection of flags defining fully backward compatible TTF fixup
+#define FFLG_TTF_BACKCOMPATMASK   (FFLG_REPORTNOMINALHEIGHT | FFLG_ASCENDERFIXUP)
+// Collection of flags defining font's load mode
+#define FFLG_LOADMODEMASK         (FFLG_REPORTNOMINALHEIGHT | FFLG_ASCENDERFIXUP)
 // Font outline types
 #define FONT_OUTLINE_NONE -1
 #define FONT_OUTLINE_AUTO -10
@@ -246,7 +258,7 @@ struct FontInfo {
 	int8          Outline;
 	// Custom vertical render offset, used mainly for fixing broken fonts
 	int           YOffset;
-	// custom line spacing between two lines of text (0 = use font height)
+	// Custom line spacing between two lines of text (0 = use font height)
 	int           LineSpacing;
 	// When automatic outlining, thickness of the outline (0 = no auto outline)
 	int           AutoOutlineThickness;

@@ -226,7 +226,7 @@ void DrawingSurface_DrawSurfaceEx(ScriptDrawingSurface *target, ScriptDrawingSur
 		int dst_x, int dst_y, int dst_width, int dst_height,
 		int src_x, int src_y, int src_width, int src_height) {
 	DrawingSurface_DrawImageImpl(target, source->GetBitmapSurface(), dst_x, dst_y, trans, dst_width, dst_height,
-		src_x, src_y, src_width, src_height, -1, source->hasAlphaChannel);
+		src_x, src_y, src_width, src_height, -1, source->hasAlphaChannel != 0);
 }
 
 void DrawingSurface_DrawSurface(ScriptDrawingSurface *target, ScriptDrawingSurface *source, int trans) {
@@ -333,7 +333,7 @@ void DrawingSurface_DrawStringWrapped_Old(ScriptDrawingSurface *sds, int xx, int
 }
 
 void DrawingSurface_DrawStringWrapped(ScriptDrawingSurface *sds, int xx, int yy, int wid, int font, int alignment, const char *msg) {
-	int linespacing = getfontspacing_outlined(font);
+	int linespacing = get_font_linespacing(font);
 	sds->PointToGameResolution(&xx, &yy);
 	sds->SizeToGameResolution(&wid);
 
@@ -347,9 +347,9 @@ void DrawingSurface_DrawStringWrapped(ScriptDrawingSurface *sds, int xx, int yy,
 		int drawAtX = xx;
 
 		if (alignment & kMAlignHCenter) {
-			drawAtX = xx + ((wid / 2) - wgettextwidth(_GP(Lines)[i].GetCStr(), font) / 2);
+			drawAtX = xx + ((wid / 2) - get_text_width(_GP(Lines)[i].GetCStr(), font) / 2);
 		} else if (alignment & kMAlignRight) {
-			drawAtX = (xx + wid) - wgettextwidth(_GP(Lines)[i].GetCStr(), font);
+			drawAtX = (xx + wid) - get_text_width(_GP(Lines)[i].GetCStr(), font);
 		}
 
 		wouttext_outline(ds, drawAtX, yy + linespacing * i, font, text_color, _GP(Lines)[i].GetCStr());

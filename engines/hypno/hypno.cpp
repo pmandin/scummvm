@@ -70,6 +70,8 @@ HypnoEngine::HypnoEngine(OSystem *syst, const ADGameDescription *gd)
 	if (!Common::parseBool(ConfMan.get("cheats"), _cheatsEnabled))
 		error("Failed to parse bool from cheats options");
 
+	if (!Common::parseBool(ConfMan.get("restored"), _restoredContentEnabled))
+		error("Failed to parse bool from restored options");
 	// Add quit level
 	Hotspot q(MakeMenu);
 	Action *a = new Quit();
@@ -79,6 +81,7 @@ HypnoEngine::HypnoEngine(OSystem *syst, const ADGameDescription *gd)
 	hs.push_back(q);
 	quit->hots = hs;
 	_levels["<quit>"] = quit;
+	resetStatistics();
 }
 
 HypnoEngine::~HypnoEngine() {
@@ -174,8 +177,10 @@ void HypnoEngine::runLevel(Common::String &name) {
 	} else if (_levels[name]->type == ArcadeLevel) {
 		debugC(1, kHypnoDebugArcade, "Executing arcade level %s", name.c_str());
 		changeScreenMode("320x200");
-		runBeforeArcade((ArcadeShooting *)_levels[name]);
-		runArcade((ArcadeShooting *)_levels[name]);
+		ArcadeShooting *arc = (ArcadeShooting *)_levels[name];
+		runBeforeArcade(arc);
+		runArcade(arc);
+		runAfterArcade(arc);
 	} else if (_levels[name]->type == CodeLevel) {
 		debugC(1, kHypnoDebugScene, "Executing hardcoded level %s", name.c_str());
 		// Resolution depends on the game
@@ -251,7 +256,7 @@ void HypnoEngine::runIntro(MVideo &video) {
 
 void HypnoEngine::runCode(Code *code) { error("Function \"%s\" not implemented", __FUNCTION__); }
 void HypnoEngine::showCredits() { error("Function \"%s\" not implemented", __FUNCTION__); }
-void HypnoEngine::loadGame(const Common::String &nextLevel, int puzzleDifficulty, int combatDifficulty) {
+void HypnoEngine::loadGame(const Common::String &nextLevel, int score, int puzzleDifficulty, int combatDifficulty) {
 	error("Function \"%s\" not implemented", __FUNCTION__);
 }
 
@@ -430,7 +435,6 @@ void HypnoEngine::updateScreen(MVideo &video) {
 	const Graphics::Surface *frame = video.decoder->decodeNextFrame();
 	bool dirtyPalette = video.decoder->hasDirtyPalette();
 
-	video.currentFrame = frame;
 	if (frame->h == 0 || frame->w == 0 || video.decoder->getPalette() == nullptr)
 		return;
 
@@ -522,7 +526,7 @@ void HypnoEngine::playSound(const Common::String &filename, uint32 loops, uint32
 		if (file->open(name)) {
 			stream = new Audio::LoopingAudioStream(Audio::makeRawStream(file, sampleRate, Audio::FLAG_UNSIGNED, DisposeAfterUse::YES), loops);
 			_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundHandle, stream, -1, Audio::Mixer::kMaxChannelVolume);
-		} else 
+		} else
 			debugC(1, kHypnoDebugMedia, "%s not found!", name.c_str());
 	}
 }

@@ -26,6 +26,7 @@
 #include "ags/shared/core/types.h"
 #include "ags/shared/ac/common_defines.h"
 #include "ags/shared/gfx/gfx_def.h"
+#include "ags/shared/game/room_struct.h"
 
 namespace AGS3 {
 namespace AGS {
@@ -73,12 +74,18 @@ class Camera;
 
 // Initializes drawing methods and optimisation
 void init_draw_method();
+// Initializes global game drawing resources
+void init_game_drawdata();
 // Initializes drawing resources upon entering new room
 void init_room_drawdata();
 // Disposes resources related to the current drawing methods
 void dispose_draw_method();
+// Disposes global game drawing resources
+void dispose_game_drawdata();
 // Disposes any temporary resources on leaving current room
 void dispose_room_drawdata();
+// Releases all the cached textures of game objects
+void clear_drawobj_cache();
 // Updates drawing settings depending on main viewport's size and position on screen
 void on_mainviewport_changed();
 // Notifies that a new room viewport was created
@@ -106,6 +113,7 @@ void invalidate_rect(int x1, int y1, int x2, int y2, bool in_room);
 
 void mark_current_background_dirty();
 void invalidate_cached_walkbehinds();
+
 // Avoid freeing and reallocating the memory if possible
 Shared::Bitmap *recycle_bitmap(Shared::Bitmap *bimp, int coldep, int wid, int hit, bool make_transparent = false);
 Engine::IDriverDependantBitmap *recycle_ddb_bitmap(Engine::IDriverDependantBitmap *bimp, Shared::Bitmap *source, bool hasAlpha = false, bool opaque = false);
@@ -117,13 +125,19 @@ void construct_game_scene(bool full_redraw = false);
 void construct_game_screen_overlay(bool draw_mouse = true);
 // Construct engine overlay with debugging tools (fps, console)
 void construct_engine_overlay();
-void add_to_sprite_list(Engine::IDriverDependantBitmap *spp, int xx, int yy, int baseline, int trans, int sprNum, bool isWalkBehind = false);
+// Clears black game borders in legacy letterbox mode
+void clear_letterbox_borders();
+
+void debug_draw_room_mask(RoomAreaMask mask);
+void debug_draw_movelist(int charnum);
+void update_room_debug();
+
 void tint_image(Shared::Bitmap *g, Shared::Bitmap *source, int red, int grn, int blu, int light_level, int luminance = 255);
 void draw_sprite_support_alpha(Shared::Bitmap *ds, bool ds_has_alpha, int xpos, int ypos, Shared::Bitmap *image, bool src_has_alpha,
                                Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha, int alpha = 0xFF);
 void draw_sprite_slot_support_alpha(Shared::Bitmap *ds, bool ds_has_alpha, int xpos, int ypos, int src_slot,
                                     Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha, int alpha = 0xFF);
-void draw_gui_sprite(Shared::Bitmap *ds, int pic, int x, int y, bool use_alpha, Shared::BlendMode blend_mode);
+void draw_gui_sprite(Shared::Bitmap *ds, int pic, int x, int y, bool use_alpha = true, Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha);
 void draw_gui_sprite_v330(Shared::Bitmap *ds, int pic, int x, int y, bool use_alpha = true, Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha);
 // Render game on screen
 void render_to_screen();
@@ -136,7 +150,10 @@ void putpixel_compensate(Shared::Bitmap *g, int xx, int yy, int col);
 // returns 1 if nothing at all has changed and actsps is still
 // intact from last time; 0 otherwise
 int construct_object_gfx(int aa, int *drawnWidth, int *drawnHeight, bool alwaysUseSoftware);
-void clear_letterbox_borders();
+// Returns a cached character image prepared for the render
+Shared::Bitmap *get_cached_character_image(int charid);
+// Returns a cached object image prepared for the render
+Shared::Bitmap *get_cached_object_image(int objid);
 
 void draw_and_invalidate_text(Shared::Bitmap *ds, int x1, int y1, int font, color_t text_color, const char *text);
 
@@ -148,7 +165,7 @@ void setpal();
 // This conversion is done before anything else (like moving from room to
 // viewport on screen, or scaling game further in the window by the graphic
 // renderer).
-extern AGS_INLINE int get_fixed_pixel_size(int pixels);
+AGS_INLINE int get_fixed_pixel_size(int pixels);
 // coordinate conversion data,script ---> final game resolution
 extern AGS_INLINE int data_to_game_coord(int coord);
 extern AGS_INLINE void data_to_game_coords(int *x, int *y);
@@ -165,11 +182,11 @@ extern AGS_INLINE int game_to_ctx_data_size(int size, bool hires_ctx);
 // This function converts game coordinates coming from script to the actual game resolution.
 extern AGS_INLINE void defgame_to_finalgame_coords(int &x, int &y);
 
-// Checks if the bitmap needs to be converted and **deletes original** if a new bitmap
-// had to be created (by default).
-// TODO: this helper function was meant to remove bitmap deletion from the GraphicsDriver's
-// implementations while keeping code changes to minimum. The proper solution would probably
-// be to use shared pointers when storing Bitmaps, or make Bitmap reference-counted object.
+// Creates bitmap of a format compatible with the gfxdriver;
+// if col_depth is 0, uses game's native color depth.
+Shared::Bitmap *CreateCompatBitmap(int width, int height, int col_depth = 0);
+// Checks if the bitmap is compatible with the gfxdriver;
+// returns same bitmap or its copy of a compatible format.
 Shared::Bitmap *ReplaceBitmapWithSupportedFormat(Shared::Bitmap *bitmap);
 // Checks if the bitmap needs any kind of adjustments before it may be used
 // in AGS sprite operations. Also handles number of certain special cases

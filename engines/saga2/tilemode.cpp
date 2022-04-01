@@ -27,6 +27,7 @@
 
 #include "saga2/saga2.h"
 #include "saga2/detection.h"
+#include "saga2/display.h"
 #include "saga2/tilemode.h"
 #include "saga2/tile.h"
 #include "saga2/setup.h"
@@ -108,7 +109,6 @@ void navigatePath(TilePoint pick);
 
 void moveActors(int32 deltaTime);
 
-void drawMainDisplay();
 void updateMainDisplay();
 
 #if DEBUG

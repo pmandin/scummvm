@@ -240,7 +240,7 @@ void unload_old_room() {
 		_G(objs)[ff].moving = 0;
 
 	if (!_GP(play).ambient_sounds_persist) {
-		for (ff = 1; ff < MAX_SOUND_CHANNELS; ff++)
+		for (ff = NUM_SPEECH_CHANS; ff < _GP(game).numGameChannels; ff++)
 			StopAmbientSound(ff);
 	}
 
@@ -302,31 +302,10 @@ void unload_old_room() {
 
 	croom_ptr_clear();
 
-	// clear the object cache
-	for (ff = 0; ff < MAX_ROOM_OBJECTS; ff++) {
-		delete _G(objcache)[ff].image;
-		_G(objcache)[ff].image = nullptr;
-	}
-	// clear the _G(actsps) buffers to save memory, since the
+	// clear the _GP(actsps) buffers to save memory, since the
 	// objects/characters involved probably aren't on the
 	// new screen. this also ensures all cached data is flushed
-	for (ff = 0; ff < MAX_ROOM_OBJECTS + _GP(game).numcharacters; ff++) {
-		delete _G(actsps)[ff];
-		_G(actsps)[ff] = nullptr;
-
-		if (_G(actspsbmp)[ff] != nullptr)
-			_G(gfxDriver)->DestroyDDB(_G(actspsbmp)[ff]);
-		_G(actspsbmp)[ff] = nullptr;
-
-		delete _G(actspswb)[ff];
-		_G(actspswb)[ff] = nullptr;
-
-		if (_G(actspswbbmp)[ff] != nullptr)
-			_G(gfxDriver)->DestroyDDB(_G(actspswbbmp)[ff]);
-		_G(actspswbbmp)[ff] = nullptr;
-
-		_G(actspswbcache)[ff].valid = 0;
-	}
+	clear_drawobj_cache();
 
 	// if Hide Player Character was ticked, restore it to visible
 	if (_GP(play).temporarily_turned_off_character >= 0) {
@@ -431,6 +410,12 @@ HError LoadRoomScript(RoomStruct *room, int newnum) {
 		room->CompiledScript = script;
 	}
 	return HError::None();
+}
+
+static void reset_temp_room() {
+	_GP(troom).FreeScriptData();
+	_GP(troom).FreeProperties();
+	_GP(troom) = RoomStatus();
 }
 
 // forchar = playerchar on NewRoom, or NULL if restore saved game
@@ -544,11 +529,7 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	// setup objects
 	if (forchar != nullptr) {
 		// if not restoring a game, always reset this room
-		_GP(troom).beenhere = 0;
-		_GP(troom).FreeScriptData();
-		_GP(troom).FreeProperties();
-		memset(&_GP(troom).hotspot_enabled[0], 1, MAX_ROOM_HOTSPOTS);
-		memset(&_GP(troom).region_enabled[0], 1, MAX_ROOM_REGIONS);
+		reset_temp_room();
 	}
 	if ((newnum >= 0) & (newnum < MAX_ROOMS))
 		_G(croom) = getRoomStatus(newnum);
@@ -950,21 +931,24 @@ void new_room(int newnum, CharacterInfo *forchar) {
 		// Delete all cached sprites
 		_GP(spriteset).DisposeAll();
 
-		// Delete all gui background images
-		for (int i = 0; i < _GP(game).numgui; i++) {
-			delete _G(guibg)[i];
-			_G(guibg)[i] = nullptr;
-
-			if (_G(guibgbmp)[i])
-				_G(gfxDriver)->DestroyDDB(_G(guibgbmp)[i]);
-			_G(guibgbmp)[i] = nullptr;
-		}
 		GUI::MarkAllGUIForUpdate();
 	}
 
 	update_polled_stuff_if_runtime();
 
 	load_new_room(newnum, forchar);
+}
+
+void set_room_placeholder() {
+	_GP(thisroom).InitDefaults();
+	std::shared_ptr<Bitmap> dummy_bg(new Bitmap(1, 1, 8));
+	_GP(thisroom).BgFrames[0].Graphic = dummy_bg;
+	_GP(thisroom).HotspotMask = dummy_bg;
+	_GP(thisroom).RegionMask = dummy_bg;
+	_GP(thisroom).WalkAreaMask = dummy_bg;
+	_GP(thisroom).WalkBehindMask = dummy_bg;
+	reset_temp_room();
+	_G(croom) = &_GP(troom);
 }
 
 int find_highest_room_entered() {
@@ -1008,14 +992,19 @@ void compile_room_script() {
 	_G(ccError) = 0;
 
 	_G(roominst) = ccInstance::CreateFromScript(_GP(thisroom).CompiledScript);
-
 	if ((_G(ccError) != 0) || (_G(roominst) == nullptr)) {
-		quitprintf("Unable to create local script: %s", _G(ccErrorString).GetCStr());
+		quitprintf("Unable to create local script:\n%s", _G(ccErrorString).GetCStr());
 	}
+
+	if (!_G(roominst)->ResolveScriptImports(_G(roominst)->instanceof.get()))
+		quitprintf("Unable to resolve imports in room script:\n%s", _G(ccErrorString).GetCStr());
+
+	if (!_G(roominst)->ResolveImportFixups(_G(roominst)->instanceof.get()))
+		quitprintf("Unable to resolve import fixups in room script:\n%s", _G(ccErrorString).GetCStr());
 
 	_G(roominstFork) = _G(roominst)->Fork();
 	if (_G(roominstFork) == nullptr)
-		quitprintf("Unable to create forked room instance: %s", _G(ccErrorString).GetCStr());
+		quitprintf("Unable to create forked room instance:\n%s", _G(ccErrorString).GetCStr());
 
 	_GP(repExecAlways).roomHasFunction = true;
 	_GP(lateRepExecAlways).roomHasFunction = true;

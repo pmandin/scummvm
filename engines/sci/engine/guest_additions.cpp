@@ -157,6 +157,12 @@ static Common::String getUserObject(SciGameId gameId) {
 		return "oUser";
 	case GID_PHANTASMAGORIA2:
 		return "p2User";
+	case GID_LSL3:
+	case GID_SQ3:
+		// German Amiga versions
+		if (getSciVersion() == SCI_VERSION_1_MIDDLE)
+			return "PUser";
+		// fallthrough
 	default:
 		return "User";
 	}
@@ -164,8 +170,19 @@ static Common::String getUserObject(SciGameId gameId) {
 
 bool GuestAdditions::userHasControl() {
 	const SciGameId gameId = g_sci->getGameId();
-	const reg_t user = _segMan->findObjectByName(getUserObject(gameId));
+	reg_t user = _segMan->findObjectByName(getUserObject(gameId));
+	if (user.isNull()) {
+		// If the user object can't be found by name then try the object in
+		// global 80, as that's the usual location.
+		// Several Mac games like QFG1VGA don't contain object names, and some
+		// third party localizations like SQ1VGA Russian altered object names.
+		user = _state->variables[VAR_GLOBAL][kGlobalVarUser];
+	}
 	const Object *userObject = _segMan->getObject(user);
+	if (userObject == nullptr) {
+		warning("User object not found");
+		return false;
+	}
 
 	// Selectors input/canInput and controls should be available at all times, except
 	// in games that don't have selector vocab 997 (e.g. some game demos and LB2 floppy)
@@ -813,14 +830,14 @@ bool GuestAdditions::restoreFromLauncher() const {
 			// a handsOff sequence breaks the prompt and crashes the next room.
 			// We enable input by calling p2User:canInput(1).
 			reg_t canInputParams[] = { TRUE_REG };
-			invokeSelector(_state->variables[VAR_GLOBAL][kGlobalVarPhant2User], SELECTOR(canInput), 1, canInputParams);
+			invokeSelector(_state->variables[VAR_GLOBAL][kGlobalVarUser], SELECTOR(canInput), 1, canInputParams);
 
-			writeSelectorValue(_segMan, g_sci->getGameObject(), SELECTOR(num), _state->_delayedRestoreGameId - kSaveIdShift);
+			writeSelectorValue(_segMan, g_sci->getGameObject(), SELECTOR(num), shiftScummVMToSciSaveId(_state->_delayedRestoreGameId));
 			invokeSelector(g_sci->getGameObject(), SELECTOR(reallyRestore));
 		} else if (g_sci->getGameId() == GID_SHIVERS) {
 			// Shivers accepts the save game number as a parameter to
 			// `SHIVERS::restore`
-			reg_t args[] = { make_reg(0, _state->_delayedRestoreGameId - kSaveIdShift) };
+			reg_t args[] = { make_reg(0, shiftScummVMToSciSaveId(_state->_delayedRestoreGameId)) };
 			invokeSelector(g_sci->getGameObject(), SELECTOR(restore), 1, args);
 		} else {
 			int saveId = _state->_delayedRestoreGameId;

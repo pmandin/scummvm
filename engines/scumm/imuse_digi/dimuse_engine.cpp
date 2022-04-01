@@ -81,7 +81,7 @@ IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer)
 	_numAudioNames = 0;
 
 	_emptyMarker[0] = '\0';
-	_internalMixer = new IMuseDigiInternalMixer(mixer);
+	_internalMixer = new IMuseDigiInternalMixer(mixer, _isEarlyDiMUSE);
 	_groupsHandler = new IMuseDigiGroupsHandler(this);
 	_fadesHandler = new IMuseDigiFadesHandler(this);
 	_triggersHandler = new IMuseDigiTriggersHandler(this);
@@ -103,13 +103,18 @@ IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer)
 	_filesHandler->allocSoundBuffer(DIMUSE_BUFFER_SMUSH, 198000, 0, 0);
 
 	if (_mixer->getOutputBufSize() != 0) {
-		_maxQueuedStreams = (_mixer->getOutputBufSize() / _waveOutPreferredFeedSize) + 1;
-		// This mixer's optimal output sample rate for this audio engine is 44100
-		// if it's higher than that, compensate the number of queued streams in order
-		// to try to achieve a better latency compromise
-		if (_mixer->getOutputRate() > DIMUSE_SAMPLERATE * 2) {
-			_maxQueuedStreams -= 2;
+		// Let's find the optimal value for the maximum number of streams which can stay in the queue at once;
+		// (A number which is too low can lead to buffer underrun, while the higher the number is, the higher is the audio latency)
+		_maxQueuedStreams = (int)ceil((_mixer->getOutputBufSize() / _waveOutPreferredFeedSize) / ((float)_mixer->getOutputRate() / DIMUSE_SAMPLERATE));
+
+		// This mixer's optimal output sample rate for this audio engine is one which is a multiple of 22050Hz;
+		// if we're dealing with one which is a multiple of 48000Hz, compensate the number of queued streams...
+		if (_mixer->getOutputRate() % DIMUSE_SAMPLERATE) {
+			_maxQueuedStreams++;
 		}
+
+		// The lower optimal bound is always 5, except if we're operating in low latency mode
+		_maxQueuedStreams = MAX(_mixer->getOutputBufSize() <= 1024 ? 4 : 5, _maxQueuedStreams);
 	} else {
 		debug(5, "IMuseDigital::IMuseDigital(): WARNING: output audio buffer size not specified for this platform, defaulting _maxQueuedStreams to 4");
 		_maxQueuedStreams = 4;
@@ -227,6 +232,35 @@ int IMuseDigital::startVoice(const char *fileName, ScummFile *file, uint32 offse
 	return 0;
 }
 
+static void skipLegacyTrackEntry(Common::Serializer &s) {
+	s.skip(1, VER(31)); // t.pan
+	s.skip(4, VER(31)); // t.vol
+	s.skip(4, VER(31)); // t.volFadeDest
+	s.skip(4, VER(31)); // t.volFadeStep
+	s.skip(4, VER(31)); // t.volFadeDelay
+	s.skip(1, VER(31)); // t.volFadeUsed
+	s.skip(4, VER(31)); // t.soundId
+	s.skip(15, VER(31)); // t.soundName
+	s.skip(1, VER(31)); // t.used
+	s.skip(1, VER(31)); // t.toBeRemoved
+	s.skip(1, VER(31)); // t.souStreamUsed
+	s.skip(1, VER(31), VER(76)); // mixerStreamRunning
+	s.skip(4, VER(31)); // t.soundPriority
+	s.skip(4, VER(31)); // t.regionOffset
+	s.skip(4, VER(31), VER(31)); // trackOffset
+	s.skip(4, VER(31)); // t.dataOffset
+	s.skip(4, VER(31)); // t.curRegion
+	s.skip(4, VER(31)); // t.curHookId
+	s.skip(4, VER(31)); // t.volGroupId
+	s.skip(4, VER(31)); // t.soundType
+	s.skip(4, VER(31)); // t.feedSize
+	s.skip(4, VER(31)); // t.dataMod12Bit
+	s.skip(4, VER(31)); // t.mixerFlags
+	s.skip(4, VER(31), VER(42)); // mixerVol
+	s.skip(4, VER(31), VER(42)); // mixerPan
+	s.skip(1, VER(45)); // t.sndDataExtComp
+}
+
 void IMuseDigital::saveLoadEarly(Common::Serializer &s) {
 	Common::StackLock lock(_mutex, "IMuseDigital::saveLoadEarly()");
 
@@ -247,6 +281,9 @@ void IMuseDigital::saveLoadEarly(Common::Serializer &s) {
 		s.syncAsSint32LE(_nextSeqToPlay, VER(31));
 		s.syncAsByte(_radioChatterSFX, VER(76));
 		s.syncArray(_attributes, 188, Common::Serializer::Sint32LE, VER(31));
+
+		for (int j = 0; j < 16; ++j)
+			skipLegacyTrackEntry(s);
 
 		int stateSoundId = 0;
 		int seqSoundId = 0;

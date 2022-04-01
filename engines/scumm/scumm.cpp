@@ -109,7 +109,8 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	  _currentScript(0xFF), // Let debug() work on init stage
 	  _messageDialog(nullptr), _pauseDialog(nullptr), _versionDialog(nullptr),
 	  _rnd("scumm"),
-	  _shakeTimerRate(dr.game.version <= 3 ? 236696 : 291304)
+	  _shakeTimerRate(dr.game.version <= 3 ? 236696 : 291304),
+	  _enableEnhancements(false)
 	  {
 
 	_localizer = nullptr;
@@ -286,6 +287,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	_townsScreen = nullptr;
 	_scrollRequest = _scrollDeltaAdjust = 0;
 	_scrollDestOffset = _scrollTimer = 0;
+	_scrollNeedDeltaAdjust = scumm_stricmp(_game.gameid, "indyzak");
 	_refreshNeedCatchUp = false;
 	_enableSmoothScrolling = (_game.platform == Common::kPlatformFMTowns);
 	memset(_refreshDuration, 0, sizeof(_refreshDuration));
@@ -1113,6 +1115,8 @@ Common::Error ScummEngine::init() {
 
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
 
+	_enableEnhancements = ConfMan.getBool("enable_enhancements");
+
 	// Add default file directories.
 	if (((_game.platform == Common::kPlatformAmiga) || (_game.platform == Common::kPlatformAtariST)) && (_game.version <= 4)) {
 		// This is for the Amiga version of Indy3/Loom/Maniac/Zak
@@ -1706,10 +1710,9 @@ void ScummEngine::setupCharsetRenderer(const Common::String &macFontFile) {
 #endif
 		if (_game.platform == Common::kPlatformFMTowns)
 			_charset = new CharsetRendererTownsV3(this);
-		else if (_game.platform == Common::kPlatformMacintosh && !macFontFile.empty()) {
-			bool correctFontSpacing = _game.id == GID_LOOM || ConfMan.getBool("mac_v3_correct_font_spacing");
-			_charset = new CharsetRendererMac(this, macFontFile, correctFontSpacing);
-		} else
+		else if (_game.platform == Common::kPlatformMacintosh && !macFontFile.empty())
+			_charset = new CharsetRendererMac(this, macFontFile);
+		else
 			_charset = new CharsetRendererV3(this);
 #ifdef ENABLE_SCUMM_7_8
 	} else if (_game.version == 8) {
@@ -2445,18 +2448,18 @@ Common::Error ScummEngine::go() {
 			delta = 6;
 		}
 
-		// Wait...
-		waitForTimer(delta * 1000 / 60 - diff);
+		// Wait and start the stop watch at the time the wait is assumed
+		// to end. There is no guarantee that the wait is that exact,
+		// but this way if it overshoots that time will count as part
+		// of the main loop.
 
-		// Start the stop watch!
-		diff = _system->getMillis();
+		diff = waitForTimer(delta * 1000 / 60 - diff);
 
 		// Run the main loop
 		scummLoop(delta);
 
 		// Halt the stop watch and compute how much time this iteration took.
 		diff = _system->getMillis() - diff;
-
 
 		if (shouldQuit()) {
 			// TODO: Maybe perform an autosave on exit?
@@ -2467,15 +2470,17 @@ Common::Error ScummEngine::go() {
 	return Common::kNoError;
 }
 
-void ScummEngine::waitForTimer(int msec_delay) {
-	uint32 start_time;
+int ScummEngine::waitForTimer(int msec_delay) {
+	uint32 end_time;
 
 	if (_fastMode & 2)
 		msec_delay = 0;
 	else if (_fastMode & 1)
 		msec_delay = 10;
 
-	start_time = _system->getMillis();
+	uint32 cur = _system->getMillis();;
+
+	end_time = cur + msec_delay;
 
 	while (!shouldQuit()) {
 		_sound->updateCD(); // Loop CD Audio if needed
@@ -2488,7 +2493,7 @@ void ScummEngine::waitForTimer(int msec_delay) {
 		towns_updateGfx();
 #endif
 		_system->updateScreen();
-		uint32 cur = _system->getMillis();
+		cur = _system->getMillis();
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 		// These measurements are used to determine whether the FM-Towns smooth scrolling is likely to fall behind and need to catch
@@ -2497,10 +2502,20 @@ void ScummEngine::waitForTimer(int msec_delay) {
 		_refreshDuration[_refreshArrayPos] = (int)(cur - screenUpdateTimerStart);
 		_refreshArrayPos = (_refreshArrayPos + 1) % ARRAYSIZE(_refreshDuration);
 #endif
-		if (cur >= start_time + msec_delay)
+		if (cur >= end_time)
 			break;
-		_system->delayMillis(10);
+		_system->delayMillis(MIN<uint32>(10, end_time - cur));
 	}
+
+	// Return the expected end time, which may be different from the actual
+	// time. This helps the main loop maintain consistent timing.
+	//
+	// If it's lagging too far behind, we probably resumed from pausing, or
+	// the process was suspended, or any such thing. We probably can't
+	// sensibly detect all of them from within ScummVM, so in that case we
+	// simply return the current time to catch up.
+
+	return (cur > end_time + 50) ? cur : end_time;
 }
 
 void ScummEngine_v0::scummLoop(int delta) {

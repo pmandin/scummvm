@@ -63,10 +63,10 @@ enum {
 };
 
 PredictiveDialog::PredictiveDialog() : Dialog("Predictive") {
-	new StaticTextWidget(this, "Predictive.Headline", Common::U32String("Enter Text"));
+	new StaticTextWidget(this, "Predictive.Headline", _("Enter Text"));
 
 	_button[kCancelAct] =  new ButtonWidget(this, "Predictive.Cancel",  _("Cancel")   , Common::U32String(), kCancelCmd);
-	_button[kOkAct] =      new ButtonWidget(this, "Predictive.OK",      _("Ok")       , Common::U32String(), kOkCmd);
+	_button[kOkAct] =      new ButtonWidget(this, "Predictive.OK",      _("OK")       , Common::U32String(), kOkCmd);
 
 	if (g_gui.useRTL()) {
 		/** If using RTL, swap the internal name of odd columns, to be flipped again when drawing.

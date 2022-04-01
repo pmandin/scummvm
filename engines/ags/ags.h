@@ -49,13 +49,8 @@ namespace AGS {
  * @brief Engine to run Adventure Game Studio games.
  */
 
-/* Synced up to upstream: 3.5.1.10
- * f2736d21677d2db4b0559c1ded31e284b8a8f64f
- *
- * Commits still pending to be ported:
- * cae84d689019313cad49b6dca7e916866b90e49e
- * - We have slightly different blending code, commit needs
- * to be modified to take that into account
+/* Synced up to upstream: ---
+ * ----
  */
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200

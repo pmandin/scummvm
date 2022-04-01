@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-02-23 09:29+0000\n"
-"PO-Revision-Date: 2022-02-23 20:45+0000\n"
+"POT-Creation-Date: 2022-03-27 04:28+0000\n"
+"PO-Revision-Date: 2022-03-24 12:27+0000\n"
 "Last-Translator: VAN-Gluon <van.gluonp@gmail.com>\n"
 "Language-Team: Japanese <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ja/>\n"
@@ -69,7 +69,8 @@ msgstr "上へ"
 #: backends/events/default/default-events.cpp:218
 #: backends/platform/wii/options.cpp:47 engines/asylum/asylum.cpp:201
 #: engines/buried/saveload.cpp:69 engines/cine/saveload.cpp:863
-#: engines/drascula/saveload.cpp:48 engines/mohawk/myst_stacks/menu.cpp:283
+#: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:84
+#: engines/mohawk/myst_stacks/menu.cpp:283
 #: engines/mohawk/myst_stacks/menu.cpp:300
 #: engines/mohawk/myst_stacks/menu.cpp:318
 #: engines/mohawk/riven_stacks/aspit.cpp:349
@@ -131,8 +132,8 @@ msgstr "接続が制限されているようです。ダウンロードしても
 #: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
-#: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
-#: engines/kyra/gui/saveload_eob.cpp:628
+#: engines/director/events.cpp:91 engines/grim/grim.cpp:357
+#: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
 #: engines/parallaction/metaengine.cpp:145
 #: engines/sci/graphics/controls32.cpp:927
 msgid "Yes"
@@ -142,8 +143,9 @@ msgstr "はい"
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
 #: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
-#: engines/buried/buried.cpp:580 engines/grim/grim.cpp:357
-#: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
+#: engines/buried/buried.cpp:580 engines/director/events.cpp:91
+#: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
+#: engines/kyra/gui/saveload_eob.cpp:628
 #: engines/parallaction/metaengine.cpp:151
 #: engines/sci/graphics/controls32.cpp:927
 msgid "No"
@@ -162,23 +164,26 @@ msgstr ""
 "ファイルが存在します。"
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
-#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:534 gui/launcher.cpp:538
-#: gui/massadd.cpp:88 gui/options.cpp:2104 gui/saveload-dialog.cpp:1187
-#: engines/engine.cpp:525 engines/engine.cpp:549
+#: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
+#: gui/launcher.cpp:534 gui/launcher.cpp:538 gui/massadd.cpp:88
+#: gui/options.cpp:2104 gui/predictivedialog.cpp:69
+#: gui/saveload-dialog.cpp:1187 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
-#: engines/buried/saveload.cpp:69 engines/drascula/saveload.cpp:48
-#: engines/groovie/script.cpp:652 engines/parallaction/saveload.cpp:270
-#: engines/saga/music.cpp:99 engines/sci/engine/kgraphics.cpp:75
-#: engines/sci/graphics/controls32.cpp:924 engines/scumm/dialogs.cpp:180
-#: engines/scumm/scumm.cpp:1352 engines/scumm/scumm.cpp:1378
-#: engines/scumm/scumm.cpp:1400 engines/scumm/scumm.cpp:1678
-#: engines/scumm/scumm.cpp:2146 engines/sky/compact.cpp:141
-#: engines/sword1/animation.cpp:531 engines/sword1/animation.cpp:552
-#: engines/sword1/animation.cpp:568 engines/sword1/animation.cpp:576
-#: engines/sword1/control.cpp:888 engines/sword1/logic.cpp:1634
-#: engines/sword2/animation.cpp:428 engines/sword2/animation.cpp:448
-#: engines/sword2/animation.cpp:464 engines/sword2/animation.cpp:474
-#: engines/zvision/file/save_manager.cpp:225
+#: engines/buried/saveload.cpp:69
+#: engines/director/lingo/lingo-builtins.cpp:1652
+#: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
+#: engines/groovie/script.cpp:652 engines/nancy/dialogs.cpp:101
+#: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
+#: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:924
+#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1356
+#: engines/scumm/scumm.cpp:1382 engines/scumm/scumm.cpp:1404
+#: engines/scumm/scumm.cpp:1682 engines/scumm/scumm.cpp:2149
+#: engines/sky/compact.cpp:141 engines/sword1/animation.cpp:531
+#: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
+#: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
+#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:428
+#: engines/sword2/animation.cpp:448 engines/sword2/animation.cpp:464
+#: engines/sword2/animation.cpp:474 engines/zvision/file/save_manager.cpp:225
 msgid "OK"
 msgstr "OK"
 
@@ -529,11 +534,6 @@ msgstr "製作者："
 #: gui/editrecorddialog.cpp:59
 msgid "Notes:"
 msgstr "メモ："
-
-#: gui/editrecorddialog.cpp:67 gui/predictivedialog.cpp:69
-#: engines/nancy/dialogs.cpp:101
-msgid "Ok"
-msgstr "Ok"
 
 #: gui/filebrowser-dialog.cpp:53
 msgid "Choose file for loading"
@@ -1964,6 +1964,10 @@ msgstr ""
 "リクエストが完了しませんでした。\n"
 "インターネットへの接続状態を確認してください。"
 
+#: gui/predictivedialog.cpp:66
+msgid "Enter Text"
+msgstr "テキストを入力"
+
 #. I18N: You must leave "#" as is, only word 'next' is translatable
 #: gui/predictivedialog.cpp:101
 msgid "#  next"
@@ -2446,12 +2450,12 @@ msgstr "メインメニューに戻る(~R~)"
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:846
-#: engines/groovie/script.cpp:2187 engines/groovie/script.cpp:2228
+#: engines/groovie/script.cpp:2194 engines/groovie/script.cpp:2235
 #: engines/hugo/file.cpp:297 engines/illusions/menusystem.cpp:702
 #: engines/kingdom/kingdom.cpp:736 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
 #: engines/neverhood/menumodule.cpp:889 engines/pegasus/pegasus.cpp:402
-#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:725
+#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:742
 #: engines/sci/engine/kfile.cpp:1079 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3405
@@ -2466,14 +2470,14 @@ msgstr "ゲームをセーブ："
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:841
-#: engines/groovie/script.cpp:846 engines/groovie/script.cpp:2187
-#: engines/groovie/script.cpp:2228 engines/hugo/file.cpp:297
+#: engines/groovie/script.cpp:846 engines/groovie/script.cpp:2194
+#: engines/groovie/script.cpp:2235 engines/hugo/file.cpp:297
 #: engines/illusions/menusystem.cpp:702 engines/kingdom/kingdom.cpp:736
 #: engines/lab/savegame.cpp:237 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
 #: engines/neverhood/menumodule.cpp:889 engines/parallaction/metaengine.cpp:133
 #: engines/parallaction/saveload.cpp:208 engines/pegasus/pegasus.cpp:402
-#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:726
+#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:743
 #: engines/sci/engine/kfile.cpp:1079 engines/scumm/dialogs.cpp:175
 #: engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
@@ -2595,7 +2599,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "エラー：セーブデータを新規スロットへコピーできませんでした"
 
 #: engines/engine.cpp:609 engines/metaengine.cpp:370 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:248 engines/sky/metaengine.cpp:185
+#: backends/platform/ios7/ios7_osys_main.cpp:249 engines/sky/metaengine.cpp:185
 #: engines/xeen/saves.cpp:289
 msgid "Autosave"
 msgstr "自動セーブ"
@@ -4089,12 +4093,12 @@ msgstr ""
 #: engines/dm/loadsave.cpp:187 engines/drascula/saveload.cpp:395
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:823
-#: engines/groovie/script.cpp:858 engines/groovie/script.cpp:2174
-#: engines/groovie/script.cpp:2244 engines/hugo/file.cpp:399
+#: engines/groovie/script.cpp:858 engines/groovie/script.cpp:2181
+#: engines/groovie/script.cpp:2251 engines/hugo/file.cpp:399
 #: engines/illusions/menusystem.cpp:679 engines/kingdom/kingdom.cpp:746
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
 #: engines/neverhood/menumodule.cpp:902 engines/prince/saveload.cpp:63
-#: engines/sci/engine/guest_additions.cpp:728 engines/sci/engine/kfile.cpp:1206
+#: engines/sci/engine/guest_additions.cpp:745 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
@@ -4108,12 +4112,12 @@ msgstr "ゲームを復元する:"
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:823
 #: engines/groovie/script.cpp:841 engines/groovie/script.cpp:858
-#: engines/groovie/script.cpp:2174 engines/groovie/script.cpp:2244
+#: engines/groovie/script.cpp:2181 engines/groovie/script.cpp:2251
 #: engines/hugo/file.cpp:399 engines/illusions/menusystem.cpp:679
 #: engines/kingdom/kingdom.cpp:746 engines/lab/savegame.cpp:237
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
 #: engines/neverhood/menumodule.cpp:902 engines/prince/saveload.cpp:63
-#: engines/sci/engine/guest_additions.cpp:729 engines/sci/engine/kfile.cpp:1206
+#: engines/sci/engine/guest_additions.cpp:746 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
@@ -4126,7 +4130,7 @@ msgid "Quick load or save game isn't supported in this location"
 msgstr ""
 "このロケーションでは、セーブまたはクイックロードはサポートされていません"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2761
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2776
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4137,7 +4141,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2751
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2766
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4148,7 +4152,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2774
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2789
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4198,7 +4202,7 @@ msgstr "テキストを強制的にアンチエイリアス"
 msgid "Use antialiasing to draw text even if the game does not ask for it"
 msgstr "ゲームが要求していない場合でも、テキストにアンチエイリアシングを使用"
 
-#: engines/ags/ags.cpp:127
+#: engines/ags/ags.cpp:126
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
 "supported."
@@ -4206,7 +4210,7 @@ msgstr ""
 "このゲームは、Scumm VMでサポートされていないバージョン2.5以前のAGSエンジンを"
 "使用しています。"
 
-#: engines/ags/ags.cpp:135
+#: engines/ags/ags.cpp:134
 msgid ""
 "The selected game has a data file greater than 2Gb, which isn't supported by "
 "your version of ScummVM yet."
@@ -4258,7 +4262,7 @@ msgstr "リソースの初期化に失敗しました"
 msgid "A required game resource was not found"
 msgstr "必要なゲームリソースが見つかりませんでした"
 
-#: engines/bladerunner/bladerunner.cpp:2332
+#: engines/bladerunner/bladerunner.cpp:2334
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4268,7 +4272,7 @@ msgstr ""
 "ナルモードでプレイ中です。ゲームを完全に終了するまで、ディレクターズカット"
 "モードとして調整されます。"
 
-#: engines/bladerunner/bladerunner.cpp:2334
+#: engines/bladerunner/bladerunner.cpp:2336
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4278,7 +4282,7 @@ msgstr ""
 "カットモードでプレイ中です。ゲームを完全に終了するまで、オリジナルモードとし"
 "て調整されます。"
 
-#: engines/bladerunner/bladerunner.cpp:2336
+#: engines/bladerunner/bladerunner.cpp:2338
 msgid "Continue"
 msgstr "つづく"
 
@@ -4345,7 +4349,7 @@ msgstr "ファンの翻訳者は、ScummVMに翻訳が組み込まれる事を�
 #: engines/mohawk/detection_tables.h:1109 engines/myst3/detection.cpp:142
 #: engines/neverhood/detection.cpp:120 engines/saga/detection_tables.h:186
 #: engines/saga/detection_tables.h:1217 engines/saga/detection_tables.h:1276
-#: engines/sci/detection_tables.h:5040 engines/sci/detection_tables.h:5048
+#: engines/sci/detection_tables.h:5068 engines/sci/detection_tables.h:5076
 #: engines/sherlock/detection_tables.h:223 engines/stark/detection.cpp:319
 #: engines/teenagent/detection.cpp:117 engines/trecision/detection.cpp:199
 #: engines/zvision/detection_tables.h:190
@@ -4437,6 +4441,12 @@ msgstr ""
 #: engines/cryomni3d/metaengine.cpp:145
 msgid "Versailles 1685 support is not compiled in"
 msgstr "Versailles 1685のサポートはコンパイルされていません"
+
+#: engines/director/events.cpp:90
+msgid ""
+"The game prevents quitting at this moment. Are you sure you want to quit "
+"anyway?"
+msgstr "このまま進めるとゲームが終了します。それでもよろしいですか?"
 
 #: engines/dragons/dragons.cpp:1802
 #, c-format
@@ -4957,6 +4967,10 @@ msgstr "調べる/見る"
 msgid "Error: the game could not be saved."
 msgstr "エラー：ゲームをセーブできませんでした。"
 
+#: engines/grim/inputdialog.cpp:79
+msgid "Input text"
+msgstr "入力テキスト"
+
 #: engines/grim/md5check.cpp:558
 #, c-format
 msgid ""
@@ -5150,6 +5164,14 @@ msgstr "チートを有効化"
 #: engines/hypno/detection.cpp:191
 msgid "Allow cheats using the C key."
 msgstr "Cキーでチートが使えます。"
+
+#: engines/hypno/detection.cpp:197
+msgid "Enable restored content"
+msgstr "復元されたコンテンツを有効にする"
+
+#: engines/hypno/detection.cpp:198
+msgid "Add additional content that is not enabled the original implementation."
+msgstr "オリジナルの実装を有効にしていないコンテンツを追加します。"
 
 #. I18N: Studio audience adds an applause and cheering sounds whenever
 #. Malcolm makes a joke.
@@ -6222,7 +6244,7 @@ msgstr ""
 msgid "Error loading game resources."
 msgstr "リソースのロード中にエラーが発生しました。"
 
-#: engines/sci/detection_tables.h:4369
+#: engines/sci/detection_tables.h:4397
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
 "不完全なゲームが検出されました。全てのCDからデータをコピーする必要がありま"
@@ -6246,16 +6268,16 @@ msgstr ""
 "ポーカーロジックは外部のDLLにハードコーディングされており、未実装です。代わり"
 "に、対戦相手のアクションをランダムに選ぶダミーのロジックが存在します"
 
-#: engines/sci/engine/savegame.cpp:1446
+#: engines/sci/engine/savegame.cpp:1453
 msgid "The format of this saved game is obsolete, unable to load it"
 msgstr "セーブのフォーマットが古いため、ロードできません"
 
-#: engines/sci/engine/savegame.cpp:1448
+#: engines/sci/engine/savegame.cpp:1455
 #, c-format
 msgid "Savegame version is %d, maximum supported is %0d"
 msgstr "セーブのゲームバージョンは%dですが、サポートされているのは%0dまでです"
 
-#: engines/sci/engine/savegame.cpp:1459
+#: engines/sci/engine/savegame.cpp:1466
 msgid ""
 "This saved game was created with a different version of the game, unable to "
 "load it"
@@ -6445,24 +6467,24 @@ msgstr ""
 "ん。"
 
 #: engines/scumm/detection.cpp:203
-msgid "Use correct font spacing"
-msgstr "正しいフォント間隔を使用"
-
-#: engines/scumm/detection.cpp:204
-msgid ""
-"Draw text with correct font spacing. This arguably looks better, but doesn't "
-"match the original behavior."
-msgstr ""
-"正しいフォント間隔で描画します。間違い無く見栄えが良くなりますが、元の動作と"
-"は一致しません。"
-
-#: engines/scumm/detection.cpp:210
 msgid "Enable smooth scrolling"
 msgstr "スムーズスクロールを有効化"
 
-#: engines/scumm/detection.cpp:211
+#: engines/scumm/detection.cpp:204
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(通常の8px単位でのスクロールの代わりに)"
+
+#: engines/scumm/detection.cpp:210 engines/scumm/dialogs.cpp:730
+msgid "Enable game-specific enhancements"
+msgstr "ゲーム固有の拡張機能を有効化"
+
+#: engines/scumm/detection.cpp:211 engines/scumm/dialogs.cpp:730
+msgid ""
+"Allow ScummVM to make small enhancements to the game, usually based on other "
+"versions of the same game."
+msgstr ""
+"Scumm VMがゲームに対し、他のバージョンに基づいた小さな拡張を行う事を許可しま"
+"す。"
 
 #: engines/scumm/detection_internal.h:358
 msgid ""
@@ -7143,15 +7165,15 @@ msgstr ""
 "ん。\n"
 "製品版はiTunes Storeからご購入いただけます。"
 
-#: engines/scumm/metaengine.cpp:421
+#: engines/scumm/metaengine.cpp:427
 msgid "HE v71+ support is not compiled in"
 msgstr "HE v71+のサポートはコンパイルされていません"
 
-#: engines/scumm/metaengine.cpp:445
+#: engines/scumm/metaengine.cpp:451
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr "SCUMM v7-8のサポートはコンパイルされていません"
 
-#: engines/scumm/scumm.cpp:542
+#: engines/scumm/scumm.cpp:544
 msgid ""
 "You have enabled 'aspect ratio correction'. However, FM-TOWNS' natural "
 "resolution is 320x240, which doesn't allow aspect ratio correction.\n"
@@ -7163,7 +7185,7 @@ msgstr ""
 "アスペクト比の補正は、[エンジン]タブで解像度を320x200にトリミングすることで実"
 "現できます。"
 
-#: engines/scumm/scumm.cpp:1351
+#: engines/scumm/scumm.cpp:1355
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -7171,7 +7193,7 @@ msgstr ""
 "「Indy」のMacintosh用実行ファイルが見つかりません。\n"
 "高解像度のフォントは使用できません。"
 
-#: engines/scumm/scumm.cpp:1377
+#: engines/scumm/scumm.cpp:1381
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -7179,7 +7201,7 @@ msgstr ""
 "Macintosh用実行ファイル「Loom」が見つかりません。\n"
 "音楽、高解像度のフォントやカーソルは使えなくなります。"
 
-#: engines/scumm/scumm.cpp:1399
+#: engines/scumm/scumm.cpp:1403
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7188,7 +7210,7 @@ msgstr ""
 "ん。\n"
 "音楽は無効になります。"
 
-#: engines/scumm/scumm.cpp:1675
+#: engines/scumm/scumm.cpp:1679
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7198,7 +7220,7 @@ msgstr ""
 "このゲームではサポートされていないため、オーディオは無効になります。\n"
 "オリジナルのメディアから、圧縮せずにコピーしてください。"
 
-#: engines/scumm/scumm.cpp:2144
+#: engines/scumm/scumm.cpp:2147
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7207,7 +7229,7 @@ msgstr ""
 "ネイティブMIDIのサポートには、LucasArts提供のthe Roland Upgradeが必要です。\n"
 "しかし%sがありません。代わりにAdLibを使用します。"
 
-#: engines/scumm/scumm.cpp:3075
+#: engines/scumm/scumm.cpp:3090
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -8637,6 +8659,19 @@ msgstr ""
 "Arialが必要です。LiberationFontsを使用する場合、LiberationMono、"
 "LiberationSans、LiberationSerifが必要です。GNUFreeFontを使用する場合、"
 "FreeMono、FreeSans、FreeSerifが必要です。"
+
+#~ msgid "Use correct font spacing"
+#~ msgstr "正しいフォント間隔を使用"
+
+#~ msgid ""
+#~ "Draw text with correct font spacing. This arguably looks better, but "
+#~ "doesn't match the original behavior."
+#~ msgstr ""
+#~ "正しいフォント間隔で描画します。間違い無く見栄えが良くなりますが、元の動作"
+#~ "とは一致しません。"
+
+#~ msgid "Ok"
+#~ msgstr "Ok"
 
 #~ msgid "~E~dit Game..."
 #~ msgstr "ゲームを編集(~E~)..."

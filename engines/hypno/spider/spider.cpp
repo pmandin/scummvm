@@ -78,7 +78,7 @@ void SpiderEngine::loadAssetsFullGame() {
 	loadSceneLevel("mainmenu.mi_", "", prefix);
 	loadSceneLevel("tryagain.mi_", "", prefix);
 
-	cl = new ChangeLevel("mainmenu.mi_");
+	cl = new ChangeLevel("<give_up>");
 	sc = (Scene *) _levels["tryagain.mi_"];
 	sc->hots[1].actions.push_back(cl);
 
@@ -124,7 +124,7 @@ void SpiderEngine::loadAssetsFullGame() {
 	cl = new ChangeLevel("mainmenu.mi_");
 	sc->hots[6].actions.push_back(cl);
 
-	sc = (Scene *) _levels["options.mi_"]; 
+	sc = (Scene *) _levels["options.mi_"];
 
 	cl = new ChangeLevel("combmenu.mi_");
 	sc->hots[1].actions.push_back(cl);
@@ -135,7 +135,7 @@ void SpiderEngine::loadAssetsFullGame() {
 	cl = new ChangeLevel("<credits>");
 	sc->hots[5].actions.push_back(cl);
 
-	sc = (Scene *) _levels["combmenu.mi_"]; 
+	sc = (Scene *) _levels["combmenu.mi_"];
 
 	cl = new ChangeLevel("options.mi_");
 	sc->hots[1].actions.push_back(cl);
@@ -270,6 +270,7 @@ void SpiderEngine::loadAssetsFullGame() {
 
 	Transition *trans_apt_1 = new Transition("busint.mi_");
 	trans_apt_1->intros.push_back("spider/cine/ross004s.smk");
+	trans_apt_1->intros.push_back("spider/cine/ross005s.smk");
 	trans_apt_1->intros.push_back("spider/cine/apts002s.smk");
 	trans_apt_1->intros.push_back("spider/cine/blcs00.smk");
 	_levels["<trans_apt_1>"] = trans_apt_1;
@@ -316,7 +317,7 @@ void SpiderEngine::loadAssetsFullGame() {
 	cl = new ChangeLevel("<add_ingredient>");
 	sc->hots[3].actions.push_back(cl);
 
-	gl = new Global("", "CLEAR"); 
+	gl = new Global("", "CLEAR");
 	sc->hots[4].actions.push_back(gl);
 
 	gl = new Global("GS_SWITCH1", "TURNON"); // hairspray
@@ -455,7 +456,7 @@ void SpiderEngine::loadAssetsFullGame() {
 	Code *office = new Code("<office>");
 	office->prefix = prefix;
 	_levels["<office>"] = office;
-	
+
 	cl = new ChangeLevel("<back_roof_1>");
 	sc->hots[2].actions.push_back(cl);
 
@@ -566,9 +567,13 @@ void SpiderEngine::loadAssetsFullGame() {
 	sc->hots[4].actions.push_back(gl);
 
 	loadArcadeLevel("c5.mi_", "<trans_apt_6>", "<over_hob2>", prefix);
+	if (_restoredContentEnabled)
+		_levels["c5.mi_"]->intros.push_back("cine/ppv006bs.smk");
 	_levels["c5.mi_"]->intros.push_back("cine/ctss001s.smk");
 
 	loadArcadeLevel("c5h.mi_", "<trans_apt_6>", "<over_hob2>", prefix);
+	if (_restoredContentEnabled)
+		_levels["c5.mi_"]->intros.push_back("cine/ppv006bs.smk");
 	_levels["c5h.mi_"]->intros.push_back("cine/ctss001s.smk");
 
 	Transition *trans_apt_6 = new Transition("factory1.mi_");
@@ -579,6 +584,8 @@ void SpiderEngine::loadAssetsFullGame() {
 	loadSceneLevel("ball1.mi_", "<note>", prefix);
 	_levels["ball1.mi_"]->music = "sound.lib/ballroom.raw";
 	_levels["ball1.mi_"]->musicRate = 11025;
+	if (_restoredContentEnabled)
+		_levels["ball1.mi_"]->intros.push_back("cine/ppv006as.smk");
 	loadSceneLevel("coat.mi_", "ball2.mi_", prefix);
 	_levels["coat.mi_"]->music = "sound.lib/ballroom.raw";
 	_levels["coat.mi_"]->musicRate = 11025;
@@ -710,6 +717,7 @@ void SpiderEngine::loadAssetsFullGame() {
 
 	Transition *after_c13 = new Transition("docoffi2.mi_");
 	after_c13->intros.push_back("spider/cine/vrfs06bs.smk");
+	after_c13->intros.push_back("spider/cine/spv064as.smk");
 	//after_c13->intros.push_back("spider/cine/spv064s.smk"); low-quality version?
 	_levels["<after_c13>"] = after_c13;
 
@@ -770,6 +778,7 @@ void SpiderEngine::loadAssetsFullGame() {
 
 	Transition *after_c10 = new Transition("docoffic.mi_");
 	after_c10->intros.push_back("spider/cine/utns004s.smk");
+	after_c10->intros.push_back("spider/cine/bustitxs.smk");
 	_levels["<after_c10>"] = after_c10;
 
 	loadSceneLevel("docoffic.mi_", "decide9.mi_", prefix);
@@ -962,6 +971,11 @@ void SpiderEngine::loadAssetsFullGame() {
 	chip_lives_with_spiderman->intros.push_back("spider/cine/vrja003s.smk");
 	chip_lives_with_spiderman->intros.push_back("spider/cine/wins001s.smk");
 	_levels["<chip_lives_with_spiderman>"] = chip_lives_with_spiderman;
+
+	Code *give_up = new Code("<give_up>");
+	give_up->prefix = prefix;
+	_levels["<give_up>"] = give_up;
+
 	_defaultCursor = "mouse/cursor1.smk";
 
 	// hints areas
@@ -1048,7 +1062,7 @@ void SpiderEngine::loadAssetsDemo() {
 	_nextLevel = "<start>";
 }
 
-Common::String SpiderEngine::findNextLevel(const Transition *trans) { 
+Common::String SpiderEngine::findNextLevel(const Transition *trans) {
 	if (trans->nextLevel.empty())
 		return _sceneState["GS_PUZZLELEVEL"] == 0 ? trans->levelEasy : trans->levelHard;
 
@@ -1115,17 +1129,19 @@ void SpiderEngine::drawString(const Common::String &font, const Common::String &
 Common::Error SpiderEngine::loadGameStream(Common::SeekableReadStream *stream) {
 	int puzzleDifficulty = stream->readUint32LE();
 	int combatDifficulty = stream->readUint32LE();
+	int score = stream->readUint32LE();
 	const Common::String nextLevel = stream->readString();
-	loadGame(nextLevel, puzzleDifficulty, combatDifficulty);
+	loadGame(nextLevel, score, puzzleDifficulty, combatDifficulty);
 	return Common::kNoError;
 }
 
-void SpiderEngine::loadGame(const Common::String &nextLevel, int puzzleDifficulty, int combatDifficulty) {
+void SpiderEngine::loadGame(const Common::String &nextLevel, int score, int puzzleDifficulty, int combatDifficulty) {
 
 	// We don't want to continue with any sound from a previous game
 	stopSound();
 	_sceneState["GS_PUZZLELEVEL"] = puzzleDifficulty;
 	_sceneState["GS_COMBATLEVEL"] = combatDifficulty;
+	_score = score;
 	_nextLevel = nextLevel;
 	_checkpoint = _nextLevel;
 
@@ -1152,6 +1168,7 @@ Common::Error SpiderEngine::saveGameStream(Common::WriteStream *stream, bool isA
 
 	stream->writeUint32LE(_sceneState["GS_PUZZLELEVEL"]);
 	stream->writeUint32LE(_sceneState["GS_COMBATLEVEL"]);
+	stream->writeUint32LE(_score);
 	stream->writeString(_checkpoint);
 	stream->writeByte(0);
 	return Common::kNoError;
@@ -1173,7 +1190,7 @@ void SpiderEngine::drawBackToMenu(Hotspot *h) {
 				if (_currentLevel != "mainmenu.mi_" && _currentLevel != "options.mi_" && _currentLevel != "combmenu.mi_")
 					menu = decodeFrame("int_main/menu.smk", 0);
 			}
-		} 
+		}
 
 		if (menu) {
 			h->rect = Common::Rect(0, 0, menu->w, menu->h);

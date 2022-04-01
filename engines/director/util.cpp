@@ -32,6 +32,7 @@
 
 #include "director/director.h"
 #include "director/movie.h"
+#include "director/lingo/lingo.h"
 #include "director/util.h"
 
 namespace Director {
@@ -393,6 +394,10 @@ Common::String getPath(Common::String path, Common::String cwd) {
 bool testPath(Common::String &path, bool directory) {
 	Common::FSNode d = Common::FSNode(*g_director->getGameDataDir());
 
+	// Test if we have it right in the SearchMan
+	if (SearchMan.hasFile(Common::Path(path, g_director->_dirSeparator)))
+		return true;
+
 	// check for the game data dir
 	if (!path.contains(g_director->_dirSeparator) && path.equalsIgnoreCase(d.getName())) {
 		if (!directory)
@@ -436,11 +441,35 @@ bool testPath(Common::String &path, bool directory) {
 	return true;
 }
 
+
+Common::String pathMakeRelative(Common::String path, bool recursive, bool addexts, bool directory) {
+	//Wrap pathMakeRelative to search in extra paths defined by the game
+	Common::String foundPath;
+
+	Datum searchPath = g_director->getLingo()->_searchPath;
+	if (searchPath.type == ARRAY && searchPath.u.farr->arr.size() > 0) {
+		for (uint i = 0; i < searchPath.u.farr->arr.size(); i++) {
+			Common::String searchIn = searchPath.u.farr->arr[i].asString();
+			debug(9, "pathMakeRelative(): searchPath: %s", searchIn.c_str());
+
+			foundPath = wrappedPathMakeRelative(searchIn + path, recursive, addexts, directory);
+			if (testPath(foundPath))
+				return foundPath;
+		}
+	}
+
+	return wrappedPathMakeRelative(path, recursive, addexts, directory);
+}
+
+
 // if we are finding the file path, then this func will return exactly the executable file path
 // if we are finding the directory path, then we will get the path relative to the game data dir.
 // e.g. if we have game data dir as SSwarlock, then "A:SSwarlock" -> "", "A:SSwarlock:Nav" -> "Nav"
-Common::String pathMakeRelative(Common::String path, bool recursive, bool addexts, bool directory) {
+Common::String wrappedPathMakeRelative(Common::String path, bool recursive, bool addexts, bool directory) {
+
 	Common::String initialPath(path);
+
+	debug(9, "pathMakeRelative(): s0 %s -> %s", path.c_str(), initialPath.c_str());
 
 	if (recursive) // first level
 		initialPath = convertPath(initialPath);
@@ -467,8 +496,15 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 
 		debug(9, "pathMakeRelative(): s3 try %s", convPath.c_str());
 
-		if (!testPath(convPath, directory))
-			continue;
+		if (!testPath(convPath, directory)) {
+			// If we were supplied with parh with subdirectories,
+			// attempt to combine it with the current movie path at every iteration
+			Common::String locPath = Common::normalizePath(g_director->getCurrentPath() + convPath, g_director->_dirSeparator);
+			debug(9, "pathMakeRelative(): s3.1 try %s", locPath.c_str());
+
+			if (!testPath(locPath, directory))
+				continue;
+		}
 
 		debug(9, "pathMakeRelative(): s3 converted %s -> %s", path.c_str(), convPath.c_str());
 
@@ -537,7 +573,7 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 				Common::String newpath = convPath + convertMacFilename(nameWithoutExt.c_str()) + ext;
 
 				debug(9, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
-				Common::String res = pathMakeRelative(newpath, false, false);
+				Common::String res = wrappedPathMakeRelative(newpath, false, false);
 
 				if (testPath(res))
 					return res;
@@ -576,8 +612,8 @@ Common::String testExtensions(Common::String component, Common::String initialPa
 	for (int i = 0; exts[i]; ++i) {
 		Common::String newpath = convPath + convertMacFilename(component.c_str()) + exts[i];
 
-		debug(9, "pathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
-		Common::String res = pathMakeRelative(newpath, false, false);
+		debug(9, "testExtensions(): sT %s -> try %s, comp: %s", initialPath.c_str(), newpath.c_str(), component.c_str());
+		Common::String res = wrappedPathMakeRelative(newpath, false, false);
 
 		if (testPath(res))
 			return res;
@@ -714,6 +750,10 @@ Common::String convertMacFilename(const char *name) {
 
 			cnt++;
 		}
+
+		// If the result filename ends with '.', remove it
+		if (res.hasSuffix("."))
+			res = res.substr(0, res.size() - 1);
 	}
 
 	return res;
@@ -724,8 +764,8 @@ Common::String dumpScriptName(const char *prefix, int type, int id, const char *
 
 	switch (type) {
 	case kNoneScript:
-	default:
-		error("dumpScriptName(): Incorrect call (type %d)", type);
+		typeName = "unknown";
+		break;
 	case kMovieScript:
 		typeName = "movie";
 		break;
@@ -738,9 +778,16 @@ Common::String dumpScriptName(const char *prefix, int type, int id, const char *
 	case kScoreScript:
 		typeName = "score";
 		break;
+	default:
+		error("dumpScriptName(): Incorrect call (type %d)", type);
+		break;
 	}
 
 	return Common::String::format("./dumps/%s-%s-%d.%s", prefix, typeName.c_str(), id, ext);
+}
+
+Common::String dumpFactoryName(const char *prefix, const char *name, const char *ext) {
+	return Common::String::format("./dumps/%s-factory-%s.%s", prefix, name, ext);
 }
 
 void RandomState::setSeed(int seed) {
@@ -923,11 +970,14 @@ int compareStrings(const Common::String &s1, const Common::String &s2) {
 	Common::U32String u32S2 = s2.decode(Common::kUtf8);
 	const Common::u32char_type_t *p1 = u32S1.c_str();
 	const Common::u32char_type_t *p2 = u32S2.c_str();
+
 	uint32 c1, c2;
-	while ((c1 = charToNum(*p1)) && (c2 = charToNum(*p2)) && c1 == c2) {
+	do {
+		c1 = charToNum(*p1);
+		c2 = charToNum(*p2);
 		p1++;
 		p2++;
-	}
+	} while (c1 == c2 && c1);
 	return c1 - c2;
 }
 

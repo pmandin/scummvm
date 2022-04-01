@@ -89,7 +89,8 @@ void IMuseDigiFilesHandler::saveLoad(Common::Serializer &ser) {
 			ser.syncAsSint32LE(_ftSpeechFileSize, VER(103));
 			ser.syncAsSint32LE(_ftSpeechSubFileOffset, VER(103));
 			ser.syncArray(_ftSpeechFilename, sizeof(_ftSpeechFilename), Common::Serializer::SByte, VER(103));
-			_ftSpeechFile = _vm->_sound->restoreDiMUSESpeechFile(_ftSpeechFilename);
+			if (strlen(_ftSpeechFilename))
+				_ftSpeechFile = _vm->_sound->restoreDiMUSESpeechFile(_ftSpeechFilename);
 		}
 	}
 }
@@ -276,7 +277,9 @@ int IMuseDigiFilesHandler::openSound(int soundId) {
 		getFilenameFromSoundId(soundId, fileName, sizeof(fileName));
 
 		int groupId = soundId == kTalkSoundID ? IMUSE_VOLGRP_VOICE : IMUSE_VOLGRP_MUSIC;
-		s = _sound->openSound(soundId, fileName, IMUSE_BUNDLE, groupId, -1);
+		s = _sound->findSoundById(soundId);
+		if (!s)
+			s = _sound->openSound(soundId, fileName, IMUSE_BUNDLE, groupId, -1);
 		if (!s)
 			s = _sound->openSound(soundId, fileName, IMUSE_BUNDLE, groupId, 1);
 		if (!s)

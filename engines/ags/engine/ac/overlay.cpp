@@ -54,8 +54,8 @@ void Overlay_SetText(ScriptOverlay *scover, int wii, int fontid, int text_color,
 	int ovri = find_overlay_of_type(scover->overlayId);
 	if (ovri < 0)
 		quit("!Overlay.SetText: invalid overlay ID specified");
-	int xx = game_to_data_coord(_G(screenover)[ovri].x) - scover->borderWidth;
-	int yy = game_to_data_coord(_G(screenover)[ovri].y) - scover->borderHeight;
+	int xx = game_to_data_coord(_GP(screenover)[ovri].x) - scover->borderWidth;
+	int yy = game_to_data_coord(_GP(screenover)[ovri].y) - scover->borderHeight;
 
 	RemoveOverlay(scover->overlayId);
 	const int disp_type = scover->overlayId;
@@ -70,7 +70,7 @@ int Overlay_GetX(ScriptOverlay *scover) {
 		quit("!invalid overlay ID specified");
 
 	int tdxp, tdyp;
-	get_overlay_position(_G(screenover)[ovri], &tdxp, &tdyp);
+	get_overlay_position(_GP(screenover)[ovri], &tdxp, &tdyp);
 
 	return game_to_data_coord(tdxp);
 }
@@ -80,7 +80,7 @@ void Overlay_SetX(ScriptOverlay *scover, int newx) {
 	if (ovri < 0)
 		quit("!invalid overlay ID specified");
 
-	_G(screenover)[ovri].x = data_to_game_coord(newx);
+	_GP(screenover)[ovri].x = data_to_game_coord(newx);
 }
 
 int Overlay_GetY(ScriptOverlay *scover) {
@@ -89,7 +89,7 @@ int Overlay_GetY(ScriptOverlay *scover) {
 		quit("!invalid overlay ID specified");
 
 	int tdxp, tdyp;
-	get_overlay_position(_G(screenover)[ovri], &tdxp, &tdyp);
+	get_overlay_position(_GP(screenover)[ovri], &tdxp, &tdyp);
 
 	return game_to_data_coord(tdyp);
 }
@@ -99,21 +99,21 @@ void Overlay_SetY(ScriptOverlay *scover, int newy) {
 	if (ovri < 0)
 		quit("!invalid overlay ID specified");
 
-	_G(screenover)[ovri].y = data_to_game_coord(newy);
+	_GP(screenover)[ovri].y = data_to_game_coord(newy);
 }
 
 int Overlay_GetWidth(ScriptOverlay *scover) {
 	int ovri = find_overlay_of_type(scover->overlayId);
 	if (ovri < 0)
 		quit("!invalid overlay ID specified");
-	return game_to_data_coord(_G(screenover)[ovri].pic->GetWidth());
+	return game_to_data_coord(_GP(screenover)[ovri].pic->GetWidth());
 }
 
 int Overlay_GetHeight(ScriptOverlay *scover) {
 	int ovri = find_overlay_of_type(scover->overlayId);
 	if (ovri < 0)
 		quit("!invalid overlay ID specified");
-	return game_to_data_coord(_G(screenover)[ovri].pic->GetHeight());
+	return game_to_data_coord(_GP(screenover)[ovri].pic->GetHeight());
 }
 
 int Overlay_GetValid(ScriptOverlay *scover) {
@@ -148,12 +148,46 @@ ScriptOverlay *Overlay_CreateTextual(int x, int y, int width, int font, int colo
 	sco->overlayId = CreateTextOverlayCore(x, y, width, font, colour, text, DISPLAYTEXT_NORMALOVERLAY, 0);
 
 	int ovri = find_overlay_of_type(sco->overlayId);
-	sco->borderWidth = game_to_data_coord(_G(screenover)[ovri].x - x);
-	sco->borderHeight = game_to_data_coord(_G(screenover)[ovri].y - y);
+	sco->borderWidth = game_to_data_coord(_GP(screenover)[ovri].x - x);
+	sco->borderHeight = game_to_data_coord(_GP(screenover)[ovri].y - y);
 	sco->isBackgroundSpeech = 0;
 
 	ccRegisterManagedObject(sco, sco);
 	return sco;
+}
+
+int Overlay_GetTransparency(ScriptOverlay *scover) {
+	int ovri = find_overlay_of_type(scover->overlayId);
+	if (ovri < 0)
+		quit("!invalid overlay ID specified");
+
+	return GfxDef::LegacyTrans255ToTrans100(_GP(screenover)[ovri].transparency);
+}
+
+void Overlay_SetTransparency(ScriptOverlay *scover, int trans) {
+	int ovri = find_overlay_of_type(scover->overlayId);
+	if (ovri < 0)
+		quit("!invalid overlay ID specified");
+	if ((trans < 0) | (trans > 100))
+		quit("!SetTransparency: transparency value must be between 0 and 100");
+
+	_GP(screenover)[ovri].transparency = GfxDef::Trans100ToLegacyTrans255(trans);
+}
+
+int Overlay_GetZOrder(ScriptOverlay *scover) {
+	int ovri = find_overlay_of_type(scover->overlayId);
+	if (ovri < 0)
+		quit("!invalid overlay ID specified");
+
+	return _GP(screenover)[ovri].zorder;
+}
+
+void Overlay_SetZOrder(ScriptOverlay *scover, int zorder) {
+	int ovri = find_overlay_of_type(scover->overlayId);
+	if (ovri < 0)
+		quit("!invalid overlay ID specified");
+
+	_GP(screenover)[ovri].zorder = zorder;
 }
 
 //=============================================================================
@@ -194,8 +228,8 @@ static void dispose_overlay(ScreenOverlay &over) {
 		ccAttemptDisposeObject(over.associatedOverlayHandle);
 }
 
-void remove_screen_overlay_index(int over_idx) {
-	ScreenOverlay &over = _G(screenover)[over_idx];
+void remove_screen_overlay_index(size_t over_idx) {
+	ScreenOverlay &over = _GP(screenover)[over_idx];
 	// TODO: move these custom settings outside of this function
 	if (over.type == _GP(play).complete_overlay_on) {
 		_GP(play).complete_overlay_on = 0;
@@ -209,18 +243,16 @@ void remove_screen_overlay_index(int over_idx) {
 		_G(face_talking) = -1;
 	}
 	dispose_overlay(over);
-	_G(numscreenover)--;
-	for (int i = over_idx; i < _G(numscreenover); ++i)
-		_G(screenover)[i] = _G(screenover)[i + 1];
+	_GP(screenover).erase(_GP(screenover).begin() + over_idx);
 	// if an overlay before the sierra-style speech one is removed, update the index
 	// TODO: this is bad, need more generic system to store overlay references
-	if (_G(face_talking) > over_idx)
+	if ((size_t)_G(face_talking) > over_idx)
 		_G(face_talking)--;
 }
 
 void remove_screen_overlay(int type) {
-	for (int i = 0; i < _G(numscreenover);) {
-		if (type < 0 || _G(screenover)[i].type == type)
+	for (size_t i = 0; i < _GP(screenover).size();) {
+		if (type < 0 || _GP(screenover)[i].type == type)
 			remove_screen_overlay_index(i);
 		else
 			i++;
@@ -228,34 +260,36 @@ void remove_screen_overlay(int type) {
 }
 
 int find_overlay_of_type(int type) {
-	for (int i = 0; i < _G(numscreenover); ++i) {
-		if (_G(screenover)[i].type == type) return i;
+	for (size_t i = 0; i < _GP(screenover).size(); ++i) {
+		if (_GP(screenover)[i].type == type) return i;
 	}
 	return -1;
 }
 
-int add_screen_overlay(int x, int y, int type, Bitmap *piccy, bool alphaChannel) {
+size_t add_screen_overlay(int x, int y, int type, Bitmap *piccy, bool alphaChannel) {
 	return add_screen_overlay(x, y, type, piccy, 0, 0, alphaChannel);
 }
 
-int add_screen_overlay(int x, int y, int type, Shared::Bitmap *piccy, int pic_offx, int pic_offy, bool alphaChannel) {
+size_t add_screen_overlay(int x, int y, int type, Shared::Bitmap *piccy, int pic_offx, int pic_offy, bool alphaChannel) {
 	if (type == OVER_CUSTOM) {
 		// find an unused custom ID; TODO: find a better approach!
-		for (int id = OVER_CUSTOM + 1; id < OVER_CUSTOM + 100; ++id) {
+		for (int id = OVER_CUSTOM + 1; (size_t)id <= _GP(screenover).size() + OVER_CUSTOM + 1; ++id) {
 			if (find_overlay_of_type(id) == -1) {
-				type = id;
-				break;
+				type = id; break;
 			}
 		}
 	}
 
-	ScreenOverlay &over = _G(screenover)[_G(numscreenover)++];
+	ScreenOverlay over;
 	over.pic = piccy;
 	over.bmp = _G(gfxDriver)->CreateDDBFromBitmap(piccy, alphaChannel);
 	over.x = x;
 	over.y = y;
 	over._offsetX = pic_offx;
 	over._offsetY = pic_offy;
+	// by default draw speech and portraits over GUI, and the rest under GUI
+	over.zorder = (type == OVER_TEXTMSG || type == OVER_PICTURE || type == OVER_TEXTSPEECH) ?
+		INT_MAX : INT_MIN;
 	over.type = type;
 	over.timeout = 0;
 	over.bgSpeechForChar = -1;
@@ -273,7 +307,9 @@ int add_screen_overlay(int x, int y, int type, Shared::Bitmap *piccy, int pic_of
 	} else if (type == OVER_PICTURE) {
 		_GP(play).speech_face_scover = create_scriptobj_addref(over);
 	}
-	return _G(numscreenover) - 1;
+
+	_GP(screenover).push_back(std::move(over));
+	return _GP(screenover).size() - 1;
 }
 
 void get_overlay_position(const ScreenOverlay &over, int *x, int *y) {
@@ -285,7 +321,7 @@ void get_overlay_position(const ScreenOverlay &over, int *x, int *y) {
 		int charid = over.y;
 
 		auto view = FindNearestViewport(charid);
-		const int charpic = _G(views)[_GP(game).chars[charid].view].loops[_GP(game).chars[charid].loop].frames[0].pic;
+		const int charpic = _GP(views)[_GP(game).chars[charid].view].loops[_GP(game).chars[charid].loop].frames[0].pic;
 		const int height = (_G(charextra)[charid].height < 1) ? _GP(game).SpriteInfos[charpic].Height : _G(charextra)[charid].height;
 		Point screenpt = view->RoomToScreen(
 		                     data_to_game_coord(_GP(game).chars[charid].x),
@@ -319,13 +355,13 @@ void get_overlay_position(const ScreenOverlay &over, int *x, int *y) {
 }
 
 void recreate_overlay_ddbs() {
-	for (int i = 0; i < _G(numscreenover); ++i) {
-		if (_G(screenover)[i].bmp)
-			_G(gfxDriver)->DestroyDDB(_G(screenover)[i].bmp);
-		if (_G(screenover)[i].pic)
-			_G(screenover)[i].bmp = _G(gfxDriver)->CreateDDBFromBitmap(_G(screenover)[i].pic, false);
+	for (auto &over : _GP(screenover)) {
+		if (over.bmp)
+			_G(gfxDriver)->DestroyDDB(over.bmp);
+		if (over.pic)
+			over.bmp = _G(gfxDriver)->CreateDDBFromBitmap(over.pic, false);
 		else
-			_G(screenover)[i].bmp = nullptr;
+			over.bmp = nullptr;
 	}
 }
 
@@ -393,6 +429,22 @@ RuntimeScriptValue Sc_Overlay_GetHeight(void *self, const RuntimeScriptValue *pa
 	API_OBJCALL_INT(ScriptOverlay, Overlay_GetHeight);
 }
 
+RuntimeScriptValue Sc_Overlay_GetTransparency(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_INT(ScriptOverlay, Overlay_GetTransparency);
+}
+
+RuntimeScriptValue Sc_Overlay_SetTransparency(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_VOID_PINT(ScriptOverlay, Overlay_SetTransparency);
+}
+
+RuntimeScriptValue Sc_Overlay_GetZOrder(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_INT(ScriptOverlay, Overlay_GetZOrder);
+}
+
+RuntimeScriptValue Sc_Overlay_SetZOrder(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_VOID_PINT(ScriptOverlay, Overlay_SetZOrder);
+}
+
 //=============================================================================
 //
 // Exclusive API for Plugins
@@ -418,6 +470,10 @@ void RegisterOverlayAPI() {
 	ccAddExternalObjectFunction("Overlay::set_Y", Sc_Overlay_SetY);
 	ccAddExternalObjectFunction("Overlay::get_Width", Sc_Overlay_GetWidth);
 	ccAddExternalObjectFunction("Overlay::get_Height", Sc_Overlay_GetHeight);
+	ccAddExternalObjectFunction("Overlay::get_Transparency", Sc_Overlay_GetTransparency);
+	ccAddExternalObjectFunction("Overlay::set_Transparency", Sc_Overlay_SetTransparency);
+	ccAddExternalObjectFunction("Overlay::get_ZOrder", Sc_Overlay_GetZOrder);
+	ccAddExternalObjectFunction("Overlay::set_ZOrder", Sc_Overlay_SetZOrder);
 }
 
 } // namespace AGS3

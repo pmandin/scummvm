@@ -82,6 +82,7 @@ public:
 	Common::Platform _platform;
 	Common::String _variant;
 	bool _cheatsEnabled;
+	bool _restoredContentEnabled;
 
 	Audio::SoundHandle _soundHandle;
 	Common::InstallShieldV3 _installerArchive;
@@ -96,6 +97,7 @@ public:
 	void runLevel(Common::String &name);
 	void runScene(Scene *scene);
 	virtual void runBeforeArcade(ArcadeShooting *arc);
+	virtual void runAfterArcade(ArcadeShooting *arc);
 	void runArcade(ArcadeShooting *arc);
 	// For some menus and hardcoded puzzles
 	virtual void runCode(Code *code);
@@ -124,7 +126,7 @@ public:
 	bool cursorExit(Common::Point);
 	bool cursorMask(Common::Point);
 
-	virtual void loadGame(const Common::String &nextLevel, int puzzleDifficulty, int combatDifficulty);
+	virtual void loadGame(const Common::String &nextLevel, int score, int puzzleDifficulty, int combatDifficulty);
 	bool canLoadGameStateCurrently() override { return (isDemo() ? false : true); }
 	bool canSaveAutosaveCurrently() override { return false; }
 	bool canSaveGameStateCurrently() override { return (isDemo() ? false : true); }
@@ -216,12 +218,14 @@ public:
 	Common::String _arcadeMode;
 	uint32 _currentPlayerPosition;
 	uint32 _lastPlayerPosition;
+	virtual Common::Point computeTargetPosition(const Common::Point &mousePos);
 	int detectTarget(const Common::Point &mousePos);
 	virtual bool clickedPrimaryShoot(const Common::Point &mousePos);
 	virtual bool clickedSecondaryShoot(const Common::Point &mousePos);
 	virtual void drawShoot(const Common::Point &mousePos);
-	virtual void shoot(const Common::Point &mousePos);
+	virtual void shoot(const Common::Point &mousePos, ArcadeShooting *arc, MVideo &background);
 	virtual void hitPlayer();
+	virtual void missTarget(Shoot *s, ArcadeShooting *arc, MVideo &background);
 
 	// Segments
 	uint32 _segmentIdx;
@@ -233,7 +237,30 @@ public:
 	ShootSequence _shootSequence;
 	virtual void findNextSegment(ArcadeShooting *arc);
 	virtual void initSegment(ArcadeShooting *arc);
-	virtual bool checkArcadeLevelCompleted(MVideo &background, Segment segment);
+
+	void resetStatistics();
+
+	void incShotsFired();
+	uint32 _shootsFired;
+
+	void incEnemyHits();
+	uint32 _enemyHits;
+
+	void incEnemyTargets();
+	uint32 _enemyTargets;
+
+	void incTargetsDestroyed();
+	uint32 _targetsDestroyed;
+
+	void incTargetsMissed();
+	uint32 _targetsMissed;
+
+	void incScore(int inc);
+	void incBonus(int inc);
+
+	uint32 killRatio();
+	uint32 accuracyRatio();
+
 	Common::String _difficulty;
 	bool _skipLevel;
 
@@ -243,6 +270,7 @@ public:
 	int _health;
 	int _maxHealth;
 	int _score;
+	int _bonus;
 	int _lives;
 	Filename _shootSound;
 	Filename _hitSound;
@@ -255,6 +283,8 @@ public:
 	uint32 _objIdx;
 	uint32 _objKillsCount[2];
 	uint32 _objMissesCount[2];
+	uint32 _objKillsRequired[2];
+	uint32 _objMissesAllowed[2];
 
 	// Fonts
 	virtual void loadFonts();
@@ -292,6 +322,10 @@ class WetEngine : public HypnoEngine {
 public:
 	WetEngine(OSystem *syst, const ADGameDescription *gd);
 	Common::HashMap<int, const struct chapterEntry*> _chapterTable;
+	Common::Array<int> _ids;
+	int _lastLevel;
+	Common::String _name;
+
 	void loadAssets() override;
 	void loadAssetsDemoDisc();
 	void loadAssetsPCW();
@@ -306,21 +340,37 @@ public:
 	void drawPlayer() override;
 	void drawHealth() override;
 	void hitPlayer() override;
+	void drawCursorArcade(const Common::Point &mousePos) override;
+	Common::Point computeTargetPosition(const Common::Point &mousePos) override;
+	void missTarget(Shoot *s, ArcadeShooting *arc, MVideo &background) override;
 	void runCode(Code *code) override;
 	Common::String findNextLevel(const Common::String &level) override;
 	Common::String findNextLevel(const Transition *trans) override;
 
+	// Saves
+	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
+	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
+	bool loadProfile(const Common::String &name);
+	void saveProfile(const Common::String &name, int levelId);
+
 	// Arcade
 	void runBeforeArcade(ArcadeShooting *arc) override;
+	void runAfterArcade(ArcadeShooting *arc) override;
 	void findNextSegment(ArcadeShooting *arc) override;
 	void initSegment(ArcadeShooting *arc) override;
 
 private:
 	void runMainMenu(Code *code);
+	void runLevelMenu(Code *code);
 	void runCheckLives(Code *code);
+	void endCredits(Code *code);
 
 	Common::BitArray _font05;
 	Common::BitArray _font08;
+	Common::Array<uint32> _c40SegmentPath;
+	Common::Array<uint32> _c40SegmentNext;
+	int _c40SegmentIdx;
+	int _c40lastTurn;
 };
 
 class SpiderEngine : public HypnoEngine {
@@ -339,9 +389,9 @@ public:
 
 	// Arcade
 	void runBeforeArcade(ArcadeShooting *arc) override;
+	void runAfterArcade(ArcadeShooting *arc) override;
 	void findNextSegment(ArcadeShooting *arc) override;
 	void initSegment(ArcadeShooting *arc) override;
-	bool checkArcadeLevelCompleted(MVideo &background, Segment segment) override;
 
 	void drawBackToMenu(Hotspot *h) override;
 	void runCode(Code *code) override;
@@ -356,7 +406,7 @@ public:
 	void leftClickedConversation(const Common::Point &mousePos) override;
 	bool hoverConversation(const Common::Point &mousePos) override;
 
-	void loadGame(const Common::String &nextLevel, int puzzleDifficulty, int combatDifficulty) override;
+	void loadGame(const Common::String &nextLevel, int score, int puzzleDifficulty, int combatDifficulty) override;
 	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
 	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
 	bool hasFeature(EngineFeature f) const override {
@@ -374,6 +424,8 @@ private:
 	void runFileCabinet(Code *code);
 	void runLock(Code *code);
 	void runFuseBox(Code *code);
+	void runGiveUp();
+	void showScore(const Common::String prefix);
 
 	bool _fuseState[2][10] = {};
 	bool _isFuseRust = true;
@@ -382,7 +434,7 @@ private:
 
 	Common::Rect _h1Area;
 	Common::Rect _h2Area;
-	Common::Rect _h3Area; 
+	Common::Rect _h3Area;
 
 	Common::BitArray _font05;
 	Common::BitArray _font08;

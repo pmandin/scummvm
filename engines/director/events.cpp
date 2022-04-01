@@ -20,6 +20,11 @@
  */
 
 #include "common/system.h"
+#include "common/translation.h"
+
+#include "audio/mixer.h"
+
+#include "gui/message.h"
 
 #include "graphics/macgui/macwindowmanager.h"
 
@@ -64,7 +69,7 @@ bool DirectorEngine::processEvents(bool captureClick) {
 		// We want to handle these events regardless.
 		switch (event.type) {
 		case Common::EVENT_QUIT:
-			_stage->getCurrentMovie()->getScore()->_playState = kPlayStopped;
+			processEventQUIT();
 			if (captureClick)
 				return true;
 			break;
@@ -78,6 +83,23 @@ bool DirectorEngine::processEvents(bool captureClick) {
 	}
 
 	return false;
+}
+
+void DirectorEngine::processEventQUIT() {
+	if (g_lingo->_exitLock) {
+		Common::U32String message = _("The game prevents quitting at this moment. Are you sure you want to quit anyway?");
+		GUI::MessageDialog dialog(message, _("Yes"), _("No"));
+
+		g_system->getEventManager()->resetQuit(); // Clear the quit event
+		_mixer->pauseAll(true);
+
+		int result = dialog.runModal();
+		if (result == GUI::kMessageOK)
+			_stage->getCurrentMovie()->getScore()->_playState = kPlayStopped;
+		_mixer->pauseAll(false);
+	} else {
+		_stage->getCurrentMovie()->getScore()->_playState = kPlayStopped;
+	}
 }
 
 bool Window::processEvent(Common::Event &event) {

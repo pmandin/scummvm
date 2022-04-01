@@ -40,11 +40,11 @@ struct ScummVMPlatformDriver : AGSPlatformDriver {
 
 	int  CDPlayerCommand(int cmdd, int datt) override;
 	void DisplayAlert(const char *, ...) override;
-	const char *GetAllUsersDataDirectory() override;
-	const char *GetUserSavedgamesDirectory() override;
-	const char *GetUserConfigDirectory() override;
-	const char *GetUserGlobalConfigDirectory() override;
-	const char *GetAppOutputDirectory() override;
+	FSLocation GetAllUsersDataDirectory() override;
+	FSLocation GetUserSavedgamesDirectory() override;
+	FSLocation GetUserConfigDirectory() override;
+	FSLocation GetUserGlobalConfigDirectory() override;
+	FSLocation GetAppOutputDirectory() override;
 	unsigned long GetDiskFreeSpaceMB() override;
 	const char *GetNoMouseErrorString() override;
 	const char *GetAllegroFailUserHint() override;
@@ -77,24 +77,24 @@ void ScummVMPlatformDriver::DisplayAlert(const char *text, ...) {
 		::AGS::g_vm->GUIError(msg);
 }
 
-const char *ScummVMPlatformDriver::GetAllUsersDataDirectory() {
-	return "";
+FSLocation ScummVMPlatformDriver::GetAllUsersDataDirectory() {
+	return FSLocation(".");
 }
 
-const char *ScummVMPlatformDriver::GetUserSavedgamesDirectory() {
-	return "";
+FSLocation ScummVMPlatformDriver::GetUserSavedgamesDirectory() {
+	return FSLocation(".");
 }
 
-const char *ScummVMPlatformDriver::GetUserConfigDirectory() {
+FSLocation ScummVMPlatformDriver::GetUserConfigDirectory() {
 	return GetUserSavedgamesDirectory();
 }
 
-const char *ScummVMPlatformDriver::GetUserGlobalConfigDirectory() {
+FSLocation ScummVMPlatformDriver::GetUserGlobalConfigDirectory() {
 	return GetUserSavedgamesDirectory();
 }
 
-const char *ScummVMPlatformDriver::GetAppOutputDirectory() {
-	return "";
+FSLocation ScummVMPlatformDriver::GetAppOutputDirectory() {
+	return FSLocation(".");
 }
 
 unsigned long ScummVMPlatformDriver::GetDiskFreeSpaceMB() {
@@ -146,7 +146,7 @@ void ScummVMPlatformDriver::UnlockMouse() {
 
 void ScummVMPlatformDriver::GetSystemDisplayModes(std::vector<Engine::DisplayMode> &dms) {
 	dms.clear();
-	GFX_MODE_LIST *gmlist = get_gfx_mode_list(GFX_SCUMMVM_FULLSCREEN);
+	GFX_MODE_LIST *gmlist = get_gfx_mode_list(GFX_SCUMMVM);
 	for (int i = 0; i < gmlist->num_modes; ++i) {
 		const GFX_MODE &m = gmlist->mode[i];
 		dms.push_back(Engine::DisplayMode(Engine::GraphicResolution(m.width, m.height, m.bpp)));

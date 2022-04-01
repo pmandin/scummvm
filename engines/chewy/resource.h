@@ -22,13 +22,13 @@
 #ifndef CHEWY_RESOURCE_H
 #define CHEWY_RESOURCE_H
 
-
 #include "common/scummsys.h"
 #include "common/file.h"
 #include "common/util.h"
 #include "common/str.h"
 #include "common/hashmap.h"
 #include "common/hash-str.h"
+#include "common/memstream.h"
 #include "common/random.h"
 #include "common/stream.h"
 #include "graphics/surface.h"
@@ -36,6 +36,7 @@
 namespace Chewy {
 
 enum ResourceType {
+	kResourceUnknown = -1,
 	kResourcePCX = 0,		// unused
 	kResourceTBF = 1,		// background art, contained in TGPs
 	kResourceTAF = 2,
@@ -82,8 +83,8 @@ struct TBFChunk {
 	uint32 size;
 	uint16 width;
 	uint16 height;
-	byte palette[3 * 256];
-	byte *data;
+	uint8 palette[3 * 256];
+	uint8 *data;
 };
 
 // TAF (sprite) image data chunk header - 15 bytes
@@ -94,13 +95,13 @@ struct TAFChunk {
 	// 4 bytes next sprite offset
 	// 4 bytes sprite image offset
 	// 1 byte padding
-	byte *data;
+	uint8 *data;
 };
 
 // Sound chunk header
 struct SoundChunk {
 	uint32 size;
-	byte *data;
+	uint8 *data;
 };
 
 // Video chunk header
@@ -112,6 +113,15 @@ struct VideoChunk {
 	uint16 height;
 	uint32 frameDelay;	// in ms
 	uint32 firstFrameOffset;
+};
+
+// Dialog chunk header (AdsBlock)
+// Original values are in diah.adh, and are synced
+// to saved games
+struct DialogChunk {
+	bool show[6];
+	uint8 next[6];
+	uint8 flags[6];
 };
 
 enum VideoFrameType {
@@ -127,20 +137,31 @@ public:
 	Resource(Common::String filename);
 	virtual ~Resource();
 
-	ResourceType getType() const { return _resType; }
+	ResourceType getType() const {
+		return _resType;
+	}
+	uint32 getSize() const {
+		return _stream.size();
+	}
 	uint32 getChunkCount() const;
 	Chunk *getChunk(uint num);
-	virtual byte *getChunkData(uint num);
+	virtual uint8 *getChunkData(uint num);
 
 protected:
 	void initSprite(Common::String filename);
-	void unpackRLE(byte *buffer, uint32 compressedSize, uint32 uncompressedSize);
-	void decrypt(byte *data, uint32 size);
+	void unpackRLE(uint8 *buffer, uint32 compressedSize, uint32 uncompressedSize);
+	void decrypt(uint8 *data, uint32 size);
 
 	Common::File _stream;
 	uint16 _chunkCount;
 	ResourceType _resType;
 	bool _encrypted;
+
+	// Sprite specific
+	uint8 _spritePalette[3 * 256];
+	uint32 _allSize;
+	uint16 _spriteCorrectionsCount;
+	uint16 *_spriteCorrectionsTable;
 
 	ChunkList _chunkList;
 };
@@ -148,23 +169,28 @@ protected:
 class SpriteResource : public Resource {
 public:
 	SpriteResource(Common::String filename) : Resource(filename) {}
-	~SpriteResource() override {}
+	virtual ~SpriteResource() {}
 
 	TAFChunk *getSprite(uint num);
+	uint32 getSpriteData(uint num, uint8 **buf, bool initBuffer);
+	uint8 *getSpritePalette() { return _spritePalette; }
+	uint32 getAllSize() { return _allSize; }
+	uint16 getSpriteCorrectionsCount() { return _spriteCorrectionsCount; }
+	uint16 *getSpriteCorrectionsTable() { return _spriteCorrectionsTable; }
 };
 
 class BackgroundResource : public Resource {
 public:
 	BackgroundResource(Common::String filename) : Resource(filename) {}
-	~BackgroundResource() override {}
+	virtual ~BackgroundResource() {}
 
-	TBFChunk *getImage(uint num);
+	TBFChunk *getImage(uint num, bool fixPalette);
 };
 
 class SoundResource : public Resource {
 public:
 	SoundResource(Common::String filename) : Resource(filename) {}
-	~SoundResource() override {}
+	virtual ~SoundResource() {}
 
 	SoundChunk *getSound(uint num);
 };
@@ -172,12 +198,37 @@ public:
 class VideoResource : public Resource {
 public:
 	VideoResource(Common::String filename) : Resource(filename) {}
-	~VideoResource() override {}
+	virtual ~VideoResource() {}
 
 	VideoChunk *getVideoHeader(uint num);
 	Common::SeekableReadStream *getVideoStream(uint num);
 };
 
-} // End of namespace Chewy
+class DialogResource : public Resource {
+public:
+	DialogResource(Common::String filename);
+	virtual ~DialogResource();
+
+	DialogChunk *getDialog(uint dialog, uint block);
+	bool isItemShown(uint dialog, uint block, uint num);
+	void setItemShown(uint dialog, uint block, uint num, bool shown);
+	bool hasExitBit(uint dialog, uint block, uint num);
+	bool hasRestartBit(uint dialog, uint block, uint num);
+	bool hasShowBit(uint dialog, uint block, uint num);
+	uint8 getNextBlock(uint dialog, uint block, uint num);
+
+	void loadStream(Common::SeekableReadStream *s);
+	void saveStream(Common::WriteStream *s);
+
+	uint32 getStreamSize() const {
+		return _stream.size();
+	}
+
+private:
+	Common::MemorySeekableReadWriteStream *_dialogStream;
+	byte *_dialogBuffer;
+};
+
+} // namespace Chewy
 
 #endif

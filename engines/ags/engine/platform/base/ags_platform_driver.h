@@ -30,6 +30,7 @@
 
 #include "ags/lib/std/vector.h"
 #include "ags/engine/ac/date_time.h"
+#include "ags/engine/ac/path_helper.h"
 #include "ags/shared/debugging/output_handler.h"
 #include "ags/shared/util/ini_util.h"
 #include "ags/lib/allegro/error.h"
@@ -70,30 +71,40 @@ struct AGSPlatformDriver
 	: public AGS::Shared::IOutputHandler {
 	virtual ~AGSPlatformDriver() { instance = nullptr; }
 
-	virtual void AboutToQuitGame();
+    // Called at the creation of the platform driver
+    virtual void MainInit() { };
+    // Called right before the formal backend init
+    virtual void PreBackendInit() { };
+    // Called right after the formal backend init
+    virtual void PostBackendInit() { };
+    // Called right before the backend is deinitialized
+    virtual void PreBackendExit() { };
+    // Called right after the backend is deinitialized
+    virtual void PostBackendExit() { };
+
 	virtual void Delay(int millis);
 	virtual void DisplayAlert(const char *, ...) = 0;
 	virtual void AttachToParentConsole();
 	virtual int  GetLastSystemError();
 	// Get root directory for storing per-game shared data
-	virtual const char *GetAllUsersDataDirectory() {
-		return ".";
+	virtual FSLocation GetAllUsersDataDirectory() {
+		return FSLocation(".");
 	}
 	// Get root directory for storing per-game saved games
-	virtual const char *GetUserSavedgamesDirectory() {
-		return ".";
+	virtual FSLocation GetUserSavedgamesDirectory() {
+		return FSLocation(".");
 	}
 	// Get root directory for storing per-game user configuration files
-	virtual const char *GetUserConfigDirectory() {
-		return ".";
+	virtual FSLocation GetUserConfigDirectory() {
+		return FSLocation(".");
 	}
 	// Get directory for storing all-games user configuration files
-	virtual const char *GetUserGlobalConfigDirectory() {
-		return ".";
+	virtual FSLocation GetUserGlobalConfigDirectory() {
+		return FSLocation(".");
 	}
 	// Get default directory for program output (logs)
-	virtual const char *GetAppOutputDirectory() {
-		return ".";
+	virtual FSLocation GetAppOutputDirectory() {
+		return FSLocation(".");
 	}
 	// Returns array of characters illegal to use in file names
 	virtual const char *GetIllegalFileChars() {
@@ -121,8 +132,6 @@ struct AGSPlatformDriver
 	virtual void InitialiseAbufAtStartup();
 	virtual void PostAllegroInit(bool windowed);
 	virtual void PostAllegroExit() = 0;
-	virtual void PostBackendInit() {}
-	virtual void PostBackendExit() {}
 	virtual const char *GetBackendFailUserHint() {
 		return nullptr;
 	}
@@ -166,13 +175,16 @@ struct AGSPlatformDriver
 	virtual int  CDPlayerCommand(int cmdd, int datt) = 0;
 	virtual void ShutdownCDPlayer() = 0;
 
-	// Allows adjusting parameters and other fixes before engine is initialized
-	virtual void MainInitAdjustments() {}
+	// Returns command line argument in a UTF-8 format
+	virtual Common::String GetCommandArg(size_t arg_index);
 
 	virtual bool LockMouseToWindow();
 	virtual void UnlockMouse();
 
 	static AGSPlatformDriver *GetDriver();
+
+	// Store command line arguments for the future use
+	void SetCommandArgs(const char *const argv[], size_t argc);
 
 	// Set whether PrintMessage should output to stdout or stderr
 	void SetOutputToErr(bool on) {
@@ -200,6 +212,9 @@ protected:
 	// Defines whether engine is allowed to display important warnings
 	// and errors by showing a message box kind of GUI.
 	bool _guiMode = false;
+
+	const char *const *_cmdArgs = nullptr;
+	size_t _cmdArgCount = 0u;
 
 private:
 	static AGSPlatformDriver *instance;

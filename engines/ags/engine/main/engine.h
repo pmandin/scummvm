@@ -32,11 +32,11 @@ void        show_preload();
 void        engine_init_game_settings();
 int         initialize_engine(const AGS::Shared::ConfigTree &startup_opts);
 
-struct ScreenSetup;
+struct DisplayModeSetup;
 // Try to set new graphics mode deduced from given configuration;
 // if requested mode fails, tries to find any compatible mode close to the
 // requested one.
-bool        engine_try_set_gfxmode_any(const ScreenSetup &setup);
+bool        engine_try_set_gfxmode_any(const DisplayModeSetup &setup);
 // Tries to switch between fullscreen and windowed mode; uses previously saved
 // setup if it is available, or default settings for the new mode
 bool        engine_try_switch_windowed_gfxmode();
@@ -63,7 +63,8 @@ struct ResourcePaths {
 	// This is bit ugly, but remain so until more flexible configuration is designed
 	String       DataDir2;   // optional data directory
 	String       AudioDir2;  // optional audio directory
-	String       VoiceDir2;  // optional voice-over directory
+	String       VoiceDir2;  // optional voice-over directory (base)
+	String       VoiceDirSub;// full voice-over directory with optional sub-dir
 };
 
 // (Re-)Assign all known asset search paths to the AssetManager

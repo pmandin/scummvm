@@ -38,7 +38,6 @@ namespace AGS3 {
 #define SYSTEM_NONE        AL_ID('N','O','N','E')
 
 #define GFX_SCUMMVM             AL_ID('S', 'C', 'V', 'M')
-#define GFX_SCUMMVM_FULLSCREEN  AL_ID('S', 'C', 'V', 'M')
 
 #define SWITCH_NONE           0
 #define SWITCH_PAUSE          1
@@ -117,7 +116,6 @@ struct GFX_DRIVER {
 	AL_METHOD(int, show_mouse, (BITMAP *bmp, int x, int y));
 	AL_METHOD(void, hide_mouse, (void));
 	AL_METHOD(void, move_mouse, (int x, int y));
-	AL_METHOD(void, drawing_mode, (void));
 	AL_METHOD(void, save_video_state, (void));
 	AL_METHOD(void, restore_video_state, (void));
 	AL_METHOD(void, set_blender_mode, (int mode, int r, int g, int b, int a));

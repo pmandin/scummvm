@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.8.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-02-23 09:29+0000\n"
-"PO-Revision-Date: 2022-02-23 12:11+0000\n"
+"POT-Creation-Date: 2022-03-27 04:28+0000\n"
+"PO-Revision-Date: 2022-03-23 16:14+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Russian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ru/>\n"
@@ -69,7 +69,8 @@ msgstr "Вверх"
 #: backends/events/default/default-events.cpp:218
 #: backends/platform/wii/options.cpp:47 engines/asylum/asylum.cpp:201
 #: engines/buried/saveload.cpp:69 engines/cine/saveload.cpp:863
-#: engines/drascula/saveload.cpp:48 engines/mohawk/myst_stacks/menu.cpp:283
+#: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:84
+#: engines/mohawk/myst_stacks/menu.cpp:283
 #: engines/mohawk/myst_stacks/menu.cpp:300
 #: engines/mohawk/myst_stacks/menu.cpp:318
 #: engines/mohawk/riven_stacks/aspit.cpp:349
@@ -133,8 +134,8 @@ msgstr ""
 #: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
-#: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
-#: engines/kyra/gui/saveload_eob.cpp:628
+#: engines/director/events.cpp:91 engines/grim/grim.cpp:357
+#: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
 #: engines/parallaction/metaengine.cpp:145
 #: engines/sci/graphics/controls32.cpp:927
 msgid "Yes"
@@ -144,8 +145,9 @@ msgstr "Да"
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
 #: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
 #: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
-#: engines/buried/buried.cpp:580 engines/grim/grim.cpp:357
-#: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
+#: engines/buried/buried.cpp:580 engines/director/events.cpp:91
+#: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
+#: engines/kyra/gui/saveload_eob.cpp:628
 #: engines/parallaction/metaengine.cpp:151
 #: engines/sci/graphics/controls32.cpp:927
 msgid "No"
@@ -164,23 +166,26 @@ msgstr ""
 "таким же именем."
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
-#: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:534 gui/launcher.cpp:538
-#: gui/massadd.cpp:88 gui/options.cpp:2104 gui/saveload-dialog.cpp:1187
-#: engines/engine.cpp:525 engines/engine.cpp:549
+#: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
+#: gui/launcher.cpp:534 gui/launcher.cpp:538 gui/massadd.cpp:88
+#: gui/options.cpp:2104 gui/predictivedialog.cpp:69
+#: gui/saveload-dialog.cpp:1187 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
-#: engines/buried/saveload.cpp:69 engines/drascula/saveload.cpp:48
-#: engines/groovie/script.cpp:652 engines/parallaction/saveload.cpp:270
-#: engines/saga/music.cpp:99 engines/sci/engine/kgraphics.cpp:75
-#: engines/sci/graphics/controls32.cpp:924 engines/scumm/dialogs.cpp:180
-#: engines/scumm/scumm.cpp:1352 engines/scumm/scumm.cpp:1378
-#: engines/scumm/scumm.cpp:1400 engines/scumm/scumm.cpp:1678
-#: engines/scumm/scumm.cpp:2146 engines/sky/compact.cpp:141
-#: engines/sword1/animation.cpp:531 engines/sword1/animation.cpp:552
-#: engines/sword1/animation.cpp:568 engines/sword1/animation.cpp:576
-#: engines/sword1/control.cpp:888 engines/sword1/logic.cpp:1634
-#: engines/sword2/animation.cpp:428 engines/sword2/animation.cpp:448
-#: engines/sword2/animation.cpp:464 engines/sword2/animation.cpp:474
-#: engines/zvision/file/save_manager.cpp:225
+#: engines/buried/saveload.cpp:69
+#: engines/director/lingo/lingo-builtins.cpp:1652
+#: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
+#: engines/groovie/script.cpp:652 engines/nancy/dialogs.cpp:101
+#: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
+#: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:924
+#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1356
+#: engines/scumm/scumm.cpp:1382 engines/scumm/scumm.cpp:1404
+#: engines/scumm/scumm.cpp:1682 engines/scumm/scumm.cpp:2149
+#: engines/sky/compact.cpp:141 engines/sword1/animation.cpp:531
+#: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
+#: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
+#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:428
+#: engines/sword2/animation.cpp:448 engines/sword2/animation.cpp:464
+#: engines/sword2/animation.cpp:474 engines/zvision/file/save_manager.cpp:225
 msgid "OK"
 msgstr "OK"
 
@@ -533,11 +538,6 @@ msgstr "Автор:"
 #: gui/editrecorddialog.cpp:59
 msgid "Notes:"
 msgstr "Примечания:"
-
-#: gui/editrecorddialog.cpp:67 gui/predictivedialog.cpp:69
-#: engines/nancy/dialogs.cpp:101
-msgid "Ok"
-msgstr "Ok"
 
 #: gui/filebrowser-dialog.cpp:53
 msgid "Choose file for loading"
@@ -1994,6 +1994,10 @@ msgstr ""
 "Ошибка запроса.\n"
 "Проверьте ваше Интернет-соединение."
 
+#: gui/predictivedialog.cpp:66
+msgid "Enter Text"
+msgstr "Введите текст"
+
 #. I18N: You must leave "#" as is, only word 'next' is translatable
 #: gui/predictivedialog.cpp:101
 msgid "#  next"
@@ -2482,12 +2486,12 @@ msgstr "~В~ главное меню"
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:846
-#: engines/groovie/script.cpp:2187 engines/groovie/script.cpp:2228
+#: engines/groovie/script.cpp:2194 engines/groovie/script.cpp:2235
 #: engines/hugo/file.cpp:297 engines/illusions/menusystem.cpp:702
 #: engines/kingdom/kingdom.cpp:736 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
 #: engines/neverhood/menumodule.cpp:889 engines/pegasus/pegasus.cpp:402
-#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:725
+#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:742
 #: engines/sci/engine/kfile.cpp:1079 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3405
@@ -2502,14 +2506,14 @@ msgstr "Сохранить игру:"
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:841
-#: engines/groovie/script.cpp:846 engines/groovie/script.cpp:2187
-#: engines/groovie/script.cpp:2228 engines/hugo/file.cpp:297
+#: engines/groovie/script.cpp:846 engines/groovie/script.cpp:2194
+#: engines/groovie/script.cpp:2235 engines/hugo/file.cpp:297
 #: engines/illusions/menusystem.cpp:702 engines/kingdom/kingdom.cpp:736
 #: engines/lab/savegame.cpp:237 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
 #: engines/neverhood/menumodule.cpp:889 engines/parallaction/metaengine.cpp:133
 #: engines/parallaction/saveload.cpp:208 engines/pegasus/pegasus.cpp:402
-#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:726
+#: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:743
 #: engines/sci/engine/kfile.cpp:1079 engines/scumm/dialogs.cpp:175
 #: engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
@@ -2634,7 +2638,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ОШИБКА: Не удалось перенести сохранение в новый слот"
 
 #: engines/engine.cpp:609 engines/metaengine.cpp:370 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:248 engines/sky/metaengine.cpp:185
+#: backends/platform/ios7/ios7_osys_main.cpp:249 engines/sky/metaengine.cpp:185
 #: engines/xeen/saves.cpp:289
 msgid "Autosave"
 msgstr "Автосохранение"
@@ -4134,12 +4138,12 @@ msgstr ""
 #: engines/dm/loadsave.cpp:187 engines/drascula/saveload.cpp:395
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:823
-#: engines/groovie/script.cpp:858 engines/groovie/script.cpp:2174
-#: engines/groovie/script.cpp:2244 engines/hugo/file.cpp:399
+#: engines/groovie/script.cpp:858 engines/groovie/script.cpp:2181
+#: engines/groovie/script.cpp:2251 engines/hugo/file.cpp:399
 #: engines/illusions/menusystem.cpp:679 engines/kingdom/kingdom.cpp:746
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
 #: engines/neverhood/menumodule.cpp:902 engines/prince/saveload.cpp:63
-#: engines/sci/engine/guest_additions.cpp:728 engines/sci/engine/kfile.cpp:1206
+#: engines/sci/engine/guest_additions.cpp:745 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
@@ -4153,12 +4157,12 @@ msgstr "Восстановить игру:"
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:823
 #: engines/groovie/script.cpp:841 engines/groovie/script.cpp:858
-#: engines/groovie/script.cpp:2174 engines/groovie/script.cpp:2244
+#: engines/groovie/script.cpp:2181 engines/groovie/script.cpp:2251
 #: engines/hugo/file.cpp:399 engines/illusions/menusystem.cpp:679
 #: engines/kingdom/kingdom.cpp:746 engines/lab/savegame.cpp:237
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
 #: engines/neverhood/menumodule.cpp:902 engines/prince/saveload.cpp:63
-#: engines/sci/engine/guest_additions.cpp:729 engines/sci/engine/kfile.cpp:1206
+#: engines/sci/engine/guest_additions.cpp:746 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
@@ -4170,7 +4174,7 @@ msgstr "Восстановить"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Быстрое сохранение или загрузка не поддерживаются в этой локации"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2761
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2776
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4181,7 +4185,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2751
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2766
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4192,7 +4196,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2774
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2789
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4243,14 +4247,14 @@ msgid "Use antialiasing to draw text even if the game does not ask for it"
 msgstr ""
 "Использовать шрифты со сглаживанием, даже если игра этого не запрашивала"
 
-#: engines/ags/ags.cpp:127
+#: engines/ags/ags.cpp:126
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
 "supported."
 msgstr ""
 "Эта игра использует движок AGS версии до 2.5, который не поддерживается."
 
-#: engines/ags/ags.cpp:135
+#: engines/ags/ags.cpp:134
 msgid ""
 "The selected game has a data file greater than 2Gb, which isn't supported by "
 "your version of ScummVM yet."
@@ -4304,7 +4308,7 @@ msgstr "Не удалось инициализировать ресурсы"
 msgid "A required game resource was not found"
 msgstr "Требуемый игровой ресурс не найден"
 
-#: engines/bladerunner/bladerunner.cpp:2332
+#: engines/bladerunner/bladerunner.cpp:2334
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4315,7 +4319,7 @@ msgstr ""
 "режим будет изменен на Restored Cut Content, пока вы полностью не выйдете из "
 "игры."
 
-#: engines/bladerunner/bladerunner.cpp:2334
+#: engines/bladerunner/bladerunner.cpp:2336
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4326,7 +4330,7 @@ msgstr ""
 "изменен на режим оригинального содержимого, пока вы полностью не выйдете из "
 "игры."
 
-#: engines/bladerunner/bladerunner.cpp:2336
+#: engines/bladerunner/bladerunner.cpp:2338
 msgid "Continue"
 msgstr "Продолжить"
 
@@ -4398,7 +4402,7 @@ msgstr "Автор перевода не желает, чтобы его пер�
 #: engines/mohawk/detection_tables.h:1109 engines/myst3/detection.cpp:142
 #: engines/neverhood/detection.cpp:120 engines/saga/detection_tables.h:186
 #: engines/saga/detection_tables.h:1217 engines/saga/detection_tables.h:1276
-#: engines/sci/detection_tables.h:5040 engines/sci/detection_tables.h:5048
+#: engines/sci/detection_tables.h:5068 engines/sci/detection_tables.h:5076
 #: engines/sherlock/detection_tables.h:223 engines/stark/detection.cpp:319
 #: engines/teenagent/detection.cpp:117 engines/trecision/detection.cpp:199
 #: engines/zvision/detection_tables.h:190
@@ -4492,6 +4496,13 @@ msgstr ""
 #: engines/cryomni3d/metaengine.cpp:145
 msgid "Versailles 1685 support is not compiled in"
 msgstr "Поддержка для Versailles 1685 не скомпилирована"
+
+#: engines/director/events.cpp:90
+msgid ""
+"The game prevents quitting at this moment. Are you sure you want to quit "
+"anyway?"
+msgstr ""
+"Игра блокирует выход в данный момент. На самом ли деле вы хотите выйти?"
 
 #: engines/dragons/dragons.cpp:1802
 #, c-format
@@ -5012,6 +5023,10 @@ msgstr "Проверить/Посмотреть"
 msgid "Error: the game could not be saved."
 msgstr "Ошибка: к сожалению, сохранить игру не удалось."
 
+#: engines/grim/inputdialog.cpp:79
+msgid "Input text"
+msgstr "Введите текст"
+
 #: engines/grim/md5check.cpp:558
 #, c-format
 msgid ""
@@ -5209,6 +5224,14 @@ msgstr "Включить чит-режим"
 #: engines/hypno/detection.cpp:191
 msgid "Allow cheats using the C key."
 msgstr "Включите читы, нажав на клавишу С."
+
+#: engines/hypno/detection.cpp:197
+msgid "Enable restored content"
+msgstr "Включить восстановленный контент"
+
+#: engines/hypno/detection.cpp:198
+msgid "Add additional content that is not enabled the original implementation."
+msgstr "Добавить конент, который был удалён в огининальной игре."
 
 #. I18N: Studio audience adds an applause and cheering sounds whenever
 #. Malcolm makes a joke.
@@ -6302,7 +6325,7 @@ msgstr ""
 msgid "Error loading game resources."
 msgstr "Ошибка чтения файлов ресурсов игры."
 
-#: engines/sci/detection_tables.h:4369
+#: engines/sci/detection_tables.h:4397
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
 "Обнаружена неполная игра. Вам необходимо скопировать данные со всех CD."
@@ -6327,16 +6350,16 @@ msgstr ""
 "Логика игры в покер находится в отдельной DLL и пока не реализована. Пока "
 "сделана заглушка, в которой действия соперников выбираются случайно"
 
-#: engines/sci/engine/savegame.cpp:1446
+#: engines/sci/engine/savegame.cpp:1453
 msgid "The format of this saved game is obsolete, unable to load it"
 msgstr "Формат файла сохранённой игры устарел, не могу загрузить его"
 
-#: engines/sci/engine/savegame.cpp:1448
+#: engines/sci/engine/savegame.cpp:1455
 #, c-format
 msgid "Savegame version is %d, maximum supported is %0d"
 msgstr "Версия файла сохранения: %d, но максимальная поддерживаемая: %0d"
 
-#: engines/sci/engine/savegame.cpp:1459
+#: engines/sci/engine/savegame.cpp:1466
 msgid ""
 "This saved game was created with a different version of the game, unable to "
 "load it"
@@ -6532,24 +6555,24 @@ msgstr ""
 "один канал."
 
 #: engines/scumm/detection.cpp:203
-msgid "Use correct font spacing"
-msgstr "Использовать верные интервалы шрифта"
-
-#: engines/scumm/detection.cpp:204
-msgid ""
-"Draw text with correct font spacing. This arguably looks better, but doesn't "
-"match the original behavior."
-msgstr ""
-"Рисовать текст с верными интервалами шрифта. Это выглядит вроде бы лучше, но "
-"не соответсвует оригиналу."
-
-#: engines/scumm/detection.cpp:210
 msgid "Enable smooth scrolling"
 msgstr "Включить плавную прокрутку"
 
-#: engines/scumm/detection.cpp:211
+#: engines/scumm/detection.cpp:204
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(вместо обычной прокрутки с шагов в 8 пикселей)"
+
+#: engines/scumm/detection.cpp:210 engines/scumm/dialogs.cpp:730
+msgid "Enable game-specific enhancements"
+msgstr "Включить улучшения для некоторых игр"
+
+#: engines/scumm/detection.cpp:211 engines/scumm/dialogs.cpp:730
+msgid ""
+"Allow ScummVM to make small enhancements to the game, usually based on other "
+"versions of the same game."
+msgstr ""
+"ScummVM включит небольшие улучшения для некоторых игр, обычно основанные на "
+"других версиях той же игры."
 
 #: engines/scumm/detection_internal.h:358
 msgid ""
@@ -7229,15 +7252,15 @@ msgstr ""
 "Во избежание пиратства Lite-версия игры Putt-Putt Saves the Zoo для iOS\n"
 "не поддерживается. Полную версию игры можно купить в iTunes Store."
 
-#: engines/scumm/metaengine.cpp:421
+#: engines/scumm/metaengine.cpp:427
 msgid "HE v71+ support is not compiled in"
 msgstr "Поддержка для версии HE v71+ не скомпилирована"
 
-#: engines/scumm/metaengine.cpp:445
+#: engines/scumm/metaengine.cpp:451
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr "Поддержка для версии SCUMM v7-8 не скомпилирована"
 
-#: engines/scumm/scumm.cpp:542
+#: engines/scumm/scumm.cpp:544
 msgid ""
 "You have enabled 'aspect ratio correction'. However, FM-TOWNS' natural "
 "resolution is 320x240, which doesn't allow aspect ratio correction.\n"
@@ -7250,7 +7273,7 @@ msgstr ""
 "Коррекция соотношения сторон может быть достигнута путем обрезки разрешения "
 "до 320x200 на вкладке «Движок»."
 
-#: engines/scumm/scumm.cpp:1351
+#: engines/scumm/scumm.cpp:1355
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -7258,7 +7281,7 @@ msgstr ""
 "Не удалось найти исполнимый файл 'Штвн' Macintosh. Шрифты\n"
 "высокого разрешения будут выключены."
 
-#: engines/scumm/scumm.cpp:1377
+#: engines/scumm/scumm.cpp:1381
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -7266,7 +7289,7 @@ msgstr ""
 "Не удалось найти исполнимый файл 'Loom' Macintosh. Музыка и шрифты\n"
 "высокого разрешения будут выключены."
 
-#: engines/scumm/scumm.cpp:1399
+#: engines/scumm/scumm.cpp:1403
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7274,7 +7297,7 @@ msgstr ""
 "Не удалось найти исполнимый файл 'Monkey Island' Macintosh, чтобы прочитать\n"
 "данные об инструментах. Музыка будет выключена."
 
-#: engines/scumm/scumm.cpp:1675
+#: engines/scumm/scumm.cpp:1679
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7284,7 +7307,7 @@ msgstr ""
 "*.BUN/*.SOU больше не поддерживается для этой игры, звук будет выключен.\n"
 "Пожалуйста, скопируйте заново файлы с оригинальных дисков без компрессии."
 
-#: engines/scumm/scumm.cpp:2144
+#: engines/scumm/scumm.cpp:2147
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7293,7 +7316,7 @@ msgstr ""
 "Режим \"родного\" MIDI требует обновление Roland Upgrade от\n"
 "LucasArts, но не хватает %s. Переключаюсь на AdLib."
 
-#: engines/scumm/scumm.cpp:3075
+#: engines/scumm/scumm.cpp:3090
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -8740,6 +8763,19 @@ msgstr ""
 "понадобятся все шрифты из выбранного вами пакета, то есть, LiberationMono, "
 "LiberationSans и LiberationSerif, либо FreeMono, FreeSans и FreeSerif "
 "соответственно."
+
+#~ msgid "Use correct font spacing"
+#~ msgstr "Использовать верные интервалы шрифта"
+
+#~ msgid ""
+#~ "Draw text with correct font spacing. This arguably looks better, but "
+#~ "doesn't match the original behavior."
+#~ msgstr ""
+#~ "Рисовать текст с верными интервалами шрифта. Это выглядит вроде бы лучше, "
+#~ "но не соответсвует оригиналу."
+
+#~ msgid "Ok"
+#~ msgstr "Ok"
 
 #~ msgid "~E~dit Game..."
 #~ msgstr "Н~а~стройки игры..."

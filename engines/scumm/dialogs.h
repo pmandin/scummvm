@@ -210,12 +210,12 @@ private:
 };
 
 /**
- * Options widget for EGA Loom
+ * Options widget for EGA Loom.
  */
-class EgaLoomOptionsWidget : public GUI::OptionsContainerWidget {
+class LoomEgaGameOptionsWidget : public GUI::OptionsContainerWidget {
 public:
-	EgaLoomOptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain);
-	~EgaLoomOptionsWidget() override {};
+	LoomEgaGameOptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain);
+	~LoomEgaGameOptionsWidget() override {};
 
 	void load() override;
 	bool save() override;
@@ -228,10 +228,11 @@ private:
 	void defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const override;
 	void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
 
+	GUI::CheckboxWidget *_enableEnhancements;
 	GUI::SliderWidget *_overtureTicksSlider;
-	GUI::StaticTextWidget *_overtureTicksLabel;
+	GUI::StaticTextWidget *_overtureTicksValue;
 
-	void updateOvertureTicksLabel();
+	void updateOvertureTicksValue();
 };
 
 } // End of namespace Scumm

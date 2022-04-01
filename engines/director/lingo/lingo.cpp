@@ -162,7 +162,18 @@ Lingo::Lingo(DirectorEngine *vm) : _vm(vm) {
 	_localvars = nullptr;
 
 	//kTheEntities
+	_actorList.type = ARRAY;
+	_actorList.u.farr = new FArray;
+
 	_itemDelimiter = ',';
+	_exitLock = false;
+	_preLoadEventAbort = false;
+
+	_searchPath.type = ARRAY;
+	_searchPath.u.farr = new FArray;
+
+	_traceLoad = 0;
+	_updateMovieEnabled = false;
 
 	// events
 	_passEvent = false;
@@ -578,11 +589,17 @@ int Lingo::getAlignedType(const Datum &d1, const Datum &d2, bool numsOnly) {
 		d1Type = INT;
 	if (d2Type == VOID)
 		d2Type = INT;
+	if (d1Type == OBJECT)
+		d1Type = STRING;
+	if (d2Type == OBJECT)
+		d2Type = STRING;
 
 	if (d1Type == FLOAT || d2Type == FLOAT) {
 		opType = FLOAT;
 	} else if (d1Type == INT && d2Type == INT) {
 		opType = INT;
+	} else if ((d1Type == STRING && d2Type == INT) || (d1Type == INT && d2Type == STRING)) {
+		opType = STRING;
 	}
 
 	return opType;
@@ -823,7 +840,9 @@ Common::String Datum::asString(bool printonly) const {
 		break;
 	case OBJECT:
 		if (!printonly) {
-			s = Common::String::format("#%s", u.obj->getName().c_str());
+			// Object names in Director are: "<Object:hex>"
+			// the starting '<' is important, it's used when comparing objects and integers
+			s = Common::String::format("<Object:%08x>", ((uint32)(size_t)((void *)u.obj)) & 0xffffffff);
 		} else {
 			s = u.obj->asString();
 		}
@@ -1146,14 +1165,25 @@ void Lingo::executeImmediateScripts(Frame *frame) {
 }
 
 void Lingo::executePerFrameHook(int frame, int subframe) {
-	if (_perFrameHook.type == OBJECT) {
-		Symbol method = _perFrameHook.u.obj->getMethod("mAtFrame");
-		if (method.type != VOIDSYM) {
-			debugC(1, kDebugLingoExec, "Executing perFrameHook : <%s>(mAtFrame, %d, %d)", _perFrameHook.asString(true).c_str(), frame, subframe);
-			push(_perFrameHook);
-			push(frame);
-			push(subframe);
-			LC::call(method, 3, false);
+	if (_vm->getVersion() < 400) {
+		if (_perFrameHook.type == OBJECT) {
+			Symbol method = _perFrameHook.u.obj->getMethod("mAtFrame");
+			if (method.type != VOIDSYM) {
+				debugC(1, kDebugLingoExec, "Executing perFrameHook : <%s>(mAtFrame, %d, %d)", _perFrameHook.asString(true).c_str(), frame, subframe);
+				push(_perFrameHook);
+				push(frame);
+				push(subframe);
+				LC::call(method, 3, false);
+				execute();
+			}
+		}
+	} else if (_actorList.u.farr->arr.size() > 0) {
+		for (uint i = 0; i < _actorList.u.farr->arr.size(); i++) {
+			Datum actor = _actorList.u.farr->arr[i];
+			Symbol method = actor.u.obj->getMethod("stepFrame");
+			if (method.nargs == 1)
+				push(actor);
+			LC::call(method, method.nargs, false);
 			execute();
 		}
 	}

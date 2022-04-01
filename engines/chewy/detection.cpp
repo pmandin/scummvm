@@ -24,17 +24,16 @@
 
 #include "chewy/detection.h"
 
+#include "common/translation.h"
+
 static const PlainGameDescriptor chewyGames[] = {
 	{"chewy", "Chewy: Esc from F5"},
 	{nullptr, nullptr}
 };
 
-static const char *directoryGlobs[] = {
-	"txt",
-	nullptr
-};
-
 namespace Chewy {
+
+#define GAMEOPTION_ORIGINAL_SAVELOAD GUIO_GAMEOPTIONS1
 
 static const ChewyGameDescription gameDescriptions[] = {
 
@@ -42,11 +41,11 @@ static const ChewyGameDescription gameDescriptions[] = {
 		{
 			"chewy",
 			nullptr,
-			AD_ENTRY1s("atds.tap", "e6050c144dd4f23d79ea4f89a8ef306e", 218857),
+			AD_ENTRY1s("txt/atds.tap", "e6050c144dd4f23d79ea4f89a8ef306e", 218857),
 			Common::EN_ANY,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NOMIDI)
+			GUIO2(GUIO_NOMIDI, GAMEOPTION_ORIGINAL_SAVELOAD)
 		},
 	},
 
@@ -55,45 +54,35 @@ static const ChewyGameDescription gameDescriptions[] = {
 		{
 			"chewy",
 			nullptr,
-			AD_ENTRY1s("atds.tap", "b1210066a524fe0f88862f44671ed97d", 226988),
+			AD_ENTRY1s("txt/atds.tap", "b1210066a524fe0f88862f44671ed97d", 226988),
 			Common::ES_ESP,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NOMIDI)
+			GUIO2(GUIO_NOMIDI, GAMEOPTION_ORIGINAL_SAVELOAD)
 		},
 	},
 
 	{
-		// Chewy - ESC von F5 - German
-		// Master version 1.1 (CHEWY.EXE - offset 0x8AB28)
-		// The source CD-ROM has the Matrix code SONOPRESS R-7885 B
-		// The disc contains several demos and files from 1996
-		// Provided by lotharsm
 		{
 			"chewy",
 			nullptr,
-			AD_ENTRY1s("atds.tap", "c117e884cc5b4bbe50ae1217d13916c4", 231071),
+			AD_ENTRY1s("txt/atds.tap", "c117e884cc5b4bbe50ae1217d13916c4", 231071),
 			Common::DE_DEU,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NOMIDI)
+			GUIO2(GUIO_NOMIDI, GAMEOPTION_ORIGINAL_SAVELOAD)
 		},
 	},
 
 	{
-		// Chewy - ESC von F5 - German
-		// Master version 1.0 (CHEWY.EXE - offset 0x8AB10)
-		// The source CD-ROM has the Matrix code SONOPRESS M-2742 A
-		// CD-ROM has the label "CHEWY_V1_0"
-		// Provided by lotharsm
 		{
 			"chewy",
 			nullptr,
-			AD_ENTRY1s("atds.tap", "e22f97761c0e7772ec99660f2277b1a4", 231001),
+			AD_ENTRY1s("txt/atds.tap", "e22f97761c0e7772ec99660f2277b1a4", 231001),
 			Common::DE_DEU,
 			Common::kPlatformDOS,
 			ADGF_NO_FLAGS,
-			GUIO1(GUIO_NOMIDI)
+			GUIO2(GUIO_NOMIDI, GAMEOPTION_ORIGINAL_SAVELOAD)
 		},
 	},
 
@@ -106,24 +95,36 @@ static const ChewyGameDescription gameDescriptions[] = {
 		{
 			"chewy",
 			nullptr,
-			AD_ENTRY1s("atds.tap", "c3be5641e90dd01274309b778cf8146d", 230686),
+			AD_ENTRY1s("txt/atds.tap", "c3be5641e90dd01274309b778cf8146d", 230686),
 			Common::DE_DEU,
 			Common::kPlatformDOS,
 			ADGF_DEMO,
-			GUIO1(GUIO_NOMIDI)
+			GUIO2(GUIO_NOMIDI, GAMEOPTION_ORIGINAL_SAVELOAD)
 		},
 	},
 
 	{ AD_TABLE_END_MARKER }
 };
 
-} // End of namespace Chewy
+static const ADExtraGuiOptionsMap optionsList[] = {
+	{
+		GAMEOPTION_ORIGINAL_SAVELOAD,
+		{
+			_s("Use original save/load screens"),
+			_s("Use the original save/load screens instead of the ScummVM ones"),
+			"original_menus",
+			false
+		}
+	},
+
+	AD_EXTRA_GUI_OPTIONS_TERMINATOR};
+} // namespace Chewy
 
 class ChewyMetaEngineDetection : public AdvancedMetaEngineDetection {
 public:
-	ChewyMetaEngineDetection() : AdvancedMetaEngineDetection(Chewy::gameDescriptions, sizeof(Chewy::ChewyGameDescription), chewyGames) {
+	ChewyMetaEngineDetection() : AdvancedMetaEngineDetection(Chewy::gameDescriptions, sizeof(Chewy::ChewyGameDescription), chewyGames, Chewy::optionsList) {
 		_maxScanDepth = 2;
-		_directoryGlobs = directoryGlobs;
+		_flags = kADFlagMatchFullPaths;
 	}
 
 	const char *getEngineId() const override {

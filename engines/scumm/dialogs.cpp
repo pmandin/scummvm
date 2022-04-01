@@ -699,58 +699,75 @@ void LoomTownsDifficultyDialog::handleCommand(GUI::CommandSender *sender, uint32
 	}
 }
 
-EgaLoomOptionsWidget::EgaLoomOptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain) :
-		OptionsContainerWidget(boss, name, "EgaLoomOptionsDialog", false, domain) {
-	GUI::StaticTextWidget *text = new GUI::StaticTextWidget(widgetsBoss(), "EgaLoomOptionsDialog.OvertureTicksHeader", _("Overture Timing:"));
+LoomEgaGameOptionsWidget::LoomEgaGameOptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain) :
+		OptionsContainerWidget(boss, name, "LoomEgaGameOptionsDialog", false, domain) {
+	GUI::StaticTextWidget *text = new GUI::StaticTextWidget(widgetsBoss(), "LoomEgaGameOptionsDialog.OvertureTicksLabel", _("Overture Timing:"));
 
 	text->setAlign(Graphics::TextAlign::kTextAlignEnd);
 
-	_overtureTicksSlider = new GUI::SliderWidget(widgetsBoss(), "EgaLoomOptionsDialog.OvertureTicks", _("When using replacement music, this adjusts the time when the Overture changes to the scene with the Lucasfilm and Loom logotypes."), kOvertureTicksChanged);
+	_overtureTicksSlider = new GUI::SliderWidget(widgetsBoss(), "LoomEgaGameOptionsDialog.OvertureTicks", _("When using replacement music, this adjusts the time when the Overture changes to the scene with the Lucasfilm and Loom logotypes."), kOvertureTicksChanged);
 
-	// This allows the transition in the Loom Overture to be changed by
-	// 20 seconds in each direction. I think it's nice if the interval is
-	// small enough that you can set the slider back to default at any
-	// reasonable screen resolution.
+	// In the Ozawa recording, the transition happens at about 1:56. At is
+	// turns out, this is a fairly fast version of the tune. After checking
+	// a number of different recordings, I've settled on an interval of
+	// 1:40 - 2:50. This is larger than I had hoped, but I guess it's
+	// really necessary.
+	//
+	// Hopefully that still means you can set the slider back to its default
+	// value at most reasonable screen resolutions.
 
-	_overtureTicksSlider->setMinValue(-200);
-	_overtureTicksSlider->setMaxValue(200);
+	_overtureTicksSlider->setMinValue(-160);
+	_overtureTicksSlider->setMaxValue(540);
 
-	_overtureTicksLabel = new GUI::StaticTextWidget(widgetsBoss(), "EgaLoomOptionsDialog.OvertureTicksLabel", Common::U32String());
+	_overtureTicksValue = new GUI::StaticTextWidget(widgetsBoss(), "LoomEgaGameOptionsDialog.OvertureTicksValue", Common::U32String());
 
-	_overtureTicksLabel->setFlags(GUI::WIDGET_CLEARBG);
+	_overtureTicksValue->setFlags(GUI::WIDGET_CLEARBG);
+
+	// Normally this would be added as a static game settings widget, but
+	// I see no way to get both the dynamic and the static one, so we have
+	// to duplicate it here.
+
+	_enableEnhancements = new GUI::CheckboxWidget(widgetsBoss(), "LoomEgaGameOptionsDialog.EnableEnhancements", _("Enable game-specific enhancements"), _("Allow ScummVM to make small enhancements to the game, usually based on other versions of the same game."));
 }
 
-void EgaLoomOptionsWidget::load() {
+void LoomEgaGameOptionsWidget::load() {
 	int loomOvertureTicks = 0;
 
 	if (ConfMan.hasKey("loom_overture_ticks", _domain))
 		loomOvertureTicks = ConfMan.getInt("loom_overture_ticks", _domain);
 
 	_overtureTicksSlider->setValue(loomOvertureTicks);
-	updateOvertureTicksLabel();
+	updateOvertureTicksValue();
+
+	_enableEnhancements->setState(ConfMan.getBool("enable_enhancements", _domain));
 }
 
-bool EgaLoomOptionsWidget::save() {
+bool LoomEgaGameOptionsWidget::save() {
 	ConfMan.setInt("loom_overture_ticks", _overtureTicksSlider->getValue(), _domain);
+	ConfMan.setBool("enable_enhancements", _enableEnhancements->getState(), _domain);
 	return true;
 }
 
-void EgaLoomOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const {
+void LoomEgaGameOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const {
 	layouts.addDialog(layoutName, overlayedLayout)
-		.addLayout(GUI::ThemeLayout::kLayoutHorizontal, 12)
-			.addPadding(0, 0, 16, 0)
-			.addWidget("OvertureTicksHeader", "OptionsLabel")
-			.addWidget("OvertureTicks", "WideSlider")
-			.addWidget("OvertureTicksLabel", "ShortOptionsLabel")
+		.addLayout(GUI::ThemeLayout::kLayoutVertical, 12)
+			.addPadding(0, 0, 0, 0)
+			.addLayout(GUI::ThemeLayout::kLayoutHorizontal, 12)
+				.addPadding(0, 0, 12, 0)
+				.addWidget("OvertureTicksLabel", "OptionsLabel")
+				.addWidget("OvertureTicks", "WideSlider")
+				.addWidget("OvertureTicksValue", "ShortOptionsLabel")
+			.closeLayout()
+			.addWidget("EnableEnhancements", "Checkbox")
 		.closeLayout()
 	.closeDialog();
 }
 
-void EgaLoomOptionsWidget::handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) {
+void LoomEgaGameOptionsWidget::handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) {
 
 	switch (cmd) {
 	case kOvertureTicksChanged:
-		updateOvertureTicksLabel();
+		updateOvertureTicksValue();
 		break;
 	default:
 		GUI::OptionsContainerWidget::handleCommand(sender, cmd, data);
@@ -758,10 +775,10 @@ void EgaLoomOptionsWidget::handleCommand(GUI::CommandSender *sender, uint32 cmd,
 	}
 }
 
-void EgaLoomOptionsWidget::updateOvertureTicksLabel() {
+void LoomEgaGameOptionsWidget::updateOvertureTicksValue() {
 	int ticks = DEFAULT_LOOM_OVERTURE_TRANSITION + _overtureTicksSlider->getValue();
 
-	_overtureTicksLabel->setLabel(Common::String::format("%d:%02d.%d", ticks / 600, (ticks % 600) / 10, ticks % 10));
+	_overtureTicksValue->setLabel(Common::String::format("%d:%02d.%d", ticks / 600, (ticks % 600) / 10, ticks % 10));
 }
 
 } // End of namespace Scumm

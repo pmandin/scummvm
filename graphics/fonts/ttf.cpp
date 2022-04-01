@@ -147,7 +147,7 @@ public:
 	          int size, TTFSizeMode sizeMode, uint dpi, TTFRenderMode renderMode, const uint32 *mapping, bool stemDarkening);
 
 	virtual int getFontHeight() const;
-
+	Common::String getFontName() const override;
 	virtual int getFontAscent() const;
 
 	virtual int getMaxCharWidth() const;
@@ -538,6 +538,10 @@ int TTFFont::computePointSizeFromHeaders(int height) const {
 
 int TTFFont::getFontHeight() const {
 	return _height;
+}
+
+Common::String TTFFont::getFontName() const {
+	return _face->family_name;
 }
 
 int TTFFont::getFontAscent() const {

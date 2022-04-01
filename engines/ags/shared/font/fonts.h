@@ -45,12 +45,14 @@ struct Font {
 	FontInfo            Info;
 	// Values received from the renderer and saved for the reference
 	FontMetrics       Metrics;
+	// Precalculated linespacing, based on font properties and compat settings
+	int                 LineSpacingCalc = 0;
 
 	// Outline buffers
 	Bitmap TextStencil, TextStencilSub;
 	Bitmap OutlineStencil, OutlineStencilSub;
 
-	Font();
+	Font() {}
 };
 
 } // namespace Shared
@@ -71,6 +73,10 @@ bool font_first_renderer_loaded();
 bool is_font_loaded(size_t fontNumber);
 bool is_bitmap_font(size_t fontNumber);
 bool font_supports_extended_characters(size_t fontNumber);
+// Get font's name, if it's available, otherwise returns empty string
+const char *get_font_name(size_t fontNumber);
+// Get a collection of FFLG_* flags corresponding to this font
+int get_font_flags(size_t fontNumber);
 // TODO: with changes to WFN font renderer that implemented safe rendering of
 // strings containing invalid chars (since 3.3.1) this function is not
 // important, except for (maybe) few particular cases.
@@ -81,23 +87,30 @@ void ensure_text_valid_for_font(char *text, size_t fontnum);
 // Get font's scaling multiplier
 int get_font_scaling_mul(size_t fontNumber);
 // Calculate actual width of a line of text
-int wgettextwidth(const char *texx, size_t fontNumber);
-// Calculates actual height of a line of text
-int wgettextheight(const char *text, size_t fontNumber);
-// Get font's height (maximal height of any line of text printed with this font)
-int getfontheight(size_t fontNumber);
+int get_text_width(const char *texx, size_t fontNumber);
+// Get font's height; this value is used for logical arrangement of UI elements;
+// note that this is a "formal" font height, that may have different value
+// depending on compatibility mode (used when running old games);
+int get_font_height(size_t fontNumber);
+// Get the maximal height of the given font, with corresponding outlining
+int get_font_height_outlined(size_t fontNumber);
+// Get font's surface height: this always returns the height enough to accomodate
+// font letters on a bitmap or a texture; the distinction is needed for compatibility reasons
+int get_font_surface_height(size_t fontNumber);
 // Get font's line spacing
-int getfontlinespacing(size_t fontNumber);
+int get_font_linespacing(size_t fontNumber);
 // Set font's line spacing
 void set_font_linespacing(size_t fontNumber, int spacing);
-// Get is font is meant to use default line spacing
-bool use_default_linespacing(size_t fontNumber);
 // Get font's outline type
 int  get_font_outline(size_t font_number);
 // Get font's automatic outline thickness (if set)
 int  get_font_outline_thickness(size_t font_number);
-// get the source font associated with an outline font
-int get_font_outline_font(size_t font_number);
+// Gets the total maximal height of the given number of lines printed with the given font;
+// note that this uses formal font height, for compatibility purposes
+int get_text_lines_height(size_t fontNumber, size_t numlines);
+// Gets the height of a graphic surface enough to accomodate this number of text lines;
+// note this accounts for the real pixel font height
+int get_text_lines_surf_height(size_t fontNumber, size_t numlines);
 // Set font's outline type
 void set_font_outline(size_t font_number, int outline_type,
 	enum FontInfo::AutoOutlineStyle style = FontInfo::kSquared, int thickness = 1);
@@ -108,13 +121,14 @@ void set_fontinfo(size_t fontNumber, const FontInfo &finfo);
 // Gets full information about the font
 FontInfo get_fontinfo(size_t font_number);
 // Loads a font from disk
-bool wloadfont_size(size_t fontNumber, const FontInfo &font_info);
-void wgtprintf(Shared::Bitmap *ds, int xxx, int yyy, size_t fontNumber, color_t text_color, char *fmt, ...);
+bool load_font_size(size_t fontNumber, const FontInfo &font_info); void wgtprintf(Shared::Bitmap *ds, int xxx, int yyy, size_t fontNumber, color_t text_color, char *fmt, ...);
 // Allocates two outline stencil buffers, or returns previously creates ones;
 // these buffers are owned by the font, they should not be deleted by the caller.
 void alloc_font_outline_buffers(size_t font_number,
 	Shared::Bitmap **text_stencil, Shared::Bitmap **outline_stencil,
 	int text_width, int text_height, int color_depth);
+// Perform necessary adjustments on all fonts in case the text render mode changed (anti-aliasing etc)
+void adjust_fonts_for_render_mode(bool aa_mode);
 // Free particular font's data
 void wfreefont(size_t fontNumber);
 // Free all fonts data

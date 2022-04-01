@@ -18,6 +18,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für verbesserte Filter in der Such-Box hinzugefügt.
      Weitere Informationen findest Du in der Dokumentation unnter "Unterstanding the search box".
    - Icon-Ansicht zur Benutzeroberfläche hinzugefügt [GSoC-Aufgabe].
+   - Unterstützung für die RetroWave OPL3-Soundkarte hinzugefügt.
 
  AGI:
    - Unterstützung für die Macintosh-Versionen von Manhunter 1 und 2 hinzugefügt.
@@ -67,11 +68,18 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      in Loom und Indiana Jones and the Last Crusade behoben.
    - Es ist nun möglich, die Musik in den Disketten-Versionen von Loom durch eigene Audio-Tracks
      zu ersetzen. Im ScummVM-Wiki findest Du eine Liste, welche Teile von Schwanensee im Spiel verwendet werden.
+   - Einige Verbesserungen, die ScummVM zu Spielen hinzufügt, können jetzt
+     in den Spiel-Einstellungen deaktiviert werden. Die Option zur Korrektur des Zeichen-
+     Abstands in den 16-Farben-Versionen für Macintosh von Indiana Jones and the Last Crusade
+     findest du jetzt dort.
 
  Sherlock:
    - Fehler in der Wiedergabegeschwindigkeit im Intro von Serrated Scalpel behoben, der auftritt,
      wenn die Spieldateien über eine minimale Installation bereitgestellt werden.
    - Fehler in der Darstellung der Benutzeroberfläche in Serrated Scalpel behoben.
+
+ Titanic:
+   - Das Haus im Sternenfeld-Puzzle wird nun korrekt dargestellt.
 
  TwinE:
    - Fehler in der Kollisionserkennung behoben, der dazu führt, dass das Spiel nicht beendet werden kann,

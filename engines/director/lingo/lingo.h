@@ -378,7 +378,13 @@ public:
 	const char *field2str(int id);
 
 	// global kTheEntity
+	Datum _actorList;
 	Common::u32char_type_t _itemDelimiter;
+	bool _exitLock;
+	bool _preLoadEventAbort; // no-op, everything is always preloaded
+	Datum _searchPath;
+	int _traceLoad; // internal Director verbosity level
+	bool _updateMovieEnabled;
 
 	Datum getTheEntity(int entity, Datum &id, int field);
 	void setTheEntity(int entity, Datum &id, int field, Datum &d);

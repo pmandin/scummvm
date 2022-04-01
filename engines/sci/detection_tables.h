@@ -297,6 +297,22 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_UNDITHER	},
 
+	// Codename: Iceman - English DOS (360kb disks)
+	// Executable scanning reports "0.000.685", Floppy label reports "1.033, 6.8.90", VERSION file reports "1.033"
+	// SCI interpreter version 0.000.685
+	{"iceman", "", {
+		{"resource.map", 0, "d4f2ab06146656619836587059ac1fc2", 6282},
+		{"resource.000", 0, "b1bccd827453d4cb834bfd5b45bef63c", 26989},
+		{"resource.001", 0, "32b351072fccf76fc82234d73d28c08b", 126775},
+		{"resource.002", 0, "36670a917550757d57df84c96cf9e6d9", 307014},
+		{"resource.003", 0, "1ae7752a54802ab196115f8d8d34d9d5", 318066},
+		{"resource.004", 0, "5fb36f15dd68a7c32e49fc57f9b1c9cf", 324243},
+		{"resource.005", 0, "d97a96f1ab91b41cf46a02cc89b0a04e", 333091},
+		{"resource.006", 0, "c0881236945b1f61d4e11b23014eee41", 232696},
+		{"resource.007", 0, "8613c45fc771d658e5a505b9a4a54f31", 267741},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_UNDITHER	},
+
 	// Codename: Iceman - English DOS (from FRG)
 	// SCI interpreter version 0.000.668
 	{"iceman", "", {
@@ -3409,6 +3425,18 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformMacintosh, ADGF_MACRESFORK | ADGF_UNSTABLE, GUIO_LSL6HIRES_MAC },
 
+	// Larry 6 - English Macintosh CD - HIRES (provided by eriktorbjorn)
+	// This version has the same game resources as the previous entry.
+	// Data1 contains an additional six byte resource named DESCRIPT.ION
+	{"lsl6hires", "Hi-res", {
+		{"Data1", 0, "2c4e00a6910490831d4d84e9e6a49ec4", 3456235},
+		{"Data2", 0, "a7522b925dd5422c2db2b0a2337c76c3", 5856422},
+		{"Data3", 0, "9ebb490ec63721e5261111b918b5520e", 5577742},
+		{"Data4", 0, "d70687689ff3cf19a5e3c79dfced1c94", 3472064},
+		{"Data5", 0, "e91c3b681095a263fcb2f2c8d8fc74b6", 3273843},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformMacintosh, ADGF_MACRESFORK | ADGF_UNSTABLE, GUIO_LSL6HIRES_MAC },
+
 #undef GUIO_LSL6HIRES
 #undef GUIO_LSL6HIRES_MAC
 
@@ -5321,15 +5349,6 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_PALETTEMODS	},
 
-	// Space Quest 3 - English Mac (from Fingolfin)
-	{"sq3", "", {
-		{"resource.map", 0, "5c931675c6e01c4b418faca85d76c92c", 5844},
-		{"resource.001", 0, "0d8dfe42683b46f3131823233a91ce6a", 771917},
-		{"resource.002", 0, "0d8dfe42683b46f3131823233a91ce6a", 794072},
-		{"resource.003", 0, "0d8dfe42683b46f3131823233a91ce6a", 776536},
-		AD_LISTEND},
-		Common::EN_ANY, Common::kPlatformMacintosh, ADGF_UNSTABLE, GUIO_STD16_MAC_PALETTEMODS },
-
 	// Space Quest 3 - German DOS (from Tobis87, also includes english language)
 	// SCI interpreter version 0.000.453 (?)
 	{"sq3", "", {
@@ -5342,7 +5361,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.006", 0, "9107c2aa5398e28b5c5406df13491f85", 320643},
 		{"resource.007", 0, "9107c2aa5398e28b5c5406df13491f85", 344287},
 		AD_LISTEND},
-		Common::DE_DEU, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16_MAC_PALETTEMODS },
+		Common::DE_DEU, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16_PALETTEMODS },
 
 	// Space Quest 3 v1.052 - German DOS (supplied by markcoolio in bug report #4281, also includes english language)
 	// Executable scanning reports "S.old.114"
@@ -5354,6 +5373,15 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::DE_DEU, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16_PALETTEMODS	},
 
+	// Space Quest 3 - English Mac (from Fingolfin)
+	{"sq3", "", {
+		{"resource.map", 0, "5c931675c6e01c4b418faca85d76c92c", 5844},
+		{"resource.001", 0, "0d8dfe42683b46f3131823233a91ce6a", 771917},
+		{"resource.002", 0, "0d8dfe42683b46f3131823233a91ce6a", 794072},
+		{"resource.003", 0, "0d8dfe42683b46f3131823233a91ce6a", 776536},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformMacintosh, ADGF_UNSTABLE, GUIO_STD16_MAC_PALETTEMODS },
+
 	// Space Quest 3 v1.1 (game says 0.016) - English Mac (supplied by misterhands in bug report #6484)
 	// Executable scanning reports "0.024"
 	{"sq3", "", {
@@ -5363,7 +5391,7 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.003", 0, "0d8dfe42683b46f3131823233a91ce6a", 776554},
 		{"resource.004", 0, "0d8dfe42683b46f3131823233a91ce6a", 787066},
 		AD_LISTEND},
-		Common::EN_ANY, Common::kPlatformMacintosh, ADGF_UNSTABLE, GUIO_STD16_PALETTEMODS	},
+		Common::EN_ANY, Common::kPlatformMacintosh, ADGF_UNSTABLE, GUIO_STD16_MAC_PALETTEMODS	},
 
 #define GUIO_SQ4_CD GUIO5(GAMEOPTION_SQ4_SILVER_CURSORS,	\
 						  GAMEOPTION_PREFER_DIGITAL_SFX,	\
@@ -5564,6 +5592,14 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.000", 0, "231fd8421e1f211e1bcf9d7b8b6408e7", 9526423},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, ADGF_CD, GUIO_SQ4_CD	},
+
+	// Space Quest 4 - French DOS CD (fan translation and patch-set)
+	{"sq4", "CD", {
+		{"resource.map", 0, "ed90a8e3ccc53af6633ff6ab58392bae", 7054},
+		{"resource.000", 0, "63247e3901ab8963d4eece73747832e0", 5157378},
+		{"0.fon",        0, "ff0d61807398a6928222ebbfc233adde", 2431},
+		AD_LISTEND},
+		Common::FR_FRA, Common::kPlatformDOS, ADGF_CD, GUIO_SQ4_CD	},
 
 	// Space Quest 4 - Spanish DOS Floppy version distributed on a CD (from jvprat, also includes english language)
 	// Executable scanning reports "1.SQ4.057", VERSION file reports "1.000"

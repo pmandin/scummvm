@@ -37,11 +37,11 @@ namespace Chewy {
  * USE - use action texts, 100 entries max
  */
 enum MaxTextTypes {
-	kADSTextMax = 500,	//   0 - 499
-	kATSTextMax = 100,	// 500 - 599
-	kAADTextMax = 100,	// 600 - 699
-	kINVTextMax = 100,	// 700 - 799
-	kUSETextMax = 100	// 800 - 899
+	kADSTextMax = 500, //   0 - 499
+	kATSTextMax = 100, // 500 - 599
+	kAADTextMax = 100, // 600 - 699
+	kINVTextMax = 100, // 700 - 799
+	kUSETextMax = 100  // 800 - 899
 };
 
 /**
@@ -59,17 +59,16 @@ enum TextEntryMarkers {
 #define VOICE_OFFSET 20
 
 struct TextEntry {
-	int16 speechId;
-	Common::String text;
+	int16 _speechId;
+	Common::String _text;
 };
 
 typedef Common::List<TextEntry> TextEntryList;
 
-
 class Text : public Resource {
 public:
 	Text();
-	~Text() override;
+	~Text();
 
 	/**
 	 * Gets a list of lines for a specific dialog entry
@@ -83,30 +82,14 @@ public:
 	* - inventory text (INV) - 700 - 799
 	* - use text (USE) - 800 - 899
 	*/
-	TextEntry *getText(uint dialogNum, uint entryNum);
+	TextEntry *getText(uint chunk, uint entry, int type);
+	Common::StringArray getTextArray(uint chunk, uint entry, int type);
+	Common::String getTextEntry(uint chunk, uint entry, int type);
+
+	void crypt(char *txt, uint32 size);
+	const char *strPos(const char *txtAdr, int16 pos);
 };
 
-class ErrorMessage : public Resource {
-public:
-	ErrorMessage(Common::String filename) : Resource(filename) {}
-	~ErrorMessage() override {}
-
-	Common::String getErrorMessage(uint num);
-};
-
-class Font {
-public:
-	Font(Common::String filename);
-	virtual ~Font();
-
-	::Graphics::Surface *getLine(const Common::String &text);
-
-private:
-	uint16 _count, _first, _last, _width, _height;
-
-	::Graphics::Surface _fontSurface;
-};
-
-} // End of namespace Chewy
+} // namespace Chewy
 
 #endif

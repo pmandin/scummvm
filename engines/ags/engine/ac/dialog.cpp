@@ -360,7 +360,7 @@ int write_dialog_options(Bitmap *ds, bool ds_has_alpha, int dlgxp, int curyp, in
 		needheight = 0;\
 		for (int i = 0; i < numdisp; ++i) {\
 			break_up_text_into_lines(get_translation(dtop->optionnames[(int)disporder[i]]), _GP(Lines), areawid-(2*padding+2+bullet_wid), usingfont);\
-			needheight += getheightoflines(usingfont, _GP(Lines).Count()) + data_to_game_coord(_GP(game).options[OPT_DIALOGGAP]);\
+			needheight += get_text_lines_surf_height(usingfont, _GP(Lines).Count()) + data_to_game_coord(_GP(game).options[OPT_DIALOGGAP]);\
 		}\
 		if (parserInput) needheight += parserInput->Height + data_to_game_coord(_GP(game).options[OPT_DIALOGGAP]);\
 	}
@@ -450,8 +450,8 @@ void DialogOptions::Prepare(int _dlgnum, bool _runGameLoopsInBackground) {
 
 	dlgyp = get_fixed_pixel_size(160);
 	usingfont = FONT_NORMAL;
-	lineheight = getfontheight_outlined(usingfont);
-	linespacing = getfontspacing_outlined(usingfont);
+	lineheight = get_font_height_outlined(usingfont);
+	linespacing = get_font_linespacing(usingfont);
 	curswas = _G(cur_cursor);
 	bullet_wid = 0;
 	ddb = nullptr;
@@ -473,7 +473,7 @@ void DialogOptions::Prepare(int _dlgnum, bool _runGameLoopsInBackground) {
 
 	// numbered options, leave space for the numbers
 	if (_GP(game).options[OPT_DIALOGNUMBERED] == kDlgOptNumbering)
-		bullet_wid += wgettextwidth_compensate("9. ", usingfont);
+		bullet_wid += get_text_width_outlined("9. ", usingfont);
 
 	_G(said_text) = 0;
 
@@ -766,8 +766,8 @@ void DialogOptions::Redraw() {
 
 	update_polled_stuff_if_runtime();
 
-	subBitmap = recycle_bitmap(subBitmap, tempScrn->GetColorDepth(), dirtywidth, dirtyheight);
-	subBitmap = ReplaceBitmapWithSupportedFormat(subBitmap);
+	subBitmap = recycle_bitmap(subBitmap,
+		_G(gfxDriver)->GetCompatibleBitmapFormat(tempScrn->GetColorDepth()), dirtywidth, dirtyheight);
 
 	update_polled_stuff_if_runtime();
 

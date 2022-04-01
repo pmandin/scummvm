@@ -22,6 +22,9 @@
 #ifndef AGS_GLOBALS_H
 #define AGS_GLOBALS_H
 
+#include "ags/shared/core/platform.h"
+#define AGS_PLATFORM_DEFINES_PSP_VARS (AGS_PLATFORM_OS_IOS || AGS_PLATFORM_OS_ANDROID)
+
 #include "ags/shared/ac/game_version.h"
 #include "ags/shared/util/stdio_compat.h"
 #include "ags/shared/util/string.h"
@@ -32,6 +35,7 @@
 #include "ags/engine/ac/runtime_defines.h"
 #include "ags/engine/ac/walk_behind.h"
 #include "ags/engine/main/engine.h"
+#include "ags/engine/main/graphics_mode.h"
 #include "ags/engine/media/audio/audio_defines.h"
 #include "ags/engine/script/script.h"
 #include "ags/engine/script/script_runtime.h"
@@ -72,6 +76,7 @@ class GUITextBox;
 struct InteractionVariable;
 struct PlaneScaling;
 class RoomStruct;
+class SpriteCache;
 struct Translation;
 
 } // namespace Shared
@@ -95,9 +100,9 @@ class EngineExports;
 } // namespace Core
 } // namespace Plugins
 
+class IRouteFinder;
 class Navigation;
 class SplitLines;
-class SpriteCache;
 class TTFFontRenderer;
 class WFNFontRenderer;
 
@@ -131,7 +136,6 @@ struct DirtyRects;
 struct EnginePlugin;
 struct ExecutingScript;
 struct EventHappened;
-struct GameFrameSetup;
 struct GameSetup;
 struct GameSetupStruct;
 struct GameState;
@@ -525,6 +529,10 @@ public:
 	ScriptDialogOptionsRendering *_ccDialogOptionsRendering;
 	ScriptDrawingSurface *_dialogOptionsRenderingSurface = nullptr;
 
+	// identifier (username) of the voice pak
+	String _VoicePakName;
+	// parent part to use when making voice asset names
+	String _VoiceAssetPath;
 	int _said_speech_line = 0; // used while in dialog to track whether screen needs updating
 	int _said_text = 0;
 	int _longestline = 0;
@@ -559,8 +567,10 @@ public:
 	 */
 
 	std::vector<RoomCameraDrawData> *_CameraDrawData;
-	std::vector<SpriteListEntry> *_sprlist;
+	// Two lists of sprites to push into renderer during next render pass
+	// thingsToDrawList - is the main list, unsorted, drawn in the index order
 	std::vector<SpriteListEntry> *_thingsToDrawList;
+	std::vector<SpriteListEntry> *_sprlist;
 
 	AGS::Engine::IGraphicsDriver *_gfxDriver = nullptr;
 	AGS::Engine::IDriverDependantBitmap *_blankImage = nullptr;
@@ -569,18 +579,25 @@ public:
 
 	// actsps is used for temporary storage of the bitamp image
 	// of the latest version of the sprite
-	int _actSpsCount = 0;
-	AGS::Shared::Bitmap **_actsps = nullptr;
-	AGS::Engine::IDriverDependantBitmap **_actspsbmp = nullptr;
+	std::vector<Shared::Bitmap *> *_actsps;
+	std::vector<Engine::IDriverDependantBitmap *> *_actspsbmp;
 	// temporary cache of walk-behind for this actsps image
-	AGS::Shared::Bitmap **_actspswb = nullptr;
-	AGS::Engine::IDriverDependantBitmap **_actspswbbmp = nullptr;
-	CachedActSpsData *_actspswbcache = nullptr;
+	std::vector<Shared::Bitmap *> *_actspswb;
+	std::vector<Engine::IDriverDependantBitmap *> *_actspswbbmp;
+	std::vector<CachedActSpsData> *_actspswbcache;
+	// GUI surfaces
+	std::vector<Shared::Bitmap *> *_guibg;
+	std::vector<Engine::IDriverDependantBitmap *> *_guibgbmp;
+	// For debugging room masks
+	RoomAreaMask _debugRoomMask = kRoomAreaNone;
+	Engine::IDriverDependantBitmap *_debugRoomMaskDDB = nullptr;
+	int _debugMoveListChar = -1;
+	Shared::Bitmap *_debugMoveListBmp = nullptr;
+	Engine::IDriverDependantBitmap *_debugMoveListDDB = nullptr;
+
 	bool _current_background_is_dirty = false;
 	// Room background sprite
 	AGS::Engine::IDriverDependantBitmap *_roomBackgroundBmp = nullptr;
-	AGS::Shared::Bitmap **_guibg = nullptr;
-	AGS::Engine::IDriverDependantBitmap **_guibgbmp = nullptr;
 	AGS::Shared::Bitmap *_debugConsoleBuffer = nullptr;
 	// whether there are currently remnants of a DisplaySpeech
 	bool _screen_is_dirty = false;
@@ -703,7 +720,7 @@ public:
 
 	GameSetupStruct *_game;
 	GameState *_play;
-	SpriteCache *_spriteset;
+	AGS::Shared::SpriteCache *_spriteset;
 	AGS::Shared::RoomStruct *_thisroom;
 	RoomStatus *_troom; // used for non-saveable rooms, eg. intro
 
@@ -731,13 +748,12 @@ public:
 	ScriptRegion *_scrRegion;
 	ScriptInvItem *_scrInv;
 	ScriptDialog *_scrDialog = nullptr;
-	ViewStruct *_views = nullptr;
+	std::vector<ViewStruct> *_views;
 	CharacterCache *_charcache = nullptr;
 	ObjectCache *_objcache;
 	MoveList *_mls = nullptr;
 	GameSetup *_usetup;
 	AGS::Shared::String _saveGameDirectory;
-	AGS::Shared::String _saveGameParent;
 	AGS::Shared::String _saveGameSuffix;
 	bool _want_exit = false;
 	bool _abort_engine = false;
@@ -887,7 +903,7 @@ public:
 	ActiveDisplaySetting *_SavedFullscreenSetting;
 	ActiveDisplaySetting *_SavedWindowedSetting;
 	// Current frame scaling setup
-	GameFrameSetup *_CurFrameSetup;
+	FrameScaleDef _CurFrameSetup = kFrame_Undefined;
 	// The game-to-screen transformation
 	AGS::Shared::PlaneScaling *_GameScaling;
 
@@ -1037,7 +1053,7 @@ public:
 	char *_lzbuffer = nullptr;
 	int *_node = nullptr;
 	int _pos = 0;
-	long _outbytes = 0, _maxsize = 0, _putbytes = 0;
+	size_t _outbytes = 0, _maxsize = 0, _putbytes = 0;
 
 	/**@}*/
 
@@ -1051,11 +1067,7 @@ public:
 	String _appDirectory; // Needed for library loading
 	String _cmdGameDataPath;
 
-	const char **_global_argv = nullptr;
-	int _global_argc = 0;
-
 	// Startup flags, set from parameters to engine
-	int _force_window = 0;
 	int _override_start_room = 0;
 	bool _justDisplayHelp = false;
 	bool _justDisplayVersion = false;
@@ -1071,7 +1083,7 @@ public:
 	int _psp_ignore_acsetup_cfg_file = 0;
 	int _psp_clear_cache_on_room_change = 0; // clear --sprite cache-- when room is unloaded
 
-#if AGS_PLATFORM_SCUMMVM
+#if defined(AGS_PLATFORM_SCUMMVM) && AGS_PLATFORM_SCUMMVM
 	int _psp_audio_cachesize = 10;
 #endif
 	const char *_psp_game_file_name = "";
@@ -1148,9 +1160,8 @@ public:
 	 * @{
 	 */
 
-	ScreenOverlay *_screenover;
+	std::vector<ScreenOverlay> *_screenover;
 	int _is_complete_overlay = 0;
-	int _numscreenover = 0;
 
 	/**@}*/
 
@@ -1203,6 +1214,7 @@ public:
 	fixed _move_speed_x = 0, _move_speed_y = 0;
 	AGS::Shared::Bitmap *_wallscreen = nullptr;
 	int _lastcx = 0, _lastcy = 0;
+	std::unique_ptr<IRouteFinder> *_route_finder_impl;
 
 	/**@}*/
 

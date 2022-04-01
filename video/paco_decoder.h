@@ -22,9 +22,10 @@
 #ifndef VIDEO_PACODECODER_H
 #define VIDEO_PACODECODER_H
 
-#include "video/video_decoder.h"
+#include "audio/audiostream.h"
 #include "common/list.h"
 #include "common/rect.h"
+#include "video/video_decoder.h"
 
 namespace Common {
 class SeekableReadStream;
@@ -33,7 +34,7 @@ class SeekableReadStream;
 namespace Graphics {
 struct PixelFormat;
 struct Surface;
-}
+} // namespace Graphics
 
 namespace Video {
 
@@ -48,54 +49,76 @@ public:
 	PacoDecoder();
 	virtual ~PacoDecoder();
 
-	virtual bool loadStream(Common::SeekableReadStream *stream);
+	virtual bool loadStream(Common::SeekableReadStream *stream) override;
 
 	const Common::List<Common::Rect> *getDirtyRects() const;
 	void clearDirtyRects();
 	void copyDirtyRectsToBuffer(uint8 *dst, uint pitch);
+	const byte *getPalette();
+	virtual void readNextPacket() override;
+
 
 protected:
-	class PacoVideoTrack : public VideoTrack {
+	class PacoVideoTrack : public FixedRateVideoTrack {
 	public:
 		PacoVideoTrack(
-			Common::SeekableReadStream *stream, uint16 frameRate, uint16 frameCount,
-			bool hasAudio, uint16 width, uint16 height);
+			uint16 frameRate, uint16 frameCount,  uint16 width, uint16 height);
 		~PacoVideoTrack();
 
-		bool endOfTrack() const;
-		virtual bool isRewindable() const { return false; }
+		bool endOfTrack() const override;
+		virtual bool isRewindable() const override { return false; }
 
-		uint16 getWidth() const;
-		uint16 getHeight() const;
-		Graphics::PixelFormat getPixelFormat() const;
-		int getCurFrame() const { return _curFrame; }
-		int getFrameCount() const { return _frameCount; }
-		uint32 getNextFrameStartTime() const { return _nextFrameStartTime; }
-		virtual const Graphics::Surface *decodeNextFrame();
-		virtual void handleFrame(uint32 chunkSize);
-		const byte *getPalette() const { return _palette; }
-		bool hasDirtyPalette() const { return false; }
+		uint16 getWidth() const override;
+		uint16 getHeight() const override;
+		Graphics::PixelFormat getPixelFormat() const override;
+		int getCurFrame() const override { return _curFrame; }
+		int getFrameCount() const override { return _frameCount; }
+		virtual const Graphics::Surface *decodeNextFrame() override;
+		virtual void handleFrame(Common::SeekableReadStream *fileStream, uint32 chunkSize, int curFrame);
+		void handlePalette(Common::SeekableReadStream *fileStream);
+		const byte *getPalette() const override;
+		bool hasDirtyPalette() const override { return _dirtyPalette; }
 
 		const Common::List<Common::Rect> *getDirtyRects() const { return &_dirtyRects; }
 		void clearDirtyRects() { _dirtyRects.clear(); }
 		void copyDirtyRectsToBuffer(uint8 *dst, uint pitch);
+		Common::Rational getFrameRate() const override { return Common::Rational(_frameRate, 1); }
 
 	protected:
-		Common::SeekableReadStream *_fileStream;
 		Graphics::Surface *_surface;
 
-		int _curFrame;
-
 		byte *_palette;
-		int _frameSizes[65536]; // can be done differently?
+
 		mutable bool _dirtyPalette;
 
+		int _curFrame;
 		uint32 _frameCount;
 		uint32 _frameDelay;
-		uint32 _nextFrameStartTime;
+		uint16 _frameRate;
 
 		Common::List<Common::Rect> _dirtyRects;
 	};
+
+	class PacoAudioTrack : public AudioTrack {
+	public:
+		PacoAudioTrack(int samplingRate);
+		void queueSound(Common::SeekableReadStream *fileStream, uint32 chunkSize);
+
+	protected:
+		Audio::AudioStream *getAudioStream() const { return _packetStream; }
+
+	private:
+		Audio::PacketizedAudioStream *_packetStream;
+		int _samplingRate;
+	};
+
+private:
+	PacoVideoTrack *_videoTrack;
+	PacoAudioTrack *_audioTrack;
+	Common::SeekableReadStream *_fileStream;
+	int _curFrame = 0;
+	int _frameSizes[65536]; // can be done differently?
+	int getAudioSamplingRate();
 };
 
 } // End of namespace Video

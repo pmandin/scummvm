@@ -92,7 +92,7 @@ public:
 	bool IsNullOrSpace() const;
 
 	// Those getters are for tests only, hence if AGS_PLATFORM_DEBUG
-#if AGS_PLATFORM_TEST
+#if defined(AGS_PLATFORM_TEST) && AGS_PLATFORM_TEST
 	inline const char *GetBuffer() const {
 		return _buf;
 	}
@@ -422,6 +422,9 @@ public:
 	// Fixes compilation error in script_set
 	operator bool() const {
 		return !IsEmpty();
+	}
+	operator const char *() const {
+		return GetCStr();
 	}
 
 private:

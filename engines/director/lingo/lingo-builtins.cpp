@@ -21,8 +21,7 @@
 
 #include "common/system.h"
 #include "common/tokenizer.h"
-
-#include "video/paco_decoder.h"
+#include "common/translation.h"
 
 #include "gui/message.h"
 
@@ -108,7 +107,7 @@ static BuiltinProto builtins[] = {
 	{ "openDA",	 		LB::b_openDA, 		1, 1, 200, CBLTIN },	// D2 c
 	{ "openResFile",	LB::b_openResFile,	1, 1, 200, CBLTIN },	// D2 c
 	{ "openXlib",		LB::b_openXlib,		1, 1, 200, CBLTIN },	// D2 c
-	{ "saveMovie",		LB::b_saveMovie,	1, 1, 400, CBLTIN },	//			D4 c
+	{ "saveMovie",		LB::b_saveMovie,	0, 1, 400, CBLTIN },	//			D4 c
 	{ "setCallBack",	LB::b_setCallBack,	2, 2, 200, CBLTIN },	// D2 c
 	{ "showResFile",	LB::b_showResFile,	0, 1, 200, CBLTIN },	// D2 c
 	{ "showXlib",		LB::b_showXlib,		0, 1, 200, CBLTIN },	// D2 c
@@ -226,8 +225,6 @@ static BuiltinProto builtins[] = {
 	{ "scummvmAssert",	LB::b_scummvmassert,1, 2, 200, HBLTIN },
 	{ "scummvmAssertEqual",	LB::b_scummvmassertequal,2,3,200,HBLTIN },
 
-	// Expose Paco
-	{ "XPlayAnim", LB::b_xPlayAnim, 3,3, 300, HBLTIN },
 	// XCMD/XFCN (HyperCard), normally exposed
 	{ "GetVolumes", LB::b_getVolumes, 0, 0, 400, FBLTIN },
 
@@ -744,6 +741,7 @@ void LB::b_getAt(int nargs) {
 
 	switch (list.type) {
 	case ARRAY:
+	case RECT:
 		ARRBOUNDSCHECK(index, list);
 		g_lingo->push(list.u.farr->arr[index - 1]);
 		break;
@@ -752,7 +750,7 @@ void LB::b_getAt(int nargs) {
 		g_lingo->push(list.u.parr->arr[index - 1].v);
 		break;
 	default:
-		TYPECHECK2(list, ARRAY, PARRAY);
+		TYPECHECK3(list, ARRAY, PARRAY, RECT);
 	}
 }
 
@@ -977,7 +975,7 @@ void LB::b_setAt(int nargs) {
 	Datum list = g_lingo->pop();
 
 	TYPECHECK2(indexD, INT, FLOAT);
-	TYPECHECK2(list, ARRAY, PARRAY);
+	TYPECHECK3(list, ARRAY, PARRAY, RECT);
 	int index = indexD.asInt();
 
 	switch (list.type) {
@@ -995,6 +993,9 @@ void LB::b_setAt(int nargs) {
 		ARRBOUNDSCHECK(index, list);
 		list.u.parr->arr[index - 1].v = value;
 		break;
+	case RECT:
+		ARRBOUNDSCHECK(index, list);
+		list.u.farr->arr[index-1] = value;
 	default:
 		break;
 	}
@@ -1137,9 +1138,38 @@ void LB::b_openResFile(int nargs) {
 void LB::b_openXlib(int nargs) {
 	// TODO: When Xtras are implemented, determine whether to initialize
 	// the XObject or Xtra version of FileIO
+	Common::String xlibName;
 
 	Datum d = g_lingo->pop();
-	Common::String xlibName = d.asString();
+	if (g_director->getPlatform() == Common::kPlatformMacintosh) {
+		// try opening the file as a resfile
+		Common::String resPath = g_director->getCurrentWindow()->getCurrentPath() + d.asString();
+		if (!g_director->_openResFiles.contains(resPath)) {
+			MacArchive *resFile = new MacArchive();
+
+			if (resFile->openFile(pathMakeRelative(resPath))) {
+				g_director->_openResFiles.setVal(resPath, resFile);
+				uint32 XCOD = MKTAG('X', 'C', 'O', 'D');
+				uint32 XCMD = MKTAG('X', 'C', 'M', 'D');
+
+				Common::Array<uint16> rsrcList = resFile->getResourceIDList(XCOD);
+
+				for (uint i = 0; i < rsrcList.size(); i++) {
+					xlibName = resFile->getResourceDetail(XCOD, rsrcList[i]).name.c_str();
+					g_lingo->openXLib(xlibName, kXObj);
+				}
+
+				rsrcList = resFile->getResourceIDList(XCMD);
+				for (uint i = 0; i < rsrcList.size(); i++) {
+					xlibName = resFile->getResourceDetail(XCMD, rsrcList[i]).name.c_str();
+					g_lingo->openXLib(xlibName, kXObj);
+				}
+				return;
+			}
+		}
+	}
+
+	xlibName = d.asString();
 	g_lingo->openXLib(xlibName, kXObj);
 }
 
@@ -1203,6 +1233,11 @@ void LB::b_do(int nargs) {
 	Common::String code = g_lingo->pop().asString();
 	ScriptContext *sc = g_lingo->_compiler->compileAnonymous(code);
 	Symbol sym = sc->_eventHandlers[kEventGeneric];
+
+	// Check if we have anything to execute
+	if (sym.type == VOIDSYM)
+		return;
+
 	LC::call(sym, 0, false);
 }
 
@@ -1614,7 +1649,7 @@ void LB::b_alert(int nargs) {
 
 	if (!debugChannelSet(-1, kDebugFewFramesOnly)) {
 		g_director->_wm->clearHandlingWidgets();
-		GUI::MessageDialog dialog(alert.c_str(), "OK");
+		GUI::MessageDialog dialog(alert.c_str(), _("OK"));
 		dialog.runModal();
 	}
 }
@@ -1638,7 +1673,11 @@ void LB::b_put(int nargs) {
 		if (i > 0)
 			output += " ";
 	}
-	debug("-- %s", output.c_str());
+	if (g_debugger->isActive()) {
+		g_debugger->debugPrintf("-- %s\n", output.c_str());
+	} else {
+		debug("-- %s", output.c_str());
+	}
 	g_lingo->dropStack(nargs);
 }
 
@@ -1699,9 +1738,27 @@ void LB::b_copyToClipBoard(int nargs) {
 }
 
 void LB::b_duplicate(int nargs) {
-	g_lingo->printSTUBWithArglist("b_duplicate", nargs);
+	Datum to = g_lingo->pop();
+	Datum from = g_lingo->pop();
 
-	g_lingo->dropStack(nargs);
+	Frame *currentFrame = g_director->getCurrentMovie()->getScore()->_frames[g_director->getCurrentMovie()->getScore()->getCurrentFrame()];
+	CastMember *castMember = g_director->getCurrentMovie()->getCastMember(from.asMemberID());
+	auto channels = g_director->getCurrentMovie()->getScore()->_channels;
+
+	castMember->setModified(true);
+	g_director->getCurrentMovie()->getCast()->_loadedCast->setVal(to.u.i, castMember);
+
+	for (uint16 i = 0; i < currentFrame->_sprites.size(); i++) {
+		if (currentFrame->_sprites[i]->_castId == to.asMemberID())
+			currentFrame->_sprites[i]->setCast(to.asMemberID());
+	}
+
+	for (uint i = 0; i < channels.size(); i++) {
+		if (channels[i]->_sprite->_castId == to.asMemberID()) {
+			channels[i]->_sprite->setCast(to.asMemberID());
+			channels[i]->_dirty = true;
+		}
+	}
 }
 
 void LB::b_editableText(int nargs) {
@@ -1737,9 +1794,19 @@ void LB::b_editableText(int nargs) {
 }
 
 void LB::b_erase(int nargs) {
-	g_lingo->printSTUBWithArglist("b_erase", nargs);
+	Datum d = g_lingo->pop();
+	CastMember *eraseCast = g_director->getCurrentMovie()->getCastMember(d.asMemberID());
 
-	g_lingo->dropStack(nargs);
+	if (eraseCast) {
+		eraseCast->_erase = true;
+		Common::Array<Channel *> channels = g_director->getCurrentMovie()->getScore()->_channels;
+
+		for (uint i = 0; i < channels.size(); i++) {
+			if (channels[i]->_sprite->_castId == d.asMemberID()) {
+				channels[i]->_dirty = true;
+			}
+		}
+	}
 }
 
 void LB::b_findEmpty(int nargs) {
@@ -2696,26 +2763,6 @@ void LB::b_scummvmassertequal(int nargs) {
 		warning("LB::b_scummvmassertequals: %s is not equal %s at line %d", d1.asString().c_str(), d2.asString().c_str(), line.asInt());
 	}
 	assert(result == 1);
-}
-
-void LB::b_xPlayAnim(int nargs){
-	int y = g_lingo->pop().asInt();
-	int x = g_lingo->pop().asInt();
-	Common::String filename = g_lingo->pop().asString();
-
-	warning("LB::b_xPlayAnim: x: %i y: %i", x, y);
-	Video::PacoDecoder *video = new Video::PacoDecoder();
-	video->loadFile(Common::Path(filename, g_director->_dirSeparator));
-
-	while (!video->endOfVideo()) {
-		warning("LB::b_xPlayAnim: loop");
-		Graphics::Surface const *frame = video->decodeNextFrame();
-		Graphics::ManagedSurface *surface = g_director->getCurrentWindow()->getSurface();
-		surface->copyRectToSurface(frame->getPixels(), frame->pitch, x, y, frame->w, frame->h);
-
-		g_system->updateScreen();
-		g_system->delayMillis(10);
-	}
 }
 
 void LB::b_getVolumes(int nargs) {

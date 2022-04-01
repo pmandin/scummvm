@@ -115,13 +115,13 @@ int GetCharacterWidth(int ww) {
 
 	if (_G(charextra)[ww].width < 1) {
 		if ((char1->view < 0) ||
-		        (char1->loop >= _G(views)[char1->view].numLoops) ||
-		        (char1->frame >= _G(views)[char1->view].loops[char1->loop].numFrames)) {
+		        (char1->loop >= _GP(views)[char1->view].numLoops) ||
+		        (char1->frame >= _GP(views)[char1->view].loops[char1->loop].numFrames)) {
 			debug_script_warn("GetCharacterWidth: Character %s has invalid frame: view %d, loop %d, frame %d", char1->scrname, char1->view + 1, char1->loop, char1->frame);
 			return data_to_game_coord(4);
 		}
 
-		return _GP(game).SpriteInfos[_G(views)[char1->view].loops[char1->loop].frames[char1->frame].pic].Width;
+		return _GP(game).SpriteInfos[_GP(views)[char1->view].loops[char1->loop].frames[char1->frame].pic].Width;
 	} else
 		return _G(charextra)[ww].width;
 }
@@ -131,13 +131,13 @@ int GetCharacterHeight(int charid) {
 
 	if (_G(charextra)[charid].height < 1) {
 		if ((char1->view < 0) ||
-		        (char1->loop >= _G(views)[char1->view].numLoops) ||
-		        (char1->frame >= _G(views)[char1->view].loops[char1->loop].numFrames)) {
+		        (char1->loop >= _GP(views)[char1->view].numLoops) ||
+		        (char1->frame >= _GP(views)[char1->view].loops[char1->loop].numFrames)) {
 			debug_script_warn("GetCharacterHeight: Character %s has invalid frame: view %d, loop %d, frame %d", char1->scrname, char1->view + 1, char1->loop, char1->frame);
 			return data_to_game_coord(2);
 		}
 
-		return _GP(game).SpriteInfos[_G(views)[char1->view].loops[char1->loop].frames[char1->frame].pic].Height;
+		return _GP(game).SpriteInfos[_GP(views)[char1->view].loops[char1->loop].frames[char1->frame].pic].Height;
 	} else
 		return _G(charextra)[charid].height;
 }
@@ -548,20 +548,19 @@ void DisplaySpeechAt(int xx, int yy, int wii, int aschar, const char *spch) {
 
 int DisplaySpeechBackground(int charid, const char *speel) {
 	// remove any previous background speech for this character
-	int cc;
-	for (cc = 0; cc < _G(numscreenover); cc++) {
-		if (_G(screenover)[cc].bgSpeechForChar == charid) {
-			remove_screen_overlay_index(cc);
-			cc--;
-		}
+	for (size_t i = 0; i < _GP(screenover).size();) {
+		if (_GP(screenover)[i].bgSpeechForChar == charid)
+			remove_screen_overlay_index(i);
+		else
+			i++;
 	}
 
 	int ovrl = CreateTextOverlay(OVR_AUTOPLACE, charid, _GP(play).GetUIViewport().GetWidth() / 2, FONT_SPEECH,
 	                             -_GP(game).chars[charid].talkcolor, get_translation(speel), DISPLAYTEXT_NORMALOVERLAY);
 
 	int scid = find_overlay_of_type(ovrl);
-	_G(screenover)[scid].bgSpeechForChar = charid;
-	_G(screenover)[scid].timeout = GetTextDisplayTime(speel, 1);
+	_GP(screenover)[scid].bgSpeechForChar = charid;
+	_GP(screenover)[scid].timeout = GetTextDisplayTime(speel, 1);
 	return ovrl;
 }
 

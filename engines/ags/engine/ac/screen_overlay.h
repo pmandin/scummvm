@@ -46,13 +46,15 @@ using namespace AGS; // FIXME later
 struct ScreenOverlay {
 	Engine::IDriverDependantBitmap *bmp = nullptr;
 	Shared::Bitmap *pic = nullptr;
+	bool hasAlphaChannel = false;
 	int type = 0, x = 0, y = 0, timeout = 0;
 	int bgSpeechForChar = 0;
 	int associatedOverlayHandle = 0;
-	bool hasAlphaChannel = false;
+	int zorder = INT_MIN;
 	bool positionRelativeToScreen = false;
 	bool hasSerializedBitmap = false;
 	int _offsetX = 0, _offsetY = 0;
+	int transparency = 0;
 
 	void ReadFromFile(Shared::Stream *in, int32_t cmp_ver);
 	void WriteToFile(Shared::Stream *out) const;

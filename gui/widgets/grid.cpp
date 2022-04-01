@@ -304,7 +304,7 @@ Graphics::ManagedSurface *loadSurfaceFromFile(const Common::String &name, int re
 			if (!srcSurface) {
 				warning("Failed to load surface : %s", name.c_str());
 			} else if (srcSurface->format.bytesPerPixel != 1) {
-				surf = new Graphics::ManagedSurface(srcSurface->convertTo(g_system->getOverlayFormat()));
+				surf = new Graphics::ManagedSurface(srcSurface);
 			}
 		} else {
 			debug(5, "GridWidget: Cannot read file '%s'", name.c_str());
@@ -395,12 +395,9 @@ void GridWidget::unloadSurfaces(Common::HashMap<T, const Graphics::ManagedSurfac
 }
 
 const Graphics::ManagedSurface *GridWidget::filenameToSurface(const Common::String &name) {
-	for (Common::Array<GridItemInfo *>::iterator l = _visibleEntryList.begin(); l != _visibleEntryList.end(); ++l) {
-		if ((!(*l)->isHeader) && ((*l)->thumbPath == name)) {
-			return _loadedSurfaces[name];
-		}
-	}
-	return nullptr;
+	if (name.empty())
+		return nullptr;
+	return _loadedSurfaces[name];
 }
 
 const Graphics::ManagedSurface *GridWidget::languageToSurface(Common::Language languageCode) {
@@ -573,19 +570,26 @@ void GridWidget::setGroupHeaderFormat(const Common::U32String &prefix, const Com
 }
 
 void GridWidget::reloadThumbnails() {
-	Graphics::ManagedSurface *surf = nullptr;
-	Common::String gameid;
-	Common::String engineid;
-
 	for (Common::Array<GridItemInfo *>::iterator iter = _visibleEntryList.begin(); iter != _visibleEntryList.end(); ++iter) {
 		GridItemInfo *entry = *iter;
+		if (entry->thumbPath.empty())
+			continue;
+
 		if (!_loadedSurfaces.contains(entry->thumbPath)) {
-			surf = loadSurfaceFromFile(entry->thumbPath);
+			Common::String path = Common::String::format("icons/%s-%s.png", entry->engineid.c_str(), entry->gameid.c_str());
+			Graphics::ManagedSurface *surf = loadSurfaceFromFile(path);
+			if (!surf) {
+				path = Common::String::format("icons/%s.png", entry->engineid.c_str());
+				surf = loadSurfaceFromFile(path);
+			}
+
 			if (surf) {
 				const Graphics::ManagedSurface *scSurf(scaleGfx(surf, _thumbnailWidth, 512, true));
 				_loadedSurfaces[entry->thumbPath] = scSurf;
-				surf->free();
-				delete surf;
+				if (surf != scSurf) {
+					surf->free();
+					delete surf;
+				}
 			} else {
 				_loadedSurfaces[entry->thumbPath] = nullptr;
 			}
@@ -614,8 +618,10 @@ void GridWidget::loadPlatformIcons() {
 		if (gfx) {
 			const Graphics::ManagedSurface *scGfx = scaleGfx(gfx, _platformIconWidth, _platformIconHeight, true);
 			_platformIcons[l->id] = scGfx;
-			gfx->free();
-			delete gfx;
+			if (gfx != scGfx) {
+				gfx->free();
+				delete gfx;
+			}
 		} else {
 			_platformIcons[l->id] = nullptr;
 		}

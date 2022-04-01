@@ -199,17 +199,17 @@ static const ExtraGuiOption macV3LowQualityMusic = {
 	false
 };
 
-static const ExtraGuiOption macV3CorrectFontSpacing = {
-	_s("Use correct font spacing"),
-	_s("Draw text with correct font spacing. This arguably looks better, but doesn't match the original behavior."),
-	"mac_v3_correct_font_spacing",
-	false
-};
-
 static const ExtraGuiOption smoothScrolling = {
 	_s("Enable smooth scrolling"),
 	_s("(instead of the normal 8-pixels steps scrolling)"),
 	"smooth_scroll",
+	true
+};
+
+static const ExtraGuiOption enableEnhancements {
+	_s("Enable game-specific enhancements"),
+	_s("Allow ScummVM to make small enhancements to the game, usually based on other versions of the same game."),
+	"enable_enhancements",
 	true
 };
 
@@ -221,6 +221,15 @@ const ExtraGuiOptions ScummMetaEngineDetection::getExtraGuiOptions(const Common:
 	const Common::String extra = ConfMan.get("extra", target);
 	const Common::String guiOptions = parseGameGUIOptions(guiOptionsString);
 	const Common::Platform platform = Common::parsePlatform(ConfMan.get("platform", target));
+
+	if (target.empty() ||
+		gameid == "monkey" ||
+		gameid == "monkey2" ||
+		gameid == "samnmax" ||
+		gameid == "loom" ||
+		(gameid == "indy3" && platform == Common::kPlatformMacintosh && extra != "Steam")) {
+		options.push_back(enableEnhancements);
+	}
 
 	if (target.empty() || gameid == "comi") {
 		options.push_back(comiObjectLabelsOption);
@@ -243,18 +252,6 @@ const ExtraGuiOptions ScummMetaEngineDetection::getExtraGuiOptions(const Common:
 
 	if (target.empty() || (gameid == "loom" && platform == Common::kPlatformMacintosh && extra != "Steam")) {
 		options.push_back(macV3LowQualityMusic);
-	}
-
-	// The original Macintosh interpreter didn't use the correct spacing
-	// between characters for some of the text, e.g. the Grail Diary. This
-	// appears to have been because of rounding errors, and was apparently
-	// fixed in Loom. Enabling this setting allows ScummVM to draw the
-	// text more correctly, at the cost of not matching the original quite
-	// as well. (At the time of writing, there are still cases, at least in
-	// Loom, where text isn't correctly positioned.)
-
-	if (target.empty() || (gameid == "indy3" && platform == Common::kPlatformMacintosh && extra != "Steam")) {
-		options.push_back(macV3CorrectFontSpacing);
 	}
 
 	return options;

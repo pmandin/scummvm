@@ -284,25 +284,24 @@ size_t break_up_text_into_lines(const char *todis, SplitLines &lines, int wii, i
 			(get_uformat() == U_UTF8) ?
 				lines[rr].ReverseUTF8() :
 				lines[rr].Reverse();
-			line_length = wgettextwidth_compensate(lines[rr].GetCStr(), fonnt);
+			line_length = get_text_width_outlined(lines[rr].GetCStr(), fonnt);
 			if (line_length > _G(longestline))
 				_G(longestline) = line_length;
 		} else
 			for (size_t rr = 0; rr < lines.Count(); rr++) {
-				line_length = wgettextwidth_compensate(lines[rr].GetCStr(), fonnt);
+				line_length = get_text_width_outlined(lines[rr].GetCStr(), fonnt);
 				if (line_length > _G(longestline))
 					_G(longestline) = line_length;
 			}
 		return lines.Count();
 }
 
-int MAXSTRLEN = MAX_MAXSTRLEN;
 void check_strlen(char *ptt) {
-	MAXSTRLEN = MAX_MAXSTRLEN;
+	_G(MAXSTRLEN) = MAX_MAXSTRLEN;
 	long charstart = (intptr_t)&_GP(game).chars[0];
 	long charend = charstart + sizeof(CharacterInfo) * _GP(game).numcharacters;
 	if (((intptr_t)&ptt[0] >= charstart) && ((intptr_t)&ptt[0] <= charend))
-		MAXSTRLEN = 30;
+		_G(MAXSTRLEN) = 30;
 }
 
 /*void GetLanguageString(int indxx,char*buffr) {

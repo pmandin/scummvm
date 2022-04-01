@@ -275,6 +275,14 @@ void MacWindowManager::setScreen(int w, int h) {
 	drawDesktop();
 }
 
+int MacWindowManager::getWidth() {
+	return _screenDims.width();
+}
+
+int MacWindowManager::getHeight() {
+	return _screenDims.height();
+}
+
 void MacWindowManager::resizeScreen(int w, int h) {
 	if (!_screen)
 		error("MacWindowManager::resizeScreen(): Trying to creating surface on non-existing screen");
@@ -819,6 +827,21 @@ void MacWindowManager::loadDesktop() {
 	_desktopBmp->copyFrom(*source);
 
 	delete file;
+	source->free();
+	delete source;
+}
+
+void MacWindowManager::setDesktopColor(byte r, byte g, byte b) {
+	_desktopBmp = new Graphics::TransparentSurface();
+	uint32 color = TS_RGB(r, g, b);
+
+	const Graphics::PixelFormat requiredFormat_4byte(4, 8, 8, 8, 8, 0, 8, 16, 24);
+	Graphics::ManagedSurface *source = new Graphics::ManagedSurface();
+	source->create(10, 10, requiredFormat_4byte);
+	Common::Rect area = source->getBounds();
+	source->fillRect(area, color);
+
+	_desktopBmp->copyFrom(*source);
 	source->free();
 	delete source;
 }

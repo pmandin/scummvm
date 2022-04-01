@@ -253,11 +253,11 @@ static void restore_game_thisroom(Stream *in, RestoredData &r_data) {
 }
 
 static void restore_game_ambientsounds(Stream *in, RestoredData &r_data) {
-	for (int i = 0; i < MAX_SOUND_CHANNELS; ++i) {
+	for (int i = 0; i < MAX_GAME_CHANNELS_v320; ++i) {
 		_GP(ambient)[i].ReadFromFile(in);
 	}
 
-	for (int bb = 1; bb < MAX_SOUND_CHANNELS; bb++) {
+	for (int bb = NUM_SPEECH_CHANS; bb < MAX_GAME_CHANNELS_v320; bb++) {
 		if (_GP(ambient)[bb].channel == 0)
 			r_data.DoAmbient[bb] = 0;
 		else {
@@ -267,20 +267,21 @@ static void restore_game_ambientsounds(Stream *in, RestoredData &r_data) {
 	}
 }
 
-static void ReadOverlays_Aligned(Stream *in) {
+static void ReadOverlays_Aligned(Stream *in, size_t num_overs) {
 	AlignedStream align_s(in, Shared::kAligned_Read);
-	for (int i = 0; i < _G(numscreenover); ++i) {
-		_G(screenover)[i].ReadFromFile(&align_s, 0);
+	for (size_t i = 0; i < num_overs; ++i) {
+		_GP(screenover)[i].ReadFromFile(&align_s, 0);
 		align_s.Reset();
 	}
 }
 
 static void restore_game_overlays(Stream *in) {
-	_G(numscreenover) = in->ReadInt32();
-	ReadOverlays_Aligned(in);
-	for (int bb = 0; bb < _G(numscreenover); bb++) {
-		if (_G(screenover)[bb].hasSerializedBitmap)
-			_G(screenover)[bb].pic = read_serialized_bitmap(in);
+	size_t num_overs = in->ReadInt32();
+	_GP(screenover).resize(num_overs);
+	ReadOverlays_Aligned(in, num_overs);
+	for (size_t i = 0; i < num_overs; ++i) {
+		if (_GP(screenover)[i].hasSerializedBitmap)
+			_GP(screenover)[i].pic = read_serialized_bitmap(in);
 	}
 }
 
@@ -343,10 +344,10 @@ static HSaveError restore_game_views(Stream *in) {
 	}
 
 	for (int bb = 0; bb < _GP(game).numviews; bb++) {
-		for (int cc = 0; cc < _G(views)[bb].numLoops; cc++) {
-			for (int dd = 0; dd < _G(views)[bb].loops[cc].numFrames; dd++) {
-				_G(views)[bb].loops[cc].frames[dd].sound = in->ReadInt32();
-				_G(views)[bb].loops[cc].frames[dd].pic = in->ReadInt32();
+		for (int cc = 0; cc < _GP(views)[bb].numLoops; cc++) {
+			for (int dd = 0; dd < _GP(views)[bb].loops[cc].numFrames; dd++) {
+				_GP(views)[bb].loops[cc].frames[dd].sound = in->ReadInt32();
+				_GP(views)[bb].loops[cc].frames[dd].pic = in->ReadInt32();
 			}
 		}
 	}
@@ -358,7 +359,7 @@ static HSaveError restore_game_audioclips_and_crossfade(Stream *in, RestoredData
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching number of Audio Clips.");
 	}
 
-	for (int i = 0; i <= MAX_SOUND_CHANNELS; ++i) {
+	for (int i = 0; i < TOTAL_AUDIO_CHANNELS_v320; ++i) {
 		RestoredData::ChannelInfo &chan_info = r_data.AudioChans[i];
 		chan_info.Pos = 0;
 		chan_info.ClipID = in->ReadInt32();
@@ -373,9 +374,9 @@ static HSaveError restore_game_audioclips_and_crossfade(Stream *in, RestoredData
 			chan_info.Priority = in->ReadInt32();
 			chan_info.Repeat = in->ReadInt32();
 			chan_info.Vol = in->ReadInt32();
-			chan_info.Pan = in->ReadInt32();
+			in->ReadInt32(); // unused
 			chan_info.VolAsPercent = in->ReadInt32();
-			chan_info.PanAsPercent = in->ReadInt32();
+			chan_info.Pan = in->ReadInt32();
 			chan_info.Speed = 1000;
 			if (_G(loaded_game_file_version) >= kGameVersion_340_2)
 				chan_info.Speed = in->ReadInt32();

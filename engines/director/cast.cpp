@@ -99,7 +99,10 @@ Cast::~Cast() {
 
 	if (_loadedCast)
 		for (Common::HashMap<int, CastMember *>::iterator it = _loadedCast->begin(); it != _loadedCast->end(); ++it)
-			delete it->_value;
+			if (it->_value) {
+				it->_value = nullptr;
+				delete it->_value;
+			}
 
 	for (Common::HashMap<uint16, CastMemberInfo *>::iterator it = _castsInfo.begin(); it != _castsInfo.end(); ++it)
 		delete it->_value;
@@ -224,7 +227,34 @@ bool Cast::loadConfig() {
 	_castArrayEnd = stream->readUint16();
 
 	// v3 and below use this, override for v4 and over
-	byte currentFrameRate = stream->readByte();
+	// actual framerates are, on average: { 3.75, 4, 4.35, 4.65, 5, 5.5, 6, 6.6, 7.5, 8.5, 10, 12, 20, 30, 60 }
+	Common::Array<int> frameRates = { 3, 4, 4, 4, 5, 5, 6, 6, 7, 8, 10, 12, 15, 20, 30, 60 };
+	byte readRate = stream->readByte();
+	byte currentFrameRate;
+	if (readRate <= 0xF) {
+		currentFrameRate = frameRates[readRate];
+	} else {
+		switch (readRate) {
+			// rate when set via the tempo channel
+			// these rates are the actual framerates
+			case 0x10:
+				// defaults to 15 fps on D2 and D3. On D4 it shows as 120 fps
+				currentFrameRate = 15;
+				break;
+			case 212:
+				currentFrameRate = 1;
+				break;
+			case 242:
+				currentFrameRate = 2;
+				break;
+			case 252:
+				currentFrameRate = 3;
+				break;
+			default:
+				warning("BUILDBOT: Cast::loadConfig: unhandled framerate: %i", readRate);
+				currentFrameRate = readRate;
+		}
+	}
 
 	byte lightswitch = stream->readByte();
 	uint16 unk1 = stream->readUint16();
@@ -289,8 +319,6 @@ bool Cast::loadConfig() {
 	if (!_isShared) {
 		debugC(1, kDebugLoading, "Cast::loadConfig(): currentFrameRate: %d", currentFrameRate);
 		_movie->getScore()->_currentFrameRate = currentFrameRate;
-		if (_movie->getScore()->_currentFrameRate == 0)
-			_movie->getScore()->_currentFrameRate = 20;
 	}
 
 	uint16 humanVer = humanVersion(_version);
@@ -434,7 +462,8 @@ void Cast::loadCast() {
 
 	// Score Order List resources
 	if (_castArchive->hasResource(MKTAG('S', 'o', 'r', 'd'), -1)) {
-		debug("STUB: Unhandled 'Sord' resource");
+		loadSord(*(r = _castArchive->getFirstResource(MKTAG('S', 'o', 'r', 'd'))));
+		delete r;
 	}
 
 	// Now process STXTs
@@ -656,7 +685,12 @@ void Cast::loadSoundCasts() {
 		if (sndData != nullptr) {
 			if (sndData->size() == 0) {
 				// audio file is linked, load from the filesystem
-				AudioFileDecoder *audio = new AudioFileDecoder(_castsInfo[c->_key]->fileName);
+				Common::String filename = _castsInfo[c->_key]->fileName;
+
+				if (!_castsInfo[c->_key]->directory.empty())
+					filename = _castsInfo[c->_key]->directory + g_director->_dirSeparator + _castsInfo[c->_key]->fileName;
+
+				AudioFileDecoder *audio = new AudioFileDecoder(filename);
 				soundCast->_audio = audio;
 			} else {
 				SNDDecoder *audio = new SNDDecoder();
@@ -968,7 +1002,7 @@ void Cast::loadCastData(Common::SeekableReadStreamEndian &stream, uint16 id, Res
 		castInfoSize = 0;
 		break;
 	case kCastMovie:
-		warning("STUB: Cast::loadCastData(): kCastMovie (id=%d, %d children)! This will be missing from the movie and may cause problems", id, res->children.size());
+		warning("BUILDBOT: STUB: Cast::loadCastData(): kCastMovie (id=%d, %d children)! This will be missing from the movie and may cause problems", id, res->children.size());
 		castInfoSize = 0;
 		break;
 	default:
@@ -1056,7 +1090,7 @@ void Cast::loadLingoContext(Common::SeekableReadStreamEndian &stream) {
 		}
 
 		// mark unused entries
-		int16 nextUnused = firstUnused ;
+		int16 nextUnused = firstUnused;
 		while (0 <= nextUnused && nextUnused < (int16)entries.size()) {
 			LingoContextEntry &entry = entries[nextUnused];
 			entry.unused = true;
@@ -1291,6 +1325,38 @@ Common::U32String Cast::decodeString(const Common::String &str) {
 	}
 
 	return fixedStr.decode(encoding);
+}
+
+// Score order, 'Sord' resource
+//
+// Enlists all cast members as they're used in the movie
+// It is used for more effective preloading
+//
+// And as such, not currently used by the ScummVM
+void Cast::loadSord(Common::SeekableReadStreamEndian &stream) {
+	stream.readUint32();
+	stream.readUint32();
+	stream.readUint32();
+	stream.readUint32();
+	stream.readUint16();
+	stream.readUint16();
+
+	uint numEntries = 0;
+	uint16 castLibId = 0; // default for pre-D5
+	uint16 memberId;
+	while (!stream.eos()) {
+
+		if (_version >= kFileVer500)
+			castLibId = stream.readUint16LE();
+
+		memberId = stream.readUint16LE();
+
+		debugC(2, kDebugLoading, "Cast::loadSord(): entry %d - %u:%u", numEntries, castLibId, memberId);
+
+		numEntries++;
+	}
+
+	debugC(1, kDebugLoading, "Cast::loadSord(): number of entries: %d", numEntries);
 }
 
 } // End of namespace Director

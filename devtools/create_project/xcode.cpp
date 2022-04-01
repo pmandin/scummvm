@@ -124,9 +124,11 @@ bool shouldSkipFileForTarget(const std::string &fileID, const std::string &targe
 		// We don't need SDL for the iOS target
 		static const std::string sdl_directory = "/sdl/";
 		static const std::string surfacesdl_directory = "/surfacesdl/";
+		static const std::string openglsdl_directory = "/openglsdl/";
 		static const std::string doublebufferdl_directory = "/doublebuffersdl/";
 		if (fileID.find(sdl_directory) != std::string::npos
 		 || fileID.find(surfacesdl_directory) != std::string::npos
+		 || fileID.find(openglsdl_directory) != std::string::npos
 		 || fileID.find(doublebufferdl_directory) != std::string::npos) {
 			return true;
 		 }
@@ -277,7 +279,7 @@ XcodeProvider::XcodeProvider(StringList &global_warnings, std::map<std::string, 
 void XcodeProvider::addResourceFiles(const BuildSetup &setup, StringList &includeList, StringList &excludeList) {
 	includeList.push_back(setup.srcDir + "/dists/ios7/Info.plist");
 
-	ValueList &resources = getResourceFiles();
+	ValueList &resources = getResourceFiles(setup);
 	for (ValueList::iterator it = resources.begin(); it != resources.end(); ++it) {
 		includeList.push_back(setup.srcDir + "/" + *it);
 	}
@@ -301,7 +303,7 @@ void XcodeProvider::createWorkspace(const BuildSetup &setup) {
 	setupFrameworksBuildPhase(setup);
 	setupNativeTarget();
 	setupProject();
-	setupResourcesBuildPhase();
+	setupResourcesBuildPhase(setup);
 	setupBuildConfiguration(setup);
 	setupImageAssetCatalog(setup);
 }
@@ -820,7 +822,7 @@ void XcodeProvider::setupProject() {
 	_project.add(project);
 }
 
-XcodeProvider::ValueList& XcodeProvider::getResourceFiles() const {
+XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setup) const {
 	static ValueList files;
 	if (files.empty()) {
 		files.push_back("gui/themes/scummclassic.zip");
@@ -860,6 +862,84 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles() const {
 		files.push_back("dists/ios7/LaunchScreen_ios.storyboard");
 		files.push_back("dists/pred.dic");
 		files.push_back("dists/networking/wwwroot.zip");
+		if (CONTAINS_DEFINE(setup.defines, "ENABLE_GRIME")) {
+			files.push_back("engines/grim/shaders/grim_dim.fragment");
+			files.push_back("engines/grim/shaders/grim_dim.vertex");
+			files.push_back("engines/grim/shaders/grim_emerg.fragment");
+			files.push_back("engines/grim/shaders/grim_emerg.vertex");
+			files.push_back("engines/grim/shaders/emi_actor.fragment");
+			files.push_back("engines/grim/shaders/emi_actor.vertex");
+			files.push_back("engines/grim/shaders/emi_actorlights.fragment");
+			files.push_back("engines/grim/shaders/emi_actorlights.vertex");
+			files.push_back("engines/grim/shaders/emi_background.fragment");
+			files.push_back("engines/grim/shaders/emi_background.vertex");
+			files.push_back("engines/grim/shaders/emi_dimplane.fragment");
+			files.push_back("engines/grim/shaders/emi_dimplane.vertex");
+			files.push_back("engines/grim/shaders/emi_sprite.fragment");
+			files.push_back("engines/grim/shaders/emi_sprite.vertex");
+			files.push_back("engines/grim/shaders/grim_actor.fragment");
+			files.push_back("engines/grim/shaders/grim_actor.vertex");
+			files.push_back("engines/grim/shaders/grim_actorlights.fragment");
+			files.push_back("engines/grim/shaders/grim_actorlights.vertex");
+			files.push_back("engines/grim/shaders/grim_background.fragment");
+			files.push_back("engines/grim/shaders/grim_background.vertex");
+			files.push_back("engines/grim/shaders/grim_primitive.fragment");
+			files.push_back("engines/grim/shaders/grim_primitive.vertex");
+			files.push_back("engines/grim/shaders/grim_shadowplane.fragment");
+			files.push_back("engines/grim/shaders/grim_shadowplane.vertex");
+			files.push_back("engines/grim/shaders/grim_smush.fragment");
+			files.push_back("engines/grim/shaders/grim_smush.vertex");
+			files.push_back("engines/grim/shaders/grim_text.fragment");
+			files.push_back("engines/grim/shaders/grim_text.vertex");
+		}
+		if (CONTAINS_DEFINE(setup.defines, "ENABLE_MYST3")) {
+			files.push_back("engines/myst3/shaders/myst3_box.fragment");
+			files.push_back("engines/myst3/shaders/myst3_box.vertex");
+			files.push_back("engines/myst3/shaders/myst3_cube.fragment");
+			files.push_back("engines/myst3/shaders/myst3_cube.vertex");
+			files.push_back("engines/myst3/shaders/myst3_text.fragment");
+			files.push_back("engines/myst3/shaders/myst3_text.vertex");
+		}
+		if (CONTAINS_DEFINE(setup.defines, "ENABLE_PLAYGROUND3D")) {
+			files.push_back("engines/playground3d/shaders/playground3d_bitmap.fragment");
+			files.push_back("engines/playground3d/shaders/playground3d_bitmap.vertex");
+			files.push_back("engines/playground3d/shaders/playground3d_cube.fragment");
+			files.push_back("engines/playground3d/shaders/playground3d_cube.vertex");
+			files.push_back("engines/playground3d/shaders/playground3d_fade.fragment");
+			files.push_back("engines/playground3d/shaders/playground3d_fade.vertex");
+		}
+		if (CONTAINS_DEFINE(setup.defines, "ENABLE_STARK")) {
+			files.push_back("engines/stark/shaders/stark_actor.fragment");
+			files.push_back("engines/stark/shaders/stark_actor.vertex");
+			files.push_back("engines/stark/shaders/stark_prop.fragment");
+			files.push_back("engines/stark/shaders/stark_prop.vertex");
+			files.push_back("engines/stark/shaders/stark_surface.fragment");
+			files.push_back("engines/stark/shaders/stark_surface.vertex");
+			files.push_back("engines/stark/shaders/stark_fade.fragment");
+			files.push_back("engines/stark/shaders/stark_fade.vertex");
+			files.push_back("engines/stark/shaders/stark_shadow.fragment");
+			files.push_back("engines/stark/shaders/stark_shadow.vertex");
+		}
+		if (CONTAINS_DEFINE(setup.defines, "ENABLE_WINTERMUTE")) {
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_fade.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_fade.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_mask.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_mask.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_modelx.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_flat_shadow_modelx.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_geometry.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_geometry.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_line.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_line.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_modelx.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_modelx.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_mask.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_mask.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_volume.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_volume.vertex");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_sprite.fragment");
+			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_sprite.vertex");
+		}
 		files.push_back("icons/scummvm.icns");
 		files.push_back("AUTHORS");
 		files.push_back("COPYING");
@@ -878,10 +958,10 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles() const {
 	return files;
 }
 
-void XcodeProvider::setupResourcesBuildPhase() {
+void XcodeProvider::setupResourcesBuildPhase(const BuildSetup &setup) {
 	_resourcesBuildPhase._comment = "PBXResourcesBuildPhase";
 
-	ValueList &files_list = getResourceFiles();
+	ValueList &files_list = getResourceFiles(setup);
 
 	// Same as for containers: a rule for each native target
 	for (unsigned int i = 0; i < _targets.size(); i++) {
@@ -975,7 +1055,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ADD_SETTING(scummvm_Debug, "ALWAYS_SEARCH_USER_PATHS", "NO");
 	ADD_SETTING_QUOTE(scummvm_Debug, "USER_HEADER_SEARCH_PATHS", "$(SRCROOT) $(SRCROOT)/engines");
 	ADD_SETTING(scummvm_Debug, "CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED", "YES");
-	ADD_SETTING(scummvm_Debug, "CLANG_CXX_LANGUAGE_STANDARD", "\"c++0x\"");
+	ADD_SETTING(scummvm_Debug, "CLANG_CXX_LANGUAGE_STANDARD", "\"c++11\"");
 	ADD_SETTING(scummvm_Debug, "CLANG_WARN_BOOL_CONVERSION", "YES");
 	ADD_SETTING(scummvm_Debug, "CLANG_WARN_CONSTANT_CONVERSION", "YES");
 	ADD_SETTING(scummvm_Debug, "CLANG_WARN_EMPTY_BODY", "YES");
@@ -1094,7 +1174,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ADD_SETTING(iPhone_Debug, "ONLY_ACTIVE_ARCH", "YES");
 	ADD_SETTING(iPhone_Debug, "PRODUCT_NAME", PROJECT_NAME);
 	ADD_SETTING(iPhone_Debug, "PRODUCT_BUNDLE_IDENTIFIER", "\"org.scummvm.${PRODUCT_NAME}\"");
-	ADD_SETTING(iPhone_Debug, "IPHONEOS_DEPLOYMENT_TARGET", "8.0");
+	ADD_SETTING(iPhone_Debug, "IPHONEOS_DEPLOYMENT_TARGET", "9.0");
 	ADD_SETTING_QUOTE_VAR(iPhone_Debug, "PROVISIONING_PROFILE[sdk=iphoneos*]", "");
 	ADD_SETTING(iPhone_Debug, "SDKROOT", "iphoneos");
 	ADD_SETTING_QUOTE(iPhone_Debug, "TARGETED_DEVICE_FAMILY", "1,2");
@@ -1140,7 +1220,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ADD_SETTING(scummvmOSX_Debug, "COPY_PHASE_STRIP", "NO");
 	ADD_SETTING_QUOTE(scummvmOSX_Debug, "DEBUG_INFORMATION_FORMAT", "dwarf");
 	ADD_SETTING_QUOTE(scummvmOSX_Debug, "FRAMEWORK_SEARCH_PATHS", "");
-	ADD_SETTING(scummvmOSX_Debug, "CLANG_CXX_LANGUAGE_STANDARD", "\"c++0x\"");
+	ADD_SETTING(scummvmOSX_Debug, "CLANG_CXX_LANGUAGE_STANDARD", "\"c++11\"");
 	ADD_SETTING(scummvmOSX_Debug, "GCC_C_LANGUAGE_STANDARD", "c99");
 	ADD_SETTING(scummvmOSX_Debug, "GCC_ENABLE_CPP_EXCEPTIONS", "NO");
 	ADD_SETTING(scummvmOSX_Debug, "GCC_ENABLE_CPP_RTTI", "YES");

@@ -83,6 +83,8 @@ enum BlenderMode {
 	kTintLightBlenderMode
 };
 
+extern int makecol(byte r, byte g, byte b);
+
 AL_ARRAY(const int, _rgb_scale_5);
 AL_ARRAY(const int, _rgb_scale_6);
 
@@ -147,11 +149,6 @@ extern int getr32(int c);
 extern int getg32(int c);
 extern int getb32(int c);
 extern int geta32(int c);
-
-extern int getr_depth(int color_depth, int c);
-extern int getg_depth(int color_depth, int c);
-extern int getb_depth(int color_depth, int c);
-extern int geta_depth(int color_depth, int c);
 
 } // namespace AGS3
 

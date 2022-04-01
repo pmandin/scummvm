@@ -40,9 +40,6 @@ namespace AGS3 {
 
 using namespace AGS::Shared;
 
-
-
-
 int IsGUIOn(int guinum) {
 	if ((guinum < 0) || (guinum >= _GP(game).numgui))
 		quit("!IsGUIOn: invalid GUI number specified");
@@ -177,7 +174,7 @@ int GetTextWidth(const char *text, int fontnum) {
 	if ((fontnum < 0) || (fontnum >= _GP(game).numfonts))
 		quit("!GetTextWidth: invalid font number.");
 
-	return game_to_data_coord(wgettextwidth_compensate(text, fontnum));
+	return game_to_data_coord(get_text_width_outlined(text, fontnum));
 }
 
 int GetTextHeight(const char *text, int fontnum, int width) {
@@ -187,19 +184,19 @@ int GetTextHeight(const char *text, int fontnum, int width) {
 
 	if (break_up_text_into_lines(text, _GP(Lines), data_to_game_coord(width), fontnum) == 0)
 		return 0;
-	return game_to_data_coord(getheightoflines(fontnum, _GP(Lines).Count()));
+	return game_to_data_coord(get_text_lines_height(fontnum, _GP(Lines).Count()));
 }
 
 int GetFontHeight(int fontnum) {
 	if ((fontnum < 0) || (fontnum >= _GP(game).numfonts))
 		quit("!GetFontHeight: invalid font number.");
-	return game_to_data_coord(getfontheight_outlined(fontnum));
+	return game_to_data_coord(get_font_height_outlined(fontnum));
 }
 
 int GetFontLineSpacing(int fontnum) {
 	if ((fontnum < 0) || (fontnum >= _GP(game).numfonts))
 		quit("!GetFontLineSpacing: invalid font number.");
-	return game_to_data_coord(getfontspacing_outlined(fontnum));
+	return game_to_data_coord(get_font_linespacing(fontnum));
 }
 
 void SetGUIBackgroundPic(int guin, int slotn) {

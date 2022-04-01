@@ -161,6 +161,10 @@ public:
 	 */
 	void setScreen(int w, int h);
 
+	int getWidth();
+
+	int getHeight();
+
 	/**
 	 * Create a window with the given parameters.
 	 * Note that this method allocates the necessary memory for the window.
@@ -317,6 +321,7 @@ public:
 	uint findBestColor(byte cr, byte cg, byte cb);
 	uint findBestColor(uint32 color);
 	void decomposeColor(uint32 color, byte &r, byte &g, byte &b);
+	void setDesktopColor(byte, byte, byte);
 
 	uint inverter(uint src);
 

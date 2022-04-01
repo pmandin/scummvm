@@ -27,11 +27,13 @@
 
 #include "common/mutex.h"
 
+#include "bladerunner/bladerunner.h" // For BLADERUNNER_ORIGINAL_BUGS symbol
+
 namespace BladeRunner {
 
 class BladeRunnerEngine;
 
-#if !BLADERUNNER_ORIGINAL_BUG
+#if !BLADERUNNER_ORIGINAL_BUGS
 enum audioMixerAppTimers {
 	kAudioMixerAppTimerMusicNext    =  0,
 	kAudioMixerAppTimerMusicFadeOut =  1

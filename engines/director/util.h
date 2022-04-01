@@ -41,6 +41,8 @@ bool testPath(Common::String &path, bool directory = false);
 
 Common::String pathMakeRelative(Common::String path, bool recursive = true, bool addexts = true, bool directory = false);
 
+Common::String wrappedPathMakeRelative(Common::String path, bool recursive = true, bool addexts = true, bool directory = false);
+
 bool hasExtension(Common::String filename);
 
 Common::String testExtensions(Common::String component, Common::String initialPath, Common::String convPath);
@@ -52,6 +54,7 @@ Common::String stripMacPath(const char *name);
 Common::String convertMacFilename(const char *name);
 
 Common::String dumpScriptName(const char *prefix, int type, int id, const char *ext);
+Common::String dumpFactoryName(const char *prefix, const char *name, const char *ext);
 
 bool isButtonSprite(SpriteType spriteType);
 

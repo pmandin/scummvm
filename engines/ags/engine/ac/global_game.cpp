@@ -52,6 +52,7 @@
 #include "ags/engine/ac/system.h"
 #include "ags/engine/debugging/debugger.h"
 #include "ags/engine/debugging/debug_log.h"
+#include "ags/shared/font/fonts.h"
 #include "ags/engine/gui/gui_dialog.h"
 #include "ags/engine/main/engine.h"
 #include "ags/engine/main/game_run.h"
@@ -199,7 +200,7 @@ void FillSaveList(std::vector<SaveListItem> &saves, size_t max_count) {
 
 void SetGlobalInt(int index, int valu) {
 	if ((index < 0) | (index >= MAXGSVALUES))
-		quit("!SetGlobalInt: invalid index");
+		quitprintf("!SetGlobalInt: invalid index %d, supported range is %d - %d", index, 0, MAXGSVALUES - 1);
 
 	if (_GP(play).globalscriptvars[index] != valu) {
 		debug_script_log("GlobalInt %d set to %d", index, valu);
@@ -211,23 +212,21 @@ void SetGlobalInt(int index, int valu) {
 
 int GetGlobalInt(int index) {
 	if ((index < 0) | (index >= MAXGSVALUES))
-		quit("!GetGlobalInt: invalid index");
+		quitprintf("!GetGlobalInt: invalid index %d, supported range is %d - %d", index, 0, MAXGSVALUES - 1);
 	return _GP(play).globalscriptvars[index];
 }
 
 void SetGlobalString(int index, const char *newval) {
 	if ((index < 0) | (index >= MAXGLOBALSTRINGS))
-		quit("!SetGlobalString: invalid index");
+		quitprintf("!SetGlobalString: invalid index %d, supported range is %d - %d", index, 0, MAXGLOBALSTRINGS - 1);
 	debug_script_log("GlobalString %d set to '%s'", index, newval);
-	strncpy(_GP(play).globalstrings[index], newval, MAX_MAXSTRLEN);
-	// truncate it to 200 chars, to be sure
-	_GP(play).globalstrings[index][MAX_MAXSTRLEN - 1] = 0;
+	snprintf(_GP(play).globalstrings[index], MAX_MAXSTRLEN, "%s", newval);
 }
 
 void GetGlobalString(int index, char *strval) {
 	if ((index < 0) | (index >= MAXGLOBALSTRINGS))
-		quit("!GetGlobalString: invalid index");
-	strcpy(strval, _GP(play).globalstrings[index]);
+		quitprintf("!GetGlobalString: invalid index %d, supported range is %d - %d", index, 0, MAXGLOBALSTRINGS - 1);
+	snprintf(strval, MAX_MAXSTRLEN, "%s", _GP(play).globalstrings[index]);
 }
 
 // TODO: refactor this method, and use same shared procedure at both normal stop/startup and in RunAGSGame
@@ -325,14 +324,14 @@ int GetGameParameter(int parm, int data1, int data2, int data3) {
 		if ((data1 < 1) || (data1 > _GP(game).numviews)) {
 			quitprintf("!GetGameParameter: invalid view specified (v: %d, l: %d, f: %d)", data1, data2, data3);
 		}
-		if ((data2 < 0) || (data2 >= _G(views)[data1 - 1].numLoops)) {
+		if ((data2 < 0) || (data2 >= _GP(views)[data1 - 1].numLoops)) {
 			quitprintf("!GetGameParameter: invalid loop specified (v: %d, l: %d, f: %d)", data1, data2, data3);
 		}
-		if ((data3 < 0) || (data3 >= _G(views)[data1 - 1].loops[data2].numFrames)) {
+		if ((data3 < 0) || (data3 >= _GP(views)[data1 - 1].loops[data2].numFrames)) {
 			quitprintf("!GetGameParameter: invalid frame specified (v: %d, l: %d, f: %d)", data1, data2, data3);
 		}
 
-		ViewFrame *pvf = &_G(views)[data1 - 1].loops[data2].frames[data3];
+		ViewFrame *pvf = &_GP(views)[data1 - 1].loops[data2].frames[data3];
 
 		if (parm == GP_FRAMESPEED)
 			return pvf->speed;
@@ -427,6 +426,8 @@ int SetGameOption(int opt, int setting) {
 	} else if (opt == OPT_PORTRAITSIDE) {
 		if (setting == 0)  // set back to Left
 			_GP(play).swap_portrait_side = 0;
+	} else if (opt == OPT_ANTIALIASFONTS) {
+		adjust_fonts_for_render_mode(setting != 0);
 	}
 
 	return oldval;
@@ -780,7 +781,7 @@ int WaitImpl(int skip_type, int nloops) {
 
 	if (_GP(game).options[OPT_BASESCRIPTAPI] < kScriptAPI_v360) {
 		// < 3.6.0 return 1 is skipped by user input, otherwise 0
-		return (_GP(play).wait_skipped_by & (SKIP_KEYPRESS | SKIP_MOUSECLICK)) != 0 ? 1 : 0;
+		return ((_GP(play).wait_skipped_by & (SKIP_KEYPRESS | SKIP_MOUSECLICK)) != 0) ? 1 : 0;
 	}
 	// >= 3.6.0 return positive keycode, negative mouse button code, or 0 as time-out
 	return _GP(play).GetWaitSkipResult();

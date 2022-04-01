@@ -20,31 +20,31 @@
  */
 
 #include "common/config-manager.h"
-#include "common/error.h"
-#include "common/events.h"
+#include "common/fs.h"
 #include "common/system.h"
-#include "graphics/palette.h"
-
-#include "engines/engine.h"
 #include "engines/util.h"
-
+#include "graphics/palette.h"
 #include "chewy/chewy.h"
-#include "chewy/console.h"
-#include "chewy/cursor.h"
+#include "chewy/debugger.h"
 #include "chewy/events.h"
-#include "chewy/graphics.h"
+#include "chewy/globals.h"
+#include "chewy/main.h"
 #include "chewy/resource.h"
-#include "chewy/scene.h"
 #include "chewy/sound.h"
-#include "chewy/text.h"
+#include "chewy/video/video_player.h"
 
 namespace Chewy {
 
-ChewyEngine::ChewyEngine(OSystem *syst, const ChewyGameDescription *gameDesc)
-	: Engine(syst),
-	_gameDescription(gameDesc),
-	_rnd("chewy") {
+ChewyEngine *g_engine;
+Graphics::Screen *g_screen;
 
+ChewyEngine::ChewyEngine(OSystem *syst, const ChewyGameDescription *gameDesc)
+		: Engine(syst),
+		_gameDescription(gameDesc),
+		_rnd("chewy") {
+
+	g_engine = this;
+	g_screen = nullptr;
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
 
 	SearchMan.addSubDirectoryMatching(gameDataDir, "back");
@@ -58,25 +58,22 @@ ChewyEngine::ChewyEngine(OSystem *syst, const ChewyGameDescription *gameDesc)
 
 ChewyEngine::~ChewyEngine() {
 	delete _events;
-	delete _text;
+	delete _globals;
+	delete _screen;
 	delete _sound;
-	delete _cursor;
-	delete _scene;
-	delete _graphics;
+	delete _video;
+	g_engine = nullptr;
+	g_screen = nullptr;
 }
 
 void ChewyEngine::initialize() {
-	setDebugger(new Console(this));
-	_cursor = new Cursor();
-	_graphics = new Graphics(this);
-	_scene = new Scene(this);
+	g_screen = _screen = new Graphics::Screen();
+	_globals = new Globals();
+	_events = new EventsManager(_screen);
 	_sound = new Sound(_mixer);
-	_text = new Text();
-	_events = new Events(this);
+	_video = new VideoPlayer();
 
-	_curCursor = 0;
-	_elapsedFrames = 0;
-	_videoNum = -1;
+	setDebugger(new Debugger());
 }
 
 Common::Error ChewyEngine::run() {
@@ -86,39 +83,90 @@ Common::Error ChewyEngine::run() {
 
 	initialize();
 
-	/*for (uint i = 0; i < 161; i++) {
-		debug("Video %d", i);
-		_graphics->playVideo(i);
-	}*/
-
-	//_graphics->playVideo(0);
-
-	_scene->change(0);
-	//_sound->playSpeech(1);
-	//_sound->playSound(1);
-	//_sound->playMusic(2);
-
-	// Run a dummy loop
-	while (!shouldQuit()) {
-		_events->processEvents();
-
-		// Cursor animation
-		if (_elapsedFrames % 30 == 0)
-			_cursor->animateCursor();
-
-		if (_videoNum >= 0) {
-			_graphics->playVideo(_videoNum);
-			_scene->draw();
-			_videoNum = -1;
-		}
-
-		g_system->updateScreen();
-		g_system->delayMillis(10);
-
-		_elapsedFrames++;
-	}
+	game_main();
 
 	return Common::kNoError;
+}
+
+#define SCUMMVM_TAG MKTAG('S', 'C', 'V', 'M')
+
+Common::Error ChewyEngine::loadGameStream(Common::SeekableReadStream *stream) {
+	exit_room(-1);
+
+	Common::Serializer s(stream, nullptr);
+	if (!_G(gameState).synchronize(s)) {
+		error("loadGameStream error");
+		return Common::kReadingFailed;
+
+	} else {
+		if (stream->readUint32BE() != SCUMMVM_TAG ||
+			stream->readUint32LE() != _G(atds)->getAtdsStreamSize())
+			return Common::kReadingFailed;
+		_G(atds)->loadAtdsStream(stream);
+
+		_G(flags).LoadGame = true;
+
+		if (_G(gameState).inv_cur && _G(gameState).AkInvent != -1) {
+			_G(menu_item) = CUR_USE;
+		}
+
+		if (_G(gameState).AkInvent != -1)
+			_G(gameState).room_m_obj[_G(gameState).AkInvent].RoomNr = -1;
+		_G(room)->loadRoom(&_G(room_blk), _G(gameState)._personRoomNr[P_CHEWY], &_G(gameState));
+		load_chewy_taf(_G(gameState).ChewyAni);
+
+		_G(fx_blend) = BLEND1;
+		_G(room)->calc_invent(&_G(room_blk), &_G(gameState));
+
+		if (_G(gameState).AkInvent != -1)
+			_G(gameState).room_m_obj[_G(gameState).AkInvent].RoomNr = 255;
+		_G(obj)->sort();
+
+		for (int i = 0; i < MAX_PERSON; i++) {
+			setPersonPos(_G(gameState).X[i], _G(gameState).Y[i], i, _G(gameState).Phase[i]);
+		}
+
+		_G(auto_obj) = 0;
+
+		enter_room(-1);
+		_G(flags).LoadGame = false;
+
+		return Common::kNoError;
+	}
+}
+
+Common::Error ChewyEngine::saveGameStream(Common::WriteStream *stream, bool isAutosave) {
+	Common::Serializer s(nullptr, stream);
+
+	for (int i = 0; i < MAX_PERSON; i++) {
+		_G(gameState).X[i] = _G(spieler_vector)[i].Xypos[0];
+		_G(gameState).Y[i] = _G(spieler_vector)[i].Xypos[1];
+		_G(gameState).Phase[i] = _G(person_end_phase)[i];
+	}
+
+	if (!_G(gameState).synchronize(s))
+		return Common::kWritingFailed;
+
+	stream->writeUint32BE(SCUMMVM_TAG);
+	stream->writeUint32LE(_G(atds)->getAtdsStreamSize());
+	_G(atds)->saveAtdsStream(stream);
+
+	return Common::kNoError;
+}
+
+SaveStateList ChewyEngine::listSaves() {
+	return getMetaEngine()->listSaves(_targetName.c_str());
+}
+
+void ChewyEngine::showGmm(bool isInGame) {
+	_canLoad = true;
+	_canSave = isInGame;
+
+	openMainMenuDialog();
+	_events->clearEvents();
+
+	_canLoad = false;
+	_canSave = false;
 }
 
 } // End of namespace Chewy

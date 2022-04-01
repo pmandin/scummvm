@@ -457,7 +457,7 @@ void ScummEngine_v5::o5_actorOps() {
 			// But in the VGA CD version, only costume 0 is used
 			// and the close-up is missing the cigar smoke.
 
-			if (_game.id == GID_MONKEY && _currentRoom == 76 && act == 12 && i == 0) {
+			if (_game.id == GID_MONKEY && _currentRoom == 76 && act == 12 && i == 0 && _enableEnhancements) {
 				i = 76;
 			}
 
@@ -670,7 +670,7 @@ void ScummEngine_v5::o5_add() {
 	// We restore the old behavior by adding 0, not 1, to the second
 	// variable when examining the clock tower.
 
-	if (_game.id == GID_MONKEY && vm.slot[_currentScript].number == 210 && _currentRoom == 35 && _resultVarNumber == 248 && a == 1) {
+	if (_game.id == GID_MONKEY && vm.slot[_currentScript].number == 210 && _currentRoom == 35 && _resultVarNumber == 248 && a == 1 && _enableEnhancements) {
 		a = 0;
 	}
 
@@ -882,6 +882,23 @@ void ScummEngine_v5::o5_doSentence() {
 
 	int objectA = getVarOrDirectWord(PARAM_2);
 	int objectB = getVarOrDirectWord(PARAM_3);
+
+	//	HACK: breath mint(object 458) should only be given to actors.
+	//	Giving it to non-actor objects crashes the game.
+	//	The sentence doesn't run a script if the recipient is not an actor.
+	//	Trac #13196
+	//	This bug occurred always when breath mint was given to non-actor objects
+	// 	and sometimes when other non actor objects were given to breathe mint
+	//	Giving pot or red herring to breath mint triggered the bug as these two objects' scripts
+	//	reverse the sentence (in case if the user had reversed the items), effectively making the sentence
+	//	such that the breath mint is being given to the pot/red herring.
+	// 	But giving hunk o' meat to breath mint didn't trigger the bug as such reversal is not done
+	//	by hunk o' meat's script.
+	if (((_game.id == GID_MONKEY_VGA && (_game.features & GF_DEMO)) ||
+		 (_game.id == GID_MONKEY_EGA && (_game.features & GF_DEMO)))
+		&& verb == 3 && objectA == 458 && !isValidActor(objectB))
+		return;
+
 	doSentence(verb, objectA, objectB);
 }
 
@@ -1039,7 +1056,32 @@ void ScummEngine_v5::o5_findObject() {
 	getResultPos();
 	int x = getVarOrDirectByte(PARAM_1);
 	int y = getVarOrDirectByte(PARAM_2);
-	setResult(findObject(x, y));
+	int obj = findObject(x, y);
+
+	// WORKAROUND bug #13367: In some versions of Loom, it's possible to
+	// walk right through the closed cell door if you allowed Stoke to lead
+	// you into the cell rather than skipping the cutscene. This is because
+	// the open door (object 623) isn't made non-touchable when the door
+	// closes at the end of the cutscene.
+	//
+	// The FM Towns and TurboGrafx-16 versions fix this by making sure the
+	// object is untouchable at the end of the cutscene. The Macintosh and
+	// VGA talkie versions make sure the object script checks if the door
+	// is open. This makes the script identical to the script for the wall
+	// to the left of the door (object 609).
+	//
+	// These fixes produce subtly different behavior, but since the VGA
+	// talkie version (sadly) is the most readily available these days,
+	// let's go with that fix. But we do it by redirecting the click to the
+	// wall object instead.
+
+	if (_game.id == GID_LOOM && _game.version == 3 &&
+	    (_game.platform == Common::kPlatformDOS || _game.platform == Common::kPlatformAmiga || _game.platform == Common::kPlatformAtariST) &&
+	    _currentRoom == 38 && obj == 623 && _enableEnhancements) {
+		obj = 609;
+	}
+
+	setResult(obj);
 }
 
 void ScummEngine_v5::o5_freezeScripts() {
@@ -1338,7 +1380,8 @@ void ScummEngine_v5::o5_isLess() {
 }
 
 void ScummEngine_v5::o5_isLessEqual() {
-	int16 a = getVar();
+	int var = fetchScriptWord();
+	int16 a = readVar(var);
 	int16 b = getVarOrDirectWord(PARAM_1);
 
 	// WORKAROUND bug #1266 : Work around a bug in Indy3Town.
@@ -1347,6 +1390,16 @@ void ScummEngine_v5::o5_isLessEqual() {
 	    _currentRoom == 70 && b == -256) {
 		o5_jumpRelative();
 		return;
+	}
+
+	// WORKAROUND: When Mandible uses the distaff, it seems to light up
+	// only three times with no animation for the second note. Actually,
+	// the animations for the first and second notes are played so closely
+	// together that they look like one. This adjusts the timing of the
+	// second one.
+
+	if (_game.id == GID_LOOM && _game.version >= 4 && _language == Common::EN_ANY && vm.slot[_currentScript].number == 95 && var == VAR_MUSIC_TIMER && b == 1708 && _enableEnhancements) {
+		b = 1815;
 	}
 
 	jumpRelative(b <= a);
@@ -1599,7 +1652,7 @@ void ScummEngine_v5::o5_putActor() {
 	// other coordinates. The difference is never more than a single pixel,
 	// so there's not much reason to correct those.
 
-	if (_game.id == GID_MONKEY && _currentRoom == 76 && act == 12) {
+	if (_game.id == GID_MONKEY && _currentRoom == 76 && act == 12 && _enableEnhancements) {
 		if (x == 176 && y == 80) {
 			x = 174;
 			y = 86;
@@ -1871,7 +1924,7 @@ void ScummEngine_v5::o5_roomOps() {
 			// we want the original color 3 for the cigar smoke. It
 			// should be ok since there is no GUI in this scene.
 
-			if (_game.id == GID_MONKEY && _currentRoom == 76 && d == 3)
+			if (_game.id == GID_MONKEY && _currentRoom == 76 && d == 3 && _enableEnhancements)
 				break;
 
 			setPalColor(d, a, b, c);	/* index, r, g, b */
@@ -2279,7 +2332,22 @@ void ScummEngine_v5::o5_stopMusic() {
 }
 
 void ScummEngine_v5::o5_stopSound() {
-	_sound->stopSound(getVarOrDirectByte(PARAM_1));
+	int sound = getVarOrDirectByte(PARAM_1);
+
+	// WORKAROUND: Don't stop the background audio when showing the close-up
+	// of captain Smirk. You are still outdoors, so it makes more sense if
+	// they keep playing like they do in the Special Edition. (Though there
+	// the background makes it more obvious.)
+	//
+	// The sound is stopped by the exit script, which always has number
+	// 10001 regardless of which room it is. We figure out which one by
+	// looking at which rooms we're moving between.
+
+	if (_game.id == GID_MONKEY && (_game.features & GF_AUDIOTRACKS) && sound == 126 && vm.slot[_currentScript].number == 10001 && VAR(VAR_ROOM) == 43 && VAR(VAR_NEW_ROOM) == 76 && _enableEnhancements) {
+		return;
+	}
+
+	_sound->stopSound(sound);
 }
 
 void ScummEngine_v5::o5_isSoundRunning() {
@@ -2316,6 +2384,18 @@ void ScummEngine_v5::o5_startScript() {
 	script = getVarOrDirectByte(PARAM_1);
 
 	getWordVararg(data);
+
+	// WORKAROUND bug #13370: If you try to leave the plateau before
+	// healing Rusty, his ghost will block the way. But this should not
+	// happen during the cutscene where he first appears, because then he
+	// will appear to teleport from one spot to another.
+	//
+	// In the VGA talkie version Rusty just appears in the rift, rather
+	// than gliding in from off-stage. The only thing that's affected is
+	// whether Bobbin or Rusty speaks first, and the dialog makes sense
+	// either way.
+	if (_game.id == GID_LOOM && _game.version == 3 && script == 207 && isScriptRunning(98) && _enableEnhancements)
+		return;
 
 	// WORKAROUND bug #2198: Script 171 loads a complete room resource,
 	// instead of the actual script, causing invalid opcode cases
@@ -2899,7 +2979,7 @@ void ScummEngine_v5::decodeParseString() {
 		case 15:{	// SO_TEXTSTRING
 				const int len = resStrLen(_scriptPointer);
 
-				if (_game.id == GID_LOOM && vm.slot[_currentScript].number == 95 && strcmp((const char *)_scriptPointer, "I am Choas.") == 0) {
+				if (_game.id == GID_LOOM && vm.slot[_currentScript].number == 95 && _enableEnhancements && strcmp((const char *)_scriptPointer, "I am Choas.") == 0) {
 					// WORKAROUND: This happens when Chaos introduces
 					// herself to bishop Mandible. Of all the places to put
 					// a typo...

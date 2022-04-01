@@ -26,6 +26,7 @@
 #include "director/castmember.h"
 #include "director/cursor.h"
 #include "director/channel.h"
+#include "director/frame.h"
 #include "director/movie.h"
 #include "director/sound.h"
 #include "director/sprite.h"
@@ -373,7 +374,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 
 	switch (entity) {
 	case kTheActorList:
-		getTheEntitySTUB(kTheActorList);
+		d = g_lingo->_actorList;
 		break;
 	case kTheBeepOn:
 		getTheEntitySTUB(kTheBeepOn);
@@ -441,7 +442,8 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d.u.i = (movie->_lastClickTime - movie->_lastClickTime2) <= 25 ? 1 : 0;
 		break;
 	case kTheExitLock:
-		getTheEntitySTUB(kTheExitLock);
+		d.type = INT;
+		d.u.i = g_lingo->_exitLock;
 		break;
 	case kTheField:
 		d = getTheField(id, field);
@@ -462,7 +464,8 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d.u.s = score->getFrameLabel(score->getCurrentFrame());
 		break;
 	case kTheFrameScript:
-		getTheEntitySTUB(kTheFrameScript);
+		d.type = INT;
+		d.u.i = score->_frames[score->getCurrentFrame()]->_actionId.member;
 		break;
 	case kTheFramePalette:
 		d.type = INT;
@@ -714,7 +717,8 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = _perFrameHook;
 		break;
 	case kThePreloadEventAbort:
-		getTheEntitySTUB(kThePreloadEventAbort);
+		d.type = INT;
+		d.u.i = g_lingo->_preLoadEventAbort;
 		break;
 	case kThePreLoadRAM:
 		d.u.i = 0;		// We always have unlimited RAM
@@ -752,7 +756,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		getTheEntitySTUB(kTheSearchCurrentFolder);
 		break;
 	case kTheSearchPath:
-		getTheEntitySTUB(kTheSearchPath);
+		d = g_lingo->_searchPath;
 		break;
 	case kTheSelection:
 		if (movie->_currentEditableTextChannel) {
@@ -880,13 +884,15 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		getTheEntitySTUB(kTheTrace);
 		break;
 	case kTheTraceLoad:
-		getTheEntitySTUB(kTheTraceLoad);
+		d.type = INT;
+		d.u.i = g_lingo->_traceLoad;
 		break;
 	case kTheTraceLogFile:
 		getTheEntitySTUB(kTheTraceLogFile);
 		break;
 	case kTheUpdateMovieEnabled:
-		getTheEntitySTUB(kTheUpdateMovieEnabled);
+		d.type = INT;
+		d.u.i = g_lingo->_updateMovieEnabled;
 		break;
 	case kTheWindow:
 		g_lingo->push(id);
@@ -920,7 +926,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 
 	switch (entity) {
 	case kTheActorList:
-		setTheEntitySTUB(kTheActorList);
+		g_lingo->_actorList = d;
 		break;
 	case kTheBeepOn:
 		setTheEntitySTUB(kTheBeepOn);
@@ -953,7 +959,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		warning("STUB: Lingo::setTheEntity(): Set color depth to %d", _vm->_colorDepth);
 		break;
 	case kTheExitLock:
-		setTheEntitySTUB(kTheExitLock);
+		g_lingo->_exitLock = bool(d.asInt());
 		break;
 	case kTheFixStageSize:
 		setTheEntitySTUB(kTheFixStageSize);
@@ -970,7 +976,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		setTheEntityReadOnly(kTheFrameLabel);
 		break;
 	case kTheFrameScript:
-		setTheEntitySTUB(kTheFrameScript);
+		setTheEntityReadOnly(kTheFrameScript);
 		break;
 	case kTheFramePalette:
 		setTheEntityReadOnly(kTheFramePalette);
@@ -1012,7 +1018,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		_perFrameHook = d;
 		break;
 	case kThePreloadEventAbort:
-		setTheEntitySTUB(kThePreloadEventAbort);
+		g_lingo->_preLoadEventAbort = bool(d.asInt());
 		break;
 	case kThePreLoadRAM:
 		// We always have the unlimited RAM, ignore
@@ -1112,13 +1118,13 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		setTheEntitySTUB(kTheTrace);
 		break;
 	case kTheTraceLoad:
-		setTheEntitySTUB(kTheTraceLoad);
+		g_lingo->_traceLoad = d.asInt();
 		break;
 	case kTheTraceLogFile:
 		setTheEntitySTUB(kTheTraceLogFile);
 		break;
 	case kTheUpdateMovieEnabled:
-		setTheEntitySTUB(kTheUpdateMovieEnabled);
+		g_lingo->_updateMovieEnabled = bool(d.asInt());
 		break;
 	case kTheWindow:
 		g_lingo->push(id);

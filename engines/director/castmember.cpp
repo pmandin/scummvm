@@ -21,6 +21,7 @@
 
 #include "graphics/macgui/macbutton.h"
 #include "image/image_decoder.h"
+#include "video/avi_decoder.h"
 #include "video/qt_decoder.h"
 
 #include "director/director.h"
@@ -51,6 +52,7 @@ CastMember::CastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndi
 	_objType = kCastMemberObj;
 
 	_widget = nullptr;
+	_erase = false;
 }
 
 CastMemberInfo *CastMember::getInfo() {
@@ -358,8 +360,14 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 	_filename = path;
 	_video = new Video::QuickTimeDecoder();
 
-	debugC(2, kDebugLoading | kDebugImages, "Loading video %s", path.c_str());
-	bool result = _video->loadFile(Common::Path(path, g_director->_dirSeparator));
+	Common::String path1 = pathMakeRelative(path);
+
+	debugC(2, kDebugLoading | kDebugImages, "Loading video %s -> %s", path.c_str(), path1.c_str());
+	bool result = _video->loadFile(Common::Path(path1, g_director->_dirSeparator));
+	if (!result) {
+		_video = new Video::AVIDecoder();
+		result = _video->loadFile(Common::Path(path1, g_director->_dirSeparator));
+	}
 
 	if (result && g_director->_pixelformat.bytesPerPixel == 1) {
 		// Director supports playing back RGB and paletted video in 256 colour mode.

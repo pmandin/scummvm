@@ -98,10 +98,9 @@ String GetMainGameFileErrorText(MainGameFileErrorType err) {
 	return "Unknown error.";
 }
 
-LoadedGameEntities::LoadedGameEntities(GameSetupStruct &game, DialogTopic *&dialogs, ViewStruct *&views)
+LoadedGameEntities::LoadedGameEntities(GameSetupStruct &game, DialogTopic *&dialogs)
 	: Game(game)
 	, Dialogs(dialogs)
-	, Views(views)
 	, SpriteCount(0) {
 }
 
@@ -254,16 +253,17 @@ void ReadViewStruct272_Aligned(std::vector<ViewStruct272> &oldv, Stream *in, siz
 	}
 }
 
-void ReadViews(GameSetupStruct &game, ViewStruct *&views, Stream *in, GameDataVersion data_ver) {
-	int count = _GP(game).numviews;
-	views = (ViewStruct *)calloc(sizeof(ViewStruct) * count, 1);
-	if (data_ver > kGameVersion_272) { // 3.x views
-		for (int i = 0; i < _GP(game).numviews; ++i) {
-			_G(views)[i].ReadFromFile(in);
+void ReadViews(GameSetupStruct &game, std::vector<ViewStruct> &views, Stream *in, GameDataVersion data_ver) {
+	views.resize(game.numviews);
+	if (data_ver > kGameVersion_272) // 3.x views
+	{
+		for (int i = 0; i < game.numviews; ++i) {
+			views[i].ReadFromFile(in);
 		}
-	} else { // 2.x views
+	} else // 2.x views
+	{
 		std::vector<ViewStruct272> oldv;
-		ReadViewStruct272_Aligned(oldv, in, count);
+		ReadViewStruct272_Aligned(oldv, in, game.numviews);
 		Convert272ViewsToNew(oldv, views);
 	}
 }
@@ -488,6 +488,11 @@ void UpgradeFonts(GameSetupStruct &game, GameDataVersion data_ver) {
 			}
 		}
 	}
+	if (data_ver < kGameVersion_360_11) { // use global defaults for the font load flags
+		for (int i = 0; i < game.numfonts; ++i) {
+			game.fonts[i].Flags |= FFLG_TTF_BACKCOMPATMASK;
+		}
+	}
 }
 
 // Convert audio data to the current version
@@ -523,7 +528,7 @@ void UpgradeAudio(GameSetupStruct &game, LoadedGameEntities &ents, GameDataVersi
 	// Read audio clip names from from registered libraries
 	for (size_t i = 0; i < _GP(AssetMgr)->GetLibraryCount(); ++i) {
 		const AssetLibInfo *game_lib = _GP(AssetMgr)->GetLibraryInfo(i);
-		if (Path::IsDirectory(game_lib->BasePath))
+		if (File::IsDirectory(game_lib->BasePath))
 			continue; // might be a directory
 
 		for (const AssetInfo &info : game_lib->AssetInfos) {
@@ -538,7 +543,7 @@ void UpgradeAudio(GameSetupStruct &game, LoadedGameEntities &ents, GameDataVersi
 	// but that have to be done consistently if done at all.
 	for (size_t i = 0; i < _GP(AssetMgr)->GetLibraryCount(); ++i) {
 		const AssetLibInfo *game_lib = _GP(AssetMgr)->GetLibraryInfo(i);
-		if (!Path::IsDirectory(game_lib->BasePath))
+		if (!File::IsDirectory(game_lib->BasePath))
 			continue; // might be a library
 
 
@@ -608,7 +613,7 @@ void UpgradeMouseCursors(GameSetupStruct &game, GameDataVersion data_ver) {
 }
 
 // Adjusts score clip id, depending on game data version
-void RemapLegacySoundNums(GameSetupStruct &game, ViewStruct *&views, GameDataVersion data_ver) {
+void RemapLegacySoundNums(GameSetupStruct &game, std::vector<ViewStruct> &views, GameDataVersion data_ver) {
 	if (data_ver >= kGameVersion_320)
 		return;
 
@@ -716,6 +721,21 @@ HError GameDataExtReader::ReadBlock(int block_id, const String &ext_id,
     // {
     //     // read new gui properties
     // }
+	if (ext_id.CompareNoCase("v360_fonts") == 0) {
+		for (int i = 0; i < _ents.Game.numfonts; ++i) {
+			// adjustable font outlines
+			_ents.Game.fonts[i].AutoOutlineThickness = _in->ReadInt32();
+			_ents.Game.fonts[i].AutoOutlineStyle =
+				static_cast<enum FontInfo::AutoOutlineStyle>(_in->ReadInt32());
+			// reserved
+			_in->ReadInt32();
+			_in->ReadInt32();
+			_in->ReadInt32();
+			_in->ReadInt32();
+		}
+		return HError::None();
+	}
+
     return new MainGameFileError(kMGFErr_ExtUnknown, String::FromFormat("Type: %s", ext_id.GetCStr()));
 }
 

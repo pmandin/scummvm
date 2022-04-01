@@ -7,6 +7,7 @@ MODULE_OBJS = \
 	channel.o \
 	cursor.o \
 	director.o \
+	debugger.o \
 	events.o \
 	fonts.o \
 	frame.o \
@@ -47,10 +48,12 @@ MODULE_OBJS = \
 	lingo/xlibs/orthoplayxobj.o \
 	lingo/xlibs/palxobj.o \
 	lingo/xlibs/popupmenuxobj.o \
+	lingo/xlibs/registercomponent.o \
 	lingo/xlibs/serialportxobj.o \
 	lingo/xlibs/soundjam.o \
 	lingo/xlibs/videodiscxobj.o \
-	lingo/xlibs/winxobj.o
+	lingo/xlibs/winxobj.o \
+	lingo/xlibs/xplayanim.o
 
 # HACK: Skip this when including the file for detection objects.
 ifeq "$(USE_RULES)" "1"
