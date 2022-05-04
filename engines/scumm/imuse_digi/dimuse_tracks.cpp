@@ -162,6 +162,10 @@ void IMuseDigital::tracksCallback() {
 
 		if (_outputFeedSize != 0) {
 			_internalMixer->clearMixerBuffer();
+			if (_isEarlyDiMUSE && _splayer && _splayer->isAudioCallbackEnabled()) {
+				_splayer->processDispatches(_outputFeedSize);
+			}
+
 			if (!_tracksPauseTimer) {
 				IMuseDigiTrack *track = _trackList;
 
@@ -235,13 +239,16 @@ int IMuseDigital::tracksStopSound(int soundId) {
 	if (!_trackList)
 		return -1;
 
-	IMuseDigiTrack *track = _trackList;
-	do {
-		if (track->soundId == soundId) {
-			tracksClear(track);
+	IMuseDigiTrack *nextTrack = _trackList;
+	IMuseDigiTrack *curTrack;
+
+	while (nextTrack) {
+		curTrack = nextTrack;
+		nextTrack = curTrack->next;
+		if (curTrack->soundId == soundId) {
+			tracksClear(curTrack);
 		}
-		track = track->next;
-	} while (track);
+	}
 
 	return 0;
 }

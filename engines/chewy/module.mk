@@ -4,7 +4,6 @@ MODULE_OBJS = \
 	atds.o \
 	chewy.o \
 	cursor.o \
-	data.o \
 	debugger.o \
 	detail.o \
 	effect.o \
@@ -15,7 +14,6 @@ MODULE_OBJS = \
 	m_event.o \
 	main.o \
 	mouse.o \
-	mcga.o \
 	mcga_graphics.o \
 	memory.o \
 	menus.o \

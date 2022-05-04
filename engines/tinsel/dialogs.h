@@ -42,26 +42,44 @@ struct FILM;
 struct CONFINIT;
 
 enum {
-	INV_OPEN	= -1,	// DW1 only
-	INV_CONV	= 0,
-	INV_1		= 1,
-	INV_2		= 2,
-	INV_CONF	= 3,
-	INV_MENU	= 3,	// DW2 constant
-	NUM_INV		= 4,
+	INV_OPEN 		= -1, // DW1 only
+	INV_CONV 		= 0,
+	INV_1 			= 1,
+	INV_2 			= 2,
+	INV_CONF 		= 3,
+	INV_MENU 		= 3, // DW2 constant
+	NUM_INV_V0 		= 4,
 
 	// Discworld 2 constants
-	DW2_INV_OPEN = 5,
-	INV_DEFAULT = 6
+	DW2_INV_OPEN	= 5,
+	INV_DEFAULT  	= 6,
+
+	// Noir constants
+	INV_4 		 	= 4,
+	NUM_INV_V3 	 	= 5,
+	INV_7NOINV 	 	= 7,
+	INV_8NOINV 	 	= 8,
+	INV_NOTEBOOK 	= 9,
+
+	MAX_NUM_INV 	= NUM_INV_V3 // For determination of _invD array size
 };
+
+#define NUM_INV ((TinselVersion == 3) ? NUM_INV_V3 : NUM_INV_V0)
 
 enum {
 	NOOBJECT = -1,
-	INV_NOICON = -1,
+	INV_NOICON_V0 = -1,
 	INV_CLOSEICON = -2,
 	INV_OPENICON = -3,
-	INV_HELDNOTIN = -4
+	INV_HELDNOTIN_V0 = -4,
+	// Noir discerns between NOOBJECT and INV_NOICON
+	INV_NOICON_V3 = 0,
+	INV_HELDNOTIN_V3 = 1,
+	INV_HELDIN = 2,
 };
+
+#define INV_NOICON ((TinselVersion == 3) ? INV_NOICON_V3 : INV_NOICON_V0)
+#define INV_HELDNOTIN ((TinselVersion == 3) ? INV_HELDNOTIN_V3 : INV_HELDNOTIN_V0)
 
 enum CONV_PARAM {
 	CONV_DEF,
@@ -85,6 +103,14 @@ enum InvCursorFN { IC_AREA,
 #define DEFINV2 0x10
 #define PERMACONV 0x20
 #define CONVENDITEM 0x40
+// Noir only
+#define V3ATTR_X80 0x80
+#define V3ATTR_X200 0x200
+#define V3ATTR_X400 0x400
+#define NOTEBOOK_TITLE 0x800 // is a notebook title
+#define V3ATTR_X1000 0x1000
+#define V3ATTR_X2000 0x2000
+
 #define sliderRange (_sliderYmax - _sliderYmin)
 #define MAXSLIDES 4
 #define MAX_PERMICONS 10 // Max permanent conversation icons
@@ -120,6 +146,10 @@ struct INV_OBJECT {
 	SCNHANDLE hIconFilm;	// inventory objects animation film
 	SCNHANDLE hScript;	// inventory objects event handling script
 	int32 attribute;		// inventory object's attribute
+
+	// Noir
+	int32 unknown;
+	int32 title;	// id of associated notebook title
 };
 
 struct INV_DEF {
@@ -283,6 +313,9 @@ public:
 	void idec_inv2(SCNHANDLE text, int MaxContents, int MinWidth, int MinHeight,
 	               int StartWidth, int StartHeight, int MaxWidth, int MaxHeight);
 
+	// Noir
+	void idec_invMain(SCNHANDLE text, int MaxContents);
+
 	bool InventoryActive();
 
 	void PermaConvIcon(int icon, bool bEnd = false);
@@ -348,6 +381,9 @@ public:
 	bool InventoryIsHidden() { return _InventoryHidden; }
 	const FILM *GetWindowData();
 	void Redraw();
+
+	// Noir
+	bool IsConvAndNotMove();
 
 	bool _noLanguage;
 	int _glitterIndex;
@@ -426,7 +462,7 @@ private:
 	SCNHANDLE _flagFilm;  // Window members and cursors' graphic data
 	SCNHANDLE _configStrings[20];
 
-	INV_DEF _invD[NUM_INV];        // Conversation + 2 inventories + ...
+	INV_DEF _invD[MAX_NUM_INV];        // Conversation + 2 inventories + ...
 	int _activeInv;                      // Which inventory is currently active
 	INV_OBJECT *_invObjects; // Inventory objects' data
 	int _numObjects;               // Number of inventory objects

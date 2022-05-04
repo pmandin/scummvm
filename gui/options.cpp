@@ -403,7 +403,7 @@ void OptionsDialog::build() {
 		_vsyncCheckbox->setState(ConfMan.getBool("vsync", _domain));
 
 		_rendererTypePopUp->setEnabled(true);
-		_rendererTypePopUp->setSelectedTag(Graphics::parseRendererTypeCode(ConfMan.get("renderer", _domain)));
+		_rendererTypePopUp->setSelectedTag(Graphics::Renderer::parseTypeCode(ConfMan.get("renderer", _domain)));
 
 		_antiAliasPopUp->setEnabled(true);
 		if (ConfMan.hasKey("antialiasing", _domain)) {
@@ -642,7 +642,7 @@ void OptionsDialog::apply() {
 
 			if (_rendererTypePopUp->getSelectedTag() > 0) {
 				Graphics::RendererType selected = (Graphics::RendererType) _rendererTypePopUp->getSelectedTag();
-				ConfMan.set("renderer", Graphics::getRendererTypeCode(selected), _domain);
+				ConfMan.set("renderer", Graphics::Renderer::getTypeCode(selected), _domain);
 			} else {
 				ConfMan.removeKey("renderer", _domain);
 			}
@@ -1446,12 +1446,14 @@ void OptionsDialog::addGraphicControls(GuiObject *boss, const Common::String &pr
 	_rendererTypePopUp = new PopUpWidget(boss, prefix + "grRendererTypePopup");
 	_rendererTypePopUp->appendEntry(_("<default>"), Graphics::kRendererTypeDefault);
 	_rendererTypePopUp->appendEntry("");
-	const Graphics::RendererTypeDescription *rt = Graphics::listRendererTypes();
-	for (; rt->code; ++rt) {
-		if (g_system->getOverlayWidth() > 320)
-			_rendererTypePopUp->appendEntry(_(rt->description), rt->id);
-		else
-			_rendererTypePopUp->appendEntry(_c(rt->description, "lowres"), rt->id);
+	Common::Array<Graphics::RendererTypeDescription> rt = Graphics::Renderer::listTypes();
+	for (Common::Array<Graphics::RendererTypeDescription>::iterator it = rt.begin();
+	        it != rt.end(); ++it) {
+		if (g_system->getOverlayWidth() > 320) {
+			_rendererTypePopUp->appendEntry(_(it->description), it->id);
+		} else {
+			_rendererTypePopUp->appendEntry(_c(it->description, "lowres"), it->id);
+		}
 	}
 
 	_antiAliasPopUpDesc = new StaticTextWidget(boss, prefix + "grAntiAliasPopupDesc", _("3D Anti-aliasing:"));
@@ -2790,6 +2792,7 @@ void GlobalOptionsDialog::apply() {
 #ifdef USE_TTS
 	Common::TextToSpeechManager *ttsMan = g_system->getTextToSpeechManager();
 	if (ttsMan) {
+		ttsMan->enable(_ttsCheckbox->getState());
 #ifdef USE_TRANSLATION
 		if (newLang != oldLang) {
 			ttsMan->setLanguage(newLang);

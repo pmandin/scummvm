@@ -511,6 +511,11 @@ void ScummEngine_v5::o5_actorOps() {
 			// remap the colors, it uses the wrong indexes. The
 			// CD animation uses colors 1-3, where the floppy
 			// version uses 2, 3, and 9.
+			//
+			// We don't touch the colours in general - the Special
+			// edition have pretty much made them canon anyway -
+			// but for the Smirk close-up we want the same colors
+			// as the floppy version.
 
 			if (_game.id == GID_MONKEY && _currentRoom == 76) {
 				if (i == 3)
@@ -1081,6 +1086,15 @@ void ScummEngine_v5::o5_findObject() {
 		obj = 609;
 	}
 
+	// WORKAROUND bug #13385: Clicking on the cave entrance to go back into
+	// the dragon caves registers on the incorrect object. Since the object
+	// script is responsible for actually moving you to the other room and
+	// this script is empty, redirect the action to the cave object's
+	// script instead.
+	if (_game.id == GID_LOOM && _game.version == 4 && _currentRoom == 33 && obj == 482 && _enableEnhancements) {
+		obj = 468;
+	}
+
 	setResult(obj);
 }
 
@@ -1482,9 +1496,28 @@ void ScummEngine_v5::o5_loadRoom() {
 	// the one where Indy enters the office for the first time. If object 23 (National
 	// Archeology) is in possession of Indy (owner == 1) then it's safe to force the
 	// coat (object 24) and broken window (object 25) into the room.
-	if (_game.id == GID_INDY4 && room == 1 && _objectOwnerTable[23] == 1) {
+	if (_game.id == GID_INDY4 && room == 1 && _objectOwnerTable[23] == 1 && _enableEnhancements) {
 		putState(24, 1);
 		putState(25, 1);
+	}
+
+	// WORKAROUND: The first time you examine Rusty while he's sleeping,
+	// you will get a close-up of him. Which one should depend on whether
+	// or not you've used the Reflection draft on him. But in some, you
+	// will always get the close-up where he's wearing his own clothes.
+
+	if (_game.id == GID_LOOM && _game.version == 3 && room == 29 &&
+		vm.slot[_currentScript].number == 112 && _enableEnhancements) {
+		Actor *a = derefActorSafe(VAR(VAR_EGO), "o5_loadRoom");
+
+		// Bobbin's normal costume is number 1. If he's wearing anything
+		// else, he's presumably disguised as Rusty. The game also sets
+		// a variable, but uses different ones for different versions of
+		// the game. You can't even assume that every English version
+		// uses the same one!
+
+		if (a && a->_costume != 1)
+			room = 68;
 	}
 
 	// For small header games, we only call startScene if the room
@@ -1617,6 +1650,19 @@ void ScummEngine_v5::o5_pickupObject() {
 }
 
 void ScummEngine_v5::o5_print() {
+	// WORKAROUND bug #13374: The patched script for the Ultimate Talkie
+	// is missing a WaitForMessage() after Lemonhead says "Oooh, that's
+	// nice." so we insert one here. If there is a future version that
+	// fixes this, the workaround still shouldn't do any harm.
+	//
+	// The workaround is deliberately not marked as an enhancement, since
+	// this version makes so many changes of its own.
+	if (_game.id == GID_MONKEY && _currentRoom == 25 && vm.slot[_currentScript].number == 205 && VAR(VAR_HAVE_MSG) && strcmp(_game.variant, "SE Talkie") == 0) {
+		_scriptPointer--;
+		o5_breakHere();
+		return;
+	}
+
 	_actorToPrintStrFor = getVarOrDirectByte(PARAM_1);
 	decodeParseString();
 }
@@ -1659,6 +1705,13 @@ void ScummEngine_v5::o5_putActor() {
 		} else if (x == 176 && y == 78) {
 			x = 172;
 		}
+	} else if (_game.id == GID_ZAK && _game.platform == Common::kPlatformFMTowns && _currentRoom == 42 && vm.slot[_currentScript].number == 201 && act == 6 && x == 136 && y == 0 && _enableEnhancements) {
+		// WORKAROUND: bug #2762: When switching back to Zak after using the blue
+		// crystal on the bird in Lima, the bird will disappear, come back and
+		// disappear again. This is really strange and only happens with the
+		// FM-TOWNS version, which adds an unconditional putActor(6,136,0) sequence
+		// that will always negate the getActorX()/getActorY() checks that follow.
+		return;
 	}
 
 	Actor *a = derefActor(act, "o5_putActor");
@@ -1817,7 +1870,7 @@ void ScummEngine_v5::o5_resourceRoutines() {
 		loadFlObject(getVarOrDirectWord(PARAM_2), resid);
 		break;
 
-	// TODO: For the following see also Hibarnatus' information on bug #7315.
+	// TODO: For the following see also Hibernatus' information on bug #7315.
 	case 32:
 		// TODO (apparently never used in FM-TOWNS)
 		debug(0, "o5_resourceRoutines %d not yet handled (script %d)", op, vm.slot[_currentScript].number);
@@ -1924,10 +1977,11 @@ void ScummEngine_v5::o5_roomOps() {
 			// we want the original color 3 for the cigar smoke. It
 			// should be ok since there is no GUI in this scene.
 
-			if (_game.id == GID_MONKEY && _currentRoom == 76 && d == 3 && _enableEnhancements)
-				break;
-
-			setPalColor(d, a, b, c);	/* index, r, g, b */
+			if (_game.id == GID_MONKEY && _currentRoom == 76 && d == 3 && _enableEnhancements) {
+				// Do nothing
+			} else {
+				setPalColor(d, a, b, c);	/* index, r, g, b */
+			}
 		}
 		break;
 	case 5:		// SO_ROOM_SHAKE_ON
@@ -2984,6 +3038,12 @@ void ScummEngine_v5::decodeParseString() {
 					// herself to bishop Mandible. Of all the places to put
 					// a typo...
 					printString(textSlot, (const byte *)"I am Chaos.");
+				} else if (_game.id == GID_LOOM && _game.version == 4 && _roomResource == 90 &&
+						vm.slot[_currentScript].number == 203 && _string[textSlot].color == 0x0F && _enableEnhancements) {
+					// WORKAROUND: When Mandible speaks with Goodmold, his second
+					// speech line is missing its color parameter.
+					_string[textSlot].color = 0x0A;
+					printString(textSlot, _scriptPointer);
 				} else if (_game.id == GID_INDY4 && _roomResource == 23 && vm.slot[_currentScript].number == 167 &&
 						len == 24 && 0==memcmp(_scriptPointer+16, "pregod", 6)) {
 					// WORKAROUND for bug #2961.

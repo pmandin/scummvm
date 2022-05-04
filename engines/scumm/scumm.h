@@ -94,6 +94,7 @@ class ScummEngine;
 class ScummDebugger;
 class Sound;
 class Localizer;
+class GlyphRenderer_v7;
 
 struct Box;
 struct BoxCoords;
@@ -621,6 +622,8 @@ protected:
 	int pop();
 	virtual int readVar(uint var);
 	virtual void writeVar(uint var, int value);
+	// SCUMM 1/2
+	virtual void resetSentence() {}
 
 protected:
 	void beginCutscene(int *args);
@@ -1217,6 +1220,8 @@ private:
 	Common::HashMap<byte, TranslationRoom> _roomIndex;
 
 	const byte *searchTranslatedLine(const byte *text, const TranslationRange &range, bool useIndex);
+
+	virtual void createTextRenderer(GlyphRenderer_v7 *gr) {}
 
 public:
 

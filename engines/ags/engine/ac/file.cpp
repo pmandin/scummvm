@@ -121,7 +121,7 @@ static bool File_ReadRawLineImpl(sc_File *fil, char *buffer, size_t buf_len) {
 	if (buf_len == 0) return false;
 	Stream *in = get_valid_file_stream_from_handle(fil->handle, "File.ReadRawLine");
 	for (size_t i = 0; i < buf_len - 1; ++i) {
-		char c = in->ReadByte();
+		int c = in->ReadByte();
 		if (c < 0 || c == '\n') // EOF or LF
 		{
 			buffer[i] = 0;
@@ -312,20 +312,29 @@ FSLocation GetGameUserDataDir() {
 }
 
 bool ResolveScriptPath(const String &orig_sc_path, bool read_only, ResolvedPath &rp) {
-	debugC(::AGS::kDebugFilePath, "ResolveScriptPath(%s)", orig_sc_path.GetCStr());
 	rp = ResolvedPath();
 
-	if (!Path::IsRelativePath(orig_sc_path)) {
-		if (!read_only) {
-			debug_script_warn("Attempt to access file '%s' denied (cannot write to absolute path)", orig_sc_path.GetCStr());
-			return false;
-		}
+	// Make sure that the file path has system-compatible form
+	String sc_path = orig_sc_path;
+	sc_path.Replace('\\', '/');
 
-		rp = ResolvedPath(orig_sc_path);
+	// File tokens (they must be the only thing in script path)
+	if (sc_path.Compare(UserConfigFileToken) == 0) {
+		auto loc = GetGameUserConfigDir();
+		rp = ResolvedPath(loc, DefaultConfigFileName);
 		return true;
 	}
 
-	String sc_path = orig_sc_path;
+	// Test absolute paths
+	if (!Path::IsRelativePath(sc_path)) {
+		if (!read_only) {
+			debug_script_warn("Attempt to access file '%s' denied (cannot write to absolute path)", sc_path.GetCStr());
+			return false;
+		}
+		rp = ResolvedPath(sc_path);
+		return true;
+	}
+
 	if (sc_path.CompareLeft(GameAssetToken, strlen(GameAssetToken)) == 0) {
 		if (!read_only) {
 			debug_script_warn("Attempt to access file '%s' denied (cannot write to game assets)", orig_sc_path.GetCStr());
@@ -450,7 +459,7 @@ static int ags_pf_getc(void *userdata) {
 	return -1;
 }
 
-static int ags_pf_ungetc(int c, void *userdata) {
+static int ags_pf_ungetc(int /*c*/, void * /*userdata*/) {
 	return -1; // we do not want to support this
 }
 
@@ -464,15 +473,15 @@ static long ags_pf_fread(void *p, long n, void *userdata) {
 	return -1;
 }
 
-static int ags_pf_putc(int c, void *userdata) {
+static int ags_pf_putc(int /*c*/, void * /*userdata*/) {
 	return -1;  // don't support write
 }
 
-static long ags_pf_fwrite(AL_CONST void *p, long n, void *userdata) {
+static long ags_pf_fwrite(AL_CONST void * /*p*/, long /*n*/, void * /*userdata*/) {
 	return -1; // don't support write
 }
 
-static int ags_pf_fseek(void *userdata, int offset) {
+static int ags_pf_fseek(void * /*userdata*/, int /*offset*/) {
 	return -1; // don't support seek
 }
 
@@ -500,22 +509,22 @@ static PACKFILE_VTABLE ags_packfile_vtable = {
 
 PACKFILE *PackfileFromAsset(const AssetPath &path) {
 	Stream *asset_stream = _GP(AssetMgr)->OpenAsset(path);
+	if (!asset_stream) return nullptr;
 	const size_t asset_size = asset_stream->GetLength();
-	if (asset_stream && asset_size > 0) {
-		AGS_PACKFILE_OBJ *obj = new AGS_PACKFILE_OBJ;
-		obj->stream.reset(asset_stream);
-		obj->asset_size = asset_size;
-		obj->remains = asset_size;
-		return pack_fopen_vtable(&ags_packfile_vtable, obj);
-	}
-	return nullptr;
+	if (asset_size == 0) return nullptr;
+	AGS_PACKFILE_OBJ *obj = new AGS_PACKFILE_OBJ;
+	obj->stream.reset(asset_stream);
+	obj->asset_size = asset_size;
+	obj->remains = asset_size;
+	return pack_fopen_vtable(&ags_packfile_vtable, obj);
 }
 
 String find_assetlib(const String &filename) {
 	String libname = File::FindFileCI(_GP(ResPaths).DataDir, filename);
 	if (AssetManager::IsDataFile(libname))
 		return libname;
-	if (Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).DataDir2) != 0) {
+	if (!_GP(ResPaths).DataDir2.IsEmpty() &&
+		Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).DataDir2) != 0) {
 		// Hack for running in Debugger
 		libname = File::FindFileCI(_GP(ResPaths).DataDir2, filename);
 		if (AssetManager::IsDataFile(libname))
@@ -524,7 +533,8 @@ String find_assetlib(const String &filename) {
 	return "";
 }
 
-AssetPath get_audio_clip_assetpath(int bundling_type, const String &filename) {
+AssetPath get_audio_clip_assetpath(int /*bundling_type*/, const String &filename) {
+	// NOTE: bundling_type is ignored now
 	return AssetPath(filename, "audio");
 }
 

@@ -154,9 +154,9 @@ SCENE_STRUC* parseV3Scene(const byte *pStruc) {
 }
 
 const SCENE_STRUC *GetSceneStruc(const byte *pStruc) {
-	if (TinselVersion == TINSEL_V2)
+	if (TinselVersion == 2)
 		return (const SCENE_STRUC *)pStruc;
-	else if (TinselVersion == TINSEL_V3)
+	else if (TinselVersion == 3)
 		return parseV3Scene(pStruc);
 
 	// Copy appropriate fields into tempStruc, and return a pointer to it
@@ -190,9 +190,9 @@ static void SceneTinselProcess(CORO_PARAM, const void *param) {
 	CORO_BEGIN_CODE(_ctx);
 
 	// The following myEscape value setting is used for enabling title screen skipping in DW1
-	if (TinselV1 && (g_sceneCtr == 1)) g_initialMyEscape = GetEscEvents();
+	if ((TinselVersion == 1) && (g_sceneCtr == 1)) g_initialMyEscape = GetEscEvents();
 	// DW1 PSX, Saturn and Mac has its own scene skipping script code for scenes 2 and 3 (bug #6094).
-	_ctx->myEscape = (TinselV1 && (g_sceneCtr < ((TinselV1PSX || TinselV1Saturn || TinselV1Mac) ? 2 : 4))) ? g_initialMyEscape : 0;
+	_ctx->myEscape = ((TinselVersion == 1) && (g_sceneCtr < ((TinselV1PSX || TinselV1Saturn || TinselV1Mac) ? 2 : 4))) ? g_initialMyEscape : 0;
 
 	// get the stuff copied to process when it was created
 	_ctx->pInit = (const TP_INIT *)param;
@@ -201,7 +201,7 @@ static void SceneTinselProcess(CORO_PARAM, const void *param) {
 
 	_ctx->pic = InitInterpretContext(GS_SCENE,
 		FROM_32(_ctx->pInit->hTinselCode),
-		TinselV2 ? _ctx->pInit->event : NOEVENT,
+		(TinselVersion >= 2) ? _ctx->pInit->event : NOEVENT,
 		NOPOLY,			// No polygon
 		0,				// No actor
 		NULL,			// No object
@@ -252,7 +252,7 @@ static void LoadScene(SCNHANDLE scene, int entry) {
 	_vm->_handle->LockMem(g_SceneHandle); // Make sure scene is loaded
 	_vm->_handle->LockScene(g_SceneHandle); // Prevent current scene from being discarded
 
-	if (TinselV2) {
+	if (TinselVersion >= 2) {
 		// CdPlay() stuff
 		byte *cptr = FindChunk(scene, CHUNK_CDPLAY_FILENUM);
 		assert(cptr);
@@ -267,7 +267,7 @@ static void LoadScene(SCNHANDLE scene, int entry) {
 	ss = GetSceneStruc(FindChunk(scene, CHUNK_SCENE));
 	assert(ss != NULL);
 
-	if (TinselV2) {
+	if (TinselVersion >= 2) {
 		// Music stuff
 		char *cptr = (char *)FindChunk(scene, CHUNK_MUSIC_FILENAME);
 		assert(cptr);
@@ -283,7 +283,7 @@ static void LoadScene(SCNHANDLE scene, int entry) {
 		// Initialize the actors for this scene
 		_vm->_actor->StartTaggedActors(FROM_32(ss->hTaggedActor), FROM_32(ss->numTaggedActor), false);
 
-		if (TinselV2)
+		if (TinselVersion >= 2)
 			// Returning from cutscene
 			SendSceneTinselProcess(RESTORE);
 
@@ -310,7 +310,7 @@ static void LoadScene(SCNHANDLE scene, int entry) {
 			}
 
 			// Move to next entrance
-			if (TinselV2)
+			if (TinselVersion >= 2)
 				++es;
 			else
 				es = (const ENTRANCE_STRUC *)((const byte *)es + 8);
@@ -356,7 +356,7 @@ void EndScene() {
 	FreeAllTokens();	// No-one has tokens
 	FreeMostInterpretContexts();	// Only master script still interpreting
 
-	if (TinselV2) {
+	if (TinselVersion >= 2) {
 		SetSysVar(ISV_DIVERT_ACTOR, 0);
 		SetSysVar(ISV_GHOST_ACTOR, 0);
 		SetSysVar(SV_MinimumXoffset, 0);
@@ -389,7 +389,7 @@ void PrimeScene() {
 	SetSysVar(SYS_SceneFxDimFactor, SysVar(SYS_DefaultFxDimFactor));
 
 	_vm->_cursor->RestartCursor(); // Restart the cursor
-	if (!TinselV2)
+	if (TinselVersion <= 1)
 		EnableTags();		// Next scene with tags enabled
 
 	CoroScheduler.createProcess(PID_SCROLL, ScrollProcess, NULL, 0);
@@ -414,7 +414,7 @@ void PrimeScene() {
 void StartNewScene(SCNHANDLE scene, int entry) {
 	EndScene();	// Wrap up the last scene.
 
-	if (TinselV2) {
+	if (TinselVersion >= 2) {
 		TouchMoverReels();
 
 		_vm->_handle->LockMem(scene); // Do CD change before PrimeScene
@@ -458,7 +458,7 @@ void DoHailScene(SCNHANDLE scene) {
 		init.event = NOEVENT;
 		init.hTinselCode = ss->hSceneScript;
 
-		CoroScheduler.createProcess(PID_TCODE, SceneTinselProcess, &init, sizeof(init));
+		CoroScheduler.createProcess(PID_SCENE, SceneTinselProcess, &init, sizeof(init));
 	}
 }
 

@@ -183,7 +183,7 @@ static String find_game_data_in_config(const String &path) {
 	ConfigTree cfg;
 	String def_cfg_file = Path::ConcatPaths(path, DefaultConfigFileName);
 	if (IniUtil::Read(def_cfg_file, cfg)) {
-		String data_file = INIreadstring(cfg, "misc", "datafile");
+		String data_file = CfgReadString(cfg, "misc", "datafile");
 		Debug::Printf("Found game config: %s", def_cfg_file.GetCStr());
 		Debug::Printf(" Cfg: data file: %s", data_file.GetCStr());
 		// Only accept if it's a relative path
@@ -284,7 +284,8 @@ void engine_locate_audio_pak() {
 			_G(platform)->DisplayAlert("Unable to initialize digital audio pack '%s', file could be corrupt or of unsupported format.",
 				music_file.GetCStr());
 		}
-	} else if (Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).AudioDir2) != 0) {
+	} else if (!_GP(ResPaths).AudioDir2.IsEmpty() &&
+			Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).AudioDir2) != 0) {
 		Debug::Printf(kDbgMsg_Info, "Audio pack was not found, but explicit audio directory is defined.");
 	}
 }
@@ -325,18 +326,22 @@ void engine_init_timer() {
 
 void engine_init_audio() {
 #if !AGS_PLATFORM_SCUMMVM
-	if (_GP(usetup).audio_backend != 0) {
+	if (usetup.audio_backend != 0) {
 		Debug::Printf("Initializing audio");
-		audio_core_init(); // audio core system
+		try {
+			audio_core_init(); // audio core system
+		} catch (std::runtime_error ex) {
+			Debug::Printf(kDbgMsg_Error, "Failed to initialize audio: %s", ex.what());
+			usetup.audio_backend = 0;
+		}
 	}
 #endif
 
-	_G(our_eip) = -181;
-
-	if (_GP(usetup).audio_backend == 0) {
+	if (!_GP(usetup).audio_enabled) {
 		// all audio is disabled
 		_GP(play).voice_avail = false;
 		_GP(play).separate_music_lib = false;
+		Debug::Printf(kDbgMsg_Info, "Audio is disabled");
 	}
 }
 
@@ -375,22 +380,6 @@ int engine_load_game_data() {
 		display_game_file_error(err);
 		return EXIT_ERROR;
 	}
-	return 0;
-}
-
-int engine_check_register_game() {
-	if (_G(justRegisterGame)) {
-		_G(platform)->RegisterGameWithGameExplorer();
-		_G(proper_exit) = 1;
-		return EXIT_NORMAL;
-	}
-
-	if (_G(justUnRegisterGame)) {
-		_G(platform)->UnRegisterGameWithGameExplorer();
-		_G(proper_exit) = 1;
-		return EXIT_NORMAL;
-	}
-
 	return 0;
 }
 
@@ -539,7 +528,10 @@ void engine_init_game_settings() {
 	Debug::Printf("Initialize game settings");
 
 	// Setup a text encoding mode depending on the game data hint
-	set_uformat(U_ASCII);
+	if (_GP(game).options[OPT_GAMETEXTENCODING] == 65001) // utf-8 codepage number
+		set_uformat(U_UTF8);
+	else
+		set_uformat(U_ASCII);
 
 	int ee;
 
@@ -752,8 +744,10 @@ void engine_init_game_settings() {
 	_GP(play).game_speed_modifier = 0;
 	if (_G(debug_flags) & DBG_DEBUGMODE)
 		_GP(play).debug_mode = 1;
-	_G(gui_disabled_style) = convert_gui_disabled_style(_GP(game).options[OPT_DISABLEOFF]);
 	_GP(play).shake_screen_yoff = 0;
+
+	GUI::Options.DisabledStyle = static_cast<GuiDisableStyle>(_GP(game).options[OPT_DISABLEOFF]);
+	GUI::Options.ClipControls = _GP(game).options[OPT_CLIPGUICONTROLS] != 0;
 
 	memset(&_GP(play).walkable_areas_on[0], 1, MAX_WALK_AREAS + 1);
 	memset(&_GP(play).script_timers[0], 0, MAX_TIMERS * sizeof(int));
@@ -935,9 +929,9 @@ void engine_read_config(ConfigTree &cfg) {
 	// Handle directive to search for the user config inside the custom directory;
 		// this option may come either from command line or default/global config.
 	if (_GP(usetup).user_conf_dir.IsEmpty())
-		_GP(usetup).user_conf_dir = INIreadstring(cfg, "misc", "user_conf_dir");
+		_GP(usetup).user_conf_dir = CfgReadString(cfg, "misc", "user_conf_dir");
 	if (_GP(usetup).user_conf_dir.IsEmpty()) // also try deprecated option
-		_GP(usetup).user_conf_dir = INIreadint(cfg, "misc", "localuserconf") != 0 ? "." : "";
+		_GP(usetup).user_conf_dir = CfgReadBoolInt(cfg, "misc", "localuserconf") ? "." : "";
 	// Test if the file is writeable, if it is then both engine and setup
 	// applications may actually use it fully as a user config, otherwise
 	// fallback to default behavior.
@@ -955,7 +949,7 @@ void engine_read_config(ConfigTree &cfg) {
 
 	// Handle directive to search for the user config inside the game directory;
 	// this option may come either from command line or default/global config.
-	_GP(usetup).local_user_conf |= INIreadint(cfg, "misc", "localuserconf", 0) != 0;
+	_GP(usetup).local_user_conf |= CfgReadInt(cfg, "misc", "localuserconf", 0) != 0;
 	if (_GP(usetup).local_user_conf) { // Test if the file is writeable, if it is then both engine and setup
 	  // applications may actually use it fully as a user config, otherwise
 	  // fallback to default behavior.
@@ -1152,10 +1146,6 @@ int initialize_engine(const ConfigTree &startup_opts) {
 	if (res != 0)
 		return res;
 
-	res = engine_check_register_game();
-	if (res != 0)
-		return res;
-
 	_G(our_eip) = -189;
 
 	res = engine_check_disk_space();
@@ -1172,6 +1162,8 @@ int initialize_engine(const ConfigTree &startup_opts) {
 	_G(our_eip) = -179;
 
 	engine_init_resolution_settings(_GP(game).GetGameRes());
+
+	engine_adjust_for_rotation_settings();
 
 	// Attempt to initialize graphics mode
 	if (!engine_try_set_gfxmode_any(_GP(usetup).Screen))
@@ -1204,13 +1196,17 @@ int initialize_engine(const ConfigTree &startup_opts) {
 bool engine_try_set_gfxmode_any(const DisplayModeSetup &setup) {
 	engine_shutdown_gfxmode();
 
-	const Size init_desktop = get_desktop_size();
-	if (!graphics_mode_init_any(GraphicResolution(_GP(game).GetGameRes(), _GP(game).color_depth * 8),
-		setup, ColorDepthOption(_GP(game).GetColorDepth())))
-		return false;
+	sys_renderer_set_output(_GP(usetup).software_render_driver);
 
-	engine_post_gfxmode_setup(init_desktop);
-	return true;
+	const Size init_desktop = get_desktop_size();
+	bool res = graphics_mode_init_any(GraphicResolution(_GP(game).GetGameRes(), _GP(game).color_depth * 8),
+		setup, ColorDepthOption(_GP(game).GetColorDepth()));
+
+	if (res)
+		engine_post_gfxmode_setup(init_desktop);
+	// Make sure that we don't receive window events queued during init
+	sys_flush_events();
+	return res;
 }
 
 bool engine_try_switch_windowed_gfxmode() {
@@ -1259,7 +1255,9 @@ bool engine_try_switch_windowed_gfxmode() {
 			init_desktop = get_desktop_size();
 		engine_post_gfxmode_setup(init_desktop);
 	}
-	ags_clear_input_state();
+
+	// Make sure that we don't receive window events queued during init
+	sys_flush_events();
 	return res;
 }
 

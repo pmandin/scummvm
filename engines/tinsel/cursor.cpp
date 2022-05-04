@@ -321,15 +321,19 @@ void Cursor::SetAuxCursor(SCNHANDLE hFilm) {
 
 	DelAuxCursor();		// Get rid of previous
 
-	// WORKAROUND: There's no palette when loading a DW1 savegame with a held item, so exit if so
-	if (!_vm->_bg->BgPal())
-		return;
+	// Noir does not use palettes
+	if (TinselVersion < 3) {
+		// WORKAROUND: There's no palette when loading a DW1 savegame with a held item, so exit if so
+		if (!_vm->_bg->BgPal())
+			return;
+
+		assert(_vm->_bg->BgPal()); // no background palette
+		PokeInPalette(pmi);
+	}
 
 	GetCursorXY(&x, &y, false);	// Note: also waits for cursor to appear
 
 	pim = _vm->_handle->GetImage(READ_32(pFrame)); // Get pointer to auxillary cursor's image
-	assert(_vm->_bg->BgPal()); // no background palette
-	PokeInPalette(pmi);
 
 	_auxCursorOffsetX = (short)(pim->imgWidth / 2 - ((int16) pim->anioffX));
 	_auxCursorOffsetY = (short)((pim->imgHeight & ~C16_FLAG_MASK) / 2 -
@@ -428,11 +432,11 @@ void Cursor::InitCurObj() {
 	const FREEL *pfr = (const FREEL *)&pFilm->reels[0];
 	const MULTI_INIT *pmi = (MULTI_INIT *)_vm->_handle->LockMem(FROM_32(pfr->mobj));
 
-	if (!TinselV3) {
+	if (TinselVersion != 3) {
 		PokeInPalette(pmi);
 	}
 
-	if (!TinselV2)
+	if (TinselVersion <= 1)
 		_auxCursor = nullptr; // No auxillary cursor
 
 	_mainCursor = MultiInitObject(pmi);
@@ -475,7 +479,7 @@ void Cursor::DwInitCursor(SCNHANDLE bfilm) {
  * DropCursor is called when a scene is closing down.
  */
 void Cursor::DropCursor() {
-	if (TinselV2) {
+	if (TinselVersion >= 2) {
 		if (_auxCursor)
 			MultiDeleteObject(_vm->_bg->GetPlayfieldList(FIELD_STATUS), _auxCursor);
 		if (_mainCursor)
@@ -588,7 +592,7 @@ void CursorStoppedCheck(CORO_PARAM) {
 bool CanInitializeCursor() {
 	if (!_vm->_cursor->HasReelData()) {
 		return false;
-	} else if (TinselVersion != TINSEL_V3) {
+	} else if (TinselVersion != 3) {
 		return (_vm->_bg->BgPal() != 0);
 	}
 	return true;

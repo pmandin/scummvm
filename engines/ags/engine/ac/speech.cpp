@@ -113,7 +113,8 @@ bool init_voicepak(const String &name) {
 	}
 
 	String speech_subdir = "";
-	if (!_GP(ResPaths).VoiceDir2.IsEmpty() && Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).VoiceDir2) != 0) {
+	if (!_GP(ResPaths).VoiceDir2.IsEmpty() &&
+			!_GP(ResPaths).VoiceDir2.IsEmpty() && Path::ComparePaths(_GP(ResPaths).DataDir, _GP(ResPaths).VoiceDir2) != 0) {
 		// If we have custom voice directory set, we will enable voice-over even if speech.vox does not exist
 		speech_subdir = name.IsEmpty() ? _GP(ResPaths).VoiceDir2 : Path::ConcatPaths(_GP(ResPaths).VoiceDir2, name);
 		if (File::IsDirectory(speech_subdir)) {
@@ -265,7 +266,7 @@ RuntimeScriptValue Sc_Speech_GetPortraitOverlay(const RuntimeScriptValue *params
 
 extern RuntimeScriptValue Sc_SetVoiceMode(const RuntimeScriptValue *params, int32_t param_count);
 
-void RegisterSpeechAPI(ScriptAPIVersion base_api, ScriptAPIVersion compat_api) {
+void RegisterSpeechAPI(ScriptAPIVersion base_api, ScriptAPIVersion /*compat_api*/) {
 	ccAddExternalStaticFunction("Speech::get_AnimationStopTimeMargin", Sc_Speech_GetAnimationStopTimeMargin);
 	ccAddExternalStaticFunction("Speech::set_AnimationStopTimeMargin", Sc_Speech_SetAnimationStopTimeMargin);
 	ccAddExternalStaticFunction("Speech::get_CustomPortraitPlacement", Sc_Speech_GetCustomPortraitPlacement);

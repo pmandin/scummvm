@@ -80,20 +80,6 @@ struct CurBlk {
 	byte **sprite = nullptr;
 };
 
-struct CurAni {
-	uint8 _start = 0;
-	uint8 _end = 0;
-	int16 _delay = 0;
-};
-
-struct ChunkHead {
-	uint32 size = 0;
-	uint16 type = 0;
-
-	bool load(Common::SeekableReadStream *src);
-	static constexpr int SIZE() { return 6; }
-};
-
 struct CustomInfo {
 	byte *TempArea = 0;
 };

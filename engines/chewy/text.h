@@ -40,8 +40,8 @@ enum MaxTextTypes {
 	kADSTextMax = 500, //   0 - 499
 	kATSTextMax = 100, // 500 - 599
 	kAADTextMax = 100, // 600 - 699
-	kINVTextMax = 100, // 700 - 799
-	kUSETextMax = 100  // 800 - 899
+	kINVTextMax = 140, // 700 - 849
+	kUSETextMax =  60  // 850 - 899
 };
 
 /**
@@ -81,13 +81,20 @@ public:
 	* - auto dialog (AAD) - 600 - 699
 	* - inventory text (INV) - 700 - 799
 	* - use text (USE) - 800 - 899
+	*
+	* A chunk can contain multiple subchunks with
+	* the same entry IDs per subchunk:
+	* 0 - name, 1 - look, 2 - use, 3 - walk, 4 - talk
 	*/
-	TextEntry *getText(uint chunk, uint entry, int type);
-	Common::StringArray getTextArray(uint chunk, uint entry, int type);
-	Common::String getTextEntry(uint chunk, uint entry, int type);
+	TextEntry *getText(uint chunk, uint entry, int type, int subEntry = -1);
+	Common::StringArray getTextArray(uint chunk, uint entry, int type, int subEntry = -1);
+	Common::String getTextEntry(uint chunk, uint entry, int type, int subEntry = -1);
+	int16 getLastSpeechId() { return _lastSpeechId; }
 
-	void crypt(char *txt, uint32 size);
 	const char *strPos(const char *txtAdr, int16 pos);
+
+private:
+	int16 _lastSpeechId = -1;
 };
 
 } // namespace Chewy

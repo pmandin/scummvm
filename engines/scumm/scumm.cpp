@@ -42,7 +42,6 @@
 #include "scumm/file_nes.h"
 #include "scumm/imuse/imuse.h"
 #include "scumm/imuse_digi/dimuse_engine.h"
-#include "scumm/smush/smush_mixer.h"
 #include "scumm/smush/smush_player.h"
 #include "scumm/players/player_towns.h"
 #include "scumm/insane/insane.h"
@@ -71,6 +70,7 @@
 #include "scumm/scumm_v0.h"
 #include "scumm/scumm_v8.h"
 #include "scumm/sound.h"
+#include "scumm/string_v7.h"
 #include "scumm/imuse/sysex.h"
 #include "scumm/he/localizer.h"
 #include "scumm/he/sprite_he.h"
@@ -838,10 +838,6 @@ ScummEngine_v6::ScummEngine_v6(OSystem *syst, const DetectorResult &dr)
 	for (uint i = 0; i < ARRAYSIZE(_blastObjectQueue); i++) {
 		_blastObjectQueue[i].clear();
 	}
-	_blastTextQueuePos = 0;
-	for (uint i = 0; i < ARRAYSIZE(_blastTextQueue); i++) {
-		_blastTextQueue[i].clear();
-	}
 
 	memset(_akosQueue, 0, sizeof(_akosQueue));
 	_akosQueuePos = 0;
@@ -1061,6 +1057,10 @@ void ScummEngine_vCUPhe::parseEvents() {
 #ifdef ENABLE_SCUMM_7_8
 ScummEngine_v7::ScummEngine_v7(OSystem *syst, const DetectorResult &dr)
 	: ScummEngine_v6(syst, dr) {
+	_blastTextQueuePos = 0;
+	for (uint i = 0; i < ARRAYSIZE(_blastTextQueue); i++) {
+		_blastTextQueue[i].clear();
+	}
 	_verbLineSpacing = 10;
 
 	_smushFrameRate = 0;
@@ -1074,20 +1074,22 @@ ScummEngine_v7::ScummEngine_v7(OSystem *syst, const DetectorResult &dr)
 	_languageIndex = NULL;
 	clearSubtitleQueue();
 
+	_textV7 = NULL;
+	_newTextRenderStyle = (_game.version == 8 || _language == Common::JA_JPN || _language == Common::KO_KOR || _language == Common::ZH_TWN);
+	_defaultTextClipRect = Common::Rect(_screenWidth, _screenHeight);
+	_wrappedTextClipRect = _newTextRenderStyle ? Common::Rect(10, 10, _screenWidth - 10, _screenHeight - 10)  : Common::Rect(_screenWidth, _screenHeight);
+
 	_game.features |= GF_NEW_COSTUMES;
 }
 
 ScummEngine_v7::~ScummEngine_v7() {
-	if (_smixer) {
-		_smixer->stop();
-		delete _smixer;
-	}
 	if (_splayer) {
 		_splayer->release();
 		delete _splayer;
 	}
 
 	delete _insane;
+	delete _textV7;
 
 	free(_languageBuffer);
 	free(_languageIndex);
@@ -1688,11 +1690,9 @@ void ScummEngine_v7::setupScumm(const Common::String &macResourceFile) {
 	if (_game.id == GID_FT)
 		_insane = new Insane(this);
 	else
-		_insane = 0;
+		_insane = nullptr;
 
-	_smixer = new SmushMixer(_mixer);
-
-	_splayer = new SmushPlayer(this, _imuseDigital);
+	_splayer = new SmushPlayer(this, _imuseDigital, _insane);
 }
 #endif
 
@@ -1715,8 +1715,14 @@ void ScummEngine::setupCharsetRenderer(const Common::String &macFontFile) {
 		else
 			_charset = new CharsetRendererV3(this);
 #ifdef ENABLE_SCUMM_7_8
+	} else if (_game.version == 7) {
+		CharsetRendererV7 *c7 = new CharsetRendererV7(this);
+		_charset = c7;
+		createTextRenderer(c7);
 	} else if (_game.version == 8) {
-		_charset = new CharsetRendererNut(this);
+		CharsetRendererNut *c8 = new CharsetRendererNut(this);
+		_charset = c8;
+		createTextRenderer(c8);
 #endif
 	} else {
 #ifdef USE_RGB_COLOR
@@ -2908,9 +2914,8 @@ void ScummEngine_v7::scummLoop_handleSound() {
 		_imuseDigital->refreshScripts();
 	}
 
-	if (_smixer) {
-		_smixer->flush();
-	}
+	_splayer->setChanFlag(0, VAR(VAR_VOICE_MODE) != 0);
+	_splayer->setChanFlag(2, VAR(VAR_VOICE_MODE) != 2);
 }
 #endif
 
@@ -2969,7 +2974,6 @@ void ScummEngine::restart() {
 	// a save state right after startup ... to this end we could introduce a SaveFile
 	// subclass which is implemented using a memory buffer (i.e. no actual file is
 	// created). Then to restart we just have to load that pseudo save state.
-
 
 	int i;
 

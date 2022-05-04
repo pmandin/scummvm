@@ -284,22 +284,25 @@ int ccInstance::CallScriptFunction(const char *funcname, int32_t numargs, const 
 	int32_t startat = -1;
 	int k;
 	char mangledName[200];
-	sprintf(mangledName, "%s$", funcname);
+	size_t mangled_len = snprintf(mangledName, sizeof(mangledName), "%s$", funcname);
+	int32_t export_args = 0;
 
 	for (k = 0; k < instanceof->numexports; k++) {
 		char *thisExportName = instanceof->exports[k];
 		int match = 0;
 
 		// check for a mangled name match
-		if (strncmp(thisExportName, mangledName, strlen(mangledName)) == 0) {
+		if (strncmp(thisExportName, mangledName, mangled_len) == 0) {
 			// found, compare the number of parameters
-			char *numParams = thisExportName + strlen(mangledName);
-			if (atoi(numParams) != numargs) {
-				cc_error("wrong number of parameters to exported function '%s' (expected %d, supplied %d)", funcname, atoi(numParams), numargs);
+			export_args = atoi(thisExportName + mangled_len);
+			if (export_args > numargs) {
+				cc_error("wrong number of parameters to exported function '%s' (expected %d, supplied %d)",
+					funcname, export_args, numargs);
 				return -1;
 			}
 			match = 1;
 		}
+
 		// check for an exact match (if the script was compiled with
 		// an older version)
 		if ((match == 1) || (strcmp(thisExportName, funcname) == 0)) {
@@ -317,6 +320,9 @@ int ccInstance::CallScriptFunction(const char *funcname, int32_t numargs, const 
 		cc_error("function '%s' not found", funcname);
 		return -2;
 	}
+
+	// Allow to pass less parameters if script callback has less declared args
+	numargs = std::min(numargs, export_args);
 
 	//numargs++;                    // account for return address
 	flags &= ~INSTF_ABORTED;
@@ -477,7 +483,7 @@ int ccInstance::Run(int32_t curpc) {
 					codeOp.Args[i].SetStringLiteral(&codeInst->strings[0] + codeInst->code[pc_at]);
 					break;
 				case FIXUP_IMPORT: {
-					const ScriptImport *import = _GP(simp).getByIndex((int32_t)codeInst->code[pc_at]);
+					const ScriptImport *import = _GP(simp).getByIndex(static_cast<uint32_t>(codeInst->code[pc_at]));
 					if (import) {
 						codeOp.Args[i] = import->Value;
 					} else {
@@ -688,7 +694,7 @@ int ccInstance::Run(int32_t curpc) {
 			reg1 = !(reg1);
 			break;
 		case SCMD_CALL:
-			// CallScriptFunction another function within same script, just save PC
+			// Call another function within same script, just save PC
 			// and continue from there
 			if (curnest >= MAXNEST - 1) {
 				cc_error("!call stack overflow, recursive call problem?");
@@ -914,7 +920,7 @@ int ccInstance::Run(int32_t curpc) {
 		case SCMD_CALLAS: {
 			PUSH_CALL_STACK;
 
-			// CallScriptFunction to a function in another script
+			// Call to a function in another script
 
 			// If there are nested CALLAS calls, the stack might
 			// contain 2 calls worth of parameters, so only
@@ -971,7 +977,7 @@ int ccInstance::Run(int32_t curpc) {
 			break;
 		}
 		case SCMD_CALLEXT: {
-			// CallScriptFunction to a real 'C' code function
+			// Call to a real 'C' code function
 			was_just_callas = -1;
 			if (num_args_to_func < 0) {
 				num_args_to_func = func_callstack.Count;
@@ -1234,7 +1240,7 @@ void ccInstance::GetScriptPosition(ScriptPosition &script_pos) {
 RuntimeScriptValue ccInstance::GetSymbolAddress(const char *symname) {
 	int k;
 	char altName[200];
-	sprintf(altName, "%s$", symname);
+	snprintf(altName, sizeof(altName), "%s$", symname);
 	RuntimeScriptValue rval_null;
 
 	for (k = 0; k < instanceof->numexports; k++) {
@@ -1494,16 +1500,16 @@ bool ccInstance::ResolveScriptImports(const ccScript *scri) {
 		return true;
 	}
 
-	resolved_imports = new int[numimports];
-	int errors = 0, last_err_idx;
+	resolved_imports = new uint32_t[numimports];
+	size_t errors = 0, last_err_idx = 0;
 	for (int import_idx = 0; import_idx < scri->numimports; ++import_idx) {
 		if (scri->imports[import_idx] == nullptr) {
-			resolved_imports[import_idx] = -1;
+			resolved_imports[import_idx] = UINT32_MAX;
 			continue;
 		}
 
 		resolved_imports[import_idx] = _GP(simp).get_index_of(scri->imports[import_idx]);
-		if (resolved_imports[import_idx] < 0) {
+		if (resolved_imports[import_idx] == UINT32_MAX) {
 			Debug::Printf(kDbgMsg_Error, "unresolved import '%s' in '%s'", scri->imports[import_idx], scri->numSections > 0 ? scri->sectionNames[0] : "<unknown>");
 			errors++;
 			last_err_idx = import_idx;
@@ -1620,7 +1626,7 @@ static void cc_error_fixups(const ccScript *scri, size_t pc, const char *fmt, ..
 	String displbuf = String::FromFormatV(fmt, ap);
 	va_end(ap);
 	const char *scname = scri->numSections > 0 ? scri->sectionNames[0] : "?";
-	if (pc == (size_t) -1) {
+	if (pc == SIZE_MAX) {
 		cc_error("in script %s: %s", scname, displbuf.GetCStr());
 	} else {
 		int line = DetermineScriptLine(scri->code, scri->codesize, pc);
@@ -1654,7 +1660,7 @@ bool ccInstance::CreateRuntimeCodeFixups(const ccScript *scri) {
 		case FIXUP_IMPORT:
 			break; // do nothing yet
 		default:
-			cc_error_fixups(scri, (size_t)-1, "unknown fixup type: %d (fixup num %d)", scri->fixuptypes[i], i);
+			cc_error_fixups(scri, UINT32_MAX, "unknown fixup type: %d (fixup num %d)", scri->fixuptypes[i], i);
 			return false;
 		}
 	}
@@ -1667,8 +1673,8 @@ bool ccInstance::ResolveImportFixups(const ccScript *scri) {
 		if (scri->fixuptypes[fixup_idx] != FIXUP_IMPORT)
 			continue;
 
-		int32_t const fixup = scri->fixups[fixup_idx];
-		int const import_index = resolved_imports[code[fixup]];
+		uint32_t const fixup = scri->fixups[fixup_idx];
+		uint32_t const import_index = resolved_imports[code[fixup]];
 		ScriptImport const *import = _GP(simp).getByIndex(import_index);
 		if (!import) {
 			cc_error_fixups(scri, fixup, "cannot resolve import (bytecode pos %d, key %d)", fixup, import_index);

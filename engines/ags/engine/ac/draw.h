@@ -26,12 +26,12 @@
 #include "ags/shared/core/types.h"
 #include "ags/shared/ac/common_defines.h"
 #include "ags/shared/gfx/gfx_def.h"
+#include "ags/shared/gfx/bitmap.h"
 #include "ags/shared/game/room_struct.h"
 
 namespace AGS3 {
 namespace AGS {
 namespace Shared {
-class Bitmap;
 typedef std::shared_ptr<Shared::Bitmap> PBitmap;
 } // namespace Shared
 
@@ -43,13 +43,6 @@ class IDriverDependantBitmap;
 using namespace AGS; // FIXME later
 
 #define IS_ANTIALIAS_SPRITES _GP(usetup).enable_antialiasing && (_GP(play).disable_antialiasing == 0)
-
-struct CachedActSpsData {
-	int xWas, yWas;
-	int baselineWas;
-	int isWalkBehindHere;
-	int valid;
-};
 
 /**
  * Buffer and info flags for viewport/camera pairs rendering in software mode
@@ -112,7 +105,6 @@ void invalidate_camera_frame(int index);
 void invalidate_rect(int x1, int y1, int x2, int y2, bool in_room);
 
 void mark_current_background_dirty();
-void invalidate_cached_walkbehinds();
 
 // Avoid freeing and reallocating the memory if possible
 Shared::Bitmap *recycle_bitmap(Shared::Bitmap *bimp, int coldep, int wid, int hit, bool make_transparent = false);
@@ -139,6 +131,14 @@ void draw_sprite_slot_support_alpha(Shared::Bitmap *ds, bool ds_has_alpha, int x
                                     Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha, int alpha = 0xFF);
 void draw_gui_sprite(Shared::Bitmap *ds, int pic, int x, int y, bool use_alpha = true, Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha);
 void draw_gui_sprite_v330(Shared::Bitmap *ds, int pic, int x, int y, bool use_alpha = true, Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha);
+void draw_gui_sprite(Shared::Bitmap *ds, bool use_alpha, int xpos, int ypos,
+	Shared::Bitmap *image, bool src_has_alpha, Shared::BlendMode blend_mode = Shared::kBlendMode_Alpha, int alpha = 0xFF);
+
+// Generates a transformed sprite, using src image and parameters;
+// * if transformation is necessary - writes into dst and returns dst;
+// * if no transformation is necessary - simply returns src;
+Shared::Bitmap *transform_sprite(Shared::Bitmap *src, bool src_has_alpha, Shared::Bitmap *&dst,
+	const Size dst_sz, Shared::BitmapFlip flip = Shared::kBitmap_NoFlip);
 // Render game on screen
 void render_to_screen();
 // Callbacks for the graphics driver

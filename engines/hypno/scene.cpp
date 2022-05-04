@@ -119,9 +119,10 @@ void HypnoEngine::clickedHotspot(Common::Point mousePos) {
 		}
 	}
 	if (selected.type == MakeMenu) {
-		if (isDemo())
+		if (isDemo()) {
 			_nextLevel = "sixdemo/mis/demo.mis";
-		else // TODO: remove when proper escape to main menu is implemented
+			resetSceneState();
+		} else // TODO: remove when proper escape to main menu is implemented
 			openMainMenuDialog();
 		return;
 	}
@@ -237,11 +238,12 @@ bool HypnoEngine::hoverHotspot(Common::Point mousePos) {
 }
 
 Common::String HypnoEngine::findNextLevel(const Transition *trans) { error("Function \"%s\" not implemented", __FUNCTION__); }
-Common::String HypnoEngine::findNextLevel(const Common::String &level) { error("Function \"%s\" not implemented", __FUNCTION__); }
 
 void HypnoEngine::runTransition(Transition *trans) {
 	Common::String nextLevel = findNextLevel(trans);
 	if (!trans->frameImage.empty()) {
+		// This is only used in Wetlands, and therefore, resolution should be 320x200
+		changeScreenMode("320x200");
 		debugC(1, kHypnoDebugScene, "Rendering %s frame in transaction", trans->frameImage.c_str());
 		loadImage(trans->frameImage, 0, 0, false, true, trans->frameNumber);
 		drawScreen();
@@ -255,7 +257,6 @@ void HypnoEngine::runTransition(Transition *trans) {
 void HypnoEngine::runScene(Scene *scene) {
 	_refreshConversation = false;
 	_timerStarted = false;
-	_conversation.clear();
 	Common::Event event;
 	Common::Point mousePos;
 	Common::List<uint32> videosToRemove;
@@ -366,6 +367,7 @@ void HypnoEngine::runScene(Scene *scene) {
 			_nextParallelVideoToPlay.empty() &&
 			_videosPlaying.empty()) {
 			showConversation();
+			runMenu(stack.back(), true);
 			drawScreen();
 			_refreshConversation = false;
 		}
@@ -531,11 +533,13 @@ void HypnoEngine::runScene(Scene *scene) {
 	_nextParallelVideoToPlay.clear();
 	_nextSequentialVideoToPlay.clear();
 	_escapeSequentialVideoToPlay.clear();
+	_conversation.clear();
 
 	removeTimers();
 }
 
 void HypnoEngine::showConversation() { error("Function \"%s\" not implemented", __FUNCTION__); }
+void HypnoEngine::endConversation() { error("Function \"%s\" not implemented", __FUNCTION__); }
 void HypnoEngine::rightClickedConversation(const Common::Point &mousePos) { error("Function \"%s\" not implemented", __FUNCTION__); }
 void HypnoEngine::leftClickedConversation(const Common::Point &mousePos) { error("Function \"%s\" not implemented", __FUNCTION__); }
 bool HypnoEngine::hoverConversation(const Common::Point &mousePos) { error("Function \"%s\" not implemented", __FUNCTION__); }

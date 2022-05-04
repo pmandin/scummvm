@@ -25,12 +25,14 @@
 #ifdef ENABLE_SCUMM_7_8
 
 #include "scumm/scumm_v6.h"
+#include "scumm/charset_v7.h"
 
 namespace Scumm {
 
 class Insane;
 class SmushMixer;
 class SmushPlayer;
+class TextRenderer_v7;
 
 class ScummEngine_v7 : public ScummEngine_v6 {
 	friend class SmushPlayer;
@@ -64,6 +66,11 @@ public:
 	};
 
 protected:
+	TextRenderer_v7 *_textV7;
+	Common::Rect _defaultTextClipRect;
+	Common::Rect _wrappedTextClipRect;
+	bool _newTextRenderStyle;
+
 	int _verbLineSpacing;
 	bool _existLanguageFile;
 	char *_languageBuffer;
@@ -78,10 +85,18 @@ protected:
 		byte charset;
 		byte text[256];
 		bool actorSpeechMsg;
+		bool center;
+		bool wrap;
 	};
 #else
 	struct SubtitleText : TextObject {
+		void clear() {
+			TextObject::clear();
+			actorSpeechMsg = center = wrap = false;
+		}
 		bool actorSpeechMsg;
+		bool center;
+		bool wrap;
 	};
 #endif
 
@@ -92,7 +107,7 @@ protected:
 
 public:
 	void processSubtitleQueue();
-	void addSubtitleToQueue(const byte *text, const Common::Point &pos, byte color, byte charset);
+	void addSubtitleToQueue(const byte *text, const Common::Point &pos, byte color, byte charset, bool center, bool wrap);
 	void clearSubtitleQueue();
 	void CHARSET_1() override;
 	bool isSmushActive() { return _smushActive; }
@@ -125,6 +140,10 @@ protected:
 
 	int getObjectIdFromOBIM(const byte *obim) override;
 
+	void createTextRenderer(GlyphRenderer_v7 *gr) override;
+	void enqueueText(const byte *text, int x, int y, byte color, byte charset, TextStyleFlags flags);
+	void drawBlastTexts() override;
+	void removeBlastTexts() override;
 	void actorTalk(const byte *msg) override;
 	void translateText(const byte *text, byte *trans_buff) override;
 	void loadLanguageBundle() override;
@@ -134,8 +153,20 @@ protected:
 
 	void pauseEngineIntern(bool pause) override;
 
-
 	void o6_kernelSetFunctions() override;
+
+	struct BlastText : TextObject {
+		Common::Rect rect;
+		TextStyleFlags flags;
+
+		void clear() {
+			this->TextObject::clear();
+			rect = Common::Rect();
+		}
+	};
+
+	int _blastTextQueuePos;
+	BlastText _blastTextQueue[50];
 };
 
 

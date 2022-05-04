@@ -64,6 +64,18 @@ static const char *compatFragment =
 		"#define OUTPUT out vec4 outColor;\n"
 	"#endif\n";
 
+// OGLES2 on AmigaOS doesn't support uniform booleans, let's introduce some shim
+#if defined(AMIGAOS)
+static const char *compatUniformBool =
+	"#define UBOOL mediump int\n"
+	"#define UBOOL_TEST(v) (v != 0)\n";
+#else
+static const char *compatUniformBool =
+	"#define UBOOL bool\n"
+	"#define UBOOL_TEST(v) v\n";
+#endif
+
+
 static const GLchar *readFile(const Common::String &filename) {
 	Common::File file;
 	Common::String shaderDir;
@@ -127,11 +139,12 @@ static GLuint createCompatShader(const char *shaderSource, GLenum shaderType, co
 	const GLchar *shaderSources[] = {
 		versionSource,
 		compatSource,
+		compatUniformBool,
 		shaderSource
 	};
 
 	GLuint shader = glCreateShader(shaderType);
-	glShaderSource(shader, 3, shaderSources, NULL);
+	glShaderSource(shader, 4, shaderSources, NULL);
 	glCompileShader(shader);
 
 	GLint status;
@@ -189,9 +202,9 @@ ShaderGL::ShaderGL(const Common::String &name, GLuint vertexShader, GLuint fragm
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &status);
 	if (status != GL_TRUE) {
 		GLint logSize;
-		glGetShaderiv(shaderProgram, GL_INFO_LOG_LENGTH, &logSize);
+		glGetProgramiv(shaderProgram, GL_INFO_LOG_LENGTH, &logSize);
 		GLchar *log = new GLchar[logSize];
-		glGetShaderInfoLog(shaderProgram, logSize, nullptr, log);
+		glGetProgramInfoLog(shaderProgram, logSize, nullptr, log);
 		error("Could not link shader %s: %s", name.c_str(), log);
 	}
 
@@ -256,6 +269,7 @@ void ShaderGL::use(bool forceReload) {
 			}
 		}
 	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 GLuint ShaderGL::createBuffer(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) {
@@ -263,6 +277,7 @@ GLuint ShaderGL::createBuffer(GLenum target, GLsizeiptr size, const GLvoid *data
 	glGenBuffers(1, &vbo);
 	glBindBuffer(target, vbo);
 	glBufferData(target, size, data, usage);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	return vbo;
 }
 

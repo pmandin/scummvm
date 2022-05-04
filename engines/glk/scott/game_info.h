@@ -19,13 +19,22 @@
  *
  */
 
-#include "ags/engine/ac/global_record.h"
-#include "ags/shared/ac/common.h"
+#ifndef GLK_SCOTT_GAMEINFO
+#define GLK_SCOTT_GAMEINFO
 
-namespace AGS3 {
+#include "glk/scott/definitions.h"
+#include "common/array.h"
 
-void scStartRecording(int keyToStop) {
-	quit("!StartRecording: not supported");
-}
+namespace Glk {
+namespace Scott {
 
-} // namespace AGS3
+extern GameInfo g_games[];
+extern const char *g_sysDict[];
+extern const char *g_sysDictIAm[];
+extern const char *g_sysDictZX[];
+extern const char *g_sysDictTI994A[];
+
+} // End of namespace Scott
+} // End of namespace Glk
+
+#endif

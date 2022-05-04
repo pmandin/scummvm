@@ -27,28 +27,33 @@
 
 namespace Hypno {
 
+static const char *failedDetectionError = \
+  "Failed to load any files from missions.lib.\
+   Please review https://wiki.scummvm.org/index.php?title=Wetlands\
+   and re-add the game.";
+
 static const chapterEntry rawChapterTable[] = {
-	{11, {44, 172}, {218, 172}, {0,   0}}, 		// c11
-	{10, {19, 3},   {246, 3}, 	{246, 11}}, 	// c10
-	{21, {70, 160}, {180, 160}, {220, 185}}, 	// c21
-	{22, {70, 160}, {180, 160}, {220, 185}}, 	// c22
-	{23, {70, 160}, {180, 160}, {220, 185}}, 	// c23
-	{20, {128, 150}, {238, 150},{0,   0}}, 		// c20
-	{31, {70, 160}, {180, 160}, {220, 185}}, 	// c31
-	{32, {70, 160}, {180, 160}, {220, 185}}, 	// c32
-	{33, {70, 160}, {180, 160}, {220, 185}}, 	// c33
-	{30, {19, 3},   {246, 3}, 	{246, 11}}, 	// c30
-	{41, {70, 160}, {180, 160}, {220, 185}}, 	// c41
-	{42, {70, 160}, {180, 160}, {220, 185}}, 	// c42
-	{43, {70, 160}, {180, 160}, {220, 185}}, 	// c43
-	{44, {70, 160}, {180, 160}, {220, 185}}, 	// c44
-	{40, {19, 3},   {246, 3}, 	{246, 11}}, 	// c40
-	{51, {60, 167}, {190, 167}, {135, 187}}, 	// c51
-	{52, {60, 167}, {190, 167}, {135, 187}}, 	// c52
-	{50, {19, 3},   {246, 3}, 	{246, 11}}, 	// c50 (fixed)
-	{61, {44, 172}, {218, 172}, {0, 0}}, 		// c61
-	{60, {44, 172}, {218, 172}, {0, 0}}, 		// c60
-	{0,  {0,  0},   {0,   0},   {0,   0}}    	// NULL
+	{11, {44, 172}, {218, 172}, {0,   0},   {127, 172}, 0,   kHypnoColorRed}, 	 // c11
+	{10, {19, 3},   {246, 3}, 	{246, 11},  {2, 2},     0,   kHypnoNoColor}, 	 // c10
+	{21, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215, kHypnoColorYellow}, // c21
+	{22, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215,   kHypnoColorGreen},  // c22
+	{23, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215, kHypnoColorCyan}, 	// c23
+	{20, {128, 150}, {238, 150},{0,   0},   {209, 146}, 0, kHypnoColorCyan}, 	// c20
+	{31, {70, 160}, {180, 160}, {220, 185}, {44, 164},  215, kHypnoColorGreen}, 	// c31
+	{32, {70, 160}, {180, 160}, {220, 185}, {44, 164},  215, kHypnoColorRed}, 	// c32
+	{33, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215, kHypnoColorRed}, 	// c33
+	{30, {19, 3},   {246, 3}, 	{246, 11},  {2, 2},     0, kHypnoColorRed}, 	// c30
+	{41, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215, kHypnoColorRed}, 	// c41
+	{42, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215, kHypnoColorRed}, 	// c42
+	{43, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215, kHypnoColorRed}, 	// c43
+	{44, {70, 160}, {180, 160}, {220, 185}, {44, 162},  215, kHypnoColorRed}, 	// c44
+	{40, {19, 3},   {246, 3}, 	{246, 11},  {2, 2},     0, kHypnoColorRed}, 	// c40
+	{51, {60, 167}, {190, 167}, {135, 187}, {136, 163}, 36, kHypnoColorRed}, 	// c51
+	{52, {60, 167}, {190, 167}, {135, 187}, {136, 165}, 36, kHypnoColorCyan}, 	// c52
+	{50, {19, 3},   {246, 3}, 	{246, 11},  {2, 2}, 	0, kHypnoColorRed}, 	// c50 (fixed)
+	{61, {63, 167}, {187, 167}, {192, 188}, {152, 185}, 0, kHypnoColorCyan}, 	// c61
+	{60, {63, 167}, {187, 167}, {192, 188}, {152, 185}, 0, kHypnoColorCyan}, 	// c60
+	{0,  {0,  0},   {0,   0},   {0,   0},   {0, 0},     0, kHypnoColorRed}    	// NULL
 };
 
 WetEngine::WetEngine(OSystem *syst, const ADGameDescription *gd) : HypnoEngine(syst, gd) {
@@ -57,8 +62,13 @@ WetEngine::WetEngine(OSystem *syst, const ADGameDescription *gd) : HypnoEngine(s
 	_lives = 2;
 	_lastLevel = 0;
 
+	_c33UseMouse = true;
+
 	_c40SegmentIdx = -1;
 	_c40lastTurn = -1;
+
+	_c50LeftTurns = 0;
+	_c50RigthTurns = 0;
 
     const chapterEntry *entry = rawChapterTable;
     while (entry->id) {
@@ -67,6 +77,10 @@ WetEngine::WetEngine(OSystem *syst, const ADGameDescription *gd) : HypnoEngine(s
 		entry++;
     }
 
+	_healthString = getLocalizedString("health");
+	_scoreString = getLocalizedString("score");
+	_objString = getLocalizedString("objectives");
+	_targetString = getLocalizedString("target");
 }
 
 void WetEngine::loadAssets() {
@@ -77,12 +91,14 @@ void WetEngine::loadAssets() {
 	}
 	_difficulty = ""; // No difficulty selection in demo
 
-	if (_variant == "Demo")
+	if (_variant == "Demo" || _variant == "DemoHebrew")
 		loadAssetsDemoDisc();
 	else if (_variant == "PCWDemo")
 		loadAssetsPCW();
 	else if (_variant == "PCGDemo")
 		loadAssetsPCG();
+	else if (_variant == "NonInteractive")
+		loadAssetsNI();
 	else
 		error("Invalid demo version: \"%s\"", _variant.c_str());
 }
@@ -90,11 +106,11 @@ void WetEngine::loadAssets() {
 
 void WetEngine::loadAssetsDemoDisc() {
 
-	bool encrypted = _language == Common::HE_ISR ? false : true;
+	bool encrypted = _variant == "Demo" ? true : false;
 	LibFile *missions = loadLib("", "wetlands/c_misc/missions.lib", encrypted);
 	Common::ArchiveMemberList files;
 	if (missions->listMembers(files) == 0)
-		error("Failed to load any files from missions.lib");
+		error(failedDetectionError);
 
 	Hotspot h(MakeMenu);
 	Hotspots hs;
@@ -132,9 +148,9 @@ void WetEngine::loadAssetsDemoDisc() {
 	_levels["<start>"] = start;
 
 	Transition *intro;
-	if (_language == Common::EN_USA)
+	if (_variant == "Demo")
 		intro = new Transition("c31");
-	else if (_language == Common::HE_ISR)
+	else if (_variant == "DemoHebrew")
 		intro = new Transition("c31.mis");
 	else
 		error("Unsupported language");
@@ -167,14 +183,14 @@ void WetEngine::loadAssetsDemoDisc() {
 	movies->frameNumber = 0;
 	_levels["<movies>"] = movies;
 
-	if (_language == Common::EN_USA) {
+	if (_variant == "Demo") {
 		loadArcadeLevel("c31.mi_", "c52", "c52", "wetlands");
 		loadArcadeLevel("c52.mi_", "<game_over>", "<quit>", "wetlands");
-	} else if (_language == Common::HE_ISR) {
+	} else if (_variant == "DemoHebrew") {
 		loadArcadeLevel("c31.mis", "c52.mis", "c52.mis", "wetlands");
 		loadArcadeLevel("c52.mis", "<game_over>", "<quit>", "wetlands");
 	} else {
-		error("Unsupported language");
+		error("Unsupported variant");
 	}
 
 	Transition *over = new Transition("<quit>");
@@ -187,12 +203,54 @@ void WetEngine::loadAssetsDemoDisc() {
 	_nextLevel = "<start>";
 }
 
+void WetEngine::loadAssetsNI() {
+	playSound("wetmusic.81m", 0, 11025);
+	Transition *movies = new Transition("<quit>");
+	movies->intros.push_back("demo/nw_logo.smk");
+	movies->intros.push_back("demo/hypnotix.smk");
+	movies->intros.push_back("demo/wetlogo.smk");
+	movies->intros.push_back("demo/c31c1.smk");
+	movies->intros.push_back("demo/demo31.smk");
+	movies->intros.push_back("demo/c31c2.smk");
+	movies->intros.push_back("demo/c31e1.smk");
+	movies->intros.push_back("demo/logo_w.smk");
+	movies->intros.push_back("demo/bar01b.smk");
+	movies->intros.push_back("demo/gun_320.smk");
+	movies->intros.push_back("demo/logo_e.smk");
+	movies->intros.push_back("demo/c30peek.smk");
+	movies->intros.push_back("demo/demo30.smk");
+	movies->intros.push_back("demo/c30knife.smk");
+	movies->intros.push_back("demo/logo_t.smk");
+	movies->intros.push_back("demo/c51teez.smk");
+	movies->intros.push_back("demo/demo21.smk");
+	movies->intros.push_back("demo/c51kill.smk");
+	movies->intros.push_back("demo/logo_l.smk");
+	movies->intros.push_back("demo/run_320.smk");
+	movies->intros.push_back("demo/logo_a.smk");
+	movies->intros.push_back("demo/demo50.smk");
+	movies->intros.push_back("demo/c50gate.smk");
+	movies->intros.push_back("demo/logo_n.smk");
+	movies->intros.push_back("demo/c22end.smk");
+	movies->intros.push_back("demo/logo_d.smk");
+	movies->intros.push_back("demo/demo44.smk");
+	movies->intros.push_back("demo/c44boom.smk");
+	movies->intros.push_back("demo/logo_s.smk");
+	movies->intros.push_back("demo/xi.smk");
+	movies->intros.push_back("demo/wetlogo.smk");
+	movies->intros.push_back("demo/c30shoot.smk");
+	movies->frameImage = "";
+	movies->frameNumber = 0;
+	_levels["<start>"] = movies;
+	_nextLevel = "<start>";
+}
+
+
 void WetEngine::loadAssetsPCW() {
 
 	LibFile *missions = loadLib("", "c_misc/missions.lib", false);
 	Common::ArchiveMemberList files;
 	if (missions->listMembers(files) == 0)
-		error("Failed to load any files from missions.lib");
+		error(failedDetectionError);
 
 	Transition *intro = new Transition("c11.mis");
 	intro->intros.push_back("c_misc/nw_logo.smk");
@@ -200,12 +258,12 @@ void WetEngine::loadAssetsPCW() {
 	intro->intros.push_back("c_misc/wet.smk");
 	_levels["<start>"] = intro;
 
-	loadArcadeLevel("c11.mis", "<quit>", "<check_lives>", "");
+	loadArcadeLevel("c11.mis", "<quit>", "<quit>", "");
 
 	Transition *over = new Transition("<quit>");
 	_levels["<game_over>"] = over;
 
-	loadLib("", "c_misc/sound.lib", false);
+	loadLib("sound/", "c_misc/sound.lib", false);
 	loadLib("", "c_misc/fonts.lib", true);
 	loadFonts();
 	_nextLevel = "<start>";
@@ -216,7 +274,7 @@ void WetEngine::loadAssetsPCG() {
 	LibFile *missions = loadLib("", "missions.lib", false);
 	Common::ArchiveMemberList files;
 	if (missions->listMembers(files) == 0)
-		error("Failed to load any files from missions.lib");
+		error(failedDetectionError);
 
 	Transition *intro = new Transition("c31.mis");
 	intro->intros.push_back("nw_logo.smk");
@@ -226,7 +284,7 @@ void WetEngine::loadAssetsPCG() {
 	intro->frameNumber = 0;
 	_levels["<start>"] = intro;
 
-	loadArcadeLevel("c31.mis", "<quit>", "<check_lives>", "");
+	loadArcadeLevel("c31.mis", "<quit>", "<quit>", "");
 
 	Transition *over = new Transition("<quit>");
 	over->intros.push_back("g.s");
@@ -242,7 +300,7 @@ void WetEngine::loadAssetsFullGame() {
 	LibFile *missions = loadLib("", "c_misc/missions.lib", true);
 	Common::ArchiveMemberList files;
 	if (missions == nullptr || missions->listMembers(files) == 0)
-		error("Failed to load any files from missions.lib");
+		error(failedDetectionError);
 
 	Transition *logos = new Transition("<main_menu>");
 	logos->intros.push_back("c_misc/logo.smk");
@@ -259,7 +317,7 @@ void WetEngine::loadAssetsFullGame() {
 	_levels["<level_menu>"] = level_menu;
 	_levels["<level_menu>"]->levelIfWin = "?";
 
-	Transition *over = new Transition("<quit>");
+	Transition *over = new Transition("<main_menu>");
 	over->intros.push_back("c_misc/gameover.smk");
 	_levels["<game_over>"] = over;
 
@@ -275,6 +333,7 @@ void WetEngine::loadAssetsFullGame() {
 	Code *end_credits = new Code("<credits>");
 	_levels["<credits>"] = end_credits;
 
+	ArcadeShooting *arc;
 	loadArcadeLevel("c110.mi_", "c10", "<check_lives>", "");
 	loadArcadeLevel("c111.mi_", "c10", "<check_lives>", "");
 	loadArcadeLevel("c112.mi_", "c10", "<check_lives>", "");
@@ -299,6 +358,18 @@ void WetEngine::loadAssetsFullGame() {
 	loadArcadeLevel("c201.mi_", "c31", "<check_lives>", "");
 	loadArcadeLevel("c202.mi_", "c31", "<check_lives>", "");
 
+	arc = (ArcadeShooting*) _levels["c200.mi_"];
+	arc->mouseBox.right = 320;
+	arc->mouseBox.bottom = 135;
+
+	arc = (ArcadeShooting*) _levels["c201.mi_"];
+	arc->mouseBox.right = 320;
+	arc->mouseBox.bottom = 135;
+
+	arc = (ArcadeShooting*) _levels["c202.mi_"];
+	arc->mouseBox.right = 320;
+	arc->mouseBox.bottom = 135;
+
 	loadArcadeLevel("c310.mi_", "c32", "<check_lives>", "");
 	loadArcadeLevel("c311.mi_", "c32", "<check_lives>", "");
 	loadArcadeLevel("c312.mi_", "c32", "<check_lives>", "");
@@ -312,7 +383,7 @@ void WetEngine::loadAssetsFullGame() {
 	loadArcadeLevel("c332.mi_", "c30", "<check_lives>", "");
 
 	loadArcadeLevel("c300.mi_", "c41", "<check_lives>", "");
-	ArcadeShooting *arc = (ArcadeShooting*) _levels["c300.mi_"];
+	arc = (ArcadeShooting*) _levels["c300.mi_"];
 	arc->id = 30; // Fixed from the original (3)
 
 	loadArcadeLevel("c301.mi_", "c41", "<check_lives>", "");
@@ -386,12 +457,7 @@ void WetEngine::loadAssetsFullGame() {
 }
 
 void WetEngine::showCredits() {
-	if (_cheatsEnabled && !_arcadeMode.empty()) {
-		_skipLevel = true;
-		return;
-	}
-
-	if (!isDemo() || _variant == "Demo" || _language == Common::EN_USA) {
+	if (!isDemo() || (_variant == "Demo" && _language == Common::EN_USA)) {
 		MVideo video("c_misc/credits.smk", Common::Point(0, 0), false, true, false);
 		runIntro(video);
 	}
@@ -424,12 +490,20 @@ void WetEngine::loadFonts() {
 }
 
 void WetEngine::drawString(const Common::String &font, const Common::String &str, int x, int y, int w, uint32 color) {
+	int offset = 0;
 	if (font == "block05.fgx") {
 		for (uint32 c = 0; c < str.size(); c++) {
+
+			offset = 0;
+			if (str[c] == ':')
+				offset = 1;
+			else if (str[c] == '.')
+				offset = 4;
+
 			for (int i = 0; i < 5; i++) {
 				for (int j = 0; j < 5; j++) {
 					if (!_font05.get(275 + 40*str[c] + j*8 + i))
-						_compositeSurface->setPixel(x + 5 - i + 6*c, y + j, color);
+						_compositeSurface->setPixel(x + 5 - i + 6*c, offset + y + j, color);
 				}
 			}
 		}
@@ -438,10 +512,18 @@ void WetEngine::drawString(const Common::String &font, const Common::String &str
 			if (str[c] == 0)
 				continue;
 			assert(str[c] >= 32);
+			offset = 0;
+			if (str[c] == 't')
+				offset = 0;
+			else if (str[c] == 'i' || str[c] == '%')
+				offset = 1;
+			else if (Common::isLower(str[c]) || str[c] == ':')
+				offset = 2;
+
 			for (int i = 0; i < 6; i++) {
 				for (int j = 0; j < 8; j++) {
 					if (!_font08.get(1554 + 72*(str[c]-32) + j*8 + i))
-						_compositeSurface->setPixel(x + 6 - i + 7*c, y + j, color);
+						_compositeSurface->setPixel(x + 6 - i + 7*c, offset + y + j, color);
 				}
 			}
 		}

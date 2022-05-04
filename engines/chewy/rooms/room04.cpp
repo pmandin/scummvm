@@ -19,9 +19,11 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
+#include "chewy/mouse.h"
 #include "chewy/room.h"
 #include "chewy/rooms/room04.h"
 #include "chewy/sound.h"
@@ -96,11 +98,9 @@ int16 Room4::comp_probe() {
 		_G(spr_info)[0]._y = CUR_POS[curX][1];
 
 		if (_G(minfo)._button == 1 || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN) {
-			_G(curani)._start = HAND_CLICK;
-			_G(curani)._end = HAND_CLICK;
+			_G(cur)->setAnimation(HAND_CLICK, HAND_CLICK, -1);
 		} else {
-			_G(curani)._start = HAND_NORMAL;
-			_G(curani)._end = HAND_NORMAL;
+			_G(cur)->setAnimation(HAND_NORMAL, HAND_NORMAL, -1);
 		}
 		cursorChoice(CUR_USER);
 		_G(gameState)._curHeight = 16;

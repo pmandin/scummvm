@@ -100,6 +100,7 @@ void main_print_help() {
 	                          "Usage: ags [OPTIONS] [GAMEFILE or DIRECTORY]\n\n"
 	                          //--------------------------------------------------------------------------------|
 	                          "Options:\n"
+                              "  --clear-cache-on-room-change Clears sprite cache on every room change\n"
 	                          "  --conf FILEPATH              Specify explicit config file to read on startup\n"
 #if AGS_PLATFORM_OS_WINDOWS
 	                          "  --console-attach             Write output to the parent process's console\n"
@@ -146,11 +147,14 @@ void main_print_help() {
 #if AGS_PLATFORM_OS_WINDOWS
 	                          "  --no-message-box             Disable alerts as modal message boxes\n"
 #endif
+		                      "  --no-translation             Use default game language on start\n"
 	                          "  --noiface                    Don't draw game GUI\n"
 	                          "  --noscript                   Don't run room scripts; *WARNING:* unreliable\n"
 	                          "  --nospr                      Don't draw room objects and characters\n"
 	                          "  --noupdate                   Don't run game update\n"
 	                          "  --novideo                    Don't play game videos\n"
+                              "  --rotation <MODE>            Screen rotation preferences. MODEs are:\n"
+                              "                                 unlocked (0), portrait (1), landscape (2)\n"
 #if AGS_PLATFORM_OS_WINDOWS
 	                          "  --setup                      Run setup application\n"
 #endif
@@ -167,7 +171,8 @@ void main_print_help() {
 	                          "  --tell-graphicdriver         Print list of supported graphic drivers\n"
 	                          "\n"
 	                          "  --test                       Run game in the test mode\n"
-	                          "  --version                    Print engine's version and stop\n"
+                              "  --translation <name>         Select the given translation on start\n"
+		                      "  --version                    Print engine's version and stop\n"
 	                          "  --user-data-dir DIR          Set the save game directory\n"
 	                          "  --windowed                   Force display mode to windowed\n"
 	                          "\n"
@@ -198,10 +203,6 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 		} else if (ags_stricmp(arg, "--noexceptionhandler") == 0) _GP(usetup).disable_exception_handling = true;
 		else if (ags_stricmp(arg, "--setup") == 0) {
 			_G(justRunSetup) = true;
-		} else if (ags_stricmp(arg, "--registergame") == 0) {
-			_G(justRegisterGame) = true;
-		} else if (ags_stricmp(arg, "--unregistergame") == 0) {
-			_G(justUnRegisterGame) = true;
 		} else if ((ags_stricmp(arg, "--loadsavedgame") == 0) && (argc > ee + 1)) {
 			_G(loadSaveGameOnStartup) = atoi(argv[ee + 1]);
 			ee++;
@@ -230,6 +231,8 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 			strncpy(_GP(play).takeover_from, argv[ee + 2], 49);
 			_GP(play).takeover_from[49] = 0;
 			ee += 2;
+		} else if (ags_stricmp(arg, "--clear-cache-on-room-change") == 0) {
+			CfgWriteString(cfg, "misc", "clear_cache_on_room_change", "1");
 		} else if (ags_strnicmp(arg, "--tell", 6) == 0) {
 			if (arg[6] == 0)
 				_G(tellInfoKeys).insert(String("all"));
@@ -248,15 +251,19 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 		else if (ags_stricmp(arg, "--fullscreen") == 0)
 			cfg["graphics"]["windowed"] = "0";
 		else if ((ags_stricmp(arg, "--gfxdriver") == 0) && (argc > ee + 1)) {
-			INIwritestring(cfg, "graphics", "driver", argv[++ee]);
+			CfgWriteString(cfg, "graphics", "driver", argv[++ee]);
 		} else if ((ags_stricmp(arg, "--gfxfilter") == 0) && (argc > ee + 1)) {
 			// NOTE: we make an assumption here that if user provides scaling factor,
 			// this factor means to be applied to windowed mode only.
-			INIwritestring(cfg, "graphics", "filter", argv[++ee]);
+			CfgWriteString(cfg, "graphics", "filter", argv[++ee]);
 			if (argc > ee + 1 && argv[ee + 1][0] != '-')
-				INIwritestring(cfg, "graphics", "game_scale_win", argv[++ee]);
+				CfgWriteString(cfg, "graphics", "game_scale_win", argv[++ee]);
 			else
-				INIwritestring(cfg, "graphics", "game_scale_win", "max_round");
+				CfgWriteString(cfg, "graphics", "game_scale_win", "max_round");
+		} else if ((ags_stricmp(arg, "--translation") == 0) && (argc > ee + 1)) {
+			CfgWriteString(cfg, "language", "translation", argv[++ee]);
+		} else if (ags_stricmp(arg, "--no-translation") == 0) {
+			CfgWriteString(cfg, "language", "translation", "");
 		} else if (ags_stricmp(arg, "--fps") == 0) _G(display_fps) = kFPS_Forced;
 		else if (ags_stricmp(arg, "--test") == 0) _G(debug_flags) |= DBG_DEBUGMODE;
 		else if (ags_stricmp(arg, "--noiface") == 0) _G(debug_flags) |= DBG_NOIFACE;
@@ -267,10 +274,12 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 		else if (ags_stricmp(arg, "--nomusic") == 0) _G(debug_flags) |= DBG_NOMUSIC;
 		else if (ags_stricmp(arg, "--noscript") == 0) _G(debug_flags) |= DBG_NOSCRIPT;
 		else if (ags_stricmp(arg, "--novideo") == 0) _G(debug_flags) |= DBG_NOVIDEO;
-		else if (ags_strnicmp(arg, "--log-", 6) == 0 && arg[6] != 0) {
+		else if (ags_stricmp(arg, "--rotation") == 0 && (argc > ee + 1)) {
+			CfgWriteString(cfg, "graphics", "rotation", argv[++ee]);
+		} else if (ags_strnicmp(arg, "--log-", 6) == 0 && arg[6] != 0) {
 			String logarg = arg + 6;
 			size_t split_at = logarg.FindChar('=');
-			if (split_at != String::npos)
+			if (split_at != String::NoIndex)
 				cfg["log"][logarg.Left(split_at)] = logarg.Mid(split_at + 1);
 			else
 				cfg["log"][logarg] = "";

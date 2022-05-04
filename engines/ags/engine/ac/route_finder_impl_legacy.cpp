@@ -72,7 +72,7 @@ void set_wallscreen(Bitmap *wallscreen_) {
 }
 
 // TODO: find a way to reimpl this with Bitmap
-static void line_callback(BITMAP *bmpp, int x, int y, int d) {
+static void line_callback(BITMAP *bmpp, int x, int y, int /*d*/) {
 	/*  if ((x>=320) | (y>=200) | (x<0) | (y<0)) line_failed=1;
 	  else */ if (getpixel(bmpp, x, y) < 1)
 		line_failed = 1;
@@ -110,19 +110,18 @@ void get_lastcpos(int &lastcx_, int &lastcy_) {
 
 int find_nearest_walkable_area(Bitmap *tempw, int fromX, int fromY, int toX, int toY, int destX, int destY, int granularity) {
 	assert(tempw != nullptr);
-
-	int ex, ey, nearest = 99999, thisis, nearx = 0, neary = 0;
 	if (fromX < 0) fromX = 0;
 	if (fromY < 0) fromY = 0;
 	if (toX >= tempw->GetWidth()) toX = tempw->GetWidth() - 1;
 	if (toY >= tempw->GetHeight()) toY = tempw->GetHeight() - 1;
 
-	for (ex = fromX; ex < toX; ex += granularity) {
-		for (ey = fromY; ey < toY; ey += granularity) {
+	int nearest = 99999, nearx = -1, neary = -1;
+	for (int ex = fromX; ex < toX; ex += granularity) {
+		for (int ey = fromY; ey < toY; ey += granularity) {
 			if (tempw->GetScanLine(ey)[ex] != 232)
 				continue;
 
-			thisis = (int)::sqrt((double)((ex - destX) * (ex - destX) + (ey - destY) * (ey - destY)));
+			int thisis = (int)::sqrt((double)((ex - destX) * (ex - destX) + (ey - destY) * (ey - destY)));
 			if (thisis < nearest) {
 				nearest = thisis;
 				nearx = ex;
@@ -789,8 +788,6 @@ int find_route(short srcx, short srcy, short xx, short yy, Bitmap *onscreen, int
 		numstages++;
 		nearestindx = -1;
 
-		int lastpbs = pathbackstage;
-
 stage_again:
 		nearestpos = 0;
 		aaa = 1;
@@ -823,7 +820,7 @@ stage_again:
 #ifdef DEBUG_PATHFINDER
 			AGS::Shared::Debug::Printf("Added: %d, %d pbs:%d", srcx, srcy, pathbackstage);
 #endif
-			lastpbs = pathbackstage;
+
 			pathbackstage = nearestindx;
 			goto stage_again;
 		}
@@ -866,7 +863,6 @@ stage_again:
 #ifdef DEBUG_PATHFINDER
 		// getch();
 #endif
-		(void)lastpbs;
 
 		return mlist;
 	} else {

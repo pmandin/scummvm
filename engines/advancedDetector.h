@@ -252,7 +252,7 @@ struct ADExtraGuiOptionsMap {
 	ExtraGuiOption option; /*!< The associated option. */
 };
 
-#define AD_EXTRA_GUI_OPTIONS_TERMINATOR { 0, { 0, 0, 0, 0 } }
+#define AD_EXTRA_GUI_OPTIONS_TERMINATOR { 0, { 0, 0, 0, 0, 0, 0 } }
 
 /**
  * A @ref MetaEngineDetection implementation based on the Advanced Detector code.
@@ -385,6 +385,8 @@ public:
 	const ExtraGuiOptions getExtraGuiOptions(const Common::String &target) const override;
 
 	static Common::StringArray getPathsFromEntry(const ADGameDescription *g);
+
+	uint getMD5Bytes() const { return _md5Bytes; }
 
 protected:
 	/**

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.10.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-03-27 04:28+0000\n"
-"PO-Revision-Date: 2022-03-23 20:39+0000\n"
+"POT-Creation-Date: 2022-04-27 19:39+0000\n"
+"PO-Revision-Date: 2022-04-28 16:49+0000\n"
 "Last-Translator: Antoniou Athanasios <a.antoniou79@gmail.com>\n"
 "Language-Team: Greek <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/el/>\n"
@@ -19,16 +19,17 @@ msgstr ""
 "X-Generator: Weblate 4.4\n"
 "X-Language-name: Ελληνικά\n"
 
-#: gui/about.cpp:103
+#. I18N: built on <build date> with <compiler>
+#: gui/about.cpp:104
 #, c-format
-msgid "(built on %s)"
-msgstr "(δημιουργήθηκε την %s)"
+msgid "(built on %s with %s)"
+msgstr "(δημιουργήθηκε την %s με %s)"
 
-#: gui/about.cpp:110
+#: gui/about.cpp:111
 msgid "Features compiled in:"
 msgstr "Χαρακτηριστικά που περιλαμβάνονται:"
 
-#: gui/about.cpp:119
+#: gui/about.cpp:120
 msgid "Available engines:"
 msgstr "Διαθέσιμες μηχανές:"
 
@@ -57,7 +58,7 @@ msgstr "Μετάβαση πάνω"
 #: gui/browser.cpp:81 gui/chooser.cpp:45 gui/downloadiconsdialog.cpp:161
 #: gui/editgamedialog.cpp:384 gui/editrecorddialog.cpp:66
 #: gui/filebrowser-dialog.cpp:68 gui/fluidsynth-dialog.cpp:152
-#: gui/massadd.cpp:91 gui/options.cpp:2102 gui/predictivedialog.cpp:68
+#: gui/massadd.cpp:91 gui/options.cpp:2104 gui/predictivedialog.cpp:68
 #: gui/recorderdialog.cpp:67 gui/recorderdialog.cpp:154
 #: gui/remotebrowser.cpp:59 gui/saveload-dialog.cpp:62
 #: gui/saveload-dialog.cpp:418 gui/saveload-dialog.cpp:489
@@ -130,8 +131,8 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:152
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
-#: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
+#: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
+#: gui/options.cpp:3063 gui/options.cpp:3101 gui/saveload-dialog.cpp:343
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:357
 #: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
@@ -142,8 +143,8 @@ msgstr "Ναι"
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:153
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
-#: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
+#: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
+#: gui/options.cpp:3063 gui/options.cpp:3101 gui/saveload-dialog.cpp:343
 #: engines/buried/buried.cpp:580 engines/director/events.cpp:91
 #: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
 #: engines/kyra/gui/saveload_eob.cpp:628
@@ -152,7 +153,7 @@ msgstr "Ναι"
 msgid "No"
 msgstr "Όχι"
 
-#: gui/downloaddialog.cpp:136 gui/launcher.cpp:575
+#: gui/downloaddialog.cpp:136 gui/launcher.cpp:576
 msgid "ScummVM couldn't open the specified directory!"
 msgstr "Το ScummVM δε μπόρεσε να ανοίξει το καθορισμένο φάκελο!"
 
@@ -166,8 +167,8 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
-#: gui/launcher.cpp:534 gui/launcher.cpp:538 gui/massadd.cpp:88
-#: gui/options.cpp:2104 gui/predictivedialog.cpp:69
+#: gui/launcher.cpp:535 gui/launcher.cpp:539 gui/massadd.cpp:88
+#: gui/options.cpp:2106 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1187 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
 #: engines/buried/saveload.cpp:69
@@ -176,9 +177,9 @@ msgstr ""
 #: engines/groovie/script.cpp:652 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:924
-#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1356
-#: engines/scumm/scumm.cpp:1382 engines/scumm/scumm.cpp:1404
-#: engines/scumm/scumm.cpp:1682 engines/scumm/scumm.cpp:2149
+#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1358
+#: engines/scumm/scumm.cpp:1384 engines/scumm/scumm.cpp:1406
+#: engines/scumm/scumm.cpp:1684 engines/scumm/scumm.cpp:2155
 #: engines/sky/compact.cpp:141 engines/sword1/animation.cpp:531
 #: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
 #: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
@@ -303,9 +304,9 @@ msgstr ""
 
 #: gui/editgamedialog.cpp:163 gui/editgamedialog.cpp:178 gui/options.cpp:1368
 #: gui/options.cpp:1388 gui/options.cpp:1401 gui/options.cpp:1415
-#: gui/options.cpp:1427 gui/options.cpp:1447 gui/options.cpp:1459
-#: gui/options.cpp:1838 gui/options.cpp:2256 gui/options.cpp:2329
-#: gui/options.cpp:2509 gui/options.cpp:2948 audio/null.cpp:40
+#: gui/options.cpp:1427 gui/options.cpp:1447 gui/options.cpp:1461
+#: gui/options.cpp:1840 gui/options.cpp:2258 gui/options.cpp:2331
+#: gui/options.cpp:2511 gui/options.cpp:2951 audio/null.cpp:40
 #: engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<προκαθορισμένη>"
@@ -324,12 +325,12 @@ msgctxt "lowres"
 msgid "Platform:"
 msgstr "Πλατφόρμα:"
 
-#: gui/editgamedialog.cpp:207 gui/options.cpp:1780 gui/options.cpp:1950
-#: backends/graphics/sdl/sdl-graphics.cpp:416
+#: gui/editgamedialog.cpp:207 gui/options.cpp:1782 gui/options.cpp:1952
+#: backends/graphics/sdl/sdl-graphics.cpp:418
 msgid "Graphics"
 msgstr "Γραφικά"
 
-#: gui/editgamedialog.cpp:207 gui/options.cpp:1780 gui/options.cpp:1950
+#: gui/editgamedialog.cpp:207 gui/options.cpp:1782 gui/options.cpp:1952
 msgid "GFX"
 msgstr "Γραφ."
 
@@ -342,7 +343,7 @@ msgctxt "lowres"
 msgid "Override global graphic settings"
 msgstr "Παράκαμψη καθολικών ρυθμ. γραφικών"
 
-#: gui/editgamedialog.cpp:225 gui/options.cpp:1961
+#: gui/editgamedialog.cpp:225 gui/options.cpp:1963
 msgid "Shader"
 msgstr "Σκιαστής"
 
@@ -355,11 +356,11 @@ msgctxt "lowres"
 msgid "Override global shader settings"
 msgstr "Υπέρβαση καθολικών ρυθμίσεων σκιαστή"
 
-#: gui/editgamedialog.cpp:244 gui/options.cpp:1993 engines/dialogs.cpp:318
+#: gui/editgamedialog.cpp:244 gui/options.cpp:1995 engines/dialogs.cpp:318
 msgid "Keymaps"
 msgstr "Αντιστοιχίσεις πλήκτρων"
 
-#: gui/editgamedialog.cpp:251 gui/options.cpp:2000 engines/dialogs.cpp:325
+#: gui/editgamedialog.cpp:251 gui/options.cpp:2002 engines/dialogs.cpp:325
 msgid "Backend"
 msgstr "Backend"
 
@@ -372,7 +373,7 @@ msgctxt "lowres"
 msgid "Override global backend settings"
 msgstr "Παράκαμψη καθολικών ρυθμίσεων backend"
 
-#: gui/editgamedialog.cpp:270 gui/options.cpp:2014 engines/dialogs.cpp:293
+#: gui/editgamedialog.cpp:270 gui/options.cpp:2016 engines/dialogs.cpp:293
 msgid "Audio"
 msgstr "Ήχος"
 
@@ -385,11 +386,11 @@ msgctxt "lowres"
 msgid "Override global audio settings"
 msgstr "Παράκαμψη ρυθμ. ήχου"
 
-#: gui/editgamedialog.cpp:284 gui/options.cpp:2019
+#: gui/editgamedialog.cpp:284 gui/options.cpp:2021
 msgid "Volume"
 msgstr "Ένταση"
 
-#: gui/editgamedialog.cpp:286 gui/options.cpp:2021
+#: gui/editgamedialog.cpp:286 gui/options.cpp:2023
 msgctxt "lowres"
 msgid "Volume"
 msgstr "Ένταση"
@@ -403,7 +404,7 @@ msgctxt "lowres"
 msgid "Override global volume settings"
 msgstr "Παράκαμψη ρυθμ. έντασης"
 
-#: gui/editgamedialog.cpp:302 gui/options.cpp:2029
+#: gui/editgamedialog.cpp:302 gui/options.cpp:2031
 msgid "MIDI"
 msgstr "MIDI"
 
@@ -416,7 +417,7 @@ msgctxt "lowres"
 msgid "Override global MIDI settings"
 msgstr "Παράκαμψη ρυθμ. MIDI"
 
-#: gui/editgamedialog.cpp:317 gui/options.cpp:2035
+#: gui/editgamedialog.cpp:317 gui/options.cpp:2037
 msgid "MT-32"
 msgstr "MT-32"
 
@@ -429,11 +430,11 @@ msgctxt "lowres"
 msgid "Override global MT-32 settings"
 msgstr "Παράκαμψη ρυθμ. MT-32"
 
-#: gui/editgamedialog.cpp:331 gui/options.cpp:2042
+#: gui/editgamedialog.cpp:331 gui/options.cpp:2044
 msgid "Paths"
 msgstr "Φάκελοι"
 
-#: gui/editgamedialog.cpp:333 gui/options.cpp:2044
+#: gui/editgamedialog.cpp:333 gui/options.cpp:2046
 msgctxt "lowres"
 msgid "Paths"
 msgstr "Φάκελοι"
@@ -447,7 +448,7 @@ msgctxt "lowres"
 msgid "Game Path:"
 msgstr "Φάκελος Παιχνιδιού:"
 
-#: gui/editgamedialog.cpp:347 gui/options.cpp:2233
+#: gui/editgamedialog.cpp:347 gui/options.cpp:2235
 msgid "Extra Path:"
 msgstr "Πρόσθετα:"
 
@@ -457,22 +458,22 @@ msgid "Specifies path to additional data used by the game"
 msgstr ""
 "Καθορίζει διαδρομή για πρόσθετα δεδομένα που χρησιμοποιούνται από το παιχνίδι"
 
-#: gui/editgamedialog.cpp:349 gui/options.cpp:2235
+#: gui/editgamedialog.cpp:349 gui/options.cpp:2237
 msgctxt "lowres"
 msgid "Extra Path:"
 msgstr "Πρόσθετα:"
 
-#: gui/editgamedialog.cpp:356 gui/options.cpp:2209
+#: gui/editgamedialog.cpp:356 gui/options.cpp:2211
 msgid "Save Path:"
 msgstr "Φάκελος Αποθήκευσης:"
 
 #: gui/editgamedialog.cpp:356 gui/editgamedialog.cpp:358
-#: gui/editgamedialog.cpp:359 gui/options.cpp:2209 gui/options.cpp:2211
-#: gui/options.cpp:2212
+#: gui/editgamedialog.cpp:359 gui/options.cpp:2211 gui/options.cpp:2213
+#: gui/options.cpp:2214
 msgid "Specifies where your saved games are put"
 msgstr "Καθορίζει την τοποθεσία των αποθηκευμένων παιχνιδιών σας"
 
-#: gui/editgamedialog.cpp:358 gui/options.cpp:2211
+#: gui/editgamedialog.cpp:358 gui/options.cpp:2213
 msgctxt "lowres"
 msgid "Save Path:"
 msgstr "Φάκελος Αποθ.:"
@@ -486,25 +487,25 @@ msgid "Statistics"
 msgstr "Στατιστικά"
 
 #: gui/editgamedialog.cpp:398 gui/editgamedialog.cpp:504
-#: gui/editgamedialog.cpp:570 gui/editgamedialog.cpp:637 gui/options.cpp:2126
-#: gui/options.cpp:2132 gui/options.cpp:2138 gui/options.cpp:2146
-#: gui/options.cpp:2177 gui/options.cpp:2220 gui/options.cpp:2228
-#: gui/options.cpp:2236 gui/options.cpp:2245 gui/options.cpp:2622
-#: gui/options.cpp:2628 gui/options.cpp:2634 gui/options.cpp:2641
-#: gui/options.cpp:2650 gui/options.cpp:2929 gui/options.cpp:2932
-#: gui/options.cpp:2935 gui/options.cpp:2942 gui/options.cpp:2954
-#: gui/options.cpp:2965
+#: gui/editgamedialog.cpp:570 gui/editgamedialog.cpp:637 gui/options.cpp:2128
+#: gui/options.cpp:2134 gui/options.cpp:2140 gui/options.cpp:2148
+#: gui/options.cpp:2179 gui/options.cpp:2222 gui/options.cpp:2230
+#: gui/options.cpp:2238 gui/options.cpp:2247 gui/options.cpp:2624
+#: gui/options.cpp:2630 gui/options.cpp:2636 gui/options.cpp:2643
+#: gui/options.cpp:2652 gui/options.cpp:2932 gui/options.cpp:2935
+#: gui/options.cpp:2938 gui/options.cpp:2945 gui/options.cpp:2957
+#: gui/options.cpp:2968
 msgctxt "path"
 msgid "None"
 msgstr "Κανένα"
 
 #: gui/editgamedialog.cpp:403 gui/editgamedialog.cpp:510
-#: gui/editgamedialog.cpp:641 gui/options.cpp:2120 gui/options.cpp:2616
-#: gui/options.cpp:2938 backends/platform/wii/options.cpp:55
+#: gui/editgamedialog.cpp:641 gui/options.cpp:2122 gui/options.cpp:2618
+#: gui/options.cpp:2941 backends/platform/wii/options.cpp:55
 msgid "Default"
 msgstr "Προκαθορισμένο"
 
-#: gui/editgamedialog.cpp:563 gui/options.cpp:2959
+#: gui/editgamedialog.cpp:563 gui/options.cpp:2962
 msgid "Select SoundFont"
 msgstr "Επιλέξτε SoundFont"
 
@@ -512,11 +513,11 @@ msgstr "Επιλέξτε SoundFont"
 msgid "Select additional game directory"
 msgstr "Επιλέξτε πρόσθετο φάκελο παιχνιδιού"
 
-#: gui/editgamedialog.cpp:615 gui/options.cpp:2840
+#: gui/editgamedialog.cpp:615 gui/options.cpp:2843
 msgid "Select directory for saved games"
 msgstr "Επιλέξτε φάκελο για αποθηκευμένα παιχνίδια"
 
-#: gui/editgamedialog.cpp:622 gui/options.cpp:2847
+#: gui/editgamedialog.cpp:622 gui/options.cpp:2850
 msgid "The chosen directory cannot be written to. Please select another one."
 msgstr ""
 "Δεν ήταν δυνατή η εγγραφή στον επιλεγμένο φάκελο. Παρακαλώ επιλέξτε κάποιον "
@@ -610,7 +611,7 @@ msgstr "Ημίτονο"
 msgid "Triangle"
 msgstr "Τρίγωνο"
 
-#: gui/fluidsynth-dialog.cpp:138 gui/options.cpp:2051
+#: gui/fluidsynth-dialog.cpp:138 gui/options.cpp:2053
 msgid "Misc"
 msgstr "Διάφορα"
 
@@ -661,10 +662,10 @@ msgid "Interact"
 msgstr "Αλληλεπίδραση"
 
 #: gui/gui-manager.cpp:227 engines/metaengine.cpp:109
-#: engines/dragons/metaengine.cpp:160 engines/glk/scott/scott.cpp:411
-#: engines/griffon/metaengine.cpp:95 engines/grim/grim.cpp:455
-#: engines/grim/grim.cpp:536 engines/twine/metaengine.cpp:329
-#: engines/twine/metaengine.cpp:396 engines/wintermute/keymapper_tables.h:1262
+#: engines/dragons/metaengine.cpp:160 engines/griffon/metaengine.cpp:95
+#: engines/grim/grim.cpp:455 engines/grim/grim.cpp:536
+#: engines/twine/metaengine.cpp:329 engines/twine/metaengine.cpp:396
+#: engines/wintermute/keymapper_tables.h:1262
 #: engines/wintermute/keymapper_tables.h:1372
 #: engines/wintermute/keymapper_tables.h:1843
 #: engines/wintermute/keymapper_tables.h:2077
@@ -672,10 +673,10 @@ msgid "Up"
 msgstr "Πάνω"
 
 #: gui/gui-manager.cpp:232 engines/metaengine.cpp:114
-#: engines/dragons/metaengine.cpp:166 engines/glk/scott/scott.cpp:411
-#: engines/griffon/metaengine.cpp:101 engines/grim/grim.cpp:460
-#: engines/grim/grim.cpp:541 engines/twine/metaengine.cpp:336
-#: engines/twine/metaengine.cpp:404 engines/wintermute/keymapper_tables.h:1268
+#: engines/dragons/metaengine.cpp:166 engines/griffon/metaengine.cpp:101
+#: engines/grim/grim.cpp:460 engines/grim/grim.cpp:541
+#: engines/twine/metaengine.cpp:336 engines/twine/metaengine.cpp:404
+#: engines/wintermute/keymapper_tables.h:1268
 #: engines/wintermute/keymapper_tables.h:1379
 #: engines/wintermute/keymapper_tables.h:1849
 #: engines/wintermute/keymapper_tables.h:2083
@@ -852,7 +853,7 @@ msgstr "~Α~φαίρ. Παιχν."
 msgid "Search in game list"
 msgstr "Αναζήτηση στη λίστα παιχνιδιών"
 
-#: gui/launcher.cpp:275 gui/launcher.cpp:782
+#: gui/launcher.cpp:275 gui/launcher.cpp:783
 msgid "Search:"
 msgstr "Αναζήτηση:"
 
@@ -872,13 +873,13 @@ msgstr "Φόρτωση παιχνιδιού:"
 msgid "Load"
 msgstr "Φόρτωση"
 
-#: gui/launcher.cpp:394
+#: gui/launcher.cpp:395
 msgid "This directory cannot be used yet, it is being downloaded into!"
 msgstr ""
 "Αυτός ο φάκελος δε μπορεί να χρησιμοποιηθεί ακόμη, γίνεται μεταφόρτωση σε "
 "αυτόν!"
 
-#: gui/launcher.cpp:405
+#: gui/launcher.cpp:406
 msgid ""
 "Do you really want to run the mass game detector? This could potentially add "
 "a huge number of games."
@@ -886,112 +887,112 @@ msgstr ""
 "Θέλετε σίγουρα να τρέξετε τον μαζικό ανιχνευτή παιχνιδιών; Αυτό ενδέχεται να "
 "προσθέσει ένα τεράστιο αριθμό παιχνιδιών."
 
-#: gui/launcher.cpp:435
+#: gui/launcher.cpp:436
 msgid "Do you really want to remove this game configuration?"
 msgstr "Θέλετε σίγουρα να σβήσετε τη ρύθμιση για αυτό το παιχνίδι;"
 
-#: gui/launcher.cpp:477
+#: gui/launcher.cpp:478
 msgid "Do you want to load saved game?"
 msgstr "Θέλετε να φορτώσετε το αποθηκευμένο παιχνίδι;"
 
-#: gui/launcher.cpp:534
+#: gui/launcher.cpp:535
 msgid "This game does not support loading games from the launcher."
 msgstr "Αυτό το παιχνίδι δεν υποστηρίζει φόρτωση παιχνιδιών από τον launcher."
 
-#: gui/launcher.cpp:538
+#: gui/launcher.cpp:539
 msgid "ScummVM could not find any engine capable of running the selected game!"
 msgstr ""
 "Το ScummVM δεν βρήκε κάποια μηχανή ικανή να εκτελέσει το επιλεγμένο παιχνίδι!"
 
-#: gui/launcher.cpp:594
+#: gui/launcher.cpp:595
 msgid "ScummVM could not find any game in the specified directory!"
 msgstr "Το ScummVM δεν βρήκε κάποιο παιχνίδι στον συγκεκριμένο φάκελο!"
 
 #. I18N: Unknown game variant
-#: gui/launcher.cpp:610
+#: gui/launcher.cpp:611
 msgid "Unknown variant"
 msgstr "Άγνωστη εκδοχή παιχνιδιού"
 
-#: gui/launcher.cpp:616
+#: gui/launcher.cpp:617
 msgid "Pick the game:"
 msgstr "Διαλέξτε το παιχνίδι:"
 
-#: gui/launcher.cpp:791
+#: gui/launcher.cpp:792
 msgid "Group by:"
 msgstr "Κριτήριο ομαδοποίησης:"
 
-#: gui/launcher.cpp:831 gui/saveload-dialog.cpp:367
+#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:367
 msgid "List view"
 msgstr "Προβολή ως λίστα"
 
-#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:368
+#: gui/launcher.cpp:833 gui/saveload-dialog.cpp:368
 msgid "Grid view"
 msgstr "Προβολή ως πλέγμα"
 
-#: gui/launcher.cpp:986
+#: gui/launcher.cpp:987
 msgid "~S~tart"
 msgstr "~Ε~κκίνηση"
 
-#: gui/launcher.cpp:986
+#: gui/launcher.cpp:987
 msgid "Start selected game"
 msgstr "Εκκίνηση επιλεγμένου παιχνιδιού"
 
-#: gui/launcher.cpp:989
+#: gui/launcher.cpp:990
 msgid "~L~oad..."
 msgstr "~Φ~όρτωση..."
 
-#: gui/launcher.cpp:989
+#: gui/launcher.cpp:990
 msgid "Load saved game for selected game"
 msgstr "Φόρτωση αποθηκευμένου παιχνιδιού για το επιλεγμένο παιχνίδι"
 
-#: gui/launcher.cpp:991
+#: gui/launcher.cpp:992
 msgid "Record..."
 msgstr "Εγγραφή..."
 
-#: gui/launcher.cpp:998
+#: gui/launcher.cpp:999
 msgid "~G~ame Options..."
 msgstr "~Ρ~υθμίσεις Παιχνιδιού..."
 
-#: gui/launcher.cpp:998 gui/launcher.cpp:1001
+#: gui/launcher.cpp:999 gui/launcher.cpp:1002
 msgid "Change game options"
 msgstr "Αλλαγή επιλογών παιχνιδιού"
 
-#: gui/launcher.cpp:1001
+#: gui/launcher.cpp:1002
 msgctxt "lowres"
 msgid "~G~ame Opts..."
 msgstr "~Ρ~υθμ Παιχν..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1123 gui/launcher.cpp:1318
+#: gui/launcher.cpp:1124 gui/launcher.cpp:1319
 msgid "Unknown Engine"
 msgstr "Άγνωστη Μηχανή"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1141 gui/launcher.cpp:1350
+#: gui/launcher.cpp:1142 gui/launcher.cpp:1351
 msgid "Unknown Publisher"
 msgstr "Άγνωστος Εκδότης"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1159 gui/launcher.cpp:1336
+#: gui/launcher.cpp:1160 gui/launcher.cpp:1337
 msgid "No Series"
 msgstr "Δεν ανήκουν σε σειρά"
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1174 gui/launcher.cpp:1369
+#: gui/launcher.cpp:1175 gui/launcher.cpp:1370
 msgid "Language not detected"
 msgstr "Δεν ανιχνεύτηκε η γλώσσα"
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1189 gui/launcher.cpp:1384
+#: gui/launcher.cpp:1190 gui/launcher.cpp:1385
 msgid "Platform not detected"
 msgstr "Δεν ανιχνεύτηκε η πλατφόρμα"
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1395 gui/widgets/groupedlist.cpp:122
+#: gui/launcher.cpp:1396 gui/widgets/groupedlist.cpp:122
 msgid "All"
 msgstr "Όλα"
 
@@ -1022,7 +1023,7 @@ msgstr ""
 "Ανακαλύφθηκαν %d νέα παιχνίδια, αγνοήθηκαν %d παιχνίδια που έχουν ήδη "
 "προστεθεί ..."
 
-#: gui/message.cpp:173 gui/message.cpp:177 gui/options.cpp:2444
+#: gui/message.cpp:173 gui/message.cpp:177 gui/options.cpp:2446
 msgid "Open URL"
 msgstr "Άνοιγμα διεύθυνσης URL"
 
@@ -1083,7 +1084,7 @@ msgid "Small"
 msgstr "Μικρό"
 
 #: gui/options.cpp:456 gui/options.cpp:863 gui/options.cpp:1004
-#: gui/options.cpp:1139 gui/options.cpp:1564
+#: gui/options.cpp:1139 gui/options.cpp:1566
 msgctxt "soundfont"
 msgid "None"
 msgstr "Κανένα"
@@ -1191,7 +1192,7 @@ msgstr "Επέκταση εικόνας:"
 msgid "Scaler:"
 msgstr "Κλιμάκωση:"
 
-#: gui/options.cpp:1437 backends/graphics/sdl/sdl-graphics.cpp:407
+#: gui/options.cpp:1437 backends/graphics/sdl/sdl-graphics.cpp:409
 msgid "Fullscreen mode"
 msgstr "Λειτουργία πλήρους οθόνης"
 
@@ -1216,121 +1217,121 @@ msgctxt "lowres"
 msgid "Game 3D Renderer:"
 msgstr "Απόδοση εικόνας 3D παιχνιδιού:"
 
-#: gui/options.cpp:1457
+#: gui/options.cpp:1459
 msgid "3D Anti-aliasing:"
 msgstr "Εξομάλυνση 3D:"
 
-#: gui/options.cpp:1461 engines/mohawk/dialogs.cpp:365
+#: gui/options.cpp:1463 engines/mohawk/dialogs.cpp:365
 msgid "Disabled"
 msgstr "Απενεργοποιημένες"
 
-#: gui/options.cpp:1473
+#: gui/options.cpp:1475
 msgid "Filter graphics"
 msgstr "Φίλτρο γραφικών"
 
-#: gui/options.cpp:1473
+#: gui/options.cpp:1475
 msgid "Use linear filtering when scaling graphics"
 msgstr "Χρήση γραμμικού φιλτραρίσματος για την κλιμάκωση γραφικών"
 
-#: gui/options.cpp:1476
+#: gui/options.cpp:1478
 msgid "Aspect ratio correction"
 msgstr "Διόρθωση αναλογίας διαστάσεων"
 
-#: gui/options.cpp:1476
+#: gui/options.cpp:1478
 msgid "Correct aspect ratio for games"
 msgstr "Διόρθωση αναλογίας διαστάσεων για παιχνίδια"
 
-#: gui/options.cpp:1484
+#: gui/options.cpp:1486
 msgid "Preferred device:"
 msgstr "Προτιμώμενη συσκευή:"
 
-#: gui/options.cpp:1484
+#: gui/options.cpp:1486
 msgid "Music device:"
 msgstr "Συσκευή Μουσικής:"
 
-#: gui/options.cpp:1484 gui/options.cpp:1486
+#: gui/options.cpp:1486 gui/options.cpp:1488
 msgid "Specifies preferred sound device or sound card emulator"
 msgstr "Καθορίζει την προτιμώμενη συσκευή εξόδου ήχου ή εξομοιωτή κάρτας ήχου"
 
-#: gui/options.cpp:1484 gui/options.cpp:1486 gui/options.cpp:1487
+#: gui/options.cpp:1486 gui/options.cpp:1488 gui/options.cpp:1489
 msgid "Specifies output sound device or sound card emulator"
 msgstr "Καθορίζει τη συσκευή εξόδου ήχου ή εξομοιωτή κάρτας ήχου"
 
-#: gui/options.cpp:1486
+#: gui/options.cpp:1488
 msgctxt "lowres"
 msgid "Preferred dev.:"
 msgstr "Προτιμώμενη Συσκ.:"
 
-#: gui/options.cpp:1486
+#: gui/options.cpp:1488
 msgctxt "lowres"
 msgid "Music device:"
 msgstr "Συσκευή μουσικής:"
 
-#: gui/options.cpp:1513
+#: gui/options.cpp:1515
 msgid "AdLib emulator:"
 msgstr "Εξομοιωτής Adlib:"
 
-#: gui/options.cpp:1513 gui/options.cpp:1514
+#: gui/options.cpp:1515 gui/options.cpp:1516
 msgid "AdLib is used for music in many games"
 msgstr "Η Adlib χρησιμοποιείται για μουσική σε πολλά παιχνίδια"
 
-#: gui/options.cpp:1527
+#: gui/options.cpp:1529
 msgid "GM device:"
 msgstr "Συσκευή GM:"
 
-#: gui/options.cpp:1527
+#: gui/options.cpp:1529
 msgid "Specifies default sound device for General MIDI output"
 msgstr "Καθορίζει προεπιλεγμένη συσκευή ήχου για την έξοδο General MIDI"
 
-#: gui/options.cpp:1538
+#: gui/options.cpp:1540
 msgid "Don't use General MIDI music"
 msgstr "Μη χρήση μουσικής General MIDI"
 
-#: gui/options.cpp:1549 gui/options.cpp:1611
+#: gui/options.cpp:1551 gui/options.cpp:1613
 msgid "Use first available device"
 msgstr "Χρήση πρώτης διαθέσιμης συσκευής"
 
-#: gui/options.cpp:1561
+#: gui/options.cpp:1563
 msgid "SoundFont:"
 msgstr "SoundFont:"
 
-#: gui/options.cpp:1561 gui/options.cpp:1563 gui/options.cpp:1564
+#: gui/options.cpp:1563 gui/options.cpp:1565 gui/options.cpp:1566
 msgid "SoundFont is supported by some audio cards, FluidSynth and Timidity"
 msgstr ""
 "Το SoundFont υποστηρίζεται από μερικές κάρτες ήχου, το FluidSynth και το "
 "Timidity"
 
-#: gui/options.cpp:1563
+#: gui/options.cpp:1565
 msgctxt "lowres"
 msgid "SoundFont:"
 msgstr "SoundFont:"
 
-#: gui/options.cpp:1569
+#: gui/options.cpp:1571
 msgid "Mixed AdLib/MIDI mode"
 msgstr "Μικτή λειτουργία Adlib/MIDI"
 
-#: gui/options.cpp:1569
+#: gui/options.cpp:1571
 msgid "Use both MIDI and AdLib sound generation"
 msgstr "Χρήση MIDI και Adlib για δημιουργία ήχου"
 
-#: gui/options.cpp:1572
+#: gui/options.cpp:1574
 msgid "MIDI gain:"
 msgstr "Αύξηση MIDI:"
 
-#: gui/options.cpp:1582
+#: gui/options.cpp:1584
 msgid "MT-32 Device:"
 msgstr "Συσκευή MT-32:"
 
-#: gui/options.cpp:1582
+#: gui/options.cpp:1584
 msgid "Specifies default sound device for Roland MT-32/LAPC1/CM32l/CM64 output"
 msgstr ""
 "Καθορίζει προεπιλεγμένη συσκευή ήχου για έξοδο Roland MT-32/LAPC1/CM32l/CM64"
 
-#: gui/options.cpp:1587
+#: gui/options.cpp:1589
 msgid "True Roland MT-32 (disable GM emulation)"
 msgstr "Πραγματική Roland MT-32 (απενεργοποίηση εξομοιωτή GM)"
 
-#: gui/options.cpp:1587 gui/options.cpp:1589
+#: gui/options.cpp:1589 gui/options.cpp:1591
 msgid ""
 "Check if you want to use your real hardware Roland-compatible sound device "
 "connected to your computer"
@@ -1338,16 +1339,16 @@ msgstr ""
 "Επιλέξτε αν θέλετε να χρησιμοποιήσετε συσκευή ήχου συμβατή με Roland, η "
 "οποία είναι συνδεδεμένη στον υπολογιστή σας"
 
-#: gui/options.cpp:1589
+#: gui/options.cpp:1591
 msgctxt "lowres"
 msgid "True Roland MT-32 (no GM emulation)"
 msgstr "Πραγματική Roland MT-32 (χωρίς εξομοίωση GM)"
 
-#: gui/options.cpp:1592
+#: gui/options.cpp:1594
 msgid "Roland GS device (enable MT-32 mappings)"
 msgstr "Συσκευή Roland GS (ενεργοποίηση αντιστοιχίσεων MT-32)"
 
-#: gui/options.cpp:1592
+#: gui/options.cpp:1594
 msgid ""
 "Check if you want to enable patch mappings to emulate an MT-32 on a Roland "
 "GS device"
@@ -1355,237 +1356,237 @@ msgstr ""
 "Επιλέξτε αν θέλετε να ενεργοποιήσετε διορθωμένες αντιστοιχίσεις για να "
 "εξομοιώσετε μια MT-32 σε συσκευή Roland GS"
 
-#: gui/options.cpp:1601
+#: gui/options.cpp:1603
 msgid "Don't use Roland MT-32 music"
 msgstr "Μη χρήση μουσικής Roland MT-32"
 
-#: gui/options.cpp:1628
+#: gui/options.cpp:1630
 msgid "Text and speech:"
 msgstr "Κείμενο και ομιλία:"
 
-#: gui/options.cpp:1632 gui/options.cpp:1642
+#: gui/options.cpp:1634 gui/options.cpp:1644
 msgid "Speech"
 msgstr "Ομιλία"
 
-#: gui/options.cpp:1633 gui/options.cpp:1643
+#: gui/options.cpp:1635 gui/options.cpp:1645
 msgid "Subtitles"
 msgstr "Υπότιτλοι"
 
-#: gui/options.cpp:1634
+#: gui/options.cpp:1636
 msgid "Both"
 msgstr "Και τα δυο"
 
-#: gui/options.cpp:1636
+#: gui/options.cpp:1638
 msgid "Subtitle speed:"
 msgstr "Ταχύτητα υποτίτλων:"
 
-#: gui/options.cpp:1638
+#: gui/options.cpp:1640
 msgctxt "lowres"
 msgid "Text and speech:"
 msgstr "Κείμενο και ομιλία:"
 
-#: gui/options.cpp:1642
+#: gui/options.cpp:1644
 msgid "Spch"
 msgstr "Ομιλία"
 
-#: gui/options.cpp:1643
+#: gui/options.cpp:1645
 msgid "Subs"
 msgstr "Υπότ."
 
-#: gui/options.cpp:1644
+#: gui/options.cpp:1646
 msgctxt "lowres"
 msgid "Both"
 msgstr "Και τα δυο"
 
-#: gui/options.cpp:1644
+#: gui/options.cpp:1646
 msgid "Show subtitles and play speech"
 msgstr "Προβολή υποτίτλων και αναπαραγωγή φωνής"
 
-#: gui/options.cpp:1646
+#: gui/options.cpp:1648
 msgctxt "lowres"
 msgid "Subtitle speed:"
 msgstr "Ταχύτητα υπότ.:"
 
-#: gui/options.cpp:1663
+#: gui/options.cpp:1665
 msgid "Music volume:"
 msgstr "Ένταση μουσικής:"
 
-#: gui/options.cpp:1665
+#: gui/options.cpp:1667
 msgctxt "lowres"
 msgid "Music volume:"
 msgstr "Ένταση μουσικής:"
 
-#: gui/options.cpp:1672
+#: gui/options.cpp:1674
 msgid "Mute all"
 msgstr "Σίγαση όλων"
 
-#: gui/options.cpp:1675
+#: gui/options.cpp:1677
 msgid "SFX volume:"
 msgstr "Ένταση εφέ:"
 
-#: gui/options.cpp:1675 gui/options.cpp:1677 gui/options.cpp:1678
+#: gui/options.cpp:1677 gui/options.cpp:1679 gui/options.cpp:1680
 msgid "Special sound effects volume"
 msgstr "Ένταση ειδικών ακουστικών εφέ"
 
-#: gui/options.cpp:1677
+#: gui/options.cpp:1679
 msgctxt "lowres"
 msgid "SFX volume:"
 msgstr "Ένταση εφέ:"
 
-#: gui/options.cpp:1685
+#: gui/options.cpp:1687
 msgid "Speech volume:"
 msgstr "Ένταση ομιλίας:"
 
-#: gui/options.cpp:1687
+#: gui/options.cpp:1689
 msgctxt "lowres"
 msgid "Speech volume:"
 msgstr "Ένταση ομιλίας:"
 
-#: gui/options.cpp:1971
+#: gui/options.cpp:1973
 msgid "Control"
 msgstr "Χειρισμός"
 
-#: gui/options.cpp:2053
+#: gui/options.cpp:2055
 msgctxt "lowres"
 msgid "Misc"
 msgstr "Λοιπά"
 
-#: gui/options.cpp:2065
+#: gui/options.cpp:2067
 msgid "Cloud"
 msgstr "Νέφος"
 
-#: gui/options.cpp:2067
+#: gui/options.cpp:2069
 msgctxt "lowres"
 msgid "Cloud"
 msgstr "Νέφος"
-
-#: gui/options.cpp:2081
-msgid "LAN"
-msgstr "LAN"
 
 #: gui/options.cpp:2083
+msgid "LAN"
+msgstr "LAN"
+
+#: gui/options.cpp:2085
 msgctxt "lowres"
 msgid "LAN"
 msgstr "LAN"
 
-#: gui/options.cpp:2091
+#: gui/options.cpp:2093
 msgid "Accessibility"
 msgstr "Προσβασιμότητα"
 
-#: gui/options.cpp:2093
+#: gui/options.cpp:2095
 msgctxt "lowres"
 msgid "Accessibility"
 msgstr "Προσβασιμότητα"
 
-#: gui/options.cpp:2102
+#: gui/options.cpp:2104
 msgid "Discard changes and close the dialog"
 msgstr "Αναίρεση των αλλαγών και κλείσιμο του παράθυρου"
 
-#: gui/options.cpp:2103
+#: gui/options.cpp:2105
 msgid "Apply"
 msgstr "Εφαρμογή"
 
-#: gui/options.cpp:2103
+#: gui/options.cpp:2105
 msgid "Apply changes without closing the dialog"
 msgstr "Εφαρμογή των αλλαγών χωρίς να κλείσει το παράθυρο"
 
-#: gui/options.cpp:2104
+#: gui/options.cpp:2106
 msgid "Apply changes and close the dialog"
 msgstr "Εφαρμογή των αλλαγών και κλείσιμο του παράθυρου"
 
-#: gui/options.cpp:2198
+#: gui/options.cpp:2200
 msgid "FluidSynth Settings"
 msgstr "Ρυθμίσεις FluidSynth"
 
-#: gui/options.cpp:2217
+#: gui/options.cpp:2219
 msgid "Theme Path:"
 msgstr "Φάκελος Θέματος:"
 
-#: gui/options.cpp:2219
+#: gui/options.cpp:2221
 msgctxt "lowres"
 msgid "Theme Path:"
 msgstr "Φάκελος Θέματος:"
-
-#: gui/options.cpp:2225
-msgid "Icon Path:"
-msgstr "Διαδρομή Εικονιδίων:"
 
 #: gui/options.cpp:2227
+msgid "Icon Path:"
+msgstr "Διαδρομή Εικονιδίων:"
+
+#: gui/options.cpp:2229
 msgctxt "lowres"
 msgid "Icon Path:"
 msgstr "Διαδρομή Εικονιδίων:"
 
-#: gui/options.cpp:2233 gui/options.cpp:2235 gui/options.cpp:2236
+#: gui/options.cpp:2235 gui/options.cpp:2237 gui/options.cpp:2238
 msgid "Specifies path to additional data used by all games or ScummVM"
 msgstr ""
 "Καθορίζει τη διαδρομή για πρόσθετα δεδομένα που χρησιμοποιούνται από όλα τα "
 "παιχνίδια ή το ScummVM"
 
-#: gui/options.cpp:2242
+#: gui/options.cpp:2244
 msgid "Plugins Path:"
 msgstr "Διαδρομή Πρόσθετων:"
 
-#: gui/options.cpp:2244
+#: gui/options.cpp:2246
 msgctxt "lowres"
 msgid "Plugins Path:"
 msgstr "Διαδρ. Πρόσθ.:"
 
-#: gui/options.cpp:2254
+#: gui/options.cpp:2256
 msgid "ScummVM config path: "
 msgstr "Διαδρομή Ρυθμίσεων: "
 
 #. I18N: Referring to the last path memorized when adding a game
-#: gui/options.cpp:2261 gui/options.cpp:2948
+#: gui/options.cpp:2263 gui/options.cpp:2951
 msgid "Last browser path: "
 msgstr "Πρόσφατη διαδρομή πλοηγητή: "
 
-#: gui/options.cpp:2266
+#: gui/options.cpp:2268
 msgid "Theme:"
 msgstr "Θέμα:"
 
-#: gui/options.cpp:2270
+#: gui/options.cpp:2272
 msgid "GUI scale:"
 msgstr "Κλιμάκωση GUI:"
 
-#: gui/options.cpp:2277
+#: gui/options.cpp:2279
 msgid "GUI renderer:"
 msgstr "Απόδοση εικόνας GUI:"
 
-#: gui/options.cpp:2289
+#: gui/options.cpp:2291
 msgid "Autosave:"
 msgstr "Αυτόματη αποθήκευση:"
 
-#: gui/options.cpp:2291
+#: gui/options.cpp:2293
 msgctxt "lowres"
 msgid "Autosave:"
 msgstr "Αυτόμ. αποθ.:"
 
-#: gui/options.cpp:2300
+#: gui/options.cpp:2302
 msgid "Always return to the launcher when leaving a game"
 msgstr "Επιστροφή πάντα στο launcher κατά την έξοδο από παιχνίδι"
 
-#: gui/options.cpp:2301
+#: gui/options.cpp:2303
 msgid ""
 "Always return to the launcher when leaving a game instead of closing ScummVM."
 msgstr ""
 "Να γίνεται πάντα επιστροφή στο launcher κατά την έξοδο από ένα παιχνίδι, "
 "αντί να κλείνει η εφαρμογή του ScummVM."
 
-#: gui/options.cpp:2308
+#: gui/options.cpp:2310
 msgid "Ask for confirmation on exit"
 msgstr "Να ζητείται επιβεβαίωση κατά την έξοδο"
 
-#: gui/options.cpp:2309
+#: gui/options.cpp:2311
 msgid "Ask for permission when closing ScummVM or leaving a game."
 msgstr ""
 "Να ζητείται επιβεβαίωση από τον χρήστη κατά το κλείσιμο του ScummVM ή την "
 "έξοδο από ένα παιχνίδι."
 
-#: gui/options.cpp:2316
+#: gui/options.cpp:2318
 msgid "Enable Discord integration"
 msgstr "Ενεργοποίηση διασύνδεσης με DIscord"
 
-#: gui/options.cpp:2317
+#: gui/options.cpp:2319
 msgid ""
 "Show information about the games you are playing on Discord if the Discord "
 "client is running."
@@ -1593,19 +1594,19 @@ msgstr ""
 "Εμφανίζει στο Discord πληροφορίες για τα παιχνίδια που παίζετε, αν το "
 "πρόγραμμα Discord εκτελείται."
 
-#: gui/options.cpp:2326
+#: gui/options.cpp:2328
 msgid "GUI language:"
 msgstr "Γλώσσα GUI:"
 
-#: gui/options.cpp:2326
+#: gui/options.cpp:2328
 msgid "Language of ScummVM GUI"
 msgstr "Γλώσσα του ScummVM GUI"
 
-#: gui/options.cpp:2352
+#: gui/options.cpp:2354
 msgid "Switch the ScummVM GUI language to the game language"
 msgstr "Χρήση γλώσσας παιχνιδιού ως γλώσσα του ScummVM GUI"
 
-#: gui/options.cpp:2353
+#: gui/options.cpp:2355
 msgid ""
 "When starting a game, change the ScummVM GUI language to the game language. "
 "That way, if a game uses the ScummVM save and load dialogs, they are in the "
@@ -1616,11 +1617,11 @@ msgstr ""
 "παράθυρα διαλόγου του ScummVM για αποθήκευση και φόρτωση, αυτά θα είναι στην "
 "ίδια γλώσσα με το παιχνίδι."
 
-#: gui/options.cpp:2365
+#: gui/options.cpp:2367
 msgid "Use native system file browser"
 msgstr "Χρήση του εγγενούς περιηγητή αρχείων"
 
-#: gui/options.cpp:2366
+#: gui/options.cpp:2368
 msgid ""
 "Use the native system file browser instead of the ScummVM one to select a "
 "file or directory."
@@ -1628,31 +1629,31 @@ msgstr ""
 "Χρήση του εγγενούς περιηγητή αρχείων που παρέχει το λειτουργικό σύστημα αντί "
 "αυτού από το ScummVM για την επιλογή αρχείου ή καταλόγου."
 
-#: gui/options.cpp:2374 gui/updates-dialog.cpp:85
+#: gui/options.cpp:2376 gui/updates-dialog.cpp:85
 msgid "Update check:"
 msgstr "Έλεγχος αναβαθμίσεων:"
 
-#: gui/options.cpp:2374
+#: gui/options.cpp:2376
 msgid "How often to check ScummVM updates"
 msgstr "Συχνότητα ελέγχου ενημερώσεων του ScummVM"
 
-#: gui/options.cpp:2385
+#: gui/options.cpp:2387
 msgid "Check now"
 msgstr "Ελέγξτε τώρα"
 
-#: gui/options.cpp:2391
+#: gui/options.cpp:2393
 msgid "Update Icons"
 msgstr "Ενημέρωση Εικονιδίων"
 
-#: gui/options.cpp:2399
+#: gui/options.cpp:2401
 msgid "Active storage:"
 msgstr "Ενεργή αποθήκη:"
 
-#: gui/options.cpp:2399
+#: gui/options.cpp:2401
 msgid "Active cloud storage"
 msgstr "Ενεργή αποθήκη"
 
-#: gui/options.cpp:2408
+#: gui/options.cpp:2410
 msgctxt "lowres"
 msgid ""
 "4. Storage is not yet enabled. Verify that username is correct and enable it:"
@@ -1660,239 +1661,239 @@ msgstr ""
 "4. Η αποθήκευση δεν είναι ακόμα ενεργοποιημένη. Επιβεβαιώστε ότι το όνομα "
 "χρήστη είναι σωστό και ενεργοποιήστε τη:"
 
-#: gui/options.cpp:2410
+#: gui/options.cpp:2412
 msgid ""
 "4. Storage is not yet enabled. Verify that username is correct and enable it:"
 msgstr ""
 "4. Η αποθήκευση δεν είναι ακόμα ενεργοποιημένη. Επιβεβαιώστε ότι το όνομα "
 "χρήστη είναι σωστό και ενεργοποιήστε τη:"
 
-#: gui/options.cpp:2411
+#: gui/options.cpp:2413
 msgid "Enable storage"
 msgstr "Ενεργοποίηση αποθήκευσης"
 
-#: gui/options.cpp:2411
+#: gui/options.cpp:2413
 msgid "Confirm you want to use this account for this storage"
 msgstr ""
 "Επιβεβαιώστε ότι επιθυμείτε να χρησιμοποιήσετε αυτόν τον λογαριασμό για αυτή "
 "την αποθήκευση"
 
-#: gui/options.cpp:2413 backends/platform/wii/options.cpp:113
+#: gui/options.cpp:2415 backends/platform/wii/options.cpp:113
 msgid "Username:"
 msgstr "Όνομα χρήστη:"
 
-#: gui/options.cpp:2413
+#: gui/options.cpp:2415
 msgid "Username used by this storage"
 msgstr "Το όνομα χρήστη που χρησιμοποιείται από αυτή την αποθήκη"
 
-#: gui/options.cpp:2414
+#: gui/options.cpp:2416
 msgid "<none>"
 msgstr "<κανένα>"
 
-#: gui/options.cpp:2416
+#: gui/options.cpp:2418
 msgid "Used space:"
 msgstr "Χρησιμοποιημένος χώρος:"
 
-#: gui/options.cpp:2416
+#: gui/options.cpp:2418
 msgid "Space used by ScummVM's saved games on this storage"
 msgstr ""
 "Χώρος που χρησιμοποιείται από τα αποθηκευμένα παιχνίδια του ScummVM σε αυτή "
 "την αποθήκη"
 
-#: gui/options.cpp:2419
+#: gui/options.cpp:2421
 msgid "Last sync:"
 msgstr "Πρόσφατος συγχρονισμός:"
 
-#: gui/options.cpp:2419
+#: gui/options.cpp:2421
 msgid "When was the last time saved games were synced with this storage"
 msgstr ""
 "Πότε πραγματοποιήθηκε ο πιο πρόσφατος συγχρονισμός αποθηκευμένων παιχνιδιών"
 
-#: gui/options.cpp:2420 gui/options.cpp:3303
+#: gui/options.cpp:2422 gui/options.cpp:3306
 msgid "<never>"
 msgstr "<ποτέ>"
 
-#: gui/options.cpp:2422
+#: gui/options.cpp:2424
 msgctxt "lowres"
 msgid "Saved games sync automatically on launch, after saving and on loading."
 msgstr ""
 "Τα αποθηκευμένα παιχνίδια συγχρονίζονται αυτόματα κατά την εκκίνηση, μετά "
 "την αποθήκευση και κατά τη φόρτωση."
 
-#: gui/options.cpp:2424
+#: gui/options.cpp:2426
 msgid "Saved games sync automatically on launch, after saving and on loading."
 msgstr ""
 "Τα αποθηκευμένα παιχνίδια συγχρονίζονται αυτόματα κατά την εκκίνηση, μετά "
 "την αποθήκευση και κατά τη φόρτωση."
 
-#: gui/options.cpp:2425
+#: gui/options.cpp:2427
 msgid "Sync now"
 msgstr "Συγχρονισμός τώρα"
 
-#: gui/options.cpp:2425
+#: gui/options.cpp:2427
 msgid "Start saved games sync"
 msgstr "Εκκίνηση συγχρονισμού αποθηκευμένων παιχνιδιών"
 
-#: gui/options.cpp:2428
+#: gui/options.cpp:2430
 msgctxt "lowres"
 msgid "You can download game files from your cloud ScummVM folder:"
 msgstr ""
 "Μπορείτε να μεταφορτώσετε αρχεία παιχνιδιού από τον δικό σας φάκελο Νέφους "
 "για το ScummVM:"
 
-#: gui/options.cpp:2430
+#: gui/options.cpp:2432
 msgid "You can download game files from your cloud ScummVM folder:"
 msgstr ""
 "Μπορείτε να μεταφορτώσετε αρχεία παιχνιδιού από τον δικό σας φάκελο Νέφους "
 "για το ScummVM:"
 
-#: gui/options.cpp:2431
+#: gui/options.cpp:2433
 msgid "Download game files"
 msgstr "Κατεβάστε αρχεία παιχνιδιού"
 
-#: gui/options.cpp:2431
+#: gui/options.cpp:2433
 msgid "Open downloads manager dialog"
 msgstr "Άνοιγμα διαλόγου διαχείρισης μεταφορτώσεων"
 
-#: gui/options.cpp:2434
+#: gui/options.cpp:2436
 msgctxt "lowres"
 msgid "To change account for this storage, disconnect and connect again:"
 msgstr ""
 "Για να αλλάξετε το λογαριασμό για αυτή την αποθήκη, αποσυνδεθείτε και "
 "συνδεθείτε εκ νέου:"
 
-#: gui/options.cpp:2436
+#: gui/options.cpp:2438
 msgid "To change account for this storage, disconnect and connect again:"
 msgstr ""
 "Για να αλλάξετε το λογαριασμό για αυτή την αποθήκη, αποσυνδεθείτε και "
 "συνδεθείτε εκ νέου:"
 
-#: gui/options.cpp:2437
+#: gui/options.cpp:2439
 msgid "Disconnect"
 msgstr "Αποσύνδεση"
 
-#: gui/options.cpp:2437
+#: gui/options.cpp:2439
 msgid "Stop using this storage on this device"
 msgstr "Διακοπή χρήσης αυτής της αποθήκης σε αυτή τη συσκευή"
 
-#: gui/options.cpp:2440
+#: gui/options.cpp:2442
 msgctxt "lowres"
 msgid "This storage is not connected yet! To connect,"
 msgstr "Η αποθήκη αυτή δεν είναι ακόμα συνδεδεμένη! Για να τη συνδέσετε,"
 
-#: gui/options.cpp:2442
+#: gui/options.cpp:2444
 msgid "This storage is not connected yet! To connect,"
 msgstr "Η αποθήκη αυτή δεν είναι ακόμα συνδεδεμένη! Για να τη συνδέσετε,"
 
-#: gui/options.cpp:2443
+#: gui/options.cpp:2445
 msgid "1. Open this link:"
 msgstr "1. Ανοίξτε αυτόν τον σύνδεσμο:"
 
-#: gui/options.cpp:2446
+#: gui/options.cpp:2448
 msgctxt "lowres"
 msgid "2. Get the code and enter it here:"
 msgstr "2. Γράψτε εδώ τον κωδικό που θα λάβετε:"
 
-#: gui/options.cpp:2448
+#: gui/options.cpp:2450
 msgid "2. Get the code and enter it here:"
 msgstr "2. Γράψτε εδώ τον κωδικό που θα λάβετε:"
 
-#: gui/options.cpp:2450
+#: gui/options.cpp:2452
 msgid "Paste"
 msgstr "Επικόλληση"
 
-#: gui/options.cpp:2450
+#: gui/options.cpp:2452
 msgid "Paste code from clipboard"
 msgstr "Επικόλληση κωδικού από το πρόχειρο"
 
-#: gui/options.cpp:2451
+#: gui/options.cpp:2453
 msgid "3. Connect"
 msgstr "3. Συνδεθείτε"
 
-#: gui/options.cpp:2451
+#: gui/options.cpp:2453
 msgid "Connect your cloud storage account"
 msgstr "Συνδέστε τον λογαριασμό του δικού σας αποθηκευτικού χώρου στο Νέφος"
 
-#: gui/options.cpp:2460
+#: gui/options.cpp:2462
 msgid "Run server"
 msgstr "Εκτέλεση διακομιστή"
 
-#: gui/options.cpp:2460
+#: gui/options.cpp:2462
 msgid "Run local webserver"
 msgstr "Εκτέλεση τοπικού διακομιστή web"
 
-#: gui/options.cpp:2461 gui/options.cpp:3418
+#: gui/options.cpp:2463 gui/options.cpp:3421
 msgid "Not running"
 msgstr "Δεν εκτελείται"
 
-#: gui/options.cpp:2465
+#: gui/options.cpp:2467
 msgctxt "lowres"
 msgid "/root/ Path:"
 msgstr "/root/ Διαδρομή:"
 
-#: gui/options.cpp:2465 gui/options.cpp:2467 gui/options.cpp:2468
+#: gui/options.cpp:2467 gui/options.cpp:2469 gui/options.cpp:2470
 msgid "Select which directory will be shown as /root/ in the Files Manager"
 msgstr ""
 "Επιλέξτε το φάκελο που θα εμφανίζεται ως κορυφαίος /root/ στη Διαχείριση "
 "Αρχείων"
 
-#: gui/options.cpp:2467
+#: gui/options.cpp:2469
 msgid "/root/ Path:"
 msgstr "/root/ Διαδρομή:"
 
-#: gui/options.cpp:2473
+#: gui/options.cpp:2475
 msgid "Server's port:"
 msgstr "Θύρα εξυπηρετητή:"
 
-#: gui/options.cpp:2473
+#: gui/options.cpp:2475
 msgid "Port for server to use"
 msgstr "Η θύρα που θα χρησιμοποιεί ο εξυπηρετητής"
 
-#: gui/options.cpp:2478
+#: gui/options.cpp:2480
 msgctxt "lowres"
 msgid "Run server to manage files with browser (in the same network)."
 msgstr ""
 "Εκκινείστε τον εξυπηρετητή για να διαχειριστείτε αρχεία με κάποιο browser "
 "(εντός του ίδιου δικτύου)."
-
-#: gui/options.cpp:2479
-msgctxt "lowres"
-msgid "Closing options dialog will stop the server."
-msgstr "Κλείνοντας το μενού επιλογών θα σταματήσει ο εξυπηρετητής."
 
 #: gui/options.cpp:2481
+msgctxt "lowres"
+msgid "Closing options dialog will stop the server."
+msgstr "Κλείνοντας το μενού επιλογών θα σταματήσει ο εξυπηρετητής."
+
+#: gui/options.cpp:2483
 msgid "Run server to manage files with browser (in the same network)."
 msgstr ""
 "Εκκινείστε τον εξυπηρετητή για να διαχειριστείτε αρχεία με κάποιο browser "
 "(εντός του ίδιου δικτύου)."
 
-#: gui/options.cpp:2482
+#: gui/options.cpp:2484
 msgid "Closing options dialog will stop the server."
 msgstr "Κλείνοντας το μενού επιλογών θα σταματήσει ο εξυπηρετητής."
 
-#: gui/options.cpp:2494
+#: gui/options.cpp:2496
 msgid "Use Text to speech"
 msgstr "Μετατροπή κειμένου σε ομιλία"
 
-#: gui/options.cpp:2494
+#: gui/options.cpp:2496
 msgid "Will read text in gui on mouse over."
 msgstr ""
 "Θα διαβάσει το κείμενο που βρίσκεται κάτω από το ποντίκι στο γραφικό "
 "περιβάλλον διεπαφής."
 
-#: gui/options.cpp:2507
+#: gui/options.cpp:2509
 msgid "None"
 msgstr "Κανένα"
 
-#: gui/options.cpp:2568
+#: gui/options.cpp:2570
 msgid "Ignore"
 msgstr "Αγνόηση"
 
-#: gui/options.cpp:2569
+#: gui/options.cpp:2571
 msgid "Disable autosave"
 msgstr "Χωρίς αυτόματη αποθήκευση"
 
-#: gui/options.cpp:2570
+#: gui/options.cpp:2572
 msgid ""
 "WARNING: Autosave was enabled. Some of your games have existing saved games "
 "on the autosave slot. You can either move the existing saves to new slots, "
@@ -1908,7 +1909,7 @@ msgstr ""
 "αντικαταστήσει κάποιο υπάρχον αποθηκευμένο παιχνίδι).\n"
 "Λίστα παιχνιδιών:\n"
 
-#: gui/options.cpp:2579
+#: gui/options.cpp:2581
 msgid ""
 "\n"
 "And more..."
@@ -1916,31 +1917,31 @@ msgstr ""
 "\n"
 "Και άλλα..."
 
-#: gui/options.cpp:2580 engines/engine.cpp:579
+#: gui/options.cpp:2582 engines/engine.cpp:579
 msgid "Move"
 msgstr "Μετακίνηση"
 
-#: gui/options.cpp:2593
+#: gui/options.cpp:2595
 msgid "ERROR: Failed to move the following saved games:\n"
 msgstr "ΣΦΑΛΜΑ: Αποτυχία μετακίνησης των παρακάτω αποθηκεμένων παιχνιδιών:\n"
 
-#: gui/options.cpp:2686
+#: gui/options.cpp:2688
 msgid "Failed to change cloud storage!"
 msgstr "Αδυναμία αλλαγής αποθήκης Νέφους!"
 
-#: gui/options.cpp:2689
+#: gui/options.cpp:2691
 msgid "Another cloud storage is already active."
 msgstr "Μια άλλη αποθήκη Νέφους είναι ήδη ενεργή."
 
-#: gui/options.cpp:2779
+#: gui/options.cpp:2781
 msgid "Theme does not support selected language!"
 msgstr "Το θέμα δεν υποστηρίζει την επιλεγμένη γλώσσα!"
 
-#: gui/options.cpp:2782
+#: gui/options.cpp:2784
 msgid "Theme cannot be loaded!"
 msgstr "Το θέμα δεν φορτώθηκε!"
 
-#: gui/options.cpp:2785
+#: gui/options.cpp:2787
 msgid ""
 "\n"
 "Misc settings will be restored."
@@ -1948,29 +1949,29 @@ msgstr ""
 "\n"
 "Επαναφορά αρχικών τιμών στις λοιπές ρυθμίσεις."
 
-#: gui/options.cpp:2856
+#: gui/options.cpp:2859
 msgid "Select directory for GUI themes"
 msgstr "Επιλέξτε φάκελο για θέματα GUI"
 
-#: gui/options.cpp:2866
+#: gui/options.cpp:2869
 msgid "Select directory for GUI launcher thumbnails"
 msgstr ""
 "Επιλέξτε φάκελο για τα εικονίδια παιχνιδιών στο γραφικό περιβάλλον διεπαφής "
 "(GUI) του launcher"
 
-#: gui/options.cpp:2876
+#: gui/options.cpp:2879
 msgid "Select directory for extra files"
 msgstr "Επιλέξτε φάκελο για πρόσθετα αρχεία"
 
-#: gui/options.cpp:2887
+#: gui/options.cpp:2890
 msgid "Select directory for plugins"
 msgstr "Επιλέξτε φάκελο για πρόσθετα"
 
-#: gui/options.cpp:2900
+#: gui/options.cpp:2903
 msgid "Select directory for Files Manager /root/"
 msgstr "Επιλέξτε φάκελο για το /root/ του Διαχειριστή Αρχείων"
 
-#: gui/options.cpp:3035
+#: gui/options.cpp:3038
 msgid ""
 "Failed to open URL!\n"
 "Please navigate to this page manually."
@@ -1978,51 +1979,51 @@ msgstr ""
 "Αποτυχία ανοίγματος του URL!\n"
 "Παρακαλούμε, μεταφερθείτε σε αυτή τη σελίδα χειροκίνητα."
 
-#: gui/options.cpp:3060
+#: gui/options.cpp:3063
 msgid "Another Storage is working now. Do you want to interrupt it?"
 msgstr ""
 "Κάποια άλλη Αποθήκη έχει εργασία σε εξέλιξη αυτή τη στιγμή. Επιθυμείτε να τη "
 "διακόψετε;"
 
-#: gui/options.cpp:3069 gui/options.cpp:3107
+#: gui/options.cpp:3072 gui/options.cpp:3110
 msgid "Wait until current Storage finishes up and try again."
 msgstr "Περιμένετε να ολοκληρωθεί η τρέχουσα Αποθήκευση και δοκιμάστε ξανά."
 
-#: gui/options.cpp:3082
+#: gui/options.cpp:3085
 msgid "Connecting..."
 msgstr "Γίνεται σύνδεση..."
 
-#: gui/options.cpp:3098
+#: gui/options.cpp:3101
 msgid "This Storage is working now. Do you want to interrupt it?"
 msgstr ""
 "Αυτή η Αποθήκη έχει εργασία σε εξέλιξη αυτή τη στιγμή. Επιθυμείτε να τη "
 "διακόψετε;"
 
-#: gui/options.cpp:3301 backends/cloud/cloudmanager.cpp:156
+#: gui/options.cpp:3304 backends/cloud/cloudmanager.cpp:156
 msgid "<right now>"
 msgstr "<άμεσα>"
 
-#: gui/options.cpp:3410
+#: gui/options.cpp:3413
 msgid "Stop server"
 msgstr "Διακοπή εξυπηρετητή"
 
-#: gui/options.cpp:3411
+#: gui/options.cpp:3414
 msgid "Stop local webserver"
 msgstr "Διακοπή τοπικού εξυπηρετητή ιστού"
 
-#: gui/options.cpp:3463
+#: gui/options.cpp:3466
 msgid "Storage connected."
 msgstr "Η αποθήκη συνδέθηκε."
 
-#: gui/options.cpp:3465
+#: gui/options.cpp:3468
 msgid "Failed to connect storage."
 msgstr "Αποτυχία σύνδεσης αποθήκης."
 
-#: gui/options.cpp:3467
+#: gui/options.cpp:3470
 msgid "Failed to connect storage: "
 msgstr "Αποτυχία σύνδεσης αποθήκης: "
 
-#: gui/options.cpp:3487
+#: gui/options.cpp:3490
 msgid ""
 "Request failed.\n"
 "Check your Internet connection."
@@ -2820,21 +2821,25 @@ msgstr "Παράλειψη γραμμής"
 msgid "Predictive input dialog"
 msgstr "Παράθυρο διαλόγου με πρόβλεψη κειμένου"
 
-#: engines/metaengine.cpp:104 engines/griffon/metaengine.cpp:89
-#: engines/grim/grim.cpp:512 engines/grim/grim.cpp:608
-#: engines/sky/metaengine.cpp:97 engines/wintermute/keymapper_tables.h:54
+#. I18N: This keymap works within the KIA Save Game screen
+#. and allows confirming popup dialogue prompts (eg. for save game deletion or overwriting)
+#. and also submitting a new save game name, or choosing an existing save game for overwriting.
+#: engines/metaengine.cpp:104 engines/bladerunner/metaengine.cpp:181
+#: engines/griffon/metaengine.cpp:89 engines/grim/grim.cpp:512
+#: engines/grim/grim.cpp:608 engines/sky/metaengine.cpp:97
+#: engines/wintermute/keymapper_tables.h:54
 msgid "Confirm"
 msgstr "Επιβεβαίωση"
 
-#: graphics/renderer.cpp:30 backends/graphics/opengl/opengl-graphics.cpp:174
+#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:174
 msgid "OpenGL"
 msgstr "OpenGL"
 
-#: graphics/renderer.cpp:33
+#: graphics/renderer.cpp:36
 msgid "OpenGL with shaders"
 msgstr "OpenGL με σκιαστές"
 
-#: graphics/renderer.cpp:41
+#: graphics/renderer.cpp:44
 msgctxt "lowres"
 msgid "OpenGL with shaders"
 msgstr "OpenGL με σκιαστές"
@@ -3183,20 +3188,20 @@ msgstr "Έγινε αποθήκευση στιγμιότυπου '%s'"
 msgid "Could not save screenshot"
 msgstr "Αδυναμία αποθήκευσης στιγμιότυπου"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:409
+#: backends/graphics/sdl/sdl-graphics.cpp:411
 msgid "Windowed mode"
 msgstr "Λειτουργία παραθύρου"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:420 engines/scumm/help.cpp:85
+#: backends/graphics/sdl/sdl-graphics.cpp:422 engines/scumm/help.cpp:85
 msgid "Toggle fullscreen"
 msgstr "Λειτουργία πλήρους οθόνης"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:427 engines/scumm/help.cpp:98
+#: backends/graphics/sdl/sdl-graphics.cpp:429 engines/scumm/help.cpp:98
 #: engines/wintermute/keymapper_tables.h:960
 msgid "Toggle mouse capture"
 msgstr "Εναλλαγή κράτησης ποντικιού"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:432
+#: backends/graphics/sdl/sdl-graphics.cpp:434
 #: engines/wintermute/keymapper_tables.h:646
 #: engines/wintermute/keymapper_tables.h:695
 #: engines/wintermute/keymapper_tables.h:1098
@@ -3209,31 +3214,31 @@ msgstr "Εναλλαγή κράτησης ποντικιού"
 msgid "Save screenshot"
 msgstr "Αποθήκευση στιγμιότυπου"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:438
+#: backends/graphics/sdl/sdl-graphics.cpp:440
 msgid "Toggle aspect ratio correction"
 msgstr "Εναλλαγή διόρθωσης αναλογίας διαστάσεων"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:445
+#: backends/graphics/sdl/sdl-graphics.cpp:447
 msgid "Toggle linear filtered scaling"
 msgstr "Εναλλαγή χρήσης γραμμικού φίλτρου σε κλιμάκωση εικόνας"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:452
+#: backends/graphics/sdl/sdl-graphics.cpp:454
 msgid "Cycle through stretch modes"
 msgstr "Κυκλική περιήγηση στις λειτουργίες εξάπλωσης εικόνας"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:458
+#: backends/graphics/sdl/sdl-graphics.cpp:460
 msgid "Increase the scale factor"
 msgstr "Αύξηση συντελεστή κλίμακας"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:464
+#: backends/graphics/sdl/sdl-graphics.cpp:466
 msgid "Decrease the scale factor"
 msgstr "Μείωση συντελεστή κλίμακας"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:470
+#: backends/graphics/sdl/sdl-graphics.cpp:472
 msgid "Switch to the next scaler"
 msgstr "Χρήση επόμενου κλιμακωτή"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:475
+#: backends/graphics/sdl/sdl-graphics.cpp:477
 msgid "Switch to the previous scaler"
 msgstr "Χρήση προηγούμενου κλιμακωτή"
 
@@ -3822,8 +3827,12 @@ msgstr "Παράθυρο"
 msgid "Minimize"
 msgstr "Ελαχιστοποίηση"
 
+#. I18N: This keymap opens KIA's HELP tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. ONLINE HELP
 #: backends/platform/sdl/macosx/appmenu_osx.mm:237
-#: engines/zvision/metaengine.cpp:157
+#: engines/bladerunner/metaengine.cpp:221 engines/zvision/metaengine.cpp:157
 msgid "Help"
 msgstr "Βοήθεια"
 
@@ -4051,24 +4060,24 @@ msgid "Check for Updates..."
 msgstr "Έλεγχος Ενημερώσεων..."
 
 #: engines/access/resources.cpp:43 engines/drascula/drascula.cpp:933
-#: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:56
+#: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:301 engines/sky/compact.cpp:130
-#: engines/supernova/supernova.cpp:462 engines/teenagent/resources.cpp:97
+#: engines/supernova/supernova.cpp:464 engines/teenagent/resources.cpp:97
 #: engines/tony/tony.cpp:187 engines/toon/toon.cpp:4999
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "Δεν ήταν δυνατή η εύρεση του αρχείου παιχνιδιού '%s'."
 
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:949
-#: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:65
-#: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:467
+#: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:66
+#: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:469
 #: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5012
 #, c-format
 msgid "The '%s' engine data file is corrupt."
 msgstr "Το αρχειο παιχνιδιού '%s' είναι κατεστραμμένο."
 
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:960
-#: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:68
+#: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:319 engines/tony/tony.cpp:211
 #: engines/toon/toon.cpp:5023
 #, c-format
@@ -4087,55 +4096,57 @@ msgstr "Προσομοιωτής TV"
 msgid "Emulate composite output to an NTSC TV"
 msgstr "Προσομοίωση σύνθετου σήματος εξόδου (composite) σε τηλεόραση NTSC"
 
-#: engines/adl/detection.cpp:63 engines/adl/detection.cpp:73
+#: engines/adl/detection.cpp:65 engines/adl/detection.cpp:77
 msgid "Color graphics"
 msgstr "Έγχρωμα γραφικά"
 
-#: engines/adl/detection.cpp:64 engines/adl/detection.cpp:74
+#: engines/adl/detection.cpp:66 engines/adl/detection.cpp:78
 msgid "Use color graphics instead of monochrome"
 msgstr "Χρήση έγχρωμων γραφικών αντί για μονόχρωμα"
 
-#: engines/adl/detection.cpp:83
+#: engines/adl/detection.cpp:89
 msgid "Show scanlines"
 msgstr "Προβολή γραμμών σάρωσης"
 
-#: engines/adl/detection.cpp:84
+#: engines/adl/detection.cpp:90
 msgid "Darken every other scanline to mimic the look of a CRT"
 msgstr ""
 "Σκοτείνιασμα κάθε δεύτερης γραμμής σάρωσης για μίμηση εικόνας CRT οθόνης"
 
-#: engines/adl/detection.cpp:93
+#: engines/adl/detection.cpp:101
 msgid "Always use sharp monochrome text"
 msgstr "Να γίνεται πάντα χρήση μονόχρωμου κειμένου χωρίς εξομάλυνση"
 
-#: engines/adl/detection.cpp:94
+#: engines/adl/detection.cpp:102
 msgid "Do not emulate NTSC artifacts for text"
 msgstr "Να μη γίνει προσομοίωση \"παράσιτων\" του NTSC για το κείμενο"
 
 #: engines/agi/detection.cpp:86 engines/cine/detection.cpp:51
 #: engines/drascula/detection.cpp:298 engines/dreamweb/detection.cpp:54
-#: engines/groovie/detection.cpp:285 engines/neverhood/detection.cpp:134
-#: engines/sherlock/detection.cpp:58 engines/toltecs/detection.cpp:212
-#: engines/trecision/detection.cpp:219 engines/ultima/detection.cpp:55
-#: engines/ultima/detection.cpp:106 engines/zvision/detection_tables.h:50
+#: engines/groovie/detection.cpp:287 engines/neverhood/detection.cpp:134
+#: engines/sci/detection_options.h:105 engines/sherlock/detection.cpp:58
+#: engines/toltecs/detection.cpp:212 engines/trecision/detection.cpp:219
+#: engines/ultima/detection.cpp:55 engines/ultima/detection.cpp:120
+#: engines/zvision/detection_tables.h:50
 msgid "Use original save/load screens"
 msgstr "Χρήση αρχικών οθονών αποθήκευσης/φόρτωσης"
 
 #: engines/agi/detection.cpp:87 engines/cine/detection.cpp:52
 #: engines/drascula/detection.cpp:299 engines/dreamweb/detection.cpp:55
-#: engines/groovie/detection.cpp:286 engines/neverhood/detection.cpp:135
-#: engines/sherlock/detection.cpp:59 engines/toltecs/detection.cpp:213
-#: engines/trecision/detection.cpp:220 engines/ultima/detection.cpp:56
-#: engines/ultima/detection.cpp:107 engines/zvision/detection_tables.h:51
+#: engines/groovie/detection.cpp:288 engines/neverhood/detection.cpp:135
+#: engines/sci/detection_options.h:106 engines/sherlock/detection.cpp:59
+#: engines/toltecs/detection.cpp:213 engines/trecision/detection.cpp:220
+#: engines/ultima/detection.cpp:56 engines/ultima/detection.cpp:121
+#: engines/zvision/detection_tables.h:51
 msgid "Use the original save/load screens instead of the ScummVM ones"
 msgstr ""
 "Χρήση των αρχικών οθονών αποθήκευσης/φόρτωσης αντί για αυτές του ScummVM"
 
-#: engines/agi/detection.cpp:96
+#: engines/agi/detection.cpp:98
 msgid "Use an alternative palette"
 msgstr "Χρήση εναλλακτικής παλέτας"
 
-#: engines/agi/detection.cpp:97
+#: engines/agi/detection.cpp:99
 msgid ""
 "Use an alternative palette, common for all Amiga games. This was the old "
 "behavior"
@@ -4143,32 +4154,32 @@ msgstr ""
 "Χρήση εναλλακτικής παλέτας, κοινής για όλα τα παιχνίδια Amiga. Αυτή ήταν η "
 "παλιά συμπεριφορά"
 
-#: engines/agi/detection.cpp:106
+#: engines/agi/detection.cpp:110
 msgid "Mouse support"
 msgstr "Υποστήριξη ποντικιού"
 
-#: engines/agi/detection.cpp:107
+#: engines/agi/detection.cpp:111
 msgid ""
 "Enables mouse support. Allows to use mouse for movement and in game menus."
 msgstr ""
 "Ενεργοποίηση της υποστήριξης του ποντικιού. Επιτρέπει τη χρήση του ποντικιού "
 "για κίνηση και τα μενού του παιχνιδιού."
 
-#: engines/agi/detection.cpp:116
+#: engines/agi/detection.cpp:122
 msgid "Use Hercules hires font"
 msgstr "Χρήση γραμματοσειράς Hercules υψηλής ευκρίνειας"
 
-#: engines/agi/detection.cpp:117
+#: engines/agi/detection.cpp:123
 msgid "Uses Hercules hires font, when font file is available."
 msgstr ""
 "Χρήση γραμματοσειράς Hercules υψηλής ευκρίνειας, όταν η γραμματοσειρά είναι "
 "διαθέσιμη."
 
-#: engines/agi/detection.cpp:126
+#: engines/agi/detection.cpp:134
 msgid "Pause when entering commands"
 msgstr "Παύση κατά την εισαγωγή εντολών"
 
-#: engines/agi/detection.cpp:127
+#: engines/agi/detection.cpp:135
 msgid ""
 "Shows a command prompt window and pauses the game (like in SCI) instead of a "
 "real-time prompt."
@@ -4176,11 +4187,11 @@ msgstr ""
 "Εμφανίζει ένα παράθυρο γραμμής εντολών και παύει το παιχνίδι (όπως και το "
 "SCI) αντί της γραμμής εντολών πραγματικού χρόνου."
 
-#: engines/agi/detection.cpp:136
+#: engines/agi/detection.cpp:146
 msgid "Add speed menu"
 msgstr "Προσθήκη μενού ταχύτητας"
 
-#: engines/agi/detection.cpp:137
+#: engines/agi/detection.cpp:147
 msgid "Add game speed menu (similar to PC version)"
 msgstr "Προσθήκη ενός μενού ταχύτητας (παρόμοιο με της έκδοσης για PC)"
 
@@ -4238,7 +4249,7 @@ msgstr ""
 "Η γρήγορη φόρτωση ή αποθήκευση παιχνιδιού δεν υποστηρίζεται σε αυτή την "
 "περιοχή"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2776
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2782
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4249,7 +4260,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2766
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2772
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4260,7 +4271,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2789
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2795
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4312,7 +4323,7 @@ msgstr ""
 "Χρήση εξομάλυνσης για τη σχεδίαση κειμένου ακόμα κι αν το παιχνίδι δεν το "
 "απαιτεί"
 
-#: engines/ags/ags.cpp:126
+#: engines/ags/ags.cpp:125
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
 "supported."
@@ -4320,7 +4331,7 @@ msgstr ""
 "Το επιλεγμένο παιχνίδι χρησιμοποιεί μια παλιότερη από την 2.5 έκδοση της AGS "
 "μηχανής, η οποία δεν υποστηρίζεται."
 
-#: engines/ags/ags.cpp:134
+#: engines/ags/ags.cpp:133
 msgid ""
 "The selected game has a data file greater than 2Gb, which isn't supported by "
 "your version of ScummVM yet."
@@ -4366,15 +4377,15 @@ msgstr ""
 msgid "Load anyway"
 msgstr "Φόρτωση όπως και να 'χει"
 
-#: engines/bladerunner/bladerunner.cpp:357
+#: engines/bladerunner/bladerunner.cpp:368
 msgid "Failed to initialize resources"
 msgstr "Αποτυχία αρχικοποίησης πόρων"
 
-#: engines/bladerunner/bladerunner.cpp:1058
+#: engines/bladerunner/bladerunner.cpp:1084
 msgid "A required game resource was not found"
 msgstr "Δεν βρέθηκε ένας απαιτούμενος πόρος του παιχνιδιού"
 
-#: engines/bladerunner/bladerunner.cpp:2334
+#: engines/bladerunner/bladerunner.cpp:2589
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4385,7 +4396,7 @@ msgstr ""
 "Περιεχομένου\". Η λειτουργία θα αλλάξει σε \"Αποκατεστημένου Περιεχομένου\" "
 "για αυτή τη συνεδρία μέχρι να βγείτε εντελώς από το παιχνίδι."
 
-#: engines/bladerunner/bladerunner.cpp:2336
+#: engines/bladerunner/bladerunner.cpp:2591
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4396,7 +4407,7 @@ msgstr ""
 "θα αλλάξει σε \"Αρχικού Περιεχομένου\" για αυτή τη συνεδρία μέχρι να βγείτε "
 "εντελώς από το παιχνίδι."
 
-#: engines/bladerunner/bladerunner.cpp:2338
+#: engines/bladerunner/bladerunner.cpp:2593
 msgid "Continue"
 msgstr "Συνέχεια"
 
@@ -4410,21 +4421,21 @@ msgstr ""
 "Το παιχνίδι θα προσθέσει γέλιο κονσέρβα μετά από κάποιες ατάκες ή αφηγήσεις "
 "των ηθοποιών"
 
-#: engines/bladerunner/detection.cpp:61
+#: engines/bladerunner/detection.cpp:63
 msgid "Shorty mode"
 msgstr "Λειτουργία κοντοπίθαρου"
 
-#: engines/bladerunner/detection.cpp:62
+#: engines/bladerunner/detection.cpp:64
 msgid "Game will shrink the actors and make their voices high pitched"
 msgstr ""
 "Το παιχνίδι θα σμικρύνει τους ηθοποιούς και οι φωνές τους θα είναι σε υψηλό "
 "τόνο"
 
-#: engines/bladerunner/detection.cpp:70
+#: engines/bladerunner/detection.cpp:74
 msgid "Frame limiter high performance mode"
 msgstr "Λειτουργία υψηλών επιδόσεων για τον περιορισμό καρέ"
 
-#: engines/bladerunner/detection.cpp:71
+#: engines/bladerunner/detection.cpp:75
 msgid ""
 "This mode may result in high CPU usage! It avoids use of delayMillis() "
 "function."
@@ -4432,11 +4443,11 @@ msgstr ""
 "Αυτή η λειτουργία ίσως έχει συνέπεια υψηλή χρήση του επεξεργαστή! Αποφεύγει "
 "τη χρήση της μεθόδου delayMillis()."
 
-#: engines/bladerunner/detection.cpp:79
+#: engines/bladerunner/detection.cpp:85
 msgid "Max frames per second limit"
 msgstr "Μέγιστο όριο καρέ ανά δευτερόλεπτο"
 
-#: engines/bladerunner/detection.cpp:80
+#: engines/bladerunner/detection.cpp:86
 msgid ""
 "This mode targets a maximum of 120 fps. When disabled, the game targets 60 "
 "fps"
@@ -4444,11 +4455,11 @@ msgstr ""
 "Αυτή η λειτουργία στοχεύει σε ένα μέγιστο 120 fps (καρέ ανά δευτερόλεπτο). "
 "Αν είναι απενεργοποιημένη, το παιχνίδι στοχεύει τα 60 fps"
 
-#: engines/bladerunner/detection.cpp:88
+#: engines/bladerunner/detection.cpp:96
 msgid "Disable McCoy's quick stamina drain"
 msgstr "Απενεργοποίηση γρήγορης εξάντλησης του McCoy"
 
-#: engines/bladerunner/detection.cpp:89
+#: engines/bladerunner/detection.cpp:97
 msgid ""
 "When running, McCoy won't start slowing down as soon as the player stops "
 "clicking the mouse"
@@ -4468,19 +4479,143 @@ msgstr ""
 
 #: engines/bladerunner/detection_tables.h:128 engines/cge/detection.cpp:56
 #: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
-#: engines/groovie/detection.cpp:104 engines/hypno/detection.cpp:165
-#: engines/kyra/detection_tables.h:303 engines/lure/detection.cpp:249
-#: engines/mohawk/detection_tables.h:988 engines/mohawk/detection_tables.h:1094
+#: engines/groovie/detection.cpp:104 engines/kyra/detection_tables.h:303
+#: engines/lure/detection.cpp:251 engines/mohawk/detection_tables.h:988
+#: engines/mohawk/detection_tables.h:1094
 #: engines/mohawk/detection_tables.h:1109 engines/myst3/detection.cpp:142
 #: engines/neverhood/detection.cpp:120 engines/saga/detection_tables.h:186
-#: engines/saga/detection_tables.h:1217 engines/saga/detection_tables.h:1276
+#: engines/saga/detection_tables.h:1241 engines/saga/detection_tables.h:1300
 #: engines/sci/detection_tables.h:5068 engines/sci/detection_tables.h:5076
 #: engines/sherlock/detection_tables.h:223 engines/stark/detection.cpp:319
 #: engines/teenagent/detection.cpp:117 engines/trecision/detection.cpp:199
-#: engines/zvision/detection_tables.h:190
-#: engines/zvision/detection_tables.h:210
+#: engines/zvision/detection_tables.h:200
+#: engines/zvision/detection_tables.h:220
 msgid "Missing game code"
 msgstr "Λείπουν τμήματα απαραίτητου κώδικα για αυτή την έκδοση του παιχνιδιού"
+
+#. I18N: These are keymaps that work in the main gameplay and also when KIA (Knowledge Integration Assistant) is open.
+#: engines/bladerunner/metaengine.cpp:107
+msgid "common shortcuts"
+msgstr "κοινές συντομεύσεις"
+
+#. I18N: These are keymaps which work only in the main gameplay and not within KIA's (Knowledge Integration Assistant) screens.
+#: engines/bladerunner/metaengine.cpp:109
+msgid "main game shortcuts"
+msgstr "συντομεύσεις για το κυρίως παιχνίδι"
+
+#. I18N: These are keymaps that work only within KIA's (Knowledge Integration Assistant) screens.
+#: engines/bladerunner/metaengine.cpp:111
+msgid "KIA only shortcuts"
+msgstr "συντομεύσεις για το KIA"
+
+#. I18N: This keymap is the main way for the user interact with the game.
+#. It is used with the game's cursor to select, walk-to, run-to, look-at, talk-to, pick up, use, shoot (combat mode), open KIA (when clicking on McCoy).
+#: engines/bladerunner/metaengine.cpp:118
+msgid "Walk / Look / Talk / Select / Shoot"
+msgstr "Περπάτα / Κοίτα / Μίλα / Επέλεξε / Πυροβόλησε"
+
+#. I18N: This keymap toggles McCoy's status between combat mode (drawing his gun) and normal mode (holstering his gun)
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. TOGGLE MCCOY'S COMBAT MODE
+#: engines/bladerunner/metaengine.cpp:128
+msgid "Toggle Combat"
+msgstr "Εναλλαγή Ετοιμότητας για Μάχη"
+
+#. I18N: This keymap allows skipping video cutscenes
+#: engines/bladerunner/metaengine.cpp:137 engines/scumm/help.cpp:76
+#: engines/zvision/metaengine.cpp:215
+msgid "Skip cutscene"
+msgstr "Παράλειψη ταινίας"
+
+#. I18N: This keymap allows skipping the current line of dialogue.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. SKIP PAST CURRENT LINE OF DIALOGUE
+#: engines/bladerunner/metaengine.cpp:150
+msgid "Skip dialogue"
+msgstr "Παράκαμψη διαλόγου"
+
+#. I18N: This keymap toggles between opening the KIA in the Game Options tab, and closing the KIA.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. GAME OPTIONS
+#: engines/bladerunner/metaengine.cpp:161
+msgid "Game Options"
+msgstr "Ρυθμίσεις Παιχνιδιού"
+
+#. I18N: This keymap opens the KIA database on one of the investigation tabs,
+#. CRIME SCENE DATABASE, SUSPECT DATABASE and CLUES DATABASE.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. ACTIVATE KIA CLUE DATABASE SYSTEM
+#: engines/bladerunner/metaengine.cpp:172
+msgid "Open KIA Database"
+msgstr "Άνοιγμα της Βάσης Δεδομένων KIA"
+
+#. I18N: This keymap works within the KIA Save Game screen
+#. and allows submitting a selected existing save game for deletion.
+#: engines/bladerunner/metaengine.cpp:190
+msgid "Delete Selected Saved Game"
+msgstr "Διαγραφή Επιλεγμένου Αποθηκευμένου Παιχνιδιού"
+
+#. I18N: This keymap allows scrolling texts and lists upwards
+#: engines/bladerunner/metaengine.cpp:204
+msgid "Scroll Up"
+msgstr "Κύλιση Πάνω"
+
+#. I18N: This keymap allows scrolling texts and lists downwards
+#: engines/bladerunner/metaengine.cpp:211
+msgid "Scroll Down"
+msgstr "Κύλιση Κάτω"
+
+#. I18N: This keymap opens KIA's SAVE GAME tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. SAVE GAME
+#: engines/bladerunner/metaengine.cpp:230 engines/pegasus/pegasus.cpp:2820
+msgid "Save Game"
+msgstr "Αποθήκευση παιχνιδιού"
+
+#. I18N: This keymap opens KIA's LOAD GAME tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. LOAD GAME
+#: engines/bladerunner/metaengine.cpp:239 engines/pegasus/pegasus.cpp:2826
+msgid "Load Game"
+msgstr "Φόρτωση Παιχνιδιού"
+
+#. I18N: This keymap opens KIA's CRIME SCENE DATABASE tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. CRIME SCENE DATABASE
+#: engines/bladerunner/metaengine.cpp:248
+msgid "Crime Scene Database"
+msgstr "Βάση Δεδομένων Σκηνών Εγκλήματος"
+
+#. I18N: This keymap opens KIA's SUSPECT DATABASE tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. SUSPECT DATABASE
+#: engines/bladerunner/metaengine.cpp:257
+msgid "Suspect Database"
+msgstr "Βάση Δεδομένων Υπόπτων"
+
+#. I18N: This keymap opens KIA's CLUE DATABASE tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. CLUE DATABASE
+#: engines/bladerunner/metaengine.cpp:266
+msgid "Clue Database"
+msgstr "Βάση Δεδομένων Στοιχείων Έρευνας"
+
+#. I18N: This keymap opens KIA's QUIT GAME tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. QUIT GAME
+#: engines/bladerunner/metaengine.cpp:275 engines/dragons/metaengine.cpp:225
+msgid "Quit Game"
+msgstr "Έξοδος από το παιχνίδι"
 
 #: engines/buried/buried.cpp:580
 msgid "Are you sure you want to quit?"
@@ -4522,20 +4657,20 @@ msgstr "Λειτουργία για Άτομα με Αχρωματοψία"
 msgid "Enable Color Blind Mode by default"
 msgstr "Ενεργοποίηση λειτουργίας για Άτομα με Αχρωματοψία εξ'ορισμού"
 
-#: engines/cge/detection.cpp:124 engines/glk/detection.cpp:238
-#: engines/supernova/detection.cpp:51
+#: engines/cge/detection.cpp:126 engines/glk/detection.cpp:238
+#: engines/sci/detection_options.h:221 engines/supernova/detection.cpp:53
 msgid "Enable Text to Speech"
 msgstr "Χρήση Κειμένου σε Ομιλία"
 
-#: engines/cge/detection.cpp:125
+#: engines/cge/detection.cpp:127
 msgid "Use TTS to read text in the game (if TTS is available)"
 msgstr "Χρήση TTS για την ανάγνωση κειμένου στο παιχνίδι (αν είναι διαθέσιμο)"
 
-#: engines/cine/detection.cpp:60
+#: engines/cine/detection.cpp:62
 msgid "Use transparent dialog boxes in 16 color scenes"
 msgstr "Χρήση διάφανων διαλόγων σε σκηνές με 16 χρώματα"
 
-#: engines/cine/detection.cpp:61
+#: engines/cine/detection.cpp:63
 msgid ""
 "Use transparent dialog boxes in 16 color scenes even if the original game "
 "version did not support them"
@@ -4637,10 +4772,6 @@ msgstr "Enter"
 msgid "Debug Graphics"
 msgstr "Αποσφαλμάτωση Γραφικών"
 
-#: engines/dragons/metaengine.cpp:225
-msgid "Quit Game"
-msgstr "Έξοδος από το παιχνίδι"
-
 #: engines/drascula/saveload.cpp:46
 msgid ""
 "ScummVM found that you have old saved games for Drascula that should be "
@@ -4659,32 +4790,33 @@ msgstr ""
 "Πατήστε OK (Εντάξει)για να τα μετατρέψετε τώρα, αλλιώς θα σας ζητηθεί ξανά "
 "την επόμενη φορά που θα ξεκινήσετε το παιχνίδι.\n"
 
-#: engines/dreamweb/detection.cpp:64
+#: engines/dreamweb/detection.cpp:66
 msgid "Use bright palette mode"
 msgstr "Χρήση λειτουργίας φωτεινής παλέτας"
 
-#: engines/dreamweb/detection.cpp:65
+#: engines/dreamweb/detection.cpp:67
 msgid "Display graphics using the game's bright palette"
 msgstr "Προβολή γραφικών με χρήση της φωτεινής παλέτας του παιχνιδιού"
 
-#: engines/dreamweb/detection.cpp:75
+#: engines/dreamweb/detection.cpp:79
 msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
 msgstr ""
 "Αφήγηση κειμένου για Αντικείμενα, Επιλογές, και το Απόφθευγμα της Βίβλου"
 
-#: engines/dreamweb/detection.cpp:76 engines/lure/detection.cpp:45
-#: engines/mads/detection.cpp:114 engines/sherlock/detection.cpp:120
-#: engines/supernova/detection.cpp:52 engines/twine/detection.cpp:753
+#: engines/dreamweb/detection.cpp:80 engines/lure/detection.cpp:45
+#: engines/mads/detection.cpp:124 engines/sci/detection_options.h:222
+#: engines/sherlock/detection.cpp:132 engines/supernova/detection.cpp:54
+#: engines/twine/detection.cpp:775
 msgid "Use TTS to read the descriptions (if TTS is available)"
 msgstr ""
 "Χρήση λειτουργίας Αφήγησης Κειμένου (TTS) για την ανάγνωση περιγραφών (αν "
 "είναι διαθέσιμη)"
 
-#: engines/dreamweb/detection.cpp:85
+#: engines/dreamweb/detection.cpp:91
 msgid "Enable Text to Speech for Subtitles"
 msgstr "Αφήγηση κειμένου για Υπότιτλους"
 
-#: engines/dreamweb/detection.cpp:86
+#: engines/dreamweb/detection.cpp:92
 msgid "Use TTS to read the subtitles (if TTS is available)"
 msgstr ""
 "Χρήση λειτουργίας Αφήγησης Κειμένου (TTS) για την ανάγνωση υποτίτλων (αν "
@@ -4694,11 +4826,11 @@ msgstr ""
 msgid "Use TTS to read the text"
 msgstr "Χρήση της λειτουργίας TTS για την ανάγνωση κειμένου"
 
-#: engines/glk/detection.cpp:244
+#: engines/glk/detection.cpp:246
 msgid "Also read input text"
 msgstr "Ανάγνωση και του κειμένου εισόδου"
 
-#: engines/glk/detection.cpp:245
+#: engines/glk/detection.cpp:247
 msgid "Use TTS to read the input text"
 msgstr "Χρήση της λειτουργίας TTS για την ανάγνωση του κειμένου εισόδου"
 
@@ -4751,7 +4883,7 @@ msgstr "Αυτό δεν είναι ένα έγκυρο αρχείο Alan2."
 msgid "Savegame"
 msgstr "Αποθηκευμένο παιχνίδι"
 
-#: engines/glk/comprehend/game.cpp:861
+#: engines/glk/comprehend/game.cpp:860
 msgid "Picture window toggled\n"
 msgstr "Εναλλαγή παραθύρου εικόνας\n"
 
@@ -4775,220 +4907,9 @@ msgstr "Αυτή η έκδοση αρχείου Glulx είναι πολύ νέα
 msgid "Could not start Quest game"
 msgstr "Αδυναμία εκκίνησης παιχνιδιού Quest"
 
-#: engines/glk/scott/scott.cpp:99
-msgid "I don't understand your command. "
-msgstr "Δεν καταλαβαίνω την εντολή σου. "
-
-#: engines/glk/scott/scott.cpp:102
-msgid "I can't do that yet. "
-msgstr "Δεν μπορώ να το κάνω αυτό ακόμα. "
-
-#: engines/glk/scott/scott.cpp:118
-msgid "Light has run out! "
-msgstr "Το φως έχει σβήσει! "
-
-#: engines/glk/scott/scott.cpp:120
-msgid "Your light has run out. "
-msgstr "Το φως σου έχει σβήσει. "
-
-#: engines/glk/scott/scott.cpp:129
-msgid "Light runs out in "
-msgstr "Το φως θα σβήσει σε "
-
-#: engines/glk/scott/scott.cpp:131
-msgid " turns. "
-msgstr " γύρους. "
-
-#: engines/glk/scott/scott.cpp:134
-msgid "Your light is growing dim. "
-msgstr "Το φως σου γίνεται αδύναμο. "
-
-#: engines/glk/scott/scott.cpp:411
-msgid "North"
-msgstr "Βόρεια"
-
-#: engines/glk/scott/scott.cpp:411
-msgid "South"
-msgstr "Νότια"
-
-#: engines/glk/scott/scott.cpp:411
-msgid "East"
-msgstr "Ανατολικά"
-
-#: engines/glk/scott/scott.cpp:411
-msgid "West"
-msgstr "Δυτικά"
-
-#: engines/glk/scott/scott.cpp:423
-msgid "You can't see. It is too dark!\n"
-msgstr "Δεν μπορείς να δεις. Είναι πολύ σκοτεινά!\n"
-
-#: engines/glk/scott/scott.cpp:425
-msgid "I can't see. It is too dark!\n"
-msgstr "Δεν μπορώ να δω. Είναι πολύ σκοτεινά!\n"
-
-#: engines/glk/scott/scott.cpp:435
-#, c-format
-msgid "You are in a %s\n"
-msgstr "Βρίσκεσαι σε ένα %s\n"
-
-#: engines/glk/scott/scott.cpp:437
-#, c-format
-msgid "I'm in a %s\n"
-msgstr "Βρίσκομαι σε ένα %s\n"
-
-#: engines/glk/scott/scott.cpp:442
-msgid ""
-"\n"
-"Obvious exits: "
-msgstr ""
-"\n"
-"Προφανείς έξοδοι: "
-
-#: engines/glk/scott/scott.cpp:455
-msgid "none"
-msgstr "καμία"
-
-#: engines/glk/scott/scott.cpp:464
-msgid ""
-"\n"
-"You can also see: "
-msgstr ""
-"\n"
-"Μπορείς επίσης να δεις: "
-
-#: engines/glk/scott/scott.cpp:467
-msgid ""
-"\n"
-"I can also see: "
-msgstr ""
-"\n"
-"Μπορώ επίσης να δω: "
-
-#: engines/glk/scott/scott.cpp:550
+#: engines/glk/scott/scott.cpp:662
 msgid "Saved.\n"
 msgstr "Αποθηκεύτηκε.\n"
-
-#: engines/glk/scott/scott.cpp:643
-msgid "You use word(s) I don't know! "
-msgstr "Χρησιμοποιείς λέξεις που δεν γνωρίζω! "
-
-#: engines/glk/scott/scott.cpp:773 engines/glk/scott/scott.cpp:1096
-#: engines/glk/scott/scott.cpp:1118
-msgid "You are carrying too much. "
-msgstr "Κουβαλάς πάρα πολλά πράγματα. "
-
-#: engines/glk/scott/scott.cpp:775
-msgid "I've too much to carry! "
-msgstr "Κουβαλάω πάρα πολλά πράγματα! "
-
-#: engines/glk/scott/scott.cpp:806
-msgid "You are dead.\n"
-msgstr "Είσαι νεκρός.\n"
-
-#: engines/glk/scott/scott.cpp:808
-msgid "I am dead.\n"
-msgstr "Είμαι νεκρός.\n"
-
-#: engines/glk/scott/scott.cpp:820
-msgid "The game is now over.\n"
-msgstr "Το παιχνίδι έχει τελειώσει τώρα.\n"
-
-#: engines/glk/scott/scott.cpp:835
-msgid "You have stored "
-msgstr "Έχεις συγκεντρώσει "
-
-#: engines/glk/scott/scott.cpp:837
-msgid "I've stored "
-msgstr "Έχω συγκεντρώσει "
-
-#: engines/glk/scott/scott.cpp:839
-msgid " treasures.  On a scale of 0 to 100, that rates "
-msgstr " θησαυρούς.  Σε κλίμακα από το 0 έως το 100, το σκόρ είναι "
-
-#: engines/glk/scott/scott.cpp:843
-msgid "Well done.\n"
-msgstr "Μπράβο.\n"
-
-#: engines/glk/scott/scott.cpp:852
-msgid "You are carrying:\n"
-msgstr "Κουβαλάς:\n"
-
-#: engines/glk/scott/scott.cpp:854
-msgid "I'm carrying:\n"
-msgstr "Κουβαλάω:\n"
-
-#: engines/glk/scott/scott.cpp:869
-msgid "Nothing"
-msgstr "Τίποτα"
-
-#: engines/glk/scott/scott.cpp:998
-msgid "Give me a direction too."
-msgstr "Δώσε μου και μια κατεύθυνση."
-
-#: engines/glk/scott/scott.cpp:1007
-msgid "Dangerous to move in the dark! "
-msgstr "Επικίνδυνο να μετακινείσαι στο σκοτάδι! "
-
-#: engines/glk/scott/scott.cpp:1015
-msgid "You fell down and broke your neck. "
-msgstr "Έπεσες κάτω και έσπασες το σβέρκο σου. "
-
-#: engines/glk/scott/scott.cpp:1017
-msgid "I fell down and broke my neck. "
-msgstr "Έπεσα και έσπασα το σβέρκο μου. "
-
-#: engines/glk/scott/scott.cpp:1022
-msgid "You can't go in that direction. "
-msgstr "Δεν μπορείς να πας προς εκείνη την κατεύθυνση. "
-
-#: engines/glk/scott/scott.cpp:1024
-msgid "I can't go in that direction. "
-msgstr "Δεν μπορώ να πάω προς εκείνη την κατεύθυνση. "
-
-#: engines/glk/scott/scott.cpp:1082
-msgid "It is dark.\n"
-msgstr "Είναι σκοτεινά.\n"
-
-#: engines/glk/scott/scott.cpp:1098 engines/glk/scott/scott.cpp:1120
-msgid "I've too much to carry. "
-msgstr "Κουβαλάω πάρα πολλά πράγματα. "
-
-#: engines/glk/scott/scott.cpp:1103 engines/glk/scott/scott.cpp:1151
-msgid ": O.K.\n"
-msgstr ": Εντάξει\n"
-
-#: engines/glk/scott/scott.cpp:1109
-msgid "Nothing taken."
-msgstr "Δεν λήφθηκε τίποτα."
-
-#: engines/glk/scott/scott.cpp:1113 engines/glk/scott/scott.cpp:1161
-msgid "What ? "
-msgstr "Ορίστε ; "
-
-#: engines/glk/scott/scott.cpp:1126
-msgid "It is beyond your power to do that. "
-msgstr "Είναι πέρα από τη δύναμή σου να το κάνεις αυτό. "
-
-#: engines/glk/scott/scott.cpp:1128
-msgid "It's beyond my power to do that. "
-msgstr "Είναι πέρα από τη δύναμή μου να το κάνω αυτό. "
-
-#: engines/glk/scott/scott.cpp:1132
-msgid "O.K. "
-msgstr "Εντάξει "
-
-#: engines/glk/scott/scott.cpp:1157
-msgid "Nothing dropped.\n"
-msgstr "Δεν ρίχτηκε τίποτα.\n"
-
-#: engines/glk/scott/scott.cpp:1167
-msgid "It's beyond your power to do that.\n"
-msgstr "Είναι πέρα από τη δύναμή σου να το κάνεις αυτό.\n"
-
-#: engines/glk/scott/scott.cpp:1169
-msgid "It's beyond my power to do that.\n"
-msgstr "Είναι πέρα από τη δύναμή μου να το κάνω αυτό.\n"
 
 #: engines/glk/zcode/zcode.cpp:144
 msgid "Error writing save file\n"
@@ -5003,12 +4924,12 @@ msgid "Save file created by different version."
 msgstr "Το αρχείο αποθήκευσης δημιουργήθηκε από διαφορετική έκδοση."
 
 #: engines/gob/inter_playtoons.cpp:257 engines/gob/inter_v2.cpp:1479
-#: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:553
+#: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:554
 msgid "Failed to load saved game from file."
 msgstr "Η ανάγνωση αποθηκευμένου παιχνιδιού από αρχείο απέτυχε."
 
 #: engines/gob/inter_v2.cpp:1549 engines/gob/inter_geisha.cpp:262
-#: engines/tinsel/saveload.cpp:566
+#: engines/tinsel/saveload.cpp:567
 msgid "Failed to save game to file."
 msgstr "Η εγγραφή αποθηκευμένου παιχνιδιού σε αρχείο απέτυχε."
 
@@ -5041,11 +4962,11 @@ msgstr ""
 "σημειώστε ότι η ομάδα του ScummVM δεν παρέχει υποστήριξη για τη χρήση "
 "τέτοιων παρεμβάσεων (patches)."
 
-#: engines/grim/detection.cpp:78 engines/zvision/metaengine.cpp:152
+#: engines/grim/detection.cpp:80 engines/zvision/metaengine.cpp:152
 msgid "Show FPS"
 msgstr "Προβολή FPS"
 
-#: engines/grim/detection.cpp:79
+#: engines/grim/detection.cpp:81
 msgid "Show the current FPS-rate, while you play."
 msgstr "Προβολή του τρέχοντος ρυθμού καρέ (FPS), όσο παίζετε."
 
@@ -5161,7 +5082,7 @@ msgstr ""
 "Η υποστήριξη του Escape from Monkey Island δεν έχει ενσωματωθεί στο "
 "εκτελέσιμο"
 
-#: engines/grim/resource.cpp:99
+#: engines/grim/resource.cpp:100
 msgid ""
 "The original patch of Grim Fandango\n"
 "is missing. Please download it from\n"
@@ -5173,7 +5094,7 @@ msgstr ""
 "https://downloads.scummvm.org/frs/extras/patches/gfupd101.exe\n"
 "και να το βάλετε στο φάκελο με τα αρχεία του παιχνιδιού"
 
-#: engines/grim/resource.cpp:104
+#: engines/grim/resource.cpp:105
 msgid ""
 "The original patch of Escape from Monkey Island is missing. \n"
 "Please download it from https://downloads.scummvm.org/frs/extras/patches/\n"
@@ -5218,21 +5139,21 @@ msgstr "Γρήγορη ταχύτητα ταινιών"
 msgid "Play movies at an increased speed"
 msgstr "Αναπαραγωγή ταινιών με αυξημένη ταχύτητα"
 
-#: engines/groovie/detection.cpp:295
+#: engines/groovie/detection.cpp:299
 msgid "Easier AI"
 msgstr "Ευκολότερη ΤΝ"
 
-#: engines/groovie/detection.cpp:296
+#: engines/groovie/detection.cpp:300
 msgid "Decrease the difficulty of AI puzzles"
 msgstr ""
 "Μειώνει το βαθμό δυσκολίας των γρίφων που λειτουργούν με Τεχνητή Νοημοσύνη "
 "(ΤΝ)"
 
-#: engines/groovie/detection.cpp:305
+#: engines/groovie/detection.cpp:311
 msgid "Updated Credits Music"
 msgstr "Ενημερωμένη Μουσική Τίτλων Τέλους"
 
-#: engines/groovie/detection.cpp:306
+#: engines/groovie/detection.cpp:312
 msgid ""
 "Play the song The Final Hour during the credits instead of reusing MIDI songs"
 msgstr ""
@@ -5305,27 +5226,45 @@ msgstr "Σβήσιμο σημείων προορισμού"
 msgid "Debug"
 msgstr "Αποσφαλμάτωση"
 
-#: engines/hopkins/detection.cpp:46 engines/hopkins/detection.cpp:56
+#: engines/hopkins/detection.cpp:46 engines/hopkins/detection.cpp:58
 msgid "Gore Mode"
 msgstr "Λειτουργία Αίματος"
 
-#: engines/hopkins/detection.cpp:47 engines/hopkins/detection.cpp:57
+#: engines/hopkins/detection.cpp:47 engines/hopkins/detection.cpp:59
 msgid "Enable Gore Mode when available"
 msgstr "Ενεργοποίηση Λειτουργίας Αίματος όταν υπάρχει διαθεσιμότητα"
 
-#: engines/hypno/detection.cpp:190 engines/ultima/detection.cpp:78
-msgid "Enable cheats"
-msgstr "Ενεργοποίηση cheats"
+#: engines/hypno/detection.cpp:211
+msgid "Enable original cheats"
+msgstr "Ενεργοποίηση αρχικών cheats"
 
-#: engines/hypno/detection.cpp:191
+#: engines/hypno/detection.cpp:212
 msgid "Allow cheats using the C key."
 msgstr "Να επιτρέπονται τα cheats με χρήση του πλήκτρου C."
 
-#: engines/hypno/detection.cpp:197
+#: engines/hypno/detection.cpp:220
+msgid "Enable infinite health cheat"
+msgstr "Cheat για άπειρη ενέργεια (υγεία)"
+
+#: engines/hypno/detection.cpp:221
+msgid "Player health will never decrease (except for game over scenes)."
+msgstr ""
+"Η υγεία του παίκτη δεν θα μειωθεί ποτέ (εξαιρώντας την περίπτωση κακού "
+"τερματισμού / game over)."
+
+#: engines/hypno/detection.cpp:229
+msgid "Enable infinite ammo cheat"
+msgstr "Cheat για άπειρα πυρομαχικά"
+
+#: engines/hypno/detection.cpp:230
+msgid "Player ammo will never decrease."
+msgstr "Τα πυρομαχικά του παίκτη δεν θα μειωθούν ποτέ."
+
+#: engines/hypno/detection.cpp:238
 msgid "Enable restored content"
 msgstr "Αποκατεστημένο περιεχόμενο"
 
-#: engines/hypno/detection.cpp:198
+#: engines/hypno/detection.cpp:239
 msgid "Add additional content that is not enabled the original implementation."
 msgstr ""
 "Επαναφορά πρόσθετου περιεχομένου που δεν είναι ενεργοποιημένο στην αρχική "
@@ -5342,69 +5281,69 @@ msgid "Enable studio audience"
 msgstr "Ενεργοποίηση κοινού στούντιο"
 
 #. I18N: This option allows the user to skip text and cutscenes.
-#: engines/kyra/detection.cpp:72
+#: engines/kyra/detection.cpp:74
 msgid "Skip support"
 msgstr "Υποστήριξη παράλειψης"
 
-#: engines/kyra/detection.cpp:73
+#: engines/kyra/detection.cpp:75
 msgid "Allow text and cutscenes to be skipped"
 msgstr "Να επιτρέπεται η παράλειψη κειμένου και ταινιών"
 
 #. I18N: Helium mode makes people sound like they've inhaled Helium.
-#: engines/kyra/detection.cpp:83
+#: engines/kyra/detection.cpp:87
 msgid "Helium mode"
 msgstr "Λειτουργία ηλίου"
 
-#: engines/kyra/detection.cpp:84
+#: engines/kyra/detection.cpp:88
 msgid "Enable helium mode"
 msgstr "Ενεργοποίηση λειτουργίας ηλίου"
 
 #. I18N: When enabled, this option makes scrolling smoother when
 #. changing from one screen to another.
-#: engines/kyra/detection.cpp:97
+#: engines/kyra/detection.cpp:103
 msgid "Smooth scrolling"
 msgstr "Ομαλή κύλιση"
 
-#: engines/kyra/detection.cpp:98
+#: engines/kyra/detection.cpp:104
 msgid "Enable smooth scrolling when walking"
 msgstr "Ενεργοποίηση ομαλής κύλισης κατά το περπάτημα"
 
 #. I18N: When enabled, this option changes the cursor when it floats to the
 #. edge of the screen to a directional arrow. The player can then click to
 #. walk towards that direction.
-#: engines/kyra/detection.cpp:110
+#: engines/kyra/detection.cpp:118
 msgid "Floating cursors"
 msgstr "Δρομείς κατεύθυνσης"
 
-#: engines/kyra/detection.cpp:111
+#: engines/kyra/detection.cpp:119
 msgid "Enable floating cursors"
 msgstr "Ενεργοποίηση δρομέων κατεύθυνσης"
 
 #. I18N: When enabled, this option will fill in an autogenerated savegame
 #. description into the input prompt where.
-#: engines/kyra/detection.cpp:122
+#: engines/kyra/detection.cpp:132
 msgid "Suggest save names"
 msgstr "Πρόταση για όνομα αποθήκευσης"
 
-#: engines/kyra/detection.cpp:123
+#: engines/kyra/detection.cpp:133
 msgid "Autogenerated naming suggestions for savegames"
 msgstr "Αυτόματες προτάσεις ονοματοδοσίας για αποθηκευμένα παιχνίδια"
 
 #. I18N: HP stands for Hit Points
-#: engines/kyra/detection.cpp:135
+#: engines/kyra/detection.cpp:147
 msgid "HP bar graphs"
 msgstr "Ραβδογράμματα HP"
 
-#: engines/kyra/detection.cpp:136
+#: engines/kyra/detection.cpp:148
 msgid "Enable hit point bar graphs"
 msgstr "Ενεργοποίηση ραβδογραμμάτων για hit points"
 
 #. I18N: L/R stands for Left/Right
-#: engines/kyra/detection.cpp:146
+#: engines/kyra/detection.cpp:160
 msgid "Fight Button L/R Swap"
 msgstr "Εναλλαγή Κουμπιού Μάχης Α/Δ"
 
-#: engines/kyra/detection.cpp:147
+#: engines/kyra/detection.cpp:161
 msgid "Left button to attack, right button to pick up items"
 msgstr "Αριστερό κουμπί για επίθεση, δεξί κουμπί για να πάρετε αντικείμενα"
 
@@ -5704,8 +5643,8 @@ msgid "This puzzle is not available in the trial version of the game"
 msgstr ""
 "Αυτός ο γρίφος δεν είναι διαθέσιμος στη δοκιμαστική έκδοση του παιχνιδιού"
 
-#: engines/lure/detection.cpp:44 engines/mads/detection.cpp:113
-#: engines/sherlock/detection.cpp:119 engines/twine/detection.cpp:752
+#: engines/lure/detection.cpp:44 engines/mads/detection.cpp:123
+#: engines/sherlock/detection.cpp:131 engines/twine/detection.cpp:774
 msgid "TTS Narrator"
 msgstr "Αφηγητής Κειμένου"
 
@@ -5734,15 +5673,15 @@ msgid "Shows object names when hovering the mouse over them"
 msgstr ""
 "Εμφανίζει τα ονόματα των αντικειμένων όταν αιωρείται το ποντίκι πάνω τους"
 
-#: engines/mads/detection.cpp:72 engines/mads/detection.cpp:73
+#: engines/mads/detection.cpp:74 engines/mads/detection.cpp:75
 msgid "Animated inventory items"
 msgstr "Κινούμενα αντικείμενα στα υπάρχοντα"
 
-#: engines/mads/detection.cpp:82 engines/mads/detection.cpp:83
+#: engines/mads/detection.cpp:86 engines/mads/detection.cpp:87
 msgid "Animated game interface"
 msgstr "Κινούμενη διεπαφή παιχνιδιού"
 
-#: engines/mads/detection.cpp:92 engines/mads/detection.cpp:93
+#: engines/mads/detection.cpp:98 engines/mads/detection.cpp:99
 msgid "Naughty game mode"
 msgstr "Λειτουργία παιχνιδιού για άτακτους"
 
@@ -6068,7 +6007,7 @@ msgstr "Λειτουργία ευρείας οθόνης"
 msgid "Enable widescreen rendering in fullscreen mode."
 msgstr "Εικόνα ευρείας οθόνης κατά τη λειτουργία πλήρους οθόνης."
 
-#: engines/myst3/myst3.cpp:355
+#: engines/myst3/myst3.cpp:365
 msgid ""
 "This version of Myst III has not been updated with the latest official "
 "patch.\n"
@@ -6083,7 +6022,7 @@ msgstr ""
 "Οι ενημερώσεις μπορούν να ληφθούν από εδώ:\n"
 "https://www.scummvm.org/frs/extras/patches/"
 
-#: engines/myst3/myst3.cpp:1569 engines/pegasus/pegasus.cpp:744
+#: engines/myst3/myst3.cpp:1579 engines/pegasus/pegasus.cpp:744
 msgid "Invalid file name for saving"
 msgstr "Εσφαλμένο όνομα αρχείου για αποθήκευση"
 
@@ -6273,21 +6212,21 @@ msgstr "Δευτερόλεπτα"
 msgid "Invalid Scene ID!"
 msgstr "Άκυρο Αναγνωριστικό Σκηνής!"
 
-#: engines/neverhood/detection.cpp:141
+#: engines/neverhood/detection.cpp:143
 msgid "Skip the Hall of Records storyboard scenes"
 msgstr "Παράλειψη εικονογραφημένων σκηνών της Αίθουσας των Αρχείων"
 
-#: engines/neverhood/detection.cpp:142
+#: engines/neverhood/detection.cpp:144
 msgid "Allows the player to skip past the Hall of Records storyboard scenes"
 msgstr ""
 "Επιτρέπει στον παίκτη να παραλείψει την προβολή των εικονογραφημένων σκηνών "
 "της Αίθουσας των Αρχείων"
 
-#: engines/neverhood/detection.cpp:148
+#: engines/neverhood/detection.cpp:152
 msgid "Scale the making of videos to full screen"
 msgstr "Κλιμάκωση των ταινιών δημιουργίας σε πλήρη οθόνη"
 
-#: engines/neverhood/detection.cpp:149
+#: engines/neverhood/detection.cpp:153
 msgid "Scale the making of videos, so that they use the whole screen"
 msgstr "Κλιμάκωση των ταινιών δημιουργίας, ώστε να καταλαμβάνουν όλη την οθόνη"
 
@@ -6385,14 +6324,6 @@ msgstr "Προβολή/Απόκρυψη Μενού Παύσης"
 msgid "Toggle Chatty AI"
 msgstr "Εναλλαγή Φλύαρου AI"
 
-#: engines/pegasus/pegasus.cpp:2820
-msgid "Save Game"
-msgstr "Αποθήκευση παιχνιδιού"
-
-#: engines/pegasus/pegasus.cpp:2826
-msgid "Load Game"
-msgstr "Φόρτωση Παιχνιδιού"
-
 #: engines/pink/gui.cpp:219
 msgid "This menu item is not yet implemented"
 msgstr "Αυτή η επιλογή μενού δεν έχει υλοποιηθεί ακόμα"
@@ -6414,18 +6345,18 @@ msgid "Use an alternative game intro (CD version only)"
 msgstr "Χρήση εναλλακτικής εισαγωγής παιχνιδιού (έκδοση CD μόνο)"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:789
+#: engines/saga/detection_tables.h:813
 msgid "Windows Trial version is not supported"
 msgstr ""
 "Η δοκιμαστική έκδοση για Windows (Windows Trial Version) δεν υποστηρίζεται"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:815
+#: engines/saga/detection_tables.h:839
 msgid "macOS Trial version is not supported"
 msgstr "Η δοκιμαστική έκδοση για macOS (macOS Trial version) δεν υποστηρίζεται"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:840
+#: engines/saga/detection_tables.h:864
 msgid "Pocket PC Trial version is not supported"
 msgstr ""
 "Η δοκιμαστική έκδοση για Pocket PC (Pocket PC Trial version) δεν "
@@ -6451,6 +6382,153 @@ msgstr ""
 msgid "Error loading game resources."
 msgstr "Σφάλμα στη φόρτωση πόρων παιχνιδιού."
 
+#: engines/sci/detection_options.h:31
+msgid "Skip EGA dithering pass (full color backgrounds)"
+msgstr ""
+"Παράλειψη του βήματος χρωματικής αντιπαράθεσης της EGA (φόντα πλήρους "
+"χρώματος)"
+
+#: engines/sci/detection_options.h:32
+msgid "Skip dithering pass in EGA games, graphics are shown with full colors"
+msgstr ""
+"Παράλειψη του βήματος χρωματικής αντιπαράθεσης σε παιχνίδια EGA, τα γραφικά "
+"εμφανίζονται με πλήρη χρώματα"
+
+#: engines/sci/detection_options.h:43
+msgid "Enable high resolution graphics"
+msgstr "Ενεργοποίηση γραφικών υψηλής ανάλυσης"
+
+#: engines/sci/detection_options.h:44
+msgid "Enable high resolution graphics/content"
+msgstr "Ενεργοποίηση γραφικών/περιεχομένου υψηλής ανάλυσης"
+
+#: engines/sci/detection_options.h:55
+msgid "Enable black-lined video"
+msgstr "Ενεργοποίηση βίντεο με μαύρες γραμμές"
+
+#: engines/sci/detection_options.h:56
+msgid "Draw black lines over videos to increase their apparent sharpness"
+msgstr ""
+"Σχεδιασμός μαύρων γραμμών πάνω στα βίντεο για την αύξηση της οξύτητας τους"
+
+#: engines/sci/detection_options.h:68
+msgid "Use high-quality video scaling"
+msgstr "Χρήση κλιμάκωσης video υψηλής ποιότητας"
+
+#: engines/sci/detection_options.h:69
+msgid "Use linear interpolation when upscaling videos, where possible"
+msgstr "Χρήση γραμμικής παρεμβολής για την κλιμάκωση βίντεο, όπου είναι δυνατή"
+
+#: engines/sci/detection_options.h:81
+msgid "Use high-quality \"LarryScale\" cel scaling"
+msgstr "Χρήση υψηλής ποιότητας κλιμάκωσης cel \"LarryScale\""
+
+#: engines/sci/detection_options.h:82
+msgid "Use special cartoon scaler for drawing character sprites"
+msgstr "Χρήση ειδικού καρτούν-κλιμακωτή στη σχεδίαση των sprite των χαρακτήρων"
+
+#: engines/sci/detection_options.h:93
+msgid "Prefer digital sound effects"
+msgstr "Προτίμηση ψηφιακών ακουστικών εφε"
+
+#: engines/sci/detection_options.h:94
+msgid "Prefer digital sound effects instead of synthesized ones"
+msgstr "Προτίμηση ψηφιακών ηχητικών εφέ αντί για εφέ δυναμικής σύνθεσης"
+
+#: engines/sci/detection_options.h:117
+msgid "Use CD audio"
+msgstr "Χρήση ήχου CD"
+
+#: engines/sci/detection_options.h:118
+msgid "Use CD audio instead of in-game audio, if available"
+msgstr "Χρήση ήχου CD αντί για ήχο παιχνιδιού, όπου είναι διαθέσιμο"
+
+#: engines/sci/detection_options.h:130
+msgid "Use Windows cursors"
+msgstr "Χρήση δρομέων Windows"
+
+#: engines/sci/detection_options.h:131
+msgid ""
+"Use the Windows cursors (smaller and monochrome) instead of the DOS ones"
+msgstr ""
+"Χρήση δρομέων Windows (μικρότεροι και ασπρόμαυροι) αντί για τους δρομείς DOS"
+
+#: engines/sci/detection_options.h:143
+msgid "Use silver cursors"
+msgstr "Χρήση ασημένιων δρομέων"
+
+#: engines/sci/detection_options.h:144
+msgid ""
+"Use the alternate set of silver cursors instead of the normal golden ones"
+msgstr ""
+"Χρήση των εναλλακτικών ασημένιων δρομέων αντί των προκαθορισμένων χρυσών"
+
+#: engines/sci/detection_options.h:156
+msgid "Enable content censoring"
+msgstr "Ενεργοποίηση λογοκρισίας περιεχομένου"
+
+#: engines/sci/detection_options.h:157
+msgid "Enable the game's built-in optional content censoring"
+msgstr "Ενεργοποίηση του προαιρετικού ενσωματωμένου φίλτρου λογοκρισίας"
+
+#: engines/sci/detection_options.h:169
+msgid "Upscale videos"
+msgstr "Αύξηση κλιμάκωσης βίντεο"
+
+#: engines/sci/detection_options.h:170
+msgid "Upscale videos to double their size"
+msgstr "Αύξηση κλιμάκωσης εικόνας στα βίντεο σε διπλάσιο μέγεθός"
+
+#: engines/sci/detection_options.h:182
+msgid "Use RGB rendering"
+msgstr "Χρήση απόδοσης RGB"
+
+#: engines/sci/detection_options.h:183
+msgid "Use RGB rendering to improve screen transitions"
+msgstr "Χρήση απόδοσης RGB για τη βελτίωση των μεταβάσεων μεταξύ οθονών"
+
+#: engines/sci/detection_options.h:195
+msgid "Use per-resource modified palettes"
+msgstr "Χρήση τροποποιημένης παλέτας ανά πόρο"
+
+#: engines/sci/detection_options.h:196
+msgid "Use custom per-resource palettes to improve visuals"
+msgstr ""
+"Χρήση ειδικής παλέτας για κάθε στοιχείο (resource) παιχνιδιού για βελτιωμένη "
+"απεικόνιση"
+
+#: engines/sci/detection_options.h:208
+msgid "Enable bearded musicians"
+msgstr "Ενεργοποίηση γενειοφόρων μουσικών"
+
+#: engines/sci/detection_options.h:209
+msgid "Enable graphics that were disabled for legal reasons"
+msgstr "Ενεργοποίηση γραφικών που είχαν απενεργοποιηθεί για νομικούς λόγους"
+
+#: engines/sci/detection_options.h:237
+msgid "MIDI mode:"
+msgstr "Λειτουργία MIDI:"
+
+#: engines/sci/detection_options.h:238
+msgid ""
+"When using external MIDI devices (e.g. through USB-MIDI), select your device "
+"here"
+msgstr ""
+"Αν χρησιμοποιείτε εξωτερικές συσκευές MIDI (π.χ. μέσω USB-MIDI), επιλέξτε "
+"εδώ τη συσκευή σας"
+
+#: engines/sci/detection_options.h:243
+msgid "Standard (GM / MT-32)"
+msgstr "Τυπικό (GM / MT-32)"
+
+#: engines/sci/detection_options.h:247
+msgid "Roland D-110 / D-10 / D-20"
+msgstr "Roland D-110 / D-10 / D-20"
+
+#: engines/sci/detection_options.h:251
+msgid "Yamaha FB-01"
+msgstr "Yamaha FB-01"
+
 #: engines/sci/detection_tables.h:4397
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
@@ -6468,7 +6546,7 @@ msgstr ""
 "Πρέπει να χρησιμοποιήσετε ένα εξωτερικό πρόγραμμα για να ανοίξετε το "
 "ακόλουθο αρχείο βοηθείας του παιχνιδιού: %s"
 
-#: engines/sci/engine/kmisc.cpp:876
+#: engines/sci/engine/kmisc.cpp:857
 msgid ""
 "The Poker logic is hardcoded in an external DLL, and is not implemented yet. "
 "There exists some dummy logic for now, where opponent actions are chosen "
@@ -6671,21 +6749,21 @@ msgstr "Προβολή Γραμμής Αντικειμένων"
 msgid "Show the names of objects at the bottom of the screen"
 msgstr "Παρουσίαση των ονομάτων των αντικειμένων στο κάτω μέρος της οθόνης"
 
-#: engines/scumm/detection.cpp:182
+#: engines/scumm/detection.cpp:184
 msgid "Use NES Classic Palette"
 msgstr "Χρήση NES Classic Παλέτας"
 
-#: engines/scumm/detection.cpp:183
+#: engines/scumm/detection.cpp:185
 msgid "Use a more neutral color palette that closely emulates the NES Classic"
 msgstr ""
 "Χρήσης μια παλέτας πιο ουδέτερων χρωμάτων που προσομοιώνει καλύτερα το NES "
 "Classic"
 
-#: engines/scumm/detection.cpp:189
+#: engines/scumm/detection.cpp:193
 msgid "Trim FM-TOWNS games to 200 pixels height"
 msgstr "Περικοπή παιχνιδιών FM-TOWNS σε ύψος 200 πίξελ"
 
-#: engines/scumm/detection.cpp:190
+#: engines/scumm/detection.cpp:194
 msgid ""
 "Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
 "pixels height, allowing using 'aspect ratio correction'"
@@ -6694,11 +6772,11 @@ msgstr ""
 "ακολουθεί το πρότυπο των 200 πίξελ, επιτρέποντας τη χρήση της 'διόρθωσης "
 "αναλογίας διαστάσεων'"
 
-#: engines/scumm/detection.cpp:196
+#: engines/scumm/detection.cpp:202
 msgid "Play simplified music"
 msgstr "Αναπαραγωγή απλοποιημένης μουσικής"
 
-#: engines/scumm/detection.cpp:197
+#: engines/scumm/detection.cpp:203
 msgid ""
 "This music was presumably intended for low-end Macs, and uses only one "
 "channel."
@@ -6706,19 +6784,31 @@ msgstr ""
 "Αυτή η μουσική φαίνεται πως προοριζόταν για Macs χαμηλών δυνατοτήτων, και "
 "χρησιμοποιεί μόνο ένα κανάλι ήχου."
 
-#: engines/scumm/detection.cpp:203
+#: engines/scumm/detection.cpp:211
 msgid "Enable smooth scrolling"
 msgstr "Ενεργοποίηση ομαλής κύλισης"
 
-#: engines/scumm/detection.cpp:204
+#: engines/scumm/detection.cpp:212
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(αντί της κανονικής κύλισης σε βήματα των 8-πίξελ)"
 
-#: engines/scumm/detection.cpp:210 engines/scumm/dialogs.cpp:730
+#: engines/scumm/detection.cpp:220
+msgid "Allow semi-smooth scrolling"
+msgstr "Να επιτρέπεται ημι-ομαλή κύλιση"
+
+#: engines/scumm/detection.cpp:221
+msgid ""
+"Allow scrolling to be less smooth during the fast camera movement in the "
+"intro."
+msgstr ""
+"Επιτρέπει την χρήση λιγότερο ομαλής κύλισης κατά τη διάρκεια της γρήγορης "
+"κάμερας στην εισαγωγή."
+
+#: engines/scumm/detection.cpp:229 engines/scumm/dialogs.cpp:730
 msgid "Enable game-specific enhancements"
 msgstr "Εφαρμογή βελτιώσεων για το παιχνίδι"
 
-#: engines/scumm/detection.cpp:211 engines/scumm/dialogs.cpp:730
+#: engines/scumm/detection.cpp:230 engines/scumm/dialogs.cpp:730
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -6883,10 +6973,6 @@ msgstr "Παράλειψη γραμμής κειμένου"
 #: engines/scumm/help.cpp:76
 msgid "Esc"
 msgstr "Esc"
-
-#: engines/scumm/help.cpp:76 engines/zvision/metaengine.cpp:215
-msgid "Skip cutscene"
-msgstr "Παράλειψη ταινίας"
 
 #: engines/scumm/help.cpp:77 engines/wintermute/keymapper_tables.h:2059
 msgid "Space"
@@ -7381,19 +7467,19 @@ msgstr "Πέταξε δεξιά"
 msgid "Fly to lower right"
 msgstr "Πέταξε κάτω δεξιά"
 
-#: engines/scumm/input.cpp:574
+#: engines/scumm/input.cpp:590
 msgid "Snap scroll on"
 msgstr "Ενεργή συγκράτηση κύλισης"
 
-#: engines/scumm/input.cpp:576
+#: engines/scumm/input.cpp:592
 msgid "Snap scroll off"
 msgstr "Συγκράτηση κύλισης ανενεργή"
 
-#: engines/scumm/input.cpp:589
+#: engines/scumm/input.cpp:605
 msgid "Music volume: "
 msgstr "Ένταση μουσικής: "
 
-#: engines/scumm/input.cpp:606
+#: engines/scumm/input.cpp:622
 msgid "Subtitle speed: "
 msgstr "Ταχύτητα υποτίτλων: "
 
@@ -7428,7 +7514,7 @@ msgstr ""
 "Η διόρθωση αναλογίας διαστάσεων μπορεί να επιτευχθεί αν επιλέξετε την "
 "περικοπή της ανάλυσης σε 320x200 από την καρτέλα 'μηχανή'."
 
-#: engines/scumm/scumm.cpp:1355
+#: engines/scumm/scumm.cpp:1357
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -7436,7 +7522,7 @@ msgstr ""
 "Δεν βρέθηκε το εκτελέσιμο του 'Indy' για Macintosh. Οι εκδοχές\n"
 "υψηλής ανάλυσης γραμματοσειράς (font) θα απενεργοποιηθούν."
 
-#: engines/scumm/scumm.cpp:1381
+#: engines/scumm/scumm.cpp:1383
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -7445,7 +7531,7 @@ msgstr ""
 "εκδοχές\n"
 "υψηλής ανάλυσης γραμματοσειράς (font) θα απενεργοποιηθούν."
 
-#: engines/scumm/scumm.cpp:1403
+#: engines/scumm/scumm.cpp:1405
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7453,7 +7539,7 @@ msgstr ""
 "Δεν ήταν δυνατή η εύρεση του εκτελέσιμου Macintosh 'Monkey Island' από\n"
 "το οποίο να διαβαστούν τα όργανα μουσικής. Η μουσική θα απενεργοποιηθεί."
 
-#: engines/scumm/scumm.cpp:1679
+#: engines/scumm/scumm.cpp:1681
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7466,7 +7552,7 @@ msgstr ""
 "Παρακαλούμε να αντιγράψετε τα αυθεντικά (original) ασυμπίεστα αρχεία ήχου "
 "του παιχνιδιού."
 
-#: engines/scumm/scumm.cpp:2147
+#: engines/scumm/scumm.cpp:2153
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7475,7 +7561,7 @@ msgstr ""
 "Η υποστήριξη native MIDI απαιτεί την Αναβάθμιση Roland από τη LucasArts,\n"
 "αλλά το %s λείπει. Γίνεται χρήση AdLib αντ 'αυτού."
 
-#: engines/scumm/scumm.cpp:3090
+#: engines/scumm/scumm.cpp:3094
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -7504,19 +7590,19 @@ msgstr ""
 "Παρακαλούμε αντιγράψτε αυτά τα αρχεία στο φάκελο δεδομένων του παιχνιδιού.\n"
 "\n"
 
-#: engines/sherlock/detection.cpp:68
+#: engines/sherlock/detection.cpp:70
 msgid "Pixellated scene transitions"
 msgstr "Πιξελιασμένες μεταβάσεις σκηνής"
 
-#: engines/sherlock/detection.cpp:69
+#: engines/sherlock/detection.cpp:71
 msgid "When changing scenes, a randomized pixel transition is done"
 msgstr "Στην εναλλαγή σκηνών, πραγματοποιείται μια τυχαία μεταβολή pixel"
 
-#: engines/sherlock/detection.cpp:78
+#: engines/sherlock/detection.cpp:82
 msgid "Don't show hotspots when moving mouse"
 msgstr "Απόκρυψη ενεργών περιοχών όταν μετακινείται ο δρομέας"
 
-#: engines/sherlock/detection.cpp:79
+#: engines/sherlock/detection.cpp:83
 msgid ""
 "Only show hotspot names after you actually click on a hotspot or action "
 "button"
@@ -7524,27 +7610,27 @@ msgstr ""
 "Προβολή των ονομάτων ενεργών σημείων μόνο αφού πατηθεί ενεργό σημείο ή "
 "κουμπί δράσης"
 
-#: engines/sherlock/detection.cpp:88
+#: engines/sherlock/detection.cpp:94
 msgid "Show character portraits"
 msgstr "Προβολή πορτρέτων χαρακτήρων"
 
-#: engines/sherlock/detection.cpp:89
+#: engines/sherlock/detection.cpp:95
 msgid "Show portraits for the characters when conversing"
 msgstr "Προβολή πορτρέτων χαρακτήρων κατά τη διάρκεια συνομιλίας"
 
-#: engines/sherlock/detection.cpp:98
+#: engines/sherlock/detection.cpp:106
 msgid "Slide dialogs into view"
 msgstr "Κύλιση διαλόγων όταν εμφανίζονται"
 
-#: engines/sherlock/detection.cpp:99
+#: engines/sherlock/detection.cpp:107
 msgid "Slide UI dialogs into view, rather than simply showing them immediately"
 msgstr "Κύλιση διαλόγων διεπαφής όταν εμφανίζονται, αντί να εμφανίζονται άμεσα"
 
-#: engines/sherlock/detection.cpp:108
+#: engines/sherlock/detection.cpp:118
 msgid "Transparent windows"
 msgstr "Διαφανή παράθυρα"
 
-#: engines/sherlock/detection.cpp:109
+#: engines/sherlock/detection.cpp:119
 msgid "Show windows with a partially transparent background"
 msgstr "Προβολή παραθύρων με ένα μερικώς διαφανές φόντο"
 
@@ -7596,11 +7682,11 @@ msgstr ""
 "Ενεργοποίηση φόρτωσης εξωτερικών στοιχείων (assets) που θα αντικαταστήσουν "
 "αυτά του παιχνιδιού."
 
-#: engines/stark/detection.cpp:384
+#: engines/stark/detection.cpp:386
 msgid "Enable linear filtering of the backgrounds images"
 msgstr "Ενεργοποίηση γραμμικού φίλτρου στις εικόνες φόντου"
 
-#: engines/stark/detection.cpp:385
+#: engines/stark/detection.cpp:387
 msgid ""
 "When linear filtering is enabled the background graphics are smoother in "
 "full screen mode, at the cost of some details."
@@ -7609,11 +7695,11 @@ msgstr ""
 "ομαλά σε λειτουργία πλήρους οθόνης, με αντίτιμο την απώλεια κάποιας "
 "λεπτομέρειας."
 
-#: engines/stark/detection.cpp:393 engines/ultima/detection.cpp:118
+#: engines/stark/detection.cpp:397 engines/ultima/detection.cpp:136
 msgid "Enable font anti-aliasing"
 msgstr "Ενεργοποίηση εξομάλυνσης γραμματοσειράς"
 
-#: engines/stark/detection.cpp:394 engines/ultima/detection.cpp:119
+#: engines/stark/detection.cpp:398 engines/ultima/detection.cpp:137
 msgid "When font anti-aliasing is enabled, the text is smoother."
 msgstr ""
 "Όταν η εξομάλυνση γραμματοσειράς (font anti-aliasing) είναι ενεργοποιημένη, "
@@ -7660,13 +7746,13 @@ msgstr ""
 "Το 'game.exe' προτείνεται για να έχουν ξεχωριστό στιλ τα παράθυρα με "
 "διαλόγους επιβεβαίωσης."
 
-#: engines/supernova/supernova.cpp:190
+#: engines/supernova/supernova.cpp:192
 #, c-format
 msgid "Unable to locate the text for %s language in engine data file."
 msgstr ""
 "Αδυναμία εύρεσης του κειμένου σε γλώσσα %s στο αρχείο δεδομένων της μηχανής."
 
-#: engines/supernova/supernova.cpp:474
+#: engines/supernova/supernova.cpp:476
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d but got %d."
@@ -7674,19 +7760,19 @@ msgstr ""
 "Βρέθηκε λανθασμένη έκδοση του '%s' αρχείου μηχανής παιχνιδιού. Αναμενόμενη η "
 "%d αλλά βρέθηκε η %d."
 
-#: engines/supernova/supernova.cpp:484
+#: engines/supernova/supernova.cpp:486
 #, c-format
 msgid "Unable to find block for part %d"
 msgstr "Αδυναμία εύρεσης τμήματος για το μέρος %d"
 
-#: engines/supernova/supernova.cpp:527
+#: engines/supernova/supernova.cpp:529
 #, c-format
 msgid "Unable to find '%s' in game folder or the engine data file."
 msgstr ""
 "Αδυναμία εύρεσης αρχείου '%s' στο φάκελο παιχνιδιού ή το αρχείο δεδομένων "
 "μηχανής."
 
-#: engines/supernova/supernova.cpp:831
+#: engines/supernova/supernova.cpp:833
 msgid ""
 "Failed to save temporary game state. Make sure your save game directory is "
 "set in ScummVM and that you can write to it."
@@ -7695,7 +7781,7 @@ msgstr ""
 "φάκελος αποθήκευσης έχει οριστεί στο ScummVM και ότι έχετε δικαιώματα "
 "εγγραφής σε αυτόν."
 
-#: engines/supernova/supernova.cpp:832
+#: engines/supernova/supernova.cpp:834
 msgid "Failed to load temporary game state."
 msgstr "Αποτυχία φόρτωσης προσωρινής κατάστασης παιχνιδιού."
 
@@ -7854,86 +7940,86 @@ msgid "Enable the original wall collision damage"
 msgstr ""
 "Ενεργοποίηση επίπτωσης από σύγκρουση με τοίχο όπως ήταν στο αρχικό παιχνίδι"
 
-#: engines/twine/detection.cpp:681
+#: engines/twine/detection.cpp:683
 msgid "Disable save menu"
 msgstr "Απενεργοποίηση μενού αποθήκευσης"
 
-#: engines/twine/detection.cpp:682
+#: engines/twine/detection.cpp:684
 msgid ""
 "The original only had autosaves. This allows you to save whenever you want."
 msgstr ""
 "Το αρχικό παιχνίδι έκανε μόνο αυτόματη αποθήκευση. Αυτή η νέα δυνατότητα σας "
 "επιτρέπει να αποθηκεύσετε όποτε θέλετε."
 
-#: engines/twine/detection.cpp:688
+#: engines/twine/detection.cpp:692
 msgid "Enable debug mode"
 msgstr "Χρήση λειτουργίας αποσφαλμάτωσης"
 
-#: engines/twine/detection.cpp:689
+#: engines/twine/detection.cpp:693
 msgid "Enable the debug mode"
 msgstr "Ενεργοποίηση της λειτουργίας αποσφαλμάτωσης (debug)"
 
-#: engines/twine/detection.cpp:695
+#: engines/twine/detection.cpp:701
 msgid "Enable audio CD"
 msgstr "Ενεργοποίηση ήχου από CD"
 
-#: engines/twine/detection.cpp:696
+#: engines/twine/detection.cpp:702
 msgid "Enable the original audio cd track"
 msgstr "Ενεργοποίηση χρήσης ήχου από CD που είχε το αρχικό παιχνίδι"
 
-#: engines/twine/detection.cpp:702
+#: engines/twine/detection.cpp:710
 msgid "Enable sound"
 msgstr "Ενεργοποίηση ήχου"
 
-#: engines/twine/detection.cpp:703
+#: engines/twine/detection.cpp:711
 msgid "Enable the sound for the game"
 msgstr "Ενεργοποίηση του ήχου για το παιχνίδι"
 
-#: engines/twine/detection.cpp:709
+#: engines/twine/detection.cpp:719
 msgid "Enable voices"
 msgstr "Ενεργοποίηση φωνής"
 
-#: engines/twine/detection.cpp:710
+#: engines/twine/detection.cpp:720
 msgid "Enable the voices for the game"
 msgstr "Ενεργοποίηση των φωνών στο παιχνίδι"
 
-#: engines/twine/detection.cpp:716
+#: engines/twine/detection.cpp:728
 msgid "Enable text"
 msgstr "Ενεργοποίηση κειμένου"
 
-#: engines/twine/detection.cpp:717
+#: engines/twine/detection.cpp:729
 msgid "Enable the text for the game"
 msgstr "Ενεργοποίηση του κειμένου για το παιχνίδι"
 
-#: engines/twine/detection.cpp:723
+#: engines/twine/detection.cpp:737
 msgid "Enable movies"
 msgstr "Ενεργοποίηση ταινιών"
 
-#: engines/twine/detection.cpp:724
+#: engines/twine/detection.cpp:738
 msgid "Enable the cutscenes for the game"
 msgstr "Ενεργοποίηση των ταινιών (cutscenes) για το παιχνίδι"
 
-#: engines/twine/detection.cpp:730
+#: engines/twine/detection.cpp:746
 msgid "Enable mouse"
 msgstr "Χρήση ποντικιού"
 
-#: engines/twine/detection.cpp:731
+#: engines/twine/detection.cpp:747
 msgid "Enable the mouse for the UI"
 msgstr "Ενεργοποίηση του ποντικιού για το περιβάλλον διεπαφής (UI)"
 
-#: engines/twine/detection.cpp:737
+#: engines/twine/detection.cpp:755
 msgid "Use the USA version"
 msgstr "Χρήση της έκδοσης από ΗΠΑ"
 
-#: engines/twine/detection.cpp:738
+#: engines/twine/detection.cpp:756
 msgid "Enable the USA specific version flags"
 msgstr "Ενεργοποίηση ειδικών ρυθμίσεων που είχε η έκδοση από ΗΠΑ"
 
-#: engines/twine/detection.cpp:744 engines/ultima/detection.cpp:84
+#: engines/twine/detection.cpp:764 engines/ultima/detection.cpp:92
 msgid "Enable high resolution"
 msgstr "Ενεργοποίηση υψηλής ανάλυσης"
 
-#: engines/twine/detection.cpp:745 engines/ultima/detection.cpp:85
+#: engines/twine/detection.cpp:765 engines/ultima/detection.cpp:93
 msgid "Enable a higher resolution for the game"
 msgstr "Ενεργοποίηση υψηλής ανάλυσης για το παιχνίδι"
 
@@ -8082,76 +8168,80 @@ msgctxt "Options menu"
 msgid "Wall collision off"
 msgstr "Ανενεργή σύγκρουση με τοίχους"
 
-#: engines/ultima/detection.cpp:66
+#: engines/ultima/detection.cpp:68
 msgid "Enable frame skipping"
 msgstr "Ενεργοποίηση παράλειψης καρέ"
 
-#: engines/ultima/detection.cpp:67
+#: engines/ultima/detection.cpp:69
 msgid "Allow the game to skip animation frames when running too slow."
 msgstr ""
 "Επιτρέπει στο παιχνίδι να παραλείψει κάποια καρέ animation αν οι επιδόσεις "
 "είναι πολύ χαμηλές."
 
-#: engines/ultima/detection.cpp:72
+#: engines/ultima/detection.cpp:76
 msgid "Enable frame limiting"
 msgstr "Ενεργοποίηση περιορισμού καρέ"
 
-#: engines/ultima/detection.cpp:73
+#: engines/ultima/detection.cpp:77
 msgid "Limits the speed of the game to prevent running too fast."
 msgstr ""
 "Περιορίζει την ταχύτητα του παιχνιδιού αποτρέποντας το να \"τρέχει\" "
 "υπερβολικά γρήγορα."
 
-#: engines/ultima/detection.cpp:79
+#: engines/ultima/detection.cpp:84
+msgid "Enable cheats"
+msgstr "Ενεργοποίηση cheats"
+
+#: engines/ultima/detection.cpp:85
 msgid "Allow cheats by commands and a menu when player is clicked."
 msgstr ""
 "Να επιτρέπονται τα cheats με εντολές και ένα μενού όταν γίνεται κλικ πάνω "
 "στον παίκτη."
 
-#: engines/ultima/detection.cpp:94
+#: engines/ultima/detection.cpp:104
 msgid "Play foot step sounds"
 msgstr "Να έχουν ήχο οι πατημασιές"
 
-#: engines/ultima/detection.cpp:95
+#: engines/ultima/detection.cpp:105
 msgid "Plays sound when the player moves."
 msgstr "Αναπαραγωγή ήχου όταν κινείται ο παίκτης."
 
-#: engines/ultima/detection.cpp:100
+#: engines/ultima/detection.cpp:112
 msgid "Enable jump to mouse position"
 msgstr "Ενεργοποίηση άλματος στο σημείο του ποντικιού"
 
-#: engines/ultima/detection.cpp:101
+#: engines/ultima/detection.cpp:113
 msgid ""
 "Jumping while not moving targets the mouse cursor rather than direction only."
 msgstr ""
 "Τα άλματα χωρίς φορά (χωρίς πρότερη κίνηση) γίνονται προς το σημείο του "
 "κέρσορα ποντικιού αντί απλά την γενική κατεύθυνση."
 
-#: engines/ultima/detection.cpp:112
+#: engines/ultima/detection.cpp:128
 msgid "Enable font replacement"
 msgstr "Ενεργοποίηση αντικατάστασης γραμματοσειράς"
 
-#: engines/ultima/detection.cpp:113
+#: engines/ultima/detection.cpp:129
 msgid "Replaces game fonts with rendered fonts"
 msgstr "Αντικαθιστά γραμματοσειρές του παιχνιδιού με rendered γραμματοσειρές"
 
 #. I18N: Silencer is the player-character in Crusader games, known as the Avatar in Ultima series.
-#: engines/ultima/detection.cpp:128
+#: engines/ultima/detection.cpp:148
 msgid "Camera moves with Silencer"
 msgstr "Η κάμερα ακολουθεί τον Silencer"
 
-#: engines/ultima/detection.cpp:129
+#: engines/ultima/detection.cpp:149
 msgid ""
 "Camera tracks the player movement rather than snapping to defined positions."
 msgstr ""
 "Η κάμερα ακολουθεί την κίνηση του παίκτη αντί να καρφώνεται σε "
 "προκαθορισμένες θέσεις."
 
-#: engines/ultima/detection.cpp:142
+#: engines/ultima/detection.cpp:164
 msgid "Always enable Christmas easter-egg"
 msgstr "Πάντα ενεργό Χριστουγεννιάτικο easter-egg"
 
-#: engines/ultima/detection.cpp:143
+#: engines/ultima/detection.cpp:165
 msgid "Enable the Christmas music at any time of year."
 msgstr ""
 "Να είναι ενεργοποιημένη η Χριστουγεννιάτικη μουσική σε κάθε εποχή του χρόνου."
@@ -8227,11 +8317,11 @@ msgid "Show the current number of frames per second in the upper left corner"
 msgstr ""
 "Προβολή του τρέχοντος αριθμού καρέ ανά δευτερόλεπτο στην επάνω αριστερή γωνία"
 
-#: engines/wintermute/detection.cpp:62
+#: engines/wintermute/detection.cpp:64
 msgid "Sprite bilinear filtering (SLOW)"
 msgstr "Διγραμμικό φιλτράρισμα στοιχείων (ΑΡΓΟ)"
 
-#: engines/wintermute/detection.cpp:63
+#: engines/wintermute/detection.cpp:65
 msgid "Apply bilinear filtering to individual sprites"
 msgstr "Εφαρμογή διγραμμικού φιλτραρίσματος σε μεμονωμένα στοιχεία"
 
@@ -8854,11 +8944,11 @@ msgstr ""
 "Εμφανίζει το κόστος των αντικειμένων στη βασική προβολή των υπαρχόντων του "
 "παίκτη, επιτρέποντας την σύγκριση της αξίας τους"
 
-#: engines/xeen/detection.cpp:65
+#: engines/xeen/detection.cpp:67
 msgid "More durable armor"
 msgstr "Πιο ανθεκτική πανοπλία"
 
-#: engines/xeen/detection.cpp:66
+#: engines/xeen/detection.cpp:68
 msgid "Armor won't break until character is at -80HP, rather than merely -10HP"
 msgstr ""
 "Η πανοπλία δεν θα σπάσει ώσπου να βρεθεί ο χαρακτήρας στα -80HP, αντί για "
@@ -8868,35 +8958,35 @@ msgstr ""
 msgid "Failed to autosave"
 msgstr "Αποτυχία αυτόματης αποθήκευσης"
 
-#: engines/zvision/detection_tables.h:60
+#: engines/zvision/detection_tables.h:62
 msgid "Double FPS"
 msgstr "Διπλάσια FPS"
 
-#: engines/zvision/detection_tables.h:61
+#: engines/zvision/detection_tables.h:63
 msgid "Increase framerate from 30 to 60 FPS"
 msgstr "Αύξηση του ρυθμού καρέ από 30 σε 60 FPS"
 
-#: engines/zvision/detection_tables.h:70
+#: engines/zvision/detection_tables.h:74
 msgid "Enable Venus"
 msgstr "Ενεργοποίηση Αφροδίτης"
 
-#: engines/zvision/detection_tables.h:71
+#: engines/zvision/detection_tables.h:75
 msgid "Enable the Venus help system"
 msgstr "Ενεργοποίηση του συστήματος βοήθειας της Αφροδίτης"
 
-#: engines/zvision/detection_tables.h:80
+#: engines/zvision/detection_tables.h:86
 msgid "Disable animation while turning"
 msgstr "Απενεργοποίηση κίνησης κατά την περιστροφή"
 
-#: engines/zvision/detection_tables.h:81
+#: engines/zvision/detection_tables.h:87
 msgid "Disable animation while turning in panorama mode"
 msgstr "Απενεργοποίηση κίνησης κατά την περιστροφή σε λειτουργία πανοράματος"
 
-#: engines/zvision/detection_tables.h:90
+#: engines/zvision/detection_tables.h:98
 msgid "Use high resolution MPEG video"
 msgstr "Χρήση MPEG βίντεο υψηλής ανάλυσης"
 
-#: engines/zvision/detection_tables.h:91
+#: engines/zvision/detection_tables.h:99
 msgid "Use MPEG video from the DVD version instead of lower resolution AVI"
 msgstr ""
 "Χρήση βίντεο MPEG από την έκδοση DVD αντί για το χαμηλότερης ανάλυσης AVI"
@@ -8959,6 +9049,165 @@ msgstr ""
 "το πακέτο με fonts που θα επιλέξετε, δηλαδή, LiberationMono, LiberationSans "
 "και LiberationSerif, ή FreeMono, FreeSans και FreeSerif αντίστοιχα."
 
+#~ msgid "I don't understand your command. "
+#~ msgstr "Δεν καταλαβαίνω την εντολή σου. "
+
+#~ msgid "I can't do that yet. "
+#~ msgstr "Δεν μπορώ να το κάνω αυτό ακόμα. "
+
+#~ msgid "Light has run out! "
+#~ msgstr "Το φως έχει σβήσει! "
+
+#~ msgid "Your light has run out. "
+#~ msgstr "Το φως σου έχει σβήσει. "
+
+#~ msgid "Light runs out in "
+#~ msgstr "Το φως θα σβήσει σε "
+
+#~ msgid " turns. "
+#~ msgstr " γύρους. "
+
+#~ msgid "Your light is growing dim. "
+#~ msgstr "Το φως σου γίνεται αδύναμο. "
+
+#~ msgid "North"
+#~ msgstr "Βόρεια"
+
+#~ msgid "South"
+#~ msgstr "Νότια"
+
+#~ msgid "East"
+#~ msgstr "Ανατολικά"
+
+#~ msgid "West"
+#~ msgstr "Δυτικά"
+
+#~ msgid "You can't see. It is too dark!\n"
+#~ msgstr "Δεν μπορείς να δεις. Είναι πολύ σκοτεινά!\n"
+
+#~ msgid "I can't see. It is too dark!\n"
+#~ msgstr "Δεν μπορώ να δω. Είναι πολύ σκοτεινά!\n"
+
+#~ msgid "You are in a %s\n"
+#~ msgstr "Βρίσκεσαι σε ένα %s\n"
+
+#~ msgid "I'm in a %s\n"
+#~ msgstr "Βρίσκομαι σε ένα %s\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Obvious exits: "
+#~ msgstr ""
+#~ "\n"
+#~ "Προφανείς έξοδοι: "
+
+#~ msgid "none"
+#~ msgstr "καμία"
+
+#~ msgid ""
+#~ "\n"
+#~ "You can also see: "
+#~ msgstr ""
+#~ "\n"
+#~ "Μπορείς επίσης να δεις: "
+
+#~ msgid ""
+#~ "\n"
+#~ "I can also see: "
+#~ msgstr ""
+#~ "\n"
+#~ "Μπορώ επίσης να δω: "
+
+#~ msgid "You use word(s) I don't know! "
+#~ msgstr "Χρησιμοποιείς λέξεις που δεν γνωρίζω! "
+
+#~ msgid "You are carrying too much. "
+#~ msgstr "Κουβαλάς πάρα πολλά πράγματα. "
+
+#~ msgid "I've too much to carry! "
+#~ msgstr "Κουβαλάω πάρα πολλά πράγματα! "
+
+#~ msgid "You are dead.\n"
+#~ msgstr "Είσαι νεκρός.\n"
+
+#~ msgid "I am dead.\n"
+#~ msgstr "Είμαι νεκρός.\n"
+
+#~ msgid "The game is now over.\n"
+#~ msgstr "Το παιχνίδι έχει τελειώσει τώρα.\n"
+
+#~ msgid "You have stored "
+#~ msgstr "Έχεις συγκεντρώσει "
+
+#~ msgid "I've stored "
+#~ msgstr "Έχω συγκεντρώσει "
+
+#~ msgid " treasures.  On a scale of 0 to 100, that rates "
+#~ msgstr " θησαυρούς.  Σε κλίμακα από το 0 έως το 100, το σκόρ είναι "
+
+#~ msgid "Well done.\n"
+#~ msgstr "Μπράβο.\n"
+
+#~ msgid "You are carrying:\n"
+#~ msgstr "Κουβαλάς:\n"
+
+#~ msgid "I'm carrying:\n"
+#~ msgstr "Κουβαλάω:\n"
+
+#~ msgid "Nothing"
+#~ msgstr "Τίποτα"
+
+#~ msgid "Give me a direction too."
+#~ msgstr "Δώσε μου και μια κατεύθυνση."
+
+#~ msgid "Dangerous to move in the dark! "
+#~ msgstr "Επικίνδυνο να μετακινείσαι στο σκοτάδι! "
+
+#~ msgid "You fell down and broke your neck. "
+#~ msgstr "Έπεσες κάτω και έσπασες το σβέρκο σου. "
+
+#~ msgid "I fell down and broke my neck. "
+#~ msgstr "Έπεσα και έσπασα το σβέρκο μου. "
+
+#~ msgid "You can't go in that direction. "
+#~ msgstr "Δεν μπορείς να πας προς εκείνη την κατεύθυνση. "
+
+#~ msgid "I can't go in that direction. "
+#~ msgstr "Δεν μπορώ να πάω προς εκείνη την κατεύθυνση. "
+
+#~ msgid "It is dark.\n"
+#~ msgstr "Είναι σκοτεινά.\n"
+
+#~ msgid "I've too much to carry. "
+#~ msgstr "Κουβαλάω πάρα πολλά πράγματα. "
+
+#~ msgid ": O.K.\n"
+#~ msgstr ": Εντάξει\n"
+
+#~ msgid "Nothing taken."
+#~ msgstr "Δεν λήφθηκε τίποτα."
+
+#~ msgid "What ? "
+#~ msgstr "Ορίστε ; "
+
+#~ msgid "It is beyond your power to do that. "
+#~ msgstr "Είναι πέρα από τη δύναμή σου να το κάνεις αυτό. "
+
+#~ msgid "It's beyond my power to do that. "
+#~ msgstr "Είναι πέρα από τη δύναμή μου να το κάνω αυτό. "
+
+#~ msgid "O.K. "
+#~ msgstr "Εντάξει "
+
+#~ msgid "Nothing dropped.\n"
+#~ msgstr "Δεν ρίχτηκε τίποτα.\n"
+
+#~ msgid "It's beyond your power to do that.\n"
+#~ msgstr "Είναι πέρα από τη δύναμή σου να το κάνεις αυτό.\n"
+
+#~ msgid "It's beyond my power to do that.\n"
+#~ msgstr "Είναι πέρα από τη δύναμή μου να το κάνω αυτό.\n"
+
 #~ msgid "Use correct font spacing"
 #~ msgstr "Χρήση σωστού διαστήματος μεταξύ χαρακτήρων"
 
@@ -9007,124 +9256,6 @@ msgstr ""
 
 #~ msgid "V-Sync in 3D Games"
 #~ msgstr "V-Sync σε 3D Παιχνίδια"
-
-#~ msgid "Skip EGA dithering pass (full color backgrounds)"
-#~ msgstr ""
-#~ "Παράλειψη του βήματος χρωματικής αντιπαράθεσης της EGA (φόντα πλήρους "
-#~ "χρώματος)"
-
-#~ msgid ""
-#~ "Skip dithering pass in EGA games, graphics are shown with full colors"
-#~ msgstr ""
-#~ "Παράλειψη του βήματος χρωματικής αντιπαράθεσης σε παιχνίδια EGA, τα "
-#~ "γραφικά εμφανίζονται με πλήρη χρώματα"
-
-#~ msgid "Enable high resolution graphics"
-#~ msgstr "Ενεργοποίηση γραφικών υψηλής ανάλυσης"
-
-#~ msgid "Enable high resolution graphics/content"
-#~ msgstr "Ενεργοποίηση γραφικών/περιεχομένου υψηλής ανάλυσης"
-
-#~ msgid "Enable black-lined video"
-#~ msgstr "Ενεργοποίηση βίντεο με μαύρες γραμμές"
-
-#~ msgid "Draw black lines over videos to increase their apparent sharpness"
-#~ msgstr ""
-#~ "Σχεδιασμός μαύρων γραμμών πάνω στα βίντεο για την αύξηση της οξύτητας τους"
-
-#~ msgid "Use high-quality video scaling"
-#~ msgstr "Χρήση κλιμάκωσης video υψηλής ποιότητας"
-
-#~ msgid "Use linear interpolation when upscaling videos, where possible"
-#~ msgstr ""
-#~ "Χρήση γραμμικής παρεμβολής για την κλιμάκωση βίντεο, όπου είναι δυνατή"
-
-#~ msgid "Use high-quality \"LarryScale\" cel scaling"
-#~ msgstr "Χρήση υψηλής ποιότητας κλιμάκωσης cel \"LarryScale\""
-
-#~ msgid "Use special cartoon scaler for drawing character sprites"
-#~ msgstr ""
-#~ "Χρήση ειδικού καρτούν-κλιμακωτή στη σχεδίαση των sprite των χαρακτήρων"
-
-#~ msgid "Prefer digital sound effects"
-#~ msgstr "Προτίμηση ψηφιακών ακουστικών εφε"
-
-#~ msgid "Prefer digital sound effects instead of synthesized ones"
-#~ msgstr "Προτίμηση ψηφιακών ηχητικών εφέ αντί για εφέ δυναμικής σύνθεσης"
-
-#~ msgid "Use CD audio"
-#~ msgstr "Χρήση ήχου CD"
-
-#~ msgid "Use CD audio instead of in-game audio, if available"
-#~ msgstr "Χρήση ήχου CD αντί για ήχο παιχνιδιού, όπου είναι διαθέσιμο"
-
-#~ msgid "Use Windows cursors"
-#~ msgstr "Χρήση δρομέων Windows"
-
-#~ msgid ""
-#~ "Use the Windows cursors (smaller and monochrome) instead of the DOS ones"
-#~ msgstr ""
-#~ "Χρήση δρομέων Windows (μικρότεροι και ασπρόμαυροι) αντί για τους δρομείς "
-#~ "DOS"
-
-#~ msgid "Use silver cursors"
-#~ msgstr "Χρήση ασημένιων δρομέων"
-
-#~ msgid ""
-#~ "Use the alternate set of silver cursors instead of the normal golden ones"
-#~ msgstr ""
-#~ "Χρήση των εναλλακτικών ασημένιων δρομέων αντί των προκαθορισμένων χρυσών"
-
-#~ msgid "Enable content censoring"
-#~ msgstr "Ενεργοποίηση λογοκρισίας περιεχομένου"
-
-#~ msgid "Enable the game's built-in optional content censoring"
-#~ msgstr "Ενεργοποίηση του προαιρετικού ενσωματωμένου φίλτρου λογοκρισίας"
-
-#~ msgid "Upscale videos"
-#~ msgstr "Αύξηση κλιμάκωσης βίντεο"
-
-#~ msgid "Upscale videos to double their size"
-#~ msgstr "Αύξηση κλιμάκωσης εικόνας στα βίντεο σε διπλάσιο μέγεθός"
-
-#~ msgid "Use RGB rendering"
-#~ msgstr "Χρήση απόδοσης RGB"
-
-#~ msgid "Use RGB rendering to improve screen transitions"
-#~ msgstr "Χρήση απόδοσης RGB για τη βελτίωση των μεταβάσεων μεταξύ οθονών"
-
-#~ msgid "Use per-resource modified palettes"
-#~ msgstr "Χρήση τροποποιημένης παλέτας ανά πόρο"
-
-#~ msgid "Use custom per-resource palettes to improve visuals"
-#~ msgstr ""
-#~ "Χρήση ειδικής παλέτας για κάθε στοιχείο (resource) παιχνιδιού για "
-#~ "βελτιωμένη απεικόνιση"
-
-#~ msgid "Enable bearded musicians"
-#~ msgstr "Ενεργοποίηση γενειοφόρων μουσικών"
-
-#~ msgid "Enable graphics that were disabled for legal reasons"
-#~ msgstr "Ενεργοποίηση γραφικών που είχαν απενεργοποιηθεί για νομικούς λόγους"
-
-#~ msgid "MIDI mode:"
-#~ msgstr "Λειτουργία MIDI:"
-
-#~ msgid ""
-#~ "When using external MIDI devices (e.g. through USB-MIDI), select your "
-#~ "device here"
-#~ msgstr ""
-#~ "Αν χρησιμοποιείτε εξωτερικές συσκευές MIDI (π.χ. μέσω USB-MIDI), επιλέξτε "
-#~ "εδώ τη συσκευή σας"
-
-#~ msgid "Standard (GM / MT-32)"
-#~ msgstr "Τυπικό (GM / MT-32)"
-
-#~ msgid "Roland D-110 / D-10 / D-20"
-#~ msgstr "Roland D-110 / D-10 / D-20"
-
-#~ msgid "Yamaha FB-01"
-#~ msgstr "Yamaha FB-01"
 
 #~ msgid "Auto"
 #~ msgstr "Αυτόματη"

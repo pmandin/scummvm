@@ -186,8 +186,8 @@ void FillSaveList(std::vector<SaveListItem> &saves, size_t max_count) {
 	for (uint idx = 0; idx < saveList.size(); ++idx) {
 		int saveGameSlot = saveList[idx].getSaveSlot();
 
-		// only list games .000 to .099 (to allow higher slots for other perposes)
-		if (saveGameSlot > 99)
+		// only list games .000 to .xxx (to allow higher slots for other perposes)
+		if (saveGameSlot < 0 || saveGameSlot > TOP_LISTEDSAVESLOT)
 			continue;
 
 		String description;
@@ -418,7 +418,7 @@ int SetGameOption(int opt, int setting) {
 	if (opt == OPT_DUPLICATEINV)
 		update_invorder();
 	else if (opt == OPT_DISABLEOFF) {
-		_G(gui_disabled_style) = convert_gui_disabled_style(_GP(game).options[OPT_DISABLEOFF]);
+		GUI::Options.DisabledStyle = static_cast<GuiDisableStyle>(_GP(game).options[OPT_DISABLEOFF]);
 		// If GUI was disabled at this time then also update it, as visual style could've changed
 		if (_GP(play).disabled_user_interface > 0) {
 			GUI::MarkAllGUIForUpdate();
@@ -587,7 +587,7 @@ void GetLocationName(int xxx, int yyy, char *tempo) {
 	// on object
 	if (loctype == LOCTYPE_OBJ) {
 		aa = _G(getloctype_index);
-		strcpy(tempo, get_translation(_GP(thisroom).Objects[aa].Name.GetCStr()));
+		strcpy(tempo, get_translation(_G(croom)->obj[aa].name.GetCStr()));
 		// Compatibility: < 3.1.1 games returned space for nameless object
 		// (presumably was a bug, but fixing it affected certain games behavior)
 		if (_G(loaded_game_file_version) < kGameVersion_311 && tempo[0] == 0) {
@@ -600,7 +600,7 @@ void GetLocationName(int xxx, int yyy, char *tempo) {
 		return;
 	}
 	onhs = _G(getloctype_index);
-	if (onhs > 0) strcpy(tempo, get_translation(_GP(thisroom).Hotspots[onhs].Name.GetCStr()));
+	if (onhs > 0) strcpy(tempo, get_translation(_G(croom)->hotspot[onhs].Name.GetCStr()));
 	if (_GP(play).get_loc_name_last_time != onhs)
 		GUI::MarkSpecialLabelsForUpdate(kLabelMacro_Overhotspot);
 	_GP(play).get_loc_name_last_time = onhs;
@@ -771,6 +771,10 @@ void SetGraphicalVariable(const char *varName, int p_value) {
 }
 
 int WaitImpl(int skip_type, int nloops) {
+	// if skipping cutscene and expecting user input: don't wait at all
+	if (_GP(play).fast_forward && ((skip_type & ~SKIP_AUTOTIMER) != 0))
+		return 0;
+
 	_GP(play).wait_counter = nloops;
 	_GP(play).wait_skipped_by = SKIP_NONE;
 	_GP(play).wait_skipped_by = SKIP_AUTOTIMER; // we set timer flag by default to simplify that case
@@ -805,6 +809,10 @@ int WaitMouseKey(int nloops) {
 
 void SkipWait() {
 	_GP(play).wait_counter = 0;
+}
+
+void scStartRecording(int /*keyToStop*/) {
+	debug_script_warn("StartRecording: not supported");
 }
 
 } // namespace AGS3

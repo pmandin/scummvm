@@ -138,7 +138,7 @@ indy3	Indiana Jones and the Last Crusade
 	d62d248c3df6ec177405e2cb23d923b2	-1	it	DOS	EGA	EGA	v1.4 from 25 Nov 89	Andrea Petrucci, Peter Eckerlein
 	86be8ada36371d4fdc35659d0e912a26	-1	es	DOS	EGA	EGA	?? v1.4b from 7 May 90	Andrea Petrucci, Peter Eckerlein
 	ce7fd0c382389a6791fc3e199c117ef4	-1	es	DOS	EGA	EGA	?? v1.4b from 7 May 90	abnog, Peter Eckerlein
-	1dd7aa088e09f96d06818aa9a9deabe0	5361	en	Mac	No AdLib	EGA	v1.7, 8/17/90	Fingolfin
+	1dd7aa088e09f96d06818aa9a9deabe0	5361	en	Mac	Mac	EGA	v1.7, 8/17/90	Fingolfin
 
 	1875b90fade138c9253a8e967007031a	6295	en	DOS	VGA	VGA	IBM 256 color v2.0 from 3 May 90	Peter Eckerlein, Fingolfin
 	7fbcff27c323499beaedd605e1ebd47d	561152	en	Windows	Steam	Steam	Steam Version	Ben Castricum, Filippos Karapetis
@@ -240,7 +240,7 @@ monkey	The Secret of Monkey Island
 
 	71523b539491527d9860f4407faf0411	7607	en	DOS	Demo	EGA Demo	-	Fingolfin
 	771bc18ec6f93837b839c992b211904b	-1	de	DOS	Demo	EGA Demo	-	khalek
-	54a936ad06161ff7bfefcb96200f7bff	7617	en	Amiga   VGA Demo	VGA	Demo	-	khalek
+	54a936ad06161ff7bfefcb96200f7bff	7617	en	Amiga	VGA Demo	Demo	-	khalek
 	c0c9de81fb965e6cbe77f6e5631ca705	9135	en	DOS	SE Talkie	Unofficial SE Talkie v1.02	lotharsm
 	4252854e7d052cb488b520ba89c3eb6d	9135	de	DOS	SE Talkie	Unofficial SE Talkie v1.01
 	2b3744585bc6815ec55dd09f655b7a5b	-1	ko	DOS	VGA	VGA	Fan translation	ScummVM-Kor
@@ -329,7 +329,7 @@ tentacle	Day of the Tentacle
 	ae94f110a14ce71fc515d5b648827a8f	-1	es	DOS	Floppy	Floppy	-	abnog, Andrea Petrucci
 
 	4167a92a1d46baa4f4127d918d561f88	7932	en	All?	-	CD	-	Fingolfin
-	8aa05d3cdb0e795436043f0546af2da2	-1	fr	All?	-	CD?	-	Andrea Petrucci
+	8aa05d3cdb0e795436043f0546af2da2	7932	fr	All?	-	CD	-	Andrea Petrucci
 	6e959d65358eedf9b68b81e304b97fa4	7932	de	All?	-	CD	-	Fingolfin
 	4fbbe9f64b8bc547503a379a301183ce	-1	it	All?	-	CD	-	Andrea Petrucci
 	883af4b0af4f77a92f1dcf1d0a283140	-1	es	All?	-	CD	-	Andrea Petrucci
@@ -404,6 +404,7 @@ dig	The Dig
 comi	The Curse of Monkey Island
 	fe60d6b5ff51b0553ac59963123b5777	76791	All	Windows	-	-	-	Fingolfin
 	861e59ed72a1cd0e6d454f7ee7e2bf3d	-1	ru	Windows	-	-	-
+	813fbcd24a46728cf142cb62057a69cd	76791	he	Windows	-	-	-	orgads
 
 	8fec68383202d38c0d25e9e3b757c5df	18041	All	Windows	Demo	Demo	-	Fingolfin
 

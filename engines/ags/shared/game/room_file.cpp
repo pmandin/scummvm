@@ -44,7 +44,8 @@ namespace AGS3 {
 #define LEGACY_ROOM_PASSWORD_LENGTH 11
 #define LEGACY_ROOM_PASSWORD_SALT 60
 #define ROOM_MESSAGE_FLAG_DISPLAYNEXT 200
-#define ROOM_LEGACY_OPTIONS_SIZE 10
+// Reserved room options (each is a byte)
+#define ROOM_OPTIONS_RESERVED 4
 #define LEGACY_TINT_IS_ENABLED 0x80000000
 
 namespace AGS {
@@ -236,7 +237,8 @@ HError ReadMainBlock(RoomStruct *room, Stream *in, RoomFileVersion data_ver) {
 	room->Options.PlayerCharOff = in->ReadInt8() != 0;
 	room->Options.PlayerView = in->ReadInt8();
 	room->Options.MusicVolume = (RoomVolumeMod)in->ReadInt8();
-	in->Seek(ROOM_LEGACY_OPTIONS_SIZE - 5);
+	room->Options.Flags = in->ReadInt8();
+	in->Seek(ROOM_OPTIONS_RESERVED);
 
 	room->MessageCount = in->ReadInt16();
 	if (room->MessageCount > MAX_MESSAGES)
@@ -293,39 +295,30 @@ HError ReadMainBlock(RoomStruct *room, Stream *in, RoomFileVersion data_ver) {
 	}
 
 	update_polled_stuff_if_runtime();
-	// Primary background
-	Bitmap *mask = nullptr;
+	// Primary background (LZW or RLE compressed depending on format)
 	if (data_ver >= kRoomVersion_pre114_5)
-		load_lzw(in, &mask, room->BackgroundBPP, &room->Palette);
+		room->BgFrames[0].Graphic.reset(
+			load_lzw(in, room->BackgroundBPP, &room->Palette));
 	else
-		mask = load_rle_bitmap8(in);
-	room->BgFrames[0].Graphic.reset(mask);
+		room->BgFrames[0].Graphic.reset(load_rle_bitmap8(in));
 
+	// Area masks
 	update_polled_stuff_if_runtime();
-	// Mask bitmaps
-	if (data_ver >= kRoomVersion_255b) {
-		mask = load_rle_bitmap8(in);
-	} else if (data_ver >= kRoomVersion_114) {
-		// an old version - clear the 'shadow' area into a blank regions bmp
-		mask = load_rle_bitmap8(in);
-		delete mask;
-		mask = nullptr;
-	}
-	room->RegionMask.reset(mask);
+	if (data_ver >= kRoomVersion_255b)
+		room->RegionMask.reset(load_rle_bitmap8(in));
+	else if (data_ver >= kRoomVersion_114)
+		skip_rle_bitmap8(in); // an old version - clear the 'shadow' area into a blank regions bmp (???)
 	update_polled_stuff_if_runtime();
-	mask = load_rle_bitmap8(in);
-	room->WalkAreaMask.reset(mask);
+	room->WalkAreaMask.reset(load_rle_bitmap8(in));
 	update_polled_stuff_if_runtime();
-	mask = load_rle_bitmap8(in);
-	room->WalkBehindMask.reset(mask);
+	room->WalkBehindMask.reset(load_rle_bitmap8(in));
 	update_polled_stuff_if_runtime();
-	mask = load_rle_bitmap8(in);
-	room->HotspotMask.reset(mask);
+	room->HotspotMask.reset(load_rle_bitmap8(in));
 	return HError::None();
 }
 
 // Room script sources (original text)
-HError ReadScriptBlock(char *&buf, Stream *in, RoomFileVersion data_ver) {
+HError ReadScriptBlock(char *&buf, Stream *in, RoomFileVersion /*data_ver*/) {
 	size_t len = in->ReadInt32();
 	buf = new char[len + 1];
 	in->Read(buf, len);
@@ -336,7 +329,7 @@ HError ReadScriptBlock(char *&buf, Stream *in, RoomFileVersion data_ver) {
 }
 
 // Compiled room script
-HError ReadCompSc3Block(RoomStruct *room, Stream *in, RoomFileVersion data_ver) {
+HError ReadCompSc3Block(RoomStruct *room, Stream *in, RoomFileVersion /*data_ver*/) {
 	room->CompiledScript.reset(ccScript::CreateFromStream(in));
 	if (room->CompiledScript == nullptr)
 		return new RoomFileError(kRoomFileErr_ScriptLoadFailed, _G(ccErrorString));
@@ -345,10 +338,10 @@ HError ReadCompSc3Block(RoomStruct *room, Stream *in, RoomFileVersion data_ver) 
 
 // Room object names
 HError ReadObjNamesBlock(RoomStruct *room, Stream *in, RoomFileVersion data_ver) {
-	size_t name_count = in->ReadByte();
+	size_t name_count = static_cast<uint8_t>(in->ReadInt8());
 	if (name_count != room->ObjectCount)
 		return new RoomFileError(kRoomFileErr_InconsistentData,
-			String::FromFormat("In the object names block, expected name count: %d, got %d", room->ObjectCount, name_count));
+			String::FromFormat("In the object names block, expected name count: %zu, got %zu", room->ObjectCount, name_count));
 
 	for (size_t i = 0; i < room->ObjectCount; ++i) {
 		if (data_ver >= kRoomVersion_3415)
@@ -361,10 +354,10 @@ HError ReadObjNamesBlock(RoomStruct *room, Stream *in, RoomFileVersion data_ver)
 
 // Room object script names
 HError ReadObjScNamesBlock(RoomStruct *room, Stream *in, RoomFileVersion data_ver) {
-	size_t name_count = in->ReadByte();
+	size_t name_count = static_cast<uint8_t>(in->ReadInt8());
 	if (name_count != room->ObjectCount)
 		return new RoomFileError(kRoomFileErr_InconsistentData,
-			String::FromFormat("In the object script names block, expected name count: %d, got %d", room->ObjectCount, name_count));
+			String::FromFormat("In the object script names block, expected name count: %zu, got %zu", room->ObjectCount, name_count));
 
 	for (size_t i = 0; i < room->ObjectCount; ++i) {
 		if (data_ver >= kRoomVersion_3415)
@@ -389,15 +382,14 @@ HError ReadAnimBgBlock(RoomStruct *room, Stream *in, RoomFileVersion data_ver) {
 
 	for (size_t i = 1; i < room->BgFrameCount; ++i) {
 		update_polled_stuff_if_runtime();
-		Bitmap *frame = nullptr;
-		load_lzw(in, &frame, room->BackgroundBPP, &room->BgFrames[i].Palette);
-		room->BgFrames[i].Graphic.reset(frame);
+		room->BgFrames[i].Graphic.reset(
+			load_lzw(in, room->BackgroundBPP, &room->BgFrames[i].Palette));
 	}
 	return HError::None();
 }
 
 // Read custom properties
-HError ReadPropertiesBlock(RoomStruct *room, Stream *in, RoomFileVersion data_ver) {
+HError ReadPropertiesBlock(RoomStruct *room, Stream *in, RoomFileVersion /*data_ver*/) {
 	int prop_ver = in->ReadInt32();
 	if (prop_ver != 1)
 		return new RoomFileError(kRoomFileErr_PropertiesBlockFormat, String::FromFormat("Expected version %d, got %d", 1, prop_ver));
@@ -446,11 +438,12 @@ HError ReadRoomBlock(RoomStruct *room, Stream *in, RoomFileBlock block, const St
 			String::FromFormat("Type: %d, known range: %d - %d.", block, kRoomFblk_Main, kRoomFblk_ObjectScNames));
 	}
 
-	// Add extensions here checking ext_id, which is an up to 16-chars name, for example:
-	// if (ext_id.CompareNoCase("REGION_NEWPROPS") == 0)
-	// {
-	//     // read new region properties
-	// }
+	// Add extensions here checking ext_id, which is an up to 16-chars name
+	if (ext_id.CompareNoCase("ext_sopts") == 0) {
+		StrUtil::ReadStringMap(room->StrOptions, in);
+		return HError::None();
+	}
+
 	return new RoomFileError(kRoomFileErr_UnknownBlockType,
 		String::FromFormat("Type: %s", ext_id.GetCStr()));
 }
@@ -483,7 +476,8 @@ private:
 	}
 
 	HError ReadBlock(int block_id, const String &ext_id,
-		soff_t block_len, bool &read_next) override {
+			soff_t block_len, bool &read_next) override {
+		read_next = true;
 		return ReadRoomBlock(_room, _in, (RoomFileBlock)block_id, ext_id, block_len, _dataVer);
 	}
 
@@ -618,7 +612,8 @@ HRoomFileError UpdateRoomData(RoomStruct *room, RoomFileVersion data_ver, bool g
 	// Older format room messages had flags appended to the message string
 	// TODO: find out which data versions had these; is it safe to assume this was before kRoomVersion_pre114_3?
 	for (size_t i = 0; i < room->MessageCount; ++i) {
-		if (!room->Messages[i].IsEmpty() && room->Messages[i].GetLast() == (char)ROOM_MESSAGE_FLAG_DISPLAYNEXT) {
+		if (!room->Messages[i].IsEmpty() &&
+				static_cast<uint8_t>(room->Messages[i].GetLast()) == ROOM_MESSAGE_FLAG_DISPLAYNEXT) {
 			room->Messages[i].ClipRight(1);
 			room->MessageInfos[i].Flags |= MSG_DISPLAYNEXT;
 		}
@@ -728,7 +723,8 @@ void WriteMainBlock(const RoomStruct *room, Stream *out) {
 	out->WriteInt8(room->Options.PlayerCharOff ? 1 : 0);
 	out->WriteInt8(room->Options.PlayerView);
 	out->WriteInt8(room->Options.MusicVolume);
-	out->WriteByteCount(0, ROOM_LEGACY_OPTIONS_SIZE - 5);
+	out->WriteInt8(room->Options.Flags);
+	out->WriteByteCount(0, ROOM_OPTIONS_RESERVED);
 	out->WriteInt16((int16_t)room->MessageCount);
 	out->WriteInt32(room->GameID);
 	for (size_t i = 0; i < room->MessageCount; ++i) {
@@ -789,6 +785,10 @@ void WritePropertiesBlock(const RoomStruct *room, Stream *out) {
 		Properties::WriteValues(room->Objects[i].Properties, out);
 }
 
+void WriteStrOptions(const RoomStruct *room, Stream *out) {
+	StrUtil::WriteStringMap(room->StrOptions, out);
+}
+
 HRoomFileError WriteRoomData(const RoomStruct *room, Stream *out, RoomFileVersion data_ver) {
 	if (data_ver < kRoomVersion_Current)
 		return new RoomFileError(kRoomFileErr_FormatNotSupported, "We no longer support saving room in the older format.");
@@ -810,6 +810,9 @@ HRoomFileError WriteRoomData(const RoomStruct *room, Stream *out, RoomFileVersio
 		WriteRoomBlock(room, kRoomFblk_AnimBg, WriteAnimBgBlock, out);
 	// Custom properties
 	WriteRoomBlock(room, kRoomFblk_Properties, WritePropertiesBlock, out);
+
+	// String options
+	WriteRoomBlock(room, "ext_sopts", WriteStrOptions, out);
 
 	// Write end of room file
 	out->WriteByte(kRoomFile_EOF);

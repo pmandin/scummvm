@@ -24,6 +24,7 @@
 #include "ags/shared/ac/common.h"
 #include "ags/shared/ac/view.h"
 #include "ags/engine/ac/audio_channel.h"
+#include "ags/engine/ac/button.h"
 #include "ags/engine/ac/character.h"
 #include "ags/engine/ac/character_cache.h"
 #include "ags/shared/ac/dialog_topic.h"
@@ -65,9 +66,11 @@
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/engine/gfx/graphics_driver.h"
 #include "ags/shared/gui/gui_button.h"
+#include "ags/shared/gui/gui_slider.h"
 #include "ags/engine/gui/gui_dialog.h"
 #include "ags/engine/main/engine.h"
 #include "ags/engine/media/audio/audio_system.h"
+#include "ags/engine/media/video/video.h"
 #include "ags/engine/platform/base/ags_platform_driver.h"
 #include "ags/engine/platform/base/sys_main.h"
 #include "ags/plugins/plugin_engine.h"
@@ -194,19 +197,13 @@ void set_game_speed(int new_fps) {
 void setup_for_dialog() {
 	_G(cbuttfont) = _GP(play).normal_font;
 	_G(acdialog_font) = _GP(play).normal_font;
-	if (!_GP(play).mouse_cursor_hidden)
-		ags_domouse(DOMOUSE_ENABLE);
 	_G(oldmouse) = _G(cur_cursor);
 	set_mouse_cursor(CURS_ARROW);
 }
 void restore_after_dialog() {
 	set_mouse_cursor(_G(oldmouse));
-	if (!_GP(play).mouse_cursor_hidden)
-		ags_domouse(DOMOUSE_DISABLE);
 	invalidate_screen();
 }
-
-
 
 String get_save_game_directory() {
 	return _G(saveGameDirectory);
@@ -367,18 +364,16 @@ void unload_game_file() {
 
 	_GP(characterScriptObjNames).clear();
 	free(_G(charextra));
+	_G(charextra) = nullptr;
 	free(_G(mls));
+	_G(mls) = nullptr;
 
 	dispose_game_drawdata();
 
-	if ((_G(gameinst) != nullptr) && (_G(gameinst)->pc != 0)) {
-		quit("Error: unload_game called while script still running");
-	} else {
-		delete _G(gameinstFork);
-		delete _G(gameinst);
-		_G(gameinstFork) = nullptr;
-		_G(gameinst) = nullptr;
-	}
+	delete _G(gameinstFork);
+	delete _G(gameinst);
+	_G(gameinstFork) = nullptr;
+	_G(gameinst) = nullptr;
 
 	_GP(gamescript).reset();
 
@@ -391,7 +386,7 @@ void unload_game_file() {
 
 	_GP(dialogScriptsScript).reset();
 
-	for (int i = 0; i < _G(numScriptModules); ++i) {
+	for (size_t i = 0; i < _G(numScriptModules); ++i) {
 		delete _GP(moduleInstFork)[i];
 		delete _GP(moduleInst)[i];
 		_GP(scriptModules)[i].reset();
@@ -407,6 +402,7 @@ void unload_game_file() {
 	_GP(getDialogOptionUnderCursorFunc).moduleHasFunction.resize(0);
 	_GP(runDialogOptionMouseClickHandlerFunc).moduleHasFunction.resize(0);
 	_GP(runDialogOptionKeyPressHandlerFunc).moduleHasFunction.resize(0);
+	_GP(runDialogOptionTextInputHandlerFunc).moduleHasFunction.resize(0);
 	_GP(runDialogOptionRepExecFunc).moduleHasFunction.resize(0);
 	_G(numScriptModules) = 0;
 
@@ -447,7 +443,7 @@ void unload_game_file() {
 	ccUnregisterAllObjects();
 
 	free_do_once_tokens();
-	free(_GP(play).gui_draw_order);
+	_GP(play).gui_draw_order.clear();
 
 	resetRoomStatuses();
 
@@ -952,9 +948,11 @@ bool read_savedgame_screenshot(const String &savedgame, int &want_shot) {
 
 // Test if the game file contains expected GUID / legacy id
 bool test_game_guid(const String &filepath, const String &guid, int legacy_id) {
+	std::unique_ptr<AssetManager> amgr(new AssetManager());
+	if (amgr->AddLibrary(filepath) != kAssetNoError)
+		return false;
 	MainGameSource src;
-	HGameFileError err = OpenMainGameFileFromDefaultAsset(src);
-	if (!err)
+	if (!OpenMainGameFileFromDefaultAsset(src, amgr.get()))
 		return false;
 	GameSetupStruct g;
 	PreReadGameData(g, src.InputStream.get(), src.DataVersion);
@@ -996,7 +994,7 @@ HSaveError load_game(const String &path, int slotNumber, bool &data_overwritten)
 			String gamefile = FindGameData(_GP(ResPaths).DataDir, TestGame);
 
 			if (Shared::File::TestReadFile(gamefile)) {
-				RunAGSGame(desc.MainDataFilename, 0, 0);
+				RunAGSGame(gamefile.GetCStr(), 0, 0);
 				_G(load_new_game_restore) = slotNumber;
 				return HSaveError::None();
 			}
@@ -1216,7 +1214,9 @@ void display_switch_out_suspend() {
 
 	// TODO: find out if anything has to be done here for SDL backend
 
-	// stop the sound stuttering
+	video_pause();
+
+	// Pause all the sounds
 	for (int i = 0; i < TOTAL_AUDIO_CHANNELS; i++) {
 		auto *ch = AudioChans::GetChannelIfPlaying(i);
 		if (ch) {
@@ -1243,12 +1243,14 @@ void display_switch_in() {
 void display_switch_in_resume() {
 	display_switch_in();
 
+	// Resume all the sounds
 	for (int i = 0; i < TOTAL_AUDIO_CHANNELS; i++) {
 		auto *ch = AudioChans::GetChannelIfPlaying(i);
 		if (ch) {
 			ch->resume();
 		}
 	}
+	video_resume();
 
 	// clear the screen if necessary
 	if (_G(gfxDriver) && _G(gfxDriver)->UsesMemoryBackBuffer())
@@ -1335,11 +1337,11 @@ void get_message_text(int msnum, char *buffer, char giveErr) {
 	replace_tokens(get_translation(_GP(thisroom).Messages[msnum].GetCStr()), buffer, maxlen);
 }
 
-bool unserialize_audio_script_object(int index, const char *objectType, const char *serializedData, int dataSize) {
+bool unserialize_audio_script_object(int index, const char *objectType, Stream *in, size_t data_sz) {
 	if (strcmp(objectType, "AudioChannel") == 0) {
-		_GP(ccDynamicAudio).Unserialize(index, serializedData, dataSize);
+		_GP(ccDynamicAudio).Unserialize(index, in, data_sz);
 	} else if (strcmp(objectType, "AudioClip") == 0) {
-		_GP(ccDynamicAudioClip).Unserialize(index, serializedData, dataSize);
+		_GP(ccDynamicAudioClip).Unserialize(index, in, data_sz);
 	} else {
 		return false;
 	}
@@ -1369,7 +1371,13 @@ void game_sprite_updated(int sprnum) {
 	// gui buttons
 	for (size_t i = 0; i < (size_t)_G(numguibuts); ++i) {
 		if (_GP(guibuts)[i].CurrentImage == sprnum) {
-			_GP(guibuts)[i].NotifyParentChanged();
+			_GP(guibuts)[i].MarkChanged();
+		}
+	}
+	// gui sliders
+	for (size_t i = 0; i < (size_t)_G(numguislider); ++i) {
+		if ((_GP(guislider)[i].BgImage == sprnum) || (_GP(guislider)[i].HandleImage == sprnum)) {
+			_GP(guislider)[i].MarkChanged();
 		}
 	}
 }
@@ -1408,8 +1416,17 @@ void game_sprite_deleted(int sprnum) {
 
 		if (_GP(guibuts)[i].CurrentImage == sprnum) {
 			_GP(guibuts)[i].CurrentImage = 0;
-			_GP(guibuts)[i].NotifyParentChanged();
+			_GP(guibuts)[i].MarkChanged();
 		}
+	}
+	// gui sliders
+	for (size_t i = 0; i < (size_t)_G(numguislider); ++i) {
+		if ((_GP(guislider)[i].BgImage == sprnum) || (_GP(guislider)[i].HandleImage == sprnum))
+			_GP(guislider)[i].MarkChanged();
+		if (_GP(guislider)[i].BgImage == sprnum)
+			_GP(guislider)[i].BgImage = 0;
+		if (_GP(guislider)[i].HandleImage == sprnum)
+			_GP(guislider)[i].HandleImage = 0;
 	}
 	// views
 	for (size_t v = 0; v < (size_t)_GP(game).numviews; ++v) {
@@ -1653,7 +1670,7 @@ RuntimeScriptValue Sc_Game_GetTranslationFilename(const RuntimeScriptValue *para
 }
 
 RuntimeScriptValue Sc_Game_GetSpeechVoxFilename(const RuntimeScriptValue *params, int32_t param_count) {
-	API_SCALL_OBJ(const char, _GP(myScriptStringImpl), Game_GetSpeechVoxFilename);
+	API_CONST_SCALL_OBJ(const char, _GP(myScriptStringImpl), Game_GetSpeechVoxFilename);
 }
 
 // int ()

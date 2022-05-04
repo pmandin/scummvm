@@ -826,27 +826,77 @@ void GfxOpenGLS::startActorDraw(const Actor *actor) {
 
 	_actorLightsProgram->setUniform("hasAmbient", _hasAmbientLight);
 	if (_lightsEnabled) {
+		// Allocate all variables in one chunk
+		static const unsigned int numUniforms = 4;
+		static const unsigned int uniformSize = _maxLights * 4;
+		float *lightsData = new float[numUniforms * uniformSize];
 		for (int i = 0; i < _maxLights; ++i) {
 			const GLSLight &l = _lights[i];
-			Common::String uniform;
-			uniform = Common::String::format("lightsPosition[%u]", i);
 
-			_actorLightsProgram->setUniform(uniform.c_str(), viewMatrix * l._position);
+			// lightsPosition
+			Math::Vector4d tmp = viewMatrix * l._position;
 
+			lightsData[0 * uniformSize + 4 * i + 0] = tmp.x();
+			lightsData[0 * uniformSize + 4 * i + 1] = tmp.y();
+			lightsData[0 * uniformSize + 4 * i + 2] = tmp.z();
+			lightsData[0 * uniformSize + 4 * i + 3] = tmp.w();
+
+			// lightsDirection
 			Math::Vector4d direction = l._direction;
 			direction.w() = 0.0;
 			viewMatrix.transformVector(&direction);
 			direction.w() = l._direction.w();
 
-			uniform = Common::String::format("lightsDirection[%u]", i);
-			_actorLightsProgram->setUniform(uniform.c_str(), direction);
+			lightsData[1 * uniformSize + 4 * i + 0] = direction.x();
+			lightsData[1 * uniformSize + 4 * i + 1] = direction.y();
+			lightsData[1 * uniformSize + 4 * i + 2] = direction.z();
+			lightsData[1 * uniformSize + 4 * i + 3] = direction.w();
 
-			uniform = Common::String::format("lightsColor[%u]", i);
-			_actorLightsProgram->setUniform(uniform.c_str(), l._color);
+			// lightsColor
+			lightsData[2 * uniformSize + 4 * i + 0] = l._color.x();
+			lightsData[2 * uniformSize + 4 * i + 1] = l._color.y();
+			lightsData[2 * uniformSize + 4 * i + 2] = l._color.z();
+			lightsData[2 * uniformSize + 4 * i + 3] = l._color.w();
 
-			uniform = Common::String::format("lightsParams[%u]", i);
-			_actorLightsProgram->setUniform(uniform.c_str(), l._params);
+			// lightsParams
+			lightsData[3 * uniformSize + 4 * i + 0] = l._params.x();
+			lightsData[3 * uniformSize + 4 * i + 1] = l._params.y();
+			lightsData[3 * uniformSize + 4 * i + 2] = l._params.z();
+			lightsData[3 * uniformSize + 4 * i + 3] = l._params.w();
 		}
+
+		Common::String uniform;
+		GLint uniformPos;
+
+		uniform = Common::String::format("lightsPosition");
+		uniformPos = _actorLightsProgram->getUniformLocation(uniform.c_str());
+		if (uniformPos == -1) {
+			error("No uniform named '%s'", uniform.c_str());
+		}
+		glUniform4fv(uniformPos, _maxLights, &lightsData[0 * uniformSize]);
+
+		uniform = Common::String::format("lightsDirection");
+		uniformPos = _actorLightsProgram->getUniformLocation(uniform.c_str());
+		if (uniformPos == -1) {
+			error("No uniform named '%s'", uniform.c_str());
+		}
+		glUniform4fv(uniformPos, _maxLights, &lightsData[1 * uniformSize]);
+
+		uniform = Common::String::format("lightsColor");
+		uniformPos = _actorLightsProgram->getUniformLocation(uniform.c_str());
+		if (uniformPos == -1) {
+			error("No uniform named '%s'", uniform.c_str());
+		}
+		glUniform4fv(uniformPos, _maxLights, &lightsData[2 * uniformSize]);
+
+		uniform = Common::String::format("lightsParams");
+		uniformPos = _actorLightsProgram->getUniformLocation(uniform.c_str());
+		if (uniformPos == -1) {
+			error("No uniform named '%s'", uniform.c_str());
+		}
+		glUniform4fv(uniformPos, _maxLights, &lightsData[3 * uniformSize]);
+
+		delete[] lightsData;
 	}
 }
 
@@ -1275,7 +1325,9 @@ void GfxOpenGLS::createBitmap(BitmapData *bitmap) {
 				if (val == 0xf81f) {
 					val = 0;
 				}
-				zbufPtr[i] = 0xffff - ((uint32)val) * 0x10000 / 100 / (0x10000 - val);
+				// This is later read as a LA pair when filling texture
+				// with L being used as the LSB in fragment shader
+				zbufPtr[i] = TO_LE_16(0xffff - ((uint32)val) * 0x10000 / 100 / (0x10000 - val));
 			}
 		}
 	}
@@ -1418,7 +1470,8 @@ void GfxOpenGLS::drawBitmap(const Bitmap *bitmap, int dx, int dy, uint32 layer) 
 	} else {
 		// Only draw the manual zbuffer when enabled
 		if (bitmap->getActiveImage() - 1 < bitmap->getNumImages()) {
-			drawDepthBitmap(dx, dy, bitmap->getWidth(), bitmap->getHeight(), (char *)const_cast<void *>(bitmap->getData(bitmap->getActiveImage() - 1).getPixels()));
+			drawDepthBitmap(bitmap->getId(), dx, dy, bitmap->getWidth(), bitmap->getHeight(),
+			                (char *)const_cast<void *>(bitmap->getData(bitmap->getActiveImage() - 1).getPixels()));
 		} else {
 			warning("zbuffer image has index out of bounds! %d/%d", bitmap->getActiveImage(), bitmap->getNumImages());
 		}
@@ -1426,15 +1479,26 @@ void GfxOpenGLS::drawBitmap(const Bitmap *bitmap, int dx, int dy, uint32 layer) 
 	}
 }
 
-void GfxOpenGLS::drawDepthBitmap(int x, int y, int w, int h, char *data) {
+void GfxOpenGLS::drawDepthBitmap(int bitmapId, int x, int y, int w, int h, char *data) {
+	static int prevId = -1;
 	static int prevX = -1, prevY = -1;
+	static int prevW = -1, prevH = -1;
 	static char *prevData = nullptr;
 
-	if (prevX == x && prevY == y && data == prevData)
+	// Sometimes the data pointer is reused by the allocator between bitmaps
+	// Use the bitmap ID to ensure we don't prevent an expected update
+	if (bitmapId == prevId &&
+	        prevX == x && prevY == y &&
+	        prevW == w && prevH == h &&
+	        data == prevData) {
 		return;
+	}
 
+	prevId = bitmapId;
 	prevX = x;
 	prevY = y;
+	prevW = w;
+	prevH = h;
 	prevData = data;
 
 	glActiveTexture(GL_TEXTURE1);

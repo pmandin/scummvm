@@ -118,7 +118,10 @@ Format value is defined as AGS version represented as NN,NN,NN,NN.
 Fonts have adjustable outline
 3.6.0.11:
 New font load flags, control backward compatible font behavior
-
+3.6.0.16:
+Idle animation speed, modifiable hotspot names, fixed video frame
+3.6.0.21:
+Some adjustments to gui text alignment.
 */
 
 enum GameDataVersion {
@@ -153,7 +156,9 @@ enum GameDataVersion {
 	kGameVersion_350 = 50,
 	kGameVersion_360 = 3060000,
 	kGameVersion_360_11 = 3060011,
-	kGameVersion_Current = kGameVersion_360_11
+	kGameVersion_360_16 = 3060016,
+	kGameVersion_360_21 = 3060021,
+	kGameVersion_Current = kGameVersion_360_21
 };
 
 } // namespace AGS3

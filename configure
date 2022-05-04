@@ -2109,28 +2109,7 @@ else
 		echo non-gcc compiler version ${cxx_version}
 	fi
 	cxx_verc_fail=yes
-
-	case $_host_os in
-		irix*)
-			case $cxx_version in
-				7.4.4*)
-					# We just assume this is SGI MIPSpro
-					cxx_version="assumed SGI MIPSpro $cxx_version, ok"
-					cxx_verc_fail=no
-					_cxx_major=7
-					_cxx_minor=4
-					add_line_to_config_mk 'CXX_UPDATE_DEP_FLAG = -MDupdate "$(*D)/$(DEPDIR)/$(*F).d"'
-					add_line_to_config_mk '-include Makedepend'
-					;;
-				*)
-					cxx_version="$cxx_version, bad"
-					;;
-			esac
-			;;
-		*)
-			cxx_version="$cxx_version, bad"
-			;;
-	esac
+	cxx_version="$cxx_version, bad"
 fi
 
 echo "$cxx_version"
@@ -2166,7 +2145,7 @@ if test "$have_gcc" = yes ; then
 		std_variant=gnu++
 		pedantic=no
 		;;
-	amigaos* | dreamcast | ds | mingw* | mint* | n64 | ps3 | psp2)
+	amigaos* | dreamcast | ds | mingw* | mint* | morphos | n64 | ps3 | psp2)
 		std_variant=gnu++
 		;;
 	*)
@@ -2832,6 +2811,17 @@ EOF
 			# Assume the SDK version is the same as the min version.
 			if test "$_macos_min_version" -gt 101399 ; then
 				add_line_to_config_mk 'MACOSX_64_BITS_ONLY = 1'
+			fi
+		fi
+
+		# Avoid "file has no symbols" noise from ranlib, if it's new enough
+		ranlib_version=`$_ranlib -V 2>/dev/null`
+		if test -n "$ranlib_version" ; then
+			ranlib_version="`echo "${ranlib_version}" | sed -ne 's/.*cctools-\([0-9]\{1,\}\).*/\1/gp'`"
+			if test -n "$ranlib_version" && test "$ranlib_version" -ge 862 ; then
+				append_var _ranlib "-no_warning_for_no_symbols"
+				# Also tell ar not to do its own calls to ranlib
+				append_var _ar "-S"
 			fi
 		fi
 
@@ -3723,7 +3713,7 @@ case $_backend in
 	psp2)
 		append_var LIBS "-lSDL2 -lSceCommonDialog_stub"
 		append_var LIBS "-lSceSysmodule_stub -lSceDisplay_stub -lSceGxm_stub"
-		append_var LIBS "-lSceAudio_stub -lSceCtrl_stub -lScePower_stub"
+		append_var LIBS "-lSceAudio_stub -lSceAudioIn_stub -lSceCtrl_stub -lScePower_stub"
 		append_var LIBS "-lSceNet_stub -lSceNetCtl_stub"
 		append_var LIBS "-lSceAppMgr_stub -lSceAppUtil_stub -lScePgf_stub"
 		append_var LIBS "-lSceTouch_stub -lSceHid_stub -lSceMotion_stub"
@@ -4197,8 +4187,8 @@ POST_OBJS_FLAGS		:= -Wl,--export-all-symbols -Wl,--no-whole-archive -Wl,--out-im
 		_elf_loader=yes
 		append_var DEFINES "-DUNCACHED_PLUGINS"
 _mak_plugins='
-LDFLAGS				+= -Wl,-T$(srcdir)/backends/plugins/psp/main_prog.ld
-PLUGIN_LDFLAGS		+= -Wl,-T$(srcdir)/backends/plugins/psp/plugin.ld -lstdc++ -lc
+LDFLAGS				+= -Wl,-T$(srcdir)/backends/plugins/psp/main_prog.ld  -Wl,-zmax-page-size=128
+PLUGIN_LDFLAGS		+= -Wl,-T$(srcdir)/backends/plugins/psp/plugin.ld -Wl,-zmax-page-size=128 -lstdc++ 
 '
 		;;
 	*)

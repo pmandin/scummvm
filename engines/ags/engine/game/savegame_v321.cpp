@@ -32,6 +32,7 @@
 #include "ags/engine/ac/character_extras.h"
 #include "ags/shared/ac/common.h"
 #include "ags/shared/ac/dialog_topic.h"
+#include "ags/engine/ac/button.h"
 #include "ags/engine/ac/dynamic_sprite.h"
 #include "ags/engine/ac/game.h"
 #include "ags/shared/ac/game_setup_struct.h"
@@ -60,7 +61,7 @@ namespace AGS3 {
 using namespace AGS::Shared;
 using namespace AGS::Engine;
 
-static const int32_t MAGICNUMBER = 0xbeefcafe;
+static const uint32_t MAGICNUMBER = 0xbeefcafe;
 
 static HSaveError restore_game_head_dynamic_values(Stream *in, RestoredData &r_data) {
 	r_data.FPS = in->ReadInt32();
@@ -87,7 +88,7 @@ static void restore_game_spriteset(Stream *in) {
 
 static HSaveError restore_game_scripts(Stream *in, const PreservedParams &pp, RestoredData &r_data) {
 	// read the global script data segment
-	int gdatasize = in->ReadInt32();
+	size_t gdatasize = (uint32_t)in->ReadInt32();
 	if (pp.GlScDataSize != gdatasize) {
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching size of global script data.");
 	}
@@ -95,12 +96,12 @@ static HSaveError restore_game_scripts(Stream *in, const PreservedParams &pp, Re
 	r_data.GlobalScript.Data.reset(new char[gdatasize]);
 	in->Read(r_data.GlobalScript.Data.get(), gdatasize);
 
-	if (in->ReadInt32() != _G(numScriptModules)) {
+	if ((uint32_t)in->ReadInt32() != _G(numScriptModules)) {
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching number of script modules.");
 	}
 	r_data.ScriptModules.resize(_G(numScriptModules));
-	for (int i = 0; i < _G(numScriptModules); ++i) {
-		int module_size = in->ReadInt32();
+	for (size_t i = 0; i < _G(numScriptModules); ++i) {
+		size_t module_size = (uint32_t)in->ReadInt32();
 		if (pp.ScMdDataSize[i] != module_size) {
 			return new SavegameError(kSvgErr_GameContentAssertion, String::FromFormat("Mismatching size of script module data, module %d.", i));
 		}
@@ -153,21 +154,18 @@ static void restore_game_play_ex_data(Stream *in) {
 		_GP(play).do_once_tokens[i] = rbuffer;
 	}
 
-	in->ReadArrayOfInt32(&_GP(play).gui_draw_order[0], _GP(game).numgui);
+	in->Seek(_GP(game).numgui * sizeof(int32_t)); // gui_draw_order
 }
 
 static void restore_game_play(Stream *in, RestoredData &r_data) {
 	int screenfadedout_was = _GP(play).screen_is_faded_out;
 	int roomchanges_was = _GP(play).room_changes;
-	// make sure the pointer is preserved
-	int32_t *gui_draw_order_was = _GP(play).gui_draw_order;
 
 	ReadGameState_Aligned(in, r_data);
 	r_data.Cameras[0].Flags = r_data.Camera0_Flags;
 
 	_GP(play).screen_is_faded_out = screenfadedout_was;
 	_GP(play).room_changes = roomchanges_was;
-	_GP(play).gui_draw_order = gui_draw_order_was;
 
 	restore_game_play_ex_data(in);
 }
@@ -211,16 +209,18 @@ static void restore_game_more_dynamic_values(Stream *in) {
 	_G(game_paused) = in->ReadInt32();
 }
 
-static void ReadAnimatedButtons_Aligned(Stream *in) {
+void ReadAnimatedButtons_Aligned(Stream *in, int num_abuts) {
 	AlignedStream align_s(in, Shared::kAligned_Read);
-	for (int i = 0; i < _G(numAnimButs); ++i) {
-		_G(animbuts)[i].ReadFromFile(&align_s);
+	for (int i = 0; i < num_abuts; ++i) {
+		AnimatingGUIButton abtn;
+		abtn.ReadFromFile(&align_s, 0);
+		AddButtonAnimation(abtn);
 		align_s.Reset();
 	}
 }
 
 static HSaveError restore_game_gui(Stream *in, int numGuisWas) {
-	HError err = GUI::ReadGUI(_GP(guis), in, true);
+	HError err = GUI::ReadGUI(in, true);
 	if (!err)
 		return new SavegameError(kSvgErr_GameObjectInitFailed, err);
 	_GP(game).numgui = _GP(guis).size();
@@ -229,13 +229,14 @@ static HSaveError restore_game_gui(Stream *in, int numGuisWas) {
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching number of GUI.");
 	}
 
-	_G(numAnimButs) = in->ReadInt32();
-	ReadAnimatedButtons_Aligned(in);
+	RemoveAllButtonAnimations();
+	int anim_count = in->ReadInt32();
+	ReadAnimatedButtons_Aligned(in, anim_count);
 	return HSaveError::None();
 }
 
 static HSaveError restore_game_audiocliptypes(Stream *in) {
-	if (in->ReadInt32() != (int)_GP(game).audioClipTypes.size()) {
+	if ((uint32_t)in->ReadInt32() != _GP(game).audioClipTypes.size()) {
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching number of Audio Clip Types.");
 	}
 
@@ -355,7 +356,7 @@ static HSaveError restore_game_views(Stream *in) {
 }
 
 static HSaveError restore_game_audioclips_and_crossfade(Stream *in, RestoredData &r_data) {
-	if (in->ReadInt32() != (int)_GP(game).audioClips.size()) {
+	if ((uint32_t)in->ReadInt32() != _GP(game).audioClips.size()) {
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching number of Audio Clips.");
 	}
 
@@ -389,7 +390,7 @@ static HSaveError restore_game_audioclips_and_crossfade(Stream *in, RestoredData
 	return HSaveError::None();
 }
 
-HSaveError restore_game_data(Stream *in, SavegameVersion svg_version, const PreservedParams &pp, RestoredData &r_data) {
+HSaveError restore_save_data_v321(Stream *in, const PreservedParams &pp, RestoredData &r_data) {
 	int vv;
 
 	HSaveError err = restore_game_head_dynamic_values(in, r_data);
@@ -472,7 +473,7 @@ HSaveError restore_game_data(Stream *in, SavegameVersion svg_version, const Pres
 	if (!err)
 		return err;
 
-	if ((uint32)in->ReadInt32() != (uint32)(MAGICNUMBER + 1)) {
+	if (static_cast<uint32_t>(in->ReadInt32()) != (MAGICNUMBER + 1)) {
 		return new SavegameError(kSvgErr_InconsistentFormat, "MAGICNUMBER not found before Audio Clips.");
 	}
 
@@ -484,7 +485,7 @@ HSaveError restore_game_data(Stream *in, SavegameVersion svg_version, const Pres
 	pl_set_file_handle(pluginFileHandle, in);
 	pl_run_plugin_hooks(AGSE_RESTOREGAME, pluginFileHandle);
 	pl_clear_file_handle();
-	if ((uint32)in->ReadInt32() != (uint32)MAGICNUMBER)
+	if (static_cast<uint32_t>(in->ReadInt32()) != MAGICNUMBER)
 		return new SavegameError(kSvgErr_InconsistentPlugin);
 
 	// save the new room music vol for later use

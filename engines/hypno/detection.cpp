@@ -101,12 +101,12 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
-		"wetlands", // Wetlands Demo Hebrew
-		"Demo",
+		"wetlands", // Wetlands Demo from a Hebrew magazine
+		"DemoHebrew",
 		AD_ENTRY3s("wetlands.exe", "15a6b1b3819ef002438df340509b5373", 629503,
 				"wetdemo.exe", "15a6b1b3819ef002438df340509b5373", 458319,
 				"demo.exe", "15a6b1b3819ef002438df340509b5373", 533221),
-		Common::HE_ISR,
+		Common::EN_USA,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_DEMO,
 		GUIO1(GUIO_NOMIDI)
@@ -116,7 +116,7 @@ static const ADGameDescription gameDescriptions[] = {
 		"PCWDemo",
 		AD_ENTRY2s("wetlands.exe", "15a6b1b3819ef002438df340509b5373", 553355,
 				"missions.lib", "6ffa658f22a00b6e17d7f920fcc13578", 12469),
-		Common::EN_GRB,
+		Common::EN_USA,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_DEMO,
 		GUIO1(GUIO_NOMIDI)
@@ -132,13 +132,23 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
+		"wetlands", // Non Interactive demo featured in several game magazines
+		"NonInteractive",
+		AD_ENTRY2s("playsmks.exe", "edc5b0c0caf3d5b01d344cb555d9a085", 422607,
+				"wetmusic.81m", "0d99c63ce19633d09569b1fdcdff1505", 2833439),
+		Common::EN_USA,
+		Common::kPlatformDOS,
+		ADGF_TESTING | ADGF_DEMO,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
 		"wetlands", // Wetlands (US)
 		nullptr,
 		AD_ENTRY2s("wetlands.exe", "15a6b1b3819ef002438df340509b5373", 647447,
 				"missions.lib", "aeaaa8b26ab17e37f060334a311a3ff6", 309793),
 		Common::EN_USA,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -148,7 +158,7 @@ static const ADGameDescription gameDescriptions[] = {
 			    "missions.lib", "aeaaa8b26ab17e37f060334a311a3ff6", 309793),
 		Common::FR_FRA,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
+		ADGF_TESTING,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
@@ -158,16 +168,27 @@ static const ADGameDescription gameDescriptions[] = {
 				"missions.lib", "aeaaa8b26ab17e37f060334a311a3ff6", 309793),
 		Common::ES_ESP,
 		Common::kPlatformDOS,
-		ADGF_UNSTABLE,
-		GUIO1(GUIO_NOMIDI)},
+		ADGF_TESTING,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"wetlands", // Wetlands (KO)
+		nullptr,
+		AD_ENTRY2s("wetlands.exe", "edc5b0c0caf3d5b01d344cb555d9a085", 360151,
+				"missions.lib", "aeaaa8b26ab17e37f060334a311a3ff6", 309793),
+		Common::KO_KOR,
+		Common::kPlatformDOS,
+		ADGF_TESTING,
+		GUIO1(GUIO_NOMIDI)
+	},
 	{
 		"soldierboyz", // Solidier Boyz (US)
-		_s("Missing game code"),
+		nullptr,
 		AD_ENTRY2s("boyz.exe", "bac1d734f2606dbdd0816dfa7a5cf518", 263347,
 					"setup.exe", "bac1d734f2606dbdd0816dfa7a5cf518", 160740),
 		Common::EN_USA,
 		Common::kPlatformWindows,
-		ADGF_UNSUPPORTED,
+		ADGF_UNSTABLE,
 		GUIO1(GUIO_NOMIDI)
 	},
 	AD_TABLE_END_MARKER
@@ -186,18 +207,40 @@ static const char *const directoryGlobs[] = {
 	nullptr
 };
 
-static const ExtraGuiOption hypnoExtraGuiOptionCheats = {
-	_s("Enable cheats"),
+static const ExtraGuiOption hypnoExtraGuiOptionOriginalCheats = {
+	_s("Enable original cheats"),
 	_s("Allow cheats using the C key."),
 	"cheats",
-	false
+	true,
+	0,
+	0
+};
+
+static const ExtraGuiOption hypnoExtraGuiOptionInfiniteHealthCheat = {
+	_s("Enable infinite health cheat"),
+	_s("Player health will never decrease (except for game over scenes)."),
+	"infiniteHealth",
+	false,
+	0,
+	0
+};
+
+static const ExtraGuiOption hypnoExtraGuiOptionInfiniteAmmoCheat = {
+	_s("Enable infinite ammo cheat"),
+	_s("Player ammo will never decrease."),
+	"infiniteAmmo",
+	false,
+	0,
+	0
 };
 
 static const ExtraGuiOption hypnoExtraGuiOptionRestoredContent = {
 	_s("Enable restored content"),
 	_s("Add additional content that is not enabled the original implementation."),
 	"restored",
-	false
+	true,
+	0,
+	0
 };
 
 class HypnoMetaEngineDetection : public AdvancedMetaEngineDetection {
@@ -218,7 +261,8 @@ public:
 
 	const char *getOriginalCopyright() const override {
 		return	"Marvel Comics Spider-Man: The Sinister Six (C) Brooklyn Multimedia\n"
-				"Wetlands (C) Hypnotix, Inc.";
+				"Wetlands (C) Hypnotix, Inc.\n"
+				"Soldier Bozy (C) Hypnotix, Inc., Motion Picture Corporation of America Interactive";
 	}
 
 	const DebugChannelDef *getDebugChannels() const override {
@@ -230,7 +274,9 @@ public:
 
 const ExtraGuiOptions HypnoMetaEngineDetection::getExtraGuiOptions(const Common::String &target) const {
 	ExtraGuiOptions options;
-	options.push_back(hypnoExtraGuiOptionCheats);
+	options.push_back(hypnoExtraGuiOptionOriginalCheats);
+	options.push_back(hypnoExtraGuiOptionInfiniteHealthCheat);
+	options.push_back(hypnoExtraGuiOptionInfiniteAmmoCheat);
 	options.push_back(hypnoExtraGuiOptionRestoredContent);
 	return options;
 }

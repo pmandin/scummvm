@@ -46,8 +46,8 @@ struct PreservedParams {
 	bool SpeechVOX;
 	bool MusicVOX;
 	// Script global data sizes
-	int GlScDataSize;
-	std::vector<int> ScMdDataSize;
+	size_t GlScDataSize;
+	std::vector<size_t> ScMdDataSize;
 
 	PreservedParams();
 };
@@ -91,7 +91,7 @@ struct RestoredData {
 	int                     CursorMode;
 	// General audio
 	struct ChannelInfo {
-		int ClipID = 0;
+		int ClipID = -1;
 		int Pos = 0;
 		int Priority = 0;
 		int Repeat = 0;

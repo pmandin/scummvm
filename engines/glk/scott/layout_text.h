@@ -19,13 +19,16 @@
  *
  */
 
-#ifndef AGS_ENGINE_AC_GLOBAL_RECORD_H
-#define AGS_ENGINE_AC_GLOBAL_RECORD_H
+#ifndef GLK_SCOTT_LAYOUTTEXT
+#define GLK_SCOTT_LAYOUTTEXT
 
-namespace AGS3 {
+namespace Glk {
+namespace Scott {
 
-void scStartRecording(int keyToStop);
+/* Breaks a null-terminated string up by inserting newlines,*/
+/* moving words down to the next line when reaching the end of the line */
+char *lineBreakText(char *source, int columns, int *rows, int *length);
 
-} // namespace AGS3
-
+} // End of namespace Scott
+} // End of namespace Glk
 #endif

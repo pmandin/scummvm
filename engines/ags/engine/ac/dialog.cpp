@@ -166,14 +166,15 @@ void get_dialog_script_parameters(unsigned char *&script, unsigned short *param1
 	}
 }
 
-int run_dialog_script(DialogTopic *dtpp, int dialogID, int offse, int optionIndex) {
+int run_dialog_script(int dialogID, int offse, int optionIndex) {
 	_G(said_speech_line) = 0;
 	int result = RUN_DIALOG_STAY;
 
 	if (_G(dialogScriptsInst)) {
-		char funcName[100];
-		sprintf(funcName, "_run_dialog%d", dialogID);
-		RunTextScriptIParam(_G(dialogScriptsInst), funcName, RuntimeScriptValue().SetInt32(optionIndex));
+		char func_name[100];
+		snprintf(func_name, sizeof(func_name), "_run_dialog%d", dialogID);
+		RuntimeScriptValue params[]{ optionIndex };
+		RunScriptFunction(_G(dialogScriptsInst), func_name, 1, params);
 		result = _G(dialogScriptsInst)->returnValue;
 	} else {
 		// old dialog format
@@ -308,8 +309,8 @@ int run_dialog_script(DialogTopic *dtpp, int dialogID, int offse, int optionInde
 }
 
 int write_dialog_options(Bitmap *ds, bool ds_has_alpha, int dlgxp, int curyp, int numdisp, int mouseison, int areawid,
-                         int bullet_wid, int usingfont, DialogTopic *dtop, int8 *disporder, short *dispyp,
-                         int linespacing, int utextcol, int padding) {
+		int bullet_wid, int usingfont, DialogTopic *dtop, int *disporder, short *dispyp,
+		int linespacing, int utextcol, int padding) {
 	int ww;
 
 	color_t text_color;
@@ -341,7 +342,7 @@ int write_dialog_options(Bitmap *ds, bool ds_has_alpha, int dlgxp, int curyp, in
 			if (_GP(game).dialog_bullet > 0)
 				actualpicwid = _GP(game).SpriteInfos[_GP(game).dialog_bullet].Width + 3;
 
-			sprintf(tempbfr, "%d.", ww + 1);
+			snprintf(tempbfr, sizeof(tempbfr), "%d.", ww + 1);
 			wouttext_outline(ds, dlgxp + actualpicwid, curyp, usingfont, text_color, tempbfr);
 		}
 		for (size_t cc = 0; cc < _GP(Lines).Count(); cc++) {
@@ -411,10 +412,13 @@ struct DialogOptions {
 	GUITextBox *parserInput;
 	DialogTopic *dtop;
 
-	int8 disporder[MAXTOPICOPTIONS];
+	// display order of options
+	int disporder[MAXTOPICOPTIONS];
+	// display Y coordinate of options
 	short dispyp[MAXTOPICOPTIONS];
-
+	// number of displayed options
 	int numdisp;
+	// currently chosen option
 	int chose;
 
 	Bitmap *tempScrn;
@@ -587,16 +591,8 @@ void DialogOptions::Show() {
 	wantRefresh = false;
 	mouseison = -10;
 
-	update_polled_stuff_if_runtime();
-	if (!_GP(play).mouse_cursor_hidden)
-		ags_domouse(DOMOUSE_ENABLE);
-	update_polled_stuff_if_runtime();
-
 	Redraw();
 	while (Run() && !SHOULD_QUIT) {}
-
-	if (!_GP(play).mouse_cursor_hidden)
-		ags_domouse(DOMOUSE_DISABLE);
 }
 
 void DialogOptions::Redraw() {
@@ -800,6 +796,7 @@ bool DialogOptions::Run() {
 	sys_evt_process_pending();
 
 	const bool new_custom_render = usingCustomRendering && _GP(game).options[OPT_DIALOGOPTIONSAPI] >= 0;
+	const bool old_keyhandle = _GP(game).options[OPT_KEYHANDLEAPI] == 0;
 
 	if (runGameLoopsInBackground) {
 		_GP(play).disabled_user_interface++;
@@ -847,9 +844,19 @@ bool DialogOptions::Run() {
 				}
 			}
 		} else if (new_custom_render) {
-			_GP(runDialogOptionKeyPressHandlerFunc).params[0].SetDynamicObject(&_GP(ccDialogOptionsRendering), &_GP(ccDialogOptionsRendering));
-			_GP(runDialogOptionKeyPressHandlerFunc).params[1].SetInt32(AGSKeyToScriptKey(gkey));
-			run_function_on_non_blocking_thread(&_GP(runDialogOptionKeyPressHandlerFunc));
+			if (old_keyhandle || (ki.UChar == 0)) {
+				// "dialog_options_key_press"
+				_GP(runDialogOptionKeyPressHandlerFunc).params[0].SetDynamicObject(&_GP(ccDialogOptionsRendering), &_GP(ccDialogOptionsRendering));
+				_GP(runDialogOptionKeyPressHandlerFunc).params[1].SetInt32(AGSKeyToScriptKey(gkey));
+				_GP(runDialogOptionKeyPressHandlerFunc).params[2].SetInt32(ki.Mod);
+				run_function_on_non_blocking_thread(&_GP(runDialogOptionKeyPressHandlerFunc));
+			}
+			if (!old_keyhandle && (ki.UChar > 0)) {
+				// "dialog_options_text_input"
+				_GP(runDialogOptionTextInputHandlerFunc).params[0].SetDynamicObject(&_GP(ccDialogOptionsRendering), &_GP(ccDialogOptionsRendering));
+				_GP(runDialogOptionTextInputHandlerFunc).params[1].SetInt32(ki.UChar);
+				run_function_on_non_blocking_thread(&_GP(runDialogOptionKeyPressHandlerFunc));
+			}
 		}
 		// Allow selection of options by keyboard shortcuts
 		else if (_GP(game).options[OPT_DIALOGNUMBERED] >= kDlgOptKeysOnly &&
@@ -1054,7 +1061,7 @@ void do_conversation(int dlgnum) {
 	DialogTopic *dtop = &_G(dialog)[dlgnum];
 
 	// run the startup script
-	int tocar = run_dialog_script(dtop, dlgnum, dtop->startupentrypoint, 0);
+	int tocar = run_dialog_script(dlgnum, dtop->startupentrypoint, 0);
 	if ((tocar == RUN_DIALOG_STOP_DIALOG) ||
 	        (tocar == RUN_DIALOG_GOTO_PREVIOUS)) {
 		// 'stop' or 'goto-previous' from first startup script
@@ -1073,7 +1080,7 @@ void do_conversation(int dlgnum) {
 		if (dlgnum != dlgnum_was) {
 			// dialog topic changed, so play the startup
 			// script for the new topic
-			tocar = run_dialog_script(dtop, dlgnum, dtop->startupentrypoint, 0);
+			tocar = run_dialog_script(dlgnum, dtop->startupentrypoint, 0);
 			dlgnum_was = dlgnum;
 			if (tocar == RUN_DIALOG_GOTO_PREVIOUS) {
 				if (numPrevTopics < 1) {
@@ -1112,7 +1119,7 @@ void do_conversation(int dlgnum) {
 				set_mouse_cursor(CURS_ARROW);
 			}
 		} else if (chose >= 0) {
-			tocar = run_dialog_script(dtop, dlgnum, dtop->entrypoints[chose], chose + 1);
+			tocar = run_dialog_script(dlgnum, dtop->entrypoints[chose], chose + 1);
 		} else {
 			tocar = RUN_DIALOG_STOP_DIALOG;
 		}

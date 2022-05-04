@@ -271,8 +271,6 @@ int _display_main(int xx, int yy, int wii, const char *text, int disp_type, int 
 			return 0;
 		}
 
-		if (!_GP(play).mouse_cursor_hidden)
-			ags_domouse(DOMOUSE_ENABLE);
 		int countdown = GetTextDisplayTime(todis);
 		int skip_setting = user_to_internal_skip_speech((SkipSpeechStyle)_GP(play).skip_display);
 		// Loop until skipped
@@ -332,8 +330,7 @@ int _display_main(int xx, int yy, int wii, const char *text, int disp_type, int 
 			if ((countdown < 1) && (_GP(play).fast_forward))
 				break;
 		}
-		if (!_GP(play).mouse_cursor_hidden)
-			ags_domouse(DOMOUSE_DISABLE);
+
 		remove_screen_overlay(OVER_TEXTMSG);
 		invalidate_screen();
 	} else {
@@ -367,7 +364,7 @@ void _display_at(int xx, int yy, int wii, const char *text, int disp_type, int a
 
 	EndSkippingUntilCharStops();
 
-	if (try_auto_play_speech(text, text, _GP(play).narrator_speech, true)) {// TODO: is there any need for this flag?
+	if (try_auto_play_speech(text, text, _GP(play).narrator_speech)) {
 		need_stop_speech = true;
 	}
 	_display_main(xx, yy, wii, text, disp_type, usingfont, asspch, isThought, allowShrink, overlayPositionFixed);
@@ -376,7 +373,7 @@ void _display_at(int xx, int yy, int wii, const char *text, int disp_type, int a
 		stop_voice_speech();
 }
 
-bool try_auto_play_speech(const char *text, const char *&replace_text, int charid, bool blocking) {
+bool try_auto_play_speech(const char *text, const char *&replace_text, int charid) {
 	const char *src = text;
 	if (src[0] != '&')
 		return false;
@@ -559,10 +556,6 @@ int get_font_outline_padding(int font) {
 			return 2;
 	}
 	return 0;
-}
-
-int get_text_width_outlined(const char *tex, int font) {
-	return get_text_width(tex, font) + 2 * get_font_outline_padding(font);
 }
 
 void do_corner(Bitmap *ds, int sprn, int x, int y, int offx, int offy) {

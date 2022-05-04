@@ -53,21 +53,10 @@ bool TextStreamReader::EOS() const {
 }
 
 char TextStreamReader::ReadChar() {
-	if (_stream) {
-		// Skip carriage-returns
-		char c;
-		do {
-			c = _stream->ReadByte();
-		} while (!_stream->EOS() && c == '\r');
-		return c;
-	}
-	return '\0';
+	return _stream->ReadInt8();
 }
 
 String TextStreamReader::ReadString(size_t length) {
-	if (!_stream) {
-		return "";
-	}
 	// TODO: remove carriage-return characters
 	return String::FromStreamCount(_stream, length);
 }
@@ -76,10 +65,6 @@ String TextStreamReader::ReadLine() {
 	// TODO
 	// Probably it is possible to group Stream::ReadString with this,
 	// both use similar algorythm, difference is only in terminator chars
-
-	if (!_stream) {
-		return "";
-	}
 
 	String str;
 	int chars_read_last = 0;
@@ -125,11 +110,8 @@ String TextStreamReader::ReadLine() {
 }
 
 String TextStreamReader::ReadAll() {
-	if (_stream) {
-		soff_t len = _stream->GetLength() - _stream->GetPosition();
-		return ReadString(len > SIZE_MAX ? SIZE_MAX : (size_t)len);
-	}
-	return "";
+	size_t len = Math::InRangeOrDef<size_t>((size_t)(_stream->GetLength() - _stream->GetPosition()), SIZE_MAX);
+	return ReadString(len);
 }
 
 } // namespace Shared

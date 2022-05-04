@@ -26,6 +26,7 @@
 #include "scumm/resource.h"
 #include "scumm/scumm_v0.h"
 #include "scumm/scumm_v7.h"
+#include "scumm/string_v7.h"
 #include "scumm/verbs.h"
 
 namespace Scumm {
@@ -993,6 +994,17 @@ void ScummEngine_v7::drawVerb(int verb, int mode) {
 		else if (mode && vs->hicolor)
 			color = vs->hicolor;
 
+		TextStyleFlags flags = kStyleAlignLeft;
+		int xpos = vs->origLeft;
+		int ypos = vs->curRect.top;
+
+		if (vs->center) {
+			flags = kStyleAlignCenter;
+		} else if (_language == Common::HE_ISR) {
+			flags = kStyleAlignRight;
+			xpos = _screenWidth - 1 - vs->origLeft;
+		}
+
 		const byte *msg = getResourceAddress(rtVerb, verb);
 		if (!msg)
 			return;
@@ -1012,54 +1024,37 @@ void ScummEngine_v7::drawVerb(int verb, int mode) {
 		_charset->setCurID(vs->charset_nr);
 
 		// Compute the text rect
-		int textWidth = 0;
-		vs->curRect.bottom = 0;
-		const byte *msg2 = msg;
-		while (*msg2) {
-			const int charWidth = _charset->getCharWidth(*msg2);
-			const int charHeight = _charset->getCharHeight(*msg2);
-			textWidth += charWidth;
-			if (vs->curRect.bottom < charHeight)
-				vs->curRect.bottom = charHeight;
-			msg2++;
-		}
-		vs->curRect.bottom += vs->curRect.top;
-		vs->oldRect = vs->curRect;
+		vs->curRect = _textV7->calcStringDimensions((const char*)msg, xpos, vs->curRect.top, flags);
+		
+		const int maxWidth = _screenWidth - vs->curRect.left;
+		int finalWidth = maxWidth;
 
-		const int maxWidth = _language == Common::HE_ISR ? vs->curRect.right + 1 : _screenWidth - vs->curRect.left;
-		if (_game.version == 8 && _charset->getStringWidth(0, buf) > maxWidth) {
+		if (_game.version == 8 && _textV7->getStringWidth((const char*)buf) > maxWidth) {
 			byte tmpBuf[384];
-			memcpy(tmpBuf, msg, 384);
+			int len = resStrLen(msg);
+			memcpy(tmpBuf, msg, len);
+			len--;
 
-			int len = resStrLen(tmpBuf) - 1;
 			while (len >= 0) {
 				if (tmpBuf[len] == ' ') {
 					tmpBuf[len] = 0;
-					if (_charset->getStringWidth(0, tmpBuf) <= maxWidth) {
+					if ((finalWidth = _textV7->getStringWidth((const char*)tmpBuf)) <= maxWidth) {
 						break;
 					}
 				}
 				--len;
 			}
-			int16 leftPos = vs->curRect.left;
-			if (_language == Common::HE_ISR)
-				vs->curRect.left = vs->origLeft = leftPos = vs->curRect.right - _charset->getStringWidth(0, tmpBuf);
-			else
-				vs->curRect.right = vs->curRect.left + _charset->getStringWidth(0, tmpBuf);
-			enqueueText(tmpBuf, leftPos, vs->curRect.top, color, vs->charset_nr, vs->center);
-			if (len >= 0) {
-				if (_language == Common::HE_ISR)
-					leftPos = vs->curRect.right - _charset->getStringWidth(0, &msg[len + 1]);
-				enqueueText(&msg[len + 1], leftPos, vs->curRect.top + _verbLineSpacing, color, vs->charset_nr, vs->center);
-				vs->curRect.bottom += _verbLineSpacing;
-			}
+
+			enqueueText(tmpBuf, xpos, ypos, color, vs->charset_nr, flags);
+			enqueueText(&msg[len + 1], xpos, ypos + _verbLineSpacing, color, vs->charset_nr, flags);
+			vs->curRect.right = vs->curRect.left + finalWidth;
+			vs->curRect.bottom += _verbLineSpacing;			
 		} else {
-			if (_language == Common::HE_ISR)
-				vs->curRect.left = vs->origLeft = vs->curRect.right - textWidth;
-			else
-				vs->curRect.right = vs->curRect.left + textWidth;
-			enqueueText(msg, vs->curRect.left, vs->curRect.top, color, vs->charset_nr, vs->center);
+			enqueueText(msg, xpos, ypos, color, vs->charset_nr, flags);
 		}
+
+		vs->oldRect = vs->curRect;
+		vs->curRect.top = ypos;
 		_charset->setCurID(oldID);
 	}
 }
@@ -1276,6 +1271,15 @@ void ScummEngine::setVerbObject(uint room, uint object, uint verb) {
 
 	if (whereIsObject(object) == WIO_FLOBJECT)
 		error("Can't grab verb image from flobject");
+
+	// HACK: When the straw changes to gold, or the other way around, the
+	// object image changes, but the text is not undrawn. This causes the
+	// two object names to overlap each other. The text can be undrawn by
+	// script 8, but the logic for it is more convoluted in the Mac version
+	// than in the EGA DOS version, and I can't figure out how to bend it
+	// to my will. So hard-code the clearing here.
+	if (_game.id == GID_LOOM && verb == 53 && _game.platform == Common::kPlatformMacintosh)
+		drawBox(232, 152, 312, 192, 0);
 
 	if (_game.features & GF_OLD_BUNDLE) {
 		for (i = (_numLocalObjects-1); i > 0; i--) {

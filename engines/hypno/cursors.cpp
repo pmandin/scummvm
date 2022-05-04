@@ -28,21 +28,21 @@ namespace Hypno {
 
 static const byte MOUSECURSOR_SCI[] = {
 	1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-	1, 2, 2, 1, 0, 0, 0, 0, 0, 0, 0,
-	1, 2, 2, 2, 1, 0, 0, 0, 0, 0, 0,
-	1, 2, 2, 2, 2, 1, 0, 0, 0, 0, 0,
-	1, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0,
-	1, 2, 2, 2, 2, 2, 2, 1, 0, 0, 0,
-	1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 0,
-	1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 0,
-	1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
-	1, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0,
-	1, 2, 1, 0, 1, 2, 2, 1, 0, 0, 0,
-	1, 1, 0, 0, 1, 2, 2, 1, 0, 0, 0,
-	0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0,
-	0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0,
-	0, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0};
+	1, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+	1, 3, 3, 1, 0, 0, 0, 0, 0, 0, 0,
+	1, 3, 3, 3, 1, 0, 0, 0, 0, 0, 0,
+	1, 3, 3, 3, 3, 1, 0, 0, 0, 0, 0,
+	1, 3, 3, 3, 3, 3, 1, 0, 0, 0, 0,
+	1, 3, 3, 3, 3, 3, 3, 1, 0, 0, 0,
+	1, 3, 3, 3, 3, 3, 3, 3, 1, 0, 0,
+	1, 3, 3, 3, 3, 3, 3, 3, 3, 1, 0,
+	1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1,
+	1, 3, 3, 3, 3, 3, 1, 0, 0, 0, 0,
+	1, 3, 1, 0, 1, 3, 3, 1, 0, 0, 0,
+	1, 1, 0, 0, 1, 3, 3, 1, 0, 0, 0,
+	0, 0, 0, 0, 0, 1, 3, 3, 1, 0, 0,
+	0, 0, 0, 0, 0, 1, 3, 3, 1, 0, 0,
+	0, 0, 0, 0, 0, 0, 1, 3, 3, 1, 0};
 
 static const byte circleCursor[] = {
 	0, 0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0,
@@ -76,7 +76,7 @@ static const byte cursorPalette[] = {
 	0x00, 0x00, 0x00, // Black / Transparent
 	0x00, 0x00, 0xff, // Blue
 	0xff, 0x00, 0x00, // Red
-	0x00, 0x00, 0x00  // Red
+	0xff, 0xff, 0xff  // White
 };
 
 struct CursorTable {
@@ -130,6 +130,15 @@ void HypnoEngine::changeCursor(const Common::String &cursor, uint32 n, bool cent
 	delete entry;
 	CursorMan.showMouse(true);
 }
+
+void HypnoEngine::changeCursor(const Graphics::Surface &entry, byte *palette, bool centerCursor) {
+	uint32 hotspotX = centerCursor ? entry.w / 2 : 0;
+	uint32 hotspotY = centerCursor ? entry.h / 2 : 0;
+	CursorMan.replaceCursor(entry.getPixels(), entry.w, entry.h, hotspotX, hotspotY, 0, &_pixelFormat);
+	CursorMan.replaceCursorPalette(palette, 0, 256);
+	CursorMan.showMouse(true);
+}
+
 
 } // End of namespace Hypno
 

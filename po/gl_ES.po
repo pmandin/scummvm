@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.8.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-03-27 04:28+0000\n"
+"POT-Creation-Date: 2022-04-27 19:39+0000\n"
 "PO-Revision-Date: 2020-09-26 21:13+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Galician <https://translations.scummvm.org/projects/scummvm/"
@@ -20,16 +20,18 @@ msgstr ""
 "X-Generator: Weblate 4.0.4\n"
 "X-Language-name: Galego\n"
 
-#: gui/about.cpp:103
-#, c-format
-msgid "(built on %s)"
+#. I18N: built on <build date> with <compiler>
+#: gui/about.cpp:104
+#, fuzzy, c-format
+#| msgid "(built on %s)"
+msgid "(built on %s with %s)"
 msgstr "(compilado o %s)"
 
-#: gui/about.cpp:110
+#: gui/about.cpp:111
 msgid "Features compiled in:"
 msgstr "Funcionalidades compiladas:"
 
-#: gui/about.cpp:119
+#: gui/about.cpp:120
 msgid "Available engines:"
 msgstr "Motores dispoñibles:"
 
@@ -58,7 +60,7 @@ msgstr "Arriba"
 #: gui/browser.cpp:81 gui/chooser.cpp:45 gui/downloadiconsdialog.cpp:161
 #: gui/editgamedialog.cpp:384 gui/editrecorddialog.cpp:66
 #: gui/filebrowser-dialog.cpp:68 gui/fluidsynth-dialog.cpp:152
-#: gui/massadd.cpp:91 gui/options.cpp:2102 gui/predictivedialog.cpp:68
+#: gui/massadd.cpp:91 gui/options.cpp:2104 gui/predictivedialog.cpp:68
 #: gui/recorderdialog.cpp:67 gui/recorderdialog.cpp:154
 #: gui/remotebrowser.cpp:59 gui/saveload-dialog.cpp:62
 #: gui/saveload-dialog.cpp:418 gui/saveload-dialog.cpp:489
@@ -131,8 +133,8 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:152
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
-#: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
+#: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
+#: gui/options.cpp:3063 gui/options.cpp:3101 gui/saveload-dialog.cpp:343
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:357
 #: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
@@ -143,8 +145,8 @@ msgstr "Si"
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:153
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:406 gui/launcher.cpp:435 gui/launcher.cpp:478
-#: gui/options.cpp:3060 gui/options.cpp:3098 gui/saveload-dialog.cpp:343
+#: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
+#: gui/options.cpp:3063 gui/options.cpp:3101 gui/saveload-dialog.cpp:343
 #: engines/buried/buried.cpp:580 engines/director/events.cpp:91
 #: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
 #: engines/kyra/gui/saveload_eob.cpp:628
@@ -153,7 +155,7 @@ msgstr "Si"
 msgid "No"
 msgstr "Non"
 
-#: gui/downloaddialog.cpp:136 gui/launcher.cpp:575
+#: gui/downloaddialog.cpp:136 gui/launcher.cpp:576
 msgid "ScummVM couldn't open the specified directory!"
 msgstr "ScummVM non foi quen de abrir o directorio!"
 
@@ -167,8 +169,8 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
-#: gui/launcher.cpp:534 gui/launcher.cpp:538 gui/massadd.cpp:88
-#: gui/options.cpp:2104 gui/predictivedialog.cpp:69
+#: gui/launcher.cpp:535 gui/launcher.cpp:539 gui/massadd.cpp:88
+#: gui/options.cpp:2106 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1187 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
 #: engines/buried/saveload.cpp:69
@@ -177,9 +179,9 @@ msgstr ""
 #: engines/groovie/script.cpp:652 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:924
-#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1356
-#: engines/scumm/scumm.cpp:1382 engines/scumm/scumm.cpp:1404
-#: engines/scumm/scumm.cpp:1682 engines/scumm/scumm.cpp:2149
+#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1358
+#: engines/scumm/scumm.cpp:1384 engines/scumm/scumm.cpp:1406
+#: engines/scumm/scumm.cpp:1684 engines/scumm/scumm.cpp:2155
 #: engines/sky/compact.cpp:141 engines/sword1/animation.cpp:531
 #: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
 #: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
@@ -308,9 +310,9 @@ msgstr "Idioma do xogo. Non converterá a versión galega do xogo en inglesa"
 
 #: gui/editgamedialog.cpp:163 gui/editgamedialog.cpp:178 gui/options.cpp:1368
 #: gui/options.cpp:1388 gui/options.cpp:1401 gui/options.cpp:1415
-#: gui/options.cpp:1427 gui/options.cpp:1447 gui/options.cpp:1459
-#: gui/options.cpp:1838 gui/options.cpp:2256 gui/options.cpp:2329
-#: gui/options.cpp:2509 gui/options.cpp:2948 audio/null.cpp:40
+#: gui/options.cpp:1427 gui/options.cpp:1447 gui/options.cpp:1461
+#: gui/options.cpp:1840 gui/options.cpp:2258 gui/options.cpp:2331
+#: gui/options.cpp:2511 gui/options.cpp:2951 audio/null.cpp:40
 #: engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<por defecto>"
@@ -329,12 +331,12 @@ msgctxt "lowres"
 msgid "Platform:"
 msgstr "Plataforma:"
 
-#: gui/editgamedialog.cpp:207 gui/options.cpp:1780 gui/options.cpp:1950
-#: backends/graphics/sdl/sdl-graphics.cpp:416
+#: gui/editgamedialog.cpp:207 gui/options.cpp:1782 gui/options.cpp:1952
+#: backends/graphics/sdl/sdl-graphics.cpp:418
 msgid "Graphics"
 msgstr "Gráficos"
 
-#: gui/editgamedialog.cpp:207 gui/options.cpp:1780 gui/options.cpp:1950
+#: gui/editgamedialog.cpp:207 gui/options.cpp:1782 gui/options.cpp:1952
 msgid "GFX"
 msgstr "Efectos gráficos"
 
@@ -347,7 +349,7 @@ msgctxt "lowres"
 msgid "Override global graphic settings"
 msgstr "Anular a configuración dos gráficos"
 
-#: gui/editgamedialog.cpp:225 gui/options.cpp:1961
+#: gui/editgamedialog.cpp:225 gui/options.cpp:1963
 msgid "Shader"
 msgstr "Sombreador"
 
@@ -362,12 +364,12 @@ msgctxt "lowres"
 msgid "Override global shader settings"
 msgstr "Anular a configuración do son"
 
-#: gui/editgamedialog.cpp:244 gui/options.cpp:1993 engines/dialogs.cpp:318
+#: gui/editgamedialog.cpp:244 gui/options.cpp:1995 engines/dialogs.cpp:318
 #, fuzzy
 msgid "Keymaps"
 msgstr "Asignación de teclas:"
 
-#: gui/editgamedialog.cpp:251 gui/options.cpp:2000 engines/dialogs.cpp:325
+#: gui/editgamedialog.cpp:251 gui/options.cpp:2002 engines/dialogs.cpp:325
 msgid "Backend"
 msgstr ""
 
@@ -382,7 +384,7 @@ msgctxt "lowres"
 msgid "Override global backend settings"
 msgstr "Anular a configuración do son"
 
-#: gui/editgamedialog.cpp:270 gui/options.cpp:2014 engines/dialogs.cpp:293
+#: gui/editgamedialog.cpp:270 gui/options.cpp:2016 engines/dialogs.cpp:293
 msgid "Audio"
 msgstr "Son"
 
@@ -395,11 +397,11 @@ msgctxt "lowres"
 msgid "Override global audio settings"
 msgstr "Anular a configuración do son"
 
-#: gui/editgamedialog.cpp:284 gui/options.cpp:2019
+#: gui/editgamedialog.cpp:284 gui/options.cpp:2021
 msgid "Volume"
 msgstr "Volume"
 
-#: gui/editgamedialog.cpp:286 gui/options.cpp:2021
+#: gui/editgamedialog.cpp:286 gui/options.cpp:2023
 msgctxt "lowres"
 msgid "Volume"
 msgstr "Volume"
@@ -413,7 +415,7 @@ msgctxt "lowres"
 msgid "Override global volume settings"
 msgstr "Anular a configuración do volume"
 
-#: gui/editgamedialog.cpp:302 gui/options.cpp:2029
+#: gui/editgamedialog.cpp:302 gui/options.cpp:2031
 msgid "MIDI"
 msgstr "MIDI"
 
@@ -426,7 +428,7 @@ msgctxt "lowres"
 msgid "Override global MIDI settings"
 msgstr "Anular a configuración de MIDI"
 
-#: gui/editgamedialog.cpp:317 gui/options.cpp:2035
+#: gui/editgamedialog.cpp:317 gui/options.cpp:2037
 msgid "MT-32"
 msgstr "MT-32"
 
@@ -439,11 +441,11 @@ msgctxt "lowres"
 msgid "Override global MT-32 settings"
 msgstr "Anular a configuración de MT-32"
 
-#: gui/editgamedialog.cpp:331 gui/options.cpp:2042
+#: gui/editgamedialog.cpp:331 gui/options.cpp:2044
 msgid "Paths"
 msgstr "Camiños"
 
-#: gui/editgamedialog.cpp:333 gui/options.cpp:2044
+#: gui/editgamedialog.cpp:333 gui/options.cpp:2046
 msgctxt "lowres"
 msgid "Paths"
 msgstr "Camiños"
@@ -457,7 +459,7 @@ msgctxt "lowres"
 msgid "Game Path:"
 msgstr "Camiño do xogo:"
 
-#: gui/editgamedialog.cpp:347 gui/options.cpp:2233
+#: gui/editgamedialog.cpp:347 gui/options.cpp:2235
 msgid "Extra Path:"
 msgstr "Camiño adicional:"
 
@@ -466,22 +468,22 @@ msgstr "Camiño adicional:"
 msgid "Specifies path to additional data used by the game"
 msgstr "Especifica o camiño dos datos adicionais usados no xogo"
 
-#: gui/editgamedialog.cpp:349 gui/options.cpp:2235
+#: gui/editgamedialog.cpp:349 gui/options.cpp:2237
 msgctxt "lowres"
 msgid "Extra Path:"
 msgstr "Camiño adicional:"
 
-#: gui/editgamedialog.cpp:356 gui/options.cpp:2209
+#: gui/editgamedialog.cpp:356 gui/options.cpp:2211
 msgid "Save Path:"
 msgstr "Camiño de gardado:"
 
 #: gui/editgamedialog.cpp:356 gui/editgamedialog.cpp:358
-#: gui/editgamedialog.cpp:359 gui/options.cpp:2209 gui/options.cpp:2211
-#: gui/options.cpp:2212
+#: gui/editgamedialog.cpp:359 gui/options.cpp:2211 gui/options.cpp:2213
+#: gui/options.cpp:2214
 msgid "Specifies where your saved games are put"
 msgstr "Especifica o lugar dos ficheiros de gardado"
 
-#: gui/editgamedialog.cpp:358 gui/options.cpp:2211
+#: gui/editgamedialog.cpp:358 gui/options.cpp:2213
 msgctxt "lowres"
 msgid "Save Path:"
 msgstr "Camiño de gardado:"
@@ -495,25 +497,25 @@ msgid "Statistics"
 msgstr ""
 
 #: gui/editgamedialog.cpp:398 gui/editgamedialog.cpp:504
-#: gui/editgamedialog.cpp:570 gui/editgamedialog.cpp:637 gui/options.cpp:2126
-#: gui/options.cpp:2132 gui/options.cpp:2138 gui/options.cpp:2146
-#: gui/options.cpp:2177 gui/options.cpp:2220 gui/options.cpp:2228
-#: gui/options.cpp:2236 gui/options.cpp:2245 gui/options.cpp:2622
-#: gui/options.cpp:2628 gui/options.cpp:2634 gui/options.cpp:2641
-#: gui/options.cpp:2650 gui/options.cpp:2929 gui/options.cpp:2932
-#: gui/options.cpp:2935 gui/options.cpp:2942 gui/options.cpp:2954
-#: gui/options.cpp:2965
+#: gui/editgamedialog.cpp:570 gui/editgamedialog.cpp:637 gui/options.cpp:2128
+#: gui/options.cpp:2134 gui/options.cpp:2140 gui/options.cpp:2148
+#: gui/options.cpp:2179 gui/options.cpp:2222 gui/options.cpp:2230
+#: gui/options.cpp:2238 gui/options.cpp:2247 gui/options.cpp:2624
+#: gui/options.cpp:2630 gui/options.cpp:2636 gui/options.cpp:2643
+#: gui/options.cpp:2652 gui/options.cpp:2932 gui/options.cpp:2935
+#: gui/options.cpp:2938 gui/options.cpp:2945 gui/options.cpp:2957
+#: gui/options.cpp:2968
 msgctxt "path"
 msgid "None"
 msgstr "Ningún"
 
 #: gui/editgamedialog.cpp:403 gui/editgamedialog.cpp:510
-#: gui/editgamedialog.cpp:641 gui/options.cpp:2120 gui/options.cpp:2616
-#: gui/options.cpp:2938 backends/platform/wii/options.cpp:55
+#: gui/editgamedialog.cpp:641 gui/options.cpp:2122 gui/options.cpp:2618
+#: gui/options.cpp:2941 backends/platform/wii/options.cpp:55
 msgid "Default"
 msgstr "Predefinido"
 
-#: gui/editgamedialog.cpp:563 gui/options.cpp:2959
+#: gui/editgamedialog.cpp:563 gui/options.cpp:2962
 msgid "Select SoundFont"
 msgstr "Seleccionar SoundFont"
 
@@ -521,11 +523,11 @@ msgstr "Seleccionar SoundFont"
 msgid "Select additional game directory"
 msgstr "Selecciona un directorio con datos adicionais"
 
-#: gui/editgamedialog.cpp:615 gui/options.cpp:2840
+#: gui/editgamedialog.cpp:615 gui/options.cpp:2843
 msgid "Select directory for saved games"
 msgstr "Selecciona un directorio para ficheiros de gardado"
 
-#: gui/editgamedialog.cpp:622 gui/options.cpp:2847
+#: gui/editgamedialog.cpp:622 gui/options.cpp:2850
 msgid "The chosen directory cannot be written to. Please select another one."
 msgstr "Non é posible escribir no directorio elixido. Selecciona outro."
 
@@ -615,7 +617,7 @@ msgstr "Seno"
 msgid "Triangle"
 msgstr "Triángulo"
 
-#: gui/fluidsynth-dialog.cpp:138 gui/options.cpp:2051
+#: gui/fluidsynth-dialog.cpp:138 gui/options.cpp:2053
 msgid "Misc"
 msgstr "Misc."
 
@@ -667,10 +669,10 @@ msgid "Interact"
 msgstr "Interpolación:"
 
 #: gui/gui-manager.cpp:227 engines/metaengine.cpp:109
-#: engines/dragons/metaengine.cpp:160 engines/glk/scott/scott.cpp:411
-#: engines/griffon/metaengine.cpp:95 engines/grim/grim.cpp:455
-#: engines/grim/grim.cpp:536 engines/twine/metaengine.cpp:329
-#: engines/twine/metaengine.cpp:396 engines/wintermute/keymapper_tables.h:1262
+#: engines/dragons/metaengine.cpp:160 engines/griffon/metaengine.cpp:95
+#: engines/grim/grim.cpp:455 engines/grim/grim.cpp:536
+#: engines/twine/metaengine.cpp:329 engines/twine/metaengine.cpp:396
+#: engines/wintermute/keymapper_tables.h:1262
 #: engines/wintermute/keymapper_tables.h:1372
 #: engines/wintermute/keymapper_tables.h:1843
 #: engines/wintermute/keymapper_tables.h:2077
@@ -678,10 +680,10 @@ msgid "Up"
 msgstr "Arriba"
 
 #: gui/gui-manager.cpp:232 engines/metaengine.cpp:114
-#: engines/dragons/metaengine.cpp:166 engines/glk/scott/scott.cpp:411
-#: engines/griffon/metaengine.cpp:101 engines/grim/grim.cpp:460
-#: engines/grim/grim.cpp:541 engines/twine/metaengine.cpp:336
-#: engines/twine/metaengine.cpp:404 engines/wintermute/keymapper_tables.h:1268
+#: engines/dragons/metaengine.cpp:166 engines/griffon/metaengine.cpp:101
+#: engines/grim/grim.cpp:460 engines/grim/grim.cpp:541
+#: engines/twine/metaengine.cpp:336 engines/twine/metaengine.cpp:404
+#: engines/wintermute/keymapper_tables.h:1268
 #: engines/wintermute/keymapper_tables.h:1379
 #: engines/wintermute/keymapper_tables.h:1849
 #: engines/wintermute/keymapper_tables.h:2083
@@ -872,7 +874,7 @@ msgstr "Elimina~r~ xogo"
 msgid "Search in game list"
 msgstr "Buscar na lista de xogos"
 
-#: gui/launcher.cpp:275 gui/launcher.cpp:782
+#: gui/launcher.cpp:275 gui/launcher.cpp:783
 msgid "Search:"
 msgstr "Buscar:"
 
@@ -892,11 +894,11 @@ msgstr "Cargar partida:"
 msgid "Load"
 msgstr "Cargar"
 
-#: gui/launcher.cpp:394
+#: gui/launcher.cpp:395
 msgid "This directory cannot be used yet, it is being downloaded into!"
 msgstr "Aínda non se pode empregar este directorio. A descarga non rematou!"
 
-#: gui/launcher.cpp:405
+#: gui/launcher.cpp:406
 msgid ""
 "Do you really want to run the mass game detector? This could potentially add "
 "a huge number of games."
@@ -904,79 +906,79 @@ msgstr ""
 "Queres executar o detector de xogos en masa? É posible que se engada un gran "
 "número de xogos."
 
-#: gui/launcher.cpp:435
+#: gui/launcher.cpp:436
 msgid "Do you really want to remove this game configuration?"
 msgstr "Seguro que queres eliminar esta configuración de xogo?"
 
-#: gui/launcher.cpp:477
+#: gui/launcher.cpp:478
 msgid "Do you want to load saved game?"
 msgstr "Queres cargar a partida gardada?"
 
-#: gui/launcher.cpp:534
+#: gui/launcher.cpp:535
 msgid "This game does not support loading games from the launcher."
 msgstr "O xogo non permite cargar partidas dende o iniciador."
 
-#: gui/launcher.cpp:538
+#: gui/launcher.cpp:539
 msgid "ScummVM could not find any engine capable of running the selected game!"
 msgstr "ScummVM non foi quen de atopar un motor para executar o xogo!"
 
-#: gui/launcher.cpp:594
+#: gui/launcher.cpp:595
 msgid "ScummVM could not find any game in the specified directory!"
 msgstr "ScummVM non foi quen de atopar xogos no directorio!"
 
 #. I18N: Unknown game variant
-#: gui/launcher.cpp:610
+#: gui/launcher.cpp:611
 #, fuzzy
 msgid "Unknown variant"
 msgstr "Erro descoñecido"
 
-#: gui/launcher.cpp:616
+#: gui/launcher.cpp:617
 msgid "Pick the game:"
 msgstr "Elixe o xogo:"
 
-#: gui/launcher.cpp:791
+#: gui/launcher.cpp:792
 msgid "Group by:"
 msgstr ""
 
-#: gui/launcher.cpp:831 gui/saveload-dialog.cpp:367
+#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:367
 msgid "List view"
 msgstr "Lista"
 
-#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:368
+#: gui/launcher.cpp:833 gui/saveload-dialog.cpp:368
 msgid "Grid view"
 msgstr "Grade"
 
-#: gui/launcher.cpp:986
+#: gui/launcher.cpp:987
 msgid "~S~tart"
 msgstr "~I~niciar"
 
-#: gui/launcher.cpp:986
+#: gui/launcher.cpp:987
 msgid "Start selected game"
 msgstr "Iniciar o xogo seleccionado"
 
-#: gui/launcher.cpp:989
+#: gui/launcher.cpp:990
 msgid "~L~oad..."
 msgstr "~C~argar..."
 
-#: gui/launcher.cpp:989
+#: gui/launcher.cpp:990
 msgid "Load saved game for selected game"
 msgstr "Cargar partida do xogo seleccionado"
 
-#: gui/launcher.cpp:991
+#: gui/launcher.cpp:992
 msgid "Record..."
 msgstr "Gravar..."
 
-#: gui/launcher.cpp:998
+#: gui/launcher.cpp:999
 #, fuzzy
 #| msgid "~O~ptions..."
 msgid "~G~ame Options..."
 msgstr "~O~pcións..."
 
-#: gui/launcher.cpp:998 gui/launcher.cpp:1001
+#: gui/launcher.cpp:999 gui/launcher.cpp:1002
 msgid "Change game options"
 msgstr "Cambiar as opcións do xogo"
 
-#: gui/launcher.cpp:1001
+#: gui/launcher.cpp:1002
 #, fuzzy
 #| msgid "~O~ptions..."
 msgctxt "lowres"
@@ -985,14 +987,14 @@ msgstr "~O~pcións..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1123 gui/launcher.cpp:1318
+#: gui/launcher.cpp:1124 gui/launcher.cpp:1319
 #, fuzzy
 msgid "Unknown Engine"
 msgstr "Erro descoñecido"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1141 gui/launcher.cpp:1350
+#: gui/launcher.cpp:1142 gui/launcher.cpp:1351
 #, fuzzy
 #| msgid "Unknown Author"
 msgid "Unknown Publisher"
@@ -1000,23 +1002,23 @@ msgstr "Autor descoñecido"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1159 gui/launcher.cpp:1336
+#: gui/launcher.cpp:1160 gui/launcher.cpp:1337
 msgid "No Series"
 msgstr ""
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1174 gui/launcher.cpp:1369
+#: gui/launcher.cpp:1175 gui/launcher.cpp:1370
 msgid "Language not detected"
 msgstr ""
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1189 gui/launcher.cpp:1384
+#: gui/launcher.cpp:1190 gui/launcher.cpp:1385
 msgid "Platform not detected"
 msgstr ""
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1395 gui/widgets/groupedlist.cpp:122
+#: gui/launcher.cpp:1396 gui/widgets/groupedlist.cpp:122
 #, fuzzy
 #| msgid "Alt"
 msgid "All"
@@ -1045,7 +1047,7 @@ msgstr "%d directorios analizados..."
 msgid "Discovered %d new games, ignored %d previously added games ..."
 msgstr "%d xogos novos atopados; %d xogos xa engadidos ignorados..."
 
-#: gui/message.cpp:173 gui/message.cpp:177 gui/options.cpp:2444
+#: gui/message.cpp:173 gui/message.cpp:177 gui/options.cpp:2446
 msgid "Open URL"
 msgstr "Abrir URL"
 
@@ -1106,7 +1108,7 @@ msgid "Small"
 msgstr ""
 
 #: gui/options.cpp:456 gui/options.cpp:863 gui/options.cpp:1004
-#: gui/options.cpp:1139 gui/options.cpp:1564
+#: gui/options.cpp:1139 gui/options.cpp:1566
 msgctxt "soundfont"
 msgid "None"
 msgstr "Ningunha"
@@ -1216,7 +1218,7 @@ msgstr "Modo Helio"
 msgid "Scaler:"
 msgstr ""
 
-#: gui/options.cpp:1437 backends/graphics/sdl/sdl-graphics.cpp:407
+#: gui/options.cpp:1437 backends/graphics/sdl/sdl-graphics.cpp:409
 msgid "Fullscreen mode"
 msgstr "Pantalla completa"
 
@@ -1241,146 +1243,146 @@ msgctxt "lowres"
 msgid "Game 3D Renderer:"
 msgstr "Procesamento da interfaz:"
 
-#: gui/options.cpp:1457
+#: gui/options.cpp:1459
 #, fuzzy
 msgid "3D Anti-aliasing:"
 msgstr "Antidistorsión"
 
-#: gui/options.cpp:1461 engines/mohawk/dialogs.cpp:365
+#: gui/options.cpp:1463 engines/mohawk/dialogs.cpp:365
 msgid "Disabled"
 msgstr "Desactivados"
 
-#: gui/options.cpp:1473
+#: gui/options.cpp:1475
 msgid "Filter graphics"
 msgstr "Filtrar gráficos"
 
-#: gui/options.cpp:1473
+#: gui/options.cpp:1475
 msgid "Use linear filtering when scaling graphics"
 msgstr "Empregar filtrado linear ao escalar gráficos"
 
-#: gui/options.cpp:1476
+#: gui/options.cpp:1478
 msgid "Aspect ratio correction"
 msgstr "Corrección de proporción"
 
-#: gui/options.cpp:1476
+#: gui/options.cpp:1478
 #, fuzzy
 msgid "Correct aspect ratio for games"
 msgstr "Corrixir a proporción para os xogos en 320x200"
 
-#: gui/options.cpp:1484
+#: gui/options.cpp:1486
 #, fuzzy
 msgid "Preferred device:"
 msgstr "Dispositivo preferido:"
 
-#: gui/options.cpp:1484
+#: gui/options.cpp:1486
 #, fuzzy
 msgid "Music device:"
 msgstr "Dispositivo de música:"
 
-#: gui/options.cpp:1484 gui/options.cpp:1486
+#: gui/options.cpp:1486 gui/options.cpp:1488
 msgid "Specifies preferred sound device or sound card emulator"
 msgstr "Especifica o dispositivo ou emulador de tarxeta de son preferido"
 
-#: gui/options.cpp:1484 gui/options.cpp:1486 gui/options.cpp:1487
+#: gui/options.cpp:1486 gui/options.cpp:1488 gui/options.cpp:1489
 msgid "Specifies output sound device or sound card emulator"
 msgstr "Especifica o dispositivo ou emulador de tarxeta de son de saída"
 
-#: gui/options.cpp:1486
+#: gui/options.cpp:1488
 #, fuzzy
 msgctxt "lowres"
 msgid "Preferred dev.:"
 msgstr "Disp. preferido:"
 
-#: gui/options.cpp:1486
+#: gui/options.cpp:1488
 #, fuzzy
 msgctxt "lowres"
 msgid "Music device:"
 msgstr "Dispositivo de música:"
 
-#: gui/options.cpp:1513
+#: gui/options.cpp:1515
 msgid "AdLib emulator:"
 msgstr "Emulador de AdLib:"
 
-#: gui/options.cpp:1513 gui/options.cpp:1514
+#: gui/options.cpp:1515 gui/options.cpp:1516
 msgid "AdLib is used for music in many games"
 msgstr "Moitos xogos empregan AdLib para a música"
 
-#: gui/options.cpp:1527
+#: gui/options.cpp:1529
 #, fuzzy
 msgid "GM device:"
 msgstr "Dispositivo de GM:"
 
-#: gui/options.cpp:1527
+#: gui/options.cpp:1529
 msgid "Specifies default sound device for General MIDI output"
 msgstr ""
 "Especifica o dispositivo de son por defecto para a saída de General MIDI"
 
-#: gui/options.cpp:1538
+#: gui/options.cpp:1540
 msgid "Don't use General MIDI music"
 msgstr "Non empregar música en General MIDI"
 
-#: gui/options.cpp:1549 gui/options.cpp:1611
+#: gui/options.cpp:1551 gui/options.cpp:1613
 msgid "Use first available device"
 msgstr "Empregar o primeiro dispositivo dispoñible"
 
-#: gui/options.cpp:1561
+#: gui/options.cpp:1563
 msgid "SoundFont:"
 msgstr "SoundFont:"
 
-#: gui/options.cpp:1561 gui/options.cpp:1563 gui/options.cpp:1564
+#: gui/options.cpp:1563 gui/options.cpp:1565 gui/options.cpp:1566
 msgid "SoundFont is supported by some audio cards, FluidSynth and Timidity"
 msgstr ""
 "SoundFont é compatible con algunhas tarxetas de son, FluidSynth e Timidity"
 
-#: gui/options.cpp:1563
+#: gui/options.cpp:1565
 msgctxt "lowres"
 msgid "SoundFont:"
 msgstr "SoundFont:"
 
-#: gui/options.cpp:1569
+#: gui/options.cpp:1571
 msgid "Mixed AdLib/MIDI mode"
 msgstr "Modo AdLib/MIDI mixto"
 
-#: gui/options.cpp:1569
+#: gui/options.cpp:1571
 msgid "Use both MIDI and AdLib sound generation"
 msgstr "Empregar xeración de son MIDI e máis AdLib"
 
-#: gui/options.cpp:1572
+#: gui/options.cpp:1574
 msgid "MIDI gain:"
 msgstr "Ganancia de MIDI:"
 
-#: gui/options.cpp:1582
+#: gui/options.cpp:1584
 msgid "MT-32 Device:"
 msgstr "Dispositivo de MT-32:"
 
-#: gui/options.cpp:1582
+#: gui/options.cpp:1584
 msgid "Specifies default sound device for Roland MT-32/LAPC1/CM32l/CM64 output"
 msgstr ""
 "Especifica o dispositivo por defecto para a saída de Roland MT-32/LAPC1/"
 "CM32l/CM64"
 
-#: gui/options.cpp:1587
+#: gui/options.cpp:1589
 msgid "True Roland MT-32 (disable GM emulation)"
 msgstr "Roland MT-32 verdadeiro (sen emulación de GM)"
 
-#: gui/options.cpp:1587 gui/options.cpp:1589
+#: gui/options.cpp:1589 gui/options.cpp:1591
 msgid ""
 "Check if you want to use your real hardware Roland-compatible sound device "
 "connected to your computer"
 msgstr ""
 "Marcar para empregar o hardware compatible con Roland conectado ao sistema"
 
-#: gui/options.cpp:1589
+#: gui/options.cpp:1591
 msgctxt "lowres"
 msgid "True Roland MT-32 (no GM emulation)"
 msgstr "Roland MT-32 (sen emulación de GM)"
 
-#: gui/options.cpp:1592
+#: gui/options.cpp:1594
 #, fuzzy
 msgid "Roland GS device (enable MT-32 mappings)"
 msgstr "Dispositivo Roland GS (activar atribución MT-32)"
 
-#: gui/options.cpp:1592
+#: gui/options.cpp:1594
 msgid ""
 "Check if you want to enable patch mappings to emulate an MT-32 on a Roland "
 "GS device"
@@ -1388,167 +1390,167 @@ msgstr ""
 "Marcar para activar a atribución de parches e emular MT-32 nun dispositivo "
 "Roland GS"
 
-#: gui/options.cpp:1601
+#: gui/options.cpp:1603
 msgid "Don't use Roland MT-32 music"
 msgstr "Non empregar música en Roland MT-32"
 
-#: gui/options.cpp:1628
+#: gui/options.cpp:1630
 #, fuzzy
 msgid "Text and speech:"
 msgstr "Texto e voz:"
 
-#: gui/options.cpp:1632 gui/options.cpp:1642
+#: gui/options.cpp:1634 gui/options.cpp:1644
 msgid "Speech"
 msgstr "Voz"
 
-#: gui/options.cpp:1633 gui/options.cpp:1643
+#: gui/options.cpp:1635 gui/options.cpp:1645
 msgid "Subtitles"
 msgstr "Subtítulos"
 
-#: gui/options.cpp:1634
+#: gui/options.cpp:1636
 msgid "Both"
 msgstr "Ambos"
 
-#: gui/options.cpp:1636
+#: gui/options.cpp:1638
 msgid "Subtitle speed:"
 msgstr "Velocidade dos subtítulos:"
 
-#: gui/options.cpp:1638
+#: gui/options.cpp:1640
 #, fuzzy
 msgctxt "lowres"
 msgid "Text and speech:"
 msgstr "Texto e voz:"
 
-#: gui/options.cpp:1642
+#: gui/options.cpp:1644
 msgid "Spch"
 msgstr "Voz"
 
-#: gui/options.cpp:1643
+#: gui/options.cpp:1645
 msgid "Subs"
 msgstr "Subs"
 
-#: gui/options.cpp:1644
+#: gui/options.cpp:1646
 msgctxt "lowres"
 msgid "Both"
 msgstr "Ambos"
 
-#: gui/options.cpp:1644
+#: gui/options.cpp:1646
 msgid "Show subtitles and play speech"
 msgstr "Mostrar os subtítulos e reproducir as voces"
 
-#: gui/options.cpp:1646
+#: gui/options.cpp:1648
 msgctxt "lowres"
 msgid "Subtitle speed:"
 msgstr "Velocidade subs:"
 
-#: gui/options.cpp:1663
+#: gui/options.cpp:1665
 msgid "Music volume:"
 msgstr "Volume de música:"
 
-#: gui/options.cpp:1665
+#: gui/options.cpp:1667
 msgctxt "lowres"
 msgid "Music volume:"
 msgstr "Volume música:"
 
-#: gui/options.cpp:1672
+#: gui/options.cpp:1674
 #, fuzzy
 msgid "Mute all"
 msgstr "Silenciar todo"
 
-#: gui/options.cpp:1675
+#: gui/options.cpp:1677
 msgid "SFX volume:"
 msgstr "Volume de efectos:"
 
-#: gui/options.cpp:1675 gui/options.cpp:1677 gui/options.cpp:1678
+#: gui/options.cpp:1677 gui/options.cpp:1679 gui/options.cpp:1680
 msgid "Special sound effects volume"
 msgstr "Volume dos efectos de son"
 
-#: gui/options.cpp:1677
+#: gui/options.cpp:1679
 msgctxt "lowres"
 msgid "SFX volume:"
 msgstr "Volume efectos:"
 
-#: gui/options.cpp:1685
+#: gui/options.cpp:1687
 msgid "Speech volume:"
 msgstr "Volume de voz:"
 
-#: gui/options.cpp:1687
+#: gui/options.cpp:1689
 msgctxt "lowres"
 msgid "Speech volume:"
 msgstr "Volume voz:"
 
-#: gui/options.cpp:1971
+#: gui/options.cpp:1973
 msgid "Control"
 msgstr "Control"
 
-#: gui/options.cpp:2053
+#: gui/options.cpp:2055
 msgctxt "lowres"
 msgid "Misc"
 msgstr "Misc."
 
-#: gui/options.cpp:2065
+#: gui/options.cpp:2067
 msgid "Cloud"
 msgstr "Nube"
 
-#: gui/options.cpp:2067
+#: gui/options.cpp:2069
 msgctxt "lowres"
 msgid "Cloud"
 msgstr "Nube"
-
-#: gui/options.cpp:2081
-msgid "LAN"
-msgstr ""
 
 #: gui/options.cpp:2083
-msgctxt "lowres"
 msgid "LAN"
 msgstr ""
 
-#: gui/options.cpp:2091
-msgid "Accessibility"
+#: gui/options.cpp:2085
+msgctxt "lowres"
+msgid "LAN"
 msgstr ""
 
 #: gui/options.cpp:2093
+msgid "Accessibility"
+msgstr ""
+
+#: gui/options.cpp:2095
 msgctxt "lowres"
 msgid "Accessibility"
 msgstr ""
 
-#: gui/options.cpp:2102
+#: gui/options.cpp:2104
 msgid "Discard changes and close the dialog"
 msgstr ""
 
-#: gui/options.cpp:2103
+#: gui/options.cpp:2105
 msgid "Apply"
 msgstr "Aplicar"
 
-#: gui/options.cpp:2103
+#: gui/options.cpp:2105
 msgid "Apply changes without closing the dialog"
 msgstr ""
 
-#: gui/options.cpp:2104
+#: gui/options.cpp:2106
 msgid "Apply changes and close the dialog"
 msgstr ""
 
-#: gui/options.cpp:2198
+#: gui/options.cpp:2200
 msgid "FluidSynth Settings"
 msgstr "Configuración de FluidSynth"
 
-#: gui/options.cpp:2217
+#: gui/options.cpp:2219
 msgid "Theme Path:"
 msgstr "Camiño do tema:"
 
-#: gui/options.cpp:2219
+#: gui/options.cpp:2221
 msgctxt "lowres"
 msgid "Theme Path:"
 msgstr "Camiño tema:"
 
-#: gui/options.cpp:2225
+#: gui/options.cpp:2227
 #, fuzzy
 #| msgid "/root/ Path:"
 msgid "Icon Path:"
 msgstr "Camiño de /root/:"
 
-#: gui/options.cpp:2227
+#: gui/options.cpp:2229
 #, fuzzy
 #| msgctxt "lowres"
 #| msgid "/root/ Path:"
@@ -1556,365 +1558,365 @@ msgctxt "lowres"
 msgid "Icon Path:"
 msgstr "Camiño de /root/:"
 
-#: gui/options.cpp:2233 gui/options.cpp:2235 gui/options.cpp:2236
+#: gui/options.cpp:2235 gui/options.cpp:2237 gui/options.cpp:2238
 msgid "Specifies path to additional data used by all games or ScummVM"
 msgstr ""
 "Especificar o camiño dos datos adicionais de todos os xogos ou de ScummVM"
 
-#: gui/options.cpp:2242
+#: gui/options.cpp:2244
 msgid "Plugins Path:"
 msgstr "Camiño dos complementos:"
 
-#: gui/options.cpp:2244
+#: gui/options.cpp:2246
 msgctxt "lowres"
 msgid "Plugins Path:"
 msgstr "Camiño complementos:"
 
-#: gui/options.cpp:2254
+#: gui/options.cpp:2256
 msgid "ScummVM config path: "
 msgstr ""
 
 #. I18N: Referring to the last path memorized when adding a game
-#: gui/options.cpp:2261 gui/options.cpp:2948
+#: gui/options.cpp:2263 gui/options.cpp:2951
 msgid "Last browser path: "
 msgstr ""
 
-#: gui/options.cpp:2266
+#: gui/options.cpp:2268
 msgid "Theme:"
 msgstr "Tema:"
 
-#: gui/options.cpp:2270
+#: gui/options.cpp:2272
 #, fuzzy
 msgid "GUI scale:"
 msgstr "Idioma de interfaz:"
 
-#: gui/options.cpp:2277
+#: gui/options.cpp:2279
 #, fuzzy
 msgid "GUI renderer:"
 msgstr "Procesamento da interfaz:"
 
-#: gui/options.cpp:2289
+#: gui/options.cpp:2291
 msgid "Autosave:"
 msgstr "Autogardado:"
 
-#: gui/options.cpp:2291
+#: gui/options.cpp:2293
 msgctxt "lowres"
 msgid "Autosave:"
 msgstr "Autogardado:"
 
-#: gui/options.cpp:2300
+#: gui/options.cpp:2302
 msgid "Always return to the launcher when leaving a game"
 msgstr ""
 
-#: gui/options.cpp:2301
+#: gui/options.cpp:2303
 msgid ""
 "Always return to the launcher when leaving a game instead of closing ScummVM."
 msgstr ""
 
-#: gui/options.cpp:2308
+#: gui/options.cpp:2310
 msgid "Ask for confirmation on exit"
 msgstr ""
 
-#: gui/options.cpp:2309
+#: gui/options.cpp:2311
 msgid "Ask for permission when closing ScummVM or leaving a game."
 msgstr ""
 
-#: gui/options.cpp:2316
+#: gui/options.cpp:2318
 #, fuzzy
 msgid "Enable Discord integration"
 msgstr "Activar censura de contidos"
 
-#: gui/options.cpp:2317
+#: gui/options.cpp:2319
 msgid ""
 "Show information about the games you are playing on Discord if the Discord "
 "client is running."
 msgstr ""
 
-#: gui/options.cpp:2326
+#: gui/options.cpp:2328
 #, fuzzy
 msgid "GUI language:"
 msgstr "Idioma de interfaz:"
 
-#: gui/options.cpp:2326
+#: gui/options.cpp:2328
 msgid "Language of ScummVM GUI"
 msgstr "Idioma da interfaz de ScummVM"
 
-#: gui/options.cpp:2352
+#: gui/options.cpp:2354
 msgid "Switch the ScummVM GUI language to the game language"
 msgstr ""
 
-#: gui/options.cpp:2353
+#: gui/options.cpp:2355
 msgid ""
 "When starting a game, change the ScummVM GUI language to the game language. "
 "That way, if a game uses the ScummVM save and load dialogs, they are in the "
 "same language as the game."
 msgstr ""
 
-#: gui/options.cpp:2365
+#: gui/options.cpp:2367
 msgid "Use native system file browser"
 msgstr ""
 
-#: gui/options.cpp:2366
+#: gui/options.cpp:2368
 msgid ""
 "Use the native system file browser instead of the ScummVM one to select a "
 "file or directory."
 msgstr ""
 
-#: gui/options.cpp:2374 gui/updates-dialog.cpp:85
+#: gui/options.cpp:2376 gui/updates-dialog.cpp:85
 msgid "Update check:"
 msgstr "Comprobación de actualizacións:"
 
-#: gui/options.cpp:2374
+#: gui/options.cpp:2376
 msgid "How often to check ScummVM updates"
 msgstr "Frecuencia de comprobación das actualizacións de ScummVM"
 
-#: gui/options.cpp:2385
+#: gui/options.cpp:2387
 msgid "Check now"
 msgstr "Comprobar agora"
 
-#: gui/options.cpp:2391
+#: gui/options.cpp:2393
 #, fuzzy
 #| msgid "Update check:"
 msgid "Update Icons"
 msgstr "Comprobación de actualizacións:"
 
-#: gui/options.cpp:2399
+#: gui/options.cpp:2401
 #, fuzzy
 msgid "Active storage:"
 msgstr "Almacenamento na nube activo"
 
-#: gui/options.cpp:2399
+#: gui/options.cpp:2401
 msgid "Active cloud storage"
 msgstr "Almacenamento na nube activo"
 
-#: gui/options.cpp:2408
+#: gui/options.cpp:2410
 msgctxt "lowres"
 msgid ""
 "4. Storage is not yet enabled. Verify that username is correct and enable it:"
 msgstr ""
 
-#: gui/options.cpp:2410
+#: gui/options.cpp:2412
 msgid ""
 "4. Storage is not yet enabled. Verify that username is correct and enable it:"
 msgstr ""
 
-#: gui/options.cpp:2411
+#: gui/options.cpp:2413
 #, fuzzy
 msgid "Enable storage"
 msgstr "Activa o público do estudio."
 
-#: gui/options.cpp:2411
+#: gui/options.cpp:2413
 msgid "Confirm you want to use this account for this storage"
 msgstr ""
 
-#: gui/options.cpp:2413 backends/platform/wii/options.cpp:113
+#: gui/options.cpp:2415 backends/platform/wii/options.cpp:113
 msgid "Username:"
 msgstr "Nome de usuario:"
 
-#: gui/options.cpp:2413
+#: gui/options.cpp:2415
 msgid "Username used by this storage"
 msgstr "Nome de usuario empregado por este almacenamento"
 
-#: gui/options.cpp:2414
+#: gui/options.cpp:2416
 msgid "<none>"
 msgstr "<ningún>"
 
-#: gui/options.cpp:2416
+#: gui/options.cpp:2418
 msgid "Used space:"
 msgstr "Espazo empregado:"
 
-#: gui/options.cpp:2416
+#: gui/options.cpp:2418
 msgid "Space used by ScummVM's saved games on this storage"
 msgstr ""
 "Espazo empregado polas partidas gardadas de ScummVM neste almacenamento."
 
-#: gui/options.cpp:2419
+#: gui/options.cpp:2421
 #, fuzzy
 msgid "Last sync:"
 msgstr "Última sincronización:"
 
-#: gui/options.cpp:2419
+#: gui/options.cpp:2421
 #, fuzzy
 msgid "When was the last time saved games were synced with this storage"
 msgstr ""
 "O momento da última sincronización das partidas gardadas neste almacenamento."
 
-#: gui/options.cpp:2420 gui/options.cpp:3303
+#: gui/options.cpp:2422 gui/options.cpp:3306
 msgid "<never>"
 msgstr "<nunca>"
 
-#: gui/options.cpp:2422
+#: gui/options.cpp:2424
 msgctxt "lowres"
 msgid "Saved games sync automatically on launch, after saving and on loading."
 msgstr ""
 
-#: gui/options.cpp:2424
+#: gui/options.cpp:2426
 msgid "Saved games sync automatically on launch, after saving and on loading."
 msgstr ""
 
-#: gui/options.cpp:2425
+#: gui/options.cpp:2427
 msgid "Sync now"
 msgstr ""
 
-#: gui/options.cpp:2425
+#: gui/options.cpp:2427
 #, fuzzy
 msgid "Start saved games sync"
 msgstr "Iniciar o xogo seleccionado"
 
-#: gui/options.cpp:2428
+#: gui/options.cpp:2430
 msgctxt "lowres"
 msgid "You can download game files from your cloud ScummVM folder:"
 msgstr ""
 
-#: gui/options.cpp:2430
+#: gui/options.cpp:2432
 msgid "You can download game files from your cloud ScummVM folder:"
 msgstr ""
 
-#: gui/options.cpp:2431
+#: gui/options.cpp:2433
 #, fuzzy
 msgid "Download game files"
 msgstr "Erro ao descargar."
 
-#: gui/options.cpp:2431
+#: gui/options.cpp:2433
 msgid "Open downloads manager dialog"
 msgstr "Abre o diálogo do xestor de descargas."
 
-#: gui/options.cpp:2434
+#: gui/options.cpp:2436
 msgctxt "lowres"
 msgid "To change account for this storage, disconnect and connect again:"
 msgstr ""
 
-#: gui/options.cpp:2436
+#: gui/options.cpp:2438
 msgid "To change account for this storage, disconnect and connect again:"
 msgstr ""
 
-#: gui/options.cpp:2437
+#: gui/options.cpp:2439
 #, fuzzy
 msgid "Disconnect"
 msgstr "Conectar"
 
-#: gui/options.cpp:2437
+#: gui/options.cpp:2439
 msgid "Stop using this storage on this device"
 msgstr ""
 
-#: gui/options.cpp:2440
+#: gui/options.cpp:2442
 msgctxt "lowres"
 msgid "This storage is not connected yet! To connect,"
 msgstr ""
 
-#: gui/options.cpp:2442
+#: gui/options.cpp:2444
 msgid "This storage is not connected yet! To connect,"
 msgstr ""
 
-#: gui/options.cpp:2443
+#: gui/options.cpp:2445
 msgid "1. Open this link:"
 msgstr ""
 
-#: gui/options.cpp:2446
+#: gui/options.cpp:2448
 msgctxt "lowres"
 msgid "2. Get the code and enter it here:"
 msgstr ""
 
-#: gui/options.cpp:2448
+#: gui/options.cpp:2450
 msgid "2. Get the code and enter it here:"
 msgstr ""
 
-#: gui/options.cpp:2450
+#: gui/options.cpp:2452
 msgid "Paste"
 msgstr "Pegar"
 
-#: gui/options.cpp:2450
+#: gui/options.cpp:2452
 msgid "Paste code from clipboard"
 msgstr ""
 
-#: gui/options.cpp:2451
+#: gui/options.cpp:2453
 #, fuzzy
 msgid "3. Connect"
 msgstr "Conectar"
 
-#: gui/options.cpp:2451
+#: gui/options.cpp:2453
 #, fuzzy
 msgid "Connect your cloud storage account"
 msgstr ""
 "Abre o diálogo do asistente para conectar coa túa conta de almacenamento na "
 "nube."
 
-#: gui/options.cpp:2460
+#: gui/options.cpp:2462
 msgid "Run server"
 msgstr "Executar servidor"
 
-#: gui/options.cpp:2460
+#: gui/options.cpp:2462
 msgid "Run local webserver"
 msgstr "Executar servidor web local"
 
-#: gui/options.cpp:2461 gui/options.cpp:3418
+#: gui/options.cpp:2463 gui/options.cpp:3421
 msgid "Not running"
 msgstr "Non se está a executar"
 
-#: gui/options.cpp:2465
+#: gui/options.cpp:2467
 msgctxt "lowres"
 msgid "/root/ Path:"
 msgstr "Camiño de /root/:"
 
-#: gui/options.cpp:2465 gui/options.cpp:2467 gui/options.cpp:2468
+#: gui/options.cpp:2467 gui/options.cpp:2469 gui/options.cpp:2470
 #, fuzzy
 msgid "Select which directory will be shown as /root/ in the Files Manager"
 msgstr "Especifica o directorio de acceso do xestor de ficheiros."
 
-#: gui/options.cpp:2467
+#: gui/options.cpp:2469
 msgid "/root/ Path:"
 msgstr "Camiño de /root/:"
 
-#: gui/options.cpp:2473
+#: gui/options.cpp:2475
 msgid "Server's port:"
 msgstr "Porto do servidor:"
 
-#: gui/options.cpp:2473
+#: gui/options.cpp:2475
 msgid "Port for server to use"
 msgstr ""
 
-#: gui/options.cpp:2478
+#: gui/options.cpp:2480
 msgctxt "lowres"
 msgid "Run server to manage files with browser (in the same network)."
-msgstr ""
-
-#: gui/options.cpp:2479
-msgctxt "lowres"
-msgid "Closing options dialog will stop the server."
 msgstr ""
 
 #: gui/options.cpp:2481
-msgid "Run server to manage files with browser (in the same network)."
-msgstr ""
-
-#: gui/options.cpp:2482
+msgctxt "lowres"
 msgid "Closing options dialog will stop the server."
 msgstr ""
 
-#: gui/options.cpp:2494
+#: gui/options.cpp:2483
+msgid "Run server to manage files with browser (in the same network)."
+msgstr ""
+
+#: gui/options.cpp:2484
+msgid "Closing options dialog will stop the server."
+msgstr ""
+
+#: gui/options.cpp:2496
 #, fuzzy
 msgid "Use Text to speech"
 msgstr "Texto e voz:"
 
-#: gui/options.cpp:2494
+#: gui/options.cpp:2496
 msgid "Will read text in gui on mouse over."
 msgstr ""
 
-#: gui/options.cpp:2507
+#: gui/options.cpp:2509
 #, fuzzy
 msgid "None"
 msgstr "Ningún"
 
-#: gui/options.cpp:2568
+#: gui/options.cpp:2570
 msgid "Ignore"
 msgstr ""
 
-#: gui/options.cpp:2569
+#: gui/options.cpp:2571
 #, fuzzy
 msgid "Disable autosave"
 msgstr "Erro ao gardar a partida"
 
-#: gui/options.cpp:2570
+#: gui/options.cpp:2572
 msgid ""
 "WARNING: Autosave was enabled. Some of your games have existing saved games "
 "on the autosave slot. You can either move the existing saves to new slots, "
@@ -1923,39 +1925,39 @@ msgid ""
 "List of games:\n"
 msgstr ""
 
-#: gui/options.cpp:2579
+#: gui/options.cpp:2581
 #, fuzzy
 msgid ""
 "\n"
 "And more..."
 msgstr "Eng~a~dir xogo..."
 
-#: gui/options.cpp:2580 engines/engine.cpp:579
+#: gui/options.cpp:2582 engines/engine.cpp:579
 #, fuzzy
 msgid "Move"
 msgstr "Mover cara atrás"
 
-#: gui/options.cpp:2593
+#: gui/options.cpp:2595
 msgid "ERROR: Failed to move the following saved games:\n"
 msgstr ""
 
-#: gui/options.cpp:2686
+#: gui/options.cpp:2688
 msgid "Failed to change cloud storage!"
 msgstr "Erro ao cambiar o almacenamento na nube!"
 
-#: gui/options.cpp:2689
+#: gui/options.cpp:2691
 msgid "Another cloud storage is already active."
 msgstr "Xa está activo outro almacenamento na nube."
 
-#: gui/options.cpp:2779
+#: gui/options.cpp:2781
 msgid "Theme does not support selected language!"
 msgstr "O tema non é compatible co idioma seleccionado!"
 
-#: gui/options.cpp:2782
+#: gui/options.cpp:2784
 msgid "Theme cannot be loaded!"
 msgstr "Non se puido cargar o tema!"
 
-#: gui/options.cpp:2785
+#: gui/options.cpp:2787
 msgid ""
 "\n"
 "Misc settings will be restored."
@@ -1963,29 +1965,29 @@ msgstr ""
 "\n"
 "A configuración de Misc. será restaurada."
 
-#: gui/options.cpp:2856
+#: gui/options.cpp:2859
 msgid "Select directory for GUI themes"
 msgstr "Seleccionar directorio para temas de interfaz"
 
-#: gui/options.cpp:2866
+#: gui/options.cpp:2869
 #, fuzzy
 #| msgid "Select directory for GUI themes"
 msgid "Select directory for GUI launcher thumbnails"
 msgstr "Seleccionar directorio para temas de interfaz"
 
-#: gui/options.cpp:2876
+#: gui/options.cpp:2879
 msgid "Select directory for extra files"
 msgstr "Seleccionar directorio para ficheiros adicionais"
 
-#: gui/options.cpp:2887
+#: gui/options.cpp:2890
 msgid "Select directory for plugins"
 msgstr "Seleccionar directorio para complementos"
 
-#: gui/options.cpp:2900
+#: gui/options.cpp:2903
 msgid "Select directory for Files Manager /root/"
 msgstr "Seleccionar directorio para /root/ de xestor de ficheiros"
 
-#: gui/options.cpp:3035
+#: gui/options.cpp:3038
 msgid ""
 "Failed to open URL!\n"
 "Please navigate to this page manually."
@@ -1993,53 +1995,53 @@ msgstr ""
 "Erro ao abrir a URL!\n"
 "Por favor, accede a esta páxina manualmente."
 
-#: gui/options.cpp:3060
+#: gui/options.cpp:3063
 #, fuzzy
 msgid "Another Storage is working now. Do you want to interrupt it?"
 msgstr "Hai outro almacenamento activo. Seguro que queres interrompelo?"
 
-#: gui/options.cpp:3069 gui/options.cpp:3107
+#: gui/options.cpp:3072 gui/options.cpp:3110
 msgid "Wait until current Storage finishes up and try again."
 msgstr "Agarda a que finalice o almacenamento actual e téntao de novo."
 
-#: gui/options.cpp:3082
+#: gui/options.cpp:3085
 #, fuzzy
 msgid "Connecting..."
 msgstr "Conectar"
 
-#: gui/options.cpp:3098
+#: gui/options.cpp:3101
 #, fuzzy
 msgid "This Storage is working now. Do you want to interrupt it?"
 msgstr "Hai outro almacenamento activo. Seguro que queres interrompelo?"
 
-#: gui/options.cpp:3301 backends/cloud/cloudmanager.cpp:156
+#: gui/options.cpp:3304 backends/cloud/cloudmanager.cpp:156
 msgid "<right now>"
 msgstr "<agora mesmo>"
 
-#: gui/options.cpp:3410
+#: gui/options.cpp:3413
 msgid "Stop server"
 msgstr "Deter servidor"
 
-#: gui/options.cpp:3411
+#: gui/options.cpp:3414
 msgid "Stop local webserver"
 msgstr "Deter servidor web local"
 
-#: gui/options.cpp:3463
+#: gui/options.cpp:3466
 #, fuzzy
 msgid "Storage connected."
 msgstr "Asistente de conexión ao almacenamento de %s"
 
-#: gui/options.cpp:3465
+#: gui/options.cpp:3468
 #, fuzzy
 msgid "Failed to connect storage."
 msgstr "Erro ao cambiar o almacenamento na nube!"
 
-#: gui/options.cpp:3467
+#: gui/options.cpp:3470
 #, fuzzy
 msgid "Failed to connect storage: "
 msgstr "Erro ao cambiar o almacenamento na nube!"
 
-#: gui/options.cpp:3487
+#: gui/options.cpp:3490
 msgid ""
 "Request failed.\n"
 "Check your Internet connection."
@@ -2820,21 +2822,25 @@ msgstr "Omitir liña"
 msgid "Predictive input dialog"
 msgstr ""
 
-#: engines/metaengine.cpp:104 engines/griffon/metaengine.cpp:89
-#: engines/grim/grim.cpp:512 engines/grim/grim.cpp:608
-#: engines/sky/metaengine.cpp:97 engines/wintermute/keymapper_tables.h:54
+#. I18N: This keymap works within the KIA Save Game screen
+#. and allows confirming popup dialogue prompts (eg. for save game deletion or overwriting)
+#. and also submitting a new save game name, or choosing an existing save game for overwriting.
+#: engines/metaengine.cpp:104 engines/bladerunner/metaengine.cpp:181
+#: engines/griffon/metaengine.cpp:89 engines/grim/grim.cpp:512
+#: engines/grim/grim.cpp:608 engines/sky/metaengine.cpp:97
+#: engines/wintermute/keymapper_tables.h:54
 msgid "Confirm"
 msgstr ""
 
-#: graphics/renderer.cpp:30 backends/graphics/opengl/opengl-graphics.cpp:174
+#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:174
 msgid "OpenGL"
 msgstr "OpenGL"
 
-#: graphics/renderer.cpp:33
+#: graphics/renderer.cpp:36
 msgid "OpenGL with shaders"
 msgstr ""
 
-#: graphics/renderer.cpp:41
+#: graphics/renderer.cpp:44
 msgctxt "lowres"
 msgid "OpenGL with shaders"
 msgstr ""
@@ -3193,20 +3199,20 @@ msgstr "Axuste de desprazamento SI"
 msgid "Could not save screenshot"
 msgstr "Axuste de desprazamento SI"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:409
+#: backends/graphics/sdl/sdl-graphics.cpp:411
 msgid "Windowed mode"
 msgstr "Modo en ventá"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:420 engines/scumm/help.cpp:85
+#: backends/graphics/sdl/sdl-graphics.cpp:422 engines/scumm/help.cpp:85
 msgid "Toggle fullscreen"
 msgstr "Activar/desactivar pantalla completa"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:427 engines/scumm/help.cpp:98
+#: backends/graphics/sdl/sdl-graphics.cpp:429 engines/scumm/help.cpp:98
 #: engines/wintermute/keymapper_tables.h:960
 msgid "Toggle mouse capture"
 msgstr "Activar/desactivar captura de rato"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:432
+#: backends/graphics/sdl/sdl-graphics.cpp:434
 #: engines/wintermute/keymapper_tables.h:646
 #: engines/wintermute/keymapper_tables.h:695
 #: engines/wintermute/keymapper_tables.h:1098
@@ -3220,37 +3226,37 @@ msgstr "Activar/desactivar captura de rato"
 msgid "Save screenshot"
 msgstr "Axuste de desprazamento SI"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:438
+#: backends/graphics/sdl/sdl-graphics.cpp:440
 #, fuzzy
 msgid "Toggle aspect ratio correction"
 msgstr "Activar/desactivar corrección de proporción"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:445
+#: backends/graphics/sdl/sdl-graphics.cpp:447
 #, fuzzy
 msgid "Toggle linear filtered scaling"
 msgstr "Empregar filtrado linear ao escalar gráficos"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:452
+#: backends/graphics/sdl/sdl-graphics.cpp:454
 #, fuzzy
 msgid "Cycle through stretch modes"
 msgstr "Non se puido cambiar ao modo de vídeo: '"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:458
+#: backends/graphics/sdl/sdl-graphics.cpp:460
 #, fuzzy
 msgid "Increase the scale factor"
 msgstr "Aumentar/reducir factor de escala"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:464
+#: backends/graphics/sdl/sdl-graphics.cpp:466
 #, fuzzy
 msgid "Decrease the scale factor"
 msgstr "Aumentar/reducir factor de escala"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:470
+#: backends/graphics/sdl/sdl-graphics.cpp:472
 #, fuzzy
 msgid "Switch to the next scaler"
 msgstr "Cambiar ao xogo"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:475
+#: backends/graphics/sdl/sdl-graphics.cpp:477
 msgid "Switch to the previous scaler"
 msgstr ""
 
@@ -3883,8 +3889,12 @@ msgstr "Ventá"
 msgid "Minimize"
 msgstr "Minimizar"
 
+#. I18N: This keymap opens KIA's HELP tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. ONLINE HELP
 #: backends/platform/sdl/macosx/appmenu_osx.mm:237
-#: engines/zvision/metaengine.cpp:157
+#: engines/bladerunner/metaengine.cpp:221 engines/zvision/metaengine.cpp:157
 msgid "Help"
 msgstr ""
 
@@ -4113,24 +4123,24 @@ msgid "Check for Updates..."
 msgstr "Buscar actualizacións..."
 
 #: engines/access/resources.cpp:43 engines/drascula/drascula.cpp:933
-#: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:56
+#: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:301 engines/sky/compact.cpp:130
-#: engines/supernova/supernova.cpp:462 engines/teenagent/resources.cpp:97
+#: engines/supernova/supernova.cpp:464 engines/teenagent/resources.cpp:97
 #: engines/tony/tony.cpp:187 engines/toon/toon.cpp:4999
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "Non se puido localizar o ficheiro de datos do motor %s."
 
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:949
-#: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:65
-#: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:467
+#: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:66
+#: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:469
 #: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5012
 #, c-format
 msgid "The '%s' engine data file is corrupt."
 msgstr "O ficheiro de datos do motor %s está danado."
 
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:960
-#: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:68
+#: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:319 engines/tony/tony.cpp:211
 #: engines/toon/toon.cpp:5023
 #, c-format
@@ -4150,56 +4160,58 @@ msgstr "Emulador de MT-32"
 msgid "Emulate composite output to an NTSC TV"
 msgstr ""
 
-#: engines/adl/detection.cpp:63 engines/adl/detection.cpp:73
+#: engines/adl/detection.cpp:65 engines/adl/detection.cpp:77
 #, fuzzy
 msgid "Color graphics"
 msgstr "Empregar gráficos en cor"
 
-#: engines/adl/detection.cpp:64 engines/adl/detection.cpp:74
+#: engines/adl/detection.cpp:66 engines/adl/detection.cpp:78
 #, fuzzy
 msgid "Use color graphics instead of monochrome"
 msgstr "Empregar gráficos en cor"
 
-#: engines/adl/detection.cpp:83
+#: engines/adl/detection.cpp:89
 msgid "Show scanlines"
 msgstr "Mostra liñas de varrido."
 
-#: engines/adl/detection.cpp:84
+#: engines/adl/detection.cpp:90
 msgid "Darken every other scanline to mimic the look of a CRT"
 msgstr ""
 
-#: engines/adl/detection.cpp:93
+#: engines/adl/detection.cpp:101
 msgid "Always use sharp monochrome text"
 msgstr ""
 
-#: engines/adl/detection.cpp:94
+#: engines/adl/detection.cpp:102
 msgid "Do not emulate NTSC artifacts for text"
 msgstr ""
 
 #: engines/agi/detection.cpp:86 engines/cine/detection.cpp:51
 #: engines/drascula/detection.cpp:298 engines/dreamweb/detection.cpp:54
-#: engines/groovie/detection.cpp:285 engines/neverhood/detection.cpp:134
-#: engines/sherlock/detection.cpp:58 engines/toltecs/detection.cpp:212
-#: engines/trecision/detection.cpp:219 engines/ultima/detection.cpp:55
-#: engines/ultima/detection.cpp:106 engines/zvision/detection_tables.h:50
+#: engines/groovie/detection.cpp:287 engines/neverhood/detection.cpp:134
+#: engines/sci/detection_options.h:105 engines/sherlock/detection.cpp:58
+#: engines/toltecs/detection.cpp:212 engines/trecision/detection.cpp:219
+#: engines/ultima/detection.cpp:55 engines/ultima/detection.cpp:120
+#: engines/zvision/detection_tables.h:50
 msgid "Use original save/load screens"
 msgstr "Empregar pantallas orixinais de gardado e carga"
 
 #: engines/agi/detection.cpp:87 engines/cine/detection.cpp:52
 #: engines/drascula/detection.cpp:299 engines/dreamweb/detection.cpp:55
-#: engines/groovie/detection.cpp:286 engines/neverhood/detection.cpp:135
-#: engines/sherlock/detection.cpp:59 engines/toltecs/detection.cpp:213
-#: engines/trecision/detection.cpp:220 engines/ultima/detection.cpp:56
-#: engines/ultima/detection.cpp:107 engines/zvision/detection_tables.h:51
+#: engines/groovie/detection.cpp:288 engines/neverhood/detection.cpp:135
+#: engines/sci/detection_options.h:106 engines/sherlock/detection.cpp:59
+#: engines/toltecs/detection.cpp:213 engines/trecision/detection.cpp:220
+#: engines/ultima/detection.cpp:56 engines/ultima/detection.cpp:121
+#: engines/zvision/detection_tables.h:51
 msgid "Use the original save/load screens instead of the ScummVM ones"
 msgstr ""
 "Emprega as pantallas orixinais de gardado e carga, no canto das de ScummVM."
 
-#: engines/agi/detection.cpp:96
+#: engines/agi/detection.cpp:98
 msgid "Use an alternative palette"
 msgstr "Empregar unha paleta alternativa"
 
-#: engines/agi/detection.cpp:97
+#: engines/agi/detection.cpp:99
 msgid ""
 "Use an alternative palette, common for all Amiga games. This was the old "
 "behavior"
@@ -4207,30 +4219,30 @@ msgstr ""
 "Emprega unha paleta alternativa, común para todos os xogos de Amiga (uso "
 "antigo)."
 
-#: engines/agi/detection.cpp:106
+#: engines/agi/detection.cpp:110
 msgid "Mouse support"
 msgstr "Compatibilidade co rato"
 
-#: engines/agi/detection.cpp:107
+#: engines/agi/detection.cpp:111
 msgid ""
 "Enables mouse support. Allows to use mouse for movement and in game menus."
 msgstr ""
 "Activa a compatibilidade co rato. Permite o uso do rato para o movemento e "
 "os menús do xogo."
 
-#: engines/agi/detection.cpp:116
+#: engines/agi/detection.cpp:122
 msgid "Use Hercules hires font"
 msgstr "Empregar fonte Hercules de alta resolución"
 
-#: engines/agi/detection.cpp:117
+#: engines/agi/detection.cpp:123
 msgid "Uses Hercules hires font, when font file is available."
 msgstr "Emprega a fonte Hércules de alta resolución se está dispoñible."
 
-#: engines/agi/detection.cpp:126
+#: engines/agi/detection.cpp:134
 msgid "Pause when entering commands"
 msgstr "Pausar ao introducir comandos"
 
-#: engines/agi/detection.cpp:127
+#: engines/agi/detection.cpp:135
 msgid ""
 "Shows a command prompt window and pauses the game (like in SCI) instead of a "
 "real-time prompt."
@@ -4238,11 +4250,11 @@ msgstr ""
 "Mostra unha ventá de comandos e pausa o xogo (como en SCI), no canto de "
 "facelo en tempo real."
 
-#: engines/agi/detection.cpp:136
+#: engines/agi/detection.cpp:146
 msgid "Add speed menu"
 msgstr ""
 
-#: engines/agi/detection.cpp:137
+#: engines/agi/detection.cpp:147
 msgid "Add game speed menu (similar to PC version)"
 msgstr ""
 
@@ -4294,7 +4306,7 @@ msgstr "Restaurar"
 msgid "Quick load or save game isn't supported in this location"
 msgstr ""
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2776
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2782
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4305,7 +4317,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2766
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2772
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4316,7 +4328,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2789
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2795
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4372,13 +4384,13 @@ msgstr "Antidistorsión"
 msgid "Use antialiasing to draw text even if the game does not ask for it"
 msgstr ""
 
-#: engines/ags/ags.cpp:126
+#: engines/ags/ags.cpp:125
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
 "supported."
 msgstr ""
 
-#: engines/ags/ags.cpp:134
+#: engines/ags/ags.cpp:133
 msgid ""
 "The selected game has a data file greater than 2Gb, which isn't supported by "
 "your version of ScummVM yet."
@@ -4427,30 +4439,30 @@ msgstr ""
 msgid "Load anyway"
 msgstr "Iniciar de todos os xeitos"
 
-#: engines/bladerunner/bladerunner.cpp:357
+#: engines/bladerunner/bladerunner.cpp:368
 #, fuzzy
 msgid "Failed to initialize resources"
 msgstr "Erro ao cambiar o almacenamento na nube!"
 
-#: engines/bladerunner/bladerunner.cpp:1058
+#: engines/bladerunner/bladerunner.cpp:1084
 msgid "A required game resource was not found"
 msgstr ""
 
-#: engines/bladerunner/bladerunner.cpp:2334
+#: engines/bladerunner/bladerunner.cpp:2589
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
 "Content for this session until you completely Quit the game."
 msgstr ""
 
-#: engines/bladerunner/bladerunner.cpp:2336
+#: engines/bladerunner/bladerunner.cpp:2591
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
 "mode for this session until you completely Quit the game."
 msgstr ""
 
-#: engines/bladerunner/bladerunner.cpp:2338
+#: engines/bladerunner/bladerunner.cpp:2593
 msgid "Continue"
 msgstr ""
 
@@ -4463,40 +4475,40 @@ msgstr "Modo Helio"
 msgid "Game will add laughter after actor's line or narration"
 msgstr ""
 
-#: engines/bladerunner/detection.cpp:61
+#: engines/bladerunner/detection.cpp:63
 #, fuzzy
 msgid "Shorty mode"
 msgstr "Modo de cor"
 
-#: engines/bladerunner/detection.cpp:62
+#: engines/bladerunner/detection.cpp:64
 msgid "Game will shrink the actors and make their voices high pitched"
 msgstr ""
 
-#: engines/bladerunner/detection.cpp:70
+#: engines/bladerunner/detection.cpp:74
 msgid "Frame limiter high performance mode"
 msgstr ""
 
-#: engines/bladerunner/detection.cpp:71
+#: engines/bladerunner/detection.cpp:75
 msgid ""
 "This mode may result in high CPU usage! It avoids use of delayMillis() "
 "function."
 msgstr ""
 
-#: engines/bladerunner/detection.cpp:79
+#: engines/bladerunner/detection.cpp:85
 msgid "Max frames per second limit"
 msgstr ""
 
-#: engines/bladerunner/detection.cpp:80
+#: engines/bladerunner/detection.cpp:86
 msgid ""
 "This mode targets a maximum of 120 fps. When disabled, the game targets 60 "
 "fps"
 msgstr ""
 
-#: engines/bladerunner/detection.cpp:88
+#: engines/bladerunner/detection.cpp:96
 msgid "Disable McCoy's quick stamina drain"
 msgstr ""
 
-#: engines/bladerunner/detection.cpp:89
+#: engines/bladerunner/detection.cpp:97
 msgid ""
 "When running, McCoy won't start slowing down as soon as the player stops "
 "clicking the mouse"
@@ -4512,20 +4524,155 @@ msgstr ""
 
 #: engines/bladerunner/detection_tables.h:128 engines/cge/detection.cpp:56
 #: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
-#: engines/groovie/detection.cpp:104 engines/hypno/detection.cpp:165
-#: engines/kyra/detection_tables.h:303 engines/lure/detection.cpp:249
-#: engines/mohawk/detection_tables.h:988 engines/mohawk/detection_tables.h:1094
+#: engines/groovie/detection.cpp:104 engines/kyra/detection_tables.h:303
+#: engines/lure/detection.cpp:251 engines/mohawk/detection_tables.h:988
+#: engines/mohawk/detection_tables.h:1094
 #: engines/mohawk/detection_tables.h:1109 engines/myst3/detection.cpp:142
 #: engines/neverhood/detection.cpp:120 engines/saga/detection_tables.h:186
-#: engines/saga/detection_tables.h:1217 engines/saga/detection_tables.h:1276
+#: engines/saga/detection_tables.h:1241 engines/saga/detection_tables.h:1300
 #: engines/sci/detection_tables.h:5068 engines/sci/detection_tables.h:5076
 #: engines/sherlock/detection_tables.h:223 engines/stark/detection.cpp:319
 #: engines/teenagent/detection.cpp:117 engines/trecision/detection.cpp:199
-#: engines/zvision/detection_tables.h:190
-#: engines/zvision/detection_tables.h:210
+#: engines/zvision/detection_tables.h:200
+#: engines/zvision/detection_tables.h:220
 #, fuzzy
 msgid "Missing game code"
 msgstr "Controis principais de xogo:"
+
+#. I18N: These are keymaps that work in the main gameplay and also when KIA (Knowledge Integration Assistant) is open.
+#: engines/bladerunner/metaengine.cpp:107
+msgid "common shortcuts"
+msgstr ""
+
+#. I18N: These are keymaps which work only in the main gameplay and not within KIA's (Knowledge Integration Assistant) screens.
+#: engines/bladerunner/metaengine.cpp:109
+#, fuzzy
+#| msgid "Main game controls:"
+msgid "main game shortcuts"
+msgstr "Controis principais de xogo:"
+
+#. I18N: These are keymaps that work only within KIA's (Knowledge Integration Assistant) screens.
+#: engines/bladerunner/metaengine.cpp:111
+msgid "KIA only shortcuts"
+msgstr ""
+
+#. I18N: This keymap is the main way for the user interact with the game.
+#. It is used with the game's cursor to select, walk-to, run-to, look-at, talk-to, pick up, use, shoot (combat mode), open KIA (when clicking on McCoy).
+#: engines/bladerunner/metaengine.cpp:118
+msgid "Walk / Look / Talk / Select / Shoot"
+msgstr ""
+
+#. I18N: This keymap toggles McCoy's status between combat mode (drawing his gun) and normal mode (holstering his gun)
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. TOGGLE MCCOY'S COMBAT MODE
+#: engines/bladerunner/metaengine.cpp:128
+#, fuzzy
+msgid "Toggle Combat"
+msgstr "Activar/desactivar captura de rato"
+
+#. I18N: This keymap allows skipping video cutscenes
+#: engines/bladerunner/metaengine.cpp:137 engines/scumm/help.cpp:76
+#: engines/zvision/metaengine.cpp:215
+msgid "Skip cutscene"
+msgstr "Omitir secuencia"
+
+#. I18N: This keymap allows skipping the current line of dialogue.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. SKIP PAST CURRENT LINE OF DIALOGUE
+#: engines/bladerunner/metaengine.cpp:150
+#, fuzzy
+msgid "Skip dialogue"
+msgstr "Omitir liña"
+
+#. I18N: This keymap toggles between opening the KIA in the Game Options tab, and closing the KIA.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. GAME OPTIONS
+#: engines/bladerunner/metaengine.cpp:161
+#, fuzzy
+#| msgid "~O~ptions..."
+msgid "Game Options"
+msgstr "~O~pcións..."
+
+#. I18N: This keymap opens the KIA database on one of the investigation tabs,
+#. CRIME SCENE DATABASE, SUSPECT DATABASE and CLUES DATABASE.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. ACTIVATE KIA CLUE DATABASE SYSTEM
+#: engines/bladerunner/metaengine.cpp:172
+msgid "Open KIA Database"
+msgstr ""
+
+#. I18N: This keymap works within the KIA Save Game screen
+#. and allows submitting a selected existing save game for deletion.
+#: engines/bladerunner/metaengine.cpp:190
+msgid "Delete Selected Saved Game"
+msgstr ""
+
+#. I18N: This keymap allows scrolling texts and lists upwards
+#: engines/bladerunner/metaengine.cpp:204
+#, fuzzy
+msgid "Scroll Up"
+msgstr "Subir lista"
+
+#. I18N: This keymap allows scrolling texts and lists downwards
+#: engines/bladerunner/metaengine.cpp:211
+#, fuzzy
+msgid "Scroll Down"
+msgstr "Baixar lista"
+
+#. I18N: This keymap opens KIA's SAVE GAME tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. SAVE GAME
+#: engines/bladerunner/metaengine.cpp:230 engines/pegasus/pegasus.cpp:2820
+#, fuzzy
+msgid "Save Game"
+msgstr "Gardar partida:"
+
+#. I18N: This keymap opens KIA's LOAD GAME tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. LOAD GAME
+#: engines/bladerunner/metaengine.cpp:239 engines/pegasus/pegasus.cpp:2826
+#, fuzzy
+msgid "Load Game"
+msgstr "Cargar partida:"
+
+#. I18N: This keymap opens KIA's CRIME SCENE DATABASE tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. CRIME SCENE DATABASE
+#: engines/bladerunner/metaengine.cpp:248
+msgid "Crime Scene Database"
+msgstr ""
+
+#. I18N: This keymap opens KIA's SUSPECT DATABASE tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. SUSPECT DATABASE
+#: engines/bladerunner/metaengine.cpp:257
+msgid "Suspect Database"
+msgstr ""
+
+#. I18N: This keymap opens KIA's CLUE DATABASE tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. CLUE DATABASE
+#: engines/bladerunner/metaengine.cpp:266
+msgid "Clue Database"
+msgstr ""
+
+#. I18N: This keymap opens KIA's QUIT GAME tab.
+#. In Blade Runner's official localizations, there is a description of this keymap
+#. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
+#. QUIT GAME
+#: engines/bladerunner/metaengine.cpp:275 engines/dragons/metaengine.cpp:225
+#, fuzzy
+msgid "Quit Game"
+msgstr " (Xogo)"
 
 #: engines/buried/buried.cpp:580
 #, fuzzy
@@ -4582,22 +4729,22 @@ msgstr "Modo accesible para daltonismo"
 msgid "Enable Color Blind Mode by default"
 msgstr "Activa o modo accesible para daltonismo de xeito predeterminado."
 
-#: engines/cge/detection.cpp:124 engines/glk/detection.cpp:238
-#: engines/supernova/detection.cpp:51
+#: engines/cge/detection.cpp:126 engines/glk/detection.cpp:238
+#: engines/sci/detection_options.h:221 engines/supernova/detection.cpp:53
 #, fuzzy
 msgid "Enable Text to Speech"
 msgstr "Texto e voz:"
 
-#: engines/cge/detection.cpp:125
+#: engines/cge/detection.cpp:127
 #, fuzzy
 msgid "Use TTS to read text in the game (if TTS is available)"
 msgstr "Emprega son de CD no canto do do xogo, de ser o caso."
 
-#: engines/cine/detection.cpp:60
+#: engines/cine/detection.cpp:62
 msgid "Use transparent dialog boxes in 16 color scenes"
 msgstr ""
 
-#: engines/cine/detection.cpp:61
+#: engines/cine/detection.cpp:63
 msgid ""
 "Use transparent dialog boxes in 16 color scenes even if the original game "
 "version did not support them"
@@ -4684,11 +4831,6 @@ msgstr "INTRO"
 msgid "Debug Graphics"
 msgstr "Gráficos"
 
-#: engines/dragons/metaengine.cpp:225
-#, fuzzy
-msgid "Quit Game"
-msgstr " (Xogo)"
-
 #: engines/drascula/saveload.cpp:46
 msgid ""
 "ScummVM found that you have old saved games for Drascula that should be "
@@ -4707,30 +4849,31 @@ msgstr ""
 "Preme Aceptar para convertilos. Se non, volverás ver esta mensaxe a próxima "
 "vez que inicies o xogo.\n"
 
-#: engines/dreamweb/detection.cpp:64
+#: engines/dreamweb/detection.cpp:66
 msgid "Use bright palette mode"
 msgstr "Empregar modo Paleta intensa"
 
-#: engines/dreamweb/detection.cpp:65
+#: engines/dreamweb/detection.cpp:67
 msgid "Display graphics using the game's bright palette"
 msgstr "Mostrar os gráficos coa paletta intensa do xogo"
 
-#: engines/dreamweb/detection.cpp:75
+#: engines/dreamweb/detection.cpp:79
 msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
 msgstr ""
 
-#: engines/dreamweb/detection.cpp:76 engines/lure/detection.cpp:45
-#: engines/mads/detection.cpp:114 engines/sherlock/detection.cpp:120
-#: engines/supernova/detection.cpp:52 engines/twine/detection.cpp:753
+#: engines/dreamweb/detection.cpp:80 engines/lure/detection.cpp:45
+#: engines/mads/detection.cpp:124 engines/sci/detection_options.h:222
+#: engines/sherlock/detection.cpp:132 engines/supernova/detection.cpp:54
+#: engines/twine/detection.cpp:775
 msgid "Use TTS to read the descriptions (if TTS is available)"
 msgstr ""
 
-#: engines/dreamweb/detection.cpp:85
+#: engines/dreamweb/detection.cpp:91
 #, fuzzy
 msgid "Enable Text to Speech for Subtitles"
 msgstr "Texto e voz:"
 
-#: engines/dreamweb/detection.cpp:86
+#: engines/dreamweb/detection.cpp:92
 #, fuzzy
 msgid "Use TTS to read the subtitles (if TTS is available)"
 msgstr "Emprega son de CD no canto do do xogo, de ser o caso."
@@ -4740,12 +4883,12 @@ msgstr "Emprega son de CD no canto do do xogo, de ser o caso."
 msgid "Use TTS to read the text"
 msgstr "Erro ao eliminar o ficheiro."
 
-#: engines/glk/detection.cpp:244
+#: engines/glk/detection.cpp:246
 #, fuzzy
 msgid "Also read input text"
 msgstr "Erro ao eliminar o ficheiro."
 
-#: engines/glk/detection.cpp:245
+#: engines/glk/detection.cpp:247
 #, fuzzy
 msgid "Use TTS to read the input text"
 msgstr "Erro ao eliminar o ficheiro."
@@ -4805,7 +4948,7 @@ msgstr ""
 msgid "Savegame"
 msgstr "Gardar partida:"
 
-#: engines/glk/comprehend/game.cpp:861
+#: engines/glk/comprehend/game.cpp:860
 msgid "Picture window toggled\n"
 msgstr ""
 
@@ -4830,225 +4973,10 @@ msgstr ""
 msgid "Could not start Quest game"
 msgstr "Non se puido cambiar ao modo de vídeo: '"
 
-#: engines/glk/scott/scott.cpp:99
-msgid "I don't understand your command. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:102
-msgid "I can't do that yet. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:118
-#, fuzzy
-msgid "Light has run out! "
-msgstr "Simular botón secundario do rato"
-
-#: engines/glk/scott/scott.cpp:120
-#, fuzzy
-msgid "Your light has run out. "
-msgstr "Simular botón secundario do rato"
-
-#: engines/glk/scott/scott.cpp:129
-#, fuzzy
-msgid "Light runs out in "
-msgstr "Simular botón secundario do rato"
-
-#: engines/glk/scott/scott.cpp:131
-#, fuzzy
-msgid " turns. "
-msgstr "Acender"
-
-#: engines/glk/scott/scott.cpp:134
-msgid "Your light is growing dim. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:411
-msgid "North"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:411
-msgid "South"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:411
-msgid "East"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:411
-msgid "West"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:423
-msgid "You can't see. It is too dark!\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:425
-msgid "I can't see. It is too dark!\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:435
-#, c-format
-msgid "You are in a %s\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:437
-#, c-format
-msgid "I'm in a %s\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:442
-msgid ""
-"\n"
-"Obvious exits: "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:455
-#, fuzzy
-msgid "none"
-msgstr "<ningún>"
-
-#: engines/glk/scott/scott.cpp:464
-msgid ""
-"\n"
-"You can also see: "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:467
-msgid ""
-"\n"
-"I can also see: "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:550
+#: engines/glk/scott/scott.cpp:662
 #, fuzzy
 msgid "Saved.\n"
 msgstr "Gardar"
-
-#: engines/glk/scott/scott.cpp:643
-msgid "You use word(s) I don't know! "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:773 engines/glk/scott/scott.cpp:1096
-#: engines/glk/scott/scott.cpp:1118
-msgid "You are carrying too much. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:775
-msgid "I've too much to carry! "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:806
-#, fuzzy
-msgid "You are dead.\n"
-msgstr "Restaurar"
-
-#: engines/glk/scott/scott.cpp:808
-msgid "I am dead.\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:820
-#, fuzzy
-msgid "The game is now over.\n"
-msgstr "Non se puido cargar a partida"
-
-#: engines/glk/scott/scott.cpp:835
-#, fuzzy
-msgid "You have stored "
-msgstr "Restaurar"
-
-#: engines/glk/scott/scott.cpp:837
-#, fuzzy
-msgid "I've stored "
-msgstr "Restaurar"
-
-#: engines/glk/scott/scott.cpp:839
-msgid " treasures.  On a scale of 0 to 100, that rates "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:843
-msgid "Well done.\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:852
-msgid "You are carrying:\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:854
-msgid "I'm carrying:\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:869
-msgid "Nothing"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:998
-msgid "Give me a direction too."
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1007
-msgid "Dangerous to move in the dark! "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1015
-msgid "You fell down and broke your neck. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1017
-msgid "I fell down and broke my neck. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1022
-msgid "You can't go in that direction. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1024
-msgid "I can't go in that direction. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1082
-msgid "It is dark.\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1098 engines/glk/scott/scott.cpp:1120
-msgid "I've too much to carry. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1103 engines/glk/scott/scott.cpp:1151
-msgid ": O.K.\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1109
-msgid "Nothing taken."
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1113 engines/glk/scott/scott.cpp:1161
-#, fuzzy
-msgid "What ? "
-msgstr "Que é"
-
-#: engines/glk/scott/scott.cpp:1126
-msgid "It is beyond your power to do that. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1128
-msgid "It's beyond my power to do that. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1132
-msgid "O.K. "
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1157
-msgid "Nothing dropped.\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1167
-msgid "It's beyond your power to do that.\n"
-msgstr ""
-
-#: engines/glk/scott/scott.cpp:1169
-msgid "It's beyond my power to do that.\n"
-msgstr ""
 
 #: engines/glk/zcode/zcode.cpp:144
 #, fuzzy
@@ -5064,12 +4992,12 @@ msgid "Save file created by different version."
 msgstr ""
 
 #: engines/gob/inter_playtoons.cpp:257 engines/gob/inter_v2.cpp:1479
-#: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:553
+#: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:554
 msgid "Failed to load saved game from file."
 msgstr "Erro ao cargar a partida do ficheiro."
 
 #: engines/gob/inter_v2.cpp:1549 engines/gob/inter_geisha.cpp:262
-#: engines/tinsel/saveload.cpp:566
+#: engines/tinsel/saveload.cpp:567
 msgid "Failed to save game to file."
 msgstr "Erro ao gardar a partida no ficheiro."
 
@@ -5101,12 +5029,12 @@ msgid ""
 "support for using such patches."
 msgstr ""
 
-#: engines/grim/detection.cpp:78 engines/zvision/metaengine.cpp:152
+#: engines/grim/detection.cpp:80 engines/zvision/metaengine.cpp:152
 #, fuzzy
 msgid "Show FPS"
 msgstr "Mostrar FPS"
 
-#: engines/grim/detection.cpp:79
+#: engines/grim/detection.cpp:81
 msgid "Show the current FPS-rate, while you play."
 msgstr ""
 
@@ -5207,7 +5135,7 @@ msgstr ""
 msgid "Escape from Monkey Island support is not compiled in"
 msgstr "Funcionalidades compiladas:"
 
-#: engines/grim/resource.cpp:99
+#: engines/grim/resource.cpp:100
 msgid ""
 "The original patch of Grim Fandango\n"
 "is missing. Please download it from\n"
@@ -5215,7 +5143,7 @@ msgid ""
 "and put it in the game data files directory"
 msgstr ""
 
-#: engines/grim/resource.cpp:104
+#: engines/grim/resource.cpp:105
 msgid ""
 "The original patch of Escape from Monkey Island is missing. \n"
 "Please download it from https://downloads.scummvm.org/frs/extras/patches/\n"
@@ -5244,19 +5172,19 @@ msgstr "Velocidade de vídeo rápida"
 msgid "Play movies at an increased speed"
 msgstr "Reproducir vídeos a máis velocidade"
 
-#: engines/groovie/detection.cpp:295
+#: engines/groovie/detection.cpp:299
 msgid "Easier AI"
 msgstr ""
 
-#: engines/groovie/detection.cpp:296
+#: engines/groovie/detection.cpp:300
 msgid "Decrease the difficulty of AI puzzles"
 msgstr ""
 
-#: engines/groovie/detection.cpp:305
+#: engines/groovie/detection.cpp:311
 msgid "Updated Credits Music"
 msgstr ""
 
-#: engines/groovie/detection.cpp:306
+#: engines/groovie/detection.cpp:312
 msgid ""
 "Play the song The Final Hour during the credits instead of reusing MIDI songs"
 msgstr ""
@@ -5337,29 +5265,47 @@ msgstr ""
 msgid "Debug"
 msgstr "Depurador"
 
-#: engines/hopkins/detection.cpp:46 engines/hopkins/detection.cpp:56
+#: engines/hopkins/detection.cpp:46 engines/hopkins/detection.cpp:58
 msgid "Gore Mode"
 msgstr "Modo Gore"
 
-#: engines/hopkins/detection.cpp:47 engines/hopkins/detection.cpp:57
+#: engines/hopkins/detection.cpp:47 engines/hopkins/detection.cpp:59
 msgid "Enable Gore Mode when available"
 msgstr "Activa o modo Gore, de ser o caso."
 
-#: engines/hypno/detection.cpp:190 engines/ultima/detection.cpp:78
+#: engines/hypno/detection.cpp:211
 #, fuzzy
-msgid "Enable cheats"
+msgid "Enable original cheats"
 msgstr "Activa o modo Helio."
 
-#: engines/hypno/detection.cpp:191
+#: engines/hypno/detection.cpp:212
 msgid "Allow cheats using the C key."
 msgstr ""
 
-#: engines/hypno/detection.cpp:197
+#: engines/hypno/detection.cpp:220
+#, fuzzy
+msgid "Enable infinite health cheat"
+msgstr "Activar censura de contidos"
+
+#: engines/hypno/detection.cpp:221
+msgid "Player health will never decrease (except for game over scenes)."
+msgstr ""
+
+#: engines/hypno/detection.cpp:229
+#, fuzzy
+msgid "Enable infinite ammo cheat"
+msgstr "Activa o modo Helio."
+
+#: engines/hypno/detection.cpp:230
+msgid "Player ammo will never decrease."
+msgstr ""
+
+#: engines/hypno/detection.cpp:238
 #, fuzzy
 msgid "Enable restored content"
 msgstr "Activar censura de contidos"
 
-#: engines/hypno/detection.cpp:198
+#: engines/hypno/detection.cpp:239
 msgid "Add additional content that is not enabled the original implementation."
 msgstr ""
 
@@ -5374,70 +5320,70 @@ msgid "Enable studio audience"
 msgstr "Activa o público do estudio."
 
 #. I18N: This option allows the user to skip text and cutscenes.
-#: engines/kyra/detection.cpp:72
+#: engines/kyra/detection.cpp:74
 msgid "Skip support"
 msgstr "Omisións"
 
-#: engines/kyra/detection.cpp:73
+#: engines/kyra/detection.cpp:75
 msgid "Allow text and cutscenes to be skipped"
 msgstr "Permite a omisión do texto e das secuencias."
 
 #. I18N: Helium mode makes people sound like they've inhaled Helium.
-#: engines/kyra/detection.cpp:83
+#: engines/kyra/detection.cpp:87
 msgid "Helium mode"
 msgstr "Modo Helio"
 
-#: engines/kyra/detection.cpp:84
+#: engines/kyra/detection.cpp:88
 msgid "Enable helium mode"
 msgstr "Activa o modo Helio."
 
 #. I18N: When enabled, this option makes scrolling smoother when
 #. changing from one screen to another.
-#: engines/kyra/detection.cpp:97
+#: engines/kyra/detection.cpp:103
 msgid "Smooth scrolling"
 msgstr "Desprazamento suave"
 
-#: engines/kyra/detection.cpp:98
+#: engines/kyra/detection.cpp:104
 msgid "Enable smooth scrolling when walking"
 msgstr "Activa o desprazamento suave ao camiñar."
 
 #. I18N: When enabled, this option changes the cursor when it floats to the
 #. edge of the screen to a directional arrow. The player can then click to
 #. walk towards that direction.
-#: engines/kyra/detection.cpp:110
+#: engines/kyra/detection.cpp:118
 msgid "Floating cursors"
 msgstr "Cursores flotantes"
 
-#: engines/kyra/detection.cpp:111
+#: engines/kyra/detection.cpp:119
 msgid "Enable floating cursors"
 msgstr "Activa os cursores flotantes."
 
 #. I18N: When enabled, this option will fill in an autogenerated savegame
 #. description into the input prompt where.
-#: engines/kyra/detection.cpp:122
+#: engines/kyra/detection.cpp:132
 #, fuzzy
 msgid "Suggest save names"
 msgstr "Gardar partida:"
 
-#: engines/kyra/detection.cpp:123
+#: engines/kyra/detection.cpp:133
 msgid "Autogenerated naming suggestions for savegames"
 msgstr ""
 
 #. I18N: HP stands for Hit Points
-#: engines/kyra/detection.cpp:135
+#: engines/kyra/detection.cpp:147
 msgid "HP bar graphs"
 msgstr "Barras de vida"
 
-#: engines/kyra/detection.cpp:136
+#: engines/kyra/detection.cpp:148
 msgid "Enable hit point bar graphs"
 msgstr "Activa as barras de vida."
 
 #. I18N: L/R stands for Left/Right
-#: engines/kyra/detection.cpp:146
+#: engines/kyra/detection.cpp:160
 msgid "Fight Button L/R Swap"
 msgstr ""
 
-#: engines/kyra/detection.cpp:147
+#: engines/kyra/detection.cpp:161
 msgid "Left button to attack, right button to pick up items"
 msgstr ""
 
@@ -5699,8 +5645,8 @@ msgstr ""
 "A exploración alén deste punto só está dispoñible coa versión\n"
 "completa do xogo."
 
-#: engines/lure/detection.cpp:44 engines/mads/detection.cpp:113
-#: engines/sherlock/detection.cpp:119 engines/twine/detection.cpp:752
+#: engines/lure/detection.cpp:44 engines/mads/detection.cpp:123
+#: engines/sherlock/detection.cpp:131 engines/twine/detection.cpp:774
 msgid "TTS Narrator"
 msgstr ""
 
@@ -5727,15 +5673,15 @@ msgstr "Interface de rato sinxela"
 msgid "Shows object names when hovering the mouse over them"
 msgstr "Mostra os nomes dos obxectos ao apuntar co rato."
 
-#: engines/mads/detection.cpp:72 engines/mads/detection.cpp:73
+#: engines/mads/detection.cpp:74 engines/mads/detection.cpp:75
 msgid "Animated inventory items"
 msgstr "Obxectos de inventario animados"
 
-#: engines/mads/detection.cpp:82 engines/mads/detection.cpp:83
+#: engines/mads/detection.cpp:86 engines/mads/detection.cpp:87
 msgid "Animated game interface"
 msgstr "Interface de xogo animada"
 
-#: engines/mads/detection.cpp:92 engines/mads/detection.cpp:93
+#: engines/mads/detection.cpp:98 engines/mads/detection.cpp:99
 msgid "Naughty game mode"
 msgstr "Modo de xogo rebelde"
 
@@ -6059,7 +6005,7 @@ msgstr "Pantalla completa"
 msgid "Enable widescreen rendering in fullscreen mode."
 msgstr ""
 
-#: engines/myst3/myst3.cpp:355
+#: engines/myst3/myst3.cpp:365
 msgid ""
 "This version of Myst III has not been updated with the latest official "
 "patch.\n"
@@ -6068,7 +6014,7 @@ msgid ""
 "https://www.scummvm.org/frs/extras/patches/"
 msgstr ""
 
-#: engines/myst3/myst3.cpp:1569 engines/pegasus/pegasus.cpp:744
+#: engines/myst3/myst3.cpp:1579 engines/pegasus/pegasus.cpp:744
 msgid "Invalid file name for saving"
 msgstr "Nome de ficheiro de gardado non válido"
 
@@ -6271,19 +6217,19 @@ msgstr "Rapaz 2"
 msgid "Invalid Scene ID!"
 msgstr "Código non válido"
 
-#: engines/neverhood/detection.cpp:141
+#: engines/neverhood/detection.cpp:143
 msgid "Skip the Hall of Records storyboard scenes"
 msgstr "Omitir as escenas do Salón dos rexistros"
 
-#: engines/neverhood/detection.cpp:142
+#: engines/neverhood/detection.cpp:144
 msgid "Allows the player to skip past the Hall of Records storyboard scenes"
 msgstr "Permite ao xogador saltar as escenas do Salón dos rexistros"
 
-#: engines/neverhood/detection.cpp:148
+#: engines/neverhood/detection.cpp:152
 msgid "Scale the making of videos to full screen"
 msgstr "Redimensionar vídeos a pantalla completa"
 
-#: engines/neverhood/detection.cpp:149
+#: engines/neverhood/detection.cpp:153
 msgid "Scale the making of videos, so that they use the whole screen"
 msgstr "Redimensionar a creación de vídeos en pantalla completa"
 
@@ -6382,16 +6328,6 @@ msgstr "Mostrar/Ocultar menú de pausa"
 msgid "Toggle Chatty AI"
 msgstr "Modo Rápido"
 
-#: engines/pegasus/pegasus.cpp:2820
-#, fuzzy
-msgid "Save Game"
-msgstr "Gardar partida:"
-
-#: engines/pegasus/pegasus.cpp:2826
-#, fuzzy
-msgid "Load Game"
-msgstr "Cargar partida:"
-
 #: engines/pink/gui.cpp:219
 msgid "This menu item is not yet implemented"
 msgstr ""
@@ -6411,19 +6347,19 @@ msgid "Use an alternative game intro (CD version only)"
 msgstr "Emprega unha introdución alternativa para o xogo (só versión en CD)."
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:789
+#: engines/saga/detection_tables.h:813
 #, fuzzy
 msgid "Windows Trial version is not supported"
 msgstr "ID de xogo non compatible"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:815
+#: engines/saga/detection_tables.h:839
 #, fuzzy
 msgid "macOS Trial version is not supported"
 msgstr "ID de xogo non compatible"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:840
+#: engines/saga/detection_tables.h:864
 #, fuzzy
 msgid "Pocket PC Trial version is not supported"
 msgstr "ID de xogo non compatible"
@@ -6446,6 +6382,151 @@ msgstr ""
 msgid "Error loading game resources."
 msgstr "Erro de execución do xogo:"
 
+#: engines/sci/detection_options.h:31
+msgid "Skip EGA dithering pass (full color backgrounds)"
+msgstr "Omitir interpolación de cores EGA (fondos de cor completa)"
+
+#: engines/sci/detection_options.h:32
+msgid "Skip dithering pass in EGA games, graphics are shown with full colors"
+msgstr ""
+"Omite a interpolación de cores EGA. Os gráficos móstranse con cores "
+"completas."
+
+#: engines/sci/detection_options.h:43
+msgid "Enable high resolution graphics"
+msgstr "Activar gráficos de alta resolución"
+
+#: engines/sci/detection_options.h:44
+msgid "Enable high resolution graphics/content"
+msgstr "Activa os gráficos ou o contido de alta resolución."
+
+#: engines/sci/detection_options.h:55
+msgid "Enable black-lined video"
+msgstr "Activar vídeo con bordos"
+
+#: engines/sci/detection_options.h:56
+msgid "Draw black lines over videos to increase their apparent sharpness"
+msgstr "Debuxa liñas negras sobre os vídeos para aumentar a nitidez aparente."
+
+#: engines/sci/detection_options.h:68
+msgid "Use high-quality video scaling"
+msgstr "Empregar escalado de vídeo de alta calidade"
+
+#: engines/sci/detection_options.h:69
+msgid "Use linear interpolation when upscaling videos, where possible"
+msgstr "Empregar interpolación linear ao escalar gráficos, se é posible"
+
+#: engines/sci/detection_options.h:81
+#, fuzzy
+msgid "Use high-quality \"LarryScale\" cel scaling"
+msgstr "Empregar escalado de vídeo de alta calidade"
+
+#: engines/sci/detection_options.h:82
+msgid "Use special cartoon scaler for drawing character sprites"
+msgstr ""
+
+#: engines/sci/detection_options.h:93
+msgid "Prefer digital sound effects"
+msgstr "Preferir efectos de son dixitais"
+
+#: engines/sci/detection_options.h:94
+msgid "Prefer digital sound effects instead of synthesized ones"
+msgstr "Dá preferencia aos efectos de son dixitais no canto dos sintéticos."
+
+#: engines/sci/detection_options.h:117
+msgid "Use CD audio"
+msgstr "Empregar son de CD"
+
+#: engines/sci/detection_options.h:118
+msgid "Use CD audio instead of in-game audio, if available"
+msgstr "Emprega son de CD no canto do do xogo, de ser o caso."
+
+#: engines/sci/detection_options.h:130
+msgid "Use Windows cursors"
+msgstr "Empregar cursores de Windows"
+
+#: engines/sci/detection_options.h:131
+msgid ""
+"Use the Windows cursors (smaller and monochrome) instead of the DOS ones"
+msgstr ""
+"Emprega os cursores de Windows (máis pequenos e monocromos) no canto dos de "
+"DOS."
+
+#: engines/sci/detection_options.h:143
+msgid "Use silver cursors"
+msgstr "Empregar cursores prateados"
+
+#: engines/sci/detection_options.h:144
+msgid ""
+"Use the alternate set of silver cursors instead of the normal golden ones"
+msgstr ""
+"Emprega o xogo de cursores prateados alternativo, no canto dos dourados "
+"normais."
+
+#: engines/sci/detection_options.h:156
+msgid "Enable content censoring"
+msgstr "Activar censura de contidos"
+
+#: engines/sci/detection_options.h:157
+msgid "Enable the game's built-in optional content censoring"
+msgstr "Activa a censura de contidos opcional incorporada ao xogo."
+
+#: engines/sci/detection_options.h:169
+msgid "Upscale videos"
+msgstr ""
+
+#: engines/sci/detection_options.h:170
+msgid "Upscale videos to double their size"
+msgstr ""
+
+#: engines/sci/detection_options.h:182
+msgid "Use RGB rendering"
+msgstr ""
+
+#: engines/sci/detection_options.h:183
+msgid "Use RGB rendering to improve screen transitions"
+msgstr ""
+
+#: engines/sci/detection_options.h:195
+msgid "Use per-resource modified palettes"
+msgstr ""
+
+#: engines/sci/detection_options.h:196
+msgid "Use custom per-resource palettes to improve visuals"
+msgstr ""
+
+#: engines/sci/detection_options.h:208
+#, fuzzy
+msgid "Enable bearded musicians"
+msgstr "Activar censura de contidos"
+
+#: engines/sci/detection_options.h:209
+msgid "Enable graphics that were disabled for legal reasons"
+msgstr ""
+
+#: engines/sci/detection_options.h:237
+#, fuzzy
+msgid "MIDI mode:"
+msgstr "Ganancia de MIDI:"
+
+#: engines/sci/detection_options.h:238
+msgid ""
+"When using external MIDI devices (e.g. through USB-MIDI), select your device "
+"here"
+msgstr ""
+
+#: engines/sci/detection_options.h:243
+msgid "Standard (GM / MT-32)"
+msgstr ""
+
+#: engines/sci/detection_options.h:247
+msgid "Roland D-110 / D-10 / D-20"
+msgstr ""
+
+#: engines/sci/detection_options.h:251
+msgid "Yamaha FB-01"
+msgstr ""
+
 #: engines/sci/detection_tables.h:4397
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
@@ -6459,7 +6540,7 @@ msgstr "(Autogardado)"
 msgid "Please use an external viewer to open the game's help file: %s"
 msgstr "Usa un visor externo para abrir o ficheiro de axuda do xogo: %s."
 
-#: engines/sci/engine/kmisc.cpp:876
+#: engines/sci/engine/kmisc.cpp:857
 msgid ""
 "The Poker logic is hardcoded in an external DLL, and is not implemented yet. "
 "There exists some dummy logic for now, where opponent actions are chosen "
@@ -6620,50 +6701,61 @@ msgstr "Mostrar liña de obsecto"
 msgid "Show the names of objects at the bottom of the screen"
 msgstr "Mostra os nomes dos obxectos na parte inferior da pantalla"
 
-#: engines/scumm/detection.cpp:182
+#: engines/scumm/detection.cpp:184
 #, fuzzy
 msgid "Use NES Classic Palette"
 msgstr "Empregar unha paleta alternativa"
 
-#: engines/scumm/detection.cpp:183
+#: engines/scumm/detection.cpp:185
 msgid "Use a more neutral color palette that closely emulates the NES Classic"
 msgstr ""
 
-#: engines/scumm/detection.cpp:189
+#: engines/scumm/detection.cpp:193
 msgid "Trim FM-TOWNS games to 200 pixels height"
 msgstr ""
 
-#: engines/scumm/detection.cpp:190
+#: engines/scumm/detection.cpp:194
 msgid ""
 "Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
 "pixels height, allowing using 'aspect ratio correction'"
 msgstr ""
 
-#: engines/scumm/detection.cpp:196
+#: engines/scumm/detection.cpp:202
 msgid "Play simplified music"
 msgstr ""
 
-#: engines/scumm/detection.cpp:197
+#: engines/scumm/detection.cpp:203
 msgid ""
 "This music was presumably intended for low-end Macs, and uses only one "
 "channel."
 msgstr ""
 
-#: engines/scumm/detection.cpp:203
+#: engines/scumm/detection.cpp:211
 #, fuzzy
 msgid "Enable smooth scrolling"
 msgstr "Activa o desprazamento suave ao camiñar."
 
-#: engines/scumm/detection.cpp:204
+#: engines/scumm/detection.cpp:212
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr ""
 
-#: engines/scumm/detection.cpp:210 engines/scumm/dialogs.cpp:730
+#: engines/scumm/detection.cpp:220
+#, fuzzy
+msgid "Allow semi-smooth scrolling"
+msgstr "Activa o desprazamento suave ao camiñar."
+
+#: engines/scumm/detection.cpp:221
+msgid ""
+"Allow scrolling to be less smooth during the fast camera movement in the "
+"intro."
+msgstr ""
+
+#: engines/scumm/detection.cpp:229 engines/scumm/dialogs.cpp:730
 #, fuzzy
 msgid "Enable game-specific enhancements"
 msgstr "Activar censura de contidos"
 
-#: engines/scumm/detection.cpp:211 engines/scumm/dialogs.cpp:730
+#: engines/scumm/detection.cpp:230 engines/scumm/dialogs.cpp:730
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -6816,10 +6908,6 @@ msgstr "Omitir liña de texto"
 #: engines/scumm/help.cpp:76
 msgid "Esc"
 msgstr "ESC"
-
-#: engines/scumm/help.cpp:76 engines/zvision/metaengine.cpp:215
-msgid "Skip cutscene"
-msgstr "Omitir secuencia"
 
 #: engines/scumm/help.cpp:77 engines/wintermute/keymapper_tables.h:2059
 msgid "Space"
@@ -7314,19 +7402,19 @@ msgstr "Voar á dereita"
 msgid "Fly to lower right"
 msgstr "Voar á dereita abaixo"
 
-#: engines/scumm/input.cpp:574
+#: engines/scumm/input.cpp:590
 msgid "Snap scroll on"
 msgstr "Axuste de desprazamento SI"
 
-#: engines/scumm/input.cpp:576
+#: engines/scumm/input.cpp:592
 msgid "Snap scroll off"
 msgstr "Axuste de desprazamento NON"
 
-#: engines/scumm/input.cpp:589
+#: engines/scumm/input.cpp:605
 msgid "Music volume: "
 msgstr "Volume de música: "
 
-#: engines/scumm/input.cpp:606
+#: engines/scumm/input.cpp:622
 msgid "Subtitle speed: "
 msgstr "Velocidade dos subtítulos: "
 
@@ -7358,7 +7446,7 @@ msgid ""
 "320x200, under 'engine' tab."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:1355
+#: engines/scumm/scumm.cpp:1357
 #, fuzzy
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
@@ -7367,7 +7455,7 @@ msgstr ""
 "Erro ao buscar o executable de Loom para Macintosh\n"
 "do que empregar os instrumentos. A música desactivarase."
 
-#: engines/scumm/scumm.cpp:1381
+#: engines/scumm/scumm.cpp:1383
 #, fuzzy
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
@@ -7376,7 +7464,7 @@ msgstr ""
 "Erro ao buscar o executable de Loom para Macintosh\n"
 "do que empregar os instrumentos. A música desactivarase."
 
-#: engines/scumm/scumm.cpp:1403
+#: engines/scumm/scumm.cpp:1405
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7384,14 +7472,14 @@ msgstr ""
 "Erro ao buscar o executable de Monkey Island para Macintosh\n"
 "do que empregar os instrumentos. A música desactivarase."
 
-#: engines/scumm/scumm.cpp:1679
+#: engines/scumm/scumm.cpp:1681
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
 "Please copy the game from the original media without compression."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:2147
+#: engines/scumm/scumm.cpp:2153
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7400,7 +7488,7 @@ msgstr ""
 "A compatibilidade nativa con MIDI precisa a actualización de Roland\n"
 "de LucasArts, mais falla %s. Empregarase AdLib."
 
-#: engines/scumm/scumm.cpp:3090
+#: engines/scumm/scumm.cpp:3094
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -7423,19 +7511,19 @@ msgid ""
 "\n"
 msgstr ""
 
-#: engines/sherlock/detection.cpp:68
+#: engines/sherlock/detection.cpp:70
 msgid "Pixellated scene transitions"
 msgstr "Transicións de escenas pixeladas"
 
-#: engines/sherlock/detection.cpp:69
+#: engines/sherlock/detection.cpp:71
 msgid "When changing scenes, a randomized pixel transition is done"
 msgstr "Ao mudar de escena, mostrase una transición pixelada aleatoria."
 
-#: engines/sherlock/detection.cpp:78
+#: engines/sherlock/detection.cpp:82
 msgid "Don't show hotspots when moving mouse"
 msgstr "Non mostrar puntos de acceso ao mover o rato"
 
-#: engines/sherlock/detection.cpp:79
+#: engines/sherlock/detection.cpp:83
 msgid ""
 "Only show hotspot names after you actually click on a hotspot or action "
 "button"
@@ -7443,27 +7531,27 @@ msgstr ""
 "Só mostra os nomes dos puntos de acceso despois de premer nun punto de "
 "acceso ou un botón de acción."
 
-#: engines/sherlock/detection.cpp:88
+#: engines/sherlock/detection.cpp:94
 msgid "Show character portraits"
 msgstr "Mostrar retratos de personaxes"
 
-#: engines/sherlock/detection.cpp:89
+#: engines/sherlock/detection.cpp:95
 msgid "Show portraits for the characters when conversing"
 msgstr "Mostra os retratos dos personaxes nas conversas."
 
-#: engines/sherlock/detection.cpp:98
+#: engines/sherlock/detection.cpp:106
 msgid "Slide dialogs into view"
 msgstr "Deslizar pantallas"
 
-#: engines/sherlock/detection.cpp:99
+#: engines/sherlock/detection.cpp:107
 msgid "Slide UI dialogs into view, rather than simply showing them immediately"
 msgstr "Desliza as pantallas da IU, no canto de mostralas directamente."
 
-#: engines/sherlock/detection.cpp:108
+#: engines/sherlock/detection.cpp:118
 msgid "Transparent windows"
 msgstr "Ventás transparentes"
 
-#: engines/sherlock/detection.cpp:109
+#: engines/sherlock/detection.cpp:119
 msgid "Show windows with a partially transparent background"
 msgstr "Mostra ventás cun fondo parcialmente transparente."
 
@@ -7515,22 +7603,22 @@ msgstr "Cargar partida:"
 msgid "Enable loading of external replacement assets."
 msgstr ""
 
-#: engines/stark/detection.cpp:384
+#: engines/stark/detection.cpp:386
 msgid "Enable linear filtering of the backgrounds images"
 msgstr ""
 
-#: engines/stark/detection.cpp:385
+#: engines/stark/detection.cpp:387
 msgid ""
 "When linear filtering is enabled the background graphics are smoother in "
 "full screen mode, at the cost of some details."
 msgstr ""
 
-#: engines/stark/detection.cpp:393 engines/ultima/detection.cpp:118
+#: engines/stark/detection.cpp:397 engines/ultima/detection.cpp:136
 #, fuzzy
 msgid "Enable font anti-aliasing"
 msgstr "Activar censura de contidos"
 
-#: engines/stark/detection.cpp:394 engines/ultima/detection.cpp:119
+#: engines/stark/detection.cpp:398 engines/ultima/detection.cpp:137
 msgid "When font anti-aliasing is enabled, the text is smoother."
 msgstr ""
 
@@ -7566,12 +7654,12 @@ msgstr ""
 msgid "'game.exe' is recommended to get styled confirmation dialogs."
 msgstr ""
 
-#: engines/supernova/supernova.cpp:190
+#: engines/supernova/supernova.cpp:192
 #, fuzzy, c-format
 msgid "Unable to locate the text for %s language in engine data file."
 msgstr "Non se puido localizar o ficheiro de datos do motor %s."
 
-#: engines/supernova/supernova.cpp:474
+#: engines/supernova/supernova.cpp:476
 #, fuzzy, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d but got %d."
@@ -7579,23 +7667,23 @@ msgstr ""
 "Atopouse unha versión incorrecta do ficheiro de datos do motor %s. Ficheiro "
 "esperado: %d.%d. Ficheiro atopado: %d.%d."
 
-#: engines/supernova/supernova.cpp:484
+#: engines/supernova/supernova.cpp:486
 #, c-format
 msgid "Unable to find block for part %d"
 msgstr ""
 
-#: engines/supernova/supernova.cpp:527
+#: engines/supernova/supernova.cpp:529
 #, fuzzy, c-format
 msgid "Unable to find '%s' in game folder or the engine data file."
 msgstr "Non se puido localizar o ficheiro de datos do motor %s."
 
-#: engines/supernova/supernova.cpp:831
+#: engines/supernova/supernova.cpp:833
 msgid ""
 "Failed to save temporary game state. Make sure your save game directory is "
 "set in ScummVM and that you can write to it."
 msgstr ""
 
-#: engines/supernova/supernova.cpp:832
+#: engines/supernova/supernova.cpp:834
 #, fuzzy
 msgid "Failed to load temporary game state."
 msgstr "Erro ao cargar a partida do ficheiro."
@@ -7752,99 +7840,99 @@ msgstr ""
 msgid "Enable the original wall collision damage"
 msgstr ""
 
-#: engines/twine/detection.cpp:681
+#: engines/twine/detection.cpp:683
 #, fuzzy
 msgid "Disable save menu"
 msgstr "Erro ao gardar a partida"
 
-#: engines/twine/detection.cpp:682
+#: engines/twine/detection.cpp:684
 msgid ""
 "The original only had autosaves. This allows you to save whenever you want."
 msgstr ""
 
-#: engines/twine/detection.cpp:688
+#: engines/twine/detection.cpp:692
 #, fuzzy
 msgid "Enable debug mode"
 msgstr "Activa o modo Helio."
 
-#: engines/twine/detection.cpp:689
+#: engines/twine/detection.cpp:693
 #, fuzzy
 msgid "Enable the debug mode"
 msgstr "Activa o modo Helio."
 
-#: engines/twine/detection.cpp:695
+#: engines/twine/detection.cpp:701
 #, fuzzy
 msgid "Enable audio CD"
 msgstr "Activa o público do estudio."
 
-#: engines/twine/detection.cpp:696
+#: engines/twine/detection.cpp:702
 msgid "Enable the original audio cd track"
 msgstr ""
 
-#: engines/twine/detection.cpp:702
+#: engines/twine/detection.cpp:710
 #, fuzzy
 msgid "Enable sound"
 msgstr "Activa o público do estudio."
 
-#: engines/twine/detection.cpp:703
+#: engines/twine/detection.cpp:711
 #, fuzzy
 msgid "Enable the sound for the game"
 msgstr "Título completo do xogo"
 
-#: engines/twine/detection.cpp:709
+#: engines/twine/detection.cpp:719
 #, fuzzy
 msgid "Enable voices"
 msgstr "Activar Venus"
 
-#: engines/twine/detection.cpp:710
+#: engines/twine/detection.cpp:720
 #, fuzzy
 msgid "Enable the voices for the game"
 msgstr "Activa o sistema de axuda Venus."
 
-#: engines/twine/detection.cpp:716
+#: engines/twine/detection.cpp:728
 #, fuzzy
 msgid "Enable text"
 msgstr "Activa o público do estudio."
 
-#: engines/twine/detection.cpp:717
+#: engines/twine/detection.cpp:729
 #, fuzzy
 msgid "Enable the text for the game"
 msgstr "Título completo do xogo"
 
-#: engines/twine/detection.cpp:723
+#: engines/twine/detection.cpp:737
 #, fuzzy
 msgid "Enable movies"
 msgstr "Activar Venus"
 
-#: engines/twine/detection.cpp:724
+#: engines/twine/detection.cpp:738
 #, fuzzy
 msgid "Enable the cutscenes for the game"
 msgstr "Activa o sistema de axuda Venus."
 
-#: engines/twine/detection.cpp:730
+#: engines/twine/detection.cpp:746
 #, fuzzy
 msgid "Enable mouse"
 msgstr "Activar Venus"
 
-#: engines/twine/detection.cpp:731
+#: engines/twine/detection.cpp:747
 #, fuzzy
 msgid "Enable the mouse for the UI"
 msgstr "Título completo do xogo"
 
-#: engines/twine/detection.cpp:737
+#: engines/twine/detection.cpp:755
 msgid "Use the USA version"
 msgstr ""
 
-#: engines/twine/detection.cpp:738
+#: engines/twine/detection.cpp:756
 msgid "Enable the USA specific version flags"
 msgstr ""
 
-#: engines/twine/detection.cpp:744 engines/ultima/detection.cpp:84
+#: engines/twine/detection.cpp:764 engines/ultima/detection.cpp:92
 #, fuzzy
 msgid "Enable high resolution"
 msgstr "Activar gráficos de alta resolución"
 
-#: engines/twine/detection.cpp:745 engines/ultima/detection.cpp:85
+#: engines/twine/detection.cpp:765 engines/ultima/detection.cpp:93
 #, fuzzy
 msgid "Enable a higher resolution for the game"
 msgstr "Título completo do xogo"
@@ -8007,69 +8095,74 @@ msgctxt "Options menu"
 msgid "Wall collision off"
 msgstr "Axuste de desprazamento NON"
 
-#: engines/ultima/detection.cpp:66
+#: engines/ultima/detection.cpp:68
 msgid "Enable frame skipping"
 msgstr ""
 
-#: engines/ultima/detection.cpp:67
+#: engines/ultima/detection.cpp:69
 msgid "Allow the game to skip animation frames when running too slow."
 msgstr ""
 
-#: engines/ultima/detection.cpp:72
+#: engines/ultima/detection.cpp:76
 #, fuzzy
 msgid "Enable frame limiting"
 msgstr "Activar censura de contidos"
 
-#: engines/ultima/detection.cpp:73
+#: engines/ultima/detection.cpp:77
 msgid "Limits the speed of the game to prevent running too fast."
 msgstr ""
 
-#: engines/ultima/detection.cpp:79
+#: engines/ultima/detection.cpp:84
+#, fuzzy
+msgid "Enable cheats"
+msgstr "Activa o modo Helio."
+
+#: engines/ultima/detection.cpp:85
 msgid "Allow cheats by commands and a menu when player is clicked."
 msgstr ""
 
-#: engines/ultima/detection.cpp:94
+#: engines/ultima/detection.cpp:104
 msgid "Play foot step sounds"
 msgstr ""
 
-#: engines/ultima/detection.cpp:95
+#: engines/ultima/detection.cpp:105
 msgid "Plays sound when the player moves."
-msgstr ""
-
-#: engines/ultima/detection.cpp:100
-#, fuzzy
-msgid "Enable jump to mouse position"
-msgstr "Título completo do xogo"
-
-#: engines/ultima/detection.cpp:101
-msgid ""
-"Jumping while not moving targets the mouse cursor rather than direction only."
 msgstr ""
 
 #: engines/ultima/detection.cpp:112
 #, fuzzy
+msgid "Enable jump to mouse position"
+msgstr "Título completo do xogo"
+
+#: engines/ultima/detection.cpp:113
+msgid ""
+"Jumping while not moving targets the mouse cursor rather than direction only."
+msgstr ""
+
+#: engines/ultima/detection.cpp:128
+#, fuzzy
 msgid "Enable font replacement"
 msgstr "Activar censura de contidos"
 
-#: engines/ultima/detection.cpp:113
+#: engines/ultima/detection.cpp:129
 msgid "Replaces game fonts with rendered fonts"
 msgstr ""
 
 #. I18N: Silencer is the player-character in Crusader games, known as the Avatar in Ultima series.
-#: engines/ultima/detection.cpp:128
+#: engines/ultima/detection.cpp:148
 msgid "Camera moves with Silencer"
 msgstr ""
 
-#: engines/ultima/detection.cpp:129
+#: engines/ultima/detection.cpp:149
 msgid ""
 "Camera tracks the player movement rather than snapping to defined positions."
 msgstr ""
 
-#: engines/ultima/detection.cpp:142
+#: engines/ultima/detection.cpp:164
 msgid "Always enable Christmas easter-egg"
 msgstr ""
 
-#: engines/ultima/detection.cpp:143
+#: engines/ultima/detection.cpp:165
 msgid "Enable the Christmas music at any time of year."
 msgstr ""
 
@@ -8145,11 +8238,11 @@ msgstr "Mostrar FPS"
 msgid "Show the current number of frames per second in the upper left corner"
 msgstr "Mostra o número actual de FPS na esquina superior esquerda."
 
-#: engines/wintermute/detection.cpp:62
+#: engines/wintermute/detection.cpp:64
 msgid "Sprite bilinear filtering (SLOW)"
 msgstr "Filtraxe bilineal de sprites (LENTA)"
 
-#: engines/wintermute/detection.cpp:63
+#: engines/wintermute/detection.cpp:65
 msgid "Apply bilinear filtering to individual sprites"
 msgstr "Aplica a flitraxe bilineal a cada sprite."
 
@@ -8838,11 +8931,11 @@ msgid ""
 "be compared"
 msgstr ""
 
-#: engines/xeen/detection.cpp:65
+#: engines/xeen/detection.cpp:67
 msgid "More durable armor"
 msgstr ""
 
-#: engines/xeen/detection.cpp:66
+#: engines/xeen/detection.cpp:68
 msgid "Armor won't break until character is at -80HP, rather than merely -10HP"
 msgstr ""
 
@@ -8851,35 +8944,35 @@ msgstr ""
 msgid "Failed to autosave"
 msgstr "Erro ao gardar a partida"
 
-#: engines/zvision/detection_tables.h:60
+#: engines/zvision/detection_tables.h:62
 msgid "Double FPS"
 msgstr "Dobrar FPS"
 
-#: engines/zvision/detection_tables.h:61
+#: engines/zvision/detection_tables.h:63
 msgid "Increase framerate from 30 to 60 FPS"
 msgstr "Aumenta os fotogramas de 30 a 60 FPS."
 
-#: engines/zvision/detection_tables.h:70
+#: engines/zvision/detection_tables.h:74
 msgid "Enable Venus"
 msgstr "Activar Venus"
 
-#: engines/zvision/detection_tables.h:71
+#: engines/zvision/detection_tables.h:75
 msgid "Enable the Venus help system"
 msgstr "Activa o sistema de axuda Venus."
 
-#: engines/zvision/detection_tables.h:80
+#: engines/zvision/detection_tables.h:86
 msgid "Disable animation while turning"
 msgstr "Desactivar animación nos xiros"
 
-#: engines/zvision/detection_tables.h:81
+#: engines/zvision/detection_tables.h:87
 msgid "Disable animation while turning in panorama mode"
 msgstr "Desactiva a animación nos xiros no modo Panorama."
 
-#: engines/zvision/detection_tables.h:90
+#: engines/zvision/detection_tables.h:98
 msgid "Use high resolution MPEG video"
 msgstr "Empregar modo de vídeo MPEG de alta resolución"
 
-#: engines/zvision/detection_tables.h:91
+#: engines/zvision/detection_tables.h:99
 msgid "Use MPEG video from the DVD version instead of lower resolution AVI"
 msgstr ""
 "Emprega o vídeo MPEG da versión en DVD, no canto do AVI de menor resolución."
@@ -8937,6 +9030,46 @@ msgid ""
 "respectively."
 msgstr ""
 
+#, fuzzy
+#~ msgid "Light has run out! "
+#~ msgstr "Simular botón secundario do rato"
+
+#, fuzzy
+#~ msgid "Your light has run out. "
+#~ msgstr "Simular botón secundario do rato"
+
+#, fuzzy
+#~ msgid "Light runs out in "
+#~ msgstr "Simular botón secundario do rato"
+
+#, fuzzy
+#~ msgid " turns. "
+#~ msgstr "Acender"
+
+#, fuzzy
+#~ msgid "none"
+#~ msgstr "<ningún>"
+
+#, fuzzy
+#~ msgid "You are dead.\n"
+#~ msgstr "Restaurar"
+
+#, fuzzy
+#~ msgid "The game is now over.\n"
+#~ msgstr "Non se puido cargar a partida"
+
+#, fuzzy
+#~ msgid "You have stored "
+#~ msgstr "Restaurar"
+
+#, fuzzy
+#~ msgid "I've stored "
+#~ msgstr "Restaurar"
+
+#, fuzzy
+#~ msgid "What ? "
+#~ msgstr "Que é"
+
 #~ msgid "Ok"
 #~ msgstr "Aceptar"
 
@@ -8961,82 +9094,6 @@ msgstr ""
 #, fuzzy
 #~ msgid "Enable cross fade"
 #~ msgstr "Activa o modo Helio."
-
-#~ msgid "Skip EGA dithering pass (full color backgrounds)"
-#~ msgstr "Omitir interpolación de cores EGA (fondos de cor completa)"
-
-#~ msgid ""
-#~ "Skip dithering pass in EGA games, graphics are shown with full colors"
-#~ msgstr ""
-#~ "Omite a interpolación de cores EGA. Os gráficos móstranse con cores "
-#~ "completas."
-
-#~ msgid "Enable high resolution graphics"
-#~ msgstr "Activar gráficos de alta resolución"
-
-#~ msgid "Enable high resolution graphics/content"
-#~ msgstr "Activa os gráficos ou o contido de alta resolución."
-
-#~ msgid "Enable black-lined video"
-#~ msgstr "Activar vídeo con bordos"
-
-#~ msgid "Draw black lines over videos to increase their apparent sharpness"
-#~ msgstr ""
-#~ "Debuxa liñas negras sobre os vídeos para aumentar a nitidez aparente."
-
-#~ msgid "Use high-quality video scaling"
-#~ msgstr "Empregar escalado de vídeo de alta calidade"
-
-#~ msgid "Use linear interpolation when upscaling videos, where possible"
-#~ msgstr "Empregar interpolación linear ao escalar gráficos, se é posible"
-
-#, fuzzy
-#~ msgid "Use high-quality \"LarryScale\" cel scaling"
-#~ msgstr "Empregar escalado de vídeo de alta calidade"
-
-#~ msgid "Prefer digital sound effects"
-#~ msgstr "Preferir efectos de son dixitais"
-
-#~ msgid "Prefer digital sound effects instead of synthesized ones"
-#~ msgstr "Dá preferencia aos efectos de son dixitais no canto dos sintéticos."
-
-#~ msgid "Use CD audio"
-#~ msgstr "Empregar son de CD"
-
-#~ msgid "Use CD audio instead of in-game audio, if available"
-#~ msgstr "Emprega son de CD no canto do do xogo, de ser o caso."
-
-#~ msgid "Use Windows cursors"
-#~ msgstr "Empregar cursores de Windows"
-
-#~ msgid ""
-#~ "Use the Windows cursors (smaller and monochrome) instead of the DOS ones"
-#~ msgstr ""
-#~ "Emprega os cursores de Windows (máis pequenos e monocromos) no canto dos "
-#~ "de DOS."
-
-#~ msgid "Use silver cursors"
-#~ msgstr "Empregar cursores prateados"
-
-#~ msgid ""
-#~ "Use the alternate set of silver cursors instead of the normal golden ones"
-#~ msgstr ""
-#~ "Emprega o xogo de cursores prateados alternativo, no canto dos dourados "
-#~ "normais."
-
-#~ msgid "Enable content censoring"
-#~ msgstr "Activar censura de contidos"
-
-#~ msgid "Enable the game's built-in optional content censoring"
-#~ msgstr "Activa a censura de contidos opcional incorporada ao xogo."
-
-#, fuzzy
-#~ msgid "Enable bearded musicians"
-#~ msgstr "Activar censura de contidos"
-
-#, fuzzy
-#~ msgid "MIDI mode:"
-#~ msgstr "Ganancia de MIDI:"
 
 #, fuzzy
 #~ msgid "Auto"

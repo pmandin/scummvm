@@ -65,10 +65,10 @@ void start_game_init_editor_debugging() {
 	}
 }
 
-void start_game_load_savegame_on_startup() {
-	if (_G(loadSaveGameOnStartup) != -1) {
+static void start_game_load_savegame_on_startup(int loadSave) {
+	if (loadSave != -1) {
 		current_fade_out_effect();
-		try_restore_save(_G(loadSaveGameOnStartup));
+		try_restore_save(loadSave);
 	}
 }
 
@@ -83,10 +83,7 @@ void start_game() {
 	// skip ticks to account for initialisation or a restored _GP(game).
 	skipMissedTicks();
 
-	for (int kk = 0; kk < _G(numScriptModules); kk++)
-		RunTextScript(_GP(moduleInst)[kk], "game_start");
-
-	RunTextScript(_G(gameinst), "game_start");
+	RunScriptFunctionInModules("game_start");
 
 	_G(our_eip) = -43;
 
@@ -97,14 +94,12 @@ void start_game() {
 	if (_G(displayed_room) < 0) {
 		current_fade_out_effect();
 		load_new_room(_G(playerchar)->room, _G(playerchar));
-		// load_new_room updates it, but it should be -1 in the first room
-		_G(playerchar)->prevroom = -1;
 	}
 
 	first_room_initialization();
 }
 
-void initialize_start_and_play_game(int override_start_room, int loadSaveGameOnStartup) {
+void initialize_start_and_play_game(int override_start_room, int loadSave) {
 	//try { // BEGIN try for ALI3DEXception
 
 	set_cursor_mode(MODE_WALK);
@@ -118,7 +113,7 @@ void initialize_start_and_play_game(int override_start_room, int loadSaveGameOnS
 
 	start_game_init_editor_debugging();
 
-	start_game_load_savegame_on_startup();
+	start_game_load_savegame_on_startup(loadSave);
 
 	// only start if not restored a save
 	if (_G(displayed_room) < 0)

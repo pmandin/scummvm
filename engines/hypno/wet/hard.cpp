@@ -20,6 +20,7 @@
  */
 
 #include "common/bitarray.h"
+#include "gui/message.h"
 #include "common/events.h"
 #include "common/config-manager.h"
 #include "common/savefile.h"
@@ -48,9 +49,12 @@ void WetEngine::runCode(Code *code) {
 }
 
 void WetEngine::runCheckLives(Code *code) {
-	if (_lives < 0)
+	if (_lives < 0) {
 		_nextLevel = "<game_over>";
-	else
+		_score = 0;
+		_lives = 2;
+		saveProfile(_name, _lastLevel);
+	} else
 		_nextLevel = _checkpoint;
 }
 
@@ -78,6 +82,7 @@ void WetEngine::runLevelMenu(Code *code) {
 	loadPalette((byte *) &lime, 192+currentLevel, 1);
 	drawImage(*menu, 0, 0, false);
 	bool cont = true;
+	playSound("sound/bub01.raw", 0, 22050);
 	while (!shouldQuit() && cont) {
 		while (g_system->getEventManager()->pollEvent(event)) {
 			// Events
@@ -89,12 +94,13 @@ void WetEngine::runLevelMenu(Code *code) {
 
 			case Common::EVENT_KEYDOWN:
 				if (event.kbd.keycode == Common::KEYCODE_DOWN && currentLevel < _lastLevel) {
-					playSound("sound/extra.raw", 1, 11025);
+					playSound("sound/m_hilite.raw", 1, 11025);
 					currentLevel++;
 				} else if (event.kbd.keycode == Common::KEYCODE_UP && currentLevel > 0) {
-					playSound("sound/extra.raw", 1, 11025);
+					playSound("sound/m_hilite.raw", 1, 11025);
 					currentLevel--;
 				} else if (event.kbd.keycode == Common::KEYCODE_RETURN ) {
+					playSound("sound/m_choice.raw", 1, 11025);
 					_nextLevel = Common::String::format("c%d", _ids[currentLevel]);
 					cont = false;
 				}
@@ -134,6 +140,7 @@ void WetEngine::runMainMenu(Code *code) {
 	Graphics::Surface surName = overlay->getSubArea(subName);
 	drawImage(surName, subName.left, subName.top, false);
 	drawString("scifi08.fgx", "ENTER NAME :", 48, 50, 100, c);
+	_name.clear();
 	bool cont = true;
 	while (!shouldQuit() && cont) {
 		while (g_system->getEventManager()->pollEvent(event)) {
@@ -150,7 +157,7 @@ void WetEngine::runMainMenu(Code *code) {
 				else if (event.kbd.keycode == Common::KEYCODE_RETURN && !_name.empty()) {
 					cont = false;
 				}
-				else if (Common::isAlnum(event.kbd.keycode)) {
+				else if (Common::isAlpha(event.kbd.keycode)) {
 					playSound("sound/m_choice.raw", 1);
 					_name = _name + char(event.kbd.keycode - 32);
 				}
@@ -177,11 +184,27 @@ void WetEngine::runMainMenu(Code *code) {
 	} else
 		_lastLevel = 0;
 
+	if (_name == "ELRAPIDO") {
+		_infiniteAmmoCheat = true;
+		playSound("sound/extra.raw", 1);
+	}
+
+	if (_name == "SAVANNAH") {
+		_infiniteHealthCheat = true;
+		playSound("sound/extra.raw", 1);
+	}
+
 	_name.toLowercase();
 	bool found = loadProfile(_name);
 
-	if (found)
+	if (found) {
+		menu->free();
+		delete menu;
+		overlay->free();
+		delete overlay;
 		return;
+	}
+
 
 	saveProfile(_name, _ids[_lastLevel]);
 
@@ -250,7 +273,56 @@ void WetEngine::runMainMenu(Code *code) {
 
 	_difficulty = difficulties[idx];
 	_nextLevel = code->levelIfWin;
+	menu->free();
+	delete menu;
+	overlay->free();
+	delete overlay;
+}
 
+void WetEngine::showDemoScore() {
+	Common::String fmessage = "You finished the demo with an accuracy of %d%% and a score of %d points";
+	Common::String message = Common::String::format(fmessage.c_str(), accuracyRatio(), _score);
+	GUI::MessageDialog dialog(message);
+	dialog.runModal();
+}
+
+Common::String WetEngine::getLocalizedString(const Common::String name) {
+	if (name == "health") {
+		switch (_language) {
+		case Common::FR_FRA:
+			return "ENERGIE";
+		case Common::ES_ESP:
+			return "ENERGIA";
+		default:
+			return "HEALTH";
+		}
+	} else if (name == "objectives") {
+		switch (_language) {
+		case Common::FR_FRA:
+			return "OBJ.";
+		case Common::ES_ESP:
+			return "O. M.";
+		default:
+			return "M. O.";
+		}
+	} else if (name == "score") {
+		switch (_language) {
+		case Common::ES_ESP:
+			return "PUNTOS";
+		default:
+			return "SCORE";
+		}
+	} else if (name == "target") {
+		switch (_language) {
+		case Common::FR_FRA:
+			return "VERROUILLAGE";
+		case Common::ES_ESP:
+			return "BLANCO FIJADO";
+		default:
+			return "TARGET ACQUIRED";
+		}
+	} else
+		error("Invalid string name to localize: %s", name.c_str());
 }
 
 } // End of namespace Hypno

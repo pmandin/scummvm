@@ -1925,7 +1925,7 @@ static const uint16 freddypharkasPatchMacInventory[] = {
 // Applies to: Mac Floppy
 // Responsible method: Heap in script 270
 // Fixes bug #7065
-static const uint16 freddypharkasSignatureMacEasterEgg[] = {
+static const uint16 freddypharkasSignatureMacEasterEggHang[] = {
 	SIG_MAGICDWORD,                 // macSound
 	SIG_UINT16(0x0b89),             // number = 2953
 	SIG_UINT16(0x007f),             // vol = 127
@@ -1934,9 +1934,41 @@ static const uint16 freddypharkasSignatureMacEasterEgg[] = {
 	SIG_END
 };
 
-static const uint16 freddypharkasPatchMacEasterEgg[] = {
+static const uint16 freddypharkasPatchMacEasterEggHang[] = {
 	PATCH_ADDTOOFFSET(+6),
 	PATCH_UINT16(0x0001),           // loop = 1 [ play sound once ]
+	PATCH_END
+};
+
+// WORKAROUND
+// FPFP Mac's easter egg has a view that relies on a bug in the Mac interpreter.
+//  Sierra's interpreter draws views one pixel higher than their y coordinate.
+//  KQ6 Mac has this bug too. Compared to their original PC versions, views
+//  appear higher relative to their background. This is a problem for views that
+//  require precise placement to blend in with those backgrounds.
+//
+// The Mac easter egg adds such a view. View 275 contains a hand in the lake
+//  holding a Maintosh computer. Because this feature was developed against the
+//  Mac interpreter, the y coordinate that achieved the water effect is really
+//  off by one. In our interpreter, which doesn't have this bug, the view
+//  appears one pixel lower than intended and doesn't match the background.
+//
+// We fix this by adjusting macView:y to compensate for Sierra's off-by-one bug
+//  so that view 275 matches the lake background as in the original.
+//
+// Applies to: Mac Floppy
+// Responsible method: Heap in script 270
+static const uint16 freddypharkasSignatureMacEasterEggView[] = {
+	SIG_MAGICDWORD,                 // macView
+	SIG_UINT16(0x061e),             // name = $061e [ macView ]
+	SIG_UINT16(0x00cd),             // x = 205
+	SIG_UINT16(0x0065),             // y = 101
+	SIG_END
+};
+
+static const uint16 freddypharkasPatchMacEasterEggView[] = {
+	PATCH_ADDTOOFFSET(+4),
+	PATCH_UINT16(0x0064),           // y = 100
 	PATCH_END
 };
 
@@ -2073,17 +2105,18 @@ static const uint16 freddypharkasPatchDeskLetter[] = {
 	PATCH_END
 };
 
-//          script, description,                                      signature                            patch
+//          script, description,                                      signature                                patch
 static const SciScriptPatcherEntry freddypharkasSignatures[] = {
-	{  true,    15, "Mac: broken inventory",                       1, freddypharkasSignatureMacInventory,  freddypharkasPatchMacInventory },
-	{  true,   110, "intro scaling workaround",                    2, freddypharkasSignatureIntroScaling,  freddypharkasPatchIntroScaling },
-	{  false,  200, "Mac: skip broken hop singh scene",            1, freddypharkasSignatureMacHopSingh,   freddypharkasPatchMacHopSingh },
-	{  true,   235, "CD: canister pickup hang",                    3, freddypharkasSignatureCanisterHang,  freddypharkasPatchCanisterHang },
-	{  true,   270, "Mac: easter egg hang",                        1, freddypharkasSignatureMacEasterEgg,  freddypharkasPatchMacEasterEgg },
-	{  true,   310, "church key reappears",                        1, freddypharkasSignatureChurchKey,     freddypharkasPatchChurchKey },
-	{  true,   320, "ladder event issue",                          2, freddypharkasSignatureLadderEvent,   freddypharkasPatchLadderEvent },
-	{  true,   610, "desk letter reappears",                       1, freddypharkasSignatureDeskLetter,    freddypharkasPatchDeskLetter },
-	{  true,   928, "Narrator lockup fix",                         1, sciNarratorLockupSignature,          sciNarratorLockupPatch },
+	{  true,    15, "Mac: broken inventory",                       1, freddypharkasSignatureMacInventory,      freddypharkasPatchMacInventory },
+	{  true,   110, "intro scaling workaround",                    2, freddypharkasSignatureIntroScaling,      freddypharkasPatchIntroScaling },
+	{  false,  200, "Mac: skip broken hop singh scene",            1, freddypharkasSignatureMacHopSingh,       freddypharkasPatchMacHopSingh },
+	{  true,   235, "CD: canister pickup hang",                    3, freddypharkasSignatureCanisterHang,      freddypharkasPatchCanisterHang },
+	{  true,   270, "Mac: easter egg hang",                        1, freddypharkasSignatureMacEasterEggHang,  freddypharkasPatchMacEasterEggHang },
+	{  true,   270, "Mac: easter egg view",                        1, freddypharkasSignatureMacEasterEggView,  freddypharkasPatchMacEasterEggView },
+	{  true,   310, "church key reappears",                        1, freddypharkasSignatureChurchKey,         freddypharkasPatchChurchKey },
+	{  true,   320, "ladder event issue",                          2, freddypharkasSignatureLadderEvent,       freddypharkasPatchLadderEvent },
+	{  true,   610, "desk letter reappears",                       1, freddypharkasSignatureDeskLetter,        freddypharkasPatchDeskLetter },
+	{  true,   928, "Narrator lockup fix",                         1, sciNarratorLockupSignature,              sciNarratorLockupPatch },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
 
@@ -5768,8 +5801,8 @@ static const uint16 kq6PatchTruncatedMessagesFix[] = {
 //  their mouths are animated by inner loops that call kDrawCel with unthrottled
 //  inner inner loops that spin to create a delay between frames. This prevents
 //  updating the screen and responding to input. We replace the spin loops with
-//  calls to kGameIsRestarting, which detects and throttles these calls so that
-//  the speed is reasonable, the screen updates, and the game is responsive.
+//  calls to kScummVMSleep for 5 ticks so that the speed is reasonable, the
+//  screen updates, and the game is responsive.
 //
 // Applies to: All versions
 // Responsible method: participle:doVerb, tomato:doVerb
@@ -5786,9 +5819,9 @@ static const uint16 kq6SignatureTalkingInventory[] = {
 static const uint16 kq6PatchTalkingInventory[] = {
 	PATCH_ADDTOOFFSET(+2),
 	0x78,                               // push1
-	0x76,                               // push0
-	0x43, 0x2c, 0x02,                   // callk GameIsRestarting 02 [ custom throttling ]
-	0x34, PATCH_UINT16(0x0000),         // ldi 0000 [ exit loop ]
+	0x39, 0x05,                         // pushi 05
+	0x43, kScummVMSleepId, 0x02,        // callk kScummVMSleep 02 [ 5 ticks ]
+	0x35, 0x00,                         // ldi 00 [ exit loop ]
 	PATCH_END
 };
 
@@ -7908,9 +7941,62 @@ static const uint16 larry2PatchWearParachutePoints[] = {
 	PATCH_END
 };
 
-//          script, description,                                      signature                           patch
+// When buying a lottery ticket, the message box "Processing..." is displayed
+//  three times with no delay between the messages. In the original, each was
+//  visibly erased before the next because the interpreter drew directly to the
+//  screen. This created the necessary flicker effect indicating that the three
+//  identical messages were separte. In ScummVM there is no flicker because the
+//  window is updated with the screen buffer when processing events or between
+//  game cycles. The result is a single message box that appears to not respond
+//  to Enter or clicks until the third one dismisses it.
+//
+// We fix this by adding a brief delay in the "Procesing..." loop with a call to
+//  kScummVMSleep so that the screen is redrawn between message boxes and the
+//  intended effect occurs as in the original. This patch is broken up into two
+//  parts because different versions have different instructions in the loop.
+//
+// Applies to: All versions
+// Responsible method: rm114Script:changeState(15)
+static const uint16 larry2SignatureLotteryTicketMessages1[] = {
+	0x35, 0x00,                      // ldi 00
+	0xa5, 0x00,                      // sat 00 [ temp0 = 0 ]
+	0x8d, 0x00,                      // lst 00 [ start loop ]
+	SIG_MAGICDWORD,
+	0x35, 0x03,                      // ldi 03
+	0x22,                            // lt?    [ temp0 < 3 ]
+	0x30, SIG_ADDTOOFFSET(+1), 0x00, // bnt    [ exit loop ]
+	SIG_END
+};
+
+static const uint16 larry2PatchLotteryTicketMessages1[] = {
+	0xa5, 0x00,                      // sat 00 [ temp0 = 0 (acc already 0) ]
+	0x7a,                            // push2  [ start loop ]
+	0x20,                            // ge?    [ 2 >= temp0 ]
+	0x31, PATCH_GETORIGINALBYTEADJUST(+10, +6), // bnt [ exit loop ]
+	0x78,                            // push1
+	0x39, 0x02,                      // pushi 02
+	0x43, kScummVMSleepId, 0x02,     // callk kScummVMSleep 02 [ 2 ticks ]
+	PATCH_END
+};
+
+static const uint16 larry2SignatureLotteryTicketMessages2[] = {
+	0x47, 0xff, SIG_MAGICDWORD, 0x00, 0x0c, // calle proc255_0 0c [ Print "Processing..." ]
+	0xc5, 0x00,                             // +at 00 [ temp0++, acc = temp0 ]
+	0x32, SIG_ADDTOOFFSET(+1), 0xff,        // jmp    [ continue loop ]
+	SIG_END
+};
+
+static const uint16 larry2PatchLotteryTicketMessages2[] = {
+	PATCH_ADDTOOFFSET(+6),
+	0x32, PATCH_GETORIGINALBYTEADJUST(+7, -2), 0xff, // jmp [ continue loop ]
+	PATCH_END
+};
+
+//          script, description,                                      signature                              patch
 static const SciScriptPatcherEntry larry2Signatures[] = {
-	{  true,    63, "plane: no points for wearing parachute",      1, larry2SignatureWearParachutePoints, larry2PatchWearParachutePoints },
+	{  true,    63, "plane: no points for wearing parachute",      1, larry2SignatureWearParachutePoints,    larry2PatchWearParachutePoints },
+	{  true,   114, "lottery ticket messages (1/2)",               1, larry2SignatureLotteryTicketMessages1, larry2PatchLotteryTicketMessages1 },
+	{  true,   114, "lottery ticket messages (2/2)",               1, larry2SignatureLotteryTicketMessages2, larry2PatchLotteryTicketMessages2 },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
 
@@ -13941,11 +14027,41 @@ static const uint16 qfg3PatchNrsFloatingSpears[] = {
 	PATCH_END
 };
 
+// When purchasing from a vendor while a message box is on the screen, events
+//  are randomly dropped and clicks randomly have no effect. barter:doit runs an
+//  event processing loop that calls kGetEvent twice per iteration when a
+//  message is on screen. It's luck as to which call retrieves the input event.
+//  If the first call retrieves the input event then it's replaced by the second
+//  and never reaches the Messager object.
+//
+// We fix this by patching barter:dispatchEvent to use the current event that
+//  barter:doit provides instead of unnecessarily creating a new one.
+//
+// Applies to: All versions
+// Responsible method: barter:dispatchEvent
+// Fixes bug: #11422
+static const uint16 qfg3SignatureBarterEvents[] = {
+	0x39, SIG_SELECTOR8(new),           // pushi new
+	0x76,                               // push0
+	SIG_MAGICDWORD,
+	0x51, 0x07,                         // class Event
+	0x4a, 0x04,                         // send 04 [ Event new: ]
+	0xa5, 0x00,                         // sat 00  [ temp0 = (Event new:) ]
+	SIG_END
+};
+
+static const uint16 qfg3PatchBarterEvents[] = {
+	0x87, 0x01,                         // lap 01 [ use current event ]
+	0x32, PATCH_UINT16(0x0002),         // jmp 0002
+	PATCH_END
+};
+
 //          script, description,                                      signature                    patch
 static const SciScriptPatcherEntry qfg3Signatures[] = {
 	{  true,   944, "import dialog continuous calls",                     1, qfg3SignatureImportDialog,           qfg3PatchImportDialog },
 	{  true,   440, "dialog crash when asking about Woo",                 1, qfg3SignatureWooDialog,              qfg3PatchWooDialog },
 	{  true,   440, "dialog crash when asking about Woo",                 1, qfg3SignatureWooDialogAlt,           qfg3PatchWooDialogAlt },
+	{  true,    47, "barter events",                                      1, qfg3SignatureBarterEvents,           qfg3PatchBarterEvents },
 	{  true,    52, "export character save bug",                          2, qfg3SignatureExportChar,             qfg3PatchExportChar },
 	{  true,    54, "import character from QfG1 bug",                     1, qfg3SignatureImportQfG1Char,         qfg3PatchImportQfG1Char },
 	{  true,   640, "chief in hut priority fix",                          1, qfg3SignatureChiefPriority,          qfg3PatchChiefPriority },
@@ -18559,6 +18675,44 @@ static const uint16 sq3AnnouncementsPatch[] = {
 	PATCH_END
 };
 
+// In the navigation computer, selecting your current location is supposed to
+//  display COURSE ALREADY ACHIEVED but the message doesn't appear in ScummVM.
+//  This occurs in later versions of SQ3.
+//
+// The navigation computer was changed in version 1.018 to return to the main
+//  screen when selecting the current location. It appears that there was some
+//  confusion though; the new script incorrectly attempts to disable the scan
+//  button and sets a three second pause after requesting a room change. The
+//  result is that the pause doesn't occur and the text is drawn and then erased
+//  on the same game cycle. By the time ScummVM updates the window from the
+//  screen buffer it's too late. In Sierra's interpreter the text only flickers
+//  on the screen, even on slow machines.
+//
+// We fix this by calling kScummVMSleep with the script's three second delay so
+//  that the screen updates and the message is displayed. The button states
+//  don't matter because no input is processed when sleeping and the script sets
+//  a new room immediately afterwards.
+//
+// Applies to: English PC 1.018, German PC, German Amiga, Macintosh
+// Responsible method: courseScript:changeState(1)
+// Fixes bug: #13114
+static const uint16 sq3CourseAchievedSignature[] = {
+	0x39, SIG_MAGICDWORD,               // pushi state
+	      SIG_SELECTOR8(state),
+	0x78,                               // push1
+	0x76,                               // push0
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa scanBut
+	0x4a, 0x06,                         // send 06 [ scanBut state: 0 (has no effect) ]
+	SIG_END
+};
+
+static const uint16 sq3CourseAchievedPatch[] = {
+	0x38, PATCH_UINT16(0x0001),         // pushi 0001
+	0x38, PATCH_UINT16(0x00b4),         // pushi 00b4
+	0x43, kScummVMSleepId, 0x02,        // callk kScummVMSleep 02 [ 180 ticks ]
+	PATCH_END
+};
+
 // Space Quest 3 has some strings hard coded in the scripts file
 // We need to patch them for the Hebrew translation
 
@@ -18589,6 +18743,7 @@ static const uint16 sq3HebrewStatusBarNamePatch[] = {
 //         script, description,                                      signature                                      patch
 static const SciScriptPatcherEntry sq3Signatures[] = {
 	{ false,   0, "Hebrew: Replace name in status bar",    1, sq3HebrewStatusBarNameSignature,                     sq3HebrewStatusBarNamePatch },
+	{  true,  19, "Fix course achieved message",           1, sq3CourseAchievedSignature,                          sq3CourseAchievedPatch },
 	{  true, 117, "Fix end credits",                       1, sq3EndCreditsSignature,                              sq3EndCreditsPatch },
 	{  true, 702, "Fix scumsoft announcements",            1, sq3AnnouncementsSignature,                           sq3AnnouncementsPatch },
 	{ false, 996, "Hebrew: Replace 'Enter input' prompt",  1, sq3HebrewEnterInputSignature,                        sq3HebrewEnterInputPatch },
@@ -21517,11 +21672,44 @@ static const uint16 ramaChangeDirPatch[] = {
 	PATCH_END
 };
 
+// Clicking on the lower area of the screen at the start of the demo, or at a
+//  later time when the cursor is a pointer, crashes the program with a missing
+//  script error. The demo adds button handlers for buttons that don't really
+//  exist, and clicking loads scripts that aren't included.
+//
+// We fix this by removing the broken button handlers. Graphics are unaffected.
+//
+// Applies to: PC Demo
+// Responsible method: RamaInterface:init
+// Fixes bug: #10344
+static const uint16 ramaDemoBrokenButtonsSignature[] = {
+	0x38, SIG_SELECTOR16(add),     // pushi add
+	0x38, SIG_UINT16(0x0003),      // pushi 0003
+	SIG_MAGICDWORD,
+	0x72, SIG_UINT16(0x03fe),      // lofsa optionsButton [ puzzle icon ]
+	0x36,                          // push
+	0x72, SIG_UINT16(0x02d6),      // lofsa thighComputerButton [ lower area ]
+	0x36,                          // push
+	SIG_ADDTOOFFSET(+36),
+	0x4a, SIG_UINT16(0x0018),      // send 18 [ interfacePlane:theFtrs ... add: optionsButton thighComputerButton ... ]
+	SIG_END
+};
+
+static const uint16 ramaDemoBrokenButtonsPatch[] = {
+	PATCH_ADDTOOFFSET(+3),
+	0x78,                          // push1
+	0x33, 0x08,                    // jmp 08 [ skip adding optionsButton and thighComputerButton ]
+	PATCH_ADDTOOFFSET(+44),
+	0x4a, PATCH_UINT16(0x0014),    // send 14
+	PATCH_END
+};
+
 static const SciScriptPatcherEntry ramaSignatures[] = {
 	{  true,     0, "disable video benchmarking",                     1, sci2BenchmarkSignature,          sci2BenchmarkReversePatch },
 	{  true,    15, "disable video benchmarking",                     1, sci2BenchmarkSignature,          sci2BenchmarkReversePatch },
 	{  true,    55, "fix bad DocReader::init priority calculation",   1, ramaDocReaderInitSignature,      ramaDocReaderInitPatch },
 	{  true,    85, "fix SaveManager to use normal readWord calls",   1, ramaSerializeRegTSignature1,     ramaSerializeRegTPatch1 },
+	{  true,    90, "demo: remove broken button handlers",            1, ramaDemoBrokenButtonsSignature,  ramaDemoBrokenButtonsPatch },
 	{  true,   201, "fix crash restoring save games using NukeTimer", 1, ramaNukeTimerSignature,          ramaNukeTimerPatch },
 	{  true, 64928, "Narrator lockup fix",                            1, sciNarratorLockupSignature,      sciNarratorLockupPatch },
 	{  true, 64990, "disable change directory button",                1, ramaChangeDirSignature,          ramaChangeDirPatch },

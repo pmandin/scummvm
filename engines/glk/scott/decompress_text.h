@@ -19,22 +19,17 @@
  *
  */
 
-#ifndef CHEWY_DATA_H
-#define CHEWY_DATA_H
+#ifndef GLK_SCOTT_DECOMPRESSTEXT
+#define GLK_SCOTT_DECOMPRESSTEXT
 
-#include "chewy/chewy.h"
+#include "glk/scott/types.h"
 
-namespace Chewy {
+namespace Glk {
+namespace Scott {
 
-class Data {
-public:
-	Data();
-	~Data();
+char *decompressText(uint8_t *source, int stringIndex);
 
-	uint16 selectPoolItem(Common::Stream *stream, uint16 nr);
-	uint32 getPoolSize(const char *filename, int16 chunkStart, int16 chunkNr);
-};
-
-} // namespace Chewy
+} // End of namespace Scott
+} // End of namespace Glk
 
 #endif

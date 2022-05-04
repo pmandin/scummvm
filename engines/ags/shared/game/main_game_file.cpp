@@ -70,8 +70,6 @@ String GetMainGameFileErrorText(MainGameFileErrorType err) {
 		return "Unable to determine native game resolution.";
 	case kMGFErr_TooManySprites:
 		return "Too many sprites for this engine to handle.";
-	case kMGFErr_TooManyCursors:
-		return "Too many cursors for this engine to handle.";
 	case kMGFErr_InvalidPropertySchema:
 		return "Failed to deserialize custom properties schema.";
 	case kMGFErr_InvalidPropertyValues:
@@ -201,15 +199,15 @@ HGameFileError OpenMainGameFile(const String &filename, MainGameSource &src) {
 	return OpenMainGameFileBase(in, src);
 }
 
-HGameFileError OpenMainGameFileFromDefaultAsset(MainGameSource &src) {
+HGameFileError OpenMainGameFileFromDefaultAsset(MainGameSource &src, AssetManager *mgr) {
 	// Cleanup source struct
 	src = MainGameSource();
 	// Try to find and open main game file
 	String filename = MainGameSource::DefaultFilename_v3;
-	Stream *in = _GP(AssetMgr)->OpenAsset(filename);
+	Stream *in = mgr->OpenAsset(filename);
 	if (!in) {
 		filename = MainGameSource::DefaultFilename_v2;
-		in = _GP(AssetMgr)->OpenAsset(filename);
+		in = mgr->OpenAsset(filename);
 	}
 	if (!in)
 		return new MainGameFileError(kMGFErr_FileOpenFailed, String::FromFormat("Filename: %s.", filename.GetCStr()));
@@ -352,8 +350,8 @@ void ReadDialogs(DialogTopic *&dialog,
 	} else {
 		// Encrypted text on > 2.60
 		while (1) {
-			size_t newlen = in->ReadInt32();
-			if (static_cast<uint32_t>(newlen) == 0xCAFEBEEF) { // GUI magic
+			size_t newlen = static_cast<uint32_t>(in->ReadInt32());
+			if (newlen == 0xCAFEBEEF) { // GUI magic
 				in->Seek(-4);
 				break;
 			}
@@ -714,9 +712,10 @@ protected:
 	GameDataVersion _dataVer;
 };
 
-HError GameDataExtReader::ReadBlock(int block_id, const String &ext_id,
-		soff_t block_len, bool &read_next) {
-    // Add extensions here checking ext_id, which is an up to 16-chars name, for example:
+HError GameDataExtReader::ReadBlock(int /*block_id*/, const String &ext_id,
+		soff_t /*block_len*/, bool &read_next) {
+	read_next = true;
+	// Add extensions here checking ext_id, which is an up to 16-chars name, for example:
     // if (ext_id.CompareNoCase("GUI_NEWPROPS") == 0)
     // {
     //     // read new gui properties
@@ -729,6 +728,15 @@ HError GameDataExtReader::ReadBlock(int block_id, const String &ext_id,
 				static_cast<enum FontInfo::AutoOutlineStyle>(_in->ReadInt32());
 			// reserved
 			_in->ReadInt32();
+			_in->ReadInt32();
+			_in->ReadInt32();
+			_in->ReadInt32();
+		}
+		return HError::None();
+	} else if (ext_id.CompareNoCase("v360_cursors") == 0) {
+		for (int i = 0; i < _ents.Game.numcursors; ++i) {
+			_ents.Game.mcurs[i].animdelay = _in->ReadInt32();
+			// reserved
 			_in->ReadInt32();
 			_in->ReadInt32();
 			_in->ReadInt32();
@@ -761,7 +769,7 @@ HGameFileError ReadGameData(LoadedGameEntities &ents, Stream *in, GameDataVersio
 	if (!err)
 		return err;
 	game.ReadInvInfo_Aligned(in);
-	err = game.read_cursors(in, data_ver);
+	err = game.read_cursors(in);
 	if (!err)
 		return err;
 	game.read_interaction_scripts(in, data_ver);
@@ -787,13 +795,13 @@ HGameFileError ReadGameData(LoadedGameEntities &ents, Stream *in, GameDataVersio
 		in->Seek(count * 0x204);
 	}
 
-	game.read_characters(in, data_ver);
+	game.read_characters(in);
 	game.read_lipsync(in, data_ver);
 	game.read_messages(in, data_ver);
 
 	ReadDialogs(ents.Dialogs, ents.OldDialogScripts, ents.OldDialogSources, ents.OldSpeechLines,
 		in, data_ver, game.numdialog);
-	HError err2 = GUI::ReadGUI(_GP(guis), in);
+	HError err2 = GUI::ReadGUI(in);
 	if (!err2)
 		return new MainGameFileError(kMGFErr_GameEntityFailed, err2);
 	game.numgui = _GP(guis).size();

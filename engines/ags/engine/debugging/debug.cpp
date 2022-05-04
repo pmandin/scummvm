@@ -73,7 +73,7 @@ IAGSEditorDebugger *GetEditorDebugger(const char *instanceToken) {
 
 #else   // AGS_PLATFORM_OS_WINDOWS
 
-IAGSEditorDebugger *GetEditorDebugger(const char *instanceToken) {
+IAGSEditorDebugger *GetEditorDebugger(const char * /*instanceToken*/) {
 	return nullptr;
 }
 
@@ -119,6 +119,9 @@ std::vector<String> parse_log_multigroup(const String &group_str) {
 		case 'g':
 			grplist.push_back("game");
 			break;
+		case 's':
+			grplist.push_back("script");
+			break;
 		case 'c':
 			grplist.push_back("sprcache");
 			break;
@@ -150,7 +153,7 @@ typedef std::pair<CommonDebugGroup, MessageType> DbgGroupOption;
 void apply_log_config(const ConfigTree &cfg, const String &log_id,
                       bool def_enabled,
                       std::initializer_list<DbgGroupOption> def_opts) {
-	String value = INIreadstring(cfg, "log", log_id);
+	String value = CfgReadString(cfg, "log", log_id);
 	if (value.IsEmpty() && !def_enabled)
 		return;
 
@@ -158,7 +161,7 @@ void apply_log_config(const ConfigTree &cfg, const String &log_id,
 	auto dbgout = _GP(DbgMgr).GetOutput(log_id);
 	const bool was_created_earlier = dbgout != nullptr;
 	if (!dbgout) {
-		String path = INIreadstring(cfg, "log", String::FromFormat("%s-path", log_id.GetCStr()));
+		String path = CfgReadString(cfg, "log", String::FromFormat("%s-path", log_id.GetCStr()));
 		dbgout = create_log_output(log_id, path);
 		if (!dbgout)
 			return; // unknown output type
@@ -212,7 +215,7 @@ void init_debug(const ConfigTree &cfg, bool stderr_only) {
 
 void apply_debug_config(const ConfigTree &cfg) {
 	apply_log_config(cfg, OutputSystemID, /* defaults */ true, { DbgGroupOption(kDbgGroup_Main, kDbgMsg_Info) });
-	bool legacy_log_enabled = INIreadint(cfg, "misc", "log", 0) != 0;
+	bool legacy_log_enabled = CfgReadBoolInt(cfg, "misc", "log", false);
 	apply_log_config(cfg, OutputFileID,
 	                 /* defaults */
 	legacy_log_enabled, {
@@ -269,7 +272,7 @@ void debug_set_console(bool enable) {
 }
 
 // Prepends message text with current room number and running script info, then logs result
-void debug_script_print(const String &msg, MessageType mt) {
+static void debug_script_print_impl(const String &msg, MessageType mt) {
 	String script_ref;
 	ccInstance *curinst = ccInstance::GetCurrentInstance();
 	if (curinst != nullptr) {
@@ -288,12 +291,20 @@ void debug_script_print(const String &msg, MessageType mt) {
 	Debug::Printf(kDbgGroup_Game, mt, "(room:%d)%s %s", _G(displayed_room), script_ref.GetCStr(), msg.GetCStr());
 }
 
+void debug_script_print(MessageType mt, const char *msg, ...) {
+	va_list ap;
+	va_start(ap, msg);
+	String full_msg = String::FromFormatV(msg, ap);
+	va_end(ap);
+	debug_script_print_impl(full_msg, mt);
+}
+
 void debug_script_warn(const char *msg, ...) {
 	va_list ap;
 	va_start(ap, msg);
 	String full_msg = String::FromFormatV(msg, ap);
 	va_end(ap);
-	debug_script_print(full_msg, kDbgMsg_Warn);
+	debug_script_print_impl(full_msg, kDbgMsg_Warn);
 }
 
 void debug_script_log(const char *msg, ...) {
@@ -301,7 +312,7 @@ void debug_script_log(const char *msg, ...) {
 	va_start(ap, msg);
 	String full_msg = String::FromFormatV(msg, ap);
 	va_end(ap);
-	debug_script_print(full_msg, kDbgMsg_Debug);
+	debug_script_print_impl(full_msg, kDbgMsg_Debug);
 }
 
 

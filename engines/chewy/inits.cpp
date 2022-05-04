@@ -22,9 +22,12 @@
 #include "common/config-manager.h"
 #include "common/memstream.h"
 #include "chewy/chewy.h"
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/globals.h"
 #include "chewy/main.h"
+#include "chewy/mcga_graphics.h"
+#include "chewy/memory.h"
 #include "chewy/sound.h"
 
 namespace Chewy {
@@ -54,12 +57,9 @@ void standard_init() {
 	_G(curtaf) = _G(mem)->taf_adr(CURSOR_TAF);
 
 	_G(curblk).sprite = _G(curtaf)->_image;
-	_G(curani)._start = 0;
-	_G(curani)._end = 0;
-	_G(curani)._delay = 0;
 	
 	_G(cur) = new Cursor(&_G(curblk));
-	_G(cur)->set_cur_ani(&_G(curani));
+	_G(cur)->setAnimation(0, 0, 0);
 
 	alloc_buffers();
 	_G(pal)[765] = 63;
@@ -138,7 +138,6 @@ void var_init() {
 
 	_G(gpkt).Vorschub = _G(spieler_mi)[P_CHEWY].Vorschub;
 	init_room();
-	init_atds();
 	_G(gameState).FramesPerSecond = 7;
 	_G(currentSong) = -1;
 	_G(SetUpScreenFunc) = nullptr;
@@ -161,29 +160,6 @@ void init_room() {
 	_G(room_blk).AtsLoad = true;
 
 	_G(room)->open_handle(EPISODE1_GEP, R_GEP_DATA);
-}
-
-void init_atds() {
-	// Close any prior handles
-	_G(atds)->close_handle(AAD_DATA);
-	_G(atds)->close_handle(ATS_DATA);
-	_G(atds)->close_handle(ADS_DATA);
-	_G(atds)->close_handle(INV_USE_DATA);
-	_G(atds)->close_handle(INV_ATS_DATA);
-	_G(atds)->close_handle(ATDS_HANDLE);
-
-	// New set up
-	Common::Stream *handle = _G(atds)->pool_handle(ATDS_TXT);
-	_G(atds)->set_handle(ATDS_TXT, ATS_DATA, handle, ATS_TAP_OFF, ATS_TAP_MAX);
-	_G(atds)->set_handle(ATDS_TXT, INV_ATS_DATA, handle, INV_TAP_OFF, INV_TAP_MAX);
-	_G(atds)->set_handle(ATDS_TXT, AAD_DATA, handle, AAD_TAP_OFF, AAD_TAP_MAX);
-	_G(atds)->set_handle(ATDS_TXT, ADS_DATA, handle, ADS_TAP_OFF, ADS_TAP_MAX);
-	_G(atds)->set_handle(ATDS_TXT, INV_USE_DATA, handle, USE_TAP_OFF, USE_TAP_MAX);
-	_G(gameState).AadSilent = 10;
-	_G(gameState).DelaySpeed = 5;
-	_G(spieler_vector)[P_CHEWY].Delay = _G(gameState).DelaySpeed;
-	_G(atds)->set_delay(&_G(gameState).DelaySpeed, _G(gameState).AadSilent);
-	_G(atds)->set_string_end_func(&atdsStringStart);
 }
 
 void new_game() {
@@ -284,7 +260,6 @@ void sound_init() {
 	_G(gameState).SoundVol = 63;
 	g_engine->_sound->setMusicVolume(_G(gameState).MusicVol * Audio::Mixer::kMaxChannelVolume / 120);
 	g_engine->_sound->setSoundVolume(_G(gameState).SoundVol * Audio::Mixer::kMaxChannelVolume / 120);
-	_G(atds)->updateSoundSettings();
 }
 
 void show_intro() {

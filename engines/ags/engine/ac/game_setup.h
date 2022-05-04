@@ -42,6 +42,14 @@ enum MouseSpeedDef {
 	kNumMouseSpeedDefs
 };
 
+// Screen rotation mode on supported platforms and devices
+enum ScreenRotation {
+	kScreenRotation_Unlocked = 0,     // player can freely rotate the screen if possible
+	kScreenRotation_Portrait,         // screen can only be in portrait orientation
+	kScreenRotation_Landscape,        // screen can only be in landscape orientation
+	kNumScreenRotationOptions
+};
+
 using AGS::Shared::String;
 
 // TODO: reconsider the purpose of this struct.
@@ -52,8 +60,9 @@ using AGS::Shared::String;
 // that engine may use a "config" object or combo of objects to store
 // current user config, which may also be changed from script, and saved.
 struct GameSetup {
-	int    audio_backend; // abstract option, currently only works as on/off
-	int textheight; // text height used on the certain built-in GUI // TODO: move out to game class?
+	bool  audio_enabled;
+	String audio_driver;
+	int   textheight; // text height used on the certain built-in GUI // TODO: move out to game class?
 	bool  no_speech_pack;
 	bool  enable_antialiasing;
 	bool  disable_exception_handling;
@@ -83,8 +92,11 @@ struct GameSetup {
 	MouseSpeedDef mouse_speed_def;
 	bool  RenderAtScreenRes; // render sprites at screen resolution, as opposed to native one
 	int   Supersampling;
+	bool  clear_cache_on_room_change; // compatibility
+	ScreenRotation rotation;
 
 	DisplayModeSetup Screen;
+	String software_render_driver;
 
 	GameSetup();
 };

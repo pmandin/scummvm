@@ -208,7 +208,6 @@ public:
 
 	MouseInfo _minfo;
 	CurBlk _curblk;
-	CurAni _curani;
 	RaumBlk _room_blk;
 	Flags _flags = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -357,8 +356,6 @@ void sound_init();
 void show_intro();
 void register_cutscene(int cutsceneNum);
 void getCutscenes(Common::Array<int> &cutscenes);
-
-void init_atds();
 
 void init_room();
 

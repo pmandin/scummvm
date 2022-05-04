@@ -372,25 +372,17 @@ reg_t kTextSize(EngineState *s, int argc, reg_t *argv) {
 	// Fixes bug #5710.
 	if (textWidth >= g_sci->_gfxScreen->getDisplayWidth() ||
 		textHeight >= g_sci->_gfxScreen->getDisplayHeight()) {
-		// TODO: Is this needed for SCI32 as well?
-		if (g_sci->_gfxText16) {
-			warning("kTextSize: string would be too big to fit on screen. Trimming it");
-			text.trim();
-			// Copy over the trimmed string...
-			s->_segMan->strcpy(argv[1], text.c_str());
-			// ...and recalculate bounding box dimensions
-			g_sci->_gfxText16->kernelTextSize(splitText.c_str(), languageSplitter, font, maxWidth, &textWidth, &textHeight);
-		}
+		warning("kTextSize: string would be too big to fit on screen. Trimming it");
+		text.trim();
+		// Copy over the trimmed string...
+		s->_segMan->strcpy(argv[1], text.c_str());
+		// ...and recalculate bounding box dimensions
+		g_sci->_gfxText16->kernelTextSize(splitText.c_str(), languageSplitter, font, maxWidth, &textWidth, &textHeight);
 	}
 
 	debugC(kDebugLevelStrings, "GetTextSize '%s' -> %dx%d", text.c_str(), textWidth, textHeight);
-	if (getSciVersion() <= SCI_VERSION_1_1) {
-		dest[2] = make_reg(0, textHeight);
-		dest[3] = make_reg(0, textWidth);
-	} else {
-		dest[2] = make_reg(0, textWidth);
-		dest[3] = make_reg(0, textHeight);
-	}
+	dest[2] = make_reg(0, textHeight);
+	dest[3] = make_reg(0, textWidth);
 
 	return s->r_acc;
 }
@@ -411,9 +403,8 @@ reg_t kWait(EngineState *s, int argc, reg_t *argv) {
 	return make_reg(0, delta);
 }
 
-#ifdef ENABLE_SCI32
 // kScummVMSleep is our own custom kernel function that sleeps for
-// the number of ticks requested. We use this in SCI32 script patches
+// the number of ticks requested. We use this in script patches
 // to replace spin loops so that the application remains responsive
 // and doesn't just block the thread without updating the screen or
 // processing input events.
@@ -422,7 +413,6 @@ reg_t kScummVMSleep(EngineState *s, int argc, reg_t *argv) {
 	s->sleep(ticks);
 	return s->r_acc;
 }
-#endif
 
 reg_t kCoordPri(EngineState *s, int argc, reg_t *argv) {
 	int16 y = argv[0].toSint16();

@@ -89,6 +89,11 @@ enum RoomVolumeMod {
 	kRoomVolumeMax = kRoomVolumeExtra2,
 };
 
+// Extended room boolean options
+enum RoomFlags {
+	kRoomFlag_BkgFrameLocked = 0x01
+};
+
 // Flag tells that walkable area does not have continious zoom
 #define NOT_VECTOR_SCALED  -10000
 // Flags tells that room is not linked to particular game ID
@@ -128,6 +133,8 @@ struct RoomOptions {
 	int  PlayerView;
 	// Room's music volume modifier
 	RoomVolumeMod MusicVolume;
+	// A collection of boolean options
+	int  Flags;
 
 	RoomOptions();
 };
@@ -365,6 +372,8 @@ public:
 	PInteractionScripts     EventHandlers;
 	// Compiled room script
 	PScript                 CompiledScript;
+	// Various extended options with string values, meta-data etc
+	StringMap               StrOptions;
 
 private:
 	// Room's legacy resolution type, defines relation room and game's resolution

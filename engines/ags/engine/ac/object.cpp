@@ -40,8 +40,10 @@
 #include "ags/engine/ac/route_finder.h"
 #include "ags/engine/gfx/graphics_driver.h"
 #include "ags/shared/ac/view.h"
+#include "ags/engine/ac/view_frame.h"
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/shared/gfx/gfx_def.h"
+#include "ags/shared/gui/gui_main.h"
 #include "ags/engine/script/runtime_script_value.h"
 #include "ags/engine/ac/dynobj/cc_object.h"
 #include "ags/engine/ac/move_list.h"
@@ -167,19 +169,19 @@ void Object_SetVisible(ScriptObject *objj, int onoroff) {
 }
 
 int Object_GetView(ScriptObject *objj) {
-	if (_G(objs)[objj->id].view == (uint16_t)-1)
+	if (_G(objs)[objj->id].view == RoomObject::NoView)
 		return 0;
 	return _G(objs)[objj->id].view + 1;
 }
 
 int Object_GetLoop(ScriptObject *objj) {
-	if (_G(objs)[objj->id].view == (uint16_t)-1)
+	if (_G(objs)[objj->id].view == RoomObject::NoView)
 		return 0;
 	return _G(objs)[objj->id].loop;
 }
 
 int Object_GetFrame(ScriptObject *objj) {
-	if (_G(objs)[objj->id].view == (uint16_t)-1)
+	if (_G(objs)[objj->id].view == RoomObject::NoView)
 		return 0;
 	return _G(objs)[objj->id].frame;
 }
@@ -279,7 +281,14 @@ const char *Object_GetName_New(ScriptObject *objj) {
 	if (!is_valid_object(objj->id))
 		quit("!Object.Name: invalid object number");
 
-	return CreateNewScriptString(get_translation(_GP(thisroom).Objects[objj->id].Name.GetCStr()));
+	return CreateNewScriptString(get_translation(_G(croom)->obj[objj->id].name.GetCStr()));
+}
+
+void Object_SetName(ScriptObject *objj, const char *newName) {
+	if (!is_valid_object(objj->id))
+		quit("!Object.Name: invalid object number");
+	_G(croom)->obj[objj->id].name = newName;
+	GUI::MarkSpecialLabelsForUpdate(kLabelMacro_Overhotspot);
 }
 
 bool Object_IsInteractionAvailable(ScriptObject *oobj, int mood) {
@@ -544,6 +553,72 @@ int check_click_on_object(int roomx, int roomy, int mood) {
 	return 1;
 }
 
+// General view animation algorithm: find next loop and frame, depending on anim settings
+bool CycleViewAnim(int view, uint16_t &o_loop, uint16_t &o_frame, bool forwards, int repeat) {
+	// Allow multi-loop repeat: idk why, but original engine behavior
+	// was to only check this for forward animation, not backward
+	const bool multi_loop_repeat = !forwards || (_GP(play).no_multiloop_repeat == 0);
+
+	ViewStruct *aview = &_GP(views)[view];
+	uint16_t loop = o_loop;
+	uint16_t frame = o_frame;
+	bool done = false;
+
+	if (forwards) {
+		if (frame + 1 >= aview->loops[loop].numFrames) { // Reached the last frame in the loop, find out what to do next
+			if (aview->loops[loop].RunNextLoop()) {
+				// go to next loop
+				loop++;
+				frame = 0;
+			} else {
+				// If either ANIM_REPEAT or ANIM_ONCERESET:
+				// reset to the beginning of a multiloop animation
+				if (repeat != ANIM_ONCE) {
+					frame = 0;
+					if (multi_loop_repeat)
+						while ((loop > 0) && (aview->loops[loop - 1].RunNextLoop()))
+							loop--;
+				} else { // if ANIM_ONCE, stop at the last frame
+					frame = aview->loops[loop].numFrames - 1;
+				}
+
+				if (repeat != ANIM_REPEAT) // either ANIM_ONCE or ANIM_ONCERESET
+					done = true; // finished animation
+			}
+		} else
+			frame++;
+	} else // backwards
+	{
+		if (frame == 0) { // Reached the first frame in the loop, find out what to do next
+			if ((loop > 0) && aview->loops[loop - 1].RunNextLoop()) {
+				// go to next loop
+				loop--;
+				frame = aview->loops[loop].numFrames - 1;
+			} else {
+				// If either ANIM_REPEAT or ANIM_ONCERESET:
+				// reset to the beginning of a multiloop animation
+				if (repeat != ANIM_ONCE) {
+					if (multi_loop_repeat)
+						while (aview->loops[loop].RunNextLoop())
+							loop++;
+					frame = aview->loops[loop].numFrames - 1;
+				} else { // if ANIM_ONCE, stop at the first frame
+					frame = 0;
+				}
+
+				if (repeat != ANIM_REPEAT) // either ANIM_ONCE or ANIM_ONCERESET
+					done = true; // finished animation
+			}
+		} else
+			frame--;
+	}
+
+	// Update object values
+	o_loop = loop;
+	o_frame = frame;
+	return !done; // have we finished animating?
+}
+
 //=============================================================================
 //
 // Script API Functions
@@ -790,6 +865,10 @@ RuntimeScriptValue Sc_Object_GetName_New(void *self, const RuntimeScriptValue *p
 	API_CONST_OBJCALL_OBJ(ScriptObject, const char, _GP(myScriptStringImpl), Object_GetName_New);
 }
 
+RuntimeScriptValue Sc_Object_SetName(void *self, const RuntimeScriptValue *params, int32_t param_count) {
+	API_OBJCALL_VOID_POBJ(ScriptObject, Object_SetName, const char);
+}
+
 RuntimeScriptValue Sc_Object_GetScaling(void *self, const RuntimeScriptValue *params, int32_t param_count) {
 	API_OBJCALL_INT(ScriptObject, Object_GetScaling);
 }
@@ -903,6 +982,7 @@ void RegisterObjectAPI() {
 	ccAddExternalObjectFunction("Object::set_ManualScaling", Sc_Object_SetManualScaling);
 	ccAddExternalObjectFunction("Object::get_Moving", Sc_Object_GetMoving);
 	ccAddExternalObjectFunction("Object::get_Name", Sc_Object_GetName_New);
+	ccAddExternalObjectFunction("Object::set_Name", Sc_Object_SetName);
 	ccAddExternalObjectFunction("Object::get_Scaling", Sc_Object_GetScaling);
 	ccAddExternalObjectFunction("Object::set_Scaling", Sc_Object_SetScaling);
 	ccAddExternalObjectFunction("Object::get_Solid", Sc_Object_GetSolid);

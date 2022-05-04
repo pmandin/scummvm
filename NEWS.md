@@ -79,6 +79,10 @@ For a more comprehensive changelog of the latest experimental code, see:
      game's settings. The old option to use correct character spacing in the
      16-color Mac version of Indiana Jones and the Last Crusade is now included
      in this setting instead.
+   - Fixed some MIDI music looping when it shouldn't in EGA/VGA floppy versions
+     of The Secret of Monkey Island.
+   - Fixed Full Throttle distorted graphics when Ben runs past the Corley
+     Motors entrance.
 
  Sherlock:
    - Fixed slowdown in Serrated Scalpel intro when playing the game from a small

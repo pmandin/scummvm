@@ -157,8 +157,10 @@ void OSystem_SDL::init() {
 	SDL_EnableUNICODE(1);
 #endif
 
+#if !defined(OPENPANDORA)
 	// Disable OS cursor
 	SDL_ShowCursor(SDL_DISABLE);
+#endif
 
 	if (_window == nullptr)
 		_window = new SdlWindow();
@@ -180,6 +182,12 @@ bool OSystem_SDL::hasFeature(Feature f) {
 	if (f == kFeatureJoystickDeadzone || f == kFeatureKbdMouseSpeed) {
 		return _eventSource->isJoystickConnected();
 	}
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
+	/* Even if we are using the 2D graphics manager,
+	 * we are at one initGraphics3d call of supporting OpenGL */
+	if (f == kFeatureOpenGLForGame) return true;
+	if (f == kFeatureShadersForGame) return _supportsShaders;
+#endif
 	return ModularGraphicsBackend::hasFeature(f);
 }
 
@@ -216,7 +224,7 @@ void OSystem_SDL::initBackend() {
 	debug(1, "Using SDL Video Driver \"%s\"", sdlDriverName);
 
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
-	detectFramebufferSupport();
+	detectOpenGLFeaturesSupport();
 	detectAntiAliasingSupport();
 #endif
 
@@ -313,31 +321,63 @@ void OSystem_SDL::initBackend() {
 }
 
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
-void OSystem_SDL::detectFramebufferSupport() {
+void OSystem_SDL::detectOpenGLFeaturesSupport() {
+	_oglType = OpenGL::kOGLContextNone;
 	_supportsFrameBuffer = false;
+	_supportsShaders = false;
 #if USE_FORCED_GLES2
-	// Framebuffers are always available with GLES2
+	// Framebuffers and shaders are always available with GLES2
+	_oglType = OpenGL::kOGLContextGLES2;
 	_supportsFrameBuffer = true;
-#elif !defined(AMIGAOS) && !defined(__MORPHOS__)
+	_supportsShaders = true;
+#else
 	// Spawn a 32x32 window off-screen with a GL context to test if framebuffers are supported
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	SDL_Window *window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 32, 32, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-	if (window) {
-		SDL_GLContext glContext = SDL_GL_CreateContext(window);
-		if (glContext) {
-			OpenGLContext.initialize(OpenGL::kOGLContextGL);
-			_supportsFrameBuffer = OpenGLContext.framebufferObjectSupported;
-			OpenGLContext.reset();
-			SDL_GL_DeleteContext(glContext);
-		}
-		SDL_DestroyWindow(window);
+	if (!window) {
+		return;
 	}
+
+	int glContextProfileMask, glContextMajor;
+	if (SDL_GL_GetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, &glContextProfileMask) != 0) {
+		SDL_DestroyWindow(window);
+		return;
+	}
+	if (glContextProfileMask == SDL_GL_CONTEXT_PROFILE_ES) {
+		if (SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &glContextMajor) != 0) {
+			SDL_DestroyWindow(window);
+			return;
+		}
+		if (glContextMajor == 2) {
+			_oglType = OpenGL::kOGLContextGLES2;
+		} else {
+			SDL_DestroyWindow(window);
+			return;
+		}
+	} else {
+		_oglType = OpenGL::kOGLContextGL;
+	}
+	SDL_GLContext glContext = SDL_GL_CreateContext(window);
+	if (!glContext) {
+		SDL_DestroyWindow(window);
+		return;
+	}
+
+	OpenGLContext.initialize(_oglType);
+	_supportsFrameBuffer = OpenGLContext.framebufferObjectSupported;
+	_supportsShaders = OpenGLContext.shadersSupported;
+	OpenGLContext.reset();
+	SDL_GL_DeleteContext(glContext);
+	SDL_DestroyWindow(window);
 #else
 	SDL_putenv(const_cast<char *>("SDL_VIDEO_WINDOW_POS=9000,9000"));
 	SDL_SetVideoMode(32, 32, 0, SDL_OPENGL);
 	SDL_putenv(const_cast<char *>("SDL_VIDEO_WINDOW_POS=center"));
-	OpenGLContext.initialize(OpenGL::kOGLContextGL);
+	// SDL 1.2 only supports OpenGL
+	_oglType = OpenGL::kOGLContextGL;
+	OpenGLContext.initialize(_oglType);
 	_supportsFrameBuffer = OpenGLContext.framebufferObjectSupported;
+	_supportsShaders = OpenGLContext.shadersSupported;
 	OpenGLContext.reset();
 #endif
 #endif

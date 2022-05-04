@@ -44,6 +44,8 @@
 #include "scumm/imuse_digi/dimuse_sndmgr.h"
 #include "scumm/imuse_digi/dimuse_tables.h"
 
+#include "scumm/smush/smush_player.h"
+
 #include "audio/mixer.h"
 #include "audio/decoders/raw.h"
 
@@ -55,6 +57,7 @@ class QueuingAudioStream;
 
 namespace Scumm {
 class ScummEngine_v7;
+class SmushPlayer;
 
 struct imuseDigTable;
 struct imuseComiTable;
@@ -67,6 +70,7 @@ private:
 	Common::Mutex _mutex;
 	ScummEngine_v7 *_vm;
 	Audio::Mixer *_mixer;
+	SmushPlayer *_splayer;
 
 	IMuseDigiInternalMixer *_internalMixer;
 	IMuseDigiGroupsHandler *_groupsHandler;
@@ -327,6 +331,8 @@ public:
 	void disableEngine();
 	bool isEngineDisabled();
 	void stopSMUSHAudio();
+	void receiveAudioFromSMUSH(uint8 *srcBuf, int32 inFrameCount, int32 feedSize, int32 mixBufStartIndex, int volume, int pan, bool is11025Hz);
+	void setSmushPlayer(SmushPlayer *splayer);
 
 	bool isFTSoundEngine(); // Used in the handlers to check if we're using the FT version of the engine
 
@@ -354,7 +360,12 @@ public:
 	int diMUSEGetParam(int soundId, int paramId);
 	int diMUSEFadeParam(int soundId, int opcode, int destValue, int fadeLength);
 	int diMUSESetHook(int soundId, int hookId);
-	int diMUSESetTrigger(int soundId, int marker, int opcode, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n);
+
+	int diMUSESetTrigger(int soundId, int marker, int opcode,
+		int d = -1, int e = -1, int f = -1, int g = -1,
+		int h = -1, int i = -1, int j = -1, int k = -1,
+		int l = -1, int m = -1, int n = -1);
+
 	int diMUSEStartStream(int soundId, int priority, int groupId);
 	int diMUSESwitchStream(int oldSoundId, int newSoundId, int fadeDelay, int fadeSyncFlag2, int fadeSyncFlag1);
 	int diMUSESwitchStream(int oldSoundId, int newSoundId, uint8 *crossfadeBuffer, int crossfadeBufferSize, int vocLoopFlag);

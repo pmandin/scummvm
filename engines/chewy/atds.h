@@ -42,18 +42,7 @@ namespace Chewy {
 
 #define MAX_HANDLE 8
 #define AAD_HANDLE 0
-#define ATS_HANDLE 1
 #define ADS_HANDLE 2
-#define INV_USE_HANDLE 4
-#define INV_ATS_HANDLE 6
-#define ATDS_HANDLE 7
-
-enum DisplayMode {
-	DISPLAY_NONE = -1,
-	DISPLAY_TXT = 0,
-	DISPLAY_VOC = 1,
-	DISPLAY_ALL = 2
-};
 
 #define MAX_STR_SPLIT 10
 
@@ -104,7 +93,6 @@ struct AtdsVar {
 	int16 *_delay = nullptr;
 	int16 _diaNr = 0;
 
-	DisplayMode _display = DISPLAY_TXT;
 	bool _eventsEnabled = false;
 	int16 _vocNr = 0;
 
@@ -188,13 +176,6 @@ struct AdsNextBlk {
 	int16 _endNr;
 };
 
-struct AtsStrHeader {
-	uint16 _vocNr = 0;
-
-	bool load(Common::SeekableReadStream *src);
-	static constexpr int SIZE() { return 2; }
-};
-
 struct AtsTxtHeader {
 	uint16 _txtNr = 0;
 	int16 _aMov = 0;
@@ -205,15 +186,14 @@ struct AtsTxtHeader {
 };
 
 struct AtsVar {
-	DisplayMode _display = DISPLAY_NONE;
 	AtsTxtHeader _txtHeader;
-	AtsStrHeader _strHeader;
-	char *_ptr;
+	uint16 vocNum;
+	Common::String text;
 	int16 _delayCount;
 	int16 _silentCount;
-	int16 _txtLen;
 	int16 _color;
 	int16 _txtMode;
+	bool shown;
 };
 
 struct SplitStringRet {
@@ -237,12 +217,6 @@ struct SplitStringInit {
 
 	int16 _x;
 	int16 _y;
-	int16 _width;
-	int16 _lines;
-	int16 _mode;
-
-	int16 fontWidth;
-	int16 fontHeight;
 };
 
 class Atdsys {
@@ -251,22 +225,16 @@ public:
 	~Atdsys();
 
 	void set_delay(int16 *delay, int16 silent);
-	void updateSoundSettings();
 	void set_split_win(int16 nr, int16 x, int16 y);
-	SplitStringRet *split_string(SplitStringInit *ssi);
+	void split_string(SplitStringInit *ssi, SplitStringRet *ret);
 	void calc_txt_win(SplitStringInit *ssi);
 	void str_null2leer(char *strStart, char *strEnd);
-	char *atds_adr(const char *fname, int16 chunkStart, int16 chunkNr);
 	void load_atds(int16 chunkNr, int16 mode);
 
-	Common::Stream *pool_handle(const char *fname);
-	void set_handle(const char *fname, int16 mode, Common::Stream *handle, int16 chunkStart, int16 chunkNr);
-	void open_handle(const char *fname, int16 mode);
-	void close_handle(int16 mode);
-	void crypt(char *txt, uint32 size);
-	DisplayMode start_ats(int16 txtNr, int16 txtMode, int16 color, int16 mode, int16 *vocNr);
+	void set_handle(const char *fname, int16 mode, int16 chunkStart, int16 chunkNr);
+	bool start_ats(int16 txtNr, int16 txtMode, int16 color, int16 mode, int16 *vocNr);
 	void stop_ats();
-	DisplayMode &ats_get_status();
+	bool atsShown() { return _atsv.shown; }
 	void print_ats(int16 x, int16 y, int16 scrX, int16 scrY);
 	int16 getControlBit(int16 txtNr, int16 bitIdx);
 	void setControlBit(int16 txtNr, int16 bitIdx);
@@ -274,10 +242,6 @@ public:
 	void set_ats_str(int16 txtNr, int16 txtMode, int16 strNr, int16 mode);
 	void set_ats_str(int16 txtNr, int16 strNr, int16 mode);
 	int16 get_ats_str(int16 txtNr, int16 txtMode, int16 mode);
-	char *ats_get_txt(int16 txtNr, int16 txtMode, int16 *retNr, int16 mode);
-	char *ats_search_block(int16 txtMode, char *txtAdr);
-	void ats_search_nr(int16 txtNr, char **str);
-	void ats_search_str(int16 *nr, uint8 *status, uint8 controlByte, char **str);
 	void set_ats_mem(int16 mode);
 	int16 start_aad(int16 diaNr);
 	void stopAad();
@@ -298,27 +262,25 @@ public:
 	void ads_search_block(int16 blockNr, char **ptr);
 	void ads_search_item(int16 itemNr, char **blkAdr);
 	int16 start_ads_auto_dia(char *itemAdr);
-	int16 calc_inv_no_use(int16 curInv, int16 testNr, int16 mode);
+	int16 calc_inv_no_use(int16 curInv, int16 testNr);
 	int8 getStereoPos(int16 x);
 	void enableEvents(bool nr) {
 		_atdsv._eventsEnabled = nr;
-	}
-	int getAtdDisplay() const {
-		return _atdsv._display;	
 	}
 
 	void saveAtdsStream(Common::WriteStream *stream);
 	void loadAtdsStream(Common::SeekableReadStream *stream);
 	uint32 getAtdsStreamSize() const;
 
-	Common::StringArray getTextArray(uint dialogNum, uint entryNum, int type);
-	Common::String getTextEntry(uint dialogNum, uint entryNum, int type);
+	Common::StringArray getTextArray(uint dialogNum, uint entryNum, int type, int subEntry = -1);
+	Common::String getTextEntry(uint dialogNum, uint entryNum, int type, int subEntry = -1);
 
 private:
+	void init();
 	int16 get_delay(int16 txt_len);
 	void initItemUseWith();
-
-	Common::Stream *_atdsHandle[MAX_HANDLE] = { nullptr };
+	
+	Common::File *_atdsHandle = nullptr;
 	char *_atdsMem[MAX_HANDLE] = { nullptr };
 	int16 _atdsPoolOff[MAX_HANDLE] = { 0 };
 	char *_atsMem = nullptr;
@@ -332,26 +294,23 @@ private:
 	AdsNextBlk _adsnb;
 	uint8 _adsStack[ADS_STACK_SIZE] = { 0 };
 	int16 _adsStackPtr;
-	SplitStringRet _ssret;
-	SplitStringRet *_ssr = nullptr;
 
 	SplitStringInit _ssi[AAD_MAX_PERSON] = {
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
-		{ 0, 100, 0, 200, 4, SPLIT_CENTER, 8, 8 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
+		{ 0, 100, 0 },
 	};
 
 	char *_splitPtr[MAX_STR_SPLIT] = { nullptr };
 	int16 _splitX[MAX_STR_SPLIT] = { 0 };
 	int16 _invBlockNr;
-	char *_invUseMem = nullptr;
 	int16 _tmpDelay;
 	int16 _mousePush = 0;
 	int _printDelayCount1 = 0;

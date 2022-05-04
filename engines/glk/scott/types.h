@@ -19,12 +19,28 @@
  *
  */
 
-#ifndef CHEWY_NGSHEXT_H
-#define CHEWY_NGSHEXT_H
+#ifndef GLK_SCOTT_TYPES
+#define GLK_SCOTT_TYPES
 
-#include "chewy/memory.h"
-#include "chewy/mcga.h"
-#include "chewy/mouse.h"
-#include "chewy/cursor.h"
+#include "common/scummsys.h"
+
+namespace Glk {
+namespace Scott {
+
+#if !defined(SIZE_MAX)
+#define SIZE_MAX 0xFFFFFFFF
+#endif
+
+typedef uint8 uint8_t;
+typedef uint16 uint16_t;
+typedef uint32 uint32_t;
+typedef int8 int8_t;
+typedef int16 int16_t;
+typedef int32 int32_t;
+typedef int64 int64_t;
+typedef unsigned long long size_t;
+
+} // End of namespace Scott
+} // End of namespace Glk
 
 #endif

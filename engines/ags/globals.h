@@ -32,6 +32,7 @@
 #include "ags/shared/util/version.h"
 #include "ags/shared/gui/gui_main.h"
 #include "ags/shared/script/cc_script.h"
+#include "ags/engine/ac/event.h"
 #include "ags/engine/ac/runtime_defines.h"
 #include "ags/engine/ac/walk_behind.h"
 #include "ags/engine/main/engine.h"
@@ -106,7 +107,6 @@ class SplitLines;
 class TTFFontRenderer;
 class WFNFontRenderer;
 
-struct ActiveDisplaySetting;
 struct AGSDeSerializer;
 struct AGSPlatformDriver;
 struct AGSStaticObject;
@@ -324,8 +324,7 @@ public:
 	 * @{
 	 */
 
-	AnimatingGUIButton *_animbuts;
-	int _numAnimButs = 0;
+	std::vector<AnimatingGUIButton> *_animbuts;
 
 	/**@}*/
 
@@ -582,17 +581,15 @@ public:
 	std::vector<Shared::Bitmap *> *_actsps;
 	std::vector<Engine::IDriverDependantBitmap *> *_actspsbmp;
 	// temporary cache of walk-behind for this actsps image
-	std::vector<Shared::Bitmap *> *_actspswb;
-	std::vector<Engine::IDriverDependantBitmap *> *_actspswbbmp;
-	std::vector<CachedActSpsData> *_actspswbcache;
 	// GUI surfaces
 	std::vector<Shared::Bitmap *> *_guibg;
-	std::vector<Engine::IDriverDependantBitmap *> *_guibgbmp;
+	std::vector<Engine::IDriverDependantBitmap *> *_guibgddb;
 	// For debugging room masks
 	RoomAreaMask _debugRoomMask = kRoomAreaNone;
+	std::unique_ptr<Shared::Bitmap> *_debugRoomMaskBmp;
 	Engine::IDriverDependantBitmap *_debugRoomMaskDDB = nullptr;
 	int _debugMoveListChar = -1;
-	Shared::Bitmap *_debugMoveListBmp = nullptr;
+	std::unique_ptr<Shared::Bitmap> *_debugMoveListBmp;
 	Engine::IDriverDependantBitmap *_debugMoveListDDB = nullptr;
 
 	bool _current_background_is_dirty = false;
@@ -606,6 +603,14 @@ public:
 	int _places_r = 3, _places_g = 2, _places_b = 3;
 	color *_palette;
 	COLOR_MAP *_maincoltable;
+
+	// GUI control surfaces
+	std::vector<Shared::Bitmap *> *_guiobjbg;
+	std::vector<Engine::IDriverDependantBitmap *> *_guiobjddb;
+	std::vector<Point> *_guiobjoff; // because surface may be larger than logical position
+	std::vector<int> *_guiobjddbref; // first control texture index of each GUI
+	// Overlay's cached transformed bitmap, for software mode
+	std::vector<Shared::Bitmap *> *_overlaybmp;
 
 	/**@}*/
 
@@ -669,8 +674,7 @@ public:
 	int _in_enters_screen = 0, _done_es_error = 0;
 	int _in_leaves_screen = -1;
 
-	EventHappened *_event;
-	int _numevents = 0;
+	std::vector<EventHappened> *_events;
 
 	const char *_evblockbasename = nullptr;
 	int _evblocknum = 0;
@@ -678,7 +682,7 @@ public:
 	int _inside_processevent = 0;
 	int _eventClaimed = 0;
 
-	const char *_tsnames[4] = { nullptr, REP_EXEC_NAME, "on_key_press", "on_mouse_click" };
+	const char *_tsnames[TS_NUM] = { nullptr, REP_EXEC_NAME, "on_key_press", "on_mouse_click", "on_text_input" };
 
 	/**@}*/
 
@@ -814,11 +818,17 @@ public:
 	 * @{
 	 */
 
-	// Following 3 parameters instruct the engine to run game loops until
-	// certain condition is not fullfilled.
-	int _restrict_until = 0;
-	int _user_disabled_for = 0;
-	const void *_user_disabled_data = nullptr;
+	 // Following struct instructs the engine to run game loops until
+	 // certain condition is not fullfilled.
+	struct RestrictUntil {
+		int type = 0; // type of condition, UNTIL_* constant
+		int disabled_for = 0; // FOR_* constant
+		// pointer to the test variable
+		const void *data_ptr = nullptr;
+		// other values used for a test, depend on type
+		int data1 = 0;
+		int data2 = 0;
+	} _restrict_until;
 
 	unsigned int _loopcounter = 0;
 	unsigned int _lastcounter = 0;
@@ -996,8 +1006,7 @@ public:
 	 */
 
 	int _guis_need_update = 1;
-	int _all_buttons_disabled = 0, _gui_inv_pic = -1;
-	int _gui_disabled_style = 0;
+	int _all_buttons_disabled = -1, _gui_inv_pic = -1;
 
 	/**@}*/
 
@@ -1050,7 +1059,7 @@ public:
 	 * @{
 	 */
 
-	char *_lzbuffer = nullptr;
+	uint8_t *_lzbuffer = nullptr;
 	int *_node = nullptr;
 	int _pos = 0;
 	size_t _outbytes = 0, _maxsize = 0, _putbytes = 0;
@@ -1072,8 +1081,6 @@ public:
 	bool _justDisplayHelp = false;
 	bool _justDisplayVersion = false;
 	bool _justRunSetup = false;
-	bool _justRegisterGame = false;
-	bool _justUnRegisterGame = false;
 	bool _justTellInfo = false;
 	std::set<String> _tellInfoKeys;
 	int _loadSaveGameOnStartup = -1;
@@ -1089,6 +1096,7 @@ public:
 	const char *_psp_game_file_name = "";
 	const char *_psp_translation = "default";
 
+	int _psp_rotation = 0;
 	int _psp_gfx_renderer = 0;
 	int _psp_gfx_scaling = 1;
 	int _psp_gfx_smoothing = 0;
@@ -1258,6 +1266,7 @@ public:
 	NonBlockingScriptFunction *_getDialogOptionUnderCursorFunc;
 	NonBlockingScriptFunction *_runDialogOptionMouseClickHandlerFunc;
 	NonBlockingScriptFunction *_runDialogOptionKeyPressHandlerFunc;
+	NonBlockingScriptFunction *_runDialogOptionTextInputHandlerFunc;
 	NonBlockingScriptFunction *_runDialogOptionRepExecFunc;
 
 	ScriptSystem *_scsystem;
@@ -1266,7 +1275,7 @@ public:
 	std::vector<ccInstance *> *_moduleInst;
 	std::vector<ccInstance *> *_moduleInstFork;
 	std::vector<RuntimeScriptValue> *_moduleRepExecAddr;
-	int _numScriptModules = 0;
+	size_t _numScriptModules = 0;
 
 	// TODO: find out if these extra arrays are really necessary. This may be remains from the
 	// time when the symbol import table was holding raw pointers to char array.
@@ -1334,6 +1343,7 @@ public:
 
 	std::chrono::microseconds _tick_duration = std::chrono::microseconds(1000000LL / 40);
 	bool _framerate_maxed = false;
+	int _framerate = 0;
 
 	uint32 _last_tick_time = 0; // AGS_Clock::now();
 	uint32 _next_frame_timestamp = 0; // AGS_Clock::now();

@@ -1050,7 +1050,7 @@ void ClearScreen() {
  * Updates the screen surface within the following rectangle
  */
 void UpdateScreenRect(const Common::Rect &pClip) {
-	int yOffset = TinselV2 ? (g_system->getHeight() - SCREEN_HEIGHT) / 2 : 0;
+	int yOffset = (TinselVersion >= 2) ? (g_system->getHeight() - SCREEN_HEIGHT) / 2 : 0;
 	byte *pSrc = (byte *)_vm->screen().getBasePtr(pClip.left, pClip.top);
 	g_system->copyRectToScreen(pSrc, _vm->screen().pitch, pClip.left, pClip.top + yOffset,
 		pClip.width(), pClip.height());
@@ -1073,8 +1073,8 @@ void DrawObject(DRAWOBJECT *pObj) {
 		return;
 
 	// If writing constant data, don't bother locking the data pointer and reading src details
-	if (((pObj->flags & DMA_CONST) == 0) || (TinselV3 && ((pObj->flags & 0x05) == 0x05))) {
-		if (TinselV2) {
+	if (((pObj->flags & DMA_CONST) == 0) || ((TinselVersion == 3) && ((pObj->flags & 0x05) == 0x05))) {
+		if (TinselVersion >= 2) {
 			srcPtr = (byte *)_vm->_handle->LockMem(pObj->hBits);
 			pObj->charBase = nullptr;
 			pObj->transOffset = 0;
@@ -1142,10 +1142,10 @@ void DrawObject(DRAWOBJECT *pObj) {
 
 	// Handle various draw types
 	uint8 typeId = pObj->flags & 0xff;
-	int packType = pObj->flags >> 14;	// TinselV2
+	int packType = pObj->flags >> 14;	// TinselVersion >= 2
 
-	if (TinselV2 && packType != 0) {
-		// Color packing for TinselV2
+	if ((TinselVersion >= 2) && packType != 0) {
+		// Color packing for TinselVersion >= 2
 
 		if (packType == 1)
 			pObj->baseCol = 0xF0;	// 16 from 240
@@ -1159,34 +1159,34 @@ void DrawObject(DRAWOBJECT *pObj) {
 		switch (typeId) {
 		case 0x01:	// all versions, draw sprite without clipping
 		case 0x41:	// all versions, draw sprite with clipping
-		case 0x02:	// TinselV2, draw sprite without clipping
-		case 0x11:	// TinselV2, draw sprite without clipping, flipped horizontally
-		case 0x42:	// TinselV2, draw sprite with clipping
-		case 0x51:	// TinselV2, draw sprite with clipping, flipped horizontally
-			assert(TinselV2 || (typeId == 0x01 || typeId == 0x41));
+		case 0x02:	// TinselV2 and above, draw sprite without clipping
+		case 0x11:	// TinselV2 and above, draw sprite without clipping, flipped horizontally
+		case 0x42:	// TinselV2 and above, draw sprite with clipping
+		case 0x51:	// TinselV2 and above, draw sprite with clipping, flipped horizontally
+			assert((TinselVersion >= 2) || (typeId == 0x01 || typeId == 0x41));
 
-			if (TinselV3)
+			if (TinselVersion == 3)
 				t3WrtNonZero(pObj, srcPtr, destPtr);
-			else if (TinselV2)
+			else if (TinselVersion >= 2)
 				t2WrtNonZero(pObj, srcPtr, destPtr, (typeId & DMA_CLIP) != 0, (typeId & DMA_FLIPH) != 0);
 			else if (TinselV1PSX || TinselV1Saturn)
 				psxSaturnDrawTiles(pObj, srcPtr, destPtr, typeId == 0x41, psxFourBitClut, psxSkipBytes, psxMapperTable, true);
 			else if (TinselV1Mac)
 				MacDrawTiles(pObj, srcPtr, destPtr, typeId == 0x41);
-			else if (TinselV1)
+			else if (TinselVersion == 1)
 				WrtNonZero(pObj, srcPtr, destPtr, typeId == 0x41);
-			else if (TinselV0)
+			else if (TinselVersion == 0)
 				t0WrtNonZero(pObj, srcPtr, destPtr, typeId == 0x41);
 			break;
 		case 0x08:	// draw background without clipping
 		case 0x48:	// draw background with clipping
-			if (TinselV3)
+			if (TinselVersion == 3)
 				t3WrtAll(pObj, srcPtr, destPtr);
-			else if (TinselV2 || TinselV1Mac || TinselV0)
+			else if ((TinselVersion == 2) || TinselV1Mac || (TinselVersion == 0))
 				WrtAll(pObj, srcPtr, destPtr, typeId == 0x48);
 			else if (TinselV1PSX || TinselV1Saturn)
 				psxSaturnDrawTiles(pObj, srcPtr, destPtr, typeId == 0x48, psxFourBitClut, psxSkipBytes, psxMapperTable, false);
-			else if (TinselV1)
+			else if (TinselVersion == 1)
 				WrtNonZero(pObj, srcPtr, destPtr, typeId == 0x48);
 			break;
 		case 0x04:	// fill with constant color without clipping
@@ -1195,9 +1195,9 @@ void DrawObject(DRAWOBJECT *pObj) {
 			break;
 		case 0x81:	// TinselV3, draw sprite with transparency
 		case 0xC1:	// TinselV3, draw sprite with transparency & clipping
-			if (TinselV3)
+			if (TinselVersion == 3)
 				t3TransWNZ(pObj, srcPtr, destPtr);
-			else if (TinselV2)
+			else if (TinselVersion == 2)
 				t2WrtNonZero(pObj, srcPtr, destPtr, (typeId & DMA_CLIP) != 0, (typeId & DMA_FLIPH) != 0);
 			break;
 		case 0x84:	// draw transparent surface without clipping
@@ -1206,7 +1206,7 @@ void DrawObject(DRAWOBJECT *pObj) {
 			break;
 		case 0x05:	// TinselV3, draw text with color replacement without clipping
 		case 0x45:	// TinselV3, draw text with color replacement with clipping
-			assert(TinselV3);
+			assert(TinselVersion == 3);
 			t3WrtText(pObj, srcPtr, destPtr);
 			break;
 		default:
