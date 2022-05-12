@@ -26,6 +26,7 @@
 #include "ags/shared/core/types.h"
 #include "ags/shared/ac/common_defines.h"
 #include "ags/shared/gfx/gfx_def.h"
+#include "ags/shared/gfx/allegro_bitmap.h"
 #include "ags/shared/gfx/bitmap.h"
 #include "ags/shared/game/room_struct.h"
 
@@ -57,6 +58,42 @@ struct RoomCameraDrawData {
 	AGS::Shared::PBitmap Frame;       // this is either same bitmap reference or sub-bitmap of virtual screen
 	bool    IsOffscreen; // whether room viewport was offscreen (cannot use sub-bitmap)
 	bool    IsOverlap;   // whether room viewport overlaps any others (marking dirty rects is complicated)
+};
+
+// ObjTexture is a helper struct that pairs a raw bitmap with
+// a renderer's texture and an optional position
+struct ObjTexture {
+	// Raw bitmap
+	std::unique_ptr<Shared::Bitmap> Bmp;
+	// Corresponding texture, created by renderer
+	Engine::IDriverDependantBitmap *Ddb = nullptr;
+	// Sprite's position
+	Point Pos;
+	// Texture's offset, *relative* to the logical sprite's position;
+	// may be used in case the texture's size is different for any reason
+	Point Off;
+
+	ObjTexture() = default;
+	ObjTexture(Shared::Bitmap *bmp, Engine::IDriverDependantBitmap *ddb, int x, int y, int xoff = 0, int yoff = 0)
+		: Bmp(bmp), Ddb(ddb), Pos(x, y), Off(xoff, yoff) {
+	}
+	ObjTexture(const ObjTexture &) = default;
+	ObjTexture(ObjTexture &&o);
+	~ObjTexture();
+
+	ObjTexture &operator =(ObjTexture &&o);
+};
+
+// ObjectCache stores cached object data, used to determine
+// if active sprite / texture should be reconstructed
+struct ObjectCache {
+	Shared::Bitmap *image = nullptr;
+	bool  in_use = false;
+	int   sppic = 0;
+	short tintr = 0, tintg = 0, tintb = 0, tintamnt = 0, tintlight = 0;
+	short lightlev = 0, zoom = 0;
+	bool  mirrored = 0;
+	int   x = 0, y = 0;
 };
 
 // Converts AGS color index to the actual bitmap color using game's color depth
@@ -91,6 +128,10 @@ void on_roomviewport_changed(Viewport *view);
 void detect_roomviewport_overlaps(size_t z_index);
 // Updates drawing settings if room camera's size has changed
 void on_roomcamera_changed(Camera *cam);
+// Marks particular object as need to update the texture
+void mark_object_changed(int objid);
+// Resets all object caches which reference this sprite
+void reset_objcache_for_sprite(int sprnum);
 
 // whether there are currently remnants of a DisplaySpeech
 void mark_screen_dirty();
@@ -108,7 +149,8 @@ void mark_current_background_dirty();
 
 // Avoid freeing and reallocating the memory if possible
 Shared::Bitmap *recycle_bitmap(Shared::Bitmap *bimp, int coldep, int wid, int hit, bool make_transparent = false);
-Engine::IDriverDependantBitmap *recycle_ddb_bitmap(Engine::IDriverDependantBitmap *bimp, Shared::Bitmap *source, bool hasAlpha = false, bool opaque = false);
+void recycle_bitmap(std::unique_ptr<Shared::Bitmap> &bimp, int coldep, int wid, int hit, bool make_transparent = false);
+Engine::IDriverDependantBitmap *recycle_ddb_bitmap(Engine::IDriverDependantBitmap *ddb, Shared::Bitmap *source, bool has_alpha = false, bool opaque = false);
 // Draw everything
 void render_graphics(Engine::IDriverDependantBitmap *extraBitmap = nullptr, int extraX = 0, int extraY = 0);
 // Construct game scene, scheduling drawing list for the renderer
@@ -137,7 +179,7 @@ void draw_gui_sprite(Shared::Bitmap *ds, bool use_alpha, int xpos, int ypos,
 // Generates a transformed sprite, using src image and parameters;
 // * if transformation is necessary - writes into dst and returns dst;
 // * if no transformation is necessary - simply returns src;
-Shared::Bitmap *transform_sprite(Shared::Bitmap *src, bool src_has_alpha, Shared::Bitmap *&dst,
+Shared::Bitmap *transform_sprite(Shared::Bitmap *src, bool src_has_alpha, std::unique_ptr<Shared::Bitmap> &dst,
 	const Size dst_sz, Shared::BitmapFlip flip = Shared::kBitmap_NoFlip);
 // Render game on screen
 void render_to_screen();
@@ -154,6 +196,9 @@ int construct_object_gfx(int aa, int *drawnWidth, int *drawnHeight, bool alwaysU
 Shared::Bitmap *get_cached_character_image(int charid);
 // Returns a cached object image prepared for the render
 Shared::Bitmap *get_cached_object_image(int objid);
+// Adds a walk-behind sprite to the list for the given slot
+// (reuses existing texture if possible)
+void add_walkbehind_image(size_t index, Shared::Bitmap *bmp, int x, int y);
 
 void draw_and_invalidate_text(Shared::Bitmap *ds, int x1, int y1, int font, color_t text_color, const char *text);
 

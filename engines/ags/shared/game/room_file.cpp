@@ -29,7 +29,7 @@
 #include "ags/shared/game/room_file.h"
 #include "ags/shared/game/room_struct.h"
 #include "ags/shared/gfx/bitmap.h"
-#include "ags/shared/script/cc_error.h"
+#include "ags/shared/script/cc_common.h"
 #include "ags/shared/script/cc_script.h"
 #include "ags/shared/util/compress.h"
 #include "ags/shared/util/data_ext.h"
@@ -332,7 +332,7 @@ HError ReadScriptBlock(char *&buf, Stream *in, RoomFileVersion /*data_ver*/) {
 HError ReadCompSc3Block(RoomStruct *room, Stream *in, RoomFileVersion /*data_ver*/) {
 	room->CompiledScript.reset(ccScript::CreateFromStream(in));
 	if (room->CompiledScript == nullptr)
-		return new RoomFileError(kRoomFileErr_ScriptLoadFailed, _G(ccErrorString));
+		return new RoomFileError(kRoomFileErr_ScriptLoadFailed, cc_get_error().ErrorString);
 	return HError::None();
 }
 

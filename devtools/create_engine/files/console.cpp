@@ -19,15 +19,20 @@
  *
  */
 
-#ifndef AGS_SHARED_SCRIPT_CC_ERROR_H
-#define AGS_SHARED_SCRIPT_CC_ERROR_H
+#include "xyzzy/console.h"
 
-#include "ags/shared/util/string.h"
+namespace Xyzzy {
 
-namespace AGS3 {
+Console::Console() : GUI::Debugger() {
+	registerCmd("test",   WRAP_METHOD(Console, Cmd_test));
+}
 
-extern void cc_error(const char *, ...);
+Console::~Console() {
+}
 
-} // namespace AGS3
+bool Console::Cmd_test(int argc, const char **argv) {
+	debugPrintf("Test\n");
+	return true;
+}
 
-#endif
+} // namespace Xyzzy

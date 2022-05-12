@@ -19,24 +19,32 @@
  *
  */
 
-#ifndef AGS_ENGINE_AC_OBJECT_CACHE_H
-#define AGS_ENGINE_AC_OBJECT_CACHE_H
+#include "xyzzy/metaengine.h"
+#include "xyzzy/detection.h"
+#include "xyzzy/xyzzy.h"
 
-namespace AGS3 {
+const char *XyzzyMetaEngine::getName() const {
+	return "xyzzy";
+}
 
-// stores cached object info
-struct ObjectCache {
-	Shared::Bitmap *image = nullptr;
-	int   sppic = 0;
-	short tintredwas = 0, tintgrnwas = 0, tintbluwas = 0;
-	short tintamntwas = 0, tintlightwas = 0;
-	short lightlevwas = 0, zoomWas = 0;
-	bool  mirroredWas = false;
+Common::Error XyzzyMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const {
+	*engine = new Xyzzy::XyzzyEngine(syst, desc);
+	return Common::kNoError;
+}
 
-	// The following are used to determine if the character has moved
-	int   xwas = 0, ywas = 0;
-};
+bool XyzzyMetaEngine::hasFeature(MetaEngineFeature f) const {
+	return
+		(f == kSavesUseExtendedFormat) ||
+		(f == kSimpleSavesNames) ||
+	    (f == kSupportsListSaves) ||
+	    (f == kSupportsDeleteSave) ||
+	    (f == kSavesSupportMetaInfo) ||
+	    (f == kSavesSupportThumbnail) ||
+	    (f == kSupportsLoadingDuringStartup);
+}
 
-} // namespace AGS3
-
+#if PLUGIN_ENABLED_DYNAMIC(XYZZY)
+REGISTER_PLUGIN_DYNAMIC(XYZZY, PLUGIN_TYPE_ENGINE, XyzzyMetaEngine);
+#else
+REGISTER_PLUGIN_STATIC(XYZZY, PLUGIN_TYPE_ENGINE, XyzzyMetaEngine);
 #endif

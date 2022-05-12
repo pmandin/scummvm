@@ -32,7 +32,7 @@
 #include "ags/shared/game/main_game_file.h"
 #include "ags/shared/font/fonts.h"
 #include "ags/shared/gui/gui_main.h"
-#include "ags/shared/script/cc_error.h"
+#include "ags/shared/script/cc_common.h"
 #include "ags/shared/util/aligned_stream.h"
 #include "ags/shared/util/data_ext.h"
 #include "ags/shared/util/path.h"
@@ -220,7 +220,7 @@ HGameFileError ReadDialogScript(PScript &dialog_script, Stream *in, GameDataVers
 	if (data_ver > kGameVersion_310) { // 3.1.1+ dialog script
 		dialog_script.reset(ccScript::CreateFromStream(in));
 		if (dialog_script == nullptr)
-			return new MainGameFileError(kMGFErr_CreateDialogScriptFailed, _G(ccErrorString));
+			return new MainGameFileError(kMGFErr_CreateDialogScriptFailed, cc_get_error().ErrorString);
 	} else { // 2.x and < 3.1.1 dialog
 		dialog_script.reset();
 	}
@@ -234,7 +234,7 @@ HGameFileError ReadScriptModules(std::vector<PScript> &sc_mods, Stream *in, Game
 		for (int i = 0; i < count; ++i) {
 			sc_mods[i].reset(ccScript::CreateFromStream(in));
 			if (sc_mods[i] == nullptr)
-				return new MainGameFileError(kMGFErr_CreateScriptModuleFailed, _G(ccErrorString));
+				return new MainGameFileError(kMGFErr_CreateScriptModuleFailed, cc_get_error().ErrorString);
 		}
 	} else {
 		sc_mods.resize(0);
@@ -356,7 +356,7 @@ void ReadDialogs(DialogTopic *&dialog,
 				break;
 			}
 
-			newlen = Math::Min(newlen, sizeof(buffer) - 1);
+			newlen = MIN(newlen, sizeof(buffer) - 1);
 			in->Read(buffer, newlen);
 			decrypt_text(buffer, newlen);
 			buffer[newlen] = 0;
@@ -778,7 +778,7 @@ HGameFileError ReadGameData(LoadedGameEntities &ents, Stream *in, GameDataVersio
 	if (game.load_compiled_script) {
 		ents.GlobalScript.reset(ccScript::CreateFromStream(in));
 		if (!ents.GlobalScript)
-			return new MainGameFileError(kMGFErr_CreateGlobalScriptFailed, _G(ccErrorString));
+			return new MainGameFileError(kMGFErr_CreateGlobalScriptFailed, cc_get_error().ErrorString);
 		err = ReadDialogScript(ents.DialogScript, in, data_ver);
 		if (!err)
 			return err;

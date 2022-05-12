@@ -19,8 +19,12 @@
  *
  */
 
-#ifndef AGS_SHARED_SCRIPT_CC_OPTIONS_H
-#define AGS_SHARED_SCRIPT_CC_OPTIONS_H
+// Script options and error reporting.
+
+#ifndef AGS_SHARED_SCRIPT_CC_COMMON_H
+#define AGS_SHARED_SCRIPT_CC_COMMON_H
+
+#include "ags/shared/util/string.h"
 
 namespace AGS3 {
 
@@ -32,9 +36,28 @@ namespace AGS3 {
 #define SCOPT_NOIMPORTOVERRIDE 0x20 // do not allow an import to be re-declared
 #define SCOPT_LEFTTORIGHT 0x40   // left-to-right operator precedance
 #define SCOPT_OLDSTRINGS  0x80   // allow old-style strings
+#define SCOPT_UTF8        0x100  // UTF-8 text mode
 
 extern void ccSetOption(int, int);
 extern int ccGetOption(int);
+
+// error reporting
+
+struct ScriptError {
+	bool HasError = false; // set if error occurs
+	bool IsUserError = false; // marks script use errors
+	AGS::Shared::String ErrorString; // description of the error
+	int Line = 0;  // line number of the error
+	AGS::Shared::String CallStack; // callstack where error happened
+};
+
+void cc_clear_error();
+bool cc_has_error();
+const ScriptError &cc_get_error();
+void cc_error(const char *, ...);
+void cc_error(const ScriptError &err);
+// Project-dependent script error formatting
+AGS::Shared::String cc_format_error(const AGS::Shared::String &message);
 
 } // namespace AGS3
 

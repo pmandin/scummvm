@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.4.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-04-27 19:39+0000\n"
-"PO-Revision-Date: 2022-04-28 09:44+0000\n"
+"POT-Creation-Date: 2022-05-12 17:01+0000\n"
+"PO-Revision-Date: 2022-05-10 08:41+0000\n"
 "Last-Translator: IlDucci <pajaroloco_2@hotmail.com>\n"
 "Language-Team: Spanish <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/es/>\n"
@@ -62,8 +62,8 @@ msgstr "Arriba"
 #: gui/massadd.cpp:91 gui/options.cpp:2104 gui/predictivedialog.cpp:68
 #: gui/recorderdialog.cpp:67 gui/recorderdialog.cpp:154
 #: gui/remotebrowser.cpp:59 gui/saveload-dialog.cpp:62
-#: gui/saveload-dialog.cpp:418 gui/saveload-dialog.cpp:489
-#: gui/saveload-dialog.cpp:793 gui/saveload-dialog.cpp:1186
+#: gui/saveload-dialog.cpp:406 gui/saveload-dialog.cpp:477
+#: gui/saveload-dialog.cpp:781 gui/saveload-dialog.cpp:1174
 #: gui/themebrowser.cpp:54 gui/unknown-game-dialog.cpp:53
 #: engines/engine.cpp:714 backends/dialogs/gtk/gtk-dialogs.cpp:63
 #: backends/events/default/default-events.cpp:194
@@ -133,7 +133,7 @@ msgstr ""
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:152
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
 #: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
-#: gui/options.cpp:3063 gui/options.cpp:3101 gui/saveload-dialog.cpp:343
+#: gui/options.cpp:3063 gui/options.cpp:3101
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:357
 #: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
@@ -145,10 +145,9 @@ msgstr "Sí"
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:153
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
 #: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
-#: gui/options.cpp:3063 gui/options.cpp:3101 gui/saveload-dialog.cpp:343
-#: engines/buried/buried.cpp:580 engines/director/events.cpp:91
-#: engines/grim/grim.cpp:357 engines/kyra/gui/saveload_eob.cpp:595
-#: engines/kyra/gui/saveload_eob.cpp:628
+#: gui/options.cpp:3063 gui/options.cpp:3101 engines/buried/buried.cpp:580
+#: engines/director/events.cpp:91 engines/grim/grim.cpp:357
+#: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
 #: engines/parallaction/metaengine.cpp:151
 #: engines/sci/graphics/controls32.cpp:927
 msgid "No"
@@ -170,7 +169,7 @@ msgstr ""
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
 #: gui/launcher.cpp:535 gui/launcher.cpp:539 gui/massadd.cpp:88
 #: gui/options.cpp:2106 gui/predictivedialog.cpp:69
-#: gui/saveload-dialog.cpp:1187 engines/engine.cpp:525 engines/engine.cpp:549
+#: gui/saveload-dialog.cpp:1175 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
 #: engines/buried/saveload.cpp:69
 #: engines/director/lingo/lingo-builtins.cpp:1652
@@ -180,7 +179,7 @@ msgstr ""
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:924
 #: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1358
 #: engines/scumm/scumm.cpp:1384 engines/scumm/scumm.cpp:1406
-#: engines/scumm/scumm.cpp:1684 engines/scumm/scumm.cpp:2155
+#: engines/scumm/scumm.cpp:1685 engines/scumm/scumm.cpp:2156
 #: engines/sky/compact.cpp:141 engines/sword1/animation.cpp:531
 #: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
 #: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
@@ -911,11 +910,11 @@ msgstr "Elige el juego:"
 msgid "Group by:"
 msgstr "Agrupar por:"
 
-#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:367
+#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:355
 msgid "List view"
 msgstr "Modo lista"
 
-#: gui/launcher.cpp:833 gui/saveload-dialog.cpp:368
+#: gui/launcher.cpp:833 gui/saveload-dialog.cpp:356
 msgid "Grid view"
 msgstr "Modo mosaico"
 
@@ -1370,7 +1369,7 @@ msgstr "Ambos"
 
 #: gui/options.cpp:1638
 msgid "Subtitle speed:"
-msgstr "Vel. de subtítulos:"
+msgstr "Vel. subtítulos:"
 
 #: gui/options.cpp:1640
 msgctxt "lowres"
@@ -2047,7 +2046,7 @@ msgid "Recorder or Playback Gameplay"
 msgstr "Grabar o reproducir vídeos"
 
 #: gui/recorderdialog.cpp:66 gui/recorderdialog.cpp:154
-#: gui/saveload-dialog.cpp:422 gui/saveload-dialog.cpp:489
+#: gui/saveload-dialog.cpp:410 gui/saveload-dialog.cpp:477
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -2093,67 +2092,59 @@ msgstr "Descargando partidas guardadas..."
 msgid "Run in background"
 msgstr "Ejecutar en segundo plano"
 
-#: gui/saveload-dialog.cpp:342
-msgid ""
-"WARNING: Existing save has longer gameplay duration than the current state. "
-"Are you sure you want to overwrite it?"
-msgstr ""
-"AVISO: La partida anterior tiene una duración más larga que la actual. "
-"¿Seguro que quieres sobrescribirla?"
-
-#: gui/saveload-dialog.cpp:413 gui/saveload-dialog.cpp:593
+#: gui/saveload-dialog.cpp:401 gui/saveload-dialog.cpp:581
 msgid "No date saved"
 msgstr "No hay fecha guardada"
 
-#: gui/saveload-dialog.cpp:414 gui/saveload-dialog.cpp:594
+#: gui/saveload-dialog.cpp:402 gui/saveload-dialog.cpp:582
 msgid "No time saved"
 msgstr "No hay hora guardada"
 
-#: gui/saveload-dialog.cpp:415 gui/saveload-dialog.cpp:595
+#: gui/saveload-dialog.cpp:403 gui/saveload-dialog.cpp:583
 msgid "No playtime saved"
 msgstr "No hay tiempo guardado"
 
-#: gui/saveload-dialog.cpp:488
+#: gui/saveload-dialog.cpp:476
 msgid "Do you really want to delete this saved game?"
 msgstr "¿Seguro que quieres borrar esta partida?"
 
-#: gui/saveload-dialog.cpp:620 gui/saveload-dialog.cpp:1137
+#: gui/saveload-dialog.cpp:608 gui/saveload-dialog.cpp:1125
 msgid "Date: "
 msgstr "Fecha: "
 
-#: gui/saveload-dialog.cpp:624 gui/saveload-dialog.cpp:1143
+#: gui/saveload-dialog.cpp:612 gui/saveload-dialog.cpp:1131
 msgid "Time: "
 msgstr "Hora: "
 
-#: gui/saveload-dialog.cpp:630 gui/saveload-dialog.cpp:1151
+#: gui/saveload-dialog.cpp:618 gui/saveload-dialog.cpp:1139
 msgid "Playtime: "
 msgstr "Tiempo: "
 
-#: gui/saveload-dialog.cpp:643 gui/saveload-dialog.cpp:731
+#: gui/saveload-dialog.cpp:631 gui/saveload-dialog.cpp:719
 msgid "Untitled saved game"
 msgstr "Partida sin nombre"
 
-#: gui/saveload-dialog.cpp:794
+#: gui/saveload-dialog.cpp:782
 msgid "Next"
 msgstr "Siguiente"
 
-#: gui/saveload-dialog.cpp:797
+#: gui/saveload-dialog.cpp:785
 msgid "Prev"
 msgstr "Anterior"
 
-#: gui/saveload-dialog.cpp:998
+#: gui/saveload-dialog.cpp:986
 msgid "New Save"
 msgstr "Guardar"
 
-#: gui/saveload-dialog.cpp:998
+#: gui/saveload-dialog.cpp:986
 msgid "Create a new saved game"
 msgstr "Guarda una nueva partida"
 
-#: gui/saveload-dialog.cpp:1130
+#: gui/saveload-dialog.cpp:1118
 msgid "Name: "
 msgstr "Nombre: "
 
-#: gui/saveload-dialog.cpp:1206
+#: gui/saveload-dialog.cpp:1194
 #, c-format
 msgid "Enter a description for slot %d:"
 msgstr "Introduce una descripción para el espacio %d:"
@@ -3136,7 +3127,7 @@ msgstr "Modo de ajuste"
 
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:66
 msgid "SDL Surface"
-msgstr "«SDL Surface»"
+msgstr "SDL Surface"
 
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2416
 msgid "Active graphics filter:"
@@ -4204,7 +4195,7 @@ msgstr "Cargar"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "No se pueden usar el guardado o carga rápidos en este lugar"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2782
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2811
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4215,7 +4206,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2772
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2801
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4226,7 +4217,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2795
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2824
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4246,7 +4237,7 @@ msgstr "¡No se ha encontrado el vídeo %s!"
 msgid "AGOS 2 support is not compiled in"
 msgstr "No se ha incluido el soporte para AGOS 2."
 
-#: engines/agos/midi.cpp:157 engines/kyra/sound/sound_pc_midi.cpp:75
+#: engines/agos/midi.cpp:180 engines/kyra/sound/sound_pc_midi.cpp:75
 msgid ""
 "You appear to be using a General MIDI device,\n"
 "but your game only supports Roland MT32 MIDI.\n"
@@ -4259,6 +4250,42 @@ msgstr ""
 "Intentamos adaptar los instrumentos Roland MT32\n"
 "a los de General MIDI, pero es posible que algunas\n"
 "de las pistas no suenen correctamente."
+
+#: engines/agos/detection.cpp:77
+msgid "AdLib OPL3 mode"
+msgstr "Modo AdLib OPL3"
+
+#: engines/agos/detection.cpp:78
+msgid ""
+"When AdLib is selected, OPL3 features will be used. Depending on the game, "
+"this will prevent cut-off notes, add extra notes or instruments and/or add "
+"stereo."
+msgstr ""
+"Al seleccionar AdLib se utilizarán las características OPL3. Esto impedirá "
+"que se pierdan notas, se añadan notas o instrumentos de más o se añada una "
+"panoramización estéreo indeseada, en función de cada juego."
+
+#: engines/agos/detection.cpp:86
+msgid "Use DOS version music tempos"
+msgstr "Usar tempos de la versión para DOS en la música"
+
+#: engines/agos/detection.cpp:87
+msgid ""
+"Selecting this option will play the music using the tempos used by the DOS "
+"version of the game. Otherwise, the faster tempos of the Windows version "
+"will be used."
+msgstr ""
+"Al seleccionar esta opción se reproducirá la música aplicando los tempos de "
+"la versión para DOS del juego. En caso contrario, se utilizarán los tempos "
+"más acelerados de la versión para Windows."
+
+#: engines/agos/detection.cpp:95 engines/sci/detection_options.h:93
+msgid "Prefer digital sound effects"
+msgstr "Preferir efectos de sonido digitales"
+
+#: engines/agos/detection.cpp:96 engines/sci/detection_options.h:94
+msgid "Prefer digital sound effects instead of synthesized ones"
+msgstr "Utiliza efectos de sonido digitales en vez de los sintetizados"
 
 #: engines/ags/dialogs.cpp:58
 msgid "Game language:"
@@ -4333,15 +4360,15 @@ msgstr ""
 msgid "Load anyway"
 msgstr "Cargar de todas maneras"
 
-#: engines/bladerunner/bladerunner.cpp:368
+#: engines/bladerunner/bladerunner.cpp:390
 msgid "Failed to initialize resources"
 msgstr "No se han podido iniciar los recursos"
 
-#: engines/bladerunner/bladerunner.cpp:1084
+#: engines/bladerunner/bladerunner.cpp:1143
 msgid "A required game resource was not found"
 msgstr "No se ha encontrado un recurso necesario del juego"
 
-#: engines/bladerunner/bladerunner.cpp:2589
+#: engines/bladerunner/bladerunner.cpp:2664
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4351,7 +4378,7 @@ msgstr ""
 "estás jugando en el modo Contenidos originales. Se ajustará el modo a "
 "Contenidos restaurados durante esta sesión y hasta que salgas del juego."
 
-#: engines/bladerunner/bladerunner.cpp:2591
+#: engines/bladerunner/bladerunner.cpp:2666
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4361,7 +4388,7 @@ msgstr ""
 "estás jugando en el modo Contenidos restaurados. Se ajustará el modo a "
 "Contenidos originales durante esta sesión y hasta que salgas del juego."
 
-#: engines/bladerunner/bladerunner.cpp:2593
+#: engines/bladerunner/bladerunner.cpp:2668
 msgid "Continue"
 msgstr "Continuar"
 
@@ -5180,37 +5207,37 @@ msgstr "Modo sangriento"
 msgid "Enable Gore Mode when available"
 msgstr "Activa el modo sangriento si está disponible"
 
-#: engines/hypno/detection.cpp:211
+#: engines/hypno/detection.cpp:244
 msgid "Enable original cheats"
 msgstr "Activar trucos originales"
 
-#: engines/hypno/detection.cpp:212
+#: engines/hypno/detection.cpp:245
 msgid "Allow cheats using the C key."
 msgstr "Permite el uso de trucos al pulsar la tecla C."
 
-#: engines/hypno/detection.cpp:220
+#: engines/hypno/detection.cpp:253
 msgid "Enable infinite health cheat"
 msgstr "Activar truco de salud infinita"
 
-#: engines/hypno/detection.cpp:221
+#: engines/hypno/detection.cpp:254
 msgid "Player health will never decrease (except for game over scenes)."
 msgstr ""
 "La salud del jugador no se reducirá nunca (salvo en las pantallas de «game "
 "over»)."
 
-#: engines/hypno/detection.cpp:229
+#: engines/hypno/detection.cpp:262
 msgid "Enable infinite ammo cheat"
 msgstr "Activar truco de munición infinita"
 
-#: engines/hypno/detection.cpp:230
+#: engines/hypno/detection.cpp:263
 msgid "Player ammo will never decrease."
 msgstr "La munición del jugador no se reducirá nunca."
 
-#: engines/hypno/detection.cpp:238
+#: engines/hypno/detection.cpp:271
 msgid "Enable restored content"
 msgstr "Activar contenidos restaurados"
 
-#: engines/hypno/detection.cpp:239
+#: engines/hypno/detection.cpp:272
 msgid "Add additional content that is not enabled the original implementation."
 msgstr ""
 "Añade contenidos adicionales que no se activan en la implementación original."
@@ -6354,14 +6381,6 @@ msgstr ""
 "Utiliza un escalado especial para dibujos animados en los sprites de los "
 "personajes"
 
-#: engines/sci/detection_options.h:93
-msgid "Prefer digital sound effects"
-msgstr "Preferir efectos de sonido digitales"
-
-#: engines/sci/detection_options.h:94
-msgid "Prefer digital sound effects instead of synthesized ones"
-msgstr "Utiliza efectos de sonido digitales en vez de los sintetizados"
-
 #: engines/sci/detection_options.h:117
 msgid "Use CD audio"
 msgstr "Usar CD audio"
@@ -7450,7 +7469,7 @@ msgstr ""
 "No se ha encontrado el ejecutable de Macintosh de Monkey Island\n"
 "para reproducir los instrumentos. Se ha desactivado la música."
 
-#: engines/scumm/scumm.cpp:1681
+#: engines/scumm/scumm.cpp:1682
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7461,7 +7480,7 @@ msgstr ""
 "para este juego, así que el audio será desactivado.\n"
 "Vuelve a copiar el juego a partir de los archivos originales sin comprimir."
 
-#: engines/scumm/scumm.cpp:2153
+#: engines/scumm/scumm.cpp:2154
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7470,7 +7489,7 @@ msgstr ""
 "El soporte MIDI nativo requiere la actualización Roland de LucasArts,\n"
 "pero %s no está disponible. Se usará AdLib."
 
-#: engines/scumm/scumm.cpp:3094
+#: engines/scumm/scumm.cpp:3123
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -8938,6 +8957,13 @@ msgstr ""
 "Necesitarás todas las fuentes del paquete que prefieras, por ejemplo, "
 "LiberationMono, LiberationSans y LiberationSerif, o FreeMono, FreeSans y "
 "FreeSerif respectivamente."
+
+#~ msgid ""
+#~ "WARNING: Existing save has longer gameplay duration than the current "
+#~ "state. Are you sure you want to overwrite it?"
+#~ msgstr ""
+#~ "AVISO: La partida anterior tiene una duración más larga que la actual. "
+#~ "¿Seguro que quieres sobrescribirla?"
 
 #~ msgid "I don't understand your command. "
 #~ msgstr "No entiendo tu orden. "

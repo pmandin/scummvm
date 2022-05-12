@@ -23,7 +23,6 @@
 #include "ags/shared/util/string_utils.h" //strlwr()
 #include "ags/shared/ac/common.h"
 #include "ags/engine/ac/character.h"
-#include "ags/engine/ac/character_cache.h"
 #include "ags/engine/ac/character_extras.h"
 #include "ags/engine/ac/draw.h"
 #include "ags/engine/ac/event.h"
@@ -38,7 +37,6 @@
 #include "ags/engine/ac/global_translation.h"
 #include "ags/engine/ac/move_list.h"
 #include "ags/engine/ac/mouse.h"
-#include "ags/engine/ac/object_cache.h"
 #include "ags/engine/ac/overlay.h"
 #include "ags/engine/ac/properties.h"
 #include "ags/engine/ac/region.h"
@@ -62,7 +60,7 @@
 #include "ags/engine/platform/base/ags_platform_driver.h"
 #include "ags/plugins/ags_plugin.h"
 #include "ags/plugins/plugin_engine.h"
-#include "ags/shared/script/cc_error.h"
+#include "ags/shared/script/cc_common.h"
 #include "ags/engine/script/script.h"
 #include "ags/engine/script/script_runtime.h"
 #include "ags/shared/ac/sprite_cache.h"
@@ -271,15 +269,9 @@ void unload_old_room() {
 	for (size_t i = 0; i < _GP(thisroom).LocalVariables.size() && i < MAX_GLOBAL_VARIABLES; ++i)
 		_G(croom)->interactionVariableValues[i] = _GP(thisroom).LocalVariables[i].Value;
 
-	// wipe the character cache when we change rooms
+	// ensure that any half-moves (eg. with scaled movement) are stopped
 	for (ff = 0; ff < _GP(game).numcharacters; ff++) {
-		if (_G(charcache)[ff].inUse) {
-			delete _G(charcache)[ff].image;
-			_G(charcache)[ff].image = nullptr;
-			_G(charcache)[ff].inUse = 0;
-		}
-		// ensure that any half-moves (eg. with scaled movement) are stopped
-		_G(charextra)[ff].xwas = INVALID_X;
+		_GP(charextra)[ff].xwas = INVALID_X;
 	}
 
 	_GP(play).swap_portrait_lastchar = -1;
@@ -406,7 +398,7 @@ HError LoadRoomScript(RoomStruct *room, int newnum) {
 		if (!script)
 			return new Error(String::FromFormat(
 				"Failed to load a script module: %s", filename.GetCStr()),
-				_G(ccErrorString));
+				cc_get_error().ErrorString);
 		room->CompiledScript = script;
 	}
 	return HError::None();
@@ -521,7 +513,7 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	update_polled_stuff_if_runtime();
 	redo_walkable_areas();
 	update_polled_stuff_if_runtime();
-	recache_walk_behinds();
+	walkbehinds_recalc();
 	update_polled_stuff_if_runtime();
 
 	_G(our_eip) = 205;
@@ -989,22 +981,22 @@ void check_new_room() {
 }
 
 void compile_room_script() {
-	_G(ccError) = 0;
+	cc_clear_error();
 
 	_G(roominst) = ccInstance::CreateFromScript(_GP(thisroom).CompiledScript);
-	if ((_G(ccError) != 0) || (_G(roominst) == nullptr)) {
-		quitprintf("Unable to create local script:\n%s", _G(ccErrorString).GetCStr());
+	if (cc_has_error() || (_G(roominst) == nullptr)) {
+		quitprintf("Unable to create local script:\n%s", cc_get_error().ErrorString.GetCStr());
 	}
 
 	if (!_G(roominst)->ResolveScriptImports(_G(roominst)->instanceof.get()))
-		quitprintf("Unable to resolve imports in room script:\n%s", _G(ccErrorString).GetCStr());
+		quitprintf("Unable to resolve imports in room script:\n%s", cc_get_error().ErrorString.GetCStr());
 
 	if (!_G(roominst)->ResolveImportFixups(_G(roominst)->instanceof.get()))
-		quitprintf("Unable to resolve import fixups in room script:\n%s", _G(ccErrorString).GetCStr());
+		quitprintf("Unable to resolve import fixups in room script:\n%s", cc_get_error().ErrorString.GetCStr());
 
 	_G(roominstFork) = _G(roominst)->Fork();
 	if (_G(roominstFork) == nullptr)
-		quitprintf("Unable to create forked room instance:\n%s", _G(ccErrorString).GetCStr());
+		quitprintf("Unable to create forked room instance:\n%s", cc_get_error().ErrorString.GetCStr());
 
 	_GP(repExecAlways).roomHasFunction = true;
 	_GP(lateRepExecAlways).roomHasFunction = true;

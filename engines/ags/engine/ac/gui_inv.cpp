@@ -32,6 +32,12 @@ namespace AGS3 {
 namespace AGS {
 namespace Shared {
 
+bool GUIInvWindow::HasAlphaChannel() const {
+	// We would have to test every inventory item's graphic to tell precisely,
+	// so just test game color depth instead:
+	return _GP(game).GetColorDepth() == 32;
+}
+
 int GUIInvWindow::GetCharacterId() const {
 	if (CharId < 0)
 		return _GP(game).playercharacter;
@@ -47,7 +53,7 @@ void GUIInvWindow::Draw(Bitmap *ds, int x, int y) {
 	// backwards compatibility
 	_GP(play).inv_numinline = ColCount;
 	_GP(play).inv_numdisp = RowCount * ColCount;
-	_GP(play).obsolete_inv_numorder = _G(charextra)[_GP(game).playercharacter].invorder_count;
+	_GP(play).obsolete_inv_numorder = _GP(charextra)[_GP(game).playercharacter].invorder_count;
 	// if the user changes top_inv_item, switch into backwards
 	// compatibiltiy mode
 	if (_GP(play).inv_top)
@@ -60,12 +66,12 @@ void GUIInvWindow::Draw(Bitmap *ds, int x, int y) {
 	int at_x = x;
 	int at_y = y;
 	int lastItem = TopItem + (ColCount * RowCount);
-	if (lastItem > _G(charextra)[GetCharacterId()].invorder_count)
-		lastItem = _G(charextra)[GetCharacterId()].invorder_count;
+	if (lastItem > _GP(charextra)[GetCharacterId()].invorder_count)
+		lastItem = _GP(charextra)[GetCharacterId()].invorder_count;
 
 	for (int item = TopItem; item < lastItem; ++item) {
 		// draw inv graphic
-		draw_gui_sprite(ds, _GP(game).invinfo[_G(charextra)[GetCharacterId()].invorder[item]].pic, at_x, at_y, true);
+		draw_gui_sprite(ds, _GP(game).invinfo[_GP(charextra)[GetCharacterId()].invorder[item]].pic, at_x, at_y, true);
 		at_x += data_to_game_coord(ItemWidth);
 
 		// go to next row when appropriate

@@ -37,12 +37,12 @@
 #include "ags/engine/ac/walkable_area.h"
 #include "ags/engine/gfx/gfxfilter.h"
 #include "ags/engine/gui/gui_dialog.h"
-#include "ags/shared/script/cc_options.h"
 #include "ags/engine/debugging/debug_log.h"
 #include "ags/engine/debugging/debugger.h"
 #include "ags/engine/main/main.h"
 #include "ags/shared/ac/sprite_cache.h"
 #include "ags/shared/gfx/bitmap.h"
+#include "ags/shared/script/cc_common.h"
 #include "ags/engine/gfx/graphics_driver.h"
 #include "ags/engine/main/graphics_mode.h"
 
@@ -140,7 +140,7 @@ void script_debug(int cmdd, int dataa) {
 		int mlsnum = _GP(game).chars[dataa].walking;
 		if (_GP(game).chars[dataa].walking >= TURNING_AROUND)
 			mlsnum %= TURNING_AROUND;
-		MoveList *cmls = &_G(mls)[mlsnum];
+		MoveList *cmls = &_GP(mls)[mlsnum];
 		for (int i = 0; i < cmls->numstage - 1; i++) {
 			short srcx = short((cmls->pos[i] >> 16) & 0x00ffff);
 			short srcy = short(cmls->pos[i] & 0x00ffff);

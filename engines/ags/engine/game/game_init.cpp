@@ -20,7 +20,6 @@
  */
 
 #include "ags/engine/ac/character.h"
-#include "ags/engine/ac/character_cache.h"
 #include "ags/engine/ac/dialog.h"
 #include "ags/engine/ac/display.h"
 #include "ags/engine/ac/draw.h"
@@ -49,7 +48,7 @@
 #include "ags/engine/media/audio/audio_system.h"
 #include "ags/engine/platform/base/ags_platform_driver.h"
 #include "ags/plugins/plugin_engine.h"
-#include "ags/shared/script/cc_error.h"
+#include "ags/shared/script/cc_common.h"
 #include "ags/engine/script/exports.h"
 #include "ags/engine/script/script.h"
 #include "ags/engine/script/script_runtime.h"
@@ -363,9 +362,8 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	//
 	// 3. Allocate and init game objects
 	//
-	_G(charextra) = (CharacterExtras *)calloc(game.numcharacters, sizeof(CharacterExtras));
-	_G(charcache) = (CharacterCache *)calloc(1, sizeof(CharacterCache) * game.numcharacters + 5);
-	_G(mls) = (MoveList *)calloc(game.numcharacters + MAX_ROOM_OBJECTS + 1, sizeof(MoveList));
+	_GP(charextra).resize(game.numcharacters);
+	_GP(mls).resize(game.numcharacters + MAX_ROOM_OBJECTS + 1);
 	init_game_drawdata();
 	_GP(views) = std::move(ents.Views);
 
@@ -405,9 +403,9 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	//
 	// 5. Initialize runtime state of certain game objects
 	//
-	for (int i = 0; i < _G(numguilabels); ++i) {
+	for (auto &label : _GP(guilabels)) {
 		// labels are not clickable by default
-		_GP(guilabels)[i].SetClickable(false);
+		label.SetClickable(false);
 	}
 	_GP(play).gui_draw_order.resize(game.numgui);
 	for (int i = 0; i < game.numgui; ++i)
@@ -444,7 +442,7 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	_GP(scriptModules) = ents.ScriptModules;
 	AllocScriptModules();
 	if (create_global_script())
-		return new GameInitError(kGameInitErr_ScriptLinkFailed, _G(ccErrorString));
+		return new GameInitError(kGameInitErr_ScriptLinkFailed, cc_get_error().ErrorString);
 
 	return HGameInitError::None();
 }

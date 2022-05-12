@@ -49,6 +49,10 @@ GUIListBox::GUIListBox() {
 	_scEventArgs[0] = "GUIControl *control";
 }
 
+bool GUIListBox::HasAlphaChannel() const {
+	return is_font_antialiased(Font);
+}
+
 int GUIListBox::GetItemAt(int x, int y) const {
 	if (RowHeight <= 0 || IsInRightMargin(x))
 		return -1;
@@ -79,12 +83,12 @@ bool GUIListBox::IsInRightMargin(int x) const {
 
 Rect GUIListBox::CalcGraphicRect(bool clipped) {
 	if (clipped)
-		return RectWH(X, Y, Width, Height);
+		return RectWH(0, 0, Width, Height);
 	// TODO: need to find a way to text position, or there'll be some repetition
 	// have to precache text and size on some events:
 	// - translation change
 	// - macro value change (score, overhotspot etc)
-	Rect rc = RectWH(X, Y, Width, Height);
+	Rect rc = RectWH(0, 0, Width, Height);
 	UpdateMetrics();
 	const int width = Width - 1;
 	const int pixel_size = get_fixed_pixel_size(1);
@@ -99,9 +103,9 @@ Rect GUIListBox::CalcGraphicRect(bool clipped) {
 		PrepareTextToDraw(Items[item_index]);
 		Line lpos = GUI::CalcTextPositionHor(_textToDraw.GetCStr(), Font, 1 + pixel_size, right_hand_edge, at_y + 1,
 			(FrameAlignment)TextAlignment);
-		max_line.X2 = std::max(max_line.X2, lpos.X2);
+		max_line.X2 = MAX(max_line.X2, lpos.X2);
 	}
-	return SumRects(rc, RectWH(X, Y, max_line.X2 - max_line.X1 + 1, Height));
+	return SumRects(rc, RectWH(0, 0, max_line.X2 - max_line.X1 + 1, Height));
 }
 
 int GUIListBox::AddItem(const String &text) {
@@ -113,7 +117,7 @@ int GUIListBox::AddItem(const String &text) {
 }
 
 void GUIListBox::Clear() {
-	if (Items.size() == 0)
+	if (Items.empty())
 		return;
 
 	Items.clear();

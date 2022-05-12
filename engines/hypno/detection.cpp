@@ -36,6 +36,7 @@ static const PlainGameDescriptor hypnoGames[] = {
 	{"sinistersix", "Marvel Comics Spider-Man: The Sinister Six"},
 	{"wetlands", "Wetlands"},
 	{"soldierboyz", "Soldier Boyz"},
+	{"teacher", "Bruce Coville's My Teacher Is an Alien"},
 	{nullptr, nullptr}};
 
 static const ADGameDescription gameDescriptions[] = {
@@ -132,10 +133,30 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
-		"wetlands", // Non Interactive demo featured in several game magazines
+		"wetlands", // Génération 4 (FR) - Number 81 (October 1995) - Chapters 31/52 demo
+		"Gen4",
+		AD_ENTRY2s("wetlands.exe", "15a6b1b3819ef002438df340509b5373", 629503,
+				"missions.lib", "34b922fac8f64546c0690aa83f09e98e", 40891),
+		Common::EN_USA,
+		Common::kPlatformDOS,
+		ADGF_TESTING | ADGF_DEMO,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"wetlands", // Non Interactive: PC Review 49 (November 1995)
 		"NonInteractive",
 		AD_ENTRY2s("playsmks.exe", "edc5b0c0caf3d5b01d344cb555d9a085", 422607,
 				"wetmusic.81m", "0d99c63ce19633d09569b1fdcdff1505", 2833439),
+		Common::EN_USA,
+		Common::kPlatformDOS,
+		ADGF_TESTING | ADGF_DEMO,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"wetlands", // Non Interactive: Joystick HS 7 (September 1995)
+		"NonInteractiveJoystick",
+		AD_ENTRY2s("playsmks.exe", "edc5b0c0caf3d5b01d344cb555d9a085", 422607,
+				"c44_22k.raw", "4b2279af59ce3049cc5177b0047e8447", 5247618),
 		Common::EN_USA,
 		Common::kPlatformDOS,
 		ADGF_TESTING | ADGF_DEMO,
@@ -187,8 +208,18 @@ static const ADGameDescription gameDescriptions[] = {
 		AD_ENTRY2s("boyz.exe", "bac1d734f2606dbdd0816dfa7a5cf518", 263347,
 					"setup.exe", "bac1d734f2606dbdd0816dfa7a5cf518", 160740),
 		Common::EN_USA,
-		Common::kPlatformWindows,
+		Common::kPlatformDOS,
 		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"teacher", // Bruce Coville's My Teacher Is an Alien Demo - PC Collector 10 (July 1997)
+		"Demo",
+		AD_ENTRY2s("teacher.exe", "7650ab104a21e2ca33a1d0d54a51e9d1", 258560,
+				"demomenu.smk", "abb06755ff1d345b11b0f2c2d42e5dc7", 2424),
+		Common::EN_USA,
+		Common::kPlatformWindows,
+		ADGF_UNSTABLE | ADGF_DEMO,
 		GUIO1(GUIO_NOMIDI)
 	},
 	AD_TABLE_END_MARKER
@@ -204,6 +235,8 @@ static const char *const directoryGlobs[] = {
 	"factory",
 	"movie",
 	"c_misc",
+	"data",
+	"demo",
 	nullptr
 };
 
@@ -262,7 +295,7 @@ public:
 	const char *getOriginalCopyright() const override {
 		return	"Marvel Comics Spider-Man: The Sinister Six (C) Brooklyn Multimedia\n"
 				"Wetlands (C) Hypnotix, Inc.\n"
-				"Soldier Bozy (C) Hypnotix, Inc., Motion Picture Corporation of America Interactive";
+				"Soldier Boyz (C) Hypnotix, Inc., Motion Picture Corporation of America Interactive";
 	}
 
 	const DebugChannelDef *getDebugChannels() const override {

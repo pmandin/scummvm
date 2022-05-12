@@ -19,23 +19,18 @@
  *
  */
 
-#include "ags/shared/script/cc_options.h"
-#include "ags/globals.h"
+#ifndef AGS_STD_STACK_H
+#define AGS_STD_STACK_H
+
+#include "common/stack.h"
 
 namespace AGS3 {
+namespace std {
 
-void ccSetOption(int optbit, int onoroff) {
-	if (onoroff)
-		_G(ccCompOptions) |= optbit;
-	else
-		_G(ccCompOptions) &= ~optbit;
-}
+template<class T>
+using stack = Common::Stack<T>;
 
-int ccGetOption(int optbit) {
-	if (_G(ccCompOptions) & optbit)
-		return 1;
-
-	return 0;
-}
-
+} // namespace std
 } // namespace AGS3
+
+#endif

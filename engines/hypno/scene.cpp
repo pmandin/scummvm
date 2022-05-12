@@ -80,6 +80,17 @@ void HypnoEngine::loadSceneLevel(const Common::String &current, const Common::St
 	free(buf);
 }
 
+void HypnoEngine::loadSceneLevel(const char *buf, const Common::String &name, const Common::String &next, const Common::String &prefix) {
+	debugC(1, kHypnoDebugParser, "Parsing %s", name.c_str());
+	debugC(1, kHypnoDebugParser, "%s", buf);
+	parse_mis(buf);
+	Scene *level = new Scene();
+	level->prefix = prefix;
+	level->levelIfWin = next;
+	level->hots = *g_parsedHots;
+	_levels[name] = level;
+}
+
 void HypnoEngine::resetSceneState() {
 	uint32 i = 0;
 	while (sceneVariables[i]) {
@@ -194,6 +205,10 @@ void HypnoEngine::clickedHotspot(Common::Point mousePos) {
 
 		case PaletteAction:
 			runPalette((Palette *)action);
+			break;
+
+		case SwapPointerAction:
+			runSwapPointer((SwapPointer *)action);
 			break;
 
 		default:
@@ -468,6 +483,7 @@ void HypnoEngine::runScene(Scene *scene) {
 					debugC(1, kHypnoDebugScene, "Resetting level variables");
 					resetSceneState();
 					_checkpoint = _nextLevel;
+					_defaultCursorIdx = 0;
 				}
 				_sceneState["GS_LEVELCOMPLETE"] = 0;
 

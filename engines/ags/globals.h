@@ -25,6 +25,7 @@
 #include "ags/shared/core/platform.h"
 #define AGS_PLATFORM_DEFINES_PSP_VARS (AGS_PLATFORM_OS_IOS || AGS_PLATFORM_OS_ANDROID)
 
+#include "ags/lib/std/queue.h"
 #include "ags/shared/ac/game_version.h"
 #include "ags/shared/util/stdio_compat.h"
 #include "ags/shared/util/string.h"
@@ -161,6 +162,7 @@ struct ScriptAudioChannel;
 struct ScriptDialog;
 struct ScriptDialogOptionsRendering;
 struct ScriptDrawingSurface;
+struct ScriptError;
 struct ScriptGUI;
 struct ScriptHotspot;
 struct ScriptInvItem;
@@ -349,17 +351,11 @@ public:
 	/**@}*/
 
 	/**
-	 * @defgroup agscc_errorglobals cc_error globals
+	 * @defgroup agscc_commonglobals cc_common globals
 	 * @ingroup agsglobals
 	 * @{
 	 */
-
-	int _ccError = 0;
-	int _ccErrorLine = 0;
-	String _ccErrorString;
-	String _ccErrorCallStack;
-	bool _ccErrorIsUserError = false;
-	const char *_ccCurScriptName = "";
+	ScriptError *_ccError;
 
 	/**@}*/
 
@@ -369,7 +365,11 @@ public:
 	 * @{
 	 */
 
-	ccInstance *_current_instance = nullptr;
+	// Instance thread stack holds a list of running or suspended script instances;
+	// In AGS currently only one thread is running, others are waiting in the queue.
+	// An example situation is repeatedly_execute_always callback running while
+	// another instance is waiting at the blocking action or Wait().
+	std::deque<ccInstance *> *_InstThreads;
 	// [IKM] 2012-10-21:
 	// NOTE: This is temporary solution (*sigh*, one of many) which allows certain
 	// exported functions return value as a RuntimeScriptValue object;
@@ -430,7 +430,6 @@ public:
 	 * @{
 	 */
 
-	CharacterExtras *_charextra = nullptr;
 	CharacterInfo *_playerchar = nullptr;
 	int32_t _sc_PlayerCharPtr = 0;
 	int _char_lowest_yp = 0;
@@ -578,19 +577,22 @@ public:
 
 	// actsps is used for temporary storage of the bitamp image
 	// of the latest version of the sprite
-	std::vector<Shared::Bitmap *> *_actsps;
-	std::vector<Engine::IDriverDependantBitmap *> *_actspsbmp;
-	// temporary cache of walk-behind for this actsps image
+	std::vector<ObjTexture> *_actsps;
+	// Walk-behind textures (3D renderers only)
+	std::vector<ObjTexture> *_walkbehindobj;
 	// GUI surfaces
-	std::vector<Shared::Bitmap *> *_guibg;
-	std::vector<Engine::IDriverDependantBitmap *> *_guibgddb;
+	std::vector<ObjTexture> *_guibg;
+	// GUI control surfaces
+	std::vector<ObjTexture> *_guiobjbg;
+	// first control texture index of each GUI
+	std::vector<int> *_guiobjddbref;
+	// Overlay's cached transformed bitmap, for software mode
+	std::vector<std::unique_ptr<Shared::Bitmap> > *_overlaybmp;
 	// For debugging room masks
+	ObjTexture *_debugRoomMaskObj;
+	ObjTexture *_debugMoveListObj;
 	RoomAreaMask _debugRoomMask = kRoomAreaNone;
-	std::unique_ptr<Shared::Bitmap> *_debugRoomMaskBmp;
-	Engine::IDriverDependantBitmap *_debugRoomMaskDDB = nullptr;
 	int _debugMoveListChar = -1;
-	std::unique_ptr<Shared::Bitmap> *_debugMoveListBmp;
-	Engine::IDriverDependantBitmap *_debugMoveListDDB = nullptr;
 
 	bool _current_background_is_dirty = false;
 	// Room background sprite
@@ -604,13 +606,8 @@ public:
 	color *_palette;
 	COLOR_MAP *_maincoltable;
 
-	// GUI control surfaces
-	std::vector<Shared::Bitmap *> *_guiobjbg;
 	std::vector<Engine::IDriverDependantBitmap *> *_guiobjddb;
 	std::vector<Point> *_guiobjoff; // because surface may be larger than logical position
-	std::vector<int> *_guiobjddbref; // first control texture index of each GUI
-	// Overlay's cached transformed bitmap, for software mode
-	std::vector<Shared::Bitmap *> *_overlaybmp;
 
 	/**@}*/
 
@@ -753,9 +750,14 @@ public:
 	ScriptInvItem *_scrInv;
 	ScriptDialog *_scrDialog = nullptr;
 	std::vector<ViewStruct> *_views;
-	CharacterCache *_charcache = nullptr;
+	// Cached character and object states, used to determine
+	// whether these require texture update
+	std::vector<ObjectCache> *_charcache;
 	ObjectCache *_objcache;
-	MoveList *_mls = nullptr;
+	std::vector<Point> *_screenovercache;
+	std::vector<CharacterExtras> *_charextra;
+	std::vector<MoveList> *_mls;
+
 	GameSetup *_usetup;
 	AGS::Shared::String _saveGameDirectory;
 	AGS::Shared::String _saveGameSuffix;
@@ -939,7 +941,6 @@ public:
 	 */
 
 	std::vector<AGS::Shared::GUIButton> *_guibuts;
-	int _numguibuts = 0;
 
 	/**@}*/
 
@@ -973,7 +974,6 @@ public:
 	 */
 
 	std::vector<AGS::Shared::GUIInvWindow> *_guiinv;
-	int _numguiinv = 0;
 
 	/**@}*/
 
@@ -984,7 +984,6 @@ public:
 	 */
 
 	std::vector<AGS::Shared::GUILabel> *_guilabels;
-	int _numguilabels = 0;
 
 	/**@}*/
 
@@ -995,7 +994,6 @@ public:
 	 */
 
 	std::vector<AGS::Shared::GUIListBox> *_guilist;
-	int _numguilist = 0;
 
 	/**@}*/
 
@@ -1017,7 +1015,6 @@ public:
 	 */
 
 	std::vector<AGS::Shared::GUISlider> *_guislider;
-	int _numguislider = 0;
 
 	/**@}*/
 
@@ -1028,7 +1025,6 @@ public:
 	 */
 
 	std::vector<AGS::Shared::GUITextBox> *_guitext;
-	int _numguitext = 0;
 
 	/**@}*/
 
@@ -1085,17 +1081,8 @@ public:
 	std::set<String> _tellInfoKeys;
 	int _loadSaveGameOnStartup = -1;
 
-#if ! AGS_PLATFORM_DEFINES_PSP_VARS
-	int _psp_video_framedrop = 1;
-	int _psp_ignore_acsetup_cfg_file = 0;
-	int _psp_clear_cache_on_room_change = 0; // clear --sprite cache-- when room is unloaded
-
-#if defined(AGS_PLATFORM_SCUMMVM) && AGS_PLATFORM_SCUMMVM
-	int _psp_audio_cachesize = 10;
-#endif
-	const char *_psp_game_file_name = "";
-	const char *_psp_translation = "default";
-
+#if 0
+	//! AGS_PLATFORM_DEFINES_PSP_VARS
 	int _psp_rotation = 0;
 	int _psp_gfx_renderer = 0;
 	int _psp_gfx_scaling = 1;

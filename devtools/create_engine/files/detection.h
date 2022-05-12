@@ -19,30 +19,49 @@
  *
  */
 
-#ifndef AGS_ENGINE_AC_CHARACTER_CACHE_H
-#define AGS_ENGINE_AC_CHARACTER_CACHE_H
+#ifndef XYZZY_DETECTION_H
+#define XYZZY_DETECTION_H
 
-namespace AGS3 {
+#include "engines/advancedDetector.h"
 
-namespace AGS {
-namespace Shared {
-class Bitmap;
-} // namespace Shared
-} // namespace AGS
+namespace Xyzzy {
 
-using namespace AGS; // FIXME later
-
-// stores cached info about the character
-struct CharacterCache {
-	Shared::Bitmap *image;
-	int sppic;
-	int scaling;
-	int inUse;
-	short tintredwas, tintgrnwas, tintbluwas, tintamntwas;
-	short lightlevwas, tintlightwas;
-	// no mirroredWas is required, since the code inverts the sprite number
+enum XyzzyDebugChannels {
+	kDebugGraphics = 1 << 0,
+	kDebugPath     = 1 << 1,
+	kDebugScan     = 1 << 2,
+	kDebugFilePath = 1 << 3,
+	kDebugScript   = 1 << 4
 };
 
-} // namespace AGS3
+extern const PlainGameDescriptor GAME_NAMES[];
+
+extern const ADGameDescription GAME_DESCRIPTIONS[];
+
+} // namespace Xyzzy
+
+class XyzzyMetaEngineDetection : public AdvancedMetaEngineDetection {
+	static const DebugChannelDef debugFlagList[];
+
+public:
+	XyzzyMetaEngineDetection();
+	~XyzzyMetaEngineDetection() override {}
+
+	const char *getEngineId() const override {
+		return "xyzzy";
+	}
+
+	const char *getName() const override {
+		return "Xyzzy";
+	}
+
+	const char *getOriginalCopyright() const override {
+		return "Xyzzy (C)";
+	}
+
+	const DebugChannelDef *getDebugChannels() const override {
+		return debugFlagList;
+	}
+};
 
 #endif

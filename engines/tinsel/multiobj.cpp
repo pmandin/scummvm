@@ -20,10 +20,13 @@
  * This file contains utilities to handle multi-part objects.
  */
 
+#include "tinsel/background.h"
+#include "tinsel/film.h"
 #include "tinsel/multiobj.h"
 #include "tinsel/handle.h"
 #include "tinsel/object.h"
 #include "tinsel/tinsel.h"
+#include "tinsel/noir/sysreel.h"
 
 namespace Tinsel {
 
@@ -82,6 +85,28 @@ OBJECT *MultiInitObject(const MULTI_INIT *pInitTbl) {
 	return pFirst;
 }
 
+OBJECT *InsertReelObj(const FREEL *reels) {
+	const MULTI_INIT *pmi = (const MULTI_INIT*)_vm->_handle->LockMem(reels->mobj);
+	// Verify that there is an image defined
+	const FRAME *frame = (const FRAME*)_vm->_handle->LockMem(pmi->hMulFrame);
+	const IMAGE *image = (const IMAGE*)_vm->_handle->LockMem(*frame);
+	assert(image);
+
+	auto pInsObj = MultiInitObject(pmi);
+	MultiInsertObject(_vm->_bg->GetPlayfieldList(FIELD_STATUS), pInsObj);
+	return pInsObj; // Result
+}
+
+const FILM *GetSystemReelFilm(SysReel reelIndex) {
+	SCNHANDLE hFilm = _vm->_systemReel->Get(reelIndex);
+	const FILM *pfilm = (const FILM *)_vm->_handle->LockMem(hFilm);
+	return pfilm;
+}
+
+OBJECT *InsertSystemReelObj(SysReel reelIndex) {
+	return InsertReelObj(GetSystemReelFilm(reelIndex)->reels);
+}
+
 /**
  * Inserts the multi-part object onto the specified object list.
  * @param pObjList			List to insert multi-part object onto
@@ -122,6 +147,19 @@ void MultiDeleteObject(OBJECT **pObjList, OBJECT *pMultiObj) {
 		// next obj in list
 		pMultiObj = pMultiObj->pSlave;
 	} while (pMultiObj != NULL);
+}
+
+/**
+ * Deletes all the pieces of a multi-part object from the
+ * specified playfield's object list, then sets the pointer to nullptr.
+ * @param which				The playfield whos object list we delete from.
+ * @param pMultiObj			Multi-part object to be deleted
+ */
+void MultiDeleteObjectIfExists(unsigned int playfield, OBJECT **pMultiObj) {
+	if (*pMultiObj) {
+		MultiDeleteObject(_vm->_bg->GetPlayfieldList(playfield), *pMultiObj);
+		*pMultiObj = nullptr;
+	}
 }
 
 /**
@@ -280,6 +318,17 @@ void MultiSetAniXY(OBJECT *pMultiObj, int newAniX, int newAniY) {
 
 	// move all pieces by the difference
 	MultiMoveRelXY(pMultiObj, newAniX, newAniY);
+}
+
+/**
+ * Sets the x & y anim position of all pieces of a multi-part object, as well as the Z Position.
+ * @param pMultiObj			Multi-part object whose position is to be changed
+ * @param newAniX			New x animation position
+ * @param newAniY			New y animation position
+ */
+void MultiSetAniXYZ(OBJECT *pMultiObj, int newAniX, int newAniY, int zPosition) {
+	MultiSetAniXY(pMultiObj, newAniX, newAniY);
+	MultiSetZPosition(pMultiObj, zPosition);
 }
 
 /**

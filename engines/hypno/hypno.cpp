@@ -53,10 +53,12 @@ HypnoEngine::HypnoEngine(OSystem *syst, const ADGameDescription *gd)
 	  _levelId(0), _skipLevel(false), _health(0), _maxHealth(0),
 	  _playerFrameIdx(0), _playerFrameSep(0), _refreshConversation(false),
 	  _countdown(0), _timerStarted(false), _score(0), _lives(0),
-	  _defaultCursor(""), _checkpoint(""), _skipDefeatVideo(false),
-	  _background(nullptr), _masks(nullptr), _ammo(0), _maxAmmo(0),
-	  _screenW(0), _screenH(0) { // Every games initializes its own resolution
+	  _defaultCursor(""), _defaultCursorIdx(0),  _skipDefeatVideo(false),
+	  _background(nullptr), _masks(nullptr),
+	  _additionalVideo(nullptr), _ammo(0), _maxAmmo(0),
+	  _doNotStopSounds(false), _screenW(0), _screenH(0) { // Every games initializes its own resolution
 	_rnd = new Common::RandomSource("hypno");
+	_checkpoint = "";
 
 	if (gd->extra)
 		_variant = gd->extra;
@@ -172,11 +174,19 @@ void HypnoEngine::runLevel(Common::String &name) {
 
 	// Play intros
 	disableCursor();
+
+	if (_levels[name]->playMusicDuringIntro && !_levels[name]->music.empty()) {
+		playSound(_levels[name]->music, 0, _levels[name]->musicRate);
+		_doNotStopSounds = true;
+	}
+
 	debug("Number of videos to play: %d", _levels[name]->intros.size());
 	for (Filenames::iterator it = _levels[name]->intros.begin(); it != _levels[name]->intros.end(); ++it) {
 		MVideo v(*it, Common::Point(0, 0), false, true, false);
 		runIntro(v);
 	}
+
+	_doNotStopSounds = false;
 
 	if (_levels[name]->type == TransitionLevel) {
 		debugC(1, kHypnoDebugScene, "Executing transition level %s", name.c_str());
@@ -204,7 +214,8 @@ void HypnoEngine::runLevel(Common::String &name) {
 void HypnoEngine::runIntros(Videos &videos) {
 	debugC(1, kHypnoDebugScene, "Starting run intros with %d videos!", videos.size());
 	Common::Event event;
-	stopSound();
+	if (!_doNotStopSounds)
+		stopSound();
 	bool skip = false;
 	int clicked[3] = {-1, -1, -1};
 	int clicks = 0;

@@ -20,7 +20,7 @@
  */
 
 #include "ags/lib/std/utility.h"
-#include "ags/shared/script/script_common.h"  // current_line
+#include "ags/shared/script/cc_common.h"
 #include "ags/shared/util/string.h"
 #include "ags/globals.h"
 
@@ -28,15 +28,36 @@ namespace AGS3 {
 
 using namespace AGS::Shared;
 
-// Returns full script error message and callstack (if possible)
-extern std::pair<String, String> cc_error_at_line(const char *error_msg);
-// Returns script error message without location or callstack
-extern String cc_error_without_line(const char *error_msg);
+void ccSetOption(int optbit, int onoroff) {
+	if (onoroff)
+		_G(ccCompOptions) |= optbit;
+	else
+		_G(ccCompOptions) &= ~optbit;
+}
+
+int ccGetOption(int optbit) {
+	if (_G(ccCompOptions) & optbit)
+		return 1;
+
+	return 0;
+}
+
+void cc_clear_error() {
+	_GP(ccError) = ScriptError();
+}
+
+bool cc_has_error() {
+	return _GP(ccError).HasError;
+}
+
+const ScriptError &cc_get_error() {
+	return _GP(ccError);
+}
 
 void cc_error(const char *descr, ...) {
-	_G(ccErrorIsUserError) = false;
+	_GP(ccError).IsUserError = false;
 	if (descr[0] == '!') {
-		_G(ccErrorIsUserError) = true;
+		_GP(ccError).IsUserError = true;
 		descr++;
 	}
 
@@ -45,18 +66,16 @@ void cc_error(const char *descr, ...) {
 	String displbuf = String::FromFormatV(descr, ap);
 	va_end(ap);
 
-	if (_G(currentline) > 0) {
-		// [IKM] Implementation is project-specific
-		std::pair<String, String> errinfo = cc_error_at_line(displbuf.GetCStr());
-		_G(ccErrorString) = errinfo.first;
-		_G(ccErrorCallStack) = errinfo.second;
-	} else {
-		_G(ccErrorString) = cc_error_without_line(displbuf.GetCStr());
-		_G(ccErrorCallStack) = "";
-	}
+	// TODO: because this global ccError is a global shared variable,
+	// we have to use project-dependent function to format the final message
+	_GP(ccError).ErrorString = cc_format_error(displbuf);
+	_GP(ccError).CallStack = cc_get_callstack();
+	_GP(ccError).HasError = 1;
+	_GP(ccError).Line = _G(currentline);
+}
 
-	_G(ccError) = 1;
-	_G(ccErrorLine) = _G(currentline);
+void cc_error(const ScriptError &err) {
+	_GP(ccError) = err;
 }
 
 } // namespace AGS3

@@ -135,6 +135,8 @@ public:
 	SegmentShootsSequence parseShootList(const Common::String &name, const Common::String &data);
 	void loadArcadeLevel(const Common::String &current, const Common::String &nextWin, const Common::String &nextLose, const Common::String &prefix);
 	void loadSceneLevel(const Common::String &current, const Common::String &next, const Common::String &prefix);
+	void loadSceneLevel(const char *buf, const Common::String &name, const Common::String &next, const Common::String &prefix);
+
 	LibFile *loadLib(const Filename &prefix, const Filename &filename, bool encrypted);
 
 	// User input
@@ -168,6 +170,7 @@ public:
 
 	// Cursors
 	Common::String _defaultCursor;
+	uint32 _defaultCursorIdx;
 	void disableCursor();
 	void defaultCursor();
 	void changeCursor(const Common::String &cursor, uint32 n, bool centerCursor = false);
@@ -193,6 +196,7 @@ public:
 	void runWalN(WalN *a);
 	bool runGlobal(Global *a);
 	void runTalk(Talk *a);
+	void runSwapPointer(SwapPointer *a);
 	void runChangeLevel(ChangeLevel *a);
 	virtual void drawBackToMenu(Hotspot *h);
 
@@ -231,11 +235,13 @@ public:
 	Videos _videosPlaying;
 	Videos _videosLooping;
 	MVideo *_masks;
+	MVideo *_additionalVideo;
 	const Graphics::Surface *_mask;
 
 	// Sounds
 	Filename _soundPath;
 	Filename _music;
+	bool _doNotStopSounds;
 	void playSound(const Filename &filename, uint32 loops, uint32 sampleRate = 22050);
 	void stopSound();
 
@@ -253,13 +259,14 @@ public:
 	virtual bool clickedPrimaryShoot(const Common::Point &mousePos);
 	virtual bool clickedSecondaryShoot(const Common::Point &mousePos);
 	virtual void drawShoot(const Common::Point &mousePos);
-	virtual void shoot(const Common::Point &mousePos, ArcadeShooting *arc);
+	virtual bool shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool secondary);
 	virtual void hitPlayer();
 	virtual void missedTarget(Shoot *s, ArcadeShooting *arc);
 	virtual void missNoTarget(ArcadeShooting *arc);
 	virtual byte *getTargetColor(Common::String name, int levelId);
 
 	// Segments
+	Segments _segments;
 	uint32 _segmentIdx;
 	uint32 _segmentOffset;
 	uint32 _segmentRepetition;
@@ -381,6 +388,7 @@ public:
 
 	void loadAssets() override;
 	void loadAssetsDemoDisc();
+	void loadAssetsGen4();
 	void loadAssetsPCW();
 	void loadAssetsPCG();
 	void loadAssetsFullGame();
@@ -528,14 +536,19 @@ private:
 class BoyzEngine : public HypnoEngine {
 public:
 	BoyzEngine(OSystem *syst, const ADGameDescription *gd);
+	Common::String _name;
 	void loadAssets() override;
+	void runCode(Code *code) override;
 	Common::String findNextLevel(const Common::String &level) override;
+	Common::String findNextLevel(const Transition *trans) override;
 
 	void runBeforeArcade(ArcadeShooting *arc) override;
 	void runAfterArcade(ArcadeShooting *arc) override;
+	void pressedKey(const int keycode) override;
 	int detectTarget(const Common::Point &mousePos) override;
 	void drawCursorArcade(const Common::Point &mousePos) override;
-	void shoot(const Common::Point &mousePos, ArcadeShooting *arc) override;
+	bool shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool secondary) override;
+	bool clickedSecondaryShoot(const Common::Point &mousePos) override;
 
 	void missedTarget(Shoot *s, ArcadeShooting *arc) override;
 	void drawHealth() override;
@@ -545,13 +558,24 @@ public:
 	void drawPlayer() override;
 	void findNextSegment(ArcadeShooting *arc) override;
 	void initSegment(ArcadeShooting *arc) override;
+	bool checkTransition(ArcadeTransitions &transitions, ArcadeShooting *arc) override;
+
+	void loadFonts() override;
+	void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c) override;
 
 	private:
-	Graphics::Surface _healthBar[6];
-	Graphics::Surface _ammoBar[6];
-	Graphics::Surface _portrait[6];
+	void runMainMenu(Code *code);
 
-	Filename _weaponShootSound[6];
+	int _ammoTeam[7];
+	int _healthTeam[7];
+	Graphics::Surface _healthBar[7];
+	Graphics::Surface _ammoBar[7];
+	Graphics::Surface _portrait[7];
+
+	Filename _weaponShootSound[7];
+	Filename _weaponReloadSound[7];
+	Filename _heySound[7];
+	int _weaponMaxAmmo[7];
 
 	byte *_crosshairsPalette;
 	Graphics::Surface _crosshairsInactive[8];
@@ -564,7 +588,12 @@ public:
 	ScriptMode _currentMode;
 	uint32 _currentActor;
 	uint32 _currentWeapon;
+	uint32 _civiliansShoot;
+	Filename _warningAnimals;
+	Common::Array<Filename> _warningCivilians;
 
+	Common::BitArray _font05;
+	Common::BitArray _font08;
 };
 
 } // End of namespace Hypno

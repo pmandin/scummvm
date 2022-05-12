@@ -65,14 +65,14 @@ Rect GUISlider::CalcGraphicRect(bool clipped) {
 	// Sliders are never clipped as of 3.6.0
 	// TODO: precalculate everything on width/height/graphic change!!
 	UpdateMetrics();
-	Rect logical = RectWH(X, Y, Width, Height);
-	Rect bar = Rect::MoveBy(_cachedBar, X, Y);
-	Rect handle = Rect::MoveBy(_cachedHandle, X, Y);
+	Rect logical = RectWH(0, 0, Width, Height);
+	Rect bar = _cachedBar;
+	Rect handle = _cachedHandle;
 	return Rect(
-		std::min(std::min(logical.Left, bar.Left), handle.Left),
-		std::min(std::min(logical.Top, bar.Top), handle.Top),
-		std::max(std::max(logical.Right, bar.Right), handle.Right),
-		std::max(std::max(logical.Bottom, bar.Bottom), handle.Bottom)
+		MIN(MIN(logical.Left, bar.Left), handle.Left),
+		MIN(MIN(logical.Top, bar.Top), handle.Top),
+		MAX(MAX(logical.Right, bar.Right), handle.Right),
+		MAX(MAX(logical.Bottom, bar.Bottom), handle.Bottom)
 	);
 }
 
@@ -136,7 +136,7 @@ void GUISlider::UpdateMetrics() {
 
 	_cachedBar = bar;
 	_cachedHandle = handle;
-	_handleRange = std::max(1, handle_range);
+	_handleRange = MAX(1, handle_range);
 }
 
 void GUISlider::Draw(Bitmap *ds, int x, int y) {

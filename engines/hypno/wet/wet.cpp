@@ -93,11 +93,13 @@ void WetEngine::loadAssets() {
 
 	if (_variant == "Demo" || _variant == "DemoHebrew")
 		loadAssetsDemoDisc();
+	else if (_variant == "Gen4")
+		loadAssetsGen4();
 	else if (_variant == "PCWDemo")
 		loadAssetsPCW();
 	else if (_variant == "PCGDemo")
 		loadAssetsPCG();
-	else if (_variant == "NonInteractive")
+	else if (_variant == "NonInteractive" || _variant == "NonInteractiveJoystick")
 		loadAssetsNI();
 	else
 		error("Invalid demo version: \"%s\"", _variant.c_str());
@@ -110,7 +112,7 @@ void WetEngine::loadAssetsDemoDisc() {
 	LibFile *missions = loadLib("", "wetlands/c_misc/missions.lib", encrypted);
 	Common::ArchiveMemberList files;
 	if (missions->listMembers(files) == 0)
-		error(failedDetectionError);
+		error("%s", failedDetectionError);
 
 	Hotspot h(MakeMenu);
 	Hotspots hs;
@@ -203,9 +205,45 @@ void WetEngine::loadAssetsDemoDisc() {
 	_nextLevel = "<start>";
 }
 
+void WetEngine::loadAssetsGen4() {
+
+	bool encrypted = false;
+	LibFile *missions = loadLib("", "c_misc/missions.lib", encrypted);
+	Common::ArchiveMemberList files;
+	if (missions->listMembers(files) == 0)
+		error("%s", failedDetectionError);
+
+	Transition *intro;
+	intro = new Transition("c31.mis");
+
+	intro->intros.push_back("c_misc/nw_logo.smk");
+	intro->intros.push_back("c_misc/h.s");
+	intro->intros.push_back("c_misc/w.s");
+	intro->frameImage = "c_misc/c.s";
+	intro->frameNumber = 0;
+	_levels["<start>"] = intro;
+
+	loadArcadeLevel("c31.mis", "c52.mis", "c52.mis", "");
+	loadArcadeLevel("c52.mis", "<game_over>", "<quit>", "");
+
+	Transition *over = new Transition("<quit>");
+	over->intros.push_back("c_misc/g.s");
+	_levels["<game_over>"] = over;
+
+	loadLib("", "c_misc/fonts.lib", true);
+	loadFonts();
+	loadLib("sound/", "c_misc/sound.lib", true);
+	_nextLevel = "<start>";
+}
+
 void WetEngine::loadAssetsNI() {
-	playSound("wetmusic.81m", 0, 11025);
+	Common::String musicFile = _variant == "NonInteractive" ? "wetmusic.81m" : "c44_22k.raw";
+	int musicRate = _variant == "NonInteractive" ? 11025 : 22050;
+
 	Transition *movies = new Transition("<quit>");
+	movies->music = musicFile;
+	movies->musicRate = musicRate;
+	movies->playMusicDuringIntro = true;
 	movies->intros.push_back("demo/nw_logo.smk");
 	movies->intros.push_back("demo/hypnotix.smk");
 	movies->intros.push_back("demo/wetlogo.smk");
@@ -250,7 +288,7 @@ void WetEngine::loadAssetsPCW() {
 	LibFile *missions = loadLib("", "c_misc/missions.lib", false);
 	Common::ArchiveMemberList files;
 	if (missions->listMembers(files) == 0)
-		error(failedDetectionError);
+		error("%s", failedDetectionError);
 
 	Transition *intro = new Transition("c11.mis");
 	intro->intros.push_back("c_misc/nw_logo.smk");
@@ -274,7 +312,7 @@ void WetEngine::loadAssetsPCG() {
 	LibFile *missions = loadLib("", "missions.lib", false);
 	Common::ArchiveMemberList files;
 	if (missions->listMembers(files) == 0)
-		error(failedDetectionError);
+		error("%s", failedDetectionError);
 
 	Transition *intro = new Transition("c31.mis");
 	intro->intros.push_back("nw_logo.smk");
@@ -300,7 +338,7 @@ void WetEngine::loadAssetsFullGame() {
 	LibFile *missions = loadLib("", "c_misc/missions.lib", true);
 	Common::ArchiveMemberList files;
 	if (missions == nullptr || missions->listMembers(files) == 0)
-		error(failedDetectionError);
+		error("%s", failedDetectionError);
 
 	Transition *logos = new Transition("<main_menu>");
 	logos->intros.push_back("c_misc/logo.smk");

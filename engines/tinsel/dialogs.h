@@ -26,6 +26,7 @@
 
 #include "tinsel/dw.h"
 #include "tinsel/events.h"	// for PLR_EVENT, PLR_EVENT
+#include "tinsel/inv_objects.h"
 #include "tinsel/object.h"
 #include "tinsel/movers.h"
 
@@ -46,7 +47,7 @@ enum {
 	INV_CONV 		= 0,
 	INV_1 			= 1,
 	INV_2 			= 2,
-	INV_CONF 		= 3,
+	DW0_INV_CONF	= 3,
 	INV_MENU 		= 3, // DW2 constant
 	NUM_INV_V0 		= 4,
 
@@ -55,8 +56,10 @@ enum {
 	INV_DEFAULT  	= 6,
 
 	// Noir constants
+	INV_3		 	= 3,
 	INV_4 		 	= 4,
-	NUM_INV_V3 	 	= 5,
+	NOIR_INV_CONF   = 5,
+	NUM_INV_V3 	 	= 6,
 	INV_7NOINV 	 	= 7,
 	INV_8NOINV 	 	= 8,
 	INV_NOTEBOOK 	= 9,
@@ -64,6 +67,7 @@ enum {
 	MAX_NUM_INV 	= NUM_INV_V3 // For determination of _invD array size
 };
 
+#define INV_CONF ((TinselVersion == 3) ? NOIR_INV_CONF : DW0_INV_CONF)
 #define NUM_INV ((TinselVersion == 3) ? NUM_INV_V3 : NUM_INV_V0)
 
 enum {
@@ -95,22 +99,6 @@ enum InventoryType { EMPTY,
 enum InvCursorFN { IC_AREA,
 	               IC_DROP };
 
-// attribute values - not a bit bit field to prevent portability problems
-#define DROPCODE 0x01
-#define ONLYINV1 0x02
-#define ONLYINV2 0x04
-#define DEFINV1 0x08
-#define DEFINV2 0x10
-#define PERMACONV 0x20
-#define CONVENDITEM 0x40
-// Noir only
-#define V3ATTR_X80 0x80
-#define V3ATTR_X200 0x200
-#define V3ATTR_X400 0x400
-#define NOTEBOOK_TITLE 0x800 // is a notebook title
-#define V3ATTR_X1000 0x1000
-#define V3ATTR_X2000 0x2000
-
 #define sliderRange (_sliderYmax - _sliderYmin)
 #define MAXSLIDES 4
 #define MAX_PERMICONS 10 // Max permanent conversation icons
@@ -119,9 +107,11 @@ enum InvCursorFN { IC_AREA,
 #define SG_DESC_LEN 40   // Max. saved game description length
 
 // Number of objects that makes up an empty window
-#define MAX_WCOMP 21 // 4 corners + (3+3) sides + (2+2) extra sides
-	                 // + Bground + title + slider
-	                 // + more Needed for save game window
+#define MAX_WCOMP_T0 21 // 4 corners + (3+3) sides + (2+2) extra sides
+						// + Bground + title + slider
+	                    // + more Needed for save game window
+#define MAX_WCOMP_T3 84
+#define MAX_WCOMP (TinselVersion == 3 ? MAX_WCOMP_T3 : MAX_WCOMP_T0)
 
 #define MAX_ICONS MAXHICONS *MAXVICONS
 #define MAX_ININV_TOT 160
@@ -138,18 +128,6 @@ enum CONFTYPE {
 	HOPPER_MENU1,
 	HOPPER_MENU2,
 	TOP_WINDOW
-};
-
-/** structure of each inventory object */
-struct INV_OBJECT {
-	int32 id;		// inventory objects id
-	SCNHANDLE hIconFilm;	// inventory objects animation film
-	SCNHANDLE hScript;	// inventory objects event handling script
-	int32 attribute;		// inventory object's attribute
-
-	// Noir
-	int32 unknown;
-	int32 title;	// id of associated notebook title
 };
 
 struct INV_DEF {
@@ -250,6 +228,7 @@ enum BFUNC {
 enum TM { TM_POINTER,
 	      TM_INDEX,
 	      TM_STRINGNUM,
+	      TM_UNK4,
 	      TM_NONE };
 
 // For SlideSlider() and similar
@@ -283,12 +262,14 @@ struct BUTTONEFFECT {
 	bool press; // true = button press; false = button toggle
 };
 
+enum class SysReel;
+
 class Dialogs {
 public:
 	Dialogs();
 	virtual ~Dialogs();
 
-	void PopUpInventory(int invno);
+	void PopUpInventory(int invno, int menuId = -1);
 	void OpenMenu(CONFTYPE type);
 
 	void Xmovement(int x);
@@ -370,7 +351,7 @@ public:
 	void Select(int i, bool force);
 	void FillInInventory();
 	void InvCursor(InvCursorFN fn, int CurX, int CurY);
-	INV_OBJECT *GetInvObject(int id);
+	const InventoryObject *GetInvObject(int id);
 	bool UpdateString(const Common::KeyState &kbd);
 	bool InventoryIsActive() { return _inventoryState == ACTIVE_INV; }
 	bool IsMixingDeskControl() { return _invDragging == ID_MDCONT; }
@@ -418,14 +399,18 @@ private:
 	void InvLabels(bool InBody, int aniX, int aniY);
 	void AdjustTop();
 	OBJECT *AddInvObject(int num, const FREEL **pfreel, const FILM **pfilm);
-	void AddBackground(OBJECT **rect, OBJECT **title, int extraH, int extraV, int textFrom);
-	void AddBackground(OBJECT **rect, int extraH, int extraV);
-	void AddTitle(OBJECT **title, int extraH);
+	void AddBackground(OBJECT **rect, const Common::Rect &bounds, OBJECT **title = nullptr, int textFrom = 0);
+	void AddTitle(OBJECT **title, const Common::Rect &rect);
 	void AddSlider(OBJECT **slide, const FILM *pfilm);
 	void AddBox(int *pi, const int i);
 	void AddEWSlider(OBJECT **slide, const FILM *pfilm);
+	void PositionInventory(OBJECT *pMultiObj, int xOffset, int yOffset, int zPosition);
 	int AddExtraWindow(int x, int y, OBJECT **retObj);
+	void ConstructInventoryCommon(SysReel reel, bool hasTitle);
+	void ConstructConversationInventory();
 	void ConstructInventory(InventoryType filling);
+	void ConstructOtherInventory(int menuId);
+	void ConstructMainInventory();
 	void AlterCursor(int num);
 	void SetMenuGlobals(CONFINIT *ci);
 	void CloseInventory();
@@ -464,8 +449,7 @@ private:
 
 	INV_DEF _invD[MAX_NUM_INV];        // Conversation + 2 inventories + ...
 	int _activeInv;                      // Which inventory is currently active
-	INV_OBJECT *_invObjects; // Inventory objects' data
-	int _numObjects;               // Number of inventory objects
+	InventoryObjects *_invObjects; // Inventory objects' data
 	SCNHANDLE *_invFilms;
 	DIRECTION _initialDirection;
 
@@ -503,8 +487,8 @@ private:
 
 	LANGUAGE _displayedLanguage;
 
-	OBJECT *_objArray[MAX_WCOMP];  // Current display objects (window)
-	OBJECT *_dispObjArray[MAX_WCOMP]; // Current display objects (re-sizing window)
+	OBJECT *_objArray[MAX_WCOMP_T3];  // Current display objects (window)
+	OBJECT *_dispObjArray[MAX_WCOMP_T3]; // Current display objects (re-sizing window)
 	ANIM _iconAnims[MAX_ICONS];
 
 	OBJECT *_rectObject, *_slideObject; // Current display objects, for reference
