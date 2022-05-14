@@ -85,46 +85,39 @@ bool ReevengiEngine::hasFeature(EngineFeature f) const {
 
 GfxBase *ReevengiEngine::createRenderer(int screenW, int screenH, bool fullscreen) {
 	Common::String rendererConfig = ConfMan.get("renderer");
-	Graphics::RendererType desiredRendererType = Graphics::parseRendererTypeCode(rendererConfig);
-	Graphics::RendererType matchingRendererType = Graphics::getBestMatchingAvailableRendererType(desiredRendererType);
+	Graphics::RendererType desiredRendererType = Graphics::Renderer::parseTypeCode(rendererConfig);
+	uint32 availableRendererTypes = Graphics::Renderer::getAvailableTypes();
 
-	_softRenderer = (matchingRendererType == Graphics::kRendererTypeTinyGL);
+	availableRendererTypes &=
+#if defined(USE_OPENGL_GAME)
+			Graphics::kRendererTypeOpenGL |
+#endif
+#if defined(USE_TINYGL)
+			Graphics::kRendererTypeTinyGL |
+#endif
+			0;
+
+	Graphics::RendererType matchingRendererType = Graphics::Renderer::getBestMatchingType(desiredRendererType, availableRendererTypes);
+
+	_softRenderer = matchingRendererType == Graphics::kRendererTypeTinyGL;
 	if (!_softRenderer) {
 		initGraphics3d(screenW, screenH);
 	} else {
 		initGraphics(screenW, screenH, nullptr);
 	}
 
-#if defined(USE_OPENGL_GAME) /*|| defined(USE_OPENGL_SHADERS) || defined(USE_GLES2)*/
-	bool backendCapableOpenGL = g_system->hasFeature(OSystem::kFeatureOpenGLForGame);
-#endif
-
-#if defined(USE_OPENGL_GAME)
-	// Check the OpenGL context actually supports shaders
-	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders && !OpenGLContext.shadersSupported) {
-		matchingRendererType = Graphics::kRendererTypeOpenGL;
-	}
-#endif
-
-	if (matchingRendererType != desiredRendererType && desiredRendererType != Graphics::kRendererTypeDefault) {
-		// Display a warning if unable to use the desired renderer
-		warning("Unable to create a '%s' renderer", rendererConfig.c_str());
-	}
 
 	GfxBase *renderer = nullptr;
-/*#if defined(USE_GLES2) || defined(USE_OPENGL_SHADERS)
-	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGLShaders) {
-		renderer = CreateGfxOpenGLShader();
-	}
-#endif*/
-#if defined(USE_OPENGL_GAME) /*&& !defined(USE_GLES2)*/
-	if (backendCapableOpenGL && matchingRendererType == Graphics::kRendererTypeOpenGL) {
+#if defined(USE_OPENGL_GAME)
+	if (matchingRendererType == Graphics::kRendererTypeOpenGL) {
 		renderer = CreateGfxOpenGL();
 	}
 #endif
+#if defined(USE_TINYGL)
 	if (matchingRendererType == Graphics::kRendererTypeTinyGL) {
 		renderer = CreateGfxTinyGL();
 	}
+#endif
 
 	if (!renderer) {
 		error("Unable to create a '%s' renderer", rendererConfig.c_str());
