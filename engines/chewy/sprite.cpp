@@ -161,22 +161,22 @@ void spriteEngine() {
 					calc_zoom(_G(spieler_mi)[P_CHEWY].XyzStart[1], (int16)_G(room)->_roomInfo->_zoomFactor,
 					          (int16)_G(room)->_roomInfo->_zoomFactor, &_G(spieler_vector)[P_CHEWY]);
 
-					_G(out)->scale_set(_G(chewy)->_image[sprNr], x, y,
+					_G(out)->scale_set(_G(chewy)->image[sprNr], x, y,
 					                _G(spieler_vector)[P_CHEWY].Xzoom,
 					                _G(spieler_vector)[P_CHEWY].Yzoom,
 					                _G(scr_width));
 				} else {
 					int16 sprNr = _G(spz_spr_nr)[_G(spieler_vector)[P_CHEWY].PhNr];
-					x = _G(spieler_mi)[P_CHEWY].XyzStart[0] + _G(spz_tinfo)->_correction[sprNr * 2] -
+					x = _G(spieler_mi)[P_CHEWY].XyzStart[0] + _G(spz_tinfo)->correction[sprNr * 2] -
 					    _G(gameState).scrollx;
-					y = _G(spieler_mi)[P_CHEWY].XyzStart[1] + _G(spz_tinfo)->_correction[sprNr * 2 + 1] -
+					y = _G(spieler_mi)[P_CHEWY].XyzStart[1] + _G(spz_tinfo)->correction[sprNr * 2 + 1] -
 					    _G(gameState).scrolly;
 					calc_zoom(_G(spieler_mi)[P_CHEWY].XyzStart[1],
 					          (int16)_G(room)->_roomInfo->_zoomFactor,
 					          (int16)_G(room)->_roomInfo->_zoomFactor,
 					          &_G(spieler_vector)[P_CHEWY]);
 
-					_G(out)->scale_set(_G(spz_tinfo)->_image[sprNr], x, y,
+					_G(out)->scale_set(_G(spz_tinfo)->image[sprNr], x, y,
 					                _G(spieler_vector)[P_CHEWY].Xzoom,
 					                _G(spieler_vector)[P_CHEWY].Yzoom,
 					                _G(scr_width));
@@ -197,10 +197,10 @@ void spriteEngine() {
 					sprNr = _G(spz_spr_nr)[_G(spieler_vector)[personNr].PhNr];
 				}
 
-				x = _G(spieler_mi)[personNr].XyzStart[0] + ts_info->_correction[sprNr * 2] - _G(gameState).scrollx;
-				y = _G(spieler_mi)[personNr].XyzStart[1] + ts_info->_correction[sprNr * 2 + 1] - _G(gameState).scrolly;
+				x = _G(spieler_mi)[personNr].XyzStart[0] + ts_info->correction[sprNr * 2] - _G(gameState).scrollx;
+				y = _G(spieler_mi)[personNr].XyzStart[1] + ts_info->correction[sprNr * 2 + 1] - _G(gameState).scrolly;
 				calc_zoom(_G(spieler_mi)[personNr].XyzStart[1], _G(gameState).ZoomXy[personNr][0],_G(gameState).ZoomXy[personNr][1], &_G(spieler_vector)[personNr]);
-				_G(out)->scale_set(ts_info->_image[sprNr], x, y, _G(spieler_vector)[personNr].Xzoom, _G(spieler_vector)[personNr].Yzoom, _G(scr_width));
+				_G(out)->scale_set(ts_info->image[sprNr], x, y, _G(spieler_vector)[personNr].Xzoom, _G(spieler_vector)[personNr].Yzoom, _G(scr_width));
 			}
 			}
 			break;
@@ -323,10 +323,8 @@ void setPersonPos(int16 x, int16 y, int16 personNr, int16 direction) {
 	int16 y1 = _G(spieler_vector)[personNr].Xypos[1] - _G(gameState).scrolly;
 	_G(atds)->set_split_win(tmpNr, x1, y1);
 	if (!_G(flags).ExitMov && personNr == P_CHEWY) {
-		int16 u_index = _G(ged)->ged_idx(x + _G(spieler_mi)[personNr].HotX, y + _G(spieler_mi)[personNr].HotY,
-		                                 _G(room)->_gedXNr[_G(room_blk).AkAblage],
-		                                 _G(ged_mem)[_G(room_blk).AkAblage]);
-		check_shad(u_index, 1);
+		const int16 paletteId = _G(barriers)->getBarrierId(x + _G(spieler_mi)[personNr].HotX, y + _G(spieler_mi)[personNr].HotY);
+		checkShadow(paletteId, 1);
 	}
 }
 
@@ -454,7 +452,7 @@ void startAniBlock(int16 nr, const AniBlock *ab) {
 void startAadWait(int16 diaNr) {
 	const int16 oldMouseLeftClick = _G(mouseLeftClick);
 	_G(mouseLeftClick) = false;
-	_G(minfo)._button = 0;
+	_G(minfo).button = 0;
 	_G(talk_start_ani) = -1;
 	_G(talk_hide_static) = -1;
 	setSsiPos();
@@ -465,14 +463,14 @@ void startAadWait(int16 diaNr) {
 		g_engine->_sound->isSpeechActive()
 		)) {
 
-		if (_G(minfo)._button && _G(atds)->aadGetStatus() == -1)
+		if (_G(minfo).button && _G(atds)->aadGetStatus() == -1)
 			g_engine->_sound->stopSpeech();
 
 		setupScreen(DO_SETUP);
 	}
 
 	_G(mouseLeftClick) = oldMouseLeftClick;
-	if (_G(minfo)._button)
+	if (_G(minfo).button)
 		_G(flags).mainMouseFlag = 1;
 	g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
 	stop_spz();
@@ -491,7 +489,7 @@ bool startAtsWait(int16 txtNr, int16 txtMode, int16 col, int16 mode) {
 	assert(mode == ATS_DATA || mode == INV_USE_DATA || mode == INV_USE_DEF);
 
 	_G(mouseLeftClick) = false;
-	_G(minfo)._button = 0;
+	_G(minfo).button = 0;
 
 	if (!_G(flags).AtsText) {
 		_G(flags).AtsText = true;
@@ -518,7 +516,7 @@ bool startAtsWait(int16 txtNr, int16 txtMode, int16 col, int16 mode) {
 					if (g_engine->_sound->speechEnabled() && !g_engine->_sound->isSpeechActive())
 						_G(atds)->stop_ats();
 
-					if (_G(minfo)._button)
+					if (_G(minfo).button)
 						g_engine->_sound->stopSpeech();
 
 					setupScreen(DO_SETUP);
@@ -532,7 +530,7 @@ bool startAtsWait(int16 txtNr, int16 txtMode, int16 col, int16 mode) {
 		_G(flags).AtsText = false;
 	}
 
-	if (_G(minfo)._button)
+	if (_G(minfo).button)
 		_G(flags).mainMouseFlag = 1;
 
 	g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
@@ -554,7 +552,7 @@ void aadWait(int16 strNr) {
 		}
 	}
 	_G(mouseLeftClick) = oldMouseLeftClick;
-	if (_G(minfo)._button)
+	if (_G(minfo).button)
 		_G(flags).mainMouseFlag = 1;
 	g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
 }
@@ -774,20 +772,14 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 			}
 
 			if (!mi->Mode) {
-				if (!(u_index = _G(ged)->ged_idx(om->Xypos[0] + mi->HotX + tmpx,
-				                              om->Xypos[1] + mi->HotY + tmpy,
-				                              _G(room)->_gedXNr[_G(room_blk).AkAblage],
-				                              _G(ged_mem)[_G(room_blk).AkAblage]))) {
+				if (!(u_index = _G(barriers)->getBarrierId(om->Xypos[0] + mi->HotX + tmpx,
+				                                      om->Xypos[1] + mi->HotY + tmpy))) {
 
-					if (!(u_index = _G(ged)->ged_idx(om->Xypos[0] + mi->HotX + tmpx,
-					                              om->Xypos[1] + mi->HotY,
-					                              _G(room)->_gedXNr[_G(room_blk).AkAblage],
-					                              _G(ged_mem)[_G(room_blk).AkAblage]))) {
+					if (!(u_index = _G(barriers)->getBarrierId(om->Xypos[0] + mi->HotX + tmpx,
+					                                      om->Xypos[1] + mi->HotY))) {
 
-						if (!(u_index = _G(ged)->ged_idx(om->Xypos[0] + mi->HotX,
-						                              om->Xypos[1] + mi->HotY + tmpy,
-						                              _G(room)->_gedXNr[_G(room_blk).AkAblage],
-						                              _G(ged_mem)[_G(room_blk).AkAblage]))) {
+						if (!(u_index = _G(barriers)->getBarrierId(om->Xypos[0] + mi->HotX,
+						                                      om->Xypos[1] + mi->HotY + tmpy))) {
 							om->Count = 0;
 						} else {
 							if (!tmpy) {
@@ -797,7 +789,7 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 									tmpy = 1;
 							}
 							if (mi->Id == CHEWY_OBJ)
-								check_shad(u_index, 1);
+								checkShadow(u_index, 1);
 
 							if (abs(om->Xypos[1] - mi->XyzEnd[1]) <= abs(tmpy)) {
 								om->Count = 0;
@@ -834,7 +826,7 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 								tmpx = 1;
 						}
 						if (mi->Id == CHEWY_OBJ)
-							check_shad(u_index, 1);
+							checkShadow(u_index, 1);
 
 						if (abs(om->Xypos[0] - mi->XyzEnd[0]) <= abs(tmpx)) {
 							om->Count = 0;
@@ -866,7 +858,7 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 					}
 				} else {
 					if (mi->Id == CHEWY_OBJ)
-						check_shad(u_index, 1);
+						checkShadow(u_index, 1);
 					om->Xypos[0] += tmpx;
 					om->Xypos[1] += tmpy;
 					om->Xypos[2] += tmpz;
@@ -889,11 +881,9 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 				om->Xypos[1] += tmpy;
 				om->Xypos[2] += tmpz;
 				if (mi->Id == CHEWY_OBJ) {
-					u_index = _G(ged)->ged_idx(om->Xypos[0] + mi->HotX,
-					                        om->Xypos[1] + mi->HotY,
-					                        _G(room)->_gedXNr[_G(room_blk).AkAblage],
-					                        _G(ged_mem)[_G(room_blk).AkAblage]);
-					check_shad(u_index, 1);
+					u_index = _G(barriers)->getBarrierId(om->Xypos[0] + mi->HotX,
+					                                om->Xypos[1] + mi->HotY);
+					checkShadow(u_index, 1);
 				}
 			}
 			if (mi->Id == CHEWY_OBJ) {

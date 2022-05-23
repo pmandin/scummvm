@@ -67,7 +67,7 @@ void Inventory::plot_menu() {
 	if (k != -1) {
 		if (k < 5)
 			_G(out)->boxFill(inventoryHotspots[k].left, inventoryHotspots[k].top,
-	  						 inventoryHotspots[k].bottom + 1, inventoryHotspots[k].right + 5, 41);
+	  						 inventoryHotspots[k].right + 1, inventoryHotspots[k].bottom + 5, 41);
 		else {
 			int16 x = (g_events->_mousePos.x - (WIN_INF_X)) / 54;
 			y = (g_events->_mousePos.y - (WIN_INF_Y + 4 + 30)) / 30;
@@ -100,12 +100,12 @@ void Inventory::plot_menu() {
 			y = 3;
 		else
 			y = 0;
-		_G(out)->spriteSet(_G(curtaf)->_image[_G(ani_count)[i]],
+		_G(out)->spriteSet(_G(curtaf)->image[_G(ani_count)[i]],
 			WIN_INF_X + 8 + i * 32, WIN_INF_Y + 12 - y, _G(scr_width));
 	}
 
 	for (int16 i = 0; i < 2; i++) {
-		_G(out)->spriteSet(_G(menutaf)->_image[PFEIL_UP + i],
+		_G(out)->spriteSet(_G(menutaf)->image[PFEIL_UP + i],
 			WIN_INF_X + 200 + i * 40, WIN_INF_Y + 12, _G(scr_width));
 	}
 
@@ -163,9 +163,9 @@ void Inventory::menu() {
 	_G(show_invent_menu) = 1;
 
 	while (_G(show_invent_menu) == 1 && !SHOULD_QUIT) {
-		if (!_G(minfo)._button)
+		if (!_G(minfo).button)
 			mouseFl = false;
-		if (_G(minfo)._button == 1 || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN || keyVal) {
+		if (_G(minfo).button == 1 || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN || keyVal) {
 			if (!mouseFl) {
 				mouseFl = true;
 				g_events->_kbInfo._keyCode = '\0';
@@ -248,7 +248,7 @@ void Inventory::menu() {
 					break;
 				}
 			}
-		} else if (_G(minfo)._button == 2 || g_events->_kbInfo._keyCode == Common::KEYCODE_ESCAPE) {
+		} else if (_G(minfo).button == 2 || g_events->_kbInfo._keyCode == Common::KEYCODE_ESCAPE) {
 			if (!mouseFl) {
 				// Set virtual key
 				_G(in)->_hotkey = Common::KEYCODE_ESCAPE;
@@ -266,7 +266,7 @@ void Inventory::menu() {
 		} else if (ret_look == 5) {
 			taste_flag = false;
 			mouseFl = false;
-			_G(minfo)._button = 1;
+			_G(minfo).button = 1;
 			keyVal = Common::KEYCODE_RETURN;
 		}
 
@@ -296,7 +296,7 @@ void Inventory::menu() {
 						inv_rand_y = -1;
 						plot_menu();
 						_G(cur)->plot_cur();
-						_G(out)->back2screen(_G(workpage));
+						_G(out)->copyToScreen();
 					}
 				} else {
 					if (menu_flag1 != MENU_DISPLAY) {
@@ -359,8 +359,7 @@ void Inventory::menu() {
 			} else if (menu_flag1 == MENU_HIDE)
 				_G(fx)->blende1(_G(workptr), _G(screen0), nullptr, 200, 1, 300);
 			menu_flag1 = false;
-			_G(out)->setClip(0, 0, 320, 200);
-			_G(out)->back2screen(_G(workpage));
+			_G(out)->copyToScreen();
 		} else {
 			showCur();
 		}
@@ -369,12 +368,12 @@ void Inventory::menu() {
 	_G(cur)->move(_G(maus_old_x), _G(maus_old_y));
 	g_events->_mousePos.x = _G(maus_old_x);
 	g_events->_mousePos.y = _G(maus_old_y);
-	_G(minfo)._button = 0;
+	_G(minfo).button = 0;
 
 	while (_G(in)->getSwitchCode() == Common::KEYCODE_ESCAPE && !SHOULD_QUIT) {
 		setupScreen(NO_SETUP);
 		_G(cur)->plot_cur();
-		_G(out)->back2screen(_G(workpage));
+		_G(out)->copyToScreen();
 	}
 
 	_G(flags).InventMenu = false;
@@ -425,11 +424,11 @@ int16 Inventory::look(int16 invent_nr, int16 mode, int16 ats_nr) {
 	while (!endLoop) {
 		int16 rect = _G(in)->findHotspot(inventoryHotspots);
 
-		if (_G(minfo)._button) {
-			if (_G(minfo)._button == 2) {
+		if (_G(minfo).button) {
+			if (_G(minfo).button == 2) {
 				if (!mouseFl)
 					g_events->_kbInfo._scanCode = Common::KEYCODE_ESCAPE;
-			} else if (_G(minfo)._button == 1) {
+			} else if (_G(minfo).button == 1) {
 				if (!mouseFl) {
 					switch (rect) {
 					case 0:
@@ -534,7 +533,7 @@ int16 Inventory::look(int16 invent_nr, int16 mode, int16 ats_nr) {
 		}
 
 		_G(cur)->plot_cur();
-		_G(out)->back2screen(_G(workpage));
+		_G(out)->copyToScreen();
 		SHOULD_QUIT_RETURN0;
 	}
 
@@ -542,7 +541,7 @@ int16 Inventory::look(int16 invent_nr, int16 mode, int16 ats_nr) {
 		setupScreen(NO_SETUP);
 		plot_menu();
 		_G(cur)->plot_cur();
-		_G(out)->back2screen(_G(workpage));
+		_G(out)->copyToScreen();
 		SHOULD_QUIT_RETURN0;
 	}
 
@@ -654,7 +653,7 @@ void Inventory::showDiary() {
 	_G(room)->load_tgp(DIARY_START, &_G(room_blk), GBOOK_TGP, 0, GBOOK);
 	_G(out)->setPointer(_G(workptr));
 	_G(out)->map_spr2screen(_G(ablage)[_G(room_blk).AkAblage], _G(gameState).scrollx, _G(gameState).scrolly);
-	_G(out)->back2screen(_G(workpage));
+	_G(out)->copyToScreen();
 	_G(room)->set_ak_pal(&_G(room_blk));
 	_G(out)->setPointer(nullptr);
 	_G(fx)->blende1(_G(workptr), _G(screen0), _G(pal), 150, 0, 0);

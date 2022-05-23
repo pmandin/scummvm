@@ -2323,40 +2323,15 @@ static const uint16 hoyle5PatchSetScale[] = {
 // Choosing any other game than the above results in a "No script found" error.
 // The original game did not show the game selection screen, as there were
 // direct shortucts to each game.
-// Since we do show the game selection screen, we remove all the games
-// which from the ones below, which are not included in each version:
-// - Crazy Eights (script 100)
-// - Old Maid (script 200)
+// We do show the game selection screen for Children's Collection, thus we
+// disable all the games which are not included in this version:
 // - Hearts (script 300)
 // - Gin Rummy (script 400)
 // - Cribbage (script 500)
 // - Klondike / Solitaire (script 600)
 // - Bridge (script 700)
 // - Poker (script 1100)
-// - Checkers (script 1200)
 // - Backgammon (script 1300)
-static const uint16 hoyle5SignatureCrazyEights[] = {
-	SIG_MAGICDWORD,
-	0x38, 0x8e, 0x00,      // pushi 008e
-	0x76,                  // push0
-	0x38, 0xf0, 0x02,      // pushi 02f0
-	0x76,                  // push0
-	0x72, 0x9c, 0x01,      // lofsa chooseCrazy8s
-	0x4a, 0x08, 0x00,      // send  0008
-	SIG_END
-};
-
-static const uint16 hoyle5SignatureOldMaid[] = {
-	SIG_MAGICDWORD,
-	0x38, 0x8e, 0x00,      // pushi 008e
-	0x76,                  // push0
-	0x38, 0xf0, 0x02,      // pushi 02f0
-	0x76,                  // push0
-	0x72, 0x2c, 0x02,      // lofsa chooseOldMaid
-	0x4a, 0x08, 0x00,      // send  0008
-	SIG_END
-};
-
 static const uint16 hoyle5SignatureHearts[] = {
 	SIG_MAGICDWORD,
 	0x38, 0x8e, 0x00,      // pushi 008e
@@ -2419,17 +2394,6 @@ static const uint16 hoyle5SignaturePoker[] = {
 	0x38, 0xf0, 0x02,      // pushi 02f0
 	0x76,                  // push0
 	0x72, 0x8c, 0x05,      // lofsa choosePoker
-	0x4a, 0x08, 0x00,      // send  0008
-	SIG_END
-};
-
-static const uint16 hoyle5SignatureCheckers[] = {
-	SIG_MAGICDWORD,
-	0x38, 0x8e, 0x00,      // pushi 008e
-	0x76,                  // push0
-	0x38, 0xf0, 0x02,      // pushi 02f0
-	0x76,                  // push0
-	0x72, 0x1c, 0x06,      // lofsa chooseCheckers
 	0x4a, 0x08, 0x00,      // send  0008
 	SIG_END
 };
@@ -2506,45 +2470,13 @@ static const SciScriptPatcherEntry hoyle5Signatures[] = {
 	{  true, 64990, "increase number of save games (1/2)",         1, sci2NumSavesSignature1,           sci2NumSavesPatch1 },
 	{  true, 64990, "increase number of save games (2/2)",         1, sci2NumSavesSignature2,           sci2NumSavesPatch2 },
 	{  true, 64990, "disable change directory button",             1, sci2ChangeDirSignature,           sci2ChangeDirPatch },
-	SCI_SIGNATUREENTRY_TERMINATOR
-};
-
-//          script, description,                                      signature                         patch
-static const SciScriptPatcherEntry hoyle5ChildrensCollectionSignatures[] = {
-	{  true,     3, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true,    23, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true,   200, "fix setScale calls",                         11, hoyle5SetScaleSignature,          hoyle5PatchSetScale },
-	{  true,   500, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true, 64937, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true,   975, "disable Gin Rummy",                           1, hoyle5SignatureGinRummy,          hoyle5PatchDisableGame },
-	{  true,   975, "disable Cribbage",                            1, hoyle5SignatureCribbage,          hoyle5PatchDisableGame },
-	{  true,   975, "disable Klondike",                            1, hoyle5SignatureKlondike,          hoyle5PatchDisableGame },
-	{  true,   975, "disable Bridge",                              1, hoyle5SignatureBridge,            hoyle5PatchDisableGame },
-	{  true,   975, "disable Poker",                               1, hoyle5SignaturePoker,             hoyle5PatchDisableGame },
-	{  true,   975, "disable Hearts",                              1, hoyle5SignatureHearts,            hoyle5PatchDisableGame },
-	{  true,   975, "disable Backgammon",                          1, hoyle5SignatureBackgammon,        hoyle5PatchDisableGame },
-	SCI_SIGNATUREENTRY_TERMINATOR
-};
-
-//          script, description,                                      signature                         patch
-static const SciScriptPatcherEntry hoyle5BridgeSignatures[] = {
-	{  true,     3, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true,    23, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true,   500, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true, 64937, "remove kGetTime spin",                        1, hoyle5SignatureSpinLoop,          hoyle5PatchSpinLoop },
-	{  true,   733, "bridge arithmetic against object ",           1, hoyle5SignatureBridgeArithmetic,  hoyle5PatchBridgeArithmetic },
-	{  true,   975, "disable Gin Rummy",                           1, hoyle5SignatureGinRummy,          hoyle5PatchDisableGame },
-	{  true,   975, "disable Cribbage",                            1, hoyle5SignatureCribbage,          hoyle5PatchDisableGame },
-	{  true,   975, "disable Klondike",                            1, hoyle5SignatureKlondike,          hoyle5PatchDisableGame },
-	{  true,   975, "disable Poker",                               1, hoyle5SignaturePoker,             hoyle5PatchDisableGame },
-	{  true,   975, "disable Hearts",                              1, hoyle5SignatureHearts,            hoyle5PatchDisableGame },
-	{  true,   975, "disable Backgammon",                          1, hoyle5SignatureBackgammon,        hoyle5PatchDisableGame },
-	{  true,   975, "disable Crazy Eights",                        1, hoyle5SignatureCrazyEights,       hoyle5PatchDisableGame },
-	{  true,   975, "disable Old Maid",                            1, hoyle5SignatureOldMaid,           hoyle5PatchDisableGame },
-	{  true,   975, "disable Checkers",                            1, hoyle5SignatureCheckers,          hoyle5PatchDisableGame },
-	{  true, 64990, "increase number of save games (1/2)",         1, sci2NumSavesSignature1,           sci2NumSavesPatch1 },
-	{  true, 64990, "increase number of save games (2/2)",         1, sci2NumSavesSignature2,           sci2NumSavesPatch2 },
-	{  true, 64990, "disable change directory button",             1, sci2ChangeDirSignature,           sci2ChangeDirPatch },
+	{ false,   975, "disable Gin Rummy",                           1, hoyle5SignatureGinRummy,          hoyle5PatchDisableGame },
+	{ false,   975, "disable Cribbage",                            1, hoyle5SignatureCribbage,          hoyle5PatchDisableGame },
+	{ false,   975, "disable Klondike",                            1, hoyle5SignatureKlondike,          hoyle5PatchDisableGame },
+	{ false,   975, "disable Bridge",                              1, hoyle5SignatureBridge,            hoyle5PatchDisableGame },
+	{ false,   975, "disable Poker",                               1, hoyle5SignaturePoker,             hoyle5PatchDisableGame },
+	{ false,   975, "disable Hearts",                              1, hoyle5SignatureHearts,            hoyle5PatchDisableGame },
+	{ false,   975, "disable Backgammon",                          1, hoyle5SignatureBackgammon,        hoyle5PatchDisableGame },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
 
@@ -7757,6 +7689,35 @@ static const uint16 longbowPatchAmigaSpeedTest[] = {
 	PATCH_END
 };
 
+// The Amiga version introduced a script bug that prevents setting the flag when
+//  saving the peasant woman on day one. To get a perfect score, Robin must give
+//  the woman money as she walks away, but this causes the rest of the game to
+//  behave as if she was left to die. The script savedTheWoman was altered to
+//  set flag 173 in a later state than before, but this was a mistake because
+//  giveWomanBucks interrupts savedTheWoman and completes the scene. The Amiga
+//  script also allows exiting to the map before flag 173 is set.
+//
+// We fix this by setting flag 173 as soon as savedTheWoman enables input, just
+//  like in the PC versions. We make room by overwriting an Amiga-only test of
+//  the machine's speed. This is unnecessary as we disable the speed test above.
+//
+// Applies to: English Amiga Floppy
+// Responsible method: savedTheWoman:changeState(13)
+static const uint16 longbowSignatureAmigaPeasantWoman[] = {
+	0x89, SIG_MAGICDWORD, 0x57,     // lsg 87 [ machine speed, always 2 ]
+	0x35, 0x01,                     // ldi 01
+	0x20,                           // ge?    [ machine speed >= 1 ]
+	0x30, SIG_UINT16(0x0012),       // bnt 0012
+	SIG_END
+};
+
+static const uint16 longbowPatchAmigaPeasantWoman[] = {
+	0x39, 0x01,                     // pushi 01
+	0x38, PATCH_UINT16(0x00ad),     // pushi 00ad    [ flag 173 ]
+	0x45, 0x06, 0x02,               // callb proc0_6 [ set saved-woman flag ]
+	PATCH_END
+};
+
 // When Robin is sentenced to death, King Richard and Robin discuss Marian's
 //  death even if she is alive and just finished testifying at the trial.
 //
@@ -7807,6 +7768,7 @@ static const uint16 longbowPatchMarianMessagesFix[] = {
 
 //          script, description,                                      signature                                patch
 static const SciScriptPatcherEntry longbowSignatures[] = {
+	{  true,    29, "amiga day 1 peasant woman",                   1, longbowSignatureAmigaPeasantWoman,       longbowPatchAmigaPeasantWoman},
 	{  true,   140, "green man riddles and forest sweep fix",      1, longbowSignatureGreenManForestSweepFix,  longbowPatchGreenManForestSweepFix },
 	{  true,   150, "day 5/6 camp sunset fix",                     2, longbowSignatureCampSunsetFix,           longbowPatchCampSunsetFix },
 	{  true,   150, "day 7 tuck net fix",                          1, longbowSignatureTuckNetFix,              longbowPatchTuckNetFix },
@@ -22963,15 +22925,7 @@ void ScriptPatcher::processScript(uint16 scriptNr, SciSpan<byte> scriptData) {
 		break;
 #ifdef ENABLE_SCI32
 	case GID_HOYLE5:
-		if (g_sci->getResMan()->testResource(ResourceId(kResourceTypeScript, 100)) &&
-			g_sci->getResMan()->testResource(ResourceId(kResourceTypeScript, 700)))
-			signatureTable = hoyle5Signatures;
-		else if (g_sci->getResMan()->testResource(ResourceId(kResourceTypeScript, 100)) &&
-			    !g_sci->getResMan()->testResource(ResourceId(kResourceTypeScript, 700)))
-			signatureTable = hoyle5ChildrensCollectionSignatures;
-		else if (!g_sci->getResMan()->testResource(ResourceId(kResourceTypeScript, 100)) &&
-			      g_sci->getResMan()->testResource(ResourceId(kResourceTypeScript, 700)))
-			signatureTable = hoyle5BridgeSignatures;
+		signatureTable = hoyle5Signatures;
 		break;
 	case GID_GK1:
 		signatureTable = gk1Signatures;
@@ -23163,6 +23117,18 @@ void ScriptPatcher::processScript(uint16 scriptNr, SciSpan<byte> scriptData) {
 				// Enable subtitle compatibility if a sync resource is present
 				if (g_sci->getResMan()->testResource(ResourceId(kResourceTypeSync, 10))) {
 					enablePatch(signatureTable, "subtitle patch compatibility");
+				}
+				break;
+			case GID_HOYLE5:
+				if (!g_sci->getResMan()->testResource(ResourceId(kResourceTypeScript, 700))) {
+					// Hoyle 5 children's collection
+					enablePatch(signatureTable, "disable Gin Rummy");
+					enablePatch(signatureTable, "disable Cribbage");
+					enablePatch(signatureTable, "disable Klondike");
+					enablePatch(signatureTable, "disable Bridge");
+					enablePatch(signatureTable, "disable Poker");
+					enablePatch(signatureTable, "disable Hearts");
+					enablePatch(signatureTable, "disable Backgammon");
 				}
 				break;
 			case GID_KQ4:

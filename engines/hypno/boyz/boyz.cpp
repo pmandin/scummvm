@@ -113,7 +113,7 @@ void BoyzEngine::loadAssets() {
 	loadArcadeLevel("c355.mi_", "c36.mi_", "??", "");
 	loadArcadeLevel("c36.mi_", "c41.mi_", "??", "");
 	loadArcadeLevel("c41.mi_", "c42.mi_", "??", "");
-	//loadArcadeLevel("c42.mi_", "c51.mi_", "??", "");
+	loadArcadeLevel("c42.mi_", "c51.mi_", "??", "");
 
 	loadArcadeLevel("c51.mi_", "c52.mi_", "??", "");
 	loadArcadeLevel("c52.mi_", "c53.mi_", "??", "");
@@ -127,11 +127,14 @@ void BoyzEngine::loadAssets() {
 
 	loadSceneLevel(selectBoyz, "<select_boyz>", "", "");
 	Scene *sc = (Scene *) _levels["<select_boyz>"];
+	sc->resolution = "320x200";
 
 	ChangeLevel *cl = new ChangeLevel("c19.mi_");
 	sc->hots[7].actions.push_back(cl);
 
 	loadSceneLevel(selectC3, "<select_c3>", "", "");
+	sc = (Scene *) _levels["<select_c3>"];
+	sc->resolution = "320x200";
 
 	loadLib("sound/", "misc/sound.lib", true);
 
@@ -142,6 +145,7 @@ void BoyzEngine::loadAssets() {
 	_weaponShootSound[4] = "m16fire.raw";
 	_weaponShootSound[5] = "shotfire.raw";
 	_weaponShootSound[6] = "glm60fr.raw";
+	_weaponShootSound[7] = "dblfire.raw"; // Not sure
 
 	_weaponReloadSound[0] = "";
 	_weaponReloadSound[1] = "pstlload.raw";
@@ -150,6 +154,27 @@ void BoyzEngine::loadAssets() {
 	_weaponReloadSound[4] = "m16load.raw";
 	_weaponReloadSound[5] = "shotload.raw";
 	_weaponReloadSound[6] = "glm60rl.raw";
+	_weaponReloadSound[7] = "dblload.raw"; // Not sure
+
+	_deathDay[0] = "";
+	_deathDay[1] = "preload/deathd1s.smk";
+	_deathDay[2] = "preload/deathd2s.smk";
+	_deathDay[3] = "preload/deathd3s.smk";
+	_deathDay[4] = "preload/deathd4s.smk";
+	_deathDay[5] = "preload/deathd5s.smk";
+	_deathDay[6] = "preload/deathd6s.smk";
+
+	_deathNight[0] = "";
+	_deathNight[1] = "preload/deathn2s.smk";
+	_deathNight[2] = "preload/deathn3s.smk";
+	_deathNight[3] = "preload/deathn4s.smk";
+	_deathNight[4] = "";
+	_deathNight[5] = "";
+	_deathNight[6] = "";
+
+	_deathVideo.push_back("preload/cdeath1s.smk");
+	_deathVideo.push_back("preload/cdeath2s.smk");
+	_deathVideo.push_back("preload/cdeath3s.smk");
 
 	_heySound[0] = "";
 	_heySound[1] = "lopzheys.raw";
@@ -253,21 +278,20 @@ void BoyzEngine::loadAssets() {
 	cursorBox = Common::Rect(256, 66, 273, 93);
 	_crosshairsTarget[5].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
 	_crosshairsTarget[5].copyRectToSurface(*targets, 0, 0, cursorBox);
-
+    */
 	// Large crossair
 
 	cursorBox = Common::Rect(56, 98, 88, 125);
-	_crosshairsInactive[6].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
-	_crosshairsInactive[6].copyRectToSurface(*targets, 0, 0, cursorBox);
+	_crosshairsInactive[7].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
+	_crosshairsInactive[7].copyRectToSurface(*targets, 0, 0, cursorBox);
 
 	cursorBox = Common::Rect(57, 130, 88, 158);
-	_crosshairsActive[6].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
-	_crosshairsActive[6].copyRectToSurface(*targets, 0, 0, cursorBox);
+	_crosshairsActive[7].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
+	_crosshairsActive[7].copyRectToSurface(*targets, 0, 0, cursorBox);
 
 	cursorBox = Common::Rect(57, 162, 88, 189);
-	_crosshairsTarget[6].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
-	_crosshairsTarget[6].copyRectToSurface(*targets, 0, 0, cursorBox);
-	*/
+	_crosshairsTarget[7].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
+	_crosshairsTarget[7].copyRectToSurface(*targets, 0, 0, cursorBox);
 
 	_weaponMaxAmmo[0] = 0;
 	_weaponMaxAmmo[1] = 10;
@@ -276,14 +300,23 @@ void BoyzEngine::loadAssets() {
 	_weaponMaxAmmo[4] = 6; // pistol?
 	_weaponMaxAmmo[5] = 6; // small shotgun
 	_weaponMaxAmmo[6] = 0;
+	_weaponMaxAmmo[7] = 25; // Boat machine-gun
 
 	_maxHealth = 100;
 	_civiliansShoot = 0;
-	_warningAnimals = "warnings/w01s.smk";
-	_warningCivilians.push_back("warnings/w02s.smk");
-	_warningCivilians.push_back("warnings/w03s.smk");
-	_warningCivilians.push_back("warnings/w04s.smk");
-	_warningCivilians.push_back("warnings/w05s.smk");
+	_warningVideosDay.push_back("");
+	_warningVideosDay.push_back("warnings/w01s.smk");
+	_warningVideosDay.push_back("warnings/w02s.smk");
+	_warningVideosDay.push_back("warnings/w03s.smk");
+	_warningVideosDay.push_back("warnings/w04s.smk");
+	_warningVideosDay.push_back("warnings/w05s.smk");
+	_warningVideosDay.push_back("warnings/w06s.smk");
+	_warningVideosDay.push_back("warnings/w07s.smk");
+
+	_warningAlarmVideos.push_back("warnings/w10s.smk");
+	_warningAlarmVideos.push_back("warnings/w11s.smk");
+
+	_warningHostage = "warnings/w08s.smk";
 
 	// Set initial health for the team
 	for (int i = 0; i < 7; i++) {

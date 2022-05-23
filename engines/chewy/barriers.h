@@ -19,26 +19,19 @@
  *
  */
 
-#ifndef CHEWY_DEBUGGER_H
-#define CHEWY_DEBUGGER_H
-
-#include "gui/debugger.h"
+#ifndef CHEWY_BARRIERS_H
+#define CHEWY_BARRIERS_H
 
 namespace Chewy {
 
-class Debugger : public GUI::Debugger {
-protected:
-	bool Cmd_GotoRoom(int argc, const char **argv);
-	bool Cmd_Item(int argc, const char **argv);
-	bool Cmd_PlayVideo(int argc, const char **argv);
-	bool Cmd_WalkAreas(int argc, const char **argv);
-	bool Cmd_Text(int argc, const char **argv);
-
+class Barriers {
 public:
-	Debugger();
-	~Debugger() override;
+	Barriers() {}
+
+	int16 getBarrierId(int16 x, int16 y);
+	int16 getBarrierId(int16 g_idx, const byte *buffer);
 };
 
-} // End of namespace Chewy
+} // namespace Chewy
 
 #endif

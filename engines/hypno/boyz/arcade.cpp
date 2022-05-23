@@ -57,6 +57,7 @@ void BoyzEngine::runBeforeArcade(ArcadeShooting *arc) {
 	}
 
 	updateFromScript();
+	_shootsDestroyed.clear();
 }
 
 void BoyzEngine::runAfterArcade(ArcadeShooting *arc) {
@@ -64,6 +65,13 @@ void BoyzEngine::runAfterArcade(ArcadeShooting *arc) {
 		_playerFrames[i]->free();
 		delete _playerFrames[i];
 	}
+
+	if (_healthTeam[_currentActor] <= 0) {
+		MVideo video(_deathDay[_currentActor], Common::Point(0, 0), false, true, false);
+		disableCursor();
+		runIntro(video);
+	}
+
 }
 
 void BoyzEngine::pressedKey(const int keycode) {
@@ -73,6 +81,7 @@ void BoyzEngine::pressedKey(const int keycode) {
 			return;
 		}
 	} else if (keycode == Common::KEYCODE_k) { // Added for testing
+		_healthTeam[_currentActor] = 0;
 		_health = 0;
 	} else if (keycode == Common::KEYCODE_ESCAPE) {
 		openMainMenuDialog();
@@ -134,15 +143,15 @@ void BoyzEngine::drawHealth() {
 void BoyzEngine::drawAmmo() {
 	updateFromScript();
 
-	float w = float(_ammoBar[_currentWeapon].w) / float(_weaponMaxAmmo[_currentWeapon]);
+	float w = float(_ammoBar[_currentActor].w) / float(_weaponMaxAmmo[_currentWeapon]);
 
 	Common::Rect ammoBarBox(320 - int(_ammoTeam[_currentActor] * w), 0, 320, _ammoBar[_currentActor].h / 2);
 	uint32 c = kHypnoColorGreen; // green
 	_compositeSurface->fillRect(ammoBarBox, c);
 
-	drawImage(_ammoBar[_currentActor], 320 - _ammoBar[_currentWeapon].w, 0, true);
+	drawImage(_ammoBar[_currentActor], 320 - _ammoBar[_currentActor].w, 0, true);
 	for (int i = 1; i < _weaponMaxAmmo[_currentWeapon]; i++) {
-		int x = 320 - _ammoBar[_currentWeapon].w + int (i * w);
+		int x = 320 - _ammoBar[_currentActor].w + int (i * w);
 		_compositeSurface->drawLine(x, 2, x, 6, 0);
 	}
 }
@@ -151,8 +160,10 @@ void BoyzEngine::hitPlayer() {
 	uint32 c = kHypnoColorRed; // red
 	_compositeSurface->fillRect(Common::Rect(0, 0, _screenW, _screenH), c);
 	drawScreen();
-	if (!_infiniteHealthCheat)
+	if (!_infiniteHealthCheat) {
 		_healthTeam[_currentActor] = _healthTeam[_currentActor] - 10;
+		_health = _healthTeam[_currentActor];
+	}
 	if (!_hitSound.empty())
 		playSound(_soundPath + _hitSound, 1, 11025);
 }
@@ -190,6 +201,12 @@ bool BoyzEngine::checkTransition(ArcadeTransitions &transitions, ArcadeShooting 
 				drawScreen();
 			} else if (!arc->additionalSound.empty())
 				playSound(arc->additionalSound, 1, arc->additionalSoundRate);
+			else if (_levelId == 36) {
+				if (!checkArcadeObjectives()) {
+					_health = 0;
+					// Not sure how to handle this
+				}
+			}
 		} else if (!at.video.empty()) {
 			_background->decoder->pauseVideo(true);
 			debugC(1, kHypnoDebugArcade, "Playing transition %s", at.video.c_str());
@@ -210,6 +227,11 @@ bool BoyzEngine::checkTransition(ArcadeTransitions &transitions, ArcadeShooting 
 			drawCursorArcade(g_system->getEventManager()->getMousePos());
 		} else if (!at.sound.empty()) {
 			playSound(at.sound, 1, at.soundRate);
+		} else if (at.jumpToTime > 0) {
+			_background->decoder->forceSeekToFrame(at.jumpToTime);
+			_masks->decoder->forceSeekToFrame(at.jumpToTime);
+		} else if (at.loseLevel) {
+			_health = 0;
 		} else
 			error ("Invalid transition at %d", ttime);
 
@@ -231,6 +253,11 @@ int BoyzEngine::detectTarget(const Common::Point &mousePos) {
 
 	int i = 0;
 	for (Shoots::iterator it = _shoots.begin(); it != _shoots.end(); ++it) {
+		if (_background->decoder->getCurFrame() > int(it->bodyFrames.back().start)) {
+			i++;
+			continue;  // This shoot is old!
+		}
+
 		if (m == it->paletteOffset && !_shoots[i].destroyed)
 			return i;
 		i++;
@@ -261,6 +288,7 @@ bool BoyzEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool 
 	if (i < 0) {
 		missNoTarget(arc);
 	} else {
+		debugC(1, kHypnoDebugArcade, "Hit target %s", _shoots[i].name.c_str());
 		if (_shoots[i].nonHostile && secondary) {
 			playSound(_soundPath + _heySound[_currentActor], 1);
 
@@ -268,28 +296,39 @@ bool BoyzEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool 
 				playSound(_soundPath + _shoots[i].animalSound, 1);
 				return false;
 			}
+			if (!_shoots[i].additionalVideo.empty()) {
+				_background->decoder->pauseVideo(true);
+				MVideo video(_shoots[i].additionalVideo, Common::Point(0, 0), false, true, false);
+				disableCursor();
+				runIntro(video);
+				loadPalette(_currentPalette);
+				_background->decoder->pauseVideo(false);
 
-			if (_shoots[i].interactionFrame > 0) {
+				// Skip the rest of the interaction
+				_background->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start + 3);
+				_masks->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start + 3);
+				_shoots[i].destroyed = true;
+				_shootsDestroyed[_shoots[i].name] = true;
+				updateScreen(*_background);
+				drawScreen();
+				if (!_music.empty())
+					playSound(_music, 0, arc->musicRate); // restore music
+			} else if (_shoots[i].interactionFrame > 0) {
 				_background->decoder->forceSeekToFrame(_shoots[i].interactionFrame);
 				_masks->decoder->forceSeekToFrame(_shoots[i].interactionFrame);
 				_additionalVideo = new MVideo(arc->missBoss2Video, Common::Point(0, 0), true, false, false);
 				playVideo(*_additionalVideo);
 				//_shoots[i].lastFrame = _background->decoder->getFrameCount();
 				_shoots[i].destroyed = true;
-
+				_shootsDestroyed[_shoots[i].name] = true;
 				updateScreen(*_background);
 				drawScreen();
 			}
 			return false;
 		} else if (_shoots[i].nonHostile && !secondary) {
 
-			Common::String filename;
-			if (_shoots[i].isAnimal)
-				filename = _warningAnimals;
-			else {
-				filename = _warningCivilians[_civiliansShoot];
-				_civiliansShoot++;
-			}
+			Common::String filename = _warningVideosDay[_shoots[i].warningVideoIdx];
+			_civiliansShoot++;
 
 			_background->decoder->pauseVideo(true);
 			MVideo video(filename, Common::Point(0, 0), false, true, false);
@@ -307,9 +346,24 @@ bool BoyzEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool 
 
 			_background->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start - 3);
 			_masks->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start - 3);
+
+
+			if (_shoots[i].jumpToTimeAfterKilled == -1000) {
+				ArcadeTransition at("", 0, "", 0, _shoots[i].explosionFrames[0].lastFrame() - 1);
+				at.loseLevel = true;
+				_transitions.push_front(at);
+			}
+
 			return false;
 		} else if (!_shoots[i].nonHostile && secondary) {
-			// Nothing
+			if (_shoots[i].interactionFrame > 0) {
+				_background->decoder->forceSeekToFrame(_shoots[i].interactionFrame);
+				_masks->decoder->forceSeekToFrame(_shoots[i].interactionFrame);
+				_shoots[i].destroyed = true;
+
+				updateScreen(*_background);
+				drawScreen();
+			}
 			return false;
 		}
 
@@ -329,24 +383,64 @@ bool BoyzEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool 
 		incScore(_shoots[i].pointsToShoot);
 		incBonus(_shoots[i].pointsToShoot);
 		_shoots[i].destroyed = true;
+		_objKillsCount[_objIdx] = _objKillsCount[_objIdx] + _shoots[i].objKillsCount;
+		_shootsDestroyed[_shoots[i].name] = true;
 		_background->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start - 3);
 		_masks->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start - 3);
 		changeCursor(_crosshairsActive[_currentWeapon], _crosshairsPalette, true);
+
+		if (_shoots[i].jumpToTimeAfterKilled > 0) {
+			ArcadeTransition at("", 0, "", 0, _shoots[i].explosionFrames[0].lastFrame() - 1);
+			at.jumpToTime = _shoots[i].jumpToTimeAfterKilled;
+			_transitions.push_front(at);
+		}
 	}
 	return false;
 }
 
 void BoyzEngine::missedTarget(Shoot *s, ArcadeShooting *arc) {
+	debugC(1, kHypnoDebugArcade, "Missed target %s!", s->name.c_str());
+	if (!s->checkIfDestroyed.empty()) {
+		if (_shootsDestroyed.contains(s->checkIfDestroyed))
+			return;  // Precondition was destroyed, so we ignore the missed shoot
+	}
+
+	if (s->name == "CAPTOR") {
+		_background->decoder->pauseVideo(true);
+		MVideo video(_warningHostage, Common::Point(0, 0), false, true, false);
+		disableCursor();
+		runIntro(video);
+		_health = 0; // TODO: not sure about this
+		return;
+	} else if (s->name.hasPrefix("ALARM")) {
+		if (_background->decoder->getCurFrame() > int(s->missedAnimation))
+			return;
+		_background->decoder->pauseVideo(true);
+		MVideo video(_warningAlarmVideos.front(), Common::Point(0, 0), false, true, false);
+		disableCursor();
+		runIntro(video);
+		_health = 0;
+		return;
+	}
+
 	if (s->missedAnimation == 0) {
 		return;
 	} else if (s->missedAnimation == uint32(-1)) {
-		uint32 last = _background->decoder->getFrameCount()-1;
-		_background->decoder->forceSeekToFrame(last);
-		_masks->decoder->forceSeekToFrame(last);
+		debugC(1, kHypnoDebugArcade, "Jumping to end of level");
+		_skipLevel = true;
+	} else if (s->missedAnimation == uint32(-1000)) {
+		_health = 0;
 	} else {
-		s->missedAnimation = s->missedAnimation + 3;
-		_background->decoder->forceSeekToFrame(s->missedAnimation);
-		_masks->decoder->forceSeekToFrame(s->missedAnimation);
+		int missedAnimation = s->missedAnimation + 3;
+		if (missedAnimation > int(_background->decoder->getFrameCount()) - 1) {
+			_skipLevel = true;
+			return;
+		}
+		if (_background->decoder->getCurFrame() > missedAnimation)
+			return; // Too late for this
+		debugC(1, kHypnoDebugArcade, "Jumping to: %d", missedAnimation);
+		_background->decoder->forceSeekToFrame(missedAnimation);
+		_masks->decoder->forceSeekToFrame(missedAnimation);
 	}
 	if (s->interactionFrame == 0)
 		hitPlayer();

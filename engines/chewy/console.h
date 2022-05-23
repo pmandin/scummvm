@@ -19,33 +19,26 @@
  *
  */
 
-#include "common/stream.h"
-#include "chewy/ngstypes.h"
+#ifndef CHEWY_CONSOLE_H
+#define CHEWY_CONSOLE_H
+
+#include "gui/debugger.h"
 
 namespace Chewy {
 
-bool NewPhead::load(Common::SeekableReadStream *src) {
-	src->read(_id, 4);
-	_type = src->readUint16LE();
-	_poolNr = src->readUint16LE();
+class Console : public GUI::Debugger {
+protected:
+	bool Cmd_GotoRoom(int argc, const char **argv);
+	bool Cmd_Item(int argc, const char **argv);
+	bool Cmd_PlayVideo(int argc, const char **argv);
+	bool Cmd_WalkAreas(int argc, const char **argv);
+	bool Cmd_Text(int argc, const char **argv);
 
-	return true;
-}
+public:
+	Console();
+	~Console() override;
+};
 
-bool GedPoolHeader::load(Common::SeekableReadStream *src) {
-	src->read(_id, 4);
-	_nr = src->readUint16LE();
+} // End of namespace Chewy
 
-	return true;
-}
-
-bool GedChunkHeader::load(Common::SeekableReadStream *src) {
-	Len = src->readUint32LE();
-	X = src->readSint16LE();
-	Y = src->readSint16LE();
-	Ebenen = src->readSint16LE();
-
-	return true;
-}
-
-} // namespace Chewy
+#endif

@@ -19,53 +19,19 @@
  *
  */
 
-#ifndef CHEWY_NGSDEFS_H
-#define CHEWY_NGSDEFS_H
+#include "common/scummsys.h"
 
-#include "common/events.h"
+#if defined(DYNAMIC_MODULES) && defined(SDL_BACKEND) && defined(MACOSX)
 
-namespace Chewy {
+#include "backends/plugins/sdl/macosx/macosx-provider.h"
+#include "backends/platform/sdl/macosx/macosx_wrapper.h"
 
-#define MAXSPRITE 620
-#define NOSPEICHER 0
-#define MAXFONTBREITE 32
-#define MAXFONTHOEHE 32
+#include "common/fs.h"
 
-#define CHECK 0x00
-#define WRITE 0x04
-#define READ 0x08
+void MacOSXPluginProvider::addCustomDirectories(Common::FSList &dirs) const {
+	Common::String bundlePath = getResourceAppBundlePathMacOSX();
+	if (!bundlePath.empty())
+		dirs.push_back(Common::FSNode(bundlePath));
+}
 
-#define MCGA_SPEICHER 64000L
-#define SETZEN 0
-#define UND 1
-#define ODER 2
-#define XODER 3
-
-#define COPY_PAGE _G(out)->screen2screen
-
-#define END_POOL 32767
-
-#define MAXDIRS 50
-#define MAXFNAMEN 50
-#define MOD15 10
-#define TYPE_ANZ 27
-#define TMFDATA 6
-#define SCREENSAVE 0
-#define SPRITESAVE 1
-
-#define ALT 0x1000
-
-#define MOUSE_LEFT 255
-#define MOUSE_RIGHT 1
-#define MOUSE_CENTER 254
-
-#define SOUND 5
-#define BASE 0x220
-#define JA 1
-#define NEIN 0
-#define ON 1
-#define OFF 0
-
-} // namespace Chewy
-
-#endif
+#endif // defined(DYNAMIC_MODULES) && defined(SDL_BACKEND) && defined(MACOSX)

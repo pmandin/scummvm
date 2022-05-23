@@ -294,6 +294,28 @@ void SciMusic::pauseAll(bool pause) {
 	}
 }
 
+void SciMusic::resetGlobalPauseCounter() {
+	// This is an adjustment for our savegame loading process,
+	// ONLY when done from kRestoreGame().
+	// The enginge will call SciMusic::pauseAll() before loading.
+	// So the _globalPause will be increased and the individual
+	// sounds will be paused, too. However, the sounds will
+	// then be restored to the playing status that is stored in
+	// the savegame. The _globalPause stays, however. There may
+	// be no unpausing after the loading, since the playing status
+	// in the savegames is the correct one. So, the essence is:
+	// the _globalPause counter needs to go down without anything
+	// else happening.
+	// The loading from GMM has been implemented differently. It
+	// will remove the paused state before loading (and doesn't
+	// do anything unpleasant afterwards, either). So this is not
+	// needed there.
+	// I have added an assert, since it is such a special case,
+	// people need to know what they're doing if they call this...
+	assert(_globalPause == 1);
+	_globalPause = 0;
+}
+
 void SciMusic::stopAll() {
 	const MusicList::iterator end = _playList.end();
 	for (MusicList::iterator i = _playList.begin(); i != end; ++i) {
@@ -699,7 +721,7 @@ void SciMusic::soundStop(MusicEntry *pSnd) {
 	pSnd->fadeStep = 0; // end fading, if fading was in progress
 
 	// SSCI0 resumes the next available sound from the (priority ordered) list with a paused status.
-	if (_soundVersion <= SCI_VERSION_0_LATE && (pSnd = getFirstSlotWithStatus(kSoundPaused)))
+	if (_soundVersion <= SCI_VERSION_0_LATE && previousStatus == kSoundPlaying && (pSnd = getFirstSlotWithStatus(kSoundPaused)))
 		soundResume(pSnd);
 }
 

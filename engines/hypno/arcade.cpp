@@ -31,14 +31,16 @@ namespace Hypno {
 extern int parse_arc(const char *);
 
 void HypnoEngine::splitArcadeFile(const Common::String &filename, Common::String &arc, Common::String &list) {
+	debugC(1, kHypnoDebugParser, "Splitting %s", filename.c_str());
 	Common::File file;
 	if (!file.open(filename.c_str()))
 		error("Failed to open %s", filename.c_str());
 
 	while (!file.eos()) {
 		byte x = file.readByte();
+		byte p = arc.lastChar();
 		arc += x;
-		if (x == 'X') {
+		if (x == 'X' && p == '\n') {
 			while (!file.eos()) {
 				x = file.readByte();
 				if (x == 'Y' && list.size() > 0 && list[list.size()-1] == '\n')
@@ -211,7 +213,7 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 	initSegment(arc);
 
 	// Transitions
-	ArcadeTransitions transitions = arc->transitions;
+	_transitions = arc->transitions;
 
 	_levelId = arc->id;
 	_shootSound = arc->shootSound;
@@ -254,7 +256,6 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 		int start = segments[_segmentIdx].start;
 		_background->decoder->forceSeekToFrame(start);
 		_masks->decoder->forceSeekToFrame(start);
-		segments[_segmentIdx].size -= start;
 		segments[_segmentIdx].start = 1;
 	}
 
@@ -377,8 +378,8 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 			break;
 		}
 
-		if (!transitions.empty()) {
-			transition = checkTransition(transitions, arc);
+		if (!_transitions.empty()) {
+			transition = checkTransition(_transitions, arc);
 		}
 
 		if (_background->decoder && _background->decoder->getCurFrame() >= int(segments[_segmentIdx].start + segments[_segmentIdx].size - 2)) {

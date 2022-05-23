@@ -62,6 +62,9 @@ Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer, bool useReplacementAudioT
 	_replacementTrackStartTime(0),
 	_replacementTrackPauseTime(0),
 	_musicTimer(0),
+	_cdMusicTimerMod(0),
+	_cdMusicTimer(0),
+	_speechTimerMod(0),
 	_soundQuePos(0),
 	_soundQue2Pos(0),
 	_sfxFilename(),
@@ -103,6 +106,13 @@ Sound::Sound(ScummEngine *parent, Audio::Mixer *mixer, bool useReplacementAudioT
 
 	_loomSteamCDAudioHandle = new Audio::SoundHandle();
 	_talkChannelHandle = new Audio::SoundHandle();
+
+	// This timer targets every talkie game, except for LOOM CD
+	// which is handled differently, and except for COMI which
+	// handles lipsync within Digital iMUSE.
+	if (_vm->_game.version >= 5 && _vm->_game.version <= 7) {
+		startSpeechTimer();
+	}
 }
 
 Sound::~Sound() {
@@ -111,6 +121,9 @@ Sound::~Sound() {
 	free(_offsetTable);
 	delete _loomSteamCDAudioHandle;
 	delete _talkChannelHandle;
+	if (_vm->_game.version >= 5 && _vm->_game.version <= 7) {
+		stopSpeechTimer();
+	}
 }
 
 bool Sound::isRolandLoom() const {
@@ -120,6 +133,9 @@ bool Sound::isRolandLoom() const {
 		(_vm->_game.platform == Common::kPlatformDOS) &&
 		(_vm->VAR(_vm->VAR_SOUNDCARD) == 4);
 }
+
+#define TICKS_TO_TIMER(x) ((((x) * 204) / _loomOvertureTransition) + 1)
+#define TIMER_TO_TICKS(x) ((((x) - 1) * _loomOvertureTransition) / 204)
 
 void Sound::updateMusicTimer() {
 	bool isLoomOverture = (isRolandLoom() && _currentCDSound == 56 && !(_vm->_game.features & GF_DEMO));
@@ -588,16 +604,17 @@ void Sound::processSfxQueues() {
 
 		if (_vm->_imuseDigital) {
 			finished = !isSoundRunning(kTalkSoundID);
+			if (_vm->_game.id == GID_CMI) {
 #if defined(ENABLE_SCUMM_7_8)
-			_curSoundPos = _vm->_imuseDigital->getSoundElapsedTimeInMs(kTalkSoundID) * 60 / 1000;
+				_curSoundPos = _vm->_imuseDigital->getSoundElapsedTimeInMs(kTalkSoundID) * 60 / 1000;
 #endif
+			}
 		} else if (_vm->_game.heversion >= 60) {
 			finished = !isSoundRunning(1);
 		} else {
 			finished = !_mixer->isSoundHandleActive(*_talkChannelHandle);
-			// calculate speech sound position simulating increment at 60FPS
-			_curSoundPos = (_mixer->getSoundElapsedTime(*_talkChannelHandle) * 60) / 1000;
 		}
+
 		if ((uint) act < 0x80 && ((_vm->_game.version == 8) || (_vm->_game.version <= 7 && !_vm->_string[0].no_talk_anim))) {
 			a = _vm->derefActor(act, "processSfxQueues");
 			if (a->isInCurrentRoom()) {
@@ -690,7 +707,7 @@ void Sound::startTalkSound(uint32 offset, uint32 b, int mode, Audio::SoundHandle
 		_sfxMode |= mode;
 
 		if (_vm->_game.id == GID_DIG)
-			_curSoundPos = 0;
+			resetSpeechTimer();
 
 		return;
 	} else if (_vm->_game.id == GID_DIG && (_vm->_game.features & GF_DEMO)) {
@@ -775,7 +792,7 @@ void Sound::startTalkSound(uint32 offset, uint32 b, int mode, Audio::SoundHandle
 
 			_mouthSyncTimes[i] = 0xFFFF;
 			_sfxMode |= mode;
-			_curSoundPos = 0;
+			resetSpeechTimer();
 			_mouthSyncMode = true;
 
 			totalOffset = offset + b;
@@ -875,7 +892,7 @@ void Sound::startTalkSound(uint32 offset, uint32 b, int mode, Audio::SoundHandle
 
 		_mouthSyncTimes[i] = 0xFFFF;
 		_sfxMode |= mode;
-		_curSoundPos = 0;
+		resetSpeechTimer();
 		_mouthSyncMode = true;
 	}
 
@@ -956,6 +973,7 @@ bool Sound::isMouthSyncOff(uint pos) {
 	uint j;
 	bool val = true;
 	uint16 *ms = _mouthSyncTimes;
+	uint delay = (_vm->_game.version == 6) ? 10 : 0;
 
 	if (_vm->_game.id == GID_DIG && !(_vm->_game.features & GF_DEMO)) {
 		pos = 1000 * pos / 60;
@@ -970,8 +988,13 @@ bool Sound::isMouthSyncOff(uint pos) {
 			_endOfMouthSync = true;
 			break;
 		}
-	} while (pos > j);
-	return val;
+	} while (pos + delay > j);
+
+	if (_vm->_game.version < 7) {
+		return val;
+	} else {
+		return (j != 0xFFFF) ? val : false;
+	}
 }
 
 int Sound::isSoundRunning(int sound) const {
@@ -1339,47 +1362,75 @@ bool Sound::isSfxFinished() const {
 	return !_mixer->hasActiveChannelOfType(Audio::Mixer::kSFXSoundType);
 }
 
-// We use a real timer in an attempt to get better sync with CD tracks. This is
-// necessary for games like Loom CD.
+void Sound::incrementSpeechTimer() {
+	if (!_soundsPaused)
+		_curSoundPos++;
+}
 
-static void cd_timer_handler(void *refCon) {
-	ScummEngine *scumm = (ScummEngine *)refCon;
+void Sound::resetSpeechTimer() {
+	_curSoundPos = 0;
+}
+
+static void speechTimerHandler(void *refCon) {
+	Sound *snd = (Sound *)refCon;
+	if ((snd->_speechTimerMod++ & 3) == 0) {
+		snd->incrementSpeechTimer();
+	}
+}
+
+void Sound::startSpeechTimer() {
+	_vm->getTimerManager()->installTimerProc(&speechTimerHandler, 1000000 / _vm->getTimerFrequency(), this, "scummSpeechTimer");
+}
+
+void Sound::stopSpeechTimer() {
+	_vm->getTimerManager()->removeTimerProc(&speechTimerHandler);
+}
+
+static void cdTimerHandler(void *refCon) {
+	Sound *snd = (Sound *)refCon;
 
 	// FIXME: Turn off the timer when it's no longer needed. In theory, it
 	// should be possible to check with pollCD(), but since CD sound isn't
 	// properly restarted when reloading a saved game, I don't dare to.
-
-	scumm->VAR(scumm->VAR_MUSIC_TIMER) += 6;
+	if ((snd->_cdMusicTimerMod++ & 3) == 0) {
+		snd->_cdMusicTimer++;
+	}
 }
 
 void Sound::startCDTimer() {
 	if (_useReplacementAudioTracks)
 		return;
 
-	// This timer interval is based on two scenes: The Monkey Island 1
-	// intro, and the scene in Loom CD where Chaos appears. In both cases
-	// the game plays the scene as two separate sounds, even though both
-	// halves are right next to each other in the CD track. Probably so
-	// that you can hit Escape to skip the first half.
+	// This CD timer implementation strictly follows the original interpreters for
+	// Monkey Island 1 CD and Loom CD: it works by incrementing _cdMusicTimerMod and _cdMusicTimer
+	// at each quarter frame (see ScummEngine::setTimerAndShakeFrequency() for what the exact
+	// frequency rate is for the particular game and engine version being ran).
 	//
-	// Make it too low, and the Monkey Island theme will be cut short. Make
-	// it too high, and there will be a nasty "hiccup" just as Chaos
-	// appears.
+	// Again as per the interpreters, VAR_MUSIC_TIMER is then updated inside the SCUMM main loop.
+	int32 interval = 1000000 / _vm->getTimerFrequency();
 
-	_vm->getTimerManager()->removeTimerProc(&cd_timer_handler);
-	_vm->getTimerManager()->installTimerProc(&cd_timer_handler, 100700, _vm, "scummCDtimer");
+	// LOOM Steam uses a fixed 240Hz rate. This was probably done to get rid of some
+	// audio glitches which are confirmed to be in the original. So let's activate this
+	// fix for the DOS version of LOOM as well, if enhancements are enabled.
+	if (_isLoomSteam || (_vm->_game.id == GID_LOOM && _vm->_enableEnhancements))
+		interval = 1000000 / LOOM_STEAM_CDDA_RATE;
+
+	_vm->getTimerManager()->removeTimerProc(&cdTimerHandler);
+	_vm->getTimerManager()->installTimerProc(&cdTimerHandler, interval, this, "scummCDtimer");
 }
 
 void Sound::stopCDTimer() {
 	if (_useReplacementAudioTracks)
 		return;
 
-	_vm->getTimerManager()->removeTimerProc(&cd_timer_handler);
+	_vm->getTimerManager()->removeTimerProc(&cdTimerHandler);
 }
 
 void Sound::playCDTrack(int track, int numLoops, int startFrame, int duration) {
 	// Reset the music timer variable at the start of a new track
 	_vm->VAR(_vm->VAR_MUSIC_TIMER) = 0;
+	_cdMusicTimerMod = 0;
+	_cdMusicTimer = 0;
 
 	// Play it
 	if (!_soundsPaused)

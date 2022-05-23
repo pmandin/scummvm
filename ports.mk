@@ -158,6 +158,9 @@ endif
 	cp $(bundle_name)/Contents/Resources/COPYING.FREEFONT $(bundle_name)/Contents/Resources/COPYING-FREEFONT
 	cp $(bundle_name)/Contents/Resources/COPYING.OFL $(bundle_name)/Contents/Resources/COPYING-OFL
 	cp $(bundle_name)/Contents/Resources/COPYING.BSD $(bundle_name)/Contents/Resources/COPYING-BSD
+ifdef DYNAMIC_MODULES
+	cp $(PLUGINS) $(bundle_name)/Contents/Resources/
+endif
 	chmod 644 $(bundle_name)/Contents/Resources/*
 ifneq ($(DIST_FILES_SHADERS),)
 	chmod 755 $(bundle_name)/Contents/Resources/shaders
@@ -172,9 +175,9 @@ endif
 	codesign -s - --deep --force $(bundle_name)
 
 ifdef USE_DOCKTILEPLUGIN
-bundle: scummvm-static scummvm.docktileplugin bundle-pack
+bundle: scummvm-static plugins scummvm.docktileplugin bundle-pack
 else
-bundle: scummvm-static bundle-pack
+bundle: scummvm-static plugins bundle-pack
 endif
 
 iphonebundle: iphone
@@ -472,7 +475,7 @@ endif
 # We use -force_cpusubtype_ALL to ensure the binary runs on every
 # PowerPC machine.
 scummvm-static: $(DETECT_OBJS) $(OBJS)
-	+$(LD) $(LDFLAGS) -force_cpusubtype_ALL -o scummvm-static $(DETECT_OBJS) $(OBJS) \
+	+$(LD) $(LDFLAGS) -force_cpusubtype_ALL -o scummvm-static $(PRE_OBJS_FLAGS) $(DETECT_OBJS) $(OBJS) $(POST_OBJS_FLAGS) \
 		-framework CoreMIDI \
 		$(OSX_STATIC_LIBS) \
 		$(OSX_ZLIB)

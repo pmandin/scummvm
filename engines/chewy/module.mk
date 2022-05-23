@@ -2,13 +2,13 @@ MODULE := engines/chewy
 
 MODULE_OBJS = \
 	atds.o \
+	barriers.o \
 	chewy.o \
 	cursor.o \
-	debugger.o \
+	console.o \
 	detail.o \
 	effect.o \
 	events.o \
-	gedclass.o \
 	globals.o \
 	inits.o \
 	m_event.o \
@@ -19,7 +19,6 @@ MODULE_OBJS = \
 	menus.o \
 	metaengine.o \
 	movclass.o \
-	ngstypes.o \
 	object.o \
 	object_extra.o \
 	r_event.o \

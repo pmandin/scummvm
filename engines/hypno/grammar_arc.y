@@ -328,6 +328,8 @@ bline: FNTOK FILENAME {
 			shoot->animation = $2;
 		else if (Common::String("F4") == $1)
 			shoot->explosionAnimation = $2;
+		else if (Common::String("F6") == $1)
+			shoot->additionalVideo = $2;
 		debugC(1, kHypnoDebugParser, "FN %s", $2);
 	}
 	| AVTOK NUM {
@@ -336,6 +338,8 @@ bline: FNTOK FILENAME {
 		debugC(1, kHypnoDebugParser, "AV %d", $2);
 	}
 	| ALTOK NUM {
+		assert(g_parsedArc->shoots.size() > 0);
+		shoot->checkIfDestroyed = g_parsedArc->shoots.back().name;
 		debugC(1, kHypnoDebugParser, "AL %d", $2);
 	}
 	| ABTOK NUM {
@@ -343,9 +347,11 @@ bline: FNTOK FILENAME {
 		shoot->playInteractionAudio = true;
 		debugC(1, kHypnoDebugParser, "AB %d", $2);
 	}
-	| DTOK LTOK  { debugC(1, kHypnoDebugParser, "D L");
-	}
+	| DTOK LTOK  { debugC(1, kHypnoDebugParser, "D L"); }
+	| DTOK RTOK  { debugC(1, kHypnoDebugParser, "D R"); }
 	| J0TOK NUM {
+		assert($2 > 0);
+		shoot->warningVideoIdx = $2;
 		debugC(1, kHypnoDebugParser, "J0 %d", $2);
 	}
 	| FNTOK NONETOK {
@@ -519,6 +525,10 @@ bline: FNTOK FILENAME {
 		shoot->explosionFrames.push_back(fi);
 	}
 	| KTOK NUM NUM NUM {
+		assert($3 > $2);
+		FrameInfo fi($2, $3 - $2);
+		shoot->jumpToTimeAfterKilled = $4;
+		shoot->explosionFrames.push_back(fi);
 		debugC(1, kHypnoDebugParser, "K %d %d %d", $2, $3, $4);
 	}
 	| KTOK NUM NUM { debugC(1, kHypnoDebugParser, "K %d %d", $2, $3);
@@ -542,6 +552,7 @@ bline: FNTOK FILENAME {
 
 	| GTOK { debugC(1, kHypnoDebugParser, "G"); }
 	| TTOK NUM NUM NUM {
+		shoot->interactionFrame = $2;
 		debugC(1, kHypnoDebugParser, "T %d %d %d", $2, $3, $4);
 	}
 	| TTOK NUM {

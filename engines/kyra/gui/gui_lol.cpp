@@ -36,8 +36,6 @@
 
 #include "backends/keymapper/keymapper.h"
 
-#include "base/version.h"
-
 namespace Kyra {
 
 void LoLEngine::gui_drawPlayField() {
@@ -2365,7 +2363,7 @@ int GUI_LoL::runMenu(Menu &menu) {
 
 		if (_currentMenu == &_mainMenu && !_vm->gameFlags().use16ColorMode) {
 			Screen::FontId f = _screen->setFont(Screen::FID_6_FNT);
-			_screen->fprintString("%s", menu.x + 8, menu.y + menu.height - 12, 204, 0, 8, gScummVMVersion);
+			_screen->fprintString("v%s", menu.x + 8, menu.y + menu.height - 12, 204, 0, 8, _vm->_versionString.c_str());
 			_screen->setFont(f);
 			_screen->updateScreen();
 		}
@@ -2850,6 +2848,7 @@ int GUI_LoL::clickedSavenameMenu(Button *button) {
 		int slot = _menuResult == -2 ? getNextSavegameSlot() : _menuResult - 1;
 		Graphics::Surface thumb;
 		createScreenThumbnail(thumb);
+		_vm->updatePlayTimer();
 		_vm->saveGameStateIntern(slot, _saveDescription, &thumb);
 		thumb.free();
 

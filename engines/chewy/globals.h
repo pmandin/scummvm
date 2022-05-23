@@ -29,7 +29,7 @@
 #include "chewy/room.h"
 #include "chewy/movclass.h"
 #include "chewy/timer.h"
-#include "chewy/gedclass.h"
+#include "chewy/barriers.h"
 #include "chewy/text.h"
 #include "chewy/object.h"
 #include "chewy/effect.h"
@@ -129,7 +129,6 @@ public:
 	byte **_ablage = nullptr;
 	byte *_workpage = nullptr;
 	byte *_workptr = nullptr;
-	byte **_ged_mem = nullptr;
 	byte *_spblende = nullptr;
 	char **_ads_item_ptr = nullptr;
 
@@ -184,7 +183,7 @@ public:
 	TafSeqInfo *_howard_taf = nullptr;
 	TafInfo *_chewy = nullptr;
 	int16 *_chewy_kor = nullptr;
-	GedClass *_ged = nullptr;
+	Barriers *_barriers = nullptr;
 	Text *_txt = nullptr;
 	Room *_room = nullptr;
 	Object *_obj = nullptr;
@@ -248,7 +247,6 @@ public:
 	int _spriteWidth = 0;
 
 	// mcga_graphics.cpp
-	int16 _clipx1 = 0, _clipx2 = 0, _clipy1 = 0, _clipy2 = 0;
 	int16 _gcurx = 0, _gcury = 0;
 
 	// menus.cpp
@@ -305,7 +303,7 @@ void delInventory(int16 nr);
 
 bool isCurInventory(int16 nr);
 
-void check_shad(int16 palIdx, int16 mode);
+void checkShadow(int16 palIdx, int16 mode);
 
 void get_scroll_off(int16 x, int16 y, int16 pic_x, int16 pic_y,
                     int16 *sc_x, int16 *sc_y);
@@ -388,8 +386,6 @@ void play_scene_ani(int16 nr, int16 mode);
 void timer_action(int16 t_nr);
 
 void check_ged_action(int16 index);
-
-int16 ged_user_func(int16 idx_nr);
 
 void enter_room(int16 eib_nr);
 

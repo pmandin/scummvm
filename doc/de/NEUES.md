@@ -24,6 +24,21 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  AGI:
    - Unterstützung für die Macintosh-Versionen von Manhunter 1 und 2 hinzugefügt.
 
+ AGOS:
+   - Elvira 1: Unterstützung für Casio MT-540/CT-460/CSM1 und CMS/GameBlaster hinzugefügt.
+   - Elvira 1 & 2, Waxworks, Simon the Sorcerer: Unterstützung für AdLib OPL3 hinzugefügt.
+     Abhängig von dem gewählten Spiel wird diese Einstellung "abgeschnittene" Noten verhindern sowie
+     zusätzliche Noten und Instrumente sowie Stereo-Unterstützung anbieten.
+   - Elvira 2, Waxworks: Unterstützung für AdLib- und MT-32-Soundeffekte hinzugefügt.
+   - Elvira 2, Waxworks, Simon the Sorcerer (Diskettenversion): Unterstützung für abgemischte MIDI-Wiedergabe
+     (MT-32-Musik mit AdLib-Soundeffekten) hinzugefügt.
+   - Simon the Sorcerer (Diskettenversion): Verbesserung der Genauigkeit von AdLib-Soundeffekten.
+   - Simon the Sorcerer: Die Audio-Wiedergabegeschwindigkeit der DOS-Version ist nun genauer. Sowohl die DOS-
+     als auch die Windows-Version erlauben nun, die genaueren DOS-Geschwindigkeiten oder die schnellere Windows-Wiedergabe
+     auszuwählen.
+   - Simon the Sorcerer 2: Unterstützung für AdLib und General MIDI verbessert.
+   - Simon the Sorcerer 2: Fehlerkorrektur für fehlende MT-32-Audiospuren im Intro.
+
  BBVS:
    - Teilweise fehlerhafte Darstellung der Buttons im Hauptmenü korrigiert.
    - Absturz am Ende des Hock-A-Loogie-Minispiels behoben.
@@ -75,6 +90,8 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      findest du jetzt dort.
    - Fehler bei der Wiedergabe von MIDI-Musik in der EGA/VGA-Diskettenversion von The Secret of Monkey Island behoben.
    - Fehlerhafte Grafik-Darstellung in Full Throttle korrigiert, die auftritt, wenn Ben am Eingang von Corley Motors vorbeiläuft.
+   - Fehlerhafte Farben in der NES-Version von Maniac Mansion auf Plattformen mit striktem Aligment wie Dreamcast,
+     Apple silicon und diversen Handheld-Geräten korrigiert.
 
  Sherlock:
    - Fehler in der Wiedergabegeschwindigkeit im Intro von Serrated Scalpel behoben, der auftritt,

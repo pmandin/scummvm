@@ -35,9 +35,6 @@
 
 #define DEFAULT_LOOM_OVERTURE_TRANSITION 1160
 
-#define TICKS_TO_TIMER(x) ((((x) * 204) / _loomOvertureTransition) + 1)
-#define TIMER_TO_TICKS(x) ((((x) - 1) * _loomOvertureTransition) / 204)
-
 namespace Audio {
 class Mixer;
 class SoundHandle;
@@ -112,6 +109,9 @@ public:
 	bool _soundsPaused;
 	byte _sfxMode;
 	uint _lastSound;
+	uint32 _cdMusicTimerMod;
+	uint32 _cdMusicTimer;
+	uint32 _speechTimerMod;
 
 	MidiDriverFlags _musicType;
 
@@ -138,6 +138,10 @@ public:
 	bool hasSfxFile() const;
 	ScummFile *restoreDiMUSESpeechFile(const char *fileName);
 	void extractSyncsFromDiMUSEMarker(const char *marker);
+	void incrementSpeechTimer();
+	void resetSpeechTimer();
+	void startSpeechTimer();
+	void stopSpeechTimer();
 
 	void startCDTimer();
 	void stopCDTimer();
@@ -154,6 +158,7 @@ public:
 	bool useReplacementAudioTracks() const { return _useReplacementAudioTracks; }
 	void updateMusicTimer();
 	int getMusicTimer() const { return _musicTimer; }
+	int getCDMusicTimer() const { return _cdMusicTimer; }
 
 	void saveLoadWithSerializer(Common::Serializer &ser) override;
 	void restoreAfterLoad();

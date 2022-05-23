@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.10.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-05-12 17:01+0000\n"
-"PO-Revision-Date: 2022-05-11 18:27+0000\n"
+"POT-Creation-Date: 2022-05-22 20:08+0000\n"
+"PO-Revision-Date: 2022-05-15 10:31+0000\n"
 "Last-Translator: Lothar Serra Mari <lothar.serramari@scummvm.org>\n"
 "Language-Team: German <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/de/>\n"
@@ -97,7 +97,7 @@ msgstr ""
 "Wählen Sie das Verzeichnis, in welches die Spieldaten heruntergeladen werden "
 "sollen"
 
-#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:283
+#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:583 gui/launcher.cpp:274
 msgid "Select directory with game data"
 msgstr "Verzeichnis mit Spieldateien auswählen"
 
@@ -135,11 +135,11 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:152
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
+#: gui/launcher.cpp:398 gui/launcher.cpp:427 gui/launcher.cpp:470
 #: gui/options.cpp:3063 gui/options.cpp:3101
 #: backends/events/default/default-events.cpp:194 engines/buried/buried.cpp:580
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:357
-#: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
+#: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
 #: engines/parallaction/metaengine.cpp:145
 #: engines/sci/graphics/controls32.cpp:927
 msgid "Yes"
@@ -147,16 +147,16 @@ msgstr "Ja"
 
 #: gui/downloaddialog.cpp:118 gui/downloaddialog.cpp:153
 #: gui/filebrowser-dialog.cpp:136 gui/fluidsynth-dialog.cpp:217
-#: gui/launcher.cpp:407 gui/launcher.cpp:436 gui/launcher.cpp:479
+#: gui/launcher.cpp:398 gui/launcher.cpp:427 gui/launcher.cpp:470
 #: gui/options.cpp:3063 gui/options.cpp:3101 engines/buried/buried.cpp:580
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:357
-#: engines/kyra/gui/saveload_eob.cpp:595 engines/kyra/gui/saveload_eob.cpp:628
+#: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
 #: engines/parallaction/metaengine.cpp:151
 #: engines/sci/graphics/controls32.cpp:927
 msgid "No"
 msgstr "Nein"
 
-#: gui/downloaddialog.cpp:136 gui/launcher.cpp:576
+#: gui/downloaddialog.cpp:136 gui/launcher.cpp:567
 msgid "ScummVM couldn't open the specified directory!"
 msgstr "ScummVM konnte das gewählte Verzeichnis nicht öffnen!"
 
@@ -170,7 +170,7 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
-#: gui/launcher.cpp:535 gui/launcher.cpp:539 gui/massadd.cpp:88
+#: gui/launcher.cpp:526 gui/launcher.cpp:530 gui/massadd.cpp:88
 #: gui/options.cpp:2106 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1175 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
@@ -180,9 +180,9 @@ msgstr ""
 #: engines/groovie/script.cpp:652 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:924
-#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1358
-#: engines/scumm/scumm.cpp:1384 engines/scumm/scumm.cpp:1406
-#: engines/scumm/scumm.cpp:1685 engines/scumm/scumm.cpp:2156
+#: engines/scumm/dialogs.cpp:180 engines/scumm/scumm.cpp:1048
+#: engines/scumm/scumm.cpp:1074 engines/scumm/scumm.cpp:1096
+#: engines/scumm/scumm.cpp:1375 engines/scumm/scumm.cpp:1846
 #: engines/sky/compact.cpp:141 engines/sword1/animation.cpp:531
 #: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
 #: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
@@ -789,11 +789,11 @@ msgstr "~B~eenden"
 msgid "Quit ScummVM"
 msgstr "ScummVM beenden"
 
-#: gui/launcher.cpp:241
+#: gui/launcher.cpp:242
 msgid "A~b~out"
 msgstr "Übe~r~"
 
-#: gui/launcher.cpp:241 backends/platform/sdl/macosx/appmenu_osx.mm:223
+#: gui/launcher.cpp:242 backends/platform/sdl/macosx/appmenu_osx.mm:223
 msgid "About ScummVM"
 msgstr "Über ScummVM"
 
@@ -801,66 +801,66 @@ msgstr "Über ScummVM"
 msgid "Global ~O~ptions..."
 msgstr "Globale ~O~ptionen..."
 
-#: gui/launcher.cpp:243 gui/launcher.cpp:245
+#: gui/launcher.cpp:243
 msgid "Change global ScummVM options"
 msgstr "Globale ScummVM-Einstellungen ändern"
 
-#: gui/launcher.cpp:245
+#: gui/launcher.cpp:243
 msgctxt "lowres"
-msgid "Global ~O~pts..."
-msgstr "Globale ~O~pts..."
+msgid "Global Opts..."
+msgstr "Globale Opts..."
 
-#: gui/launcher.cpp:250
+#: gui/launcher.cpp:247
 msgid "~A~dd Game..."
 msgstr "Spiel ~h~inzufügen..."
 
-#: gui/launcher.cpp:250 gui/launcher.cpp:258
+#: gui/launcher.cpp:247
 msgid "Add games to the list"
 msgstr "Spiele zur Liste hinzufügen"
 
-#: gui/launcher.cpp:251
-msgid "Mass Add..."
-msgstr "Durchsuchen..."
-
-#: gui/launcher.cpp:255
-msgid "~R~emove Game"
-msgstr "Spiel ~e~ntfernen"
-
-#: gui/launcher.cpp:255 gui/launcher.cpp:263
-msgid "Remove game from the list. The game data files stay intact"
-msgstr "Spiel aus der Liste entfernen. Die Spieldateien bleiben erhalten"
-
-#: gui/launcher.cpp:258
+#: gui/launcher.cpp:247
 msgctxt "lowres"
 msgid "~A~dd Game..."
 msgstr "~H~inzufügen..."
 
-#: gui/launcher.cpp:259
-msgctxt "lowres"
-msgid "Mass Add..."
-msgstr "Durchsuchen..."
+#: gui/launcher.cpp:250
+msgid "~R~emove Game"
+msgstr "Spiel ~e~ntfernen"
 
-#: gui/launcher.cpp:263
+#: gui/launcher.cpp:250
+msgid "Remove game from the list. The game data files stay intact"
+msgstr "Spiel aus der Liste entfernen. Die Spieldateien bleiben erhalten"
+
+#: gui/launcher.cpp:250
 msgctxt "lowres"
 msgid "~R~emove Game"
 msgstr "~E~ntfernen"
 
-#: gui/launcher.cpp:271
+#: gui/launcher.cpp:252
+msgid "Mass Add..."
+msgstr "Durchsuchen..."
+
+#: gui/launcher.cpp:254
+msgctxt "lowres"
+msgid "Mass Add..."
+msgstr "Durchsuchen..."
+
+#: gui/launcher.cpp:262
 msgid "Search in game list"
 msgstr "In Spieleliste suchen"
 
-#: gui/launcher.cpp:275 gui/launcher.cpp:783
+#: gui/launcher.cpp:266 gui/launcher.cpp:774
 msgid "Search:"
 msgstr "Suchen:"
 
-#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:277 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/pegasus/pegasus.cpp:383 engines/trecision/saveload.cpp:253
 #: engines/tsage/scenes.cpp:630 engines/wage/saveload.cpp:741
 #: engines/xeen/saves.cpp:255
 msgid "Load game:"
 msgstr "Spiel laden:"
 
-#: gui/launcher.cpp:286 engines/dialogs.cpp:97 engines/engine.cpp:864
+#: gui/launcher.cpp:277 engines/dialogs.cpp:97 engines/engine.cpp:864
 #: engines/parallaction/metaengine.cpp:127
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:383
 #: engines/scumm/dialogs.cpp:176 engines/trecision/saveload.cpp:253
@@ -869,13 +869,13 @@ msgstr "Spiel laden:"
 msgid "Load"
 msgstr "Laden"
 
-#: gui/launcher.cpp:395
+#: gui/launcher.cpp:386
 msgid "This directory cannot be used yet, it is being downloaded into!"
 msgstr ""
 "Dieses Verzeichnis kann noch nicht verwendet werden, da noch Dateien "
 "heruntergeladen werden!"
 
-#: gui/launcher.cpp:406
+#: gui/launcher.cpp:397
 msgid ""
 "Do you really want to run the mass game detector? This could potentially add "
 "a huge number of games."
@@ -883,112 +883,112 @@ msgstr ""
 "Möchten Sie wirklich den PC nach Spielen durchsuchen? Möglicherweise wird "
 "dabei eine größere Menge an Spielen hinzugefügt."
 
-#: gui/launcher.cpp:436
+#: gui/launcher.cpp:427
 msgid "Do you really want to remove this game configuration?"
 msgstr "Möchten Sie diese Spielkonfiguration wirklich entfernen?"
 
-#: gui/launcher.cpp:478
+#: gui/launcher.cpp:469
 msgid "Do you want to load saved game?"
 msgstr "Möchten Sie einen Spielstand laden?"
 
-#: gui/launcher.cpp:535
+#: gui/launcher.cpp:526
 msgid "This game does not support loading games from the launcher."
 msgstr ""
 "Für dieses Spiel wird das Laden aus der Spieleliste heraus nicht unterstützt."
 
-#: gui/launcher.cpp:539
+#: gui/launcher.cpp:530
 msgid "ScummVM could not find any engine capable of running the selected game!"
 msgstr "ScummVM konnte keine passende Engine für dieses Spiel finden!"
 
-#: gui/launcher.cpp:595
+#: gui/launcher.cpp:586
 msgid "ScummVM could not find any game in the specified directory!"
 msgstr "ScummVM konnte im gewählten Verzeichnis kein Spiel finden!"
 
 #. I18N: Unknown game variant
-#: gui/launcher.cpp:611
+#: gui/launcher.cpp:602
 msgid "Unknown variant"
 msgstr "Unbekannte Spiele-Variante"
 
-#: gui/launcher.cpp:617
+#: gui/launcher.cpp:608
 msgid "Pick the game:"
 msgstr "Spiel auswählen:"
 
-#: gui/launcher.cpp:792
+#: gui/launcher.cpp:783
 msgid "Group by:"
 msgstr "Gruppieren nach:"
 
-#: gui/launcher.cpp:832 gui/saveload-dialog.cpp:355
+#: gui/launcher.cpp:823 gui/saveload-dialog.cpp:355
 msgid "List view"
 msgstr "Listenansicht"
 
-#: gui/launcher.cpp:833 gui/saveload-dialog.cpp:356
+#: gui/launcher.cpp:824 gui/saveload-dialog.cpp:356
 msgid "Grid view"
 msgstr "Rasteransicht"
 
-#: gui/launcher.cpp:987
+#: gui/launcher.cpp:978
 msgid "~S~tart"
 msgstr "~S~tarten"
 
-#: gui/launcher.cpp:987
+#: gui/launcher.cpp:978
 msgid "Start selected game"
 msgstr "Ausgewähltes Spiel starten"
 
-#: gui/launcher.cpp:990
+#: gui/launcher.cpp:981
 msgid "~L~oad..."
 msgstr "~L~aden..."
 
-#: gui/launcher.cpp:990
+#: gui/launcher.cpp:981
 msgid "Load saved game for selected game"
 msgstr "Spielstand für ausgewähltes Spiel laden"
 
-#: gui/launcher.cpp:992
+#: gui/launcher.cpp:983
 msgid "Record..."
 msgstr "Aufzeichnen..."
 
-#: gui/launcher.cpp:999
+#: gui/launcher.cpp:989
 msgid "~G~ame Options..."
 msgstr "Spiel-~O~ptionen..."
 
-#: gui/launcher.cpp:999 gui/launcher.cpp:1002
+#: gui/launcher.cpp:989
 msgid "Change game options"
 msgstr "Spieloptionen ändern"
 
-#: gui/launcher.cpp:1002
+#: gui/launcher.cpp:989
 msgctxt "lowres"
-msgid "~G~ame Opts..."
-msgstr "Spiel-~O~pts..."
+msgid "Game Opts..."
+msgstr "Spiel-Opts..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1124 gui/launcher.cpp:1319
+#: gui/launcher.cpp:1110 gui/launcher.cpp:1305
 msgid "Unknown Engine"
 msgstr "Unbekannte Engine"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1142 gui/launcher.cpp:1351
+#: gui/launcher.cpp:1128 gui/launcher.cpp:1337
 msgid "Unknown Publisher"
 msgstr "Unbekannter Publisher"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1160 gui/launcher.cpp:1337
+#: gui/launcher.cpp:1146 gui/launcher.cpp:1323
 msgid "No Series"
 msgstr "Keine Serie"
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1175 gui/launcher.cpp:1370
+#: gui/launcher.cpp:1161 gui/launcher.cpp:1356
 msgid "Language not detected"
 msgstr "Sprache nicht erkannt"
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1190 gui/launcher.cpp:1385
+#: gui/launcher.cpp:1176 gui/launcher.cpp:1371
 msgid "Platform not detected"
 msgstr "Plattform nicht erkannt"
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1396 gui/widgets/groupedlist.cpp:122
+#: gui/launcher.cpp:1382 gui/widgets/groupedlist.cpp:122
 msgid "All"
 msgstr "Alle"
 
@@ -2229,7 +2229,7 @@ msgstr ""
 msgid "Proceed"
 msgstr "Fortfahren"
 
-#: gui/widget.cpp:407 gui/widget.cpp:409 gui/widget.cpp:415 gui/widget.cpp:417
+#: gui/widget.cpp:422 gui/widget.cpp:424 gui/widget.cpp:430 gui/widget.cpp:432
 msgid "Clear value"
 msgstr "Wert löschen"
 
@@ -2883,7 +2883,7 @@ msgstr "Keine Musik"
 msgid "Apple II GS emulator (NOT IMPLEMENTED)"
 msgstr "Apple II GS-Emulator (NICHT INTEGRIERT)"
 
-#: audio/softsynth/cms.cpp:350
+#: audio/softsynth/cms.cpp:354
 msgid "Creative Music System emulator"
 msgstr "Creative Music System-Emulator"
 
@@ -4191,7 +4191,7 @@ msgstr ""
 "Schnelles Laden oder Speichern eines Spiels wird an diesem Ort nicht "
 "unterstützt"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2811
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2563
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4202,7 +4202,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2801
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2553
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4213,7 +4213,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2824
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2576
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4233,7 +4233,7 @@ msgstr "Zwischensequenz-Datei \"%s\" nicht gefunden!"
 msgid "AGOS 2 support is not compiled in"
 msgstr "Unterstützung für AGOS 2ist nicht eingebaut"
 
-#: engines/agos/midi.cpp:180 engines/kyra/sound/sound_pc_midi.cpp:75
+#: engines/agos/midi.cpp:184 engines/kyra/sound/sound_pc_midi.cpp:75
 msgid ""
 "You appear to be using a General MIDI device,\n"
 "but your game only supports Roland MT32 MIDI.\n"
@@ -5336,14 +5336,14 @@ msgstr ""
 "Die Demo-Version spielt einfache Animationen ab, ohne Westwoods Engine zu "
 "verwenden."
 
-#: engines/kyra/detection_tables.h:1447
+#: engines/kyra/detection_tables.h:1460
 msgid "You added the game incorrectly. Please add the root folder of the game."
 msgstr ""
 "Du hast das Spiel nicht korrekt hinzugefügt. Bitte füge das Stammverzeichnis "
 "des Spiels hinzu."
 
 #. I18N: The file in the game directory needs to be extracted
-#: engines/kyra/detection_tables.h:1463
+#: engines/kyra/detection_tables.h:1476
 msgid ""
 "You added the game incorrectly. The GAME.DAT file is an ISO image and you "
 "need to extract the game data files from it."
@@ -5351,11 +5351,11 @@ msgstr ""
 "Du hast das Spiel nicht korrekt hinzugefügt. Die Datei GAME.DAT ist ein ISO-"
 "Image. Du musst daher die Spiel-Dateien aus diesem Image extrahieren."
 
-#: engines/kyra/metaengine.cpp:116
+#: engines/kyra/metaengine.cpp:118
 msgid "Lands of Lore support is not compiled in"
 msgstr "Unterstützung für Lands of Lore ist nicht eingebaut"
 
-#: engines/kyra/metaengine.cpp:126
+#: engines/kyra/metaengine.cpp:128
 msgid ""
 "EOB II FM-TOWNS requires support of 16bit color modes which has not been "
 "activated in your ScummVM build"
@@ -5363,28 +5363,28 @@ msgstr ""
 "Die FM-TOWNS-Version von EOB II benötigt Unterstützung für 16bit-Farbmodi, "
 "welche in deiner ScummVM-Version nicht enhalten ist"
 
-#: engines/kyra/metaengine.cpp:132
+#: engines/kyra/metaengine.cpp:134
 msgid "Eye of Beholder support is not compiled in"
 msgstr "Unterstützung für Eye of the Beholder ist nicht eingebaut"
 
-#: engines/kyra/engine/eobcommon.cpp:367 engines/kyra/engine/lol.cpp:453
+#: engines/kyra/engine/eobcommon.cpp:367 engines/kyra/engine/lol.cpp:458
 #: engines/ultima/ultima4/meta_engine.cpp:224
 #: engines/ultima/ultima8/meta_engine.cpp:142
 msgid "Interact via Left Click"
 msgstr "Interaktion via Linksklick"
 
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:454
+#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:459
 #: engines/ultima/ultima4/meta_engine.cpp:230
 #: engines/ultima/ultima8/meta_engine.cpp:148
 msgid "Interact via Right Click"
 msgstr "Interaktion via Rechtsklick"
 
-#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:461
+#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:466
 #: engines/twine/metaengine.cpp:248
 msgid "Move Forward"
 msgstr "Nach vorn bewegen"
 
-#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:462
+#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:467
 msgid "Move Back"
 msgstr "Nach hinten bewegen"
 
@@ -5396,13 +5396,13 @@ msgstr "Nach links gehen"
 msgid "Move Right"
 msgstr "Nach rechts gehen"
 
-#: engines/kyra/engine/eobcommon.cpp:373 engines/kyra/engine/lol.cpp:465
+#: engines/kyra/engine/eobcommon.cpp:373 engines/kyra/engine/lol.cpp:470
 #: engines/pegasus/pegasus.cpp:2735 engines/twine/metaengine.cpp:269
 #: engines/zvision/metaengine.cpp:140
 msgid "Turn Left"
 msgstr "Nach links drehen"
 
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:466
+#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:471
 #: engines/pegasus/pegasus.cpp:2742 engines/twine/metaengine.cpp:262
 #: engines/zvision/metaengine.cpp:146
 msgid "Turn Right"
@@ -5448,43 +5448,43 @@ msgstr "Zauberspruch Stufe 5"
 msgid "Spell Level 6"
 msgstr "Zauberspruch Stufe 6"
 
-#: engines/kyra/engine/lol.cpp:457
+#: engines/kyra/engine/lol.cpp:462
 msgid "Attack 1"
 msgstr "Attacke 1"
 
-#: engines/kyra/engine/lol.cpp:458
+#: engines/kyra/engine/lol.cpp:463
 msgid "Attack 2"
 msgstr "Attacke 2"
 
-#: engines/kyra/engine/lol.cpp:459
+#: engines/kyra/engine/lol.cpp:464
 msgid "Attack 3"
 msgstr "Attacke 3"
 
-#: engines/kyra/engine/lol.cpp:460
+#: engines/kyra/engine/lol.cpp:465
 msgid "Show Map"
 msgstr "Karte anzeigen"
 
-#: engines/kyra/engine/lol.cpp:463
+#: engines/kyra/engine/lol.cpp:468
 msgid "Slide Left"
 msgstr "Nach links rutschen"
 
-#: engines/kyra/engine/lol.cpp:464
+#: engines/kyra/engine/lol.cpp:469
 msgid "Slide Right"
 msgstr "Nach rechts rutschen"
 
-#: engines/kyra/engine/lol.cpp:467
+#: engines/kyra/engine/lol.cpp:472
 msgid "Rest"
 msgstr "Ausruhen"
 
-#: engines/kyra/engine/lol.cpp:468
+#: engines/kyra/engine/lol.cpp:473
 msgid "Options"
 msgstr "Optionen"
 
-#: engines/kyra/engine/lol.cpp:469
+#: engines/kyra/engine/lol.cpp:474
 msgid "Choose Spell"
 msgstr "Zauberspruch auswählen"
 
-#: engines/kyra/gui/saveload_eob.cpp:595
+#: engines/kyra/gui/saveload_eob.cpp:597
 #, c-format
 msgid ""
 "The following original saved game file has been found in your game path:\n"
@@ -5502,7 +5502,7 @@ msgstr ""
 "Möchten Sie diese Spielstand-Datei in ScummVM verwenden?\n"
 "\n"
 
-#: engines/kyra/gui/saveload_eob.cpp:628
+#: engines/kyra/gui/saveload_eob.cpp:630
 #, c-format
 msgid ""
 "A saved game file was found in the specified slot %d. Overwrite?\n"
@@ -5512,7 +5512,7 @@ msgstr ""
 "Überschreiben?\n"
 "\n"
 
-#: engines/kyra/gui/saveload_eob.cpp:661
+#: engines/kyra/gui/saveload_eob.cpp:663
 #, c-format
 msgid ""
 "%d original saved games have been successfully imported into\n"
@@ -7450,7 +7450,7 @@ msgstr "Unterstützung für HE v71+ ist nicht eingebaut"
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr "Unterstützung für SCUMM v7-8 ist nicht eingebaut"
 
-#: engines/scumm/scumm.cpp:544
+#: engines/scumm/scumm.cpp:236
 msgid ""
 "You have enabled 'aspect ratio correction'. However, FM-TOWNS' natural "
 "resolution is 320x240, which doesn't allow aspect ratio correction.\n"
@@ -7463,7 +7463,7 @@ msgstr ""
 "Ein korrektes Seitenverhältnis kann erreicht werden, in dem im Engine-Tab "
 "die Auflösung auf 320x200 begrenzt wird."
 
-#: engines/scumm/scumm.cpp:1357
+#: engines/scumm/scumm.cpp:1047
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -7472,7 +7472,7 @@ msgstr ""
 "gefunden.\n"
 "Hochauflösende Schriften werden deaktiviert."
 
-#: engines/scumm/scumm.cpp:1383
+#: engines/scumm/scumm.cpp:1073
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -7480,7 +7480,7 @@ msgstr ""
 "Die Programmdatei für die Macintosh-Version von \"Loom\" nicht gefunden.\n"
 "Musik und hochauflösende Schriften werden deaktiviert."
 
-#: engines/scumm/scumm.cpp:1405
+#: engines/scumm/scumm.cpp:1095
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -7488,7 +7488,7 @@ msgstr ""
 "Macintosh-Programmdatei für Instrumente in \"Monkey Island\" nicht\n"
 "gefunden. Musik wird abgeschaltet."
 
-#: engines/scumm/scumm.cpp:1682
+#: engines/scumm/scumm.cpp:1372
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -7502,7 +7502,7 @@ msgstr ""
 "Kompression von\n"
 "den originalen Medien."
 
-#: engines/scumm/scumm.cpp:2154
+#: engines/scumm/scumm.cpp:1844
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -7512,7 +7512,7 @@ msgstr ""
 "Roland-Upgrade von LucasArts, aber %s\n"
 "fehlt. Stattdessen wird AdLib verwendet."
 
-#: engines/scumm/scumm.cpp:3123
+#: engines/scumm/scumm.cpp:2875
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "

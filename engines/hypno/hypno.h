@@ -251,6 +251,7 @@ public:
 	Filename _currentPalette;
 	virtual bool availableObjectives();
 	virtual bool checkArcadeObjectives();
+	ArcadeTransitions _transitions;
 	virtual bool checkTransition(ArcadeTransitions &transitions, ArcadeShooting *arc);
 	virtual Common::Point getPlayerPosition(bool needsUpdate);
 	virtual Common::Point computeTargetPosition(const Common::Point &mousePos);
@@ -571,11 +572,13 @@ public:
 	Graphics::Surface _healthBar[7];
 	Graphics::Surface _ammoBar[7];
 	Graphics::Surface _portrait[7];
+	Filename _deathDay[7];
+	Filename _deathNight[7];
 
-	Filename _weaponShootSound[7];
-	Filename _weaponReloadSound[7];
+	Filename _weaponShootSound[8];
+	Filename _weaponReloadSound[8];
 	Filename _heySound[7];
-	int _weaponMaxAmmo[7];
+	int _weaponMaxAmmo[8];
 
 	byte *_crosshairsPalette;
 	Graphics::Surface _crosshairsInactive[8];
@@ -589,8 +592,13 @@ public:
 	uint32 _currentActor;
 	uint32 _currentWeapon;
 	uint32 _civiliansShoot;
-	Filename _warningAnimals;
-	Common::Array<Filename> _warningCivilians;
+	Common::Array<Filename> _warningVideosDay;
+	Common::Array<Filename> _warningVideosNight;
+	Common::Array<Filename> _warningAlarmVideos;
+	Filename _warningHostage;
+
+	Common::Array<Filename> _deathVideo;
+	Common::HashMap<Common::String, bool> _shootsDestroyed;
 
 	Common::BitArray _font05;
 	Common::BitArray _font08;

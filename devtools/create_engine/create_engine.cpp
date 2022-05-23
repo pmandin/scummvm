@@ -25,7 +25,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#include <Windows.h>
+#ifdef _MSC_VER
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 // Specified engine name with different cases
 #define MAX_LINE_LENGTH 256
@@ -43,7 +47,23 @@ static const char *const FILENAMES[] = {
 };
 const char *const ENGINES = "create_project ..\\.. --use-canonical-lib-names --msvc\n";
 
-// Replaces any occurances of the xyzzy placeholder with
+bool fileExists(const char *name) {
+#ifdef _MSC_VER
+	return (GetFileAttributesA(name) != INVALID_FILE_ATTRIBUTES);
+#else
+	return (!access(name, F_OK));
+#endif
+}
+
+bool createDirectory(const char *name) {
+#ifdef _MSC_VER
+	return CreateDirectoryA(name);
+#else
+	return (!mkdir(name, 0755));
+#endif
+}
+
+// Replaces any occurrences of the xyzzy placeholder with
 // whatever engine name was specified
 void replace_placeholders(char line[MAX_LINE_LENGTH]) {
 	char buf[MAX_LINE_LENGTH];
@@ -86,15 +106,18 @@ void process_file(FILE *in, FILE *out) {
 }
 
 // Copies and processes the specified file
-void process_file(const char *filename) {
+void process_file(const char *filename, const char *prefix, const char *prefix2) {
 	char srcFilename[128], destFilename[128];
-	sprintf(srcFilename, "files/%s", filename);
+	sprintf(srcFilename, "%s/files/%s", prefix2, filename);
 	if (!strncmp(filename, "xyzzy.", 6))
-		sprintf(destFilename, "../../engines/%s/%s.%s",
-			engineLowercase, engineLowercase, filename + 6);
+		sprintf(destFilename, "%s/engines/%s/%s.%s",
+			prefix, engineLowercase, engineLowercase, filename + 6);
 	else
-		sprintf(destFilename, "../../engines/%s/%s",
-			engineLowercase, filename);
+		sprintf(destFilename, "%s/engines/%s/%s",
+			prefix, engineLowercase, filename);
+
+	printf("Creating file %s...", destFilename);
+	fflush(stdout);
 
 	FILE *in, *out;
 	if (!(in = fopen(srcFilename, "r"))) {
@@ -109,6 +132,8 @@ void process_file(const char *filename) {
 
 	process_file(in, out);
 
+	printf("done\n");
+
 	fclose(in);
 	fclose(out);
 }
@@ -116,17 +141,22 @@ void process_file(const char *filename) {
 // For Visual Studio convenience, creates a copy of the
 // create_msvc.bat to <engine>.bat that allows creating
 // the ScummVM solution with just that engine enabled
-void create_batch_file() {
+void create_batch_file(const char *prefix) {
 	FILE *in, *out;
 	char line[MAX_LINE_LENGTH];
+	char destFilename[MAX_LINE_LENGTH];
 
-	if (!(in = fopen("../../dists/msvc/create_msvc.bat", "r"))) {
+	sprintf(destFilename, "%s/dists/msvc/create_msvc.bat", prefix);
+	if (!(in = fopen(destFilename, "r"))) {
 		printf("Could not open create_msvc.bat\n");
 		exit(0);
 	}
 
-	char destFilename[MAX_LINE_LENGTH];
-	sprintf(destFilename, "../../dists/msvc/%s.bat", engineLowercase);
+	sprintf(destFilename, "%s/dists/msvc/%s.bat", prefix, engineLowercase);
+
+	printf("Creating file %s...", destFilename);
+	fflush(stdout);
+
 	if (!(out = fopen(destFilename, "w"))) {
 		printf("Could not create %s.bat\n", engineLowercase);
 		exit(0);
@@ -143,6 +173,8 @@ void create_batch_file() {
 		// Write out the line
 		fputs(line, out);
 	}
+
+	printf("done\n");
 
 	fclose(in);
 	fclose(out);
@@ -162,19 +194,38 @@ int main(int argc, char *argv[]) {
 			engineUppercase[i] : engineLowercase[i];
 	}
 
-	// Create a directory for the new engine
-	char folder[MAX_LINE_LENGTH];
-	sprintf(folder, "../../engines/%s", engineLowercase);
-	if (!CreateDirectoryA(folder, NULL)) {
-		printf("Could not create engine folder.\n");
+	char prefix[100];
+	char prefix2[100];
+	if (fileExists("../../engines")) {
+		strcpy(prefix, "../..");
+		strcpy(prefix2, ".");
+	} else if (fileExists("engines")) {
+		strcpy(prefix, ".");
+		strcpy(prefix2, "devtools/create_engine");
+	} else {
+		printf("Cound not locate engines directory. Run from the scummvm source root directory\n");
 		return 0;
 	}
 
+
+	// Create a directory for the new engine
+	char folder[MAX_LINE_LENGTH];
+	sprintf(folder, "%s/engines/%s", prefix, engineLowercase);
+
+	printf("Creating directory %s...", folder);
+	fflush(stdout);
+
+	if (!createDirectory(folder)) {
+		printf("Could not create engine folder.\n");
+		return 0;
+	}
+	printf("done\n");
+
 	// Process the files
 	for (const char *const *filename = FILENAMES; *filename; ++filename)
-		process_file(*filename);
+		process_file(*filename, prefix, prefix2);
 
-	create_batch_file();
+	create_batch_file(prefix);
 
 	printf("Engine generation complete.\n");
 	return 0;

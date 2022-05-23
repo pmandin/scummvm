@@ -71,8 +71,8 @@ void game_main() {
 void alloc_buffers() {
 	_G(workpage) = (byte *)MALLOC(64004l);
 	_G(pal) = (byte *)MALLOC(768l);
-	_G(Ci).TempArea = (byte *)MALLOC(64004l);
-	_G(det)->set_taf_ani_mem(_G(Ci).TempArea);
+	_G(Ci).tempArea = (byte *)MALLOC(64004l);
+	_G(det)->set_taf_ani_mem(_G(Ci).tempArea);
 }
 
 void free_buffers() {
@@ -85,7 +85,7 @@ void free_buffers() {
 	free((char *)_G(chewy));
 
 	free((char *)_G(curtaf));
-	free(_G(Ci).TempArea);
+	free(_G(Ci).tempArea);
 	free(_G(pal));
 	free(_G(workpage));
 }
@@ -95,7 +95,7 @@ void cursorChoice(int16 nr) {
 	int16 delay = -1;
 
 	if (nr != CUR_USER) {
-		_G(curblk).sprite = _G(curtaf)->_image;
+		_G(curblk).sprite = _G(curtaf)->image;
 		delay = (1 + _G(gameState).DelaySpeed) * 5;
 	}
 	switch (nr) {
@@ -169,7 +169,6 @@ void cursorChoice(int16 nr) {
 	}
 
 	if (ok) {
-		_cursorMoveFl = true;
 		_G(gameState)._curWidth = READ_LE_INT16(_G(curblk).sprite[_G(cur)->getAnimStart()]);
 		_G(gameState)._curHeight = READ_LE_INT16(_G(curblk).sprite[_G(cur)->getAnimStart()] + 2);
 	}
@@ -423,11 +422,9 @@ static void showWalkAreas() {
 
 	for (int y = 0, yp = ys; y < 200 / 8; ++y, yp += 8) {
 		for (int x = 0, xp = xs; x < 320 / 8; ++x, xp += 8) {
-			int idx = _G(ged)->ged_idx(xp, yp,
-				_G(room)->_gedXNr[_G(room_blk).AkAblage],
-				_G(ged_mem)[_G(room_blk).AkAblage]);
+			const int barrierId = _G(barriers)->getBarrierId(xp, yp);
 
-			if (idx) {
+			if (barrierId) {
 				Common::Rect r(xp, yp, xp + 8, yp + 8);
 				r.translate(-_G(gameState).scrollx, -_G(gameState).scrolly);
 				r.clip(Common::Rect(0, 0, 320, 200));
@@ -504,10 +501,6 @@ void setupScreen(SetupScreenMode mode) {
 						          _G(spieler_mi)[P_CHEWY].HotX;
 						_G(gpkt).Sy = _G(spieler_vector)[P_CHEWY].Xypos[1] +
 						          _G(spieler_mi)[P_CHEWY].HotY;
-						_G(gpkt).Breite = _G(room)->_gedXNr[_G(room_blk).AkAblage];
-						_G(gpkt).Hoehe = _G(room)->_gedYNr[_G(room_blk).AkAblage];
-						_G(gpkt).Mem = _G(ged_mem)[_G(room_blk).AkAblage];
-						_G(gpkt).Ebenen = _G(room)->_gedInfo[_G(room_blk).AkAblage].Ebenen;
 						_G(gpkt).AkMovEbene = 1;
 						_G(mov)->goto_xy(&_G(gpkt));
 						_G(spieler_mi)[P_CHEWY].XyzStart[0] = _G(spieler_vector)[P_CHEWY].Xypos[0];
@@ -526,12 +519,10 @@ void setupScreen(SetupScreenMode mode) {
 		calc_auto_go();
 
 		if (_G(fx_blend)) {
-			int16 idx = _G(ged)->ged_idx(
+			const int16 paletteId = _G(barriers)->getBarrierId(
 				_G(spieler_vector)[P_CHEWY].Xypos[0] + _G(spieler_mi)[P_CHEWY].HotX,
-				_G(spieler_vector)[P_CHEWY].Xypos[1] + _G(spieler_mi)[P_CHEWY].HotY,
-				_G(room)->_gedXNr[_G(room_blk).AkAblage],
-				_G(ged_mem)[_G(room_blk).AkAblage]);
-			check_shad(idx, 0);
+				_G(spieler_vector)[P_CHEWY].Xypos[1] + _G(spieler_mi)[P_CHEWY].HotY);
+			checkShadow(paletteId, 0);
 		} else {
 			for (i = 0; i < MAX_PERSON; i++) {
 				mov_objekt(&_G(spieler_vector)[i], &_G(spieler_mi)[i]);
@@ -563,7 +554,7 @@ void setupScreen(SetupScreenMode mode) {
 			_G(cur)->plot_cur();
 
 			if ((_G(gameState).inv_cur) && (_G(flags).CursorStatus == true))
-				_G(out)->spriteSet(_G(curtaf)->_image[_G(pfeil_ani) + 32], g_events->_mousePos.x, g_events->_mousePos.y,
+				_G(out)->spriteSet(_G(curtaf)->image[_G(pfeil_ani) + 32], g_events->_mousePos.x, g_events->_mousePos.y,
 				                _G(scr_width));
 			if (_G(pfeil_delay) == 0) {
 				_G(pfeil_delay) = _G(gameState).DelaySpeed;
@@ -605,7 +596,7 @@ void setupScreen(SetupScreenMode mode) {
 			break;
 
 		default:
-			_G(out)->back2screen(_G(workpage));
+			_G(out)->copyToScreen();
 			break;
 		}
 
@@ -797,13 +788,13 @@ void mouseAction() {
 		_G(inv_disp_ok) = false;
 	}
 	if (_G(atds)->aadGetStatus() == -1) {
-		if (_G(minfo)._button || g_events->_kbInfo._keyCode == Common::KEYCODE_ESCAPE || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN) {
+		if (_G(minfo).button || g_events->_kbInfo._keyCode == Common::KEYCODE_ESCAPE || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN) {
 
-			if (_G(minfo)._button == 2 || g_events->_kbInfo._keyCode == Common::KEYCODE_ESCAPE) {
+			if (_G(minfo).button == 2 || g_events->_kbInfo._keyCode == Common::KEYCODE_ESCAPE) {
 				if (!_G(flags).mainMouseFlag) {
 					g_events->_kbInfo._scanCode = Common::KEYCODE_ESCAPE;
 				}
-			} else if (_G(minfo)._button == 1 || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN) {
+			} else if (_G(minfo).button == 1 || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN) {
 				if (!_G(flags).mainMouseFlag) {
 					if (_G(menu_display) == MENU_DISPLAY)
 						g_events->_kbInfo._scanCode = Common::KEYCODE_RETURN;
@@ -1034,7 +1025,7 @@ void palcopy(byte *destPal, const byte *srcPal, int16 destStartIndex, int16 srcS
 	}
 }
 
-void check_shad(int16 palIdx, int16 mode) {
+void checkShadow(int16 palIdx, int16 mode) {
 	static const uint8 PAL_0[] = {
 		0, 0, 0,
 		39, 0, 26,
@@ -1149,10 +1140,6 @@ bool autoMove(int16 movNr, int16 playerNum) {
 						  _G(spieler_mi)[playerNum].HotMovY + _G(spieler_mi)[playerNum].HotY;
 			_G(gpkt).Sx = _G(spieler_vector)[playerNum].Xypos[0] + _G(spieler_mi)[playerNum].HotX;
 			_G(gpkt).Sy = _G(spieler_vector)[playerNum].Xypos[1] + _G(spieler_mi)[playerNum].HotY;
-			_G(gpkt).Breite = _G(room)->_gedXNr[_G(room_blk).AkAblage];
-			_G(gpkt).Hoehe = _G(room)->_gedYNr[_G(room_blk).AkAblage];
-			_G(gpkt).Mem = _G(ged_mem)[_G(room_blk).AkAblage];
-			_G(gpkt).Ebenen = _G(room)->_gedInfo[_G(room_blk).AkAblage].Ebenen;
 			_G(gpkt).AkMovEbene = 1;
 			_G(mov)->goto_xy(&_G(gpkt));
 
@@ -1412,21 +1399,21 @@ int16 is_mouse_person(int16 x, int16 y) {
 				if (!_G(spz_ani)[i]) {
 					switch (i) {
 					case P_CHEWY:
-						xy = (int16 *)_G(chewy)->_image[_G(chewy_ph)[_G(spieler_vector)[P_CHEWY].Phase * 8 + _G(spieler_vector)[P_CHEWY].PhNr]];
+						xy = (int16 *)_G(chewy)->image[_G(chewy_ph)[_G(spieler_vector)[P_CHEWY].Phase * 8 + _G(spieler_vector)[P_CHEWY].PhNr]];
 						break;
 
 					case P_HOWARD:
 					case P_NICHELLE:
 						if (_G(gameState)._personRoomNr[i] != _G(gameState)._personRoomNr[P_CHEWY])
 							check = false;
-						xy = (int16 *)_G(PersonTaf)[i]->_image[_G(PersonSpr)[i][_G(spieler_vector)[i].PhNr]];
+						xy = (int16 *)_G(PersonTaf)[i]->image[_G(PersonSpr)[i][_G(spieler_vector)[i].PhNr]];
 						break;
 
 					default:
 						break;
 					}
 				} else
-					xy = (int16 *)_G(spz_tinfo)->_image[_G(spz_spr_nr)[_G(spieler_vector)[i].PhNr]];
+					xy = (int16 *)_G(spz_tinfo)->image[_G(spz_spr_nr)[_G(spieler_vector)[i].PhNr]];
 				if (check) {
 					if (x + _G(gameState).scrollx >= _G(spieler_vector)[i].Xypos[0] &&
 					        x + _G(gameState).scrollx <= _G(spieler_vector)[i].Xypos[0] + xy[0] + _G(spieler_vector)[i].Xzoom &&
@@ -1708,11 +1695,9 @@ void calc_ausgang(int16 x, int16 y) {
 				               ScrXy[0], ScrXy[1],
 				               &_G(gameState).scrollx, &_G(gameState).scrolly);
 
-				int16 u_idx = _G(ged)->ged_idx(_G(spieler_vector)[P_CHEWY].Xypos[0] + _G(spieler_mi)[P_CHEWY].HotX,
-				                               _G(spieler_vector)[P_CHEWY].Xypos[1] + _G(spieler_mi)[P_CHEWY].HotY,
-				                               _G(room)->_gedXNr[_G(room_blk).AkAblage],
-				                               _G(ged_mem)[_G(room_blk).AkAblage]);
-				check_shad(u_idx, 0);
+				const int16 paletteId = _G(barriers)->getBarrierId(_G(spieler_vector)[P_CHEWY].Xypos[0] + _G(spieler_mi)[P_CHEWY].HotX,
+				                                              _G(spieler_vector)[P_CHEWY].Xypos[1] + _G(spieler_mi)[P_CHEWY].HotY);
+				checkShadow(paletteId, 0);
 				setPersonSpr(_G(Rdi)->AutoMov[_G(gameState).room_e_obj[nr].ExitMov]._sprNr, P_CHEWY);
 				_G(spieler_vector)[P_CHEWY]._delayCount = 0;
 				_G(fx_blend) = BLEND1;
@@ -1920,7 +1905,7 @@ ChewyFont::ChewyFont(Common::String filename) {
 	_displayWidth = _dataWidth;
 	_displayHeight = _dataHeight;
 
-	_fontSurface.create(_dataWidth * _count, _dataHeight, ::Graphics::PixelFormat::createFormatCLUT8());
+	_fontSurface.create(_dataWidth * _count, _dataHeight, Graphics::PixelFormat::createFormatCLUT8());
 
 	int bitIndex = 7;
 
@@ -1956,19 +1941,24 @@ void ChewyFont::setDeltaX(uint16 deltaX) {
 	_deltaX = deltaX;
 }
 
-::Graphics::Surface *ChewyFont::getLine(const Common::String &texts) {
-	::Graphics::Surface *line = new ::Graphics::Surface();
-	line->create(texts.size() * _dataWidth, _dataHeight, ::Graphics::PixelFormat::createFormatCLUT8());
+Graphics::Surface *ChewyFont::getLine(const Common::String &texts) {
+	Graphics::Surface *line = new Graphics::Surface();
+	if (texts.size() == 0)
+		return line;
+
+	Common::Rect subrect(0, 0, _dataWidth, _dataHeight);
+	line->create(texts.size() * _deltaX, _dataHeight, Graphics::PixelFormat::createFormatCLUT8());
+	line->fillRect(Common::Rect(line->w, line->h), 0xFF);
 
 	for (uint i = 0; i < texts.size(); i++) {
-		uint x = (texts[i] - _first) * _dataWidth;
-		line->copyRectToSurface(_fontSurface, i * _dataWidth, 0, Common::Rect(x, 0, x + _dataWidth, _dataHeight));
+		subrect.moveTo((texts[i] - _first) * _dataWidth, 0);
+		line->copyRectToSurface(_fontSurface, i * (_deltaX - 2), 0, subrect);
 	}
 
 	return line;
 }
 
-::Graphics::Surface *FontMgr::getLine(const Common::String &texts) {
+Graphics::Surface *FontMgr::getLine(const Common::String &texts) {
 	return _font->getLine(texts);
 }
 

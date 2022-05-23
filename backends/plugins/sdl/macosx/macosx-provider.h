@@ -19,33 +19,18 @@
  *
  */
 
-#ifndef CHEWY_GEDCLASS_H
-#define CHEWY_GEDCLASS_H
+#ifndef BACKENDS_PLUGINS_SDL_MACOSX_PROVIDER_H
+#define BACKENDS_PLUGINS_SDL_MACOSX_PROVIDER_H
 
-#include "chewy/ngstypes.h"
+#include "backends/plugins/sdl/sdl-provider.h"
 
-namespace Chewy {
+#if defined(DYNAMIC_MODULES) && defined(SDL_BACKEND) && defined(MACOSX)
 
-typedef int16(*GedUserFunc)(int16 idx_nr);
-
-class GedClass {
-public:
-	GedClass(GedUserFunc func) : _gedUserFunc(func) {
-	}
-
-	void load_ged_pool(const char *fname, GedChunkHeader *Gh, int16 ch_nr, byte *speicher);
-
-	void load_ged_pool(Common::SeekableReadStream *stream, GedChunkHeader *Gh, int16 ch_nr, byte *speicher);
-	int16 ged_idx(int16 x, int16 y, int16 x_anz, byte *speicher);
-	int16 ged_idx(int16 g_idx, int16 x_anz, byte *speicher);
-
-private:
-	void load_ged_chunk(GedChunkHeader *Gh, Common::SeekableReadStream *stream, int16 nr, byte *speicher);
-
-	GedPoolHeader _gedPoolHeader;
-	GedUserFunc _gedUserFunc;
+class MacOSXPluginProvider : public SDLPluginProvider {
+protected:
+	void addCustomDirectories(Common::FSList &dirs) const;
 };
 
-} // namespace Chewy
+#endif // defined(DYNAMIC_MODULES) && defined(SDL_BACKEND) && defined(MACOSX)
 
 #endif
