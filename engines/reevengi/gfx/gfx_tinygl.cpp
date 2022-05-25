@@ -212,9 +212,9 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 		for (int x = 0; x < width; x += BITMAP_TEXTURE_SIZE) {
 			int t_width = (x + BITMAP_TEXTURE_SIZE >= width) ? (width - x) : BITMAP_TEXTURE_SIZE;
 			int t_height = (y + BITMAP_TEXTURE_SIZE >= height) ? (height - y) : BITMAP_TEXTURE_SIZE;
-			TGLenum txFormat = TGL_BGRA;
-			TGLenum txDataType = TGL_UNSIGNED_SHORT_1_5_5_5_REV;
-			Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 10, 5, 0, 15);
+			TGLenum txFormat = TGL_RGBA;
+			TGLenum txDataType = TGL_UNSIGNED_SHORT_5_5_5_1;
+			Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 11, 6, 1, 0);
 
 			tglBindTexture(TGL_TEXTURE_2D, _maskTexIds[i]);
 			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MAG_FILTER, TGL_NEAREST);
@@ -456,10 +456,10 @@ void GfxTinyGL::createTexture(const Graphics::Surface *frame, uint16* timPalette
 
 	if (frame->format == Graphics::PixelFormat(1, 0, 0, 0, 0, 0, 0, 0, 0)) {
 		/* Convert to R5G5B5A1 texture */
-		format = TGL_BGRA;
-		dataType = TGL_UNSIGNED_SHORT_1_5_5_5_REV;
+		format = TGL_RGBA;
+		dataType = TGL_UNSIGNED_SHORT_5_5_5_1;
 		Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
-		Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 10, 5, 0, 15);
+		Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 11, 6, 1, 0);
 
 		maskBitmap = new uint16[frame->w * frame->h];
 
