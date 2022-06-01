@@ -25,8 +25,8 @@
 
 #include "graphics/cursorman.h"
 
-#include "agi/preagi.h"
-#include "agi/preagi_mickey.h"
+#include "agi/preagi/preagi.h"
+#include "agi/preagi/mickey.h"
 #include "agi/graphics.h"
 
 namespace Agi {

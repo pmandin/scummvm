@@ -27,7 +27,8 @@
 #endif
 
 // This is a convenience macro to test whether the compiler used is a GCC
-// version, which is at least major.minor.
+// version, which is at least major.minor.  Note that Clang will also define
+// it and report itself as GCC 4.2.1.
 #ifdef __GNUC__
 	#define GCC_ATLEAST(major, minor) (__GNUC__ > (major) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor)))
 #else
@@ -134,10 +135,7 @@
 	// write a simple placement new on our own. It might be noteworthy we can't
 	// easily do that for systems which do have a <new>, since it might clash with
 	// the default definition otherwise!
-	// Symbian does not have <new> but the new operator
-	#if !defined(__SYMBIAN32__)
 	#include <new>
-	#endif
 #endif
 
 #ifndef STATIC_ASSERT
@@ -267,8 +265,7 @@
 		  defined(__DS__) || \
 		  defined(__3DS__) || \
 		  defined(IPHONE) || \
-		  defined(__PSP__) || \
-		  defined(__SYMBIAN32__)
+		  defined(__PSP__)
 
 		#define SCUMM_LITTLE_ENDIAN
 		#define SCUMM_NEED_ALIGNMENT
@@ -362,7 +359,7 @@
 #ifndef FORCEINLINE
 	#if defined(_MSC_VER)
 		#define FORCEINLINE __forceinline
-	#elif GCC_ATLEAST(3, 1)
+	#elif defined(__GNUC__)
 		#define FORCEINLINE inline __attribute__((__always_inline__))
 	#else
 		#define FORCEINLINE inline
@@ -398,7 +395,7 @@
 #ifndef WARN_UNUSED_RESULT
 	#if __cplusplus >= 201703L
 		#define WARN_UNUSED_RESULT [[nodiscard]]
-	#elif GCC_ATLEAST(3, 4)
+	#elif defined(__GNUC__)
 		#define WARN_UNUSED_RESULT __attribute__((__warn_unused_result__))
 	#elif defined(_Check_return_)
 		#define WARN_UNUSED_RESULT _Check_return_
@@ -424,7 +421,7 @@
 		#define scumm_va_copy va_copy
 	#elif defined(__va_copy)
 		#define scumm_va_copy __va_copy
-	#elif defined(_MSC_VER) || defined(__SYMBIAN32__)
+	#elif defined(_MSC_VER)
 		#define scumm_va_copy(dst, src)       ((dst) = (src))
 	#else
 		#error scumm_va_copy undefined for this port

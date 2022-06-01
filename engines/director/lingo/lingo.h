@@ -383,8 +383,10 @@ public:
 	bool _exitLock;
 	bool _preLoadEventAbort; // no-op, everything is always preloaded
 	Datum _searchPath;
+	bool _trace;	// state of movie's trace function
 	int _traceLoad; // internal Director verbosity level
 	bool _updateMovieEnabled;
+	bool _romanLingo;
 
 	Datum getTheEntity(int entity, Datum &id, int field);
 	void setTheEntity(int entity, Datum &id, int field, Datum &d);

@@ -31,6 +31,7 @@
 #include "ags/shared/util/string.h"
 #include "ags/shared/util/string_types.h"
 #include "ags/shared/util/version.h"
+#include "ags/shared/font/wfn_font.h"
 #include "ags/shared/gui/gui_main.h"
 #include "ags/shared/script/cc_script.h"
 #include "ags/engine/ac/event.h"
@@ -60,7 +61,6 @@ namespace AGS3 {
 
 using String = AGS::Shared::String;
 using Version = AGS::Shared::Version;
-using StringMap = AGS::Shared::StringMap;
 
 namespace AGS {
 namespace Shared {
@@ -710,6 +710,8 @@ public:
 	TTFFontRenderer *_ttfRenderer;
 	WFNFontRenderer *_wfnRenderer;
 	SplitLines *_Lines;
+	const WFNChar _emptyChar; // a dummy character to substitute bad symbols
+	Shared::Bitmap _wputblock_wrapper; // [IKM] argh! :[
 
 	/**@}*/
 
@@ -857,6 +859,7 @@ public:
 	 */
 
 	const AGS::Engine::GfxFilterInfo *_allegroFilterInfo;
+	AGS::Engine::GfxFilterInfo *_scummvmGfxFilter;
 
 	/**@}*/
 
@@ -1344,7 +1347,7 @@ public:
 	 */
 
 	AGS::Shared::Translation *_trans;
-	StringMap *_transtree = nullptr;
+	AGS::Shared::StringMap *_transtree = nullptr;
 	String _trans_name, _trans_filename;
 	long _lang_offs_start = 0;
 	char _transFileName[MAX_PATH_SZ] = { 0 };
@@ -1378,6 +1381,8 @@ public:
 	int _walkBehindsCachedForBgNum = 0;
 	WalkBehindMethodEnum _walkBehindMethod = DrawOverCharSprite;
 	int _walk_behind_baselines_changed = 0;
+	Rect _walkBehindAABB[MAX_WALK_BEHINDS]; // WB bounding box
+	std::vector<WalkBehindColumn> _walkBehindCols; // precalculated WB positions
 
 	/**@}*/
 

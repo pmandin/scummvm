@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef AGI_PREAGI_H
-#define AGI_PREAGI_H
+#ifndef AGI_PREAGI_PREAGI_H
+#define AGI_PREAGI_PREAGI_H
 
 #include "agi/agi.h"
 

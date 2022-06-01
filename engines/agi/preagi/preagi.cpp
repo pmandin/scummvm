@@ -26,7 +26,7 @@
 #include "common/events.h"
 #include "common/random.h"
 
-#include "agi/preagi.h"
+#include "agi/preagi/preagi.h"
 #include "agi/graphics.h"
 
 namespace Agi {

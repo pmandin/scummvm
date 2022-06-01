@@ -253,6 +253,8 @@ Globals::Globals() {
 	_StaticInventoryArray = new StaticArray();
 	_StaticDialogArray = new StaticArray();
 
+	_scummvmGfxFilter = new AGS::Engine::GfxFilterInfo("StdScale", "Nearest-neighbour");
+
 	// gfxfilter_aad3d.cpp globals
 	_aad3dFilterInfo = new AGS::Engine::GfxFilterInfo("Linear", "Linear interpolation");
 
@@ -368,7 +370,7 @@ Globals::Globals() {
 
 	// translation.cpp globals
 	_trans = new AGS::Shared::Translation();
-	_transtree = new StringMap();
+	_transtree = new AGS::Shared::StringMap();
 
 	// walk_behind.cpp globals
 	Common::fill(_walkBehindLeft, _walkBehindLeft + MAX_WALK_BEHINDS, 0);
@@ -511,6 +513,7 @@ Globals::~Globals() {
 	delete _StaticRegionArray;
 	delete _StaticInventoryArray;
 	delete _StaticDialogArray;
+	delete _scummvmGfxFilter;
 
 	// gfxfilter_aad3d.cpp globals
 	delete _aad3dFilterInfo;

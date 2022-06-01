@@ -204,10 +204,15 @@ void SpiderEngine::addIngredient(Code *code) {
 		ingredients[6] = true;
 	}
 	resetSceneState();
+	_defaultCursorIdx = 0;
+	defaultCursor();
 	_nextLevel = "bushard2.mi_";
 }
 
 void SpiderEngine::checkMixture(Code *code) {
+	_defaultCursorIdx = 0;
+	defaultCursor();
+
 	_nextLevel = "bushard2.mi_";
 	if (ingredients[0]) {
 		MVideo video("cine/blcs005s.smk", Common::Point(0, 0), false, true, false);
@@ -730,6 +735,8 @@ void SpiderEngine::runFileCabinet(Code *code) {
 					}
 
 					_nextLevel = code->levelIfWin;
+					_defaultCursorIdx = 36;
+					defaultCursor();
 					return;
 				}
 
@@ -758,6 +765,7 @@ void SpiderEngine::runFileCabinet(Code *code) {
 				for (int i = 0; i < 6; i++) {
 					drawImage(*nums[comb[i]], sel[i].left, sel[i].top, true);
 				}
+				drawImage(*menu, 0, 0, false);
 				break;
 
 
@@ -1103,7 +1111,7 @@ void SpiderEngine::showCredits() {
 	changeScreenMode("640x480");
 	MVideo video("cine/credits.smk", Common::Point(0, 0), false, true, false);
 	runIntro(video);
-	if (_restoredContentEnabled) {
+	if (_restoredContentEnabled && !_checkpoint.empty()) {
 		showScore("Spider-Man saved the day!");
 	}
 	_score = 0;

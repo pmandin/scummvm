@@ -240,7 +240,7 @@ void LauncherDialog::build() {
 		new ButtonWidget(this, _title + ".QuitButton", _("~Q~uit"), _("Quit ScummVM"), kQuitCmd);
 
 	new ButtonWidget(this, _title + ".AboutButton", _("A~b~out"), _("About ScummVM"), kAboutCmd);
-	new ButtonWidget(this, _title + ".OptionsButton", _("Global ~O~ptions..."), _("Change global ScummVM options"), kOptionsCmd, 0, _c("Global Opts...", "lowres"));
+	new ButtonWidget(this, _title + ".OptionsButton", _("Global ~O~ptions..."), _("Change global ScummVM options"), kOptionsCmd, 0, _c("Global ~O~pts...", "lowres"));
 
 	// Above the lowest button rows: two more buttons (directly below the list box)
 	DropdownButtonWidget *addButton =
@@ -986,7 +986,7 @@ void LauncherSimple::build() {
 
 	// Add edit button
 	_editButton =
-		new ButtonWidget(this, "Launcher.EditGameButton", _("~G~ame Options..."), _("Change game options"), kEditGameCmd, 0, _c("Game Opts...", "lowres"));
+		new ButtonWidget(this, "Launcher.EditGameButton", _("~G~ame Options..."), _("Change game options"), kEditGameCmd, 0, _c("~G~ame Opts...", "lowres"));
 
 	// Add list with game titles
 	_list = new GroupedListWidget(this, "Launcher.GameList", Common::U32String(), kListSearchCmd);
@@ -1009,7 +1009,6 @@ void LauncherSimple::build() {
 void LauncherSimple::updateListing() {
 	Common::U32StringArray l;
 	Common::Array<const Common::ConfigManager::Domain *> attrs;
-	ListWidget::ColorList colors;
 	ThemeEngine::FontColor color;
 	int numEntries = ConfMan.getInt("gui_list_max_scan_entries");
 
@@ -1064,14 +1063,15 @@ void LauncherSimple::updateListing() {
 				// description += Common::String::format(" (%s)", _("Not found"));
 			}
 		}
-		l.push_back(iter->description);
-		colors.push_back(color);
+		Common::U32String gameDesc = GUI::ListWidget::getThemeColor(color) + Common::U32String(iter->description);
+
+		l.push_back(gameDesc);
 		attrs.push_back(iter->domain);
 		_domains.push_back(iter->key);
 	}
 
 	const int oldSel = _list->getSelected();
-	_list->setList(l, &colors);
+	_list->setList(l);
 
 	groupEntries(attrs);
 

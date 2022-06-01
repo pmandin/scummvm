@@ -19,8 +19,8 @@
  *
  */
 
-#include "agi/preagi.h"
-#include "agi/preagi_troll.h"
+#include "agi/preagi/preagi.h"
+#include "agi/preagi/troll.h"
 #include "agi/graphics.h"
 
 #include "common/events.h"

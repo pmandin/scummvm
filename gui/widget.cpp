@@ -292,6 +292,7 @@ StaticTextWidget::StaticTextWidget(GuiObject *boss, int x, int y, int w, int h, 
 	_label = text;
 	_align = Graphics::convertTextAlignH(align, g_gui.useRTL() && _useRTL);
 	setFont(font, lang);
+	_fontColor = ThemeEngine::FontColor::kFontColorNormal; 
 	_useEllipsis = useEllipsis;
 }
 
@@ -302,6 +303,7 @@ StaticTextWidget::StaticTextWidget(GuiObject *boss, const Common::String &name, 
 	_label = text;
 	_align = Graphics::convertTextAlignH(g_gui.xmlEval()->getWidgetTextHAlign(name), g_gui.useRTL() && _useRTL);
 	setFont(font, lang);
+	_fontColor = ThemeEngine::FontColor::kFontColorNormal; 
 	_useEllipsis = useEllipsis;
 }
 
@@ -326,11 +328,14 @@ void StaticTextWidget::setAlign(Graphics::TextAlign align) {
 	}
 }
 
+void StaticTextWidget::setFontColor(const ThemeEngine::FontColor color) {
+	_fontColor = color; 
+}
 
 void StaticTextWidget::drawWidget() {
 	g_gui.theme()->drawText(
 			Common::Rect(_x, _y, _x + _w, _y + _h),
-			_label, _state, _align, ThemeEngine::kTextInversionNone, 0, _useEllipsis, _font
+			_label, _state, _align, ThemeEngine::kTextInversionNone, 0, _useEllipsis, _font, _fontColor
 	);
 }
 
@@ -349,10 +354,16 @@ void StaticTextWidget::setFont(ThemeEngine::FontStyle font, Common::Language lan
 ButtonWidget::ButtonWidget(GuiObject *boss, int x, int y, int w, int h, const Common::U32String &label, const Common::U32String &tooltip, uint32 cmd, uint8 hotkey, const Common::U32String &lowresLabel)
 	: StaticTextWidget(boss, x, y, w, h, cleanupHotkey(label), Graphics::kTextAlignCenter, tooltip), CommandSender(boss),
 	  _cmd(cmd), _hotkey(hotkey), _duringPress(false) {
-	_lowresLabel = lowresLabel;
+	_lowresLabel = cleanupHotkey(lowresLabel);
 
-	if (hotkey == 0)
-		_hotkey = parseHotkey(label);
+	if (hotkey == 0) {
+		_highresHotkey = parseHotkey(label);
+		_hotkey = _highresHotkey;
+		_lowresHotkey = parseHotkey(lowresLabel);
+	} else {
+		_highresHotkey = hotkey;
+		_lowresHotkey = hotkey;
+	}
 
 	setFlags(WIDGET_ENABLED/* | WIDGET_BORDER*/ | WIDGET_CLEARBG);
 	_type = kButtonWidget;
@@ -361,10 +372,16 @@ ButtonWidget::ButtonWidget(GuiObject *boss, int x, int y, int w, int h, const Co
 ButtonWidget::ButtonWidget(GuiObject *boss, const Common::String &name, const Common::U32String &label, const Common::U32String &tooltip, uint32 cmd, uint8 hotkey, const Common::U32String &lowresLabel)
 	: StaticTextWidget(boss, name, cleanupHotkey(label), tooltip), CommandSender(boss),
 	  _cmd(cmd), _hotkey(hotkey), _duringPress(false) {
-	_lowresLabel = lowresLabel;
+	_lowresLabel = cleanupHotkey(lowresLabel);
 
-	if (hotkey == 0)
-		_hotkey = parseHotkey(label);
+	if (hotkey == 0) {
+		_highresHotkey = parseHotkey(label);
+		_hotkey = _highresHotkey;
+		_lowresHotkey = parseHotkey(lowresLabel);
+	} else {
+		_highresHotkey = hotkey;
+		_lowresHotkey = hotkey;
+	}
 
 	setFlags(WIDGET_ENABLED/* | WIDGET_BORDER*/ | WIDGET_CLEARBG);
 	_type = kButtonWidget;
@@ -403,13 +420,14 @@ void ButtonWidget::setLabel(const Common::String &label) {
 }
 
 void ButtonWidget::setLowresLabel(const Common::U32String &label) {
-	_lowresLabel = label;
+	_lowresLabel = cleanupHotkey(label);
 }
 
 const Common::U32String &ButtonWidget::getLabel() {
 	bool useLowres = false;
 	if (!_lowresLabel.empty())
-		useLowres = g_gui.theme()->getStringWidth(_label) > _w;
+		useLowres = g_system->getOverlayWidth() <= 320;
+	_hotkey = useLowres ? _lowresHotkey : _highresHotkey;
 	return useLowres ? _lowresLabel : _label;
 }
 
@@ -689,14 +707,14 @@ void PicButtonWidget::drawWidget() {
 #pragma mark -
 
 CheckboxWidget::CheckboxWidget(GuiObject *boss, int x, int y, int w, int h, const Common::U32String &label, const Common::U32String &tooltip, uint32 cmd, uint8 hotkey)
-	: ButtonWidget(boss, x, y, w, h, label, tooltip, cmd, hotkey), _state(false) {
+	: ButtonWidget(boss, x, y, w, h, label, tooltip, cmd, hotkey), _state(false), _overrideText(false) {
 	setFlags(WIDGET_ENABLED);
 	_type = kCheckboxWidget;
 	_spacing = g_gui.xmlEval()->getVar("Globals.Checkbox.Spacing", 15);
 }
 
 CheckboxWidget::CheckboxWidget(GuiObject *boss, const Common::String &name, const Common::U32String &label, const Common::U32String &tooltip, uint32 cmd, uint8 hotkey)
-	: ButtonWidget(boss, name, label, tooltip, cmd, hotkey), _state(false) {
+	: ButtonWidget(boss, name, label, tooltip, cmd, hotkey), _state(false), _overrideText(false) {
 	setFlags(WIDGET_ENABLED);
 	_type = kCheckboxWidget;
 	_spacing = g_gui.xmlEval()->getVar("Globals.Checkbox.Spacing", 15);
@@ -718,9 +736,13 @@ void CheckboxWidget::setState(bool state) {
 	}
 	sendCommand(_cmd, _state);
 }
+	
+void CheckboxWidget::setOverride(bool enable) {
+	_overrideText = enable; 
+}
 
 void CheckboxWidget::drawWidget() {
-	g_gui.theme()->drawCheckbox(Common::Rect(_x, _y, _x + _w, _y + _h), _spacing, getLabel(), _state, Widget::_state, (g_gui.useRTL() && _useRTL));
+	g_gui.theme()->drawCheckbox(Common::Rect(_x, _y, _x + _w, _y + _h), _spacing, getLabel(), _state, Widget::_state, _overrideText, (g_gui.useRTL() && _useRTL));
 }
 
 #pragma mark -

@@ -7911,6 +7911,30 @@ static const SciScriptPatcherEntry larry1Signatures[] = {
 
 // ===========================================================================
 // Leisure Suit Larry 2
+
+// Disable the LSL2 speed test by always setting the machine speed to 61 so that
+//  all graphics are enabled. This is the minimum value that enables all details
+//  such as clouds on the cruise ship.
+//
+// Applies to: All versions
+// Responsible method: rm99:doit
+static const uint16 larry2SignatureSpeedTest[] = {
+	SIG_MAGICDWORD,
+	0x8b, 0x00,                      // lsl 00
+	0x76,                            // push0
+	0x43, SIG_ADDTOOFFSET(+1), 0x00, // callk GetTime 00
+	0x22,                            // lt? [ is speed test complete? ]
+	0x30,                            // bnt
+	SIG_END
+};
+
+static const uint16 larry2PatchSpeedTest[] = {
+	0x35, 0x3d,                      // ldi 3d
+	0xa1, 0x78,                      // sag 78 [ machine speed = 61 ]
+	0x33, 0x04,                      // jmp 04 [ complete speed test ]
+	PATCH_END
+};
+
 // On the plane, Larry is able to wear the parachute. This grants 4 points.
 // In early versions of LSL2, it was possible to get "unlimited" points by
 //  simply wearing it multiple times.
@@ -7954,8 +7978,8 @@ static const uint16 larry2PatchWearParachutePoints[] = {
 //  game cycles. The result is a single message box that appears to not respond
 //  to Enter or clicks until the third one dismisses it.
 //
-// We fix this by adding a brief delay in the "Procesing..." loop with a call to
-//  kScummVMSleep so that the screen is redrawn between message boxes and the
+// We fix this by adding a brief delay in the "Processing..." loop with a call
+//  to kScummVMSleep so that the screen is redrawn between message boxes and the
 //  intended effect occurs as in the original. This patch is broken up into two
 //  parts because different versions have different instructions in the loop.
 //
@@ -7999,6 +8023,7 @@ static const uint16 larry2PatchLotteryTicketMessages2[] = {
 //          script, description,                                      signature                              patch
 static const SciScriptPatcherEntry larry2Signatures[] = {
 	{  true,    63, "plane: no points for wearing parachute",      1, larry2SignatureWearParachutePoints,    larry2PatchWearParachutePoints },
+	{  true,    99, "disable speed test",                          1, larry2SignatureSpeedTest,              larry2PatchSpeedTest },
 	{  true,   114, "lottery ticket messages (1/2)",               1, larry2SignatureLotteryTicketMessages1, larry2PatchLotteryTicketMessages1 },
 	{  true,   114, "lottery ticket messages (2/2)",               1, larry2SignatureLotteryTicketMessages2, larry2PatchLotteryTicketMessages2 },
 	SCI_SIGNATUREENTRY_TERMINATOR
@@ -8290,6 +8315,57 @@ static const uint16 larry6HiresWhaleOilLampPatch[] = {
 	PATCH_END
 };
 
+// When attempting to take the guard's weapons, missleDeathScr calculates an
+//  excessively long delay in game cycles based on the initial speed test. The
+//  script attempts to use this delay as a backup if the user quickly dismisses
+//  the "Without thinking twice..." message so that it doesn't get stuck. We
+//  patch the speed test to use the best value so that all details are enabled,
+//  but we also throttle game cycles, and this results in a 30+ second delay.
+//
+// We fix this incompatibility by patching the delay down to 60 cycles, but this
+//  exposes a real script bug. The backup delay is always active and interrupts
+//  the message audio if the delay lasts less than six seconds. The script
+//  attempts to prevent this by polling the message's audio position, but it
+//  passes the wrong audio tuple. We also fix the tuple and now the delay works.
+//
+// Applies to: All versions
+// Responsible method: missleDeathScr:changeState(3), missleDeathScr:doit
+// Fixes bug: #13501
+static const uint16 larry6HiresGuardDelaySignature1[] = {
+	SIG_MAGICDWORD,
+	0x89, 0x57,                         // lsg 57 [ how-fast ]
+	0x35, 0x4b,                         // ldi 4b
+	0x06,                               // mul
+	0x65, 0x26,                         // aTop register [ register = how-fast * 75 ]
+	SIG_END
+};
+
+static const uint16 larry6HiresGuardDelayPatch1[] = {
+	0x35, 0x3c,                         // ldi 3c [ 60 cycles ]
+	0x32, PATCH_UINT16(0x0000),         // jmp 0000
+	PATCH_END
+};
+
+static const uint16 larry6HiresGuardDelaySignature2[] = {
+	SIG_MAGICDWORD,
+	0x39, 0x06,                         // pushi 06
+	0x3c,                               // dup [ kDoAudioPosition ]
+	0x38, SIG_UINT16(0x0352),           // pushi 0352
+	0x39, 0x03,                         // pushi 03 [ noun ]
+	0x39, 0x05,                         // pushi 05 [ verb ]
+	0x76,                               // push0    [ cond ]
+	0x76,                               // push0    [ seq  ]
+	SIG_END
+};
+
+static const uint16 larry6HiresGuardDelayPatch2[] = {
+	PATCH_ADDTOOFFSET(+6),
+	0x39, 0x04,                         // pushi 04 [ correct noun ]
+	PATCH_ADDTOOFFSET(+3),
+	0x78,                               // push1    [ correct seq  ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                             patch
 static const SciScriptPatcherEntry larry6HiresSignatures[] = {
 	{  true,     0, "disable mac volume restore",                  1, larry6HiresMacVolumeRestoreSignature, larry6HiresMacVolumeRestorePatch },
@@ -8298,6 +8374,8 @@ static const SciScriptPatcherEntry larry6HiresSignatures[] = {
 	{  true,    71, "disable video benchmarking",                  1, sci2BenchmarkSignature,               sci2BenchmarkPatch },
 	{  true,   270, "fix incorrect setScale call",                 1, larry6HiresSetScaleSignature,         larry6HiresSetScalePatch },
 	{  true,   330, "fix whale oil lamp lockup",                   1, larry6HiresWhaleOilLampSignature,     larry6HiresWhaleOilLampPatch },
+	{  true,   850, "guard delay (1/2)",                           1, larry6HiresGuardDelaySignature1,      larry6HiresGuardDelayPatch1 },
+	{  true,   850, "guard delay (2/2)",                           1, larry6HiresGuardDelaySignature2,      larry6HiresGuardDelayPatch2 },
 	{  true, 64928, "Narrator lockup fix",                         1, sciNarratorLockupSignature,           sciNarratorLockupPatch },
 	{  true, 64990, "increase number of save games (1/2)",         1, sci2NumSavesSignature1,               sci2NumSavesPatch1 },
 	{  true, 64990, "increase number of save games (2/2)",         1, sci2NumSavesSignature2,               sci2NumSavesPatch2 },
@@ -14060,6 +14138,231 @@ static const uint16 qfg3PatchBarterEvents[] = {
 	PATCH_END
 };
 
+// After getting the ring from the rope, the script awardPrize stores the winner
+//  in a temp variable during its first state and expects it to be there during
+//  a later state. We patch the script to use its register property instead.
+//
+// Applies to: All versions
+// Responsible method: awardPrize:changeState
+// Fixes bug: #5277
+static const uint16 qfg3SignatureRingRopePrize[] = {
+	SIG_MAGICDWORD,
+	0x35, 0x01,                         // ldi 01
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+43),
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+39),
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+39),
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+33),
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+40),
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+48),
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+10),
+	0xa5, 0x00,                         // sat 00
+	SIG_ADDTOOFFSET(+49),
+	0x85, 0x00,                         // lat 00
+	SIG_END
+};
+
+static const uint16 qfg3PatchRingRopePrize[] = {
+	PATCH_ADDTOOFFSET(+2),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+43),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+39),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+39),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+33),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+40),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+48),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+10),
+	0x65, 0x24,                         // aTop register
+	PATCH_ADDTOOFFSET(+49),
+	0x63, 0x24,                         // pToa register
+	PATCH_END
+};
+
+// The Laibon's hut has complex script bugs that create unintentional dead ends.
+//  After the Laibon requests a dinosaur horn from fighters and paladins, the
+//  player is unable to give the horn on subsequent visits if they have the
+//  bride's price items. Upon leaving the hut, they are unable to return.
+//
+// rm450:init sets an event number based on game state. The problem events are:
+// - Event 5: Fighters/paladins give the horn to begin initiation.
+// - Event 6: The bride's price can be paid, but fighters/paladins must have
+//            given the horn in event 5 for the Laibon to accept the price.
+//
+// The main problem is that rm450:init tests for event 6 before event 5. If the
+//  preconditions for event 6 are met then event 5 is suppressed. This is a
+//  conflict because event 6 can't be completed until event 5 has been, but the
+//  horn can only be given in event 5. More inconsistencies: some code enforces
+//  an incorrect rule that these events can only occur once, despite event 6
+//  being designed to reoccur and event 5 allowing the player to leave without
+//  giving the horn in version 1.0. Finally, the hut's event logic is out of
+//  sync between the entrance (room 420) and interior (450). The entrance blocks
+//  events from recurring even if they weren't completed and is missing a flag
+//  check, but unlike room 450 it does test the events in the correct order.
+//
+// We fix this by allowing room 450 to select event 5 (giving the horn) even if
+//  the preconditions for event 6 are met. We also allow both events to reoccur.
+//  Finally, we patch the relevant entrance logic to match the interior's.
+//  Although these patches touch a lot of logic, they only affect the game when
+//  it is in a state where the player wouldn't have been allowed to proceed with
+//  events that they've met the preconditions for. Note that these changes are
+//  broken up into smaller patches to be compatible with the many different
+//  versions of these scripts, including the NRS fan patches that GOG includes,
+//  and the comprehensive QFG3 Unofficial Update fan patches. 
+//
+// Applies to: All versions
+// Responsible methods: rm450:init, rm420:init
+// Fixes bug: #11425
+static const uint16 qfg3SignatureLaibonHutEvents1[] = {
+	0x88, SIG_MAGICDWORD,               // lsg 0188 [ johari state ]
+	      SIG_UINT16(0x0188),
+	0x35, 0x01,                         // ldi 01
+	0x1a,                               // eq? [ Laibon said the bride price ]
+	SIG_END
+};
+
+static const uint16 qfg3PatchLaibonHutEvents1[] = {
+	PATCH_ADDTOOFFSET(+5),
+	0x20,                               // ge? [ Laibon said the bride price OR you've tried to pay before ]
+	PATCH_END
+};
+
+static const uint16 qfg3SignatureLaibonHutEvents2[] = {
+	SIG_MAGICDWORD,
+	0x35, 0x06,                         // ldi 06
+	0xa3, 0x0b,                         // sal 0b [ room event = 6 ]
+	0x32,                               // jmp    [ end of cond ]
+	SIG_END
+};
+
+static const uint16 qfg3PatchLaibonHutEvents2[] = {
+	PATCH_ADDTOOFFSET(+4),
+	0x32, PATCH_UINT16(0x0000),        // jmp [ continue evaluating room events ]
+	PATCH_END
+};
+
+static const uint16 qfg3SignatureLaibonHutEvents3[] = {
+	0x31, 0x2b,                         // bnt 2b [ next room event ]
+	SIG_ADDTOOFFSET(+7),
+	0x31, 0x22,                         // bnt 22 [ next room event ]
+	SIG_ADDTOOFFSET(+10),
+	0x31, 0x16,                         // bnt 16 [ next room event ]
+	SIG_ADDTOOFFSET(+6),
+	0x2f, SIG_ADDTOOFFSET(+1),          // bt (06, but 08 in QFG3 Unofficial Update)
+	0x88, SIG_UINT16(0x016a),           // lsg 016a [ character class ]
+	0x35, 0x03,                         // ldi 03   [ impossible value ]
+	0x1a,                               // eq?
+	0x31, 0x06,                         // bnt 06 [ always false ]
+	SIG_MAGICDWORD,
+	0x35, 0x05,                         // ldi 05
+	0xa3, 0x0b,                         // sal 0b [ room event = 5 ]
+	0x33,                               // jmp [ exit cond ] 
+	SIG_END
+};
+
+static const uint16 qfg3PatchLaibonHutEvents3[] = {
+	0x31, 0x23,                         // bnt 23 [ next room event ]
+	PATCH_ADDTOOFFSET(+7),
+	0x31, 0x1a,                         // bnt 1a [ next room event ]
+	PATCH_ADDTOOFFSET(+10),
+	0x31, 0x0e,                         // bnt 0e [ next room event ]
+	PATCH_ADDTOOFFSET(+6),
+	0x31, 0x06,                         // bnt 06
+	0x35, 0x05,                         // ldi 05
+	0xa3, 0x0b,                         // sal 0b [ room event = 5 ]
+	0x33, 0x06,                         // jmp 06 [ exit cond ] 
+	0x8a, PATCH_UINT16(0x000b),         // lsl 000b
+	0x35, 0x06,                         // ldi 06
+	0x1a,                               // eq? [ is room event 6? ]
+	0x2f,                               // bt [ exit cond ]
+	PATCH_END
+};
+
+// same as above but for the NRS script due its wide branch offsets
+static const uint16 qfg3SignatureNrsLaibonHutEvents3[] = {
+	0x30, SIG_UINT16(0x0031),           // bnt 0031 [ next room event ]
+	SIG_ADDTOOFFSET(+8),
+	0x30, SIG_UINT16(0x0026),           // bnt 0026 [ next room event ]
+	SIG_ADDTOOFFSET(+10),
+	0x30, SIG_UINT16(0x0019),           // bnt 0019 [ next room event ]
+	SIG_ADDTOOFFSET(+6),
+	0x2e, SIG_UINT16(0x0006),           // bt 0006
+	0x88, SIG_UINT16(0x016a),           // lsg 016a [ character class ]
+	0x35, 0x03,                         // ldi 03   [ impossible value ]
+	0x1a,                               // eq?
+	0x30, SIG_UINT16(0x0007),           // bnt 0007 [ always false ]
+	SIG_MAGICDWORD,
+	0x35, 0x05,                         // ldi 05
+	0xa3, 0x0b,                         // sal 0b [ room event = 5 ]
+	0x32,                               // jmp [ exit cond ] 
+	SIG_END
+};
+
+static const uint16 qfg3PatchNrsLaibonHutEvents3[] = {
+	0x30, PATCH_UINT16(0x0028),         // bnt 0028 [ next room event ]
+	PATCH_ADDTOOFFSET(+8),
+	0x30, PATCH_UINT16(0x001d),         // bnt 001d [ next room event ]
+	PATCH_ADDTOOFFSET(+10),
+	0x30, PATCH_UINT16(0x0010),         // bnt 0010 [ next room event ]
+	PATCH_ADDTOOFFSET(+6),
+	0x30, PATCH_UINT16(0x0007),         // bnt 0007
+	0x35, 0x05,                         // ldi 05
+	0xa3, 0x0b,                         // sal 0b [ room event = 5 ]
+	0x32, PATCH_UINT16(0x0006),         // jmp 0006 [ exit cond ] 
+	0x8a, PATCH_UINT16(0x000b),         // lsl 000b
+	0x35, 0x06,                         // ldi 06
+	0x1a,                               // eq? [ is room event 6? ]
+	0x2e,                               // bt [ exit cond ]
+	PATCH_END
+};
+
+static const uint16 qfg3SignatureLaibonHutEntrance1[] = {
+	0x88, SIG_MAGICDWORD,               // lsg 016e [ entrance event ]
+	      SIG_UINT16(0x016e),
+	0x35, 0x09,                         // ldi 09
+	0x1c,                               // ne? [ global366 != 9 (haven't entered for event 5) ]
+	SIG_END
+};
+
+static const uint16 qfg3PatchLaibonHutEntrance1[] = {
+	0x78,                               // push1
+	0x39, 0x26,                         // pushi 26 [ flag 38 ]
+	0x45, 0x06, 0x02,                   // callb proc0_6 [ is flag 38 set? (dispelled Johari) ]
+	PATCH_END
+};
+
+static const uint16 qfg3SignatureLaibonHutEntrance2[] = {
+	0x88, SIG_MAGICDWORD,               // lsg 0188 [ johari state ]
+	      SIG_UINT16(0x0188),
+	0x35, 0x01,                         // ldi 01
+	0x1a,                               // eq? [ Laibon said the bride price ]
+	SIG_ADDTOOFFSET(+59),
+	0x88, SIG_UINT16(0x016e),           // lsg 016e [ entrance event ]
+	0x35, 0x0d,                         // ldi 0d
+	0x1c,                               // ne? [ global366 != 13 (haven't entered for event 6) ]
+	SIG_END
+};
+
+static const uint16 qfg3PatchLaibonHutEntrance2[] = {
+	PATCH_ADDTOOFFSET(+5),
+	0x20,                               // ge? [ Laibon said the bride price OR you've tried to pay before ]
+	PATCH_ADDTOOFFSET(+59),
+	0x88, PATCH_UINT16(0x0188),         // lsg 0188
+	0x35, 0x04,                         // ldi 04
+	PATCH_END                           // ne? [ Haven't paid Laibon the bride price ]
+};
+
 //          script, description,                                      signature                    patch
 static const SciScriptPatcherEntry qfg3Signatures[] = {
 	{  true,   944, "import dialog continuous calls",                     1, qfg3SignatureImportDialog,           qfg3PatchImportDialog },
@@ -14072,7 +14375,14 @@ static const SciScriptPatcherEntry qfg3Signatures[] = {
 	{  true,   285, "missing points for telling about initiation heap",   1, qfg3SignatureMissingPoints1,         qfg3PatchMissingPoints1 },
 	{  true,   285, "missing points for telling about initiation script", 1, qfg3SignatureMissingPoints2a,	      qfg3PatchMissingPoints2 },
 	{  true,   285, "missing points for telling about initiation script", 1, qfg3SignatureMissingPoints2b,        qfg3PatchMissingPoints2 },
+	{  true,   420, "laibon hut entrance (1/2)",                          1, qfg3SignatureLaibonHutEntrance1,     qfg3PatchLaibonHutEntrance1 },
+	{  true,   420, "laibon hut entrance (2/2)",                          1, qfg3SignatureLaibonHutEntrance2,     qfg3PatchLaibonHutEntrance2 },
+	{  true,   450, "laibon hut events (1/3)",                            1, qfg3SignatureLaibonHutEvents1,       qfg3PatchLaibonHutEvents1 },
+	{  true,   450, "laibon hut events (2/3)",                            1, qfg3SignatureLaibonHutEvents2,       qfg3PatchLaibonHutEvents2 },
+	{  true,   450, "laibon hut events (3/3)",                            1, qfg3SignatureLaibonHutEvents3,       qfg3PatchLaibonHutEvents3 },
+	{  true,   450, "NRS: laibon hut events (3/3)",                       1, qfg3SignatureNrsLaibonHutEvents3,    qfg3PatchNrsLaibonHutEvents3 },
 	{  true,   460, "NRS: floating spears",                               1, qfg3SignatureNrsFloatingSpears,      qfg3PatchNrsFloatingSpears },
+	{  true,   510, "ring rope prize",                                    1, qfg3SignatureRingRopePrize,          qfg3PatchRingRopePrize },
 	{  true,   550, "combat speed throttling script",                     1, qfg3SignatureCombatSpeedThrottling1, qfg3PatchCombatSpeedThrottling1 },
 	{  true,   550, "combat speed throttling heap",                       1, qfg3SignatureCombatSpeedThrottling2, qfg3PatchCombatSpeedThrottling2 },
 	{  true,   750, "hero goes out of bounds in room 750",                2, qfg3SignatureRoom750Bounds1,         qfg3PatchRoom750Bounds1 },
@@ -22001,7 +22311,7 @@ static const uint16 sq6SaveDialogMessagePatch[] = {
 // Outside the arcade and club, room 330 adjusts the current music and volume
 //  based on which entrance ego is nearest and the distance. All Polysorbate LX
 //  music plays through gSound1. rm330:init records gSound1:vol when ego enters,
-/// rm330:doit uses this value in volume calculations, and then sExitToArcade or
+//  rm330:doit uses this value in volume calculations, and then sExitToArcade or
 //  sExitToClub restores gSound1:vol to its original value. The other two street
 //  rooms (320 and 340) slowly fade gSound1:vol in from 0 to the normal value of
 //  127 whenever entering from another room.

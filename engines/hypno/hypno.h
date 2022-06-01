@@ -57,8 +57,6 @@ enum {
 	kHypnoDebugScene = 1 << 3
 };
 
-typedef Common::Array<Graphics::Surface *> Frames;
-
 // Player positions
 
 enum PlayerPosition {
@@ -111,7 +109,7 @@ public:
 	Common::Error run() override;
 	Levels _levels;
 	Common::HashMap<Common::String, int> _sceneState;
-	void resetSceneState();
+	virtual void resetSceneState();
 	bool checkSceneCompleted();
 	bool checkLevelWon();
 	void runLevel(Common::String &name);
@@ -141,7 +139,7 @@ public:
 
 	// User input
 	void clickedHotspot(Common::Point);
-	bool hoverHotspot(Common::Point);
+	virtual bool hoverHotspot(Common::Point);
 
 	// Cursors
 	bool cursorPauseMovie(Common::Point);
@@ -178,7 +176,7 @@ public:
 	void changeCursor(const Graphics::Surface &entry, byte *palette, bool centerCursor = false);
 
 	// Actions
-	void runMenu(Hotspots *hs, bool only_menu = false);
+	virtual void runMenu(Hotspots *hs, bool only_menu = false);
 	void runBackground(Background *a);
 	void runOverlay(Overlay *a);
 	void runMice(Mice *a);
@@ -191,6 +189,7 @@ public:
 	void runCutscene(Cutscene *a);
 	void runIntro(Intro *a);
 	void runPlay(Play *a);
+	void runSound(Sound *a);
 	void runPalette(Palette *a);
 	void runAmbient(Ambient *a);
 	void runWalN(WalN *a);
@@ -538,11 +537,19 @@ class BoyzEngine : public HypnoEngine {
 public:
 	BoyzEngine(OSystem *syst, const ADGameDescription *gd);
 	Common::String _name;
+	Common::Array<int> _ids;
+	int _lastLevel;
 	void loadAssets() override;
 	void runCode(Code *code) override;
 	Common::String findNextLevel(const Common::String &level) override;
 	Common::String findNextLevel(const Transition *trans) override;
 
+	// Scenes
+	void resetSceneState() override;
+	void runMenu(Hotspots *hs, bool only_menu = false) override;
+	bool hoverHotspot(Common::Point) override;
+
+	// Arcade
 	void runBeforeArcade(ArcadeShooting *arc) override;
 	void runAfterArcade(ArcadeShooting *arc) override;
 	void pressedKey(const int keycode) override;
@@ -550,6 +557,7 @@ public:
 	void drawCursorArcade(const Common::Point &mousePos) override;
 	bool shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool secondary) override;
 	bool clickedSecondaryShoot(const Common::Point &mousePos) override;
+	void showCredits() override;
 
 	void missedTarget(Shoot *s, ArcadeShooting *arc) override;
 	void drawHealth() override;
@@ -564,11 +572,27 @@ public:
 	void loadFonts() override;
 	void drawString(const Filename &name, const Common::String &str, int x, int y, int w, uint32 c) override;
 
-	private:
-	void runMainMenu(Code *code);
+	// Saves
+	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
+	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
+	Common::StringArray listProfiles();
+	bool loadProfile(const Common::String &name);
+	void saveProfile(const Common::String &name, int levelId);
 
-	int _ammoTeam[7];
-	int _healthTeam[7];
+	private:
+	void renderHighlights(Hotspots *hs);
+	void waitForUserClick(uint32 timeout);
+
+	void runMainMenu(Code *code);
+	void runRetryMenu(Code *code);
+	void runCheckC3(Code *code);
+	void runCheckHo(Code *code);
+	void runDifficultyMenu(Code *code);
+	void endCredits(Code *code);
+	Common::String firstLevelTerritory(const Common::String &level);
+
+
+	int _previousHealth;
 	Graphics::Surface _healthBar[7];
 	Graphics::Surface _ammoBar[7];
 	Graphics::Surface _portrait[7];
@@ -586,6 +610,7 @@ public:
 	Graphics::Surface _crosshairsTarget[8];
 
 	void updateFromScript();
+	bool checkCup(const Common::String &name);
 
 	Script _currentScript;
 	ScriptMode _currentMode;

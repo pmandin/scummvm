@@ -133,6 +133,24 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 		SearchMan.addSubDirectoryMatching(gameDataDir, "video");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "music");
 	}
+
+	if (isLba1Classic()) {
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/fla");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/vox");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/music");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "common/midi");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/images");
+		if (_gameLang == Common::Language::DE_DEU) {
+			SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/de_voice");
+		} else if (_gameLang == Common::Language::EN_ANY || _gameLang == Common::Language::EN_GRB || _gameLang == Common::Language::EN_USA) {
+			SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/en_voice");
+		} else if (_gameLang == Common::Language::FR_FRA) {
+			SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/fr_voice");
+		}
+	}
+
 	if (isDotEmuEnhanced()) {
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/hqr");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/fla");
@@ -510,27 +528,34 @@ void TwinEEngine::playIntro() {
 		abort |= _screens->loadImageDelay(_resources->eaLogo(), 7);
 	}
 
-	abort |= _screens->adelineLogo();
+	if (isLba1Classic()) {
+		abort |= _screens->loadBitmapDelay("Logo2Point21_640_480_256.bmp", 3);
+		if (!abort) {
+			abort |= _screens->loadBitmapDelay("TLBA1C_640_480_256.bmp", 3);
+		}
+	} else {
+		abort |= _screens->adelineLogo();
 
-	if (isLBA1()) {
-		// verify game version screens
-		if (!abort && _cfgfile.Version == EUROPE_VERSION) {
-			// Little Big Adventure screen
-			abort |= _screens->loadImageDelay(_resources->lbaLogo(), 3);
-			if (!abort) {
-				// Electronic Arts Logo
-				abort |= _screens->loadImageDelay(_resources->eaLogo(), 2);
+		if (isLBA1()) {
+			// verify game version screens
+			if (!abort && _cfgfile.Version == EUROPE_VERSION) {
+				// Little Big Adventure screen
+				abort |= _screens->loadImageDelay(_resources->lbaLogo(), 3);
+				if (!abort) {
+					// Electronic Arts Logo
+					abort |= _screens->loadImageDelay(_resources->eaLogo(), 2);
+				}
+			} else if (!abort && _cfgfile.Version == USA_VERSION) {
+				// Relentless screen
+				abort |= _screens->loadImageDelay(_resources->relentLogo(), 3);
+				if (!abort) {
+					// Electronic Arts Logo
+					abort |= _screens->loadImageDelay(_resources->eaLogo(), 2);
+				}
+			} else if (!abort && _cfgfile.Version == MODIFICATION_VERSION) {
+				// Modification screen
+				abort |= _screens->loadImageDelay(_resources->relentLogo(), 2);
 			}
-		} else if (!abort && _cfgfile.Version == USA_VERSION) {
-			// Relentless screen
-			abort |= _screens->loadImageDelay(_resources->relentLogo(), 3);
-			if (!abort) {
-				// Electronic Arts Logo
-				abort |= _screens->loadImageDelay(_resources->eaLogo(), 2);
-			}
-		} else if (!abort && _cfgfile.Version == MODIFICATION_VERSION) {
-			// Modification screen
-			abort |= _screens->loadImageDelay(_resources->relentLogo(), 2);
 		}
 	}
 

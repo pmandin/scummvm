@@ -32,13 +32,6 @@ namespace Dialogs {
 
 static constexpr int CINEMA_LINES = 12;
 
-static const Common::Rect cinematicsHotspots[] = {
-	{ 10,  80,  32, 105 },
-	{ 10, 150,  32, 175 },
-	{ 36,  64, 310, 188 },
-	{ -1,  -1,  -1,  -1 }
-};
-
 static const uint8 CINEMA_FLICS[35] = {
 	FCUT_000, FCUT_002, FCUT_006, FCUT_009, FCUT_015,
 	FCUT_012, FCUT_011, FCUT_SPACECHASE_18, FCUT_003, FCUT_048,
@@ -90,7 +83,7 @@ void Cinema::execute() {
 
 		if (_G(minfo).button == 1 && !flag) {
 			flag = true;
-			switch (_G(in)->findHotspot(cinematicsHotspots)) {
+			switch (_G(in)->findHotspot(_G(cinematicsHotspots))) {
 			case 0:
 				g_events->_kbInfo._scanCode = Common::KEYCODE_UP;
 				if (!endLoop)
@@ -108,9 +101,10 @@ void Cinema::execute() {
 			case 2:
 			{
 				int selIndex = (g_events->_mousePos.y - 68) / 10 + topIndex;
-				if (selIndex < (int)cutscenes.size())
+				if (selIndex < (int)cutscenes.size()) {
 					selected = selIndex;
-				g_events->_kbInfo._scanCode = Common::KEYCODE_RETURN;
+					g_events->_kbInfo._scanCode = Common::KEYCODE_RETURN;
+				}
 				break;
 			}
 

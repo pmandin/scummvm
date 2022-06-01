@@ -55,7 +55,8 @@ const char *sceneVariables[] = {
 	"GS_COMBATJSON",
 	"GS_COMBATLEVEL",
 	"GS_PUZZLELEVEL",
-	nullptr};
+	nullptr
+};
 
 void HypnoEngine::loadSceneLevel(const Common::String &current, const Common::String &next, const Common::String &prefix) {
 	debugC(1, kHypnoDebugParser, "Parsing %s", current.c_str());
@@ -169,6 +170,10 @@ void HypnoEngine::clickedHotspot(Common::Point mousePos) {
 
 		case PlayAction:
 			runPlay((Play *)action);
+			break;
+
+		case SoundAction:
+			runSound((Sound *)action);
 			break;
 
 		case WalNAction:

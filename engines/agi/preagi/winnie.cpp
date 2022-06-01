@@ -19,8 +19,8 @@
  *
  */
 
-#include "agi/preagi.h"
-#include "agi/preagi_winnie.h"
+#include "agi/preagi/preagi.h"
+#include "agi/preagi/winnie.h"
 #include "agi/graphics.h"
 
 #include "graphics/cursorman.h"
@@ -1066,6 +1066,8 @@ void WinnieEngine::drawPic(const char *szName) {
 
 	if (getPlatform() != Common::kPlatformAmiga)
 		fileName += ".pic";
+	else
+		fileName = "misc/" + fileName;
 
 	Common::File file;
 
