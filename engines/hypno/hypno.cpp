@@ -54,7 +54,7 @@ HypnoEngine::HypnoEngine(OSystem *syst, const ADGameDescription *gd)
 	  _playerFrameIdx(0), _playerFrameSep(0), _refreshConversation(false),
 	  _countdown(0), _timerStarted(false), _score(0), _lives(0),
 	  _defaultCursor(""), _defaultCursorIdx(0),  _skipDefeatVideo(false),
-	  _background(nullptr), _masks(nullptr),
+	  _background(nullptr), _masks(nullptr), _musicRate(0), _skipNextVideo(false),
 	  _additionalVideo(nullptr), _ammo(0), _maxAmmo(0),
 	  _doNotStopSounds(false), _screenW(0), _screenH(0) { // Every games initializes its own resolution
 	_rnd = new Common::RandomSource("hypno");
@@ -75,6 +75,9 @@ HypnoEngine::HypnoEngine(OSystem *syst, const ADGameDescription *gd)
 		error("Failed to parse bool from cheats options");
 
 	if (!Common::parseBool(ConfMan.get("infiniteAmmo"), _infiniteAmmoCheat))
+		error("Failed to parse bool from cheats options");
+
+	if (!Common::parseBool(ConfMan.get("unlockAllLevels"), _unlockAllLevels))
 		error("Failed to parse bool from cheats options");
 
 	if (!Common::parseBool(ConfMan.get("restored"), _restoredContentEnabled))
@@ -136,7 +139,7 @@ Common::Error HypnoEngine::run() {
 	_pixelFormat = Graphics::PixelFormat::createFormatCLUT8();
 	initGraphics(_screenW, _screenH, &_pixelFormat);
 
-	_compositeSurface = new Graphics::ManagedSurface();
+	_compositeSurface = new Graphics::Surface();
 	_compositeSurface->create(_screenW, _screenH, _pixelFormat);
 
 	// Main event loop
@@ -265,8 +268,8 @@ void HypnoEngine::runIntros(Videos &videos) {
 				} else {
 					playing = true;
 					if (it->decoder->needsUpdate()) {
-						drawScreen();
 						updateScreen(*it);
+						drawScreen();
 					}
 				}
 			}
@@ -318,34 +321,16 @@ void HypnoEngine::loadImage(const Common::String &name, int x, int y, bool trans
 }
 
 void HypnoEngine::drawImage(Graphics::Surface &surf, int x, int y, bool transparent) {
+	Common::Rect srcRect(surf.w, surf.h);
+	Common::Rect dstRect = srcRect;
+
+	dstRect.moveTo(x, y);
+	_compositeSurface->clip(srcRect, dstRect);
+
 	if (transparent) {
-		_compositeSurface->transBlitFrom(surf, Common::Point(x, y), _transparentColor);
+		_compositeSurface->copyRectToSurfaceWithKey(surf, dstRect.left, dstRect.top, srcRect, _transparentColor);
 	} else
-		_compositeSurface->blitFrom(surf, Common::Point(x, y));
-}
-
-Common::File *HypnoEngine::fixSmackerHeader(Common::File *file) {
-	Common::String magic;
-	magic += file->readByte();
-	magic += file->readByte();
-	magic += file->readByte();
-	magic += file->readByte();
-
-	if (magic == "HYP2") {
-		uint32 size = file->size();
-		byte *data = (byte *)malloc(size);
-		file->seek(0);
-		file->read(data, size);
-		data[0] = 'S';
-		data[1] = 'M';
-		data[2] = 'K';
-		file->close();
-		delete file;
-		file = (Common::File *)new Common::MemoryReadStream(data, size, DisposeAfterUse::YES);
-	} else
-		file->seek(0);
-
-	return file;
+		_compositeSurface->copyRectToSurface(surf, dstRect.left, dstRect.top, srcRect);
 }
 
 Graphics::Surface *HypnoEngine::decodeFrame(const Common::String &name, int n, byte **palette) {
@@ -356,8 +341,6 @@ Graphics::Surface *HypnoEngine::decodeFrame(const Common::String &name, int n, b
 
 	if (!file->open(path))
 		error("unable to find video file %s", path.c_str());
-
-	file = fixSmackerHeader(file);
 
 	HypnoSmackerDecoder vd;
 	if (!vd.loadStream(file))
@@ -386,8 +369,6 @@ Frames HypnoEngine::decodeFrames(const Common::String &name) {
 
 	if (!file->open(path))
 		error("unable to find video file %s", path.c_str());
-
-	file = fixSmackerHeader(file);
 
 	HypnoSmackerDecoder vd;
 	if (!vd.loadStream(file))
@@ -418,11 +399,8 @@ void HypnoEngine::changeScreenMode(const Common::String &mode) {
 		_compositeSurface->free();
 		delete _compositeSurface;
 
-		_compositeSurface = new Graphics::ManagedSurface();
+		_compositeSurface = new Graphics::Surface();
 		_compositeSurface->create(_screenW, _screenH, _pixelFormat);
-
-		_compositeSurface->setTransparentColor(_transparentColor);
-
 	} else if (mode == "320x200") {
 		if (_screenW == 320 && _screenH == 200)
 			return;
@@ -435,10 +413,8 @@ void HypnoEngine::changeScreenMode(const Common::String &mode) {
 		_compositeSurface->free();
 		delete _compositeSurface;
 
-		_compositeSurface = new Graphics::ManagedSurface();
+		_compositeSurface = new Graphics::Surface();
 		_compositeSurface->create(_screenW, _screenH, _pixelFormat);
-
-		_compositeSurface->setTransparentColor(_transparentColor);
 	} else
 		error("Unknown screen mode %s", mode.c_str());
 }
@@ -477,6 +453,7 @@ void HypnoEngine::updateVideo(MVideo &video) {
 void HypnoEngine::updateScreen(MVideo &video) {
 	const Graphics::Surface *frame = video.decoder->decodeNextFrame();
 	bool dirtyPalette = video.decoder->hasDirtyPalette();
+	bool isFullscreen = (frame->w == _screenW && frame->h == _screenH);
 
 	if (frame->h == 0 || frame->w == 0 || video.decoder->getPalette() == nullptr)
 		return;
@@ -488,22 +465,33 @@ void HypnoEngine::updateScreen(MVideo &video) {
 		g_system->getPaletteManager()->setPalette(videoPalette, 0, 256);
 	}
 
-	if (video.scaled) {
+	if (video.scaled && !isFullscreen) {
 		Graphics::Surface *sframe = frame->scale(_screenW, _screenH);
+		Common::Rect srcRect(sframe->w, sframe->h);
+		Common::Rect dstRect = srcRect;
+
+		dstRect.moveTo(video.position);
+		_compositeSurface->clip(srcRect, dstRect);
 
 		if (video.transparent) {
-			_compositeSurface->transBlitFrom(*sframe, video.position, _transparentColor);
+			_compositeSurface->copyRectToSurfaceWithKey(*sframe, dstRect.left, dstRect.top, srcRect, _transparentColor);
 		} else {
-			_compositeSurface->blitFrom(*sframe, video.position);
+			_compositeSurface->copyRectToSurface(*sframe, dstRect.left, dstRect.top, srcRect);
 		}
 
 		sframe->free();
 		delete sframe;
 	} else {
+		Common::Rect srcRect(frame->w, frame->h);
+		Common::Rect dstRect = srcRect;
+
+		dstRect.moveTo(video.position);
+		_compositeSurface->clip(srcRect, dstRect);
+
 		if (video.transparent) {
-			_compositeSurface->transBlitFrom(*frame, video.position, _transparentColor);
+			_compositeSurface->copyRectToSurfaceWithKey(*frame, dstRect.left, dstRect.top, srcRect, _transparentColor);
 		} else {
-			_compositeSurface->blitFrom(*frame, video.position);
+			_compositeSurface->copyRectToSurface(*frame, dstRect.left, dstRect.top, srcRect);
 		}
 	}
 }
@@ -525,8 +513,6 @@ void HypnoEngine::playVideo(MVideo &video) {
 
 	if (!file->open(path))
 		error("unable to find video file %s", path.c_str());
-
-	file = fixSmackerHeader(file);
 
 	if (video.decoder != nullptr) {
 		debugC(1, kHypnoDebugMedia, "Restarting %s!!!!", video.path.c_str());

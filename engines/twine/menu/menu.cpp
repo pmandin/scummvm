@@ -27,6 +27,7 @@
 #include "common/events.h"
 #include "common/keyboard.h"
 #include "common/scummsys.h"
+#include "common/str.h"
 #include "common/system.h"
 #include "common/util.h"
 #include "graphics/cursorman.h"
@@ -97,6 +98,14 @@ static MenuSettings createMainMenu(bool lba1) {
 	return settings;
 }
 
+static MenuSettings createLba1ClassicNewGame() {
+	MenuSettings settings;
+	settings.addButton(TextId::kReturnMenu);
+	settings.addButton(TextId::kNewGame);
+	settings.addButton(TextId::kNewGamePlus);
+	return settings;
+}
+
 static MenuSettings createGiveUpMenu() {
 	MenuSettings settings;
 	settings.setButtonsBoxHeight(240);
@@ -157,9 +166,14 @@ static MenuSettings createVolumeMenu() {
 
 const char *MenuSettings::getButtonText(Text *text, int buttonIndex) {
 	if (_buttonTexts[buttonIndex].empty()) {
-		const TextId textId = getButtonTextId(buttonIndex);
+		TextId textId = getButtonTextId(buttonIndex);
 		char dialText[256] = "";
-		text->getMenuText(textId, dialText, sizeof(dialText));
+		if (textId == TextId::kNewGamePlus) {
+			text->getMenuText(TextId::kNewGame, dialText, sizeof(dialText));
+			Common::strlcat(dialText, "+", sizeof(dialText));
+		} else {
+			text->getMenuText(textId, dialText, sizeof(dialText));
+		}
 		_buttonTexts[buttonIndex] = dialText;
 	}
 	return _buttonTexts[buttonIndex].c_str();
@@ -174,6 +188,7 @@ Menu::Menu(TwinEEngine *engine) {
 	_saveManageMenuState = _priv::createSaveManageMenu();
 	_giveUpMenuState = _priv::createGiveUpMenu();
 	_mainMenuState = _priv::createMainMenu(engine->isLBA1());
+	_newGameMenuState = _priv::createLba1ClassicNewGame();
 	_advOptionsMenuState = _priv::createAdvancedOptionsMenu();
 
 	Common::fill(&_behaviourAnimState[0], &_behaviourAnimState[4], 0);
@@ -740,6 +755,34 @@ int32 Menu::optionsMenu() {
 	return 0;
 }
 
+int32 Menu::newGameClassicMenu() {
+	_engine->restoreFrontBuffer();
+
+	ScopedCursor scoped(_engine);
+	for (;;) {
+		switch (processMenu(&_newGameMenuState)) {
+		case (int32)TextId::kReturnGame:
+		case (int32)TextId::kReturnMenu: {
+			return 0;
+		}
+		case (int32)TextId::kNewGamePlus:
+		case (int32)TextId::kNewGame: {
+			_engine->_gameState->_endGameItems = true;
+			if (_engine->_menuOptions->newGameMenu()) {
+				return 1;
+			}
+			break;
+		}
+		case kQuitEngine:
+			return kQuitEngine;
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
 static const byte cursorArrow[] = {
 	1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	1, 0, 1, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -789,6 +832,12 @@ EngineState Menu::run() {
 	switch (processMenu(&_mainMenuState)) {
 	case (int32)TextId::toNewGame:
 	case (int32)TextId::kNewGame: {
+		if (_engine->isLba1Classic()) {
+			if (newGameClassicMenu()) {
+				return EngineState::GameLoop;
+			}
+			break;
+		}
 		if (_engine->_menuOptions->newGameMenu()) {
 			return EngineState::GameLoop;
 		}
@@ -1068,72 +1117,79 @@ void Menu::processBehaviourMenu() {
 
 	_engine->_text->initTextBank(TextBankId::Options_and_menus);
 
-	const int32 left = _engine->width() / 2 - 220;
-	const int32 top = _engine->height() / 2 - 140;
-	drawBehaviourMenu(left, top, _engine->_scene->_sceneHero->_angle);
+	if (_engine->isLba1Classic()) {
+		char text[256];
+		_engine->_text->getMenuText(_engine->_actor->getTextIdForBehaviour(), text, sizeof(text));
+		_engine->_redraw->setRenderText(text);
+		_engine->_text->initSceneTextBank();
+	} else {
+		const int32 left = _engine->width() / 2 - 220;
+		const int32 top = _engine->height() / 2 - 140;
+		drawBehaviourMenu(left, top, _engine->_scene->_sceneHero->_angle);
 
-	HeroBehaviourType tmpHeroBehaviour = _engine->_actor->_heroBehaviour;
+		HeroBehaviourType tmpHeroBehaviour = _engine->_actor->_heroBehaviour;
 
-	const int animIdx = _engine->_actor->_heroAnimIdx[(byte)_engine->_actor->_heroBehaviour];
-	_engine->_animations->setAnimAtKeyframe(_behaviourAnimState[(byte)_engine->_actor->_heroBehaviour], _engine->_resources->_animData[animIdx], *_behaviourEntity, &_behaviourAnimData[(byte)_engine->_actor->_heroBehaviour]);
+		const int animIdx = _engine->_actor->_heroAnimIdx[(byte)_engine->_actor->_heroBehaviour];
+		_engine->_animations->setAnimAtKeyframe(_behaviourAnimState[(byte)_engine->_actor->_heroBehaviour], _engine->_resources->_animData[animIdx], *_behaviourEntity, &_behaviourAnimData[(byte)_engine->_actor->_heroBehaviour]);
 
-	int32 tmpTime = _engine->_lbaTime;
-
-#if 0
-	ScopedCursor scopedCursor(_engine);
-#endif
-	ScopedKeyMap scopedKeyMap(_engine, uiKeyMapId);
-	while (_engine->_input->isActionActive(TwinEActionType::BehaviourMenu) || _engine->_input->isQuickBehaviourActionActive()) {
-		FrameMarker frame(_engine, 50);
-		_engine->readKeys();
-		if (_engine->shouldQuit()) {
-			break;
-		}
+		int32 tmpTime = _engine->_lbaTime;
 
 #if 0
-		if (isBehaviourHovered(HeroBehaviourType::kNormal)) {
-			_engine->_actor->heroBehaviour = HeroBehaviourType::kNormal;
-		} else if (isBehaviourHovered(HeroBehaviourType::kAthletic)) {
-			_engine->_actor->heroBehaviour = HeroBehaviourType::kAthletic;
-		} else if (isBehaviourHovered(HeroBehaviourType::kAggressive)) {
-			_engine->_actor->heroBehaviour = HeroBehaviourType::kAggressive;
-		} else if (isBehaviourHovered(HeroBehaviourType::kDiscrete)) {
-			_engine->_actor->heroBehaviour = HeroBehaviourType::kDiscrete;
-		}
+		ScopedCursor scopedCursor(_engine);
+#endif
+		ScopedKeyMap scopedKeyMap(_engine, uiKeyMapId);
+		while (_engine->_input->isActionActive(TwinEActionType::BehaviourMenu) || _engine->_input->isQuickBehaviourActionActive()) {
+			FrameMarker frame(_engine, 50);
+			_engine->readKeys();
+			if (_engine->shouldQuit()) {
+				break;
+			}
+
+#if 0
+			if (isBehaviourHovered(HeroBehaviourType::kNormal)) {
+				_engine->_actor->heroBehaviour = HeroBehaviourType::kNormal;
+			} else if (isBehaviourHovered(HeroBehaviourType::kAthletic)) {
+				_engine->_actor->heroBehaviour = HeroBehaviourType::kAthletic;
+			} else if (isBehaviourHovered(HeroBehaviourType::kAggressive)) {
+				_engine->_actor->heroBehaviour = HeroBehaviourType::kAggressive;
+			} else if (isBehaviourHovered(HeroBehaviourType::kDiscrete)) {
+				_engine->_actor->heroBehaviour = HeroBehaviourType::kDiscrete;
+			}
 #endif
 
-		int heroBehaviour = (int)_engine->_actor->_heroBehaviour;
-		if (_engine->_input->toggleActionIfActive(TwinEActionType::UILeft)) {
-			heroBehaviour--;
-		} else if (_engine->_input->toggleActionIfActive(TwinEActionType::UIRight)) {
-			heroBehaviour++;
+			int heroBehaviour = (int)_engine->_actor->_heroBehaviour;
+			if (_engine->_input->toggleActionIfActive(TwinEActionType::UILeft)) {
+				heroBehaviour--;
+			} else if (_engine->_input->toggleActionIfActive(TwinEActionType::UIRight)) {
+				heroBehaviour++;
+			}
+
+			if (heroBehaviour < (int)HeroBehaviourType::kNormal) {
+				heroBehaviour = (int)HeroBehaviourType::kDiscrete;
+			} else if (heroBehaviour >= (int)HeroBehaviourType::kProtoPack) {
+				heroBehaviour = (int)HeroBehaviourType::kNormal;
+			}
+
+			_engine->_actor->_heroBehaviour = (HeroBehaviourType)heroBehaviour;
+
+			if (tmpHeroBehaviour != _engine->_actor->_heroBehaviour) {
+				drawBehaviour(left, top, tmpHeroBehaviour, _engine->_scene->_sceneHero->_angle, true);
+				tmpHeroBehaviour = _engine->_actor->_heroBehaviour;
+				_engine->_movements->setActorAngleSafe(_engine->_scene->_sceneHero->_angle, _engine->_scene->_sceneHero->_angle - ANGLE_90, ANGLE_17, &_moveMenu);
+				const int tmpAnimIdx = _engine->_actor->_heroAnimIdx[(byte)_engine->_actor->_heroBehaviour];
+				_engine->_animations->setAnimAtKeyframe(_behaviourAnimState[(byte)_engine->_actor->_heroBehaviour], _engine->_resources->_animData[tmpAnimIdx], *_behaviourEntity, &_behaviourAnimData[(byte)_engine->_actor->_heroBehaviour]);
+			}
+
+			drawBehaviour(left, top, _engine->_actor->_heroBehaviour, -1, true);
+
+			_engine->_lbaTime++;
 		}
 
-		if (heroBehaviour < (int)HeroBehaviourType::kNormal) {
-			heroBehaviour = (int)HeroBehaviourType::kDiscrete;
-		} else if (heroBehaviour >= (int)HeroBehaviourType::kProtoPack) {
-			heroBehaviour = (int)HeroBehaviourType::kNormal;
-		}
+		_engine->_lbaTime = tmpTime;
 
-		_engine->_actor->_heroBehaviour = (HeroBehaviourType)heroBehaviour;
-
-		if (tmpHeroBehaviour != _engine->_actor->_heroBehaviour) {
-			drawBehaviour(left, top, tmpHeroBehaviour, _engine->_scene->_sceneHero->_angle, true);
-			tmpHeroBehaviour = _engine->_actor->_heroBehaviour;
-			_engine->_movements->setActorAngleSafe(_engine->_scene->_sceneHero->_angle, _engine->_scene->_sceneHero->_angle - ANGLE_90, ANGLE_17, &_moveMenu);
-			const int tmpAnimIdx = _engine->_actor->_heroAnimIdx[(byte)_engine->_actor->_heroBehaviour];
-			_engine->_animations->setAnimAtKeyframe(_behaviourAnimState[(byte)_engine->_actor->_heroBehaviour], _engine->_resources->_animData[tmpAnimIdx], *_behaviourEntity, &_behaviourAnimData[(byte)_engine->_actor->_heroBehaviour]);
-		}
-
-		drawBehaviour(left, top, _engine->_actor->_heroBehaviour, -1, true);
-
-		_engine->_lbaTime++;
+		_engine->_gameState->initEngineProjections();
 	}
-
-	_engine->_lbaTime = tmpTime;
-
 	_engine->_actor->setBehaviour(_engine->_actor->_heroBehaviour);
-	_engine->_gameState->initEngineProjections();
 
 	_engine->_scene->_sceneTextBank = tmpTextBank;
 	_engine->_text->initSceneTextBank();

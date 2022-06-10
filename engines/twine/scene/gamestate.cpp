@@ -503,7 +503,7 @@ void GameState::processGameoverAnimation() {
 	_engine->_interface->setClip(rect);
 
 	Common::Rect dummy;
-	while (!_engine->_input->toggleAbortAction() && (_engine->_lbaTime - startLbaTime) <= 500) {
+	while (!_engine->_input->toggleAbortAction() && (_engine->_lbaTime - startLbaTime) <= TO_SECONDS(10)) {
 		FrameMarker frame(_engine, 66);
 		_engine->readKeys();
 		if (_engine->shouldQuit()) {
@@ -549,6 +549,27 @@ int16 GameState::setGas(int16 value) {
 
 void GameState::addGas(int16 value) {
 	setGas(_inventoryNumGas + value);
+}
+
+// late game items from lba1 classic new game +
+void GameState::handleLateGameItems() {
+	if (!_endGameItems) {
+		return;
+	}
+	debug("Give end game items");
+	_endGameItems = false;
+	_magicLevelIdx = 4;
+	setMaxMagicPoints();
+	giveItem(InventoryItems::kiUseSabre);
+	giveItem(InventoryItems::kiProtoPack);
+	giveItem(InventoryItems::kiHolomap);
+	giveItem(InventoryItems::kiTunic);
+	giveItem(InventoryItems::kiMagicBall);
+	giveItem(InventoryItems::kSendellsMedallion);
+	giveItem(InventoryItems::kiPenguin);
+	giveItem(InventoryItems::kGasItem);
+	giveItem(InventoryItems::kiCloverLeaf);
+	addGas(10);
 }
 
 int16 GameState::setKashes(int16 value) {

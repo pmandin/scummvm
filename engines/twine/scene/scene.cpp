@@ -601,6 +601,7 @@ void Scene::changeScene() {
 		debug(2, "Scene %i music track id: %i", _currentSceneIdx, _sceneMusic);
 		_engine->_music->playTrackMusic(_sceneMusic);
 	}
+	_engine->_gameState->handleLateGameItems();
 }
 
 ActorStruct *Scene::getActor(int32 actorIdx) {
@@ -668,7 +669,7 @@ void Scene::processEnvironmentSound() {
 	}
 
 	// compute next ambiance timer
-	_sampleAmbienceTime = _engine->_lbaTime + (_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay) * 50;
+	_sampleAmbienceTime = _engine->_lbaTime + TO_SECONDS(_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay);
 }
 
 void Scene::processZoneExtraBonus(ZoneStruct *zone) {

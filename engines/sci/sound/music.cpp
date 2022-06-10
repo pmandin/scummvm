@@ -39,7 +39,7 @@
 namespace Sci {
 
 SciMusic::SciMusic(SciVersion soundVersion, bool useDigitalSFX)
-	: _soundVersion(soundVersion), _soundOn(true), _masterVolume(15), _globalReverb(0), _useDigitalSFX(useDigitalSFX), _needsResume(soundVersion > SCI_VERSION_0_LATE), _globalPause(0) {
+	: _mutex(g_system->getMixer()->mutex()), _soundVersion(soundVersion), _soundOn(true), _masterVolume(15), _globalReverb(0), _useDigitalSFX(useDigitalSFX), _needsResume(soundVersion > SCI_VERSION_0_LATE), _globalPause(0) {
 
 	// Reserve some space in the playlist, to avoid expensive insertion
 	// operations
@@ -504,6 +504,7 @@ void SciMusic::soundInitSnd(MusicEntry *pSnd) {
 				pSnd->_chan[chan.number]._dontRemap = (chan.flags & 2);
 				pSnd->_chan[chan.number]._prio = chan.prio;
 				pSnd->_chan[chan.number]._voices = chan.poly;
+				pSnd->_chan[chan.number]._mute = (chan.flags & 4) ? 1 : 0;
 
 				// CHECKME: Some SCI versions use chan.flags & 1 for this:
 				pSnd->_chan[chan.number]._dontMap = false;

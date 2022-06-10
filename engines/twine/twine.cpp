@@ -123,8 +123,8 @@ void TwineScreen::update() {
 	Super::update();
 }
 
-TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags, TwineGameType gameType)
-	: Engine(system), _gameType(gameType), _gameLang(language), _frontVideoBuffer(this), _gameFlags(flags), _rnd("twine") {
+TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flags, Common::Platform platform, TwineGameType gameType)
+	: Engine(system), _gameType(gameType), _gameLang(language), _frontVideoBuffer(this), _gameFlags(flags), _platform(platform), _rnd("twine") {
 	// Add default file directories
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
 	SearchMan.addSubDirectoryMatching(gameDataDir, "fla");
@@ -720,7 +720,7 @@ void TwinEEngine::processInventoryAction() {
 			penguin->setBrickShape(ShapeType::kNone);
 			_movements->moveActor(penguin->_angle, penguin->_angle, penguin->_speed, &penguin->_move);
 			_gameState->removeItem(InventoryItems::kiPenguin);
-			penguin->_delayInMillis = _lbaTime + 1500;
+			penguin->_delayInMillis = _lbaTime + TO_SECONDS(30);
 		}
 		break;
 	}

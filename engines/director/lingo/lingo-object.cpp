@@ -27,6 +27,8 @@
 #include "director/cast.h"
 #include "director/channel.h"
 #include "director/castmember.h"
+#include "director/movie.h"
+#include "director/score.h"
 #include "director/window.h"
 #include "director/util.h"
 #include "director/lingo/lingo.h"
@@ -964,7 +966,8 @@ Datum TextCastMember::getField(int field) {
 		}
 		break;
 	case kTheTextFont:
-		d.u.i = _fontId;
+		d.type = STRING;
+		d.u.s = new Common::String(g_director->_wm->_fontMan->getFontName(_fontId));
 		break;
 	case kTheTextHeight:
 		d.u.i = getTextHeight();
@@ -983,6 +986,22 @@ Datum TextCastMember::getField(int field) {
 }
 
 bool TextCastMember::setField(int field, const Datum &d) {
+	Channel *toEdit = nullptr;
+
+	if (field == kTheTextFont || field == kTheTextSize || field == kTheTextStyle) {
+		Common::Array<Channel *> channels = g_director->getCurrentMovie()->getScore()->_channels;
+		for (uint i = 0; i < channels.size(); i++) {
+			if (channels[i]->_sprite->_cast == this) {
+				toEdit = channels[i];
+				break;
+			}
+		}
+		if (toEdit) {
+			Common::Rect bbox = toEdit->getBbox();
+			toEdit->_widget = createWidget(bbox, toEdit, toEdit->_sprite->_spriteType);
+		}
+	}
+
 	switch (field) {
 	case kTheBackColor:
 		{
@@ -1028,20 +1047,45 @@ bool TextCastMember::setField(int field, const Datum &d) {
 	}
 		return true;
 	case kTheTextFont:
-		_fontId = d.asInt();
+		if (!toEdit) {
+			warning("Channel containing this CastMember %d doesn't exist", (int) _castId);
+			return false;
+		}
+		((Graphics::MacText *)toEdit->_widget)->enforceTextFont((uint16) g_director->_wm->_fontMan->getFontIdByName(d.asString()));
+		_ptext = ((Graphics::MacText *)toEdit->_widget)->getPlainText();
+		_ftext = ((Graphics::MacText *)toEdit->_widget)->getTextChunk(0, 0, -1, -1, true);
 		_modified = true;
-		return false;
+		toEdit->_widget->removeWidget(_widget);
+		return true;
 	case kTheTextHeight:
 		_lineSpacing = d.asInt();
 		_modified = true;
 		return false;
 	case kTheTextSize:
-		setTextSize(d.asInt());
-		return false;
-	case kTheTextStyle:
-		_textSlant = d.asInt();
+		if (!toEdit) {
+			warning("Channel containing this CastMember %d doesn't exist", (int) _castId);
+			return false;
+		}
+		((Graphics::MacText *)toEdit->_widget)->setTextSize(d.asInt());
+		_ptext = ((Graphics::MacText *)toEdit->_widget)->getPlainText();
+		_ftext = ((Graphics::MacText *)toEdit->_widget)->getTextChunk(0, 0, -1, -1, true);
 		_modified = true;
-		return false;
+		toEdit->_widget->removeWidget(_widget);
+		return true;
+	case kTheTextStyle:
+		if (!toEdit) {
+			warning("Channel containing this CastMember %d doesn't exist", (int) _castId);
+			return false;
+		}
+		{
+			int slant = g_director->_wm->_fontMan->parseSlantFromName(d.asString());
+			((Graphics::MacText *)toEdit->_widget)->enforceTextSlant(slant);
+		}
+		_ptext = ((Graphics::MacText *)toEdit->_widget)->getPlainText();
+		_ftext = ((Graphics::MacText *)toEdit->_widget)->getTextChunk(0, 0, -1, -1, true);
+		_modified = true;
+		toEdit->_widget->removeWidget(_widget);
+		return true;
 	default:
 		break;
 	}
@@ -1077,12 +1121,17 @@ Datum TextCastMember::getChunkField(int field, int start, int end) {
 		else
 			d.u.i = getForeColor();
 		break;
-	case kTheTextFont:
+	case kTheTextFont: {
+		int fontId;
 		if (_widget)
-			d.u.i = macText->getTextFont(start, end);
+			fontId = macText->getTextFont(start, end);
 		else
-			d.u.i = _fontId;
+			fontId = _fontId;
+
+		d.type = STRING;
+		d.u.s = new Common::String(g_director->_wm->_fontMan->getFontName(fontId));
 		break;
+		}
 	case kTheTextHeight:
 		warning("TextCastMember::getChunkField getting text height(line spacing) is not implemented yet, returning the default one");
 		d.u.i = _lineSpacing;

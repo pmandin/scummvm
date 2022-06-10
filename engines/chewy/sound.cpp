@@ -29,8 +29,27 @@
 #include "chewy/sound.h"
 #include "chewy/types.h"
 #include "chewy/globals.h"
+#include "chewy/music/tmf_stream.h"
 
 namespace Chewy {
+
+const uint8 Sound::TMF_MOD_SONG_NAME[] = {
+	'S', 'C', 'U', 'M', 'M',
+	'V', 'M', ' ', 'M', 'O',
+	'D', 'U', 'L', 'E', '\0',
+	'\0', '\0', '\0', '\0', '\0'};
+const uint8 Sound::TMF_MOD_INSTRUMENT_NAME[] = {
+	'S', 'C', 'U', 'M', 'M',
+	'V', 'M', ' ', 'I', 'N',
+	'S', 'T', 'R', 'U', 'M',
+	'E', 'N', 'T', '\0', '\0',
+	'\0', '\0'};
+// TODO Verify period values used by the game; this is an educated guess.
+const uint16 Sound::TMF_MOD_PERIODS[] = {
+	856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453,
+	428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226,
+	214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113
+};
 
 Sound::Sound(Audio::Mixer *mixer) {
 	_mixer = mixer;
@@ -114,30 +133,9 @@ void Sound::playMusic(int num, bool loop) {
 }
 
 void Sound::playMusic(uint8 *data, uint32 size, bool loop, DisposeAfterUse::Flag dispose) {
-#if 0
-	uint8 *modData = nullptr;
-	uint32 modSize;
-
-	/*
-	// TODO: Finish and use convertTMFToMod()
-	warning("The current music playing implementation is wrong");
-	modSize = size;
-	modData = (uint8 *)MALLOC(modSize);
-	memcpy(modData, data, size);
-	
-	Audio::AudioStream *stream = Audio::makeLoopingAudioStream(
-	                                 Audio::makeRawStream(modData,
-	                                         modSize, 22050, Audio::FLAG_UNSIGNED,
-	                                         dispose),
-	                                 loop ? 0 : 1);
-	*/
-
-	convertTMFToMod(data, size, modData, modSize);
-	Audio::AudioStream *stream = Audio::makeProtrackerStream(
-		new Common::MemoryReadStream(data, size));
+	TMFStream *stream = new TMFStream(new Common::MemoryReadStream(data, size), 0);
 
 	_mixer->playStream(Audio::Mixer::kMusicSoundType, &_musicHandle, stream);
-#endif
 }
 
 void Sound::pauseMusic() {
@@ -211,76 +209,6 @@ void Sound::setSpeechVolume(uint volume) {
 
 void Sound::stopAll() {
 	_mixer->stopAll();
-}
-
-void Sound::convertTMFToMod(uint8 *tmfData, uint32 tmfSize, uint8 *modData, uint32 &modSize) {
-	const int maxInstruments = 31;
-
-	modSize = tmfSize + 20 + maxInstruments * 22 + 4;
-	modData = (uint8 *)MALLOC(modSize);
-	uint8 *tmfPtr = tmfData;
-	uint8 *modPtr = modData;
-
-	const uint8 songName[20] = {
-		'S', 'C', 'U', 'M', 'M',
-		'V', 'M', ' ', 'M', 'O',
-		'D', 'U', 'L', 'E', '\0',
-		'\0', '\0', '\0', '\0', '\0'
-	};
-	const uint8 instrumentName[22] = {
-		'S', 'C', 'U', 'M', 'M',
-		'V', 'M', ' ', 'I', 'N',
-		'S', 'T', 'R', 'U', 'M',
-		'E', 'N', 'T', '\0', '\0',
-		'\0', '\0'
-	};
-
-	if (READ_BE_UINT32(tmfPtr) != MKTAG('T', 'M', 'F', '\0'))
-		error("Corrupt TMF resource");
-	tmfPtr += 4;
-
-	memcpy(modPtr, songName, 20);
-	modPtr += 20;
-
-	uint8 fineTune, instVolume;
-	uint16 repeatPoint, repeatLength, sampleLength;
-
-	for (int i = 0; i < maxInstruments; i++) {
-		fineTune = *tmfPtr++;
-		instVolume = *tmfPtr++;
-		repeatPoint = READ_BE_UINT16(tmfPtr);
-		tmfPtr += 2;
-		repeatLength = READ_BE_UINT16(tmfPtr);
-		tmfPtr += 2;
-		sampleLength = READ_BE_UINT16(tmfPtr);
-		tmfPtr += 2;
-
-		memcpy(modPtr, instrumentName, 18);
-		modPtr += 18;
-		*modPtr++ = ' ';
-		*modPtr++ = i / 10;
-		*modPtr++ = i % 10;
-		*modPtr++ = '\0';
-
-		WRITE_BE_UINT16(modPtr, sampleLength / 2);
-		modPtr += 2;
-		*modPtr++ = fineTune;
-		*modPtr++ = instVolume;
-		WRITE_BE_UINT16(modPtr, repeatPoint / 2);
-		modPtr += 2;
-		WRITE_BE_UINT16(modPtr, repeatLength / 2);
-		modPtr += 2;
-	}
-
-	*modPtr++ = *tmfPtr++;
-	*modPtr++ = *tmfPtr++;
-	memcpy(modPtr, tmfPtr, 128);
-	modPtr += 128;
-	tmfPtr += 128;
-	WRITE_BE_UINT32(modPtr, MKTAG('M', '.', 'K', '.'));
-	modPtr += 4;
-
-	// TODO: Finish this
 }
 
 void Sound::waitForSpeechToFinish() {

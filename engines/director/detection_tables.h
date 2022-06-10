@@ -256,6 +256,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "maze",				"The Riddle of the Maze" },
 	{ "mckenzie",			"McKenzie & Co." },
 	{ "mckenziemf",			"McKenzie & Co.: More Friends" }, // Expansion for McKenzie & Co.
+	{ "mcluhan",			"Understanding McLuhan" },
 	{ "mcmillennium",		"Mission Code: Millennium" },
 	{ "mediaband",			"Meet MediaBand" },
 	{ "melements",			"Masters of the Elements" },
@@ -442,6 +443,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "amhha",				"All My Hummingbirds Have Alibis" },
 	{ "amnesty",			"Amnesty Interactive" },
 	{ "artintact",			"the complete artintact komplett" },
+	{ "artmarcopatrito",	"The Art of Marco Patrito" },
 	{ "aruba",				"Aruba Interactive" },
 	{ "athletics",			"International Athletics" },
 	{ "babylon5int",		"Babylon 5 Interactive" },
@@ -3572,6 +3574,10 @@ static const DirectorGameDescription gameDescriptions[] = {
 
 	WINGAME1("mckenziemf", "", "MCKFRAME.EXE", "49c04e880f314a4965d21273df4f2dee", 4038355, 404),
 
+	WINGAME2t("mcluhan", "", "mcluhan/mcluhan.exe", "317d00bfea3c27688462f01bdd6ac2aa", 3587645,
+							 "fg/sunmorn.mov", "baee2df57be48984fabb721ce996b224", 1331857, 404),
+	MACGAME1("mcluhan", "", "McLuhan.dxr", "ce91eb31b2fcebc26451e0cc1632a964", 44371496, 404),
+
 	WINDEMO1("mcmillennium", "Demo", "MILLDEMO.EXE", "b6027f900ae90ed59de3d22e68d2bfed", 3630918, 404),
 
 	// Full game is not Director
@@ -3757,11 +3763,15 @@ static const DirectorGameDescription gameDescriptions[] = {
 
 	WINDEMO1("nyack", "Demo", "NYACKDEM.EXE", "8902ed0bcaf2d78151f819ba41eaf124", 720431, 404),
 
-	WINGAME1("operafatal", "",	 "OPERA.EXE",   "2b9da5566698a1f4b453e1a27e00ad29", 697739, 400),
-	MACGAME2("operafatal", "",	 "OPERA FATAL", "f5033f237ad1b1639fc46d01a82ac380", 285566,
-								 "SPRINT.Dxr",  "3e86f01eeac5fa3349c5177378997a7f", 694912, 400),
-	MACGAME2_l("operafatal", "", "OPERA FATAL",	"f5033f237ad1b1639fc46d01a82ac380", 285566,
-								 "SPRINT.Dxr",	"3eb6f5568c9ced258059e2cfd30751c5", 479616, Common::IT_ITA, 400),
+	WINGAME1("operafatal", "",	 "OPERA.EXE",		 "2b9da5566698a1f4b453e1a27e00ad29", 697739, 400),
+	MACGAME2("operafatal", "",	 "OPERA FATAL",		 "f5033f237ad1b1639fc46d01a82ac380", 285310,
+								 "Opera/SPRINT.Dxr", "3e86f01eeac5fa3349c5177378997a7f", 694912, 400),
+	MACGAME2_l("operafatal", "", "OPERA FATAL",		 "f5033f237ad1b1639fc46d01a82ac380", 285310,
+								 "Opera/SPRINT.Dxr", "3eb6f5568c9ced258059e2cfd30751c5", 479616, Common::IT_ITA, 400),
+	// From bugreport #13466
+	// Windows version is identical to regular Windows version
+	MACGAME2("operafatal", "Hybrid release", "OPERA FATAL",		 "f5033f237ad1b1639fc46d01a82ac380", 285310,
+											 "Opera/SPRINT.Dxr", "26c83c0cac1d40e91487e3a142d29733", 479390, 404),
 
 	MACDEMO1("orgotto", "Demo", "ORGOTTO", "0c7bbb4b24823e5ab871cb4c1d6f3710", 484351, 404),
 	WINDEMO1("orgotto", "Demo", "ORGOTTO.EXE", "f9272ef143c610ebd4dcb8301aa9b678", 760137, 404),
@@ -6223,6 +6233,9 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINGAME2t("artintact", "", "start.exe", "e35fd9cafa74db33dca37e7e7cd63e43", 146931,
 		"DATA/intro.dxr", "a8fe1c32a4c4d40ed00393d8602b979e", 997164,
 		800),
+
+	// From bugreport #13438
+	WINGAME1t("artmarcopatrito", "", "The_Art.exe", "5b1dc5ceba980c61ff9f6c82f187f106", 2158556, 851),
 
 	MACGAME2("avrilletgo", "ECD", "Projector",	   "4ea5fc09f79eee6dded94dc40f303779", 194863,
 								  "movie.dxr",	   "6d0c0712fdd32cf1de489b4c152b2460", 50908119, 800),

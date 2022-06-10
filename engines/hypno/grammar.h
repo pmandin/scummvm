@@ -40,6 +40,9 @@ typedef Common::List<Filename> Filenames;
 class HypnoSmackerDecoder : public Video::SmackerDecoder {
 public:
 	bool loadStream(Common::SeekableReadStream *stream) override;
+
+protected:
+	uint32 getSignatureVersion(uint32 signature) const override;
 };
 
 class MVideo {
@@ -449,6 +452,7 @@ public:
 		lastFrame = 1024;
 		interactionFrame = 0;
 		noEnemySound = false;
+		enemySoundRate = 22050;
 		isAnimal = false;
 		nonHostile = false;
 		playInteractionAudio = false;
@@ -456,6 +460,7 @@ public:
 		jumpToTimeAfterKilled = 0;
 		warningVideoIdx = 0;
 		waitForClickAfterInteraction = 0;
+		direction = 0;
 	}
 	Common::String name;
 	Filename animation;
@@ -481,6 +486,7 @@ public:
 
 	// Sounds
 	Filename enemySound;
+	uint32 enemySoundRate;
 	Filename deathSound;
 	Filename hitSound;
 	Filename animalSound;
@@ -503,6 +509,7 @@ public:
 	bool isAnimal;
 	Common::String checkIfDestroyed;
 	int jumpToTimeAfterKilled;
+	char direction;
 	uint32 waitForClickAfterInteraction;
 	uint32 warningVideoIdx;
 };
@@ -565,6 +572,7 @@ public:
 		sound = sound_;
 		soundRate = soundRate_;
 		loseLevel = false;
+		selection = false;
 		jumpToTime = 0;
 		time = time_;
 	}
@@ -574,6 +582,7 @@ public:
 	Filename sound;
 	uint32 soundRate;
 	bool loseLevel;
+	bool selection;
 	uint32 jumpToTime;
 	uint32 time;
 };

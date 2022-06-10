@@ -592,7 +592,7 @@ void GUI_LoK::setupSavegames(Menu &menu, int num) {
 			_screen->_charSpacing = 0;
 
 			Util::convertUTF8ToDOS(_savegameNames[i], 35);
-			if (_vm->gameFlags().lang == Common::JA_JPN) {
+			if (_vm->gameFlags().lang == Common::JA_JPN || _vm->gameFlags().lang == Common::ZH_TWN || _vm->gameFlags().lang == Common::KO_KOR) {
 				// Strip special characters from GMM save dialog which might get misinterpreted as SJIS
 				for (uint ii = 0; ii < strlen(_savegameNames[i]); ++ii) {
 					if (_savegameNames[i][ii] < 32) // due to the signed char type this will also clean up everything >= 0x80
@@ -699,38 +699,61 @@ int GUI_LoK::loadGameMenu(Button *button) {
 }
 
 void GUI_LoK::redrawTextfield() {
-	_screen->fillRect(38, 91, 287, _vm->gameFlags().lang == Common::ZH_TWN ? 107 : 102, _vm->gameFlags().platform == Common::kPlatformAmiga ? 18 : 250);
-	_text->printText(_savegameName, 38, 92, 253, 0, 0);
+	Common::Rect textField(38, 91, 287, 102);
+	int yOffs = 1;
+
+	if (_vm->gameFlags().lang == Common::KO_KOR) {
+		textField = Common::Rect(23, 88, 295, 105);
+		yOffs = 0;
+	} else if (_vm->gameFlags().lang == Common::ZH_TWN) {
+		textField.bottom = 107;
+	}
+
+	_screen->fillRect(textField.left, textField.top, textField.right, textField.bottom, _vm->gameFlags().platform == Common::kPlatformAmiga ? 18 : 250);
+	_text->printText(_savegameName, textField.left, textField.top + yOffs, 253, 0, 0);
 
 	_screen->_charSpacing = -2;
 	int width = _screen->getTextWidth(_savegameName);
-	_screen->fillRect(39 + width, 93, 45 + width, _vm->gameFlags().lang == Common::ZH_TWN ? 105 : 100, _vm->gameFlags().platform == Common::kPlatformAmiga ? 31 : 254);
+	_screen->fillRect(textField.left + 1 + width, textField.top + 2, textField.left + 7 + width, textField.bottom - 2, _vm->gameFlags().platform == Common::kPlatformAmiga ? 31 : 254);
 	_screen->_charSpacing = 0;
 
 	_screen->updateScreen();
 }
 
 void GUI_LoK::updateSavegameString() {
-	int length;
+	int length = 0;
+	int inputType = Font::kASCII;
 
 	if (_keyPressed.keycode) {
 		length = strlen(_savegameName);
 		_screen->_charSpacing = -2;
 		int width = _screen->getTextWidth(_savegameName) + 7;
 		_screen->_charSpacing = 0;
+		char oneByteInput = _keyPressed.ascii;
+		Util::convertISOToDOS(oneByteInput);
+		uint16 twoByteInput = 0;
+		//uint8 flags = 0;
 
-		char inputKey = _keyPressed.ascii;
-		Util::convertISOToDOS(inputKey);
+		if (inputType == Font::kHANGUL)
+			/*flags = */Util::convertKeyDOSToHAN(oneByteInput, twoByteInput);
 
-		if ((uint8)inputKey > 31 && (uint8)inputKey < (_vm->gameFlags().lang == Common::JA_JPN ? 128 : 226)) {
+		if (twoByteInput) {
+			if ((length < ARRAYSIZE(_savegameName) - 2) && (width <= 240)) {
+				WRITE_BE_UINT16(&_savegameName[length], twoByteInput | 0x8000);
+				_savegameName[length + 2] = 0;
+				redrawTextfield();
+			}
+		} else if ((uint8)oneByteInput > 31 && (uint8)oneByteInput < (_vm->gameFlags().lang == Common::JA_JPN ? 128 : 226)) {
 			if ((length < ARRAYSIZE(_savegameName) - 1) && (width <= 240)) {
-				_savegameName[length] = inputKey;
+				_savegameName[length] = oneByteInput;
 				_savegameName[length + 1] = 0;
 				redrawTextfield();
 			}
-		} else if (_keyPressed.keycode == Common::KEYCODE_BACKSPACE ||
-		           _keyPressed.keycode == Common::KEYCODE_DELETE) {
-			if (length > 0) {
+		} else if (_keyPressed.keycode == Common::KEYCODE_BACKSPACE || _keyPressed.keycode == Common::KEYCODE_DELETE) {
+			if (inputType == Font::kHANGUL && length > 1 && (_savegameName[length - 2] & 0x80)) {
+				_savegameName[length - 2] = _savegameName[length - 1] = 0;
+				redrawTextfield();
+			} else if (length > 0) {
 				_savegameName[length - 1] = 0;
 				redrawTextfield();
 			}
@@ -757,7 +780,7 @@ int GUI_LoK::saveGame(Button *button) {
 	_displaySubMenu = true;
 	_cancelSubMenu = false;
 
-	Screen::FontId cf = _screen->setFont(_vm->gameFlags().lang == Common::ZH_TWN ? Screen::FID_CHINESE_FNT : Screen::FID_8_FNT);
+	Screen::FontId cf = _screen->setFont(_vm->gameFlags().lang == Common::ZH_TWN ? Screen::FID_CHINESE_FNT : (_vm->gameFlags().lang == Common::KO_KOR ? Screen::FID_KOREAN_FNT : Screen::FID_8_FNT));
 
 	if (_savegameOffset == 0 && _vm->_gameToLoad == 0) {
 		_savegameName[0] = 0;
@@ -775,7 +798,7 @@ int GUI_LoK::saveGame(Button *button) {
 
 	while (_displaySubMenu && !_vm->shouldQuit()) {
 		checkTextfieldInput();
-		cf = _screen->setFont(_vm->gameFlags().lang == Common::ZH_TWN ? Screen::FID_CHINESE_FNT : Screen::FID_8_FNT);
+		cf = _screen->setFont(_vm->gameFlags().lang == Common::ZH_TWN ? Screen::FID_CHINESE_FNT : (_vm->gameFlags().lang == Common::KO_KOR ? Screen::FID_KOREAN_FNT : Screen::FID_8_FNT));
 		updateSavegameString();
 		_screen->setFont(cf);
 		processHighlights(_menu[3]);

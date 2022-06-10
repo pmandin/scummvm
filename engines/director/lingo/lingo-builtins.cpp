@@ -1079,7 +1079,7 @@ void LB::b_getNthFileNameInFolder(int nargs) {
 	// for directory, we either return the correct path, which we can access recursively.
 	// or we get a wrong path, which will lead us to a non-exist file node
 
-	Common::StringTokenizer directory_list(path, "/");
+	Common::StringTokenizer directory_list(path, Common::String(g_director->_dirSeparator));
 	Common::FSNode d = Common::FSNode(*g_director->getGameDataDir());
 	while (d.exists() && !directory_list.empty()) {
 		d = d.getChild(directory_list.nextToken());
@@ -2552,11 +2552,32 @@ void LB::b_offsetRect(int nargs) {
 }
 
 void LB::b_union(int nargs) {
-	g_lingo->printSTUBWithArglist("b_union", nargs);
+	if (nargs != 2) {
+		warning("Wrong number of arguments for b_union: Expected 2, got %d", nargs);
+		g_lingo->dropStack(nargs);
+		g_lingo->push(Datum(0));
+		return;
+	}
 
-	g_lingo->dropStack(nargs);
+	Datum rect1 = g_lingo->pop();
+	Datum rect2 = g_lingo->pop();
 
-	g_lingo->push(Datum(0));
+	if (rect1.type != RECT || rect2.type != RECT) {
+		warning("Wrong type of arguments for b_union");
+		g_lingo->push(Datum(0));
+		return;
+	}
+
+	Datum res;
+	res.type = RECT;
+
+	res.u.farr = new FArray();
+	res.u.farr->arr.push_back(Datum(MIN(rect1.u.farr->arr[0].u.i, rect2.u.farr->arr[0].u.i)));
+	res.u.farr->arr.push_back(Datum(MIN(rect1.u.farr->arr[1].u.i, rect2.u.farr->arr[1].u.i)));
+	res.u.farr->arr.push_back(Datum(MAX(rect1.u.farr->arr[2].u.i, rect2.u.farr->arr[2].u.i)));
+	res.u.farr->arr.push_back(Datum(MAX(rect1.u.farr->arr[3].u.i, rect2.u.farr->arr[3].u.i)));
+
+	g_lingo->push(res);
 }
 
 

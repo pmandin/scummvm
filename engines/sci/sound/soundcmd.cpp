@@ -264,7 +264,7 @@ void SoundCommandParser::processPlaySound(reg_t obj, bool playBed, bool restorin
 		// this to play certain death messages. Fixes bug #13500
 		uint16 flags = readSelectorValue(_segMan, obj, SELECTOR(flags));
 		if (!(flags & kSoundFlagPreload)) {
-			writeSelectorValue(_segMan, obj, SELECTOR(handle), -1);
+			writeSelectorValue(_segMan, obj, SELECTOR(handle), 0xffff);
 		}
 	}
 
@@ -369,7 +369,11 @@ reg_t SoundCommandParser::kDoSoundPause(EngineState *s, int argc, reg_t *argv) {
 		(_soundVersion < SCI_VERSION_2 && !obj.getSegment()) ||
 		(_soundVersion >= SCI_VERSION_2 && obj.isNull())
 	) {
-		_music->pauseAll(shouldPause);
+		// Don't unpause here, if the sound is already unpaused. The negative global pause counter
+		// that we introduced to accomodate our special needs during GMM save/load and autosave
+		// operations is not meant to be used here and will cause glitches.
+		if (_music->isAllPaused() || shouldPause)
+			_music->pauseAll(shouldPause);
 #ifdef ENABLE_SCI32
 		if (_soundVersion >= SCI_VERSION_2_1_EARLY) {
 			if (shouldPause) {

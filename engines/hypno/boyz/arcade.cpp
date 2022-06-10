@@ -71,6 +71,7 @@ void BoyzEngine::runBeforeArcade(ArcadeShooting *arc) {
 	updateFromScript();
 	_shootsDestroyed.clear();
 	_health = _previousHealth;
+	_selectedCorrectBox = 0;
 }
 
 void BoyzEngine::runAfterArcade(ArcadeShooting *arc) {
@@ -78,6 +79,7 @@ void BoyzEngine::runAfterArcade(ArcadeShooting *arc) {
 		_playerFrames[i]->free();
 		delete _playerFrames[i];
 	}
+	_playerFrames.clear();
 
 
 	if (_health <= 0) {
@@ -142,7 +144,8 @@ void BoyzEngine::drawCursorArcade(const Common::Point &mousePos) {
 
 void BoyzEngine::drawPlayer() {
 	updateFromScript();
-	drawImage(_portrait[_currentActor], 0, 200 - _portrait[_currentActor].h, true);
+	if (_arcadeMode != "YS")
+		drawImage(_portrait[_currentActor], 0, 200 - _portrait[_currentActor].h, true);
 }
 
 void BoyzEngine::drawHealth() {
@@ -240,7 +243,29 @@ bool BoyzEngine::checkTransition(ArcadeTransitions &transitions, ArcadeShooting 
 				// Objectives are never checked here, for some reason
 				_skipLevel = true;
 			} else if (_levelId == 51) {
-				waitForUserClick(1);
+				if (_selectedCorrectBox == 0) {
+					_background->decoder->pauseVideo(true);
+					_background->decoder->forceSeekToFrame(ttime - 2);
+					_masks->decoder->forceSeekToFrame(ttime - 2);
+					const Graphics::Surface *frame = _background->decoder->decodeNextFrame();
+					Graphics::Surface *boxes = frame->convertTo(frame->format, _background->decoder->getPalette());
+					drawImage(*boxes, 0, 0, false);
+					drawScreen();
+					_selectedCorrectBox = pickABox();
+					if (_selectedCorrectBox == 1) {
+						_background->decoder->forceSeekToFrame(582);
+						_masks->decoder->forceSeekToFrame(582);
+					} else if (_selectedCorrectBox == -1) {
+						_background->decoder->forceSeekToFrame(525);
+						_masks->decoder->forceSeekToFrame(525);
+					} else
+						error("Invalid value for _selectedCorrectBox: %d", _selectedCorrectBox);
+					_background->decoder->pauseVideo(false);
+					updateScreen(*_background);
+					drawScreen();
+				} else if (_selectedCorrectBox == -1) {
+					_health = 0;
+				}
 			}
 		} else if (!at.video.empty()) {
 			_background->decoder->pauseVideo(true);
@@ -303,6 +328,57 @@ int BoyzEngine::detectTarget(const Common::Point &mousePos) {
 	error("Invalid mask state (%d)!", m);
 }
 
+char BoyzEngine::selectDirection() {
+	Common::Event event;
+	Common::Rect button(252, 158, 315, 195);
+	Graphics::Surface *screen = _compositeSurface->convertTo(_compositeSurface->format, _background->decoder->getPalette());
+	Frames mapFrames = decodeFrames("c4/minemap.smk");
+	bool showMap = _sceneState["GS_MINEMAP"];
+	bool viewingMap = false;
+	if (showMap)
+		drawImage(*mapFrames[0], 0, 0, true);
+
+	while (!shouldQuit()) {
+		while (g_system->getEventManager()->pollEvent(event)) {
+			Common::Point mousePos = g_system->getEventManager()->getMousePos();
+			switch (event.type) {
+				case Common::EVENT_MOUSEMOVE:
+					if (showMap && button.contains(mousePos))
+						defaultCursor();
+					else if (!viewingMap && mousePos.x <= _screenW / 3)
+						changeCursor(_leftArrowPointer, _crosshairsPalette, true);
+					else if (!viewingMap && mousePos.x >= 2 * _screenW / 3)
+						changeCursor(_rightArrowPointer, _crosshairsPalette, true);
+					else if (!viewingMap)
+						changeCursor(_crossPointer, _crosshairsPalette, true);
+					break;
+
+				case Common::EVENT_LBUTTONDOWN:
+					if (showMap && button.contains(mousePos)) {
+						if (viewingMap) {
+							drawImage(*screen, 0, 0, false);
+							drawImage(*mapFrames[0], 0, 0, true);
+						} else {
+							drawImage(*mapFrames[1], 0, 0, true);
+						}
+						viewingMap = !viewingMap;
+					} else if (!viewingMap && mousePos.x <= _screenH / 2) {
+						return 'L';
+					} else if (!viewingMap)
+						return 'R';
+					break;
+
+				default:
+					break;
+			}
+		}
+		drawScreen();
+		g_system->delayMillis(10);
+	}
+	return 0;
+}
+
+
 void BoyzEngine::waitForUserClick(uint32 timeout) {
 	Common::Event event;
 	bool cont = true;
@@ -329,6 +405,55 @@ void BoyzEngine::waitForUserClick(uint32 timeout) {
 		g_system->delayMillis(10);
 	}
 }
+
+int BoyzEngine::pickABox() {
+	Common::Event event;
+
+	Common::Rect correctBox(84, 14, 135, 66);
+	Common::Rect incorrectBoxes[6];
+	incorrectBoxes[0] = Common::Rect(15, 17, 77, 66);
+	incorrectBoxes[1] = Common::Rect(2, 69, 84, 92);
+	incorrectBoxes[2] = Common::Rect(74, 108, 242, 138);
+	incorrectBoxes[3] = Common::Rect(62, 134, 245, 160);
+	incorrectBoxes[4] = Common::Rect(59, 161, 239, 190);
+	incorrectBoxes[5] = Common::Rect(135, 29, 223, 101);
+	int i;
+	while (!shouldQuit()) {
+		while (g_system->getEventManager()->pollEvent(event)) {
+			Common::Point mousePos = g_system->getEventManager()->getMousePos();
+			switch (event.type) {
+				case Common::EVENT_MOUSEMOVE:
+					if (correctBox.contains(mousePos)) {
+						changeCursor(_crosshairsTarget[_currentWeapon], _crosshairsPalette, true);
+						break;
+					}
+					for (i = 0; i < 6; i++)
+						if (incorrectBoxes[i].contains(mousePos)) {
+							changeCursor(_crosshairsTarget[_currentWeapon], _crosshairsPalette, true);
+							break;
+						}
+					if (i == 6)
+						changeCursor(_crosshairsActive[_currentWeapon], _crosshairsPalette, true);
+					break;
+
+				case Common::EVENT_LBUTTONDOWN:
+					if (correctBox.contains(mousePos))
+						return 1;
+					for (i = 0; i < 6; i++)
+						if (incorrectBoxes[i].contains(mousePos))
+							return -1;
+					break;
+
+				default:
+					break;
+			}
+		}
+		drawScreen();
+		g_system->delayMillis(10);
+	}
+	return -1;
+}
+
 
 bool BoyzEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool secondary) {
 	if (_currentMode == NonInteractive) {
@@ -367,6 +492,11 @@ bool BoyzEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool 
 
 				if (_shoots[i].waitForClickAfterInteraction > 0) {
 					waitForUserClick(_shoots[i].waitForClickAfterInteraction);
+					if (_shoots[i].name == "LILKID")
+						_sceneState["GS_MINEMAP"] = true;
+					else if (_shoots[i].name == "HO3") {
+						_sceneState["GS_C5MAP"] = true;
+					}
 				}
 
 				loadPalette(_currentPalette);
@@ -460,6 +590,17 @@ bool BoyzEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool 
 		_shoots[i].destroyed = true;
 		_objKillsCount[_objIdx] = _objKillsCount[_objIdx] + _shoots[i].objKillsCount;
 		_shootsDestroyed[_shoots[i].name] = true;
+
+		if (_shoots[i].name == "HELICOPTER") {
+			_background->decoder->pauseVideo(true);
+			MVideo video(arc->hitBoss2Video, Common::Point(0, 0), false, true, false);
+			disableCursor();
+			runIntro(video);
+			_skipLevel = true;
+			_skipNextVideo = true;
+			return false;
+		}
+
 		_background->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start - 3);
 		_masks->decoder->forceSeekToFrame(_shoots[i].explosionFrames[0].start - 3);
 		changeCursor(_crosshairsActive[_currentWeapon], _crosshairsPalette, true);
@@ -497,6 +638,26 @@ void BoyzEngine::missedTarget(Shoot *s, ArcadeShooting *arc) {
 		disableCursor();
 		runIntro(video);
 		_health = 0;
+		return;
+	} else if (s->direction > 0) {
+		char selected = selectDirection();
+		defaultCursor();
+
+		if (selected == s->direction) {
+			int missedAnimation = s->missedAnimation;
+			debugC(1, kHypnoDebugArcade, "Jumping to: %d", missedAnimation);
+			_background->decoder->forceSeekToFrame(missedAnimation);
+			_masks->decoder->forceSeekToFrame(missedAnimation);
+		} else {
+			_background->decoder->forceSeekToFrame(s->explosionFrames[0].start - 3);
+			_masks->decoder->forceSeekToFrame(s->explosionFrames[0].start - 3);
+
+			if (s->jumpToTimeAfterKilled == -1000) {
+				ArcadeTransition at("", 0, "", 0, s->explosionFrames[0].lastFrame() - 1);
+				at.loseLevel = true;
+				_transitions.push_front(at);
+			}
+		}
 		return;
 	}
 

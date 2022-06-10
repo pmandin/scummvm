@@ -81,6 +81,16 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
+		"sinistersix", // IT release
+		nullptr,
+		AD_ENTRY2s("DATA.Z", "8e1aa1ab39e38c4f1bf67c0b330b3991", 8740866,
+				"MISSIONS.LIB", "585704e26094cbaf14fbee90798e8d5d", 119945),
+		Common::IT_ITA,
+		Common::kPlatformDOS,
+		ADGF_TESTING,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
 		"sinistersix", // HE release
 		nullptr,
 		AD_ENTRY2s("SPIDER.EXE", "dbd912d6f6724c6d44775fc19cfa8ca0", 483359,
@@ -267,6 +277,15 @@ static const ExtraGuiOption hypnoExtraGuiOptionInfiniteAmmoCheat = {
 	0
 };
 
+static const ExtraGuiOption hypnoExtraGuiOptionUnlockAllLevels = {
+	_s("Unlock all levels"),
+	_s("All levels will be available to play."),
+	"unlockAllLevels",
+	false,
+	0,
+	0
+};
+
 static const ExtraGuiOption hypnoExtraGuiOptionRestoredContent = {
 	_s("Enable restored content"),
 	_s("Add additional content that is not enabled the original implementation."),
@@ -311,6 +330,7 @@ const ExtraGuiOptions HypnoMetaEngineDetection::getExtraGuiOptions(const Common:
 	options.push_back(hypnoExtraGuiOptionInfiniteHealthCheat);
 	options.push_back(hypnoExtraGuiOptionInfiniteAmmoCheat);
 	options.push_back(hypnoExtraGuiOptionRestoredContent);
+	options.push_back(hypnoExtraGuiOptionUnlockAllLevels);
 	return options;
 }
 
