@@ -39,11 +39,15 @@ MODULE_OBJS = \
 	lingo/lingo-preprocessor.o \
 	lingo/lingo-the.o \
 	lingo/lingo-utils.o \
+	lingo/xlibs/aiff.o \
 	lingo/xlibs/cdromxobj.o \
 	lingo/xlibs/fileio.o \
 	lingo/xlibs/flushxobj.o \
 	lingo/xlibs/fplayxobj.o \
+	lingo/xlibs/gpid.o \
 	lingo/xlibs/labeldrvxobj.o \
+	lingo/xlibs/movutils.o \
+	lingo/xlibs/jwxini.o \
 	lingo/xlibs/memoryxobj.o \
 	lingo/xlibs/movemousexobj.o \
 	lingo/xlibs/orthoplayxobj.o \

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-06-10 00:01+0000\n"
+"POT-Creation-Date: 2022-06-15 12:39+0000\n"
 "PO-Revision-Date: 2022-04-06 04:44+0000\n"
 "Last-Translator: wonst719 <wonst719@gmail.com>\n"
 "Language-Team: Korean <https://translations.scummvm.org/projects/scummvm/"
@@ -60,8 +60,8 @@ msgstr "위로"
 #: gui/browser.cpp:81 gui/chooser.cpp:45 gui/downloadiconsdialog.cpp:161
 #: gui/editgamedialog.cpp:384 gui/editrecorddialog.cpp:66
 #: gui/filebrowser-dialog.cpp:68 gui/fluidsynth-dialog.cpp:152
-#: gui/massadd.cpp:91 gui/options.cpp:2193 gui/predictivedialog.cpp:68
-#: gui/recorderdialog.cpp:67 gui/recorderdialog.cpp:154
+#: gui/massadd.cpp:93 gui/options.cpp:2193 gui/predictivedialog.cpp:68
+#: gui/recorderdialog.cpp:73 gui/recorderdialog.cpp:213
 #: gui/remotebrowser.cpp:59 gui/saveload-dialog.cpp:62
 #: gui/saveload-dialog.cpp:406 gui/saveload-dialog.cpp:477
 #: gui/saveload-dialog.cpp:779 gui/saveload-dialog.cpp:1172
@@ -137,7 +137,7 @@ msgstr "인터넷 연결에 제한이 있는 것 같습니다. 다운로드를 �
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:355
 #: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
 #: engines/parallaction/metaengine.cpp:145
-#: engines/sci/graphics/controls32.cpp:929
+#: engines/sci/graphics/controls32.cpp:929 engines/toon/toon.cpp:1502
 msgid "Yes"
 msgstr "예"
 
@@ -148,7 +148,7 @@ msgstr "예"
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:355
 #: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
 #: engines/parallaction/metaengine.cpp:151
-#: engines/sci/graphics/controls32.cpp:929
+#: engines/sci/graphics/controls32.cpp:929 engines/toon/toon.cpp:1502
 msgid "No"
 msgstr "아니오"
 
@@ -166,7 +166,7 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
-#: gui/launcher.cpp:527 gui/launcher.cpp:531 gui/massadd.cpp:88
+#: gui/launcher.cpp:527 gui/launcher.cpp:531 gui/massadd.cpp:90
 #: gui/options.cpp:2195 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1173 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
@@ -303,7 +303,8 @@ msgstr "게임의 언어. 선택한 언어로 게임이 번역되지는 않음"
 #: gui/options.cpp:1501 gui/options.cpp:1521 gui/options.cpp:1535
 #: gui/options.cpp:1929 gui/options.cpp:2338 gui/options.cpp:2412
 #: gui/options.cpp:2592 gui/options.cpp:3025 audio/null.cpp:40
-#: engines/ags/dialogs.cpp:62
+#: backends/platform/android/options.cpp:112
+#: backends/platform/android/options.cpp:113 engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<기본값>"
 
@@ -913,35 +914,35 @@ msgstr "리스트로 표시"
 msgid "Grid view"
 msgstr "그리드로 표시"
 
-#: gui/launcher.cpp:1002
+#: gui/launcher.cpp:1004
 msgid "~S~tart"
 msgstr "시작(~S~)"
 
-#: gui/launcher.cpp:1002
+#: gui/launcher.cpp:1004
 msgid "Start selected game"
 msgstr "선택한 게임을 시작합니다"
 
-#: gui/launcher.cpp:1005
+#: gui/launcher.cpp:1007
 msgid "~L~oad..."
 msgstr "불러오기(~L~)..."
 
-#: gui/launcher.cpp:1005
+#: gui/launcher.cpp:1007
 msgid "Load saved game for selected game"
 msgstr "선택된 게임의 저장 데이터를 불러옵니다"
 
-#: gui/launcher.cpp:1007
+#: gui/launcher.cpp:1009
 msgid "Record..."
 msgstr "녹화..."
 
-#: gui/launcher.cpp:1013
+#: gui/launcher.cpp:1015
 msgid "~G~ame Options..."
 msgstr "게임 옵션(~G~)..."
 
-#: gui/launcher.cpp:1013
+#: gui/launcher.cpp:1015
 msgid "Change game options"
 msgstr "게임 옵션을 변경합니다"
 
-#: gui/launcher.cpp:1013
+#: gui/launcher.cpp:1015
 #, fuzzy
 #| msgctxt "lowres"
 #| msgid "~G~ame Opts..."
@@ -951,59 +952,63 @@ msgstr "게임 옵션(~G~)..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1134 gui/launcher.cpp:1329
+#: gui/launcher.cpp:1136 gui/launcher.cpp:1331
 msgid "Unknown Engine"
 msgstr "알려지지 않은 엔진"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1152 gui/launcher.cpp:1361
+#: gui/launcher.cpp:1154 gui/launcher.cpp:1363
 msgid "Unknown Publisher"
 msgstr "알 수 없는 배급사"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1170 gui/launcher.cpp:1347
+#: gui/launcher.cpp:1172 gui/launcher.cpp:1349
 msgid "No Series"
 msgstr "시리즈 없음"
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1185 gui/launcher.cpp:1380
+#: gui/launcher.cpp:1187 gui/launcher.cpp:1382
 msgid "Language not detected"
 msgstr "언어가 감지되지 않음"
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1200 gui/launcher.cpp:1395
+#: gui/launcher.cpp:1202 gui/launcher.cpp:1397
 msgid "Platform not detected"
 msgstr "플랫폼이 감지되지 않음"
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1406 gui/widgets/groupedlist.cpp:80
+#: gui/launcher.cpp:1408 gui/widgets/groupedlist.cpp:80
 msgid "All"
 msgstr "모두"
 
-#: gui/massadd.cpp:75 gui/massadd.cpp:78
+#: gui/launcher.cpp:1596
+msgid "Icons per row:"
+msgstr ""
+
+#: gui/massadd.cpp:77 gui/massadd.cpp:80
 msgid "... progress ..."
 msgstr "... 진행 중 ..."
 
-#: gui/massadd.cpp:256
+#: gui/massadd.cpp:258
 msgid "Scan complete!"
 msgstr "검색 완료!"
 
-#: gui/massadd.cpp:259
+#: gui/massadd.cpp:261
 #, c-format
 msgid "Discovered %d new games, ignored %d previously added games."
 msgstr ""
 "%d 개의 새로운 게임을 찾았습니다. 그리고 %d 개의 기존 추가된 게임을 무시했습"
 "니다."
 
-#: gui/massadd.cpp:263
+#: gui/massadd.cpp:265
 #, c-format
 msgid "Scanned %d directories ..."
 msgstr "%d 개의 디렉토리를 탐색했습니다..."
 
-#: gui/massadd.cpp:266
+#: gui/massadd.cpp:268
 #, c-format
 msgid "Discovered %d new games, ignored %d previously added games ..."
 msgstr ""
@@ -1100,7 +1105,7 @@ msgstr "전체 화면 설정을 변경할 수 없음"
 msgid "the filtering setting could not be changed"
 msgstr "필터링 설정을 변경할 수 없음"
 
-#: gui/options.cpp:1287 backends/platform/android/options.cpp:72
+#: gui/options.cpp:1287
 msgid "Touchpad mouse mode"
 msgstr "터치패드 마우스 모드"
 
@@ -2013,42 +2018,42 @@ msgstr "*  숫자"
 msgid "*  Abc"
 msgstr "*  Abc"
 
-#: gui/recorderdialog.cpp:61
+#: gui/recorderdialog.cpp:67
 msgid "Recorder or Playback Gameplay"
 msgstr "게임플레이 녹화 또는 재생"
 
-#: gui/recorderdialog.cpp:66 gui/recorderdialog.cpp:154
+#: gui/recorderdialog.cpp:72 gui/recorderdialog.cpp:213
 #: gui/saveload-dialog.cpp:410 gui/saveload-dialog.cpp:477
 msgid "Delete"
 msgstr "삭제"
 
-#: gui/recorderdialog.cpp:68
+#: gui/recorderdialog.cpp:74
 msgid "Record"
 msgstr "녹화"
 
-#: gui/recorderdialog.cpp:69
+#: gui/recorderdialog.cpp:75
 msgid "Playback"
 msgstr "재생"
 
-#: gui/recorderdialog.cpp:71 gui/widgets/grid.cpp:224
+#: gui/recorderdialog.cpp:77 gui/widgets/grid.cpp:224
 msgid "Edit"
 msgstr "수정"
 
-#: gui/recorderdialog.cpp:83 gui/recorderdialog.cpp:240
-#: gui/recorderdialog.cpp:250
+#: gui/recorderdialog.cpp:143 gui/recorderdialog.cpp:302
+#: gui/recorderdialog.cpp:309
 msgid "Author: "
 msgstr "작성자: "
 
-#: gui/recorderdialog.cpp:84 gui/recorderdialog.cpp:241
-#: gui/recorderdialog.cpp:251
+#: gui/recorderdialog.cpp:145 gui/recorderdialog.cpp:303
+#: gui/recorderdialog.cpp:310
 msgid "Notes: "
 msgstr "메모: "
 
-#: gui/recorderdialog.cpp:153
+#: gui/recorderdialog.cpp:212
 msgid "Do you really want to delete this record?"
 msgstr "현재 녹화를 삭제하겠습니까?"
 
-#: gui/recorderdialog.cpp:170
+#: gui/recorderdialog.cpp:229
 msgid "Unknown Author"
 msgstr "알 수 없는 작성자"
 
@@ -2463,7 +2468,7 @@ msgstr "런처로 돌아가기(~R~)"
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:742
 #: engines/sci/engine/kfile.cpp:1079 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3405
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3763
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/xeen/saves.cpp:276
 #: engines/zvision/file/save_manager.cpp:48
@@ -2486,7 +2491,7 @@ msgstr "게임 저장:"
 #: engines/sci/engine/kfile.cpp:1079 engines/scumm/dialogs.cpp:175
 #: engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3405
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3763
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/xeen/saves.cpp:276
 #: engines/zvision/file/save_manager.cpp:48 engines/zvision/metaengine.cpp:193
@@ -3665,12 +3670,56 @@ msgstr "돋보기 모드 끔. 드래그 모드를 재활성화합니다..."
 msgid "Magnify Mode Off"
 msgstr "돋보기 모드 끔"
 
-#: backends/platform/android/options.cpp:71
+#: backends/platform/android/options.cpp:93
 msgid "Show On-screen control"
 msgstr "화면상 컨트롤을 표시"
 
+#: backends/platform/android/options.cpp:94
+msgid "Choose the preferred touch mode:"
+msgstr ""
+
+#: backends/platform/android/options.cpp:96
+#, fuzzy
+#| msgid "Enable Venus"
+msgid "In menus"
+msgstr "비너스 활성화"
+
+#: backends/platform/android/options.cpp:98
+#: backends/platform/android/options.cpp:116
+#: backends/platform/android/options.cpp:117
+#, fuzzy
+#| msgid "TV emulation"
+msgid "Touchpad emulation"
+msgstr "TV 에뮬레이션"
+
+#: backends/platform/android/options.cpp:99
+#: backends/platform/android/options.cpp:119
+#: backends/platform/android/options.cpp:120
+#, fuzzy
+#| msgid "Virtual mouse up"
+msgid "Direct mouse"
+msgstr "가상 마우스 위"
+
+#: backends/platform/android/options.cpp:100
+#: backends/platform/android/options.cpp:122
+#: backends/platform/android/options.cpp:123
+#, fuzzy
+#| msgid "TV emulation"
+msgid "Gamepad emulation"
+msgstr "TV 에뮬레이션"
+
+#: backends/platform/android/options.cpp:106
+msgid "In 2D games"
+msgstr ""
+
+#: backends/platform/android/options.cpp:108
+#, fuzzy
+#| msgid "V-Sync in 3D Games"
+msgid "In 3D games"
+msgstr "3D 게임에서 수직 동기화 사용"
+
 #. I18N: Show a button to revoke Storage Access Framework permissions for Android
-#: backends/platform/android/options.cpp:76
+#: backends/platform/android/options.cpp:128
 msgid "Show SAF revoke permissions overlay button"
 msgstr "SAF 권한 승인 취소 오버레이 버튼을 표시"
 
@@ -3970,7 +4019,7 @@ msgstr "업데이트 확인 중..."
 #: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:301 engines/sky/compact.cpp:130
 #: engines/supernova/supernova.cpp:464 engines/teenagent/resources.cpp:97
-#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:4999
+#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5357
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "'%s' 엔진의 데이터 파일을 찾을 수 없습니다."
@@ -3978,7 +4027,7 @@ msgstr "'%s' 엔진의 데이터 파일을 찾을 수 없습니다."
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:949
 #: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:66
 #: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:469
-#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5012
+#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5370
 #, c-format
 msgid "The '%s' engine data file is corrupt."
 msgstr "'%s' 엔진의 데이터 파일이 손상되었습니다."
@@ -3986,7 +4035,7 @@ msgstr "'%s' 엔진의 데이터 파일이 손상되었습니다."
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:960
 #: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:319 engines/tony/tony.cpp:211
-#: engines/toon/toon.cpp:5023
+#: engines/toon/toon.cpp:5381
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d.%d but got "
@@ -4118,7 +4167,7 @@ msgstr ""
 #: engines/sci/engine/guest_additions.cpp:745 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3857
 #: engines/zvision/file/save_manager.cpp:61
 msgid "Restore game:"
 msgstr "게임 불러오기:"
@@ -4137,7 +4186,7 @@ msgstr "게임 불러오기:"
 #: engines/sci/engine/guest_additions.cpp:746 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3857
 #: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:198
 msgid "Restore"
 msgstr "불러오기"
@@ -4286,6 +4335,12 @@ msgstr "Grimwall에게 전환"
 #: engines/asylum/metaengine.cpp:139
 msgid "Switch to Olmec"
 msgstr "Olmec에게 전환"
+
+#: engines/asylum/metaengine.cpp:144
+#, fuzzy
+#| msgid "Open/Close Inventory"
+msgid "Open character inventory"
+msgstr "인벤토리 열기/닫기"
 
 #. I18N: Warn user about loading potentially incompatible saved game
 #: engines/asylum/asylum.cpp:200
@@ -4709,7 +4764,7 @@ msgstr "물체, 옵션 및 성경 인용문에 대해 TTS를 활성화"
 #: engines/dreamweb/detection.cpp:80 engines/lure/detection.cpp:45
 #: engines/mads/detection.cpp:124 engines/sci/detection_options.h:222
 #: engines/sherlock/detection.cpp:132 engines/supernova/detection.cpp:54
-#: engines/twine/detection.cpp:904
+#: engines/twine/detection.cpp:953
 msgid "Use TTS to read the descriptions (if TTS is available)"
 msgstr "TTS를 사용하여 설명 읽기 (TTS를 사용할 수있는 경우)"
 
@@ -5520,7 +5575,7 @@ msgid "This puzzle is not available in the trial version of the game"
 msgstr "게임 평가판에서는 현재 퍼즐을 이용할 수 없습니다"
 
 #: engines/lure/detection.cpp:44 engines/mads/detection.cpp:123
-#: engines/sherlock/detection.cpp:131 engines/twine/detection.cpp:903
+#: engines/sherlock/detection.cpp:131 engines/twine/detection.cpp:952
 msgid "TTS Narrator"
 msgstr "TTS 나레이터"
 
@@ -5867,7 +5922,7 @@ msgstr "와이드 스크린 개조"
 msgid "Enable widescreen rendering in fullscreen mode."
 msgstr "전체 화면 모드에서 와이드 스크린 렌더링을 사용합니다."
 
-#: engines/myst3/myst3.cpp:365
+#: engines/myst3/myst3.cpp:363
 msgid ""
 "This version of Myst III has not been updated with the latest official "
 "patch.\n"
@@ -5880,7 +5935,7 @@ msgstr ""
 "업데이트는 다음에서 다운로드 할 수 있습니다:\n"
 "https://www.scummvm.org/frs/extras/patches/"
 
-#: engines/myst3/myst3.cpp:1579 engines/pegasus/pegasus.cpp:744
+#: engines/myst3/myst3.cpp:1577 engines/pegasus/pegasus.cpp:744
 msgid "Invalid file name for saving"
 msgstr "잘못된 저장 파일 이름"
 
@@ -6365,7 +6420,7 @@ msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
 "불완전한 게임이 감지되었습니다. 모든 CD로부터 데이터를 복사해야 합니다."
 
-#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:366
+#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:368
 msgid "(Autosave)"
 msgstr "(자동 저장)"
 
@@ -6404,7 +6459,7 @@ msgid ""
 "Cannot play back %dbpp video on a system with maximum color depth of 8bpp"
 msgstr "최대 색상이 8비트인 시스템에서 %d비트 색상 영상을 재생할 수 없습니다"
 
-#: engines/sci/metaengine.cpp:298
+#: engines/sci/metaengine.cpp:300
 msgid "SCI32 support not compiled in"
 msgstr "SCI32 지원이 컴파일 되지 않음"
 
@@ -7488,19 +7543,19 @@ msgstr "매우 빠른 모드 토글"
 msgid "WARNING: Deleting the autosave slot is not supported by this engine"
 msgstr "경고: 자동 저장 슬롯 삭제는 이 엔진에서 지원되지 않음"
 
-#: engines/stark/detection.cpp:375
+#: engines/stark/detection.cpp:387
 msgid "Load modded assets"
 msgstr "모드 애셋을 불러오기"
 
-#: engines/stark/detection.cpp:376
+#: engines/stark/detection.cpp:388
 msgid "Enable loading of external replacement assets."
 msgstr "대체용 외부 애셋을 불러오는 것을 활성화합니다."
 
-#: engines/stark/detection.cpp:386
+#: engines/stark/detection.cpp:398
 msgid "Enable linear filtering of the backgrounds images"
 msgstr "백그라운드 이미지의 선형 필터링 활성화"
 
-#: engines/stark/detection.cpp:387
+#: engines/stark/detection.cpp:399
 msgid ""
 "When linear filtering is enabled the background graphics are smoother in "
 "full screen mode, at the cost of some details."
@@ -7508,11 +7563,11 @@ msgstr ""
 "선형 필터링이 활성화되면 전체 화면에서 백그라운드 그래픽이 더 부드럽게 표시됩"
 "니다. 다만 디테일이 조금 낮아집니다."
 
-#: engines/stark/detection.cpp:397 engines/ultima/detection.cpp:143
+#: engines/stark/detection.cpp:409 engines/ultima/detection.cpp:143
 msgid "Enable font anti-aliasing"
 msgstr "폰트 안티 앨리어싱 활성화"
 
-#: engines/stark/detection.cpp:398 engines/ultima/detection.cpp:144
+#: engines/stark/detection.cpp:410 engines/ultima/detection.cpp:144
 msgid "When font anti-aliasing is enabled, the text is smoother."
 msgstr "폰트 안티 앨리어싱을 활성화하면 텍스트가 부드럽게 표시됩니다."
 
@@ -7692,27 +7747,33 @@ msgstr "새턴 CD 버전은 아직 지원되지 않습니다"
 msgid "Font variant not present in '%s' engine data file."
 msgstr "'%s' 엔진 데이터 파일에 폰트 종류가 존재하지 않습니다."
 
-#: engines/toon/toon.cpp:215
+#: engines/toon/toon.cpp:244
 #, c-format
 msgid "Saved game in slot #%d "
 msgstr "#%d 슬롯에 게임 저장됨 "
 
-#: engines/toon/toon.cpp:219
+#: engines/toon/toon.cpp:248
 #, c-format
 msgid "Could not quick save into slot #%d"
 msgstr "#%d 슬롯에 빠른 저장하지 못함"
 
-#: engines/toon/toon.cpp:232
+#: engines/toon/toon.cpp:261
 #, c-format
 msgid "Saved game #%d quick loaded"
 msgstr "#%d 게임을 불러옴"
 
-#: engines/toon/toon.cpp:236
+#: engines/toon/toon.cpp:265
 #, c-format
 msgid "Could not quick load the saved game #%d"
 msgstr "#%d 게임을 빠른 불러오기 하지 못함"
 
-#: engines/toon/toon.cpp:1563
+#: engines/toon/toon.cpp:1502
+#, fuzzy
+#| msgid "Are you sure you want to quit?"
+msgid "Are you sure you want to exit?"
+msgstr "정말로 종료하겠습니까?"
+
+#: engines/toon/toon.cpp:1906
 #, c-format
 msgid "Unable to locate the '%s' data file."
 msgstr "'%s' 데이터 파일을 찾을 수 없습니다."
@@ -7721,94 +7782,94 @@ msgstr "'%s' 데이터 파일을 찾을 수 없습니다."
 msgid "This version requires Giflib which was not compiled into ScummVM"
 msgstr "이 버전은 ScummVM에 컴파일되어 포함되지 않은 Giflib을 필요로 합니다"
 
-#: engines/twine/detection.cpp:802
+#: engines/twine/detection.cpp:851
 msgid "Enable wall collisions"
 msgstr "벽 충돌 활성화"
 
-#: engines/twine/detection.cpp:803
+#: engines/twine/detection.cpp:852
 msgid "Enable the original wall collision damage"
 msgstr "벽 충돌시 받는 피해를 활성화합니다"
 
-#: engines/twine/detection.cpp:812
+#: engines/twine/detection.cpp:861
 msgid "Disable save menu"
 msgstr "저장 메뉴 비활성화"
 
-#: engines/twine/detection.cpp:813
+#: engines/twine/detection.cpp:862
 msgid ""
 "The original only had autosaves. This allows you to save whenever you want."
 msgstr ""
 "원본 게임에는 자동 저장만 존재했습니다. 이 옵션은 언제든 저장할 수 있게 해 줍"
 "니다."
 
-#: engines/twine/detection.cpp:821
+#: engines/twine/detection.cpp:870
 msgid "Enable debug mode"
 msgstr "디버그 모드 사용"
 
-#: engines/twine/detection.cpp:822
+#: engines/twine/detection.cpp:871
 msgid "Enable the debug mode"
 msgstr "디버그 모드를 활성화합니다"
 
-#: engines/twine/detection.cpp:830
+#: engines/twine/detection.cpp:879
 msgid "Enable audio CD"
 msgstr "오디오 CD 사용"
 
-#: engines/twine/detection.cpp:831
+#: engines/twine/detection.cpp:880
 msgid "Enable the original audio cd track"
 msgstr "원본 오디오 CD 트랙을 활성화합니다"
 
-#: engines/twine/detection.cpp:839
+#: engines/twine/detection.cpp:888
 msgid "Enable sound"
 msgstr "사운드 활성화"
 
-#: engines/twine/detection.cpp:840
+#: engines/twine/detection.cpp:889
 msgid "Enable the sound for the game"
 msgstr "게임의 사운드를 활성화합니다"
 
-#: engines/twine/detection.cpp:848
+#: engines/twine/detection.cpp:897
 msgid "Enable voices"
 msgstr "음성 활성화"
 
-#: engines/twine/detection.cpp:849
+#: engines/twine/detection.cpp:898
 msgid "Enable the voices for the game"
 msgstr "게임의 음성을 활성화합니다"
 
-#: engines/twine/detection.cpp:857
+#: engines/twine/detection.cpp:906
 msgid "Enable text"
 msgstr "텍스트 활성화"
 
-#: engines/twine/detection.cpp:858
+#: engines/twine/detection.cpp:907
 msgid "Enable the text for the game"
 msgstr "게임의 텍스트를 활성화합니다"
 
-#: engines/twine/detection.cpp:866
+#: engines/twine/detection.cpp:915
 msgid "Enable movies"
 msgstr "영상 활성화"
 
-#: engines/twine/detection.cpp:867
+#: engines/twine/detection.cpp:916
 msgid "Enable the cutscenes for the game"
 msgstr "게임의 컷씬을 활성화합니다"
 
-#: engines/twine/detection.cpp:875
+#: engines/twine/detection.cpp:924
 msgid "Enable mouse"
 msgstr "마우스 활성화"
 
-#: engines/twine/detection.cpp:876
+#: engines/twine/detection.cpp:925
 msgid "Enable the mouse for the UI"
 msgstr "UI에 마우스를 활성화합니다"
 
-#: engines/twine/detection.cpp:884
+#: engines/twine/detection.cpp:933
 msgid "Use the USA version"
 msgstr "USA 버전 사용"
 
-#: engines/twine/detection.cpp:885
+#: engines/twine/detection.cpp:934
 msgid "Enable the USA specific version flags"
 msgstr "USA 버전 플래그를 활성화합니다"
 
-#: engines/twine/detection.cpp:893 engines/ultima/detection.cpp:99
+#: engines/twine/detection.cpp:942 engines/ultima/detection.cpp:99
 msgid "Enable high resolution"
 msgstr "고해상도 사용"
 
-#: engines/twine/detection.cpp:894 engines/ultima/detection.cpp:100
+#: engines/twine/detection.cpp:943 engines/ultima/detection.cpp:100
 msgid "Enable a higher resolution for the game"
 msgstr "게임의 고해상도 지원을 활성화합니다"
 
@@ -9016,9 +9077,6 @@ msgstr ""
 
 #~ msgid "Enable cross fading of images and scenes"
 #~ msgstr "이미지와 씬의 크로스페이드를 활성화합니다"
-
-#~ msgid "V-Sync in 3D Games"
-#~ msgstr "3D 게임에서 수직 동기화 사용"
 
 #~ msgid "Auto"
 #~ msgstr "자동"

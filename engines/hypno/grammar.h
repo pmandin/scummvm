@@ -376,6 +376,7 @@ public:
 		type = CodeLevel;
 		musicRate = 22050;
 		playMusicDuringIntro = false;
+		musicStereo = false;
 	}
 	virtual ~Level() {} // needed to make Level polymorphic
 	LevelType type;
@@ -386,6 +387,7 @@ public:
 	bool playMusicDuringIntro;
 	Filename music;
 	uint32 musicRate;
+	bool musicStereo;
 };
 
 class Scene : public Level {
@@ -571,6 +573,7 @@ public:
 		palette = palette_;
 		sound = sound_;
 		soundRate = soundRate_;
+		soundStereo = false;
 		loseLevel = false;
 		selection = false;
 		jumpToTime = 0;
@@ -581,6 +584,7 @@ public:
 	Filename palette;
 	Filename sound;
 	uint32 soundRate;
+	bool soundStereo;
 	bool loseLevel;
 	bool selection;
 	uint32 jumpToTime;
@@ -606,6 +610,7 @@ public:
 		enemySoundRate = 0;
 		hitSoundRate = 0;
 		additionalSoundRate = 0;
+		noAmmoSoundRate = 0;
 	}
 	void clear() {
 		nextLevelVideo.clear();
@@ -730,6 +735,27 @@ public:
 typedef Common::HashMap<Filename, Level*> Levels;
 extern Hotspots *g_parsedHots;
 extern ArcadeShooting *g_parsedArc;
+
+class ArcadeStats {
+	public:
+	ArcadeStats()  {
+		shootsFired = 0;
+		enemyHits = 0;
+		enemyTargets = 0;
+		targetsDestroyed = 0;
+		targetsMissed = 0;
+		friendliesEncountered = 0;
+		infoReceived = 0;
+	}
+
+	uint32 shootsFired;
+	uint32 enemyHits;
+	uint32 enemyTargets;
+	uint32 targetsDestroyed;
+	uint32 targetsMissed;
+	uint32 friendliesEncountered;
+	uint32 infoReceived;
+};
 
 } // End of namespace Hypno
 

@@ -1939,8 +1939,6 @@ void GUI_LoL::processButton(Button *button) {
 	default:
 		break;
 	}
-
-	_screen->updateScreen();
 }
 
 int GUI_LoL::processButtonList(Button *buttonList, uint16 inputFlag, int8 mouseWheel) {
@@ -2223,10 +2221,9 @@ int GUI_LoL::runMenu(Menu &menu) {
 	int fW = (d->w << 3) - wW;
 	int fC = 0;
 
-	// LoL doesn't have default higlighted items. No item should be
-	// highlighted when entering a new menu.
-	// Instead, the respevtive struct entry is used to determine whether
-	// a menu has scroll buttons or slider bars.
+	// LoL doesn't have default highlighted items. No item should be highlighted when
+	// entering a new menu. Instead, the respective struct entry is used to determine
+	// whether a menu has scroll buttons or slider bars.
 	uint8 hasSpecialButtons = 0;
 	_saveSlotsListUpdateNeeded = true;
 
@@ -2843,7 +2840,7 @@ int GUI_LoL::clickedSavenameMenu(Button *button) {
 	updateMenuButton(button);
 	if (button->arg == _savenameMenu.item[0].itemId) {
 
-		Util::convertDOSToUTF8(_saveDescription, 5120 - (int)((uint8*)_saveDescription - _vm->_tempBuffer5120));
+		Util::convertString_KYRAtoGUI(_saveDescription, 5120 - (int)((uint8*)_saveDescription - _vm->_tempBuffer5120));
 
 		int slot = _menuResult == -2 ? getNextSavegameSlot() : _menuResult - 1;
 		Graphics::Surface thumb;

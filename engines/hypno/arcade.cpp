@@ -205,8 +205,6 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 	Common::Point mousePos;
 	Common::List<uint32> shootsToRemove;
 
-	// statistics
-	resetStatistics();
 
 	// segment/shoots
 	Segments segments = arc->segments;
@@ -250,11 +248,10 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 	}
 	_currentPalette = arc->backgroundPalette;
 	loadPalette(_currentPalette);
-
-	if (segments[_segmentIdx].start > 1) {
-		int start = segments[_segmentIdx].start;
-		_background->decoder->forceSeekToFrame(start);
-		_masks->decoder->forceSeekToFrame(start);
+	int firstFrame = segments[_segmentIdx].start;
+	if (firstFrame > 1) {
+		_background->decoder->forceSeekToFrame(firstFrame);
+		_masks->decoder->forceSeekToFrame(firstFrame);
 		segments[_segmentIdx].start = 1;
 	}
 
@@ -349,7 +346,7 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 
 		if (needsUpdate) {
 			getPlayerPosition(true);
-			if (_background->decoder->getCurFrame() > 0)
+			if (_background->decoder->getCurFrame() > firstFrame)
 				drawScreen();
 			updateScreen(*_background);
 			if (!arc->maskVideo.empty() && _masks->decoder->needsUpdate())
@@ -497,8 +494,8 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 
 				uint32 bodyLastFrame = it->bodyFrames[it->bodyFrames.size() - 1].lastFrame();
 				if (frame > 0 && frame >= (int)(bodyLastFrame - 3) && !it->destroyed) {
-					missedTarget(it, arc);
 					incTargetsMissed();
+					missedTarget(it, arc);
 					// No need to pop attackFrames or explosionFrames
 					skipVideo(*it->video);
 					shootsToRemove.push_back(i);
@@ -513,6 +510,7 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 				uint32 bodyLastFrame = it->bodyFrames[it->bodyFrames.size() - 1].lastFrame();
 				if (frame > it->startFrame && frame - it->startFrame >= bodyLastFrame - 3)
 					if (!it->destroyed) {
+						incTargetsMissed();
 						missedTarget(it, arc);
 						shootsToRemove.push_back(i);
 					}
@@ -532,7 +530,8 @@ void HypnoEngine::runArcade(ArcadeShooting *arc) {
 		if (_music.empty() && !arc->music.empty()) {
 			_music = _soundPath + arc->music;
 			_musicRate = arc->musicRate;
-			playSound(_music, 0, _musicRate); // music loop forever
+			_musicStereo = arc->musicStereo;
+			playSound(_music, 0, _musicRate, _musicStereo); // music loop forever
 		}
 
 		if (needsUpdate) {
@@ -693,7 +692,7 @@ bool HypnoEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool
 				updateScreen(*_background);
 				drawScreen();
 				if (!_music.empty())
-					playSound(_music, 0, _musicRate); // restore music
+					playSound(_music, 0, _musicRate, _musicStereo); // restore music
 			} else if (_objIdx == 1 && !arc->hitBoss2Video.empty()) {
 				_background->decoder->pauseVideo(true);
 				MVideo video(arc->hitBoss2Video, Common::Point(0, 0), false, true, false);
@@ -705,7 +704,7 @@ bool HypnoEngine::shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool
 				drawScreen();
 				drawCursorArcade(mousePos);
 				if (!_music.empty())
-					playSound(_music, 0, _musicRate); // restore music
+					playSound(_music, 0, _musicRate, _musicStereo); // restore music
 			}
 			byte p[3] = {0x00, 0x00, 0x00}; // Always black?
 			assert(_shoots[i].paletteSize == 1 || _shoots[i].paletteSize == 0);
@@ -735,43 +734,47 @@ void HypnoEngine::incScore(int inc) {
 }
 
 void HypnoEngine::incShotsFired() {
-	_shootsFired++;
+	_stats.shootsFired++;
 }
 
 void HypnoEngine::incEnemyHits() {
-	_enemyHits++;
+	_stats.enemyHits++;
 }
 
 void HypnoEngine::incEnemyTargets() {
-	_enemyTargets++;
+	_stats.enemyTargets++;
 }
 
 void HypnoEngine::incTargetsDestroyed() {
-	_targetsDestroyed++;
+	_stats.targetsDestroyed++;
 }
 
 void HypnoEngine::incTargetsMissed() {
-	_targetsMissed++;
+	_stats.targetsMissed++;
 }
 
 uint32 HypnoEngine::killRatio() {
-	if (_enemyTargets == 0)
+	if (_stats.enemyTargets == 0)
 		return 0;
-	return 100 * _targetsDestroyed / _enemyTargets;
+	return 100 * _stats.targetsDestroyed / _stats.enemyTargets;
 }
 
 uint32 HypnoEngine::accuracyRatio() {
-	if (_shootsFired == 0)
+	if (_stats.shootsFired == 0)
 		return 0;
-	return 100 * _enemyHits / _shootsFired;
+	return 100 * _stats.enemyHits / _stats.shootsFired;
+}
+
+void HypnoEngine::incFriendliesEncountered() {
+	_stats.friendliesEncountered++;
+}
+
+void HypnoEngine::incInfoReceived() {
+	_stats.infoReceived++;
 }
 
 void HypnoEngine::resetStatistics() {
-	_shootsFired = 0;
-	_enemyHits = 0;
-	_enemyTargets = 0;
-	_targetsDestroyed = 0;
-	_targetsMissed = 0;
+	_stats = ArcadeStats();
 	_bonus = 0;
 }
 

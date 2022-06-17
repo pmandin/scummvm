@@ -69,6 +69,7 @@ BoyzEngine::BoyzEngine(OSystem *syst, const ADGameDescription *gd) : HypnoEngine
 	_currentMode = NonInteractive;
 	_crosshairsPalette = nullptr;
 	_lastLevel = 0;
+	_previousHealth = 0;
 	_selectedCorrectBox = 0;
 	_flashbackMode = false;
 
@@ -261,10 +262,16 @@ void BoyzEngine::loadAssets() {
 
 	loadArcadeLevel("c41.mi_", "c42.mi_", "<retry_menu>", "");
 	loadArcadeLevel("c42.mi_", "<territory_5>", "<retry_menu>", "");
+	ar = (ArcadeShooting *) _levels["c42.mi_"];
+	// We remove the last element, which plays c4/c4bro8s.smk
+	// This transition is too close to the end of the level
+	// and will likely not be executed
+	ar->transitions.pop_back();
 
 	Transition *territory_5 = new Transition("<check_c5>");
 	territory_5->intros.push_back("warnings/w16s.smk");
 	territory_5->intros.push_back("c5/c5t01.smk");
+	territory_5->intros.push_back("c5/c5intras.smk");
 	_levels["<territory_5>"] = territory_5;
 
 	loadArcadeLevel("c51.mi_", "<check_c5>", "<retry_menu>", "");
@@ -427,6 +434,9 @@ void BoyzEngine::loadAssets() {
 	sc = (Scene *) _levels["<select_c5>"];
 	sc->resolution = "320x200";
 
+	Code *alarm_c5 = new Code("<alarm_c5>");
+	_levels["<alarm_c5>"] = alarm_c5;
+
 	hl = new Highlight("GS_SEQ_51");
 	sc->hots[1].actions.push_back(hl);
 	gl = new Global("GS_SEQ_51", "NCHECK");
@@ -447,6 +457,24 @@ void BoyzEngine::loadAssets() {
 	sc->hots[3].actions.push_back(gl);
 	cl = new ChangeLevel("c53.mi_");
 	sc->hots[3].actions.push_back(cl);
+
+	hl = new Highlight("GS_SWITCH7");
+	sc->hots[4].actions.push_back(hl);
+	gl = new Global("GS_SWITCH7", "NCHECK");
+	sc->hots[4].actions.push_back(gl);
+	gl = new Global("GS_SWITCH7", "TURNON");
+	sc->hots[4].actions.push_back(gl);
+	cl = new ChangeLevel("<alarm_c5>");
+	sc->hots[4].actions.push_back(cl);
+
+	hl = new Highlight("GS_SWITCH8");
+	sc->hots[5].actions.push_back(hl);
+	gl = new Global("GS_SWITCH8", "NCHECK");
+	sc->hots[5].actions.push_back(gl);
+	gl = new Global("GS_SWITCH8", "TURNON");
+	sc->hots[5].actions.push_back(gl);
+	cl = new ChangeLevel("<alarm_c5>");
+	sc->hots[5].actions.push_back(cl);
 
 	for (int t = 1; t <= 5; t++) {
 		Common::String fterrMis = Common::String::format(fterr, t);
@@ -692,10 +720,10 @@ void BoyzEngine::loadAssets() {
 	_deathDay[6] = "preload/deathd6s.smk";
 
 	_deathNight[0] = "";
-	_deathNight[1] = "preload/deathn2s.smk";
-	_deathNight[2] = "preload/deathn3s.smk";
-	_deathNight[3] = "preload/deathn4s.smk";
-	_deathNight[4] = "";
+	_deathNight[1] = "";
+	_deathNight[2] = "preload/deathn2s.smk";
+	_deathNight[3] = "preload/deathn3s.smk";
+	_deathNight[4] = "preload/deathn4s.smk";
 	_deathNight[5] = "";
 	_deathNight[6] = "";
 
@@ -854,7 +882,6 @@ void BoyzEngine::loadAssets() {
 	_weaponMaxAmmo[7] = 25; // Boat machine-gun
 
 	_maxHealth = 100;
-	_civiliansShoot = 0;
 	_warningVideosDay.push_back("");
 	_warningVideosDay.push_back("warnings/w01s.smk");
 	_warningVideosDay.push_back("warnings/w02s.smk");
@@ -953,6 +980,11 @@ void BoyzEngine::drawString(const Common::String &font, const Common::String &st
 }
 
 void BoyzEngine::saveProfile(const Common::String &name, int levelId) {
+	if (name.empty()) {
+		debugC(1, kHypnoDebugMedia, "WARNING: refusing to save at last level %d with an empty name", _lastLevel);
+		return;
+	}
+
 	SaveStateList saves = getMetaEngine()->listSaves(_targetName.c_str());
 
 	// Find the correct level index to before saving
@@ -1022,6 +1054,24 @@ Common::Error BoyzEngine::saveGameStream(Common::WriteStream *stream, bool isAut
 
 	stream->writeUint32LE(_lastLevel);
 
+	// Save current stats
+	stream->writeUint32LE(_stats.shootsFired);
+	stream->writeUint32LE(_stats.enemyHits);
+	stream->writeUint32LE(_stats.enemyTargets);
+	stream->writeUint32LE(_stats.targetsDestroyed);
+	stream->writeUint32LE(_stats.targetsMissed);
+	stream->writeUint32LE(_stats.friendliesEncountered);
+	stream->writeUint32LE(_stats.infoReceived);
+
+	stream->writeUint32LE(_globalStats.shootsFired);
+	stream->writeUint32LE(_globalStats.enemyHits);
+	stream->writeUint32LE(_globalStats.enemyTargets);
+	stream->writeUint32LE(_globalStats.targetsDestroyed);
+	stream->writeUint32LE(_globalStats.targetsMissed);
+	stream->writeUint32LE(_globalStats.friendliesEncountered);
+	stream->writeUint32LE(_globalStats.infoReceived);
+
+	stream->writeUint32LE(_flashbackMode);
 	saveSceneState(stream);
 	return Common::kNoError;
 }
@@ -1034,10 +1084,31 @@ Common::Error BoyzEngine::loadGameStream(Common::SeekableReadStream *stream) {
 	_score = stream->readUint32LE();
 	_lastLevel = stream->readUint32LE();
 
+	// Load stats
+	_stats.shootsFired = stream->readUint32LE();
+	_stats.enemyHits = stream->readUint32LE();
+	_stats.enemyTargets = stream->readUint32LE();
+	_stats.targetsDestroyed = stream->readUint32LE();
+	_stats.targetsMissed = stream->readUint32LE();
+	_stats.friendliesEncountered = stream->readUint32LE();
+	_stats.infoReceived = stream->readUint32LE();
+
+	_globalStats.shootsFired = stream->readUint32LE();
+	_globalStats.enemyHits = stream->readUint32LE();
+	_globalStats.enemyTargets = stream->readUint32LE();
+	_globalStats.targetsDestroyed = stream->readUint32LE();
+	_globalStats.targetsMissed = stream->readUint32LE();
+	_globalStats.friendliesEncountered = stream->readUint32LE();
+	_globalStats.infoReceived = stream->readUint32LE();
+
+	_flashbackMode = stream->readUint32LE();
 	loadSceneState(stream);
 	if (_unlockAllLevels) {
 		_nextLevel = "<select_t1>";
+		_flashbackMode = true;
 		unlockAllLevels();
+	} else if (_flashbackMode) {
+		_nextLevel = "<select_t1>";
 	} else if (_ids[_lastLevel] == 3591)
 		_nextLevel = "<select_c3>";
 	else if (_ids[_lastLevel] == 3592)

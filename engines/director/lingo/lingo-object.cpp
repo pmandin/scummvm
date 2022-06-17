@@ -36,13 +36,17 @@
 #include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-the.h"
 
+#include "director/lingo/xlibs/aiff.h"
 #include "director/lingo/xlibs/cdromxobj.h"
 #include "director/lingo/xlibs/fileio.h"
 #include "director/lingo/xlibs/flushxobj.h"
 #include "director/lingo/xlibs/fplayxobj.h"
+#include "director/lingo/xlibs/gpid.h"
+#include "director/lingo/xlibs/jwxini.h"
 #include "director/lingo/xlibs/labeldrvxobj.h"
 #include "director/lingo/xlibs/memoryxobj.h"
 #include "director/lingo/xlibs/movemousexobj.h"
+#include "director/lingo/xlibs/movutils.h"
 #include "director/lingo/xlibs/orthoplayxobj.h"
 #include "director/lingo/xlibs/palxobj.h"
 #include "director/lingo/xlibs/popupmenuxobj.h"
@@ -122,24 +126,27 @@ static struct XLibProto {
 	int type;
 	int version;
 } xlibs[] = {
-	{ CDROMXObj::fileNames,			CDROMXObj::open,		CDROMXObj::close,			kXObj,					200 },	// D2
-	{ FileIO::fileNames,			FileIO::open,			FileIO::close,				kXObj | kXtraObj,		200 },	// D2
-	{ FlushXObj::fileNames,			FlushXObj::open,		FlushXObj::close,			kXObj,					400 },	// D4
-	{ FPlayXObj::fileNames,			FPlayXObj::open,		FPlayXObj::close,			kXObj,					200 },	// D2
-	{ LabelDrvXObj::fileNames,		LabelDrvXObj::open,		LabelDrvXObj::close,		kXObj,					400 }, 	// D4
-	{ OrthoPlayXObj::fileNames,		OrthoPlayXObj::open,	OrthoPlayXObj::close,		kXObj,					400 }, 	// D4
-	{ PalXObj::fileNames,			PalXObj::open,			PalXObj::close,				kXObj,					400 }, 	// D4
-	{ MemoryXObj::fileNames,		MemoryXObj::open,		MemoryXObj::close,			kXObj,					400 }, 	// D4
-	{ PopUpMenuXObj::fileNames,		PopUpMenuXObj::open,	PopUpMenuXObj::close,		kXObj,					200 }, 	// D2
-	{ SerialPortXObj::fileNames,	SerialPortXObj::open,	SerialPortXObj::close,		kXObj,					200 },	// D2
-	{ SoundJam::fileNames,			SoundJam::open,			SoundJam::close,			kXObj,					400 },	// D4
-	{ RegisterComponent::fileNames,	RegisterComponent::open,RegisterComponent::close,	kXObj,					400 },	// D4
-	{ VideodiscXObj::fileNames,		VideodiscXObj::open,	VideodiscXObj::close,		kXObj,					200 }, 	// D2
-	{ RearWindowXObj::fileNames,	RearWindowXObj::open,	RearWindowXObj::close,		kXObj,					400 },	// D4
-	{ MoveMouseXObj::fileNames,		MoveMouseXObj::open,	MoveMouseXObj::close,		kXObj,					400 },	// D4
-	{ XPlayAnim::fileNames,			XPlayAnim::open,		XPlayAnim::close, 			kXObj,					300 },	// D3
+	{ AiffXObj::fileNames,				AiffXObj::open,				AiffXObj::close,			kXObj,					400 },	// D4
+	{ CDROMXObj::fileNames,				CDROMXObj::open,			CDROMXObj::close,			kXObj,					200 },	// D2
+	{ FileIO::fileNames,				FileIO::open,				FileIO::close,				kXObj | kXtraObj,		200 },	// D2
+	{ FlushXObj::fileNames,				FlushXObj::open,			FlushXObj::close,			kXObj,					400 },	// D4
+	{ FPlayXObj::fileNames,				FPlayXObj::open,			FPlayXObj::close,			kXObj,					200 },	// D2
+	{ GpidXObj::fileNames,				GpidXObj::open,				GpidXObj::close,			kXObj,					400 },	// D4
+	{ LabelDrvXObj::fileNames,			LabelDrvXObj::open,			LabelDrvXObj::close,		kXObj,					400 }, 	// D4
+	{ OrthoPlayXObj::fileNames,			OrthoPlayXObj::open,		OrthoPlayXObj::close,		kXObj,					400 }, 	// D4
+	{ JourneyWareXINIXObj::fileNames,	JourneyWareXINIXObj::open,	JourneyWareXINIXObj::close,	kXObj,					400 }, 	// D4
+	{ PalXObj::fileNames,				PalXObj::open,				PalXObj::close,				kXObj,					400 }, 	// D4
+	{ MemoryXObj::fileNames,			MemoryXObj::open,			MemoryXObj::close,			kXObj,					400 }, 	// D4
+	{ MovUtilsXObj::fileNames,			MovUtilsXObj::open,			MovUtilsXObj::close,		kXObj,					400 }, 	// D4
+	{ PopUpMenuXObj::fileNames,			PopUpMenuXObj::open,		PopUpMenuXObj::close,		kXObj,					200 }, 	// D2
+	{ SerialPortXObj::fileNames,		SerialPortXObj::open,		SerialPortXObj::close,		kXObj,					200 },	// D2
+	{ SoundJam::fileNames,				SoundJam::open,				SoundJam::close,			kXObj,					400 },	// D4
+	{ RegisterComponent::fileNames,		RegisterComponent::open,	RegisterComponent::close,	kXObj,					400 },	// D4
+	{ VideodiscXObj::fileNames,			VideodiscXObj::open,		VideodiscXObj::close,		kXObj,					200 }, 	// D2
+	{ RearWindowXObj::fileNames,		RearWindowXObj::open,		RearWindowXObj::close,		kXObj,					400 },	// D4
+	{ MoveMouseXObj::fileNames,			MoveMouseXObj::open,		MoveMouseXObj::close,		kXObj,					400 },	// D4
+	{ XPlayAnim::fileNames,				XPlayAnim::open,			XPlayAnim::close, 			kXObj,					300 },	// D3
 	{ nullptr, nullptr, nullptr, 0, 0 }
-
 };
 
 void Lingo::initXLibs() {
@@ -700,10 +707,10 @@ bool CastMember::setField(int field, const Datum &d) {
 
 	switch (field) {
 	case kTheBackColor:
-		warning("STUB: CastMember::setField(): Unprocessed setting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
-		return false;
+		_cast->getCastMember(_castId)->setBackColor(d.asInt());
+		return true;
 	case kTheCastType:
-		warning("CastMember::setField(): Attempt to set read-only field %s of cast %d", g_lingo->entity2str(field), _castId);
+		warning("BUILDBOT: CastMember::setField(): Attempt to set read-only field %s of cast %d", g_lingo->entity2str(field), _castId);
 		return false;
 	case kTheFileName:
 		if (!castInfo) {
@@ -713,10 +720,10 @@ bool CastMember::setField(int field, const Datum &d) {
 		castInfo->fileName = d.asString();
 		return true;
 	case kTheForeColor:
-		warning("STUB: CastMember::setField(): Unprocessed setting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
-		return false;
+		_cast->getCastMember(_castId)->setForeColor(d.asInt());
+		return true;
 	case kTheHeight:
-		warning("CastMember::setField(): Attempt to set read-only field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
+		warning("BUILDBOT: CastMember::setField(): Attempt to set read-only field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
 		return false;
 	case kTheName:
 		if (!castInfo) {
@@ -726,7 +733,7 @@ bool CastMember::setField(int field, const Datum &d) {
 		castInfo->name = d.asString();
 		return true;
 	case kTheRect:
-		warning("STUB: CastMember::setField(): Unprocessed setting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
+		warning("CastMember::setField(): Attempt to set read-only field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
 		return false;
 	case kThePurgePriority:
 		_purgePriority = CLIP<int>(d.asInt(), 0, 3);
@@ -740,7 +747,7 @@ bool CastMember::setField(int field, const Datum &d) {
 		castInfo->script = d.asString();
 		return true;
 	case kTheWidth:
-		warning("CastMember::setField(): Attempt to set read-only field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
+		warning("BUILDBOT: CastMember::setField(): Attempt to set read-only field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
 		return false;
 	default:
 		warning("CastMember::setField(): Unprocessed setting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
@@ -883,7 +890,8 @@ Datum BitmapCastMember::getField(int field) {
 
 	switch (field) {
 	case kTheDepth:
-		warning("STUB: BitmapCastMember::getField(): Unprocessed getting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
+		d.type = INT;
+		d.u.i = _bitsPerPixel;
 		break;
 	case kTheRegPoint:
 		warning("STUB: BitmapCastMember::getField(): Unprocessed getting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
@@ -904,7 +912,7 @@ Datum BitmapCastMember::getField(int field) {
 bool BitmapCastMember::setField(int field, const Datum &d) {
 	switch (field) {
 	case kTheDepth:
-		warning("STUB: BitmapCastMember::setField(): Unprocessed setting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
+		warning("BitmapCastMember::setField(): Attempt to set read-only field %s of cast %d", g_lingo->field2str(field), _castId);
 		return false;
 	case kTheRegPoint:
 		warning("STUB: BitmapCastMember::setField(): Unprocessed setting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);

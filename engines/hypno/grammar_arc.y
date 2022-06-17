@@ -50,32 +50,42 @@ using namespace Hypno;
 
 void parseSN(const char *sn, const char *path, const char *enc, const char *flag) {
 	uint32 sampleRate = 11025;
+	bool stereo = false;
 	if (Common::String("22K") == enc || Common::String("22k") == enc)
 		sampleRate = 22050;
 	else if (HYPNO_ARC_default_sound_rate > 0)
 		sampleRate = HYPNO_ARC_default_sound_rate;
+	if (Common::String("STEREO") == flag)
+		stereo = true;
 
 	if (Common::String("S0") == sn) {
 		g_parsedArc->music = path;
 		g_parsedArc->musicRate = sampleRate;
+		g_parsedArc->musicStereo = stereo;
 	} else if (Common::String("S1") == sn) {
 		g_parsedArc->shootSound = path;
 		g_parsedArc->shootSoundRate = sampleRate;
+		assert(!stereo);
 	} else if (Common::String("S2") == sn) {
 		g_parsedArc->hitSound = path;
 		g_parsedArc->hitSoundRate = sampleRate;
+		assert(!stereo);
 	} else if (Common::String("S4") == sn) {
 		g_parsedArc->enemySound = path;
 		g_parsedArc->enemySoundRate = sampleRate;
+		assert(!stereo);
 	} else if (Common::String("S5") == sn) {
 		g_parsedArc->additionalSound = path;
 		g_parsedArc->additionalSoundRate = sampleRate;
+		assert(!stereo);
 	} else if (Common::String("S7") == sn) {
 		g_parsedArc->noAmmoSound = path;
 		g_parsedArc->noAmmoSoundRate = sampleRate;
+		assert(!stereo);
 	} else if (Common::String("S8") == sn) {
 		g_parsedArc->additionalSound = path;
 		g_parsedArc->additionalSoundRate = sampleRate;
+		assert(!stereo);
 	}
 	debugC(1, kHypnoDebugParser, "SN %s", path);
 }
@@ -189,10 +199,14 @@ hline: 	CTOK NUM {
 	}
 	| TATOK NUM FILENAME flag enc {
 		uint32 sampleRate = 11025;
+		bool stereo = false;
 		if (Common::String("22K") == $5 || Common::String("22k") == $5)
 			sampleRate = 22050;
+		if (Common::String("STEREO") == $4)
+			stereo = true;
 
 		ArcadeTransition at("", "", $3, sampleRate, $2);
+		at.soundStereo = stereo;
 		g_parsedArc->transitions.push_back(at);
 		debugC(1, kHypnoDebugParser, "Ta %d %s", $2, $3);
 	}

@@ -425,7 +425,7 @@ void ScummEngine_v5::o5_actorOps() {
 	// the code below just skips the extra script code.
 	if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformFMTowns &&
 		vm.slot[_currentScript].number == 45 && _currentRoom == 45 &&
-		(_scriptPointer - _scriptOrgPointer == 0xA9)) {
+		(_scriptPointer - _scriptOrgPointer == 0xA9) && _enableEnhancements) {
 		_scriptPointer += 0xCF - 0xA1;
 		writeVar(32811, 0); // clear bit 43
 		return;
@@ -503,6 +503,20 @@ void ScummEngine_v5::o5_actorOps() {
 			i = getVarOrDirectByte(PARAM_1);
 			j = getVarOrDirectByte(PARAM_2);
 			assertRange(0, i, 31, "o5_actorOps: palette slot");
+
+			// WORKAROUND: In the corridors of Castle Brunwald,
+			// there is a 'continuity error' with the Nazi guards
+			// in the FM-TOWNS version. They still have their
+			// palette override from the EGA version, making them
+			// appear in gray there, although their uniforms are
+			// green when you fight them or meet them again in
+			// the zeppelin. The PC VGA version fixed this.
+
+			if (_game.id == GID_INDY3 && _game.platform == Common::kPlatformFMTowns &&
+				(a->_costume == 23 || a->_costume == 28 || a->_costume == 29) &&
+				(_currentRoom == 20 || _currentRoom == 28 || _currentRoom == 32) && _enableEnhancements) {
+				break;
+			}
 
 			// WORKAROUND: The smoke animation is the same as
 			// what's used for the voodoo lady's cauldron. But
@@ -949,6 +963,33 @@ void ScummEngine_v5::o5_drawObject() {
 		default:
 			error("o5_drawObject: unknown subopcode %d", _opcode & 0x1F);
 		}
+	}
+
+	// WORKAROUND: Captain Dread's head will glitch if you have already talked to him,
+	// give him an object and then immediately talk to him again ("It's me again.").
+	// This is because the original script forgot to check Bit[129] (= already facing
+	// Guybrush) in that particular case, and so Dread would always try to turn and
+	// face Guybrush even if he's already looking at him.  drawObject() should never
+	// be called if Bit[129] is set in that script, so if it does happen, it means
+	// the check was missing, and so we ignore the next 32 bytes of Dread's reaction.
+	if (_game.id == GID_MONKEY2 && _currentRoom == 22 && vm.slot[_currentScript].number == 201 && obj == 237 && state == 1 && readVar(0x8000 + 129) == 1 && _enableEnhancements) {
+		_scriptPointer += 32;
+		return;
+	}
+
+	// WORKAROUND: In Indy3, the first close-up frame of Indy's reaction after drinking
+	// from the Grail is never shown; it always starts at the second step, with Indy
+	// already appearing a bit older. This is a bit unfortunate, especially if you
+	// picked up the real Grail. This was probably done as a way to unconditionally
+	// reset the animation if it's already been played, but we can just do an
+	// unconditional reset of all previous frames instead, restoring the first one.
+	if (_game.id == GID_INDY3 && _roomResource == 87 && vm.slot[_currentScript].number == 200 && obj == 899 && state == 1 && VAR(VAR_TIMER_NEXT) != 12 && _enableEnhancements) {
+		i = _numLocalObjects - 1;
+		do {
+			if (_objs[i].obj_nr)
+				putState(_objs[i].obj_nr, 0);
+		} while (--i);
+		return;
 	}
 
 	idx = getObjectIndex(obj);

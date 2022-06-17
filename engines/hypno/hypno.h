@@ -237,8 +237,9 @@ public:
 	Filename _soundPath;
 	Filename _music;
 	int _musicRate;
+	bool _musicStereo;
 	bool _doNotStopSounds;
-	void playSound(const Filename &filename, uint32 loops, uint32 sampleRate = 22050);
+	void playSound(const Filename &filename, uint32 loops, uint32 sampleRate = 22050, bool stereo = false);
 	void stopSound();
 
 	// Arcade
@@ -274,22 +275,15 @@ public:
 	virtual void findNextSegment(ArcadeShooting *arc);
 	virtual void initSegment(ArcadeShooting *arc);
 
+	ArcadeStats _stats;
 	void resetStatistics();
-
 	void incShotsFired();
-	uint32 _shootsFired;
-
 	void incEnemyHits();
-	uint32 _enemyHits;
-
 	void incEnemyTargets();
-	uint32 _enemyTargets;
-
 	void incTargetsDestroyed();
-	uint32 _targetsDestroyed;
-
 	void incTargetsMissed();
-	uint32 _targetsMissed;
+	void incFriendliesEncountered();
+	void incInfoReceived();
 
 	void incScore(int inc);
 	void incBonus(int inc);
@@ -564,6 +558,8 @@ public:
 	bool shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool secondary) override;
 	bool clickedSecondaryShoot(const Common::Point &mousePos) override;
 	void showCredits() override;
+	ArcadeStats _lastStats;
+	ArcadeStats _globalStats;
 
 	void missedTarget(Shoot *s, ArcadeShooting *arc) override;
 	void drawHealth() override;
@@ -597,8 +593,11 @@ public:
 	void runCheckC3(Code *code);
 	void runCheckHo(Code *code);
 	void runCheckC5(Code *code);
+	void runAlarmC5(Code *code);
 	void runDifficultyMenu(Code *code);
 	void endCredits(Code *code);
+	int getTerritory(const Common::String &level);
+	Common::String lastLevelTerritory(const Common::String &level);
 	Common::String firstLevelTerritory(const Common::String &level);
 
 	void loadSceneState(Common::SeekableReadStream *stream);
@@ -632,7 +631,6 @@ public:
 	ScriptMode _currentMode;
 	uint32 _currentActor;
 	uint32 _currentWeapon;
-	uint32 _civiliansShoot;
 	Common::Array<Filename> _warningVideosDay;
 	Common::Array<Filename> _warningVideosNight;
 	Common::Array<Filename> _warningAlarmVideos;

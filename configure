@@ -838,6 +838,7 @@ Special configuration feature:
                                            psp for PlayStation Portable
                                            samsungtv for Samsung TV
                                            switch for Nintendo Switch
+                                           wasm32-unknown-emscripten for WebAssembly
                                            wii for Nintendo Wii
 
 Game engines:
@@ -1709,7 +1710,7 @@ wasm32-*)
 	_endian=little # the endian check below fails, but emscripten is always little endian anyway
 	_host_os=emscripten
 	_host_cpu=wasm32
-	datadir='/scummvm'
+	datadir='/data'
 	CXX="em++"
 	;;
 wii)
@@ -2149,6 +2150,9 @@ if test "$have_gcc" = yes ; then
 	amigaos* | dreamcast | ds | mingw* | mint* | morphos | n64 | ps3 | psp2)
 		std_variant=gnu++
 		;;
+	openbsd*)
+		pedantic=no
+		;;
 	*)
 		;;
 	esac
@@ -2337,6 +2341,9 @@ fi
 #
 echo_n "Checking endianness... "
 cat > tmp_endianness_check.cpp << EOF
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
 __attribute__ ((used)) unsigned short ascii_mm[] = { 0x4249, 0x4765, 0x6E44, 0x6961, 0x6E53, 0x7953, 0 };
 __attribute__ ((used)) unsigned short ascii_ii[] = { 0x694C, 0x5454, 0x656C, 0x6E45, 0x6944, 0x6E61, 0 };
 const char * _ascii() { char* s = (char*) ascii_mm; s = (char*) ascii_ii; return s; }
@@ -2882,23 +2889,49 @@ EOF
 		;;
 	emscripten)
 		# mandatory emscripten flags
-		append_var LDFLAGS "-s FULL_ES2=1 -s MAX_WEBGL_VERSION=1 -s ASYNCIFY -s FORCE_FILESYSTEM=1 -s ALLOW_MEMORY_GROWTH=1"
-		# enable emscripten-ports and set up paths accordingly
-		append_var LDFLAGS "-s USE_SDL=2 -s USE_SDL_MIXER=2  -s USE_OGG=1 -s USE_VORBIS=1  -s USE_LIBJPEG=1  -s USE_FREETYPE=1 -s USE_ZLIB"
-		_sdlpath="$EMSDK/upstream/emscripten/system/bin/"
-		_pngpath="$EMSDK/upstream/emscripten/cache/"
-		_freetypepath="$EMSDK/upstream/emscripten/cache/ports-builds/freetype/"
-		VORBIS_CFLAGS="-I$EMSDK/upstream/emscripten/cache//ports-builds/vorbis/include"
-		VORBIS_LIBS="-L$EMSDK/upstream/emscripten/cache/ports-builds/vorbis/lib"
-		FREETYPE2_CFLAGS="-I$_freetypepath/include"
-		_freetype_found="true"
-		if test "$_debug_build" = no; then
-			_optimization_level=-O3 -g4
+		append_var LDFLAGS "-s ALLOW_MEMORY_GROWTH=1 -s ASYNCIFY -s FORCE_FILESYSTEM=1"
+	
+		append_var DEFINES "-DEMSCRIPTEN"
+		add_line_to_config_mk 'EMSCRIPTEN = 1'
+
+		if test "$_debug_build" = yes; then
+			_optimization_level=-O2 
+			append_var LDFLAGS "-O2 -g3 -s ASSERTIONS=2"
 		else
-			_optimization_level=-O2
+			_optimization_level=-O3
+			append_var LDFLAGS "-O3"
+		fi
+
+		# activate emscripten-ports
+		if test "$_freetype2" != no; then
+			append_var LDFLAGS "-s USE_FREETYPE=1 -s SUPPORT_LONGJMP=1" # freetype requires setjmp
+			# neither pkg-config nor freetype-config work, so we setup freetype manually
+			_freetypepath="$EMSCRIPTEN/cache/ports-builds/freetype/"
+			FREETYPE2_CFLAGS="-I$_freetypepath/include" # there were link errors / missing symbols without this
+			_freetype_found="true"
+		else 
+			#use link time optimization to further reduce exe size (this can't be used with setjmp whcih freetype requires)
+			# TODO: Figure out why this is a conflict and/or if freetype can be built without setjmp
+			append_var CXXFLAGS "-flto"
+			append_var LDFLAGS "-flto"
+		fi
+		if test "$_jpeg" != no; then 
+			append_var LDFLAGS "-s USE_LIBJPEG=1"
+		fi
+		if test "$_png" != no; then
+			append_var LDFLAGS "-s USE_LIBPNG=1"
+		fi
+		if test "$_sdl" != no; then
+			append_var LDFLAGS "-s USE_SDL=2 "
+		fi 
+		if test "$_vorbis" != no; then 
+			append_var LDFLAGS "-s USE_OGG=1" # vorbis needs to be linked against OGG (even if we use an external vorbis lib)
+		fi
+		if test "$_zlib" != no; then
+			append_var LDFLAGS "-s USE_ZLIB=1"
 		fi
 	;;
-	freebsd* | openbsd*)
+	freebsd*)
 		append_var LDFLAGS "-L/usr/local/lib"
 		append_var CXXFLAGS "-I/usr/local/include"
 		;;
@@ -2993,6 +3026,11 @@ EOF
 		add_line_to_config_mk 'N64 = 1'
 		_detection_features_full=no
 		_nuked_opl=no
+		;;
+	openbsd*)
+		append_var LDFLAGS "-L/usr/local/lib"
+		append_var CXXFLAGS "-I/usr/local/include"
+		_seq_midi=no
 		;;
 	ps3)
 		# Force use of SDL and freetype from the ps3 toolchain
@@ -3232,8 +3270,11 @@ if test -n "$_host"; then
 			;;
 		wasm*-emscripten)
 			_backend="sdl"
-			HOSTEXEPRE=
-			HOSTEXEEXT=.html
+			# Disable cloud and SDL_Net as this is handled in the browser
+			_cloud=no
+			_sdlnet=no
+			_libcurl=no
+			_curl=no
 			_ar="emar cr"
 			_ranlib="emranlib"
 			;;
@@ -4112,12 +4153,13 @@ PLUGIN_LDFLAGS		+= -Wl,-T$(srcdir)/backends/plugins/ds/plugin.ld -mthumb -mthumb
 		;;
 	emscripten)
 		_plugin_prefix="lib"
-		_plugin_suffix=".wasm"
+		_plugin_suffix=".so"
+		append_var DEFINES "-DUNCACHED_PLUGINS"
 		append_var CXXFLAGS "-fPIC"
 		append_var LIBS ""
 _mak_plugins='
 PLUGIN_EXTRA_DEPS =
-PLUGIN_LDFLAGS  += -s SIDE_MODULE=1 -s EXPORT_ALL=1
+PLUGIN_LDFLAGS  += $(LDFLAGS) -s SIDE_MODULE=1 -s ASYNCIFY_IMPORTS=["*"] -s EXPORT_ALL=1
 PRE_OBJS_FLAGS  := -s MAIN_MODULE=1 -s EXPORT_ALL=1
 POST_OBJS_FLAGS :=
 '
@@ -4208,6 +4250,16 @@ LDFLAGS				+= -Wl,-T$(srcdir)/backends/plugins/psp/main_prog.ld  -Wl,-zmax-page-
 PLUGIN_LDFLAGS		+= -Wl,-T$(srcdir)/backends/plugins/psp/plugin.ld -Wl,-zmax-page-size=128 -lstdc++
 '
 		;;
+	riscos)
+		_elf_loader=yes
+		append_var DEFINES "-DELF_LOADER_CXA_ATEXIT"
+		append_var CXXFLAGS "-fuse-cxa-atexit"
+		append_var DEFINES "-DUNCACHED_PLUGINS"
+_mak_plugins='
+PLUGIN_EXTRA_DEPS	+= backends/plugins/riscos/plugin.o
+PLUGIN_LDFLAGS		+= -static -Wl,-T$(srcdir)/backends/plugins/riscos/plugin.ld backends/plugins/riscos/plugin.o -Wl,--wrap=__rt_stkovf_split_small -Wl,--wrap=__rt_stkovf_split_big
+'
+		;;
 	*)
 		_dynamic_modules=no
 		_mak_plugins=
@@ -4226,7 +4278,7 @@ if test "$_elf_loader" = yes; then
 	_plugin_suffix=".plg"
 	_mak_plugins='
 PLUGIN_EXTRA_DEPS	= $(EXECUTABLE)
-PLUGIN_LDFLAGS		= -nostartfiles backends/plugins/elf/version.o -Wl,-q,--just-symbols,$(EXECUTABLE),--retain-symbols-file,$(srcdir)/backends/plugins/elf/plugin.syms
+PLUGIN_LDFLAGS		= -nostartfiles backends/plugins/elf/version.o -Wl,-q,--retain-symbols-file,$(srcdir)/backends/plugins/elf/plugin.syms -Xlinker --just-symbols -Xlinker $(EXECUTABLE)
 PRE_OBJS_FLAGS		:= -Wl,--whole-archive
 POST_OBJS_FLAGS		:= -Wl,--no-whole-archive
 '"$_mak_plugins"
@@ -4352,7 +4404,7 @@ EOF
 			cc_check -lspeechd && _tts=yes
 			;;
 		darwin*)
-			# Check the API is available. The most recent API we need is for the NSSpeechSynthesizerDelegate protocole
+			# Check the API is available. The most recent API we need is for the NSSpeechSynthesizerDelegate protocol
 			cat > $TMPC << EOF
 #include <AppKit/NSSpeechSynthesizer.h>
 @interface SpeechDelegate : NSObject<NSSpeechSynthesizerDelegate> {
@@ -5374,7 +5426,11 @@ if test "$_opengl_mode" != none ; then
 						darwin*)
 							_opengl_mode=gl
 							;;
-
+						emscripten)
+							_opengl_mode=gles2
+							_opengl_glad=no
+							append_var LDFLAGS "-s FULL_ES2=1 -s MAX_WEBGL_VERSION=1"
+							;;
 						*)
 							# As SDL2 supports everything, let the user choose if he wants to
 							test "$_opengl_mode" = "auto" && _opengl_mode=any
@@ -5387,9 +5443,6 @@ if test "$_opengl_mode" != none ; then
 		switch)
 			_opengl_mode=gles2
 			_opengl_glad=yes
-			;;
-		wasm*-emscripten)
-			_opengl_mode=gles2
 			;;
 		*)
 			# On all other platforms, by default don't enable OpenGL
@@ -5953,7 +6006,7 @@ case $_host_os in
 		;;
 esac
 
-case $_backend in
+case $_host in
 	3ds)
 		append_var DEFINES "-DPLUGIN_DIRECTORY=\\\"$datadir/plugins\\\""
 		;;
@@ -5967,6 +6020,9 @@ case $_backend in
 		# The Maemo apps want the plugins in the "lib" directory
 		# without a scummvm sub directory.
 		append_var DEFINES "-DPLUGIN_DIRECTORY=\\\"$libdir\\\""
+		;;
+	arm-*riscos)
+		append_var DEFINES "-DPLUGIN_DIRECTORY=\\\"\${datarootdir}/plugins\\\""
 		;;
 	*)
 		append_var DEFINES "-DPLUGIN_DIRECTORY=\\\"$libdir/scummvm\\\""
@@ -6170,6 +6226,22 @@ case $_host_os in
 			# append_var LDFLAGS "-Wl,--retain-symbols-file,ds.syms"
 		fi
 		;;
+	emscripten)
+		append_var LDFLAGS "--pre-js ./dists/emscripten/custom_shell-pre.js --post-js ./dists/emscripten/custom_shell-post.js --shell-file ./dists/emscripten/custom_shell.html"
+		# we remove some linker flags for libs which will be added by emscripten from emscripten-ports to avoid duplicate symbols
+		if test "${LDFLAGS#*-s USE_LIBJPEG=1}" != "$LDFLAGS"; then
+    		LIBS=`echo ${LIBS} | sed 's/-ljpeg//g'`
+		fi
+		if test "${LDFLAGS#*-s USE_LIBPNG=1}" != "$LDFLAGS"; then
+			LIBS=`echo ${LIBS} | sed 's/-lpng -lz//g'`
+		fi
+		if test "${LDFLAGS#*-s USE_OGG=1}" != "$LDFLAGS"; then
+			LIBS=`echo ${LIBS} | sed 's/-logg//g'`
+		fi
+		if test "${LDFLAGS#*-s USE_ZLIB=1}" != "$LDFLAGS"; then
+			LIBS=`echo ${LIBS} | sed 's/-lz//g'`
+		fi
+		;;
 	mingw*)
 		if test "$_windows_unicode" = yes; then
 			append_var DEFINES "-DUNICODE -D_UNICODE"
@@ -6186,7 +6258,13 @@ case $_host_os in
 		fi
 		append_var CXXFLAGS "-ffunction-sections"
 		append_var CXXFLAGS "-fdata-sections"
-		append_var LDFLAGS "-Wl,--gc-sections"
+		if test "$_dynamic_modules" = no ; then
+			append_var LDFLAGS "-Wl,--gc-sections"
+		else
+			# toolchain asks for gc-sections
+			append_var LDFLAGS "-Wl,--no-gc-sections"
+			append_var CXXFLAGS "-mlong-calls"
+		fi
 		;;
 	n64)
 		# Move some libs down here, otherwise some symbols requires by libvorbis aren't found

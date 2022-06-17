@@ -326,7 +326,7 @@ void apply_config(const ConfigTree &cfg) {
 
 		int cache_size_kb = CfgReadInt(cfg, "misc", "cachemax", DEFAULTCACHESIZE_KB);
 		if (cache_size_kb > 0)
-			_GP(spriteset).SetMaxCacheSize((size_t)cache_size_kb * 1024);
+			_GP(usetup).SpriteCacheSize = cache_size_kb * 1024;
 
 		_GP(usetup).mouse_auto_lock = CfgReadBoolInt(cfg, "mouse", "auto_lock");
 
@@ -364,6 +364,8 @@ void apply_config(const ConfigTree &cfg) {
 			_GP(usetup).override_script_os = eOS_Mac;
 		}
 		_GP(usetup).override_upscale = CfgReadBoolInt(cfg, "override", "upscale", _GP(usetup).override_upscale);
+		_GP(usetup).key_save_game = CfgReadInt(cfg, "override", "save_game_key", 0);
+		_GP(usetup).key_restore_game = CfgReadInt(cfg, "override", "restore_game_key", 0);
 	}
 
 	// Apply logging configuration

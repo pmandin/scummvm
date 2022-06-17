@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.8.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-06-10 00:01+0000\n"
+"POT-Creation-Date: 2022-06-15 12:39+0000\n"
 "PO-Revision-Date: 2022-06-09 17:48+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Russian <https://translations.scummvm.org/projects/scummvm/"
@@ -59,8 +59,8 @@ msgstr "Вверх"
 #: gui/browser.cpp:81 gui/chooser.cpp:45 gui/downloadiconsdialog.cpp:161
 #: gui/editgamedialog.cpp:384 gui/editrecorddialog.cpp:66
 #: gui/filebrowser-dialog.cpp:68 gui/fluidsynth-dialog.cpp:152
-#: gui/massadd.cpp:91 gui/options.cpp:2193 gui/predictivedialog.cpp:68
-#: gui/recorderdialog.cpp:67 gui/recorderdialog.cpp:154
+#: gui/massadd.cpp:93 gui/options.cpp:2193 gui/predictivedialog.cpp:68
+#: gui/recorderdialog.cpp:73 gui/recorderdialog.cpp:213
 #: gui/remotebrowser.cpp:59 gui/saveload-dialog.cpp:62
 #: gui/saveload-dialog.cpp:406 gui/saveload-dialog.cpp:477
 #: gui/saveload-dialog.cpp:779 gui/saveload-dialog.cpp:1172
@@ -138,7 +138,7 @@ msgstr ""
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:355
 #: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
 #: engines/parallaction/metaengine.cpp:145
-#: engines/sci/graphics/controls32.cpp:929
+#: engines/sci/graphics/controls32.cpp:929 engines/toon/toon.cpp:1502
 msgid "Yes"
 msgstr "Да"
 
@@ -149,7 +149,7 @@ msgstr "Да"
 #: engines/director/events.cpp:91 engines/grim/grim.cpp:355
 #: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
 #: engines/parallaction/metaengine.cpp:151
-#: engines/sci/graphics/controls32.cpp:929
+#: engines/sci/graphics/controls32.cpp:929 engines/toon/toon.cpp:1502
 msgid "No"
 msgstr "Нет"
 
@@ -167,7 +167,7 @@ msgstr ""
 
 #: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:385
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
-#: gui/launcher.cpp:527 gui/launcher.cpp:531 gui/massadd.cpp:88
+#: gui/launcher.cpp:527 gui/launcher.cpp:531 gui/massadd.cpp:90
 #: gui/options.cpp:2195 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1173 engines/engine.cpp:525 engines/engine.cpp:549
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
@@ -305,7 +305,8 @@ msgstr ""
 #: gui/options.cpp:1501 gui/options.cpp:1521 gui/options.cpp:1535
 #: gui/options.cpp:1929 gui/options.cpp:2338 gui/options.cpp:2412
 #: gui/options.cpp:2592 gui/options.cpp:3025 audio/null.cpp:40
-#: engines/ags/dialogs.cpp:62
+#: backends/platform/android/options.cpp:112
+#: backends/platform/android/options.cpp:113 engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<по умолчанию>"
 
@@ -917,92 +918,96 @@ msgstr "Вид списка"
 msgid "Grid view"
 msgstr "Вид сетки"
 
-#: gui/launcher.cpp:1002
+#: gui/launcher.cpp:1004
 msgid "~S~tart"
 msgstr "П~у~ск"
 
-#: gui/launcher.cpp:1002
+#: gui/launcher.cpp:1004
 msgid "Start selected game"
 msgstr "Запустить выбранную игру"
 
-#: gui/launcher.cpp:1005
+#: gui/launcher.cpp:1007
 msgid "~L~oad..."
 msgstr "~З~агрузить..."
 
-#: gui/launcher.cpp:1005
+#: gui/launcher.cpp:1007
 msgid "Load saved game for selected game"
 msgstr "Загрузить сохранение для выбранной игры"
 
-#: gui/launcher.cpp:1007
+#: gui/launcher.cpp:1009
 msgid "Record..."
 msgstr "Запись..."
 
-#: gui/launcher.cpp:1013
+#: gui/launcher.cpp:1015
 msgid "~G~ame Options..."
 msgstr "Настройки ~и~гры..."
 
-#: gui/launcher.cpp:1013
+#: gui/launcher.cpp:1015
 msgid "Change game options"
 msgstr "Изменить настройки игры"
 
-#: gui/launcher.cpp:1013
+#: gui/launcher.cpp:1015
 msgctxt "lowres"
 msgid "~G~ame Opts..."
 msgstr "Настр. ~и~гры..."
 
 #. I18N: List grouping when no engine is specified
 #. I18N: List grouping when no enginr is specified
-#: gui/launcher.cpp:1134 gui/launcher.cpp:1329
+#: gui/launcher.cpp:1136 gui/launcher.cpp:1331
 msgid "Unknown Engine"
 msgstr "Неизвестный движок"
 
 #. I18N: List grouping when no pubisher is specified
 #. I18N: List group when no publisher is specified
-#: gui/launcher.cpp:1152 gui/launcher.cpp:1361
+#: gui/launcher.cpp:1154 gui/launcher.cpp:1363
 msgid "Unknown Publisher"
 msgstr "Неизвестный издатель"
 
 #. I18N: List group when no game series is specified
 #. I18N: List grouping when no game series is specified
-#: gui/launcher.cpp:1170 gui/launcher.cpp:1347
+#: gui/launcher.cpp:1172 gui/launcher.cpp:1349
 msgid "No Series"
 msgstr "Без серии"
 
 #. I18N: List group when no languageis specified
 #. I18N: List group when no language is specified
-#: gui/launcher.cpp:1185 gui/launcher.cpp:1380
+#: gui/launcher.cpp:1187 gui/launcher.cpp:1382
 msgid "Language not detected"
 msgstr "Язык не определён"
 
 #. I18N: List group when no platform is specified
-#: gui/launcher.cpp:1200 gui/launcher.cpp:1395
+#: gui/launcher.cpp:1202 gui/launcher.cpp:1397
 msgid "Platform not detected"
 msgstr "Платформа не определена"
 
 #. I18N: Group for All items
-#: gui/launcher.cpp:1406 gui/widgets/groupedlist.cpp:80
+#: gui/launcher.cpp:1408 gui/widgets/groupedlist.cpp:80
 msgid "All"
 msgstr "Все"
 
-#: gui/massadd.cpp:75 gui/massadd.cpp:78
+#: gui/launcher.cpp:1596
+msgid "Icons per row:"
+msgstr ""
+
+#: gui/massadd.cpp:77 gui/massadd.cpp:80
 msgid "... progress ..."
 msgstr "... поиск ..."
 
-#: gui/massadd.cpp:256
+#: gui/massadd.cpp:258
 msgid "Scan complete!"
 msgstr "Поиск закончен!"
 
-#: gui/massadd.cpp:259
+#: gui/massadd.cpp:261
 #, c-format
 msgid "Discovered %d new games, ignored %d previously added games."
 msgstr "Найдено новых игр: %d, пропущено ранее добавленных игр: %d."
 
-#: gui/massadd.cpp:263
+#: gui/massadd.cpp:265
 #, c-format
 msgid "Scanned %d directories ..."
 msgstr "Просмотрено каталогов: %d..."
 
-#: gui/massadd.cpp:266
+#: gui/massadd.cpp:268
 #, c-format
 msgid "Discovered %d new games, ignored %d previously added games ..."
 msgstr "Найдено новых игр: %d, пропущено ранее добавленных игр: %d..."
@@ -1097,7 +1102,7 @@ msgstr "не удалось изменить полноэкранный режи
 msgid "the filtering setting could not be changed"
 msgstr "режим фильтрации не может быть изменён"
 
-#: gui/options.cpp:1287 backends/platform/android/options.cpp:72
+#: gui/options.cpp:1287
 msgid "Touchpad mouse mode"
 msgstr "Режим тачпада"
 
@@ -2037,42 +2042,42 @@ msgstr "*  Цфр"
 msgid "*  Abc"
 msgstr "*  Abc"
 
-#: gui/recorderdialog.cpp:61
+#: gui/recorderdialog.cpp:67
 msgid "Recorder or Playback Gameplay"
 msgstr "Воспроизвести или записать игровой процесс"
 
-#: gui/recorderdialog.cpp:66 gui/recorderdialog.cpp:154
+#: gui/recorderdialog.cpp:72 gui/recorderdialog.cpp:213
 #: gui/saveload-dialog.cpp:410 gui/saveload-dialog.cpp:477
 msgid "Delete"
 msgstr "Удалить"
 
-#: gui/recorderdialog.cpp:68
+#: gui/recorderdialog.cpp:74
 msgid "Record"
 msgstr "Записать"
 
-#: gui/recorderdialog.cpp:69
+#: gui/recorderdialog.cpp:75
 msgid "Playback"
 msgstr "Воспроизвести"
 
-#: gui/recorderdialog.cpp:71 gui/widgets/grid.cpp:224
+#: gui/recorderdialog.cpp:77 gui/widgets/grid.cpp:224
 msgid "Edit"
 msgstr "Редактировать"
 
-#: gui/recorderdialog.cpp:83 gui/recorderdialog.cpp:240
-#: gui/recorderdialog.cpp:250
+#: gui/recorderdialog.cpp:143 gui/recorderdialog.cpp:302
+#: gui/recorderdialog.cpp:309
 msgid "Author: "
 msgstr "Автор: "
 
-#: gui/recorderdialog.cpp:84 gui/recorderdialog.cpp:241
-#: gui/recorderdialog.cpp:251
+#: gui/recorderdialog.cpp:145 gui/recorderdialog.cpp:303
+#: gui/recorderdialog.cpp:310
 msgid "Notes: "
 msgstr "Примечания: "
 
-#: gui/recorderdialog.cpp:153
+#: gui/recorderdialog.cpp:212
 msgid "Do you really want to delete this record?"
 msgstr "Вы действительно хотите удалить эту запись?"
 
-#: gui/recorderdialog.cpp:170
+#: gui/recorderdialog.cpp:229
 msgid "Unknown Author"
 msgstr "Неизвестный автор"
 
@@ -2493,7 +2498,7 @@ msgstr "~В~ главное меню"
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:742
 #: engines/sci/engine/kfile.cpp:1079 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3405
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3763
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/xeen/saves.cpp:276
 #: engines/zvision/file/save_manager.cpp:48
@@ -2516,7 +2521,7 @@ msgstr "Сохранить игру:"
 #: engines/sci/engine/kfile.cpp:1079 engines/scumm/dialogs.cpp:175
 #: engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3405
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3763
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/xeen/saves.cpp:276
 #: engines/zvision/file/save_manager.cpp:48 engines/zvision/metaengine.cpp:193
@@ -3699,12 +3704,56 @@ msgstr "Режим Увеличения выключен. Переключени
 msgid "Magnify Mode Off"
 msgstr "Режим увеличения выключен"
 
-#: backends/platform/android/options.cpp:71
+#: backends/platform/android/options.cpp:93
 msgid "Show On-screen control"
 msgstr "Показать экранное управление"
 
+#: backends/platform/android/options.cpp:94
+msgid "Choose the preferred touch mode:"
+msgstr ""
+
+#: backends/platform/android/options.cpp:96
+#, fuzzy
+#| msgid "Enable Venus"
+msgid "In menus"
+msgstr "Включить Venus"
+
+#: backends/platform/android/options.cpp:98
+#: backends/platform/android/options.cpp:116
+#: backends/platform/android/options.cpp:117
+#, fuzzy
+#| msgid "TV emulation"
+msgid "Touchpad emulation"
+msgstr "ТВ эмуляция"
+
+#: backends/platform/android/options.cpp:99
+#: backends/platform/android/options.cpp:119
+#: backends/platform/android/options.cpp:120
+#, fuzzy
+#| msgid "Virtual mouse up"
+msgid "Direct mouse"
+msgstr "Виртуальная мышь вверх"
+
+#: backends/platform/android/options.cpp:100
+#: backends/platform/android/options.cpp:122
+#: backends/platform/android/options.cpp:123
+#, fuzzy
+#| msgid "TV emulation"
+msgid "Gamepad emulation"
+msgstr "ТВ эмуляция"
+
+#: backends/platform/android/options.cpp:106
+msgid "In 2D games"
+msgstr ""
+
+#: backends/platform/android/options.cpp:108
+#, fuzzy
+#| msgid "V-Sync in 3D Games"
+msgid "In 3D games"
+msgstr "Вертикальная синхронизация в 3D играх"
+
 #. I18N: Show a button to revoke Storage Access Framework permissions for Android
-#: backends/platform/android/options.cpp:76
+#: backends/platform/android/options.cpp:128
 msgid "Show SAF revoke permissions overlay button"
 msgstr "Показать кнопку SAF для управления доступом к памяти"
 
@@ -4004,7 +4053,7 @@ msgstr "Проверить обновления..."
 #: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:301 engines/sky/compact.cpp:130
 #: engines/supernova/supernova.cpp:464 engines/teenagent/resources.cpp:97
-#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:4999
+#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5357
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "Не удалось найти файл движка %s."
@@ -4012,7 +4061,7 @@ msgstr "Не удалось найти файл движка %s."
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:949
 #: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:66
 #: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:469
-#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5012
+#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5370
 #, c-format
 msgid "The '%s' engine data file is corrupt."
 msgstr "Файл движка %s повреждён."
@@ -4020,7 +4069,7 @@ msgstr "Файл движка %s повреждён."
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:960
 #: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:319 engines/tony/tony.cpp:211
-#: engines/toon/toon.cpp:5023
+#: engines/toon/toon.cpp:5381
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d.%d but got "
@@ -4153,7 +4202,7 @@ msgstr ""
 #: engines/sci/engine/guest_additions.cpp:745 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3857
 #: engines/zvision/file/save_manager.cpp:61
 msgid "Restore game:"
 msgstr "Восстановить игру:"
@@ -4172,7 +4221,7 @@ msgstr "Восстановить игру:"
 #: engines/sci/engine/guest_additions.cpp:746 engines/sci/engine/kfile.cpp:1206
 #: engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3499
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3857
 #: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:198
 msgid "Restore"
 msgstr "Восстановить"
@@ -4328,6 +4377,12 @@ msgstr "Переключиться на Гримвелла"
 #: engines/asylum/metaengine.cpp:139
 msgid "Switch to Olmec"
 msgstr "Переключиться на Ольмека"
+
+#: engines/asylum/metaengine.cpp:144
+#, fuzzy
+#| msgid "Open/Close Inventory"
+msgid "Open character inventory"
+msgstr "Открыть/закрыть инвентарь"
 
 #. I18N: Warn user about loading potentially incompatible saved game
 #: engines/asylum/asylum.cpp:200
@@ -4760,7 +4815,7 @@ msgstr "Включить озвучку текста для объектов, о
 #: engines/dreamweb/detection.cpp:80 engines/lure/detection.cpp:45
 #: engines/mads/detection.cpp:124 engines/sci/detection_options.h:222
 #: engines/sherlock/detection.cpp:132 engines/supernova/detection.cpp:54
-#: engines/twine/detection.cpp:904
+#: engines/twine/detection.cpp:953
 msgid "Use TTS to read the descriptions (if TTS is available)"
 msgstr "Использовать TTS для чтения описаний вслух (если TTS доступна)"
 
@@ -5578,7 +5633,7 @@ msgid "This puzzle is not available in the trial version of the game"
 msgstr "Эта головоломка недоступна в пробной версии игры"
 
 #: engines/lure/detection.cpp:44 engines/mads/detection.cpp:123
-#: engines/sherlock/detection.cpp:131 engines/twine/detection.cpp:903
+#: engines/sherlock/detection.cpp:131 engines/twine/detection.cpp:952
 msgid "TTS Narrator"
 msgstr "Комментатор TTS"
 
@@ -5929,7 +5984,7 @@ msgstr "Широкоэкранный мод"
 msgid "Enable widescreen rendering in fullscreen mode."
 msgstr "Включить отрисовку в широком формате в полноэкранном режиме."
 
-#: engines/myst3/myst3.cpp:365
+#: engines/myst3/myst3.cpp:363
 msgid ""
 "This version of Myst III has not been updated with the latest official "
 "patch.\n"
@@ -5943,7 +5998,7 @@ msgstr ""
 "Обновления можно скачать с:\n"
 "https://www.scummvm.org/frs/extras/patches/"
 
-#: engines/myst3/myst3.cpp:1579 engines/pegasus/pegasus.cpp:744
+#: engines/myst3/myst3.cpp:1577 engines/pegasus/pegasus.cpp:744
 msgid "Invalid file name for saving"
 msgstr "Неверное имя файла для записи"
 
@@ -6443,7 +6498,7 @@ msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
 "Обнаружена неполная игра. Вам необходимо скопировать данные со всех CD."
 
-#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:366
+#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:368
 msgid "(Autosave)"
 msgstr "(Автосохранение)"
 
@@ -6486,7 +6541,7 @@ msgid ""
 msgstr ""
 "Не могу проигрывать %dbpp видео на системе с максимальной глубиной цвета 8bpp"
 
-#: engines/sci/metaengine.cpp:298
+#: engines/sci/metaengine.cpp:300
 msgid "SCI32 support not compiled in"
 msgstr "Поддержка для SCI32 не скомпилирована"
 
@@ -7586,19 +7641,19 @@ msgid "WARNING: Deleting the autosave slot is not supported by this engine"
 msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: Этот движок не поддерживает удаление слота автосохранения"
 
-#: engines/stark/detection.cpp:375
+#: engines/stark/detection.cpp:387
 msgid "Load modded assets"
 msgstr "Загрузить данные мода"
 
-#: engines/stark/detection.cpp:376
+#: engines/stark/detection.cpp:388
 msgid "Enable loading of external replacement assets."
 msgstr "Включить загрузку внешних файлов замены игровых ресурсов."
 
-#: engines/stark/detection.cpp:386
+#: engines/stark/detection.cpp:398
 msgid "Enable linear filtering of the backgrounds images"
 msgstr "Включить линейную фильтрацию фоновых изображений"
 
-#: engines/stark/detection.cpp:387
+#: engines/stark/detection.cpp:399
 msgid ""
 "When linear filtering is enabled the background graphics are smoother in "
 "full screen mode, at the cost of some details."
@@ -7606,11 +7661,11 @@ msgstr ""
 "Линейная фильтрация сглаживает фоновые изображения за счёт некоторой потери "
 "детализации."
 
-#: engines/stark/detection.cpp:397 engines/ultima/detection.cpp:143
+#: engines/stark/detection.cpp:409 engines/ultima/detection.cpp:143
 msgid "Enable font anti-aliasing"
 msgstr "Включить сглаживание шрифтов"
 
-#: engines/stark/detection.cpp:398 engines/ultima/detection.cpp:144
+#: engines/stark/detection.cpp:410 engines/ultima/detection.cpp:144
 msgid "When font anti-aliasing is enabled, the text is smoother."
 msgstr "Если сглаживание шрифтов включено, шрифты рисуются без зубцов."
 
@@ -7797,27 +7852,33 @@ msgstr "Версия для Saturn CD ещё не поддерживается"
 msgid "Font variant not present in '%s' engine data file."
 msgstr "Вариант шрифта отсутствует в файле движка %s."
 
-#: engines/toon/toon.cpp:215
+#: engines/toon/toon.cpp:244
 #, c-format
 msgid "Saved game in slot #%d "
 msgstr "Игра сохранена в слот №%d "
 
-#: engines/toon/toon.cpp:219
+#: engines/toon/toon.cpp:248
 #, c-format
 msgid "Could not quick save into slot #%d"
 msgstr "Не удалось сделать быстрое сохранение игры в слот №%d"
 
-#: engines/toon/toon.cpp:232
+#: engines/toon/toon.cpp:261
 #, c-format
 msgid "Saved game #%d quick loaded"
 msgstr "Сохранённая игра №%d загружена"
 
-#: engines/toon/toon.cpp:236
+#: engines/toon/toon.cpp:265
 #, c-format
 msgid "Could not quick load the saved game #%d"
 msgstr "Не удалось быстро загрузить сохранённую игру №%d"
 
-#: engines/toon/toon.cpp:1563
+#: engines/toon/toon.cpp:1502
+#, fuzzy
+#| msgid "Are you sure you want to quit?"
+msgid "Are you sure you want to exit?"
+msgstr "Вы уверены, что хотите выйти?"
+
+#: engines/toon/toon.cpp:1906
 #, c-format
 msgid "Unable to locate the '%s' data file."
 msgstr "Не удалось найти файл движка '%s'."
@@ -7826,94 +7887,94 @@ msgstr "Не удалось найти файл движка '%s'."
 msgid "This version requires Giflib which was not compiled into ScummVM"
 msgstr "Эта игра требует библиотеку Giflib которая не была скомпилирована"
 
-#: engines/twine/detection.cpp:802
+#: engines/twine/detection.cpp:851
 msgid "Enable wall collisions"
 msgstr "Включить столкновение со стенами"
 
-#: engines/twine/detection.cpp:803
+#: engines/twine/detection.cpp:852
 msgid "Enable the original wall collision damage"
 msgstr "Включить ущерб от столкновения со стенами как в оригинале"
 
-#: engines/twine/detection.cpp:812
+#: engines/twine/detection.cpp:861
 msgid "Disable save menu"
 msgstr "Запретить меню сохранения"
 
-#: engines/twine/detection.cpp:813
+#: engines/twine/detection.cpp:862
 msgid ""
 "The original only had autosaves. This allows you to save whenever you want."
 msgstr ""
 "В оригинале были только автосохранения. Эта опция позволит вам записываться "
 "в любой момент."
 
-#: engines/twine/detection.cpp:821
+#: engines/twine/detection.cpp:870
 msgid "Enable debug mode"
 msgstr "Включить режим отладки"
 
-#: engines/twine/detection.cpp:822
+#: engines/twine/detection.cpp:871
 msgid "Enable the debug mode"
 msgstr "Включить режим отладки"
 
-#: engines/twine/detection.cpp:830
+#: engines/twine/detection.cpp:879
 msgid "Enable audio CD"
 msgstr "Включить CD-аудио"
 
-#: engines/twine/detection.cpp:831
+#: engines/twine/detection.cpp:880
 msgid "Enable the original audio cd track"
 msgstr "Включить оригинальный аудио CD трек"
 
-#: engines/twine/detection.cpp:839
+#: engines/twine/detection.cpp:888
 msgid "Enable sound"
 msgstr "Включить звук"
 
-#: engines/twine/detection.cpp:840
+#: engines/twine/detection.cpp:889
 msgid "Enable the sound for the game"
 msgstr "Включить звук в игре"
 
-#: engines/twine/detection.cpp:848
+#: engines/twine/detection.cpp:897
 msgid "Enable voices"
 msgstr "Включить озвучку"
 
-#: engines/twine/detection.cpp:849
+#: engines/twine/detection.cpp:898
 msgid "Enable the voices for the game"
 msgstr "Включить озвучку персонажей в игре"
 
-#: engines/twine/detection.cpp:857
+#: engines/twine/detection.cpp:906
 msgid "Enable text"
 msgstr "Включить текст"
 
-#: engines/twine/detection.cpp:858
+#: engines/twine/detection.cpp:907
 msgid "Enable the text for the game"
 msgstr "Включить тексты в игре"
 
-#: engines/twine/detection.cpp:866
+#: engines/twine/detection.cpp:915
 msgid "Enable movies"
 msgstr "Включить ролики"
 
-#: engines/twine/detection.cpp:867
+#: engines/twine/detection.cpp:916
 msgid "Enable the cutscenes for the game"
 msgstr "Включить видеоролики в игре"
 
-#: engines/twine/detection.cpp:875
+#: engines/twine/detection.cpp:924
 msgid "Enable mouse"
 msgstr "Разрешить мышь"
 
-#: engines/twine/detection.cpp:876
+#: engines/twine/detection.cpp:925
 msgid "Enable the mouse for the UI"
 msgstr "Разрешить мышь для пользовательского интерфейса"
 
-#: engines/twine/detection.cpp:884
+#: engines/twine/detection.cpp:933
 msgid "Use the USA version"
 msgstr "Использовать версию для США"
 
-#: engines/twine/detection.cpp:885
+#: engines/twine/detection.cpp:934
 msgid "Enable the USA specific version flags"
 msgstr "Использовать флаги, специфичные для версии для США"
 
-#: engines/twine/detection.cpp:893 engines/ultima/detection.cpp:99
+#: engines/twine/detection.cpp:942 engines/ultima/detection.cpp:99
 msgid "Enable high resolution"
 msgstr "Включить отображение высокого разрешения"
 
-#: engines/twine/detection.cpp:894 engines/ultima/detection.cpp:100
+#: engines/twine/detection.cpp:943 engines/ultima/detection.cpp:100
 msgid "Enable a higher resolution for the game"
 msgstr "Включить отображение высокого разрешения в игре"
 
@@ -9131,9 +9192,6 @@ msgstr ""
 
 #~ msgid "Enable cross fading of images and scenes"
 #~ msgstr "Включить плавный переход изображений и сцен"
-
-#~ msgid "V-Sync in 3D Games"
-#~ msgstr "Вертикальная синхронизация в 3D играх"
 
 #~ msgid "Auto"
 #~ msgstr "Автоматическое"

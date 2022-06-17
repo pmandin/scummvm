@@ -50,11 +50,11 @@ void Sound::setSamplePosition(int32 channelIdx, int32 x, int32 y, int32 z) {
 	if (channelIdx < 0 || channelIdx >= NUM_CHANNELS) {
 		return;
 	}
-	const int32 camX = _engine->_grid->_newCamera.x * BRICK_SIZE;
-	const int32 camY = _engine->_grid->_newCamera.y * BRICK_HEIGHT;
-	const int32 camZ = _engine->_grid->_newCamera.z * BRICK_SIZE;
+	const int32 camX = _engine->_grid->_newCamera.x * SIZE_BRICK_XZ;
+	const int32 camY = _engine->_grid->_newCamera.y * SIZE_BRICK_Y;
+	const int32 camZ = _engine->_grid->_newCamera.z * SIZE_BRICK_XZ;
 	int32 distance = getDistance3D(camX, camY, camZ, x, y, z);
-	distance = _engine->_collision->getAverageValue(0, distance, 10000, 255);
+	distance = _engine->_collision->clampedLerp(0, distance, 10000, 255);
 	const byte targetVolume = CLIP<byte>(255 - distance, 0, 255);
 	_engine->_system->getMixer()->setChannelVolume(samplesPlaying[channelIdx], targetVolume);
 }
