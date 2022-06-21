@@ -322,6 +322,7 @@ void AllocScriptModules() {
 	_GP(runDialogOptionKeyPressHandlerFunc).moduleHasFunction.resize(_G(numScriptModules), true);
 	_GP(runDialogOptionTextInputHandlerFunc).moduleHasFunction.resize(_G(numScriptModules), true);
 	_GP(runDialogOptionRepExecFunc).moduleHasFunction.resize(_G(numScriptModules), true);
+	_GP(runDialogOptionCloseFunc).moduleHasFunction.resize(_G(numScriptModules), true);
 	for (auto &val : _GP(moduleRepExecAddr)) {
 		val.Invalidate();
 	}
@@ -362,6 +363,9 @@ HGameInitError InitGameState(const LoadedGameEntities &ents, GameDataVersion dat
 	_GP(views) = std::move(ents.Views);
 
 	_GP(play).charProps.resize(game.numcharacters);
+	_G(dialog) = std::move(ents.Dialogs);
+	_G(old_dialog_scripts) = std::move(ents.OldDialogScripts);
+	_G(old_speech_lines) = std::move(ents.OldSpeechLines);
 	_G(old_dialog_scripts) = ents.OldDialogScripts;
 	_G(old_speech_lines) = ents.OldSpeechLines;
 

@@ -241,13 +241,23 @@ void BoyzEngine::loadAssets() {
 	loadArcadeLevel("c31.mi_", "<check_c3>", "<retry_menu>", "");
 	loadArcadeLevel("c32.mi_", "<check_c3>", "<retry_menu>", "");
 	loadArcadeLevel("c33.mi_", "<check_c3>", "<retry_menu>", "");
+	// This is manually implemented, if objectives are completed
+	ArcadeShooting *ar = (ArcadeShooting *) _levels["c33.mi_"];
+	ar->nextLevelVideo.clear();
+
 	loadArcadeLevel("c34.mi_", "<check_c3>", "<retry_menu>", "");
 	loadArcadeLevel("c35.mi_", "<check_ho>", "<select_c3>", "");
-	ArcadeShooting *ar = (ArcadeShooting *) _levels["c35.mi_"];
+	ar = (ArcadeShooting *) _levels["c35.mi_"];
 	ar->backgroundVideo = ""; // This will be manually populated
 
 	loadArcadeLevel("c351.mi_", "<check_ho>", "<retry_menu>", "");
 	loadArcadeLevel("c352.mi_", "<check_ho>", "<retry_menu>", "");
+	ar = (ArcadeShooting *) _levels["c352.mi_"];
+	// These objectives, as every others, are unused
+	// We should remove them to avoid always failing the level
+	ar->objKillsRequired[0] = 0;
+	ar->objMissesAllowed[0] = 0;
+
 	loadArcadeLevel("c353.mi_", "<check_ho>", "<retry_menu>", "");
 	ar = (ArcadeShooting *) _levels["c353.mi_"];
 	ar->id = 353; // This corrects a mistake in the game scripts
@@ -485,14 +495,29 @@ void BoyzEngine::loadAssets() {
 
 		cl = new ChangeLevel("<main_menu>");
 		sc->hots[1].actions.push_back(cl);
+
+		hl = new Highlight("GS_SEQ_19");
+		sc->hots[2].actions.push_back(hl);
 		cl = new ChangeLevel("<select_t1>");
 		sc->hots[2].actions.push_back(cl);
+
+		hl = new Highlight("GS_SEQ_21");
+		sc->hots[3].actions.push_back(hl);
 		cl = new ChangeLevel("<select_t2>");
 		sc->hots[3].actions.push_back(cl);
+
+		hl = new Highlight("GS_SEQ_31");
+		sc->hots[4].actions.push_back(hl);
 		cl = new ChangeLevel("<select_t3>");
 		sc->hots[4].actions.push_back(cl);
+
+		hl = new Highlight("GS_SEQ_41");
+		sc->hots[5].actions.push_back(hl);
 		cl = new ChangeLevel("<select_t4>");
 		sc->hots[5].actions.push_back(cl);
+
+		hl = new Highlight("GS_SEQ_51");
+		sc->hots[6].actions.push_back(hl);
 		cl = new ChangeLevel("<select_t5>");
 		sc->hots[6].actions.push_back(cl);
 	}
@@ -649,46 +674,46 @@ void BoyzEngine::loadAssets() {
 	cl = new ChangeLevel("c52.mi_");
 	sc->hots[8].actions.push_back(cl);
 
-	hl = new Highlight("GS_SEQ_53");
+	hl = new Highlight("GS_SEQ_54");
 	sc->hots[9].actions.push_back(hl);
-	gl = new Global("GS_SEQ_53", "CHECK");
+	gl = new Global("GS_SEQ_54", "CHECK");
 	sc->hots[9].actions.push_back(gl);
-	cl = new ChangeLevel("c53.mi_");
+	cl = new ChangeLevel("c54.mi_");
 	sc->hots[9].actions.push_back(cl);
 
-	hl = new Highlight("GS_SEQ_54");
+	hl = new Highlight("GS_SEQ_55");
 	sc->hots[10].actions.push_back(hl);
-	gl = new Global("GS_SEQ_54", "CHECK");
+	gl = new Global("GS_SEQ_55", "CHECK");
 	sc->hots[10].actions.push_back(gl);
-	cl = new ChangeLevel("c54.mi_");
+	cl = new ChangeLevel("c55.mi_");
 	sc->hots[10].actions.push_back(cl);
 
-	hl = new Highlight("GS_SEQ_55");
+	hl = new Highlight("GS_SEQ_56");
 	sc->hots[11].actions.push_back(hl);
-	gl = new Global("GS_SEQ_55", "CHECK");
+	gl = new Global("GS_SEQ_56", "CHECK");
 	sc->hots[11].actions.push_back(gl);
-	cl = new ChangeLevel("c55.mi_");
+	cl = new ChangeLevel("c56.mi_");
 	sc->hots[11].actions.push_back(cl);
 
-	hl = new Highlight("GS_SEQ_56");
+	hl = new Highlight("GS_SEQ_57");
 	sc->hots[12].actions.push_back(hl);
-	gl = new Global("GS_SEQ_56", "CHECK");
+	gl = new Global("GS_SEQ_57", "CHECK");
 	sc->hots[12].actions.push_back(gl);
-	cl = new ChangeLevel("c56.mi_");
+	cl = new ChangeLevel("c57.mi_");
 	sc->hots[12].actions.push_back(cl);
 
-	hl = new Highlight("GS_SEQ_57");
+	hl = new Highlight("GS_SEQ_58");
 	sc->hots[13].actions.push_back(hl);
-	gl = new Global("GS_SEQ_57", "CHECK");
+	gl = new Global("GS_SEQ_58", "CHECK");
 	sc->hots[13].actions.push_back(gl);
-	cl = new ChangeLevel("c57.mi_");
+	cl = new ChangeLevel("c58.mi_");
 	sc->hots[13].actions.push_back(cl);
 
-	hl = new Highlight("GS_SEQ_58");
+	hl = new Highlight("GS_SEQ_59");
 	sc->hots[14].actions.push_back(hl);
-	gl = new Global("GS_SEQ_58", "CHECK");
+	gl = new Global("GS_SEQ_59", "CHECK");
 	sc->hots[14].actions.push_back(gl);
-	cl = new ChangeLevel("c58.mi_");
+	cl = new ChangeLevel("c59.mi_");
 	sc->hots[14].actions.push_back(cl);
 
 	loadLib("sound/", "misc/sound.lib", true);
@@ -815,7 +840,7 @@ void BoyzEngine::loadAssets() {
 	_crosshairsActive[5].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
 	_crosshairsActive[5].copyRectToSurface(*targets, 0, 0, cursorBox);
 
-	cursorBox = Common::Rect(104, 71, 136, 83);
+	cursorBox = Common::Rect(104, 71, 136, 88);
 	_crosshairsTarget[5].create(cursorBox.width(), cursorBox.height(), _pixelFormat);
 	_crosshairsTarget[5].copyRectToSurface(*targets, 0, 0, cursorBox);
 
@@ -1055,6 +1080,7 @@ Common::Error BoyzEngine::saveGameStream(Common::WriteStream *stream, bool isAut
 	stream->writeUint32LE(_lastLevel);
 
 	// Save current stats
+	stream->writeUint32LE(_stats.livesUsed);
 	stream->writeUint32LE(_stats.shootsFired);
 	stream->writeUint32LE(_stats.enemyHits);
 	stream->writeUint32LE(_stats.enemyTargets);
@@ -1063,6 +1089,7 @@ Common::Error BoyzEngine::saveGameStream(Common::WriteStream *stream, bool isAut
 	stream->writeUint32LE(_stats.friendliesEncountered);
 	stream->writeUint32LE(_stats.infoReceived);
 
+	stream->writeUint32LE(_globalStats.livesUsed);
 	stream->writeUint32LE(_globalStats.shootsFired);
 	stream->writeUint32LE(_globalStats.enemyHits);
 	stream->writeUint32LE(_globalStats.enemyTargets);
@@ -1085,6 +1112,7 @@ Common::Error BoyzEngine::loadGameStream(Common::SeekableReadStream *stream) {
 	_lastLevel = stream->readUint32LE();
 
 	// Load stats
+	_stats.livesUsed = stream->readUint32LE();
 	_stats.shootsFired = stream->readUint32LE();
 	_stats.enemyHits = stream->readUint32LE();
 	_stats.enemyTargets = stream->readUint32LE();
@@ -1093,6 +1121,7 @@ Common::Error BoyzEngine::loadGameStream(Common::SeekableReadStream *stream) {
 	_stats.friendliesEncountered = stream->readUint32LE();
 	_stats.infoReceived = stream->readUint32LE();
 
+	_globalStats.livesUsed = stream->readUint32LE();
 	_globalStats.shootsFired = stream->readUint32LE();
 	_globalStats.enemyHits = stream->readUint32LE();
 	_globalStats.enemyTargets = stream->readUint32LE();

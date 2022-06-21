@@ -395,7 +395,7 @@ int check_for_messages_from_editor() {
 			bool isDelete = (msgPtr[0] == 'D');
 			// Format:  SETBREAK $scriptname$lineNumber$
 			msgPtr += 10;
-			char scriptNameBuf[100];
+			char scriptNameBuf[80];
 			int i = 0;
 			while (msgPtr[0] != '$') {
 				scriptNameBuf[i] = msgPtr[0];
@@ -418,7 +418,7 @@ int check_for_messages_from_editor() {
 				}
 			} else {
 				_G(breakpoints).push_back(Globals::Breakpoint());
-				strcpy(_G(breakpoints)[_G(numBreakpoints)].scriptName, scriptNameBuf);
+				snprintf(_G(breakpoints)[_G(numBreakpoints)].scriptName, sizeof(Breakpoint::scriptName), "%s", scriptNameBuf);
 				_G(breakpoints)[_G(numBreakpoints)].lineNumber = lineNumber;
 				_G(numBreakpoints)++;
 			}

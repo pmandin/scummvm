@@ -191,9 +191,6 @@ _enable_prof=no
 _enable_asan=no
 _enable_tsan=no
 _enable_ubsan=no
-_global_constructors=no
-_no_undefined_var_template=no
-_no_pragma_pack=no
 _bink=yes
 _cloud=auto
 _pandoc=no
@@ -2279,18 +2276,22 @@ if test "$_release_build" = yes; then
 	append_var DEFINES "-DRELEASE_BUILD"
 fi
 
-# If possible, we want to use -Wglobal-constructors
-# However, not all compilers support that, so check whether the active one does.
-echocheck "whether C++ compiler accepts -Wglobal-constructors"
-cat > $TMPC << EOF
-int main() { return 0; }
+set_flag_if_supported() {
+	echocheck "whether C++ compiler accepts $1"
+	cat > $TMPC << EOF
+	int main() { return 0; }
 EOF
-cc_check -Wglobal-constructors -Werror && _global_constructors=yes
+	# Note: we check for -Wxxx instead of -Wno-xxx as not all compilers error
+	# out on unknown -Wno-xxx flags.
+	if cc_check $(echo $1 | sed 's/-Wno-/-W/') -Werror; then
+		append_var CXXFLAGS "$1"
+		echo yes
+	else
+		echo no
+	fi
+}
 
-if test "$_global_constructors" = yes; then
-	append_var CXXFLAGS "-Wglobal-constructors"
-fi
-echo $_global_constructors
+set_flag_if_supported -Wglobal-constructors
 
 # If the compiler supports the -Wundefined-var-template flag, silence that warning.
 # We get this warning a lot with regard to the Singleton class as we explicitly
@@ -2298,16 +2299,7 @@ echo $_global_constructors
 # change the way we instantiate the singleton classes as done in PR #967.
 # Note: we check the -Wundefined-var-template as gcc does not error out on unknown
 # -Wno-xxx flags.
-echocheck "whether C++ compiler accepts -Wno-undefined-var-template"
-cat > $TMPC << EOF
-int main() { return 0; }
-EOF
-cc_check -Wundefined-var-template -Werror && _no_undefined_var_template=yes
-
-if test "$_no_undefined_var_template" = yes; then
-	append_var CXXFLAGS "-Wno-undefined-var-template"
-fi
-echo $_no_undefined_var_template
+set_flag_if_supported -Wno-undefined-var-template
 
 # Vanilla clang 6 enables the new -Wpragma-pack which warns when leaving an
 # included file which changes the current alignment.
@@ -2315,13 +2307,7 @@ echo $_no_undefined_var_template
 # Because there is no correlation between the version reported by Apple Xcode
 # clang and vanilla clang we cannot rely on the __clang_major__/clang_minor__
 # macros.
-# Note: as above, we check for -Wpragma-pack as not all compilers error out on
-# unknown -Wno-xxx flags.
-echocheck "whether C++ compiler accepts -Wno-pragma-pack"
-echo "int main() { return 0; }" >$TMPC
-cc_check -Wpragma-pack -Werror && _no_pragma_pack=yes
-test "$_no_pragma_pack" = yes && append_var CXXFLAGS "-Wno-pragma-pack"
-echo $_no_pragma_pack
+set_flag_if_supported -Wno-pragma-pack
 
 if test -n "$STRINGS"; then
 	_strings=$STRINGS
@@ -2513,7 +2499,7 @@ case $_host_cpu in
 			openpandora)
 				define_in_config_if_yes yes 'USE_ARM_NEON_ASPECT_CORRECTOR'
 				;;
-			arm-*riscos | caanoo | gp2x | gp2xwiz | maemo )
+			caanoo | gp2x | gp2xwiz | maemo )
 				define_in_config_if_yes yes 'USE_ARM_SCALER_ASM'
 				define_in_config_if_yes yes 'USE_ARM_SMUSH_ASM'
 				define_in_config_if_yes yes 'USE_ARM_GFX_ASM'
@@ -3104,12 +3090,18 @@ EOF
 	riscos)
 		define_in_config_if_yes yes 'RISCOS'
 		append_var LDFLAGS "-static"
-		_optimization_level=-O2
+		_optimization_level=-O3
 		_port_mk="backends/platform/sdl/riscos/riscos.mk"
 		_pandoc=yes
 		_sdlconfig=sdl-config
 		# RiscOS has no OpenGL support at all even though it's SDL based
 		_opengl_mode=none
+		if test "$_dynamic_modules" = yes ; then
+			_detection_features_static=no
+			_plugins_default=dynamic
+		else
+			_detection_features_full=no
+		fi
 		;;
 	solaris*)
 		append_var DEFINES "-DSOLARIS"
@@ -3193,9 +3185,8 @@ if test -n "$_host"; then
 		arm-linux|arm*-linux-gnueabi|arm-*-linux)
 			;;
 		arm-vfp-riscos)
-			# -O2 causes internal compiler error on VFP only with gcc 4.7
-			_optimization_level=-O1
 			append_var LDFLAGS "-L$GCCSDK_INSTALL_ENV/vfp/lib"
+			append_var PLUGIN_LDFLAGS "-L$GCCSDK_INSTALL_ENV/vfp/lib"
 			append_var CXXFLAGS "-isystem $GCCSDK_INSTALL_ENV/vfp/include"
 			if test -z "$PKG_CONFIG_LIBDIR"; then
 				PKG_CONFIG_LIBDIR="$GCCSDK_INSTALL_ENV/vfp/lib/pkgconfig"
@@ -3207,10 +3198,12 @@ if test -n "$_host"; then
 			append_var CXXFLAGS "-mtune=cortex-a9"
 			append_var CXXFLAGS "-mfpu=vfp"
 			append_var LDFLAGS "-mfpu=vfp"
+			append_var PLUGIN_LDFLAGS "-mfpu=vfp"
 			append_var ASFLAGS "-mfpu=vfp"
 			;;
 		arm-*riscos)
 			append_var LDFLAGS "-L$GCCSDK_INSTALL_ENV/lib"
+			append_var PLUGIN_LDFLAGS "-L$GCCSDK_INSTALL_ENV/lib"
 			append_var CXXFLAGS "-isystem $GCCSDK_INSTALL_ENV/include"
 			if test -z "$PKG_CONFIG_LIBDIR"; then
 				PKG_CONFIG_LIBDIR="$GCCSDK_INSTALL_ENV/lib/pkgconfig"
@@ -4137,7 +4130,7 @@ POST_OBJS_FLAGS :=
 		append_var DEFINES "-DUNCACHED_PLUGINS"
 _mak_plugins='
 PLUGIN_EXTRA_DEPS	= $(abspath $(srcdir)/backends/platform/dc/plugin.x $(srcdir)/backends/platform/dc/plugin.syms) $(EXECUTABLE) backends/platform/dc/plugin_head.o
-PLUGIN_LDFLAGS		= -ml -m4-single-only -nostartfiles -Wl,-q,-T$(srcdir)/backends/platform/dc/plugin.x,--just-symbols,$(EXECUTABLE),--retain-symbols-file,$(srcdir)/backends/platform/dc/plugin.syms backends/platform/dc/plugin_head.o
+PLUGIN_LDFLAGS		+= -ml -m4-single-only -nostartfiles -Wl,-q,-T$(srcdir)/backends/platform/dc/plugin.x,--just-symbols,$(EXECUTABLE),--retain-symbols-file,$(srcdir)/backends/platform/dc/plugin.syms backends/platform/dc/plugin_head.o
 PRE_OBJS_FLAGS		:= -Wl,--whole-archive
 POST_OBJS_FLAGS		:= -Wl,--no-whole-archive
 '
@@ -4225,7 +4218,7 @@ POST_OBJS_FLAGS := -Wl,-no-whole-archive
 		_plugin_suffix=".dll"
 _mak_plugins='
 PLUGIN_EXTRA_DEPS	= $(EXECUTABLE)
-PLUGIN_LDFLAGS		:= -Wl,--enable-auto-import -shared ./libscummvm.a
+PLUGIN_LDFLAGS		+= -Wl,--enable-auto-import -shared ./libscummvm.a
 PRE_OBJS_FLAGS		:= -Wl,--whole-archive
 POST_OBJS_FLAGS		:= -Wl,--export-all-symbols -Wl,--no-whole-archive -Wl,--out-implib,./libscummvm.a
 '
@@ -4255,6 +4248,7 @@ PLUGIN_LDFLAGS		+= -Wl,-T$(srcdir)/backends/plugins/psp/plugin.ld -Wl,-zmax-page
 		append_var DEFINES "-DELF_LOADER_CXA_ATEXIT"
 		append_var CXXFLAGS "-fuse-cxa-atexit"
 		append_var DEFINES "-DUNCACHED_PLUGINS"
+		append_var DEFINES "-DELF_NO_MEM_MANAGER"
 _mak_plugins='
 PLUGIN_EXTRA_DEPS	+= backends/plugins/riscos/plugin.o
 PLUGIN_LDFLAGS		+= -static -Wl,-T$(srcdir)/backends/plugins/riscos/plugin.ld backends/plugins/riscos/plugin.o -Wl,--wrap=__rt_stkovf_split_small -Wl,--wrap=__rt_stkovf_split_big
@@ -4278,7 +4272,7 @@ if test "$_elf_loader" = yes; then
 	_plugin_suffix=".plg"
 	_mak_plugins='
 PLUGIN_EXTRA_DEPS	= $(EXECUTABLE)
-PLUGIN_LDFLAGS		= -nostartfiles backends/plugins/elf/version.o -Wl,-q,--retain-symbols-file,$(srcdir)/backends/plugins/elf/plugin.syms -Xlinker --just-symbols -Xlinker $(EXECUTABLE)
+PLUGIN_LDFLAGS		+= -nostartfiles backends/plugins/elf/version.o -Wl,-q,--retain-symbols-file,$(srcdir)/backends/plugins/elf/plugin.syms -Xlinker --just-symbols -Xlinker $(EXECUTABLE)
 PRE_OBJS_FLAGS		:= -Wl,--whole-archive
 POST_OBJS_FLAGS		:= -Wl,--no-whole-archive
 '"$_mak_plugins"
@@ -5501,9 +5495,8 @@ EOF
 		_opengl_can_compile=no
 		# Try different library names
 		if test "$_opengl_mode" = "gles2" ; then
-			# 1) GLESv2    This is generally used by nearly all platforms for OpenGL ES 2
-			# 2) ogles2    This is used by AmigaOS4 for OpenGL ES 2
-			for lib in "-lGLESv2" "-logles2"; do
+			# GLESv2    This is generally used by nearly all platforms for OpenGL ES 2
+			for lib in "-lGLESv2"; do
 				if cc_check_no_clean $DEFINES $OPENGL_CFLAGS $OPENGL_LIBS $lib; then
 					append_var OPENGL_LIBS "$lib"
 					_opengl_can_compile=yes
@@ -6256,10 +6249,10 @@ case $_host_os in
 		if test "$_debug_build" = no; then
 			append_var CXXFLAGS "-mno-poke-function-name"
 		fi
-		append_var CXXFLAGS "-ffunction-sections"
-		append_var CXXFLAGS "-fdata-sections"
 		if test "$_dynamic_modules" = no ; then
 			append_var LDFLAGS "-Wl,--gc-sections"
+			append_var CXXFLAGS "-ffunction-sections"
+			append_var CXXFLAGS "-fdata-sections"
 		else
 			# toolchain asks for gc-sections
 			append_var LDFLAGS "-Wl,--no-gc-sections"
@@ -6399,7 +6392,7 @@ OBJS += $OBJS
 DEFINES += $DEFINES
 LDFLAGS += $LDFLAGS
 
-PLUGIN_LDFLAGS += $PLUGIN_LDFLAGS
+PLUGIN_LDFLAGS = $PLUGIN_LDFLAGS
 $_mak_plugins
 
 port_mk = $_port_mk

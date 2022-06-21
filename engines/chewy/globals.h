@@ -130,7 +130,7 @@ public:
 	byte *_workpage = nullptr;
 	byte *_workptr = nullptr;
 	byte *_spblende = nullptr;
-	char **_ads_item_ptr = nullptr;
+	char **_dialogCloseupItemPtr = nullptr;
 
 	int16 _ads_dia_nr = 0;
 	int16 _ads_item_nr = 0;
@@ -389,7 +389,6 @@ void init_load();
 void var_init();
 
 void new_game();
-void sound_init();
 void show_intro();
 void register_cutscene(int cutsceneNum);
 void getCutscenes(Common::Array<int> &cutscenes);
@@ -416,9 +415,9 @@ void remove_inventory(int16 nr);
 void getDisplayCoord(int16 *x, int16 *y, int16 nr);
 void calcTxtXy(int16 *x, int16 *y, char *txtAdr, int16 txtNr);
 void calcTxtXy(int16 *x, int16 *y, Common::StringArray &desc);
-void adsMenu();
+void handleDialogCloseupMenu();
 
-void stop_ads_dialog();
+void stopDialogCloseupDialog();
 
 void play_scene_ani(int16 nr, int16 mode);
 
@@ -440,7 +439,7 @@ uint16 exit_flip_flop(int16 ani_nr, int16 eib_nr1, int16 eib_nr2,
                         int16 ats_nr1, int16 ats_nr2, int16 sib_nr,
                         int16 spr_nr1, int16 spr_nr2, int16 flag);
 
-int16 loadAdsDia(int16 diaNr);
+int16 loadDialogCloseup(int16 diaNr);
 
 void setSsiPos();
 
@@ -448,7 +447,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 MODE);
 
 void selectDialogOption(int16 diaNr, int16 blkNr, int16 strEndNr);
 
-void ads_ende(int16 diaNr, int16 blkNr, int16 strEndNr);
+void endDialogCloseup(int16 diaNr, int16 blkNr, int16 strEndNr);
 
 void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr,
                        int16 mode);
@@ -482,7 +481,7 @@ void startAadWait(int16 diaNr);
 
 void start_aad(int16 diaNr);
 void aadWait(int16 strNr);
-void startAdsWait(int16 diaNr);
+void startDialogCloseupWait(int16 diaNr);
 void start_aad(int16 diaNr, int16 ssiNr);
 void wait_auto_obj(int16 nr);
 

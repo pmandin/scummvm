@@ -1252,7 +1252,11 @@ void MToonElement::render(Window *window) {
 }
 
 VThreadState MToonElement::startPlayingTask(const StartPlayingTaskData &taskData) {
-	_cel = _playRange.min;
+	if (_rateTimes100000 < 0)
+		_cel = _playRange.max;
+	else
+		_cel = _playRange.min;
+
 	_paused = false;
 	_isPlaying = false;	// Reset play state, it starts for real in playMedia
 
@@ -1450,6 +1454,7 @@ MiniscriptInstructionOutcome MToonElement::scriptSetRangeTyped(MiniscriptThread 
 		intRange.max = maxFrame;
 
 	if (isInvertedRange) {
+		// coverity[swapped_arguments]
 		_playRange = IntRange::create(intRange.max, intRange.min);
 		if (_rateTimes100000 > 0)
 			_rateTimes100000 = -_rateTimes100000;

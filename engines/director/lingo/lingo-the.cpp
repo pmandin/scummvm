@@ -377,7 +377,8 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = g_lingo->_actorList;
 		break;
 	case kTheBeepOn:
-		getTheEntitySTUB(kTheBeepOn);
+		d.type = INT;
+		d.u.i = (int)g_director->getCurrentMovie()->_isBeepOn;
 		break;
 	case kTheButtonStyle:
 		d.type = INT;
@@ -387,7 +388,8 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = getTheCast(id, field);
 		break;
 	case kTheCastMembers:
-		warning("STUB: Lingo::getTheEntity(): Unprocessed getting field %s of entity %s", field2str(field), entity2str(entity));
+		d.type = INT;
+		d.u.i = movie->getCast()->_loadedCast->size() + movie->_sharedCast->_loadedCast->size();
 		break;
 	case kTheCenterStage:
 		d.type = INT;
@@ -449,7 +451,8 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = getTheField(id, field);
 		break;
 	case kTheFixStageSize:
-		getTheEntitySTUB(kTheFixStageSize);
+		d.type = INT;
+		d.u.i = (int)g_director->_fixStageSize;
 		break;
 	case kTheFloatPrecision:
 		d.type = INT;
@@ -936,7 +939,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		g_lingo->_actorList = d;
 		break;
 	case kTheBeepOn:
-		setTheEntitySTUB(kTheBeepOn);
+		g_director->getCurrentMovie()->_isBeepOn = (bool)d.u.i;
 		break;
 	case kTheButtonStyle:
 		if (d.asInt())
@@ -969,7 +972,10 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		g_lingo->_exitLock = bool(d.asInt());
 		break;
 	case kTheFixStageSize:
-		setTheEntitySTUB(kTheFixStageSize);
+		g_director->_fixStageSize = (bool)d.u.i;
+		if (d.u.i) {
+			g_director->_fixStageRect = g_director->getCurrentMovie()->_movieRect;
+		}
 		break;
 	case kTheField:
 		setTheField(id, field, d);
@@ -1365,10 +1371,12 @@ Datum Lingo::getTheSprite(Datum &id1, int field) {
 		d.u.i = channel->getBbox().right;
 		break;
 	case kTheScoreColor:
-		warning("STUB: Lingo::getTheSprite(): Unprocessed getting field \"%s\" of sprite", field2str(field));
+		//Check the last 3 bits of the _colorcode byte as value lies in 0 to 5
+		d.u.i = (int)(sprite->_colorcode & 0x7);
 		break;
 	case kTheScriptNum:
-		warning("STUB: Lingo::getTheSprite(): Unprocessed getting field \"%s\" of sprite", field2str(field));
+		d.type = INT;
+		d.u.i = sprite->_scriptId.member;
 		break;
 	case kTheStartTime:
 		d.u.i = channel->_startTime;

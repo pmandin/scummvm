@@ -517,8 +517,6 @@ struct GameState : public GameFlags {
 	int16 SVal3 = 0;
 	int16 SVal4 = 0;
 	int16 soundLoopMode = 0;
-	uint8 SoundVol = 0;
-	uint8 MusicVol = 0;
 	uint8 FramesPerSecond = 0;
 };
 
@@ -567,7 +565,7 @@ struct Flags {
 	uint16 AtsAction : 1;
 	uint16 AdsAction : 1;
 	uint16 AtsText : 1;
-	uint16 AdsDialog : 1;
+	uint16 DialogCloseup : 1;
 	uint16 ShowAtsInvTxt : 1;
 	uint16 MainInput : 1;
 	uint16 InventMenu : 1;

@@ -22,6 +22,7 @@
 #include "ags/globals.h"
 #include "ags/shared/ac/game_setup_struct.h"
 #include "ags/shared/ac/sprite_cache.h"
+#include "ags/shared/ac/dialog_topic.h"
 #include "ags/shared/core/asset_manager.h"
 #include "ags/shared/debugging/debug_manager.h"
 #include "ags/shared/font/fonts.h"
@@ -351,6 +352,7 @@ Globals::Globals() {
 	_runDialogOptionKeyPressHandlerFunc = new NonBlockingScriptFunction("dialog_options_key_press", 3);
 	_runDialogOptionTextInputHandlerFunc = new NonBlockingScriptFunction("dialog_options_text_input", 2);
 	_runDialogOptionRepExecFunc = new NonBlockingScriptFunction("dialog_options_repexec", 1);
+	_runDialogOptionCloseFunc = new NonBlockingScriptFunction("dialog_options_close", 1);
 	_scsystem = new ScriptSystem();
 	_scriptModules = new std::vector<PScript>();
 	_moduleInst = new std::vector<ccInstance *>();
@@ -598,6 +600,7 @@ Globals::~Globals() {
 	delete _runDialogOptionKeyPressHandlerFunc;
 	delete _runDialogOptionTextInputHandlerFunc;
 	delete _runDialogOptionRepExecFunc;
+	delete _runDialogOptionCloseFunc;
 	delete _scsystem;
 	delete _scriptModules;
 	delete _moduleInst;

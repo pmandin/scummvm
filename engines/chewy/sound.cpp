@@ -24,32 +24,16 @@
 #include "audio/decoders/raw.h"
 #include "audio/mods/protracker.h"
 #include "common/config-manager.h"
+#include "common/memstream.h"
 #include "common/system.h"
 #include "chewy/resource.h"
 #include "chewy/sound.h"
 #include "chewy/types.h"
 #include "chewy/globals.h"
-#include "chewy/music/tmf_stream.h"
+#include "chewy/audio/chewy_voc.h"
+#include "chewy/audio/tmf_stream.h"
 
 namespace Chewy {
-
-const uint8 Sound::TMF_MOD_SONG_NAME[] = {
-	'S', 'C', 'U', 'M', 'M',
-	'V', 'M', ' ', 'M', 'O',
-	'D', 'U', 'L', 'E', '\0',
-	'\0', '\0', '\0', '\0', '\0'};
-const uint8 Sound::TMF_MOD_INSTRUMENT_NAME[] = {
-	'S', 'C', 'U', 'M', 'M',
-	'V', 'M', ' ', 'I', 'N',
-	'S', 'T', 'R', 'U', 'M',
-	'E', 'N', 'T', '\0', '\0',
-	'\0', '\0'};
-// TODO Verify period values used by the game; this is an educated guess.
-const uint16 Sound::TMF_MOD_PERIODS[] = {
-	856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453,
-	428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226,
-	214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113
-};
 
 Sound::Sound(Audio::Mixer *mixer) {
 	_mixer = mixer;
@@ -74,11 +58,13 @@ void Sound::playSound(int num, uint channel, bool loop) {
 }
 
 void Sound::playSound(uint8 *data, uint32 size, uint channel, bool loop, DisposeAfterUse::Flag dispose) {
+	stopSound(channel);
+
 	Audio::AudioStream *stream = Audio::makeLoopingAudioStream(
-	                                 Audio::makeRawStream(data,
-	                                         size, 22050, Audio::FLAG_UNSIGNED,
-	                                         dispose),
-	                                 loop ? 0 : 1);
+		new ChewyVocStream(
+			new Common::MemorySeekableReadWriteStream(data, size, dispose),
+			dispose),
+		loop ? 0 : 1);
 
 	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundHandle[channel], stream);
 }
@@ -99,7 +85,7 @@ void Sound::stopSound(uint channel) {
 }
 
 void Sound::stopAllSounds() {
-	for (int i = 4; i < 8; i++)
+	for (int i = 0; i < 14; i++)
 		stopSound(i);
 }
 
@@ -110,6 +96,24 @@ bool Sound::isSoundActive(uint channel) const {
 
 void Sound::setSoundVolume(uint volume) {
 	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, volume);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, volume);
+}
+
+int Sound::getSoundVolume() const {
+	return _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
+}
+
+void Sound::pushVolume() {
+	_soundVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
+	_speechVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType);
+	_musicVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
+}
+
+void Sound::popVolume() {
+	assert(_soundVolume >= 0 && _speechVolume >= 0 && _musicVolume >= 0);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, _soundVolume);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, _speechVolume);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, _musicVolume);
 }
 
 void Sound::setSoundChannelVolume(uint channel, uint volume) {
@@ -161,6 +165,10 @@ void Sound::setMusicVolume(uint volume) {
 	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, volume);
 }
 
+int Sound::getMusicVolume() const {
+	return _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
+}
+
 void Sound::playSpeech(int num, bool waitForFinish) {
 	if (isSpeechActive())
 		stopSpeech();
@@ -175,9 +183,9 @@ void Sound::playSpeech(int num, bool waitForFinish) {
 	delete sound;
 
 	// Play it
-	Audio::AudioStream *stream = Audio::makeLoopingAudioStream(
-	    Audio::makeRawStream(data, size, 22050, Audio::FLAG_UNSIGNED,
-		DisposeAfterUse::YES), 1);
+	Audio::AudioStream *stream = new ChewyVocStream(
+		new Common::MemorySeekableReadWriteStream(data, size, DisposeAfterUse::YES),
+		DisposeAfterUse::YES);
 
 	_mixer->playStream(Audio::Mixer::kSpeechSoundType,
 		&_speechHandle, stream);
@@ -204,10 +212,6 @@ void Sound::stopSpeech() {
 
 bool Sound::isSpeechActive() const {
 	return _mixer->isSoundHandleActive(_speechHandle);
-}
-
-void Sound::setSpeechVolume(uint volume) {
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, volume);
 }
 
 void Sound::stopAll() {

@@ -140,11 +140,13 @@ public:
 
 class Timer : public Action {
 public:
-	Timer(uint32 delay_) {
+	Timer(uint32 delay_, Common::String flag_) {
 		type = TimerAction;
 		delay = delay_;
+		flag = flag_;
 	}
 	uint32 delay;
+	Common::String flag;
 };
 
 class Palette : public Action {
@@ -575,6 +577,7 @@ public:
 		soundRate = soundRate_;
 		soundStereo = false;
 		loseLevel = false;
+		winLevel = false;
 		selection = false;
 		jumpToTime = 0;
 		time = time_;
@@ -586,6 +589,7 @@ public:
 	uint32 soundRate;
 	bool soundStereo;
 	bool loseLevel;
+	bool winLevel;
 	bool selection;
 	uint32 jumpToTime;
 	uint32 time;
@@ -739,6 +743,7 @@ extern ArcadeShooting *g_parsedArc;
 class ArcadeStats {
 	public:
 	ArcadeStats()  {
+		livesUsed = 0;
 		shootsFired = 0;
 		enemyHits = 0;
 		enemyTargets = 0;
@@ -747,7 +752,7 @@ class ArcadeStats {
 		friendliesEncountered = 0;
 		infoReceived = 0;
 	}
-
+	uint32 livesUsed;
 	uint32 shootsFired;
 	uint32 enemyHits;
 	uint32 enemyTargets;

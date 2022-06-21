@@ -19,20 +19,18 @@
  *
  */
 
-#include "chewy/music/tmf_stream.h"
+#ifndef MTROPOLIS_BOOT_H
+#define MTROPOLIS_BOOT_H
 
-#include "chewy/music/module_tmf.h"
+#include "common/ptr.h"
 
-Chewy::TMFStream::TMFStream(Common::SeekableReadStream *stream, int offs) : ProtrackerStream(44100, true) {
-	_module = new Module_TMF();
-	bool result = _module->load(*stream, offs);
-	assert(result);
+namespace MTropolis {
 
-	// Channel panning used by TMF is L-R-L-R instead of MOD's L-R-R-L.
-	setChannelPanning(0, PANNING_LEFT);
-	setChannelPanning(1, PANNING_RIGHT);
-	setChannelPanning(2, PANNING_LEFT);
-	setChannelPanning(3, PANNING_RIGHT);
+struct MTropolisGameDescription;
+class ProjectDescription;
 
-	startPaula();
-}
+Common::SharedPtr<ProjectDescription> bootProject(const MTropolisGameDescription &gameDesc);
+
+} // End of namespace MTropolis
+
+#endif

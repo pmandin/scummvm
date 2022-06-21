@@ -37,12 +37,15 @@
 void pluginHack() {
 	volatile float f = 0.0f;
 	volatile double d = 0.0;
+	volatile int i = 0;
 
 	byte *b = new (std::nothrow) byte[100];
 
 	f = tanhf(f);
 	f = logf(f);
+	f = log10f(f);
 	f = lroundf(f);
+	f = expf(f);
 	f = frexpf(f, NULL);
 	f = ldexpf(f, 1);
 	f = fmaxf(f, f);
@@ -50,6 +53,8 @@ void pluginHack() {
 	f = truncf(f);
 
 	d = nearbyint(d);
+
+	i = strcoll("dummyA", "dummyB");
 
 	rename("dummyA", "dummyB");
 

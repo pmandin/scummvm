@@ -486,8 +486,8 @@ void setupScreen(SetupScreenMode mode) {
 			                 , _G(scr_width));
 		}
 
-		if (_G(flags).AdsDialog)
-			adsMenu();
+		if (_G(flags).DialogCloseup)
+			handleDialogCloseupMenu();
 		if (_G(mouseLeftClick)) {
 			if (_G(menu_item) == CUR_WALK) {
 				if (_G(cur_ausgang_flag)) {
@@ -1864,7 +1864,7 @@ bool is_chewy_busy() {
 	bool ret = true;
 	if (!_G(atds)->atsShown()) {
 		if (_G(atds)->aadGetStatus() == -1) {
-			if (_G(atds)->ads_get_status() == -1) {
+			if (_G(atds)->getDialogCloseupStatus() == -1) {
 				if (!_G(mov)->auto_go_status()) {
 					if (!_G(moveState)[P_CHEWY].Count) {
 						if (!_G(flags).ExitMov) {

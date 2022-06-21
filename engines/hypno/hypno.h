@@ -277,6 +277,7 @@ public:
 
 	ArcadeStats _stats;
 	void resetStatistics();
+	void incLivesUsed();
 	void incShotsFired();
 	void incEnemyHits();
 	void incEnemyTargets();
@@ -354,6 +355,7 @@ public:
 	// Timers
 	int32 _countdown;
 	bool _timerStarted;
+	bool _keepTimerDuringScenes;
 	bool startAlarm(uint32, Common::String *);
 	bool startCountdown(uint32);
 	void removeTimers();
@@ -558,6 +560,8 @@ public:
 	bool shoot(const Common::Point &mousePos, ArcadeShooting *arc, bool secondary) override;
 	bool clickedSecondaryShoot(const Common::Point &mousePos) override;
 	void showCredits() override;
+	// Stats
+	void showArcadeStats(int territory, const ArcadeStats &data);
 	ArcadeStats _lastStats;
 	ArcadeStats _globalStats;
 
@@ -589,6 +593,7 @@ public:
 	char selectDirection();
 
 	void runMainMenu(Code *code);
+	bool runExitMenu();
 	void runRetryMenu(Code *code);
 	void runCheckC3(Code *code);
 	void runCheckHo(Code *code);

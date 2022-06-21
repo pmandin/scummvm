@@ -29,16 +29,12 @@
 
 namespace Chewy {
 
-int16 loadAdsDia(int16 diaNr) {
-	int16 ret = false;
-
-	if (_G(flags).AdsDialog == false) {
-		bool tmp = _G(atds)->ads_start(diaNr);
-		if (tmp == true) {
-			ret = true;
+int16 loadDialogCloseup(int16 diaNr) {
+	if (_G(flags).DialogCloseup == false) {
+		if (_G(atds)->startDialogCloseup(diaNr)) {
 			_G(ads_blk_nr) = 0;
-			_G(ads_item_ptr) = _G(atds)->ads_item_ptr(diaNr, _G(ads_blk_nr), &_G(ads_item_nr));
-			_G(flags).AdsDialog = true;
+			_G(dialogCloseupItemPtr) = _G(atds)->dialogCloseupItemPtr(diaNr, _G(ads_blk_nr), &_G(ads_item_nr));
+			_G(flags).DialogCloseup = true;
 			_G(ads_push) = true;
 			_G(ads_tmp_dsp) = _G(gameState).DispFlag;
 			_G(gameState).DispFlag = false;
@@ -47,9 +43,10 @@ int16 loadAdsDia(int16 diaNr) {
 			_G(ads_dia_nr) = diaNr;
 			_G(talk_start_ani) = -1;
 			_G(talk_hide_static) = -1;
+			return true;
 		}
 	}
-	return ret;
+	return false;
 }
 
 void setSsiPos() {
@@ -1160,7 +1157,7 @@ void selectDialogOption(int16 diaNr, int16 blkNr, int16 strEndNr) {
 				Room41::sub_dia();
 			} else if (blkNr == 0 && strEndNr == 3) {
 				_G(gameState).R41RepairInfo = true;
-				stop_ads_dialog();
+				stopDialogCloseupDialog();
 			}
 			break;
 
@@ -1173,7 +1170,7 @@ void selectDialogOption(int16 diaNr, int16 blkNr, int16 strEndNr) {
 		case 15:
 			if (blkNr == 1 && strEndNr == 0) {
 				_G(gameState).R55Job = true;
-				stop_ads_dialog();
+				stopDialogCloseupDialog();
 			}
 			break;
 
@@ -1185,7 +1182,7 @@ void selectDialogOption(int16 diaNr, int16 blkNr, int16 strEndNr) {
 
 		case 17:
 			if (blkNr == 0 && strEndNr == 2)
-				_G(atds)->show_item(17, 0, 1);
+				_G(atds)->showDialogCloseupItem(17, 0, 1);
 
 			break;
 
@@ -1212,7 +1209,7 @@ void selectDialogOption(int16 diaNr, int16 blkNr, int16 strEndNr) {
 	}
 }
 
-void ads_ende(int16 diaNr, int16 blkNr, int16 strEndNr) {
+void endDialogCloseup(int16 diaNr, int16 blkNr, int16 strEndNr) {
 	switch (diaNr) {
 	case 0:
 		_G(flags).AutoAniPlay = false;
@@ -2767,7 +2764,7 @@ void calc_person_dia(int16 p_nr) {
 					_G(stopAutoMove)[P_NICHELLE] = _G(gameState).PersonDiaRoom[P_NICHELLE];
 					showCur();
 				} else {
-					startAdsWait(_G(gameState).PersonDia[P_NICHELLE] - 10000);
+					startDialogCloseupWait(_G(gameState).PersonDia[P_NICHELLE] - 10000);
 				}
 			}
 		}

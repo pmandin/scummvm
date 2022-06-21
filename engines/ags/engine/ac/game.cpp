@@ -26,7 +26,7 @@
 #include "ags/engine/ac/audio_channel.h"
 #include "ags/engine/ac/button.h"
 #include "ags/engine/ac/character.h"
-#include "ags/shared/ac/dialog_topic.h"
+#include "ags/engine/ac/dialog.h"
 #include "ags/engine/ac/draw.h"
 #include "ags/engine/ac/dynamic_sprite.h"
 #include "ags/engine/ac/event.h"
@@ -364,7 +364,6 @@ void free_do_once_tokens() {
 
 
 // Free all the memory associated with the game
-// TODO: call this when exiting the game (currently only called in RunAGSGame)
 void unload_game_file() {
 	close_translation();
 
@@ -379,16 +378,10 @@ void unload_game_file() {
 	delete _G(gameinst);
 	_G(gameinstFork) = nullptr;
 	_G(gameinst) = nullptr;
-
 	_GP(gamescript).reset();
 
-	if ((_G(dialogScriptsInst) != nullptr) && (_G(dialogScriptsInst)->pc != 0)) {
-		quit("Error: unload_game called while dialog script still running");
-	} else if (_G(dialogScriptsInst) != nullptr) {
-		delete _G(dialogScriptsInst);
-		_G(dialogScriptsInst) = nullptr;
-	}
-
+	delete _G(dialogScriptsInst);
+	_G(dialogScriptsInst) = nullptr;
 	_GP(dialogScriptsScript).reset();
 
 	for (size_t i = 0; i < _G(numScriptModules); ++i) {
@@ -409,6 +402,7 @@ void unload_game_file() {
 	_GP(runDialogOptionKeyPressHandlerFunc).moduleHasFunction.resize(0);
 	_GP(runDialogOptionTextInputHandlerFunc).moduleHasFunction.resize(0);
 	_GP(runDialogOptionRepExecFunc).moduleHasFunction.resize(0);
+	_GP(runDialogOptionCloseFunc).moduleHasFunction.resize(0);
 	_G(numScriptModules) = 0;
 
 	_GP(views).clear();
@@ -424,13 +418,11 @@ void unload_game_file() {
 		_G(curLipLine) = -1;
 	}
 
-	for (int i = 0; i < _GP(game).numdialog; ++i) {
-		if (_G(dialog)[i].optionscripts != nullptr)
-			free(_G(dialog)[i].optionscripts);
-		_G(dialog)[i].optionscripts = nullptr;
+	for (auto &dlg : _G(dialog)) {
+		if (dlg.optionscripts != nullptr)
+			free(dlg.optionscripts);
 	}
-	free(_G(dialog));
-	_G(dialog) = nullptr;
+	_G(dialog).clear();
 	delete[] _G(scrDialog);
 	_G(scrDialog) = nullptr;
 
@@ -872,7 +864,8 @@ void save_game(int slotn, const char *descript) {
 	can_run_delayed_command();
 
 	if (_G(inside_script)) {
-		strcpy(_G(curscript)->postScriptSaveSlotDescription[_G(curscript)->queue_action(ePSASaveGame, slotn, "SaveGameSlot")], descript);
+		snprintf(_G(curscript)->postScriptSaveSlotDescription[_G(curscript)->queue_action(ePSASaveGame, slotn, "SaveGameSlot")],
+					 MAX_QUEUED_ACTION_DESC, "%s", descript);
 		return;
 	}
 
@@ -1289,7 +1282,7 @@ void replace_tokens(const char *srcmes, char *destm, int maxlen) {
 					quit("!Display: invalid global int index speicifed in @GI@");
 				snprintf(tval, sizeof(tval), "%d", GetGlobalInt(inx));
 			}
-			strcpy(destp, tval);
+			snprintf(destp, maxlen, "%s", tval);
 			indxdest += strlen(tval);
 		} else {
 			destp[0] = srcp[0];
@@ -1348,7 +1341,7 @@ bool unserialize_audio_script_object(int index, const char *objectType, Stream *
 
 void game_sprite_updated(int sprnum) {
 	// update the shared texture (if exists)
-	_G(gfxDriver)->UpdateSharedDDB(sprnum, _GP(spriteset)[sprnum], _GP(game).SpriteInfos[sprnum].Flags & SPF_ALPHACHANNEL, false);
+	_G(gfxDriver)->UpdateSharedDDB(sprnum, _GP(spriteset)[sprnum], (_GP(game).SpriteInfos[sprnum].Flags & SPF_ALPHACHANNEL) != 0, false);
 
 	// character and object draw caches
 	reset_objcache_for_sprite(sprnum);

@@ -471,12 +471,12 @@ void GfxTinyGL::startActorDraw(const Actor *actor) {
 		tglEnable(TGL_POLYGON_OFFSET_FILL);
 		tglDisable(TGL_LIGHTING);
 		tglDisable(TGL_TEXTURE_2D);
-		//tglColor3f(0.0f, 1.0f, 0.0f); // debug draw color
 		if (g_grim->getGameType() == GType_GRIM) {
 			tglColor3ub(_shadowColorR, _shadowColorG, _shadowColorB);
 		} else {
 			tglColor3ub(_currentShadowArray->color.getRed(), _currentShadowArray->color.getGreen(), _currentShadowArray->color.getBlue());
 		}
+		//tglColor3f(0.0f, 1.0f, 0.0f); // debug draw color
 		shadowProjection(_currentShadowArray->pos, shadowSector->getVertices()[0], shadowSector->getNormal(), _currentShadowArray->dontNegate);
 	}
 
@@ -550,6 +550,17 @@ void GfxTinyGL::finishActorDraw() {
 }
 
 void GfxTinyGL::drawShadowPlanes() {
+/*	tglColor3f(1.0f, 1.0f, 1.0f);
+	_currentShadowArray->planeList.begin();
+	for (SectorListType::iterator i = _currentShadowArray->planeList.begin(); i != _currentShadowArray->planeList.end(); i++) {
+		Sector *shadowSector = i->sector;
+		tglBegin(TGL_POLYGON);
+		for (int k = 0; k < shadowSector->getNumVertices(); k++) {
+			tglVertex3f(shadowSector->getVertices()[k].x(), shadowSector->getVertices()[k].y(), shadowSector->getVertices()[k].z());
+		}
+		tglEnd();
+	}*/
+
 	tglPushMatrix();
 
 	if (g_grim->getGameType() == GType_MONKEY4) {

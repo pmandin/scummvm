@@ -602,7 +602,7 @@ bool DynamicListContainer<VarReference>::expandToMinimumSize(size_t sz) {
 		_array.resize(sz);
 		_strings.resize(sz);
 
-		for (size_t i = prevSize; i < sz; prevSize++) {
+		for (size_t i = prevSize; i < sz; i++) {
 			_array[i].guid = 0;
 			_array[i].source = nullptr;
 		}
@@ -2113,7 +2113,14 @@ void IPlugInModifierRegistrar::registerPlugInModifier(const char *name, const IP
 PlugIn::~PlugIn() {
 }
 
+ProjectPersistentResource::~ProjectPersistentResource() {
+}
+
 ProjectResources::~ProjectResources() {
+	// We need these destroyed in reverse order exactly, and unfortunately the ScummVM Common::Array destructor
+	// destroys forward
+	while (persistentResources.size() > 0)
+		persistentResources.pop_back();
 }
 
 CursorGraphic::~CursorGraphic() {
@@ -3525,7 +3532,8 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, ISaveUIProvider *saveProv
 	_displayWidth(1024), _displayHeight(768), _realTimeBase(0), _playTimeBase(0), _sceneTransitionState(kSceneTransitionStateNotTransitioning),
 	_lastFrameCursor(nullptr), _defaultCursor(new DefaultCursorGraphic()), _platform(kProjectPlatformUnknown),
 	_cachedMousePosition(Common::Point(0, 0)), _realMousePosition(Common::Point(0, 0)), _trackedMouseOutside(false),
-	_forceCursorRefreshOnce(true), _haveModifierOverrideCursor(false), _sceneGraphChanged(false), _isQuitting(false), _collisionCheckTime(0) {
+	_forceCursorRefreshOnce(true), _haveModifierOverrideCursor(false), _sceneGraphChanged(false), _isQuitting(false),
+	  _collisionCheckTime(0), _defaultVolumeState(true) {
 	_random.reset(new Common::RandomSource("mtropolis"));
 
 	_vthread.reset(new VThread());
@@ -3540,7 +3548,7 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, ISaveUIProvider *saveProv
 	_playTimeBase = system->getMillis();
 
 	for (int i = 0; i < Actions::kMouseButtonCount; i++)
-		_mouseFocusFlags[Actions::kMouseButtonCount] = false;
+		_mouseFocusFlags[i] = false;
 	
 	_worldManagerInterface.reset(new WorldManagerInterface());
 	_worldManagerInterface->setSelfReference(_worldManagerInterface);
@@ -3805,7 +3813,8 @@ void Runtime::drawFrame() {
 		sortedBuckets[i].window = _windows[i].get();
 	}
 
-	Common::sort(sortedBuckets, sortedBuckets + numWindows, WindowSortingBucket::sortPredicate);
+	if (numWindows > 1)	// Quiet Coverity warning
+		Common::sort(sortedBuckets, sortedBuckets + numWindows, WindowSortingBucket::sortPredicate);
 	
 	for (size_t i = 0; i < numWindows; i++) {
 		const Window &window = *sortedBuckets[i].window;
@@ -5291,6 +5300,11 @@ bool Runtime::getVolumeState(const Common::String &name, int &outVolumeID, bool 
 			outIsMounted = volume.isMounted;
 			return true;
 		}
+	}
+
+	if (_defaultVolumeState) {
+		outIsMounted = true;
+		return true;
 	}
 
 	return false;

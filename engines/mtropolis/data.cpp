@@ -1042,11 +1042,12 @@ DataReadErrorCode SetModifier::load(DataReader &reader) {
 	if (_revision != 1000)
 		return kDataReadErrorUnsupportedRevision;
 
-	if (!modHeader.load(reader) || !reader.readBytes(unknown1) || !executeWhen.load(reader)
-		|| !source.load(reader) || !target.load(reader) || !reader.readU8(unknown3)
+	// NOTE: executeWhen is split in half and stored in 2 separate parts
+	if (!modHeader.load(reader) || !reader.readBytes(unknown1) || !reader.readU32(executeWhen.eventID)
+		|| !source.load(reader) || !target.load(reader) || !reader.readU32(executeWhen.eventInfo) || !reader.readU8(unknown3)
 		|| !reader.readU8(sourceNameLength) || !reader.readU8(targetNameLength) || !reader.readU8(sourceStringLength)
 		|| !reader.readU8(targetStringLength)  || !reader.readU8(unknown4) || !reader.readNonTerminatedStr(sourceName, sourceNameLength)
-		|| !reader.readNonTerminatedStr(targetName, targetNameLength) || !reader.readNonTerminatedStr(sourceString, sourceNameLength)
+		|| !reader.readNonTerminatedStr(targetName, targetNameLength) || !reader.readNonTerminatedStr(sourceString, sourceStringLength)
 		|| !reader.readNonTerminatedStr(targetString, targetStringLength))
 		return kDataReadErrorReadFailed;
 
@@ -1348,6 +1349,7 @@ DataReadErrorCode GraphicModifier::load(DataReader &reader) {
 	if (!reader.readU16(numPolygonPoints) || !reader.readBytes(unknown6))
 		return kDataReadErrorReadFailed;
 
+	// coverity[tainted_scalar]
 	polyPoints.resize(numPolygonPoints);
 	for (size_t i = 0; i < numPolygonPoints; i++) {
 		if (!polyPoints[i].load(reader))
@@ -1524,8 +1526,8 @@ DataReadErrorCode ColorTableAsset::load(DataReader &reader) {
 
 			const uint8 *rgb = cdefBytes + i * 8 + 2;
 			cdef.red = (rgb[0] << 8) | rgb[1];
-			cdef.green = (rgb[2] << 8) | rgb[5];
-			cdef.blue = (rgb[4] << 8) | rgb[6];
+			cdef.green = (rgb[2] << 8) | rgb[3];
+			cdef.blue = (rgb[4] << 8) | rgb[5];
 		}
 	} else if (reader.getProjectFormat() == Data::kProjectFormatWindows) {
 		if (!reader.skip(14))

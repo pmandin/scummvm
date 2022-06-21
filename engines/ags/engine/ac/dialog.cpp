@@ -593,6 +593,12 @@ void DialogOptions::Show() {
 
 	Redraw();
 	while (Run() && !SHOULD_QUIT) {}
+
+	// Close custom dialog options
+	if (usingCustomRendering) {
+		_GP(runDialogOptionCloseFunc).params[0].SetDynamicObject(&_GP(ccDialogOptionsRendering), &_GP(ccDialogOptionsRendering));
+		run_function_on_non_blocking_thread(&_GP(runDialogOptionCloseFunc));
+	}
 }
 
 void DialogOptions::Redraw() {
@@ -997,7 +1003,7 @@ void DialogOptions::Close() {
 	invalidate_screen();
 
 	if (parserActivated) {
-		strcpy(_GP(play).lastParserEntry, parserInput->Text.GetCStr());
+		snprintf(_GP(play).lastParserEntry, MAX_MAXSTRLEN, "%s", parserInput->Text.GetCStr());
 		ParseText(parserInput->Text.GetCStr());
 		chose = CHOSE_TEXTPARSER;
 	}
