@@ -111,6 +111,9 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 	case Common::kPlatformMacintoshII:
 		_machineType = 4;
 		break;
+	case Common::kPlatformPippin:
+		_machineType = 71;
+		break;
 	case Common::kPlatformWindows:
 		_machineType = 256;
 		break;
@@ -124,6 +127,7 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 	_centerStage = true;
 
 	_surface = nullptr;
+	_tickBaseline = 0;
 }
 
 DirectorEngine::~DirectorEngine() {

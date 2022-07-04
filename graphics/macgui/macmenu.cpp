@@ -116,6 +116,8 @@ MacMenu::MacMenu(int id, const Common::Rect &bounds, MacWindowManager *wm)
 
 	_align = kTextAlignLeft;
 
+	_type = MacWindowConstants::kWindowMenu;
+
 	_screen.create(bounds.width(), bounds.height(), PixelFormat::createFormatCLUT8());
 
 	_bbox.left = 0;
@@ -303,6 +305,89 @@ void MacMenu::printMenu(int level, MacMenuSubMenu *submenu) {
 	}
 }
 
+int MacMenu::numberOfMenus() {
+	return _items.size();
+}
+
+MacMenuItem *MacMenu::getMenuItem(const Common::String &menuId) {
+	MacMenuItem *menu = nullptr;
+
+	for (uint i = 0; i < _items.size(); i++) {
+		// TODO: support unicode text menu
+		// didn't support unicode item finding yet
+		if (!_items[i]->unicode) {
+			if (_items[i]->text.equalsIgnoreCase(menuId)) {
+				menu = _items[i];
+				break;
+			}
+		}
+	}
+	return menu;
+}
+
+MacMenuItem *MacMenu::getMenuItem(int menuId) {
+	MacMenuItem *menu = nullptr;
+
+	if ((uint)menuId < _items.size())
+		menu = _items[menuId];
+
+	return menu;
+}
+
+MacMenuItem *MacMenu::getSubMenuItem(MacMenuItem *menu, const Common::String &itemId) {
+	if (!menu) {
+		warning("MacMenu::getSubMenuItem: can not find given menu");
+		return nullptr;
+	}
+
+	if (!menu->submenu) {
+		warning("MacMenu::getSubMenuItem: menu %s doesn't have submenu", menu->text.c_str());
+		return nullptr;
+	}
+
+	for (uint i = 0; i < menu->submenu->items.size(); i++) {
+		if (!menu->submenu->items[i]->unicode) {
+			if (menu->submenu->items[i]->text.equalsIgnoreCase(itemId))
+				return menu->submenu->items[i];
+		}
+	}
+
+	warning("MacMenu::getSubMenuItem: menu %s doesn't have item with id %s", menu->text.c_str(), itemId.c_str());
+	return nullptr;
+}
+
+MacMenuItem *MacMenu::getSubMenuItem(MacMenuItem *menu, int itemId) {
+	if (!menu) {
+		warning("MacMenu::getSubMenuItem: menuId out of bounds");
+		return nullptr;
+	}
+
+	if (!menu->submenu) {
+		warning("MacMenu::getSubMenuItem: menu %s doesn't have submenu", menu->text.c_str());
+		return nullptr;
+	}
+
+	if ((uint)itemId < menu->submenu->items.size())
+		return menu->submenu->items[itemId];
+
+	warning("MacMenu::getSubMenuItem: itemId %d out of bounds in menu %s", itemId, menu->text.c_str());
+	return nullptr;
+}
+
+int MacMenu::numberOfMenuItems(MacMenuItem *menu) {
+	if (!menu) {
+		warning("MacMenu::numberOfMenuItems: can not find menu with id %s", menu->text.c_str());
+		return 0;
+	}
+
+	if (!menu->submenu) {
+		warning("MacMenu::numberOfMenuItems: menu with id %s has no submenu", menu->text.c_str());
+		return 0;
+	}
+
+	return menu->submenu->items.size();
+}
+
 void MacMenu::addStaticMenus(const MacMenuData *data) {
 	MacMenuItem *about = new MacMenuItem(_wm->_fontMan->hasBuiltInFonts() ? "\xa9" : "\xf0"); // (c) Symbol as the most resembling apple
 	_items.push_back(about);
@@ -485,183 +570,47 @@ void MacMenu::loadMenuBarResource(Common::MacResManager *resFork, uint16 id) {
 	}
 }
 
-void MacMenu::setCheckMark(const Common::String &menuId, const Common::String &itemId, bool checkMark) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->checked = checkMark;
+void MacMenu::setCheckMark(MacMenuItem *menuItem, bool checkMark) {
+	if (menuItem) {
+		menuItem->checked = checkMark;
 		_contentIsDirty = true;
 	}
 }
 
-void MacMenu::setEnabled(const Common::String &menuId, const Common::String &itemId, bool enabled) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->enabled = enabled;
+void MacMenu::setEnabled(MacMenuItem *menuItem, bool enabled) {
+	if (menuItem) {
+		menuItem->enabled = enabled;
 		_contentIsDirty = true;
 	}
 }
 
-void MacMenu::setName(const Common::String &menuId, const Common::String &itemId, const Common::String &name) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->text = name;
+void MacMenu::setName(MacMenuItem *menuItem, const Common::String &name) {
+	if (menuItem) {
+		menuItem->text = name;
 		_contentIsDirty = true;
 	}
 }
 
-void MacMenu::setCheckMark(int menuId, int itemId, bool checkMark) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->checked = checkMark;
-		_contentIsDirty = true;
+void MacMenu::setAction(MacMenuItem *menuItem, int actionId) {
+	if (menuItem) {
+		menuItem->action = actionId;
 	}
 }
 
-void MacMenu::setEnabled(int menuId, int itemId, bool enabled) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->enabled = enabled;
-		_contentIsDirty = true;
-	}
+bool MacMenu::getCheckMark(MacMenuItem *menuItem) {
+	return menuItem ? menuItem->checked : false;
 }
 
-void MacMenu::setName(int menuId, int itemId, const Common::String &name) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->text = name;
-		_contentIsDirty = true;
-	}
+bool MacMenu::getEnabled(MacMenuItem *menuItem) {
+	return menuItem ? menuItem->enabled : false;
 }
 
-void MacMenu::setAction(const Common::String &menuId, const Common::String &itemId, int actionId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->action = actionId;
-	}
+Common::String MacMenu::getName(MacMenuItem *menuItem) {
+	return menuItem ? menuItem->text : Common::String();
 }
 
-void MacMenu::setAction(int menuId, int itemId, int actionId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	if (item) {
-		item->action = actionId;
-	}
-}
-
-bool MacMenu::getCheckMark(int menuId, int itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	// if item doesn't exist, this will be warned at findMenuItem
-	return item ? item->checked : false;
-}
-
-bool MacMenu::getCheckMark(const Common::String &menuId, const Common::String &itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	return item ? item->checked : false;
-}
-
-bool MacMenu::getEnabled(int menuId, int itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	return item ? item->enabled : false;
-}
-
-bool MacMenu::getEnabled(const Common::String &menuId, const Common::String &itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	return item ? item->enabled : false;
-}
-
-Common::String MacMenu::getName(int menuId, int itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	return item ? item->text : Common::String();
-}
-
-Common::String MacMenu::getName(const Common::String &menuId, const Common::String &itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	return item ? item->text : Common::String();
-}
-
-int MacMenu::getAction(int menuId, int itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	return item ? item->action : 0;
-}
-
-int MacMenu::getAction(const Common::String &menuId, const Common::String &itemId) {
-	MacMenuItem *item = findMenuItem(menuId, itemId);
-
-	return item ? item->action : 0;
-}
-
-MacMenuItem *MacMenu::findMenuItem(const Common::String &menuId, const Common::String &itemId) {
-	// TODO: support arbitrary level menu item finding
-	// only support 2 level finding now.
-
-	MacMenuItem *menu = nullptr;
-	for (uint i = 0; i < _items.size(); i++) {
-		// TODO: support unicode text menu
-		// didn't support unicode item finding yet
-		if (!_items[i]->unicode) {
-			if (_items[i]->text.equalsIgnoreCase(menuId)) {
-				menu = _items[i];
-				break;
-			}
-		}
-	}
-
-	if (!menu) {
-		warning("MacMenu::findMenuItem: can not find menu with id %s", menuId.c_str());
-		return nullptr;
-	}
-
-	if (!menu->submenu) {
-		warning("MacMenu::findMenuItem: menu %s doesn't have submenu", menuId.c_str());
-		return nullptr;
-	}
-
-	for (uint i = 0; i < menu->submenu->items.size(); i++) {
-		if (!menu->submenu->items[i]->unicode) {
-			if (menu->submenu->items[i]->text.equalsIgnoreCase(itemId))
-				return menu->submenu->items[i];
-		}
-	}
-
-	warning("MacMenu::findMenuItem: menu %s doesn't have item with id %s", menuId.c_str(), itemId.c_str());
-	return nullptr;
-}
-
-MacMenuItem *MacMenu::findMenuItem(int menuId, int itemId) {
-	MacMenuItem *menu = nullptr;
-
-	if ((uint)menuId < _items.size())
-		menu = _items[menuId];
-
-	if (!menu) {
-		warning("MacMenu::findMenuItem: menuId %d out of bounds", menuId);
-		return nullptr;
-	}
-
-	if (!menu->submenu) {
-		warning("MacMenu::findMenuItem: menu %d doesn't have submenu", menuId);
-		return nullptr;
-	}
-
-	if ((uint)itemId < menu->submenu->items.size())
-		return menu->submenu->items[itemId];
-
-	warning("MacMenu::findMenuItem: itemId %d out of bounds in menu %d", itemId, menuId);
-	return nullptr;
+int MacMenu::getAction(MacMenuItem *menuItem) {
+	return menuItem ? menuItem->action : 0;
 }
 
 void MacMenu::clearSubMenu(int id) {
@@ -1051,7 +1000,7 @@ bool MacMenu::draw(ManagedSurface *g, bool forceRedraw) {
 
 
 	for (uint i = 0; i < _menustack.size(); i++) {
-		renderSubmenu(_menustack[i], (i == _menustack.size() - 1));
+		renderSubmenu(g, _menustack[i], (i == _menustack.size() - 1));
 	}
 
 	if (g)
@@ -1063,7 +1012,7 @@ bool MacMenu::draw(ManagedSurface *g, bool forceRedraw) {
 	return true;
 }
 
-void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
+void MacMenu::renderSubmenu(ManagedSurface *g, MacMenuSubMenu *menu, bool recursive) {
 	Common::Rect *r = &menu->bbox;
 
 	if (r->width() == 0 || r->height() == 0)
@@ -1174,7 +1123,7 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 	}
 
 	if (recursive && menu->highlight != -1 && menu->items[menu->highlight]->submenu != nullptr)
-		renderSubmenu(menu->items[menu->highlight]->submenu, false);
+		renderSubmenu(g, menu->items[menu->highlight]->submenu, false);
 
 	if (_wm->_mode & kWMModalMenuMode) {
 		// TODO: Instead of cropping, reposition the submenu
@@ -1186,7 +1135,8 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 		if (r->top + h >= _screen.h)
 			h = _screen.h - 1 - r->top;
 
-		g_system->copyRectToScreen(_screen.getBasePtr(r->left, r->top), _screen.pitch, r->left, r->top, w, h);
+		g->transBlitFrom(_screen, _wm->_colorGreen);
+		g_system->copyRectToScreen(g->getBasePtr(r->left, r->top), g->pitch, r->left, r->top, w, h);
 	}
 }
 

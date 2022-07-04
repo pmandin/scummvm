@@ -48,6 +48,25 @@ CastMember::CastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndi
 	_flags1 = 0;
 
 	_modified = true;
+	_isChanged = false;
+
+	_objType = kCastMemberObj;
+
+	_widget = nullptr;
+	_erase = false;
+}
+
+CastMember::CastMember(Cast *cast, uint16 castId) : Object<CastMember>("CastMember") {
+	_type = kCastTypeNull;
+	_cast = cast;
+	_castId = castId;
+	_hilite = false;
+	_purgePriority = 3;
+	_size = 0;
+	_flags1 = 0;
+
+	_modified = true;
+	_isChanged = false;
 
 	_objType = kCastMemberObj;
 
@@ -59,6 +78,12 @@ CastMemberInfo *CastMember::getInfo() {
 	return _cast->getCastMemberInfo(_castId);
 }
 
+void CastMember::setModified(bool modified) {
+	_modified = modified;
+	if (modified)
+		_isChanged = true;
+}
+
 
 /////////////////////////////////////
 // Bitmap
@@ -68,6 +93,7 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 		: CastMember(cast, castId, stream) {
 	_type = kCastBitmap;
 	_img = nullptr;
+	_ditheredImg = nullptr;
 	_matte = nullptr;
 	_noMatte = false;
 	_bytes = 0;
@@ -170,9 +196,30 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 	_tag = castTag;
 }
 
+BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Image::ImageDecoder *img, uint8 flags1)
+	: CastMember(cast, castId) {
+	_type = kCastBitmap;
+	_matte = nullptr;
+	_noMatte = false;
+	_bytes = 0;
+	_img = img;
+	_ditheredImg = nullptr;
+	_clut = -1;
+	_initialRect = Common::Rect(0, 0, img->getSurface()->w, img->getSurface()->h);
+	_pitch = img->getSurface()->pitch;
+	_bitsPerPixel = img->getSurface()->format.bytesPerPixel * 8;
+	_regY = img->getSurface()->h / 2;
+	_regX = img->getSurface()->w / 2;
+	_flags1 = flags1;
+	_flags2 = 0;
+}
+
 BitmapCastMember::~BitmapCastMember() {
 	if (_img)
 		delete _img;
+
+	if (_ditheredImg)
+		delete _ditheredImg;
 
 	if (_matte)
 		delete _matte;
@@ -188,6 +235,11 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 	if (!bbox.width() || !bbox.height())
 		return nullptr;
 
+	// Check if we need to dither the image
+	if (g_director->_wm->_pixelformat.bytesPerPixel == 1 && _img->getSurface()->format.bytesPerPixel > 1) {
+		ditherFloydImage();
+	}
+
 	Graphics::MacWidget *widget = new Graphics::MacWidget(g_director->getCurrentWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, false);
 
 	// scale for drawing a different size sprite
@@ -197,6 +249,13 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 }
 
 void BitmapCastMember::copyStretchImg(Graphics::Surface *surface, const Common::Rect &bbox) {
+	const Graphics::Surface *srcSurf;
+
+	if (_ditheredImg)
+		srcSurf = _ditheredImg;
+	else
+		srcSurf = _img->getSurface();
+
 	if (bbox.width() != _initialRect.width() || bbox.height() != _initialRect.height()) {
 
 		int scaleX = SCALE_THRESHOLD * _initialRect.width() / bbox.width();
@@ -205,19 +264,143 @@ void BitmapCastMember::copyStretchImg(Graphics::Surface *surface, const Common::
 		for (int y = 0, scaleYCtr = 0; y < bbox.height(); y++, scaleYCtr += scaleY) {
 			if (g_director->_wm->_pixelformat.bytesPerPixel == 1) {
 				for (int x = 0, scaleXCtr = 0; x < bbox.width(); x++, scaleXCtr += scaleX) {
-					const byte *src = (const byte *)_img->getSurface()->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
+					const byte *src = (const byte *)srcSurf->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
 					*(byte *)surface->getBasePtr(x, y) = *src;
 				}
 			} else {
 				for (int x = 0, scaleXCtr = 0; x < bbox.width(); x++, scaleXCtr += scaleX) {
-					const int *src = (const int *)_img->getSurface()->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
+					const int *src = (const int *)srcSurf->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
 					*(int *)surface->getBasePtr(x, y) = *src;
 				}
 			}
 		}
 	} else {
-		surface->copyFrom(*_img->getSurface());
+		surface->copyFrom(*srcSurf);
 	}
+}
+
+void BitmapCastMember::ditherImage() {
+	// If palette did not change, do not re-dither
+	if (!_paletteLookup.setPalette(g_director->_wm->getPalette(), g_director->_wm->getPaletteSize()))
+		return;
+
+	int bpp = _img->getSurface()->format.bytesPerPixel;
+	int w = _initialRect.width();
+	int h = _initialRect.height();
+
+	_ditheredImg = new Graphics::Surface;
+	_ditheredImg->create(w, h, g_director->_pixelformat);
+
+	for (int y = 0; y < h; y++) {
+		const byte *src = (const byte *)_img->getSurface()->getBasePtr(0, y);
+		byte *dst = (byte *)_ditheredImg->getBasePtr(0, y);
+
+		for (int x = 0; x < w; x++) {
+			uint32 color;
+
+			switch (bpp) {
+			case 2:
+				color = *((const uint16 *)src);
+				src += 2;
+				break;
+			case 4:
+				color = *((const uint32 *)src);
+				src += 4;
+				break;
+			default:
+				error("BitmapCastMember::ditherImage(): Unsupported bit depth: %d", bpp);
+			}
+
+			byte r, g, b;
+			_img->getSurface()->format.colorToRGB(color, r, g, b);
+
+			*dst = _paletteLookup.findBestColor(r, g, b);
+			dst++;
+		}
+	}
+}
+
+static void updatePixel(byte *surf, int x, int y, int w, int h, int qr, int qg, int qb, int qq) {
+	if (x >= w || y >= h)
+		return;
+
+	byte *ptr = &surf[x * 3 + y * w * 3];
+
+	ptr[0] = CLIP(ptr[0] + qr * qq / 16, 0, 255);
+	ptr[1] = CLIP(ptr[1] + qg * qq / 16, 0, 255);
+	ptr[2] = CLIP(ptr[2] + qb * qq / 16, 0, 255);
+}
+
+void BitmapCastMember::ditherFloydImage() {
+	// If palette did not change, do not re-dither
+	if (!_paletteLookup.setPalette(g_director->_wm->getPalette(), g_director->_wm->getPaletteSize()))
+		return;
+
+	int w = _initialRect.width();
+	int h = _initialRect.height();
+
+	byte *tmpSurf = (byte *)malloc(w * h * 3);
+
+	int bpp = _img->getSurface()->format.bytesPerPixel;
+
+	for (int y = 0; y < h; y++) {
+		const byte *src = (const byte *)_img->getSurface()->getBasePtr(0, y);
+		byte *dst = &tmpSurf[y * w * 3];
+
+		for (int x = 0; x < w; x++) {
+			uint32 color;
+
+			switch (bpp) {
+			case 2:
+				color = *((const uint16 *)src);
+				src += 2;
+				break;
+			case 4:
+				color = *((const uint32 *)src);
+				src += 4;
+				break;
+			default:
+				error("BitmapCastMember::ditherImage(): Unsupported bit depth: %d", bpp);
+			}
+
+			byte r, g, b;
+			_img->getSurface()->format.colorToRGB(color, r, g, b);
+
+			dst[0] = r; dst[1] = g; dst[2] = b;
+			dst += 3;
+		}
+	}
+
+	_ditheredImg = new Graphics::Surface;
+	_ditheredImg->create(w, h, g_director->_pixelformat);
+
+	const byte *pal = g_director->_wm->getPalette();
+
+	for (int y = 0; y < h; y++) {
+		const byte *src = &tmpSurf[y * w * 3];
+		byte *dst = (byte *)_ditheredImg->getBasePtr(0, y);
+
+		for (int x = 0; x < w; x++) {
+			byte r = src[0], g = src[1], b = src[2];
+			byte col = _paletteLookup.findBestColor(r, g, b);
+
+			*dst = col;
+
+			int qr = r - pal[col * 3 + 0];
+			int qg = g = pal[col * 3 + 1];
+			int qb = b = pal[col * 3 + 2];
+
+			updatePixel(tmpSurf, x + 1, y,     w, h, qr, qg, qb, 7);
+			updatePixel(tmpSurf, x - 1, y + 1, w, h, qr, qg, qb, 3);
+			updatePixel(tmpSurf, x,     y + 1, w, h, qr, qg, qb, 5);
+			updatePixel(tmpSurf, x + 1, y + 1, w, h, qr, qg, qb, 1);
+
+			src += 3;
+			dst++;
+		}
+	}
+
+	free(tmpSurf);
 }
 
 void BitmapCastMember::createMatte(Common::Rect &bbox) {

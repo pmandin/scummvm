@@ -2576,6 +2576,7 @@ case $_host_os in
 			_optimization_level=-O0
 			append_var CXXFLAGS "-fno-omit-frame-pointer"
 			append_var CXXFLAGS "-fno-strict-aliasing"
+			define_in_config_if_yes "$_debug_build" 'DEBUG_BUILD'
 		fi
 		# When building dynamic, add everything possible as plugin
 		if test "$_dynamic_modules" = yes ; then
@@ -2876,12 +2877,12 @@ EOF
 	emscripten)
 		# mandatory emscripten flags
 		append_var LDFLAGS "-s ALLOW_MEMORY_GROWTH=1 -s ASYNCIFY -s FORCE_FILESYSTEM=1"
-	
+
 		append_var DEFINES "-DEMSCRIPTEN"
 		add_line_to_config_mk 'EMSCRIPTEN = 1'
 
 		if test "$_debug_build" = yes; then
-			_optimization_level=-O2 
+			_optimization_level=-O2
 			append_var LDFLAGS "-O2 -g3 -s ASSERTIONS=2"
 		else
 			_optimization_level=-O3
@@ -2895,13 +2896,13 @@ EOF
 			_freetypepath="$EMSCRIPTEN/cache/ports-builds/freetype/"
 			FREETYPE2_CFLAGS="-I$_freetypepath/include" # there were link errors / missing symbols without this
 			_freetype_found="true"
-		else 
+		else
 			#use link time optimization to further reduce exe size (this can't be used with setjmp whcih freetype requires)
 			# TODO: Figure out why this is a conflict and/or if freetype can be built without setjmp
 			append_var CXXFLAGS "-flto"
 			append_var LDFLAGS "-flto"
 		fi
-		if test "$_jpeg" != no; then 
+		if test "$_jpeg" != no; then
 			append_var LDFLAGS "-s USE_LIBJPEG=1"
 		fi
 		if test "$_png" != no; then
@@ -2909,8 +2910,8 @@ EOF
 		fi
 		if test "$_sdl" != no; then
 			append_var LDFLAGS "-s USE_SDL=2 "
-		fi 
-		if test "$_vorbis" != no; then 
+		fi
+		if test "$_vorbis" != no; then
 			append_var LDFLAGS "-s USE_OGG=1" # vorbis needs to be linked against OGG (even if we use an external vorbis lib)
 		fi
 		if test "$_zlib" != no; then
@@ -3837,12 +3838,16 @@ if test "$_sdl" = yes ; then
 	append_var INCLUDES "$SDL_CFLAGS"
 	append_var LIBS "$SDL_LIBS"
 	case $_sdlversion in
-		2.0.*)
+		2.*.*)
 			add_line_to_config_mk "USE_SDL2 = 1"
 			_sdlMajorVersionNumber=2
 			;;
-		*)
+		1.2.*)
 			_sdlMajorVersionNumber=1
+			;;
+		*)
+			echo "support for SDL $_sdlversion not implemented yet"
+			exit 1
 			;;
 	esac
 fi
@@ -5412,7 +5417,7 @@ if test "$_opengl_mode" != none ; then
 					_opengl_mode=gl
 					;;
 
-				2.0.*)
+				*)
 					# SDL2 supports both OpenGL + OpenGL ES contexts.
 					# However, macOS only allows OpenGL context creation at
 					# this time, thus we limit us to OpenGL on that platform.
@@ -5538,12 +5543,6 @@ fi
 
 _opengl=yes
 case $_opengl_mode in
-	auto)
-		# This case should never occur but better safe than sorry.
-		echo "no"
-		_opengl=no
-		;;
-
 	none)
 		echo "no"
 		_opengl=no

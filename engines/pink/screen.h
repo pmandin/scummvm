@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef PINK_DIRECTOR_H
-#define PINK_DIRECTOR_H
+#ifndef PINK_SCREEN_H
+#define PINK_SCREEN_H
 
 #include "common/array.h"
 #include "common/rect.h"
@@ -41,10 +41,10 @@ class ActionSound;
 class ActionText;
 class PinkEngine;
 
-class Director {
+class Screen {
 public:
-	Director(PinkEngine *vm);
-	~Director();
+	Screen(PinkEngine *vm);
+	~Screen();
 
 	void update();
 	bool processEvent(Common::Event &event);

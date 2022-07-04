@@ -50,13 +50,7 @@ void standard_init() {
 	_G(out)->cls();
 	_G(scr_width) = 0;
 
-	// WORKAROUND: Moved from init_load because the original
-	// uses _G(curtaf)->_image below before _G(curtaf) was initialized
-	_G(curtaf) = _G(mem)->taf_adr(CURSOR_TAF);
-
-	_G(curblk).sprite = _G(curtaf)->image;
-	
-	_G(cur) = new Cursor(&_G(curblk));
+	_G(cur) = new Cursor();
 	_G(cur)->setAnimation(0, 0, 0);
 
 	alloc_buffers();
@@ -93,7 +87,7 @@ void var_init() {
 	new_game();
 	_G(gameState).MainMenuY = MENU_Y;
 	_G(gameState).DispFlag = true;
-	_G(gameState).AkInvent = -1;
+	_G(cur)->setInventoryCursor(-1);
 	_G(gameState).ScrollxStep = 1;
 	_G(gameState).ScrollyStep = 1;
 
@@ -139,7 +133,6 @@ void var_init() {
 	_G(pfeil_delay) = 0;
 	_G(pfeil_ani) = 0;
 	_G(timer_action_ctr) = 0;
-	_G(flags).CursorStatus = true;
 	_G(savegameFlag) = false;
 }
 
@@ -170,20 +163,6 @@ void new_game() {
 	_G(obj)->load(INVENTORY_IIB, &_G(gameState).room_m_obj[0]);
 	_G(obj)->load(INVENTORY_SIB, &_G(gameState).room_s_obj[0]);
 	_G(obj)->load(EXIT_EIB, &_G(gameState).room_e_obj[0]);
-
-	Common::File f;
-
-	if (!f.open(ROOM_ATS_STEUER))
-		error("Error reading file: %s", ROOM_ATS_STEUER);
-	for (int16 i = 0; i < ROOM_ATS_MAX; i++)
-		_G(gameState).Ats[i * MAX_ATS_STATUS] = f.readByte();
-	f.close();
-
-	if (!f.open(INV_ATS_STEUER))
-		error("Error reading file: %s", INV_ATS_STEUER);
-	for (int16 i = 0; i < MAX_MOV_OBJ; i++)
-		_G(gameState).InvAts[i * MAX_ATS_STATUS] = f.readByte();
-	f.close();
 
 	_G(obj)->sort();
 	for (int16 i = 0; i < _G(obj)->spieler_invnr[0]; i++)

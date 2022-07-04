@@ -86,7 +86,6 @@ public:
 
 	int16 _pfeil_ani = 0;
 	int16 _pfeil_delay = 0;
-	int16 _cur_hide_flag = 0;
 	int16 _auto_p_nr = 0;
 
 	int16 _zoom_horizont = 0;
@@ -94,7 +93,6 @@ public:
 
 	int16 _auto_obj = 0;
 
-	bool _cur_display = false;
 	int16 _mouseLeftClick = 0;
 	Common::String _calc_inv_text_str1, _calc_inv_text_str2;
 	bool _stopAutoMove[3] = { false };
@@ -177,7 +175,6 @@ public:
 	RoomDetailInfo *_Rdi = nullptr;
 	StaticDetailInfo *_Sdi = nullptr;
 	AniDetailInfo *_Adi = nullptr;
-	TafInfo *_curtaf = nullptr;
 	TafInfo *_menutaf = nullptr;
 	TafSeqInfo *_howard_taf = nullptr;
 	TafInfo *_chewy = nullptr;
@@ -204,12 +201,12 @@ public:
 	bool _ani_stand_flag[MAX_PERSON] = { false };
 
 	MouseInfo _minfo;
-	CurBlk _curblk;
 	RaumBlk _room_blk;
 	Flags _flags = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0 };
+					0, 0, 0, 0, 0, 0, 0, 0 };
 	CustomInfo _Ci;
 	GotoPkt _gpkt;
+	bool _disableScreen = false;
 
 	int16 _r45_pinfo[R45_MAX_PERSON][4] = {
 	   { 0, 4, 1490, 1500 },
@@ -325,7 +322,7 @@ void kb_mov(int16 mode);
 void kb_cur_action(int16 key, int16 mode);
 void mouseAction();
 
-void evaluateObj(int16 testNr, int16 txt_nr);
+void evaluateObj(int16 objectId, int16 txt_nr);
 
 void swap_if_l(int16 *x1, int16 *x2);
 
@@ -342,7 +339,7 @@ void delInventory(int16 nr);
 
 bool isCurInventory(int16 nr);
 
-void checkShadow(int16 palIdx, int16 mode);
+void setShadowPalette(int16 palIdx, bool setPartialPalette);
 
 void get_scroll_off(int16 x, int16 y, int16 pic_x, int16 pic_y,
                     int16 *sc_x, int16 *sc_y);
@@ -419,7 +416,7 @@ void handleDialogCloseupMenu();
 
 void stopDialogCloseupDialog();
 
-void play_scene_ani(int16 nr, int16 mode);
+void play_scene_ani(int16 nr, int16 direction);
 
 void timer_action(int16 t_nr);
 
@@ -439,7 +436,7 @@ uint16 exit_flip_flop(int16 ani_nr, int16 eib_nr1, int16 eib_nr2,
                         int16 ats_nr1, int16 ats_nr2, int16 sib_nr,
                         int16 spr_nr1, int16 spr_nr2, int16 flag);
 
-int16 loadDialogCloseup(int16 diaNr);
+void loadDialogCloseup(int16 diaNr);
 
 void setSsiPos();
 

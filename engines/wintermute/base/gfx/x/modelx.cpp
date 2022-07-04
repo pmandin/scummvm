@@ -149,14 +149,19 @@ static XFileLexer createXFileLexer(byte *&buffer, uint32 fileSize) {
 IMPLEMENT_PERSISTENT(ModelX, false)
 
 //////////////////////////////////////////////////////////////////////////
-ModelX::ModelX(BaseGame *inGame, BaseObject *owner) : BaseObject(inGame),
-	                                              _owner(owner), _lastOffsetX(0), _lastOffsetY(0),
-	                                              _BBoxStart(0.0f, 0.0f, 0.0f), _BBoxEnd(0.0f, 0.0f, 0.0f),
-	                                              _rootFrame(nullptr) {
+ModelX::ModelX(BaseGame *inGame, BaseObject *owner) : BaseObject(inGame) {
+	_owner = owner;
+
+	_rootFrame = nullptr;
+
 	_drawingViewport.setEmpty();
 	_lastWorldMat.setToIdentity();
 	_lastViewMat.setToIdentity();
 	_lastProjMat.setToIdentity();
+	_lastOffsetX = _lastOffsetY = 0;
+
+	_BBoxStart = Math::Vector3d(0.0f, 0.0f, 0.0f);
+	_BBoxEnd = Math::Vector3d(0.0f, 0.0f, 0.0f);
 	_boundingRect.setEmpty();
 
 	for (int i = 0; i < X_NUM_ANIMATION_CHANNELS; i++) {
@@ -183,14 +188,12 @@ void ModelX::cleanup(bool complete) {
 	for (uint32 i = 0; i < _animationSets.size(); i++) {
 		delete _animationSets[i];
 	}
-
 	_animationSets.clear();
 
 	if (complete) {
 		for (uint i = 0; i < _mergedModels.size(); ++i) {
 			delete[] _mergedModels[i];
 		}
-
 		_mergedModels.clear();
 	}
 
@@ -198,13 +201,11 @@ void ModelX::cleanup(bool complete) {
 		delete _matSprites[i];
 		_matSprites[i] = nullptr;
 	}
-
 	_matSprites.clear();
 
 	for (uint i = 0; i < _materialReferences.size(); ++i) {
 		delete _materialReferences[i]._material;
 	}
-
 	_materialReferences.clear();
 
 	// remove root frame
@@ -220,24 +221,24 @@ void ModelX::cleanup(bool complete) {
 bool ModelX::loadFromFile(const Common::String &filename, ModelX *parentModel) {
 	cleanup(false);
 
+	_parentModel = parentModel;
+
 	uint32 fileSize = 0;
 	byte *buffer = BaseFileManager::getEngineInstance()->getEngineInstance()->readWholeFile(filename, &fileSize);
 	XFileLexer lexer = createXFileLexer(buffer, fileSize);
 
-	bool res = true;
-
-	_parentModel = parentModel;
 	_rootFrame = new FrameNode(_gameRef);
-	res = _rootFrame->loadFromXAsRoot(filename, lexer, this, _materialReferences);
-	setFilename(filename.c_str());
+
+	bool res = _rootFrame->loadFromXAsRoot(filename, lexer, this, _materialReferences);
+	if (res) {
+		findBones(false, parentModel);
+	}
 
 	for (int i = 0; i < X_NUM_ANIMATION_CHANNELS; ++i) {
 		_channels[i] = new AnimationChannel(_gameRef, this);
 	}
 
-	if (res) {
-		findBones(false, parentModel);
-	}
+	setFilename(filename.c_str());
 
 	delete[] buffer;
 
@@ -245,6 +246,10 @@ bool ModelX::loadFromFile(const Common::String &filename, ModelX *parentModel) {
 }
 
 bool ModelX::mergeFromFile(const Common::String &filename) {
+	if (!_rootFrame) {
+		return false;
+	}
+
 	uint32 fileSize = 0;
 	byte *buffer = BaseFileManager::getEngineInstance()->getEngineInstance()->readWholeFile(filename, &fileSize);
 	XFileLexer lexer = createXFileLexer(buffer, fileSize);
@@ -819,6 +824,7 @@ bool ModelX::initializeSimple() {
 			_rootFrame->setMaterialSprite(_matSprites[i]->_matName, _matSprites[i]->_sprite);
 		}
 	}
+	// TODO: Effects
 
 	if (_parentModel) {
 		findBones(false, _parentModel);
@@ -923,6 +929,9 @@ bool ModelX::persist(BasePersistenceManager *persistMgr) {
 			_matSprites.add(MatSprite);
 		}
 	}
+
+	if (!persistMgr->getIsSaving())
+		initializeSimple();
 
 	return true;
 }

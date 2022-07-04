@@ -86,7 +86,7 @@ static bool ShouldStayInWaitMode();
 #define UNTIL_ANIMBTNEND 9
 
 static void ProperExit() {
-	_G(want_exit) = 0;
+	_G(want_exit) = false;
 	_G(proper_exit) = 1;
 	quit("||exit!");
 }
@@ -322,6 +322,7 @@ bool run_service_key_controls(KeyInput &out_key) {
 
 	// Alt+X, abort (but only once game is loaded)
 	if ((_G(displayed_room) >= 0) && (_GP(play).abort_key > 0 && agskey == _GP(play).abort_key)) {
+		Debug::Printf("Abort key pressed");
 		_G(check_dynamic_sprites_at_exit) = 0;
 		quit("!|");
 	}
@@ -1041,7 +1042,7 @@ void update_polled_stuff_if_runtime() {
 	::AGS::g_events->pollEvents();
 
 	if (_G(want_exit)) {
-		_G(want_exit) = 0;
+		_G(want_exit) = false;
 		quit("||exit!");
 
 	} else if (_G(editor_debugging_initialized))

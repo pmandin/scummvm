@@ -42,6 +42,7 @@ namespace BladeRunner {
 static const PlainGameDescriptor bladeRunnerGames[] = {
 	{"bladerunner", "Blade Runner"},
 	{"bladerunner-final", "Blade Runner with restored content"},
+	{"bladerunner-ee", "Blade Runner: Enhanced Edition"},
 	{nullptr, nullptr}
 };
 
@@ -97,6 +98,17 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			_s("When running, McCoy won't start slowing down as soon as the player stops clicking the mouse"),
 			"disable_stamina_drain",
 			false,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_SHOW_SUBS_IN_CRAWL,
+		{
+			_s("Show subtitles during text crawl"),
+			_s("During the intro cutscene, show subtitles during the text crawl"),
+			"use_crawl_subs",
+			true,
 			0,
 			0
 		}

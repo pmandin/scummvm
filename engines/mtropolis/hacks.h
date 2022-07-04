@@ -19,21 +19,53 @@
  *
  */
 
+#ifndef MTROPOLIS_HACKS_H
+#define MTROPOLIS_HACKS_H
+
+#include "common/rect.h"
+#include "common/ptr.h"
+#include "common/hashmap.h"
+
 namespace MTropolis {
+
+class AssetHooks;
+class ModifierHooks;
+class SaveLoadHooks;
+class SceneTransitionHooks;
+class StructuralHooks;
+struct IAutoSaveProvider;
+struct MTropolisGameDescription;
 
 struct Hacks {
 	Hacks();
+	~Hacks();
 
-	// Workaround for bug in Obsidian:
-	// When opening the journal in the intro, a script checks if cGSt.cfst.binjournal is false and if so,
-	// sets cGSt.cfst.binjournal to true and then sets including setting cJournalConst.aksjournpath to the
-	// main journal scene path.  That scene path is used to resolve the scene to go to after clicking
-	// the "Continue" button on the warning that pops up.
-	//
-	// The problem is that cJournalConst uses a project name that doesn't match the retail data, and
-	// cJournalConst is unloaded if the player leaves the journal.  This causes a progression blocker if
-	// the player leaves the journal without clicking Continue.
+	void addStructuralHooks(uint32 guid, const Common::SharedPtr<StructuralHooks> &hooks);
+	void addModifierHooks(uint32 guid, const Common::SharedPtr<ModifierHooks> &hooks);
+	void addAssetHooks(const Common::SharedPtr<AssetHooks> &hooks);
+	void addSceneTransitionHooks(const Common::SharedPtr<SceneTransitionHooks> &hooks);
+	void addSaveLoadHooks(const Common::SharedPtr<SaveLoadHooks> &hooks);
+
 	bool ignoreMismatchedProjectNameInObjectLookups;
+
+	Common::Point reportDisplaySize;	// If X or Y is non-zero, report this as the display size
+	Common::Point mainWindowOffset;		// Coordinate offset of the main window
+
+	Common::HashMap<uint32, Common::SharedPtr<StructuralHooks> > structuralHooks;
+	Common::HashMap<uint32, Common::SharedPtr<ModifierHooks> > modifierHooks;
+	Common::Array<Common::SharedPtr<SceneTransitionHooks> > sceneTransitionHooks;
+	Common::Array<Common::SharedPtr<AssetHooks> > assetHooks;
+	Common::Array<Common::SharedPtr<SaveLoadHooks> > saveLoadHooks;
 };
 
+namespace HackSuites {
+
+void addObsidianBugFixes(const MTropolisGameDescription &desc, Hacks &hacks);
+void addObsidianAutoSaves(const MTropolisGameDescription &desc, Hacks &hacks, IAutoSaveProvider *autoSaveProvider);
+void addObsidianImprovedWidescreen(const MTropolisGameDescription &desc, Hacks &hacks);
+
+} // End of namespace HackSuites
+
 } // End of namespace MTropolis
+
+#endif

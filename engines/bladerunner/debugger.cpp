@@ -1396,7 +1396,7 @@ bool Debugger::cmdOverlay(int argc, const char **argv) {
 bool Debugger::cmdSubtitle(int argc, const char **argv) {
 	bool invalidSyntax = false;
 
-	if (argc != 2) {
+	if (argc != 2 && argc != 3) {
 		invalidSyntax = true;
 	} else {
 		if (!_vm->_subtitles->isSystemActive()) {
@@ -1404,6 +1404,15 @@ bool Debugger::cmdSubtitle(int argc, const char **argv) {
 		}
 
 		Common::String subtitleText = argv[1];
+		int subtitleRole = BladeRunner::Subtitles::kSubtitlesPrimary;
+		if (argc == 3) {
+			subtitleRole = atoi(argv[2]);
+			// Just interpret any number other than 0 as secondary subtitles
+			if (subtitleRole != BladeRunner::Subtitles::kSubtitlesPrimary) {
+				subtitleRole = BladeRunner::Subtitles::kSubtitlesSecondary;
+			}
+		}
+
 		if (subtitleText == "info") {
 			debugPrintf("Subtitles version info: v%s (%s) %s\nCredits:\n%s\n",
 			            _vm->_subtitles->getSubtitlesInfo().versionStr.c_str(),
@@ -1414,21 +1423,39 @@ bool Debugger::cmdSubtitle(int argc, const char **argv) {
 			            _vm->_subtitles->getSubtitlesInfo().fontName.c_str());
 
 		} else if (subtitleText == "reset") {
-			_vm->_subtitles->setGameSubsText("", false);
+			if (argc == 2) {
+				_vm->_subtitles->setGameSubsText(BladeRunner::Subtitles::kSubtitlesPrimary, "", false);
+				_vm->_subtitles->setGameSubsText(BladeRunner::Subtitles::kSubtitlesSecondary, "", false);
+			} else {
+				_vm->_subtitles->setGameSubsText(subtitleRole, "", false);
+			}
+		} else if (subtitleText == "printExtAscii") {
+			// Test displaying all glyphs in subtitles font
+			Common::String allGlyphQuote;
+			int strpos = 0;
+			for (int j = 1; j < 8; ++j) {
+				for (int i = j * 32; i < (j + 1) * 32 && i < 255 ; ++i) {
+					allGlyphQuote.insertChar((char)i, strpos++);
+					allGlyphQuote.insertChar(' ', strpos++);
+				}
+				if (j < 7) allGlyphQuote.insertChar('\n', strpos++);
+			}
+			_vm->_subtitles->setGameSubsText(subtitleRole, allGlyphQuote, true);
+			_vm->_subtitles->show(subtitleRole);
 		} else {
 			debugPrintf("Showing text: %s\n", subtitleText.c_str());
-			_vm->_subtitles->setGameSubsText(subtitleText, true);
-			_vm->_subtitles->show();
+			_vm->_subtitles->setGameSubsText(subtitleRole, subtitleText, true);
+			_vm->_subtitles->show(subtitleRole);
 		}
 	}
 
 	if (invalidSyntax) {
 		debugPrintf("Show subtitles info, or display and clear (reset) a specified text as subtitle or clear the current subtitle.\n");
 		debugPrintf("Use double quotes to encapsulate the text.\n");
-		debugPrintf("Usage: %s (\"<text_to_display>\" | info | reset)\n", argv[0]);
+		debugPrintf("SubtitleRole can be 0 (primary) or 1 (secondary).\n");
+		debugPrintf("Usage: %s (info | \"<text_to_display>\" [subtitleRole] | printExtAscii [subtitleRole]  | reset [subtitleRole])\n", argv[0]);
 	}
 	return true;
-
 }
 
 /**

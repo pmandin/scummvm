@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -154,7 +155,7 @@ int16 Room49::use_boy() {
 		action_ret = true;
 		hideCur();
 		autoMove(3, P_CHEWY);
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		talk_boy(265);
 		_G(gameState).R49WegFrei = true;
 		_G(gameState).room_e_obj[80].Attribut = EXIT_TOP;
@@ -170,7 +171,7 @@ int16 Room49::use_boy() {
 
 void Room49::use_boy_cigar() {
 	hideCur();
-	delInventory(_G(gameState).AkInvent);
+	delInventory(_G(cur)->getInventoryCursor());
 	talk_boy(263);
 	_G(SetUpScreenFunc) = nullptr;
 	autoMove(5, P_CHEWY);
@@ -241,7 +242,7 @@ void Room49::look_hotel() {
 int16 Room49::use_taxi() {
 	int16 action_ret = false;
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_ret = true;
 		hideCur();
 		startAniBlock(2, ABLOCK34);

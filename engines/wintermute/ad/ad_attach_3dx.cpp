@@ -40,7 +40,8 @@ namespace Wintermute {
 IMPLEMENT_PERSISTENT(AdAttach3DX, false)
 
 //////////////////////////////////////////////////////////////////////////
-AdAttach3DX::AdAttach3DX(BaseGame *inGame, BaseObject *owner) : AdObject3D(inGame), _owner(owner) {
+AdAttach3DX::AdAttach3DX(BaseGame *inGame, BaseObject *owner) : AdObject3D(inGame) {
+	_owner = owner;
 	_dropToFloor = false;
 }
 
@@ -58,7 +59,6 @@ bool AdAttach3DX::init(const char *modelFile, const char *name, const char *pare
 	setName(name);
 
 	_modelX = new ModelX(_gameRef, _owner);
-
 	if (!_modelX) {
 		return false;
 	}

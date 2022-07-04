@@ -68,7 +68,6 @@ enum SetupScreenMode {
 #define CUR_INVENT 5
 #define CUR_NO_WALK 6
 #define CUR_NOPE 7
-#define CUR_AK_INVENT 8
 #define CUR_NO_USE 10
 #define CUR_NO_LOOK 11
 #define CUR_NO_TALK 12
@@ -80,9 +79,9 @@ enum SetupScreenMode {
 
 #define CUR_DISK 18
 #define CUR_HOWARD 19
-#define CUR_ZEIGE 20
+#define CUR_POINT 20
 #define CUR_NICHELLE 21
-#define CUR_22 22
+#define CUR_BLASTER 22
 #define EXIT_LEFT_SPR 26
 #define EXIT_RIGHT_SPR 27
 #define EXIT_ABOVE_SPR 28
@@ -100,7 +99,7 @@ enum SetupScreenMode {
 #define WIN_INF_Y 15
 #define WIN_LOOK_X 30
 #define WIN_LOOK_Y 150
-#define PFEIL_UP 26
+#define ARROW_UP 26
 #define INVENTORY_HOTSPOTS_COUNT 8
 #define HOT_LOOK_NR 2
 #define MES_RAHMEN 1
@@ -405,7 +404,6 @@ enum SetupScreenMode {
 #define AUTO_OBJ4 4
 #define MAX_OBJ_MOV 3
 
-#define ROOM_ATS_MAX 1000
 #define INV_USE_ATS_MAX 500
 #define ATS_ACTION_VOR 0
 #define ATS_ACTION_NACH 1

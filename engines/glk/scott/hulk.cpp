@@ -19,12 +19,23 @@
  *
  */
 
-#include "glk/scott/hulk.h"
-#include "glk/scott/definitions.h"
-#include "glk/scott/detect_game.h"
-#include "glk/scott/globals.h"
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
+
 #include "glk/scott/scott.h"
+#include "glk/scott/definitions.h"
+#include "glk/scott/resource.h"
+#include "glk/scott/globals.h"
 #include "glk/scott/types.h"
+#include "glk/scott/hulk.h"
 
 namespace Glk {
 namespace Scott {
@@ -113,7 +124,8 @@ void drawHulkImage(int p) {
 		image = 42;
 		break;
 	default:
-		error("Unhandled image number %d!\n", p);
+
+		error("drawHulkImage: Unhandled image number %d", p);
 		break;
 	}
 
@@ -403,6 +415,15 @@ int tryLoadingHulk(GameInfo info, int dictStart) {
 		}
 		ct++;
 	}
+
+	if (CURRENT_GAME == HULK_C64) {
+		_G(_hulkCoordinates) = 0x22cd;
+		_G(_hulkItemImageOffsets) = 0x2731;
+		_G(_hulkLookImageOffsets) = 0x2761;
+		_G(_hulkSpecialImageOffsets) = 0x2781;
+		_G(_hulkImageOffset) = -0x7ff;
+	}
+
 	return 1;
 }
 

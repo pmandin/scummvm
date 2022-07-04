@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -96,8 +97,8 @@ void Room32::use_schreibmaschine() {
 
 	hideCur();
 	if (_G(gameState).R32HowardWeg) {
-		if (_G(gameState).inv_cur) {
-			switch (_G(gameState).AkInvent) {
+		if (_G(cur)->usingInventoryCursor()) {
+			switch (_G(cur)->getInventoryCursor()) {
 			case CYB_KRONE_INV:
 				if (!_G(gameState).R32UseSchreib) {
 					if (!_G(gameState).R32PapierOk) {
@@ -122,7 +123,7 @@ void Room32::use_schreibmaschine() {
 				autoMove(2, P_CHEWY);
 				_G(gameState).R32PapierOk = true;
 				start_spz_wait(CH_LGET_O, 1, false, P_CHEWY);
-				delInventory(_G(gameState).AkInvent);
+				delInventory(_G(cur)->getInventoryCursor());
 				_G(atds)->set_ats_str(231, TXT_MARK_LOOK, 1, ATS_DATA);
 				ani_nr = CH_TALK3;
 				dia_nr = 86;
@@ -151,7 +152,7 @@ void Room32::use_schreibmaschine() {
 int16 Room32::get_script() {
 	int16 action_flag = false;
 
-	if (!_G(gameState).inv_cur && !_G(gameState).R32Script && _G(gameState).R32UseSchreib) {
+	if (!_G(cur)->usingInventoryCursor() && !_G(gameState).R32Script && _G(gameState).R32UseSchreib) {
 		action_flag = true;
 		_G(gameState).R32Script = true;
 		autoMove(4, P_CHEWY);

@@ -313,7 +313,7 @@ void Detail::showStaticSpr(int16 nr) {
 
 void Detail::setStaticPos(int16 detNr, int16 x, int16 y, bool hideFl, bool correctionFlag) {
 	if (correctionFlag) {
-		int16 *Cxy = &_rdi.dptr->correction[_rdi.Sinfo[detNr].SprNr];
+		int16 *Cxy = &_rdi.dptr->correction[_rdi.Sinfo[detNr].SprNr * 2];
 		x += Cxy[0];
 		y += Cxy[1];
 	}
@@ -322,7 +322,7 @@ void Detail::setStaticPos(int16 detNr, int16 x, int16 y, bool hideFl, bool corre
 	_rdi.Sinfo[detNr].Hide = hideFl;
 }
 
-void Detail::setSetailPos(int16 detNr, int16 x, int16 y) {
+void Detail::setDetailPos(int16 detNr, int16 x, int16 y) {
 	_rdi.Ainfo[detNr].x = x;
 	_rdi.Ainfo[detNr].y = y;
 }
@@ -404,9 +404,7 @@ void Detail::plot_ani_details(int16 scrx, int16 scry, int16 start, int16 end, in
 					if ((adiptr->sfx.sound_start[k] == adiptr->ani_count) &&
 					        (!adiptr->delay_count)) {
 						const uint channel = adiptr->sfx.kanal[k] & 7;
-						sound->setSoundChannelBalance(channel, adiptr->sfx.stereo[k]);
-						sound->setSoundChannelVolume(channel, adiptr->sfx.volume[k]);
-						sound->playSound(soundEffect, channel,	adiptr->sfx.repeats[k]);
+						sound->playSound(soundEffect, channel, adiptr->sfx.repeats[k], adiptr->sfx.volume[k], adiptr->sfx.stereo[k]);
 					}
 				}
 			}
@@ -545,9 +543,7 @@ SprInfo Detail::plot_detail_sprite(int16 scrx, int16 scry, int16 det_nr, int16 s
 		        (_rdi.sample[soundEffect])) {
 			if (adiptr->sfx.sound_start[k] == spr_nr) {
 				const uint channel = adiptr->sfx.kanal[k] & 7;
-				sound->setSoundChannelBalance(channel, adiptr->sfx.stereo[k]);
-				sound->setSoundChannelVolume(channel, adiptr->sfx.volume[k]);
-				sound->playSound(soundEffect, channel, adiptr->sfx.repeats[k]);
+				sound->playSound(soundEffect, channel, adiptr->sfx.repeats[k], adiptr->sfx.volume[k], adiptr->sfx.stereo[k]);
 			}
 		}
 	}
@@ -594,9 +590,7 @@ void Detail::play_detail_sound(int16 nr) {
 		if ((sdb->sound_enable[k]) && (sdb->sound_index[k] != -1) &&
 		        (_rdi.sample[sdb->sound_index[k]])) {
 			const uint channel = sdb->kanal[k] & 7;
-			sound->setSoundChannelBalance(channel, sdb->stereo[k]);
-			sound->setSoundChannelVolume(channel, sdb->volume[k]);
-			sound->playSound(sdb->sound_index[k], channel, sdb->repeats[k]);
+			sound->playSound(sdb->sound_index[k], channel, sdb->repeats[k], sdb->volume[k], sdb->stereo[k]);
 		}
 	}
 }

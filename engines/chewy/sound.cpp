@@ -46,18 +46,18 @@ Sound::~Sound() {
 	delete _speechRes;
 }
 
-void Sound::playSound(int num, uint channel, bool loop) {
+void Sound::playSound(int num, uint channel, bool loop, uint16 volume, uint16 balance) {
 	SoundChunk *sound = _soundRes->getSound(num);
 	uint8 *data = (uint8 *)MALLOC(sound->size);
 	memcpy(data, sound->data, sound->size);
 
-	playSound(data, sound->size, channel, loop);
+	playSound(data, sound->size, channel, loop, volume, balance);
 
 	delete[] sound->data;
 	delete sound;
 }
 
-void Sound::playSound(uint8 *data, uint32 size, uint channel, bool loop, DisposeAfterUse::Flag dispose) {
+void Sound::playSound(uint8 *data, uint32 size, uint channel, bool loop, uint16 volume, uint16 balance, DisposeAfterUse::Flag dispose) {
 	stopSound(channel);
 
 	Audio::AudioStream *stream = Audio::makeLoopingAudioStream(
@@ -66,7 +66,8 @@ void Sound::playSound(uint8 *data, uint32 size, uint channel, bool loop, Dispose
 			dispose),
 		loop ? 0 : 1);
 
-	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundHandle[channel], stream);
+	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_soundHandle[channel], stream, -1,
+		convertVolume(volume), convertBalance(balance));
 }
 
 void Sound::pauseSound(uint channel) {
@@ -94,36 +95,24 @@ bool Sound::isSoundActive(uint channel) const {
 	return _mixer->isSoundHandleActive(_soundHandle[channel]);
 }
 
-void Sound::setSoundVolume(uint volume) {
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, volume);
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, volume);
+void Sound::setUserSoundVolume(uint volume) {
+	_userSoundVolume = volume;
+	if (soundEnabled())
+		ConfMan.setInt("sfx_volume", volume);
 }
 
-int Sound::getSoundVolume() const {
-	return _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
-}
-
-void Sound::pushVolume() {
-	_soundVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
-	_speechVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType);
-	_musicVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
-}
-
-void Sound::popVolume() {
-	assert(_soundVolume >= 0 && _speechVolume >= 0 && _musicVolume >= 0);
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, _soundVolume);
-	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, _speechVolume);
-	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, _musicVolume);
+int Sound::getUserSoundVolume() const {
+	return _userSoundVolume;
 }
 
 void Sound::setSoundChannelVolume(uint channel, uint volume) {
 	assert(channel < MAX_SOUND_EFFECTS);
-	_mixer->setChannelVolume(_soundHandle[channel], volume);
+	_mixer->setChannelVolume(_soundHandle[channel], convertVolume(volume));
 }
 
 void Sound::setSoundChannelBalance(uint channel, int8 balance) {
 	assert(channel < MAX_SOUND_EFFECTS);
-	_mixer->setChannelBalance(_soundHandle[channel], balance);
+	_mixer->setChannelBalance(_soundHandle[channel], convertBalance(balance));
 }
 
 void Sound::playMusic(int16 num, bool loop) {
@@ -137,11 +126,11 @@ void Sound::playMusic(int16 num, bool loop) {
 	delete[] data;
 }
 
-void Sound::playMusic(uint8 *data, uint32 size) {
+void Sound::playMusic(uint8 *data, uint32 size, uint8 volume) {
 	TMFStream *stream = new TMFStream(new Common::MemoryReadStream(data, size), 0);
 	_curMusic = -1;
 
-	_mixer->playStream(Audio::Mixer::kMusicSoundType, &_musicHandle, stream);
+	_mixer->playStream(Audio::Mixer::kMusicSoundType, &_musicHandle, stream, -1, convertVolume(volume));
 }
 
 void Sound::pauseMusic() {
@@ -161,15 +150,22 @@ bool Sound::isMusicActive() const {
 	return _mixer->isSoundHandleActive(_musicHandle);
 }
 
-void Sound::setMusicVolume(uint volume) {
-	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, volume);
+void Sound::setUserMusicVolume(uint volume) {
+	_userMusicVolume = volume;
+	if (musicEnabled())
+		ConfMan.setInt("music_volume", volume);
 }
 
-int Sound::getMusicVolume() const {
-	return _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
+int Sound::getUserMusicVolume() const {
+	return _userMusicVolume;
 }
 
-void Sound::playSpeech(int num, bool waitForFinish) {
+void Sound::setActiveMusicVolume(uint8 volume) {
+	if (isMusicActive())
+		_mixer->setChannelVolume(_musicHandle, convertVolume(volume));
+}
+
+void Sound::playSpeech(int num, bool waitForFinish, uint16 balance) {
 	if (isSpeechActive())
 		stopSpeech();
 
@@ -187,8 +183,8 @@ void Sound::playSpeech(int num, bool waitForFinish) {
 		new Common::MemorySeekableReadWriteStream(data, size, DisposeAfterUse::YES),
 		DisposeAfterUse::YES);
 
-	_mixer->playStream(Audio::Mixer::kSpeechSoundType,
-		&_speechHandle, stream);
+	_mixer->playStream(Audio::Mixer::kSpeechSoundType, &_speechHandle, stream,
+		-1, Audio::Mixer::kMaxChannelVolume, convertBalance(balance));
 
 	if (waitForFinish) {
 		// Wait for speech to finish
@@ -226,20 +222,26 @@ void Sound::waitForSpeechToFinish() {
 	}
 }
 
+void Sound::setSpeechBalance(uint16 balance) {
+	if (isSpeechActive()) {
+		_mixer->setChannelBalance(_speechHandle, convertBalance(balance));
+	}
+}
+
 bool Sound::soundEnabled() const {
-	return !ConfMan.getBool("sfx_mute");
+	return ConfMan.getInt("sfx_volume") > 0;
 }
 
 void Sound::toggleSound(bool enable) {
-	return ConfMan.setBool("sfx_mute", !enable);
+	ConfMan.setInt("sfx_volume", enable ? _userSoundVolume : 0);
 }
 
 bool Sound::musicEnabled() const {
-	return !ConfMan.getBool("music_mute");
+	return ConfMan.getInt("music_volume") > 0;
 }
 
 void Sound::toggleMusic(bool enable) {
-	return ConfMan.setBool("music_mute", !enable);
+	ConfMan.setInt("music_volume", enable ? _userSoundVolume : 0);
 }
 
 bool Sound::speechEnabled() const {
@@ -247,7 +249,7 @@ bool Sound::speechEnabled() const {
 }
 
 void Sound::toggleSpeech(bool enable) {
-	return ConfMan.setBool("speech_mute", !enable);
+	ConfMan.setBool("speech_mute", !enable);
 }
 
 bool Sound::subtitlesEnabled() const {
@@ -255,7 +257,31 @@ bool Sound::subtitlesEnabled() const {
 }
 
 void Sound::toggleSubtitles(bool enable) {
-	return ConfMan.setBool("subtitles", enable);
+	ConfMan.setBool("subtitles", enable);
+}
+
+void Sound::syncSoundSettings() {
+	int confSoundVolume = ConfMan.getInt("sfx_volume");
+	int confMusicVolume = ConfMan.getInt("music_volume");
+
+	if (confSoundVolume == 0) {
+		// Sound is muted.
+		if (_userSoundVolume == 0)
+			// Set a default value.
+			_userSoundVolume = 192;
+		// Otherwise leave _soundVolume at the last value set by the user.
+	} else {
+		_userSoundVolume = confSoundVolume;
+	}
+	if (confMusicVolume == 0) {
+		// Music is muted.
+		if (_userMusicVolume == 0)
+			// Set a default value.
+			_userMusicVolume = 192;
+		// Otherwise leave _musicVolume at the last value set by the user.
+	} else {
+		_userMusicVolume = confMusicVolume;
+	}
 }
 
 struct RoomMusic {
@@ -275,7 +301,7 @@ const RoomMusic roomMusic[] = {
 	{  89, 38 }, {  92, 38 }, {  33, 35 }, {  37,  8 }, {  39,  9 },
 	{  42, 41 }, {  45, 44 }, {  46, 21 }, {  50, 21 }, {  73, 21 },
 	{  74, 21 }, {  48, 22 }, {  49,  3 }, {  51, 27 }, {  52, 27 },
-	{  53, 26 }, {  55, 23 }, {  57, 23 }, {  56, 52 }, {  62, 25 },
+	{  53, 26 }, {  55, 23 }, {  57, 23 }, {  56,  7 }, {  62, 25 },
 	{  64, 51 }, {  66, 34 }, {  68, 34 }, {  67, 28 }, {  69, 28 },
 	{  70, 28 }, {  75, 28 }, {  72, 31 }, {  76, 46 }, {  79,  6 },
 	{  80, 29 }, {  81, 45 }, {  82, 50 }, {  84, 24 }, {  85, 32 },
@@ -296,17 +322,25 @@ void Sound::playRoomMusic(int16 roomNum) {
 		}
 	}
 	
-	// TODO: Extra checks for two flags in room 56
-	//if ((spieler.flags32 & SpielerFlags32_10) != 0 && spieler.flags33 >= 0)
-	//  musicIndex = 52;
-	//else
-	//  musicIndex = 7;
+	// Room 56 music (first vs second visit)
+	if (roomNum == 56 && _G(gameState).flags32_10 && _G(gameState).flags33_80)
+		musicIndex = 52;
 
 	if (musicIndex != _curMusic) {
 		stopMusic();
 		if (musicIndex >= 0)
 			playMusic(musicIndex, true);
 	}
+}
+
+uint8 Sound::convertVolume(uint16 volume) {
+	assert(volume >= 0 && volume < 64);
+	return volume * Audio::Mixer::kMaxChannelVolume / 63;
+}
+
+int8 Sound::convertBalance(uint16 balance) {
+	assert(balance >= 0 && balance < 128);
+	return MIN(127, (balance - 63) * 2);
 }
 
 } // namespace Chewy

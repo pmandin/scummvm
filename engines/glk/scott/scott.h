@@ -19,10 +19,19 @@
  *
  */
 
-/* Based on ScottFree interpreter version 1.14 */
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
 
-#ifndef GLK_SCOTT
-#define GLK_SCOTT
+#ifndef GLK_SCOTT_H
+#define GLK_SCOTT_H
 
 /*
  *  Controlling block
@@ -134,16 +143,13 @@ class Scott : public GlkAPI {
 private:
 	Globals _globals;
 	char _nounText[16];
-	int _options = 0;   ///< Option flags set
 	//int _width = 0;     ///< Terminal width
 	int _topHeight = 0; ///< Height of top window
 	int _topWidth = 0;
 
 	bool _splitScreen = true;
 	int _saveSlot = -1;   ///< Save slot when loading savegame from launcher
-	Common::String _titleScreen;
 
-	int _shouldLookInTranscript = 0;
 	int _printLookToTranscript = 0;
 	int _pauseNextRoomDescription = 0;
 
@@ -154,17 +160,10 @@ private:
 	 * Initialization code
 	 */
 	void initialize();
-
-	void updateSettings();
-	void delay(int seconds);
 	void clearScreen(void);
-	bool randomPercent(uint n);
-	int countCarried(void);
 	int matchUpItem(int noun, int loc);
 	Common::String readString(Common::SeekableReadStream *f);
 	void loadDatabase(Common::SeekableReadStream *f, bool loud);
-	void outputNumber(int a);
-	void look(void);
 	int whichWord(const char *word, const Common::StringArray &list);
 
 	ActionResultType performLine(int ct);
@@ -178,9 +177,7 @@ private:
 	void listExitsSpectrumStyle();
 	void listInventoryInUpperWindow();
 	int itemEndsWithPeriod(int item);
-	void closeGraphicsWindow();
 	winid_t findGlkWindowWithRock(glui32 rock);
-	void openGraphicsWindow();
 	glui32 optimalPictureSize(uint *width, uint *height);
 	void openTopWindow();
 	void cleanupAndExit();
@@ -190,19 +187,7 @@ private:
 	void transcriptOn();
 	void transcriptOff();
 	int yesOrNo();
-	void listInventory();
 	void lookWithPause();
-	void doneIt();
-	int printScore();
-	void printNoun();
-	void moveItemAToLocOfItemB(int itemA, int itemB);
-	void goToStoredLoc();
-	void swapLocAndRoomFlag(int index);
-	void swapItemLocations(int itemA, int itemB);
-	void putItemAInRoomB(int itemA, int roomB);
-	void swapCounters(int index);
-	void printMessage(int index);
-	void playerIsDead();
 	void printTakenOrDropped(int index);
 	void printTitleScreenBuffer();
 	void printTitleScreenGrid();
@@ -211,6 +196,7 @@ public:
 	void drawImage(int image);
 	void output(const Common::String &a);
 	void output(const Common::U32String &a);
+	void outputNumber(int a);
 	void display(winid_t w, const char *fmt, ...);
 	void display(winid_t w, const Common::U32String fmt, ...);
 	void fatal(const char *x);
@@ -218,6 +204,26 @@ public:
 	void updates(event_t ev);
 	const char *mapSynonym(int noun);
 	int performExtraCommand(int extraStopTime);
+	void look(void);
+	void openGraphicsWindow();
+	void closeGraphicsWindow();
+	void listInventory();
+	void updateSettings();
+	uint getRandomNumber(uint max);
+	bool randomPercent(uint n);
+	int countCarried(void);
+	void playerIsDead();
+	void doneIt();
+	void putItemAInRoomB(int itemA, int roomB);
+	int printScore();
+	void swapItemLocations(int itemA, int itemB);
+	void moveItemAToLocOfItemB(int itemA, int itemB);
+	void goToStoredLoc();
+	void swapLocAndRoomFlag(int index);
+	void swapCounters(int index);
+	void printNoun();
+	void delay(double seconds);
+	void printMessage(int index);
 
 public:
 	/**

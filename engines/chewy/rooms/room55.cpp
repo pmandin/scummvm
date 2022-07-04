@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -131,7 +132,7 @@ int16 Room55::use_stapel1() {
 	int16 action_ret = false;
 	hideCur();
 	
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		if (!_G(gameState).R55ScriptWeg) {
 			action_ret = true;
 			_G(gameState).R55ScriptWeg = true;
@@ -153,7 +154,7 @@ int16 Room55::use_stapel1() {
 			autoMove(4, P_CHEWY);
 			_G(gameState).R55EscScriptOk = true;
 			_G(det)->showStaticSpr(0);
-			delInventory(_G(gameState).AkInvent);
+			delInventory(_G(cur)->getInventoryCursor());
 			_G(atds)->set_ats_str(354, 2, ATS_DATA);
 		} else {
 			startAadWait(326);
@@ -180,7 +181,7 @@ int16 Room55::use_stapel2() {
 int16 Room55::use_telefon() {
 	int16 action_ret = false;
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_ret = true;
 		if (_G(gameState).R55EscScriptOk) {
 			if (!_G(gameState).R55RaumOk) {
@@ -341,7 +342,7 @@ void Room55::verleger_mov(int16 mode) {
 }
 
 void Room55::strasse(int16 mode) {
-	if (!_G(gameState).inv_cur || mode) {
+	if (!_G(cur)->usingInventoryCursor() || mode) {
 		_G(gameState)._personHide[P_CHEWY] = true;
 		_G(room)->set_timer_status(4, TIMER_STOP);
 		_G(det)->del_static_ani(4);
@@ -378,7 +379,7 @@ int16 Room55::use_kammeraus() {
 			_G(gameState).R55ExitDia = 322;
 			_G(gameState).R55SekWeg = true;
 			_G(atds)->setControlBit(352, ATS_ACTIVE_BIT);
-			delInventory(_G(gameState).AkInvent);
+			delInventory(_G(cur)->getInventoryCursor());
 			_G(atds)->setControlBit(345, ATS_ACTIVE_BIT);
 			_G(atds)->setControlBit(346, ATS_ACTIVE_BIT);
 			strasse(1);

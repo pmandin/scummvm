@@ -45,8 +45,9 @@ static int strToInt(const char *s) {
 }
 
 Console::Console() : GUI::Debugger() {
-	registerCmd("room", WRAP_METHOD(Console, Cmd_GotoRoom));
+	registerCmd("room", WRAP_METHOD(Console, Cmd_Room));
 	registerCmd("item", WRAP_METHOD(Console, Cmd_Item));
+	registerCmd("cursor", WRAP_METHOD(Console, Cmd_Cursor));
 	registerCmd("play_sound", WRAP_METHOD(Console, Cmd_PlaySound));
 	registerCmd("play_speech", WRAP_METHOD(Console, Cmd_PlaySpeech));
 	registerCmd("play_music", WRAP_METHOD(Console, Cmd_PlayMusic));
@@ -58,9 +59,10 @@ Console::Console() : GUI::Debugger() {
 Console::~Console() {
 }
 
-bool Console::Cmd_GotoRoom(int argc, const char **argv) {
+bool Console::Cmd_Room(int argc, const char **argv) {
 	if (argc == 1) {
 		debugPrintf("%s <roomNum>\n", argv[0]);
+		debugPrintf("Current room is %d\n", _G(gameState)._personRoomNr[P_CHEWY]);
 		return true;
 	} else {
 		int roomNum = strToInt(argv[1]);
@@ -84,6 +86,17 @@ bool Console::Cmd_Item(int argc, const char **argv) {
 	}
 
 	return true;
+}
+
+bool Console::Cmd_Cursor(int argc, const char **argv) {
+	if (argc == 1) {
+		debugPrintf("%s <cursorNum>\n", argv[0]);
+	} else {
+		int cursorNum = strToInt(argv[1]);
+		cursorChoice(cursorNum);
+	}
+
+	return false;
 }
 
 bool Console::Cmd_PlaySound(int argc, const char **argv) {

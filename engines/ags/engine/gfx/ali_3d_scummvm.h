@@ -198,7 +198,7 @@ public:
 
 	void RenderToBackBuffer() override;
 	void Render() override;
-	void Render(int xoff, int yoff, GlobalFlipType flip) override;
+	void Render(int xoff, int yoff, Shared::GraphicFlip flip) override;
 	bool GetCopyOfScreenIntoBitmap(Bitmap *destination, bool at_native_res, GraphicResolution *want_fmt) override;
 	void FadeOut(int speed, int targetColourRed, int targetColourGreen, int targetColourBlue) override;
 	void FadeIn(int speed, PALETTE pal, int targetColourRed, int targetColourGreen, int targetColourBlue) override;
@@ -206,8 +206,8 @@ public:
 	bool SupportsGammaControl() override;
 	void SetGamma(int newGamma) override;
 	void UseSmoothScaling(bool /*enabled*/) override {}
-	void EnableVsyncBeforeRender(bool /*enabled*/) override {}
-	void Vsync() override;
+	bool DoesSupportVsyncToggle() override;
+	bool SetVsync(bool enabled) override;
 	void RenderSpritesAtScreenResolution(bool /*enabled*/, int /*supersampling*/) override {}
 	bool RequiresFullRedrawEachFrame() override {
 		return false;

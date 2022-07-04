@@ -24,6 +24,8 @@
 #include "chewy/memory.h"
 #include "chewy/resource.h"
 #include "chewy/room.h"
+
+#include "cursor.h"
 #include "chewy/sound.h"
 
 namespace Chewy {
@@ -101,7 +103,6 @@ static const uint8 CHEWY_JM_PHASES[8][8] = {
 static const uint8 CHEWY_JM_PHASE_NR[] = {8, 8, 8, 8, 8, 8, 8, 8};
 
 void JungleRoom::topEntry() {
-	_G(cur_hide_flag) = 0;
 	hideCur();
 	setPersonPos(236, 110, P_CHEWY, P_RIGHT);
 	setPersonPos(263, 85, P_NICHELLE, P_RIGHT);
@@ -285,9 +286,10 @@ void Room::calc_invent(RaumBlk *Rb, GameState *player) {
 			free(tmp_inv_spr[i]);
 	}
 
-	if (player->AkInvent != -1) {
-		if (Rb->InvSprAdr[player->AkInvent] == nullptr) {
-			spriteRes->getSpriteData(player->AkInvent, &Rb->InvSprAdr[player->AkInvent], true);
+	if (_G(cur)->usingInventoryCursor()) {
+		const int cursor = _G(cur)->getInventoryCursor();
+		if (Rb->InvSprAdr[cursor] == nullptr) {
+			spriteRes->getSpriteData(cursor, &Rb->InvSprAdr[cursor], true);
 		}
 	}
 

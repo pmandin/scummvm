@@ -64,6 +64,7 @@ class Stxt;
 class CastMember : public Object<CastMember> {
 public:
 	CastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndian &stream);
+	CastMember(Cast *cast, uint16 castId);
 	virtual ~CastMember() {}
 
 	Cast *getCast() { return _cast; }
@@ -73,7 +74,7 @@ public:
 	virtual bool isEditable() { return false; }
 	virtual void setEditable(bool editable) {}
 	virtual bool isModified() { return _modified; }
-	virtual void setModified(bool modified) { _modified = modified; }
+	void setModified(bool modified);
 	virtual Graphics::MacWidget *createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) { return nullptr; }
 	virtual void updateWidget(Graphics::MacWidget *widget, Channel *channel) {}
 	virtual void updateFromWidget(Graphics::MacWidget *widget) {}
@@ -112,11 +113,13 @@ protected:
 	// a link to the widget we created, we may use it later
 	Graphics::MacWidget *_widget;
 	bool _modified;
+	bool _isChanged;
 };
 
 class BitmapCastMember : public CastMember {
 public:
 	BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableReadStreamEndian &stream, uint32 castTag, uint16 version, uint8 flags1 = 0);
+	BitmapCastMember(Cast *cast, uint16 castId, Image::ImageDecoder *img, uint8 flags1 = 0);
 	~BitmapCastMember();
 	Graphics::MacWidget *createWidget(Common::Rect &bbox, Channel *channel, SpriteType spriteType) override;
 
@@ -129,6 +132,7 @@ public:
 	bool setField(int field, const Datum &value) override;
 
 	Image::ImageDecoder *_img;
+	Graphics::Surface *_ditheredImg;
 	Graphics::FloodFill *_matte;
 
 	uint16 _pitch;
@@ -142,6 +146,12 @@ public:
 
 	uint32 _tag;
 	bool _noMatte;
+
+private:
+	void ditherImage();
+	void ditherFloydImage();
+
+	Graphics::PaletteLookup _paletteLookup;
 };
 
 class DigitalVideoCastMember : public CastMember {

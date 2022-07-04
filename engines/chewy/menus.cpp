@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/detail.h"
 #include "chewy/events.h"
@@ -27,7 +28,6 @@
 #include "chewy/mcga_graphics.h"
 #include "chewy/menus.h"
 #include "chewy/mouse.h"
-#include "chewy/dialogs/inventory.h"
 
 namespace Chewy {
 
@@ -267,7 +267,6 @@ void handleDialogCloseupMenu() {
 
 		if (_G(atds)->aadGetStatus() == -1 && _G(ads_push) == false &&
 		        _G(flags).NoDiaBox == false) {
-			_G(cur_display) = true;
 
 			buildMenu(ADS_WIN);
 			_G(fontMgr)->setFont(_G(font6));
@@ -288,7 +287,6 @@ void handleDialogCloseupMenu() {
 		case 255:
 		case Common::KEYCODE_RETURN:
 			if (curY < _G(ads_item_nr) && curY >= 0 && _G(ads_push) == false) {
-				_G(cur_display) = false;
 				_G(ads_push) = true;
 				g_events->_mousePos.y = 159;
 				DialogCloseupNextBlock *an_blk = _G(atds)->dialogCloseupItemChoice(_G(ads_dia_nr), _G(ads_blk_nr), curY);
@@ -319,7 +317,6 @@ void handleDialogCloseupMenu() {
 void stopDialogCloseupDialog() {
 	aadWait(-1);
 	_G(gameState).DispFlag = _G(ads_tmp_dsp);
-	_G(cur_display) = true;
 	_G(flags).ShowAtsInvTxt = true;
 	_G(flags).MainInput = true;
 	_G(flags).DialogCloseup = false;
@@ -330,22 +327,21 @@ void stopDialogCloseupDialog() {
 }
 
 void cur_2_inventory() {
-	if (_G(gameState).AkInvent != -1) {
-		invent_2_slot(_G(gameState).AkInvent);
-		_G(gameState).AkInvent = -1;
+	if (_G(cur)->usingInventoryCursor()) {
+		invent_2_slot(_G(cur)->getInventoryCursor());
+		_G(cur)->setInventoryCursor(-1);
 		_G(menu_item) = CUR_WALK;
 		cursorChoice(_G(menu_item));
 	}
-	_G(gameState).inv_cur = false;
+	_G(cur)->setInventoryCursor(-1);
 }
 
 void inventory_2_cur(int16 nr) {
-	if (_G(gameState).AkInvent == -1 && _G(obj)->checkInventory(nr)) {
+	if (!_G(cur)->usingInventoryCursor() && _G(obj)->checkInventory(nr)) {
 		del_invent_slot(nr);
 		_G(menu_item) = CUR_USE;
-		_G(gameState).AkInvent = nr;
-		cursorChoice(CUR_AK_INVENT);
-		getDisplayCoord(&_G(gameState).DispZx, &_G(gameState).DispZy, _G(gameState).AkInvent);
+		_G(cur)->setInventoryCursor(nr);
+		getDisplayCoord(&_G(gameState).DispZx, &_G(gameState).DispZy, _G(cur)->getInventoryCursor());
 	}
 }
 
@@ -356,11 +352,10 @@ void new_invent_2_cur(int16 inv_nr) {
 }
 
 void invent_2_slot(int16 nr) {
-	int16 ok = 0;
-	for (int16 i = 0; i < MAX_MOV_OBJ && !ok; i++) {
+	for (int16 i = 0; i < MAX_MOV_OBJ; i++) {
 		if (_G(gameState).InventSlot[i] == -1) {
 			_G(gameState).InventSlot[i] = nr;
-			ok = true;
+			break;
 		}
 	}
 	_G(obj)->addInventory(nr, &_G(room_blk));
@@ -380,7 +375,7 @@ int16 del_invent_slot(int16 nr) {
 }
 
 void remove_inventory(int16 nr) {
-	if (nr == _G(gameState).AkInvent) {
+	if (nr == _G(cur)->getInventoryCursor()) {
 		delInventory(nr);
 	} else {
 		_G(obj)->delInventory(nr, &_G(room_blk));

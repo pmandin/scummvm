@@ -58,13 +58,14 @@ namespace Director {
 
 const char *MemoryXObj::xlibName = "Memory";
 const char *MemoryXObj::fileNames[] = {
+	"Memory XObj",
 	"Memory",
 	nullptr
 };
 
 static MethodProto xlibMethods[] = {
-	{ "new",					MemoryXObj::m_new,			0,	0,	400 },	// D4
-	{ "Clear",					MemoryXObj::m_clear,		0,	0,	400 },	// D4
+	{ "new",					MemoryXObj::m_new,			0,	0,	300 },	// D3
+	{ "Clear",					MemoryXObj::m_clear,		0,	0,	300 },	// D3
 	{ "Purge",					MemoryXObj::m_purge,		0,	0,	400 },	// D4
 	{ nullptr, nullptr, 0, 0, 0 }
 };
@@ -73,7 +74,7 @@ void MemoryXObj::open(int type) {
 	if (type == kXObj) {
 		MemoryXObject::initMethods(xlibMethods);
 		MemoryXObject *xobj = new MemoryXObject(kXObj);
-		g_lingo->_globalvars[xlibName] = xobj;
+		g_lingo->exposeXObject(xlibName, xobj);
 	}
 }
 
@@ -90,16 +91,13 @@ MemoryXObject::MemoryXObject(ObjectType ObjectType) :Object<MemoryXObject>("Memo
 }
 
 void MemoryXObj::m_new(int nargs) {
-	// Datum d1 = g_lingo->pop();
 	g_lingo->push(g_lingo->_currentMe);
 }
 
 void MemoryXObj::m_clear(int nargs) {
-	// g_lingo->pop();
 }
 
 void MemoryXObj::m_purge(int nargs) {
-	// g_lingo->pop();
 }
 
 } // End of namespace Director

@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -194,7 +195,7 @@ void Room21::chewy_kolli() {
 		_G(flags).AutoAniPlay = true;
 		_G(gameState)._personHide[P_CHEWY] = true;
 		int16 ani_nr = (_G(moveState)[P_CHEWY].Xyvo[0] < 0) ? 10 : 11;
-		_G(det)->setSetailPos(ani_nr, _G(moveState)[P_CHEWY].Xypos[0], _G(moveState)[P_CHEWY].Xypos[1]);
+		_G(det)->setDetailPos(ani_nr, _G(moveState)[P_CHEWY].Xypos[0], _G(moveState)[P_CHEWY].Xypos[1]);
 		startSetAILWait(ani_nr, 1, ANI_FRONT);
 		_G(gameState)._personHide[P_CHEWY] = false;
 		_G(flags).AutoAniPlay = false;
@@ -205,14 +206,13 @@ void Room21::chewy_kolli() {
 }
 
 void Room21::salto() {
-	if (!_G(gameState).inv_cur && _G(atds)->get_ats_str(134, TXT_MARK_USE, ATS_DATA) == 8
-		&& !_G(gameState).R21Salto && !_G(flags).AutoAniPlay) {
+	if (!_G(cur)->usingInventoryCursor() && !_G(gameState).R21Salto && !_G(flags).AutoAniPlay) {
 		_G(gameState).R21Salto = true;
 		_G(flags).AutoAniPlay = true;
 		_G(gameState)._personHide[P_CHEWY] = true;
 
 		for (int16 i = 0; i < 3; i++) {
-			_G(det)->setSetailPos(12 + i, _G(moveState)[P_CHEWY].Xypos[0],
+			_G(det)->setDetailPos(12 + i, _G(moveState)[P_CHEWY].Xypos[0],
 				_G(moveState)[P_CHEWY].Xypos[1]);
 		}
 
@@ -240,7 +240,7 @@ void Room21::use_gitter_energie() {
 int16 Room21::use_fenster() {
 	int16 action_flag = false;
 
-	if (!_G(gameState).inv_cur && !_G(flags).AutoAniPlay && _G(gameState).R21Laser1Weg) {
+	if (!_G(cur)->usingInventoryCursor() && !_G(flags).AutoAniPlay && _G(gameState).R21Laser1Weg) {
 		action_flag = true;
 		_G(flags).AutoAniPlay = true;
 		_G(gameState).R18Gitter = true;

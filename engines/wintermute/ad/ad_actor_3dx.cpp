@@ -27,6 +27,7 @@
 
 #include "common/math.h"
 #include "common/util.h"
+
 #include "engines/wintermute/ad/ad_actor_3dx.h"
 #include "engines/wintermute/ad/ad_attach_3dx.h"
 #include "engines/wintermute/ad/ad_entity.h"
@@ -60,29 +61,42 @@ namespace Wintermute {
 IMPLEMENT_PERSISTENT(AdActor3DX, false)
 
 //////////////////////////////////////////////////////////////////////////
-AdActor3DX::AdActor3DX(BaseGame *inGame) : AdObject3D(inGame),
-										   _partOffset(0.0f, 0.0f, 0.0f),
-										   _stateAnimChannel(-1),
-										   _defaultTransTime(200),
-										   _defaultStopTransTime(200),
-										   _afterWalkAngle(-1.0f),
-										   _talkAnimName("talk"),
-										   _idleAnimName("idle"),
-										   _walkAnimName("walk"),
-										   _turnLeftAnimName("turnleft"),
-										   _turnRightAnimName("turnright"),
-										   _talkAnimChannel(0),
-										   _directWalkMode(DIRECT_WALK_NONE),
-										   _directTurnMode(DIRECT_TURN_NONE),
-										   _directWalkVelocity(0.0f),
-										   _directTurnVelocity(0.0f),
-										   _goToTolerance(2),
-										   _targetPoint3D(0.0f, 0.0f, 0.0f),
-										   _targetPoint2D(new BasePoint),
-										   _targetAngle(0.0f),
-										   _path3D(new AdPath3D(inGame)),
-										   _path2D(new AdPath(inGame)) {
+AdActor3DX::AdActor3DX(BaseGame *inGame) : AdObject3D(inGame) {
+	_targetPoint3D = Math::Vector3d(0.0f, 0.0f, 0.0f);
+	_targetPoint2D = new BasePoint;
+
+	_targetAngle = 0.0f;
+	_afterWalkAngle = -1.0f;
+
+	_path3D = new AdPath3D(inGame);
+	_path2D = new AdPath(inGame);
+
+	_talkAnimName = Common::String("talk");
+
+	_idleAnimName = Common::String("idle");
+
+	_walkAnimName = Common::String("walk");
+
+	_turnLeftAnimName = Common::String("turnleft");
+
+	_turnRightAnimName = Common::String("turnright");
+
+	_talkAnimChannel = 0;
+
 	_gameRef->_renderer3D->enableShadows();
+
+	_directWalkMode = DIRECT_WALK_NONE;
+	_directTurnMode = DIRECT_TURN_NONE;
+	_directWalkVelocity = 0.0f;
+	_directTurnVelocity = 0.0f;
+
+	_defaultTransTime = 200;
+	_defaultStopTransTime = 200;
+	_stateAnimChannel = -1;
+
+	_goToTolerance = 2;
+
+	_partOffset = Math::Vector3d(0.0f, 0.0f, 0.0f);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -91,7 +105,6 @@ AdActor3DX::~AdActor3DX() {
 	for (uint32 i = 0; i < _attachments.size(); i++) {
 		delete _attachments[i];
 	}
-
 	_attachments.clear();
 
 	// delete transition times
@@ -101,11 +114,12 @@ AdActor3DX::~AdActor3DX() {
 	_transitionTimes.clear();
 
 	delete _path2D;
+	_path2D = nullptr;
 	delete _path3D;
+	_path3D = nullptr;
 
 	delete _targetPoint2D;
-
-	delete _modelX;
+	_targetPoint2D = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -143,8 +157,10 @@ bool AdActor3DX::update() {
 			_nextState = STATE_READY;
 		} else {
 			// set animation
-			if (_directTurnMode != DIRECT_TURN_NONE) {
-				if (_directTurnAnim.empty()) {
+			if (_directWalkMode != DIRECT_WALK_NONE) {
+				// disabled in original code
+			} else if (_directTurnMode != DIRECT_TURN_NONE) {
+				if (!_directTurnAnim.empty()) {
 					_modelX->playAnim(0, _directTurnAnim, _defaultTransTime, false, _defaultStopTransTime);
 				} else {
 					_modelX->playAnim(0, _idleAnimName, _defaultTransTime, false, _defaultStopTransTime);
@@ -455,10 +471,11 @@ bool AdActor3DX::displayShadowVolume() {
 	Math::Vector3d lightVector = Math::Vector3d(_shadowLightPos.x() * _scale3D,
 	                                            _shadowLightPos.y() * _scale3D,
 	                                            _shadowLightPos.z() * _scale3D);
-	float extrusionDepth = lightVector.getMagnitude() * 1.5f;
+	float extrusionDepth = lightVector.length() * 1.5f;
 	lightVector.normalize();
 
 	getShadowVolume()->setColor(_shadowColor);
+
 	getShadowVolume()->reset();
 
 	ModelX *shadowModel;
@@ -483,7 +500,8 @@ bool AdActor3DX::displayShadowVolume() {
 			continue;
 		}
 
-		at->displayShadowVol(_worldMatrix * (*boneMat), lightVector, extrusionDepth, true);
+		Math::Matrix4 viewMat = *boneMat;
+		at->displayShadowVol(viewMat, lightVector, extrusionDepth, true);
 	}
 
 	_gameRef->_renderer3D->setWorldTransform(_worldMatrix);
@@ -619,7 +637,7 @@ void AdActor3DX::getNextStep3D() {
 		newVec = *currentPos - newPos;
 	}
 
-	if (currentPos == nullptr || origVec.getSquareMagnitude() < newVec.getSquareMagnitude()) {
+	if (currentPos == nullptr || origVec.length() < newVec.length()) {
 		if (currentPos != nullptr) {
 			_posVector = *currentPos;
 		}
@@ -683,7 +701,7 @@ void AdActor3DX::getNextStep2D() {
 	origVec = currentPoint - _posVector;
 	newVec = currentPoint - newPos;
 
-	if (origVec.getSquareMagnitude() < newVec.getSquareMagnitude()) {
+	if (origVec.length() < newVec.length()) {
 		_posVector = currentPoint;
 
 		if (_path2D->getNext() == nullptr) {
@@ -781,7 +799,6 @@ bool AdActor3DX::turnToStep(float velocity) {
 	}
 
 	// done turning?
-	// comparison between floating point numbers?
 	if (_angle == _targetAngle) {
 		_angle.normalize(0.0f);
 		_targetAngle = _angle;
@@ -906,8 +923,8 @@ bool AdActor3DX::loadBuffer(byte *buffer, bool complete) {
 	}
 
 	delete _modelX;
-	delete _shadowModel;
 	_modelX = nullptr;
+	delete _shadowModel;
 	_shadowModel = nullptr;
 
 	while ((cmd = parser.getCommand((char **)&buffer, commands, (char **)&params)) > 0) {
@@ -956,7 +973,6 @@ bool AdActor3DX::loadBuffer(byte *buffer, bool complete) {
 		case TOKEN_SHADOW_COLOR: {
 			int r, g, b, a;
 			parser.scanStr((char *)params, "%d,%d,%d,%d", &r, &g, &b, &a);
-			// TODO: not sure if this is correct
 			_shadowColor = BYTETORGBA(r, g, b, a);
 
 			break;
@@ -1039,7 +1055,6 @@ bool AdActor3DX::loadBuffer(byte *buffer, bool complete) {
 					_shadowType = SHADOW_STENCIL;
 				}
 			}
-
 			break;
 		}
 
@@ -1062,7 +1077,6 @@ bool AdActor3DX::loadBuffer(byte *buffer, bool complete) {
 		case TOKEN_SHADOW_MODEL:
 			if (_modelX) {
 				delete _shadowModel;
-				_shadowModel = nullptr;
 				_shadowModel = new ModelX(_gameRef, this);
 
 				if (!_shadowModel || !_shadowModel->loadFromFile((char *)params, _modelX)) {
@@ -1122,43 +1136,42 @@ bool AdActor3DX::loadBuffer(byte *buffer, bool complete) {
 
 		case TOKEN_BLOCKED_REGION: {
 			delete _blockRegion;
+			_blockRegion = nullptr;
 			delete _currentBlockRegion;
+			_currentBlockRegion = nullptr;
 			BaseRegion *rgn = new BaseRegion(_gameRef);
 			BaseRegion *crgn = new BaseRegion(_gameRef);
 			if (!rgn || !crgn || !rgn->loadBuffer((char *)params, false)) {
 				delete rgn;
 				delete crgn;
-				_blockRegion = nullptr;
-				_currentBlockRegion = nullptr;
 				cmd = PARSERR_GENERIC;
 			} else {
 				_blockRegion = rgn;
 				_currentBlockRegion = crgn;
 				_currentBlockRegion->mimic(_blockRegion);
 			}
-
 			break;
 		}
 
 		case TOKEN_WAYPOINTS: {
 			delete _wptGroup;
+			_wptGroup = nullptr;
 			delete _currentWptGroup;
+			_currentWptGroup = nullptr;
 			AdWaypointGroup *wpt = new AdWaypointGroup(_gameRef);
 			AdWaypointGroup *cwpt = new AdWaypointGroup(_gameRef);
 			if (!wpt || !cwpt || !wpt->loadBuffer((char *)params, false)) {
-				delete _wptGroup;
-				delete _currentWptGroup;
-				_wptGroup = nullptr;
-				_currentWptGroup = nullptr;
+				delete wpt;
+				delete cwpt;
 				cmd = PARSERR_GENERIC;
 			} else {
 				_wptGroup = wpt;
 				_currentWptGroup = cwpt;
 				_currentWptGroup->mimic(_wptGroup);
 			}
-
 			break;
 		}
+
 		}
 	}
 
@@ -1241,7 +1254,6 @@ bool AdActor3DX::playAnim3DX(int channel, const char *name, bool setState) {
 	}
 
 	bool res = _modelX->playAnim(channel, name, _defaultTransTime, true, _defaultStopTransTime);
-
 	if (res && setState) {
 		_state = STATE_PLAYING_ANIM;
 		_stateAnimChannel = channel;
@@ -1274,7 +1286,7 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	if (strcmp(name, "PlayAnim") == 0 || strcmp(name, "PlayAnimAsync") == 0) {
 		bool async = strcmp(name, "PlayAnimAsync") == 0;
 		stack->correctParams(1);
-		if (!playAnim3DX(stack->pop()->getString(), true /*!Async*/)) {
+		if (!playAnim3DX(stack->pop()->getString(), true)) {
 			stack->pushBool(false);
 		} else {
 			if (!async)
@@ -1814,12 +1826,15 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "SetEffect") == 0) {
 		stack->correctParams(2);
-//		const char *materialName = stack->pop()->getString();
-//		const char *effectFilename = stack->pop()->getString();
+		/*const char *materialName =*/ stack->pop()->getString();
+		/*const char *effectFilename =*/ stack->pop()->getString();
 
 		warning("AdActor3DX::scCallMethod D3DX effects are not supported");
-
-		stack->pushBool(false);
+		if (_modelX) {
+			stack->pushBool(true);
+		} else {
+			stack->pushBool(false);
+		}
 		return true;
 	}
 
@@ -1828,13 +1843,15 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "RemoveEffect") == 0) {
 		stack->correctParams(1);
-//		const char *materialName = stack->pop()->getString();
+		/*const char *materialName =*/ stack->pop()->getString();
 		stack->pop();
 
 		warning("AdActor3DX::scCallMethod D3DX effects are not supported");
-
-		stack->pushBool(false);
-
+		if (_modelX) {
+			stack->pushBool(true);
+		} else {
+			stack->pushBool(false);
+		}
 		return true;
 	}
 
@@ -1843,16 +1860,16 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "SetEffectParam") == 0) {
 		stack->correctParams(3);
-//		const char *materialName = stack->pop()->getString();
-//		const char *paramName = stack->pop()->getString();
-//		ScValue *val = stack->pop();
-		stack->pop();
-		stack->pop();
-		stack->pop();
+		/*const char *materialName =*/ stack->pop()->getString();
+		/*const char *paramName =*/ stack->pop()->getString();
+		/*ScValue *val =*/ stack->pop();
 
 		warning("AdActor3DX::scCallMethod D3DX effects are not supported");
-
-		stack->pushBool(false);
+		if (_modelX) {
+			stack->pushBool(true);
+		} else {
+			stack->pushBool(false);
+		}
 		return true;
 	}
 
@@ -1861,22 +1878,19 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "SetEffectParamVector") == 0) {
 		stack->correctParams(6);
-//		const char *materialName = stack->pop()->getString();
-//		const char *paramName = stack->pop()->getString();
-//		float x = stack->pop()->getFloat();
-//		float y = stack->pop()->getFloat();
-//		float z = stack->pop()->getFloat();
-//		float w = stack->pop()->getFloat();
-		stack->pop();
-		stack->pop();
-		stack->pop();
-		stack->pop();
-		stack->pop();
-		stack->pop();
+		/*const char *materialName =*/ stack->pop()->getString();
+		/*const char *paramName =*/ stack->pop()->getString();
+		/*float x =*/ stack->pop()->getFloat();
+		/*float y =*/ stack->pop()->getFloat();
+		/*float z =*/ stack->pop()->getFloat();
+		/*float w =*/ stack->pop()->getFloat();
 
 		warning("AdActor3DX::scCallMethod D3DX effects are not supported");
-
-		stack->pushBool(false);
+		if (_modelX) {
+			stack->pushBool(true);
+		} else {
+			stack->pushBool(false);
+		}
 		return true;
 	}
 
@@ -1885,16 +1899,16 @@ bool AdActor3DX::scCallMethod(ScScript *script, ScStack *stack, ScStack *thisSta
 	//////////////////////////////////////////////////////////////////////////
 	else if (strcmp(name, "SetEffectParamColor") == 0) {
 		stack->correctParams(3);
-//		const char *materialName = stack->pop()->getString();
-//		const char *paramName = stack->pop()->getString();
-//		uint32 color = stack->pop()->getInt();
-		stack->pop();
-		stack->pop();
-		stack->pop();
+		/*const char *materialName =*/ stack->pop()->getString();
+		/*const char *paramName =*/ stack->pop()->getString();
+		/*uint32 color =*/ stack->pop()->getInt();
 
 		warning("AdActor3DX::scCallMethod D3DX effects are not supported");
-
-		stack->pushBool(false);
+		if (_modelX) {
+			stack->pushBool(true);
+		} else {
+			stack->pushBool(false);
+		}
 		return true;
 	}
 
@@ -2482,6 +2496,7 @@ bool AdActor3DX::parseEffect(byte *buffer) {
 	}
 
 	if (effectFile && material) {
+		// TODO: Implement
 	}
 
 	delete[] effectFile;

@@ -158,19 +158,24 @@ void Room46::kloppe() {
 		
 		_G(out)->setPointer(nullptr);
 		_G(out)->cls();
+
 		start_aad(244 + i, -1);
 		int16 delay = _G(gameState).DelaySpeed * 50;
 		_G(atds)->print_aad(0, 0);
 
+		_G(disableScreen) = true;
+
 		if (g_engine->_sound->speechEnabled()) {
 			g_engine->_sound->waitForSpeechToFinish();
-			continue;
+		} else {
+			while (_G(in)->getSwitchCode() == Common::KEYCODE_INVALID && delay) {
+				--delay;
+				EVENTS_UPDATE;
+				SHOULD_QUIT_RETURN;
+			}
 		}
-		
-		while (_G(in)->getSwitchCode() == Common::KEYCODE_INVALID && delay) {
-			--delay;
-			SHOULD_QUIT_RETURN;
-		}
+
+		_G(disableScreen) = false;
 	}
 
 	g_engine->_video->playVideo(FCUT_066);
@@ -186,7 +191,7 @@ void Room46::kloppe() {
 int16 Room46::use_schloss() {
 	int16 action_ret = false;
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_ret = true;
 
 		if (!_G(gameState).R46GetLeder) {

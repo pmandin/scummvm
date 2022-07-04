@@ -19,15 +19,29 @@
  *
  */
 
-#ifndef GLK_SCOTT_GLOBALS
-#define GLK_SCOTT_GLOBALS
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
 
+#ifndef GLK_SCOTT_GLOBALS_H
+#define GLK_SCOTT_GLOBALS_H
+
+#include "common/array.h"
+#include "common/str.h"
+#include "common/str-array.h"
+#include "common/hashmap.h"
 #include "glk/glk_types.h"
 #include "glk/windows.h"
 #include "glk/scott/definitions.h"
 #include "glk/scott/types.h"
-#include "common/array.h"
-#include "common/str-array.h"
+#include "glk/scott/unp64/unp64.h"
 
 namespace Glk {
 namespace Scott {
@@ -78,9 +92,15 @@ public:
 	int _counters[16]; ///< Range unknown
 	int _currentCounter = 0;
 	int _savedRoom = 0;
-	int _roomSaved[16]; ///< Range unknown
+	int _roomSaved[16];   ///< Range unknown
 	uint32 _bitFlags = 0; ///< Might be >32 flags - I haven't seen >32 yet
 	int _autoInventory = 0;
+	int _animationFlag = 0;
+	uint8_t _enemyTable[126];
+	const char *_battleMessages[33];
+	int _options = 0; ///< Option flags set
+	Common::String _titleScreen;
+	int _shouldLookInTranscript = 0;
 
 	// sagadraw
 	int _drawToBuffer = 0;
@@ -137,8 +157,16 @@ public:
 	Common::Array<ExtraCommand> _extraCommandsKey;
 	Common::StringArray _abbreviations;
 	Common::StringArray _abbreviationsKey;
+	Common::StringArray _spanishDirections;
+	Common::StringArray _germanDirections;
+	Common::StringArray _germanExtraCommands;
+	Common::StringArray _spanishExtraCommands;
+	Common::StringArray _germanExtraNouns;
+	Common::StringArray _spanishExtraNouns;
+	Common::StringArray _germanSkipList;
+	Common::StringArray _germanDelimiterList;
 
-	//restore state
+	// restore state
 	int _justUndid = 0;
 	SavedState *_initialState = nullptr;
 	SavedState *_ramSave = nullptr;
@@ -150,6 +178,49 @@ public:
 	GameInfo _fallbackGame;
 	// Include game list
 	#include "glk/scott/games.h"
+
+	// detect game
+	Common::HashMap<Common::String, int> _md5Index;
+
+	// unp64
+	UnpStr _unp;
+	int _parsePar = 1;
+	int _iter = 0;
+
+	// 6502 emu
+	int _byted011[2] = {0, 0};
+	int _retfire = 0xff;
+	int _retspace = 0xff;
+
+	// robin of sherwood]
+	uint8_t *_forestImages = nullptr;
+
+	// seas of blood
+	winid_t _leftDiceWin = nullptr;
+	winid_t _rightDiceWin = nullptr;
+	winid_t _battleRight = nullptr;
+	uint _backgroundColour = 0;
+	uint8_t *_bloodImageData = nullptr;
+	glui32 _dicePixelSize = 0;
+	glui32 _diceXOffset = 0;
+	glui32 _diceYOffset = 0;
+	int _shouldDrawObjectImages = 0;
+
+	// savage island
+	uint8_t *_saveIslandAppendix1 = nullptr;
+	int _saveIslandAppendix1Length = 0;
+	uint8_t *_saveIslandAppendix2 = nullptr;
+	int _saveIslandAppendix2Length = 0;
+
+	// load TI994A
+	int _maxMessages = 0;
+	int _maxItemDescr = 0;
+	size_t _ti99ImplicitExtent = 0;
+	size_t _ti99ExplicitExtent = 0;
+	uint8_t *_ti99ImplicitActions = nullptr;
+	uint8_t *_ti99ExplicitActions = nullptr;
+	uint8_t **_verbActionOffsets = nullptr;
+
 public:
 	Globals();
 	~Globals();

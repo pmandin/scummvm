@@ -20,20 +20,19 @@
  */
 
 #include "common/system.h"
-#include "chewy/dialogs/main_menu.h"
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
 #include "chewy/ani_dat.h"
 #include "chewy/rooms/rooms.h"
-#include "chewy/main.h"
 #include "chewy/resource.h"
 #include "chewy/sound.h"
 #include "chewy/video/video_player.h"
 
 namespace Chewy {
 
-void play_scene_ani(int16 nr, int16 mode) {
+void play_scene_ani(int16 nr, int16 direction) {
 #define ROOM_1_1 101
 #define ROOM_1_2 102
 #define ROOM_1_5 105
@@ -55,14 +54,14 @@ void play_scene_ani(int16 nr, int16 mode) {
 		break;
 
 	case ROOM_18_20:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		break;
 
 	default:
 		break;
 	}
 
-	startSetAILWait(nr, 1, mode);
+	startSetAILWait(nr, 1, direction);
 
 	switch (r_nr) {
 	case ROOM_1_1:
@@ -195,7 +194,6 @@ void enter_room(int16 eib_nr) {
 	_G(flags).AutoAniPlay = false;
 	_G(SetUpScreenFunc) = nullptr;
 	_G(HowardMov) = 0;
-	_G(cur_hide_flag) = false;
 
 #define ENTRY(NUM) case NUM: Room##NUM::entry(); break
 #define ENTRY_NR(NUM) case NUM: Room##NUM::entry(eib_nr); break
@@ -756,9 +754,9 @@ void flic_cut(int16 nr) {
 		break;
 
 	case FCUT_112:
-		g_engine->_sound->setMusicVolume(32 * Audio::Mixer::kMaxChannelVolume / 120);
+		g_engine->_sound->setActiveMusicVolume(32);
 		g_engine->_video->playVideo(nr);
-		g_engine->_sound->setMusicVolume(5 * Audio::Mixer::kMaxChannelVolume / 120);
+		g_engine->_sound->setActiveMusicVolume(5);
 		break;
 
 	case FCUT_133:
@@ -1114,7 +1112,7 @@ int16 sib_event_no_inv(int16 sib_nr) {
 	case SIB_LAMPE_R52:
 		_G(atds)->delControlBit(338, ATS_ACTIVE_BIT);
 		_G(gameState).R52LichtAn ^= 1;
-		checkShadow(2 * (_G(gameState).R52LichtAn + 1), 1);
+		setShadowPalette(2 * (_G(gameState).R52LichtAn + 1), true);
 		break;
 
 	case SIB_KAUTABAK_R56:
@@ -1122,15 +1120,16 @@ int16 sib_event_no_inv(int16 sib_nr) {
 		_G(gameState).R56GetTabak = true;
 		break;
 
-	case SIB_ASCHE_R64:
+	case SIB_ASHTRAY_R64:
+		// Pick up ashtray
 		_G(det)->stop_detail(0);
 		_G(obj)->hide_sib(sib_nr);
+		_G(gameState).R64AshtrayTaken = true;
 		Room64::talk_man(351);
 		break;
 
 	case 94:
 		_G(det)->showStaticSpr(7);
-		_G(cur_hide_flag) = false;
 		hideCur();
 		startAadWait(406);
 		if (_G(gameState)._personRoomNr[P_HOWARD] == 66)
@@ -1181,7 +1180,7 @@ void sib_event_inv(int16 sib_nr) {
 		break;
 
 	case SIB_BOLA_BUTTON_R6:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(gameState).R6BolaSchild = true;
 		_G(det)->showStaticSpr(2);
 		_G(obj)->calc_rsi_flip_flop(SIB_BOLA_BUTTON_R6);
@@ -1234,13 +1233,13 @@ void sib_event_inv(int16 sib_nr) {
 
 	case SIB_FLUXO_R23:
 		_G(gameState).R23FluxoFlex = true;
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(atds)->set_ats_str(112, 1, ATS_DATA);
 		_G(menu_item_vorwahl) = CUR_USE;
 		break;
 
 	case SIB_TRANSLATOR_23:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(atds)->set_ats_str(113, 0, ATS_DATA);
 		_G(menu_item_vorwahl) = CUR_USE;
 		break;
@@ -1251,7 +1250,7 @@ void sib_event_inv(int16 sib_nr) {
 
 	case SIB_ROEHRE_R12:
 		_G(gameState).R12TalismanOk = true;
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(atds)->set_ats_str(118, TXT_MARK_LOOK, 1, ATS_DATA);
 		start_spz(CH_TALK6, 255, false, P_CHEWY);
 		startAadWait(115);
@@ -1267,10 +1266,9 @@ void sib_event_inv(int16 sib_nr) {
 		break;
 
 	case SIB_CART_FACH_R18:
-		_G(cur_hide_flag) = false;
 		start_spz_wait(CH_LGET_O, 1, false, P_CHEWY);
 		_G(gameState).R18CartFach = true;
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(det)->showStaticSpr(7);
 		_G(atds)->set_ats_str(157, TXT_MARK_LOOK, 1, ATS_DATA);
 

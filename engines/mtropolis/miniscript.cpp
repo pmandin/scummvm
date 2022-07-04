@@ -1331,7 +1331,7 @@ MiniscriptInstructionOutcome RangeCreate::execute(MiniscriptThread *thread) cons
 
 		switch (v->getType()) {
 		case DynamicValueTypes::kFloat:
-			coords[i] = static_cast<int32>(floor(v->getFloat() + 0.5)) & 0xffff;
+			coords[i] = static_cast<int32>(floor(v->getFloat() + 0.5));
 			break;
 		case DynamicValueTypes::kInteger:
 			coords[i] = v->getInt();
@@ -1531,6 +1531,11 @@ MiniscriptInstructionOutcome GetChild::readRValueAttribIndexed(MiniscriptThread 
 			size_t realIndex = 0;
 			if (!DynamicList::dynamicValueToIndex(realIndex, index)) {
 				thread->error("Unable to list value at specified index");
+				return kMiniscriptInstructionOutcomeFailed;
+			}
+
+			if (!list->getAtIndex(realIndex, valueSrcDest)) {
+				thread->error("List read index out of bounds");
 				return kMiniscriptInstructionOutcomeFailed;
 			}
 		} else {
@@ -1899,14 +1904,6 @@ MiniscriptInstructionOutcome MiniscriptThread::dereferenceRValue(size_t offset, 
 	case DynamicValueTypes::kWriteProxy:
 		this->error("Attempted to dereference an lvalue proxy");
 		return kMiniscriptInstructionOutcomeFailed;
-	case DynamicValueTypes::kReadProxy: {
-			const DynamicValueReadProxyPOD &readProxy = stackValue.value.getReadProxyPOD();
-			if (!readProxy.ifc->read(this, stackValue.value, readProxy.objectRef, readProxy.ptrOrOffset)) {
-				this->error("Failed to access a proxy value");
-				return kMiniscriptInstructionOutcomeFailed;
-			}
-		}
-		break;
 	case DynamicValueTypes::kList:
 			if (cloneLists)
 				stackValue.value.setList(stackValue.value.getList()->clone());
@@ -1941,28 +1938,26 @@ bool MiniscriptThread::evaluateTruthOfResult(bool &isTrue) {
 }
 
 void MiniscriptThread::createWriteIncomingDataProxy(DynamicValueWriteProxy &proxy) {
-	proxy.pod.ifc = &IncomingDataWriteInterface::_instance;
+	proxy.pod.ifc = DynamicValueWriteInterfaceGlue<IncomingDataWriteInterface>::getInstance();
 	proxy.pod.objectRef = this;
 	proxy.pod.ptrOrOffset = 0;
 }
 
-MiniscriptInstructionOutcome MiniscriptThread::IncomingDataWriteInterface::write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) const {
+MiniscriptInstructionOutcome MiniscriptThread::IncomingDataWriteInterface::write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) {
 	thread->_msgProps->setValue(value);
 
 	return kMiniscriptInstructionOutcomeContinue;
 }
 
-MiniscriptInstructionOutcome MiniscriptThread::IncomingDataWriteInterface::refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const {
+MiniscriptInstructionOutcome MiniscriptThread::IncomingDataWriteInterface::refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) {
 	// TODO: Generic refAttrib for dynamic values
 	return kMiniscriptInstructionOutcomeFailed;
 }
 
-MiniscriptInstructionOutcome MiniscriptThread::IncomingDataWriteInterface::refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const {
+MiniscriptInstructionOutcome MiniscriptThread::IncomingDataWriteInterface::refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) {
 	// TODO: Generic refAttribIndexed for dynamic values
 	return kMiniscriptInstructionOutcomeFailed;
 }
-
-MiniscriptThread::IncomingDataWriteInterface MiniscriptThread::IncomingDataWriteInterface::_instance;
 
 
 VThreadState MiniscriptThread::resumeTask(const ResumeTaskData &data) {

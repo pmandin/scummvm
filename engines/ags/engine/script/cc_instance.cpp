@@ -39,6 +39,7 @@
 #include "ags/engine/ac/dynobj/script_user_object.h"
 #include "ags/engine/ac/statobj/ags_static_object.h"
 #include "ags/engine/ac/statobj/static_array.h"
+#include "ags/engine/ac/sys_events.h"
 #include "ags/engine/ac/dynobj/cc_dynamic_object_addr_and_manager.h"
 #include "ags/shared/util/memory.h"
 #include "ags/shared/util/string_utils.h" // linux strnicmp definition
@@ -206,7 +207,6 @@ struct FunctionCallStack {
 	int                 Count;
 };
 
-
 ccInstance *ccInstance::GetCurrentInstance() {
 	return _GP(InstThreads).size() > 0 ? _GP(InstThreads).back() : nullptr;
 }
@@ -224,6 +224,12 @@ ccInstance *ccInstance::CreateEx(PScript scri, ccInstance *joined) {
 	}
 
 	return cinst;
+}
+
+void ccInstance::SetExecTimeout(unsigned sys_poll_ms, unsigned abort_ms, unsigned abort_loops) {
+	_G(timeoutCheckMs) = sys_poll_ms;
+	_G(timeoutAbortMs) = abort_ms;
+	_G(maxWhileLoops) = abort_loops;
 }
 
 ccInstance::ccInstance() {
@@ -431,7 +437,7 @@ int ccInstance::Run(int32_t curpc) {
 	int32_t thisbase[MAXNEST], funcstart[MAXNEST];
 	int was_just_callas = -1;
 	int curnest = 0;
-	int loopIterations = 0;
+	unsigned loopIterations = 0;
 	int num_args_to_func = -1;
 	int next_call_needs_object = 0;
 	int loopIterationCheckDisabled = 0;
@@ -441,10 +447,14 @@ int ccInstance::Run(int32_t curpc) {
 	bool write_debug_dump = ccGetOption(SCOPT_DEBUGRUN) ||
 		(gDebugLevel > 0 && DebugMan.isDebugChannelEnabled(::AGS::kDebugScript));
 	ScriptOperation codeOp;
-
 	FunctionCallStack func_callstack;
 
-	while (1) {
+	const auto timeout = std::chrono::milliseconds(_G(timeoutCheckMs));
+	const auto timeout_abort = std::chrono::milliseconds(_G(timeoutAbortMs));
+	_lastAliveTs = AGS_Clock::now();
+	bool timeout_warn = false;
+
+	while ((flags & INSTF_ABORTED) == 0) {
 		if (_G(abort_engine))
 			return -1;
 
@@ -774,15 +784,36 @@ int ccInstance::Run(int32_t curpc) {
 		case SCMD_JMP:
 			pc += arg1.IValue;
 
-			if ((arg1.IValue < 0) && (_G(maxWhileLoops) > 0) && (loopIterationCheckDisabled == 0)) {
-				// Make sure it's not stuck in a While loop
-				loopIterations ++;
+			// Make sure it's not stuck in a While loop
+			if (arg1.IValue < 0) {
+				auto now = AGS_Clock::now();
+				auto test_dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastAliveTs);
 				if (flags & INSTF_RUNNING) {
-					loopIterations = 0;
+					// was notified still running, don't do anything
 					flags &= ~INSTF_RUNNING;
-				} else if (loopIterations > _G(maxWhileLoops)) {
-					cc_error("!Script appears to be hung (a while loop ran %d times). The problem may be in a calling function; check the call stack.", loopIterations);
+					_lastAliveTs = now;
+					timeout_warn = false;
+					loopIterations = 0;
+				} else if ((loopIterationCheckDisabled == 0) && (_G(maxWhileLoops) > 0) && (++loopIterations > _G(maxWhileLoops))) {
+					cc_error("!Script appears to be hung (a while loop ran %d times). The problem may be in a calling function; check the call stack.", (int)loopIterations);
 					return -1;
+				} else if (test_dur > timeout) {
+					// minimal timeout occured
+					if ((timeout_abort.count() > 0) && (test_dur.count() > timeout_abort.count())) {
+						// critical timeout occured
+						/* CHECKME: disabled, because not working well
+						if (loopIterationCheckDisabled == 0) {
+							cc_error("!Script appears to be hung (no game update for %lld ms). The problem may be in a calling function; check the call stack.", test_dur.count());
+							return -1;
+						}
+						*/
+						if (!timeout_warn) {
+							debug_script_warn("WARNING: script execution hung? (%lld ms)", test_dur.count());
+							timeout_warn = true;
+						}
+					}
+					// at least let user to manipulate the game window
+					sys_evt_process_pending();
 				}
 			}
 			break;
@@ -969,9 +1000,6 @@ int ccInstance::Run(int32_t curpc) {
 				return -1;
 
 			runningInst = wasRunning;
-
-			if (flags & INSTF_ABORTED)
-				return 0;
 
 			if (oldstack != registers[SREG_SP]) {
 				cc_error("stack corrupt after function call");
@@ -1219,11 +1247,9 @@ int ccInstance::Run(int32_t curpc) {
 			return -1;
 		}
 
-		if (flags & INSTF_ABORTED)
-			return 0;
-
 		pc += codeOp.ArgCount + 1;
 	}
+	return 0;
 }
 
 String ccInstance::GetCallStack(int maxLines) const {

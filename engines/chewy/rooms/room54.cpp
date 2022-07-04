@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -117,8 +118,7 @@ void Room54::setup_func() {
 				}
 			}
 
-			if (!_G(flags).SaveMenu)
-				goAutoXy(x, y, P_HOWARD, ANI_GO);
+			goAutoXy(x, y, P_HOWARD, ANI_GO);
 		}
 	}
 }
@@ -126,7 +126,7 @@ void Room54::setup_func() {
 int16 Room54::use_schalter() {
 	int16 action_ret = false;
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		hideCur();
 		action_ret = true;
 
@@ -188,7 +188,7 @@ void Room54::talk_verkauf() {
 
 	if (!_G(gameState).R54HotDogOk) {
 		if (_G(gameState).R45MagOk) {
-			if (_G(gameState).AkInvent == DOLLAR175_INV)
+			if (_G(cur)->getInventoryCursor() == DOLLAR175_INV)
 				delInventory(DOLLAR175_INV);
 			else
 				remove_inventory(DOLLAR175_INV);
@@ -228,7 +228,7 @@ int16 Room54::use_zelle() {
 	int16 action_ret = false;
 	hideCur();
 
-	if (_G(gameState).inv_cur) {
+	if (_G(cur)->usingInventoryCursor()) {
 		if (isCurInventory(JMKOST_INV)) {
 			action_ret = true;
 
@@ -242,7 +242,7 @@ int16 Room54::use_zelle() {
 				goAutoXy(239, 101, P_HOWARD, ANI_WAIT);
 				flic_cut(FCUT_069);
 
-				delInventory(_G(gameState).AkInvent);
+				delInventory(_G(cur)->getInventoryCursor());
 				invent_2_slot(LEDER_INV);
 				load_chewy_taf(CHEWY_JMANS);
 				_G(zoom_horizont) = 90;
@@ -271,7 +271,7 @@ int16 Room54::use_zelle() {
 int16 Room54::use_azug() {
 	int16 action_ret = false;
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_ret = true;
 		hideCur();
 
@@ -361,7 +361,7 @@ void Room54::aufzug_ab() {
 short Room54::use_taxi() {
 	int16 action_ret = false;
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_ret = true;
 		hideCur();
 		autoMove(7, P_CHEWY);

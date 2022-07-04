@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -249,7 +250,7 @@ void Room28::set_pump() {
 			_G(gameState)._personHide[P_CHEWY] = true;
 			int16 tmp = (_G(person_end_phase)[P_CHEWY] == P_RIGHT) ? 1 : 0;
 			delInventory(K_MASKE_INV);
-			_G(det)->setSetailPos(tmp, _G(moveState)[P_CHEWY].Xypos[0], _G(moveState)[P_CHEWY].Xypos[1]);
+			_G(det)->setDetailPos(tmp, _G(moveState)[P_CHEWY].Xypos[0], _G(moveState)[P_CHEWY].Xypos[1]);
 
 			if (_G(gameState).R28PumpTxt1 < 3) {
 				start_aad(137);
@@ -296,7 +297,7 @@ void Room28::get_pump() {
 		_G(gameState).R28ChewyPump = false;
 		_G(gameState)._personHide[P_CHEWY] = true;
 		int16 tmp = (_G(person_end_phase)[P_CHEWY] == P_RIGHT) ? 1 : 0;
-		_G(det)->setSetailPos(tmp, _G(moveState)[P_CHEWY].Xypos[0], _G(moveState)[P_CHEWY].Xypos[1]);
+		_G(det)->setDetailPos(tmp, _G(moveState)[P_CHEWY].Xypos[0], _G(moveState)[P_CHEWY].Xypos[1]);
 		startSetAILWait(tmp, 1, ANI_BACK);
 
 		invent_2_slot(K_MASKE_INV);
@@ -317,7 +318,7 @@ void Room28::get_pump() {
 int16 Room28::use_breifkasten() {
 	int16 action_flag = false;
 
-	if (_G(gameState).R28Briefkasten && !_G(gameState).inv_cur) {
+	if (_G(gameState).R28Briefkasten && !_G(cur)->usingInventoryCursor()) {
 		action_flag = true;
 		hideCur();
 		_G(gameState).R28Briefkasten = false;

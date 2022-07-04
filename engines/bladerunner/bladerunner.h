@@ -42,6 +42,7 @@
 #define BLADERUNNER_ORIGINAL_BUGS     0
 
 namespace Common {
+class Archive;
 struct Event;
 }
 
@@ -228,12 +229,14 @@ public:
 	bool _vqaIsPlaying;
 	bool _vqaStopIsRequested;
 	bool _subtitlesEnabled;  // tracks the state of whether subtitles are enabled or disabled from ScummVM GUI option or KIA checkbox (the states are synched)
+	bool _showSubtitlesForTextCrawl;
 	bool _sitcomMode;
 	bool _shortyMode;
 	bool _noDelayMillisFramelimiter;
 	bool _framesPerSecondMax;
 	bool _disableStaminaDrain;
 	bool _cutContent;
+	bool _enhancedEdition;
 	bool _validBootParam;
 
 	int _walkSoundId;
@@ -332,6 +335,7 @@ public:
 
 private:
 	MIXArchive _archives[kArchiveCount];
+	Common::Archive *_archive;
 
 public:
 	BladeRunnerEngine(OSystem *syst, const ADGameDescription *desc);
@@ -408,6 +412,8 @@ public:
 	bool openArchive(const Common::String &name);
 	bool closeArchive(const Common::String &name);
 	bool isArchiveOpen(const Common::String &name) const;
+
+	bool openArchiveEnhancedEdition();
 
 	void syncSoundSettings() override;
 	bool isSubtitlesEnabled();

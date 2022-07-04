@@ -19,11 +19,22 @@
  *
  */
 
-#include "glk/scott/saga_draw.h"
-#include "glk/scott/definitions.h"
-#include "glk/scott/detect_game.h"
-#include "glk/scott/globals.h"
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
+
 #include "glk/scott/scott.h"
+#include "glk/scott/definitions.h"
+#include "glk/scott/resource.h"
+#include "glk/scott/globals.h"
+#include "glk/scott/saga_draw.h"
 
 namespace Glk {
 namespace Scott {
@@ -97,6 +108,8 @@ void plotsprite(int32_t character, int32_t x, int32_t y, int32_t fg, int32_t bg)
 }
 
 void transform(int32_t character, int32_t flipMode, int32_t ptr) {
+	if (character > 255)
+		return;
 	uint8_t work[8];
 	int32_t i;
 
@@ -314,7 +327,8 @@ uint8_t *drawSagaPictureFromData(uint8_t *dataptr, int xSize, int ySize, int xOf
 void drawSagaPictureNumber(int pictureNumber) {
 	int numgraphics = _G(_game)->_numberOfPictures;
 	if (pictureNumber >= numgraphics) {
-		error("Invalid image number % d !Last image: % d\n ", pictureNumber, numgraphics - 1);
+
+		error("drawSagaPictureNumber: Invalid image number % d !Last image: % d", pictureNumber, numgraphics - 1);
 		return;
 	}
 
@@ -324,6 +338,48 @@ void drawSagaPictureNumber(int pictureNumber) {
 		return;
 
 	drawSagaPictureFromData(img._imageData, img._width, img._height, img._xOff, img._yOff);
+}
+
+void drawSagaPictureAtPos(int pictureNumber, int x, int y) {
+	Image img = _G(_images)[pictureNumber];
+
+	drawSagaPictureFromData(img._imageData, img._width, img._height, x, y);
+}
+
+void drawSagaPictureFromBuffer() {
+	for (int line = 0; line < 12; line++) {
+		for (int col = 0; col < 32; col++) {
+
+			uint8_t colour = _G(_buffer)[col + line * 32][8];
+
+			int paper = (colour >> 3) & 0x7;
+			paper += 8 * ((colour & 0x40) == 0x40);
+			paper = remap(paper);
+			int ink = (colour & 0x7);
+			ink += 8 * ((colour & 0x40) == 0x40);
+			ink = remap(ink);
+
+			background(col, line, paper);
+
+			for (int i = 0; i < 8; i++) {
+				if (_G(_buffer)[col + line * 32][i] == 0)
+					continue;
+				if (_G(_buffer)[col + line * 32][i] == 255) {
+
+					glui32 glk_color = (_G(_pal)[ink][0] << 16) | (_G(_pal)[ink][1] << 8) | _G(_pal)[ink][2];
+
+					g_scott->glk_window_fill_rect(_G(_graphics), glk_color, col * 8 * _G(_pixelSize) + _G(_xOffset),
+												  (line * 8 + i) * _G(_pixelSize), 8 * _G(_pixelSize), _G(_pixelSize));
+					continue;
+				}
+				for (int j = 0; j < 8; j++)
+					if ((_G(_buffer)[col + line * 32][i] & (1 << j)) != 0) {
+						int ypos = line * 8 + i;
+						putPixel(col * 8 + j, ypos, ink);
+					}
+			}
+		}
+	}
 }
 
 void sagaSetup(size_t imgOffset) {
@@ -336,7 +392,7 @@ void sagaSetup(size_t imgOffset) {
 	}
 
 	if (_G(_palChosen) == NO_PALETTE) {
-		error("unknown palette\n");
+		error("sagaSetup: unknown palette");
 	}
 
 	definePalette();
@@ -454,6 +510,22 @@ void rectFill(int32_t x, int32_t y, int32_t width, int32_t height, int32_t color
 
 	g_scott->glk_window_fill_rect(_G(_graphics), glk_color, x * _G(_pixelSize) + _G(_xOffset),
 							   y * _G(_pixelSize) + yOffset, width * _G(_pixelSize), height * _G(_pixelSize));
+}
+
+void switchPalettes(int pal1, int pal2) {
+	uint8_t temp[3];
+
+	temp[0] = _G(_pal)[pal1][0];
+	temp[1] = _G(_pal)[pal1][1];
+	temp[2] = _G(_pal)[pal1][2];
+
+	_G(_pal)[pal1][0] = _G(_pal)[pal2][0];
+	_G(_pal)[pal1][1] = _G(_pal)[pal2][1];
+	_G(_pal)[pal1][2] = _G(_pal)[pal2][2];
+
+	_G(_pal)[pal2][0] = temp[0];
+	_G(_pal)[pal2][1] = temp[1];
+	_G(_pal)[pal2][2] = temp[2];
 }
 
 void setColor(int32_t index, RGB *colour) {

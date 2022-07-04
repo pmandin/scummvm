@@ -299,7 +299,6 @@ public:
 	std::array<SOUNDCLIP *> *_audioChannels;
 	std::array<AmbientSound> *_ambient;
 
-	volatile bool _audio_doing_crossfade = false;
 	ScriptAudioChannel *_scrAudioChannel;
 	char _acaudio_buffer[256];
 	int _reserved_channel_count = 0;
@@ -1280,7 +1279,15 @@ public:
 	 */
 
 	new_line_hook_type _new_line_hook = nullptr;
-	int _maxWhileLoops = 0;
+	// Minimal timeout: how much time may pass without any engine update
+	// before we want to check on the situation and do system poll
+	unsigned _timeoutCheckMs = 60u;
+	// Critical timeout: how much time may pass without any engine update
+	// before we abort or post a warning
+	unsigned _timeoutAbortMs = 0u;
+	// Maximal while loops without any engine update in between,
+	// after which the interpreter will abort
+	unsigned _maxWhileLoops = 0u;
 	ccInstance *_loadedInstances[MAX_LOADED_INSTANCES];
 
 	/**@}*/

@@ -77,6 +77,8 @@ enum Platform {
 	kPlatformPippin,
 	kPlatformMacintoshII,
 	kPlatformShockwave,
+	kPlatformZX,
+	kPlatformTI994,
 
 	kPlatformUnknown = -1
 };

@@ -31,6 +31,7 @@
 //#include "math/matrix.h"
 #include "ags/lib/std/memory.h"
 #include "ags/lib/allegro.h" // RGB, PALETTE
+#include "ags/shared/gfx/gfx_def.h"
 #include "ags/engine/gfx/gfx_defines.h"
 #include "ags/engine/gfx/gfx_mode_list.h"
 #include "ags/shared/util/geometry.h"
@@ -152,7 +153,7 @@ public:
 	// Beginning a batch while the previous was not ended will create a sub-batch
 	// (think of it as of a child scene node).
 	virtual void BeginSpriteBatch(const Rect &viewport, const SpriteTransform &transform,
-		const Point offset = Point(), GlobalFlipType flip = kFlip_None, PBitmap surface = nullptr) = 0;
+		const Point offset = Point(), Shared::GraphicFlip flip = Shared::kFlip_None, PBitmap surface = nullptr) = 0;
 	// Ends current sprite batch
 	virtual void EndSpriteBatch() = 0;
 	// Adds sprite to the active batch
@@ -169,13 +170,15 @@ public:
 	// Renders with additional final offset and flip
 	// TODO: leftover from old code, solely for software renderer; remove when
 	// software mode either discarded or scene node graph properly implemented.
-	virtual void Render(int xoff, int yoff, GlobalFlipType flip) = 0;
+	virtual void Render(int xoff, int yoff, Shared::GraphicFlip flip) = 0;
 	// Copies contents of the game screen into bitmap using simple blit or pixel copy.
 	// Bitmap must be of supported size and pixel format. If it's not the method will
 	// fail and optionally write wanted destination format into 'want_fmt' pointer.
 	virtual bool GetCopyOfScreenIntoBitmap(Shared::Bitmap *destination, bool at_native_res, GraphicResolution *want_fmt = nullptr) = 0;
-	virtual void EnableVsyncBeforeRender(bool enabled) = 0;
-	virtual void Vsync() = 0;
+	// Tells if the renderer supports toggling vsync after initializing the mode.
+	virtual bool DoesSupportVsyncToggle() = 0;
+	// Toggles vertical sync mode, if renderer supports one; returns the new state.
+	virtual bool SetVsync(bool enabled) = 0;
 	// Enables or disables rendering mode that draws sprite list directly into
 	// the final resolution, as opposed to drawing to native-resolution buffer
 	// and scaling to final frame. The effect may be that sprites that are

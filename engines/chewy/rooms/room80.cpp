@@ -61,7 +61,7 @@ void Room80::entry() {
 	_G(gameState).ZoomXy[P_NICHELLE][1] = 40;
 	_G(zoom_horizont) = 0;
 
-	if (_G(gameState).r88DestRoom == 84)
+	if (_G(gameState).R88UsedMonkey)
 		_G(det)->showStaticSpr(3);
 	else
 		_G(det)->showStaticSpr(4);
@@ -78,7 +78,7 @@ void Room80::setup_func() {
 
 	_G(menu_item) = CUR_USE;
 	cur_2_inventory();
-	cursorChoice(CUR_ZEIGE);
+	cursorChoice(CUR_POINT);
 	int vec = _G(det)->maus_vector(_G(gameState).scrollx + g_events->_mousePos.x, g_events->_mousePos.y);
 	if (vec == -1)
 		return;

@@ -53,7 +53,6 @@ void Room0::entry() {
 
 	if (!_G(flags).LoadGame) {
 		setPersonPos(150, 100, P_CHEWY, P_RIGHT);
-		_G(cur_hide_flag) = 0;
 		hideCur();
 		_G(timer_nr)[0] = _G(room)->set_timer(255, 3);
 
@@ -123,7 +122,7 @@ bool Room0::timer(int16 timerNr, int16 aniNr) {
 bool Room0::getPillow() {
 	bool retval = false;
 	
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		hideCur();
 		_G(flags).AutoAniPlay = true;
 		autoMove(1, P_CHEWY);
@@ -144,7 +143,7 @@ bool Room0::getPillow() {
 
 bool Room0::pullSlime() {
 	bool retval = false;
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		hideCur();
 		
 		_G(flags).AutoAniPlay = true;
@@ -234,7 +233,7 @@ void Room0::eyeStart(EyeMode mode) {
 		setupScreen(NO_SETUP);
 		SHOULD_QUIT_RETURN;
 
-		_G(cur)->plot_cur();
+		_G(cur)->updateCursor();
 		calcEyeClick(3);
 		_G(out)->copyToScreen();
 
@@ -279,7 +278,7 @@ void Room0::eyeWait() {
 		_G(spr_info)[2]._zLevel = 192;
 		get_user_key(NO_SETUP);
 		setupScreen(NO_SETUP);
-		_G(cur)->plot_cur();
+		_G(cur)->updateCursor();
 		calcEyeClick(2);
 		_G(out)->copyToScreen();
 
@@ -313,7 +312,7 @@ void Room0::calcEyeClick(int16 aniNr) {
 			}
 		} else if (_G(minfo).button == 1 || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN) {
 			if (isCurInventory(SLIME_INV)) {
-				delInventory(_G(gameState).AkInvent);
+				delInventory(_G(cur)->getInventoryCursor());
 				_G(gameState).R0SlimeUsed = true;
 			} else if (isCurInventory(PILLOW_INV)) {
 				startAtsWait(172, TXT_MARK_WALK, 14, ATS_DATA);
@@ -487,7 +486,7 @@ void Room0::feederStart(int16 mode) {
 		SHOULD_QUIT_RETURN;
 
 		setupScreen(NO_SETUP);
-		_G(cur)->plot_cur();
+		_G(cur)->updateCursor();
 		if (!mode)
 			calcPillowClick(1);
 
@@ -528,7 +527,7 @@ void Room0::feederExtend() {
 		_G(spr_info)[1]._zLevel = 191;
 		get_user_key(NO_SETUP);
 		setupScreen(NO_SETUP);
-		_G(cur)->plot_cur();
+		_G(cur)->updateCursor();
 		calcPillowClick(1);
 		_G(out)->copyToScreen();
 	}
@@ -551,7 +550,7 @@ void Room0::calcPillowClick(int16 aniNr) {
 			}
 		} else if (_G(minfo).button == 1 || g_events->_kbInfo._keyCode == Common::KEYCODE_RETURN) {
 			if (isCurInventory(PILLOW_INV) && _G(gameState).R0SlimeUsed) {
-				delInventory(_G(gameState).AkInvent);
+				delInventory(_G(cur)->getInventoryCursor());
 				_G(gameState).R0PillowThrow = true;
 			} else if (isCurInventory(SLIME_INV)) {
 				startAtsWait(173, TXT_MARK_WALK, 14, ATS_DATA);
@@ -752,7 +751,7 @@ void Room0::feederAni() {
 			               _G(Rdi)->AutoMov[4]._y - CH_HOT_MOV_Y, P_CHEWY, P_RIGHT);
 			_G(moveState)[P_CHEWY]._delayCount = 0;
 
-			checkShadow(4, 0);
+			setShadowPalette(4, false);
 			_G(fx_blend) = BLEND1;
 			setupScreen(DO_SETUP);
 		} else {

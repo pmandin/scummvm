@@ -19,11 +19,14 @@
  *
  */
 
-#include "backends/graphics/opengl/debug.h"
-#include "backends/graphics/opengl/opengl-sys.h"
+#include "graphics/opengl/debug.h"
 
 #include "common/str.h"
 #include "common/textconsole.h"
+
+#include "graphics/opengl/system_headers.h"
+
+#if defined(USE_OPENGL)
 
 #ifdef OPENGL_DEBUG
 
@@ -52,6 +55,13 @@ Common::String getGLErrStr(GLenum error) {
 }
 } // End of anonymous namespace
 
+void clearGLError() {
+	GLenum error;
+
+	while ((error = glGetError()) != GL_NO_ERROR)
+		;
+}
+
 void checkGLError(const char *expr, const char *file, int line) {
 	GLenum error;
 
@@ -62,5 +72,7 @@ void checkGLError(const char *expr, const char *file, int line) {
 	}
 }
 } // End of namespace OpenGL
+
+#endif
 
 #endif

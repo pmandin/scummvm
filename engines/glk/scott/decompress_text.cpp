@@ -19,8 +19,19 @@
  *
  */
 
-#include "glk/scott/decompress_text.h"
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
+
 #include "common/str.h"
+#include "glk/scott/decompress_text.h"
 
 namespace Glk {
 namespace Scott {
@@ -48,7 +59,8 @@ int decompressOne(uint8_t *bytes) {
 
 char *decompressText(uint8_t *source, int stringIndex) {
 	// Lookup table
-	Common::String alphabet = " abcdefghijklmnopqrstuvwxyz'\x01,.\x00";
+	const char *alphabet = " abcdefghijklmnopqrstuvwxyz'\x01,.\x00";
+	//Common::String alphabet = " abcdefghijklmnopqrstuvwxyz'\x01,.\x00";
 
 	int pos, c, uppercase, i, j;
 	uint8_t decompressed[256];

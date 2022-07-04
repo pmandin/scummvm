@@ -965,7 +965,7 @@ void OptionsDialog::apply() {
 					break;
 				}
 
-				if (subtitles != ConfMan.getBool("subtitles")) {
+				if (subtitles != ConfMan.getBool("subtitles", _domain)) {
 					ConfMan.setBool("subtitles", subtitles, _domain);
 					_subToggleDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal); 
 				}
@@ -2216,7 +2216,7 @@ void GlobalOptionsDialog::build() {
 
 	setPath(_savePath, "savepath", _("Default")); 
 	setPath(_themePath, "themepath", _c("None", "path"));
-	setPath(_iconPath, "iconspath", _c("None", "path"));
+	setPath(_iconPath, "iconspath", _("Default"));
 	setPath(_extraPath, "extrapath", _c("None", "path"));
 
 #ifdef DYNAMIC_MODULES
@@ -2304,7 +2304,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 		new ButtonWidget(boss, prefix + "IconButton", _("Icon Path:"), Common::U32String(), kChooseIconDirCmd);
 	else
 		new ButtonWidget(boss, prefix + "IconButton", _c("Icon Path:", "lowres"), Common::U32String(), kChooseIconDirCmd);
-	_iconPath = new StaticTextWidget(boss, prefix + "IconPath", _c("None", "path"));
+	_iconPath = new StaticTextWidget(boss, prefix + "IconPath", _c("Default", "path"));
 
 	_iconPathClearButton = addClearButton(boss, prefix + "IconPathClearButton", kIconPathClearCmd);
 
@@ -2709,7 +2709,7 @@ void GlobalOptionsDialog::apply() {
 
 	changePath(_savePath, "savepath", _("Default")); 
 	changePath(_themePath, "themepath", _c("None", "path")); 
-	changePath(_iconPath, "iconspath", _c("None", "path")); 
+	changePath(_iconPath, "iconspath", _("Default"));
 	changePath(_extraPath, "extrapath", _c("None", "path")); 
 
 #ifdef DYNAMIC_MODULES
@@ -2991,12 +2991,7 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 #ifdef USE_LIBCURL
 	case kUpdateIconsCmd: {
 		DownloadIconsDialog dia;
-
-		if (dia.runModal() > 0) {
-			if (_launcher && _launcher->getType() == kLauncherDisplayGrid)
-				_launcher->rebuild();
-		}
-
+		dia.runModal();
 		break;
 	}
 #endif
@@ -3006,7 +3001,7 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 		_themePath->setLabel(_c("None", "path"));
 		break;
 	case kIconPathClearCmd:
-		_iconPath->setLabel(_c("None", "path"));
+		_iconPath->setLabel(_("Default"));
 		break;
 	case kExtraPathClearCmd:
 		_extraPath->setLabel(_c("None", "path"));
@@ -3271,10 +3266,12 @@ void GlobalOptionsDialog::reflowLayout() {
 	if (_midiTabId != -1) {
 		_tabWidget->setActiveTab(_midiTabId);
 
+		bool enabled = _soundFontClearButton->isEnabled();
 		_tabWidget->removeWidget(_soundFontClearButton);
 		_soundFontClearButton->setNext(nullptr);
 		delete _soundFontClearButton;
 		_soundFontClearButton = addClearButton(_tabWidget, "GlobalOptions_MIDI.mcFontClearButton", kClearSoundFontCmd);
+		_soundFontClearButton->setEnabled(enabled);
 	}
 
 	if (_pathsTabId != -1) {

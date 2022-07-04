@@ -183,6 +183,7 @@ LauncherDialog::LauncherDialog(const Common::String &dialogName, LauncherChooser
 
 	Common::ArchiveMemberList mdFiles;
 
+	g_gui.lockIconsSet();
 	g_gui.getIconsSet().listMatchingMembers(mdFiles, "*.xml");
 	for (Common::ArchiveMemberList::iterator md = mdFiles.begin(); md != mdFiles.end(); ++md) {
 		if (_metadataParser.loadStream((*md)->createReadStream()) == false) {
@@ -194,6 +195,7 @@ LauncherDialog::LauncherDialog(const Common::String &dialogName, LauncherChooser
 		}
 		_metadataParser.close();
 	}
+	g_gui.unlockIconsSet();
 }
 
 LauncherDialog::~LauncherDialog() {
@@ -1476,6 +1478,9 @@ void LauncherGrid::handleCommand(CommandSender *sender, uint32 cmd, uint32 data)
 		ConfMan.setInt("grid_items_per_row", _gridItemSizeSlider->getValue());
 		ConfMan.flushToDisk();
 		reflowLayout();
+		break;
+	case kIconsSetLoadedCmd:
+		rebuild();
 		break;
 	default:
 		LauncherDialog::handleCommand(sender, cmd, data);

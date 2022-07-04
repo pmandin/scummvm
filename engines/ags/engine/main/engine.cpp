@@ -104,9 +104,10 @@ bool engine_init_backend() {
 }
 
 void winclosehook() {
-	_G(want_exit) = 1;
-	_G(abort_engine) = 1;
+	_G(want_exit) = true;
+	_G(abort_engine) = true;
 	_G(check_dynamic_sprites_at_exit) = 0;
+	AbortGame();
 }
 
 void engine_setup_window() {
@@ -1175,7 +1176,7 @@ int initialize_engine(const ConfigTree &startup_opts) {
 	// Configure game window after renderer was initialized
 	engine_setup_window();
 
-	SetMultitasking(0);
+	SetMultitasking(_GP(usetup).multitasking);
 
 	sys_window_show_cursor(false); // hide the system cursor
 

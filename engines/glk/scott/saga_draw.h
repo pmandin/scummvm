@@ -19,8 +19,19 @@
  *
  */
 
-#ifndef GLK_SCOTT_SAGADRAW
-#define GLK_SCOTT_SAGADRAW
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
+
+#ifndef GLK_SCOTT_SAGADRAW_H
+#define GLK_SCOTT_SAGADRAW_H
 
 #include "glk/glk_types.h"
 #include "glk/scott/types.h"
@@ -41,11 +52,15 @@ typedef RGB PALETTE[16];
 
 uint8_t *drawSagaPictureFromData(uint8_t *dataptr, int xSize, int ySize, int xOff, int yOff);
 void drawSagaPictureNumber(int pictureNumber);
+void drawSagaPictureAtPos(int pictureNumber, int x, int y);
+void drawSagaPictureFromBuffer();
+void flip(uint8_t character[]);
 
 void sagaSetup(size_t imgOffset);
 
 void putPixel(glsi32 x, glsi32 y, int32_t color);
 void rectFill(int32_t x, int32_t y, int32_t width, int32_t height, int32_t color);
+void switchPalettes(int pal1, int pal2);
 void definePalette();
 
 int32_t remap(int32_t color);

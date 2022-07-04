@@ -182,7 +182,7 @@ struct GameFlags {
 	bool R40TrainOk : 1;
 	bool R40Geld : 1;
 	bool R40PoliceStart : 1;
-	bool R40PoliceWeg : 1;
+	bool R40PoliceAway : 1;
 
 	bool R40PoliceAb : 1;
 	bool R40Wettbewerb : 1;
@@ -253,12 +253,12 @@ struct GameFlags {
 	bool R62Flucht : 1;
 	bool R62FirstEntry : 1;
 	bool R62TShow : 1;
-	bool R62LauraVerwandlung : 1;
-	bool R63Feuer : 1;
-	bool R63FxMannWeg : 1;
+	bool R62LauraTransformation : 1;
+	bool R63Fire : 1;
+	bool R63FxManAway : 1;
 
 	bool R63Uhr : 1;
-	bool R64ManWeg : 1;
+	bool R64ManAway : 1;
 	bool flags26_4 : 1;
 	bool flags26_8 : 1;
 	bool flags26_10 : 1;
@@ -280,8 +280,8 @@ struct GameFlags {
 	bool flags28_4 : 1;
 	bool flags28_8 : 1;
 	bool flags28_10 : 1;
-	bool flags28_20 : 1;
-	bool flags28_40 : 1;
+	bool flags28_20 : 1;	// bushes moved
+	bool flags28_40 : 1;	// machete picked up
 	bool R74CutRubberPlant : 1;
 
 	bool flags29_1 : 1;
@@ -366,7 +366,7 @@ struct GameFlags {
 	bool flags37_40 : 1;
 	bool flags37_80 : 1;
 
-	bool flags38_1 : 1;
+	bool R64AshtrayTaken : 1;	// picked up ashtray in TV room
 	bool flags38_2 : 1;
 	uint8 flags38_unused : 6;
 
@@ -391,10 +391,6 @@ struct GameState : public GameFlags {
 	bool synchronize(Common::Serializer &s);
 
 	GameFlags *_flags = nullptr;
-	uint8 Ats[ROOM_ATS_MAX * 3] = { 0 };
-	uint8 InvAts[MAX_MOV_OBJ * 3] = { 0 };
-	uint8 InvUse[INV_USE_ATS_MAX * 3] = { 0 };
-	uint8 InvUseDef[40 * 3] = { 0 };
 
 	int16 MainMenuY = 0;
 	int16 InvDisp = 0;
@@ -403,11 +399,6 @@ struct GameState : public GameFlags {
 	int16 DispFlag = 0;
 	int16 InventY = 0;
 	int16 InventSlot[MAX_MOV_OBJ] = { 0 };
-
-	int16 AkInvent = 0;
-	bool inv_cur = 0;
-	int16 _curWidth = 0;
-	int16 _curHeight = 0;
 
 	RoomMovObject room_m_obj[MAX_MOV_OBJ];
 	RoomStaticInventory room_s_obj[MAX_FEST_OBJ];
@@ -493,8 +484,6 @@ struct GameState : public GameFlags {
 	int16 r76State = 0;
 	// ---- //
 	int16 R79Val[3] = {0, 0, 0};
-	// ---- //
-	int16 r88DestRoom = 0;
 	// ---- //
 	int r90_Array187030[8][4] = {
 		{0, 1, 180, 190},
@@ -585,8 +574,6 @@ struct Flags {
 	uint16 NoDiaBox : 1;
 	uint16 NoEndPosMovObj: 1;
 	uint16 SavePersonRnr : 1;
-
-	uint16 CursorStatus : 1;
 };
 
 extern void *MALLOC(size_t size);

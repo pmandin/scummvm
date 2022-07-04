@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -195,8 +196,10 @@ void Room3::probeCreak() {
 	_G(auto_mov_obj)[SONDE_OBJ].Mode = true;
 	init_auto_obj(SONDE_OBJ, &SONDE_PHASEN[0][0], 3, (MovLine*)sonde_mpkt1);
 	_G(flags).AniUserAction = false;
-	while (_G(mov_phasen)[SONDE_OBJ].Repeat != -1)
+	while (_G(mov_phasen)[SONDE_OBJ].Repeat != -1) {
 		set_ani_screen();
+		SHOULD_QUIT_RETURN;
+	}
 
 	_G(det)->startDetail(SONDE_SHOOT, 1, ANI_FRONT);
 	int16 ende = 0;
@@ -248,7 +251,7 @@ void Room3::probeCreak() {
 	clear_prog_ani();
 	_G(det)->startDetail(SONDE_CLEAR, 1, ANI_BACK);
 	while (_G(det)->get_ani_status(SONDE_CLEAR)) {
-
+		SHOULD_QUIT_RETURN;
 		_G(spr_info)[0] = _G(det)->plot_detail_sprite(0, 0, SONDE_ANI, SONDE_SPR_R, ANI_HIDE);
 		_G(spr_info)[0]._zLevel = 0;
 		set_ani_screen();
@@ -356,7 +359,7 @@ void Room3::probeTransfer() {
 							else
 								start_aad(44);
 
-							delInventory(_G(gameState).AkInvent);
+							delInventory(_G(cur)->getInventoryCursor());
 							_G(gameState).R2FussSchleim = true;
 							_G(mov_phasen)[SONDE_OBJ1].Phase[0][0] = 142;
 							_G(mov_phasen)[SONDE_OBJ1].Phase[0][1] = 149;
@@ -392,7 +395,7 @@ void Room3::probeTransfer() {
 
 		case 1:
 			g_engine->_sound->waitForSpeechToFinish();
-			_G(atds)->set_ats_str(24, 0, 1);
+			_G(atds)->set_ats_str(24, 0, ATS_DATA);
 			_G(mov_phasen)[0].AtsText = 544;
 			switchRoom(1);
 			break;

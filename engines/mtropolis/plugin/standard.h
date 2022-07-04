@@ -38,6 +38,7 @@ namespace Standard {
 class StandardPlugIn;
 class MidiFilePlayer;
 class MultiMidiPlayer;
+class MidiCombinerSource;
 
 class CursorModifier : public Modifier {
 public:
@@ -163,12 +164,10 @@ public:
 #endif
 
 private:
-	struct ObjectWriteInterface : public IDynamicValueWriteInterface {
-		MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const override;
-		MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-		MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
-
-		static ObjectWriteInterface _instance;
+	struct ObjectWriteInterface {
+		static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset);
+		static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+		static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 	};
 
 	class SaveLoad : public ModifierSaveLoad {
@@ -192,9 +191,9 @@ private:
 	MiniscriptInstructionOutcome scriptObjectRefAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, const Common::String &attrib);
 	MiniscriptInstructionOutcome scriptObjectRefAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, const Common::String &attrib, const DynamicValue &index);
 
-	void resolve();
+	void resolve(Runtime *runtime);
 	void resolveRelativePath(RuntimeObject *obj, const Common::String &path, size_t startPos);
-	void resolveAbsolutePath();
+	void resolveAbsolutePath(Runtime *runtime);
 
 	static bool computeObjectPath(RuntimeObject *obj, Common::String &outPath);
 	static RuntimeObject *getObjectParent(RuntimeObject *obj);
@@ -220,18 +219,19 @@ public:
 	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 	MiniscriptInstructionOutcome writeRefAttributeIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib, const DynamicValue &index) override;
 
+	void playSingleNote(Runtime *runtime);
+	void stopSingleNote();
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "MIDI Modifier"; }
 	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
 #endif
 
 private:
-	struct MuteTrackProxyInterface : public IDynamicValueWriteInterface {
-		MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const override;
-		MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-		MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
-
-		static MuteTrackProxyInterface _instance;
+	struct MuteTrackProxyInterface {
+		static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset);
+		static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+		static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 	};
 
 	Common::SharedPtr<Modifier> shallowClone() const override;
@@ -239,10 +239,15 @@ private:
 
 	MiniscriptInstructionOutcome scriptSetVolume(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome scriptSetNoteVelocity(MiniscriptThread *thread, const DynamicValue &value);
+	MiniscriptInstructionOutcome scriptSetNoteDuration(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome scriptSetNoteNum(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome scriptSetLoop(MiniscriptThread *thread, const DynamicValue &value);
+	MiniscriptInstructionOutcome scriptSetPlayNote(MiniscriptThread *thread, const DynamicValue &value);
+	MiniscriptInstructionOutcome scriptSetTempo(MiniscriptThread *thread, const DynamicValue &value);
 
 	MiniscriptInstructionOutcome scriptSetMuteTrack(MiniscriptThread *thread, size_t trackIndex, bool muted);
+
+	void stopSingleNoteCallback(Runtime *runtime);
 
 	struct FilePart {
 		bool loop;
@@ -280,10 +285,16 @@ private:
 	Common::SharedPtr<Data::Standard::MidiModifier::EmbeddedFile> _embeddedFile;
 
 	uint16 _mutedTracks;
-	bool _isActive;
+	bool _isSingleNoteActive;
+	uint8 _singleNoteChannel;
+	uint8 _singleNoteNote;
 
 	StandardPlugIn *_plugIn;
 	MidiFilePlayer *_filePlayer;
+
+	Common::SharedPtr<MidiCombinerSource> _singleNoteSource;
+	Common::SharedPtr<ScheduledEvent> _singleNodeScheduledOffEvent;
+	Runtime *_runtime;
 };
 
 class ListVariableModifier : public VariableModifier {
@@ -364,7 +375,7 @@ struct StandardPlugInHacks {
 
 class StandardPlugIn : public MTropolis::PlugIn {
 public:
-	StandardPlugIn();
+	explicit StandardPlugIn(bool useDynamicMidi);
 	~StandardPlugIn();
 
 	void registerModifiers(IPlugInModifierRegistrar *registrar) const override;

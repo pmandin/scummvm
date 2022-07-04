@@ -19,26 +19,31 @@
  *
  */
 
-#ifndef GLK_SCOTT_DETECTGAME
-#define GLK_SCOTT_DETECTGAME
+#ifndef DIRECTOR_LINGO_XLIBS_BARAKEOBJ_H
+#define DIRECTOR_LINGO_XLIBS_BARAKEOBJ_H
 
-#include "common/stream.h"
-#include "glk/scott/definitions.h"
-#include "glk/scott/types.h"
+namespace Director {
 
-namespace Glk {
-namespace Scott {
+class BarakeObject : public Object<BarakeObject> {
+public:
+	BarakeObject(ObjectType objType);
+};
 
-void readHeader(uint8_t *ptr);
-int parseHeader(int *h, HeaderType type, int *ni, int *na, int *nw, int *nr, int *mc, int *pr, int *tr, int *wl, int *lt, int *mn, int *trm);
-GameIDType detectGame(Common::SeekableReadStream *f);
-uint8_t *seekToPos(uint8_t *buf, size_t offset);
-int seekIfNeeded(int expectedStart, int *offset, uint8_t **ptr);
-int tryLoading(GameInfo info, int dictStart, int loud);
-DictionaryType getId(int *offset);
-int findCode(const char *x, int base);
+namespace BarakeObj {
 
-} // End of namespace Scott
-} // End of namespace Glk
+extern const char *xlibName;
+extern const char *fileNames[];
+
+void open(int type);
+void close(int type);
+
+void m_new(int nargs);
+void m_clear(int nargs);
+void m_gpal(int nargs);
+void m_line(int nargs);
+
+} // End of namespace BarakeObj
+
+} // End of namespace Director
 
 #endif

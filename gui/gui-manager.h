@@ -27,6 +27,7 @@
 #include "common/stack.h"
 #include "common/str.h"
 #include "common/list.h"
+#include "common/mutex.h"
 
 #include "gui/ThemeEngine.h"
 #include "gui/widget.h"
@@ -43,6 +44,10 @@ namespace Common {
 }
 
 namespace GUI {
+
+enum {
+	kIconsSetLoadedCmd  = 'icns'
+};
 
 class Dialog;
 class ThemeEval;
@@ -64,7 +69,7 @@ typedef Common::FixedStack<Dialog *> DialogStack;
 /**
  * GUI manager singleton.
  */
-class GuiManager : public Common::Singleton<GuiManager> {
+class GuiManager : public Common::Singleton<GuiManager>, public CommandSender {
 	friend class Dialog;
 	friend class Common::Singleton<SingletonBaseType>;
 	GuiManager();
@@ -91,6 +96,8 @@ public:
 
 	ThemeEval *xmlEval() { return _theme->getEvaluator(); }
 
+	void lockIconsSet() { _iconsMutex.lock(); }
+	void unlockIconsSet()  { _iconsMutex.unlock(); }
 	Common::SearchSet &getIconsSet() { return _iconsSet; }
 
 	int16 getGUIWidth() const { return _baseWidth; }
@@ -162,7 +169,9 @@ protected:
 	int			_topDialogLeftPadding;
 	int			_topDialogRightPadding;
 
+	Common::Mutex _iconsMutex;
 	Common::SearchSet _iconsSet;
+	bool _iconsSetChanged;
 
 	// position and time of last mouse click (used to detect double clicks)
 	struct MousePos {

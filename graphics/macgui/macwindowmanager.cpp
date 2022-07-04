@@ -215,6 +215,7 @@ MacWindowManager::MacWindowManager(uint32 mode, MacPatterns *patterns, Common::L
 		_palette = (byte *)malloc(_paletteSize * 3);
 		memcpy(_palette, palette, _paletteSize * 3);
 	}
+	_paletteLookup.setPalette(_palette, _paletteSize);
 
 	_fontMan = new MacFontManager(mode, language);
 
@@ -379,6 +380,13 @@ MacMenu *MacWindowManager::addMenu() {
 	return _menu;
 }
 
+MacMenu *MacWindowManager::getMenu() {
+	if (_menu) {
+		return _menu;
+	}
+	return nullptr;
+}
+
 void MacWindowManager::removeMenu() {
 	if (_menu) {
 		_windows[_menu->getId()] = nullptr;
@@ -435,136 +443,68 @@ void MacWindowManager::disableScreenCopy() {
 	g_system->copyRectToScreen(_screenCopy->getBasePtr(0, 0), _screenCopy->pitch, 0, 0, _screenCopy->w, _screenCopy->h);
 }
 
-void MacWindowManager::setMenuItemCheckMark(const Common::String &menuId, const Common::String &itemId, bool checkMark) {
+void MacWindowManager::setMenuItemCheckMark(MacMenuItem *menuItem, bool checkMark) {
 	if (_menu) {
-		_menu->setCheckMark(menuId, itemId, checkMark);
+		_menu->setCheckMark(menuItem, checkMark);
 	} else {
 		warning("MacWindowManager::setMenuItemCheckMark: wm doesn't have menu");
 	}
 }
 
-void MacWindowManager::setMenuItemEnabled(const Common::String &menuId, const Common::String &itemId, bool enabled) {
+void MacWindowManager::setMenuItemEnabled(MacMenuItem *menuItem, bool enabled) {
 	if (_menu) {
-		_menu->setEnabled(menuId, itemId, enabled);
+		_menu->setEnabled(menuItem, enabled);
 	} else {
 		warning("MacWindowManager::setMenuItemEnabled: wm doesn't have menu");
 	}
 }
 
-void MacWindowManager::setMenuItemName(const Common::String &menuId, const Common::String &itemId, const Common::String &name) {
+void MacWindowManager::setMenuItemName(MacMenuItem *menuItem, const Common::String &name) {
 	if (_menu) {
-		_menu->setName(menuId, itemId, name);
+		_menu->setName(menuItem, name);
 	} else {
 		warning("MacWindowManager::setMenuItemName: wm doesn't have menu");
 	}
 }
 
-void MacWindowManager::setMenuItemCheckMark(int menuId, int itemId, bool checkMark) {
+void MacWindowManager::setMenuItemAction(MacMenuItem *menuItem, int actionId) {
 	if (_menu) {
-		_menu->setCheckMark(menuId, itemId, checkMark);
-	} else {
-		warning("MacWindowManager::setMenuItemCheckMark: wm doesn't have menu");
-	}
-}
-
-void MacWindowManager::setMenuItemEnabled(int menuId, int itemId, bool enabled) {
-	if (_menu) {
-		_menu->setEnabled(menuId, itemId, enabled);
-	} else {
-		warning("MacWindowManager::setMenuItemEnabled: wm doesn't have menu");
-	}
-}
-
-void MacWindowManager::setMenuItemName(int menuId, int itemId, const Common::String &name) {
-	if (_menu) {
-		_menu->setName(menuId, itemId, name);
-	} else {
-		warning("MacWindowManager::setMenuItemName: wm doesn't have menu");
-	}
-}
-
-void MacWindowManager::setMenuItemAction(const Common::String &menuId, const Common::String &itemId, int actionId) {
-	if (_menu) {
-		_menu->setAction(menuId, itemId, actionId);
+		_menu->setAction(menuItem, actionId);
 	} else {
 		warning("MacWindowManager::setMenuItemAction: wm doesn't have menu");
 	}
 }
 
-void MacWindowManager::setMenuItemAction(int menuId, int itemId, int actionId) {
+bool MacWindowManager::getMenuItemCheckMark(MacMenuItem *menuItem) {
 	if (_menu) {
-		_menu->setAction(menuId, itemId, actionId);
-	} else {
-		warning("MacWindowManager::setMenuItemAction: wm doesn't have menu");
-	}
-}
-
-bool MacWindowManager::getMenuItemCheckMark(const Common::String &menuId, const Common::String &itemId) {
-	if (_menu) {
-		return _menu->getCheckMark(menuId, itemId);
+		return _menu->getCheckMark(menuItem);
 	} else {
 		warning("MacWindowManager::getMenuItemCheckMark: wm doesn't have menu");
 		return false;
 	}
 }
 
-bool MacWindowManager::getMenuItemCheckMark(int menuId, int itemId) {
+bool MacWindowManager::getMenuItemEnabled(MacMenuItem *menuItem) {
 	if (_menu) {
-		return _menu->getCheckMark(menuId, itemId);
-	} else {
-		warning("MacWindowManager::getMenuItemCheckMark: wm doesn't have menu");
-		return false;
-	}
-}
-
-bool MacWindowManager::getMenuItemEnabled(const Common::String &menuId, const Common::String &itemId) {
-	if (_menu) {
-		return _menu->getEnabled(menuId, itemId);
+		return _menu->getEnabled(menuItem);
 	} else {
 		warning("MacWindowManager::getMenuItemEnabled: wm doesn't have menu");
 		return false;
 	}
 }
 
-bool MacWindowManager::getMenuItemEnabled(int menuId, int itemId) {
+Common::String MacWindowManager::getMenuItemName(MacMenuItem *menuItem) {
 	if (_menu) {
-		return _menu->getEnabled(menuId, itemId);
-	} else {
-		warning("MacWindowManager::getMenuItemEnabled: wm doesn't have menu");
-		return false;
-	}
-}
-
-Common::String MacWindowManager::getMenuItemName(const Common::String &menuId, const Common::String &itemId) {
-	if (_menu) {
-		return _menu->getName(menuId, itemId);
+		return _menu->getName(menuItem);
 	} else {
 		warning("MacWindowManager::getMenuItemName: wm doesn't have menu");
 		return Common::String();
 	}
 }
 
-Common::String MacWindowManager::getMenuItemName(int menuId, int itemId) {
+int MacWindowManager::getMenuItemAction(MacMenuItem *menuItem) {
 	if (_menu) {
-		return _menu->getName(menuId, itemId);
-	} else {
-		warning("MacWindowManager::getMenuItemName: wm doesn't have menu");
-		return Common::String();
-	}
-}
-
-int MacWindowManager::getMenuItemAction(const Common::String &menuId, const Common::String &itemId) {
-	if (_menu) {
-		return _menu->getAction(menuId, itemId);
-	} else {
-		warning("MacWindowManager::getMenuItemAction: wm doesn't have menu");
-		return 0;
-	}
-}
-
-int MacWindowManager::getMenuItemAction(int menuId, int itemId) {
-	if (_menu) {
-		return _menu->getAction(menuId, itemId);
+		return _menu->getAction(menuItem);
 	} else {
 		warning("MacWindowManager::getMenuItemAction: wm doesn't have menu");
 		return 0;
@@ -1342,8 +1282,7 @@ void MacWindowManager::passPalette(const byte *pal, uint size) {
 	}
 	_paletteSize = size;
 
-	_colorHash.clear();
-	_invertColorHash.clear();
+	_paletteLookup.setPalette(pal, size);
 
 	LOOKUPCOLOR(White);
 	LOOKUPCOLOR(Gray80);
@@ -1360,37 +1299,14 @@ void MacWindowManager::passPalette(const byte *pal, uint size) {
 uint MacWindowManager::findBestColor(uint32 color) {
 	byte r, g, b;
 	decomposeColor(color, r, g, b);
-	return findBestColor(r, g, b);
+	return _paletteLookup.findBestColor(r, g, b);
 }
 
 uint MacWindowManager::findBestColor(byte cr, byte cg, byte cb) {
 	if (_pixelformat.bytesPerPixel == 4)
 		return _pixelformat.RGBToColor(cr, cg, cb);
 
-	uint bestColor = 0;
-	double min = 0xFFFFFFFF;
-
-	uint32 color = cr << 16 | cg << 8 | cb;
-
-	if (_colorHash.contains(color))
-		return _colorHash[color];
-
-	for (uint i = 0; i < _paletteSize; ++i) {
-		int rmean = (*(_palette + 3 * i + 0) + cr) / 2;
-		int r = *(_palette + 3 * i + 0) - cr;
-		int g = *(_palette + 3 * i + 1) - cg;
-		int b = *(_palette + 3 * i + 2) - cb;
-
-		double dist = sqrt((((512 + rmean) * r * r) >> 8) + 4 * g * g + (((767 - rmean) * b * b) >> 8));
-		if (min > dist) {
-			bestColor = i;
-			min = dist;
-		}
-	}
-
-	_colorHash[color] = bestColor;
-
-	return bestColor;
+	return _paletteLookup.findBestColor(cr, cg, cb);
 }
 
 void MacWindowManager::decomposeColor(uint32 color, byte &r, byte &g, byte &b) {

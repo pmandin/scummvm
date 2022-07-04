@@ -19,19 +19,32 @@
  *
  */
 
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
+
+#include "common/str.h"
+#include "glk/scott/scott.h"
+#include "glk/scott/globals.h"
 #include "glk/scott/command_parser.h"
-#include "glk/scott/detect_game.h"
 #include "glk/scott/decompress_text.h"
 #include "glk/scott/decompress_z80.h"
 #include "glk/scott/detection.h"
 #include "glk/scott/detection_tables.h"
 #include "glk/scott/game_info.h"
-#include "glk/scott/globals.h"
 #include "glk/scott/hulk.h"
 #include "glk/scott/line_drawing.h"
 #include "glk/scott/saga_draw.h"
-#include "glk/scott/scott.h"
-#include "common/str.h"
+#include "glk/scott/c64_checksums.h"
+#include "glk/scott/game_specific.h"
+#include "glk/scott/resource.h"
 
 namespace Glk {
 namespace Scott {
@@ -341,12 +354,12 @@ void loadVectorData(GameInfo info, uint8_t *ptr) {
 			lp->_bgColour = *(ptr++);
 			lp->_data = ptr;
 		} else {
-			error("Error! Image data does not start with 0xff!\n");
+			error("loadVectorData: Error! Image data does not start with 0xff");
 		}
 		do {
 			byte = *(ptr++);
 			if (ptr > _G(_entireFile) && static_cast<size_t>(ptr - _G(_entireFile)) >= _G(_fileLength)) {
-				error("Error! Image data for image %d cut off!\n", ct);
+				warning("loadVectorData: Error! Image data for image %d cut off", ct);
 				if (_G(_gameHeader)->_numRooms - ct > 1)
 					g_scott->display(_G(_bottomWindow), "[This copy has %d broken or missing pictures. These have been patched out.]\n\n", _G(_gameHeader)->_numRooms - ct);
 				if (lp->_data >= ptr)
@@ -363,175 +376,6 @@ void loadVectorData(GameInfo info, uint8_t *ptr) {
 		lp++;
 		ct++;
 	} while (ct < info._numberOfRooms);
-}
-
-GameIDType detectGame(Common::SeekableReadStream *f) {
-
-	for (int i = 0; i < NUMBER_OF_DIRECTIONS; i++)
-		_G(_directions)[i] = _G(_englishDirections)[i];
-	for (int i = 0; i < NUMBER_OF_SKIPPABLE_WORDS; i++)
-		_G(_skipList)[i] = _G(_englishSkipList)[i];
-	for (int i = 0; i < NUMBER_OF_DELIMITERS; i++)
-		_G(_delimiterList)[i] = _G(_englishDelimiterList)[i];
-	for (int i = 0; i < NUMBER_OF_EXTRA_NOUNS; i++)
-		_G(_extraNouns)[i] = _G(_englishExtraNouns)[i];
-
-	_G(_fileLength) = f->size();
-
-	_G(_game) = &_G(_fallbackGame);
-
-	Common::String md5 = g_vm->getGameMD5();
-	const GlkDetectionEntry *p = SCOTT_GAMES;
-
-	while (p->_md5) {
-		if (md5.equalsC(p->_md5)) {
-			if (!scumm_stricmp(p->_extra, "")) {
-				_G(_fallbackGame)._gameID = SCOTTFREE;
-			}
-			if (!scumm_stricmp(p->_extra, "ZXSpectrum")) {
-				_G(_entireFile) = new uint8_t[_G(_fileLength)];
-				size_t result = f->read(_G(_entireFile), _G(_fileLength));
-				if (result != _G(_fileLength))
-					g_scott->fatal("File empty or read error!");
-
-				// ZXSpectrum Detection
-				uint8_t *uncompressed = decompressZ80(_G(_entireFile), _G(_fileLength));
-				if (uncompressed != nullptr) {
-					delete[] _G(_entireFile);
-					_G(_entireFile) = uncompressed;
-					_G(_fileLength) = 0xc000;
-				}
-
-				int offset;
-				DictionaryType dict_type = getId(&offset);
-				if (dict_type == NOT_A_GAME)
-					return UNKNOWN_GAME;
-				for (int i = 0; i < NUMGAMES; i++) {
-					if (_G(_games)[i]._dictionary == dict_type) {
-						if (tryLoading(_G(_games)[i], offset, 0)) {
-							_G(_game) = &_G(_games)[i];
-							break;
-						}
-					}
-				}
-			}
-		}
-		// TODO
-		// TI99/4A Detection
-
-		// TODO
-		// C64 Detection
-
-		++p;
-	}
-
-	if (CURRENT_GAME == SCOTTFREE || CURRENT_GAME == TI994A)
-		return CURRENT_GAME;
-
-	/* Copy ZX Spectrum style system messages as base */
-	for (int i = 6; i < MAX_SYSMESS && g_sysDictZX[i] != nullptr; i++) {
-		_G(_sys)[i] = g_sysDictZX[i];
-	}
-
-	switch (CURRENT_GAME) {
-	case ROBIN_OF_SHERWOOD:
-		// TODO
-		break;
-	case ROBIN_OF_SHERWOOD_C64:
-		// TODO
-		break;
-	case SEAS_OF_BLOOD:
-		// TODO
-		break;
-	case SEAS_OF_BLOOD_C64:
-		// TODO
-		break;
-	case CLAYMORGUE:
-		// TODO
-		break;
-	case SECRET_MISSION:
-	case SECRET_MISSION_C64:
-		// TODO
-		break;
-	case ADVENTURELAND:
-		// TODO
-		break;
-	case ADVENTURELAND_C64:
-		// TODO
-		break;
-	case CLAYMORGUE_C64:
-		// TODO
-		break;
-	case GREMLINS_GERMAN_C64:
-		// TODO
-		break;
-	case SPIDERMAN_C64:
-		// TODO
-		break;
-	case SUPERGRAN_C64:
-		// TODO
-		break;
-	case SAVAGE_ISLAND_C64:
-	case SAVAGE_ISLAND2_C64:
-		// TODO
-		break;
-	case SAVAGE_ISLAND:
-	case SAVAGE_ISLAND2:
-	case GREMLINS_GERMAN:
-	case GREMLINS:
-	case SUPERGRAN:
-		// TODO
-		break;
-	case GREMLINS_SPANISH:
-		// TODO
-		break;
-	case HULK_C64:
-	case HULK:
-		for (int i = 0; i < 6; i++) {
-			_G(_sys)[i] = g_sysDictZX[i];
-		}
-		break;
-	default:
-		if (!(_G(_game)->_subType & C64)) {
-			if (_G(_game)->_subType & MYSTERIOUS) {
-				for (int i = PLAY_AGAIN; i <= YOU_HAVENT_GOT_IT; i++)
-					_G(_sys)[i] = _G(_systemMessages)[2 - PLAY_AGAIN + i];
-				for (int i = YOU_DONT_SEE_IT; i <= WHAT_NOW; i++)
-					_G(_sys)[i] = _G(_systemMessages)[15 - YOU_DONT_SEE_IT + i];
-				for (int i = LIGHT_HAS_RUN_OUT; i <= RESUME_A_SAVED_GAME; i++)
-					_G(_sys)[i] = _G(_systemMessages)[31 - LIGHT_HAS_RUN_OUT + i];
-				_G(_sys)[ITEM_DELIMITER] = " - ";
-				_G(_sys)[MESSAGE_DELIMITER] = "\n";
-				_G(_sys)[YOU_SEE] = "\nThings I can see:\n";
-				break;
-			} else {
-				for (int i = PLAY_AGAIN; i <= RESUME_A_SAVED_GAME; i++)
-					_G(_sys)[i] = _G(_systemMessages)[2 - PLAY_AGAIN + i];
-			}
-		}
-		break;
-	}
-
-	switch (CURRENT_GAME) {
-	case GREMLINS_GERMAN:
-		// TODO
-		break;
-	case GREMLINS_GERMAN_C64:
-		// TODO
-		break;
-	case PERSEUS_ITALIAN:
-		// TODO
-		break;
-	default:
-		break;
-	}
-
-	/* If it is a C64 or a Mysterious Adventures game, we have setup the graphics already */
-	if (!(_G(_game)->_subType & (C64 | MYSTERIOUS)) && _G(_game)->_numberOfPictures > 0) {
-		sagaSetup(0);
-	}
-
-	return CURRENT_GAME;
 }
 
 uint8_t *seekToPos(uint8_t *buf, size_t offset) {
@@ -943,12 +787,12 @@ int tryLoading(GameInfo info, int dictStart, int loud) {
 			value = *(ptr++); /* count of actions/conditions */
 			cond = value & 0x1f;
 			if (cond > 5) {
-				debug("Condition error at action %d!\n", ct);
+				debug("Condition error at action %d!", ct);
 				cond = 5;
 			}
 			comm = (value & 0xe0) >> 5;
 			if (comm > 2) {
-				debug("Command error at action %d!\n", ct);
+				debug("Command error at action %d!", ct);
 				comm = 2;
 			}
 		} else {
@@ -1018,7 +862,7 @@ int tryLoading(GameInfo info, int dictStart, int loud) {
 			do {
 				rp = &_G(_rooms)[ct];
 				rp->_text = decompressText(ptr, ct);
-				if (rp->_text == nullptr)
+				if (rp->_text.size() == 0)
 					return 0;
 				rp->_text.replace(0, 1, Common::String(tolower(rp->_text[0])));
 				ct++;
@@ -1055,7 +899,7 @@ int tryLoading(GameInfo info, int dictStart, int loud) {
 			_G(_messages)[ct] = decompressText(ptr, ct);
 			if (loud)
 				debug("Message %d: \"%s\"\n", ct, _G(_messages)[ct].c_str());
-			if (_G(_messages)[ct] == nullptr)
+			if (_G(_messages)[ct].size() == 0)
 				return 0;
 			ct++;
 		}
@@ -1093,13 +937,14 @@ int tryLoading(GameInfo info, int dictStart, int loud) {
 				const char *p = strchr(ip->_text.c_str(), '.');
 				if (p) {
 					ip->_autoGet = Common::String(p);
+					ip->_text = Common::String(ip->_text.c_str(), p);
 					ip->_autoGet.deleteChar(0);
 					ip->_autoGet.deleteChar(0);
 					const char *t = strchr(ip->_autoGet.c_str(), '.');
 					if (t)
 						ip->_autoGet = Common::String(ip->_autoGet.c_str(), t);
-					for (int i = 1; i < _G(_gameHeader)->_wordLength; i++)
-						ip->_autoGet.replace(i, 1, Common::String(toupper(ip->_text[i])));
+					for (uint i = 1; i < ip->_autoGet.size(); i++)
+						ip->_autoGet.replace(i, 1, Common::String(toupper(ip->_autoGet[i])));
 				}
 			}
 			ct++;

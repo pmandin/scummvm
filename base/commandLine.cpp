@@ -55,7 +55,7 @@ namespace Base {
 
 #ifndef DISABLE_COMMAND_LINE
 
-#if defined(__DS__)
+#if !defined(__DS__)
 static const char USAGE_STRING[] =
 	"%s: %s\n"
 	"Usage: %s [OPTIONS]... [GAME]\n"
@@ -151,6 +151,7 @@ static const char HELP_STRING[] =
 	"                           pce, segacd, wii, windows)\n"
 	"  --savepath=PATH          Path to where saved games are stored\n"
 	"  --extrapath=PATH         Extra path to additional game data\n"
+	"  --iconspath=PATH         Path to additional icons for the launcher grid view\n"
 	"  --soundfont=FILE         Select the SoundFont for MIDI playback (only\n"
 	"                           supported by some MIDI drivers)\n"
 	"  --multi-midi             Enable combination AdLib and native MIDI\n"
@@ -247,7 +248,7 @@ static void usage(const char *s, ...) {
 	vsnprintf(buf, STRINGBUFLEN, s, va);
 	va_end(va);
 
-#if defined(__DS__)
+#if !defined(__DS__)
 	printf(USAGE_STRING, s_appName, buf, s_appName, s_appName);
 #endif
 	exit(1);
@@ -316,6 +317,7 @@ void registerDefaults() {
 	ConfMan.registerDefault("dump_scripts", false);
 	ConfMan.registerDefault("save_slot", -1);
 	ConfMan.registerDefault("autosave_period", 5 * 60); // By default, trigger autosave every 5 minutes
+	ConfMan.registerDefault("engine_speed", 60); // FPS limit for 3D games
 
 #if defined(ENABLE_SCUMM) || defined(ENABLE_SWORD2)
 	ConfMan.registerDefault("object_labels", true);
@@ -836,6 +838,15 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 				} else if (!path.isReadable()) {
 					usage("Non-readable extra path '%s'", option);
 				}
+			END_OPTION
+
+			DO_LONG_OPTION("iconspath")
+			Common::FSNode path(option);
+			if (!path.exists()) {
+				usage("Non-existent icons path '%s'", option);
+			} else if (!path.isReadable()) {
+				usage("Non-readable icons path '%s'", option);
+			}
 			END_OPTION
 
 			DO_LONG_OPTION("md5-path")
@@ -1847,6 +1858,7 @@ bool processSettings(Common::String &command, Common::StringMap &settings, Commo
 		"subtitles",
 		"savepath",
 		"extrapath",
+		"iconspath",
 		"screenshotpath",
 		"soundfont",
 		"multi-midi",

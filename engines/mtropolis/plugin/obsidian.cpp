@@ -126,11 +126,11 @@ bool TextWorkModifier::readAttribute(MiniscriptThread *thread, DynamicValue &res
 		}
 		return true;
 	} else if (attrib == "exists") {
-		bool exists = (_string.find(_token) != Common::String::npos);
+		bool exists = (caseInsensitiveFind(_string, _token) != Common::String::npos);
 		result.setInt(exists ? 1 : 0);
 		return true;
 	} else if (attrib == "index") {
-		size_t index = _string.find(_token);
+		size_t index = caseInsensitiveFind(_string, _token);
 		if (index == Common::String::npos)
 			index = 0;
 		else
@@ -600,7 +600,7 @@ VThreadState XorModModifier::consumeMessage(Runtime *runtime, const Common::Shar
 	else
 		renderProps.setShape(static_cast<VisualElementRenderProperties::Shape>(VisualElementRenderProperties::kShapeObsidianCanvasPuzzleTri1 + _shapeID - 1));
 
-	visual->setRenderProperties(renderProps);
+	visual->setRenderProperties(renderProps, Common::WeakPtr<GraphicModifier>());
 
 	return kVThreadReturn;
 }

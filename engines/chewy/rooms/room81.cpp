@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -37,7 +38,8 @@ void Room81::entry() {
 	_G(flags).ZoomMov = true;
 	_G(zoom_mov_fak) = 3;
 	_G(gameState).DiaAMov = 0;
-	if (_G(gameState).r88DestRoom == 84) {
+
+	if (_G(gameState).R88UsedMonkey) {
 		_G(det)->showStaticSpr(0);
 		_G(atds)->delControlBit(488, ATS_ACTIVE_BIT);
 	}
@@ -116,7 +118,7 @@ int Room81::proc2() {
 		start_spz_wait(13, 1, false, P_CHEWY);
 		aniId = 5;
 		diaNr = 462;
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(gameState).flags30_2 = true;
 	} else if (isCurInventory(104)) {
 		aniId = 4;

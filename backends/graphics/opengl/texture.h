@@ -22,7 +22,8 @@
 #ifndef BACKENDS_GRAPHICS_OPENGL_TEXTURE_H
 #define BACKENDS_GRAPHICS_OPENGL_TEXTURE_H
 
-#include "backends/graphics/opengl/opengl-sys.h"
+#include "graphics/opengl/system_headers.h"
+#include "graphics/opengl/context.h"
 
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
@@ -32,8 +33,6 @@
 class Scaler;
 
 namespace OpenGL {
-
-class Shader;
 
 /**
  * A simple GL texture object abstraction.
@@ -405,9 +404,9 @@ public:
 	virtual const GLTexture &getGLTexture() const;
 
 	static bool isSupportedByContext() {
-		return g_context.shadersSupported
-		    && g_context.multitextureSupported
-		    && g_context.framebufferObjectSupported;
+		return OpenGLContext.shadersSupported
+		    && OpenGLContext.multitextureSupported
+		    && OpenGLContext.framebufferObjectSupported;
 	}
 private:
 	void lookUpColors();

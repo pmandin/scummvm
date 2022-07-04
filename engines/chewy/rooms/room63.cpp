@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -33,10 +34,9 @@ void Room63::entry() {
 	_G(gameState).ScrollxStep = 2;
 	_G(r63Schalter) = false;
 	_G(r63RunDia) = 0;
-	if (_G(gameState).R63FxMannWeg)
+	if (_G(gameState).R63FxManAway)
 		_G(det)->del_static_ani(5);
 	if (!_G(gameState).R63Uhr) {
-		_G(cur_hide_flag) = false;
 		hideCur();
 		_G(det)->startDetail(12, 255, ANI_FRONT);
 		_G(det)->startDetail(10, 255, ANI_FRONT);
@@ -49,10 +49,10 @@ void Room63::entry() {
 		_G(det)->stop_detail(11);
 		_G(det)->startDetail(10, 255, ANI_FRONT);
 		showCur();
-	} else if (!_G(gameState).R63Feuer) {
+	} else if (!_G(gameState).R63Fire) {
 		_G(det)->showStaticSpr(10);
 		_G(det)->showStaticSpr(12);
-	} else if (_G(gameState).R62LauraVerwandlung) {
+	} else if (_G(gameState).R62LauraTransformation) {
 		_G(atds)->setControlBit(383, ATS_ACTIVE_BIT);
 		_G(SetUpScreenFunc) = setup_func;
 		cur_2_inventory();
@@ -66,7 +66,7 @@ void Room63::entry() {
 }
 
 void Room63::setup_func() {
-	if (!_G(gameState).R62LauraVerwandlung)
+	if (!_G(gameState).R62LauraTransformation)
 		return;
 
 	cur_2_inventory();
@@ -130,13 +130,13 @@ void Room63::setup_func() {
 }
 
 void Room63::bork_platt() {
-	_G(gameState).R62LauraVerwandlung = false;
+	_G(gameState).R62LauraTransformation = false;
 	_G(r63Schalter) = false;
 	_G(gameState).room_e_obj[95].Attribut = EXIT_TOP;
 	flic_cut(FCUT_081);
 	flic_cut(FCUT_082);
 	_G(gameState)._personHide[P_CHEWY] = false;
-	checkShadow(4, 1);
+	setShadowPalette(4, true);
 	_G(spieler_mi)[P_CHEWY].Mode = true;
 	autoMove(6, P_CHEWY);
 	_G(spieler_mi)[P_CHEWY].Mode = false;
@@ -199,7 +199,7 @@ int16 Room63::use_fx_man() {
 		action_ret = true;
 		hideCur();
 		autoMove(1, P_CHEWY);
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		remove_inventory(34);
 		startAadWait(359);
 		_G(det)->del_static_ani(5);
@@ -208,7 +208,7 @@ int16 Room63::use_fx_man() {
 		startAadWait(362);
 		_G(det)->stop_detail(7);
 		startSetAILWait(8, 1, ANI_FRONT);
-		_G(gameState).R63FxMannWeg = true;
+		_G(gameState).R63FxManAway = true;
 		_G(atds)->setControlBit(384, ATS_ACTIVE_BIT);
 		showCur();
 	}
@@ -217,10 +217,10 @@ int16 Room63::use_fx_man() {
 
 int16 Room63::use_schalter() {
 	int16 action_ret = false;
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_ret = true;
-		if (_G(gameState).R63FxMannWeg) {
-			if (_G(gameState).R62LauraVerwandlung) {
+		if (_G(gameState).R63FxManAway) {
+			if (_G(gameState).R62LauraTransformation) {
 				_G(r63Schalter) = true;
 				hideCur();
 				_G(flags).MainInput = false;
@@ -266,7 +266,7 @@ int16 Room63::use_girl() {
 		action_ret = true;
 		hideCur();
 		autoMove(2, P_CHEWY);
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(det)->stop_detail(12);
 		startSetAILWait(13, 1, ANI_FRONT);
 		_G(det)->set_static_ani(14, -1);
@@ -294,12 +294,11 @@ int16 Room63::use_aschenbecher() {
 	int16 action_ret = false;
 	if (isCurInventory(ASCHE_INV)) {
 		action_ret = true;
-		_G(cur_hide_flag) = false;
 		hideCur();
 		if (_G(gameState).R63Uhr) {
-			if (_G(gameState).R63FxMannWeg) {
+			if (_G(gameState).R63FxManAway) {
 				autoMove(5, P_CHEWY);
-				delInventory(_G(gameState).AkInvent);
+				delInventory(_G(cur)->getInventoryCursor());
 				_G(flags).NoScroll = true;
 				auto_scroll(70, 0);
 				autoMove(1, P_CHEWY);
@@ -314,7 +313,7 @@ int16 Room63::use_aschenbecher() {
 				_G(atds)->setControlBit(381, ATS_ACTIVE_BIT);
 				_G(atds)->setControlBit(382, ATS_ACTIVE_BIT);
 				_G(atds)->set_ats_str(383, 1, ATS_DATA);
-				_G(gameState).R63Feuer = true;
+				_G(gameState).R63Fire = true;
 				_G(gameState)._personHide[P_CHEWY] = false;
 				_G(gameState).scrollx = 0;
 				setPersonPos(187, 42, P_CHEWY, P_RIGHT);

@@ -66,6 +66,28 @@ public:
 const ExtraGuiOptions MTropolisMetaEngineDetection::getExtraGuiOptions(const Common::String &target) const {
 	ExtraGuiOptions options;
 
+	Common::String gameid = ConfMan.get("gameid", target);
+
+	if (gameid == "obsidian") {
+		static const ExtraGuiOption widescreenOption = {
+			_s("16:9 Widescreen Mod"),
+			_s("Removes letterboxing and moves some display elements, improving coverage on widescreen displays"),
+			"mtropolis_mod_obsidian_widescreen",
+			false,
+			0,
+			0};
+
+		options.push_back(widescreenOption);
+	}
+
+	static const ExtraGuiOption dynamicMIDIOption = {
+		_s("Improved Music Mixing"),
+		_s("Enables dynamic MIDI mixer, improving quality, but behaving less like mTropolis Player."),
+		"mtropolis_mod_dynamic_midi",
+		true,
+		0,
+		0};
+
 	static const ExtraGuiOption launchDebugOption = {
 		_s("Start with debugger"),
 		_s("Starts with the debugger dashboard active"),
@@ -83,6 +105,7 @@ const ExtraGuiOptions MTropolisMetaEngineDetection::getExtraGuiOptions(const Com
 		0
 	};
 
+	options.push_back(dynamicMIDIOption);
 	options.push_back(launchDebugOption);
 	options.push_back(launchBreakOption);
 

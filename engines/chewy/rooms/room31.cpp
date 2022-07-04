@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -94,7 +95,7 @@ void Room31::calc_luke() {
 int16 Room31::open_luke() {
 	int16 action_flag = false;
 	
-	if (!_G(gameState).inv_cur && _G(gameState).R31KlappeZu) {
+	if (!_G(cur)->usingInventoryCursor() && _G(gameState).R31KlappeZu) {
 		action_flag = true;
 		hideCur();
 		autoMove(2, P_CHEWY);
@@ -111,7 +112,7 @@ int16 Room31::open_luke() {
 int16 Room31::close_luke_proc1() {
 	int16 action_flag = false;
 
-	if (!_G(gameState).inv_cur && !_G(gameState).R31KlappeZu) {
+	if (!_G(cur)->usingInventoryCursor() && !_G(gameState).R31KlappeZu) {
 		action_flag = true;
 		hideCur();
 		autoMove(2, P_CHEWY);
@@ -144,13 +145,13 @@ int16 Room31::use_topf() {
 	int16 action_flag = false;
 
 	hideCur();
-	if (_G(gameState).inv_cur) {
+	if (_G(cur)->usingInventoryCursor()) {
 		if (_G(gameState).R31PflanzeWeg) {
 			if (isCurInventory(K_KERNE_INV)) {
 				_G(gameState).R31KoernerDa = true;
 				autoMove(1, P_CHEWY);
 				start_spz_wait(CH_LGET_O, 1, false, P_CHEWY);
-				delInventory(_G(gameState).AkInvent);
+				delInventory(_G(cur)->getInventoryCursor());
 				ani_nr = CH_TALK3;
 				dia_nr = 150;
 				_G(atds)->set_ats_str(242, 2, ATS_DATA);
@@ -162,7 +163,7 @@ int16 Room31::use_topf() {
 					_G(gameState)._personHide[P_CHEWY] = true;
 					startAniBlock(3, ABLOCK30);
 					_G(gameState)._personHide[P_CHEWY] = false;
-					delInventory(_G(gameState).AkInvent);
+					delInventory(_G(cur)->getInventoryCursor());
 					_G(obj)->addInventory(MILCH_LEER_INV, &_G(room_blk));
 					inventory_2_cur(MILCH_LEER_INV);
 					ani_nr = CH_TALK6;

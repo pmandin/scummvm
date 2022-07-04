@@ -48,6 +48,8 @@
 #include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-utils.h"
 
+#include "image/pict.h"
+
 namespace Director {
 
 static BuiltinProto builtins[] = {
@@ -521,6 +523,11 @@ void LB::b_string(int nargs) {
 
 void LB::b_value(int nargs) {
 	Datum d = g_lingo->pop();
+	if (d.type != STRING) {
+		g_lingo->push(d);
+		return;
+	}
+
 	Common::String expr = d.asString();
 	if (expr.empty()) {
 		g_lingo->push(Datum(0));
@@ -1048,7 +1055,7 @@ void LB::b_sort(int nargs) {
 // Files
 ///////////////////
 void LB::b_closeDA(int nargs) {
-	warning("STUB: b_closeDA");
+	warning("BUILDBOT: closeDA is not supported in ScummVM");
 }
 
 void LB::b_closeResFile(int nargs) {
@@ -1114,7 +1121,7 @@ void LB::b_open(int nargs) {
 void LB::b_openDA(int nargs) {
 	Datum d = g_lingo->pop();
 
-	warning("STUB: b_openDA(%s)", d.asString().c_str());
+	warning("BUILDBOT: openDA is not supported in ScummVM");
 }
 
 void LB::b_openResFile(int nargs) {
@@ -1186,28 +1193,38 @@ void LB::b_setCallBack(int nargs) {
 }
 
 void LB::b_showResFile(int nargs) {
-	Datum d = g_lingo->pop();
-
-	warning("STUB: b_showResFile(%s)", d.asString().c_str());
+	if (nargs)
+		g_lingo->pop();
+	Common::String out;
+	for (auto it = g_director->_openResFiles.begin(); it != g_director->_openResFiles.end(); it++)
+		out += it->_key + "\n";
+	g_debugger->debugLogFile(out, false);
 }
 
 void LB::b_showXlib(int nargs) {
-	Datum d = g_lingo->pop();
-
-	warning("STUB: b_showXlib(%s)", d.asString().c_str());
+	if (nargs)
+		g_lingo->pop();
+	Common::String out;
+	for (auto it = g_lingo->_openXLibs.begin(); it != g_lingo->_openXLibs.end(); it++)
+		out += it->_key + "\n";
+	g_debugger->debugLogFile(out, false);
 }
 
 void LB::b_xFactoryList(int nargs) {
 	Datum d = g_lingo->pop();
+	d.type = STRING;
+	d.u.s = new Common::String();
 
-	warning("STUB: b_xFactoryList(%s)", d.asString().c_str());
+	for (auto it = g_lingo->_openXLibs.begin(); it != g_lingo->_openXLibs.end(); it++)
+		*d.u.s += it->_key + "\n";
+	g_lingo->push(d);
 }
 
 ///////////////////
 // Control
 ///////////////////
 void LB::b_abort(int nargs) {
-	warning("STUB: b_abort");
+	g_lingo->_abort = true;
 }
 
 void LB::b_continue(int nargs) {
@@ -1513,7 +1530,7 @@ void LB::b_param(int nargs) {
 }
 
 void LB::b_printFrom(int nargs) {
-	g_lingo->printSTUBWithArglist("b_printFrom", nargs);
+	warning("BUILDBOT: printFrom is not supported in ScummVM");
 
 	g_lingo->dropStack(nargs);
 }
@@ -1655,7 +1672,11 @@ void LB::b_alert(int nargs) {
 }
 
 void LB::b_clearGlobals(int nargs) {
-	g_lingo->_globalvars.clear();
+	for (DatumHash::iterator it = g_lingo->_globalvars.begin(); it != g_lingo->_globalvars.end(); it++) {
+		if (!it->_value.ignoreGlobal) {
+			g_lingo->_globalvars.erase(it);
+		}
+	}
 }
 
 void LB::b_cursor(int nargs) {
@@ -1672,7 +1693,7 @@ void LB::b_put(int nargs) {
 			output += " ";
 	}
 	if (g_debugger->isActive()) {
-		g_debugger->debugPrintf("-- %s\n", output.c_str());
+		g_debugger->debugLogFile(output, true);
 	} else {
 		debug("-- %s", output.c_str());
 	}
@@ -1686,10 +1707,12 @@ void LB::b_showGlobals(int nargs) {
 	global_out += ver.asString() + "\n";
 	if (g_lingo->_globalvars.size()) {
 		for (auto it = g_lingo->_globalvars.begin(); it != g_lingo->_globalvars.end(); it++) {
-			global_out += it->_key + " = " + it->_value.asString() + "\n";
+			if (!it->_value.ignoreGlobal) {
+				global_out += it->_key + " = " + it->_value.asString() + "\n";
+			}
 		}
 	}
-	g_debugger->debugPrintf("%s", global_out.c_str());
+	g_debugger->debugLogFile(global_out, false);
 }
 
 void LB::b_showLocals(int nargs) {
@@ -1699,7 +1722,7 @@ void LB::b_showLocals(int nargs) {
 			local_out += it->_key + " = " + it->_value.asString() + "\n";
 		}
 	}
-	g_debugger->debugPrintf("%s", local_out.c_str());
+	g_debugger->debugLogFile(local_out, false);
 }
 
 ///////////////////
@@ -1857,9 +1880,49 @@ void LB::b_findEmpty(int nargs) {
 }
 
 void LB::b_importFileInto(int nargs) {
-	g_lingo->printSTUBWithArglist("b_importFileInto", nargs);
 
-	g_lingo->dropStack(nargs);
+	Datum file = g_lingo->pop();
+	Datum dst = g_lingo->pop();
+
+	if (!dst.isCastRef()) {
+		warning("b_importFileInto(): bad cast ref field type: %s", dst.type2str());
+		return;
+	}
+
+	CastMemberID memberID = *dst.u.cast;
+
+	if (!(file.asString().matchString("*.pic") || file.asString().matchString("*.pict"))) {
+		warning("LB::b_importFileInto : %s is not a valid PICT file", file.asString().c_str());
+		return;
+	}
+
+	Common::String path = pathMakeRelative(file.asString());
+	Common::File in;
+	in.open(path);
+
+	if (!in.isOpen()) {
+		warning("b_importFileInto(): Cannot open file %s", path.c_str());
+		return;
+	}
+
+	Image::PICTDecoder *img = new Image::PICTDecoder();
+	img->loadStream(in);
+	in.close();
+
+	Movie *movie = g_director->getCurrentMovie();
+	BitmapCastMember *bitmapCast = new BitmapCastMember(movie->getCast(), memberID.member, img);
+	movie->createOrReplaceCastMember(memberID, bitmapCast);
+	bitmapCast->setModified(true);
+	const Graphics::Surface *surf = img->getSurface();
+	bitmapCast->_size = surf->pitch * surf->h + img->getPaletteColorCount() * 3;
+	auto channels = g_director->getCurrentMovie()->getScore()->_channels;
+
+	for (uint i = 0; i < channels.size(); i++) {
+		if (channels[i]->_sprite->_castId == dst.asMemberID()) {
+			channels[i]->setCast(memberID);
+			channels[i]->_dirty = true;
+		}
+	}
 }
 
 void menuCommandsCallback(int action, Common::String &text, void *data) {
@@ -2074,7 +2137,7 @@ void LB::b_pasteClipBoardInto(int nargs) {
 	}
 
 	Movie *movie = g_director->getCurrentMovie();
-	uint16 frame = movie->getScore()->getCurrentFrame(); 
+	uint16 frame = movie->getScore()->getCurrentFrame();
 	Frame *currentFrame = movie->getScore()->_frames[frame];
 	CastMember *castMember = movie->getCastMember(*g_director->_clipBoard);
 	auto channels = movie->getScore()->_channels;
@@ -2571,11 +2634,42 @@ void LB::b_inside(int nargs) {
 }
 
 void LB::b_map(int nargs) {
-	g_lingo->printSTUBWithArglist("b_map", nargs);
+	Datum toRect = g_lingo->pop();
+	Datum fromRect = g_lingo->pop();
+	Datum srcArr = g_lingo->pop();
 
-	g_lingo->dropStack(nargs);
+	if (!(toRect.type == RECT || (toRect.type == ARRAY && toRect.u.farr->arr.size() == 4)) ||
+		!(fromRect.type == RECT || (fromRect.type == ARRAY && fromRect.u.farr->arr.size() == 4))) {
+		warning("LB::b_map(): Invalid Datum Type of source and destination Rects");
+		return;
+	}
 
-	g_lingo->push(Datum(0));
+	int toWidth = toRect.u.farr->arr[2].u.i - toRect.u.farr->arr[0].u.i;
+	int toHeight = toRect.u.farr->arr[3].u.i - toRect.u.farr->arr[1].u.i;
+	int fromWidth = fromRect.u.farr->arr[2].u.i - fromRect.u.farr->arr[0].u.i;
+	int fromHeight = fromRect.u.farr->arr[3].u.i - fromRect.u.farr->arr[1].u.i;
+
+	if (!(srcArr.type == POINT ||
+		srcArr.type == RECT ||
+		(srcArr.type == ARRAY && (srcArr.u.farr->arr.size() == 2 || srcArr.u.farr->arr.size() == 4)))) {
+		warning("LB::b_map(): Invalid Datum type of input Point / Rect");
+		return;
+	}
+
+	Datum d;
+	d.type = POINT;
+	d.u.farr = new FArray();
+	d.u.farr->arr.push_back((srcArr.u.farr->arr[0].u.i - fromRect.u.farr->arr[0].u.i) * (toWidth / fromWidth) + toRect.u.farr->arr[0].u.i);
+	d.u.farr->arr.push_back((srcArr.u.farr->arr[1].u.i - fromRect.u.farr->arr[1].u.i) * (toHeight / fromHeight) + toRect.u.farr->arr[1].u.i);
+
+	if (srcArr.type == RECT ||
+		(srcArr.type == ARRAY && srcArr.u.farr->arr.size() == 4)) {
+		d.type = RECT;
+		d.u.farr->arr.push_back((srcArr.u.farr->arr[2].u.i - srcArr.u.farr->arr[0].u.i) * (toWidth / fromWidth) + d.u.farr->arr[0].u.i);
+		d.u.farr->arr.push_back((srcArr.u.farr->arr[3].u.i - srcArr.u.farr->arr[1].u.i) * (toWidth / fromWidth) + d.u.farr->arr[1].u.i);
+	}
+
+	g_lingo->push(d);
 }
 
 void LB::b_offsetRect(int nargs) {

@@ -20,6 +20,7 @@
  */
 
 #include "chewy/chewy.h"
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/dialogs/inventory.h"
 #include "chewy/events.h"
@@ -29,9 +30,13 @@
 
 namespace Chewy {
 
-int16 loadDialogCloseup(int16 diaNr) {
-	if (_G(flags).DialogCloseup == false) {
+void loadDialogCloseup(int16 diaNr) {
+	if (!_G(flags).DialogCloseup) {
 		if (_G(atds)->startDialogCloseup(diaNr)) {
+			_G(minfo).button = 0;
+			g_events->_kbInfo._keyCode = '\0';
+			g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
+
 			_G(ads_blk_nr) = 0;
 			_G(dialogCloseupItemPtr) = _G(atds)->dialogCloseupItemPtr(diaNr, _G(ads_blk_nr), &_G(ads_item_nr));
 			_G(flags).DialogCloseup = true;
@@ -43,10 +48,8 @@ int16 loadDialogCloseup(int16 diaNr) {
 			_G(ads_dia_nr) = diaNr;
 			_G(talk_start_ani) = -1;
 			_G(talk_hide_static) = -1;
-			return true;
 		}
 	}
-	return false;
 }
 
 void setSsiPos() {
@@ -134,7 +137,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 					case 71:
 						if (isCurInventory(ZANGE_INV))
 							Room8::hole_kohle();
-						else if (!_G(gameState).inv_cur)
+						else if (!_G(cur)->usingInventoryCursor())
 							Room8::start_verbrennen();
 						break;
 
@@ -150,7 +153,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 
 
 					case 77:
-						if (!_G(gameState).R10SurimyOk && !_G(gameState).inv_cur) {
+						if (!_G(gameState).R10SurimyOk && !_G(cur)->usingInventoryCursor()) {
 							hideCur();
 							autoMove(3, P_CHEWY);
 							flic_cut(FCUT_004);
@@ -167,7 +170,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 80:
-						if (_G(gameState).inv_cur)
+						if (_G(cur)->usingInventoryCursor())
 							autoMove(3, P_CHEWY);
 						break;
 
@@ -443,6 +446,10 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 295:
+					case 386:
+						retValue = Room45::use_taxi();
+						break;
+
 					case 297:
 						retValue = Room45::use_boy();
 						break;
@@ -544,7 +551,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 375:
-						retValue = Room64::use_tasche();
+						retValue = Room64::useBag();
 						break;
 
 					case 380:
@@ -561,10 +568,6 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 
 					case 385:
 						retValue = Room63::use_schalter();
-						break;
-
-					case 386:
-						retValue = Room45::use_taxi();
 						break;
 
 					case 394:
@@ -605,11 +608,11 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 430:
-						retValue = Room73::proc1();
+						retValue = Room73::procMoveBushes();
 						break;
 
 					case 433:
-						retValue = Room73::proc2();
+						retValue = Room73::procPickupMachete();
 						break;
 
 					case 435:
@@ -642,7 +645,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 
 					case 467:
 					case 473:
-						retValue = Room82::proc9();
+						retValue = Room82::procClimbLadderToGorilla();
 						break;
 
 					case 468:
@@ -913,7 +916,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 376:
-						Room64::talk_man();
+						Room64::talk_man(350);
 						break;
 
 					case 380:
@@ -974,11 +977,11 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 468:
-						Room82::talk1();
+						Room82::talkWithDirector();
 						break;
 
 					case 469:
-						Room82::talk2();
+						Room82::talkWithFilmDiva();
 						break;
 
 					case 471:
@@ -2187,7 +2190,7 @@ void calc_inv_use_txt(int16 test_nr) {
 
 	case ANGEL_INV:
 	case KNOCHEN_INV:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
 		ret = del_invent_slot(test_nr);
@@ -2204,21 +2207,21 @@ void calc_inv_use_txt(int16 test_nr) {
 		break;
 
 	case MESSER_INV:
-		if (_G(gameState).AkInvent == 40) {
-			delInventory(_G(gameState).AkInvent);
+		if (_G(cur)->getInventoryCursor() == 40) {
+			delInventory(_G(cur)->getInventoryCursor());
 			_G(menu_item) = CUR_USE;
 			cursorChoice(_G(menu_item));
 			invent_2_slot(K_MASKE_INV);
 			invent_2_slot(K_FLEISCH_INV);
 			invent_2_slot(K_KERNE_INV);
-		} else if (_G(gameState).AkInvent == 88) {
+		} else if (_G(cur)->getInventoryCursor() == 88) {
 			_G(gameState).flags26_10 = true;
 			startAadWait(_G(gameState)._personRoomNr[P_CHEWY] + 350);
 		}
 		break;
 
 	case BRIEF_INV:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
 		_G(gameState).R42BriefMarke = true;
@@ -2228,7 +2231,7 @@ void calc_inv_use_txt(int16 test_nr) {
 		break;
 
 	case FLASCHE_INV:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
 		// fall through
@@ -2241,7 +2244,7 @@ void calc_inv_use_txt(int16 test_nr) {
 
 	case B_MARY_INV:
 	case PIRANHA_INV:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
 		ret = del_invent_slot(test_nr);
@@ -2266,7 +2269,7 @@ void calc_inv_use_txt(int16 test_nr) {
 
 	case 102:
 	case 104:
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(CUR_USE);
 
@@ -2276,15 +2279,15 @@ void calc_inv_use_txt(int16 test_nr) {
 		break;
 
 	case 105:
-		delInventory(_G(gameState).AkInvent);
-		_G(atds)->set_ats_str(105, 0, 1, 6);
+		delInventory(_G(cur)->getInventoryCursor());
+		_G(atds)->set_ats_str(105, 0, 1, INV_ATS_DATA);
 		_G(menu_item) = CUR_USE;
 		cursorChoice(CUR_USE);
 		break;
 
 	case 106:
 		del_invent_slot(106);
-		_G(atds)->set_ats_str(105, 0, 1, 6);
+		_G(atds)->set_ats_str(105, 0, 1, INV_ATS_DATA);
 		break;
 
 	default:
@@ -2334,7 +2337,7 @@ bool calc_inv_no_use(int16 test_nr, int16 mode) {
 	}
 
 	if (inv_mode != -1) {
-		int16 txt_nr = _G(atds)->calc_inv_no_use(_G(gameState).AkInvent, test_nr);
+		int16 txt_nr = _G(atds)->calc_inv_no_use(_G(cur)->getInventoryCursor(), test_nr);
 		if (txt_nr != -1) {
 			if (!_G(flags).InventMenu) {
 				if (txt_nr >= 15000) {
@@ -2353,7 +2356,7 @@ bool calc_inv_no_use(int16 test_nr, int16 mode) {
 				int16 r_val = g_engine->getRandomNumber(5);
 
 				if (_G(flags).InventMenu) {
-					calc_inv_get_text(_G(gameState).AkInvent, test_nr);
+					calc_inv_get_text(_G(cur)->getInventoryCursor(), test_nr);
 					Dialogs::Inventory::look(-1, INV_USE_ATS_MODE, RAND_NO_USE[r_val] + 15000);
 				} else {
 					ret = startAtsWait(RAND_NO_USE[r_val], TXT_MARK_USE, 14, INV_USE_DEF);
@@ -2453,7 +2456,7 @@ int16 calc_person_click(int16 p_nr) {
 
 	switch (p_nr) {
 	case P_CHEWY:
-		switch (_G(gameState).AkInvent) {
+		switch (_G(cur)->getInventoryCursor()) {
 		case K_MASKE_INV:
 			Room28::set_pump();
 			action_ret = true;
@@ -2479,7 +2482,7 @@ int16 calc_person_click(int16 p_nr) {
 		break;
 
 	case P_HOWARD:
-		switch (_G(gameState).AkInvent) {
+		switch (_G(cur)->getInventoryCursor()) {
 		case GALA_INV:
 			if (_G(gameState)._personRoomNr[P_CHEWY] == 67) {
 				Room67::kostuem_aad(378);
@@ -2494,7 +2497,7 @@ int16 calc_person_click(int16 p_nr) {
 		break;
 
 	case P_NICHELLE:
-		switch (_G(gameState).AkInvent) {
+		switch (_G(cur)->getInventoryCursor()) {
 		case GALA_INV:
 			if (_G(gameState)._personRoomNr[P_CHEWY] == 67) {
 				Room67::kostuem_aad(377);
@@ -2758,7 +2761,6 @@ void calc_person_dia(int16 p_nr) {
 
 			} else if (p_nr == P_NICHELLE) {
 				if (_G(gameState).PersonDia[P_NICHELLE] < 10000) {
-					_G(cur_hide_flag) = false;
 					hideCur();
 					startAadWait(_G(gameState).PersonDia[P_NICHELLE]);
 					_G(stopAutoMove)[P_NICHELLE] = _G(gameState).PersonDiaRoom[P_NICHELLE];

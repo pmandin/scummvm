@@ -132,6 +132,7 @@ private:
 	void loadRLEFrames(const Common::Array<uint8> &data);
 	void decompressRLEFrame(size_t frameIndex);
 	void loadUncompressedFrame(const Common::Array<uint8> &data, size_t frameIndex);
+	void decompressQuickTimeFrame(const Common::Array<uint8> &data, size_t frameIndex);
 
 	template<class TSrcNumber, uint32 TSrcLiteralMask, uint32 TSrcTransparentSkipMask, class TDestNumber, uint32 TDestLiteralMask, uint32 TDestTransparentSkipMask>
 	void rleReformat(RleFrame &frame, const Common::Array<TSrcNumber> &srcData, const Graphics::PixelFormat &srcFormatRef, Common::Array<TDestNumber> &destData, const Graphics::PixelFormat &destFormatRef);
@@ -205,6 +206,9 @@ public:
 	const Common::String &getExtFileName() const;
 	size_t getStreamIndex() const;
 
+	void addDamagedFrame(int frame);
+	const Common::Array<int> &getDamagedFrames() const;
+
 private:
 	uint32 _movieDataPos;
 	uint32 _moovAtomPos;
@@ -212,6 +216,8 @@ private:
 
 	Common::String _extFileName;
 	size_t _streamIndex;
+
+	Common::Array<int> _damagedFrames;
 };
 
 class CachedImage {

@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -119,7 +120,7 @@ void Room45::setup_func() {
 							_G(det)->stop_detail(3 + i);
 						}
 					}
-					_G(det)->setSetailPos(3 + i, x, y);
+					_G(det)->setDetailPos(3 + i, x, y);
 				} else {
 					++_G(r45_pinfo)[i][2];
 
@@ -132,7 +133,7 @@ void Room45::setup_func() {
 						} else {
 							x = 0;
 						}
-						_G(det)->setSetailPos(3 + i, x, y);
+						_G(det)->setDetailPos(3 + i, x, y);
 						_G(det)->startDetail(3 + i, 255, ANI_FRONT);
 					}
 				}
@@ -170,7 +171,7 @@ int16 Room45::use_taxi() {
 	hideCur();
 	autoMove(1, P_CHEWY);
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		if (_G(gameState).ChewyAni == CHEWY_PUMPKIN) {
 			action_ret = true;
 			talk_taxi(254);

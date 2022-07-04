@@ -28,7 +28,7 @@
 #include "gui/message.h"
 
 #include "pink/pink.h"
-#include "pink/director.h"
+#include "pink/screen.h"
 #include "pink/objects/actors/lead_actor.h"
 
 namespace Pink {
@@ -134,9 +134,9 @@ static void menuCommandsCallback(int action, Common::U32String &, void *data) {
 }
 
 void PinkEngine::initMenu() {
-	_director->getWndManager().setEngine(this);
+	_screen->getWndManager().setEngine(this);
 
-	_menu = Graphics::MacMenu::createMenuFromPEexe(_exeResources, &_director->getWndManager());
+	_menu = Graphics::MacMenu::createMenuFromPEexe(_exeResources, &_screen->getWndManager());
 	if (getLanguage() == Common::HE_ISR) {
 		_menu->setAlignment(Graphics::kTextAlignRight);
 	}

@@ -22,6 +22,8 @@
 #ifndef MTROPOLIS_ELEMENTS_H
 #define MTROPOLIS_ELEMENTS_H
 
+#include "graphics/fontman.h"
+
 #include "mtropolis/data.h"
 #include "mtropolis/runtime.h"
 #include "mtropolis/render.h"
@@ -44,6 +46,7 @@ struct MToonMetadata;
 
 enum MediaState {
 	kMediaStatePlaying,
+	kMediaStatePlayingLastFrame,
 	kMediaStateStopped,
 	kMediaStatePaused,
 };
@@ -87,6 +90,7 @@ public:
 	void deactivate() override;
 
 	bool canAutoPlay() const override;
+	void queueAutoPlayEvents(Runtime *runtime, bool isAutoPlaying) override;
 
 	void render(Window *window) override;
 	void playMedia(Runtime *runtime, Project *project) override;
@@ -143,6 +147,8 @@ private:
 	Common::SharedPtr<SegmentUnloadSignaller> _unloadSignaller;
 	Common::SharedPtr<PlayMediaSignaller> _playMediaSignaller;
 
+	Common::Array<int> _damagedFrames;
+
 	Runtime *_runtime;
 };
 
@@ -197,6 +203,8 @@ public:
 	bool canAutoPlay() const override;
 
 	void render(Window *window) override;
+
+	bool isMouseCollisionAtPoint(int32 relativeX, int32 relativeY) const override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "mToon Element"; }
@@ -272,18 +280,19 @@ public:
 
 	void setTextStyle(uint16 macFontID, const Common::String &fontFamilyName, uint size, TextAlignment alignment, const TextStyleFlags &styleFlags);
 
+	Graphics::FontManager::FontUsage getDefaultUsageForMacFont(uint16 macFontID, uint size);
+	Graphics::FontManager::FontUsage getDefaultUsageForNamedFont(const Common::String &fontFamilyName, uint size);
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Text Label Element"; }
 	SupportStatus debugGetSupportStatus() const override { return kSupportStatusPartial; }
 #endif
 
 private:
-	struct TextLabelLineWriteInterface : public IDynamicValueWriteInterface {
-		MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const override;
-		MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-		MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
-
-		static TextLabelLineWriteInterface _instance;
+	struct TextLabelLineWriteInterface {
+		static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset);
+		static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+		static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 	};
 
 	MiniscriptInstructionOutcome scriptSetText(MiniscriptThread *thread, const DynamicValue &value);
@@ -350,6 +359,7 @@ private:
 	};
 
 	VThreadState startPlayingTask(const StartPlayingTaskData &taskData);
+	VThreadState stopPlayingTask(const StartPlayingTaskData &taskData);
 
 	void setLoop(bool loop);
 	void setVolume(uint16 volume);

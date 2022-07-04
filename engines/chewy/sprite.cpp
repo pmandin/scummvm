@@ -324,7 +324,7 @@ void setPersonPos(int16 x, int16 y, int16 personNr, int16 direction) {
 	_G(atds)->set_split_win(tmpNr, x1, y1);
 	if (!_G(flags).ExitMov && personNr == P_CHEWY) {
 		const int16 paletteId = _G(barriers)->getBarrierId(x + _G(spieler_mi)[personNr].HotX, y + _G(spieler_mi)[personNr].HotY);
-		checkShadow(paletteId, 1);
+		setShadowPalette(paletteId, true);
 	}
 }
 
@@ -505,9 +505,6 @@ bool startAtsWait(int16 txtNr, int16 txtMode, int16 col, int16 mode) {
 			shown = _G(atds)->start_ats(txtNr, txtMode, col, mode, &vocNr);
 
 			if (g_engine->_sound->speechEnabled())  {
-				const int16 vocx = _G(moveState)[P_CHEWY].Xypos[0] - _G(gameState).scrollx + _G(spieler_mi)[P_CHEWY].HotX;
-
-				g_engine->_sound->setSoundChannelBalance(0, _G(atds)->getStereoPos(vocx));
 				if (vocNr >= 0) {
 					g_engine->_sound->playSpeech(vocNr, false);
 				}
@@ -575,9 +572,6 @@ void startDialogCloseupWait(int16 diaNr) {
 	if (!_G(flags).DialogCloseup) {
 		_G(menu_item) = CUR_TALK;
 		cursorChoice(_G(menu_item));
-		_G(minfo).button = 0;
-		g_events->_kbInfo._keyCode = '\0';
-		g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
 
 		loadDialogCloseup(diaNr);
 
@@ -798,7 +792,7 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 									tmpy = 1;
 							}
 							if (mi->Id == CHEWY_OBJ)
-								checkShadow(u_index, 1);
+								setShadowPalette(u_index, true);
 
 							if (abs(om->Xypos[1] - mi->XyzEnd[1]) <= abs(tmpy)) {
 								om->Count = 0;
@@ -835,7 +829,7 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 								tmpx = 1;
 						}
 						if (mi->Id == CHEWY_OBJ)
-							checkShadow(u_index, 1);
+							setShadowPalette(u_index, true);
 
 						if (abs(om->Xypos[0] - mi->XyzEnd[0]) <= abs(tmpx)) {
 							om->Count = 0;
@@ -867,7 +861,7 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 					}
 				} else {
 					if (mi->Id == CHEWY_OBJ)
-						checkShadow(u_index, 1);
+						setShadowPalette(u_index, true);
 					om->Xypos[0] += tmpx;
 					om->Xypos[1] += tmpy;
 					om->Xypos[2] += tmpz;
@@ -892,7 +886,7 @@ void mov_objekt(ObjMov *om, MovInfo *mi) {
 				if (mi->Id == CHEWY_OBJ) {
 					u_index = _G(barriers)->getBarrierId(om->Xypos[0] + mi->HotX,
 					                                om->Xypos[1] + mi->HotY);
-					checkShadow(u_index, 1);
+					setShadowPalette(u_index, true);
 				}
 			}
 			if (mi->Id == CHEWY_OBJ) {

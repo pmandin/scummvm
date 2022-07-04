@@ -84,10 +84,6 @@ namespace Chewy {
 struct KbdMouseInfo;
 class Text;
 
-struct AdsDiaHeaders {
-	int16 _nr;
-};
-
 struct AtdsVar {
 	int16 _silent = 0;
 	int16 _delay = 1;
@@ -122,31 +118,9 @@ public:
 	void load(const void *data, size_t count);
 };
 
-struct AadTxtHeader {
-	int16 _diaNr;
-	int16 _perNr;
-	int16 _aMov;
-	int16 _curNr;
-
-	bool load(const void *src);
-	static constexpr int SIZE() { return 8; }
-};
-
 struct AadStrHeader {
 	int16 _akPerson;
 	int16 _vocNr;
-};
-
-struct AadVar {
-	int16 _dialog;
-
-	AadTxtHeader *_txtHeader;
-	AadStrHeader *_strHeader;
-	AadInfoArray _person;
-	char *_ptr;
-	int16 _strNr;
-	int16 _delayCount;
-	int16 _silentCount;
 };
 
 // ADS (dialog closeup) header
@@ -175,6 +149,18 @@ struct DialogCloseupVariables {
 struct DialogCloseupNextBlock {
 	int16 _blkNr;
 	int16 _endNr;
+};
+
+struct AadVar {
+	int16 _dialog;
+
+	DialogCloseupTxtHeader *_txtHeader;
+	AadStrHeader *_strHeader;
+	AadInfoArray _person;
+	char *_ptr;
+	int16 _strNr;
+	int16 _delayCount;
+	int16 _silentCount;
 };
 
 struct AtsTxtHeader {
@@ -242,8 +228,6 @@ public:
 	void delControlBit(int16 txtNr, int16 bitIdx);
 	void set_ats_str(int16 txtNr, int16 txtMode, int16 strNr, int16 mode);
 	void set_ats_str(int16 txtNr, int16 strNr, int16 mode);
-	int16 get_ats_str(int16 txtNr, int16 txtMode, int16 mode);
-	void set_ats_mem(int16 mode);
 	int16 start_aad(int16 diaNr);
 	void stopAad();
 	void print_aad(int16 scrX, int16 scrY);
@@ -277,7 +261,7 @@ public:
 
 	Common::StringArray getTextArray(uint dialogNum, uint entryNum, int type, int subEntry = -1);
 	Common::String getTextEntry(uint dialogNum, uint entryNum, int type, int subEntry = -1);
-	int16 getLastSpeechId() { return _text->getLastSpeechId(); }
+	int16 getLastSpeechId();
 
 private:
 	void init();
@@ -287,8 +271,6 @@ private:
 	Common::File *_atdsHandle = nullptr;
 	char *_atdsMem[MAX_HANDLE] = { nullptr };
 	int16 _atdsPoolOff[MAX_HANDLE] = { 0 };
-	char *_atsMem = nullptr;
-	uint8 *_ats_sheader = nullptr;
 	AadVar _aadv;
 	AtsVar _atsv;
 	DialogCloseupVariables _dialogCloseup;

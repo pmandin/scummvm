@@ -73,6 +73,7 @@ class AssetManagerInterface;
 class CursorGraphic;
 class CursorGraphicCollection;
 class Element;
+class GraphicModifier;
 class KeyboardInputEvent;
 class MessageDispatch;
 class MiniscriptThread;
@@ -89,7 +90,6 @@ class VisualElement;
 class Window;
 class WorldManagerInterface;
 struct DynamicValue;
-struct DynamicValueReadProxy;
 struct DynamicValueWriteProxy;
 struct ICollider;
 struct ILoadUIProvider;
@@ -119,6 +119,7 @@ class DebugPrimaryTaskList;
 char invariantToLower(char c);
 Common::String toCaseInsensitive(const Common::String &str);
 bool caseInsensitiveEqual(const Common::String &str1, const Common::String &str2);
+size_t caseInsensitiveFind(const Common::String &stringToSearch, const Common::String &stringToFind);
 
 enum ColorDepthMode {
 	kColorDepthMode1Bit,
@@ -181,7 +182,6 @@ enum DynamicValueType {
 	kString,
 	kList,
 	kObject,
-	kReadProxy,
 	kWriteProxy,
 
 	kEmpty,
@@ -196,9 +196,24 @@ enum AttributeID {
 	kAttribDirect = 56,
 	kAttribVisible = 58,
 	kAttribLayer = 24,
+	kAttribPaused = 25,
+	kAttribLoop = 57,
 	kAttribPosition = 1,
 	kAttribWidth = 2,
 	kAttribHeight = 3,
+	kAttribRate = 4,
+	kAttribRange = 5,
+	kAttribCel = 6,
+	kAttribLoopBackForth = 59,
+	kAttribPlayEveryFrame = 60,
+	kAttribTimeValue = 16,
+	kAttribTrackDisable = 51,
+	kAttribTrackEnable = 50,
+	kAttribVolume = 13,
+	kAttribBalance = 26,
+	kAttribText = 7,
+	kAttribMasterVolume = 18,
+	kAttribUserTimeout = 19,
 };
 
 } // End of namespace AttributeIDs
@@ -451,33 +466,47 @@ struct MessageFlags {
 struct DynamicValue;
 struct DynamicList;
 
-struct IDynamicValueReadInterface : public IInterfaceBase {
-	virtual MiniscriptInstructionOutcome read(MiniscriptThread *thread, DynamicValue &dest, const void *objectRef, uintptr ptrOrOffset) const = 0;
-	virtual MiniscriptInstructionOutcome readAttrib(MiniscriptThread *thread, DynamicValue &dest, const void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const = 0;
-	virtual MiniscriptInstructionOutcome readAttribIndexed(MiniscriptThread *thread, DynamicValue &dest, const void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const = 0;
+// This should be an interface, but since this exists to make global singletons that JUST supply a vtable,
+// GCC complains about there being a global destructor, unless we delete the destructor, in which case
+// it complains about a class having virtual functions but not having a virtual destructor, so we have to
+// do this dispatch table stuff just to make GCC be quiet.
+struct DynamicValueWriteInterface {
+	typedef MiniscriptInstructionOutcome (*writeFunc_t)(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset);
+	typedef MiniscriptInstructionOutcome (*refAttribFunc_t)(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+	typedef MiniscriptInstructionOutcome (*refAttribIndexedFunc_t)(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
+
+	writeFunc_t write;
+	refAttribFunc_t refAttrib;
+	refAttribIndexedFunc_t refAttribIndexed;
 };
 
-struct IDynamicValueWriteInterface : public IInterfaceBase {
-	virtual MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const = 0;
-	virtual MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const = 0;
-	virtual MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const = 0;
+template<class T>
+class DynamicValueWriteInterfaceGlue {
+public:
+	static const DynamicValueWriteInterface *getInstance();
+
+private:
+	static DynamicValueWriteInterface _instance;
 };
 
-struct DynamicValueReadProxyPOD {
-	uintptr ptrOrOffset;
-	const void *objectRef;
-	IDynamicValueReadInterface *ifc;
+template<class T>
+inline const DynamicValueWriteInterface *DynamicValueWriteInterfaceGlue<T>::getInstance() {
+	return &_instance;
+}
+
+template<class T>
+DynamicValueWriteInterface DynamicValueWriteInterfaceGlue<T>::_instance = {
+	static_cast<DynamicValueWriteInterface::writeFunc_t>(T::write),
+	static_cast<DynamicValueWriteInterface::refAttribFunc_t>(T::refAttrib),
+	static_cast<DynamicValueWriteInterface::refAttribIndexedFunc_t>(T::refAttribIndexed),
 };
 
-struct DynamicValueReadProxy {
-	DynamicValueReadProxyPOD pod;
-	Common::SharedPtr<DynamicList> containerList;
-};
+
 
 struct DynamicValueWriteProxyPOD {
 	uintptr ptrOrOffset;
 	void *objectRef;
-	IDynamicValueWriteInterface *ifc;
+	const DynamicValueWriteInterface *ifc;
 };
 
 struct DynamicValueWriteProxy {
@@ -761,12 +790,10 @@ struct DynamicList {
 	void createWriteProxyForIndex(size_t index, DynamicValueWriteProxy &proxy);
 
 private:
-	struct WriteProxyInterface : public IDynamicValueWriteInterface {
-		MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const override;
-		MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-		MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
-
-		static WriteProxyInterface _instance;
+	struct WriteProxyInterface {
+		static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset);
+		static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+		static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 	};
 
 	void clear();
@@ -801,11 +828,8 @@ struct DynamicValue {
 	const bool &getBool() const;
 	const Common::SharedPtr<DynamicList> &getList() const;
 	const ObjectReference &getObject() const;
-	const DynamicValueReadProxyPOD &getReadProxyPOD() const;
 	const DynamicValueWriteProxyPOD &getWriteProxyPOD() const;
-	DynamicValueReadProxy getReadProxyTEMP() const;
 	DynamicValueWriteProxy getWriteProxyTEMP() const;
-	const Common::SharedPtr<DynamicList> &getReadProxyContainer() const;
 	const Common::SharedPtr<DynamicList> &getWriteProxyContainer() const;
 
 	void clear();
@@ -823,7 +847,6 @@ struct DynamicValue {
 	void setList(const Common::SharedPtr<DynamicList> &value);
 	void setObject(const ObjectReference &value);
 	void setObject(const Common::WeakPtr<RuntimeObject> &value);
-	void setReadProxy(const DynamicValueReadProxy &readProxy);
 	void setWriteProxy(const DynamicValueWriteProxy &writeProxy);
 
 	bool roundToInt(int32 &outInt) const;
@@ -850,7 +873,6 @@ private:
 		Event asEvent;
 		Point16POD asPoint;
 		bool asBool;
-		DynamicValueReadProxyPOD asReadProxy;
 		DynamicValueWriteProxyPOD asWriteProxy;
 	};
 
@@ -875,8 +897,8 @@ private:
 };
 
 template<class TFloat>
-struct DynamicValueWriteFloatHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) const override {
+struct DynamicValueWriteFloatHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) {
 		TFloat &dest = *static_cast<TFloat *>(objectRef);
 		switch (value.getType()) {
 		case DynamicValueTypes::kFloat:
@@ -889,29 +911,23 @@ struct DynamicValueWriteFloatHelper : public IDynamicValueWriteInterface {
 			return kMiniscriptInstructionOutcomeFailed;
 		}
 	}
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override {
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) {
 		return kMiniscriptInstructionOutcomeFailed;
 	}
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override {
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) {
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 
 	static void create(TFloat *floatValue, DynamicValueWriteProxy &proxy) {
 		proxy.pod.ptrOrOffset = 0;
 		proxy.pod.objectRef = floatValue;
-		proxy.pod.ifc = &_instance;
+		proxy.pod.ifc = DynamicValueWriteInterfaceGlue<DynamicValueWriteFloatHelper<TFloat> >::getInstance();
 	}
-
-private:
-	static DynamicValueWriteFloatHelper _instance;
 };
 
-template<class TFloat>
-DynamicValueWriteFloatHelper<TFloat> DynamicValueWriteFloatHelper<TFloat>::_instance;
-
 template<class TInteger>
-struct DynamicValueWriteIntegerHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) const override {
+struct DynamicValueWriteIntegerHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) {
 		TInteger &dest = *static_cast<TInteger *>(objectRef);
 		switch (value.getType()) {
 		case DynamicValueTypes::kFloat:
@@ -924,101 +940,79 @@ struct DynamicValueWriteIntegerHelper : public IDynamicValueWriteInterface {
 			return kMiniscriptInstructionOutcomeFailed;
 		}
 	}
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override {
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) {
 		return kMiniscriptInstructionOutcomeFailed;
 	}
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override {
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) {
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 
 	static void create(TInteger *intValue, DynamicValueWriteProxy &proxy) {
 		proxy.pod.ptrOrOffset = 0;
 		proxy.pod.objectRef = intValue;
-		proxy.pod.ifc = &_instance;
+		proxy.pod.ifc = DynamicValueWriteInterfaceGlue<DynamicValueWriteIntegerHelper<TInteger> >::getInstance();
 	}
-
-private:
-	static DynamicValueWriteIntegerHelper _instance;
 };
 
-template<class TInteger>
-DynamicValueWriteIntegerHelper<TInteger> DynamicValueWriteIntegerHelper<TInteger>::_instance;
-
-struct DynamicValueWritePointHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) const override;
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
+struct DynamicValueWritePointHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset);
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 
 	static void create(Common::Point *pointValue, DynamicValueWriteProxy &proxy);
-
-private:
-	static DynamicValueWritePointHelper _instance;
 };
 
-struct DynamicValueWriteBoolHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) const override;
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
+struct DynamicValueWriteBoolHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset);
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 
 	static void create(bool *boolValue, DynamicValueWriteProxy &proxy);
-
-private:
-	static DynamicValueWriteBoolHelper _instance;
 };
 
-struct DynamicValueWriteStringHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) const override;
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
+struct DynamicValueWriteStringHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset);
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 
 	static void create(Common::String *strValue, DynamicValueWriteProxy &proxy);
-
-private:
-	static DynamicValueWriteStringHelper _instance;
 };
 
 template<class TClass, MiniscriptInstructionOutcome (TClass::*TWriteMethod)(MiniscriptThread *thread, const DynamicValue &dest), MiniscriptInstructionOutcome (TClass::*TRefAttribMethod)(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, const Common::String &attrib)>
-struct DynamicValueWriteOrRefAttribFuncHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const override {
+struct DynamicValueWriteOrRefAttribFuncHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) {
 		return (static_cast<TClass *>(objectRef)->*TWriteMethod)(thread, dest);
 	}
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override {
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) {
 		return (static_cast<TClass *>(objectRef)->*TRefAttribMethod)(thread, proxy, attrib);
 	}
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override {
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) {
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 
 	static void create(TClass *obj, DynamicValueWriteProxy &proxy) {
 		proxy.pod.ptrOrOffset = 0;
 		proxy.pod.objectRef = obj;
-		proxy.pod.ifc = &_instance;
+		proxy.pod.ifc = DynamicValueWriteInterfaceGlue<DynamicValueWriteOrRefAttribFuncHelper<TClass, TWriteMethod, TRefAttribMethod> >::getInstance();
 	}
-
-private:
-	static DynamicValueWriteOrRefAttribFuncHelper _instance;
 };
 
-template<class TClass, MiniscriptInstructionOutcome (TClass::*TWriteMethod)(MiniscriptThread *thread, const DynamicValue &dest), MiniscriptInstructionOutcome (TClass::*TRefAttribMethod)(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, const Common::String &attrib)>
-DynamicValueWriteOrRefAttribFuncHelper<TClass, TWriteMethod, TRefAttribMethod> DynamicValueWriteOrRefAttribFuncHelper<TClass, TWriteMethod, TRefAttribMethod>::_instance;
-
-
 template<class TClass, MiniscriptInstructionOutcome (TClass::*TWriteMethod)(MiniscriptThread *thread, const DynamicValue &dest)>
-struct DynamicValueWriteFuncHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const override {
+struct DynamicValueWriteFuncHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) {
 		return (static_cast<TClass *>(objectRef)->*TWriteMethod)(thread, dest);
 	}
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override {
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) {
 		return kMiniscriptInstructionOutcomeFailed;
 	}
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override {
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) {
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 
 	static void create(TClass *obj, DynamicValueWriteProxy &proxy) {
 		proxy.pod.ptrOrOffset = 0;
 		proxy.pod.objectRef = obj;
-		proxy.pod.ifc = &_instance;
+		proxy.pod.ifc = DynamicValueWriteInterfaceGlue<DynamicValueWriteFuncHelper<TClass, TWriteMethod> >::getInstance();
 	}
 
 private:
@@ -1028,15 +1022,12 @@ private:
 template<class TClass, MiniscriptInstructionOutcome (TClass::*TWriteMethod)(MiniscriptThread *thread, const DynamicValue &dest)>
 DynamicValueWriteFuncHelper<TClass, TWriteMethod> DynamicValueWriteFuncHelper<TClass, TWriteMethod>::_instance;
 
-struct DynamicValueWriteObjectHelper : public IDynamicValueWriteInterface {
-	MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset) const override;
-	MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-	MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
+struct DynamicValueWriteObjectHelper {
+	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset);
+	static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+	static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 
 	static void create(RuntimeObject *obj, DynamicValueWriteProxy &proxy);
-
-private:
-	static DynamicValueWriteObjectHelper _instance;
 };
 
 struct MessengerSendSpec {
@@ -1249,6 +1240,7 @@ struct LowLevelSceneStateTransitionAction {
 		kLoad,
 		kUnload,
 		kSendMessage,
+		kAutoResetCursor,
 	};
 
 	explicit LowLevelSceneStateTransitionAction(const Common::SharedPtr<MessageDispatch> &msg);
@@ -1319,6 +1311,10 @@ private:
 			kStageSendToStructuralModifiers,
 			kStageSendToStructuralChildren,
 
+			kStageCheckAndSendToModifier,
+			kStageCheckAndSendToStructural,
+			kStageCheckAndSendCommand,
+
 			kStageSendCommand,
 		};
 
@@ -1329,6 +1325,9 @@ private:
 
 	Common::Array<PropagationStack> _propagationStack;
 	Common::SharedPtr<MessageProperties> _msg;
+
+	Common::WeakPtr<RuntimeObject> _root;
+
 	bool _cascade; // Traverses structure tree
 	bool _relay;   // Fire on multiple modifiers
 	bool _terminated;
@@ -1453,6 +1452,13 @@ struct DragMotionProperties {
 	bool constrainToParent;
 };
 
+class SceneTransitionHooks {
+public:
+	virtual ~SceneTransitionHooks();
+
+	virtual void onSceneTransitionEnded(Runtime *runtime, const Common::WeakPtr<Structural> &newScene);
+};
+
 class Runtime {
 public:
 	explicit Runtime(OSystem *system, Audio::Mixer *mixer, ISaveUIProvider *saveProvider, ILoadUIProvider *loadProvider);
@@ -1536,6 +1542,7 @@ public:
 	void setModifierCursorOverride(uint32 cursorID);
 	void clearModifierCursorOverride();
 	void forceCursorRefreshOnce();
+	void setAutoResetCursor(bool enabled);
 
 	bool isAwaitingSceneTransition() const;
 
@@ -1559,6 +1566,8 @@ public:
 	void addCollider(ICollider *collider);
 	void removeCollider(ICollider *collider);
 	void checkCollisions();
+
+	const Common::String *resolveAttributeIDName(uint32 attribID) const;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	void debugSetEnabled(bool enabled);
@@ -1747,6 +1756,7 @@ private:
 	Common::Point _mouseTrackingObjectInitialOrigin;
 	bool _trackedMouseOutside;
 	bool _forceCursorRefreshOnce;
+	bool _autoResetCursor;
 
 	uint32 _modifierOverrideCursorID;
 	bool _haveModifierOverrideCursor;
@@ -1762,6 +1772,8 @@ private:
 	uint32 _collisionCheckTime;
 
 	Hacks _hacks;
+
+	Common::HashMap<uint32, Common::String> _getSetAttribIDsToAttribName;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	Common::SharedPtr<Debugger> _debugger;
@@ -1858,6 +1870,7 @@ public:
 private:
 	MiniscriptInstructionOutcome setCurrentScene(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome setRefreshCursor(MiniscriptThread *thread, const DynamicValue &value);
+	MiniscriptInstructionOutcome setAutoResetCursor(MiniscriptThread *thread, const DynamicValue &value);
 };
 
 class AssetManagerInterface : public RuntimeObject {
@@ -1885,6 +1898,14 @@ private:
 
 	Common::String _volumeName;
 	int _masterVolume;
+};
+
+class StructuralHooks {
+public:
+	virtual ~StructuralHooks();
+
+	virtual void onCreate(Structural *structural);
+	virtual void onSetPosition(Structural *structural, Common::Point &pt);
 };
 
 class Structural : public RuntimeObject, public IModifierContainer, public IMessageConsumer, public Debuggable {
@@ -1932,6 +1953,9 @@ public:
 
 	void recursiveCollectObjectsMatchingCriteria(Common::Array<Common::WeakPtr<RuntimeObject> > &results, bool (*evalFunc)(void *userData, RuntimeObject *object), void *userData, bool onlyEnabled);
 
+	void setHooks(const Common::SharedPtr<StructuralHooks> &hooks);
+	const Common::SharedPtr<StructuralHooks> &getHooks() const;
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	SupportStatus debugGetSupportStatus() const override;
 	const Common::String &debugGetName() const override;
@@ -1944,6 +1968,7 @@ protected:
 
 	MiniscriptInstructionOutcome scriptSetPaused(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome scriptSetLoop(MiniscriptThread *thread, const DynamicValue &value);
+	MiniscriptInstructionOutcome scriptSetDebug(MiniscriptThread *thread, const DynamicValue &value);
 
 	// If you override this, you must override visitInternalReferences too.
 	virtual void linkInternalReferences(ObjectLinkingScope *outerScope);
@@ -1965,6 +1990,8 @@ protected:
 	// "loop" appears to have been made available on everything in 1.2.  Obsidian depends on it
 	// being available for sound indexes to be properly set up.
 	bool _loop;
+
+	Common::SharedPtr<StructuralHooks> _hooks;
 };
 
 struct ProjectPresentationSettings {
@@ -2109,8 +2136,8 @@ public:
 
 	VThreadState consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg);
 
-	void loadFromDescription(const ProjectDescription &desc);
-	void loadSceneFromStream(const Common::SharedPtr<Structural> &structural, uint32 streamID);
+	void loadFromDescription(const ProjectDescription &desc, const Hacks &hacks);
+	void loadSceneFromStream(const Common::SharedPtr<Structural> &structural, uint32 streamID, const Hacks &hacks);
 
 	Common::SharedPtr<Modifier> resolveAlias(uint32 aliasID) const;
 	void materializeGlobalVariables(Runtime *runtime, ObjectLinkingScope *scope);
@@ -2192,7 +2219,7 @@ private:
 		Common::WeakPtr<Asset> asset;
 	};
 
-	void loadBootStream(size_t streamIndex);
+	void loadBootStream(size_t streamIndex, const Hacks &hacks);
 
 	void loadPresentationSettings(const Data::PresentationSettings &presentationSettings);
 	void loadAssetCatalog(const Data::AssetCatalog &assetCatalog);
@@ -2206,7 +2233,7 @@ private:
 	ObjectLinkingScope *getPersistentStructuralScope() override;
 	ObjectLinkingScope *getPersistentModifierScope() override;
 
-	void assignAssets(const Common::Array<Common::SharedPtr<Asset> > &assets);
+	void assignAssets(const Common::Array<Common::SharedPtr<Asset> > &assets, const Hacks &hacks);
 
 	Common::Array<Segment> _segments;
 	Common::Array<StreamDesc> _streams;
@@ -2287,6 +2314,8 @@ public:
 
 	virtual bool isVisual() const = 0;
 	virtual bool canAutoPlay() const;
+	virtual void queueAutoPlayEvents(Runtime *runtime, bool isAutoPlaying);
+
 	bool isElement() const override;
 
 	uint32 getStreamLocator() const;
@@ -2401,9 +2430,10 @@ public:
 
 	bool isVisible() const;
 	bool isDirectToScreen() const;
+	void setDirectToScreen(bool directToScreen);
 	uint16 getLayer() const;
 
-	bool isMouseInsideBox(int32 relativeX, int32 relativeY) const;
+	bool isMouseInsideDrawableArea(int32 relativeX, int32 relativeY) const;
 
 	// Returns true if there is mouse collision at a specified point, assuming it has already passed isMouseInsideBox
 	virtual bool isMouseCollisionAtPoint(int32 relativeX, int32 relativeY) const;
@@ -2414,6 +2444,8 @@ public:
 	Common::Point getParentOrigin() const;
 	Common::Point getGlobalPosition() const;
 	const Common::Rect &getRelativeRect() const;
+
+	void setRelativeRect(const Common::Rect &rect);
 
 	// The cached absolute origin is from the last time the element was rendered.
 	// Do not rely on it mid-frame.
@@ -2432,8 +2464,9 @@ public:
 
 	VThreadState offsetTranslateTask(const OffsetTranslateTaskData &data);
 
-	void setRenderProperties(const VisualElementRenderProperties &props);
+	void setRenderProperties(const VisualElementRenderProperties &props, const Common::WeakPtr<GraphicModifier> &primaryGraphicModifier);
 	const VisualElementRenderProperties &getRenderProperties() const;
+	const Common::WeakPtr<GraphicModifier> &getPrimaryGraphicModifier() const;
 
 	bool needsRender() const;
 	virtual void render(Window *window) = 0;
@@ -2482,7 +2515,10 @@ protected:
 
 	Common::SharedPtr<DragMotionProperties> _dragProps;
 
+	// Quirk: When a graphic modifier is applied, it needs to be 
 	VisualElementRenderProperties _renderProps;
+	Common::WeakPtr<GraphicModifier> _primaryGraphicModifier;
+
 	Common::Rect _prevRect;
 	bool _contentsDirty;
 };
@@ -2517,6 +2553,13 @@ protected:
 	// Loads the modifier state from a stream into the save/load state and returns true
 	// if successful.  This will not trigger any actual changes until "commit" is called.
 	virtual bool loadInternal(Common::ReadStream *stream) = 0;
+};
+
+class ModifierHooks {
+public:
+	virtual ~ModifierHooks();
+
+	virtual void onCreate(Modifier *modifier);
 };
 
 class Modifier : public RuntimeObject, public IMessageConsumer, public Debuggable {
@@ -2571,6 +2614,9 @@ public:
 
 	Structural *findStructuralOwner() const;
 
+	void setHooks(const Common::SharedPtr<ModifierHooks> &hooks);
+	const Common::SharedPtr<ModifierHooks> &getHooks() const;
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	SupportStatus debugGetSupportStatus() const override;
 	const Common::String &debugGetName() const override;
@@ -2587,6 +2633,8 @@ protected:
 	Common::String _name;
 	ModifierFlags _modifierFlags;
 	Common::WeakPtr<RuntimeObject> _parent;
+
+	Common::SharedPtr<ModifierHooks> _hooks;
 };
 
 class VariableModifier : public Modifier {
@@ -2601,12 +2649,10 @@ public:
 	virtual DynamicValueWriteProxy createWriteProxy();
 
 private:
-	struct WriteProxyInterface : public IDynamicValueWriteInterface {
-		MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const override;
-		MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const override;
-		MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const override;
-
-		static WriteProxyInterface _instance;
+	struct WriteProxyInterface {
+		static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset);
+		static MiniscriptInstructionOutcome refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib);
+		static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 	};
 };
 
@@ -2619,6 +2665,13 @@ enum AssetType {
 	kAssetTypeImage,
 	kAssetTypeText,
 	kAssetTypeMToon,
+};
+
+class AssetHooks {
+public:
+	virtual ~AssetHooks();
+
+	virtual void onLoaded(Asset *asset, const Common::String &name);
 };
 
 class Asset {

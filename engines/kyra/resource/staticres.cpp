@@ -38,7 +38,7 @@
 
 namespace Kyra {
 
-#define RESFILE_VERSION 117
+#define RESFILE_VERSION 118
 
 namespace {
 bool checkKyraDat(Common::SeekableReadStream *file) {
@@ -100,8 +100,8 @@ const IndexTable iLanguageTable[] = {
 	{ -1, -1 }
 };
 
-byte getLanguageID(const GameFlags &flags) {
-	return Common::find(iLanguageTable, ARRAYEND(iLanguageTable) - 1, flags.lang)->value;
+byte getLanguageID(Common::Language lang) {
+	return Common::find(iLanguageTable, ARRAYEND(iLanguageTable) - 1, lang)->value;
 }
 
 const IndexTable iPlatformTable[] = {
@@ -155,7 +155,7 @@ bool StaticResource::loadStaticResourceFile() {
 		if (!res->loadPakFile(staticDataFilename(), *i))
 			continue;
 
-		if (tryKyraDatLoad()) {
+		if ((setLanguage(_vm->gameFlags().lang) && prefetchId(-1))) {
 			foundWorkingKyraDat = true;
 			break;
 		}
@@ -173,32 +173,32 @@ bool StaticResource::loadStaticResourceFile() {
 	return true;
 }
 
-bool StaticResource::tryKyraDatLoad() {
+Common::SeekableReadStream *StaticResource::loadIdMap(Common::Language lang) {
 	Common::SeekableReadStream *index = _vm->resource()->createReadStream("INDEX");
 	if (!index)
-		return false;
+		return 0;
 
 	const uint32 version = index->readUint32BE();
 
 	if (version != RESFILE_VERSION) {
 		delete index;
-		return false;
+		return 0;
 	}
 
 	const uint32 includedGames = index->readUint32BE();
 
 	if (includedGames * 2 + 8 != (uint32)index->size()) {
 		delete index;
-		return false;
+		return 0;
 	}
 
 	const GameFlags &flags = _vm->gameFlags();
 	const byte game = getGameID(flags) & 0xF;
 	const byte platform = getPlatformID(flags) & 0xF;
 	const byte special = getSpecialID(flags) & 0xF;
-	const byte lang = getLanguageID(flags) & 0xF;
+	const byte lng = getLanguageID(lang) & 0xF;
 
-	const uint16 gameDef = (game << 12) | (platform << 8) | (special << 4) | (lang << 0);
+	const uint16 gameDef = (game << 12) | (platform << 8) | (special << 4) | (lng << 0);
 
 	bool found = false;
 	for (uint32 i = 0; i < includedGames; ++i) {
@@ -212,34 +212,12 @@ bool StaticResource::tryKyraDatLoad() {
 	index = nullptr;
 
 	if (!found)
-		return false;
+		return 0;
 
 
 	// load the ID map for our game
-	const Common::String filenamePattern = Common::String::format("0%01X%01X%01X000%01X", game, platform, special, lang);
-	Common::SeekableReadStream *idMap = _vm->resource()->createReadStream(filenamePattern);
-	if (!idMap)
-		return false;
-
-	uint16 numIDs = idMap->readUint16BE();
-	while (numIDs--) {
-		uint16 id = idMap->readUint16BE();
-		uint8 type = idMap->readByte();
-		uint32 filename = idMap->readUint32BE();
-
-		_dataTable[id] = DataDescriptor(filename, type);
-	}
-
-	const bool fileError = idMap->err();
-	delete idMap;
-	if (fileError)
-		return false;
-
-	// load all tables for now
-	if (!prefetchId(-1))
-		return false;
-
-	return true;
+	const Common::String filenamePattern = Common::String::format("0%01X%01X%01X000%01X", game, platform, special, lng);
+	return _vm->resource()->createReadStream(filenamePattern);
 }
 
 bool StaticResource::init() {
@@ -328,6 +306,38 @@ const ItemAnimDefinition *StaticResource::loadItemAnimDefinition(int id, int &en
 
 const uint16 *StaticResource::loadRawDataBe16(int id, int &entries) {
 	return (const uint16 *)getData(id, kRawDataBe16, entries);
+}
+
+bool StaticResource::setLanguage(Common::Language lang, int id) {
+	if (lang == Common::UNK_LANG)
+		lang = _vm->gameFlags().lang;
+	
+	unloadId(id);
+
+	// load the ID map for our game
+	Common::SeekableReadStream *idMap = loadIdMap(lang);
+	if (!idMap)
+		return false;
+
+
+	int numIDs = idMap->readUint16BE();
+	while (numIDs--) {
+		uint16 id2 = idMap->readUint16BE();
+		uint8 type = idMap->readByte();
+		uint32 filename = idMap->readUint32BE();
+		if (id == -1 || id == id2) {
+			_dataTable[id2] = DataDescriptor(filename, type);
+			if (id == id2)
+				break;
+		}
+	}
+
+	const bool fileError = idMap->err();
+	delete idMap;
+	if (fileError || (id != -1 && numIDs == -1))
+		return false;
+
+	return true;
 }
 
 bool StaticResource::prefetchId(int id) {

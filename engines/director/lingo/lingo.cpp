@@ -142,6 +142,13 @@ PCell::PCell(const Datum &prop, const Datum &val) {
 	v = val;
 }
 
+MenuReference::MenuReference() {
+	menuIdNum = -1;
+	menuIdStr = nullptr;
+	menuItemIdNum = -1;
+	menuItemIdStr = nullptr;
+}
+
 Lingo::Lingo(DirectorEngine *vm) : _vm(vm) {
 	g_lingo = this;
 
@@ -615,6 +622,7 @@ Datum::Datum() {
 	type = VOID;
 	refCount = new int;
 	*refCount = 1;
+	ignoreGlobal = false;
 }
 
 Datum::Datum(const Datum &d) {
@@ -622,6 +630,7 @@ Datum::Datum(const Datum &d) {
 	u = d.u;
 	refCount = d.refCount;
 	*refCount += 1;
+	ignoreGlobal = false;
 }
 
 Datum& Datum::operator=(const Datum &d) {
@@ -632,6 +641,7 @@ Datum& Datum::operator=(const Datum &d) {
 		refCount = d.refCount;
 		*refCount += 1;
 	}
+	ignoreGlobal = false;
 	return *this;
 }
 
@@ -647,6 +657,7 @@ Datum::Datum(double val) {
 	type = FLOAT;
 	refCount = new int;
 	*refCount = 1;
+	ignoreGlobal = false;
 }
 
 Datum::Datum(const Common::String &val) {
@@ -654,6 +665,7 @@ Datum::Datum(const Common::String &val) {
 	type = STRING;
 	refCount = new int;
 	*refCount = 1;
+	ignoreGlobal = false;
 }
 
 Datum::Datum(AbstractObject *val) {
@@ -667,6 +679,7 @@ Datum::Datum(AbstractObject *val) {
 		refCount = new int;
 		*refCount = 1;
 	}
+	ignoreGlobal = false;
 }
 
 Datum::Datum(const CastMemberID &val) {
@@ -674,6 +687,7 @@ Datum::Datum(const CastMemberID &val) {
 	type = CASTREF;
 	refCount = new int;
 	*refCount = 1;
+	ignoreGlobal = false;
 }
 
 Datum::Datum(const Common::Rect &rect) {
@@ -683,6 +697,7 @@ Datum::Datum(const Common::Rect &rect) {
 	u.farr->arr.push_back(Datum(rect.top));
 	u.farr->arr.push_back(Datum(rect.right));
 	u.farr->arr.push_back(Datum(rect.bottom));
+	ignoreGlobal = false;
 }
 
 void Datum::reset() {
@@ -948,6 +963,9 @@ Common::String Datum::asString(bool printonly) const {
 		}
 
 		s += ")";
+		break;
+	case MENUREF:
+		s = Common::String::format("menu(%d, %d)", u.menu->menuIdNum, u.menu->menuItemIdNum);
 		break;
 	default:
 		warning("Incorrect operation asString() for type: %s", type2str());
@@ -1493,6 +1511,11 @@ CastMemberID Lingo::resolveCastMember(const Datum &memberID, const Datum &castLi
 	}
 
 	return CastMemberID(-1, castLib.asInt());
+}
+
+void Lingo::exposeXObject(const char *name, Datum obj) {
+	_globalvars[name] = obj;
+	_globalvars[name].ignoreGlobal = true;
 }
 
 } // End of namespace Director

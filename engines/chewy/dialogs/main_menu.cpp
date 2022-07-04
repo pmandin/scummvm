@@ -53,7 +53,7 @@ void MainMenu::execute() {
 	_G(cur)->move(152, 92);
 	g_events->_mousePos.x = 152;
 	g_events->_mousePos.y = 92;
-	_G(gameState).inv_cur = false;
+	_G(cur)->setInventoryCursor(-1);
 	_G(menu_display) = 0;
 	_G(gameState).soundLoopMode = 1;
 
@@ -62,7 +62,7 @@ void MainMenu::execute() {
 		g_engine->_sound->stopAllSounds();
 		_G(SetUpScreenFunc) = screenFunc;
 
-		cursorChoice(CUR_ZEIGE);
+		cursorChoice(CUR_POINT);
 		_selection = -1;
 		_G(gameState).scrollx = _G(gameState).scrolly = 0;
 		_G(gameState)._personRoomNr[P_CHEWY] = 98;
@@ -159,7 +159,7 @@ void MainMenu::animate() {
 	spriteEngine();
 	kb_mov(1);
 	calcMouseText(g_events->_mousePos.x, g_events->_mousePos.y, 1);
-	_G(cur)->plot_cur();
+	_G(cur)->updateCursor();
 	_G(mouseLeftClick) = false;
 	_G(out)->setPointer(nullptr);
 	_G(out)->copyToScreen();
@@ -205,11 +205,9 @@ bool MainMenu::loadGame() {
 	g_events->_mousePos.x = 152;
 	g_events->_mousePos.y = 92;
 	_G(savegameFlag) = true;
-	int result = Dialogs::Files::execute(false);
+	int result = Files::execute(false);
 
-	cursorChoice((_G(gameState).inv_cur && _G(gameState).AkInvent != -1 &&
-		_G(menu_item) == CUR_USE) ? 8 : 0);
-	_G(cur_display) = true;
+	cursorChoice((_G(cur)->usingInventoryCursor() && _G(menu_item) == CUR_USE) ? 8 : 0);
 	restorePersonAni();
 	_G(flags).SaveMenu = false;
 
@@ -224,7 +222,6 @@ bool MainMenu::loadGame() {
 void MainMenu::playGame() {
 	// unused1 = 0;
 	_G(inv_disp_ok) = false;
-	_G(cur_display) = true;
 	_G(tmp_menu_item) = 0;
 	_G(mouseLeftClick) = false;
 	g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
@@ -232,7 +229,7 @@ void MainMenu::playGame() {
 	_G(flags).mainMouseFlag = false;
 	_G(flags).MainInput = true;
 	_G(flags).ShowAtsInvTxt = true;
-	_G(cur)->show_cur();
+	_G(cur)->showCursor();
 	_G(moveState)[P_CHEWY].Count = 0;
 	_G(uhr)->resetTimer(0, 0);
 

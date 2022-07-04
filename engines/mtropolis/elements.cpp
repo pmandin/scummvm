@@ -603,8 +603,18 @@ MiniscriptInstructionOutcome MovieElement::writeRefAttribute(MiniscriptThread *t
 }
 
 VThreadState MovieElement::consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	// The reaction to the Play command should be to fire Unpaused and then fire Played.
+	// At First Cel is NOT fired by Play commands for some reason.
+
 	if (Event::create(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
-		// These reverse order
+		if (_paused)
+		{
+			_paused = false;
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kUnpause, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+			runtime->sendMessageOnVThread(dispatch);
+		}
+
 		{
 			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
@@ -616,6 +626,26 @@ VThreadState MovieElement::consumeCommand(Runtime *runtime, const Common::Shared
 
 		ChangeFlagTaskData *becomeVisibleTaskData = runtime->getVThread().pushTask("MovieElement::changeVisibilityTask", static_cast<VisualElement *>(this), &MovieElement::changeVisibilityTask);
 		becomeVisibleTaskData->desiredFlag = true;
+		becomeVisibleTaskData->runtime = runtime;
+
+		return kVThreadReturn;
+	}
+	if (Event::create(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
+		if (!_paused) {
+			_paused = true;
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+			runtime->sendMessageOnVThread(dispatch);
+		}
+
+		{
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+			runtime->sendMessageOnVThread(dispatch);
+		}
+
+		ChangeFlagTaskData *becomeVisibleTaskData = runtime->getVThread().pushTask("MovieElement::changeVisibilityTask", static_cast<VisualElement *>(this), &MovieElement::changeVisibilityTask);
+		becomeVisibleTaskData->desiredFlag = false;
 		becomeVisibleTaskData->runtime = runtime;
 
 		return kVThreadReturn;
@@ -654,6 +684,7 @@ void MovieElement::activate() {
 	qtDecoder->setVolume(_volume * 255 / 100);
 
 	_videoDecoder.reset(qtDecoder);
+	_damagedFrames = movieAsset->getDamagedFrames();
 
 	Common::SafeSeekableSubReadStream *movieDataStream = new Common::SafeSeekableSubReadStream(stream, movieAsset->getMovieDataPos(), movieAsset->getMovieDataPos() + movieAsset->getMovieDataSize(), DisposeAfterUse::NO);
 
@@ -690,6 +721,17 @@ bool MovieElement::canAutoPlay() const {
 	return _visible && !_paused;
 }
 
+void MovieElement::queueAutoPlayEvents(Runtime *runtime, bool isAutoPlaying) {
+	// At First Cel event fires even if the movie isn't playing, and it fires before Played
+	if (_visible) {
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+		runtime->queueMessage(dispatch);
+	}
+
+	VisualElement::queueAutoPlayEvents(runtime, isAutoPlaying);
+}
+
 void MovieElement::render(Window *window) {
 	if (_needsReset) {
 		_videoDecoder->setReverse(_reversed);
@@ -720,7 +762,7 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 		if (_shouldPlayIfNotPaused) {
 			if (_paused) {
 				// Goal state is paused
-				if (_videoDecoder->isPlaying()) {
+				if (_videoDecoder->isPlaying() && !_videoDecoder->isPaused()) {
 					_videoDecoder->pauseVideo(true);
 					_currentPlayState = kMediaStatePaused;
 				}
@@ -731,7 +773,8 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 				if (_videoDecoder->isPaused())
 					_videoDecoder->pauseVideo(false);
 
-				_currentPlayState = kMediaStatePlaying;
+				if (_currentPlayState != kMediaStatePlayingLastFrame)
+					_currentPlayState = kMediaStatePlaying;
 				checkContinuously = true;
 			}
 		} else {
@@ -747,25 +790,40 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 		uint32 targetTS = _currentTimestamp;
 
 		int framesDecodedThisFrame = 0;
-		while (_videoDecoder->needsUpdate()) {
-			if (_playEveryFrame && framesDecodedThisFrame > 0)
-				break;
-
-			const Graphics::Surface *decodedFrame = _videoDecoder->decodeNextFrame();
-
-			// GNARLY HACK: QuickTimeDecoder doesn't return true for endOfVideo or false for needsUpdate until it
-			// tries decoding past the end, so we're assuming that the decoded frame memory stays valid until we
-			// actually have a new frame and continuing to use it.
-			if (decodedFrame) {
-				_contentsDirty = true;
-				framesDecodedThisFrame++;
-				_displayFrame = decodedFrame;
-				if (_playEveryFrame)
-					break;
-			}
-		}
-
 		if (_currentPlayState == kMediaStatePlaying) {
+			while (_videoDecoder->needsUpdate()) {
+				if (_playEveryFrame && framesDecodedThisFrame > 0)
+					break;
+
+				if (_damagedFrames.size()) {
+					bool frameIsDamaged = false;
+					int thisFrameNumber = _videoDecoder->getCurFrame() + framesDecodedThisFrame + 1;
+
+					for (int damagedFrame : _damagedFrames) {
+						if (static_cast<int>(damagedFrame) == thisFrameNumber) {
+							frameIsDamaged = true;
+							break;
+						}
+					}
+
+					if (frameIsDamaged)
+						_videoDecoder->seekToFrame(thisFrameNumber + 1);
+				}
+
+				const Graphics::Surface *decodedFrame = _videoDecoder->decodeNextFrame();
+
+				// QuickTimeDecoder doesn't return true for endOfVideo or false for needsUpdate until it
+				// tries decoding past the end, so we're assuming that the decoded frame memory stays valid until we
+				// actually have a new frame and continuing to use it.
+				if (decodedFrame) {
+					_contentsDirty = true;
+					framesDecodedThisFrame++;
+					_displayFrame = decodedFrame;
+					if (_playEveryFrame)
+						break;
+				}
+			}
+
 			if (_videoDecoder->endOfVideo())
 				targetTS = _reversed ? _playRange.min : _playRange.max;
 			else
@@ -782,10 +840,14 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 
 		// Sync TS to the end of video if we hit the end
 
+		bool triggerEndEvents = false;
+
+		if (_currentPlayState == kMediaStatePlayingLastFrame)
+			triggerEndEvents = true;
+
 		if (targetTS != _currentTimestamp) {
 			assert(!_paused);
 
-			
 			// Check media cues
 			for (MediaCueState *mediaCue : _mediaCues)
 				mediaCue->checkTimestampChange(runtime, _currentTimestamp, targetTS, checkContinuously, true);
@@ -793,32 +855,37 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 			_currentTimestamp = targetTS;
 
 			if (_currentTimestamp == maxTS) {
-				Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtLastCel, 0), DynamicValue(), getSelfReference()));
-				Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
-				runtime->queueMessage(dispatch);
-			}
-
-			if (_currentTimestamp == minTS) {
-				Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
-				Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
-				runtime->queueMessage(dispatch);
+				if (maxTS == _maxTimestamp) {
+					// If this play range plays through to the end, then delay end events 1 frame so it has a chance to render
+					_currentPlayState = kMediaStatePlayingLastFrame;
+				} else
+					triggerEndEvents = true;
 			}
 		}
 
-		if (_currentPlayState == kMediaStatePlaying && _videoDecoder->endOfVideo()) {
-			if (_alternate) {
-				_reversed = !_reversed;
-				if (!_videoDecoder->setReverse(_reversed)) {
-					warning("Failed to reverse video decoder, disabling it");
-					_videoDecoder.reset();
-				}
+		if (triggerEndEvents) {
+			if (!_loop) {
+				_paused = true;
 
-				uint32 endTS = _reversed ? _playRange.min : _playRange.max;
-				_videoDecoder->setEndTime(Audio::Timestamp(0, _timeScale).addFrames(endTS));
-			} else {
-				// It doesn't look like movies fire any events upon reaching the end, just At Last Cel and At First Cel
-				_videoDecoder->stop();
+				Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
+				Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+				runtime->queueMessage(dispatch);
+
 				_currentPlayState = kMediaStateStopped;
+			}
+
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtLastCel, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+			runtime->queueMessage(dispatch);
+
+			// For some reason, At First Cel isn't fired for movies, even when they loop or are set to timevalue 0
+			_videoDecoder->stop();
+			_currentPlayState = kMediaStateStopped;
+
+			if (_loop) {
+				_needsReset = true;
+				_currentTimestamp = _reversed ? _playRange.max : _playRange.min;
+				_contentsDirty = true;
 			}
 		}
 	}
@@ -951,6 +1018,8 @@ VThreadState MovieElement::startPlayingTask(const StartPlayingTaskData &taskData
 		_videoDecoder->stop();
 		_currentPlayState = kMediaStateStopped;
 		_needsReset = true;
+		_contentsDirty = true;
+		_currentTimestamp = _reversed ? _playRange.max : _playRange.min;
 
 		_shouldPlayIfNotPaused = true;
 		_paused = false;
@@ -980,18 +1049,6 @@ VThreadState MovieElement::seekToTimeTask(const SeekToTimeTaskData &taskData) {
 	}
 	_needsReset = true;
 	_contentsDirty = true;
-
-	if (_currentTimestamp == minTS) {
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
-		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
-		taskData.runtime->sendMessageOnVThread(dispatch);
-	}
-
-	if (_currentTimestamp == maxTS) {
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtLastCel, 0), DynamicValue(), getSelfReference()));
-		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
-		taskData.runtime->sendMessageOnVThread(dispatch);
-	}
 
 	return kVThreadReturn;
 }
@@ -1062,11 +1119,14 @@ void ImageElement::deactivate() {
 
 void ImageElement::render(Window *window) {
 	if (_cachedImage) {
+		VisualElementRenderProperties::InkMode inkMode = _renderProps.getInkMode();
+
+		if (inkMode == VisualElementRenderProperties::kInkModeInvisible)
+			return;
+
 		Common::SharedPtr<Graphics::Surface> optimized = _cachedImage->optimize(_runtime);
 		Common::Rect srcRect(optimized->w, optimized->h);
 		Common::Rect destRect(_cachedAbsoluteOrigin.x, _cachedAbsoluteOrigin.y, _cachedAbsoluteOrigin.x + _rect.width(), _cachedAbsoluteOrigin.y + _rect.height());
-
-		VisualElementRenderProperties::InkMode inkMode = _renderProps.getInkMode();
 
 		if (inkMode == VisualElementRenderProperties::kInkModeBackgroundMatte || inkMode == VisualElementRenderProperties::kInkModeBackgroundTransparent) {
 			const ColorRGB8 transColorRGB8 = _renderProps.getBackColor();
@@ -1166,6 +1226,10 @@ VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::Shared
 	}
 	if (Event::create(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
 		// Works differently from movies: Needs to hide the element and pause
+#ifdef MTROPOLIS_DEBUG_ENABLE
+		if (Debugger *debugger = runtime->debugGetDebugger())
+			debugger->notify(kDebugSeverityError, "mToon element was commanded to stop, but that's not implemented yet");
+#endif
 		warning("mToon element stops are not implemented");
 		return kVThreadReturn;
 	}
@@ -1212,6 +1276,7 @@ bool MToonElement::canAutoPlay() const {
 
 void MToonElement::render(Window *window) {
 	if (_cachedMToon) {
+
 		_cachedMToon->optimize(_runtime);
 
 		uint32 frame = _cel - 1;
@@ -1221,11 +1286,19 @@ void MToonElement::render(Window *window) {
 
 		_renderedFrame = frame;
 
-		Common::Rect frameRect = _metadata->frames[frame].rect;
+		// This is a bit suboptimal since we don't need to render the frame if invisible, but
+		// we do need some things here to be up to date because isMouseCollisionAtPoint depends on
+		// invisible mToon frames still being clickable.
+		VisualElementRenderProperties::InkMode inkMode = _renderProps.getInkMode();
+
+		if (inkMode == VisualElementRenderProperties::kInkModeInvisible)
+			return;
 
 		if (_renderSurface) {
 			Common::Rect srcRect;
 			Common::Rect destRect;
+
+			Common::Rect frameRect = _metadata->frames[frame].rect;
 
 			if (frameRect.width() == _renderSurface->w && frameRect.height() == _renderSurface->h) {
 				// Frame rect is the size of the render surface, meaning the frame rect is an offset
@@ -1236,7 +1309,6 @@ void MToonElement::render(Window *window) {
 			}
 			destRect = Common::Rect(_cachedAbsoluteOrigin.x + frameRect.left, _cachedAbsoluteOrigin.y + frameRect.top, _cachedAbsoluteOrigin.x + frameRect.right, _cachedAbsoluteOrigin.y + frameRect.bottom);
 
-			VisualElementRenderProperties::InkMode inkMode = _renderProps.getInkMode();
 			if (inkMode == VisualElementRenderProperties::kInkModeBackgroundMatte || inkMode == VisualElementRenderProperties::kInkModeBackgroundTransparent) {
 				ColorRGB8 transColorRGB8 = _renderProps.getBackColor();
 				uint32 transColor = _renderSurface->format.ARGBToColor(255, transColorRGB8.r, transColorRGB8.g, transColorRGB8.b);
@@ -1249,6 +1321,43 @@ void MToonElement::render(Window *window) {
 			}
 		}
 	}
+}
+
+bool MToonElement::isMouseCollisionAtPoint(int32 relativeX, int32 relativeY) const {
+	relativeX -= _rect.left;
+	relativeY -= _rect.top;
+
+	if (_renderSurface) {
+		Common::Rect frameRect = _metadata->frames[_renderedFrame].rect;
+
+		if (frameRect.width() == _renderSurface->w && frameRect.height() == _renderSurface->h) {
+			// Frame rect is the size of the render surface, meaning the frame rect is an offset
+			relativeX -= frameRect.left;
+			relativeY -= frameRect.top;
+		}
+		// ... otherwise it's a sub-area of the rendered rect, meaning we shouldn't adjust coordinates
+
+		if (relativeX < 0 || relativeY < 0 || relativeX >= frameRect.width() || relativeY >= frameRect.height())
+			return false;
+
+		if (_renderProps.getInkMode() == VisualElementRenderProperties::kInkModeBackgroundMatte) {
+			// TODO: This doesn't account for scaling
+			ColorRGB8 transColorRGB8 = _renderProps.getBackColor();
+			uint32 transColor = _renderSurface->format.ARGBToColor(255, transColorRGB8.r, transColorRGB8.g, transColorRGB8.b);
+
+			// Sanity-check
+			if (relativeX >= _renderSurface->w || relativeY >= _renderSurface->h)
+				return false;
+
+			// Check if the pixel is transparent
+			if (_renderSurface->getPixel(relativeX, relativeY) == transColor)
+				return false;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 VThreadState MToonElement::startPlayingTask(const StartPlayingTaskData &taskData) {
@@ -1280,6 +1389,15 @@ VThreadState MToonElement::startPlayingTask(const StartPlayingTaskData &taskData
 
 void MToonElement::playMedia(Runtime *runtime, Project *project) {
 	if (_paused)
+		return;
+
+	// TODO: This is semi-accurate: mTropolis Player will advance mToon time while
+	// the element is hidden and can then fire a barrage of frame advances and events
+	// if it's revealed again.  However, we're not fully handling that here yet,
+	// and we actually miss events if frame advance overruns the last cel, which can
+	// cause problems sometimes (e.g. lag in the Spider air puzzle in Obsidian when
+	// the board is revealed)
+	if (!_visible)
 		return;
 
 	int32 minCel = _playRange.min;
@@ -1316,6 +1434,7 @@ void MToonElement::playMedia(Runtime *runtime, Project *project) {
 		// which case the timing of "at last cel"/"at first cel" triggers based on where the timer would be
 		// in the invalid range, so mTropolis Player apparently keeps a play cel independent of the actual
 		// cel?
+
 		bool ranPastEnd = false;
 
 		size_t framesRemainingToOnePastEnd = isReversed ? (_cel - minCel + 1) : (maxCel + 1 - _cel);
@@ -1570,7 +1689,7 @@ MiniscriptInstructionOutcome TextLabelElement::writeRefAttributeIndexed(Miniscri
 			return kMiniscriptInstructionOutcomeFailed;
 		}
 
-		writeProxy.pod.ifc = &TextLabelLineWriteInterface::_instance;
+		writeProxy.pod.ifc = DynamicValueWriteInterfaceGlue<TextLabelLineWriteInterface>::getInstance();
 		writeProxy.pod.objectRef = this;
 		writeProxy.pod.ptrOrOffset = asInteger - 1;
 		return kMiniscriptInstructionOutcomeContinue;
@@ -1595,7 +1714,7 @@ void TextLabelElement::activate() {
 
 	TextAsset *textAsset = static_cast<TextAsset *>(asset.get());
 
-	if (textAsset->isBitmap()) {
+	if (textAsset->isBitmap()) { 
 		_renderedText = textAsset->getBitmapSurface();
 		_needsRender = false;
 	} else {
@@ -1631,6 +1750,8 @@ void TextLabelElement::render(Window *window) {
 		const Graphics::Font *font = nullptr;
 		if (_fontFamilyName.size() > 0) {
 			font = FontMan.getFontByName(_fontFamilyName.c_str());
+			if (!font)
+				font = FontMan.getFontByUsage(getDefaultUsageForNamedFont(_fontFamilyName, _size));
 		} else if (_macFontID != 0) {
 			// TODO: Formatting spans
 			int slant = 0;
@@ -1650,12 +1771,10 @@ void TextLabelElement::render(Window *window) {
 			if (_styleFlags.expanded)
 				slant |= 64;
 
-			// FIXME/HACK: This is a stupid way to make getFont return null on failure
-			font = _runtime->getMacFontManager()->getFont(Graphics::MacFont(_macFontID, _size, slant, static_cast<Graphics::FontManager::FontUsage>(-1)));
-		}
+			const Graphics::FontManager::FontUsage defaultUsage = getDefaultUsageForMacFont(_macFontID, _size);
 
-		if (!font)
-			font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
+			font = _runtime->getMacFontManager()->getFont(Graphics::MacFont(_macFontID, _size, slant, defaultUsage));
+		}
 
 		int height = font->getFontHeight();
 		int ascent = font->getFontAscent();
@@ -1746,7 +1865,9 @@ void TextLabelElement::render(Window *window) {
 	Common::Rect srcRect(0, 0, renderWidth, renderHeight);
 	Common::Rect destRect(_cachedAbsoluteOrigin.x, _cachedAbsoluteOrigin.y, _cachedAbsoluteOrigin.x + _rect.width(), _cachedAbsoluteOrigin.y + _rect.height());
 
-	const uint32 opaqueColor = 0xff000000;
+	// TODO: Need to handle more modes
+	const ColorRGB8 &color = _renderProps.getForeColor();
+	const uint32 opaqueColor = target->format.RGBToColor(color.r, color.g, color.b);
 	const uint32 drawPalette[2] = {0, opaqueColor};
 
 	if (_renderedText) {
@@ -1756,14 +1877,43 @@ void TextLabelElement::render(Window *window) {
 }
 
 void TextLabelElement::setTextStyle(uint16 macFontID, const Common::String &fontFamilyName, uint size, TextAlignment alignment, const TextStyleFlags &styleFlags) {
-	_needsRender = true;
-	_contentsDirty = true;
+	if (!_text.empty()) {
+		_needsRender = true;
+		_contentsDirty = true;
+	}
 
 	_macFontID = macFontID;
 	_fontFamilyName = fontFamilyName;
 	_size = size;
 	_alignment = alignment;
 	_styleFlags = styleFlags;
+}
+
+Graphics::FontManager::FontUsage TextLabelElement::getDefaultUsageForMacFont(uint16 macFontID, uint size) {
+	switch (macFontID) {
+	case Graphics::kMacFontCourier:
+		return Graphics::FontManager::kConsoleFont;
+	default:
+		break;
+	}
+
+	warning("Unhandled font ID %i default, this might not render well", static_cast<int>(macFontID));
+	return Graphics::FontManager::kGUIFont;
+}
+
+Graphics::FontManager::FontUsage TextLabelElement::getDefaultUsageForNamedFont(const Common::String &fontFamilyName, uint size) {
+	if (fontFamilyName == "Courier New") {
+		if (size == 8)
+			return Graphics::FontManager::kConsoleFont;
+	} else if (fontFamilyName == "Arial") {
+		if (size == 10)
+			return Graphics::FontManager::kGUIFont;
+		if (size == 14)
+			return Graphics::FontManager::kBigGUIFont;
+	}
+
+	warning("Unhandled font name '%s' default, this might not render well", fontFamilyName.c_str());
+	return Graphics::FontManager::kGUIFont;
 }
 
 MiniscriptInstructionOutcome TextLabelElement::scriptSetText(MiniscriptThread *thread, const DynamicValue &value) {
@@ -1840,20 +1990,17 @@ size_t TextLabelElement::countLines() const {
 	return numLines;
 }
 
-MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) const {
+MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) {
 	return static_cast<TextLabelElement *>(objectRef)->scriptSetLine(thread, ptrOrOffset, dest);
 }
 
-MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) const {
+MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) {
 	return kMiniscriptInstructionOutcomeFailed;
 }
 
-MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) const {
+MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index) {
 	return kMiniscriptInstructionOutcomeFailed;
 }
-
-TextLabelElement::TextLabelLineWriteInterface TextLabelElement::TextLabelLineWriteInterface::_instance;
-
 
 SoundElement::SoundElement() : _finishTime(0), _shouldPlayIfNotPaused(true), _needsReset(true) {
 }
@@ -1908,6 +2055,12 @@ MiniscriptInstructionOutcome SoundElement::writeRefAttribute(MiniscriptThread *t
 VThreadState SoundElement::consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
 	if (Event::create(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
 		StartPlayingTaskData *startPlayingTaskData = runtime->getVThread().pushTask("SoundElement::startPlayingTask", this, &SoundElement::startPlayingTask);
+		startPlayingTaskData->runtime = runtime;
+
+		return kVThreadReturn;
+	}
+	if (Event::create(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
+		StartPlayingTaskData *startPlayingTaskData = runtime->getVThread().pushTask("SoundElement::stopPlayingTask", this, &SoundElement::stopPlayingTask);
 		startPlayingTaskData->runtime = runtime;
 
 		return kVThreadReturn;
@@ -2075,13 +2228,36 @@ void SoundElement::setBalance(int16 balance) {
 }
 
 VThreadState SoundElement::startPlayingTask(const StartPlayingTaskData &taskData) {
-	_paused = false;
+	// Pushed in reverse order, actual order is Unpaused -> Played
+	{
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+		taskData.runtime->sendMessageOnVThread(dispatch);
+	}
+
+	if (_paused) {
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kUnpause, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+		taskData.runtime->sendMessageOnVThread(dispatch);
+
+		_paused = false;
+	}
+
 	_shouldPlayIfNotPaused = true;
 	_needsReset = true;
 
-	Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
-	Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
-	taskData.runtime->sendMessageOnVThread(dispatch);
+	return kVThreadReturn;
+}
+
+VThreadState SoundElement::stopPlayingTask(const StartPlayingTaskData &taskData) {
+	if (_shouldPlayIfNotPaused) {
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+		taskData.runtime->sendMessageOnVThread(dispatch);
+
+		_shouldPlayIfNotPaused = false;
+		_needsReset = true;
+	}
 
 	return kVThreadReturn;
 }

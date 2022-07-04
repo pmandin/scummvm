@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -81,7 +82,7 @@ void Room97::entry() {
 	}
 
 	if (_G(gameState).flags36_20) {
-		_G(det)->setSetailPos(27, 272, 110);
+		_G(det)->setDetailPos(27, 272, 110);
 		for (int i = 0; i < 2; ++i) {
 			_G(det)->stop_detail(23 + i);
 			_G(det)->startDetail(27 + i, 255, ANI_FRONT);
@@ -193,7 +194,7 @@ void Room97::setup_func() {
 
 		_G(det)->setStaticPos(16, 699, _word18DB38, false, false);
 		if (_G(gameState).flags36_10) {
-			_G(det)->setSetailPos(12, _word18DB34, _word18DB36);
+			_G(det)->setDetailPos(12, _word18DB34, _word18DB36);
 		} else {
 			_G(det)->setStaticPos(14, _word18DB34, _word18DB36, false, false);
 		}
@@ -399,7 +400,7 @@ int Room97::proc5() {
 	_G(gameState).scrollx = 720;
 	setPersonPos(822, 98, P_CHEWY, P_LEFT);
 	setPersonPos(861, 81, P_HOWARD, P_LEFT);
-	delInventory(_G(gameState).AkInvent);
+	delInventory(_G(cur)->getInventoryCursor());
 	_G(det)->showStaticSpr(21);
 	_G(gameState).flags35_80 = true;
 	startAadWait(546);
@@ -413,7 +414,7 @@ int Room97::proc5() {
 }
 
 int Room97::proc6() {
-	if (_G(gameState).inv_cur)
+	if (_G(cur)->usingInventoryCursor())
 		return 0;
 
 	hideCur();
@@ -447,7 +448,7 @@ int Room97::proc6() {
 }
 
 int Room97::proc7() {
-	if (_G(gameState).inv_cur)
+	if (_G(cur)->usingInventoryCursor())
 		return 0;
 
 	hideCur();
@@ -483,7 +484,7 @@ int Room97::proc8() {
 	else {
 		start_spz_wait(14, 1, false, P_CHEWY);
 		_G(det)->startDetail(11, 255, false);
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(gameState).flags36_10 = true;
 		_G(gameState).flags36_8 = false;
 		_G(det)->startDetail(12, 255, false);
@@ -512,7 +513,7 @@ int Room97::proc8() {
 		_G(det)->stop_detail(27);
 		_G(gameState).flags36_20 = true;
 		_G(det)->startDetail(28, 255, false);
-		_G(det)->setSetailPos(27, 272, 110);
+		_G(det)->setDetailPos(27, 272, 110);
 		_G(det)->startDetail(27, 255, false);
 		_G(atds)->setControlBit(533, ATS_ACTIVE_BIT);
 		_G(atds)->setControlBit(534, ATS_ACTIVE_BIT);
@@ -528,7 +529,7 @@ int Room97::proc8() {
 }
 
 int Room97::proc9() {
-	if (_G(gameState).inv_cur)
+	if (_G(cur)->usingInventoryCursor())
 		return 0;
 
 	hideCur();
@@ -556,7 +557,7 @@ int Room97::proc9() {
 }
 
 int Room97::proc10() {
-	if (_G(gameState).inv_cur)
+	if (_G(cur)->usingInventoryCursor())
 		return 0;
 
 	hideCur();
@@ -576,7 +577,7 @@ int Room97::proc10() {
 }
 
 int Room97::proc11() {
-	if (_G(gameState).inv_cur)
+	if (_G(cur)->usingInventoryCursor())
 		return 0;
 
 	hideCur();
@@ -663,7 +664,7 @@ int Room97::throwSlime() {
 
 	_slimeThrown = true;
 	hideCur();
-	delInventory(_G(gameState).AkInvent);
+	delInventory(_G(cur)->getInventoryCursor());
 	_G(menu_item) = CUR_USE;
 	cursorChoice(CUR_USE);
 	
@@ -686,7 +687,7 @@ void Room97::sensorAnim() {
 	while (_G(det)->get_ani_status(16)) {
 		get_user_key(NO_SETUP);
 		if (_G(minfo).button == 1 || _G(in)->getSwitchCode() == 28) {
-			if (_G(gameState).inv_cur)
+			if (_G(cur)->usingInventoryCursor())
 				_G(mouseLeftClick) = true;
 		}
 
@@ -704,7 +705,7 @@ void Room97::sensorAnim() {
 		_G(gameState)._personHide[P_CHEWY] = false;
 	} else {
 		_G(gameState).flags37_4 = true;
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(det)->showStaticSpr(27);
 		_G(gameState)._personHide[P_CHEWY] = true;
 		startSetAILWait(21, 1, ANI_FRONT);

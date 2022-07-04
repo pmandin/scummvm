@@ -25,11 +25,20 @@
 #include "audio/audiostream.h"
 
 #include "common/endian.h"
+#include "common/memstream.h"
+
+#include "image/codecs/codec.h"
 
 #include "mtropolis/assets.h"
 #include "mtropolis/asset_factory.h"
 
 namespace MTropolis {
+
+AssetHooks::~AssetHooks() {
+}
+
+void AssetHooks::onLoaded(Asset *asset, const Common::String &name) {
+}
 
 Asset::Asset() : _assetID(0) {
 }
@@ -160,8 +169,10 @@ void CachedMToon::decompressFrames(const Common::Array<uint8> &data) {
 	for (size_t i = 0; i < numFrames; i++) {
 		if (_metadata->codecID == kMToonRLECodecID) {
 			decompressRLEFrame(i);
-		} else {
+		} else if (_metadata->codecID == 0) {
 			loadUncompressedFrame(data, i);
+		} else {
+			decompressQuickTimeFrame(data, i);
 		}
 	}
 
@@ -415,12 +426,52 @@ void CachedMToon::loadUncompressedFrame(const Common::Array<uint8> &data, size_t
 					static_cast<uint16 *>(outDataUntyped)[col] = (inData[col * 2 + 1] << 8) | (inData[col * 2]);
 			}
 		} else if (bpp == 32) {
-			for (size_t col = 0; col < w; col++)
-				static_cast<uint32 *>(outDataUntyped)[col] = (0xff000000 | (inData[col * 4]) | (inData[col * 4 + 1] << 8) | (inData[col * 4 + 2] << 16));
+			if (_metadata->imageFormat == MToonMetadata::kImageFormatMac) {
+				for (size_t col = 0; col < w; col++)
+					static_cast<uint32 *>(outDataUntyped)[col] = (0xff000000 | (inData[col * 4 + 1]) | (inData[col * 4 + 2] << 8) | (inData[col * 4 + 3] << 16));
+			} else if (_metadata->imageFormat == MToonMetadata::kImageFormatWindows) {
+				for (size_t col = 0; col < w; col++)
+					static_cast<uint32 *>(outDataUntyped)[col] = (0xff000000 | (inData[col * 4 + 2]) | (inData[col * 4 + 1] << 8) | (inData[col * 4 + 0] << 16));
+			}
 		}
 	}
 
 	_decompressedFrames[frameIndex] = surface;
+}
+
+void CachedMToon::decompressQuickTimeFrame(const Common::Array<uint8> &data, size_t frameIndex) {
+	const MToonMetadata::FrameDef &frameDef = _metadata->frames[frameIndex];
+
+	// We used to validate that these match the sample desc, but that actually breaks in Obsidian
+	// on the Bureau Immediate Action clock puzzle, because the frames have different sizes and
+	// the codec data encodes the size of the last frame.
+	uint16 w = frameDef.rect.width();
+	uint16 h = frameDef.rect.height();
+	uint16 bpp = READ_BE_UINT16(&_metadata->codecData[82]);
+
+	Image::Codec *codec = Image::createQuickTimeCodec(_metadata->codecID, w, h, bpp);
+	if (!codec) {
+		error("Unknown QuickTime codec for mToon frame");
+	}
+
+	if (frameDef.dataOffset > data.size())
+		error("Invalid framedef offset");
+
+	if (frameDef.compressedSize > data.size())
+		error("Invalid compressed size");
+
+	if (frameDef.compressedSize - data.size() < frameDef.dataOffset)
+		error("Not enough available bytes for compressed data");
+
+	Common::MemoryReadStream stream(&data[frameDef.dataOffset], frameDef.compressedSize);
+
+	const Graphics::Surface *surface = codec->decodeFrame(stream);
+	if (!surface) {
+		error("mToon QuickTime frame failed to decompress");
+	}
+
+	// Clone the decompressed frame
+	_decompressedFrames[frameIndex] = Common::SharedPtr<Graphics::Surface>(new Graphics::Surface(*surface));
 }
 
 template<class TSrcNumber, uint32 TSrcLiteralMask, uint32 TSrcTransparentSkipMask, class TDestNumber, uint32 TDestLiteralMask, uint32 TDestTransparentSkipMask>
@@ -692,6 +743,14 @@ const Common::String &MovieAsset::getExtFileName() const {
 
 size_t MovieAsset::getStreamIndex() const {
 	return _streamIndex;
+}
+
+void MovieAsset::addDamagedFrame(int frame) {
+	_damagedFrames.push_back(frame);
+}
+
+const Common::Array<int> &MovieAsset::getDamagedFrames() const {
+	return _damagedFrames;
 }
 
 
@@ -1060,6 +1119,9 @@ bool MToonMetadata::FrameRangeDef::load(AssetLoaderContext &context, const Data:
 bool TextAsset::load(AssetLoaderContext &context, const Data::TextAsset &data) {
 	_assetID = data.assetID;
 
+	_isBitmap = ((data.isBitmap & 1) != 0);
+
+	// Bitmaps may contain garbled alignment
 	switch (data.alignment) {
 	case Data::kTextAlignmentCodeLeft:
 		_alignment = kTextAlignmentLeft;
@@ -1071,10 +1133,12 @@ bool TextAsset::load(AssetLoaderContext &context, const Data::TextAsset &data) {
 		_alignment = kTextAlignmentCenter;
 		break;
 	default:
-		return false;
+		if (_isBitmap)
+			_alignment = kTextAlignmentLeft;
+		else
+			return false;
+		break;
 	};
-
-	_isBitmap = ((data.isBitmap & 1) != 0);
 
 	if (_isBitmap) {
 		if (!data.bitmapRect.toScummVMRect(_bitmapRect))
@@ -1101,7 +1165,11 @@ bool TextAsset::load(AssetLoaderContext &context, const Data::TextAsset &data) {
 		_bitmapData->create(width, height, Graphics::PixelFormat::createFormatCLUT8());
 
 		for (int row = 0; row < height; row++) {
-			uint8 *outRow = static_cast<uint8 *>(_bitmapData->getBasePtr(0, row));
+			int outRowY = row;
+			if (data.isBottomUp)
+				outRowY = height - 1 - row;
+
+			uint8 *outRow = static_cast<uint8 *>(_bitmapData->getBasePtr(0, outRowY));
 			const uint8 *inRow = &data.bitmapData[row * pitch];
 			for (int col = 0; col < width; col++) {
 				int bit = ((inRow[col / 8] >> (7 - (col & 7))) & 1);

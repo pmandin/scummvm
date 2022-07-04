@@ -38,10 +38,17 @@ namespace Wintermute {
 // define constant to make it available to the linker
 const uint32 MeshX::kNullIndex;
 
-MeshX::MeshX(Wintermute::BaseGame *inGame) : BaseNamedObject(inGame),
-	_BBoxStart(0.0f, 0.0f, 0.0f), _BBoxEnd(0.0f, 0.0f, 0.0f),
-	_vertexData(nullptr), _vertexPositionData(nullptr), _vertexNormalData(nullptr),
-	_vertexCount(0), _numAttrs(0), _skinnedMesh(false) {
+MeshX::MeshX(Wintermute::BaseGame *inGame) : BaseNamedObject(inGame) {
+	_numAttrs = 0;
+	_skinnedMesh = false;
+
+	_BBoxStart = Math::Vector3d(0.0f, 0.0f, 0.0f);
+	_BBoxEnd = Math::Vector3d(0.0f, 0.0f, 0.0f);
+
+	_vertexData = nullptr;
+	_vertexPositionData = nullptr;
+	_vertexNormalData = nullptr;
+	_vertexCount = 0;
 }
 
 MeshX::~MeshX() {
@@ -403,6 +410,9 @@ bool MeshX::pickPoly(Math::Vector3d *pickRayOrig, Math::Vector3d *pickRayDir) {
 		v1.setData(&_vertexData[index2 * kVertexComponentCount + kPositionOffset]);
 		Math::Vector3d v2;
 		v2.setData(&_vertexData[index3 * kVertexComponentCount + kPositionOffset]);
+
+		if (isnan(v0.x()))
+			continue;
 
 		Math::Vector3d intersection;
 		if (lineIntersectsTriangle(*pickRayOrig, *pickRayDir, v0, v1, v2, intersection.x(), intersection.y(), intersection.z())) {

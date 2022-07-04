@@ -19,11 +19,22 @@
  *
  */
 
-#include "glk/scott/line_drawing.h"
+/*
+ * Based on ScottFree interpreter version 1.14 developed by Swansea
+ * University Computer Society without disassembly of any other game
+ * drivers, only of game databases as permitted by EEC law (for purposes
+ * of compatibility).
+ *
+ * Licensed under GPLv2
+ *
+ * https://github.com/angstsmurf/spatterlight/tree/master/terps/scott
+ */
+
+#include "glk/scott/scott.h"
 #include "glk/scott/globals.h"
 #include "glk/scott/ring_buffer.h"
 #include "glk/scott/saga_draw.h"
-#include "glk/scott/scott.h"
+#include "glk/scott/line_drawing.h"
 
 namespace Glk {
 namespace Scott {
@@ -173,7 +184,7 @@ void drawVectorPicture(int image) {
 	uint8_t opcode = 0;
 	while (((p < _G(_lineImages)[image]._data) || static_cast<size_t>(p - _G(_lineImages)[image]._data) < _G(_lineImages)[image]._size) && opcode != 0xff) {
 		if (p > _G(_entireFile) + _G(_fileLength)) {
-			error("Out of range! Opcode: %x. Image: %d. LineImages[%d].size: %llu\n", opcode, image, image, _G(_lineImages)[image]._size);
+			error("drawVectorPicture: Out of range! Opcode: %x. Image: %d. LineImages[%d].size: %llu", opcode, image, image, _G(_lineImages)[image]._size);
 			break;
 		}
 		opcode = *(p++);

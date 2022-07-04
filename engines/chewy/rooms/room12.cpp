@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -169,7 +170,7 @@ void Room12::bork_ok() {
 	wait_auto_obj(R12_BORK_OBJ);
 
 	_G(gameState).R12BorkInRohr = true;
-	_G(det)->setSetailPos(3, 170, 145);
+	_G(det)->setDetailPos(3, 170, 145);
 	_G(det)->startDetail(3, 255, ANI_FRONT);
 	startAadWait(57);
 	_G(det)->stop_detail(3);
@@ -191,7 +192,7 @@ void Room12::bork_ok() {
 
 int16 Room12::use_terminal() {
 	int16 action_flag = false;
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_flag = true;
 
 		if (!_G(gameState).R12ChewyBork) {
@@ -248,7 +249,7 @@ void Room12::use_linke_rohr() {
 
 int16 Room12::chewy_trans() {
 	int16 action_flag = false;
-	if (!_G(gameState).inv_cur && _G(gameState).R12TransOn) {
+	if (!_G(cur)->usingInventoryCursor() && _G(gameState).R12TransOn) {
 		action_flag = true;
 		_G(flags).AutoAniPlay = true;
 		autoMove(9, P_CHEWY);
@@ -265,7 +266,7 @@ int16 Room12::chewy_trans() {
 int16 Room12::useTransformerTube() {
 	bool result = false;
 
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		result = true;
 
 		if (_G(gameState).R12ChainLeft) {

@@ -845,6 +845,15 @@ void ScummEngine_v5::o5_cursorCommand() {
 void ScummEngine_v5::o5_cutscene() {
 	int args[NUM_SCRIPT_LOCAL];
 	getWordVararg(args);
+
+	// WORKAROUND: In Indy 3, the cutscene where Indy and his father escape
+	// from the zeppelin with the biplane is missing the `[1]` parameter
+	// which disables the verb interface. For some reason, this only causes
+	// a problem on the FM-TOWNS version, though... also happens under UNZ.
+	if (_game.id == GID_INDY3 && _game.platform == Common::kPlatformFMTowns && _currentRoom == 80 && vm.slot[_currentScript].number == 201 && args[0] == 0 && _enableEnhancements) {
+		args[0] = 1;
+	}
+
 	beginCutscene(args);
 }
 
@@ -3159,6 +3168,20 @@ void ScummEngine_v5::decodeParseString() {
 					// WORKAROUND: When Mandible speaks with Goodmold, his second
 					// speech line is missing its color parameter.
 					_string[textSlot].color = 0x0A;
+					printString(textSlot, _scriptPointer);
+				} else if (_game.id == GID_INDY3 && _game.platform == Common::kPlatformFMTowns && _roomResource == 80 &&
+						vm.slot[_currentScript].number == 201 && _enableEnhancements) {
+					// WORKAROUND: When Indy and his father escape the zeppelin
+					// with the biplane in the FM-TOWNS version, they share the
+					// same text color. Indeed, they're not given any explicit
+					// color, but for some reason this is only a problem on the
+					// FM-TOWNS. In order to determine who's who, we look for a
+					// `\xFF\x03` wait instruction or the `Junior` word, since
+					// only Henry Sr. uses them in this script.
+					if (strstr((const char *)_scriptPointer, "\xFF\x03") || strstr((const char *)_scriptPointer, "Junior"))
+						_string[textSlot].color = 0x0A;
+					else
+						_string[textSlot].color = 0x0E;
 					printString(textSlot, _scriptPointer);
 				} else if (_game.id == GID_INDY4 && _roomResource == 23 && vm.slot[_currentScript].number == 167 &&
 						len == 24 && 0==memcmp(_scriptPointer+16, "pregod", 6)) {

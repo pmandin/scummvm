@@ -55,16 +55,6 @@ void AadInfoArray::load(const void *data, size_t count) {
 		(*this)[i].load(&src);
 }
 
-bool AadTxtHeader::load(const void *src) {
-	Common::MemoryReadStream rs((const byte *)src, 8);
-
-	_diaNr = rs.readSint16LE();
-	_perNr = rs.readSint16LE();
-	_aMov = rs.readSint16LE();
-	_curNr = rs.readSint16LE();
-	return true;
-}
-
 bool DialogCloseupTxtHeader::load(const void *src) {
 	Common::MemoryReadStream rs((const byte *)src, 8);
 
@@ -362,38 +352,10 @@ void Atdsys::load_atds(int16 chunkNr, int16 mode) {
 	}
 }
 
-void Atdsys::set_ats_mem(int16 mode) {
-	switch (mode) {
-	case ATS_DATA:
-		_ats_sheader = _G(gameState).Ats;
-		_atsMem = _atdsMem[mode];
-		break;
-
-	case INV_USE_DATA:
-		_ats_sheader = _G(gameState).InvUse;
-		_atsMem = _atdsMem[mode];
-		break;
-
-	case INV_USE_DEF:
-		error("set_ats_mem() called with mode INV_USE_DEF");
-
-	case INV_ATS_DATA:
-		_ats_sheader = _G(gameState).InvAts;
-		_atsMem = _atdsMem[mode];
-		break;
-
-	default:
-		break;
-	}
-}
-
 bool Atdsys::start_ats(int16 txtNr, int16 txtMode, int16 color, int16 mode, int16 *vocNr) {
 	assert(mode == ATS_DATA || mode == INV_USE_DATA || mode == INV_USE_DEF);
 
 	*vocNr = -1;
-
-	if (mode != INV_USE_DEF)
-		set_ats_mem(mode);
 
 	_atsv.shown = false;
 
@@ -511,19 +473,7 @@ void Atdsys::print_ats(int16 x, int16 y, int16 scrX, int16 scrY) {
 }
 
 void Atdsys::set_ats_str(int16 txtNr, int16 txtMode, int16 strNr, int16 mode) {
-	set_ats_mem(mode);
-	uint8 status = _ats_sheader[(txtNr * MAX_ATS_STATUS) + (txtMode + 1) / 2];
-	int16 ak_nybble = (txtMode + 1) % 2;
-
-	uint8 lo_hi[2];
-	lo_hi[1] = status >> 4;
-	lo_hi[0] = status &= 15;
-	lo_hi[ak_nybble] = strNr;
-	status = 0;
-	lo_hi[1] <<= 4;
-	status |= lo_hi[0];
-	status |= lo_hi[1];
-	_ats_sheader[(txtNr * MAX_ATS_STATUS) + (txtMode + 1) / 2] = status;
+	_text->setTextId(txtNr, txtMode, strNr, mode);
 }
 
 void Atdsys::set_ats_str(int16 txtNr, int16 strNr, int16 mode) {
@@ -531,31 +481,16 @@ void Atdsys::set_ats_str(int16 txtNr, int16 strNr, int16 mode) {
 		set_ats_str(txtNr, i, strNr, mode);
 }
 
-int16 Atdsys::get_ats_str(int16 txtNr, int16 txtMode, int16 mode) {
-	set_ats_mem(mode);
-	uint8 status = _ats_sheader[(txtNr * MAX_ATS_STATUS) + (txtMode + 1) / 2];
-	int16 ak_nybble = (txtMode + 1) % 2;
-
-	uint8 lo_hi[2];
-	lo_hi[1] = status >> 4;
-	lo_hi[0] = status &= 15;
-
-	return (int16)lo_hi[ak_nybble];
-}
-
 int16 Atdsys::getControlBit(int16 txtNr, int16 bitIdx) {
-	set_ats_mem(ATS_DATA);
-	return (_ats_sheader[txtNr * MAX_ATS_STATUS] & bitIdx) != 0;
+	return _text->getControlBit(txtNr, bitIdx);
 }
 
 void Atdsys::setControlBit(int16 txtNr, int16 bitIdx) {
-	set_ats_mem(ATS_DATA);
-	_ats_sheader[txtNr * MAX_ATS_STATUS] |= bitIdx;
+	_text->setControlBit(txtNr, bitIdx);
 }
 
 void Atdsys::delControlBit(int16 txtNr, int16 bitIdx) {
-	set_ats_mem(ATS_DATA);
-	_ats_sheader[txtNr * MAX_ATS_STATUS] &= ~bitIdx;
+	_text->delControlBit(txtNr, bitIdx);
 }
 
 int16 Atdsys::start_aad(int16 diaNr) {
@@ -673,9 +608,6 @@ void Atdsys::print_aad(int16 scrX, int16 scrY) {
 					_aadv._strHeader->_vocNr - ATDS_VOC_OFFSET != -1) {
 				if (_atdsv._vocNr != _aadv._strHeader->_vocNr - ATDS_VOC_OFFSET) {
 					_atdsv._vocNr = _aadv._strHeader->_vocNr - ATDS_VOC_OFFSET;
-					const int16 vocx = _G(moveState)[personId].Xypos[0] -
-								 _G(gameState).scrollx + _G(spieler_mi)[personId].HotX;
-					g_engine->_sound->setSoundChannelBalance(0, getStereoPos(vocx));
 					g_engine->_sound->playSpeech(_atdsv._vocNr, false);
 				}
 
@@ -756,10 +688,10 @@ void Atdsys::aad_search_dia(int16 diaNr, char **ptr) {
 			uint16 *pos = (uint16 *)start_ptr;
 			if (pos[0] == diaNr) {
 				ende = true;
-				_aadv._txtHeader = (AadTxtHeader *)start_ptr;
-				*ptr = start_ptr + sizeof(AadTxtHeader);
+				_aadv._txtHeader = (DialogCloseupTxtHeader *)start_ptr;
+				*ptr = start_ptr + sizeof(DialogCloseupTxtHeader);
 			} else {
-				start_ptr += sizeof(AadTxtHeader) + pos[1] * sizeof(AadInfo);
+				start_ptr += sizeof(DialogCloseupTxtHeader) + pos[1] * sizeof(AadInfo);
 				bool ende1 = false;
 				for (; !ende1; ++start_ptr) {
 					if (*start_ptr != ATDS_END_TEXT)
@@ -1001,7 +933,7 @@ int16 Atdsys::calc_inv_no_use(int16 curInv, int16 testNr) {
 }
 
 int8 Atdsys::getStereoPos(int16 x) {
-	return floor(x / 2.5) * 2 - 127;
+	return floor(x / 2.5);
 }
 
 void Atdsys::saveAtdsStream(Common::WriteStream *stream) {
@@ -1017,7 +949,13 @@ uint32 Atdsys::getAtdsStreamSize() const {
 }
 
 Common::StringArray Atdsys::getTextArray(uint dialogNum, uint entryNum, int type, int subEntry) {
-	if (!getControlBit(entryNum, ATS_ACTIVE_BIT))
+	if (dialogNum == 45 && entryNum == 295 && type == 1 && subEntry == -1 &&
+			g_engine->getLanguage() == Common::EN_ANY) {
+		// WORKAROUND: Taxi hotspot in room 45 (Big City)
+		Common::StringArray results;
+		results.push_back("Taxi");
+		return results;
+	} else if (!getControlBit(entryNum, ATS_ACTIVE_BIT))
 		return _text->getTextArray(dialogNum, entryNum, type, subEntry);
 	else
 		return Common::StringArray();
@@ -1028,6 +966,10 @@ Common::String Atdsys::getTextEntry(uint dialogNum, uint entryNum, int type, int
 		return _text->getTextEntry(dialogNum, entryNum, type, subEntry);
 	else
 		return Common::String();
+}
+
+int16 Atdsys::getLastSpeechId() {
+	return _text->getLastSpeechId();
 }
 
 } // namespace Chewy

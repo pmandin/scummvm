@@ -309,8 +309,8 @@ void debug_script_log(const char *msg, ...) {
 }
 
 struct Breakpoint {
-	char scriptName[80];
-	int lineNumber;
+	char scriptName[80]{};
+	int lineNumber = 0;
 };
 
 bool send_message_to_editor(const char *msg, const char *errorMsg) {
@@ -360,9 +360,11 @@ bool init_editor_debugging() {
 		}
 
 		send_message_to_editor("START");
+		Debug::Printf(kDbgMsg_Info, "External debugger initialized");
 		return true;
 	}
 
+	Debug::Printf(kDbgMsg_Error, "Failed to initialize external debugger");
 	return false;
 }
 
@@ -395,24 +397,24 @@ int check_for_messages_from_editor() {
 			bool isDelete = (msgPtr[0] == 'D');
 			// Format:  SETBREAK $scriptname$lineNumber$
 			msgPtr += 10;
-			char scriptNameBuf[80];
-			int i = 0;
+			char scriptNameBuf[sizeof(Breakpoint::scriptName)]{};
+			size_t i = 0;
 			while (msgPtr[0] != '$') {
-				scriptNameBuf[i] = msgPtr[0];
+				if (i < sizeof(scriptNameBuf) - 1)
+					scriptNameBuf[i] = msgPtr[0];
 				msgPtr++;
 				i++;
 			}
-			scriptNameBuf[i] = 0;
 			msgPtr++;
 
 			int lineNumber = atoi(msgPtr);
 
 			if (isDelete) {
-				for (i = 0; i < _G(numBreakpoints); i++) {
-					if ((_G(breakpoints)[i].lineNumber == lineNumber) &&
-					        (strcmp(_G(breakpoints)[i].scriptName, scriptNameBuf) == 0)) {
+				for (int j = 0; j < _G(numBreakpoints); j++) {
+					if ((_G(breakpoints)[j].lineNumber == lineNumber) &&
+					        (strcmp(_G(breakpoints)[j].scriptName, scriptNameBuf) == 0)) {
 						_G(numBreakpoints)--;
-						_G(breakpoints).erase(_G(breakpoints).begin() + i);
+						_G(breakpoints).erase(_G(breakpoints).begin() + j);
 						break;
 					}
 				}
@@ -428,8 +430,8 @@ int check_for_messages_from_editor() {
 			_G(game_paused_in_debugger) = 0;
 			_G(break_on_next_script_step) = 1;
 		} else if (strncmp(msgPtr, "EXIT", 4) == 0) {
-			_G(want_exit) = 1;
-			_G(abort_engine) = 1;
+			_G(want_exit) = true;
+			_G(abort_engine) = true;
 			_G(check_dynamic_sprites_at_exit) = 0;
 		}
 
@@ -445,7 +447,7 @@ int check_for_messages_from_editor() {
 
 bool send_exception_to_editor(const char *qmsg) {
 #if AGS_PLATFORM_OS_WINDOWS
-	_G(want_exit) = 0;
+	_G(want_exit) = false;
 	// allow the editor to break with the error message
 	if (editor_window_handle != NULL)
 		SetForegroundWindow(editor_window_handle);
@@ -453,7 +455,7 @@ bool send_exception_to_editor(const char *qmsg) {
 	if (!send_message_to_editor("ERROR", qmsg))
 		return false;
 
-	while ((check_for_messages_from_editor() == 0) && (_G(want_exit) == 0)) {
+	while ((check_for_messages_from_editor() == 0) && (!_G(want_exit))) {
 		_G(platform)->Delay(10);
 	}
 #endif

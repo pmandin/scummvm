@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -74,7 +75,7 @@ short Room39::use_howard() {
 
 	if (!_G(gameState).R39HowardWach) {
 		int16 dia_nr;
-		if (_G(gameState).inv_cur) {
+		if (_G(cur)->usingInventoryCursor()) {
 			if (isCurInventory(MANUSKRIPT_INV)) {
 				hideCur();
 				_G(gameState).R39HowardWach = true;
@@ -87,7 +88,7 @@ short Room39::use_howard() {
 				startSetAILWait(7, 1, ANI_FRONT);
 				_G(gameState)._personHide[P_CHEWY] = false;
 
-				delInventory(_G(gameState).AkInvent);
+				delInventory(_G(cur)->getInventoryCursor());
 				_G(det)->stop_detail(1);
 				startAniBlock(2, ABLOCK33);
 				start_spz(CH_TALK6, 255, ANI_FRONT, P_CHEWY);

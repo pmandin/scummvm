@@ -132,7 +132,7 @@ void KyraEngine_LoK::waitForChatToFinish(int vocFile, int chatDuration, const ch
 }
 
 void KyraEngine_LoK::endCharacterChat(int8 charNum, int16 convoInitialized) {
-	_charSayUnk3 = -1;
+	_talkHeadAnimCharNum = -1;
 
 	if (charNum > 4 && charNum < 11) {
 		_animator->sprites()[_disabledTalkAnimObject].active = 1;
@@ -244,7 +244,7 @@ int KyraEngine_LoK::initCharacterChat(int8 charNum) {
 	_animator->flagAllObjectsForRefresh();
 	_animator->flagAllObjectsForBkgdChange();
 	_animator->preserveAnyChangedBackgrounds();
-	_charSayUnk3 = charNum;
+	_talkHeadAnimCharNum = charNum;
 
 	return returnValue;
 }
@@ -268,9 +268,11 @@ void KyraEngine_LoK::characterSays(int vocFile, const char *chatStr, int16 charN
 		backupChatPartnerAnimFrame(chatPartnerNum);
 
 	if (charNum < 5) {
-		_characterList[charNum].currentAnimFrame = startAnimFrames[charNum];
-		_charSayUnk3 = charNum;
-		_talkingCharNum = charNum;
+		if (_flags.isTalkie || _flags.platform == Common::kPlatformFMTowns || _flags.platform == Common::kPlatformPC98 || _animator->_brandonScaleX == 0x100 || !_scaleMode) {
+			_characterList[charNum].currentAnimFrame = startAnimFrames[charNum];
+			_talkHeadAnimCharNum = charNum;
+			_talkingCharNum = charNum;
+		}
 		_animator->animRefreshNPC(charNum);
 	}
 
@@ -282,10 +284,10 @@ void KyraEngine_LoK::characterSays(int vocFile, const char *chatStr, int16 charN
 	int16 yPos = _characterList[charNum].y1;
 	yPos -= ((_scaleTable[yPos] * _characterList[charNum].height) >> 8);
 	yPos -= 8;
-	yPos -= lineNum * (_screen->getFontHeight() + _screen->_lineSpacing);
+	yPos -= (lineNum * _screen->getFontHeight() + (lineNum - 1) * _screen->_lineSpacing);
 
 	_text->_talkMessageY = (_flags.lang == Common::ZH_TWN) ? CLIP<int>(yPos, 10, 80) : CLIP<int>(yPos, 11, 100);
-	_text->_talkMessageH = lineNum * (_screen->getFontHeight() + _screen->_lineSpacing) + _text->_langExtraSpacing;
+	_text->_talkMessageH = lineNum * _screen->getFontHeight() + (lineNum - 1) * _screen->_lineSpacing + _text->_langExtraSpacing;
 
 	const bool printText = textEnabled();
 
@@ -293,7 +295,7 @@ void KyraEngine_LoK::characterSays(int vocFile, const char *chatStr, int16 charN
 		_animator->restoreAllObjectBackgrounds();
 
 		_screen->copyRegion(8, _text->_talkMessageY, 8, 136, 304, _text->_talkMessageH, 2, 2);
-
+	
 		_text->printCharacterText(processedString, charNum, _characterList[charNum].x1);
 	}
 

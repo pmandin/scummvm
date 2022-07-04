@@ -19,6 +19,7 @@
  *
  */
 
+#include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
@@ -161,7 +162,6 @@ void Room56::entry() {
 	case 1:
 		_G(gameState)._personRoomNr[P_HOWARD] = 66;
 		_G(gameState)._personRoomNr[P_NICHELLE] = 66;
-		_G(gameState).r88DestRoom = 82;
 		_G(out)->setPointer(nullptr);
 		_G(out)->cls();
 		_G(flags).NoPalAfterFlc = true;
@@ -208,7 +208,7 @@ bool Room56::timer(int16 t_nr, int16 ani_nr) {
 
 int16 Room56::use_taxi() {
 	int16 action_ret = false;
-	if (!_G(gameState).inv_cur) {
+	if (!_G(cur)->usingInventoryCursor()) {
 		action_ret = true;
 		hideCur();
 		autoMove(1, P_CHEWY);
@@ -268,7 +268,7 @@ int16 Room56::use_man() {
 		_G(room)->set_timer_status(0, TIMER_START);
 		_G(det)->set_static_ani(0, -1);
 	} else {
-		delInventory(_G(gameState).AkInvent);
+		delInventory(_G(cur)->getInventoryCursor());
 		_G(gameState).R56AbfahrtOk = true;
 		startSetAILWait(6, 1, ANI_FRONT);
 
@@ -286,7 +286,7 @@ int16 Room56::use_man() {
 int16 Room56::use_kneipe() {
 	int16 action_ret = false;
 	if (!_G(gameState).flags32_10) {
-		if (_G(menu_item) == CUR_WALK && !_G(gameState).inv_cur && _G(atds)->getControlBit(362, ATS_ACTIVE_BIT) == 0) {
+		if (_G(menu_item) == CUR_WALK && !_G(cur)->usingInventoryCursor() && _G(atds)->getControlBit(362, ATS_ACTIVE_BIT) == 0) {
 			action_ret = true;
 			hideCur();
 			if (_G(gameState).R56Kneipe) {
@@ -346,7 +346,7 @@ int16 Room56::use_kneipe() {
 			startAadWait(518);
 		}
 		showCur();
-	} else if (_G(menu_item) == 0 || _G(menu_item) == 2 || (_G(menu_item) == 1 && !_G(gameState).inv_cur)){
+	} else if (_G(menu_item) == 0 || _G(menu_item) == 2 || (_G(menu_item) == 1 && !_G(cur)->usingInventoryCursor())){
 		hideCur();
 		action_ret = 1;
 		_G(mouseLeftClick) = false;
