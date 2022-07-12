@@ -246,6 +246,15 @@ GdiV1::GdiV1(ScummEngine *vm) : Gdi(vm) {
 	memset(&_V1, 0, sizeof(_V1));
 }
 
+void GdiV1::setRenderModeColorMap(const byte *map) {
+	_colorMap = map;
+}
+
+byte GdiV1::remapColorToRenderMode(byte col) const {
+	assert(_colorMap);
+	return _colorMap[col];
+}
+
 GdiV2::GdiV2(ScummEngine *vm) : Gdi(vm) {
 	_roomStrips = nullptr;
 }
@@ -736,29 +745,12 @@ void ScummEngine::drawStripToScreen(VirtScreen *vs, int x, int width, int top, i
 		src = _compositeBuf;
 		pitch = width * vs->format.bytesPerPixel;
 
-		if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) {
-			ditherHerc(_compositeBuf, _herculesBuf, width, &x, &y, &width, &height);
-
-			src = _herculesBuf + x + y * kHercWidth;
-			pitch = kHercWidth;
-
-			// center image on the screen
-			x += (kHercWidth - _screenWidth * 2) / 2;	// (720 - 320*2)/2 = 40
-		} else if (_useCJKMode && m == 2) {
-			pitch *= m;
-			x *= m;
-			y *= m;
-			width *= m;
-			height *= m;
-		} else {
-			if (_renderMode == Common::kRenderCGA)
-				ditherCGA(_compositeBuf, width, x, y, width, height);
-
+		if (_game.platform == Common::kPlatformNES) {
 			// HACK: This is dirty hack which renders narrow NES rooms centered
 			// NES can address negative number strips and that poses problem for
 			// our code. So instead of adding zillions of fixes and potentially
 			// breaking other games, we shift it right at the rendering stage.
-			if ((_game.platform == Common::kPlatformNES) && (((_NESStartStrip > 0) && (vs->number == kMainVirtScreen)) || (vs->number == kTextVirtScreen))) {
+			if (((_NESStartStrip > 0) && (vs->number == kMainVirtScreen)) || (vs->number == kTextVirtScreen)) {
 				x += 16;
 				while (x + width >= _screenWidth)
 					width -= 16;
@@ -775,12 +767,147 @@ void ScummEngine::drawStripToScreen(VirtScreen *vs, int x, int width, int top, i
 					_system->copyRectToScreen(blackbuf, 16, 0, 0, 16, 240); // Fix left strip
 				}
 			}
+		} else if (_game.version == 1) {
+			src = postProcessV1Graphics(vs, pitch, x, y, width, height);
+		} else if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) {
+			ditherHerc(_compositeBuf, _hercCGAScaleBuf, width, &x, &y, &width, &height);
 
+			src = _hercCGAScaleBuf + x + y * kHercWidth;
+			pitch = kHercWidth;
+
+			// center image on the screen
+			x += (kHercWidth - _screenWidth * 2) / 2;	// (720 - 320*2)/2 = 40
+		} else if (_useCJKMode && m == 2) {
+			pitch *= m;
+			x *= m;
+			y *= m;
+			width *= m;
+			height *= m;
+		} else if (_renderMode == Common::kRenderCGA) {
+			ditherCGA(_compositeBuf, width, x, y, width, height);
 		}
 	}
 
 	// Finally blit the whole thing to the screen
 	_system->copyRectToScreen(src, pitch, x, y, width, height);
+}
+
+const byte *ScummEngine::postProcessV1Graphics(VirtScreen *vs, int &pitch, int &x, int &y, int &width, int &height) const {
+	static const byte zakVrbColMap[] =	{ 0x0, 0x5, 0x5, 0x5, 0xA, 0xA, 0xA, 0xF, 0xF, 0x5, 0x5, 0x5, 0xA, 0xA, 0xF, 0xF };
+	static const byte zakTxtColMap[] =	{ 0x0, 0xF, 0xA, 0x5, 0xA, 0x5, 0x5, 0xF, 0xA, 0xA, 0xA, 0xA, 0xA, 0x5, 0x5, 0xF };
+	static const byte mmVrbColMap[] =	{ 0x0, 0x5, 0x5, 0x5, 0xA, 0xA, 0xA, 0xF, 0xA, 0x5, 0x5, 0x5, 0xA, 0xA, 0xA, 0xF };
+
+	byte mmTxtColMap[16];
+	for (uint8 i = 0; i < ARRAYSIZE(mmTxtColMap); ++i)
+		mmTxtColMap[i] = mmVrbColMap[_gdi->remapColorToRenderMode(i)];
+
+	byte *res = _compositeBuf;
+	byte *dst = _compositeBuf;
+	const byte *src = res;
+	bool renderHerc = (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG);
+
+	const byte *colMap = (_game.id == GID_ZAK) ? ((vs->number == kVerbVirtScreen || renderHerc) ? zakVrbColMap : zakTxtColMap) : (vs->number == kVerbVirtScreen ? mmVrbColMap : mmTxtColMap);
+
+	if (_renderMode == Common::kRenderCGA || _renderMode == Common::kRenderCGAComp) {
+		if (vs->number == kMainVirtScreen) {
+			for (int h = height; h; --h) {
+				for (int w = width >> 1; w; --w) {
+					*dst++ = (*src++ >> 2) & 3;
+					*dst++ = *src++ & 3;
+				}
+			}
+		} else {
+			for (int h = height; h; --h) {
+				for (int w = width >> 1; w; --w) {
+					*dst++ = (colMap[*src++] >> 2) & 3;
+					*dst++ = colMap[*src++] & 3;
+				}
+			}
+		}
+
+	} else if (renderHerc || _renderMode == Common::kRenderCGA_BW) {
+		// The monochrome rendering is very similiar for Hercules and CGA b/w.
+		// For Hercules we have to do some corrections to fit into the 350 pixels
+		// height. The text and verb vs are rendered in normal height, only the
+		// main vs gets scaled by leaving out every other line. And we center the
+		// image horizontally within the 720 pixels width.
+		// For CGA b/w the origial resolution is 640x200, so we just scale that
+		// to our 640x400 by repeating each line.
+		pitch = renderHerc ? kHercWidth : (_screenWidth << 1);
+		dst = res = _hercCGAScaleBuf;
+		int pitch1 = (pitch - width) << 1;
+
+		if (vs->number == kMainVirtScreen) {
+			uint32 *dst2 = (uint32*)(dst + pitch);
+			int pitch2 = pitch1 >> 2;
+			int height2 = height;
+
+			if (renderHerc) {
+				y = (y - vs->topline) * 2 + vs->topline;
+				height = MIN<int>(height << 1, kHercHeight - y);
+				height2 = height >> 1;
+			}
+
+			for (int h = height2; h; --h) {
+				for (int w = width >> 1; w; --w) {
+					const uint32 *s = (const uint32*)dst;
+					*dst++ = (*src >> 3) & 1;
+					*dst++ = (*src >> 2) & 1;
+					*dst++ = (*src >> 1) & 1;
+					*dst++ = *src & 1;
+					*dst2++ = renderHerc ? 0 : *s;
+					src += 2;
+				}
+				dst += pitch1;
+				dst2 += pitch2;
+			}
+
+		} else {
+			if (renderHerc) {
+				pitch1 = kHercWidth - (width << 1);
+				y -= vs->topline;
+				if (vs->number == kVerbVirtScreen) {
+					y += vs->topline * 2 - 16;
+					height = MIN<int>(height, kHercHeight - y);
+				}
+			}
+
+			uint16 *dst2 = (uint16*)(dst + pitch);
+			int pitch2 = pitch1 >> 1;
+
+			for (int h = height; h; --h) {
+				for (int w = width; w; --w) {
+					const uint16 *s = (const uint16*)dst;
+					uint8 col = colMap[*src++];
+					*dst++ = (col >> 1) & 1;
+					*dst++ = col & 1;
+					if (!renderHerc)
+						*dst2++ = *s;
+				}
+				dst += pitch1;
+				dst2 += pitch2;
+			}
+		}
+
+		x <<= 1;
+		width <<= 1;
+
+		if (renderHerc) {
+			x += 40;
+		} else {
+			y <<= 1;
+			height <<= 1;
+		}
+
+	} else if (vs->number == kTextVirtScreen) {
+		// For EGA, the only colors that need remapping are for the kTextVirtScreen.
+		for (int h = height; h; --h)  {
+			for (int w = width; w; --w)
+				*dst++ = _gdi->remapColorToRenderMode(*src++);
+		}
+	}
+
+	return res;
 }
 
 // CGA
@@ -798,17 +925,16 @@ static const byte cgaDither[2][2][16] = {
 	{{0, 0, 1, 1, 0, 2, 2, 3, 0, 3, 1, 1, 3, 3, 1, 3},
 	 {0, 1, 0, 1, 2, 2, 0, 0, 3, 1, 1, 1, 3, 2, 1, 3}}};
 
-// CGA dithers 4x4 square with direct substitutes
-// Odd lines have colors swapped, so there will be checkered patterns.
-// But apparently there is a mistake for 10th color.
 void ScummEngine::ditherCGA(byte *dst, int dstPitch, int x, int y, int width, int height) const {
 	byte *ptr;
 	int idx1, idx2;
-
+	// CGA dithers 4x4 square with direct substitutes
+	// Odd lines have colors swapped, so there will be checkered patterns.
+	// But apparently there is a mistake for 10th color.
 	for (int y1 = 0; y1 < height; y1++) {
 		ptr = dst + y1 * dstPitch;
 
-		if (_game.version == 2)
+		if (_game.version <= 2)
 			idx1 = 0;
 		else
 			idx1 = (y + y1) % 2;
@@ -3172,10 +3298,10 @@ void GdiV1::drawStripV1Background(byte *dst, int dstPitch, int stripnr, int heig
 		charIdx = _V1.picMap[y + stripnr * height] * 8;
 		for (int i = 0; i < 8; i++) {
 			byte c = _V1.charMap[charIdx + i];
-			dst[0] = dst[1] = _V1.colors[(c >> 6) & 3];
-			dst[2] = dst[3] = _V1.colors[(c >> 4) & 3];
-			dst[4] = dst[5] = _V1.colors[(c >> 2) & 3];
-			dst[6] = dst[7] = _V1.colors[(c >> 0) & 3];
+			dst[0] = dst[1] = _colorMap[_V1.colors[(c >> 6) & 3]];
+			dst[2] = dst[3] = _colorMap[_V1.colors[(c >> 4) & 3]];
+			dst[4] = dst[5] = _colorMap[_V1.colors[(c >> 2) & 3]];
+			dst[6] = dst[7] = _colorMap[_V1.colors[(c >> 0) & 3]];
 			dst += dstPitch;
 		}
 	}
@@ -3190,10 +3316,10 @@ void GdiV1::drawStripV1Object(byte *dst, int dstPitch, int stripnr, int width, i
 		charIdx = _V1.objectMap[y * width + stripnr] * 8;
 		for (int i = 0; i < 8; i++) {
 			byte c = _V1.charMap[charIdx + i];
-			dst[0] = dst[1] = _V1.colors[(c >> 6) & 3];
-			dst[2] = dst[3] = _V1.colors[(c >> 4) & 3];
-			dst[4] = dst[5] = _V1.colors[(c >> 2) & 3];
-			dst[6] = dst[7] = _V1.colors[(c >> 0) & 3];
+			dst[0] = dst[1] = _colorMap[_V1.colors[(c >> 6) & 3]];
+			dst[2] = dst[3] = _colorMap[_V1.colors[(c >> 4) & 3]];
+			dst[4] = dst[5] = _colorMap[_V1.colors[(c >> 2) & 3]];
+			dst[6] = dst[7] = _colorMap[_V1.colors[(c >> 0) & 3]];
 			dst += dstPitch;
 		}
 	}

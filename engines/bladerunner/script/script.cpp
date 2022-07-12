@@ -28,6 +28,7 @@
 #include "bladerunner/audio_player.h"
 #include "bladerunner/audio_speech.h"
 #include "bladerunner/bladerunner.h"
+#include "bladerunner/debugger.h"
 #include "bladerunner/crimes_database.h"
 #include "bladerunner/combat.h"
 #include "bladerunner/dialogue_menu.h"
@@ -1442,6 +1443,11 @@ int ScriptBase::Police_Maze_Query_Score() {
 void ScriptBase::Police_Maze_Zero_Score() {
 	debugC(kDebugScript, "Police_Maze_Zero_Score()");
 	Global_Variable_Reset(kVariablePoliceMazeScore);
+	// Police_Maze_Zero_Score is called when exiting from the maze
+	if (_vm->_debugger->_showMazeScore) {
+		_vm->_subtitles->setGameSubsText(BladeRunner::Subtitles::kSubtitlesSecondary, "", false);
+		_vm->_subtitles->hide(BladeRunner::Subtitles::kSubtitlesSecondary);
+	}
 }
 
 void ScriptBase::Police_Maze_Increment_Score(int delta) {
@@ -1719,6 +1725,19 @@ void ScriptBase::Autosave_Game(int textId) {
 void ScriptBase::I_Sez(const char *str) {
 	debugC(kDebugScript, "I_Sez(%s)", str);
 	_vm->ISez(str);
+//	Add_Subtitle_To_Queue(str, 2000);
+}
+
+void ScriptBase::Add_Subtitle_To_Queue(Common::String dbgQuote, uint32 duration) {
+	debugC(kDebugScript, "Add_Subtitle_To_Queue(%s, %u)", dbgQuote.c_str(), duration);
+	if (!dbgQuote.empty()) {
+		_vm->_subtitles->addGameSubsTextToQueue(dbgQuote, duration);
+	}
+}
+
+void ScriptBase::Clear_Subtitle_Queue() {
+	debugC(kDebugScript, "Clear_Subtitle_Queue()");
+	_vm->_subtitles->clearQueue();
 }
 
 void ScriptBase::AI_Countdown_Timer_Start(int actorId, signed int timer, int32 seconds) {

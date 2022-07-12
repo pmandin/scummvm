@@ -22,6 +22,7 @@
 #include "chewy/cursor.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
+#include "chewy/font.h"
 #include "chewy/globals.h"
 #include "chewy/main.h"
 #include "chewy/room.h"
@@ -113,8 +114,9 @@ bool Room0::timer(int16 timerNr, int16 aniNr) {
 			_G(uhr)->resetTimer(timerNr, 0);
 			_G(flags).AutoAniPlay = false;
 		}
-	} else if (timerNr == 3)
+	} else if (timerNr != 3) {
 		retval = true;
+	}
 
 	return retval;
 }
@@ -202,15 +204,15 @@ void Room0::eyeStart(EyeMode mode) {
 	_G(flags).AniUserAction = true;
 
 	if (mode == EYE_START) {
-		g_engine->_sound->playSound(FLAP_DETAIL, 0);
-		g_engine->_sound->stopSound(1);
-		g_engine->_sound->playSound(HOSE_DETAIL, 0);
-		g_engine->_sound->stopSound(2);
+		_G(det)->playSound(FLAP_DETAIL, 0);
+		_G(det)->stopSound(1);
+		_G(det)->playSound(HOSE_DETAIL, 0);
+		_G(det)->stopSound(2);
 	} else {
-		g_engine->_sound->stopSound(0);
-		g_engine->_sound->playSound(FLAP_DETAIL, 1);
-		g_engine->_sound->stopSound(0);
-		g_engine->_sound->playSound(HOSE_DETAIL, 2);
+		_G(det)->stopSound(0);
+		_G(det)->playSound(FLAP_DETAIL, 1);
+		_G(det)->stopSound(0);
+		_G(det)->playSound(HOSE_DETAIL, 2);
 	}
 
 	while (!ende) {
@@ -457,15 +459,15 @@ void Room0::feederStart(int16 mode) {
 
 	if (!mode) {
 		trapDoorOpen();
-		g_engine->_sound->playSound(FLAP_DETAIL, 0);
-		g_engine->_sound->stopSound(1);
-		g_engine->_sound->playSound(FEEDER_HOSE, 0);
-		g_engine->_sound->stopSound(2);
+		_G(det)->playSound(FLAP_DETAIL, 0);
+		_G(det)->stopSound(1);
+		_G(det)->playSound(FEEDER_HOSE, 0);
+		_G(det)->stopSound(2);
 	} else {
-		g_engine->_sound->stopSound(0);
-		g_engine->_sound->playSound(FLAP_DETAIL, 1);
-		g_engine->_sound->stopSound(0);
-		g_engine->_sound->playSound(FEEDER_HOSE, 2);
+		_G(det)->stopSound(0);
+		_G(det)->playSound(FLAP_DETAIL, 1);
+		_G(det)->stopSound(0);
+		_G(det)->playSound(FEEDER_HOSE, 2);
 	}
 
 	bool endLoopFl = false;
@@ -577,7 +579,7 @@ void Room0::checkFeed() {
 		if (adi->ani_count == 136) {
 			_G(gameState)._personHide[P_CHEWY] = true;
 			if (!_G(gameState).R0SlimeUsed)
-				_G(det)->stop_detail(16);
+				_G(det)->stopDetail(16);
 		}
 
 		if (adi->ani_count > 138) {
@@ -747,8 +749,8 @@ void Room0::feederAni() {
 
 			_G(gameState)._personRoomNr[P_CHEWY] = 1;
 			_G(room)->loadRoom(&_G(room_blk), _G(gameState)._personRoomNr[P_CHEWY], &_G(gameState));
-			setPersonPos(_G(Rdi)->AutoMov[4]._x - CH_HOT_MOV_X,
-			               _G(Rdi)->AutoMov[4]._y - CH_HOT_MOV_Y, P_CHEWY, P_RIGHT);
+			setPersonPos(_G(Rdi)->autoMove[4]._x - CH_HOT_MOV_X,
+			               _G(Rdi)->autoMove[4]._y - CH_HOT_MOV_Y, P_CHEWY, P_RIGHT);
 			_G(moveState)[P_CHEWY]._delayCount = 0;
 
 			setShadowPalette(4, false);

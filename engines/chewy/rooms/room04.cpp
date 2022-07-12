@@ -23,7 +23,6 @@
 #include "chewy/defines.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
-#include "chewy/mouse.h"
 #include "chewy/room.h"
 #include "chewy/rooms/room04.h"
 #include "chewy/sound.h"
@@ -84,19 +83,19 @@ int16 Room4::comp_probe() {
 		mouseAction();
 
 		if (_G(mouseLeftClick)) {
-			switch (_G(in)->findHotspot(CONSOLE_HOTSPOTS)) {
+			switch (_G(out)->findHotspot(CONSOLE_HOTSPOTS)) {
 			case 0:
 				if (curX > 0)
 					--curX;
 				else
 					curX = 2;
-				g_engine->_sound->playSound(0, 1);
+				_G(det)->playSound(0, 1);
 				break;
 
 			case 1:
 				endLoop = true;
 				sprNr = YELLOW_FRAME;
-				g_engine->_sound->playSound(0, 0);
+				_G(det)->playSound(0, 0);
 				break;
 
 			case 2:
@@ -104,7 +103,7 @@ int16 Room4::comp_probe() {
 					++curX;
 				else
 					curX = 0;
-				g_engine->_sound->playSound(0, 2);
+				_G(det)->playSound(0, 2);
 				break;
 
 			default:

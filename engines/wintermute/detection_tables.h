@@ -33,13 +33,17 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"alavi",           "Alavi Detective - Murder of Miss Rojan"},
 	{"alimardan1",      "Alimardan's Mischief"},
 	{"alimardan2",      "Alimardan Meets Merlin"},
+	{"alone",           "Alone, Under Strange Night"},
 	{"alphapolaris",    "Alpha Polaris"},
 	{"apeiron",         "Apeiron"},
 	{"artofmurder1",    "Art of Murder 1: FBI Confidential"},
 	{"awakening",       "Awakening: Burning Ashes"},
+	{"barbapoca1",      "El Engaño de Barbapoca Chapter 1: Esta Pizza Esta de Muerte"},
+	{"barbapoca2",      "El Engaño de Barbapoca Chapter 2: Competencia Fantasmal"},
 	{"barrowhilldp",    "Barrow Hill - The Dark Path"},
 	{"basisoctavus",    "Basis Octavus"},
 	{"bickadoodle",     "Bickadoodle"},
+	{"bookmania",       "BookMania"},
 	{"bookofgron",      "Book of Gron Part One"},
 	{"bthreshold",      "Beyond the Threshold"},
 	{"carolreed4",      "Carol Reed 4 - East Side Story"},
@@ -55,7 +59,9 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"carolreed14",     "Carol Reed 14 - The Fall Of April"},
 	{"carolreed15",     "Carol Reed 15 - Geospots"},
 	{"carolreed16",     "Carol Reed 16 - Quarantine Diary"},
+	{"chaos",           "Chaos"},
 	{"chivalry",        "Chivalry is Not Dead"},
+	{"colapso1",        "Colapso: Episode 1"},
 	{"colorsoncanvas",  "Colors on Canvas"},
 	{"conspiracao",     "Conspiracao Dumont"},
 	{"corrosion",       "Corrosion: Cold Winter Waiting"},
@@ -64,13 +70,14 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"deadcity",        "Dead City"},
 	{"devilincapital",  "Devil In The Capital"},
 	{"dfafadventure",   "DFAF Adventure"},
+	{"dirtysplit",      "Dirty Split"},
 	{"drbohus",         "Dr. Bohus"},
 	{"drdoylemotch",    "Dr. Doyle - Mystery Of The Cloche Hat"},
 	{"dreamcat",        "Dreamcat"},
 	{"dreaming",        "Des Reves Elastiques Avec Mille Insectes Nommes Georges"},
-	{"driller",         "The Driller Incident"},
-	{"dirtysplit",      "Dirty Split"},
+	{"dreams",          "Dreams"},
 	{"dreamscape",      "Dreamscape"},
+	{"driller",         "The Driller Incident"},
 	{"erinmyers",       "The Death of Erin Myers"},
 	{"escapemansion",   "Escape from the Mansion"},
 	{"everydaygray",    "Everyday Grey"},
@@ -81,14 +88,17 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"four",            "Four"},
 	{"foxtail",         "FoxTail"},
 	{"framed",          "Framed"},
+	{"fred",            "Fred"},
 	{"ghostsheet",      "Ghost in the Sheet"},
 	{"goldencalf",      "The Golden Calf"},
+	{"guttenburg",      "The Guttenburg Project"},
 	{"hamlet",          "Hamlet or the last game without MMORPG features, shaders and product placement"},
 	{"helga",           "Helga Deep In Trouble"},
 	{"hor",             "Hor"},
 	{"idiotstale",      "The Idiot's Tale"},
 	{"imustkill",       "I Must Kill...: Fresh Meat"},
 	{"jamesperis",      "James Peris: No License Nor Control"},
+	{"klaymen1",        "Klaymen Episodes: Pilot"},
 	{"knossos",         "K'NOSSOS"},
 	{"kulivocko",       "Kulivocko"},
 	{"lifein3minutes",  "Life In 3 Minutes"},
@@ -105,8 +115,11 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"miskatonic1",     "Miskatonic. Part One"},
 	{"msos",            "Monday Starts on Saturday"},
 	{"mukhtar",         "Mukhtar and his Team"},
+	{"mystictriddle",   "Mystic Triddle"},
 	{"mythguff",        "Myth: A Guff's Tale"},
+	{"nightinthefog",   "Night in the Fog"},
 	{"nighttrain",      "Night Train"},
+	{"nosebound1",      "Nose Bound: Episode 1"},
 	{"oknytt",          "Oknytt"},
 	{"one",             "One"},
 	{"onehelluvaday",   "One Helluva Day"},
@@ -119,6 +132,7 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"pigeons",         "Pigeons in the Park"},
 	{"pizzamorgana",    "Pizza Morgana: Episode 1 - Monsters and Manipulations in the Magical Forest"},
 	{"polechudes",      "Pole Chudes"},
+	{"preciouspills",   "Precious Pills, Blasting Bacon and Mowing Minds"},
 	{"projectdoom",     "Project: Doom"},
 	{"projectjoe",      "Project Joe"},
 	{"qajarycat",       "Qajary Cat"},
@@ -133,6 +147,8 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"satanandsons",    "Satan and Sons"},
 	{"securanote",      "Securanote"},
 	{"shaban",          "Shaban"},
+	{"shadowofnebula",  "Shadow Of Nebula"},
+	{"shelter",         "Shelter"},
 	{"shinestar",       "The Shine of a Star"},
 	{"spaceinvaders",   "Space Invaders"},
 	{"spacemadness",    "Space Madness"},
@@ -142,6 +158,7 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"sotv1",           "Shadows on the Vatican - Act I: Greed"},
 	{"sotv2",           "Shadows on the Vatican - Act II: Wrath"},
 	{"strangechange",   "Strange Change"},
+	{"sunny",           "Sunny"},
 	{"sunrise",         "Sunrise: The game"},
 	{"susanrose1",      "Susan Rose: Mysterious Child"},
 	{"susanrose2",      "Susan Rose: Delicate Murder"},
@@ -150,6 +167,7 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"tehran1933",      "Murder In Tehran's Alleys 1933"},
 	{"tehran2016",      "Murder In Tehran's Alleys 2016"},
 	{"theancientmark1", "The Ancient Mark - Episode 1"},
+	{"tetriks",         "TeTRIks"},
 	{"thebox",          "The Box"},
 	{"thekite",         "The Kite"},
 	{"thelastcrownmh",  "The Last Crown - Midnight Horror"},
@@ -296,6 +314,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("alimardan2", "",
 		WME_ENTRY1s("data.dcp", "e3ffb5d177737a57bb391995d9361055", 413397623), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_3),
 
+	// Alone, Under Strange Night (English)
+	WME_WINENTRY("alone", "",
+		WME_ENTRY1s("data.dcp", "af7638e15b5eeeedb92768d32e02e7f4", 66172118), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_5),
+
 	// Alpha Polaris (English)
 	WME_WINENTRY("alphapolaris", "",
 		WME_ENTRY1s("data.dcp", "6d5d2264a3135dae3a9a74de50b4ea68", 706780438), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_1),
@@ -425,6 +447,14 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("awakening", "",
 		WME_ENTRY1s("data.dcp", "a7b8633fdc5cc8ff659dda5a11d3d971", 1900777616), Common::FA_IRN, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
 
+	// El Engaño de Barbapoca Chapter 1: Esta Pizza Esta de Muerte (Spanish)
+	WME_WINENTRY("barbapoca1", "",
+		WME_ENTRY1s("data.dcp", "efc555f57ec0db5d5106bc8aa0e7f627", 467198987), Common::ES_ESP, ADGF_UNSTABLE, WME_1_9_1),
+
+	// El Engaño de Barbapoca Chapter 2: Competencia Fantasmal (Spanish)
+	WME_WINENTRY("barbapoca2", "",
+		WME_ENTRY1s("data.dcp", "746b3264178607121169fa32d48f5368", 1256448570), Common::ES_ESP, ADGF_UNSTABLE, WME_1_9_1),
+
 	// Barrow Hill - The Dark Path (Steam, September 2018) (English)
 	WME_WINENTRY("barrowhilldp", "",
 		WME_ENTRY1s("data.dcp", "6b7c8f8185a80c50a71e068aad82862e", 1066752), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_3),
@@ -464,6 +494,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Bickadoodle (https://web.archive.org/web/20150516210632/http://aethericgames.com/games/bickadoodle/download-bickadoodle/)
 	WME_WINENTRY("bickadoodle", "",
 		WME_ENTRY1s("data.dcp", "1584d83577c32add0fce27fae91141a2", 35337728), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
+
+	// BookMania
+	WME_WINENTRY("bookmania", "",
+		WME_ENTRY1s("bookmania.exe", "2c7c950a7e7c5b3a30e83a6cd603789b", 5084057), Common::CS_CZE, ADGF_UNSTABLE, WME_1_9_1),
 
 	// Book of Gron Part One
 	WME_WINENTRY("bookofgron", "",
@@ -751,6 +785,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("carolreed16", "SD",
 		WME_ENTRY1s("data.dcp", "9a9749e4d9cf6a151e9c95dece48b2c1", 774823176), Common::RU_RUS, ADGF_UNSTABLE, WME_1_9_3),
 
+	// Chaos (Tech Demo)
+	WME_WINENTRY("chaos", "Tech Demo",
+		WME_ENTRY1s("data_main.dcp", "7fc1d1629876ebf85e098df05d8c795f", 107375), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_8_10),
+
 	// Chivalry is Not Dead
 	WME_WINENTRY("chivalry", "",
 		WME_ENTRY1s("data.dcp", "ebd0915d9a12df5224be22f53bb23eb6", 7278306), Common::EN_ANY, ADGF_NO_FLAGS, WME_1_8_0),
@@ -758,6 +796,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Chivalry is Not Dead (Version from deirdrakai.com)
 	WME_WINENTRY("chivalry", "",
 		WME_ENTRY1s("data.dcp", "ae6d91b9517f4d2851a8ad94c96951c8", 7278302), Common::EN_ANY, ADGF_NO_FLAGS, WME_1_8_0),
+
+	// Colapso: Episode 1 (multi-language)
+	WME_WINENTRY("colapso1", "",
+		WME_ENTRY1s("data.dcp", "9ad2d643e882ec98a4c37f52555d69f1", 38865249), Common::UNK_LANG, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_3),
 
 	// Colors on Canvas (Demo)
 	WME_WINENTRY("colorsoncanvas", "Demo",
@@ -881,13 +923,17 @@ static const WMEGameDescription gameDescriptions[] = {
 		WME_ENTRY2s("spanish.dcp", "b3982c0a5e85b42e1e38240fef004aa4", 164428596,
 					"data.dcp", "63766d6c68b9f00b632ea1736fc8a95c", 88577621), Common::ES_ESP, ADGF_UNSTABLE, WME_1_8_5),
 
-	// Des Reves Elastiques Avec Mille Insectes Nommes Georges
+	// Des Reves Elastiques Avec Mille Insectes Nommes Georges / Elastic Dreams with a Thousand Insects Named George
 	WME_WINENTRY("dreaming", "",
 		WME_ENTRY1s("data.dcp", "4af26d97ea063fc1277ce30ae431de90", 8804073), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_6),
 
 	// The Driller Incident (English)
 	WME_WINENTRY("driller", "",
 		WME_ENTRY1s("data.dcp", "9cead7a85244263e0a5ff8f69dd7a1fc", 13671792), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
+
+	// The Driller Incident (Czech)
+	WME_WINENTRY("driller", "",
+		WME_ENTRY1s("data.dcp", "1adcb6aac675539292a2e8fbe6cf7c76", 13671805), Common::CS_CZE, ADGF_UNSTABLE, WME_1_9_1),
 
 	// The Driller Incident (Russian)
 	WME_WINENTRY("driller", "",
@@ -904,6 +950,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Dreamcat
 	WME_WINENTRY("dreamcat", "",
 		WME_ENTRY1s("data.dcp", "189bd4eef29034f4ff4ed30120eaac4e", 7758040), Common::EN_ANY, ADGF_UNSTABLE | GF_LOWSPEC_ASSETS, WME_1_9_1),
+
+	// Dreams (Demo)
+	WME_WINENTRY("dreams", "Demo",
+		WME_ENTRY1s("data.dcp", "1c620f51bef1faffbeebb6253542f834", 23622097), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_26),
 
 	// Dreamscape (Beta)
 	// NOTE: Package is called "Dreamland.rar", however game title is "Dreamscape"
@@ -1300,6 +1350,15 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("framed", "Beta",
 		WME_ENTRY1s("data.dcp", "e7259fb36f2c6f9f28242291e0c3de98", 34690568), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_8_11),
 
+	// Fred (English) (PreAlpha)
+	WME_WINENTRY("fred", "PreAlpha",
+		WME_ENTRY2s("string.tab", "76b48c26e611071810d8182fc27f7d0e", 12590,
+		            "data.dcp", "e18b1f9815b9e9cf1d1357bc48269b0b", 7632855), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_31),
+
+	// Fred (French) (PreAlpha)
+	WME_WINENTRY("fred", "PreAlpha",
+		WME_ENTRY1s("data.dcp", "e18b1f9815b9e9cf1d1357bc48269b0b", 7632855), Common::FR_FRA, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_31),
+
 	// Ghost in the Sheet (English, v1.00)
 	WME_WINENTRY("ghostsheet", "",
 		WME_ENTRY2s("english.dcp", "f53acdc5510aa184f6f968e38d8c9ad7", 12008908,
@@ -1335,6 +1394,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// The Golden Calf (German)
 	WME_WINENTRY("goldencalf", "",
 		WME_ENTRY1s("data.dcp", "c611503c2c10137d1195878080cee2d1", 1174552), Common::DE_DEU, ADGF_UNSTABLE, WME_1_8_11),
+
+	// The Guttenburg Project (Demo)
+	WME_WINENTRY("guttenburg", "Demo",
+		WME_ENTRY1s("data.dcp", "0c90b369ad0928a450d092114376cf7f", 24121170), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_1),
 
 	// Hamlet or the last game without MMORPG features, shaders and product placement (English)
 	WME_WINENTRY("hamlet", "",
@@ -1591,6 +1654,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("juliauntold", "GOG",
 		WME_ENTRY1s("data.dcp", "b0aefd82647a26425fe3ee21aabb6283", 26462676), Common::EN_ANY, ADGF_UNSTABLE, WME_LITE),
 
+	// Klaymen Episodes: Pilot
+	WME_WINENTRY("klaymen1", "",
+		WME_ENTRY1s("data.dcp", "8a066d13d32567ca88a6918bfa3c01fa", 17086470), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_6),
+
 	// K'NOSSOS
 	WME_WINENTRY("knossos", "",
 		WME_ENTRY1s("K'NOSSOS.exe", "694e488cc99bb78d2fe906f82d3ee9e1", 1654383903), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_3),
@@ -1668,7 +1735,11 @@ static const WMEGameDescription gameDescriptions[] = {
 
 	// Miskatonic. Part One
 	WME_WINENTRY("miskatonic1", "",
-		WME_ENTRY1s("Miskatonic.exe", "21d1ed0375f64c13688e2d082ed1aaa1", 340306712), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
+		WME_ENTRY1s("Miskatonic.exe", "21d1ed0375f64c13688e2d082ed1aaa1", 340306712), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_1),
+
+	// Miskatonic. Part One (alt)
+	WME_WINENTRY("miskatonic1", "",
+		WME_ENTRY1s("Miskatonic.exe", "4c52d1cdc6dc708f47049b5c88a5b866", 339002997), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_9_1),
 
 	// Monday Starts on Saturday
 	WME_WINENTRY("msos", "",
@@ -1678,9 +1749,17 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("mukhtar", "",
 		WME_ENTRY1s("data.dcp", "ed1deb8e6b2ce0a50ba26e035bdb7006", 1086177292), Common::RU_RUS, ADGF_UNSTABLE | GF_3D, WME_1_9_1),
 
+	// Mystic Triddle (Demo)
+	WME_WINENTRY("mystictriddle", "Demo",
+		WME_ENTRY1s("data.dcp", "77b54c83d49f2cd9d78d319bafa8a4bd", 27716095), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_5_2),
+
 	// Myth: A Guff's Tale
 	WME_WINENTRY("mythguff", "",
 		WME_ENTRY1s("data.dcp", "ef53dddd2264a7d5b13f3d71da5261e4", 675663078), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
+
+	// Night in the Fog (Demo, 0.4.0212a)
+	WME_WINENTRY("nightinthefog", "Demo 0.4.0212a",
+		WME_ENTRY1s("game.exe", "73c88cb17e380ff72c2f1d156b4545e9", 128294595), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_1),
 
 	// Night Train Demo
 	WME_WINENTRY("nighttrain", "Demo",
@@ -1689,6 +1768,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Night Train Demo 2
 	WME_WINENTRY("nighttrain", "Demo",
 		WME_ENTRY1s("data.dcp", "c4c29461bb070735e564ef6612ea371a", 124495883), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_1),
+
+	// Nose Bound: Episode 1 (Demo) (multi-language)
+	WME_WINENTRY("nosebound1", "Demo",
+		WME_ENTRY1s("data.dcp", "280f2e063385e2ed4c17b43991666e93", 379558560), Common::UNK_LANG, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_3),
 
 	// Oknytt
 	WME_WINENTRY("oknytt", "Version 1.0",
@@ -1741,6 +1824,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("onehelluvaday", "Demo",
 		WME_ENTRY1s("data.dcp", "144e23fca7c1c54103dad9c1342de2b6", 229963509), Common::UNK_LANG, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_3),
 
+	// One Helluva Day (Steam Demo) (multi-language)
+	WME_WINENTRY("onehelluvaday", "Demo",
+		WME_ENTRY1s("data.dcp", "0d79c74140c24f10255617f71b7e45da", 230689994), Common::UNK_LANG, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_3),
+
 	// Open Quest
 	WME_WINENTRY("openquest", "",
 		WME_ENTRY1s("data.dcp", "16893e3fc15a211a49654ae66f684f28", 82281736), Common::EN_ANY, ADGF_UNSTABLE | GF_LOWSPEC_ASSETS, WME_1_9_1),
@@ -1781,6 +1868,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Pole Chudes
 	WME_WINENTRY("polechudes", "",
 		WME_ENTRY1s("data.dcp", "3329e9af9cb41e052de8d929ea49b594", 76297454), Common::RU_RUS, ADGF_UNSTABLE, WME_HEROCRAFT),
+
+	// Precious Pills, Blasting Bacon and Mowing Minds
+	WME_WINENTRY("preciouspills", "",
+		WME_ENTRY1s("data.dcp", "9237dac68dd09e07c5d17d5b904774d0", 22451857), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
 
 	// Project: Doom (Beta)
 	WME_WINENTRY("projectdoom", "Beta",
@@ -4160,6 +4251,14 @@ static const WMEGameDescription gameDescriptions[] = {
 		WME_ENTRY2s("data.dcp", "9f4de2a53ef396cc70786a1dc0ab191d", 828351641,
 					"local.dcp", "a78f5353c6539b4ff9c39223202ba8d0", 433003083), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_8_9),
 
+	// Shadow of Nebula (Steam: Early Access Game, Mar 2016) (English)
+	WME_WINENTRY("shadowofnebula", "",
+		WME_ENTRY1s("data.dcp", "fd3631791e66885427ccdb6063752a6d", 1402609157), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_3),
+
+	// Shadow of Nebula (Demo) (English)
+	WME_WINENTRY("shadowofnebula", "",
+		WME_ENTRY1s("data.dcp", "f16f8a354bd90cb233dafc6b1a318f26", 913267667), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_3),
+
 	// Shadows on the Vatican - Act I: Greed (Legacy Version) (Steam, Jul 2014) (German)
 	WME_WINENTRY("sotv1", "Legacy Version/Steam",
 		WME_ENTRY3s("data.dcp", "e19b63c6aa19d491a4f533ac9c1609ef", 97061505,
@@ -5197,6 +5296,10 @@ static const WMEGameDescription gameDescriptions[] = {
 					"data_hd.dcp", "61b79bd9f732e48bb097227ee615463b", 272405838,
 					"i18n_pl_strings.dcp", "67c194c45375d2e26f8bf5ae17800944", 119354), Common::PL_POL, ADGF_UNSTABLE | GF_IGNORE_SD_FILES | GF_3D, WME_1_9_3),
 
+	// Shelter (Demo)
+	WME_WINENTRY("shelter", "Demo",
+		WME_ENTRY1s("data.dcp", "789f15a26fc06a814cfca723e33fc5f7", 5417715), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_6_2),
+
 	// The Shine of a Star
 	WME_WINENTRY("shinestar", "",
 		WME_ENTRY1s("data.dcp", "f05abe9e2427a5e4f73648fa09c4ba8e", 94113060), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
@@ -5235,6 +5338,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Strange Change
 	WME_WINENTRY("strangechange", "",
 		WME_ENTRY1s("data.dcp", "818e53c1584dac28f336195d7dcfb97d", 3762512), Common::EN_ANY, ADGF_UNSTABLE | GF_3D, WME_1_8_6),
+
+	// Sunny (Demo)
+	WME_WINENTRY("sunny", "Demo",
+		WME_ENTRY1s("data.dcp", "685f4db26ed8134aa82bf5b6bae3963e", 4745194), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_31),
 
 	// Sunrise: The game (German)
 	WME_WINENTRY("sunrise", "",
@@ -5283,6 +5390,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// The Ancient Mark - Episode 1
 	WME_WINENTRY("theancientmark1", "",
 		WME_ENTRY1s("data.dcp", "ca04c26f03b2bd307368b306b297ddd7", 364664692), Common::EN_ANY, ADGF_UNSTABLE, WME_1_9_1),
+
+	// TeTRIks
+	WME_WINENTRY("tetriks", "",
+		WME_ENTRY1s("data.dcp", "94040eb5ae132ac2ef1d40888934f9fa", 2289693), Common::CS_CZE, ADGF_UNSTABLE, WME_1_1_38),
 
 	// The Box
 	WME_WINENTRY("thebox", "",

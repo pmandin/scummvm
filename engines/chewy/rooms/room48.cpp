@@ -134,10 +134,10 @@ void Room48::setup_func() {
 							hideCur();
 							_G(room)->set_timer_status(255, TIMER_STOP);
 							_G(room)->set_timer_status(0, TIMER_STOP);
-							_G(det)->stop_detail(0);
+							_G(det)->stopDetail(0);
 							_G(det)->del_static_ani(0);
 							startSetAILWait(2, 1, ANI_FRONT);
-							g_engine->_sound->stopSound(0);
+							_G(det)->stopSound(0);
 							_G(menu_item) = CUR_WALK;
 							cursorChoice(_G(menu_item));
 							showCur();

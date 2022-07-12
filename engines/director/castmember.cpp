@@ -236,19 +236,36 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 		return nullptr;
 
 	// Check if we need to dither the image
-	if (g_director->_wm->_pixelformat.bytesPerPixel == 1 && _img->getSurface()->format.bytesPerPixel > 1) {
-		ditherFloydImage();
+	int dstBpp = g_director->_wm->_pixelformat.bytesPerPixel;
+	int srcBpp = _img->getSurface()->format.bytesPerPixel;
+
+	const byte *pal = _img->getPalette();
+
+	if (dstBpp == 1) {
+		if (srcBpp > 1
+		// At least early directors were not remapping 8bpp images. But in case it is
+		// needed, here is the code
+#if 0
+		|| (srcBpp == 1 &&
+			memcmp(g_director->_wm->getPalette(), _img->getPalette(), _img->getPaletteColorCount() * 3))
+#endif
+			) {
+
+			ditherFloydImage();
+
+			pal = g_director->_wm->getPalette();
+		}
 	}
 
 	Graphics::MacWidget *widget = new Graphics::MacWidget(g_director->getCurrentWindow(), bbox.left, bbox.top, bbox.width(), bbox.height(), g_director->_wm, false);
 
 	// scale for drawing a different size sprite
-	copyStretchImg(widget->getSurface()->surfacePtr(), bbox);
+	copyStretchImg(widget->getSurface()->surfacePtr(), bbox, pal);
 
 	return widget;
 }
 
-void BitmapCastMember::copyStretchImg(Graphics::Surface *surface, const Common::Rect &bbox) {
+void BitmapCastMember::copyStretchImg(Graphics::Surface *surface, const Common::Rect &bbox, const byte *pal) {
 	const Graphics::Surface *srcSurf;
 
 	if (_ditheredImg)
@@ -269,8 +286,24 @@ void BitmapCastMember::copyStretchImg(Graphics::Surface *surface, const Common::
 				}
 			} else {
 				for (int x = 0, scaleXCtr = 0; x < bbox.width(); x++, scaleXCtr += scaleX) {
-					const int *src = (const int *)srcSurf->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
-					*(int *)surface->getBasePtr(x, y) = *src;
+					const void *ptr = srcSurf->getBasePtr(scaleXCtr / SCALE_THRESHOLD, scaleYCtr / SCALE_THRESHOLD);
+					int32 color;
+
+					switch (srcSurf->format.bytesPerPixel) {
+					case 1:
+						{
+							color = *(const byte *)ptr * 3;
+							color = surface->format.RGBToColor(pal[color], pal[color + 1], pal[color + 2]);
+						}
+						break;
+					case 4:
+						color = *(const int32 *)ptr;
+						break;
+					default:
+						error("Unimplemented src bpp: %d", srcSurf->format.bytesPerPixel);
+					}
+
+					*(int32 *)surface->getBasePtr(x, y) = color;
 				}
 			}
 		}
@@ -289,7 +322,7 @@ void BitmapCastMember::ditherImage() {
 	int h = _initialRect.height();
 
 	_ditheredImg = new Graphics::Surface;
-	_ditheredImg->create(w, h, g_director->_pixelformat);
+	_ditheredImg->create(w, h, Graphics::PixelFormat::createFormatCLUT8());
 
 	for (int y = 0; y < h; y++) {
 		const byte *src = (const byte *)_img->getSurface()->getBasePtr(0, y);
@@ -299,6 +332,10 @@ void BitmapCastMember::ditherImage() {
 			uint32 color;
 
 			switch (bpp) {
+			case 1:
+				color = *((const byte *)src);
+				src += 1;
+				break;
 			case 2:
 				color = *((const uint16 *)src);
 				src += 2;
@@ -320,15 +357,15 @@ void BitmapCastMember::ditherImage() {
 	}
 }
 
-static void updatePixel(byte *surf, int x, int y, int w, int h, int qr, int qg, int qb, int qq) {
+static void updatePixel(byte *surf, int x, int y, int w, int h, int qr, int qg, int qb, int qq, int qdiv) {
 	if (x >= w || y >= h)
 		return;
 
 	byte *ptr = &surf[x * 3 + y * w * 3];
 
-	ptr[0] = CLIP(ptr[0] + qr * qq / 16, 0, 255);
-	ptr[1] = CLIP(ptr[1] + qg * qq / 16, 0, 255);
-	ptr[2] = CLIP(ptr[2] + qb * qq / 16, 0, 255);
+	ptr[0] = CLIP(ptr[0] + qr * qq / qdiv, 0, 255);
+	ptr[1] = CLIP(ptr[1] + qg * qq / qdiv, 0, 255);
+	ptr[2] = CLIP(ptr[2] + qb * qq / qdiv, 0, 255);
 }
 
 void BitmapCastMember::ditherFloydImage() {
@@ -342,29 +379,36 @@ void BitmapCastMember::ditherFloydImage() {
 	byte *tmpSurf = (byte *)malloc(w * h * 3);
 
 	int bpp = _img->getSurface()->format.bytesPerPixel;
+	const byte *pal = _img->getPalette();
 
 	for (int y = 0; y < h; y++) {
 		const byte *src = (const byte *)_img->getSurface()->getBasePtr(0, y);
 		byte *dst = &tmpSurf[y * w * 3];
 
+		byte r, g, b;
+
 		for (int x = 0; x < w; x++) {
 			uint32 color;
 
 			switch (bpp) {
+			case 1:
+				color = *src * 3;
+				src += 1;
+				r = pal[color + 0]; g = pal[color + 1]; b = pal[color + 2];
+				break;
 			case 2:
 				color = *((const uint16 *)src);
 				src += 2;
+				_img->getSurface()->format.colorToRGB(color, r, g, b);
 				break;
 			case 4:
 				color = *((const uint32 *)src);
 				src += 4;
+				_img->getSurface()->format.colorToRGB(color, r, g, b);
 				break;
 			default:
-				error("BitmapCastMember::ditherImage(): Unsupported bit depth: %d", bpp);
+				error("BitmapCastMember::ditherFloydImage(): Unsupported bit depth: %d", bpp);
 			}
-
-			byte r, g, b;
-			_img->getSurface()->format.colorToRGB(color, r, g, b);
 
 			dst[0] = r; dst[1] = g; dst[2] = b;
 			dst += 3;
@@ -372,9 +416,148 @@ void BitmapCastMember::ditherFloydImage() {
 	}
 
 	_ditheredImg = new Graphics::Surface;
-	_ditheredImg->create(w, h, g_director->_pixelformat);
+	_ditheredImg->create(w, h, Graphics::PixelFormat::createFormatCLUT8());
 
-	const byte *pal = g_director->_wm->getPalette();
+	pal = g_director->_wm->getPalette();
+
+	struct DitherParams {
+		int dy, dx, qq;
+	};
+
+	DitherParams paramsNaive[] = {
+		{ 0, 0, 0 }
+	};
+
+	DitherParams paramsFloyd[] = {
+		{ 0, +1, 7 },
+		{ 1, -1, 3 },
+		{ 1,  0, 5 },
+		{ 1, +1, 1 },
+		{ 0,  0, 0 }
+	};
+
+	DitherParams paramsAtkinson[] = {
+		{ 0, +1, 1 },
+		{ 0, +2, 1 },
+		{ 1, -1, 1 },
+		{ 1,  0, 1 },
+		{ 1, +1, 1 },
+		{ 2,  0, 1 },
+		{ 0,  0, 0 }
+	};
+
+	DitherParams paramsBurkes[] = {
+		{ 0, +1, 8 },
+		{ 0, +2, 4 },
+		{ 1, -2, 2 },
+		{ 1, -1, 4 },
+		{ 1,  0, 8 },
+		{ 1, +1, 4 },
+		{ 1, +2, 2 },
+		{ 0,  0, 0 }
+	};
+
+	DitherParams paramsFalseFloyd[] = {
+		{ 0, +1, 3 },
+		{ 1,  0, 3 },
+		{ 1, +1, 2 },
+		{ 0,  0, 0 }
+	};
+
+    DitherParams paramsSierra[] = {
+		{ 0,  1, 5 },
+		{ 0,  2, 3 },
+		{ 1, -2, 2 },
+		{ 1, -1, 4 },
+		{ 1,  0, 5 },
+		{ 1,  1, 4 },
+		{ 1,  2, 2 },
+		{ 2, -1, 2 },
+		{ 2,  0, 3 },
+		{ 2,  1, 2 },
+		{ 0,  0, 0 }
+    };
+
+    DitherParams paramsSierraTwoRow[] = {
+		{ 0,  1, 4 },
+		{ 0,  2, 3 },
+		{ 1, -2, 1 },
+		{ 1, -1, 2 },
+		{ 1,  0, 3 },
+		{ 1,  1, 2 },
+		{ 1,  2, 1 },
+		{ 0,  0, 0 }
+    };
+
+    DitherParams paramsSierraLite[] = {
+		{ 0,  1, 2 },
+		{ 1, -1, 1 },
+		{ 1,  0, 1 },
+		{ 0,  0, 0 }
+    };
+
+    DitherParams paramsStucki[] = {
+		{ 0,  1, 8 },
+		{ 0,  2, 4 },
+		{ 1, -2, 2 },
+		{ 1, -1, 4 },
+		{ 1,  0, 8 },
+		{ 1,  1, 4 },
+		{ 1,  2, 2 },
+		{ 2, -2, 1 },
+		{ 2, -1, 2 },
+		{ 2,  0, 4 },
+		{ 2,  1, 2 },
+		{ 2,  2, 1 },
+		{ 0,  0, 0 }
+    };
+
+    DitherParams paramsJarvis[] = {
+		{ 0,  1, 7 },
+		{ 0,  2, 5 },
+		{ 1, -2, 3 },
+		{ 1, -1, 5 },
+		{ 1,  0, 7 },
+		{ 1,  1, 5 },
+		{ 1,  2, 3 },
+		{ 2, -2, 1 },
+		{ 2, -1, 3 },
+		{ 2,  0, 5 },
+		{ 2,  1, 3 },
+		{ 2,  2, 1 },
+		{ 0,  0, 0 }
+    };
+
+	struct DitherAlgos {
+		const char *name;
+		DitherParams *params;
+		int qdiv;
+	} const algos[] = {
+		{ "Naive",                paramsNaive,         1 },
+		{ "Floyd-Steinberg",      paramsFloyd,        16 },
+		{ "Atkinson",             paramsAtkinson,      8 },
+		{ "Burkes",               paramsBurkes,       32 },
+		{ "False Floyd-Steinberg",paramsFalseFloyd,    8 },
+		{ "Sierra",               paramsSierra,       32 },
+		{ "Sierra 2",             paramsSierraTwoRow, 16 },
+		{ "Sierra Lite",          paramsSierraLite,    4 },
+		{ "Stucki",               paramsStucki,       42 },
+		{ "Jarvis-Judice-Ninke ", paramsJarvis,       48 },
+		{ nullptr, nullptr, 0 }
+	};
+
+	enum {
+		kDitherNaive,
+		kDitherFloyd,
+		kDitherAtkinson,
+		kDitherBurkes,
+		kDitherFalseFloyd,
+		kDitherSierra,
+		kDitherSierraTwoRow,
+		kDitherSierraLite,
+		kDitherStucki,
+		kDitherJarvis,
+	};
 
 	for (int y = 0; y < h; y++) {
 		const byte *src = &tmpSurf[y * w * 3];
@@ -387,13 +570,14 @@ void BitmapCastMember::ditherFloydImage() {
 			*dst = col;
 
 			int qr = r - pal[col * 3 + 0];
-			int qg = g = pal[col * 3 + 1];
-			int qb = b = pal[col * 3 + 2];
+			int qg = g - pal[col * 3 + 1];
+			int qb = b - pal[col * 3 + 2];
 
-			updatePixel(tmpSurf, x + 1, y,     w, h, qr, qg, qb, 7);
-			updatePixel(tmpSurf, x - 1, y + 1, w, h, qr, qg, qb, 3);
-			updatePixel(tmpSurf, x,     y + 1, w, h, qr, qg, qb, 5);
-			updatePixel(tmpSurf, x + 1, y + 1, w, h, qr, qg, qb, 1);
+			int algo = kDitherFloyd;
+			DitherParams *params = algos[algo].params;
+
+			for (int i = 0; params[i].dx != 0 || params[i].dy != 0; i++)
+				updatePixel(tmpSurf, x + params[i].dx, y + params[i].dy, w, h, qr, qg, qb, params[i].qq, algos[algo].qdiv);
 
 			src += 3;
 			dst++;

@@ -46,7 +46,6 @@ extern const uint8 RAND_NO_USE[MAX_RAND_NO_USE];
 class ChewyFont;
 class Cursor;
 class FontMgr;
-class InputMgr;
 class McgaGraphics;
 class Memory;
 
@@ -204,7 +203,7 @@ public:
 	RaumBlk _room_blk;
 	Flags _flags = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					0, 0, 0, 0, 0, 0, 0, 0 };
-	CustomInfo _Ci;
+	byte *_tempArea = nullptr;
 	GotoPkt _gpkt;
 	bool _disableScreen = false;
 
@@ -228,7 +227,6 @@ public:
 	int16 _cur_ausgang_flag = 0;
 	int16 _room_start_nr = 0;
 	int16 _TmpFrameSpeed = 0;
-	InputMgr *_in = nullptr;
 	Memory *_mem = nullptr;
 	McgaGraphics *_out = nullptr;
 	Cursor *_cur = nullptr;
@@ -353,7 +351,7 @@ int16 calc_mouse_mov_obj(int16 *auto_nr);
 
 void check_mouse_ausgang(int16 x, int16 y);
 
-void calc_ausgang(int16 x, int16 y);
+void calcExit(int16 x, int16 y);
 
 void goAutoXy(int16 x, int16 y, int16 personNum, int16 mode);
 
@@ -448,7 +446,7 @@ void endDialogCloseup(int16 diaNr, int16 blkNr, int16 strEndNr);
 
 void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr,
                        int16 mode);
-void calc_inv_use_txt(int16 test_nr);
+void useItemWithInvItem(int16 itemId);
 bool calc_inv_no_use(int16 test_nr, int16 mode);
 int16 calc_person_txt(int16 p_nr);
 int16 calc_person_click(int16 p_nr);
@@ -479,7 +477,7 @@ void startAadWait(int16 diaNr);
 void start_aad(int16 diaNr);
 void aadWait(int16 strNr);
 void startDialogCloseupWait(int16 diaNr);
-void start_aad(int16 diaNr, int16 ssiNr);
+void start_aad(int16 diaNr, int16 ssiNr, bool continueWhenSpeechEnds = false);
 void wait_auto_obj(int16 nr);
 
 void stop_auto_obj(int16 nr);

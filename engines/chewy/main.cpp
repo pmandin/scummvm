@@ -24,6 +24,7 @@
 #include "chewy/chewy.h"
 #include "chewy/cursor.h"
 #include "chewy/events.h"
+#include "chewy/font.h"
 #include "chewy/mcga_graphics.h"
 #include "chewy/menus.h"
 #include "chewy/dialogs/files.h"
@@ -71,8 +72,8 @@ void game_main() {
 void alloc_buffers() {
 	_G(workpage) = (byte *)MALLOC(64004l);
 	_G(pal) = (byte *)MALLOC(768l);
-	_G(Ci).tempArea = (byte *)MALLOC(64004l);
-	_G(det)->set_taf_ani_mem(_G(Ci).tempArea);
+	_G(tempArea) = (byte *)MALLOC(64004l);
+	_G(det)->set_taf_ani_mem(_G(tempArea));
 }
 
 void free_buffers() {
@@ -84,7 +85,7 @@ void free_buffers() {
 	free(_G(menutaf));
 	free(_G(chewy));
 
-	free(_G(Ci).tempArea);
+	free(_G(tempArea));
 	free(_G(pal));
 	free(_G(workpage));
 }
@@ -183,7 +184,7 @@ void menuEntry() {
 }
 
 void menuExit() {
-	_G(det)->unfreeze_ani();
+	_G(det)->unfreezeAni();
 	_G(uhr)->setAllStatus(TIMER_UNFREEZE);
 	_G(uhr)->resetTimer(0, 0);
 	_G(FrameSpeed) = 0;
@@ -196,6 +197,8 @@ bool mainLoop(int16 mode) {
 	if (_G(flags).MainInput) {
 		switch (g_events->_kbInfo._scanCode) {
 		case Common::KEYCODE_F1:
+			if (_G(cur)->usingInventoryCursor())
+				invent_2_slot(_G(cur)->getInventoryCursor());
 			_G(cur)->setInventoryCursor(-1);
 			_G(menu_item) = CUR_WALK;
 			_G(cur)->showCursor();
@@ -205,6 +208,8 @@ bool mainLoop(int16 mode) {
 			break;
 
 		case Common::KEYCODE_F2:
+			if (_G(cur)->usingInventoryCursor())
+				invent_2_slot(_G(cur)->getInventoryCursor());
 			_G(cur)->setInventoryCursor(-1);
 			_G(menu_item) = CUR_USE;
 			_G(cur)->showCursor();
@@ -214,6 +219,8 @@ bool mainLoop(int16 mode) {
 			break;
 
 		case Common::KEYCODE_F3:
+			if (_G(cur)->usingInventoryCursor())
+				invent_2_slot(_G(cur)->getInventoryCursor());
 			_G(cur)->setInventoryCursor(-1);
 			_G(menu_item) = CUR_LOOK;
 			_G(cur)->showCursor();
@@ -223,6 +230,8 @@ bool mainLoop(int16 mode) {
 			break;
 
 		case Common::KEYCODE_F4:
+			if (_G(cur)->usingInventoryCursor())
+				invent_2_slot(_G(cur)->getInventoryCursor());
 			_G(cur)->setInventoryCursor(-1);
 			_G(menu_item) = CUR_TALK;
 			_G(cur)->showCursor();
@@ -260,8 +269,11 @@ bool mainLoop(int16 mode) {
 
 			_G(out)->setPointer((byte *)g_screen->getPixels());
 			_G(fontMgr)->setFont(_G(font6));
+			if (_G(cur)->usingInventoryCursor())
+				invent_2_slot(_G(cur)->getInventoryCursor());
+			_G(cur)->setInventoryCursor(-1);
 			cursorChoice(CUR_SAVE);
-			if (Dialogs::Files::execute(true) == 1) {
+			if (Dialogs::Files::execute(true)) {
 				retValue = true;
 				_G(fx_blend) = BLEND4;
 			}
@@ -320,6 +332,8 @@ bool mainLoop(int16 mode) {
 				_G(fontMgr)->setFont(_G(font6));
 
 				_G(out)->setPointer((byte *)g_screen->getPixels());
+				if (_G(cur)->usingInventoryCursor())
+					invent_2_slot(_G(cur)->getInventoryCursor());
 				cursorChoice(CUR_SAVE);
 				bool ret = Dialogs::Files::execute(true);
 				if (ret) {
@@ -328,11 +342,13 @@ bool mainLoop(int16 mode) {
 				}
 
 				_G(out)->setPointer(_G(workptr));
-				_G(menu_item) = _G(tmp_menu_item);
 				_G(menu_display) = MENU_HIDE;
 
-				if (!(_G(cur)->usingInventoryCursor() && _G(menu_item) == CUR_USE))
-					cursorChoice(_G(tmp_menu_item));
+				if (!_G(cur)->usingInventoryCursor()) {
+					_G(menu_item) = CUR_WALK;
+					cursorChoice(_G(menu_item));
+				} else
+					_G(menu_item) = CUR_USE;
 
 				_G(flags).SaveMenu = false;
 				_G(cur)->showCursor();
@@ -455,7 +471,7 @@ void setupScreen(SetupScreenMode mode) {
 			plotMainMenu();
 	} else {
 		kb_mov(1);
-		_G(det)->unfreeze_ani();
+		_G(det)->unfreezeAni();
 		check_mouse_ausgang(g_events->_mousePos.x + _G(gameState).scrollx, g_events->_mousePos.y + _G(gameState).scrolly);
 
 		if (!_G(flags).SaveMenu)
@@ -475,7 +491,7 @@ void setupScreen(SetupScreenMode mode) {
 		if (_G(mouseLeftClick)) {
 			if (_G(menu_item) == CUR_WALK) {
 				if (_G(cur_ausgang_flag)) {
-					calc_ausgang(g_events->_mousePos.x + _G(gameState).scrollx, g_events->_mousePos.y + _G(gameState).scrolly);
+					calcExit(g_events->_mousePos.x + _G(gameState).scrollx, g_events->_mousePos.y + _G(gameState).scrolly);
 				} else {
 					if (!_G(flags).ChewyDontGo) {
 						_G(gpkt).Dx = g_events->_mousePos.x - _G(spieler_mi)[P_CHEWY].HotMovX +
@@ -683,7 +699,7 @@ void mous_obj_action(int16 nr, int16 mode, int16 txt_mode, int16 txt_nr) {
 void kb_mov(int16 mode) {
 	bool ende = false;
 	while (!ende) {
-		switch (_G(in)->getSwitchCode()) {
+		switch (g_events->getSwitchCode()) {
 		case Common::KEYCODE_RIGHT:
 			if (g_events->_mousePos.x < 320 - _G(cur)->getCursorWidth())
 				_G(cur)->move(g_events->_mousePos.x + 2, g_events->_mousePos.y);
@@ -976,7 +992,7 @@ void evaluateObj(int16 objectId, int16 mode) {
 	case OBJECT_1:
 	case OBJECT_2:
 		if (mode == INVENTORY_NORMAL)
-			calc_inv_use_txt(objectId);
+			useItemWithInvItem(objectId);
 		break;
 
 	case NO_ACTION:
@@ -1106,9 +1122,9 @@ bool autoMove(int16 movNr, int16 playerNum) {
 			_G(auto_p_nr) = playerNum;
 			int16 tmp = _G(mouseLeftClick);
 			_G(mouseLeftClick) = false;
-			_G(gpkt).Dx = _G(Rdi)->AutoMov[movNr]._x -
+			_G(gpkt).Dx = _G(Rdi)->autoMove[movNr]._x -
 						  _G(spieler_mi)[playerNum].HotMovX + _G(spieler_mi)[playerNum].HotX;
-			_G(gpkt).Dy = _G(Rdi)->AutoMov[movNr]._y -
+			_G(gpkt).Dy = _G(Rdi)->autoMove[movNr]._y -
 						  _G(spieler_mi)[playerNum].HotMovY + _G(spieler_mi)[playerNum].HotY;
 			_G(gpkt).Sx = _G(moveState)[playerNum].Xypos[0] + _G(spieler_mi)[playerNum].HotX;
 			_G(gpkt).Sy = _G(moveState)[playerNum].Xypos[1] + _G(spieler_mi)[playerNum].HotY;
@@ -1128,7 +1144,7 @@ bool autoMove(int16 movNr, int16 playerNum) {
 				while (_G(mov)->auto_go_status()) {
 					if (SHOULD_QUIT)
 						return 0;
-					if (_G(in)->getSwitchCode() == Common::KEYCODE_ESCAPE) {
+					if (g_events->getSwitchCode() == Common::KEYCODE_ESCAPE) {
 						if (_G(flags).ExitMov || _G(flags).BreakAMov) {
 							key = Common::KEYCODE_ESCAPE;
 							_G(mov)->stop_auto_go();
@@ -1147,7 +1163,7 @@ bool autoMove(int16 movNr, int16 playerNum) {
 				_G(mov)->get_mov_vector((int16 *)_G(spieler_mi)[playerNum].XyzStart, (int16 *)_G(spieler_mi)[playerNum].XyzEnd, _G(spieler_mi)[playerNum].Vorschub, &_G(moveState)[playerNum]);
 				get_phase(&_G(moveState)[playerNum], &_G(spieler_mi)[playerNum]);
 				while (!endLoopFl) {
-					if (_G(in)->getSwitchCode() == Common::KEYCODE_ESCAPE || key == Common::KEYCODE_ESCAPE) {
+					if (g_events->getSwitchCode() == Common::KEYCODE_ESCAPE || key == Common::KEYCODE_ESCAPE) {
 						if (_G(flags).ExitMov || _G(flags).BreakAMov) {
 							_G(moveState)[playerNum].Count = 0;
 							movingFl = false;
@@ -1159,7 +1175,7 @@ bool autoMove(int16 movNr, int16 playerNum) {
 
 								setPersonPos(_G(spieler_mi)[playerNum].XyzEnd[0],
 								               _G(spieler_mi)[playerNum].XyzEnd[1],
-								               playerNum, _G(Rdi)->AutoMov[movNr]._sprNr);
+								               playerNum, _G(Rdi)->autoMove[movNr]._sprNr);
 							}
 						}
 						endLoopFl = true;
@@ -1195,7 +1211,7 @@ void goAutoXy(int16 x, int16 y, int16 personNum, int16 mode) {
 		if (mode == ANI_WAIT) {
 			bool endLoopFl = false;
 			while (!endLoopFl) {
-				if (_G(in)->getSwitchCode() == Common::KEYCODE_ESCAPE) {
+				if (g_events->getSwitchCode() == Common::KEYCODE_ESCAPE) {
 					if (_G(flags).ExitMov || _G(flags).BreakAMov) {
 						_G(moveState)[personNum].Count = 0;
 						move_status = false;
@@ -1536,7 +1552,7 @@ void get_user_key(int16 mode) {
 	_G(mouseLeftClick) = false;
 
 	if (!_G(inv_disp_ok)) {
-		switch (_G(in)->getSwitchCode()) {
+		switch (g_events->getSwitchCode()) {
 		case Common::KEYCODE_F5:
 		case Common::KEYCODE_SPACE:
 		case Common::KEYCODE_ESCAPE:
@@ -1634,7 +1650,7 @@ void check_mouse_ausgang(int16 x, int16 y) {
 	}
 }
 
-void calc_ausgang(int16 x, int16 y) {
+void calcExit(int16 x, int16 y) {
 	if (!_G(flags).ExitMov) {
 		_G(mouseLeftClick) = false;
 		int16 nr = _G(obj)->is_exit(x, y);
@@ -1648,9 +1664,9 @@ void calc_ausgang(int16 x, int16 y) {
 				exit_room(nr);
 				_G(gameState)._personRoomNr[P_CHEWY] = _G(gameState).room_e_obj[nr].Exit;
 				_G(room)->loadRoom(&_G(room_blk), _G(gameState)._personRoomNr[P_CHEWY], &_G(gameState));
-				setPersonPos(_G(Rdi)->AutoMov[_G(gameState).room_e_obj[nr].ExitMov]._x -
+				setPersonPos(_G(Rdi)->autoMove[_G(gameState).room_e_obj[nr].ExitMov]._x -
 				               _G(spieler_mi)[_G(auto_p_nr)].HotMovX,
-				               _G(Rdi)->AutoMov[_G(gameState).room_e_obj[nr].ExitMov]._y - _G(spieler_mi)[_G(auto_p_nr)].HotMovY
+				               _G(Rdi)->autoMove[_G(gameState).room_e_obj[nr].ExitMov]._y - _G(spieler_mi)[_G(auto_p_nr)].HotMovY
 				               , P_CHEWY, -1);
 				int16 *ScrXy = (int16 *)_G(ablage)[_G(room_blk).AkAblage];
 				get_scroll_off(_G(moveState)[P_CHEWY].Xypos[0] + _G(spieler_mi)[P_CHEWY].HotX,
@@ -1661,7 +1677,7 @@ void calc_ausgang(int16 x, int16 y) {
 				const int16 paletteId = _G(barriers)->getBarrierId(_G(moveState)[P_CHEWY].Xypos[0] + _G(spieler_mi)[P_CHEWY].HotX,
 				                                              _G(moveState)[P_CHEWY].Xypos[1] + _G(spieler_mi)[P_CHEWY].HotY);
 				setShadowPalette(paletteId, false);
-				setPersonSpr(_G(Rdi)->AutoMov[_G(gameState).room_e_obj[nr].ExitMov]._sprNr, P_CHEWY);
+				setPersonSpr(_G(Rdi)->autoMove[_G(gameState).room_e_obj[nr].ExitMov]._sprNr, P_CHEWY);
 				_G(moveState)[P_CHEWY]._delayCount = 0;
 				_G(fx_blend) = BLEND1;
 				_G(auto_obj) = 0;
@@ -1829,85 +1845,6 @@ bool is_chewy_busy() {
 	}
 
 	return ret;
-}
-
-
-ChewyFont::ChewyFont(Common::String filename) {
-	const uint32 headerFont = MKTAG('T', 'F', 'F', '\0');
-	Common::File stream;
-
-	stream.open(filename);
-
-	uint32 header = stream.readUint32BE();
-
-	if (header != headerFont)
-		error("Invalid resource - %s", filename.c_str());
-
-	stream.skip(4);	// total memory
-	_count = stream.readUint16LE();
-	_first = stream.readUint16LE();
-	_last = stream.readUint16LE();
-	_deltaX = _dataWidth = stream.readUint16LE();
-	_dataHeight = stream.readUint16LE();
-
-	_displayWidth = _dataWidth;
-	_displayHeight = _dataHeight;
-
-	_fontSurface.create(_dataWidth * _count, _dataHeight, Graphics::PixelFormat::createFormatCLUT8());
-
-	int bitIndex = 7;
-
-	byte curr = stream.readByte();
-
-	for (uint n = 0; n < _count; n++) {
-		for (uint y = 0; y < _dataHeight; y++) {
-			byte *p = (byte *)_fontSurface.getBasePtr(n * _dataWidth, y);
-
-			for (uint x = n * _dataWidth; x < n * _dataWidth + _dataWidth; x++) {
-				*p++ = (curr & (1 << bitIndex)) ? 0 : 0xFF;
-
-				bitIndex--;
-				if (bitIndex < 0) {
-					bitIndex = 7;
-					curr = stream.readByte();
-				}
-			}
-		}
-	}
-}
-
-ChewyFont::~ChewyFont() {
-	_fontSurface.free();
-}
-
-void ChewyFont::setDisplaySize(uint16 width, uint16 height) {
-	_displayWidth = width;
-	_displayHeight = height;
-}
-
-void ChewyFont::setDeltaX(uint16 deltaX) {
-	_deltaX = deltaX;
-}
-
-Graphics::Surface *ChewyFont::getLine(const Common::String &texts) {
-	Graphics::Surface *line = new Graphics::Surface();
-	if (texts.size() == 0)
-		return line;
-
-	Common::Rect subrect(0, 0, _dataWidth, _dataHeight);
-	line->create(texts.size() * _deltaX, _dataHeight, Graphics::PixelFormat::createFormatCLUT8());
-	line->fillRect(Common::Rect(line->w, line->h), 0xFF);
-
-	for (uint i = 0; i < texts.size(); i++) {
-		subrect.moveTo(((byte)texts[i] - _first) * _dataWidth, 0);
-		line->copyRectToSurface(_fontSurface, i * (_deltaX - 2), 0, subrect);
-	}
-
-	return line;
-}
-
-Graphics::Surface *FontMgr::getLine(const Common::String &texts) {
-	return _font->getLine(texts);
 }
 
 } // namespace Chewy

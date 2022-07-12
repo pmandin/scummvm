@@ -94,7 +94,7 @@ void timer_action(int16 t_nr) {
 	if (g_engine->_sound->isSpeechActive())
 		return;
 
-#define TIMER(NUM) case NUM: Room##NUM::timer(t_nr, ani_nr); break;
+#define TIMER(NUM) case NUM: default_flag = Room##NUM::timer(t_nr, ani_nr); break;
 	switch (_G(gameState)._personRoomNr[P_CHEWY]) {
 	TIMER(0);
 	TIMER(11);
@@ -217,8 +217,8 @@ void enter_room(int16 eib_nr) {
 	case 17:
 		Room17::entry();
 		if (g_engine->_sound->soundEnabled()) {
-			if (!_G(gameState).R17EnergieOut)
-				g_engine->_sound->playSound(15);
+			if (!_G(gameState).R17EnergyOut)
+				_G(det)->playSound(15, 0);
 		}
 		break;
 
@@ -231,7 +231,7 @@ void enter_room(int16 eib_nr) {
 	case 24:
 		Room24::entry();
 		if (g_engine->_sound->soundEnabled())
-			g_engine->_sound->playSound(17);
+			_G(det)->playSound(17, 0);
 		break;
 
 	ENTRY(25);
@@ -317,7 +317,7 @@ void enter_room(int16 eib_nr) {
 
 void exit_room(int16 eib_nr) {
 	bool no_exit = false;
-	_G(det)->disable_room_sound();
+	g_engine->_sound->stopAllSounds();
 
 	switch (_G(gameState)._personRoomNr[P_CHEWY]) {
 	case 6:
@@ -340,7 +340,7 @@ void exit_room(int16 eib_nr) {
 			_G(gameState).R17Location = 3;
 		_G(gameState).ScrollxStep = 1;
 		_G(flags).NoScroll = false;
-		_G(gameState).R18Gitter = false;
+		_G(gameState).R18Grid = false;
 		_G(gameState).room_e_obj[50].Attribut = 255;
 		_G(gameState).room_e_obj[41].Attribut = EXIT_BOTTOM;
 		break;
@@ -363,13 +363,13 @@ void exit_room(int16 eib_nr) {
 
 	case 23:
 		_G(gameState)._personHide[P_CHEWY] = false;
-		switch (_G(gameState).R23GleiterExit) {
+		switch (_G(gameState).R23GliderExit) {
 		case 16:
 			setPersonPos(126, 110, P_CHEWY, P_RIGHT);
 			break;
 
 		case 25:
-			_G(gameState).R25GleiterExit = true;
+			_G(gameState).R25GliderExit = true;
 			break;
 
 		default:
@@ -672,7 +672,7 @@ static void playIntroSequence() {
 			g_engine->_sound->playRoomMusic(260);
 
 		if (introDialog[i] != -1)
-			start_aad(introDialog[i], -1);
+			start_aad(introDialog[i], -1, true);
 
 		ret = g_engine->_video->playVideo(introVideo[i], false) ? 0 : -1;
 		_G(atds)->stopAad();
@@ -709,22 +709,22 @@ void flic_cut(int16 nr) {
 	bool keepPlaying = true;
 
 	_G(out)->setPointer(nullptr);
-	_G(det)->disable_room_sound();
 	g_engine->_sound->stopAllSounds();
 	g_events->delay(50);
 
 	switch (nr) {
 	case FCUT_SPACECHASE_18:
-		// _G(sndPlayer)->setLoopMode(1)
+		// Play the space chase video, after escaping F5.
+		// The music is placed in the first video of the
+		// series, so we need to keep a copy of it and
+		// dispose it after the series of videos ends.
 		for (i = 0; i < 11 && keepPlaying; i++) {
-			keepPlaying = g_engine->_video->playVideo(FCUT_SPACECHASE_18 + i);
+			keepPlaying = g_engine->_video->playVideo(FCUT_SPACECHASE_18 + i, false, false);
 		}
 
-		// TODO: Reimplement
-		//_G(sndPlayer)->fadeOut(0);
+		g_engine->_sound->stopMusic();
 		_G(out)->fadeOut();
 		_G(out)->cls();
-		//while (_G(sndPlayer)->musicPlaying()) {}
 		break;
 
 	case FCUT_058:
@@ -735,7 +735,7 @@ void flic_cut(int16 nr) {
 		if (!_G(gameState).R43GetPgLady) {
 			g_engine->_video->playVideo(FCUT_060);
 		} else {
-			start_aad(623, -1);
+			start_aad(623, -1, true);
 			g_engine->_video->playVideo(FCUT_061);
 			g_engine->_video->playVideo(FCUT_062);
 		}
@@ -783,7 +783,7 @@ void flic_cut(int16 nr) {
 		break;
 	}
 
-	g_engine->_sound->stopSound();
+	_G(det)->stopSound(0);
 	SHOULD_QUIT_RETURN;
 
 	g_events->delay(50);
@@ -791,7 +791,6 @@ void flic_cut(int16 nr) {
 	if (nr != FCUT_135) {
 		g_engine->_sound->playRoomMusic(_G(gameState)._personRoomNr[0]);
 
-		_G(det)->enable_room_sound();
 		_G(uhr)->resetTimer(0, 0);
 	}
 
@@ -856,7 +855,7 @@ int16 sib_event_no_inv(int16 sib_nr) {
 	case SIB_TERMINAL_R5:
 		if (_G(gameState).R5Terminal) {
 			_G(gameState).R5Terminal = 0;
-			_G(det)->stop_detail(6);
+			_G(det)->stopDetail(6);
 			_G(atds)->set_ats_str(27, TXT_MARK_LOOK, 0, ATS_DATA);
 			_G(atds)->set_ats_str(30, TXT_MARK_LOOK, 0, ATS_DATA);
 		}
@@ -959,7 +958,7 @@ int16 sib_event_no_inv(int16 sib_nr) {
 				_G(det)->startDetail(i, 255, ANI_FRONT);
 		} else {
 			for (int i = 0; i < 5; ++i)
-				_G(det)->stop_detail(i);
+				_G(det)->stopDetail(i);
 		}
 
 		_G(atds)->set_ats_str(94, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);
@@ -1028,11 +1027,11 @@ int16 sib_event_no_inv(int16 sib_nr) {
 
 	case SIB_DOORKNOB_R18:
 		if (_G(gameState).R18DoorBruecke) {
-			g_engine->_sound->stopSound(0);
-			g_engine->_sound->playSound(19, 1);
+			_G(det)->stopSound(0);
+			_G(det)->playSound(19, 1);
 		} else {
-			g_engine->_sound->playSound(19, 0);
-			g_engine->_sound->stopSound(1);
+			_G(det)->playSound(19, 0);
+			_G(det)->stopSound(1);
 		}
 
 		if (!_G(gameState).R6DoorLeftF) {
@@ -1047,9 +1046,9 @@ int16 sib_event_no_inv(int16 sib_nr) {
 
 	case SIB_CART_FACH_R18:
 		start_spz_wait(CH_LGET_O, 1, false, P_CHEWY);
-		_G(gameState).R18CartFach = 0;
+		_G(gameState).R18CartridgeInSlot = false;
 		cur_2_inventory();
-		_G(atds)->set_ats_str(157, 1, AAD_DATA);
+		_G(atds)->set_ats_str(157, TXT_MARK_LOOK, 0, ATS_DATA);
 		break;
 
 	case SIB_SCHLAUCH_R26:
@@ -1122,7 +1121,7 @@ int16 sib_event_no_inv(int16 sib_nr) {
 
 	case SIB_ASHTRAY_R64:
 		// Pick up ashtray
-		_G(det)->stop_detail(0);
+		_G(det)->stopDetail(0);
 		_G(obj)->hide_sib(sib_nr);
 		_G(gameState).R64AshtrayTaken = true;
 		Room64::talk_man(351);
@@ -1267,7 +1266,7 @@ void sib_event_inv(int16 sib_nr) {
 
 	case SIB_CART_FACH_R18:
 		start_spz_wait(CH_LGET_O, 1, false, P_CHEWY);
-		_G(gameState).R18CartFach = true;
+		_G(gameState).R18CartridgeInSlot = true;
 		delInventory(_G(cur)->getInventoryCursor());
 		_G(det)->showStaticSpr(7);
 		_G(atds)->set_ats_str(157, TXT_MARK_LOOK, 1, ATS_DATA);

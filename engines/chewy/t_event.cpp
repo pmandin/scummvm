@@ -25,7 +25,6 @@
 #include "chewy/dialogs/inventory.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
-#include "chewy/mouse.h"
 #include "chewy/rooms/rooms.h"
 
 namespace Chewy {
@@ -114,7 +113,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 416:
-						Room68::look_kaktus();
+						Room68::lookAtCactus();
 						break;
 
 					default:
@@ -216,7 +215,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 114:
-						switchRoom(_G(gameState).R23GleiterExit);
+						switchRoom(_G(gameState).R23GliderExit);
 						break;
 
 					case 117:
@@ -261,7 +260,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 
 					case 149:
 					case 153:
-						retValue = Room18::calc_surimy();
+						retValue = Room18::calcSurimy();
 						break;
 
 					case 154:
@@ -273,7 +272,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 159:
-						retValue = Room18::calc_schalter();
+						retValue = Room18::calcMonitorControls();
 						break;
 
 					case 161:
@@ -304,7 +303,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 187:
-						retValue = Room25::use_gleiter();
+						retValue = Room25::useGlider();
 						break;
 
 					case 203:
@@ -324,7 +323,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 215:
-						retValue = Room29::use_schlauch();
+						retValue = Room29::useWaterHose();
 						break;
 
 					case 216:
@@ -332,11 +331,11 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 218:
-						retValue = Room29::get_schlauch();
+						retValue = Room29::getWaterHose();
 						break;
 
 					case 219:
-						retValue = Room25::gleiter_loesch();
+						retValue = Room25::extinguishGliderFlames();
 						break;
 
 					case 220:
@@ -384,15 +383,15 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 249:
-						retValue = Room37::use_wippe();
+						retValue = Room37::useSeesaw();
 						break;
 
 					case 251:
-						Room37::use_hahn();
+						Room37::useRooster();
 						break;
 
 					case 256:
-						retValue = Room37::use_glas();
+						retValue = Room37::useGlass();
 						break;
 
 					case 263:
@@ -588,19 +587,19 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 406:
-						retValue = Room68::use_papagei();
+						retValue = Room68::useParrot();
 						break;
 
 					case 407:
-						retValue = Room68::use_diva();
+						retValue = Room68::useDiva();
 						break;
 
 					case 410:
-						retValue = Room68::use_keeper();
+						retValue = Room68::useBartender();
 						break;
 
 					case 414:
-						retValue = Room68::use_indigo();
+						retValue = Room68::useIndigo();
 						break;
 
 					case 425:
@@ -786,7 +785,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 114:
-						switchRoom(_G(gameState).R23GleiterExit);
+						switchRoom(_G(gameState).R23GliderExit);
 						break;
 
 					case 227:
@@ -826,7 +825,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 					switch (txtNr) {
 					case 11:
 						autoMove(3, P_CHEWY);
-						_G(det)->stop_detail(5);
+						_G(det)->stopDetail(5);
 						_G(det)->startDetail(6, 2, ANI_FRONT);
 						Room2::jump_out_r1(9);
 						break;
@@ -855,7 +854,7 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 251:
-						Room37::talk_hahn();
+						Room37::talkWithRooster();
 						break;
 
 					case 265:
@@ -940,15 +939,15 @@ int16 atsAction(int16 txtNr, int16 txtMode, int16 mode) {
 						break;
 
 					case 408:
-						Room68::talk_papagei();
+						Room68::talkWithParrot();
 						break;
 
 					case 410:
-						Room68::talk_keeper();
+						Room68::talkToBartender();
 						break;
 
 					case 414:
-						Room68::talk_indigo();
+						Room68::talkToIndigo();
 						break;
 
 					case 419:
@@ -1192,7 +1191,7 @@ void selectDialogOption(int16 diaNr, int16 blkNr, int16 strEndNr) {
 		case 18:
 		case 19:
 			if (blkNr == 0 && strEndNr == 4)
-				_G(gameState).R67LiedOk = true;
+				_G(gameState).R67SongOk = true;
 
 			break;
 
@@ -1262,13 +1261,13 @@ void endDialogCloseup(int16 diaNr, int16 blkNr, int16 strEndNr) {
 	if (mode == AAD_STR_START) \
 		talkAni = tmp; \
 	else \
-		_G(det)->stop_detail(tmp)
+		_G(det)->stopDetail(tmp)
 
 #define START_STOP(NUM) \
 	if (mode == AAD_STR_START) \
 		talkAni = NUM; \
 	else \
-		_G(det)->stop_detail(NUM) \
+		_G(det)->stopDetail(NUM) \
 
 
 void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
@@ -1469,7 +1468,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 				talkAni = 1;
 			} else {
 				_G(room)->set_timer_status(0, TIMER_START);
-				_G(det)->stop_detail(1);
+				_G(det)->stopDetail(1);
 				_G(det)->set_static_ani(0, -1);
 			}
 			break;
@@ -1489,7 +1488,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 				talkAni = 0;
 			} else {
 				_G(room)->set_timer_status(1, TIMER_START);
-				_G(det)->stop_detail(0);
+				_G(det)->stopDetail(0);
 				_G(det)->set_static_ani(1, -1);
 			}
 		}
@@ -1510,7 +1509,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 			if (mode == AAD_STR_START) {
 				_G(det)->startDetail(5, 255, ANI_FRONT);
 			} else {
-				_G(det)->stop_detail(5);
+				_G(det)->stopDetail(5);
 			}
 			break;
 
@@ -1564,7 +1563,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 				if (mode == AAD_STR_START) {
 					_G(det)->startDetail(tmp, 255, ANI_FRONT);
 				} else {
-					_G(det)->stop_detail(tmp);
+					_G(det)->stopDetail(tmp);
 				}
 				++tmp;
 			}
@@ -1771,7 +1770,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 
 		case P_3:
 			if (mode == AAD_STR_START) {
-				_G(det)->stop_detail(2);
+				_G(det)->stopDetail(2);
 			} else {
 				stop_spz();
 			}
@@ -1818,7 +1817,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 					talkAni = 2;
 				} else {
 					_G(room)->set_timer_status(8, TIMER_START);
-					_G(det)->stop_detail(2);
+					_G(det)->stopDetail(2);
 					_G(det)->set_static_ani(8, -1);
 				}
 				break;
@@ -1834,7 +1833,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 						talkAni = 2;
 					} else {
 						_G(room)->set_timer_status(0, TIMER_START);
-						_G(det)->stop_detail(2);
+						_G(det)->stopDetail(2);
 						_G(det)->set_static_ani(0, -1);
 					}
 					break;
@@ -1954,7 +1953,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 					if (diaNr != 376)
 						talkAni = 1;
 				} else if (diaNr != 376)
-					_G(det)->stop_detail(1);
+					_G(det)->stopDetail(1);
 
 				break;
 
@@ -2105,7 +2104,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 		if (mode == AAD_STR_START) {
 			_G(det)->startDetail(personNr, 255, ANI_FRONT);
 		} else {
-			_G(det)->stop_detail(personNr);
+			_G(det)->stopDetail(personNr);
 		}
 		break;
 
@@ -2128,7 +2127,7 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 				_G(gameState)._personHide[P_CHEWY] = true;
 				talkAni = 29;
 			} else {
-				_G(det)->stop_detail(29);
+				_G(det)->stopDetail(29);
 				_G(gameState)._personHide[P_CHEWY] = false;
 			}
 			break;
@@ -2144,23 +2143,23 @@ void atdsStringStart(int16 diaNr, int16 strNr, int16 personNr, int16 mode) {
 
 	if (oldFormat) {
 		_G(det)->startDetail(_G(talk_start_ani), 255, ANI_FRONT);
-		_G(det)->stop_detail(talkStopAni);
+		_G(det)->stopDetail(talkStopAni);
 		_G(det)->hideStaticSpr(_G(talk_hide_static));
 		_G(det)->showStaticSpr(talkShowStatic);
 	} else {
 		_G(det)->startDetail(talkAni, 255, ANI_FRONT);
-		_G(det)->stop_detail(stopAni);
+		_G(det)->stopDetail(stopAni);
 	}
 }
 
 #undef START_STOP
 #undef START_STOP_TMP
 
-void calc_inv_use_txt(int16 test_nr) {
+void useItemWithInvItem(int16 itemId) {
 	int scrollx, scrolly;
 	int16 ret;
 
-	switch (test_nr) {
+	switch (itemId) {
 	case NOTEBOOK_OPEN_INV:
 	case MONOCLE_INV:
 		scrollx = _G(gameState).scrollx;
@@ -2173,14 +2172,15 @@ void calc_inv_use_txt(int16 test_nr) {
 		_G(out)->map_spr2screen(_G(ablage)[_G(room_blk).AkAblage], _G(gameState).scrollx, _G(gameState).scrolly);
 		_G(out)->copyToScreen();
 
-		while (_G(in)->getSwitchCode() != Common::KEYCODE_ESCAPE) {
+		while (g_events->getSwitchCode() != Common::KEYCODE_ESCAPE) {
 			g_events->update();
 			SHOULD_QUIT_RETURN;
 		}
-		while (_G(in)->getSwitchCode() != Common::KEYCODE_INVALID) {
-			g_events->update();
-			SHOULD_QUIT_RETURN;
-		}
+
+		EVENTS_CLEAR;
+		g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
+		g_events->_kbInfo._keyCode = '\0';
+		_G(minfo).button = 0;
 
 		_G(room)->load_tgp(_G(gameState)._personRoomNr[P_CHEWY], &_G(room_blk), EPISODE1_TGP, true, EPISODE1);
 
@@ -2188,25 +2188,25 @@ void calc_inv_use_txt(int16 test_nr) {
 		_G(gameState).scrolly = scrolly;
 		break;
 
-	case ANGEL_INV:
-	case KNOCHEN_INV:
+	case FISHINGROD_INV:
+	case BONE_INV:
 		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
-		ret = del_invent_slot(test_nr);
-		_G(gameState).InventSlot[ret] = ANGEL2_INV;
-		_G(obj)->changeInventory(test_nr, ANGEL2_INV, &_G(room_blk));
+		ret = del_invent_slot(itemId);
+		_G(gameState).InventSlot[ret] = FISHING_ROD_INV;
+		_G(obj)->changeInventory(itemId, FISHING_ROD_INV, &_G(room_blk));
 		break;
 
-	case KUERBIS1_INV:
-		ret = del_invent_slot(KUERBIS1_INV);
+	case PUMPKIN_INV:
+		ret = del_invent_slot(PUMPKIN_INV);
 		_G(gameState).InventSlot[ret] = K_MASKE_INV;
-		_G(obj)->changeInventory(KUERBIS1_INV, K_MASKE_INV, &_G(room_blk));
+		_G(obj)->changeInventory(PUMPKIN_INV, K_MASKE_INV, &_G(room_blk));
 		invent_2_slot(K_FLEISCH_INV);
 		invent_2_slot(K_KERNE_INV);
 		break;
 
-	case MESSER_INV:
+	case KNIFE_INV:
 		if (_G(cur)->getInventoryCursor() == 40) {
 			delInventory(_G(cur)->getInventoryCursor());
 			_G(menu_item) = CUR_USE;
@@ -2215,30 +2215,30 @@ void calc_inv_use_txt(int16 test_nr) {
 			invent_2_slot(K_FLEISCH_INV);
 			invent_2_slot(K_KERNE_INV);
 		} else if (_G(cur)->getInventoryCursor() == 88) {
-			_G(gameState).flags26_10 = true;
+			_G(gameState).changedArtifactOrigin = true;
 			startAadWait(_G(gameState)._personRoomNr[P_CHEWY] + 350);
 		}
 		break;
 
-	case BRIEF_INV:
+	case LETTER_INV:
 		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
-		_G(gameState).R42BriefMarke = true;
-		ret = del_invent_slot(BRIEF_INV);
-		_G(gameState).InventSlot[ret] = BRIEF2_INV;
-		_G(obj)->changeInventory(BRIEF_INV, BRIEF2_INV, &_G(room_blk));
+		_G(gameState).R42LetterStamped = true;
+		ret = del_invent_slot(LETTER_INV);
+		_G(gameState).InventSlot[ret] = STAMPEDLETTER_INV;
+		_G(obj)->changeInventory(LETTER_INV, STAMPEDLETTER_INV, &_G(room_blk));
 		break;
 
-	case FLASCHE_INV:
+	case BOTTLE_INV:
 		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
 		// fall through
 
-	case WOLLE_INV:
-		remove_inventory(WOLLE_INV);
-		_G(atds)->set_ats_str(FLASCHE_INV, 1, INV_ATS_DATA);
+	case WOOL_INV:
+		remove_inventory(WOOL_INV);
+		_G(atds)->set_ats_str(BOTTLE_INV, 1, INV_ATS_DATA);
 		_G(gameState).R56WhiskyMix = true;
 		break;
 
@@ -2247,24 +2247,24 @@ void calc_inv_use_txt(int16 test_nr) {
 		delInventory(_G(cur)->getInventoryCursor());
 		_G(menu_item) = CUR_USE;
 		cursorChoice(_G(menu_item));
-		ret = del_invent_slot(test_nr);
+		ret = del_invent_slot(itemId);
 		_G(gameState).InventSlot[ret] = B_MARY2_INV;
-		_G(obj)->changeInventory(test_nr, B_MARY2_INV, &_G(room_blk));
+		_G(obj)->changeInventory(itemId, B_MARY2_INV, &_G(room_blk));
 		break;
 
 	case 13:
-		_G(gameState).flags26_10 = true;
+		_G(gameState).changedArtifactOrigin = true;
 		_G(flags).InventMenu = false;
 		start_spz(CH_TALK6, 255, false, P_CHEWY);
 		startAadWait(_G(gameState)._personRoomNr[P_CHEWY] + 350);
 		_G(flags).InventMenu = true;
-		_G(atds)->set_ats_str(ARTE_INV, 1, INV_ATS_DATA);
+		_G(atds)->set_ats_str(ARTIFACT_INV, 1, INV_ATS_DATA);
 		break;
 
 	case 88:
-		_G(gameState).flags26_10 = true;
+		_G(gameState).changedArtifactOrigin = true;
 		startAadWait(350);
-		_G(atds)->set_ats_str(ARTE_INV, 1, INV_ATS_DATA);
+		_G(atds)->set_ats_str(ARTIFACT_INV, 1, INV_ATS_DATA);
 		break;
 
 	case 102:
@@ -2273,7 +2273,7 @@ void calc_inv_use_txt(int16 test_nr) {
 		_G(menu_item) = CUR_USE;
 		cursorChoice(CUR_USE);
 
-		ret = del_invent_slot(test_nr);
+		ret = del_invent_slot(itemId);
 		_G(gameState).InventSlot[ret] = 110;
 		_G(obj)->changeInventory(104, 110, &_G(room_blk));
 		break;
@@ -2407,7 +2407,7 @@ int16 calc_person_txt(int16 p_nr) {
 				break;
 
 			case 42:
-				if (!_G(gameState).R42MarkeOk && !_G(gameState).R42HoToBeamter) {
+				if (!_G(gameState).R42StampOk && !_G(gameState).R42HoToBeamter) {
 					_G(menu_item) = CUR_HOWARD;
 					cursorChoice(_G(menu_item));
 					txt_nr = 30000;
@@ -2503,7 +2503,7 @@ int16 calc_person_click(int16 p_nr) {
 				Room67::kostuem_aad(377);
 				action_ret = true;
 			} else if (_G(gameState)._personRoomNr[P_CHEWY] == 68) {
-				Room68::kostuem_aad(387);
+				Room68::useDressOnNichelle(387);
 				action_ret = true;
 			}
 			break;
@@ -2750,7 +2750,6 @@ void calc_person_dia(int16 p_nr) {
 			showCur();
 		} else {
 			_G(room_blk).AadLoad = false;
-			_G(room_blk).AtsLoad = false;
 			_G(gameState).PersonDiaTmpRoom[p_nr] = _G(gameState)._personRoomNr[P_CHEWY];
 			save_person_rnr();
 

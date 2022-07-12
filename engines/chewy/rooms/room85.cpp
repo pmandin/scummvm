@@ -32,10 +32,8 @@ namespace Chewy {
 namespace Rooms {
 
 void Room85::entry(int16 eib_nr) {
-	g_engine->_sound->playSound(0, 0);
-	g_engine->_sound->playSound(0);
-	g_engine->_sound->playSound(0, 1);
-	g_engine->_sound->playSound(0, 1, false);
+	_G(det)->playSound(0, 0);
+	_G(det)->playSound(0, 1);
 	_G(gameState).ScrollxStep = 2;
 	_G(SetUpScreenFunc) = setup_func;
 	_G(spieler_mi)[P_HOWARD].Mode = true;
@@ -155,7 +153,7 @@ int Room85::proc2() {
 		return 0;
 
 	autoMove(2, P_CHEWY);
-	_G(det)->stop_detail(1);
+	_G(det)->stopDetail(1);
 	startSetAILWait(2, 1, ANI_FRONT);
 	_G(gameState)._personRoomNr[P_HOWARD] = 89;
 	cur_2_inventory();

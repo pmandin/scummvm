@@ -19,27 +19,49 @@
  *
  */
 
-#ifndef CHEWY_MOUSE_H
-#define CHEWY_MOUSE_H
+#ifndef CHEWY_FONT_H
+#define CHEWY_FONT_H
 
-#include "common/keyboard.h"
-#include "common/rect.h"
+#include "common/str.h"
+#include "graphics/surface.h"
 
 namespace Chewy {
 
-#define MOUSE_LEFT 255
-#define MOUSE_CENTER 254
-
-class InputMgr {
+class ChewyFont {
 public:
-	InputMgr();
-	~InputMgr();
+	ChewyFont(Common::String filename);
+	virtual ~ChewyFont();
 
-	int16 findHotspot(const Common::Rect *hotspots);
+	Graphics::Surface *getLine(const Common::String &texts);
+	void setDisplaySize(uint16 width, uint16 height);
+	void setDeltaX(uint16 deltaX);
 
-	int16 getSwitchCode();
+	uint16 getDataWidth() const { return _dataWidth; }
+	uint16 getDataHeight() const { return _dataHeight; }
+	uint16 getFirst() const { return _first; }
+	uint16 getLast() const { return _last; }
 
-	int16 _hotkey = Common::KEYCODE_INVALID;
+private:
+	uint16 _count, _first, _last;
+	uint16 _dataWidth, _dataHeight;
+	uint16 _displayWidth, _displayHeight;
+	uint16 _deltaX;
+
+	Graphics::Surface _fontSurface;
+};
+
+class FontMgr {
+public:
+	FontMgr() : _font(nullptr) {};
+	virtual ~FontMgr() {};
+
+	Graphics::Surface *getLine(const Common::String &texts);
+
+	void setFont(ChewyFont *font) { _font = font; }
+	ChewyFont *getFont() { return _font; }
+
+private:
+	ChewyFont *_font;
 };
 
 } // namespace Chewy

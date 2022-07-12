@@ -41,7 +41,7 @@ namespace Scumm {
 /*
  * Mouse cursor cycle colors (for the default crosshair).
  */
-static const byte default_v1_cursor_colors[4] = {
+static const byte default_v0_cursor_colors[4] = {
 	1, 1, 12, 11
 };
 
@@ -465,8 +465,12 @@ void ScummEngine_v2::setBuiltinCursor(int idx) {
 
 	memset(_grabbedCursor, 0xFF, sizeof(_grabbedCursor));
 
-	if (_game.version <= 1)
-		color = default_v1_cursor_colors[idx];
+	if (_game.version == 0)
+		color = default_v0_cursor_colors[idx];
+	else if (_renderMode == Common::kRenderCGA || _renderMode == Common::kRenderCGAComp)
+		color = (idx & 1) * 3;
+	else if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG || _renderMode == Common::kRenderCGA_BW)
+		color = idx & 1;
 	else
 		color = default_cursor_colors[idx];
 
@@ -561,6 +565,30 @@ void ScummEngine_v2::setBuiltinCursor(int idx) {
 		*(hotspot - (_cursor.width * 5) + 1) = color;
 		*(hotspot + (_cursor.width * 5) - 1) = color;
 		*(hotspot + (_cursor.width * 5) + 1) = color;
+
+		if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG || _renderMode == Common::kRenderCGA_BW) {
+			const byte *src = &_grabbedCursor[_cursor.width * _cursor.height - 1];
+
+			_cursor.width <<= 1;
+			_cursor.height <<= 1;
+			_cursor.hotspotX <<= 1;
+			_cursor.hotspotY <<= 1;
+
+			byte *dst1 = &_grabbedCursor[_cursor.width * _cursor.height - 1];
+			byte *dst2 = dst1 - _cursor.width;
+
+			while (dst2 >= _grabbedCursor) {
+				for (i = _cursor.width >> 1; i; --i) {
+					uint8 col2 = (_renderMode == Common::kRenderCGA_BW) ? *src : 0xFF;
+					*dst1-- = col2;
+					*dst1-- = col2;
+					*dst2-- = *src;
+					*dst2-- = *src--;
+				}
+				dst1 -= _cursor.width;
+				dst2 -= _cursor.width;
+			}
+		}
 	}
 
 	updateCursor();

@@ -35,7 +35,6 @@ namespace Chewy {
 void standard_init() {
 	_G(mem) = new Memory();
 	_G(out) = new McgaGraphics();
-	_G(in) = new InputMgr();
 	_G(fx) = new Effect();
 	_G(txt) = new Text();
 	_G(barriers) = new Barriers();
@@ -78,7 +77,7 @@ void standard_init() {
 
 void var_init() {
 	_G(Rdi) = _G(det)->getRoomDetailInfo();
-	_G(Sdi) = &_G(Rdi)->Sinfo[0];
+	_G(Sdi) = &_G(Rdi)->staticSprite[0];
 	_G(Adi) = &_G(Rdi)->Ainfo[0];
 
 	_G(auto_p_nr) = 0;
@@ -145,7 +144,6 @@ void init_room() {
 	_G(room_blk).Rmo = _G(gameState).room_m_obj;
 	_G(room_blk).Rsi = _G(gameState).room_s_obj;
 	_G(room_blk).AadLoad = true;
-	_G(room_blk).AtsLoad = true;
 }
 
 void new_game() {
@@ -208,7 +206,6 @@ void tidy() {
 	delete _G(barriers);
 	delete _G(txt);
 	delete _G(fx);
-	delete _G(in);
 	delete _G(out);
 	delete _G(mem);
 
@@ -222,7 +219,6 @@ void tidy() {
 	_G(barriers) = nullptr;
 	_G(txt) = nullptr;
 	_G(fx) = nullptr;
-	_G(in) = nullptr;
 	_G(out) = nullptr;
 	_G(mem) = nullptr;
 }

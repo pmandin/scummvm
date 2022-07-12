@@ -210,7 +210,7 @@ void Archive::dumpChunk(Resource &res, Common::DumpFile &out) {
 	if (!resStream) {
 		return;
 	}
-	uint32 len = res.size;
+	uint32 len = resStream->size();
 
 	if (dataSize < len) {
 		free(data);
@@ -307,6 +307,8 @@ void MacArchive::readTags() {
 
 			res.offset = res.size = 0; // unused
 			res.name = _resFork->getResName(tagArray[i], idArray[j]);
+			res.tag = tagArray[i];
+			res.index = idArray[j];
 			debug(3, "Found MacArchive resource '%s' %d: %s", tag2str(tagArray[i]), idArray[j], res.name.c_str());
 			if (ConfMan.getBool("dump_scripts"))
 				dumpChunk(res, out);

@@ -23,10 +23,9 @@
 #include "chewy/atds.h"
 #include "chewy/defines.h"
 #include "chewy/events.h"
+#include "chewy/font.h"
 #include "chewy/globals.h"
-#include "chewy/main.h"
 #include "chewy/mcga_graphics.h"
-#include "chewy/mouse.h"
 #include "chewy/sound.h"
 #include "chewy/text.h"
 
@@ -85,7 +84,7 @@ Atdsys::Atdsys() {
 	_invBlockNr = -1;
 
 	_dialogResource = new DialogResource(ADS_TXT_STEUER);
-	_text = new Text();
+	_text = _G(txt);
 
 	_dialogCloseupNextBlock._blkNr = 0;
 	_dialogCloseupNextBlock._endNr = 0;
@@ -96,9 +95,6 @@ Atdsys::Atdsys() {
 }
 
 Atdsys::~Atdsys() {
-	delete _atdsHandle;
-	_atdsHandle = nullptr;
-
 	for (int16 i = 0; i < MAX_HANDLE; i++) {
 		if (_atdsMem[i])
 			free(_atdsMem[i]);
@@ -109,17 +105,8 @@ Atdsys::~Atdsys() {
 }
 
 void Atdsys::init() {
-	_atdsHandle = new Common::File();
-	_atdsHandle->open(ATDS_TXT);
-	if (!_atdsHandle->isOpen()) {
-		error("Error opening %s", ATDS_TXT);
-	}
-
-	set_handle(ATDS_TXT, ATS_DATA, ATS_TAP_OFF, ATS_TAP_MAX);
-	set_handle(ATDS_TXT, INV_ATS_DATA, INV_TAP_OFF, INV_TAP_MAX);
-	set_handle(ATDS_TXT, AAD_DATA, AAD_TAP_OFF, AAD_TAP_MAX);
-	set_handle(ATDS_TXT, DIALOG_CLOSEUP_DATA, ADS_TAP_OFF, ADS_TAP_MAX);
-	set_handle(ATDS_TXT, INV_USE_DATA, USE_TAP_OFF, USE_TAP_MAX);
+	set_handle(AAD_DATA, AAD_TAP_OFF, AAD_TAP_MAX);
+	set_handle(DIALOG_CLOSEUP_DATA, ADS_TAP_OFF, ADS_TAP_MAX);
 	_G(gameState).AadSilent = 10;
 	_G(gameState).DelaySpeed = 5;
 	_G(moveState)[P_CHEWY].Delay = _G(gameState).DelaySpeed;
@@ -328,7 +315,9 @@ void Atdsys::set_split_win(int16 nr, int16 x, int16 y) {
 	_ssi[nr]._y = y;
 }
 
-void Atdsys::set_handle(const char *fname, int16 mode, int16 chunkStart, int16 chunkNr) {
+void Atdsys::set_handle(int16 mode, int16 chunkStart, int16 chunkNr) {
+	assert(mode == AAD_DATA || mode == DIALOG_CLOSEUP_DATA);
+
 	uint32 size = _text->findLargestChunk(chunkStart, chunkStart + chunkNr);
 	char *tmp_adr = size ? (char *)MALLOC(size + 3) : nullptr;
 
@@ -339,9 +328,11 @@ void Atdsys::set_handle(const char *fname, int16 mode, int16 chunkStart, int16 c
 }
 
 void Atdsys::load_atds(int16 chunkNr, int16 mode) {
+	assert(mode == AAD_DATA || mode == DIALOG_CLOSEUP_DATA);
+
 	char *txt_adr = _atdsMem[mode];
 
-	if (_atdsHandle && txt_adr) {
+	if (txt_adr) {
 		const uint32 chunkSize = _text->getChunk(chunkNr + _atdsPoolOff[mode])->size;
 		const uint8 *chunkData = _text->getChunkData(chunkNr + _atdsPoolOff[mode]);
 		memcpy(txt_adr, chunkData, chunkSize);
@@ -354,6 +345,11 @@ void Atdsys::load_atds(int16 chunkNr, int16 mode) {
 
 bool Atdsys::start_ats(int16 txtNr, int16 txtMode, int16 color, int16 mode, int16 *vocNr) {
 	assert(mode == ATS_DATA || mode == INV_USE_DATA || mode == INV_USE_DEF);
+
+	EVENTS_CLEAR;
+	g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
+	g_events->_kbInfo._keyCode = '\0';
+	_G(minfo).button = 0;
 
 	*vocNr = -1;
 
@@ -393,16 +389,19 @@ void Atdsys::stop_ats() {
 void Atdsys::print_ats(int16 x, int16 y, int16 scrX, int16 scrY) {
 	if (_atsv.shown) {
 		if (_atdsv._eventsEnabled) {
-			switch (_G(in)->getSwitchCode()) {
+			switch (g_events->getSwitchCode()) {
 			case Common::KEYCODE_ESCAPE:
 			case Common::KEYCODE_RETURN:
-			case MOUSE_LEFT:
+			case Common::MOUSE_BUTTON_LEFT:
 				if (!_mousePush) {
+					EVENTS_CLEAR;
+					g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
+					g_events->_kbInfo._keyCode = '\0';
+					_G(minfo).button = 0;
+
 					if (_atsv._silentCount <= 0 && _atsv._delayCount > _printDelayCount1) {
 						_mousePush = true;
 						_atsv._delayCount = 0;
-						g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
-						g_events->_kbInfo._keyCode = '\0';
 					}
 				}
 				break;
@@ -493,9 +492,16 @@ void Atdsys::delControlBit(int16 txtNr, int16 bitIdx) {
 	_text->delControlBit(txtNr, bitIdx);
 }
 
-int16 Atdsys::start_aad(int16 diaNr) {
+int16 Atdsys::start_aad(int16 diaNr, bool continueWhenSpeechEnds) {
 	if (_aadv._dialog)
 		stopAad();
+
+	_continueWhenSpeechEnds = continueWhenSpeechEnds;
+
+	EVENTS_CLEAR;
+	g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
+	g_events->_kbInfo._keyCode = '\0';
+	_G(minfo).button = 0;
 
 	if (_atdsMem[AAD_HANDLE]) {
 		_aadv._ptr = _atdsMem[AAD_HANDLE];
@@ -537,18 +543,19 @@ void Atdsys::stopAad() {
 void Atdsys::print_aad(int16 scrX, int16 scrY) {
 	if (_aadv._dialog) {
 		if (_atdsv._eventsEnabled) {
-			switch (_G(in)->getSwitchCode()) {
+			switch (g_events->getSwitchCode()) {
 			case Common::KEYCODE_ESCAPE:
 			case Common::KEYCODE_RETURN:
-			case MOUSE_LEFT:
-				EVENTS_CLEAR;
-
+			case Common::MOUSE_BUTTON_LEFT:
 				if (!_mousePush) {
+					EVENTS_CLEAR;
+					g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
+					g_events->_kbInfo._keyCode = '\0';
+					_G(minfo).button = 0;
+
 					if (_aadv._silentCount <= 0 && _aadv._delayCount > _printDelayCount1) {
 						_mousePush = true;
 						_aadv._delayCount = 0;
-						g_events->_kbInfo._scanCode = Common::KEYCODE_INVALID;
-						g_events->_kbInfo._keyCode = '\0';
 					}
 				}
 				break;
@@ -611,7 +618,7 @@ void Atdsys::print_aad(int16 scrX, int16 scrY) {
 					g_engine->_sound->playSpeech(_atdsv._vocNr, false);
 				}
 
-				if (_atdsv._vocNr >= 0 && !g_engine->_sound->isSpeechActive())
+				if (_continueWhenSpeechEnds && _atdsv._vocNr >= 0 && !g_engine->_sound->isSpeechActive())
 					stopAad();
 			}
 
@@ -717,9 +724,9 @@ void Atdsys::aad_search_dia(int16 diaNr, char **ptr) {
 
 bool  Atdsys::startDialogCloseup(int16 diaNr) {
 	bool ret = false;
+	bool end = false;
 
 	load_atds(diaNr, DIALOG_CLOSEUP_DATA);
-	bool end = false;
 
 	if (_atdsMem[ADS_HANDLE][0] == (char)BLOCKENDE &&
 		    _atdsMem[ADS_HANDLE][1] == (char)BLOCKENDE &&

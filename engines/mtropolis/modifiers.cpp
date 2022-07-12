@@ -34,7 +34,7 @@ class CompoundVarLoader : public ISaveReader {
 public:
 	explicit CompoundVarLoader(RuntimeObject *object);
 
-	bool readSave(Common::ReadStream *stream) override;
+	bool readSave(Common::ReadStream *stream, uint32 saveFileVersion) override;
 
 private:
 	RuntimeObject *_object;
@@ -43,7 +43,7 @@ private:
 CompoundVarLoader::CompoundVarLoader(RuntimeObject *object) : _object(object) {
 }
 
-bool CompoundVarLoader::readSave(Common::ReadStream *stream) {
+bool CompoundVarLoader::readSave(Common::ReadStream *stream, uint32 saveFileVersion) {
 	if (_object == nullptr || !_object->isModifier())
 		return false;
 
@@ -52,7 +52,7 @@ bool CompoundVarLoader::readSave(Common::ReadStream *stream) {
 	if (!saveLoad)
 		return false;
 
-	if (!saveLoad->load(modifier, stream))
+	if (!saveLoad->load(modifier, stream, saveFileVersion))
 		return false;
 
 	if (stream->err())
@@ -62,9 +62,6 @@ bool CompoundVarLoader::readSave(Common::ReadStream *stream) {
 
 	return true;
 }
-
-
-
 
 bool BehaviorModifier::load(ModifierLoaderContext &context, const Data::BehaviorModifier &data) {
 	if (data.numChildren > 0) {
@@ -1142,7 +1139,10 @@ const char *BoundaryDetectionMessengerModifier::getDefaultName() const {
 	return "Boundary Detection Messenger";
 }
 
-CollisionDetectionMessengerModifier::CollisionDetectionMessengerModifier() : _runtime(nullptr), _isActive(false) {
+CollisionDetectionMessengerModifier::CollisionDetectionMessengerModifier()
+	: _runtime(nullptr), _isActive(false),
+	  _enableWhen(Event::create()), _disableWhen(Event::create()), _detectionMode(kDetectionModeFirstContact),
+	  _detectInFront(true), _detectBehind(true), _ignoreParent(true), _sendToCollidingElement(false) {
 }
 
 CollisionDetectionMessengerModifier::~CollisionDetectionMessengerModifier() {
@@ -1730,7 +1730,7 @@ void CompoundVariableModifier::SaveLoad::saveInternal(Common::WriteStream *strea
 		childSL.saveLoad->save(childSL.modifier, stream);
 }
 
-bool CompoundVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool CompoundVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	const uint32 numChildren = stream->readUint32BE();
 	if (stream->err())
 		return false;
@@ -1739,7 +1739,7 @@ bool CompoundVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream
 		return false;
 
 	for (const ChildSaveLoad &childSL : _childrenSaveLoad) {
-		if (!childSL.saveLoad->load(childSL.modifier, stream))
+		if (!childSL.saveLoad->load(childSL.modifier, stream, saveFileVersion))
 			return false;
 	}
 
@@ -1822,7 +1822,7 @@ void BooleanVariableModifier::SaveLoad::saveInternal(Common::WriteStream *stream
 	stream->writeByte(_value ? 1 : 0);
 }
 
-bool BooleanVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool BooleanVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	byte b = stream->readByte();
 	if (stream->err())
 		return false;
@@ -1893,7 +1893,7 @@ void IntegerVariableModifier::SaveLoad::saveInternal(Common::WriteStream *stream
 	stream->writeSint32BE(_value);
 }
 
-bool IntegerVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool IntegerVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	_value = stream->readSint32BE();
 
 	if (stream->err())
@@ -1982,7 +1982,7 @@ void IntegerRangeVariableModifier::SaveLoad::saveInternal(Common::WriteStream *s
 	stream->writeSint32BE(_range.max);
 }
 
-bool IntegerRangeVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool IntegerRangeVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	_range.min = stream->readSint32BE();
 	_range.max = stream->readSint32BE();
 
@@ -2072,7 +2072,7 @@ void VectorVariableModifier::SaveLoad::saveInternal(Common::WriteStream *stream)
 	stream->writeDoubleBE(_vector.magnitude);
 }
 
-bool VectorVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool VectorVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	_vector.angleDegrees = stream->readDoubleBE();
 	_vector.magnitude = stream->readDoubleBE();
 
@@ -2164,7 +2164,7 @@ void PointVariableModifier::SaveLoad::saveInternal(Common::WriteStream *stream) 
 	stream->writeSint16BE(_value.y);
 }
 
-bool PointVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool PointVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	_value.x = stream->readSint16BE();
 	_value.y = stream->readSint16BE();
 
@@ -2230,7 +2230,7 @@ void FloatingPointVariableModifier::SaveLoad::saveInternal(Common::WriteStream *
 	stream->writeDoubleBE(_value);
 }
 
-bool FloatingPointVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool FloatingPointVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	_value = stream->readDoubleBE();
 
 	if (stream->err())
@@ -2294,7 +2294,7 @@ void StringVariableModifier::SaveLoad::saveInternal(Common::WriteStream *stream)
 	stream->writeString(_value);
 }
 
-bool StringVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream) {
+bool StringVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	uint32 size = stream->readUint32BE();
 
 	if (stream->err())

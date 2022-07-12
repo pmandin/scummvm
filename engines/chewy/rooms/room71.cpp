@@ -34,10 +34,8 @@ int Room71::_state;
 int Room71::_delay;
 
 void Room71::entry(int16 eib_nr) {
-	g_engine->_sound->playSound(0, 0);
-	g_engine->_sound->playSound(0, 1);
-	g_engine->_sound->playSound(0);
-	g_engine->_sound->playSound(0, 1, false);
+	_G(det)->playSound(0, 0);
+	_G(det)->playSound(0, 1);
 	_G(gameState).ScrollxStep = 2;
 	_G(spieler_mi)[P_HOWARD].Mode = true;
 	_G(spieler_mi)[P_NICHELLE].Mode = true;
@@ -212,7 +210,7 @@ void Room71::proc2() {
 	_G(det)->hideStaticSpr(5);
 	startSetAILWait(1, 1, ANI_FRONT);
 	_G(det)->startDetail(2, 255, false);
-	_G(det)->stop_detail(5);
+	_G(det)->stopDetail(5);
 	_G(det)->showStaticSpr(8);
 	_G(atds)->setControlBit(442, ATS_ACTIVE_BIT);
 	_G(atds)->setControlBit(446, ATS_ACTIVE_BIT);
@@ -295,7 +293,7 @@ void Room71::proc7() {
 	_G(gameState)._personHide[P_NICHELLE] = true;
 	_G(det)->startDetail(7, 255, false);
 	startAadWait(624);
-	_G(det)->stop_detail(7);
+	_G(det)->stopDetail(7);
 	_G(gameState)._personHide[P_NICHELLE] = false;
 	_G(SetUpScreenFunc) = setup_func;
 	_G(flags).NoScroll = false;

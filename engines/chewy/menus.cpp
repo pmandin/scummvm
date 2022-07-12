@@ -23,11 +23,11 @@
 #include "chewy/defines.h"
 #include "chewy/detail.h"
 #include "chewy/events.h"
+#include "chewy/font.h"
 #include "chewy/globals.h"
 #include "chewy/main.h"
 #include "chewy/mcga_graphics.h"
 #include "chewy/menus.h"
-#include "chewy/mouse.h"
 
 namespace Chewy {
 
@@ -283,8 +283,8 @@ void handleDialogCloseupMenu() {
 			}
 		}
 
-		switch (_G(in)->getSwitchCode()) {
-		case 255:
+		switch (g_events->getSwitchCode()) {
+		case Common::MOUSE_BUTTON_LEFT:
 		case Common::KEYCODE_RETURN:
 			if (curY < _G(ads_item_nr) && curY >= 0 && _G(ads_push) == false) {
 				_G(ads_push) = true;
@@ -300,7 +300,7 @@ void handleDialogCloseupMenu() {
 					_G(ads_blk_nr) = an_blk->_blkNr;
 					_G(dialogCloseupItemPtr) = _G(atds)->dialogCloseupItemPtr(_G(ads_dia_nr), _G(ads_blk_nr), &_G(ads_item_nr));
 				}
-				_G(det)->stop_detail(_G(talk_start_ani));
+				_G(det)->stopDetail(_G(talk_start_ani));
 				_G(det)->showStaticSpr(_G(talk_hide_static));
 				_G(talk_start_ani) = -1;
 				_G(talk_hide_static) = -1;

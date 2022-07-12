@@ -62,11 +62,13 @@ void Room13::entry() {
 			_G(obj)->hide_sib(SIB_BANDBUTTON_R13);
 			_G(gameState).R13Bandlauf = true;
 
-			_G(atds)->set_ats_str(94, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);
-
-			_G(atds)->set_ats_str(97, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);
-
-			_G(atds)->set_ats_str(93, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);
+			_G(atds)->set_ats_str(94, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);	// conveyor belt
+			_G(atds)->set_ats_str(97, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);	// lever
+			_G(atds)->set_ats_str(93, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);	// monitor
+		} else {
+			_G(atds)->setControlBit(122, ATS_ACTIVE_BIT);
+			_G(atds)->delControlBit(92, ATS_ACTIVE_BIT);
+			_G(obj)->show_sib(SIB_BANDBUTTON_R13);
 		}
 
 		if (_G(gameState).R13Bandlauf) {
@@ -107,7 +109,7 @@ void Room13::talk_bork() {
 		_G(det)->setStaticPos(12, _G(moveState)[P_CHEWY].Xypos[0], _G(moveState)[P_CHEWY].Xypos[1], false, true);
 		_G(gameState)._personHide[P_CHEWY] = true;
 		startAadWait(33);
-		_G(det)->stop_detail(9);
+		_G(det)->stopDetail(9);
 		_G(det)->load_taf_seq(86, 12, nullptr);
 		_G(gameState)._personHide[P_CHEWY] = false;
 		_G(det)->hideStaticSpr(12);
@@ -178,9 +180,9 @@ void Room13::jmp_band() {
 			setPersonPos(195, 226, P_CHEWY, P_LEFT);
 
 			_G(gameState).R13Bandlauf = false;
-			_G(atds)->set_ats_str(94, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);
-			_G(atds)->set_ats_str(97, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);
-			_G(atds)->set_ats_str(93, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);
+			_G(atds)->set_ats_str(94, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);	// conveyor belt
+			_G(atds)->set_ats_str(97, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);	// lever
+			_G(atds)->set_ats_str(93, TXT_MARK_LOOK, _G(gameState).R13Bandlauf, ATS_DATA);	// monitor
 			_G(obj)->calc_rsi_flip_flop(SIB_BANDBUTTON_R13);
 			_G(obj)->hide_sib(SIB_BANDBUTTON_R13);
 			switchRoom(14);

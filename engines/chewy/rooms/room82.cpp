@@ -34,8 +34,7 @@ namespace Chewy {
 namespace Rooms {
 
 void Room82::entry() {
-	g_engine->_sound->playSound(0, 0);
-	g_engine->_sound->playSound(0);
+	_G(det)->playSound(0, 0);
 	_G(gameState).ScrollxStep = 2;
 	_G(spieler_mi)[P_HOWARD].Mode = true;
 	_G(spieler_mi)[P_NICHELLE].Mode = true;
@@ -233,7 +232,7 @@ void Room82::proc8() {
 	_G(gameState)._personHide[P_NICHELLE] = true;
 	_G(det)->startDetail(10, 255, false);
 	startAadWait(625);
-	_G(det)->stop_detail(10);
+	_G(det)->stopDetail(10);
 	_G(gameState)._personHide[P_NICHELLE] = false;
 	startAadWait(448);
 	_G(det)->del_static_ani(4);

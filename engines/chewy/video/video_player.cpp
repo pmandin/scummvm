@@ -24,7 +24,6 @@
 #include "chewy/cursor.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
-#include "chewy/mouse.h"
 #include "chewy/resource.h"
 #include "chewy/sound.h"
 #include "common/events.h"
@@ -32,8 +31,8 @@
 
 namespace Chewy {
 
-bool VideoPlayer::playVideo(uint num, bool stopMusic) {
-	CfoDecoder *cfoDecoder = new CfoDecoder(g_engine->_sound);
+bool VideoPlayer::playVideo(uint num, bool stopMusic, bool disposeMusic) {
+	CfoDecoder *cfoDecoder = new CfoDecoder(g_engine->_sound, disposeMusic);
 	VideoResource *videoResource = new VideoResource("cut.tap");
 	Common::SeekableReadStream *videoStream = videoResource->getVideoStream(num);
 	_playCount = 0;
@@ -89,7 +88,7 @@ bool VideoPlayer::playVideo(uint num, bool stopMusic) {
 		// FIXME: We ignore mouse events because the game checks
 		// for left mouse down, instead of up, so releasing the
 		// mouse button results in video skipping
-		if (_G(in)->getSwitchCode() == Common::KEYCODE_ESCAPE)
+		if (g_events->getSwitchCode() == Common::KEYCODE_ESCAPE)
 			skipVideo = true;
 
 		// Clear any pending keys
@@ -120,7 +119,7 @@ bool VideoPlayer::handleCustom(uint num, uint frame, CfoDecoder *cfoDecoder) {
 		// Room10::cut_serv
 		_G(atds)->print_aad(scrollx, scrolly);
 		if (frame == 31)
-			start_aad(107, 0);
+			start_aad(107, 0, true);
 		break;
 	case FCUT_009:
 	case FCUT_010:
@@ -137,7 +136,7 @@ bool VideoPlayer::handleCustom(uint num, uint frame, CfoDecoder *cfoDecoder) {
 		if (num == FCUT_010) {
 			_G(atds)->print_aad(scrollx, scrolly);
 			if (frame == 43)
-				start_aad(106, 0);
+				start_aad(106, 0, true);
 		}
 		break;
 	case FCUT_032:
@@ -163,13 +162,13 @@ bool VideoPlayer::handleCustom(uint num, uint frame, CfoDecoder *cfoDecoder) {
 
 		switch (frame) {
 		case 121:
-			start_aad(599, -1);
+			start_aad(599, -1, true);
 			break;
 		case 247:
-			start_aad(600, -1);
+			start_aad(600, -1, true);
 			break;
 		case 267:
-			start_aad(601, 0);
+			start_aad(601, 0, true);
 			break;
 		case 297:
 			//_G(in)->_hotkey = 1;
@@ -187,8 +186,8 @@ bool VideoPlayer::handleCustom(uint num, uint frame, CfoDecoder *cfoDecoder) {
 		break;
 	case FCUT_047:
 		// Room37::cut_serv1
-		if (!_G(gameState).R37Kloppe) {
-			if (!_G(gameState).R37Gebiss) {
+		if (!_G(gameState).R37RoosterFoughtWithDog) {
+			if (!_G(gameState).R37TakenDenturesFromGlass) {
 				_G(det)->plot_static_details(scrollx, scrolly, 9, 9);
 				_G(det)->plot_static_details(scrollx, scrolly, 11, 11);
 				_G(det)->showStaticSpr(11);
@@ -229,7 +228,7 @@ bool VideoPlayer::handleCustom(uint num, uint frame, CfoDecoder *cfoDecoder) {
 		// Room28::cut_serv2 (FCUT_055)
 		if (num != FCUT_055 || frame < 23) {
 			// Room28::cut_serv1 (FCUT_056 / FCUT_064)
-			if (_G(gameState).R28Briefkasten)
+			if (_G(gameState).R28LetterBox)
 				_G(det)->plot_static_details(0, 0, 8, 9);
 			else
 				_G(det)->plot_static_details(0, 0, 7, 7);
@@ -292,7 +291,7 @@ bool VideoPlayer::handleCustom(uint num, uint frame, CfoDecoder *cfoDecoder) {
 			cfoDecoder->rewind();
 			_playCount++;
 		}
-		return (_G(in)->getSwitchCode() == 1) ? false : true;
+		return (g_events->getSwitchCode() == Common::KEYCODE_ESCAPE) ? false : true;
 	case FCUT_116:
 		if (cfoDecoder->endOfVideo() && _playCount < 6) {
 			cfoDecoder->rewind();

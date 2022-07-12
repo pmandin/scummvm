@@ -33,6 +33,7 @@ namespace MTropolis {
 
 Hacks::Hacks() {
 	ignoreMismatchedProjectNameInObjectLookups = false;
+	midiVolumeScale = 256;
 }
 
 Hacks::~Hacks() {
@@ -86,6 +87,61 @@ void ObsidianInventoryWindscreenHooks::onSetPosition(Structural *structural, Com
 	}
 }
 
+class ObsidianSecurityFormWindscreenHooks : public StructuralHooks {
+public:
+	void onSetPosition(Structural *structural, Common::Point &pt) override;
+
+private:
+	Common::Array<uint32> _hiddenCards;
+};
+
+void ObsidianSecurityFormWindscreenHooks::onSetPosition(Structural *structural, Common::Point &pt) {
+	bool cardVisibility = (pt.y > 480);
+
+	// Originally tried manipulating layer order but that's actually not a good solution because
+	// the form graphic is not actually dismissed until the cinematic completes.  It's normally not
+	// visible because the cinematic is drawn over it, but managing that vis-a-vis the cards is a mess,
+	// and the form graphic actually includes a bit of area to the left due to the vidbot's arm being
+	// on the desk, which partially overlaps the cards, but not completely.
+	Structural *subsection = structural->getParent()->getParent();
+	assert(subsection->isSubsection());
+
+	Structural *sharedScene = subsection->getChildren()[0].get();
+	assert(sharedScene);
+
+	Structural *cards = nullptr;
+	for (const Common::SharedPtr<Structural> &child : sharedScene->getChildren()) {
+		if (child->getName() == "Inventory Cards") {
+			cards = child.get();
+			break;
+		}
+	}
+
+	if (!cardVisibility)
+		_hiddenCards.clear();
+
+	if (cards) {
+		for (const Common::SharedPtr<Structural> &child : cards->getChildren()) {
+			assert(child->isElement() && static_cast<Element *>(child.get())->isVisual());
+
+			VisualElement *card = static_cast<VisualElement *>(child.get());
+
+			if (cardVisibility) {
+				if (Common::find(_hiddenCards.begin(), _hiddenCards.end(), card->getStaticGUID()) != _hiddenCards.end())
+					card->setVisible(true);
+			} else {
+				if (card->isVisible()) {
+					_hiddenCards.push_back(card->getStaticGUID());
+					card->setVisible(false);
+				}
+			}
+		}
+	}
+
+	if (cardVisibility)
+		_hiddenCards.clear();
+}
+
 void addObsidianBugFixes(const MTropolisGameDescription &desc, Hacks &hacks) {
 	// Workaround for bug in Obsidian:
 	// When opening the journal in the intro, a script checks if cGSt.cfst.binjournal is false and if so,
@@ -97,6 +153,9 @@ void addObsidianBugFixes(const MTropolisGameDescription &desc, Hacks &hacks) {
 	// cJournalConst is unloaded if the player leaves the journal.  This causes a progression blocker if
 	// the player leaves the journal without clicking Continue.
 	hacks.ignoreMismatchedProjectNameInObjectLookups = true;
+
+	// Bump 70% volume musics to 100%
+	hacks.midiVolumeScale = (100 * 256 / 70);
 
 	// Fix for corrupted frame in transition from the outer edge in Spider to the air puzzle tower.
 	// The data is corrupted in both Mac and Win retail versions.
@@ -167,10 +226,14 @@ void addObsidianImprovedWidescreen(const MTropolisGameDescription &desc, Hacks &
 			0x5ecdee,
 		};
 
+		const uint32 cubeMazeSecurityFormGUID = 0x9602ec;
+
 		Common::SharedPtr<StructuralHooks> invItemHooks(new ObsidianInventoryWindscreenHooks());
 
 		for (uint32 guid : inventoryItemGUIDs)
 			hacks.addStructuralHooks(guid, invItemHooks);
+
+		hacks.addStructuralHooks(cubeMazeSecurityFormGUID, Common::SharedPtr<StructuralHooks>(new ObsidianSecurityFormWindscreenHooks()));
 	}
 	if ((desc.desc.flags & ADGF_DEMO) == 0 && desc.desc.language == Common::EN_ANY && desc.desc.platform == Common::kPlatformMacintosh) {
 		const uint32 inventoryItemGUIDs[] = {
@@ -235,10 +298,14 @@ void addObsidianImprovedWidescreen(const MTropolisGameDescription &desc, Hacks &
 			0x5ecdee,
 		};
 
+		const uint32 cubeMazeSecurityFormGUID = 0x9602ec;
+
 		Common::SharedPtr<StructuralHooks> invItemHooks(new ObsidianInventoryWindscreenHooks());
 
 		for (uint32 guid : inventoryItemGUIDs)
 			hacks.addStructuralHooks(guid, invItemHooks);
+
+		hacks.addStructuralHooks(cubeMazeSecurityFormGUID, Common::SharedPtr<StructuralHooks>(new ObsidianSecurityFormWindscreenHooks()));
 	}
 }
 

@@ -24,6 +24,7 @@
 
 #include "bladerunner/bladerunner.h"
 
+#include "bladerunner/color.h"
 #include "common/str.h"
 #include "common/ustr.h"
 
@@ -48,12 +49,26 @@ class Subtitles {
 	static const int  kTextMaxWidth            = 610;    // In pixels
 	static const int  kMaxTextResourceEntries  = 27;     // Support in-game subs (1) and all possible VQAs (26) with spoken dialogue or translatable text
 	static const int  kMaxLanguageSelectionNum = 1024;   // Max allowed number of languages to select from (should be available in the MIX file)
+	static const uint32  kMinDuration          = 1000;    // Min allowed duration for a queued subtitle
 
 	static const char *SUBTITLES_FILENAME_PREFIXES[kMaxTextResourceEntries];
 	static const char *SUBTITLES_FONT_FILENAME_EXTERNAL;
 	static const char *SUBTITLES_VERSION_TRENAME;
+	static const char *EXTRA_TRENAME;
+
+	static const Color256 kTextColors[];
 
 	static const int  kNumOfSubtitleRoles       = 2;
+
+	static const int  kxcLineCount              = 22;
+	static const int  kxcStringCount            = 14; // 15 - 1
+	Common::String    _xcStrings[kxcStringCount];
+	int               _xcStringIndex;
+
+	Common::String    _xcLineTexts[kxcLineCount];
+	int               _xcLineTimeouts[kxcLineCount];
+	int               _xcLineOffsets[kxcLineCount];
+	uint32            _xcTimeLast;
 
 	BladeRunnerEngine *_vm;
 
@@ -90,6 +105,18 @@ class Subtitles {
 		Common::String currentText;
 		Common::String prevText;
 		Common::Array<Common::String> lines;
+
+		SubtitlesData() : isVisible(false), forceShowWhenNoSpeech(false) { };
+	};
+
+	struct SubtitlesQueueEntry {
+		Common::String quote;
+		uint32 timeStarted;
+		uint32 duration;
+		//uint8 subsRole; // only support secondary subtitles to be queued
+		bool  started;
+
+		SubtitlesQueueEntry() : timeStarted(0), duration(kMinDuration), started(false) { };
 	};
 
 	SubtitlesInfo  _subtitlesInfo;
@@ -97,8 +124,13 @@ class Subtitles {
 
 	Graphics::Font *_font;
 	bool            _useUTF8;
-
-	Common::Array<SubtitlesData> _subtitlesData;
+	bool            _useHDC;
+	Common::Array<Common::String>       _subtitlesEXC;
+	Common::Array<SubtitlesData>        _subtitlesDataActive;
+	Common::Array<SubtitlesQueueEntry>  _subtitlesDataQueue;
+	Common::String                      _loadAvgStr;
+	Common::String                      _excTitlStr;
+	Common::String                      _goVib;
 
 	bool _gameSubsResourceEntriesFound[kMaxTextResourceEntries]; // false if a TRE file did not open successfully
 	bool _isSystemActive;                                        // true if the whole subtitles subsystem should be disabled (due to missing required resources)
@@ -115,10 +147,16 @@ public:
 	void loadOuttakeSubsText(const Common::String &outtakesName, int frame); // get the text for this frame if any
 
 	void setGameSubsText(int subsRole, Common::String dbgQuote, bool force); // for debugging - explicit set subs text
+	void addGameSubsTextToQueue(Common::String dbgQuote, uint32 duration);
+	void clearQueue();
 
 	bool show(int subsRole);
 	bool hide(int subsRole);
 	void clear();
+	bool isHDCPresent();
+	void xcReload();
+	Common::String getLoadAvgStr() const { return _loadAvgStr; }
+	const char *getGoVib() const { return _goVib.c_str(); }
 
 	bool isVisible(int subsRole) const;
 	void tick(Graphics::Surface &s);

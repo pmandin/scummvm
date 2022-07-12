@@ -142,13 +142,13 @@ void Options::execute(TafInfo *ti) {
 			18 + ti->correction[EXIT << 1],
 			8 + ti->correction[(EXIT << 1) + 1], 0);
 
-		key = _G(in)->getSwitchCode();
+		key = g_events->getSwitchCode();
 		if ((_G(minfo).button == 1) || (key == Common::KEYCODE_RETURN)) {
 			// TODO This line breaks screen updates. Not sure what it does
 			// otherwise; options screen seems to work without it.
 			//WAIT_TASTE_LOS
 
-			int16 rect = _G(in)->findHotspot(_G(optionHotspots));
+			int16 rect = _G(out)->findHotspot(_G(optionHotspots));
 			switch (rect) {
 			case 0: // Hamster wheel arrow left (speed down)
 				if (_G(gameState).FramesPerSecond > 6)
@@ -172,10 +172,8 @@ void Options::execute(TafInfo *ti) {
 			case 4: // Speaker (sound)
 				if (g_engine->_sound->soundEnabled()) {
 					g_engine->_sound->toggleSound(false);
-					_G(det)->disable_room_sound();
 				} else {
 					g_engine->_sound->toggleSound(true);
-					_G(det)->enable_room_sound();
 				}
 				g_engine->syncSoundSettings();
 				break;

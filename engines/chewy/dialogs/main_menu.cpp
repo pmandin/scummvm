@@ -26,6 +26,7 @@
 #include "chewy/dialogs/files.h"
 #include "chewy/cursor.h"
 #include "chewy/events.h"
+#include "chewy/font.h"
 #include "chewy/globals.h"
 #include "chewy/main.h"
 #include "chewy/mcga_graphics.h"
@@ -55,7 +56,6 @@ void MainMenu::execute() {
 	g_events->_mousePos.y = 92;
 	_G(cur)->setInventoryCursor(-1);
 	_G(menu_display) = 0;
-	_G(gameState).soundLoopMode = 1;
 
 	bool done = false;
 	while (!done && !SHOULD_QUIT) {
@@ -132,7 +132,7 @@ void MainMenu::execute() {
 void MainMenu::screenFunc() {
 	int vec = _G(det)->maus_vector(g_events->_mousePos.x + _G(gameState).scrollx, g_events->_mousePos.y + _G(gameState).scrolly);
 
-	if (_G(in)->getSwitchCode() == 28 || _G(minfo).button == 1) {
+	if (g_events->getSwitchCode() == 28 || _G(minfo).button == 1) {
 		_selection = vec;
 	}
 }
@@ -174,12 +174,10 @@ void MainMenu::startGame() {
 	exit_room(-1);
 
 	uint8 framesPerSecond = _G(gameState).FramesPerSecond;
-	int sndLoopMode = _G(gameState).soundLoopMode;
 
 	var_init();
 
 	_G(gameState).FramesPerSecond = framesPerSecond;
-	_G(gameState).soundLoopMode = sndLoopMode;
 
 	_G(gameState)._personRoomNr[P_CHEWY] = 0;
 	_G(room)->loadRoom(&_G(room_blk), 0, &_G(gameState));

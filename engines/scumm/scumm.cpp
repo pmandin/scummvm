@@ -247,14 +247,16 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 			dialog.runModal();
 		}
 
-	// Check some render mode restrictions
-	if (_game.version <= 1)
-		_renderMode = Common::kRenderDefault;
-
 	switch (_renderMode) {
 	case Common::kRenderHercA:
 	case Common::kRenderHercG:
 		if (_game.version > 2 && _game.id != GID_MONKEY_EGA)
+			_renderMode = Common::kRenderDefault;
+		break;
+
+	case Common::kRenderCGA_BW:
+	case Common::kRenderCGAComp:
+		if (_game.version > 1 || _game.platform != Common::kPlatformDOS)
 			_renderMode = Common::kRenderDefault;
 		break;
 
@@ -320,9 +322,12 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	else
 		_compositeBuf = nullptr;
 
-	if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) {
-		_herculesBuf = (byte *)malloc(kHercWidth * kHercHeight);
-	}
+	if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG)
+		_hercCGAScaleBuf = (byte *)malloc(kHercWidth * kHercHeight);
+	else if (_renderMode == Common::kRenderCGA_BW)
+		_hercCGAScaleBuf = (byte *)malloc(_screenWidth * 2 * _screenHeight * 2);
+
+	updateColorTableV1(_renderMode);
 
 	_isRTL = (_language == Common::HE_ISR && _game.heversion == 0)
 			&& (_game.id == GID_MANIAC || (_game.version >= 4 && _game.version < 7));
@@ -389,8 +394,7 @@ ScummEngine::~ScummEngine() {
 	free(_arraySlot);
 
 	free(_compositeBuf);
-	free(_herculesBuf);
-
+	free(_hercCGAScaleBuf);
 	free(_16BitPalette);
 
 	if (_macScreen) {
@@ -1116,6 +1120,8 @@ Common::Error ScummEngine::init() {
 	// Initialize backend
 	if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) {
 		initGraphics(kHercWidth, kHercHeight);
+	} else if (_renderMode == Common::kRenderCGA_BW) {
+		initGraphics(_screenWidth * 2, _screenHeight * 2);
 	} else {
 		int screenWidth = _screenWidth;
 		int screenHeight = _screenHeight;

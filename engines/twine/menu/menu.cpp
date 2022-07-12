@@ -1099,7 +1099,7 @@ void Menu::drawBehaviourMenu(int32 left, int32 top, int32 angle) {
 	drawInfoMenu(titleRect.left, titleRect.bottom + 10, titleRect.width());
 }
 
-void Menu::processBehaviourMenu() {
+void Menu::processBehaviourMenu(bool behaviourMenu) {
 	_engine->exitSceneryView();
 	if (_engine->_actor->_heroBehaviour == HeroBehaviourType::kProtoPack) {
 		_engine->_sound->stopSamples();
@@ -1122,7 +1122,8 @@ void Menu::processBehaviourMenu() {
 
 	_engine->_text->initTextBank(TextBankId::Options_and_menus);
 
-	if (_engine->isLba1Classic()) {
+	// quick actions to change behaviour don't show the menu in classic edition
+	if (!behaviourMenu && _engine->isLba1Classic()) {
 		char text[256];
 		_engine->_text->getMenuText(_engine->_actor->getTextIdForBehaviour(), text, sizeof(text));
 		_engine->_redraw->setRenderText(text);
@@ -1250,8 +1251,8 @@ void Menu::processInventoryMenu() {
 
 	if (_engine->_gameState->_inventoryNumLeafs > 0) {
 		_engine->_gameState->giveItem(InventoryItems::kiCloverLeaf);
-		// TODO: shouldn't this get reset? } else {
-		//	_engine->_gameState->removeItem(InventoryItems::kiCloverLeaf);
+	} else {
+		_engine->_gameState->removeItem(InventoryItems::kiCloverLeaf);
 	}
 
 	const int32 left = _engine->width() / 2 - 303;
@@ -1358,6 +1359,9 @@ void Menu::processInventoryMenu() {
 	_engine->_gameState->initEngineProjections();
 
 	_engine->_text->initSceneTextBank();
+
+	// this is a hack to 'fix' https://bugs.scummvm.org/ticket/13677
+	_engine->_input->toggleActionIfActive(TwinEActionType::RecenterScreenOnTwinsen);
 }
 
 } // namespace TwinE

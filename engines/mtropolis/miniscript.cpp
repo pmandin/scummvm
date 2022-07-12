@@ -28,7 +28,7 @@
 
 namespace MTropolis {
 
-static bool miniscriptEvaluateTruth(const DynamicValue& value) {
+bool miniscriptEvaluateTruth(const DynamicValue &value) {
 	// NOTE: Comparing equal to "true" only passes for 1 exactly, but for conditions,
 	// any non-zero value is true.
 	switch (value.getType()) {
@@ -1931,7 +1931,11 @@ bool MiniscriptThread::evaluateTruthOfResult(bool &isTrue) {
 		return false;
 	}
 
-	dereferenceRValue(0, false);
+	MiniscriptInstructionOutcome outcome = dereferenceRValue(0, false);
+	if (outcome != kMiniscriptInstructionOutcomeContinue) {
+		this->error("Miniscript program result couldn't be dereferenced");
+		return false;
+	}
 
 	isTrue = miniscriptEvaluateTruth(_stack[0].value);
 	return true;

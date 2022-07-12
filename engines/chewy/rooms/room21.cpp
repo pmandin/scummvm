@@ -86,7 +86,7 @@ bool Room21::timer(int16 t_nr, int16 ani_nr) {
 void Room21::calc_laser() {
 	if (_G(gameState).R21Hebel1 && !_G(gameState).R21Hebel2 && _G(gameState).R21Hebel3) {
 		_G(gameState).R21Laser1Weg = true;
-		_G(det)->stop_detail(3);
+		_G(det)->stopDetail(3);
 		_G(atds)->setControlBit(134, ATS_ACTIVE_BIT);
 		_G(atds)->delControlBit(133, ATS_ACTIVE_BIT);
 	} else {
@@ -103,7 +103,7 @@ void Room21::calc_laser() {
 		}
 
 		_G(gameState).R21Laser2Weg = true;
-		_G(det)->stop_detail(4);
+		_G(det)->stopDetail(4);
 		_G(atds)->setControlBit(135, ATS_ACTIVE_BIT);
 
 	} else {
@@ -243,7 +243,7 @@ int16 Room21::use_fenster() {
 	if (!_G(cur)->usingInventoryCursor() && !_G(flags).AutoAniPlay && _G(gameState).R21Laser1Weg) {
 		action_flag = true;
 		_G(flags).AutoAniPlay = true;
-		_G(gameState).R18Gitter = true;
+		_G(gameState).R18Grid = true;
 		autoMove(13, P_CHEWY);
 		setPersonPos(541, 66, P_CHEWY, P_LEFT);
 		switchRoom(18);

@@ -49,11 +49,6 @@
 
 namespace Director {
 
-const uint32 wmModeDesktop = Graphics::kWMModalMenuMode | Graphics::kWMModeManualDrawWidgets;
-const uint32 wmModeFullscreen = Graphics::kWMModalMenuMode | Graphics::kWMModeNoDesktop
-	| Graphics::kWMModeManualDrawWidgets | Graphics::kWMModeFullscreen;
-uint32 wmMode = 0;
-
 DirectorEngine *g_director;
 
 DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gameDesc) : Engine(syst), _gameDescription(gameDesc) {
@@ -90,17 +85,20 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 	_version = getDescriptionVersion();
 	_fixStageSize = false;
 	_fixStageRect = Common::Rect();
+	_wmMode = debugChannelSet(-1, kDebugDesktop) ? wmModeDesktop : wmModeFullscreen;
+	_wmWidth = 1024;
+	_wmHeight = 768;
 
 	_wm = nullptr;
 
 	_gameDataDir = Common::FSNode(ConfMan.get("path"));
 
+	SearchMan.addDirectory(_gameDataDir.getPath(), _gameDataDir, 0, 5);
+
 	for (uint i = 0; Director::directoryGlobs[i]; i++) {
 		Common::String directoryGlob = directoryGlobs[i];
 		SearchMan.addSubDirectoryMatching(_gameDataDir, directoryGlob);
 	}
-
-	gameQuirks(_gameDescription->desc.gameId, _gameDescription->desc.platform);
 
 	if (debugChannelSet(-1, kDebug32bpp))
 		_colorDepth = 32;
@@ -128,6 +126,8 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 
 	_surface = nullptr;
 	_tickBaseline = 0;
+
+	gameQuirks(_gameDescription->desc.gameId, _gameDescription->desc.platform);
 }
 
 DirectorEngine::~DirectorEngine() {
@@ -178,12 +178,10 @@ Common::Error DirectorEngine::run() {
 
 	_currentPalette = nullptr;
 
-	wmMode = debugChannelSet(-1, kDebugDesktop) ? wmModeDesktop : wmModeFullscreen;
-
 	if (debugChannelSet(-1, kDebug32bpp))
-		wmMode |= Graphics::kWMMode32bpp;
+		_wmMode |= Graphics::kWMMode32bpp;
 
-	_wm = new Graphics::MacWindowManager(wmMode, &_director3QuickDrawPatterns, getLanguage());
+	_wm = new Graphics::MacWindowManager(_wmMode, &_director3QuickDrawPatterns, getLanguage());
 	_wm->setEngine(this);
 
 	_pixelformat = _wm->_pixelformat;
@@ -193,7 +191,7 @@ Common::Error DirectorEngine::run() {
 	_stage = new Window(_wm->getNextId(), false, false, false, _wm, this, true);
 	*_stage->_refCount += 1;
 
-	if (!debugChannelSet(-1, kDebugDesktop))
+	if (!desktopEnabled())
 		_stage->disableBorder();
 
 	_surface = new Graphics::ManagedSurface(1, 1);
@@ -323,6 +321,10 @@ StartMovie DirectorEngine::getStartMovie() const {
 
 Common::String DirectorEngine::getStartupPath() const {
 	return _options.startupPath;
+}
+
+bool DirectorEngine::desktopEnabled() {
+	return !(_wmMode & Graphics::kWMModeNoDesktop);
 }
 
 } // End of namespace Director

@@ -96,19 +96,19 @@ struct GameFlags {
 
 	bool R17Seil : 1;
 	bool R17HebelOk : 1;
-	bool R17EnergieOut : 1;
+	bool R17EnergyOut : 1;
 	bool R17DoorKommand : 1;
 	bool R18DoorBruecke : 1;
-	bool R18CartFach : 1;
+	bool R18CartridgeInSlot : 1;
 	bool R18CartTerminal : 1;
 	bool R18CartSave : 1;
 
-	bool R18SurimyWurf : 1;
+	bool R18SurimyThrown : 1;
 	bool R18SondeMoni : 1;
-	bool R18MoniSwitch : 1;
-	bool R18Krone : 1;
+	bool R18MonitorSwitch : 1;
+	bool R18Crown : 1;
 	bool R18FirstEntry : 1;
-	bool R18Gitter : 1;
+	bool R18Grid : 1;
 	bool R21Salto : 1;
 	bool R21GitterEnergie : 1;
 
@@ -128,14 +128,14 @@ struct GameFlags {
 	bool R23Cartridge : 1;
 	bool R24FirstEntry : 1;
 	bool R25FirstEntry : 1;
-	bool R25GleiteLoesch : 1;
+	bool R25GliderFlamesExtinguished : 1;
 
 	bool R25SurimyLauf : 1;
-	bool R25GleiterExit : 1;
+	bool R25GliderExit : 1;
 	bool R27SurimyOk : 1;
 	bool R28SurimyCar : 1;
 	bool R28ChewyPump : 1;
-	bool R28Briefkasten : 1;
+	bool R28LetterBox : 1;
 	bool R28EntryHaus : 1;
 	bool R28Manuskript : 1;
 
@@ -144,7 +144,7 @@ struct GameFlags {
 	bool R28PostCar : 1;
 	bool R29Pumpe : 1;
 	bool R29Schlauch1 : 1;
-	bool R29Schlauch2 : 1;
+	bool R29WaterHose : 1;
 	bool R29AutoSitz : 1;
 	bool R31PflanzeWeg : 1;
 
@@ -166,10 +166,10 @@ struct GameFlags {
 	bool R35Schublade : 1;
 	bool R35CatEat : 1;
 
-	bool R37TransHahn : 1;
-	bool R37Gebiss : 1;
-	bool R37HundScham : 1;
-	bool R37Kloppe : 1;
+	bool R37UsedTranslatorOnRooster : 1;
+	bool R37TakenDenturesFromGlass : 1;
+	bool R37DogAshamed : 1;
+	bool R37RoosterFoughtWithDog : 1;
 	bool R37Mes : 1;
 	bool R39TranslatorUsed : 1;
 	bool R39TvOn : 1;
@@ -199,12 +199,12 @@ struct GameFlags {
 	bool R41RepairInfo : 1;
 	bool R41HowardDiaOK : 1;
 	bool R42FirstEntry : 1;
-	bool R42BriefOk : 1;
+	bool R42LetterOk : 1;
 	bool R42HoToBeamter : 1;
 
-	bool R42MarkeOk : 1;
-	bool R42BriefMarke : 1;
-	bool R42BeamterWach : 1;
+	bool R42StampOk : 1;
+	bool R42LetterStamped : 1;
+	bool R42StationEmployeeAway : 1;
 	bool R43GetPgLady : 1;
 	bool R45TaxiOk : 1;
 	bool R45MagOk : 1;
@@ -261,21 +261,21 @@ struct GameFlags {
 	bool R64ManAway : 1;
 	bool flags26_4 : 1;
 	bool flags26_8 : 1;
-	bool flags26_10 : 1;
+	bool changedArtifactOrigin : 1;
 	bool flags26_20 : 1;
 	bool flags26_40 : 1;
-	bool R67LiedOk : 1;
+	bool R67SongOk : 1;
 
 	bool R67KommodeAuf : 1;
 	bool R67KostuemWeg : 1;
 	bool R67PapageiWeg : 1;
 	bool R68KarteDa : 1;
-	bool R68Papagei : 1;
-	bool R68DivaWeg : 1;
-	bool R68Lied : 1;
+	bool R68Parrot : 1;
+	bool R68DivaAway : 1;
+	bool R68Song : 1;
 	bool R68IndigoDia : 1;
 
-	bool R68Gutschein : 1;
+	bool R68DrinkCoupon : 1;
 	bool R71LeopardVined : 1;
 	bool flags28_4 : 1;
 	bool flags28_8 : 1;
@@ -435,9 +435,9 @@ struct GameState : public GameFlags {
 
 	uint8 R17Location = 0;
 
-	int16 R23GleiterExit = 0;
+	int16 R23GliderExit = 0;
 
-	uint8 R24Hebel[3] = { 0 };
+	uint8 R24Lever[3] = { 0 };
 	uint8 R24HebelDir[3] = { 0 };
 	uint8 R24KristallLast[3] = { 0 };
 	uint8 R25SurimyGo = 0;
@@ -505,7 +505,6 @@ struct GameState : public GameFlags {
 	int16 SVal2 = 0;
 	int16 SVal3 = 0;
 	int16 SVal4 = 0;
-	int16 soundLoopMode = 0;
 	uint8 FramesPerSecond = 0;
 };
 

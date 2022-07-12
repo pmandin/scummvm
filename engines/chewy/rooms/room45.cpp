@@ -111,13 +111,13 @@ void Room45::setup_func() {
 						x -= _G(r45_pinfo)[i][1];
 						if (x < -30) {
 							_G(r45_pinfo)[i][0] = 0;
-							_G(det)->stop_detail(3 + i);
+							_G(det)->stopDetail(3 + i);
 						}
 					} else {
 						x += _G(r45_pinfo)[i][1];
 						if (x > 540) {
 							_G(r45_pinfo)[i][0] = 0;
-							_G(det)->stop_detail(3 + i);
+							_G(det)->stopDetail(3 + i);
 						}
 					}
 					_G(det)->setDetailPos(3 + i, x, y);
@@ -213,7 +213,7 @@ void Room45::taxi_mov() {
 	_G(HowardMov) = 2;
 	_G(room)->set_timer_status(12, TIMER_STOP);
 	_G(det)->del_static_ani(12);
-	g_engine->_sound->playSound(15, 1);
+	_G(det)->playSound(15, 1);
 	_G(det)->showStaticSpr(11);
 	autoMove(3, P_CHEWY);
 	_G(gameState)._personHide[P_CHEWY] = true;
@@ -227,11 +227,10 @@ void Room45::taxi_mov() {
 	}
 
 	_G(det)->hideStaticSpr(11);
-	g_engine->_sound->playSound(15, 2);
-	g_engine->_sound->playSound(15, 2, false);
-	g_engine->_sound->playSound(15, 0);
+	_G(det)->playSound(15, 2);
+	_G(det)->playSound(15, 0);
 	startSetAILWait(15, 1, ANI_FRONT);
-	g_engine->_sound->stopSound(0);
+	_G(det)->stopSound(0);
 	switchRoom(48);
 }
 

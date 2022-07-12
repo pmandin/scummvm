@@ -173,7 +173,7 @@ void Room12::bork_ok() {
 	_G(det)->setDetailPos(3, 170, 145);
 	_G(det)->startDetail(3, 255, ANI_FRONT);
 	startAadWait(57);
-	_G(det)->stop_detail(3);
+	_G(det)->stopDetail(3);
 
 	_G(mov_phasen)[R12_BORK_OBJ].Repeat = 1;
 	_G(mov_phasen)[R12_BORK_OBJ].Lines = 3;
@@ -272,7 +272,7 @@ int16 Room12::useTransformerTube() {
 		if (_G(gameState).R12ChainLeft) {
 			_G(gameState).R12ChainLeft = false;
 			_G(uhr)->enableTimer();
-			_G(atds)->set_ats_str(117, 1, AAD_DATA);
+			_G(atds)->set_ats_str(117, TXT_MARK_LOOK, 0, ATS_DATA);
 		} else {
 			autoMove(7, P_CHEWY);
 			startAadWait(29);

@@ -712,7 +712,7 @@ void TwinEEngine::processInventoryAction() {
 
 		penguin->_angle = _scene->_sceneHero->_angle;
 
-		if (!_collision->checkValidObjPos(_scene->_mecaPenguinIdx)) {
+		if (_collision->checkValidObjPos(_scene->_mecaPenguinIdx)) {
 			penguin->setLife(kActorMaxLife);
 			penguin->_genBody = BodyType::btNone;
 			_actor->initModelActor(BodyType::btNormal, _scene->_mecaPenguinIdx);
@@ -827,7 +827,8 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 
 		// Process behaviour menu
-		if ((_input->isActionActive(TwinEActionType::BehaviourMenu, false) ||
+		const bool behaviourMenu = _input->isActionActive(TwinEActionType::BehaviourMenu, false);
+		if ((behaviourMenu ||
 		     _input->isActionActive(TwinEActionType::QuickBehaviourNormal, false) ||
 		     _input->isActionActive(TwinEActionType::QuickBehaviourAthletic, false) ||
 		     _input->isActionActive(TwinEActionType::QuickBehaviourAggressive, false) ||
@@ -843,7 +844,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 				_actor->_heroBehaviour = HeroBehaviourType::kDiscrete;
 			}
 			ScopedEngineFreeze scopedFreeze(this);
-			_menu->processBehaviourMenu();
+			_menu->processBehaviourMenu(behaviourMenu);
 			_redraw->redrawEngineActions(true);
 		}
 

@@ -108,7 +108,7 @@ void Room40::xit(int16 eib_nr) {
 			_G(gameState)._personRoomNr[P_HOWARD] = 28;
 
 		} else if (eib_nr == 72) {
-			if ((_G(obj)->checkInventory(HOTEL_INV) && _G(obj)->checkInventory(TICKET_INV) && _G(gameState).R42BriefOk && _G(gameState).R28Manuskript)
+			if ((_G(obj)->checkInventory(HOTEL_INV) && _G(obj)->checkInventory(TICKET_INV) && _G(gameState).R42LetterOk && _G(gameState).R28Manuskript)
 				|| _G(gameState).R40TrainOk) {
 				_G(gameState).R40TrainOk = true;
 				_G(gameState)._personRoomNr[P_HOWARD] = 45;
@@ -178,7 +178,7 @@ void Room40::move_train(int16 mode) {
 	if (mode && _G(gameState).ChewyAni == CHEWY_PUMPKIN)
 		_G(det)->showStaticSpr(12);
 
-	g_engine->_sound->playSound(7, 0);
+	_G(det)->playSound(7, 0);
 	int16 delay = 0;
 
 	while (ax < 560) {
@@ -205,7 +205,7 @@ void Room40::move_train(int16 mode) {
 		SHOULD_QUIT_RETURN;
 	}
 
-	_G(det)->stop_detail(7);
+	_G(det)->stopDetail(7);
 	_G(det)->hideStaticSpr(11);
 	_G(det)->hideStaticSpr(12);
 
@@ -289,7 +289,7 @@ void Room40::setup_func() {
 					_G(gameState).R40PoliceAway = true;
 					_G(det)->startDetail(17, 255, ANI_FRONT);
 					startAadWait(226);
-					_G(det)->stop_detail(17);
+					_G(det)->stopDetail(17);
 					_G(gameState).R40HoUse = true;
 					_G(person_end_phase)[P_CHEWY] = P_RIGHT;
 					startSetAILWait(10, 1, ANI_FRONT);
@@ -551,7 +551,7 @@ void Room40::bmeister_dia(int16 aad_nr) {
 	auto_scroll(206, 0);
 	_G(det)->del_static_ani(0);
 	_G(room)->set_timer_status(0, TIMER_STOP);
-	_G(det)->stop_detail(0);
+	_G(det)->stopDetail(0);
 	startSetAILWait(1, 1, ANI_FRONT);
 	_G(det)->set_static_ani(2, -1);
 

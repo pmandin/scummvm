@@ -68,8 +68,7 @@ void Room90::entry(int16 eib_nr) {
 	if (_G(gameState).flags34_40 && !_G(gameState).flags33_40) {
 		_G(det)->setDetailPos(12, 329, 15);
 		_G(det)->startDetail(12, 255, false);
-		g_engine->_sound->playSound(12, 0);
-		g_engine->_sound->playSound(12);
+		_G(det)->playSound(12, 0);
 	}
 
 	if (_G(gameState).flags33_40 && !_G(gameState).flags34_10) {
@@ -129,13 +128,13 @@ void Room90::setup_func() {
 					destX += _G(gameState).r90_Array187030[i][1];
 					if (destX > 540) {
 						_G(gameState).r90_Array187030[i][0] = 0;
-						_G(det)->stop_detail(i + 4);
+						_G(det)->stopDetail(i + 4);
 					}
 				} else {
 					destX -= _G(gameState).r90_Array187030[i][1];
 					if (destX < -30) {
 						_G(gameState).r90_Array187030[i][0] = 0;
-						_G(det)->stop_detail(i + 4);
+						_G(det)->stopDetail(i + 4);
 					}
 				}
 				_G(det)->setDetailPos(i + 4, destX, destY);
@@ -259,8 +258,7 @@ int Room90::getHubcaps() {
 	auto_scroll(176, 0);
 	_G(det)->setDetailPos(12, 495, 15);
 	_G(det)->startDetail(12, 255, false);
-	g_engine->_sound->playSound(12, 0);
-	g_engine->_sound->playSound(12);
+	_G(det)->playSound(12, 0);
 
 	int destX = 495;
 
@@ -307,7 +305,7 @@ int Room90::shootControlUnit() {
 	_G(flags).NoScroll = false;
 	_G(HowardMov) = 0;
 	_G(gameState).flags33_40 = true;
-	_G(det)->stop_detail(12);
+	_G(det)->stopDetail(12);
 	_G(atds)->setControlBit(519, ATS_ACTIVE_BIT);
 	_G(atds)->delControlBit(520, ATS_ACTIVE_BIT);
 	_G(flags).ZoomMov = true;

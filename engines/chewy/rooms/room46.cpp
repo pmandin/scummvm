@@ -115,7 +115,7 @@ void Room46::bodo() {
 	startSetAILWait(0, 1, ANI_FRONT);
 	_G(det)->startDetail(5, 255, ANI_FRONT);
 	startAadWait(241);
-	_G(det)->stop_detail(5);
+	_G(det)->stopDetail(5);
 	_G(det)->showStaticSpr(5);
 	startAadWait(609);
 	_G(det)->hideStaticSpr(5);
@@ -123,7 +123,7 @@ void Room46::bodo() {
 	startSetAILWait(3, 1, ANI_FRONT);
 	_G(det)->startDetail(4, 255, ANI_FRONT);
 	startAadWait(242);
-	_G(det)->stop_detail(4);
+	_G(det)->stopDetail(4);
 
 	_G(det)->showStaticSpr(6);
 	startAadWait(610);
@@ -168,7 +168,7 @@ void Room46::kloppe() {
 		if (g_engine->_sound->speechEnabled()) {
 			g_engine->_sound->waitForSpeechToFinish();
 		} else {
-			while (_G(in)->getSwitchCode() == Common::KEYCODE_INVALID && delay) {
+			while (g_events->getSwitchCode() == Common::KEYCODE_INVALID && delay) {
 				--delay;
 				EVENTS_UPDATE;
 				SHOULD_QUIT_RETURN;

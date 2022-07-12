@@ -22,7 +22,6 @@
 #include "common/system.h"
 #include "chewy/events.h"
 #include "chewy/globals.h"
-#include "chewy/mouse.h"
 
 namespace Chewy {
 
@@ -218,6 +217,30 @@ void EventsManager::processEvents() {
 void EventsManager::warpMouse(const Common::Point &newPos) {
 	_mousePos = newPos;
 	g_system->warpMouse(newPos.x, newPos.y);
+}
+
+int16 EventsManager::getSwitchCode() {
+	int16 switch_code = -1;
+
+	if (_G(minfo).button == 2)
+		switch_code = Common::KEYCODE_ESCAPE;
+	else if (_G(minfo).button == 1)
+		switch_code = Common::MOUSE_BUTTON_LEFT;
+	else if (_G(minfo).button == 4)
+		switch_code = Common::MOUSE_BUTTON_MIDDLE;
+
+	if (g_events->_kbInfo._keyCode != 0)
+		switch_code = (int16)g_events->_kbInfo._keyCode;
+
+	// Virtual key, set when an item is taken from the inventory
+	if (_hotkey != Common::KEYCODE_INVALID) {
+		switch_code = _hotkey;
+		_hotkey = Common::KEYCODE_INVALID;
+	}
+
+	//debug("Mouse button: %d, key: %d, hotkey: %d", _G(minfo).button, g_events->_kbInfo._keyCode, _hotkey);
+
+	return switch_code;
 }
 
 void delay(size_t time) {

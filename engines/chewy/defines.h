@@ -34,10 +34,7 @@ namespace Chewy {
 #define USE_TAP_MAX 140
 
 #define ADS_TAP_OFF 0
-#define ATS_TAP_OFF ADS_TAP_MAX	// 500
-#define AAD_TAP_OFF ATS_TAP_OFF+ATS_TAP_MAX	// 500 + 100
-#define INV_TAP_OFF AAD_TAP_OFF+AAD_TAP_MAX	// 500 + 100 + 100
-#define USE_TAP_OFF INV_TAP_OFF+INV_TAP_MAX	// 500 + 100 + 100 + 140
+#define AAD_TAP_OFF ADS_TAP_MAX + ATS_TAP_MAX // 500 + 100
 
 #define SCREEN_WIDTH 320
 #define SCREEN_HEIGHT 200
@@ -47,10 +44,6 @@ enum SetupScreenMode {
 	DO_SETUP = 1,
 	DO_MAIN_LOOP = 2
 };
-
-#define MIN_FAR_MEM 3000000
-#define MIN_LOW_MEM 100000
-#define SPEECH_HALF_BUF 25000
 
 #define JXDIFF 180
 #define JYDIFF 150
@@ -290,7 +283,7 @@ enum SetupScreenMode {
 #define PILLOW_INV 0
 #define SLIME_INV 1
 #define RED_CARD_INV 2
-#define KABEL_INV 3
+#define CABLE_INV 3
 #define MONOCLE_INV 4
 #define NOTEBOOK_INV 5
 #define NOTEBOOK_OPEN_INV 6
@@ -319,34 +312,34 @@ enum SetupScreenMode {
 #define CYB_KRONE_INV 29
 #define SCHLAUCH_INV 30
 #define TRICHTER_INV 31
-#define ANGEL_INV 32
+#define FISHINGROD_INV 32
 #define MILCH_INV 33
-#define MESSER_INV 34
+#define KNIFE_INV 34
 #define PUMPE_INV 35
 #define CENT_INV 36
-#define ANGEL2_INV 37
-#define GEBISS_INV 38
+#define FISHING_ROD_INV 37
+#define DENTURES_INV 38
 #define H_FUTTER_INV 39
-#define KUERBIS1_INV 40
+#define PUMPKIN_INV 40
 #define K_MASKE_INV 41
 #define K_FLEISCH_INV 42
 #define K_KERNE_INV 43
-#define EIER_INV 44
+#define EGGS_INV 44
 #define KAFFEE_INV 45
 #define PUTENKEULE_INV 46
-#define KNOCHEN_INV 47
+#define BONE_INV 47
 #define MANUSKRIPT_INV 48
 #define RECORDER_INV 49
 #define ZAPPER_INV 50
 #define MUNTER_INV 51
-#define MILCH_LEER_INV 52
-#define MILCH_WAS_INV 53
+#define EMPTY_MILK_BOTTLE_INV 52
+#define WATER_FILLED_BOTTLE_INV 53
 #define PAPIER_INV 54
-#define BRIEF_INV 55
+#define LETTER_INV 55
 #define TICKET_INV 56
 #define ZEITUNG_INV 57
 #define BMARKE_INV 58
-#define BRIEF2_INV 59
+#define STAMPEDLETTER_INV 59
 #define DUENGER_INV 60
 #define LIKOER_INV 61
 #define LIKOER2_INV 62
@@ -354,12 +347,12 @@ enum SetupScreenMode {
 #define CASSETTE_INV 64
 #define HOTEL_INV 65
 #define KAPPE_INV 66
-#define FLASCHE_INV 67
+#define BOTTLE_INV 67
 #define GUM_INV 68
 #define CIGAR_INV 69
 #define KEY_INV 70
 #define BURGER_INV 71
-#define WOLLE_INV 72
+#define WOOL_INV 72
 #define UHR_INV 73
 #define RING_INV 74
 #define SACKGELD_INV 75
@@ -375,10 +368,10 @@ enum SetupScreenMode {
 #define ASCHE_INV 85
 #define PIRANHA_INV 86
 #define SCHALL_INV 87
-#define ARTE_INV 88
+#define ARTIFACT_INV 88
 #define GALA_INV 89
-#define PAPAGEI_INV 90
-#define BAR_GUT_INV 91
+#define PARROT_INV 90
+#define DRINK_COUPON_INV 91
 #define CLINT_500_INV 92
 #define CLINT_1500_INV 93
 #define CLINT_3000_INV 94
@@ -574,7 +567,7 @@ enum SetupScreenMode {
 #define EXIT_RIGHT 2
 #define EXIT_TOP 3
 #define EXIT_BOTTOM 4
-#define WAIT_TASTE_LOS while (_G(in)->getSwitchCode() != 0 \
+#define WAIT_TASTE_LOS while (g_events->getSwitchCode() != -1 \
 	&& !SHOULD_QUIT) { g_events->update(); }
 
 } // namespace Chewy

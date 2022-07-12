@@ -136,8 +136,6 @@ private:
 	bool _isRetail;
 	bool _isEnglish;
 
-	bool _useDynamicMidi;
-
 	void unpackMacRetailInstaller(Common::Array<Common::SharedPtr<ProjectPersistentResource> > &persistentResources, Common::Array<FileIdentification> &files);
 	Common::SharedPtr<Obsidian::WordGameData> loadWinWordGameData();
 	Common::SharedPtr<Obsidian::WordGameData> loadMacWordGameData();
@@ -182,13 +180,13 @@ void ObsidianGameDataHandler::unpackMacRetailInstaller(Common::Array<Common::Sha
 
 	Common::SeekableReadStream *installerDataForkStream = installerResMan->getDataFork();
 
-	// Not counted/persisted because the StuffIt archive owns the stream
+	// Not counted/persisted because the StuffIt archive owns the stream.  It will also delete it if createStuffItArchive fails.
 	_installerArchive.reset(Common::createStuffItArchive(installerDataForkStream));
+	installerDataForkStream = nullptr;
+
 	persistentResources.push_back(PersistentResource<Common::Archive>::wrap(_installerArchive));
 
 	if (!_installerArchive) {
-		delete installerDataForkStream;
-		installerDataForkStream = nullptr;
 
 		error("Failed to open Obsidian Installer archive");
 	}

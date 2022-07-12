@@ -40,7 +40,7 @@ void Room41::entry() {
 	hideCur();
 
 	if (!_G(gameState).R41LolaOk) {
-		g_engine->_sound->playSound(6);
+		_G(det)->playSound(6, 0);
 
 		if (!_G(flags).LoadGame) {
 			_G(room)->set_timer_status(0, TIMER_STOP);
@@ -169,7 +169,7 @@ void Room41::stop_hoggy() {
 	for (int16 i = 0; i < 2; i++) {
 		_G(room)->set_timer_status(i, TIMER_STOP);
 		_G(det)->del_static_ani(i);
-		_G(det)->stop_detail(i);
+		_G(det)->stopDetail(i);
 		_G(det)->set_static_ani(i + 3, -1);
 	}
 }
@@ -196,10 +196,10 @@ int16 Room41::use_lola() {
 		action_flag = true;
 		_G(gameState).R41LolaOk = true;
 		autoMove(4, P_CHEWY);
-		g_engine->_sound->stopSound(0);
+		_G(det)->stopSound(0);
 		flic_cut(FCUT_057);
 		setPersonPos(127, 112, P_CHEWY, P_LEFT);
-		_G(det)->stop_detail(6);
+		_G(det)->stopDetail(6);
 
 		_G(atds)->delControlBit(267, ATS_ACTIVE_BIT);
 		_G(atds)->set_ats_str(267, 1, ATS_DATA);
@@ -214,14 +214,14 @@ int16 Room41::use_brief() {
 	int16 action_flag = false;
 	hideCur();
 
-	if (isCurInventory(BRIEF_INV)) {
+	if (isCurInventory(LETTER_INV)) {
 		action_flag = true;
 		stop_hoggy();
 		autoMove(6, P_CHEWY);
 		startAadWait(126);
 		start_hoggy();
 
-	} else if (isCurInventory(BRIEF2_INV)) {
+	} else if (isCurInventory(STAMPEDLETTER_INV)) {
 		action_flag = true;
 		autoMove(6, P_CHEWY);
 		delInventory(_G(cur)->getInventoryCursor());
@@ -229,10 +229,10 @@ int16 Room41::use_brief() {
 		startAadWait(186);
 		start_hoggy();
 		_G(atds)->set_ats_str(206, 1, ATS_DATA);
-		_G(gameState).R28Briefkasten = true;
+		_G(gameState).R28LetterBox = true;
 		_G(gameState).R40TrainMove = true;
 		_G(gameState).R28PostCar = true;
-		_G(gameState).R42BriefOk = true;
+		_G(gameState).R42LetterOk = true;
 	}
 
 	showCur();

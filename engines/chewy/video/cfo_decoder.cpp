@@ -68,12 +68,12 @@ bool CfoDecoder::loadStream(Common::SeekableReadStream *stream) {
 	uint16 width = stream->readUint16LE();
 	uint16 height = stream->readUint16LE();
 
-	addTrack(new CfoVideoTrack(stream, frameCount, width, height, _sound));
+	addTrack(new CfoVideoTrack(stream, frameCount, width, height, _sound, _disposeMusic));
 	return true;
 }
 
-CfoDecoder::CfoVideoTrack::CfoVideoTrack(Common::SeekableReadStream *stream, uint16 frameCount, uint16 width, uint16 height, Sound *sound) :
-	Video::FlicDecoder::FlicVideoTrack(stream, frameCount, width, height, true), _sound(sound) {
+CfoDecoder::CfoVideoTrack::CfoVideoTrack(Common::SeekableReadStream *stream, uint16 frameCount, uint16 width, uint16 height, Sound *sound, bool disposeMusic) :
+	Video::FlicDecoder::FlicVideoTrack(stream, frameCount, width, height, true), _sound(sound), _disposeMusic(disposeMusic) {
 	readHeader();
 
 	for (int i = 0; i < MAX_SOUND_EFFECTS; i++) {
@@ -99,7 +99,8 @@ CfoDecoder::CfoVideoTrack::~CfoVideoTrack() {
 
 	// Only stop music if it is included in the video data.
 	if (_musicData) {
-		_sound->stopMusic();
+		if (_disposeMusic)
+			_sound->stopMusic();
 		delete[] _musicData;
 		_musicData = nullptr;
 	}
@@ -264,11 +265,13 @@ void CfoDecoder::CfoVideoTrack::handleCustomFrame() {
 		case kChunkPlayVoc:
 			number = _fileStream->readUint16LE();
 			channel = _fileStream->readUint16LE();
-			volume = _fileStream->readUint16LE();// * Audio::Mixer::kMaxChannelVolume / 63;
+			volume = _fileStream->readUint16LE();
 			repeat = _fileStream->readUint16LE();
 			assert(number < MAX_SOUND_EFFECTS);
 
-			_sound->playSound(_soundEffects[number], _soundEffectSize[number], channel, repeat,
+			// Repeat is the number of times the sound should be repeated, so
+			// 0 means play once, 1 twice etc. 255 means repeat until stopped.
+			_sound->playSound(_soundEffects[number], _soundEffectSize[number], channel, repeat == 255 ? 0 : repeat + 1,
 				volume * _sfxGlobalVolume / 63, _sfxBalances[channel], DisposeAfterUse::NO);
 			break;
 		case kChunkSetSoundVolume:

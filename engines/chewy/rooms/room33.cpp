@@ -90,7 +90,7 @@ int16 Room33::use_schublade() {
 		_G(atds)->set_ats_str(210, TXT_MARK_LOOK, 1, ATS_DATA);
 		_G(atds)->set_ats_str(210, TXT_MARK_USE, 2, ATS_DATA);
 		start_spz(CH_LGET_O, 1, ANI_FRONT, P_CHEWY);
-		invent_2_slot(MESSER_INV);
+		invent_2_slot(KNIFE_INV);
 		showCur();
 	}
 
@@ -112,14 +112,14 @@ void Room33::use_maschine() {
 			switch (_G(cur)->getInventoryCursor()) {
 			case MILCH_INV:
 				_G(gameState).R33Munter[3] = true;
-				invent_2_slot(MILCH_LEER_INV);
+				invent_2_slot(EMPTY_MILK_BOTTLE_INV);
 				break;
 
 			case K_FLEISCH_INV:
 				_G(gameState).R33Munter[1] = true;
 				break;
 
-			case EIER_INV:
+			case EGGS_INV:
 				_G(gameState).R33Munter[2] = true;
 				break;
 
