@@ -65,14 +65,12 @@ public:
 
 	void dumpData(const char *filename) override {}
 	BaseImage *takeScreenshot() override;
-	bool saveScreenShot(const Common::String &filename, int sizeX = 0, int sizeY = 0) override;
 	void setWindowed(bool windowed) override;
 	void fadeToColor(byte r, byte g, byte b, byte a) override;
 	bool fill(byte r, byte g, byte b, Common::Rect *rect = nullptr) override;
 
 	bool setViewport(int left, int top, int right, int bottom) override;
-	bool drawLine(int x1, int y1, int x2, int y2, uint32 color) override;                // Unused outside indicator-display
-	bool drawRect(int x1, int y1, int x2, int y2, uint32 color, int width = 1) override; // Unused outside indicator-display
+	bool drawLine(int x1, int y1, int x2, int y2, uint32 color) override;
 
 	bool setProjection() override;
 	bool setProjection2D() override;

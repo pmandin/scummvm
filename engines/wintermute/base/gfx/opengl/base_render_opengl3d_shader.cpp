@@ -23,9 +23,12 @@
 #include "engines/wintermute/ad/ad_generic.h"
 #include "engines/wintermute/ad/ad_walkplane.h"
 #include "engines/wintermute/base/base_game.h"
+#include "engines/wintermute/base/gfx/base_image.h"
 #include "engines/wintermute/base/gfx/3ds/camera3d.h"
 
 #include "graphics/opengl/system_headers.h"
+
+#include "common/config-manager.h"
 
 #include "math/glmath.h"
 
@@ -333,17 +336,30 @@ bool BaseRenderOpenGL3DShader::stencilSupported() {
 }
 
 BaseImage *BaseRenderOpenGL3DShader::takeScreenshot() {
-	warning("BaseRenderOpenGL3DShader::takeScreenshot not yet implemented");
-	return nullptr;
-}
+	BaseImage *screenshot = new BaseImage();
+	Graphics::Surface *surface = new Graphics::Surface();
+#ifdef SCUMM_BIG_ENDIAN
+	Graphics::PixelFormat format(4, 8, 8, 8, 8, 24, 16, 8, 0);
+#else
+	Graphics::PixelFormat format(4, 8, 8, 8, 8, 0, 8, 16, 24);
+#endif
+	surface->create(_viewportRect.width(), _viewportRect.height(), format);
 
-bool BaseRenderOpenGL3DShader::saveScreenShot(const Common::String &filename, int sizeX, int sizeY) {
-	warning("BaseRenderOpenGL3DShader::saveScreenshot not yet implemented");
-	return true;
+	glReadPixels(_viewportRect.left, g_system->getHeight() - _viewportRect.bottom, _viewportRect.width(), _viewportRect.height(),
+	             GL_RGBA, GL_UNSIGNED_BYTE, surface->getPixels());
+	flipVertical(surface);
+	Graphics::Surface *converted = surface->convertTo(getPixelFormat());
+	screenshot->copyFrom(converted);
+	delete surface;
+	delete converted;
+	return screenshot;
 }
 
 void BaseRenderOpenGL3DShader::setWindowed(bool windowed) {
-	warning("BaseRenderOpenGL3DShader::setWindowed not yet implemented");
+	ConfMan.setBool("fullscreen", !windowed);
+	g_system->beginGFXTransaction();
+	g_system->setFeatureState(OSystem::kFeatureFullscreenMode, !windowed);
+	g_system->endGFXTransaction();
 }
 
 void BaseRenderOpenGL3DShader::fadeToColor(byte r, byte g, byte b, byte a) {
@@ -388,9 +404,9 @@ bool BaseRenderOpenGL3DShader::drawLine(int x1, int y1, int x2, int y2, uint32 c
 	float lineCoords[4];
 
 	lineCoords[0] = x1;
-	lineCoords[1] = y1;
+	lineCoords[1] = _height - y1;
 	lineCoords[2] = x2;
-	lineCoords[3] = y2;
+	lineCoords[3] = _height - y2;
 
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 2 * 8, lineCoords);
 
@@ -407,16 +423,11 @@ bool BaseRenderOpenGL3DShader::drawLine(int x1, int y1, int x2, int y2, uint32 c
 
 	_lineShader->use();
 	_lineShader->setUniform("color", colorValue);
-	_fadeShader->setUniform("projMatrix", _projectionMatrix2d);
+	_lineShader->setUniform("projMatrix", _projectionMatrix2d);
 
 	glDrawArrays(GL_LINES, 0, 2);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	return true;
-}
-
-bool BaseRenderOpenGL3DShader::drawRect(int x1, int y1, int x2, int y2, uint32 color, int width) {
-	warning("BaseRenderOpenGL3DShader::drawRect not yet implemented");
 	return true;
 }
 
@@ -475,12 +486,12 @@ void BaseRenderOpenGL3DShader::setWorldTransform(const Math::Matrix4 &transform)
 }
 
 bool BaseRenderOpenGL3DShader::windowedBlt() {
-	warning("BaseRenderOpenGL3DShader::windowedBlt not yet implemented");
+	flip();
 	return true;
 }
 
 void Wintermute::BaseRenderOpenGL3DShader::onWindowChange() {
-	warning("BaseRenderOpenGL3DShader::onWindowChange not yet implemented");
+	_windowed = !g_system->getFeatureState(OSystem::kFeatureFullscreenMode);
 }
 
 bool BaseRenderOpenGL3DShader::initRenderer(int width, int height, bool windowed) {
@@ -518,7 +529,7 @@ bool BaseRenderOpenGL3DShader::initRenderer(int width, int height, bool windowed
 		disableLight(i);
 	}
 
-	_windowed = windowed;
+	_windowed = !ConfMan.getBool("fullscreen");
 	_width = width;
 	_height = height;
 
@@ -545,7 +556,6 @@ bool BaseRenderOpenGL3DShader::initRenderer(int width, int height, bool windowed
 
 	static const char *fadeAttributes[] = { "position", nullptr };
 	_fadeShader = OpenGL::Shader::fromFiles("wme_fade", fadeAttributes);
-
 	_fadeShader->enableVertexAttribute("position", _fadeVBO, 2, GL_FLOAT, false, 8, 0);
 
 	glGenBuffers(1, &_lineVBO);
@@ -572,12 +582,12 @@ bool Wintermute::BaseRenderOpenGL3DShader::flip() {
 }
 
 bool BaseRenderOpenGL3DShader::indicatorFlip() {
-	warning("BaseRenderOpenGL3DShader::indicatorFlip not yet implemented");
+	flip();
 	return true;
 }
 
 bool BaseRenderOpenGL3DShader::forcedFlip() {
-	warning("BaseRenderOpenGL3DShader::forcedFlip not yet implemented");
+	flip();
 	return true;
 }
 

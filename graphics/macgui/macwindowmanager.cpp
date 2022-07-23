@@ -167,7 +167,7 @@ MacWindowManager::MacWindowManager(uint32 mode, MacPatterns *patterns, Common::L
 	_mouseDown = false;
 	_hoveredWidget = nullptr;
 
-	_mode = mode;
+	_mode = 0;
 	_language = language;
 
 	_menu = 0;
@@ -225,9 +225,7 @@ MacWindowManager::MacWindowManager(uint32 mode, MacPatterns *patterns, Common::L
 	CursorMan.showMouse(true);
 
 	loadDataBundle();
-	if (!(_mode & Graphics::kWMNoScummVMWallpaper)) {
-		loadDesktop();
-	}
+	setDesktopMode(_mode);
 }
 
 MacWindowManager::~MacWindowManager() {
@@ -249,6 +247,18 @@ MacWindowManager::~MacWindowManager() {
 	cleanupDataBundle();
 
 	g_system->getTimerManager()->removeTimerProc(&menuTimerHandler);
+}
+
+void MacWindowManager::setDesktopMode(uint32 mode) {
+	if (!(mode & Graphics::kWMNoScummVMWallpaper)) {
+		if (!_mode || (_mode & Graphics::kWMNoScummVMWallpaper))
+			loadDesktop();
+	} else if (_desktopBmp) {
+		_desktopBmp->free();
+		_desktopBmp = nullptr;
+	}
+
+	_mode = mode;
 }
 
 void MacWindowManager::setScreen(ManagedSurface *screen) {
@@ -807,7 +817,7 @@ void MacWindowManager::drawDesktop() {
 
 		MacPlotData pd(_desktop, nullptr, &_patterns, kPatternCheckers, 0, 0, 1, _colorWhite);
 
-		Graphics::drawRoundRect(r, kDesktopArc, _colorBlack, true, getDrawPixel(), &pd);
+		Graphics::drawRoundRect1(r, kDesktopArc, _colorBlack, true, getDrawPixel(), &pd);
 	}
 }
 
@@ -1348,6 +1358,51 @@ void MacWindowManager::setEngine(Engine *engine) {
 void MacWindowManager::setEngineRedrawCallback(void *engine, void (*redrawCallback)(void *)) {
 	_engineR = engine;
 	_redrawEngineCallback = redrawCallback;
+}
+
+void MacWindowManager::printWMMode(int debuglevel) {
+	Common::String out;
+
+	if (_mode & kWMModeNoDesktop)
+		out += "kWMModeNoDesktop";
+	else
+		out += "!kWMModeNoDesktop";
+
+	if (_mode & kWMModeAutohideMenu)
+		out += " kWMModeAutohideMenu";
+
+	if (_mode & kWMModalMenuMode)
+		out += " kWMModalMenuMode";
+
+	if (_mode & kWMModeForceBuiltinFonts)
+		out += " kWMModeForceBuiltinFonts";
+
+	if (_mode & kWMModeUnicode)
+		out += " kWMModeUnicode";
+
+	if (_mode & kWMModeManualDrawWidgets)
+		out += " kWMModeManualDrawWidgets";
+
+	if (_mode & kWMModeFullscreen)
+		out += " kWMModeFullscreen";
+	else
+		out += " !kWMModeFullscreen";
+
+	if (_mode & kWMModeButtonDialogStyle)
+		out += " kWMModeButtonDialogStyle";
+
+	if (_mode & kWMMode32bpp)
+		out += " kWMMode32bpp";
+	else
+		out += " !kWMMode32bpp";
+
+	if (_mode & kWMNoScummVMWallpaper)
+		out += " kWMNoScummVMWallpaper";
+
+	if (_mode & kWMModeWin95)
+		out += " kWMModeWin95";
+
+	debug(debuglevel, "WM mode: %s", out.c_str());
 }
 
 } // End of namespace Graphics

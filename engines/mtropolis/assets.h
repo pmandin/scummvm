@@ -26,9 +26,6 @@
 #include "mtropolis/runtime.h"
 #include "mtropolis/render.h"
 
-namespace Audio {
-} // End of namespace Audio
-
 namespace MTropolis {
 
 struct AssetLoaderContext;
@@ -74,6 +71,7 @@ struct MToonMetadata {
 		uint16 decompressedBytesPerRow;
 		bool isKeyFrame;
 
+		FrameDef();
 		bool load(AssetLoaderContext &context, const Data::MToonAsset::FrameDef &data);
 	};
 
@@ -83,8 +81,11 @@ struct MToonMetadata {
 
 		Common::String name;
 
+		FrameRangeDef();
 		bool load(AssetLoaderContext &context, const Data::MToonAsset::FrameRangeDef &data);
 	};
+
+	MToonMetadata();
 
 	ImageFormat imageFormat;
 
@@ -114,6 +115,8 @@ private:
 	void optimizeRLE(const Graphics::PixelFormat &targetFormat);
 
 	struct RleFrame {
+		RleFrame();
+
 		uint32 version;
 		uint32 width;
 		uint32 height;
@@ -163,6 +166,8 @@ struct AudioMetadata {
 		kEncodingMace3,
 		kEncodingMace6,
 	};
+
+	AudioMetadata();
 
 	Encoding encoding;
 	uint32 durationMSec;

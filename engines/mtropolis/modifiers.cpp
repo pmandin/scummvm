@@ -21,6 +21,8 @@
 
 #include "common/memstream.h"
 
+#include "mtropolis/assets.h"
+#include "mtropolis/audio_player.h"
 #include "mtropolis/miniscript.h"
 #include "mtropolis/modifiers.h"
 #include "mtropolis/modifier_factory.h"
@@ -275,7 +277,7 @@ VThreadState SaveAndRestoreModifier::consumeMessage(Runtime *runtime, const Comm
 
 	if (_saveWhen.respondsTo(msg->getEvent())) {
 		CompoundVarSaver saver(obj);
-		if (runtime->getSaveProvider()->promptSave(&saver)) {
+		if (runtime->getSaveProvider()->promptSave(&saver, runtime->getSaveScreenshotOverride().get())) {
 			for (const Common::SharedPtr<SaveLoadHooks> &hooks : runtime->getHacks().saveLoadHooks)
 				hooks->onSave(runtime, this, static_cast<Modifier *>(obj));
 		}
@@ -532,7 +534,7 @@ bool SoundEffectModifier::load(ModifierLoaderContext &context, const Data::Sound
 	if (!loadTypicalHeader(data.modHeader))
 		return false;
 
-	if (!_executeWhen.load(data.executeWhen) || !_terminateWhen.load(data.executeWhen))
+	if (!_executeWhen.load(data.executeWhen) || !_terminateWhen.load(data.terminateWhen))
 		return false;
 
 	if (data.assetID == Data::SoundEffectModifier::kSpecialAssetIDSystemBeep) {
@@ -546,12 +548,71 @@ bool SoundEffectModifier::load(ModifierLoaderContext &context, const Data::Sound
 	return true;
 }
 
+bool SoundEffectModifier::respondsToEvent(const Event &evt) const {
+	return _executeWhen.respondsTo(evt) || _terminateWhen.respondsTo(evt);
+}
+
+VThreadState SoundEffectModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	if (_terminateWhen.respondsTo(msg->getEvent())) {
+		if (_player) {
+			_player->stop();
+			_player.reset();
+		}
+	} else if (_executeWhen.respondsTo(msg->getEvent())) {
+		if (_soundType == kSoundTypeAudioAsset) {
+			if (!_cachedAudio)
+				loadAndCacheAudio(runtime);
+
+			if (_cachedAudio) {
+				if (_player) {
+					_player->stop();
+					_player.reset();
+				}
+
+				size_t numSamples = _cachedAudio->getNumSamples(*_metadata);
+				_player.reset(new AudioPlayer(runtime->getAudioMixer(), 255, 0, _metadata, _cachedAudio, false, 0, 0, numSamples));
+			}
+		}
+	}
+
+	return kVThreadReturn;
+}
+
+void SoundEffectModifier::loadAndCacheAudio(Runtime *runtime) {
+	if (_cachedAudio)
+		return;
+
+	Project *project = runtime->getProject();
+	Common::SharedPtr<Asset> asset = project->getAssetByID(_assetID).lock();
+
+	if (!asset) {
+		warning("Sound effect modifier references asset %i but the asset isn't loaded!", _assetID);
+		return;
+	}
+
+	if (asset->getAssetType() != kAssetTypeAudio) {
+		warning("Sound element assigned an asset that isn't audio");
+		return;
+	}
+
+	_cachedAudio = static_cast<AudioAsset *>(asset.get())->loadAndCacheAudio(runtime);
+	_metadata = static_cast<AudioAsset *>(asset.get())->getMetadata();
+}
+
 Common::SharedPtr<Modifier> SoundEffectModifier::shallowClone() const {
 	return Common::SharedPtr<Modifier>(new SoundEffectModifier(*this));
 }
 
 const char *SoundEffectModifier::getDefaultName() const {
 	return "Sound Effect Modifier";
+}
+
+PathMotionModifierV2::PointDef::PointDef() : frame(0), useFrame(false) {
+}
+
+PathMotionModifierV2::PathMotionModifierV2()
+	: _executeWhen(Event::create()), _terminateWhen(Event::create()), _reverse(false), _loop(false), _alternate(false),
+	  _startAtBeginning(false), _frameDurationTimes10Million(0) {
 }
 
 bool PathMotionModifierV2::load(ModifierLoaderContext &context, const Data::PathMotionModifierV2 &data) {
@@ -769,6 +830,19 @@ void VectorMotionModifier::trigger(Runtime *runtime) {
 	uint64 currentTime = runtime->getPlayTime();
 	_scheduledEvent = runtime->getScheduler().scheduleMethod<VectorMotionModifier, &VectorMotionModifier::trigger>(currentTime + 1, this);
 
+	Modifier *vecSrcModifier = _vecVar.lock().get();
+
+	// Variable-sourced motion is continuously updated and doesn't need to be re-triggered.
+	// The Pong minigame in Obsidian's Bureau chapter depends on this.
+	if (vecSrcModifier && vecSrcModifier->isVariable()) {
+		DynamicValue vec;
+		VariableModifier *varModifier = static_cast<VariableModifier *>(vecSrcModifier);
+		varModifier->varGetValue(nullptr, vec);
+
+		if (vec.getType() == DynamicValueTypes::kVector)
+			_resolvedVector = vec.getVector();
+	}
+
 	double radians = _resolvedVector.angleDegrees * (M_PI / 180.0);
 
 	// Distance is per-tick, which is 1/60 of a sec, so the multiplier is 60.0/1000.0 or 0.06
@@ -838,10 +912,45 @@ bool SceneTransitionModifier::load(ModifierLoaderContext &context, const Data::S
 
 	_duration = data.duration;
 	_steps = data.steps;
-	_transitionType = static_cast<TransitionType>(data.transitionType);
-	_transitionDirection = static_cast<TransitionDirection>(data.direction);
+	if (!SceneTransitionTypes::loadFromData(_transitionType, data.transitionType))
+		return false;
+	if (!SceneTransitionDirections::loadFromData(_transitionDirection, data.direction))
+		return false;
 
 	return true;
+}
+
+bool SceneTransitionModifier::respondsToEvent(const Event &evt) const {
+	return _enableWhen.respondsTo(evt) || _disableWhen.respondsTo(evt);
+}
+
+VThreadState SceneTransitionModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	if (_enableWhen.respondsTo(msg->getEvent())) {
+		SceneTransitionEffect effect;
+
+		// For some reason, these vary
+		uint32 timeDivisor = 100;
+		switch (effect._transitionType) {
+		case SceneTransitionTypes::kRandomDissolve:
+			timeDivisor = 50;
+			break;
+		case SceneTransitionTypes::kFade:
+			timeDivisor = 25;
+			break;
+		default:
+			break;
+		}
+
+		effect._duration = _duration / timeDivisor;
+		effect._steps = _steps;
+		effect._transitionDirection = _transitionDirection;
+		effect._transitionType = _transitionType;
+		runtime->setSceneTransitionEffect(true, &effect);
+	}
+	if (_disableWhen.respondsTo(msg->getEvent()))
+		runtime->setSceneTransitionEffect(true, nullptr);
+
+	return kVThreadReturn;
 }
 
 Common::SharedPtr<Modifier> SceneTransitionModifier::shallowClone() const {
@@ -850,6 +959,17 @@ Common::SharedPtr<Modifier> SceneTransitionModifier::shallowClone() const {
 
 const char *SceneTransitionModifier::getDefaultName() const {
 	return "Scene Transition Modifier";
+}
+
+ElementTransitionModifier::ElementTransitionModifier() : _enableWhen(Event::create()), _disableWhen(Event::create()), _rate(0), _steps(0),
+	_transitionType(kTransitionTypeFade), _revealType(kRevealTypeReveal), _transitionStartTime(0), _currentStep(0) {
+}
+
+ElementTransitionModifier::~ElementTransitionModifier() {
+	if (_scheduledEvent) {
+		_scheduledEvent->cancel();
+		_scheduledEvent.reset();
+	}
 }
 
 bool ElementTransitionModifier::load(ModifierLoaderContext &context, const Data::ElementTransitionModifier &data) {
@@ -861,8 +981,34 @@ bool ElementTransitionModifier::load(ModifierLoaderContext &context, const Data:
 
 	_rate = data.rate;
 	_steps = data.steps;
-	_transitionType = static_cast<TransitionType>(data.transitionType);
-	_revealType = static_cast<RevealType>(data.revealType);
+
+	switch (data.transitionType) {
+	case Data::ElementTransitionModifier::kTransitionTypeFade:
+		_transitionType = kTransitionTypeFade;
+		break;
+	case Data::ElementTransitionModifier::kTransitionTypeOvalIris:
+		_transitionType = kTransitionTypeOvalIris;
+		break;
+	case Data::ElementTransitionModifier::kTransitionTypeRectangularIris:
+		_transitionType = kTransitionTypeRectangularIris;
+		break;
+	case Data::ElementTransitionModifier::kTransitionTypeZoom:
+		_transitionType = kTransitionTypeZoom;
+		break;
+	default:
+		return false;
+	}
+
+	switch (data.revealType) {
+	case Data::ElementTransitionModifier::kRevealTypeConceal:
+		_revealType = kRevealTypeConceal;
+		break;
+	case Data::ElementTransitionModifier::kRevealTypeReveal:
+		_revealType = kRevealTypeReveal;
+		break;
+	default:
+		return false;
+	}
 
 	return true;
 }
@@ -890,6 +1036,9 @@ VThreadState ElementTransitionModifier::consumeMessage(Runtime *runtime, const C
 		}
 
 		_scheduledEvent = runtime->getScheduler().scheduleMethod<ElementTransitionModifier, &ElementTransitionModifier::continueTransition>(runtime->getPlayTime() + 1, this);
+		_transitionStartTime = runtime->getPlayTime();
+		_currentStep = 0;
+		setTransitionProgress(0, _steps);
 
 		// Pushed tasks, so these are executed in reverse order (Show -> Transition Started)
 		{
@@ -933,13 +1082,28 @@ const char *ElementTransitionModifier::getDefaultName() const {
 }
 
 void ElementTransitionModifier::continueTransition(Runtime *runtime) {
-	// TODO: Make this functional
-	completeTransition(runtime);
+	_scheduledEvent.reset();
+
+	const uint64 playTime = runtime->getPlayTime();
+	const uint64 timeSinceStart = playTime - _transitionStartTime;
+
+	uint32 step = static_cast<uint32>(timeSinceStart * _rate / 1000);
+
+	if (step >= _steps || _rate == 0) {
+		completeTransition(runtime);
+		return;
+	}
+
+	if (step != _currentStep) {
+		setTransitionProgress(step, _steps);
+		_currentStep = step;
+	}
+
+	runtime->setSceneGraphDirty();
+	_scheduledEvent = runtime->getScheduler().scheduleMethod<ElementTransitionModifier, &ElementTransitionModifier::continueTransition>(playTime + 1, this);
 }
 
 void ElementTransitionModifier::completeTransition(Runtime *runtime) {
-	_scheduledEvent.reset();
-
 	// Pushed tasks, so these are executed in reverse order (Hide -> Transition Ended)
 	{
 		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kTransitionEnded, 0), DynamicValue(), getSelfReference()));
@@ -951,6 +1115,31 @@ void ElementTransitionModifier::completeTransition(Runtime *runtime) {
 		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kElementHide, 0), DynamicValue(), getSelfReference()));
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, findStructuralOwner(), false, false, true));
 		runtime->sendMessageOnVThread(dispatch);
+	}
+
+	setTransitionProgress(( _revealType == kRevealTypeReveal) ? 1 : 0, 1);
+	runtime->setSceneGraphDirty();
+}
+
+void ElementTransitionModifier::setTransitionProgress(uint32 step, uint32 maxSteps) {
+	Structural *structural = findStructuralOwner();
+	if (structural && structural->isElement() && static_cast<Element *>(structural)->isVisual()) {
+		VisualElement *visual = static_cast<VisualElement *>(structural);
+		VisualElementTransitionProperties props = visual->getTransitionProperties();
+
+		if (_transitionType == kTransitionTypeFade) {
+			if (step > maxSteps)
+				step = maxSteps;
+
+			uint32 alpha = step * 255 / maxSteps;
+			if (_revealType == kRevealTypeConceal)
+				alpha = 255 - alpha;
+
+			props.setAlpha(alpha);
+			visual->setTransitionProperties(props);
+		} else {
+			warning("Unsupported transition type");
+		}
 	}
 }
 
@@ -1110,6 +1299,18 @@ void TimerMessengerModifier::trigger(Runtime *runtime) {
 	_sendSpec.sendFromMessenger(runtime, this, _incomingData, nullptr);
 }
 
+BoundaryDetectionMessengerModifier::BoundaryDetectionMessengerModifier()
+	: _enableWhen(Event::create()), _disableWhen(Event::create()), _exitTriggerMode(kExitTriggerExiting),
+	_detectTopEdge(false), _detectBottomEdge(false), _detectLeftEdge(false), _detectRightEdge(false),
+	_detectionMode(kContinuous), _runtime(nullptr), _isActive(false) {
+}
+
+BoundaryDetectionMessengerModifier::~BoundaryDetectionMessengerModifier() {
+	if (_isActive)
+		_runtime->removeBoundaryDetector(this);
+}
+
+
 bool BoundaryDetectionMessengerModifier::load(ModifierLoaderContext &context, const Data::BoundaryDetectionMessengerModifier &data) {
 	if (!loadTypicalHeader(data.modHeader))
 		return false;
@@ -1131,6 +1332,59 @@ bool BoundaryDetectionMessengerModifier::load(ModifierLoaderContext &context, co
 	return true;
 }
 
+bool BoundaryDetectionMessengerModifier::respondsToEvent(const Event &evt) const {
+	return _enableWhen.respondsTo(evt) || _disableWhen.respondsTo(evt);
+}
+
+VThreadState BoundaryDetectionMessengerModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	if (_enableWhen.respondsTo(msg->getEvent()) && !_isActive) {
+		_runtime = runtime;
+		_runtime->addBoundaryDetector(this);
+		_isActive = true;
+
+		_incomingData = msg->getValue();
+		if (_incomingData.getType() == DynamicValueTypes::kList)
+			_incomingData.setList(_incomingData.getList()->clone());
+	}
+	if (_disableWhen.respondsTo(msg->getEvent()) && _isActive) {
+		_runtime->removeBoundaryDetector(this);
+		_isActive = false;
+		_runtime = nullptr;
+	}
+
+	return kVThreadReturn;
+}
+
+void BoundaryDetectionMessengerModifier::linkInternalReferences(ObjectLinkingScope *outerScope) {
+	_send.linkInternalReferences(outerScope);
+}
+
+void BoundaryDetectionMessengerModifier::visitInternalReferences(IStructuralReferenceVisitor *visitor) {
+	_send.visitInternalReferences(visitor);
+}
+
+void BoundaryDetectionMessengerModifier::getCollisionProperties(Modifier *&modifier, uint &edgeFlags, bool &mustBeCompletelyOutside, bool &continuous) const {
+	modifier = const_cast<BoundaryDetectionMessengerModifier *>(this);
+
+	uint flags = 0;
+	if (_detectBottomEdge)
+		flags |= kEdgeBottom;
+	if (_detectTopEdge)
+		flags |= kEdgeTop;
+	if (_detectRightEdge)
+		flags |= kEdgeRight;
+	if (_detectLeftEdge)
+		flags |= kEdgeLeft;
+
+	edgeFlags = flags;
+	mustBeCompletelyOutside = (_exitTriggerMode == kExitTriggerOnceExited);
+	continuous = (_detectionMode == kContinuous);
+}
+
+void BoundaryDetectionMessengerModifier::triggerCollision(Runtime *runtime) {
+	_send.sendFromMessenger(runtime, this, _incomingData, nullptr);
+}
+
 Common::SharedPtr<Modifier> BoundaryDetectionMessengerModifier::shallowClone() const {
 	return Common::SharedPtr<Modifier>(new BoundaryDetectionMessengerModifier(*this));
 }
@@ -1140,9 +1394,9 @@ const char *BoundaryDetectionMessengerModifier::getDefaultName() const {
 }
 
 CollisionDetectionMessengerModifier::CollisionDetectionMessengerModifier()
-	: _runtime(nullptr), _isActive(false),
-	  _enableWhen(Event::create()), _disableWhen(Event::create()), _detectionMode(kDetectionModeFirstContact),
-	  _detectInFront(true), _detectBehind(true), _ignoreParent(true), _sendToCollidingElement(false) {
+	: _enableWhen(Event::create()), _disableWhen(Event::create()), _detectionMode(kDetectionModeFirstContact),
+	  _detectInFront(true), _detectBehind(true), _ignoreParent(true), _sendToCollidingElement(false),
+	  _sendToOnlyFirstCollidingElement(false), _runtime(nullptr), _isActive(false) {
 }
 
 CollisionDetectionMessengerModifier::~CollisionDetectionMessengerModifier() {
@@ -1269,7 +1523,9 @@ void CollisionDetectionMessengerModifier::triggerCollision(Runtime *runtime, Str
 KeyboardMessengerModifier::~KeyboardMessengerModifier() {
 }
 
-KeyboardMessengerModifier::KeyboardMessengerModifier() : _isEnabled(false) {
+KeyboardMessengerModifier::KeyboardMessengerModifier()
+	: _send(Event::create()), _onDown(false), _onUp(false), _onRepeat(false), _keyModControl(false), _keyModCommand(false), _keyModOption(false),
+	  _isEnabled(false), _keyCodeType(kAny), _macRomanChar(0) {
 }
 
 bool KeyboardMessengerModifier::isKeyboardMessenger() const {
@@ -1710,6 +1966,9 @@ Modifier *CompoundVariableModifier::findChildByName(const Common::String &name) 
 	}
 
 	return nullptr;
+}
+
+CompoundVariableModifier::SaveLoad::ChildSaveLoad::ChildSaveLoad() : modifier(nullptr) {
 }
 
 CompoundVariableModifier::SaveLoad::SaveLoad(CompoundVariableModifier *modifier) : _modifier(modifier) {

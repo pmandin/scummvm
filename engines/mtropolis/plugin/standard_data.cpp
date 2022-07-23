@@ -28,6 +28,11 @@ namespace Data {
 
 namespace Standard {
 
+CursorModifier::CursorModifier()
+	: unknown1(0), applyWhen(Event::createDefault()), unknown2(0), removeWhen(Event::createDefault()),
+	  unknown3(0), unknown4{0, 0, 0, 0}, cursorID(0) {
+}
+
 DataReadErrorCode CursorModifier::load(PlugIn &plugIn, const PlugInModifier &prefix, DataReader &reader) {
 	if (prefix.plugInRevision != 1)
 		return kDataReadErrorUnsupportedRevision;
@@ -49,6 +54,10 @@ DataReadErrorCode STransCtModifier::load(PlugIn &plugIn, const PlugInModifier &p
 		return kDataReadErrorReadFailed;
 
 	return kDataReadErrorNone;
+}
+
+MediaCueMessengerModifier::MediaCueMessengerModifier()
+	: unknown1(0), destination(0), unknown2(0) {
 }
 
 DataReadErrorCode MediaCueMessengerModifier::load(PlugIn &plugIn, const PlugInModifier &prefix, DataReader &reader) {
@@ -78,6 +87,10 @@ DataReadErrorCode ObjectReferenceVariableModifier::load(PlugIn &plugIn, const Pl
 		return kDataReadErrorReadFailed;
 
 	return kDataReadErrorNone;
+}
+
+MidiModifier::MidiModifier() : embeddedFlag(0) {
+	memset(&this->modeSpecific, 0, sizeof(this->modeSpecific));
 }
 
 DataReadErrorCode MidiModifier::load(PlugIn &plugIn, const PlugInModifier &prefix, DataReader &reader) {
@@ -117,7 +130,8 @@ DataReadErrorCode MidiModifier::load(PlugIn &plugIn, const PlugInModifier &prefi
 	return kDataReadErrorNone;
 }
 
-ListVariableModifier::ListVariableModifier() : values(nullptr) {
+ListVariableModifier::ListVariableModifier() : unknown1(0), contentsType(0), unknown2{0, 0, 0, 0},
+	havePersistentData(false), numValues(0), values(nullptr), persistentValuesGarbled(false) {
 }
 
 ListVariableModifier::~ListVariableModifier() {

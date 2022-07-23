@@ -22,8 +22,12 @@
 #include "common/system.h"
 #include "common/hashmap.h"
 
+#include "graphics/managed_surface.h"
+#include "graphics/surface.h"
+
 #include "mtropolis/assets.h"
 #include "mtropolis/detection.h"
+#include "mtropolis/elements.h"
 #include "mtropolis/hacks.h"
 #include "mtropolis/runtime.h"
 #include "mtropolis/modifiers.h"
@@ -34,6 +38,7 @@ namespace MTropolis {
 Hacks::Hacks() {
 	ignoreMismatchedProjectNameInObjectLookups = false;
 	midiVolumeScale = 256;
+	minTransitionDuration = 0;
 }
 
 Hacks::~Hacks() {
@@ -57,6 +62,10 @@ void Hacks::addSceneTransitionHooks(const Common::SharedPtr<SceneTransitionHooks
 
 void Hacks::addSaveLoadHooks(const Common::SharedPtr<SaveLoadHooks> &hooks) {
 	saveLoadHooks.push_back(hooks);
+}
+
+void Hacks::addSaveLoadMechanismHooks(const Common::SharedPtr<SaveLoadMechanismHooks> &hooks) {
+	saveLoadMechanismHooks.push_back(hooks);
 }
 
 namespace HackSuites {
@@ -87,7 +96,7 @@ void ObsidianInventoryWindscreenHooks::onSetPosition(Structural *structural, Com
 	}
 }
 
-class ObsidianSecurityFormWindscreenHooks : public StructuralHooks {
+class ObsidianSecurityFormWidescreenHooks : public StructuralHooks {
 public:
 	void onSetPosition(Structural *structural, Common::Point &pt) override;
 
@@ -95,7 +104,7 @@ private:
 	Common::Array<uint32> _hiddenCards;
 };
 
-void ObsidianSecurityFormWindscreenHooks::onSetPosition(Structural *structural, Common::Point &pt) {
+void ObsidianSecurityFormWidescreenHooks::onSetPosition(Structural *structural, Common::Point &pt) {
 	bool cardVisibility = (pt.y > 480);
 
 	// Originally tried manipulating layer order but that's actually not a good solution because
@@ -142,6 +151,253 @@ void ObsidianSecurityFormWindscreenHooks::onSetPosition(Structural *structural, 
 		_hiddenCards.clear();
 }
 
+class ObsidianRSGLogoAnamorphicFilter : public MovieResizeFilter {
+public:
+	ObsidianRSGLogoAnamorphicFilter();
+
+	Common::SharedPtr<Graphics::Surface> scaleFrame(const Graphics::Surface &surface, uint32 timestamp) const override;
+
+private:
+	template<class TPixel>
+	void anamorphicScaleFrameTyped(const Graphics::Surface &src, Graphics::Surface &dest) const;
+
+	static double anamorphicCurve(double d);
+	static double inverseAnamorphicCurve(double d);
+
+	template<class TPixel>
+	void halveWidthTyped(const Graphics::Surface &src, Graphics::Surface &dest) const;
+
+	template<class TPixel>
+	void halveHeightTyped(const Graphics::Surface &src, Graphics::Surface &dest) const;
+
+	Common::Array<uint> _xCoordinates;
+	Common::Array<uint> _yCoordinates;
+};
+
+ObsidianRSGLogoAnamorphicFilter::ObsidianRSGLogoAnamorphicFilter() {
+	// Anamorphic rescale, keeps the RSG logo proportional but preserves the vertical spacing!
+	// We use an anamorphic curve of y=x+x^2 which ensures the derivative at 0 is 1, meaning
+	// the rate of change stays constant at with the unfiltered pixels at the edge of the filter.
+	const uint unscaledWidth = 640;
+	const uint unscaledHeight = 480;
+
+	const uint scaledWidth = 1280;
+	const uint scaledHeight = 720;
+
+	_xCoordinates.resize(scaledWidth);
+	_yCoordinates.resize(scaledHeight);
+
+	// Margin in pixels on the side of the original image to apply filter
+	const double scalingFactor = static_cast<double>(scaledHeight) / static_cast<double>(unscaledHeight);
+	const double invScalingFactor = 1.0 / scalingFactor;
+	const double sideMarginInOriginalImage = 90.0;
+
+	const double sideMarginInScaledImage = (static_cast<double>(scaledWidth) - ((static_cast<double>(unscaledWidth) - sideMarginInOriginalImage * 2.0) * scalingFactor)) * 0.5;
+
+	const double originalMarginHeightFraction = sideMarginInOriginalImage / static_cast<double>(unscaledHeight);
+	const double scaledMarginHeightFraction = sideMarginInScaledImage / static_cast<double>(scaledHeight);
+
+	const double targetCurveRatio = scaledMarginHeightFraction / originalMarginHeightFraction;
+
+	// (x + x^2) / x = targetCurveRatio
+	// (x + x^2) = targetCurveRatio * x
+	// 1 + x = targetCurveRatio
+
+	const double xCurveRatio = targetCurveRatio - 1.0;
+	const double yCurveRatio = anamorphicCurve(xCurveRatio);
+
+	const double rightMarginStart = static_cast<double>(scaledWidth) - sideMarginInScaledImage;
+
+	for (uint i = 0; i < scaledWidth; i++) {
+		double pixelCenterX = static_cast<double>(i) + 0.5;
+		double originalImagePixelCenter = 0.0;
+		if (pixelCenterX < sideMarginInScaledImage) {
+			double marginFraction = 1.0 - pixelCenterX / sideMarginInScaledImage;
+			double marginCurveY = marginFraction * yCurveRatio;
+			double marginCurveX = inverseAnamorphicCurve(marginCurveY);
+			double multiplier = 1.0 - marginCurveX / xCurveRatio;
+			originalImagePixelCenter = multiplier * sideMarginInOriginalImage;
+		} else if (pixelCenterX > rightMarginStart) {
+			double marginFraction = 1.0 - (static_cast<double>(scaledWidth) - pixelCenterX) / sideMarginInScaledImage;
+			double marginCurveY = marginFraction * yCurveRatio;
+			double marginCurveX = inverseAnamorphicCurve(marginCurveY);
+			double multiplier = 1.0 - marginCurveX / xCurveRatio;
+			originalImagePixelCenter = static_cast<double>(unscaledWidth) - multiplier * sideMarginInOriginalImage;
+		} else {
+			double offsetFromCenter = pixelCenterX - (static_cast<double>(scaledWidth) * 0.5);
+			double offsetFromCenterInOriginalImage = offsetFromCenter * invScalingFactor;
+			originalImagePixelCenter = static_cast<double>(unscaledWidth) * 0.5 + offsetFromCenterInOriginalImage;
+		}
+
+		double srcPixelX = floor(originalImagePixelCenter);
+		if (srcPixelX < 0.0)
+			srcPixelX = 0.0;
+		else if (srcPixelX >= static_cast<double>(unscaledWidth))
+			srcPixelX = static_cast<double>(unscaledWidth - 1);
+
+		_xCoordinates[i] = static_cast<uint>(srcPixelX);
+	}
+
+	for (uint i = 0; i < scaledHeight; i++)
+		_yCoordinates[i] = (2 * i + 1) * unscaledHeight / (scaledHeight * 2);
+}
+
+template<class TPixel>
+void ObsidianRSGLogoAnamorphicFilter::anamorphicScaleFrameTyped(const Graphics::Surface &src, Graphics::Surface &dest) const {
+	const uint width = _xCoordinates.size();
+	const uint height = _yCoordinates.size();
+
+	const uint *xCoordinates = &_xCoordinates[0];
+	const uint *yCoordinates = &_yCoordinates[0];
+
+	assert(width == static_cast<uint>(dest.w));
+	assert(height == static_cast<uint>(dest.h));
+
+	for (uint row = 0; row < height; row++) {
+		const TPixel *srcRow = static_cast<const TPixel *>(src.getBasePtr(0, yCoordinates[row]));
+		TPixel *destRow = static_cast<TPixel *>(dest.getBasePtr(0, row));
+
+		for (uint col = 0; col < width; col++)
+			destRow[col] = srcRow[xCoordinates[col]];
+	}
+}
+
+double ObsidianRSGLogoAnamorphicFilter::anamorphicCurve(double d) {
+	return d + d * d;
+}
+
+double ObsidianRSGLogoAnamorphicFilter::inverseAnamorphicCurve(double d) {
+	return -0.5 + sqrt(0.25 + d);
+}
+
+template<class TPixel>
+void ObsidianRSGLogoAnamorphicFilter::halveWidthTyped(const Graphics::Surface &src, Graphics::Surface &dest) const {
+	const uint widthHigh = src.w;
+	const uint widthLow = dest.w;
+	const uint height = src.h;
+
+	assert(widthLow * 2 == widthHigh);
+	assert(dest.h == src.h);
+
+	const Graphics::PixelFormat fmt = src.format;
+
+	for (uint row = 0; row < height; row++) {
+		const TPixel *srcRow = static_cast<const TPixel *>(src.getBasePtr(0, row));
+		TPixel *destRow = static_cast<TPixel *>(dest.getBasePtr(0, row));
+
+		for (uint col = 0; col < widthLow; col++) {
+			uint32 col1 = srcRow[col * 2];
+			uint32 col2 = srcRow[col * 2 + 1];
+
+			uint8 r1, g1, b1;
+			fmt.colorToRGB(col1, r1, g1, b1);
+
+			uint8 r2, g2, b2;
+			fmt.colorToRGB(col2, r2, g2, b2);
+
+			destRow[col] = fmt.RGBToColor((r1 + r2) >> 1, (g1 + g2) >> 1, (b1 + b2) >> 1);
+		}
+	}
+}
+
+template<class TPixel>
+void ObsidianRSGLogoAnamorphicFilter::halveHeightTyped(const Graphics::Surface &src, Graphics::Surface &dest) const {
+	const uint heightHigh = src.h;
+	const uint heightLow = dest.h;
+	const uint width = src.w;
+
+	assert(heightLow * 2 == heightHigh);
+	assert(dest.w == src.w);
+
+	const Graphics::PixelFormat fmt = src.format;
+
+	for (uint row = 0; row < heightLow; row++) {
+		const TPixel *srcRow1 = static_cast<const TPixel *>(src.getBasePtr(0, row * 2));
+		const TPixel *srcRow2 = static_cast<const TPixel *>(src.getBasePtr(0, row * 2 + 1));
+		TPixel *destRow = static_cast<TPixel *>(dest.getBasePtr(0, row));
+
+		for (uint col = 0; col < width; col++) {
+			uint32 col1 = srcRow1[col];
+			uint32 col2 = srcRow2[col];
+
+			uint8 r1, g1, b1;
+			fmt.colorToRGB(col1, r1, g1, b1);
+
+			uint8 r2, g2, b2;
+			fmt.colorToRGB(col2, r2, g2, b2);
+
+			destRow[col] = fmt.RGBToColor((r1 + r2) >> 1, (g1 + g2) >> 1, (b1 + b2) >> 1);
+		}
+	}
+}
+
+Common::SharedPtr<Graphics::Surface> ObsidianRSGLogoAnamorphicFilter::scaleFrame(const Graphics::Surface &surface, uint32 timestamp) const {
+	Common::SharedPtr<Graphics::Surface> result(new Graphics::Surface());
+	result->create(_xCoordinates.size() / 2, _yCoordinates.size() / 2, surface.format);
+
+	Common::SharedPtr<Graphics::Surface> temp1(new Graphics::Surface());
+	Common::SharedPtr<Graphics::Surface> temp2(new Graphics::Surface());
+
+	temp1->create(_xCoordinates.size(), _yCoordinates.size(), surface.format);
+	temp2->create(_xCoordinates.size() / 2, _yCoordinates.size(), surface.format);
+
+	if (surface.format.bytesPerPixel == 1) {
+		anamorphicScaleFrameTyped<uint8>(surface, *temp1);
+		halveWidthTyped<uint8>(*temp1, *temp2);
+		halveHeightTyped<uint8>(*temp2, *result);
+	} else if (surface.format.bytesPerPixel == 2) {
+		anamorphicScaleFrameTyped<uint16>(surface, *temp1);
+		halveWidthTyped<uint16>(*temp1, *temp2);
+		halveHeightTyped<uint16>(*temp2, *result);
+	} else if (surface.format.bytesPerPixel == 4) {
+		anamorphicScaleFrameTyped<uint32>(surface, *temp1);
+		halveWidthTyped<uint32>(*temp1, *temp2);
+		halveHeightTyped<uint32>(*temp2, *result);
+	}
+
+	return result;
+}
+
+class ObsidianRSGLogoWidescreenHooks : public StructuralHooks {
+public:
+	void onCreate(Structural *structural) override;
+};
+
+void ObsidianRSGLogoWidescreenHooks::onCreate(Structural *structural) {
+	MovieElement *movie = static_cast<MovieElement *>(structural);
+	movie->setRelativeRect(Common::Rect(0, 60, 640, 420));
+	movie->setResizeFilter(Common::SharedPtr<MovieResizeFilter>(new ObsidianRSGLogoAnamorphicFilter()));
+}
+
+class ObsidianSaveScreenshotHooks : public SceneTransitionHooks {
+public:
+	void onSceneTransitionSetup(Runtime *runtime, const Common::WeakPtr<Structural> &oldScene, const Common::WeakPtr<Structural> &newScene) override;
+};
+
+void ObsidianSaveScreenshotHooks::onSceneTransitionSetup(Runtime *runtime, const Common::WeakPtr<Structural> &oldScene, const Common::WeakPtr<Structural> &newScene) {
+	Structural *newScenePtr = newScene.lock().get();
+
+	if (!newScenePtr)
+		return;
+
+	if (newScenePtr->getName() == "Game_Screen") {
+		Window *mainWindow = runtime->getMainWindow().lock().get();
+		if (mainWindow) {
+			Common::SharedPtr<Graphics::ManagedSurface> mainWindowSurface = mainWindow->getSurface();
+			Common::SharedPtr<Graphics::Surface> screenshot(new Graphics::Surface());
+			screenshot->copyFrom(*mainWindowSurface);
+
+			runtime->setSaveScreenshotOverride(screenshot);
+		}
+	} else {
+		runtime->setSaveScreenshotOverride(Common::SharedPtr<Graphics::Surface>());
+	}
+}
+
+void addObsidianQuirks(const MTropolisGameDescription &desc, Hacks &hacks) {
+	hacks.addSceneTransitionHooks(Common::SharedPtr<SceneTransitionHooks>(new ObsidianSaveScreenshotHooks()));
+}
+
 void addObsidianBugFixes(const MTropolisGameDescription &desc, Hacks &hacks) {
 	// Workaround for bug in Obsidian:
 	// When opening the journal in the intro, a script checks if cGSt.cfst.binjournal is false and if so,
@@ -153,9 +409,6 @@ void addObsidianBugFixes(const MTropolisGameDescription &desc, Hacks &hacks) {
 	// cJournalConst is unloaded if the player leaves the journal.  This causes a progression blocker if
 	// the player leaves the journal without clicking Continue.
 	hacks.ignoreMismatchedProjectNameInObjectLookups = true;
-
-	// Bump 70% volume musics to 100%
-	hacks.midiVolumeScale = (100 * 256 / 70);
 
 	// Fix for corrupted frame in transition from the outer edge in Spider to the air puzzle tower.
 	// The data is corrupted in both Mac and Win retail versions.
@@ -227,13 +480,15 @@ void addObsidianImprovedWidescreen(const MTropolisGameDescription &desc, Hacks &
 		};
 
 		const uint32 cubeMazeSecurityFormGUID = 0x9602ec;
+		const uint32 rsgIntroMovieGUID = 0x2fc101;
 
 		Common::SharedPtr<StructuralHooks> invItemHooks(new ObsidianInventoryWindscreenHooks());
 
 		for (uint32 guid : inventoryItemGUIDs)
 			hacks.addStructuralHooks(guid, invItemHooks);
 
-		hacks.addStructuralHooks(cubeMazeSecurityFormGUID, Common::SharedPtr<StructuralHooks>(new ObsidianSecurityFormWindscreenHooks()));
+		hacks.addStructuralHooks(cubeMazeSecurityFormGUID, Common::SharedPtr<StructuralHooks>(new ObsidianSecurityFormWidescreenHooks()));
+		hacks.addStructuralHooks(rsgIntroMovieGUID, Common::SharedPtr<StructuralHooks>(new ObsidianRSGLogoWidescreenHooks()));
 	}
 	if ((desc.desc.flags & ADGF_DEMO) == 0 && desc.desc.language == Common::EN_ANY && desc.desc.platform == Common::kPlatformMacintosh) {
 		const uint32 inventoryItemGUIDs[] = {
@@ -299,13 +554,15 @@ void addObsidianImprovedWidescreen(const MTropolisGameDescription &desc, Hacks &
 		};
 
 		const uint32 cubeMazeSecurityFormGUID = 0x9602ec;
+		const uint32 rsgIntroMovieGUID = 0x2fc101;
 
 		Common::SharedPtr<StructuralHooks> invItemHooks(new ObsidianInventoryWindscreenHooks());
 
 		for (uint32 guid : inventoryItemGUIDs)
 			hacks.addStructuralHooks(guid, invItemHooks);
 
-		hacks.addStructuralHooks(cubeMazeSecurityFormGUID, Common::SharedPtr<StructuralHooks>(new ObsidianSecurityFormWindscreenHooks()));
+		hacks.addStructuralHooks(cubeMazeSecurityFormGUID, Common::SharedPtr<StructuralHooks>(new ObsidianSecurityFormWidescreenHooks()));
+		hacks.addStructuralHooks(rsgIntroMovieGUID, Common::SharedPtr<StructuralHooks>(new ObsidianRSGLogoWidescreenHooks()));
 	}
 }
 
@@ -656,6 +913,100 @@ void addObsidianAutoSaves(const MTropolisGameDescription &desc, Hacks &hacks, IA
 	Common::SharedPtr<ObsidianAutoSaveVarsState> varsState(new ObsidianAutoSaveVarsState());
 	hacks.addSceneTransitionHooks(Common::SharedPtr<SceneTransitionHooks>(new ObsidianAutoSaveSceneTransitionHooks(varsState, autoSaveProvider)));
 	hacks.addSaveLoadHooks(Common::SharedPtr<SaveLoadHooks>(new ObsidianAutoSaveSaveLoadHooks(varsState)));
+}
+
+class ObsidianSaveLoadMechanism : public SaveLoadMechanismHooks {
+public:
+	bool canSaveNow(Runtime *runtime) override;
+	Common::SharedPtr<ISaveWriter> createSaveWriter(Runtime *runtime) override;
+};
+
+bool ObsidianSaveLoadMechanism::canSaveNow(Runtime *runtime) {
+	Project *project = runtime->getProject();
+
+	// Check that we're in a game section
+	Structural *mainScene = runtime->getActiveMainScene().get();
+
+	if (!mainScene)
+		return false;
+
+	const Common::String disallowedSections[] = {
+		Common::String("Start Obsidian"),	// Intro videos/screens
+		Common::String("End Obsidian"),		// Credits
+		Common::String("GUI"),				// Menus
+	};
+
+	Common::String sectionName = mainScene->getParent()->getParent()->getName();
+
+	for (const Common::String &disallowedSection : disallowedSections) {
+		if (caseInsensitiveEqual(disallowedSection, sectionName))
+			return false;
+	}
+
+	// Check that the g.bESC flag is set, meaning we can go to the menu
+	Common::String gName("g");
+	Common::String bEscName("bESC");
+
+	Modifier *gCompoundVar = nullptr;
+	for (const Common::SharedPtr<Modifier> &child : project->getModifiers()) {
+		if (caseInsensitiveEqual(child->getName(), gName)) {
+			gCompoundVar = child.get();
+			break;
+		}
+	}
+
+	if (!gCompoundVar)
+		return false;
+
+	IModifierContainer *container = gCompoundVar->getChildContainer();
+	if (!container)
+		return false;
+
+	Modifier *bEscVar = nullptr;
+	for (const Common::SharedPtr<Modifier> &child : container->getModifiers()) {
+		if (caseInsensitiveEqual(child->getName(), bEscName)) {
+			bEscVar = child.get();
+			break;
+		}
+	}
+
+	if (!bEscVar || !bEscVar->isVariable())
+		return false;
+
+	DynamicValue bEscValue;
+	static_cast<VariableModifier *>(bEscVar)->varGetValue(nullptr, bEscValue);
+
+	if (bEscValue.getType() != DynamicValueTypes::kBoolean || !bEscValue.getBool())
+		return false;
+
+	return true;
+}
+
+Common::SharedPtr<ISaveWriter> ObsidianSaveLoadMechanism::createSaveWriter(Runtime *runtime) {
+	Project *project = runtime->getProject();
+
+	Common::String cgstName("cGSt");
+
+	Modifier *cgstCompoundVar = nullptr;
+	for (const Common::SharedPtr<Modifier> &child : project->getModifiers()) {
+		if (caseInsensitiveEqual(child->getName(), cgstName)) {
+			cgstCompoundVar = child.get();
+			break;
+		}
+	}
+
+	if (!cgstCompoundVar)
+		return nullptr;
+
+	if (cgstCompoundVar->getSaveLoad())
+		return Common::SharedPtr<CompoundVarSaver>(new CompoundVarSaver(cgstCompoundVar));
+
+	return nullptr;
+}
+
+void addObsidianSaveMechanism(const MTropolisGameDescription &desc, Hacks &hacks) {
+	Common::SharedPtr<ObsidianSaveLoadMechanism> mechanism(new ObsidianSaveLoadMechanism());
+	hacks.addSaveLoadMechanismHooks(mechanism);
 }
 
 } // End of namespace HackSuites

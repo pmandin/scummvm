@@ -31,6 +31,12 @@ class WriteStream;
 
 } // End of namespace Common
 
+namespace Graphics {
+
+struct Surface;
+
+} // End of namespace Graphics
+
 namespace MTropolis {
 
 class Modifier;
@@ -46,7 +52,7 @@ struct ISaveReader : public IInterfaceBase {
 };
 
 struct ISaveUIProvider : public IInterfaceBase {
-	virtual bool promptSave(ISaveWriter *writer) = 0;
+	virtual bool promptSave(ISaveWriter *writer, const Graphics::Surface *screenshotOverride) = 0;
 };
 
 struct ILoadUIProvider : public IInterfaceBase {
@@ -73,6 +79,14 @@ public:
 
 	virtual void onLoad(Runtime *runtime, Modifier *saveLoadModifier, Modifier *varModifier);
 	virtual void onSave(Runtime *runtime, Modifier *saveLoadModifier, Modifier *varModifier);
+};
+
+class SaveLoadMechanismHooks {
+public:
+	virtual ~SaveLoadMechanismHooks();
+
+	virtual bool canSaveNow(Runtime *runtime);
+	virtual Common::SharedPtr<ISaveWriter> createSaveWriter(Runtime *runtime);
 };
 
 } // End of namespace MTropolis

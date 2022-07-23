@@ -30,6 +30,9 @@
 
 namespace MTropolis {
 
+struct AudioMetadata;
+class AudioPlayer;
+class CachedAudio;
 struct ModifierLoaderContext;
 class MiniscriptProgram;
 class MiniscriptReferences;
@@ -57,12 +60,16 @@ public:
 
 private:
 	struct SwitchTaskData {
+		SwitchTaskData() : targetState(false), eventID(EventIDs::kNothing), runtime(nullptr) {}
+
 		bool targetState;
 		EventIDs::EventID eventID;
 		Runtime *runtime;
 	};
 
 	struct PropagateTaskData {
+		PropagateTaskData() : index(0), eventID(EventIDs::kNothing), runtime(nullptr) {}
+
 		size_t index;
 		EventIDs::EventID eventID;
 		Runtime *runtime;
@@ -140,8 +147,8 @@ public:
 	bool respondsToEvent(const Event &evt) const override;
 	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
-	void linkInternalReferences(ObjectLinkingScope *outerScope);
-	void visitInternalReferences(IStructuralReferenceVisitor *visitor);
+	void linkInternalReferences(ObjectLinkingScope *outerScope) override;
+	void visitInternalReferences(IStructuralReferenceVisitor *visitor) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Messenger Modifier"; }
@@ -228,6 +235,9 @@ class SoundEffectModifier : public Modifier {
 public:
 	bool load(ModifierLoaderContext &context, const Data::SoundEffectModifier &data);
 
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Sound Effect Modifier"; }
 #endif
@@ -241,15 +251,23 @@ private:
 		kSoundTypeAudioAsset,
 	};
 
+	void loadAndCacheAudio(Runtime *runtime);
+
 	Event _executeWhen;
 	Event _terminateWhen;
 
 	SoundType _soundType;
 	uint32 _assetID;
+
+	Common::SharedPtr<CachedAudio> _cachedAudio;
+	Common::SharedPtr<AudioMetadata> _metadata;
+	Common::SharedPtr<AudioPlayer> _player;
 };
 
 class PathMotionModifierV2 : public Modifier {
 public:
+	PathMotionModifierV2();
+
 	bool load(ModifierLoaderContext &context, const Data::PathMotionModifierV2 &data);
 
 	bool respondsToEvent(const Event &evt) const override;
@@ -262,6 +280,8 @@ public:
 
 private:
 	struct PointDef {
+		PointDef();
+
 		Common::Point point;
 		uint32 frame;
 		bool useFrame;
@@ -320,6 +340,7 @@ public:
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Vector Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
 #endif
 
 private:
@@ -348,6 +369,9 @@ class SceneTransitionModifier : public Modifier {
 public:
 	bool load(ModifierLoaderContext &context, const Data::SceneTransitionModifier &data);
 
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Scene Transition Modifier"; }
 #endif
@@ -361,27 +385,30 @@ private:
 
 	uint32 _duration;	// 6000000 is maximum
 	uint16 _steps;
-	TransitionType _transitionType;
-	TransitionDirection _transitionDirection;
+	SceneTransitionTypes::SceneTransitionType _transitionType;
+	SceneTransitionDirections::SceneTransitionDirection _transitionDirection;
 };
 
 class ElementTransitionModifier : public Modifier {
 public:
+	ElementTransitionModifier();
+	~ElementTransitionModifier();
+
 	bool load(ModifierLoaderContext &context, const Data::ElementTransitionModifier &data);
 
 	bool respondsToEvent(const Event &evt) const override;
 	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
 	enum TransitionType {
-		kTransitionTypeRectangularIris = 0x03e8,
-		kTransitionTypeOvalIris = 0x03f2,
-		kTransitionTypeZoom = 0x044c,
-		kTransitionTypeFade = 0x2328,
+		kTransitionTypeRectangularIris,
+		kTransitionTypeOvalIris,
+		kTransitionTypeZoom,
+		kTransitionTypeFade,
 	};
 
 	enum RevealType {
-		kRevealTypeReveal = 0,
-		kRevealTypeConceal = 1,
+		kRevealTypeReveal,
+		kRevealTypeConceal,
 	};
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
@@ -396,13 +423,18 @@ private:
 	void continueTransition(Runtime *runtime);
 	void completeTransition(Runtime *runtime);
 
+	void setTransitionProgress(uint32 steps, uint32 maxSteps);
+
 	Event _enableWhen;
 	Event _disableWhen;
 
-	uint32 _rate;	// 1-100, higher is faster
+	uint32 _rate;	// Steps per second
 	uint16 _steps;
 	TransitionType _transitionType;
 	RevealType _revealType;
+
+	uint64 _transitionStartTime;
+	uint32 _currentStep;
 
 	Common::SharedPtr<ScheduledEvent> _scheduledEvent;
 };
@@ -421,6 +453,8 @@ public:
 
 private:
 	struct EvaluateAndSendTaskData {
+		EvaluateAndSendTaskData() : runtime(nullptr) {}
+
 		Common::SharedPtr<MiniscriptThread> thread;
 		Runtime *runtime;
 		DynamicValue incomingData;
@@ -449,8 +483,8 @@ public:
 	bool respondsToEvent(const Event &evt) const override;
 	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
-	void linkInternalReferences(ObjectLinkingScope *outerScope);
-	void visitInternalReferences(IStructuralReferenceVisitor *visitor);
+	void linkInternalReferences(ObjectLinkingScope *outerScope) override;
+	void visitInternalReferences(IStructuralReferenceVisitor *visitor) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Timer Messenger Modifier"; }
@@ -473,9 +507,21 @@ private:
 	Common::SharedPtr<ScheduledEvent> _scheduledEvent;
 };
 
-class BoundaryDetectionMessengerModifier : public Modifier {
+class BoundaryDetectionMessengerModifier : public Modifier, public IBoundaryDetector {
 public:
+	BoundaryDetectionMessengerModifier();
+	~BoundaryDetectionMessengerModifier();
+
 	bool load(ModifierLoaderContext &context, const Data::BoundaryDetectionMessengerModifier &data);
+
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+
+	void linkInternalReferences(ObjectLinkingScope *outerScope) override;
+	void visitInternalReferences(IStructuralReferenceVisitor *visitor) override;
+
+	void getCollisionProperties(Modifier *&modifier, uint &edgeFlags, bool &mustBeCompletelyOutside, bool &continuous) const override;
+	void triggerCollision(Runtime *runtime) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Boundary Detection Modifier"; }
@@ -504,6 +550,10 @@ private:
 	bool _detectLeftEdge;
 	bool _detectRightEdge;
 	MessengerSendSpec _send;
+
+	Runtime *_runtime;
+	bool _isActive;
+	DynamicValue _incomingData;
 };
 
 class CollisionDetectionMessengerModifier : public Modifier, public ICollider {
@@ -521,7 +571,7 @@ public:
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Collision Detection Messenger Modifier"; }
-	SupportStatus debugGetSupportStatus() const { return kSupportStatusPartial; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusPartial; }
 #endif
 
 private:
@@ -559,7 +609,7 @@ public:
 	KeyboardMessengerModifier();
 	~KeyboardMessengerModifier();
 
-	bool isKeyboardMessenger() const;
+	bool isKeyboardMessenger() const override;
 
 	bool load(ModifierLoaderContext &context, const Data::KeyboardMessengerModifier &data);
 
@@ -581,8 +631,6 @@ private:
 	void visitInternalReferences(IStructuralReferenceVisitor *visitor) override;
 	void linkInternalReferences(ObjectLinkingScope *scope) override;
 
-	Event _send;
-
 	enum KeyCodeType {
 		kAny = 0x00,
 		kHome = 0x01,
@@ -602,6 +650,8 @@ private:
 		kDelete = 0x7f,
 		kMacRomanChar = 0xff,
 	};
+
+	Event _send;
 
 	bool _onDown : 1;
 	bool _onUp : 1;
@@ -695,6 +745,8 @@ private:
 
 	private:
 		struct ChildSaveLoad {
+			ChildSaveLoad();
+
 			Modifier *modifier;
 			Common::SharedPtr<ModifierSaveLoad> saveLoad;
 		};
@@ -800,8 +852,8 @@ public:
 	bool varSetValue(MiniscriptThread *thread, const DynamicValue &value) override;
 	void varGetValue(MiniscriptThread *thread, DynamicValue &dest) const override;
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Integer Range Variable Modifier"; }
@@ -838,8 +890,8 @@ public:
 	bool varSetValue(MiniscriptThread *thread, const DynamicValue &value) override;
 	void varGetValue(MiniscriptThread *thread, DynamicValue &dest) const override;
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Vector Variable Modifier"; }

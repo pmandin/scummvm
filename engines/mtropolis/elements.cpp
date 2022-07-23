@@ -29,137 +29,14 @@
 #include "graphics/font.h"
 #include "graphics/managed_surface.h"
 
-#include "mtropolis/elements.h"
 #include "mtropolis/assets.h"
+#include "mtropolis/audio_player.h"
+#include "mtropolis/elements.h"
 #include "mtropolis/element_factory.h"
 #include "mtropolis/miniscript.h"
 #include "mtropolis/render.h"
 
 namespace MTropolis {
-
-
-// Audio player, this does not support requeueing.  If the sound exhausts, then you must create a
-// new audio player.  In particular, since time is being tracked separately, if the loop status
-// changes when the timer thinks the sound should still be playing, but the sound has actually
-// exhausted, then the sound needs to be requeued.
-class AudioPlayer : public Audio::AudioStream {
-public:
-	AudioPlayer(Audio::Mixer *mixer, byte volume, int8 balance, const Common::SharedPtr<AudioMetadata> &metadata, const Common::SharedPtr<CachedAudio> &audio, bool isLooping, size_t currentPos, size_t startPos, size_t endPos);
-	~AudioPlayer();
-	
-	int readBuffer(int16 *buffer, const int numSamples) override;
-	bool isStereo() const override;
-	int getRate() const override;
-	bool endOfData() const override;
-
-	void sendToMixer(Audio::Mixer *mixer, byte volume, int8 balance);
-	void stop();
-
-private:
-	Common::Mutex _mutex;
-
-	Common::SharedPtr<AudioMetadata> _metadata;
-	Common::SharedPtr<CachedAudio> _audio;
-	Audio::SoundHandle _handle;
-	bool _isLooping;
-	bool _exhausted;
-	size_t _currentPos;
-	size_t _startPos;
-	size_t _endPos;
-	Audio::Mixer *_mixer;
-};
-
-AudioPlayer::AudioPlayer(Audio::Mixer *mixer, byte volume, int8 balance, const Common::SharedPtr<AudioMetadata> &metadata, const Common::SharedPtr<CachedAudio> &audio, bool isLooping, size_t currentPos, size_t startPos, size_t endPos)
-	: _metadata(metadata), _audio(audio), _isLooping(isLooping), _currentPos(currentPos), _startPos(startPos), _endPos(endPos), _exhausted(false), _mixer(nullptr) {
-	if (_startPos >= _endPos) {
-		// ???
-		_exhausted = true;
-		_isLooping = false;
-	}
-	if (_currentPos < _startPos)
-		_currentPos = _startPos;
-
-	if (!_exhausted) {
-		_mixer = mixer;
-		mixer->playStream(Audio::Mixer::kPlainSoundType, &_handle, this, -1, volume, balance, DisposeAfterUse::NO);
-	}
-}
-
-AudioPlayer::~AudioPlayer() {
-	stop();
-}
-
-int AudioPlayer::readBuffer(int16 *buffer, const int numSamplesTimesChannelCount) {
-	Common::StackLock lock(_mutex);
-
-	int samplesRead = 0;
-	if (_exhausted)
-		return 0;
-
-	uint8 numChannels = _metadata->channels;
-
-	size_t numSamples = numSamplesTimesChannelCount / numChannels;
-
-	while (numSamples > 0) {
-		size_t samplesAvailable = _endPos - _currentPos;
-		if (samplesAvailable == 0) {
-			if (_isLooping) {
-				_currentPos = _startPos;
-				continue;
-			} else {
-				_exhausted = true;
-				break;
-			}
-		}
-
-		size_t numSamplesThisIteration = numSamples;
-		if (numSamplesThisIteration > samplesAvailable)
-			numSamplesThisIteration = samplesAvailable;
-
-		size_t numSampleValues = numSamplesThisIteration * numChannels;
-		// TODO: Support more formats
-		if (_metadata->bitsPerSample == 8 && _metadata->encoding == AudioMetadata::kEncodingUncompressed) {
-			const uint8 *inSamples = static_cast<const uint8 *>(_audio->getData()) + _currentPos * numChannels;
-			for (size_t i = 0; i < numSampleValues; i++)
-				buffer[i] = (inSamples[i] - 0x80) * 256;
-		} else if (_metadata->bitsPerSample == 16 && _metadata->encoding == AudioMetadata::kEncodingUncompressed) {
-			const int16 *inSamples = static_cast<const int16 *>(_audio->getData()) + _currentPos * numChannels;
-			memcpy(buffer, inSamples, sizeof(int16) * numSampleValues);
-		}
-
-		buffer += numSampleValues;
-		numSamples -= numSamplesThisIteration;
-
-		samplesRead += numSamplesThisIteration * numChannels;
-		_currentPos += numSamplesThisIteration;
-	}
-
-	return samplesRead;
-}
-
-bool AudioPlayer::isStereo() const {
-	return _metadata->channels == 2;
-}
-
-int AudioPlayer::getRate() const {
-	return _metadata->sampleRate;
-}
-
-bool AudioPlayer::endOfData() const {
-	return _exhausted;
-}
-
-void AudioPlayer::sendToMixer(Audio::Mixer *mixer, byte volume, int8 balance) {
-	mixer->playStream(Audio::Mixer::kPlainSoundType, &_handle, this, -1, volume, balance, DisposeAfterUse::NO);
-}
-
-void AudioPlayer::stop() {
-	if (_mixer)
-		_mixer->stopHandle(_handle);
-
-	_exhausted = true;
-	_mixer = nullptr;
-}
 
 GraphicElement::GraphicElement() : _cacheBitmap(false) {
 }
@@ -542,10 +419,14 @@ void GraphicElement::render(Window *window) {
 	}
 }
 
+MovieResizeFilter::~MovieResizeFilter() {
+}
+
 MovieElement::MovieElement()
-	: _cacheBitmap(false), _reversed(false), _haveFiredAtFirstCel(false), _haveFiredAtLastCel(false)
-	, _alternate(false), _playEveryFrame(false), _assetID(0), _runtime(nullptr), _displayFrame(nullptr)
-	, _shouldPlayIfNotPaused(true), _needsReset(true), _currentPlayState(kMediaStateStopped), _playRange(IntRange::create(0, 0)) {
+	: _cacheBitmap(false), _alternate(false), _playEveryFrame(false), _reversed(false), _haveFiredAtLastCel(false),
+	  _haveFiredAtFirstCel(false), _shouldPlayIfNotPaused(true), _needsReset(true), _currentPlayState(kMediaStateStopped),
+	  _assetID(0), _maxTimestamp(0), _timeScale(0), _currentTimestamp(0), _volume(100), _playRange(IntRange::create(0, 0)),
+	  _displayFrame(nullptr), _runtime(nullptr) {
 }
 
 MovieElement::~MovieElement() {
@@ -740,17 +621,26 @@ void MovieElement::render(Window *window) {
 		_videoDecoder->seek(Audio::Timestamp(0, _timeScale).addFrames(_currentTimestamp));
 		_videoDecoder->setEndTime(Audio::Timestamp(0, _timeScale).addFrames(_reversed ? realRange.min : realRange.max));
 		const Graphics::Surface *decodedFrame = _videoDecoder->decodeNextFrame();
-		if (decodedFrame)
+		if (decodedFrame) {
 			_displayFrame = decodedFrame;
+			_scaledFrame.reset();
+		}
 
 		_needsReset = false;
 	}
 
 	if (_displayFrame) {
+		const Graphics::Surface *displaySurface = _displayFrame;
+		if (_resizeFilter) {
+			if (!_scaledFrame)
+				_scaledFrame = _resizeFilter->scaleFrame(*_displayFrame, _currentTimestamp);
+			displaySurface = _scaledFrame.get();
+		}
+
 		Graphics::ManagedSurface *target = window->getSurface().get();
-		Common::Rect srcRect(0, 0, _displayFrame->w, _displayFrame->h);
+		Common::Rect srcRect(0, 0, displaySurface->w, displaySurface->h);
 		Common::Rect destRect(_cachedAbsoluteOrigin.x, _cachedAbsoluteOrigin.y, _cachedAbsoluteOrigin.x + _rect.width(), _cachedAbsoluteOrigin.y + _rect.height());
-		target->blitFrom(*_displayFrame, srcRect, destRect);
+		target->blitFrom(*displaySurface, srcRect, destRect);
 	}
 }
 
@@ -823,6 +713,7 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 					_contentsDirty = true;
 					framesDecodedThisFrame++;
 					_displayFrame = decodedFrame;
+					_scaledFrame.reset();
 					if (_playEveryFrame)
 						break;
 				}
@@ -893,6 +784,10 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 			}
 		}
 	}
+}
+
+void MovieElement::setResizeFilter(const Common::SharedPtr<MovieResizeFilter> &filter) {
+	_resizeFilter = filter;
 }
 
 void MovieElement::onSegmentUnloaded(int segmentIndex) {
@@ -1071,7 +966,7 @@ VThreadState MovieElement::seekToTimeTask(const SeekToTimeTaskData &taskData) {
 	return kVThreadReturn;
 }
 
-ImageElement::ImageElement() : _cacheBitmap(false), _runtime(nullptr) {
+ImageElement::ImageElement() : _cacheBitmap(false), _assetID(0), _runtime(nullptr) {
 }
 
 ImageElement::~ImageElement() {
@@ -1146,11 +1041,18 @@ void ImageElement::render(Window *window) {
 		Common::Rect srcRect(optimized->w, optimized->h);
 		Common::Rect destRect(_cachedAbsoluteOrigin.x, _cachedAbsoluteOrigin.y, _cachedAbsoluteOrigin.x + _rect.width(), _cachedAbsoluteOrigin.y + _rect.height());
 
+		uint8 alpha = _transitionProps.getAlpha();
+
 		if (inkMode == VisualElementRenderProperties::kInkModeBackgroundMatte || inkMode == VisualElementRenderProperties::kInkModeBackgroundTransparent) {
 			const ColorRGB8 transColorRGB8 = _renderProps.getBackColor();
 			uint32 transColor = optimized->format.ARGBToColor(255, transColorRGB8.r, transColorRGB8.g, transColorRGB8.b);
-			window->getSurface()->transBlitFrom(*optimized, srcRect, destRect, transColor);
+			window->getSurface()->transBlitFrom(*optimized, srcRect, destRect, transColor, false, 0, alpha);
 		} else if (inkMode == VisualElementRenderProperties::kInkModeDefault || inkMode == VisualElementRenderProperties::kInkModeCopy) {
+			if (alpha != 255) {
+				warning("Alpha fade was applied to a default or copy image, this isn't supported yet");
+				_transitionProps.setAlpha(255);
+			}
+
 			window->getSurface()->blitFrom(*optimized, srcRect, destRect);
 		} else {
 			warning("Unimplemented image ink mode");
@@ -1163,7 +1065,9 @@ MiniscriptInstructionOutcome ImageElement::scriptSetFlushPriority(MiniscriptThre
 	return kMiniscriptInstructionOutcomeContinue;
 }
 
-MToonElement::MToonElement() : _cel(1), _renderedFrame(0), _flushPriority(0), _celStartTimeMSec(0), _isPlaying(false), _playRange(IntRange::create(1, 1)) {
+MToonElement::MToonElement()
+	: _cacheBitmap(false), _maintainRate(false), _assetID(0), _rateTimes100000(0), _flushPriority(0), _celStartTimeMSec(0),
+	  _isPlaying(false), _runtime(nullptr), _renderedFrame(0), _playRange(IntRange::create(1, 1)), _cel(1) {
 }
 
 MToonElement::~MToonElement() {
@@ -1231,7 +1135,7 @@ MiniscriptInstructionOutcome MToonElement::writeRefAttribute(MiniscriptThread *t
 	return VisualElement::writeRefAttribute(thread, result, attrib);
 }
 
-VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties>& msg) {
+VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
 	if (Event::create(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
 		StartPlayingTaskData *startPlayingTaskData = runtime->getVThread().pushTask("MToonElement::startPlayingTask", this, &MToonElement::startPlayingTask);
 		startPlayingTaskData->runtime = runtime;
@@ -1243,12 +1147,12 @@ VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::Shared
 		return kVThreadReturn;
 	}
 	if (Event::create(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
-		// Works differently from movies: Needs to hide the element and pause
-#ifdef MTROPOLIS_DEBUG_ENABLE
-		if (Debugger *debugger = runtime->debugGetDebugger())
-			debugger->notify(kDebugSeverityError, "mToon element was commanded to stop, but that's not implemented yet");
-#endif
-		warning("mToon element stops are not implemented");
+		ChangeFlagTaskData *becomeVisibleTaskData = runtime->getVThread().pushTask("MToonElement::changeVisibilityTask", static_cast<VisualElement *>(this), &MToonElement::changeVisibilityTask);
+		becomeVisibleTaskData->desiredFlag = false;
+		becomeVisibleTaskData->runtime = runtime;
+
+		StopPlayingTaskData *stopPlayingTaskData = runtime->getVThread().pushTask("MToonElement::startPlayingTask", this, &MToonElement::stopPlayingTask);
+		stopPlayingTaskData->runtime = runtime;
 		return kVThreadReturn;
 	}
 
@@ -1401,6 +1305,17 @@ VThreadState MToonElement::startPlayingTask(const StartPlayingTaskData &taskData
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 		taskData.runtime->sendMessageOnVThread(dispatch);
 	}
+
+	return kVThreadReturn;
+}
+
+VThreadState MToonElement::stopPlayingTask(const StopPlayingTaskData &taskData) {
+	_contentsDirty = true;
+	_isPlaying = false;
+
+	Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+	Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+	taskData.runtime->sendMessageOnVThread(dispatch);
 
 	return kVThreadReturn;
 }
@@ -1638,7 +1553,9 @@ MiniscriptInstructionOutcome MToonElement::scriptSetRate(MiniscriptThread *threa
 }
 
 
-TextLabelElement::TextLabelElement() : _needsRender(false), _isBitmap(false), _macFontID(0), _size(12), _alignment(kTextAlignmentLeft) {
+TextLabelElement::TextLabelElement()
+	: _cacheBitmap(false), _needsRender(false), _isBitmap(false), _assetID(0),
+	  _macFontID(0), _size(12), _alignment(kTextAlignmentLeft), _runtime(nullptr) {
 }
 
 TextLabelElement::~TextLabelElement() {
@@ -1676,7 +1593,7 @@ bool TextLabelElement::readAttributeIndexed(MiniscriptThread *thread, DynamicVal
 			return false;
 		}
 
-		size_t lineIndex = asInteger - 1;
+		size_t lineIndex = static_cast<size_t>(asInteger) - 1;
 		uint32 startPos;
 		uint32 endPos;
 		if (findLineRange(lineIndex, startPos, endPos))
@@ -1709,7 +1626,7 @@ MiniscriptInstructionOutcome TextLabelElement::writeRefAttributeIndexed(Miniscri
 
 		writeProxy.pod.ifc = DynamicValueWriteInterfaceGlue<TextLabelLineWriteInterface>::getInstance();
 		writeProxy.pod.objectRef = this;
-		writeProxy.pod.ptrOrOffset = asInteger - 1;
+		writeProxy.pod.ptrOrOffset = static_cast<uintptr>(asInteger) - 1;
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -1790,8 +1707,12 @@ void TextLabelElement::render(Window *window) {
 				slant |= 64;
 
 			const Graphics::FontManager::FontUsage defaultUsage = getDefaultUsageForMacFont(_macFontID, _size);
+			const Graphics::Font *fallback = FontMan.getFontByUsage(defaultUsage);
 
-			font = _runtime->getMacFontManager()->getFont(Graphics::MacFont(_macFontID, _size, slant, defaultUsage));
+			Graphics::MacFont macFont(_macFontID, _size, slant);
+			macFont.setFallback(fallback);
+
+			font = _runtime->getMacFontManager()->getFont(macFont);
 		}
 
 		// Some weird cases (like the Immediate Action entryway in Obsidian) have no font info at all
@@ -2024,7 +1945,9 @@ MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::refA
 	return kMiniscriptInstructionOutcomeFailed;
 }
 
-SoundElement::SoundElement() : _finishTime(0), _shouldPlayIfNotPaused(true), _needsReset(true) {
+SoundElement::SoundElement()
+	: _leftVolume(0), _rightVolume(0), _balance(0), _assetID(0), _finishTime(0),
+	  _shouldPlayIfNotPaused(true), _needsReset(true), _runtime(nullptr) {
 }
 
 SoundElement::~SoundElement() {

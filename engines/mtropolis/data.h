@@ -215,6 +215,7 @@ private:
 
 struct Rect {
 	bool load(DataReader &reader);
+	static Rect createDefault();
 
 	bool toScummVMRect(Common::Rect &outRect) const;
 	bool toScummVMRectUnchecked(Common::Rect &outRect) const;
@@ -229,18 +230,23 @@ struct Point {
 	bool load(DataReader &reader);
 	bool toScummVMPoint(Common::Point &outPoint) const;
 
+	static Point createDefault();
+
 	int16 x;
 	int16 y;
 };
 
 struct Event {
 	bool load(DataReader &reader);
+	static Event createDefault();
 
 	uint32 eventID;
 	uint32 eventInfo;
 };
 
 struct ColorRGB16 {
+	ColorRGB16();
+
 	bool load(DataReader &reader);
 
 	uint16 red;
@@ -250,6 +256,7 @@ struct ColorRGB16 {
 
 struct IntRange {
 	bool load(DataReader &reader);
+	static IntRange createDefault();
 
 	int32 min;
 	int32 max;
@@ -315,6 +322,8 @@ struct InternalTypeTaggedValue {
 		Point asPoint;
 	};
 
+	InternalTypeTaggedValue();
+
 	uint16 type;
 	ValueUnion value;
 
@@ -347,6 +356,8 @@ struct PlugInTypeTaggedValue : public Common::NonCopyable {
 		uint32 asVarRefGUID;
 	};
 
+	PlugInTypeTaggedValue();
+
 	uint16 type;
 	ValueUnion value;
 
@@ -374,6 +385,8 @@ protected:
 };
 
 struct ProjectHeader : public DataObject {
+	ProjectHeader();
+
 	uint32 persistFlags;
 	uint32 sizeIncludingTag;
 	uint16 unknown1;
@@ -435,6 +448,8 @@ private:
 };
 
 struct PresentationSettings : public DataObject {
+	PresentationSettings();
+
 	uint32 persistFlags;
 	uint32 sizeIncludingTag;
 	uint8 unknown1[2];
@@ -453,6 +468,8 @@ struct AssetCatalog : public DataObject {
 	};
 
 	struct AssetInfo {
+		AssetInfo();
+
 		uint32 flags1;
 		uint16 nameLength;
 		uint16 alwaysZero;
@@ -462,6 +479,8 @@ struct AssetCatalog : public DataObject {
 		uint32 flags2;
 		Common::String name;
 	};
+
+	AssetCatalog();
 
 	uint32 persistFlags;
 	uint32 totalNameSizePlus22;
@@ -474,6 +493,8 @@ protected:
 };
 
 struct Unknown19 : public DataObject {
+	Unknown19();
+
 	uint32 persistFlags;
 	uint32 sizeIncludingTag;
 	uint8 unknown1[2];
@@ -483,10 +504,14 @@ protected:
 };
 
 struct StructuralDef : public DataObject {
+	StructuralDef();
+
 	uint32 structuralFlags;
 };
 
 struct ProjectStructuralDef : public DataObject {
+	ProjectStructuralDef();
+
 	uint32 unknown1; // Seems to always be 0x16 or 0x9
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -500,6 +525,8 @@ protected:
 };
 
 struct SectionStructuralDef : public StructuralDef {
+	SectionStructuralDef();
+
 	uint32 sizeIncludingTag;
 	uint32 guid;
 	uint16 lengthOfName;
@@ -515,6 +542,8 @@ protected:
 };
 
 struct SubsectionStructuralDef : public StructuralDef {
+	SubsectionStructuralDef();
+
 	uint32 structuralFlags;
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -529,25 +558,57 @@ protected:
 };
 
 namespace ElementFlags {
-	enum ElementFlags {
-		kNotDirectToScreen	= 0x00001000,
-		kHidden				= 0x00008000,
-		kPaused				= 0x00010000,
-		kExpandedInEditor	= 0x00800000,
-		kCacheBitmap		= 0x02000000,
-		kSelectedInEditor	= 0x10000000,
-	};
+
+enum ElementFlags {
+	kNotDirectToScreen	= 0x00001000,
+	kHidden				= 0x00008000,
+	kPaused				= 0x00010000,
+	kExpandedInEditor	= 0x00800000,
+	kCacheBitmap		= 0x02000000,
+	kSelectedInEditor	= 0x10000000,
+};
+
 } // End of namespace ElementFlags
 
 namespace AnimationFlags {
-	enum AnimationFlags {
-		kAlternate			= 0x10000000,
-		kLoop				= 0x08000000,
-		kPlayEveryFrame		= 0x02000000,
-	};
-}
+
+enum AnimationFlags {
+	kAlternate			= 0x10000000,
+	kLoop				= 0x08000000,
+	kPlayEveryFrame		= 0x02000000,
+};
+
+} // End of namespace AnimationFlags
+
+namespace SceneTransitionTypes {
+
+enum SceneTransitionType {
+	kNone = 0,
+	kPatternDissolve = 0x0406,
+	kRandomDissolve = 0x0410, // No steps
+	kFade = 0x041a,
+	kSlide = 0x03e8, // Directional
+	kPush = 0x03f2,  // Directional
+	kZoom = 0x03fc,
+	kWipe = 0x0424, // Directional
+};
+
+} // End of namespace SceneTransitionTypes
+
+namespace SceneTransitionDirections {
+
+enum SceneTransitionDirection {
+	kUp = 0x384,
+	kDown = 0x385,
+	kLeft = 0x386,
+	kRight = 0x387,
+};
+
+} // End of namespace SceneTransitionDirections
 
 struct GraphicElement : public StructuralDef {
+	GraphicElement();
+
 	// Possible element flags: NotDirectToScreen, CacheBitmap, Hidden
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -567,6 +628,8 @@ protected:
 };
 
 struct ImageElement : public StructuralDef {
+	ImageElement();
+
 	// Possible element flags: NotDirectToScreen, CacheBitmap, Hidden
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -587,6 +650,8 @@ protected:
 };
 
 struct TextLabelElement : public StructuralDef {
+	TextLabelElement();
+
 	// Possible element flags: NotDirectToScreen, CacheBitmap, Hidden
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -628,6 +693,8 @@ struct SoundElement : public StructuralDef {
 		kLoop = 0x80000000,
 	};
 
+	SoundElement();
+
 	// Possible element flags: Loop, Paused
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -649,6 +716,8 @@ protected:
 };
 
 struct MovieElement : public StructuralDef {
+	MovieElement();
+
 	// Possible flags: NotDirectToScreen, CacheBitmap, Hidden, Loop, Loop + Alternate, Paused
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -676,6 +745,8 @@ protected:
 };
 
 struct MToonElement : public StructuralDef {
+	MToonElement();
+
 	// Possible flags: NotDirectToScreen, CacheBitmap, Hidden, Loop, Paused, PlayEveryFrame (inverted as "Maintain Rate")
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -699,18 +770,22 @@ protected:
 };
 
 struct GlobalObjectInfo : public DataObject {
-	DataReadErrorCode load(DataReader &reader) override;
+	GlobalObjectInfo();
 
 	uint32 persistFlags;
 	uint32 sizeIncludingTag;
 	uint16 numGlobalModifiers;
 	uint8 unknown1[4];
+
+protected:
+	DataReadErrorCode load(DataReader &reader) override;
 };
 
 class ProjectCatalog : public DataObject {
-
 public:
 	struct StreamDesc {
+		StreamDesc();
+
 		char streamType[25];
 		uint16 segmentIndexPlusOne;
 		uint32 size;
@@ -718,10 +793,14 @@ public:
 	};
 
 	struct SegmentDesc {
+		SegmentDesc();
+
 		uint32 segmentID;
 		Common::String label;
 		Common::String exportedPath;
 	};
+
+	ProjectCatalog();
 
 	uint32 persistFlags;
 	uint32 sizeOfStreamAndSegmentDescs;
@@ -737,6 +816,7 @@ protected:
 };
 
 struct StreamHeader : public DataObject {
+	StreamHeader();
 
 	uint32 marker;
 	uint32 sizeIncludingTag;
@@ -753,6 +833,8 @@ struct BehaviorModifier : public DataObject {
 	enum BehaviorFlags {
 		kBehaviorFlagSwitchable = 1,
 	};
+
+	BehaviorModifier();
 
 	uint32 modifierFlags;
 	uint32 sizeIncludingTag;
@@ -777,6 +859,8 @@ protected:
 
 struct MiniscriptProgram {
 	struct LocalRef {
+		LocalRef();
+
 		uint32 guid;
 		uint8 lengthOfName;
 		uint8 unknown2;
@@ -785,11 +869,15 @@ struct MiniscriptProgram {
 	};
 
 	struct Attribute {
+		Attribute();
+
 		uint8 lengthOfName;
 		uint8 unknown3;
 
 		Common::String name;
 	};
+
+	MiniscriptProgram();
 
 	uint32 unknown1;
 	uint32 sizeOfInstructions;
@@ -809,6 +897,8 @@ struct MiniscriptProgram {
 
 // Header used for most modifiers, but not all
 struct TypicalModifierHeader {
+	TypicalModifierHeader();
+
 	uint32 modifierFlags;
 	uint32 sizeIncludingTag;
 	uint32 guid;
@@ -823,6 +913,8 @@ struct TypicalModifierHeader {
 };
 
 struct MiniscriptModifier : public DataObject {
+	MiniscriptModifier();
+
 	TypicalModifierHeader modHeader;
 	Event enableWhen;
 	uint8 unknown6[11];
@@ -836,6 +928,8 @@ protected:
 
 
 struct SaveAndRestoreModifier : public DataObject {
+	SaveAndRestoreModifier();
+
 	TypicalModifierHeader modHeader;
 	uint8 unknown1[4];
 	Event saveWhen;
@@ -866,6 +960,8 @@ enum MessageFlags {
 
 
 struct MessengerModifier : public DataObject {
+	MessengerModifier();
+
 	TypicalModifierHeader modHeader;
 
 	uint32 messageFlags;
@@ -886,6 +982,8 @@ protected:
 };
 
 struct SetModifier : public DataObject {
+	SetModifier();
+
 	TypicalModifierHeader modHeader;
 
 	uint8 unknown1[4];
@@ -909,6 +1007,8 @@ protected:
 };
 
 struct AliasModifier : public DataObject {
+	AliasModifier();
+
 	uint32 modifierFlags;
 	uint32 sizeIncludingTag;
 	uint16 aliasIndexPlusOne;
@@ -934,6 +1034,8 @@ struct ChangeSceneModifier : public DataObject {
 		kChangeSceneFlagWrapAround			= 0x04000000,
 	};
 
+	ChangeSceneModifier();
+
 	TypicalModifierHeader modHeader;
 	uint32 changeSceneFlags;
 	Event executeWhen;
@@ -946,6 +1048,8 @@ protected:
 };
 
 struct SoundEffectModifier : public DataObject {
+	SoundEffectModifier();
+
 	static const uint32 kSpecialAssetIDSystemBeep = 0xffffffffu;
 
 	TypicalModifierHeader modHeader;
@@ -963,6 +1067,8 @@ protected:
 
 struct PathMotionModifierV2 : public DataObject {
 	struct PointDef {
+		PointDef();
+
 		enum FrameFlags {
 			kFrameFlagPlaySequentially = 1,
 		};
@@ -992,6 +1098,8 @@ struct PathMotionModifierV2 : public DataObject {
 		kFlagStartAtBeginning = 0x08000000,
 	};
 
+	PathMotionModifierV2();
+
 	TypicalModifierHeader modHeader;
 	uint32 flags;
 
@@ -1012,6 +1120,8 @@ protected:
 };
 
 struct DragMotionModifier : public DataObject {
+	DragMotionModifier();
+
 	TypicalModifierHeader modHeader;
 
 	Event enableWhen;
@@ -1052,6 +1162,8 @@ protected:
 };
 
 struct VectorMotionModifier : public DataObject {
+	VectorMotionModifier();
+
 	TypicalModifierHeader modHeader;
 
 	Event enableWhen;
@@ -1069,6 +1181,8 @@ protected:
 };
 
 struct SceneTransitionModifier : public DataObject {
+	SceneTransitionModifier();
+
 	TypicalModifierHeader modHeader;
 
 	Event enableWhen;
@@ -1085,6 +1199,20 @@ protected:
 };
 
 struct ElementTransitionModifier : public DataObject {
+	ElementTransitionModifier();
+
+	enum TransitionType {
+		kTransitionTypeRectangularIris = 0x03e8,
+		kTransitionTypeOvalIris = 0x03f2,
+		kTransitionTypeZoom = 0x044c,
+		kTransitionTypeFade = 0x2328,
+	};
+
+	enum RevealType {
+		kRevealTypeReveal = 0,
+		kRevealTypeConceal = 1,
+	};
+
 	TypicalModifierHeader modHeader;
 
 	Event enableWhen;
@@ -1101,6 +1229,8 @@ protected:
 };
 
 struct IfMessengerModifier : public DataObject {
+	IfMessengerModifier();
+
 	TypicalModifierHeader modHeader;
 
 	uint32 messageFlags;
@@ -1123,6 +1253,8 @@ protected:
 };
 
 struct TimerMessengerModifier : public DataObject {
+	TimerMessengerModifier();
+
 	TypicalModifierHeader modHeader;
 
 	enum TimerFlags {
@@ -1155,6 +1287,8 @@ protected:
 };
 
 struct BoundaryDetectionMessengerModifier : public DataObject {
+	BoundaryDetectionMessengerModifier();
+
 	enum Flags {
 		kDetectTopEdge = 0x1000,
 		kDetectBottomEdge = 0x0800,
@@ -1184,6 +1318,8 @@ protected:
 };
 
 struct CollisionDetectionMessengerModifier : public DataObject {
+	CollisionDetectionMessengerModifier();
+
 	enum ModifierFlags {
 		kDetectLayerInFront = 0x10000000,
 		kDetectLayerBehind = 0x08000000,
@@ -1251,6 +1387,8 @@ struct KeyboardMessengerModifier : public DataObject {
 		kDelete = 0x7f,
 	};
 
+	KeyboardMessengerModifier();
+
 	TypicalModifierHeader modHeader;
 	uint32 messageFlagsAndKeyStates;
 	uint16 unknown2;
@@ -1273,9 +1411,10 @@ protected:
 };
 
 struct TextStyleModifier : public DataObject {
+	TextStyleModifier();
+
 	TypicalModifierHeader modHeader;
 
-	TypicalModifierHeader m_modHeader;
 	uint8 unknown1[4];
 	uint16 macFontID;
 	uint8 flags;
@@ -1296,6 +1435,8 @@ protected:
 };
 
 struct GraphicModifier : public DataObject {
+	GraphicModifier();
+
 	TypicalModifierHeader modHeader;
 
 	uint16 unknown1;
@@ -1341,6 +1482,8 @@ protected:
 };
 
 struct CompoundVariableModifier : public DataObject {
+	CompoundVariableModifier();
+
 	// This doesn't follow the usual modifier header layout
 	uint32 modifierFlags;
 	uint32 sizeIncludingTag;
@@ -1360,6 +1503,8 @@ protected:
 };
 
 struct BooleanVariableModifier : public DataObject {
+	BooleanVariableModifier();
+
 	TypicalModifierHeader modHeader;
 	uint8 value;
 	uint8 unknown5;
@@ -1369,6 +1514,8 @@ protected:
 };
 
 struct IntegerVariableModifier : public DataObject {
+	IntegerVariableModifier();
+
 	TypicalModifierHeader modHeader;
 	uint8 unknown1[4];
 	int32 value;
@@ -1378,6 +1525,8 @@ protected:
 };
 
 struct IntegerRangeVariableModifier : public DataObject {
+	IntegerRangeVariableModifier();
+
 	TypicalModifierHeader modHeader;
 	uint8 unknown1[4];
 	IntRange range;
@@ -1387,6 +1536,8 @@ protected:
 };
 
 struct VectorVariableModifier : public DataObject {
+	VectorVariableModifier();
+
 	TypicalModifierHeader modHeader;
 	uint8 unknown1[4];
 	XPFloatVector vector;
@@ -1396,6 +1547,8 @@ protected:
 };
 
 struct PointVariableModifier : public DataObject {
+	PointVariableModifier();
+
 	TypicalModifierHeader modHeader;
 
 	uint8 unknown5[4];
@@ -1406,6 +1559,8 @@ protected:
 };
 
 struct FloatingPointVariableModifier : public DataObject {
+	FloatingPointVariableModifier();
+
 	TypicalModifierHeader modHeader;
 	uint8 unknown1[4];
 	Common::XPFloat value;
@@ -1415,6 +1570,8 @@ protected:
 };
 
 struct StringVariableModifier : public DataObject {
+	StringVariableModifier();
+
 	TypicalModifierHeader modHeader;
 	uint32 lengthOfString;
 	uint8 unknown1[4];
@@ -1430,6 +1587,8 @@ struct PlugInModifierData {
 };
 
 struct PlugInModifier : public DataObject {
+	PlugInModifier();
+
 	uint32 modifierFlags;
 	uint32 codedSize;	// Total size on Mac but (size + (name length * 255)) on Windows for some reason
 	char modifierName[17];
@@ -1451,6 +1610,8 @@ protected:
 };
 
 struct Debris : public DataObject {
+	Debris();
+
 	uint32 persistFlags;
 	uint32 sizeIncludingTag;
 
@@ -1459,6 +1620,8 @@ protected:
 };
 
 struct ColorTableAsset : public DataObject {
+	ColorTableAsset();
+
 	uint32 persistFlags;
 	uint32 sizeIncludingTag;
 	uint8 unknown1[4];
@@ -1487,6 +1650,8 @@ struct MovieAsset : public DataObject {
 		MacPart mac;
 		WinPart win;
 	};
+
+	MovieAsset();
 
 	uint32 persistFlags;
 	uint32 assetAndDataCombinedSize;
@@ -1536,6 +1701,8 @@ struct AudioAsset : public DataObject {
 		uint32 cuePointID;
 	};
 
+	AudioAsset();
+
 	uint32 persistFlags;
 	uint32 assetAndDataCombinedSize;
 	uint8 unknown2[4];
@@ -1578,6 +1745,8 @@ struct ImageAsset : public DataObject {
 		MacPart mac;
 	};
 
+	ImageAsset();
+
 	uint32 persistFlags;
 	uint32 unknown1;
 	uint8 unknown2[4];
@@ -1612,6 +1781,11 @@ struct MToonAsset : public DataObject {
 		uint8 unknown11[54];
 	};
 
+	union PlatformUnion {
+		MacPart mac;
+		WinPart win;
+	};
+
 	struct FrameDef {
 		struct MacPart {
 			uint8 unknown17[4];
@@ -1625,6 +1799,8 @@ struct MToonAsset : public DataObject {
 			MacPart mac;
 			WinPart win;
 		};
+
+		FrameDef();
 
 		uint8 unknown12[4];
 		Rect rect1;
@@ -1647,6 +1823,8 @@ struct MToonAsset : public DataObject {
 	};
 
 	struct FrameRangeDef {
+		FrameRangeDef();
+
 		uint32 startFrame;
 		uint32 endFrame;
 		uint8 lengthOfName;
@@ -1661,17 +1839,25 @@ struct MToonAsset : public DataObject {
 		kEncodingFlag_Trimming = 0x08,
 	};
 
+	struct FrameRangePart {
+		FrameRangePart();
+
+		uint32 tag;
+		uint32 sizeIncludingTag;
+
+		uint32 numFrameRanges;
+		Common::Array<FrameRangeDef> frameRanges;
+	};
+
+	MToonAsset();
+
 	uint32 marker;
 	uint8 unknown1[8];
 	uint32 assetID;
 
 	bool haveMacPart;
 	bool haveWinPart;
-
-	union PlatformUnion {
-		MacPart mac;
-		WinPart win;
-	} platform;
+	PlatformUnion platform;
 
 	uint32 frameDataPosition;
 	uint32 sizeOfFrameData;
@@ -1703,14 +1889,6 @@ struct MToonAsset : public DataObject {
 	// byte[8] unknown (all 0?)
 	Common::Array<uint8> codecData;
 
-	struct FrameRangePart {
-		uint32 tag;
-		uint32 sizeIncludingTag;
-
-		uint32 numFrameRanges;
-		Common::Array<FrameRangeDef> frameRanges;
-	};
-
 	FrameRangePart frameRangesPart;
 
 protected:
@@ -1741,6 +1919,8 @@ struct TextAsset : public DataObject {
 		MacPart mac;
 		WinPart win;
 	};
+
+	TextAsset();
 
 	uint32 persistFlags;
 	uint32 sizeIncludingTag;
@@ -1777,6 +1957,8 @@ protected:
 };
 
 struct AssetDataChunk : public DataObject {
+	AssetDataChunk();
+
 	uint32 unknown1;
 	uint32 sizeIncludingTag;
 	int64 filePosition;

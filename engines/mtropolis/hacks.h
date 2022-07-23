@@ -33,6 +33,7 @@ class ModifierHooks;
 class SaveLoadHooks;
 class SceneTransitionHooks;
 class StructuralHooks;
+class SaveLoadMechanismHooks;
 struct IAutoSaveProvider;
 struct MTropolisGameDescription;
 
@@ -45,9 +46,12 @@ struct Hacks {
 	void addAssetHooks(const Common::SharedPtr<AssetHooks> &hooks);
 	void addSceneTransitionHooks(const Common::SharedPtr<SceneTransitionHooks> &hooks);
 	void addSaveLoadHooks(const Common::SharedPtr<SaveLoadHooks> &hooks);
+	void addSaveLoadMechanismHooks(const Common::SharedPtr<SaveLoadMechanismHooks> &hooks);
 
 	bool ignoreMismatchedProjectNameInObjectLookups;
 	uint midiVolumeScale;	// 256 = 1.0
+
+	uint32 minTransitionDuration;
 
 	Common::Point reportDisplaySize;	// If X or Y is non-zero, report this as the display size
 	Common::Point mainWindowOffset;		// Coordinate offset of the main window
@@ -57,12 +61,15 @@ struct Hacks {
 	Common::Array<Common::SharedPtr<SceneTransitionHooks> > sceneTransitionHooks;
 	Common::Array<Common::SharedPtr<AssetHooks> > assetHooks;
 	Common::Array<Common::SharedPtr<SaveLoadHooks> > saveLoadHooks;
+	Common::Array<Common::SharedPtr<SaveLoadMechanismHooks> > saveLoadMechanismHooks;
 };
 
 namespace HackSuites {
 
+void addObsidianQuirks(const MTropolisGameDescription &desc, Hacks &hacks);
 void addObsidianBugFixes(const MTropolisGameDescription &desc, Hacks &hacks);
 void addObsidianAutoSaves(const MTropolisGameDescription &desc, Hacks &hacks, IAutoSaveProvider *autoSaveProvider);
+void addObsidianSaveMechanism(const MTropolisGameDescription &desc, Hacks &hacks);
 void addObsidianImprovedWidescreen(const MTropolisGameDescription &desc, Hacks &hacks);
 
 } // End of namespace HackSuites

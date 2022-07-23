@@ -1789,7 +1789,7 @@ void LB::b_duplicate(int nargs) {
 	auto channels = g_director->getCurrentMovie()->getScore()->_channels;
 
 	castMember->setModified(true);
-	g_director->getCurrentMovie()->getCast()->_loadedCast->setVal(to.u.i, castMember);
+	g_director->getCurrentMovie()->createOrReplaceCastMember(to.asMemberID(), castMember);
 
 	for (uint16 i = 0; i < currentFrame->_sprites.size(); i++) {
 		if (currentFrame->_sprites[i]->_castId == to.asMemberID())
@@ -1854,9 +1854,9 @@ void LB::b_erase(int nargs) {
 
 void LB::b_findEmpty(int nargs) {
 	Datum d = g_lingo->pop();
-	uint16  c_start = g_director->getCurrentMovie()->getCast()->_castArrayStart;
-	uint16  c_end = g_director->getCurrentMovie()->getCast()->_castArrayEnd;
-	Common::HashMap<int, CastMember *> *cast = g_director->getCurrentMovie()->getCast()->_loadedCast;
+	Cast *cast = g_director->getCurrentMovie()->getCast();
+	uint16 c_start = cast->_castArrayStart;
+	uint16 c_end = cast->_castArrayEnd;
 
 	if (d.type != CASTREF) {
 		warning("Incorrect argument type for findEmpty");
@@ -1874,7 +1874,7 @@ void LB::b_findEmpty(int nargs) {
 	}
 
 	for (uint16 i = c_start; i <= c_end; i++) {
-		if (!cast->contains((int) i) || cast->getVal((int) i)->_type == kCastTypeNull) {
+		if (!(cast->getCastMember(i) && cast->getCastMember(i)->_type != kCastTypeNull)) {
 			d.u.i = i;
 			d.type = INT;
 			g_lingo->push(d);
@@ -2105,7 +2105,7 @@ void LB::b_move(int nargs) {
 		return;
 	}
 
-	if (!g_director->getCurrentMovie()->getCast()->_loadedCast->contains(src.u.cast->member)) {
+	if (!g_director->getCurrentMovie()->getCastMember(*src.u.cast)) {
 		warning("b_move: Source CastMember doesn't exist");
 		return;
 	}
@@ -2114,11 +2114,36 @@ void LB::b_move(int nargs) {
 		warning("b_move: wrong castLib '%d' in src CastMemberID", src.u.cast->castLib);
 	}
 
-	CastMember *toMove = g_director->getCurrentMovie()->getCast()->_loadedCast->getVal(src.u.cast->member);
+	g_lingo->push(dest);
+	b_erase(1);
+
+	Movie *movie = g_director->getCurrentMovie();
+	uint16 frame = movie->getScore()->getCurrentFrame();
+	Frame *currentFrame = movie->getScore()->_frames[frame];
+	auto channels = g_director->getCurrentMovie()->getScore()->_channels;
+	
+
+	movie->getScore()->renderFrame(frame, kRenderForceUpdate);
+
+	CastMember *toMove = g_director->getCurrentMovie()->getCastMember(src.asMemberID());
 	CastMember *toReplace = new CastMember(*toMove);
 	toReplace->_type = kCastTypeNull;
-	g_director->getCurrentMovie()->getCast()->_loadedCast->setVal(dest.u.cast->member, toMove);
-	g_director->getCurrentMovie()->getCast()->_loadedCast->setVal(src.u.cast->member, toReplace);
+	g_director->getCurrentMovie()->createOrReplaceCastMember(dest.asMemberID(), toMove);
+	g_director->getCurrentMovie()->createOrReplaceCastMember(src.asMemberID(), toReplace);
+
+	for (uint16 i = 0; i < currentFrame->_sprites.size(); i++) {
+		if (currentFrame->_sprites[i]->_castId == dest.asMemberID())
+			currentFrame->_sprites[i]->setCast(dest.asMemberID());
+	}
+
+	for (uint i = 0; i < channels.size(); i++) {
+		if (channels[i]->_sprite->_castId == dest.asMemberID()) {
+			channels[i]->_sprite->setCast(CastMemberID(1, 0));
+			channels[i]->_dirty = true;
+		}
+	}
+
+	movie->getScore()->renderFrame(frame, kRenderForceUpdate);
 }
 
 void LB::b_moveableSprite(int nargs) {
@@ -2151,7 +2176,7 @@ void LB::b_pasteClipBoardInto(int nargs) {
 	auto channels = movie->getScore()->_channels;
 
 	castMember->setModified(true);
-	movie->getCast()->_loadedCast->setVal(to.u.cast->member, castMember);
+	movie->createOrReplaceCastMember(*to.u.cast, castMember);
 
 	for (uint16 i = 0; i < currentFrame->_sprites.size(); i++) {
 		if (currentFrame->_sprites[i]->_castId == to.asMemberID())
@@ -2681,11 +2706,27 @@ void LB::b_map(int nargs) {
 }
 
 void LB::b_offsetRect(int nargs) {
-	g_lingo->printSTUBWithArglist("b_offsetRect", nargs);
+	Datum vert = g_lingo->pop();
+	Datum hori = g_lingo->pop();
+	Datum rect = g_lingo->pop();
 
-	g_lingo->dropStack(nargs);
+	if (vert.type != INT ||
+		hori.type != INT ||
+		!(rect.type == RECT || (rect.type == ARRAY && rect.u.farr->arr.size() >= 4))) {
+		warning(" LB::b_offsetRect(): Invalid DatumType of inputs");
+		g_lingo->push(rect);
+	}
 
-	g_lingo->push(Datum(0));
+	//When vert is positive, rect moves higher
+	//When hori is positive, rect moves towards right
+
+	rect.u.farr->arr[0].u.i += hori.u.i;
+	rect.u.farr->arr[2].u.i += hori.u.i;
+	rect.u.farr->arr[1].u.i -= vert.u.i;
+	rect.u.farr->arr[3].u.i -= vert.u.i;
+	
+
+	g_lingo->push(rect);
 }
 
 void LB::b_union(int nargs) {

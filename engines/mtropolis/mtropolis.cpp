@@ -50,7 +50,7 @@
 
 namespace MTropolis {
 
-MTropolisEngine::MTropolisEngine(OSystem *syst, const MTropolisGameDescription *gameDesc) : Engine(syst), _gameDescription(gameDesc) {
+MTropolisEngine::MTropolisEngine(OSystem *syst, const MTropolisGameDescription *gameDesc) : Engine(syst), _gameDescription(gameDesc), _saveWriter(nullptr), _isTriggeredAutosave(false) {
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
 	SearchMan.addSubDirectoryMatching(gameDataDir, "Resource");
 
@@ -119,9 +119,11 @@ Common::Error MTropolisEngine::run() {
 		preferredColorDepthMode = kColorDepthMode16Bit;
 		enhancedColorDepthMode = kColorDepthMode32Bit;
 
+		HackSuites::addObsidianQuirks(*_gameDescription, _runtime->getHacks());
 		HackSuites::addObsidianBugFixes(*_gameDescription, _runtime->getHacks());
+		HackSuites::addObsidianSaveMechanism(*_gameDescription, _runtime->getHacks());
 
-		if (ConfMan.getBool("mtropolis_mod_auto_save"))
+		if (ConfMan.getBool("mtropolis_mod_auto_save_at_checkpoints"))
 			HackSuites::addObsidianAutoSaves(*_gameDescription, _runtime->getHacks(), this);
 
 		if (ConfMan.getBool("mtropolis_mod_obsidian_widescreen")) {
@@ -131,6 +133,9 @@ Common::Error MTropolisEngine::run() {
 			HackSuites::addObsidianImprovedWidescreen(*_gameDescription, _runtime->getHacks());
 		}
 	}
+
+	if (ConfMan.getBool("mtropolis_mod_minimum_transition_duration"))
+		_runtime->getHacks().minTransitionDuration = 75;
 
 	_runtime->queueProject(projectDesc);
 
@@ -203,7 +208,7 @@ Common::Error MTropolisEngine::run() {
 
 	// If that fails, then try to find the best one available
 	if (selectedMode == kColorDepthModeInvalid) {
-		for (int i = preferredColorDepthMode - 1; i >= 0; i++) {
+		for (int i = preferredColorDepthMode - 1; i >= 0; i--) {
 			if (haveExactMode[i] || haveCloseMode[i]) {
 				selectedMode = static_cast<ColorDepthMode>(i);
 				break;
@@ -256,6 +261,18 @@ Common::Error MTropolisEngine::run() {
 
 void MTropolisEngine::pauseEngineIntern(bool pause) {
 	Engine::pauseEngineIntern(pause);
+}
+
+
+
+bool MTropolisEngine::hasFeature(EngineFeature f) const {
+	switch (f) {
+	case kSupportsReturnToLauncher:
+	case kSupportsSavingDuringRuntime:
+		return true;
+	default:
+		return false;
+	};
 }
 
 } // End of namespace MTropolis

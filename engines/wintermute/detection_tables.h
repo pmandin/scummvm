@@ -21,8 +21,11 @@
 
 namespace Wintermute {
 
-#define GAMEOPTION_SHOW_FPS GUIO_GAMEOPTIONS1
-#define GAMEOPTION_BILINEAR GUIO_GAMEOPTIONS2
+#define GAMEOPTION_SHOW_FPS          GUIO_GAMEOPTIONS1
+#define GAMEOPTION_BILINEAR          GUIO_GAMEOPTIONS2
+#ifdef ENABLE_WME3D
+#define GAMEOPTION_FORCE_2D_RENDERER GUIO_GAMEOPTIONS3
+#endif
 
 static const PlainGameDescriptor wintermuteGames[] = {
 	{"5ld",             "Five Lethal Demons"},
@@ -120,6 +123,7 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"nightinthefog",   "Night in the Fog"},
 	{"nighttrain",      "Night Train"},
 	{"nosebound1",      "Nose Bound: Episode 1"},
+	{"octave",          "Octave"},
 	{"oknytt",          "Oknytt"},
 	{"one",             "One"},
 	{"onehelluvaday",   "One Helluva Day"},
@@ -144,6 +148,7 @@ static const PlainGameDescriptor wintermuteGames[] = {
 	{"rhiannon",        "Rhiannon: Curse of the four Branches"},
 	{"ritter",          "1 1/2 Ritter: Auf der Suche nach der hinreissenden Herzelinde"},
 	{"rosemary",        "Rosemary"},
+	{"royalmahjong",    "Royal Mahjong: King's Journey"},
 	{"satanandsons",    "Satan and Sons"},
 	{"securanote",      "Securanote"},
 	{"shaban",          "Shaban"},
@@ -953,7 +958,7 @@ static const WMEGameDescription gameDescriptions[] = {
 
 	// Dreams (Demo)
 	WME_WINENTRY("dreams", "Demo",
-		WME_ENTRY1s("data.dcp", "1c620f51bef1faffbeebb6253542f834", 23622097), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_26),
+		WME_ENTRY1s("data.dcp", "1c620f51bef1faffbeebb6253542f834", 23622097), Common::EN_ANY, ADGF_UNSUPPORTED | ADGF_DEMO, WME_1_0_26),
 
 	// Dreamscape (Beta)
 	// NOTE: Package is called "Dreamland.rar", however game title is "Dreamscape"
@@ -1353,11 +1358,11 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Fred (English) (PreAlpha)
 	WME_WINENTRY("fred", "PreAlpha",
 		WME_ENTRY2s("string.tab", "76b48c26e611071810d8182fc27f7d0e", 12590,
-		            "data.dcp", "e18b1f9815b9e9cf1d1357bc48269b0b", 7632855), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_31),
+		            "data.dcp", "e18b1f9815b9e9cf1d1357bc48269b0b", 7632855), Common::EN_ANY, ADGF_UNSUPPORTED | ADGF_DEMO, WME_1_0_31),
 
 	// Fred (French) (PreAlpha)
 	WME_WINENTRY("fred", "PreAlpha",
-		WME_ENTRY1s("data.dcp", "e18b1f9815b9e9cf1d1357bc48269b0b", 7632855), Common::FR_FRA, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_31),
+		WME_ENTRY1s("data.dcp", "e18b1f9815b9e9cf1d1357bc48269b0b", 7632855), Common::FR_FRA, ADGF_UNSUPPORTED | ADGF_DEMO, WME_1_0_31),
 
 	// Ghost in the Sheet (English, v1.00)
 	WME_WINENTRY("ghostsheet", "",
@@ -1772,6 +1777,10 @@ static const WMEGameDescription gameDescriptions[] = {
 	// Nose Bound: Episode 1 (Demo) (multi-language)
 	WME_WINENTRY("nosebound1", "Demo",
 		WME_ENTRY1s("data.dcp", "280f2e063385e2ed4c17b43991666e93", 379558560), Common::UNK_LANG, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_3),
+
+	// Octave (Demo, Beta)
+	WME_WINENTRY("octave", "Demo",
+		WME_ENTRY1s("data.dcp", "e5705856e81ec2adcaa6324e9f331a6e", 78113318), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_9_1),
 
 	// Oknytt
 	WME_WINENTRY("oknytt", "Version 1.0",
@@ -4167,6 +4176,25 @@ static const WMEGameDescription gameDescriptions[] = {
 	WME_WINENTRY("rosemary", "",
 		WME_ENTRY1s("data.dcp", "4f2631138bd4d27587d9043f8aeff3df", 29483643), Common::EN_ANY, ADGF_UNSTABLE, WME_1_8_6),
 
+	// Royal Mahjong: King's Journey (French)
+	WME_WINENTRY("royalmahjong", "",
+		WME_ENTRY2s("data.dcp", "f8f8b0308693d07261373766e001bb61", 28856313,
+				"fr.dcp", "84fc731590c7ee8c8ae7b8b89d6a8d39", 2560185), Common::FR_FRA, ADGF_UNSTABLE, WME_MAHJONG),
+
+	// Royal Mahjong: King's Journey (German)
+	WME_WINENTRY("royalmahjong", "",
+		WME_ENTRY2s("data.dcp", "f8f8b0308693d07261373766e001bb61", 28856313,
+				"de.dcp", "70f7e6d70787773df11da69e9f5df5e0", 2750615), Common::DE_DEU, ADGF_UNSTABLE, WME_MAHJONG),
+
+	// Royal Mahjong: King's Journey (Russian)
+	WME_WINENTRY("royalmahjong", "",
+		WME_ENTRY2s("data.dcp", "f8f8b0308693d07261373766e001bb61", 28856313,
+				"ru.dcp", "3e6ed74b4571ccada26700e7a0c62696", 978996), Common::RU_RUS, ADGF_UNSTABLE, WME_MAHJONG),
+
+	// Royal Mahjong: King's Journey (English)
+	WME_WINENTRY("royalmahjong", "",
+		WME_ENTRY1s("data.dcp", "f8f8b0308693d07261373766e001bb61", 28856313), Common::EN_ANY, ADGF_UNSTABLE, WME_MAHJONG),
+
 	// Securanote
 	WME_PLATENTRY("securanote", "",
 		WME_ENTRY1s("data.dcp", "5213d3e59b9e95b7fbd5c56f7de5341a", 2625554), Common::EN_ANY, Common::kPlatformIOS, ADGF_UNSTABLE, WME_LITE),
@@ -5341,7 +5369,7 @@ static const WMEGameDescription gameDescriptions[] = {
 
 	// Sunny (Demo)
 	WME_WINENTRY("sunny", "Demo",
-		WME_ENTRY1s("data.dcp", "685f4db26ed8134aa82bf5b6bae3963e", 4745194), Common::EN_ANY, ADGF_UNSTABLE | ADGF_DEMO, WME_1_0_31),
+		WME_ENTRY1s("data.dcp", "685f4db26ed8134aa82bf5b6bae3963e", 4745194), Common::EN_ANY, ADGF_UNSUPPORTED | ADGF_DEMO, WME_1_0_31),
 
 	// Sunrise: The game (German)
 	WME_WINENTRY("sunrise", "",

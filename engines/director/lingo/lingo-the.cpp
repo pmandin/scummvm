@@ -392,7 +392,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		break;
 	case kTheCastMembers:
 		d.type = INT;
-		d.u.i = movie->getCast()->_loadedCast->size() + (movie->_sharedCast ? movie->_sharedCast->_loadedCast->size() : 0);
+		d.u.i = movie->getCast()->getCastSize() + (movie->_sharedCast ? movie->_sharedCast->getCastSize() : 0);
 		break;
 	case kTheCenterStage:
 		d.type = INT;
@@ -1647,6 +1647,15 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 		if (!d.asInt()) {
 			// TODO: Properly reset sprite properties after puppet disabled.
 			sprite->_moveable = false;
+		}
+		break;
+	case kTheRect:
+		if (d.type == RECT || (d.type == ARRAY && d.u.farr->arr.size() >= 4)) {
+			score->renderSprites(score->getCurrentFrame(), kRenderForceUpdate);
+			channel->_currentPoint = Common::Point(d.u.farr->arr[0].u.i, d.u.farr->arr[1].u.i);
+			sprite->_width = d.u.farr->arr[2].u.i - d.u.farr->arr[0].u.i;
+			sprite->_height = d.u.farr->arr[3].u.i - d.u.farr->arr[1].u.i;
+			channel->_dirty = true;
 		}
 		break;
 	case kTheStartTime:

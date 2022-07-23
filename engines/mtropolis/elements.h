@@ -74,6 +74,13 @@ private:
 	Common::SharedPtr<Graphics::ManagedSurface> _mask;
 };
 
+class MovieResizeFilter {
+public:
+	virtual ~MovieResizeFilter();
+
+	virtual Common::SharedPtr<Graphics::Surface> scaleFrame(const Graphics::Surface &surface, uint32 timestamp) const = 0;
+};
+
 class MovieElement : public VisualElement, public ISegmentUnloadSignalReceiver, public IPlayMediaSignalReceiver {
 public:
 	MovieElement();
@@ -95,6 +102,8 @@ public:
 	void render(Window *window) override;
 	void playMedia(Runtime *runtime, Project *project) override;
 
+	void setResizeFilter(const Common::SharedPtr<MovieResizeFilter> &filter);
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Movie Element"; }
 	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
@@ -115,10 +124,14 @@ private:
 	MiniscriptInstructionOutcome scriptSetRangeTyped(MiniscriptThread *thread, const IntRange &range);
 
 	struct StartPlayingTaskData {
+		StartPlayingTaskData() : runtime(nullptr) {}
+
 		Runtime *runtime;
 	};
 
 	struct SeekToTimeTaskData {
+		SeekToTimeTaskData() : runtime(nullptr), timestamp(0) {}
+
 		Runtime *runtime;
 		uint32 timestamp;
 	};
@@ -145,6 +158,8 @@ private:
 	IntRange _playRange;
 
 	const Graphics::Surface *_displayFrame;
+	Common::SharedPtr<Graphics::Surface> _scaledFrame;
+	Common::SharedPtr<MovieResizeFilter> _resizeFilter;
 
 	Common::SharedPtr<SegmentUnloadSignaller> _unloadSignaller;
 	Common::SharedPtr<PlayMediaSignaller> _playMediaSignaller;
@@ -161,8 +176,8 @@ public:
 
 	bool load(ElementLoaderContext &context, const Data::ImageElement &data);
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib) override;
 
 	void activate() override;
 	void deactivate() override;
@@ -215,15 +230,26 @@ public:
 
 private:
 	struct StartPlayingTaskData {
+		StartPlayingTaskData() : runtime(nullptr) {}
+
+		Runtime *runtime;
+	};
+
+	struct StopPlayingTaskData {
+		StopPlayingTaskData() : runtime(nullptr) {}
+
 		Runtime *runtime;
 	};
 
 	struct ChangeFrameTaskData {
+		ChangeFrameTaskData() : runtime(nullptr), frame(0) {}
+
 		Runtime *runtime;
 		uint32 frame;
 	};
 
 	VThreadState startPlayingTask(const StartPlayingTaskData &taskData);
+	VThreadState stopPlayingTask(const StopPlayingTaskData &taskData);
 
 	void playMedia(Runtime *runtime, Project *project) override;
 	MiniscriptInstructionOutcome scriptSetRate(MiniscriptThread *thread, const DynamicValue &value);
@@ -235,7 +261,7 @@ private:
 	MiniscriptInstructionOutcome scriptRangeWriteRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
 	MiniscriptInstructionOutcome scriptSetRangeTyped(MiniscriptThread *thread, const IntRange &value);
 
-	void onPauseStateChanged();
+	void onPauseStateChanged() override;
 
 	bool _cacheBitmap;
 
@@ -270,9 +296,9 @@ public:
 
 	bool load(ElementLoaderContext &context, const Data::TextLabelElement &data);
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
 	bool readAttributeIndexed(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib, const DynamicValue &index) override;
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib);
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib) override;
 	MiniscriptInstructionOutcome writeRefAttributeIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib, const DynamicValue &index) override;
 
 	void activate() override;
@@ -336,7 +362,7 @@ public:
 	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
 	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib) override;
 
-	VThreadState consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg);
+	VThreadState consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
 	void activate() override;
 	void deactivate() override;
@@ -357,6 +383,8 @@ private:
 	MiniscriptInstructionOutcome scriptSetBalance(MiniscriptThread *thread, const DynamicValue &value);
 
 	struct StartPlayingTaskData {
+		StartPlayingTaskData() : runtime(nullptr) {}
+
 		Runtime *runtime;
 	};
 

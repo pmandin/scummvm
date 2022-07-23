@@ -23,10 +23,13 @@
 #include "engines/wintermute/ad/ad_generic.h"
 #include "engines/wintermute/ad/ad_walkplane.h"
 #include "engines/wintermute/base/base_game.h"
+#include "engines/wintermute/base/gfx/base_image.h"
 #include "engines/wintermute/base/gfx/3ds/camera3d.h"
 #include "engines/wintermute/base/gfx/3ds/light3d.h"
 
 #include "graphics/opengl/system_headers.h"
+
+#include "common/config-manager.h"
 
 #include "math/glmath.h"
 
@@ -219,17 +222,30 @@ bool BaseRenderOpenGL3D::stencilSupported() {
 }
 
 BaseImage *BaseRenderOpenGL3D::takeScreenshot() {
-	warning("BaseRenderOpenGL3D::takeScreenshot not yet implemented");
-	return nullptr;
-}
+	BaseImage *screenshot = new BaseImage();
+	Graphics::Surface *surface = new Graphics::Surface();
+#ifdef SCUMM_BIG_ENDIAN
+	Graphics::PixelFormat format(4, 8, 8, 8, 8, 24, 16, 8, 0);
+#else
+	Graphics::PixelFormat format(4, 8, 8, 8, 8, 0, 8, 16, 24);
+#endif
+	surface->create(_viewportRect.width(), _viewportRect.height(), format);
 
-bool BaseRenderOpenGL3D::saveScreenShot(const Common::String &filename, int sizeX, int sizeY) {
-	warning("BaseRenderOpenGL3D::saveScreenshot not yet implemented");
-	return true;
+	glReadPixels(_viewportRect.left, g_system->getHeight() - _viewportRect.bottom, _viewportRect.width(), _viewportRect.height(),
+	             GL_RGBA, GL_UNSIGNED_BYTE, surface->getPixels());
+	flipVertical(surface);
+	Graphics::Surface *converted = surface->convertTo(getPixelFormat());
+	screenshot->copyFrom(converted);
+	delete surface;
+	delete converted;
+	return screenshot;
 }
 
 void BaseRenderOpenGL3D::setWindowed(bool windowed) {
-	warning("BaseRenderOpenGL3D::setWindowed not yet implemented");
+	ConfMan.setBool("fullscreen", !windowed);
+	g_system->beginGFXTransaction();
+	g_system->setFeatureState(OSystem::kFeatureFullscreenMode, !windowed);
+	g_system->endGFXTransaction();
 }
 
 void BaseRenderOpenGL3D::fadeToColor(byte r, byte g, byte b, byte a) {
@@ -309,15 +325,10 @@ bool BaseRenderOpenGL3D::drawLine(int x1, int y1, int x2, int y2, uint32 color) 
 
 	glBegin(GL_LINES);
 		glColor4ub(r, g, b, a);
-		glVertex3f(x1, y1, 0.9f);
-		glVertex3f(x2, y2, 0.9f);
+		glVertex3f(x1, _height - y1, 0.9f);
+		glVertex3f(x2, _height - y2, 0.9f);
 	glEnd();
 
-	return true;
-}
-
-bool BaseRenderOpenGL3D::drawRect(int x1, int y1, int x2, int y2, uint32 color, int width) {
-	warning("BaseRenderOpenGL3D::drawRect not yet implemented");
 	return true;
 }
 
@@ -363,16 +374,16 @@ void BaseRenderOpenGL3D::setWorldTransform(const Math::Matrix4 &transform) {
 }
 
 bool BaseRenderOpenGL3D::windowedBlt() {
-	warning("BaseRenderOpenGL3D::windowedBlt not yet implemented");
+	flip();
 	return true;
 }
 
 void Wintermute::BaseRenderOpenGL3D::onWindowChange() {
-	warning("BaseRenderOpenGL3D::onWindowChange not yet implemented");
+	_windowed = !g_system->getFeatureState(OSystem::kFeatureFullscreenMode);
 }
 
 bool BaseRenderOpenGL3D::initRenderer(int width, int height, bool windowed) {
-	_windowed = windowed;
+	_windowed = !ConfMan.getBool("fullscreen");
 	_width = width;
 	_height = height;
 
@@ -430,12 +441,12 @@ bool Wintermute::BaseRenderOpenGL3D::flip() {
 }
 
 bool BaseRenderOpenGL3D::indicatorFlip() {
-	warning("BaseRenderOpenGL3D::indicatorFlip not yet implemented");
+	flip();
 	return true;
 }
 
 bool BaseRenderOpenGL3D::forcedFlip() {
-	warning("BaseRenderOpenGL3D::forcedFlip not yet implemented");
+	flip();
 	return true;
 }
 

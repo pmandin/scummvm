@@ -259,6 +259,61 @@ size_t caseInsensitiveFind(const Common::String &strToSearch, const Common::Stri
 	return Common::String::npos;
 }
 
+bool SceneTransitionTypes::loadFromData(SceneTransitionType &transType, int32 data) {
+	switch (data) {
+	case Data::SceneTransitionTypes::kNone:
+		transType = kNone;
+		break;
+	case Data::SceneTransitionTypes::kPatternDissolve:
+		transType = kPatternDissolve;
+		break;
+	case Data::SceneTransitionTypes::kRandomDissolve:
+		transType = kRandomDissolve;
+		break;
+	case Data::SceneTransitionTypes::kFade:
+		transType = kFade;
+		break;
+	case Data::SceneTransitionTypes::kSlide:
+		transType = kSlide;
+		break;
+	case Data::SceneTransitionTypes::kPush:
+		transType = kPush;
+		break;
+	case Data::SceneTransitionTypes::kZoom:
+		transType = kZoom;
+		break;
+	case Data::SceneTransitionTypes::kWipe:
+		transType = kWipe;
+		break;
+	default:
+		return false;
+	}
+
+	return true;
+}
+
+
+bool SceneTransitionDirections::loadFromData(SceneTransitionDirection &transDir, int32 data) {
+	switch (data) {
+	case Data::SceneTransitionDirections::kUp:
+		transDir = kUp;
+		break;
+	case Data::SceneTransitionDirections::kDown:
+		transDir = kDown;
+		break;
+	case Data::SceneTransitionDirections::kLeft:
+		transDir = kLeft;
+		break;
+	case Data::SceneTransitionDirections::kRight:
+		transDir = kRight;
+		break;
+	default:
+		return false;
+	}
+
+	return true;
+}
+
 bool EventIDs::isCommand(EventID eventID) {
 	switch (eventID) {
 	case kElementShow:
@@ -362,6 +417,17 @@ ColorRGB8 ColorRGB8::create(uint8 r, uint8 g, uint8 b) {
 
 
 MessageFlags::MessageFlags() : relay(true), cascade(true), immediate(true) {
+}
+
+DynamicValueWriteProxyPOD DynamicValueWriteProxyPOD::createDefault() {
+	DynamicValueWriteProxyPOD proxy;
+	proxy.ifc = nullptr;
+	proxy.objectRef = nullptr;
+	proxy.ptrOrOffset = 0;
+	return proxy;
+}
+
+DynamicValueWriteProxy::DynamicValueWriteProxy() : pod(DynamicValueWriteProxyPOD::createDefault()) {
 }
 
 Common::Point Point16POD::toScummVMPoint() const {
@@ -1082,6 +1148,7 @@ MiniscriptInstructionOutcome DynamicList::WriteProxyInterface::refAttribIndexed(
 }
 
 DynamicValue::DynamicValue() : _type(DynamicValueTypes::kNull) {
+	memset(&this->_value, 0, sizeof(this->_value));
 }
 
 DynamicValue::DynamicValue(const DynamicValue &other) : _type(DynamicValueTypes::kNull) {
@@ -1715,7 +1782,7 @@ void DynamicValueWriteObjectHelper::create(RuntimeObject *obj, DynamicValueWrite
 	proxy.pod.ptrOrOffset = 0;
 }
 
-MessengerSendSpec::MessengerSendSpec() : destination(0), _linkType(kLinkTypeNotYetLinked) {
+MessengerSendSpec::MessengerSendSpec() : send(Event::create()), destination(0), _linkType(kLinkTypeNotYetLinked) {
 }
 
 bool MessengerSendSpec::load(const Data::Event &dataEvent, uint32 dataMessageFlags, const Data::InternalTypeTaggedValue &dataLocator, const Common::String &dataWithSource, const Common::String &dataWithString, uint32 dataDestination) {
@@ -2086,6 +2153,11 @@ MiniscriptInstructionOutcome AngleMagVector::refAttrib(MiniscriptThread *thread,
 
 Common::String AngleMagVector::toString() const {
 	return Common::String::format("(%g deg %g mag)", angleDegrees, magnitude);
+}
+
+
+
+SegmentDescription::SegmentDescription() : volumeID(0), stream(nullptr) {
 }
 
 void IPlugInModifierRegistrar::registerPlugInModifier(const char *name, const IPlugInModifierFactoryAndDataFactory *loaderFactory) {
@@ -2563,7 +2635,7 @@ void StructuralHooks::onSetPosition(Structural *structural, Common::Point &pt) {
 ProjectPresentationSettings::ProjectPresentationSettings() : width(640), height(480), bitsPerPixel(8) {
 }
 
-Structural::Structural() : _parent(nullptr), _paused(false), _loop(false) {
+Structural::Structural() : _parent(nullptr), _paused(false), _loop(false), _flushPriority(0) {
 }
 
 Structural::~Structural() {
@@ -2681,6 +2753,9 @@ bool Structural::readAttribute(MiniscriptThread *thread, DynamicValue &result, c
 		else
 			result.clear();
 		return true;
+	} else if (attrib == "flushpriority") {
+		result.setInt(_flushPriority);
+		return true;
 	}
 
 	// Traverse children (modifiers must be first)
@@ -2751,6 +2826,9 @@ MiniscriptInstructionOutcome Structural::writeRefAttribute(MiniscriptThread *thr
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "debug") {
 		DynamicValueWriteFuncHelper<Structural, &Structural::scriptSetDebug>::create(this, result);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "flushpriority") {
+		DynamicValueWriteIntegerHelper<int32>::create(&_flushPriority, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -3124,6 +3202,9 @@ MiniscriptInstructionOutcome Structural::scriptSetDebug(MiniscriptThread *thread
 	return kMiniscriptInstructionOutcomeContinue;
 }
 
+VolumeState::VolumeState() : volumeID(0), isMounted(false) {
+}
+
 ObjectLinkingScope::ObjectLinkingScope() : _parent(nullptr) {
 }
 
@@ -3241,6 +3322,10 @@ LowLevelSceneStateTransitionAction &LowLevelSceneStateTransitionAction::operator
 
 HighLevelSceneTransition::HighLevelSceneTransition(const Common::SharedPtr<Structural> &hlst_scene, Type hlst_type, bool hlst_addToDestinationScene, bool hlst_addToReturnList)
 	: scene(hlst_scene), type(hlst_type), addToDestinationScene(hlst_addToDestinationScene), addToReturnList(hlst_addToReturnList) {
+}
+
+SceneTransitionEffect::SceneTransitionEffect()
+	: _duration(100000), _steps(64), _transitionType(SceneTransitionTypes::kNone), _transitionDirection(SceneTransitionDirections::kUp) {
 }
 
 MessageDispatch::MessageDispatch(const Common::SharedPtr<MessageProperties> &msgProps, Structural *root, bool cascade, bool relay, bool couldBeCommand)
@@ -3448,6 +3533,10 @@ RuntimeObject *MessageDispatch::getRootPropagator() const {
 		case PropagationStack::kStageSendToStructuralModifiers:
 		case PropagationStack::kStageSendToStructuralSelf:
 			return lowest.ptr.structural;
+		case PropagationStack::kStageCheckAndSendToModifier:
+		case PropagationStack::kStageCheckAndSendToStructural:
+		case PropagationStack::kStageCheckAndSendCommand:
+			return _root.lock().get();
 		default:
 			break;
 		}
@@ -3662,7 +3751,40 @@ const Common::KeyState &KeyboardInputEvent::getKeyState() const {
 Runtime::SceneStackEntry::SceneStackEntry() {
 }
 
+Runtime::Teardown::Teardown() : onlyRemoveChildren(false) {
+}
+
+Runtime::SceneReturnListEntry::SceneReturnListEntry() : isAddToDestinationSceneTransition(false) {
+}
+
+Runtime::ConsumeMessageTaskData::ConsumeMessageTaskData() : consumer(nullptr) {
+}
+
+Runtime::ConsumeCommandTaskData::ConsumeCommandTaskData() : structural(nullptr) {
+}
+
+Runtime::UpdateMouseStateTaskData::UpdateMouseStateTaskData() : mouseDown(false) {
+}
+
+Runtime::UpdateMousePositionTaskData::UpdateMousePositionTaskData() : x(0), y(0) {
+}
+
+Runtime::CollisionCheckState::CollisionCheckState() : collider(nullptr) {
+}
+
+Runtime::BoundaryCheckState::BoundaryCheckState() : detector(nullptr), currentContacts(0), positionResolved(false) {
+}
+
+Runtime::ColliderInfo::ColliderInfo() : sceneStackDepth(0), layer(0), element(nullptr) {
+}
+
+DragMotionProperties::DragMotionProperties() : constraintDirection(kConstraintDirectionNone), constrainToParent(false) {
+}
+
 SceneTransitionHooks::~SceneTransitionHooks() {
+}
+
+void SceneTransitionHooks::onSceneTransitionSetup(Runtime *runtime, const Common::WeakPtr<Structural> &oldScene, const Common::WeakPtr<Structural> &newScene) {
 }
 
 void SceneTransitionHooks::onSceneTransitionEnded(Runtime *runtime, const Common::WeakPtr<Structural> &newScene) {
@@ -3670,12 +3792,13 @@ void SceneTransitionHooks::onSceneTransitionEnded(Runtime *runtime, const Common
 
 Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, ISaveUIProvider *saveProvider, ILoadUIProvider *loadProvider)
 	: _system(system), _mixer(mixer), _saveProvider(saveProvider), _loadProvider(loadProvider),
-	_nextRuntimeGUID(1), _realDisplayMode(kColorDepthModeInvalid), _fakeDisplayMode(kColorDepthModeInvalid),
-	_displayWidth(1024), _displayHeight(768), _realTimeBase(0), _playTimeBase(0), _sceneTransitionState(kSceneTransitionStateNotTransitioning),
-	_lastFrameCursor(nullptr), _defaultCursor(new DefaultCursorGraphic()), _platform(kProjectPlatformUnknown),
-	_cachedMousePosition(Common::Point(0, 0)), _realMousePosition(Common::Point(0, 0)), _trackedMouseOutside(false),
-	_forceCursorRefreshOnce(true), _autoResetCursor(false), _haveModifierOverrideCursor(false), _sceneGraphChanged(false), _isQuitting(false),
-	_collisionCheckTime(0), _defaultVolumeState(true) {
+	  _nextRuntimeGUID(1), _realDisplayMode(kColorDepthModeInvalid), _fakeDisplayMode(kColorDepthModeInvalid),
+	  _displayWidth(1024), _displayHeight(768), _realTime(0), _realTimeBase(0), _playTime(0), _playTimeBase(0), _sceneTransitionState(kSceneTransitionStateNotTransitioning),
+	  _lastFrameCursor(nullptr), _defaultCursor(new DefaultCursorGraphic()), _platform(kProjectPlatformUnknown),
+	  _cachedMousePosition(Common::Point(0, 0)), _realMousePosition(Common::Point(0, 0)), _trackedMouseOutside(false),
+	  _forceCursorRefreshOnce(true), _autoResetCursor(false), _haveModifierOverrideCursor(false), _sceneGraphChanged(false), _isQuitting(false),
+	  _collisionCheckTime(0), _defaultVolumeState(true), _activeSceneTransitionEffect(nullptr), _sceneTransitionStartTime(0), _sceneTransitionEndTime(0),
+	  _modifierOverrideCursorID(0) {
 	_random.reset(new Common::RandomSource("mtropolis"));
 
 	_vthread.reset(new VThread());
@@ -3745,7 +3868,7 @@ bool Runtime::runFrame() {
 			break;
 		}
 
-		if (_osEventQueue.size() > 0) {
+		if (_sceneTransitionState != kSceneTransitionStateTransitioning && _osEventQueue.size() > 0) {
 			Common::SharedPtr<OSEvent> evt = _osEventQueue[0];
 			_osEventQueue.remove_at(0);
 
@@ -3898,18 +4021,56 @@ bool Runtime::runFrame() {
 		}
 
 		if (_sceneTransitionState == kSceneTransitionStateWaitingForDraw) {
-			if (_sceneTransitionEffect.duration == 0) {
-				// This needs to skip past the transition phase and hit the next condition
+			if (_sourceSceneTransitionEffect._transitionType != SceneTransitionTypes::kNone)
+				_activeSceneTransitionEffect = &_sourceSceneTransitionEffect;
+			else if (_destinationSceneTransitionEffect._transitionType != SceneTransitionTypes::kNone)
+				_activeSceneTransitionEffect = &_destinationSceneTransitionEffect;
+			else
+				_activeSceneTransitionEffect = nullptr;
+
+			_sceneTransitionState = kSceneTransitionStateTransitioning;
+			_sceneTransitionStartTime = _playTime;
+
+			uint32 transitionDuration = 0;
+
+			if (_activeSceneTransitionEffect) {
+				transitionDuration = _activeSceneTransitionEffect->_duration;
+
+				if (transitionDuration < _hacks.minTransitionDuration)
+					transitionDuration = _hacks.minTransitionDuration;
+			}
+
+			if (transitionDuration == 0) {
+				// No transition at all.  This needs to skip past the transition phase and hit the next condition
 				_sceneTransitionEndTime = _playTime;
-				_sceneTransitionState = kSceneTransitionStateTransitioning;
 			} else {
-				_sceneTransitionState = kSceneTransitionStateDrawingTargetFrame;
-				_sceneTransitionEndTime = _playTime + _sceneTransitionEffect.duration / 10;
+				_sceneTransitionEndTime = _playTime + transitionDuration;
+
+				if (!_mainWindow.expired()) {
+					Common::SharedPtr<Window> mainWindow = _mainWindow.lock();
+					_sceneTransitionOldFrame.reset(new Graphics::ManagedSurface());
+					_sceneTransitionNewFrame.reset(new Graphics::ManagedSurface());
+
+					_sceneTransitionOldFrame->copyFrom(*mainWindow->getSurface());
+
+					Render::renderProject(this, mainWindow.get());
+
+					_sceneTransitionNewFrame->copyFrom(*mainWindow->getSurface());
+				}
 			}
 		}
 
 		if (_sceneTransitionState == kSceneTransitionStateTransitioning && _playTime >= _sceneTransitionEndTime) {
 			_sceneTransitionState = kSceneTransitionStateNotTransitioning;
+
+			if (_sceneTransitionNewFrame && !_mainWindow.expired())
+				_mainWindow.lock()->getSurface()->copyFrom(*_sceneTransitionNewFrame);
+
+			_sceneTransitionOldFrame.reset();
+			_sceneTransitionNewFrame.reset();
+
+			_sourceSceneTransitionEffect = SceneTransitionEffect();
+			_destinationSceneTransitionEffect = SceneTransitionEffect();
 
 			for (const SceneStackEntry &sceneStackEntry : _sceneStack)
 				recursiveAutoPlayMedia(sceneStackEntry.scene.get());
@@ -3919,6 +4080,11 @@ bool Runtime::runFrame() {
 
 			queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSceneTransitionEnded, 0), _activeMainScene.get(), true, true);
 			continue;
+		}
+
+		if (_sceneTransitionState == kSceneTransitionStateTransitioning) {
+			// Keep looping transition and don't do anything else until it's done
+			break;
 		}
 
 		{
@@ -3934,6 +4100,7 @@ bool Runtime::runFrame() {
 		if (_collisionCheckTime < _playTime) {
 			_collisionCheckTime = _playTime;
 
+			checkBoundaries();
 			checkCollisions();
 		}
 
@@ -3976,20 +4143,25 @@ void Runtime::drawFrame() {
 
 	{
 		Common::SharedPtr<Window> mainWindow = _mainWindow.lock();
-		if (mainWindow)
-			Render::renderProject(this, mainWindow.get());
+		if (mainWindow) {
+			if (_sceneTransitionState == kSceneTransitionStateTransitioning) {
+				assert(_activeSceneTransitionEffect != nullptr);
+				Render::renderSceneTransition(this, mainWindow.get(), *_activeSceneTransitionEffect, _sceneTransitionStartTime, _sceneTransitionEndTime, _playTime, *_sceneTransitionOldFrame, *_sceneTransitionNewFrame);
+			} else
+				Render::renderProject(this, mainWindow.get());
+		}
 	}
 
 	const size_t numWindows = _windows.size();
-	WindowSortingBucket singleBucket;
+	WindowSortingBucket singleBucket[1];
 	Common::Array<WindowSortingBucket> multipleBuckets;
-	WindowSortingBucket *sortedBuckets = &singleBucket;
+	WindowSortingBucket *sortedBuckets = singleBucket;
 
 	if (numWindows < 2) {
-		sortedBuckets = &singleBucket;
+		sortedBuckets = singleBucket;
 
-		singleBucket.originalIndex = 0;
-		singleBucket.window = _windows[0].get();
+		singleBucket[0].originalIndex = 0;
+		singleBucket[0].window = _windows[0].get();
 	} else {
 		multipleBuckets.resize(numWindows);
 		sortedBuckets = &multipleBuckets[0];
@@ -4146,6 +4318,9 @@ void Runtime::executeCompleteTransitionToScene(const Common::SharedPtr<Structura
 
 	Common::SharedPtr<Structural> targetSharedScene = findDefaultSharedSceneForScene(targetScene.get());
 
+	for (const Common::SharedPtr<SceneTransitionHooks> &hooks : _hacks.sceneTransitionHooks)
+		hooks->onSceneTransitionSetup(this, _activeMainScene, targetScene);
+
 	if (targetScene == targetSharedScene)
 		error("Transitioned into a default shared scene, this is not supported");
 
@@ -4183,7 +4358,6 @@ void Runtime::executeCompleteTransitionToScene(const Common::SharedPtr<Structura
 	}
 
 	{
-		_pendingLowLevelTransitions.push_back(LowLevelSceneStateTransitionAction(targetSharedScene, LowLevelSceneStateTransitionAction::kAutoResetCursor));
 		_pendingLowLevelTransitions.push_back(LowLevelSceneStateTransitionAction(targetScene, LowLevelSceneStateTransitionAction::kLoad));
 		queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kParentEnabled, 0), targetScene.get(), true, true);
 		queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSceneStarted, 0), targetScene.get(), true, true);
@@ -4194,13 +4368,18 @@ void Runtime::executeCompleteTransitionToScene(const Common::SharedPtr<Structura
 		_sceneStack.push_back(sceneEntry);
 	}
 
+	// This might not be exactly where this belongs but it must go after Parent Enabled for sure, otherwise
+	// the wave puzzle in the Mac version of Obsidian completes instantly because Parent Enabled hasn't had
+	// a chance to clear the flags.  It looks like what's supposed to happen is the cursor override gets
+	// cleared by the scene transition starting and the cursor reset happens after.  Fix this later...
+	_pendingLowLevelTransitions.push_back(LowLevelSceneStateTransitionAction(targetScene, LowLevelSceneStateTransitionAction::kAutoResetCursor));
+
 	_activeMainScene = targetScene;
 	_activeSharedScene = targetSharedScene;
 
 	// Scene transitions have to be set up by the destination scene
 	_sceneTransitionState = kSceneTransitionStateWaitingForDraw;
-	_sceneTransitionEffect.transitionType = kTransitionTypeNone;
-	_sceneTransitionEffect.duration = 0;
+	_activeSceneTransitionEffect = nullptr;
 
 	executeSharedScenePostSceneChangeActions();
 }
@@ -4324,12 +4503,12 @@ void Runtime::executeSharedScenePostSceneChangeActions() {
 
 	const Common::Array<Common::SharedPtr<Structural> > &subsectionScenes = subsection->getChildren();
 
-	queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSharedSceneSceneChanged, 0), _activeSharedScene.get(), false, true);
+	queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSharedSceneSceneChanged, 0), _activeSharedScene.get(), true, true);
 	if (subsectionScenes.size() > 1) {
 		if (_activeMainScene == subsectionScenes[subsectionScenes.size() - 1])
-			queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSharedSceneNoNextScene, 0), _activeSharedScene.get(), false, true);
+			queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSharedSceneNoNextScene, 0), _activeSharedScene.get(), true, true);
 		if (_activeMainScene == subsectionScenes[1])
-			queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSharedSceneNoPrevScene, 0), _activeSharedScene.get(), false, true);
+			queueEventAsLowLevelSceneStateTransitionAction(Event::create(EventIDs::kSharedSceneNoPrevScene, 0), _activeSharedScene.get(), true, true);
 	}
 }
 
@@ -5392,6 +5571,127 @@ void Runtime::checkCollisions() {
 	}
 }
 
+void Runtime::addBoundaryDetector(IBoundaryDetector *boundaryDetector) {
+	BoundaryCheckState state;
+	state.currentContacts = 0;
+	state.detector = boundaryDetector;
+	state.position = Common::Point(0, 0);
+	state.positionResolved = false;
+
+	Modifier *modifier;
+	uint edgeFlags;
+	bool mustBeCompletelyOutside;
+	bool continuous;
+	boundaryDetector->getCollisionProperties(modifier, edgeFlags, mustBeCompletelyOutside, continuous);
+
+	_boundaryChecks.push_back(state);
+}
+
+void Runtime::removeBoundaryDetector(IBoundaryDetector *boundaryDetector) {
+	size_t numColliders = _boundaryChecks.size();
+	for (size_t i = 0; i < numColliders; i++) {
+		if (_boundaryChecks[i].detector == boundaryDetector) {
+			_boundaryChecks.remove_at(i);
+			return;
+		}
+	}
+}
+
+void Runtime::addPostEffect(IPostEffect *postEffect) {
+	_postEffects.push_back(postEffect);
+}
+
+void Runtime::removePostEffect(IPostEffect *postEffect) {
+	size_t numPostEffects = _postEffects.size();
+	for (size_t i = 0; i < numPostEffects; i++) {
+		if (_postEffects[i] == postEffect) {
+			_postEffects.remove_at(i);
+			return;
+		}
+	}
+}
+
+const Common::Array<IPostEffect *> &Runtime::getPostEffects() const {
+	return _postEffects;
+}
+
+void Runtime::checkBoundaries() {
+	// Boundary Detection Messenger behavior is very quirky in mTropolis 1.1.  Basically, if an object moves in the direction of
+	// the boundary, then it may trigger collision checks with the boundary.  If it moves but does not move in the direction of
+	// the boundary, then it is considered no longer in contact with the boundary - period - which means it can trigger again
+	// once it moves in the boundary direction.
+	for (BoundaryCheckState &checkState : _boundaryChecks) {
+		Modifier *modifier;
+		uint edgeFlags;
+		bool mustBeCompletelyOutside;
+		bool continuous;
+		checkState.detector->getCollisionProperties(modifier, edgeFlags, mustBeCompletelyOutside, continuous);
+
+		Structural *structural = modifier->findStructuralOwner();
+		if (structural == nullptr || !structural->isElement() || !static_cast<Element *>(structural)->isVisual())
+			continue;
+
+		VisualElement *visual = static_cast<VisualElement *>(structural);
+
+		Common::Rect thisRect = visual->getRelativeRect();
+		Common::Point point(thisRect.left, thisRect.top);
+
+		if (!checkState.positionResolved) {
+			checkState.positionResolved = true;
+			checkState.position = point;
+			continue;
+		}
+
+		if (point == checkState.position)
+			continue;
+
+		Structural *parentStructural = visual->getParent();
+		if (parentStructural == nullptr || !parentStructural->isElement() || !static_cast<Element *>(parentStructural)->isVisual())
+			continue;
+
+		VisualElement *parentVisual = static_cast<VisualElement *>(parentStructural);
+
+		Common::Point delta = point - checkState.position;
+
+		int16 parentWidth = parentVisual->getRelativeRect().width();
+		int16 parentHeight = parentVisual->getRelativeRect().height();
+
+		uint contacts = 0;
+		if (delta.x < 0) {
+			int16 edge = mustBeCompletelyOutside ? thisRect.right : thisRect.left;
+			if (edge < 0)
+				contacts |= IBoundaryDetector::kEdgeLeft;
+		}
+		if (delta.y < 0) {
+			int16 edge = mustBeCompletelyOutside ? thisRect.bottom : thisRect.top;
+			if (edge < 0)
+				contacts |= IBoundaryDetector::kEdgeTop;
+		}
+		if (delta.x > 0) {
+			int16 edge = mustBeCompletelyOutside ? thisRect.left : thisRect.right;
+			if (edge >= parentWidth)
+				contacts |= IBoundaryDetector::kEdgeRight;
+		}
+		if (delta.y > 0) {
+			int16 edge = mustBeCompletelyOutside ? thisRect.top : thisRect.bottom;
+			if (edge >= parentHeight)
+				contacts |= IBoundaryDetector::kEdgeBottom;
+		}
+
+		uint activatedContacts = contacts;
+
+		// If non-continuous, then only activate new contacts
+		if (!continuous)
+			activatedContacts &= ~checkState.currentContacts;
+
+		checkState.position = point;
+		checkState.currentContacts = contacts;
+
+		if (activatedContacts & edgeFlags)
+			checkState.detector->triggerCollision(this);
+	}
+}
+
 void Runtime::recursiveFindColliders(Structural *structural, size_t sceneStackDepth, Common::Array<ColliderInfo> &colliders, int32 parentOriginX, int32 parentOriginY, bool isRoot) {
 	int32 childOffsetX = parentOriginX;
 	int32 childOffsetY = parentOriginY;
@@ -5434,6 +5734,50 @@ const Common::String *Runtime::resolveAttributeIDName(uint32 attribID) const {
 		return nullptr;
 	else
 		return &it->_value;
+}
+
+const Common::WeakPtr<Window> &Runtime::getMainWindow() const {
+	return _mainWindow;
+}
+
+const Common::SharedPtr<Graphics::Surface> &Runtime::getSaveScreenshotOverride() const {
+	return _saveScreenshotOverride;
+}
+
+void Runtime::setSaveScreenshotOverride(const Common::SharedPtr<Graphics::Surface> &screenshot) {
+	_saveScreenshotOverride = screenshot;
+}
+
+bool Runtime::isIdle() const {
+	// The runtime is idle if nothing is happening except for scheduled events and the OS queue
+	if (_vthread->hasTasks())
+		return false;
+
+	if (_sceneTransitionState != kSceneTransitionStateNotTransitioning)
+		return false;
+
+	if (_forceCursorRefreshOnce)
+		return false;
+
+	if (_queuedProjectDesc)
+		return false;
+
+	if (_pendingTeardowns.size() > 0)
+		return false;
+
+	if (_pendingLowLevelTransitions.size() > 0)
+		return false;
+
+	if (_messageQueue.size() > 0)
+		return false;
+
+	if (_pendingSceneTransitions.size() > 0)
+		return false;
+
+	if (_isQuitting)
+		return false;
+
+	return true;
 }
 
 void Runtime::ensureMainWindowExists() {
@@ -5523,6 +5867,14 @@ bool Runtime::getVolumeState(const Common::String &name, int &outVolumeID, bool 
 
 void Runtime::addSceneStateTransition(const HighLevelSceneTransition &transition) {
 	_pendingSceneTransitions.push_back(transition);
+}
+
+void Runtime::setSceneTransitionEffect(bool isInDestinationScene, SceneTransitionEffect *effect) {
+	SceneTransitionEffect *target = isInDestinationScene ? &_destinationSceneTransitionEffect : &_sourceSceneTransitionEffect;
+	if (!effect)
+		*target = SceneTransitionEffect();
+	else
+		*target = *effect;
 }
 
 Project *Runtime::getProject() const {
@@ -5703,6 +6055,7 @@ const Common::Array<Common::SharedPtr<Modifier> > &IModifierContainer::getModifi
 }
 
 ChildLoaderContext::ChildLoaderContext() : remainingCount(0), type(kTypeUnknown) {
+	memset(&this->containerUnion, 0, sizeof(this->containerUnion));
 }
 
 ProjectPlugInRegistry::ProjectPlugInRegistry() {
@@ -5806,6 +6159,9 @@ void KeyboardEventSignaller::removeReceiver(IKeyboardEventReceiver *receiver) {
 	}
 }
 
+MediaCueState::MediaCueState() : minTime(0), maxTime(0), sourceModifier(nullptr), triggerTiming(kTriggerTimingStart) {
+}
+
 void MediaCueState::checkTimestampChange(Runtime *runtime, uint32 oldTS, uint32 newTS, bool continuousTimestamps, bool canTriggerDuring) {
 	bool entersRange = (static_cast<int32>(oldTS) < minTime && static_cast<int32>(newTS) >= minTime);
 	bool exitsRange = (static_cast<int32>(oldTS) <= maxTime && static_cast<int32>(newTS) > maxTime);
@@ -5831,7 +6187,20 @@ void MediaCueState::checkTimestampChange(Runtime *runtime, uint32 oldTS, uint32 
 		send.sendFromMessenger(runtime, sourceModifier, incomingData, nullptr);
 }
 
+
+Project::LabelSuperGroup::LabelSuperGroup() : firstRootNodeIndex(0), numRootNodes(0), numTotalNodes(0), superGroupID(0) {
+}
+
+Project::LabelTree::LabelTree() : firstChildIndex(0), numChildren(0), id(0) {
+}
+
 Project::Segment::Segment() : weakStream(nullptr) {
+}
+
+Project::StreamDesc::StreamDesc() : streamType(kStreamTypeUnknown), segmentIndex(0), size(0), pos(0) {
+}
+
+Project::AssetDesc::AssetDesc() : typeCode(0), id(0) {
 }
 
 Project::Project(Runtime *runtime)
@@ -6338,7 +6707,7 @@ Common::SharedPtr<Modifier> Project::loadModifierObject(ModifierLoaderContext &l
 
 		modifier = factory->createModifier(loaderContext, plugInData);
 	} else {
-		IModifierFactory *factory = getModifierFactoryForDataObjectType(dataObject.getType());
+		SIModifierFactory *factory = getModifierFactoryForDataObjectType(dataObject.getType());
 
 		if (!factory)
 			error("Unknown or unsupported modifier type, or non-modifier encountered where a modifier was expected");
@@ -6574,7 +6943,7 @@ void Project::loadContextualObject(size_t streamIndex, ChildLoaderStack &stack, 
 			if (topContext.containerUnion.filteredElements.filterFunc(dataObjectType)) {
 				const Data::StructuralDef &structuralDef = static_cast<const Data::StructuralDef &>(dataObject);
 
-				IElementFactory *elementFactory = getElementFactoryForDataObjectType(dataObjectType);
+				SIElementFactory *elementFactory = getElementFactoryForDataObjectType(dataObjectType);
 				if (!elementFactory) {
 					error("No element factory defined for structural object");
 				}
@@ -6630,7 +6999,7 @@ void Project::loadContextualObject(size_t streamIndex, ChildLoaderStack &stack, 
 void Project::loadAssetDef(size_t streamIndex, AssetDefLoaderContext& context, const Data::DataObject& dataObject) {
 	assert(Data::DataObjectTypes::isAsset(dataObject.getType()));
 
-	IAssetFactory *factory = getAssetFactoryForDataObjectType(dataObject.getType());
+	SIAssetFactory *factory = getAssetFactoryForDataObjectType(dataObject.getType());
 	if (!factory) {
 		error("Unimplemented asset type");
 		return;
@@ -6738,6 +7107,26 @@ void Element::triggerAutoPlay(Runtime *runtime) {
 
 bool Element::resolveMediaMarkerLabel(const Label& label, int32 &outResolution) const {
 	return false;
+}
+
+VisualElementTransitionProperties::VisualElementTransitionProperties() : _isDirty(true), _alpha(255) {
+}
+
+uint8 VisualElementTransitionProperties::getAlpha() const {
+	return _alpha;
+}
+
+void VisualElementTransitionProperties::setAlpha(uint8 alpha) {
+	_isDirty = true;
+	_alpha = alpha;
+}
+
+bool VisualElementTransitionProperties::isDirty() const {
+	return _isDirty;
+}
+
+void VisualElementTransitionProperties::clearDirty() {
+	_isDirty = false;
 }
 
 VisualElementRenderProperties::VisualElementRenderProperties()
@@ -6854,8 +7243,7 @@ VisualElementRenderProperties &VisualElementRenderProperties::operator=(const Vi
 */
 
 VisualElement::VisualElement()
-	: _rect(0, 0, 0, 0), _cachedAbsoluteOrigin(Common::Point(0, 0))
-	, _contentsDirty(true) {
+	: _rect(0, 0, 0, 0), _cachedAbsoluteOrigin(Common::Point(0, 0)), _contentsDirty(true), _directToScreen(false), _visible(true), _layer(0) {
 }
 
 bool VisualElement::isVisual() const {
@@ -7193,6 +7581,14 @@ void VisualElement::handleDragMotion(Runtime *runtime, const Common::Point &init
 VThreadState VisualElement::offsetTranslateTask(const OffsetTranslateTaskData &data) {
 	offsetTranslate(data.dx, data.dy, false);
 	return kVThreadReturn;
+}
+
+void VisualElement::setTransitionProperties(const VisualElementTransitionProperties &props) {
+	_transitionProps = props;
+}
+
+const VisualElementTransitionProperties &VisualElement::getTransitionProperties() const {
+	return _transitionProps;
 }
 
 void VisualElement::setRenderProperties(const VisualElementRenderProperties &props, const Common::WeakPtr<GraphicModifier> &primaryGraphicModifier) {

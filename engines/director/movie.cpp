@@ -72,6 +72,7 @@ Movie::Movie(Window *window) {
 	_movieArchive = nullptr;
 
 	_cast = new Cast(this, 0);
+	_casts.setVal(_cast->_castLibID, _cast);
 	_sharedCast = nullptr;
 	_score = new Score(this);
 
@@ -94,7 +95,6 @@ Movie::Movie(Window *window) {
 Movie::~Movie() {
 	// _movieArchive is shared with the cast, so the cast will free it
 	delete _cast;
-
 	delete _sharedCast;
 	delete _score;
 }
@@ -311,8 +311,8 @@ void Movie::loadSharedCastsFrom(Common::String filename) {
 
 CastMember *Movie::getCastMember(CastMemberID memberID) {
 	CastMember *result = nullptr;
-	if (memberID.castLib == 0) {
-		result = _cast->getCastMember(memberID.member);
+	if (_casts.contains(memberID.castLib)) {
+		result = _casts.getVal(memberID.castLib)->getCastMember(memberID.member);
 		if (result == nullptr && _sharedCast) {
 			result = _sharedCast->getCastMember(memberID.member);
 		}
@@ -325,19 +325,25 @@ CastMember *Movie::getCastMember(CastMemberID memberID) {
 CastMember* Movie::createOrReplaceCastMember(CastMemberID memberID, CastMember* cast) {
 	CastMember *result = nullptr;
 
-	if (memberID.castLib == 0) {
-		result = _cast->setCastMember(memberID, cast);
-	} else if (memberID.castLib == 1) {
-		result = _sharedCast->setCastMember(memberID, cast);
+	if (_casts.contains(memberID.castLib)) {
+		_casts.getVal(memberID.castLib)->setCastMember(memberID, cast);
 	}
 
 	return result;
 }
 
+bool Movie::eraseCastMember(CastMemberID memberID) {
+	if (_casts.contains(memberID.castLib)) {
+		return _casts.getVal(memberID.castLib)->eraseCastMember(memberID);
+	}
+
+	return false;
+}
+
 CastMember *Movie::getCastMemberByName(const Common::String &name, int castLib) {
 	CastMember *result = nullptr;
-	if (castLib == 0) {
-		result = _cast->getCastMemberByName(name);
+	if (_casts.contains(castLib)) {
+		result = _casts.getVal(castLib)->getCastMemberByName(name);
 		if (result == nullptr && _sharedCast) {
 			result = _sharedCast->getCastMemberByName(name);
 		}
@@ -349,8 +355,8 @@ CastMember *Movie::getCastMemberByName(const Common::String &name, int castLib) 
 
 CastMemberInfo *Movie::getCastMemberInfo(CastMemberID memberID) {
 	CastMemberInfo *result = nullptr;
-	if (memberID.castLib == 0) {
-		result = _cast->getCastMemberInfo(memberID.member);
+	if (_casts.contains(memberID.castLib)) {
+		result = _casts.getVal(memberID.castLib)->getCastMemberInfo(memberID.member);
 		if (result == nullptr && _sharedCast) {
 			result = _sharedCast->getCastMemberInfo(memberID.member);
 		}
@@ -362,8 +368,8 @@ CastMemberInfo *Movie::getCastMemberInfo(CastMemberID memberID) {
 
 const Stxt *Movie::getStxt(CastMemberID memberID) {
 	const Stxt *result = nullptr;
-	if (memberID.castLib == 0) {
-		result = _cast->getStxt(memberID.member);
+	if (_casts.contains(memberID.castLib)) {
+		result = _casts.getVal(memberID.castLib)->getStxt(memberID.member);
 		if (result == nullptr && _sharedCast) {
 			result = _sharedCast->getStxt(memberID.member);
 		}
@@ -374,7 +380,7 @@ const Stxt *Movie::getStxt(CastMemberID memberID) {
 }
 
 LingoArchive *Movie::getMainLingoArch() {
-	return _cast->_lingoArchive;
+	return _casts.getVal(0)->_lingoArchive;
 }
 
 LingoArchive *Movie::getSharedLingoArch() {
@@ -383,8 +389,8 @@ LingoArchive *Movie::getSharedLingoArch() {
 
 ScriptContext *Movie::getScriptContext(ScriptType type, CastMemberID id) {
 	ScriptContext *result = nullptr;
-	if (id.castLib == 0) {
-		result = _cast->_lingoArchive->getScriptContext(type, id.member);
+	if (_casts.contains(id.castLib)) {
+		result = _casts.getVal(id.castLib)->_lingoArchive->getScriptContext(type, id.member);
 		if (result == nullptr && _sharedCast) {
 			result = _sharedCast->_lingoArchive->getScriptContext(type, id.member);
 		}

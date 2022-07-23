@@ -19,6 +19,8 @@
  *
  */
 
+#include "graphics/managed_surface.h"
+
 #include "mtropolis/plugin/obsidian.h"
 #include "mtropolis/plugins.h"
 
@@ -28,14 +30,77 @@ namespace MTropolis {
 
 namespace Obsidian {
 
+MovementModifier::MovementModifier() : _type(false), _rate(0), _frequency(0),
+	_enableWhen(Event::create()), _disableWhen(Event::create()), _triggerEvent(Event::create()), _moveStartTime(0), _runtime(nullptr) {
+}
+
+MovementModifier::~MovementModifier() {
+	if (_moveEvent)
+		_moveEvent->cancel();
+}
+
 bool MovementModifier::load(const PlugInModifierLoaderContext &context, const Data::Obsidian::MovementModifier &data) {
-	// FIXME: Map these
-	_rate = 0;
-	_frequency = 0;
-	_type = false;
-	_dest = Common::Point(0, 0);
+
+	if (data.enableWhen.type != Data::PlugInTypeTaggedValue::kEvent || !_enableWhen.load(data.enableWhen.value.asEvent))
+		return false;
+
+	if (data.disableWhen.type != Data::PlugInTypeTaggedValue::kEvent || !_disableWhen.load(data.disableWhen.value.asEvent))
+		return false;
+
+	if (data.rate.type != Data::PlugInTypeTaggedValue::kFloat)
+		return false;
+
+	_rate = data.rate.value.asFloat.toXPFloat().toDouble();
+
+	if (data.frequency.type != Data::PlugInTypeTaggedValue::kInteger)
+		return false;
+
+	_frequency = data.frequency.value.asInt;
+
+	if (data.type.type != Data::PlugInTypeTaggedValue::kBoolean)
+		return false;
+
+	_type = (data.type.value.asBoolean != 0);
+
+	if (data.dest.type != Data::PlugInTypeTaggedValue::kPoint || !data.dest.value.asPoint.toScummVMPoint(_dest))
+		return false;
+
+	if (data.triggerEvent.type != Data::PlugInTypeTaggedValue::kEvent || !_triggerEvent.load(data.triggerEvent.value.asEvent))
+		return false;
 
 	return true;
+}
+
+bool MovementModifier::respondsToEvent(const Event &evt) const {
+	return _enableWhen.respondsTo(evt) || _disableWhen.respondsTo(evt);
+}
+
+VThreadState MovementModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	if (_enableWhen.respondsTo(msg->getEvent())) {
+		Structural *structural = findStructuralOwner();
+		if (structural == nullptr || !structural->isElement() || !static_cast<Element *>(structural)->isVisual()) {
+			warning("Movement modifier wasn't attached to a visual element");
+			return kVThreadError;
+		}
+		VisualElement *visual = static_cast<VisualElement *>(structural);
+
+		Common::Rect startRect = visual->getRelativeRect();
+		_moveStartPoint = Common::Point(startRect.left, startRect.top);
+		_moveStartTime = runtime->getPlayTime();
+
+		if (!_moveEvent) {
+			_runtime = runtime;
+			_moveEvent = runtime->getScheduler().scheduleMethod<MovementModifier, &MovementModifier::triggerMove>(runtime->getPlayTime() + 1, this);
+		}
+	}
+	if (_disableWhen.respondsTo(msg->getEvent())) {
+		if (_moveEvent) {
+			_moveEvent->cancel();
+			_moveEvent.reset();
+		}
+	}
+
+	return kVThreadReturn;
 }
 
 MiniscriptInstructionOutcome MovementModifier::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
@@ -48,7 +113,7 @@ MiniscriptInstructionOutcome MovementModifier::writeRefAttribute(MiniscriptThrea
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 	if (attrib == "rate") {
-		DynamicValueWriteIntegerHelper<int32>::create(&_rate, result);
+		DynamicValueWriteFloatHelper<double>::create(&_rate, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 	if (attrib == "frequency") {
@@ -59,6 +124,20 @@ MiniscriptInstructionOutcome MovementModifier::writeRefAttribute(MiniscriptThrea
 	return Modifier::writeRefAttribute(thread, result, attrib);
 }
 
+#ifdef MTROPOLIS_DEBUG_ENABLE
+void MovementModifier::debugInspect(IDebugInspectionReport *report) const {
+	Modifier::debugInspect(report);
+
+	report->declareDynamic("enableWhen", Common::String::format("Event(%i,%i)", static_cast<int>(_enableWhen.eventType), static_cast<int>(_enableWhen.eventInfo)));
+	report->declareDynamic("disableWhen", Common::String::format("Event(%i,%i)", static_cast<int>(_disableWhen.eventType), static_cast<int>(_disableWhen.eventInfo)));
+	report->declareDynamic("rate", Common::String::format("%g", _rate));
+	report->declareDynamic("frequency", Common::String::format("%i", static_cast<int>(_frequency)));
+	report->declareDynamic("type", Common::String::format(_type ? "true" : "false"));
+	report->declareDynamic("dest", Common::String::format("(%i,%i)", static_cast<int>(_dest.x), static_cast<int>(_dest.y)));
+	report->declareDynamic("triggerEvent", Common::String::format("Event(%i,%i)", static_cast<int>(_triggerEvent.eventType), static_cast<int>(_triggerEvent.eventInfo)));
+}
+#endif
+
 Common::SharedPtr<Modifier> MovementModifier::shallowClone() const {
 	return Common::SharedPtr<Modifier>(new MovementModifier(*this));
 }
@@ -67,21 +146,100 @@ const char *MovementModifier::getDefaultName() const {
 	return "Movement";
 }
 
+void MovementModifier::triggerMove(Runtime *runtime) {
+	_moveEvent.reset();
+
+	Structural *structural = findStructuralOwner();
+	if (structural == nullptr || !structural->isElement() || !static_cast<Element *>(structural)->isVisual()) {
+		warning("Movement modifier wasn't attached to a visual element");
+		return;
+	}
+	VisualElement *visual = static_cast<VisualElement *>(structural);
+
+
+	Common::Point delta = _dest - _moveStartPoint;
+
+	double deltaLength = sqrt(delta.x * delta.x + delta.y * delta.y);
+
+	double progression = 1.0;
+	if (deltaLength > 0.0 && _rate > 0.0) {
+		double distance = static_cast<double>(runtime->getPlayTime() - _moveStartTime) * _rate / 1000.0;
+		progression = distance / deltaLength;
+		if (progression > 1.0)
+			progression = 1.0;
+		if (progression < 0.0)
+			progression = 0.0;
+	}
+
+	int32 targetX = _moveStartPoint.x + static_cast<int32>(round((_dest.x - _moveStartPoint.x) * progression));
+	int32 targetY = _moveStartPoint.y + static_cast<int32>(round((_dest.y - _moveStartPoint.y) * progression));
+
+	Common::Rect relRect = visual->getRelativeRect();
+	int32 xDelta = targetX - relRect.left;
+	int32 yDelta = targetY - relRect.top;
+
+	relRect.left += xDelta;
+	relRect.right += xDelta;
+	relRect.top += yDelta;
+	relRect.bottom += yDelta;
+
+	visual->setRelativeRect(relRect);
+
+	if (progression == 1.0) {
+		Common::SharedPtr<MessageProperties> props(new MessageProperties(_triggerEvent, DynamicValue(), visual->getSelfReference()));
+		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(props, visual, true, true, false));
+		runtime->sendMessageOnVThread(dispatch);
+	} else {
+		_moveEvent = runtime->getScheduler().scheduleMethod<MovementModifier, &MovementModifier::triggerMove>(runtime->getPlayTime() + 1, this);
+	}
+}
+
+RectShiftModifier::RectShiftModifier() : _enableWhen(Event::create()), _disableWhen(Event::create()), _direction(0), _runtime(nullptr), _isActive(false) {
+}
+
+RectShiftModifier::~RectShiftModifier() {
+	if (_isActive)
+		_runtime->removePostEffect(this);
+}
+
+bool RectShiftModifier::respondsToEvent(const Event &evt) const {
+	return _enableWhen.respondsTo(evt) || _disableWhen.respondsTo(evt);
+}
+
+VThreadState RectShiftModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	if (_enableWhen.respondsTo(msg->getEvent()) && !_isActive) {
+		_runtime = runtime;
+		_runtime->addPostEffect(this);
+		_isActive = true;
+	}
+	if (_disableWhen.respondsTo(msg->getEvent()) && _isActive) {
+		_isActive = false;
+		_runtime->removePostEffect(this);
+		_runtime = nullptr;
+	}
+
+	return kVThreadReturn;
+}
+
 bool RectShiftModifier::load(const PlugInModifierLoaderContext &context, const Data::Obsidian::RectShiftModifier &data) {
-	if (data.rate.type != Data::PlugInTypeTaggedValue::kInteger)
+	if (data.enableWhen.type != Data::PlugInTypeTaggedValue::kEvent || !_enableWhen.load(data.enableWhen.value.asEvent))
 		return false;
 
-	_direction = 0;
-	_rate = data.rate.value.asInt;
+	if (data.disableWhen.type != Data::PlugInTypeTaggedValue::kEvent || !_disableWhen.load(data.disableWhen.value.asEvent))
+		return false;
+
+	if (data.direction.type != Data::PlugInTypeTaggedValue::kInteger)
+		return false;
+
+	_direction = data.direction.value.asInt;
+
+	if (data.enableWhen.type != Data::PlugInTypeTaggedValue::kEvent || !_enableWhen.load(data.enableWhen.value.asEvent))
+		return false;
 
 	return true;
 }
 
 MiniscriptInstructionOutcome RectShiftModifier::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
-	if (attrib == "rate") {
-		DynamicValueWriteIntegerHelper<int32>::create(&_rate, result);
-		return kMiniscriptInstructionOutcomeContinue;
-	}
 	if (attrib == "direction") {
 		DynamicValueWriteIntegerHelper<int32>::create(&_direction, result);
 		return kMiniscriptInstructionOutcomeContinue;
@@ -90,8 +248,69 @@ MiniscriptInstructionOutcome RectShiftModifier::writeRefAttribute(MiniscriptThre
 	return Modifier::writeRefAttribute(thread, result, attrib);
 }
 
+void RectShiftModifier::renderPostEffect(Graphics::ManagedSurface &surface) const {
+	Structural *structural = findStructuralOwner();
+	if (!structural)
+		return;
+
+	if (!structural->isElement() || !static_cast<Element *>(structural)->isVisual())
+		return;
+
+	VisualElement *visual = static_cast<VisualElement *>(structural);
+
+	Common::Point absOrigin = visual->getCachedAbsoluteOrigin();
+	Common::Rect relRect = visual->getRelativeRect();
+	Common::Rect absRect(absOrigin.x, absOrigin.y, absOrigin.x + relRect.width(), absOrigin.y + relRect.height());
+
+	if (absRect.left < 0)
+		absRect.left = 0;
+	if (absRect.right >= surface.w)
+		absRect.right = surface.w;
+	if (absRect.top < 0)
+		absRect.top = 0;
+	if (absRect.bottom >= surface.h)
+		absRect.bottom = surface.h;
+
+	if (_direction == 1) {
+		if (absRect.bottom + 1 >= surface.h)
+			absRect.bottom--;
+	} else if (_direction == 4) {
+		if (absRect.right + 1 >= surface.w)
+			absRect.right--;
+	} else
+		return;
+
+	if (!absRect.isValidRect())
+		return;
+
+	uint pitch = (absRect.right - absRect.left) * surface.format.bytesPerPixel;
+
+	for (int32 y = absRect.top; y < absRect.bottom; y++) {
+		void *destPixels = surface.getBasePtr(absRect.left, y);
+		void *srcPixels = destPixels;
+
+		if (_direction == 1)
+			srcPixels = surface.getBasePtr(absRect.left, y + 1);
+		else if (_direction == 4)
+			srcPixels = surface.getBasePtr(absRect.left + 1, y);
+
+		memmove(destPixels, srcPixels, pitch);
+	}
+}
+
+#ifdef MTROPOLIS_DEBUG_ENABLE
+void RectShiftModifier::debugInspect(IDebugInspectionReport *report) const {
+	Modifier::debugInspect(report);
+
+	report->declareDynamic("direction", Common::String::format("%i", static_cast<int>(_direction)));
+}
+#endif
+
 Common::SharedPtr<Modifier> RectShiftModifier::shallowClone() const {
-	return Common::SharedPtr<Modifier>(new RectShiftModifier(*this));
+	Common::SharedPtr<RectShiftModifier> clone(new RectShiftModifier(*this));
+	clone->_isActive = false;
+	clone->_runtime = nullptr;
+	return clone;
 }
 
 const char *RectShiftModifier::getDefaultName() const {
@@ -254,7 +473,7 @@ MiniscriptInstructionOutcome TextWorkModifier::scriptSetLastWord(MiniscriptThrea
 	return kMiniscriptInstructionOutcomeFailed;
 }
 
-DictionaryModifier::DictionaryModifier() : _plugIn(nullptr) {
+DictionaryModifier::DictionaryModifier() : _plugIn(nullptr), _isIndexResolved(false), _index(0) {
 }
 
 bool DictionaryModifier::load(const PlugInModifierLoaderContext &context, const Data::Obsidian::DictionaryModifier &data) {
@@ -316,14 +535,14 @@ void DictionaryModifier::resolveStringIndex() {
 	const WordGameData::WordBucket &bucket = wordBuckets[strLength];
 
 	size_t lowOffsetInclusive = 0;
-	size_t highOffsetExclusive = bucket.wordIndexes.size();
+	size_t highOffsetExclusive = bucket._wordIndexes.size();
 
 	const char *strChars = _str.c_str();
 
 	// Binary search
 	while (lowOffsetInclusive != highOffsetExclusive) {
 		const size_t midOffset = (lowOffsetInclusive + highOffsetExclusive) / 2;
-		const char *chars = &bucket.chars[bucket.spacing * midOffset];
+		const char *chars = &bucket._chars[bucket._spacing * midOffset];
 
 		bool isMidGreater = false;
 		bool isMidLess = false;
@@ -342,7 +561,7 @@ void DictionaryModifier::resolveStringIndex() {
 		else if (isMidGreater)
 			highOffsetExclusive = midOffset;
 		else {
-			_index = bucket.wordIndexes[midOffset] + 1;
+			_index = bucket._wordIndexes[midOffset] + 1;
 			break;
 		}
 	}
@@ -373,12 +592,12 @@ MiniscriptInstructionOutcome DictionaryModifier::scriptSetIndex(MiniscriptThread
 	if (_index < 1)
 		_str.clear();
 	else {
-		const size_t indexAdjusted = _index - 1;
+		const size_t indexAdjusted = static_cast<size_t>(_index) - 1;
 		const Common::Array<WordGameData::SortedWord> &sortedWords = _plugIn->getWordGameData()->getSortedWords();
 		if (indexAdjusted >= sortedWords.size())
 			_str.clear();
 		else
-			_str = Common::String(sortedWords[indexAdjusted].chars, sortedWords[indexAdjusted].length);
+			_str = Common::String(sortedWords[indexAdjusted]._chars, sortedWords[indexAdjusted]._length);
 	}
 
 	_isIndexResolved = true;
@@ -394,7 +613,7 @@ const char *DictionaryModifier::getDefaultName() const {
 	return "Dictionary";
 }
 
-WordMixerModifier::WordMixerModifier() : _matches(0), _result(0) {
+WordMixerModifier::WordMixerModifier() : _matches(0), _result(0), _plugIn(nullptr) {
 }
 
 bool WordMixerModifier::load(const PlugInModifierLoaderContext &context, const Data::Obsidian::WordMixerModifier &data) {
@@ -461,10 +680,10 @@ MiniscriptInstructionOutcome WordMixerModifier::scriptSetInput(MiniscriptThread 
 
 		const WordGameData::WordBucket &bucket = wordBuckets[wordLength];
 
-		size_t numWords = bucket.wordIndexes.size();
+		size_t numWords = bucket._wordIndexes.size();
 
 		for (size_t wi = 0; wi < numWords; wi++) {
-			const char *wordChars = &bucket.chars[bucket.spacing * wi];
+			const char *wordChars = &bucket._chars[bucket._spacing * wi];
 
 			for (bool &b : charIsUsed)
 				b = false;
@@ -521,8 +740,8 @@ MiniscriptInstructionOutcome WordMixerModifier::scriptSetSearch(MiniscriptThread
 	if (searchLength < buckets.size()) {
 		const WordGameData::WordBucket &bucket = buckets[searchLength];
 
-		for (size_t wi = 0; wi < bucket.wordIndexes.size(); wi++) {
-			const char *wordChars = &bucket.chars[wi * bucket.spacing];
+		for (size_t wi = 0; wi < bucket._wordIndexes.size(); wi++) {
+			const char *wordChars = &bucket._chars[wi * bucket._spacing];
 
 			bool isMatch = true;
 			for (size_t ci = 0; ci < searchLength; ci++) {
@@ -550,7 +769,7 @@ const char *WordMixerModifier::getDefaultName() const {
 	return "WordMixer";
 }
 
-XorModModifier::XorModModifier() {
+XorModModifier::XorModModifier() : _enableWhen(Event::create()), _disableWhen(Event::create()), _shapeID(0) {
 }
 
 bool XorModModifier::load(const PlugInModifierLoaderContext &context, const Data::Obsidian::XorModModifier &data) {
@@ -812,6 +1031,13 @@ const Common::SharedPtr<WordGameData>& ObsidianPlugIn::getWordGameData() const {
 	return _wgData;
 }
 
+
+WordGameData::WordBucket::WordBucket() : _spacing(0) {
+}
+
+WordGameData::SortedWord::SortedWord() : _chars(nullptr), _length(0) {
+}
+
 bool WordGameData::load(Common::SeekableReadStream *stream, const WordGameLoadBucket *buckets, uint numBuckets, uint alignment, bool backwards) {
 	_buckets.resize(numBuckets);
 
@@ -824,24 +1050,24 @@ bool WordGameData::load(Common::SeekableReadStream *stream, const WordGameLoadBu
 		uint wordLength = i;
 		uint spacing = (wordLength + alignment) - (wordLength % alignment);
 
-		outBucket.spacing = spacing;
-		outBucket.chars.resize(sizeBytes);
+		outBucket._spacing = spacing;
+		outBucket._chars.resize(sizeBytes);
 
 		assert(sizeBytes % alignment == 0);
 
 		if (sizeBytes > 0) {
 			if (!stream->seek(inBucket.startAddress, SEEK_SET))
 				return false;
-			stream->read(&outBucket.chars[0], sizeBytes);
+			stream->read(&outBucket._chars[0], sizeBytes);
 		}
 
 		uint numWords = sizeBytes / spacing;
-		outBucket.wordIndexes.resize(numWords);
+		outBucket._wordIndexes.resize(numWords);
 
 		if (backwards) {
 			for (size_t wordIndex = 0; wordIndex < numWords / 2; wordIndex++) {
-				char *swapA = &outBucket.chars[wordIndex * spacing];
-				char *swapB = &outBucket.chars[(numWords - 1 - wordIndex) * spacing];
+				char *swapA = &outBucket._chars[wordIndex * spacing];
+				char *swapB = &outBucket._chars[(numWords - 1 - wordIndex) * spacing];
 
 				for (size_t chIndex = 0; chIndex < wordLength; chIndex++) {
 					char temp = swapA[chIndex];
@@ -866,9 +1092,9 @@ bool WordGameData::load(Common::SeekableReadStream *stream, const WordGameLoadBu
 		size_t bestBucket = numBuckets;
 		const char *bestChars = nullptr;
 		for (size_t bucketIndex = 0; bucketIndex < numBuckets; bucketIndex++) {
-			size_t wordOffset = currentWordIndexes[bucketIndex] * _buckets[bucketIndex].spacing;
-			if (wordOffset < _buckets[bucketIndex].chars.size()) {
-				const char *candidate = &_buckets[bucketIndex].chars[wordOffset];
+			size_t wordOffset = currentWordIndexes[bucketIndex] * _buckets[bucketIndex]._spacing;
+			if (wordOffset < _buckets[bucketIndex]._chars.size()) {
+				const char *candidate = &_buckets[bucketIndex]._chars[wordOffset];
 				bool isWorse = true;
 				if (bestChars == nullptr)
 					isWorse = false;
@@ -894,11 +1120,11 @@ bool WordGameData::load(Common::SeekableReadStream *stream, const WordGameLoadBu
 		assert(bestChars != nullptr);
 
 		const size_t bucketWordIndex = currentWordIndexes[bestBucket];
-		_buckets[bestBucket].wordIndexes[bucketWordIndex] = wordIndex;
+		_buckets[bestBucket]._wordIndexes[bucketWordIndex] = wordIndex;
 		currentWordIndexes[bestBucket]++;
 
-		_sortedWords[wordIndex].chars = bestChars;
-		_sortedWords[wordIndex].length = bestBucket;
+		_sortedWords[wordIndex]._chars = bestChars;
+		_sortedWords[wordIndex]._length = bestBucket;
 	}
 
 	return !stream->err();

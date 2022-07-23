@@ -36,40 +36,74 @@ class WordGameData;
 
 class MovementModifier : public Modifier {
 public:
+	MovementModifier();
+	~MovementModifier();
+
 	bool load(const PlugInModifierLoaderContext &context, const Data::Obsidian::MovementModifier &data);
+
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
 	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Movement Modifier"; }
+	void debugInspect(IDebugInspectionReport *report) const override;
 #endif
 
 private:
 	Common::SharedPtr<Modifier> shallowClone() const override;
 	const char *getDefaultName() const override;
+
+	void triggerMove(Runtime *runtime);
 
 	Common::Point _dest;
 	bool _type;
-	int32 _rate;
+	double _rate;
 	int32 _frequency;
+
+	Event _enableWhen;
+	Event _disableWhen;
+
+	Event _triggerEvent;
+
+	Common::Point _moveStartPoint;
+	uint64 _moveStartTime;
+
+	Common::SharedPtr<ScheduledEvent> _moveEvent;
+	Runtime *_runtime;
 };
 
-class RectShiftModifier : public Modifier {
+class RectShiftModifier : public Modifier, public IPostEffect {
 public:
+	RectShiftModifier();
+	~RectShiftModifier();
+
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+
 	bool load(const PlugInModifierLoaderContext &context, const Data::Obsidian::RectShiftModifier &data);
 
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
+
+	void renderPostEffect(Graphics::ManagedSurface &surface) const override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Rect Shift Modifier"; }
+	void debugInspect(IDebugInspectionReport *report) const override;
 #endif
 
 private:
 	Common::SharedPtr<Modifier> shallowClone() const override;
 	const char *getDefaultName() const override;
 
-	int32 _rate;
+	Event _enableWhen;
+	Event _disableWhen;
+
 	int32 _direction;
+
+	Runtime *_runtime;
+	bool _isActive;
 };
 
 class TextWorkModifier : public Modifier {
@@ -78,11 +112,12 @@ public:
 
 	bool load(const PlugInModifierLoaderContext &context, const Data::Obsidian::TextWorkModifier &data);
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "TextWork Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
 #endif
 
 private:
@@ -106,11 +141,12 @@ public:
 
 	bool load(const PlugInModifierLoaderContext &context, const Data::Obsidian::DictionaryModifier &data);
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Dictionary Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
 #endif
 
 private:
@@ -134,11 +170,12 @@ public:
 
 	bool load(const PlugInModifierLoaderContext &context, const Data::Obsidian::WordMixerModifier &data);
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "WordMixer Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
 #endif
 
 private:
@@ -167,6 +204,7 @@ public:
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Xor Mod Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
 #endif
 
 private:
@@ -185,11 +223,12 @@ public:
 
 	bool load(const PlugInModifierLoaderContext &context, const Data::Obsidian::XorCheckModifier &data);
 
-	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib);
-	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
+	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+	MiniscriptInstructionOutcome writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Xor Check Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusDone; }
 #endif
 
 private:
@@ -233,14 +272,18 @@ struct WordGameLoadBucket {
 class WordGameData {
 public:
 	struct WordBucket {
-		Common::Array<char> chars;
-		Common::Array<uint16> wordIndexes;
-		uint32 spacing;
+		WordBucket();
+
+		Common::Array<char> _chars;
+		Common::Array<uint16> _wordIndexes;
+		uint32 _spacing;
 	};
 
 	struct SortedWord {
-		const char *chars;
-		uint length;
+		SortedWord();
+
+		const char *_chars;
+		uint _length;
 	};
 
 	bool load(Common::SeekableReadStream *stream, const WordGameLoadBucket *buckets, uint numBuckets, uint alignment, bool backwards);

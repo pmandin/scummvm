@@ -210,6 +210,7 @@ public:
 	void disableScreenCopy();
 
 	bool isMenuActive();
+	void setDesktopMode(uint32 mode);
 
 	/**
 	 * Set hot zone where menu appears (works only with autohide menu)
@@ -296,6 +297,8 @@ public:
 	Common::Rect getScreenBounds() { return _screen ? _screen->getBounds() : _screenDims; }
 
 	void clearWidgetRefs(MacWidget *widget);
+
+	void printWMMode(int debuglevel = 0);
 
 private:
 	void replaceCursorType(MacCursorType type);

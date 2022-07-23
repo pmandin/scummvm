@@ -91,18 +91,21 @@ class Window;
 class WorldManagerInterface;
 struct DynamicValue;
 struct DynamicValueWriteProxy;
+struct IBoundaryDetector;
 struct ICollider;
 struct ILoadUIProvider;
 struct IMessageConsumer;
 struct IModifierContainer;
-struct IModifierFactory;
 struct IPlugInModifierFactory;
 struct IPlugInModifierFactoryAndDataFactory;
+struct IPostEffect;
 struct ISaveUIProvider;
+struct ISaveWriter;
 struct IStructuralReferenceVisitor;
 struct MessageProperties;
 struct ModifierLoaderContext;
 struct PlugInModifierLoaderContext;
+struct SIModifierFactory;
 template<typename TElement, typename TElementData> class ElementFactory;
 
 enum MiniscriptInstructionOutcome {
@@ -134,23 +137,35 @@ enum ColorDepthMode {
 	kColorDepthModeInvalid,
 };
 
-enum TransitionType {
-	kTransitionTypeNone = 0,
-	kTransitionTypePatternDissolve = 0x0406,
-	kTransitionTypeRandomDissolve = 0x0410, // No steps
-	kTransitionTypeFade = 0x041a,
-	kTransitionTypeSlide = 0x03e8, // Directional
-	kTransitionTypePush = 0x03f2,  // Directional
-	kTransitionTypeZoom = 0x03fc,
-	kTransitionTypeWipe = 0x0424, // Directional
+namespace SceneTransitionTypes {
+
+enum SceneTransitionType {
+	kNone,
+	kPatternDissolve,
+	kRandomDissolve, // No steps
+	kFade,
+	kSlide, // Directional
+	kPush,  // Directional
+	kZoom,
+	kWipe, // Directional
 };
 
-enum TransitionDirection {
-	kTransitionDirectionUp = 0x385,
-	kTransitionDirectionDown = 0x385,
-	kTransitionDirectionLeft = 0x386,
-	kTransitionDirectionRight = 0x387,
+bool loadFromData(SceneTransitionType &transType, int32 data);
+
+} // End of namespace SceneTransitionTypes
+
+namespace SceneTransitionDirections {
+
+enum SceneTransitionDirection {
+	kUp,
+	kDown,
+	kLeft,
+	kRight,
 };
+
+bool loadFromData(SceneTransitionDirection &transDir, int32 data);
+
+} // End of namespace SceneTransitionDirections
 
 enum ConstraintDirection {
 	kConstraintDirectionNone,
@@ -507,9 +522,13 @@ struct DynamicValueWriteProxyPOD {
 	uintptr ptrOrOffset;
 	void *objectRef;
 	const DynamicValueWriteInterface *ifc;
+
+	static DynamicValueWriteProxyPOD createDefault();
 };
 
 struct DynamicValueWriteProxy {
+	DynamicValueWriteProxy();
+
 	DynamicValueWriteProxyPOD pod;
 	Common::SharedPtr<DynamicList> containerList;
 };
@@ -1014,13 +1033,7 @@ struct DynamicValueWriteFuncHelper {
 		proxy.pod.objectRef = obj;
 		proxy.pod.ifc = DynamicValueWriteInterfaceGlue<DynamicValueWriteFuncHelper<TClass, TWriteMethod> >::getInstance();
 	}
-
-private:
-	static DynamicValueWriteFuncHelper _instance;
 };
-
-template<class TClass, MiniscriptInstructionOutcome (TClass::*TWriteMethod)(MiniscriptThread *thread, const DynamicValue &dest)>
-DynamicValueWriteFuncHelper<TClass, TWriteMethod> DynamicValueWriteFuncHelper<TClass, TWriteMethod>::_instance;
 
 struct DynamicValueWriteObjectHelper {
 	static MiniscriptInstructionOutcome write(MiniscriptThread *thread, const DynamicValue &value, void *objectRef, uintptr ptrOrOffset);
@@ -1032,6 +1045,7 @@ struct DynamicValueWriteObjectHelper {
 
 struct MessengerSendSpec {
 	MessengerSendSpec();
+
 	bool load(const Data::Event &dataEvent, uint32 dataMessageFlags, const Data::InternalTypeTaggedValue &dataLocator, const Common::String &dataWithSource, const Common::String &dataWithString, uint32 dataDestination);
 	bool load(const Data::PlugInTypeTaggedValue &dataEvent, const MessageFlags &dataMessageFlags, const Data::PlugInTypeTaggedValue &dataWith, uint32 dataDestination);
 
@@ -1044,11 +1058,6 @@ struct MessengerSendSpec {
 	void sendFromMessenger(Runtime *runtime, Modifier *sender, const DynamicValue &incomingData, RuntimeObject *customDestination) const;
 	void sendFromMessengerWithCustomData(Runtime *runtime, Modifier *sender, const DynamicValue &data, RuntimeObject *customDestination) const;
 
-	Event send;
-	MessageFlags messageFlags;
-	DynamicValue with;
-	uint32 destination; // May be a MessageDestination or GUID
-
 	enum LinkType {
 		kLinkTypeNotYetLinked,
 		kLinkTypeStructural,
@@ -1056,6 +1065,11 @@ struct MessengerSendSpec {
 		kLinkTypeCoded,
 		kLinkTypeUnresolved,
 	};
+
+	Event send;
+	MessageFlags messageFlags;
+	DynamicValue with;
+	uint32 destination; // May be a MessageDestination or GUID
 
 	LinkType _linkType;
 	Common::WeakPtr<Structural> _resolvedStructuralDest;
@@ -1068,13 +1082,6 @@ private:
 	static bool isSectionFilter(Structural *section);
 	static bool isSubsectionFilter(Structural *section);
 	static bool isElementFilter(Structural *section);
-};
-
-struct Message {
-	Message();
-
-	Event evt;
-	DynamicValue data;
 };
 
 enum MessageDestination {
@@ -1100,6 +1107,8 @@ enum MessageDestination {
 };
 
 struct SegmentDescription {
+	SegmentDescription();
+
 	int volumeID;
 	Common::String filePath;
 	Common::SeekableReadStream *stream;
@@ -1211,6 +1220,8 @@ private:
 };
 
 struct VolumeState {
+	VolumeState();
+
 	Common::String name;
 	int volumeID;
 	bool isMounted;
@@ -1275,10 +1286,12 @@ struct HighLevelSceneTransition {
 };
 
 struct SceneTransitionEffect {
-	uint32 duration; // 6000000 is maximum
-	uint16 steps;
-	TransitionType transitionType;
-	TransitionDirection transitionDirection;
+	SceneTransitionEffect();
+
+	uint32 _duration; // 6000000 is maximum
+	uint16 _steps;
+	SceneTransitionTypes::SceneTransitionType _transitionType;
+	SceneTransitionDirections::SceneTransitionDirection _transitionDirection;
 };
 
 class MessageDispatch {
@@ -1343,7 +1356,7 @@ public:
 
 	bool isTerminated() const;
 	VThreadState continuePropagating(Runtime *runtime);
-	
+
 private:
 	Common::Array<Common::WeakPtr<RuntimeObject> > _keyboardMessengers;
 	size_t _dispatchIndex;
@@ -1447,6 +1460,8 @@ private:
 };
 
 struct DragMotionProperties {
+	DragMotionProperties();
+
 	ConstraintDirection constraintDirection;
 	Common::Rect constraintMargin;
 	bool constrainToParent;
@@ -1456,6 +1471,7 @@ class SceneTransitionHooks {
 public:
 	virtual ~SceneTransitionHooks();
 
+	virtual void onSceneTransitionSetup(Runtime *runtime, const Common::WeakPtr<Structural> &oldScene, const Common::WeakPtr<Structural> &newScene);
 	virtual void onSceneTransitionEnded(Runtime *runtime, const Common::WeakPtr<Structural> &newScene);
 };
 
@@ -1474,6 +1490,8 @@ public:
 	void setDefaultVolumeState(bool defaultState);
 
 	void addSceneStateTransition(const HighLevelSceneTransition &transition);
+
+	void setSceneTransitionEffect(bool isInDestinationScene, SceneTransitionEffect *effect);
 
 	Project *getProject() const;
 
@@ -1567,7 +1585,22 @@ public:
 	void removeCollider(ICollider *collider);
 	void checkCollisions();
 
+	void addBoundaryDetector(IBoundaryDetector *boundaryDetector);
+	void removeBoundaryDetector(IBoundaryDetector *boundaryDetector);
+	void checkBoundaries();
+
+	void addPostEffect(IPostEffect *postEffect);
+	void removePostEffect(IPostEffect *postEffect);
+	const Common::Array<IPostEffect *> &getPostEffects() const;
+
 	const Common::String *resolveAttributeIDName(uint32 attribID) const;
+
+	const Common::WeakPtr<Window> &getMainWindow() const;
+
+	const Common::SharedPtr<Graphics::Surface> &getSaveScreenshotOverride() const;
+	void setSaveScreenshotOverride(const Common::SharedPtr<Graphics::Surface> &screenshot);
+
+	bool isIdle() const;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	void debugSetEnabled(bool enabled);
@@ -1581,7 +1614,6 @@ private:
 	enum SceneTransitionState {
 		kSceneTransitionStateNotTransitioning,
 		kSceneTransitionStateWaitingForDraw,
-		kSceneTransitionStateDrawingTargetFrame,
 		kSceneTransitionStateTransitioning,
 	};
 
@@ -1592,11 +1624,15 @@ private:
 	};
 
 	struct Teardown {
+		Teardown();
+
 		Common::WeakPtr<Structural> structural;
 		bool onlyRemoveChildren;
 	};
 
 	struct SceneReturnListEntry {
+		SceneReturnListEntry();
+
 		Common::SharedPtr<Structural> scene;
 		bool isAddToDestinationSceneTransition;
 	};
@@ -1610,30 +1646,51 @@ private:
 	};
 
 	struct ConsumeMessageTaskData {
+		ConsumeMessageTaskData();
+
 		IMessageConsumer *consumer;
 		Common::SharedPtr<MessageProperties> message;
 	};
 
 	struct ConsumeCommandTaskData {
+		ConsumeCommandTaskData();
+
 		Structural *structural;
 		Common::SharedPtr<MessageProperties> message;
 	};
 
 	struct UpdateMouseStateTaskData {
+		UpdateMouseStateTaskData();
+
 		bool mouseDown;
 	};
 
 	struct UpdateMousePositionTaskData {
+		UpdateMousePositionTaskData();
+
 		int32 x;
 		int32 y;
 	};
 
 	struct CollisionCheckState {
+		CollisionCheckState();
+
 		Common::Array<Common::WeakPtr<VisualElement> > activeElements;
 		ICollider *collider;
 	};
 
+	struct BoundaryCheckState {
+		BoundaryCheckState();
+
+		IBoundaryDetector *detector;
+		uint currentContacts;
+		Common::Point position;
+		bool positionResolved;
+	};
+
 	struct ColliderInfo {
+		ColliderInfo();
+
 		size_t sceneStackDepth;
 		uint16 layer;
 		VisualElement *element;
@@ -1693,7 +1750,12 @@ private:
 	Common::Array<SceneReturnListEntry> _sceneReturnList;
 
 	SceneTransitionState _sceneTransitionState;
-	SceneTransitionEffect _sceneTransitionEffect;
+	SceneTransitionEffect _sourceSceneTransitionEffect;
+	SceneTransitionEffect _destinationSceneTransitionEffect;
+	SceneTransitionEffect *_activeSceneTransitionEffect;
+	Common::SharedPtr<Graphics::ManagedSurface> _sceneTransitionOldFrame;
+	Common::SharedPtr<Graphics::ManagedSurface> _sceneTransitionNewFrame;
+	uint32 _sceneTransitionStartTime;
 	uint32 _sceneTransitionEndTime;
 
 	Common::WeakPtr<Window> _mainWindow;
@@ -1721,8 +1783,10 @@ private:
 	Scheduler _scheduler;
 	OSystem *_system;
 	Audio::Mixer *_mixer;
+
 	ISaveUIProvider *_saveProvider;
 	ILoadUIProvider *_loadProvider;
+	Common::SharedPtr<Graphics::Surface> _saveScreenshotOverride;
 
 	Common::SharedPtr<CursorGraphic> _lastFrameCursor;
 	Common::SharedPtr<CursorGraphic> _defaultCursor;
@@ -1769,7 +1833,10 @@ private:
 	bool _isQuitting;
 
 	Common::Array<Common::SharedPtr<CollisionCheckState> > _colliders;
+	Common::Array<BoundaryCheckState> _boundaryChecks;
 	uint32 _collisionCheckTime;
+
+	Common::Array<IPostEffect *> _postEffects;
 
 	Hacks _hacks;
 
@@ -1787,7 +1854,7 @@ struct IModifierContainer : public IInterfaceBase {
 
 class SimpleModifierContainer : public IModifierContainer {
 public:
-	const Common::Array<Common::SharedPtr<Modifier> > &getModifiers() const;
+	const Common::Array<Common::SharedPtr<Modifier> > &getModifiers() const override;
 	void appendModifier(const Common::SharedPtr<Modifier> &modifier) override;
 
 private:
@@ -1991,6 +2058,8 @@ protected:
 	// being available for sound indexes to be properly set up.
 	bool _loop;
 
+	int32 _flushPriority;
+
 	Common::SharedPtr<StructuralHooks> _hooks;
 };
 
@@ -2111,6 +2180,22 @@ struct ICollider : public IInterfaceBase {
 	virtual void triggerCollision(Runtime *runtime, Structural *collidingElement, bool wasInContact, bool isInContact, bool &outShouldStop) = 0;
 };
 
+struct IBoundaryDetector : public IInterfaceBase {
+	enum EdgeFlags {
+		kEdgeTop = 0x1,
+		kEdgeBottom = 0x2,
+		kEdgeLeft = 0x4,
+		kEdgeRight = 0x8,
+	};
+
+	virtual void getCollisionProperties(Modifier *&modifier, uint &edgeFlags, bool &mustBeCompletelyOutside, bool &continuous) const = 0;
+	virtual void triggerCollision(Runtime *runtime) = 0;
+};
+
+struct IPostEffect : public IInterfaceBase {
+	virtual void renderPostEffect(Graphics::ManagedSurface &surface) const = 0;
+};
+
 struct MediaCueState {
 	enum TriggerTiming {
 		kTriggerTimingStart = 0,
@@ -2126,6 +2211,7 @@ struct MediaCueState {
 	MessengerSendSpec send;
 	DynamicValue incomingData;
 
+	MediaCueState();
 	void checkTimestampChange(Runtime *runtime, uint32 oldTS, uint32 newTS, bool continuousTimestamps, bool canTriggerDuring);
 };
 
@@ -2134,7 +2220,7 @@ public:
 	explicit Project(Runtime *runtime);
 	~Project();
 
-	VThreadState consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg);
+	VThreadState consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
 	void loadFromDescription(const ProjectDescription &desc, const Hacks &hacks);
 	void loadSceneFromStream(const Common::SharedPtr<Structural> &structural, uint32 streamID, const Hacks &hacks);
@@ -2170,6 +2256,8 @@ public:
 
 private:
 	struct LabelSuperGroup {
+		LabelSuperGroup();
+
 		size_t firstRootNodeIndex;
 		size_t numRootNodes;
 		size_t numTotalNodes;
@@ -2179,6 +2267,8 @@ private:
 	};
 
 	struct LabelTree {
+		LabelTree();
+
 		size_t firstChildIndex;
 		size_t numChildren;
 
@@ -2204,6 +2294,8 @@ private:
 	};
 
 	struct StreamDesc {
+		StreamDesc();
+
 		StreamType streamType;
 		uint16 segmentIndex;
 		uint32 size;
@@ -2211,6 +2303,8 @@ private:
 	};
 
 	struct AssetDesc {
+		AssetDesc();
+
 		uint32 typeCode;
 		size_t id;
 		Common::String name;
@@ -2272,7 +2366,7 @@ class Section : public Structural {
 public:
 	bool load(const Data::SectionStructuralDef &data);
 
-	bool isSection() const;
+	bool isSection() const override;
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Section"; }
@@ -2334,6 +2428,21 @@ protected:
 	Common::Array<MediaCueState *> _mediaCues;
 
 	bool _haveCheckedAutoPlay;
+};
+
+class VisualElementTransitionProperties {
+public:
+	VisualElementTransitionProperties();
+
+	uint8 getAlpha() const;
+	void setAlpha(uint8 alpha);
+
+	bool isDirty() const;
+	void clearDirty();
+
+private:
+	uint8 _alpha;
+	bool _isDirty;
 };
 
 class VisualElementRenderProperties {
@@ -2426,7 +2535,7 @@ public:
 	bool isVisual() const override;
 	virtual bool isTextLabel() const;
 
-	VThreadState consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg);
+	VThreadState consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
 	bool isVisible() const;
 	void setVisible(bool visible);
@@ -2462,6 +2571,8 @@ public:
 	void handleDragMotion(Runtime *runtime, const Common::Point &initialOrigin, const Common::Point &targetOrigin);
 
 	struct OffsetTranslateTaskData {
+		OffsetTranslateTaskData() : dx(0), dy(0) {}
+
 		int32 dx;
 		int32 dy;
 	};
@@ -2471,6 +2582,9 @@ public:
 	void setRenderProperties(const VisualElementRenderProperties &props, const Common::WeakPtr<GraphicModifier> &primaryGraphicModifier);
 	const VisualElementRenderProperties &getRenderProperties() const;
 	const Common::WeakPtr<GraphicModifier> &getPrimaryGraphicModifier() const;
+
+	void setTransitionProperties(const VisualElementTransitionProperties &props);
+	const VisualElementTransitionProperties &getTransitionProperties() const;
 
 	bool needsRender() const;
 	virtual void render(Window *window) = 0;
@@ -2503,6 +2617,8 @@ protected:
 	Common::Point getCenterPosition() const;
 
 	struct ChangeFlagTaskData {
+		ChangeFlagTaskData() : desiredFlag(false), runtime(nullptr) {}
+
 		bool desiredFlag;
 		Runtime *runtime;
 	};
@@ -2519,9 +2635,12 @@ protected:
 
 	Common::SharedPtr<DragMotionProperties> _dragProps;
 
-	// Quirk: When a graphic modifier is applied, it needs to be 
+	// Quirk: When a graphic modifier is applied, it becomes the primary graphic modifier, and disabling it
+	// will only take effect if it's the primary graphic modifier.
 	VisualElementRenderProperties _renderProps;
 	Common::WeakPtr<GraphicModifier> _primaryGraphicModifier;
+
+	VisualElementTransitionProperties _transitionProps;
 
 	Common::Rect _prevRect;
 	bool _contentsDirty;
@@ -2643,7 +2762,7 @@ protected:
 
 class VariableModifier : public Modifier {
 public:
-	virtual bool isVariable() const;
+	virtual bool isVariable() const override;
 	virtual bool varSetValue(MiniscriptThread *thread, const DynamicValue &value) = 0;
 	virtual void varGetValue(MiniscriptThread *thread, DynamicValue &dest) const = 0;
 	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override = 0;

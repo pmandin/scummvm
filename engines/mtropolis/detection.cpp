@@ -40,7 +40,7 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 	{
 		GAMEOPTION_WIDESCREEN_MOD,
 		{
-			_s("16:9 Widescreen Mod"),
+			_s("16:9 widescreen mod"),
 			_s("Removes letterboxing and moves some display elements, improving coverage on widescreen displays"),
 			"mtropolis_mod_obsidian_widescreen",
 			false,
@@ -51,7 +51,7 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 	{
 		GAMEOPTION_DYNAMIC_MIDI,
 		{
-			_s("Improved Music Mixing"),
+			_s("Improved music mixing"),
 			_s("Enables dynamic MIDI mixer, improving quality, but behaving less like mTropolis Player."),
 			"mtropolis_mod_dynamic_midi",
 			true,
@@ -60,11 +60,22 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		}
 	},
 	{
-		GAMEOPTION_AUTO_SAVE,
+		GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS,
 		{
-			_s("Save Progress Automatically"),
-			_s("Automatically saves the game at certain progress points."),
-			"mtropolis_mod_auto_save",
+			_s("Autosave at progress points"),
+			_s("Automatically saves the game after completing puzzles and chapters."),
+			"mtropolis_mod_auto_save_at_checkpoints",
+			true,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_ENABLE_SHORT_TRANSITIONS,
+		{
+			_s("Enable short transitions"),
+			_s("Enables transitions that are set to maximum rate instead of skipping them"),
+			"mtropolis_mod_minimum_transition_duration",
 			true,
 			0,
 			0
@@ -76,17 +87,6 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 			_s("Start with debugger"),
 			_s("Starts with the debugger dashboard active"),
 			"mtropolis_debug_at_start",
-			false,
-			0,
-			0
-		}
-	},
-	{
-		GAMEOPTION_LAUNCH_BREAK,
-		{
-			_s("Start debugging immediately"),
-			_s("Halts progress and stops at the debugger immediately"),
-			"mtropolis_pause_at_start",
 			false,
 			0,
 			0
@@ -107,7 +107,7 @@ static const char *directoryGlobs[] = {
 class MTropolisMetaEngineDetection : public AdvancedMetaEngineDetection {
 public:
 	MTropolisMetaEngineDetection() : AdvancedMetaEngineDetection(MTropolis::gameDescriptions, sizeof(MTropolis::MTropolisGameDescription), mTropolisGames, MTropolis::optionsList) {
-		_guiOptions = GUIO3(GAMEOPTION_DYNAMIC_MIDI, GAMEOPTION_LAUNCH_DEBUG, GAMEOPTION_LAUNCH_BREAK);
+		_guiOptions = GUIO3(GAMEOPTION_DYNAMIC_MIDI, GAMEOPTION_LAUNCH_DEBUG, GAMEOPTION_ENABLE_SHORT_TRANSITIONS);
 		_maxScanDepth = 3;
 		_directoryGlobs = directoryGlobs;
 	}

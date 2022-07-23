@@ -46,6 +46,9 @@ bool miniscriptEvaluateTruth(const DynamicValue &value) {
 MiniscriptInstruction::~MiniscriptInstruction() {
 }
 
+MiniscriptReferences::LocalRef::LocalRef() : guid(0) {
+}
+
 MiniscriptReferences::MiniscriptReferences(const Common::Array<LocalRef> &localRefs) : _localRefs(localRefs) {
 }
 
@@ -241,25 +244,25 @@ bool MiniscriptInstructionLoader<MiniscriptInstructions::PushString>::loadInstru
 	return true;
 }
 
-struct IMiniscriptInstructionFactory : public IInterfaceBase {
-	virtual bool create(void *dest, uint32 instrFlags, Data::DataReader &instrDataReader, MiniscriptInstruction *&outMiniscriptInstructionPtr) const = 0;
-	virtual void getSizeAndAlignment(size_t &outSize, size_t &outAlignment) const = 0;
+struct SIMiniscriptInstructionFactory {
+	bool (*create)(void *dest, uint32 instrFlags, Data::DataReader &instrDataReader, MiniscriptInstruction *&outMiniscriptInstructionPtr);
+	void (*getSizeAndAlignment)(size_t &outSize, size_t &outAlignment);
 };
 
 template<class T>
-class MiniscriptInstructionFactory : public IMiniscriptInstructionFactory {
+class MiniscriptInstructionFactory {
 public:
-	bool create(void *dest, uint32 instrFlags, Data::DataReader &instrDataReader, MiniscriptInstruction *&outMiniscriptInstructionPtr) const override;
-	void getSizeAndAlignment(size_t &outSize, size_t &outAlignment) const override;
+	static bool create(void *dest, uint32 instrFlags, Data::DataReader &instrDataReader, MiniscriptInstruction *&outMiniscriptInstructionPtr);
+	static void getSizeAndAlignment(size_t &outSize, size_t &outAlignment);
 
-	static IMiniscriptInstructionFactory *getInstance();
+	static SIMiniscriptInstructionFactory *getInstance();
 
 private:
-	static MiniscriptInstructionFactory<T> _instance;
+	static SIMiniscriptInstructionFactory _instance;
 };
 
 template<class T>
-bool MiniscriptInstructionFactory<T>::create(void *dest, uint32 instrFlags, Data::DataReader &instrDataReader, MiniscriptInstruction *&outMiniscriptInstructionPtr) const {
+bool MiniscriptInstructionFactory<T>::create(void *dest, uint32 instrFlags, Data::DataReader &instrDataReader, MiniscriptInstruction *&outMiniscriptInstructionPtr) {
 	if (!MiniscriptInstructionLoader<T>::loadInstruction(dest, instrFlags, instrDataReader))
 		return false;
 
@@ -268,18 +271,25 @@ bool MiniscriptInstructionFactory<T>::create(void *dest, uint32 instrFlags, Data
 }
 
 template<class T>
-void MiniscriptInstructionFactory<T>::getSizeAndAlignment(size_t &outSize, size_t &outAlignment) const {
+void MiniscriptInstructionFactory<T>::getSizeAndAlignment(size_t &outSize, size_t &outAlignment) {
 	outSize = sizeof(T);
 	outAlignment = alignof(T);
 }
 
 template<class T>
-inline IMiniscriptInstructionFactory *MiniscriptInstructionFactory<T>::getInstance() {
+inline SIMiniscriptInstructionFactory *MiniscriptInstructionFactory<T>::getInstance() {
 	return &_instance;
 }
 
 template<class T>
-MiniscriptInstructionFactory<T> MiniscriptInstructionFactory<T>::_instance;
+SIMiniscriptInstructionFactory MiniscriptInstructionFactory<T>::_instance = {
+	MiniscriptInstructionFactory<T>::create,
+	MiniscriptInstructionFactory<T>::getSizeAndAlignment
+};
+
+MiniscriptParser::InstructionData::InstructionData()
+	: opcode(0), flags(0), pdPosition(0), instrFactory(nullptr) {
+}
 
 bool MiniscriptParser::parse(const Data::MiniscriptProgram &program, Common::SharedPtr<MiniscriptProgram> &outProgram, Common::SharedPtr<MiniscriptReferences> &outReferences) {
 	Common::Array<MiniscriptReferences::LocalRef> localRefs;
@@ -307,14 +317,6 @@ bool MiniscriptParser::parse(const Data::MiniscriptProgram &program, Common::Sha
 
 	Common::MemoryReadStreamEndian stream(&program.bytecode[0], program.bytecode.size(), program.isBigEndian);
 	Data::DataReader reader(0, stream, program.projectFormat);
-
-	struct InstructionData {
-		uint16 opcode;
-		uint16 flags;
-		size_t pdPosition;
-		IMiniscriptInstructionFactory *instrFactory;
-		Common::Array<uint8> contents;
-	};
 
 	Common::Array<InstructionData> rawInstructions;
 	rawInstructions.resize(program.numOfInstructions);
@@ -344,7 +346,7 @@ bool MiniscriptParser::parse(const Data::MiniscriptProgram &program, Common::Sha
 	for (size_t i = 0; i < program.numOfInstructions; i++) {
 		InstructionData &rawInstruction = rawInstructions[i];
 
-		IMiniscriptInstructionFactory *factory = resolveOpcode(rawInstruction.opcode);
+		SIMiniscriptInstructionFactory *factory = resolveOpcode(rawInstruction.opcode);
 		rawInstruction.instrFactory = factory;
 
 		if (!factory)
@@ -401,7 +403,7 @@ bool MiniscriptParser::parse(const Data::MiniscriptProgram &program, Common::Sha
 	return true;
 }
 
-IMiniscriptInstructionFactory *MiniscriptParser::resolveOpcode(uint16 opcode) {
+SIMiniscriptInstructionFactory *MiniscriptParser::resolveOpcode(uint16 opcode) {
 	switch (opcode) {
 	case 0x834:
 		return MiniscriptInstructionFactory<MiniscriptInstructions::Set>::getInstance();
@@ -1563,6 +1565,8 @@ MiniscriptInstructionOutcome GetChild::readRValueAttribIndexed(MiniscriptThread 
 
 PushValue::PushValue(DataType dataType, const void *value, bool isLValue)
 	: _dataType(dataType), _isLValue(isLValue) {
+	memset(&this->_value, 0, sizeof(this->_value));
+
 	switch (dataType) {
 	case DataType::kDataTypeBool:
 		_value.b = *static_cast<const bool *>(value);
@@ -1577,7 +1581,10 @@ PushValue::PushValue(DataType dataType, const void *value, bool isLValue)
 	case DataType::kDataTypeLabel:
 		_value.lbl = *static_cast<const Label *>(value);
 		break;
+	case DataType::kDataTypeNull:
+		break;
 	default:
+		warning("PushValue instruction has an unknown type of value, this will probably malfunction!");
 		break;
 	}
 }

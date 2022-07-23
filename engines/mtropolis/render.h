@@ -40,6 +40,7 @@ namespace MTropolis {
 class CursorGraphic;
 class Runtime;
 class Project;
+struct SceneTransitionEffect;
 
 enum TextAlignment {
 	kTextAlignmentLeft,
@@ -70,6 +71,8 @@ struct MacFontFormatting {
 };
 
 struct MacFormattingSpan {
+	MacFormattingSpan();
+
 	uint16 spanStart;
 	MacFontFormatting formatting;
 };
@@ -133,6 +136,8 @@ namespace Render {
 
 uint32 resolveRGB(uint8 r, uint8 g, uint8 b, const Graphics::PixelFormat &fmt);
 void renderProject(Runtime *runtime, Window *mainWindow);
+void renderSceneTransition(Runtime *runtime, Window *mainWindow, const SceneTransitionEffect &effect, uint32 startTime, uint32 endTime, uint32 currentTime, const Graphics::ManagedSurface &oldFrame, const Graphics::ManagedSurface &newFrame);
+
 void convert32To16(Graphics::Surface &destSurface, const Graphics::Surface &srcSurface);
 void convert16To32(Graphics::Surface &destSurface, const Graphics::Surface &srcSurface);
 
