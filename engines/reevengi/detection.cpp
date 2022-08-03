@@ -153,11 +153,11 @@ public:
 	}
 
 	const char *getName() const override {
-		return "Reevengi";
+		return "reevengi";
 	}
 
-	const char *getEngineId() const override {
-		return "reevengi";
+	const char *getEngineName() const override {
+		return "Reevengi";
 	}
 
 	const char *getOriginalCopyright() const override {
