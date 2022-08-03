@@ -22,10 +22,17 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  SCUMM:
    - Added support for CGA, CGA Composite, CGA black & white and Hercules modes
-     for SCUMM 1 versions of Zak McKracken and Maniac Mansion. Also improved
-	   accuracy of CGA and Hercules modes for SCUMM 2 (enhanced) versions of
-	   Zak McKracken and Maniac Mansion and fixed some minor glitches for the
-	   CGA mode of Loom.
+     for SCUMM 1 versions of Zak McKracken and Maniac Mansion.
+   - Improved accuracy of CGA and Hercules modes for SCUMM 2 (enhanced) versions of
+     Zak McKracken and Maniac Mansion.
+   - Improved accuracy of CGA and Hercules modes for Monkey Island 1 (EGA version
+     only - the VGA version does not have CGA and Hercules modes).
+   - Fixed some minor glitches for the CGA mode of Loom.
+   - Added EGA dithering mode for VGA versions of Loom, Monkey Island 1 and 2 and
+     Indiana Jones 4.
+   - Fixed a possible dead-end in the Ultimate Talkie Edition of Monkey Island 2,
+     if one doesn't pick up the model lighthouse lens before Captain Dread brings
+     Guybrush back to Scabb Island, at the end of Part II.
 
  Toon:
    - Made game menus behave like in the original.

@@ -112,17 +112,19 @@ public:
 		_directoryGlobs = directoryGlobs;
 	}
 
-	const char *getEngineId() const override {
+	const char *getName() const override {
 		return "mtropolis";
 	}
 
-	const char *getName() const override {
+	const char *getEngineName() const override {
 		return "mTropolis";
 	}
 
 	const char *getOriginalCopyright() const override {
 		return "mTropolis (C) mFactory/Quark";
 	}
+
+	bool canPlayUnknownVariants() const override { return true; }
 };
 
 REGISTER_PLUGIN_STATIC(MTROPOLIS_DETECTION, PLUGIN_TYPE_ENGINE_DETECTION, MTropolisMetaEngineDetection);

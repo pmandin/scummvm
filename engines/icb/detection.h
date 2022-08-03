@@ -4,11 +4,6 @@
  * are too numerous to list here. Please refer to the COPYRIGHT
  * file distributed with this source distribution.
  *
- * Additional copyright for this file:
- * Copyright (C) 1999-2000 Revolution Software Ltd.
- * This code is based on source code created by Revolution Software,
- * used with permission.
- *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,21 +19,23 @@
  *
  */
 
-#ifndef ICB_BONE_H
-#define ICB_BONE_H
+#ifndef ICB_DETECTION_H
+#define ICB_DETECTION_H
 
-#include "engines/icb/common/px_bones.h"
-#include "engines/icb/object_structs.h"
-#include "engines/icb/gfx/rap_api.h"
+#include "engines/advancedDetector.h"
 
 namespace ICB {
 
-void UpdateTalking(_logic *log, RapAPI *rap);
+enum IcbGameType {
+	GType_ICB,
+	GType_ELDORADO
+};
 
-void SetPlayerShotBone(int32 obj_id);
-
-void UpdatePlayerLook();
+struct IcbGameDescription {
+	ADGameDescription desc;
+	IcbGameType gameType;
+};
 
 } // End of namespace ICB
 
-#endif // _BONE_H
+#endif // ICB_DETECTION_H

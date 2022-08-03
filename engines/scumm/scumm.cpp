@@ -179,6 +179,8 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	memset(_currentPalette, 0, sizeof(_currentPalette));
 	memset(_darkenPalette, 0, sizeof(_darkenPalette));
 	memset(_HEV7ActorPalette, 0, sizeof(_HEV7ActorPalette));
+	_egaColorMap[0] = &_currentPalette[0x30];
+	_egaColorMap[1] = &_currentPalette[0x130];
 	memset(_extraBoxFlags, 0, sizeof(_extraBoxFlags));
 	memset(_scaleSlots, 0, sizeof(_scaleSlots));
 	memset(_charsetColorMap, 0, sizeof(_charsetColorMap));
@@ -239,6 +241,19 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		_renderMode = Common::kRenderDefault;
 	}
 
+	// VGA games which support an EGA dithering mode
+	static const byte egaModeIDs[] = {
+		GID_SAMNMAX,		// Not supported in the original interpreter. Glitches might occur.
+		GID_TENTACLE,		// Not supported in the original interpreter. Glitches might occur.
+		GID_LOOM,			// Supported in the original interpreter.
+		GID_MONKEY,
+		GID_MONKEY_VGA,
+		GID_INDY4,			// Not supported in all versions of the original interpreter.
+		GID_MONKEY2			// Support in the original interpreter.
+	};
+
+	_supportsEGADithering = (_game.platform == Common::kPlatformDOS && _game.version > 3 && Common::find(egaModeIDs, &egaModeIDs[ARRAYSIZE(egaModeIDs)], _game.id) != &egaModeIDs[ARRAYSIZE(egaModeIDs)]);
+
 	if (_game.platform == Common::kPlatformFMTowns && _game.id != GID_LOOM && _game.version == 3)
 		if (ConfMan.getBool("aspect_ratio") && !ConfMan.getBool("trim_fmtowns_to_200_pixels")) {
 			GUI::MessageDialog dialog(
@@ -264,7 +279,8 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	case Common::kRenderEGA:
 	case Common::kRenderAmiga:
 		if ((_game.version >= 4 && !(_game.features & GF_16COLOR)
-			&& !(_game.platform == Common::kPlatformAmiga && _renderMode == Common::kRenderEGA))
+			&& !(_game.platform == Common::kPlatformAmiga && _renderMode == Common::kRenderEGA)
+			&& !_supportsEGADithering)
 			|| (_game.features & GF_OLD256))
 			_renderMode = Common::kRenderDefault;
 		break;
@@ -324,7 +340,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 
 	if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG)
 		_hercCGAScaleBuf = (byte *)malloc(kHercWidth * kHercHeight);
-	else if (_renderMode == Common::kRenderCGA_BW)
+	else if (_renderMode == Common::kRenderCGA_BW || (_renderMode == Common::kRenderEGA && _supportsEGADithering))
 		_hercCGAScaleBuf = (byte *)malloc(_screenWidth * 2 * _screenHeight * 2);
 
 	setV1ColorTable(_renderMode);
@@ -1120,7 +1136,7 @@ Common::Error ScummEngine::init() {
 	// Initialize backend
 	if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) {
 		initGraphics(kHercWidth, kHercHeight);
-	} else if (_renderMode == Common::kRenderCGA_BW) {
+	} else if (_renderMode == Common::kRenderCGA_BW || (_renderMode == Common::kRenderEGA && _supportsEGADithering)) {
 		initGraphics(_screenWidth * 2, _screenHeight * 2);
 	} else {
 		int screenWidth = _screenWidth;
@@ -2675,15 +2691,74 @@ void ScummEngine_v3::scummLoop_handleSaveLoad() {
 			_townsPlayer->restoreAfterLoad();
 	}
 }
+
 void ScummEngine_v5::scummLoop_handleSaveLoad() {
 	bool processIQPoints = (_game.id == GID_INDY4) && (_saveLoadFlag == 2 || _loadFromLauncher);
 	_loadFromLauncher = false;
 
 	ScummEngine::scummLoop_handleSaveLoad();
 
+	if (_videoModeChanged) {
+		_videoModeChanged = false;
+		warning("Loading savegame with a different render mode setting. Glitches might occur");
+
+		if (_game.id == GID_MONKEY_EGA) {
+			// WORKAROUND: MI1 post-load room palette fixes for games that were saved with a different
+			// render mode. The entry scripts apply custom fixes here, based on the VAR_VIDEOMODE
+			// var. Saving this state and then loading the savegame with a different render mode setting,
+			// will mess up the room palette. The original interpreter does not fix this, savegames
+			// from different videomodes are basically incompatible, at least until a scene comes up
+			// where the script might again apply the necessary fixes. Unfortunately, this workaround
+			// will also only work if the current room has a script with the correct fixes...
+
+			// Reset everything that the former entry script might have
+			// done (based on the former VAR_VIDEOMODE).
+			for (int i = 0; i < ARRAYSIZE(_roomPalette); ++i)
+				_roomPalette[i] = i;
+			// We want just the ENCD script...
+			int entryScript = VAR_ENTRY_SCRIPT;
+			VAR_ENTRY_SCRIPT = 0xFF;
+			runEntryScript();
+			VAR_ENTRY_SCRIPT = entryScript;
+		} else if (_supportsEGADithering) {
+			// Reconstruct the screen palette. It might glitch a bit if the palette was modified with
+			// darkenPalette or similar. But we do give warning... and the alternative would be to
+			// completely process, save and load both the VGA and EGA palettes all the time (regardless
+			// of the current render mode).
+			setCurrentPalette(_curPalIndex);
+		}	
+	}
+
 	// update IQ points after loading
 	if (processIQPoints)
 		runScript(145, 0, 0, nullptr);
+}
+
+void ScummEngine_v6::scummLoop_handleSaveLoad() {
+	ScummEngine::scummLoop_handleSaveLoad();
+
+	if (_videoModeChanged) {
+		_videoModeChanged = false;
+		warning("Loading savegame with a different render mode setting. Glitches might occur");
+		if (_supportsEGADithering) {
+			// Reconstruct the screen palette.
+			setCurrentPalette(_curPalIndex);
+			// Reconstruct mouse cursor (crosshair for DOTT, verb cursor for SAM).
+			if (_game.id == GID_SAMNMAX) {
+				setCursorFromImg(VAR(177), VAR(177) > 890 ? 94 : 93, 1);
+				if (VAR(177) > 890) {
+					// The inventory item cursors require some extra treatment...
+					setCursorTransparency(180);
+					setCursorTransparency(178);
+					setCursorTransparency(176);
+					setCursorTransparency(6);
+					setCursorTransparency(0);
+				}
+			} else {
+				setDefaultCursor();
+			}
+		}
+	}
 }
 
 #ifdef ENABLE_SCUMM_7_8
@@ -2837,6 +2912,14 @@ void ScummEngine::restart() {
 	_currentRoom = 0;
 	_currentScript = 0xFF;
 	killAllScriptsExceptCurrent();
+
+#ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
+	if (_townsScreen && _game.id == GID_MONKEY) {
+		_textSurface.fillRect(Common::Rect(0, 0, _textSurface.w * _textSurfaceMultiplier, _textSurface.h * _textSurfaceMultiplier), 0);
+		_townsScreen->clearLayer(1);
+	}
+#endif
+
 	setShake(0);
 	_sound->stopAllSounds();
 

@@ -83,10 +83,10 @@ _TSrtn text_sprite::BuildTextSprite(int32 stopAtLine, bool8 bRemoraLeftFormattin
 	pxString font_cluster = FONT_CLUSTER_PATH;
 	charSet = (_pxBitmap *)rs_font->Res_open(const_cast<char *>(params.fontResource), params.fontResource_hash, font_cluster, font_cluster_hash); // open font file
 
-	if (charSet->schema != PC_BITMAP_SCHEMA)
-		Fatal_error("Incorrect versions loading [%s] (engine has %d, data has %d", const_cast<char *>(params.fontResource), PC_BITMAP_SCHEMA, charSet->schema);
+	if (FROM_LE_32(charSet->schema) != PC_BITMAP_SCHEMA)
+		Fatal_error("Incorrect versions loading [%s] (engine has %d, data has %d", const_cast<char *>(params.fontResource), PC_BITMAP_SCHEMA, FROM_LE_32(charSet->schema));
 
-	pal = (uint8 *)charSet->Fetch_palette_pointer();
+	pal = (uint8 *)&charSet->palette[0];
 
 	// If the temporary text colour is set, copy it into palette entry 1.  NB: This code assumes a 32-bit
 	// palette.  If this ever changes then this code needs to change.  This should be done with schema numbers.

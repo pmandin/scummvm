@@ -73,6 +73,8 @@ struct MacMenuSubMenu {
 
 	~MacMenuSubMenu();
 
+	void enableAllItems();
+
 	int ytoItem(int y, int itemHeight) { return MIN<int>((y - bbox.top) / itemHeight, items.size() - 1); }
 };
 
@@ -108,6 +110,15 @@ MacMenuSubMenu::~MacMenuSubMenu() {
 		delete items[i];
 }
 
+void MacMenuSubMenu::enableAllItems() {
+	for (uint i = 0; i < items.size(); ++i) {
+		items[i]->enabled = true;
+		if (items[i]->submenu) {
+			items[i]->submenu->enableAllItems();
+		}
+	}
+}
+
 MacMenu::MacMenu(int id, const Common::Rect &bounds, MacWindowManager *wm)
 		: BaseMacWindow(id, false, wm) {
 	_loadedFont = NULL;
@@ -127,7 +138,7 @@ MacMenu::MacMenu(int id, const Common::Rect &bounds, MacWindowManager *wm)
 
 	_dimensionsDirty = true;
 
-	if (_wm->_mode & kWMModeWin95) {
+	if (_wm->_mode & kWMModeWin95 && !(_wm->_mode & kWMModeForceMacFontsInWin95)) {
 		_menuDropdownItemHeight = kMenuWin95DropdownItemHeight;
 		_menuLeftDropdownPadding = kMenuWin95LeftDropdownPadding;
 		_menuRightDropdownPadding = kMenuWin95RightDropdownPadding;
@@ -279,6 +290,9 @@ MacMenu *MacMenu::createMenuFromPEexe(Common::PEResources *exe, MacWindowManager
 
 	if (gDebugLevel > 5)
 		menu->printMenu();
+
+	if (wm->_mode & Graphics::kWMModeWin95)
+		menu->enableAllMenus();
 
 	return menu;
 }
@@ -490,6 +504,86 @@ int MacMenu::addMenuItem(MacMenuSubMenu *submenu, const Common::U32String &text,
 	submenu->items.push_back(new MacMenuItem(res, action, style, shortcut, shortcutPos, enabled, checked));
 
 	return submenu->items.size() - 1;
+}
+
+void MacMenu::insertMenuItem(MacMenuSubMenu *submenu, const Common::String &text, uint pos, int action, int style, char shortcut, bool enabled, bool checked) {
+	_dimensionsDirty = true;
+
+	if (submenu == nullptr) {
+		if (pos >= _items.size()) {
+			_dimensionsDirty = false;
+		} else {
+			MacMenuItem *i = new MacMenuItem(text);
+			_items.insert(_items.begin() + pos, i);
+		}
+		return;
+	}
+
+	if (pos >= submenu->items.size()) {
+		_dimensionsDirty = false;
+		return;
+	}
+
+	_dimensionsDirty = true;
+
+	submenu->items.insert(submenu->items.begin() + pos, new MacMenuItem(text, action, style, shortcut, -1, enabled, checked));
+}
+
+void MacMenu::insertMenuItem(MacMenuSubMenu *submenu, const Common::U32String &text, uint pos, int action, int style, char shortcut, bool enabled, bool checked) {
+	_dimensionsDirty = true;
+
+	Common::U32String amp("&");
+	Common::U32String res;
+	int shortcutPos = -1;
+
+	for (uint i = 0; i < text.size(); i++)
+		if (text[i] == amp[0]) {
+			if (i < text.size() - 1) {
+				if ((text[i + 1] & 0xff) != '&') {
+					shortcut = text[i + 1] & 0xff;
+					shortcutPos = i;
+				} else {
+					res += text[i];
+				}
+			}
+		} else {
+			res += text[i];
+		}
+
+	if (submenu == nullptr) {
+		if (pos >= _items.size()) {
+			_dimensionsDirty = false;
+		} else {
+			_items.insert(_items.begin() + pos, new MacMenuItem(res, -1, 0, shortcut, shortcutPos));
+		}
+		return;
+	}
+
+	if (pos >= submenu->items.size()) {
+		_dimensionsDirty = false;
+		return;
+	}
+
+	submenu->items.insert(submenu->items.begin() + pos, new MacMenuItem(res, action, style, shortcut, shortcutPos, enabled, checked));
+}
+
+void MacMenu::removeMenuItem(MacMenuSubMenu *submenu, uint pos) {
+	_dimensionsDirty = true;
+
+	if (submenu == nullptr) {
+		if (pos >= _items.size()) {
+			_dimensionsDirty = false;
+		} else {
+			delete _items.remove_at(pos);
+		}
+		return;
+	}
+
+	if (pos >= submenu->items.size()) {
+		_dimensionsDirty = false;
+		return;
+	}
+	delete submenu->items.remove_at(pos);
 }
 
 void MacMenu::calcDimensions() {
@@ -722,7 +816,7 @@ void MacMenu::createSubMenuFromString(int id, const char *str, int commandId) {
 
 const Font *MacMenu::getMenuFont(int slant) {
 #ifdef USE_FREETYPE2
-	if (_wm->_mode & kWMModeWin95) {
+	if (_wm->_mode & kWMModeWin95 && !(_wm->_mode & kWMModeForceMacFontsInWin95)) {
 		if (!_loadedFont) {
 			_loadedFont = Graphics::loadTTFFontFromArchive("ms_sans_serif.ttf", 16);
 
@@ -870,7 +964,7 @@ int MacMenu::calcSubMenuWidth(MacMenuSubMenu *submenu) {
 			}
 		}
 	}
-	return maxWidth;
+	return maxWidth > 200 ? 200 : maxWidth;
 }
 
 void MacMenu::calcSubMenuBounds(MacMenuSubMenu *submenu, int x, int y) {
@@ -1385,6 +1479,10 @@ bool MacMenu::mouseRelease(int x, int y) {
 
 	bool haveCallBack = false;
 	if (_activeItem != -1 && _activeSubItem != -1 && _menustack.back()->items[_activeSubItem]->enabled) {
+		// no action if item has submenu
+		if (_menustack.back()->items[_activeSubItem]->submenu) {
+			return false;
+		}
 		if (_menustack.back()->items[_activeSubItem]->unicode) {
 			if (checkCallback(true)) {
 				(*_unicodeccallback)(_menustack.back()->items[_activeSubItem]->action,
@@ -1482,6 +1580,14 @@ void MacMenu::enableCommand(const Common::U32String &menuitem, const Common::U32
 			if (_items[menunum]->submenu->items[i]->unicodeText.equals(menuaction))
 				_items[menunum]->submenu->items[i]->enabled = state;
 		}
+
+	_contentIsDirty = true;
+}
+
+void MacMenu::enableAllMenus() {
+	for (uint i = 0; i < _items.size(); i++)
+		if (_items[i]->submenu != nullptr)
+			_items[i]->submenu->enableAllItems();
 
 	_contentIsDirty = true;
 }

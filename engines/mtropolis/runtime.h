@@ -1938,6 +1938,7 @@ private:
 	MiniscriptInstructionOutcome setCurrentScene(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome setRefreshCursor(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome setAutoResetCursor(MiniscriptThread *thread, const DynamicValue &value);
+	MiniscriptInstructionOutcome setWinSndBufferSize(MiniscriptThread *thread, const DynamicValue &value);
 };
 
 class AssetManagerInterface : public RuntimeObject {
@@ -2557,6 +2558,7 @@ public:
 	Common::Point getParentOrigin() const;
 	Common::Point getGlobalPosition() const;
 	const Common::Rect &getRelativeRect() const;
+	virtual Common::Rect getRelativeCollisionRect() const;
 
 	void setRelativeRect(const Common::Rect &rect);
 
@@ -2740,6 +2742,9 @@ public:
 	void setHooks(const Common::SharedPtr<ModifierHooks> &hooks);
 	const Common::SharedPtr<ModifierHooks> &getHooks() const;
 
+	// Recursively disable due to containing behavior being disabled
+	virtual void disable(Runtime *runtime) = 0;
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	SupportStatus debugGetSupportStatus() const override;
 	const Common::String &debugGetName() const override;
@@ -2768,6 +2773,8 @@ public:
 	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override = 0;
 
 	bool readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) override;
+
+	void disable(Runtime *runtime) override;
 
 	virtual DynamicValueWriteProxy createWriteProxy();
 

@@ -95,7 +95,7 @@ void ScummEngine::printString(int m, const byte *msg) {
 					if (a)
 						a->setAnimSpeed(2);
 					a = derefActorSafe(10, "printString");
-				if (a)
+					if (a)
 						a->setAnimSpeed(2);
 				}
 			}
@@ -539,7 +539,7 @@ bool ScummEngine::newLine() {
 			// the original code it seems that setting _nextLeft to 0 is the right thing to do here.
 			_nextLeft = /*_game.version >= 6 ? _string[0].xpos :*/ 0;
 	} else if (_isRTL) {
-		if (_game.id == GID_MANIAC || (_game.id == GID_MONKEY && _charset->getCurID() == 4)) {
+		if (_game.id == GID_MANIAC || ((_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && _charset->getCurID() == 4)) {
 			_nextLeft = _screenWidth - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) - _nextLeft;
 		}
 	}
@@ -567,7 +567,7 @@ void ScummEngine::fakeBidiString(byte *ltext, bool ignoreVerb) const {
 	// Reverses texts on each line marked by control characters (considering different control characters used in verbs panel)
 	// While preserving original order of numbers (also negative numbers and comma separated)
 	int32 ll = 0;
-	if (_game.id == GID_INDY4 && ltext[ll] == 0x7F) {
+	if ((_game.id == GID_INDY4 && ltext[ll] == 0x7F) || (_game.id == GID_MONKEY2 && ltext[ll] == 0x07)) {
 		ll++;
 	}
 	while (ltext[ll] == 0xFF) {
@@ -588,7 +588,7 @@ void ScummEngine::fakeBidiString(byte *ltext, bool ignoreVerb) const {
 		if (*current == 0x0D || *current == 0 || *current == 0xFF || *current == 0xFE) {
 
 			// ignore the line break for verbs texts
-			if (ignoreVerb && (*(current + 1) ==  8)) {
+			if (ignoreVerb && *current && (*(current + 1) ==  8)) {
 				*(current + 1) = *current;
 				*current = 0x08;
 				ipos += 2;
@@ -648,9 +648,15 @@ void ScummEngine::fakeBidiString(byte *ltext, bool ignoreVerb) const {
 		}
 		break;
 	}
-	if (!ignoreVerb && _game.id == GID_INDY4 && ltext[0] == 0x7F) {
-		ltext[start + ipos + ll] = 0x80;
-		ltext[start + ipos + ll + 1] = 0;
+	if (!ignoreVerb) {
+		if (_game.id == GID_INDY4 && ltext[0] == 0x7F) {
+			ltext[start + ipos + ll] = 0x80;
+			ltext[start + ipos + ll + 1] = 0;
+		} else if (_game.id == GID_MONKEY2 && ltext[0] == 0x07) {
+			ltext[0] = ' ';
+			ltext[start + ipos + ll] = 0x07;
+			ltext[start + ipos + ll + 1] = 0;
+		}
 	}
 
 	free(buff);
@@ -786,7 +792,7 @@ void ScummEngine::CHARSET_1() {
 		if (_nextLeft < 0)
 			_nextLeft = _game.version >= 6 ? _string[0].xpos : 0;
 	} else if (_isRTL) {
-		if (_game.id == GID_MANIAC || (_game.id == GID_MONKEY && _charset->getCurID() == 4)) {
+		if (_game.id == GID_MANIAC || ((_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && _charset->getCurID() == 4)) {
 			_nextLeft = _screenWidth - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) - _nextLeft;
 		}
 	}
@@ -1165,6 +1171,18 @@ int ScummEngine::convertMessageToString(const byte *msg, byte *dst, int dstSize)
 					*dst++ = chr;
 					*dst++ = src[num+0];
 					*dst++ = src[num+1];
+
+					// WORKAROUND: In some versions of Sam & Max, talking to Evelyn Morrison
+					// while wearing the bigfoot costume misattributes some lines to Max even
+					// though Sam is the one actually speaking. For example, the French and
+					// German releases use `startAnim(8)` while the English release correctly
+					// uses `startAnim(7)` for this.
+					if (_game.id == GID_SAMNMAX && _currentRoom == 52 && vm.slot[_currentScript].number == 102 &&
+						chr == 9 && readVar(0x8000 + 95) != 0 && (VAR(171) == 997 || VAR(171) == 998) &&
+						dst[-2] == 8 && _enableEnhancements) {
+						dst[-2] = 7;
+					}
+
 					if (_game.version == 8) {
 						*dst++ = src[num+2];
 						*dst++ = src[num+3];

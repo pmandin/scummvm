@@ -99,6 +99,11 @@ void ScummEngine_v5::animateCursor() {
 }
 
 void ScummEngine_v6::setCursorHotspot(int x, int y) {
+	if (_enableEGADithering) {
+		x <<= 1;
+		y <<= 1;
+	}
+
 	_cursor.hotspotX = x;
 	_cursor.hotspotY = y;
 }
@@ -108,9 +113,17 @@ void ScummEngine_v6::setCursorTransparency(int a) {
 
 	size = _cursor.width * _cursor.height;
 
-	for (i = 0; i < size; i++)
-		if (_grabbedCursor[i] == (byte)a)
-			_grabbedCursor[i] = 0xFF;
+	if (_enableEGADithering) {
+		for (i = 0; i < size; i += 2) {
+			int st = 1 ^ ((i / (_cursor.width << 1)) & 1);
+			if (_grabbedCursor[i] == _egaColorMap[st][a] && _grabbedCursor[i + 1] == _egaColorMap[st ^ 1][a])
+				_grabbedCursor[i] = _grabbedCursor[i + 1] = 0xFF;
+		}
+	} else {
+		for (i = 0; i < size; i++)
+			if (_grabbedCursor[i] == (byte)a)
+				_grabbedCursor[i] = 0xFF;
+	}
 
 	updateCursor();
 }
@@ -148,11 +161,13 @@ void ScummEngine_v6::setDefaultCursor() {
 	setCursorFromBuffer(default_v6_cursor, 16, 13, 16);
 }
 
-void ScummEngine::setCursorFromBuffer(const byte *ptr, int width, int height, int pitch) {
+void ScummEngine_v6::setCursorFromBuffer(const byte *ptr, int width, int height, int pitch) {
 	uint size;
 	byte *dst;
 
 	size = width * height * _bytesPerPixel;
+	if (_enableEGADithering)
+		size <<= 2;
 	if (size > sizeof(_grabbedCursor))
 		error("grabCursor: grabbed cursor too big");
 
@@ -160,14 +175,35 @@ void ScummEngine::setCursorFromBuffer(const byte *ptr, int width, int height, in
 	_cursor.height = height;
 	_cursor.animate = 0;
 
-	dst = _grabbedCursor;
+	dst = _enableEGADithering ? _compositeBuf : _grabbedCursor;
 	for (; height; height--) {
 		memcpy(dst, ptr, width * _bytesPerPixel);
 		dst += width * _bytesPerPixel;
 		ptr += pitch;
 	}
 
+	if (_enableEGADithering)
+		ditherCursor();
+
 	updateCursor();
+}
+
+void ScummEngine_v6::ditherCursor() {
+	int x = 0;
+	int y = 0;
+	int pitch = _cursor.width;
+
+	// We temporarily put the transparency color in the EGA color tables.
+	uint8 backupEGA0 = _egaColorMap[0][255];
+	uint8 backupEGA1 = _egaColorMap[1][255];
+	_egaColorMap[0][255] = _egaColorMap[1][255] = 0xFF;
+
+	ditherVGAtoEGA(pitch, x, y, _cursor.width, _cursor.height);
+
+	_egaColorMap[0][255] = backupEGA0;
+	_egaColorMap[1][255] = backupEGA1;
+
+	memcpy(_grabbedCursor, _hercCGAScaleBuf, _cursor.width * _cursor.height);
 }
 
 void ScummEngine_v70he::setCursorFromImg(uint img, uint room, uint imgindex) {
@@ -371,6 +407,8 @@ void ScummEngine_v6::useBompCursor(const byte *im, int width, int height) {
 	height *= 8;
 
 	size = width * height;
+	if (_enableEGADithering)
+		size <<= 2;
 	if (size > sizeof(_grabbedCursor))
 		error("useBompCursor: cursor too big (%d)", size);
 
@@ -384,7 +422,10 @@ void ScummEngine_v6::useBompCursor(const byte *im, int width, int height) {
 	} else {
 		im += 18;
 	}
-	decompressBomp(_grabbedCursor, im, width, height);
+	decompressBomp(_enableEGADithering ? _compositeBuf : _grabbedCursor, im, width, height);
+
+	if (_enableEGADithering)
+		ditherCursor();
 
 	updateCursor();
 }
@@ -692,32 +733,36 @@ void ScummEngine_v5::setBuiltinCursor(int idx) {
 				252, 252, 253, 254
 			};
 			color = indy4AmigaColors[idx];
+		} else if (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) {
+			color = idx & 1;
 		} else {
 			color = default_cursor_colors[idx];
 		}
 		memset(_grabbedCursor, 0xFF, sizeof(_grabbedCursor));
 	}
 
-	_cursor.hotspotX = _cursorHotspots[2 * _currentCursor] * _textSurfaceMultiplier;
-	_cursor.hotspotY = _cursorHotspots[2 * _currentCursor + 1] * _textSurfaceMultiplier;
-	_cursor.width = 16 * _textSurfaceMultiplier;
-	_cursor.height = 16 * _textSurfaceMultiplier;
+	int sclW = (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG || _enableEGADithering) ? 2 : _textSurfaceMultiplier;
+	int sclH = (_renderMode == Common::kRenderHercA || _renderMode == Common::kRenderHercG) ? 1 : (_enableEGADithering ? 2 : _textSurfaceMultiplier);
+	int sclW2 = _outputPixelFormat.bytesPerPixel * sclW;
 
-	int scl = _outputPixelFormat.bytesPerPixel * _textSurfaceMultiplier;
-
+	_cursor.hotspotX = _cursorHotspots[2 * _currentCursor] * sclW;
+	_cursor.hotspotY = _cursorHotspots[2 * _currentCursor + 1] * sclH;
+	_cursor.width = 16 * sclW;
+	_cursor.height = 16 * sclH;
+	
 	for (i = 0; i < 16; i++) {
 		for (j = 0; j < 16; j++) {
 			if (src[i] & (1 << j)) {
-				byte *dst1 = _grabbedCursor + 16 * scl * i * _textSurfaceMultiplier + (15 - j) * scl;
-				byte *dst2 = (_textSurfaceMultiplier == 2) ? dst1 + 16 * scl : dst1;
+				byte *dst1 = _grabbedCursor + 16 * sclW2 * i * sclH + (15 - j) * sclW2;
+				byte *dst2 = (sclH == 2) ? dst1 + 16 * sclW2 : dst1;
 				if (_outputPixelFormat.bytesPerPixel == 2) {
-					for (int b = 0; b < scl; b += 2) {
+					for (int b = 0; b < sclW; b++) {
 						*((uint16 *)dst1) = *((uint16 *)dst2) = color;
 						dst1 += 2;
 						dst2 += 2;
 					}
 				} else {
-					for (int b = 0; b < scl; b++)
+					for (int b = 0; b < sclW; b++)
 						*dst1++ = *dst2++ = color;
 				}
 			}

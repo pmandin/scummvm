@@ -648,7 +648,7 @@ bool LauncherDialog::doGameDetection(const Common::String &path) {
 			selectTarget(editDialog.getDomain());
 			g_gui.scheduleTopDialogRedraw();
 		} else {
-			// User aborted, remove the the new domain again
+			// User aborted, remove the new domain again
 			ConfMan.removeGameDomain(domain);
 		}
 
@@ -875,7 +875,7 @@ void LauncherChooser::genGameList() {
 
 		PlainGameList list = metaEngine.getSupportedGames();
 		for (auto v = list.begin(); v != list.end(); ++v) {
-			_games[buildQualifiedGameName(metaEngine.getEngineId(), v->gameId)] = v->description;
+			_games[buildQualifiedGameName(metaEngine.getName(), v->gameId)] = v->description;
 		}
 	}
 }

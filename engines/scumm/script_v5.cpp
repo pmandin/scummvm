@@ -540,7 +540,7 @@ void ScummEngine_v5::o5_actorOps() {
 
 			// WORKAROUND for original bug. The original interpreter has a color fix for CGA mode which can be seen
 			// in Actor::setActorCostume(). Sometimes (e. g. when Bobbin walks out of the darkened tent) the actor
-			// colors are changed via script without taking into the account the need to repeat the color fix.
+			// colors are changed via script without taking into account the need to repeat the color fix.
 			if (_game.id == GID_LOOM && _renderMode == Common::kRenderCGA && act == 1) {
 				if (i == 6 && j == 6)
 					j = 5;
@@ -725,7 +725,7 @@ void ScummEngine_v5::o5_animateActor() {
 		return;
 	}
 
-	// WORKAROUND bug #1339: While on mars, going outside without your helmet
+	// WORKAROUND bug #1339: While on Mars, going outside without your helmet
 	// (or missing some other part of your "space suite" will cause your
 	// character to complain ("I can't breathe."). Unfortunately, this is
 	// coupled with an animate command, making it very difficult to return to
@@ -757,16 +757,19 @@ void ScummEngine_v5::o5_chainScript() {
 
 	cur = _currentScript;
 
-	// WORKAROUND bug #812: Work around a bug in script 33 in Indy3 VGA.
+	// WORKAROUND bug #812: Work around a bug in script 33 in Indy3.
 	// That script is used for the fist fights in the Zeppelin. It uses
 	// Local[5], even though that is never set to any value. But script 33 is
 	// called via chainScript by script 32, and in there Local[5] is set to
 	// the actor ID of the opposing soldier. So, we copy that value over to
 	// the Local[5] variable of script 33.
-	// FIXME: This workaround is meant for Indy3 VGA, but we make no checks
-	// to exclude the EGA/Mac/FM-TOWNS versions. We need to check whether
+	// FIXME: This workaround is meant for Indy3 EGA/VGA, but we make no
+	// checks to exclude the Mac/FM-TOWNS versions. We need to check whether
 	// those need the same workaround; if they don't, or if they need it in
 	// modified form, adjust this workaround accordingly.
+	// FIXME: Do we still need this workaround, 19 years later? I can't
+	// reproduce the original crash anymore, maybe we handle uninitialized
+	// local values the same way the original interpreter did, now?
 	if (_game.id == GID_INDY3 && vm.slot[cur].number == 32 && script == 33) {
 		vars[5] = vm.localvar[cur][5];
 	}
@@ -780,7 +783,8 @@ void ScummEngine_v5::o5_chainScript() {
 
 void ScummEngine_v5::o5_cursorCommand() {
 	int i, j, k;
-	int table[NUM_SCRIPT_LOCAL];
+	int table[32];
+	memset(table, 0, sizeof(table));
 	switch ((_opcode = fetchScriptByte()) & 0x1F) {
 	case 1:			// SO_CURSOR_ON
 		_cursor.state = 1;
@@ -840,8 +844,15 @@ void ScummEngine_v5::o5_cursorCommand() {
 			// games if needed.
 		} else {
 			getWordVararg(table);
+			// MI1 FM-Towns has a bug in the original interpreter which removes the shadow color from the verbs.
+			// getWordVararg() will generate a WORD table, but then - right here - it is accessed like a DWORD
+			// table. This is actually fixed in the original interpreters for MI2 and INDY4. It could be argued
+			// if we even want that "fixed", but it does lead to bug tickets (#13735 - "Inaccurate verb rendering
+			// in Monkey 1 FM-TOWNS") and the "fix" restores the original appearance (which - as per usual - is
+			// a matter of personal taste...)
+			int m = (_game.platform == Common::kPlatformFMTowns && _game.id == GID_MONKEY) ? 2 : 1;
 			for (i = 0; i < 16; i++)
-				_charsetColorMap[i] = _charsetData[_string[1]._default.charset][i] = (unsigned char)table[i];
+				_charsetColorMap[i] = _charsetData[_string[1]._default.charset][i] = (unsigned char)table[i * m];
 		}
 		break;
 	default:
@@ -1349,8 +1360,8 @@ void ScummEngine_v5::o5_isScriptRunning() {
 	// expected to give something to the cannibals, but instead look at certain
 	// items like the compass or kidnap note. Those inventory items contain little
 	// cutscenes and are abrubtly stopped by the endcutscene in script 204 at 0x0060.
-	// This patch changes the the result of isScriptRunning(164) to also wait for
-	// any inventory scripts that are in a cutscene state, preventing the crash.
+	// This patch changes the result of isScriptRunning(164) to also wait for any
+	// inventory scripts that are in a cutscene state, preventing the crash.
 	if (_game.id == GID_MONKEY && vm.slot[_currentScript].number == 204 && _currentRoom == 25) {
 		ScriptSlot *ss = vm.slot;
 		for (int i = 0; i < NUM_SCRIPT_SLOT; i++, ss++) {
@@ -1501,7 +1512,60 @@ void ScummEngine_v5::o5_isNotEqual() {
 }
 
 void ScummEngine_v5::o5_notEqualZero() {
-	int a = getVar();
+	int a;
+
+	// WORKAROUND for a possible dead-end in Monkey Island 2. By luck, this
+	// only happens in the Ultimate Talkie Edition (because it fixes another
+	// script error which unveils this one), or when one enables the second
+	// workaround just below in one of the original releases.
+	//
+	// Once Bit[70] has been properly set by one of the configurations above,
+	// Captain Dread will have his intended reaction of forcing you to go back
+	// to Scabb Island, once you've got the four map pieces. But, unless you're
+	// playing in Lite mode, you'll need the lens from the model lighthouse,
+	// otherwise Wally won't be able to read the map, and you'll be completely
+	// stuck on Scabb Island with no way of going back to the Phatt Island
+	// Library, since Dread's ship is gone.
+	//
+	// Not using `_enableEnhancements`, since we always want to solve a dead-end
+	// in a Monkey Island game!
+	if (_game.id == GID_MONKEY2 && ((_roomResource == 22 && vm.slot[_currentScript].number == 202) || (_roomResource == 2 && vm.slot[_currentScript].number == 10002) || vm.slot[_currentScript].number == 97)) {
+		int var = fetchScriptWord();
+		a = readVar(var);
+
+		// WORKAROUND: When Guybrush buys a map piece from the antiques dealer,
+		// the script forgets to set Bit[70], which means that an intended
+		// reaction from Captain Dread forcing you to go back to Scabb when you
+		// get the full map was never triggered in the original game.
+		//
+		// The Ultimate Edition fixed this in script 48-207 (when you buy the
+		// map piece), but for the other versions we're fixing it on-the-fly
+		// at the last moment instead (by checking for the object in the
+		// inventory instead of Bit[70]), so that it will also work with older
+		// savegames, and so that you can uncheck the Enhancement option at any
+		// moment if you realize that you want the original behavior.
+		//
+		// Note that fixing this unveils the script error causing the possible
+		// dead-end described above.
+		if (var == 0x8000 + 70 && a == 0 && getOwner(519) == VAR(VAR_EGO) && strcmp(_game.variant, "SE Talkie") != 0 && _enableEnhancements) {
+			a = 1;
+		}
+
+		// [Back to the previous "dead-end" workaround.]
+		// If you've got the four map pieces and the script is checking this...
+		else if (var == 0x8000 + 69 && a == 1 && getOwner(519) == VAR(VAR_EGO) && readVar(0x8000 + 55) == 1 && readVar(0x8000 + 366) == 1) {
+			// ...but you don't have the lens and you never gave it to Wally...
+			// (and you're not playing the Lite mode, where this doesn't matter)
+			if (getOwner(295) != VAR(VAR_EGO) && readVar(0x8000 + 67) != 0 && readVar(0x8000 + 567) == 0) {
+				// ...then short-circuit this condition, so that you can still go back
+				// to Phatt Island to pick up the lens, as in the original game.
+				a = 0;
+			}
+		}
+	} else {
+		a = getVar();
+	}
+
 	jumpRelative(a != 0);
 }
 

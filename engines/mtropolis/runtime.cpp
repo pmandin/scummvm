@@ -2414,6 +2414,10 @@ MiniscriptInstructionOutcome WorldManagerInterface::writeRefAttribute(Miniscript
 		DynamicValueWriteFuncHelper<WorldManagerInterface, &WorldManagerInterface::setAutoResetCursor>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
+	if (attrib == "winsndbuffersize") {
+		DynamicValueWriteFuncHelper<WorldManagerInterface, &WorldManagerInterface::setWinSndBufferSize>::create(this, result);
+		return kMiniscriptInstructionOutcomeContinue;
+	}
 	return RuntimeObject::writeRefAttribute(thread, result, attrib);
 }
 
@@ -2460,6 +2464,11 @@ MiniscriptInstructionOutcome WorldManagerInterface::setAutoResetCursor(Miniscrip
 
 	thread->getRuntime()->setAutoResetCursor(value.getBool());
 
+	return kMiniscriptInstructionOutcomeContinue;
+}
+
+MiniscriptInstructionOutcome WorldManagerInterface::setWinSndBufferSize(MiniscriptThread *thread, const DynamicValue &value) {
+	// Ignore
 	return kMiniscriptInstructionOutcomeContinue;
 }
 
@@ -5707,7 +5716,7 @@ void Runtime::recursiveFindColliders(Structural *structural, size_t sceneStackDe
 			// isRoot = Is a scene, and colliding with scenes is not allowed
 			if (!isRoot && visual->isVisible()) {
 				ColliderInfo colliderInfo;
-				colliderInfo.absRect = rect;
+				colliderInfo.absRect = visual->getRelativeCollisionRect();
 				colliderInfo.absRect.translate(parentOriginX, parentOriginY);
 				colliderInfo.element = visual;
 				colliderInfo.layer = visual->getLayer();
@@ -7497,6 +7506,10 @@ const Common::Rect &VisualElement::getRelativeRect() const {
 	return _rect;
 }
 
+Common::Rect VisualElement::getRelativeCollisionRect() const {
+	return getRelativeRect();
+}
+
 void VisualElement::setRelativeRect(const Common::Rect &rect) {
 	_rect = rect;
 }
@@ -8146,6 +8159,9 @@ bool VariableModifier::readAttribute(MiniscriptThread *thread, DynamicValue &res
 	}
 
 	return Modifier::readAttribute(thread, result, attrib);
+}
+
+void VariableModifier::disable(Runtime *runtime) {
 }
 
 DynamicValueWriteProxy VariableModifier::createWriteProxy() {

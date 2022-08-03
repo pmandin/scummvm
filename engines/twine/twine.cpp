@@ -704,7 +704,7 @@ void TwinEEngine::processInventoryAction() {
 	case kiPenguin: {
 		ActorStruct *penguin = _scene->getActor(_scene->_mecaPenguinIdx);
 
-		const IVec3 &destPos = _movements->rotateActor(0, 800, penguin->_angle);
+		const IVec3 &destPos = _movements->rotateActor(0, 800, _scene->_sceneHero->_angle);
 
 		penguin->_pos = _scene->_sceneHero->_pos;
 		penguin->_pos.x += destPos.x;
@@ -718,7 +718,7 @@ void TwinEEngine::processInventoryAction() {
 			_actor->initModelActor(BodyType::btNormal, _scene->_mecaPenguinIdx);
 			penguin->_dynamicFlags.bIsDead = 0;
 			penguin->setBrickShape(ShapeType::kNone);
-			_movements->moveActor(penguin->_angle, penguin->_angle, penguin->_speed, &penguin->_move);
+			_movements->initRealAngleConst(penguin->_angle, penguin->_angle, penguin->_speed, &penguin->_move);
 			_gameState->removeItem(InventoryItems::kiPenguin);
 			penguin->_delayInMillis = _lbaTime + TO_SECONDS(30);
 		}

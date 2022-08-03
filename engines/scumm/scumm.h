@@ -606,6 +606,7 @@ protected:
 	uint32 _lastSaveTime = 0;
 	bool _saveTemporaryState = false;
 	bool _loadFromLauncher = false;
+	bool _videoModeChanged = false;
 	Common::String _saveLoadFileName;
 	Common::String _saveLoadDescription;
 
@@ -848,8 +849,10 @@ protected:
 	virtual int actorToObj(int actor);
 	int getObjX(int obj);
 	int getObjY(int obj);
-	void getObjectXYPos(int object, int &x, int &y)	{ int dir; getObjectXYPos(object, x, y, dir); }
-	void getObjectXYPos(int object, int &x, int &y, int &dir);
+	void getObjectWidth(int object, int &width) { int x, y, dir; getObjectXYPos(object, x, y, dir, width); }
+	void getObjectXYPos(int object, int &x, int &y) { int dir, width; getObjectXYPos(object, x, y, dir, width); }
+	void getObjectXYPos(int object, int &x, int &y, int &dir) { int width; getObjectXYPos(object, x, y, dir, width); }
+	void getObjectXYPos(int object, int &x, int &y, int &dir, int &width);
 	int getObjOldDir(int obj);
 	int getObjNewDir(int obj);
 	int getObjectIndex(int object) const;
@@ -858,6 +861,7 @@ protected:
 	int findObject(int x, int y);
 	void findObjectInRoom(FindObjectInRoom *fo, byte findWhat, uint object, uint room);
 public:
+	int getObjectOrActorWidth(int object, int &width); // Used in v4 and below
 	int getObjectOrActorXY(int object, int &x, int &y);	// Used in actor.cpp, hence public
 	int getDist(int x, int y, int x2, int y2);	// Also used in actor.cpp
 protected:
@@ -1050,8 +1054,6 @@ protected:
 	void setShadowPalette(int redScale, int greenScale, int blueScale, int startColor, int endColor, int start, int end);
 	virtual void darkenPalette(int redScale, int greenScale, int blueScale, int startColor, int endColor);
 
-	void setCursorFromBuffer(const byte *ptr, int width, int height, int pitch);
-
 public:
 	void markRectAsDirty(VirtScreenNumber virt, int left, int right, int top, int bottom, int dirtybit = 0);
 	void markRectAsDirty(VirtScreenNumber virt, const Common::Rect& rect, int dirtybit = 0) {
@@ -1061,6 +1063,8 @@ protected:
 	// Screen rendering
 	byte *_compositeBuf;
 	byte *_hercCGAScaleBuf = nullptr;
+	bool _enableEGADithering = false;
+	bool _supportsEGADithering = false;
 
 	virtual void drawDirtyScreenParts();
 	void updateDirtyScreen(VirtScreenNumber slot);
@@ -1072,8 +1076,8 @@ protected:
 	void mac_undrawIndy3TextBox();
 	void mac_undrawIndy3CreditsText();
 
-	const byte *postProcessV2Graphics(VirtScreen *vs, int &pitch, int &x, int &y, int &width, int &height) const;
-	void ditherCGA(byte *dst, int dstPitch, int x, int y, int width, int height) const;
+	const byte *postProcessDOSGraphics(VirtScreen *vs, int &pitch, int &x, int &y, int &width, int &height) const;
+	const byte *ditherVGAtoEGA(int &pitch, int &x, int &y, int &width, int &height) const;
 
 public:
 	VirtScreen *findVirtScreen(int y);
@@ -1082,7 +1086,6 @@ public:
 protected:
 	void fadeIn(int effect);
 	void fadeOut(int effect);
-	void setScrollBuffer();
 
 	void dissolveEffectSelector();
 	void transitionEffect(int a);
@@ -1172,6 +1175,9 @@ protected:
 	int remapRoomPaletteColor(int r, int g, int b);
 	void mapVerbPalette(int idx);
 	int remapVerbPaletteColor(int r, int g, int b);
+
+	// EGA dithering mode color tables for certain VGA games like MI2, LOOM Talkie...
+	byte *_egaColorMap[2];
 
 public:
 	uint16 _extraBoxFlags[65];

@@ -23,9 +23,17 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  SCUMM:
    - Unterstützung von CGA-, CGA Composite-, CGA schwarz/weiß- und Herkules-Grafikmodi
      für die SCUMM 1-Versionen von Zak McKracken und Maniac Mansion hinzugefügt.
-     Die Genauigkeit der CGA- und Hercules-Modi der SCUMM 2-Versionen von
+   - Die Genauigkeit der CGA- und Hercules-Modi der SCUMM 2-Versionen von
      Zak McKracken und Maniac Mansion wurde verbessert.
-     Einige Grafik-Fehler im CGA-Modus von Loom wurden ebenfalls korrigiert.
+   - Verbesserte Genauigkeit der Darstekkzbg von CGA- und Hercules-Grafikmodi
+     in der EGA-Version von Monkey Island 1 (die VGA-Version unterstützt weder CGA noch Hercules).
+   - Einige Grafik-Fehler im CGA-Modus von Loom wurden korrigiert.
+   - EGA-Dithering-Modus für die VGA-Versionen von Loom, Monkey Island 1 und 2
+     sowie für Indiana Jones 4 hinzugefügt.
+   - Mögliche Sackgasse in der Ultimate Talkie Edition von Monkey Island 2 korrigiert.
+     Diese ist immer dann aufgetreten, wenn der Spieler am Ende von Part II
+     das Modell des Leuchtturms nicht aufhebt, bevor Captain Dread Guybrush
+     zurück zu Scabb Island bringt.
 
  Toon:
    - Die Spiel-Menüs verhalten sich nun wie das Original.

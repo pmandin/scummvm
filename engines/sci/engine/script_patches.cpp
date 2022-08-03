@@ -150,6 +150,8 @@ static const char *const selectorNameTable[] = {
 	"setVol",       // Laura Bow 2 CD
 	"at",           // Longbow, QFG4
 	"owner",        // Longbow, QFG4
+	"fade",         // Longbow, Shivers
+	"enable",       // Longbow, SQ6
 	"delete",       // EcoQuest 1
 	"size",         // EcoQuest 1
 	"signal",       // EcoQuest 1, GK1
@@ -160,7 +162,6 @@ static const char *const selectorNameTable[] = {
 	"newWith",      // SCI2 array script
 	"posn",         // GK1, Phant2, QFG4
 	"printLang",    // GK2
-	"fade",         // Shivers
 	"test",         // Torin
 	"get",          // Torin, GK1
 	"normalize",    // GK1
@@ -208,7 +209,6 @@ static const char *const selectorNameTable[] = {
 	"setLooper",    // QFG4
 	"useStamina",   // QFG4
 	"value",        // QFG4
-	"enable",       // SQ6
 	"setupExit",    // SQ6
 	"vol",          // SQ6
 	"walkIconItem", // SQ6
@@ -286,6 +286,8 @@ enum ScriptPatcherSelectors {
 	SELECTOR_setVol,
 	SELECTOR_at,
 	SELECTOR_owner,
+	SELECTOR_fade,
+	SELECTOR_enable,
 	SELECTOR_delete,
 	SELECTOR_size,
 	SELECTOR_signal,
@@ -297,7 +299,6 @@ enum ScriptPatcherSelectors {
 	SELECTOR_newWith,
 	SELECTOR_posn,
 	SELECTOR_printLang,
-	SELECTOR_fade,
 	SELECTOR_test,
 	SELECTOR_get,
 	SELECTOR_normalize,
@@ -345,7 +346,6 @@ enum ScriptPatcherSelectors {
 	SELECTOR_setLooper,
 	SELECTOR_useStamina,
 	SELECTOR_value,
-	SELECTOR_enable,
 	SELECTOR_setupExit,
 	SELECTOR_vol,
 	SELECTOR_walkIconItem
@@ -7887,6 +7887,67 @@ static const uint16 longbowPatchMarianMessagesFix[] = {
 	PATCH_END
 };
 
+// In the abbey hedge maze, the music stops if the interpreter loads the next
+//  maze room in under half a second. ScummVM can achieve this on fast machines.
+//  When changing maze rooms, the old room sets the music to slowly fade to zero
+//  without waiting. The new room then sets the music to fade back in to full
+//  volume (127). This has no noticeable effect since the second fade reverts
+//  the first almost instantly, but if the new room loads before the fade timer
+//  has lowered the volume at all then kDoSoundFade ignores the second fade
+//  because the volume is already at the target. The first fade then proceeds to
+//  lower the volume to zero and stop the sound, after which it never resumes.
+//
+// We fix this by patching HedgeRow:dispose to only fade out the music when
+//  exiting the maze. This doesn't change the music since the fades canceled
+//  each other out when changing maze rooms. There is already a nearby check for
+//  exiting the maze so this patch re-orders the instructions.
+//
+// Applies to: All versions
+// Responsible method: HedgeRow:dispose
+// Fixes bug: #13674
+static const uint16 longbowSignatureHedgeMazeMusic[] = {
+	SIG_MAGICDWORD,
+	0x38, SIG_SELECTOR16(fade),     // pushi fade
+	0x39, 0x04,                     // pushi 04
+	0x76,                           // push0
+	0x39, 0x1e,                     // pushi 1e
+	0x39, 0x08,                     // pushi 08
+	0x78,                           // push1
+	0x81, 0x64,                     // lag 64
+	0x4a, 0x0c,                     // send 0c [ rgnMusic fade: 0 30 8 1 ]
+	0x38, SIG_SELECTOR16(enable),   // pushi enable
+	0x78,                           // push1
+	0x39, 0x05,                     // pushi 05
+	0x81, 0x45,                     // lag 45
+	0x4a, 0x06,                     // send 06 [ IconBar enable: 5 ]
+	0x89, 0x0d,                     // lsg 0d  [ new room ]
+	0x35, 0x55,                     // ldi 55  [ max maze room ]
+	0x1e,                           // gt?     [ exiting hedge maze? ]
+	0x30, SIG_UINT16(0x0020),       // bnt 0020
+	SIG_END
+};
+
+static const uint16 longbowPatchHedgeMazeMusic[] = {
+	0x38, PATCH_SELECTOR16(enable), // pushi enable
+	0x78,                           // push1
+	0x39, 0x05,                     // pushi 05
+	0x81, 0x45,                     // lag 45
+	0x4a, 0x06,                     // send 06 [ IconBar enable: 5 ]
+	0x89, 0x0d,                     // lsg 0d  [ new room ]
+	0x35, 0x55,                     // ldi 55  [ max maze room ]
+	0x1e,                           // gt?     [ exiting hedge maze? ]
+	0x30, PATCH_UINT16(0x002f),     // bnt 002f
+	0x38, PATCH_SELECTOR16(fade),   // pushi fade
+	0x39, 0x04,                     // pushi 04
+	0x76,                           // push0
+	0x39, 0x1e,                     // pushi 1e
+	0x39, 0x08,                     // pushi 08
+	0x78,                           // push1
+	0x81, 0x64,                     // lag 64
+	0x4a, 0x0c,                     // send 0c [ rgnMusic fade: 0 30 8 1 ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                                patch
 static const SciScriptPatcherEntry longbowSignatures[] = {
 	{  true,    29, "amiga day 1 peasant woman",                   1, longbowSignatureAmigaPeasantWoman,       longbowPatchAmigaPeasantWoman},
@@ -7900,6 +7961,7 @@ static const SciScriptPatcherEntry longbowSignatures[] = {
 	{  true,   320, "day 8 archer pathfinding workaround",         1, longbowSignatureArcherPathfinding,       longbowPatchArcherPathfinding },
 	{  true,   350, "day 9 cobbler hut fix",                      10, longbowSignatureCobblerHut,              longbowPatchCobblerHut },
 	{  true,   422, "marian messages fix",                         1, longbowSignatureMarianMessagesFix,       longbowPatchMarianMessagesFix },
+	{  true,   490, "hedge maze music",                            1, longbowSignatureHedgeMazeMusic,          longbowPatchHedgeMazeMusic },
 	{  true,   530, "amiga pub fix",                               1, longbowSignatureAmigaPubFix,             longbowPatchAmigaPubFix },
 	{  true,   600, "amiga fulk rescue fix",                       1, longbowSignatureAmigaFulkRescue,         longbowPatchAmigaFulkRescue },
 	{  true,   803, "amiga speed test",                            1, longbowSignatureAmigaSpeedTest,          longbowPatchAmigaSpeedTest },
@@ -22127,6 +22189,86 @@ static const uint16 sq5PatchTabInventoryCursorFix[] = {
 	PATCH_END
 };
 
+// In room 310, if WD40 appears while ego is exiting through the left tunnel
+//  then the room exits break. When ego is near the tunnel, sWD40Appear waits
+//  for seven seconds before calling handsOff. If sExitViaTunnelB is running
+//  then handsOff stops ego's exit motion and the room script never completes.
+//
+// We fix this by clearing sWD40Appear:seconds when starting sExitViaTunnelB so
+//  that the timer in sWD40Appear state 0 is stopped once ego begins exiting the
+//  the room. sWD40Appear already checks that sExitViaTunnelB isn't running in
+//  its later states, but it's missing the check in state 1.
+//
+// Applies to: All versions
+// Responsible method: rm310:doit
+// Fixes bug: #9988
+static const uint16 sq5SignatureWd40TunnelLockupFix[] = {
+	0x72, SIG_ADDTOOFFSET(+2),            // lofsa sWD40Appear
+	SIG_ADDTOOFFSET(+15),
+	0x38, SIG_SELECTOR16(script),         // pushi script
+	0x76,                                 // push0
+	0x81, 0x02,                           // lag 02
+	0x4a, SIG_MAGICDWORD, 0x04,           // send 04 [ rm310 script? ]
+	0x18,                                 // not
+	0x31, 0x0e,                           // bnt 0e [ skip sExitViaTunnelB if room has script ]
+	0x38, SIG_SELECTOR16(setScript),      // pushi setScript
+	0x78,                                 // push1
+	0x72, SIG_ADDTOOFFSET(+2),            // lofsa sExitViaTunnelB
+	0x36,                                 // push
+	0x81, 0x02,                           // lag 02
+	0x4a, 0x06,                           // send 06 [ rm310 setScript: sExitViaTunnelB ]
+	SIG_END
+};
+
+static const uint16 sq5PatchWd40TunnelLockupFix[] = {
+	PATCH_ADDTOOFFSET(+18),
+	0x63, 0x12,                           // pToa script
+	0x2f, 0x15,                           // bt 15 [ skip sExitViaTunnelB if room has script ]
+	0x38, PATCH_SELECTOR16(setScript),    // pushi setScript
+	0x78,                                 // push1
+	0x74, PATCH_GETORIGINALUINT16(+34),   // lofss sExitViaTunnelB
+	0x54, 0x06,                           // self 06 [ self setScript: sExitViaTunnelB ]
+	0x38, PATCH_SELECTOR16(seconds),      // pushi seconds
+	0x78,                                 // push1
+	0x76,                                 // push0
+	0x72, PATCH_GETORIGINALUINT16(+1),    // lofsa sWD40Appear
+	0x4a, 0x06,                           // send 06 [ sWD40Appear seconds: 0 (stop timer) ]
+	PATCH_END
+};
+
+// In room 310, clicking Talk or most inventory items on WD40 results in a
+//  missing message error. When WD40 is visible, wd40:doVerb passes the incoming
+//  verb directly to testMessager:say without first checking if a message exists
+//  for the verb. We fix this by setting the noun and modNum as in the other
+//  rooms on K.U. and then calling super:doVerb as normal.
+//
+// Applies to: All versions
+// Responsible method: wd40:doVerb
+static const uint16 sq5SignatureWd40MissingMessages[] = {
+	0x38, SIG_SELECTOR16(say),            // pushi say
+	SIG_MAGICDWORD,
+	0x39, 0x06,                           // pushi 06
+	0x39, 0x04,                           // pushi 04
+	0x8f, 0x01,                           // lsp 01
+	0x76,                                 // push0
+	0x76,                                 // push0
+	0x76,                                 // push0
+	0x38, SIG_UINT16(0x012d),             // pushi 012d
+	0x81, 0x5b,                           // lag 5b
+	0x4a, 0x10,                           // send 10 [ testMessager say: 4 verb 0 0 0 301 ]
+	0x33, 0x0b,                           // jmp 0b  [ skip super: doVerb verb &rest ]
+	SIG_END
+};
+
+static const uint16 sq5PatchWd40MissingMessages[] = {
+	0x35, 0x04,                           // ldi 04
+	0x65, 0x1a,                           // aTop noun [ noun = 4 ]
+	0x34, PATCH_UINT16(0x012d),           // ldi 012d
+	0x65, 0x1c,                           // aTop modNum [ modNum = 301 ]
+	0x33, 0x0a,                           // jmp 0a [ super: doVerb verb &rest ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                             patch
 static const SciScriptPatcherEntry sq5Signatures[] = {
 	{  true,     0, "tab inventory cursor fix",                    1, sq5SignatureTabInventoryCursorFix,    sq5PatchTabInventoryCursorFix },
@@ -22135,6 +22277,8 @@ static const SciScriptPatcherEntry sq5Signatures[] = {
 	{  true,   243, "transporter room speed fix",                  3, sq5SignatureTransporterRoomSpeedFix,  sq5PatchTransporterRoomSpeedFix },
 	{  true,   250, "elevator handsOn fix",                        1, sq5SignatureElevatorHandsOn,          sq5PatchElevatorHandsOn },
 	{  true,   305, "wd40 fruit fix",                              1, sq5SignatureWd40FruitFix,             sq5PatchWd40FruitFix },
+	{  true,   310, "wd40 tunnel lockup fix",                      1, sq5SignatureWd40TunnelLockupFix,      sq5PatchWd40TunnelLockupFix },
+	{  true,   310, "wd40 missing messages",                       1, sq5SignatureWd40MissingMessages,      sq5PatchWd40MissingMessages },
 	{  true,   335, "wd40 alarm countdown fix",                    1, sq5SignatureWd40AlarmCountdownFix,    sq5PatchWd40AlarmCountdownFix },
 	{  true,   730, "genetix bridge handsOn fix",                  1, sq5SignatureGenetixBridgeHandsOn,     sq5PatchGenetixBridgeHandsOn },
 	{  true,    30, "ChoiceTalker lockup fix",                     1, sciNarratorLockupSignature,           sciNarratorLockupPatch },

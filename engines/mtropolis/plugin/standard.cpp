@@ -1554,11 +1554,14 @@ void MultiMidiPlayer::stopNote(MidiNotePlayer *player) {
 }
 
 uint32 MultiMidiPlayer::getBaseTempo() const {
-	return _driver->getBaseTempo();
+	if (_driver)
+		return _driver->getBaseTempo();
+	return 1;
 }
 
 void MultiMidiPlayer::send(uint32 b) {
-	_driver->send(b);
+	if (_driver)
+		_driver->send(b);
 }
 
 CursorModifier::CursorModifier() : _applyWhen(Event::create()), _removeWhen(Event::create()), _cursorID(0) {
@@ -1574,9 +1577,14 @@ VThreadState CursorModifier::consumeMessage(Runtime *runtime, const Common::Shar
 		runtime->setModifierCursorOverride(_cursorID);
 	}
 	if (_removeWhen.respondsTo(msg->getEvent())) {
+		// This doesn't call "disable" because the behavior is actually different.
+		// Disabling a cursor modifier doesn't seem to remove it.
 		runtime->clearModifierCursorOverride();
 	}
 	return kVThreadReturn;
+}
+
+void CursorModifier::disable(Runtime *runtime) {
 }
 
 bool CursorModifier::load(const PlugInModifierLoaderContext &context, const Data::Standard::CursorModifier &data) {
@@ -1646,9 +1654,13 @@ VThreadState STransCtModifier::consumeMessage(Runtime *runtime, const Common::Sh
 		}
 	}
 	if (_disableWhen.respondsTo(msg->getEvent()))
-		runtime->setSceneTransitionEffect(false, nullptr);
+		disable(runtime);
 
 	return kVThreadReturn;
+}
+
+void STransCtModifier::disable(Runtime *runtime) {
+	runtime->setSceneTransitionEffect(false, nullptr);
 }
 
 bool STransCtModifier::readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) {
@@ -1848,16 +1860,20 @@ VThreadState MediaCueMessengerModifier::consumeMessage(Runtime *runtime, const C
 		}
 	}
 	if (_disableWhen.respondsTo(msg->getEvent())) {
-		if (_isActive) {
-			Structural *owner = findStructuralOwner();
-			if (owner && owner->isElement())
-				static_cast<Element *>(owner)->removeMediaCue(&_mediaCue);
-
-			_isActive = false;
-		}
+		disable(runtime);
 	}
 
 	return kVThreadReturn;
+}
+
+void MediaCueMessengerModifier::disable(Runtime *runtime) {
+	if (_isActive) {
+		Structural *owner = findStructuralOwner();
+		if (owner && owner->isElement())
+			static_cast<Element *>(owner)->removeMediaCue(&_mediaCue);
+
+		_isActive = false;
+	}
 }
 
 Common::SharedPtr<Modifier> MediaCueMessengerModifier::shallowClone() const {
@@ -2351,17 +2367,21 @@ VThreadState MidiModifier::consumeMessage(Runtime *runtime, const Common::Shared
 		}
 	}
 	if (_terminateWhen.respondsTo(msg->getEvent())) {
-		if (_filePlayer) {
-			_plugIn->getMidi()->deleteFilePlayer(_filePlayer);
-			_filePlayer = nullptr;
-		}
-		if (_notePlayer) {
-			_plugIn->getMidi()->deleteNotePlayer(_notePlayer);
-			_notePlayer = nullptr;
-		}
+		disable(runtime);
 	}
 
 	return kVThreadReturn;
+}
+
+void MidiModifier::disable(Runtime *runtime) {
+	if (_filePlayer) {
+		_plugIn->getMidi()->deleteFilePlayer(_filePlayer);
+		_filePlayer = nullptr;
+	}
+	if (_notePlayer) {
+		_plugIn->getMidi()->deleteNotePlayer(_notePlayer);
+		_notePlayer = nullptr;
+	}
 }
 
 void MidiModifier::playSingleNote() {
@@ -2405,6 +2425,9 @@ MiniscriptInstructionOutcome MidiModifier::writeRefAttribute(MiniscriptThread *t
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "tempo") {
 		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetTempo>::create(this, result);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "mutetrack") {
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetMuteTrack>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -2574,7 +2597,25 @@ MiniscriptInstructionOutcome MidiModifier::scriptSetPlayNote(MiniscriptThread *t
 	return kMiniscriptInstructionOutcomeContinue;
 }
 
-MiniscriptInstructionOutcome MidiModifier::scriptSetMuteTrack(MiniscriptThread *thread, size_t trackIndex, bool muted) {
+MiniscriptInstructionOutcome MidiModifier::scriptSetMuteTrack(MiniscriptThread *thread, const DynamicValue &value) {
+	if (value.getType() != DynamicValueTypes::kBoolean) {
+		thread->error("Invalid type for mutetrack");
+		return kMiniscriptInstructionOutcomeFailed;
+	}
+
+	uint16 mutedTracks = value.getBool() ? 0xffffu : 0u;
+
+	if (mutedTracks != _mutedTracks) {
+		_mutedTracks = mutedTracks;
+
+		if (_filePlayer)
+			_plugIn->getMidi()->setPlayerMutedTracks(_filePlayer, mutedTracks);
+	}
+
+	return kMiniscriptInstructionOutcomeContinue;
+}
+
+MiniscriptInstructionOutcome MidiModifier::scriptSetMuteTrackIndexed(MiniscriptThread *thread, size_t trackIndex, bool muted) {
 	if (trackIndex >= 16) {
 		thread->error("Invalid track index for mutetrack");
 		return kMiniscriptInstructionOutcomeFailed;
@@ -2604,7 +2645,7 @@ MiniscriptInstructionOutcome MidiModifier::MuteTrackProxyInterface::write(Minisc
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 
-	return static_cast<MidiModifier *>(objectRef)->scriptSetMuteTrack(thread, ptrOrOffset, value.getBool());
+	return static_cast<MidiModifier *>(objectRef)->scriptSetMuteTrackIndexed(thread, ptrOrOffset, value.getBool());
 }
 
 MiniscriptInstructionOutcome MidiModifier::MuteTrackProxyInterface::refAttrib(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib) {

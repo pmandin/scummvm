@@ -171,11 +171,11 @@ void OpenTexture(const char *tex_name, uint32 tex_hash, const char *pal_name, ui
 	revtex_API *rTexAPI = (revtex_API *)rs_anims->Res_open(tex_name, tex_hash, base, base_hash);
 
 	// Check the texture file is correct ID & schema
-	if ((*(uint32 *)rTexAPI->id) != (*(uint32 *)const_cast<char *>(REVTEX_API_ID)))
+	if (READ_LE_UINT32((uint32 *)rTexAPI->id) != (*(uint32 *)const_cast<char *>(REVTEX_API_ID)))
 		Fatal_error("Invalid revtex_API id file %s API %s in file %s", rTexAPI->id, REVTEX_API_ID, tex_name);
 
-	if (rTexAPI->schema != REVTEX_API_SCHEMA)
-		Fatal_error("Invalid revtex_API file schema file %d API %d in file %s", rTexAPI->schema, REVTEX_API_SCHEMA, tex_name);
+	if (FROM_LE_32(rTexAPI->schema) != REVTEX_API_SCHEMA)
+		Fatal_error("Invalid revtex_API file schema file %d API %d in file %s", FROM_LE_32(rTexAPI->schema), REVTEX_API_SCHEMA, tex_name);
 
 	// Load the palette (it might be the same file !)
 	revtex_API *rPalAPI = (revtex_API *)rs_anims->Res_open(pal_name, pal_hash, base, base_hash);
@@ -183,11 +183,11 @@ void OpenTexture(const char *tex_name, uint32 tex_hash, const char *pal_name, ui
 	// Is the palette different ?
 	if (rPalAPI != rTexAPI) {
 		// It's different !
-		if ((*(uint32 *)rPalAPI->id) != (*(uint32 *)const_cast<char *>(REVTEX_API_ID)))
+		if ((READ_LE_UINT32((uint32 *)rPalAPI->id)) != (*(uint32 *)const_cast<char *>(REVTEX_API_ID)))
 			Fatal_error("Invalid revtex_API id file %s API %s in file %s", rTexAPI->id, REVTEX_API_ID, pal_name);
 
-		if (rPalAPI->schema != REVTEX_API_SCHEMA)
-			Fatal_error("Invalid revtex_API file schema file %d API %d in file %s", rTexAPI->schema, REVTEX_API_SCHEMA, pal_name);
+		if (FROM_LE_32(rPalAPI->schema) != REVTEX_API_SCHEMA)
+			Fatal_error("Invalid revtex_API file schema file %d API %d in file %s", FROM_LE_32(rTexAPI->schema), REVTEX_API_SCHEMA, pal_name);
 
 		// Copy the palette into the texture
 		memcpy(rTexAPI->palette, rPalAPI->palette, 256 * sizeof(uint32));
@@ -196,10 +196,10 @@ void OpenTexture(const char *tex_name, uint32 tex_hash, const char *pal_name, ui
 	// Set up RevTexture structure
 	RevTexture revTex;
 	revTex.palette = rTexAPI->palette;
-	revTex.width = rTexAPI->width;
-	revTex.height = rTexAPI->height;
+	revTex.width = FROM_LE_32(rTexAPI->width);
+	revTex.height = FROM_LE_32(rTexAPI->height);
 	for (int32 i = 0; i < 9; i++) {
-		revTex.level[i] = (uint8 *)rTexAPI + rTexAPI->levelOffset[i];
+		revTex.level[i] = (uint8 *)rTexAPI + FROM_LE_32(rTexAPI->levelOffset[i]);
 	}
 
 	// Register the texture
@@ -248,10 +248,10 @@ void PreRegisterTexture(const char *tex_name, uint32 tex_hash, const char *pal_n
 
 void drawObjects(SDactor &act, PSXLampList &lamplist, PSXrgb *pAmbient, PSXShadeList &shadelist, MATRIXPC *local2screen, int32 *brightnessReturn) {
 	psxActor &actor = act.psx_actor;
-	rap_API *mesh;
-	rap_API *smesh;
-	rap_API *pose;
-	rab_API *bones;
+	RapAPI *mesh;
+	RapAPI *smesh;
+	RapAPI *pose;
+	RabAPI *bones;
 
 	_vox_image *&vox = act.log->voxel_info;
 	_mega *&mega = act.log->mega;
@@ -276,92 +276,92 @@ void drawObjects(SDactor &act, PSXLampList &lamplist, PSXrgb *pAmbient, PSXShade
 	}
 
 	// Load the POSE
-	pose = (rap_API *)rs_anims->Res_open(poseName, poseHash, vox->base_path, vox->base_path_hash);
+	pose = (RapAPI *)rs_anims->Res_open(poseName, poseHash, vox->base_path, vox->base_path_hash);
 	ConvertRAP(pose);
 	// check the pose data
-	if (*(int32 *)pose->id != *(int32 *)const_cast<char *>(RAP_API_ID))
+	if (READ_LE_INT32((int32 *)pose->id) != *(int32 *)const_cast<char *>(RAP_API_ID))
 		Fatal_error("Pose Invalid rap ID rap_api.h %s file:%s file:%s", pose->id, RAP_API_ID, poseName);
 	if (pose->schema != RAP_API_SCHEMA)
 		Fatal_error("Wrong rap schema value file %d api %d file:%s", pose->schema, RAP_API_SCHEMA, poseName);
 
 	// Load the MESH
-	mesh = (rap_API *)rs_anims->Res_open(vox->mesh_name, vox->mesh_hash, vox->base_path, vox->base_path_hash);
+	mesh = (RapAPI *)rs_anims->Res_open(vox->mesh_name, vox->mesh_hash, vox->base_path, vox->base_path_hash);
 	ConvertRAP(mesh);
 	// check the mesh data
-	if (*(int32 *)mesh->id != *(int32 *)const_cast<char *>(RAP_API_ID))
+	if (READ_LE_INT32((int32 *)mesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID))
 		Fatal_error("Mesh Invalid rap ID rap_api.h %s file:%s file:%s", mesh->id, RAP_API_ID, vox->mesh_name);
 	if (mesh->schema != RAP_API_SCHEMA)
 		Fatal_error("Mesh rap schema value file %d api %d file:%s", mesh->schema, RAP_API_SCHEMA, vox->mesh_name);
 
 	// Load the SHADOW MESH
-	smesh = (rap_API *)rs_anims->Res_open(vox->shadow_mesh_name, vox->shadow_mesh_hash, vox->base_path, vox->base_path_hash);
+	smesh = (RapAPI *)rs_anims->Res_open(vox->shadow_mesh_name, vox->shadow_mesh_hash, vox->base_path, vox->base_path_hash);
 	ConvertRAP(smesh);
 	// check the shadow mesh data
-	if (*(int32 *)smesh->id != *(int32 *)const_cast<char *>(RAP_API_ID))
+	if (READ_LE_INT32((int32 *)smesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID))
 		Fatal_error("Mesh Invalid rap ID rap_api.h %s file:%s file:%s", smesh->id, RAP_API_ID, vox->shadow_mesh_name);
 	if (smesh->schema != RAP_API_SCHEMA)
 		Fatal_error("Mesh rap schema value file %d api %d file:%s", smesh->schema, RAP_API_SCHEMA, vox->shadow_mesh_name);
 
 	// Load the BONES
-	bones = (rab_API *)rs_anims->Res_open(vox->anim_name[act.log->cur_anim_type], vox->anim_name_hash[act.log->cur_anim_type], vox->base_path, vox->base_path_hash);
+	bones = (RabAPI *)rs_anims->Res_open(vox->anim_name[act.log->cur_anim_type], vox->anim_name_hash[act.log->cur_anim_type], vox->base_path, vox->base_path_hash);
 	// check the bones...
-	if (*(int32 *)bones->id != *(int32 *)const_cast<char *>(RAB_API_ID))
+	if (READ_LE_INT32((int32 *)bones->id) != *(int32 *)const_cast<char *>(RAB_API_ID))
 		Fatal_error("Bones Invalid rab ID rab_api.h %s file:%s file:%s", bones->id, RAB_API_ID, vox->anim_name[act.log->cur_anim_type]);
 	if (bones->schema != RAB_API_SCHEMA)
 		Fatal_error("Bones rab schema value file %d api %d file:%s", bones->schema, RAB_API_SCHEMA, vox->anim_name[act.log->cur_anim_type]);
 
 	// Check the data is all in still and resman has settled.
-	if (*(int32 *)mesh->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
-		mesh = (rap_API *)rs_anims->Res_open(vox->mesh_name, vox->mesh_hash, vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)mesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID)) {
+		mesh = (RapAPI *)rs_anims->Res_open(vox->mesh_name, vox->mesh_hash, vox->base_path, vox->base_path_hash);
 		ConvertRAP(mesh);
 	}
 
-	if (*(int32 *)smesh->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
-		smesh = (rap_API *)rs_anims->Res_open(vox->shadow_mesh_name, vox->shadow_mesh_hash, vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)smesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID)) {
+		smesh = (RapAPI *)rs_anims->Res_open(vox->shadow_mesh_name, vox->shadow_mesh_hash, vox->base_path, vox->base_path_hash);
 		ConvertRAP(smesh);
 	}
 
-	if (*(int32 *)bones->id != *(int32 *)const_cast<char *>(RAB_API_ID)) {
-		bones = (rab_API *)rs_anims->Res_open(vox->anim_name[act.log->cur_anim_type], vox->anim_name_hash[act.log->cur_anim_type], vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)bones->id) != *(int32 *)const_cast<char *>(RAB_API_ID)) {
+		bones = (RabAPI *)rs_anims->Res_open(vox->anim_name[act.log->cur_anim_type], vox->anim_name_hash[act.log->cur_anim_type], vox->base_path, vox->base_path_hash);
 	}
 
-	if (*(int32 *)pose->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
-		pose = (rap_API *)rs_anims->Res_open(poseName, poseHash, vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)pose->id) != *(int32 *)const_cast<char *>(RAP_API_ID)) {
+		pose = (RapAPI *)rs_anims->Res_open(poseName, poseHash, vox->base_path, vox->base_path_hash);
 		ConvertRAP(pose);
 	}
 
-	if (*(int32 *)mesh->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
-		mesh = (rap_API *)rs_anims->Res_open(vox->mesh_name, vox->mesh_hash, vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)mesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID)) {
+		mesh = (RapAPI *)rs_anims->Res_open(vox->mesh_name, vox->mesh_hash, vox->base_path, vox->base_path_hash);
 		ConvertRAP(mesh);
 	}
 
-	if (*(int32 *)smesh->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
-		smesh = (rap_API *)rs_anims->Res_open(vox->shadow_mesh_name, vox->shadow_mesh_hash, vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)smesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID)) {
+		smesh = (RapAPI *)rs_anims->Res_open(vox->shadow_mesh_name, vox->shadow_mesh_hash, vox->base_path, vox->base_path_hash);
 		ConvertRAP(smesh);
 	}
 
-	if (*(int32 *)bones->id != *(int32 *)const_cast<char *>(RAB_API_ID)) {
-		bones = (rab_API *)rs_anims->Res_open(vox->anim_name[act.log->cur_anim_type], vox->anim_name_hash[act.log->cur_anim_type], vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)bones->id) != *(int32 *)const_cast<char *>(RAB_API_ID)) {
+		bones = (RabAPI *)rs_anims->Res_open(vox->anim_name[act.log->cur_anim_type], vox->anim_name_hash[act.log->cur_anim_type], vox->base_path, vox->base_path_hash);
 	}
 
-	if (*(int32 *)pose->id != *(int32 *)const_cast<char *>(RAP_API_ID)) {
-		pose = (rap_API *)rs_anims->Res_open(poseName, poseHash, vox->base_path, vox->base_path_hash);
+	if (READ_LE_INT32((int32 *)pose->id) != *(int32 *)const_cast<char *>(RAP_API_ID)) {
+		pose = (RapAPI *)rs_anims->Res_open(poseName, poseHash, vox->base_path, vox->base_path_hash);
 		ConvertRAP(pose);
 	}
 
 	// FINAL CHECKS
-	if (*(int32 *)mesh->id != *(int32 *)const_cast<char *>(RAP_API_ID))
+	if (READ_LE_INT32((int32 *)mesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID))
 		Fatal_error("Failed to get MESH %s settled within Resman", vox->mesh_name);
-	if (*(int32 *)smesh->id != *(int32 *)const_cast<char *>(RAP_API_ID))
+	if (READ_LE_INT32((int32 *)smesh->id) != *(int32 *)const_cast<char *>(RAP_API_ID))
 		Fatal_error("Failed to get SHADOW MESH %s settled within Resman", vox->shadow_mesh_name);
-	if (*(int32 *)bones->id != *(int32 *)const_cast<char *>(RAB_API_ID))
+	if (READ_LE_INT32((int32 *)bones->id) != *(int32 *)const_cast<char *>(RAB_API_ID))
 		Fatal_error("Failed to get BONES %s settled within Resman", vox->anim_name[act.log->cur_anim_type]);
-	if (*(int32 *)pose->id != *(int32 *)const_cast<char *>(RAP_API_ID))
+	if (READ_LE_INT32((int32 *)pose->id) != *(int32 *)const_cast<char *>(RAP_API_ID))
 		Fatal_error("Failed to get POSE %s settled within Resman", poseName);
 
 	// FINISHED LOADING
 	// Turn this code back after the demo
-	if (act.frame >= bones->nFrames) {
+	if (FROM_LE_32(act.frame) >= FROM_LE_16(bones->nFrames)) {
 		Fatal_error("stagedraw_pc_poly Illegal frame %d bones %d anim %s", act.frame, bones->nFrames, vox->anim_name[act.log->cur_anim_type]);
 	}
 
@@ -371,7 +371,7 @@ void drawObjects(SDactor &act, PSXLampList &lamplist, PSXrgb *pAmbient, PSXShade
 
 	Bone_Frame *frame;
 
-	frame = bones->GetFrame(f);
+	frame = RabAPIObject::GetFrame(bones, f);
 
 	selFace = 65535;
 
@@ -447,9 +447,9 @@ void drawObjects(SDactor &act, PSXLampList &lamplist, PSXrgb *pAmbient, PSXShade
 	if (g_mission->session->objects == nullptr || strcmp(act.log->GetName(), "StageView") == 0) {
 		uvframe = gameCycle;
 	} else {
-		c_game_object *ob = (c_game_object *)MS->objects->Fetch_item_by_name(act.log->GetName());
+		CGame *ob = (CGame *)LinkedDataObject::Fetch_item_by_name(MS->objects, act.log->GetName());
 
-		int32 ret = ob->GetVariable("state");
+		int32 ret = CGameObject::GetVariable(ob, "state");
 
 		// The snow_suit in Car_5 does not have a state flag
 		// so can't test ret == -1
@@ -458,7 +458,7 @@ void drawObjects(SDactor &act, PSXLampList &lamplist, PSXrgb *pAmbient, PSXShade
 
 		uvframe = -1;
 		if (ret != -1) {
-			ret = ob->GetIntegerVariable(ret);
+			ret = CGameObject::GetIntegerVariable(ob, ret);
 			// which means ALIVE
 			if (ret == 0)
 				uvframe = gameCycle;
@@ -499,15 +499,15 @@ int32 drawSpecialObjects(SDactor &actor, MATRIXPC *local2screen, int32 brightnes
 		PXframe *frm = PXFrameEnOfAnim(actor.frame, pAnim);
 		if (frm->marker_qty > INT_POS) {
 			PXmarker *marker = &(frm->markers[INT_POS]);
-			uint8 mtype = (uint8)marker->GetType();
+			uint8 mtype = (uint8)PXmarker_PSX_Object::GetType(marker);
 			if ((INT0_TYPE == mtype) || (INT_TYPE == mtype)) {
 				// The interact marker exists
 				PXfloat mx, my, mz;
-				marker->GetXYZ(&mx, &my, &mz);
+				PXmarker_PSX_Object::GetXYZ(marker, &mx, &my, &mz);
 
 				PXfloat ox, oy, oz;
 				marker = &(frm->markers[ORG_POS]);
-				marker->GetXYZ(&ox, &oy, &oz);
+				PXmarker_PSX_Object::GetXYZ(marker, &ox, &oy, &oz);
 
 				// Yeah - found a muzzle flash
 				mflash = 1;
@@ -891,15 +891,15 @@ void StageDrawPoly(SDactor *actors, uint32 actorQty) {
 									uint16 *ptr = rowAd;
 									for (int32 x = 0; x < TILE_WIDTH;) {
 										// read the rle counters (trans/solid)
-										int32 trans = ((int32)*zPtr) & 0xff;
-										int32 solid = ((int32)*zPtr) >> 8;
+										int32 trans = ((int32)READ_LE_U16(zPtr)) & 0xff;
+										int32 solid = ((int32)READ_LE_U16(zPtr)) >> 8;
 										zPtr++;
 
 										x += trans + solid;
 										ptr += trans;
 
 										while (solid--) {
-											if (*ptr > *zPtr)
+											if (*ptr > READ_LE_U16(zPtr))
 												*ptr = 0xffff;
 											++ptr;
 											++zPtr;
@@ -921,14 +921,14 @@ void StageDrawPoly(SDactor *actors, uint32 actorQty) {
 									uint16 *aZ = bufZ;
 									for (int32 x = 0; x < TILE_WIDTH;) {
 										// read the rle counters (trans/solid)
-										int32 trans = ((int32)*tPtr) & 0xff;
-										int32 solid = ((int32)*tPtr) >> 8;
+										int32 trans = ((int32)READ_LE_U16(tPtr)) & 0xff;
+										int32 solid = ((int32)READ_LE_U16(tPtr)) >> 8;
 										tPtr++;
 										aRGB += trans;
 										aZ += trans;
 										x += trans + solid;
 										while (solid--) {
-											if (*tPtr++ <= *aZ) {
+											if (READ_LE_U16(tPtr++) <= *aZ) {
 												uint8 *pix = (uint8 *)aRGB;
 												uint8 *t = (uint8 *)tPtr;
 												for (int32 i = 0; i < 3; i++) {
@@ -1061,14 +1061,14 @@ void StageDrawPoly(SDactor *actors, uint32 actorQty) {
 								uint16 *aZ = bufZ;
 								for (int32 x = 0; x < TILE_WIDTH;) {
 									// read the rle counters (trans/solid)
-									int32 trans = ((int32)*tPtr) & 0xff;
-									int32 solid = ((int32)*tPtr) >> 8;
+									int32 trans = ((int32)READ_LE_U16(tPtr)) & 0xff;
+									int32 solid = ((int32)READ_LE_U16(tPtr)) >> 8;
 									tPtr++;
 									aRGB += trans;
 									aZ += trans;
 									x += trans + solid;
 									while (solid--) {
-										if (*tPtr++ <= *aZ) {
+										if (READ_LE_U16(tPtr++) <= *aZ) {
 											uint8 *pix = (uint8 *)aRGB;
 											uint8 *t = (uint8 *)tPtr;
 											for (int32 i = 0; i < 3; i++) {
@@ -1202,8 +1202,8 @@ void StageDrawPoly(SDactor *actors, uint32 actorQty) {
 								uint32 *rgbDst = rgbS32;
 								for (int32 x = 0; x < TILE_WIDTH;) {
 									// read the rle counters (trans/solid)
-									int32 trans = ((int32)*zPtr) & 0xff;
-									int32 solid = ((int32)*zPtr) >> 8;
+									int32 trans = ((int32)READ_LE_U16(zPtr)) & 0xff;
+									int32 solid = ((int32)READ_LE_U16(zPtr)) >> 8;
 									zPtr++;
 
 									x += trans + solid;
@@ -1297,7 +1297,7 @@ void StageDrawPoly(SDactor *actors, uint32 actorQty) {
 									}
 
 									while (solid--) {
-										if (*zDst < *zPtr) {
+										if (*zDst < READ_LE_U16(zPtr)) {
 											switch ((*rgbSrc) >> 30) {
 											case 0:
 												*rgbDst = *rgbSrc;
@@ -1620,8 +1620,8 @@ void StageDrawPoly(SDactor *actors, uint32 actorQty) {
 										uint32 *rgbDst = rgbS32;
 										for (int32 x = 0; x < TILE_WIDTH;) {
 											// read the rle counters (trans/solid)
-											int32 trans = ((int32)*zPtr) & 0xff;
-											int32 solid = ((int32)*zPtr) >> 8;
+											int32 trans = ((int32)READ_LE_U16(zPtr)) & 0xff;
+											int32 solid = ((int32)READ_LE_U16(zPtr)) >> 8;
 											zPtr++;
 
 											x += trans + solid;
@@ -1715,7 +1715,7 @@ void StageDrawPoly(SDactor *actors, uint32 actorQty) {
 											}
 
 											while (solid--) {
-												if ((*zDst < *zPtr) && (*zDst < *(zDst + (ZBUFFERSIZE >> 1)))) {
+												if ((*zDst < READ_LE_U16(zPtr)) && (*zDst < *(zDst + (ZBUFFERSIZE >> 1)))) {
 													switch ((*rgbSrc) >> 30) {
 													case 0:
 														*rgbDst = *rgbSrc;
