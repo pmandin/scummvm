@@ -60,7 +60,7 @@ static const ResString string_map_table_v8[] = {
 	{0, "/BT__004/Error reading disk %c, (%c%d) Press Button."},
 	{0, "/BT__002/Game Paused.  Press SPACE to Continue."},
 	{0, "/BT__005/Are you sure you want to restart?  (Y/N)"}, //BOOT.004
-	{0, "/BT__006/Are you sure you want to quit?  (Y/N)"}, //BOOT.005
+	{0, "/BT__006/Are you sure you want to quit?  (Y/N)"},    //BOOT.005
 	{0, "/BT__008/Save"},
 	{0, "/BT__009/Load"},
 	{0, "/BT__010/Play"},
@@ -74,7 +74,21 @@ static const ResString string_map_table_v8[] = {
 	{0, "/BT__017/Saving '%s'"},
 	{0, "/BT__018/Loading '%s'"},
 	{0, "/BT__019/Name your SAVE game"},
-	{0, "/BT__020/Select a game to LOAD"}
+	{0, "/BT__020/Select a game to LOAD"},
+	{0, "/BT__028/Do you want to replace this saved game? (Y/N)Y"},
+	{0, "/SYST200/Are you sure you want to quit?"},
+	{0, "/SYST201/Yes"},
+	{0, "/SYST202/No"},
+	{0, "/SYST203/iMuse buffer count changed to %d"},
+	{0, "/BT_104/Voice and Text"},
+	{0, "/BT_105/Text Display Only"},
+	{0, "/BT_103/Voice Only"},
+	{0, "/SYST300/y"},
+	{0, "/BOOT.005/Are you sure you want to quit?  (Y-N)"}, // Demo strings
+	{0, "/NEW.23/Text Speed  Slow  ==========  Fast"},
+	{0, "/NEW.24/Music Volume  Low  =========  High"},
+	{0, "/NEW.25/Voice Volume  Low  =========  High"},
+	{0, "/NEW.26/Sfx Volume  Low  =========  High"}
 };
 
 static const ResString string_map_table_v7[] = {
@@ -424,6 +438,22 @@ void InfoDialog::reflowLayout() {
 	_y = (screenH - height) / 2;
 
 	_text->setSize(_w, _h);
+}
+
+const char *InfoDialog::getPlainEngineString(int stringno) {
+	if (stringno == 0)
+		return nullptr;
+
+	if (_vm->_game.version == 8)
+		return (const char *)string_map_table_v8[stringno - 1].string;
+	else if (_vm->_game.version == 7)
+		return (const char *)_vm->getStringAddressVar(string_map_table_v7[stringno - 1].num);
+	else if (_vm->_game.version == 6)
+		return (const char *)_vm->getStringAddressVar(string_map_table_v6[stringno - 1].num);
+	else if (_vm->_game.version >= 3)
+		return (const char *)_vm->getStringAddress(string_map_table_v345[stringno - 1].num);
+	else
+		return (const char *)(string_map_table_v345[stringno - 1].string);
 }
 
 const Common::U32String InfoDialog::queryResString(int stringno) {

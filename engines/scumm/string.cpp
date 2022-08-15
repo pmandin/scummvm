@@ -541,6 +541,8 @@ bool ScummEngine::newLine() {
 	} else if (_isRTL) {
 		if (_game.id == GID_MANIAC || ((_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && _charset->getCurID() == 4)) {
 			_nextLeft = _screenWidth - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) - _nextLeft;
+		} else if (_game.id == GID_MONKEY2 && _charset->getCurID() == 5) {
+			_nextLeft += _screenWidth - 210 - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos);
 		}
 	}
 	if (_game.version == 0) {
@@ -573,6 +575,13 @@ void ScummEngine::fakeBidiString(byte *ltext, bool ignoreVerb) const {
 	while (ltext[ll] == 0xFF) {
 		ll += 4;
 	}
+
+	if (_game.id == GID_MONKEY2 && ltext[0] == 0x07) {
+		for (int i = 1; i < ll; i++)
+			ltext[i - 1] = ltext[i];
+		ltext[--ll] = 0x07;
+	}
+
 	int32 ipos = 0;
 	int32 start = 0;
 	byte *text = ltext + ll;
@@ -652,9 +661,9 @@ void ScummEngine::fakeBidiString(byte *ltext, bool ignoreVerb) const {
 		if (_game.id == GID_INDY4 && ltext[0] == 0x7F) {
 			ltext[start + ipos + ll] = 0x80;
 			ltext[start + ipos + ll + 1] = 0;
-		} else if (_game.id == GID_MONKEY2 && ltext[0] == 0x07) {
-			ltext[0] = ' ';
-			ltext[start + ipos + ll] = 0x07;
+		} else if (_game.id == GID_MONKEY2) {
+			// add non-printable character to end to avoid space trimming
+			ltext[start + ipos + ll] = '@';
 			ltext[start + ipos + ll + 1] = 0;
 		}
 	}
@@ -690,10 +699,13 @@ void ScummEngine::CHARSET_1() {
 		_string[0].ypos = a->getPos().y - a->getElevation() - _screenTop;
 
 		if (_game.version <= 5) {
-
 			if (VAR(VAR_V5_TALK_STRING_Y) < 0) {
-				s = (a->_scaley * (int)VAR(VAR_V5_TALK_STRING_Y)) / 0xFF;
-				_string[0].ypos += (int)(((VAR(VAR_V5_TALK_STRING_Y) - s) / 2) + s);
+				if (_game.version == 4) {
+					_string[0].ypos = (int)VAR(VAR_V5_TALK_STRING_Y) + a->getPos().y + a->getElevation();
+				} else {
+					s = (a->_scaley * (int)VAR(VAR_V5_TALK_STRING_Y)) / 0xFF;
+					_string[0].ypos += (int)(((VAR(VAR_V5_TALK_STRING_Y) - s) / 2) + s);
+				}
 			} else {
 				_string[0].ypos = (int)VAR(VAR_V5_TALK_STRING_Y);
 			}
@@ -794,6 +806,8 @@ void ScummEngine::CHARSET_1() {
 	} else if (_isRTL) {
 		if (_game.id == GID_MANIAC || ((_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && _charset->getCurID() == 4)) {
 			_nextLeft = _screenWidth - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) - _nextLeft;
+		} else if (_game.id == GID_MONKEY2 && _charset->getCurID() == 5) {
+			_nextLeft += _screenWidth - 210 - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos);
 		}
 	}
 

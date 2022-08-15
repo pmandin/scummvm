@@ -287,8 +287,10 @@ void _game_session::___init(const char *mission, const char *new_session_name) {
 	// reference file which is opened here so the global reference can be set.
 	g_oIconMenu->SetTransparencyColourKey();
 
-	// Initialise the remora
-	g_oRemora->InitialiseRemora();
+	if (g_icb->getGameType() == GType_ICB) {
+		// Initialise the remora
+		g_oRemora->InitialiseRemora();
+	}
 
 	// Set the default colour for voice over text.
 	voice_over_red = VOICE_OVER_DEFAULT_RED;
@@ -384,8 +386,8 @@ void _game_session::___init(const char *mission, const char *new_session_name) {
 
 void _game_session::Script_version_check() {
 	uint32 version = LinkedDataObject::GetHeaderVersion(scripts);
-	if (FN_ROUTINES_DATA_VERSION != version) {
-		warning("SCRIPTS AND ENGINE ARE NOT SAME VERSION: %d", version);
+	if (FN_ROUTINES_DATA_VERSION_ICB != version && FN_ROUTINES_DATA_VERSION_ELDORADO != version) {
+		error("SCRIPTS AND ENGINE ARE NOT SAME VERSION: %d", version);
 	}
 }
 

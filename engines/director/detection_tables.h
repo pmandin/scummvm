@@ -617,6 +617,7 @@ static const PlainGameDescriptor directorGames[] = {
 
 	// Productivity software
 	{ "expbooktoolkit2",	"Expanded Book Toolkit II" },
+	{ "secretwriters",		"Secret Writer's Society" },
 
 	// Shareware and freeware
 	{ "101pet",				"Dalmation Adoption" },
@@ -4272,7 +4273,7 @@ static const DirectorGameDescription gameDescriptions[] = {
 
 	MACDEMO1_l("phantplanet", "Demo", "PHANTASMAGORIA demo", "dc5a87dda7a0daf46604515f7d2cca66", 291960, Common::JA_JPN, 403),
 	WINDEMO1t_l("phantplanet", "Demo", "PHANDEMO.EXE", "56dc12f841f627be652d23e457875f61", 692923, Common::JA_JPN, 404),
-	MACGAME1_l("phantplanet", "Hybrid release", "phantasmagoria_PPC", "602e61f10c158183218405dd30a09b3f", 60352, Common::JA_JPN, 400),
+	MACGAME1_l("phantplanet", "Hybrid release", "phantasmagoria_PPC", "602e61f10c158183218405dd30a09b3f", 60096, Common::JA_JPN, 404),
 	WINGAME1_l("phantplanet", "Hybrid release", "PHANTAS.EXE", "c2dd62dd0f9488ae8102970553eff170", 690449, Common::JA_JPN, 400),
 	// Under the working title 'Micromondo'
 	MACDEMO1("phantplanet", "Demo", "MICROMONDO Demo", "8f597c0dc7a7f0d1d1e0b85404c62c1e", 286152, 404),
@@ -6440,6 +6441,10 @@ static const DirectorGameDescription gameDescriptions[] = {
 
 	WINGAME2_l("samson", "", "start.exe", "a593079aecf5bd938ce75264cac24b2d", 1919963,
 							 "GOSCHOT.DXR", "045e8b0091317831da84596f807779cd", 161404, Common::NL_NLD, 600),
+
+	MACGAME1("secretwriters", "", "Secret Writer's Society", "1b0e3f44bd18e81164b424a268e4fdf7", 1028926, 600),
+	WINGAME1t("secretwriters", "", "WRITING.EXE", "48c8c31df289713b629af6a4c4e519fb", 1508719, 600),
+
 
 	MACGAME1("shrlucky", "", "Arcade", "dab7a517b0877454d1e16c40c9b5a9be", 1029193, 600),
 	WINGAME1("shrlucky", "", "COPYARC/ARCWIN95.EXE", "a593079aecf5bd938ce75264cac24b2d", 7304861, 600),

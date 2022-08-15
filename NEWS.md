@@ -6,8 +6,9 @@ For a more comprehensive changelog of the latest experimental code, see:
  New games:
    - Added support for Soldier Boyz.
    - Added support for C64 and ZX Spectrum versions of GLK Scott Adams
-     Interactive Fiction games
+     Interactive Fiction games.
    - Added support for GLK Scott Adams adventures 1-12 in the TI99/4A format.
+   - Added support for Obsidian.
 
  General:
    - Reduced amount of false positives in Mass Add.
@@ -33,6 +34,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed a possible dead-end in the Ultimate Talkie Edition of Monkey Island 2,
      if one doesn't pick up the model lighthouse lens before Captain Dread brings
      Guybrush back to Scabb Island, at the end of Part II.
+   - Added support for original GUI dialogs to COMI.
 
  Toon:
    - Made game menus behave like in the original.

@@ -74,9 +74,20 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		GAMEOPTION_ENABLE_SHORT_TRANSITIONS,
 		{
 			_s("Enable short transitions"),
-			_s("Enables transitions that are set to maximum rate instead of skipping them"),
+			_s("Enables transitions that are set to maximum rate instead of skipping them."),
 			"mtropolis_mod_minimum_transition_duration",
 			true,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_SOUND_EFFECT_SUBTITLES,
+		{
+			_s("Enable subtitles for important sound effects"),
+			_s("Enables subtitles for important sound effects.  This may reduce the difficulty of sound recognition puzzles and minigames."),
+			"mtropolis_mod_sound_gameplay_subtitles",
+			false,
 			0,
 			0
 		}
@@ -85,7 +96,7 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		GAMEOPTION_LAUNCH_DEBUG,
 		{
 			_s("Start with debugger"),
-			_s("Starts with the debugger dashboard active"),
+			_s("Starts with the debugger dashboard active."),
 			"mtropolis_debug_at_start",
 			false,
 			0,

@@ -420,9 +420,12 @@ void ScummEngine_v5::o5_actorFromPos() {
 void ScummEngine_v5::o5_actorOps() {
 	static const byte convertTable[20] =
 		{ 1, 0, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20 };
-	// Fix for bug #2233 "MI2 FM-TOWNS: Elaine's mappiece directly flies to treehouse"
+	// WORKAROUND bug #2233 "MI2 FM-TOWNS: Elaine's mappiece directly flies to treehouse"
 	// There's extra code inserted in script 45 from room 45 that caused that behaviour,
-	// the code below just skips the extra script code.
+	// the code below just skips the extra script code.  As confirmed by Aric Wilmunder,
+	// "the fishing pole puzzle had been removed for the Towns because vertical scrolling
+	// hadn't been implemented", but it appears to work nonetheless, which is what they
+	// also observed when doing the QA for the PC version.
 	if (_game.id == GID_MONKEY2 && _game.platform == Common::kPlatformFMTowns &&
 		vm.slot[_currentScript].number == 45 && _currentRoom == 45 &&
 		(_scriptPointer - _scriptOrgPointer == 0xA9) && _enableEnhancements) {
@@ -719,8 +722,10 @@ void ScummEngine_v5::o5_animateActor() {
 	int act = getVarOrDirectByte(PARAM_1);
 	int anim = getVarOrDirectByte(PARAM_2);
 
-	// WORKAROUND bug #1265: This seems to be yet another script bug which
-	// the original engine let slip by. For details, refer to the tracker item.
+	// WORKAROUND bug #1265: This script calls animateCostume(86,255) and
+	// animateCostume(31,255), with 86 and 31 being script numbers used as
+	// (way out of range) actor numbers. This seems to be yet another script
+	// bug which the original engine let slip by.
 	if (_game.id == GID_INDY4 && vm.slot[_currentScript].number == 206 && _currentRoom == 17 && (act == 31 || act == 86)) {
 		return;
 	}
@@ -742,6 +747,20 @@ void ScummEngine_v5::o5_animateActor() {
 }
 
 void ScummEngine_v5::o5_breakHere() {
+	// WORKAROUND: The English PC Engine version of Loom shows a Turbo
+	// Technologies loading screen. In the Mednafen emulator it's shown for
+	// about 10 seconds while the game is loading resources. ScummVM does
+	// that in the blink of an eye.
+	//
+	// Injecting the delay into the breakHere instruction seems like the
+	// least intrusive way of adding the delay. The script calls it a number
+	// of times, but only once from room 69.
+
+	if (_game.id == GID_LOOM && _game.platform == Common::kPlatformPCEngine && _language == Common::EN_ANY && vm.slot[_currentScript].number == 44 && _currentRoom == 69) {
+		vm.slot[_currentScript].delay = 120;
+		vm.slot[_currentScript].status = ssPaused;
+	}
+
 	updateScriptPtr();
 	_currentScript = 0xFF;
 }
@@ -1004,7 +1023,8 @@ void ScummEngine_v5::o5_drawObject() {
 	// face Guybrush even if he's already looking at him.  drawObject() should never
 	// be called if Bit[129] is set in that script, so if it does happen, it means
 	// the check was missing, and so we ignore the next 32 bytes of Dread's reaction.
-	if (_game.id == GID_MONKEY2 && _currentRoom == 22 && vm.slot[_currentScript].number == 201 && obj == 237 && state == 1 && readVar(0x8000 + 129) == 1 && _enableEnhancements) {
+	if (_game.id == GID_MONKEY2 && _currentRoom == 22 && vm.slot[_currentScript].number == 201 && obj == 237 &&
+		state == 1 && readVar(0x8000 + 129) == 1 && _enableEnhancements && strcmp(_game.variant, "SE Talkie") != 0) {
 		_scriptPointer += 32;
 		return;
 	}
@@ -1211,9 +1231,20 @@ void ScummEngine_v5::o5_getActorMoving() {
 void ScummEngine_v5::o5_getActorRoom() {
 	getResultPos();
 	int act = getVarOrDirectByte(PARAM_1);
-	// WORKAROUND bug #832. This is a really odd bug in either the script
-	// or in our script engine. Might be a good idea to investigate this
-	// further by e.g. looking at the FOA engine a bit closer.
+
+	// WORKAROUND bug #832: Invalid actor XXX in o5_getActorRoom().
+	//
+	// Script 94-206 is started by script 94-200 this way:
+	//
+	// Var[442] = getObjectOwner(586)  (the metal rod)
+	// startScript(201,[Var[442]],F)
+	// startScript(206,[Var[442]],F,R)
+	//
+	// Script 201 gets to run first, and it changes the value of Var[442],
+	// so by the time script 206 is invoked, it gets a bad value as param.
+	// This is a really odd bug in either the script or in our script
+	// engine. Might be a good idea to investigate this further by e.g.
+	// looking at the FOA engine a bit closer. The original doesn't crash.
 	if (_game.id == GID_INDY4 && _roomResource == 94 && vm.slot[_currentScript].number == 206 && !isValidActor(act)) {
 		setResult(0);
 		return;
@@ -2620,6 +2651,7 @@ void ScummEngine_v5::o5_startScript() {
 	// WORKAROUND bug #1025: in Loom, using the stealth draft on the
 	// shepherds would crash the game because of a missing actor number for
 	// their first reaction line ("We are the masters of stealth"...).
+	// The original interpreter would just skip the line.
 	if (_game.id == GID_LOOM && _game.version == 3 && _roomResource == 23 && script == 232 && data[0] == 0) {
 		byte shepherdActor;
 		bool buggyShepherdsEGArelease = false;
@@ -2853,33 +2885,6 @@ void ScummEngine_v5::o5_verbOps() {
 					break;
 				default:
 					break;
-				}
-			} else	if (_game.id == GID_LOOM && _game.version == 4) {
-			// FIXME: hack loom notes into right spot
-				if ((verb >= 90) && (verb <= 97)) {	// Notes
-					switch (verb) {
-					case 90:
-					case 91:
-						vs->curRect.top -= 7;
-						break;
-					case 92:
-						vs->curRect.top -= 6;
-						break;
-					case 93:
-						vs->curRect.top -= 4;
-						break;
-					case 94:
-						vs->curRect.top -= 3;
-						break;
-					case 95:
-						vs->curRect.top -= 1;
-						break;
-					case 97:
-						vs->curRect.top -= 5;
-						break;
-					default:
-						break;
-					}
 				}
 			} else if (_game.platform == Common::kPlatformFMTowns && ConfMan.getBool("trim_fmtowns_to_200_pixels")) {
 				if (_game.id == GID_ZAK && verb == 116)
@@ -3234,7 +3239,9 @@ void ScummEngine_v5::decodeParseString() {
 		case 15:{	// SO_TEXTSTRING
 				const int len = resStrLen(_scriptPointer);
 
-				if (_game.id == GID_LOOM && vm.slot[_currentScript].number == 95 && _enableEnhancements && strcmp((const char *)_scriptPointer, "I am Choas.") == 0) {
+				if (_game.id == GID_LOOM && _game.version == 4 && _language == Common::EN_ANY &&
+						vm.slot[_currentScript].number == 95 && _enableEnhancements &&
+						strcmp((const char *)_scriptPointer, "I am Choas.") == 0) {
 					// WORKAROUND: This happens when Chaos introduces
 					// herself to bishop Mandible. Of all the places to put
 					// a typo...
@@ -3282,6 +3289,24 @@ void ScummEngine_v5::decodeParseString() {
 						byte *tmpBuf = new byte[sizeof(newText) + 16];
 						memcpy(tmpBuf, _scriptPointer, 16);
 						memcpy(tmpBuf + 16, newText, sizeof(newText));
+						printString(textSlot, tmpBuf);
+						delete[] tmpBuf;
+					} else {
+						printString(textSlot, _scriptPointer);
+					}
+				} else if (_game.id == GID_INDY4 && vm.slot[_currentScript].number == 161 && _actorToPrintStrFor == 2 &&
+						_game.platform != Common::kPlatformAmiga && strcmp(_game.variant, "Floppy") != 0 &&
+						_enableEnhancements) {
+					// WORKAROUND: In Indy 4, if one plays as Sophia and looks at Indy, then
+					// her "There's nothing to look at." reaction line will be said with
+					// Indy's voice, because script 68-161 doesn't check for Sophia in this
+					// case. Script 68-4 has a "There's nothing to look at." line for Sophia,
+					// though, so we reuse this if the current line contains the expected
+					// audio offset.
+					if (memcmp(_scriptPointer, "\xFF\x0A\x5D\x8E\xFF\x0A\x63\x08\xFF\x0A\x0E\x00\xFF\x0A\x00\x00", 16) == 0) {
+						byte *tmpBuf = new byte[len];
+						memcpy(tmpBuf, "\xFF\x0A\xCE\x3B\xFF\x0A\x01\x05\xFF\x0A\x0E\x00\xFF\x0A\x00\x00", 16);
+						memcpy(tmpBuf + 16, _scriptPointer + 16, len - 16);
 						printString(textSlot, tmpBuf);
 						delete[] tmpBuf;
 					} else {

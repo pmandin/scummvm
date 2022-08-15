@@ -121,6 +121,8 @@ IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer)
 		_maxQueuedStreams = 4;
 	}
 
+	_nominalBufferCount = _maxQueuedStreams;
+
 	_vm->getTimerManager()->installTimerProc(timer_handler, 1000000 / _callbackFps, this, "IMuseDigital");
 }
 
@@ -148,6 +150,18 @@ IMuseDigital::~IMuseDigital() {
 	free(_audioNames);
 }
 
+int IMuseDigital::roundRobinSetBufferCount() {
+	int minStreams = _nominalBufferCount - 3;
+	int maxStreams = _nominalBufferCount + 3;
+	_maxQueuedStreams++;
+
+	if (_maxQueuedStreams > maxStreams) {
+		_maxQueuedStreams = minStreams;
+	}
+
+	return _maxQueuedStreams;
+}
+
 void IMuseDigital::stopSound(int sound) {
 	diMUSEStopSound(sound);
 }
@@ -173,7 +187,7 @@ int IMuseDigital::startVoice(int soundId, const char *soundName, byte speakingAc
 		if (fileDoesNotExist)
 			return 1;
 
-		// Workaround for this particular sound file not playing (this is a bug in the original):
+		// WORKAROUND for this particular sound file not playing (this is a bug in the original):
 		// this is happening because the sound buffer responsible for speech
 		// is still busy with the previous speech file playing during the SAN
 		// movie. We just stop the SMUSH speech sound before playing NEXUS.029.
@@ -315,6 +329,12 @@ void IMuseDigital::saveLoadEarly(Common::Serializer &s) {
 		_curMusicCue = 0;
 	} else {
 		diMUSESaveLoad(s);
+
+		if (s.isLoading() && _vm->isUsingOriginalGUI()) {
+			diMUSESetMusicGroupVol(diMUSEGetMusicGroupVol());
+			diMUSESetVoiceGroupVol(diMUSEGetVoiceGroupVol());
+			diMUSESetSFXGroupVol(diMUSEGetSFXGroupVol());
+		}
 	}
 }
 
@@ -359,21 +379,23 @@ void IMuseDigital::diMUSEHeartbeat() {
 
 	waveOutCallback();
 
-	// Update volumes
+	if (!_vm->isUsingOriginalGUI()) {
+		// Update volumes
 
-	if (_curMixerMusicVolume != _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType)) {
-		_curMixerMusicVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
-		diMUSESetMusicGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType) / 2, 0, 127));
-	}
+		if (_curMixerMusicVolume != _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType)) {
+			_curMixerMusicVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType);
+			diMUSESetMusicGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType) / 2, 0, 127));
+		}
 
-	if (_curMixerSpeechVolume != _mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType)) {
-		_curMixerSpeechVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType);
-		diMUSESetVoiceGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType) / 2, 0, 127));
-	}
+		if (_curMixerSpeechVolume != _mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType)) {
+			_curMixerSpeechVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType);
+			diMUSESetVoiceGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType) / 2, 0, 127));
+		}
 
-	if (_curMixerSFXVolume != _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType)) {
-		_curMixerSFXVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
-		diMUSESetSFXGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType) / 2, 0, 127));
+		if (_curMixerSFXVolume != _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType)) {
+			_curMixerSFXVolume = _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType);
+			diMUSESetSFXGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType) / 2, 0, 127));
+		}
 	}
 
 	// Handle fades and triggers
@@ -659,6 +681,7 @@ void IMuseDigital::parseScriptCmds(int cmd, int soundId, int sub_cmd, int d, int
 	int b = soundId;
 	int c = sub_cmd;
 	int id;
+	int volume = b;
 	switch (cmd) {
 	case 0x1000:
 		// SetState
@@ -678,15 +701,27 @@ void IMuseDigital::parseScriptCmds(int cmd, int soundId, int sub_cmd, int d, int
 		break;
 	case 0x2000:
 		// SetGroupSfxVolume
-		diMUSESetSFXGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType) / 2, 0, 127));
+		if (!_vm->isUsingOriginalGUI()) {
+			volume = CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType) / 2, 0, 127);
+		}
+
+		diMUSESetSFXGroupVol(volume);
 		break;
 	case 0x2001:
 		// SetGroupVoiceVolume
-		diMUSESetVoiceGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType) / 2, 0, 127));
+		if (!_vm->isUsingOriginalGUI()) {
+			volume = CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType) / 2, 0, 127);
+		}
+
+		diMUSESetVoiceGroupVol(volume);
 		break;
 	case 0x2002:
 		// SetGroupMusicVolume
-		diMUSESetMusicGroupVol(CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType) / 2, 0, 127));
+		if (!_vm->isUsingOriginalGUI()) {
+			volume = CLIP(_mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType) / 2, 0, 127);
+		}
+
+		diMUSESetMusicGroupVol(volume);
 		break;
 	case 10: // StopAllSounds
 	case 12: // SetParam
@@ -811,6 +846,30 @@ int IMuseDigital::diMUSEFeedStream(int soundId, uint8 *srcBuf, int32 sizeToFeed,
 
 int IMuseDigital::diMUSELipSync(int soundId, int syncId, int msPos, int32 &width, int32 &height) {
 	return waveLipSync(soundId, syncId, msPos, width, height);
+}
+
+int IMuseDigital::diMUSEGetMusicGroupVol() {
+	if (_vm->isUsingOriginalGUI()) {
+		return diMUSESetGroupVol(DIMUSE_GROUP_MUSIC, -1);
+	}
+
+	return _mixer->getVolumeForSoundType(Audio::Mixer::kMusicSoundType) / 2;
+}
+
+int IMuseDigital::diMUSEGetSFXGroupVol() {
+	if (_vm->isUsingOriginalGUI()) {
+		return diMUSESetGroupVol(DIMUSE_GROUP_SFX, -1);
+	}
+
+	return _mixer->getVolumeForSoundType(Audio::Mixer::kSFXSoundType) / 2;
+}
+
+int IMuseDigital::diMUSEGetVoiceGroupVol() {
+	if (_vm->isUsingOriginalGUI()) {
+		return diMUSESetGroupVol(DIMUSE_GROUP_SPEECH, -1);
+	}
+
+	return _mixer->getVolumeForSoundType(Audio::Mixer::kSpeechSoundType) / 2;
 }
 
 int IMuseDigital::diMUSESetMusicGroupVol(int volume) {

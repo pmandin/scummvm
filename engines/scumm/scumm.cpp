@@ -1377,6 +1377,21 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 #ifdef ENABLE_SCUMM_7_8
 void ScummEngine_v7::setupScumm(const Common::String &macResourceFile) {
 
+	ConfMan.registerDefault("original_gui", true);
+	if (ConfMan.hasKey("original_gui", _targetName)) {
+		_useOriginalGUI = ConfMan.getBool("original_gui");
+	}
+
+	// The object line toggle is always synchronized from the main game to
+	// our internal Game Options; at startup we do the opposite, since an user
+	// might change the toggle just before starting up the game...
+	if (_game.version == 8) {
+		if (ConfMan.hasKey("original_gui_object_labels", _targetName) &&
+			ConfMan.hasKey("object_labels", _targetName)) {
+			ConfMan.setInt("original_gui_object_labels", ConfMan.getBool("object_labels") ? 1 : 0);
+		}
+	}
+
 	if (_game.id == GID_DIG && (_game.features & GF_DEMO))
 		_smushFrameRate = 15;
 	else
@@ -1416,6 +1431,8 @@ void ScummEngine_v7::setupScumm(const Common::String &macResourceFile) {
 		_insane = nullptr;
 
 	_splayer = new SmushPlayer(this, _imuseDigital, _insane);
+
+	initBanners();
 }
 #endif
 
@@ -2059,6 +2076,43 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 }
 
 void ScummEngine::syncSoundSettings() {
+	if (isUsingOriginalGUI() && _game.version == 8) {
+		if (ConfMan.hasKey("original_gui_text_status", _targetName)) {
+			_voiceMode = ConfMan.getInt("original_gui_text_status");
+		} else if (ConfMan.hasKey("subtitles", _targetName) && ConfMan.hasKey("speech_mute", _targetName)){
+			int guiTextStatus = 0;
+			if (ConfMan.getBool("speech_mute")) {
+				guiTextStatus = 2;
+			} else if (ConfMan.getBool("subtitles")) {
+				guiTextStatus = 1;
+			}
+
+			// Let's set it now so we don't have to do the conversion the next time...
+			ConfMan.setInt("original_gui_text_status", guiTextStatus);
+			_voiceMode = guiTextStatus;
+		}
+
+		if (VAR_VOICE_MODE != 0xFF)
+			VAR(VAR_VOICE_MODE) = _voiceMode;
+
+		if (ConfMan.hasKey("original_gui_text_speed", _targetName)) {
+			// If the value has been changed from the GMM, sync it...
+			if (getTalkSpeed() != ConfMan.getInt("original_gui_text_speed")) {
+				ConfMan.setInt("original_gui_text_speed", getTalkSpeed());
+			}
+
+			_defaultTalkDelay = ConfMan.getInt("original_gui_text_speed");
+
+			// In the original games the talk delay is represented as text speed,
+			// so we have to invert the value:
+			// - 9 is the highest text speed possible;
+			// - 0 is the lowest text speed possible.
+			if (VAR_CHARINC != 0xFF)
+				VAR(VAR_CHARINC) = 9 - _defaultTalkDelay;
+		}
+		return;
+	}
+
 	Engine::syncSoundSettings();
 
 	// Sync the engine with the config manager
@@ -2092,8 +2146,13 @@ void ScummEngine::syncSoundSettings() {
 
 	if (ConfMan.hasKey("talkspeed", _targetName)) {
 		_defaultTalkDelay = getTalkSpeed();
+
+		// In the original games the talk delay is represented as text speed,
+		// so we have to invert the value:
+		// - 9 is the highest text speed possible;
+		// - 0 is the lowest text speed possible.
 		if (VAR_CHARINC != 0xFF)
-			VAR(VAR_CHARINC) = _defaultTalkDelay;
+			VAR(VAR_CHARINC) = 9 - _defaultTalkDelay;
 	}
 
 	// Backyard Baseball 2003 uses a unique subtitle variable,
@@ -2171,6 +2230,11 @@ Common::Error ScummEngine::go() {
 		// to round up VAR_TIMER_NEXT to the nearest multiple of three.
 		if (_game.id == GID_MANIAC && _game.version == 1) {
 			delta = ceil(delta / 3.0) * 3;
+		}
+
+		// In COMI we put no speed limit while on the main menu.
+		if (_game.version == 8 && _currentRoom == 92) {
+			delta = 0;
 		}
 
 		// Wait, start and stop the stop watch at the time the wait is assumed
@@ -2349,6 +2413,28 @@ void ScummEngine::scummLoop(int delta) {
 
 	processInput();
 
+	if (_game.version == 8) {
+		// In v7-8 this function is executed at the end of processInput().
+		// Currently there are no known cases for v7 in which not calling this here,
+		// causes issues. Because of the way things are positioned in our implementation
+		// of the SCUMM loop, as of now enabling this for v7 breaks the screen shake
+		// effect. For v8 we really need to call this here, so let's do that...
+		checkExecVerbs();
+
+		// Saving is performed here in v8; this is important when saving the thumbnail,
+		// which would otherwise miss blastObjects/Texts on the bitmap.
+		scummLoop_handleSaveLoad();
+	}
+
+	// BlastObjects/Texts are completely removed in this moment of the codepath, in v7.
+	// In v8 we just reset the queue: the rects will be restored after runAllScripts().
+	if (_game.version >= 7) {
+		((ScummEngine_v6 *)this)->removeBlastObjects();
+#ifdef ENABLE_SCUMM_7_8
+		((ScummEngine_v7 *)this)->removeBlastTexts();
+#endif
+	}
+
 	scummLoop_updateScummVars();
 
 	if (_game.features & GF_AUDIOTRACKS) {
@@ -2367,23 +2453,21 @@ void ScummEngine::scummLoop(int delta) {
 		}
 	}
 
-	if (VAR_GAME_LOADED != 0xFF)
-		VAR(VAR_GAME_LOADED) = 0;
+	// Another v8 quirk: runAllScripts() is called here; after that we can
+	// finally restore the blastTexts/blastObject rects...
+	if (_game.version == 8) {
+		runAllScripts();
+		((ScummEngine_v6 *)this)->restoreBlastObjectsRects();
+#ifdef ENABLE_SCUMM_7_8
+		((ScummEngine_v7 *)this)->restoreBlastTextsRects();
+#endif
+	}
+
+	if (_game.version < 8)
 load_game:
-	scummLoop_handleSaveLoad();
+		scummLoop_handleSaveLoad();
 
 	if (_completeScreenRedraw) {
-		clearCharsetMask();
-		_charset->_hasMask = false;
-
-		if (_game.version > 3) {
-			if (_townsPlayer)
-				_townsPlayer->restoreAfterLoad();
-
-			for (int i = 0; i < _numVerbs; i++)
-				drawVerb(i, 0);
-		}
-
 		// Update volume settings
 		syncSoundSettings();
 
@@ -2396,8 +2480,17 @@ load_game:
 	if (_game.heversion >= 80) {
 		((SoundHE *)_sound)->processSoundCode();
 	}
-	runAllScripts();
-	checkExecVerbs();
+
+	if (_game.version < 8) {
+		runAllScripts();
+	}
+
+	// SCUMM v7-8 executes checkExecVerbs inside the function
+	// which processes keyboard inputs, so we handle it above
+	// in that case. Again, we make an exception for v7, for now.
+	if (_game.version < 8)
+		checkExecVerbs();
+
 	checkAndRunSentenceScript();
 
 	if (shouldQuit())
@@ -2413,6 +2506,13 @@ load_game:
 
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
 	towns_processPalCycleField();
+#endif
+
+#ifdef ENABLE_SCUMM_7_8
+	// Dequeue the stamp shots for the main menu of COMI
+	if (_game.version == 8) {
+		((ScummEngine_v8 *)this)->stampShotDequeue();
+	}
 #endif
 
 	if (_currentRoom == 0) {
@@ -2534,7 +2634,7 @@ void ScummEngine::scummLoop_handleSaveLoad() {
 		bool success;
 		Common::U32String errMsg;
 
-		if (_game.version == 8 && _saveTemporaryState)
+		if (_game.version == 8 && VAR_GAME_LOADED != 0xFF)
 			VAR(VAR_GAME_LOADED) = 0;
 
 		Common::String filename;
@@ -2553,7 +2653,7 @@ void ScummEngine::scummLoop_handleSaveLoad() {
 			if (!success)
 				errMsg = _("Failed to load saved game from file:\n\n%s");
 
-			if (success && _saveTemporaryState && VAR_GAME_LOADED != 0xFF)
+			if (success && (_saveTemporaryState || _game.version == 8) && VAR_GAME_LOADED != 0xFF)
 				VAR(VAR_GAME_LOADED) = (_game.version == 8) ? 1 : 203;
 		}
 
@@ -2569,6 +2669,7 @@ void ScummEngine::scummLoop_handleSaveLoad() {
 			GUI::TimedMessageDialog dialog(buf, 1500);
 			runDialog(dialog);
 		}
+
 		if (success && _saveLoadFlag != 1)
 			clearClickedStatus();
 
@@ -2577,7 +2678,7 @@ void ScummEngine::scummLoop_handleSaveLoad() {
 }
 
 void ScummEngine_v3::scummLoop_handleSaveLoad() {
-	bool processIQPoints = (_game.id == GID_INDY3) && (_saveLoadFlag == 2 || _loadFromLauncher);
+	bool processIQPoints = (_game.id == GID_INDY3 && (_saveLoadFlag == 2 || _loadFromLauncher));
 	_loadFromLauncher = false;
 
 	ScummEngine::scummLoop_handleSaveLoad();
@@ -2693,7 +2794,7 @@ void ScummEngine_v3::scummLoop_handleSaveLoad() {
 }
 
 void ScummEngine_v5::scummLoop_handleSaveLoad() {
-	bool processIQPoints = (_game.id == GID_INDY4) && (_saveLoadFlag == 2 || _loadFromLauncher);
+	bool processIQPoints = (_game.id == GID_INDY4 && (_saveLoadFlag == 2 || _loadFromLauncher));
 	_loadFromLauncher = false;
 
 	ScummEngine::scummLoop_handleSaveLoad();
@@ -2717,16 +2818,43 @@ void ScummEngine_v5::scummLoop_handleSaveLoad() {
 				_roomPalette[i] = i;
 			// We want just the ENCD script...
 			int entryScript = VAR_ENTRY_SCRIPT;
-			VAR_ENTRY_SCRIPT = 0xFF;
+			int entryScript2 = VAR_ENTRY_SCRIPT2;
+			VAR_ENTRY_SCRIPT = VAR_ENTRY_SCRIPT2 = 0xFF;
 			runEntryScript();
 			VAR_ENTRY_SCRIPT = entryScript;
+			VAR_ENTRY_SCRIPT2 = entryScript2;
 		} else if (_supportsEGADithering) {
 			// Reconstruct the screen palette. It might glitch a bit if the palette was modified with
 			// darkenPalette or similar. But we do give warning... and the alternative would be to
 			// completely process, save and load both the VGA and EGA palettes all the time (regardless
 			// of the current render mode).
 			setCurrentPalette(_curPalIndex);
-		}	
+			// This is also needed to fix the verb interface colors for the games with the purple verbs
+			// interface. It looks like this came up first with MI2 and was then brought over to MI1 CD
+			// and even to DOTT. GID_MONKEY_VGA (with the green verbs) is not affected.
+			if ((_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && VAR_ENTRY_SCRIPT2 != 0xFF && VAR(VAR_ENTRY_SCRIPT2))
+				runScript(VAR(VAR_ENTRY_SCRIPT2), 0, 0, nullptr);
+		}
+	}
+
+	if (_completeScreenRedraw) {
+		clearCharsetMask();
+		_charset->_hasMask = false;
+
+		if (_townsPlayer)
+			_townsPlayer->restoreAfterLoad();
+
+		redrawVerbs();
+
+		// For LOOM VGA Talkie, we restore the text glyphs on top of the note verbs
+		// and also restore the text description on top of the image of the selected
+		// object in the bottom right corner. 
+		// These text parts are not actually connected to the verbs (which are image
+		// verbs only). redrawVerbs() will not restore them. They require some script
+		// work. The original interpreter just sets this variable after loading.
+		// Apparently, this is the trigger for all necessary steps to happen...
+		if (_game.id == GID_LOOM)
+			VAR(66) = 1;
 	}
 
 	// update IQ points after loading
@@ -2756,16 +2884,37 @@ void ScummEngine_v6::scummLoop_handleSaveLoad() {
 				}
 			} else {
 				setDefaultCursor();
+				// For DOTT, this is also needed to fix the verb interface colors. Weirdly, it
+				// does check the videomode var for an EGA setting and makes color changes
+				// based on that. My guess is that this was brought over from MI2 (since the
+				// color adjustments are also the same).
+				if (VAR_ENTRY_SCRIPT2 != 0xFF && VAR(VAR_ENTRY_SCRIPT2))
+					runScript(VAR(VAR_ENTRY_SCRIPT2), 0, 0, nullptr);
 			}
 		}
+	}
+
+	if (_completeScreenRedraw) {
+		clearCharsetMask();
+		_charset->_hasMask = false;
+		redrawVerbs();
 	}
 }
 
 #ifdef ENABLE_SCUMM_7_8
 void ScummEngine_v8::scummLoop_handleSaveLoad() {
-	ScummEngine::scummLoop_handleSaveLoad();
+	if (_saveLoadFlag == 1) {
+		createInternalSaveStateThumbnail();
+	}
 
-	removeBlastObjects();
+	// Needed for newer savegames saved within the original GUI
+	if (_loadFromLauncher && VAR_GAME_LOADED != 0xFF) {
+		_loadFromLauncher = false;
+		VAR(VAR_GAME_LOADED) = 1;
+		return;
+	}
+
+	ScummEngine::scummLoop_handleSaveLoad();
 }
 #endif
 
@@ -2943,6 +3092,13 @@ void ScummEngine::restart() {
 
 	// Re-run bootscript
 	runBootscript();
+}
+
+bool ScummEngine::isUsingOriginalGUI() {
+	if (_game.version == 8)
+		return _useOriginalGUI;
+
+	return false;
 }
 
 void ScummEngine::runBootscript() {

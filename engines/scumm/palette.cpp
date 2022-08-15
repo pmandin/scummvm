@@ -795,7 +795,10 @@ void ScummEngine::palManipulateInit(int resID, int start, int end, int time) {
 	// This function is actually a nullsub in Indy4 Amiga.
 	// It might very well be a nullsub in other Amiga games, but for now I
 	// limit this to Indy4 Amiga, since that is the only game I can check.
-	if (_game.platform == Common::kPlatformAmiga && _game.id == GID_INDY4)
+	// UPDATE: Disable it for EGA mode, too. The original does not handle this. For
+	// Indy4 they just disabled the EGA mode completely. I have tried to make an EGA
+	// implementation, but it looks glitchy and unpleasant.
+	if ((_game.platform == Common::kPlatformAmiga && _game.id == GID_INDY4) || _enableEGADithering)
 		return;
 
 	byte *string1 = getStringAddress(resID);
@@ -838,6 +841,9 @@ void ScummEngine::palManipulateInit(int resID, int start, int end, int time) {
 
 void ScummEngine_v6::palManipulateInit(int resID, int start, int end, int time) {
 	const byte *new_pal;
+
+	if (_enableEGADithering)
+		return;
 
 	new_pal = getPalettePtr(resID, _roomResource);
 
@@ -981,7 +987,7 @@ void ScummEngine::setShadowPalette(int redScale, int greenScale, int blueScale, 
 }
 
 byte egaFindBestMatch(int r, int g, int b) {
-	// This mostly like the normal EGA palette, but a bit different
+	// This is almost like the normal EGA palette, but a bit different
 	static const byte matchPalette[] = {
 		0x00, 0x00, 0x00, 	0x00, 0x00, 0xAB, 	0x00, 0xAB, 0x00, 	0x00, 0xAB, 0xAB,
 		0xAB, 0x00, 0x00, 	0xAB, 0x00, 0xAB, 	0xAB, 0x57, 0x00, 	0xAB, 0xAB, 0xAB,
@@ -1496,6 +1502,59 @@ const byte *ScummEngine::getPalettePtr(int palindex, int room) {
 		assert(cptr);
 	}
 	return cptr;
+}
+
+uint32 ScummEngine::getPaletteColorFromRGB(byte *palette, byte r, byte g, byte b) {
+	uint32 color, black = 0x00, white = 0xFF;
+
+	if ((r == 0xFF && b == 0xFF && g == 0xFF) || (r == 0x00 && g == 0x00 && b == 0x00)) {
+		fetchBlackAndWhite(black, white, palette, 256);
+
+		if (!r) {
+			color = black;
+		} else {
+			color = white;
+		}
+	} else {
+		color = findClosestPaletteColor(palette, 256, r, g, b);
+	}
+
+	return color;
+}
+
+uint32 ScummEngine::getPackedRGBColorFromPalette(byte *palette, uint32 color) {
+	return palette[3 * color] | (palette[3 * color + 1] << 8) | (palette[3 * color + 2] << 16);
+}
+
+void ScummEngine::fetchBlackAndWhite(uint32 &black, uint32 &white, byte *palette, int paletteEntries) {
+	int max = 0;
+	int r, g, b;
+	int componentsSum;
+	int min = 1000;
+
+	for (int elementId = 0; elementId < paletteEntries; elementId++) {
+		r = palette[0];
+		g = palette[1];
+		b = palette[2];
+
+		componentsSum = r + g + b;
+		if (elementId > 0 && componentsSum >= max) {
+			max = componentsSum;
+			white = elementId;
+		}
+
+		if (componentsSum <= min) {
+			min = componentsSum;
+			black = elementId;
+		}
+
+		palette += 3;
+	}
+}
+
+uint32 ScummEngine::findClosestPaletteColor(byte *palette, int paletteLength, byte r, byte g, byte b) {
+	_pl.setPalette(palette, paletteLength);
+	return (uint32)_pl.findBestColor(r, g, b, true);
 }
 
 void ScummEngine::updatePalette() {

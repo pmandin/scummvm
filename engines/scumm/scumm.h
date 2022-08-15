@@ -38,6 +38,7 @@
 #include "common/textconsole.h"
 #include "graphics/surface.h"
 #include "graphics/sjis.h"
+#include "graphics/palette.h"
 
 #include "scumm/gfx.h"
 #include "scumm/detection.h"
@@ -386,6 +387,7 @@ public:
 	ResourceManager *_res = nullptr;
 
 	bool _enableEnhancements = false;
+	bool _useOriginalGUI = true;
 	bool _enableAudioOverride = false;
 
 protected:
@@ -473,22 +475,24 @@ protected:
 	virtual void clearClickedStatus();
 
 	// Cursor/palette
-	void updateCursor();
+	virtual void updateCursor();
 	virtual void animateCursor() {}
 	virtual void updatePalette();
-
+	virtual void setDefaultCursor() {};
+	virtual void setCursorTransparency(int a) {};
 	virtual void resetCursors() {}
 
 public:
 	void pauseGame();
 	void restart();
+	bool isUsingOriginalGUI();
 
 protected:
 	Dialog *_pauseDialog = nullptr;
 	Dialog *_messageDialog = nullptr;
 	Dialog *_versionDialog = nullptr;
 
-	void confirmExitDialog();
+	virtual void confirmExitDialog();
 	void confirmRestartDialog();
 	void pauseDialog();
 	void messageDialog(const Common::U32String &message);
@@ -619,6 +623,7 @@ protected:
 	void loadResource(Common::Serializer &ser, ResType type, ResId idx);
 	void loadResourceOLD(Common::Serializer &ser, ResType type, ResId idx);	// "Obsolete"
 
+	void copyHeapSaveGameToFile(int slot, const char *saveName);
 	virtual Common::SeekableReadStream *openSaveFileForReading(int slot, bool compat, Common::String &fileName);
 	virtual Common::WriteStream *openSaveFileForWriting(int slot, bool compat, Common::String &fileName);
 
@@ -657,6 +662,9 @@ protected:
 	byte _currentScript = 0xFF; // Let debug() work on init stage
 	int _scummStackPos = 0;
 	int _vmStack[256];
+
+	char _engineVersionString[50];
+	char _dataFileVersionString[50];
 
 	OpcodeEntry _opcodes[256];
 
@@ -962,6 +970,7 @@ public:
 protected:
 	ColorCycle _colorCycle[16];	// Palette cycles
 	uint8 _colorUsedByCycle[256];
+	Graphics::PaletteLookup _pl; // Used by the internal GUI
 
 	uint32 _ENCD_offs = 0, _EXCD_offs = 0;
 	uint32 _CLUT_offs = 0, _EPAL_offs = 0;
@@ -1004,6 +1013,8 @@ protected:
 	void drawRoomObjects(int arg);
 	void drawRoomObject(int i, int arg);
 	void drawBox(int x, int y, int x2, int y2, int color);
+	void drawLine(int x1, int y1, int x2, int y2, int color);
+	void drawPixel(VirtScreen *vs, int x, int y, int16 color, bool useBackbuffer = false);
 
 	void moveScreen(int dx, int dy, int height);
 
@@ -1041,9 +1052,14 @@ protected:
 	void stopCycle(int i);
 	virtual void palManipulateInit(int resID, int start, int end, int time);
 	void palManipulate();
+	uint32 findClosestPaletteColor(byte *palette, int paletteLength, byte r, byte g, byte b);
+
 public:
 	uint8 *getHEPaletteSlot(uint16 palSlot);
 	uint16 get16BitColor(uint8 r, uint8 g, uint8 b);
+	uint32 getPaletteColorFromRGB(byte *palette, byte r, byte g, byte b);
+	uint32 getPackedRGBColorFromPalette(byte *palette, uint32 color);
+	void fetchBlackAndWhite(uint32 &black, uint32 &white, byte *palette, int paletteEntries);
 	int remapPaletteColor(int r, int g, int b, int threshold);		// Used by Actor::remapActorPalette
 	void readPCEPalette(const byte **ptr, byte **dest, int numEntries);
 	void colorPCEToRGB(uint16 color, byte *r, byte *g, byte *b);
@@ -1118,7 +1134,7 @@ protected:
 	 * If the leftmost bit is set, the strip (background) is dirty
 	 * needs to be redrawn.
 	 *
-	 * The second leftmost bit is set by removeBlastObject() and
+	 * The second leftmost bit is set by restoreBlastObjectsRect() and
 	 * restoreBackground(), but I'm not yet sure why.
 	 */
 	uint32 gfxUsageBits[410 * 3];
@@ -1261,7 +1277,7 @@ protected:
 	void drawString(int a, const byte *msg);
 	void fakeBidiString(byte *ltext, bool ignoreVerb) const;
 	void debugMessage(const byte *msg);
-	void showMessageDialog(const byte *msg);
+	virtual void showMessageDialog(const byte *msg);
 
 	virtual int convertMessageToString(const byte *msg, byte *dst, int dstSize);
 	int convertIntMessage(byte *dst, int dstSize, int var);
@@ -1443,6 +1459,8 @@ public:
 	byte VAR_RIGHTBTN_HOLD = 0xFF;	// V6/V72HE/V7/V8
 	byte VAR_SAVELOAD_SCRIPT = 0xFF;	// V6/V7 (not HE)
 	byte VAR_SAVELOAD_SCRIPT2 = 0xFF;	// V6/V7 (not HE)
+	byte VAR_SAVELOAD_PAGE = 0xFF;		// V8
+	byte VAR_OBJECT_LABEL_FLAG = 0xFF;	// V8
 
 	// V6/V7 specific variables (FT & Sam & Max specific)
 	byte VAR_CHARSET_MASK = 0xFF;

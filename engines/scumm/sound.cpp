@@ -404,7 +404,7 @@ void Sound::playSound(int soundID) {
 		stream = Audio::makeRawStream(sound, size, rate, Audio::FLAG_UNSIGNED);
 		_mixer->playStream(Audio::Mixer::kSFXSoundType, nullptr, stream, soundID);
 	}
-	// WORKAROUND bug # 1311447
+	// WORKAROUND bug #2221
 	else if (READ_BE_UINT32(ptr) == 0x460e200d) {
 		// This sound resource occurs in the Macintosh version of Monkey Island.
 		// I do now know whether it is used in any place other than the one
@@ -1193,12 +1193,6 @@ void Sound::pauseSounds(bool pause) {
 	if (_vm->_imuse)
 		_vm->_imuse->pause(pause);
 
-	// Don't pause sounds if the game isn't active
-	// FIXME - this is quite a nasty hack, replace with something cleaner, and w/o
-	// having to access member vars directly!
-	if (!_vm->_roomResource)
-		return;
-
 	_soundsPaused = pause;
 
 #ifdef ENABLE_SCUMM_7_8
@@ -1209,7 +1203,7 @@ void Sound::pauseSounds(bool pause) {
 
 	_mixer->pauseAll(pause);
 
-	if ((_vm->_game.features & GF_AUDIOTRACKS) && _vm->VAR(_vm->VAR_MUSIC_TIMER) > 0) {
+	if ((_vm->_game.features & GF_AUDIOTRACKS) && _vm->VAR_MUSIC_TIMER != 0xFF && _vm->VAR(_vm->VAR_MUSIC_TIMER) > 0) {
 		if (pause)
 			stopCDTimer();
 		else
@@ -1715,7 +1709,7 @@ int ScummEngine::readSoundResource(ResId idx) {
 	case MKTAG('T','A','L','K'):
 	case MKTAG('D','I','G','I'):
 	case MKTAG('C','r','e','a'):
-	case 0x460e200d:	// WORKAROUND bug # 1311447
+	case 0x460e200d:	// WORKAROUND bug #2221
 		_fileHandle->seek(-12, SEEK_CUR);
 		total_size = _fileHandle->readUint32BE();
 		ptr = _res->createResource(rtSound, idx, total_size);

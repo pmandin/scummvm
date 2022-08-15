@@ -917,18 +917,32 @@ void MacText::render(int from, int to, int shadow) {
 	int w = MIN(_maxWidth, _textMaxWidth);
 	ManagedSurface *surface = shadow ? _shadowSurface : _surface;
 
-	for (int i = from; i <= to; i++) {
+	int myFrom = from, myTo = to + 1, delta = 1;
+
+	if (_wm->_language == Common::HE_ISR) {
+		myFrom = to;
+		myTo = from - 1;
+		delta = -1;
+	}
+
+	for (int i = myFrom; i != myTo; i += delta) {
 		int xOffset = getAlignOffset(i);
 		xOffset++;
 
+		int start = 0, end = _textLines[i].chunks.size();
+		if (_wm->_language == Common::HE_ISR) {
+			start = _textLines[i].chunks.size() - 1;
+			end = -1;
+		}
+
 		int maxAscentForRow = 0;
-		for (uint j = 0; j < _textLines[i].chunks.size(); j++) {
+		for (int j = start; j != end; j += delta) {
 			if (_textLines[i].chunks[j].font->getFontAscent() > maxAscentForRow)
 				maxAscentForRow = _textLines[i].chunks[j].font->getFontAscent();
 		}
 
 		// TODO: _textMaxWidth, when -1, was not rendering ANY text.
-		for (uint j = 0; j < _textLines[i].chunks.size(); j++) {
+		for (int j = start; j != end; j += delta) {
 			debug(9, "MacText::render: line %d[%d] h:%d at %d,%d (%s) fontid: %d on %dx%d, fgcolor: %d bgcolor: %d, font: %p",
 				  i, j, _textLines[i].height, xOffset, _textLines[i].y, _textLines[i].chunks[j].text.encode().c_str(),
 				  _textLines[i].chunks[j].fontId, _surface->w, _surface->h, _textLines[i].chunks[j].fgcolor, _bgcolor,
@@ -947,7 +961,10 @@ void MacText::render(int from, int to, int shadow) {
 				_textLines[i].chunks[j].getFont()->drawString(surface, str, xOffset, _textLines[i].y + yOffset, w, shadow ? _wm->_colorBlack : _textLines[i].chunks[j].fgcolor, Graphics::kTextAlignLeft, 0, true);
 				xOffset += _textLines[i].chunks[j].getFont()->getStringWidth(str);
 			} else {
-				_textLines[i].chunks[j].getFont()->drawString(surface, convertBiDiU32String(_textLines[i].chunks[j].text), xOffset, _textLines[i].y + yOffset, w, shadow ? _wm->_colorBlack : _textLines[i].chunks[j].fgcolor, Graphics::kTextAlignLeft, 0, true);
+				if (_wm->_language == Common::HE_ISR)
+					_textLines[i].chunks[j].getFont()->drawString(surface, convertBiDiU32String(_textLines[i].chunks[j].text, Common::BIDI_PAR_RTL), xOffset, _textLines[i].y + yOffset, w, shadow ? _wm->_colorBlack : _textLines[i].chunks[j].fgcolor, Graphics::kTextAlignLeft, 0, true);
+				else
+					_textLines[i].chunks[j].getFont()->drawString(surface, convertBiDiU32String(_textLines[i].chunks[j].text), xOffset, _textLines[i].y + yOffset, w, shadow ? _wm->_colorBlack : _textLines[i].chunks[j].fgcolor, Graphics::kTextAlignLeft, 0, true);
 				xOffset += _textLines[i].chunks[j].getFont()->getStringWidth(_textLines[i].chunks[j].text);
 			}
 		}

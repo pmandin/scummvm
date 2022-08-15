@@ -91,6 +91,7 @@ private:
 	int _outputSampleRate;
 
 	int _maxQueuedStreams; // maximum number of streams which can be queued before they are played
+	int _nominalBufferCount;
 
 	int _currentSpeechVolume, _currentSpeechFrequency, _currentSpeechPan;
 	int _curMixerMusicVolume, _curMixerSpeechVolume, _curMixerSFXVolume;
@@ -373,6 +374,9 @@ public:
 	void diMUSEQueryStream(int soundId, int32 &bufSize, int32 &criticalSize, int32 &freeSpace, int &paused);
 	int diMUSEFeedStream(int soundId, uint8 *srcBuf, int32 sizeToFeed, int paused);
 	int diMUSELipSync(int soundId, int syncId, int msPos, int32 &width, int32 &height);
+	int diMUSEGetMusicGroupVol();
+	int diMUSEGetSFXGroupVol();
+	int diMUSEGetVoiceGroupVol();
 	int diMUSESetMusicGroupVol(int volume);
 	int diMUSESetSFXGroupVol(int volume);
 	int diMUSESetVoiceGroupVol(int volume);
@@ -392,6 +396,7 @@ public:
 	int clampNumber(int value, int minValue, int maxValue);
 	int clampTuning(int value, int minValue, int maxValue);
 	int checkHookId(int &trackHookId, int sampleHookId);
+	int roundRobinSetBufferCount();
 
 	// CMDs
 	int cmdsHandleCmd(int cmd, uint8 *ptr = nullptr,

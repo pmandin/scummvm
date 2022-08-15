@@ -10004,6 +10004,32 @@ static const uint16 laurabow2CDPatchFixAct5FinaleMusic[] = {
 	PATCH_END
 };
 
+// During the introduction in room 110 the music is cut off in the CD version
+//  instead of waiting for it to complete. This is the same bug as above where
+//  changes to the newer Sound class broke a script that worked in floppy.
+//
+// We fix this in the same was as the Act 5 music by testing Sound:handle.
+//
+// Applies to: All CD versions
+// Responsible method: sCartoon:changeState(26)
+static const uint16 laurabow2CDSignatureFixIntroMusic[] = {
+	SIG_MAGICDWORD,
+	0x38, SIG_UINT16(0x00ab),           // pushi 00ab [ prevSignal ]
+	0x76,                               // push0
+	0x81, 0x66,                         // lag 66
+	0x4a, 0x04,                         // send 04 [ gameMusic1 prevSignal? ]
+	0x36,                               // push
+	0x35, 0xff,                         // ldi ff
+	SIG_END
+};
+
+static const uint16 laurabow2CDPatchFixIntroMusic[] = {
+	0x38, PATCH_SELECTOR16(handle),     // pushi handle
+	PATCH_ADDTOOFFSET(+6),
+	0x35, 0x00,                         // ldi 00
+	PATCH_END
+};
+
 // LB2CD reduces the music volume significantly during the introduction when
 //  characters talk while disembarking the ship in room 120. This is done so
 //  that their speech can be heard but it also occurs in text-only mode.
@@ -10149,6 +10175,7 @@ static const SciScriptPatcherEntry laurabow2Signatures[] = {
 	{  true,   560, "CD: painting closing immediately",               1, laurabow2CDSignaturePaintingClosing,            laurabow2CDPatchPaintingClosing },
 	{  true,     0, "CD: fix problematic icon bar",                   1, laurabow2CDSignatureFixProblematicIconBar,      laurabow2CDPatchFixProblematicIconBar },
 	{  true,    90, "CD: fix yvette's tut response",                  1, laurabow2CDSignatureFixYvetteTutResponse,       laurabow2CDPatchFixYvetteTutResponse },
+	{  true,   110, "CD: fix intro music",                            1, laurabow2CDSignatureFixIntroMusic,              laurabow2CDPatchFixIntroMusic },
 	{  true,   350, "CD/Floppy: museum party fix entering south 1/2", 1, laurabow2SignatureMuseumPartyFixEnteringSouth1, laurabow2PatchMuseumPartyFixEnteringSouth1 },
 	{  true,   350, "CD/Floppy: museum party fix entering south 2/2", 1, laurabow2SignatureMuseumPartyFixEnteringSouth2, laurabow2PatchMuseumPartyFixEnteringSouth2 },
 	{  true,   430, "CD/Floppy: make wired east door persistent",     1, laurabow2SignatureRememberWiredEastDoor,        laurabow2PatchRememberWiredEastDoor },
@@ -11703,6 +11730,35 @@ static const uint16 pq1vgaPatchFloatOutsideCarols2[] = {
 	PATCH_END
 };
 
+// When all the poker players fold, the game displays the message "You wins."
+//  instead of "You win.". The script that builds the string compares the wrong
+//  objects to see who the winner is, and so it always adds the final "s".
+//
+// We fix this by comparing the correct objects.
+//
+// Applies to: English Floppy
+// Responsible method: HandList:winner
+static const uint16 pq1vgaSignaturePokerWinnerMessage[] = {
+	0x35, 0x00,                          // ldi 00
+	0xa3, 0x4a,                          // sal 4a   [ local74 = 0 ]
+	0x7c,                                // pushSelf [ hand1First or allHands ]
+	0x72, SIG_UINT16(0x033c),            // lofsa hand1
+	0x1c,                                // ne?      [ always true ]
+	SIG_ADDTOOFFSET(+51),
+	SIG_MAGICDWORD,
+	0x8d, 0x06,                          // lst 06 [ winning hand ]
+	0x72, SIG_UINT16(0x033c),            // lofsa hand1
+	0x1a,                                // eq?
+	SIG_END
+};
+
+static const uint16 pq1vgaPatchPokerWinnerMessage[] = {
+	0x76,                                // push0
+	0xab, 0x4a,                          // ssl 4a [ local74 = 0 ]
+	0x8d, 0x06,                          // lst 06 [ winning hand ]
+	PATCH_END
+};
+
 // The GOG release includes New Rising Sun's script patches which throttle speed
 //  in core classes. Since we do our own speed throttling, we patch the scripts
 //  back to the original code for compatibility.
@@ -11747,6 +11803,7 @@ static const SciScriptPatcherEntry pq1vgaSignatures[] = {
 	{  true,    30, "float outside carol's (1/2)",                    7, pq1vgaSignatureFloatOutsideCarols1,  pq1vgaPatchFloatOutsideCarols1 },
 	{  true,    30, "float outside carol's (2/2)",                    1, pq1vgaSignatureFloatOutsideCarols2,  pq1vgaPatchFloatOutsideCarols2 },
 	{  true,   152, "getting stuck while briefing is about to start", 1, pq1vgaSignatureBriefingGettingStuck, pq1vgaPatchBriefingGettingStuck },
+	{  true,   156, "poker winner message",                           1, pq1vgaSignaturePokerWinnerMessage,   pq1vgaPatchPokerWinnerMessage },
 	{  true,   341, "put gun in locker bug",                          1, pq1vgaSignaturePutGunInLockerBug,    pq1vgaPatchPutGunInLockerBug },
 	{  true,   500, "map save/restore bug",                           2, pq1vgaSignatureMapSaveRestoreBug,    pq1vgaPatchMapSaveRestoreBug },
 	{  true,   928, "Narrator lockup fix",                            1, sciNarratorLockupSignature,          sciNarratorLockupPatch },

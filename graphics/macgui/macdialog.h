@@ -44,16 +44,29 @@
  *
  */
 
-#ifndef WAGE_DIALOG_H
-#define WAGE_DIALOG_H
+#ifndef GRAPHICS_MACGUI_MACDIALOG_H
+#define GRAPHICS_MACGUI_MACDIALOG_H
 
-namespace Wage {
+#include "common/str.h"
+#include "common/rect.h"
 
-struct DialogButton {
+namespace Graphics {
+
+class Font;
+class ManagedSurface;
+
+class MacText;
+class MacWindowManager;
+
+enum {
+	kMacDialogQuitRequested = -2
+};
+
+struct MacDialogButton {
 	Common::String text;
 	Common::Rect bounds;
 
-	DialogButton(const char *t, int x1, int y1, int w, int h) {
+	MacDialogButton(const char *t, int x1, int y1, int w, int h) {
 		text = t;
 		bounds.left = x1;
 		bounds.top = y1;
@@ -62,32 +75,38 @@ struct DialogButton {
 	}
 };
 
-typedef Common::Array<DialogButton *> DialogButtonArray;
+typedef Common::Array<MacDialogButton *> MacDialogButtonArray;
 
-class Dialog {
+class MacDialog {
 public:
-	Dialog(Gui *gui, int width, const char *text, DialogButtonArray *buttons, uint defaultButton);
-	~Dialog();
+	MacDialog(ManagedSurface *screen, MacWindowManager *wm,  int width, MacText *mactext, int maxTextWidth, MacDialogButtonArray *buttons, uint defaultButton);
+	~MacDialog();
 
 	int run();
 
 private:
-	Gui *_gui;
-	Graphics::ManagedSurface _tempSurface;
+	ManagedSurface *_screen;
+	MacWindowManager *_wm;
+	ManagedSurface *_tempSurface;
 	Common::Rect _bbox;
-	Common::String _text;
+	Common::Rect _r;
+	MacText *_mactext;
+	int _maxTextWidth;
 
-	const Graphics::Font *_font;
-	DialogButtonArray *_buttons;
-	int _pressedButton;
+	const Font *_font;
+	MacDialogButtonArray *_buttons;
 	uint _defaultButton;
 	bool _mouseOverPressedButton;
 
+public:
+	int _pressedButton;
 	bool _needsRedraw;
 
 private:
-	const Graphics::Font *getDialogFont();
+	const Font *getDialogFont();
 	void drawOutline(Common::Rect &bounds, int *spec, int speclen);
+
+public:
 	void paint();
 	void mouseMove(int x, int y);
 	void mouseClick(int x, int y);

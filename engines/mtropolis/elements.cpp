@@ -425,7 +425,7 @@ MovieResizeFilter::~MovieResizeFilter() {
 MovieElement::MovieElement()
 	: _cacheBitmap(false), _alternate(false), _playEveryFrame(false), _reversed(false), _haveFiredAtLastCel(false),
 	  _haveFiredAtFirstCel(false), _shouldPlayIfNotPaused(true), _needsReset(true), _currentPlayState(kMediaStateStopped),
-	  _assetID(0), _maxTimestamp(0), _timeScale(0), _currentTimestamp(0), _volume(100), _playRange(IntRange::create(0, 0)),
+	  _assetID(0), _maxTimestamp(0), _timeScale(0), _currentTimestamp(0), _volume(100),
 	  _displayFrame(nullptr), _runtime(nullptr) {
 }
 
@@ -434,6 +434,8 @@ MovieElement::~MovieElement() {
 		_unloadSignaller->removeReceiver(this);
 	if (_playMediaSignaller)
 		_playMediaSignaller->removeReceiver(this);
+
+	stopSubtitles();
 }
 
 bool MovieElement::load(ElementLoaderContext &context, const Data::MovieElement &data) {
@@ -487,17 +489,17 @@ VThreadState MovieElement::consumeCommand(Runtime *runtime, const Common::Shared
 	// The reaction to the Play command should be to fire Unpaused and then fire Played.
 	// At First Cel is NOT fired by Play commands for some reason.
 
-	if (Event::create(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
+	if (Event(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
 		if (_paused)
 		{
 			_paused = false;
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kUnpause, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kUnpause, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->sendMessageOnVThread(dispatch);
 		}
 
 		{
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->sendMessageOnVThread(dispatch);
 		}
@@ -511,16 +513,18 @@ VThreadState MovieElement::consumeCommand(Runtime *runtime, const Common::Shared
 
 		return kVThreadReturn;
 	}
-	if (Event::create(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
+	if (Event(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
 		if (!_paused) {
+			stopSubtitles();
+
 			_paused = true;
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->sendMessageOnVThread(dispatch);
 		}
 
 		{
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->sendMessageOnVThread(dispatch);
 		}
@@ -578,11 +582,23 @@ void MovieElement::activate() {
 	_playMediaSignaller = project->notifyOnPlayMedia(this);
 
 	_maxTimestamp = qtDecoder->getDuration().convertToFramerate(qtDecoder->getTimeScale()).totalNumberOfFrames();
-	_playRange = IntRange::create(0, 0);
+	_playRange = IntRange(0, 0);
 	_currentTimestamp = 0;
 
 	if (_name.empty())
 		_name = project->getAssetNameByID(_assetID);
+
+	const SubtitleTables &subtitleTables = project->getSubtitles();
+	if (subtitleTables.assetMapping) {
+		const Common::String *subSetIDPtr = subtitleTables.assetMapping->findSubtitleSetForAssetID(_assetID);
+		if (!subSetIDPtr) {
+			Common::String assetName = project->getAssetNameByID(_assetID);
+			subSetIDPtr = subtitleTables.assetMapping->findSubtitleSetForAssetName(assetName);
+		}
+
+		if (subSetIDPtr)
+			_subtitles.reset(new SubtitlePlayer(_runtime, *subSetIDPtr, subtitleTables));
+	}
 }
 
 void MovieElement::deactivate() {
@@ -605,7 +621,7 @@ bool MovieElement::canAutoPlay() const {
 void MovieElement::queueAutoPlayEvents(Runtime *runtime, bool isAutoPlaying) {
 	// At First Cel event fires even if the movie isn't playing, and it fires before Played
 	if (_visible) {
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 		runtime->queueMessage(dispatch);
 	}
@@ -747,6 +763,9 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 			for (MediaCueState *mediaCue : _mediaCues)
 				mediaCue->checkTimestampChange(runtime, _currentTimestamp, targetTS, checkContinuously, true);
 
+			if (_subtitles)
+				_subtitles->update(_currentTimestamp * 1000 / _timeScale, targetTS * 1000 / _timeScale);
+
 			_currentTimestamp = targetTS;
 
 			if (_currentTimestamp == maxTS) {
@@ -761,15 +780,16 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 		if (triggerEndEvents) {
 			if (!_loop) {
 				_paused = true;
+				stopSubtitles();
 
-				Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
+				Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
 				Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 				runtime->queueMessage(dispatch);
 
 				_currentPlayState = kMediaStateStopped;
 			}
 
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtLastCel, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kAtLastCel, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->queueMessage(dispatch);
 
@@ -778,6 +798,8 @@ void MovieElement::playMedia(Runtime *runtime, Project *project) {
 			_currentPlayState = kMediaStateStopped;
 
 			if (_loop) {
+				stopSubtitles();
+
 				_needsReset = true;
 				_currentTimestamp = _reversed ? realRange.max : realRange.min;
 				_contentsDirty = true;
@@ -797,8 +819,20 @@ void MovieElement::onSegmentUnloaded(int segmentIndex) {
 IntRange MovieElement::computeRealRange() const {
 	// The default range for movies is 0..0, which is interpreted as unset
 	if (_playRange.min == 0 && _playRange.max == 0)
-		return IntRange::create(0, _maxTimestamp);
+		return IntRange(0, _maxTimestamp);
 	return _playRange;
+}
+
+void MovieElement::stopSubtitles() {
+	if (_subtitles)
+		_subtitles->stop();
+}
+
+void MovieElement::onPauseStateChanged() {
+	VisualElement::onPauseStateChanged();
+
+	if (_paused && _subtitles)
+		_subtitles->stop();
 }
 
 MiniscriptInstructionOutcome MovieElement::scriptSetRange(MiniscriptThread *thread, const DynamicValue &value) {
@@ -863,7 +897,7 @@ MiniscriptInstructionOutcome MovieElement::scriptSetRangeStart(MiniscriptThread 
 	if (rangeMax < asInteger)
 		rangeMax = asInteger;
 
-	return scriptSetRangeTyped(thread, IntRange::create(asInteger, rangeMax));
+	return scriptSetRangeTyped(thread, IntRange(asInteger, rangeMax));
 }
 
 MiniscriptInstructionOutcome MovieElement::scriptSetRangeEnd(MiniscriptThread *thread, const DynamicValue &value) {
@@ -877,7 +911,7 @@ MiniscriptInstructionOutcome MovieElement::scriptSetRangeEnd(MiniscriptThread *t
 	if (rangeMin > asInteger)
 		rangeMin = asInteger;
 
-	return scriptSetRangeTyped(thread, IntRange::create(rangeMin, asInteger));
+	return scriptSetRangeTyped(thread, IntRange(rangeMin, asInteger));
 }
 
 MiniscriptInstructionOutcome MovieElement::scriptRangeWriteRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
@@ -936,6 +970,8 @@ VThreadState MovieElement::startPlayingTask(const StartPlayingTaskData &taskData
 
 		_shouldPlayIfNotPaused = true;
 		_paused = false;
+
+		stopSubtitles();
 	}
 
 	return kVThreadReturn;
@@ -962,6 +998,8 @@ VThreadState MovieElement::seekToTimeTask(const SeekToTimeTaskData &taskData) {
 	}
 	_needsReset = true;
 	_contentsDirty = true;
+
+	stopSubtitles();
 
 	return kVThreadReturn;
 }
@@ -1067,7 +1105,7 @@ MiniscriptInstructionOutcome ImageElement::scriptSetFlushPriority(MiniscriptThre
 
 MToonElement::MToonElement()
 	: _cacheBitmap(false), _maintainRate(false), _assetID(0), _rateTimes100000(0), _flushPriority(0), _celStartTimeMSec(0),
-	  _isPlaying(false), _runtime(nullptr), _renderedFrame(0), _playRange(IntRange::create(1, 1)), _cel(1) {
+	  _isPlaying(false), _runtime(nullptr), _renderedFrame(0), _playRange(IntRange(1, 1)), _cel(1) {
 }
 
 MToonElement::~MToonElement() {
@@ -1136,7 +1174,7 @@ MiniscriptInstructionOutcome MToonElement::writeRefAttribute(MiniscriptThread *t
 }
 
 VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
-	if (Event::create(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
+	if (Event(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
 		StartPlayingTaskData *startPlayingTaskData = runtime->getVThread().pushTask("MToonElement::startPlayingTask", this, &MToonElement::startPlayingTask);
 		startPlayingTaskData->runtime = runtime;
 
@@ -1146,7 +1184,7 @@ VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::Shared
 
 		return kVThreadReturn;
 	}
-	if (Event::create(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
+	if (Event(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
 		ChangeFlagTaskData *becomeVisibleTaskData = runtime->getVThread().pushTask("MToonElement::changeVisibilityTask", static_cast<VisualElement *>(this), &MToonElement::changeVisibilityTask);
 		becomeVisibleTaskData->desiredFlag = false;
 		becomeVisibleTaskData->runtime = runtime;
@@ -1177,7 +1215,7 @@ void MToonElement::activate() {
 	_metadata = _cachedMToon->getMetadata();
 
 	_playMediaSignaller = project->notifyOnPlayMedia(this);
-	_playRange = IntRange::create(1, _metadata->frames.size());
+	_playRange = IntRange(1, _metadata->frames.size());
 
 	if (_name.empty())
 		_name = project->getAssetNameByID(_assetID);
@@ -1301,13 +1339,13 @@ VThreadState MToonElement::startPlayingTask(const StartPlayingTaskData &taskData
 
 	// These send in reverse order
 	{
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 		taskData.runtime->sendMessageOnVThread(dispatch);
 	}
 
 	{
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 		taskData.runtime->sendMessageOnVThread(dispatch);
 	}
@@ -1319,7 +1357,7 @@ VThreadState MToonElement::stopPlayingTask(const StopPlayingTaskData &taskData) 
 	_contentsDirty = true;
 	_isPlaying = false;
 
-	Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+	Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
 	Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 	taskData.runtime->sendMessageOnVThread(dispatch);
 
@@ -1402,11 +1440,11 @@ void MToonElement::playMedia(Runtime *runtime, Project *project) {
 		bool atLastCel = (targetCel == (isReversed ? minCel : maxCel)) && !(ranPastEnd && alreadyAtLastCel);
 
 		if (atFirstCel) {
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kAtFirstCel, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->queueMessage(dispatch);
 		} else if (atLastCel) {		// These can not fire from the same frame transition (see notes)
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kAtLastCel, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kAtLastCel, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->queueMessage(dispatch);
 		}
@@ -1414,7 +1452,7 @@ void MToonElement::playMedia(Runtime *runtime, Project *project) {
 		if (ranPastEnd && !_loop) {
 			_paused = true;
 
-			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
+			Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kPause, 0), DynamicValue(), getSelfReference()));
 			Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 			runtime->queueMessage(dispatch);
 		}
@@ -1513,7 +1551,7 @@ MiniscriptInstructionOutcome MToonElement::scriptSetRangeTyped(MiniscriptThread 
 
 	if (isInvertedRange) {
 		// coverity[swapped_arguments]
-		_playRange = IntRange::create(intRange.max, intRange.min);
+		_playRange = IntRange(intRange.max, intRange.min);
 		if (_rateTimes100000 > 0)
 			_rateTimes100000 = -_rateTimes100000;
 	} else {
@@ -1952,8 +1990,8 @@ MiniscriptInstructionOutcome TextLabelElement::TextLabelLineWriteInterface::refA
 }
 
 SoundElement::SoundElement()
-	: _leftVolume(0), _rightVolume(0), _balance(0), _assetID(0), _finishTime(0),
-	  _shouldPlayIfNotPaused(true), _needsReset(true), _runtime(nullptr) {
+	: _leftVolume(0), _rightVolume(0), _balance(0), _assetID(0), _startTime(0), _finishTime(0), _cueCheckTime(0),
+	  _startTimestamp(0), _shouldPlayIfNotPaused(true), _needsReset(true), _runtime(nullptr) {
 }
 
 SoundElement::~SoundElement() {
@@ -2004,13 +2042,13 @@ MiniscriptInstructionOutcome SoundElement::writeRefAttribute(MiniscriptThread *t
 }
 
 VThreadState SoundElement::consumeCommand(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
-	if (Event::create(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
+	if (Event(EventIDs::kPlay, 0).respondsTo(msg->getEvent())) {
 		StartPlayingTaskData *startPlayingTaskData = runtime->getVThread().pushTask("SoundElement::startPlayingTask", this, &SoundElement::startPlayingTask);
 		startPlayingTaskData->runtime = runtime;
 
 		return kVThreadReturn;
 	}
-	if (Event::create(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
+	if (Event(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
 		StartPlayingTaskData *startPlayingTaskData = runtime->getVThread().pushTask("SoundElement::stopPlayingTask", this, &SoundElement::stopPlayingTask);
 		startPlayingTaskData->runtime = runtime;
 
@@ -2041,6 +2079,19 @@ void SoundElement::activate() {
 
 	if (_name.empty())
 		_name = project->getAssetNameByID(_assetID);
+
+	const SubtitleTables &subTables = project->getSubtitles();
+	if (subTables.assetMapping) {
+		const Common::String *subtitleSetIDPtr = subTables.assetMapping->findSubtitleSetForAssetID(_assetID);
+		if (!subtitleSetIDPtr) {
+			Common::String assetName = project->getAssetNameByID(_assetID);
+			if (assetName.size() > 0)
+				subtitleSetIDPtr = subTables.assetMapping->findSubtitleSetForAssetName(assetName);
+		}
+
+		if (subtitleSetIDPtr)
+			_subtitlePlayer.reset(new SubtitlePlayer(_runtime, *subtitleSetIDPtr, subTables));
+	}
 }
 
 
@@ -2064,19 +2115,17 @@ void SoundElement::playMedia(Runtime *runtime, Project *project) {
 		if (_paused) {
 			// Goal state is paused
 			// TODO: Track pause time
-			_player.reset();
+			stopPlayer();
 		} else {
 			// Goal state is playing
 			if (_needsReset) {
 				// TODO: Reset to start time
-				_player.reset();
+				stopPlayer();
 				_needsReset = false;
 			}
 
 			if (!_player) {
 				_finishTime = _runtime->getPlayTime() + _metadata->durationMSec;
-
-				_player.reset();
 
 				int normalizedVolume = (_leftVolume + _rightVolume) * 255 / 200;
 				int normalizedBalance = _balance * 127 / 100;
@@ -2084,27 +2133,51 @@ void SoundElement::playMedia(Runtime *runtime, Project *project) {
 				// TODO: Support ranges
 				size_t numSamples = _cachedAudio->getNumSamples(*_metadata);
 				_player.reset(new AudioPlayer(_runtime->getAudioMixer(), normalizedVolume, normalizedBalance, _metadata, _cachedAudio, _loop, 0, 0, numSamples));
+
+				_startTime = runtime->getPlayTime();
+				_cueCheckTime = _startTime;
+				_startTimestamp = 0;
 			}
 
-			// TODO: Check cue points and queue them here
+			uint64 newTime = _runtime->getPlayTime();
+			if (newTime > _cueCheckTime) {
+				uint64 oldTimeRelative = _cueCheckTime - _startTime + _startTimestamp;
+				uint64 newTimeRelative = newTime - _startTime + _startTimestamp;
+
+				_cueCheckTime = newTime;
+
+				if (_subtitlePlayer)
+					_subtitlePlayer->update(oldTimeRelative, newTimeRelative);
+
+				// TODO: Check cue points and queue them here
+			}
+
 			
-			if (!_loop && _runtime->getPlayTime() >= _finishTime) {
+			if (!_loop && newTime >= _finishTime) {
 				// Don't throw out the handle - It can still be playing but we just treat it like it's not.
 				// If it has anything left, then we let it finish and avoid clipping the sound, but we need
 				// to know that the handle is still here so we can actually stop it if the element is
 				// destroyed, since the stream is tied to the CachedAudio.
 
-				Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+				Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
 				Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 				runtime->queueMessage(dispatch);
 
 				_shouldPlayIfNotPaused = false;
+				if (_subtitlePlayer)
+					_subtitlePlayer->stop();
 			}
 		}
 	} else {
 		// Goal state is stopped
-		_player.reset();
+		stopPlayer();
 	}
+}
+
+void SoundElement::stopPlayer() {
+	_player.reset();
+	if (_subtitlePlayer)
+		_subtitlePlayer->stop();
 }
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
@@ -2181,13 +2254,13 @@ void SoundElement::setBalance(int16 balance) {
 VThreadState SoundElement::startPlayingTask(const StartPlayingTaskData &taskData) {
 	// Pushed in reverse order, actual order is Unpaused -> Played
 	{
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kPlay, 0), DynamicValue(), getSelfReference()));
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 		taskData.runtime->sendMessageOnVThread(dispatch);
 	}
 
 	if (_paused) {
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kUnpause, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kUnpause, 0), DynamicValue(), getSelfReference()));
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 		taskData.runtime->sendMessageOnVThread(dispatch);
 
@@ -2202,7 +2275,7 @@ VThreadState SoundElement::startPlayingTask(const StartPlayingTaskData &taskData
 
 VThreadState SoundElement::stopPlayingTask(const StartPlayingTaskData &taskData) {
 	if (_shouldPlayIfNotPaused) {
-		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event::create(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
 		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
 		taskData.runtime->sendMessageOnVThread(dispatch);
 

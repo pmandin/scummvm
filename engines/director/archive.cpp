@@ -171,6 +171,17 @@ Common::String Archive::getName(uint32 tag, uint16 id) const {
 	return resMap[id].name;
 }
 
+Common::SeekableReadStreamEndian *Archive::getMovieResourceIfPresent(uint32 tag) {
+	if (g_director->getVersion() >= 400) {
+		if (_movieChunks.contains(tag) && hasResource(tag, _movieChunks[tag]))
+			return getResource(tag, _movieChunks[tag]);
+	} else if (hasResource(tag, -1)) {
+		return getFirstResource(tag);
+	}
+
+	return nullptr;
+}
+
 Common::Array<uint32> Archive::getResourceTypeList() const {
 	Common::Array<uint32> typeList;
 
@@ -299,10 +310,16 @@ void MacArchive::readTags() {
 	Common::DumpFile out;
 
 	for (uint32 i = 0; i < tagArray.size(); i++) {
-		ResourceMap &resMap = _types[tagArray[i]];
+		ResourceMap resMap;
 		Common::MacResIDArray idArray = _resFork->getResIDArray(tagArray[i]);
 
 		for (uint32 j = 0; j < idArray.size(); j++) {
+			// Avoid assigning invalid entries to _types, because other
+			// functions will assume they exist and are valid if listed.
+			if (_resFork->getResource(tagArray[i], idArray[j]) == nullptr) {
+				continue;
+			}
+
 			Resource &res = resMap[idArray[j]];
 
 			res.offset = res.size = 0; // unused
@@ -312,6 +329,11 @@ void MacArchive::readTags() {
 			debug(3, "Found MacArchive resource '%s' %d: %s", tag2str(tagArray[i]), idArray[j], res.name.c_str());
 			if (ConfMan.getBool("dump_scripts"))
 				dumpChunk(res, out);
+		}
+
+		// Don't assign a 0-entry resMap to _types.
+		if (resMap.size() > 0) {
+			 _types[tagArray[i]] = resMap;
 		}
 	}
 }
@@ -582,22 +604,21 @@ bool RIFXArchive::openStream(Common::SeekableReadStream *stream, uint32 startOff
 		}
 	}
 
-	// Parse the CAS*, if present
-	if (hasResource(MKTAG('C', 'A', 'S', '*'), -1)) {
-		Common::SeekableReadStreamEndian *casStream = getFirstResource(MKTAG('C', 'A', 'S', '*'));
-		readCast(*casStream);
-		delete casStream;
-	}
-
 	// A KEY* must be present
 	if (!hasResource(MKTAG('K', 'E', 'Y', '*'), -1)) {
 		warning("No 'KEY*' resource present");
-		return false;
+	} else {
+		// Parse the KEY*
+		Common::SeekableReadStreamEndian *keyStream = getFirstResource(MKTAG('K', 'E', 'Y', '*'), true);
+		readKeyTable(*keyStream);
+		delete keyStream;
 	}
-	// Parse the KEY*
-	Common::SeekableReadStreamEndian *keyStream = getFirstResource(MKTAG('K', 'E', 'Y', '*'), true);
-	readKeyTable(*keyStream);
-	delete keyStream;
+
+	// Parse the CAS*, if present
+	if (Common::SeekableReadStreamEndian *casStream = getMovieResourceIfPresent(MKTAG('C', 'A', 'S', '*'))) {
+		readCast(*casStream);
+		delete casStream;
+	}
 
 	return true;
 }
@@ -851,10 +872,20 @@ void RIFXArchive::readKeyTable(Common::SeekableReadStreamEndian &keyStream) {
 		uint32 childTag = keyStream.readUint32();
 
 		debugC(2, kDebugLoading, "KEY*: childIndex: %d parentIndex: %d childTag: %s", childIndex, parentIndex, tag2str(childTag));
+
+		// Link cast members to their resources.
 		if (castResMap.contains(parentIndex)) {
 			castResMap[parentIndex].children.push_back(_types[childTag][childIndex]);
 		} else if (castResMap.contains(childIndex)) { // sometimes parent and child index are reversed...
 			castResMap[childIndex].children.push_back(_types[childTag][parentIndex]);
+		}
+
+		// Link the movie to its resources.
+		// The movie has the hardcoded ID 1024, which may collide with a cast member's ID
+		// when there are many chunks. This is not a problem since cast members and
+		// movies use different resource types, so we can tell them apart.
+		if (parentIndex == 1024) {
+			_movieChunks.setVal(childTag, childIndex);
 		}
 	}
 }

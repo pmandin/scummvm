@@ -26,12 +26,12 @@
 
 #include "mtropolis/detection.h"
 
-#define GAMEOPTION_WIDESCREEN_MOD			GUIO_GAMEOPTIONS1
-#define GAMEOPTION_DYNAMIC_MIDI				GUIO_GAMEOPTIONS2
-#define GAMEOPTION_LAUNCH_DEBUG				GUIO_GAMEOPTIONS3
-//#define GAMEOPTION_LAUNCH_BREAK			GUIO_GAMEOPTIONS4	// Disabled due to not being functional
-#define GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS	GUIO_GAMEOPTIONS5
-#define GAMEOPTION_ENABLE_SHORT_TRANSITIONS GUIO_GAMEOPTIONS6
+#define GAMEOPTION_WIDESCREEN_MOD				GUIO_GAMEOPTIONS1
+#define GAMEOPTION_DYNAMIC_MIDI					GUIO_GAMEOPTIONS2
+#define GAMEOPTION_LAUNCH_DEBUG					GUIO_GAMEOPTIONS3
+#define GAMEOPTION_SOUND_EFFECT_SUBTITLES		GUIO_GAMEOPTIONS4
+#define GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS		GUIO_GAMEOPTIONS5
+#define GAMEOPTION_ENABLE_SHORT_TRANSITIONS		GUIO_GAMEOPTIONS6
 
 namespace MTropolis {
 
@@ -52,8 +52,8 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformMacintosh,
-			ADGF_UNSTABLE,
-			GUIO2(GAMEOPTION_WIDESCREEN_MOD, GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS)
+			ADGF_TESTING,
+			GUIO3(GAMEOPTION_WIDESCREEN_MOD, GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS, GAMEOPTION_SOUND_EFFECT_SUBTITLES)
 		},
 		GID_OBSIDIAN,
 		0,
@@ -74,8 +74,8 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformMacintosh,
-			ADGF_UNSTABLE,
-			GUIO2(GAMEOPTION_WIDESCREEN_MOD, GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS)
+			ADGF_TESTING,
+			GUIO3(GAMEOPTION_WIDESCREEN_MOD, GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS, GAMEOPTION_SOUND_EFFECT_SUBTITLES)
 		},
 		GID_OBSIDIAN,
 		0,
@@ -101,8 +101,8 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_UNSTABLE,
-			GUIO2(GAMEOPTION_WIDESCREEN_MOD, GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS)
+			ADGF_TESTING,
+			GUIO3(GAMEOPTION_WIDESCREEN_MOD, GAMEOPTION_AUTO_SAVE_AT_CHECKPOINTS, GAMEOPTION_SOUND_EFFECT_SUBTITLES)
 		},
 		GID_OBSIDIAN,
 		0,
@@ -128,7 +128,7 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::DE_DEU,
 			Common::kPlatformWindows,
-			ADGF_UNSTABLE,
+			ADGF_TESTING,
 			GUIO1(GAMEOPTION_WIDESCREEN_MOD)
 		},
 		GID_OBSIDIAN,
@@ -154,7 +154,7 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformMacintosh,
-			ADGF_DEMO | ADGF_UNSTABLE,
+			ADGF_DEMO | ADGF_TESTING,
 			GUIO1(GAMEOPTION_WIDESCREEN_MOD)
 		},
 		GID_OBSIDIAN,
@@ -181,7 +181,30 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_DEMO | ADGF_UNSTABLE,
+			ADGF_DEMO | ADGF_TESTING,
+			GUIO1(GAMEOPTION_WIDESCREEN_MOD)
+		},
+		GID_OBSIDIAN,
+		0,
+		0,
+	},
+
+	{ // Obsidian PC demo, same as above, with 8.3 file names
+		{
+			"obsidian",
+			"Demo",
+			{
+				{ "OBSIDIAN.EXE",	0, "b6fb0e0df88c1524bcd0c5de9f5e882c", 750080 },
+				{ "OBSIDIAN.R95",	0, "5361ef93e36d722665594b724e0018fd", 183296 },
+				{ "TEXTWORK.R95",	0, "96346d39c4bb04f525edbf06ffe047e0", 148992 },
+				{ "EXPRMNTL.R95",	0, "aa0431c2be37e33883747c61d3e980ff", 108544 },
+				{ "MCURSORS.C95",	0, "47cf6abb95f3c43cdcbdf7ea1de3478d", 145920 },
+				{ "OBSIDI~1.MPL",	0, "643a989213b42cbac319d04676447624", 29096880 },
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_DEMO | ADGF_TESTING,
 			GUIO1(GAMEOPTION_WIDESCREEN_MOD)
 		},
 		GID_OBSIDIAN,
@@ -204,7 +227,7 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_DEMO | ADGF_UNSTABLE,
+			ADGF_DEMO | ADGF_TESTING,
 			GUIO1(GAMEOPTION_WIDESCREEN_MOD)
 		},
 		GID_OBSIDIAN,
@@ -229,7 +252,7 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_DEMO | ADGF_UNSTABLE,
+			ADGF_DEMO | ADGF_TESTING,
 			GUIO0()
 		},
 		GID_OBSIDIAN,
@@ -252,7 +275,7 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_DEMO | ADGF_UNSTABLE,
+			ADGF_DEMO | ADGF_TESTING,
 			GUIO0()
 		},
 		GID_OBSIDIAN,
@@ -275,7 +298,7 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_DEMO | ADGF_UNSTABLE,
+			ADGF_DEMO | ADGF_TESTING,
 			GUIO1(GAMEOPTION_WIDESCREEN_MOD)
 		},
 		GID_OBSIDIAN,
@@ -298,7 +321,7 @@ static const MTropolisGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_DEMO | ADGF_UNSTABLE,
+			ADGF_DEMO | ADGF_TESTING,
 			GUIO1(GAMEOPTION_WIDESCREEN_MOD)
 		},
 		GID_OBSIDIAN,

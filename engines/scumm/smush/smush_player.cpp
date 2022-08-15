@@ -738,6 +738,10 @@ void SmushPlayer::handleNewPalette(int32 subSize, Common::SeekableReadStream &b)
 	setDirtyColors(0, 255);
 }
 
+byte *SmushPlayer::getVideoPalette() {
+	return _pal;
+}
+
 void smush_decode_codec1(byte *dst, const byte *src, int left, int top, int width, int height, int pitch);
 void smush_decode_codec20(byte *dst, const byte *src, int left, int top, int width, int height, int pitch);
 
@@ -1247,7 +1251,7 @@ void SmushPlayer::play(const char *filename, int32 speed, int32 offset, int32 st
 			skipped = 0;
 		if (_updateNeeded) {
 			if (!skipFrame) {
-				// Workaround for bug #2415: "FT DEMO: assertion triggered
+				// WORKAROUND for bug #2415: "FT DEMO: assertion triggered
 				// when playing movie". Some frames there are 384 x 224
 				int w = MIN(_width, _vm->_screenWidth);
 				int h = MIN(_height, _vm->_screenHeight);
