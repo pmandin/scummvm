@@ -252,7 +252,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		GID_MONKEY2			// Support in the original interpreter.
 	};
 
-	_supportsEGADithering = (_game.platform == Common::kPlatformDOS && _game.version > 3 && Common::find(egaModeIDs, &egaModeIDs[ARRAYSIZE(egaModeIDs)], _game.id) != &egaModeIDs[ARRAYSIZE(egaModeIDs)]);
+	_supportsEGADithering = ((_game.version == 6 || (_game.version > 3 && _game.platform == Common::kPlatformDOS)) && Common::find(egaModeIDs, &egaModeIDs[ARRAYSIZE(egaModeIDs)], _game.id) != &egaModeIDs[ARRAYSIZE(egaModeIDs)]);
 
 	if (_game.platform == Common::kPlatformFMTowns && _game.id != GID_LOOM && _game.version == 3)
 		if (ConfMan.getBool("aspect_ratio") && !ConfMan.getBool("trim_fmtowns_to_200_pixels")) {
@@ -265,7 +265,7 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 	switch (_renderMode) {
 	case Common::kRenderHercA:
 	case Common::kRenderHercG:
-		if (_game.version > 2 && _game.id != GID_MONKEY_EGA)
+		if ((_game.version > 2 && _game.id != GID_MONKEY_EGA) || _game.platform != Common::kPlatformDOS)
 			_renderMode = Common::kRenderDefault;
 		break;
 
@@ -277,11 +277,18 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 
 	case Common::kRenderCGA:
 	case Common::kRenderEGA:
+		if ((_game.version >= 4 && !(_game.features & GF_16COLOR) && !_supportsEGADithering)
+			|| (_game.features & GF_OLD256) || (_game.platform != Common::kPlatformDOS && !_supportsEGADithering))
+			_renderMode = Common::kRenderDefault;
+		break;
+
 	case Common::kRenderAmiga:
-		if ((_game.version >= 4 && !(_game.features & GF_16COLOR)
-			&& !(_game.platform == Common::kPlatformAmiga && _renderMode == Common::kRenderEGA)
-			&& !_supportsEGADithering)
-			|| (_game.features & GF_OLD256))
+		if (_game.platform != Common::kPlatformAmiga)
+			_renderMode = Common::kRenderDefault;
+		break;
+
+	case Common::kRenderMacintosh:
+		if (_game.platform != Common::kPlatformMacintosh)
 			_renderMode = Common::kRenderDefault;
 		break;
 
@@ -289,6 +296,11 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		if (_game.platform != Common::kPlatformMacintosh || (_game.id != GID_LOOM && _game.id != GID_INDY3)) {
 			_renderMode = Common::kRenderDefault;
 		}
+		break;
+
+	case Common::kRenderFMTowns:
+		if (_game.platform != Common::kPlatformFMTowns)
+			_renderMode = Common::kRenderDefault;
 		break;
 
 	default:

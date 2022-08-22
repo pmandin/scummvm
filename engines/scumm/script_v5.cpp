@@ -1232,7 +1232,7 @@ void ScummEngine_v5::o5_getActorRoom() {
 	getResultPos();
 	int act = getVarOrDirectByte(PARAM_1);
 
-	// WORKAROUND bug #832: Invalid actor XXX in o5_getActorRoom().
+	// WORKAROUND bug #832: Invalid actor in o5_getActorRoom().
 	//
 	// Script 94-206 is started by script 94-200 this way:
 	//
@@ -1484,6 +1484,36 @@ void ScummEngine_v5::o5_isEqual() {
 			b = 549;
 	}
 
+	// WORKAROUND: The Ultimate Talkie edition of Monkey Island 2 has no
+	// audio for the "Hey spitter" and "C'mon!  What are you?  Afraid?"
+	// lines from the crowd in the spitting contest. It's there in the
+	// 000001e1, 00000661, 00000caf, 000001e8, 0000066c and 00000cba.wav
+	// files, but these resources are not called in this script, and it also
+	// looks like they're not built into the MONSTER.SOU file either, so
+	// these lines remain silent at the moment, although they were voiced.
+	//
+	// Try to detect and skip them, which as much care as possible for any
+	// future update or fan translation which would change this.
+	//
+	// Intentionally not using `_enableEnhancements` for this version.
+	if (_game.id == GID_MONKEY2 && _roomResource == 47 && vm.slot[_currentScript].number == 218 &&
+		var == 0x4000 + 1 && a == vm.localvar[_currentScript][1] && a == b && (b == 7 || b == 13) &&
+		strcmp(_game.variant, "SE Talkie") == 0) {
+		// No need to skip any line if playing in always-prefer-original-text
+		// mode (Bit[588]) where silent lines are expected, or if speech is muted.
+		if (readVar(0x8000 + 588) == 1 && !ConfMan.getBool("speech_mute")) {
+			// Only skip the line when we can detect one and it has no sound prologue.
+			if (memcmp(_scriptPointer + 2, "\x27\x01\x1D", 3) == 0 && memcmp(_scriptPointer + 5, "\xFF\x0A", 2) != 0) {
+				// Cheat and use the next recorded line, but do it in a way so that it
+				// shouldn't be played twice in a row.
+				if (vm.localvar[_currentScript][1] == _scummVars[516])
+					_scummVars[516]++;
+				vm.localvar[_currentScript][1]++;
+				a = -1;
+			}
+		}
+	}
+
 	// HACK: To allow demo script of Maniac Mansion V2
 	// The camera x position is only 100, instead of 180, after game title name scrolls.
 	if (_game.id == GID_MANIAC && _game.version == 2 && (_game.features & GF_DEMO) && isScriptRunning(173) && b == 180)
@@ -1515,7 +1545,12 @@ void ScummEngine_v5::o5_isLessEqual() {
 	int16 a = readVar(var);
 	int16 b = getVarOrDirectWord(PARAM_1);
 
-	// WORKAROUND bug #1266 : Work around a bug in Indy3Town.
+	// WORKAROUND bug #1266: INDY3TOWNS: Biplane controls are haywire.
+	// This is broken under UNZ too; the script does an incorrect signed
+	// comparison, possibly with the intent of checking for a gamepad.
+	//
+	// Since the biplane is unplayable without this, we don't check for
+	// `_enableEnhancements`, and always enable this fix.
 	if (_game.id == GID_INDY3 && (_game.platform == Common::kPlatformFMTowns) &&
 	    (vm.slot[_currentScript].number == 200 || vm.slot[_currentScript].number == 203) &&
 	    _currentRoom == 70 && b == -256) {
@@ -1859,9 +1894,8 @@ void ScummEngine_v5::o5_putActor() {
 	y = getVarOrDirectWord(PARAM_3);
 
 	// WORKAROUND: When enabling the cigar smoke in the captain Smirk
-	// close-up, it turns out that the coordinates were changed in the CD
-	// version's script for no apparent reason. (Were they taken from the
-	// EGA version?)
+	// close-up, it turns out that the coordinates in the CD
+	// version's script were taken from the EGA version.
 	//
 	// The coordinates below are taken from the VGA floppy version. The
 	// "Ultimate Talkie" version also corrects the positions, but uses
@@ -2446,8 +2480,21 @@ void ScummEngine_v5::o5_setOwnerOf() {
 
 void ScummEngine_v5::o5_setState() {
 	int obj, state;
+
 	obj = getVarOrDirectWord(PARAM_1);
 	state = getVarOrDirectByte(PARAM_2);
+
+	// WORKAROUND: The door will glitch if one closes it before using the voodoo
+	// doll on Largo. Script 13-213 triggers the same action without any glitch,
+	// though, since it properly resets the state of the (invisible) laundry claim
+	// ticket part of the door, so we just reuse its setState and setClass calls.
+	if (_game.id == GID_MONKEY2 && _currentRoom == 13 && vm.slot[_currentScript].number == 200 &&
+		obj == 108 && state == 1 && getState(100) != 1 && getState(111) != 2 && _enableEnhancements) {
+		putState(111, 2);
+		markObjectRectAsDirty(111);
+		putClass(111, 160, true);
+	}
+
 	putState(obj, state);
 	markObjectRectAsDirty(obj);
 	if (_bgNeedsRedraw)

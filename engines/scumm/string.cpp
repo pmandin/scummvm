@@ -2017,9 +2017,9 @@ Common::CodePage ScummEngine::getDialogCodePage() const {
 			return Common::kDos862;
 		default:
 			return Common::kWindows1255;
-		}
+		}	
 	default:
-		return Common::kCodePageInvalid;
+		return (_game.version > 7) ? Common::kWindows1252 : Common::kDos850;
 	}
 }
 
