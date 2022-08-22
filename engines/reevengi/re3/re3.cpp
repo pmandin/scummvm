@@ -32,6 +32,7 @@
 #include "engines/reevengi/formats/rofs.h"
 #include "engines/reevengi/formats/sld.h"
 #include "engines/reevengi/formats/tim.h"
+#include "engines/reevengi/movie/movie.h"
 #include "engines/reevengi/re3/re3.h"
 #include "engines/reevengi/re3/entity.h"
 #include "engines/reevengi/re3/entity_emd.h"
@@ -41,6 +42,39 @@
 namespace Reevengi {
 
 /*--- Constant ---*/
+
+static const char *re3pc_movies[] = {
+	"zmovie/opn.dat",
+	"zmovie/roop.dat",
+	"zmovie/roopne.dat",
+	"zmovie/ins01.dat",
+	"zmovie/ins02.dat",
+	"zmovie/ins03.dat",
+	"zmovie/ins04.dat",
+	"zmovie/ins05.dat",
+	"zmovie/ins06.dat",
+	"zmovie/ins07.dat",
+	"zmovie/ins08.dat",
+	"zmovie/ins09.dat",
+	"zmovie/enda.dat",
+	"zmovie/endb.dat"
+};
+
+static const char *re3ps1_movies[] = {
+	"cd_data/zmovie/opn.str",
+	"cd_data/zmovie/roopne.str",
+	"cd_data/zmovie/ins01.str",
+	"cd_data/zmovie/ins02.str",
+	"cd_data/zmovie/ins03.str",
+	"cd_data/zmovie/ins04.str",
+	"cd_data/zmovie/ins05.str",
+	"cd_data/zmovie/ins06.str",
+	"cd_data/zmovie/ins07.str",
+	"cd_data/zmovie/ins08.str",
+	"cd_data/zmovie/ins09.str",
+	"cd_data/zmovie/enda.str",
+	"cd_data/zmovie/endb.str"
+};
 
 static const char *RE3PCROFS_DAT = "rofs%d.dat";
 static const char *RE3PC_BG = "data_a/bss/r%d%02x%02x.jpg";
@@ -446,6 +480,36 @@ Entity *RE3Engine::loadEntityPsx(int numEntity, int isPlayer) {
 	}
 
 	return newEntity;
+}
+
+void RE3Engine::loadMovie(unsigned int numMovie) {
+	char filePath[64];
+	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+
+	ReevengiEngine::loadMovie(numMovie);
+
+	if (isPsx) {
+		// PS1
+		if (numMovie >= sizeof(re3ps1_movies)) {
+			return;
+		}
+
+		sprintf(filePath, re3ps1_movies[numMovie]);
+
+		g_movie = CreatePsxPlayer();
+	} else {
+		// PC
+		if (numMovie >= sizeof(re3pc_movies)) {
+			return;
+		}
+
+		sprintf(filePath, re3pc_movies[numMovie]);
+
+		g_movie = CreateMpegPlayer();
+	}
+
+	debug(3, "re3: loadMovie(%d): %s", numMovie, filePath);
+	g_movie->play(filePath, false, 0, 0);
 }
 
 } // end of namespace Reevengi
