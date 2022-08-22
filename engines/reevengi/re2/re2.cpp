@@ -29,6 +29,7 @@
 #include "engines/reevengi/formats/bss.h"
 #include "engines/reevengi/formats/bss_sld.h"
 #include "engines/reevengi/formats/ems.h"
+#include "engines/reevengi/movie/movie.h"
 #include "engines/reevengi/re2/re2.h"
 #include "engines/reevengi/re2/entity.h"
 #include "engines/reevengi/re2/entity_emd.h"
@@ -38,6 +39,40 @@
 namespace Reevengi {
 
 /*--- Constant ---*/
+
+static const char *re2pc_movies[] = {
+	"pl%d/zmovie/opn1st%c.bin",
+	"pl%d/zmovie/opn2nd%c.bin",
+	"pl%d/zmovie/opn2ndr%c.bin",
+	"pl%d/zmovie/r108%c.bin",
+	"pl%d/zmovie/r204%c.bin",
+	"pl%d/zmovie/r40%c.bin",	// r408 Claire, r409 Leon
+	"pl%d/zmovie/r700%c.bin",
+	"pl%d/zmovie/r703%c.bin",
+	"pl%d/zmovie/r704%ce.bin",
+	"pl%d/zmovie/title%ce.bin",
+	"zmovie/r109.bin",
+	"zmovie/r10b.bin",
+	"zmovie/r200.bin",
+	"zmovie/r505.bin"
+};
+
+static const char *re2ps1_movies[] = {
+	"pl%d/zmovie/opn1st%c.str",
+	"pl%d/zmovie/opn2nd%c.str",
+	"pl%d/zmovie/opn2ndr%c.str",
+	"pl%d/zmovie/r108%c.str",
+	"pl%d/zmovie/r204%c.str",
+	"pl%d/zmovie/r40%c.str",	// r408 Claire, r409 Leon
+	"pl%d/zmovie/r700%c.str",
+	"pl%d/zmovie/r703%c.str",
+	"pl%d/zmovie/r704%c.str",
+	"pl%d/zmovie/title%c.str",
+	"zmovie/r109.str",
+	"zmovie/r10b.str",
+	"zmovie/r200.str",
+	"zmovie/r505.str"
+};
 
 static const char *RE2_ROOM = "pl%d/rd%c/room%d%02x%d.rdt";
 
@@ -538,6 +573,44 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 	}
 
 	return newEntity;
+}
+
+void RE2Engine::loadMovie(unsigned int numMovie) {
+	char filePath[64];
+	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+
+	ReevengiEngine::loadMovie(numMovie);
+
+	if (isPsx) {
+		// PS1
+		if (numMovie >= sizeof(re2ps1_movies)) {
+			return;
+		}
+
+		if (numMovie == 5) {
+			sprintf(filePath, re2ps1_movies[numMovie], _character, _character==0 ? '9' : '8');
+		} else {
+			sprintf(filePath, re2ps1_movies[numMovie], _character, _character==0 ? 'l' : 'c');
+		}
+
+		g_movie = CreatePsxPlayer();
+	} else {
+		// PC
+		if (numMovie >= sizeof(re2pc_movies)) {
+			return;
+		}
+
+		if (numMovie == 5) {
+			sprintf(filePath, re2pc_movies[numMovie], _character, _character==0 ? '9' : '8');
+		} else {
+			sprintf(filePath, re2pc_movies[numMovie], _character, _character==0 ? 'l' : 'c');
+		}
+
+		g_movie = CreateAviPlayer();
+	}
+
+	debug(3, "re2: loadMovie(%d): %s", numMovie, filePath);
+	g_movie->play(filePath, false, 0, 0);
 }
 
 } // end of namespace Reevengi

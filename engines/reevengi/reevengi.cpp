@@ -484,6 +484,11 @@ void ReevengiEngine::loadRoom(void) {
 	//
 }
 
+void ReevengiEngine::loadMovie(unsigned int numMovie) {
+	delete g_movie;
+	g_movie = nullptr;
+}
+
 void ReevengiEngine::testDisplayImage(Image::ImageDecoder *img) {
 	g_driver->drawMovieFrame(0, 0);
 }
@@ -496,17 +501,7 @@ void ReevengiEngine::testDisplayMaskImage(Image::ImageDecoder *img) {
 }
 
 void ReevengiEngine::testLoadMovie(void) {
-	//RE1 PS1
-	g_movie = CreatePsxPlayer();
-	g_movie->play("capcom.str", false, 0, 0);
-
-	//RE2 PC
-	//g_movie = CreateAviPlayer();
-	//g_movie->play("pl0/zmovie/titlele.bin", false, 0, 0);
-
-	//RE3 PC
-	//g_movie = CreateMpegPlayer();
-	//g_movie->play("zmovie/roopne.dat", false, 0, 0);
+	loadMovie(0);
 }
 
 void ReevengiEngine::testPlayMovie(void) {

@@ -81,6 +81,9 @@ protected:
 	void destroyRoom(void);
 	virtual void loadRoom(void);
 
+	// Movie
+	virtual void loadMovie(unsigned int numMovie);
+
 	// Entity
 	int _defEntity, _defIsPlayer;
 	virtual Entity *loadEntity(int numEntity, int isPlayer);

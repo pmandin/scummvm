@@ -26,6 +26,7 @@
 
 #include "engines/reevengi/formats/pak.h"
 #include "engines/reevengi/formats/bss.h"
+#include "engines/reevengi/movie/movie.h"
 #include "engines/reevengi/re1/re1.h"
 #include "engines/reevengi/re1/entity.h"
 #include "engines/reevengi/re1/room.h"
@@ -48,6 +49,64 @@ static const char *re1_country[NUM_COUNTRIES]={
 	"jpn",
 	"fra",
 	""
+};
+
+static const char *re1pc_movies[] = {
+	"horr/usa/movie/capcom.avi",
+	"horr/usa/movie/dm1.avi",
+	"horr/usa/movie/dm2.avi",
+	"horr/usa/movie/dm3.avi",
+	"horr/usa/movie/dm4.avi",
+	"horr/usa/movie/dm6.avi",
+	"horr/usa/movie/dm7.avi",
+	"horr/usa/movie/dm8.avi",
+	"horr/usa/movie/dmb.avi",
+	"horr/usa/movie/dmc.avi",
+	"horr/usa/movie/dmd.avi",
+	"horr/usa/movie/dme.avi",
+	"horr/usa/movie/dmf.avi",
+	"horr/usa/movie/ed1.avi",
+	"horr/usa/movie/ed2.avi",
+	"horr/usa/movie/ed3.avi",
+	"horr/usa/movie/ed6.avi",
+	"horr/usa/movie/ed7.avi",
+	"horr/usa/movie/ed8.avi",
+	"horr/usa/movie/eu4.avi",
+	"horr/usa/movie/eu5.avi",
+	"horr/usa/movie/ou.avi",
+	"horr/usa/movie/pu.avi",
+	"horr/usa/movie/staf_r.avi",
+	"horr/usa/movie/stfc_r.avi",
+	"horr/usa/movie/stfj_r.avi",
+	"horr/usa/movie/stfz_r.avi"
+};
+
+static const char *re1ps1_movies[] = {
+	"psx/movie/capcom.str",
+	"psx/movie/dm1.str",
+	"psx/movie/dm2.str",
+	"psx/movie/dm3.str",
+	"psx/movie/dm4.str",
+	"psx/movie/dm6.str",
+	"psx/movie/dm7.str",
+	"psx/movie/dm8.str",
+	"psx/movie/dmb.str",
+	"psx/movie/dmc.str",
+	"psx/movie/dmd.str",
+	"psx/movie/dme.str",
+	"psx/movie/dmf.str",
+	"psx/movie/ed1.str",
+	"psx/movie/ed2.str",
+	"psx/movie/ed3.str",
+	"psx/movie/ed4.str",
+	"psx/movie/ed5.str",
+	"psx/movie/ed6.str",
+	"psx/movie/ed7.str",
+	"psx/movie/ed8.str",
+	"psx/movie/oj.str",
+	"psx/movie/pj.str",
+	"psx/movie/stfc.str",
+	"psx/movie/stfj.str"
 };
 
 static const char *RE1_ROOM = "%s%s/stage%d/room%d%02x0.rdt";
@@ -273,6 +332,36 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 	delete stream;
 
 	return newEntity;
+}
+
+void RE1Engine::loadMovie(unsigned int numMovie) {
+	char filePath[64];
+	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
+
+	ReevengiEngine::loadMovie(numMovie);
+
+	if (isPsx) {
+		// PS1
+		if (numMovie >= sizeof(re1ps1_movies)) {
+			return;
+		}
+
+		sprintf(filePath, re1ps1_movies[numMovie]);
+
+		g_movie = CreatePsxPlayer();
+	} else {
+		// PC
+		if (numMovie >= sizeof(re1pc_movies)) {
+			return;
+		}
+
+		sprintf(filePath, re1pc_movies[numMovie]);
+
+		g_movie = CreateAviPlayer();
+	}
+
+	debug(3, "re1: loadMovie(%d): %s", numMovie, filePath);
+	g_movie->play(filePath, false, 0, 0);
 }
 
 } // end of namespace Reevengi
