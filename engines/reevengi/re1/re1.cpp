@@ -125,6 +125,10 @@ RE1Engine::RE1Engine(OSystem *syst, ReevengiGameType gameType, const ADGameDescr
 	_camera = 6;
 
 	_country = 8;
+
+	/* Default entity */
+	_defEntity = 0;
+	_defIsPlayer = 1;
 }
 
 RE1Engine::~RE1Engine() {
