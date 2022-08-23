@@ -434,6 +434,10 @@ void ReevengiEngine::processEventsKeyDown(Common::Event e) {
 
 void ReevengiEngine::onScreenChanged(void) {
 	bool changed = g_driver->computeScreenViewport();
+
+	if (changed) {
+		g_driver->clearScreen();
+	}
 }
 
 void ReevengiEngine::destroyBgImage(void) {
