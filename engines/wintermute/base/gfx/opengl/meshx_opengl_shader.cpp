@@ -25,7 +25,7 @@
  * Copyright (c) 2003-2013 Jan Nedoma and contributors
  */
 
-#include "engines/wintermute/base/gfx/x/material.h"
+#include "engines/wintermute/base/gfx/xmaterial.h"
 
 #include "graphics/opengl/system_headers.h"
 
@@ -64,7 +64,7 @@ bool MeshXOpenGLShader::loadFromX(const Common::String &filename, XFileLexer &le
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool MeshXOpenGLShader::render(ModelX *model) {
+bool MeshXOpenGLShader::render(XModel *model) {
 	if (_vertexData == nullptr) {
 		return false;
 	}

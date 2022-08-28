@@ -28,7 +28,7 @@
 #ifndef WINTERMUTE_MESH_X_OPENGL_H
 #define WINTERMUTE_MESH_X_OPENGL_H
 
-#include "engines/wintermute/base/gfx/x/meshx.h"
+#include "engines/wintermute/base/gfx/xmesh.h"
 
 #if defined(USE_OPENGL_GAME)
 
@@ -39,7 +39,7 @@ public:
 	MeshXOpenGL(BaseGame *inGame);
 	~MeshXOpenGL() override;
 
-	bool render(ModelX *model) override;
+	bool render(XModel *model) override;
 	bool renderFlatShadowModel() override;
 };
 

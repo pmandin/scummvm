@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.9.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-08-22 10:18+0000\n"
-"PO-Revision-Date: 2022-08-16 03:37+0000\n"
+"POT-Creation-Date: 2022-08-26 22:15+0000\n"
+"PO-Revision-Date: 2022-08-26 08:55+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Ukrainian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/uk/>\n"
@@ -67,7 +67,7 @@ msgstr "Вгору"
 #: gui/saveload-dialog.cpp:64 gui/saveload-dialog.cpp:457
 #: gui/saveload-dialog.cpp:528 gui/saveload-dialog.cpp:830
 #: gui/saveload-dialog.cpp:1223 gui/themebrowser.cpp:54
-#: gui/unknown-game-dialog.cpp:53 engines/engine.cpp:721
+#: gui/unknown-game-dialog.cpp:53 engines/engine.cpp:699
 #: backends/dialogs/gtk/gtk-dialogs.cpp:63
 #: backends/events/default/default-events.cpp:193
 #: backends/events/default/default-events.cpp:217
@@ -172,7 +172,7 @@ msgstr ""
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
 #: gui/launcher.cpp:529 gui/launcher.cpp:533 gui/massadd.cpp:90
 #: gui/options.cpp:2195 gui/predictivedialog.cpp:69
-#: gui/saveload-dialog.cpp:1224 engines/engine.cpp:526 engines/engine.cpp:550
+#: gui/saveload-dialog.cpp:1224 engines/engine.cpp:505 engines/engine.cpp:528
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
 #: engines/buried/saveload.cpp:69
 #: engines/director/lingo/lingo-builtins.cpp:1677
@@ -346,7 +346,7 @@ msgid "Platform:"
 msgstr "Платформа:"
 
 #: gui/editgamedialog.cpp:207 gui/options.cpp:1869 gui/options.cpp:2041
-#: backends/graphics/sdl/sdl-graphics.cpp:419
+#: backends/graphics/sdl/sdl-graphics.cpp:423
 msgid "Graphics"
 msgstr "Графіка"
 
@@ -867,14 +867,14 @@ msgstr "Пошук у списку ігор"
 msgid "Search:"
 msgstr "Пошук:"
 
-#: gui/launcher.cpp:280 engines/dialogs.cpp:99 engines/engine.cpp:885
+#: gui/launcher.cpp:280 engines/dialogs.cpp:99 engines/engine.cpp:863
 #: engines/pegasus/pegasus.cpp:383 engines/trecision/saveload.cpp:253
 #: engines/tsage/scenes.cpp:630 engines/wage/saveload.cpp:741
 #: engines/xeen/saves.cpp:255
 msgid "Load game:"
 msgstr "Завантажити гру:"
 
-#: gui/launcher.cpp:280 engines/dialogs.cpp:99 engines/engine.cpp:885
+#: gui/launcher.cpp:280 engines/dialogs.cpp:99 engines/engine.cpp:863
 #: engines/parallaction/metaengine.cpp:127
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:383
 #: engines/trecision/saveload.cpp:253 engines/tsage/scenes.cpp:630
@@ -1002,7 +1002,7 @@ msgstr "Платформа не визначена"
 msgid "All"
 msgstr "Усі"
 
-#: gui/launcher.cpp:1601
+#: gui/launcher.cpp:1603
 msgid "Icons per row:"
 msgstr "Іконок на рядок:"
 
@@ -1196,7 +1196,7 @@ msgstr "Розтягування:"
 msgid "Scaler:"
 msgstr "Масштаб:"
 
-#: gui/options.cpp:1511 backends/graphics/sdl/sdl-graphics.cpp:410
+#: gui/options.cpp:1511 backends/graphics/sdl/sdl-graphics.cpp:414
 msgid "Fullscreen mode"
 msgstr "Повноекранний режим"
 
@@ -1921,7 +1921,7 @@ msgstr ""
 "\n"
 "Далі..."
 
-#: gui/options.cpp:2663 engines/engine.cpp:580
+#: gui/options.cpp:2663 engines/engine.cpp:558
 msgid "Move"
 msgstr "Перенести"
 
@@ -2082,7 +2082,7 @@ msgstr "Записати"
 msgid "Playback"
 msgstr "Відтворити"
 
-#: gui/recorderdialog.cpp:77 gui/widgets/grid.cpp:224
+#: gui/recorderdialog.cpp:77 gui/widgets/grid.cpp:231
 msgid "Edit"
 msgstr "Редагувати"
 
@@ -2263,11 +2263,11 @@ msgstr ""
 msgid "Clear value"
 msgstr "Очистити значення"
 
-#: gui/widgets/grid.cpp:218
+#: gui/widgets/grid.cpp:225
 msgid "Play"
 msgstr "Грати"
 
-#: gui/widgets/grid.cpp:221
+#: gui/widgets/grid.cpp:228
 msgid "Saves"
 msgstr "Зберігання"
 
@@ -2508,7 +2508,7 @@ msgctxt "lowres"
 msgid "~R~eturn to Launcher"
 msgstr "~П~овер.в головне меню"
 
-#: engines/dialogs.cpp:100 engines/engine.cpp:914 engines/agi/saveload.cpp:766
+#: engines/dialogs.cpp:100 engines/engine.cpp:892 engines/agi/saveload.cpp:766
 #: engines/avalanche/parser.cpp:1918 engines/cine/various.cpp:349
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
@@ -2529,7 +2529,7 @@ msgstr "~П~овер.в головне меню"
 msgid "Save game:"
 msgstr "Зберегти гру:"
 
-#: engines/dialogs.cpp:100 engines/engine.cpp:914 engines/agi/saveload.cpp:766
+#: engines/dialogs.cpp:100 engines/engine.cpp:892 engines/agi/saveload.cpp:766
 #: engines/avalanche/parser.cpp:1918 engines/cine/various.cpp:349
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
@@ -2579,42 +2579,42 @@ msgstr "~O~K"
 msgid "~C~ancel"
 msgstr "Ві~д~міна"
 
-#: engines/engine.cpp:342
+#: engines/engine.cpp:336
 #, c-format
 msgid "Could not switch to resolution '%dx%d'."
 msgstr "Не вдалося переключитися до відеорежиму '%dx%d'."
 
-#: engines/engine.cpp:351
+#: engines/engine.cpp:345
 msgid "Could not initialize color format."
 msgstr "Не можу налаштувати формат кольору."
 
-#: engines/engine.cpp:360
+#: engines/engine.cpp:354
 #, c-format
 msgid "Could not switch to video mode '%s'."
 msgstr "Не вдалося переключитися до відеорежиму '%s'."
 
-#: engines/engine.cpp:368
+#: engines/engine.cpp:362
 #, c-format
 msgid "Could not switch to stretch mode '%s'."
 msgstr "Не вдалося переключитися до відеорежиму з розтягуванням '%s'."
 
-#: engines/engine.cpp:375
+#: engines/engine.cpp:369
 msgid "Could not apply aspect ratio setting."
 msgstr "Не вдалося застосувати корекцію співвідношення сторін."
 
-#: engines/engine.cpp:380
+#: engines/engine.cpp:374
 msgid "Could not apply fullscreen setting."
 msgstr "Не вдалося застосувати повноекранний режим."
 
-#: engines/engine.cpp:385
+#: engines/engine.cpp:379
 msgid "Could not apply filtering setting."
 msgstr "Не вдалося застосувати режим фільтрування."
 
-#: engines/engine.cpp:444
+#: engines/engine.cpp:438
 msgid "Error"
 msgstr "Помилка"
 
-#: engines/engine.cpp:522
+#: engines/engine.cpp:501
 msgid ""
 "You appear to be playing this game directly\n"
 "from the CD. This is known to cause problems,\n"
@@ -2628,7 +2628,7 @@ msgstr ""
 "файли даних на жорсткий диск.\n"
 "Детальніше див. у документації (аудіо CD)."
 
-#: engines/engine.cpp:546
+#: engines/engine.cpp:524
 msgid ""
 "This game has audio tracks on its CD. These\n"
 "tracks need to be ripped from the CD using\n"
@@ -2642,15 +2642,15 @@ msgstr ""
 "щоби у грі була музика.\n"
 "Детальніше див. у документації (CD-аудіо)."
 
-#: engines/engine.cpp:573
+#: engines/engine.cpp:551
 msgid "Overwrite"
 msgstr "Перетерти"
 
-#: engines/engine.cpp:574
+#: engines/engine.cpp:552
 msgid "Cancel autosave"
 msgstr "Відмінити автозбереження"
 
-#: engines/engine.cpp:576
+#: engines/engine.cpp:554
 #, c-format
 msgid ""
 "WARNING: The autosave slot has a saved game named %S. You can either move "
@@ -2661,21 +2661,21 @@ msgstr ""
 "перенести поточне збереження у новий слот, Перетерти поточне збереження, або "
 "відмінити автозбереження (до перезапуску ScummVM)"
 
-#: engines/engine.cpp:584
+#: engines/engine.cpp:562
 msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ПОМИЛКА: Не вдалося скопіювати збереження ігри у новий слот"
 
-#: engines/engine.cpp:610 engines/metaengine.cpp:380 engines/savestate.cpp:98
+#: engines/engine.cpp:588 engines/metaengine.cpp:380 engines/savestate.cpp:98
 #: backends/platform/ios7/ios7_osys_main.cpp:255 engines/sky/metaengine.cpp:185
 #: engines/xeen/saves.cpp:289
 msgid "Autosave"
 msgstr "Автозбереження"
 
-#: engines/engine.cpp:618
+#: engines/engine.cpp:596
 msgid "Error occurred making autosave"
 msgstr "Помилка створення автозбереження"
 
-#: engines/engine.cpp:693
+#: engines/engine.cpp:671
 #, c-format
 msgid ""
 "Failed to load saved game (%s)! Please consult the README for basic "
@@ -2684,15 +2684,15 @@ msgstr ""
 "Не вдалося завантажити гру (%s)! . Будь-ласка, дивіться файл README для "
 "основної інформації, а також інструкцій, як отримати подальшу допомогу."
 
-#: engines/engine.cpp:717
+#: engines/engine.cpp:695
 msgid "WARNING: "
 msgstr "ПОПЕРЕДЖЕННЯ: "
 
-#: engines/engine.cpp:717
+#: engines/engine.cpp:695
 msgid " Shall we still run the game?"
 msgstr " Чи ви хочете таки запустити гру?"
 
-#: engines/engine.cpp:718
+#: engines/engine.cpp:696
 msgid ""
 "WARNING: The game you are about to start is not yet fully supported by "
 "ScummVM. As such, it is likely to be unstable, and any saved game you make "
@@ -2702,15 +2702,15 @@ msgstr ""
 "ScummVM. Скорше за все вона не буде працювати стабільно, і збережені ігри, "
 "які ви зробите, можуть не працювати у подальших версіях ScummVM."
 
-#: engines/engine.cpp:721 engines/wintermute/wintermute.cpp:182
+#: engines/engine.cpp:699 engines/wintermute/wintermute.cpp:182
 msgid "Start anyway"
 msgstr "Все одно запустити"
 
-#: engines/engine.cpp:739
+#: engines/engine.cpp:717
 msgid "This game is not supported."
 msgstr "Ця гра не підтримується."
 
-#: engines/engine.cpp:739
+#: engines/engine.cpp:717
 msgid ""
 "This game is not supported for the following reason:\n"
 "\n"
@@ -2718,11 +2718,11 @@ msgstr ""
 "Ця гра не підтримується через наступні причини:\n"
 "\n"
 
-#: engines/engine.cpp:881
+#: engines/engine.cpp:859
 msgid "Loading game is currently unavailable"
 msgstr "Заватнаження гри наразі неможливе"
 
-#: engines/engine.cpp:910
+#: engines/engine.cpp:888
 msgid "Saving game is currently unavailable"
 msgstr "Збереження гри наразі неможливе"
 
@@ -3087,66 +3087,66 @@ msgstr "Режим дотику у тачскріні - Проліт (клік D
 
 #: backends/graphics/opengl/opengl-graphics.cpp:254
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:72
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:228
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:235
 #: engines/twine/metaengine.cpp:228
 msgid "Center"
 msgstr "По центру"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:255
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:73
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:229
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:236
 msgid "Pixel-perfect scaling"
 msgstr "Піксельне ідеальне масштабування"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:256
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:230
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:237
 msgid "Even pixels scaling"
 msgstr "Піксельне рівномірне масштабування"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:257
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:74
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:231
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:238
 msgid "Fit to window"
 msgstr "В розміри вікна"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:258
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:75
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:232
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:239
 msgid "Stretch to window"
 msgstr "Розтягнути до вікна"
 
 #: backends/graphics/opengl/opengl-graphics.cpp:259
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:76
-#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:233
+#: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:240
 msgid "Fit to window (4:3)"
 msgstr "До розмірів вікна (4: 3)"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:710
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:708
 #, c-format
 msgid "Resolution: %dx%d"
 msgstr "Розгалуження %dx%d"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:733
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:731
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2450
 msgid "Enabled aspect ratio correction"
 msgstr "Корекцію співвідношення сторін увімкнено"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:735
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:733
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2456
 msgid "Disabled aspect ratio correction"
 msgstr "Корекцію співвідношення сторін вимкнено"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:756
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:754
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2472
 msgid "Filtering enabled"
 msgstr "Фільтрування увімкнено"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:758
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:756
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2474
 msgid "Filtering disabled"
 msgstr "Фільтрування вимкнено"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:787
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:785
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2501
 msgid "Stretch mode"
 msgstr "Стретч-режим"
@@ -3159,29 +3159,29 @@ msgstr "Поверхня SDL"
 msgid "Active graphics filter:"
 msgstr "Поточний графічний фільтр:"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:356
+#: backends/graphics/sdl/sdl-graphics.cpp:360
 #, c-format
 msgid "Saved screenshot '%s'"
 msgstr "Збережено екран '%s'"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:365
+#: backends/graphics/sdl/sdl-graphics.cpp:369
 msgid "Could not save screenshot"
 msgstr "Не вдалося зберегти екран"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:412
+#: backends/graphics/sdl/sdl-graphics.cpp:416
 msgid "Windowed mode"
 msgstr "Віконний режим"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:423 engines/scumm/help.cpp:85
+#: backends/graphics/sdl/sdl-graphics.cpp:427 engines/scumm/help.cpp:85
 msgid "Toggle fullscreen"
 msgstr "Перемикання повноекранного режиму"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:430 engines/scumm/help.cpp:98
+#: backends/graphics/sdl/sdl-graphics.cpp:434 engines/scumm/help.cpp:98
 #: engines/wintermute/keymapper_tables.h:960
 msgid "Toggle mouse capture"
 msgstr "Перемикання захоплення миші"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:435
+#: backends/graphics/sdl/sdl-graphics.cpp:439
 #: engines/wintermute/keymapper_tables.h:646
 #: engines/wintermute/keymapper_tables.h:695
 #: engines/wintermute/keymapper_tables.h:1098
@@ -3194,31 +3194,31 @@ msgstr "Перемикання захоплення миші"
 msgid "Save screenshot"
 msgstr "Зберегти екран"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:441
+#: backends/graphics/sdl/sdl-graphics.cpp:445
 msgid "Toggle aspect ratio correction"
 msgstr "Перемикання корекції співвідношення сторін"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:448
+#: backends/graphics/sdl/sdl-graphics.cpp:452
 msgid "Toggle linear filtered scaling"
 msgstr "Перемикання фільтра лінийний"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:455
+#: backends/graphics/sdl/sdl-graphics.cpp:459
 msgid "Cycle through stretch modes"
 msgstr "Перемикання між режимів розтягування"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:461
+#: backends/graphics/sdl/sdl-graphics.cpp:465
 msgid "Increase the scale factor"
 msgstr "Збільшити масштаб"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:467
+#: backends/graphics/sdl/sdl-graphics.cpp:471
 msgid "Decrease the scale factor"
 msgstr "Зменшити масштаб"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:473
+#: backends/graphics/sdl/sdl-graphics.cpp:477
 msgid "Switch to the next scaler"
 msgstr "Перемикання до наступного фільтру"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:478
+#: backends/graphics/sdl/sdl-graphics.cpp:482
 msgid "Switch to the previous scaler"
 msgstr "Перемикання до попереднього фільтру"
 
@@ -4538,7 +4538,7 @@ msgstr "Автор перекладу проти того, щоб його пе�
 #: engines/mohawk/detection_tables.h:3175 engines/myst3/detection.cpp:142
 #: engines/neverhood/detection.cpp:124 engines/saga/detection_tables.h:186
 #: engines/saga/detection_tables.h:1241 engines/saga/detection_tables.h:1300
-#: engines/sci/detection_tables.h:5136 engines/sci/detection_tables.h:5144
+#: engines/sci/detection_tables.h:5141 engines/sci/detection_tables.h:5149
 #: engines/sherlock/detection_tables.h:223 engines/stark/detection.cpp:319
 #: engines/teenagent/detection.cpp:117 engines/toltecs/detection.cpp:212
 #: engines/trecision/detection.cpp:199 engines/zvision/detection_tables.h:200
@@ -4784,13 +4784,7 @@ msgid "Ok"
 msgstr "Гаразд"
 
 #: engines/dragons/dragons.cpp:1803
-#, fuzzy, c-format
-#| msgid ""
-#| "Error: The file '%s' hasn't been extracted properly.\n"
-#| "Please refer to the wiki page\n"
-#| "https://wiki.scummvm.org/index.php?title=HOWTO-PlayStation_Videos for "
-#| "details on how to properly extract the DTSPEECH.XA and *.STR files from "
-#| "your game disc."
+#, c-format
 msgid ""
 "Error: The file '%s' hasn't been extracted properly.\n"
 "Please refer to the wiki page\n"
@@ -4799,19 +4793,11 @@ msgid ""
 msgstr ""
 "Помилка: файл '%s' було переписано неправильно.\n"
 "Будь-ласка зверніться до наступної сторінки на Вікі\n"
-"https://wiki.scummvm.org/index.php?title=HOWTO-PlayStation_Videos за "
-"інформацією, як правильно переписати файли DTSPEECH.XA та *.STR з ваших "
-"дисків."
+"%s за інформацією, як правильно переписати файли DTSPEECH.XA та *.STR з "
+"ваших дисків."
 
 #: engines/dragons/metaengine.cpp:122
-#, fuzzy, c-format
-#| msgid ""
-#| "Error: It appears that the game data files were extracted incorrectly.\n"
-#| "\n"
-#| "You should only extract STR and XA files using the special method. The "
-#| "rest should be copied normally from your game CD.\n"
-#| "\n"
-#| " See https://wiki.scummvm.org/index.php?title=Datafiles#Blazing_Dragons"
+#, c-format
 msgid ""
 "Error: It appears that the game data files were extracted incorrectly.\n"
 "\n"
@@ -4825,7 +4811,7 @@ msgstr ""
 "Вам потрібно переписувати спеціальним чином тільки файли STR та XA. Решта "
 "мусить бути скопійовано звичайним чином з вашого CD.\n"
 "\n"
-"Дивіться https://wiki.scummvm.org/index.php?title=Datafiles#Blazing_Dragons"
+"Дивіться %s"
 
 #: engines/dragons/metaengine.cpp:137
 msgid "Action"
@@ -5123,12 +5109,7 @@ msgstr ""
 "%s"
 
 #: engines/grim/md5check.cpp:567
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not open the file %s for checking.\n"
-#| "It may be missing or you may not have the rights to open it.\n"
-#| "Go to https://wiki.scummvm.org/index.php/Datafiles to see a list of the "
-#| "needed files."
+#, c-format
 msgid ""
 "Could not open the file %s for checking.\n"
 "It may be missing or you may not have the rights to open it.\n"
@@ -5136,8 +5117,7 @@ msgid ""
 msgstr ""
 "Не вдалося відкрити файл %s для перевірки.\n"
 "Можливо він відсутній, або у вас немає прав досупу до нього.\n"
-"Перейдіть на https://wiki.scummvm.org/index.php/Datafiles, щоб побачити "
-"список файлів, необхідних для гри."
+"Перейдіть на %s, щоб побачити список файлів, необхідних для гри."
 
 #: engines/grim/md5checkdialog.cpp:41
 msgid ""
@@ -5156,12 +5136,7 @@ msgid "Escape from Monkey Island support is not compiled in"
 msgstr "Підтримку для Escape from Monkey Island не скомпільовано"
 
 #: engines/grim/resource.cpp:102
-#, fuzzy, c-format
-#| msgid ""
-#| "The original patch of Grim Fandango\n"
-#| "is missing. Please download it from\n"
-#| "https://downloads.scummvm.org/frs/extras/patches/gfupd101.exe\n"
-#| "and put it in the game data files directory"
+#, c-format
 msgid ""
 "The original patch of Grim Fandango\n"
 "is missing. Please download it from\n"
@@ -5170,18 +5145,11 @@ msgid ""
 msgstr ""
 "Оригінальний патч гри Grim Fandango\n"
 "відсутній. Будь-ласка, завантажте його з\n"
-"https://downloads.scummvm.org/frs/extras/patches/gfupd101.exe\n"
+"%s\n"
 "і скопіюйте у папку з файлами гри"
 
 #: engines/grim/resource.cpp:107
-#, fuzzy, c-format
-#| msgid ""
-#| "The original patch of Escape from Monkey Island is missing. \n"
-#| "Please download it from https://downloads.scummvm.org/frs/extras/"
-#| "patches/\n"
-#| "and put it in the game data files directory.\n"
-#| "Pay attention to download the correct version according to the game's "
-#| "language"
+#, c-format
 msgid ""
 "The original patch of Escape from Monkey Island is missing. \n"
 "Please download it from %s\n"
@@ -5190,11 +5158,10 @@ msgid ""
 "language!"
 msgstr ""
 "Оригінальний патч для Escape from Monkey Island відсутній.\n"
-"Будь-ласка, завантажте його з https://downloads.scummvm.org/frs/extras/"
-"patches/\n"
+"Будь-ласка, завантажте його з %s\n"
 "та покладіть у папку з грою.\n"
 "Зверніть увагу на те, щоб завантажити патч, відповідний до мови вашої копії "
-"гри"
+"гри!"
 
 #: engines/grim/emi/sound/emisound.cpp:655
 msgid ""
@@ -6157,14 +6124,7 @@ msgid "Enable widescreen rendering in fullscreen mode."
 msgstr "Ввімкнути режим широкого екрану у повноекранному режимі."
 
 #: engines/myst3/myst3.cpp:364
-#, fuzzy, c-format
-#| msgid ""
-#| "This version of Myst III has not been updated with the latest official "
-#| "patch.\n"
-#| "Please install the official update corresponding to your game's "
-#| "language.\n"
-#| "The updates can be downloaded from:\n"
-#| "https://www.scummvm.org/frs/extras/patches/"
+#, c-format
 msgid ""
 "This version of Myst III has not been updated with the latest official "
 "patch.\n"
@@ -6175,7 +6135,7 @@ msgstr ""
 "Цю версію Myst III не було відновлено до останнього офіційного патча.\n"
 "Будь-ласка, встановіть офіційний патч, відповідне до мови вашої копії гри.\n"
 "Патчі можна завантажити з:\n"
-"https://www.scummvm.org/frs/extras/patches/"
+"%s"
 
 #: engines/myst3/myst3.cpp:1578 engines/pegasus/pegasus.cpp:744
 msgid "Invalid file name for saving"
@@ -6668,7 +6628,7 @@ msgstr "Roland D-110 / D-10 / D-20"
 msgid "Yamaha FB-01"
 msgstr "Yamaha FB-01"
 
-#: engines/sci/detection_tables.h:4442
+#: engines/sci/detection_tables.h:4447
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr "Неповна версія гри. Ви мусите скопіювати дані з усіх CD."
 

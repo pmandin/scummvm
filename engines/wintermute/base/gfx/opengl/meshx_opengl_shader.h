@@ -28,7 +28,7 @@
 #ifndef WINTERMUTE_MESH_X_OPENGL_SHADER_H
 #define WINTERMUTE_MESH_X_OPENGL_SHADER_H
 
-#include "engines/wintermute/base/gfx/x/meshx.h"
+#include "engines/wintermute/base/gfx/xmesh.h"
 
 #if defined(USE_OPENGL_SHADERS)
 
@@ -42,7 +42,7 @@ public:
 	~MeshXOpenGLShader() override;
 
 	bool loadFromX(const Common::String &filename, XFileLexer &lexer, Common::Array<MaterialReference> &materialReferences) override;
-	bool render(ModelX *model) override;
+	bool render(XModel *model) override;
 	bool renderFlatShadowModel() override;
 	bool update(FrameNode *parentFrame) override;
 
