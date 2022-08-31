@@ -2903,6 +2903,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "updatequest", "Update Quest" },
 	{ "upducted", "Upducted" },
 	{ "urbanwitchstory", "Urban Witch Story" },
+	{ "uydearmyfriendsremake", "Urusei Yatsura: Dear My Friends Remake" },
 	{ "urgentquest", "Urgent Quest" },
 	{ "uropa", "U-ropa" },
 	{ "utopiaoftyrant", "Utopia of Tyrant" },
@@ -3682,6 +3683,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_GOG("strangeland", "ac2game.dat", "e4b9f0aa26c1115143ad483c99bc9383", 3183880236), // Mac v2.5a
 	GAME_ENTRY_GOG("strangeland", "ac2game.dat", "86e8b93b8231d6c571669f1621561a21", 3183886917), // Mac v2.7
 	GAME_ENTRY_GOG("strangeland", "ac2game.dat", "c0d0009485795a4ff0cf9dbe5ad82a2f", 3183902196), // Mac
+	GAME_ENTRY("sulifallenharmony", "Suli Fallen Harmony.exe", "8a58836830dce896e4366f57791ab6cc", 35900870),  // v1.4 itch.io En-Fr
 	GAME_ENTRY_STEAM("sumatra", "sumatra fate of yandi.exe", "57c868b1a81c0335ab60970292cd79d8", 170088886),
 	GAME_ENTRY_STEAM("sumatra", "sumatra fate of yandi.exe", "b4407ac542f316456f549fc8a60dccae", 170634789),
 	GAME_ENTRY_GOG("sumatra", "sumatra fate of yandi.exe", "b4407ac542f316456f549fc8a60dccae", 170715680),  // v1.2
@@ -3719,14 +3721,16 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN_STEAM("theterribleoldman", "The Terrible Old Man.exe", "b3a10d7d3b5a728330b028ec28ff2d05", 103852030),  //v1.2 MAGS port
 	GAME_ENTRY_EN_STEAM("theterribleoldman", "The Terrible OId Man.exe", "e07a475bcf14bc75c016724186f222ac", 369769127),
 	GAME_ENTRY_EN_STEAM("timegentlemenplease", "tgp.exe", "86a5359bac7c88f0dfa060478800dd61", 74077811),
-	GAME_ENTRY_STEAM("unavowed", "ac2game.dat", "b1ff7d96667707daf4266975cea2bf90", 1755457364), // Mac
-	GAME_ENTRY_STEAM("unavowed", "ac2game.dat", "140570a663877cb81e3656b4f29c63f6", 1752922600), // Mac
-	GAME_ENTRY_STEAM("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756036604), // Linux (and Windows?) v0.9.0
-	GAME_ENTRY_STEAM("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756040045), // Linux (and Windows?) v1.0.0
-	GAME_ENTRY_STEAM("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756041684), // Windows v1.0.2
-	GAME_ENTRY_PLATFORM("unavowed", "Unavowed.exe", "b1ff7d96667707daf4266975cea2bf90", 1755451248, "Steam/GOG"), // TODO: split
-	GAME_ENTRY_GOG("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756040362), // Linux/Windows v.1.0.0
-	GAME_ENTRY_GOG("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756042001), // Windows v1.0.2
+	GAME_ENTRY_EN_STEAM("unavowed", "ac2game.dat", "b1ff7d96667707daf4266975cea2bf90", 1755457364), // Mac
+	GAME_ENTRY_EN_STEAM("unavowed", "ac2game.dat", "140570a663877cb81e3656b4f29c63f6", 1752922600), // Mac
+	GAME_ENTRY_EN_PLATFORM("unavowed", "Unavowed.exe", "b1ff7d96667707daf4266975cea2bf90", 1755451248, "Steam/GOG"), // TODO: split
+	GAME_ENTRY_EN_PLATFORM("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756036604, "Steam/GOG"), // Linux/Windows v0.9.0 (GOG v1.2)
+	GAME_ENTRY_EN_STEAM("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756040045), // Linux (and Windows?) v1.0.0
+	GAME_ENTRY_EN_STEAM("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756041684), // Windows v1.0.2
+	GAME_ENTRY_EN_GOG("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756037170), // Linux/Windows v.0.9.0 (GOG v1.3)
+	GAME_ENTRY_EN_GOG("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756040362), // Linux/Windows v.1.0.0 (GOG v1.31)
+	GAME_ENTRY_EN_GOG("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756041833), // Linux/Windows v.1.0.1 (GOG v1.32)
+	GAME_ENTRY_EN_GOG("unavowed", "Unavowed.exe", "52c411caa3bfb65788ed8768ceaa0c30", 1756042001), // Linux/Windows v.1.0.2 (GOG v1.4)
 	GAME_ENTRY_EN_STEAM("waitingfortheloop", "waitingfortheloop.exe", "0241777c2537fc5d077c05cde10bfa9f", 51472537),
 	GAME_ENTRY_EN("waitingfortheloop", "waitingfortheloop.exe", "0241777c2537fc5d077c05cde10bfa9f", 51273604),
 	GAME_ENTRY("welcometosunnymunarvagir", "alpha4.ags", "392dbdd0697ae32af4cfe5212f9213c5", 23000263),
@@ -6671,7 +6675,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY("sq7m1", "SQ7 Mania. Ep 1.exe", "256752c9a97b4780fc5e6f3239c8cdf1", 72027772),  // Eng-Rus
 	GAME_ENTRY("sq7m2", "SQ7Mania2.exe", "82da2565c456dcfb265ded6fe3189c0b", 143600299),  // Eng-Rus
 	GAME_ENTRY_EN("sqdote", "SQ DOTE.exe", "615e73fc1874e92d60a1996c2330ea36", 28479377),
-	GAME_ENTRY_EN("sqdote2", "DOTE2.exe", "7ddb9e776648faed5a51170d087074e9", 6122737),
+	GAME_ENTRY_EN_PLATFORM("sqdote2", "DOTE2.exe", "7ddb9e776648faed5a51170d087074e9", 6122737, "Chapter I"),
+	GAME_ENTRY_EN("sqdote2", "XENON.ags", "50153b6eac4061a96f403ddc65c14b9d", 12263830),
 	GAME_ENTRY_EN("sqinc", "SQinc.exe", "3ee9783a5613040e25193e21c235a7d3", 6013823),  // Win/Mac
 	GAME_ENTRY_EN("sqinc", "SQinc.ags", "0c940729c90f15bc34fdb93bdecbf94b", 4214354),  // Linux
 	GAME_ENTRY_EN("sqkubik", "SQ Kubik.exe", "4fb72c890984548ed6782063f2230942", 2184808),
@@ -7148,6 +7153,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("upducted", "Upducted.ags", "803a57bc967b6fa1293373fe203ae773", 3471092),  // Linux
 	GAME_ENTRY("urbanwitchstory", "Urban Witch Story.exe", "636950f50c877767bca7e2b1250632f7", 441430956),  //Eng-Esp Win
 	GAME_ENTRY("urbanwitchstory", "Urban Witch Story.ags", "ea3bede3ffc8904199e915274feddfe6", 438411774),  //Eng-Esp Lin
+	GAME_ENTRY_EN("uydearmyfriendsremake", "Urusei Yatsura.exe", "df94207a3720d4bb2404ca8be23e9d72", 4252149), // version R12b
 	GAME_ENTRY_EN("urgentquest", "urgent quest.exe", "655363c390c7ae7225c237108edf50b7", 6260710),
 	GAME_ENTRY("uropa", "U-ropa.exe", "0241777c2537fc5d077c05cde10bfa9f", 12999971),  //En-Fr
 	GAME_ENTRY("utopiaoftyrant", "Utopia_of_a_Tyrant.exe", "f8a42e09e40a7ab1cd2a21f74a5e0980", 80966652),  //Eng-Tur
