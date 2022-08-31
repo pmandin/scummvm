@@ -84,9 +84,10 @@ public:
 	void line(Math::Vector3d v0, Math::Vector3d v1) override;
 
 private:
+	int _smushNumTex;
+	TGLuint *_smushTexIds;
 	Graphics::PixelFormat _pixelFormat;
 	Graphics::Surface *_storedDisplay;
-	TinyGL::BlitImage *_smushImage;
 
 	int _maskNumTex, _maskTexPitch;
 	TGLuint *_maskTexIds;
