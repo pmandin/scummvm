@@ -38,7 +38,7 @@ GfxBase *CreateGfxTinyGL() {
 	return new GfxTinyGL();
 }
 
-GfxTinyGL::GfxTinyGL(): _smushImage(nullptr),
+GfxTinyGL::GfxTinyGL(): _smushNumTex(0), _smushTexIds(nullptr),
 	_maskNumTex(0) {
 	//
 }
@@ -109,12 +109,118 @@ bool GfxTinyGL::supportsShaders() {
 }
 
 void GfxTinyGL::prepareMovieFrame(Graphics::Surface *frame) {
-	if (!_smushImage)
-		_smushImage = tglGenBlitImage();
-	tglUploadBlitImage(_smushImage, *frame, 0, false);
+	int height = frame->h;
+	int width = frame->w;
 
-	_smushWidth = frame->w;
-	_smushHeight = frame->h;
+	// create texture
+	_smushNumTex = ((width + (BITMAP_TEXTURE_SIZE - 1)) / BITMAP_TEXTURE_SIZE) *
+				   ((height + (BITMAP_TEXTURE_SIZE - 1)) / BITMAP_TEXTURE_SIZE);
+	_smushTexIds = new TGLuint[_smushNumTex];
+	tglGenTextures(_smushNumTex, _smushTexIds);
+
+	int curTexIdx = 0;
+	for (int y = 0; y < height; y += BITMAP_TEXTURE_SIZE) {
+		for (int x = 0; x < width; x += BITMAP_TEXTURE_SIZE) {
+			int t_width = (x + BITMAP_TEXTURE_SIZE >= width) ? (width - x) : BITMAP_TEXTURE_SIZE;
+			int t_height = (y + BITMAP_TEXTURE_SIZE >= height) ? (height - y) : BITMAP_TEXTURE_SIZE;
+			TGLenum txFormat = TGL_RGBA;
+			TGLenum txDataType = TGL_UNSIGNED_SHORT_5_5_5_1;
+			Graphics::PixelFormat dstFormat(2, 5, 5, 5, 1, 11, 6, 1, 0);
+
+			tglBindTexture(TGL_TEXTURE_2D, _smushTexIds[curTexIdx]);
+
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MAG_FILTER, TGL_NEAREST);
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_MIN_FILTER, TGL_NEAREST);
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_S, TGL_CLAMP);
+			tglTexParameteri(TGL_TEXTURE_2D, TGL_TEXTURE_WRAP_T, TGL_CLAMP);
+
+			uint16 *tmpBitmap = new uint16[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE];
+
+			switch(frame->format.bytesPerPixel) {
+				case 1:
+					{
+						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						uint16 *dstBitmap = tmpBitmap;
+						for (int sy=0; sy<t_height; sy++) {
+							uint8 *srcLine = srcBitmap;
+							uint16 *dstLine = dstBitmap;
+							for (int sx=0; sx<t_width; sx++) {
+								byte r, g, b, a;
+								uint8 color = *srcLine++;
+								frame->format.colorToARGB(color, a, r, g, b);
+								*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+							}
+							srcBitmap += frame->pitch;
+							dstBitmap += BITMAP_TEXTURE_SIZE;
+						}
+					}
+					break;
+				case 2:
+					{
+						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						uint16 *dstBitmap = tmpBitmap;
+						for (int sy=0; sy<t_height; sy++) {
+							uint16 *srcLine = (uint16 *) srcBitmap;
+							uint16 *dstLine = dstBitmap;
+							for (int sx=0; sx<t_width; sx++) {
+								byte r, g, b, a;
+								uint16 color = *srcLine++;
+								frame->format.colorToARGB(color, a, r, g, b);
+								*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+							}
+							srcBitmap += frame->pitch;
+							dstBitmap += BITMAP_TEXTURE_SIZE;
+						}
+					}
+					break;
+				case 3:
+					{
+						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						uint16 *dstBitmap = tmpBitmap;
+						for (int sy=0; sy<t_height; sy++) {
+							uint8 *srcLine = (uint8 *) srcBitmap;
+							uint16 *dstLine = dstBitmap;
+							for (int sx=0; sx<t_width; sx++) {
+								byte r, g, b, a;
+								uint32 color = (srcLine[0]<<16)|(srcLine[1]<<8)|srcLine[2];	// FIXME: for endianness
+								srcLine += 3;
+								frame->format.colorToARGB(color, a, r, g, b);
+								*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+							}
+							srcBitmap += frame->pitch;
+							dstBitmap += BITMAP_TEXTURE_SIZE;
+						}
+					}
+					break;
+				case 4:
+					{
+						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						uint16 *dstBitmap = tmpBitmap;
+						for (int sy=0; sy<t_height; sy++) {
+							uint32 *srcLine = (uint32 *) srcBitmap;
+							uint16 *dstLine = dstBitmap;
+							for (int sx=0; sx<t_width; sx++) {
+								byte r, g, b, a;
+								uint32 color = *srcLine++;
+								frame->format.colorToARGB(color, a, r, g, b);
+								*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+							}
+							srcBitmap += frame->pitch;
+							dstBitmap += BITMAP_TEXTURE_SIZE;
+						}
+					}
+					break;
+			}
+
+			tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, txFormat, txDataType, tmpBitmap);
+			delete[] tmpBitmap;
+
+			curTexIdx++;
+		}
+	}
+
+	_smushWidth = width; //(int)(width * _scaleW);
+	_smushHeight = height; //(int)(height * _scaleH);
 }
 
 void GfxTinyGL::drawMovieFrame(int offsetX, int offsetY) {
@@ -125,77 +231,76 @@ void GfxTinyGL::drawMovieFrame(int offsetX, int offsetY) {
 	int movW = _smushWidth * movScale;
 	int movH = _smushHeight * movScale;
 
+ 	tglViewport(0, 0, sysW, sysH);
+
+	// prepare view
+	tglMatrixMode(TGL_PROJECTION);
+	tglLoadIdentity();
+	tglOrtho(0, sysW, sysH, 0, 0, 1);
+
+	tglMatrixMode(TGL_TEXTURE);
+	tglLoadIdentity();
+
+	tglMatrixMode(TGL_MODELVIEW);
+	tglLoadIdentity();
+
+	// A lot more may need to be put there : disabling Alpha test, blending, ...
+	// For now, just keep this here :-)
+
+	tglDisable(TGL_LIGHTING);
+	tglEnable(TGL_TEXTURE_2D);
+	// draw
+	tglDisable(TGL_DEPTH_TEST);
+	tglDepthMask(TGL_FALSE);
+	//glEnable(GL_SCISSOR_TEST);
+
 	offsetX = (int)(offsetX * movScale);
 	offsetY = (int)(offsetY * movScale);
 
 	offsetX += (sysW-movW)>>1;
 	offsetY += (sysH-movH)>>1;
 
-	if ((movW==_smushWidth) && (movH==_smushHeight)) {
-		tglBlitFast(_smushImage, offsetX, offsetY);
-		return;
+	//glScissor(offsetX, _screenHeight - (offsetY + movH), movW, movH);
+
+	int curTexIdx = 0;
+	for (int y = 0; y < movH; y += (int)(BITMAP_TEXTURE_SIZE * movScale)) {
+		for (int x = 0; x < movW; x += (int)(BITMAP_TEXTURE_SIZE * movScale)) {
+			tglBindTexture(TGL_TEXTURE_2D, _smushTexIds[curTexIdx]);
+			tglBegin(TGL_QUADS);
+			tglTexCoord2f(0, 0);
+			tglVertex2f(x + offsetX, y + offsetY);
+			tglTexCoord2f(1.0f, 0.0f);
+			tglVertex2f(x + offsetX + BITMAP_TEXTURE_SIZE * movScale, y + offsetY);
+			tglTexCoord2f(1.0f, 1.0f);
+			tglVertex2f(x + offsetX + BITMAP_TEXTURE_SIZE * movScale, y + offsetY + BITMAP_TEXTURE_SIZE * movScale);
+			tglTexCoord2f(0.0f, 1.0f);
+			tglVertex2f(x + offsetX, y + offsetY + BITMAP_TEXTURE_SIZE * movScale);
+			tglEnd();
+			curTexIdx++;
+		}
 	}
 
-	TinyGL::BlitTransform bltTransform(offsetX, offsetY);
-	//FIXME bltTransform.scale no more available
-	// bltTransform.scale(movW, movH);
+	//glDisable(GL_SCISSOR_TEST);
+	tglDisable(TGL_TEXTURE_2D);
+	tglDepthMask(TGL_TRUE);
+	tglEnable(TGL_DEPTH_TEST);
+	tglEnable(TGL_LIGHTING);
 
-	tglBlit(_smushImage, bltTransform);
+	tglViewport(_screenViewport.left, _screenViewport.top, _screenWidth, _screenHeight);
 }
 
 void GfxTinyGL::releaseMovieFrame() {
-	tglDeleteBlitImage(_smushImage);
+	if (_smushNumTex > 0) {
+		tglDeleteTextures(_smushNumTex, _smushTexIds);
+		delete[] _smushTexIds;
+		_smushNumTex = 0;
+	}
 }
 
 void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette) {
 	int height = frame->h;
 	int width = frame->w;
 	uint16 *maskBitmap;
-
-	TGLenum format;
-	TGLenum dataType;
-	int bytesPerPixel = frame->format.bytesPerPixel;
-
-	// Aspyr Logo format
-	if (frame->format == Graphics::PixelFormat(4, 8, 8, 8, 0, 8, 16, 24, 0)) {
-#if !defined(__amigaos4__)
-		format = TGL_BGRA;
-		dataType = TGL_UNSIGNED_INT_8_8_8_8;
-#else
-		// AmigaOS' MiniGL does not understand GL_UNSIGNED_INT_8_8_8_8 yet.
-		format = TGL_BGRA;
-		dataType = TGL_UNSIGNED_BYTE;
-#endif
-	} else if (frame->format == Graphics::PixelFormat(4, 8, 8, 8, 0, 16, 8, 0, 0)) {
-		format = TGL_BGRA;
-		dataType = TGL_UNSIGNED_INT_8_8_8_8_REV;
-	} else if (frame->format == Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0)) {
-		format = TGL_RGB;
-		dataType = TGL_UNSIGNED_SHORT_5_6_5;
-	/*} else if (frame->format == Graphics::PixelFormat(2, 5, 5, 5, 1, 11, 6, 1, 0)) {
-		format = TGL_RGBA;
-		dataType = TGL_UNSIGNED_SHORT_5_5_5_1;*/
-	} else if (frame->format == Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24)) {
-		format = TGL_RGBA;
-		dataType = TGL_UNSIGNED_INT_8_8_8_8_REV;
-	} else if (frame->format == Graphics::PixelFormat(3, 8, 8, 8, 0, 0, 8, 16, 0)) {
-		format = TGL_RGB;
-		dataType = TGL_UNSIGNED_BYTE;
- 	} else if (frame->format == Graphics::PixelFormat(1, 0, 0, 0, 0, 0, 0, 0, 0)) {
-		format = TGL_COLOR_INDEX;
-		dataType = TGL_UNSIGNED_BYTE;
-	} else {
-		error("Unknown pixelformat: Bpp: %d RBits: %d GBits: %d BBits: %d ABits: %d RShift: %d GShift: %d BShift: %d AShift: %d",
-			frame->format.bytesPerPixel,
-			-(frame->format.rLoss - 8),
-			-(frame->format.gLoss - 8),
-			-(frame->format.bLoss - 8),
-			-(frame->format.aLoss - 8),
-			frame->format.rShift,
-			frame->format.gShift,
-			frame->format.bShift,
-			frame->format.aShift);
-	}
 
 	releaseMaskedFrame();
 
@@ -223,27 +328,44 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 
 			maskBitmap = new uint16[BITMAP_TEXTURE_SIZE * BITMAP_TEXTURE_SIZE];
 
-			if (format == TGL_COLOR_INDEX) {
-				// Does not work with paletted texture, convert to some argb texture
-				Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
+			switch(frame->format.bytesPerPixel) {
+				case 1:
+					{
+						// Does not work with paletted texture, convert to some argb texture
+						Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
 
-				/* Convert part of texture, we only need Alpha channel */
-				uint16 *dstBitmap = maskBitmap;
-				uint8 *srcBitmap = (uint8 *) frame->getBasePtr(0, 0);
-				for (int sy=0; sy<t_height; sy++) {
-					uint8 *srcLine = srcBitmap;
-					uint16 *dstLine = dstBitmap;
-					for (int sx=0; sx<t_width; sx++) {
-						byte r, g, b, a;
-						uint16 color = timPalette[ *srcLine++ ];
-						fmtTimPal.colorToARGB(color, a, r, g, b);
-						*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+						/* Convert part of texture, we only need Alpha channel */
+						uint16 *dstBitmap = maskBitmap;
+						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(0, 0);
+						for (int sy=0; sy<t_height; sy++) {
+							uint8 *srcLine = srcBitmap;
+							uint16 *dstLine = dstBitmap;
+							for (int sx=0; sx<t_width; sx++) {
+								byte r, g, b, a;
+								uint16 color = timPalette[ *srcLine++ ];
+								fmtTimPal.colorToARGB(color, a, r, g, b);
+								*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
+							}
+							srcBitmap += frame->pitch;
+							dstBitmap += BITMAP_TEXTURE_SIZE;
+						}
 					}
-					srcBitmap += frame->pitch;
-					dstBitmap += BITMAP_TEXTURE_SIZE;
-				}
-			} else {
-				// FIXME: Copy part of texture from frame to maskBitmap
+					break;
+				case 2:
+					{
+						// TODO
+					}
+					break;
+				case 3:
+					{
+						// TODO
+					}
+					break;
+				case 4:
+					{
+						// TODO
+					}
+					break;
 			}
 
 			tglTexImage2D(TGL_TEXTURE_2D, 0, TGL_RGBA, BITMAP_TEXTURE_SIZE, BITMAP_TEXTURE_SIZE, 0, txFormat, txDataType, maskBitmap);
