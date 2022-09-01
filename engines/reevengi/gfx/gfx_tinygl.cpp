@@ -182,7 +182,7 @@ void GfxTinyGL::prepareMovieFrame(Graphics::Surface *frame) {
 							uint16 *dstLine = dstBitmap;
 							for (int sx=0; sx<t_width; sx++) {
 								byte r, g, b, a;
-								uint32 color = (srcLine[0]<<16)|(srcLine[1]<<8)|srcLine[2];	// FIXME: for endianness
+								uint32 color = (srcLine[2]<<16)|(srcLine[1]<<8)|srcLine[0];	// FIXME: for endianness
 								srcLine += 3;
 								frame->format.colorToARGB(color, a, r, g, b);
 								*dstLine++ = dstFormat.ARGBToColor(a, r, g, b);
