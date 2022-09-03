@@ -327,4 +327,38 @@ Common::SeekableReadStream *RE1Room::getTimMask(int numCamera) {
 	return new Common::MemoryReadStream(&_roomPtr[offset], _roomSize);
 }
 
+void RE1Room::scenePrepareInit(void) {
+	Room::scenePrepareInit();
+
+	if (!_roomPtr)
+		return;
+
+	int32 offset = FROM_LE_32( ((rdt1_header_t *) _roomPtr)->offsets[RDT1_OFFSET_INIT_SCRIPT] );
+	_scriptPtr = & (((byte *) _roomPtr)[offset]);
+	if (!_scriptPtr)
+		return;
+
+	_scriptLen = FROM_LE_16( *((int16 *) _scriptPtr) );
+	_scriptInst = &_scriptPtr[2];
+}
+
+void RE1Room::scenePrepareRun(void) {
+	Room::scenePrepareRun();
+
+	if (!_roomPtr)
+		return;
+
+	int32 offset = FROM_LE_32( ((rdt1_header_t *) _roomPtr)->offsets[RDT1_OFFSET_ROOM_SCRIPT] );
+	_scriptPtr = & (((byte *) _roomPtr)[offset]);
+	if (!_scriptPtr)
+		return;
+
+	_scriptLen = FROM_LE_16( *((int16 *) _scriptPtr) );
+	_scriptInst = &_scriptPtr[2];
+}
+
+void RE1Room::sceneExecInst(void) {
+	//
+}
+
 } // End of namespace Reevengi
