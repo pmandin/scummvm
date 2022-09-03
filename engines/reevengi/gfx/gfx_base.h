@@ -64,7 +64,7 @@ public:
 	 * @see drawMovieFrame
 	 * @see releaseMovieFrame
 	 */
-	virtual void prepareMovieFrame(Graphics::Surface *frame) = 0;
+	virtual void prepareMovieFrame(const Graphics::Surface *frame) = 0;
 	virtual void drawMovieFrame(int offsetX, int offsetY) = 0;
 
 	/**

@@ -56,7 +56,7 @@ public:
 	bool isHardwareAccelerated() /*override*/;
 	bool supportsShaders() /*override*/;
 
-	void prepareMovieFrame(Graphics::Surface *frame) override;
+	void prepareMovieFrame(const Graphics::Surface *frame) override;
 	void drawMovieFrame(int offsetX, int offsetY) override;
 	void releaseMovieFrame() override;
 

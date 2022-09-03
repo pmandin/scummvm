@@ -108,7 +108,7 @@ bool GfxTinyGL::supportsShaders() {
 	return false;
 }
 
-void GfxTinyGL::prepareMovieFrame(Graphics::Surface *frame) {
+void GfxTinyGL::prepareMovieFrame(const Graphics::Surface *frame) {
 	int height = frame->h;
 	int width = frame->w;
 

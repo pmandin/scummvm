@@ -449,7 +449,7 @@ void ReevengiEngine::loadBgImage(void) {
 		return;
 	}
 
-	Graphics::Surface *bgSurf = (Graphics::Surface *) _bgImage->getSurface();
+	const Graphics::Surface *bgSurf = _bgImage->getSurface();
 	if (bgSurf) {
 		g_driver->prepareMovieFrame(bgSurf);
 	}
