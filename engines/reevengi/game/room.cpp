@@ -102,14 +102,20 @@ void Room::sceneRunScript(void) {
 	}
 
 	/* Room script */
-	while (_scriptInst) {
-		sceneExecInst();
+	bool paused = false;
+	while (_scriptInst && !paused) {
+		paused = sceneExecInst();
 	}
 }
 
-void Room::sceneExecInst(void) {
+bool Room::sceneExecInst(void) {
 	// FIXME
 	_scriptInst = nullptr;
+	return true;
+}
+
+int Room::sceneInstLen(void) {
+	return 0;
 }
 
 bool Room::isInside(Math::Vector2d pos, Math::Vector2d quad[4]) {

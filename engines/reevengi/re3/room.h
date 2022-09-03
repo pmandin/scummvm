@@ -32,7 +32,8 @@ class RE3Room: public RE2Room {
 public:
 	RE3Room(Common::SeekableReadStream *stream);
 
-	void sceneExecInst(void);
+	bool sceneExecInst(void);
+	int sceneInstLen(void);
 };
 
 } // End of namespace Reevengi

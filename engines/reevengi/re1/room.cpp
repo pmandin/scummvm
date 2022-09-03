@@ -40,6 +40,8 @@ namespace Reevengi {
 
 #define RDT1_RVD_BOUNDARY 9
 
+#include "rdt_scd_defs.gen.h"
+
 /*--- Types ---*/
 
 typedef struct {
@@ -101,6 +103,19 @@ typedef struct {
 	int16 x3,y3;
 	int16 x4,y4;
 } rdt1_rvd_t;
+
+typedef struct {
+	uint8 opcode;
+	uint8 length;
+} script_inst_len_t;
+
+#include "rdt_scd_types.gen.h"
+
+/*--- Variables ---*/
+
+#include "rdt_scd_lengths.gen.c"
+
+/*--- Class ---*/
 
 RE1Room::RE1Room(Common::SeekableReadStream *stream): Room(stream) {
 	//
@@ -357,9 +372,80 @@ void RE1Room::scenePrepareRun(void) {
 	_scriptInst = &_scriptPtr[2];
 }
 
-void RE1Room::sceneExecInst(void) {
+bool RE1Room::sceneExecInst(void) {
 	// FIXME
-	Room::sceneExecInst();
+	return Room::sceneExecInst();
+}
+
+int RE1Room::sceneInstLen(void) {
+	if (!_scriptInst)
+		return 0;
+
+	for (unsigned int i=0; i< sizeof(inst_length)/sizeof(script_inst_len_t); i++) {
+		if (inst_length[i].opcode == _scriptInst[0]) {
+			return inst_length[i].length;
+		}
+	}
+
+	/* Variable length instructions */
+	switch(_scriptInst[0]) {
+		case INST_17:
+			switch(_scriptInst[4]) {
+				case 0:
+					/* fields used */
+					return 6+4;
+				case 1:
+				case 2:
+				case 3:
+					/* fields not used */
+					return 6+4;
+				default:
+					return 6;
+			}
+			break;
+		case INST_28:
+			switch(_scriptInst[2]) {
+				case 0:
+				case 2:
+				case 3:
+				case 5:
+				case 9:
+				case 10:
+					return 6;
+				case 1:
+					return 8;
+				case 6:
+				case 8:
+					return 4;
+				case 4:
+				default:
+					break;
+			}
+			break;
+		case INST_33:
+			switch(_scriptInst[1]) {
+				case 0:
+				case 4:
+				case 6:
+				case 7:
+					return 2;
+				case 1:
+				case 3:
+				case 5:
+				case 8:
+				case 9:
+				case 10:
+					return 4;
+				case 2:
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+
+	return 0;
 }
 
 } // End of namespace Reevengi
