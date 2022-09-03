@@ -43,8 +43,15 @@ public:
 
 	void drawMasks(int numCamera);
 
+	void scenePrepareInit(void);
+	void scenePrepareRun(void);
+	void sceneExecInst(void);
+
 protected:
 	void *getRdtSection(int numSection) override;
+
+	int getSceneScriptLength(int numScript);
+	byte *getSceneScriptStart(void);
 };
 
 } // End of namespace Reevengi

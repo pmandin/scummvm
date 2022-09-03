@@ -26,7 +26,8 @@
 
 namespace Reevengi {
 
-Room::Room(Common::SeekableReadStream *stream) {
+Room::Room(Common::SeekableReadStream *stream): _scriptPtr(nullptr), _scriptLen(0),
+	_scriptInst(nullptr), _scriptPC(0) {
 	stream->seek(0);
 	_roomSize = stream->size();
 
@@ -75,6 +76,20 @@ void Room::drawCamBoundary(int curCam) {
 }
 
 void Room::drawMasks(int numCamera) {
+	//
+}
+
+void Room::scenePrepareInit(void) {
+	_scriptPtr = _scriptInst = nullptr;
+	_scriptLen = _scriptPC = 0;
+}
+
+void Room::scenePrepareRun(void) {
+	_scriptPtr = _scriptInst = nullptr;
+	_scriptLen = _scriptPC = 0;
+}
+
+void Room::sceneExecInst(void) {
 	//
 }
 

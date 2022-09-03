@@ -43,6 +43,10 @@ public:
 
 	void drawMasks(int numCamera);
 	Common::SeekableReadStream *getTimMask(int numCamera);
+
+	void scenePrepareInit(void);
+	void scenePrepareRun(void);
+	void sceneExecInst(void);
 };
 
 } // End of namespace Reevengi

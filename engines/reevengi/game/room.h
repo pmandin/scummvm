@@ -48,10 +48,19 @@ public:
 
 	virtual void drawMasks(int numCamera);
 
+	virtual void scenePrepareInit(void);	// Prepare scene initialization script
+	virtual void scenePrepareRun(void);		// Prepare scene run script
+	virtual void sceneExecInst(void);		// Execute instruction for current scene script
+
 protected:
 	// raw data file for room
 	byte *_roomPtr;
 	int32 _roomSize;
+
+	byte *_scriptPtr;
+	int _scriptLen;		// Script length
+	byte *_scriptInst;	// Current instruction = &_scriptPtr[_scriptOffset]
+	int _scriptPC;		// Program counter in script
 
 	virtual void*getRdtSection(int numSection);
 

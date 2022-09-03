@@ -378,4 +378,59 @@ void RE2Room::drawMasks(int numCamera) {
 	}
 }
 
+void RE2Room::scenePrepareInit(void) {
+	Room::scenePrepareInit();
+
+	_scriptPtr = (byte *) getRdtSection(RDT2_OFFSET_INIT_SCRIPT);
+	_scriptLen = getSceneScriptLength(RDT2_OFFSET_INIT_SCRIPT);
+	_scriptInst = getSceneScriptStart();
+}
+
+void RE2Room::scenePrepareRun(void) {
+	Room::scenePrepareRun();
+
+	_scriptPtr = (byte *) getRdtSection(RDT2_OFFSET_ROOM_SCRIPT);
+	_scriptLen = getSceneScriptLength(RDT2_OFFSET_ROOM_SCRIPT);
+	_scriptInst = getSceneScriptStart();
+}
+
+int RE2Room::getSceneScriptLength(int numScript) {
+	uint32 smaller_offset, offset;
+
+	if (!_scriptPtr)
+		return 0;
+
+	/* Search smaller offset after script to calc length */
+	offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[numScript] );
+	smaller_offset = _roomSize;
+	for (int i=0; i<21; i++) {
+		uint32 next_offset = FROM_LE_32( ((rdt2_header_t *) _roomPtr)->offsets[i] );
+		if ((next_offset>0) && (next_offset<smaller_offset) && (next_offset>offset)) {
+			smaller_offset = next_offset;
+		}
+	}
+	if (smaller_offset>offset) {
+		return smaller_offset - offset;
+	}
+
+	return 0;
+}
+
+byte *RE2Room::getSceneScriptStart(void) {
+	if (!_scriptPtr)
+		return nullptr;
+
+	/* Start of script is an array of offsets to the various script functions
+	 * The first offset also gives the first instruction to execute
+	 */
+	uint16 *funcArrayPtr = (uint16 *) _scriptPtr;
+
+	_scriptPC = FROM_LE_16( funcArrayPtr[0] );
+	return &_scriptPtr[_scriptPC];
+}
+
+void RE2Room::sceneExecInst(void) {
+	//
+}
+
 } // End of namespace Reevengi
