@@ -106,10 +106,10 @@ bool GfxOpenGL::supportsShaders() {
 	return false;
 }
 
-void GfxOpenGL::prepareMovieFrame(Graphics::Surface *frame) {
+void GfxOpenGL::prepareMovieFrame(const Graphics::Surface *frame) {
 	int height = frame->h;
 	int width = frame->w;
-	byte *bitmap = (byte *)frame->getPixels();
+	const byte *bitmap = (const byte *) frame->getPixels();
 
 	GLenum format;
 	GLenum dataType;
