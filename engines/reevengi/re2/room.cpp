@@ -409,11 +409,8 @@ int RE2Room::getSceneScriptLength(int numScript) {
 			smaller_offset = next_offset;
 		}
 	}
-	if (smaller_offset>offset) {
-		return smaller_offset - offset;
-	}
 
-	return 0;
+	return smaller_offset - offset;
 }
 
 byte *RE2Room::getSceneScriptStart(void) {
@@ -430,7 +427,8 @@ byte *RE2Room::getSceneScriptStart(void) {
 }
 
 void RE2Room::sceneExecInst(void) {
-	//
+	// FIXME
+	Room::sceneExecInst();
 }
 
 } // End of namespace Reevengi

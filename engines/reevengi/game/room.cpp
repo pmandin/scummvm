@@ -27,7 +27,7 @@
 namespace Reevengi {
 
 Room::Room(Common::SeekableReadStream *stream): _scriptPtr(nullptr), _scriptLen(0),
-	_scriptInst(nullptr), _scriptPC(0) {
+	_scriptInst(nullptr), _scriptPC(0), _scriptInit(true) {
 	stream->seek(0);
 	_roomSize = stream->size();
 
@@ -89,8 +89,27 @@ void Room::scenePrepareRun(void) {
 	_scriptLen = _scriptPC = 0;
 }
 
+void Room::sceneRunScript(void) {
+	/* Run init script once */
+	if (_scriptInit) {
+		scenePrepareInit();
+		while (_scriptInst) {
+			sceneExecInst();
+		}
+		_scriptInit = false;
+
+		scenePrepareRun();
+	}
+
+	/* Room script */
+	while (_scriptInst) {
+		sceneExecInst();
+	}
+}
+
 void Room::sceneExecInst(void) {
-	//
+	// FIXME
+	_scriptInst = nullptr;
 }
 
 bool Room::isInside(Math::Vector2d pos, Math::Vector2d quad[4]) {

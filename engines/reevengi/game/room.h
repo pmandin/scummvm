@@ -50,6 +50,7 @@ public:
 
 	virtual void scenePrepareInit(void);	// Prepare scene initialization script
 	virtual void scenePrepareRun(void);		// Prepare scene run script
+	void sceneRunScript(void);				// Execute script
 	virtual void sceneExecInst(void);		// Execute instruction for current scene script
 
 protected:
@@ -61,6 +62,7 @@ protected:
 	int _scriptLen;		// Script length
 	byte *_scriptInst;	// Current instruction = &_scriptPtr[_scriptOffset]
 	int _scriptPC;		// Program counter in script
+	bool _scriptInit;	// Run init script (true), room script (false)
 
 	virtual void*getRdtSection(int numSection);
 

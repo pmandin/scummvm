@@ -358,7 +358,8 @@ void RE1Room::scenePrepareRun(void) {
 }
 
 void RE1Room::sceneExecInst(void) {
-	//
+	// FIXME
+	Room::sceneExecInst();
 }
 
 } // End of namespace Reevengi
