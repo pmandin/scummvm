@@ -30,7 +30,8 @@ RE3Room::RE3Room(Common::SeekableReadStream *stream): RE2Room(stream) {
 }
 
 void RE3Room::sceneExecInst(void) {
-	//
+	// FIXME
+	Room::sceneExecInst();
 }
 
 } // End of namespace Reevengi

@@ -154,6 +154,8 @@ Common::Error ReevengiEngine::run() {
 			_playerZ = (camera.toZ + camera.fromZ) / 2;
 
 			debug(3, "%d cameras, pos %.3f,%.3f,%.3f", _roomScene->getNumCameras(), _playerX,_playerY,_playerZ);
+
+			_roomScene->sceneRunScript();
 		}
 		loadBgImage();
 		loadBgMaskImage();
@@ -420,6 +422,8 @@ void ReevengiEngine::processEventsKeyDown(Common::Event e) {
 			_playerZ = (camera.toZ + camera.fromZ) / 2;
 
 			debug(3, "%d cameras, pos %.3f,%.3f,%.3f", _roomScene->getNumCameras(), _playerX,_playerY,_playerZ);
+
+			_roomScene->sceneRunScript();
 		}
 	}
 	if (updateBgImage) {
