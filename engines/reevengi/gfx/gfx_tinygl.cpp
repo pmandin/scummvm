@@ -139,10 +139,10 @@ void GfxTinyGL::prepareMovieFrame(const Graphics::Surface *frame) {
 			switch(frame->format.bytesPerPixel) {
 				case 1:
 					{
-						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						const uint8 *srcBitmap = (const uint8 *) frame->getBasePtr(x, y);
 						uint16 *dstBitmap = tmpBitmap;
 						for (int sy=0; sy<t_height; sy++) {
-							uint8 *srcLine = srcBitmap;
+							const uint8 *srcLine = srcBitmap;
 							uint16 *dstLine = dstBitmap;
 							for (int sx=0; sx<t_width; sx++) {
 								byte r, g, b, a;
@@ -157,10 +157,10 @@ void GfxTinyGL::prepareMovieFrame(const Graphics::Surface *frame) {
 					break;
 				case 2:
 					{
-						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						const uint8 *srcBitmap = (const uint8 *) frame->getBasePtr(x, y);
 						uint16 *dstBitmap = tmpBitmap;
 						for (int sy=0; sy<t_height; sy++) {
-							uint16 *srcLine = (uint16 *) srcBitmap;
+							const uint16 *srcLine = (const uint16 *) srcBitmap;
 							uint16 *dstLine = dstBitmap;
 							for (int sx=0; sx<t_width; sx++) {
 								byte r, g, b, a;
@@ -175,10 +175,10 @@ void GfxTinyGL::prepareMovieFrame(const Graphics::Surface *frame) {
 					break;
 				case 3:
 					{
-						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						const uint8 *srcBitmap = (const uint8 *) frame->getBasePtr(x, y);
 						uint16 *dstBitmap = tmpBitmap;
 						for (int sy=0; sy<t_height; sy++) {
-							uint8 *srcLine = (uint8 *) srcBitmap;
+							const uint8 *srcLine = (const uint8 *) srcBitmap;
 							uint16 *dstLine = dstBitmap;
 							for (int sx=0; sx<t_width; sx++) {
 								byte r, g, b, a;
@@ -194,10 +194,10 @@ void GfxTinyGL::prepareMovieFrame(const Graphics::Surface *frame) {
 					break;
 				case 4:
 					{
-						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(x, y);
+						const uint8 *srcBitmap = (const uint8 *) frame->getBasePtr(x, y);
 						uint16 *dstBitmap = tmpBitmap;
 						for (int sy=0; sy<t_height; sy++) {
-							uint32 *srcLine = (uint32 *) srcBitmap;
+							const uint32 *srcLine = (const uint32 *) srcBitmap;
 							uint16 *dstLine = dstBitmap;
 							for (int sx=0; sx<t_width; sx++) {
 								byte r, g, b, a;
@@ -297,7 +297,7 @@ void GfxTinyGL::releaseMovieFrame() {
 	}
 }
 
-void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette) {
+void GfxTinyGL::prepareMaskedFrame(const Graphics::Surface *frame, uint16* timPalette) {
 	int height = frame->h;
 	int width = frame->w;
 	uint16 *maskBitmap;
@@ -335,10 +335,10 @@ void GfxTinyGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette)
 						Graphics::PixelFormat fmtTimPal(2, 5, 5, 5, 1, 11, 6, 1, 0);
 
 						/* Convert part of texture, we only need Alpha channel */
+						const uint8 *srcBitmap = (const uint8 *) frame->getBasePtr(0, 0);
 						uint16 *dstBitmap = maskBitmap;
-						uint8 *srcBitmap = (uint8 *) frame->getBasePtr(0, 0);
 						for (int sy=0; sy<t_height; sy++) {
-							uint8 *srcLine = srcBitmap;
+							const uint8 *srcLine = srcBitmap;
 							uint16 *dstLine = dstBitmap;
 							for (int sx=0; sx<t_width; sx++) {
 								byte r, g, b, a;
@@ -586,9 +586,9 @@ void GfxTinyGL::createTexture(const Graphics::Surface *frame, uint16* timPalette
 
 		/* Convert part of texture, we only need Alpha channel */
 		uint16 *dstBitmap = maskBitmap;
-		uint8 *srcBitmap = (uint8 *) frame->getPixels();
+		const uint8 *srcBitmap = (const uint8 *) frame->getPixels();
 		for (int sy=0; sy<frame->h; sy++) {
-			uint8 *srcLine = srcBitmap;
+			const uint8 *srcLine = srcBitmap;
 			uint16 *dstLine = dstBitmap;
 			for (int sx=0; sx<frame->w; sx++) {
 				byte r, g, b, a;

@@ -76,7 +76,7 @@ public:
 	virtual void releaseMovieFrame() = 0;
 
 	/* Draw mask (only to depth buffer), using alpha */
-	virtual void prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette = nullptr) = 0;
+	virtual void prepareMaskedFrame(const Graphics::Surface *frame, uint16* timPalette = nullptr) = 0;
 	virtual void drawMaskedFrame(int srcX, int srcY, int dstX, int dstY, int w, int h, int depth) = 0;
 	virtual void releaseMaskedFrame(void) = 0;
 

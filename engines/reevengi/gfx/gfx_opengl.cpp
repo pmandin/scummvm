@@ -267,10 +267,10 @@ void GfxOpenGL::releaseMovieFrame() {
 	}
 }
 
-void GfxOpenGL::prepareMaskedFrame(Graphics::Surface *frame, uint16* timPalette) {
+void GfxOpenGL::prepareMaskedFrame(const Graphics::Surface *frame, uint16* timPalette) {
 	int height = frame->h;
 	int width = frame->w;
-	byte *bitmap = (byte *)frame->getPixels();
+	const byte *bitmap = (const byte *) frame->getPixels();
 
 	GLenum format;
 	GLenum dataType;
