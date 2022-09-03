@@ -48,10 +48,18 @@ public:
 
 	virtual void drawMasks(int numCamera);
 
-	virtual void scenePrepareInit(void);	// Prepare scene initialization script
-	virtual void scenePrepareRun(void);		// Prepare scene run script
-	void sceneRunScript(void);				// Execute script
-	virtual void sceneExecInst(void);		// Execute instruction for current scene script
+	// Prepare scene initialization script
+	virtual void scenePrepareInit(void);
+	// Prepare scene run script
+	virtual void scenePrepareRun(void);
+	// Execute script
+	void sceneRunScript(void);
+	// Execute instruction for current scene script
+	//	Returns true if can continue executing with next instruction
+	//	Returns false if any pause in script
+	virtual bool sceneExecInst(void);
+	// Returns instruction length
+	virtual int sceneInstLen(void);
 
 protected:
 	// raw data file for room

@@ -25,13 +25,45 @@
 
 namespace Reevengi {
 
+/*--- Defines ---*/
+
+#include "rdt_scd_defs.gen.h"
+
+/*--- Types ---*/
+
+typedef struct {
+	uint8 opcode;
+	uint8 length;
+} script_inst_len_t;
+
+#include "rdt_scd_types.gen.h"
+
+/*--- Variables ---*/
+
+#include "rdt_scd_lengths.gen.c"
+
+/*--- Class ---*/
+
 RE3Room::RE3Room(Common::SeekableReadStream *stream): RE2Room(stream) {
 	//
 }
 
-void RE3Room::sceneExecInst(void) {
+bool RE3Room::sceneExecInst(void) {
 	// FIXME
-	Room::sceneExecInst();
+	return Room::sceneExecInst();
+}
+
+int RE3Room::sceneInstLen(void) {
+	if (!_scriptInst)
+		return 0;
+
+	for (unsigned int i=0; i< sizeof(inst_length)/sizeof(script_inst_len_t); i++) {
+		if (inst_length[i].opcode == _scriptInst[0]) {
+			return inst_length[i].length;
+		}
+	}
+
+	return 0;
 }
 
 } // End of namespace Reevengi

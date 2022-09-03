@@ -41,6 +41,8 @@ namespace Reevengi {
 #define RDT2_OFFSET_ROOM_SCRIPT	17
 #define RDT2_OFFSET_ANIMS	18
 
+#include "rdt_scd_defs.gen.h"
+
 /*--- Types ---*/
 
 typedef struct {
@@ -129,6 +131,17 @@ typedef struct {
 	rdt2_lit_pos_t pos[3];
 	uint16 brightness[3];
 } rdt2_lit_t;
+
+typedef struct {
+	uint8 opcode;
+	uint8 length;
+} script_inst_len_t;
+
+#include "rdt_scd_types.gen.h"
+
+/*--- Variables ---*/
+
+#include "rdt_scd_lengths.gen.c"
 
 /*--- Class --- */
 
@@ -426,9 +439,22 @@ byte *RE2Room::getSceneScriptStart(void) {
 	return &_scriptPtr[_scriptPC];
 }
 
-void RE2Room::sceneExecInst(void) {
+bool RE2Room::sceneExecInst(void) {
 	// FIXME
-	Room::sceneExecInst();
+	return Room::sceneExecInst();
+}
+
+int RE2Room::sceneInstLen(void) {
+	if (!_scriptInst)
+		return 0;
+
+	for (unsigned int i=0; i< sizeof(inst_length)/sizeof(script_inst_len_t); i++) {
+		if (inst_length[i].opcode == _scriptInst[0]) {
+			return inst_length[i].length;
+		}
+	}
+
+	return 0;
 }
 
 } // End of namespace Reevengi

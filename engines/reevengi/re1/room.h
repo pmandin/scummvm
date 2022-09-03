@@ -46,7 +46,8 @@ public:
 
 	void scenePrepareInit(void);
 	void scenePrepareRun(void);
-	void sceneExecInst(void);
+	bool sceneExecInst(void);
+	int sceneInstLen(void);
 };
 
 } // End of namespace Reevengi
