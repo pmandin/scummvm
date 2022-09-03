@@ -297,9 +297,9 @@ void RE1Engine::loadRoom(void) {
 	char filePath[64];
 	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
 
-	debug(3, "re1: loadRoom");
-
 	sprintf(filePath, RE1_ROOM, isPsx ? "psx" : "", re1_country[_country], _stage, _stage, _room);
+
+	debug(3, "re1: loadRoom(\"%s\")", filePath);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
