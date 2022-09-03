@@ -352,6 +352,8 @@ void RE3Engine::loadRoomPc(void) {
 
 	sprintf(filePath, RE3PC_ROOM, _country, _stage, _room);
 
+	debug(3, "re3: loadRoom(\"%s\")", filePath);
+
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
 		_roomScene = new RE3Room(stream);
@@ -363,6 +365,8 @@ void RE3Engine::loadRoomPsx(void) {
 	char filePath[64];
 
 	sprintf(filePath, RE3PSX_ROOM, _stage, _stage, _room);
+
+	debug(3, "re3: loadRoom(\"%s\")", filePath);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {

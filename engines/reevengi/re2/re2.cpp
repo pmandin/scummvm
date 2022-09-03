@@ -409,9 +409,9 @@ void RE2Engine::loadBgMaskImagePsx(void) {
 void RE2Engine::loadRoom(void) {
 	char filePath[64];
 
-	debug(3, "re2: loadRoom");
-
 	sprintf(filePath, RE2_ROOM, _character, _country, _stage, _room, _character);
+
+	debug(3, "re2: loadRoom(\"%s\")", filePath);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
