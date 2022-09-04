@@ -95,6 +95,7 @@ void Room::sceneRunScript(void) {
 		scenePrepareInit();
 		while (_scriptInst) {
 			sceneExecInst();
+			sceneUpdatePC();
 		}
 		_scriptInit = false;
 
@@ -105,17 +106,38 @@ void Room::sceneRunScript(void) {
 	bool paused = false;
 	while (_scriptInst && !paused) {
 		paused = sceneExecInst();
+		sceneUpdatePC();
 	}
 }
 
 bool Room::sceneExecInst(void) {
-	// FIXME
 	_scriptInst = nullptr;
 	return true;
 }
 
 int Room::sceneInstLen(void) {
 	return 0;
+}
+
+void Room::sceneUpdatePC(void) {
+	if (!_scriptInst)
+		return;
+
+	int instLen = sceneInstLen();
+	if (instLen == 0) {
+		debug(2, "Zero instruction length");
+		_scriptInst = nullptr;
+		return;
+	}
+
+	_scriptPC += instLen;
+	if (_scriptPC >= _scriptLen) {
+		debug(2, "End of script reached");
+		_scriptInst = nullptr;
+		return;
+	}
+
+	_scriptInst = &_scriptPtr[_scriptPC];
 }
 
 bool Room::isInside(Math::Vector2d pos, Math::Vector2d quad[4]) {

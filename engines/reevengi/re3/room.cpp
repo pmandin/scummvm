@@ -49,8 +49,39 @@ RE3Room::RE3Room(Common::SeekableReadStream *stream): RE2Room(stream) {
 }
 
 bool RE3Room::sceneExecInst(void) {
-	// FIXME
-	return Room::sceneExecInst();
+	script_inst_t *inst = (script_inst_t *) _scriptInst;
+
+	if (!inst)
+		return true;
+
+	switch(inst->opcode) {
+		case INST_DOOR_AOT_SET:
+			{
+#if 0
+				script_inst_door_aot_set_t *doorSet = (script_inst_door_aot_set_t *) inst;
+				room_door_t roomDoor;
+
+				roomDoor.x = FROM_LE_16(doorSet->x);
+				roomDoor.y = FROM_LE_16(doorSet->z);
+				roomDoor.w = FROM_LE_16(doorSet->w);
+				roomDoor.h = FROM_LE_16(doorSet->h);
+
+				roomDoor.next_x = FROM_LE_16(doorSet->next_x);
+				roomDoor.next_y = FROM_LE_16(doorSet->next_y);
+				roomDoor.next_z = FROM_LE_16(doorSet->next_z);
+				roomDoor.next_dir = FROM_LE_16(doorSet->next_dir);
+
+				roomDoor.next_stage = doorSet->next_stage+1;
+				roomDoor.next_room = doorSet->next_room;
+				roomDoor.next_camera = doorSet->next_camera;
+
+				this->addDoor(this, &roomDoor);
+#endif
+			}
+			break;
+	}
+
+	return false;
 }
 
 int RE3Room::sceneInstLen(void) {

@@ -373,8 +373,55 @@ void RE1Room::scenePrepareRun(void) {
 }
 
 bool RE1Room::sceneExecInst(void) {
-	// FIXME
-	return Room::sceneExecInst();
+	script_inst_t *inst = (script_inst_t *) _scriptInst;
+
+	if (!inst)
+		return true;
+
+	switch(inst->opcode) {
+		case INST_DOOR_SET:
+			{
+#if 0
+				script_inst_door_set_t *doorSet = (script_inst_door_set_t *) inst;
+				room_door_t roomDoor;
+				int next_stage, next_room;
+
+				roomDoor.x = FROM_LE_16(doorSet->x);
+				roomDoor.y = FROM_LE_16(doorSet->y);
+				roomDoor.w = FROM_LE_16(doorSet->w);
+				roomDoor.h = FROM_LE_16(doorSet->h);
+
+				roomDoor.next_x = FROM_LE_16(doorSet->next_x);
+				roomDoor.next_y = FROM_LE_16(doorSet->next_y);
+				roomDoor.next_z = FROM_LE_16(doorSet->next_z);
+				roomDoor.next_dir = FROM_LE_16(doorSet->next_dir);
+
+				next_stage = doorSet->next_stage_and_room>>5;
+				switch(next_stage) {
+					case 0:
+					default:
+						next_stage = game->num_stage;
+						break;
+					case 1:
+						next_stage = game->num_stage-1;
+						break;
+					case 2:
+						next_stage = game->num_stage+1;
+						break;
+				}
+				roomDoor.next_stage = next_stage;
+
+				roomDoor.next_room = doorSet->next_stage_and_room & 31;
+
+				roomDoor.next_camera = 0/*doorSet->next_camera & 7*/;
+
+				this->addDoor(this, &roomDoor);
+#endif
+			}
+			break;
+	}
+
+	return false;
 }
 
 int RE1Room::sceneInstLen(void) {
