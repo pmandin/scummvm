@@ -25,14 +25,15 @@
  * Copyright (c) 2003-2013 Jan Nedoma and contributors
  */
 
-#ifndef WINTERMUTE_MODEL_X_H
-#define WINTERMUTE_MODEL_X_H
+#ifndef WINTERMUTE_XMODEL_H
+#define WINTERMUTE_XMODEL_H
 
 #include "engines/wintermute/base/base_object.h"
 #include "engines/wintermute/base/base_sprite.h"
 #include "engines/wintermute/coll_templ.h"
 #include "engines/wintermute/math/rect32.h"
 #include "engines/wintermute/video/video_theora_player.h"
+#include "engines/wintermute/utils/utils.h"
 
 #include "math/matrix4.h"
 #include "math/vector3d.h"
@@ -76,20 +77,14 @@ private:
 		XModelMatSprite(const char *matName, BaseSprite *sprite) {
 			_theora = nullptr;
 			_matName = nullptr;
-			uint32 size = strlen(matName);
-			_matName = new char[size + 1];
-			Common::copy(matName, matName + size, _matName);
-			_matName[size] = 0;
+			BaseUtils::setString(&_matName, matName);
 			_sprite = sprite;
 		}
 
 		XModelMatSprite(const char *matName, VideoTheoraPlayer *theora) {
 			_sprite = nullptr;
 			_matName = nullptr;
-			uint32 size = strlen(matName);
-			_matName = new char[size + 1];
-			Common::copy(matName, matName + size, _matName);
-			_matName[size] = 0;
+			BaseUtils::setString(&_matName, matName);
 			_theora = theora;
 		}
 

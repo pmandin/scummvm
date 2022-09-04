@@ -25,8 +25,8 @@
  * Copyright (c) 2003-2013 Jan Nedoma and contributors
  */
 
-#ifndef WINTERMUTE_MESH_X_H
-#define WINTERMUTE_MESH_X_H
+#ifndef WINTERMUTE_XMESH_H
+#define WINTERMUTE_XMESH_H
 
 #include "engines/wintermute/base/base_named_object.h"
 #include "engines/wintermute/base/gfx/xmodel.h"
@@ -52,10 +52,10 @@ struct SkinWeights {
 	BaseArray<float> _vertexWeights;
 };
 
-class MeshX : public BaseNamedObject {
+class XMesh : public BaseNamedObject {
 public:
-	MeshX(BaseGame *inGame);
-	virtual ~MeshX();
+	XMesh(BaseGame *inGame);
+	virtual ~XMesh();
 
 	virtual bool loadFromX(const Common::String &filename, XFileLexer &lexer, Common::Array<MaterialReference> &materialReferences);
 	bool findBones(FrameNode *rootFrame);
