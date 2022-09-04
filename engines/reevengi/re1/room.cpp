@@ -24,6 +24,7 @@
 #include "common/memstream.h"
 #include "common/stream.h"
 
+#include "engines/reevengi/reevengi.h"
 #include "engines/reevengi/gfx/gfx_base.h"
 #include "engines/reevengi/re1/room.h"
 
@@ -117,7 +118,7 @@ typedef struct {
 
 /*--- Class ---*/
 
-RE1Room::RE1Room(Common::SeekableReadStream *stream): Room(stream) {
+RE1Room::RE1Room(ReevengiEngine *game, Common::SeekableReadStream *stream): Room(game, stream) {
 	//
 }
 
@@ -403,18 +404,18 @@ bool RE1Room::sceneExecInst(void) {
 				next_dir = FROM_LE_16(doorSet->next_dir);
 
 				next_stage = doorSet->next_stage_and_room>>5;
-				/*switch(next_stage) {
+				switch(next_stage) {
 					case 0:
 					default:
-						next_stage = _stage;
+						next_stage = _game->_stage;
 						break;
 					case 1:
-						next_stage = _stage-1;
+						next_stage = _game->_stage-1;
 						break;
 					case 2:
-						next_stage = _stage+1;
+						next_stage = _game->_stage+1;
 						break;
-				}*/
+				}
 				next_room = doorSet->next_stage_and_room & 31;
 				next_camera = 0/*doorSet->next_camera & 7*/;
 

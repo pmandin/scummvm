@@ -30,7 +30,7 @@ class RE2Room;
 
 class RE3Room: public RE2Room {
 public:
-	RE3Room(Common::SeekableReadStream *stream);
+	RE3Room(ReevengiEngine *game, Common::SeekableReadStream *stream);
 
 	bool sceneExecInst(void);
 	int sceneInstLen(void);
