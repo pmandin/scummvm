@@ -407,7 +407,29 @@ void ReevengiEngine::processEventsKeyDown(Common::Event e) {
 		updateBgImage = true;
 	}
 
-	debug(3, "switch to stage %d, room %d, camera %d", _stage, _room, _camera);
+	bool resetPlayerPos = true;
+	if ((e.kbd.keycode == Common::KEYCODE_KP_ENTER) || (e.kbd.keycode == Common::KEYCODE_RETURN)) {
+		Math::Vector2d playerPos(_playerX, _playerZ);
+		if (_roomScene) {
+			Door *inDoorArea = _roomScene->checkDoors(playerPos);
+			if (inDoorArea) {
+				_stage = inDoorArea->_nextStage;
+				_room = inDoorArea->_nextRoom;
+				_camera = inDoorArea->_nextCamera;
+				updateBgImage = true;
+				updateRoom = true;
+
+				_playerX = inDoorArea->_nextX;
+				_playerY = inDoorArea->_nextY;
+				_playerZ = inDoorArea->_nextZ;
+				_playerA = inDoorArea->_nextDir;
+				resetPlayerPos = false;
+			}
+		}
+	}
+
+	if (updateRoom || updateBgImage)
+		debug(3, "switch to stage %d, room %d, camera %d", _stage, _room, _camera);
 
 	if (updateRoom) {
 		destroyRoom();
@@ -417,9 +439,11 @@ void ReevengiEngine::processEventsKeyDown(Common::Event e) {
 			_roomScene->getCameraPos(_camera, &camera);
 
 			/* Reset player pos */
-			_playerX = (camera.toX + camera.fromX) / 2;
-			_playerY = (camera.toY + camera.fromY) / 2;
-			_playerZ = (camera.toZ + camera.fromZ) / 2;
+			if (resetPlayerPos) {
+				_playerX = (camera.toX + camera.fromX) / 2;
+				_playerY = (camera.toY + camera.fromY) / 2;
+				_playerZ = (camera.toZ + camera.fromZ) / 2;
+			}
 
 			debug(3, "%d cameras, pos %.3f,%.3f,%.3f", _roomScene->getNumCameras(), _playerX,_playerY,_playerZ);
 
