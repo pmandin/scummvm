@@ -89,6 +89,7 @@ Door *Room::checkDoors(Math::Vector2d pos) {
 		Door *door = *it;
 		if (door->isInside(pos))
 			return door;
+		++it;
 	}
 
 	return nullptr;
