@@ -19,6 +19,8 @@
  *
  */
 
+#include "common/debug.h"
+#include "common/endian.h"
 #include "common/stream.h"
 
 #include "engines/reevengi/re3/room.h"
@@ -57,26 +59,26 @@ bool RE3Room::sceneExecInst(void) {
 	switch(inst->opcode) {
 		case INST_DOOR_AOT_SET:
 			{
-#if 0
+				int16 x,y,w,h, next_x,next_y,next_z, next_dir;
+				int next_stage, next_room, next_camera;
+
 				script_inst_door_aot_set_t *doorSet = (script_inst_door_aot_set_t *) inst;
-				room_door_t roomDoor;
 
-				roomDoor.x = FROM_LE_16(doorSet->x);
-				roomDoor.y = FROM_LE_16(doorSet->z);
-				roomDoor.w = FROM_LE_16(doorSet->w);
-				roomDoor.h = FROM_LE_16(doorSet->h);
+				x = FROM_LE_16(doorSet->x);
+				y = FROM_LE_16(doorSet->z);
+				w = FROM_LE_16(doorSet->w);
+				h = FROM_LE_16(doorSet->h);
 
-				roomDoor.next_x = FROM_LE_16(doorSet->next_x);
-				roomDoor.next_y = FROM_LE_16(doorSet->next_y);
-				roomDoor.next_z = FROM_LE_16(doorSet->next_z);
-				roomDoor.next_dir = FROM_LE_16(doorSet->next_dir);
+				next_x = FROM_LE_16(doorSet->next_x);
+				next_y = FROM_LE_16(doorSet->next_y);
+				next_z = FROM_LE_16(doorSet->next_z);
+				next_dir = FROM_LE_16(doorSet->next_dir);
 
-				roomDoor.next_stage = doorSet->next_stage+1;
-				roomDoor.next_room = doorSet->next_room;
-				roomDoor.next_camera = doorSet->next_camera;
+				next_stage = doorSet->next_stage+1;
+				next_room = doorSet->next_room;
+				next_camera = doorSet->next_camera;
 
-				this->addDoor(this, &roomDoor);
-#endif
+				debug(3, "0x%04x: INST_DOOR_AOT_SET x=%d,y=%d,w=%d,h=%d", _scriptPC, x,y,w,h);
 			}
 			break;
 	}

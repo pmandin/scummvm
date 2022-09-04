@@ -354,7 +354,10 @@ void RE1Room::scenePrepareInit(void) {
 		return;
 
 	_scriptLen = FROM_LE_16( *((int16 *) _scriptPtr) );
-	_scriptInst = &_scriptPtr[2];
+	_scriptPC = 2;
+	_scriptInst = &_scriptPtr[_scriptPC];
+
+	debug(3, "re1: sceneInit at offset 0x%08x, length 0x%08x", offset, _scriptLen);
 }
 
 void RE1Room::scenePrepareRun(void) {
@@ -369,7 +372,10 @@ void RE1Room::scenePrepareRun(void) {
 		return;
 
 	_scriptLen = FROM_LE_16( *((int16 *) _scriptPtr) );
-	_scriptInst = &_scriptPtr[2];
+	_scriptPC = 2;
+	_scriptInst = &_scriptPtr[_scriptPC];
+
+	debug(3, "re1: sceneRun at offset 0x%08x, length 0x%08x", offset, _scriptLen);
 }
 
 bool RE1Room::sceneExecInst(void) {
@@ -381,43 +387,42 @@ bool RE1Room::sceneExecInst(void) {
 	switch(inst->opcode) {
 		case INST_DOOR_SET:
 			{
-#if 0
+				uint16 x,y,w,h, next_x,next_y,next_z, next_dir;
+				int next_stage, next_room, next_camera;
+
 				script_inst_door_set_t *doorSet = (script_inst_door_set_t *) inst;
-				room_door_t roomDoor;
-				int next_stage, next_room;
 
-				roomDoor.x = FROM_LE_16(doorSet->x);
-				roomDoor.y = FROM_LE_16(doorSet->y);
-				roomDoor.w = FROM_LE_16(doorSet->w);
-				roomDoor.h = FROM_LE_16(doorSet->h);
+				x = FROM_LE_16(doorSet->x);
+				y = FROM_LE_16(doorSet->y);
+				w = FROM_LE_16(doorSet->w);
+				h = FROM_LE_16(doorSet->h);
 
-				roomDoor.next_x = FROM_LE_16(doorSet->next_x);
-				roomDoor.next_y = FROM_LE_16(doorSet->next_y);
-				roomDoor.next_z = FROM_LE_16(doorSet->next_z);
-				roomDoor.next_dir = FROM_LE_16(doorSet->next_dir);
+				next_x = FROM_LE_16(doorSet->next_x);
+				next_y = FROM_LE_16(doorSet->next_y);
+				next_z = FROM_LE_16(doorSet->next_z);
+				next_dir = FROM_LE_16(doorSet->next_dir);
 
 				next_stage = doorSet->next_stage_and_room>>5;
-				switch(next_stage) {
+				/*switch(next_stage) {
 					case 0:
 					default:
-						next_stage = game->num_stage;
+						next_stage = _stage;
 						break;
 					case 1:
-						next_stage = game->num_stage-1;
+						next_stage = _stage-1;
 						break;
 					case 2:
-						next_stage = game->num_stage+1;
+						next_stage = _stage+1;
 						break;
-				}
-				roomDoor.next_stage = next_stage;
+				}*/
+				next_room = doorSet->next_stage_and_room & 31;
+				next_camera = 0/*doorSet->next_camera & 7*/;
 
-				roomDoor.next_room = doorSet->next_stage_and_room & 31;
-
-				roomDoor.next_camera = 0/*doorSet->next_camera & 7*/;
-
-				this->addDoor(this, &roomDoor);
-#endif
+				debug(3, "0x%04x: INST_DOOR_SET x=%d,y=%d,w=%d,h=%d", _scriptPC, x,y,w,h);
 			}
+			break;
+		default:
+			debug(3, "0x%04x: 0x%02x", _scriptPC, inst->opcode);
 			break;
 	}
 
