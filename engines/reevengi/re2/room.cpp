@@ -24,6 +24,7 @@
 #include "common/stream.h"
 #include "math/vector2d.h"
 
+#include "engines/reevengi/game/door.h"
 #include "engines/reevengi/gfx/gfx_base.h"
 #include "engines/reevengi/re2/room.h"
 
@@ -452,26 +453,27 @@ bool RE2Room::sceneExecInst(void) {
 	switch(inst->opcode) {
 		case INST_DOOR_AOT_SET:
 			{
-				int16 x,y,w,h, next_x,next_y,next_z, next_dir;
-				int next_stage, next_room, next_camera;
-
 				script_inst_door_aot_set_t *doorSet = (script_inst_door_aot_set_t *) inst;
 
-				x = FROM_LE_16(doorSet->x);
-				y = FROM_LE_16(doorSet->z);
-				w = FROM_LE_16(doorSet->w);
-				h = FROM_LE_16(doorSet->h);
+				Door *new_door = new Door();
+				new_door->_x = FROM_LE_16(doorSet->x);
+				new_door->_y = FROM_LE_16(doorSet->z);
+				new_door->_w = FROM_LE_16(doorSet->w);
+				new_door->_h = FROM_LE_16(doorSet->h);
 
-				next_x = FROM_LE_16(doorSet->next_x);
-				next_y = FROM_LE_16(doorSet->next_y);
-				next_z = FROM_LE_16(doorSet->next_z);
-				next_dir = FROM_LE_16(doorSet->next_dir);
+				new_door->_nextX = FROM_LE_16(doorSet->next_x);
+				new_door->_nextY = FROM_LE_16(doorSet->next_y);
+				new_door->_nextZ = FROM_LE_16(doorSet->next_z);
+				new_door->_nextDir = FROM_LE_16(doorSet->next_dir);
 
-				next_stage = doorSet->next_stage+1;
-				next_room = doorSet->next_room;
-				next_camera = doorSet->next_camera;
+				new_door->_nextStage = doorSet->next_stage+1;
+				new_door->_nextRoom = doorSet->next_room;
+				new_door->_nextCamera = doorSet->next_camera;
 
-				debug(3, "0x%04x: INST_DOOR_AOT_SET x=%d,y=%d,w=%d,h=%d", _scriptPC, x,y,w,h);
+				this->_doors.push_back(new_door);
+
+				debug(3, "0x%04x: INST_DOOR_AOT_SET x=%d,y=%d,w=%d,h=%d", _scriptPC,
+					new_door->_x,new_door->_y,new_door->_w,new_door->_h);
 			}
 			break;
 	}

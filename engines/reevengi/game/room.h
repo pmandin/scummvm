@@ -25,6 +25,8 @@
 #include "common/stream.h"
 #include "math/vector2d.h"
 
+#include "engines/reevengi/game/door.h"
+
 namespace Reevengi {
 
 typedef struct {
@@ -49,6 +51,10 @@ public:
 	virtual void drawCamBoundary(int curCam);
 
 	virtual void drawMasks(int numCamera);
+
+	// Checks if pos in door zone
+	//	Returns matched door
+	Door *checkDoors(Math::Vector2d pos);
 
 	// Prepare scene initialization script
 	virtual void scenePrepareInit(void);
@@ -77,6 +83,8 @@ protected:
 	byte *_scriptInst;	// Current instruction = &_scriptPtr[_scriptOffset]
 	int _scriptPC;		// Program counter in script
 	bool _scriptInit;	// Run init script (true), room script (false)
+
+	Common::List<Door *> _doors;	// Doors list;
 
 	virtual void*getRdtSection(int numSection);
 

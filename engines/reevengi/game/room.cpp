@@ -34,6 +34,8 @@ Room::Room(ReevengiEngine *game, Common::SeekableReadStream *stream): _game(game
 
 	_roomPtr = new byte[_roomSize];
 	stream->read(_roomPtr, _roomSize);
+
+	_doors.clear();
 /*
 	Common::DumpFile adf;
 	adf.open("room.rdt");
@@ -78,6 +80,18 @@ void Room::drawCamBoundary(int curCam) {
 
 void Room::drawMasks(int numCamera) {
 	//
+}
+
+Door *Room::checkDoors(Math::Vector2d pos) {
+	Common::List<Door *>::iterator it = _doors.begin();
+
+	while (it != _doors.end()) {
+		Door *door = *it;
+		if (door->isInside(pos))
+			return door;
+	}
+
+	return nullptr;
 }
 
 void Room::scenePrepareInit(void) {
