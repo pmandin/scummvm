@@ -60,6 +60,8 @@ public:
 	virtual bool sceneExecInst(void);
 	// Returns instruction length
 	virtual int sceneInstLen(void);
+	// Update program counter for next instruction
+	void sceneUpdatePC(void);
 
 protected:
 	// raw data file for room
