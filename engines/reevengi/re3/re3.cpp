@@ -356,7 +356,7 @@ void RE3Engine::loadRoomPc(void) {
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
-		_roomScene = new RE3Room(stream);
+		_roomScene = new RE3Room(this, stream);
 	}
 	delete stream;
 }
@@ -374,7 +374,7 @@ void RE3Engine::loadRoomPsx(void) {
 		if (ard) {
 			Common::SeekableReadStream *rdtStream = ard->createReadStreamForMember(ArdArchive::kRdtFile);
 			if (rdtStream) {
-				_roomScene = new RE3Room(rdtStream);
+				_roomScene = new RE3Room(this, rdtStream);
 			}
 			delete rdtStream;
 		}

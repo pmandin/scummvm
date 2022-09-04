@@ -304,7 +304,7 @@ void RE1Engine::loadRoom(void) {
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
 		//debug(3, "loaded %s", filePath);
-		_roomScene = new RE1Room(stream);
+		_roomScene = new RE1Room(this, stream);
 	}
 	delete stream;
 }

@@ -145,7 +145,7 @@ typedef struct {
 
 /*--- Class --- */
 
-RE2Room::RE2Room(Common::SeekableReadStream *stream): Room(stream) {
+RE2Room::RE2Room(ReevengiEngine *game, Common::SeekableReadStream *stream): Room(game, stream) {
 	//
 }
 

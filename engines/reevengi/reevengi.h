@@ -54,12 +54,13 @@ public:
 
 	virtual Common::Error run(void);
 
+	int _character;
+	int _stage, _room, _camera;
+
 protected:
 	ADGameDescription _gameDesc;
 	ReevengiGameType _gameType;
 	Clock *_clock;
-	int _character;
-	int _stage, _room, _camera;
 
 	bool hasFeature(EngineFeature f) const override;
 	GfxBase *createRenderer(int screenW, int screenH, bool fullscreen);

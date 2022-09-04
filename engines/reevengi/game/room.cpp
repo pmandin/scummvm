@@ -26,8 +26,9 @@
 
 namespace Reevengi {
 
-Room::Room(Common::SeekableReadStream *stream): _scriptPtr(nullptr), _scriptLen(0),
-	_scriptInst(nullptr), _scriptPC(0), _scriptInit(true) {
+Room::Room(ReevengiEngine *game, Common::SeekableReadStream *stream): _game(game),
+	_scriptPtr(nullptr), _scriptLen(0), _scriptInst(nullptr), _scriptPC(0),
+	_scriptInit(true) {
 	stream->seek(0);
 	_roomSize = stream->size();
 

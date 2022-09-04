@@ -415,7 +415,7 @@ void RE2Engine::loadRoom(void) {
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
-		_roomScene = new RE2Room(stream);
+		_roomScene = new RE2Room(this, stream);
 	}
 	delete stream;
 }

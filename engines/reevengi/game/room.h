@@ -32,9 +32,11 @@ typedef struct {
 	int32 toX, toY, toZ;
 } RdtCameraPos_t;
 
+class ReevengiEngine;
+
 class Room {
 public:
-	Room(Common::SeekableReadStream *stream);
+	Room(ReevengiEngine *game, Common::SeekableReadStream *stream);
 	virtual ~Room();
 
 	virtual int getNumCameras(void);
@@ -64,6 +66,8 @@ public:
 	void sceneUpdatePC(void);
 
 protected:
+	ReevengiEngine *_game;
+
 	// raw data file for room
 	byte *_roomPtr;
 	int32 _roomSize;

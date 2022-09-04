@@ -30,7 +30,7 @@ class Room;
 
 class RE2Room: public Room {
 public:
-	RE2Room(Common::SeekableReadStream *stream);
+	RE2Room(ReevengiEngine *game, Common::SeekableReadStream *stream);
 
 	int getNumCameras(void);
 	void getCameraPos(int numCamera, RdtCameraPos_t *cameraPos);
