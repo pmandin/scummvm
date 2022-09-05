@@ -420,8 +420,21 @@ bool RE1Room::sceneExecInst(void) {
 
 				this->_doors.push_back(new_door);
 
-				debug(3, "0x%04x: INST_DOOR_SET x=%d,y=%d,w=%d,h=%d", _scriptPC,
+				debug(3, "0x%04x: DOOR_SET x=%d,y=%d,w=%d,h=%d", _scriptPC,
 					new_door->_x,new_door->_y,new_door->_w,new_door->_h);
+			}
+			break;
+		case INST_PLC_POS_SET:
+			{
+				script_inst_plc_pos_set_t *plcPosSet = (script_inst_plc_pos_set_t *) inst;
+
+				_game->_playerX = FROM_LE_16(plcPosSet->x);
+				_game->_playerY = FROM_LE_16(plcPosSet->y);
+				_game->_playerZ = FROM_LE_16(plcPosSet->z);
+				_game->_playerA = FROM_LE_16(plcPosSet->cdir_y);
+
+				debug(3, "0x%04x: PLC_POS_SET x=%.3f,y=%.3f,z=%.3f,a=%.3f", _scriptPC,
+					_game->_playerX, _game->_playerY, _game->_playerZ, _game->_playerA);
 			}
 			break;
 		default:
