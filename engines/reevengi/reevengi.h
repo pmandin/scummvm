@@ -57,6 +57,8 @@ public:
 	int _character;
 	int _stage, _room, _camera;
 
+	float _playerX, _playerY, _playerZ, _playerA;
+
 protected:
 	ADGameDescription _gameDesc;
 	ReevengiGameType _gameType;
@@ -89,7 +91,6 @@ protected:
 	virtual Entity *loadEntity(int numEntity, int isPlayer);
 
 	// Player
-	float _playerX, _playerY, _playerZ, _playerA;
 	int _playerTic, _playerMove;
 
 private:
