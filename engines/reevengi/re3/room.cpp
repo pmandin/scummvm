@@ -23,6 +23,7 @@
 #include "common/endian.h"
 #include "common/stream.h"
 
+#include "engines/reevengi/reevengi.h"
 #include "engines/reevengi/game/door.h"
 #include "engines/reevengi/re3/room.h"
 
@@ -79,9 +80,34 @@ bool RE3Room::sceneExecInst(void) {
 
 				this->_doors.push_back(new_door);
 
-				debug(3, "0x%04x: INST_DOOR_AOT_SET x=%d,y=%d,w=%d,h=%d", _scriptPC,
+				debug(3, "0x%04x: DOOR_AOT_SET x=%d,y=%d,w=%d,h=%d", _scriptPC,
 					new_door->_x,new_door->_y,new_door->_w,new_door->_h);
 			}
+			break;
+		case INST_POS_SET:
+			{
+				script_inst_pos_set_t *posSet = (script_inst_pos_set_t *) inst;
+
+				_game->_playerX = (int16) FROM_LE_16(posSet->x);
+				_game->_playerY = (int16) FROM_LE_16(posSet->y);
+				_game->_playerZ = (int16) FROM_LE_16(posSet->z);
+
+				debug(3, "0x%04x: POS_SET x=%.3f,y=%.3f,z=%.3f", _scriptPC,
+					_game->_playerX, _game->_playerY, _game->_playerZ);
+			}
+			break;
+		case INST_DIR_SET:
+			{
+				script_inst_dir_set_t *dirSet = (script_inst_dir_set_t *) inst;
+
+				_game->_playerA = FROM_LE_16(dirSet->cdir_y);
+
+				debug(3, "0x%04x: DIR_SET a=%.3f", _scriptPC,
+					_game->_playerA);
+			}
+			break;
+		default:
+			debug(3, "0x%04x: 0x%02x", _scriptPC, inst->opcode);
 			break;
 	}
 
