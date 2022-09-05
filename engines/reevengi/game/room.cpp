@@ -23,6 +23,7 @@
 //#include "common/file.h"
 
 #include "engines/reevengi/game/room.h"
+#include "engines/reevengi/gfx/gfx_base.h"
 
 namespace Reevengi {
 
@@ -93,6 +94,29 @@ Door *Room::checkDoors(Math::Vector2d pos) {
 	}
 
 	return nullptr;
+}
+
+void Room::drawDoors(void) {
+	Common::List<Door *>::iterator it = _doors.begin();
+
+	g_driver->setColor(0.0, 0.5, 1.0);
+
+	while (it != _doors.end()) {
+		Door *door = *it;
+
+		Math::Vector3d quad[4];
+		quad[0] = Math::Vector3d(door->_x, 0, door->_y);
+		quad[1] = Math::Vector3d(door->_x + door->_w, 0, door->_y);
+		quad[2] = Math::Vector3d(door->_x + door->_w, 0, door->_y + door->_h);
+		quad[3] = Math::Vector3d(door->_x, 0, door->_y + door->_h);
+
+		g_driver->line(quad[0], quad[1]);
+		g_driver->line(quad[1], quad[2]);
+		g_driver->line(quad[2], quad[3]);
+		g_driver->line(quad[3], quad[0]);
+
+		++it;
+	}
 }
 
 void Room::scenePrepareInit(void) {

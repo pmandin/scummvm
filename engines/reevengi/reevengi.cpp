@@ -615,9 +615,10 @@ void ReevengiEngine::testDrawGrid(void) {
 		g_driver->line(v2, v3);
 	}
 
-	// Draw camera boundary and switches
+	// Draw camera boundary, switches, doors
 	_roomScene->drawCamBoundary(_camera);
 	_roomScene->drawCamSwitch(_camera);
+	_roomScene->drawDoors();
 }
 
 void ReevengiEngine::testDrawPlayer(void) {
