@@ -52,6 +52,7 @@ public:
 
 	virtual void drawMasks(int numCamera);
 
+	void drawDoors(void);
 	// Checks if pos in door zone
 	//	Returns matched door
 	Door *checkDoors(Math::Vector2d pos);
