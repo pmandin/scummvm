@@ -387,6 +387,48 @@ bool RE1Room::sceneExecInst(void) {
 		return true;
 
 	switch(inst->opcode) {
+		case INST_NOP:
+			{
+				debug(3, "0x%04x: NOP", _scriptPC);
+			}
+			break;
+		case INST_IF:
+			{
+				script_inst_if_t *instOp = (script_inst_if_t *) inst;
+
+				debug(3, "0x%04x: IF block_len=%d", _scriptPC, instOp->block_length);
+			}
+			break;
+		case INST_ELSE:
+			{
+				script_inst_else_t *instOp = (script_inst_else_t *) inst;
+
+				debug(3, "0x%04x: ELSE block_len=%d", _scriptPC, instOp->block_length);
+			}
+			break;
+		case INST_ENDIF:
+			{
+				debug(3, "0x%04x: ENDIF", _scriptPC);
+			}
+			break;
+		case INST_STAGEROOMCAM_CMP:
+			{
+				script_inst_stageroomcam_cmp_t *instOp = (script_inst_stageroomcam_cmp_t *) inst;
+
+				debug(3, "0x%04x: STAGEROOMCAM_CMP obj=%d, func=%d, value=%d", _scriptPC,
+					instOp->object, instOp->compare, instOp->value
+				);
+			}
+			break;
+		case INST_STAGEROOMCAM_SET:
+			{
+				script_inst_stageroomcam_set_t *instOp = (script_inst_stageroomcam_set_t *) inst;
+
+				debug(3, "0x%04x: STAGEROOMCAM_SET obj=%d, value=%d", _scriptPC,
+					instOp->object, instOp->value
+				);
+			}
+			break;
 		case INST_DOOR_SET:
 			{
 				script_inst_door_set_t *doorSet = (script_inst_door_set_t *) inst;
@@ -422,6 +464,11 @@ bool RE1Room::sceneExecInst(void) {
 
 				debug(3, "0x%04x: DOOR_SET x=%d,y=%d,w=%d,h=%d", _scriptPC,
 					new_door->_x,new_door->_y,new_door->_w,new_door->_h);
+			}
+			break;
+		case INST_ITEM_SET:
+			{
+				debug(3, "0x%04x: ITEM_SET", _scriptPC);
 			}
 			break;
 		case INST_PLC_POS_SET:
