@@ -59,6 +59,11 @@ bool RE3Room::sceneExecInst(void) {
 		return true;
 
 	switch(inst->opcode) {
+		case INST_NOP:
+			{
+				debug(3, "0x%04x: NOP", _scriptPC);
+			}
+			break;
 		case INST_DOOR_AOT_SET:
 			{
 				script_inst_door_aot_set_t *doorSet = (script_inst_door_aot_set_t *) inst;
