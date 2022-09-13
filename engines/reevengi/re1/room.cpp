@@ -394,21 +394,27 @@ bool RE1Room::sceneExecInst(void) {
 			break;
 		case INST_IF:
 			{
-				script_inst_if_t *instOp = (script_inst_if_t *) inst;
-
-				debug(3, "0x%04x: IF block_len=%d", _scriptPC, instOp->block_length);
+				debug(3, "0x%04x: IF", _scriptPC);
 			}
 			break;
 		case INST_ELSE:
 			{
-				script_inst_else_t *instOp = (script_inst_else_t *) inst;
-
-				debug(3, "0x%04x: ELSE block_len=%d", _scriptPC, instOp->block_length);
+				debug(3, "0x%04x: ELSE", _scriptPC);
 			}
 			break;
 		case INST_ENDIF:
 			{
 				debug(3, "0x%04x: ENDIF", _scriptPC);
+			}
+			break;
+		case INST_BIT_TEST:
+			{
+				debug(3, "0x%04x: BIT_TEST", _scriptPC);
+			}
+			break;
+		case INST_BIT_OP:
+			{
+				debug(3, "0x%04x: BIT_OP", _scriptPC);
 			}
 			break;
 		case INST_STAGEROOMCAM_CMP:
@@ -427,6 +433,21 @@ bool RE1Room::sceneExecInst(void) {
 				debug(3, "0x%04x: STAGEROOMCAM_SET obj=%d, value=%d", _scriptPC,
 					instOp->object, instOp->value
 				);
+			}
+			break;
+		case INST_CUT_SET09:
+			{
+				debug(3, "0x%04x: CUR_SET09", _scriptPC);
+			}
+			break;
+		case INST_CUT_SET0A:
+			{
+				debug(3, "0x%04x: CUT_SET0A", _scriptPC);
+			}
+			break;
+		case INST_MESSAGE_ON:
+			{
+				debug(3, "0x%04x: MESSAGE_ON", _scriptPC);
 			}
 			break;
 		case INST_DOOR_SET:
@@ -471,6 +492,31 @@ bool RE1Room::sceneExecInst(void) {
 				debug(3, "0x%04x: ITEM_SET", _scriptPC);
 			}
 			break;
+		case INST_ITEM_ATTR_SET:
+			{
+				debug(3, "0x%04x: ITEM_ATTR_SET", _scriptPC);
+			}
+			break;
+		case INST_ITEM_ATTR2_SET:
+			{
+				debug(3, "0x%04x: ITEM_ATTR2_SET", _scriptPC);
+			}
+			break;
+		case INST_ITEM_MODEL_SET:
+			{
+				debug(3, "0x%04x: ITEM_MODEL_SET", _scriptPC);
+			}
+			break;
+		case INST_EM_SET:
+			{
+				debug(3, "0x%04x: EM_SET", _scriptPC);
+			}
+			break;
+		case INST_OM_SET:
+			{
+				debug(3, "0x%04x: OM_SET", _scriptPC);
+			}
+			break;
 		case INST_PLC_POS_SET:
 			{
 				script_inst_plc_pos_set_t *plcPosSet = (script_inst_plc_pos_set_t *) inst;
@@ -482,6 +528,11 @@ bool RE1Room::sceneExecInst(void) {
 
 				debug(3, "0x%04x: PLC_POS_SET x=%.3f,y=%.3f,z=%.3f,a=%.3f", _scriptPC,
 					_game->_playerX, _game->_playerY, _game->_playerZ, _game->_playerA);
+			}
+			break;
+		case INST_EM_POS_SET:
+			{
+				debug(3, "0x%04x: EM_POS_SET", _scriptPC);
 			}
 			break;
 		default:
