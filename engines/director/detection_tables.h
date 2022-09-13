@@ -1312,6 +1312,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "kidtools",			"Kid Tools Series Demo" },
 	{ "learningsystem",		"The Learning System" },
 	{ "maxissampler",		"Maxis CD-ROM Sampler" },
+	{ "mcdonaldland",		"Mission to McDonaldland" },    // Promo game distributed by McDonald's fastfood chain (AU/NZ only)
 	{ "msgfromapple",		"Message from Apple" },
 	{ "newton",				"World of Newton" },
 	{ "origin",				"Origin Systems Product Catalog" },
@@ -1374,6 +1375,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "mavisbeacon",		"Mavis Beacon Teaches Typing" },
 	{ "mechwarrior2",		"MechWarrior 2" },
 	{ "meetingmaker",		"Meeting Maker" },
+	{ "mindbrain",			"The Lost Mind of Dr. Brain" },
 	{ "mothergoosehires",	"Mixed-Up Mother Goose Deluxe" },
 	{ "msaccess",			"Microsoft Access" },
 	{ "msarcade",			"Microsoft Arcade" },
@@ -2289,6 +2291,8 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACGAME1_l("mazebrew", "v2.0", "MazeBrew  v.2.0", "f5277c53bacd27936158dd3867e587e2", 491957, Common::JA_JPN, 311),
 
 	MACDEMO1("meetingmaker", "Demo", "Meeting Maker Demo", "19fe54e0b5c60405c7a88d9e4e032965", 721976, 300),
+
+	WINDEMO1("mindbrain", "Demo", "INSTALL.EXE", "54fbe8edce6731ba6e89c16fd3be8e6d", 2558723, 404),
 
 	// Original filename is ピーターと狼
 	// One gameplay mode supports General MIDI
@@ -6247,6 +6251,8 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINGAME1("letterrally", "1.0", "L_Rally.exe", "b0f3841f6e8005e519445b22de37749b", 3921651, 600),
 
 	WINDEMO1("madtg", "1998 Demo", "MTGDSLID.EXE", "b0f3841f6e8005e519445b22de37749b", 1317661, 600),
+
+	WINGAME1t("mcdonaldland", "", "McLand.exe", "f15f57b8b90986d6b34f8bf3a5487dfb", 1501901, 602),
 
 	// Masters of the Elements - English and German (from lotharsm)
 	// Original Dutch game Meesters van Macht released in 1997

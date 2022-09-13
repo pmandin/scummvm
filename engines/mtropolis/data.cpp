@@ -1170,6 +1170,20 @@ DataReadErrorCode MiniscriptModifier::load(DataReader &reader) {
 	return kDataReadErrorNone;
 }
 
+ColorTableModifier::ColorTableModifier() : applyWhen(Event::createDefault()), unknown1(0), unknown2{0, 0, 0, 0}, assetID(0) {
+}
+
+DataReadErrorCode ColorTableModifier::load(DataReader &reader) {
+	if (_revision != 1001)
+		return kDataReadErrorUnsupportedRevision;
+
+	if (!modHeader.load(reader) || !applyWhen.load(reader) || !reader.readU32(unknown1)
+		|| !reader.readBytes(unknown2) || !reader.readU32(assetID))
+		return kDataReadErrorReadFailed;
+
+	return kDataReadErrorNone;
+}
+
 SaveAndRestoreModifier::SaveAndRestoreModifier()
 	: unknown1{0, 0, 0, 0}, saveWhen(Event::createDefault()), restoreWhen(Event::createDefault()),
 	  unknown5{0, 0, 0, 0, 0, 0, 0, 0}, lengthOfFilePath(0), lengthOfFileName(0), lengthOfVariableName(0), lengthOfVariableString(0) {
@@ -1438,6 +1452,22 @@ DataReadErrorCode ElementTransitionModifier::load(DataReader &reader) {
 		|| !reader.readU16(transitionType) || !reader.readU16(unknown3) || !reader.readU16(unknown4)
 		|| !reader.readU16(steps) || !reader.readU16(rate))
 		return kDataReadErrorNone;
+
+	return kDataReadErrorNone;
+}
+
+SharedSceneModifier::SharedSceneModifier()
+	: executeWhen(Event::createDefault()), unknown1{0, 0, 0, 0}, sectionGUID(0), subsectionGUID(0), sceneGUID(0) {
+}
+
+DataReadErrorCode SharedSceneModifier::load(DataReader &reader) {
+	if (_revision != 1000)
+		return kDataReadErrorUnsupportedRevision;
+
+	if (!modHeader.load(reader) || !executeWhen.load(reader)
+		|| !reader.readBytes(unknown1) || !reader.readU32(sectionGUID)
+		|| !reader.readU32(subsectionGUID) || !reader.readU32(sceneGUID))
+		return kDataReadErrorReadFailed;
 
 	return kDataReadErrorNone;
 }
@@ -2256,6 +2286,9 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 	case DataObjectTypes::kMiniscriptModifier:
 		dataObject = new MiniscriptModifier();
 		break;
+	case DataObjectTypes::kColorTableModifier:
+		dataObject = new ColorTableModifier();
+		break;
 	case DataObjectTypes::kSaveAndRestoreModifier:
 		dataObject = new SaveAndRestoreModifier();
 		break;
@@ -2288,6 +2321,9 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 		break;
 	case DataObjectTypes::kElementTransitionModifier:
 		dataObject = new ElementTransitionModifier();
+		break;
+	case DataObjectTypes::kSharedSceneModifier:
+		dataObject = new SharedSceneModifier();
 		break;
 	case DataObjectTypes::kIfMessengerModifier:
 		dataObject = new IfMessengerModifier();

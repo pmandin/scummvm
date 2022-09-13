@@ -153,8 +153,16 @@ void ScummEngine::showMessageDialog(const byte *msg) {
 	if (_string[3].color == 0)
 		_string[3].color = 4;
 
-	InfoDialog dialog(this, Common::U32String((char *)buf));
-	VAR(VAR_KEYPRESS) = runDialog(dialog);
+	if (isUsingOriginalGUI()) {
+		if (_game.version > 4)
+			VAR(VAR_KEYPRESS) = showBannerAndPause(0, -1, (const char *)msg).ascii;
+		else
+			VAR(VAR_KEYPRESS) = showOldStyleBannerAndPause((const char *)msg, _string[3].color, -1).ascii;
+	} else {
+		InfoDialog dialog(this, Common::U32String((char *)buf));
+		VAR(VAR_KEYPRESS) = runDialog(dialog);
+	}
+
 }
 
 #pragma mark -
@@ -785,7 +793,7 @@ void ScummEngine::CHARSET_1() {
 				restoreCharsetBg();
 		_msgCount = 0;
 	} else if (_game.version <= 2) {
-		_talkDelay += _msgCount * _defaultTalkDelay;
+		_talkDelay += _msgCount * _defaultTextSpeed;
 	}
 
 	if (_game.version > 3) {
@@ -887,7 +895,7 @@ void ScummEngine::CHARSET_1() {
 			mac_drawIndy3TextBox();
 
 		if (_game.version <= 2) {
-			_talkDelay += _defaultTalkDelay;
+			_talkDelay += _defaultTextSpeed;
 			VAR(VAR_CHARCOUNT)++;
 		} else {
 			_talkDelay += (int)VAR(VAR_CHARINC);
@@ -2017,7 +2025,7 @@ Common::CodePage ScummEngine::getDialogCodePage() const {
 			return Common::kDos862;
 		default:
 			return Common::kWindows1255;
-		}	
+		}
 	default:
 		return (_game.version > 7) ? Common::kWindows1252 : Common::kDos850;
 	}

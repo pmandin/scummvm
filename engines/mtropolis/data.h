@@ -110,7 +110,7 @@ enum DataObjectType {
 	kVectorMotionModifier					= 0x226,
 	kSceneTransitionModifier				= 0x26c,
 	kElementTransitionModifier				= 0x276,
-	kSharedSceneModifier					= 0x29a,	// NYI
+	kSharedSceneModifier					= 0x29a,
 	kIfMessengerModifier					= 0x2bc,
 	kBehaviorModifier						= 0x2c6,
 	kMessengerModifier						= 0x2da,
@@ -125,7 +125,7 @@ enum DataObjectType {
 	kMiniscriptModifier						= 0x3c0,
 	kCursorModifierV1						= 0x3ca,	// NYI - Obsolete version
 	kGradientModifier						= 0x4b0,	// NYI
-	kColorTableModifier						= 0x4c4,	// NYI
+	kColorTableModifier						= 0x4c4,
 	kSaveAndRestoreModifier					= 0x4d8,
 
 	kCompoundVariableModifier				= 0x2c7,
@@ -936,6 +936,18 @@ protected:
 	DataReadErrorCode load(DataReader &reader) override;
 };
 
+struct ColorTableModifier : public DataObject {
+	ColorTableModifier();
+
+	TypicalModifierHeader modHeader;
+	Event applyWhen;
+	uint32 unknown1;
+	uint8 unknown2[4];
+	uint32 assetID;
+
+protected:
+	DataReadErrorCode load(DataReader &reader) override;
+};
 
 struct SaveAndRestoreModifier : public DataObject {
 	SaveAndRestoreModifier();
@@ -1233,6 +1245,21 @@ struct ElementTransitionModifier : public DataObject {
 	uint16 unknown4;
 	uint16 steps;
 	uint16 rate;
+
+protected:
+	DataReadErrorCode load(DataReader &reader) override;
+};
+
+struct SharedSceneModifier : public DataObject {
+	SharedSceneModifier();
+
+	TypicalModifierHeader modHeader;
+
+	Event executeWhen;
+	uint8 unknown1[4];
+	uint32 sectionGUID;
+	uint32 subsectionGUID;
+	uint32 sceneGUID;
 
 protected:
 	DataReadErrorCode load(DataReader &reader) override;

@@ -486,13 +486,15 @@ uint32 IMuseInternal::property(int prop, uint32 value) {
 	case IMuse::PROP_GS:
 		_enable_gs = (value > 0);
 
-		// GS Mode emulates MT-32 on a GS device, so _native_mt32 should always be true
-		if (_midi_native && _enable_gs) {
-			_native_mt32 = true;
-			initGS(_midi_native);
-		} else {
-			// If GS is disabled we do the "normal" init from the original GM drivers.
-			initGM();
+		if (_midi_native) {
+			if (_enable_gs) {
+				// GS Mode emulates MT-32 on a GS device, so _native_mt32 should always be true
+				_native_mt32 = true;
+				initGS(_midi_native);
+			} else if (!_native_mt32) {
+				// If GS is disabled we do the "normal" init from the original GM drivers.
+				initGM();
+			}
 		}
 		break;
 
@@ -1632,8 +1634,9 @@ void IMuseInternal::initGM() {
 	// These are the init messages from the DOTT General Midi
 	// driver. This is the major part of the bug fix for bug
 	// no. 13460 ("DOTT: Incorrect MIDI pitch bending").
-	// Might be worthwhile to check if other GM drivers (like
-	// SAM) have the same values...
+	// SAMNMAX has some less of the default settings (since
+	// the driver works a bit different), but it uses the same
+	// value for the pitch bend range.
 	MidiDriver *m = _midi_native;
 	for (int i = 0; i < 16; ++i) {
 		m->send(0x0064B0 | i);
@@ -1641,6 +1644,7 @@ void IMuseInternal::initGM() {
 		m->send(0x1006B0 | i);
 		m->send(0x7F07B0 | i);
 		m->send(0x3F0AB0 | i);
+		m->send(0x0000C0 | i);
 		m->send(0x4000E0 | i);
 		m->send(0x0001B0 | i);
 		m->send(0x0040B0 | i);

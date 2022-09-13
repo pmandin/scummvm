@@ -73,6 +73,8 @@ SIModifierFactory *getModifierFactoryForDataObjectType(const Data::DataObjectTyp
 		return ModifierFactory<BehaviorModifier, Data::BehaviorModifier>::getInstance();
 	case Data::DataObjectTypes::kMiniscriptModifier:
 		return ModifierFactory<MiniscriptModifier, Data::MiniscriptModifier>::getInstance();
+	case Data::DataObjectTypes::kColorTableModifier:
+		return ModifierFactory<ColorTableModifier, Data::ColorTableModifier>::getInstance();
 	case Data::DataObjectTypes::kSaveAndRestoreModifier:
 		return ModifierFactory<SaveAndRestoreModifier, Data::SaveAndRestoreModifier>::getInstance();
 	case Data::DataObjectTypes::kAliasModifier:
@@ -91,6 +93,8 @@ SIModifierFactory *getModifierFactoryForDataObjectType(const Data::DataObjectTyp
 		return ModifierFactory<SceneTransitionModifier, Data::SceneTransitionModifier>::getInstance();
 	case Data::DataObjectTypes::kElementTransitionModifier:
 		return ModifierFactory<ElementTransitionModifier, Data::ElementTransitionModifier>::getInstance();
+	case Data::DataObjectTypes::kSharedSceneModifier:
+		return ModifierFactory<SharedSceneModifier, Data::SharedSceneModifier>::getInstance();
 	case Data::DataObjectTypes::kIfMessengerModifier:
 		return ModifierFactory<IfMessengerModifier, Data::IfMessengerModifier>::getInstance();
 	case Data::DataObjectTypes::kTimerMessengerModifier:

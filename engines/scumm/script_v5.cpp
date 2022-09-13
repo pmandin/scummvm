@@ -582,7 +582,7 @@ void ScummEngine_v5::o5_actorOps() {
 			if (_game.id == GID_LOOM && _game.platform == Common::kPlatformPCEngine && i == 0 && j == 0) {
 				for (int k = 0; k < 32; k++)
 					a->setPalette(k, 0xFF);
-			} else {	
+			} else {
 				a->setPalette(i, j);
 			}
 			break;
@@ -1062,6 +1062,21 @@ void ScummEngine_v5::o5_drawObject() {
 				putState(_objs[i].obj_nr, 0);
 		} while (--i);
 		return;
+	}
+
+	// WORKAROUND: In some of the earliest 16-color releases of Loom, the
+	// staircase at the right of room 32 will glitch if Bobbin uses it to exit
+	// the room, if he entered it via the other stairs in the ground. This has
+	// been officially fixed in some '1.2' releases (e.g. French DOS/EGA) and
+	// all later versions; this smaller workaround appears to be enough.
+	if (_game.id == GID_LOOM && _game.version == 3 && !(_game.features & GF_OLD256) && _roomResource == 32 &&
+		vm.slot[_currentScript].number == 10002 && obj == 540 && state == 1 && xpos == 255 && ypos == 255 &&
+		_enableEnhancements) {
+		if (getState(541) == 1) {
+			putState(obj, state);
+			obj = 541;
+			state = 0;
+		}
 	}
 
 	idx = getObjectIndex(obj);
@@ -3345,8 +3360,14 @@ void ScummEngine_v5::decodeParseStringTextString(int textSlot) {
 			_string[textSlot].color = 0x0E;
 		printString(textSlot, _scriptPointer);
 	} else if (_game.id == GID_INDY4 && _roomResource == 23 && vm.slot[_currentScript].number == 167 &&
-			len == 24 && 0==memcmp(_scriptPointer+16, "pregod", 6)) {
-		// WORKAROUND for bug #2961.
+			len == 24 && _enableEnhancements && memcmp(_scriptPointer+16, "pregod", 6) == 0) {
+		// WORKAROUND for bug #2961: At the end of Indy4, if Ubermann is told
+		// to use 20 orichalcum beads, he'll count "pregod8" and "pregod9"
+		// instead of "18" and "19", in some releases.
+		//
+		// TODO: Check whether this issue also appears in any floppy version,
+		// because the current workaround doesn't look compatible with
+		// non-talkie releases.
 		byte tmpBuf[25];
 		memcpy(tmpBuf, _scriptPointer, 25);
 		if (tmpBuf[22] == '8')

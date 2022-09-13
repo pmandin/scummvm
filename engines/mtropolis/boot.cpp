@@ -33,6 +33,7 @@
 #include "mtropolis/runtime.h"
 #include "mtropolis/subtitles.h"
 
+#include "mtropolis/plugin/mti.h"
 #include "mtropolis/plugin/obsidian.h"
 #include "mtropolis/plugin/standard.h"
 #include "mtropolis/plugins.h"
@@ -376,6 +377,25 @@ Common::SharedPtr<Obsidian::WordGameData> ObsidianGameDataHandler::loadWinWordGa
 	return wgData;
 }
 
+class MTIGameDataHandler : public GameDataHandler {
+public:
+	MTIGameDataHandler(const Game &game, const MTropolisGameDescription &gameDesc);
+
+	void addPlugIns(ProjectDescription &projectDesc, const Common::Array<FileIdentification> &files) override;
+};
+
+MTIGameDataHandler::MTIGameDataHandler(const Game &game, const MTropolisGameDescription &gameDesc) : GameDataHandler(game, gameDesc) {
+}
+
+void MTIGameDataHandler::addPlugIns(ProjectDescription &projectDesc, const Common::Array<FileIdentification> &files) {
+	Common::SharedPtr<MTropolis::PlugIn> mtiPlugIn(new MTI::MTIPlugIn());
+	projectDesc.addPlugIn(mtiPlugIn);
+
+	Common::SharedPtr<MTropolis::PlugIn> standardPlugIn = PlugIns::createStandard();
+	static_cast<Standard::StandardPlugIn *>(standardPlugIn.get())->getHacks().allowGarbledListModData = true;
+	projectDesc.addPlugIn(standardPlugIn);
+}
+
 static bool getMacTypesForMacBinary(const char *fileName, uint32 &outType, uint32 &outCreator) {
 	Common::SharedPtr<Common::SeekableReadStream> stream(SearchMan.createReadStreamForMember(fileName));
 
@@ -694,6 +714,19 @@ const ManifestFile obsidianRetailWinDeFiles[] = {
 	{nullptr, MTFT_AUTO}
 };
 
+const ManifestFile obsidianRetailWinItFiles[] = {
+	{"Obsidian.exe", MTFT_PLAYER},
+	{"Obsidian.c95", MTFT_EXTENSION},
+	{"MCURSORS.C95", MTFT_EXTENSION},
+	{"RSGKit.r95", MTFT_SPECIAL},
+	{"Obsidian Data 1.MPL", MTFT_MAIN},
+	{"Obsidian Data 2.MPX", MTFT_ADDITIONAL},
+	{"Obsidian Data 3.MPX", MTFT_ADDITIONAL},
+	{"Obsidian Data 4.MPX", MTFT_ADDITIONAL},
+	{"Obsidian Data 5.MPX", MTFT_ADDITIONAL},
+	{"Obsidian Data 6.MPX", MTFT_ADDITIONAL},
+	{nullptr, MTFT_AUTO}
+};
 
 const char *obsidianRetailWinDirectories[] = {
 	"Obsidian",
@@ -771,6 +804,14 @@ const Game games[] = {
 		nullptr,
 		GameDataHandlerFactory<ObsidianGameDataHandler>::create
 	},
+	// Obsidian - Retail - Windows - Italian
+	{
+		MTBOOT_OBSIDIAN_RETAIL_WIN_IT,
+		obsidianRetailWinItFiles,
+		obsidianRetailWinDirectories,
+		nullptr,
+		GameDataHandlerFactory<ObsidianGameDataHandler>::create
+	},
 	// Obsidian - Demo - Macintosh - English
 	{
 		MTBOOT_OBSIDIAN_DEMO_MAC_EN,
@@ -841,7 +882,7 @@ const Game games[] = {
 		mtiRetailWinFiles,
 		mtiRetailWinDirectories,
 		nullptr,
-		GameDataHandlerFactory<GameDataHandler>::create
+		GameDataHandlerFactory<MTIGameDataHandler>::create
 	},
 	// Muppet Treasure Island - Demo - Windows
 	{
@@ -849,7 +890,7 @@ const Game games[] = {
 		mtiDemoWinFiles,
 		nullptr,
 		nullptr,
-		GameDataHandlerFactory<GameDataHandler>::create
+		GameDataHandlerFactory<MTIGameDataHandler>::create
 	},
 };
 
@@ -1015,6 +1056,8 @@ Common::SharedPtr<ProjectDescription> bootProject(const MTropolisGameDescription
 						segmentFiles.push_back(nullptr);
 					segmentFiles[segmentIndex] = &macFile;
 				} break;
+			case Boot::MTFT_VIDEO:
+				break;
 			case Boot::MTFT_SPECIAL:
 				break;
 			case Boot::MTFT_AUTO:
@@ -1079,7 +1122,7 @@ Common::SharedPtr<ProjectDescription> bootProject(const MTropolisGameDescription
 
 			Boot::FileIdentification ident;
 			ident.fileName = fileName;
-			ident.category = Boot::MTFT_AUTO;
+			ident.category = fileDesc->fileType;
 			ident.macType.value = 0;
 			ident.macCreator.value = 0;
 			winFiles.push_back(ident);
@@ -1191,6 +1234,8 @@ Common::SharedPtr<ProjectDescription> bootProject(const MTropolisGameDescription
 					segmentFiles.push_back(nullptr);
 				segmentFiles[segmentIndex] = &macFile;
 			} break;
+			case Boot::MTFT_VIDEO:
+				break;
 			case Boot::MTFT_SPECIAL:
 				break;
 			case Boot::MTFT_AUTO:

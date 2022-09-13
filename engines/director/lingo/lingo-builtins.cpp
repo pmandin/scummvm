@@ -2594,7 +2594,7 @@ void LB::b_updateStage(int nargs) {
 	movie->getWindow()->render();
 
 	// play any puppet sounds that have been queued
-	score->playSoundChannel(score->getCurrentFrame());
+	score->playSoundChannel(score->getCurrentFrame(), true);
 
 	if (score->_cursorDirty) {
 		score->renderCursor(movie->getWindow()->getMousePos());
@@ -2605,6 +2605,7 @@ void LB::b_updateStage(int nargs) {
 
 	if (debugChannelSet(-1, kDebugFewFramesOnly)) {
 		score->_framesRan++;
+			warning("LB::b_updateStage(): ran frame %0d", score->_framesRan);
 
 		if (score->_framesRan > 9) {
 			warning("b_updateStage(): exiting due to debug few frames only");

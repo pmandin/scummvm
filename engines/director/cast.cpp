@@ -424,6 +424,8 @@ bool Cast::loadConfig() {
 		if (check != checksum)
 			warning("BUILDBOT: The checksum for this VWCF resource is incorrect. Got %04x, but expected %04x", check, checksum);
 
+		/* int16 field30 = */ stream->readSint16();
+
 		_defaultPalette = stream->readSint16();
 		// In this header value, the first builtin palette starts at 0 and
 		// continues down into negative numbers.
@@ -622,7 +624,7 @@ void Cast::loadStxtData(int key, TextCastMember *member) {
 	}
 }
 
-void Cast::loadPaletteData(PaletteCastMember *member, Common::HashMap<int, PaletteV4>::iterator p) {
+void Cast::loadPaletteData(PaletteCastMember *member, Common::HashMap<int, PaletteV4>::iterator &p) {
 	// TODO: Verify how palettes work in >D4 versions
 	if (_version >= kFileVer400 && _version < kFileVer500 && member->_children.size() == 1) {
 		member->_palette = g_director->getPalette(member->_children[0].index);
@@ -646,6 +648,7 @@ void Cast::loadFilmLoopData(FilmLoopCastMember *member) {
 				Common::SeekableReadStreamEndian *loop = _castArchive->getResource(tag, filmLoopId);
 				debugC(2, kDebugLoading, "****** Loading '%s' id: %d, %d bytes", tag2str(tag), filmLoopId, (int)loop->size());
 				member->loadFilmLoopData(*loop);
+				delete loop;
 			} else {
 				warning("Cast::loadFilmLoopData(): Film loop not found");
 			}

@@ -134,8 +134,13 @@ struct MacShape {
 };
 
 struct PatternTile {
-	Image::ImageDecoder *img;
+	Image::ImageDecoder *img = 0;
 	Common::Rect rect;
+
+	~PatternTile() {
+		if (img)
+			delete img;
+	}
 };
 
 const int SCALE_THRESHOLD = 0x100;
@@ -178,6 +183,7 @@ public:
 	void addPalette(int id, byte *palette, int length);
 	bool setPalette(int id);
 	void setPalette(byte *palette, uint16 count);
+	void shiftPalette(int startIndex, int endIndex, bool reverse);
 	void clearPalettes();
 	PaletteV4 *getPalette(int id);
 	void loadDefaultPalettes();
@@ -246,7 +252,7 @@ public:
 	uint16 _wmHeight;
 
 private:
-	byte *_currentPalette;
+	byte _currentPalette[768];
 	uint16 _currentPaletteLength;
 	Lingo *_lingo;
 	uint16 _version;

@@ -106,6 +106,8 @@ void DirectorSound::playStream(Audio::AudioStream &stream, uint8 soundChannel) {
 		return;
 
 	cancelFade(soundChannel);
+	if (_channels[soundChannel - 1].loopPtr)
+		_channels[soundChannel - 1].loopPtr = nullptr;
 	_mixer->stopHandle(_channels[soundChannel - 1].handle);
 	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_channels[soundChannel - 1].handle, &stream, -1, getChannelVolume(soundChannel));
 }
@@ -784,7 +786,7 @@ bool SNDDecoder::hasLoopBounds() {
 AudioFileDecoder::AudioFileDecoder(Common::String &path)
 		: AudioDecoder() {
 	_path = path;
-	_macresman = nullptr;
+	_macresman = new Common::MacResManager();
 }
 
 AudioFileDecoder::~AudioFileDecoder() {
@@ -795,7 +797,6 @@ Audio::AudioStream *AudioFileDecoder::getAudioStream(bool looping, bool forPuppe
 	if (_path.empty())
 		return nullptr;
 
-	_macresman = new Common::MacResManager();
 	_macresman->open(Common::Path(pathMakeRelative(_path), g_director->_dirSeparator));
 	Common::SeekableReadStream *file = _macresman->getDataFork();
 

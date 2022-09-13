@@ -221,6 +221,7 @@ protected:
 	bool _isMIDI;
 	bool _isMT32;
 	bool _isGM;
+	bool _isAdLibOrFMTowns;
 	bool _supportsPercussion;
 
 protected:
@@ -277,6 +278,7 @@ public:
 	bool isMIDI() const { return _isMIDI; }
 	bool isMT32() const { return _isMT32; }
 	bool isGM() const { return _isGM; }
+	bool isAdLibOrFMTowns() const { return _isAdLibOrFMTowns; }
 	bool jump(uint track, uint beat, uint tick);
 	void onTimer();
 	void removePart(Part *part);
@@ -360,7 +362,7 @@ struct Part : public Common::Serializable {
 	void set_instrument(byte *data);
 	void load_global_instrument(byte b);
 
-	void set_transpose(int8 transpose);
+	void set_transpose(int8 transpose, int8 clipRangeLow, int8 clipRangeHi);
 	void set_detune(int8 detune);
 	void set_pri(int8 pri);
 	void set_pan(int8 pan);
@@ -378,6 +380,7 @@ struct Part : public Common::Serializable {
 private:
 	void sendPitchBend();
 	void sendTranspose();
+	void sendDetune();
 	void sendPanPosition(uint8 value);
 	void sendEffectLevel(uint8 value);
 };
