@@ -93,9 +93,6 @@ Cast::~Cast() {
 
 	if (_castArchive) {
 		_castArchive->close();
-
-		g_director->_openResFiles.erase(_castArchive->getPathName());
-
 		delete _castArchive;
 		_castArchive = nullptr;
 	}
@@ -222,9 +219,6 @@ void Cast::setArchive(Archive *archive) {
 	} else {
 		_macName = archive->getFileName();
 	}
-
-	// Register the resfile so that Cursor::readFromResource can find it
-	g_director->_openResFiles.setVal(archive->getPathName(), archive);
 }
 
 void Cast::loadArchive() {
@@ -617,10 +611,12 @@ void Cast::loadStxtData(int key, TextCastMember *member) {
 	else
 		stxtid = key;
 
-	if (_loadedStxts->getVal(stxtid)) {
+	if (_loadedStxts->contains(stxtid)) {
 		const Stxt *stxt = _loadedStxts->getVal(stxtid);
 		member->importStxt(stxt);
 		member->_size = stxt->_size;
+	} else {
+		warning("Cast::loadStxtData: stxtid %i isn't loaded", stxtid);
 	}
 }
 
@@ -725,8 +721,10 @@ void Cast::loadBitmapData(int key, BitmapCastMember *bitmapCast) {
 		break;
 	}
 
-	if (!img)
+	if (!img) {
+		delete pic;
 		return;
+	}
 
 	img->loadStream(*pic);
 
@@ -1232,6 +1230,10 @@ void Cast::loadLingoContext(Common::SeekableReadStreamEndian &stream) {
 					error("Cast::loadLingoContext: Script already defined for type %s, id %d", scriptType2str(script->_scriptType), script->_id);
 				}
 				_lingoArchive->scriptContexts[script->_scriptType][script->_id] = script;
+			} else {
+				// Keep track of scripts that are not in scriptContexts
+				// Those scripts need to be cleaned up on ~LingoArchive
+				script->setOnlyInLctxContexts();
 			}
 		}
 	} else {

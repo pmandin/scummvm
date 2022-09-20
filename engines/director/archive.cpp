@@ -242,6 +242,7 @@ void Archive::dumpChunk(Resource &res, Common::DumpFile &out) {
 	}
 
 	delete resStream;
+	free(data);
 }
 
 // Mac Archive code
@@ -796,7 +797,7 @@ bool RIFXArchive::readAfterburnerMap(Common::SeekableReadStreamEndian &stream, u
 
 	delete abmpStream;
 
-	// Initial load segment
+	// Handle Initial Load Segment (ILS)
 	if (!resourceMap.contains(2)) {
 		warning("RIFXArchive::readAfterburnerMap(): Map has no entry for ILS");
 		return false;

@@ -337,10 +337,16 @@ bool Window::step() {
 				sharedCast->releaseCastMemberWidget();
 				_currentMovie->_sharedCast = sharedCast;
 			} else {
+				// clear reference in openResFile before deleting shared cast
+				if (sharedCast)
+					g_director->_openResFiles.erase(sharedCast->getArchive()->getPathName());
 				delete sharedCast;
 				_currentMovie->loadSharedCastsFrom(sharedCastPath);
 			}
 		} else {
+			// clear reference in openResFile before deleting shared cast
+			if (sharedCast)
+				g_director->_openResFiles.erase(sharedCast->getArchive()->getPathName());
 			delete sharedCast;
 		}
 

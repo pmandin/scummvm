@@ -412,8 +412,8 @@ void ScummEngine::clearBanner() {
 }
 
 void ScummEngine::setBannerColors(int bannerId, byte r, byte g, byte b) {
-	if (bannerId < 0 || bannerId > 50) {
-		debug(1, "ScummEngine::setBannerColors(): invalid slot %d out of range (min %d, max %d)", bannerId, 0, 50);
+	if (bannerId < 0 || bannerId > 49) {
+		debug(1, "ScummEngine::setBannerColors(): invalid slot %d out of range (min %d, max %d)", bannerId, 0, 49);
 		return;
 	}
 
@@ -875,7 +875,7 @@ const char *ScummEngine_v8::getGUIString(int stringId) {
 		resStringId = 35;
 		break;
 	default:
-		return _emptyMsg;
+		break;
 	}
 
 	if (resStringId > 0)
@@ -1002,12 +1002,12 @@ const char *ScummEngine_v7::getGUIString(int stringId) {
 		resStringId = 58;
 		break;
 	default:
-		return _emptyMsg;
+		break;
 	}
 
 	const char *res =  (resStringId > 0) ? d.getPlainEngineString(resStringId) : _emptyMsg;
 
-	if (_game.id == GID_DIG) {
+	if (_game.id == GID_DIG && resStringId > 0) {
 		convertMessageToString((const byte*)res, _guiStringTransBuff, 512);
 		res = (const char*)_guiStringTransBuff;
 	}
@@ -3121,7 +3121,7 @@ const char *ScummEngine_v6::getGUIString(int stringId) {
 		resStringId = 35;
 		break;
 	default:
-		return _emptyMsg;
+		break;
 	}
 
 	if (resStringId > 0)
@@ -3208,7 +3208,7 @@ const char *ScummEngine::getGUIString(int stringId) {
 		resStringId = 28;
 		break;
 	default:
-		return _emptyMsg;
+		break;
 	}
 
 	if (resStringId > 0)
