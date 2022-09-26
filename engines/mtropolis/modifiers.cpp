@@ -302,6 +302,40 @@ bool SaveAndRestoreModifier::load(ModifierLoaderContext &context, const Data::Sa
 	return true;
 }
 
+
+SoundFadeModifier::SoundFadeModifier() : _fadeToVolume(0), _durationMSec(0) {
+}
+
+bool SoundFadeModifier::load(ModifierLoaderContext &context, const Data::SoundFadeModifier &data) {
+	if (!loadTypicalHeader(data.modHeader))
+		return false;
+
+	if (!_enableWhen.load(data.enableWhen) || !_disableWhen.load(data.disableWhen))
+		return false;
+
+	_fadeToVolume = data.fadeToVolume;
+	_durationMSec = ((((data.codedDuration[0] * 60) + data.codedDuration[1]) * 60 + data.codedDuration[2]) * 100 + data.codedDuration[3]) * 10;
+
+	return true;
+}
+
+bool SoundFadeModifier::respondsToEvent(const Event &evt) const {
+	return evt.respondsTo(_enableWhen) || evt.respondsTo(_disableWhen);
+}
+
+VThreadState SoundFadeModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	warning("Sound fade modifier is not implemented");
+	return kVThreadReturn;
+}
+
+Common::SharedPtr<Modifier> SoundFadeModifier::shallowClone() const {
+	return Common::SharedPtr<Modifier>(new SoundFadeModifier(*this));
+}
+
+const char *SoundFadeModifier::getDefaultName() const {
+	return "Sound Fade Modifier";
+}
+
 bool SaveAndRestoreModifier::respondsToEvent(const Event &evt) const {
 	if (_saveWhen.respondsTo(evt) || _restoreWhen.respondsTo(evt))
 		return true;
@@ -331,16 +365,33 @@ VThreadState SaveAndRestoreModifier::consumeMessage(Runtime *runtime, const Comm
 		return kVThreadError;
 	}
 
+	// There doesn't appear to be any flag for this, it just uses the file path field
+	bool isPrompt = (_filePath == "Ask User");
+
 	if (_saveWhen.respondsTo(msg->getEvent())) {
 		CompoundVarSaver saver(obj);
-		if (runtime->getSaveProvider()->promptSave(&saver, runtime->getSaveScreenshotOverride().get())) {
+
+		bool succeeded = false;
+		if (isPrompt)
+			succeeded = runtime->getSaveProvider()->promptSave(&saver, runtime->getSaveScreenshotOverride().get());
+		else
+			succeeded = runtime->getSaveProvider()->namedSave(&saver, runtime->getSaveScreenshotOverride().get(), _fileName);
+
+		if (succeeded) {
 			for (const Common::SharedPtr<SaveLoadHooks> &hooks : runtime->getHacks().saveLoadHooks)
 				hooks->onSave(runtime, this, static_cast<Modifier *>(obj));
 		}
 		return kVThreadReturn;
 	} else if (_restoreWhen.respondsTo(msg->getEvent())) {
 		CompoundVarLoader loader(obj);
-		if (runtime->getLoadProvider()->promptLoad(&loader)) {
+
+		bool succeeded = false;
+		if (isPrompt)
+			runtime->getLoadProvider()->promptLoad(&loader);
+		else
+			runtime->getLoadProvider()->namedLoad(&loader, _fileName);
+
+		if (succeeded) {
 			for (const Common::SharedPtr<SaveLoadHooks> &hooks : runtime->getHacks().saveLoadHooks)
 				hooks->onLoad(runtime, this, static_cast<Modifier *>(obj));
 		}
@@ -667,48 +718,56 @@ const char *SoundEffectModifier::getDefaultName() const {
 	return "Sound Effect Modifier";
 }
 
-PathMotionModifierV2::PointDef::PointDef() : frame(0), useFrame(false) {
+PathMotionModifier::PointDef::PointDef() : frame(0), useFrame(false) {
 }
 
-PathMotionModifierV2::PathMotionModifierV2()
+PathMotionModifier::PathMotionModifier()
 	: _reverse(false), _loop(false), _alternate(false),
 	  _startAtBeginning(false), _frameDurationTimes10Million(0) {
 }
 
-bool PathMotionModifierV2::load(ModifierLoaderContext &context, const Data::PathMotionModifierV2 &data) {
+bool PathMotionModifier::load(ModifierLoaderContext &context, const Data::PathMotionModifier &data) {
 	if (!loadTypicalHeader(data.modHeader))
 		return false;
 
 	if (!_executeWhen.load(data.executeWhen) || !_terminateWhen.load(data.terminateWhen))
 		return false;
 
-	_reverse = ((data.flags & Data::PathMotionModifierV2::kFlagReverse) != 0);
-	_loop = ((data.flags & Data::PathMotionModifierV2::kFlagLoop) != 0);
-	_alternate = ((data.flags & Data::PathMotionModifierV2::kFlagAlternate) != 0);
-	_startAtBeginning = ((data.flags & Data::PathMotionModifierV2::kFlagStartAtBeginning) != 0);
+	_reverse = ((data.flags & Data::PathMotionModifier::kFlagReverse) != 0);
+	_loop = ((data.flags & Data::PathMotionModifier::kFlagLoop) != 0);
+	_alternate = ((data.flags & Data::PathMotionModifier::kFlagAlternate) != 0);
+	_startAtBeginning = ((data.flags & Data::PathMotionModifier::kFlagStartAtBeginning) != 0);
 
 	_frameDurationTimes10Million = data.frameDurationTimes10Million;
 
 	_points.resize(data.numPoints);
 
 	for (size_t i = 0; i < _points.size(); i++) {
-		const Data::PathMotionModifierV2::PointDef &inPoint = data.points[i];
+		const Data::PathMotionModifier::PointDef &inPoint = data.points[i];
 		PointDef &outPoint = _points[i];
 
 		outPoint.frame = inPoint.frame;
-		outPoint.useFrame = ((inPoint.frameFlags & Data::PathMotionModifierV2::PointDef::kFrameFlagPlaySequentially) != 0);
-		if (!inPoint.point.toScummVMPoint(outPoint.point) || !outPoint.sendSpec.load(inPoint.send, inPoint.messageFlags, inPoint.with, inPoint.withSource, inPoint.withString, inPoint.destination))
+		outPoint.useFrame = ((inPoint.frameFlags & Data::PathMotionModifier::PointDef::kFrameFlagPlaySequentially) != 0);
+		if (!inPoint.point.toScummVMPoint(outPoint.point))
 			return false;
+
+		if (data.havePointDefMessageSpecs) {
+			const Data::PathMotionModifier::PointDefMessageSpec &messageSpec = inPoint.messageSpec;
+			if (!outPoint.sendSpec.load(messageSpec.send, messageSpec.messageFlags, messageSpec.with, messageSpec.withSource, messageSpec.withString, messageSpec.destination))
+				return false;
+		} else {
+			outPoint.sendSpec.destination = kMessageDestNone;
+		}
 	}
 
 	return true;
 }
 
-bool PathMotionModifierV2::respondsToEvent(const Event &evt) const {
+bool PathMotionModifier::respondsToEvent(const Event &evt) const {
 	return _executeWhen.respondsTo(evt) || _terminateWhen.respondsTo(evt);
 }
 
-VThreadState PathMotionModifierV2::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+VThreadState PathMotionModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
 	if (_executeWhen.respondsTo(msg->getEvent())) {
 #ifdef MTROPOLIS_DEBUG_ENABLE
 		if (Debugger *debugger = runtime->debugGetDebugger())
@@ -726,20 +785,20 @@ VThreadState PathMotionModifierV2::consumeMessage(Runtime *runtime, const Common
 	return kVThreadReturn;
 }
 
-void PathMotionModifierV2::disable(Runtime *runtime) {
+void PathMotionModifier::disable(Runtime *runtime) {
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	if (Debugger *debugger = runtime->debugGetDebugger())
 		debugger->notify(kDebugSeverityWarning, "Path motion modifier was supposed to terminate, but this isn't implemented yet");
 #endif
 }
 
-Common::SharedPtr<Modifier> PathMotionModifierV2::shallowClone() const {
-	Common::SharedPtr<PathMotionModifierV2> clone(new PathMotionModifierV2(*this));
+Common::SharedPtr<Modifier> PathMotionModifier::shallowClone() const {
+	Common::SharedPtr<PathMotionModifier> clone(new PathMotionModifier(*this));
 	clone->_incomingData = DynamicValue();
 	return clone;
 }
 
-const char *PathMotionModifierV2::getDefaultName() const {
+const char *PathMotionModifier::getDefaultName() const {
 	return "Path Motion Modifier";
 }
 
@@ -2036,6 +2095,41 @@ const char *GraphicModifier::getDefaultName() const {
 	return "Graphic Modifier";
 }
 
+ImageEffectModifier::ImageEffectModifier() : _type(kTypeUnknown), _bevelWidth(0), _toneAmount(0), _includeBorders(false) {
+}
+
+bool ImageEffectModifier::load(ModifierLoaderContext &context, const Data::ImageEffectModifier &data) {
+	if (!loadTypicalHeader(data.modHeader) || !_applyWhen.load(data.applyWhen) || !_removeWhen.load(data.removeWhen))
+		return false;
+
+	_includeBorders = ((data.flags & 0x40000000) != 0);
+	_type = static_cast<Type>(data.type);
+	_bevelWidth = data.bevelWidth;
+	_toneAmount = data.toneAmount;
+
+	return true;
+}
+
+bool ImageEffectModifier::respondsToEvent(const Event &evt) const {
+	return _applyWhen.respondsTo(evt) || _removeWhen.respondsTo(evt);
+}
+
+VThreadState ImageEffectModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	warning("Image effect modifier not implemented");
+	return kVThreadReturn;
+}
+
+void ImageEffectModifier::disable(Runtime *runtime) {
+}
+
+Common::SharedPtr<Modifier> ImageEffectModifier::shallowClone() const {
+	return Common::SharedPtr<Modifier>(new ImageEffectModifier(*this));
+}
+
+const char *ImageEffectModifier::getDefaultName() const {
+	return "Image Effect Modifier";
+}
+
 bool CompoundVariableModifier::load(ModifierLoaderContext &context, const Data::CompoundVariableModifier &data) {
 	if (data.numChildren > 0) {
 		ChildLoaderContext loaderContext;
@@ -2735,6 +2829,74 @@ bool StringVariableModifier::SaveLoad::loadInternal(Common::ReadStream *stream, 
 		_value = Common::String(&chars[0], size);
 	}
 
+	return true;
+}
+
+
+
+bool ObjectReferenceVariableModifierV1::load(ModifierLoaderContext &context, const Data::ObjectReferenceVariableModifierV1 &data) {
+	if (!loadTypicalHeader(data.modHeader))
+		return false;
+
+	if (!_setToSourcesParentWhen.load(data.setToSourcesParentWhen))
+		return false;
+
+	return true;
+}
+
+bool ObjectReferenceVariableModifierV1::respondsToEvent(const Event &evt) const {
+	return _setToSourcesParentWhen.respondsTo(evt);
+}
+
+VThreadState ObjectReferenceVariableModifierV1::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	if (msg->getEvent().respondsTo(_setToSourcesParentWhen)) {
+		warning("Set to source's parent is not implemented");
+	}
+	return kVThreadError;
+}
+
+Common::SharedPtr<ModifierSaveLoad> ObjectReferenceVariableModifierV1::getSaveLoad() {
+	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
+}
+
+bool ObjectReferenceVariableModifierV1::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
+	if (value.getType() == DynamicValueTypes::kNull)
+		_value.reset();
+	else if (value.getType() == DynamicValueTypes::kObject)
+		_value = value.getObject().object;
+	else
+		return false;
+
+	return true;
+}
+
+void ObjectReferenceVariableModifierV1::varGetValue(MiniscriptThread *thread, DynamicValue &dest) const {
+	if (_value.expired())
+		dest.clear();
+	else
+		dest.setObject(_value);
+}
+
+Common::SharedPtr<Modifier> ObjectReferenceVariableModifierV1::shallowClone() const {
+	return Common::SharedPtr<Modifier>(new ObjectReferenceVariableModifierV1(*this));
+}
+
+const char *ObjectReferenceVariableModifierV1::getDefaultName() const {
+	return "Object Reference Variable";
+}
+
+ObjectReferenceVariableModifierV1::SaveLoad::SaveLoad(ObjectReferenceVariableModifierV1 *modifier) : _modifier(modifier) {
+}
+
+void ObjectReferenceVariableModifierV1::SaveLoad::commitLoad() const {
+	_modifier->_value = _value;
+}
+
+void ObjectReferenceVariableModifierV1::SaveLoad::saveInternal(Common::WriteStream *stream) const {
+	error("Saving version 1 object reference variables is not currently supported");
+}
+
+bool ObjectReferenceVariableModifierV1::SaveLoad::loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) {
 	return true;
 }
 

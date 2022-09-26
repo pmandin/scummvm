@@ -75,6 +75,8 @@ SIModifierFactory *getModifierFactoryForDataObjectType(const Data::DataObjectTyp
 		return ModifierFactory<MiniscriptModifier, Data::MiniscriptModifier>::getInstance();
 	case Data::DataObjectTypes::kColorTableModifier:
 		return ModifierFactory<ColorTableModifier, Data::ColorTableModifier>::getInstance();
+	case Data::DataObjectTypes::kSoundFadeModifier:
+		return ModifierFactory<SoundFadeModifier, Data::SoundFadeModifier>::getInstance();
 	case Data::DataObjectTypes::kSaveAndRestoreModifier:
 		return ModifierFactory<SaveAndRestoreModifier, Data::SaveAndRestoreModifier>::getInstance();
 	case Data::DataObjectTypes::kAliasModifier:
@@ -83,8 +85,9 @@ SIModifierFactory *getModifierFactoryForDataObjectType(const Data::DataObjectTyp
 		return ModifierFactory<ChangeSceneModifier, Data::ChangeSceneModifier>::getInstance();
 	case Data::DataObjectTypes::kSoundEffectModifier:
 		return ModifierFactory<SoundEffectModifier, Data::SoundEffectModifier>::getInstance();
+	case Data::DataObjectTypes::kPathMotionModifierV1:
 	case Data::DataObjectTypes::kPathMotionModifierV2:
-		return ModifierFactory<PathMotionModifierV2, Data::PathMotionModifierV2>::getInstance();
+		return ModifierFactory<PathMotionModifier, Data::PathMotionModifier>::getInstance();
 	case Data::DataObjectTypes::kDragMotionModifier:
 		return ModifierFactory<DragMotionModifier, Data::DragMotionModifier>::getInstance();
 	case Data::DataObjectTypes::kVectorMotionModifier:
@@ -109,6 +112,8 @@ SIModifierFactory *getModifierFactoryForDataObjectType(const Data::DataObjectTyp
 		return ModifierFactory<TextStyleModifier, Data::TextStyleModifier>::getInstance();
 	case Data::DataObjectTypes::kGraphicModifier:
 		return ModifierFactory<GraphicModifier, Data::GraphicModifier>::getInstance();
+	case Data::DataObjectTypes::kImageEffectModifier:
+		return ModifierFactory<ImageEffectModifier, Data::ImageEffectModifier>::getInstance();
 	case Data::DataObjectTypes::kMessengerModifier:
 		return ModifierFactory<MessengerModifier, Data::MessengerModifier>::getInstance();
 	case Data::DataObjectTypes::kSetModifier:
@@ -129,6 +134,8 @@ SIModifierFactory *getModifierFactoryForDataObjectType(const Data::DataObjectTyp
 		return ModifierFactory<FloatingPointVariableModifier, Data::FloatingPointVariableModifier>::getInstance();
 	case Data::DataObjectTypes::kStringVariableModifier:
 		return ModifierFactory<StringVariableModifier, Data::StringVariableModifier>::getInstance();
+	case Data::DataObjectTypes::kObjectReferenceVariableModifierV1:
+		return ModifierFactory<ObjectReferenceVariableModifierV1, Data::ObjectReferenceVariableModifierV1>::getInstance();
 
 	default:
 		warning("No modifier factory for type %x", static_cast<int>(dataObjectType));

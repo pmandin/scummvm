@@ -23,8 +23,6 @@
  *   (c) 1993-1996 The Wyrmkeep Entertainment Co.
  */
 
-#define FORBIDDEN_SYMBOL_ALLOW_ALL // FIXME: Remove
-
 #include "common/debug.h"
 
 #include "saga2/saga2.h"
@@ -201,7 +199,7 @@ int16 scriptActorMoveRel(int16 *args) {
 	Location        l;
 	TilePoint       tp;
 
-	l.context   = baseObj->IDParent();
+	l._context   = baseObj->IDParent();
 	tp          = baseObj->getLocation();
 
 	//  Add offset for angle and distance
@@ -1026,7 +1024,7 @@ int16 deepCopy(GameObject *src, ObjectID parentID, TilePoint tp) {
 	l.u = tp.u;
 	l.v = tp.v;
 	l.z = tp.z;
-	l.context = parentID;
+	l._context = parentID;
 
 	//  Make a copy of this object, and place it in the parent container we spec'd
 	newID = src->copy(l);
@@ -2725,56 +2723,8 @@ int16 scriptStatus(int16 *args) {
 	return 0;
 }
 
-//-----------------------------------------------------------------------
-//	Write a message to a log file
-//		void "C" status( string caption, ... );
-/*
-void writeLog( char *str )
-{
-    static FILE     *logFile = NULL;
-
-    if (logFile == NULL)
-    {
-        logFile = fopen( "logfile.txt", "a+t" );
-    }
-
-    if (logFile) fputs( str, logFile );
-    fclose(logFile);
-}
-*/
-void writeLog(char *str) {
-	FILE        *logFile = nullptr;
-#ifdef __WATCOMC__
-	time_t time_of_day;
-	auto char buf[26];
-	char strbuf[256];
-
-
-	logFile = fopen("logfile.txt", "a+t");
-	if (logFile) {
-		time_of_day = time(NULL);
-		_ctime(&time_of_day, buf);
-		buf[strlen(buf) - 1] = 0;
-		sprintf(strbuf, "%s: %s", buf, str);
-		fputs(strbuf, logFile);
-		fclose(logFile);
-	}
-#else
-	logFile = fopen("logfile.txt", "a+t");
-	if (logFile) {
-		fputs(str, logFile);
-		fclose(logFile);
-	}
-#endif
-}
-
 void writeObject(char *str) {
-	FILE        *logFile = nullptr;
-	logFile = fopen("objfile.txt", "a+t");
-	if (logFile) {
-		fputs(str, logFile);
-		fclose(logFile);
-	}
+	warning("OBJ: %s", str);
 }
 
 int16 scriptWriteLog(int16 *args) {
@@ -3657,7 +3607,7 @@ int16 scriptSwapRegions(int16 *args) {
 
 		tp = obj->getLocation();
 
-		loc.context = worldID2;
+		loc._context = worldID2;
 		loc.u = tp.u + region2.min.u - region1.min.u;
 		loc.v = tp.v + region2.min.v - region1.min.v;
 		loc.z = tp.z;
@@ -3673,7 +3623,7 @@ int16 scriptSwapRegions(int16 *args) {
 
 		tp = obj->getLocation();
 
-		loc.context = worldID1;
+		loc._context = worldID1;
 		loc.u = tp.u + region1.min.u - region2.min.u;
 		loc.v = tp.v + region1.min.v - region2.min.v;
 		loc.z = tp.z;

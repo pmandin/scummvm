@@ -916,6 +916,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "peaceland",			"PeaceLand" },
 	{ "peepeebonbon",		"Pee Pee Bon Bon"},
 	{ "phantplanet",		"アミューズメント プラネット ファンタスマゴリア" },	// Amusement Planet Phantasmagoria
+	{ "phibos",				"フィボス ～彗星を追って～" },	// Phibos: Following the Comet
 	{ "picklesbook",		"Pickle's Book" },
 	{ "pinkgear",			"Pink Gear Collection" },
 	{ "pinkgear2",			"Pink Gear 2" },
@@ -2420,6 +2421,8 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACGAME1_l("peaceland", "", "PeaceLand 8m", "f5277c53bacd27936158dd3867e587e2", 392232, Common::JA_JPN, 311),
 	MACDEMO1_l("peaceland", "Demo", "PeaceLand", "276bee761e48a6fd709df77d5c2f60dd", 393877, Common::JA_JPN, 313),
 
+	WINGAME1t_l("phibos", "", "PHIBOS.EXE", "298f47fd72d3f3cee220c25dd797dbb4", 747095, Common::JA_JPN, 404),
+
 	// Original Mac-only release
 	MACGAME1_l("picklesbook", "", "Pickle's Book/Pickle", "c9ec74eea228500976ba680a362308bb", 456728, Common::JA_JPN, 300),
 	// On the same CD as the Windows version, but built with a different version?
@@ -3885,6 +3888,7 @@ static const DirectorGameDescription gameDescriptions[] = {
 
 	MACGAME1("majestic", "", "Majestic", "01be45e7241194dad07938e7059b88e3", 483774, 400),
 	WINGAME1("majestic", "", "MAJESTIC.EXE", "624267f70253e5327981003a6fc0aeba", 23437631, 400),
+	WINGAME1t_l("majestic", "", "Maj32.exe", "d1cced6eff47da53845679d05b5d2bf3", 24166899, Common::DE_DEU, 400),
 
 	// Original filename is Make•A•Mug™ V1.0
 	MACGAME1("makeamug", "v1.0", "xn--MakeAMug V1.0-lt6gb312b", "4f8bb7ad0cbcec1815538ba15a899061", 304279, 400),

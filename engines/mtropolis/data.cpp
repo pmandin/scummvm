@@ -117,6 +117,7 @@ bool isModifier(DataObjectType type) {
 	case kCursorModifierV1:
 	case kGradientModifier:
 	case kColorTableModifier:
+	case kSoundFadeModifier:
 	case kSaveAndRestoreModifier:
 	case kCompoundVariableModifier:
 	case kBooleanVariableModifier:
@@ -126,6 +127,7 @@ bool isModifier(DataObjectType type) {
 	case kPointVariableModifier:
 	case kFloatingPointVariableModifier:
 	case kStringVariableModifier:
+	case kObjectReferenceVariableModifierV1:
 	case kPlugInModifier:
 	case kDebris:
 		return true;
@@ -1184,6 +1186,24 @@ DataReadErrorCode ColorTableModifier::load(DataReader &reader) {
 	return kDataReadErrorNone;
 }
 
+SoundFadeModifier::SoundFadeModifier() : unknown1{0, 0, 0, 0}, fadeToVolume(0), codedDuration{0, 0, 0, 0},
+	unknown2{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,} {
+}
+
+DataReadErrorCode SoundFadeModifier::load(DataReader &reader) {
+	if (_revision != 1000)
+		return kDataReadErrorUnsupportedRevision;
+
+	if (!modHeader.load(reader))
+		return kDataReadErrorReadFailed;
+
+	if (!reader.readBytes(unknown1) || !enableWhen.load(reader) || !disableWhen.load(reader)
+		|| !reader.readU16(fadeToVolume) || !reader.readBytes(codedDuration) || !reader.readBytes(unknown2))
+		return kDataReadErrorReadFailed;
+
+	return kDataReadErrorNone;
+}
+
 SaveAndRestoreModifier::SaveAndRestoreModifier()
 	: unknown1{0, 0, 0, 0}, saveWhen(Event::createDefault()), restoreWhen(Event::createDefault()),
 	  unknown5{0, 0, 0, 0, 0, 0, 0, 0}, lengthOfFilePath(0), lengthOfFileName(0), lengthOfVariableName(0), lengthOfVariableString(0) {
@@ -1248,11 +1268,12 @@ DataReadErrorCode SetModifier::load(DataReader &reader) {
 }
 
 AliasModifier::AliasModifier()
-	: modifierFlags(0), sizeIncludingTag(0), aliasIndexPlusOne(0), unknown1(0), unknown2(0), lengthOfName(0), guid(0), editorLayoutPosition(Point::createDefault()) {
+	: modifierFlags(0), sizeIncludingTag(0), aliasIndexPlusOne(0), unknown1(0), unknown2(0)
+	, lengthOfName(0), guid(0), editorLayoutPosition(Point::createDefault()), haveGUID(false) {
 }
 
 DataReadErrorCode AliasModifier::load(DataReader& reader) {
-	if (_revision != 2)
+	if (_revision > 2)
 		return kDataReadErrorUnsupportedRevision;
 
 	if (!reader.readU32(modifierFlags)
@@ -1261,9 +1282,19 @@ DataReadErrorCode AliasModifier::load(DataReader& reader) {
 		|| !reader.readU32(unknown1)
 		|| !reader.readU32(unknown2)
 		|| !reader.readU16(lengthOfName)
-		|| !editorLayoutPosition.load(reader)
-		|| !reader.readU32(guid)
-		|| !reader.readTerminatedStr(name, lengthOfName))
+		|| !editorLayoutPosition.load(reader))
+		return kDataReadErrorReadFailed;
+
+	if (_revision >= 2) {
+		haveGUID = true;
+		if (!reader.readU32(guid))
+			return kDataReadErrorReadFailed;
+	} else {
+		haveGUID = false;
+		guid = 0;
+	}
+
+	if (!reader.readTerminatedStr(name, lengthOfName))
 		return kDataReadErrorReadFailed;
 
 	return kDataReadErrorNone;
@@ -1301,11 +1332,12 @@ DataReadErrorCode SoundEffectModifier::load(DataReader &reader) {
 	return kDataReadErrorNone;
 }
 
-bool PathMotionModifierV2::PointDef::load(DataReader &reader) {
-	if (!point.load(reader)
-		|| !reader.readU32(frame)
-		|| !reader.readU32(frameFlags)
-		|| !reader.readU32(messageFlags)
+PathMotionModifier::PointDefMessageSpec::PointDefMessageSpec() : messageFlags(0), send(Event::createDefault()), unknown11(0),
+	  destination(0), unknown13{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, withSourceLength(0), withStringLength(0) {
+}
+
+bool PathMotionModifier::PointDefMessageSpec::load(DataReader &reader) {
+	if (!reader.readU32(messageFlags)
 		|| !send.load(reader)
 		|| !reader.readU16(unknown11)
 		|| !reader.readU32(destination)
@@ -1320,18 +1352,27 @@ bool PathMotionModifierV2::PointDef::load(DataReader &reader) {
 	return true;
 }
 
+bool PathMotionModifier::PointDef::load(DataReader &reader, bool haveMessageSpec) {
+	if (!point.load(reader) || !reader.readU32(frame) || !reader.readU32(frameFlags))
+		return false;
 
-PathMotionModifierV2::PointDef::PointDef()
-	: point(Point::createDefault()), frame(0), frameFlags(0), messageFlags(0), send(Event::createDefault()), unknown11(0),
-	  destination(0), unknown13{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, withSourceLength(0), withStringLength(0) {
+	if (haveMessageSpec && messageSpec.load(reader))
+		return false;
+
+	return true;
 }
 
-PathMotionModifierV2::PathMotionModifierV2()
+
+PathMotionModifier::PointDef::PointDef()
+	: point(Point::createDefault()), frame(0), frameFlags(0) {
+}
+
+PathMotionModifier::PathMotionModifier(uint version)
 	: flags(0), executeWhen(Event::createDefault()), terminateWhen(Event::createDefault()), unknown2{0, 0}, numPoints(0), unknown3{0, 0, 0, 0},
-	  frameDurationTimes10Million(0), unknown5{0, 0, 0, 0}, unknown6(0) {
+	  frameDurationTimes10Million(0), unknown5{0, 0, 0, 0}, unknown6(0), havePointDefMessageSpecs(version >= 2) {
 }
 
-DataReadErrorCode PathMotionModifierV2::load(DataReader &reader) {
+DataReadErrorCode PathMotionModifier::load(DataReader &reader) {
 	if (_revision != 1001)
 		return kDataReadErrorUnsupportedRevision;
 
@@ -1350,7 +1391,7 @@ DataReadErrorCode PathMotionModifierV2::load(DataReader &reader) {
 	points.resize(numPoints);
 
 	for (size_t i = 0; i < numPoints; i++) {
-		if (!points[i].load(reader))
+		if (!points[i].load(reader, havePointDefMessageSpecs))
 			return kDataReadErrorReadFailed;
 	}
 
@@ -1650,6 +1691,20 @@ DataReadErrorCode GraphicModifier::load(DataReader &reader) {
 	return kDataReadErrorNone;
 }
 
+ImageEffectModifier::ImageEffectModifier() : flags(0), type(0), bevelWidth(0), toneAmount(0), unknown2{0, 0} {
+}
+
+DataReadErrorCode ImageEffectModifier::load(DataReader &reader) {
+	if (_revision != 1000)
+		return kDataReadErrorUnsupportedRevision;
+
+	if (!modHeader.load(reader) || !reader.readU32(flags) || !reader.readU16(type) || !applyWhen.load(reader) || !removeWhen.load(reader)
+		|| !reader.readU16(bevelWidth) || !reader.readU16(toneAmount) || !reader.readBytes(unknown2))
+		return kDataReadErrorReadFailed;
+
+	return kDataReadErrorNone;
+}
+
 CompoundVariableModifier::CompoundVariableModifier()
 	: modifierFlags(0), sizeIncludingTag(0), unknown1{0, 0}, guid(0), unknown4{0, 0, 0, 0, 0, 0}, unknown5(0),
 	  editorLayoutPosition(Point::createDefault()), lengthOfName(0), numChildren(0), unknown7{0, 0, 0, 0} {
@@ -1754,6 +1809,19 @@ DataReadErrorCode StringVariableModifier::load(DataReader &reader) {
 		return kDataReadErrorUnsupportedRevision;
 
 	if (!modHeader.load(reader) || !reader.readU32(lengthOfString) || !reader.readBytes(unknown1) || !reader.readTerminatedStr(value, lengthOfString))
+		return kDataReadErrorReadFailed;
+
+	return kDataReadErrorNone;
+}
+
+ObjectReferenceVariableModifierV1::ObjectReferenceVariableModifierV1() : unknown1(0) {
+}
+
+DataReadErrorCode ObjectReferenceVariableModifierV1::load(DataReader &reader) {
+	if (_revision != 1000)
+		return kDataReadErrorUnsupportedRevision;
+
+	if (!modHeader.load(reader) || !reader.readU32(unknown1) || !setToSourcesParentWhen.load(reader))
 		return kDataReadErrorReadFailed;
 
 	return kDataReadErrorNone;
@@ -2289,6 +2357,9 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 	case DataObjectTypes::kColorTableModifier:
 		dataObject = new ColorTableModifier();
 		break;
+	case DataObjectTypes::kSoundFadeModifier:
+		dataObject = new SoundFadeModifier();
+		break;
 	case DataObjectTypes::kSaveAndRestoreModifier:
 		dataObject = new SaveAndRestoreModifier();
 		break;
@@ -2310,8 +2381,11 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 	case DataObjectTypes::kDragMotionModifier:
 		dataObject = new DragMotionModifier();
 		break;
+	case DataObjectTypes::kPathMotionModifierV1:
+		dataObject = new PathMotionModifier(1);
+		break;
 	case DataObjectTypes::kPathMotionModifierV2:
-		dataObject = new PathMotionModifierV2();
+		dataObject = new PathMotionModifier(2);
 		break;
 	case DataObjectTypes::kVectorMotionModifier:
 		dataObject = new VectorMotionModifier();
@@ -2352,6 +2426,9 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 	case DataObjectTypes::kStringVariableModifier:
 		dataObject = new StringVariableModifier();
 		break;
+	case DataObjectTypes::kObjectReferenceVariableModifierV1:
+		dataObject = new ObjectReferenceVariableModifierV1();
+		break;
 	case DataObjectTypes::kDebris:
 		dataObject = new Debris();
 		break;
@@ -2375,6 +2452,9 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 		break;
 	case DataObjectTypes::kGraphicModifier:
 		dataObject = new GraphicModifier();
+		break;
+	case DataObjectTypes::kImageEffectModifier:
+		dataObject = new ImageEffectModifier();
 		break;
 
 	case DataObjectTypes::kColorTableAsset:

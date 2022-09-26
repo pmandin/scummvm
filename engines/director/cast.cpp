@@ -204,6 +204,8 @@ CastMember *Cast::setCastMember(CastMemberID castId, CastMember *cast) {
 
 bool Cast::eraseCastMember(CastMemberID castId) {
 	if (_loadedCast->contains(castId.member)) {
+		CastMember *member = _loadedCast->getVal(castId.member);
+		delete member;
 		_loadedCast->erase(castId.member);
 		return true;
 	}
@@ -227,14 +229,12 @@ void Cast::loadArchive() {
 }
 
 bool Cast::loadConfig() {
-	if (!_castArchive->hasResource(MKTAG('V', 'W', 'C', 'F'), -1)) {
+	Common::SeekableReadStreamEndian *stream = nullptr;
+	stream = _castArchive->getMovieResourceIfPresent(MKTAG('V', 'W', 'C', 'F'));
+	if (!stream) {
 		warning("Cast::loadConfig(): Wrong format. VWCF resource missing");
 		return false;
 	}
-
-	Common::SeekableReadStreamEndian *stream = nullptr;
-
-	stream = _castArchive->getMovieResourceIfPresent(MKTAG('V', 'W', 'C', 'F'));
 
 	debugC(1, kDebugLoading, "****** Loading Config VWCF");
 
@@ -474,7 +474,7 @@ void Cast::loadCast() {
 
 	// Font Directory
 	if (_castArchive->hasResource(MKTAG('F', 'O', 'N', 'D'), -1)) {
-		debug("Cast::loadArchive(): Movie has fonts. Loading....");
+		debug("Cast::loadCast(): Movie has fonts. Loading....");
 
 		_vm->_wm->_fontMan->loadFonts(_castArchive->getPathName());
 	}
@@ -961,11 +961,11 @@ void Cast::loadExternalSound(Common::SeekableReadStreamEndian &stream) {
 
 	Common::String resPath = g_director->getCurrentPath() + str;
 
-	if (!g_director->_openResFiles.contains(resPath)) {
+	if (!g_director->_allOpenResFiles.contains(resPath)) {
 		MacArchive *resFile = new MacArchive();
 
 		if (resFile->openFile(resPath)) {
-			g_director->_openResFiles.setVal(resPath, resFile);
+			g_director->_allOpenResFiles.setVal(resPath, resFile);
 		} else {
 			delete resFile;
 		}
@@ -1061,6 +1061,12 @@ void Cast::loadCastData(Common::SeekableReadStreamEndian &stream, uint16 id, Res
 	stream.read(data, castSizeToRead);
 
 	Common::MemoryReadStreamEndian castStream(data, castSizeToRead, stream.isBE());
+
+	if (_loadedCast->contains(id)) {
+		warning("Cast::loadCastData(): Multiple cast members with ID %d, overwriting", id);
+		delete _loadedCast->getVal(id);
+		_loadedCast->erase(id);
+	}
 
 	switch (castType) {
 	case kCastBitmap:
@@ -1497,6 +1503,26 @@ void Cast::loadVWTL(Common::SeekableReadStreamEndian &stream) {
 				r.left, r.top, r.right, r.bottom);
 	}
 
+}
+
+Common::String Cast::formatCastSummary(int castId = -1) {
+	Common::String result;
+	Common::Array<int> castIds;
+	for (auto it = _loadedCast->begin(); it != _loadedCast->end(); ++it) {
+		castIds.push_back(it->_key);
+	}
+	Common::sort(castIds.begin(), castIds.end());
+	for (auto it = castIds.begin(); it != castIds.end(); ++it) {
+		if (castId > -1 &&  *it != castId)
+			continue;
+		CastMember *castMember = getCastMember(*it);
+		CastMemberInfo *castMemberInfo = getCastMemberInfo(*it);
+		result += Common::String::format("%d: type=%s, name=\"%s\"\n",
+			*it, castTypeToString(castMember->_type).c_str(),
+			castMemberInfo ? castMemberInfo->name.c_str() : ""
+		);
+	}
+	return result;
 }
 
 } // End of namespace Director

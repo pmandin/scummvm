@@ -212,6 +212,7 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Image::ImageDecode
 	_regX = img->getSurface()->w / 2;
 	_flags1 = flags1;
 	_flags2 = 0;
+	_tag = 0;
 }
 
 BitmapCastMember::~BitmapCastMember() {
@@ -735,6 +736,11 @@ bool DigitalVideoCastMember::loadVideo(Common::String path) {
 		delete _video;
 		_video = new Video::AVIDecoder();
 		result = _video->loadFile(Common::Path(path1, g_director->_dirSeparator));
+		if (!result) {
+		    warning("DigitalVideoCastMember::loadVideo(): format not supported, skipping");
+		    delete _video;
+		    _video = nullptr;
+		}
 	}
 
 	if (result && g_director->_pixelformat.bytesPerPixel == 1) {

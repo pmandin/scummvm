@@ -655,7 +655,7 @@ void TileModeSetup() {
 	lastUpdateTime = gameTime;
 
 	setCurrentWorld(WorldBaseID);
-	setCurrentMap(currentWorld->mapNum);
+	setCurrentMap(currentWorld->_mapNum);
 }
 
 //-----------------------------------------------------------------------
@@ -676,7 +676,7 @@ void TileModeCleanup() {
 	delete tileMapControl;
 
 //	This Fixes the mousePanel That's not set up
-	g_vm->_toolBase->mousePanel = nullptr;
+	g_vm->_toolBase->_mousePanel = nullptr;
 
 	mainWindow->removeDecorations();
 }

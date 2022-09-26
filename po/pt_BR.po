@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.3.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-09-19 22:27+0000\n"
-"PO-Revision-Date: 2022-08-22 17:01+0000\n"
+"POT-Creation-Date: 2022-09-26 00:45+0000\n"
+"PO-Revision-Date: 2022-09-22 09:19+0000\n"
 "Last-Translator: Marcel Souza Lemes <marcosoutsider@gmail.com>\n"
 "Language-Team: Portuguese (Brazil) <https://translations.scummvm.org/"
 "projects/scummvm/scummvm/pt_BR/>\n"
@@ -175,7 +175,7 @@ msgstr ""
 #: gui/saveload-dialog.cpp:1224 engines/engine.cpp:506 engines/engine.cpp:529
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
 #: engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1677
+#: engines/director/lingo/lingo-builtins.cpp:1696
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:650 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
@@ -2514,7 +2514,7 @@ msgstr "Volta~r~ ao Inicializador"
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:844
-#: engines/groovie/script.cpp:2192 engines/groovie/script.cpp:2233
+#: engines/groovie/script.cpp:2214 engines/groovie/script.cpp:2255
 #: engines/hugo/file.cpp:297 engines/illusions/menusystem.cpp:702
 #: engines/kingdom/kingdom.cpp:736 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
@@ -2535,8 +2535,8 @@ msgstr "Salvar jogo:"
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:839
-#: engines/groovie/script.cpp:844 engines/groovie/script.cpp:2192
-#: engines/groovie/script.cpp:2233 engines/hugo/file.cpp:297
+#: engines/groovie/script.cpp:844 engines/groovie/script.cpp:2214
+#: engines/groovie/script.cpp:2255 engines/hugo/file.cpp:297
 #: engines/illusions/menusystem.cpp:702 engines/kingdom/kingdom.cpp:736
 #: engines/lab/savegame.cpp:237 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
@@ -4138,7 +4138,7 @@ msgstr "Não emula artefatos NTSC para texto"
 
 #: engines/agi/detection.cpp:86 engines/cine/detection.cpp:51
 #: engines/drascula/detection.cpp:303 engines/dreamweb/detection.cpp:54
-#: engines/groovie/detection.cpp:295 engines/neverhood/detection.cpp:139
+#: engines/groovie/detection.cpp:296 engines/neverhood/detection.cpp:139
 #: engines/sci/detection_options.h:105 engines/sherlock/detection.cpp:58
 #: engines/toltecs/detection.cpp:228 engines/trecision/detection.cpp:219
 #: engines/ultima/detection.cpp:55 engines/zvision/detection_tables.h:50
@@ -4147,7 +4147,7 @@ msgstr "Utilizar telas de salvar/carregar originais"
 
 #: engines/agi/detection.cpp:87 engines/cine/detection.cpp:52
 #: engines/drascula/detection.cpp:304 engines/dreamweb/detection.cpp:55
-#: engines/groovie/detection.cpp:296 engines/neverhood/detection.cpp:140
+#: engines/groovie/detection.cpp:297 engines/neverhood/detection.cpp:140
 #: engines/sci/detection_options.h:106 engines/sherlock/detection.cpp:59
 #: engines/toltecs/detection.cpp:229 engines/trecision/detection.cpp:220
 #: engines/ultima/detection.cpp:56 engines/zvision/detection_tables.h:51
@@ -4222,11 +4222,11 @@ msgstr ""
 #: engines/dm/loadsave.cpp:187 engines/drascula/saveload.cpp:395
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:821
-#: engines/groovie/script.cpp:856 engines/groovie/script.cpp:2179
-#: engines/groovie/script.cpp:2249 engines/hugo/file.cpp:399
+#: engines/groovie/script.cpp:856 engines/groovie/script.cpp:2201
+#: engines/groovie/script.cpp:2271 engines/hugo/file.cpp:399
 #: engines/illusions/menusystem.cpp:679 engines/kingdom/kingdom.cpp:746
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
-#: engines/mtropolis/saveload.cpp:110 engines/neverhood/menumodule.cpp:902
+#: engines/mtropolis/saveload.cpp:120 engines/neverhood/menumodule.cpp:902
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:745
 #: engines/sci/engine/kfile.cpp:1206 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
@@ -4241,11 +4241,11 @@ msgstr "Restaurar jogo:"
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:821
 #: engines/groovie/script.cpp:839 engines/groovie/script.cpp:856
-#: engines/groovie/script.cpp:2179 engines/groovie/script.cpp:2249
+#: engines/groovie/script.cpp:2201 engines/groovie/script.cpp:2271
 #: engines/hugo/file.cpp:399 engines/illusions/menusystem.cpp:679
 #: engines/kingdom/kingdom.cpp:746 engines/lab/savegame.cpp:237
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
-#: engines/mtropolis/saveload.cpp:110 engines/neverhood/menumodule.cpp:902
+#: engines/mtropolis/saveload.cpp:120 engines/neverhood/menumodule.cpp:902
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:746
 #: engines/sci/engine/kfile.cpp:1206 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
@@ -4258,7 +4258,7 @@ msgstr "Restaurar"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Salvar ou carregar rapidamente não é suportado neste local"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2679
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2681
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4269,7 +4269,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2666
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2668
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4280,7 +4280,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2695
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2697
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4544,7 +4544,7 @@ msgstr "O tradutor fã deseja que sua tradução não seja incorporada ao ScummV
 
 #: engines/bladerunner/detection_tables.h:129 engines/cge/detection.cpp:56
 #: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
-#: engines/groovie/detection.cpp:104 engines/kyra/detection_tables.h:302
+#: engines/groovie/detection.cpp:105 engines/kyra/detection_tables.h:302
 #: engines/lure/detection.cpp:251 engines/mohawk/detection_tables.h:988
 #: engines/mohawk/detection_tables.h:1094
 #: engines/mohawk/detection_tables.h:1109
@@ -4725,7 +4725,7 @@ msgstr ""
 "Pressione OK para convertê-los agora, caso contrário, você será solicitado "
 "novamente na próxima vez que iniciar o jogo.\n"
 
-#: engines/buried/saveload.cpp:165 engines/mtropolis/saveload.cpp:139
+#: engines/buried/saveload.cpp:165 engines/mtropolis/saveload.cpp:158
 msgid "Saved game was created with a newer version of ScummVM. Unable to load."
 msgstr ""
 "O jogo salvo foi criado com uma versão mais recente do ScummVM. Não é "
@@ -4796,7 +4796,7 @@ msgstr ""
 "O jogo não permite sair neste momento. Tem certeza de que quer sair mesmo "
 "assim?"
 
-#: engines/director/lingo/lingo-builtins.cpp:1124
+#: engines/director/lingo/lingo-builtins.cpp:1138
 msgid "Ok"
 msgstr "Ok"
 
@@ -5199,32 +5199,40 @@ msgstr ""
 "\n"
 "Como alternativa, uma cópia Steam ou GOG tem um FullMonkeyMap.int combinado"
 
-#: engines/groovie/detection.cpp:283
+#: engines/groovie/detection.cpp:284
 msgid "Fast movie speed"
 msgstr "Velocidade rápida de filme"
 
-#: engines/groovie/detection.cpp:284
+#: engines/groovie/detection.cpp:285
 msgid "Play movies at an increased speed"
 msgstr "Reproduz filmes em velocidade acelerada"
 
-#: engines/groovie/detection.cpp:307
+#: engines/groovie/detection.cpp:308
 msgid "Easier AI"
 msgstr "IA mais Fácil"
 
-#: engines/groovie/detection.cpp:308
+#: engines/groovie/detection.cpp:309
 msgid "Decrease the difficulty of AI puzzles"
 msgstr "Reduz a dificuldade da Inteligência Artificial nos quebra-cabeças"
 
-#: engines/groovie/detection.cpp:319
+#: engines/groovie/detection.cpp:320
 msgid "Updated Credits Music"
 msgstr "Música de Créditos Atualizada"
 
-#: engines/groovie/detection.cpp:320
+#: engines/groovie/detection.cpp:321
 msgid ""
 "Play the song The Final Hour during the credits instead of reusing MIDI songs"
 msgstr ""
 "Reproduz a música The Final Hour durante os créditos em vez de reutilizar "
 "músicas MIDI"
+
+#: engines/groovie/detection.cpp:332
+msgid "Speedrun Mode"
+msgstr "Modo Speedrun"
+
+#: engines/groovie/detection.cpp:333
+msgid "Affects the controls for fast forwarding the game"
+msgstr "Afeta os controles para avançar rapidamente o jogo"
 
 #: engines/groovie/metaengine.cpp:52
 msgid "GroovieV2 support is not compiled in"
@@ -5463,120 +5471,120 @@ msgstr ""
 msgid "Eye of Beholder support is not compiled in"
 msgstr "O suporte a Eye of Beholder não está compilado"
 
-#: engines/kyra/engine/eobcommon.cpp:367 engines/kyra/engine/lol.cpp:458
+#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:468
 #: engines/ultima/ultima4/meta_engine.cpp:224
 #: engines/ultima/ultima8/meta_engine.cpp:142
 msgid "Interact via Left Click"
 msgstr "Interagir com Clique do Botão Esquerdo"
 
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:459
+#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:469
 #: engines/ultima/ultima4/meta_engine.cpp:230
 #: engines/ultima/ultima8/meta_engine.cpp:148
 msgid "Interact via Right Click"
 msgstr "Interagir com Clique do Botão Direito"
 
-#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:466
+#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:476
 #: engines/twine/metaengine.cpp:248
 msgid "Move Forward"
 msgstr "Mover para Frente"
 
-#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:467
+#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:477
 msgid "Move Back"
 msgstr "Mover para Trás"
 
-#: engines/kyra/engine/eobcommon.cpp:371
+#: engines/kyra/engine/eobcommon.cpp:372
 msgid "Move Left"
 msgstr "Mover para Esquerda"
 
-#: engines/kyra/engine/eobcommon.cpp:372
+#: engines/kyra/engine/eobcommon.cpp:373
 msgid "Move Right"
 msgstr "Mover para Direita"
 
-#: engines/kyra/engine/eobcommon.cpp:373 engines/kyra/engine/lol.cpp:470
+#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:480
 #: engines/pegasus/pegasus.cpp:2735 engines/twine/metaengine.cpp:269
 #: engines/zvision/metaengine.cpp:140
 msgid "Turn Left"
 msgstr "Virar à Esquerda"
 
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:471
+#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:481
 #: engines/pegasus/pegasus.cpp:2742 engines/twine/metaengine.cpp:262
 #: engines/zvision/metaengine.cpp:146
 msgid "Turn Right"
 msgstr "Virar à Direita"
 
-#: engines/kyra/engine/eobcommon.cpp:375
+#: engines/kyra/engine/eobcommon.cpp:376
 msgid "Open/Close Inventory"
 msgstr "Abrir/Fechar Inventário"
 
-#: engines/kyra/engine/eobcommon.cpp:376
+#: engines/kyra/engine/eobcommon.cpp:377
 msgid "Switch Inventory/Character screen"
 msgstr "Alternar entre telas de Inventário/Personagem"
 
-#: engines/kyra/engine/eobcommon.cpp:377
+#: engines/kyra/engine/eobcommon.cpp:378
 msgid "Camp"
 msgstr "Acampar"
 
-#: engines/kyra/engine/eobcommon.cpp:378
+#: engines/kyra/engine/eobcommon.cpp:379
 msgid "Cast Spell"
 msgstr "Lançar Magia"
 
-#: engines/kyra/engine/eobcommon.cpp:381
+#: engines/kyra/engine/eobcommon.cpp:382
 msgid "Spell Level 1"
 msgstr "Magia Nível 1"
 
-#: engines/kyra/engine/eobcommon.cpp:382
+#: engines/kyra/engine/eobcommon.cpp:383
 msgid "Spell Level 2"
 msgstr "Magia Nível 2"
 
-#: engines/kyra/engine/eobcommon.cpp:383
+#: engines/kyra/engine/eobcommon.cpp:384
 msgid "Spell Level 3"
 msgstr "Magia Nível 3"
 
-#: engines/kyra/engine/eobcommon.cpp:384
+#: engines/kyra/engine/eobcommon.cpp:385
 msgid "Spell Level 4"
 msgstr "Magia Nível 4"
 
-#: engines/kyra/engine/eobcommon.cpp:385
+#: engines/kyra/engine/eobcommon.cpp:386
 msgid "Spell Level 5"
 msgstr "Magia Nível 5"
 
-#: engines/kyra/engine/eobcommon.cpp:387
+#: engines/kyra/engine/eobcommon.cpp:388
 msgid "Spell Level 6"
 msgstr "Magia Nível 6"
 
-#: engines/kyra/engine/lol.cpp:462
+#: engines/kyra/engine/lol.cpp:472
 msgid "Attack 1"
 msgstr "Atacar 1"
 
-#: engines/kyra/engine/lol.cpp:463
+#: engines/kyra/engine/lol.cpp:473
 msgid "Attack 2"
 msgstr "Atacar 2"
 
-#: engines/kyra/engine/lol.cpp:464
+#: engines/kyra/engine/lol.cpp:474
 msgid "Attack 3"
 msgstr "Atacar 3"
 
-#: engines/kyra/engine/lol.cpp:465
+#: engines/kyra/engine/lol.cpp:475
 msgid "Show Map"
 msgstr "Exibir Mapa"
 
-#: engines/kyra/engine/lol.cpp:468
+#: engines/kyra/engine/lol.cpp:478
 msgid "Slide Left"
 msgstr "Deslizar para Esquerda"
 
-#: engines/kyra/engine/lol.cpp:469
+#: engines/kyra/engine/lol.cpp:479
 msgid "Slide Right"
 msgstr "Deslizar para Direita"
 
-#: engines/kyra/engine/lol.cpp:472
+#: engines/kyra/engine/lol.cpp:482
 msgid "Rest"
 msgstr "Descansar"
 
-#: engines/kyra/engine/lol.cpp:473
+#: engines/kyra/engine/lol.cpp:483
 msgid "Options"
 msgstr "Opções"
 
-#: engines/kyra/engine/lol.cpp:474
+#: engines/kyra/engine/lol.cpp:484
 msgid "Choose Spell"
 msgstr "Escolher Magia"
 
@@ -6112,28 +6120,28 @@ msgstr "Iniciar com depurador"
 msgid "Starts with the debugger dashboard active."
 msgstr "Inicia com o painel do depurador ativo."
 
-#: engines/mtropolis/saveload.cpp:123
+#: engines/mtropolis/saveload.cpp:142
 msgid "Failed to read version information from save file"
 msgstr "Falha ao ler as informações da versão do arquivo salvo"
 
-#: engines/mtropolis/saveload.cpp:131
+#: engines/mtropolis/saveload.cpp:150
 msgid ""
 "Failed to load save, the save file doesn't contain valid version information."
 msgstr ""
 "Falha ao carregar o salvamento, o arquivo salvo não contém informações de "
 "versão válidas."
 
-#: engines/mtropolis/saveload.cpp:147
+#: engines/mtropolis/saveload.cpp:166
 msgid "Failed to load save, an error occurred when reading the save game data."
 msgstr ""
 "Falha ao carregar o salvamento, ocorreu um erro ao ler os dados do jogo "
 "salvo."
 
-#: engines/mtropolis/saveload.cpp:199
+#: engines/mtropolis/saveload.cpp:226
 msgid "An internal error occurred while attempting to write save game data"
 msgstr "Ocorreu um erro interno ao tentar gravar dados do progresso do jogo"
 
-#: engines/mtropolis/saveload.cpp:207
+#: engines/mtropolis/saveload.cpp:234
 msgid "An error occurred while writing the save game"
 msgstr "Ocorreu um erro ao tentar gravar o progresso do jogo"
 
@@ -6481,13 +6489,21 @@ msgstr ""
 "Jogo compactado detectado. Por favor, descompacte-o conforme especificado na "
 "descrição do jogo em nosso Wiki"
 
-#: engines/queen/detection.cpp:44
+#: engines/queen/detection.cpp:45
 msgid "Alternative intro"
 msgstr "Introdução alternativa"
 
-#: engines/queen/detection.cpp:45
+#: engines/queen/detection.cpp:46
 msgid "Use an alternative game intro (CD version only)"
 msgstr "Utiliza introdução alternativa do jogo (somente versão em CD)"
+
+#: engines/queen/detection.cpp:56
+msgid "Improved font"
+msgstr "Fonte aperfeiçoada"
+
+#: engines/queen/detection.cpp:57
+msgid "Use an easier to read custom font"
+msgstr "Utiliza uma fonte personalizada mais fácil de ler"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
 #: engines/saga/detection_tables.h:813
@@ -7574,19 +7590,19 @@ msgstr "Voar para direita"
 msgid "Fly to lower right"
 msgstr "Voar para direita inferior"
 
-#: engines/scumm/input.cpp:1061
+#: engines/scumm/input.cpp:1073
 msgid "Snap scroll on"
 msgstr "Trava de rolagem ligada"
 
-#: engines/scumm/input.cpp:1063
+#: engines/scumm/input.cpp:1075
 msgid "Snap scroll off"
 msgstr "Trava de rolagem desligada"
 
-#: engines/scumm/input.cpp:1076
+#: engines/scumm/input.cpp:1088
 msgid "Music volume: "
 msgstr "Volume da música: "
 
-#: engines/scumm/input.cpp:1093
+#: engines/scumm/input.cpp:1105
 msgid "Subtitle speed: "
 msgstr "Vel. das legendas: "
 
@@ -7670,7 +7686,7 @@ msgstr ""
 "LucasArts,\n"
 "mas %s está faltando. Utilizando AdLib ao invés."
 
-#: engines/scumm/scumm.cpp:3223
+#: engines/scumm/scumm.cpp:3225
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "

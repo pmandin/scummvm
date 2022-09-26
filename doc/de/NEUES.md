@@ -9,10 +9,15 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      hinzugefügt.
    - Unterstützung für die TI99/4A-Versionen der GLK Scott Adams-Spiele 1-12 hinzugefügt.
    - Unterstützung für Obsidian hinzugefügt.
+   - Unterstützung für Added support for Pink Panther: Passport to Peril hinzugefügt.
+   - Unterstützung für Pink Panther: Hokus Pokus Pink hinzugefügt.
 
  Allgemein:
    - Anzahl an falsch-positiven Einträgen reduziert, wenn das Gerät nach Spielen durchsucht wird.
    - Code der Roland MT-32-Emulation auf Munt mt32emu 2.7.0 aktualisiert.
+
+ AGI:
+   - Unterstützung der französischen Übersetzungen verbessert.
 
  AGOS:
    - Option hinzugefügt, mit der die Ausblende-Effekte bei einem Raum-Wechsel in Simon 1 und 2
@@ -21,6 +26,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Kyra:
    - Unterstützung für die koreanische Version von Legend of Kyrandia 1 hinzugefügt.
    - Unterstützung für die hebräische Version von Legend of Kyrandia 3 hinzugefügt.
+
+ Queen:
+   - Eine zusätzliche Option erlaubt die Verwendung einer verbesserten Schriftart für die hebräische Version.
 
  SCUMM:
    - Unterstützung von CGA-, CGA Composite-, CGA schwarz/weiß- und Herkules-Grafikmodi
@@ -44,7 +52,8 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Der Kopf des Navigators zeigte in der ursprünglichen Version von Monkey Island 1 (ohne
      die verbesserte Verben-Oberfläche) nicht in alle möglichen Richtungen.
    - Leicht abweichende Text-Positionierung in den v4-Spielen sowie in Loom v3 korrigiert.
-   - Darstellung des Textes in den Spiele-Credits am Ende von Sam & Max korrigiert.
+   - Spiele-Credits am Ende von Sam & Max können jetzt - so wie im Original -
+     mit dem Fadenkreuz-Mauszeiger abgeschossen werden.
    - Probleme mit der Lippen-Synchronisation in der finalen Szene von Freddi Fish 4 korrigiert.
    - Die Lade-Animation des Mauszeigers in The Dig und COMI wurde nicht immer dargestellt.
    - Genauigkeit einiger Audio-Treiber verbessert. Die Fehler haben sich merklich auf die

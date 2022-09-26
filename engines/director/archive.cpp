@@ -292,7 +292,7 @@ bool MacArchive::openStream(Common::SeekableReadStream *stream, uint32 startOffs
 	_resFork = new Common::MacResManager();
 	stream->seek(startOffset);
 
-	if (!_resFork->loadFromMacBinary(*stream)) {
+	if (!_resFork->loadFromMacBinary(stream)) {
 		warning("MacArchive::openStream(): Error loading Mac Binary");
 		close();
 		return false;
@@ -496,6 +496,7 @@ bool RIFXArchive::openStream(Common::SeekableReadStream *stream, uint32 startOff
 			MacArchive *macArchive = new MacArchive();
 			if (!macArchive->openStream(macStream)) {
 				delete macArchive;
+				delete macStream;
 			} else {
 				g_director->getCurrentWindow()->probeMacBinary(macArchive);
 			}

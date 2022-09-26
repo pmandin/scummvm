@@ -251,6 +251,15 @@ ScriptContext *LingoArchive::getScriptContext(ScriptType type, uint16 id) {
 	return scriptContexts[type][id];
 }
 
+ScriptContext *LingoArchive::findScriptContext(uint16 id) {
+	for (int i = 0; i < kMaxScriptType + 1; i++) {
+		if (scriptContexts[i].contains(id)) {
+			return scriptContexts[i][id];
+		}
+	}
+	return nullptr;
+}
+
 Common::String LingoArchive::getName(uint16 id) {
 	Common::String result;
 	if (id >= names.size()) {
@@ -258,6 +267,20 @@ Common::String LingoArchive::getName(uint16 id) {
 		return result;
 	}
 	result = names[id];
+	return result;
+}
+
+Common::String LingoArchive::formatFunctionList(const char *prefix) {
+	Common::String result;
+	for (int i = 0; i <= kMaxScriptType; i++) {
+		result += Common::String::format("%s%s:\n", prefix, scriptType2str((ScriptType)i));
+		if (scriptContexts[i].size() == 0)
+			result += Common::String::format("%s  [empty]\n", prefix);
+		for (ScriptContextHash::iterator it = scriptContexts[i].begin(); it != scriptContexts[i].end(); ++it) {
+			result += Common::String::format("%s  %d:\n", prefix, it->_key);
+			result += (*it->_value).formatFunctionList(Common::String::format("%s    ", prefix).c_str());
+		}
+	}
 	return result;
 }
 
@@ -369,25 +392,39 @@ void Lingo::printCallStack(uint pc) {
 }
 
 Common::String Lingo::formatFrame() {
+	Common::String result;
 	Common::Array<CFrame *> &callstack = _vm->getCurrentWindow()->_callstack;
 	if (callstack.size() == 0) {
 		return Common::String("End of execution");
 	}
+	if (_currentScriptContext->_id)
+		result += Common::String::format("%d:", _currentScriptContext->_id);
 	CFrame *frame = callstack[callstack.size() - 1];
-	const char *funcName = frame->sp.type == VOIDSYM ? "[unknown]" : frame->sp.name->c_str();
-	Common::String result = Common::String::format("%s:%d\n", funcName, _pc);
-	result += Common::String::format("[%3d]: %s", _pc, decodeInstruction(_currentScript, _pc).c_str());
+	if (frame->sp.type == VOIDSYM || !frame->sp.name)
+		result += "[unknown]";
+	else
+		result += frame->sp.name->c_str();
+	result += Common::String::format(" at [%3d]", _pc);
 	return result;
 }
 
-Common::String Lingo::decodeInstruction(ScriptData *sd, uint pc, uint *newPc) {
-	Symbol sym;
-	Common::String res;
+Common::String Lingo::formatCurrentInstruction() {
+	Common::String instr = decodeInstruction(_currentScript, _pc);
+	if (instr.empty())
+		return instr;
+	return Common::String::format("[%3d]: %s", _pc, instr.c_str());
+}
 
-	sym.u.func = (*sd)[pc++];
-	if (_functions.contains((void *)sym.u.s)) {
-		res = _functions[(void *)sym.u.s]->name;
-		const char *pars = _functions[(void *)sym.u.s]->proto;
+Common::String Lingo::decodeInstruction(ScriptData *sd, uint pc, uint *newPc) {
+	void *opcodeFunc;
+	Common::String res;
+	if (!sd || pc >= sd->size())
+		return res;
+
+	opcodeFunc = (void *)(*sd)[pc++];
+	if (_functions.contains(opcodeFunc)) {
+		res = _functions[opcodeFunc]->name;
+		const char *pars = _functions[opcodeFunc]->proto;
 		inst i;
 		uint start = pc;
 
@@ -403,11 +440,10 @@ Common::String Lingo::decodeInstruction(ScriptData *sd, uint pc, uint *newPc) {
 				}
 			case 'f':
 				{
-					Datum d;
 					i = (*sd)[pc++];
-					d.u.f = *(double *)(&i);
+					double d = *(double *)(&i);
 
-					res += Common::String::format(" %f", d.u.f);
+					res += Common::String::format(" %f", d);
 					break;
 				}
 			case 'o':
@@ -443,7 +479,7 @@ Common::String Lingo::decodeInstruction(ScriptData *sd, uint pc, uint *newPc) {
 					break;
 				}
 			default:
-				warning("decodeInstruction: Unknown parameter type: %c", pars[-1]);
+				warning("Lingo::decodeInstruction(): Unknown parameter type: %c", pars[-1]);
 			}
 
 			if (*pars)
@@ -459,10 +495,49 @@ Common::String Lingo::decodeInstruction(ScriptData *sd, uint pc, uint *newPc) {
 	return res;
 }
 
+Common::String Lingo::decodeScript(ScriptData *sd) {
+	uint pc = 0;
+	Common::String result;
+	while (pc < sd->size()) {
+		result += Common::String::format("[%5d] ", pc);
+		result += Common::String::format("%s\n", Lingo::decodeInstruction(sd, pc, &pc).c_str());
+	}
+	return result;
+}
+
+Common::String Lingo::formatFunctionName(Symbol &sym) {
+	Common::String result;
+	if (sym.type != HANDLER)
+		return result;
+	if (sym.name && sym.name->size())
+		result += Common::String::format("%s(", sym.name->c_str());
+	else
+		result += "<unknown>(";
+	for (int i = 0; i < sym.nargs; i++) {
+		result += (*sym.argNames)[i].c_str();
+		if (i < (sym.nargs - 1))
+			result += ", ";
+	}
+	result += ")";
+	return result;
+}
+
+Common::String Lingo::formatFunctionBody(Symbol &sym) {
+	Common::String result;
+	if (sym.type != HANDLER)
+		return result;
+	if (sym.ctx && sym.ctx->_id)
+		result += Common::String::format("%d:", sym.ctx->_id);
+	result += formatFunctionName(sym);
+	result += "\n";
+	result += decodeScript(sym.u.defn);
+	return result;
+}
+
 void Lingo::execute() {
 	uint localCounter = 0;
 
-	while (!_abort && !_freezeContext && (*_currentScript)[_pc] != STOP) {
+	while (!_abort && !_freezeContext && _currentScript && (*_currentScript)[_pc] != STOP) {
 		if (_globalCounter > 1000 && debugChannelSet(-1, kDebugFewFramesOnly)) {
 			warning("Lingo::execute(): Stopping due to debug few frames only");
 			_vm->getCurrentMovie()->getScore()->_playState = kPlayStopped;
@@ -587,6 +662,10 @@ void Lingo::resetLingo() {
 
 	g_director->_wm->removeMenu();
 
+	while (_vm->getCurrentWindow()->_callstack.size()) {
+		popContext(true);
+	}
+
 	// TODO
 	//
 	// reset the following:
@@ -688,6 +767,7 @@ Datum::Datum(int val) {
 	type = INT;
 	refCount = new int;
 	*refCount = 1;
+	ignoreGlobal = false;
 }
 
 Datum::Datum(double val) {
@@ -735,6 +815,8 @@ Datum::Datum(const Common::Rect &rect) {
 	u.farr->arr.push_back(Datum(rect.top));
 	u.farr->arr.push_back(Datum(rect.right));
 	u.farr->arr.push_back(Datum(rect.bottom));
+	refCount = new int;
+	*refCount = 1;
 	ignoreGlobal = false;
 }
 
@@ -1214,7 +1296,7 @@ void Lingo::runTests() {
 			}
 
 			free(script);
-
+			delete stream;
 			counter++;
 		}
 

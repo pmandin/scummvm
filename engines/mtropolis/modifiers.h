@@ -150,6 +150,33 @@ private:
 	uint32 _assetID;
 };
 
+class SoundFadeModifier : public Modifier {
+public:
+	SoundFadeModifier();
+
+	bool load(ModifierLoaderContext &context, const Data::SoundFadeModifier &data);
+
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+
+	void disable(Runtime *runtime) override {}
+
+#ifdef MTROPOLIS_DEBUG_ENABLE
+	const char *debugGetTypeName() const override { return "Sound Fade Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusNone; }
+#endif
+
+private:
+	Common::SharedPtr<Modifier> shallowClone() const override;
+	const char *getDefaultName() const override;
+
+	Event _enableWhen;
+	Event _disableWhen;
+
+	uint16 _fadeToVolume;
+	uint32 _durationMSec;
+};
+
 class SaveAndRestoreModifier : public Modifier {
 public:
 	bool load(ModifierLoaderContext &context, const Data::SaveAndRestoreModifier &data);
@@ -310,11 +337,11 @@ private:
 	Common::SharedPtr<AudioPlayer> _player;
 };
 
-class PathMotionModifierV2 : public Modifier {
+class PathMotionModifier : public Modifier {
 public:
-	PathMotionModifierV2();
+	PathMotionModifier();
 
-	bool load(ModifierLoaderContext &context, const Data::PathMotionModifierV2 &data);
+	bool load(ModifierLoaderContext &context, const Data::PathMotionModifier &data);
 
 	bool respondsToEvent(const Event &evt) const override;
 	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
@@ -799,6 +826,43 @@ private:
 	VisualElementRenderProperties _renderProps;
 };
 
+class ImageEffectModifier : public Modifier {
+public:
+	ImageEffectModifier();
+
+	bool load(ModifierLoaderContext &context, const Data::ImageEffectModifier &data);
+
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+	void disable(Runtime *runtime) override;
+
+#ifdef MTROPOLIS_DEBUG_ENABLE
+	const char *debugGetTypeName() const override { return "Image Effect Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusNone; }
+#endif
+
+private:
+	enum Type {
+		kTypeUnknown = 0,
+
+		kTypeInvert = 1,
+		kTypeSelectedBevels,
+		kTypeDeselectedBevels,
+		kTypeToneDown,
+		kTypeToneUp,
+	};
+
+	Common::SharedPtr<Modifier> shallowClone() const override;
+	const char *getDefaultName() const override;
+
+	Event _applyWhen;
+	Event _removeWhen;
+	Type _type;
+	uint16 _bevelWidth;
+	uint16 _toneAmount;
+	bool _includeBorders;
+};
+
 // Compound variable modifiers are not true variable modifiers.
 // They aren't treated as values by Miniscript and they aren't
 // treated as unique objects by aliases.  The only way that
@@ -1112,6 +1176,44 @@ private:
 	const char *getDefaultName() const override;
 
 	Common::String _value;
+};
+
+class ObjectReferenceVariableModifierV1 : public VariableModifier {
+public:
+	bool load(ModifierLoaderContext &context, const Data::ObjectReferenceVariableModifierV1 &data);
+
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+
+	bool varSetValue(MiniscriptThread *thread, const DynamicValue &value) override;
+	void varGetValue(MiniscriptThread *thread, DynamicValue &dest) const override;
+
+#ifdef MTROPOLIS_DEBUG_ENABLE
+	const char *debugGetTypeName() const override { return "Object Reference Variable Modifier V1"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusNone; }
+#endif
+
+private:
+	class SaveLoad : public ModifierSaveLoad {
+	public:
+		explicit SaveLoad(ObjectReferenceVariableModifierV1 *modifier);
+
+	private:
+		void commitLoad() const override;
+		void saveInternal(Common::WriteStream *stream) const override;
+		bool loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) override;
+
+		ObjectReferenceVariableModifierV1 *_modifier;
+		Common::WeakPtr<RuntimeObject> _value;
+	};
+
+	Common::SharedPtr<Modifier> shallowClone() const override;
+	const char *getDefaultName() const override;
+
+	Common::WeakPtr<RuntimeObject> _value;
+	Event _setToSourcesParentWhen;
 };
 
 }	// End of namespace MTropolis

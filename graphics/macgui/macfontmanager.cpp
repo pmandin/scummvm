@@ -186,7 +186,7 @@ MacFontManager::~MacFontManager() {
 	for (auto &it: _winFontRegistry)
 		delete it._value;
 	for (auto &it: _fontFamilies)
-		delete it._value;
+		delete it;
 }
 
 void MacFontManager::setLocalizedFonts() {
@@ -339,7 +339,7 @@ void MacFontManager::loadJapaneseFonts() {
 void MacFontManager::loadFonts(Common::SeekableReadStream *stream) {
 	Common::MacResManager fontFile;
 
-	if (!fontFile.loadFromMacBinary(*stream))
+	if (!fontFile.loadFromMacBinary(stream))
 		return;
 
 	loadFonts(&fontFile);
@@ -427,7 +427,7 @@ void MacFontManager::loadFonts(Common::MacResManager *fontFile) {
 			delete fond;
 
 			if (fontFamilyUsed)
-				_fontFamilies[familyName] = fontFamily;
+				_fontFamilies.push_back(fontFamily);
 			else
 				delete fontFamily;
 		}
