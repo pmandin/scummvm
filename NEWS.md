@@ -61,6 +61,7 @@ For a more comprehensive changelog of the latest experimental code, see:
      Italian and (fan-made) Russian versions of the game, matching the behavior
      of the original interpreters (probably because of the poor results in the
      other languages).
+   - Improved support for Hebrew HE game localizations.
 
  Toon:
    - Made game menus behave like in the original.
@@ -74,6 +75,11 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed background redraw when watching cutscenes at the television
    - Fixed recenter the screen on activating an inventory item
    - Fixed pressing W to talk to people also makes you jump
+
+#### 2.6.1 (2022-XX-XX)
+
+ General:
+   - Various improvements to the icon-based grid view in the ScummVM launcher.
 
 #### 2.6.0 "Insane Escapism" (2022-08-01)
 

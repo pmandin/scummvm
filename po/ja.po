@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-09-26 00:45+0000\n"
-"PO-Revision-Date: 2022-09-22 09:19+0000\n"
+"POT-Creation-Date: 2022-10-02 19:09+0000\n"
+"PO-Revision-Date: 2022-09-30 10:37+0000\n"
 "Last-Translator: VAN-Gluon <van.gluonp@gmail.com>\n"
 "Language-Team: Japanese <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ja/>\n"
@@ -169,22 +169,22 @@ msgstr ""
 #: gui/launcher.cpp:531 gui/launcher.cpp:535 gui/massadd.cpp:90
 #: gui/options.cpp:2195 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1224 engines/engine.cpp:506 engines/engine.cpp:529
-#: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:558
+#: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:572
 #: engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1696
+#: engines/director/lingo/lingo-builtins.cpp:1707
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:650 engines/nancy/dialogs.cpp:101
 #: engines/parallaction/saveload.cpp:270 engines/saga/music.cpp:99
 #: engines/sci/engine/kgraphics.cpp:75 engines/sci/graphics/controls32.cpp:926
 #: engines/scumm/scumm.cpp:1099 engines/scumm/scumm.cpp:1125
 #: engines/scumm/scumm.cpp:1147 engines/scumm/scumm.cpp:1445
-#: engines/scumm/scumm.cpp:1918 engines/sky/compact.cpp:140
-#: engines/sword1/animation.cpp:531 engines/sword1/animation.cpp:552
-#: engines/sword1/animation.cpp:568 engines/sword1/animation.cpp:576
-#: engines/sword1/control.cpp:888 engines/sword1/logic.cpp:1634
-#: engines/sword2/animation.cpp:428 engines/sword2/animation.cpp:448
-#: engines/sword2/animation.cpp:464 engines/sword2/animation.cpp:474
-#: engines/zvision/file/save_manager.cpp:225
+#: engines/scumm/scumm.cpp:1918 engines/scumm/scumm.cpp:1934
+#: engines/sky/compact.cpp:140 engines/sword1/animation.cpp:531
+#: engines/sword1/animation.cpp:552 engines/sword1/animation.cpp:568
+#: engines/sword1/animation.cpp:576 engines/sword1/control.cpp:888
+#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:428
+#: engines/sword2/animation.cpp:448 engines/sword2/animation.cpp:464
+#: engines/sword2/animation.cpp:474 engines/zvision/file/save_manager.cpp:225
 msgid "OK"
 msgstr "OK"
 
@@ -710,7 +710,7 @@ msgstr "左"
 msgid "Right"
 msgstr "右"
 
-#: gui/gui-manager.cpp:252 engines/pegasus/pegasus.cpp:2814
+#: gui/gui-manager.cpp:252 engines/pegasus/pegasus.cpp:2818
 #: engines/wintermute/keymapper_tables.h:305
 #: engines/wintermute/keymapper_tables.h:346
 #: engines/wintermute/keymapper_tables.h:381
@@ -859,7 +859,7 @@ msgid "Search:"
 msgstr "検索："
 
 #: gui/launcher.cpp:282 engines/dialogs.cpp:99 engines/engine.cpp:864
-#: engines/pegasus/pegasus.cpp:383 engines/trecision/saveload.cpp:253
+#: engines/pegasus/pegasus.cpp:387 engines/trecision/saveload.cpp:253
 #: engines/tsage/scenes.cpp:630 engines/wage/saveload.cpp:741
 #: engines/xeen/saves.cpp:255
 msgid "Load game:"
@@ -867,7 +867,7 @@ msgstr "ゲームをロード："
 
 #: gui/launcher.cpp:282 engines/dialogs.cpp:99 engines/engine.cpp:864
 #: engines/parallaction/metaengine.cpp:127
-#: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:383
+#: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:387
 #: engines/trecision/saveload.cpp:253 engines/tsage/scenes.cpp:630
 #: engines/wage/saveload.cpp:741 engines/xeen/saves.cpp:255
 msgid "Load"
@@ -2477,12 +2477,12 @@ msgstr "メインメニューに戻る(~R~)"
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:844
-#: engines/groovie/script.cpp:2214 engines/groovie/script.cpp:2255
+#: engines/groovie/script.cpp:2215 engines/groovie/script.cpp:2256
 #: engines/hugo/file.cpp:297 engines/illusions/menusystem.cpp:702
 #: engines/kingdom/kingdom.cpp:736 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
 #: engines/mtropolis/saveload.cpp:76 engines/neverhood/menumodule.cpp:889
-#: engines/pegasus/pegasus.cpp:402 engines/prince/saveload.cpp:54
+#: engines/pegasus/pegasus.cpp:406 engines/prince/saveload.cpp:54
 #: engines/sci/engine/guest_additions.cpp:742 engines/sci/engine/kfile.cpp:1079
 #: engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
@@ -2498,14 +2498,14 @@ msgstr "ゲームをセーブ："
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
 #: engines/gnap/menu.cpp:465 engines/groovie/script.cpp:839
-#: engines/groovie/script.cpp:844 engines/groovie/script.cpp:2214
-#: engines/groovie/script.cpp:2255 engines/hugo/file.cpp:297
+#: engines/groovie/script.cpp:844 engines/groovie/script.cpp:2215
+#: engines/groovie/script.cpp:2256 engines/hugo/file.cpp:297
 #: engines/illusions/menusystem.cpp:702 engines/kingdom/kingdom.cpp:736
 #: engines/lab/savegame.cpp:237 engines/lab/savegame.cpp:242
 #: engines/mads/nebular/dialogs_nebular.cpp:349
 #: engines/mtropolis/saveload.cpp:76 engines/neverhood/menumodule.cpp:889
 #: engines/parallaction/metaengine.cpp:133
-#: engines/parallaction/saveload.cpp:208 engines/pegasus/pegasus.cpp:402
+#: engines/parallaction/saveload.cpp:208 engines/pegasus/pegasus.cpp:406
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:743
 #: engines/sci/engine/kfile.cpp:1079 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
@@ -2525,7 +2525,7 @@ msgstr ""
 "申し訳ありませんが、現在このエンジンではゲーム内ヘルプを提供していません。詳"
 "細はREADMEを参照してください。"
 
-#: engines/dialogs.cpp:214 engines/pegasus/pegasus.cpp:413
+#: engines/dialogs.cpp:214 engines/pegasus/pegasus.cpp:417
 #, c-format
 msgid ""
 "Failed to save game (%s)! Please consult the README for basic information, "
@@ -2778,7 +2778,7 @@ msgctxt "lowres"
 msgid "OpenGL with shaders"
 msgstr "OpenGL(シェーダー)"
 
-#: audio/adlib.cpp:2303
+#: audio/adlib.cpp:2304
 msgid "AdLib emulator"
 msgstr "AdLibエミュレーター："
 
@@ -4170,8 +4170,8 @@ msgstr ""
 #: engines/dm/loadsave.cpp:187 engines/drascula/saveload.cpp:395
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:821
-#: engines/groovie/script.cpp:856 engines/groovie/script.cpp:2201
-#: engines/groovie/script.cpp:2271 engines/hugo/file.cpp:399
+#: engines/groovie/script.cpp:856 engines/groovie/script.cpp:2202
+#: engines/groovie/script.cpp:2272 engines/hugo/file.cpp:399
 #: engines/illusions/menusystem.cpp:679 engines/kingdom/kingdom.cpp:746
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
 #: engines/mtropolis/saveload.cpp:120 engines/neverhood/menumodule.cpp:902
@@ -4189,7 +4189,7 @@ msgstr "ゲームを復元する:"
 #: engines/dreamweb/saveload.cpp:169 engines/glk/streams.cpp:1441
 #: engines/gnap/menu.cpp:474 engines/groovie/script.cpp:821
 #: engines/groovie/script.cpp:839 engines/groovie/script.cpp:856
-#: engines/groovie/script.cpp:2201 engines/groovie/script.cpp:2271
+#: engines/groovie/script.cpp:2202 engines/groovie/script.cpp:2272
 #: engines/hugo/file.cpp:399 engines/illusions/menusystem.cpp:679
 #: engines/kingdom/kingdom.cpp:746 engines/lab/savegame.cpp:237
 #: engines/lab/savegame.cpp:257 engines/mads/nebular/dialogs_nebular.cpp:376
@@ -4207,7 +4207,7 @@ msgid "Quick load or save game isn't supported in this location"
 msgstr ""
 "このロケーションでは、セーブまたはクイックロードはサポートされていません"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2681
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2696
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4218,7 +4218,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2668
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2683
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4229,7 +4229,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2697
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2712
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4240,7 +4240,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/animation.cpp:557
+#: engines/agos/animation.cpp:571
 #, c-format
 msgid "Cutscene file '%s' not found!"
 msgstr "カットシーンファイル'%s'が見つかりません!"
@@ -4479,10 +4479,10 @@ msgstr "ファンの翻訳者は、ScummVMに翻訳が組み込まれる事を�
 #: engines/bladerunner/detection_tables.h:129 engines/cge/detection.cpp:56
 #: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
 #: engines/groovie/detection.cpp:105 engines/kyra/detection_tables.h:302
-#: engines/lure/detection.cpp:251 engines/mohawk/detection_tables.h:988
-#: engines/mohawk/detection_tables.h:1094
-#: engines/mohawk/detection_tables.h:1109
-#: engines/mohawk/detection_tables.h:3175 engines/myst3/detection.cpp:142
+#: engines/lure/detection.cpp:251 engines/mohawk/detection_tables.h:1024
+#: engines/mohawk/detection_tables.h:1130
+#: engines/mohawk/detection_tables.h:1145
+#: engines/mohawk/detection_tables.h:3211 engines/myst3/detection.cpp:142
 #: engines/neverhood/detection.cpp:124 engines/saga/detection_tables.h:186
 #: engines/saga/detection_tables.h:1241 engines/saga/detection_tables.h:1300
 #: engines/sci/detection_tables.h:5141 engines/sci/detection_tables.h:5149
@@ -4588,7 +4588,7 @@ msgstr "手がかり表示の切替"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SAVE GAME
-#: engines/bladerunner/metaengine.cpp:240 engines/pegasus/pegasus.cpp:2820
+#: engines/bladerunner/metaengine.cpp:240 engines/pegasus/pegasus.cpp:2824
 msgid "Save Game"
 msgstr "ゲームをセーブ"
 
@@ -4596,7 +4596,7 @@ msgstr "ゲームをセーブ"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. LOAD GAME
-#: engines/bladerunner/metaengine.cpp:249 engines/pegasus/pegasus.cpp:2826
+#: engines/bladerunner/metaengine.cpp:249 engines/pegasus/pegasus.cpp:2830
 msgid "Load Game"
 msgstr "ゲームをロード"
 
@@ -4723,7 +4723,7 @@ msgid ""
 "anyway?"
 msgstr "このまま進めるとゲームが終了します。それでもよろしいですか?"
 
-#: engines/director/lingo/lingo-builtins.cpp:1138
+#: engines/director/lingo/lingo-builtins.cpp:1149
 msgid "Ok"
 msgstr "Ok"
 
@@ -5360,13 +5360,13 @@ msgid "Demo plays simple animations without using Westwood's Engine."
 msgstr ""
 "デモではWestwood's Engineを使わず、シンプルなアニメーションを再生します。"
 
-#: engines/kyra/detection_tables.h:1361
+#: engines/kyra/detection_tables.h:1363
 msgid "You added the game incorrectly. Please add the root folder of the game."
 msgstr ""
 "ゲームを間違って追加しました。ゲームのルートフォルダを追加してください。"
 
 #. I18N: The file in the game directory needs to be extracted
-#: engines/kyra/detection_tables.h:1377
+#: engines/kyra/detection_tables.h:1379
 msgid ""
 "You added the game incorrectly. The GAME.DAT file is an ISO image and you "
 "need to extract the game data files from it."
@@ -5419,13 +5419,13 @@ msgid "Move Right"
 msgstr "右に行く"
 
 #: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:480
-#: engines/pegasus/pegasus.cpp:2735 engines/twine/metaengine.cpp:269
+#: engines/pegasus/pegasus.cpp:2739 engines/twine/metaengine.cpp:269
 #: engines/zvision/metaengine.cpp:140
 msgid "Turn Left"
 msgstr "左に曲がる"
 
 #: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:481
-#: engines/pegasus/pegasus.cpp:2742 engines/twine/metaengine.cpp:262
+#: engines/pegasus/pegasus.cpp:2746 engines/twine/metaengine.cpp:262
 #: engines/zvision/metaengine.cpp:146
 msgid "Turn Right"
 msgstr "右に曲がる"
@@ -6065,7 +6065,7 @@ msgstr ""
 "公式パッチは、以下からダウンロードできます：\n"
 "%s"
 
-#: engines/myst3/myst3.cpp:1578 engines/pegasus/pegasus.cpp:744
+#: engines/myst3/myst3.cpp:1578 engines/pegasus/pegasus.cpp:748
 msgid "Invalid file name for saving"
 msgstr "無効なセーブファイル名です"
 
@@ -6326,39 +6326,39 @@ msgstr ""
 "\n"
 "開発チームに内容を報告してください。"
 
-#: engines/pegasus/pegasus.cpp:2719
+#: engines/pegasus/pegasus.cpp:2723
 msgid "Up/Zoom In/Move Forward/Open Doors"
 msgstr "上/ズームイン/前方へ移動/ドアを開ける"
 
-#: engines/pegasus/pegasus.cpp:2727
+#: engines/pegasus/pegasus.cpp:2731
 msgid "Down/Zoom Out"
 msgstr "下/ズームアウト"
 
-#: engines/pegasus/pegasus.cpp:2749
+#: engines/pegasus/pegasus.cpp:2753
 msgid "Action/Select"
 msgstr "アクション/セレクト"
 
-#: engines/pegasus/pegasus.cpp:2769
+#: engines/pegasus/pegasus.cpp:2773
 msgid "Display/Hide Inventory Tray"
 msgstr "インベントリートレイの表示/非表示"
 
-#: engines/pegasus/pegasus.cpp:2776
+#: engines/pegasus/pegasus.cpp:2780
 msgid "Display/Hide Biochip Tray"
 msgstr "バイオチップトレイの表示/非表示"
 
-#: engines/pegasus/pegasus.cpp:2784
+#: engines/pegasus/pegasus.cpp:2788
 msgid "Toggle Center Data Display"
 msgstr "センターディスプレイの切り替え"
 
-#: engines/pegasus/pegasus.cpp:2791
+#: engines/pegasus/pegasus.cpp:2795
 msgid "Display/Hide Info Screen"
 msgstr "情報スクリーンの表示/非表示"
 
-#: engines/pegasus/pegasus.cpp:2798
+#: engines/pegasus/pegasus.cpp:2802
 msgid "Display/Hide Pause Menu"
 msgstr "ポーズメニューの表示/非表示"
 
-#: engines/pegasus/pegasus.cpp:2805
+#: engines/pegasus/pegasus.cpp:2809
 msgid "Toggle Chatty AI"
 msgstr "おしゃべりAIの切り替え"
 
@@ -7529,7 +7529,15 @@ msgstr ""
 "ネイティブMIDIのサポートには、LucasArts提供のthe Roland Upgradeが必要です。\n"
 "しかし%sがありません。代わりにAdLibを使用します。"
 
-#: engines/scumm/scumm.cpp:3225
+#: engines/scumm/scumm.cpp:1932
+msgid ""
+"This particular version of Monkey Island 1 is known to miss some\n"
+"required resources for MT-32. Using AdLib instead."
+msgstr ""
+"このMonkey Island 1の特定のバージョンは、MT-32に必要な\n"
+"リソースが欠落しています。AdLibを代用します。"
+
+#: engines/scumm/scumm.cpp:3240
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "

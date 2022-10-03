@@ -359,8 +359,8 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 
 	setV1ColorTable(_renderMode);
 
-	_isRTL = (_language == Common::HE_ISR && _game.heversion == 0)
-			&& (_game.id == GID_MANIAC || (_game.version >= 4 && _game.version < 7));
+	_isRTL = (_language == Common::HE_ISR && (_game.heversion == 0 || _game.heversion >= 72)) 
+			&& (_game.id == GID_MANIAC || (_game.version >= 4 && _game.version < 7)) && !(_game.features & GF_HE_NO_BIDI);
 #ifndef DISABLE_HELP
 	// Create custom GMM dialog providing a help subdialog
 	assert(!_mainMenuDialog);
@@ -1589,7 +1589,7 @@ void ScummEngine::resetScumm() {
 	_cursor.animate = 1;
 
 	// Allocate and Initialize actors
-	Actor::kInvalidBox = ((_game.features & GF_SMALL_HEADER) ? kOldInvalidBox : kNewInavlidBox);
+	Actor::kInvalidBox = ((_game.features & GF_SMALL_HEADER) ? kOldInvalidBox : kNewInvalidBox);
 	_actors = new Actor * [_numActors];
 	_sortedActors = new Actor * [_numActors];
 	for (i = 0; i < _numActors; ++i) {
@@ -1919,6 +1919,21 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 			dialog.runModal();
 			_sound->_musicType = MDT_ADLIB;
 		}
+	}
+
+	// WORKAROUND: MT-32 support is broken in the 8-disk French VGA floppy
+	// version of MI1 (the index references an invalid DISK00.LEC file, and the
+	// 'roland' room appears to be completely missing). We can't do much about
+	// this; revert to Adlib so that users don't get confused by the fatal
+	// error about DISK00.LEC.
+	if (_game.id == GID_MONKEY_VGA && _language == Common::FR_FRA && _sound->_musicType == MDT_MIDI &&
+		memcmp(_gameMD5, "\xa0\x1f\xab\x4a\x64\xd4\x7b\x96\xe2\xe5\x8e\x6b\x0f\x82\x5c\xc7", 16) == 0) {
+		GUI::MessageDialog dialog(
+			_("This particular version of Monkey Island 1 is known to miss some\n"
+			"required resources for MT-32. Using AdLib instead."),
+			_("OK"));
+		dialog.runModal();
+		_sound->_musicType = MDT_ADLIB;
 	}
 
 	if (_game.platform == Common::kPlatformMacintosh && (_game.id == GID_MONKEY2 || _game.id == GID_INDY4)) {

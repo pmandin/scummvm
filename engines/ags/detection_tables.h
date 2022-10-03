@@ -256,6 +256,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "downfall2016", "Downfall (2016)" },
 	{ "dreamswitchhouse","Dreams in the Witch House" },
 	{ "dustbowl", "Dustbowl" },
+	{ "excavationhb", "The Excavation at Hob's Barrow" },
 	{ "falconcity", "Falcon City" },
 	{ "feriadarles", "Feria d'Arles" },
 	{ "footballgame", "Football Game" },
@@ -2327,6 +2328,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "rockburgerstreehouses", "Rock Burgers & Tree Houses" },
 	{ "rockpaperscissors2", "Rock, Paper, Scissors! Reboot" },
 	{ "rockrockrock", "Rock Rock Rock" },
+	{ "rocktravis", "Rock Travis - Camilla's case" },
 	{ "rockyroams", "Rocky roams" },
 	{ "rodequest2", "Rode Quest 2: The Sweet Smell of Stenchie" },
 	{ "rogered", "Rogered" },
@@ -2440,6 +2442,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "simshogwarts", "Sims Hogwarts" },
 	{ "sinbad", "Sinbad - The Island of Korkus" },
 	{ "sinking", "Sinking" },
+	{ "siren", "Siren" },
 	{ "sisterhelper", "Sister's Little Helper" },
 	{ "sisyphus", "Sisyphus Reborn" },
 	{ "skippysavestheday", "Skippy Saves The Day" },
@@ -2809,6 +2812,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "thespiderweb", "The Spider's Web" },
 	{ "thespoons", "The Spoons" },
 	{ "thestarryskyaboveme", "The Starry Sky Above Me" },
+	{ "thestinker", "The Stinker" },
 	{ "thesummoned", "The Summoned" },
 	{ "thesundownmystery", "The Sundown mystery" },
 	{ "thesurvivors", "The Survivors / Les Survivants" },
@@ -2906,6 +2910,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "underworld", "The Underworld" },
 	{ "unexpectedguest", "Unexpected Guest" },
 	{ "unexpectedquest", "Unexpected Quest" },
+	{ "unfair", "Unfair" },
 	{ "unfinished", "Unfinished" },
 	{ "unfinishedbusiness", "Unfinished Business" },
 	{ "unfinishedtales", "Unfinished Tales / Cuentos Inconclusos" },
@@ -3169,7 +3174,7 @@ STABLE_ENTRY_PLUGIN_GUIO(ID, FILENAME, MD5, SIZE, Common::UNK_LANG, "GOG", GUIO2
 
 static const PluginVersion AGSTEAM_WADJETEYE[] = { { "agsteam", kWadjetEye }, { nullptr, 0 } };
 static const PluginVersion AGS_FLASHLIGHT[] = { { "agsflashlight", 0 }, { nullptr, 0 } };
-static const PluginVersion AGSSPRITEFONT_CLIFFTOP[] = { { "agsspritefont", kClifftopGames }, { nullptr, 0 } };
+static const PluginVersion AGSSPRITEFONT_CLIFFTOP[] = { { "agsspritefont", kClifftopGames }, { "agsplugin.spritefont", kClifftopGames }, { nullptr, 0 } };
 
 
 const AGSGameDescription GAME_DESCRIPTIONS[] = {
@@ -3551,6 +3556,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_STEAM("downfall2016", "Downfall.ags", "7c87b99ce309a46085e40ac1a2b20e75", 224024207), // Linux
 	GAME_ENTRY_EN_STEAM("dustbowl", "dustbowl.exe", "aa349d52fd620cf9642935cd5bdec5d8", 63365026),
 	GAME_ENTRY_EN("dustbowl", "dustbowl.exe", "aa349d52fd620cf9642935cd5bdec5d8", 82185295),
+	GAME_ENTRY_PLUGIN_STEAM_NOLAUNCHLOAD("excavationhb", "ac2game.dat", "e5553f7c45d26d5fbc8b376a859bb87c", 563281442, AGSSPRITEFONT_CLIFFTOP), // Mac
+	GAME_ENTRY_PLUGIN_GOG_NOLAUNCHLOAD("excavationhb", "TEOHB.exe", "f176b46bc89e227f745dae9878171676", 566320586, AGSSPRITEFONT_CLIFFTOP),
 	GAME_ENTRY_STEAM("falconcity", "game.exe", "e816b31cfe3512c2ec24ac0bc6cfc605", 584191058),
 	GAME_ENTRY_EN_STEAM("feriadarles", "feria d'arles.exe", "6a3291595263debd129e1e2064baeea5", 275649462),
 	GAME_ENTRY_EN_STEAM("feriadarles", "ac2game.dat", "6a3291595263debd129e1e2064baeea5", 275640157), // Mac
@@ -3771,34 +3778,35 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_LANG("onironauta", "Onironauta.exe", "5c8c0e3edae9b4fad276c136b2b48ce8", 69917110, Common::IT_ITA),
 
 	// AGDI games. They get their own grouping because they're just that awesome
-	GAME_ENTRY("kq1agdi", "kqvga.exe", "73f87b30f84e9c34ab09ec8dd7ae109d", 34298679),  // 1.0
-	GAME_ENTRY("kq1agdi", "kqvga.exe", "73f87b30f84e9c34ab09ec8dd7ae109d", 34922340),  // 2.0
-	GAME_ENTRY("kq1agdi", "kqvga.exe", "888e2976e6659963af15df151b846540", 27083389),  // 3.0
-	GAME_ENTRY("kq1agdi", "kq1vga.exe", "688f1807c9d8df26fc0f174dc756054e", 8278611),  // 4.1c
-	GAME_ENTRY("kq1agdi", "kq1vga.exe", "4e590490776aea10db84db4a92e1c1bb", 8226850),
-	GAME_ENTRY("kq2agdi", "kq2vga.exe", "308d35bc34e9df29d8acce615593e3e7", 64947213),  // 1.0
-	GAME_ENTRY("kq2agdi", "kq2vga.exe", "3ee3a0166357ac37836f8908a371f2dc", 65743584),  // 2.0
-	GAME_ENTRY("kq2agdi", "kq2vga.exe", "40cfb7563df7dacf6530b19289a4745b", 12563246),	// 3.1
-	GAME_ENTRY("kq2agdi", "kq2vga.exe", "40cfb7563df7dacf6530b19289a4745b", 12574643),  // 3.1c
-	GAME_ENTRY("kq2agdi", "kq2vga.exe", "43e6294f8bfbba8a3f754fa742353845", 12507938),
-	GAME_ENTRY("kq2agdi", "Kq2vgaEsp.exe", "f964e5cb4d339432dd0302d67eb11105", 2490368), // Spanish transalation
-	GAME_ENTRY("kq3agdi", "kq3redux.exe", "4c2ea3f7b4974509c59546ca8761b040", 11890197),  // 1.0
-	GAME_ENTRY("kq3agdi", "kq3redux.exe", "e569fb2ceabdc4a1609348c23ebc0821", 11986266),  // 1.1
-	GAME_ENTRY("qfg2agdi", "qfg2vga.exe", "6cddccb3744ec5c6af7c398fb7b3b11c", 20523688),  // 1.1
-	GAME_ENTRY("qfg2agdi", "qfg2vga.exe", "6cddccb3744ec5c6af7c398fb7b3b11c", 20470902),
-	GAME_ENTRY("qfg2agdi", "qfg2vga.exe", "582e26533cf784011c7565e89905d3c4", 18224373),
+	PRE_25_ENTRY_EN("kq1agdi", "kqvga.exe", "73f87b30f84e9c34ab09ec8dd7ae109d", 34298679),  // 1.0
+	PRE_25_ENTRY_EN("kq1agdi", "kqvga.exe", "73f87b30f84e9c34ab09ec8dd7ae109d", 34922340),  // 2.0
+	GAME_ENTRY("kq1agdi", "kqvga.exe", "888e2976e6659963af15df151b846540", 27083389),  // 3.0 Multilanguage
+	GAME_ENTRY_EN("kq1agdi", "kq1vga.exe", "4e590490776aea10db84db4a92e1c1bb", 8226850),  // 4.0
+	GAME_ENTRY_EN("kq1agdi", "kq1vga.exe", "688f1807c9d8df26fc0f174dc756054e", 8278611),  // 4.1c
+	GAME_ENTRY_EN("kq2agdi", "kq2vga.exe", "308d35bc34e9df29d8acce615593e3e7", 64947213),  // 1.0
+	GAME_ENTRY_EN("kq2agdi", "kq2vga.exe", "3ee3a0166357ac37836f8908a371f2dc", 65743584),  // 2.0
+	GAME_ENTRY_EN("kq2agdi", "kq2vga.exe", "43e6294f8bfbba8a3f754fa742353845", 12507938),  // 3.0?
+	GAME_ENTRY_EN("kq2agdi", "kq2vga.exe", "40cfb7563df7dacf6530b19289a4745b", 12563246),  // 3.1
+	GAME_ENTRY_EN("kq2agdi", "kq2vga.exe", "40cfb7563df7dacf6530b19289a4745b", 12572770),  // 3.1b
+	GAME_ENTRY_EN("kq2agdi", "kq2vga.exe", "40cfb7563df7dacf6530b19289a4745b", 12574643),  // 3.1c
+	GAME_ENTRY_LANG("kq2agdi", "Kq2vgaEsp.exe", "f964e5cb4d339432dd0302d67eb11105", 2490368, Common::ES_ESP), // Spanish translation
+	GAME_ENTRY_EN("kq3agdi", "kq3redux.exe", "4c2ea3f7b4974509c59546ca8761b040", 11890197),  // 1.0
+	GAME_ENTRY_EN("kq3agdi", "kq3redux.exe", "e569fb2ceabdc4a1609348c23ebc0821", 11986266),  // 1.1
+	GAME_ENTRY_EN("qfg2agdi", "qfg2vga.exe", "6cddccb3744ec5c6af7c398fb7b3b11c", 20470902),  // 1.0
+	GAME_ENTRY_EN("qfg2agdi", "qfg2vga.exe", "6cddccb3744ec5c6af7c398fb7b3b11c", 20523688),  // 1.1
+	GAME_ENTRY_EN("qfg2agdi", "qfg2vga.exe", "582e26533cf784011c7565e89905d3c4", 18224373),  // 2.0
 	GAME_ENTRY("qfg2agdi", "game.exe", "3b7cceb3e4bdb031dc5d8f290936e94b", 5408433),
 
 	// Infamous Adventures games. Likewise
-	GAME_ENTRY("kq3vga", "kq3.exe", "f120690b506dd63cd7d1112ea6af2f77", 4844298),  // 1.0 was kq3agdi
-	GAME_ENTRY("kq3vga", "KQ3.exe", "f120690b506dd63cd7d1112ea6af2f77", 5883843),  // current version from the download site
-	GAME_ENTRY("kq3vga", "ac2game.dat", "f120690b506dd63cd7d1112ea6af2f77", 5883843), // current mac version from the download site
-	GAME_ENTRY("sq2fg", "sq2fg.exe", "a524cbb1c51589903c4043b98917f1d9", 5329030),
-	GAME_ENTRY("sq2vga", "sq2vga.exe", "bdaf20d9779c01986d6d8b7e1d6118ee", 106094482),  // 1.0
-	GAME_ENTRY("sq2vga", "sq2vga.exe", "bdaf20d9779c01986d6d8b7e1d6118ee", 117200044),  // 1.1
-	GAME_ENTRY("sq2vga", "sq2vga_v2.exe", "28a946e8a278814362613f8600375438", 177645020),  // 2.0
-	GAME_ENTRY("sq2vga", "ac2game.dat", "28a946e8a278814362613f8600375438", 177645020),  // Mac
-	GAME_ENTRY("sq2vga", "SQ2VGA_V2.ags", "b3026b025c640a5c6164274034a6bab9", 175145932), // Linux
+	GAME_ENTRY_EN("kq3vga", "kq3.exe", "f120690b506dd63cd7d1112ea6af2f77", 4844298),  // 1.0
+	GAME_ENTRY_EN("kq3vga", "KQ3.exe", "f120690b506dd63cd7d1112ea6af2f77", 5883843),  // 2.0 - itch.io Windows
+	GAME_ENTRY_EN("kq3vga", "ac2game.dat", "f120690b506dd63cd7d1112ea6af2f77", 5883843), // 2.0 - itch.io Mac
+	GAME_ENTRY_EN("sq2fg", "sq2fg.exe", "a524cbb1c51589903c4043b98917f1d9", 5329030),
+	GAME_ENTRY_EN("sq2vga", "sq2vga.exe", "bdaf20d9779c01986d6d8b7e1d6118ee", 106094482),  // 1.0
+	GAME_ENTRY_EN("sq2vga", "sq2vga.exe", "bdaf20d9779c01986d6d8b7e1d6118ee", 117200044),  // 1.1
+	GAME_ENTRY_EN("sq2vga", "sq2vga_v2.exe", "28a946e8a278814362613f8600375438", 177645020),  // 2.0 Win
+	GAME_ENTRY_EN("sq2vga", "ac2game.dat", "28a946e8a278814362613f8600375438", 177645020),  // 2.0 Mac
+	GAME_ENTRY_EN("sq2vga", "SQ2VGA_V2.ags", "b3026b025c640a5c6164274034a6bab9", 175145932), // 2.0 Linux
 
 	// Free post-2.5 games that are likely supported by the AGS engine
 	DEMO_ENTRY("3geeks", "3GEEKS_Demo.exe", "7ddb9e776648faed5a51170d087074e9", 512546851), // itch.io  En-Fr
@@ -6474,6 +6482,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("rockburgerstreehouses", "RBTH.exe", "88cf59aad15ca331ab0f854e16c84df3", 1876674),
 	GAME_ENTRY_EN("rockpaperscissors2", "Rock, Paper, Scissors 2.exe", "89a94326c8afd9e0234e269bd7330130", 2926218),
 	GAME_ENTRY_EN("rockrockrock", "rrr.exe", "7dd36aa863ed40ede1b09ae505e478cc", 9362761),
+	GAME_ENTRY_EN("rocktravis", "rock travis - camilla's case.exe", "17009da9820f5aa86d0588023d497db8", 126975468),
 	GAME_ENTRY_EN("rockyroams", "Rocky.exe", "a01a9639ce30bdcd5bf82e528b51fa06", 16978200),
 	GAME_ENTRY_EN("rodequest2", "RQ2.exe", "12c03a3c782237821acd590fd91af4c5", 4192097),
 	GAME_ENTRY_EN("rodequest2", "RQ2b.exe", "12c03a3c782237821acd590fd91af4c5", 4192097),
@@ -6607,6 +6616,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY("simshogwarts", "Sims Hogwarts.exe", "615e73fc1874e92d60a1996c2330ea36", 20016887),  // En-Fr
 	GAME_ENTRY_EN("sinbad", "SINBAD.exe", "afe40dc1416dd51e896ee0444d799f07", 40143412),
 	GAME_ENTRY_EN("sinking", "OROW_Sinking.exe", "615e73fc1874e92d60a1996c2330ea36", 13781179),
+	GAME_ENTRY_EN("siren", "Siren.exe", "0564de07d3fd5c16e6947a647061913c", 10015441),
 	GAME_ENTRY_EN("sisterhelper", "Little Helper.exe", "615e73fc1874e92d60a1996c2330ea36", 8922861),
 	GAME_ENTRY_EN("sisyphus", "Sisyphus.exe", "c6496a18d39036c853da42b5888456d3", 98454819),  // itch.io 1.0 Win/Mac
 	GAME_ENTRY_EN("sisyphus", "Sisyphus Reborn.exe", "059f968398cb58cb40908b217f406863", 98804803),  // itch.io 1.0.1 Win
@@ -7067,6 +7077,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("thespoons", "Spoons.exe", "f3a13b2d6c2e0fe04c6f466062920e23", 3652176),
 	GAME_ENTRY_EN("thestarryskyaboveme", "The Starry Sky Above Me.exe", "618d7dce9631229b4579340b964c6810", 14082659),
 	GAME_ENTRY_EN("thestarryskyaboveme", "The Starry Sky Above Me.ags", "0761ef29f813294a6babdae64d122f84", 23949709),
+	GAME_ENTRY_EN("thestinker", "The Stinker.exe", "be13cb758d3568b0532695081ab64683", 51481517),
 	GAME_ENTRY_EN("thesummoned", "The Summoned.exe", "22d2d13d88310758fc76ff9d6e4f23b8", 15309757),
 	GAME_ENTRY_EN("thesundownmystery", "Sundown.exe", "a08ab253c4d2f255b9139f2aa5fe7006", 31839270),
 	GAME_ENTRY("thesurvivors", "Les_Survivants.exe", "c5d2c54c20cb606519b86d3890ee7fc0", 265445972),  //En-Fr
@@ -7189,6 +7200,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("underworld", "Underworld.exe", "6cddccb3744ec5c6af7c398fb7b3b11c", 5147661),
 	GAME_ENTRY_EN("unexpectedguest", "unexpectedGuest.exe", "5e1d1fbbaadb46b5cfd5474d71080c9d", 4541793),
 	GAME_ENTRY_EN("unexpectedquest", "UQ.exe", "f120690b506dd63cd7d1112ea6af2f77", 1837663),
+	GAME_ENTRY_EN("unfair", "Unfair.exe", "8d1ff95c16500befbdc72260d461d73f", 5203436),
 	GAME_ENTRY_EN("unfinished", "mags.exe", "0710e2ec71042617f565c01824f0cf3c", 12092514),
 	GAME_ENTRY_EN("unfinishedbusiness", "business.exe", "089fab88e6e1075a2f5b271f6f5b3c57", 2202413),
 	GAME_ENTRY("unfinishedtales", "shst.exe", "28f82e420b82d07651b68114f90223c8", 1013809),  // Eng-Esp

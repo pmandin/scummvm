@@ -62,9 +62,10 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      und der (von Fans erstellten) russischen Version des Spiels, was das Verhalten des
      originalen Interpreters widerspiegelt (vermutlich aufgrund der schlechten Resultate
      in den anderen Sprachen).
+   - Verbesserte Unterstützung der hebräischen Versionen der Spiele von Humongous Entertainment.
 
  Toon:
-   - Die Spiel-Menüs verhalten sich nun wie das Original.
+   - Die Spiel-Menüs verhalten sich nun wie im Original.
 
  TwinE:
    - Darstellungsfehler bei Türen behoben.
@@ -76,8 +77,12 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Der Bildschirm wird nun nicht mehr zentriert, wenn ein Inventar-Item aktiviert wird.
    - Wenn man W drückt, um mit Leuten zu sprechen, springt man nicht mehr automatisch.
 
+#### 2.6.1 (XX.XX.2022)
 
-#### 2.6.0 "Insane Escapism" (2022-08-01)
+ Allgemein:
+   - Verschiedene Verbesserungen für die icon-basierte Ansicht des Launchers vorgenommen.
+
+#### 2.6.0 "Insane Escapism" (01.08.2022)
 
  Neue Spiele:
    - Unterstützung für Sanitarium hinzugefügt.

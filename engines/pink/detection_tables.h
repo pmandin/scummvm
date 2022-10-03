@@ -114,6 +114,17 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO1(GUIO_NOMIDI)
 	},
 
+	// Italian
+	{
+		"peril",
+		0,
+		AD_ENTRY1s("PPTP.ORB", "d03e38348aa33d8d25315b1acb687f66", 622766069),
+		Common::IT_ITA,
+		Common::kPlatformWindows,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO1(GUIO_NOMIDI)
+	},
+
 	// Polish
 	{
 		"peril",
@@ -230,6 +241,17 @@ static const ADGameDescription gameDescriptions[] = {
 		0,
 		AD_ENTRY1s("HPP.orb", "518453b73021c31566f084b3e4b8bdbf", 502988485),
 		Common::HE_ISR,
+		Common::kPlatformWindows,
+		ADGF_TESTING | ADGF_DROPPLATFORM,
+		GUIO1(GUIO_NOMIDI)
+	},
+
+	// Italian
+	{
+		"pokus",
+		0,
+		AD_ENTRY1s("HPP.orb", "86fb890be3beaadb36d5daceae52a176", 504320381),
+		Common::IT_ITA,
 		Common::kPlatformWindows,
 		ADGF_TESTING | ADGF_DROPPLATFORM,
 		GUIO1(GUIO_NOMIDI)

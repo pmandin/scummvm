@@ -1372,16 +1372,19 @@ int Actor::remapDirection(int dir, bool is_walking) {
 	// actor is in the current room anyway.
 
 	if (!_ignoreBoxes || _vm->_game.id == GID_LOOM) {
-		specdir = _vm->_extraBoxFlags[_walkbox];
-		if (specdir) {
-			if (specdir & 0x8000) {
-				dir = specdir & 0x3FFF;
-			} else {
-				specdir = specdir & 0x3FFF;
-				if (specdir - 90 < dir && dir < specdir + 90)
-					dir = specdir;
-				else
-					dir = specdir + 180;
+		if (_walkbox != kOldInvalidBox) {
+			assert(_walkbox < ARRAYSIZE(_vm->_extraBoxFlags));
+			specdir = _vm->_extraBoxFlags[_walkbox];
+			if (specdir) {
+				if (specdir & 0x8000) {
+					dir = specdir & 0x3FFF;
+				} else {
+					specdir = specdir & 0x3FFF;
+					if (specdir - 90 < dir && dir < specdir + 90)
+						dir = specdir;
+					else
+						dir = specdir + 180;
+				}
 			}
 		}
 
@@ -2366,8 +2369,8 @@ void Actor::drawActorCostume(bool hitTestMode) {
 
 	if (!hitTestMode) {
 		// Record the vertical extent of the drawn actor
-		_top = bcr->_draw_top;
-		_bottom = bcr->_draw_bottom;
+		_top = bcr->_drawTop;
+		_bottom = bcr->_drawBottom;
 	}
 }
 
@@ -2385,9 +2388,9 @@ void Actor::prepareDrawActorCostume(BaseCostumeRenderer *bcr) {
 		bcr->_scaleY = _scaley;
 	}
 
-	bcr->_shadow_mode = _shadowMode;
+	bcr->_shadowMode = _shadowMode;
 	if (_vm->_game.version >= 5 && _vm->_game.heversion == 0) {
-		bcr->_shadow_table = _vm->_shadowPalette;
+		bcr->_shadowTable = _vm->_shadowPalette;
 	}
 
 	bcr->setCostume(_costume, (_vm->_game.heversion == 0) ? 0 : _heXmapNum);
@@ -2418,8 +2421,8 @@ void Actor::prepareDrawActorCostume(BaseCostumeRenderer *bcr) {
 
 	}
 
-	bcr->_draw_top = 0x7fffffff;
-	bcr->_draw_bottom = 0;
+	bcr->_drawTop = 0x7fffffff;
+	bcr->_drawBottom = 0;
 }
 
 void ActorHE::prepareDrawActorCostume(BaseCostumeRenderer *bcr) {
@@ -2434,7 +2437,7 @@ void ActorHE::prepareDrawActorCostume(BaseCostumeRenderer *bcr) {
 	bcr->_clipOverride = _clipOverride;
 
 	if (_vm->_game.heversion == 70) {
-		bcr->_shadow_table = _vm->_HEV7ActorPalette;
+		bcr->_shadowTable = _vm->_HEV7ActorPalette;
 	}
 
 	bcr->_skipLimbs = (_heSkipLimbs != 0);
@@ -2674,7 +2677,7 @@ void Actor_v0::limbFrameCheck(int limb) {
 	_limbFrameRepeat[limb] = _limbFrameRepeatNew[limb];
 
 	// 0x25C3
-	_cost.active[limb] = ((V0CostumeLoader *)_vm->_costumeLoader)->getFrame(this, limb);
+	_cost.animType[limb] = ((V0CostumeLoader *)_vm->_costumeLoader)->getFrame(this, limb);
 	_cost.curpos[limb] = 0;
 
 	_needRedraw = true;
@@ -2734,7 +2737,7 @@ void Actor::animateLimb(int limb, int f) {
 		size = _vm->getResourceDataSize(akfo) / 2;
 
 		while (f--) {
-			if (_cost.active[limb] != 0)
+			if (_cost.animType[limb] != AKAT_Empty)
 				((ScummEngine_v6 *)_vm)->akos_increaseAnim(this, limb, aksq, (const uint16 *)akfo, size);
 		}
 
@@ -3816,7 +3819,7 @@ void Actor::saveLoadWithSerializer(Common::Serializer &s) {
 	s.syncAsUint16LE(_walkdata.point3.x, VER(42));
 	s.syncAsUint16LE(_walkdata.point3.y, VER(42));
 
-	s.syncBytes(_cost.active, 16, VER(8));
+	s.syncBytes(_cost.animType, 16, VER(8));
 	s.syncAsUint16LE(_cost.stopped, VER(8));
 	s.syncArray(_cost.curpos, 16, Common::Serializer::Uint16LE, VER(8));
 	s.syncArray(_cost.start, 16, Common::Serializer::Uint16LE, VER(8));
