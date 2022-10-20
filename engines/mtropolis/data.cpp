@@ -1385,7 +1385,7 @@ bool PathMotionModifier::PointDef::load(DataReader &reader, bool haveMessageSpec
 	if (!point.load(reader) || !reader.readU32(frame) || !reader.readU32(frameFlags))
 		return false;
 
-	if (haveMessageSpec && messageSpec.load(reader))
+	if (haveMessageSpec && !messageSpec.load(reader))
 		return false;
 
 	return true;
@@ -1532,8 +1532,8 @@ DataReadErrorCode SharedSceneModifier::load(DataReader &reader) {
 	if (_revision != 1000)
 		return kDataReadErrorUnsupportedRevision;
 
-	if (!modHeader.load(reader) || !executeWhen.load(reader)
-		|| !reader.readBytes(unknown1) || !reader.readU32(sectionGUID)
+	if (!modHeader.load(reader) || !reader.readBytes(unknown1)
+		|| !executeWhen.load(reader) || !reader.readU32(sectionGUID)
 		|| !reader.readU32(subsectionGUID) || !reader.readU32(sceneGUID))
 		return kDataReadErrorReadFailed;
 
@@ -1962,9 +1962,9 @@ DataReadErrorCode ColorTableAsset::load(DataReader &reader) {
 		for (size_t i = 0; i < numColors; i++) {
 			ColorRGB16 &cdef = colors[i];
 
-			cdef.red = cdefBytes[i * 4 + 2] * 0x101;
+			cdef.red = cdefBytes[i * 4 + 0] * 0x101;
 			cdef.green = cdefBytes[i * 4 + 1] * 0x101;
-			cdef.blue = cdefBytes[i * 4 + 0] * 0x101;
+			cdef.blue = cdefBytes[i * 4 + 2] * 0x101;
 		}
 	} else
 		return kDataReadErrorUnrecognized;
@@ -2056,7 +2056,7 @@ DataReadErrorCode AudioAsset::load(DataReader &reader) {
 		|| !reader.readU32(filePosition) || !reader.readU32(size))
 		return kDataReadErrorReadFailed;
 
-	if (numCuePoints * 14u != cuePointDataSize)
+	if (numCuePoints * 14u > cuePointDataSize)
 		return kDataReadErrorUnrecognized;
 
 	cuePoints.resize(numCuePoints);
@@ -2066,6 +2066,10 @@ DataReadErrorCode AudioAsset::load(DataReader &reader) {
 			|| !reader.readU32(cuePoint.cuePointID))
 			return kDataReadErrorReadFailed;
 	}
+
+	uint32 extraJunkSize = cuePointDataSize - (numCuePoints * 14u);
+	if (!reader.skip(extraJunkSize))
+		return kDataReadErrorReadFailed;
 
 	return kDataReadErrorNone;
 }
@@ -2125,7 +2129,7 @@ MToonAsset::MToonAsset()
 	: marker(0), unknown1{0, 0, 0, 0, 0, 0, 0, 0}, assetID(0), haveMacPart(false), haveWinPart(false), frameDataPosition(0), sizeOfFrameData(0),
 	  mtoonHeader{0, 0}, version(0), unknown2{0, 0, 0, 0}, encodingFlags(0), numFrames(0),
 	  unknown3{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, bitsPerPixel(0), codecID(0), unknown4_1{0, 0, 0, 0, 0, 0, 0, 0},
-	  codecDataSize(0), unknown4_2{0, 0, 0, 0} {
+	  codecDataSize(0) {
 	memset(&this->platform, 0, sizeof(this->platform));
 }
 
@@ -2156,7 +2160,7 @@ DataReadErrorCode MToonAsset::load(DataReader &reader) {
 		|| !reader.readU32(mtoonHeader[1]) || !reader.readU16(version) || !reader.readBytes(unknown2)
 		|| !reader.readU32(encodingFlags) || !rect.load(reader) || !reader.readU16(numFrames)
 		|| !reader.readBytes(unknown3) || !reader.readU16(bitsPerPixel) || !reader.readU32(codecID)
-		|| !reader.readBytes(unknown4_1) || !reader.readU32(codecDataSize) || !reader.readBytes(unknown4_2))
+		|| !reader.readBytes(unknown4_1) || !reader.readU32(codecDataSize) || !registrationPoint.load(reader))
 		return kDataReadErrorReadFailed;
 
 	if (mtoonHeader[0] != 0 || mtoonHeader[1] != 0x546f6f6e)
@@ -2315,7 +2319,7 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 		return kDataReadErrorReadFailed;
 	}
 
-	debug(4, "Loading data object type %x", static_cast<int>(type));
+	debug(4, "Loading data object type 0x%x", static_cast<int>(type));
 
 	DataObject *dataObject = nullptr;
 	switch (type) {
@@ -2514,14 +2518,14 @@ DataReadErrorCode loadDataObject(const PlugInModifierRegistry &registry, DataRea
 	}
 
 	if (dataObject == nullptr) {
-		warning("Unrecognized data object type %x", static_cast<int>(type));
+		warning("Unrecognized data object type 0x%x", static_cast<int>(type));
 		return kDataReadErrorUnrecognized;
 	}
 
 	Common::SharedPtr<DataObject> sharedPtr(dataObject);
 	DataReadErrorCode errorCode = dataObject->load(static_cast<DataObjectTypes::DataObjectType>(type), revision, reader);
 	if (errorCode != kDataReadErrorNone) {
-		warning("Data object type %x failed to load", static_cast<int>(type));
+		warning("Data object type 0x%x failed to load", static_cast<int>(type));
 		outObject.reset();
 		return errorCode;
 	}

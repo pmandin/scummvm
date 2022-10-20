@@ -1445,8 +1445,7 @@ void LB::b_framesToHMS(int nargs) {
 	int fps = g_lingo->pop().asInt();
 	int frames = g_lingo->pop().asInt();
 
-	if (fps <= 0)
-		fps = -fps;
+	fps = MAX(1, fps);
 
 	bool negative = frames < 0;
 	if (negative)
@@ -1574,8 +1573,9 @@ void LB::b_printFrom(int nargs) {
 }
 
 void LB::b_quit(int nargs) {
-	if (g_director->getCurrentMovie())
-		g_director->getCurrentMovie()->getScore()->_playState = kPlayStopped;
+	Movie *movie = g_director->getCurrentMovie();
+	if (movie)
+		movie->getScore()->_playState = kPlayStopped;
 
 	g_lingo->pushVoid();
 }
@@ -1811,27 +1811,11 @@ void LB::b_copyToClipBoard(int nargs) {
 }
 
 void LB::b_duplicate(int nargs) {
-	Datum to = g_lingo->pop();
-	Datum from = g_lingo->pop();
-
-	Frame *currentFrame = g_director->getCurrentMovie()->getScore()->_frames[g_director->getCurrentMovie()->getScore()->getCurrentFrame()];
-	CastMember *castMember = g_director->getCurrentMovie()->getCastMember(from.asMemberID());
-	auto channels = g_director->getCurrentMovie()->getScore()->_channels;
-
-	castMember->setModified(true);
-	g_director->getCurrentMovie()->createOrReplaceCastMember(to.asMemberID(), castMember);
-
-	for (uint16 i = 0; i < currentFrame->_sprites.size(); i++) {
-		if (currentFrame->_sprites[i]->_castId == to.asMemberID())
-			currentFrame->_sprites[i]->setCast(to.asMemberID());
-	}
-
-	for (uint i = 0; i < channels.size(); i++) {
-		if (channels[i]->_sprite->_castId == to.asMemberID()) {
-			channels[i]->_sprite->setCast(to.asMemberID());
-			channels[i]->_dirty = true;
-		}
-	}
+	// Removed previous implementation since it copied only the reference to the cast
+	// and didn't actually duplicate it.
+	// See commit: 76e56f5b1f51a51d073ecf3970134d87964a4ea4
+	g_lingo->printSTUBWithArglist("b_duplicate", nargs);
+	g_lingo->dropStack(nargs);
 }
 
 void LB::b_editableText(int nargs) {
@@ -1868,11 +1852,12 @@ void LB::b_editableText(int nargs) {
 
 void LB::b_erase(int nargs) {
 	Datum d = g_lingo->pop();
-	CastMember *eraseCast = g_director->getCurrentMovie()->getCastMember(d.asMemberID());
+	Movie *movie = g_director->getCurrentMovie();
+	CastMember *eraseCast = movie->getCastMember(d.asMemberID());
 
 	if (eraseCast) {
 		eraseCast->_erase = true;
-		Common::Array<Channel *> channels = g_director->getCurrentMovie()->getScore()->_channels;
+		Common::Array<Channel *> channels = movie->getScore()->_channels;
 
 		for (uint i = 0; i < channels.size(); i++) {
 			if (channels[i]->_sprite->_castId == d.asMemberID()) {
@@ -1953,7 +1938,7 @@ void LB::b_importFileInto(int nargs) {
 	bitmapCast->setModified(true);
 	const Graphics::Surface *surf = img->getSurface();
 	bitmapCast->_size = surf->pitch * surf->h + img->getPaletteColorCount() * 3;
-	auto channels = g_director->getCurrentMovie()->getScore()->_channels;
+	auto channels = movie->getScore()->_channels;
 
 	for (uint i = 0; i < channels.size(); i++) {
 		if (channels[i]->_sprite->_castId == dst.asMemberID()) {
@@ -1976,8 +1961,8 @@ void LB::b_installMenu(int nargs) {
 		g_director->_wm->removeMenu();
 		return;
 	}
-
-	CastMember *member = g_director->getCurrentMovie()->getCastMember(memberID);
+	Movie *movie = g_director->getCurrentMovie();
+	CastMember *member = movie->getCastMember(memberID);
 	if (!member) {
 		g_lingo->lingoError("installMenu: Unknown %s", memberID.asString().c_str());
 		return;
@@ -2001,7 +1986,7 @@ void LB::b_installMenu(int nargs) {
 
 	debugC(3, kDebugLingoExec, "installMenu: '%s'", Common::toPrintable(menuStxt).encode().c_str());
 
-	LingoArchive *mainArchive = g_director->getCurrentMovie()->getMainLingoArch();
+	LingoArchive *mainArchive = movie->getMainLingoArch();
 
 	// Since loading the STXT converts the text to Unicode based on the platform
 	// encoding, we need to fetch the correct Unicode character for the platform.
@@ -2137,10 +2122,10 @@ void LB::b_move(int nargs) {
 	Datum src, dest;
 
 	if (nargs == 1) {
-		Datum d;
-		d.type = CASTREF;
-		d.u.cast = new CastMemberID();
-		d.u.cast->member = (int) g_director->getCurrentMovie()->getCast()->_castArrayStart;
+		int id = (int) g_director->getCurrentMovie()->getCast()->_castArrayStart;
+		CastMemberID *castId = new CastMemberID(id, 0);
+		Datum d = Datum(*castId);
+		delete castId;
 		g_lingo->push(d);
 		b_findEmpty(1);
 		dest = g_lingo->pop();
@@ -2164,32 +2149,33 @@ void LB::b_move(int nargs) {
 		return;
 	}
 
-	if (!g_director->getCurrentMovie()->getCastMember(*src.u.cast)) {
-		warning("b_move: Source CastMember doesn't exist");
-		return;
-	}
-
 	if (src.u.cast->castLib != 0) {
 		warning("b_move: wrong castLib '%d' in src CastMemberID", src.u.cast->castLib);
 	}
 
-	g_lingo->push(dest);
-	b_erase(1);
-
 	Movie *movie = g_director->getCurrentMovie();
-	uint16 frame = movie->getScore()->getCurrentFrame();
-	Frame *currentFrame = movie->getScore()->_frames[frame];
-	auto channels = g_director->getCurrentMovie()->getScore()->_channels;
+	CastMember *toMove = movie->getCastMember(src.asMemberID());
 
+	if (!toMove) {
+		warning("b_move: Source CastMember doesn't exist");
+		return;
+	}
 
-	movie->getScore()->renderFrame(frame, kRenderForceUpdate);
+	g_lingo->push(dest);
+	// Room for improvement, b_erase already marks the sprites as dirty
+	b_erase(1);
+	Score *score = movie->getScore();
+	uint16 frame = score->getCurrentFrame();
+	Frame *currentFrame = score->_frames[frame];
+	auto channels = score->_channels;
 
-	g_director->getCurrentMovie()->eraseCastMember(dest.asMemberID());
-	
-	CastMember *toMove = g_director->getCurrentMovie()->getCastMember(src.asMemberID());
+	score->renderFrame(frame, kRenderForceUpdate);
+
+	movie->eraseCastMember(dest.asMemberID());
+
 	CastMember *toReplace = new CastMember(toMove->getCast(), src.asMemberID().member);
-	g_director->getCurrentMovie()->createOrReplaceCastMember(dest.asMemberID(), toMove);
-	g_director->getCurrentMovie()->createOrReplaceCastMember(src.asMemberID(), toReplace);
+	movie->createOrReplaceCastMember(dest.asMemberID(), toMove);
+	movie->createOrReplaceCastMember(src.asMemberID(), toReplace);
 
 	for (uint16 i = 0; i < currentFrame->_sprites.size(); i++) {
 		if (currentFrame->_sprites[i]->_castId == dest.asMemberID())
@@ -2203,12 +2189,13 @@ void LB::b_move(int nargs) {
 		}
 	}
 
-	movie->getScore()->renderFrame(frame, kRenderForceUpdate);
+	score->renderFrame(frame, kRenderForceUpdate);
 }
 
 void LB::b_moveableSprite(int nargs) {
-	Score *sc = g_director->getCurrentMovie()->getScore();
-	Frame *frame = sc->_frames[g_director->getCurrentMovie()->getScore()->getCurrentFrame()];
+	Movie *movie = g_director->getCurrentMovie();
+	Score *score = movie->getScore();
+	Frame *frame = score->_frames[score->getCurrentFrame()];
 
 	if (g_lingo->_currentChannelId == -1) {
 		warning("b_moveableSprite: channel Id is missing");
@@ -2217,8 +2204,8 @@ void LB::b_moveableSprite(int nargs) {
 	}
 
 	// since we are using value copying, in order to make it taking effect immediately. we modify the sprites in channel
-	if (sc->_channels[g_lingo->_currentChannelId])
-		sc->_channels[g_lingo->_currentChannelId]->_sprite->_moveable = true;
+	if (score->_channels[g_lingo->_currentChannelId])
+		score->_channels[g_lingo->_currentChannelId]->_sprite->_moveable = true;
 	frame->_sprites[g_lingo->_currentChannelId]->_moveable = true;
 }
 
@@ -2230,10 +2217,17 @@ void LB::b_pasteClipBoardInto(int nargs) {
 	}
 
 	Movie *movie = g_director->getCurrentMovie();
-	uint16 frame = movie->getScore()->getCurrentFrame();
-	Frame *currentFrame = movie->getScore()->_frames[frame];
+
 	CastMember *castMember = movie->getCastMember(*g_director->_clipBoard);
-	auto channels = movie->getScore()->_channels;
+	if (!castMember) {
+		warning("LB:B_pasteClipBoardInto(): castMember not found");
+		return;
+	}
+
+	Score *score = movie->getScore();
+	uint16 frame = score->getCurrentFrame();
+	Frame *currentFrame = score->_frames[frame];
+	auto channels = score->_channels;
 
 	castMember->setModified(true);
 	movie->createOrReplaceCastMember(*to.u.cast, castMember);
@@ -2255,6 +2249,7 @@ void LB::b_puppetPalette(int nargs) {
 	g_lingo->convertVOIDtoString(0, nargs);
 	int numFrames = 0, speed = 0, palette = 0;
 	Datum d;
+	Movie *movie = g_director->getCurrentMovie();
 
 	switch (nargs) {
 	case 3:
@@ -2284,7 +2279,7 @@ void LB::b_puppetPalette(int nargs) {
 			}
 		}
 		if (!palette) {
-			CastMember *member = g_director->getCurrentMovie()->getCastMember(d.asMemberID());
+			CastMember *member = movie->getCastMember(d.asMemberID());
 
 			if (member && member->_type == kCastPalette)
 				palette = ((PaletteCastMember *)member)->getPaletteId();
@@ -2295,20 +2290,21 @@ void LB::b_puppetPalette(int nargs) {
 		return;
 	}
 
+	Score *score = movie->getScore();
 	if (palette) {
 		g_director->setPalette(palette);
-		g_director->getCurrentMovie()->getScore()->_puppetPalette = true;
+		score->_puppetPalette = true;
 	} else {
 		// Setting puppetPalette to 0 disables it (Lingo Dictionary, 226)
-		Score *sc = g_director->getCurrentMovie()->getScore();
-		g_director->getCurrentMovie()->getScore()->_puppetPalette = false;
+
+		score->_puppetPalette = false;
 
 		// FIXME: set system palette decided by platform, should be fixed after windows palette is working.
 		// try to set mac system palette if lastPalette is 0.
-		if (sc->_lastPalette == 0)
+		if (score->_lastPalette == 0)
 			g_director->setPalette(-1);
 		else
-			g_director->setPalette(sc->resolvePaletteId(sc->_lastPalette));
+			g_director->setPalette(score->resolvePaletteId(score->_lastPalette));
 	}
 
 	// TODO: Implement advanced features that use these.
@@ -2876,6 +2872,7 @@ void LB::b_sound(int nargs) {
 	}
 
 	DirectorSound *soundManager = g_director->getCurrentWindow()->getSoundManager();
+	Score *score = g_director->getCurrentMovie()->getScore();
 
 	if (verb.u.s->equalsIgnoreCase("close") || verb.u.s->equalsIgnoreCase("stop")) {
 		if (nargs != 2) {
@@ -2890,24 +2887,24 @@ void LB::b_sound(int nargs) {
 			TYPECHECK(secondArg, INT);
 			ticks = secondArg.u.i;
 		} else {
-			ticks = 15 * (60 / g_director->getCurrentMovie()->getScore()->_currentFrameRate);
+			ticks = 15 * (60 / score->_currentFrameRate);
 		}
 
 		TYPECHECK(firstArg, INT);
 		soundManager->registerFade(firstArg.u.i, true, ticks);
-		g_director->getCurrentMovie()->getScore()->_activeFade = firstArg.u.i;
+		score->_activeFade = firstArg.u.i;
 		return;
 	} else if (verb.u.s->equalsIgnoreCase("fadeOut")) {
 		if (nargs > 2) {
 			TYPECHECK(secondArg, INT);
 			ticks = secondArg.u.i;
 		} else {
-			ticks = 15 * (60 / g_director->getCurrentMovie()->getScore()->_currentFrameRate);
+			ticks = 15 * (60 / score->_currentFrameRate);
 		}
 
 		TYPECHECK(firstArg, INT);
 		soundManager->registerFade(firstArg.u.i, false, ticks);
-		g_director->getCurrentMovie()->getScore()->_activeFade = firstArg.u.i;
+		score->_activeFade = firstArg.u.i;
 		return;
 	} else if (verb.u.s->equalsIgnoreCase("playFile")) {
 		ARGNUMCHECK(3)

@@ -63,6 +63,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      originalen Interpreters widerspiegelt (vermutlich aufgrund der schlechten Resultate
      in den anderen Sprachen).
    - Verbesserte Unterstützung der hebräischen Versionen der Spiele von Humongous Entertainment.
+   - Unterstützung für Roland MT-32 in Sam & Max korrigiert.
 
  Toon:
    - Die Spiel-Menüs verhalten sich nun wie im Original.
@@ -77,10 +78,56 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Der Bildschirm wird nun nicht mehr zentriert, wenn ein Inventar-Item aktiviert wird.
    - Wenn man W drückt, um mit Leuten zu sprechen, springt man nicht mehr automatisch.
 
-#### 2.6.1 (XX.XX.2022)
+#### 2.6.1 "Incremental Escapism" (31.10.2022)
 
  Allgemein:
    - Verschiedene Verbesserungen für die icon-basierte Ansicht des Launchers vorgenommen.
+   - Mögliche Grafikfehler bei der Nutzung des OpenGL-Renderers behoben.
+
+ AGS:
+   - Absturz von AGDIs KQ1-Remake (und einigen anderen Spielen) auf Big-Endian-Systemen behoben.
+
+ AGOS:
+   - Mehrere Fehler korrigiert, die zu Abstürzen in den Demo-Versionen von The Feeble Files
+     und Personal Nightmare sowie in der Vollversion von Waxworks geführt haben.
+   - Absturz während des Dialogs mit den Piraten in Simon the Sorcerer 2 behoben.
+
+ Asylum:
+   - Menü zur Tastatur-Konfiguration repariert.
+   - Unterstützung für Tastenkürzel im Dialog-Bildschirm hinzugefügt.
+   - Das Spielmenü kann nun über ein Tastenkürzel aufgerufen werden.
+   - Fehler behoben, der dazu führt, dass die Steuerung zurückgesetzt wird, wenn das Hive-Puzzle verlassen wird.
+   - Animationsfehler bei der Darstellung der schwebenden Körper in Kapitel 4 korrigiert.
+
+ Ultima:
+   - Darstellungsfehler behoben, der auftritt, wenn die Minikarte vom Spiel-Bildschirm wegbewegt wird.
+   - Möglicher Absturz bei der Nutzung der Autosave-Funktion behoben.
+
+ SCI:
+   - Mehrere Fehler und Skript-Probleme in KQ4, KQ5, LB2, LONGBOW, PQ1, PQ3, QFG4 und SQ5 behoben.
+   - Zahlreiche Verbesserungen an verschiedenen Stellen des Engine-Codes.
+
+ SCUMM:
+   - Mögliche Abstürze in Spielen, die iMUSE verwenden, korrigiert.
+   - Fehlende .SOU- und .BUN-Dateien führen nun nicht mehr zu einem Absturz.
+   - Abstürze in v7- und v8-Spielen auf Systemen mit striktem Aligment behoben.
+   - Fehlerhafte Lippen-Synchronisation in COMI auf Big-Endian-Systemen (wie der PS3 oder Wii) korrigiert.
+ 
+ Tinsel:
+   - Fehler behoben, der dazu führt, dass in Discworld einige Gegenstände nicht im Inventar abgelegt werden konnten.
+
+ Toltecs:
+   - Abstürze auf einigen Systemen mit striktem Aligment behoben.
+
+ Toon:
+   - Fehler behoben, der dazu führt, dass Musik und Soundeffekte standardmäßig stummgeschaltet werden,
+     wenn das Spiel Toonstruck zu ScummVM hinzugefügt wird.
+
+ Android-Portierung:
+   - Die Maus-Koordinaten werden nun korrekt zwischen den Bildschirm-Koordinaten und den virtuellen Koordinaten konvertiert.
+
+ Windows-Portierung:
+  - Fehler korrigiert, der dazu führt, dass das Löschen des Icon-Caches einen zusätzlichen ScummVM-Ordner im APPDATA-Verzeichnis anlegt.
 
 #### 2.6.0 "Insane Escapism" (01.08.2022)
 

@@ -767,7 +767,8 @@ void ScummEngine_v5::o5_animateActor() {
 	// animateCostume(31,255), with 86 and 31 being script numbers used as
 	// (way out of range) actor numbers. This seems to be yet another script
 	// bug which the original engine let slip by.
-	if (_game.id == GID_INDY4 && vm.slot[_currentScript].number == 206 && _currentRoom == 17 && (act == 31 || act == 86)) {
+	// For more information about why this happens, see o5_getActorRoom().
+	if (!isValidActor(act)) {
 		return;
 	}
 
@@ -1415,15 +1416,6 @@ void ScummEngine_v5::o5_getDist() {
 		r = getObjActToObjActDist(actorToObj(o1), actorToObj(o2));
 	else
 		r = getObjActToObjActDist(o1, o2);
-
-	// FIXME: MI2 race workaround, see bug #420. We never quite figured out
-	// what the real cause of this, or if it maybe occurs in the original, too...
-	if (_game.id == GID_MONKEY2 && vm.slot[_currentScript].number == 40 && r < 60)
-		r = 60;
-
-	// WORKAROUND bug #1194
-	if ((_game.id == GID_MONKEY_EGA || _game.id == GID_PASS) && o1 == 1 && o2 == 307 && vm.slot[_currentScript].number == 205 && r == 2)
-		r = 3;
 
 	setResult(r);
 }
@@ -2817,11 +2809,13 @@ void ScummEngine_v5::o5_stopScript() {
 
 	script = getVarOrDirectByte(PARAM_1);
 
-	if (_game.id == GID_INDY4 && script == 164 &&
-		_roomResource == 50 && vm.slot[_currentScript].number == 213 && VAR(VAR_HAVE_MSG)) {
+	if (_game.id == GID_INDY4 && script == 164 && _roomResource == 50 &&
+		vm.slot[_currentScript].number == 213 && VAR(VAR_HAVE_MSG) &&
+		getOwner(933) == VAR(VAR_EGO) && getClass(933, 146) && _enableEnhancements) {
 		// WORKAROUND bug #2215: Due to a script bug, a line of text is skipped
 		// which Indy is supposed to speak when he finds Orichalcum in some old
-		// bones in the caves below Crete.
+		// bones in the caves below Crete, if (and only if) he has already put
+		// some beads in the gold box beforehand. Also happens in DREAMM.
 		_scriptPointer = oldaddr;
 		o5_breakHere();
 		return;
@@ -3128,6 +3122,24 @@ void ScummEngine_v5::o5_walkActorTo() {
 	a = derefActor(getVarOrDirectByte(PARAM_1), "o5_walkActorTo");
 	x = getVarOrDirectWord(PARAM_2);
 	y = getVarOrDirectWord(PARAM_3);
+
+	// WORKAROUND: In MI1 CD, when the storekeeper comes back from outside,
+	// he will close the door *after* going to his counter, which looks very
+	// strange, since he's then quite far away from the door. Force calling
+	// the script which closes the door *before* he starts walking away from
+	// it, as in the other releases. Another v5 bug fixed on SegaCD, though!
+	if (_game.id == GID_MONKEY && _game.platform != Common::kPlatformSegaCD && _currentRoom == 30 &&
+		vm.slot[_currentScript].number == 207 && a->_number == 11 && x == 232 && y == 141 &&
+		_enableEnhancements && strcmp(_game.variant, "SE Talkie") != 0) {
+		if (whereIsObject(387) == WIO_ROOM && getState(387) == 1 && getState(437) == 1) {
+			int args[NUM_SCRIPT_LOCAL];
+			memset(args, 0, sizeof(args));
+			args[0] = 387;
+			args[1] = 437;
+			runScript(26, 0, 0, args);
+		}
+	}
+
 	a->startWalkActor(x, y, -1);
 }
 
@@ -3166,28 +3178,17 @@ void ScummEngine_v5::o5_walkActorToActor() {
 	int nr2 = getVarOrDirectByte(PARAM_2);
 	int dist = fetchScriptByte();
 
-	if (_game.id == GID_LOOM && _game.version == 4 && nr == 1 && nr2 == 0 &&
-		dist == 255 && vm.slot[_currentScript].number == 98) {
-		// WORKAROUND bug #814: LoomCD script 98 contains this:
-		//   walkActorToActor(1,0,255)
-		// Once again this is either a script bug, or there is some hidden
-		// or unknown meaning to this odd walk request...
+	// We put a guard here, in case the scripts end up giving us
+	// an invalid actor id (and FOA does that quite a lot)...
+	if (!isValidActor(nr))
 		return;
-	}
-
-	if (_game.id == GID_INDY4 && nr == 1 && nr2 == 106 &&
-		dist == 255 && vm.slot[_currentScript].number == 210) {
-		// WORKAROUND bug: Work around an invalid actor bug when using the
-		// camel in Fate of Atlantis, the "wits" path. The room-65-210 script
-		// contains this:
-		//   walkActorToActor(1,106,255)
-		// Once again this is either a script bug, or there is some hidden
-		// or unknown meaning to this odd walk request...
-		return;
-	}
 
 	a = derefActor(nr, "o5_walkActorToActor");
 	if (!a->isInCurrentRoom())
+		return;
+
+	// Same as before...
+	if (!isValidActor(nr2))
 		return;
 
 	a2 = derefActor(nr2, "o5_walkActorToActor(2)");
@@ -3259,6 +3260,27 @@ void ScummEngine_v5::decodeParseString() {
 			// strange.
 			if (_game.id == GID_INDY3 && _game.platform == Common::kPlatformMacintosh && vm.slot[_currentScript].number == 134 && color == 0x8F)
 				color = 0x87;
+
+			// WORKAROUND: In the CD version of MI1, the text in
+			// the sign about the dogs only sleeping has the wrong
+			// color. We can't find an exact match to what the
+			// floppy version used, but we pick on that's as close
+			// as we can get.
+			//
+			// The SEGA CD version uses the old colors already, and
+			// the FM Towns version makes the text more readable by
+			// giving it a black outline.
+
+			else if (_game.id == GID_MONKEY &&
+					_game.platform != Common::kPlatformSegaCD &&
+					_game.platform != Common::kPlatformFMTowns &&
+					_currentRoom == 36 &&
+					vm.slot[_currentScript].number == 201 &&
+					color == 2 &&
+					strcmp(_game.variant, "SE Talkie") != 0 &&
+					_enableEnhancements) {
+				color = findClosestPaletteColor(_currentPalette, 256, 0, 171, 0);
+			}
 
 			_string[textSlot].color = color;
 			break;
@@ -3437,7 +3459,7 @@ void ScummEngine_v5::decodeParseStringTextString(int textSlot) {
 		// releases (except for the SegaCD one with the smaller palette).
 		// Fix this while making sure that it doesn't apply to Elaine saying
 		// "I heard that!" offscreen.
-		_string[textSlot].color = 0xF9;
+		_string[textSlot].color = (_game.platform == Common::kPlatformFMTowns) ? 0x0A : 0xF9;
 		printString(textSlot, _scriptPointer);
 	} else if (_game.id == GID_MONKEY && _game.platform != Common::kPlatformSegaCD &&
 			(vm.slot[_currentScript].number == 140 || vm.slot[_currentScript].number == 294) &&
@@ -3450,7 +3472,7 @@ void ScummEngine_v5::decodeParseStringTextString(int textSlot) {
 		// options may also look wrong in that scene, but we don't fix that, as
 		// this font in displayed in green, white or purple between the
 		// different releases and scenes, so we don't know the original intent.
-		_string[textSlot].color = 0xEA;
+		_string[textSlot].color = (_game.platform == Common::kPlatformFMTowns) ? 0x0C : 0xEA;
 		printString(textSlot, _scriptPointer);
 	} else if (_game.id == GID_MONKEY && _roomResource == 25 && vm.slot[_currentScript].number == 205) {
 		printPatchedMI1CannibalString(textSlot, _scriptPointer);

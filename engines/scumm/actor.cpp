@@ -398,7 +398,16 @@ void Actor_v3::setupActorScale() {
 	// To workaround this, we override the scale of Henry. Since V3 games
 	// like Indy3 don't use the costume scale otherwise, this works fine.
 	// The scale factor 0x50 was determined by some guess work.
-	if (_number == 2 && _costume == 7 && _vm->_game.id == GID_INDY3 && _vm->_currentRoom == 12) {
+	//
+	// TODO: I can't reproduce this with the EGA DOS, EGA Macintosh and
+	// VGA DOS English releases, since Indy says he'd "better not" go back
+	// to the front of the castle at this point (script 77-201), as long
+	// as a special Bit is set for this (and it's set in room 21 entry
+	// script when Henry escapes from his room). Maybe there's a problem
+	// in the German release (and then it'd probably be better to restore
+	// that safeguard instead, since the game clearly doesn't expect you
+	// to go back inside the castle), but I don't own this version.  -dwa
+	if (_number == 2 && _costume == 7 && _vm->_game.id == GID_INDY3 && _vm->_currentRoom == 12 && _vm->_enableEnhancements) {
 		_scalex = 0x50;
 		_scaley = 0x50;
 	} else {
@@ -2915,11 +2924,8 @@ void ScummEngine_v7::actorTalk(const byte *msg) {
 	playSpeech((byte *)_lastStringTag);
 
 	if (!usingOldSystem) {
-		if (VAR(VAR_HAVE_MSG)) {
-			if (_game.id == GID_DIG && _roomResource == 58 && msg[0] == ' ' && !msg[1])
-				return;
+		if (VAR(VAR_HAVE_MSG))
 			stopTalk();
-		}
 	} else {
 		if (!_keepText)
 			stopTalk();

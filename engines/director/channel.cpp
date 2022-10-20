@@ -321,7 +321,7 @@ bool Channel::isActiveVideo() {
 }
 
 void Channel::updateVideoTime() {
-	if (_sprite)
+	if (isActiveVideo())
 		_movieTime = ((DigitalVideoCastMember *)_sprite->_cast)->getMovieCurrentTime();
 }
 
@@ -503,6 +503,10 @@ void Channel::replaceSprite(Sprite *nextSprite) {
 		widgetKeeped = false;
 		_sprite->_cast->releaseWidget();
 		newSprite = true;
+	}
+	if (_sprite->_castId != nextSprite->_castId && _sprite->_cast && _sprite->_cast->_type == kCastDigitalVideo) {
+		((DigitalVideoCastMember *)_sprite->_cast)->stopVideo();
+		((DigitalVideoCastMember *)_sprite->_cast)->rewindVideo();
 	}
 
 	int width = _width;

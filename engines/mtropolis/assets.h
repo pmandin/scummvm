@@ -38,6 +38,8 @@ public:
 	bool load(AssetLoaderContext &context, const Data::ColorTableAsset &data);
 	AssetType getAssetType() const override;
 
+	const ColorRGB8 *getColors() const;
+
 private:
 	ColorRGB8 _colors[256];
 };
@@ -90,6 +92,7 @@ struct MToonMetadata {
 	ImageFormat imageFormat;
 
 	Common::Rect rect;
+	Common::Point registrationPoint;
 	uint16 bitsPerPixel;
 	uint32 codecID;
 	uint32 encodingFlags;

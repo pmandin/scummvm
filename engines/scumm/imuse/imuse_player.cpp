@@ -77,8 +77,6 @@ Player::Player() :
 	_speed(128),
 	_isMT32(false),
 	_isMIDI(false),
-	_isGM(false),
-	_isAdLibOrFMTowns(false),
 	_supportsPercussion(false),
 	_se(nullptr),
 	_vol_chan(0),
@@ -109,10 +107,6 @@ bool Player::startSound(int sound, MidiDriver *midi) {
 	_isMT32 = _se->isMT32(sound);
 	_isMIDI = _se->isMIDI(sound);
 	_supportsPercussion = _se->supportsPercussion(sound);
-	// IMuseInternal::supportsPercussion() filters out more non-MIDI things than IMuseInternal::isMIDI(),
-	// but still not the AdLib in Samnmax, so we make an extra test for that...
-	_isGM = (_supportsPercussion && !(_se->_game_id == GID_SAMNMAX && !_se->_midi_native && _se->_midi_adlib) && !_isMT32);
-	_isAdLibOrFMTowns = (_se->_midi_adlib && !_isMT32 && !_isGM && _se->_soundType != MDT_PCSPK);
 
 	_parts = nullptr;
 	_active = true;
@@ -223,7 +217,7 @@ int Player::start_seq_sound(int sound, bool reset_vars) {
 }
 
 void Player::loadStartParameters(int sound) {
-	_priority = 0x80;
+	_priority = _se->_newSystem ? 0x40 : 0x80;
 	_volume = 0x7F;
 	_vol_chan = 0xFFFF;
 	_vol_eff = (_se->get_channel_volume(0xFFFF) << 7) >> 7;
@@ -319,10 +313,15 @@ void Player::send(uint32 b) {
 			part->pitchBendFactor(param2);
 			break;
 		case 17: // GP Slider 2
-			part->set_detune(param2 - 0x40);
+			if (_se->_newSystem)
+				part->set_polyphony(param2);
+			else
+				part->set_detune(param2 - 0x40);
 			break;
 		case 18: // GP Slider 3
-			part->set_pri(param2 - 0x40);
+			if (!_se->_newSystem)
+				param2 -= 0x40;
+			part->set_pri(param2);
 			_se->reallocateMidiChannels(_midi);
 			break;
 		case 64: // Sustain Pedal
@@ -361,7 +360,7 @@ void Player::send(uint32 b) {
 		}
 		break;
 
-	case 0xE: // Pitch Bend
+	case 0xE: // Pitch Bend (or also volume fade for Samnmax)
 		part = getPart(chan);
 		if (part)
 			part->pitchBend(((param2 << 7) | param1) - 0x2000);
@@ -401,9 +400,6 @@ void Player::sysEx(const byte *p, uint16 len) {
 						part->_instrument.send(part->_mc);
 				}
 			}
-		} else if (a == YM2612_SYSEX_ID) {
-			// FM-TOWNS custom instrument definition
-			_midi->sysEx_customInstrument(p[0], 'EUP ', p + 1);
 		} else {
 			// SysEx manufacturer 0x97 has been spotted in the
 			// Monkey Island 2 AdLib music, so don't make this a
@@ -1038,10 +1034,6 @@ void Player::fixAfterLoad() {
 		_isMT32 = _se->isMT32(_id);
 		_isMIDI = _se->isMIDI(_id);
 		_supportsPercussion = _se->supportsPercussion(_id);
-		// IMuseInternal::supportsPercussion() filters out more non-MIDI things than IMuseInternal::isMIDI(),
-		// but still not the AdLib in SAMNMAX, so we make an extra test for that...
-		_isGM = (_supportsPercussion && !(_se->_game_id == GID_SAMNMAX && !_se->_midi_native && _se->_midi_adlib) && !_isMT32);
-		_isAdLibOrFMTowns = (_se->_midi_adlib && !_isMT32 && !_isGM && _se->_soundType != MDT_PCSPK);
 	}
 }
 

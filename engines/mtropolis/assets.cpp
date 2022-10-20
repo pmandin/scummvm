@@ -64,6 +64,9 @@ AssetType ColorTableAsset::getAssetType() const {
 	return kAssetTypeColorTable;
 }
 
+const ColorRGB8 *ColorTableAsset::getColors() const {
+	return _colors;
+}
 
 CachedAudio::CachedAudio() {
 }
@@ -622,7 +625,7 @@ void CachedMToon::getOrRenderFrame(uint32 prevFrame, uint32 targetFrame, Common:
 			if (prevFrame == targetFrame)
 				return;
 			if (prevFrame < targetFrame)
-				backStopFrame = prevFrame;
+				backStopFrame = prevFrame + 1;
 		}
 
 		firstFrameToRender = targetFrame;
@@ -641,7 +644,7 @@ void CachedMToon::getOrRenderFrame(uint32 prevFrame, uint32 targetFrame, Common:
 
 		for (size_t i = firstFrameToRender; i <= targetFrame; i++) {
 			if (_rleOptimizedFormat.bytesPerPixel == 1)
-				decompressMToonRLE<uint8, 0x80u, 0>(_rleData[i], _rleData[i].data8, *surface, isBottomUp);
+				decompressMToonRLE<uint8, 0x80u, 0x80u>(_rleData[i], _rleData[i].data8, *surface, isBottomUp);
 			else if (_rleOptimizedFormat.bytesPerPixel == 2)
 				decompressMToonRLE<uint16, 0x8000u, 0x8000u>(_rleData[i], _rleData[i].data16, *surface, isBottomUp);
 			else if (_rleOptimizedFormat.bytesPerPixel == 4)
@@ -800,33 +803,27 @@ const Common::SharedPtr<Graphics::ManagedSurface> &CachedImage::optimize(Runtime
 	const Graphics::PixelFormat &renderFmt = runtime->getRenderPixelFormat();
 
 	if (renderDepth != _colorDepth) {
-		size_t w = _surface->w;
-		size_t h = _surface->h;
+		if (!_optimizedSurface) {
+			size_t w = _surface->w;
+			size_t h = _surface->h;
 
-		if (renderDepth == kColorDepthMode16Bit && _colorDepth == kColorDepthMode32Bit) {
-			_optimizedSurface.reset(new Graphics::ManagedSurface());
-			_optimizedSurface->create(w, h, renderFmt);
-			Render::convert32To16(*_optimizedSurface, *_surface);
-		} else if (renderDepth == kColorDepthMode32Bit && _colorDepth == kColorDepthMode16Bit) {
-			_optimizedSurface.reset(new Graphics::ManagedSurface());
-			_optimizedSurface->create(w, h, renderFmt);
-			Render::convert16To32(*_optimizedSurface, *_surface);
-		} else {
-			_optimizedSurface = _surface;	// Can't optimize
+			if (renderDepth == kColorDepthMode16Bit && _colorDepth == kColorDepthMode32Bit) {
+				_optimizedSurface.reset(new Graphics::ManagedSurface());
+				_optimizedSurface->create(w, h, renderFmt);
+				Render::convert32To16(*_optimizedSurface, *_surface);
+			} else if (renderDepth == kColorDepthMode32Bit && _colorDepth == kColorDepthMode16Bit) {
+				_optimizedSurface.reset(new Graphics::ManagedSurface());
+				_optimizedSurface->create(w, h, renderFmt);
+				Render::convert16To32(*_optimizedSurface, *_surface);
+			} else {
+				return _surface; // Can't optimize
+			}
 		}
-	} else {
-		static const byte bwPalette[6] = {255, 255, 255, 0, 0, 0};
 
-		const byte *palette = nullptr;
-
-		if (_colorDepth == kColorDepthMode16Bit || _colorDepth == kColorDepthMode32Bit)
-			palette = bwPalette;
-
-		_surface->convertToInPlace(renderFmt, palette);
-		_optimizedSurface = _surface;
+		return _optimizedSurface;
 	}
 
-	return _optimizedSurface;
+	return _surface;	// Already optimal
 }
 
 ImageAsset::ImageAsset() : _colorDepth(kColorDepthMode8Bit), _filePosition(0), _size(0), _streamIndex(0), _imageFormat(kImageFormatWindows) {
@@ -907,8 +904,6 @@ ImageAsset::ImageFormat ImageAsset::getImageFormat() const {
 const Common::SharedPtr<CachedImage> &ImageAsset::loadAndCacheImage(Runtime *runtime) {
 	if (_imageCache)
 		return _imageCache;
-
-	ColorDepthMode renderDepth = runtime->getRealColorDepth();
 
 	size_t streamIndex = getStreamIndex();
 	int segmentIndex = runtime->getProject()->getSegmentForStreamIndex(streamIndex);
@@ -1051,7 +1046,7 @@ const Common::SharedPtr<CachedImage> &ImageAsset::loadAndCacheImage(Runtime *run
 	}
 
 	_imageCache.reset(new CachedImage());
-	_imageCache->resetSurface(renderDepth, imageSurface);
+	_imageCache->resetSurface(getColorDepth(), imageSurface);
 
 	return _imageCache;
 }
@@ -1071,6 +1066,9 @@ bool MToonAsset::load(AssetLoaderContext &context, const Data::MToonAsset &data)
 
 	_frameDataPosition = data.frameDataPosition;
 	_sizeOfFrameData = data.sizeOfFrameData;
+
+	if (!data.registrationPoint.toScummVMPoint(_metadata->registrationPoint))
+		return false;
 
 	if (!data.rect.toScummVMRect(_metadata->rect))
 		return false;

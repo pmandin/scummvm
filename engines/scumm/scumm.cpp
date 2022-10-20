@@ -81,6 +81,7 @@
 #include "scumm/imuse/drivers/mac_m68k.h"
 #include "scumm/imuse/drivers/amiga.h"
 #include "scumm/imuse/drivers/fmtowns.h"
+#include "scumm/imuse/drivers/midi.h"
 #include "scumm/detection_steam.h"
 
 #include "backends/audiocd/audiocd.h"
@@ -1435,7 +1436,7 @@ void ScummEngine_v7::setupScumm(const Common::String &macResourceFile) {
 		filesAreCompressed |= _sound->isSfxFileCompressed();
 	}
 
-	_musicEngine = _imuseDigital = new IMuseDigital(this, _mixer);
+	_musicEngine = _imuseDigital = new IMuseDigital(this, _mixer, &_resourceAccessMutex);
 
 	if (filesAreCompressed) {
 		GUI::MessageDialog dialog(_(
@@ -1968,9 +1969,6 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 		_sound->_musicType = MDT_MIDI;
 	}
 
-	// DOTT + SAM use General MIDI, so they shouldn't use GS settings
-	bool enable_gs = (_game.id == GID_TENTACLE || _game.id == GID_SAMNMAX) ? false : ConfMan.getBool("enable_gs");
-
 	/* Bind the mixer to the system => mixer will be invoked
 	 * automatically when samples need to be generated */
 	if (!_mixer->isReady()) {
@@ -2044,10 +2042,14 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 		bool multi_midi = ConfMan.getBool("multi_midi") && _sound->_musicType != MDT_NONE && _sound->_musicType != MDT_PCSPK && (midi & MDT_ADLIB);
 		bool useOnlyNative = false;
 
+		// DOTT + SAM use General MIDI, so they shouldn't use GS settings
+		bool enable_gs = (_game.id == GID_TENTACLE || _game.id == GID_SAMNMAX) ? false : (ConfMan.getBool("enable_gs") && MidiDriver::getMusicType(dev) != MT_MT32);
+		bool newSystem = (_game.id == GID_SAMNMAX);
+
 		if (isMacM68kIMuse()) {
 			// We setup this driver as native MIDI driver to avoid playback
 			// of the Mac music via a selected MIDI device.
-			nativeMidiDriver = new MacM68kDriver(_mixer);
+			nativeMidiDriver = new IMuseDriver_MacM68k(_mixer);
 			// The Mac driver is never MT-32.
 			_native_mt32 = false;
 			// Ignore non-native drivers. This also ignores the multi MIDI setting.
@@ -2057,29 +2059,29 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 			_native_mt32 = enable_gs = false;
 			useOnlyNative = true;
 		} else if (_sound->_musicType != MDT_ADLIB && _sound->_musicType != MDT_TOWNS && _sound->_musicType != MDT_PCSPK) {
-			nativeMidiDriver = MidiDriver::createMidi(dev);
+			if (_native_mt32)
+				nativeMidiDriver = new IMuseDriver_MT32(dev, newSystem);
+			else
+				nativeMidiDriver = new IMuseDriver_GMidi(dev, enable_gs, newSystem);
 		}
 
-		if (nativeMidiDriver != nullptr && _native_mt32)
-			nativeMidiDriver->property(MidiDriver::PROP_CHANNEL_MASK, 0x03FE);
-
 		if (!useOnlyNative) {
-			if (_sound->_musicType == MDT_TOWNS) {
-				adlibMidiDriver = new MidiDriver_TOWNS(_mixer);
-			} else if (_sound->_musicType == MDT_ADLIB || multi_midi) {
-				adlibMidiDriver = MidiDriver::createMidi(MidiDriver::detectDevice(_sound->_musicType == MDT_TOWNS ? MDT_TOWNS : MDT_ADLIB));
+			if (_sound->_musicType == MDT_ADLIB || multi_midi) {
+				adlibMidiDriver = MidiDriver::createMidi(MidiDriver::detectDevice(MDT_ADLIB));
 				adlibMidiDriver->property(MidiDriver::PROP_OLD_ADLIB, (_game.features & GF_SMALL_HEADER) ? 1 : 0);
 				// Try to use OPL3 mode for Sam&Max when possible.
 				adlibMidiDriver->property(MidiDriver::PROP_SCUMM_OPL3, (_game.id == GID_SAMNMAX) ? 1 : 0);
+			} else if (_sound->_musicType == MDT_TOWNS) {
+				adlibMidiDriver = new IMuseDriver_FMTowns(_mixer);
 			} else if (_sound->_musicType == MDT_PCSPK) {
-				adlibMidiDriver = new PcSpkDriver(_mixer);
+				adlibMidiDriver = new IMuseDriver_PCSpk(_mixer);
 			}
 		}
 
-		uint32 imsFlags = 0;
+		uint32 imsFlags =  newSystem ? IMuse::kFlagNewSystem : 0;
 		if (_native_mt32)
 			imsFlags |= IMuse::kFlagNativeMT32;
-		if (enable_gs && MidiDriver::getMusicType(dev) != MT_MT32)
+		if (enable_gs)
 			imsFlags |= IMuse::kFlagRolandGS;
 
 		_imuse = IMuse::create(this, nativeMidiDriver, adlibMidiDriver, isMacM68kIMuse() ? MDT_MACINTOSH : _sound->_musicType, imsFlags);
