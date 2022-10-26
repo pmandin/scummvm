@@ -3684,6 +3684,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN_STEAM("richardandalice", "richardandalice.exe", "1023d348f67ba958f78ed62d029565c7", 109164768),
 	GAME_ENTRY_EN_STEAM("richardandalice", "richardandalice.exe", "f47d11397e2059a25b11057ea6cf3409", 108264256),
 	GAME_ENTRY_EN_GOG("richardandalice", "richardandalice.exe", "9a7e38a1810e6a1839601fb5c6bd42e6", 108602238), // Desura - GOG v1.0
+	GAME_ENTRY_EN_STEAM("rnrneverdies", "Rock 'n' Roll Will Never Die.exe", "28456c6a3a38874b833651c4433e22b4", 37722884),
 	GAME_ENTRY_EN_STEAM("roguestate", "roguestate.exe", "981a1c4d5a64b8ebe300f9769acf0fe5", 895486573),
 	GAME_ENTRY_GOG("samaritan", "samaritan.exe", "79dd677433bbb10d4970367eb68b243c", 78070237), // Groupees, v1.1 - GOG
 	GAME_ENTRY_STEAM("samaritan", "samaritan.exe", "5fb404a4a7c9cd1449dfdd3d23fa0250", 78753952),
@@ -4238,8 +4239,11 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DEMO_ENTRY_EN("wretcher", "Wretcher.exe", "80076b2aad3170f5781c6a8a69a457fe", 20299824),
 	DEMO_ENTRY_EN("writersblocks", "writersblocks.exe", "2cb9c81a20282b55f69343ef95cbb63d", 16118235),
 	DEMO_ENTRY_EN("zakseamonster", "ZMALSM.exe", "82da2565c456dcfb265ded6fe3189c0b", 31849022),
-	DEMO_ENTRY("zidjourney", "ctgame2.ags", "b00498666dd31c33f1df366a88503e01", 61183594),  // Eng-Pol Win/Linux
-	DEMO_ENTRY("zidjourney", "ac2game.dat", "c354124b98ec4b1407ce5852f4d151c3", 64801406),  // Eng-Pol Mac
+	DEMO_ENTRY("zidjourney", "ctgame2.ags", "b00498666dd31c33f1df366a88503e01", 61183594),  // Eng-Pol Win/Linux  v1.0.1 2022-10-17
+	DEMO_ENTRY("zidjourney", "ac2game.dat", "c354124b98ec4b1407ce5852f4d151c3", 64801406),  // Eng-Pol Mac  v1.0.1 2022-10-17
+	DEMO_ENTRY("zidjourney", "ctgame2.exe", "c354124b98ec4b1407ce5852f4d151c3", 64808438),  // Eng-Pol Win  v1.0.2 2022-10-22
+	DEMO_ENTRY("zidjourney", "ctgame2.ags", "47b1302e78e89712caa9691135d8a5a7", 61190626),  // Eng-Pol Linux  v1.0.2 2022-10-22
+	DEMO_ENTRY("zidjourney", "ac2game.dat", "c354124b98ec4b1407ce5852f4d151c3", 64808438),  // Eng-Pol Mac   v1.0.2 2022-10-22
 	DEMO_ENTRY("zniwadventure", "ctgame.exe", "b47f0434e11532ec79c330b44ee05130", 10641139),  // Eng-Pol
 	DEMO_ENTRY_EN("zombieattack", "zademo.exe", "82da2565c456dcfb265ded6fe3189c0b", 20958555),
 
