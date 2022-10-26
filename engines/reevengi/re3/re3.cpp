@@ -111,7 +111,7 @@ void RE3Engine::initPreRun(void) {
 
 				/* Use all ROFS<n>.DAT files as archives */
 				for (int i=1;i<16;i++) {
-					sprintf(filePath, RE3PCROFS_DAT, i);
+					snprintf(filePath, sizeof(filePath), RE3PCROFS_DAT, i);
 
 					RofsArchive *archive = new RofsArchive();
 					if (archive->open(filePath))
@@ -166,7 +166,7 @@ void RE3Engine::loadBgImage(void) {
 void RE3Engine::loadBgImagePc(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE3PC_BG, _stage, _room, _camera);
+	snprintf(filePath, sizeof(filePath), RE3PC_BG, _stage, _room, _camera);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
@@ -179,7 +179,7 @@ void RE3Engine::loadBgImagePc(void) {
 void RE3Engine::loadBgImagePsx(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE3PSX_BG, _stage, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE3PSX_BG, _stage, _stage, _room);
 
 	Common::SeekableReadStream *arcStream = SearchMan.createReadStreamForMember(filePath);
 	if (arcStream) {
@@ -250,7 +250,7 @@ void RE3Engine::loadBgMaskImage(void) {
 void RE3Engine::loadBgMaskImagePc(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE3PC_BGMASK, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE3PC_BGMASK, _stage, _room);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
@@ -272,7 +272,7 @@ void RE3Engine::loadBgMaskImagePsx(void) {
 	char filePath[64];
 	const char blkEnd[8]={0x01,0x00,0x00,0x00, 0x00,0x00,0x00,0x00};
 
-	sprintf(filePath, RE3PSX_BG, _stage, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE3PSX_BG, _stage, _stage, _room);
 
 	Common::SeekableReadStream *arcStream = SearchMan.createReadStreamForMember(filePath);
 	if (arcStream) {
@@ -350,7 +350,7 @@ void RE3Engine::loadRoom(void) {
 void RE3Engine::loadRoomPc(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE3PC_ROOM, _country, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE3PC_ROOM, _country, _stage, _room);
 
 	debug(3, "re3: loadRoom(\"%s\")", filePath);
 
@@ -364,7 +364,7 @@ void RE3Engine::loadRoomPc(void) {
 void RE3Engine::loadRoomPsx(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE3PSX_ROOM, _stage, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE3PSX_ROOM, _stage, _stage, _room);
 
 	debug(3, "re3: loadRoom(\"%s\")", filePath);
 
@@ -414,9 +414,9 @@ Entity *RE3Engine::loadEntityPc(int numEntity, int isPlayer) {
 	// Load EMD model
 
 	if (isPlayer) {
-		sprintf(filePath, RE3PC_MODEL1, numEntity);
+		snprintf(filePath, sizeof(filePath), RE3PC_MODEL1, numEntity);
 	} else {
-		sprintf(filePath, RE3PC_MODEL2, numEntity, "emd");
+		snprintf(filePath, sizeof(filePath), RE3PC_MODEL2, numEntity, "emd");
 	}
 	debug(3, "re3: loadEntityPc(\"%s\")", filePath);
 
@@ -435,7 +435,7 @@ Entity *RE3Engine::loadEntityPc(int numEntity, int isPlayer) {
 	if (isPlayer) {
 		// NOTE: TIM file embedded in pld file
 	} else {
-		sprintf(filePath, RE3PC_MODEL2, numEntity, "tim");
+		snprintf(filePath, sizeof(filePath), RE3PC_MODEL2, numEntity, "tim");
 		debug(3, "re2: loadEntityPc(\"%s\")", filePath);
 
 		stream = SearchMan.createReadStreamForMember(filePath);
@@ -457,7 +457,7 @@ Entity *RE3Engine::loadEntityPsx(int numEntity, int isPlayer) {
 	// Load EMD model
 
 	if (isPlayer) {
-		sprintf(filePath, RE3PSX_MODEL1, numEntity);
+		snprintf(filePath, sizeof(filePath), RE3PSX_MODEL1, numEntity);
 	} else {
 		// TODO: Handle Ems archive
 		return nullptr;
@@ -497,7 +497,7 @@ void RE3Engine::loadMovie(unsigned int numMovie) {
 			return;
 		}
 
-		sprintf(filePath, re3ps1_movies[numMovie]);
+		snprintf(filePath, sizeof(filePath), re3ps1_movies[numMovie]);
 
 		g_movie = CreatePsxPlayer();
 	} else {
@@ -506,7 +506,7 @@ void RE3Engine::loadMovie(unsigned int numMovie) {
 			return;
 		}
 
-		sprintf(filePath, re3pc_movies[numMovie]);
+		snprintf(filePath, sizeof(filePath), re3pc_movies[numMovie]);
 
 		g_movie = CreateMpegPlayer();
 	}

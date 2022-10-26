@@ -119,19 +119,19 @@ void RE2Engine::initPreRun(void) {
 	char filePath[64];
 
 	/* Country detection */
-	sprintf(filePath, RE2_ROOM, _character, 'p', 1, 0, _character);
+	snprintf(filePath, sizeof(filePath), RE2_ROOM, _character, 'p', 1, 0, _character);
 	if (SearchMan.hasFile(filePath)) {
 		_country = 'p';
 	}
-	sprintf(filePath, RE2_ROOM, _character, 's', 1, 0, _character);
+	snprintf(filePath, sizeof(filePath), RE2_ROOM, _character, 's', 1, 0, _character);
 	if (SearchMan.hasFile(filePath)) {
 		_country = 's';
 	}
-	sprintf(filePath, RE2_ROOM, _character, 'f', 1, 0, _character);
+	snprintf(filePath, sizeof(filePath), RE2_ROOM, _character, 'f', 1, 0, _character);
 	if (SearchMan.hasFile(filePath)) {
 		_country = 'f';
 	}
-	sprintf(filePath, RE2_ROOM, _character, 't', 1, 0, _character);
+	snprintf(filePath, sizeof(filePath), RE2_ROOM, _character, 't', 1, 0, _character);
 	if (SearchMan.hasFile(filePath)) {
 		_country = 't';
 	}
@@ -169,7 +169,7 @@ void RE2Engine::loadBgImage(void) {
 void RE2Engine::loadBgImagePcDemo(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE2PCDEMO_BG, _stage, _stage, _room, _camera);
+	snprintf(filePath, sizeof(filePath), RE2PCDEMO_BG, _stage, _stage, _room, _camera);
 	debug(3, "re2: loadBgImagePcDemo(\"%s\")", filePath);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
@@ -219,7 +219,7 @@ void RE2Engine::loadBgImagePcGame(void) {
 void RE2Engine::loadBgImagePsx(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE2PSX_BG, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE2PSX_BG, _stage, _room);
 
 	Common::SeekableReadStream *arcStream = SearchMan.createReadStreamForMember(filePath);
 	if (arcStream) {
@@ -298,7 +298,7 @@ void RE2Engine::loadBgMaskImage(void) {
 void RE2Engine::loadBgMaskImagePcDemo(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE2PCDEMO_BGMASK, _stage, _stage, _room, _camera);
+	snprintf(filePath, sizeof(filePath), RE2PCDEMO_BGMASK, _stage, _stage, _room, _camera);
 	debug(3, "re2: loadBgMaskImagePcDemo(\"%s\")", filePath);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
@@ -350,7 +350,7 @@ void RE2Engine::loadBgMaskImagePsx(void) {
 	char filePath[64];
 	const char blkEnd[8]={0x01,0x00,0x00,0x00, 0x00,0x00,0x00,0x00};
 
-	sprintf(filePath, RE2PSX_BG, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE2PSX_BG, _stage, _room);
 
 	Common::SeekableReadStream *arcStream = SearchMan.createReadStreamForMember(filePath);
 	if (arcStream) {
@@ -409,7 +409,7 @@ void RE2Engine::loadBgMaskImagePsx(void) {
 void RE2Engine::loadRoom(void) {
 	char filePath[64];
 
-	sprintf(filePath, RE2_ROOM, _character, _country, _stage, _room, _character);
+	snprintf(filePath, sizeof(filePath), RE2_ROOM, _character, _country, _stage, _room, _character);
 
 	debug(3, "re2: loadRoom(\"%s\")", filePath);
 
@@ -451,9 +451,9 @@ Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
 	// Load EMD model
 
 	if (isPlayer) {
-		sprintf(filePath, RE2PC_MODEL1, _character, numEntity);
+		snprintf(filePath, sizeof(filePath), RE2PC_MODEL1, _character, numEntity);
 	} else {
-		sprintf(filePath, RE2PC_MODEL2, _character, _character, _character, numEntity, "emd");
+		snprintf(filePath, sizeof(filePath), RE2PC_MODEL2, _character, _character, _character, numEntity, "emd");
 	}
 	debug(3, "re2: loadEntityPc(\"%s\")", filePath);
 
@@ -472,7 +472,7 @@ Entity *RE2Engine::loadEntityPc(int numEntity, int isPlayer) {
 	if (isPlayer) {
 		// TIM file embedded in pld file
 	} else {
-		sprintf(filePath, RE2PC_MODEL2, _character, _character, _character, numEntity, "tim");
+		snprintf(filePath, sizeof(filePath), RE2PC_MODEL2, _character, _character, _character, numEntity, "tim");
 		debug(3, "re2: loadEntityPc(\"%s\")", filePath);
 
 		stream = SearchMan.createReadStreamForMember(filePath);
@@ -494,7 +494,7 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 	// Load EMD model
 
 	if (isPlayer) {
-		sprintf(filePath, RE2PSX_MODEL1, _character, numEntity);
+		snprintf(filePath, sizeof(filePath), RE2PSX_MODEL1, _character, numEntity);
 
 		debug(3, "re2: loadEntityPsx(\"%s\")", filePath);
 
@@ -508,7 +508,7 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 
 		if (!_emsArchive0) {
 			while ((!_emsStream0) && (numCdEmd<8)) {
-				sprintf(filePath, RE2PSX_MODEL2, _character, ++numCdEmd);
+				snprintf(filePath, sizeof(filePath), RE2PSX_MODEL2, _character, ++numCdEmd);
 				_emsStream0 = SearchMan.createReadStreamForMember(filePath);
 			}
 			if (_emsStream0) {
@@ -541,7 +541,7 @@ Entity *RE2Engine::loadEntityPsx(int numEntity, int isPlayer) {
 
 		if (!_emsArchive1) {
 			while ((!_emsStream1) && (numCdEmd<8)) {
-				sprintf(filePath, RE2PSX_MODEL2, _character, ++numCdEmd);
+				snprintf(filePath, sizeof(filePath), RE2PSX_MODEL2, _character, ++numCdEmd);
 				_emsStream1 = SearchMan.createReadStreamForMember(filePath);
 			}
 			if (_emsStream1) {
@@ -587,9 +587,9 @@ void RE2Engine::loadMovie(unsigned int numMovie) {
 		}
 
 		if (numMovie == 5) {
-			sprintf(filePath, re2ps1_movies[numMovie], _character, _character==0 ? '9' : '8');
+			snprintf(filePath, sizeof(filePath), re2ps1_movies[numMovie], _character, _character==0 ? '9' : '8');
 		} else {
-			sprintf(filePath, re2ps1_movies[numMovie], _character, _character==0 ? 'l' : 'c');
+			snprintf(filePath, sizeof(filePath), re2ps1_movies[numMovie], _character, _character==0 ? 'l' : 'c');
 		}
 
 		g_movie = CreatePsxPlayer();
@@ -600,9 +600,9 @@ void RE2Engine::loadMovie(unsigned int numMovie) {
 		}
 
 		if (numMovie == 5) {
-			sprintf(filePath, re2pc_movies[numMovie], _character, _character==0 ? '9' : '8');
+			snprintf(filePath, sizeof(filePath), re2pc_movies[numMovie], _character, _character==0 ? '9' : '8');
 		} else {
-			sprintf(filePath, re2pc_movies[numMovie], _character, _character==0 ? 'l' : 'c');
+			snprintf(filePath, sizeof(filePath), re2pc_movies[numMovie], _character, _character==0 ? 'l' : 'c');
 		}
 
 		g_movie = CreateAviPlayer();

@@ -138,7 +138,7 @@ void RE1Engine::initPreRun(void) {
 
 	/* Country detect */
 	for (int i=0; i<NUM_COUNTRIES; i++) {
-		sprintf(filePath, "%s/data/capcom.ptc", re1_country[i]);
+		snprintf(filePath, sizeof(filePath), "%s/data/capcom.ptc", re1_country[i]);
 
 		if (SearchMan.hasFile(filePath)) {
 			_country = i;
@@ -216,7 +216,7 @@ void RE1Engine::loadBgImage(void) {
 void RE1Engine::loadBgImagePc(int stage, int width, int height) {
 	char filePath[64];
 
-	sprintf(filePath, RE1PCGAME_BG, re1_country[_country], stage, stage, _room, _camera);
+	snprintf(filePath, sizeof(filePath), RE1PCGAME_BG, re1_country[_country], stage, stage, _room, _camera);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
@@ -232,7 +232,7 @@ void RE1Engine::loadBgImagePc(int stage, int width, int height) {
 void RE1Engine::loadBgImagePsx(int stage, int width, int height) {
 	char filePath[64];
 
-	sprintf(filePath, RE1PSX_BG, re1_country[_country], stage, stage, _room);
+	snprintf(filePath, sizeof(filePath), RE1PSX_BG, re1_country[_country], stage, stage, _room);
 
 	Common::SeekableReadStream *arcStream = SearchMan.createReadStreamForMember(filePath);
 	if (arcStream) {
@@ -297,7 +297,7 @@ void RE1Engine::loadRoom(void) {
 	char filePath[64];
 	bool isPsx = (_gameDesc.platform == Common::kPlatformPSX);
 
-	sprintf(filePath, RE1_ROOM, isPsx ? "psx" : "", re1_country[_country], _stage, _stage, _room);
+	snprintf(filePath, sizeof(filePath), RE1_ROOM, isPsx ? "psx" : "", re1_country[_country], _stage, _stage, _room);
 
 	debug(3, "re1: loadRoom(\"%s\")", filePath);
 
@@ -325,7 +325,7 @@ Entity *RE1Engine::loadEntity(int numEntity, int isPlayer) {
 		}
 	}
 
-	sprintf(filePath, filename, isPsx ? "psx" : "", re1_country[_country], numEntity);
+	snprintf(filePath, sizeof(filePath), filename, isPsx ? "psx" : "", re1_country[_country], numEntity);
 
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filePath);
 	if (stream) {
@@ -349,7 +349,7 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 			return;
 		}
 
-		sprintf(filePath, re1ps1_movies[numMovie]);
+		snprintf(filePath, sizeof(filePath), re1ps1_movies[numMovie]);
 
 		g_movie = CreatePsxPlayer();
 	} else {
@@ -358,7 +358,7 @@ void RE1Engine::loadMovie(unsigned int numMovie) {
 			return;
 		}
 
-		sprintf(filePath, re1pc_movies[numMovie]);
+		snprintf(filePath, sizeof(filePath), re1pc_movies[numMovie]);
 
 		g_movie = CreateAviPlayer();
 	}
