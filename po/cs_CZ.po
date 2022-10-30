@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.7.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-10-25 21:05+0000\n"
+"POT-Creation-Date: 2022-10-30 11:34+0000\n"
 "PO-Revision-Date: 2022-05-01 15:27+0000\n"
 "Last-Translator: Zbyněk Schwarz <zbynek.schwarz@gmail.com>\n"
 "Language-Team: Czech <https://translations.scummvm.org/projects/scummvm/"
@@ -2287,7 +2287,7 @@ msgstr ""
 "Toto nastavení můžete změnit později\n"
 "ve volbách v kartě Různé."
 
-#: gui/widget.cpp:440 gui/widget.cpp:442 gui/widget.cpp:448 gui/widget.cpp:450
+#: gui/widget.cpp:437 gui/widget.cpp:439 gui/widget.cpp:445 gui/widget.cpp:447
 msgid "Clear value"
 msgstr "Vyčistit hodnotu"
 
@@ -3141,32 +3141,32 @@ msgstr "Roztáhnout do okna"
 msgid "Fit to window (4:3)"
 msgstr "Přizpůsobit oknu (4:3)"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:701
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:702
 #, c-format
 msgid "Resolution: %dx%d"
 msgstr "Rozlišení: %dx%d"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:716
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:717
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2450
 msgid "Enabled aspect ratio correction"
 msgstr "Povolena korekce poměru stran"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:718
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:719
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2456
 msgid "Disabled aspect ratio correction"
 msgstr "Zakázána korekce poměru stran"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:731
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:732
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2472
 msgid "Filtering enabled"
 msgstr "Filtrování povoleno"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:733
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:734
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2474
 msgid "Filtering disabled"
 msgstr "Filtrování zakázáno"
 
-#: backends/graphics/openglsdl/openglsdl-graphics.cpp:759
+#: backends/graphics/openglsdl/openglsdl-graphics.cpp:760
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2501
 #, fuzzy
 msgid "Stretch mode"
