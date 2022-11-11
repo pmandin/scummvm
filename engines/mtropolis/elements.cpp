@@ -474,11 +474,11 @@ MiniscriptInstructionOutcome MovieElement::writeRefAttribute(MiniscriptThread *t
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 	if (attrib == "volume") {
-		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetVolume>::create(this, result);
+		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetVolume, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 	if (attrib == "timevalue") {
-		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetTimestamp>::create(this, result);
+		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetTimestamp, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -918,11 +918,11 @@ MiniscriptInstructionOutcome MovieElement::scriptSetRangeEnd(MiniscriptThread *t
 
 MiniscriptInstructionOutcome MovieElement::scriptRangeWriteRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
 	if (attrib == "start") {
-		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetRangeStart>::create(this, result);
+		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetRangeStart, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 	if (attrib == "end") {
-		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetRangeStart>::create(this, result);
+		DynamicValueWriteFuncHelper<MovieElement, &MovieElement::scriptSetRangeStart, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 
@@ -1039,7 +1039,7 @@ MiniscriptInstructionOutcome ImageElement::writeRefAttribute(MiniscriptThread *t
 		DynamicValueWriteStringHelper::create(&_text, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "flushpriority") {
-		DynamicValueWriteFuncHelper<ImageElement, &ImageElement::scriptSetFlushPriority>::create(this, writeProxy);
+		DynamicValueWriteFuncHelper<ImageElement, &ImageElement::scriptSetFlushPriority, true>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -1082,12 +1082,21 @@ void ImageElement::render(Window *window) {
 		Common::Rect destRect(_cachedAbsoluteOrigin.x, _cachedAbsoluteOrigin.y, _cachedAbsoluteOrigin.x + _rect.width(), _cachedAbsoluteOrigin.y + _rect.height());
 
 		if (optimized->format.bytesPerPixel == 1) {
-			const Palette *palette = getPalette().get();
-			if (!palette)
-				palette = &_runtime->getGlobalPalette();
-
 			// FIXME: Pass palette to blit functions instead
-			optimized->setPalette(palette->getPalette(), 0, 256);
+			if (_cachedImage->getOriginalColorDepth() == kColorDepthMode1Bit) {
+				const Graphics::PixelFormat &fmt = window->getPixelFormat();
+				uint32 blackColor = fmt.RGBToColor(0, 0, 0);
+				uint32 whiteColor = fmt.RGBToColor(255, 255, 255);
+
+				const uint32 bwPalette[2] = {whiteColor, blackColor};
+				optimized->setPalette(bwPalette, 0, 2);
+			} else {
+				const Palette *palette = getPalette().get();
+				if (!palette)
+					palette = &_runtime->getGlobalPalette();
+
+				optimized->setPalette(palette->getPalette(), 0, 256);
+			}
 		}
 
 		uint8 alpha = _transitionProps.getAlpha();
@@ -1108,6 +1117,15 @@ void ImageElement::render(Window *window) {
 		}
 	}
 }
+
+#ifdef MTROPOLIS_DEBUG_ENABLE
+void ImageElement::debugInspect(IDebugInspectionReport *report) const {
+	VisualElement::debugInspect(report);
+
+	if (report->declareStatic("assetID"))
+		report->declareStaticContents(Common::String::format("%i", static_cast<int>(_assetID)));
+}
+#endif
 
 MiniscriptInstructionOutcome ImageElement::scriptSetFlushPriority(MiniscriptThread *thread, const DynamicValue &value) {
 	// We don't support flushing media, and this value isn't readable, so just discard it
@@ -1168,7 +1186,7 @@ bool MToonElement::readAttribute(MiniscriptThread *thread, DynamicValue &result,
 
 MiniscriptInstructionOutcome MToonElement::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
 	if (attrib == "cel") {
-		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetCel>::create(this, result);
+		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetCel, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "flushpriority") {
 		DynamicValueWriteIntegerHelper<int32>::create(&_flushPriority, result);
@@ -1177,7 +1195,7 @@ MiniscriptInstructionOutcome MToonElement::writeRefAttribute(MiniscriptThread *t
 		DynamicValueWriteBoolHelper::create(&_maintainRate, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "rate") {
-		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetRate>::create(this, result);
+		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetRate, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "range") {
 		DynamicValueWriteOrRefAttribFuncHelper<MToonElement, &MToonElement::scriptSetRange, &MToonElement::scriptRangeWriteRefAttribute>::create(this, result);
@@ -1347,6 +1365,17 @@ Common::Rect MToonElement::getRelativeCollisionRect() const {
 	colRect.translate(_rect.left, _rect.top);
 	return colRect;
 }
+#ifdef MTROPOLIS_DEBUG_ENABLE
+void MToonElement::debugInspect(IDebugInspectionReport *report) const {
+	VisualElement::debugInspect(report);
+
+	report->declareDynamic("cel", Common::String::format("%i", static_cast<int>(_cel)));
+	report->declareDynamic("assetID", Common::String::format("%i", static_cast<int>(_assetID)));
+	report->declareDynamic("isPlaying", Common::String::format("%s", _isPlaying ? "true" : "false"));
+	report->declareDynamic("renderedFrame", Common::String::format("%i", static_cast<int>(_renderedFrame)));
+	report->declareDynamic("playRange", Common::String::format("%i-%i", static_cast<int>(_playRange.min), static_cast<int>(_playRange.max)));
+}
+#endif
 
 VThreadState MToonElement::startPlayingTask(const StartPlayingTaskData &taskData) {
 	if (_rateTimes100000 < 0)
@@ -1479,7 +1508,7 @@ void MToonElement::playMedia(Runtime *runtime, Project *project) {
 			runtime->queueMessage(dispatch);
 		}
 
-		if (_maintainRate)
+		if (_maintainRate && !runtime->getHacks().ignoreMToonMaintainRateFlag)
 			_celStartTimeMSec = playTime;
 		else
 			_celStartTimeMSec += (static_cast<uint64>(100000000) * framesAdvanced) / absRateTimes100000;
@@ -1548,10 +1577,10 @@ MiniscriptInstructionOutcome MToonElement::scriptSetRangeEnd(MiniscriptThread *t
 
 MiniscriptInstructionOutcome MToonElement::scriptRangeWriteRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
 	if (attrib == "start") {
-		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetRangeStart>::create(this, result);
+		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetRangeStart, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "end") {
-		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetRangeEnd>::create(this, result);
+		DynamicValueWriteFuncHelper<MToonElement, &MToonElement::scriptSetRangeEnd, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -1675,7 +1704,7 @@ bool TextLabelElement::readAttributeIndexed(MiniscriptThread *thread, DynamicVal
 
 MiniscriptInstructionOutcome TextLabelElement::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib) {
 	if (attrib == "text") {
-		DynamicValueWriteFuncHelper<TextLabelElement, &TextLabelElement::scriptSetText>::create(this, writeProxy);
+		DynamicValueWriteFuncHelper<TextLabelElement, &TextLabelElement::scriptSetText, true>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -1941,7 +1970,9 @@ MiniscriptInstructionOutcome TextLabelElement::scriptSetText(MiniscriptThread *t
 
 
 MiniscriptInstructionOutcome TextLabelElement::scriptSetLine(MiniscriptThread *thread, size_t lineIndex, const DynamicValue &value) {
-	if (value.getType() != DynamicValueTypes::kString) {
+	DynamicValue derefValue = value.dereference();
+
+	if (derefValue.getType() != DynamicValueTypes::kString) {
 		thread->error("Tried to set a text label element's text to something that wasn't a string");
 		return kMiniscriptInstructionOutcomeFailed;
 	}
@@ -1949,14 +1980,14 @@ MiniscriptInstructionOutcome TextLabelElement::scriptSetLine(MiniscriptThread *t
 	uint32 startPos;
 	uint32 endPos;
 	if (findLineRange(lineIndex, startPos, endPos))
-		_text = _text.substr(0, startPos) + value.getString() + _text.substr(endPos, _text.size() - endPos);
+		_text = _text.substr(0, startPos) + derefValue.getString() + _text.substr(endPos, _text.size() - endPos);
 	else {
 		size_t numLines = countLines();
 		while (numLines <= lineIndex) {
 			_text += '\r';
 			numLines++;
 		}
-		_text += value.getString();
+		_text += derefValue.getString();
 	}
 
 	_needsRender = true;
@@ -2050,13 +2081,13 @@ bool SoundElement::readAttribute(MiniscriptThread *thread, DynamicValue &result,
 
 MiniscriptInstructionOutcome SoundElement::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib) {
 	if (attrib == "loop") {
-		DynamicValueWriteFuncHelper<SoundElement, &SoundElement::scriptSetLoop>::create(this, writeProxy);
+		DynamicValueWriteFuncHelper<SoundElement, &SoundElement::scriptSetLoop, true>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "volume") {
-		DynamicValueWriteFuncHelper<SoundElement, &SoundElement::scriptSetVolume>::create(this, writeProxy);
+		DynamicValueWriteFuncHelper<SoundElement, &SoundElement::scriptSetVolume, true>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "balance") {
-		DynamicValueWriteFuncHelper<SoundElement, &SoundElement::scriptSetBalance>::create(this, writeProxy);
+		DynamicValueWriteFuncHelper<SoundElement, &SoundElement::scriptSetBalance, true>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -2166,14 +2197,14 @@ void SoundElement::playMedia(Runtime *runtime, Project *project) {
 				uint64 oldTimeRelative = _cueCheckTime - _startTime + _startTimestamp;
 				uint64 newTimeRelative = newTime - _startTime + _startTimestamp;
 
-				_cueCheckTime = newTime;
-
 				if (_subtitlePlayer)
 					_subtitlePlayer->update(oldTimeRelative, newTimeRelative);
 
-				// TODO: Check cue points and queue them here
-			}
+				for (MediaCueState *mediaCue : _mediaCues)
+					mediaCue->checkTimestampChange(runtime, oldTimeRelative * _metadata->sampleRate / 1000u, newTimeRelative * _metadata->sampleRate / 1000u, true, true);
 
+				_cueCheckTime = newTime;
+			}
 
 			if (!_loop && newTime >= _finishTime) {
 				// Don't throw out the handle - It can still be playing but we just treat it like it's not.
@@ -2194,6 +2225,19 @@ void SoundElement::playMedia(Runtime *runtime, Project *project) {
 		// Goal state is stopped
 		stopPlayer();
 	}
+}
+
+bool SoundElement::resolveMediaMarkerLabel(const Label &label, int32 &outResolution) const {
+	if (_metadata) {
+		for (const AudioMetadata::CuePoint &cuePoint : _metadata->cuePoints) {
+			if (cuePoint.cuePointID == label.id) {
+				outResolution = cuePoint.position;
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void SoundElement::stopPlayer() {

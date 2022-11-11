@@ -1693,10 +1693,10 @@ bool STransCtModifier::readAttribute(MiniscriptThread *thread, DynamicValue &res
 
 MiniscriptInstructionOutcome STransCtModifier::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
 	if (attrib == "rate") {
-		DynamicValueWriteFuncHelper<STransCtModifier, &STransCtModifier::scriptSetRate>::create(this, result);
+		DynamicValueWriteFuncHelper<STransCtModifier, &STransCtModifier::scriptSetRate, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "steps") {
-		DynamicValueWriteFuncHelper<STransCtModifier, &STransCtModifier::scriptSetSteps>::create(this, result);
+		DynamicValueWriteFuncHelper<STransCtModifier, &STransCtModifier::scriptSetSteps, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -1924,6 +1924,14 @@ void MediaCueMessengerModifier::disable(Runtime *runtime) {
 	}
 }
 
+Modifier *MediaCueMessengerModifier::getMediaCueModifier() {
+	return this;
+}
+
+Common::WeakPtr<Modifier> MediaCueMessengerModifier::getMediaCueTriggerSource() const {
+	return _cueSourceModifier;
+}
+
 Common::SharedPtr<Modifier> MediaCueMessengerModifier::shallowClone() const {
 	Common::SharedPtr<MediaCueMessengerModifier> clone(new MediaCueMessengerModifier(*this));
 	clone->_isActive = false;
@@ -2000,7 +2008,7 @@ bool ObjectReferenceVariableModifier::readAttribute(MiniscriptThread *thread, Dy
 
 MiniscriptInstructionOutcome ObjectReferenceVariableModifier::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
 	if (attrib == "path") {
-		DynamicValueWriteFuncHelper<ObjectReferenceVariableModifier, &ObjectReferenceVariableModifier::scriptSetPath>::create(this, result);
+		DynamicValueWriteFuncHelper<ObjectReferenceVariableModifier, &ObjectReferenceVariableModifier::scriptSetPath, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 	if (attrib == "object") {
@@ -2014,8 +2022,6 @@ MiniscriptInstructionOutcome ObjectReferenceVariableModifier::writeRefAttribute(
 }
 
 bool ObjectReferenceVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	// Somewhat strangely, setting an object reference variable to something sets the path or object,
-	// but getting the variable returns the modifier
 	switch (value.getType()) {
 	case DynamicValueTypes::kNull:
 	case DynamicValueTypes::kObject:
@@ -2028,7 +2034,7 @@ bool ObjectReferenceVariableModifier::varSetValue(MiniscriptThread *thread, cons
 }
 
 void ObjectReferenceVariableModifier::varGetValue(DynamicValue &dest) const {
-	dest.setObject(this->getSelfReference());
+	dest.setObject(getSelfReference());
 }
 
 #ifdef MTROPOLIS_DEBUG_ENABLE
@@ -2463,28 +2469,28 @@ bool MidiModifier::readAttribute(MiniscriptThread *thread, DynamicValue &result,
 
 MiniscriptInstructionOutcome MidiModifier::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
 	if (attrib == "volume") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetVolume>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetVolume, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "notevelocity") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetNoteVelocity>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetNoteVelocity, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "noteduration") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetNoteDuration>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetNoteDuration, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "notenum") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetNoteNum>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetNoteNum, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "loop") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetLoop>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetLoop, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "playnote") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetPlayNote>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetPlayNote, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "tempo") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetTempo>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetTempo, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "mutetrack") {
-		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetMuteTrack>::create(this, result);
+		DynamicValueWriteFuncHelper<MidiModifier, &MidiModifier::scriptSetMuteTrack, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -2717,52 +2723,53 @@ ListVariableModifier::ListVariableModifier() : _list(new DynamicList()), _prefer
 }
 
 bool ListVariableModifier::load(const PlugInModifierLoaderContext &context, const Data::Standard::ListVariableModifier &data) {
-	if (!data.havePersistentData || data.numValues == 0)
-		return true;	// If the list is empty then we don't care, the actual value type is irrelevant because it can be reassigned
-
-	DynamicValueTypes::DynamicValueType expectedType = DynamicValueTypes::kInvalid;
+	_preferredContentType = DynamicValueTypes::kInvalid;
 	switch (data.contentsType) {
 	case Data::Standard::ListVariableModifier::kContentsTypeInteger:
-		expectedType = DynamicValueTypes::kInteger;
+		_preferredContentType = DynamicValueTypes::kInteger;
 		break;
 	case Data::Standard::ListVariableModifier::kContentsTypePoint:
-		expectedType = DynamicValueTypes::kPoint;
+		_preferredContentType = DynamicValueTypes::kPoint;
 		break;
 	case Data::Standard::ListVariableModifier::kContentsTypeRange:
-		expectedType = DynamicValueTypes::kIntegerRange;
+		_preferredContentType = DynamicValueTypes::kIntegerRange;
 		break;
 	case Data::Standard::ListVariableModifier::kContentsTypeFloat:
-		expectedType = DynamicValueTypes::kFloat;
+		_preferredContentType = DynamicValueTypes::kFloat;
 		break;
 	case Data::Standard::ListVariableModifier::kContentsTypeString:
-		expectedType = DynamicValueTypes::kString;
+		_preferredContentType = DynamicValueTypes::kString;
 		break;
 	case Data::Standard::ListVariableModifier::kContentsTypeObject:
+		_preferredContentType = DynamicValueTypes::kObject;
 		if (data.persistentValuesGarbled) {
 			// Ignore and let the game fix it
 			return true;
 		} else {
-			warning("Object reference lists are not implemented");
-			return false;
+			warning("Loading object reference lists from data is not implemented");
+			return true;
 		}
 		break;
 	case Data::Standard::ListVariableModifier::kContentsTypeVector:
-		expectedType = DynamicValueTypes::kVector;
+		_preferredContentType = DynamicValueTypes::kVector;
 		break;
 	case Data::Standard::ListVariableModifier::kContentsTypeBoolean:
-		expectedType = DynamicValueTypes::kBoolean;
+		_preferredContentType = DynamicValueTypes::kBoolean;
 		break;
 	default:
 		warning("Unknown list data type");
 		return false;
 	}
 
+	if (!data.havePersistentData || data.numValues == 0)
+		return true;
+
 	for (size_t i = 0; i < data.numValues; i++) {
 		DynamicValue dynValue;
 		if (!dynValue.loadConstant(data.values[i]))
 			return false;
 
-		if (dynValue.getType() != expectedType) {
+		if (dynValue.getType() != _preferredContentType) {
 			warning("List mod initialization element had the wrong type");
 			return false;
 		}
@@ -2773,8 +2780,10 @@ bool ListVariableModifier::load(const PlugInModifierLoaderContext &context, cons
 		}
 	}
 
-	_preferredContentType = expectedType;
+	return true;
+}
 
+bool ListVariableModifier::isListVariable() const {
 	return true;
 }
 
@@ -2783,19 +2792,71 @@ Common::SharedPtr<ModifierSaveLoad> ListVariableModifier::getSaveLoad() {
 }
 
 bool ListVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	if (value.getType() == DynamicValueTypes::kList)
-		_list = value.getList()->clone();
-	else {
-		if (!_list)
-			_list.reset(new DynamicList());
-		return _list->setAtIndex(0, value);
+	if (value.getType() == DynamicValueTypes::kList) {
+		// Source value is a list.  In this case, it must be convertible, or an error occurs.
+		Common::SharedPtr<DynamicList> sourceList = value.getList();
+		Common::SharedPtr<DynamicList> newList(new DynamicList());
+
+		for (size_t i = 0; i < sourceList->getSize(); i++) {
+			DynamicValue sourceElement;
+			sourceList->getAtIndex(i, sourceElement);
+
+			DynamicValue convertedElement;
+
+			if (!sourceElement.convertToType(_preferredContentType, convertedElement)) {
+				thread->error("Failed to convert list when assigning to a list variable");
+				return false;
+			}
+
+			newList->setAtIndex(i, convertedElement);
+		}
+
+		_list = newList;
+	} else if (value.getType() == DynamicValueTypes::kObject) {
+		// Source value is an object.  In this case, it must be another list, otherwise this fails without an error.
+		RuntimeObject *obj = value.getObject().object.lock().get();
+		if (obj && obj->isModifier() && static_cast<Modifier *>(obj)->isVariable() && static_cast<VariableModifier *>(obj)->isListVariable()) {
+			Common::SharedPtr<DynamicList> sourceList = static_cast<ListVariableModifier *>(obj)->_list;
+			Common::SharedPtr<DynamicList> newList(new DynamicList());
+
+			bool failed = false;
+			for (size_t i = 0; i < sourceList->getSize(); i++) {
+				DynamicValue sourceElement;
+				sourceList->getAtIndex(i, sourceElement);
+
+				DynamicValue convertedElement;
+
+				if (!sourceElement.convertToType(_preferredContentType, convertedElement)) {
+					warning("Failed to convert list when assigning to a list variable.  (Non-fatal since it was directly assigned.)");
+					failed = true;
+					break;
+				}
+
+				newList->setAtIndex(i, convertedElement);
+			}
+
+			if (!failed)
+				_list = newList;
+		}
+	} else {
+		// Source value is a non-list.  In this case, it must be exactly the correct type, except for numbers.
+
+		DynamicValue convertedValue;
+		if (value.convertToType(_preferredContentType, convertedValue)) {
+			Common::SharedPtr<DynamicList> newList(new DynamicList());
+			newList->setAtIndex(0, convertedValue);
+			_list = newList;
+		} else {
+			thread->error("Can't assign incompatible value type to a list variable");
+			return false;
+		}
 	}
 
 	return true;
 }
 
 void ListVariableModifier::varGetValue(DynamicValue &dest) const {
-	dest.setList(_list);
+	dest.setObject(this->getSelfReference());
 }
 
 bool ListVariableModifier::readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) {
@@ -2808,6 +2869,28 @@ bool ListVariableModifier::readAttribute(MiniscriptThread *thread, DynamicValue 
 
 		size_t index = thread->getRuntime()->getRandom()->getRandomNumber(_list->getSize() - 1);
 		return _list->getAtIndex(index, result);
+	} else if (attrib == "shuffle") {
+		_list = _list->clone();
+
+		Common::RandomSource *rng = thread->getRuntime()->getRandom();
+
+		size_t listSize = _list->getSize();
+		for (size_t i = 1; i < listSize; i++) {
+			size_t sourceIndex = i;
+			size_t destIndex = rng->getRandomNumber(static_cast<uint>(listSize - 1 - i));
+			if (sourceIndex != destIndex) {
+				DynamicValue srcValue;
+				DynamicValue destValue;
+				(void)_list->getAtIndex(sourceIndex, srcValue);
+				(void)_list->getAtIndex(destIndex, destValue);
+
+				(void)_list->setAtIndex(destIndex, srcValue);
+				(void)_list->setAtIndex(sourceIndex, destValue);
+			}
+		}
+
+		result.setInt(listSize);
+		return true;
 	}
 
 	return Modifier::readAttribute(thread, result, attrib);
@@ -2823,7 +2906,7 @@ bool ListVariableModifier::readAttributeIndexed(MiniscriptThread *thread, Dynami
 
 MiniscriptInstructionOutcome ListVariableModifier::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib) {
 	if (attrib == "count") {
-		DynamicValueWriteFuncHelper<ListVariableModifier, &ListVariableModifier::scriptSetCount>::create(this, writeProxy);
+		DynamicValueWriteFuncHelper<ListVariableModifier, &ListVariableModifier::scriptSetCount, true>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -2893,7 +2976,7 @@ void ListVariableModifier::debugInspect(IDebugInspectionReport *report) const {
 }
 #endif
 
-ListVariableModifier::ListVariableModifier(const ListVariableModifier &other) : _preferredContentType(DynamicValueTypes::kNull) {
+ListVariableModifier::ListVariableModifier(const ListVariableModifier &other) : VariableModifier(other), _preferredContentType(other._preferredContentType) {
 	if (other._list)
 		_list = other._list->clone();
 }
@@ -2937,7 +3020,10 @@ ListVariableModifier::SaveLoad::SaveLoad(ListVariableModifier *modifier) : _modi
 }
 
 void ListVariableModifier::SaveLoad::commitLoad() const {
-	_modifier->_list = _list;
+	// We don't support deserializing object references (yet?), so just leave the existing values.
+	// In Obsidian at least, this doesn't matter.
+	if (_list->getType() != DynamicValueTypes::kObject)
+		_modifier->_list = _list;
 }
 
 void ListVariableModifier::SaveLoad::saveInternal(Common::WriteStream *stream) const {
@@ -2991,8 +3077,7 @@ void ListVariableModifier::SaveLoad::recursiveWriteList(DynamicList *list, Commo
 		case DynamicValueTypes::kBoolean:
 			stream->writeByte(list->getBool()[i] ? 1 : 0);
 			break;
-		case DynamicValueTypes::kList:
-			recursiveWriteList(list->getList()[i].get(), stream);
+		case DynamicValueTypes::kObject:
 			break;
 		default:
 			error("Can't figure out how to write a saved variable");
@@ -3060,11 +3145,8 @@ Common::SharedPtr<DynamicList> ListVariableModifier::SaveLoad::recursiveReadList
 				byte b = stream->readByte();
 				val.setBool(b != 0);
 			} break;
-		case DynamicValueTypes::kList: {
-				Common::SharedPtr<DynamicList> childList = recursiveReadList(stream);
-				if (!childList)
-					return nullptr;
-				val.setList(childList);
+		case DynamicValueTypes::kObject: {
+				val.setObject(Common::WeakPtr<RuntimeObject>());
 			} break;
 		default:
 			error("Can't figure out how to write a saved variable");

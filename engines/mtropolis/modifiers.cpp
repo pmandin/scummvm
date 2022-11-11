@@ -465,7 +465,7 @@ bool MessengerModifier::respondsToEvent(const Event &evt) const {
 
 VThreadState MessengerModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
 	if (_when.respondsTo(msg->getEvent())) {
-		_sendSpec.sendFromMessenger(runtime, this, msg->getValue(), nullptr);
+		_sendSpec.sendFromMessenger(runtime, this, msg->getSource().lock().get(), msg->getValue(), nullptr);
 	}
 
 	return kVThreadReturn;
@@ -506,14 +506,50 @@ bool SetModifier::respondsToEvent(const Event &evt) const {
 
 VThreadState SetModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
 	if (_executeWhen.respondsTo(msg->getEvent())) {
+		if (_target.getSourceType() != DynamicValueSourceTypes::kVariableReference) {
 #ifdef MTROPOLIS_DEBUG_ENABLE
-		if (Debugger *debugger = runtime->debugGetDebugger())
-			debugger->notifyFmt(kDebugSeverityError, "Set modifier is not yet implemented");
+			if (Debugger *debugger = runtime->debugGetDebugger())
+				debugger->notifyFmt(kDebugSeverityError, "Set modifier target isn't a variable reference");
 #endif
-		warning("Set modifier is not yet implemented!");
-		return kVThreadReturn;
+			return kVThreadError;
+		} else {
+			Common::SharedPtr<Modifier> targetModifier = _target.getVarReference().resolution.lock();
+			if (!targetModifier) {
+#ifdef MTROPOLIS_DEBUG_ENABLE
+				if (Debugger *debugger = runtime->debugGetDebugger())
+					debugger->notifyFmt(kDebugSeverityError, "Set modifier target was invalid");
+#endif
+				return kVThreadError;
+			} else if (!targetModifier->isVariable()) {
+#ifdef MTROPOLIS_DEBUG_ENABLE
+				if (Debugger *debugger = runtime->debugGetDebugger())
+					debugger->notifyFmt(kDebugSeverityError, "Set modifier target was invalid");
+#endif
+				return kVThreadError;
+			} else {
+				DynamicValue srcValue = _source.produceValue(msg->getValue());
+				VariableModifier *targetVar = static_cast<VariableModifier *>(targetModifier.get());
+				if (!targetVar->varSetValue(nullptr, srcValue)) {
+#ifdef MTROPOLIS_DEBUG_ENABLE
+					if (Debugger *debugger = runtime->debugGetDebugger())
+						debugger->notifyFmt(kDebugSeverityError, "Set modifier failed to set target value");
+#endif
+					return kVThreadError;
+				}
+			}
+		}
 	}
 	return kVThreadReturn;
+}
+
+void SetModifier::linkInternalReferences(ObjectLinkingScope *outerScope) {
+	_source.linkInternalReferences(outerScope);
+	_target.linkInternalReferences(outerScope);
+}
+
+void SetModifier::visitInternalReferences(IStructuralReferenceVisitor *visitor) {
+	_source.visitInternalReferences(visitor);
+	_target.visitInternalReferences(visitor);
 }
 
 Common::SharedPtr<Modifier> SetModifier::shallowClone() const {
@@ -1403,6 +1439,7 @@ VThreadState IfMessengerModifier::consumeMessage(Runtime *runtime, const Common:
 		evalAndSendData->thread = thread;
 		evalAndSendData->runtime = runtime;
 		evalAndSendData->incomingData = msg->getValue();
+		evalAndSendData->triggerSource = msg->getSource();
 
 		MiniscriptThread::runOnVThread(runtime->getVThread(), thread);
 	}
@@ -1443,7 +1480,7 @@ VThreadState IfMessengerModifier::evaluateAndSendTask(const EvaluateAndSendTaskD
 		return kVThreadError;
 
 	if (isTrue)
-		_sendSpec.sendFromMessenger(taskData.runtime, this, taskData.incomingData, nullptr);
+		_sendSpec.sendFromMessenger(taskData.runtime, this, taskData.triggerSource.lock().get(), taskData.incomingData, nullptr);
 
 	return kVThreadReturn;
 }
@@ -1487,6 +1524,8 @@ VThreadState TimerMessengerModifier::consumeMessage(Runtime *runtime, const Comm
 		uint32 realMilliseconds = _milliseconds;
 		if (realMilliseconds == 0)
 			realMilliseconds = 1;
+
+		_triggerSource = msg->getSource();
 
 		debug(3, "Timer %x '%s' scheduled to execute in %i milliseconds", getStaticGUID(), getName().c_str(), realMilliseconds);
 
@@ -1542,7 +1581,7 @@ void TimerMessengerModifier::trigger(Runtime *runtime) {
 	} else
 		_scheduledEvent.reset();
 
-	_sendSpec.sendFromMessenger(runtime, this, _incomingData, nullptr);
+	_sendSpec.sendFromMessenger(runtime, this, _triggerSource.lock().get(), _incomingData, nullptr);
 }
 
 BoundaryDetectionMessengerModifier::BoundaryDetectionMessengerModifier()
@@ -1591,6 +1630,7 @@ VThreadState BoundaryDetectionMessengerModifier::consumeMessage(Runtime *runtime
 		_incomingData = msg->getValue();
 		if (_incomingData.getType() == DynamicValueTypes::kList)
 			_incomingData.setList(_incomingData.getList()->clone());
+		_triggerSource = msg->getSource();
 	}
 	if (_disableWhen.respondsTo(msg->getEvent())) {
 		disable(runtime);
@@ -1634,7 +1674,7 @@ void BoundaryDetectionMessengerModifier::getCollisionProperties(Modifier *&modif
 }
 
 void BoundaryDetectionMessengerModifier::triggerCollision(Runtime *runtime) {
-	_send.sendFromMessenger(runtime, this, _incomingData, nullptr);
+	_send.sendFromMessenger(runtime, this, _triggerSource.lock().get(), _incomingData, nullptr);
 }
 
 Common::SharedPtr<Modifier> BoundaryDetectionMessengerModifier::shallowClone() const {
@@ -1698,12 +1738,13 @@ VThreadState CollisionDetectionMessengerModifier::consumeMessage(Runtime *runtim
 		if (!_isActive) {
 			_isActive = true;
 			_runtime = runtime;
-			_incomingData = msg->getValue();
-			if (_incomingData.getType() == DynamicValueTypes::kList)
-				_incomingData.setList(_incomingData.getList()->clone());
 
 			runtime->addCollider(this);
 		}
+		_incomingData = msg->getValue();
+		if (_incomingData.getType() == DynamicValueTypes::kList)
+			_incomingData.setList(_incomingData.getList()->clone());
+		_triggerSource = msg->getSource();
 	}
 	if (_disableWhen.respondsTo(msg->getEvent())) {
 		disable(runtime);
@@ -1773,7 +1814,7 @@ void CollisionDetectionMessengerModifier::triggerCollision(Runtime *runtime, Str
 		customDestination = collidingElement;
 	}
 
-	_sendSpec.sendFromMessenger(runtime, this, _incomingData, customDestination);
+	_sendSpec.sendFromMessenger(runtime, this, _triggerSource.lock().get(), _incomingData, customDestination);
 }
 
 KeyboardMessengerModifier::~KeyboardMessengerModifier() {
@@ -1984,7 +2025,7 @@ void KeyboardMessengerModifier::dispatchMessage(Runtime *runtime, const Common::
 
 	DynamicValue charStrValue;
 	charStrValue.setString(charStr);
-	_sendSpec.sendFromMessenger(runtime, this, charStrValue, nullptr);
+	_sendSpec.sendFromMessenger(runtime, this, nullptr, charStrValue, nullptr);
 }
 
 void KeyboardMessengerModifier::visitInternalReferences(IStructuralReferenceVisitor *visitor) {
@@ -2354,19 +2395,11 @@ Common::SharedPtr<ModifierSaveLoad> BooleanVariableModifier::getSaveLoad() {
 }
 
 bool BooleanVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	switch (value.getType()) {
-	case DynamicValueTypes::kBoolean:
-		_value = value.getBool();
-		break;
-	case DynamicValueTypes::kFloat:
-		_value = (value.getFloat() != 0.0);
-		break;
-	case DynamicValueTypes::kInteger:
-		_value = (value.getInt() != 0);
-		break;
-	default:
+	DynamicValue boolValue;
+	if (!value.convertToType(DynamicValueTypes::kBoolean, boolValue))
 		return false;
-	}
+
+	_value = boolValue.getBool();
 
 	return true;
 }
@@ -2429,18 +2462,11 @@ Common::SharedPtr<ModifierSaveLoad> IntegerVariableModifier::getSaveLoad() {
 }
 
 bool IntegerVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	if (value.getType() == DynamicValueTypes::kFloat)
-		_value = static_cast<int32>(floor(value.getFloat() + 0.5));
-	else if (value.getType() == DynamicValueTypes::kInteger)
-		_value = value.getInt();
-	else if (value.getType() == DynamicValueTypes::kString) {
-		// Should this scan %lf to a double and round it instead?
-		int i;
-		if (!sscanf(value.getString().c_str(), "%i", &i))
-			return false;
-		_value = i;
-	} else
+	DynamicValue intValue;
+	if (!value.convertToType(DynamicValueTypes::kInteger, intValue))
 		return false;
+
+	_value = intValue.getInt();
 
 	return true;
 }
@@ -2501,10 +2527,11 @@ Common::SharedPtr<ModifierSaveLoad> IntegerRangeVariableModifier::getSaveLoad() 
 }
 
 bool IntegerRangeVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	if (value.getType() == DynamicValueTypes::kIntegerRange)
-		_range = value.getIntRange();
-	else
+	DynamicValue intRangeValue;
+	if (!value.convertToType(DynamicValueTypes::kIntegerRange, intRangeValue))
 		return false;
+
+	_range = intRangeValue.getIntRange();
 
 	return true;
 }
@@ -2591,10 +2618,11 @@ Common::SharedPtr<ModifierSaveLoad> VectorVariableModifier::getSaveLoad() {
 }
 
 bool VectorVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	if (value.getType() == DynamicValueTypes::kVector)
-		_vector = value.getVector();
-	else
+	DynamicValue vectorValue;
+	if (!value.convertToType(DynamicValueTypes::kVector, vectorValue))
 		return false;
+
+	_vector = vectorValue.getVector();
 
 	return true;
 }
@@ -2681,10 +2709,11 @@ Common::SharedPtr<ModifierSaveLoad> PointVariableModifier::getSaveLoad() {
 }
 
 bool PointVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	if (value.getType() == DynamicValueTypes::kPoint)
-		_value = value.getPoint();
-	else
+	DynamicValue pointValue;
+	if (!value.convertToType(DynamicValueTypes::kPoint, pointValue))
 		return false;
+
+	_value = pointValue.getPoint();
 
 	return true;
 }
@@ -2775,12 +2804,11 @@ Common::SharedPtr<ModifierSaveLoad> FloatingPointVariableModifier::getSaveLoad()
 }
 
 bool FloatingPointVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	if (value.getType() == DynamicValueTypes::kInteger)
-		_value = value.getInt();
-	else if (value.getType() == DynamicValueTypes::kFloat)
-		_value = value.getFloat();
-	else
+	DynamicValue floatValue;
+	if (!value.convertToType(DynamicValueTypes::kFloat, floatValue))
 		return false;
+
+	_value = floatValue.getFloat();
 
 	return true;
 }
@@ -2840,10 +2868,11 @@ Common::SharedPtr<ModifierSaveLoad> StringVariableModifier::getSaveLoad() {
 }
 
 bool StringVariableModifier::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
-	if (value.getType() == DynamicValueTypes::kString)
-		_value = value.getString();
-	else
+	DynamicValue stringValue;
+	if (!value.convertToType(DynamicValueTypes::kString, stringValue))
 		return false;
+
+	_value = stringValue.getString();
 
 	return true;
 }
@@ -2930,6 +2959,8 @@ Common::SharedPtr<ModifierSaveLoad> ObjectReferenceVariableModifierV1::getSaveLo
 }
 
 bool ObjectReferenceVariableModifierV1::varSetValue(MiniscriptThread *thread, const DynamicValue &value) {
+	// Somewhat tricky aspect: If this is set to another object reference variable modifier, then this will reference
+	// the other object variable modifier, it will NOT copy it.
 	if (value.getType() == DynamicValueTypes::kNull)
 		_value.reset();
 	else if (value.getType() == DynamicValueTypes::kObject)
@@ -2941,10 +2972,7 @@ bool ObjectReferenceVariableModifierV1::varSetValue(MiniscriptThread *thread, co
 }
 
 void ObjectReferenceVariableModifierV1::varGetValue(DynamicValue &dest) const {
-	if (_value.expired())
-		dest.clear();
-	else
-		dest.setObject(_value);
+	dest.setObject(getSelfReference());
 }
 
 Common::SharedPtr<Modifier> ObjectReferenceVariableModifierV1::shallowClone() const {

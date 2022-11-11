@@ -104,7 +104,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed possible crash when using the autosave function.
 
  SCI:
-   - Fixed various bugs and script issues in KQ4, KQ5, LB2, LONGBOW, PQ1, PQ3, QFG4 and SQ5.
+   - Fixed various bugs and script issues in KQ4, KQ5, LB2, LONGBOW, PQ1, PQ3, QFG2, QFG3, QFG4 and SQ5.
    - Numerous improvements to various parts of the engine code.
 
  SCUMM:
@@ -2804,7 +2804,7 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Simon:
    - Improved Hebrew support.
-   - Lots of long-overdue cleanups and re-structuring were made to accomodate
+   - Lots of long-overdue cleanups and re-structuring were made to accommodate
      for The Feeble Files.
    - Fixed a rare MIDI bug that would cause a channel to change volume without
      adjusting it to the master volume.

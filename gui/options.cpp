@@ -250,7 +250,15 @@ void OptionsDialog::init() {
 	_guioptions.clear();
 	if (ConfMan.hasKey("guioptions", _domain)) {
 		_guioptionsString = ConfMan.get("guioptions", _domain);
-		_guioptions = parseGameGUIOptions(_guioptionsString);
+
+		const Plugin *plugin = nullptr;
+		EngineMan.findTarget(_domain, &plugin);
+		if (plugin) {
+			const MetaEngineDetection &metaEngineDetection = plugin->get<MetaEngineDetection>();		
+			_guioptions = metaEngineDetection.parseAndCustomizeGuiOptions(_guioptionsString, _domain);
+		} else {
+			_guioptions = parseGameGUIOptions(_guioptionsString);
+		}
 	}
 }
 
@@ -259,7 +267,15 @@ void OptionsDialog::build() {
 	_guioptions.clear();
 	if (ConfMan.hasKey("guioptions", _domain)) {
 		_guioptionsString = ConfMan.get("guioptions", _domain);
-		_guioptions = parseGameGUIOptions(_guioptionsString);
+
+		const Plugin *plugin = nullptr;
+		EngineMan.findTarget(_domain, &plugin);
+		if (plugin) {
+			const MetaEngineDetection &metaEngineDetection = plugin->get<MetaEngineDetection>();		
+			_guioptions = metaEngineDetection.parseAndCustomizeGuiOptions(_guioptionsString, _domain);
+		} else {
+			_guioptions = parseGameGUIOptions(_guioptionsString);
+		}
 	}
 
 	// Control options
@@ -833,7 +849,7 @@ void OptionsDialog::apply() {
 				shader = ConfMan.get("shader", _domain);
 
 			// If shader was changed, show the test dialog
-			if (previousShader != shader && !shader.empty()) {
+			if (previousShader != shader && !shader.empty() && shader != "default") {
 				if (!testGraphicsSettings()) {
 					if (previousShader == _c("None", "shader"))
 						previousShader = "default";
@@ -1515,7 +1531,7 @@ void OptionsDialog::addGraphicControls(GuiObject *boss, const Common::String &pr
 	const Common::RenderModeDescription *rm = Common::g_renderModes;
 	for (; rm->code; ++rm) {
 		Common::String renderGuiOption = Common::renderMode2GUIO(rm->id);
-		if ((_domain == Common::ConfigManager::kApplicationDomain) || (_domain != Common::ConfigManager::kApplicationDomain && !renderingTypeDefined) || (_guioptions.contains(renderGuiOption)))
+		if ((_domain == Common::ConfigManager::kApplicationDomain) || (_domain != Common::ConfigManager::kApplicationDomain && renderingTypeDefined && _guioptions.contains(renderGuiOption)))
 			_renderModePopUp->appendEntry(_c(rm->description, context), rm->id);
 	}
 

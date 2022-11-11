@@ -2237,18 +2237,39 @@ bool Gdi::drawStrip(byte *dstPtr, VirtScreen *vs, int x, int y, const int width,
 	// version makes the text more readable by giving it a black outline.
 
 	else if (_vm->_game.id == GID_MONKEY &&
+			!(_vm->_game.features & GF_ULTIMATE_TALKIE) &&
 			_vm->_game.platform != Common::kPlatformSegaCD &&
 			_vm->_game.platform != Common::kPlatformFMTowns &&
 			_vm->_currentRoom == 36 &&
 			vs->number == kMainVirtScreen &&
 			y == 8 && x >= 7 && x <= 30 && height == 88 &&
-			strcmp(_vm->_game.variant, "SE Talkie") != 0 &&
 			_vm->_enableEnhancements) {
 		_roomPalette[47] = 15;
 
 		byte result = decompressBitmap(dstPtr, vs->pitch, smap_ptr + offset, height);
 
 		_roomPalette[47] = 47;
+		return result;
+	}
+
+	// WORKAROUND: In the French VGA floppy version of MI1, the easter egg
+	// poking fun at Sierra has a dark blue background instead of white,
+	// which causes similar legibility issues (the other VGA floppy
+	// translations are fine, and the French VGA Amiga and CD releases
+	// fixed this).
+
+	else if (_vm->_game.id == GID_MONKEY_VGA &&
+			_vm->_language == Common::FR_FRA &&
+			_vm->_game.platform != Common::kPlatformAmiga &&
+			_vm->_currentRoom == 11 &&
+			vs->number == kMainVirtScreen &&
+			y == 24 && x >= 28 && x <= 52 && height == 56 &&
+			_vm->_enableEnhancements) {
+		_roomPalette[1] = 15;
+
+		byte result = decompressBitmap(dstPtr, vs->pitch, smap_ptr + offset, height);
+
+		_roomPalette[1] = 1;
 		return result;
 	}
 
