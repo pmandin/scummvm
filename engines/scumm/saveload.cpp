@@ -671,7 +671,7 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 
 	// Since version 52 a thumbnail is saved directly after the header.
 	if (hdr.ver >= VER(52)) {
-		// Prior to version 75 we always required an thumbnail to be present
+		// Prior to version 75 we always required a thumbnail to be present
 		if (hdr.ver <= VER(74)) {
 			if (!Graphics::checkThumbnailHeader(*in)) {
 				warning("Can not load thumbnail");
@@ -1987,7 +1987,7 @@ void ScummEngine_v7::saveLoadWithSerializer(Common::Serializer &s) {
 
 	if (s.getVersion() <= VER(68) && s.isLoading()) {
 		// WORKAROUND bug #3483: Reset the default charset color to a sane value.
-		_string[0]._default.charset = 1;
+		_string[0]._default.charset = _game.version == 7 ? 2 : 1;
 	}
 
 	// The original Save/Load screen for COMI saves a heap savegame when it is entered

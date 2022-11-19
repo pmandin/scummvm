@@ -1479,6 +1479,8 @@ enum OSEventType {
 	kOSEventTypeMouseMove,
 
 	kOSEventTypeKeyboard,
+
+	kOSEventTypeAction,
 };
 
 class OSEvent {
@@ -1518,6 +1520,16 @@ private:
 	Common::EventType _keyEventType;
 	bool _repeat;
 	const Common::KeyState _keyEvt;
+};
+
+class ActionEvent : public OSEvent {
+public:
+	explicit ActionEvent(OSEventType osEventType, Actions::Action action);
+
+	Actions::Action getAction() const;
+
+private:
+	Actions::Action _action;
 };
 
 struct DragMotionProperties {
@@ -1628,6 +1640,7 @@ public:
 	void onMouseMove(int32 x, int32 y);
 	void onMouseUp(int32 x, int32 y, Actions::MouseButton mButton);
 	void onKeyboardEvent(const Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt);
+	void onAction(MTropolis::Actions::Action action);
 
 	const Common::Point &getCachedMousePosition() const;
 	void setModifierCursorOverride(uint32 cursorID);
@@ -1723,6 +1736,10 @@ private:
 		Common::SharedPtr<KeyEventDispatch> dispatch;
 	};
 
+	struct DispatchActionTaskData {
+		Actions::Action action;
+	};
+
 	struct ConsumeMessageTaskData {
 		ConsumeMessageTaskData();
 
@@ -1801,6 +1818,7 @@ private:
 
 	VThreadState dispatchMessageTask(const DispatchMethodTaskData &data);
 	VThreadState dispatchKeyTask(const DispatchKeyTaskData &data);
+	VThreadState dispatchActionTask(const DispatchActionTaskData &data);
 	VThreadState consumeMessageTask(const ConsumeMessageTaskData &data);
 	VThreadState consumeCommandTask(const ConsumeCommandTaskData &data);
 	VThreadState updateMouseStateTask(const UpdateMouseStateTaskData &data);
@@ -1835,6 +1853,7 @@ private:
 	Common::SharedPtr<Graphics::ManagedSurface> _sceneTransitionNewFrame;
 	uint32 _sceneTransitionStartTime;
 	uint32 _sceneTransitionEndTime;
+	bool _sharedSceneWasSetExplicitly;
 
 	Common::WeakPtr<Window> _mainWindow;
 	Common::Array<Common::SharedPtr<Window> > _windows;
@@ -2022,7 +2041,9 @@ private:
 	MiniscriptInstructionOutcome setAutoResetCursor(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome setWinSndBufferSize(MiniscriptThread *thread, const DynamicValue &value);
 
+	int32 _opInt;
 	bool _gameMode;
+	bool _combineRedraws;
 };
 
 class AssetManagerInterface : public RuntimeObject {
@@ -2118,6 +2139,8 @@ public:
 	SupportStatus debugGetSupportStatus() const override;
 	const Common::String &debugGetName() const override;
 	void debugInspect(IDebugInspectionReport *report) const override;
+
+	virtual void debugSkipMovies();
 #endif
 
 protected:

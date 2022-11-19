@@ -93,6 +93,7 @@ public:
 	void onMouseMove(int32 x, int32 y) override;
 	void onMouseUp(int32 x, int32 y, int mouseButton) override;
 	void onKeyboardEvent(const Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt) override;
+	void onAction(MTropolis::Actions::Action action) override;
 
 private:
 	bool _mouseButtonStates[Actions::kMouseButtonCount];
@@ -129,6 +130,10 @@ void MainWindow::onMouseUp(int32 x, int32 y, int mouseButton) {
 
 void MainWindow::onKeyboardEvent(const Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt) {
 	_runtime->queueOSEvent(Common::SharedPtr<OSEvent>(new KeyboardInputEvent(kOSEventTypeKeyboard, evtType, repeat, keyEvt)));
+}
+
+void MainWindow::onAction(MTropolis::Actions::Action action) {
+	_runtime->queueOSEvent(Common::SharedPtr<OSEvent>(new ActionEvent(kOSEventTypeAction, action)));
 }
 
 
@@ -1884,7 +1889,7 @@ MiniscriptInstructionOutcome DynamicValueWriteStringHelper::write(MiniscriptThre
 	Common::String &dest = *static_cast<Common::String *>(objectRef);
 	switch (derefValue.getType()) {
 	case DynamicValueTypes::kString:
-		dest = value.getString();
+		dest = derefValue.getString();
 		return kMiniscriptInstructionOutcomeContinue;
 	default:
 		return kMiniscriptInstructionOutcomeFailed;
@@ -2645,7 +2650,7 @@ void MessageProperties::setValue(const DynamicValue &value) {
 		_value = value;
 }
 
-WorldManagerInterface::WorldManagerInterface() : _gameMode(false) {
+WorldManagerInterface::WorldManagerInterface() : _gameMode(false), _combineRedraws(true), _opInt(0) {
 }
 
 bool WorldManagerInterface::readAttribute(MiniscriptThread *thread, DynamicValue &result, const Common::String &attrib) {
@@ -2663,9 +2668,11 @@ bool WorldManagerInterface::readAttribute(MiniscriptThread *thread, DynamicValue
 
 		result.setInt(bitDepth);
 		return true;
-	}
-	else if (attrib == "gamemode") {
+	} else if (attrib == "gamemode") {
 		result.setBool(_gameMode);
+		return true;
+	} else if (attrib == "combineredraws") {
+		result.setBool(_combineRedraws);
 		return true;
 	}
 
@@ -2676,24 +2683,30 @@ MiniscriptInstructionOutcome WorldManagerInterface::writeRefAttribute(Miniscript
 	if (attrib == "currentscene") {
 		DynamicValueWriteFuncHelper<WorldManagerInterface, &WorldManagerInterface::setCurrentScene, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
-	}
-	if (attrib == "refreshcursor") {
+	} else if (attrib == "refreshcursor") {
 		DynamicValueWriteFuncHelper<WorldManagerInterface, &WorldManagerInterface::setRefreshCursor, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
-	}
-	if (attrib == "autoresetcursor") {
+	} else if (attrib == "autoresetcursor") {
 		DynamicValueWriteFuncHelper<WorldManagerInterface, &WorldManagerInterface::setAutoResetCursor, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
-	}
-	if (attrib == "winsndbuffersize") {
+	} else if (attrib == "winsndbuffersize") {
 		DynamicValueWriteFuncHelper<WorldManagerInterface, &WorldManagerInterface::setWinSndBufferSize, true>::create(this, result);
 		return kMiniscriptInstructionOutcomeContinue;
-	}
-	if (attrib == "gamemode") {
+	} else if (attrib == "gamemode") {
 		DynamicValueWriteBoolHelper::create(&_gameMode, result);
 		return kMiniscriptInstructionOutcomeContinue;
-	}
-	if (attrib == "scenefades") {
+	} else if (attrib == "combineredraws") {
+		DynamicValueWriteBoolHelper::create(&_combineRedraws, result);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "qtpalettehack") {
+		DynamicValueWriteDiscardHelper::create(result);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "opint") {
+		// This is used by SPQR before changing scenes in many instances.  It's not clear what it does.
+		// It's usually set to 2 or 4, sometimes 7
+		DynamicValueWriteIntegerHelper<int32>::create(&_opInt, result);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "scenefades") {
 		// TODO
 		DynamicValueWriteDiscardHelper::create(result);
 		return kMiniscriptInstructionOutcomeContinue;
@@ -3033,6 +3046,14 @@ bool Structural::readAttribute(MiniscriptThread *thread, DynamicValue &result, c
 		return true;
 	} else if (attrib == "flushpriority") {
 		result.setInt(_flushPriority);
+		return true;
+	} else if (attrib == "firstchild") {
+		// Despite documentation describing modifiers as children, "firstchild" on a structural element always returns
+		// the first structural child.
+		if (_children.size() == 0)
+			result.clear();
+		else
+			result.setObject(_children[0]->getSelfReference());
 		return true;
 	}
 
@@ -3424,6 +3445,11 @@ void Structural::debugInspect(IDebugInspectionReport *report) const {
 		report->declareStaticContents(Common::String::format("%x", getStaticGUID()));
 }
 
+void Structural::debugSkipMovies() {
+	for (Common::SharedPtr<Structural> &child : _children)
+		child->debugSkipMovies();
+}
+
 #endif /* MTROPOLIS_DEBUG_ENABLE */
 
 void Structural::linkInternalReferences(ObjectLinkingScope *scope) {
@@ -3631,19 +3657,17 @@ MessageDispatch::MessageDispatch(const Common::SharedPtr<MessageProperties> &msg
 
 MessageDispatch::MessageDispatch(const Common::SharedPtr<MessageProperties> &msgProps, Modifier *root, bool cascade, bool relay, bool couldBeCommand)
 	: _cascade(cascade), _relay(relay), _terminated(false), _msg(msgProps), _isCommand(false) {
-	if (couldBeCommand && EventIDs::isCommand(msgProps->getEvent().eventType)) {
-		_isCommand = true;
-		// Can't actually send this so don't even bother.  Modifiers are not allowed to respond to commands.
-	} else {
-		PropagationStack topEntry;
-		topEntry.index = 0;
-		topEntry.propagationStage = PropagationStack::kStageCheckAndSendToModifier;
-		topEntry.ptr.modifier = root;
 
-		_isCommand = (couldBeCommand && EventIDs::isCommand(msgProps->getEvent().eventType));
+	// Apparently if a command message is sent to a modifier, it's handled as a message.
+	// SPQR depends on this to send "Element Select" messages to pick the palette.
+	PropagationStack topEntry;
+	topEntry.index = 0;
+	topEntry.propagationStage = PropagationStack::kStageCheckAndSendToModifier;
+	topEntry.ptr.modifier = root;
 
-		_propagationStack.push_back(topEntry);
-	}
+	_isCommand = false;
+
+	_propagationStack.push_back(topEntry);
 
 	_root = root->getSelfReference();
 }
@@ -4026,6 +4050,13 @@ const Common::KeyState &KeyboardInputEvent::getKeyState() const {
 	return _keyEvt;
 }
 
+ActionEvent::ActionEvent(OSEventType osEventType, Actions::Action action) : OSEvent(osEventType), _action(action) {
+}
+
+Actions::Action ActionEvent::getAction() const {
+	return _action;
+}
+
 Runtime::SceneStackEntry::SceneStackEntry() {
 }
 
@@ -4132,7 +4163,7 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, ISaveUIProvider *saveProv
 	  _cachedMousePosition(Common::Point(0, 0)), _realMousePosition(Common::Point(0, 0)), _trackedMouseOutside(false),
 	  _forceCursorRefreshOnce(true), _autoResetCursor(false), _haveModifierOverrideCursor(false), _sceneGraphChanged(false), _isQuitting(false),
 	  _collisionCheckTime(0), _defaultVolumeState(true), _activeSceneTransitionEffect(nullptr), _sceneTransitionStartTime(0), _sceneTransitionEndTime(0),
-	  _modifierOverrideCursorID(0), _subtitleRenderer(subRenderer) {
+	  _sharedSceneWasSetExplicitly(false), _modifierOverrideCursorID(0), _subtitleRenderer(subRenderer) {
 	_random.reset(new Common::RandomSource("mtropolis"));
 
 	_vthread.reset(new VThread());
@@ -4248,6 +4279,12 @@ bool Runtime::runFrame() {
 						taskData->x = mouseEvt->getX();
 						taskData->y = mouseEvt->getY();
 					}
+				} break;
+			case kOSEventTypeAction: {
+					Actions::Action action = static_cast<ActionEvent *>(evt.get())->getAction();
+
+					DispatchActionTaskData *taskData = _vthread->pushTask("Runtime::dispatchAction", this, &Runtime::dispatchActionTask);
+					taskData->action = action;
 				} break;
 			default:
 				break;
@@ -4669,7 +4706,12 @@ void Runtime::executeCompleteTransitionToScene(const Common::SharedPtr<Structura
 	if (_sceneStack.size() == 0)
 		_sceneStack.resize(1);	// Reserve shared scene slot
 
-	Common::SharedPtr<Structural> targetSharedScene = findDefaultSharedSceneForScene(targetScene.get());
+	Common::SharedPtr<Structural> targetSharedScene;
+
+	if (_sharedSceneWasSetExplicitly)
+		targetSharedScene = _activeSharedScene;
+	else
+		targetSharedScene = findDefaultSharedSceneForScene(targetScene.get());
 
 	for (const Common::SharedPtr<SceneTransitionHooks> &hooks : _hacks.sceneTransitionHooks)
 		hooks->onSceneTransitionSetup(this, _activeMainScene, targetScene);
@@ -4788,7 +4830,12 @@ void Runtime::executeHighLevelSceneTransition(const HighLevelSceneTransition &tr
 
 			if (transition.addToDestinationScene) {
 				if (targetScene != _activeMainScene) {
-					Common::SharedPtr<Structural> targetSharedScene = findDefaultSharedSceneForScene(targetScene.get());
+					Common::SharedPtr<Structural> targetSharedScene;
+
+					if (_sharedSceneWasSetExplicitly)
+						targetSharedScene = _activeSharedScene;
+					else
+						targetSharedScene = findDefaultSharedSceneForScene(targetScene.get());
 
 					if (targetScene == targetSharedScene)
 						error("Transitioned into a default shared scene, this is not supported");
@@ -4864,7 +4911,11 @@ void Runtime::executeHighLevelSceneTransition(const HighLevelSceneTransition &tr
 				sharedSceneEntry.scene = targetSharedScene;
 
 				_sceneStack[0] = sharedSceneEntry;
+
+				_activeSharedScene = targetSharedScene;
 			}
+
+			_sharedSceneWasSetExplicitly = true;
 		} break;
 	default:
 		error("Unknown high-level scene transition type");
@@ -5371,6 +5422,22 @@ VThreadState Runtime::dispatchKeyTask(const DispatchKeyTaskData &data) {
 	}
 }
 
+VThreadState Runtime::dispatchActionTask(const DispatchActionTaskData &data) {
+	switch (data.action)
+	{
+	case Actions::kDebugSkipMovies:
+#ifdef MTROPOLIS_DEBUG_ENABLE
+		_project->debugSkipMovies();
+#endif
+		break;
+	default:
+		warning("Unhandled action %i", static_cast<int>(data.action));
+		break;
+	}
+
+	return kVThreadReturn;
+}
+
 VThreadState Runtime::consumeMessageTask(const ConsumeMessageTaskData &data) {
 	IMessageConsumer *consumer = data.consumer;
 	assert(consumer->respondsToEvent(data.message->getEvent()));
@@ -5721,6 +5788,13 @@ void Runtime::onKeyboardEvent(const Common::EventType evtType, bool repeat, cons
 	Common::SharedPtr<Window> focusWindow = _keyFocusWindow.lock();
 	if (focusWindow)
 		focusWindow->onKeyboardEvent(evtType, repeat, keyEvt);
+}
+
+
+void Runtime::onAction(MTropolis::Actions::Action action) {
+	Common::SharedPtr<Window> focusWindow = _keyFocusWindow.lock();
+	if (focusWindow)
+		focusWindow->onAction(action);
 }
 
 const Common::Point &Runtime::getCachedMousePosition() const {
@@ -6620,7 +6694,7 @@ VThreadState Project::consumeCommand(Runtime *runtime, const Common::SharedPtr<M
 }
 
 MiniscriptInstructionOutcome Project::writeRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib) {
-	if (attrib == "allowquit") {
+	if (attrib == "allowquit" || attrib == "allowquitkey") {
 		DynamicValueWriteDiscardHelper::create(result);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
@@ -7910,6 +7984,10 @@ MiniscriptInstructionOutcome VisualElement::writeRefAttribute(MiniscriptThread *
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "layer") {
 		DynamicValueWriteFuncHelper<VisualElement, &VisualElement::scriptSetLayer, true>::create(this, writeProxy);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "invalidaterect") {
+		// Not sure what this does, MTI uses it frequently
+		DynamicValueWriteDiscardHelper::create(writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 

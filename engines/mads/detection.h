@@ -33,12 +33,26 @@ enum {
 	GType_Phantom = 2
 };
 
+enum {
+	GF_INSTALLER = 1
+};
+
 struct MADSGameDescription {
 	ADGameDescription desc;
 
 	int gameID;
 	uint32 features;
 };
+
+#define GAMEOPTION_EASY_MOUSE          GUIO_GAMEOPTIONS1
+#define GAMEOPTION_ANIMATED_INVENTORY  GUIO_GAMEOPTIONS2
+#define GAMEOPTION_ANIMATED_INTERFACE  GUIO_GAMEOPTIONS3
+#define GAMEOPTION_NAUGHTY_MODE        GUIO_GAMEOPTIONS4
+//#define GAMEOPTION_GRAPHICS_DITHERING  GUIO_GAMEOPTIONS5
+
+#ifdef USE_TTS
+#define GAMEOPTION_TTS_NARRATOR 	GUIO_GAMEOPTIONS5
+#endif
 
 } // End of namespace MADS
 

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.8.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2022-11-09 11:28+0000\n"
-"PO-Revision-Date: 2022-10-26 11:42+0000\n"
+"POT-Creation-Date: 2022-11-18 16:12+0000\n"
+"PO-Revision-Date: 2022-11-13 18:13+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Russian <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ru/>\n"
@@ -57,7 +57,7 @@ msgid "Go up"
 msgstr "Вверх"
 
 #: gui/browser.cpp:81 gui/chooser.cpp:45 gui/downloadiconsdialog.cpp:257
-#: gui/downloadiconsdialog.cpp:452 gui/editgamedialog.cpp:358
+#: gui/downloadiconsdialog.cpp:452 gui/editgamedialog.cpp:352
 #: gui/editrecorddialog.cpp:66 gui/filebrowser-dialog.cpp:68
 #: gui/fluidsynth-dialog.cpp:152 gui/massadd.cpp:93 gui/options.cpp:2261
 #: gui/predictivedialog.cpp:68 gui/recorderdialog.cpp:73
@@ -95,7 +95,7 @@ msgstr "Выбрать"
 msgid "Select directory where to download game data"
 msgstr "Выберите каталог для скачивания данных игры"
 
-#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:549 gui/launcher.cpp:279
+#: gui/downloaddialog.cpp:49 gui/editgamedialog.cpp:543 gui/launcher.cpp:279
 msgid "Select directory with game data"
 msgstr "Выберите каталог с файлами игры"
 
@@ -167,7 +167,7 @@ msgstr ""
 "Не могу создать каталог для загрузки: в указанном каталоге уже есть файл с "
 "таким же именем."
 
-#: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:359
+#: gui/downloaddialog.cpp:146 gui/editgamedialog.cpp:353
 #: gui/editrecorddialog.cpp:67 gui/fluidsynth-dialog.cpp:153
 #: gui/launcher.cpp:534 gui/launcher.cpp:538 gui/massadd.cpp:90
 #: gui/options.cpp:2263 gui/predictivedialog.cpp:69
@@ -244,9 +244,9 @@ msgstr "Загрузка завершена, скачано %d пакетов, %
 
 #: gui/downloadiconsdialog.cpp:283 gui/downloadiconsdialog.cpp:375
 #: gui/gui-manager.cpp:228 gui/unknown-game-dialog.cpp:53
-#: engines/nancy/dialogs.cpp:313 engines/scumm/help.cpp:124
-#: engines/scumm/help.cpp:139 engines/scumm/help.cpp:164
-#: engines/scumm/help.cpp:190 engines/scumm/help.cpp:208
+#: engines/nancy/dialogs.cpp:313 engines/scumm/help.cpp:123
+#: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
+#: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
 msgid "Close"
 msgstr "Закрыть"
 
@@ -271,7 +271,7 @@ msgstr ""
 msgid "Proceed"
 msgstr "Продолжить"
 
-#: gui/editgamedialog.cpp:131 engines/dialogs.cpp:277
+#: gui/editgamedialog.cpp:131 engines/dialogs.cpp:276
 msgid "Game"
 msgstr "Игра"
 
@@ -343,154 +343,154 @@ msgctxt "lowres"
 msgid "Platform:"
 msgstr "Платформа:"
 
-#: gui/editgamedialog.cpp:197 gui/options.cpp:1936 gui/options.cpp:2118
+#: gui/editgamedialog.cpp:191 gui/options.cpp:1936 gui/options.cpp:2118
 #: backends/graphics/sdl/sdl-graphics.cpp:423
 msgid "Graphics"
 msgstr "Графика"
 
-#: gui/editgamedialog.cpp:197 gui/options.cpp:1936 gui/options.cpp:2118
+#: gui/editgamedialog.cpp:191 gui/options.cpp:1936 gui/options.cpp:2118
 msgid "GFX"
 msgstr "Грф"
 
-#: gui/editgamedialog.cpp:203
+#: gui/editgamedialog.cpp:197
 msgid "Override global graphic settings"
 msgstr "Перекрыть глобальные настройки графики"
 
-#: gui/editgamedialog.cpp:205
+#: gui/editgamedialog.cpp:199
 msgctxt "lowres"
 msgid "Override global graphic settings"
 msgstr "Перекрыть глобальные настройки графики"
 
-#: gui/editgamedialog.cpp:218 gui/options.cpp:2152 engines/dialogs.cpp:320
+#: gui/editgamedialog.cpp:212 gui/options.cpp:2152 engines/dialogs.cpp:317
 msgid "Keymaps"
 msgstr "Таблица клавиш"
 
-#: gui/editgamedialog.cpp:225 gui/options.cpp:2159 engines/dialogs.cpp:327
+#: gui/editgamedialog.cpp:219 gui/options.cpp:2159 engines/dialogs.cpp:324
 msgid "Backend"
 msgstr "Бэкенд"
 
-#: gui/editgamedialog.cpp:228
+#: gui/editgamedialog.cpp:222
 msgid "Override global backend settings"
 msgstr "Перекрыть глобальные настройки бекенда"
 
-#: gui/editgamedialog.cpp:230
+#: gui/editgamedialog.cpp:224
 msgctxt "lowres"
 msgid "Override global backend settings"
 msgstr "Перекрыть глобальные настройки бекенда"
 
-#: gui/editgamedialog.cpp:244 gui/options.cpp:2173 engines/dialogs.cpp:295
+#: gui/editgamedialog.cpp:238 gui/options.cpp:2173 engines/dialogs.cpp:292
 msgid "Audio"
 msgstr "Аудио"
 
-#: gui/editgamedialog.cpp:247
+#: gui/editgamedialog.cpp:241
 msgid "Override global audio settings"
 msgstr "Перекрыть глобальные настройки аудио"
 
-#: gui/editgamedialog.cpp:249
+#: gui/editgamedialog.cpp:243
 msgctxt "lowres"
 msgid "Override global audio settings"
 msgstr "Перекрыть глобальные настройки аудио"
 
-#: gui/editgamedialog.cpp:258 gui/options.cpp:2178
+#: gui/editgamedialog.cpp:252 gui/options.cpp:2178
 msgid "Volume"
 msgstr "Громкость"
 
-#: gui/editgamedialog.cpp:260 gui/options.cpp:2180
+#: gui/editgamedialog.cpp:254 gui/options.cpp:2180
 msgctxt "lowres"
 msgid "Volume"
 msgstr "Громк"
 
-#: gui/editgamedialog.cpp:263
+#: gui/editgamedialog.cpp:257
 msgid "Override global volume settings"
 msgstr "Перекрыть глобальные настройки громкости"
 
-#: gui/editgamedialog.cpp:265
+#: gui/editgamedialog.cpp:259
 msgctxt "lowres"
 msgid "Override global volume settings"
 msgstr "Перекрыть глобальные настройки громкости"
 
-#: gui/editgamedialog.cpp:276 gui/options.cpp:2188
+#: gui/editgamedialog.cpp:270 gui/options.cpp:2188
 msgid "MIDI"
 msgstr "MIDI"
 
-#: gui/editgamedialog.cpp:279
+#: gui/editgamedialog.cpp:273
 msgid "Override global MIDI settings"
 msgstr "Перекрыть глобальные настройки MIDI"
 
-#: gui/editgamedialog.cpp:281
+#: gui/editgamedialog.cpp:275
 msgctxt "lowres"
 msgid "Override global MIDI settings"
 msgstr "Перекрыть глобальные настройки MIDI"
 
-#: gui/editgamedialog.cpp:291 gui/options.cpp:2194
+#: gui/editgamedialog.cpp:285 gui/options.cpp:2194
 msgid "MT-32"
 msgstr "MT-32"
 
-#: gui/editgamedialog.cpp:294
+#: gui/editgamedialog.cpp:288
 msgid "Override global MT-32 settings"
 msgstr "Перекрыть глобальные настройки MT-32"
 
-#: gui/editgamedialog.cpp:296
+#: gui/editgamedialog.cpp:290
 msgctxt "lowres"
 msgid "Override global MT-32 settings"
 msgstr "Перекрыть глобальные настройки MT-32"
 
-#: gui/editgamedialog.cpp:305 gui/options.cpp:2201
+#: gui/editgamedialog.cpp:299 gui/options.cpp:2201
 msgid "Paths"
 msgstr "Пути"
 
-#: gui/editgamedialog.cpp:307 gui/options.cpp:2203
+#: gui/editgamedialog.cpp:301 gui/options.cpp:2203
 msgctxt "lowres"
 msgid "Paths"
 msgstr "Пути"
 
-#: gui/editgamedialog.cpp:314
+#: gui/editgamedialog.cpp:308
 msgid "Game Path:"
 msgstr "Путь к игре:"
 
-#: gui/editgamedialog.cpp:316
+#: gui/editgamedialog.cpp:310
 msgctxt "lowres"
 msgid "Game Path:"
 msgstr "Где игра:"
 
-#: gui/editgamedialog.cpp:321 gui/options.cpp:2380
+#: gui/editgamedialog.cpp:315 gui/options.cpp:2380
 msgid "Extra Path:"
 msgstr "Доп. путь:"
 
-#: gui/editgamedialog.cpp:321 gui/editgamedialog.cpp:323
-#: gui/editgamedialog.cpp:324
+#: gui/editgamedialog.cpp:315 gui/editgamedialog.cpp:317
+#: gui/editgamedialog.cpp:318
 msgid "Specifies path to additional data used by the game"
 msgstr "Указывает путь к дополнительным файлам данных для игры"
 
-#: gui/editgamedialog.cpp:323 gui/options.cpp:2382
+#: gui/editgamedialog.cpp:317 gui/options.cpp:2382
 msgctxt "lowres"
 msgid "Extra Path:"
 msgstr "Доп. путь:"
 
-#: gui/editgamedialog.cpp:330 gui/options.cpp:2356
+#: gui/editgamedialog.cpp:324 gui/options.cpp:2356
 msgid "Save Path:"
 msgstr "Сохранения игр:"
 
-#: gui/editgamedialog.cpp:330 gui/editgamedialog.cpp:332
-#: gui/editgamedialog.cpp:333 gui/options.cpp:2356 gui/options.cpp:2358
+#: gui/editgamedialog.cpp:324 gui/editgamedialog.cpp:326
+#: gui/editgamedialog.cpp:327 gui/options.cpp:2356 gui/options.cpp:2358
 msgid "Specifies where your saved games are put"
 msgstr "Указывает путь к сохранённым играм"
 
-#: gui/editgamedialog.cpp:332 gui/options.cpp:2358
+#: gui/editgamedialog.cpp:326 gui/options.cpp:2358
 msgctxt "lowres"
 msgid "Save Path:"
 msgstr "Путь сохр:"
 
-#: gui/editgamedialog.cpp:344 engines/dialogs.cpp:342
+#: gui/editgamedialog.cpp:338 engines/dialogs.cpp:339
 msgid "Achievements"
 msgstr "Достижения"
 
-#: gui/editgamedialog.cpp:348 engines/dialogs.cpp:346
+#: gui/editgamedialog.cpp:342 engines/dialogs.cpp:343
 msgid "Statistics"
 msgstr "Статистика"
 
-#: gui/editgamedialog.cpp:372 gui/editgamedialog.cpp:474
-#: gui/editgamedialog.cpp:536 gui/editgamedialog.cpp:603 gui/options.cpp:1157
+#: gui/editgamedialog.cpp:366 gui/editgamedialog.cpp:468
+#: gui/editgamedialog.cpp:530 gui/editgamedialog.cpp:597 gui/options.cpp:1157
 #: gui/options.cpp:2286 gui/options.cpp:2288 gui/options.cpp:2293
 #: gui/options.cpp:2324 gui/options.cpp:2367 gui/options.cpp:2383
 #: gui/options.cpp:2392 gui/options.cpp:2779 gui/options.cpp:2781
@@ -501,30 +501,30 @@ msgctxt "path"
 msgid "None"
 msgstr "Не задан"
 
-#: gui/editgamedialog.cpp:377 gui/editgamedialog.cpp:480
-#: gui/editgamedialog.cpp:607 gui/options.cpp:2285 gui/options.cpp:2287
+#: gui/editgamedialog.cpp:371 gui/editgamedialog.cpp:474
+#: gui/editgamedialog.cpp:601 gui/options.cpp:2285 gui/options.cpp:2287
 #: gui/options.cpp:2778 gui/options.cpp:2780 gui/options.cpp:3072
 #: gui/options.cpp:3078 backends/platform/wii/options.cpp:55
 msgid "Default"
 msgstr "По умолчанию"
 
-#: gui/editgamedialog.cpp:529 gui/options.cpp:3099
+#: gui/editgamedialog.cpp:523 gui/options.cpp:3099
 msgid "Select SoundFont"
 msgstr "Выберите SoundFont"
 
-#: gui/editgamedialog.cpp:568
+#: gui/editgamedialog.cpp:562
 msgid "Select additional game directory"
 msgstr "Выберите дополнительный каталог игры"
 
-#: gui/editgamedialog.cpp:581 gui/options.cpp:2985
+#: gui/editgamedialog.cpp:575 gui/options.cpp:2985
 msgid "Select directory for saved games"
 msgstr "Выберите каталог для сохранённых игр"
 
-#: gui/editgamedialog.cpp:588 gui/options.cpp:2992
+#: gui/editgamedialog.cpp:582 gui/options.cpp:2992
 msgid "The chosen directory cannot be written to. Please select another one."
 msgstr "Не могу писать в выбранный каталог. Пожалуйста, укажите другой."
 
-#: gui/editgamedialog.cpp:593
+#: gui/editgamedialog.cpp:587
 msgid ""
 "Saved games sync feature doesn't work with non-default directories. If you "
 "want your saved games to sync, use default directory."
@@ -533,7 +533,7 @@ msgstr ""
 "вы хотите, чтобы ваши сохранённые игры синхронизировались, используйте "
 "каталог по умолчанию."
 
-#: gui/editgamedialog.cpp:619
+#: gui/editgamedialog.cpp:613
 msgid "This game ID is already taken. Please choose another one."
 msgstr "Этот ID игры уже используется. Пожалуйста, выберите другой."
 
@@ -660,9 +660,9 @@ msgid "Interact"
 msgstr "Взаимодействие"
 
 #: gui/gui-manager.cpp:234 engines/metaengine.cpp:115
-#: engines/dragons/metaengine.cpp:160 engines/griffon/metaengine.cpp:95
+#: engines/dragons/metaengine.cpp:160 engines/griffon/metaengine.cpp:121
 #: engines/grim/grim.cpp:453 engines/grim/grim.cpp:534
-#: engines/twine/metaengine.cpp:329 engines/twine/metaengine.cpp:396
+#: engines/twine/metaengine.cpp:472 engines/twine/metaengine.cpp:539
 #: engines/wintermute/keymapper_tables.h:1262
 #: engines/wintermute/keymapper_tables.h:1345
 #: engines/wintermute/keymapper_tables.h:1421
@@ -672,9 +672,9 @@ msgid "Up"
 msgstr "Вверх"
 
 #: gui/gui-manager.cpp:239 engines/metaengine.cpp:121
-#: engines/dragons/metaengine.cpp:166 engines/griffon/metaengine.cpp:101
+#: engines/dragons/metaengine.cpp:166 engines/griffon/metaengine.cpp:127
 #: engines/grim/grim.cpp:458 engines/grim/grim.cpp:539
-#: engines/twine/metaengine.cpp:336 engines/twine/metaengine.cpp:404
+#: engines/twine/metaengine.cpp:479 engines/twine/metaengine.cpp:547
 #: engines/wintermute/keymapper_tables.h:1268
 #: engines/wintermute/keymapper_tables.h:1351
 #: engines/wintermute/keymapper_tables.h:1428
@@ -684,9 +684,9 @@ msgid "Down"
 msgstr "Вниз"
 
 #: gui/gui-manager.cpp:244 engines/metaengine.cpp:127
-#: engines/dragons/metaengine.cpp:172 engines/griffon/metaengine.cpp:107
+#: engines/dragons/metaengine.cpp:172 engines/griffon/metaengine.cpp:133
 #: engines/grim/grim.cpp:463 engines/grim/grim.cpp:544
-#: engines/twine/metaengine.cpp:351 engines/twine/metaengine.cpp:419
+#: engines/twine/metaengine.cpp:494 engines/twine/metaengine.cpp:562
 #: engines/wintermute/keymapper_tables.h:320
 #: engines/wintermute/keymapper_tables.h:1274
 #: engines/wintermute/keymapper_tables.h:1357
@@ -697,9 +697,9 @@ msgid "Left"
 msgstr "Влево"
 
 #: gui/gui-manager.cpp:249 engines/metaengine.cpp:133
-#: engines/dragons/metaengine.cpp:178 engines/griffon/metaengine.cpp:113
+#: engines/dragons/metaengine.cpp:178 engines/griffon/metaengine.cpp:139
 #: engines/grim/grim.cpp:468 engines/grim/grim.cpp:549
-#: engines/twine/metaengine.cpp:343 engines/twine/metaengine.cpp:412
+#: engines/twine/metaengine.cpp:486 engines/twine/metaengine.cpp:555
 #: engines/wintermute/keymapper_tables.h:326
 #: engines/wintermute/keymapper_tables.h:1280
 #: engines/wintermute/keymapper_tables.h:1363
@@ -2288,11 +2288,11 @@ msgstr "Играть"
 msgid "Saves"
 msgstr "Сохранения"
 
-#: base/main.cpp:643
+#: base/main.cpp:637
 msgid "Error running game:"
 msgstr "Ошибка запуска игры:"
 
-#: base/main.cpp:690
+#: base/main.cpp:684
 msgid "Could not find any engine capable of running the selected game"
 msgstr "Не могу найти движок для запуска выбранной игры"
 
@@ -2566,7 +2566,7 @@ msgstr "Сохранить игру:"
 #: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3765
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/xeen/saves.cpp:276
-#: engines/zvision/file/save_manager.cpp:48 engines/zvision/metaengine.cpp:193
+#: engines/zvision/file/save_manager.cpp:48 engines/zvision/metaengine.cpp:262
 msgid "Save"
 msgstr "Сохранить"
 
@@ -2589,11 +2589,11 @@ msgstr ""
 "Не удалось сохранить игру (%s)! Пожалуйста, обратитесь к файлу README за "
 "подробностями и указаниями к получению дальнейшей помощи."
 
-#: engines/dialogs.cpp:357
+#: engines/dialogs.cpp:354
 msgid "~O~K"
 msgstr "~O~K"
 
-#: engines/dialogs.cpp:358
+#: engines/dialogs.cpp:355
 msgid "~C~ancel"
 msgstr "О~т~мена"
 
@@ -2684,7 +2684,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ОШИБКА: Не удалось перенести сохранение в новый слот"
 
 #: engines/engine.cpp:589 engines/metaengine.cpp:380 engines/savestate.cpp:94
-#: backends/platform/ios7/ios7_osys_main.cpp:255 engines/sky/metaengine.cpp:185
+#: backends/platform/ios7/ios7_osys_main.cpp:255 engines/sky/metaengine.cpp:216
 #: engines/xeen/saves.cpp:289
 msgid "Autosave"
 msgstr "Автосохранение"
@@ -2767,9 +2767,9 @@ msgid "Default game keymap"
 msgstr "Назначение клавиш по умолчанию"
 
 #: engines/metaengine.cpp:60 backends/platform/maemo/maemo.cpp:161
-#: engines/asylum/metaengine.cpp:157 engines/hdb/metaengine.cpp:187
+#: engines/asylum/metaengine.cpp:157 engines/hdb/metaengine.cpp:207
 #: engines/parallaction/metaengine.cpp:114
-#: engines/wintermute/keymapper_tables.h:42 engines/zvision/metaengine.cpp:114
+#: engines/wintermute/keymapper_tables.h:42 engines/zvision/metaengine.cpp:183
 msgid "Left Click"
 msgstr "Левый щелчок"
 
@@ -2782,14 +2782,14 @@ msgstr "Средний щелчок"
 
 #: engines/metaengine.cpp:71 backends/platform/maemo/maemo.cpp:169
 #: engines/asylum/metaengine.cpp:163 engines/parallaction/metaengine.cpp:120
-#: engines/wintermute/keymapper_tables.h:48 engines/zvision/metaengine.cpp:120
+#: engines/wintermute/keymapper_tables.h:48 engines/zvision/metaengine.cpp:189
 msgid "Right Click"
 msgstr "Правый щелчок"
 
 #: engines/metaengine.cpp:77 engines/grim/grim.cpp:521
-#: engines/hdb/metaengine.cpp:238 engines/mohawk/myst.cpp:596
-#: engines/mohawk/riven.cpp:860 engines/sky/metaengine.cpp:122
-#: engines/twine/metaengine.cpp:99 engines/wintermute/keymapper_tables.h:1580
+#: engines/hdb/metaengine.cpp:258 engines/mohawk/myst.cpp:596
+#: engines/mohawk/riven.cpp:860 engines/sky/metaengine.cpp:125
+#: engines/twine/metaengine.cpp:242 engines/wintermute/keymapper_tables.h:1580
 msgid "Pause"
 msgstr "Пауза"
 
@@ -2808,7 +2808,7 @@ msgstr "Меню игры"
 msgid "Skip"
 msgstr "Пропустить"
 
-#: engines/metaengine.cpp:97 engines/sky/metaengine.cpp:117
+#: engines/metaengine.cpp:97 engines/sky/metaengine.cpp:120
 msgid "Skip line"
 msgstr "Пропустить строку"
 
@@ -2819,9 +2819,9 @@ msgstr "Диалог предиктивного ввода"
 #. I18N: This keymap works within the KIA Save Game screen
 #. and allows confirming popup dialogue prompts (eg. for save game deletion or overwriting)
 #. and also submitting a new save game name, or choosing an existing save game for overwriting.
-#: engines/metaengine.cpp:109 engines/bladerunner/metaengine.cpp:183
-#: engines/griffon/metaengine.cpp:89 engines/grim/grim.cpp:510
-#: engines/grim/grim.cpp:606 engines/sky/metaengine.cpp:97
+#: engines/metaengine.cpp:109 engines/bladerunner/metaengine.cpp:273
+#: engines/griffon/metaengine.cpp:115 engines/grim/grim.cpp:510
+#: engines/grim/grim.cpp:606 engines/sky/metaengine.cpp:100
 #: engines/wintermute/keymapper_tables.h:54
 msgid "Confirm"
 msgstr "Подтвердить"
@@ -3028,11 +3028,11 @@ msgstr ""
 
 #: backends/events/default/default-events.cpp:217
 #: backends/events/default/default-events.cpp:358
-#: engines/adl/metaengine.cpp:260 engines/hdb/metaengine.cpp:255
+#: engines/adl/metaengine.cpp:328 engines/hdb/metaengine.cpp:275
 #: engines/mohawk/myst_stacks/menu.cpp:317
-#: engines/mohawk/riven_stacks/aspit.cpp:454 engines/scumm/help.cpp:81
-#: engines/scumm/help.cpp:83 engines/zvision/metaengine.cpp:203
-#: engines/zvision/metaengine.cpp:221
+#: engines/mohawk/riven_stacks/aspit.cpp:454 engines/scumm/help.cpp:80
+#: engines/scumm/help.cpp:82 engines/zvision/metaengine.cpp:272
+#: engines/zvision/metaengine.cpp:290
 msgid "Quit"
 msgstr "Выход"
 
@@ -3041,7 +3041,7 @@ msgid "Global"
 msgstr "Глобальная"
 
 #: backends/events/default/default-events.cpp:335
-#: engines/twine/metaengine.cpp:218
+#: engines/twine/metaengine.cpp:361
 msgid "Global Main Menu"
 msgstr "Глобальное меню"
 
@@ -3106,7 +3106,7 @@ msgstr "Режим 'касаний' тачскрина - Пролёт (клик�
 #: backends/graphics/opengl/opengl-graphics.cpp:251
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:72
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:235
-#: engines/twine/metaengine.cpp:228
+#: engines/twine/metaengine.cpp:371
 msgid "Center"
 msgstr "По центру"
 
@@ -3190,11 +3190,11 @@ msgstr "Не удалось сохранить скриншот"
 msgid "Windowed mode"
 msgstr "Оконный режим"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:427 engines/scumm/help.cpp:85
+#: backends/graphics/sdl/sdl-graphics.cpp:427 engines/scumm/help.cpp:84
 msgid "Toggle fullscreen"
 msgstr "Переключение на весь экран"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:434 engines/scumm/help.cpp:98
+#: backends/graphics/sdl/sdl-graphics.cpp:434 engines/scumm/help.cpp:97
 #: engines/wintermute/keymapper_tables.h:960
 msgid "Toggle mouse capture"
 msgstr "Переключение перехвата мыши"
@@ -3861,7 +3861,7 @@ msgstr "Свернуть"
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ONLINE HELP
 #: backends/platform/sdl/macosx/appmenu_osx.mm:244
-#: engines/bladerunner/metaengine.cpp:231 engines/zvision/metaengine.cpp:157
+#: engines/bladerunner/metaengine.cpp:321 engines/zvision/metaengine.cpp:226
 msgid "Help"
 msgstr "Помощь"
 
@@ -4115,108 +4115,41 @@ msgid ""
 "%d.%d."
 msgstr "Неверная версия файла движка %s. Ожидается %d.%d, а найдена %d.%d."
 
-#: engines/adl/detection.cpp:53
+#: engines/adl/metaengine.cpp:44
 msgid "TV emulation"
 msgstr "ТВ эмуляция"
 
-#: engines/adl/detection.cpp:54
+#: engines/adl/metaengine.cpp:45
 msgid "Emulate composite output to an NTSC TV"
 msgstr "Эмулировать композитный вывод на телевизор NTSC"
 
-#: engines/adl/detection.cpp:65 engines/adl/detection.cpp:77
+#: engines/adl/metaengine.cpp:56 engines/adl/metaengine.cpp:68
 msgid "Color graphics"
 msgstr "Цветная графика"
 
-#: engines/adl/detection.cpp:66 engines/adl/detection.cpp:78
+#: engines/adl/metaengine.cpp:57 engines/adl/metaengine.cpp:69
 msgid "Use color graphics instead of monochrome"
 msgstr "Используйте цветную графику вместо монохромной"
 
-#: engines/adl/detection.cpp:89
+#: engines/adl/metaengine.cpp:80
 msgid "Show scanlines"
 msgstr "Показывать скан-линии"
 
-#: engines/adl/detection.cpp:90
+#: engines/adl/metaengine.cpp:81
 msgid "Darken every other scanline to mimic the look of a CRT"
 msgstr "Затемнять каждую другую линию сканирования, чтобы имитировать вид ЭЛТ"
 
-#: engines/adl/detection.cpp:101
+#: engines/adl/metaengine.cpp:92
 msgid "Always use sharp monochrome text"
 msgstr "Всегда используйте четкий монохромный текст"
 
-#: engines/adl/detection.cpp:102
+#: engines/adl/metaengine.cpp:93
 msgid "Do not emulate NTSC artifacts for text"
 msgstr "Не эмулируйте артефакты NTSC для текста"
 
-#: engines/agi/detection.cpp:88 engines/cine/detection.cpp:51
-#: engines/drascula/detection.cpp:303 engines/dreamweb/detection.cpp:51
-#: engines/groovie/detection.cpp:309 engines/neverhood/detection.cpp:139
-#: engines/sci/detection_options.h:105 engines/sherlock/detection.cpp:58
-#: engines/toltecs/detection.cpp:228 engines/trecision/detection.cpp:219
-#: engines/ultima/detection.cpp:55 engines/zvision/detection_tables.h:50
-msgid "Use original save/load screens"
-msgstr "Использовать оригинальные экраны записи/чтения игры"
-
-#: engines/agi/detection.cpp:89 engines/cine/detection.cpp:52
-#: engines/drascula/detection.cpp:304 engines/dreamweb/detection.cpp:52
-#: engines/groovie/detection.cpp:310 engines/neverhood/detection.cpp:140
-#: engines/sci/detection_options.h:106 engines/sherlock/detection.cpp:59
-#: engines/toltecs/detection.cpp:229 engines/trecision/detection.cpp:220
-#: engines/ultima/detection.cpp:56 engines/zvision/detection_tables.h:51
-msgid "Use the original save/load screens instead of the ScummVM ones"
+#: engines/agi/detection_tables.h:310
+msgid "Early AGI games for Tandy Color Computer are not yet supported."
 msgstr ""
-"Использовать оригинальные экраны чтения и сохранения игры вместо сделанных в "
-"ScummVM"
-
-#: engines/agi/detection.cpp:100
-msgid "Use an alternative palette"
-msgstr "Использовать альтернативную палитру"
-
-#: engines/agi/detection.cpp:101
-msgid ""
-"Use an alternative palette, common for all Amiga games. This was the old "
-"behavior"
-msgstr ""
-"Использовать альтернативную палитру для всех игр Amiga. Так работало раньше"
-
-#: engines/agi/detection.cpp:112
-msgid "Mouse support"
-msgstr "Поддержка мыши"
-
-#: engines/agi/detection.cpp:113
-msgid ""
-"Enables mouse support. Allows to use mouse for movement and in game menus."
-msgstr ""
-"Включает поддержку мыши. Позволяет использовать мышь для перемещения и в "
-"меню игры."
-
-#: engines/agi/detection.cpp:124
-msgid "Use Hercules hires font"
-msgstr "Использовать шрифт Hercules"
-
-#: engines/agi/detection.cpp:125
-msgid "Uses Hercules hires font, when font file is available."
-msgstr ""
-"Использует шрифт высокого разрешения Hercules, если доступен файл со шрифтом."
-
-#: engines/agi/detection.cpp:136
-msgid "Pause when entering commands"
-msgstr "Пауза во время ввода команд"
-
-#: engines/agi/detection.cpp:137
-msgid ""
-"Shows a command prompt window and pauses the game (like in SCI) instead of a "
-"real-time prompt."
-msgstr ""
-"Показывает окно со строкой ввода команды и ставит игру на паузу (как в SCI) "
-"вместо ввода в реальном времени."
-
-#: engines/agi/detection.cpp:148
-msgid "Add speed menu"
-msgstr "Добавить меню скорости"
-
-#: engines/agi/detection.cpp:149
-msgid "Add game speed menu (similar to PC version)"
-msgstr "Добавить меню скорости (как в PC-версии)"
 
 #: engines/agi/font.cpp:1096
 msgid ""
@@ -4227,6 +4160,79 @@ msgstr ""
 "Не удалось открыть/использовать файл hgc_font для шрифта Hercules.\n"
 "Если у вас есть такой файл от другой игры AGI (Sierra), вы можете "
 "скопировать его в каталог с игрой"
+
+#: engines/agi/metaengine.cpp:119 engines/chewy/metaengine.cpp:36
+#: engines/cine/metaengine.cpp:42 engines/drascula/metaengine.cpp:38
+#: engines/dreamweb/metaengine.cpp:36 engines/groovie/metaengine.cpp:49
+#: engines/neverhood/metaengine.cpp:37 engines/sci/detection_options.h:105
+#: engines/sherlock/metaengine.cpp:39 engines/toltecs/metaengine.cpp:40
+#: engines/trecision/metaengine.cpp:37 engines/ultima/metaengine.cpp:44
+#: engines/zvision/metaengine.cpp:46
+msgid "Use original save/load screens"
+msgstr "Использовать оригинальные экраны записи/чтения игры"
+
+#: engines/agi/metaengine.cpp:120 engines/chewy/metaengine.cpp:37
+#: engines/cine/metaengine.cpp:43 engines/drascula/metaengine.cpp:39
+#: engines/dreamweb/metaengine.cpp:37 engines/groovie/metaengine.cpp:50
+#: engines/neverhood/metaengine.cpp:38 engines/sci/detection_options.h:106
+#: engines/sherlock/metaengine.cpp:40 engines/toltecs/metaengine.cpp:41
+#: engines/trecision/metaengine.cpp:38 engines/ultima/metaengine.cpp:45
+#: engines/zvision/metaengine.cpp:47
+msgid "Use the original save/load screens instead of the ScummVM ones"
+msgstr ""
+"Использовать оригинальные экраны чтения и сохранения игры вместо сделанных в "
+"ScummVM"
+
+#: engines/agi/metaengine.cpp:131
+msgid "Use an alternative palette"
+msgstr "Использовать альтернативную палитру"
+
+#: engines/agi/metaengine.cpp:132
+msgid ""
+"Use an alternative palette, common for all Amiga games. This was the old "
+"behavior"
+msgstr ""
+"Использовать альтернативную палитру для всех игр Amiga. Так работало раньше"
+
+#: engines/agi/metaengine.cpp:143
+msgid "Mouse support"
+msgstr "Поддержка мыши"
+
+#: engines/agi/metaengine.cpp:144
+msgid ""
+"Enables mouse support. Allows to use mouse for movement and in game menus."
+msgstr ""
+"Включает поддержку мыши. Позволяет использовать мышь для перемещения и в "
+"меню игры."
+
+#: engines/agi/metaengine.cpp:155
+msgid "Use Hercules hires font"
+msgstr "Использовать шрифт Hercules"
+
+#: engines/agi/metaengine.cpp:156
+msgid "Uses Hercules hires font, when font file is available."
+msgstr ""
+"Использует шрифт высокого разрешения Hercules, если доступен файл со шрифтом."
+
+#: engines/agi/metaengine.cpp:167
+msgid "Pause when entering commands"
+msgstr "Пауза во время ввода команд"
+
+#: engines/agi/metaengine.cpp:168
+msgid ""
+"Shows a command prompt window and pauses the game (like in SCI) instead of a "
+"real-time prompt."
+msgstr ""
+"Показывает окно со строкой ввода команды и ставит игру на паузу (как в SCI) "
+"вместо ввода в реальном времени."
+
+#: engines/agi/metaengine.cpp:179
+msgid "Add speed menu"
+msgstr "Добавить меню скорости"
+
+#: engines/agi/metaengine.cpp:180
+msgid "Add game speed menu (similar to PC version)"
+msgstr "Добавить меню скорости (как в PC-версии)"
 
 #: engines/agi/saveload.cpp:779 engines/avalanche/parser.cpp:1906
 #: engines/cine/various.cpp:360 engines/dm/dm.cpp:273
@@ -4261,7 +4267,7 @@ msgstr "Восстановить игру:"
 #: engines/sci/engine/kfile.cpp:1209 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
 #: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3859
-#: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:198
+#: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:267
 msgid "Restore"
 msgstr "Восстановить"
 
@@ -4269,7 +4275,7 @@ msgstr "Восстановить"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Быстрое сохранение или загрузка не поддерживаются в этой локации"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2698
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2696
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4280,7 +4286,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2685
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2683
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4291,7 +4297,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2714
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2712
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4307,7 +4313,51 @@ msgstr ""
 msgid "Cutscene file '%s' not found!"
 msgstr "Файл заставки '%s' не найден!"
 
-#: engines/agos/metaengine.cpp:103
+#: engines/agos/metaengine.cpp:42
+msgid "AdLib OPL3 mode"
+msgstr "Режим AdLib OPL3"
+
+#: engines/agos/metaengine.cpp:43
+msgid ""
+"When AdLib is selected, OPL3 features will be used. Depending on the game, "
+"this will prevent cut-off notes, add extra notes or instruments and/or add "
+"stereo."
+msgstr ""
+"Если выбран AdLib, будет использоваться функционал OPL3. В зависимости от "
+"игры, не будут обрезаться ноты, появятся дополнительные ноты или "
+"инструменты, а также, возможно, стерео."
+
+#: engines/agos/metaengine.cpp:53 engines/agos/metaengine.cpp:64
+msgid "Use DOS version music tempos"
+msgstr "Использовать темп музыки DOS-версии"
+
+#: engines/agos/metaengine.cpp:54 engines/agos/metaengine.cpp:65
+msgid ""
+"Selecting this option will play the music using the tempos used by the DOS "
+"version of the game. Otherwise, the faster tempos of the Windows version "
+"will be used."
+msgstr ""
+"Выбор этой опции будет проигрывать музыку с использованием темпа DOS-версии "
+"игры. Иначе будет использован более быстрый темп от Windows-версии."
+
+#: engines/agos/metaengine.cpp:75 engines/sci/detection_options.h:93
+msgid "Prefer digital sound effects"
+msgstr "Предпочитать цифровые звуковые эффекты"
+
+#: engines/agos/metaengine.cpp:76 engines/sci/detection_options.h:94
+msgid "Prefer digital sound effects instead of synthesized ones"
+msgstr ""
+"Отдавать предпочтение цифровым звуковым эффектам вместо синтезированных"
+
+#: engines/agos/metaengine.cpp:86
+msgid "Disable fade-out effects"
+msgstr "Выключить эффекты затемнения"
+
+#: engines/agos/metaengine.cpp:87
+msgid "Don't fade every screen to black when leaving a room."
+msgstr "Не затемнять каждый экран при выходе из комнаты."
+
+#: engines/agos/metaengine.cpp:170
 msgid "AGOS 2 support is not compiled in"
 msgstr "Поддержка для AGOS 2 не скомпилирована"
 
@@ -4324,50 +4374,6 @@ msgstr ""
 "Мы попробуем подобрать General MIDI- инструменты,\n"
 "похожие на Roland MT32, но может оказаться, что\n"
 "некоторые треки будут сыграны неверно."
-
-#: engines/agos/detection.cpp:82
-msgid "AdLib OPL3 mode"
-msgstr "Режим AdLib OPL3"
-
-#: engines/agos/detection.cpp:83
-msgid ""
-"When AdLib is selected, OPL3 features will be used. Depending on the game, "
-"this will prevent cut-off notes, add extra notes or instruments and/or add "
-"stereo."
-msgstr ""
-"Если выбран AdLib, будет использоваться функционал OPL3. В зависимости от "
-"игры, не будут обрезаться ноты, появятся дополнительные ноты или "
-"инструменты, а также, возможно, стерео."
-
-#: engines/agos/detection.cpp:93 engines/agos/detection.cpp:104
-msgid "Use DOS version music tempos"
-msgstr "Использовать темп музыки DOS-версии"
-
-#: engines/agos/detection.cpp:94 engines/agos/detection.cpp:105
-msgid ""
-"Selecting this option will play the music using the tempos used by the DOS "
-"version of the game. Otherwise, the faster tempos of the Windows version "
-"will be used."
-msgstr ""
-"Выбор этой опции будет проигрывать музыку с использованием темпа DOS-версии "
-"игры. Иначе будет использован более быстрый темп от Windows-версии."
-
-#: engines/agos/detection.cpp:115 engines/sci/detection_options.h:93
-msgid "Prefer digital sound effects"
-msgstr "Предпочитать цифровые звуковые эффекты"
-
-#: engines/agos/detection.cpp:116 engines/sci/detection_options.h:94
-msgid "Prefer digital sound effects instead of synthesized ones"
-msgstr ""
-"Отдавать предпочтение цифровым звуковым эффектам вместо синтезированных"
-
-#: engines/agos/detection.cpp:126
-msgid "Disable fade-out effects"
-msgstr "Выключить эффекты затемнения"
-
-#: engines/agos/detection.cpp:127
-msgid "Don't fade every screen to black when leaving a room."
-msgstr "Не затемнять каждый экран при выходе из комнаты."
 
 #: engines/ags/dialogs.cpp:58
 msgid "Game language:"
@@ -4386,14 +4392,14 @@ msgid "Use antialiasing to draw text even if the game does not ask for it"
 msgstr ""
 "Использовать шрифты со сглаживанием, даже если игра этого не запрашивала"
 
-#: engines/ags/ags.cpp:131
+#: engines/ags/ags.cpp:132
 msgid ""
 "The selected game uses a pre-2.5 version of the AGS engine, which is not "
 "supported."
 msgstr ""
 "Эта игра использует движок AGS версии до 2.5, который не поддерживается."
 
-#: engines/ags/ags.cpp:139
+#: engines/ags/ags.cpp:140
 msgid ""
 "The selected game has a data file greater than 2Gb, which isn't supported by "
 "your version of ScummVM yet."
@@ -4447,15 +4453,15 @@ msgstr ""
 msgid "Load anyway"
 msgstr "Всё равно загрузить"
 
-#: engines/bladerunner/bladerunner.cpp:397
+#: engines/bladerunner/bladerunner.cpp:398
 msgid "Failed to initialize resources"
 msgstr "Не удалось инициализировать ресурсы"
 
-#: engines/bladerunner/bladerunner.cpp:1161
+#: engines/bladerunner/bladerunner.cpp:1166
 msgid "A required game resource was not found"
 msgstr "Требуемый игровой ресурс не найден"
 
-#: engines/bladerunner/bladerunner.cpp:2743
+#: engines/bladerunner/bladerunner.cpp:2748
 msgid ""
 "WARNING: This game was saved in Restored Cut Content mode, but you are "
 "playing in Original Content mode. The mode will be adjusted to Restored Cut "
@@ -4466,7 +4472,7 @@ msgstr ""
 "режим будет изменен на Restored Cut Content, пока вы полностью не выйдете из "
 "игры."
 
-#: engines/bladerunner/bladerunner.cpp:2745
+#: engines/bladerunner/bladerunner.cpp:2750
 msgid ""
 "WARNING: This game was saved in Original Content mode, but you are playing "
 "in Restored Cut Content mode. The mode will be adjusted to Original Content "
@@ -4477,98 +4483,37 @@ msgstr ""
 "изменен на режим оригинального содержимого, пока вы полностью не выйдете из "
 "игры."
 
-#: engines/bladerunner/bladerunner.cpp:2747
+#: engines/bladerunner/bladerunner.cpp:2752
 msgid "Continue"
 msgstr "Продолжить"
 
-#: engines/bladerunner/detection.cpp:53
-msgid "Sitcom mode"
-msgstr "Режим Sitcom"
-
-#: engines/bladerunner/detection.cpp:54
-msgid "Game will add laughter after actor's line or narration"
-msgstr "Игра добавит смех после актерской линии или повествования"
-
-#: engines/bladerunner/detection.cpp:64
-msgid "Shorty mode"
-msgstr "Коротышка"
-
-#: engines/bladerunner/detection.cpp:65
-msgid "Game will shrink the actors and make their voices high pitched"
-msgstr "Игра сократит актеров и сделает их голоса высокими"
-
-#: engines/bladerunner/detection.cpp:75
-msgid "Frame limiter high performance mode"
-msgstr "Режим высокой производительности ограничителя кадров"
-
-#: engines/bladerunner/detection.cpp:76
-msgid ""
-"This mode may result in high CPU usage! It avoids use of delayMillis() "
-"function."
-msgstr ""
-"Этот режим может привести к высокой загрузке процессора! Избегает "
-"использования функции delayMillis ()."
-
-#: engines/bladerunner/detection.cpp:86
-msgid "Max frames per second limit"
-msgstr "Максимальный лимит кадров в секунду"
-
-#: engines/bladerunner/detection.cpp:87
-msgid ""
-"This mode targets a maximum of 120 fps. When disabled, the game targets 60 "
-"fps"
-msgstr ""
-"Этот режим может использовать максимально 120 кадров в секунду. Когда он "
-"выключен, игра использует максимально 60 кадров в секунду"
-
-#: engines/bladerunner/detection.cpp:97
-msgid "Disable McCoy's quick stamina drain"
-msgstr "Выключить быстрое уставание МакКоя"
-
-#: engines/bladerunner/detection.cpp:98
-msgid ""
-"When running, McCoy won't start slowing down as soon as the player stops "
-"clicking the mouse"
-msgstr ""
-"Во время бега МакКой не будет замедляться, когда игрок перестаёт щёлкать "
-"мышью"
-
-#: engines/bladerunner/detection.cpp:108
-msgid "Show subtitles during text crawl"
-msgstr "Показывать субтитры во время ползущего текста"
-
-#: engines/bladerunner/detection.cpp:109
-msgid "During the intro cutscene, show subtitles during the text crawl"
-msgstr "Показывать субтитры при ползущем тексте в интро"
-
-#: engines/bladerunner/detection_tables.h:96
-#: engines/bladerunner/detection_tables.h:107
-#: engines/kyra/detection_tables.h:83
+#: engines/bladerunner/detection_tables.h:90
+#: engines/bladerunner/detection_tables.h:101
+#: engines/kyra/detection_tables.h:72
 msgid ""
 "The fan translator does not wish his translation to be incorporated into "
 "ScummVM."
 msgstr "Автор перевода не желает, чтобы его перевод был добавлен в ScummVM."
 
-#: engines/bladerunner/detection_tables.h:129 engines/cge/detection.cpp:56
-#: engines/cge/detection.cpp:62 engines/cge/detection.cpp:68
-#: engines/groovie/detection.cpp:118 engines/kyra/detection_tables.h:302
-#: engines/lure/detection.cpp:251 engines/mohawk/detection_tables.h:1024
+#: engines/bladerunner/detection_tables.h:123 engines/cge/detection.cpp:54
+#: engines/cge/detection.cpp:60 engines/cge/detection.cpp:66
+#: engines/groovie/detection.cpp:112 engines/kyra/detection_tables.h:291
+#: engines/lure/detection.cpp:229 engines/mohawk/detection_tables.h:1024
 #: engines/mohawk/detection_tables.h:1130
 #: engines/mohawk/detection_tables.h:1145
 #: engines/mohawk/detection_tables.h:3211 engines/myst3/detection.cpp:142
-#: engines/neverhood/detection.cpp:124 engines/saga/detection_tables.h:186
-#: engines/saga/detection_tables.h:1241 engines/saga/detection_tables.h:1300
+#: engines/neverhood/detection.cpp:120 engines/saga/detection_tables.h:46
 #: engines/sci/detection_tables.h:5191 engines/sci/detection_tables.h:5199
 #: engines/sherlock/detection_tables.h:223 engines/stark/detection.cpp:319
-#: engines/teenagent/detection.cpp:117 engines/toltecs/detection.cpp:212
-#: engines/trecision/detection.cpp:199 engines/zvision/detection_tables.h:200
-#: engines/zvision/detection_tables.h:220
+#: engines/teenagent/detection.cpp:117 engines/toltecs/detection.cpp:210
+#: engines/trecision/detection.cpp:201 engines/zvision/detection_tables.h:129
+#: engines/zvision/detection_tables.h:149
 msgid "Missing game code"
 msgstr "Отсутствует код для игры"
 
 #. I18N: Blade Runner Enhanced Edition is a trademark, so please keep the capitalization
 #. for Enhanced Edition as is.
-#: engines/bladerunner/detection_tables.h:143
+#: engines/bladerunner/detection_tables.h:137
 msgid ""
 "Enhanced Edition not supported. Please, use the original files which are "
 "part of the release."
@@ -4576,24 +4521,93 @@ msgstr ""
 "Enhanced Edition не поддерживается. Пожалуйста, используйте оригинальные "
 "файлы, которые тоже входят в релиз."
 
+#: engines/bladerunner/metaengine.cpp:45
+msgid "Sitcom mode"
+msgstr "Режим Sitcom"
+
+#: engines/bladerunner/metaengine.cpp:46
+msgid "Game will add laughter after actor's line or narration"
+msgstr "Игра добавит смех после актерской линии или повествования"
+
+#: engines/bladerunner/metaengine.cpp:56
+msgid "Shorty mode"
+msgstr "Коротышка"
+
+#: engines/bladerunner/metaengine.cpp:57
+msgid "Game will shrink the actors and make their voices high pitched"
+msgstr "Игра сократит актеров и сделает их голоса высокими"
+
+#: engines/bladerunner/metaengine.cpp:67
+msgid "Frame limiter high performance mode"
+msgstr "Режим высокой производительности ограничителя кадров"
+
+#: engines/bladerunner/metaengine.cpp:68
+msgid ""
+"This mode may result in high CPU usage! It avoids use of delayMillis() "
+"function."
+msgstr ""
+"Этот режим может привести к высокой загрузке процессора! Избегает "
+"использования функции delayMillis ()."
+
+#: engines/bladerunner/metaengine.cpp:78
+msgid "Max frames per second limit"
+msgstr "Максимальный лимит кадров в секунду"
+
+#: engines/bladerunner/metaengine.cpp:79
+msgid ""
+"This mode targets a maximum of 120 fps. When disabled, the game targets 60 "
+"fps"
+msgstr ""
+"Этот режим может использовать максимально 120 кадров в секунду. Когда он "
+"выключен, игра использует максимально 60 кадров в секунду"
+
+#: engines/bladerunner/metaengine.cpp:89
+msgid "Disable McCoy's quick stamina drain"
+msgstr "Выключить быстрое уставание МакКоя"
+
+#: engines/bladerunner/metaengine.cpp:90
+msgid ""
+"When running, McCoy won't start slowing down as soon as the player stops "
+"clicking the mouse"
+msgstr ""
+"Во время бега МакКой не будет замедляться, когда игрок перестаёт щёлкать "
+"мышью"
+
+#: engines/bladerunner/metaengine.cpp:100
+msgid "Show subtitles during text crawl"
+msgstr "Показывать субтитры во время ползущего текста"
+
+#: engines/bladerunner/metaengine.cpp:101
+msgid "During the intro cutscene, show subtitles during the text crawl"
+msgstr "Показывать субтитры при ползущем тексте в интро"
+
+#: engines/bladerunner/metaengine.cpp:111
+msgid "Fix credits for voice actors"
+msgstr ""
+
+#: engines/bladerunner/metaengine.cpp:112
+msgid ""
+"Updates the end credits with corrected credits for the Spanish voice actors"
+msgstr ""
+
 #. I18N: These are keymaps that work in the main gameplay and also when KIA (Knowledge Integration Assistant) is open.
-#: engines/bladerunner/metaengine.cpp:109
+#: engines/bladerunner/metaengine.cpp:199
 msgid "common shortcuts"
 msgstr "общее управление"
 
 #. I18N: These are keymaps which work only in the main gameplay and not within KIA's (Knowledge Integration Assistant) screens.
-#: engines/bladerunner/metaengine.cpp:111
+#: engines/bladerunner/metaengine.cpp:201
 msgid "main game shortcuts"
 msgstr "управление основной игрой"
 
 #. I18N: These are keymaps that work only within KIA's (Knowledge Integration Assistant) screens.
-#: engines/bladerunner/metaengine.cpp:113
+#: engines/bladerunner/metaengine.cpp:203
 msgid "KIA only shortcuts"
 msgstr "Управление для KIA"
 
 #. I18N: This keymap is the main way for the user interact with the game.
 #. It is used with the game's cursor to select, walk-to, run-to, look-at, talk-to, pick up, use, shoot (combat mode), open KIA (when clicking on McCoy).
-#: engines/bladerunner/metaengine.cpp:120
+#: engines/bladerunner/metaengine.cpp:210
 msgid "Walk / Look / Talk / Select / Shoot"
 msgstr "Ходить / Смотреть / Говорить / Выбрать / Стрелять"
 
@@ -4601,13 +4615,13 @@ msgstr "Ходить / Смотреть / Говорить / Выбрать / С
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. TOGGLE MCCOY'S COMBAT MODE
-#: engines/bladerunner/metaengine.cpp:130
+#: engines/bladerunner/metaengine.cpp:220
 msgid "Toggle Combat"
 msgstr "Переключить режим боя"
 
 #. I18N: This keymap allows skipping video cutscenes
-#: engines/bladerunner/metaengine.cpp:139 engines/scumm/help.cpp:76
-#: engines/zvision/metaengine.cpp:215
+#: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:75
+#: engines/zvision/metaengine.cpp:284
 msgid "Skip cutscene"
 msgstr "Пропустить заставку"
 
@@ -4615,7 +4629,7 @@ msgstr "Пропустить заставку"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SKIP PAST CURRENT LINE OF DIALOGUE
-#: engines/bladerunner/metaengine.cpp:152
+#: engines/bladerunner/metaengine.cpp:242
 msgid "Skip dialogue"
 msgstr "Пропустить диалог"
 
@@ -4623,7 +4637,7 @@ msgstr "Пропустить диалог"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. GAME OPTIONS
-#: engines/bladerunner/metaengine.cpp:163
+#: engines/bladerunner/metaengine.cpp:253
 msgid "Game Options"
 msgstr "Настройки Игры"
 
@@ -4632,29 +4646,29 @@ msgstr "Настройки Игры"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. ACTIVATE KIA CLUE DATABASE SYSTEM
-#: engines/bladerunner/metaengine.cpp:174
+#: engines/bladerunner/metaengine.cpp:264
 msgid "Open KIA Database"
 msgstr "Открыть базу KIA"
 
 #. I18N: This keymap works within the KIA Save Game screen
 #. and allows submitting a selected existing save game for deletion.
-#: engines/bladerunner/metaengine.cpp:192
+#: engines/bladerunner/metaengine.cpp:282
 msgid "Delete Selected Saved Game"
 msgstr "Удалить выбранное сохранение игры"
 
 #. I18N: This keymap allows scrolling texts and lists upwards
-#: engines/bladerunner/metaengine.cpp:206
+#: engines/bladerunner/metaengine.cpp:296
 msgid "Scroll Up"
 msgstr "Прокрутить вверх"
 
 #. I18N: This keymap allows scrolling texts and lists downwards
-#: engines/bladerunner/metaengine.cpp:213
+#: engines/bladerunner/metaengine.cpp:303
 msgid "Scroll Down"
 msgstr "Прокрутить вниз"
 
 #. I18N: This keymap allows (in KIA only) for a clue to be set as private or public
 #. (only when the KIA is upgraded).
-#: engines/bladerunner/metaengine.cpp:221
+#: engines/bladerunner/metaengine.cpp:311
 msgid "Toggle Clue Privacy"
 msgstr "Вкл/выкл приватность для улик"
 
@@ -4662,7 +4676,7 @@ msgstr "Вкл/выкл приватность для улик"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SAVE GAME
-#: engines/bladerunner/metaengine.cpp:240 engines/pegasus/pegasus.cpp:2824
+#: engines/bladerunner/metaengine.cpp:330 engines/pegasus/pegasus.cpp:2824
 msgid "Save Game"
 msgstr "Сохранить игру"
 
@@ -4670,7 +4684,7 @@ msgstr "Сохранить игру"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. LOAD GAME
-#: engines/bladerunner/metaengine.cpp:249 engines/pegasus/pegasus.cpp:2830
+#: engines/bladerunner/metaengine.cpp:339 engines/pegasus/pegasus.cpp:2830
 msgid "Load Game"
 msgstr "Загрузить игру"
 
@@ -4678,7 +4692,7 @@ msgstr "Загрузить игру"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. CRIME SCENE DATABASE
-#: engines/bladerunner/metaengine.cpp:258
+#: engines/bladerunner/metaengine.cpp:348
 msgid "Crime Scene Database"
 msgstr "База сцен преступлений"
 
@@ -4686,7 +4700,7 @@ msgstr "База сцен преступлений"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. SUSPECT DATABASE
-#: engines/bladerunner/metaengine.cpp:267
+#: engines/bladerunner/metaengine.cpp:357
 msgid "Suspect Database"
 msgstr "База подозреваемых"
 
@@ -4694,7 +4708,7 @@ msgstr "База подозреваемых"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. CLUE DATABASE
-#: engines/bladerunner/metaengine.cpp:276
+#: engines/bladerunner/metaengine.cpp:366
 msgid "Clue Database"
 msgstr "База улик"
 
@@ -4702,7 +4716,7 @@ msgstr "База улик"
 #. In Blade Runner's official localizations, there is a description of this keymap
 #. on the KIA Help Page, under Keyboard Shortcuts. In the English version it is
 #. QUIT GAME
-#: engines/bladerunner/metaengine.cpp:285 engines/dragons/metaengine.cpp:225
+#: engines/bladerunner/metaengine.cpp:375 engines/dragons/metaengine.cpp:225
 msgid "Quit Game"
 msgstr "Выйти из игры"
 
@@ -4713,6 +4727,18 @@ msgstr "Вы уверены, что хотите выйти?"
 #: engines/buried/buried.cpp:590
 msgid "Your game is now Paused.  Click OK to continue."
 msgstr "Игра приостановлена. Для продолжения нажмите ОК."
+
+#. I18N: This option allows the user to skip cutscenes.
+#. I18N: This option allows the user to skip text and cutscenes.
+#: engines/buried/metaengine.cpp:40 engines/kyra/metaengine.cpp:61
+msgid "Skip support"
+msgstr "Поддержка пропусков"
+
+#: engines/buried/metaengine.cpp:41
+#, fuzzy
+#| msgid "Allow text and cutscenes to be skipped"
+msgid "Allow cutscenes to be skipped"
+msgstr "Включает возможность пропускать тексты и заставки"
 
 #: engines/buried/saveload.cpp:66
 msgid ""
@@ -4738,28 +4764,51 @@ msgstr ""
 "Этот файл сохранения был создан в более новой версии ScummVM. Не могу его "
 "загрузить."
 
-#: engines/cge/detection.cpp:113
+#: engines/cge/metaengine.cpp:39 engines/cge2/metaengine.cpp:42
 msgid "Color Blind Mode"
 msgstr "Режим без цвета"
 
-#: engines/cge/detection.cpp:114
+#: engines/cge/metaengine.cpp:40 engines/cge2/metaengine.cpp:43
 msgid "Enable Color Blind Mode by default"
 msgstr "Включить режим для людей со слабым восприятием цвета"
 
-#: engines/cge/detection.cpp:126 engines/glk/detection.cpp:238
-#: engines/sci/detection_options.h:221 engines/supernova/detection.cpp:53
+#: engines/cge/metaengine.cpp:52 engines/glk/metaengine.cpp:243
+#: engines/griffon/metaengine.cpp:40 engines/sci/detection_options.h:221
+#: engines/supernova/metaengine.cpp:50
 msgid "Enable Text to Speech"
 msgstr "Включить текст-в-речь"
 
-#: engines/cge/detection.cpp:127
+#: engines/cge/metaengine.cpp:53
 msgid "Use TTS to read text in the game (if TTS is available)"
 msgstr "Использовать TTS для чтения игровых текстов вслух (если TTS доступна)"
 
-#: engines/cine/detection.cpp:62
+#: engines/cge2/metaengine.cpp:55
+#, fuzzy
+#| msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
+msgid "Enable Text to Speech for Objects and Options"
+msgstr "Включить озвучку текста для объектов, опций и цитаты из Библии"
+
+#: engines/cge2/metaengine.cpp:56 engines/dreamweb/metaengine.cpp:62
+#: engines/griffon/metaengine.cpp:41 engines/lure/metaengine.cpp:40
+#: engines/mads/metaengine.cpp:109 engines/sci/detection_options.h:222
+#: engines/sherlock/metaengine.cpp:113 engines/supernova/metaengine.cpp:51
+#: engines/twine/metaengine.cpp:168
+msgid "Use TTS to read the descriptions (if TTS is available)"
+msgstr "Использовать TTS для чтения описаний вслух (если TTS доступна)"
+
+#: engines/cge2/metaengine.cpp:67 engines/dreamweb/metaengine.cpp:73
+msgid "Enable Text to Speech for Subtitles"
+msgstr "Включить озвучку текста субтритров"
+
+#: engines/cge2/metaengine.cpp:68 engines/dreamweb/metaengine.cpp:74
+msgid "Use TTS to read the subtitles (if TTS is available)"
+msgstr "Использовать TTS для чтения субтитров вслух (если TTS доступна)"
+
+#: engines/cine/metaengine.cpp:53
 msgid "Use transparent dialog boxes in 16 color scenes"
 msgstr "Использовать прозрачные диалоговые окна в 16-цветных сценах"
 
-#: engines/cine/detection.cpp:63
+#: engines/cine/metaengine.cpp:54
 msgid ""
 "Use transparent dialog boxes in 16 color scenes even if the original game "
 "version did not support them"
@@ -4767,15 +4816,15 @@ msgstr ""
 "Использовать прозрачные диалоговые окна в 16-цветных сценах даже если "
 "оригинальная игра их не поддерживала"
 
-#: engines/cine/metaengine.cpp:133
+#: engines/cine/metaengine.cpp:164
 msgid "Unnamed autosave"
 msgstr "Автосохранение без имени"
 
-#: engines/cine/metaengine.cpp:135 engines/cine/metaengine.cpp:207
+#: engines/cine/metaengine.cpp:166 engines/cine/metaengine.cpp:238
 msgid "Unnamed savegame"
 msgstr "Сохранённая игра без имени"
 
-#: engines/cine/metaengine.cpp:152 engines/cine/metaengine.cpp:215
+#: engines/cine/metaengine.cpp:183 engines/cine/metaengine.cpp:246
 msgid "Empty autosave"
 msgstr "Пустое автосохранение"
 
@@ -4841,17 +4890,17 @@ msgstr "Действие"
 msgid "Change Command"
 msgstr "Изменить команду"
 
-#: engines/dragons/metaengine.cpp:149 engines/griffon/metaengine.cpp:126
+#: engines/dragons/metaengine.cpp:149 engines/griffon/metaengine.cpp:152
 #: engines/grim/grim.cpp:493 engines/grim/grim.cpp:589
-#: engines/hdb/metaengine.cpp:231 engines/nancy/dialogs.cpp:145
-#: engines/scumm/help.cpp:224 engines/scumm/help.cpp:233
-#: engines/scumm/help.cpp:240 engines/scumm/help.cpp:248
-#: engines/twine/metaengine.cpp:286 engines/zvision/metaengine.cpp:163
+#: engines/hdb/metaengine.cpp:251 engines/nancy/dialogs.cpp:145
+#: engines/scumm/help.cpp:223 engines/scumm/help.cpp:232
+#: engines/scumm/help.cpp:246 engines/scumm/help.cpp:254
+#: engines/twine/metaengine.cpp:429 engines/zvision/metaengine.cpp:232
 msgid "Inventory"
 msgstr "Инвентарь"
 
-#: engines/dragons/metaengine.cpp:154 engines/scumm/help.cpp:85
-#: engines/scumm/help.cpp:88
+#: engines/dragons/metaengine.cpp:154 engines/scumm/help.cpp:84
+#: engines/scumm/help.cpp:87
 msgid "Enter"
 msgstr "Ввод"
 
@@ -4877,52 +4926,34 @@ msgstr ""
 "Нажмите ОК, чтобы перевести их в новый формат сейчас, в противном случае это "
 "сообщение появится снова при следующем запуске игры.\n"
 
-#: engines/dreamweb/detection.cpp:63
+#: engines/dreamweb/metaengine.cpp:48
 msgid "Use bright palette mode"
 msgstr "Использовать режим яркой палитры"
 
-#: engines/dreamweb/detection.cpp:64
+#: engines/dreamweb/metaengine.cpp:49
 msgid "Display graphics using the game's bright palette"
 msgstr "Рисует графику с использованием яркой палитры игры"
 
-#: engines/dreamweb/detection.cpp:76
+#: engines/dreamweb/metaengine.cpp:61
 msgid "Enable Text to Speech for Objects, Options, and the Bible Quote"
 msgstr "Включить озвучку текста для объектов, опций и цитаты из Библии"
 
-#: engines/dreamweb/detection.cpp:77 engines/lure/detection.cpp:45
-#: engines/mads/detection.cpp:124 engines/sci/detection_options.h:222
-#: engines/sherlock/detection.cpp:132 engines/supernova/detection.cpp:54
-#: engines/twine/detection.cpp:552
-msgid "Use TTS to read the descriptions (if TTS is available)"
-msgstr "Использовать TTS для чтения описаний вслух (если TTS доступна)"
-
-#: engines/dreamweb/detection.cpp:88
-msgid "Enable Text to Speech for Subtitles"
-msgstr "Включить озвучку текста субтритров"
-
-#: engines/dreamweb/detection.cpp:89
-msgid "Use TTS to read the subtitles (if TTS is available)"
-msgstr "Использовать TTS для чтения субтитров вслух (если TTS доступна)"
-
-#: engines/freescape/detection.cpp:259
+#: engines/freescape/metaengine.cpp:31
 msgid "Prerecorded sounds"
-msgstr ""
+msgstr "Записанные звуки"
 
-#: engines/freescape/detection.cpp:260
+#: engines/freescape/metaengine.cpp:32
 msgid "Use high-quality pre-recorded sounds instead of pc speaker emulation"
 msgstr ""
+"Использовать высококачественные записи звуков вместо эмуляции PC Speaker"
 
-#: engines/glk/detection.cpp:239
-msgid "Use TTS to read the text"
-msgstr "Использовать TTS для чтения текста"
+#: engines/freescape/metaengine.cpp:42
+msgid "Automatic drilling"
+msgstr ""
 
-#: engines/glk/detection.cpp:246
-msgid "Also read input text"
-msgstr "Также читать введённый текст"
-
-#: engines/glk/detection.cpp:247
-msgid "Use TTS to read the input text"
-msgstr "Использовать TTS для чтения введённого текста"
+#: engines/freescape/metaengine.cpp:43
+msgid "Allow to succefully drill in any part of the area in Driller"
+msgstr ""
 
 #: engines/glk/glk_api.cpp:62
 msgid "[ press any key to exit ]"
@@ -4931,6 +4962,18 @@ msgstr "[ нажмите любую клавишу для выхода ]"
 #: engines/glk/quetzal.cpp:147 engines/glk/quetzal.cpp:156
 msgid "Untitled Savegame"
 msgstr "Без названия Savegame"
+
+#: engines/glk/metaengine.cpp:244
+msgid "Use TTS to read the text"
+msgstr "Использовать TTS для чтения текста"
+
+#: engines/glk/metaengine.cpp:251
+msgid "Also read input text"
+msgstr "Также читать введённый текст"
+
+#: engines/glk/metaengine.cpp:252
+msgid "Use TTS to read the input text"
+msgstr "Использовать TTS для чтения введённого текста"
 
 #: engines/glk/adrift/os_glk.cpp:2815
 msgid "Loading game...\n"
@@ -5027,37 +5070,17 @@ msgstr "Не удалось сохранить игру в файл."
 msgid "Failed to delete file."
 msgstr "Не удалось удалить файл."
 
-#: engines/griffon/metaengine.cpp:83
+#: engines/griffon/metaengine.cpp:109
 msgid "Menu / Skip"
 msgstr "Меню / Пропустить"
 
-#: engines/griffon/metaengine.cpp:119
+#: engines/griffon/metaengine.cpp:145
 msgid "Attack"
 msgstr "Атака"
 
-#: engines/griffon/metaengine.cpp:133
+#: engines/griffon/metaengine.cpp:159
 msgid "Speed Up Cutscene"
 msgstr "Ускорить заставку"
-
-#: engines/grim/detection.cpp:69
-msgid "Load user patch (unsupported)"
-msgstr "Загрузить пользовательский патч (без поддержки)"
-
-#: engines/grim/detection.cpp:70
-msgid ""
-"Load an user patch. Please note that the ScummVM team doesn't provide "
-"support for using such patches."
-msgstr ""
-"Загрузить пользовательский патч. Пожалуйста, заметьте, что команда ScummVM "
-"не оказывает поддержку при использовании таких патчей."
-
-#: engines/grim/detection.cpp:80 engines/zvision/metaengine.cpp:152
-msgid "Show FPS"
-msgstr "Показать счётчик кадров в секунду"
-
-#: engines/grim/detection.cpp:81
-msgid "Show the current FPS-rate, while you play."
-msgstr "Показывать частоту кадров во время игры."
 
 #: engines/grim/grim.cpp:350
 #, c-format
@@ -5074,8 +5097,8 @@ msgstr ""
 msgid "Run"
 msgstr "Бежать"
 
-#: engines/grim/grim.cpp:478 engines/scumm/help.cpp:238
-#: engines/scumm/help.cpp:246
+#: engines/grim/grim.cpp:478 engines/scumm/help.cpp:244
+#: engines/scumm/help.cpp:252
 msgid "Examine"
 msgstr "Проверить"
 
@@ -5092,7 +5115,7 @@ msgid "Skip dialog lines"
 msgstr "Пропустить строчку диалога"
 
 #: engines/grim/grim.cpp:516 engines/grim/grim.cpp:612
-#: engines/hdb/metaengine.cpp:244
+#: engines/hdb/metaengine.cpp:264
 msgid "Menu"
 msgstr "Меню"
 
@@ -5158,7 +5181,27 @@ msgstr ""
 "Это может занять некоторое время, пожалуйста, подождите.\n"
 "Последующие запуски игры будут проходить без подобной проверки."
 
-#: engines/grim/metaengine.cpp:61
+#: engines/grim/metaengine.cpp:37
+msgid "Load user patch (unsupported)"
+msgstr "Загрузить пользовательский патч (без поддержки)"
+
+#: engines/grim/metaengine.cpp:38
+msgid ""
+"Load an user patch. Please note that the ScummVM team doesn't provide "
+"support for using such patches."
+msgstr ""
+"Загрузить пользовательский патч. Пожалуйста, заметьте, что команда ScummVM "
+"не оказывает поддержку при использовании таких патчей."
+
+#: engines/grim/metaengine.cpp:48 engines/zvision/metaengine.cpp:221
+msgid "Show FPS"
+msgstr "Показать счётчик кадров в секунду"
+
+#: engines/grim/metaengine.cpp:49
+msgid "Show the current FPS-rate, while you play."
+msgstr "Показывать частоту кадров во время игры."
+
+#: engines/grim/metaengine.cpp:92
 msgid "Escape from Monkey Island support is not compiled in"
 msgstr "Поддержка для Escape from Monkey Island не скомпилирована"
 
@@ -5210,41 +5253,41 @@ msgstr ""
 "Заметьте, что релизы c GOG.com и Steam уже содержат объединённый "
 "FullMonkeyMap.imt"
 
-#: engines/groovie/detection.cpp:297
+#: engines/groovie/metaengine.cpp:37
 msgid "Fast movie speed"
 msgstr "Режим ускоренного видео"
 
-#: engines/groovie/detection.cpp:298
+#: engines/groovie/metaengine.cpp:38
 msgid "Play movies at an increased speed"
 msgstr "Воспроизводит видеоролики с увеличенной скоростью"
 
-#: engines/groovie/detection.cpp:321
+#: engines/groovie/metaengine.cpp:61
 msgid "Easier AI"
 msgstr "Упрощённый ИИ"
 
-#: engines/groovie/detection.cpp:322
+#: engines/groovie/metaengine.cpp:62
 msgid "Decrease the difficulty of AI puzzles"
 msgstr "Уменьшает сложность ИИ-головоломок"
 
-#: engines/groovie/detection.cpp:333
+#: engines/groovie/metaengine.cpp:73
 msgid "Updated Credits Music"
 msgstr "Обновлённая музыка в титрах"
 
-#: engines/groovie/detection.cpp:334
+#: engines/groovie/metaengine.cpp:74
 msgid ""
 "Play the song The Final Hour during the credits instead of reusing MIDI songs"
 msgstr ""
 "Проигрывать песню The Final Hour во время финальных титров вместо MIDI-музыки"
 
-#: engines/groovie/detection.cpp:345
+#: engines/groovie/metaengine.cpp:85
 msgid "Speedrun Mode"
 msgstr "Режим Speedrun"
 
-#: engines/groovie/detection.cpp:346
+#: engines/groovie/metaengine.cpp:86
 msgid "Affects the controls for fast forwarding the game"
 msgstr "Подстраивает управление для более быстрого перемещения по игре"
 
-#: engines/groovie/metaengine.cpp:52
+#: engines/groovie/metaengine.cpp:120
 msgid "GroovieV2 support is not compiled in"
 msgstr "Поддержка для версии GroovieV2 не скомпилирована"
 
@@ -5268,178 +5311,101 @@ msgstr "Мини-игра Medusa ещё не поддерживается. Пр�
 msgid "The Troy minigame is not supported yet. Skipping"
 msgstr "Мини-игра Troy ещё не поддерживается. Пропускаю"
 
-#: engines/hdb/detection.cpp:123
+#: engines/hdb/metaengine.cpp:44
 msgid "Enable cheat mode"
 msgstr "Включить чит-режим"
 
-#: engines/hdb/detection.cpp:124
+#: engines/hdb/metaengine.cpp:45
 msgid "Debug info and level selection becomes available"
 msgstr "Отладочная информация и выбор уровня становятся доступными"
 
-#: engines/hdb/metaengine.cpp:193 engines/nancy/input.cpp:177
+#: engines/hdb/metaengine.cpp:213 engines/nancy/input.cpp:177
 msgid "Move up"
 msgstr "Идти вверх"
 
-#: engines/hdb/metaengine.cpp:199 engines/nancy/input.cpp:183
+#: engines/hdb/metaengine.cpp:219 engines/nancy/input.cpp:183
 msgid "Move down"
 msgstr "Идти вниз"
 
-#: engines/hdb/metaengine.cpp:205 engines/nancy/input.cpp:189
+#: engines/hdb/metaengine.cpp:225 engines/nancy/input.cpp:189
 msgid "Move left"
 msgstr "Идти влево"
 
-#: engines/hdb/metaengine.cpp:211 engines/nancy/input.cpp:195
+#: engines/hdb/metaengine.cpp:231 engines/nancy/input.cpp:195
 msgid "Move right"
 msgstr "Идти вправо"
 
-#: engines/hdb/metaengine.cpp:217 engines/scumm/help.cpp:127
-#: engines/scumm/help.cpp:151 engines/scumm/help.cpp:169
-#: engines/scumm/help.cpp:197 engines/scumm/help.cpp:212
-#: engines/scumm/help.cpp:223 engines/scumm/help.cpp:249
-#: engines/sky/metaengine.cpp:91 engines/wintermute/keymapper_tables.h:140
+#: engines/hdb/metaengine.cpp:237 engines/scumm/help.cpp:126
+#: engines/scumm/help.cpp:150 engines/scumm/help.cpp:168
+#: engines/scumm/help.cpp:196 engines/scumm/help.cpp:211
+#: engines/scumm/help.cpp:222 engines/scumm/help.cpp:255
+#: engines/sky/metaengine.cpp:94 engines/wintermute/keymapper_tables.h:140
 #: engines/wintermute/keymapper_tables.h:1524
 msgid "Use"
 msgstr "Использовать"
 
-#: engines/hdb/metaengine.cpp:224
+#: engines/hdb/metaengine.cpp:244
 msgid "Clear waypoints"
 msgstr "Стереть точки пути"
 
-#: engines/hdb/metaengine.cpp:250
+#: engines/hdb/metaengine.cpp:270
 msgid "Debug"
 msgstr "Отладчик"
 
-#: engines/hopkins/detection.cpp:46 engines/hopkins/detection.cpp:58
+#: engines/hopkins/metaengine.cpp:43 engines/hopkins/metaengine.cpp:55
 msgid "Gore Mode"
 msgstr "Режим с кровью"
 
-#: engines/hopkins/detection.cpp:47 engines/hopkins/detection.cpp:59
+#: engines/hopkins/metaengine.cpp:44 engines/hopkins/metaengine.cpp:56
 msgid "Enable Gore Mode when available"
 msgstr "Включить режим с изображением крови, если он доступен"
 
-#: engines/hypno/detection.cpp:258
+#: engines/hypno/metaengine.cpp:33
 msgid "Enable original cheats"
 msgstr "Включить оригинальные читы"
 
-#: engines/hypno/detection.cpp:259
+#: engines/hypno/metaengine.cpp:34
 msgid "Allow cheats using the C key."
 msgstr "Включите читы, нажав на клавишу С."
 
-#: engines/hypno/detection.cpp:269
+#: engines/hypno/metaengine.cpp:44
 msgid "Enable infinite health cheat"
 msgstr "Включить чит бесконечного здоровья"
 
-#: engines/hypno/detection.cpp:270
+#: engines/hypno/metaengine.cpp:45
 msgid "Player health will never decrease (except for game over scenes)."
 msgstr ""
 "Здоровье игрока никогда не уменьшается (кроме экранов завершения игры)."
 
-#: engines/hypno/detection.cpp:280
+#: engines/hypno/metaengine.cpp:55
 msgid "Enable infinite ammo cheat"
 msgstr "Включить чит бесконечных боеприпасов"
 
-#: engines/hypno/detection.cpp:281
+#: engines/hypno/metaengine.cpp:56
 msgid "Player ammo will never decrease."
 msgstr "Боеприпасы игрока никогда не уменьшаются."
 
-#: engines/hypno/detection.cpp:291
+#: engines/hypno/metaengine.cpp:66
 msgid "Unlock all levels"
 msgstr "Разблокировать все уровни"
 
-#: engines/hypno/detection.cpp:292
+#: engines/hypno/metaengine.cpp:67
 msgid "All levels will be available to play."
 msgstr "Все уровни будут доступны для игры."
 
-#: engines/hypno/detection.cpp:302
+#: engines/hypno/metaengine.cpp:77
 msgid "Enable restored content"
 msgstr "Включить восстановленный контент"
 
-#: engines/hypno/detection.cpp:303
+#: engines/hypno/metaengine.cpp:78
 msgid "Add additional content that is not enabled the original implementation."
 msgstr "Добавить конент, который был удалён в огининальной игре."
 
-#. I18N: Studio audience adds an applause and cheering sounds whenever
-#. Malcolm makes a joke.
-#: engines/kyra/detection.cpp:61
-msgid "Studio audience"
-msgstr "Студийная аудитория"
-
-#: engines/kyra/detection.cpp:62
-msgid "Enable studio audience"
-msgstr "Включить звуки аудитории в студии"
-
-#. I18N: This option allows the user to skip text and cutscenes.
-#: engines/kyra/detection.cpp:74
-msgid "Skip support"
-msgstr "Поддержка пропусков"
-
-#: engines/kyra/detection.cpp:75
-msgid "Allow text and cutscenes to be skipped"
-msgstr "Включает возможность пропускать тексты и заставки"
-
-#. I18N: Helium mode makes people sound like they've inhaled Helium.
-#: engines/kyra/detection.cpp:87
-msgid "Helium mode"
-msgstr "Режим гелия"
-
-#: engines/kyra/detection.cpp:88
-msgid "Enable helium mode"
-msgstr "Включить режим гелия"
-
-#. I18N: When enabled, this option makes scrolling smoother when
-#. changing from one screen to another.
-#: engines/kyra/detection.cpp:103
-msgid "Smooth scrolling"
-msgstr "Плавная прокрутка"
-
-#: engines/kyra/detection.cpp:104
-msgid "Enable smooth scrolling when walking"
-msgstr "Включить плавную прокрутку во время ходьбы"
-
-#. I18N: When enabled, this option changes the cursor when it floats to the
-#. edge of the screen to a directional arrow. The player can then click to
-#. walk towards that direction.
-#: engines/kyra/detection.cpp:118
-msgid "Floating cursors"
-msgstr "Плавающие курсоры"
-
-#: engines/kyra/detection.cpp:119
-msgid "Enable floating cursors"
-msgstr "Включить плавающие курсоры"
-
-#. I18N: When enabled, this option will fill in an autogenerated savegame
-#. description into the input prompt where.
-#: engines/kyra/detection.cpp:132
-msgid "Suggest save names"
-msgstr "Подсказывать имена для сохранений игры"
-
-#: engines/kyra/detection.cpp:133
-msgid "Autogenerated naming suggestions for savegames"
-msgstr "Автогенерённые имена для сохранений игры"
-
-#. I18N: HP stands for Hit Points
-#: engines/kyra/detection.cpp:147
-msgid "HP bar graphs"
-msgstr "Полоски здоровья"
-
-#: engines/kyra/detection.cpp:148
-msgid "Enable hit point bar graphs"
-msgstr "Включить отображение полосок здоровья"
-
-#. I18N: L/R stands for Left/Right
-#: engines/kyra/detection.cpp:160
-msgid "Fight Button L/R Swap"
-msgstr "Fight Button L / R Swap"
-
-#: engines/kyra/detection.cpp:161
-msgid "Left button to attack, right button to pick up items"
-msgstr "Левая кнопка для атаки, правая кнопка для выбора предметов"
-
-#: engines/kyra/detection_tables.h:81
+#: engines/kyra/detection_tables.h:70
 msgid "Missing language specific game code and/or resources."
 msgstr "Отсутствует код игры и/или ресурсы для конкретного языка."
 
-#: engines/kyra/detection_tables.h:82
+#: engines/kyra/detection_tables.h:71
 msgid ""
 "Missing language specific game code and/or resources for this fan "
 "translation."
@@ -5447,17 +5413,17 @@ msgstr ""
 "Отсутствует код игры для конкретного языка и/или ресурсы для этого "
 "фанатского перевода."
 
-#: engines/kyra/detection_tables.h:84
+#: engines/kyra/detection_tables.h:73
 msgid "Demo plays simple animations without using Westwood's Engine."
 msgstr "Демо проигрывает простые анимации без использования движка Westwood."
 
-#: engines/kyra/detection_tables.h:1363
+#: engines/kyra/detection_tables.h:1352
 msgid "You added the game incorrectly. Please add the root folder of the game."
 msgstr ""
 "Вы неправильно добавили игру. Добавьте, пожалуйста, корневую папку игры."
 
 #. I18N: The file in the game directory needs to be extracted
-#: engines/kyra/detection_tables.h:1379
+#: engines/kyra/detection_tables.h:1368
 msgid ""
 "You added the game incorrectly. The GAME.DAT file is an ISO image and you "
 "need to extract the game data files from it."
@@ -5465,11 +5431,83 @@ msgstr ""
 "Вы неправильно добавили игру. Файл GAME.DAT представляет собой ISO-образ, и "
 "вам необходимо извлечь из него файлы данных игры."
 
-#: engines/kyra/metaengine.cpp:118
+#. I18N: Studio audience adds an applause and cheering sounds whenever
+#. Malcolm makes a joke.
+#: engines/kyra/metaengine.cpp:48
+msgid "Studio audience"
+msgstr "Студийная аудитория"
+
+#: engines/kyra/metaengine.cpp:49
+msgid "Enable studio audience"
+msgstr "Включить звуки аудитории в студии"
+
+#: engines/kyra/metaengine.cpp:62
+msgid "Allow text and cutscenes to be skipped"
+msgstr "Включает возможность пропускать тексты и заставки"
+
+#. I18N: Helium mode makes people sound like they've inhaled Helium.
+#: engines/kyra/metaengine.cpp:74
+msgid "Helium mode"
+msgstr "Режим гелия"
+
+#: engines/kyra/metaengine.cpp:75
+msgid "Enable helium mode"
+msgstr "Включить режим гелия"
+
+#. I18N: When enabled, this option makes scrolling smoother when
+#. changing from one screen to another.
+#: engines/kyra/metaengine.cpp:90
+msgid "Smooth scrolling"
+msgstr "Плавная прокрутка"
+
+#: engines/kyra/metaengine.cpp:91
+msgid "Enable smooth scrolling when walking"
+msgstr "Включить плавную прокрутку во время ходьбы"
+
+#. I18N: When enabled, this option changes the cursor when it floats to the
+#. edge of the screen to a directional arrow. The player can then click to
+#. walk towards that direction.
+#: engines/kyra/metaengine.cpp:105
+msgid "Floating cursors"
+msgstr "Плавающие курсоры"
+
+#: engines/kyra/metaengine.cpp:106
+msgid "Enable floating cursors"
+msgstr "Включить плавающие курсоры"
+
+#. I18N: When enabled, this option will fill in an autogenerated savegame
+#. description into the input prompt where.
+#: engines/kyra/metaengine.cpp:119
+msgid "Suggest save names"
+msgstr "Подсказывать имена для сохранений игры"
+
+#: engines/kyra/metaengine.cpp:120
+msgid "Autogenerated naming suggestions for savegames"
+msgstr "Автогенерённые имена для сохранений игры"
+
+#. I18N: HP stands for Hit Points
+#: engines/kyra/metaengine.cpp:134
+msgid "HP bar graphs"
+msgstr "Полоски здоровья"
+
+#: engines/kyra/metaengine.cpp:135
+msgid "Enable hit point bar graphs"
+msgstr "Включить отображение полосок здоровья"
+
+#. I18N: L/R stands for Left/Right
+#: engines/kyra/metaengine.cpp:147
+msgid "Fight Button L/R Swap"
+msgstr "Fight Button L / R Swap"
+
+#: engines/kyra/metaengine.cpp:148
+msgid "Left button to attack, right button to pick up items"
+msgstr "Левая кнопка для атаки, правая кнопка для выбора предметов"
+
+#: engines/kyra/metaengine.cpp:241
 msgid "Lands of Lore support is not compiled in"
 msgstr "Поддержка для Lands of Lore не скомпилирована"
 
-#: engines/kyra/metaengine.cpp:128
+#: engines/kyra/metaengine.cpp:251
 msgid ""
 "EOB II FM-TOWNS requires support of 16bit color modes which has not been "
 "activated in your ScummVM build"
@@ -5477,7 +5515,7 @@ msgstr ""
 "EOB II FM-TOWNS требует поддержки режимов 16-битного цвета, но они не были "
 "активированы в вашей сборке ScummVM"
 
-#: engines/kyra/metaengine.cpp:134
+#: engines/kyra/metaengine.cpp:257
 msgid "Eye of Beholder support is not compiled in"
 msgstr "Поддержка для Eye of Beholder не скомпилирована"
 
@@ -5494,7 +5532,7 @@ msgid "Interact via Right Click"
 msgstr "Взаимодействовать через правый щелчок"
 
 #: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:476
-#: engines/twine/metaengine.cpp:248
+#: engines/twine/metaengine.cpp:391
 msgid "Move Forward"
 msgstr "Идти вперёд"
 
@@ -5511,14 +5549,14 @@ msgid "Move Right"
 msgstr "Идти вправо"
 
 #: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:480
-#: engines/pegasus/pegasus.cpp:2739 engines/twine/metaengine.cpp:269
-#: engines/zvision/metaengine.cpp:140
+#: engines/pegasus/pegasus.cpp:2739 engines/twine/metaengine.cpp:412
+#: engines/zvision/metaengine.cpp:209
 msgid "Turn Left"
 msgstr "Поворот налево"
 
 #: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:481
-#: engines/pegasus/pegasus.cpp:2746 engines/twine/metaengine.cpp:262
-#: engines/zvision/metaengine.cpp:146
+#: engines/pegasus/pegasus.cpp:2746 engines/twine/metaengine.cpp:405
+#: engines/zvision/metaengine.cpp:215
 msgid "Turn Right"
 msgstr "Поворот направо"
 
@@ -5724,16 +5762,20 @@ msgstr ""
 msgid "This puzzle is not available in the trial version of the game"
 msgstr "Эта головоломка недоступна в пробной версии игры"
 
-#: engines/lure/detection.cpp:44 engines/mads/detection.cpp:123
-#: engines/sherlock/detection.cpp:131 engines/twine/detection.cpp:551
+#: engines/lure/metaengine.cpp:39 engines/mads/metaengine.cpp:108
+#: engines/sherlock/metaengine.cpp:112 engines/twine/metaengine.cpp:167
 msgid "TTS Narrator"
 msgstr "Комментатор TTS"
 
-#: engines/made/detection.cpp:45
+#: engines/made/detection_tables.h:441 engines/made/detection_tables.h:458
+msgid "The game is using unsupported engine"
+msgstr "Игра использует неподдерживаемый движок"
+
+#: engines/made/metaengine.cpp:34
 msgid "Play a digital soundtrack during the opening movie"
 msgstr "Проигрывать цифровой трек во время вступительного ролика"
 
-#: engines/made/detection.cpp:46
+#: engines/made/metaengine.cpp:35
 msgid ""
 "If selected, the game will use a digital soundtrack during the introduction. "
 "Otherwise, it will play MIDI music."
@@ -5741,27 +5783,23 @@ msgstr ""
 "Если выбрано, то игра будет использовать цифровой трек во вступлении. Иначе "
 "будет проигрываться MIDI-музыка."
 
-#: engines/made/detection_tables.h:443 engines/made/detection_tables.h:460
-msgid "The game is using unsupported engine"
-msgstr "Игра использует неподдерживаемый движок"
-
-#: engines/mads/detection.cpp:62
+#: engines/mads/metaengine.cpp:47
 msgid "Easy mouse interface"
 msgstr "Простой интерфейс мыши"
 
-#: engines/mads/detection.cpp:63
+#: engines/mads/metaengine.cpp:48
 msgid "Shows object names when hovering the mouse over them"
 msgstr "Показывает названия объектов при наведении курсора мыши"
 
-#: engines/mads/detection.cpp:74 engines/mads/detection.cpp:75
+#: engines/mads/metaengine.cpp:59 engines/mads/metaengine.cpp:60
 msgid "Animated inventory items"
 msgstr "Анимированные объекты инвентаря"
 
-#: engines/mads/detection.cpp:86 engines/mads/detection.cpp:87
+#: engines/mads/metaengine.cpp:71 engines/mads/metaengine.cpp:72
 msgid "Animated game interface"
 msgstr "Анимированный интерфейс игры"
 
-#: engines/mads/detection.cpp:98 engines/mads/detection.cpp:99
+#: engines/mads/metaengine.cpp:83 engines/mads/metaengine.cpp:84
 msgid "Naughty game mode"
 msgstr "Откровенный режим игры"
 
@@ -6059,11 +6097,11 @@ msgstr ""
 "этого делать, а сайт магазина больше\n"
 "не существует."
 
-#: engines/mtropolis/detection.cpp:45
+#: engines/mtropolis/metaengine.cpp:52
 msgid "16:9 widescreen mod"
 msgstr "Широкоэкранный 16:9 мод"
 
-#: engines/mtropolis/detection.cpp:46
+#: engines/mtropolis/metaengine.cpp:53
 msgid ""
 "Removes letterboxing and moves some display elements, improving coverage on "
 "widescreen displays"
@@ -6071,11 +6109,11 @@ msgstr ""
 "Убирает чёрные полосы по краям экрана, перемещает некоторые элементы, чтобы "
 "лучше выглядело на широкоэкранных мониторах"
 
-#: engines/mtropolis/detection.cpp:56
+#: engines/mtropolis/metaengine.cpp:63
 msgid "Improved music mixing"
 msgstr "Улучшенное микширование музыки"
 
-#: engines/mtropolis/detection.cpp:57
+#: engines/mtropolis/metaengine.cpp:64
 msgid ""
 "Enables dynamic MIDI mixer, improving quality, but behaving less like "
 "mTropolis Player."
@@ -6083,28 +6121,28 @@ msgstr ""
 "Включает динамическое MIDI микширование. Это улучшает качество, но "
 "отличается от оригинального mTropolis."
 
-#: engines/mtropolis/detection.cpp:67
+#: engines/mtropolis/metaengine.cpp:74
 msgid "Autosave at progress points"
 msgstr "Автоматически сохраняет игру в некоторых точках прогресса"
 
-#: engines/mtropolis/detection.cpp:68
+#: engines/mtropolis/metaengine.cpp:75
 msgid "Automatically saves the game after completing puzzles and chapters."
 msgstr "Автоматически сохраняет игру по завершению головоломок и разделов."
 
-#: engines/mtropolis/detection.cpp:78
+#: engines/mtropolis/metaengine.cpp:85
 msgid "Enable short transitions"
 msgstr "Включить короткие переходы"
 
-#: engines/mtropolis/detection.cpp:79
+#: engines/mtropolis/metaengine.cpp:86
 msgid ""
 "Enables transitions that are set to maximum rate instead of skipping them."
 msgstr "Включить переходы с максимальной скоростью, а не просто их пропускать."
 
-#: engines/mtropolis/detection.cpp:89
+#: engines/mtropolis/metaengine.cpp:96
 msgid "Enable subtitles for important sound effects"
 msgstr "Включить субтитры для важных звуковых эффектов"
 
-#: engines/mtropolis/detection.cpp:90
+#: engines/mtropolis/metaengine.cpp:97
 msgid ""
 "Enables subtitles for important sound effects.  This may reduce the "
 "difficulty of sound recognition puzzles and minigames."
@@ -6112,13 +6150,23 @@ msgstr ""
 "Включить субтитры для важных звуковых эффектов.  Это поможет упростить "
 "распознавание значения звуков в головоломках и мини-играх."
 
-#: engines/mtropolis/detection.cpp:100
+#: engines/mtropolis/metaengine.cpp:107
 msgid "Start with debugger"
 msgstr "Стартовать с отладчика"
 
-#: engines/mtropolis/detection.cpp:101
+#: engines/mtropolis/metaengine.cpp:108
 msgid "Starts with the debugger dashboard active."
 msgstr "Стартовать с активной панелью отладчика."
+
+#: engines/mtropolis/metaengine.cpp:172
+#, fuzzy
+#| msgid "Toggle Clue Privacy"
+msgid "Toggle debug overlay"
+msgstr "Вкл/выкл приватность для улик"
+
+#: engines/mtropolis/metaengine.cpp:177
+msgid "Force any playing movies to end"
+msgstr ""
 
 #: engines/mtropolis/saveload.cpp:142
 msgid "Failed to read version information from save file"
@@ -6132,15 +6180,12 @@ msgstr ""
 "версии."
 
 #: engines/mtropolis/saveload.cpp:166
-#, fuzzy
-#| msgid ""
-#| "Saved game was created with a newer version of ScummVM. Unable to load."
 msgid ""
 "Saved game was created with an earlier, incompatible version of ScummVM. "
 "Unable to load."
 msgstr ""
-"Этот файл сохранения был создан в более новой версии ScummVM. Не могу его "
-"загрузить."
+"Этот файл сохранения был создан в более новой, несовместимой версии ScummVM. "
+"Не могу его загрузить."
 
 #: engines/mtropolis/saveload.cpp:174
 msgid "Failed to load save, an error occurred when reading the save game data."
@@ -6163,11 +6208,11 @@ msgstr "Не удалось найти файл движка '%s'"
 msgid "PS2 version is not yet supported"
 msgstr "Версия для PS2 ещё не поддерживается"
 
-#: engines/myst3/detection.cpp:212
+#: engines/myst3/metaengine.cpp:40
 msgid "Widescreen mod"
 msgstr "Широкоэкранный мод"
 
-#: engines/myst3/detection.cpp:213
+#: engines/myst3/metaengine.cpp:41
 msgid "Enable widescreen rendering in fullscreen mode."
 msgstr "Включить отрисовку в широком формате в полноэкранном режиме."
 
@@ -6374,19 +6419,19 @@ msgstr "Секунд"
 msgid "Invalid Scene ID!"
 msgstr "Неверный ID сцены!"
 
-#: engines/neverhood/detection.cpp:150
+#: engines/neverhood/metaengine.cpp:48
 msgid "Skip the Hall of Records storyboard scenes"
 msgstr "Пропустить сцены из Галереи Истории"
 
-#: engines/neverhood/detection.cpp:151
+#: engines/neverhood/metaengine.cpp:49
 msgid "Allows the player to skip past the Hall of Records storyboard scenes"
 msgstr "Позволяет игроку пропустить все сцены в Галерее Истории"
 
-#: engines/neverhood/detection.cpp:161
+#: engines/neverhood/metaengine.cpp:59
 msgid "Scale the making of videos to full screen"
 msgstr "Растянуть на весь экран видео о создании игры"
 
-#: engines/neverhood/detection.cpp:162
+#: engines/neverhood/metaengine.cpp:60
 msgid "Scale the making of videos, so that they use the whole screen"
 msgstr "Растягивает видео о создании игры так, что оно занимает весь экран"
 
@@ -6496,38 +6541,38 @@ msgstr ""
 "Обнаружена сжатая игра. Пожалуйста, разожмите её как указано в описании игры "
 "на нашей Wiki"
 
-#: engines/queen/detection.cpp:45
+#: engines/queen/metaengine.cpp:36
 msgid "Alternative intro"
 msgstr "Альтернативное вступление"
 
-#: engines/queen/detection.cpp:46
+#: engines/queen/metaengine.cpp:37
 msgid "Use an alternative game intro (CD version only)"
 msgstr "Использовать альтернативное вступление (только для CD-версии игры)"
 
-#: engines/queen/detection.cpp:56
+#: engines/queen/metaengine.cpp:47
 msgid "Improved font"
 msgstr "Улучшенный шрифт"
 
-#: engines/queen/detection.cpp:57
+#: engines/queen/metaengine.cpp:48
 msgid "Use an easier to read custom font"
 msgstr "Использовать более лёгкий для чтения шрифт"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:813
+#: engines/saga/detection_tables.h:673
 msgid "Windows Trial version is not supported"
 msgstr "Пробная версия для Windows не поддерживается"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:839
+#: engines/saga/detection_tables.h:699
 msgid "macOS Trial version is not supported"
 msgstr "Пробная версия для macOS не поддерживается"
 
 #. I18N: Inherit the Earth had a "trial" version which is a full game with a simple check
-#: engines/saga/detection_tables.h:864
+#: engines/saga/detection_tables.h:724
 msgid "Pocket PC Trial version is not supported"
 msgstr "Пробная версия для Pocket PC не поддерживается"
 
-#: engines/saga/metaengine.cpp:112
+#: engines/saga/metaengine.cpp:108
 msgid "I Have No Mouth support not compiled in"
 msgstr "Поддержка для I Have No Mouth не скомпилирована"
 
@@ -6542,7 +6587,7 @@ msgstr ""
 "%s и %s. Ьез этих фвйлов\n"
 "музыка не будет звучать как в оригинальной игре."
 
-#: engines/saga/saga.cpp:228
+#: engines/saga/saga.cpp:375
 msgid "Error loading game resources."
 msgstr "Ошибка чтения файлов ресурсов игры."
 
@@ -6876,104 +6921,6 @@ msgstr ""
 "В этом случае вам может понадобиться применить оригинальный патч Sierra.\n"
 "\n"
 
-#: engines/scumm/detection.cpp:176
-msgid "Show Object Line"
-msgstr "Показывать строку объектов"
-
-#: engines/scumm/detection.cpp:177
-msgid "Show the names of objects at the bottom of the screen"
-msgstr "Показывать названия объектов внизу экрана"
-
-#: engines/scumm/detection.cpp:185
-msgid "Use NES Classic Palette"
-msgstr "Использовать классическую палитру NES"
-
-#: engines/scumm/detection.cpp:186
-msgid "Use a more neutral color palette that closely emulates the NES Classic"
-msgstr ""
-"Использовать более нейтральную палитру, которая очень близка к NES Classic"
-
-#: engines/scumm/detection.cpp:194
-msgid "Trim FM-TOWNS games to 200 pixels height"
-msgstr "Обрезать игры FM-TOWNS до высоты в 200 пикселей"
-
-#: engines/scumm/detection.cpp:195
-msgid ""
-"Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
-"pixels height, allowing using 'aspect ratio correction'"
-msgstr ""
-"Отрезать лишние 40 пикселей в нижней части экрана, чтобы сделать его высоту "
-"стандартной, в 200 пикселей, что позволит использовать 'коррекцию "
-"соотношения сторон'"
-
-#: engines/scumm/detection.cpp:203
-msgid "Play simplified music"
-msgstr "Проигрывать упрощённую музыку"
-
-#: engines/scumm/detection.cpp:204
-msgid ""
-"This music was presumably intended for low-end Macs, and uses only one "
-"channel."
-msgstr ""
-"Эта музыка была предназначена для младших моделей Mac и использует только "
-"один канал."
-
-#: engines/scumm/detection.cpp:212
-msgid "Enable smooth scrolling"
-msgstr "Включить плавную прокрутку"
-
-#: engines/scumm/detection.cpp:213
-msgid "(instead of the normal 8-pixels steps scrolling)"
-msgstr "(вместо обычной прокрутки с шагов в 8 пикселей)"
-
-#: engines/scumm/detection.cpp:221
-msgid "Allow semi-smooth scrolling"
-msgstr "Включить полуплавную прокрутку"
-
-#: engines/scumm/detection.cpp:222
-msgid ""
-"Allow scrolling to be less smooth during the fast camera movement in the "
-"intro."
-msgstr ""
-"Включает менее плавную прокрутку во время быстрокго перемещения камеры в "
-"интро."
-
-#: engines/scumm/detection.cpp:230 engines/scumm/dialogs.cpp:921
-msgid "Enable game-specific enhancements"
-msgstr "Включить улучшения для некоторых игр"
-
-#: engines/scumm/detection.cpp:231 engines/scumm/dialogs.cpp:921
-msgid ""
-"Allow ScummVM to make small enhancements to the game, usually based on other "
-"versions of the same game."
-msgstr ""
-"ScummVM включит небольшие улучшения для некоторых игр, обычно основанные на "
-"других версиях той же игры."
-
-#: engines/scumm/detection.cpp:239
-msgid "Load modded audio"
-msgstr "Загрузить мод-аудио"
-
-#: engines/scumm/detection.cpp:240
-msgid ""
-"Replace music, sound effects, and speech clips with modded audio files, if "
-"available."
-msgstr ""
-"Заменить музыку, звуковые эффекты и озвучку файлами из мода, если есть в "
-"наличии."
-
-#: engines/scumm/detection.cpp:248
-msgid "Enable the original GUI and Menu"
-msgstr "Включить оригинальные GUI и меню"
-
-#: engines/scumm/detection.cpp:249
-msgid ""
-"Allow the game to use the in-engine graphical interface and the original "
-"save/load menu."
-msgstr ""
-"Игра будет использовать оригинальный графический интерфейс и меню сохранения/"
-"загрузки."
-
 #: engines/scumm/detection_internal.h:358
 msgid ""
 "This version of Monkey Island can't be played, because Limited Run Games "
@@ -7033,11 +6980,35 @@ msgstr "Практикант"
 msgid "Expert"
 msgstr "Эксперт"
 
-#: engines/scumm/dialogs.cpp:942
+#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:647
+msgid "Enable game-specific enhancements"
+msgstr "Включить улучшения для некоторых игр"
+
+#: engines/scumm/dialogs.cpp:921 engines/scumm/metaengine.cpp:648
+msgid ""
+"Allow ScummVM to make small enhancements to the game, usually based on other "
+"versions of the same game."
+msgstr ""
+"ScummVM включит небольшие улучшения для некоторых игр, обычно основанные на "
+"других версиях той же игры."
+
+#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:665
+msgid "Enable the original GUI and Menu"
+msgstr "Включить оригинальные GUI и меню"
+
+#: engines/scumm/dialogs.cpp:925 engines/scumm/metaengine.cpp:666
+msgid ""
+"Allow the game to use the in-engine graphical interface and the original "
+"save/load menu."
+msgstr ""
+"Игра будет использовать оригинальный графический интерфейс и меню сохранения/"
+"загрузки."
+
+#: engines/scumm/dialogs.cpp:946
 msgid "Overture Timing:"
 msgstr "Время увертюры:"
 
-#: engines/scumm/dialogs.cpp:946
+#: engines/scumm/dialogs.cpp:950
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -7045,11 +7016,11 @@ msgstr ""
 "Если используется замена музыки, эта настройка указывает время, когда "
 "увертюра сменяется на сцену с логотипами Lucasfilm и Loom."
 
-#: engines/scumm/dialogs.cpp:1022
+#: engines/scumm/dialogs.cpp:1034
 msgid "Playback Adjust:"
 msgstr "Подстроить воспроизведение:"
 
-#: engines/scumm/dialogs.cpp:1026
+#: engines/scumm/dialogs.cpp:1038
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -7057,11 +7028,11 @@ msgstr ""
 "Во время проигрывания музыки из CD-трека, укажите начальную позицию звука. "
 "Используйте это если вы слышите неверные части звуков."
 
-#: engines/scumm/dialogs.cpp:1098
+#: engines/scumm/dialogs.cpp:1117
 msgid "Intro Adjust:"
 msgstr "Подстройка вступления:"
 
-#: engines/scumm/dialogs.cpp:1102
+#: engines/scumm/dialogs.cpp:1121
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -7071,11 +7042,11 @@ msgstr ""
 "Воспользуйтесь этой опцией если музыка прерывается раньше положенного, или "
 "же вам не нравится как музыка синхронизируется со вступлением."
 
-#: engines/scumm/dialogs.cpp:1111
+#: engines/scumm/dialogs.cpp:1130
 msgid "Outlook Adjust:"
 msgstr "Подстройка панорамы:"
 
-#: engines/scumm/dialogs.cpp:1115
+#: engines/scumm/dialogs.cpp:1134
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -7093,520 +7064,530 @@ msgstr "Общие клавиатурные команды:"
 msgid "Save / Load dialog"
 msgstr "Диалог записи / чтения"
 
-#: engines/scumm/help.cpp:75
+#: engines/scumm/help.cpp:74
 msgid "Skip line of text"
 msgstr "Пропустить строку"
 
-#: engines/scumm/help.cpp:76
+#: engines/scumm/help.cpp:75
 msgid "Esc"
 msgstr "Esc"
 
-#: engines/scumm/help.cpp:77 engines/wintermute/keymapper_tables.h:2108
+#: engines/scumm/help.cpp:76 engines/wintermute/keymapper_tables.h:2108
 msgid "Space"
 msgstr "Пробел"
 
-#: engines/scumm/help.cpp:77
+#: engines/scumm/help.cpp:76
 msgid "Pause game"
 msgstr "Пауза игры"
 
-#: engines/scumm/help.cpp:78 engines/scumm/help.cpp:83
-#: engines/scumm/help.cpp:94 engines/scumm/help.cpp:95
-#: engines/scumm/help.cpp:96 engines/scumm/help.cpp:97
-#: engines/scumm/help.cpp:98 engines/scumm/help.cpp:99
-#: engines/scumm/help.cpp:100 engines/scumm/help.cpp:101
+#: engines/scumm/help.cpp:77 engines/scumm/help.cpp:82
+#: engines/scumm/help.cpp:93 engines/scumm/help.cpp:94
+#: engines/scumm/help.cpp:95 engines/scumm/help.cpp:96
+#: engines/scumm/help.cpp:97 engines/scumm/help.cpp:98
+#: engines/scumm/help.cpp:99 engines/scumm/help.cpp:100
 msgid "Ctrl"
 msgstr "Ctrl"
 
-#: engines/scumm/help.cpp:78
+#: engines/scumm/help.cpp:77
 msgid "Load saved game 1-10"
 msgstr "Загрузить игру 1-10"
 
-#: engines/scumm/help.cpp:79 engines/scumm/help.cpp:83
-#: engines/scumm/help.cpp:85 engines/scumm/help.cpp:99
-#: engines/scumm/help.cpp:100 engines/scumm/help.cpp:101
+#: engines/scumm/help.cpp:78 engines/scumm/help.cpp:82
+#: engines/scumm/help.cpp:84 engines/scumm/help.cpp:98
+#: engines/scumm/help.cpp:99 engines/scumm/help.cpp:100
 msgid "Alt"
 msgstr "Alt"
 
-#: engines/scumm/help.cpp:79
+#: engines/scumm/help.cpp:78
 msgid "Save game 1-10"
 msgstr "Сохранить игру 1-10"
 
-#: engines/scumm/help.cpp:86
+#: engines/scumm/help.cpp:85
 msgid "Music volume up / down"
 msgstr "Громкость музыки увеличить / уменьшить"
 
-#: engines/scumm/help.cpp:87
+#: engines/scumm/help.cpp:86
 msgid "Text speed slower / faster"
 msgstr "Скорость текста медленнее / быстрее"
 
-#: engines/scumm/help.cpp:88
+#: engines/scumm/help.cpp:87
 msgid "Simulate left mouse button"
 msgstr "Эмуляция нажатия левой клавиши мыши"
 
-#: engines/scumm/help.cpp:89 engines/wintermute/keymapper_tables.h:2163
+#: engines/scumm/help.cpp:88 engines/wintermute/keymapper_tables.h:2163
 msgid "Tab"
 msgstr "Tab"
 
-#: engines/scumm/help.cpp:89
+#: engines/scumm/help.cpp:88
 msgid "Simulate right mouse button"
 msgstr "Эмуляция правой клавиши мыши"
 
-#: engines/scumm/help.cpp:92
+#: engines/scumm/help.cpp:91
 msgid "Special keyboard commands:"
 msgstr "Специальные клавиатурные команды:"
 
-#: engines/scumm/help.cpp:93
+#: engines/scumm/help.cpp:92
 msgid "Show / Hide console"
 msgstr "Показать / убрать консоль"
 
-#: engines/scumm/help.cpp:94
+#: engines/scumm/help.cpp:93
 msgid "Start the debugger"
 msgstr "Запустить отладчик"
 
-#: engines/scumm/help.cpp:95
+#: engines/scumm/help.cpp:94
 msgid "Show memory consumption"
 msgstr "Показать потребление памяти"
 
-#: engines/scumm/help.cpp:96
+#: engines/scumm/help.cpp:95
 msgid "Run in fast mode (*)"
 msgstr "Запустить быстрый режим (*)"
 
-#: engines/scumm/help.cpp:97
+#: engines/scumm/help.cpp:96
 msgid "Run in really fast mode (*)"
 msgstr "Запустить очень быстрый режим (*)"
 
-#: engines/scumm/help.cpp:99
+#: engines/scumm/help.cpp:98
 msgid "Switch between graphics filters"
 msgstr "Переключение между графическими фильтрами"
 
-#: engines/scumm/help.cpp:100
+#: engines/scumm/help.cpp:99
 msgid "Increase / Decrease scale factor"
 msgstr "Увеличить / уменьшить масштаб"
 
-#: engines/scumm/help.cpp:101
+#: engines/scumm/help.cpp:100
 msgid "Toggle aspect-ratio correction"
 msgstr "Переключение коррекции соотношения сторон"
 
-#: engines/scumm/help.cpp:106
+#: engines/scumm/help.cpp:105
 msgid "* Note that using ctrl-f and"
 msgstr "* Использование ctrl-f и"
 
-#: engines/scumm/help.cpp:107
+#: engines/scumm/help.cpp:106
 msgid "  ctrl-g are not recommended"
 msgstr "  ctrl-g не рекомендуется,"
 
-#: engines/scumm/help.cpp:108
+#: engines/scumm/help.cpp:107
 msgid "  since they may cause crashes"
 msgstr "  так как они могут привести к"
 
-#: engines/scumm/help.cpp:109
+#: engines/scumm/help.cpp:108
 msgid "  or incorrect game behavior."
 msgstr "  неверной работе игры."
 
-#: engines/scumm/help.cpp:113
+#: engines/scumm/help.cpp:112
 msgid "Spinning drafts on the keyboard:"
 msgstr "Изменяемые черновики на клавиатуре:"
 
-#: engines/scumm/help.cpp:115
+#: engines/scumm/help.cpp:114
 msgid "Main game controls:"
 msgstr "Основное управление игрой:"
 
-#: engines/scumm/help.cpp:120 engines/scumm/help.cpp:135
-#: engines/scumm/help.cpp:160
+#: engines/scumm/help.cpp:119 engines/scumm/help.cpp:134
+#: engines/scumm/help.cpp:159
 msgid "Push"
 msgstr "Толкать"
 
-#: engines/scumm/help.cpp:121 engines/scumm/help.cpp:136
-#: engines/scumm/help.cpp:161
+#: engines/scumm/help.cpp:120 engines/scumm/help.cpp:135
+#: engines/scumm/help.cpp:160
 msgid "Pull"
 msgstr "Тянуть"
 
-#: engines/scumm/help.cpp:122 engines/scumm/help.cpp:137
-#: engines/scumm/help.cpp:162 engines/scumm/help.cpp:196
-#: engines/scumm/help.cpp:206
+#: engines/scumm/help.cpp:121 engines/scumm/help.cpp:136
+#: engines/scumm/help.cpp:161 engines/scumm/help.cpp:195
+#: engines/scumm/help.cpp:205
 msgid "Give"
 msgstr "Дать"
 
-#: engines/scumm/help.cpp:123 engines/scumm/help.cpp:138
-#: engines/scumm/help.cpp:163 engines/scumm/help.cpp:189
-#: engines/scumm/help.cpp:207
+#: engines/scumm/help.cpp:122 engines/scumm/help.cpp:137
+#: engines/scumm/help.cpp:162 engines/scumm/help.cpp:188
+#: engines/scumm/help.cpp:206
 msgid "Open"
 msgstr "Открыть"
 
-#: engines/scumm/help.cpp:125
+#: engines/scumm/help.cpp:124
 msgid "Go to"
 msgstr "Идти"
 
-#: engines/scumm/help.cpp:126
+#: engines/scumm/help.cpp:125
 msgid "Get"
 msgstr "Взять"
 
-#: engines/scumm/help.cpp:128 engines/scumm/help.cpp:140
+#: engines/scumm/help.cpp:127 engines/scumm/help.cpp:139
 msgid "Read"
 msgstr "Читать"
 
-#: engines/scumm/help.cpp:129 engines/scumm/help.cpp:146
+#: engines/scumm/help.cpp:128 engines/scumm/help.cpp:145
 msgid "New kid"
 msgstr "Новый перс"
 
-#: engines/scumm/help.cpp:130 engines/scumm/help.cpp:152
-#: engines/scumm/help.cpp:170
+#: engines/scumm/help.cpp:129 engines/scumm/help.cpp:151
+#: engines/scumm/help.cpp:169
 msgid "Turn on"
 msgstr "Включить"
 
-#: engines/scumm/help.cpp:131 engines/scumm/help.cpp:153
-#: engines/scumm/help.cpp:171
+#: engines/scumm/help.cpp:130 engines/scumm/help.cpp:152
+#: engines/scumm/help.cpp:170
 msgid "Turn off"
 msgstr "Выключить"
 
-#: engines/scumm/help.cpp:141 engines/scumm/help.cpp:166
-#: engines/scumm/help.cpp:193 engines/wintermute/keymapper_tables.h:1512
+#: engines/scumm/help.cpp:140 engines/scumm/help.cpp:165
+#: engines/scumm/help.cpp:192 engines/wintermute/keymapper_tables.h:1512
 msgid "Walk to"
 msgstr "Идти к"
 
-#: engines/scumm/help.cpp:142 engines/scumm/help.cpp:167
-#: engines/scumm/help.cpp:194 engines/scumm/help.cpp:209
-#: engines/scumm/help.cpp:226 engines/wintermute/keymapper_tables.h:134
+#: engines/scumm/help.cpp:141 engines/scumm/help.cpp:166
+#: engines/scumm/help.cpp:193 engines/scumm/help.cpp:208
+#: engines/scumm/help.cpp:225 engines/wintermute/keymapper_tables.h:134
 #: engines/wintermute/keymapper_tables.h:1518
 msgid "Pick up"
 msgstr "Поднять"
 
-#: engines/scumm/help.cpp:143 engines/scumm/help.cpp:168
+#: engines/scumm/help.cpp:142 engines/scumm/help.cpp:167
 msgid "What is"
 msgstr "Что такое"
 
-#: engines/scumm/help.cpp:145
+#: engines/scumm/help.cpp:144
 msgid "Unlock"
 msgstr "Открыть"
 
-#: engines/scumm/help.cpp:148
+#: engines/scumm/help.cpp:147
 msgid "Put on"
 msgstr "Положить"
 
-#: engines/scumm/help.cpp:149
+#: engines/scumm/help.cpp:148
 msgid "Take off"
 msgstr "Поднять"
 
-#: engines/scumm/help.cpp:155
+#: engines/scumm/help.cpp:154
 msgid "Fix"
 msgstr "Исправить"
 
-#: engines/scumm/help.cpp:157
+#: engines/scumm/help.cpp:156
 msgid "Switch"
 msgstr "Переключить"
 
-#: engines/scumm/help.cpp:165 engines/scumm/help.cpp:227
+#: engines/scumm/help.cpp:164 engines/scumm/help.cpp:226
 msgid "Look"
 msgstr "Смотреть"
 
-#: engines/scumm/help.cpp:172 engines/scumm/help.cpp:222
+#: engines/scumm/help.cpp:171 engines/scumm/help.cpp:221
 msgid "Talk"
 msgstr "Говорить"
 
-#: engines/scumm/help.cpp:173
+#: engines/scumm/help.cpp:172
 msgid "Travel"
 msgstr "Путешествовать"
 
-#: engines/scumm/help.cpp:174
+#: engines/scumm/help.cpp:173
 msgid "To Henry / To Indy"
 msgstr "Генри / Инди"
 
 #. I18N: These are different musical notes
-#: engines/scumm/help.cpp:178
+#: engines/scumm/help.cpp:177
 msgid "play C minor on distaff"
 msgstr "играть до минор на прялке"
 
-#: engines/scumm/help.cpp:179
+#: engines/scumm/help.cpp:178
 msgid "play D on distaff"
 msgstr "играть ре на прялке"
 
-#: engines/scumm/help.cpp:180
+#: engines/scumm/help.cpp:179
 msgid "play E on distaff"
 msgstr "играть ми на прялке"
 
-#: engines/scumm/help.cpp:181
+#: engines/scumm/help.cpp:180
 msgid "play F on distaff"
 msgstr "играть фа на прялке"
 
-#: engines/scumm/help.cpp:182
+#: engines/scumm/help.cpp:181
 msgid "play G on distaff"
 msgstr "играть соль на прялке"
 
-#: engines/scumm/help.cpp:183
+#: engines/scumm/help.cpp:182
 msgid "play A on distaff"
 msgstr "играть ля на прялке"
 
-#: engines/scumm/help.cpp:184
+#: engines/scumm/help.cpp:183
 msgid "play B on distaff"
 msgstr "играть си на прялке"
 
-#: engines/scumm/help.cpp:185
+#: engines/scumm/help.cpp:184
 msgid "play C major on distaff"
 msgstr "играть до мажор на прялке"
 
-#: engines/scumm/help.cpp:191 engines/scumm/help.cpp:213
+#: engines/scumm/help.cpp:190 engines/scumm/help.cpp:212
 msgid "puSh"
 msgstr "толкать"
 
-#: engines/scumm/help.cpp:192 engines/scumm/help.cpp:214
+#: engines/scumm/help.cpp:191 engines/scumm/help.cpp:213
 msgid "pull (Yank)"
 msgstr "тянуть (цеплять)"
 
-#: engines/scumm/help.cpp:195 engines/scumm/help.cpp:211
-#: engines/scumm/help.cpp:247 engines/wintermute/keymapper_tables.h:128
+#: engines/scumm/help.cpp:194 engines/scumm/help.cpp:210
+#: engines/scumm/help.cpp:253 engines/wintermute/keymapper_tables.h:128
 #: engines/wintermute/keymapper_tables.h:1530
 msgid "Talk to"
 msgstr "Говорить с"
 
-#: engines/scumm/help.cpp:198 engines/scumm/help.cpp:210
+#: engines/scumm/help.cpp:197 engines/scumm/help.cpp:209
 #: engines/wintermute/keymapper_tables.h:122
 #: engines/wintermute/keymapper_tables.h:1506
 msgid "Look at"
 msgstr "Смотреть на"
 
-#: engines/scumm/help.cpp:199
+#: engines/scumm/help.cpp:198
 msgid "turn oN"
 msgstr "включить"
 
-#: engines/scumm/help.cpp:200
+#: engines/scumm/help.cpp:199
 msgid "turn oFf"
 msgstr "выключить"
 
-#: engines/scumm/help.cpp:216
+#: engines/scumm/help.cpp:215
 msgid "KeyUp"
 msgstr "Вверх"
 
-#: engines/scumm/help.cpp:216
+#: engines/scumm/help.cpp:215
 msgid "Highlight prev dialogue"
 msgstr "Подсветить предыдущий диалог"
 
-#: engines/scumm/help.cpp:217
+#: engines/scumm/help.cpp:216
 msgid "KeyDown"
 msgstr "Вниз"
 
-#: engines/scumm/help.cpp:217
+#: engines/scumm/help.cpp:216
 msgid "Highlight next dialogue"
 msgstr "Подсветить следующий диалог"
 
-#: engines/scumm/help.cpp:221
+#: engines/scumm/help.cpp:220
 msgid "Walk"
 msgstr "Идти"
 
-#: engines/scumm/help.cpp:225
+#: engines/scumm/help.cpp:224
 msgid "Object"
 msgstr "Объект"
 
-#: engines/scumm/help.cpp:228
+#: engines/scumm/help.cpp:227
 msgid "Black and White / Color"
 msgstr "Черно-белый / Цветной"
 
-#: engines/scumm/help.cpp:231
+#: engines/scumm/help.cpp:230
 msgid "Eyes"
 msgstr "Глаза"
 
-#: engines/scumm/help.cpp:232
+#: engines/scumm/help.cpp:231
 msgid "Tongue"
 msgstr "Язык"
 
-#: engines/scumm/help.cpp:234
+#: engines/scumm/help.cpp:233
 msgid "Punch"
 msgstr "Удар"
 
-#: engines/scumm/help.cpp:235
+#: engines/scumm/help.cpp:234
 msgid "Kick"
 msgstr "Ногой"
 
-#: engines/scumm/help.cpp:239
+#. I18N: The name of the 'Shift' key on a PC keyboard
+#: engines/scumm/help.cpp:238
+msgid "Shift"
+msgstr "Shift"
+
+#. I18N: Lets one skip the bike/car fight sequences in Full Throttle
+#: engines/scumm/help.cpp:240
+msgid "Win the bike fight cheat"
+msgstr ""
+
+#: engines/scumm/help.cpp:245
 msgid "Regular cursor"
 msgstr "Обычный курсор"
 
 #. I18N: Comm is a communication device
-#: engines/scumm/help.cpp:242
+#: engines/scumm/help.cpp:248
 msgid "Comm"
 msgstr "Комм"
 
-#: engines/scumm/help.cpp:245
+#: engines/scumm/help.cpp:251
 msgid "Save / Load / Options"
 msgstr "Загрузить / Сохранить / Настройки"
 
-#: engines/scumm/help.cpp:256
+#: engines/scumm/help.cpp:262
 msgid "Other game controls:"
 msgstr "Остальное управление игрой:"
 
-#: engines/scumm/help.cpp:258 engines/scumm/help.cpp:268
+#: engines/scumm/help.cpp:264 engines/scumm/help.cpp:274
 msgid "Inventory:"
 msgstr "Инвентарь:"
 
-#: engines/scumm/help.cpp:259 engines/scumm/help.cpp:275
+#: engines/scumm/help.cpp:265 engines/scumm/help.cpp:281
 msgid "Scroll list up"
 msgstr "Прокрутить список вверх"
 
-#: engines/scumm/help.cpp:260 engines/scumm/help.cpp:276
+#: engines/scumm/help.cpp:266 engines/scumm/help.cpp:282
 msgid "Scroll list down"
 msgstr "Прокрутить список вниз"
 
-#: engines/scumm/help.cpp:261 engines/scumm/help.cpp:269
+#: engines/scumm/help.cpp:267 engines/scumm/help.cpp:275
 msgid "Upper left item"
 msgstr "Верхний левый предмет"
 
-#: engines/scumm/help.cpp:262 engines/scumm/help.cpp:271
+#: engines/scumm/help.cpp:268 engines/scumm/help.cpp:277
 msgid "Lower left item"
 msgstr "Нижний левый предмет"
 
-#: engines/scumm/help.cpp:263 engines/scumm/help.cpp:272
+#: engines/scumm/help.cpp:269 engines/scumm/help.cpp:278
 msgid "Upper right item"
 msgstr "Верхний правый предмет"
 
-#: engines/scumm/help.cpp:264 engines/scumm/help.cpp:274
+#: engines/scumm/help.cpp:270 engines/scumm/help.cpp:280
 msgid "Lower right item"
 msgstr "Нижний правый предмет"
 
-#: engines/scumm/help.cpp:270
+#: engines/scumm/help.cpp:276
 msgid "Middle left item"
 msgstr "Средний левый предмет"
 
-#: engines/scumm/help.cpp:273
+#: engines/scumm/help.cpp:279
 msgid "Middle right item"
 msgstr "Средний правый предмет"
 
-#: engines/scumm/help.cpp:280 engines/scumm/help.cpp:285
+#: engines/scumm/help.cpp:286 engines/scumm/help.cpp:291
 msgid "Switching characters:"
 msgstr "Смена героя:"
 
-#: engines/scumm/help.cpp:282
+#: engines/scumm/help.cpp:288
 msgid "Second kid"
 msgstr "Второй герой"
 
-#: engines/scumm/help.cpp:283
+#: engines/scumm/help.cpp:289
 msgid "Third kid"
 msgstr "Третий герой"
 
-#: engines/scumm/help.cpp:292
+#: engines/scumm/help.cpp:298
 msgid "Toggle Inventory/IQ Points display"
 msgstr "Переключить показ инвентаря/очков IQ"
 
-#: engines/scumm/help.cpp:293
+#: engines/scumm/help.cpp:299
 msgid "Toggle Keyboard/Mouse Fighting (*)"
 msgstr "Переключить управление боями клавиатурой/мышью (*)"
 
-#: engines/scumm/help.cpp:295
+#: engines/scumm/help.cpp:301
 msgid "* Keyboard Fighting is always on,"
 msgstr "* Управление клавиатурой всегда включено,"
 
-#: engines/scumm/help.cpp:296
+#: engines/scumm/help.cpp:302
 msgid "  so despite the in-game message this"
 msgstr "  так что, несмотря на сообщение игры,"
 
-#: engines/scumm/help.cpp:297
+#: engines/scumm/help.cpp:303
 msgid "  actually toggles Mouse Fighting Off/On"
 msgstr "  на самом деле это вкл/выкл управление мышью"
 
-#: engines/scumm/help.cpp:304
+#: engines/scumm/help.cpp:310
 msgid "Fighting controls (numpad):"
 msgstr "Управление боем (цифровые клавиши):"
 
-#: engines/scumm/help.cpp:305 engines/scumm/help.cpp:306
-#: engines/scumm/help.cpp:307
+#: engines/scumm/help.cpp:311 engines/scumm/help.cpp:312
+#: engines/scumm/help.cpp:313
 msgid "Step back"
 msgstr "Шаг назад"
 
-#: engines/scumm/help.cpp:308
+#: engines/scumm/help.cpp:314
 msgid "Block high"
 msgstr "Защита сверху"
 
-#: engines/scumm/help.cpp:309
+#: engines/scumm/help.cpp:315
 msgid "Block middle"
 msgstr "Защита посередине"
 
-#: engines/scumm/help.cpp:310
+#: engines/scumm/help.cpp:316
 msgid "Block low"
 msgstr "Защита снизу"
 
-#: engines/scumm/help.cpp:311
+#: engines/scumm/help.cpp:317
 msgid "Punch high"
 msgstr "Удар сверху"
 
-#: engines/scumm/help.cpp:312
+#: engines/scumm/help.cpp:318
 msgid "Punch middle"
 msgstr "Удар посередине"
 
-#: engines/scumm/help.cpp:313
+#: engines/scumm/help.cpp:319
 msgid "Punch low"
 msgstr "Удар снизу"
 
-#: engines/scumm/help.cpp:315
+#: engines/scumm/help.cpp:321
 msgid "Sucker punch"
 msgstr "Удар сзади"
 
-#: engines/scumm/help.cpp:318
+#: engines/scumm/help.cpp:324
 msgid "These are for Indy on left."
 msgstr "Это когда Инди слева."
 
-#: engines/scumm/help.cpp:319
+#: engines/scumm/help.cpp:325
 msgid "When Indy is on the right,"
 msgstr "Когда Инди справа,"
 
-#: engines/scumm/help.cpp:320
+#: engines/scumm/help.cpp:326
 msgid "7, 4, and 1 are switched with"
 msgstr "7, 4 и 1 меняются с"
 
-#: engines/scumm/help.cpp:321
+#: engines/scumm/help.cpp:327
 msgid "9, 6, and 3, respectively."
 msgstr "9, 6 и 3 соответственно."
 
-#: engines/scumm/help.cpp:330
+#: engines/scumm/help.cpp:336
 msgid "Biplane controls (numpad):"
 msgstr "Управление самолётом (цифровые клавиши):"
 
-#: engines/scumm/help.cpp:331
+#: engines/scumm/help.cpp:337
 msgid "Fly to upper left"
 msgstr "Лететь влево-вверх"
 
-#: engines/scumm/help.cpp:332
+#: engines/scumm/help.cpp:338
 msgid "Fly to left"
 msgstr "Лететь влево"
 
-#: engines/scumm/help.cpp:333
+#: engines/scumm/help.cpp:339
 msgid "Fly to lower left"
 msgstr "Лететь влево-вниз"
 
-#: engines/scumm/help.cpp:334
+#: engines/scumm/help.cpp:340
 msgid "Fly upwards"
 msgstr "Лететь вверх"
 
-#: engines/scumm/help.cpp:335
+#: engines/scumm/help.cpp:341
 msgid "Fly straight"
 msgstr "Лететь прямо"
 
-#: engines/scumm/help.cpp:336
+#: engines/scumm/help.cpp:342
 msgid "Fly down"
 msgstr "Лететь вниз"
 
-#: engines/scumm/help.cpp:337
+#: engines/scumm/help.cpp:343
 msgid "Fly to upper right"
 msgstr "Лететь вправо-вверх"
 
-#: engines/scumm/help.cpp:338
+#: engines/scumm/help.cpp:344
 msgid "Fly to right"
 msgstr "Лететь вправо"
 
-#: engines/scumm/help.cpp:339
+#: engines/scumm/help.cpp:345
 msgid "Fly to lower right"
 msgstr "Лететь вправо-вниз"
 
-#: engines/scumm/input.cpp:1073
+#: engines/scumm/input.cpp:1102
 msgid "Snap scroll on"
 msgstr "Прокрутка скачками включена"
 
-#: engines/scumm/input.cpp:1075
+#: engines/scumm/input.cpp:1104
 msgid "Snap scroll off"
 msgstr "Прокрутка скачками выключена"
 
-#: engines/scumm/input.cpp:1088
+#: engines/scumm/input.cpp:1117
 msgid "Music volume: "
 msgstr "Громк. музыки: "
 
-#: engines/scumm/input.cpp:1105
+#: engines/scumm/input.cpp:1134
 msgid "Subtitle speed: "
 msgstr "Скорость титров: "
 
@@ -7626,6 +7607,80 @@ msgstr "Поддержка для версии HE v71+ не скомпилиро
 #: engines/scumm/metaengine.cpp:478
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr "Поддержка для версии SCUMM v7-8 не скомпилирована"
+
+#: engines/scumm/metaengine.cpp:593
+msgid "Show Object Line"
+msgstr "Показывать строку объектов"
+
+#: engines/scumm/metaengine.cpp:594
+msgid "Show the names of objects at the bottom of the screen"
+msgstr "Показывать названия объектов внизу экрана"
+
+#: engines/scumm/metaengine.cpp:602
+msgid "Use NES Classic Palette"
+msgstr "Использовать классическую палитру NES"
+
+#: engines/scumm/metaengine.cpp:603
+msgid "Use a more neutral color palette that closely emulates the NES Classic"
+msgstr ""
+"Использовать более нейтральную палитру, которая очень близка к NES Classic"
+
+#: engines/scumm/metaengine.cpp:611
+msgid "Trim FM-TOWNS games to 200 pixels height"
+msgstr "Обрезать игры FM-TOWNS до высоты в 200 пикселей"
+
+#: engines/scumm/metaengine.cpp:612
+msgid ""
+"Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
+"pixels height, allowing using 'aspect ratio correction'"
+msgstr ""
+"Отрезать лишние 40 пикселей в нижней части экрана, чтобы сделать его высоту "
+"стандартной, в 200 пикселей, что позволит использовать 'коррекцию "
+"соотношения сторон'"
+
+#: engines/scumm/metaengine.cpp:620
+msgid "Play simplified music"
+msgstr "Проигрывать упрощённую музыку"
+
+#: engines/scumm/metaengine.cpp:621
+msgid ""
+"This music was presumably intended for low-end Macs, and uses only one "
+"channel."
+msgstr ""
+"Эта музыка была предназначена для младших моделей Mac и использует только "
+"один канал."
+
+#: engines/scumm/metaengine.cpp:629
+msgid "Enable smooth scrolling"
+msgstr "Включить плавную прокрутку"
+
+#: engines/scumm/metaengine.cpp:630
+msgid "(instead of the normal 8-pixels steps scrolling)"
+msgstr "(вместо обычной прокрутки с шагов в 8 пикселей)"
+
+#: engines/scumm/metaengine.cpp:638
+msgid "Allow semi-smooth scrolling"
+msgstr "Включить полуплавную прокрутку"
+
+#: engines/scumm/metaengine.cpp:639
+msgid ""
+"Allow scrolling to be less smooth during the fast camera movement in the "
+"intro."
+msgstr ""
+"Включает менее плавную прокрутку во время быстрокго перемещения камеры в "
+"интро."
+
+#: engines/scumm/metaengine.cpp:656
+msgid "Load modded audio"
+msgstr "Загрузить мод-аудио"
+
+#: engines/scumm/metaengine.cpp:657
+msgid ""
+"Replace music, sound effects, and speech clips with modded audio files, if "
+"available."
+msgstr ""
+"Заменить музыку, звуковые эффекты и озвучку файлами из мода, если есть в "
+"наличии."
 
 #: engines/scumm/scumm.cpp:261
 msgid ""
@@ -7691,7 +7746,7 @@ msgstr ""
 "Эта версия Monkey Island 1 известна тем, что в ней отсутствуют\n"
 "ресурсы, необходимые для MT-32. Переключаюсь на AdLib."
 
-#: engines/scumm/scumm.cpp:3242
+#: engines/scumm/scumm.cpp:3240
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -7719,19 +7774,19 @@ msgstr ""
 "Пожалуйста, скопируйте эти файлы в каталог с игровыми данными.\n"
 "\n"
 
-#: engines/sherlock/detection.cpp:70
+#: engines/sherlock/metaengine.cpp:51
 msgid "Pixellated scene transitions"
 msgstr "Переходы между сценами с пикселизацией"
 
-#: engines/sherlock/detection.cpp:71
+#: engines/sherlock/metaengine.cpp:52
 msgid "When changing scenes, a randomized pixel transition is done"
 msgstr "При смене сцен происходит переход с рандомизированными пикселями"
 
-#: engines/sherlock/detection.cpp:82
+#: engines/sherlock/metaengine.cpp:63
 msgid "Don't show hotspots when moving mouse"
 msgstr "Не показывать хотспоты при наведении мышью"
 
-#: engines/sherlock/detection.cpp:83
+#: engines/sherlock/metaengine.cpp:64
 msgid ""
 "Only show hotspot names after you actually click on a hotspot or action "
 "button"
@@ -7739,27 +7794,27 @@ msgstr ""
 "Показывать названия хотспотов только после клика по ним либо после нажатия "
 "на кнопку действия"
 
-#: engines/sherlock/detection.cpp:94
+#: engines/sherlock/metaengine.cpp:75
 msgid "Show character portraits"
 msgstr "Показывать портреты героев"
 
-#: engines/sherlock/detection.cpp:95
+#: engines/sherlock/metaengine.cpp:76
 msgid "Show portraits for the characters when conversing"
 msgstr "Показывать портреты героев во время диалогов"
 
-#: engines/sherlock/detection.cpp:106
+#: engines/sherlock/metaengine.cpp:87
 msgid "Slide dialogs into view"
 msgstr "Въезжающие диалоги"
 
-#: engines/sherlock/detection.cpp:107
+#: engines/sherlock/metaengine.cpp:88
 msgid "Slide UI dialogs into view, rather than simply showing them immediately"
 msgstr "Диалоги будут въезжать, а не показываться мгновенно"
 
-#: engines/sherlock/detection.cpp:118
+#: engines/sherlock/metaengine.cpp:99
 msgid "Transparent windows"
 msgstr "Прозрачные окна"
 
-#: engines/sherlock/detection.cpp:119
+#: engines/sherlock/metaengine.cpp:100
 msgid "Show windows with a partially transparent background"
 msgstr "Показывать окна с частично прозрачным фоном"
 
@@ -7767,52 +7822,52 @@ msgstr "Показывать окна с частично прозрачным �
 msgid "The \"sky.cpt\" engine data file has an incorrect size."
 msgstr "Файл данных движка sky.cpt имеет неверный размер."
 
-#: engines/sky/detection.cpp:36
-msgid "Floppy intro"
-msgstr "Вступление с дискет"
-
-#: engines/sky/detection.cpp:37
-msgid "Use the floppy version's intro (CD version only)"
-msgstr "Использовать вступление с гибких дисков (только для CD-версии игры)"
-
-#: engines/sky/metaengine.cpp:85
+#: engines/sky/metaengine.cpp:88
 msgid "Walk / Look / Talk"
 msgstr "Ходить / Смотреть / Говорить"
 
-#: engines/sky/metaengine.cpp:103
+#: engines/sky/metaengine.cpp:106
 msgid "Skip / Close"
 msgstr "Пропустить / Закрыть"
 
-#: engines/sky/metaengine.cpp:111
+#: engines/sky/metaengine.cpp:114
 msgid "Open control panel"
 msgstr "Открыть панель управления"
 
-#: engines/sky/metaengine.cpp:127
+#: engines/sky/metaengine.cpp:130
 msgid "Toggle fast mode"
 msgstr "Переключить быстрый режим"
 
-#: engines/sky/metaengine.cpp:132
+#: engines/sky/metaengine.cpp:135
 msgid "Toggle really fast mode"
 msgstr "Переключить очень быстрый режим"
 
-#: engines/sky/metaengine.cpp:202
+#: engines/sky/metaengine.cpp:154
+msgid "Floppy intro"
+msgstr "Вступление с дискет"
+
+#: engines/sky/metaengine.cpp:155
+msgid "Use the floppy version's intro (CD version only)"
+msgstr "Использовать вступление с гибких дисков (только для CD-версии игры)"
+
+#: engines/sky/metaengine.cpp:233
 msgid "WARNING: Deleting the autosave slot is not supported by this engine"
 msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: Этот движок не поддерживает удаление слота автосохранения"
 
-#: engines/stark/detection.cpp:387
+#: engines/stark/metaengine.cpp:37
 msgid "Load modded assets"
 msgstr "Загрузить данные мода"
 
-#: engines/stark/detection.cpp:388
+#: engines/stark/metaengine.cpp:38
 msgid "Enable loading of external replacement assets."
 msgstr "Включить загрузку внешних файлов замены игровых ресурсов."
 
-#: engines/stark/detection.cpp:398
+#: engines/stark/metaengine.cpp:48
 msgid "Enable linear filtering of the backgrounds images"
 msgstr "Включить линейную фильтрацию фоновых изображений"
 
-#: engines/stark/detection.cpp:399
+#: engines/stark/metaengine.cpp:49
 msgid ""
 "When linear filtering is enabled the background graphics are smoother in "
 "full screen mode, at the cost of some details."
@@ -7820,11 +7875,11 @@ msgstr ""
 "Линейная фильтрация сглаживает фоновые изображения за счёт некоторой потери "
 "детализации."
 
-#: engines/stark/detection.cpp:409 engines/ultima/detection.cpp:143
+#: engines/stark/metaengine.cpp:59 engines/ultima/metaengine.cpp:132
 msgid "Enable font anti-aliasing"
 msgstr "Включить сглаживание шрифтов"
 
-#: engines/stark/detection.cpp:410 engines/ultima/detection.cpp:144
+#: engines/stark/metaengine.cpp:60 engines/ultima/metaengine.cpp:133
 msgid "When font anti-aliasing is enabled, the text is smoother."
 msgstr "Если сглаживание шрифтов включено, шрифты рисуются без зубцов."
 
@@ -7897,11 +7952,11 @@ msgstr ""
 msgid "Failed to load temporary game state."
 msgstr "Не удалось загрузить временную сохранённую игру."
 
-#: engines/supernova/detection.cpp:41
+#: engines/supernova/metaengine.cpp:38
 msgid "Improved mode"
 msgstr "Улучшенный режим"
 
-#: engines/supernova/detection.cpp:42
+#: engines/supernova/metaengine.cpp:39
 msgid ""
 "Removes some repetitive actions, adds possibility to change verbs by keyboard"
 msgstr ""
@@ -7975,19 +8030,19 @@ msgstr ""
 "Найдены заставки в формате PSX, но ScummVM был собран без поддержки RGB-"
 "цветов"
 
-#: engines/sword2/detection.cpp:52
+#: engines/sword2/metaengine.cpp:46
 msgid "Show object labels"
 msgstr "Показывать названия объектов"
 
-#: engines/sword2/detection.cpp:53
+#: engines/sword2/metaengine.cpp:47
 msgid "Show labels for objects on mouse hover"
 msgstr "Показывает названия объектов при наведении курсора мыши"
 
-#: engines/sword25/detection.cpp:50
+#: engines/sword25/metaengine.cpp:35
 msgid "Use English speech"
 msgstr "Использовать английскую озвучку"
 
-#: engines/sword25/detection.cpp:51
+#: engines/sword25/metaengine.cpp:36
 msgid ""
 "Use English speech instead of German for every language other than German"
 msgstr ""
@@ -8040,223 +8095,223 @@ msgstr "Вы уверены, что хотите выйти?"
 msgid "Unable to locate the '%s' data file."
 msgstr "Не удалось найти файл движка '%s'."
 
-#: engines/twine/detection.cpp:187
+#: engines/twine/detection.cpp:174
 msgid "This version requires Giflib which was not compiled into ScummVM"
 msgstr "Эта игра требует библиотеку Giflib которая не была скомпилирована"
 
-#: engines/twine/detection.cpp:428
+#: engines/twine/metaengine.cpp:44
 msgid "Enable wall collisions"
 msgstr "Включить столкновение со стенами"
 
-#: engines/twine/detection.cpp:429
+#: engines/twine/metaengine.cpp:45
 msgid "Enable the original wall collision damage"
 msgstr "Включить ущерб от столкновения со стенами как в оригинале"
 
-#: engines/twine/detection.cpp:440
+#: engines/twine/metaengine.cpp:56
 msgid "Disable save menu"
 msgstr "Запретить меню сохранения"
 
-#: engines/twine/detection.cpp:441
+#: engines/twine/metaengine.cpp:57
 msgid ""
 "The original only had autosaves. This allows you to save whenever you want."
 msgstr ""
 "В оригинале были только автосохранения. Эта опция позволит вам записываться "
 "в любой момент."
 
-#: engines/twine/detection.cpp:451
+#: engines/twine/metaengine.cpp:67
 msgid "Enable debug mode"
 msgstr "Включить режим отладки"
 
-#: engines/twine/detection.cpp:452
+#: engines/twine/metaengine.cpp:68
 msgid "Enable the debug mode"
 msgstr "Включить режим отладки"
 
-#: engines/twine/detection.cpp:462
+#: engines/twine/metaengine.cpp:78
 msgid "Enable audio CD"
 msgstr "Включить CD-аудио"
 
-#: engines/twine/detection.cpp:463
+#: engines/twine/metaengine.cpp:79
 msgid "Enable the original audio cd track"
 msgstr "Включить оригинальный аудио CD трек"
 
-#: engines/twine/detection.cpp:473
+#: engines/twine/metaengine.cpp:89
 msgid "Enable sound"
 msgstr "Включить звук"
 
-#: engines/twine/detection.cpp:474
+#: engines/twine/metaengine.cpp:90
 msgid "Enable the sound for the game"
 msgstr "Включить звук в игре"
 
-#: engines/twine/detection.cpp:484
+#: engines/twine/metaengine.cpp:100
 msgid "Enable voices"
 msgstr "Включить озвучку"
 
-#: engines/twine/detection.cpp:485
+#: engines/twine/metaengine.cpp:101
 msgid "Enable the voices for the game"
 msgstr "Включить озвучку персонажей в игре"
 
-#: engines/twine/detection.cpp:495
+#: engines/twine/metaengine.cpp:111
 msgid "Enable text"
 msgstr "Включить текст"
 
-#: engines/twine/detection.cpp:496
+#: engines/twine/metaengine.cpp:112
 msgid "Enable the text for the game"
 msgstr "Включить тексты в игре"
 
-#: engines/twine/detection.cpp:506
+#: engines/twine/metaengine.cpp:122
 msgid "Enable movies"
 msgstr "Включить ролики"
 
-#: engines/twine/detection.cpp:507
+#: engines/twine/metaengine.cpp:123
 msgid "Enable the cutscenes for the game"
 msgstr "Включить видеоролики в игре"
 
-#: engines/twine/detection.cpp:517
+#: engines/twine/metaengine.cpp:133
 msgid "Enable mouse"
 msgstr "Разрешить мышь"
 
-#: engines/twine/detection.cpp:518
+#: engines/twine/metaengine.cpp:134
 msgid "Enable the mouse for the UI"
 msgstr "Разрешить мышь для пользовательского интерфейса"
 
-#: engines/twine/detection.cpp:528
+#: engines/twine/metaengine.cpp:144
 msgid "Use the USA version"
 msgstr "Использовать версию для США"
 
-#: engines/twine/detection.cpp:529
+#: engines/twine/metaengine.cpp:145
 msgid "Enable the USA specific version flags"
 msgstr "Использовать флаги, специфичные для версии для США"
 
-#: engines/twine/detection.cpp:539 engines/ultima/detection.cpp:99
+#: engines/twine/metaengine.cpp:155 engines/ultima/metaengine.cpp:88
 msgid "Enable high resolution"
 msgstr "Включить отображение высокого разрешения"
 
-#: engines/twine/detection.cpp:540 engines/ultima/detection.cpp:100
+#: engines/twine/metaengine.cpp:156 engines/ultima/metaengine.cpp:89
 msgid "Enable a higher resolution for the game"
 msgstr "Включить отображение высокого разрешения в игре"
 
-#: engines/twine/metaengine.cpp:104
+#: engines/twine/metaengine.cpp:247
 msgid "Debug Next Room"
 msgstr "Отладка: Следующая комната"
 
-#: engines/twine/metaengine.cpp:109
+#: engines/twine/metaengine.cpp:252
 msgid "Debug Previous Room"
 msgstr "Отладка: Предыдущая комната"
 
-#: engines/twine/metaengine.cpp:114
+#: engines/twine/metaengine.cpp:257
 msgid "Debug Apply Celling Grid"
 msgstr "Отладка: Наложить сетку на потолок"
 
-#: engines/twine/metaengine.cpp:119
+#: engines/twine/metaengine.cpp:262
 msgid "Debug Increase Celling Grid Index"
 msgstr "Отладка: Увеличить индекс сетки на потолке"
 
-#: engines/twine/metaengine.cpp:124
+#: engines/twine/metaengine.cpp:267
 msgid "Debug Decrease Celling Grid Index"
 msgstr "Отладка: Уменьшить индекс сетки на потолке"
 
-#: engines/twine/metaengine.cpp:129
+#: engines/twine/metaengine.cpp:272
 msgid "Debug Grid Camera Up"
 msgstr "Отладка: Камеру сетки вверх"
 
-#: engines/twine/metaengine.cpp:134
+#: engines/twine/metaengine.cpp:277
 msgid "Debug Grid Camera Down"
 msgstr "Отладка: Камеру сетки вниз"
 
-#: engines/twine/metaengine.cpp:139
+#: engines/twine/metaengine.cpp:282
 msgid "Debug Grid Camera Left"
 msgstr "Отладка: Камеру сетки влево"
 
-#: engines/twine/metaengine.cpp:145
+#: engines/twine/metaengine.cpp:288
 msgid "Debug Grid Camera Right"
 msgstr "Отладка: Камеру сетки вправо"
 
-#: engines/twine/metaengine.cpp:150
+#: engines/twine/metaengine.cpp:293
 msgid "Place actor at center of screen"
 msgstr "Переместить актёра в центр экрана"
 
-#: engines/twine/metaengine.cpp:155
+#: engines/twine/metaengine.cpp:298
 msgid "Debug Menu"
 msgstr "Меню отладки"
 
-#: engines/twine/metaengine.cpp:160
+#: engines/twine/metaengine.cpp:303
 msgid "Debug Menu Execute"
 msgstr "Выполнить меню отладки"
 
-#: engines/twine/metaengine.cpp:165 engines/twine/metaengine.cpp:185
+#: engines/twine/metaengine.cpp:308 engines/twine/metaengine.cpp:328
 msgid "Normal Behaviour"
 msgstr "Нормальное поведение"
 
-#: engines/twine/metaengine.cpp:170 engines/twine/metaengine.cpp:190
+#: engines/twine/metaengine.cpp:313 engines/twine/metaengine.cpp:333
 msgid "Athletic Behaviour"
 msgstr "Атлетичное поведение"
 
-#: engines/twine/metaengine.cpp:175 engines/twine/metaengine.cpp:195
+#: engines/twine/metaengine.cpp:318 engines/twine/metaengine.cpp:338
 msgid "Aggressive Behaviour"
 msgstr "Агрессивное поведение"
 
-#: engines/twine/metaengine.cpp:180 engines/twine/metaengine.cpp:200
+#: engines/twine/metaengine.cpp:323 engines/twine/metaengine.cpp:343
 msgid "Discreet Behaviour"
 msgstr "Рассудительное поведение"
 
-#: engines/twine/metaengine.cpp:205
+#: engines/twine/metaengine.cpp:348
 msgid "Behaviour Action"
 msgstr "Поведенческое действие"
 
-#: engines/twine/metaengine.cpp:211
+#: engines/twine/metaengine.cpp:354
 msgid "Change Behaviour"
 msgstr "Изменить поведение"
 
-#: engines/twine/metaengine.cpp:223
+#: engines/twine/metaengine.cpp:366
 msgid "Options Menu"
 msgstr "Меню опций"
 
-#: engines/twine/metaengine.cpp:235
+#: engines/twine/metaengine.cpp:378
 msgid "Use Selected Object"
 msgstr "Использовать выбранный объект"
 
-#: engines/twine/metaengine.cpp:241
+#: engines/twine/metaengine.cpp:384
 msgid "Throw Magic Ball"
 msgstr "Метнуть магический шар"
 
-#: engines/twine/metaengine.cpp:255
+#: engines/twine/metaengine.cpp:398
 msgid "Move Backward"
 msgstr "Идти назад"
 
-#: engines/twine/metaengine.cpp:276
+#: engines/twine/metaengine.cpp:419
 msgid "Use Protopack"
 msgstr "Использовать протопак"
 
-#: engines/twine/metaengine.cpp:281
+#: engines/twine/metaengine.cpp:424
 msgid "Open Holomap"
 msgstr "Открыть голокарту"
 
-#: engines/twine/metaengine.cpp:294
+#: engines/twine/metaengine.cpp:437
 msgid "Special Action"
 msgstr "Специальное действие"
 
-#: engines/twine/metaengine.cpp:300 engines/wintermute/keymapper_tables.h:60
+#: engines/twine/metaengine.cpp:443 engines/wintermute/keymapper_tables.h:60
 msgid "Escape"
 msgstr "Клавиша Esc"
 
-#: engines/twine/metaengine.cpp:313
+#: engines/twine/metaengine.cpp:456
 msgid "Accept"
 msgstr "Принять"
 
-#: engines/twine/metaengine.cpp:321 engines/twine/metaengine.cpp:373
-#: engines/twine/metaengine.cpp:389
+#: engines/twine/metaengine.cpp:464 engines/twine/metaengine.cpp:516
+#: engines/twine/metaengine.cpp:532
 msgid "Abort"
 msgstr "Прервать"
 
-#: engines/twine/metaengine.cpp:359
+#: engines/twine/metaengine.cpp:502
 msgid "Next Page"
 msgstr "Следующая страница"
 
-#: engines/twine/metaengine.cpp:426
+#: engines/twine/metaengine.cpp:569
 msgid "Previous location"
 msgstr "Предыдущая локация"
 
-#: engines/twine/metaengine.cpp:431
+#: engines/twine/metaengine.cpp:574
 msgid "Next location"
 msgstr "Следующая локация"
 
@@ -8280,75 +8335,75 @@ msgctxt "Options menu"
 msgid "Wall collision off"
 msgstr "Столкновение со стенами выключено"
 
-#: engines/ultima/detection.cpp:66
+#: engines/ultima/metaengine.cpp:55
 msgid "Enable frame skipping"
 msgstr "Включить пропуск кадров"
 
-#: engines/ultima/detection.cpp:67
+#: engines/ultima/metaengine.cpp:56
 msgid "Allow the game to skip animation frames when running too slow."
 msgstr ""
 "Позволяет игре пропускать кадры анимации, если воспроизведение слишком "
 "медленное."
 
-#: engines/ultima/detection.cpp:77
+#: engines/ultima/metaengine.cpp:66
 msgid "Enable frame limiting"
 msgstr "Включить ограничение кадров в секунду"
 
-#: engines/ultima/detection.cpp:78
+#: engines/ultima/metaengine.cpp:67
 msgid "Limits the speed of the game to prevent running too fast."
 msgstr ""
 "Ограничивает скорость игры чтобы избежать слишком быстрого воспроизведения."
 
-#: engines/ultima/detection.cpp:88
+#: engines/ultima/metaengine.cpp:77
 msgid "Enable cheats"
 msgstr "Включить чит-режим"
 
-#: engines/ultima/detection.cpp:89
+#: engines/ultima/metaengine.cpp:78
 msgid "Allow cheats by commands and a menu when player is clicked."
 msgstr "Включает читы через команды и меню во время клика на игрока."
 
-#: engines/ultima/detection.cpp:110
+#: engines/ultima/metaengine.cpp:99
 msgid "Play foot step sounds"
 msgstr "Проигрывать звуки шагов"
 
-#: engines/ultima/detection.cpp:111
+#: engines/ultima/metaengine.cpp:100
 msgid "Plays sound when the player moves."
 msgstr "Проигрывает звуки шагов во аремя перемещения игрока."
 
-#: engines/ultima/detection.cpp:121
+#: engines/ultima/metaengine.cpp:110
 msgid "Enable jump to mouse position"
 msgstr "Разрешить перепрыгивание на позицию мыши"
 
-#: engines/ultima/detection.cpp:122
+#: engines/ultima/metaengine.cpp:111
 msgid ""
 "Jumping while not moving targets the mouse cursor rather than direction only."
 msgstr "Перепрыгивает на позицию курсора мыши (не во время перемещения целей)."
 
-#: engines/ultima/detection.cpp:132
+#: engines/ultima/metaengine.cpp:121
 msgid "Enable font replacement"
 msgstr "Включить замену шрифтов"
 
-#: engines/ultima/detection.cpp:133
+#: engines/ultima/metaengine.cpp:122
 msgid "Replaces game fonts with rendered fonts"
 msgstr "Заменяет шрифты игры на шрифты лучшего качества"
 
 #. I18N: Silencer is the player-character in Crusader games, known as the Avatar in Ultima series.
-#: engines/ultima/detection.cpp:155
+#: engines/ultima/metaengine.cpp:144
 msgid "Camera moves with Silencer"
 msgstr "Камера перемещается вместе с Сайленсером"
 
-#: engines/ultima/detection.cpp:156
+#: engines/ultima/metaengine.cpp:145
 msgid ""
 "Camera tracks the player movement rather than snapping to defined positions."
 msgstr ""
 "Камера отслеживает перемещения игрока, а не прыгает по фиксированным "
 "позициям."
 
-#: engines/ultima/detection.cpp:166
+#: engines/ultima/metaengine.cpp:155
 msgid "Always enable Christmas easter-egg"
 msgstr "Постоянно включить рождественский секрет"
 
-#: engines/ultima/detection.cpp:167
+#: engines/ultima/metaengine.cpp:156
 msgid "Enable the Christmas music at any time of year."
 msgstr "Включить рожденственскую музыку в любое время года."
 
@@ -8412,40 +8467,40 @@ msgstr "[устаревший]"
 msgid "[too modern]"
 msgstr "[слишком новый]"
 
-#: engines/wintermute/detection.cpp:52
+#: engines/wintermute/metaengine.cpp:41
 msgid "Show FPS-counter"
 msgstr "Показать счётчик кадров в секунду"
 
-#: engines/wintermute/detection.cpp:53
+#: engines/wintermute/metaengine.cpp:42
 msgid "Show the current number of frames per second in the upper left corner"
 msgstr "Показать в верхнем левом углу текущее количество кадров в секунду"
 
-#: engines/wintermute/detection.cpp:64
+#: engines/wintermute/metaengine.cpp:53
 msgid "Sprite bilinear filtering (SLOW)"
 msgstr "Билинейная фильтрация спрайтов (медленно)"
 
-#: engines/wintermute/detection.cpp:65
+#: engines/wintermute/metaengine.cpp:54
 msgid "Apply bilinear filtering to individual sprites"
 msgstr "Применить билинейную фильтрацию для индивидуальных спрайтов"
 
-#: engines/wintermute/detection.cpp:77
+#: engines/wintermute/metaengine.cpp:66
 msgid "Force to use 2D renderer (2D games only)"
 msgstr "Принудительно включить 2D рендерер (только в 2D играх)"
 
-#: engines/wintermute/detection.cpp:78
+#: engines/wintermute/metaengine.cpp:67
 msgid "This setting forces ScummVM to use 2D renderer while running 2D games"
 msgstr ""
 "Эта настройка принудительно включает 2D рендерер во время запуска 2D игр"
 
-#: engines/wintermute/metaengine.cpp:64
+#: engines/wintermute/metaengine.cpp:111
 msgid "FoxTail support is not compiled in"
 msgstr "Поддержка для FoxTail не скомпилирована"
 
-#: engines/wintermute/metaengine.cpp:70
+#: engines/wintermute/metaengine.cpp:117
 msgid "Hero Craft support is not compiled in"
 msgstr "Поддержка для Hero Craft не скомпилирована"
 
-#: engines/wintermute/metaengine.cpp:76
+#: engines/wintermute/metaengine.cpp:123
 msgid "Wintermute3D support is not compiled in"
 msgstr "Поддержка для Wintermute3D не скомпилирована"
 
@@ -9044,11 +9099,11 @@ msgstr "F1"
 msgid "Key i"
 msgstr "Кнопка i"
 
-#: engines/xeen/detection.cpp:55
+#: engines/xeen/metaengine.cpp:41
 msgid "Show item costs in standard inventory mode"
 msgstr "Показывать стоимость предметов в инвентаре"
 
-#: engines/xeen/detection.cpp:56
+#: engines/xeen/metaengine.cpp:42
 msgid ""
 "Shows item costs in standard inventory mode, allowing the value of items to "
 "be compared"
@@ -9056,11 +9111,11 @@ msgstr ""
 "Показывать стоимость предметов в инвентаре, что позволит их сравнивать по "
 "цене"
 
-#: engines/xeen/detection.cpp:67
+#: engines/xeen/metaengine.cpp:53
 msgid "More durable armor"
 msgstr "Более надёжная броня"
 
-#: engines/xeen/detection.cpp:68
+#: engines/xeen/metaengine.cpp:54
 msgid "Armor won't break until character is at -80HP, rather than merely -10HP"
 msgstr ""
 "Броня не будет ломаться до тех пор, пока у героя на станет -80HP, а не -10HP"
@@ -9068,40 +9123,6 @@ msgstr ""
 #: engines/xeen/saves.cpp:290
 msgid "Failed to autosave"
 msgstr "Не удалось автоматически сохранить игру"
-
-#: engines/zvision/detection_tables.h:62
-msgid "Double FPS"
-msgstr "Двойной FPS"
-
-#: engines/zvision/detection_tables.h:63
-msgid "Increase framerate from 30 to 60 FPS"
-msgstr "Увеличить частоту кадров с 30 до 60 Гц"
-
-#: engines/zvision/detection_tables.h:74
-msgid "Enable Venus"
-msgstr "Включить Venus"
-
-#: engines/zvision/detection_tables.h:75
-msgid "Enable the Venus help system"
-msgstr "Включить систему помощи Venus"
-
-#: engines/zvision/detection_tables.h:86
-msgid "Disable animation while turning"
-msgstr "Выключить анимацию во время поворотов"
-
-#: engines/zvision/detection_tables.h:87
-msgid "Disable animation while turning in panorama mode"
-msgstr "Выключить анимацию во время поворотов в режиме панорамы"
-
-#: engines/zvision/detection_tables.h:98
-msgid "Use high resolution MPEG video"
-msgstr "Использовать видео MPEG высокого разрешения"
-
-#: engines/zvision/detection_tables.h:99
-msgid "Use MPEG video from the DVD version instead of lower resolution AVI"
-msgstr ""
-"Использовать MPEG-видео из DVD-версии вместо видео низкого разрешения в "
-"формате AVI"
 
 #: engines/zvision/file/save_manager.cpp:221
 #, c-format
@@ -9113,31 +9134,65 @@ msgstr ""
 "версии не выше %d. Для использования этого файла необходима свежая версия "
 "движка."
 
-#: engines/zvision/metaengine.cpp:128
+#: engines/zvision/metaengine.cpp:58
+msgid "Double FPS"
+msgstr "Двойной FPS"
+
+#: engines/zvision/metaengine.cpp:59
+msgid "Increase framerate from 30 to 60 FPS"
+msgstr "Увеличить частоту кадров с 30 до 60 Гц"
+
+#: engines/zvision/metaengine.cpp:70
+msgid "Enable Venus"
+msgstr "Включить Venus"
+
+#: engines/zvision/metaengine.cpp:71
+msgid "Enable the Venus help system"
+msgstr "Включить систему помощи Venus"
+
+#: engines/zvision/metaengine.cpp:82
+msgid "Disable animation while turning"
+msgstr "Выключить анимацию во время поворотов"
+
+#: engines/zvision/metaengine.cpp:83
+msgid "Disable animation while turning in panorama mode"
+msgstr "Выключить анимацию во время поворотов в режиме панорамы"
+
+#: engines/zvision/metaengine.cpp:94
+msgid "Use high resolution MPEG video"
+msgstr "Использовать видео MPEG высокого разрешения"
+
+#: engines/zvision/metaengine.cpp:95
+msgid "Use MPEG video from the DVD version instead of lower resolution AVI"
+msgstr ""
+"Использовать MPEG-видео из DVD-версии вместо видео низкого разрешения в "
+"формате AVI"
+
+#: engines/zvision/metaengine.cpp:197
 msgid "Look Up"
 msgstr "Смотреть вверх"
 
-#: engines/zvision/metaengine.cpp:134
+#: engines/zvision/metaengine.cpp:203
 msgid "Look Down"
 msgstr "Смотреть вниз"
 
-#: engines/zvision/metaengine.cpp:169
+#: engines/zvision/metaengine.cpp:238
 msgid "Spellbook"
 msgstr "Книга заклинаний"
 
-#: engines/zvision/metaengine.cpp:175
+#: engines/zvision/metaengine.cpp:244
 msgid "Score"
 msgstr "Счёт"
 
-#: engines/zvision/metaengine.cpp:181
+#: engines/zvision/metaengine.cpp:250
 msgid "Put away object"
 msgstr "Отложить обьект"
 
-#: engines/zvision/metaengine.cpp:187
+#: engines/zvision/metaengine.cpp:256
 msgid "Extract coin"
 msgstr "Извлечь монету"
 
-#: engines/zvision/metaengine.cpp:208
+#: engines/zvision/metaengine.cpp:277
 msgid "Preferences"
 msgstr "Предпочтения"
 
@@ -9160,6 +9215,9 @@ msgstr ""
 "понадобятся все шрифты из выбранного вами пакета, то есть, LiberationMono, "
 "LiberationSans и LiberationSerif, либо FreeMono, FreeSans и FreeSerif "
 "соответственно."
+
+#~ msgid "Fight cheat"
+#~ msgstr "Чит для драк"
 
 #~ msgid "Override global shader settings"
 #~ msgstr "Перекрыть глобальные настройки шейдера"

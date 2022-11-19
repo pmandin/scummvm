@@ -35,6 +35,88 @@
 
 namespace Saga {
 
+// Patch files. Files not found will be ignored
+static const GamePatchDescription ITEPatch_Files[] = {
+	{       "cave.mid", GAME_RESOURCEFILE,    9},
+	{      "intro.mid", GAME_RESOURCEFILE,   10},
+	{   "fvillage.mid", GAME_RESOURCEFILE,   11},
+	{    "elkhall.mid", GAME_RESOURCEFILE,   12},
+	{      "mouse.mid", GAME_RESOURCEFILE,   13},
+	{   "darkclaw.mid", GAME_RESOURCEFILE,   14},
+	{   "birdchrp.mid", GAME_RESOURCEFILE,   15},
+	{   "orbtempl.mid", GAME_RESOURCEFILE,   16},
+	{     "spooky.mid", GAME_RESOURCEFILE,   17},
+	{    "catfest.mid", GAME_RESOURCEFILE,   18},
+	{ "elkfanfare.mid", GAME_RESOURCEFILE,   19},
+	{     "bcexpl.mid", GAME_RESOURCEFILE,   20},
+	{   "boargtnt.mid", GAME_RESOURCEFILE,   21},
+	{   "boarking.mid", GAME_RESOURCEFILE,   22},
+	{   "explorea.mid", GAME_RESOURCEFILE,   23},
+	{   "exploreb.mid", GAME_RESOURCEFILE,   24},
+	{   "explorec.mid", GAME_RESOURCEFILE,   25},
+	{   "sunstatm.mid", GAME_RESOURCEFILE,   26},
+	{   "nitstrlm.mid", GAME_RESOURCEFILE,   27},
+	{   "humruinm.mid", GAME_RESOURCEFILE,   28},
+	{   "damexplm.mid", GAME_RESOURCEFILE,   29},
+	{     "tychom.mid", GAME_RESOURCEFILE,   30},
+	{     "kitten.mid", GAME_RESOURCEFILE,   31},
+	{      "sweet.mid", GAME_RESOURCEFILE,   32},
+	{   "brutalmt.mid", GAME_RESOURCEFILE,   33},
+	{     "shiala.mid", GAME_RESOURCEFILE,   34},
+
+	{       "wyrm.pak", GAME_RESOURCEFILE, 1529},
+	{      "wyrm1.dlt", GAME_RESOURCEFILE, 1530},
+	{      "wyrm2.dlt", GAME_RESOURCEFILE, 1531},
+	{      "wyrm3.dlt", GAME_RESOURCEFILE, 1532},
+	{      "wyrm4.dlt", GAME_RESOURCEFILE, 1533},
+	{   "credit3n.dlt", GAME_RESOURCEFILE, 1796}, // PC
+	{   "credit3m.dlt", GAME_RESOURCEFILE, 1796}, // Macintosh
+	{   "credit4n.dlt", GAME_RESOURCEFILE, 1797}, // PC
+	{   "credit4m.dlt", GAME_RESOURCEFILE, 1797}, // Macintosh
+	{       "p2_a.voc", GAME_VOICEFILE,       4},
+	{       "p2_a.iaf", GAME_VOICEFILE,       4},
+	{             NULL,              0,       0}
+};
+
+static const GamePatchDescription ITEMacPatch_Files[] = {
+	{       "wyrm.pak", GAME_RESOURCEFILE, 1529},
+	{      "wyrm1.dlt", GAME_RESOURCEFILE, 1530},
+	{      "wyrm2.dlt", GAME_RESOURCEFILE, 1531},
+	{      "wyrm3.dlt", GAME_RESOURCEFILE, 1532},
+	{      "wyrm4.dlt", GAME_RESOURCEFILE, 1533},
+	{   "credit3m.dlt", GAME_RESOURCEFILE, 1796},
+	{   "credit4m.dlt", GAME_RESOURCEFILE, 1797},
+	{       "p2_a.iaf", GAME_VOICEFILE,       4},
+	{             NULL,              0,       0}
+};
+
+static const GamePatchDescription *PatchLists[PATCHLIST_MAX] = {
+	/* PATCHLIST_NONE */    nullptr,
+	/* PATCHLIST_ITE */     ITEPatch_Files,
+	/* PATCHLIST_ITE_MAC */ ITEMacPatch_Files
+};
+
+bool ResourceContext::loadResIteAmiga(uint32 contextOffset, uint32 contextSize, int type) {
+	_file.seek(contextOffset);
+	uint16 resourceCount = _file.readUint16BE();
+	uint16 scriptCount = _file.readUint16BE();
+	uint32 count = (type &  GAME_SCRIPTFILE) ? scriptCount : resourceCount;
+
+	if (type &  GAME_SCRIPTFILE)
+		_file.seek(resourceCount * 10, SEEK_CUR);
+
+	_table.resize(count);
+
+	for (uint32 i = 0; i < count; i++) {
+		ResourceData *resourceData = &_table[i];
+		resourceData->offset = _file.readUint32BE();
+		resourceData->size = _file.readUint32BE();
+		resourceData->diskNum = _file.readUint16BE();
+	}
+
+	return true;
+}
+
 bool ResourceContext::loadResV1(uint32 contextOffset, uint32 contextSize) {
 	size_t i;
 	bool result;
@@ -116,17 +198,20 @@ bool ResourceContext::load(SagaEngine *vm, Resource *resource) {
 			_file.seek(83);
 			uint32 macDataSize = _file.readSint32BE();
 			// Skip the MacBinary headers, and read the resource data.
-			return loadRes(MAC_BINARY_HEADER_SIZE, macDataSize);
+			return loadRes(MAC_BINARY_HEADER_SIZE, macDataSize, _fileType);
 		} else {
 			// Unpack MacBinary packed MIDI files
 			return loadMacMIDI();
 		}
 	}
 
-	if (!loadRes(0, _fileSize))
+
+	if (!loadRes(0, _fileSize, _fileType))
 		return false;
 
-	processPatches(resource, vm->getPatchDescriptions());
+	GamePatchList index = vm->getPatchList();
+	if (index < PATCHLIST_MAX && index > PATCHLIST_NONE)
+		processPatches(resource, PatchLists[index]);
 
 	// Close the file if it's part of a series of files.
 	// This prevents having all voice files open in IHNM for no reason, as each chapter uses
@@ -170,6 +255,8 @@ bool Resource::createContexts() {
 		gameFileDescription->fileName; gameFileDescription++) {
 		if (gameFileDescription->fileType > 0)
 			addContext(gameFileDescription->fileName, gameFileDescription->fileType);
+		if ((gameFileDescription->fileType & GAME_RESOURCEFILE) && _vm->getPlatform() == Common::kPlatformAmiga && _vm->getGameId() == GID_ITE)
+			addContext(gameFileDescription->fileName, (gameFileDescription->fileType & ~GAME_RESOURCEFILE) | GAME_SCRIPTFILE | GAME_SWAPENDIAN);
 		if (gameFileDescription->fileType == GAME_SOUNDFILE) {
 			soundFileInArray = true;
 		}
@@ -312,8 +399,23 @@ void Resource::clearContexts() {
 
 void Resource::loadResource(ResourceContext *context, uint32 resourceId, ByteArray &resourceBuffer) {
 	ResourceData *resourceData = context->getResourceData(resourceId);
-	Common::File *file = context->getFile(resourceData);
+	Common::File *file = nullptr;
 	uint32 resourceOffset = resourceData->offset;
+
+	if (resourceData->diskNum < 0)
+		file = context->getFile(resourceData);
+	else {
+		file = new Common::File();
+		Common::String fileName = context->_fileName;
+		int sz = fileName.size();
+		while(sz > 0 && fileName[sz - 1] != '.')
+			sz--;
+		if (sz > 0)
+			sz--;
+		fileName = Common::String::format("%s.%03d", fileName.substr(0, sz).c_str(), resourceData->diskNum);
+		if (!file->open(fileName))
+			error("Resource::loadResource() failed to open %s", fileName.c_str());
+	}
 
 	debug(8, "loadResource %d 0x%X:0x%X", resourceId, resourceOffset, uint(resourceData->size));
 	resourceBuffer.resize(resourceData->size);

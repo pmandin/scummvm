@@ -109,6 +109,16 @@ Area::~Area() {
 	delete _objectsByID;
 }
 
+ObjectArray Area::getSensors() {
+	ObjectArray sensors;
+	debugC(1, kFreescapeDebugMove, "Area name: %s", _name.c_str());
+	for (auto &it : *_objectsByID) {
+		if (it._value->getType() == kSensorType)
+			sensors.push_back(it._value);
+	}
+	return sensors;
+}
+
 void Area::show() {
 	debugC(1, kFreescapeDebugMove, "Area name: %s", _name.c_str());
 	for (auto &it : *_objectsByID)
@@ -178,16 +188,13 @@ Object *Area::shootRay(const Math::Ray &ray) {
 	return collided;
 }
 
-Object *Area::checkCollisions(const Math::AABB &boundingBox) {
-	float size = 3.0 * 8192.0 * 8192.0; // TODO: check if this is max size
-	Object *collided = nullptr;
+ObjectArray Area::checkCollisions(const Math::AABB &boundingBox) {
+	ObjectArray collided;
 	for (auto &obj : _drawableObjects) {
 		if (!obj->isDestroyed() && !obj->isInvisible()) {
 			GeometricObject *gobj = (GeometricObject *)obj;
-			float objSize = gobj->getSize().length();
-			if (gobj->collides(boundingBox) && size > objSize) {
-				collided = gobj;
-				size = objSize;
+			if (gobj->collides(boundingBox)) {
+				collided.push_back(gobj);
 			}
 		}
 	}
@@ -223,13 +230,19 @@ void Area::addObjectFromArea(int16 id, Area *global) {
 	Object *obj = global->objectWithID(id);
 	if (!obj) {
 		assert(global->entranceWithID(id));
-		_addedObjects[id] = global->entranceWithID(id);
-		(*_entrancesByID)[id] = global->entranceWithID(id);
+		obj = global->entranceWithID(id);
+		obj = obj->duplicate();
+		obj->scale(_scale);
+		_addedObjects[id] = obj;
+		(*_entrancesByID)[id] = obj;
 	} else {
-		(*_objectsByID)[id] = global->objectWithID(id);
-		_addedObjects[id] = global->objectWithID(id);
-		if (obj->isDrawable())
+		obj = obj->duplicate();
+		obj->scale(_scale);
+		(*_objectsByID)[id] = obj;
+		_addedObjects[id] = obj;
+		if (obj->isDrawable()) {
 			_drawableObjects.insert_at(0, obj);
+		}
 	}
 }
 

@@ -27,6 +27,7 @@
 #include "freescape/freescape.h"
 #include "freescape/language/8bitDetokeniser.h"
 #include "freescape/objects/global.h"
+#include "freescape/objects/group.h"
 #include "freescape/objects/sensor.h"
 
 namespace Freescape {
@@ -212,26 +213,54 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 
 	case kSensorType: {
 		debugC(1, kFreescapeDebugParser, "rotation: %f %f %f", v.x(), v.y(), v.z());
-		if (byteSizeOfObject > 0) {
-			// TODO: there is something here
-			debugC(1, kFreescapeDebugParser, "Warning: extra %d bytes in sensor", byteSizeOfObject);
-			for (int i = 0; i < byteSizeOfObject; i++)
-				readField(file, 8);
-			byteSizeOfObject = 0;
+		FCLInstructionVector instructions;
+		Common::String conditionSource;
+
+		if (isCastle()) { // TODO
+			assert(byteSizeOfObject == 0);
+			return new Sensor(
+				objectID,
+				32 * position,
+				5 * v,
+				0,
+				0,
+				0,
+				0,
+				instructions,
+				conditionSource);
 		}
-		assert(byteSizeOfObject == 0);
+
+		assert(byteSizeOfObject >= 5);
+		byte color = readField(file, 8) & 0xf;
+		assert(color > 0);
+		byte firingInterval = readField(file, 8);
+		uint16 firingRange = readField(file, 16);
+		byte sensorFlags = readField(file, 8);
+		byteSizeOfObject = byteSizeOfObject - 5;
+		// grab the object condition, if there is one
+		if (byteSizeOfObject) {
+			Common::Array<uint8> conditionArray = readArray(file, byteSizeOfObject);
+			conditionSource = detokenise8bitCondition(conditionArray, instructions);
+			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
+		}
 		debugC(1, kFreescapeDebugParser, "End of object at %lx", file->pos());
 		// create an entrance
 		return new Sensor(
 			objectID,
 			32 * position,
-			5 * v); // rotation
+			5 * v, // rotation?
+			color,
+			firingInterval,
+			firingRange,
+			sensorFlags,
+			instructions,
+			conditionSource);
 	} break;
 
 	case kGroupType:
 		debugC(1, kFreescapeDebugParser, "Object of type 'group'");
 		file->seek(byteSizeOfObject, SEEK_CUR);
-		return new Sensor(
+		return new Group(
 			objectID,
 			position,
 			v);
@@ -346,6 +375,7 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 		Object *newObject = load8bitObject(file);
 
 		if (newObject) {
+			newObject->scale(scale);
 			if (newObject->getType() == kEntranceType) {
 				if (entrancesByID->contains(newObject->getObjectID() & 0x7fff))
 					error("WARNING: replacing object id %d (%d)", newObject->getObjectID(), newObject->getObjectID() & 0x7fff);

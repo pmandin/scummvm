@@ -308,6 +308,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "shivah", "The Shivah" },
 	{ "shivahkosher", "The Shivah: Kosher Edition" },
 	{ "shoaly", "Shoaly You Can't Be Serious!" },
+	{ "signalecho", "Signal & Echo: Iris is Missing" },
 	{ "sisterssecret", "Sisters' Secret" },
 	{ "smallsister", "Small Sister" },
 	{ "snowproblem", "Snow Problem" },
@@ -3072,10 +3073,17 @@ const char *const PRE_25 = "Pre 2.5";
 
 #define DETECTION_ENTRY_GUIO(ID, FILENAME, MD5, SIZE, LANG, PLATFORM, GUIO, PLUGIN_ARR, FLAGS) \
 	{{ ID, PLATFORM, AD_ENTRY1s(FILENAME, MD5, SIZE), LANG, \
-	Common::kPlatformUnknown, FLAGS, GUIO }, PLUGIN_ARR }
+	Common::kPlatformUnknown, FLAGS, GUIO }, PLUGIN_ARR, nullptr }
+
+#define DETECTION_ENTRY_GUIO_INSTALLER(ID, FILENAME, MD5, SIZE, LANG, PLATFORM, GUIO, PLUGIN_ARR, FLAGS, MAIN_FILENAME) \
+	{{ ID, PLATFORM, AD_ENTRY1s(FILENAME, MD5, SIZE), LANG, \
+	Common::kPlatformUnknown, FLAGS, GUIO }, PLUGIN_ARR, MAIN_FILENAME }
 
 #define DETECTION_ENTRY(ID, FILENAME, MD5, SIZE, LANG, PLATFORM, PLUGIN_ARR, FLAGS) \
 	DETECTION_ENTRY_GUIO(ID, FILENAME, MD5, SIZE, LANG, PLATFORM, GUIO1(GUIO_NOLANG), PLUGIN_ARR, FLAGS)
+
+#define DETECTION_ENTRY_INSTALLER(ID, FILENAME, MD5, SIZE, LANG, PLATFORM, PLUGIN_ARR, FLAGS, MAIN_FILENAME) \
+	DETECTION_ENTRY_GUIO_INSTALLER(ID, FILENAME, MD5, SIZE, LANG, PLATFORM, GUIO1(GUIO_NOLANG), PLUGIN_ARR, FLAGS, MAIN_FILENAME)
 
 
 #define PRE_25_ENTRY(ID, FILENAME, MD5, SIZE) \
@@ -3105,6 +3113,9 @@ const char *const PRE_25 = "Pre 2.5";
 #define UNSUPPORTED_GAME_ENTRY(ID, FILENAME, MD5, SIZE) \
 	UNSUPPORTED_ENTRY(ID, FILENAME, MD5, SIZE, Common::UNK_LANG, nullptr)
 
+#define UNSUPPORTED_INSTALLER_ENTRY(ID, FILENAME, MAIN_FILENAME, MD5, SIZE)	\
+	DETECTION_ENTRY_INSTALLER(ID, FILENAME, MD5, SIZE, Common::UNK_LANG, nullptr, nullptr, ADGF_UNSTABLE | GAMEFLAG_INSTALLER, MAIN_FILENAME)
+
 
 #define TESTING_ENTRY(ID, FILENAME, MD5, SIZE, LANG, PLATFORM) \
 	DETECTION_ENTRY(ID, FILENAME, MD5, SIZE, LANG, PLATFORM, nullptr, ADGF_TESTING)
@@ -3123,6 +3134,9 @@ const char *const PRE_25 = "Pre 2.5";
 
 #define GAME_ENTRY(ID, FILENAME, MD5, SIZE) \
 	STABLE_ENTRY(ID, FILENAME, MD5, SIZE, Common::UNK_LANG, nullptr)
+
+#define INSTALLER_ENTRY(ID, FILENAME, MAIN_FILENAME, MD5, SIZE)	\
+	DETECTION_ENTRY_INSTALLER(ID, FILENAME, MD5, SIZE, Common::UNK_LANG, nullptr, nullptr, GAMEFLAG_INSTALLER, MAIN_FILENAME)
 
 #define GAME_ENTRY_EN(ID, FILENAME, MD5, SIZE) \
 	STABLE_ENTRY(ID, FILENAME, MD5, SIZE, Common::EN_ANY, nullptr)
@@ -3444,6 +3458,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	// hacked to specify plugin, errors on loading room107 saying that
 	// "room animations are no longer supported"
 	UNSUPPORTED_GAME_ENTRY("zak2", "Zak2.exe", "e88fd6a23a5e498d7b0d50e3bb914085", 8686711),
+	UNSUPPORTED_INSTALLER_ENTRY("zak2", "fanadv_zak2.exe", "Zak2.exe", "329ff478ffc1a3bd0dc941d5212aa602", 7165704),
 	UNSUPPORTED_GAME_ENTRY("zak2", "Zak2.exe", "0b7529a76f38283d6e850b8d56526fc1", 9205143),
 
 	// Commercial games
@@ -3884,6 +3899,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DEMO_ENTRY_EN("brotherswreckers", "Brothers & Wreckers.exe", "f24c533ce89a2566c157b871f87a4ce4", 42831964),
 	DEMO_ENTRY_EN("bytheswordconspiracy", "bts.exe", "7dc7f61f79ba7a77d4ef8168bfd3d173", 60246329),
 	DEMO_ENTRY_EN("byzantine", "byza.exe", "39d7a558298a9f1d40c1f415daf9bb74", 3708632),
+	DEMO_ENTRY_EN("byzantine", "byza.exe", "ecc8eaa38fe3adea61ffc525d2ce5c0e", 3660405),
 	DEMO_ENTRY_EN("calvin", "CalvinENG.exe", "7a3096ac0237cb6aa8e1718e28caf039", 85555229),
 	DEMO_ENTRY_LANG("calvin", "Calvin.exe", "7a3096ac0237cb6aa8e1718e28caf039", 85557724, Common::FR_FRA),
 	DEMO_ENTRY_EN("captaindisaster", "cd-dhamsb-demo-1-3-0.exe", "9d991dd1f9e7fee653d3a9bb2546f968", 153646768),
@@ -4167,6 +4183,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DEMO_ENTRY_EN("shardlight", "shardlight demo.exe", "ee801fba52d252249677a9170bd2db96", 642366257),
 	DEMO_ENTRY_EN("shivah", "shivahdemo.exe", "6e3d6225dee662ff6450a3bfa942773b", 20897850),
 	DEMO_ENTRY_EN("shivahkosher", "shivah-demo.exe", "0aaf5445a3544a631d6e7dd4561fc7ae", 23987292),
+	DEMO_ENTRY_EN("signalecho", "Signal & Echo - Iris is Missing (demo).exe", "f9e3e0193fbc975daa3a7c95edf04e0a", 39177267),
 	DEMO_ENTRY_EN("simonthesorcerer3", "simon3.exe", "3b7cceb3e4bdb031dc5d8f290936e94b", 8189928),
 	DEMO_ENTRY_EN("simonthesorcerersbrother", "stsb-trailer.exe", "06a03fe35791b0578068ab1873455463", 2283838),
 	DEMO_ENTRY_EN("sisterssecret", "SistersSecret.exe", "f8d06c339ca2af5160b662c7a19572d6", 18660074),  // v1.0.1
@@ -5732,8 +5749,10 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("maniacland", "AliceInManiacland.ags", "00596e8a9f0bd774528fb8c7225bed0d", 4082163),  // Linux
 	GAME_ENTRY("maniacland", "AliceInManiacland.exe", "d37a4f06126fc1f3bb7e5c31bd58a014", 8015351),  // Windows (newer) En-Es-It
 	GAME_ENTRY("maniacmansiondeluxe", "Maniac.exe", "3128b9f90e2f954ba704414ae854d10b", 9395050),  // v1.05 Multi
+	INSTALLER_ENTRY("maniacmansiondeluxe", "manicmdsetup.exe", "Maniac.exe", "329ff478ffc1a3bd0dc941d5212aa602", 5826271),  // v1.05 Multi
 	GAME_ENTRY("maniacmansiondeluxe", "Maniac.exe", "465f972675db2da6040518221af5b0ba", 10181366), // v1.3  "
 	GAME_ENTRY("maniacmansiondeluxe", "Maniac.exe", "465f972675db2da6040518221af5b0ba", 10409172), // v1.4  "
+	INSTALLER_ENTRY("maniacmansiondeluxe", "Maniac-Mansion-Deluxe_Win_EN-FR-ES-DE-IT.exe", "Maniac.exe", "329ff478ffc1a3bd0dc941d5212aa602", 6598337),  // v1.4
 	GAME_ENTRY("maniacmetalheadmania", "Maniac Metalhead Mania.exe", "d4dbb53d3617dcbb56251eb4a332fddd", 11785951),  //En-De
 	GAME_ENTRY("maniacmetalheadmania2", "Maniac Metalhead Mania II.exe", "be3275347f23aadb6d13aa75f70fcb99", 14997025),  //En-De
 	GAME_ENTRY_EN("manvsfish", "ManVsFish.exe", "06a03fe35791b0578068ab1873455463", 1875086),
@@ -7400,7 +7419,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_LANG("prisonersofice", "newyearq.exe", "b26aa198e5175000f037b84d8a4038f5", 84723231, Common::RU_RUS),
 
 
-	{ AD_TABLE_END_MARKER, nullptr }
+	{ AD_TABLE_END_MARKER, nullptr, nullptr }
 };
 
 /**
@@ -7416,6 +7435,7 @@ static AGSGameDescription g_fallbackDesc = {
 		ADGF_NO_FLAGS,
 		GUIO1(GUIO_NOLANG)
 	},
+	nullptr,
 	nullptr
 };
 

@@ -78,9 +78,12 @@ void FreescapeEngine::executeLocalGlobalConditions(bool shot, bool collided) {
 	if (isCastle())
 		return;
 	debugC(1, kFreescapeDebugCode, "Executing room conditions");
-	for (uint i = 0; i < _currentArea->_conditions.size(); i++) {
-		debugC(1, kFreescapeDebugCode, "%s", _currentArea->_conditionSources[i].c_str());
-		executeCode(_currentArea->_conditions[i], shot, collided);
+	Common::Array<FCLInstructionVector> conditions = _currentArea->_conditions;
+	Common::Array<Common::String> conditionSources = _currentArea->_conditionSources;
+
+	for (uint i = 0; i < conditions.size(); i++) {
+		debugC(1, kFreescapeDebugCode, "%s", conditionSources[i].c_str());
+		executeCode(conditions[i], shot, collided);
 	}
 
 	debugC(1, kFreescapeDebugCode, "Executing global conditions (%d)", _conditions.size());
@@ -383,15 +386,41 @@ bool FreescapeEngine::executeEndIfBitNotEqual(FCLInstruction &instruction) {
 }
 
 void FreescapeEngine::executeSwapJet(FCLInstruction &instruction) {
-	playSound(15, false);
+	//playSound(15, false);
 	_flyMode = !_flyMode;
+	uint16 areaID = _currentArea->getAreaID();
+
 	if (_flyMode) {
 		debugC(1, kFreescapeDebugCode, "Swaping to ship mode");
+		if (areaID == 27) {
+			traverseEntrance(26);
+			_lastPosition = _position;
+		}
+		_playerHeight = 2;
 		_playerHeightNumber = -1;
-		_playerHeight = 1;
+
+		// Save tank energy and shield
+		_gameStateVars[k8bitVariableEnergyDrillerTank] = _gameStateVars[k8bitVariableEnergy];
+		_gameStateVars[k8bitVariableShieldDrillerTank] = _gameStateVars[k8bitVariableShield];
+
+		// Restore ship energy and shield
+		_gameStateVars[k8bitVariableEnergy] = _gameStateVars[k8bitVariableEnergyDrillerJet];
+		_gameStateVars[k8bitVariableShield] = _gameStateVars[k8bitVariableShieldDrillerJet];
 	} else {
 		debugC(1, kFreescapeDebugCode, "Swaping to tank mode");
 		_playerHeightNumber = 0;
+		if (areaID == 27) {
+			traverseEntrance(27);
+			_lastPosition = _position;
+		}
+
+		// Save shield energy and shield
+		_gameStateVars[k8bitVariableEnergyDrillerJet] = _gameStateVars[k8bitVariableEnergy];
+		_gameStateVars[k8bitVariableShieldDrillerJet] = _gameStateVars[k8bitVariableShield];
+
+		// Restore ship energy and shield
+		_gameStateVars[k8bitVariableEnergy] = _gameStateVars[k8bitVariableEnergyDrillerTank];
+		_gameStateVars[k8bitVariableShield] = _gameStateVars[k8bitVariableShieldDrillerTank];
 	}
 	// TODO: implement the rest of the changes (e.g. border)
 }

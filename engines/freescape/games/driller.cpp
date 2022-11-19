@@ -19,6 +19,7 @@
  *
  */
 
+#include "common/config-manager.h"
 #include "common/events.h"
 #include "common/file.h"
 
@@ -27,23 +28,41 @@
 
 namespace Freescape {
 
+enum {
+	kDrillerNoRig = 0,
+	kDrillerRigInPlace = 1,
+	kDrillerRigOutOfPlace = 2,
+};
+
 DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : FreescapeEngine(syst, gd) {
-	// if (isAmiga())
-	//	_viewArea = Common::Rect(72, 66, 567, 269);
-	// else
-	_viewArea = Common::Rect(40, 16, 279, 116);
+
+	if (!Common::parseBool(ConfMan.get("automatic_drilling"), _useAutomaticDrilling))
+		error("Failed to parse bool from automatic_drilling option");
+
+	if (isDOS())
+		_viewArea = Common::Rect(40, 16, 280, 117);
+	else if (isAmiga() || isAtariST())
+		_viewArea = Common::Rect(36, 16, 284, 118);
+
 	_playerHeightNumber = 1;
 	_playerHeights.push_back(16);
 	_playerHeights.push_back(48);
 	_playerHeights.push_back(80);
 	_playerHeights.push_back(112);
 
+	_angleRotations.push_back(5);
+	_angleRotations.push_back(10);
+	_angleRotations.push_back(15);
+	_angleRotations.push_back(30);
+	_angleRotations.push_back(45);
+	_angleRotations.push_back(90);
+
 	_playerHeight = _playerHeights[_playerHeightNumber];
 	_playerWidth = 12;
 	_playerDepth = 32;
 
-	_initialProveEnergy = 48;
-	_initialProveShield = 50;
+	_initialTankEnergy = 48;
+	_initialTankShield = 50;
 	_initialJetEnergy = 29;
 	_initialJetShield = 34;
 }
@@ -81,20 +100,29 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 	}
 	_lastPosition = _position;
 
+	if (areaID == _startArea && entranceID == _startEntrance) {
+		_yaw = 280;
+	} else if (areaID == 127) {
+		assert(entranceID == 0);
+		_yaw = 90;
+		_pitch = 335;
+		_flyMode = true; // Avoid falling
+		// Show the number of completed areas
+		_areaMap[127]->_name.replace(0, 3, Common::String::format("%4d", _gameStateVars[32]));
+	}
+
 	debugC(1, kFreescapeDebugMove, "starting player position: %f, %f, %f", _position.x(), _position.y(), _position.z());
 	playSound(5, false);
 	// Ignore sky/ground fields
-	if (_currentArea->getAreaFlags() == 1)
-		_gfx->_keyColor = 0;
-	else
-		_gfx->_keyColor = 255;
+	_gfx->_keyColor = 0;
 
 	if (isAmiga() || isAtariST())
 		swapPalette(areaID);
 
 	if (areaID != _startArea || entranceID != _startEntrance) {
-		_lastMousePos = g_system->getEventManager()->getMousePos();
-		rotate(_lastMousePos, _lastMousePos);
+		g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
+		_lastMousePos = _crossairPosition;
+		rotate(0, 0);
 	}
 }
 
@@ -118,9 +146,6 @@ void DrillerEngine::loadAssets() {
 		loadAssetsDemo();
 	else
 		loadAssetsFullGame();
-
-	_angleRotations.push_back(5.0);
-	_angleRotations.push_back(9.5);
 
 	// Start playing music, if any, in any supported format
 	playMusic("Matt Gray - The Best Of Reformation - 07 Driller Theme");
@@ -154,12 +179,6 @@ void DrillerEngine::loadAssetsDemo() {
 		if (!file.isOpen())
 			error("Failed to open 'data' file");
 
-		// loadGlobalObjects(file, 0xbd62);
-		/*file->seek(0x29efe);
-		load8bitArea(file, 16);
-		file->seek(0x2a450);
-		load8bitArea(file, 16);*/
-
 		load8bitBinary(&file, 0x442, 16);
 		loadPalettes(&file, 0x0);
 
@@ -168,6 +187,7 @@ void DrillerEngine::loadAssetsDemo() {
 		if (!file.isOpen())
 			error("Failed to open 'driller' file");
 		loadMessagesFixedSize(&file, 0x3960, 14, 20);
+		loadGlobalObjects(&file, 0x3716);
 
 		file.close();
 		file.open("soundfx");
@@ -202,12 +222,6 @@ void DrillerEngine::loadAssetsDemo() {
 		if (!file.isOpen())
 			error("Failed to open 'data' file");
 
-		// loadGlobalObjects(file, 0xbd62);
-		/*file->seek(0x29efe);
-		load8bitArea(file, 16);
-		file->seek(0x2a450);
-		load8bitArea(file, 16);*/
-
 		load8bitBinary(&file, 0x442, 16);
 		loadPalettes(&file, 0x0);
 
@@ -216,6 +230,7 @@ void DrillerEngine::loadAssetsDemo() {
 		if (!file.isOpen())
 			error("Failed to open 'x.prg' file");
 		loadMessagesFixedSize(&file, 0x3b90, 14, 20);
+		loadGlobalObjects(&file, 0x3946);
 
 		file.close();
 		file.open("soundfx");
@@ -227,7 +242,7 @@ void DrillerEngine::loadAssetsDemo() {
 		error("Unsupported demo for Driller");
 
 	_demoMode = true;
-	_angleRotationIndex = 1;
+	_angleRotationIndex = 0;
 }
 
 void DrillerEngine::loadAssetsFullGame() {
@@ -272,6 +287,8 @@ void DrillerEngine::loadAssetsFullGame() {
 			if (!file.isOpen())
 				error("Failed to open 'driller' executable for Amiga");
 
+			loadMessagesFixedSize(&file, 0x499a, 14, 20);
+			loadGlobalObjects(&file, 0x4098);
 			load8bitBinary(&file, 0x21a3e, 16);
 			loadPalettes(&file, 0x215fc);
 
@@ -299,8 +316,8 @@ void DrillerEngine::loadAssetsFullGame() {
 		}
 		_title = loadAndConvertNeoImage(&file, 0x10, palette);
 
-		//loadMessagesFixedSize(&file, 0xc66e, 14, 20);
-		//loadGlobalObjects(&file, 0xbd62);
+		loadMessagesFixedSize(&file, 0xc5d8, 14, 20);
+		loadGlobalObjects(&file, 0xbccc);
 		load8bitBinary(&file, 0x29b3c, 16);
 		loadPalettes(&file, 0x296fa);
 		loadSoundsFx(&file, 0x30da6, 25);
@@ -316,6 +333,30 @@ void DrillerEngine::loadAssetsFullGame() {
 		loadFonts(&file, 0x99dd);
 		loadGlobalObjects(&file, 0x3b42);
 		load8bitBinary(&file, 0x9b40, 16);
+
+		/*
+		We are going to inject a small script in the
+		last area to force the game to end:
+		IF COLLIDED? THEN
+		IF VAR!=? (v32, 18) THEN END ENDIF
+		GOTO (127, 0)
+		*/
+
+		FCLInstructionVector instructions;
+		Common::Array<uint8> conditionArray;
+
+		conditionArray.push_back(0xb);
+		conditionArray.push_back(0x20);
+		conditionArray.push_back(0x12);
+		conditionArray.push_back(0x12);
+		conditionArray.push_back(0x7f);
+		conditionArray.push_back(0x0);
+
+		Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions);
+		debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
+		_areaMap[18]->_conditions.push_back(instructions);
+		_areaMap[18]->_conditionSources.push_back(conditionSource);
+
 	} else if (_renderMode == Common::kRenderCGA) {
 		loadBundledImages();
 		_title = _border;
@@ -329,14 +370,13 @@ void DrillerEngine::loadAssetsFullGame() {
 }
 
 void DrillerEngine::drawUI() {
-	_gfx->renderCrossair(0, _crossairPosition);
-
 	Graphics::Surface *surface = nullptr;
 	if (_border) { // This can be removed when all the borders are loaded
 		uint32 gray = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0xA0, 0xA0, 0xA0);
 		surface = new Graphics::Surface();
 		surface->create(_screenW, _screenH, _gfx->_texturePixelFormat);
 		surface->fillRect(_fullscreenViewArea, gray);
+		drawCrossair(surface);
 	} else
 		return;
 
@@ -363,7 +403,7 @@ void DrillerEngine::drawDOSUI(Graphics::Surface *surface) {
 	uint32 black = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
 
 	int score = _gameStateVars[k8bitVariableScore];
-	drawStringInSurface(_currentArea->_name, 195, 177, yellow, black, surface);
+	drawStringInSurface(_currentArea->_name, 196, 185, yellow, black, surface);
 	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.x())), 150, 145, yellow, black, surface);
 	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.z())), 150, 153, yellow, black, surface);
 	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.y())), 150, 161, yellow, black, surface);
@@ -372,7 +412,9 @@ void DrillerEngine::drawDOSUI(Graphics::Surface *surface) {
 	else
 		drawStringInSurface(Common::String::format("%s", "J"), 57, 161, yellow, black, surface);
 
-	drawStringInSurface(Common::String::format("%07d", score), 240, 129, yellow, black, surface);
+	drawStringInSurface(Common::String::format("%02d", int(_angleRotations[_angleRotationIndex])), 46, 145, yellow, black, surface);
+	drawStringInSurface(Common::String::format("%3d", _playerSteps[_playerStepIndex]), 46, 153, yellow, black, surface);
+	drawStringInSurface(Common::String::format("%07d", score), 238, 129, yellow, black, surface);
 
 	int hours = _countdown / 3600;
 	drawStringInSurface(Common::String::format("%02d", hours), 208, 8, yellow, black, surface);
@@ -385,13 +427,13 @@ void DrillerEngine::drawDOSUI(Graphics::Surface *surface) {
 	int deadline;
 	getLatestMessages(message, deadline);
 	if (deadline <= _countdown) {
-		drawStringInSurface(message, 191, 177, black, yellow, surface);
+		drawStringInSurface(message, 190, 177, black, yellow, surface);
 		_temporaryMessages.push_back(message);
 		_temporaryMessageDeadlines.push_back(deadline);
 	} else {
 		if (_currentArea->_gasPocketRadius == 0)
 			message = _messagesList[2];
-		else if (_completeAreas[_currentArea->getAreaID()])
+		else if (_drilledAreas[_currentArea->getAreaID()])
 			message = _messagesList[0];
 		else
 			message = _messagesList[1];
@@ -423,6 +465,14 @@ void DrillerEngine::drawAmigaAtariSTUI(Graphics::Surface *surface) {
 	// TODO: this needs to have fonts already parsed
 }
 
+Math::Vector3d getProjectionToPlane(const Math::Vector3d &vect, const Math::Vector3d normal) {
+	assert (normal.length() == 1);
+	// Formula: return p - n * (n . p)
+	Math::Vector3d result = vect;
+	result -= normal * normal.dotProduct(vect);
+	return result;
+}
+
 void DrillerEngine::pressedKey(const int keycode) {
 	if (keycode == Common::KEYCODE_d) {
 		Common::Point gasPocket = _currentArea->_gasPocketPosition;
@@ -435,7 +485,7 @@ void DrillerEngine::pressedKey(const int keycode) {
 			return;
 		}
 
-		if (drillDeployed()) {
+		if (drillDeployed(_currentArea)) {
 			insertTemporaryMessage(_messagesList[12], _countdown - 2);
 			return;
 		}
@@ -445,25 +495,22 @@ void DrillerEngine::pressedKey(const int keycode) {
 			return;
 		}
 
-		Math::Vector3d drillPosition = _cameraFront;
-		drillPosition = _position + 256 * drillPosition;
+		Math::Vector3d drill = drillPosition();
 		debugC(1, kFreescapeDebugMove, "Current position at %f %f %f", _position.x(), _position.y(), _position.z());
-		drillPosition.setValue(1, _position.y() - _playerHeight * _currentArea->getScale());
-		debugC(1, kFreescapeDebugMove, "Trying to adding drill at %f %f %f", drillPosition.x(), drillPosition.y(), drillPosition.z());
+		debugC(1, kFreescapeDebugMove, "Trying to adding drill at %f %f %f", drill.x(), drill.y(), drill.z());
 		debugC(1, kFreescapeDebugMove, "with pitch: %f and yaw %f", _pitch, _yaw);
 
-		if (!checkDrill(drillPosition)) {
+		if (!checkDrill(drill)) {
 			insertTemporaryMessage(_messagesList[4], _countdown - 2);
 			return;
 		}
 
 		_gameStateVars[k8bitVariableEnergy] = _gameStateVars[k8bitVariableEnergy] - 5;
-		const Math::Vector3d gasPocket3D(gasPocket.x, drillPosition.y(), gasPocket.y);
-		addDrill(drillPosition);
-		float distanceToPocket = (gasPocket3D - drillPosition).length();
-		float success = 100.0 * (1.0 - distanceToPocket / _currentArea->_gasPocketRadius);
+		const Math::Vector3d gasPocket3D(gasPocket.x, drill.y(), gasPocket.y);
+		float distanceToPocket = (gasPocket3D - drill).length();
+		float success = _useAutomaticDrilling ? 100.0 : 100.0 * (1.0 - distanceToPocket / _currentArea->_gasPocketRadius);
 		insertTemporaryMessage(_messagesList[3], _countdown - 2);
-
+		addDrill(drill, success > 0);
 		if (success <= 0) {
 			insertTemporaryMessage(_messagesList[9], _countdown - 4);
 			return;
@@ -472,11 +519,14 @@ void DrillerEngine::pressedKey(const int keycode) {
 		insertTemporaryMessage(_messagesList[5], _countdown - 4);
 		Common::String successMessage = _messagesList[6];
 		successMessage.replace(0, 4, Common::String::format("%d", int(success)));
+		while (successMessage.size() < 14)
+			successMessage += " ";
 		insertTemporaryMessage(successMessage, _countdown - 6);
 		if (success >= 50.0) {
-			_completeAreas[_currentArea->getAreaID()] = true;
-			_gameStateVars[32]++; // TODO: save a boolean to indicate if a level is safe or not
-		}
+			_drilledAreas[_currentArea->getAreaID()] = kDrillerRigInPlace;
+			_gameStateVars[32]++;
+		} else
+			_drilledAreas[_currentArea->getAreaID()] = kDrillerRigOutOfPlace;
 	} else if (keycode == Common::KEYCODE_c) {
 		uint32 gasPocketRadius = _currentArea->_gasPocketRadius;
 		if (gasPocketRadius == 0)
@@ -487,7 +537,7 @@ void DrillerEngine::pressedKey(const int keycode) {
 			return;
 		}
 
-		if (!drillDeployed()) {
+		if (!drillDeployed(_currentArea)) {
 			insertTemporaryMessage(_messagesList[13], _countdown - 2);
 			return;
 		}
@@ -499,17 +549,31 @@ void DrillerEngine::pressedKey(const int keycode) {
 
 		_gameStateVars[k8bitVariableEnergy] = _gameStateVars[k8bitVariableEnergy] - 5;
 
-		if (_completeAreas[_currentArea->getAreaID()]) {
-			_completeAreas[_currentArea->getAreaID()] = false;
-			_gameStateVars[32]--;
+		uint16 areaID = _currentArea->getAreaID();
+		if (_drilledAreas[areaID] > 0) {
+			if (_drilledAreas[areaID] == kDrillerRigInPlace)
+				_gameStateVars[32]--;
+			_drilledAreas[areaID] = kDrillerNoRig;
 		}
-		removeDrill();
+		removeDrill(_currentArea);
 		insertTemporaryMessage(_messagesList[10], _countdown - 2);
 	}
 }
 
-bool DrillerEngine::drillDeployed() {
-	return (_currentArea->objectWithID(252) != nullptr);
+Math::Vector3d DrillerEngine::drillPosition() {
+	Math::Vector3d position = _position;
+	position.setValue(1, position.y() - _playerHeight);
+	position = position + 300 * getProjectionToPlane(_cameraFront, Math::Vector3d(0, 1, 0));
+
+	Object *obj = (GeometricObject *)_areaMap[255]->objectWithID(255); // Drill base
+	assert(obj);
+	position.setValue(0, position.x() - obj->getSize().x() / 2);
+	position.setValue(2, position.z() - obj->getSize().z() / 2);
+	return position;
+}
+
+bool DrillerEngine::drillDeployed(Area *area) {
+	return (area->objectWithID(255) != nullptr);
 }
 
 bool DrillerEngine::checkDrill(const Math::Vector3d position) {
@@ -522,11 +586,21 @@ bool DrillerEngine::checkDrill(const Math::Vector3d position) {
 	id = 255;
 	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
 	assert(obj);
-	obj = obj->duplicate();
+	obj = (GeometricObject *)obj->duplicate();
+	origin.setValue(1, origin.y() - 5);
 	obj->setOrigin(origin);
-	//if (!_currentArea->checkCollisions(obj->_boundingBox))
-	//	return false;
 
+	// This bounding box is too large and can result in the drill to float next to a wall
+	if (_currentArea->checkCollisions(obj->_boundingBox).empty())
+		return false;
+
+	origin.setValue(1, origin.y() + 15);
+	obj->setOrigin(origin);
+
+	if (!_currentArea->checkCollisions(obj->_boundingBox).empty())
+		return false;
+
+	origin.setValue(1, origin.y() - 10);
 	heightLastObject = obj->getSize().y();
 	delete obj;
 
@@ -539,9 +613,9 @@ bool DrillerEngine::checkDrill(const Math::Vector3d position) {
 	origin.setValue(1, origin.y() + heightLastObject);
 	origin.setValue(2, origin.z() - obj->getSize().z() / 5);
 
-	obj = obj->duplicate();
+	obj = (GeometricObject *)obj->duplicate();
 	obj->setOrigin(origin);
-	if (_currentArea->checkCollisions(obj->_boundingBox))
+	if (!_currentArea->checkCollisions(obj->_boundingBox).empty())
 		return false;
 
 	// Undo offset
@@ -554,14 +628,14 @@ bool DrillerEngine::checkDrill(const Math::Vector3d position) {
 	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
 	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
 	assert(obj);
-	obj = obj->duplicate();
+	obj = (GeometricObject *)obj->duplicate();
 
 	origin.setValue(0, origin.x() + obj->getSize().x() / 5);
 	origin.setValue(1, origin.y() + heightLastObject);
 	origin.setValue(2, origin.z() + obj->getSize().z() / 5);
 
 	obj->setOrigin(origin);
-	if (_currentArea->checkCollisions(obj->_boundingBox))
+	if (!_currentArea->checkCollisions(obj->_boundingBox).empty())
 		return false;
 
 	// Undo offset
@@ -569,25 +643,11 @@ bool DrillerEngine::checkDrill(const Math::Vector3d position) {
 	heightLastObject = obj->getSize().y();
 	// origin.setValue(2, origin.z() - obj->getSize().z() / 5);
 	delete obj;
-
-	id = 252;
-	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
-	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
-	assert(obj);
-	obj = obj->duplicate();
-	origin.setValue(1, origin.y() + heightLastObject);
-	obj->setOrigin(origin);
-	assert(obj);
-
-	if (_currentArea->checkCollisions(obj->_boundingBox))
-		return false;
-
-	delete obj;
 	return true;
 }
 
 
-void DrillerEngine::addDrill(const Math::Vector3d position) {
+void DrillerEngine::addDrill(const Math::Vector3d position, bool gasFound) {
 	// int drillObjectIDs[8] = {255, 254, 253, 252, 251, 250, 248, 247};
 	GeometricObject *obj = nullptr;
 	Math::Vector3d origin = position;
@@ -599,7 +659,7 @@ void DrillerEngine::addDrill(const Math::Vector3d position) {
 	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
 	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
 	assert(obj);
-	obj = obj->duplicate();
+	obj = (GeometricObject *)obj->duplicate();
 	obj->setOrigin(origin);
 	// offset.setValue(1, offset.y() + obj->getSize().y());
 	obj->makeVisible();
@@ -616,7 +676,7 @@ void DrillerEngine::addDrill(const Math::Vector3d position) {
 	origin.setValue(1, origin.y() + heightLastObject);
 	origin.setValue(2, origin.z() - obj->getSize().z() / 5);
 
-	obj = obj->duplicate();
+	obj = (GeometricObject *)obj->duplicate();
 	obj->setOrigin(origin);
 	obj->makeVisible();
 	_currentArea->addObject(obj);
@@ -630,7 +690,7 @@ void DrillerEngine::addDrill(const Math::Vector3d position) {
 	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
 	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
 	assert(obj);
-	obj = obj->duplicate();
+	obj = (GeometricObject *)obj->duplicate();
 
 	origin.setValue(0, origin.x() + obj->getSize().x() / 5);
 	origin.setValue(1, origin.y() + heightLastObject);
@@ -645,21 +705,41 @@ void DrillerEngine::addDrill(const Math::Vector3d position) {
 	heightLastObject = obj->getSize().y();
 	// origin.setValue(2, origin.z() - obj->getSize().z() / 5);
 
-	id = 252;
-	debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
-	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
-	assert(obj);
-	obj = obj->duplicate();
-	origin.setValue(1, origin.y() + heightLastObject);
-	obj->setOrigin(origin);
-	assert(obj);
-	obj->makeVisible();
-	_currentArea->addObject(obj);
+	if (gasFound) {
+		id = 252;
+		debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
+		obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
+		assert(obj);
+		obj = (GeometricObject *)obj->duplicate();
+		origin.setValue(0, origin.x() + obj->getSize().x());
+		origin.setValue(1, origin.y() + heightLastObject);
+		origin.setValue(2, origin.z() + obj->getSize().z());
+		obj->setOrigin(origin);
+		assert(obj);
+		obj->makeVisible();
+		_currentArea->addObject(obj);
+		heightLastObject = obj->getSize().y();
+
+		id = 251;
+		debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
+		obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
+		assert(obj);
+		obj = (GeometricObject *)obj->duplicate();
+		origin.setValue(1, origin.y() + heightLastObject);
+		obj->setOrigin(origin);
+		assert(obj);
+		obj->makeVisible();
+		_currentArea->addObject(obj);
+	}
 }
 
-void DrillerEngine::removeDrill() {
-	for (int16 id = 252; id < 256; id++) {
-		_currentArea->removeObject(id);
+void DrillerEngine::removeDrill(Area *area) {
+	for (int16 id = 251; id < 256; id++) {
+		if (id > 252)
+			assert(area->objectWithID(id));
+
+		if (area->objectWithID(id))
+			area->removeObject(id);
 	}
 }
 
@@ -669,19 +749,33 @@ void DrillerEngine::initGameState() {
 
 	for (auto &it : _areaMap) {
 		_gameStateBits[it._key] = 0;
-		_completeAreas[it._key] = 0;
+		_drilledAreas[it._key] = kDrillerNoRig;
 	}
 
-	_gameStateVars[k8bitVariableEnergy] = _initialProveEnergy;
-	_gameStateVars[k8bitVariableShield] = _initialProveShield;
+	_gameStateVars[k8bitVariableEnergy] = _initialTankEnergy;
+	_gameStateVars[k8bitVariableShield] = _initialTankShield;
+
+	_gameStateVars[k8bitVariableEnergyDrillerTank] = _initialTankEnergy;
+	_gameStateVars[k8bitVariableShieldDrillerTank] = _initialTankShield;
+
+	_gameStateVars[k8bitVariableEnergyDrillerJet] = _initialJetEnergy;
+	_gameStateVars[k8bitVariableShieldDrillerJet] = _initialJetShield;
+
 	if (_countdown > 0)
 		startCountdown(_countdown);
 }
 
 bool DrillerEngine::checkIfGameEnded() {
 	if (_gameStateVars[k8bitVariableShield] == 0) {
-		_flyMode = true;
+		insertTemporaryMessage(_messagesList[15], _countdown - 2);
 		gotoArea(127, 0);
+	}
+
+	if (_currentArea->getAreaID() == 127) {
+		if (_gameStateVars[32] == 18) { // All areas are complete
+			insertTemporaryMessage(_messagesList[19], _countdown - 2);
+			_gameStateVars[32] = 0;  // Avoid repeating the message
+		}
 		drawFrame();
 		_gfx->flipBuffer();
 		g_system->updateScreen();
@@ -689,6 +783,30 @@ bool DrillerEngine::checkIfGameEnded() {
 		return true;
 	}
 	return false;
+}
+
+Common::Error DrillerEngine::saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave) {
+	for (auto &it : _areaMap) {
+		stream->writeUint16LE(it._key);
+		stream->writeUint32LE(_drilledAreas[it._key]);
+	}
+
+	return Common::kNoError;
+}
+
+Common::Error DrillerEngine::loadGameStreamExtended(Common::SeekableReadStream *stream) {
+	for (uint i = 0; i < _areaMap.size(); i++) {
+		uint16 key = stream->readUint16LE();
+		if (key == 255)
+			continue;
+		assert(_areaMap.contains(key));
+		_drilledAreas[key] = stream->readUint32LE();
+		if (_drilledAreas[key] == kDrillerNoRig)
+			if (drillDeployed(_areaMap[key]))
+				removeDrill(_areaMap[key]);
+	}
+
+	return Common::kNoError;
 }
 
 } // End of namespace Freescape

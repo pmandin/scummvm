@@ -325,6 +325,7 @@ void Score::update() {
 	if (!debugChannelSet(-1, kDebugFast)) {
 		bool keepWaiting = false;
 
+		debugC(8, kDebugLoading, "Score::update(): nextFrameTime: %d, time: %d", _nextFrameTime, g_system->getMillis(false));
 		if (_waitForChannel) {
 			if (_soundManager->isChannelActive(_waitForChannel)) {
 				keepWaiting = true;
@@ -421,7 +422,53 @@ void Score::update() {
 		}
 	}
 
-	debugC(1, kDebugImages, "******************************  Current frame: %d", _currentFrame);
+	byte tempo = _frames[_currentFrame]->_scoreCachedTempo;
+	// puppetTempo is overridden by changes in score tempo
+	if (_frames[_currentFrame]->_tempo || tempo != _lastTempo) {
+		_puppetTempo = 0;
+	} else if (_puppetTempo) {
+		tempo = _puppetTempo;
+	}
+
+	if (tempo) {
+		const bool waitForClickOnly = _vm->getVersion() < 300;
+		const int maxDelay = _vm->getVersion() < 400 ? 120 : 60;
+		if (tempo >= 256 - maxDelay) {
+			// Delay
+			_nextFrameTime = g_system->getMillis() + (256 - tempo) * 1000;
+		} else if (tempo <= 120) {
+			// FPS
+			_currentFrameRate = tempo;
+			_nextFrameTime = g_system->getMillis() + 1000.0 / (float)_currentFrameRate;
+		} else {
+			if (tempo == 128) {
+				_waitForClick = true;
+				_waitForClickCursor = false;
+				renderCursor(_movie->getWindow()->getMousePos());
+			} else if (!waitForClickOnly && tempo == 135) {
+				// Wait for sound channel 1
+				_waitForChannel = 1;
+			} else if (!waitForClickOnly && tempo == 134) {
+				// Wait for sound channel 2
+				_waitForChannel = 2;
+
+			} else if (!waitForClickOnly && tempo >= 136 && tempo <= 135 + _numChannelsDisplayed) {
+				// Wait for a digital video in a channel to finish playing
+				_waitForVideoChannel = tempo - 135;
+			} else {
+				warning("Unhandled tempo instruction: %d", tempo);
+			}
+			_nextFrameTime = g_system->getMillis();
+		}
+	} else {
+		_nextFrameTime = g_system->getMillis() + 1000.0 / (float)_currentFrameRate;
+	}
+	_lastTempo = tempo;
+
+	if (debugChannelSet(-1, kDebugSlow))
+		_nextFrameTime += 1000;
+
+	debugC(1, kDebugLoading, "******************************  Current frame: %d, time: %d", _currentFrame, g_system->getMillis(false));
 	g_debugger->frameHook();
 
 	uint initialCallStackSize = _window->_callstack.size();
@@ -471,51 +518,6 @@ void Score::update() {
 		}
 	}
 
-	byte tempo = _frames[_currentFrame]->_scoreCachedTempo;
-	// puppetTempo is overridden by changes in score tempo
-	if (_frames[_currentFrame]->_tempo || tempo != _lastTempo) {
-		_puppetTempo = 0;
-	} else if (_puppetTempo) {
-		tempo = _puppetTempo;
-	}
-
-	if (tempo) {
-		const bool waitForClickOnly = _vm->getVersion() < 300;
-		const int maxDelay = _vm->getVersion() < 400 ? 120 : 60;
-		if (tempo >= 256 - maxDelay) {
-			// Delay
-			_nextFrameTime = g_system->getMillis() + (256 - tempo) * 1000;
-		} else if (tempo <= 120) {
-			// FPS
-			_currentFrameRate = tempo;
-			_nextFrameTime = g_system->getMillis() + 1000.0 / (float)_currentFrameRate;
-		} else {
-			if (tempo == 128) {
-				_waitForClick = true;
-				_waitForClickCursor = false;
-				renderCursor(_movie->getWindow()->getMousePos());
-			} else if (!waitForClickOnly && tempo == 135) {
-				// Wait for sound channel 1
-				_waitForChannel = 1;
-			} else if (!waitForClickOnly && tempo == 134) {
-				// Wait for sound channel 2
-				_waitForChannel = 2;
-
-			} else if (!waitForClickOnly && tempo >= 136 && tempo <= 135 + _numChannelsDisplayed) {
-				// Wait for a digital video in a channel to finish playing
-				_waitForVideoChannel = tempo - 135;
-			} else {
-				warning("Unhandled tempo instruction: %d", tempo);
-			}
-			_nextFrameTime = g_system->getMillis();
-		}
-	} else {
-		_nextFrameTime = g_system->getMillis() + 1000.0 / (float)_currentFrameRate;
-	}
-	_lastTempo = tempo;
-
-	if (debugChannelSet(-1, kDebugSlow))
-		_nextFrameTime += 1000;
 }
 
 void Score::renderFrame(uint16 frameId, RenderMode mode) {
@@ -1371,6 +1373,43 @@ void Score::loadActions(Common::SeekableReadStreamEndian &stream) {
 	}
 
 	free(scriptRefs);
+}
+
+Common::String Score::formatChannelInfo() {
+	Frame &frame = *_frames[_currentFrame]; 
+	Common::String result;
+	result += Common::String::format("TMPO:   tempo: %d, skipFrameFlag: %d, blend: %d\n",
+		frame._tempo, frame._skipFrameFlag, frame._blend);
+	if (frame._palette.paletteId) {
+		result += Common::String::format("PAL:    paletteId: %d, firstColor: %d, lastColor: %d, flags: %d, cycleCount: %d, speed: %d, frameCount: %d, fade: %d, delay: %d, style: %d\n",
+			frame._palette.paletteId, frame._palette.firstColor, frame._palette.lastColor, frame._palette.flags,
+			frame._palette.cycleCount, frame._palette.speed, frame._palette.frameCount,
+			frame._palette.fade, frame._palette.delay, frame._palette.style);
+	} else {
+		result += Common::String::format("PAL:    paletteId: 000\n");
+	}
+	result += Common::String::format("TRAN:   transType: %d, transDuration: %d, transChunkSize: %d\n",
+		frame._transType, frame._transDuration, frame._transChunkSize);
+	result += Common::String::format("SND: 1  sound1: %d, soundType1: %d\n", frame._sound1.member, frame._soundType1);
+	result += Common::String::format("SND: 2  sound2: %d, soundType2: %d\n", frame._sound2.member, frame._soundType2);
+	result += Common::String::format("LSCR:   actionId: %d\n", frame._actionId.member);
+
+	for (int i = 0; i < frame._numChannels; i++) {
+		Channel &channel = *_channels[i + 1];
+		Sprite &sprite = *channel._sprite;
+		if (sprite._castId.member) {
+			result += Common::String::format("CH: %-3d castId: %s, visible: %d, [inkData: 0x%02x [ink: %d, trails: %d, line: %d], %dx%d@%d,%d type: %d fg: %d bg: %d], script: %s, flags2: 0x%x, unk2: 0x%x, unk3: 0x%x, constraint: %d, puppet: %d, stretch: %d\n",
+				i + 1, sprite._castId.asString().c_str(), channel._visible, sprite._inkData,
+				sprite._ink, sprite._trails, sprite._thickness, channel._width, channel._height,
+				channel._currentPoint.x, channel._currentPoint.y,
+				sprite._spriteType, sprite._foreColor, sprite._backColor, sprite._scriptId.asString().c_str(), sprite._colorcode, sprite._blendAmount, sprite._unk3, channel._constraint, sprite._puppet, sprite._stretch);
+		} else {
+			result += Common::String::format("CH: %-3d castId: 000\n", i + 1);
+		}
+	}
+
+	return result;
+
 }
 
 } // End of namespace Director

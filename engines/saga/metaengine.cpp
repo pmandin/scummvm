@@ -41,15 +41,12 @@
 
 namespace Saga {
 
-bool SagaEngine::isBigEndian() const { return isMacResources() && getGameId() == GID_ITE; }
+bool SagaEngine::isBigEndian() const { return (isMacResources() || (getPlatform() == Common::kPlatformAmiga)) && getGameId() == GID_ITE; }
 bool SagaEngine::isMacResources() const { return (getPlatform() == Common::kPlatformMacintosh); }
-const GameResourceDescription *SagaEngine::getResourceDescription() const { return _gameDescription->resourceDescription; }
 
-const GameFontDescription *SagaEngine::getFontDescription(int index) const {
-	assert(index < _gameDescription->fontsCount);
-	return &_gameDescription->fontDescriptions[index];
-}
-int SagaEngine::getFontsCount() const { return _gameDescription->fontsCount; }
+GameResourceList SagaEngine::getResourceList() const { return _gameDescription->resourceList; }
+GameFontList SagaEngine::getFontList() const { return _gameDescription->fontList; }
+GamePatchList SagaEngine::getPatchList() const { return _gameDescription->patchList; }
 
 int SagaEngine::getGameId() const { return _gameDescription->gameId; }
 
@@ -64,7 +61,6 @@ Common::Platform SagaEngine::getPlatform() const { return _gameDescription->desc
 int SagaEngine::getGameNumber() const { return _gameNumber; }
 int SagaEngine::getStartSceneNumber() const { return _gameDescription->startSceneNumber; }
 
-const GamePatchDescription *SagaEngine::getPatchDescriptions() const { return _gameDescription->patchDescriptions; }
 const ADGameFileDescription *SagaEngine::getFilesDescriptions() const { return _gameDescription->desc.filesDescriptions; }
 
 } // End of namespace Saga
@@ -253,6 +249,8 @@ bool SagaEngine::initGame() {
 const GameDisplayInfo &SagaEngine::getDisplayInfo() {
 	switch (_gameDescription->gameId) {
 		case GID_ITE:
+			if (getLanguage() == Common::ZH_TWN)
+				return ITE_DisplayInfo_ZH;
 			return ITE_DisplayInfo;
 #ifdef ENABLE_IHNM
 		case GID_IHNM:

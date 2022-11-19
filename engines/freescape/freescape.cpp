@@ -30,6 +30,7 @@
 #include "freescape/freescape.h"
 #include "freescape/language/8bitDetokeniser.h"
 #include "freescape/neo.h"
+#include "freescape/objects/sensor.h"
 
 namespace Freescape {
 
@@ -76,10 +77,22 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_demoIndex = 0;
 	_currentDemoInputCode = 0;
 	_currentDemoInputRepetition = 0;
+	_currentDemoMousePosition = _crossairPosition;
 	_flyMode = false;
 	_noClipMode = false;
 	_playerHeightNumber = 1;
 	_angleRotationIndex = 0;
+
+	// TODO: this is not the same for every game
+	_playerStepIndex = 6;
+	_playerSteps.push_back(1);
+	_playerSteps.push_back(2);
+	_playerSteps.push_back(5);
+	_playerSteps.push_back(10);
+	_playerSteps.push_back(25);
+	_playerSteps.push_back(50);
+	_playerSteps.push_back(100);
+
 	_border = nullptr;
 	_title = nullptr;
 	_titleTexture = nullptr;
@@ -106,6 +119,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 
 	_timerStarted = false;
 	_countdown = 0;
+	_ticks = 0;
 	_frameLimiter = nullptr;
 }
 
@@ -128,12 +142,8 @@ FreescapeEngine::~FreescapeEngine() {
 	delete _titleTexture;
 
 	for (auto &it : _areaMap) {
-		if (it._value->getAreaID() != 255)
-			delete it._value;
+		delete it._value;
 	}
-
-	if (_areaMap.contains(255))
-		delete _areaMap[255];
 
 	delete _gfx;
 	delete _dataBundle;
@@ -181,12 +191,39 @@ Math::Vector3d FreescapeEngine::directionToVector(float pitch, float heading) {
 }
 
 void FreescapeEngine::drawUI() {
-	_gfx->renderCrossair(0, _crossairPosition);
+	// TODO: crossair
 	_gfx->setViewport(_viewArea);
 }
 
+void FreescapeEngine::drawCrossair(Graphics::Surface *surface) {
+	uint32 white = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
+
+	surface->drawLine(_crossairPosition.x - 3, _crossairPosition.y, _crossairPosition.x - 2, _crossairPosition.y, white);
+	surface->drawLine(_crossairPosition.x + 2, _crossairPosition.y, _crossairPosition.x + 3, _crossairPosition.y, white);
+
+	surface->drawLine(_crossairPosition.x, _crossairPosition.y - 3, _crossairPosition.x, _crossairPosition.y - 2, white);
+	surface->drawLine(_crossairPosition.x, _crossairPosition.y + 2, _crossairPosition.x, _crossairPosition.y + 3, white);
+}
+
+void FreescapeEngine::centerCrossair() {
+	_crossairPosition.x = _viewArea.left + _viewArea.width() / 2;
+	_crossairPosition.y = _viewArea.top + _viewArea.height() / 2;
+}
+
+void FreescapeEngine::checkSensors() {
+	for (auto &it : _sensors) {
+		Sensor *sensor = (Sensor *)it;
+		if (sensor->isDestroyed() || sensor->isInvisible())
+			continue;
+		if ((sensor->getOrigin() - _position).length() <= sensor->_firingRange) {
+			if (_ticks % sensor->_firingInterval == 0)
+				warning("shoot!");
+		}
+	}
+}
+
 void FreescapeEngine::drawFrame() {
-	_gfx->updateProjectionMatrix(60.0, _nearClipPlane, _farClipPlane);
+	_gfx->updateProjectionMatrix(70.0, _nearClipPlane, _farClipPlane);
 	_gfx->positionCamera(_position, _position + _cameraFront);
 	_currentArea->draw(_gfx);
 	drawBorder();
@@ -203,32 +240,32 @@ void FreescapeEngine::generateInput() {
 			_currentDemoInputRepetition = 1;
 			_currentDemoInputCode = _demoData[_demoIndex++];
 			if (_currentDemoInputCode & 0x80) {
-				_currentDemoInputRepetition = (_currentDemoInputCode & 0x7F) + 1;
-				if (_currentDemoInputRepetition == 1)
-					_currentDemoInputRepetition = 255;
+				_currentDemoInputRepetition = (_currentDemoInputCode & 0x7F) /*+ 1*/;
+				//if (_currentDemoInputRepetition == 1)
+				//	_currentDemoInputRepetition = 255;
 				_currentDemoInputCode = _demoData[_demoIndex++];
 			}
 		}
 
 		if (_currentDemoInputCode >= 0x16 && _currentDemoInputCode <= 0x1a) {
-			// 0x16 -> left click / shoot
-			// 0x17 -> right?
-			// 0x18 -> left
-			// 0x19 -> down?
-			// 0x1a -> up
-			// TODO: mouse events
+			event = decodeDOSMouseEvent(_currentDemoInputCode, _currentDemoInputRepetition);
+			_demoEvents.push_back(event);
+			g_system->delayMillis(10);
+			_currentDemoInputRepetition = 0;
 		} else if (_currentDemoInputCode == 0x7f) {
 			// NOP
+			_currentDemoInputRepetition--;
 		} else {
 			event = Common::Event();
 			event.type = Common::EVENT_KEYDOWN;
 			event.kbd.keycode = (Common::KeyCode)decodeDOSKey(_currentDemoInputCode);
 			event.customType = 0xde00;
-			g_system->getEventManager()->pushEvent(event);
+			_demoEvents.push_back(event);
 			debugC(1, kFreescapeDebugMove, "Pushing key: %x with repetition %d", event.kbd.keycode, _currentDemoInputRepetition);
 			g_system->delayMillis(100);
+			_currentDemoInputRepetition--;
 		}
-		_currentDemoInputRepetition--;
+
 		return;
 	}
 
@@ -239,27 +276,34 @@ void FreescapeEngine::generateInput() {
 	event.type = Common::EVENT_MOUSEMOVE;
 	event.mouse = Common::Point(mouseX, mouseY);
 	event.customType = 0xde00;
-	g_system->getEventManager()->pushEvent(event);
 
 	byte nextKeyCode = _demoData[_demoIndex++];
 
 	if (nextKeyCode == 0x30) {
+		Common::Event spaceEvent;
+		spaceEvent.type = Common::EVENT_KEYDOWN;
+		spaceEvent.kbd.keycode = Common::KEYCODE_SPACE;
+		spaceEvent.customType = 0xde00;
+
+		_demoEvents.push_back(spaceEvent);
+		_demoEvents.push_back(event); // Mouse pointer is moved
 		event.type = Common::EVENT_LBUTTONDOWN; // Keep same event fields
-		g_system->getEventManager()->pushEvent(event);
+		_demoEvents.push_back(event); // Mouse is clicked
+		_demoEvents.push_back(spaceEvent);
 		nextKeyCode = _demoData[_demoIndex++];
-	} else {
-		while (nextKeyCode != 0) {
-			event = Common::Event();
-			event.type = Common::EVENT_KEYDOWN;
-			event.kbd.keycode = (Common::KeyCode)decodeAmigaAtariKey(nextKeyCode);
-			debugC(1, kFreescapeDebugMove, "Pushing key: %x", event.kbd.keycode);
-			event.customType = 0xde00;
-			g_system->getEventManager()->pushEvent(event);
-			nextKeyCode = _demoData[_demoIndex++];
-		}
+	}
+
+	while (nextKeyCode != 0) {
+		event = Common::Event();
+		event.type = Common::EVENT_KEYDOWN;
+		event.kbd.keycode = (Common::KeyCode)decodeAmigaAtariKey(nextKeyCode);
+		debugC(1, kFreescapeDebugMove, "Pushing key: %x", event.kbd.keycode);
+		event.customType = 0xde00;
+		_demoEvents.push_back(event);
+		nextKeyCode = _demoData[_demoIndex++];
 	}
 	assert(!nextKeyCode);
-	g_system->delayMillis(50);
+	g_system->delayMillis(100);
 }
 
 void FreescapeEngine::processInput() {
@@ -268,6 +312,14 @@ void FreescapeEngine::processInput() {
 	_lastFrame = currentFrame;
 	Common::Event event;
 	Common::Point mousePos;
+
+	if (_demoMode && !_demoEvents.empty()) {
+		g_system->getEventManager()->purgeMouseEvents();
+		g_system->getEventManager()->purgeKeyboardEvents();
+		g_system->getEventManager()->pushEvent(_demoEvents.front());
+		_demoEvents.remove_at(0);
+	}
+
 	while (g_system->getEventManager()->pollEvent(event)) {
 		if (_demoMode) {
 			if (event.customType != 0xde00)
@@ -310,6 +362,12 @@ void FreescapeEngine::processInput() {
 			case Common::KEYCODE_w:
 				rotate(_angleRotations[_angleRotationIndex], 0);
 				break;
+			case Common::KEYCODE_s:
+				increaseStepSize();
+				break;
+			case Common::KEYCODE_x:
+				decreaseStepSize();
+				break;
 			case Common::KEYCODE_r:
 				rise();
 				break;
@@ -321,16 +379,16 @@ void FreescapeEngine::processInput() {
 				_flyMode = _noClipMode;
 				break;
 			case Common::KEYCODE_ESCAPE:
+				_gfx->setViewport(_fullscreenViewArea);
 				_system->lockMouse(false);
 				openMainMenuDialog();
 				_system->lockMouse(true);
+				_gfx->setViewport(_viewArea);
 				break;
 			case Common::KEYCODE_SPACE:
 				_shootMode = !_shootMode;
-				if (!_shootMode) {
-					_crossairPosition.x = _screenW / 2;
-					_crossairPosition.y = _screenH / 2;
-				}
+				if (!_shootMode)
+					centerCrossair();
 				break;
 			default:
 				pressedKey(event.kbd.keycode);
@@ -420,6 +478,7 @@ Common::Error FreescapeEngine::run() {
 	// Simple main event loop
 	int saveSlot = ConfMan.getInt("save_slot");
 	_system->lockMouse(true);
+	centerCrossair();
 
 	if (_title) {
 		if (saveSlot == -1) {
@@ -450,6 +509,7 @@ Common::Error FreescapeEngine::run() {
 	g_system->updateScreen();
 
 	while (!shouldQuit() && !endGame) {
+		checkSensors();
 		drawFrame();
 		if (_demoMode)
 			generateInput();
@@ -585,10 +645,12 @@ Common::Error FreescapeEngine::loadGameStream(Common::SeekableReadStream *stream
 	}
 
 	_flyMode = stream->readByte();
-	_playerHeightNumber = stream->readByte();
+	_playerHeightNumber = stream->readUint32LE();
+	_countdown = stream->readUint32LE();
+	_ticks = 0;
 	if (!_currentArea || _currentArea->getAreaID() != areaID)
 		gotoArea(areaID, -1); // Do not change position nor rotation
-	return Common::kNoError;
+	return loadGameStreamExtended(stream);
 }
 
 Common::Error FreescapeEngine::saveGameStream(Common::WriteStream *stream, bool isAutosave) {
@@ -623,7 +685,16 @@ Common::Error FreescapeEngine::saveGameStream(Common::WriteStream *stream, bool 
 	}
 
 	stream->writeByte(_flyMode);
-	stream->writeByte(_playerHeightNumber);
+	stream->writeUint32LE(_playerHeightNumber);
+	stream->writeUint32LE(_countdown);
+	return saveGameStreamExtended(stream, isAutosave);
+}
+
+Common::Error FreescapeEngine::saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave) {
+	return Common::kNoError;
+}
+
+Common::Error FreescapeEngine::loadGameStreamExtended(Common::SeekableReadStream *stream) {
 	return Common::kNoError;
 }
 
@@ -671,14 +742,16 @@ Graphics::Surface *FreescapeEngine::loadAndConvertNeoImage(Common::SeekableReadS
 
 static void countdownCallback(void *refCon) {
 	FreescapeEngine* self = (FreescapeEngine *)refCon;
-	self->_countdown--;
+	self->_ticks++;
+	if (self->_ticks % 50 == 0)
+		self->_countdown--;
 }
 
 bool FreescapeEngine::startCountdown(uint32 delay) {
 	_countdown = delay;
 	_timerStarted = true;
-	uint32 oneSecond = 1000000;
-	return g_system->getTimerManager()->installTimerProc(&countdownCallback, oneSecond, (void *)this, "countdown");
+	uint32 oneTick = 1000000 / 50;
+	return g_system->getTimerManager()->installTimerProc(&countdownCallback, oneTick, (void *)this, "countdown");
 }
 
 void FreescapeEngine::removeTimers() {

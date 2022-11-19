@@ -15,6 +15,8 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Allgemein:
    - Anzahl an falsch-positiven Einträgen reduziert, wenn das Gerät nach Spielen durchsucht wird.
    - Code der Roland MT-32-Emulation auf Munt mt32emu 2.7.0 aktualisiert.
+   - Unterstützung für shader-basierte Skalierungen hinzugefügt.
+   - Unterstützung für Mono-Ausgabe hinzugefügt (über die Kommandozeilen-Option --output-channels=CHANNELS)
 
  AGI:
    - Unterstützung der französischen Übersetzungen verbessert.
@@ -26,9 +28,17 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Kyra:
    - Unterstützung für die koreanische Version von Legend of Kyrandia 1 hinzugefügt.
    - Unterstützung für die hebräische Version von Legend of Kyrandia 3 hinzugefügt.
+   - Unterstützung für die chinesische Version von Legend of Kyrandia 3 hinzugefügt.
+
+ MADS:
+   - Unterstützung für das Datei-Layout des Installationsprogramms der Disketten-Version von Rex Nebular hinzugefügt.Added support for original floppy installer file layout for Rex Nebular.
 
  Queen:
    - Eine zusätzliche Option erlaubt die Verwendung einer verbesserten Schriftart für die hebräische Version.
+
+ SAGA:
+   - Unterstützung für die chinesische Version von Inherit the Earth hinzugefügt.
+   - Unterstützung für die chinesische Version von I Have no Mouth and I Must Scream hinzugefügt.
 
  SCUMM:
    - Unterstützung von CGA-, CGA Composite-, CGA schwarz/weiß- und Herkules-Grafikmodi

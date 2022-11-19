@@ -45,6 +45,7 @@ OpenGLRenderer::OpenGLRenderer(int screenW, int screenH, Common::RenderMode rend
 
 OpenGLRenderer::~OpenGLRenderer() {
 	free(_verts);
+	free(_coords);
 }
 
 Texture *OpenGLRenderer::createTexture(const Graphics::Surface *surface) {
@@ -172,38 +173,7 @@ void OpenGLRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vecto
 	glTranslatef(-pos.x(), -pos.y(), -pos.z());
 }
 
-void OpenGLRenderer::renderCrossair(byte color, const Common::Point position) {
-	uint8 r, g, b;
-	readFromPalette(color, r, g, b); // TODO: should use opposite color
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, _screenW, _screenH, 0, 0, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
-
-	glColor3ub(r, g, b);
-
-	glLineWidth(15); // It will not work in every OpenGL implementation since the
-					 // spec doesn't require support for line widths other than 1
-	glEnableClientState(GL_VERTEX_ARRAY);
-	copyToVertexArray(0, Math::Vector3d(position.x - 1, position.y, 0));
-	copyToVertexArray(1, Math::Vector3d(position.x + 3, position.y, 0));
-	copyToVertexArray(2, Math::Vector3d(position.x, position.y - 3, 0));
-	copyToVertexArray(3, Math::Vector3d(position.x, position.y + 3, 0));
-	glVertexPointer(3, GL_FLOAT, 0, _verts);
-	glDrawArrays(GL_LINES, 0, 4);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glLineWidth(1);
-
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
-}
-
-void OpenGLRenderer::renderShoot(byte color, const Common::Point position) {
+void OpenGLRenderer::renderShoot(byte color, const Common::Point position, const Common::Rect viewArea) {
 	uint8 r, g, b;
 	readFromPalette(color, r, g, b); // TODO: should use opposite color
 
@@ -224,14 +194,14 @@ void OpenGLRenderer::renderShoot(byte color, const Common::Point position) {
 	glLineWidth(10); // It will not work in every OpenGL implementation since the
 					 // spec doesn't require support for line widths other than 1
 	glEnableClientState(GL_VERTEX_ARRAY);
-	copyToVertexArray(0, Math::Vector3d(0, _screenH - 2, 0));
+	copyToVertexArray(0, Math::Vector3d(viewArea.left, viewArea.height() + viewArea.top - 1, 0));
 	copyToVertexArray(1, Math::Vector3d(position.x, position.y, 0));
-	copyToVertexArray(2, Math::Vector3d(0, _screenH - 2, 0));
+	copyToVertexArray(2, Math::Vector3d(viewArea.left, viewArea.height() + viewArea.top - 1, 0));
 	copyToVertexArray(3, Math::Vector3d(position.x, position.y, 0));
 
-	copyToVertexArray(4, Math::Vector3d(_screenW, _screenH - 2, 0));
+	copyToVertexArray(4, Math::Vector3d(viewArea.right, viewArea.width() - viewArea.bottom, 0));
 	copyToVertexArray(5, Math::Vector3d(position.x, position.y, 0));
-	copyToVertexArray(6, Math::Vector3d(_screenW, _screenH, 0));
+	copyToVertexArray(6, Math::Vector3d(viewArea.right, viewArea.width() - viewArea.bottom, 0));
 	copyToVertexArray(7, Math::Vector3d(position.x, position.y, 0));
 
 	glVertexPointer(3, GL_FLOAT, 0, _verts);

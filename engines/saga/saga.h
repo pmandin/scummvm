@@ -220,7 +220,36 @@ enum TextStringIds {
 	kTextLoadSavedGame
 };
 
+struct GameResourceDescription {
+	uint32 sceneLUTResourceId;
+	uint32 moduleLUTResourceId;
+	uint32 mainPanelResourceId;
+	uint32 conversePanelResourceId;
+	uint32 optionPanelResourceId;
+	uint32 mainSpritesResourceId;
+	uint32 mainPanelSpritesResourceId;
+	uint32 mainStringsResourceId;
+	// ITE specific resources
+	uint32 actorsStringsResourceId;
+	uint32 defaultPortraitsResourceId;
+	// IHNM specific resources
+	uint32 optionPanelSpritesResourceId;
+	uint32 warningPanelResourceId;
+	uint32 warningPanelSpritesResourceId;
+	uint32 psychicProfileResourceId;
+};
+
+struct GameFontDescription {
+	uint32 fontResourceId;
+};
+
 struct GameDisplayInfo;
+
+struct GamePatchDescription {
+	const char *fileName;
+	uint16 fileType;
+	uint32 resourceId;
+};
 
 enum GameObjectTypes {
 	kGameObjectNone = 0,
@@ -420,6 +449,12 @@ public:
 
 	bool isIHNMDemo() const { return _isIHNMDemo; }
 
+	bool isITEAmiga() const { return getPlatform() == Common::kPlatformAmiga && getGameId() == GID_ITE; }
+	bool isAGA() const { return _gameDescription->features & GF_AGA_GRAPHICS; }
+	bool isECS() const { return _gameDescription->features & GF_ECS_GRAPHICS; }
+	unsigned getPalNumEntries() const { return isECS() ? 32 : 256; }
+	GameIntroList getIntroList() const { return _gameDescription->introList; }
+
 	int16 _framesEsc;
 
 	uint32 _globalFlags;
@@ -469,6 +504,7 @@ private:
 
 public:
 	bool decodeBGImage(const ByteArray &imageData, ByteArray &outputBuffer, int *w, int *h, bool flip = false);
+  	bool decodeBGImageMask(const ByteArray &imageData, ByteArray &outputBuffer, int *w, int *h, bool flip = false);
 	const byte *getImagePal(const ByteArray &imageData) {
 		if (imageData.size() <= SAGA_IMAGE_HEADER_LEN) {
 			return NULL;
@@ -476,7 +512,7 @@ public:
 
 		return &imageData.front() + SAGA_IMAGE_HEADER_LEN;
 	}
-	void loadStrings(StringsTable &stringsTable, const ByteArray &stringsData);
+	void loadStrings(StringsTable &stringsTable, const ByteArray &stringsData, bool isBigEndian);
 
 	const char *getObjectName(uint16 objectId) const;
 public:
@@ -536,8 +572,9 @@ public:
 	bool isMacResources() const;
 	const GameResourceDescription *getResourceDescription() const;
 
-	const GameFontDescription *getFontDescription(int index) const;
-	int getFontsCount() const;
+	GameResourceList getResourceList() const;
+	GameFontList getFontList() const;
+	GamePatchList getPatchList() const;
 
 	int getGameId() const;
 	uint32 getFeatures() const;
@@ -545,8 +582,6 @@ public:
 	Common::Platform getPlatform() const;
 	int getGameNumber() const;
 	int getStartSceneNumber() const;
-
-	const GamePatchDescription *getPatchDescriptions() const;
 
 	const ADGameFileDescription *getFilesDescriptions() const;
 

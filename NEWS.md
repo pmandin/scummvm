@@ -16,6 +16,8 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Reduced amount of false positives in Mass Add.
    - Updated the Roland MT-32 emulation code to Munt mt32emu 2.7.0.
    - Added support for shader-based scalers.
+   - Added option for mono sound output (via --output-channels=CHANNELS command
+     line option)
 
  AGI:
    - Improved support for French translations.
@@ -28,8 +30,16 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for the Korean version of Legend of Kyrandia 1.
    - Added support for the Hebrew version of Legend of Kyrandia 3.
 
+ MADS:
+   - Added support for original floppy installer file layout for Rex Nebular.
+
  Queen:
    - Added option for using a better font in Hebrew version.
+
+ SAGA:
+   - Added support for Chinese Inherit the Earth.
+   - Added support for Chinese I Have no Mouth and I Must Scream.
+   - Added support for Korean I Have no Mouth and I Must Scream.
 
  SCUMM:
    - Added support for CGA, CGA Composite, CGA black & white and Hercules modes

@@ -23,6 +23,7 @@
 #define FREESCAPE_H
 
 #include "common/bitarray.h"
+#include "common/events.h"
 #include "engines/advancedDetector.h"
 #include "graphics/surface.h"
 
@@ -103,11 +104,13 @@ public:
 	// UI
 	Common::Rect _viewArea;
 	Common::Rect _fullscreenViewArea;
+	void centerCrossair();
 
 	void convertBorder();
 	void drawBorder();
 	void drawTitle();
 	virtual void drawUI();
+	virtual void drawCrossair(Graphics::Surface *surface);
 	Graphics::Surface *_border;
 	Graphics::Surface *_title;
 	Texture *_borderTexture;
@@ -126,13 +129,18 @@ public:
 	void swapPalette(uint16 areaID);
 	Common::HashMap<uint16, byte *> _paletteByArea;
 	void loadColorPalette();
+
+	// Demo
 	Common::Array<byte> _demoData;
 	int _demoIndex;
 	int _currentDemoInputCode;
 	int _currentDemoInputRepetition;
+	Common::Array<Common::Event> _demoEvents;
+	Common::Point _currentDemoMousePosition;
 	void loadDemoData(Common::SeekableReadStream *file, int offset, int size);
 	int decodeAmigaAtariKey(int code);
 	int decodeDOSKey(int code);
+	Common::Event decodeDOSMouseEvent(int code, int repetition);
 
 	uint16 readField(Common::SeekableReadStream *file, int nbits);
 	Common::Array<uint8> readArray(Common::SeekableReadStream *file, int size);
@@ -162,7 +170,9 @@ public:
 	void generateInput();
 	virtual void pressedKey(const int keycode);
 	void move(CameraMovement direction, uint8 scale, float deltaTime);
-	void changePlayerHeight(int delta);
+	void changePlayerHeight(int index);
+	void increaseStepSize();
+	void decreaseStepSize();
 	void rise();
 	void lower();
 	bool checkFloor(Math::Vector3d currentPosition);
@@ -202,6 +212,9 @@ public:
 	uint16 _playerHeight;
 	uint16 _playerWidth;
 	uint16 _playerDepth;
+
+	int _playerStepIndex;
+	Common::Array<int> _playerSteps;
 
 	// Effects
 	Common::Array<Common::String> _conditionSources;
@@ -282,6 +295,9 @@ public:
 	StateVars _gameStateVars;
 	StateBits _gameStateBits;
 	virtual bool checkIfGameEnded();
+	ObjectArray _sensors;
+	void checkSensors();
+
 
 	bool hasFeature(EngineFeature f) const override;
 	bool canLoadGameStateCurrently() override { return true; }
@@ -289,12 +305,15 @@ public:
 	bool canSaveGameStateCurrently() override { return true; }
 	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
 	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
+	virtual Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false);
+	virtual Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream);
 
 	// Timers
 	bool startCountdown(uint32 delay);
 	void removeTimers();
 	bool _timerStarted;
 	int _countdown;
+	int _ticks;
 };
 
 enum DrillerReleaseFlags {
@@ -309,10 +328,10 @@ public:
 	uint32 _initialJetEnergy;
 	uint32 _initialJetShield;
 
-	uint32 _initialProveEnergy;
-	uint32 _initialProveShield;
+	uint32 _initialTankEnergy;
+	uint32 _initialTankShield;
 
-	StateBits _completeAreas;
+	bool _useAutomaticDrilling;
 
 	void initGameState() override;
 	bool checkIfGameEnded() override;
@@ -323,13 +342,17 @@ public:
 	void drawUI() override;
 
 	void pressedKey(const int keycode) override;
+	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
+	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 
 private:
 	void loadGlobalObjects(Common::SeekableReadStream *file, int offset);
-	bool drillDeployed();
-	void addDrill(const Math::Vector3d position);
+	bool drillDeployed(Area *area);
+	Math::Vector3d drillPosition();
+	void addDrill(const Math::Vector3d position, bool gasFound);
 	bool checkDrill(const Math::Vector3d position);
-	void removeDrill();
+	void removeDrill(Area *area);
+	StateBits _drilledAreas;
 
 	void loadAssetsDemo();
 	void loadAssetsFullGame();
@@ -345,6 +368,8 @@ public:
 	void loadAssets() override;
 	void gotoArea(uint16 areaID, int entranceID) override;
 	void drawUI() override;
+	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
+	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 };
 
 class EclipseEngine : public FreescapeEngine {
@@ -356,6 +381,8 @@ public:
 	void gotoArea(uint16 areaID, int entranceID) override;
 
 	void drawUI() override;
+	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
+	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 };
 
 class CastleEngine : public FreescapeEngine {
@@ -365,7 +392,8 @@ public:
 	void loadAssets() override;
 
 	void gotoArea(uint16 areaID, int entranceID) override;
-
+	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
+	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 private:
 	Common::SeekableReadStream *decryptFile(const Common::String filename);
 };

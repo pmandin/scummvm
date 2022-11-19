@@ -26,6 +26,7 @@
 #define FREESCAPE_SENSOR_H
 
 #include "freescape/objects/object.h"
+#include "freescape/language/instruction.h"
 
 namespace Freescape {
 
@@ -34,20 +35,50 @@ public:
 	Sensor(
 		uint16 objectID_,
 		const Math::Vector3d &origin_,
-		const Math::Vector3d &rotation_) {
+		const Math::Vector3d &rotation_,
+		byte color_,
+		byte firingInterval_,
+		uint16 firingRange_,
+		uint16 flags_,
+		FCLInstructionVector condition_,
+		Common::String conditionSource_) {
 		_objectID = objectID_;
 		_origin = origin_;
 		_rotation = rotation_;
-		_flags = 0;
+		_size = Math::Vector3d(3, 3, 3);
+		_colours = new Common::Array<uint8>;
+		for (int i = 0; i < 6; i++)
+			_colours->push_back(color_);
+		_firingInterval = firingInterval_;
+		_firingRange = firingRange_;
+		_flags = flags_;
+		_conditionSource = conditionSource_;
+		_condition = condition_;
 	}
+	byte _firingInterval;
+	uint16 _firingRange;
 
-	virtual ~Sensor() {}
-	bool isDrawable() override { return false; }
+	Common::String _conditionSource;
+	FCLInstructionVector _condition;
+
+	virtual ~Sensor() {
+		delete _colours;
+	}
+	bool isDrawable() override { return true; }
 	bool isPlanar() override { return true; }
+	void scale(int factor) override { _origin = _origin / factor; };
+	Object *duplicate() override { return (new Sensor(_objectID, _origin, _rotation, (*_colours)[0], _firingInterval, _firingRange, _flags, _condition, _conditionSource)); };
+
 	ObjectType getType() override { return kSensorType; };
 	Math::Vector3d getRotation() { return _rotation; }
 
-	void draw(Freescape::Renderer *gfx) override { error("cannot render sensor"); };
+	void draw(Freescape::Renderer *gfx) override {
+		Math::Vector3d origin(_origin.x() - 1, _origin.y() - 1, _origin.z() - 1);
+		gfx->renderCube(_origin, _size, _colours);
+	};
+
+	private:
+		Common::Array<uint8> *_colours;
 };
 
 } // End of namespace Freescape
