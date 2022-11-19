@@ -144,7 +144,7 @@ static const ReevengiGameDescription gameDescriptions[] = {
 
 class ReevengiMetaEngineDetection : public AdvancedMetaEngineDetection {
 public:
-	ReevengiMetaEngineDetection() : AdvancedMetaEngineDetection(Reevengi::gameDescriptions, sizeof(Reevengi::ReevengiGameDescription), reevengiGames, nullptr) {
+	ReevengiMetaEngineDetection() : AdvancedMetaEngineDetection(Reevengi::gameDescriptions, sizeof(Reevengi::ReevengiGameDescription), reevengiGames) {
 		_maxScanDepth = 4;
 		_directoryGlobs = directoryGlobs;
 		_flags = kADFlagMatchFullPaths;
