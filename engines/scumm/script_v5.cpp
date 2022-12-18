@@ -1026,6 +1026,15 @@ void ScummEngine_v5::o5_drawBox() {
 	y2 = getVarOrDirectWord(PARAM_2);
 	color = getVarOrDirectByte(PARAM_3);
 
+	// HACK! In the menu room scripts, LOOM Towns draws the save slots boxes one pixel smaller than expected (on both dimensions).
+	// The interpreter (somehow) manages to draw them correctly, though. Our drawBox implementation appears to be correct,
+	// and attempting to directly change it breaks some stuff (like the GUI banners), so it's really not clear what we're missing.
+	// So, for now, let's do this...
+	if (_game.id == GID_LOOM && _game.platform == Common::kPlatformFMTowns && _currentRoom == 70) {
+		x2 += 1;
+		y2 += 1;
+	}
+
 	drawBox(x, y, x2, y2, color);
 }
 
@@ -1767,8 +1776,8 @@ void ScummEngine_v5::o5_loadRoom() {
 
 	// WORKAROUND: The first time you examine Rusty while he's sleeping,
 	// you will get a close-up of him. Which one should depend on whether
-	// or not you've used the Reflection draft on him. But in some, you
-	// will always get the close-up where he's wearing his own clothes.
+	// or not you've used the Reflection draft on him. But in some versions,
+	// you will always get the close-up where he's wearing his own clothes.
 
 	if (_game.id == GID_LOOM && _game.version == 3 && room == 29 &&
 		vm.slot[_currentScript].number == 112 && _enableEnhancements) {
@@ -1790,7 +1799,9 @@ void ScummEngine_v5::o5_loadRoom() {
 	if (!(_game.features & GF_SMALL_HEADER) || room != _currentRoom)
 		startScene(room, nullptr, 0);
 
-	_fullRedraw = true;
+	// DIG and COMI don't flag a full redraw after starting the scene.
+	if (_game.version < 7 || _game.id == GID_FT)
+		_fullRedraw = true;
 }
 
 void ScummEngine_v5::o5_loadRoomWithEgo() {

@@ -32,6 +32,7 @@
 #include "saga/sndres.h"
 
 #include "engines/advancedDetector.h"
+#include "common/compression/powerpacker.h"
 
 namespace Saga {
 
@@ -96,11 +97,82 @@ static const GamePatchDescription *PatchLists[PATCHLIST_MAX] = {
 	/* PATCHLIST_ITE_MAC */ ITEMacPatch_Files
 };
 
-bool ResourceContext::loadResIteAmiga(uint32 contextOffset, uint32 contextSize, int type) {
+struct ITEAmigaIndex {
+	uint32 fileOffset;
+	uint32 numEntries;
+};
+
+struct ITEAmigaEXEDescriptor {
+	ITEAmigaIndex voiceIndex;
+	ITEAmigaIndex soundIndex;
+};
+
+bool ResourceContext::loadResIteAmigaSound(SagaEngine *_vm, uint32 contextOffset, uint32 contextSize, int type) {
+	Common::String exeName;
+
+	for (const ADGameFileDescription *gameFileDescription = _vm->getFilesDescriptions();
+		gameFileDescription->fileName; gameFileDescription++) {
+		if (Common::String(gameFileDescription->fileName).hasSuffix(".exe"))
+			exeName = gameFileDescription->fileName;
+	}
+
+	if (exeName.empty())
+		return false;
+
+	// Right now German and English ECS version have same offsets to
+	// offset tables, no need to distinguish them
+	static const ITEAmigaEXEDescriptor ecsDesc = {
+		{ 0x56a8, 3730 },
+		{ 0x90f0,   44 },
+	};
+
+	// Right now German and English ECS version have same offsets to
+	// offset tables, no need to distinguish them
+	static const ITEAmigaEXEDescriptor agaDesc = {
+		{ 0x53a8, 3730 },
+		{ 0x8df0,   44 },
+	};
+ 
+	const ITEAmigaEXEDescriptor *exedesc = _vm->isECS() ? &ecsDesc : &agaDesc;
+	const ITEAmigaIndex& amigaIdx = _fileType & GAME_VOICEFILE ? exedesc->voiceIndex : exedesc->soundIndex;
+
+	if (amigaIdx.numEntries <= 1)
+		return false;
+
+	_table.resize(amigaIdx.numEntries - 1);
+
+	Common::File f;
+
+	if(!f.open(exeName.c_str()))
+		return false;
+
+	f.seek(amigaIdx.fileOffset);
+
+	for (uint32 i = 0; i < amigaIdx.numEntries - 1; i++) {
+		ResourceData *resourceData = &_table[i];
+		resourceData->offset = f.readUint32BE();
+		resourceData->diskNum = -1;
+	}
+
+	uint32 lastEntry = f.readUint32BE();
+
+	for (uint32 i = 0; i < amigaIdx.numEntries - 2; i++) {
+		_table[i].size = _table[i + 1].offset - _table[i].offset;
+	}
+
+	_table[amigaIdx.numEntries - 2].size = lastEntry - _table[amigaIdx.numEntries - 2].offset;
+
+	return true;
+}
+
+bool ResourceContext::loadResIteAmiga(SagaEngine *_vm, uint32 contextOffset, uint32 contextSize, int type, bool isFloppy) {
+	if (_fileType & (GAME_VOICEFILE | GAME_SOUNDFILE))
+		return loadResIteAmigaSound(_vm, contextOffset, contextSize, type);
 	_file.seek(contextOffset);
 	uint16 resourceCount = _file.readUint16BE();
 	uint16 scriptCount = _file.readUint16BE();
 	uint32 count = (type &  GAME_SCRIPTFILE) ? scriptCount : resourceCount;
+	uint32 extraOffset = isFloppy ? 1024 : 0;
 
 	if (type &  GAME_SCRIPTFILE)
 		_file.seek(resourceCount * 10, SEEK_CUR);
@@ -109,7 +181,7 @@ bool ResourceContext::loadResIteAmiga(uint32 contextOffset, uint32 contextSize, 
 
 	for (uint32 i = 0; i < count; i++) {
 		ResourceData *resourceData = &_table[i];
-		resourceData->offset = _file.readUint32BE();
+		resourceData->offset = _file.readUint32BE() + extraOffset;
 		resourceData->size = _file.readUint32BE();
 		resourceData->diskNum = _file.readUint16BE();
 	}
@@ -198,7 +270,7 @@ bool ResourceContext::load(SagaEngine *vm, Resource *resource) {
 			_file.seek(83);
 			uint32 macDataSize = _file.readSint32BE();
 			// Skip the MacBinary headers, and read the resource data.
-			return loadRes(MAC_BINARY_HEADER_SIZE, macDataSize, _fileType);
+			return loadRes(vm, MAC_BINARY_HEADER_SIZE, macDataSize, _fileType);
 		} else {
 			// Unpack MacBinary packed MIDI files
 			return loadMacMIDI();
@@ -206,7 +278,7 @@ bool ResourceContext::load(SagaEngine *vm, Resource *resource) {
 	}
 
 
-	if (!loadRes(0, _fileSize, _fileType))
+	if (!loadRes(vm, 0, _fileSize, _fileType))
 		return false;
 
 	GamePatchList index = vm->getPatchList();
@@ -241,6 +313,7 @@ void Resource::addContext(const char *fileName, uint16 fileType, bool isCompress
 
 bool Resource::createContexts() {
 	bool soundFileInArray = false;
+	bool voiceFileInArray = false;
 
 	_vm->_voiceFilesExist = true;
 
@@ -257,8 +330,13 @@ bool Resource::createContexts() {
 			addContext(gameFileDescription->fileName, gameFileDescription->fileType);
 		if ((gameFileDescription->fileType & GAME_RESOURCEFILE) && _vm->getPlatform() == Common::kPlatformAmiga && _vm->getGameId() == GID_ITE)
 			addContext(gameFileDescription->fileName, (gameFileDescription->fileType & ~GAME_RESOURCEFILE) | GAME_SCRIPTFILE | GAME_SWAPENDIAN);
+		if ((gameFileDescription->fileType & GAME_RESOURCEFILE) && _vm->getPlatform() == Common::kPlatformAmiga && _vm->getGameId() == GID_ITE)
+			addContext(gameFileDescription->fileName, (gameFileDescription->fileType & ~GAME_RESOURCEFILE) | GAME_MUSICFILE_FM);
 		if (gameFileDescription->fileType == GAME_SOUNDFILE) {
 			soundFileInArray = true;
+		}
+		if (gameFileDescription->fileType == GAME_VOICEFILE) {
+			voiceFileInArray = true;
 		}
 	}
 
@@ -313,16 +391,17 @@ bool Resource::createContexts() {
 
 	// Detect and add voice files
 	_voicesFileName[0][0] = 0;
-	for (SoundFileInfo *curSoundFile = voiceFiles; (curSoundFile->gameId != -1); curSoundFile++) {
-		if (curSoundFile->gameId != _vm->getGameId()) continue;
-		if (!Common::File::exists(curSoundFile->fileName)) continue;
+	if (!voiceFileInArray) {
+		for (SoundFileInfo *curSoundFile = voiceFiles; (curSoundFile->gameId != -1); curSoundFile++) {
+			if (curSoundFile->gameId != _vm->getGameId()) continue;
+			if (!Common::File::exists(curSoundFile->fileName)) continue;
 
-		Common::strcpy_s(_voicesFileName[0], curSoundFile->fileName);
-		addContext(_voicesFileName[0], GAME_VOICEFILE | curSoundFile->voiceFileAddType, curSoundFile->isCompressed);
+			Common::strcpy_s(_voicesFileName[0], curSoundFile->fileName);
+			addContext(_voicesFileName[0], GAME_VOICEFILE | curSoundFile->voiceFileAddType, curSoundFile->isCompressed);
 
-		// Special cases
-		if (!scumm_stricmp(curSoundFile->fileName, "voicess.res") ||
-			!scumm_stricmp(curSoundFile->fileName, "voicess.cmp")) {
+			// Special cases
+			if (!scumm_stricmp(curSoundFile->fileName, "voicess.res") ||
+			    !scumm_stricmp(curSoundFile->fileName, "voicess.cmp")) {
 				// IHNM has multiple voice files
 				for (size_t i = 1; i <= 6; i++) { // voices1-voices6
 					Common::sprintf_s(_voicesFileName[i], "voices%i.%s", (uint)i, curSoundFile->isCompressed ? "cmp" : "res");
@@ -335,11 +414,12 @@ bool Resource::createContexts() {
 					}
 					addContext(_voicesFileName[i], GAME_VOICEFILE, curSoundFile->isCompressed, i);
 				}
+			}
+			break;
 		}
-		break;
 	}
 
-	if (_voicesFileName[0][0] == 0) {
+	if (!voiceFileInArray && _voicesFileName[0][0] == 0) {
 #ifdef ENABLE_IHNM
 		if (_vm->getGameId() == GID_IHNM && _vm->isMacResources()) {
 			// The Macintosh version of IHNM has no voices.res, and it has all
@@ -412,7 +492,10 @@ void Resource::loadResource(ResourceContext *context, uint32 resourceId, ByteArr
 			sz--;
 		if (sz > 0)
 			sz--;
-		fileName = Common::String::format("%s.%03d", fileName.substr(0, sz).c_str(), resourceData->diskNum);
+		if (_vm->getFeatures() & GF_ITE_FLOPPY)
+			fileName = Common::String::format("%s%02d.adf", fileName.substr(0, sz).c_str(), resourceData->diskNum + 1);
+		else
+			fileName = Common::String::format("%s.%03d", fileName.substr(0, sz).c_str(), resourceData->diskNum);
 		if (!file->open(fileName))
 			error("Resource::loadResource() failed to open %s", fileName.c_str());
 	}
@@ -431,6 +514,33 @@ void Resource::loadResource(ResourceContext *context, uint32 resourceId, ByteArr
 	// 1 patch file, which is reused, so don't close it
 	if (resourceData->patchData != nullptr && _vm->getGameId() == GID_ITE)
 		file->close();
+
+	if (_vm->getPlatform() == Common::Platform::kPlatformAmiga &&
+	    resourceBuffer.size() >= 16 && READ_BE_UINT32(resourceBuffer.getBuffer()) == MKTAG('H', 'E', 'A', 'D')
+	    && READ_BE_UINT32(resourceBuffer.getBuffer() + 12) == MKTAG('P', 'A', 'C', 'K')) {
+		uint32 unpackedLen = READ_BE_UINT32(resourceBuffer.getBuffer() + 4);
+		uint32 packedLen = READ_BE_UINT32(resourceBuffer.getBuffer() + 8);
+		uint32 actualUncompressedLen = 0;
+		if (packedLen != resourceBuffer.size() - 20) {
+			warning("Compressed size mismatch in resource %d: %d vs %d", resourceId, packedLen, resourceBuffer.size() - 20);
+		}
+		byte *uncompressed = Common::PowerPackerStream::unpackBuffer(resourceBuffer.getBuffer() + 12, packedLen + 8, actualUncompressedLen);
+		if (uncompressed == nullptr || unpackedLen != actualUncompressedLen) {
+			warning("Uncompressed size mismatch in resource %d: %d vs %d", resourceId, unpackedLen, actualUncompressedLen);
+		}
+
+		if (context->fileType() & GAME_MUSICFILE_FM) {
+			byte b = 0;
+			for (uint32 i = 0; i < unpackedLen; i++) {
+				b += uncompressed[i];
+				uncompressed[i] = b;
+			}
+		}
+
+		// TODO: Use move semantics
+		resourceBuffer = ByteArray(uncompressed, actualUncompressedLen);
+		delete[] uncompressed;
+	}
 }
 
 ResourceContext *Resource::getContext(uint16 fileType, int serial) {

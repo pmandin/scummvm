@@ -47,15 +47,19 @@ public:
 	uint16 getAreaID();
 	uint16 getAreaFlags();
 	uint8 getScale();
+	void remapColor(int index, int color);
+	void unremapColor(int index);
 	void draw(Renderer *gfx);
 	void show();
 
 	Object *shootRay(const Math::Ray &ray);
+	bool checkInSight(const Math::Ray &ray, float maxDistance);
 	ObjectArray checkCollisions(const Math::AABB &boundingBox);
 	void addObjectFromArea(int16 id, Area *global);
 	void addObject(Object *obj);
 	void addStructure(Area *global);
 	void removeObject(int16 id);
+	void resetArea();
 
 	Common::Array<Common::String> _conditionSources;
 	Common::Array<FCLInstructionVector> _conditions;
@@ -71,6 +75,9 @@ public:
 	uint8 _scale;
 	uint8 _skyColor;
 	uint8 _groundColor;
+	uint8 _usualBackgroundColor;
+	uint8 _underFireBackgroundColor;
+	ColorReMap _colorRemaps;
 
 private:
 	uint16 _areaID;

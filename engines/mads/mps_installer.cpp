@@ -25,8 +25,8 @@
 #include "common/file.h"
 #include "common/util.h"
 #include "common/memstream.h"
-#include "common/dcl.h"
-#include "mps_installer.h"
+#include "common/compression/dcl.h"
+#include "mads/mps_installer.h"
 
 namespace MADS {
 
@@ -50,21 +50,12 @@ MpsInstaller* MpsInstaller::open(const Common::Path& baseName) {
 		filecnt = (indexSize - 12) / kEntryLength;
 
 	for (uint i = 0; i < filecnt; i++) {
-		char nameField[kNameFieldLength];
-		int nameLen = kNameFieldLength;
-		indexFile.read(nameField, kNameFieldLength);
-		for (uint j = 0; j < kNameFieldLength; j++) {
-			if (!nameField[j]) {
-				nameLen = j;
-				break;
-			}
-		}
+		Common::String name = indexFile.readString('\0', kNameFieldLength);
 		uint16 compression = indexFile.readUint16LE();
 		uint16 volumeNumber = indexFile.readUint16LE();
 		uint32 offsetInVolume = indexFile.readUint32LE();
 		uint32 compressedSize = indexFile.readUint32LE();
 		uint32 uncompressedSize = indexFile.readUint32LE();
-		Common::String name(nameField, nameLen);
 		FileDescriptor desc(name, compression, volumeNumber, offsetInVolume, compressedSize, uncompressedSize);
 		_files[desc._fileName] = desc;
 	}
@@ -72,13 +63,8 @@ MpsInstaller* MpsInstaller::open(const Common::Path& baseName) {
 	return new MpsInstaller(_files, baseName);
 }
 
-// Use of \\ as path separator is a guess. Never seen an archive with subfolders
-static Common::String translateName(const Common::Path &path) {
-	return Common::normalizePath(path.toString('\\'), '\\');
-}
-
 bool MpsInstaller::hasFile(const Common::Path &path) const {
-	return _files.contains(translateName(path));
+	return _files.contains(translatePath(path));
 }
 
 int MpsInstaller::listMembers(Common::ArchiveMemberList &list) const {
@@ -90,26 +76,21 @@ int MpsInstaller::listMembers(Common::ArchiveMemberList &list) const {
 }
 
 const Common::ArchiveMemberPtr MpsInstaller::getMember(const Common::Path &path) const {
-	Common::String translated = translateName(path);
+	Common::String translated = translatePath(path);
 	if (!_files.contains(translated))
 		return nullptr;
 
 	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(_files.getVal(translated)._fileName, this));
 }
 
-// TODO: Make streams stay valid after destruction of archive
-Common::SeekableReadStream *MpsInstaller::createReadStreamForMember(const Common::Path &path) const {
-	Common::String translated = translateName(path);
+Common::SharedArchiveContents MpsInstaller::readContentsForPath(const Common::String& translated) const {
 	if (!_files.contains(translated))
-		return nullptr;
+		return Common::SharedArchiveContents();
 	FileDescriptor desc = _files.getVal(translated);
-	if (_cache.contains(desc._fileName)) {
-		return new Common::MemoryReadStream(_cache[desc._fileName].get(), desc._uncompressedSize, DisposeAfterUse::NO);
-	}
 
 	if (desc._compressionAlgo != 0 && desc._compressionAlgo != 1) {
 		debug ("Unsupported compression algorithm %d for %s", desc._compressionAlgo, desc._fileName.c_str());
-		return nullptr;
+		return Common::SharedArchiveContents();
 	}
 
 
@@ -124,14 +105,14 @@ Common::SeekableReadStream *MpsInstaller::createReadStreamForMember(const Common
 		if (!fvol.open(volumePath)) {
 			error("Failed to open volume %s.%03d", volumePath.toString().c_str(), vol);
 			delete[] compressedBuf;
-			return nullptr;
+			return Common::SharedArchiveContents();
 		}
 		fvol.seek(off);
 		int32 actual = fvol.read(outptr, rem);
 		if (actual <= 0) {
 			warning("Read failure in volume %s.%03d", volumePath.toString().c_str(), vol);
 			delete[] compressedBuf;
-			return nullptr;
+			return Common::SharedArchiveContents();
 		}
 
 		rem -= actual;
@@ -157,7 +138,7 @@ Common::SeekableReadStream *MpsInstaller::createReadStreamForMember(const Common
 			delete[] compressedBuf;
 			delete[] uncompressedBuf;
 			error("Unable to decompress %s", desc._fileName.c_str());
-			return nullptr;
+			return Common::SharedArchiveContents();
 		}
 		delete[] compressedBuf;
 		compressedBuf = nullptr;
@@ -165,8 +146,7 @@ Common::SeekableReadStream *MpsInstaller::createReadStreamForMember(const Common
 		break;
 	}
 
-	_cache[desc._fileName].reset(uncompressedBuf);
 	// TODO: Make it configurable to read directly from disk, at least in the uncompressed case
-	return new Common::MemoryReadStream(uncompressedBuf, desc._uncompressedSize, DisposeAfterUse::NO);
+	return Common::SharedArchiveContents(uncompressedBuf, desc._uncompressedSize);
 }
 }

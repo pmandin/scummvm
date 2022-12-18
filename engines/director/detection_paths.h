@@ -71,7 +71,6 @@ const char *directoryGlobs[] = {
 	"xn--Musejagd mit Ton-vnb",		// GGMD German
 	"music",
 	"solos",
-	"sounds",
 	"duthelp",
 	"dutvideo",
 	"endsound",
@@ -88,7 +87,6 @@ const char *directoryGlobs[] = {
 	"ojo2000",
 	"stuff",						// Abrapalabra
 	"tooned",						// Stay Tooned
-	"sam rupert",					// Who Killed Sam Rupert?
 	"content",
 	"pcinst",						// Gus and the CyberBuds series
 	"p2data",

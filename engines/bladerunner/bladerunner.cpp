@@ -87,7 +87,7 @@
 #include "common/debug.h"
 #include "common/debug-channels.h"
 #include "common/translation.h"
-#include "common/unzip.h"
+#include "common/compression/unzip.h"
 
 #include "gui/message.h"
 
@@ -702,8 +702,8 @@ bool BladeRunnerEngine::startup(bool hasSavegames) {
 
 		// Seed rand
 
-		_cosTable1024 = new Common::CosineTable(1024); // 10-bits = 1024 points for 2*PI;
-		_sinTable1024 = new Common::SineTable(1024);
+		_cosTable1024 = new Math::CosineTable(1024); // 10-bits = 1024 points for 2*PI;
+		_sinTable1024 = new Math::SineTable(1024);
 
 		_view = new View();
 

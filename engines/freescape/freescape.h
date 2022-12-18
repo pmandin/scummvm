@@ -36,6 +36,7 @@
 #include "freescape/gfx.h"
 #include "freescape/objects/entrance.h"
 #include "freescape/objects/geometricobject.h"
+#include "freescape/objects/sensor.h"
 
 namespace Common {
 class RandomSource;
@@ -109,6 +110,7 @@ public:
 	void convertBorder();
 	void drawBorder();
 	void drawTitle();
+	void drawBackground();
 	virtual void drawUI();
 	virtual void drawCrossair(Graphics::Surface *surface);
 	Graphics::Surface *_border;
@@ -163,11 +165,12 @@ public:
 
 	// Input
 	bool _demoMode;
+	bool _disableDemoMode;
 	bool _flyMode;
 	bool _shootMode;
 	bool _noClipMode;
 	void processInput();
-	void generateInput();
+	void generateDemoInput();
 	virtual void pressedKey(const int keycode);
 	void move(CameraMovement direction, uint8 scale, float deltaTime);
 	void changePlayerHeight(int index);
@@ -221,6 +224,7 @@ public:
 	Common::Array<FCLInstructionVector> _conditions;
 
 	bool checkCollisions(bool executeCode);
+	Math::Vector3d _objExecutingCodeSize;
 	void executeObjectConditions(GeometricObject *obj, bool shot, bool collided);
 	void executeLocalGlobalConditions(bool shot, bool collided);
 	void executeCode(FCLInstructionVector &code, bool shot, bool collided);
@@ -245,6 +249,7 @@ public:
 	bool executeEndIfVisibilityIsEqual(FCLInstruction &instruction);
 	void executeSwapJet(FCLInstruction &instruction);
 	void executePrint(FCLInstruction &instruction);
+	void executeSPFX(FCLInstruction &instruction);
 
 	// Sound
 	Audio::SoundHandle _soundFxHandle;
@@ -267,7 +272,10 @@ public:
 	Graphics::FrameLimiter *_frameLimiter;
 	Common::RenderMode _renderMode;
 	ColorMap _colorMap;
+	int _underFireFrames;
+	int _shootingFrames;
 	void drawFrame();
+	void flashScreen(int backgroundColor);
 	uint8 _colorNumber;
 	Math::Vector3d _scaleVector;
 	float _nearClipPlane;
@@ -276,6 +284,7 @@ public:
 	// Text messages and Fonts
 	void insertTemporaryMessage(const Common::String message, int deadline);
 	void getLatestMessages(Common::String &message, int &deadline);
+	void clearTemporalMessages();
 	Common::StringArray _temporaryMessages;
 	Common::Array<int> _temporaryMessageDeadlines;
 	Common::StringArray _messagesList;
@@ -288,7 +297,7 @@ public:
 	Common::StringArray _currentEphymeralMessages;
 	Common::BitArray _font;
 	bool _fontLoaded;
-	void drawStringInSurface(const Common::String &str, int x, int y, uint32 fontColor, uint32 backColor, Graphics::Surface *surface);
+	void drawStringInSurface(const Common::String &str, int x, int y, uint32 fontColor, uint32 backColor, Graphics::Surface *surface, int offset = 0);
 
 	// Game state
 	virtual void initGameState();
@@ -297,7 +306,8 @@ public:
 	virtual bool checkIfGameEnded();
 	ObjectArray _sensors;
 	void checkSensors();
-
+	void drawSensorShoot(Sensor *sensor);
+	void takeDamageFromSensor();
 
 	bool hasFeature(EngineFeature f) const override;
 	bool canLoadGameStateCurrently() override { return true; }
@@ -307,13 +317,20 @@ public:
 	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
 	virtual Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false);
 	virtual Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream);
+	Graphics::Surface *_savedScreen;
 
 	// Timers
 	bool startCountdown(uint32 delay);
 	void removeTimers();
 	bool _timerStarted;
+	int _initialCountdown;
 	int _countdown;
 	int _ticks;
+	int _lastTick;
+
+	// Cheats
+	bool _useExtendedTimer;
+	bool _disableSensors;
 };
 
 enum DrillerReleaseFlags {

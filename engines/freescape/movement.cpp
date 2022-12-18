@@ -34,11 +34,10 @@ void FreescapeEngine::traverseEntrance(uint16 entranceID) {
 	int scale = _currentArea->getScale();
 	assert(scale > 0);
 
-	Math::Vector3d diff = _lastPosition - _position;
 	Math::Vector3d rotation = entrance->getRotation();
 	_position = entrance->getOrigin();
 	_pitch = rotation.x();
-	if (ABS(diff.x()) > ABS(diff.z()))
+	if (ABS(_objExecutingCodeSize.x()) <= ABS(_objExecutingCodeSize.z()))
 		_yaw = rotation.y() - 90;
 	else
 		_yaw = rotation.y() + 90;
@@ -64,15 +63,15 @@ void FreescapeEngine::traverseEntrance(uint16 entranceID) {
 void FreescapeEngine::shoot() {
 	//_mixer->stopHandle(_soundFxHandle);
 	playSound(1, true);
-	_gfx->setViewport(_fullscreenViewArea);
-	_gfx->renderShoot(0, _crossairPosition, _viewArea);
-	_gfx->setViewport(_viewArea);
+	_shootingFrames = _gfx->_isAccelerated ? 60 : 4;
 
 	Common::Point center(_viewArea.left + _viewArea.width() / 2, _viewArea.top + _viewArea.height() / 2);
 	float xoffset = _crossairPosition.x - center.x;
 	float yoffset = _crossairPosition.y - center.y;
+	xoffset = xoffset * 0.33;
+	yoffset = yoffset * 0.50;
 
-	Math::Vector3d direction = directionToVector(_pitch + yoffset, _yaw - xoffset);
+	Math::Vector3d direction = directionToVector(_pitch - yoffset, _yaw - xoffset);
 	Math::Ray ray(_position, direction);
 	Object *shot = _currentArea->shootRay(ray);
 	if (shot) {
@@ -127,7 +126,7 @@ void FreescapeEngine::rise() {
 		changePlayerHeight(_playerHeightNumber);
 	}
 
-	bool collided = checkCollisions(true);
+	bool collided = checkCollisions(true) || _position.y() >= 2016;
 	if (collided) {
 		if (_currentArea->getAreaID() == previousAreaID) {
 			if (_flyMode)
@@ -202,6 +201,8 @@ void FreescapeEngine::move(CameraMovement direction, uint8 scale, float deltaTim
 		else if (_position.getValue(i) > 8128)
 			_position.setValue(i, 8128);
 	}
+	if (_position.y() >= 2016)
+		_position.y() = _lastPosition.z();
 
 	bool collided = checkCollisions(false);
 
@@ -324,10 +325,20 @@ bool FreescapeEngine::checkCollisions(bool executeCode) {
 	Common::sort(objs.begin(), objs.end(), compareObjectsSizes);
 	uint16 areaID = _currentArea->getAreaID();
 
+	bool largeObjectWasBlocking = false;
 	for (auto &obj : objs) {
 		GeometricObject *gobj = (GeometricObject *)obj;
 		debugC(1, kFreescapeDebugMove, "Collided with object id %d of size %f %f %f", gobj->getObjectID(), gobj->getSize().x(), gobj->getSize().y(), gobj->getSize().z());
+		// The following check stops the player from going through big solid objects such as walls
+		// FIXME: find a better workaround of this
+		if (gobj->getSize().length() > 3000) {
+			if (largeObjectWasBlocking)
+				break;
+			largeObjectWasBlocking = true;
+		}
+
 		executeObjectConditions(gobj, false, true);
+
 		if (areaID != _currentArea->getAreaID())
 			break;
 	}

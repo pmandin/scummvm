@@ -698,7 +698,7 @@ void Script::printString(Graphics::Surface *surface, const char *str) {
 		message[i] = str[i];
 	}
 	Common::rtrim(message);
-	
+
 	// Draw the string
 	if (_version == kGroovieT7G) {
 		_vm->_font->drawString(surface, message, 0, 16, 640, 0xE2, Graphics::kTextAlignCenter);
@@ -817,7 +817,7 @@ void Script::o_videofromref() {			// 0x09
 		break;
 
 	case 0x2420:	// load from the main menu
-		if (_version == kGroovieT7G && !ConfMan.getBool("originalsaveload")) {
+		if (_version == kGroovieT7G && !ConfMan.getBool("originalsaveload") && _currentInstruction == 381) {
 			GUI::SaveLoadChooser *dialog = new GUI::SaveLoadChooser(_("Restore game:"), _("Restore"), false);
 			int slot = dialog->runModalWithCurrentTarget();
 			delete dialog;
@@ -835,7 +835,7 @@ void Script::o_videofromref() {			// 0x09
 		break;
 
 	case 0x2422: // save from the in-game menu
-		if (_version == kGroovieT7G && !ConfMan.getBool("originalsaveload")) {
+		if (_version == kGroovieT7G && !ConfMan.getBool("originalsaveload") && _currentInstruction == 7618) {
 			GUI::MessageDialog saveOrLoad(_("Would you like to save or restore a game?"), _("Save"), _("Restore"));
 
 			int choice = saveOrLoad.runModal();
@@ -986,6 +986,8 @@ bool Script::playvideofromref(uint32 fileref, bool loopUntilAudioDone) {
 			_videoSkipAddress = 0;
 
 			_bitflags = 0;
+
+			_vm->_videoPlayer->unloadSubtitles();
 
 			// End the playback
 			return true;
@@ -2404,7 +2406,7 @@ void Script::o2_copyfgtobg() {
 	uint8 arg = readScript8bits();
 	debugC(1, kDebugScript, "Groovie::Script: o2_copyfgtobg (0x%02X)", arg);
 	debugC(2, kDebugVideo, "Groovie::Script: @0x%04X: o2_copyfgtobg (0x%02X)", _currentInstruction-2, arg);
-	
+
 	_vm->_videoPlayer->copyfgtobg(arg);
 }
 

@@ -124,7 +124,12 @@ GeometricObject::GeometricObject(
 	_flags = flags_;
 
 	if (isDestroyed()) // If the object is destroyed, restore it
-		_flags = _flags & ~0x20;
+		restore();
+
+	if (isInitiallyInvisible())
+		makeInvisible();
+	else
+		makeVisible();
 
 	_objectID = objectID_;
 	_origin = origin_;
@@ -166,7 +171,7 @@ GeometricObject::GeometricObject(
 void GeometricObject::setOrigin(Math::Vector3d origin_) {
 	_origin = origin_;
 	computeBoundingBox();
-};
+}
 
 void GeometricObject::scale(int factor) {
 	_origin = _origin / factor;

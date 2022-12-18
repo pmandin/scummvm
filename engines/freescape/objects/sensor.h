@@ -25,6 +25,7 @@
 #ifndef FREESCAPE_SENSOR_H
 #define FREESCAPE_SENSOR_H
 
+#include "freescape/area.h"
 #include "freescape/objects/object.h"
 #include "freescape/language/instruction.h"
 
@@ -39,43 +40,33 @@ public:
 		byte color_,
 		byte firingInterval_,
 		uint16 firingRange_,
-		uint16 flags_,
+		uint16 axis_,
+		uint8 flags_,
 		FCLInstructionVector condition_,
-		Common::String conditionSource_) {
-		_objectID = objectID_;
-		_origin = origin_;
-		_rotation = rotation_;
-		_size = Math::Vector3d(3, 3, 3);
-		_colours = new Common::Array<uint8>;
-		for (int i = 0; i < 6; i++)
-			_colours->push_back(color_);
-		_firingInterval = firingInterval_;
-		_firingRange = firingRange_;
-		_flags = flags_;
-		_conditionSource = conditionSource_;
-		_condition = condition_;
-	}
+		Common::String conditionSource_);
+
 	byte _firingInterval;
 	uint16 _firingRange;
+	uint16 _axis;
+	bool _isShooting;
 
 	Common::String _conditionSource;
 	FCLInstructionVector _condition;
 
-	virtual ~Sensor() {
-		delete _colours;
-	}
+	virtual ~Sensor() { delete _colours; }
 	bool isDrawable() override { return true; }
 	bool isPlanar() override { return true; }
+	bool isShooting() { return _isShooting; }
 	void scale(int factor) override { _origin = _origin / factor; };
-	Object *duplicate() override { return (new Sensor(_objectID, _origin, _rotation, (*_colours)[0], _firingInterval, _firingRange, _flags, _condition, _conditionSource)); };
+	Object *duplicate() override;
 
 	ObjectType getType() override { return kSensorType; };
 	Math::Vector3d getRotation() { return _rotation; }
+	void shouldShoot(bool shooting) { _isShooting = shooting; }
 
-	void draw(Freescape::Renderer *gfx) override {
-		Math::Vector3d origin(_origin.x() - 1, _origin.y() - 1, _origin.z() - 1);
-		gfx->renderCube(_origin, _size, _colours);
-	};
+	void draw(Freescape::Renderer *gfx) override;
+
+	bool playerDetected(const Math::Vector3d &position, Area *area);
 
 	private:
 		Common::Array<uint8> *_colours;

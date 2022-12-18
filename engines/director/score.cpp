@@ -471,8 +471,6 @@ void Score::update() {
 	debugC(1, kDebugLoading, "******************************  Current frame: %d, time: %d", _currentFrame, g_system->getMillis(false));
 	g_debugger->frameHook();
 
-	uint initialCallStackSize = _window->_callstack.size();
-
 	_lingo->executeImmediateScripts(_frames[_currentFrame]);
 
 	if (_vm->getVersion() >= 600) {
@@ -488,7 +486,26 @@ void Score::update() {
 
 	// Enter and exit from previous frame
 	if (!_vm->_playbackPaused) {
-		_movie->processEvent(kEventEnterFrame); // Triggers the frame script in D2-3, explicit enterFrame handlers in D4+
+		uint32 count = _window->frozenLingoStateCount();
+		// Triggers the frame script in D2-3, explicit enterFrame handlers in D4+
+		_movie->processEvent(kEventEnterFrame);
+		// If another frozen state gets triggered, wait another update() before thawing
+		if (_window->frozenLingoStateCount() > count)
+			return;
+	}
+
+	// Attempt to thaw and continue any frozen execution after startMovie and enterFrame
+	while (uint32 count = _window->frozenLingoStateCount()) {
+		_window->thawLingoState();
+		g_lingo->switchStateFromWindow();
+		g_lingo->execute();
+		if (_window->frozenLingoStateCount() >= count) {
+			debugC(3, kDebugLingoExec, "State froze again mid-thaw, interrupting");
+			return;
+		}
+	}
+
+	if (!_vm->_playbackPaused) {
 		if ((_vm->getVersion() >= 300 && _vm->getVersion() < 400) || _movie->_allowOutdatedLingo) {
 			// Movie version of enterFrame, for D3 only. The D3 Interactivity Manual claims
 			// "This handler executes before anything else when the playback head moves."
@@ -498,24 +515,13 @@ void Score::update() {
 		if (_movie->_timeOutPlay)
 			_movie->_lastTimeOut = _vm->getMacTicks();
 	}
+
 	// TODO Director 6 - another order
 
 	// TODO: Figure out when exactly timeout events are processed
 	if (_vm->getMacTicks() - _movie->_lastTimeOut >= _movie->_timeOutLength) {
 		_movie->processEvent(kEventTimeout);
 		_movie->_lastTimeOut = _vm->getMacTicks();
-	}
-
-	// If we have more call stack frames than we started with, then we have a newly
-	// added frozen context. We'll deal with that later.
-	if (_window->_callstack.size() == initialCallStackSize) {
-		// We may have a frozen Lingo context from func_goto.
-		// Now that we've entered a new frame, let's unfreeze that context.
-		if (g_lingo->_freezeContext) {
-			debugC(1, kDebugLingoExec, "Score::update(): Unfreezing Lingo context");
-			g_lingo->_freezeContext = false;
-			g_lingo->execute();
-		}
 	}
 
 }
@@ -1376,7 +1382,7 @@ void Score::loadActions(Common::SeekableReadStreamEndian &stream) {
 }
 
 Common::String Score::formatChannelInfo() {
-	Frame &frame = *_frames[_currentFrame]; 
+	Frame &frame = *_frames[_currentFrame];
 	Common::String result;
 	result += Common::String::format("TMPO:   tempo: %d, skipFrameFlag: %d, blend: %d\n",
 		frame._tempo, frame._skipFrameFlag, frame._blend);

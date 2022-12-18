@@ -20,9 +20,13 @@
  */
 
 #include "common/translation.h"
+#include "graphics/thumbnail.h"
+#include "graphics/scaler.h"
+
 
 #include "freescape/freescape.h"
 #include "freescape/detection.h"
+
 
 static const ADExtraGuiOptionsMap optionsList[] = {
 	{
@@ -37,11 +41,44 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		}
 	},
 	{
+		GAMEOPTION_EXTENDED_TIMER,
+		{
+			_s("Extended timer"),
+			_s("Start the game timer at 99:59:59"),
+			"extended_timer",
+			false,
+			0,
+			0
+		}
+	},
+	{
 		GAMEOPTION_AUTOMATIC_DRILLING,
 		{
 			_s("Automatic drilling"),
 			_s("Allow to succefully drill in any part of the area in Driller"),
 			"automatic_drilling",
+			false,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_DISABLE_DEMO_MODE,
+		{
+			_s("Disable demo mode"),
+			_s("Never activate demo mode"),
+			"disable_demo_mode",
+			false,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_DISABLE_SENSORS,
+		{
+			_s("Disable sensors"),
+			_s("Sensors will not shoot the player"),
+			"disable_sensors",
 			false,
 			0,
 			0
@@ -61,6 +98,7 @@ public:
 	}
 
 	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
+	void getSavegameThumbnail(Graphics::Surface &thumb) override;
 };
 
 Common::Error FreescapeMetaEngine::createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const {
@@ -76,6 +114,17 @@ Common::Error FreescapeMetaEngine::createInstance(OSystem *syst, Engine **engine
 		*engine = new Freescape::FreescapeEngine(syst, gd);
 
 	return Common::kNoError;
+}
+
+void FreescapeMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
+	Freescape::FreescapeEngine *engine = (Freescape::FreescapeEngine *)g_engine;
+	assert(engine->_savedScreen);
+	Graphics::Surface *scaledSavedScreen = scale(*engine->_savedScreen, kThumbnailWidth, kThumbnailHeight2);
+	assert(scaledSavedScreen);
+	thumb.copyFrom(*scaledSavedScreen);
+
+	scaledSavedScreen->free();
+	delete scaledSavedScreen;
 }
 
 namespace Freescape {

@@ -22,12 +22,12 @@
 #ifndef ENGINES_METAENGINE_H
 #define ENGINES_METAENGINE_H
 
-#include "common/achievements.h"
 #include "common/scummsys.h"
 #include "common/error.h"
 #include "common/array.h"
 #include "common/gui_options.h"
 
+#include "engines/achievements.h"
 #include "engines/game.h"
 #include "engines/savestate.h"
 
@@ -163,11 +163,14 @@ public:
 	 */
 	virtual DetectedGames detectGames(const Common::FSList &fslist, uint32 skipADFlags = 0, bool skipIncomplete = false) = 0;
 
+	/** Returns the number of bytes used for MD5-based detection, or 0 if not supported. */
+	virtual uint getMD5Bytes() const = 0;
+
 	/**
 	 * The default version of this method will just parse the options string from
 	 * the config manager. However it also allows the meta engine to post process
 	 * result and add/remove other options as needed.
-	 * 
+	 *
 	 * @param optionsString		Options string that from the config manager.
 	 * @param domain			Domain of the current target.
 	 *
@@ -176,7 +179,7 @@ public:
 	 */
 	virtual Common::String parseAndCustomizeGuiOptions(const Common::String &optionsString, const Common::String &domain) const {
 		return parseGameGUIOptions(optionsString);
-	} 
+	}
 
 	/**
 	 * Return a list of engine specified debug channels
@@ -606,6 +609,9 @@ public:
 
 	/** Upgrade a target to the current configuration format. */
 	void upgradeTargetIfNecessary(const Common::String &target) const;
+
+	/** Generate valid, non-repeated domainName for game*/
+	Common::String generateUniqueDomain(const Common::String gameId);
 
 private:
 	/** Find a game across all loaded plugins. */

@@ -42,6 +42,7 @@ Renderer::Renderer(int screenW, int screenH, Common::RenderMode renderMode) {
 	_keyColor = -1;
 	_palette = nullptr;
 	_colorMap = nullptr;
+	_colorRemaps = nullptr;
 	_renderMode = renderMode;
 	_isAccelerated = false;
 }
@@ -54,7 +55,15 @@ void Renderer::readFromPalette(uint8 index, uint8 &r, uint8 &g, uint8 &b) {
 	b = _palette[3 * index + 2];
 }
 
+void Renderer::setColorRemaps(ColorReMap *colorRemaps) {
+	_colorRemaps = colorRemaps;
+}
+
 bool Renderer::getRGBAt(uint8 index, uint8 &r, uint8 &g, uint8 &b) {
+
+	if (_colorRemaps && _colorRemaps->contains(index)) {
+		index = (*_colorRemaps)[index];
+	}
 
 	if (index == _keyColor)
 		return false;
@@ -76,7 +85,6 @@ bool Renderer::getRGBAt(uint8 index, uint8 &r, uint8 &g, uint8 &b) {
 	for (int i = 0; i < 4; i++) {
 		byte be = *entry;
 		if (be != 0 && be != 0xff) {
-			// TODO: fix colors for non-DOS releases
 			readFromPalette(index, r, g, b);
 			return true;
 		}
@@ -90,6 +98,17 @@ bool Renderer::getRGBAt(uint8 index, uint8 &r, uint8 &g, uint8 &b) {
 	assert(color < 16);
 	readFromPalette(color, r, g, b);
 	return true;
+}
+
+void Renderer::flipVertical(Graphics::Surface *s) {
+	for (int y = 0; y < s->h / 2; ++y) {
+		// Flip the lines
+		byte *line1P = (byte *)s->getBasePtr(0, y);
+		byte *line2P = (byte *)s->getBasePtr(0, s->h - y - 1);
+
+		for (int x = 0; x < s->pitch; ++x)
+			SWAP(line1P[x], line2P[x]);
+	}
 }
 
 void Renderer::convertImageFormatIfNecessary(Graphics::Surface *surface) {
@@ -444,11 +463,6 @@ Graphics::RendererType determinateRenderType() {
 						Graphics::kRendererTypeTinyGL |
 #endif
 						0);
-
-	#if defined(USE_TINYGL) // Prefer TinyGL until OpenGL is good enough
-	if (desiredRendererType == Graphics::kRendererTypeDefault)
-		matchingRendererType = desiredRendererType = Graphics::kRendererTypeTinyGL;
-	#endif
 
 	if (matchingRendererType != desiredRendererType && desiredRendererType != Graphics::kRendererTypeDefault) {
 		// Display a warning if unable to use the desired renderer

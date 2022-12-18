@@ -79,11 +79,6 @@ void TinyGLRenderer::setViewport(const Common::Rect &rect) {
 	tglViewport(rect.left, g_system->getHeight() - rect.bottom, rect.width(), rect.height());
 }
 
-void TinyGLRenderer::clear() {
-	tglClear(TGL_COLOR_BUFFER_BIT | TGL_DEPTH_BUFFER_BIT);
-	tglColor3f(1.0f, 1.0f, 1.0f);
-}
-
 void TinyGLRenderer::drawTexturedRect2D(const Common::Rect &screenRect, const Common::Rect &textureRect, Texture *texture) {
 	const float sLeft = screenRect.left;
 	const float sTop = screenRect.top;
@@ -122,7 +117,19 @@ void TinyGLRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vecto
 	tglTranslatef(-pos.x(), -pos.y(), -pos.z());
 }
 
-void TinyGLRenderer::renderShoot(byte color, const Common::Point position, const Common::Rect viewArea) {
+void TinyGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d player, const Common::Rect viewArea) {
+	tglColor3ub(255, 255, 255);
+	polygonOffset(true);
+	tglEnableClientState(TGL_VERTEX_ARRAY);
+	copyToVertexArray(0, player);
+	copyToVertexArray(1, sensor);
+	tglVertexPointer(3, TGL_FLOAT, 0, _verts);
+	tglDrawArrays(TGL_LINES, 0, 2);
+	tglDisableClientState(TGL_VERTEX_ARRAY);
+	polygonOffset(false);
+}
+
+void TinyGLRenderer::renderPlayerShoot(byte color, const Common::Point position, const Common::Rect viewArea) {
 	uint8 r, g, b;
 	readFromPalette(color, r, g, b); // TODO: should use opposite color
 
@@ -141,14 +148,14 @@ void TinyGLRenderer::renderShoot(byte color, const Common::Point position, const
 	tglGetIntegerv(TGL_VIEWPORT, viewPort);
 
 	tglEnableClientState(TGL_VERTEX_ARRAY);
-	copyToVertexArray(0, Math::Vector3d(viewArea.left, viewArea.height() + viewArea.top - 1, 0));
+	copyToVertexArray(0, Math::Vector3d(viewArea.left, viewArea.height() + viewArea.top, 0));
 	copyToVertexArray(1, Math::Vector3d(position.x, position.y, 0));
-	copyToVertexArray(2, Math::Vector3d(viewArea.left, viewArea.height() + viewArea.top - 1, 0));
+	copyToVertexArray(2, Math::Vector3d(viewArea.left, viewArea.height() + viewArea.top + 3, 0));
 	copyToVertexArray(3, Math::Vector3d(position.x, position.y, 0));
 
-	copyToVertexArray(4, Math::Vector3d(viewArea.right, viewArea.width() - viewArea.bottom, 0));
+	copyToVertexArray(4, Math::Vector3d(viewArea.right, viewArea.height() + viewArea.top, 0));
 	copyToVertexArray(5, Math::Vector3d(position.x, position.y, 0));
-	copyToVertexArray(6, Math::Vector3d(viewArea.right, viewArea.width() - viewArea.bottom, 0));
+	copyToVertexArray(6, Math::Vector3d(viewArea.right, viewArea.height() + viewArea.top + 3, 0));
 	copyToVertexArray(7, Math::Vector3d(position.x, position.y, 0));
 
 	tglVertexPointer(3, TGL_FLOAT, 0, _verts);
@@ -206,9 +213,14 @@ void TinyGLRenderer::useColor(uint8 r, uint8 g, uint8 b) {
 	tglColor3ub(r, g, b);
 }
 
-void TinyGLRenderer::setSkyColor(uint8 color) {
+void TinyGLRenderer::clear(uint8 color) {
 	uint8 r, g, b;
-	assert(getRGBAt(color, r, g, b)); // TODO: move check inside this function
+
+	if (_colorRemaps && _colorRemaps->contains(color)) {
+		color = (*_colorRemaps)[color];
+	}
+
+	readFromPalette(color, r, g, b);
 	tglClearColor(r / 255., g / 255., b / 255., 1.0);
 	tglClear(TGL_COLOR_BUFFER_BIT | TGL_DEPTH_BUFFER_BIT);
 }
@@ -241,6 +253,17 @@ void TinyGLRenderer::flipBuffer() {
 									   it.left, it.top, it.width(), it.height());
 		}
 	}
+}
+
+Graphics::Surface *TinyGLRenderer::getScreenshot() {
+	Graphics::Surface glBuffer;
+	TinyGL::getSurfaceRef(glBuffer);
+
+	Graphics::Surface *s = new Graphics::Surface();
+	s->create(_screenW, _screenH, TinyGLTexture::getRGBAPixelFormat());
+	s->copyFrom(glBuffer);
+
+	return s;
 }
 
 } // End of namespace Freescape

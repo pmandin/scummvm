@@ -68,17 +68,6 @@ const int BASE_FLAGS = ADGF_NO_FLAGS;
 			version                                                                                    \
 	}
 
-#define GROOVIEGAME3FILES(id, extra, f1, x1, s1, f2, x2, s2, f3, x3, s3, language, platform, flags, guiOptions, version) \
-	{                                                                                                  \
-		{                                                                                              \
-			id, extra,                                                                                 \
-			AD_ENTRY3s(f1, x1, s1, f2, x2, s2, f3, x3, s3),                                            \
-			language, platform, (flags),                                                               \
-			(guiOptions)                                                                               \
-		},                                                                                             \
-			version                                                                                    \
-	}
-
 
 #define T7GENTRY(extra, f1, x1, s1, f2, x2, s2, language, platform, flags) \
 	GROOVIEGAME("t7g", extra, f1, x1, s1, f2, x2, s2, language, platform, flags, GUIO9(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_NOASPECT, GUIO_NOSFX, GAMEOPTION_T7G_FAST_MOVIE_SPEED, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI, GAMEOPTION_SPEEDRUN), kGroovieT7G)
@@ -87,8 +76,7 @@ const int BASE_FLAGS = ADGF_NO_FLAGS;
 	GROOVIEGAME("t7g", extra, f1, x1, s1, f2, x2, s2, language, platform, flags, (GUIO_NOMIDI GUIO_NOASPECT GUIO_NOSFX GAMEOPTION_T7G_FAST_MOVIE_SPEED GAMEOPTION_SPEEDRUN guiOptions), kGroovieT7G)
 
 #define T11HENTRY(extra, f1, x1, s1, f2, x2, s2, language, platform, flags) \
-	GROOVIEGAME3FILES("11h", extra, f1, x1, s1, f2, x2, s2, "GJD.GJD", NULL, -1, language, platform, flags, GUIO7(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM GUIO_NOASPECT, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI, GAMEOPTION_FINAL_HOUR, GAMEOPTION_SPEEDRUN), kGroovieT11H), \
-	GROOVIEGAME3FILES("11hsu", extra, "suscript.grv", NULL, -1, f1, x1, s1, f2, x2, s2, language, platform, flags, GUIO6(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM GUIO_NOASPECT, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI, GAMEOPTION_SPEEDRUN), kGroovieT11H)
+	GROOVIEGAME("11h", extra, f1, x1, s1, f2, x2, s2, language, platform, flags, GUIO7(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM GUIO_NOASPECT, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI, GAMEOPTION_FINAL_HOUR, GAMEOPTION_SPEEDRUN), kGroovieT11H)
 
 #define T11HDEMOENTRY(extra, f1, x1, s1, f2, x2, s2, language, platform, flags) \
 	GROOVIEGAME("11h", extra, f1, x1, s1, f2, x2, s2, language, platform, flags | ADGF_DEMO, GUIO6(GUIO_NOLAUNCHLOAD, GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM, GUIO_NOASPECT, GAMEOPTION_SPEEDRUN), kGroovieT11H)
@@ -110,6 +98,12 @@ const int BASE_FLAGS = ADGF_NO_FLAGS;
 
 #define TLCDVDENTRY(f1, x1, s1, f2, x2, s2, language, platform) \
 	GROOVIEGAME("tlc", _s("Missing game code"), f1, x1, s1, f2, x2, s2, language, platform, ADGF_UNSUPPORTED | ADGF_DVD, GUIO3(GUIO_NOMIDI, GUIO_NOASPECT, GAMEOPTION_SPEEDRUN), kGroovieTLC)
+
+#define TLCDEMOENTRY(f1, x1, s1, f2, x2, s2, language, platform, flags) \
+	GROOVIEGAME("tlc", "Demo", f1, x1, s1, f2, x2, s2, language, platform, flags | ADGF_DEMO, GUIO3(GUIO_NOMIDI, GUIO_NOASPECT, GUIO_NOLAUNCHLOAD), kGroovieTLC)
+
+#define TLCTRAILERENTRY(f1, x1, s1, f2, x2, s2, language, platform, flags) \
+	GROOVIEGAME("tlc", "Trailer", f1, x1, s1, f2, x2, s2, language, platform, flags | ADGF_DEMO, GUIO3(GUIO_NOMIDI, GUIO_NOASPECT, GUIO_NOLAUNCHLOAD), kGroovieTLC)
 
 // clang-format off
 static const GroovieGameDescription gameDescriptions[] = {
@@ -163,6 +157,11 @@ static const GroovieGameDescription gameDescriptions[] = {
 	// The 11th Hour Mac English (Installed)
 	T11HENTRY("Installed", "script.grv", "bdb9a783d4debe477ac3856adc454c17", 62447,
 					"el01.mov", "70f42dfc25b1488a08011dc45bb5145d", 6039, EN_ANY, kPlatformMacintosh, BASE_FLAGS),
+
+	// The 11th Hour: Souped Up
+	GROOVIEGAME("11hsu", "", "suscript.grv", NULL, -1,
+					"introd1.gjd", "9ec3e727182fbe40ee23e786721180eb", 6437077, EN_ANY, kPlatformWindows, BASE_FLAGS,
+					GUIO6(GUIO_MIDIADLIB, GUIO_MIDIMT32, GUIO_MIDIGM GUIO_NOASPECT, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_EASIER_AI, GAMEOPTION_SPEEDRUN), kGroovieT11H),
 
 /*==== The 11th Hour Demos ====*/
 	// The 11th Hour DOS Interactive Demo English https://archive.org/details/11th_Hour_demo
@@ -251,28 +250,19 @@ static const GroovieGameDescription gameDescriptions[] = {
 
 	// Tender Loving Care PC Demo German (CD-ROM 1998-03-23)
 	// https://archive.org/details/Tender_Loving_Care_demo
-	{
-		{
-			"tlc", "Demo",
-			AD_ENTRY2s("tlcmain.grv", "6ec818f595eedca6570280af0c681642", 17361, "tlcnav.gjd", nullptr, -1),
-			DE_DEU, kPlatformWindows, ADGF_DEMO,
-			GUIO3(GUIO_NOMIDI, GUIO_NOASPECT, GUIO_NOLAUNCHLOAD)
-		},
-		kGroovieTLC
-	},
+	TLCDEMOENTRY("tlcmain.grv", "6ec818f595eedca6570280af0c681642", 17361, "tlcnav.gjd", nullptr, -1, DE_DEU, kPlatformWindows, BASE_FLAGS),
 
 	// Tender Loving Care PC Trailer (CD-ROM 1998-03-23)
 	// On the same disc with the above German demo
-	{
-		{
-			"tlc", "Trailer",
-			AD_ENTRY2s("preview.grv", "d95401509a0ef251e8c340737edf728c", 19,
-							"drama1.gjd", "2a4ca274d832675248e51baf7e537bb3", 390727225),
-			UNK_LANG, kPlatformWindows, ADGF_DEMO,
-			GUIO3(GUIO_NOMIDI, GUIO_NOASPECT, GUIO_NOLAUNCHLOAD)
-		},
-		kGroovieTLC
-	},
+	TLCTRAILERENTRY("preview.grv", "d95401509a0ef251e8c340737edf728c", 19, "drama1.gjd", "2a4ca274d832675248e51baf7e537bb3", 390727225, UNK_LANG, kPlatformWindows, BASE_FLAGS),
+
+	// Tender Loving Care PC Trailer (CD-ROM 1998-05-14)
+	// Included on the English version of the full game. The preview.grv
+	// file is also on the Englissh DVD (1998-09-10), but I do not know if
+	// it actually has the trailer or not. Since the trailer does not
+	// contain any spoken language, it's possible that this entry can be
+	// merged with the German one above.
+	TLCTRAILERENTRY("preview.grv", "d95401509a0ef251e8c340737edf728c", 19, "drama1.gjd", "0ac95ecdd0c8388199bf453de9f7b527", 396742303, UNK_LANG, kPlatformWindows, BASE_FLAGS),
 
 	{AD_TABLE_END_MARKER, kGroovieT7G}
 };

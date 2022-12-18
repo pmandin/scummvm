@@ -23,9 +23,10 @@
 #include "common/file.h"
 #include "common/macresman.h"
 #include "common/memstream.h"
-#include "common/stuffit.h"
-#include "common/winexe.h"
-#include "common/zlib.h"
+#include "common/compression/stuffit.h"
+#include "common/compression/vise.h"
+#include "common/formats/winexe.h"
+#include "common/compression/zlib.h"
 
 #include "graphics/maccursor.h"
 #include "graphics/wincursor.h"
@@ -220,16 +221,9 @@ void ObsidianGameDataHandler::unpackMacRetailInstaller(Common::Array<Common::Sha
 		{"RSGKit.rPP", MKTAG('M', 'F', 'c', 'o'), MKTAG('M', 'f', 'M', 'f')},
 	};
 
-	Common::SharedPtr<Common::MacResManager> installerResMan(new Common::MacResManager());
-	persistentResources.push_back(PersistentResource<Common::MacResManager>::wrap(installerResMan));
-
-	if (!installerResMan->open("Obsidian Installer"))
-		error("Failed to open Obsidian Installer");
-
-	if (!installerResMan->hasDataFork())
+	Common::SeekableReadStream *installerDataForkStream = Common::MacResManager::openFileOrDataFork("Obsidian Installer");
+	if (!installerDataForkStream)
 		error("Obsidian Installer has no data fork");
-
-	Common::SeekableReadStream *installerDataForkStream = installerResMan->getDataFork();
 
 	// Not counted/persisted because the StuffIt archive owns the stream.  It will also delete it if createStuffItArchive fails.
 	_installerArchive.reset(Common::createStuffItArchive(installerDataForkStream));
@@ -237,10 +231,8 @@ void ObsidianGameDataHandler::unpackMacRetailInstaller(Common::Array<Common::Sha
 
 	persistentResources.push_back(PersistentResource<Common::Archive>::wrap(_installerArchive));
 
-	if (!_installerArchive) {
-
+	if (!_installerArchive)
 		error("Failed to open Obsidian Installer archive");
-	}
 
 	debug(1, "Unpacking resource files...");
 
@@ -414,258 +406,8 @@ public:
 	void unpackAdditionalFiles(Common::Array<Common::SharedPtr<ProjectPersistentResource> > &persistentResources, Common::Array<FileIdentification> &files) override;
 
 private:
-	struct VISE3FileDesc {
-		VISE3FileDesc();
-
-		char type[4];
-		char creator[4];
-		uint32 compressedDataSize;
-		uint32 uncompressedDataSize;
-		uint32 compressedResSize;
-		uint32 uncompressedResSize;
-		uint32 positionInArchive;
-
-		Common::String fileName;
-	};
-
-	class VISE3ArchiveMember : public Common::ArchiveMember {
-	public:
-		VISE3ArchiveMember(Common::SeekableReadStream *archiveStream, const VISE3FileDesc *fileDesc, bool isResFork);
-
-		Common::SeekableReadStream *createReadStream() const override;
-		Common::String getName() const override;
-
-	private:
-		Common::SeekableReadStream *_archiveStream;
-		const VISE3FileDesc *_fileDesc;
-		bool _isResFork;
-	};
-
-	class VISE3Archive : public Common::Archive {
-	public:
-		explicit VISE3Archive(Common::SeekableReadStream *archiveStream);
-
-		const VISE3FileDesc *getFileDesc(const Common::Path &path) const;
-
-		bool hasFile(const Common::Path &path) const override;
-		int listMembers(Common::ArchiveMemberList &list) const override;
-		const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
-		Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
-
-	private:
-		bool getFileDescIndex(const Common::Path &path, uint &anOutIndex, bool &anOutIsResFork) const;
-
-		Common::SeekableReadStream *_archiveStream;
-		Common::Array<VISE3FileDesc> _fileDescs;
-	};
-
 	bool _isMac;
 };
-
-SPQRGameDataHandler::VISE3ArchiveMember::VISE3ArchiveMember(Common::SeekableReadStream *archiveStream, const SPQRGameDataHandler::VISE3FileDesc *fileDesc, bool isResFork) : _archiveStream(archiveStream), _fileDesc(fileDesc), _isResFork(isResFork) {
-}
-
-Common::SeekableReadStream *SPQRGameDataHandler::VISE3ArchiveMember::createReadStream() const {
-	static const uint8 vl3DeobfuscationTable[] = {
-		0x6a, 0xb7, 0x36, 0xec, 0x15, 0xd9, 0xc8, 0x73, 0xe8, 0x38, 0x9a, 0xdf, 0x21, 0x25, 0xd0, 0xcc,
-		0xfd, 0xdc, 0x16, 0xd7, 0xe3, 0x43, 0x05, 0xc5, 0x8f, 0x48, 0xda, 0xf2, 0x3f, 0x10, 0x23, 0x6c,
-		0x77, 0x7c, 0xf9, 0xa0, 0xa3, 0xe9, 0xed, 0x46, 0x8b, 0xd8, 0xac, 0x54, 0xce, 0x2d, 0x19, 0x5e,
-		0x6d, 0x7d, 0x87, 0x5d, 0xfa, 0x5b, 0x9b, 0xe0, 0xc7, 0xee, 0x9f, 0x52, 0xa9, 0xb9, 0x0a, 0xd1,
-		0xfe, 0x78, 0x76, 0x4a, 0x3d, 0x44, 0x5a, 0x96, 0x90, 0x1f, 0x26, 0x9d, 0x58, 0x1b, 0x8e, 0x57,
-		0x59, 0xc3, 0x0b, 0x6b, 0xfc, 0x1d, 0xe6, 0xa2, 0x7f, 0x92, 0x4f, 0x40, 0xb4, 0x06, 0x72, 0x4d,
-		0xf4, 0x34, 0xaa, 0xd2, 0x49, 0xad, 0xef, 0x22, 0x1a, 0xb5, 0xba, 0xbf, 0x29, 0x68, 0x89, 0x93,
-		0x3e, 0x32, 0x04, 0xf5, 0xde, 0xe1, 0x6f, 0xfb, 0x67, 0xe4, 0x7e, 0x08, 0xaf, 0xf0, 0xab, 0x41,
-		0x82, 0xea, 0x50, 0x0f, 0x2a, 0xc6, 0x35, 0xb3, 0xa8, 0xca, 0xe5, 0x4c, 0x45, 0x8a, 0x97, 0xae,
-		0xd6, 0x66, 0x27, 0x53, 0xc9, 0x1c, 0x3c, 0x03, 0x99, 0xc1, 0x09, 0x2e, 0x69, 0x37, 0x8d, 0x2f,
-		0x60, 0xc2, 0xa6, 0x18, 0x4e, 0x7a, 0xb8, 0xcf, 0xa7, 0x3a, 0x17, 0xd5, 0x9e, 0xf1, 0x84, 0x51,
-		0x0d, 0xa4, 0x64, 0xc4, 0x1e, 0xb1, 0x30, 0x98, 0xbb, 0x79, 0x01, 0xf6, 0x62, 0x0e, 0xb2, 0x63,
-		0x91, 0xcb, 0xff, 0x80, 0x71, 0xe7, 0xd4, 0x00, 0xdb, 0x75, 0x2c, 0xbd, 0x39, 0x33, 0x94, 0xbc,
-		0x8c, 0x3b, 0xb6, 0x20, 0x85, 0x24, 0x88, 0x2b, 0x70, 0x83, 0x6e, 0x7b, 0x9c, 0xbe, 0x14, 0x47,
-		0x65, 0x4b, 0x56, 0x81, 0xf8, 0x12, 0x11, 0x28, 0xeb, 0x55, 0x74, 0xa1, 0x31, 0xf7, 0xb0, 0x13,
-		0x86, 0xdd, 0x5f, 0x42, 0xd3, 0x02, 0x61, 0x95, 0x0c, 0x5c, 0xa5, 0xcd, 0xc0, 0x07, 0xe2, 0xf3,
-	};
-
-	uint32 uncompressedSize = _isResFork ? _fileDesc->uncompressedResSize : _fileDesc->uncompressedDataSize;
-	uint32 compressedSize = _isResFork ? _fileDesc->compressedResSize : _fileDesc->compressedDataSize;
-	uint32 filePosition = _fileDesc->positionInArchive;
-
-	if (_isResFork)
-		filePosition += _fileDesc->compressedDataSize;
-
-	if (uncompressedSize == 0)
-		return nullptr;
-
-	Common::Array<byte> compressedData;
-	compressedData.resize(compressedSize);
-
-	_archiveStream->seek(filePosition, SEEK_SET);
-	if (_archiveStream->read(&compressedData[0], compressedSize) != compressedSize)
-		return nullptr;
-
-	// Undo byte swapping
-	for (uint i = 1; i < compressedSize; i += 2) {
-		byte temp = compressedData[i];
-		compressedData[i] = compressedData[i - 1];
-		compressedData[i - 1] = temp;
-	}
-
-	// Undo obfuscation
-	for (byte &b : compressedData)
-		b = vl3DeobfuscationTable[b];
-
-	byte *decompressedData = static_cast<byte *>(malloc(uncompressedSize));
-	if (!decompressedData)
-		return nullptr;
-
-	if (!Common::inflateZlibHeaderless(decompressedData, uncompressedSize, &compressedData[0], compressedSize)) {
-		free(decompressedData);
-		return nullptr;
-	}
-
-	return new Common::MemoryReadStream(decompressedData, uncompressedSize, DisposeAfterUse::YES);
-}
-
-Common::String SPQRGameDataHandler::VISE3ArchiveMember::getName() const {
-	if (_isResFork)
-		return _fileDesc->fileName + ".rsrc";
-	else
-		return _fileDesc->fileName;
-}
-
-SPQRGameDataHandler::VISE3FileDesc::VISE3FileDesc() : type{ 0, 0, 0, 0 }, creator{ 0, 0, 0, 0 }, compressedDataSize(0), uncompressedDataSize(0), compressedResSize(0), uncompressedResSize(0), positionInArchive(0) {
-}
-
-SPQRGameDataHandler::VISE3Archive::VISE3Archive(Common::SeekableReadStream *archiveStream) : _archiveStream(archiveStream) {
-	uint8 vl3Header[44];
-	if (archiveStream->read(vl3Header, 44) != 44 || memcmp(vl3Header, "SVCT", 4))
-		error("Failed to read VISE 3 header");
-
-	uint32 catalogPosition = READ_BE_UINT32(vl3Header + 36);
-
-	if (!archiveStream->seek(catalogPosition))
-		error("Failed to seek to VISE 3 catalog");
-
-	uint8 vl3Catalog[20];
-	if (archiveStream->read(vl3Catalog, 20) != 20 || memcmp(vl3Catalog, "CVCT", 4))
-		error("Failed to read VISE 3 catalog");
-
-	uint16 numEntries = READ_BE_UINT16(vl3Catalog + 16);
-
-	for (uint16 i = 0; i < numEntries; i++) {
-		uint8 entryMagic[4];
-		if (archiveStream->read(entryMagic, 4) != 4 || memcmp(entryMagic + 1, "VCT", 3))
-			error("Failed to read VISE 3 catalog item");
-
-		if (entryMagic[0] == 'D') {
-			uint8 directoryData[78];
-			if (archiveStream->read(directoryData, 78) != 78)
-				error("Failed to read VISE 3 directory");
-
-			uint8 nameLength = directoryData[76];
-			archiveStream->seek(nameLength, SEEK_CUR);
-		} else if (entryMagic[0] == 'F') {
-			uint8 fileData[120];
-			if (archiveStream->read(fileData, 120) != 120)
-				error("Failed to read VISE 3 file");
-
-			VISE3FileDesc desc;
-			memcpy(desc.type, fileData + 40, 4);
-			memcpy(desc.creator, fileData + 44, 4);
-			desc.compressedDataSize = READ_BE_UINT32(fileData + 64);
-			desc.uncompressedDataSize = READ_BE_UINT32(fileData + 68);
-			desc.compressedResSize = READ_BE_UINT32(fileData + 72);
-			desc.uncompressedResSize = READ_BE_UINT32(fileData + 76);
-			desc.positionInArchive = READ_BE_UINT32(fileData + 96);
-
-			uint8 nameLength = fileData[118];
-
-			if (nameLength > 0) {
-				char fileNameChars[256];
-				if (archiveStream->read(fileNameChars, nameLength) != nameLength)
-					error("Failed to read VISE 3 file name");
-				desc.fileName = Common::String(fileNameChars, nameLength);
-			}
-
-			_fileDescs.push_back(desc);
-		} else {
-			error("Unknown VISE 3 catalog entry item type");
-		}
-	}
-}
-
-const SPQRGameDataHandler::VISE3FileDesc *SPQRGameDataHandler::VISE3Archive::getFileDesc(const Common::Path &path) const {
-	Common::String convertedPath = path.toString(':');
-	for (const VISE3FileDesc &desc : _fileDescs) {
-		if (desc.fileName == convertedPath)
-			return &desc;
-	}
-
-	return nullptr;
-}
-
-bool SPQRGameDataHandler::VISE3Archive::hasFile(const Common::Path &path) const {
-	uint index = 0;
-	bool isResFork = false;
-	return getFileDescIndex(path, index, isResFork);
-}
-
-int SPQRGameDataHandler::VISE3Archive::listMembers(Common::ArchiveMemberList &list) const {
-	int numMembers = 0;
-	for (uint fileIndex = 0; fileIndex < _fileDescs.size(); fileIndex++) {
-		const VISE3FileDesc &desc = _fileDescs[fileIndex];
-
-		if (desc.uncompressedDataSize) {
-			list.push_back(Common::ArchiveMemberPtr(new VISE3ArchiveMember(_archiveStream, &desc, false)));
-			numMembers++;
-		}
-		if (desc.uncompressedResSize) {
-			list.push_back(Common::ArchiveMemberPtr(new VISE3ArchiveMember(_archiveStream, &desc, true)));
-			numMembers++;
-		}
-	}
-	return numMembers;
-}
-
-const Common::ArchiveMemberPtr SPQRGameDataHandler::VISE3Archive::getMember(const Common::Path &path) const {
-	uint descIndex = 0;
-	bool isResFork = false;
-	if (!getFileDescIndex(path, descIndex, isResFork))
-		return nullptr;
-
-	return Common::ArchiveMemberPtr(new VISE3ArchiveMember(_archiveStream, &_fileDescs[descIndex], isResFork));
-}
-
-Common::SeekableReadStream *SPQRGameDataHandler::VISE3Archive::createReadStreamForMember(const Common::Path &path) const {
-	Common::ArchiveMemberPtr archiveMember = getMember(path);
-	if (!archiveMember)
-		return nullptr;
-
-	return archiveMember->createReadStream();
-}
-
-bool SPQRGameDataHandler::VISE3Archive::getFileDescIndex(const Common::Path &path, uint &anOutIndex, bool &anOutIsResFork) const {
-	Common::String convertedPath = path.toString(':');
-	bool isResFork = false;
-	if (convertedPath.hasSuffix(".rsrc")) {
-		isResFork = true;
-		convertedPath = convertedPath.substr(0, convertedPath.size() - 5);
-	}
-
-	for (uint descIndex = 0; descIndex < _fileDescs.size(); descIndex++) {
-		const VISE3FileDesc &desc = _fileDescs[descIndex];
-
-		if (desc.fileName == convertedPath) {
-			if ((isResFork ? desc.uncompressedResSize : desc.uncompressedDataSize) == 0)
-				return false;
-
-			anOutIsResFork = isResFork;
-			anOutIndex = descIndex;
-			return true;
-		}
-	}
-
-	return false;
-}
 
 SPQRGameDataHandler::SPQRGameDataHandler(const Game &game, const MTropolisGameDescription &gameDesc) : GameDataHandler(game, gameDesc), _isMac(gameDesc.desc.platform == Common::kPlatformMacintosh) {
 }
@@ -681,55 +423,63 @@ void SPQRGameDataHandler::addPlugIns(ProjectDescription &projectDesc, const Comm
 void SPQRGameDataHandler::unpackAdditionalFiles(Common::Array<Common::SharedPtr<ProjectPersistentResource> > &persistentResources, Common::Array<FileIdentification> &files) {
 	if (_isMac) {
 		const MacVISE3InstallerUnpackRequest unpackRequests[] = {
-			{"Basic.rPP", false, true, MTFT_EXTENSION},
-			{"Extras.rPP", false, true, MTFT_EXTENSION},
-			{"mCursors.cPP", false, true, MTFT_EXTENSION},
-			{"SPQR PPC Start", false, true, MTFT_PLAYER},
-			{"Data File SPQR", true, false, MTFT_MAIN},
+			{"SPQR:Resource:Basic.rPP", false, true, MTFT_EXTENSION},
+			{"SPQR:Resource:Extras.rPP", false, true, MTFT_EXTENSION},
+			{"SPQR:Resource:mCursors.cPP", false, true, MTFT_EXTENSION},
+			{"SPQR:SPQR PPC Start", false, true, MTFT_PLAYER},
+			{"SPQR:Data File SPQR", true, false, MTFT_MAIN},
 		};
 
-		Common::SharedPtr<Common::MacResManager> installerResMan(new Common::MacResManager());
-
-		if (!installerResMan->open("Install.vct"))
+		Common::SharedPtr<Common::SeekableReadStream> installerDataForkStream(Common::MacResManager::openFileOrDataFork("Install.vct"));
+		if (!installerDataForkStream)
 			error("Failed to open SPQR installer");
 
-		if (!installerResMan->hasDataFork())
-			error("SPQR installer has no data fork");
-
-		Common::SharedPtr<Common::SeekableReadStream> installerDataForkStream(installerResMan->getDataFork());
-
-		VISE3Archive archive(installerDataForkStream.get());
+		Common::ScopedPtr<Common::Archive> archive(Common::createMacVISEArchive(installerDataForkStream.get()));
 
 		debug(1, "Unpacking files...");
 
 		for (const MacVISE3InstallerUnpackRequest &request : unpackRequests) {
-			const VISE3FileDesc *fileDesc = archive.getFileDesc(request.fileName);
-
-			if (!fileDesc)
-				error("Couldn't find file '%s' in VISE 3 archive", request.fileName);
+			Common::MacFinderInfo finfo;
+			if (!Common::MacResManager::getFileFinderInfo(request.fileName, *archive, finfo))
+				error("Couldn't get Finder info for file '%s'", request.fileName);
 
 			FileIdentification ident;
-			ident.fileName = fileDesc->fileName;
-			ident.macCreator.value = MKTAG(fileDesc->creator[0], fileDesc->creator[1], fileDesc->creator[2], fileDesc->creator[3]);
-			ident.macType.value = MKTAG(fileDesc->type[0], fileDesc->type[1], fileDesc->type[2], fileDesc->type[3]);
+			ident.fileName = request.fileName;
+			ident.macCreator.value = MKTAG(finfo.creator[0], finfo.creator[1], finfo.creator[2], finfo.creator[3]);
+			ident.macType.value = MKTAG(finfo.type[0], finfo.type[1], finfo.type[2], finfo.type[3]);
 			ident.category = request.fileType;
 
 			if (request.extractResources) {
 				Common::SharedPtr<Common::MacResManager> resMan(new Common::MacResManager());
-				if (!resMan->open(request.fileName, archive))
+				if (!resMan->open(request.fileName, *archive))
 					error("Failed to open Mac res manager for file '%s'", request.fileName);
 
 				ident.resMan = resMan;
 			}
 
 			if (request.extractData)
-				ident.stream.reset(archive.createReadStreamForMember(request.fileName));
+				ident.stream.reset(archive->createReadStreamForMember(request.fileName));
 
 			files.push_back(ident);
 		}
 	}
 }
 
+class STTGSGameDataHandler : public GameDataHandler {
+public:
+	STTGSGameDataHandler(const Game &game, const MTropolisGameDescription &gameDesc);
+
+	void addPlugIns(ProjectDescription &projectDesc, const Common::Array<FileIdentification> &files) override;
+};
+
+STTGSGameDataHandler::STTGSGameDataHandler(const Game &game, const MTropolisGameDescription &gameDesc) : GameDataHandler(game, gameDesc) {
+}
+
+void STTGSGameDataHandler::addPlugIns(ProjectDescription &projectDesc, const Common::Array<FileIdentification> &files) {
+	Common::SharedPtr<MTropolis::PlugIn> standardPlugIn = PlugIns::createStandard();
+	static_cast<Standard::StandardPlugIn *>(standardPlugIn.get())->getHacks().allowGarbledListModData = true;
+	projectDesc.addPlugIn(standardPlugIn);
+}
 
 static bool getMacTypesForMacBinary(const char *fileName, uint32 &outType, uint32 &outCreator) {
 	Common::SharedPtr<Common::SeekableReadStream> stream(SearchMan.createReadStreamForMember(fileName));
@@ -745,7 +495,6 @@ static bool getMacTypesForMacBinary(const char *fileName, uint32 &outType, uint3
 		return false;
 
 	Common::CRC_BINHEX crc;
-	crc.init();
 	uint16 checkSum = crc.crcFast(mbHeader, 124);
 
 	if (checkSum != READ_BE_UINT16(&mbHeader[124]))
@@ -1107,6 +856,12 @@ const char *spqrRetailMacDirectories[] = {
 	nullptr
 };
 
+const ManifestFile sttgsDemoWinFiles[] = {
+	{"MTPLAY95.EXE", MTFT_PLAYER},
+	{"Trektriv.mpl", MTFT_MAIN},
+	{nullptr, MTFT_AUTO}
+};
+
 const Game games[] = {
 	// Obsidian - Retail - Macintosh - English
 	{
@@ -1235,6 +990,14 @@ const Game games[] = {
 		spqrRetailMacDirectories,
 		nullptr,
 		GameDataHandlerFactory<SPQRGameDataHandler>::create
+	},
+	// Star Trek: The Game Show - Demo - Windows
+	{
+		MTBOOT_STTGS_DEMO_WIN,
+		sttgsDemoWinFiles,
+		nullptr,
+		nullptr,
+		GameDataHandlerFactory<STTGSGameDataHandler>::create
 	},
 };
 
@@ -1440,12 +1203,9 @@ Common::SharedPtr<ProjectDescription> bootProject(const MTropolisGameDescription
 			if (segmentFile->stream)
 				dataFork = segmentFile->stream;
 			else {
-				Boot::initResManForFile(*segmentFile);
-				dataFork.reset(segmentFile->resMan->getDataFork());
+				dataFork.reset(Common::MacResManager::openFileOrDataFork(segmentFile->fileName));
 				if (!dataFork)
 					error("Segment file '%s' has no data fork", segmentFile->fileName.c_str());
-
-				persistentResources.push_back(Boot::PersistentResource<Common::MacResManager>::wrap(segmentFile->resMan));
 			}
 
 			persistentResources.push_back(Boot::PersistentResource<Common::SeekableReadStream>::wrap(dataFork));

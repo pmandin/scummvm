@@ -1067,6 +1067,30 @@ static const AGOSGameDescription gameDescriptions[] = {
 		GF_OLD_BUNDLE
 	},
 
+	// Simon the Sorcerer 1 - English Acorn Floppy Demo
+	{
+		{
+			"simon1",
+			"Floppy Demo",
+
+			{
+				{ "gamebase",	GAME_BASEFILE,	"a12b696170f14eca5ff75f1549829251", 24850},
+				{ "icondata",	GAME_ICONFILE,	"22107c24dfb31b66ac503c28a6e20b19", 14361},
+				{ "stripped",	GAME_STRFILE,	"8edde5b9498dc9f31da1093028da467c", 27},
+				{ "tbllist",	GAME_TBLFILE,	"1247e024e1f13ca54c1e354120c7519c", 105},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformAcorn,
+			ADGF_DEMO,
+			GUIO3(GUIO_NOSPEECH, GUIO_NOMIDI, GAMEOPTION_DISABLE_FADE_EFFECTS)
+		},
+
+		GType_SIMON1,
+		GID_SIMON1,
+		GF_OLD_BUNDLE
+	},
+
 	// Simon the Sorcerer 1 - English Acorn Floppy
 	{
 		{
@@ -1074,10 +1098,10 @@ static const AGOSGameDescription gameDescriptions[] = {
 			"Floppy",
 
 			{
-				{ "gamebase.dat",	GAME_BASEFILE,	"c392e494dcabed797b98cbcfc687b33a", 36980},
-				{ "icondata.dat",	GAME_ICONFILE,	"22107c24dfb31b66ac503c28a6e20b19", 14361},
-				{ "stripped.dat",	GAME_STRFILE,	"c95a0a1ee973e19c2a1c5d12026c139f", 252},
-				{ "tbllist.dat",	GAME_TBLFILE,	"d198a80de2c59e4a0cd24b98814849e8", 711},
+				{ "gamebase",	GAME_BASEFILE,	"c392e494dcabed797b98cbcfc687b33a", 36980},
+				{ "icondata",	GAME_ICONFILE,	"22107c24dfb31b66ac503c28a6e20b19", 14361},
+				{ "stripped",	GAME_STRFILE,	"c95a0a1ee973e19c2a1c5d12026c139f", 252},
+				{ "tbllist",	GAME_TBLFILE,	"d198a80de2c59e4a0cd24b98814849e8", 711},
 				AD_LISTEND
 			},
 			Common::EN_ANY,

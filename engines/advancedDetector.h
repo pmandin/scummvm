@@ -89,7 +89,7 @@ struct ADGameFileDescription {
  *
  * Note that the lowest 16 bits are currently reserved for use by the client code.
  */
-enum ADGameFlags {
+enum ADGameFlags : uint {
 	ADGF_NO_FLAGS        =  0u,        ///< No flags.
 	ADGF_TAILMD5         = (1u << 16), ///< Calculate the MD5 for this entry from the end of the file.
 	ADGF_AUTOGENTARGET   = (1u << 17), ///< Automatically generate gameid from @ref ADGameDescription::extra.
@@ -367,7 +367,7 @@ public:
 
 	static Common::StringArray getPathsFromEntry(const ADGameDescription *g);
 
-	uint getMD5Bytes() const { return _md5Bytes; }
+	uint getMD5Bytes() const override final { return _md5Bytes; }
 
 protected:
 	/**
@@ -532,6 +532,12 @@ protected:
 	 * Returns a map containing all the extra game GUI options the engine supports.
 	 */
 	virtual const ADExtraGuiOptionsMap *getAdvancedExtraGuiOptions() const { return nullptr; }
+
+	/**
+	 * Returns the set of features that need to be enabled for the
+	 * extended save format to work
+	 */
+	bool checkExtendedSaves(MetaEngineFeature f) const;
 };
 
 /**

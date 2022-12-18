@@ -36,6 +36,7 @@ namespace Freescape {
 #define kCoordsArraySize 4
 
 typedef Common::Array<byte *> ColorMap;
+typedef Common::HashMap<int, int> ColorReMap;
 
 class Renderer;
 
@@ -65,7 +66,6 @@ public:
 	bool _isAccelerated;
 
 	virtual void init() = 0;
-	virtual void clear() = 0;
 	virtual void setViewport(const Common::Rect &rect) = 0;
 
 	/**
@@ -81,14 +81,16 @@ public:
 	virtual void freeTexture(Texture *texture) = 0;
 	virtual void drawTexturedRect2D(const Common::Rect &screenRect, const Common::Rect &textureRect, Texture *texture) = 0;
 
-	virtual void renderShoot(byte color, const Common::Point position, const Common::Rect viewPort) = 0;
+	virtual void renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d player, const Common::Rect viewPort) = 0;
+	virtual void renderPlayerShoot(byte color, const Common::Point position, const Common::Rect viewPort) = 0;
 	virtual void renderCube(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours);
 	virtual void renderRectangle(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours);
 	virtual void renderPolygon(const Math::Vector3d &origin, const Math::Vector3d &size, const Common::Array<uint16> *ordinates, Common::Array<uint8> *colours);
 	virtual void renderPyramid(const Math::Vector3d &origin, const Math::Vector3d &size, const Common::Array<uint16> *ordinates, Common::Array<uint8> *colours, int type);
 	virtual void renderFace(const Common::Array<Math::Vector3d> &vertices) = 0;
 
-	virtual void setSkyColor(uint8 color) = 0;
+	void setColorRemaps(ColorReMap *colorRemaps);
+	virtual void clear(uint8 color) = 0;
 	virtual void drawFloor(uint8 color) = 0;
 
 	Common::Rect viewport() const;
@@ -98,6 +100,7 @@ public:
 	bool getRGBAt(uint8 index, uint8 &r, uint8 &g, uint8 &b);
 	byte *_palette;
 	ColorMap *_colorMap;
+	ColorReMap *_colorRemaps;
 	int _keyColor;
 
 	/**
@@ -110,7 +113,7 @@ public:
 	virtual void updateProjectionMatrix(float fov, float nearClipPlane, float farClipPlane) = 0;
 
 	Math::Matrix4 getMvpMatrix() const { return _mvpMatrix; }
-
+	virtual Graphics::Surface *getScreenshot() = 0;
 	void flipVertical(Graphics::Surface *s);
 
 	int _screenW;

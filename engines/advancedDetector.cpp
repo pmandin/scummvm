@@ -455,6 +455,14 @@ Common::Error AdvancedMetaEngineDetection::createInstance(OSystem *syst, Engine 
 	}
 
 	if (plugin) {
+		if (_flags & kADFlagMatchFullPaths) {
+			Common::StringArray dirs = getPathsFromEntry(agdDesc.desc);
+			Common::FSNode gameDataDir = Common::FSNode(ConfMan.get("path"));
+
+			for (auto d = dirs.begin(); d != dirs.end(); ++d)
+				SearchMan.addSubDirectoryMatching(gameDataDir, *d);
+		}
+
 		// Call child class's createInstanceMethod.
 		return plugin->get<AdvancedMetaEngine>().createInstance(syst, engine, agdDesc.desc);
 	}
@@ -557,6 +565,15 @@ static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::Fil
 
 		if (fileProps.size != 0)
 			return true;
+
+		Common::SeekableReadStream *dataFork = Common::MacResManager::openFileOrDataFork(fname, fileMapArchive);
+		if (dataFork && dataFork->size()) {
+			fileProps.size = dataFork->size();
+			fileProps.md5 = Common::computeStreamMD5AsString(*dataFork, md5Bytes);
+			delete dataFork;
+			return true;
+		}
+		delete dataFork;
 	}
 
 	if (!allFiles.contains(fname))
@@ -797,6 +814,7 @@ static const char *grayList[] = {
 	"play.exe",
 	"start.exe",
 	"item.dat",
+	"abc.exe",
 	0
 };
 
@@ -956,4 +974,15 @@ void AdvancedMetaEngineDetection::detectClashes() const {
 		if (k._value == 0 && k._key != getName())
 			debug(0, "WARNING: Detection gameId for '%s' in engine '%s' has no games in the detection table", k._key.c_str(), getName());
 	}
+}
+
+bool AdvancedMetaEngine::checkExtendedSaves(MetaEngineFeature f) const {
+	return (f == kSavesUseExtendedFormat) ||
+		(f == kSimpleSavesNames) ||
+		(f == kSupportsListSaves) ||
+		(f == kSupportsDeleteSave) ||
+		(f == kSavesSupportMetaInfo) ||
+		(f == kSavesSupportThumbnail) ||
+		(f == kSavesSupportCreationDate) ||
+		(f == kSavesSupportPlayTime);
 }

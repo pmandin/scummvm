@@ -28,7 +28,7 @@
 #include "common/textconsole.h"
 #include "common/translation.h"
 #ifdef ENABLE_SCI32
-#include "common/installshield_cab.h"
+#include "common/compression/installshield_cab.h"
 #include "common/memstream.h"
 #endif
 
@@ -1017,7 +1017,7 @@ void ResourceManager::init() {
 	_currentDiscNo = 1;
 #endif
 	if (g_sci) {
-		_patcher = new ResourcePatcher(g_sci->getGameId(), g_sci->getLanguage());
+		_patcher = new ResourcePatcher(g_sci->getGameId(), g_sci->isCD(), g_sci->getPlatform(), g_sci->getLanguage());
 		addSource(_patcher);
 	} else {
 		_patcher = nullptr;

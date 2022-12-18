@@ -83,7 +83,7 @@ static LoadSceneParams ITE_IntroListDefault[] = {
 };
 
 static const LoadSceneParams ITE_AmigaEnglishECSCD_IntroList[] = {
-//	{1544, kLoadByResourceId, Scene::SC_ITEIntroAnimProc, false, kTransitionNoFade, 0, NO_CHAPTER_CHANGE}, // Crashes, skip for now
+	{1544, kLoadByResourceId, Scene::SC_ITEIntroAnimProc, false, kTransitionNoFade, 0, NO_CHAPTER_CHANGE},
 	{1548, kLoadByResourceId, Scene::SC_ITEIntroCave1Proc, false, kTransitionFade, 0, NO_CHAPTER_CHANGE},
 	{1551, kLoadByResourceId, Scene::SC_ITEIntroCave2Proc, false, kTransitionNoFade, 0, NO_CHAPTER_CHANGE},
 	{1554, kLoadByResourceId, Scene::SC_ITEIntroCave3Proc, false, kTransitionNoFade, 0, NO_CHAPTER_CHANGE},
@@ -131,7 +131,6 @@ static const LoadSceneParams ITE_DOS_Demo_IntroList[] = {
 static const LoadSceneParams *ITE_IntroLists[INTROLIST_MAX] = {
 	/* INTROLIST_ITE_NONE */                 nullptr,
 	/* INTROLIST_ITE_DEFAULT */              ITE_IntroListDefault,
-	/* INTROLIST_ITE_AMIGA_ENGLISH_AGA_CD */ ITE_IntroListDefault + 1, // Skip first (logo) scene until we figure it out
 	/* INTROLIST_ITE_AMIGA_ENGLISH_ECS_CD */ ITE_AmigaEnglishECSCD_IntroList,
 	/* INTROLIST_ITE_AMIGA_GERMAN_AGA */     ITE_AmigaGermanAGA_IntroList,
 	/* INTROLIST_ITE_AMIGA_GERMAN_ECS */     ITE_AmigaGermanECS_IntroList,
@@ -409,31 +408,45 @@ int Scene::ITEIntroAnimProc(int param) {
 		debug(3, "Intro animation procedure started.");
 		debug(3, "Linking animation resources...");
 
-		_vm->_anim->setFrameTime(0, INTRO_FRAMETIME);
+		// Some demos lack animations
+		if (_vm->_anim->hasAnimation(0)) {
+			_vm->_anim->setFrameTime(0, INTRO_FRAMETIME);
 
-		// Link this scene's animation resources for continuous
-		// playback
-		int lastAnim;
+			// Link this scene's animation resources for continuous
+			// playback
+			int lastAnim;
 
-		if (hasWyrmkeepCredits || isMultiCD || isDemo)
-			lastAnim = isMac ? 3 : 2;
-		else
-			lastAnim = isMac ? 4 : 5;
+			if (hasWyrmkeepCredits || isMultiCD || isDemo)
+				lastAnim = isMac ? 3 : 2;
+			else
+				lastAnim = isMac ? 4 : 5;
 
-		for (int i = 0; i < lastAnim; i++)
-			_vm->_anim->link(i, i+1);
+			for (int i = 0; i < lastAnim; i++) {
+				if (!_vm->_anim->hasAnimation(i+1)) {
+					lastAnim = i;
+					break;
+				}
+				_vm->_anim->link(i, i+1);
+			}
 
-		_vm->_anim->setFlag(lastAnim, ANIM_FLAG_ENDSCENE);
+			_vm->_anim->setFlag(lastAnim, ANIM_FLAG_ENDSCENE);
 
-		debug(3, "Beginning animation playback.");
+			debug(3, "Beginning animation playback.");
 
-		// Begin the animation
-		event.type = kEvTOneshot;
-		event.code = kAnimEvent;
-		event.op = kEventPlay;
-		event.param = 0;
-		event.time = 0;
-		_vm->_events->chain(eventColumns, event);
+			// Begin the animation
+			event.type = kEvTOneshot;
+			event.code = kAnimEvent;
+			event.op = kEventPlay;
+			event.param = 0;
+			event.time = 0;
+			_vm->_events->chain(eventColumns, event);
+		} else {
+			event.type = kEvTOneshot;
+			event.code = kSceneEvent;
+			event.op = kEventEnd;
+			event.time = 1000;
+			_vm->_events->chain(eventColumns, event);
+		}
 
 		// Queue intro music playback
 		_vm->_events->chainMusic(eventColumns, MUSIC_INTRO, true);

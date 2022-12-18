@@ -226,6 +226,7 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 				0,
 				0,
 				0,
+				0,
 				instructions,
 				conditionSource);
 		}
@@ -235,7 +236,7 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 		assert(color > 0);
 		byte firingInterval = readField(file, 8);
 		uint16 firingRange = readField(file, 16);
-		byte sensorFlags = readField(file, 8);
+		byte sensorAxis = readField(file, 8);
 		byteSizeOfObject = byteSizeOfObject - 5;
 		// grab the object condition, if there is one
 		if (byteSizeOfObject) {
@@ -252,7 +253,8 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 			color,
 			firingInterval,
 			firingRange,
-			sensorFlags,
+			sensorAxis,
+			rawFlagsAndType,
 			instructions,
 			conditionSource);
 	} break;
@@ -294,8 +296,6 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	uint8 scale = readField(file, 8);
 	debugC(1, kFreescapeDebugParser, "Scale: %d", scale);
 
-	uint8 ci1 = 0;
-	uint8 ci2 = 0;
 	uint8 ci3 = 0;
 	uint8 ci4 = 0;
 	uint8 skyColor = areaFlags & 15;
@@ -303,14 +303,15 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 
 	if (groundColor == 0)
 		groundColor = 255;
-	if (skyColor == 0)
-		skyColor = 255;
 
-	ci1 = readField(file, 8);
-	ci2 = readField(file, 8);
+	uint8 usualBackgroundColor = readField(file, 8);
+	uint8 underFireBackgroundColor = readField(file, 8);
 	ci3 = readField(file, 8);
 	ci4 = readField(file, 8);
-	debugC(1, kFreescapeDebugParser, "Colors: %d %d %d %d %d %d", ci1, ci2, ci3, ci4, skyColor, groundColor);
+	debugC(1, kFreescapeDebugParser, "Colors usual background: %d", usualBackgroundColor);
+	debugC(1, kFreescapeDebugParser, "Colors under fire background: %d", underFireBackgroundColor);
+
+	debugC(1, kFreescapeDebugParser, "Colors: %d %d %d %d", ci3, ci4, skyColor, groundColor);
 	// CPC
 	// groundColor = file->readByte() & 15;
 	// skyColor = file->readByte() & 15;
@@ -401,6 +402,8 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	area->_scale = scale;
 	area->_skyColor = skyColor;
 	area->_groundColor = groundColor;
+	area->_usualBackgroundColor = usualBackgroundColor;
+	area->_underFireBackgroundColor = underFireBackgroundColor;
 
 	// Driller specific
 	area->_gasPocketPosition = Common::Point(32 * gasPocketX, 32 * gasPocketY);
@@ -510,21 +513,24 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 		Common::String n;
 		n += char(readField(file, 8));
 		n += char(readField(file, 8));
-		_countdown = _countdown + 3600 * atoi(n.c_str());
+		_initialCountdown =_initialCountdown + 3600 * atoi(n.c_str());
 		n.clear();
 		n += char(readField(file, 8));
 		assert(n == ":");
 		n.clear();
 		n += char(readField(file, 8));
 		n += char(readField(file, 8));
-		_countdown = _countdown + 60 * atoi(n.c_str());
+		_initialCountdown = _initialCountdown + 60 * atoi(n.c_str());
 		n.clear();
 		n += char(readField(file, 8));
 		assert(n == ":");
 		n.clear();
 		n += char(readField(file, 8));
 		n += char(readField(file, 8));
-		_countdown = _countdown + atoi(n.c_str());
+		_initialCountdown = _initialCountdown + atoi(n.c_str());
+
+		if (_useExtendedTimer)
+			_initialCountdown = 359999; // 99:59:59
 	}
 
 	if (isAmiga() || isAtariST())
@@ -585,11 +591,23 @@ void FreescapeEngine::loadBundledImages() {
 void FreescapeEngine::loadFonts(Common::SeekableReadStream *file, int offset) {
 	file->seek(offset);
 	int charNumber = 60;
-	byte *font = (byte *)malloc(6 * charNumber);
-	file->read(font, 6 * charNumber);
+	byte *font = nullptr;
+	if (isDOS()) {
+		font = (byte *)malloc(6 * charNumber);
+		file->read(font, 6 * charNumber);
 
-	_font.set_size(48 * charNumber);
-	_font.set_bits((byte *)font);
+		_font.set_size(48 * charNumber);
+		_font.set_bits((byte *)font);
+	} else if (isAmiga() || isAtariST()) {
+		int fontSize = 4654; // Driller
+		font = (byte *)malloc(fontSize);
+		file->read(font, fontSize);
+
+		_font.set_size(fontSize * 8);
+		_font.set_bits((byte *)font);
+	} else {
+		_fontLoaded = false;
+	}
 	_fontLoaded = true;
 	free(font);
 }

@@ -70,7 +70,8 @@ enum {
 	// the screen effect (like sound interrupts running,
 	// forcing the SCUMM timer to a lower frequency).
 	// I have added an extra quarter frame to emulate that.
-	kPictureDelay = 4
+	kPictureDelay = 4,
+	kC64Delay = 6
 };
 
 #define NUM_SHAKE_POSITIONS 8
@@ -4178,10 +4179,6 @@ void ScummEngine::fadeOut(int effect) {
 		}
 	}
 
-	// Update the palette at the end (once we faded to black) to avoid
-	// some nasty effects when the palette is changed
-	updatePalette();
-
 	_screenEffectFlag = false;
 }
 
@@ -4205,7 +4202,9 @@ void ScummEngine::transitionEffect(int a) {
 	const int height = MIN((int)_virtscr[kMainVirtScreen].h, _screenHeight);
 
 	if (VAR_FADE_DELAY == 0xFF) {
-		if (_game.version >= 2) {
+		if (_game.platform == Common::kPlatformC64) {
+			delay = kC64Delay;
+		} else if (_game.version >= 2) {
 			delay = kPictureDelay;
 		} else {
 			delay = kNoDelay;
@@ -4623,7 +4622,7 @@ byte MajMinCodec::readBits(byte n) {
 	MAJMIN_FILL_BITS();
 	byte _value = _majMinData.bits & ((1 << n) - 1);
 	MAJMIN_EAT_BITS(n);
-	return _value;   
+	return _value;
 }
 
 void MajMinCodec::skipData(int32 numbytes) {

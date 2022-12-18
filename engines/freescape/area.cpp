@@ -67,6 +67,9 @@ Area::Area(uint16 areaID_, uint16 areaFlags_, ObjectMap *objectsByID_, ObjectMap
 	_scale = 0;
 	_skyColor = 255;
 	_groundColor = 255;
+	_usualBackgroundColor = 255;
+	_underFireBackgroundColor = 255;
+
 	_gasPocketRadius = 0;
 
 	// create a list of drawable objects only
@@ -149,6 +152,15 @@ void Area::loadObjects(Common::SeekableReadStream *stream, Area *global) {
 		obj->setObjectFlags(flags);
 		obj->setOrigin(Math::Vector3d(x, y, z));
 	}
+
+	_colorRemaps.clear();
+	int colorRemapsSize = stream->readUint32LE();
+
+	for (int i = 0; i < colorRemapsSize; i++) {
+		int src = stream->readUint32LE();
+		int dst = stream->readUint32LE();
+		remapColor(src, dst);
+	}
 }
 
 void Area::saveObjects(Common::WriteStream *stream) {
@@ -162,10 +174,54 @@ void Area::saveObjects(Common::WriteStream *stream) {
 		stream->writeFloatLE(obj->getOrigin().y());
 		stream->writeFloatLE(obj->getOrigin().z());
 	}
+
+	stream->writeUint32LE(_colorRemaps.size());
+	for (auto &it : _colorRemaps) {
+		stream->writeUint32LE(it._key);
+		stream->writeUint32LE(it._value);
+	}
 }
 
+void Area::remapColor(int index, int color) {
+	_colorRemaps[index] = color;
+}
+
+void Area::unremapColor(int index) {
+	_colorRemaps.clear(index);
+}
+
+void Area::resetArea() {
+	debugC(1, kFreescapeDebugMove, "Resetting area name: %s", _name.c_str());
+	_colorRemaps.clear();
+	if (_objectsByID) {
+		for (auto &it : *_objectsByID) {
+			Object *obj = it._value;
+			if (obj->isDestroyed())
+				obj->restore();
+
+			if (obj->isInitiallyInvisible())
+				obj->makeInvisible();
+			else
+				obj->makeVisible();
+		}
+	}
+	if (_entrancesByID) {
+		for (auto &it : *_entrancesByID) {
+			Object *obj = it._value;
+			if (obj->isDestroyed())
+				obj->restore();
+
+			if (obj->isInitiallyInvisible())
+				obj->makeInvisible();
+			else
+				obj->makeVisible();
+		}
+	}
+}
+
+
 void Area::draw(Freescape::Renderer *gfx) {
-	gfx->clear();
+	gfx->clear(_skyColor);
 	assert(_drawableObjects.size() > 0);
 	for (auto &obj : _drawableObjects) {
 		if (!obj->isDestroyed() && !obj->isInvisible()) {
@@ -199,6 +255,33 @@ ObjectArray Area::checkCollisions(const Math::AABB &boundingBox) {
 		}
 	}
 	return collided;
+}
+
+bool Area::checkInSight(const Math::Ray &ray, float maxDistance) {
+	Math::Vector3d direction = ray.getDirection();
+	direction.normalize();
+	GeometricObject point(kCubeType,
+			0,
+			0,
+			Math::Vector3d(0, 0, 0),
+			Math::Vector3d(maxDistance / 30, maxDistance / 30, maxDistance / 30), // size
+			nullptr,
+			nullptr,
+			FCLInstructionVector(),
+			"");
+
+	for (int distanceMultiplier = 2; distanceMultiplier <= 10; distanceMultiplier++) {
+		Math::Vector3d origin = ray.getOrigin() + distanceMultiplier * (maxDistance / 10) * direction;
+		point.setOrigin(origin);
+
+		for (auto &obj : _drawableObjects) {
+			if (obj->getType() != kSensorType && !obj->isDestroyed() && !obj->isInvisible() && obj->_boundingBox.isValid() && point.collides(obj->_boundingBox)) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 void Area::addObject(Object *obj) {

@@ -20,35 +20,31 @@
  */
 
 #include "ultima/ultima8/gumps/minimap_gump.h"
+#include "ultima/ultima8/world/minimap.h"
+#include "ultima/ultima8/world/current_map.h"
 #include "ultima/ultima8/world/world.h"
-#include "ultima/ultima8/graphics/shape.h"
-#include "ultima/ultima8/graphics/shape_frame.h"
 #include "ultima/ultima8/world/actors/main_actor.h"
 #include "ultima/ultima8/graphics/render_surface.h"
-#include "ultima/ultima8/graphics/palette.h"
 #include "ultima/ultima8/world/get_object.h"
+#include "ultima/ultima8/kernel/mouse.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
 DEFINE_RUNTIME_CLASSTYPE_CODE(MiniMapGump)
 
-
-static const int MINMAPGUMP_SCALE = 8;
-
 MiniMapGump::MiniMapGump(int x, int y) :
-	Gump(x, y, MAP_NUM_CHUNKS * 2 + 2, MAP_NUM_CHUNKS * 2 + 2, 0,
-	     FLAG_DRAGGABLE, LAYER_NORMAL), _minimap(), _lastMapNum(0), _ax(0), _ay(0) {
-	_minimap.create((MAP_NUM_CHUNKS * MINMAPGUMP_SCALE), (MAP_NUM_CHUNKS * MINMAPGUMP_SCALE),
-		Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+	Gump(x, y, 120, 120, 0, FLAG_DRAGGABLE, LAYER_NORMAL), _minimaps(), _ax(0), _ay(0) {
 }
 
-MiniMapGump::MiniMapGump() : Gump(), _minimap(), _lastMapNum(0), _ax(0), _ay(0) {
-	_minimap.create((MAP_NUM_CHUNKS * MINMAPGUMP_SCALE), (MAP_NUM_CHUNKS * MINMAPGUMP_SCALE),
-		Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
+MiniMapGump::MiniMapGump() : Gump(), _minimaps(), _ax(0), _ay(0) {
 }
 
 MiniMapGump::~MiniMapGump(void) {
+	Common::HashMap<uint32, MiniMap *>::iterator iter;
+	for (iter = _minimaps.begin(); iter != _minimaps.end(); ++iter) {
+		delete iter->_value;
+	}
 }
 
 void MiniMapGump::run() {
@@ -57,11 +53,6 @@ void MiniMapGump::run() {
 	World *world = World::get_instance();
 	CurrentMap *currentmap = world->getCurrentMap();
 	int mapChunkSize = currentmap->getChunkSize();
-
-	if (currentmap->getNum() != _lastMapNum) {
-		_lastMapNum = currentmap->getNum();
-		_minimap.clear();
-	}
 
 	MainActor *actor = getMainActor();
 	if (!actor || actor->isDead())
@@ -80,27 +71,37 @@ void MiniMapGump::run() {
 	_ax = ax;
 	_ay = ay;
 
-	// Draw into the map surface
-	for (int x = 0; x < _minimap.w; x++) {
-		for (int y = 0; y < _minimap.h; y++) {
-			uint32 val = _minimap.getPixel(x, y);
-			if (val == 0) {
-				int cx = x / MINMAPGUMP_SCALE;
-				int cy = y / MINMAPGUMP_SCALE;
-				if (currentmap->isChunkFast(cx, cy)) {
-					int mx = (x * mapChunkSize) / MINMAPGUMP_SCALE;
-					int my = (y * mapChunkSize) / MINMAPGUMP_SCALE;
+	uint32 mapNum = currentmap->getNum();
 
-					// Offset produces nicer samples but may need altering
-					mx += mapChunkSize / (MINMAPGUMP_SCALE * 2);
-					my += mapChunkSize / (MINMAPGUMP_SCALE * 2);
-
-					val = sampleAtPoint(currentmap, mx, my);
-					_minimap.setPixel(x, y, val);
-				}
-			}
-		}
+	MiniMap *minimap = _minimaps[mapNum];
+	if (!minimap) {
+		minimap = new MiniMap(mapNum);
+		_minimaps[mapNum] = minimap;
 	}
+	minimap->update(currentmap);
+}
+
+void MiniMapGump::generate() {
+	World *world = World::get_instance();
+	CurrentMap *currentmap = world->getCurrentMap();
+	currentmap->setWholeMapFast();
+
+	uint32 mapNum = currentmap->getNum();
+
+	MiniMap *minimap = _minimaps[mapNum];
+	if (!minimap) {
+		minimap = new MiniMap(mapNum);
+		_minimaps[mapNum] = minimap;
+	}
+	minimap->update(currentmap);
+}
+
+void MiniMapGump::clear() {
+	Common::HashMap<uint32, MiniMap *>::iterator iter;
+	for (iter = _minimaps.begin(); iter != _minimaps.end(); ++iter) {
+		delete iter->_value;
+	}
+	_minimaps.clear();
 }
 
 void MiniMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled) {
@@ -111,7 +112,7 @@ void MiniMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled)
 	surf->Fill32(0xFFFFAF00, _dims.right - 1, 1, 1, _dims.height());
 
 	// Dimensions minus border
-	Rect dims = _dims;
+	Common::Rect dims(_dims.left, _dims.top, _dims.right, _dims.bottom);
 	dims.grow(-1);
 
 	// Fill the background
@@ -123,26 +124,37 @@ void MiniMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled)
 	int dx = 1;
 	int dy = 1;
 
+	World *world = World::get_instance();
+	CurrentMap *currentmap = world->getCurrentMap();
+	uint32 mapNum = currentmap->getNum();
+
+	MiniMap *minimap = _minimaps[mapNum];
+	if (!minimap) {
+		minimap = new MiniMap(mapNum);
+		_minimaps[mapNum] = minimap;
+	}
+
+	Graphics::ManagedSurface ms(minimap->getSurface(), DisposeAfterUse::NO);
 	Common::Rect r(sx, sy, sx + dims.width(), sy + dims.height());
 
 	if (r.left < 0) {
 		dx -= r.left;
 		r.left = 0;
 	}
-	if (r.right > _minimap.w) {
-		r.right = _minimap.w;
+	if (r.right > ms.w) {
+		r.right = ms.w;
 	}
 
 	if (r.top < 0) {
 		dy -= r.top;
 		r.top = 0;
 	}
-	if (r.bottom > _minimap.h) {
-		r.bottom = _minimap.h;
+	if (r.bottom > ms.h) {
+		r.bottom = ms.h;
 	}
 
-	if (r.isValidRect()) {
-		surf->Blit(_minimap, r, dx, dy);
+	if (!r.isEmpty()) {
+		surf->Blit(ms, r, dx, dy);
 	}
 
 	int32 ax = _ax - sx;
@@ -155,102 +167,55 @@ void MiniMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled)
 	surf->Fill32(0xFFFFFF00, 1 + ax + 0, 1 + ay + 1, 1, 2);
 }
 
-uint32 MiniMapGump::sampleAtPoint(CurrentMap *currentmap, int x, int y) {
-	uint32 val = 0;
-	const Item *item = currentmap->traceTopItem(x, y, 1 << 15, -1, 0, ShapeInfo::SI_ROOF | ShapeInfo::SI_OCCL | ShapeInfo::SI_LAND | ShapeInfo::SI_SEA);
-	if (item) {
-		val = sampleAtPoint(item, x, y);
-		if (val == 0) {
-			item = currentmap->traceTopItem(x, y, 1 << 15, -1, item->getObjId(), ShapeInfo::SI_ROOF | ShapeInfo::SI_OCCL | ShapeInfo::SI_LAND | ShapeInfo::SI_SEA);
-			if (item) {
-				val = sampleAtPoint(item, x, y);
-			}
-		}
+Gump *MiniMapGump::onMouseDown(int button, int32 mx, int32 my) {
+	Gump *handled = Gump::onMouseDown(button, mx, my);
+	if (handled)
+		return handled;
 
-		if (val == 0) {
-			// set to avoid reprocessing
-			val = _minimap.format.RGBToColor(0x00, 0x00, 0x00);
-		}
-	}
-	return val;
+	// only interested in left clicks
+	if (button == Shared::BUTTON_LEFT)
+		return this;
+
+	return nullptr;
 }
 
-uint32 MiniMapGump::sampleAtPoint(const Item *item, int x, int y)
-{
-	int32 ix, iy, iz, idx, idy, idz;
-	item->getLocation(ix, iy, iz);
-	item->getFootpadWorld(idx, idy, idz);
-
-	ix -= x;
-	iy -= y;
-
-	const Shape *sh = item->getShapeObject();
-	if (!sh)
-		return 0;
-
-	const ShapeFrame *frame = sh->getFrame(item->getFrame());
-	if (!frame)
-		return 0;
-
-	const Palette *pal = sh->getPalette();
-	if (!pal)
-		return 0;
-
-	if (item->canDrag())
-		return 0;
-
-	// Screenspace bounding box bottom x_ coord (RNB x_ coord)
-	int sx = (ix - iy) / 4;
-	// Screenspace bounding box bottom extent  (RNB y_ coord)
-	int sy = (ix + iy) / 8 + idz;
-
-	int w = 2;
-	int h = 2;
-
-	// Ensure sample is in bounds of frame
-	if (frame->_xoff - sx < 0)
-		sx = frame->_xoff;
-	else if (frame->_xoff - sx >= frame->_width - w)
-		sx = frame->_xoff - frame->_width + w;
-
-	if (frame->_yoff - sy < 0)
-		sy = frame->_yoff;
-	else if (frame->_yoff - sy >= frame->_height - h)
-		sy = frame->_yoff - frame->_height + h;
-
-	uint16 r = 0, g = 0, b = 0, c = 0;
-
-	for (int j = 0; j < w; j++) {
-		for (int i = 0; i < h; i++) {
-			if (!frame->hasPoint(i - sx, j - sy)) continue;
-
-			byte r2, g2, b2;
-			UNPACK_RGB8(pal->_native_untransformed[frame->getPixelAtPoint(i - sx, j - sy)], r2, g2, b2);
-			r += RenderSurface::_gamma22toGamma10[r2];
-			g += RenderSurface::_gamma22toGamma10[g2];
-			b += RenderSurface::_gamma22toGamma10[b2];
-			c++;
-		}
+void MiniMapGump::onMouseDouble(int button, int32 mx, int32 my) {
+	if (button == Shared::BUTTON_LEFT) {
+		HideGump();
 	}
-
-	if (c > 0) {
-		return _minimap.format.RGBToColor(RenderSurface::_gamma10toGamma22[r / c], RenderSurface::_gamma10toGamma22[g / c], RenderSurface::_gamma10toGamma22[b / c]);
-	}
-
-	return 0;
 }
 
 void MiniMapGump::saveData(Common::WriteStream *ws) {
 	Gump::saveData(ws);
+
+	ws->writeUint32LE(static_cast<uint32>(_minimaps.size()));
+	Common::HashMap<uint32, MiniMap *>::const_iterator iter;
+	for (iter = _minimaps.begin(); iter != _minimaps.end(); ++iter) {
+		const MiniMap *minimap = iter->_value;
+		ws->writeUint32LE(iter->_key);
+		minimap->save(ws);
+	}
 }
 
 bool MiniMapGump::loadData(Common::ReadStream *rs, uint32 version) {
 	if (!Gump::loadData(rs, version))
 		return false;
 
-	_lastMapNum = 0;
-	_minimap.clear();
+	_ax = 0;
+	_ay = 0;
 
+	clear();
+
+	if (version >= 6) {
+		uint32 mapcount = rs->readUint32LE();
+		for (uint32 i = 0; i < mapcount; ++i) {
+			uint32 mapNum = rs->readUint32LE();
+			MiniMap *minimap = new MiniMap(mapNum);
+			if (!minimap->load(rs, version))
+				return false;
+			_minimaps[mapNum] = minimap;
+		}
+	}
 	return true;
 }
 
