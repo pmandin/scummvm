@@ -101,6 +101,7 @@ public:
 private:
 	static Mouse *_instance;
 	Common::Stack<MouseCursor> _cursors;
+	int _lastMouseFrame;
 
 	/**
 	 * Time mouse started flashing, or 0
@@ -129,11 +130,6 @@ public:
 public:
 	Mouse();
 	~Mouse();
-
-	/**
-	 * Setup the mouse cursors
-	 */
-	void setup();
 
 	/**
 	 * Called when a mouse button is pressed down
@@ -214,7 +210,7 @@ public:
 	Gump *getMouseOverGump() const;
 	void resetMouseOverGump() { _mouseOverGump = 0; }
 
-	void paint();
+	void update();
 };
 
 } // End of namespace Ultima8

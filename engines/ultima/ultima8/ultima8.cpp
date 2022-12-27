@@ -552,9 +552,9 @@ Common::Error Ultima8Engine::runGame() {
 					_desktopGump->run();
 				}
 #if 0
-				perr << "--------------------------------------" << Std::endl;
-				perr << "NEW FRAME" << Std::endl;
-				perr << "--------------------------------------" << Std::endl;
+				pout << "--------------------------------------" << Std::endl;
+				pout << "NEW FRAME" << Std::endl;
+				pout << "--------------------------------------" << Std::endl;
 #endif
 				_inBetweenFrame = false;
 
@@ -580,6 +580,9 @@ Common::Error Ultima8Engine::runGame() {
 			handleEvent(event);
 		}
 		handleDelayedEvents();
+
+		// Update the mouse
+		_mouse->update();
 
 		// Paint Screen
 		paint();
@@ -638,9 +641,6 @@ void Ultima8Engine::paint() {
 	}
 #endif
 
-	// Draw the mouse
-	_mouse->paint();
-
 	// End _painting
 	_screen->EndPainting();
 }
@@ -680,7 +680,7 @@ void Ultima8Engine::GraphicSysInit() {
 	RenderSurface *new_screen = RenderSurface::SetVideoMode(width, height, bpp);
 
 	if (!new_screen) {
-		perr << Common::String::format("Unable to set new video mode. Trying %dx%dx32", U8_DEFAULT_SCREEN_WIDTH, U8_DEFAULT_SCREEN_HEIGHT) << Std::endl;
+		warning("Unable to set new video mode. Trying %dx%dx32", U8_DEFAULT_SCREEN_WIDTH, U8_DEFAULT_SCREEN_HEIGHT);
 		new_screen = RenderSurface::SetVideoMode(U8_DEFAULT_SCREEN_WIDTH, U8_DEFAULT_SCREEN_HEIGHT, 32);
 	}
 
@@ -695,10 +695,6 @@ void Ultima8Engine::GraphicSysInit() {
 		paint();
 		return;
 	}
-
-	// setup normal mouse cursor
-	debugN(MM_INFO, "Loading Default Mouse Cursor...\n");
-	_mouse->setup();
 
 	_desktopGump = new DesktopGump(0, 0, width, height);
 	_desktopGump->InitGump(0);
@@ -1246,9 +1242,9 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 	}
 
 	_mouse->pushMouseCursor(Mouse::MOUSE_WAIT);
-	_screen->BeginPainting();
-	_mouse->paint();
-	_screen->EndPainting();
+
+	// Redraw to indicate busy
+	paint();
 
 	Common::SeekableReadStream *ds;
 	GameInfo saveinfo;
@@ -1273,7 +1269,7 @@ Common::Error Ultima8Engine::loadGameStream(Common::SeekableReadStream *stream) 
 		if (!ignore) {
 			error("%s", message.c_str());
 		}
-		perr << message << Std::endl;
+		pout << message << Std::endl;
 #else
 		delete sg;
 		return Common::Error(Common::kReadingFailed, message);

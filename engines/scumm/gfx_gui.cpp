@@ -2106,7 +2106,7 @@ bool ScummEngine::executeMainMenuOperationSegaCD(int op, int mouseX, int mouseY,
 	case GUI_CTRL_NUMPAD_BACK:
 	{
 		int inputNum = (op == GUI_CTRL_NUMPAD_0) ? 0 : op;
-		uint curIdx = strnlen(_mainMenuSegaCDPasscode, sizeof(_mainMenuSegaCDPasscode));
+		uint curIdx = Common::strnlen(_mainMenuSegaCDPasscode, sizeof(_mainMenuSegaCDPasscode));
 
 		if (op == GUI_CTRL_NUMPAD_BACK) {
 			if (curIdx > 0) {
@@ -3857,6 +3857,16 @@ const char *ScummEngine_v6::getGUIString(int stringId) {
 		break;
 	case gsHeap:
 		resStringId = 35;
+		break;
+	case gsRecalJoystick:
+		if (_game.id == GID_SAMNMAX && !strcmp(_game.variant, "Floppy")) {
+			resStringId = 37;
+		} else {
+			resStringId = 36;
+		}
+		break;
+	case gsMouseMode:
+		resStringId = 38;
 		break;
 	default:
 		break;

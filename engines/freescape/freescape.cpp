@@ -49,6 +49,8 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 		_renderMode = Common::kRenderAmiga;
 	} else if (isAtariST()) {
 		_renderMode = Common::kRenderAtariST;
+	} else if (isSpectrum()) {
+		_renderMode = Common::kRenderZX;
 	}
 
 	_variant = gd->flags;
@@ -110,7 +112,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 
 	_lastMousePos = Common::Point(0, 0);
 	_lastFrame = 0;
-	_nearClipPlane = 1;
+	_nearClipPlane = 2;
 	_farClipPlane = 8192 + 1802; // Added some extra distance to avoid flickering
 
 	// These depends on the specific game
@@ -131,6 +133,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_ticks = 0;
 	_lastTick = -1;
 	_frameLimiter = nullptr;
+	_vsyncEnabled = false;
 
 	_underFireFrames = 0;
 	_shootingFrames = 0;
@@ -168,19 +171,7 @@ void FreescapeEngine::drawBorder() {
 
 	_gfx->setViewport(_fullscreenViewArea);
 
-	if (!_borderTexture) {
-		// Replace black pixel for transparent ones
-		uint32 black = _border->format.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
-		uint32 transparent = _border->format.ARGBToColor(0x00, 0x00, 0x00, 0x00);
-
-		for (int i = 0; i < _border->w; i++) {
-			for (int j = 0; j < _border->h; j++) {
-				if (_border->getPixel(i, j) == black)
-					_border->setPixel(i, j, transparent);
-			}
-		}
-		_borderTexture = _gfx->createTexture(_border);
-	}
+	assert(_borderTexture);
 	_gfx->drawTexturedRect2D(_fullscreenViewArea, _fullscreenViewArea, _borderTexture);
 	_gfx->setViewport(_viewArea);
 }
@@ -220,6 +211,10 @@ void FreescapeEngine::drawUI() {
 	_gfx->setViewport(_viewArea);
 }
 
+void FreescapeEngine::drawInfoMenu() {
+	warning("Function \"%s\" not implemented", __FUNCTION__);
+}
+
 void FreescapeEngine::drawCrossair(Graphics::Surface *surface) {
 	uint32 white = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
 
@@ -250,7 +245,7 @@ void FreescapeEngine::checkSensors() {
 		if (playerDetected) {
 			if (_ticks % sensor->_firingInterval == 0) {
 				if (_underFireFrames <= 0)
-					_underFireFrames = _gfx->_isAccelerated ? 60 : 4;
+					_underFireFrames = 4;
 				takeDamageFromSensor();
 			}
 		}
@@ -290,7 +285,7 @@ void FreescapeEngine::drawFrame() {
 	_gfx->positionCamera(_position, _position + _cameraFront);
 
 	if (_underFireFrames > 0) {
-		int underFireColor = isDriller() && (_renderMode == Common::kRenderEGA) ? 1
+		int underFireColor = isDriller() && isDOS() ? 1
 							: _currentArea->_underFireBackgroundColor;
 		if (underFireColor < 16) {
 			_currentArea->remapColor(_currentArea->_usualBackgroundColor, underFireColor);
@@ -399,6 +394,7 @@ void FreescapeEngine::processInput() {
 				_flyMode = _noClipMode;
 				break;
 			case Common::KEYCODE_ESCAPE:
+				drawFrame();
 				_savedScreen = _gfx->getScreenshot();
 				_gfx->setViewport(_fullscreenViewArea);
 				openMainMenuDialog();
@@ -410,6 +406,9 @@ void FreescapeEngine::processInput() {
 				_shootMode = !_shootMode;
 				if (!_shootMode)
 					centerCrossair();
+				break;
+			case Common::KEYCODE_i:
+				drawInfoMenu();
 				break;
 			default:
 				pressedKey(event.kbd.keycode);
@@ -475,6 +474,7 @@ void FreescapeEngine::processInput() {
 }
 
 Common::Error FreescapeEngine::run() {
+	_vsyncEnabled = g_system->getFeatureState(OSystem::kFeatureVSync);
 	_frameLimiter = new Graphics::FrameLimiter(g_system, ConfMan.getInt("engine_speed"));
 	// Initialize graphics
 	_screenW = g_system->getWidth();
@@ -512,11 +512,17 @@ Common::Error FreescapeEngine::run() {
 		}
 	}
 
-	if (_border) {
-		_borderTexture = nullptr;
-		uint32 gray = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0xA0, 0xA0, 0xA0);
-		_border->fillRect(_viewArea, gray);
+	loadBorder(); // Border is load unmodified
+	if (_border && (isDOS() || isSpectrum())) {
+		if (saveSlot == -1) {
+			drawBorder();
+			_gfx->flipBuffer();
+			g_system->updateScreen();
+			g_system->delayMillis(3000);
+		}
 	}
+	processBorder(); // Border is processed to use during the game
+
 	if (saveSlot >= 0) { // load the savegame
 		loadGameState(saveSlot);
 	} else
@@ -537,22 +543,49 @@ Common::Error FreescapeEngine::run() {
 			gotoArea(_startArea, _startEntrance);
 			endGame = false;
 		}
+		processInput();
+		if (_demoMode)
+			generateDemoInput();
 
 		checkSensors();
 		drawFrame();
 
-		if (_demoMode)
-			generateDemoInput();
-
-		processInput();
 		_gfx->flipBuffer();
 		_frameLimiter->delayBeforeSwap();
 		g_system->updateScreen();
 		_frameLimiter->startFrame();
+		if (_vsyncEnabled) // if vsync is enabled, the framelimiter will not work
+			g_system->delayMillis(15); // try to target ~60 FPS
 		endGame = checkIfGameEnded();
 	}
 
 	return Common::kNoError;
+}
+
+void FreescapeEngine::loadBorder() {
+	if (_border)
+		_borderTexture = _gfx->createTexture(_border);
+}
+
+void FreescapeEngine::processBorder() {
+	if (_border) {
+		if (_borderTexture)
+			delete _borderTexture;
+		uint32 gray = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0xA0, 0xA0, 0xA0);
+		_border->fillRect(_viewArea, gray);
+
+		// Replace black pixel for transparent ones
+		uint32 black = _border->format.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
+		uint32 transparent = _border->format.ARGBToColor(0x00, 0x00, 0x00, 0x00);
+
+		for (int i = 0; i < _border->w; i++) {
+			for (int j = 0; j < _border->h; j++) {
+				if (_border->getPixel(i, j) == black)
+					_border->setPixel(i, j, transparent);
+			}
+		}
+		_borderTexture = _gfx->createTexture(_border);
+	}
 }
 
 bool FreescapeEngine::checkIfGameEnded() {
@@ -633,7 +666,7 @@ void FreescapeEngine::drawStringInSurface(const Common::String &str, int x, int 
 	Common::String ustr = str;
 	ustr.toUppercase();
 
-	if (isDOS()) {
+	if (isDOS() || isSpectrum()) {
 		for (uint32 c = 0; c < ustr.size(); c++) {
 			assert(ustr[c] >= 32);
 			for (int j = 0; j < 6; j++) {

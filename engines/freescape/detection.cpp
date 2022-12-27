@@ -39,6 +39,30 @@ static const ADGameDescription gameDescriptions[] = {
 		"driller",
 		"",
 		{
+			{"DRILLER.ZX.EXTRACTED", 0, "396c1789a7da3db5058d18eb8d2d35a3", 37590},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformZX,
+		ADGF_ZX_RETAIL | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"",
+		{
+			{"DRILLER.ZX.EXTRACTED", 0, "2b996ab877f45414f8e2ae4c862746f3", 35214},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformZX,
+		ADGF_ZX_MUSICAL | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"",
+		{
 			{"DRILLER.EXE", 0, "cafc0ea0d3424640a7723af87f8bfc0b", 17427},
 			{"DRILLE.EXE", 0, "eb7e9e0acb72e30cf6e9ed20a6480e7a", 51944},
 			AD_LISTEND
@@ -85,6 +109,20 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
 		ADGF_AMIGA_BUDGET | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"Rolling Demo",
+		{
+			{"drilldem.com", 0, "5188a7ae06f72263634a107685f52cbe", 889},
+			{"d1", 0, "edd57153197ef457f08eeea4d9339208", 16384},
+			{"d2", 0, "3690e6461bfc5434bab8969c6cdbb297", 41488},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_TESTING | ADGF_DEMO,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{

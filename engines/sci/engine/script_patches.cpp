@@ -555,9 +555,6 @@ static const uint16 torinLarry7NumSavesPatch[] = {
 // We disable speed tests by patching them to return fixed results so that all
 //  graphics are enabled and games behave consistently. This also fixes the bug
 //  where tests fail on fast CPUs because their scores overflow. (bug #13529)
-//  We still have a heuristic in GfxAnimate::throttleSpeed() that attempts to
-//  detect tests and unthrottle the engine so that they score well. That should
-//  reasonably handle any games or versions that haven't been patched yet.
 //
 // Note that these patches are only for SCI16 games; the test was rewritten for
 //  SCI32 and we have separate patches for those.
@@ -618,6 +615,9 @@ static const uint16 sci01SpeedTestLocalPatch[] = {
 
 // The second generation of speed tests measured how much time it takes to do a
 //  fixed amount of work. Patch the duration calculation to always be zero.
+//  We also disable speed throttling in these rooms in kGameIsRestarting, but
+//  that's just to prevent the delay these tests create. Each game's script does
+//  different work, so that part can't be generically patched.
 static const uint16 sci11SpeedTestSignature[] = {
 	0x76,                               // push0
 	0x43, 0x42, 0x00,                   // callk GetTime 00
@@ -9700,8 +9700,8 @@ static const uint16 laurabow2CDPatchPaintingClosing[] = {
 //  restoring the floppy code in Inset:dispose. We make room by overwriting
 //  unnecessary code in Inset:onMe that sets variables and doesn't use them.
 //  While we're at it, we also remove IconBar:disable(7) from the vat room (610)
-//  and the final passage (740) in all versions. As with the CD restrictions,
-//  they're unnecessary and inconsistently applied.
+//  in all versions. This restriction was only to make searching the vats harder
+//  when the puzzle hadn't been solved, but it didn't work consistently.
 //
 // Applies to: English PC-CD for most patches, floppy versions for others
 // Responsible methods: LB2:handsOn, Inset:dispose, many others
@@ -10550,6 +10550,9 @@ static const uint16 laurabow2PatchHandleArmorRoomEvents[] = {
 //
 // We fix this by adding a test to rm448:notify to detect if sHeKills is already
 //  the current room script and ignore the notification.
+//
+// Applies to: All versions
+// Responsible method: rm448:notify
 static const uint16 laurabow2SignatureAct5TimerCrash[] = {
 	0x31, 0x29,                         // bnt 29 [ ret ]
 	0x38, SIG_ADDTOOFFSET(+2),          // pushi script
@@ -11061,12 +11064,8 @@ static const SciScriptPatcherEntry laurabow2Signatures[] = {
 	{ false,   610, "CD: enable control panel",                       3, laurabow2CDSignatureEnableControlPanel,         laurabow2PatchEnableControlPanel },
 	{ false,   700, "CD: enable control panel",                       6, laurabow2CDSignatureEnableControlPanel,         laurabow2PatchEnableControlPanel },
 	{ false,   710, "CD: enable control panel",                       1, laurabow2CDSignatureEnableControlPanel,         laurabow2PatchEnableControlPanel },
-	{ false,   730, "CD: enable control panel",                       5, laurabow2CDSignatureEnableControlPanel,         laurabow2PatchEnableControlPanel },
-	{ false,   740, "CD: enable control panel",                       4, laurabow2CDSignatureEnableControlPanel,         laurabow2PatchEnableControlPanel },
 	{ false,   923, "CD: enable control panel",                       1, laurabow2CDSignatureInsetEnableControlPanel,    laurabow2CDPatchInsetEnableControlPanel },
 	{ false,   610, "Floppy: enable control panel",                   3, laurabow2FloppySignatureEnableControlPanel,     laurabow2PatchEnableControlPanel },
-	{ false,   730, "Floppy: enable control panel",                   5, laurabow2FloppySignatureEnableControlPanel,     laurabow2PatchEnableControlPanel },
-	{ false,   740, "Floppy: enable control panel",                   3, laurabow2FloppySignatureEnableControlPanel,     laurabow2PatchEnableControlPanel },
 	// King's Quest 6 and Laura Bow 2 share basic patches for audio + text support
 	{ false,   924, "CD: audio + text support 1",                     1, kq6laurabow2CDSignatureAudioTextSupport1,       kq6laurabow2CDPatchAudioTextSupport1 },
 	{ false,   924, "CD: audio + text support 2",                     1, kq6laurabow2CDSignatureAudioTextSupport2,       kq6laurabow2CDPatchAudioTextSupport2 },
@@ -14332,6 +14331,27 @@ static const uint16 qfg1vgaPatchDrinkWaterMessage[] = {
 	PATCH_END
 };
 
+// QFG1VGA throttles the Sierra logo palette animation to once every third
+//  game cycle. This runs very slow when combined with our own throttling.
+//  This appears to be the only game that does this, so we just disable it.
+//
+// Applies to: All versions
+// Responsible method: LogoRoom:doit
+static const uint16 qfg1vgaSignatureSierraLogoSpeed[] = {
+	SIG_MAGICDWORD,
+	0x0a,                                   // mod
+	0x36,                                   // push
+	0x35, 0x00,                             // ldi 00
+	0x1a,                                   // eq?
+	SIG_END
+};
+
+static const uint16 qfg1vgaPatchSierraLogoSpeed[] = {
+	PATCH_ADDTOOFFSET(+1),
+	0x76,                                   // push0
+	PATCH_END
+};
+
 //          script, description,                                      signature                            patch
 static const SciScriptPatcherEntry qfg1vgaSignatures[] = {
 	{  true,     0, "inventory weight warning",                    1, qfg1vgaSignatureInventoryWeightWarn, qfg1vgaPatchInventoryWeightWarn },
@@ -14357,6 +14377,7 @@ static const SciScriptPatcherEntry qfg1vgaSignatures[] = {
 	{  true,   340, "dagnabit inventory fix",                      1, qfg1vgaSignatureDagnabitInventory,   qfg1vgaPatchDagnabitInventory },
 	{  true,   340, "mac: dagnabit icon bar fix",                  1, qfg1vgaSignatureMacDagnabitIconBar,  qfg1vgaPatchMacDagnabitIconBar },
 	{  true,   603, "mac: logo mouse-up fix",                      1, qfg1vgaSignatureMacLogoIntroSkip,    qfg1vgaPatchMacLogoIntroSkip },
+	{  true,   603, "sierra logo speed",                           1, qfg1vgaSignatureSierraLogoSpeed,     qfg1vgaPatchSierraLogoSpeed },
 	{  true,   814, "window text temp space",                      1, qfg1vgaSignatureTempSpace,           qfg1vgaPatchTempSpace },
 	{  true,   814, "dialog header offset",                        3, qfg1vgaSignatureDialogHeader,        qfg1vgaPatchDialogHeader },
 	{  true,   928, "Narrator lockup fix",                         1, sciNarratorLockupSignature,          sciNarratorLockupPatch },

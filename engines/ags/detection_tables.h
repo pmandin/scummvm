@@ -244,6 +244,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "blackwell5", "The Blackwell Epiphany" },
 	{ "captaindisaster", "Captain Disaster in: Death Has A Million Stomping Boots" },
 	{ "captainhook", "Captain Hook and the Lost Girl" },
+	{ "castleagony", "Castle Agony" },
 	{ "castledornstein", "Castle Dornstein" },
 	{ "charnelhousetrilogy", "The Charnel House Trilogy" },
 	{ "chronicleofinnsmouth", "Chronicle of Innsmouth" },
@@ -281,6 +282,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "larrylotter", "Larry Lotter and the Test of Time / Warthogs" },
 	{ "lastdayadolf","The Last Day of Adolf" },
 	{ "lastpirateadventure","The Last Pirate Adventure: Drake's Treasure" },
+	{ "leewardep1","Leeward - Episode 1" },
 	{ "legendofhand", "Legend of Hand" },
 	{ "mage", "Mage's Initiation: Reign of the Elements" },
 	{ "metaldead", "Metal Dead" },
@@ -1284,6 +1286,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "harrys21stbirthday", "Harry's 21st Birthday" },
 	{ "harryshopshock", "Harry and the Locked Crocs Shop Shock" },
 	{ "hauntedcastle", "Haunted Castle" },
+	{ "hauntingsmanor", "Hauntings of Mystery Manor" },
 	{ "haven1", "Haven - Episode 1" },
 	{ "hawkeye", "Hawk Eye Quandaries" },
 	{ "headbangerheaven", "Headbanger's Heaven - A Rock & Roll Adventure" },
@@ -3497,6 +3500,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("astroloco", "astroloco1.exe", "06e70a826fde73b3f86f974885d31abe", 42492070),
 	GAME_ENTRY_EN_STEAM("beer", "beer!.exe", "6f201fd7a19869c85f49c7c471d0479a", 5055091), // Windows
 	GAME_ENTRY_EN_STEAM("beer", "Beer!.ags", "6f201fd7a19869c85f49c7c471d0479a", 5042748), // Linux
+	GAME_ENTRY_STEAM("beyondowlsgard", "Owlsgard.exe", "0f647ddfd86c3dad2d68055fab21f091", 556512803), // Eng-Deu
 	GAME_ENTRY_EN_GOG("blackwell1", "blackwell1.exe", "605e124cb7e0b56841c471e2d641c224", 18822697),
 	GAME_ENTRY_EN_GOG("blackwell1", "Blackwell Legacy.exe", "92af7315126c6da1e9e0c641cd9df200", 67316743),  // v2.2.1
 	GAME_ENTRY_EN_GOG("blackwell1", "Blackwell Legacy.exe", "92af7315126c6da1e9e0c641cd9df200", 67331239),  // v2.2.2
@@ -3563,6 +3567,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_PLUGIN_STEAM_EN("blackwell5", "epiphany.exe", "c1cddd6fcdbcd030beda9f10d4e4270a", 281856724, AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN("blackwell5", "epiphany.exe", "764f20abb335b94ab8ec6a4ef6db01ea", 283020359, AGSTEAM_WADJETEYE),
 	GAME_ENTRY_EN_STEAM("captaindisaster", "cd-dhamsb-1-0-1.exe", "e2d290f8f21c6a83a9e8c5f3a0425b5e", 150665897),
+	GAME_ENTRY_EN_STEAM("castleagony", "Agony.exe", "387ff720e746ae46e93f463fd58d77a4", 21017019),
 	GAME_ENTRY_EN_STEAM("charnelhousetrilogy", "cht.ags", "55c782c9de5a09157ea6aafac90b9cc8", 339257135),
 	GAME_ENTRY_EN_STEAM("charnelhousetrilogy", "cht.exe", "29c49db0805500ec14964eb897fc7b02", 341425110),
 	GAME_ENTRY_EN("charnelhousetrilogy", "cht.exe", "9ba3d9fbb098a26d7293ad3161c0f270", 341411868),
@@ -3646,6 +3651,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY("larrylotter", "warthogs.exe", "cbe62572ed082a3063a49d594612ac0b", 12397280), // v1.7
 	GAME_ENTRY_STEAM("larrylotter", "larry lotter.ags", "2802b69370de199a1f8d47889a197c14", 47202232),
 	GAME_ENTRY_EN_STEAM("lastdayadolf", "thelastdayofadolf.ags", "6ed2d17ac0fcdb9da877daa89d4c9d30", 24559188),
+	GAME_ENTRY("leewardep1", "LeeWard.exe", "886b68d435856de8fe38b65cabf38273", 1885509300),  // itch.io Eng-Esp
 	GAME_ENTRY_EN_STEAM("legendofhand", "legend of hand.exe", "fc478dd7564c908615c9366398d995c8", 75797285),
 	GAME_ENTRY_EN("legendofhand", "legend of hand.exe", "fc478dd7564c908615c9366398d995c8", 75797155),
 	GAME_ENTRY_EN_GOG("mage", "ac2game.dat", "2e822f554994f36e0c62da2acda874da", 30492258), // Mac
@@ -3672,7 +3678,9 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN_GOG("oott", "agsgame.dat", "ca8414acc5dc5687891db2d8ac5a0e76", 465662744), // Linux
 	GAME_ENTRY("ozorwell1", "OZORWELL.exe", "7036a7f21cfe585bc890093b4e004d52", 588631118), // itch.io  Eng-Ita
 	GAME_ENTRY("ozorwell2", "OZ2.exe", "99a9a592b2ffe51a93b5f18b927441b0", 1028373987), // itch.io  Eng-Ita
-	GAME_ENTRY_EN_STEAM("perfecttides", "game.ags", "63f8a60cc094996bd070e68cb3c4722c", 1201066930),
+	GAME_ENTRY_EN_STEAM("perfecttides", "perfecttides.exe", "63f8a60cc094996bd070e68cb3c4722c", 1201068548),  // Win v1.0.2
+	GAME_ENTRY_EN_STEAM("perfecttides", "game.ags", "63f8a60cc094996bd070e68cb3c4722c", 1201066930),  // Mac
+	GAME_ENTRY_EN_STEAM("perfecttides", "game.ags", "63f8a60cc094996bd070e68cb3c4722c", 1201068548),  // Mac v1.0.2
 	GAME_ENTRY("perfidiouspetrolstation", "NancyATPPS.exe", "be858e83311d4f1b49e05b933b92f0a9", 28085287),  // Eng-Deu
 	GAME_ENTRY_GOG("primordia", "primordia.exe", "22313e59c3233001488c26f18c80cc08", 973495830),
 	GAME_ENTRY_GOG("primordia", "primordia.exe", "22313e59c3233001488c26f18c80cc08", 973511911),
@@ -5339,6 +5347,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("harryshopshock", "Harry and the Locked Crocs Shop Shock.exe", "495d45fb8adfd49690ae3b97921feec6", 13062995),
 	GAME_ENTRY_EN("harryshopshock", "snapattack.ags", "8f45073f4c89b9b9fd8990740bafa03a", 10582339),
 	GAME_ENTRY_EN("hauntedcastle", "haunted.exe", "3c22ec19306691b68c34f6ce98377265", 40287804),
+	GAME_ENTRY_EN("hauntingsmanor", "Hauntings.exe", "0710e2ec71042617f565c01824f0cf3c", 24783520),
 	GAME_ENTRY_EN("haven1", "A small world.exe", "b142b43c146c25443a1d155d441a6a81", 43019171),  // Windows
 	GAME_ENTRY_EN("haven1", "A small world.ags", "c764faa670679c24eb4d51957387f8b4", 40539027),  // Linux
 	GAME_ENTRY_EN("hawkeye", "heq.exe", "2870eb249d21d414ca1de98401190293", 136607518),

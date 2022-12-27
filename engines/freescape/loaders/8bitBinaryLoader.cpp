@@ -130,15 +130,15 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 		for (uint8 colour = 0; colour < numberOfColours / 2; colour++) {
 			uint8 data = readField(file, 8);
 			entry = data & 0xf;
-			if (_renderMode == Common::kRenderCGA)
-				entry = entry % 4; // TODO: use dithering
+			//if (_renderMode == Common::kRenderCGA)
+			//	entry = entry % 4; // TODO: use dithering
 
 			colours->push_back(entry);
 			debugC(1, kFreescapeDebugParser, "color[%d] = %x", 2 * colour, entry);
 
 			entry = data >> 4;
-			if (_renderMode == Common::kRenderCGA)
-				entry = entry % 4; // TODO: use dithering
+			//if (_renderMode == Common::kRenderCGA)
+			//	entry = entry % 4; // TODO: use dithering
 
 			colours->push_back(entry);
 			debugC(1, kFreescapeDebugParser, "color[%d] = %x", 2 * colour + 1, entry);
@@ -296,8 +296,6 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	uint8 scale = readField(file, 8);
 	debugC(1, kFreescapeDebugParser, "Scale: %d", scale);
 
-	uint8 ci3 = 0;
-	uint8 ci4 = 0;
 	uint8 skyColor = areaFlags & 15;
 	uint8 groundColor = areaFlags >> 4;
 
@@ -306,21 +304,18 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 
 	uint8 usualBackgroundColor = readField(file, 8);
 	uint8 underFireBackgroundColor = readField(file, 8);
-	ci3 = readField(file, 8);
-	ci4 = readField(file, 8);
+	uint8 paperColor = readField(file, 8);
+	uint8 inkColor = readField(file, 8);
 	debugC(1, kFreescapeDebugParser, "Colors usual background: %d", usualBackgroundColor);
 	debugC(1, kFreescapeDebugParser, "Colors under fire background: %d", underFireBackgroundColor);
+	debugC(1, kFreescapeDebugParser, "Color Paper: %d", paperColor);
+	debugC(1, kFreescapeDebugParser, "Color Ink: %d", inkColor);
 
-	debugC(1, kFreescapeDebugParser, "Colors: %d %d %d %d", ci3, ci4, skyColor, groundColor);
+	debugC(1, kFreescapeDebugParser, "Additional colors: %d %d", skyColor, groundColor);
 	// CPC
 	// groundColor = file->readByte() & 15;
 	// skyColor = file->readByte() & 15;
 	// debugC(1, kFreescapeDebugParser, "Colors: %d %d", skyColor, groundColor);
-
-	if (_renderMode == Common::kRenderCGA) {
-		skyColor = skyColor % 4;
-		groundColor = groundColor % 4;
-	}
 
 	// Graphics::PixelBuffer *palette = getPalette(areaNumber, ci1, ci2, skyColor, groundColor, ncolors);
 
@@ -402,6 +397,8 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	area->_scale = scale;
 	area->_skyColor = skyColor;
 	area->_groundColor = groundColor;
+	area->_inkColor = inkColor;
+	area->_paperColor = paperColor;
 	area->_usualBackgroundColor = usualBackgroundColor;
 	area->_underFireBackgroundColor = underFireBackgroundColor;
 
@@ -577,7 +574,11 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 
 void FreescapeEngine::loadBundledImages() {
 	Image::BitmapDecoder decoder;
-	Common::String borderFilename = _targetName + "_" + Common::getRenderModeDescription(_renderMode) + ".bmp";
+	Common::String targetName = _targetName;
+	if (isDOS() && isDemo())
+		Common::replace(targetName, "-demo", "");
+
+	Common::String borderFilename = targetName + "_" + Common::getRenderModeDescription(_renderMode) + ".bmp";
 	if (_dataBundle->hasFile(borderFilename)) {
 		Common::SeekableReadStream *borderFile = _dataBundle->createReadStreamForMember(borderFilename);
 		decoder.loadStream(*borderFile);
@@ -586,13 +587,22 @@ void FreescapeEngine::loadBundledImages() {
 		decoder.destroy();
 	} else
 		error("Missing border file '%s' in data bundle", borderFilename.c_str());
+
+	Common::String titleFilename = targetName + "_" + Common::getRenderModeDescription(_renderMode) + "_title.bmp";
+	if (_dataBundle->hasFile(titleFilename)) {
+		Common::SeekableReadStream *titleFile = _dataBundle->createReadStreamForMember(titleFilename);
+		decoder.loadStream(*titleFile);
+		_title = new Graphics::Surface();
+		_title->copyFrom(*decoder.getSurface());
+		decoder.destroy();
+	}
 }
 
 void FreescapeEngine::loadFonts(Common::SeekableReadStream *file, int offset) {
 	file->seek(offset);
 	int charNumber = 60;
 	byte *font = nullptr;
-	if (isDOS()) {
+	if (isDOS() || isSpectrum()) {
 		font = (byte *)malloc(6 * charNumber);
 		file->read(font, 6 * charNumber);
 

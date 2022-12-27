@@ -68,12 +68,36 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 	},
 
 	{
+		GAMEOPTION_EASIER_AI_DEFAULT,
+		{
+			_s("Easier AI"),
+			_s("Decrease the difficulty of AI puzzles"),
+			"easier_ai",
+			true,
+			0,
+			0
+		}
+	},
+
+	{
 		GAMEOPTION_FINAL_HOUR,
 		{
 			_s("Updated Credits Music"),
 			_s("Play the song The Final Hour during the credits instead of reusing MIDI songs"),
 			"credits_music",
 			false,
+			0,
+			0
+		}
+	},
+
+	{
+		GAMEOPTION_SLIMHOTSPOTS,
+		{
+			_s("Slim Left/Right Hotspots"),
+			_s("Shrinks the hotspots on the left and right sides for exiting puzzles"),
+			"slim_hotspots",
+			true,
 			0,
 			0
 		}

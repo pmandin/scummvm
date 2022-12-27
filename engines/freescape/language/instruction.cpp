@@ -215,9 +215,11 @@ void FreescapeEngine::executeSPFX(FCLInstruction &instruction) {
 		if (src == 0 && dst >= 2 && dst <= 5) {
 			_currentArea->remapColor(dst, 1);
 			return;
-		} if (src == 0) {
+		}
+
+		if (src == 0) {
 			color = dst;
-		} else if (src > 0) {
+		} else {
 
 			switch (src) {
 			case 1:
@@ -236,7 +238,12 @@ void FreescapeEngine::executeSPFX(FCLInstruction &instruction) {
 			_currentArea->remapColor(i, color);
 	} else if (isDOS()) {
 		debugC(1, kFreescapeDebugCode, "Switching palette from position %d to %d", src, dst);
-		_currentArea->remapColor(src, dst);
+		if (src == 0 && dst == 1)
+			_currentArea->remapColor(_currentArea->_usualBackgroundColor, _renderMode == Common::kRenderCGA ? 1 : _currentArea->_underFireBackgroundColor);
+		else if (src == 0 && dst == 0)
+			_currentArea->unremapColor(_currentArea->_usualBackgroundColor);
+		else
+			_currentArea->remapColor(src, dst);
 	}
 	executeRedraw(instruction);
 }
@@ -253,13 +260,17 @@ bool FreescapeEngine::executeEndIfVisibilityIsEqual(FCLInstruction &instruction)
 		assert(obj);
 		debugC(1, kFreescapeDebugCode, "End condition if visibility of obj with id %d is %d!", source, value);
 	} else {
-		assert(_areaMap.contains(source));
-		obj = _areaMap[source]->objectWithID(additional);
-		assert(obj);
 		debugC(1, kFreescapeDebugCode, "End condition if visibility of obj with id %d in area %d is %d!", additional, source, value);
+		if (_areaMap.contains(source)) {
+			obj = _areaMap[source]->objectWithID(additional);
+			assert(obj);
+		} else {
+			assert(isDOS() && isDemo()); // Should only happen in the DOS demo
+			return (value == false);
+		}
 	}
 
-	return (obj->isInvisible() == value);
+	return (obj->isInvisible() == (value != 0));
 }
 
 bool FreescapeEngine::executeEndIfNotEqual(FCLInstruction &instruction) {
@@ -291,7 +302,7 @@ void FreescapeEngine::executeIncrementVariable(FCLInstruction &instruction) {
 			_gameStateVars[variable] = 0;
 
 		if (increment < 0)
-			flashScreen(_currentArea->_underFireBackgroundColor);
+			flashScreen(_renderMode == Common::kRenderCGA ? 1 :_currentArea->_underFireBackgroundColor);
 
 		debugC(1, kFreescapeDebugCode, "Shield incremented by %d up to %d", increment, _gameStateVars[variable]);
 		break;
@@ -344,9 +355,14 @@ void FreescapeEngine::executeMakeInvisible(FCLInstruction &instruction) {
 	}
 
 	debugC(1, kFreescapeDebugCode, "Making obj %d invisible in area %d!", objectID, areaID);
-	Object *obj = _areaMap[areaID]->objectWithID(objectID);
-	assert(obj); // We assume the object was there
-	obj->makeInvisible();
+	if (_areaMap.contains(areaID)) {
+		Object *obj = _areaMap[areaID]->objectWithID(objectID);
+		assert(obj); // We assume the object was there
+		obj->makeInvisible();
+	} else {
+		assert(isDOS() && isDemo()); // Should only happen in the DOS demo
+	}
+
 }
 
 void FreescapeEngine::executeMakeVisible(FCLInstruction &instruction) {
@@ -361,9 +377,13 @@ void FreescapeEngine::executeMakeVisible(FCLInstruction &instruction) {
 	}
 
 	debugC(1, kFreescapeDebugCode, "Making obj %d visible in area %d!", objectID, areaID);
-	Object *obj = _areaMap[areaID]->objectWithID(objectID);
-	assert(obj); // We assume an object should be there
-	obj->makeVisible();
+	if (_areaMap.contains(areaID)) {
+		Object *obj = _areaMap[areaID]->objectWithID(objectID);
+		assert(obj); // We assume an object should be there
+		obj->makeVisible();
+	} else {
+		assert(isDOS() && isDemo()); // Should only happen in the DOS demo
+	}
 }
 
 void FreescapeEngine::executeToggleVisibility(FCLInstruction &instruction) {

@@ -173,7 +173,6 @@ static const SAGAGameDescription gameDescriptions[] = {
 	},
 
 
-	// TODO: Add Amiga floppy demos here (not supported yet)
 	{
 		{
 			"ite",
@@ -191,7 +190,31 @@ static const SAGAGameDescription gameDescriptions[] = {
 		GID_ITE,
 		GF_EXTRA_ITE_CREDITS | GF_AGA_GRAPHICS | GF_EMBED_FONT | GF_POWERPACK_GFX,
 		ITE_DEFAULT_SCENE,
-		RESOURCELIST_ITE_GERMAN_AGA_CD,
+		RESOURCELIST_ITE_GERMAN_AGA,
+		FONTLIST_NONE,
+		PATCHLIST_ITE,
+		INTROLIST_ITE_AMIGA_GERMAN_AGA,
+		{},
+	},
+	{
+		{
+			"ite",
+			"AGA Demo Floppy",
+			{
+				{"ite.rtn",		GAME_RESOURCEFILE,	"634d36f78ac151b14dbeed274e169def", 18564},
+				{"ite01.adf", 0, "82877f62357c39cb3a9f892dfce713e2", 901120},
+				{"ite02.adf", 0, "ed7bff9c17aacce17a9b5743d39149e7", 901120},
+				AD_LISTEND
+			},
+			Common::DE_DEU,
+			Common::kPlatformAmiga,
+			ADGF_CD,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_ITE_FLOPPY|GF_EXTRA_ITE_CREDITS | GF_AGA_GRAPHICS | GF_EMBED_FONT | GF_POWERPACK_GFX,
+		ITE_DEFAULT_SCENE,
+		RESOURCELIST_ITE_GERMAN_AGA,
 		FONTLIST_NONE,
 		PATCHLIST_ITE,
 		INTROLIST_ITE_AMIGA_GERMAN_AGA,
@@ -214,7 +237,31 @@ static const SAGAGameDescription gameDescriptions[] = {
 		GID_ITE,
 		GF_EXTRA_ITE_CREDITS | GF_ECS_GRAPHICS | GF_EMBED_FONT | GF_POWERPACK_GFX,
 		ITE_DEFAULT_SCENE,
-		RESOURCELIST_ITE_GERMAN_ECS_CD,
+		RESOURCELIST_ITE_GERMAN_ECS,
+		FONTLIST_NONE,
+		PATCHLIST_ITE,
+		INTROLIST_ITE_AMIGA_GERMAN_ECS,
+		{},
+	},
+	{
+		{
+			"ite",
+			"ECS Demo Floppy",
+			{
+				{"ite.rtn",		GAME_RESOURCEFILE,	"1e77154f045358ef3f09fbdb00ea92a4", 18624},
+				{"ite01.adf",                           0,      "fc6ba8bae7d86038efa2fba30ebf5e77", 901120},
+				{"ite02.adf",                           0,      "8f8cc806fc19066480b868c43e12343a", 901120},
+				AD_LISTEND
+			},
+			Common::DE_DEU,
+			Common::kPlatformAmiga,
+			ADGF_NO_FLAGS,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_ITE_FLOPPY | GF_EXTRA_ITE_CREDITS | GF_ECS_GRAPHICS | GF_EMBED_FONT | GF_POWERPACK_GFX,
+		ITE_DEFAULT_SCENE,
+		RESOURCELIST_ITE_GERMAN_ECS,
 		FONTLIST_NONE,
 		PATCHLIST_ITE,
 		INTROLIST_ITE_AMIGA_GERMAN_ECS,
@@ -230,16 +277,16 @@ static const SAGAGameDescription gameDescriptions[] = {
 			"ite",
 			"CD",
 			{
-				{"ite resources.bin",	GAME_RESOURCEFILE | GAME_MACBINARY,	"0bd506aa887bfc7965f695c6bd28237d", -1},
-				{"ite scripts.bin",		GAME_SCRIPTFILE | GAME_MACBINARY,	"af0d7a2588e09ad3ecbc5b474ea238bf", -1},
-				{"ite sounds.bin",		GAME_SOUNDFILE | GAME_MACBINARY,	"441426c6bb2a517f65c7e49b57f7a345", -1},
-				{"ite music.bin",		GAME_MUSICFILE_GM | GAME_MACBINARY,	"c1d20324b7cdf1650e67061b8a93251c", -1},
-				//{"ite voices.bin",		GAME_VOICEFILE | GAME_MACBINARY,	"dba92ae7d57e942250fe135609708369", -1},
+				{"ite resources",	GAME_RESOURCEFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
+				{"ite scripts",		GAME_SCRIPTFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
+				{"ite sounds",		GAME_SOUNDFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
+				{"ite music",		GAME_MUSICFILE_GM | GAME_MACBINARY,	"b0d66d7ae48f35c5c9a3444343b86f85", 3135053},
+				// {"ite voices",		GAME_VOICEFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
 				AD_LISTEND
 			},
 			Common::EN_ANY,
 			Common::kPlatformMacintosh,
-			ADGF_CD,
+			ADGF_CD | ADGF_MACRESFORK,
 			GUIO0()
 		},
 		GID_ITE,
@@ -1048,7 +1095,7 @@ static const SAGAGameDescription gameDescriptions[] = {
 		GID_ITE,
 		GF_EXTRA_ITE_CREDITS | GF_AGA_GRAPHICS,
 		ITE_DEFAULT_SCENE,
-		RESOURCELIST_ITE_GERMAN_AGA_CD,
+		RESOURCELIST_ITE_GERMAN_AGA,
 		FONTLIST_ITE,
 		PATCHLIST_ITE,
 		INTROLIST_ITE_AMIGA_GERMAN_AGA,
@@ -1075,7 +1122,7 @@ static const SAGAGameDescription gameDescriptions[] = {
 		GID_ITE,
 		GF_EXTRA_ITE_CREDITS | GF_ECS_GRAPHICS,
 		ITE_DEFAULT_SCENE,
-		RESOURCELIST_ITE_GERMAN_ECS_CD,
+		RESOURCELIST_ITE_GERMAN_ECS,
 		FONTLIST_ITE,
 		PATCHLIST_ITE,
 		INTROLIST_ITE_AMIGA_GERMAN_ECS,
@@ -1127,10 +1174,10 @@ static const SAGAGameDescription gameDescriptions[] = {
 		GID_ITE,
 		GF_EXTRA_ITE_CREDITS | GF_ECS_GRAPHICS,
 		ITE_DEFAULT_SCENE,
-		RESOURCELIST_ITE_ENGLISH_ECS_CD,
+		RESOURCELIST_ITE_ENGLISH_ECS,
 		FONTLIST_ITE,
 		PATCHLIST_ITE,
-		INTROLIST_ITE_AMIGA_ENGLISH_ECS_CD,
+		INTROLIST_ITE_AMIGA_ENGLISH_ECS,
 		{},
 	},
 
@@ -1153,14 +1200,61 @@ static const SAGAGameDescription gameDescriptions[] = {
 		GID_ITE,
 		GF_ITE_FLOPPY | GF_AGA_GRAPHICS | GF_EMBED_FONT | GF_POWERPACK_GFX,
 		ITE_DEFAULT_SCENE,
-		RESOURCELIST_ITE_GERMAN_AGA_CD,
+		RESOURCELIST_ITE_GERMAN_AGA,
 		FONTLIST_NONE,
 		PATCHLIST_NONE,
 		INTROLIST_ITE_AMIGA_GERMAN_AGA,
 		{},
 	},
+	{
+		{
+			"ite",
+			"ECS Floppy",
+			{
+				{"ite.rtn",		GAME_RESOURCEFILE,	"733a15d1816b76ed10fbb02668ae1f93", 18624},
+				{"ite01.adf",		0,					"49352821102fc03d1653e0fda13fb15f", 901120},
+				{"ite02.adf",	0,					"160189cce6ecec4bfb4e045bf9be3218", 901120},
+				AD_LISTEND
+			},
+			Common::DE_DEU,
+			Common::kPlatformAmiga,
+			ADGF_NO_FLAGS,
+			GUIO1(GUIO_NOSPEECH)
+		},
+		GID_ITE,
+		GF_ITE_FLOPPY | GF_ECS_GRAPHICS | GF_EMBED_FONT | GF_POWERPACK_GFX,
+		ITE_DEFAULT_SCENE,
+		RESOURCELIST_ITE_GERMAN_ECS,
+		FONTLIST_NONE,
+		PATCHLIST_NONE,
+		INTROLIST_ITE_AMIGA_GERMAN_ECS,
+		{},
+	},
+	{
+		{
+			"ite",
+			"ECS Floppy",
+			{
+				{"ite.rtn",		GAME_RESOURCEFILE,	"9d0c6b31ac86b4bd9237e304e4bfb73a", 18624},
+				{"ite01.adf",		0,					"532973f8422f46f73db5b8a161681d40", 901120},
+				{"ite02.adf",	0,					"794f525b9b81f765a5df18bfae8364ec", 901120},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformAmiga,
+			ADGF_NO_FLAGS,
+			GUIO1(GUIO_NOSPEECH)
+		},
+		GID_ITE,
+		GF_ITE_FLOPPY | GF_ECS_GRAPHICS | GF_EMBED_FONT | GF_POWERPACK_GFX,
+		ITE_DEFAULT_SCENE,
+		RESOURCELIST_ITE_GERMAN_ECS, // Uses German resource list for some reason
+		FONTLIST_NONE,
+		PATCHLIST_NONE,
+		INTROLIST_ITE_AMIGA_GERMAN_ECS, // Uses German intro list for some reason
+		{},
+	},
 
-	// TODO: Add other Amiga floppy versions
 	// IHNM Section ///////////////////////////////////////////////////////////////////////////////////////////
 
 	// I Have No Mouth And I Must Scream - Demo version

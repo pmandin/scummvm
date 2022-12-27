@@ -177,6 +177,8 @@ bool Script::loadScript(Common::String filename) {
 
 	// Load the code
 	_codeSize = scriptfile->size();
+	if (_codeSize <= 0)
+		return false;
 	delete[] _code;
 	_code = new byte[_codeSize];
 	if (!_code)
@@ -211,6 +213,11 @@ bool Script::loadScript(Common::String filename) {
 		_code[0x0795] = 0x41;
 		_code[0x078A] = 0x40;
 		_code[0x079B] = 0x3F;
+	} else if (_version == kGroovieT7G && filename.equals("mu.grv") && _codeSize == 1354) {
+		// remove the right exit hotspot in the piano, set to nops
+		_code[0x1d2] = 1;
+		_code[0x1d3] = 1;
+		_code[0x1d4] = 1;
 	} else if (_version == kGroovieT11H && filename.equals("script.grv") && _codeSize == 62447) {
 		// don't sleep before showing the skulls
 		memset(_code + 0x17, 1, 0x1F - 0x17); // set nop
@@ -292,7 +299,10 @@ void Script::directGameLoad(int slot) {
 		}
 	} else if (_version == kGroovieT11H) {
 		setVariable(0xF, slot);
-		_currentInstruction = 0xE78D;
+		if (_scriptFile == "suscript.grv")
+			_currentInstruction = 0x13;
+		else
+			_currentInstruction = 0xE78D;
 		return;
 	} else if (_version == kGroovieCDY) {
 		setVariable(0x1, slot);
@@ -1139,8 +1149,13 @@ void Script::o_hotspot_left() {
 
 	debugC(5, kDebugScript, "Groovie::Script: HOTSPOT-LEFT @0x%04X", address);
 
-	// Mark the leftmost 100 pixels of the game area
-	Common::Rect rect(0, 80, 100, 400);
+	// Mark the leftmost 50 or 100 pixels of the game area
+	// slim_hotspots is only for puzzles
+	int width = 100;
+	if (_savedCode != nullptr && ConfMan.getBool("slim_hotspots"))
+		width = 50;
+
+	Common::Rect rect(0, 80, width, 400);
 	hotspot(rect, address, 1);
 }
 
@@ -1149,8 +1164,13 @@ void Script::o_hotspot_right() {
 
 	debugC(5, kDebugScript, "Groovie::Script: HOTSPOT-RIGHT @0x%04X", address);
 
-	// Mark the rightmost 100 pixels of the game area
-	Common::Rect rect(540, 80, 640, 400);
+	// Mark the rightmost 50 or 100 pixels of the game area
+	// slim_hotspots is only for puzzles
+	int width = 100;
+	if (_savedCode != nullptr && ConfMan.getBool("slim_hotspots"))
+		width = 50;
+
+	Common::Rect rect(640 - width, 80, 640, 400);
 	hotspot(rect, address, 2);
 }
 
@@ -1178,6 +1198,12 @@ void Script::o_hotspot_current() {
 void Script::o_inputloopend() {
 	debugC(5, kDebugScript, "Groovie::Script: Input loop end");
 
+	// width for left and right sides
+	// slim_hotspots is only for puzzles
+	int width = 80;
+	if (_savedCode != nullptr && ConfMan.getBool("slim_hotspots"))
+		width = 50;
+
 	// Handle the predefined hotspots
 	if (_hotspotTopAction) {
 		Common::Rect rect(0, 0, 640, 80);
@@ -1188,11 +1214,11 @@ void Script::o_inputloopend() {
 		hotspot(rect, _hotspotBottomAction, _hotspotBottomCursor);
 	}
 	if (_hotspotRightAction) {
-		Common::Rect rect(560, 0, 640, 480);
+		Common::Rect rect(640 - width, 0, 640, 480);
 		hotspot(rect, _hotspotRightAction, 2);
 	}
 	if (_hotspotLeftAction) {
-		Common::Rect rect(0, 0, 80, 480);
+		Common::Rect rect(0, 0, width, 480);
 		hotspot(rect, _hotspotLeftAction, 1);
 	}
 
@@ -2224,6 +2250,33 @@ void Script::o2_videofromref() {
 			}
 
 			_currentInstruction = 0xBF37; // main menu
+		}
+		// T11H Souped Up
+		else if (_currentInstruction == 0x10 && _scriptFile == "suscript.grv") {
+			// Load from the main menu
+			GUI::SaveLoadChooser *dialog = new GUI::SaveLoadChooser(_("Restore game:"), _("Restore"), false);
+			int slot = dialog->runModalWithCurrentTarget();
+			delete dialog;
+
+			if (slot >= 0) {
+				_currentInstruction = 0x16;
+				loadgame(slot);
+				return;
+			} else {
+				_currentInstruction = 0x8; // main menu
+			}
+		} else if (_currentInstruction == 0x1E && _scriptFile == "suscript.grv") {
+			// Save from the main menu
+			GUI::SaveLoadChooser *dialog = new GUI::SaveLoadChooser(_("Save game:"), _("Save"), true);
+			int slot = dialog->runModalWithCurrentTarget();
+			Common::String saveName = dialog->getResultString();
+			delete dialog;
+
+			if (slot >= 0) {
+				directGameSave(slot, saveName);
+			}
+
+			_currentInstruction = 0x8; // main menu
 		}
 	}
 

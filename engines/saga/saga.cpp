@@ -274,6 +274,9 @@ SagaEngine::SagaEngine(OSystem *syst, const SAGAGameDescription *gameDesc)
 	// Mac CD Wyrmkeep
 	SearchMan.addSubDirectoryMatching(gameDataDir, "patch");
 
+	if (getPlatform() == Common::Platform::kPlatformMacintosh)
+		SearchMan.addSubDirectoryMatching(gameDataDir, "ITE Data Files");
+
 	_displayClip.left = _displayClip.top = 0;
 }
 
@@ -704,36 +707,36 @@ void SagaEngine::getExcuseInfo(int verb, const char *&textString, int &soundReso
 }
 
 ColorId SagaEngine::KnownColor2ColorId(KnownColor knownColor) {
-	ColorId colorId = kITEColorTransBlack;
+	ColorId colorId = kITEDOSColorTransBlack;
 
 	if (getGameId() == GID_ITE) {
 		switch (knownColor) {
 		case(kKnownColorTransparent):
-			colorId = kITEColorTransBlack;
+			colorId = iteColorTransBlack();
 			break;
 		case (kKnownColorBrightWhite):
-			colorId = kITEColorBrightWhite;
+			colorId = iteColorBrightWhite();
 			break;
 		case (kKnownColorWhite):
-			colorId = kITEColorWhite;
+			colorId = iteColorWhite();
 			break;
 		case (kKnownColorBlack):
-			colorId = kITEColorBlack;
+			colorId = iteColorBlack();
 			break;
 		case (kKnownColorSubtitleTextColor):
-			colorId = (ColorId)255;
+			colorId = isECS() ? kITEECSColorWhite : (ColorId)255;
 			break;
 		case (kKnownColorSubtitleEffectColorPC98):
 			colorId = (ColorId)210;
 			break;
 		case (kKnownColorVerbText):
-			colorId = kITEColorBlue;
+			colorId = isECS() ? kITEECSBottomColorBlue : kITEDOSColorBlue;
 			break;
 		case (kKnownColorVerbTextShadow):
-			colorId = kITEColorBlack;
+			colorId = isECS() ? kITEECSColorBlack : kITEDOSColorBlack;
 			break;
 		case (kKnownColorVerbTextActive):
-			colorId = (ColorId)96;
+			colorId = isECS() ? kITEECSBottomColorYellow60 : kITEDOSColorYellow60;
 			break;
 
 		default:

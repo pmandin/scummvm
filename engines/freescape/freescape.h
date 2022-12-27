@@ -79,9 +79,6 @@ struct soundFx {
 };
 
 class FreescapeEngine : public Engine {
-private:
-	// We need random numbers
-	Common::RandomSource *_rnd;
 
 public:
 	FreescapeEngine(OSystem *syst, const ADGameDescription *gd);
@@ -99,6 +96,7 @@ public:
 	bool isAmiga() { return _gameDescription->platform == Common::kPlatformAmiga; }
 	bool isAtariST() { return _gameDescription->platform == Common::kPlatformAtariST; }
 	bool isDOS() { return _gameDescription->platform == Common::kPlatformDOS; }
+	bool isSpectrum() { return _gameDescription->platform == Common::kPlatformZX; }
 
 	Common::Error run() override;
 
@@ -107,17 +105,22 @@ public:
 	Common::Rect _fullscreenViewArea;
 	void centerCrossair();
 
-	void convertBorder();
+	virtual void loadBorder();
+	virtual void processBorder();
 	void drawBorder();
 	void drawTitle();
 	void drawBackground();
 	virtual void drawUI();
+	virtual void drawInfoMenu();
+
 	virtual void drawCrossair(Graphics::Surface *surface);
 	Graphics::Surface *_border;
 	Graphics::Surface *_title;
 	Texture *_borderTexture;
 	Texture *_titleTexture;
 	Texture *_uiTexture;
+	Common::HashMap<uint16, Texture *> _borderCGAByArea;
+	Common::HashMap<uint16, byte *> _paletteCGAByArea;
 
 	// Parsing assets
 	uint8 _binaryBits;
@@ -270,6 +273,7 @@ public:
 	int _screenW, _screenH;
 	Renderer *_gfx;
 	Graphics::FrameLimiter *_frameLimiter;
+	bool _vsyncEnabled;
 	Common::RenderMode _renderMode;
 	ColorMap _colorMap;
 	int _underFireFrames;
@@ -331,11 +335,16 @@ public:
 	// Cheats
 	bool _useExtendedTimer;
 	bool _disableSensors;
+
+	// Random
+	Common::RandomSource *_rnd;
 };
 
 enum DrillerReleaseFlags {
 		ADGF_AMIGA_RETAIL = (1 << 0),
 		ADGF_AMIGA_BUDGET = (1 << 1),
+		ADGF_ZX_RETAIL = (1 << 2),
+		ADGF_ZX_MUSICAL = (1 << 3),
 };
 
 class DrillerEngine : public FreescapeEngine {
@@ -350,13 +359,19 @@ public:
 
 	bool _useAutomaticDrilling;
 
+	Common::HashMap<uint16, uint32> _drillStatusByArea;
+	Common::HashMap<uint16, uint32> _drillMaxScoreByArea;
+	Common::HashMap<uint16, uint32> _drillSuccessByArea;
+
 	void initGameState() override;
 	bool checkIfGameEnded() override;
 
 	void gotoArea(uint16 areaID, int entranceID) override;
 
+	void processBorder() override;
 	void loadAssets() override;
 	void drawUI() override;
+	void drawInfoMenu() override;
 
 	void pressedKey(const int keycode) override;
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
@@ -369,12 +384,12 @@ private:
 	void addDrill(const Math::Vector3d position, bool gasFound);
 	bool checkDrill(const Math::Vector3d position);
 	void removeDrill(Area *area);
-	StateBits _drilledAreas;
 
 	void loadAssetsDemo();
 	void loadAssetsFullGame();
 
 	void drawDOSUI(Graphics::Surface *surface);
+	void drawZXUI(Graphics::Surface *surface);
 	void drawAmigaAtariSTUI(Graphics::Surface *surface);
 };
 
