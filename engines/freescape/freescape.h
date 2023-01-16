@@ -97,6 +97,8 @@ public:
 	bool isAtariST() { return _gameDescription->platform == Common::kPlatformAtariST; }
 	bool isDOS() { return _gameDescription->platform == Common::kPlatformDOS; }
 	bool isSpectrum() { return _gameDescription->platform == Common::kPlatformZX; }
+	bool isCPC() { return _gameDescription->platform == Common::kPlatformAmstradCPC; }
+	bool isC64() { return _gameDescription->platform == Common::kPlatformC64; }
 
 	Common::Error run() override;
 
@@ -104,6 +106,9 @@ public:
 	Common::Rect _viewArea;
 	Common::Rect _fullscreenViewArea;
 	void centerCrossair();
+
+	virtual void borderScreen();
+	virtual void titleScreen();
 
 	virtual void loadBorder();
 	virtual void processBorder();
@@ -184,12 +189,11 @@ public:
 	bool checkFloor(Math::Vector3d currentPosition);
 	bool tryStepUp(Math::Vector3d currentPosition);
 	bool tryStepDown(Math::Vector3d currentPosition);
+	bool _hasFallen;
 
-	void rotate(Common::Point lastMousePos, Common::Point mousePos);
 	void rotate(float xoffset, float yoffset);
 	// Input state
 	float _lastFrame;
-	Common::Point _lastMousePos;
 
 	// Interaction
 	void shoot();
@@ -207,7 +211,6 @@ public:
 	// Camera options
 	Common::Point _crossairPosition;
 	float _mouseSensitivity;
-	float _movementSpeed;
 	Math::Vector3d _upVector; // const
 	Math::Vector3d _cameraFront, _cameraRight;
 	// Spacial attributes
@@ -308,6 +311,7 @@ public:
 	StateVars _gameStateVars;
 	StateBits _gameStateBits;
 	virtual bool checkIfGameEnded();
+	bool _forceEndGame;
 	ObjectArray _sensors;
 	void checkSensors();
 	void drawSensorShoot(Sensor *sensor);
@@ -323,6 +327,8 @@ public:
 	virtual Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream);
 	Graphics::Surface *_savedScreen;
 
+	void pauseEngineIntern(bool pause) override;
+
 	// Timers
 	bool startCountdown(uint32 delay);
 	void removeTimers();
@@ -335,21 +341,27 @@ public:
 	// Cheats
 	bool _useExtendedTimer;
 	bool _disableSensors;
+	bool _disableFalling;
 
 	// Random
 	Common::RandomSource *_rnd;
 };
 
 enum DrillerReleaseFlags {
-		ADGF_AMIGA_RETAIL = (1 << 0),
-		ADGF_AMIGA_BUDGET = (1 << 1),
-		ADGF_ZX_RETAIL = (1 << 2),
-		ADGF_ZX_MUSICAL = (1 << 3),
+		GF_AMIGA_RETAIL = (1 << 0),
+		GF_AMIGA_BUDGET = (1 << 1),
+		GF_ZX_RETAIL = (1 << 2),
+		GF_ZX_BUDGET = (1 << 3),
+		GF_CPC_RETAIL = (1 << 4),
+		GF_CPC_RETAIL2 = (1 << 5),
+		GF_CPC_BUDGET = (1 << 6),
+		GF_CPC_VIRTUALWORLDS = (1 << 7),
 };
 
 class DrillerEngine : public FreescapeEngine {
 public:
 	DrillerEngine(OSystem *syst, const ADGameDescription *gd);
+	~DrillerEngine();
 
 	uint32 _initialJetEnergy;
 	uint32 _initialJetShield;
@@ -368,6 +380,9 @@ public:
 
 	void gotoArea(uint16 areaID, int entranceID) override;
 
+	void borderScreen() override;
+	void titleScreen() override;
+
 	void processBorder() override;
 	void loadAssets() override;
 	void drawUI() override;
@@ -380,6 +395,7 @@ public:
 private:
 	void loadGlobalObjects(Common::SeekableReadStream *file, int offset);
 	bool drillDeployed(Area *area);
+	GeometricObject *_drillBase;
 	Math::Vector3d drillPosition();
 	void addDrill(const Math::Vector3d position, bool gasFound);
 	bool checkDrill(const Math::Vector3d position);
@@ -390,6 +406,8 @@ private:
 
 	void drawDOSUI(Graphics::Surface *surface);
 	void drawZXUI(Graphics::Surface *surface);
+	void drawCPCUI(Graphics::Surface *surface);
+	void drawC64UI(Graphics::Surface *surface);
 	void drawAmigaAtariSTUI(Graphics::Surface *surface);
 };
 

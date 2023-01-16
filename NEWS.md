@@ -12,6 +12,12 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Pink Panther: Passport to Peril.
    - Added support for Pink Panther: Hokus Pokus Pink.
    - Added support for Driller/Space Station Oblivion (DOS/EGA, Amiga and AtariST versions).
+   - Added support for Halls of the Dead: Faery Tale Adventure II.
+
+ New platforms:
+   - RetroMini RS90 under OpenDingux beta.
+   - 1st generation Miyoo (New BittBoy, Pocket Go and PowKiddy Q90-V90-Q20)
+     under TriForceX MiyooCFW.
 
  General:
    - Reduced amount of false positives in Mass Add.
@@ -20,6 +26,16 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added option for mono sound output (via --output-channels=CHANNELS command
      line option).
    - Improved cursor scaling in OpenGL mode.
+   - Fix crash when browsing folders containing files with \1 in the names.
+   - Added possibility to specify RNG seed via GUI or command line option.
+   - Added possibility to run ScummVM in autodetection mode by renaming the
+     executable starting with 'scummvm-auto' or by providing an empty file
+     named 'scummvm-autorun' next to the ScummVM executable.
+   - Added possibility to supply command line parameters which will be picked
+     up automatically. Put them one per line in a file named 'scummvm-autorun'.
+   - Added possibility to customize the default settings by specifying an initial
+     configuration file to load if no configuration file exists in the usual
+     location (via --initial-cfg=FILE or -i command line option).
 
  AGI:
    - Improved support for French translations.
@@ -32,11 +48,22 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for the original installer files for Maniac Mansion Deluxe and
      The New Adventures of Zak McKracken.
 
+ Director:
+   - Support for Pippin version of L-Zone.
+   - Fix a bug caused by use of slash in filename.
+
+ Dreamweb:
+   - Support playing from the original installer floppies.
+
  GOB:
    - Added support for Adibou 2 "Environment", "Read/Count 4 & 5" and "Read/Count 6 & 7".
 
+ Hadesch:
+   - Added support for a 1997 release.
+
  Kyra:
    - Added support for the Korean version of Legend of Kyrandia 1.
+   - Support multi-floppy mac kyra1 both as installer floppies and as installed directory.
    - Added support for the Hebrew version of Legend of Kyrandia 3.
 
  MADS:
@@ -44,6 +71,13 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Neverhood:
    - Added support for Japanese version of Neverhood.
+   - Support localizations by -=CHE@TER=- & Rigel.
+
+ Plumbers:
+   - Fixed crash with windows version.
+
+ Private:
+   - Allow playing mac version directly from installer CD.
 
  Queen:
    - Added option for using a better font in Hebrew version.
@@ -53,6 +87,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Chinese I Have no Mouth and I Must Scream.
    - Added support for Korean I Have no Mouth and I Must Scream.
    - Added support for playing directly from floppy installer for ITE.
+   - Support for Amiga (AGA/ECS, Retail/Demo, English/German) Inherit the Earth.
 
  SCI:
    - Improved text rendering for Macintosh titles.
@@ -90,14 +125,28 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Improved support for Hebrew HE game localizations.
    - Fixed Roland MT-32 support in Sam & Max.
    - Implemented original GUI and save menus for LucasArts games (DOS, Windows,
-     Amiga, Macintosh, FM-Towns, Atari ST and Commodore 64 versions).
-   - Implemented original save/load menu for MI1 SegaCD.
+     Amiga, Macintosh, FM-Towns, SegaCD, Atari ST, NES and Commodore 64 versions).
+   - Fixed minor timing issues for the SMUSH video engine, mostly affecting
+     Full Throttle.
+   - Added a low latency audio mode to Full Throttle, The Dig and The Curse of
+     Monkey Island; this can improve audio performance expecially in non-desktop
+     devices.
+   - Implemented reloading CD audio for Monkey Island 1 and Loom (CD versions),
+     when reloading a save state.
 
  Sherlock:
    - Added support for Chinese Rose Tattoo.
 
  Sky:
    - Added support for Chinese Beneath a Steel Sky.
+
+ Sword1:
+   - Support Novy Disk Russian translation.
+   - Fixed launching various demos.
+   - Switched detection to md5-based. Submit your unrecognized versions!
+
+ Sword2:
+   - Switched detection to md5-based. Submit your unrecognized versions!
 
  Toon:
    - Made game menus behave like in the original.
@@ -111,6 +160,18 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed background redraw when watching cutscenes at the television.
    - Fixed recenter the screen on activating an inventory item.
    - Fixed pressing W to talk to people also makes you jump.
+
+ Ultima8:
+   - Added support for saving and resizing of minimap.
+   - Adjust cursor to behave closer to the original.
+   - Adjust item quantity slider to behave closer to the original.
+
+ Xeen:
+   - Several crash fixes for Clouds of Xeen.
+
+ 3DS port:
+   - Update relocation parser to support PREL31 that are emitted by new compiler.
+   - Do more autoconfiguration in ./configure.
 
 #### 2.6.1 "Incremental Escapism" (2022-10-31)
 

@@ -19,26 +19,18 @@
  *
  */
 
-#ifndef TWINE_SCRIPTMOVE_H
-#define TWINE_SCRIPTMOVE_H
+#ifndef TWINE_SCRIPTMOVEV1_H
+#define TWINE_SCRIPTMOVEV1_H
 
-#include "common/scummsys.h"
+#include "twine/script/script_move.h"
 
 namespace TwinE {
 
 class TwinEEngine;
 
-class ScriptMove {
-private:
-	TwinEEngine *_engine;
+class ScriptMoveV1 : public ScriptMove {
 public:
-	ScriptMove(TwinEEngine *engine);
-
-	/**
-	 * Process actor move script
-	 * @param actorIdx Current processed actor index
-	 */
-	void processMoveScript(int32 actorIdx);
+	ScriptMoveV1(TwinEEngine *engine);
 };
 
 } // namespace TwinE

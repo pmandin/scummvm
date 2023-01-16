@@ -19,6 +19,7 @@
  *
  */
 
+#include "ultima/ultima.h"
 #include "ultima/ultima8/gumps/container_gump.h"
 
 #include "ultima/ultima8/graphics/shape.h"
@@ -89,8 +90,9 @@ void ContainerGump::getItemCoords(Item *item, int32 &itemx, int32 &itemy) {
 		// randomize position
 		// TODO: maybe try to put it somewhere where it doesn't overlap others?
 
-		itemx = getRandom() % _itemArea.width();
-		itemy = getRandom() % _itemArea.height();
+		Common::RandomSource &rs = Ultima8Engine::get_instance()->getRandomSource();
+		itemx = rs.getRandomNumber(_itemArea.width() - 1);
+		itemy = rs.getRandomNumber(_itemArea.height() - 1);
 
 		item->setGumpLocation(itemx, itemy);
 	}
@@ -301,22 +303,22 @@ Gump *ContainerGump::onMouseDown(int button, int32 mx, int32 my) {
 	if (handled) return handled;
 
 	// only interested in left clicks
-	if (button == Shared::BUTTON_LEFT)
+	if (button == Mouse::BUTTON_LEFT)
 		return this;
 
 	return nullptr;
 }
 
 void ContainerGump::onMouseClick(int button, int32 mx, int32 my) {
-	if (button == Shared::BUTTON_LEFT) {
+	if (button == Mouse::BUTTON_LEFT) {
 		uint16 objID = TraceObjId(mx, my);
 
 		Item *item = getItem(objID);
 		if (item) {
-			item->dumpInfo();
+			debugC(kDebugObject, "%s", item->dumpInfo().c_str());
 
 			if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-				pout << "Can't look: avatarInStasis" << Std::endl;
+				debugC(kDebugObject, "Can't look: avatarInStasis");
 			} else {
 				item->callUsecodeEvent_look();
 			}
@@ -325,7 +327,7 @@ void ContainerGump::onMouseClick(int button, int32 mx, int32 my) {
 }
 
 void ContainerGump::onMouseDouble(int button, int32 mx, int32 my) {
-	if (button == Shared::BUTTON_LEFT) {
+	if (button == Mouse::BUTTON_LEFT) {
 		uint16 objID = TraceObjId(mx, my);
 
 		if (objID == getObjId()) {
@@ -334,10 +336,10 @@ void ContainerGump::onMouseDouble(int button, int32 mx, int32 my) {
 
 		Item *item = getItem(objID);
 		if (item) {
-			item->dumpInfo();
+			debugC(kDebugObject, "%s", item->dumpInfo().c_str());
 
 			if (Ultima8Engine::get_instance()->isAvatarInStasis()) {
-				pout << "Can't use: avatarInStasis" << Std::endl;
+				debugC(kDebugObject, "Can't use: avatarInStasis");
 				return;
 			}
 

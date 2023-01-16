@@ -93,7 +93,7 @@ struct DynamicFlagsStruct {
 	uint16 bWaitHitFrame : 1;            // 0x0001 WAIT_HIT_FRAME - wait for hit frame
 	uint16 bIsHitting : 1;               // 0x0002 OK_HIT - hit frame anim
 	uint16 bAnimEnded : 1;               // 0x0004 ANIM_END - anim ended in the current loop (will be looped in the next engine loop)
-	uint16 bAnimFrameReached : 1;        // 0x0008 NEW_FRAME - new frame anim reached
+	uint16 bAnimNewFrame : 1;        // 0x0008 NEW_FRAME - new frame anim reached
 	uint16 bIsDrawn : 1;                 // 0x0010 WAS_DRAWN - actor has been drawn in this loop
 	uint16 bIsDead : 1;                  // 0x0020 OBJ_DEAD - is dead
 	uint16 bIsSpriteMoving : 1;          // 0x0040 AUTO_STOP_DOOR - door is opening or closing (wait to reach the destination position)
@@ -165,13 +165,13 @@ public:
 	bool isAttackAnimationActive() const;
 	bool isJumpAnimationActive() const;
 
-	const IVec3 &pos() const;
+	const IVec3 &posObj() const;
 
 	int32 _body = -1; // costumeIndex - index into bodyTable
 	BodyType _genBody = BodyType::btNormal;
 	AnimationTypes _genAnim = AnimationTypes::kAnimNone;
-	AnimationTypes _animExtra = AnimationTypes::kStanding;
-	AnimationTypes _animExtraPtr = AnimationTypes::kAnimNone;
+	AnimationTypes _nextGenAnim = AnimationTypes::kStanding;
+	AnimationTypes _ptrAnimAction = AnimationTypes::kAnimNone;
 	int32 _sprite = 0;
 	EntityData *_entityDataPtr = nullptr;
 
@@ -180,7 +180,7 @@ public:
 	int32 _strengthOfHit = 0;
 	int32 _hitBy = -1;
 	BonusParameter _bonusParameter;
-	int32 _angle = 0; // facing angle of actor. Minumum is 0 (SW). Going counter clock wise (BETA in original sources)
+	int32 _beta = 0; // facing angle of actor. Minumum is 0 (SW). Going counter clock wise (BETA in original sources)
 	int32 _speed = 40; // speed of movement
 	ControlMode _controlMode = ControlMode::kNoMove;
 	int32 _delayInMillis = 0;
@@ -192,19 +192,19 @@ public:
 	int32 _bonusAmount = 0;
 	int32 _talkColor = COLOR_BLACK;
 	int32 _armor = 1;
-	int32 _life = kActorMaxLife;
+	int32 _lifePoint = kActorMaxLife;
 
 	/** Process actor coordinate Nxw, Nyw, Nzw */
 	IVec3 _processActor;
 	/** Previous process actor coordinate */
 	IVec3 _previousActor;
-	IVec3 _collisionPos;
+	IVec3 _oldPos;
 
-	int32 _positionInMoveScript = -1;
+	int32 _offsetTrack = -1;
 	uint8 *_moveScript = nullptr;
 	int32 _moveScriptSize = 0;
 
-	int32 _positionInLifeScript = 0;
+	int32 _offsetLife = 0;
 	uint8 *_lifeScript = nullptr;
 	int32 _lifeScriptSize = 0;
 
@@ -222,32 +222,32 @@ public:
 	int32 _carryBy = -1;
 	int32 _zone = -1;
 
-	int32 _lastRotationAngle = ANGLE_0;
+	int32 _animStepBeta = 0;
 	IVec3 _animStep;
-	int32 _previousAnimIdx = -1;
+	int32 _anim = -1;
 	int32 _doorWidth = 0;
-	int32 _animPosition = 0;
-	AnimType _animType = AnimType::kAnimationTypeLoop;
+	int32 _frame = 0;
+	AnimType _flagAnim = AnimType::kAnimationTypeLoop;
 	int32 _spriteActorRotation = 0;
 	uint8 _brickSound = 0U; // CodeJeu
 
 	BoundingBox _boundingBox; // Xmin, YMin, Zmin, Xmax, Ymax, Zmax
-	ActorMoveStruct _move;
+	ActorMoveStruct _moveAngle;
 	AnimTimerDataStruct _animTimerData;
 };
 
-inline const IVec3 &ActorStruct::pos() const {
+inline const IVec3 &ActorStruct::posObj() const {
 	return _pos;
 }
 
 inline void ActorStruct::addLife(int32 val) {
-	setLife(_life + val);
+	setLife(_lifePoint + val);
 }
 
 inline void ActorStruct::setLife(int32 val) {
-	_life = val;
-	if (_life > kActorMaxLife) {
-		_life = kActorMaxLife;
+	_lifePoint = val;
+	if (_lifePoint > kActorMaxLife) {
+		_lifePoint = kActorMaxLife;
 	}
 }
 
@@ -275,7 +275,7 @@ private:
 	 * @param bodyIdx 3D actor body index
 	 * @param actorIdx 3D actor index
 	 */
-	int32 initBody(BodyType bodyIdx, int32 actorIdx, ActorBoundingBox &actorBoundingBox);
+	int32 searchBody(BodyType bodyIdx, int32 actorIdx, ActorBoundingBox &actorBoundingBox);
 
 	void loadBehaviourEntity(ActorStruct *actor, EntityData &entityData, int16 &bodyAnimIndex, int32 index);
 
@@ -286,7 +286,7 @@ public:
 
 	HeroBehaviourType _heroBehaviour = HeroBehaviourType::kNormal; // Comportement
 	/** Hero auto aggressive mode */
-	bool _autoAggressive = true;
+	bool _combatAuto = true;
 	/** Previous Hero behaviour */
 	HeroBehaviourType _previousHeroBehaviour = HeroBehaviourType::kNormal;
 	/** Previous Hero angle */
@@ -327,7 +327,7 @@ public:
 	 * @param bodyIdx 3D actor body index
 	 * @param actorIdx 3D actor index
 	 */
-	void initModelActor(BodyType bodyIdx, int16 actorIdx);
+	void initBody(BodyType bodyIdx, int16 actorIdx);
 
 	/**
 	 * Initialize actors

@@ -41,7 +41,7 @@ void IMuseDigital::timer_handler(void *refCon) {
 	diMUSE->callback();
 }
 
-IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer, Common::Mutex *mutex)
+IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, int sampleRate, Audio::Mixer *mixer, Common::Mutex *mutex, bool lowLatencyMode)
 	: _vm(scumm), _mixer(mixer), _mutex(mutex) {
 	assert(_vm);
 	assert(mixer);
@@ -49,6 +49,14 @@ IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer, Common::M
 	// 50 Hz rate for the callback
 	_callbackFps = DIMUSE_TIMER_BASE_RATE_HZ;
 	_usecPerInt = DIMUSE_TIMER_BASE_RATE_USEC;
+
+	_lowLatencyMode = lowLatencyMode;
+	_internalSampleRate = sampleRate;
+	_internalFeedSize = (int)(DIMUSE_BASE_FEEDSIZE * ((float)_internalSampleRate / DIMUSE_BASE_SAMPLERATE));
+
+	if (_lowLatencyMode) {
+		_internalFeedSize *= 2;
+	}
 
 	_splayer = nullptr;
 	_isEarlyDiMUSE = (_vm->_game.id == GID_FT || (_vm->_game.id == GID_DIG && _vm->_game.features & GF_DEMO));
@@ -78,12 +86,14 @@ IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer, Common::M
 
 	_radioChatterSFX = false;
 	_isEngineDisabled = false;
+	_checkForUnderrun = false;
+	_underrunCooldown = 0;
 
 	_audioNames = nullptr;
 	_numAudioNames = 0;
 
 	_emptyMarker[0] = '\0';
-	_internalMixer = new IMuseDigiInternalMixer(mixer, _isEarlyDiMUSE);
+	_internalMixer = new IMuseDigiInternalMixer(mixer, _internalSampleRate, _isEarlyDiMUSE, _lowLatencyMode);
 	_groupsHandler = new IMuseDigiGroupsHandler(this);
 	_fadesHandler = new IMuseDigiFadesHandler(this);
 	_triggersHandler = new IMuseDigiTriggersHandler(this);
@@ -107,22 +117,28 @@ IMuseDigital::IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer, Common::M
 	if (_mixer->getOutputBufSize() != 0) {
 		// Let's find the optimal value for the maximum number of streams which can stay in the queue at once;
 		// (A number which is too low can lead to buffer underrun, while the higher the number is, the higher is the audio latency)
-		_maxQueuedStreams = (int)ceil((_mixer->getOutputBufSize() / _waveOutPreferredFeedSize) / ((float)_mixer->getOutputRate() / DIMUSE_SAMPLERATE));
+		_maxQueuedStreams = (int)ceil((_mixer->getOutputBufSize() / _waveOutPreferredFeedSize) / ((float)_mixer->getOutputRate() / _internalSampleRate));
 
 		// This mixer's optimal output sample rate for this audio engine is one which is a multiple of 22050Hz;
 		// if we're dealing with one which is a multiple of 48000Hz, compensate the number of queued streams...
-		if (_mixer->getOutputRate() % DIMUSE_SAMPLERATE) {
+		if (_mixer->getOutputRate() % _internalSampleRate) {
 			_maxQueuedStreams++;
 		}
 
-		// The lower optimal bound is always 5, except if we're operating in low latency mode
-		_maxQueuedStreams = MAX(_mixer->getOutputBufSize() <= 1024 ? 4 : 5, _maxQueuedStreams);
+		// The lower optimal bound is always 4, except if we're operating in low latency mode
+		_maxQueuedStreams = MAX(_mixer->getOutputBufSize() <= 1024 ? 3 : 4, _maxQueuedStreams);
 	} else {
 		debug(5, "IMuseDigital::IMuseDigital(): WARNING: output audio buffer size not specified for this platform, defaulting _maxQueuedStreams to 4");
 		_maxQueuedStreams = 4;
 	}
 
+	// This value has been calculated in a way that is a good compromise
+	// between the absence of underruns and the lowest latency achievable.
+	// Of course this is never perfect, given the vast number of platforms
+	// we support, so the value might eventually be corrected by our custom
+	// adaptive buffer underrun correction routine.
 	_nominalBufferCount = _maxQueuedStreams;
+	_underrunCooldown = _maxQueuedStreams;
 
 	_vm->getTimerManager()->installTimerProc(timer_handler, 1000000 / _callbackFps, this, "IMuseDigital");
 }
@@ -148,12 +164,15 @@ IMuseDigital::~IMuseDigital() {
 	free(_waveOutOutputBuffer);
 	_waveOutOutputBuffer = nullptr;
 
+	free(_waveOutLowLatencyOutputBuffer);
+	_waveOutLowLatencyOutputBuffer = nullptr;
+
 	free(_audioNames);
 }
 
 int IMuseDigital::roundRobinSetBufferCount() {
-	int minStreams = MAX<int>(_nominalBufferCount - 3, 0);
-	int maxStreams = _nominalBufferCount + 3;
+	int minStreams = MAX<int>(_nominalBufferCount - 5, 1);
+	int maxStreams = _nominalBufferCount + 5;
 	_maxQueuedStreams++;
 
 	if (_maxQueuedStreams > maxStreams) {
@@ -161,6 +180,11 @@ int IMuseDigital::roundRobinSetBufferCount() {
 	}
 
 	return _maxQueuedStreams;
+}
+
+void IMuseDigital::adaptBufferCount() {
+	_maxQueuedStreams++;
+	_nominalBufferCount = _maxQueuedStreams;
 }
 
 void IMuseDigital::stopSound(int sound) {
@@ -745,6 +769,14 @@ bool IMuseDigital::queryNextSoundFile(int32 &bufSize, int32 &criticalSize, int32
 		}
 	}
 	return false;
+}
+
+int IMuseDigital::getSampleRate() {
+	return _internalSampleRate;
+}
+
+int IMuseDigital::getFeedSize() {
+	return _internalFeedSize;
 }
 
 void IMuseDigital::parseScriptCmds(int cmd, int soundId, int sub_cmd, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n, int o, int p) {

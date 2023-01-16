@@ -145,6 +145,62 @@ static const SAGAGameDescription gameDescriptions[] = {
 		{},
 	},
 
+	// Inherit the earth - Win32 Demo version 2, compressed
+	{
+		{
+			"ite",
+			"Win Demo 2",
+			{
+				{"itedemo.exe",		0,	"d2ea5ccf8554fef4576718c06f34e5e5", 17472512},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_DEMO,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_INSTALLER,
+		ITE_DEFAULT_SCENE,
+		RESOURCELIST_ITE,
+		FONTLIST_ITE_WIN_DEMO,
+		PATCHLIST_ITE,
+		INTROLIST_ITE_DEFAULT,
+		{
+			{"ited.rsc",		GAME_RESOURCEFILE,	"3a450852cbf3c80773984d565647e6ac", 1951395},
+			{"scriptsd.rsc",	GAME_SCRIPTFILE,	"3f12b67fa93e56e1a6be39d2921d80bb", 70051},
+			AD_LISTEND
+		},
+	},
+
+	// Inherit the earth - Win32 Demo version 3, compressed
+	{
+		{
+			"ite",
+			"Win Demo 3",
+			{
+				{"itedemo.exe",		0,	"0a12e3ff2d511c2723acc4abc4480ee1", 31675904},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_DEMO,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_INSTALLER,
+		ITE_DEFAULT_SCENE,
+		RESOURCELIST_ITE,
+		FONTLIST_ITE_WIN_DEMO,
+		PATCHLIST_ITE_MAC, // Skip midi patches.
+		INTROLIST_ITE_DEFAULT,
+		{
+			{"ited.rsc",		GAME_RESOURCEFILE,	"3a450852cbf3c80773984d565647e6ac", 1951395},
+			{"scriptsd.rsc",	GAME_SCRIPTFILE,	"3f12b67fa93e56e1a6be39d2921d80bb", 70051},
+			AD_LISTEND
+		},
+	},
+
 
 	// Inherit the earth - Win32 Demo version 1
 	// Non-interactive demo
@@ -170,6 +226,35 @@ static const SAGAGameDescription gameDescriptions[] = {
 		PATCHLIST_ITE,
 		INTROLIST_ITE_DEFAULT,
 		{},
+	},
+
+	// Inherit the earth - Win32 Demo version 1
+	// Non-interactive demo, compressed
+	{
+		{
+			"ite",
+			"Demo 1",
+			{
+				{"itedemo.exe",		0,	"e49c52d06add732f3736f64d3e79a223", 7823872},
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_DEMO,
+			GUIO0()
+		},
+		GID_ITE,
+		GF_8BIT_UNSIGNED_PCM | GF_INSTALLER,
+		ITE_DEFAULT_SCENE,
+		RESOURCELIST_ITE,
+		FONTLIST_ITE_WIN_DEMO,
+		PATCHLIST_ITE,
+		INTROLIST_ITE_DEFAULT,
+		{
+			{"ited.rsc",		GAME_RESOURCEFILE,	"3a450852cbf3c80773984d565647e6ac", 1327323},
+			{"scriptsd.rsc",	GAME_SCRIPTFILE,	"3f12b67fa93e56e1a6be39d2921d80bb", 38613},
+			AD_LISTEND
+		},
 	},
 
 
@@ -277,16 +362,16 @@ static const SAGAGameDescription gameDescriptions[] = {
 			"ite",
 			"CD",
 			{
-				{"ite resources",	GAME_RESOURCEFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
-				{"ite scripts",		GAME_SCRIPTFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
-				{"ite sounds",		GAME_SOUNDFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
-				{"ite music",		GAME_MUSICFILE_GM | GAME_MACBINARY,	"b0d66d7ae48f35c5c9a3444343b86f85", 3135053},
+				{"ite resources",	GAME_RESOURCEFILE | GAME_MACBINARY,	"d:4f7fa11c5175980ed593392838523060", 8862102},
+				{"ite scripts",		GAME_SCRIPTFILE | GAME_MACBINARY,	"d:adf1f46c1d0589083996a7060c798ad0", 336006},
+				{"ite sounds",		GAME_SOUNDFILE | GAME_MACBINARY,	"d:8ee4d9ee27688785608d09faaa4a974c", 3680672},
+				{"ite music",		GAME_MUSICFILE_GM | GAME_MACBINARY,	"r:b0d66d7ae48f35c5c9a3444343b86f85", 3135053},
 				// {"ite voices",		GAME_VOICEFILE | GAME_MACBINARY,	"ee65f8e713127cf7f2d56371d2b8e63d", 2264},
 				AD_LISTEND
 			},
 			Common::EN_ANY,
 			Common::kPlatformMacintosh,
-			ADGF_CD | ADGF_MACRESFORK,
+			ADGF_CD,
 			GUIO0()
 		},
 		GID_ITE,
@@ -356,7 +441,7 @@ static const SAGAGameDescription gameDescriptions[] = {
 	{
 		{
 			"ite",
-			"GOG CD Mac v1.1",
+			"GOG.com CD Mac v1.1",
 			{
 				{"ite_i.rsc",					GAME_RESOURCEFILE,	"a6433e34b97b15e64fe8214651012db9", 8927165},
 				{"scripts_i.rsc",				GAME_SCRIPTFILE,	"a891405405edefc69c9d6c420c868b84", 335927},

@@ -141,8 +141,8 @@ CameraProcess::CameraProcess(int32 x, int32 y, int32 z) :
 CameraProcess::CameraProcess(int32 x, int32 y, int32 z, int32 time) :
 	_ex(x), _ey(y), _ez(z), _time(time), _elapsed(0), _itemNum(0), _lastFrameNum(0) {
 	GetCameraLocation(_sx, _sy, _sz);
-	//pout << "Scrolling from (" << sx << "," << sy << "," << sz << ") to (" <<
-	//  ex << "," << ey << "," << ez << ") in " << _time << " frames" << Std::endl;
+	//debug(MM_INFO, "Scrolling from (%d, %d,%d) to (%d, %d, %d) in %d frames",
+	//  sx, sy, sz, ex, ey, ez,  _time);
 }
 
 void CameraProcess::terminate() {
@@ -156,8 +156,10 @@ void CameraProcess::terminate() {
 
 void CameraProcess::run() {
 	if (_earthquake) {
-		_eqX = (getRandom() % (_earthquake * 2 + 1)) - _earthquake;
-		_eqY = (getRandom() % (_earthquake * 2 + 1)) - _earthquake;
+		Common::RandomSource &rs = Ultima8Engine::get_instance()->getRandomSource();
+
+		_eqX = rs.getRandomNumberRngSigned(-_earthquake, _earthquake);
+		_eqY = rs.getRandomNumberRngSigned(-_earthquake, _earthquake);
 	} else {
 		_eqX = 0;
 		_eqY = 0;

@@ -151,19 +151,19 @@ bool World::switchMap(uint32 newmap) {
 			if (i->getFlags() & Item::FLG_ETHEREAL)
 				i->destroy();
 			else
-				warning("Not destroying ethereal item %d - it doesn't think it's ethereal!", eth);
+				warning("Not destroying ethereal item %d - it doesn't think it's ethereal", eth);
 		}
 	}
 
 	uint32 oldmap = _currentMap->getNum();
 	if (oldmap != 0) {
-		pout << "Unloading map " << oldmap << Std::endl;
+		debug(MM_INFO, "Unloading map %u", oldmap);
 
 		assert(oldmap < _maps.size() && _maps[oldmap] != nullptr);
 
 		_currentMap->writeback();
 
-		pout << "Unloading Fixed items from map " << oldmap << Std::endl;
+		debug(MM_INFO, "Unloading Fixed items from map %u", oldmap);
 
 		_maps[oldmap]->unloadFixed();
 	}
@@ -180,7 +180,7 @@ bool World::switchMap(uint32 newmap) {
 		Kernel::get_instance()->addProcess(new SchedulerProcess());
 	}
 
-	pout << "Loading Fixed items in map " << newmap << Std::endl;
+	debug(MM_INFO, "Loading Fixed items in map %u", newmap);
 	Common::SeekableReadStream *items = GameData::get_instance()->getFixed()
 	                     ->get_datasource(newmap);
 	_maps[newmap]->loadFixed(items);
@@ -209,7 +209,7 @@ bool World::switchMap(uint32 newmap) {
 void World::loadNonFixed(Common::SeekableReadStream *rs) {
 	FlexFile *f = new FlexFile(rs);
 
-	pout << "Loading NonFixed items" << Std::endl;
+	debug(MM_INFO, "Loading NonFixed items");
 
 	for (unsigned int i = 0; i < f->getCount(); ++i) {
 
@@ -240,7 +240,7 @@ void World::loadItemCachNPCData(Common::SeekableReadStream *itemcach, Common::Se
 	delete itemcachflex;
 	delete npcdataflex;
 
-	pout << "Loading NPCs" << Std::endl;
+	debug(MM_INFO, "Loading NPCs");
 
 	for (uint32 i = 1; i < 256; ++i) { // Get rid of constants?
 		// These are ALL unsigned on disk
@@ -278,7 +278,8 @@ void World::loadItemCachNPCData(Common::SeekableReadStream *itemcach, Common::Se
 		}
 
 #ifdef DUMP_ITEMS
-		pout << shape << "," << frame << ":\t(" << x << "," << y << "," << z << "),\t" << Std::hex << flags << Std::dec << ", " << quality << ", " << npcnum << ", " << mapnum << ", " << next << Std::endl;
+		debugC(kDebugObject, "%u,%u:\t(%d, %d, %d),\t%04X, %u, %u, u",
+			shape, frame, x, y, z, flags, quality, npcnum, mapnum);
 #endif
 
 		Actor *actor = ItemFactory::createActor(shape, frame, quality,
@@ -286,9 +287,7 @@ void World::loadItemCachNPCData(Common::SeekableReadStream *itemcach, Common::Se
 		                                        npcnum, mapnum,
 		                                        Item::EXT_PERMANENT_NPC, false);
 		if (!actor) {
-#ifdef DUMP_ITEMS
-			pout << "Couldn't create actor" << Std::endl;
-#endif
+			warning("Couldn't create actor");
 			continue;
 		}
 		ObjectManager::get_instance()->assignActorObjId(actor, i);

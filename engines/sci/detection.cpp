@@ -183,7 +183,12 @@ public:
 	SciMetaEngineDetection() : AdvancedMetaEngineDetection(Sci::SciGameDescriptions, sizeof(ADGameDescription), s_sciGameTitles) {
 		_maxScanDepth = 3;
 		_directoryGlobs = directoryGlobs;
-		_flags = kADFlagMatchFullPaths;
+		// Use SCI fallback detection results instead of the partial matches found by
+		// advanced detector. SCI fallback detection is excellent because games have
+		// predictable file names and contain a unique game string.
+		// Advanced detector's partial matches aren't very useful in SCI because of
+		// those similar file names; most games are partial matches of each other.
+		_flags = kADFlagMatchFullPaths | kADFlagPreferFallbackDetection;
 	}
 
 	const DebugChannelDef *getDebugChannels() const override {
@@ -209,6 +214,9 @@ public:
 	}
 
 	ADDetectedGame fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist, ADDetectedGameExtraInfo **extra) const override;
+
+private:
+	void addFileToDetectedGame(const Common::String &name, const FileMap &allFiles, MD5Properties md5Prop, ADDetectedGame &game) const;
 };
 
 ADDetectedGame SciMetaEngineDetection::fallbackDetect(const FileMap &allFiles, const Common::FSList &fslist, ADDetectedGameExtraInfo **extra) const {
@@ -225,21 +233,71 @@ ADDetectedGame SciMetaEngineDetection::fallbackDetect(const FileMap &allFiles, c
 	}
 
 	const Plugin *metaEnginePlugin = EngineMan.findPlugin(getName());
+	if (!metaEnginePlugin) {
+		return ADDetectedGame();
+	}
 
-	if (metaEnginePlugin) {
-		const Plugin *enginePlugin = PluginMan.getEngineFromMetaEngine(metaEnginePlugin);
-		if (enginePlugin) {
-			return enginePlugin->get<AdvancedMetaEngine>().fallbackDetectExtern(_md5Bytes, allFiles, fslist);
-		} else {
-			static bool warn = true;
-			if (warn) {
-				warning("Engine plugin for SCI not present. Fallback detection is disabled.");
-				warn = false;
-			}
+	const Plugin *enginePlugin = PluginMan.getEngineFromMetaEngine(metaEnginePlugin);
+	if (!enginePlugin) {
+		static bool warn = true;
+		if (warn) {
+			warning("Engine plugin for SCI not present. Fallback detection is disabled.");
+			warn = false;
+		}
+		return ADDetectedGame();
+	}
+
+	ADDetectedGame game = enginePlugin->get<AdvancedMetaEngine>().fallbackDetectExtern(_md5Bytes, allFiles, fslist);
+	if (!game.desc) {
+		return game;
+	}
+
+	// detect all the matched files here in SciMetaEngineDetection, instead of
+	// external fallback detection, so that we can use AdvancedMetaEngineDetection
+	// methods instead of duplicating code. fallback detection has identified the
+	// game, platform, and language. now we want a full list of all resource map
+	// and volume files in the directory. this code attempts to add all possible
+	// files, even if there are gaps, because we want to be able to identify
+	// incomplete directories when users submit unknown-game reports.
+	MD5Properties md5Prop = kMD5Head;
+	if (allFiles.contains("resource.map")) {
+		// add the map and volumes
+		addFileToDetectedGame("resource.map", allFiles, md5Prop, game);
+		for (int i = 0; i <= 11; i++) {
+			Common::String volume = Common::String::format("resource.%03d", i);
+			addFileToDetectedGame(volume, allFiles, md5Prop, game);
+		}
+
+		// add message and audio volumes.
+		// sometimes we need these to differentiate between localized versions.
+		addFileToDetectedGame("resource.aud", allFiles, md5Prop, game);
+		addFileToDetectedGame("resource.msg", allFiles, md5Prop, game);
+	} else if (allFiles.contains("resmap.000") || allFiles.contains("resmap.001")) {
+		// add maps and volumes
+		for (int i = 0; i <= 7; i++) {
+			Common::String map = Common::String::format("resmap.%03d", i);
+			Common::String volume = Common::String::format("ressci.%03d", i);
+			addFileToDetectedGame(map, allFiles, md5Prop, game);
+			addFileToDetectedGame(volume, allFiles, md5Prop, game);
+		}
+	} else if (allFiles.contains("Data1")) {
+		// add Mac volumes
+		md5Prop = (MD5Properties)(md5Prop | kMD5MacResOrDataFork);
+		for (int i = 1; i <= 13; i++) {
+			Common::String volume = Common::String::format("Data%d", i);
+			addFileToDetectedGame(volume, allFiles, md5Prop, game);
 		}
 	}
 
-	return ADDetectedGame();
+	return game;
+}
+
+void SciMetaEngineDetection::addFileToDetectedGame(const Common::String &name, const FileMap &allFiles, MD5Properties md5Prop, ADDetectedGame &game) const {
+	FileProperties fileProperties;
+	if (getFileProperties(allFiles, md5Prop, name, fileProperties)) {
+		game.hasUnknownFiles = true;
+		game.matchedFiles[name] = fileProperties;
+	}
 }
 
 } // End of namespace Sci

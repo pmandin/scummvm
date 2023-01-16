@@ -25,6 +25,7 @@
 
 #include "ultima/detection.h"
 #include "ultima/detection_tables.h"
+#include "ultima/ultima.h"
 
 namespace Ultima {
 
@@ -48,6 +49,16 @@ static const PlainGameDescriptor ULTIMA_GAMES[] = {
 };
 
 } // End of namespace Ultima
+
+const DebugChannelDef UltimaMetaEngineDetection::debugFlagList[] = {
+	{Ultima::kDebugPath, "Path", "Pathfinding debug level"},
+	{Ultima::kDebugGraphics, "Graphics", "Graphics debug level"},
+	{Ultima::kDebugVideo, "Video", "Video playback debug level"},
+	{Ultima::kDebugActor, "Actor", "Actor debug level"},
+	{Ultima::kDebugObject, "Object", "Object debug level"},
+	{Ultima::kDebugCollision, "Collision", "Collision debug level"},
+	DEBUG_CHANNEL_END
+};
 
 UltimaMetaEngineDetection::UltimaMetaEngineDetection() : AdvancedMetaEngineDetection(Ultima::GAME_DESCRIPTIONS,
 	        sizeof(Ultima::UltimaGameDescription), Ultima::ULTIMA_GAMES) {

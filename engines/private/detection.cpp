@@ -181,8 +181,8 @@ static const ADGameDescription gameDescriptions[] = {
 	{
 		"private-eye", // MacOS release (US)
 		nullptr,
-		AD_ENTRY2s("game.mac", "33553cc04813d3f658bbe9d548377878", 81894,
-		   "bklynlgo.bmp", "1dfb703349a46f8ec183de107992b7f5", 33118),
+		AD_ENTRY2s("game.mac", "d:33553cc04813d3f658bbe9d548377878", 81894,
+		   "bklynlgo.bmp", "d:1dfb703349a46f8ec183de107992b7f5", 33118),
 		Common::EN_USA,
 		Common::kPlatformMacintosh,
 		ADGF_NO_FLAGS,
@@ -190,18 +190,27 @@ static const ADGameDescription gameDescriptions[] = {
 	},
 	{
 		"private-eye", // MacOS release (US) uninstalled
-		_s("Compressed game detected. Please uncompress it as specified in the game description on our Wiki"),
-		AD_ENTRY1s("Private Eye Installer", "02533427ebdf26d5dd12cee8e9f4de4d", 1647309),
+		0,
+		AD_ENTRY1s("Private Eye Installer", "d:02533427ebdf26d5dd12cee8e9f4de4d", 1647309),
 		Common::EN_USA,
 		Common::kPlatformMacintosh,
-		ADGF_UNSUPPORTED,
+		ADGF_NO_FLAGS,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"private-eye", // MacOS release (JP) uninstalled
+		0,
+		AD_ENTRY1s("xn--16jc8na7ay6a0eyg9e5nud0e4525d", "d:113b57e2f6bdaf1146fe83fe0f992891", 1477309),
+		Common::JA_JPN,
+		Common::kPlatformMacintosh,
+		ADGF_NO_FLAGS,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{
 		"private-eye", // MacOS demo (US)
 		nullptr,
-		AD_ENTRY2s("demogame.mac", "cfbceaa8b91f0f53c745db61d1bc9749", 6103,
-		    "bklynlgo.bmp", "1dfb703349a46f8ec183de107992b7f5", 33118),
+		AD_ENTRY2s("demogame.mac", "d:cfbceaa8b91f0f53c745db61d1bc9749", 6103,
+		    "bklynlgo.bmp", "d:1dfb703349a46f8ec183de107992b7f5", 33118),
 		Common::EN_USA,
 		Common::kPlatformMacintosh,
 		ADGF_DEMO,
@@ -209,11 +218,11 @@ static const ADGameDescription gameDescriptions[] = {
 	},
 	{
 		"private-eye", // MacOS demo (US) uninstalled
-		_s("Compressed game detected. Please uncompress it as specified in the game description on our Wiki"),
-		AD_ENTRY1s("Private Eye Demo Installer", "e7665ddc5e6d932c4a65598ecc4ec7d2", 1626393),
+		0,
+		AD_ENTRY1s("Private Eye Demo Installer", "d:e7665ddc5e6d932c4a65598ecc4ec7d2", 1626393),
 		Common::EN_USA,
 		Common::kPlatformMacintosh,
-		ADGF_DEMO | ADGF_UNSUPPORTED,
+		ADGF_DEMO,
 		GUIO1(GUIO_NOMIDI)
 	},
 	AD_TABLE_END_MARKER

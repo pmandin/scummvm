@@ -12,6 +12,12 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für Added support for Pink Panther: Passport to Peril hinzugefügt.
    - Unterstützung für Pink Panther: Hokus Pokus Pink hinzugefügt.
    - Unterstützung für Driller/Space Station Oblivion (DOS/EGA, Amiga und Atari ST-Versionen) hinzugefügt.
+   - Unterstützung für Halls of the Dead: Faery Tale Adventure II hinzugefügt.
+
+ Neue Plattformen:
+   - RetroMini RS90 mit OpenDingux Beta-Firmware.
+   - Erste Generation von Miyoo (New BittBoy, Pocket Go und PowKiddy Q90-V90-Q20)
+     mit der TriForceX MiyooCFW.
 
  Allgemein:
    - Anzahl an falsch-positiven Einträgen reduziert, wenn das Gerät nach Spielen durchsucht wird.
@@ -19,6 +25,16 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für shader-basierte Skalierungen hinzugefügt.
    - Unterstützung für Mono-Ausgabe hinzugefügt (über die Kommandozeilen-Option --output-channels=CHANNELS)
    - Verbesserte Cursor-Skalierung im OpenGL-Modus.
+   - Absturz beim Zugriff auf Verzeichnisse, die Dateien mit "\1" im Dateinamen enthalten, behoben.
+   - Dem Zufallsgenerator kann nun ein bestimmter Start-Wert über die GUI oder Kommandozeile übergeben werden.
+   - Unterstützung für einen Modus zur automatischen Erkennung zu ScummVM hinzugefügt.
+     Dazu wird die ScummVM-Programmdatei in 'scummvm-auto' umbenannt oder eine leere Datei mit dem
+     Dateinamen 'scummvm-autorun' im ScummVM-Programmverzeichnis abgelegt.
+   - Unterstützung für zusätzliche Kommandozeilenparameter, die automatisch genutzt werden, hinzugefügt.
+     Die Anweisungen werden zeilenweise in einer Datei namens 'scummvm-autorun' abgelegt.
+   - Unterstützung für eine Konfigurationsdatei mit Anweisungen hinzugefügt, die dann gelten,
+     wenn keine reguläre Konfigurationsdatei existiert. Die Datei wird über --initial-cfg=DATEI oder
+     -i übergeben.
 
  AGI:
    - Unterstützung der französischen Übersetzungen verbessert.
@@ -28,21 +44,38 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      deaktiviert werden können.
 
  AGS:
-   - Unterstützung für die originalen Installationsdateien von Maniac Mansion Deluxe und The New Adventures of Zak McKracken hinzugefügt..
+   - Unterstützung für die originalen Installationsdateien von Maniac Mansion Deluxe und The New Adventures of Zak McKracken hinzugefügt.
+
+ Director:
+   - Unterstützung für die Pippin-Version von L-Zone hinzugefügt.
+   - Absturz beim Zugriff auf Dateien mit einem Slash im Dateinamen behoben.
+
+ Dreamweb:
+   - Das Spiel kann nun direkt von den originalen Installations-Disketten gespielt werden.
 
  GOB:
    - Unterstützung für Adibou 2 (Adi Junior) "Environment", "Read/Count 4 & 5" und "Read/Count 6 & 7" hinzugefügt.
 
+ Hadesch:
+   - Unterstützung für eine weitere Version von 1997 hinzugefügt.
+
  Kyra:
    - Unterstützung für die koreanische Version von Legend of Kyrandia 1 hinzugefügt.
+   - Unterstützung für die Macintosh-Version von Kyra1, die auf mehreren Disketten verteilt wurde, hinzugefügt.
    - Unterstützung für die hebräische Version von Legend of Kyrandia 3 hinzugefügt.
-   - Unterstützung für die chinesische Version von Legend of Kyrandia 3 hinzugefügt.
 
  MADS:
    - Unterstützung für das Datei-Layout des Installationsprogramms der Disketten-Version von Rex Nebular hinzugefügt.Added support for original floppy installer file layout for Rex Nebular.
 
  Neverhood:
    - Unterstützung für die japanische Version von Neverhood hinzugefügt.
+   - Unterstützung für die Übersetzungen von -=CHE@TER=- & Rigel hinzugefügt.
+
+ Plumbers:
+   - Absturz in der Windows-Version behoben.
+
+ Private:
+   - Die Macintosh-Version kann nun direkt von der Installations-CD gespielt werden.
 
  Queen:
    - Eine zusätzliche Option erlaubt die Verwendung einer verbesserten Schriftart für die hebräische Version.
@@ -52,6 +85,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für die chinesische Version von I Have no Mouth and I Must Scream hinzugefügt.
    - Unterstützung für die koreanische Version von I Have no Mouth and I Must Scream hinzugefügt.
    - Inherit the Earth kann nun direkt mit den Dateien des Disketten-Installationsprogramms gespielt werden.
+   - Unterstützung für die Amiga-Versionen (AGA/ECS, Retail/Demo, Englisch/Deutsch) von Inherit the Earth hinzugefügt.
 
  SCUMM:
    - Unterstützung von CGA-, CGA Composite-, CGA schwarz/weiß- und Herkules-Grafikmodi
@@ -86,14 +120,28 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      in den anderen Sprachen).
    - Verbesserte Unterstützung der hebräischen Versionen der Spiele von Humongous Entertainment.
    - Unterstützung für Roland MT-32 in Sam & Max korrigiert.
-   - Unterstützung für die originale Benutzeroberfläche und die Speicher-Menüs von LucasArts-Spielen hinzugefügt (DOS, Windows, Amiga, Macintosh, FM-Towns, Atari ST und Commodore 64-Versionen).
+   - Unterstützung für die originale Benutzeroberfläche und die Speicher-Menüs von LucasArts-Spielen hinzugefügt (DOS, Windows, Amiga, Macintosh, FM-Towns, Atari ST, Sega CD, NES- und Commodore 64-Versionen).
    - Unterstützung für die originale Benutzeroberfläche für die SegaCD-Version von MI1 hinzugefügt.
+   - Einige kleinere Timing-Probleme in der SMUSH-Video-Engine korrigiert, die hauptsächlich
+     Full Throttle betreffen.
+   - Audiomodus mit niedriger Latenz für Full Throttle, The Dig und The Curse of Monkey Island
+     hinzugefügt. Dieser Modus kann die Audio-Performance gerade auf mobilen Geräten verbessern.
+   - Die CD-Audiowiedergabe wird in den CD-Versionen von Monkey Island 1 und Loom
+     nach dem Laden eines Spielstands nun korrekt fortgesetzt.
 
  Sherlock:
    - Unterstützung für die chinesische Version von Rose Tattoo hinzugefügt.
 
  Sky:
    - Unterstützung für die chinesische Version von Beneath a Steel Sky hinzugefügt.
+
+ Sword1:
+   - Unterstützung für die russische Übersetzung von Novy Disk hinzugefügt.
+   - Ein Fehler beim Start der Windows-Demo-Versionen wurde korrigiert.
+   - Die Spiele-Erkennung nutzt nun MD5-Checksummen. Teile uns deine nicht erkannten Versionen mit!
+
+ Sword2:
+   - Die Spiele-Erkennung nutzt nun MD5-Checksummen. Teile uns deine nicht erkannten Versionen mit!
 
  Toon:
    - Die Spiel-Menüs verhalten sich nun wie im Original.
@@ -107,6 +155,18 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Hintergründe werden nun korrekt dargestellt, wenn Zwischenszenen im Fernseher angesehen werden.
    - Der Bildschirm wird nun nicht mehr zentriert, wenn ein Inventar-Item aktiviert wird.
    - Wenn man W drückt, um mit Leuten zu sprechen, springt man nicht mehr automatisch.
+
+ Ultima8:
+   - Die Minimap kann nun gespeichert und in ihrer Größe verändert werden.
+   - Der Curor verhält sich nun originalgetreuer.
+   - Der Schieberegler für die Item-Anzahl verhält sich nun originalgetreuer.
+
+ Xeen:
+   - Fehlerkorrekturen für mehrere Abstürze in Clouds of Xeen.
+
+ 3DS-Portierung:
+   - Der Relocation-Parser wurde um Unterstützung für PREL31, welches von neuen Compilern verwendet wird, erweitert.
+   - Weitere Optionen zur automatischen Konfiguration in ./configure hinzugefügt.
 
 #### 2.6.1 "Incremental Escapism" (31.10.2022)
 

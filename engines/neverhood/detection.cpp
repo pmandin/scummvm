@@ -23,12 +23,11 @@
 
 #include "engines/advancedDetector.h"
 #include "common/file.h"
-#include "common/translation.h"
 
 #include "neverhood/detection.h"
 
 static const PlainGameDescriptor neverhoodGames[] = {
-	{"neverhood", "The Neverhood Chronicles"},
+	{"neverhood", "The Neverhood"},
 	{nullptr, nullptr}
 };
 
@@ -134,7 +133,37 @@ static const ADGameDescription gameDescriptions[] = {
 class NeverhoodMetaEngineDetection : public AdvancedMetaEngineDetection {
 public:
 	NeverhoodMetaEngineDetection() : AdvancedMetaEngineDetection(Neverhood::gameDescriptions, sizeof(ADGameDescription), neverhoodGames) {
-		_guiOptions = GUIO5(GUIO_NOSUBTITLES, GUIO_NOMIDI, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_SKIP_HALL_OF_RECORDS, GAMEOPTION_SCALE_MAKING_OF_VIDEOS);
+		_guiOptions = GUIO5(GUIO_NOMIDI, GAMEOPTION_ORIGINAL_SAVELOAD, GAMEOPTION_SKIP_HALL_OF_RECORDS,
+				    GAMEOPTION_SCALE_MAKING_OF_VIDEOS, GAMEOPTION_REPEAT_WILLIE_HINT);
+	}
+
+	DetectedGames detectGames(const Common::FSList &fslist, uint32 skipADFlags, bool skipIncomplete) override {
+		DetectedGames detGames(AdvancedMetaEngineDetection::detectGames(fslist, skipADFlags, skipIncomplete));
+		bool hasSubs = false;
+
+		if (detGames.empty())
+			return detGames;
+
+		for (Common::FSList::const_iterator dr = fslist.begin(); dr != fslist.end() && !hasSubs; dr++) {
+			if (dr->getName().equalsIgnoreCase("language") && dr->isDirectory()) {
+				Common::FSList files;
+				if (!dr->getChildren(files, Common::FSNode::kListAll))
+					continue;
+				for (Common::FSList::const_iterator file = files.begin(); file != files.end(); file++) {
+					Common::String fname = file->getName();
+					if (fname.matchString("*.nhc", true) && !fname.equalsIgnoreCase("Fargusfx.nhc")) {
+						hasSubs = true;
+						break;
+					}
+				}
+			}
+		}
+		if (hasSubs)
+			return detGames;
+		for (DetectedGames::iterator it = detGames.begin(); it != detGames.end(); it++) {
+			it->appendGUIOptions("sndNoSubs");
+		}
+		return detGames;
 	}
 
 	const char *getName() const override {
@@ -142,11 +171,11 @@ public:
 	}
 
 	const char *getEngineName() const override {
-		return "The Neverhood Chronicles";
+		return "The Neverhood";
 	}
 
 	const char *getOriginalCopyright() const override {
-		return "The Neverhood Chronicles (C) The Neverhood, Inc.";
+		return "The Neverhood (C) The Neverhood, Inc.";
 	}
 };
 

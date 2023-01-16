@@ -42,6 +42,7 @@
 #include "common/debug-channels.h" /* for debug manager */
 #include "common/events.h"
 #include "gui/EventRecorder.h"
+#include "common/file.h"
 #include "common/fs.h"
 #ifdef ENABLE_EVENTRECORDER
 #include "common/recorderfile.h"
@@ -350,12 +351,20 @@ static void setupGraphics(OSystem &system) {
 		system.setScaler(ConfMan.get("scaler").c_str(), ConfMan.getInt("scale_factor"));
 		system.setShader(ConfMan.get("shader"));
 
+#ifdef OPENDINGUX
+		// 0, 0 means "autodetect" but currently only SDL supports
+		// it and really useful only on Opendingux. When more platforms
+		// support it we will switch to it.
+		system.initSize(0, 0);
+#else
 		system.initSize(320, 200);
+#endif
 
 		// Parse graphics configuration, implicit fallback to defaults set with RegisterDefaults()
 		system.setFeatureState(OSystem::kFeatureAspectRatioCorrection, ConfMan.getBool("aspect_ratio"));
 		system.setFeatureState(OSystem::kFeatureFullscreenMode, ConfMan.getBool("fullscreen"));
 		system.setFeatureState(OSystem::kFeatureFilteringMode, ConfMan.getBool("filtering"));
+		system.setFeatureState(OSystem::kFeatureVSync, ConfMan.getBool("vsync"));
 	system.endGFXTransaction();
 
 	system.applyBackendSettings();
@@ -405,13 +414,101 @@ extern "C" int scummvm_main(int argc, const char * const argv[]) {
 
 	// Parse the command line
 	Common::StringMap settings;
+	Common::String autoCommand;
+	bool autodetect = false;
+
+	// Check for the autorun name
+	if (argv[0]) {
+		const char *s = strrchr(argv[0], '/');
+
+		if (!s)
+			s = strrchr(argv[0], '\\');
+
+		const char *appName =s ? (s + 1) : argv[0];
+
+		if (!scumm_strnicmp(appName, "scummvm-auto", strlen("scummvm-auto"))) {
+			warning("Will run in autodetection mode");
+			autodetect = true;
+		}
+	}
+
+	Common::StringArray autorunArgs;
+
+	// Check for the autorun file
+	if (Common::File::exists("scummvm-autorun")) {
+		// Okay, the file exists. We open it and if it is empty, then run in the autorun mode
+		// If the file is not empty, we read command line arguments from it, one per line
+		warning("Autorun file is detected");
+
+		Common::File autorun;
+		Common::String line;
+		Common::String res;
+
+		autorunArgs.push_back(argv[0]);
+
+		if (autorun.open("scummvm-autorun")) {
+			while (!autorun.eos()) {
+				line = autorun.readLine();
+
+				if (!line.empty() && line[0] != '#') {
+					autorunArgs.push_back(line);
+
+					res += Common::String::format("\"%s\" ", line.c_str());
+				}
+			}
+		}
+
+		if (!res.empty())
+			warning("Autorun command: %s", res.c_str());
+		else
+			warning("Empty autorun file");
+
+		autorun.close();
+
+		autodetect = true;
+	}
+
+	if (autodetect) {
+		if (autorunArgs.size() > 1) {
+			uint argumentsSize = autorunArgs.size();
+			char **arguments = (char **)malloc(argumentsSize * sizeof(char *));
+
+			for (uint i = 0; i < argumentsSize; i++) {
+				arguments[i] = (char *)malloc(autorunArgs[i].size() + 1);
+				Common::strlcpy(arguments[i], autorunArgs[i].c_str(), autorunArgs[i].size() + 1);
+			}
+
+			autoCommand = Base::parseCommandLine(settings, argumentsSize, arguments);
+
+			for (uint i = 0; i < argumentsSize; i++)
+				free(arguments[i]);
+
+			free(arguments);
+		} else {
+			// Simulate autodetection
+			const char * const arguments[] = { "scummvm-auto", "-p", ".", "--auto-detect" };
+
+			warning("Running autodetection");
+
+			autoCommand = Base::parseCommandLine(settings, ARRAYSIZE(arguments), arguments);
+		}
+	}
+
 	command = Base::parseCommandLine(settings, argc, argv);
 
+	// We allow overriding the automatic command
+	if (command.empty())
+		command = autoCommand;
+
 	// Load the config file (possibly overridden via command line):
+	Common::String initConfigFilename;
+	if (settings.contains("initial-cfg"))
+		initConfigFilename = settings["initial-cfg"];
+
 	if (settings.contains("config")) {
-		ConfMan.loadConfigFile(settings["config"]);
+		ConfMan.loadConfigFile(settings["config"], initConfigFilename);
 	} else {
-		ConfMan.loadDefaultConfigFile();
+		ConfMan.loadDefaultConfigFile(initConfigFilename);
 	}
 
 	// Update the config file

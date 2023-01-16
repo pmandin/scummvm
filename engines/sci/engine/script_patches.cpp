@@ -8228,8 +8228,33 @@ static const SciScriptPatcherEntry longbowSignatures[] = {
 };
 
 // ===========================================================================
-// Leisure Suit Larry 1 (Spanish)
+// Leisure Suit Larry 1
+
+// Pushing the penthouse elevator button in room 350 causes a broken polygon to
+//  be used for pathfinding. openObstacle:points is set to a local array of 17
+//  points but its size property is incorrectly set to 19. We fix the size so
+//  that the interpreter doesn't use the wrong values for pathfinding.
 //
+// Applies to: All versions
+// Responsible method: rm350:init
+static const uint16 larry1SignatureElevatorPolygon[] = {
+	SIG_MAGICDWORD,
+	0x5b, 0x02, 0x1f,                // lea 02 1f
+	0x36,                            // push
+	0x39, SIG_SELECTOR8(size),       // pushi size
+	0x78,                            // push1
+	0x39, 0x13,                      // pushi 13 [ incorrect size ]
+	0x72, SIG_ADDTOOFFSET(+2),       // lofsa openObstacle
+	0x4a, 0x0c,                      // send 0c [ openObstacle points: @local31 size: 19 ]
+	SIG_END
+};
+
+static const uint16 larry1PatchElevatorPolygon[] = {
+	PATCH_ADDTOOFFSET(+7),
+	0x39, 0x11,                      // pushi 11 [ correct size ]
+	PATCH_END
+};
+
 // It seems originally the Spanish version of Larry 1 used some beta code at
 // least for the man wearing a barrel, who walks around in front of the casino.
 // The script inside the resource files even uses a class, that does not exist
@@ -8345,9 +8370,11 @@ static const uint16 larry1PatchBuyApple[] = {
 	PATCH_END
 };
 
-//          script, description,                               signature                patch
+//          script, description,                                signature                       patch
 static const SciScriptPatcherEntry larry1Signatures[] = {
-	{  true,   300, "Spanish: buy apple from barrel man",    1, larry1SignatureBuyApple, larry1PatchBuyApple },
+	{  true,   300, "Spanish: buy apple from barrel man",    1, larry1SignatureBuyApple,        larry1PatchBuyApple },
+	{  true,   350, "elevator polygon size",                 1, larry1SignatureElevatorPolygon, larry1PatchElevatorPolygon },
+	{  true,   803, "disable speed test",                    1, sci01SpeedTestLocalSignature,   sci01SpeedTestLocalPatch },
 	SCI_SIGNATUREENTRY_TERMINATOR
 };
 
@@ -10876,6 +10903,28 @@ static const uint16 laurabow2PatchMuseumMusicVolume[] = {
 	PATCH_END
 };
 
+// In the news room (230) there are two reporters on the left, but one of them
+//  responds to Ask with the other's message, talker, and voice. The script
+//  passes the wrong noun to lb2Messager:say.
+//
+// We fix this by patching both doVerb methods to pass their noun property so
+//  that they both respond to Ask with their own message.
+//
+// Applies to: All versions
+// Responsible Methods: personS:doVerb, personT:doVerb
+static const uint16 laurabow2SignatureReporterMessage[] = {
+	0x39, 0x0d,                         // pushi 0d [ noun ]
+	SIG_MAGICDWORD,
+	0x39, 0x06,                         // pushi 06 [ verb ]
+	0x39, 0x2e,                         // pushi 2e [ cond ]
+	SIG_END
+};
+
+static const uint16 laurabow2PatchReporterMessage[] = {
+	0x67, 0x1a,                         // pTos noun
+	PATCH_END
+};
+
 // LB2CD reduces the music volume significantly during the introduction when
 //  characters talk while disembarking the ship in room 120. This is done so
 //  that their speech can be heard but it also occurs in text-only mode.
@@ -11024,6 +11073,7 @@ static const SciScriptPatcherEntry laurabow2Signatures[] = {
 	{  true,    26, "CD: fix act 4 wrong music",                      1, laurabow2CDSignatureFixAct4WrongMusic,          laurabow2CDPatchFixAct4WrongMusic },
 	{  true,    90, "CD: fix yvette's tut response",                  1, laurabow2CDSignatureFixYvetteTutResponse,       laurabow2CDPatchFixYvetteTutResponse },
 	{  true,   110, "CD: fix intro music",                            1, laurabow2CDSignatureFixIntroMusic,              laurabow2CDPatchFixIntroMusic },
+	{  true,   230, "CD/Floppy: reporter message",                    2, laurabow2SignatureReporterMessage,              laurabow2PatchReporterMessage },
 	{  true,   350, "CD/Floppy: museum party fix entering south 1/2", 1, laurabow2SignatureMuseumPartyFixEnteringSouth1, laurabow2PatchMuseumPartyFixEnteringSouth1 },
 	{  true,   350, "CD/Floppy: museum party fix entering south 2/2", 1, laurabow2SignatureMuseumPartyFixEnteringSouth2, laurabow2PatchMuseumPartyFixEnteringSouth2 },
 	{ false,   355, "CD: fix museum actor loops",                     2, laurabow2CDSignatureFixMuseumActorLoops1,       laurabow2CDPatchFixMuseumActorLoops1 },

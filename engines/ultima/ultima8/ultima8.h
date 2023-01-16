@@ -23,9 +23,11 @@
 #ifndef ULTIMA8_ULTIMA8
 #define ULTIMA8_ULTIMA8
 
+#include "common/events.h"
+#include "common/random.h"
 #include "common/stream.h"
+#include "graphics/screen.h"
 #include "ultima/shared/std/containers.h"
-#include "ultima/shared/engine/ultima.h"
 #include "ultima/ultima8/usecode/intrinsics.h"
 #include "ultima/ultima8/misc/common_types.h"
 #include "ultima/ultima8/games/game_info.h"
@@ -63,11 +65,14 @@ struct GameInfo;
 #define GAME_IS_CRUSADER (GAME_IS_REMORSE || GAME_IS_REGRET)
 #define GAME_IS_DEMO (Ultima8Engine::get_instance()->getGameInfo()->_ucOffVariant == GameInfo::GAME_UC_DEMO)
 
-class Ultima8Engine : public Shared::UltimaEngine {
+class Ultima8Engine : public Engine {
 	friend class Debugger;
 private:
+	Common::RandomSource _randomSource;
+
 	bool _isRunning;
 	GameInfo *_gameInfo;
+	const UltimaGameDescription *_gameDescription;
 
 	// minimal system
 	FileSystem *_fileSystem;
@@ -104,6 +109,7 @@ private:
 	// Timing stuff
 	int32 _lerpFactor;       //!< Interpolation factor for this frame (0-256)
 	bool _inBetweenFrame;    //!< Set true if we are doing an inbetween frame
+	uint32 _priorFrameCounterTime;
 
 	bool _highRes;			 //!< Set to true to enable larger screen size
 	bool _frameSkip;         //!< Set to true to enable frame skipping (default false)
@@ -128,7 +134,7 @@ private:
 	/**
 	 * Does engine deinitialization
 	 */
-	void deinitialize() override;
+	void deinitialize();
 
 	/**
 	 * Shows the Pentagram splash screen
@@ -159,24 +165,19 @@ private:
 
 	void handleDelayedEvents();
 
-	//! Fill a GameInfo struct for the give game name
-	//! \param game The id of the game to check (from pentagram.cfg)
-	//! \param gameinfo The GameInfo struct to fill
-	//! \return true if detected all the fields, false if detection failed
-	bool getGameInfo(const istring &game, GameInfo *gameinfo);
-
+	bool pollEvent(Common::Event &event);
 protected:
 	// Engine APIs
 	Common::Error run() override;
 
-	bool initialize() override;
+	bool initialize();
 
 	void pauseEngineIntern(bool pause) override;
 
 	/**
 	 * Returns the data archive folder and version that's required
 	 */
-	bool isDataRequired(Common::String &folder, int &majorVersion, int &minorVersion) override;
+	bool isDataRequired(Common::String &folder, int &majorVersion, int &minorVersion);
 
 public:
 	Ultima8Engine(OSystem *syst, const Ultima::UltimaGameDescription *gameDesc);
@@ -187,6 +188,8 @@ public:
 	}
 
 	bool hasFeature(EngineFeature f) const override;
+
+	Common::Language getLanguage() const;
 
 	Common::Error startup();
 	void shutdown();
@@ -206,7 +209,7 @@ public:
 		return _screen;
 	}
 
-	Graphics::Screen *getScreen() const override;
+	Graphics::Screen *getScreen() const;
 
 	Common::Error runGame();
 	virtual void handleEvent(const Common::Event &event);
@@ -296,6 +299,10 @@ public:
 		return _avatarMoverProcess;
 	}
 
+	Common::RandomSource &getRandomSource() {
+		return _randomSource;
+	}
+
 	/**
 	 * Notifies the engine that the sound settings may have changed
 	 */
@@ -314,12 +321,12 @@ public:
 	/**
 	 * Returns true if a savegame can be loaded
 	 */
-	bool canLoadGameStateCurrently(bool isAutosave = false) override { return true; }
+	bool canLoadGameStateCurrently() override { return true; }
 
 	/**
 	 * Returns true if the game can be saved
 	 */
-	bool canSaveGameStateCurrently(bool isAutosave = false) override;
+	bool canSaveGameStateCurrently() override;
 
 	/**
 	 * Load a game

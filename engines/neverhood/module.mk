@@ -4,6 +4,7 @@ MODULE_OBJS = \
 	background.o \
 	blbarchive.o \
 	console.o \
+	dialogs.o \
 	diskplayerscene.o \
 	entity.o \
 	gamemodule.o \
@@ -56,6 +57,7 @@ MODULE_OBJS = \
 	mouse.o \
 	navigationscene.o \
 	neverhood.o \
+	nhcarchive.o \
 	palette.o \
 	resource.o \
 	resourceman.o \
@@ -66,7 +68,8 @@ MODULE_OBJS = \
 	smackerplayer.o \
 	sound.o \
 	sprite.o \
-	staticdata.o
+	staticdata.o \
+	subtitles.o
 
 # This module can be built as a plugin
 ifeq ($(ENABLE_NEVERHOOD), DYNAMIC_PLUGIN)

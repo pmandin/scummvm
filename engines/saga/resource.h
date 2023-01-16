@@ -44,27 +44,34 @@ private:
 	Common::SeekableReadStream *_patchFile;
 	const char *_fileName;
 	bool _deletePatchFile;
+	bool _patchFileOpened;
 
 public:
-	PatchData(const char *fileName): _fileName(fileName), _deletePatchFile(true), _patchFile(nullptr) {
+	PatchData(const char *fileName): _fileName(fileName), _deletePatchFile(true), _patchFile(nullptr), _patchFileOpened(false) {
 	}
-	PatchData(Common::SeekableReadStream *patchFile, const char *fileName): _patchFile(patchFile), _fileName(fileName), _deletePatchFile(false) {
+	PatchData(Common::SeekableReadStream *patchFile, const char *fileName): _patchFile(patchFile), _fileName(fileName), _deletePatchFile(false), _patchFileOpened(true) {
 	}
 
 	Common::SeekableReadStream *getStream() {
-		if (_patchFile)
+		if (_patchFileOpened)
 			return _patchFile;
 		
 		Common::File *file = new Common::File();
-		file->open(_fileName);
+		_patchFileOpened = true;
+		if (!file->open(_fileName)) {
+			_patchFile = nullptr;
+			delete file;
+			return nullptr;
+		}
 		_patchFile = file;
 		return _patchFile;
 	}
 
 	void closeStream() {
-		if (_deletePatchFile) {
+		if (_deletePatchFile && _patchFileOpened) {
 			delete _patchFile;
 			_patchFile = nullptr;
+			_patchFileOpened = false;
 		}
 	}
 
@@ -102,7 +109,7 @@ public:
 	ResourceContext():
 		_fileName(NULL), _fileType(0), _isCompressed(false), _serial(0),
 		_isBigEndian(false),
-		_fileSize(0) {
+		_fileSize(0), _tombstone(false) {
 	}
 
 	virtual ~ResourceContext() { }
@@ -118,6 +125,11 @@ public:
 		if (resourceData && resourceData->patchData != NULL) {
 			return resourceData->patchData->getStream();
 		} else {
+			if (!_file && !_tombstone)
+				_file.reset(Common::MacResManager::openFileOrDataFork(_fileName));
+			if (!_file)
+				_tombstone = true;
+
 			return _file.get();
 		}
 	}
@@ -148,6 +160,7 @@ protected:
 	Common::ScopedPtr<Common::SeekableReadStream> _file;
 	Common::ScopedPtr<Common::MacResManager> _macRes;
 	int32 _fileSize;
+	bool _tombstone;
 
 	bool load(SagaEngine *_vm, Resource *resource);
 	bool loadResV1();

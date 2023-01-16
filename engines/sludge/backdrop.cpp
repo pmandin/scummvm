@@ -430,6 +430,9 @@ bool GraphicsManager::loadHSI(int num, Common::SeekableReadStream *stream, int x
 		return false;
 	}
 
+	if (!_backdropExists)
+		_backdropSurface.fillRect(Common::Rect(x, y, x + tmp.w, y + tmp.h), _renderSurface.format.ARGBToColor(0, 0, 0, 0));
+
 	// copy surface loaded to backdrop
 	Graphics::TransparentSurface tmp_trans(tmp, false);
 	tmp_trans.blit(_backdropSurface, x, y);
@@ -477,17 +480,22 @@ void GraphicsManager::saveBackdrop(Common::WriteStream *stream) {
 }
 
 void GraphicsManager::loadBackdrop(int ssgVersion, Common::SeekableReadStream *stream) {
-	_cameraX = stream->readUint16BE();
-	_cameraY = stream->readUint16BE();
+	int cameraX = stream->readUint16BE();
+	int cameraY = stream->readUint16BE();
+	float cameraZoom;
 	if (ssgVersion >= VERSION(2, 0)) {
-		_cameraZoom = stream->readFloatLE();
+		cameraZoom = stream->readFloatLE();
 	} else {
-		_cameraZoom = 1.0;
+		cameraZoom = 1.0;
 	}
 
 	_brightnessLevel = stream->readByte();
 
 	loadHSI(-1, stream, 0, 0, true);
+
+	_cameraX = cameraX;
+	_cameraY = cameraY;
+	_cameraZoom = cameraZoom;
 }
 
 bool GraphicsManager::getRGBIntoStack(uint x, uint y, StackHandler *sH) {

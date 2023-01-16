@@ -1,5 +1,6 @@
 OD_EXE_STRIPPED := scummvm_stripped$(EXEEXT)
 bundle = od-opk
+OPKNAME = $(OPENDINGUX_TARGET)
 
 all: $(OD_EXE_STRIPPED)
 
@@ -10,7 +11,7 @@ $(bundle): all
 	$(MKDIR) $(bundle)
 	$(CP) $(DIST_FILES_DOCS) $(bundle)/
 
-ifneq ($(OPENDINGUX_TARGET), rg99)
+ifneq ($(OPENDINGUX_TARGET), rs90)
 	$(MKDIR) $(bundle)/themes
 	$(CP) $(DIST_FILES_THEMES) $(bundle)/themes/
 endif
@@ -18,7 +19,7 @@ endif
 ifdef DIST_FILES_ENGINEDATA
 	$(MKDIR) $(bundle)/engine-data
 	$(CP) $(DIST_FILES_ENGINEDATA) $(bundle)/engine-data/
-ifeq ($(OPENDINGUX_TARGET), rg99)
+ifeq ($(OPENDINGUX_TARGET), rs90)
 	$(CP) $(srcdir)/dists/opendingux/fonts_mini.dat $(bundle)/engine-data/fonts.dat
 endif
 endif
@@ -40,6 +41,7 @@ ifdef dualopk
 	$(CP) $(srcdir)/dists/opendingux/startGame.$(OPENDINGUX_TARGET).desktop $(bundle)/
 	$(CP) $(srcdir)/dists/opendingux/scummvm.sh $(bundle)/
 endif
+
 	$(CP) $(srcdir)/backends/platform/sdl/opendingux/README.OPENDINGUX $(bundle)/README.man.txt
 	echo >> $(bundle)/README.man.txt
 	echo '[General README]' >> $(bundle)/README.man.txt
@@ -50,7 +52,7 @@ od-make-opk: $(bundle)
 	$(STRIP) $(bundle)/scummvm
 
 ifdef dualopk
-	$(srcdir)/dists/opendingux/make-opk.sh -d $(bundle) -o scummvm_$(OPENDINGUX_TARGET)_dual
+	$(srcdir)/dists/opendingux/make-opk.sh -d $(bundle) -o scummvm_$(OPKNAME)_dual
 else
-	$(srcdir)/dists/opendingux/make-opk.sh -d $(bundle) -o scummvm_$(OPENDINGUX_TARGET)
+	$(srcdir)/dists/opendingux/make-opk.sh -d $(bundle) -o scummvm_$(OPKNAME)
 endif

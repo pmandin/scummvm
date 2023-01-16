@@ -151,14 +151,17 @@ void Scene::setBonusParameterFlags(ActorStruct *act, uint16 bonusFlags) {
 bool Scene::loadSceneLBA2() {
 	Common::MemoryReadStream stream(_currentScene, _currentSceneSize);
 	_sceneTextBank = (TextBankId)stream.readByte();
-	_currentGameOverScene = stream.readByte();
-	stream.skip(4);
+	/*int8 currentCubeX =*/ stream.readSByte();
+	/*int8 currentCubeY =*/ stream.readSByte();
+	/*int8 shadowLevel =*/ stream.readSByte();
+	/*int8 modeLabyrinthe =*/ stream.readSByte();
+	_isOutsideScene = stream.readByte();
+
+	/*uint8 n =*/ stream.readByte();
 
 	_alphaLight = ClampAngle((int16)stream.readUint16LE());
 	_betaLight = ClampAngle((int16)stream.readUint16LE());
 	debug(2, "Using %i and %i as light vectors", _alphaLight, _betaLight);
-
-	_isOutsideScene = stream.readByte();
 
 	for (int i = 0; i < 4; ++i) {
 		_sampleAmbiance[i] = stream.readUint16LE();
@@ -186,6 +189,8 @@ bool Scene::loadSceneLBA2() {
 	_sceneHero->_lifeScript = _currentScene + stream.pos();
 	stream.skip(_sceneHero->_lifeScriptSize);
 
+	/*uint32 checksum =*/ stream.readUint32LE();
+
 	_sceneNumActors = (int16)stream.readUint16LE();
 	int cnt = 1;
 	for (int32 a = 1; a < _sceneNumActors; a++, cnt++) {
@@ -201,10 +206,10 @@ bool Scene::loadSceneLBA2() {
 		act->_pos.x = (int16)stream.readUint16LE();
 		act->_pos.y = (int16)stream.readUint16LE();
 		act->_pos.z = (int16)stream.readUint16LE();
-		act->_collisionPos = act->pos();
+		act->_oldPos = act->posObj();
 		act->_strengthOfHit = stream.readByte();
 		setBonusParameterFlags(act, stream.readUint16LE());
-		act->_angle = (int16)stream.readUint16LE();
+		act->_beta = (int16)stream.readUint16LE();
 		act->_speed = (int16)stream.readUint16LE();
 		act->_controlMode = (ControlMode)stream.readByte();
 		act->_cropLeft = stream.readSint16LE();
@@ -333,11 +338,11 @@ bool Scene::loadSceneLBA1() {
 		act->_pos.x = (int16)stream.readUint16LE();
 		act->_pos.y = (int16)stream.readUint16LE();
 		act->_pos.z = (int16)stream.readUint16LE();
-		act->_collisionPos = act->pos();
+		act->_oldPos = act->posObj();
 		act->_strengthOfHit = stream.readByte();
 		setBonusParameterFlags(act, stream.readUint16LE());
 		act->_bonusParameter.givenNothing = 0;
-		act->_angle = (int16)stream.readUint16LE();
+		act->_beta = (int16)stream.readUint16LE();
 		act->_speed = (int16)stream.readUint16LE();
 		act->_controlMode = (ControlMode)stream.readUint16LE();
 		act->_cropLeft = stream.readSint16LE();
@@ -396,11 +401,11 @@ bool Scene::loadSceneLBA1() {
 	if (_enableEnhancements) {
 		switch (_currentSceneIdx) {
 		case LBA1SceneId::Hamalayi_Mountains_landing_place:
-			_sceneActors[21]._pos.x = _sceneActors[21]._collisionPos.x = 6656 + 256;
-			_sceneActors[21]._pos.z = _sceneActors[21]._collisionPos.z = 768;
+			_sceneActors[21]._pos.x = _sceneActors[21]._oldPos.x = 6656 + 256;
+			_sceneActors[21]._pos.z = _sceneActors[21]._oldPos.z = 768;
 			break;
 		case LBA1SceneId::Principal_Island_outside_the_fortress:
-			_sceneActors[29]._pos.z = _sceneActors[29]._collisionPos.z = 1795;
+			_sceneActors[29]._pos.z = _sceneActors[29]._oldPos.z = 1795;
 #if 0
 			_sceneZones[15].mins.x = 1104;
 			_sceneZones[15].mins.z = 8448;
@@ -536,8 +541,8 @@ void Scene::changeScene() {
 
 	_sceneHero->_controlMode = ControlMode::kManual;
 	_sceneHero->_zone = -1;
-	_sceneHero->_positionInLifeScript = 0;
-	_sceneHero->_positionInMoveScript = -1;
+	_sceneHero->_offsetLife = 0;
+	_sceneHero->_offsetTrack = -1;
 	_sceneHero->_labelIdx = -1;
 
 	initScene(_needChangeScene);
@@ -566,11 +571,11 @@ void Scene::changeScene() {
 	_sceneHero->_pos = _newHeroPos;
 	_startYFalling = _newHeroPos.y;
 
-	_engine->_renderer->setLightVector(_alphaLight, _betaLight, ANGLE_0);
+	_engine->_renderer->setLightVector(_alphaLight, _betaLight, LBAAngles::ANGLE_0);
 
 	if (_previousSceneIdx != SCENE_CEILING_GRID_FADE_1 && _previousSceneIdx != _needChangeScene) {
 		_engine->_actor->_previousHeroBehaviour = _engine->_actor->_heroBehaviour;
-		_engine->_actor->_previousHeroAngle = _sceneHero->_angle;
+		_engine->_actor->_previousHeroAngle = _sceneHero->_beta;
 		_engine->autoSave();
 	}
 
@@ -586,12 +591,12 @@ void Scene::changeScene() {
 	ActorStruct *followedActor = getActor(_currentlyFollowedActor);
 	_engine->_grid->centerOnActor(followedActor);
 
-	_engine->_gameState->_magicBallIdx = -1;
+	_engine->_gameState->_magicBall = -1;
 	_engine->_movements->_lastJoyFlag = true;
 	_engine->_grid->_useCellingGrid = -1;
 	_engine->_grid->_cellingGridIdx = -1;
 	_engine->_screens->_fadePalette = false;
-	_engine->_renderer->setLightVector(_alphaLight, _betaLight, ANGLE_0);
+	_engine->_renderer->setLightVector(_alphaLight, _betaLight, LBAAngles::ANGLE_0);
 
 	_needChangeScene = SCENE_CEILING_GRID_FADE_1;
 	_enableGridTileRendering = true;
@@ -671,7 +676,7 @@ void Scene::processEnvironmentSound() {
 	}
 
 	// compute next ambiance timer
-	_sampleAmbienceTime = _engine->_lbaTime + TO_SECONDS(_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay);
+	_sampleAmbienceTime = _engine->_lbaTime + _engine->toSeconds(_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay);
 }
 
 void Scene::processZoneExtraBonus(ZoneStruct *zone) {
@@ -688,7 +693,7 @@ void Scene::processZoneExtraBonus(ZoneStruct *zone) {
 	const int32 x = (zone->maxs.x + zone->mins.x) / 2;
 	const int32 z = (zone->maxs.z + zone->mins.z) / 2;
 	const int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(x, z, _sceneHero->_pos.x, _sceneHero->_pos.z);
-	const int32 index = _engine->_extra->addExtraBonus(x, zone->maxs.y, z, ANGLE_63, angle, bonusSprite, amount);
+	const int32 index = _engine->_extra->addExtraBonus(x, zone->maxs.y, z, LBAAngles::ANGLE_63, angle, bonusSprite, amount);
 
 	if (index != -1) {
 		_engine->_extra->_extraList[index].type |= ExtraType::TIME_IN;
@@ -718,8 +723,10 @@ void Scene::checkZoneSce(int32 actorIdx) {
 		    (currentY >= zone->mins.y && currentY <= zone->maxs.y) &&
 		    (currentZ >= zone->mins.z && currentZ <= zone->maxs.z)) {
 			switch (zone->type) {
+			default:
+				error("lba2 zone types not yet implemented");
 			case ZoneType::kCube:
-				if (IS_HERO(actorIdx) && actor->_life > 0) {
+				if (IS_HERO(actorIdx) && actor->_lifePoint > 0) {
 					_needChangeScene = zone->num;
 					_zoneHeroPos.x = actor->_pos.x - zone->mins.x + zone->infoData.ChangeScene.x;
 					_zoneHeroPos.y = actor->_pos.y - zone->mins.y + zone->infoData.ChangeScene.y;
@@ -757,13 +764,13 @@ void Scene::checkZoneSce(int32 actorIdx) {
 				}
 				break;
 			case ZoneType::kObject:
-				if (IS_HERO(actorIdx) && _engine->_movements->shouldTriggerZoneAction()) {
+				if (IS_HERO(actorIdx) && _engine->_movements->shouldExecuteAction()) {
 					_engine->_animations->initAnim(AnimationTypes::kAction, AnimType::kAnimationThen, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 					processZoneExtraBonus(zone);
 				}
 				break;
 			case ZoneType::kText:
-				if (IS_HERO(actorIdx) && _engine->_movements->shouldTriggerZoneAction()) {
+				if (IS_HERO(actorIdx) && _engine->_movements->shouldExecuteAction()) {
 					ScopedEngineFreeze scopedFreeze(_engine);
 					_engine->exitSceneryView();
 					_engine->_text->setFontCrossColor(zone->infoData.DisplayText.textColor);
@@ -774,7 +781,7 @@ void Scene::checkZoneSce(int32 actorIdx) {
 				break;
 			case ZoneType::kLadder:
 				if (IS_HERO(actorIdx) && _engine->_actor->_heroBehaviour != HeroBehaviourType::kProtoPack && (actor->_genAnim == AnimationTypes::kForward || actor->_genAnim == AnimationTypes::kTopLadder || actor->_genAnim == AnimationTypes::kClimbLadder)) {
-					IVec3 destPos = _engine->_movements->rotateActor(actor->_boundingBox.mins.x, actor->_boundingBox.mins.z, actor->_angle + ANGLE_360 + ANGLE_135);
+					IVec3 destPos = _engine->_movements->rotate(actor->_boundingBox.mins.x, actor->_boundingBox.mins.z, actor->_beta + LBAAngles::ANGLE_360 + LBAAngles::ANGLE_135);
 					destPos.x += actor->_processActor.x;
 					destPos.z += actor->_processActor.z;
 

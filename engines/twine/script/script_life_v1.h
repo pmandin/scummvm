@@ -19,30 +19,18 @@
  *
  */
 
-#ifndef TWINE_SCRIPTLIFE_H
-#define TWINE_SCRIPTLIFE_H
+#ifndef TWINE_SCRIPTLIFEV1_H
+#define TWINE_SCRIPTLIFEV1_H
 
-#include "common/scummsys.h"
+#include "twine/script/script_life.h"
 
 namespace TwinE {
 
-// SCENE_SIZE_MAX
-#define MAX_TARGET_ACTOR_DISTANCE 0x7D00
-
 class TwinEEngine;
 
-class ScriptLife {
-private:
-	TwinEEngine *_engine;
-
+class ScriptLifeV1 : public ScriptLife {
 public:
-	ScriptLife(TwinEEngine *engine);
-
-	/**
-	 * Process actor life script
-	 * @param actorIdx Current processed actor index
-	 */
-	void processLifeScript(int32 actorIdx);
+	ScriptLifeV1(TwinEEngine *engine);
 };
 
 } // namespace TwinE

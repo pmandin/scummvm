@@ -56,11 +56,6 @@ void OpenGlTexture::bind() const {
 }
 
 void OpenGlTexture::updateLevel(uint32 level, const Graphics::Surface *surface, const byte *palette) {
-	if (level == 0) {
-		_width = surface->w;
-		_height = surface->h;
-	}
-
 	if (surface->format.bytesPerPixel != 4) {
 		// Convert the surface to texture format
 		Graphics::Surface *convertedSurface = surface->convertTo(Driver::getRGBAPixelFormat(), palette);
@@ -73,28 +68,6 @@ void OpenGlTexture::updateLevel(uint32 level, const Graphics::Surface *surface, 
 		assert(surface->format == Driver::getRGBAPixelFormat());
 
 		glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->getPixels());
-	}
-}
-
-void OpenGlTexture::update(const Graphics::Surface *surface, const byte *palette) {
-	bind();
-	updateLevel(0, surface, palette);
-}
-
-void OpenGlTexture::setSamplingFilter(Texture::SamplingFilter filter) {
-	assert(_levelCount == 0);
-
-	switch (filter) {
-	case kNearest:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		break;
-	case kLinear:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		break;
-	default:
-		warning("Unhandled sampling filter %d", filter);
 	}
 }
 

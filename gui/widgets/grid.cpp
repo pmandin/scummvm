@@ -132,7 +132,9 @@ void GridItemWidget::drawWidget() {
 	// Draw Flag
 	const Graphics::ManagedSurface *flagGfx = _grid->languageToSurface(_activeEntry->language);
 	if (flagGfx) {
-		Common::Point p(_x + thumbWidth - flagGfx->w - 5, _y + 5);
+		// SVG and PNG can resize differently so it's better to use thumbWidth as reference to
+		// ensure all flags are aligned
+		Common::Point p(_x + thumbWidth - (thumbWidth / 5), _y + 5);
 		g_gui.theme()->drawSurface(p, *flagGfx, true);
 	}
 
@@ -672,8 +674,19 @@ void GridWidget::loadFlagIcons() {
 		Graphics::ManagedSurface *gfx = loadSurfaceFromFile(path, _flagIconWidth, _flagIconHeight);
 		if (gfx) {
 			_languageIcons[l->id] = gfx;
+			continue;
+		} // if no .svg flag is available, search for a .png
+		path = Common::String::format("icons/flags/%s.png", l->code);
+		gfx = loadSurfaceFromFile(path);
+		if (gfx) {
+			const Graphics::ManagedSurface *scGfx = scaleGfx(gfx, _flagIconWidth, _flagIconHeight, true);
+			_languageIcons[l->id] = scGfx;
+			if (gfx != scGfx) {
+				gfx->free();
+				delete gfx;
+			}
 		} else {
-			_languageIcons[l->id] = nullptr;
+			_languageIcons[l->id] = nullptr; // nothing found, set to nullptr
 		}
 	}
 }

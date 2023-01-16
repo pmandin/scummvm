@@ -231,10 +231,12 @@ ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
 		ConfMan.setBool("subtitles", true);
 
 	// TODO Detect subtitle only versions of scumm6 games
-	if (ConfMan.getBool("speech_mute"))
-		_voiceMode = 2;
-	else
-		_voiceMode = ConfMan.getBool("subtitles");
+	if (!isUsingOriginalGUI()) {
+		if (ConfMan.getBool("speech_mute"))
+			_voiceMode = 2;
+		else
+			_voiceMode = ConfMan.getBool("subtitles");
+	}
 
 	if (ConfMan.hasKey("render_mode")) {
 		_renderMode = Common::parseRenderMode(ConfMan.get("render_mode"));
@@ -1231,7 +1233,7 @@ Common::Error ScummEngine::init() {
 	resetScumm();
 	resetScummVars();
 
-	if (_game.version >= 5 && _game.version <= 7) {
+	if (_game.version >= 5 && _game.version <= 7 && _game.id != GID_DIG) {
 		_sound->setupSound();
 		// In case of talkie edition without sfx file, enable subtitles
 		if (!_sound->hasSfxFile() && !ConfMan.getBool("subtitles"))
@@ -1261,6 +1263,26 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 			_macCursorFile = macResourceFile;
 		} else if (_game.id == GID_MONKEY) {
 			macInstrumentFile = macResourceFile;
+		}
+	}
+
+	// Sync the voice mode options from the outside world (the ScummVM audio options tab)
+	if (_game.version >= 5 && _game.version <= 8) {
+		if (ConfMan.hasKey("subtitles", _targetName) && ConfMan.hasKey("speech_mute", _targetName)) {
+			bool speechMute = ConfMan.getBool("speech_mute", _targetName);
+			bool subtitles = ConfMan.getBool("subtitles", _targetName);
+
+			int resultingVoiceMode = 2; // Subtitles only
+
+			if (!speechMute && !subtitles) { // Voice only
+				resultingVoiceMode = 0;
+			} else if (!speechMute && subtitles) { // Text and voice
+				resultingVoiceMode = 1;
+			}
+
+			ConfMan.setInt("original_gui_text_status", resultingVoiceMode);
+			ConfMan.flushToDisk();
+			syncSoundSettings();
 		}
 	}
 
@@ -1408,10 +1430,9 @@ void ScummEngine_v7::setupScumm(const Common::String &macResourceFile) {
 		}
 	}
 
-	if (_game.id == GID_DIG && (_game.features & GF_DEMO))
-		_smushFrameRate = 15;
-	else
-		_smushFrameRate = (_game.id == GID_FT) ? 10 : 12;
+	// This is just an initialization, most SMUSH videos do have
+	// their own framerate value embedded in their ANIM header...
+	_smushFrameRate = (_game.id == GID_FT) ? 10 : 12;
 
 	ScummEngine::setupScumm(macResourceFile);
 
@@ -1430,7 +1451,26 @@ void ScummEngine_v7::setupScumm(const Common::String &macResourceFile) {
 		filesAreCompressed |= _sound->isSfxFileCompressed();
 	}
 
-	_musicEngine = _imuseDigital = new IMuseDigital(this, _mixer, &_resourceAccessMutex);
+	int sampleRate = DIMUSE_BASE_SAMPLERATE;
+
+	ConfMan.registerDefault("dimuse_sample_rate", DIMUSE_BASE_SAMPLERATE);
+	if (ConfMan.hasKey("dimuse_sample_rate", _targetName)) {
+		// Only accept sample rates which are a multiple or submultiple of 22050, with
+		// lower and upper bounds set to what the internal mixer is currently able to achieve...
+		if ((ConfMan.getInt("dimuse_sample_rate") % (DIMUSE_BASE_SAMPLERATE / 2)) == 0 &&
+			(ConfMan.getInt("dimuse_sample_rate") >= DIMUSE_BASE_SAMPLERATE / 2) &&
+			(ConfMan.getInt("dimuse_sample_rate") <= DIMUSE_BASE_SAMPLERATE * 4)) {
+			sampleRate = ConfMan.getInt("dimuse_sample_rate");
+		}
+	}
+
+	bool lowLatencyMode = false;
+	ConfMan.registerDefault("dimuse_low_latency_mode", false);
+	if (ConfMan.hasKey("dimuse_low_latency_mode", _targetName)) {
+		lowLatencyMode = ConfMan.getBool("dimuse_low_latency_mode");
+	}
+
+	_musicEngine = _imuseDigital = new IMuseDigital(this, sampleRate, _mixer, &_resourceAccessMutex, lowLatencyMode);
 
 	if (filesAreCompressed) {
 		GUI::MessageDialog dialog(_(
@@ -2610,7 +2650,7 @@ void ScummEngine_v90he::scummLoop(int delta) {
 #endif
 
 void ScummEngine::scummLoop_updateScummVars() {
-	if (_game.version >= 7) {
+	if (_game.version == 7) {
 		VAR(VAR_CAMERA_POS_X) = camera._cur.x;
 		VAR(VAR_CAMERA_POS_Y) = camera._cur.y;
 	} else if (_game.platform == Common::kPlatformNES) {
@@ -3165,9 +3205,7 @@ bool ScummEngine::isUsingOriginalGUI() {
 	if (_game.id == GID_MONKEY2 && (_game.features & GF_DEMO))
 		return false;
 
-	if (_game.platform == Common::kPlatformNES ||
-		_game.platform == Common::kPlatformPCEngine ||
-		(_game.platform == Common::kPlatformAtariST && _game.version == 2))
+	if (_game.platform == Common::kPlatformPCEngine)
 		return false;
 
 	if (_game.heversion != 0)

@@ -113,7 +113,10 @@ private:
 	void processManualMovementExecution(int actorIdx);
 	void processManualRotationExecution(int actorIdx);
 
-	bool _heroAction = false;
+	/**
+	 * This is true if the player hits the action button. E.g. in the second prison scene when you hide in the waste.
+	 */
+	bool _actionNormal = false;
 
 public:
 	Movements(TwinEEngine *engine);
@@ -123,7 +126,7 @@ public:
 	/**
 	 * Hero executes the current action of the trigger zone
 	 */
-	bool shouldTriggerZoneAction() const;
+	bool shouldExecuteAction() const;
 
 	bool _lastJoyFlag = false;
 
@@ -142,7 +145,7 @@ public:
 	 * @param stepAngle number of steps
 	 * @param movePtr time pointer to update
 	 */
-	void setActorAngleSafe(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
+	void initRealAngle(int16 startAngle, int16 endAngle, int16 stepAngle, ActorMoveStruct *movePtr);
 
 	/**
 	 * Clear actors safe angle
@@ -178,7 +181,7 @@ public:
 	 * @param z Actor current Z coordinate
 	 * @param angle Actor angle to rotate
 	 */
-	IVec3 rotateActor(int32 x, int32 z, int32 angle);
+	IVec3 rotate(int32 x, int32 z, int32 angle);
 
 	/**
 	 * Move actor around the scene
@@ -189,11 +192,11 @@ public:
 	 */
 	void initRealAngleConst(int32 start, int32 end, int32 duration, ActorMoveStruct *movePtr) const;
 
-	void processActorMovements(int32 actorIdx);
+	void doDir(int32 actorIdx);
 };
 
-inline bool Movements::shouldTriggerZoneAction() const {
-	return _heroAction;
+inline bool Movements::shouldExecuteAction() const {
+	return _actionNormal;
 }
 
 } // namespace TwinE

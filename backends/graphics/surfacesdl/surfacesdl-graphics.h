@@ -191,7 +191,6 @@ protected:
 	int SDL_SetColors(SDL_Surface *surface, SDL_Color *colors, int firstcolor, int ncolors);
 	int SDL_SetAlpha(SDL_Surface *surface, Uint32 flag, Uint8 alpha);
 	int SDL_SetColorKey(SDL_Surface *surface, Uint32 flag, Uint32 key);
-	bool _vsync;
 #endif
 
 	/** Unseen game screen */
@@ -216,6 +215,7 @@ protected:
 	SDL_Surface *_overlayscreen;
 	bool _useOldSrc;
 	Graphics::PixelFormat _overlayFormat;
+	bool _isDoubleBuf;
 
 	enum {
 		kTransactionNone = 0,
@@ -258,9 +258,11 @@ protected:
 		bool aspectRatioCorrection;
 		AspectRatio desiredAspectRatio;
 		bool filtering;
+		bool isHwPalette;
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 		int stretchMode;
+		bool vsync;
 #endif
 
 		uint scalerIndex;
@@ -282,6 +284,7 @@ protected:
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 			stretchMode = 0;
+			vsync = false;
 #endif
 
 			scalerIndex = 0;
@@ -324,7 +327,7 @@ protected:
 
 	const PluginList &_scalerPlugins;
 	ScalerPluginObject *_scalerPlugin;
-	Scaler *_scaler;
+	Scaler *_scaler, *_mouseScaler;
 	uint _maxExtraPixels;
 	uint _extraPixels;
 
@@ -339,8 +342,14 @@ protected:
 	};
 
 	// Dirty rect management
-	SDL_Rect _dirtyRectList[NUM_DIRTY_RECT];
+	// When double-buffering we need to redraw both updates from
+	// current frame and previous frame. For convenience we copy
+	// them here before traversing the list.
+	SDL_Rect _dirtyRectList[2 * NUM_DIRTY_RECT];
 	int _numDirtyRects;
+
+	SDL_Rect _prevDirtyRectList[NUM_DIRTY_RECT];
+	int _numPrevDirtyRects;
 
 	struct MousePos {
 		// The size and hotspot of the original cursor image.
@@ -363,7 +372,6 @@ protected:
 			{ }
 	};
 
-	byte *_mouseData;
 	SDL_Rect _mouseBackup;
 	MousePos _mouseCurState;
 #ifdef USE_RGB_COLOR
@@ -371,13 +379,11 @@ protected:
 #else
 	byte _mouseKeyColor;
 #endif
+	byte _mappedMouseKeyColor;
 	bool _cursorDontScale;
 	bool _cursorPaletteDisabled;
 	SDL_Surface *_mouseOrigSurface;
 	SDL_Surface *_mouseSurface;
-	enum {
-		kMouseColorKey = 1
-	};
 
 	// Shake mode
 	// This is always set to 0 when building with SDL2.
@@ -387,6 +393,9 @@ protected:
 	// Palette data
 	SDL_Color *_currentPalette;
 	uint _paletteDirtyStart, _paletteDirtyEnd;
+
+	SDL_Color *_overlayPalette;
+	bool _isInOverlayPalette;
 
 	// Cursor palette data
 	SDL_Color *_cursorPalette;
@@ -417,9 +426,13 @@ protected:
 
 	virtual void setAspectRatioCorrection(bool enable);
 	void setFilteringMode(bool enable);
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	void setVSync(bool enable);
+#endif
 
 	bool saveScreenshot(const Common::String &filename) const override;
 	virtual void setGraphicsModeIntern();
+	void getDefaultResolution(uint &w, uint &h);
 
 private:
 	void setFullscreenMode(bool enable);
@@ -458,6 +471,8 @@ private:
 	 * can be triggered.
 	 */
 	bool _needRestoreAfterOverlay;
+	bool _prevForceRedraw;
+	bool _prevCursorNeedsRedraw;
 };
 
 #endif

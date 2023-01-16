@@ -20,6 +20,7 @@
  */
 
 #include "graphics/cursorman.h"
+#include "ultima/ultima.h"
 #include "ultima/ultima8/kernel/mouse.h"
 #include "ultima/ultima8/misc/pent_include.h"
 #include "ultima/ultima8/games/game_data.h"
@@ -51,8 +52,8 @@ Mouse::~Mouse() {
 	_instance = nullptr;
 }
 
-bool Mouse::buttonDown(Shared::MouseButton button) {
-	assert(button != Shared::MOUSE_LAST);
+bool Mouse::buttonDown(MouseButton button) {
+	assert(button != MOUSE_LAST);
 	bool handled = false;
 	uint32 now = g_system->getMillis();
 
@@ -90,8 +91,8 @@ bool Mouse::buttonDown(Shared::MouseButton button) {
 	return handled;
 }
 
-bool Mouse::buttonUp(Shared::MouseButton button) {
-	assert(button != Shared::MOUSE_LAST);
+bool Mouse::buttonUp(MouseButton button) {
+	assert(button != MOUSE_LAST);
 	bool handled = false;
 
 	_mouseButton[button].clearState(MBS_DOWN);
@@ -111,7 +112,7 @@ bool Mouse::buttonUp(Shared::MouseButton button) {
 		handled = true;
 	}
 
-	if (button == Shared::BUTTON_LEFT && _dragging != Mouse::DRAG_NOT) {
+	if (button == BUTTON_LEFT && _dragging != Mouse::DRAG_NOT) {
 		stopDragging(_mousePos.x, _mousePos.y);
 		handled = true;
 	}
@@ -125,7 +126,7 @@ void Mouse::popAllCursors() {
 	update();
 }
 
-bool Mouse::isMouseDownEvent(Shared::MouseButton button) const {
+bool Mouse::isMouseDownEvent(MouseButton button) const {
 	return _mouseButton[button].isState(MBS_DOWN);
 }
 
@@ -328,9 +329,9 @@ void Mouse::setMouseCoords(int mx, int my) {
 	}
 
 	if (_dragging == DRAG_NOT) {
-		if (_mouseButton[Shared::BUTTON_LEFT].isState(MBS_DOWN)) {
-			int startx = _mouseButton[Shared::BUTTON_LEFT]._downPoint.x;
-			int starty = _mouseButton[Shared::BUTTON_LEFT]._downPoint.y;
+		if (_mouseButton[BUTTON_LEFT].isState(MBS_DOWN)) {
+			int startx = _mouseButton[BUTTON_LEFT]._downPoint.x;
+			int starty = _mouseButton[BUTTON_LEFT]._downPoint.y;
 			if (ABS(startx - mx) > 2 ||
 				ABS(starty - my) > 2) {
 				startDragging(startx, starty);
@@ -374,6 +375,8 @@ void Mouse::startDragging(int startx, int starty) {
 
 	// for a Gump, notify the Gump's parent that we started _dragging:
 	if (gump) {
+		debugC(kDebugObject, "Dragging gump %u (class=%s)", _dragging_objId, gump->GetClassType()._className);
+
 		Gump *parent = gump->GetParent();
 		assert(parent); // can't drag root gump
 		int32 px = startx, py = starty;
@@ -386,6 +389,7 @@ void Mouse::startDragging(int startx, int starty) {
 		}
 	} else if (item) {
 		// for an Item, notify the gump the item is in that we started _dragging
+		debugC(kDebugObject, "Dragging item %u (class=%s)", _dragging_objId, item->GetClassType()._className);
 
 		// find gump item was in
 		gump = desktopGump->FindGump(startx, starty);
@@ -408,17 +412,12 @@ void Mouse::startDragging(int startx, int starty) {
 		_dragging = DRAG_INVALID;
 	}
 
-#if 0
-	Object *obj = ObjectManager::get_instance()->getObject(_dragging_objId);
-	pout << "Dragging object " << _dragging_objId << " (class=" << (obj ? obj->GetClassType().class_name : "NULL") << ")" << Std::endl;
-#endif
-
 	pushMouseCursor(MOUSE_NORMAL);
 
 	// pause the kernel
 	Kernel::get_instance()->pause();
 
-	_mouseButton[Shared::BUTTON_LEFT].setState(MBS_HANDLED);
+	_mouseButton[BUTTON_LEFT].setState(MBS_HANDLED);
 
 	if (_dragging == DRAG_INVALID) {
 		setMouseCursor(MOUSE_CROSS);
@@ -471,7 +470,7 @@ void Mouse::moveDragging(int mx, int my) {
 
 
 void Mouse::stopDragging(int mx, int my) {
-	//pout << "Dropping object " << _dragging_objId << Std::endl;
+	debugC(kDebugObject, "Dropping object %u", _dragging_objId);
 
 	Gump *gump = getGump(_dragging_objId);
 	Item *item = getItem(_dragging_objId);
@@ -519,7 +518,7 @@ void Mouse::stopDragging(int mx, int my) {
 }
 
 void Mouse::handleDelayedEvents() {
-	for (int button = 0; button < Shared::MOUSE_LAST; ++button) {
+	for (int button = 0; button < MOUSE_LAST; ++button) {
 		if (!(_mouseButton[button]._state & (MBS_HANDLED | MBS_DOWN)) &&
 			!_mouseButton[button].lastWithinDblClkTimeout()) {
 			Gump *gump = getGump(_mouseButton[button]._downGump);

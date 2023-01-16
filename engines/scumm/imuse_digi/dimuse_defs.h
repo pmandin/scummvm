@@ -40,18 +40,18 @@ namespace Scumm {
 #define DIMUSE_LARGE_FADE_DIM 350000
 #define DIMUSE_SMALL_FADE_DIM 44100
 
-#define DIMUSE_SAMPLERATE     22050
-#define DIMUSE_FEEDSIZE       512
-#define DIMUSE_NUM_WAVE_BUFS  8
-#define DIMUSE_SMUSH_SOUNDID  12345678
-#define DIMUSE_BUN_CHUNK_SIZE 0x2000
-#define DIMUSE_GROUP_SFX      1
-#define DIMUSE_GROUP_SPEECH   2
-#define DIMUSE_GROUP_MUSIC    3
-#define DIMUSE_GROUP_MUSICEFF 4
-#define DIMUSE_BUFFER_SPEECH  1
-#define DIMUSE_BUFFER_MUSIC   2
-#define DIMUSE_BUFFER_SMUSH   3
+#define DIMUSE_BASE_SAMPLERATE 22050
+#define DIMUSE_BASE_FEEDSIZE   512
+#define DIMUSE_NUM_WAVE_BUFS   8
+#define DIMUSE_SMUSH_SOUNDID   12345678
+#define DIMUSE_BUN_CHUNK_SIZE  0x2000
+#define DIMUSE_GROUP_SFX       1
+#define DIMUSE_GROUP_SPEECH    2
+#define DIMUSE_GROUP_MUSIC     3
+#define DIMUSE_GROUP_MUSICEFF  4
+#define DIMUSE_BUFFER_SPEECH   1
+#define DIMUSE_BUFFER_MUSIC    2
+#define DIMUSE_BUFFER_SMUSH    3
 
 #define DIMUSE_TIMER_BASE_RATE_HZ       50
 #define DIMUSE_TIMER_BASE_RATE_USEC     20000  // 1000000 / 50Hz
@@ -124,6 +124,13 @@ namespace Scumm {
 #define DIMUSE_C_PROCESS_STREAMS  27
 #define DIMUSE_C_FEED_STREAM      29
 
+// Block IDs for the Creative Voice File format
+// used within Full Throttle and The Dig (demo)
+#define VOC_DIGI_DATA_BLOCK  1
+#define VOC_MARKER_BLOCK     4
+#define VOC_LOOP_START_BLOCK 6
+#define VOC_LOOP_END_BLOCK   7
+
 struct IMuseDigiDispatch;
 struct IMuseDigiTrack;
 struct IMuseDigiStreamZone;
@@ -174,6 +181,7 @@ typedef struct {
 } IMuseDigiFade;
 
 struct IMuseDigiTrack {
+	int index;
 	IMuseDigiTrack *prev;
 	IMuseDigiTrack *next;
 	IMuseDigiDispatch *dispatchPtr;

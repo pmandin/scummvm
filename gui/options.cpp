@@ -20,6 +20,7 @@
  */
 
 #include "gui/browser.h"
+#include "gui/shaderbrowser-dialog.h"
 #include "gui/themebrowser.h"
 #include "gui/message.h"
 #include "gui/gui-manager.h"
@@ -57,7 +58,7 @@
 #ifdef USE_LIBCURL
 #include "backends/cloud/cloudmanager.h"
 #include "gui/downloaddialog.h"
-#include "gui/downloadiconsdialog.h"
+#include "gui/downloadpacksdialog.h"
 #endif
 
 #ifdef USE_SDL_NET
@@ -95,6 +96,7 @@ enum {
 	kPluginsPathClearCmd	= 'clpl',
 	kChooseThemeCmd			= 'chtf',
 	kUpdateIconsCmd			= 'upic',
+	kUpdateShadersCmd		= 'upsh',
 	kChooseShaderCmd        = 'chsh',
 	kClearShaderCmd         = 'clsh',
 	kUpdatesCheckCmd		= 'updc',
@@ -103,6 +105,7 @@ enum {
 	kGraphicsTabContainerReflowCmd = 'gtcr',
 	kScalerPopUpCmd			= 'scPU',
 	kFullscreenToggled		= 'oful',
+	kRandomSeedClearCmd     = 'rndc',
 };
 
 enum {
@@ -422,7 +425,11 @@ void OptionsDialog::build() {
 			_aspectCheckbox->setState(ConfMan.getBool("aspect_ratio", _domain));
 		}
 
-		_vsyncCheckbox->setState(ConfMan.getBool("vsync", _domain));
+		if (g_system->hasFeature(OSystem::kFeatureVSync)) {
+			_vsyncCheckbox->setState(ConfMan.getBool("vsync", _domain));
+			if (ConfMan.isKeyTemporary("vsync"))
+				_vsyncCheckbox->setOverride(true);
+		}
 
 		_rendererTypePopUp->setEnabled(true);
 		_rendererTypePopUp->setSelectedTag(Graphics::Renderer::parseTypeCode(ConfMan.get("renderer", _domain)));
@@ -600,11 +607,15 @@ void OptionsDialog::apply() {
 			}
 			if (ConfMan.getBool("aspect_ratio", _domain) != _aspectCheckbox->getState())
 				graphicsModeChanged = true;
-			if (ConfMan.getBool("vsync", _domain) != _vsyncCheckbox->getState())
-				graphicsModeChanged = true;
+			if (g_system->hasFeature(OSystem::kFeatureVSync)) {
+				if (ConfMan.getBool("vsync", _domain) != _vsyncCheckbox->getState()) {
+					graphicsModeChanged = true;
+					ConfMan.setBool("vsync", _vsyncCheckbox->getState(), _domain);
+					_vsyncCheckbox->setOverride(false);
+				}
+			}
 
 			ConfMan.setBool("aspect_ratio", _aspectCheckbox->getState(), _domain);
-			ConfMan.setBool("vsync", _vsyncCheckbox->getState(), _domain);
 
 			bool isSet = false;
 
@@ -760,6 +771,8 @@ void OptionsDialog::apply() {
 			g_system->setFeatureState(OSystem::kFeatureFullscreenMode, ConfMan.getBool("fullscreen", _domain));
 		if (ConfMan.hasKey("filtering"))
 			g_system->setFeatureState(OSystem::kFeatureFilteringMode, ConfMan.getBool("filtering", _domain));
+		if (ConfMan.hasKey("vsync"))
+			g_system->setFeatureState(OSystem::kFeatureVSync, ConfMan.getBool("vsync", _domain));
 
 		OSystem::TransactionError gfxError = g_system->endGFXTransaction();
 
@@ -821,6 +834,12 @@ void OptionsDialog::apply() {
 				ConfMan.setBool("filtering", g_system->getFeatureState(OSystem::kFeatureFilteringMode), _domain);
 				message += Common::U32String("\n");
 				message += _("the filtering setting could not be changed");
+			}
+
+			if (gfxError & OSystem::kTransactionVSyncFailed) {
+				ConfMan.setBool("vsync", g_system->getFeatureState(OSystem::kFeatureVSync), _domain);
+				message += Common::U32String("\n");
+				message += _("the vsync setting could not be changed");
 			}
 
 			if (gfxError & OSystem::kTransactionShaderChangeFailed) {
@@ -1149,13 +1168,12 @@ void OptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 data
 		g_gui.scheduleTopDialogRedraw();
 		break;
 	case kChooseShaderCmd: {
-		BrowserDialog browser(_("Select shader"), false);
+		ShaderBrowserDialog browser(ConfMan.get("shader", _domain));
 		if (browser.runModal() > 0) {
 			// User made his choice...
-			Common::FSNode file(browser.getResult());
-			_shader->setLabel(file.getPath());
+			_shader->setLabel(browser.getResult());
 
-			if (!file.getPath().empty() && (file.getPath().decode() != _c("None", "path")))
+			if (!browser.getResult().empty() && (browser.getResult().decode() != _c("None", "path")))
 				_shaderClearButton->setEnabled(true);
 			else
 				_shaderClearButton->setEnabled(false);
@@ -1202,7 +1220,6 @@ void OptionsDialog::setGraphicSettingsState(bool enabled) {
 	_gfxPopUp->setEnabled(enabled);
 	_renderModePopUpDesc->setEnabled(enabled);
 	_renderModePopUp->setEnabled(enabled);
-	_vsyncCheckbox->setEnabled(enabled);
 	_rendererTypePopUpDesc->setEnabled(enabled);
 	_rendererTypePopUp->setEnabled(enabled);
 	_antiAliasPopUpDesc->setEnabled(enabled);
@@ -1251,6 +1268,10 @@ void OptionsDialog::setGraphicSettingsState(bool enabled) {
 		_aspectCheckbox->setEnabled(false);
 	else
 		_aspectCheckbox->setEnabled(enabled);
+
+	if (g_system->hasFeature(OSystem::kFeatureVSync))
+		_vsyncCheckbox->setEnabled(enabled);
+
 }
 
 void OptionsDialog::setAudioSettingsState(bool enabled) {
@@ -1572,12 +1593,19 @@ void OptionsDialog::addGraphicControls(GuiObject *boss, const Common::String &pr
 		_shader = new StaticTextWidget(boss, prefix + "grShader", _c("None", "shader"), _("Specifies path to the shader used for scaling the game screen"));
 
 		_shaderClearButton = addClearButton(boss, prefix + "grShaderClearButton", kClearShaderCmd);
+
+#ifdef USE_CLOUD
+#ifdef USE_LIBCURL
+		new ButtonWidget(boss, prefix + "UpdateShadersButton", _("Update Shaders"), _("Check for updates of shader packs"), kUpdateShadersCmd);
+#endif
+#endif
 	}
 
 	// Fullscreen checkbox
 	_fullscreenCheckbox = new CheckboxWidget(boss, prefix + "grFullscreenCheckbox", _("Fullscreen mode"), Common::U32String(), kFullscreenToggled);
 
-	_vsyncCheckbox = new CheckboxWidget(boss, prefix + "grVSyncCheckbox", _("V-Sync"), _("Wait for the vertical sync to refresh the screen in order to prevent tearing artifacts"));
+	if (g_system->hasFeature(OSystem::kFeatureVSync))
+		_vsyncCheckbox = new CheckboxWidget(boss, prefix + "grVSyncCheckbox", _("V-Sync"), _("Wait for the vertical sync to refresh the screen in order to prevent tearing artifacts"));
 
 	if (g_system->getOverlayWidth() > 320)
 		_rendererTypePopUpDesc = new StaticTextWidget(boss, prefix + "grRendererTypePopupDesc", _("Game 3D Renderer:"));
@@ -2205,12 +2233,18 @@ void GlobalOptionsDialog::build() {
 	addPathsControls(tab, "GlobalOptions_Paths.", g_system->getOverlayWidth() <= 320);
 
 	//
-	// 6) The miscellaneous tab
+	// 6) The GUI tab
 	//
-	if (g_system->getOverlayWidth() > 320)
-		tab->addTab(_("Misc"), "GlobalOptions_Misc", false);
-	else
-		tab->addTab(_c("Misc", "lowres"), "GlobalOptions_Misc", false);
+	tab->addTab(_("GUI"), "GlobalOptions_GUI", false);
+	ScrollContainerWidget *guiContainer = new ScrollContainerWidget(tab, "GlobalOptions_GUI.Container", "GlobalOptions_GUI_Container");
+	guiContainer->setTarget(this);
+	guiContainer->setBackgroundType(ThemeEngine::kWidgetBackgroundNo);
+	addGUIControls(guiContainer, "GlobalOptions_GUI_Container.", g_system->getOverlayWidth() <= 320);
+
+	//
+	// 7) The miscellaneous tab
+	//
+	tab->addTab(_("Misc"), "GlobalOptions_Misc", false);
 	ScrollContainerWidget *miscContainer = new ScrollContainerWidget(tab, "GlobalOptions_Misc.Container", "GlobalOptions_Misc_Container");
 	miscContainer->setTarget(this);
 	miscContainer->setBackgroundType(ThemeEngine::kWidgetBackgroundNo);
@@ -2219,7 +2253,7 @@ void GlobalOptionsDialog::build() {
 #ifdef USE_CLOUD
 #ifdef USE_LIBCURL
 	//
-	// 7) The Cloud tab (remote storages)
+	// 8) The Cloud tab (remote storages)
 	//
 	if (g_system->getOverlayWidth() > 320)
 		tab->addTab(_("Cloud"), "GlobalOptions_Cloud", false);
@@ -2235,7 +2269,7 @@ void GlobalOptionsDialog::build() {
 #endif // USE_LIBCURL
 #ifdef USE_SDL_NET
 	//
-	// 8) The LAN tab (local "cloud" webserver)
+	// 9) The LAN tab (local "cloud" webserver)
 	//
 	if (g_system->getOverlayWidth() > 320)
 		tab->addTab(_("LAN"), "GlobalOptions_Network");
@@ -2245,7 +2279,9 @@ void GlobalOptionsDialog::build() {
 #endif // USE_SDL_NET
 #endif // USE_CLOUD
 
-	//Accessibility
+	//
+	// 10) Accessibility
+	//
 #ifdef USE_TTS
 	if (g_system->getOverlayWidth() > 320)
 		tab->addTab(_("Accessibility"), "GlobalOptions_Accessibility");
@@ -2413,7 +2449,7 @@ void GlobalOptionsDialog::addPathsControls(GuiObject *boss, const Common::String
 	_browserPathClearButton = addClearButton(boss, prefix + "BrowserPathClearButton", kBrowserPathClearCmd);
 }
 
-void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String &prefix, bool lowres) {
+void GlobalOptionsDialog::addGUIControls(GuiObject *boss, const Common::String &prefix, bool lowres) {
 	new ButtonWidget(boss, prefix + "ThemeButton", _("Theme:"), Common::U32String(), kChooseThemeCmd);
 	_curTheme = new StaticTextWidget(boss, prefix + "CurTheme", g_gui.theme()->getThemeName());
 	if (ConfMan.isKeyTemporary("gui_theme"))
@@ -2437,16 +2473,6 @@ void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String 
 			_rendererPopUp->appendEntry(_(GUI::ThemeEngine::_rendererModes[i].shortname), GUI::ThemeEngine::_rendererModes[i].mode);
 	}
 
-	if (!lowres)
-		_autosavePeriodPopUpDesc = new StaticTextWidget(boss, prefix + "AutosavePeriodPopupDesc", _("Autosave:"));
-	else
-		_autosavePeriodPopUpDesc = new StaticTextWidget(boss, prefix + "AutosavePeriodPopupDesc", _c("Autosave:", "lowres"));
-	_autosavePeriodPopUp = new PopUpWidget(boss, prefix + "AutosavePeriodPopup");
-
-	for (int i = 0; savePeriodLabels[i]; i++) {
-		_autosavePeriodPopUp->appendEntry(_(savePeriodLabels[i]), savePeriodValues[i]);
-	}
-
 	if (!g_system->hasFeature(OSystem::kFeatureNoQuit)) {
 		_guiReturnToLauncherAtExit = new CheckboxWidget(boss, prefix + "ReturnToLauncherAtExit",
 			_("Return to the launcher when leaving a game"),
@@ -2462,17 +2488,6 @@ void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String 
 	);
 
 	_guiConfirmExit->setState(ConfMan.getBool("confirm_exit", _domain));
-
-#ifdef USE_DISCORD
-	_discordRpcCheckbox = new CheckboxWidget(boss, prefix + "DiscordRpc",
-		_("Enable Discord integration"),
-		_("Show information about the games you are playing on Discord if the Discord client is running.")
-	);
-
-	_discordRpcCheckbox->setState(ConfMan.getBool("discord_rpc", _domain));
-#endif
-
-	// TODO: joystick setting
 
 #ifdef USE_TRANSLATION
 	_guiLanguagePopUpDesc = new StaticTextWidget(boss, prefix + "GuiLanguagePopupDesc", _("GUI language:"), _("Language of ScummVM GUI"));
@@ -2521,6 +2536,47 @@ void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String 
 		_useSystemDialogsCheckbox->setState(ConfMan.getBool("gui_browser_native", _domain));
 	}
 
+#ifdef USE_CLOUD
+#ifdef USE_LIBCURL
+	new ButtonWidget(boss, prefix + "UpdateIconsButton", _("Update Icons"),  _("Check for updates of icon packs"), kUpdateIconsCmd);
+#endif
+#endif
+}
+
+void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String &prefix, bool lowres) {
+	if (!lowres)
+		_autosavePeriodPopUpDesc = new StaticTextWidget(boss, prefix + "AutosavePeriodPopupDesc", _("Autosave:"));
+	else
+		_autosavePeriodPopUpDesc = new StaticTextWidget(boss, prefix + "AutosavePeriodPopupDesc", _c("Autosave:", "lowres"));
+	_autosavePeriodPopUp = new PopUpWidget(boss, prefix + "AutosavePeriodPopup");
+
+	for (int i = 0; savePeriodLabels[i]; i++) {
+		_autosavePeriodPopUp->appendEntry(_(savePeriodLabels[i]), savePeriodValues[i]);
+	}
+
+	Common::String seed;
+	if (ConfMan.hasKey("random_seed"))
+		seed = Common::String::format("%u", ConfMan.getInt("random_seed"));
+
+	_randomSeedDesc = new StaticTextWidget(boss, prefix + "RandomSeedDesc", _("Random seed:"), _("Seed for initializing all random number generators"));
+
+	if (ConfMan.isKeyTemporary("random_seed"))
+		_randomSeedDesc->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
+
+	_randomSeed = new EditTextWidget(boss, prefix + "RandomSeedEditText", seed, Common::U32String());
+	_randomSeedClearButton = addClearButton(boss, prefix + "RandomSeedClearButton", kRandomSeedClearCmd);
+
+#ifdef USE_DISCORD
+	_discordRpcCheckbox = new CheckboxWidget(boss, prefix + "DiscordRpc",
+		_("Enable Discord integration"),
+		_("Show information about the games you are playing on Discord if the Discord client is running.")
+	);
+
+	_discordRpcCheckbox->setState(ConfMan.getBool("discord_rpc", _domain));
+#endif
+
+	// TODO: joystick setting
+
 #ifdef USE_UPDATES
 	if (g_system->getUpdateManager()) {
 		_updatesPopUpDesc = new StaticTextWidget(boss, prefix + "UpdatesPopupDesc", _("Update check:"), _("How often to check ScummVM updates"));
@@ -2537,12 +2593,6 @@ void GlobalOptionsDialog::addMiscControls(GuiObject *boss, const Common::String 
 		new ButtonWidget(boss, prefix + "UpdatesCheckManuallyButton", _("Check now"), Common::U32String(), kUpdatesCheckCmd);
 	}
 #endif // USE_UPDATES
-
-#ifdef USE_CLOUD
-#ifdef USE_LIBCURL
-	new ButtonWidget(boss, prefix + "UpdateIconsButton", _("Update Icons"), Common::U32String(), kUpdateIconsCmd);
-#endif
-#endif
 }
 
 #ifdef USE_CLOUD
@@ -2891,6 +2941,27 @@ void GlobalOptionsDialog::apply() {
 	}
 #endif // USE_DISCORD
 
+	bool differs = false;
+	if (ConfMan.hasKey("random_seed")) {
+		if (_randomSeed->getEditString().empty()) {
+			differs = true;
+		} else if ((uint32)_randomSeed->getEditString().asUint64() != (uint32)ConfMan.getInt("random_seed")) {
+			differs = true;
+		}
+	} else {
+		if (!_randomSeed->getEditString().empty())
+			differs = true;
+	}
+
+	if (differs) {
+		if (_randomSeed->getEditString().empty())
+			ConfMan.removeKey("random_seed", _domain);
+		else
+			ConfMan.setInt("random_seed", (uint32)_randomSeed->getEditString().asUint64());
+
+		_randomSeedDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+	}
+
 	GUI::ThemeEngine::GraphicsMode gfxMode = (GUI::ThemeEngine::GraphicsMode)_rendererPopUp->getSelectedTag();
 	Common::String oldGfxConfig = ConfMan.get("gui_renderer");
 	Common::String newGfxConfig = GUI::ThemeEngine::findModeConfigName(gfxMode);
@@ -3059,7 +3130,18 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 
 #ifdef USE_LIBCURL
 	case kUpdateIconsCmd: {
-		DownloadIconsDialog dia;
+		DownloadPacksDialog dia(_("icon packs"), "LIST", "gui-icons*.dat");
+		dia.runModal();
+
+		// Refresh the icons
+		g_gui.initIconsSet();
+		break;
+	}
+#endif
+
+#ifdef USE_LIBCURL
+	case kUpdateShadersCmd: {
+		DownloadPacksDialog dia(_("shader packs"), "LIST-SHADERS", "shaders*.dat");
 		dia.runModal();
 		break;
 	}
@@ -3121,6 +3203,13 @@ void GlobalOptionsDialog::handleCommand(CommandSender *sender, uint32 cmd, uint3
 			_curTheme->setLabel(browser.getSelectedName());
 			_curTheme->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
 		}
+		break;
+	}
+	case kRandomSeedClearCmd: {
+		if (_randomSeed) {
+			_randomSeed->setEditString(Common::U32String());
+		}
+		g_gui.scheduleTopDialogRedraw();
 		break;
 	}
 #ifdef USE_CLOUD

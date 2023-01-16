@@ -54,36 +54,34 @@ template<class uintX> SoftRenderSurface<uintX>::SoftRenderSurface(Graphics::Mana
 
 //#define CHECK_ALPHA_FILLS
 
-template<class uintX> void SoftRenderSurface<uintX>::FillAlpha(uint8 alpha, int32 sx, int32 sy, int32 w, int32 h) {
+template<class uintX> void SoftRenderSurface<uintX>::FillAlpha(uint8 alpha, const Rect &r) {
 	const Graphics::PixelFormat &format = _surface->format;
 	uint32 aMask = format.aMax() << format.aShift;
-	Rect rect(sx, sy, sx + w, sy + h);
+	Rect rect = r;
 	rect.clip(_clipWindow);
-	sx = rect.left;
-	sy = rect.top;
-	w = rect.width();
-	h = rect.height();
+	int32 w = rect.width();
+	int32 h = rect.height();
 
 	if (!w || !h || !aMask)
 		return;
 
 	// An optimization.
-	if ((int)(w * sizeof(uintX)) == _pitch) {
+	if (w * format.bytesPerPixel == _pitch) {
 		w *= h;
 		h = 1;
 	}
 
-	uint8 *pixel = _pixels + sy * _pitch + sx * sizeof(uintX);
+	uint8 *pixel = _pixels + rect.top * _pitch + rect.left * format.bytesPerPixel;
 	uint8 *end = pixel + h * _pitch;
 
-	uint8 *line_end = pixel + w * sizeof(uintX);
-	int diff = _pitch - w * sizeof(uintX);
+	uint8 *line_end = pixel + w * format.bytesPerPixel;
+	int diff = _pitch - w * format.bytesPerPixel;
 
-	uintX a = (((uintX)alpha) << format.aShift) & aMask;
+	uint32 a = (((uint32)alpha) << format.aShift) & aMask;
 
 #ifdef CHECK_ALPHA_FILLS
-	uintX c;
-	uintX m;
+	uint32 c;
+	uint32 m;
 	if (a == 0) {
 		c = (format.bMask >> 1)&format.bMask;
 		m = format.bMask;
@@ -100,7 +98,7 @@ template<class uintX> void SoftRenderSurface<uintX>::FillAlpha(uint8 alpha, int3
 #ifdef CHECK_ALPHA_FILLS
 			*dest = (*dest & ~m) | (c + (((*dest & m) >> 1)&m));
 #endif
-			pixel += sizeof(uintX);
+			pixel += format.bytesPerPixel;
 		}
 
 		line_end += _pitch;
@@ -108,46 +106,48 @@ template<class uintX> void SoftRenderSurface<uintX>::FillAlpha(uint8 alpha, int3
 	}
 }
 
-template<class uintX> void SoftRenderSurface<uintX>::FillBlended(uint32 rgba, int32 sx, int32 sy, int32 w, int32 h) {
-	if ((rgba & TEX32_A_MASK) == TEX32_A_MASK) {
-		Fill32(rgba, sx, sy, w, h);
+template<class uintX> void SoftRenderSurface<uintX>::FillBlended(uint32 rgba, const Rect &r) {
+	int alpha = TEX32_A(rgba);
+	if (alpha == 0xFF) {
+		Fill32(rgba, r);
 		return;
-	} else if (!(rgba & TEX32_A_MASK)) {
+	} else if (!alpha) {
 		return;
 	}
 
-	Rect rect(sx, sy, sx + w, sy + h);
+	Rect rect = r;
 	rect.clip(_clipWindow);
-	sx = rect.left;
-	sy = rect.top;
-	w = rect.width();
-	h = rect.height();
+	int32 w = rect.width();
+	int32 h = rect.height();
 
 	if (!w || !h) return;
 
+	const Graphics::PixelFormat &format = _surface->format;
+
 	// An optimization.
-	if ((int)(w * sizeof(uintX)) == _pitch) {
+	if (w * format.bytesPerPixel == _pitch) {
 		w *= h;
 		h = 1;
 	}
 
-	uint8 *pixel = _pixels + sy * _pitch + sx * sizeof(uintX);
+	uint8 *pixel = _pixels + rect.top * _pitch + rect.left * format.bytesPerPixel;
 	uint8 *end = pixel + h * _pitch;
 
-	uint8 *line_end = pixel + w * sizeof(uintX);
-	int diff = _pitch - w * sizeof(uintX);
+	uint8 *line_end = pixel + w * format.bytesPerPixel;
+	int diff = _pitch - w * format.bytesPerPixel;
 
-	const Graphics::PixelFormat &format = _surface->format;
 	uint32 aMask = format.aMax() << format.aShift;
-	int alpha = TEX32_A(rgba) + 1;
-	rgba = TEX32_PACK_RGBA16(TEX32_R(rgba) * alpha, TEX32_G(rgba) * alpha, TEX32_B(rgba) * alpha, 255 * alpha);
+	rgba = TEX32_PACK_RGBA((TEX32_R(rgba) * alpha) >> 8,
+						   (TEX32_G(rgba) * alpha) >> 8,
+						   (TEX32_B(rgba) * alpha) >> 8,
+						   (255 * alpha) >> 8);
 
 	while (pixel != end) {
 		while (pixel != line_end) {
 			uintX *dest = reinterpret_cast<uintX *>(pixel);
-			uintX d = *dest;
+			uint32 d = *dest;
 			*dest = (d & aMask) | BlendPreModFast(rgba, d, format);
-			pixel += sizeof(uintX);
+			pixel += format.bytesPerPixel;
 		}
 
 		line_end += _pitch;
@@ -191,10 +191,12 @@ template<class uintX> void SoftRenderSurface<uintX>::FadedBlit(const Graphics::M
 	if (px != dx) sx += dx - px;
 	if (py != dy) sy += dy - py;
 
-	uint8 *pixel = _pixels + dy * _pitch + dx * sizeof(uintX);
-	uint8 *line_end = pixel + w * sizeof(uintX);
+	const Graphics::PixelFormat &format = _surface->format;
+
+	uint8 *pixel = _pixels + dy * _pitch + dx * format.bytesPerPixel;
+	uint8 *line_end = pixel + w * format.bytesPerPixel;
 	uint8 *end = pixel + h * _pitch;
-	int diff = _pitch - w * sizeof(uintX);
+	int diff = _pitch - w * format.bytesPerPixel;
 
 	uint32 a = TEX32_A(col32);
 	uint32 ia = 256 - a;
@@ -202,7 +204,6 @@ template<class uintX> void SoftRenderSurface<uintX>::FadedBlit(const Graphics::M
 	uint32 g = (TEX32_G(col32) * a);
 	uint32 b = (TEX32_B(col32) * a);
 
-	const Graphics::PixelFormat &format = _surface->format;
 	const Graphics::PixelFormat &texformat = src.rawSurface().format;
 
 	if (texformat.bpp() == 32) {
@@ -211,18 +212,18 @@ template<class uintX> void SoftRenderSurface<uintX>::FadedBlit(const Graphics::M
 
 		while (pixel != end) {
 			if (!alpha_blend) while (pixel != line_end) {
-					if (*texel & TEX32_A_MASK) {
+					if (TEX32_A(*texel)) {
 						*(reinterpret_cast<uintX *>(pixel)) = static_cast<uintX>(
 							format.RGBToColor(
 								(TEX32_R(*texel) * ia + r) >> 8,
 								(TEX32_G(*texel) * ia + g) >> 8,
 								(TEX32_B(*texel) * ia + b) >> 8));
 					}
-					pixel += sizeof(uintX);
+					pixel += format.bytesPerPixel;
 					texel++;
 			}
 			else while (pixel != line_end) {
-					uint32 alpha = *texel & TEX32_A_MASK;
+					uint32 alpha = TEX32_A(*texel);
 					if (alpha == 0xFF) {
 						*(reinterpret_cast<uintX *>(pixel)) = static_cast<uintX>(
 							format.RGBToColor(
@@ -236,16 +237,16 @@ template<class uintX> void SoftRenderSurface<uintX>::FadedBlit(const Graphics::M
 						uint8 r2, g2, b2;
 						format.colorToRGB(*dest, r2, g2, b2);
 
-						uint32 dr = r2 * (256 - TEX32_A(Tsrc));
-						uint32 dg = g2 * (256 - TEX32_A(Tsrc));
-						uint32 db = b2 * (256 - TEX32_A(Tsrc));
-						dr += TEX32_R(Tsrc) * ia + ((r * TEX32_A(Tsrc)) >> 8);
-						dg += TEX32_G(Tsrc) * ia + ((g * TEX32_A(Tsrc)) >> 8);
-						db += TEX32_B(Tsrc) * ia + ((b * TEX32_A(Tsrc)) >> 8);
+						uint32 dr = r2 * (256 - alpha);
+						uint32 dg = g2 * (256 - alpha);
+						uint32 db = b2 * (256 - alpha);
+						dr += TEX32_R(Tsrc) * ia + ((r * alpha) >> 8);
+						dg += TEX32_G(Tsrc) * ia + ((g * alpha) >> 8);
+						db += TEX32_B(Tsrc) * ia + ((b * alpha) >> 8);
 
 						*dest = format.RGBToColor(dr >> 8, dg >> 8, db >> 8);
 					}
-					pixel += sizeof(uintX);
+					pixel += format.bytesPerPixel;
 					texel++;
 				}
 
@@ -260,11 +261,11 @@ template<class uintX> void SoftRenderSurface<uintX>::FadedBlit(const Graphics::M
 		while (pixel != end) {
 			while (pixel != line_end) {
 				// Uh, not supported right now
-				//if (*texel & RenderSurface::a_mask)
+				//if (TEX32_A(*texel))
 				{
 					*(reinterpret_cast<uintX *>(pixel)) = BlendHighlight(*texel, r, g, b, 1, ia, format);
 				}
-				pixel += sizeof(uintX);
+				pixel += format.bytesPerPixel;
 				texel++;
 			}
 
@@ -316,10 +317,12 @@ template<class uintX> void SoftRenderSurface<uintX>::MaskedBlit(const Graphics::
 	if (px != dx) sx += dx - px;
 	if (py != dy) sy += dy - py;
 
-	uint8 *pixel = _pixels + dy * _pitch + dx * sizeof(uintX);
-	uint8 *line_end = pixel + w * sizeof(uintX);
+	const Graphics::PixelFormat &format = _surface->format;
+
+	uint8 *pixel = _pixels + dy * _pitch + dx * format.bytesPerPixel;
+	uint8 *line_end = pixel + w * format.bytesPerPixel;
 	uint8 *end = pixel + h * _pitch;
-	int diff = _pitch - w * sizeof(uintX);
+	int diff = _pitch - w * format.bytesPerPixel;
 
 	uint32 a = TEX32_A(col32);
 	uint32 ia = 256 - a;
@@ -327,7 +330,6 @@ template<class uintX> void SoftRenderSurface<uintX>::MaskedBlit(const Graphics::
 	uint32 g = (TEX32_G(col32) * a);
 	uint32 b = (TEX32_B(col32) * a);
 
-	const Graphics::PixelFormat &format = _surface->format;
 	uint32 aMask = format.aMax() << format.aShift;
 	int texbpp = src.rawSurface().format.bpp();
 
@@ -340,7 +342,7 @@ template<class uintX> void SoftRenderSurface<uintX>::MaskedBlit(const Graphics::
 				while (pixel != line_end) {
 					uintX *dest = reinterpret_cast<uintX *>(pixel);
 
-					if (*texel & TEX32_A_MASK) {
+					if (TEX32_A(*texel)) {
 						if (!aMask || (*dest & aMask)) {
 							*dest = static_cast<uintX>(
 								format.RGBToColor(
@@ -349,7 +351,7 @@ template<class uintX> void SoftRenderSurface<uintX>::MaskedBlit(const Graphics::
 									(TEX32_B(*texel) * ia + b) >> 8));
 						}
 					}
-					pixel += sizeof(uintX);
+					pixel += format.bytesPerPixel;
 					texel++;
 				}
 			} else {
@@ -357,7 +359,7 @@ template<class uintX> void SoftRenderSurface<uintX>::MaskedBlit(const Graphics::
 					uintX *dest = reinterpret_cast<uintX *>(pixel);
 
 					if (!aMask || (*dest & aMask)) {
-						uint32 alpha = *texel & TEX32_A_MASK;
+						uint32 alpha = TEX32_A(*texel);
 						if (alpha == 0xFF) {
 							*dest = static_cast<uintX>(
 								format.RGBToColor(
@@ -369,17 +371,17 @@ template<class uintX> void SoftRenderSurface<uintX>::MaskedBlit(const Graphics::
 							uint8 r2, g2, b2;
 							format.colorToRGB(*dest, r2, g2, b2);
 
-							uint32 dr = r2 * (256 - TEX32_A(Tsrc));
-							uint32 dg = g2 * (256 - TEX32_A(Tsrc));
-							uint32 db = b2 * (256 - TEX32_A(Tsrc));
-							dr += TEX32_R(Tsrc) * ia + ((r * TEX32_A(Tsrc)) >> 8);
-							dg += TEX32_G(Tsrc) * ia + ((g * TEX32_A(Tsrc)) >> 8);
-							db += TEX32_B(Tsrc) * ia + ((b * TEX32_A(Tsrc)) >> 8);
+							uint32 dr = r2 * (256 - alpha);
+							uint32 dg = g2 * (256 - alpha);
+							uint32 db = b2 * (256 - alpha);
+							dr += TEX32_R(Tsrc) * ia + ((r * alpha) >> 8);
+							dg += TEX32_G(Tsrc) * ia + ((g * alpha) >> 8);
+							db += TEX32_B(Tsrc) * ia + ((b * alpha) >> 8);
 
 							*dest = format.RGBToColor(dr >> 8, dg >> 8, db >> 8);
 						}
 					}
-					pixel += sizeof(uintX);
+					pixel += format.bytesPerPixel;
 					texel++;
 				}
 			}
@@ -401,7 +403,7 @@ template<class uintX> void SoftRenderSurface<uintX>::MaskedBlit(const Graphics::
 				if (*dest & aMask) {
 					*dest = BlendHighlight(*texel, r, g, b, 1, ia, format);
 				}
-				pixel += sizeof(uintX);
+				pixel += format.bytesPerPixel;
 				texel++;
 			}
 

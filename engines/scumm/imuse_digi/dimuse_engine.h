@@ -84,11 +84,20 @@ private:
 
 	bool _isEarlyDiMUSE;
 	bool _isEngineDisabled;
+	bool _checkForUnderrun;
+	int _underrunCooldown;
+	bool _lowLatencyMode;
+
+	int _internalFeedSize;
+	int _internalSampleRate;
 
 	// These three are manipulated in the waveOut functions
 	uint8 *_outputAudioBuffer;
 	int _outputFeedSize;
 	int _outputSampleRate;
+
+	// Used in low latency mode only
+	uint8 *_outputLowLatencyAudioBuffers[DIMUSE_MAX_TRACKS];
 
 	int _maxQueuedStreams; // maximum number of streams which can be queued before they are played
 	int _nominalBufferCount;
@@ -187,7 +196,6 @@ private:
 
 	int _trackCount;
 	int _tracksPauseTimer;
-	int _tracksPrefSampleRate;
 	int _tracksMicroSecsToFeed;
 
 	int tracksInit();
@@ -196,6 +204,7 @@ private:
 	void tracksSaveLoad(Common::Serializer &ser);
 	void tracksSetGroupVol();
 	void tracksCallback();
+	void tracksLowLatencyCallback();
 	int tracksStartSound(int soundId, int tryPriority, int group);
 	int tracksStopSound(int soundId);
 	int tracksStopAllSounds();
@@ -297,14 +306,20 @@ private:
 	int _waveOutWriteIndex;
 	int _waveOutDisableWrite;
 
-	int waveOutInit(int sampleRate, waveOutParamsStruct *waveOutSettings);
+	int waveOutInit(waveOutParamsStruct *waveOutSettings);
 	void waveOutWrite(uint8 **audioBuffer, int &feedSize, int &sampleRate);
 	int waveOutDeinit();
 	void waveOutCallback();
 	byte waveOutGetStreamFlags();
 
+	// Low latency mode
+	void waveOutLowLatencyWrite(uint8 **audioBuffer, int &feedSize, int &sampleRate, int idx);
+	void waveOutEmptyBuffer(int idx);
+
+	uint8 *_waveOutLowLatencyOutputBuffer;
+
 public:
-	IMuseDigital(ScummEngine_v7 *scumm, Audio::Mixer *mixer, Common::Mutex *mutex);
+	IMuseDigital(ScummEngine_v7 *scumm, int sampleRate, Audio::Mixer *mixer, Common::Mutex *mutex, bool lowLatencyMode = false);
 	~IMuseDigital() override;
 
 	// Wrapper functions used by the main engine
@@ -340,6 +355,8 @@ public:
 	void floodMusicBuffer();
 	void fillStreamsWhileMusicCritical(int fillTimesAfter);
 	bool queryNextSoundFile(int32 &bufSize, int32 &criticalSize, int32 &freeSpace, int &paused);
+	int getSampleRate();
+	int getFeedSize();
 
 	bool isFTSoundEngine(); // Used in the handlers to check if we're using the FT version of the engine
 
@@ -405,6 +422,7 @@ public:
 	int clampTuning(int value, int minValue, int maxValue);
 	int checkHookId(int &trackHookId, int sampleHookId);
 	int roundRobinSetBufferCount();
+	void adaptBufferCount();
 
 	// CMDs
 	int cmdsHandleCmd(int cmd, uint8 *ptr = nullptr,

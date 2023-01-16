@@ -60,7 +60,9 @@ enum RenderMode {
 	kRenderMacintoshBW = 13,
 	kRenderCGAComp = 14,
 	kRenderCGA_BW = 15,
-	kRenderZX = 16,
+	kRenderCPC = 16,
+	kRenderZX = 17,
+	kRenderC64 = 18,
 };
 
 struct RenderModeDescription {

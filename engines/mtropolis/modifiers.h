@@ -394,6 +394,47 @@ private:
 	DynamicValue _incomingData;
 };
 
+class SimpleMotionModifier : public Modifier {
+public:
+	SimpleMotionModifier();
+
+	bool load(ModifierLoaderContext &context, const Data::SimpleMotionModifier &data);
+
+	bool respondsToEvent(const Event &evt) const override;
+	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
+	void disable(Runtime *runtime) override;
+
+#ifdef MTROPOLIS_DEBUG_ENABLE
+	const char *debugGetTypeName() const override { return "Simple Motion Modifier"; }
+	SupportStatus debugGetSupportStatus() const override { return kSupportStatusNone; }
+#endif
+
+private:
+	enum MotionType {
+		kMotionTypeOutOfScene = 1,
+		kMotionTypeIntoScene = 2,
+		kMotionTypeRandomBounce = 3,
+	};
+
+	enum DirectionFlags {
+		kDirectionFlagDown = 1,
+		kDirectionFlagUp = 2,
+		kDirectionFlagRight = 4,
+		kDirectionFlagLeft = 8,
+	};
+
+	Common::SharedPtr<Modifier> shallowClone() const override;
+	const char *getDefaultName() const override;
+
+	Event _executeWhen;
+	Event _terminateWhen;
+
+	MotionType _motionType;
+	uint16 _directionFlags;
+	uint16 _steps;
+	uint32 _delayMSecTimes4800;
+};
+
 class DragMotionModifier : public Modifier {
 public:
 	bool load(ModifierLoaderContext &context, const Data::DragMotionModifier &data);
@@ -704,6 +745,15 @@ private:
 	Common::SharedPtr<Modifier> shallowClone() const override;
 	const char *getDefaultName() const override;
 
+	struct EnableTaskData {
+	};
+
+	struct DisableTaskData {
+	};
+
+	VThreadState enableTask(const EnableTaskData &taskData);
+	VThreadState disableTask(const DisableTaskData &taskData);
+
 	void getCollisionProperties(Modifier *&modifier, bool &collideInFront, bool &collideBehind, bool &excludeParents) const override;
 	void triggerCollision(Runtime *runtime, Structural *collidingElement, bool wasInContact, bool isInContact, bool &outShouldStop) override;
 
@@ -955,7 +1005,7 @@ public:
 
 	void disable(Runtime *runtime) override;
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	IModifierContainer *getChildContainer() override;
 
@@ -969,7 +1019,7 @@ public:
 private:
 	class SaveLoad : public ModifierSaveLoad {
 	public:
-		explicit SaveLoad(CompoundVariableModifier *modifier);
+		SaveLoad(Runtime *runtime, CompoundVariableModifier *modifier);
 
 		void saveInternal(Common::WriteStream *stream) const override;
 		bool loadInternal(Common::ReadStream *stream, uint32 saveFileVersion) override;
@@ -1031,7 +1081,7 @@ public:
 
 	BooleanVariableStorage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 
@@ -1078,7 +1128,7 @@ public:
 
 	IntegerVariableStorage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 
@@ -1128,7 +1178,7 @@ public:
 
 	IntegerRangeVariableStorage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 
@@ -1177,7 +1227,7 @@ class VectorVariableStorage : public VariableStorage {
 
 	VectorVariableStorage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 
@@ -1227,7 +1277,7 @@ public:
 
 	PointVariableStorage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 
@@ -1274,7 +1324,7 @@ public:
 
 	FloatingPointVariableStorage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 
@@ -1321,7 +1371,7 @@ public:
 
 	StringVariableStorage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 
@@ -1373,7 +1423,7 @@ public:
 
 	ObjectReferenceVariableV1Storage();
 
-	Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override;
+	Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override;
 
 	Common::SharedPtr<VariableStorage> clone() const override;
 

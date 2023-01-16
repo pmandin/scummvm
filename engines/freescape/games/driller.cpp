@@ -22,6 +22,7 @@
 #include "common/config-manager.h"
 #include "common/events.h"
 #include "common/file.h"
+#include "common/memstream.h"
 #include "common/random.h"
 
 #include "freescape/freescape.h"
@@ -41,8 +42,30 @@ static const struct CGAPalettteEntry {
 	{1, kDrillerCGAPaletteRedGreen},
 	{2, kDrillerCGAPalettePinkBlue},
 	{3, kDrillerCGAPaletteRedGreen},
+	{4, kDrillerCGAPalettePinkBlue},
+	{5, kDrillerCGAPaletteRedGreen},
+	{6, kDrillerCGAPalettePinkBlue},
+	{7, kDrillerCGAPaletteRedGreen},
 	{8, kDrillerCGAPalettePinkBlue},
+	{9, kDrillerCGAPaletteRedGreen},
+	{10, kDrillerCGAPalettePinkBlue},
+	{11, kDrillerCGAPaletteRedGreen},
+	{12, kDrillerCGAPalettePinkBlue},
+
 	{14, kDrillerCGAPalettePinkBlue},
+
+	{16, kDrillerCGAPalettePinkBlue},
+
+	{19, kDrillerCGAPaletteRedGreen},
+	{20, kDrillerCGAPalettePinkBlue},
+	{21, kDrillerCGAPaletteRedGreen},
+	{22, kDrillerCGAPalettePinkBlue},
+	{23, kDrillerCGAPaletteRedGreen},
+
+	{28, kDrillerCGAPalettePinkBlue},
+
+	{32, kDrillerCGAPalettePinkBlue},
+	{127, kDrillerCGAPaletteRedGreen},
 	{0, 0}   // This marks the end
 };
 
@@ -84,6 +107,10 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 		_viewArea = Common::Rect(36, 16, 284, 118);
 	else if (isSpectrum())
 		_viewArea = Common::Rect(58, 20, 266, 124);
+	else if (isCPC())
+		_viewArea = Common::Rect(36, 19, 284, 120);
+	else if (isC64())
+		_viewArea = Common::Rect(32, 16, 288, 119);
 
 	_playerHeightNumber = 1;
 	_playerHeights.push_back(16);
@@ -106,6 +133,44 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 	_initialTankShield = 50;
 	_initialJetEnergy = 29;
 	_initialJetShield = 34;
+
+	Math::Vector3d drillBaseOrigin = Math::Vector3d(0, 0, 0);
+	Math::Vector3d drillBaseSize = Math::Vector3d(3, 2, 3);
+	_drillBase = new GeometricObject(kCubeType, 0, 0, drillBaseOrigin, drillBaseSize, nullptr, nullptr, FCLInstructionVector(), "");
+	assert(!_drillBase->isDestroyed() && !_drillBase->isInvisible());
+}
+
+DrillerEngine::~DrillerEngine() {
+	delete _drillBase;
+}
+
+void DrillerEngine::titleScreen() {
+	if (isDOS() && isDemo()) // Demo will not show any title screen
+		return;
+
+	if (isAmiga() || isAtariST()) // These releases has their own screens
+		return;
+
+	if (_title) {
+		drawTitle();
+		_gfx->flipBuffer();
+		g_system->updateScreen();
+		g_system->delayMillis(3000);
+	}
+}
+void DrillerEngine::borderScreen() {
+	if (isDOS() && isDemo()) // Demo will not show the border
+		return;
+
+	if (isAmiga() || isAtariST()) // These releases has their own screens
+		return;
+
+	if (_border) {
+		drawBorder();
+		_gfx->flipBuffer();
+		g_system->updateScreen();
+		g_system->delayMillis(3000);
+	}
 }
 
 void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
@@ -179,7 +244,6 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 
 	if (areaID != _startArea || entranceID != _startEntrance) {
 		g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
-		_lastMousePos = _crossairPosition;
 		rotate(0, 0);
 	}
 }
@@ -306,6 +370,7 @@ void DrillerEngine::loadAssetsDemo() {
 		loadSoundsFx(&file, 0, 25);
 	} else if (isDOS()) {
 		_renderMode = Common::kRenderCGA; // DOS demos is CGA only
+		_viewArea = Common::Rect(36, 16, 284, 117); // correct view area
 		_gfx->_renderMode = _renderMode;
 		loadBundledImages();
 		file.open("d2");
@@ -329,10 +394,75 @@ void DrillerEngine::loadAssetsDemo() {
 	_angleRotationIndex = 0;
 }
 
+
+byte *parseEDSK(const Common::String filename, int &size) {
+	debugC(1, kFreescapeDebugParser, "Trying to parse edsk file: %s", filename.c_str());
+	Common::File file;
+	file.open(filename);
+	if (!file.isOpen())
+		error("Failed to open %s", filename.c_str());
+
+	int totalSize = file.size();
+	byte *edskBuffer = (byte *)malloc(totalSize);
+	file.read(edskBuffer, totalSize);
+	file.close();
+
+	// We don't know the final size, but we allocate enough
+	byte *memBuffer = (byte *)malloc(totalSize);
+
+	byte nsides = edskBuffer[49];
+	assert(nsides == 1);
+	int ntracks = 0;
+	int i = 256;
+	int j = 0;
+	while (i + 1 < totalSize) {
+		byte ssize = edskBuffer[i + 0x14];
+		debug("i: %x ssize: %d, number: %d", i, ssize, edskBuffer[i + 0x10]);
+		assert(ssize == 3 || edskBuffer[i + 0x0] == 'T');
+		assert(ssize == 3 || edskBuffer[i + 0x1] == 'r');
+		assert(ssize == 3 || edskBuffer[i + 0x2] == 'a');
+		//assert(ssize == 3 || ntracks == edskBuffer[i + 0x10]);
+		int start = i + 0x100;
+		debugC(1, kFreescapeDebugParser, "sector size: %d", ssize);
+		if (ssize == 2) {
+			i = i + 9 * 512 + 256;
+		} else if (ssize == 5) {
+			i = i + 8 * 512 + 256;
+		} else if (ssize == 0) {
+			i = totalSize - 1;
+		} else if (ssize == 3) {
+			break; // Not sure
+		} else {
+			error("ssize: %d", ssize);
+		}
+		int osize = i - start;
+		debugC(1, kFreescapeDebugParser, "copying track %d start: %x size: %x, dest: %x", ntracks, start, osize, j);
+		memcpy(memBuffer + j, edskBuffer + start, osize);
+		j = j + osize;
+		ntracks++;
+	}
+	size = j;
+
+	if (0) { // Useful to debug where exactly each object is located in memory once it is parsed
+		i = 0;
+		while(i < j) {
+			debugN("%05x: ", i);
+			for (int k = 0; k <= 16; k++) {
+				debugN("%02x ", memBuffer[i]);
+				i++;
+			}
+			debugN("\n");
+		}
+	}
+	free(edskBuffer);
+	return memBuffer;
+}
+
+
 void DrillerEngine::loadAssetsFullGame() {
 	Common::File file;
 	if (isAmiga()) {
-		if (_variant & ADGF_AMIGA_RETAIL) {
+		if (_variant & GF_AMIGA_RETAIL) {
 			file.open("driller");
 
 			if (!file.isOpen())
@@ -353,7 +483,7 @@ void DrillerEngine::loadAssetsFullGame() {
 			load8bitBinary(&file, 0x29c16, 16);
 			loadPalettes(&file, 0x297d4);
 			loadSoundsFx(&file, 0x30e80, 25);
-		} else if (_variant & ADGF_AMIGA_BUDGET) {
+		} else if (_variant & GF_AMIGA_BUDGET) {
 			file.open("lift.neo");
 			if (!file.isOpen())
 				error("Failed to open 'lift.neo' file");
@@ -417,20 +547,95 @@ void DrillerEngine::loadAssetsFullGame() {
 
 		loadMessagesFixedSize(&file, 0x20e4, 14, 20);
 
-		if (_variant & ADGF_ZX_RETAIL)
+		if (_variant & GF_ZX_RETAIL)
 			loadFonts(&file, 0x62ca);
-		if (_variant & ADGF_ZX_MUSICAL)
+		if (_variant & GF_ZX_BUDGET)
 			loadFonts(&file, 0x5aa8);
 
 		loadGlobalObjects(&file, 0x1c93);
 
-		if (_variant & ADGF_ZX_RETAIL)
+		if (_variant & GF_ZX_RETAIL)
 			load8bitBinary(&file, 0x642c, 4);
-		else if (_variant & ADGF_ZX_MUSICAL)
+		else if (_variant & GF_ZX_BUDGET)
 			load8bitBinary(&file, 0x5c0a, 4);
 		else
 			error("Unknown ZX spectrum variant");
+	} else if (isCPC()) {
+		loadBundledImages();
+		byte *memBuffer;
+		int memSize = 0;
+		if (_variant & GF_CPC_VIRTUALWORLDS) {
+			memBuffer = parseEDSK("virtualworlds.A.cpc.edsk", memSize);
 
+			// Deofuscation / loader code
+			for (int j = 0; j < 0x200; j++) {
+				memBuffer[0x14000 + j] = memBuffer[0x14200 + j];
+				memBuffer[0x14200 + j] = memBuffer[0x13400 + j];
+				memBuffer[0x14400 + j] = memBuffer[0x13800 + j];
+				memBuffer[0x14600 + j] = memBuffer[0x13c00 + j];
+			}
+
+			for (int j = 0; j < 0x200; j++) {
+				memBuffer[0x13c00 + j] = memBuffer[0x13a00 + j];
+				memBuffer[0x13a00 + j] = memBuffer[0x13600 + j];
+				memBuffer[0x13800 + j] = memBuffer[0x13200 + j];
+				memBuffer[0x13600 + j] = memBuffer[0x12e00 + j];
+				memBuffer[0x12e00 + j] = memBuffer[0x13000 + j];
+				memBuffer[0x13000 + j] = memBuffer[0x12200 + j];
+				memBuffer[0x13200 + j] = memBuffer[0x12600 + j];
+				memBuffer[0x13400 + j] = memBuffer[0x12a00 + j];
+			}
+
+			for (int i = 6; i >= 0; i--) {
+				//debug("copying 0x200 bytes to %x from %x", 0x12000 + 0x200*i, 0x11400 + 0x400*i);
+				for (int j = 0; j < 0x200; j++) {
+					memBuffer[0x12000 + 0x200*i + j] = memBuffer[0x11400 + 0x400*i + j];
+				}
+			}
+
+			for (int j = 0; j < 0x200; j++) {
+				memBuffer[0x11c00 + j] = memBuffer[0x11e00 + j];
+				memBuffer[0x11e00 + j] = memBuffer[0x11000 + j];
+			}
+		} else
+			memBuffer = parseEDSK("driller.cpc.edsk", memSize);
+		assert(memSize > 0);
+		Common::SeekableReadStream *stream = new Common::MemoryReadStream((const byte*)memBuffer, memSize);
+
+		if (_variant & GF_CPC_RETAIL) {
+			loadMessagesFixedSize(stream, 0xb0f7, 14, 20);
+			loadFonts(stream, 0xeb14);
+			load8bitBinary(stream, 0xec76, 4);
+			loadGlobalObjects(stream, 0xacb2);
+		} else if (_variant & GF_CPC_RETAIL2) {
+			loadMessagesFixedSize(stream, 0xb0f7 - 0x3fab, 14, 20);
+			loadFonts(stream, 0xeb14 - 0x3fab);
+			load8bitBinary(stream, 0xaccb, 4);
+			loadGlobalObjects(stream, 0xacb2 - 0x3fab);
+		} else if (_variant & _variant & GF_CPC_VIRTUALWORLDS) {
+			load8bitBinary(stream, 0x11acb, 4);
+		} else if (_variant & GF_CPC_BUDGET) {
+			loadMessagesFixedSize(stream, 0x9ef7, 14, 20);
+			loadFonts(stream, 0xd914);
+			load8bitBinary(stream, 0xda76, 4);
+			loadGlobalObjects(stream, 0x9ab2);
+		} else
+			error("Unknown Amstrad CPC variant");
+	} else if (isC64()) {
+		if (_targetName.hasPrefix("spacestationoblivion")) {
+			loadBundledImages();
+			file.open("spacestationoblivion.c64.extracted");
+			loadMessagesFixedSize(&file, 0x167a, 14, 20);
+			//loadFonts(&file, 0xae54);
+			load8bitBinary(&file, 0x8e02, 4);
+			loadGlobalObjects(&file, 0x1855);
+		} else if (_targetName.hasPrefix("driller")) {
+			file.open("driller.c64.extracted");
+			loadMessagesFixedSize(&file, 0x167a - 0x400, 14, 20);
+			//loadFonts(&file, 0xae54);
+			load8bitBinary(&file, 0x8e02 - 0x400, 4);
+			loadGlobalObjects(&file, 0x1855 - 0x400);
+		}
 	} else if (_renderMode == Common::kRenderEGA) {
 		loadBundledImages();
 		file.open("DRILLE.EXE");
@@ -539,8 +744,12 @@ void DrillerEngine::drawUI() {
 
 	if (isDOS())
 		drawDOSUI(surface);
+	else if (isC64())
+		drawC64UI(surface);
 	else if (isSpectrum())
 		drawZXUI(surface);
+	else if (isCPC())
+		drawCPCUI(surface);
 	else if (isAmiga() || isAtariST())
 		drawAmigaAtariSTUI(surface);
 
@@ -574,9 +783,9 @@ void DrillerEngine::drawDOSUI(Graphics::Surface *surface) {
 
 	int score = _gameStateVars[k8bitVariableScore];
 	drawStringInSurface(_currentArea->_name, 196, 185, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.x())), 150, 145, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.z())), 150, 153, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.y())), 150, 161, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 150, 145, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.z())), 150, 153, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.y())), 150, 161, front, back, surface);
 	if (_playerHeightNumber >= 0)
 		drawStringInSurface(Common::String::format("%d", _playerHeightNumber), 57, 161, front, back, surface);
 	else
@@ -630,6 +839,151 @@ void DrillerEngine::drawDOSUI(Graphics::Surface *surface) {
 	}
 }
 
+void DrillerEngine::drawCPCUI(Graphics::Surface *surface) {
+	uint32 color = 1;
+	uint8 r, g, b;
+
+	_gfx->selectColorFromFourColorPalette(color, r, g, b);
+	uint32 front = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+
+	color = 0;
+	if (_gfx->_colorRemaps && _gfx->_colorRemaps->contains(color)) {
+		color = (*_gfx->_colorRemaps)[color];
+	}
+
+	_gfx->readFromPalette(color, r, g, b);
+	uint32 back = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+
+	int score = _gameStateVars[k8bitVariableScore];
+	drawStringInSurface(_currentArea->_name, 200, 188, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 149, 148, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.z())), 149, 156, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.y())), 149, 164, front, back, surface);
+	if (_playerHeightNumber >= 0)
+		drawStringInSurface(Common::String::format("%d", _playerHeightNumber), 54, 164, front, back, surface);
+	else
+		drawStringInSurface(Common::String::format("%s", "J"), 54, 164, front, back, surface);
+
+	drawStringInSurface(Common::String::format("%02d", int(_angleRotations[_angleRotationIndex])), 46, 148, front, back, surface);
+	drawStringInSurface(Common::String::format("%3d", _playerSteps[_playerStepIndex]), 44, 156, front, back, surface);
+	drawStringInSurface(Common::String::format("%07d", score), 239, 132, front, back, surface);
+
+	int hours = _countdown <= 0 ? 0 : _countdown / 3600;
+	drawStringInSurface(Common::String::format("%02d", hours), 209, 11, front, back, surface);
+	int minutes = _countdown <= 0 ? 0 : (_countdown - hours * 3600) / 60;
+	drawStringInSurface(Common::String::format("%02d", minutes), 232, 11, front, back, surface);
+	int seconds = _countdown <= 0 ? 0 : _countdown - hours * 3600 - minutes * 60;
+	drawStringInSurface(Common::String::format("%02d", seconds), 254, 11, front, back, surface);
+
+	Common::String message;
+	int deadline;
+	getLatestMessages(message, deadline);
+	if (deadline <= _countdown) {
+		drawStringInSurface(message, 191, 180, back, front, surface);
+		_temporaryMessages.push_back(message);
+		_temporaryMessageDeadlines.push_back(deadline);
+	} else if (_messagesList.size() > 0) {
+		if (_currentArea->_gasPocketRadius == 0)
+			message = _messagesList[2];
+		else if (_drillStatusByArea[_currentArea->getAreaID()])
+			message = _messagesList[0];
+		else
+			message = _messagesList[1];
+
+		drawStringInSurface(message, 191, 180, front, back, surface);
+	}
+
+	int energy = _gameStateVars[k8bitVariableEnergy];
+	int shield = _gameStateVars[k8bitVariableShield];
+
+	if (energy >= 0) {
+		Common::Rect backBar(25, 187, 89 - energy, 194);
+		surface->fillRect(backBar, back);
+		Common::Rect energyBar(88 - energy, 187, 88, 194);
+		surface->fillRect(energyBar, front);
+	}
+
+	if (shield >= 0) {
+		Common::Rect backBar(25, 180, 89 - shield, 186);
+		surface->fillRect(backBar, back);
+
+		Common::Rect shieldBar(88 - shield, 180, 88, 186);
+		surface->fillRect(shieldBar, front);
+	}
+}
+
+void DrillerEngine::drawC64UI(Graphics::Surface *surface) {
+	uint32 color = 1;
+	uint8 r, g, b;
+
+	_gfx->selectColorFromFourColorPalette(color, r, g, b);
+	uint32 front = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+
+	color = 0;
+	if (_gfx->_colorRemaps && _gfx->_colorRemaps->contains(color)) {
+		color = (*_gfx->_colorRemaps)[color];
+	}
+
+	_gfx->readFromPalette(color, r, g, b);
+	uint32 back = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+
+	int score = _gameStateVars[k8bitVariableScore];
+	drawStringInSurface(_currentArea->_name, 200, 188, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 149, 148, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.z())), 149, 156, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.y())), 149, 164, front, back, surface);
+	if (_playerHeightNumber >= 0)
+		drawStringInSurface(Common::String::format("%d", _playerHeightNumber), 54, 164, front, back, surface);
+	else
+		drawStringInSurface(Common::String::format("%s", "J"), 54, 164, front, back, surface);
+
+	drawStringInSurface(Common::String::format("%02d", int(_angleRotations[_angleRotationIndex])), 46, 148, front, back, surface);
+	drawStringInSurface(Common::String::format("%3d", _playerSteps[_playerStepIndex]), 44, 156, front, back, surface);
+	drawStringInSurface(Common::String::format("%07d", score), 240, 128, front, back, surface);
+
+	int hours = _countdown <= 0 ? 0 : _countdown / 3600;
+	drawStringInSurface(Common::String::format("%02d", hours), 209, 11, front, back, surface);
+	int minutes = _countdown <= 0 ? 0 : (_countdown - hours * 3600) / 60;
+	drawStringInSurface(Common::String::format("%02d", minutes), 232, 11, front, back, surface);
+	int seconds = _countdown <= 0 ? 0 : _countdown - hours * 3600 - minutes * 60;
+	drawStringInSurface(Common::String::format("%02d", seconds), 254, 11, front, back, surface);
+
+	Common::String message;
+	int deadline;
+	getLatestMessages(message, deadline);
+	if (deadline <= _countdown) {
+		drawStringInSurface(message, 191, 180, back, front, surface);
+		_temporaryMessages.push_back(message);
+		_temporaryMessageDeadlines.push_back(deadline);
+	} else {
+		if (_currentArea->_gasPocketRadius == 0)
+			message = _messagesList[2];
+		else if (_drillStatusByArea[_currentArea->getAreaID()])
+			message = _messagesList[0];
+		else
+			message = _messagesList[1];
+
+		drawStringInSurface(message, 191, 180, front, back, surface);
+	}
+
+	int energy = _gameStateVars[k8bitVariableEnergy];
+	int shield = _gameStateVars[k8bitVariableShield];
+
+	if (energy >= 0) {
+		Common::Rect backBar(25, 187, 89 - energy, 194);
+		surface->fillRect(backBar, back);
+		Common::Rect energyBar(88 - energy, 187, 88, 194);
+		surface->fillRect(energyBar, front);
+	}
+
+	if (shield >= 0) {
+		Common::Rect backBar(25, 180, 89 - shield, 186);
+		surface->fillRect(backBar, back);
+
+		Common::Rect shieldBar(88 - shield, 180, 88, 186);
+		surface->fillRect(shieldBar, front);
+	}
+}
 
 void DrillerEngine::drawZXUI(Graphics::Surface *surface) {
 	uint32 color = 5;
@@ -645,12 +999,13 @@ void DrillerEngine::drawZXUI(Graphics::Surface *surface) {
 
 	_gfx->readFromPalette(color, r, g, b);
 	uint32 back = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+	uint32 white = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0xFF);
 
 	int score = _gameStateVars[k8bitVariableScore];
 	drawStringInSurface(_currentArea->_name, 176, 188, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.x())), 152, 149, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.z())), 152, 157, front, back, surface);
-	drawStringInSurface(Common::String::format("%04d", 2 * int(_position.y())), 152, 165, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 152, 149, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.z())), 152, 157, front, back, surface);
+	drawStringInSurface(Common::String::format("%04d", int(2 * _position.y())), 152, 165, front, back, surface);
 	if (_playerHeightNumber >= 0)
 		drawStringInSurface(Common::String::format("%d", _playerHeightNumber), 74, 165, front, back, surface);
 	else
@@ -658,7 +1013,7 @@ void DrillerEngine::drawZXUI(Graphics::Surface *surface) {
 
 	drawStringInSurface(Common::String::format("%02d", int(_angleRotations[_angleRotationIndex])), 64, 149, front, back, surface);
 	drawStringInSurface(Common::String::format("%3d", _playerSteps[_playerStepIndex]), 65, 157, front, back, surface);
-	drawStringInSurface(Common::String::format("%07d", score), 217, 133, front, back, surface);
+	drawStringInSurface(Common::String::format("%07d", score), 217, 133, white, back, surface);
 
 	int hours = _countdown <= 0 ? 0 : _countdown / 3600;
 	drawStringInSurface(Common::String::format("%02d", hours), 187, 12, front, back, surface);
@@ -799,7 +1154,16 @@ void DrillerEngine::drawInfoMenu() {
 	uint32 black = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
 	surface->fillRect(_viewArea, black);
 
-	color = _renderMode == Common::kRenderCGA ? 1 : 14;
+	switch (_renderMode) {
+		case Common::kRenderCGA:
+			color = 1;
+			break;
+		case Common::kRenderZX:
+			color = 6;
+			break;
+		default:
+			color = 14;
+	}
 	uint8 r, g, b;
 
 	_gfx->readFromPalette(color, r, g, b);
@@ -844,8 +1208,13 @@ void DrillerEngine::drawInfoMenu() {
 	drawStringInSurface(Common::String::format("%13s : %d", "total sectors", 18), 84, 73, front, black, surface);
 	drawStringInSurface(Common::String::format("%13s : %d", "safe sectors", _gameStateVars[32]), 84, 81, front, black, surface);
 
-	drawStringInSurface("l-load s-save esc-terminate", 53, 97, front, black, surface);
-	drawStringInSurface("t-toggle sound on/off", 76, 105, front, black, surface);
+	if (isDOS()) {
+		drawStringInSurface("l-load s-save esc-terminate", 53, 97, front, black, surface);
+		drawStringInSurface("t-toggle sound on/off", 76, 105, front, black, surface);
+	} else if (isSpectrum()) {
+		drawStringInSurface("l-load s-save 1-abort", 53, 97, front, black, surface);
+		drawStringInSurface("any other key-continue", 76, 105, front, black, surface);
+	}
 
 	_uiTexture->update(surface);
 	_gfx->setViewport(_fullscreenViewArea);
@@ -871,8 +1240,14 @@ void DrillerEngine::drawInfoMenu() {
 					_gfx->setViewport(_fullscreenViewArea);
 					saveGameDialog();
 					_gfx->setViewport(_viewArea);
-				} else if (event.kbd.keycode == Common::KEYCODE_t) {
+				} else if (isDOS() && event.kbd.keycode == Common::KEYCODE_t) {
 					// TODO
+				} else if (isDOS() && event.kbd.keycode == Common::KEYCODE_ESCAPE) {
+					_forceEndGame = true;
+					cont = false;
+				} else if (isSpectrum() && event.kbd.keycode == Common::KEYCODE_1) {
+					_forceEndGame = true;
+					cont = false;
 				} else
 					cont = false;
 				break;
@@ -1017,8 +1392,8 @@ Math::Vector3d DrillerEngine::drillPosition() {
 
 	Object *obj = (GeometricObject *)_areaMap[255]->objectWithID(255); // Drill base
 	assert(obj);
-	position.setValue(0, position.x() - obj->getSize().x() / 2);
-	position.setValue(2, position.z() - obj->getSize().z() / 2);
+	position.setValue(0, position.x() - 128);
+	position.setValue(2, position.z() - 128);
 	return position;
 }
 
@@ -1033,15 +1408,26 @@ bool DrillerEngine::checkDrill(const Math::Vector3d position) {
 	int16 id;
 	int heightLastObject;
 
+	origin.setValue(0, origin.x() + 128);
+	origin.setValue(1, origin.y() - 5);
+	origin.setValue(2, origin.z() + 128);
+
+	_drillBase->setOrigin(origin);
+	if (_currentArea->checkCollisions(_drillBase->_boundingBox).empty())
+		return false;
+
+	origin.setValue(0, origin.x() - 128);
+	origin.setValue(2, origin.z() - 128);
+
 	id = 255;
 	obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
 	assert(obj);
 	obj = (GeometricObject *)obj->duplicate();
-	origin.setValue(1, origin.y() - 5);
+	origin.setValue(1, origin.y() + 6);
 	obj->setOrigin(origin);
 
 	// This bounding box is too large and can result in the drill to float next to a wall
-	if (_currentArea->checkCollisions(obj->_boundingBox).empty())
+	if (!_currentArea->checkCollisions(obj->_boundingBox).empty())
 		return false;
 
 	origin.setValue(1, origin.y() + 15);
@@ -1198,7 +1584,6 @@ void DrillerEngine::initGameState() {
 	_noClipMode = false;
 	_shootingFrames = 0;
 	_underFireFrames = 0;
-	_lastMousePos = Common::Point(0, 0);
 	_yaw = 0;
 	_pitch = 0;
 
@@ -1259,6 +1644,29 @@ bool DrillerEngine::checkIfGameEnded() {
 
 	if (_gameStateVars[k8bitVariableEnergy] == 0) {
 		insertTemporaryMessage(_messagesList[16], _countdown - 2);
+		drawFrame();
+		_gfx->flipBuffer();
+		g_system->updateScreen();
+		g_system->delayMillis(2000);
+		gotoArea(127, 0);
+	}
+
+	if (_hasFallen) {
+		_hasFallen = false;
+		playSound(14, false);
+		insertTemporaryMessage(_messagesList[17], _countdown - 4);
+		drawBackground();
+		drawBorder();
+		drawUI();
+		_gfx->flipBuffer();
+		g_system->updateScreen();
+		g_system->delayMillis(1000);
+		gotoArea(127, 0);
+	}
+
+	if (_forceEndGame) {
+		_forceEndGame = false;
+		insertTemporaryMessage(_messagesList[18], _countdown - 2);
 		drawFrame();
 		_gfx->flipBuffer();
 		g_system->updateScreen();

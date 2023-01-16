@@ -2,7 +2,6 @@ MODULE := common
 
 MODULE_OBJS := \
 	archive.o \
-	base-str.o \
 	concatstream.o \
 	config-manager.o \
 	coroutines.o \
@@ -29,6 +28,7 @@ MODULE_OBJS := \
 	str.o \
 	stream.o \
 	streamdebug.o \
+	str-base.o \
 	str-enc.o \
 	encodings/singlebyte.o \
 	system.o \
@@ -39,7 +39,8 @@ MODULE_OBJS := \
 	unicode-bidi.o \
 	ustr.o \
 	util.o \
-	xpfloat.o
+	xpfloat.o \
+	zip-set.o
 
 ifdef ENABLE_EVENTRECORDER
 MODULE_OBJS += \

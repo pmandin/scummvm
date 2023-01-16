@@ -218,8 +218,8 @@ SmushPlayer::SmushPlayer(ScummEngine_v7 *scumm, IMuseDigital *imuseDigital, Insa
 	_imuseDigital = imuseDigital;
 	_insane = insane;
 	_nbframes = 0;
-	_codec37 = 0;
-	_codec47 = 0;
+	_deltaBlocksCodec = 0;
+	_deltaGlyphsCodec = 0;
 	_strings = nullptr;
 	_sf[0] = nullptr;
 	_sf[1] = nullptr;
@@ -262,7 +262,7 @@ SmushPlayer::SmushPlayer(ScummEngine_v7 *scumm, IMuseDigital *imuseDigital, Insa
 	_smushAudioInitialized = false;
 	_smushAudioCallbackEnabled = false;
 
-	initAudio(DIMUSE_SAMPLERATE, 200000);
+	initAudio(_imuseDigital->getSampleRate(), 200000);
 }
 
 SmushPlayer::~SmushPlayer() {
@@ -330,10 +330,10 @@ void SmushPlayer::release() {
 	_vm->_virtscr[kMainVirtScreen].pitch = _origPitch;
 	_vm->_gdi->_numStrips = _origNumStrips;
 
-	delete _codec37;
-	_codec37 = 0;
-	delete _codec47;
-	_codec47 = 0;
+	delete _deltaBlocksCodec;
+	_deltaBlocksCodec = 0;
+	delete _deltaGlyphsCodec;
+	_deltaGlyphsCodec = 0;
 }
 
 void SmushPlayer::handleStore(int32 subSize, Common::SeekableReadStream &b) {
@@ -771,17 +771,17 @@ void SmushPlayer::decodeFrameObject(int codec, const uint8 *src, int left, int t
 	case SMUSH_CODEC_RLE_ALT:
 		smushDecodeRLE(_dst, src, left, top, width, height, _vm->_screenWidth);
 		break;
-	case SMUSH_CODEC_37:
-		if (!_codec37)
-			_codec37 = new Codec37Decoder(width, height);
-		if (_codec37)
-			_codec37->decode(_dst, src);
+	case SMUSH_CODEC_DELTA_BLOCKS:
+		if (!_deltaBlocksCodec)
+			_deltaBlocksCodec = new SmushDeltaBlocksDecoder(width, height);
+		if (_deltaBlocksCodec)
+			_deltaBlocksCodec->decode(_dst, src);
 		break;
-	case SMUSH_CODEC_47:
-		if (!_codec47)
-			_codec47 = new Codec47Decoder(width, height);
-		if (_codec47)
-			_codec47->decode(_dst, src);
+	case SMUSH_CODEC_DELTA_GLYPHS:
+		if (!_deltaGlyphsCodec)
+			_deltaGlyphsCodec = new SmushDeltaGlyphsDecoder(width, height);
+		if (_deltaGlyphsCodec)
+			_deltaGlyphsCodec->decode(_dst, src);
 		break;
 	case SMUSH_CODEC_UNCOMPRESSED:
 		// Used by Full Throttle Classic (from Remastered)
@@ -940,16 +940,39 @@ void SmushPlayer::handleFrame(int32 frameSize, Common::SeekableReadStream &b) {
 void SmushPlayer::handleAnimHeader(int32 subSize, Common::SeekableReadStream &b) {
 	debugC(DEBUG_SMUSH, "SmushPlayer::handleAnimHeader()");
 	assert(subSize >= 0x300 + 6);
+	byte *headerContent = (byte *)malloc(subSize * sizeof(byte));
 
-	/* _version = */ b.readUint16LE();
-	_nbframes = b.readUint16LE();
-	b.readUint16LE();
+	if (headerContent) {
+		// Fill out the header
+		b.read(headerContent, subSize);
 
-	if (_skipPalette)
-		return;
+		byte headerMajorVersion = headerContent[0];
+		byte headerMinorVersion = headerContent[1];
 
-	readPalette(_pal, b);
-	setDirtyColors(0, 255);
+		_nbframes = READ_LE_UINT16(&headerContent[2]);
+
+		// Video files might contain framerate overrides
+		if (headerMajorVersion > 1) {
+			uint16 speed = READ_LE_UINT16(&headerContent[6 + 0x300]);
+			if ((_curVideoFlags & 8) == 0 && speed != 0) {
+				debug(5, "SmushPlayer::handleAnimHeader(): header version %d.%d, video speed override %d fps (cur speed %d)",
+						headerMajorVersion,
+						headerMinorVersion,
+						speed,
+						_speed);
+
+				_speed = speed;
+			}
+		}
+
+		if (!_skipPalette) {
+			byte *palettePtr = &headerContent[6];
+			memcpy(_pal, palettePtr, sizeof(_pal));
+			setDirtyColors(0, 255);
+		}
+
+		free(headerContent);
+	}
 }
 
 void SmushPlayer::setupAnim(const char *file) {
@@ -958,6 +981,10 @@ void SmushPlayer::setupAnim(const char *file) {
 			readString("mineroad.trs");
 	} else
 		readString(file);
+}
+
+void SmushPlayer::setCurVideoFlags(int16 flags) {
+	_curVideoFlags = flags;
 }
 
 SmushFont *SmushPlayer::getFont(int font) {
@@ -1569,6 +1596,8 @@ void SmushPlayer::processDispatches(int16 feedSize) {
 	bool isPlayableTrack;
 	bool speechIsPlaying = false;
 
+	int engineBaseFeedSize = _imuseDigital->getFeedSize();
+
 	if (!_paused) {
 		if (_smushTracksNeedInit) {
 			_smushTracksNeedInit = false;
@@ -1657,7 +1686,7 @@ void SmushPlayer::processDispatches(int16 feedSize) {
 
 				fadeMixStartingPoint = 0;
 				while (fadeRemaining) {
-					fadeInFrameCount = (fadeRemaining < DIMUSE_FEEDSIZE / 2) ? fadeRemaining : DIMUSE_FEEDSIZE / 2;
+					fadeInFrameCount = (fadeRemaining < engineBaseFeedSize / 2) ? fadeRemaining : engineBaseFeedSize / 2;
 
 					if (fadeInFrameCount == maxFadeChunkSize) {
 						fadeFeedSize = feedSize;
@@ -1716,8 +1745,8 @@ void SmushPlayer::processDispatches(int16 feedSize) {
 								if (_smushDispatch[i].volumeStep < 16)
 									_smushDispatch[i].volumeStep++;
 
-								if (mixInFrameCount > DIMUSE_FEEDSIZE / 2)
-									mixInFrameCount = DIMUSE_FEEDSIZE / 2;
+								if (mixInFrameCount > engineBaseFeedSize / 2)
+									mixInFrameCount = engineBaseFeedSize / 2;
 
 								_smushTracks[i].state = TRK_STATE_PLAYING;
 
@@ -1731,8 +1760,8 @@ void SmushPlayer::processDispatches(int16 feedSize) {
 
 								_smushTracks[i].state = TRK_STATE_ENDING;
 
-								if (mixInFrameCount > DIMUSE_FEEDSIZE / 2)
-									mixInFrameCount = DIMUSE_FEEDSIZE / 2;
+								if (mixInFrameCount > engineBaseFeedSize / 2)
+									mixInFrameCount = engineBaseFeedSize / 2;
 
 								_smushDispatch[i].audioRemaining -= mixInFrameCount;
 								_smushDispatch[i].currentOffset += mixInFrameCount;

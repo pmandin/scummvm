@@ -19,6 +19,7 @@
  *
  */
 
+#include "ultima/ultima.h"
 #include "ultima/shared/engine/ultima.h"
 #include "ultima/shared/engine/data_archive.h"
 #include "ultima/shared/engine/events.h"
@@ -35,7 +36,7 @@ UltimaEngine * g_ultima;
 
 UltimaEngine::UltimaEngine(OSystem *syst, const Ultima::UltimaGameDescription *gameDesc) :
 		Engine(syst), _gameDescription(gameDesc), _randomSource("Ultima"),
-		_dataArchive(nullptr), _events(nullptr) {
+		_dataArchive(nullptr) {
 	g_ultima = this;
 }
 
@@ -46,9 +47,6 @@ UltimaEngine::~UltimaEngine() {
 bool UltimaEngine::initialize() {
 	Common::String folder;
 	int reqMajorVersion, reqMinorVersion;
-
-	DebugMan.addDebugChannel(kDebugPath, "Path", "Pathfinding debug level");
-	DebugMan.addDebugChannel(kDebugGraphics, "Graphics", "Graphics debug level");
 
 	// Call syncSoundSettings to get default volumes set
 	syncSoundSettings();

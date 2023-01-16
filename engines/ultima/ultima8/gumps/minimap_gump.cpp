@@ -62,27 +62,23 @@ void MiniMapGump::run() {
 	if (!actor || actor->isDead())
 		return;
 
-	int32 ax, ay, az;
-	actor->getLocation(ax, ay, az);
-
-	ax = ax / (mapChunkSize / MINMAPGUMP_SCALE);
-	ay = ay / (mapChunkSize / MINMAPGUMP_SCALE);
-
-	// Skip map update if location has not changed
-	if (ax == _ax && ay == _ay)
-		return;
-
-	_ax = ax;
-	_ay = ay;
-
 	uint32 mapNum = currentmap->getNum();
-
 	MiniMap *minimap = _minimaps[mapNum];
 	if (!minimap) {
 		minimap = new MiniMap(mapNum);
 		_minimaps[mapNum] = minimap;
 	}
-	minimap->update(currentmap);
+
+	Common::Point p = minimap->getItemLocation(*actor, mapChunkSize);
+
+	// Skip map update if location has not changed
+	if (p.x == _ax && p.y == _ay)
+		return;
+
+	_ax = p.x;
+	_ay = p.y;
+
+	minimap->update(*currentmap);
 }
 
 void MiniMapGump::generate() {
@@ -97,7 +93,7 @@ void MiniMapGump::generate() {
 		minimap = new MiniMap(mapNum);
 		_minimaps[mapNum] = minimap;
 	}
-	minimap->update(currentmap);
+	minimap->update(*currentmap);
 }
 
 void MiniMapGump::clear() {
@@ -120,11 +116,11 @@ void MiniMapGump::PaintThis(RenderSurface *surf, int32 lerp_factor, bool scaled)
 	surf->DrawLine32(color, _dims.right -1, _dims.top, _dims.right - 1, _dims.bottom - 1);
 
 	// Dimensions minus border
-	Common::Rect dims(_dims.left, _dims.top, _dims.right, _dims.bottom);
+	Rect dims = _dims;
 	dims.grow(-1);
 
 	// Fill the background
-	surf->Fill32(0xFF000000, dims.left, dims.top, dims.width(), dims.height());
+	surf->Fill32(0xFF000000, dims);
 
 	// Center on avatar
 	int sx = _ax - dims.width() / 2;
@@ -181,14 +177,14 @@ Gump *MiniMapGump::onMouseDown(int button, int32 mx, int32 my) {
 		return handled;
 
 	// only interested in left clicks
-	if (button == Shared::BUTTON_LEFT)
+	if (button == Mouse::BUTTON_LEFT)
 		return this;
 
 	return nullptr;
 }
 
 void MiniMapGump::onMouseDouble(int button, int32 mx, int32 my) {
-	if (button == Shared::BUTTON_LEFT) {
+	if (button == Mouse::BUTTON_LEFT) {
 		HideGump();
 	}
 }

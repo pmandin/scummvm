@@ -63,13 +63,8 @@ namespace Ultima8 {
 
 Debugger *g_debugger;
 
-console_ostream<char> *ppout;
-
-Debugger::Debugger() : Shared::Debugger() {
+Debugger::Debugger() : GUI::Debugger() {
 	g_debugger = this;
-
-	// Set output pointers
-	ppout = &_strOut;
 
 	// WARNING: Not only can the methods below be executed directly in the debugger,
 	// they also act as the methods keybindings are made to. So be wary of changing names
@@ -190,14 +185,11 @@ Debugger::Debugger() : Shared::Debugger() {
 
 	registerCmd("UCMachine::getGlobal", WRAP_METHOD(Debugger, cmdGetGlobal));
 	registerCmd("UCMachine::setGlobal", WRAP_METHOD(Debugger, cmdSetGlobal));
-#ifdef DEBUG
 	registerCmd("UCMachine::traceObjID", WRAP_METHOD(Debugger, cmdTraceObjID));
 	registerCmd("UCMachine::tracePID", WRAP_METHOD(Debugger, cmdTracePID));
 	registerCmd("UCMachine::traceClass", WRAP_METHOD(Debugger, cmdTraceClass));
-	registerCmd("UCMachine::traceEvents", WRAP_METHOD(Debugger, cmdTraceEvents));
 	registerCmd("UCMachine::traceAll", WRAP_METHOD(Debugger, cmdTraceAll));
 	registerCmd("UCMachine::stopTrace", WRAP_METHOD(Debugger, cmdStopTrace));
-#endif
 
 	registerCmd("FastAreaVisGump::toggle", WRAP_METHOD(Debugger, cmdToggleFastArea));
 	registerCmd("InverterProcess::invertScreen", WRAP_METHOD(Debugger, cmdInvertScreen));
@@ -217,7 +209,6 @@ Debugger::Debugger() : Shared::Debugger() {
 
 Debugger::~Debugger() {
 	g_debugger = nullptr;
-	ppout = nullptr;
 }
 
 
@@ -879,8 +870,9 @@ bool Debugger::cmdListProcesses(int argc, const char **argv) {
 		for (ProcessIterator it = kern->_processes.begin();
 			it != kern->_processes.end(); ++it) {
 			Process *p = *it;
-			if (argc == 1 || p->_itemNum == item)
-				p->dumpInfo();
+			if (argc == 1 || p->_itemNum == item) {
+				debugPrintf("%s\n", p->dumpInfo().c_str());
+			}
 		}
 	}
 
@@ -899,7 +891,7 @@ bool Debugger::cmdProcessInfo(int argc, const char **argv) {
 		if (p == 0) {
 			debugPrintf("No such process: %d\n", procid);
 		} else {
-			p->dumpInfo();
+			debugPrintf("%s\n", p->dumpInfo().c_str());
 		}
 	}
 
@@ -1481,7 +1473,7 @@ bool Debugger::cmdObjectInfo(int argc, const char **argv) {
 			else
 				debugPrintf("No such object: %d\n", objid);
 		} else {
-			obj->dumpInfo();
+			debugPrintf("%s\n", obj->dumpInfo().c_str());
 		}
 	}
 
@@ -1491,11 +1483,11 @@ bool Debugger::cmdObjectInfo(int argc, const char **argv) {
 static bool _quickMoveKey(uint32 flag, const char *debugname) {
 	Ultima8Engine *engine = Ultima8Engine::get_instance();
 	if (engine->isAvatarInStasis()) {
-		debug("Can't %s: avatarInStasis\n", debugname);
+		g_debugger->debugPrintf("Can't %s: avatarInStasis\n", debugname);
 		return true;
 	}
 	if (!engine->areCheatsEnabled()) {
-		debug("Can't %s: Cheats aren't enabled\n", debugname);
+		g_debugger->debugPrintf("Can't %s: Cheats aren't enabled\n", debugname);
 		return true;
 	}
 
@@ -1618,8 +1610,6 @@ bool Debugger::cmdSetGlobal(int argc, const char **argv) {
 	return true;
 }
 
-#ifdef DEBUG
-
 bool Debugger::cmdTracePID(int argc, const char **argv) {
 	if (argc != 2) {
 		debugPrintf("Usage: UCMachine::tracePID _pid\n");
@@ -1677,15 +1667,6 @@ bool Debugger::cmdTraceAll(int argc, const char **argv) {
 	return true;
 }
 
-bool Debugger::cmdTraceEvents(int argc, const char **argv) {
-	UCMachine *uc = UCMachine::get_instance();
-	uc->_tracingEnabled = true;
-	uc->_traceEvents = true;
-
-	debugPrintf("UCMachine: tracing usecode events\n");
-	return true;
-}
-
 bool Debugger::cmdStopTrace(int argc, const char **argv) {
 	UCMachine *uc = UCMachine::get_instance();
 	uc->_traceObjIDs.clear();
@@ -1693,14 +1674,10 @@ bool Debugger::cmdStopTrace(int argc, const char **argv) {
 	uc->_traceClasses.clear();
 	uc->_tracingEnabled = false;
 	uc->_traceAll = false;
-	uc->_traceEvents = false;
 
 	debugPrintf("Trace stopped\n");
 	return true;
 }
-
-#endif
-
 
 bool Debugger::cmdVerifyQuit(int argc, const char **argv) {
 	QuitGump::verifyQuit();

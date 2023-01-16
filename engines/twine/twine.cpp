@@ -69,7 +69,10 @@
 #include "twine/scene/movements.h"
 #include "twine/scene/scene.h"
 #include "twine/script/script_life_v1.h"
+#include "twine/script/script_life_v2.h"
 #include "twine/script/script_move_v1.h"
+#include "twine/script/script_move_v2.h"
+#include "twine/shared.h"
 #include "twine/slideshow.h"
 #include "twine/text.h"
 
@@ -172,6 +175,12 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 #endif
 	}
 
+	if (isLBA2()) {
+		LBAAngles::lba2();
+	} else {
+		LBAAngles::lba1();
+	}
+
 	_actor = new Actor(this);
 	_animations = new Animations(this);
 	_collision = new Collision(this);
@@ -189,8 +198,13 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 	_resources = new Resources(this);
 	_scene = new Scene(this);
 	_screens = new Screens(this);
-	_scriptLife = new ScriptLife(this);
-	_scriptMove = new ScriptMove(this);
+	if (isLBA1()) {
+		_scriptLife = new ScriptLifeV1(this);
+		_scriptMove = new ScriptMoveV1(this);
+	} else {
+		_scriptLife = new ScriptLifeV2(this);
+		_scriptMove = new ScriptMoveV2(this);
+	}
 	_holomap = new Holomap(this);
 	_sound = new Sound(this);
 	_text = new Text(this);
@@ -355,7 +369,7 @@ Common::Error TwinEEngine::run() {
 		}
 	}
 
-	ConfMan.setBool("combatauto", _actor->_autoAggressive);
+	ConfMan.setBool("combatauto", _actor->_combatAuto);
 	ConfMan.setInt("shadow", _cfgfile.ShadowMode);
 	ConfMan.setBool("scezoom", _cfgfile.SceZoom);
 	ConfMan.setInt("polygondetails", _cfgfile.PolygonDetails);
@@ -492,7 +506,7 @@ void TwinEEngine::initConfigurations() {
 	_cfgfile.UseAutoSaving = ConfGetBoolOrDefault("useautosaving", false);
 	_cfgfile.WallCollision = ConfGetBoolOrDefault("wallcollision", false);
 
-	_actor->_autoAggressive = ConfGetBoolOrDefault("combatauto", true);
+	_actor->_combatAuto = ConfGetBoolOrDefault("combatauto", true);
 	_cfgfile.ShadowMode = ConfGetIntOrDefault("shadow", 2);
 	_cfgfile.SceZoom = ConfGetBoolOrDefault("scezoom", false);
 	_cfgfile.PolygonDetails = ConfGetIntOrDefault("polygondetails", 2);
@@ -508,7 +522,7 @@ void TwinEEngine::initConfigurations() {
 	debug(1, "Debug:          %s", (_cfgfile.Debug ? "true" : "false"));
 	debug(1, "UseAutoSaving:  %s", (_cfgfile.UseAutoSaving ? "true" : "false"));
 	debug(1, "WallCollision:  %s", (_cfgfile.WallCollision ? "true" : "false"));
-	debug(1, "AutoAggressive: %s", (_actor->_autoAggressive ? "true" : "false"));
+	debug(1, "AutoAggressive: %s", (_actor->_combatAuto ? "true" : "false"));
 	debug(1, "ShadowMode:     %i", _cfgfile.ShadowMode);
 	debug(1, "PolygonDetails: %i", _cfgfile.PolygonDetails);
 	debug(1, "SceZoom:        %s", (_cfgfile.SceZoom ? "true" : "false"));
@@ -624,13 +638,13 @@ void TwinEEngine::unfreezeTime() {
 void TwinEEngine::processActorSamplePosition(int32 actorIdx) {
 	const ActorStruct *actor = _scene->getActor(actorIdx);
 	const int32 channelIdx = _sound->getActorChannel(actorIdx);
-	_sound->setSamplePosition(channelIdx, actor->pos());
+	_sound->setSamplePosition(channelIdx, actor->posObj());
 }
 
 void TwinEEngine::processBookOfBu() {
 	_screens->fadeToBlack(_screens->_paletteRGBA);
 	_screens->loadImage(TwineImage(Resources::HQR_RESS_FILE, 15, 16));
-	_text->initTextBank(TextBankId::Inventory_Intro_and_Holomap);
+	_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
 	_text->_drawTextBoxBackground = false;
 	_text->textClipFull();
 	_text->setFontCrossColor(COLOR_WHITE);
@@ -649,7 +663,7 @@ void TwinEEngine::processBookOfBu() {
 }
 
 void TwinEEngine::processBonusList() {
-	_text->initTextBank(TextBankId::Inventory_Intro_and_Holomap);
+	_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
 	_text->textClipFull();
 	_text->setFontCrossColor(COLOR_WHITE);
 	const bool tmpFlagDisplayText = _cfgfile.FlagDisplayText;
@@ -672,7 +686,7 @@ void TwinEEngine::processInventoryAction() {
 		break;
 	case kiMagicBall:
 		if (_gameState->_usingSabre) {
-			_actor->initModelActor(BodyType::btNormal, OWN_ACTOR_SCENE_INDEX);
+			_actor->initBody(BodyType::btNormal, OWN_ACTOR_SCENE_INDEX);
 		}
 		_gameState->_usingSabre = false;
 		break;
@@ -681,7 +695,7 @@ void TwinEEngine::processInventoryAction() {
 			if (_actor->_heroBehaviour == HeroBehaviourType::kProtoPack) {
 				_actor->setBehaviour(HeroBehaviourType::kNormal);
 			}
-			_actor->initModelActor(BodyType::btSabre, OWN_ACTOR_SCENE_INDEX);
+			_actor->initBody(BodyType::btSabre, OWN_ACTOR_SCENE_INDEX);
 			_animations->initAnim(AnimationTypes::kSabreUnknown, AnimType::kAnimationThen, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 
 			_gameState->_usingSabre = true;
@@ -707,23 +721,23 @@ void TwinEEngine::processInventoryAction() {
 	case kiPenguin: {
 		ActorStruct *penguin = _scene->getActor(_scene->_mecaPenguinIdx);
 
-		const IVec3 &destPos = _movements->rotateActor(0, 800, _scene->_sceneHero->_angle);
+		const IVec3 &destPos = _movements->rotate(0, 800, _scene->_sceneHero->_beta);
 
 		penguin->_pos = _scene->_sceneHero->_pos;
 		penguin->_pos.x += destPos.x;
 		penguin->_pos.z += destPos.z;
 
-		penguin->_angle = _scene->_sceneHero->_angle;
+		penguin->_beta = _scene->_sceneHero->_beta;
 
 		if (_collision->checkValidObjPos(_scene->_mecaPenguinIdx)) {
 			penguin->setLife(kActorMaxLife);
 			penguin->_genBody = BodyType::btNone;
-			_actor->initModelActor(BodyType::btNormal, _scene->_mecaPenguinIdx);
+			_actor->initBody(BodyType::btNormal, _scene->_mecaPenguinIdx);
 			penguin->_dynamicFlags.bIsDead = 0;
 			penguin->setBrickShape(ShapeType::kNone);
-			_movements->initRealAngleConst(penguin->_angle, penguin->_angle, penguin->_speed, &penguin->_move);
+			_movements->initRealAngleConst(penguin->_beta, penguin->_beta, penguin->_speed, &penguin->_moveAngle);
 			_gameState->removeItem(InventoryItems::kiPenguin);
-			penguin->_delayInMillis = _lbaTime + TO_SECONDS(30);
+			penguin->_delayInMillis = _lbaTime + toSeconds(30);
 		}
 		break;
 	}
@@ -733,7 +747,7 @@ void TwinEEngine::processInventoryAction() {
 		break;
 	}
 	case kiCloverLeaf:
-		if (_scene->_sceneHero->_life < kActorMaxLife) {
+		if (_scene->_sceneHero->_lifePoint < kActorMaxLife) {
 			if (_gameState->_inventoryNumLeafs > 0) {
 				_scene->_sceneHero->setLife(kActorMaxLife);
 				_gameState->setMagicPoints(_gameState->_magicLevelIdx * 20);
@@ -745,6 +759,13 @@ void TwinEEngine::processInventoryAction() {
 	}
 
 	_redraw->redrawEngineActions(true);
+}
+
+int32 TwinEEngine::toSeconds(int x) const {
+	if (isLBA1()) {
+		return DEFAULT_HZ * x;
+	}
+	return x * 1000;
 }
 
 void TwinEEngine::processOptionsMenu() {
@@ -794,7 +815,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 	} else {
 		// Process give up menu - Press ESC
-		if (_input->toggleAbortAction() && _scene->_sceneHero->_life > 0 && _scene->_sceneHero->_body != -1 && !_scene->_sceneHero->_staticFlags.bIsHidden) {
+		if (_input->toggleAbortAction() && _scene->_sceneHero->_lifePoint > 0 && _scene->_sceneHero->_body != -1 && !_scene->_sceneHero->_staticFlags.bIsHidden) {
 			ScopedEngineFreeze scopedFreeze(this);
 			exitSceneryView();
 			const int giveUp = _menu->giveupMenu();
@@ -909,7 +930,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		_loopActorStep = 1;
 	}
 
-	_movements->setActorAngle(ANGLE_0, -ANGLE_90, ANGLE_1, &_loopMovePtr);
+	_movements->setActorAngle(LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_1, &_loopMovePtr);
 	_disableScreenRecenter = false;
 
 	_scene->processEnvironmentSound();
@@ -919,7 +940,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		_scene->getActor(a)->_hitBy = -1;
 	}
 
-	_extra->processExtras();
+	_extra->gereExtras();
 
 	for (int32 a = 0; a < _scene->_sceneNumActors; a++) {
 		ActorStruct *actor = _scene->getActor(a);
@@ -928,15 +949,15 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			continue;
 		}
 
-		if (actor->_life == 0) {
+		if (actor->_lifePoint == 0) {
 			if (IS_HERO(a)) {
 				_animations->initAnim(AnimationTypes::kLandDeath, AnimType::kAnimationSet, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 				actor->_controlMode = ControlMode::kNoMove;
 			} else {
-				_sound->playSample(Samples::Explode, 1, actor->pos(), a);
+				_sound->playSample(Samples::Explode, 1, actor->posObj(), a);
 
 				if (a == _scene->_mecaPenguinIdx) {
-					_extra->addExtraExplode(actor->pos());
+					_extra->extraExplo(actor->posObj());
 				}
 			}
 
@@ -945,12 +966,12 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			}
 		}
 
-		_movements->processActorMovements(a);
+		_movements->doDir(a);
 
-		actor->_collisionPos = actor->pos();
+		actor->_oldPos = actor->posObj();
 
-		if (actor->_positionInMoveScript != -1) {
-			_scriptMove->processMoveScript(a);
+		if (actor->_offsetTrack != -1) {
+			_scriptMove->doTrack(a);
 		}
 
 		_animations->doAnim(a);
@@ -959,8 +980,8 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			_scene->checkZoneSce(a);
 		}
 
-		if (actor->_positionInLifeScript != -1) {
-			_scriptLife->processLifeScript(a);
+		if (actor->_offsetLife != -1) {
+			_scriptLife->doLife(a);
 		}
 
 		processActorSamplePosition(a);
@@ -980,14 +1001,14 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 						if (!_actor->_cropBottomScreen) {
 							_animations->initAnim(AnimationTypes::kDrawn, AnimType::kAnimationSet, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 						}
-						const IVec3 &projPos = _renderer->projectPositionOnScreen(actor->pos() - _grid->_camera);
+						const IVec3 &projPos = _renderer->projectPositionOnScreen(actor->posObj() - _grid->_camera);
 						actor->_controlMode = ControlMode::kNoMove;
 						actor->setLife(-1);
 						_actor->_cropBottomScreen = projPos.y;
 						actor->_staticFlags.bDoesntCastShadow = 1;
 					}
 				} else {
-					_sound->playSample(Samples::Explode, 1, actor->pos(), a);
+					_sound->playSample(Samples::Explode, 1, actor->posObj(), a);
 					if (actor->_bonusParameter.cloverleaf || actor->_bonusParameter.kashes || actor->_bonusParameter.key || actor->_bonusParameter.lifepoints || actor->_bonusParameter.magicpoints) {
 						if (!actor->_bonusParameter.givenNothing) {
 							_actor->giveExtraBonus(a);
@@ -998,7 +1019,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 			}
 		}
 
-		if (actor->_life <= 0) {
+		if (actor->_lifePoint <= 0) {
 			if (IS_HERO(a)) {
 				if (actor->_dynamicFlags.bAnimEnded) {
 					if (_gameState->_inventoryNumLeafs > 0) { // use clover leaf automaticaly
@@ -1021,7 +1042,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 						_gameState->setLeafs(1);
 						_gameState->setMaxMagicPoints();
 						_actor->_heroBehaviour = _actor->_previousHeroBehaviour;
-						actor->_angle = _actor->_previousHeroAngle;
+						actor->_beta = _actor->_previousHeroAngle;
 						actor->setLife(kActorMaxLife);
 
 						if (_scene->_previousSceneIdx != _scene->_currentSceneIdx) {
@@ -1071,7 +1092,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 bool TwinEEngine::gameEngineLoop() {
 	_redraw->_firstTime = true;
 	_screens->_fadePalette = true;
-	_movements->setActorAngle(ANGLE_0, -ANGLE_90, ANGLE_1, &_loopMovePtr);
+	_movements->setActorAngle(LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_1, &_loopMovePtr);
 
 	while (_sceneLoopState == SceneLoopState::Continue) {
 		if (runGameEngine()) {

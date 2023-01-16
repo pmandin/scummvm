@@ -49,8 +49,12 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 		_renderMode = Common::kRenderAmiga;
 	} else if (isAtariST()) {
 		_renderMode = Common::kRenderAtariST;
+	} else if (isCPC()) {
+		_renderMode = Common::kRenderCPC;
 	} else if (isSpectrum()) {
 		_renderMode = Common::kRenderZX;
+	} else if (isC64()) {
+		_renderMode = Common::kRenderC64;
 	}
 
 	_variant = gd->flags;
@@ -67,19 +71,22 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	if (!Common::parseBool(ConfMan.get("disable_sensors"), _disableSensors))
 		error("Failed to parse bool from disable_sensors option");
 
+	if (!Common::parseBool(ConfMan.get("disable_falling"), _disableFalling))
+		error("Failed to parse bool from disable_falling option");
+
 	_startArea = 0;
 	_startEntrance = 0;
 	_currentArea = nullptr;
 	_rotation = Math::Vector3d(0, 0, 0);
 	_position = Math::Vector3d(0, 0, 0);
 	_lastPosition = Math::Vector3d(0, 0, 0);
+	_hasFallen = false;
 	_velocity = Math::Vector3d(0, 0, 0);
 	_cameraFront = Math::Vector3d(0, 0, 0);
 	_cameraRight = Math::Vector3d(0, 0, 0);
 	_yaw = 0;
 	_pitch = 0;
 	_upVector = Math::Vector3d(0, 1, 0);
-	_movementSpeed = 1.5f;
 	_mouseSensitivity = 0.25f;
 	_demoMode = false;
 	_shootMode = false;
@@ -89,6 +96,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_currentDemoMousePosition = _crossairPosition;
 	_flyMode = false;
 	_noClipMode = false;
+	_forceEndGame = false;
 	_playerHeightNumber = 1;
 	_angleRotationIndex = 0;
 
@@ -110,7 +118,6 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_fontLoaded = false;
 	_dataBundle = nullptr;
 
-	_lastMousePos = Common::Point(0, 0);
 	_lastFrame = 0;
 	_nearClipPlane = 2;
 	_farClipPlane = 8192 + 1802; // Added some extra distance to avoid flickering
@@ -177,10 +184,15 @@ void FreescapeEngine::drawBorder() {
 }
 
 void FreescapeEngine::drawTitle() {
-	if (!_title)
-		return;
-
 	_gfx->setViewport(_fullscreenViewArea);
+	if (isSpectrum()) {
+		Graphics::Surface *title = new Graphics::Surface();
+		title->create(320, 200, _title->format);
+		title->copyRectToSurface(*_title, (320 - _title->w) / 2, (200 - _title->h) / 2, Common::Rect(_title->w, _title->h));
+		_title->free();
+		delete _title;
+		_title = title;
+	}
 	if (!_titleTexture)
 		_titleTexture = _gfx->createTexture(_title);
 	_gfx->drawTexturedRect2D(_fullscreenViewArea, _fullscreenViewArea, _titleTexture);
@@ -343,6 +355,8 @@ void FreescapeEngine::processInput() {
 
 		switch (event.type) {
 		case Common::EVENT_KEYDOWN:
+			if (_hasFallen)
+				break;
 			switch (event.kbd.keycode) {
 			case Common::KEYCODE_o:
 			case Common::KEYCODE_UP:
@@ -404,8 +418,13 @@ void FreescapeEngine::processInput() {
 				break;
 			case Common::KEYCODE_SPACE:
 				_shootMode = !_shootMode;
-				if (!_shootMode)
-					centerCrossair();
+				centerCrossair();
+				if (!_shootMode) {
+					g_system->lockMouse(true);
+				} else {
+					g_system->lockMouse(false);
+					g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
+				}
 				break;
 			case Common::KEYCODE_i:
 				drawInfoMenu();
@@ -426,6 +445,8 @@ void FreescapeEngine::processInput() {
 			break;
 
 		case Common::EVENT_MOUSEMOVE:
+			if (_hasFallen)
+				break;
 			mousePos = event.mouse;
 
 			if (_demoMode)
@@ -433,37 +454,23 @@ void FreescapeEngine::processInput() {
 
 			if (_shootMode) {
 				_crossairPosition = mousePos;
+				if (mousePos.x < _viewArea.left)
+					g_system->warpMouse(_viewArea.left + 1, _crossairPosition.y);
+				else if  (mousePos.x > _viewArea.right)
+					g_system->warpMouse(_viewArea.right - 1, _crossairPosition.y);
+				else if (mousePos.y < _viewArea.top)
+					g_system->warpMouse(_crossairPosition.x, _viewArea.top + 1);
+				else if  (mousePos.y > _viewArea.bottom)
+					g_system->warpMouse(_crossairPosition.x, _viewArea.bottom - 1);
 				break;
 			}
 
-			if (mousePos.x <= 5 || mousePos.x >= _screenW - 5) {
-				g_system->warpMouse(_screenW / 2, mousePos.y);
-
-				_lastMousePos.x = _screenW / 2;
-				_lastMousePos.y = mousePos.y;
-				if (mousePos.x <= 5)
-					mousePos.x = _lastMousePos.x + 3;
-				else
-					mousePos.x = _lastMousePos.x - 3;
-
-				mousePos.y = _lastMousePos.y;
-
-			} else if (mousePos.y <= 5 || mousePos.y >= _screenH - 5) {
-				g_system->warpMouse(mousePos.x, _screenH / 2);
-				_lastMousePos.x = mousePos.x;
-				_lastMousePos.y = _screenH / 2;
-				if (mousePos.y <= 5)
-					mousePos.y = _lastMousePos.y + 3;
-				else
-					mousePos.y = _lastMousePos.y - 3;
-
-				mousePos.x = _lastMousePos.x;
-			}
-			rotate(_lastMousePos, mousePos);
-			_lastMousePos = mousePos;
+			rotate(event.relMouse.x * _mouseSensitivity, event.relMouse.y * _mouseSensitivity);
 			break;
 
 		case Common::EVENT_LBUTTONDOWN:
+			if (_hasFallen)
+				break;
 			shoot();
 			break;
 
@@ -498,29 +505,16 @@ Common::Error FreescapeEngine::run() {
 
 	_gfx->convertImageFormatIfNecessary(_title);
 	_gfx->convertImageFormatIfNecessary(_border);
+	g_system->lockMouse(true);
 
 	// Simple main event loop
 	int saveSlot = ConfMan.getInt("save_slot");
 	centerCrossair();
-
-	if (_title) {
-		if (saveSlot == -1) {
-			drawTitle();
-			_gfx->flipBuffer();
-			g_system->updateScreen();
-			g_system->delayMillis(3000);
-		}
-	}
-
+	if (saveSlot == -1)
+		titleScreen();
 	loadBorder(); // Border is load unmodified
-	if (_border && (isDOS() || isSpectrum())) {
-		if (saveSlot == -1) {
-			drawBorder();
-			_gfx->flipBuffer();
-			g_system->updateScreen();
-			g_system->delayMillis(3000);
-		}
-	}
+	if (saveSlot == -1)
+		borderScreen();
 	processBorder(); // Border is processed to use during the game
 
 	if (saveSlot >= 0) { // load the savegame
@@ -532,7 +526,7 @@ Common::Error FreescapeEngine::run() {
 	bool endGame = false;
 	// Draw first frame
 
-	rotate(_lastMousePos, _lastMousePos);
+	rotate(0, 0);
 	drawFrame();
 	_gfx->flipBuffer();
 	g_system->updateScreen();
@@ -561,6 +555,9 @@ Common::Error FreescapeEngine::run() {
 
 	return Common::kNoError;
 }
+
+void FreescapeEngine::titleScreen() {}
+void FreescapeEngine::borderScreen() {}
 
 void FreescapeEngine::loadBorder() {
 	if (_border)
@@ -618,31 +615,6 @@ void FreescapeEngine::rotate(float xoffset, float yoffset) {
 	updateCamera();
 }
 
-void FreescapeEngine::rotate(Common::Point lastMousePos, Common::Point mousePos) {
-	if (lastMousePos != Common::Point(0, 0)) {
-		float xoffset = mousePos.x - lastMousePos.x;
-		float yoffset = mousePos.y - lastMousePos.y;
-
-		xoffset *= _mouseSensitivity;
-		yoffset *= _mouseSensitivity;
-
-		_yaw -= xoffset;
-		_pitch += yoffset;
-
-		// Make sure that when pitch is out of bounds, screen doesn't get flipped
-		if (_pitch > 360.0f)
-			_pitch -= 360.0f;
-		if (_pitch < 0.0f)
-			_pitch += 360.0f;
-
-		if (_yaw > 360.0f)
-			_yaw -= 360.0f;
-		if (_yaw < 0.0f)
-			_yaw += 360.0f;
-	}
-	updateCamera();
-}
-
 void FreescapeEngine::updateCamera() {
 	_cameraFront = directionToVector(_pitch, _yaw);
 	// _right = _front x _up;
@@ -666,7 +638,7 @@ void FreescapeEngine::drawStringInSurface(const Common::String &str, int x, int 
 	Common::String ustr = str;
 	ustr.toUppercase();
 
-	if (isDOS() || isSpectrum()) {
+	if (isDOS() || isSpectrum() || isCPC() || isC64()) {
 		for (uint32 c = 0; c < ustr.size(); c++) {
 			assert(ustr[c] >= 32);
 			for (int j = 0; j < 6; j++) {
@@ -846,5 +818,15 @@ void FreescapeEngine::removeTimers() {
 	g_system->getTimerManager()->removeTimerProc(&countdownCallback);
 }
 
+void FreescapeEngine::pauseEngineIntern(bool pause) {
+	Engine::pauseEngineIntern(pause);
+
+	// TODO: Handle the viewport here
+
+	// Unlock the mouse so that the cursor is usable when the GMM opens
+	if (!_shootMode) {
+		_system->lockMouse(!pause);
+	}
+}
 
 } // namespace Freescape

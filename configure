@@ -143,7 +143,7 @@ _tremolo=no
 _flac=auto
 _mad=auto
 _opl2lpt=no
-_retrowave=no
+_retrowave=auto
 _alsa=auto
 _seq_midi=auto
 _sndio=auto
@@ -836,10 +836,11 @@ Special configuration feature:
                                            ios7 for Apple iPhone / iPad (iOS >= 7)
                                            ios7-arm64 for Apple iPhone / iPad (iOS >= 7, 64-bit)
                                            maemo for Nokia Maemo
+                                           miyoo for 1st generation Miyoo
                                            n64 for Nintendo 64
                                            opendingux-gcw0 for GCW0 with Opendingux Beta
                                            opendingux-lepus for Lepus with Opendingux Beta
-                                           opendingux-rg99 for RG99 with Opendingux Beta
+                                           opendingux-rs90 for RS90 and RG99 with Opendingux Beta
                                            openpandora for OpenPandora
                                            ouya for OUYA
                                            ps3 for PlayStation 3
@@ -1640,6 +1641,11 @@ maemo)
 	datarootdir='${prefix}/share'
 	datadir=/opt/scummvm/share
 	docdir='${datarootdir}/doc/scummvm'
+	;;
+miyoo)
+	_host_os=linux
+	_host_cpu=arm
+	_host_alias=arm-linux
 	;;
 n64)
 	_host_os=n64
@@ -2616,6 +2622,8 @@ case $_host_os in
 		_port_mk="backends/platform/sdl/amigaos/amigaos.mk"
 		add_line_to_config_mk 'AMIGAOS = 1'
 		append_var CXXFLAGS "-mlongcall"
+		# Dependencies might also be compiled with stack protection
+		append_var LDFLAGS "-fstack-protector"
 		# Enable full optimizations for non-debug builds
 		if test "$_debug_build" = no; then
 			_optimization_level=-O3
@@ -3508,6 +3516,33 @@ if test -n "$_host"; then
 			append_var LDFLAGS "-static-libgcc"
 			append_var LIBS "-laudio"
 			;;
+		miyoo)
+			_sysroot=`$CXX --print-sysroot`
+			_sdlpath=$_sysroot/usr/bin
+			append_var DEFINES  "-DMIYOO -DREDUCE_MEMORY_USAGE -DUNCACHED_PLUGINS"
+			append_var CXXFLAGS "-march=armv5te -mtune=arm926ej-s -ffast-math -fomit-frame-pointer -ffunction-sections -fdata-sections"
+			append_var LDFLAGS  "-march=armv5te -mtune=arm926ej-s -ffast-math -fomit-frame-pointer -ffunction-sections -fdata-sections"
+			append_var LDFLAGS  "-O3 -Wl,--as-needed,--gc-sections"
+			_vkeybd=yes
+			_alsa=no
+			# Explicitly use tremor
+			_vorbis=no
+			_tremor=yes
+			_mt32emu=no
+			_timidity=no
+			_fluidsynth=no
+			_highres=no
+			# TODO: There's some problem with libFLAC availability. Fix and reenable
+			_flac=no
+			_seq_midi=no
+			_nuked_opl=no
+			_curl=no
+			_optimization_level=-O3
+			_backend="miyoo"
+			_port_mk="backends/platform/sdl/miyoo/miyoo.mk"
+			add_line_to_config_mk 'MIYOO = 1'
+			add_line_to_config_mk "MIYOO_TARGET = miyoo"
+			;;
 		n64)
 			append_var CXXFLAGS "-mno-extern-sdata"
 			append_var CXXFLAGS "--param max-inline-insns-auto=20"
@@ -3548,10 +3583,14 @@ if test -n "$_host"; then
 		opendingux-*)
 			_sysroot=`$CXX --print-sysroot`
 			_sdlpath=$_sysroot/usr/bin
-			append_var DEFINES  "-DDINGUX -DOPENDINGUX -DREDUCE_MEMORY_USAGE"
-			append_var CXXFLAGS "-ffast-math -fdata-sections -ffunction-sections -mplt -mno-shared"
-			append_var LDFLAGS  "-ffast-math -fdata-sections -ffunction-sections -mplt -mno-shared"
+			append_var DEFINES  "-DDINGUX -DOPENDINGUX -DREDUCE_MEMORY_USAGE -DUNCACHED_PLUGINS"
+			append_var CXXFLAGS "-ffast-math -fdata-sections -ffunction-sections -mplt"
+			append_var LDFLAGS  "-ffast-math -fdata-sections -ffunction-sections -mplt"
 			append_var LDFLAGS  "-O3 -Wl,--as-needed,--gc-sections"
+			if [ x"$_dynamic_modules" != xyes ]; then
+				append_var CXXFLAGS "-mno-shared"
+				append_var LDFLAGS  "-mno-shared"
+			fi
 			_vkeybd=yes
 			_alsa=no
 			_vorbis=no
@@ -3575,11 +3614,14 @@ if test -n "$_host"; then
 					_highres=no
 					_build_hq_scalers=no
 					;;
-				opendingux-rg99)
+				opendingux-rs90)
 					append_var DEFINES "-DRS90 -DDISABLE_FANCY_THEMES"
 					_16bit=no
 					_highres=no
-					_build_hq_scalers=no
+					# Scaling is handled by IPU
+					_build_aspect=no
+					_build_scalers=no
+					_host=opendingux-rs90
 					;;
 				*)
 					echo "WARNING: Unknown OpenDingux target"
@@ -3778,7 +3820,7 @@ case $_backend in
 		append_var DEFINES "-DUSE_NULL_DRIVER"
 		_text_console=yes
 		;;
-	opendingux)
+	opendingux | miyoo)
 		_sdlconfig=sdl-config
 		_sdl=auto
 		append_var MODULES "backends/platform/sdl"
@@ -3976,7 +4018,7 @@ fi
 # Enable 16bit support only for backends which support it
 #
 case $_backend in
-	3ds | android | dingux | dc | ds | gph | iphone | ios7 | maemo | null | opendingux | openpandora | psp | psp2 | samsungtv | sdl | switch | wii)
+	3ds | android | dingux | dc | ds | gph | iphone | ios7 | maemo | null | opendingux | miyoo | openpandora | psp | psp2 | samsungtv | sdl | switch | wii)
 		if test "$_16bit" = auto ; then
 			_16bit=yes
 		else
@@ -4651,18 +4693,18 @@ echo "$_opl2lpt"
 # Check for retrowave for RetroWave OPL3
 #
 echocheck "RetroWave OPL3"
-if test "$_retrowave" = yes ; then
+if test "$_retrowave" = auto ; then
 	_retrowave=no
 	cat > $TMPC << EOF
 #include <RetroWaveLib/RetroWave.h>
 RetroWaveContext context;
 int main(void) { retrowave_init(&context); return 0; }
 EOF
-	cc_check $RETROWAVE_CFLAGS $RETROWAVE_LIBS -lretrowave && \
+	cc_check $RETROWAVE_CFLAGS $RETROWAVE_LIBS -lRetroWave && \
 	_retrowave=yes
 fi
 if test "$_retrowave" = yes; then
-	append_var LIBS "$RETROWAVE_LIBS -lretrowave"
+	append_var LIBS "$RETROWAVE_LIBS -lRetroWave"
 	append_var INCLUDES "$RETROWAVE_CFLAGS"
 fi
 define_in_config_if_yes "$_retrowave" 'USE_RETROWAVE'

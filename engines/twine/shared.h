@@ -190,7 +190,28 @@ enum class ActionType : uint8 {
 	ACTION_THROW_3D_ALPHA = 19,
 	ACTION_THROW_3D_SEARCH = 20,
 	ACTION_THROW_3D_MAGIC = 21,
-	ACTION_LAST
+	// lba2
+	ACTION_SUPER_HIT = 22,
+	ACTION_THROW_OBJ_3D = 23,
+	ACTION_PATH = 24,
+	ACTION_FLOW = 25,
+	ACTION_FLOW_3D = 26,
+	ACTION_THROW_DART = 27,
+	ACTION_SHIELD = 28,
+	ACTION_SAMPLE_MAGIC = 29,
+	ACTION_THROW_3D_CONQUE = 30,
+	ACTION_ZV_ANIMIT = 31,
+	ACTION_IMPACT = 32,
+	ACTION_RENVOIE = 33,
+	ACTION_RENVOYABLE = 34,
+	ACTION_TRANSPARENT = 35,
+	ACTION_SCALE = 36,
+	ACTION_LEFT_JUMP = 37,
+	ACTION_RIGHT_JUMP = 38,
+	ACTION_NEW_SAMPLE = 39,
+	ACTION_IMPACT_3D = 40,
+	ACTION_THROW_MAGIC_EXTRA = 41,
+	ACTION_THROW_FOUDRE = 42
 };
 
 enum class ShapeType {
@@ -221,7 +242,14 @@ enum class ControlMode {
 	kFollow2 = 4,
 	kTrackAttack = 5,
 	kSameXZ = 6,
-	kRandom = 7
+	kRandom = 7, // kPinguin in lba2
+	// lba2
+	kWagon = 8,
+	kCircle = 9, // Beta = Tangent lines to circles
+	kCircle2 = 10,
+	kSameXYBeta = 11,
+	kBuggy = 12,
+	kBuggyManual = 13
 };
 
 enum class AnimationTypes {
@@ -324,7 +352,11 @@ enum class ZoneType {
 	kGrid = 3,     // Set disappearing Grid fragment
 	kObject = 4,   // Give bonus
 	kText = 5,     // Displays text message
-	kLadder = 6    // Hero can climb on it
+	kLadder = 6,   // Hero can climb on it
+	// lba2
+	kEscalator = 7,
+	kHit = 8,
+	kRail = 9
 };
 
 #define SCENE_CEILING_GRID_FADE_1 (-1)
@@ -593,29 +625,34 @@ struct TwineImage {
 	}
 };
 
-// lba2 does from 0 to 0x1000
-// lba1 angles
-// TODO: wrap in a class to be able to handle lba1 and lba2
-#define ANGLE_360 1024
-#define ANGLE_351 1000
-#define ANGLE_334 950
-#define ANGLE_315 896
-#define ANGLE_270 768
-#define ANGLE_225 640
-#define ANGLE_210 600
-#define ANGLE_180 512
-#define ANGLE_140 400
-#define ANGLE_135 384
-#define ANGLE_90 256
-#define ANGLE_70 200
-#define ANGLE_63 180
-#define ANGLE_45 128
-#define ANGLE_22_5 64
-#define ANGLE_17 50
-#define ANGLE_11_25 32
-#define ANGLE_2 8 // 1.67
-#define ANGLE_1 5 // 1.75
-#define ANGLE_0 0
+struct LBAAngles {
+	static int32 ANGLE_360;
+	static int32 ANGLE_351;
+	static int32 ANGLE_334;
+	static int32 ANGLE_315;
+	static int32 ANGLE_270;
+	static int32 ANGLE_225;
+	static int32 ANGLE_210;
+	static int32 ANGLE_180;
+	static int32 ANGLE_157_5;
+	static int32 ANGLE_140;
+	static int32 ANGLE_135;
+	static int32 ANGLE_90;
+	static int32 ANGLE_70;
+	static int32 ANGLE_63;
+	static int32 ANGLE_45;
+	static int32 ANGLE_22_5;
+	static int32 ANGLE_17;
+	static int32 ANGLE_11_25;
+	static int32 ANGLE_2;
+	static int32 ANGLE_1;
+	static int32 ANGLE_0;
+
+	static void init(int factor);
+
+	static void lba1();
+	static void lba2();
+};
 
 #define VIEW_X0 (-50)
 #define VIEW_Y0 (-30)
@@ -623,10 +660,10 @@ struct TwineImage {
 #define VIEW_Y1(engine) ((engine)->height() + 100)
 
 inline int32 NormalizeAngle(int32 angle) {
-	if (angle < -ANGLE_180) {
-		angle += ANGLE_360;
-	} else if (angle > ANGLE_180) {
-		angle -= ANGLE_360;
+	if (angle < -LBAAngles::ANGLE_180) {
+		angle += LBAAngles::ANGLE_360;
+	} else if (angle > LBAAngles::ANGLE_180) {
+		angle -= LBAAngles::ANGLE_360;
 	}
 	return angle;
 }
@@ -647,12 +684,12 @@ inline constexpr int32 FromAngle(int32 angle) {
 	return angle;
 }
 
-inline constexpr double AngleToRadians(int32 angle) {
-	return 2.0 * M_PI * angle / (double)ANGLE_360;
+inline double AngleToRadians(int32 angle) {
+	return 2.0 * M_PI * angle / (double)LBAAngles::ANGLE_360;
 }
 
-inline constexpr int32 ClampAngle(int32 angle) {
-	return angle & (ANGLE_360 - 1);
+inline int32 ClampAngle(int32 angle) {
+	return angle & (LBAAngles::ANGLE_360 - 1);
 }
 
 template<typename T>

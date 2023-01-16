@@ -37,15 +37,16 @@ namespace MTropolis {
 
 class CompoundVarLoader : public ISaveReader {
 public:
-	explicit CompoundVarLoader(RuntimeObject *object);
+	CompoundVarLoader(Runtime *runtime, RuntimeObject *object);
 
 	bool readSave(Common::ReadStream *stream, uint32 saveFileVersion) override;
 
 private:
+	Runtime *_runtime;
 	RuntimeObject *_object;
 };
 
-CompoundVarLoader::CompoundVarLoader(RuntimeObject *object) : _object(object) {
+CompoundVarLoader::CompoundVarLoader(Runtime *runtime, RuntimeObject *object) : _runtime(runtime), _object(object) {
 }
 
 bool CompoundVarLoader::readSave(Common::ReadStream *stream, uint32 saveFileVersion) {
@@ -53,7 +54,7 @@ bool CompoundVarLoader::readSave(Common::ReadStream *stream, uint32 saveFileVers
 		return false;
 
 	Modifier *modifier = static_cast<Modifier *>(_object);
-	Common::SharedPtr<ModifierSaveLoad> saveLoad = modifier->getSaveLoad();
+	Common::SharedPtr<ModifierSaveLoad> saveLoad = modifier->getSaveLoad(_runtime);
 	if (!saveLoad)
 		return false;
 
@@ -403,7 +404,7 @@ VThreadState SaveAndRestoreModifier::consumeMessage(Runtime *runtime, const Comm
 	bool isPrompt = (_filePath == "Ask User");
 
 	if (_saveWhen.respondsTo(msg->getEvent())) {
-		CompoundVarSaver saver(obj);
+		CompoundVarSaver saver(runtime, obj);
 
 		const Graphics::ManagedSurface *screenshotOverrideManaged = runtime->getSaveScreenshotOverride().get();
 		const Graphics::Surface *screenshotOverride = nullptr;
@@ -423,7 +424,7 @@ VThreadState SaveAndRestoreModifier::consumeMessage(Runtime *runtime, const Comm
 		}
 		return kVThreadReturn;
 	} else if (_restoreWhen.respondsTo(msg->getEvent())) {
-		CompoundVarLoader loader(obj);
+		CompoundVarLoader loader(runtime, obj);
 
 		bool succeeded = false;
 		if (isPrompt)
@@ -901,6 +902,57 @@ Common::SharedPtr<Modifier> PathMotionModifier::shallowClone() const {
 
 const char *PathMotionModifier::getDefaultName() const {
 	return "Path Motion Modifier";
+}
+
+
+SimpleMotionModifier::SimpleMotionModifier() : _motionType(kMotionTypeIntoScene), _directionFlags(0), _steps(0), _delayMSecTimes4800(0) {
+}
+
+bool SimpleMotionModifier::load(ModifierLoaderContext &context, const Data::SimpleMotionModifier &data) {
+	if (!loadTypicalHeader(data.modHeader))
+		return false;
+
+	if (!_executeWhen.load(data.executeWhen) || !_terminateWhen.load(data.terminateWhen))
+		return false;
+
+	_directionFlags = data.directionFlags;
+	_steps = data.steps;
+	_motionType = static_cast<MotionType>(data.motionType);
+
+	return true;
+}
+
+bool SimpleMotionModifier::respondsToEvent(const Event &evt) const {
+	return _executeWhen.respondsTo(evt) || _terminateWhen.respondsTo(evt);
+}
+
+VThreadState SimpleMotionModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
+	if (_executeWhen.respondsTo(msg->getEvent())) {
+#ifdef MTROPOLIS_DEBUG_ENABLE
+		if (Debugger *debugger = runtime->debugGetDebugger())
+			debugger->notify(kDebugSeverityError, "Simple Motion Modifier was supposed to execute, but is not implemented");
+#endif
+		return kVThreadReturn;
+	}
+	if (_terminateWhen.respondsTo(msg->getEvent())) {
+#ifdef MTROPOLIS_DEBUG_ENABLE
+		if (Debugger *debugger = runtime->debugGetDebugger())
+			debugger->notify(kDebugSeverityError, "Simple Motion Modifier was supposed to terminate, but is not implemented");
+#endif
+		return kVThreadReturn;
+	}
+	return kVThreadReturn;
+}
+
+void SimpleMotionModifier::disable(Runtime *runtime) {
+}
+
+Common::SharedPtr<Modifier> SimpleMotionModifier::shallowClone() const {
+	return Common::SharedPtr<Modifier>(new SimpleMotionModifier(*this));
+}
+
+const char *SimpleMotionModifier::getDefaultName() const {
+	return "Simple Motion Modifier";
 }
 
 bool DragMotionModifier::load(ModifierLoaderContext &context, const Data::DragMotionModifier &data) {
@@ -1734,22 +1786,37 @@ bool CollisionDetectionMessengerModifier::respondsToEvent(const Event &evt) cons
 }
 
 VThreadState CollisionDetectionMessengerModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
-	if (_enableWhen.respondsTo(msg->getEvent())) {
-		if (!_isActive) {
-			_isActive = true;
-			_runtime = runtime;
+	// If we get a message that enables AND disables this at the same time, then we need to detect collisions and fire them,
+	// then disable this element.
+	// MTI depends on this behavior for the save game menu.
 
-			runtime->addCollider(this);
-		}
+	if (_disableWhen.respondsTo(msg->getEvent())) {
+		runtime->getVThread().pushTask("CollisionDetectionModifier::disableTask", this, &CollisionDetectionMessengerModifier::disableTask);
+	}
+	if (_enableWhen.respondsTo(msg->getEvent())) {
+		runtime->getVThread().pushTask("CollisionDetectionModifier::enableTask", this, &CollisionDetectionMessengerModifier::enableTask);
+
 		_incomingData = msg->getValue();
 		if (_incomingData.getType() == DynamicValueTypes::kList)
 			_incomingData.setList(_incomingData.getList()->clone());
 		_triggerSource = msg->getSource();
-	}
-	if (_disableWhen.respondsTo(msg->getEvent())) {
-		disable(runtime);
+		_runtime = runtime;
 	}
 
+	return kVThreadReturn;
+}
+
+VThreadState CollisionDetectionMessengerModifier::enableTask(const EnableTaskData &taskData) {
+	if (!_isActive) {
+		_isActive = true;
+		_runtime->addCollider(this);
+		_runtime->checkCollisions(this);
+	}
+	return kVThreadReturn;
+}
+
+VThreadState CollisionDetectionMessengerModifier::disableTask(const DisableTaskData &taskData) {
+	disable(_runtime);
 	return kVThreadReturn;
 }
 
@@ -2322,8 +2389,8 @@ void CompoundVariableModifier::disable(Runtime *runtime) {
 	// Do nothing I guess, no variables can be disabled
 }
 
-Common::SharedPtr<ModifierSaveLoad> CompoundVariableModifier::getSaveLoad() {
-	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
+Common::SharedPtr<ModifierSaveLoad> CompoundVariableModifier::getSaveLoad(Runtime *runtime) {
+	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(runtime, this));
 }
 
 IModifierContainer *CompoundVariableModifier::getChildContainer() {
@@ -2411,9 +2478,55 @@ Modifier *CompoundVariableModifier::findChildByName(Runtime *runtime, const Comm
 CompoundVariableModifier::SaveLoad::ChildSaveLoad::ChildSaveLoad() : modifier(nullptr) {
 }
 
-CompoundVariableModifier::SaveLoad::SaveLoad(CompoundVariableModifier *modifier) /* : _modifier(modifier) */ {
+CompoundVariableModifier::SaveLoad::SaveLoad(Runtime *runtime, CompoundVariableModifier *modifier) /* : _modifier(modifier) */ {
+	// Gross hacks for MTI save games.
+	//
+	// This looks like it's due to some kind of divergence between mTropolis 1.1 and whatever
+	// MTI shipped with.  MTI's saves are done using a compound variable named "MTI" in the Load/Save scene
+	// which contains aliases to compound vars a, b, c, d, and g.  While these are aliases to the same globals
+	// as are used elsewhere (unlike the "billyState" hack), mTropolis 1.1 will DUPLICATE compound variables children
+	// unless the children themselves are aliases, which is not the case in MTI.
+	//
+	// Consequently, the default behavior here is that the compounds in the Load/Save menu will not reference the
+	// children of the aliases compound.  So, we need to patch those references here.
+	bool isMTIHackG = false;
+	bool isMTIHackGlobalContainer = false;
+	if (runtime->getHacks().mtiVariableReferencesHack) {
+		const Common::String &name = modifier->getName();
+		if (name == "g") {
+			isMTIHackG = true;
+		} else if (name == "a" || name == "b" || name == "c" || name == "d") {
+			isMTIHackGlobalContainer = true;
+		}
+	}
+
+	if (isMTIHackG) {
+		// For "g" use the "g" in the project instead
+		for (const Common::SharedPtr<Modifier> &projChild : runtime->getProject()->getModifiers()) {
+			if (projChild->getName() == "g" && projChild->isCompoundVariable()) {
+				modifier = static_cast<CompoundVariableModifier *>(projChild.get());
+				break;
+			}
+		}
+	}
+
 	for (const Common::SharedPtr<Modifier> &child : modifier->_children) {
-		Common::SharedPtr<ModifierSaveLoad> childSL = child->getSaveLoad();
+		if (isMTIHackGlobalContainer) {
+			Common::SharedPtr<Modifier> globalVarModifier = runtime->getProject()->findGlobalVarWithName(child->getName());
+
+			if (globalVarModifier) {
+				Common::SharedPtr<ModifierSaveLoad> childSL = globalVarModifier->getSaveLoad(runtime);
+
+				ChildSaveLoad childSaveLoad;
+				childSaveLoad.saveLoad = childSL;
+				childSaveLoad.modifier = globalVarModifier.get();
+				_childrenSaveLoad.push_back(childSaveLoad);
+
+				continue;
+			}
+		}
+
+		Common::SharedPtr<ModifierSaveLoad> childSL = child->getSaveLoad(runtime);
 		if (childSL) {
 			ChildSaveLoad childSaveLoad;
 			childSaveLoad.saveLoad = childSL;
@@ -2503,7 +2616,7 @@ const char *BooleanVariableModifier::getDefaultName() const {
 BooleanVariableStorage::BooleanVariableStorage() : _value(false) {
 }
 
-Common::SharedPtr<ModifierSaveLoad> BooleanVariableStorage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> BooleanVariableStorage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 
@@ -2547,7 +2660,7 @@ bool IntegerVariableModifier::load(ModifierLoaderContext& context, const Data::I
 IntegerVariableStorage::IntegerVariableStorage() : _value(0) {
 }
 
-Common::SharedPtr<ModifierSaveLoad> IntegerVariableStorage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> IntegerVariableStorage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 
@@ -2683,7 +2796,7 @@ const char *IntegerRangeVariableModifier::getDefaultName() const {
 IntegerRangeVariableStorage::IntegerRangeVariableStorage() {
 }
 
-Common::SharedPtr<ModifierSaveLoad> IntegerRangeVariableStorage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> IntegerRangeVariableStorage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 
@@ -2796,7 +2909,7 @@ const char *VectorVariableModifier::getDefaultName() const {
 VectorVariableStorage::VectorVariableStorage() {
 }
 
-Common::SharedPtr<ModifierSaveLoad> VectorVariableStorage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> VectorVariableStorage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 
@@ -2911,7 +3024,7 @@ const char *PointVariableModifier::getDefaultName() const {
 PointVariableStorage::PointVariableStorage() {
 }
 
-Common::SharedPtr<ModifierSaveLoad> PointVariableStorage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> PointVariableStorage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 
@@ -2995,7 +3108,7 @@ const char *FloatingPointVariableModifier::getDefaultName() const {
 FloatingPointVariableStorage::FloatingPointVariableStorage() : _value(0.0) {
 }
 
-Common::SharedPtr<ModifierSaveLoad> FloatingPointVariableStorage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> FloatingPointVariableStorage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 
@@ -3077,7 +3190,7 @@ const char *StringVariableModifier::getDefaultName() const {
 StringVariableStorage::StringVariableStorage() {
 }
 
-Common::SharedPtr<ModifierSaveLoad> StringVariableStorage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> StringVariableStorage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 
@@ -3173,7 +3286,7 @@ const char *ObjectReferenceVariableModifierV1::getDefaultName() const {
 ObjectReferenceVariableV1Storage::ObjectReferenceVariableV1Storage() {
 }
 
-Common::SharedPtr<ModifierSaveLoad> ObjectReferenceVariableV1Storage::getSaveLoad() {
+Common::SharedPtr<ModifierSaveLoad> ObjectReferenceVariableV1Storage::getSaveLoad(Runtime *runtime) {
 	return Common::SharedPtr<ModifierSaveLoad>(new SaveLoad(this));
 }
 

@@ -534,7 +534,7 @@ VThreadState MovieElement::consumeCommand(Runtime *runtime, const Common::Shared
 		return kVThreadReturn;
 	}
 
-	return Structural::consumeCommand(runtime, msg);
+	return VisualElement::consumeCommand(runtime, msg);
 }
 
 void MovieElement::activate() {
@@ -1553,6 +1553,28 @@ MiniscriptInstructionOutcome MToonElement::scriptSetRange(MiniscriptThread *thre
 		return scriptSetRangeTyped(thread, value.getIntRange());
 	if (value.getType() == DynamicValueTypes::kPoint)
 		return scriptSetRangeTyped(thread, value.getPoint());
+	if (value.getType() == DynamicValueTypes::kLabel) {
+		const Common::String *nameStrPtr = thread->getRuntime()->getProject()->findNameOfLabel(value.getLabel());
+		if (!nameStrPtr) {
+			thread->error("mToon range label wasn't found");
+			return kMiniscriptInstructionOutcomeFailed;
+		}
+
+		if (!_metadata) {
+			thread->error("mToon range couldn't be resolved because the metadata wasn't loaded yet");
+			return kMiniscriptInstructionOutcomeFailed;
+		}
+
+		for (const MToonMetadata::FrameRangeDef &frameRange : _metadata->frameRanges) {
+			if (caseInsensitiveEqual(frameRange.name, *nameStrPtr)) {
+				// Frame ranges in the metadata are 0-based, but setting the range is 1-based, so add 1
+				return scriptSetRangeTyped(thread, IntRange(frameRange.startFrame + 1, frameRange.endFrame + 1));
+			}
+		}
+
+		thread->error("mToon range was assigned to a label but the label doesn't exist in the mToon data");
+		return kMiniscriptInstructionOutcomeFailed;
+	}
 
 	thread->error("Invalid type for mToon range");
 	return kMiniscriptInstructionOutcomeFailed;

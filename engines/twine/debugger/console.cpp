@@ -46,6 +46,7 @@ TwinEConsole::TwinEConsole(TwinEEngine *engine) : _engine(engine), GUI::Debugger
 	registerCmd("play_midi", WRAP_METHOD(TwinEConsole, doPlayMidi));
 	registerCmd("play_music", WRAP_METHOD(TwinEConsole, doPlayMusic));
 	registerCmd("change_scene", WRAP_METHOD(TwinEConsole, doChangeScene));
+	registerCmd("change_chapter", WRAP_METHOD(TwinEConsole, doChangeChapter));
 	registerCmd("toggle_scenery_view", WRAP_METHOD(TwinEConsole, doToggleSceneryView));
 	registerCmd("magic_points", WRAP_METHOD(TwinEConsole, doAddMagicPoints));
 	registerCmd("dumpfile", WRAP_METHOD(TwinEConsole, doDumpFile));
@@ -136,7 +137,7 @@ bool TwinEConsole::doToggleSceneryView(int argc, const char **argv) {
 }
 
 bool TwinEConsole::doToggleAutoAggressive(int argc, const char **argv) {
-	TOGGLE_DEBUG(_engine->_actor->_autoAggressive, "auto aggressive\n")
+	TOGGLE_DEBUG(_engine->_actor->_combatAuto, "auto aggressive\n")
 	return true;
 }
 
@@ -180,7 +181,7 @@ bool TwinEConsole::doSetTrackObject(int argc, const char **argv) {
 
 	const int32 otherActorIdx = atoi(argv[1]);
 	const int32 offset = atoi(argv[2]);
-	_engine->_scene->getActor(otherActorIdx)->_positionInMoveScript = offset;
+	_engine->_scene->getActor(otherActorIdx)->_offsetTrack = offset;
 	return true;
 }
 
@@ -356,14 +357,14 @@ bool TwinEConsole::doListMenuText(int argc, const char **argv) {
 		textBankId = (TextBankId)atoi(argv[1]);
 	}
 	const TextBankId oldTextBankId = _engine->_text->textBank();
-	_engine->_text->initTextBank(textBankId);
+	_engine->_text->initDial(textBankId);
 	for (int32 i = 0; i < 1000; ++i) {
 		char buf[256];
 		if (_engine->_text->getMenuText((TextId)i, buf, sizeof(buf))) {
 			debugPrintf("%4i: %s\n", i, buf);
 		}
 	}
-	_engine->_text->initTextBank(oldTextBankId);
+	_engine->_text->initDial(oldTextBankId);
 	return true;
 }
 
@@ -421,6 +422,16 @@ bool TwinEConsole::doChangeScene(int argc, const char **argv) {
 	_engine->_scene->_needChangeScene = atoi(argv[1]);
 	_engine->_scene->_heroPositionType = ScenePositionType::kScene;
 	_engine->_scene->changeScene();
+	return true;
+}
+
+bool TwinEConsole::doChangeChapter(int argc, const char **argv) {
+	if (argc <= 1) {
+		debugPrintf("Expected to get a chapter index as first parameter\n");
+		return true;
+	}
+	debugPrintf("Old chapter was: %i\n", _engine->_gameState->_gameChapter);
+	_engine->_gameState->_gameChapter = (int16)atoi(argv[1]);
 	return true;
 }
 

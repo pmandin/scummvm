@@ -37,6 +37,8 @@
 #include "twine/detection.h"
 #include "twine/input.h"
 #include "twine/scene/actor.h"
+#include "twine/script/script_life.h"
+#include "twine/script/script_move.h"
 
 namespace TwinE {
 
@@ -50,7 +52,6 @@ namespace TwinE {
 /** Default frames per second */
 #define DEFAULT_FRAMES_PER_SECOND 20
 #define DEFAULT_HZ (1000 / DEFAULT_FRAMES_PER_SECOND)
-#define TO_SECONDS(x) (DEFAULT_HZ * (x))
 
 #define ORIGINAL_WIDTH 640
 #define ORIGINAL_HEIGHT 480
@@ -137,8 +138,8 @@ class Renderer;
 class Resources;
 class Scene;
 class Screens;
-class ScriptLife;
-class ScriptMove;
+class ScriptLifeV1;
+class ScriptMoveV1;
 class Holomap;
 class Sound;
 class Text;
@@ -242,6 +243,7 @@ public:
 	Common::Error loadGameStream(Common::SeekableReadStream *stream) override;
 	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
 
+	int32 toSeconds(int x) const;
 	void wipeSaveSlot(int slot);
 	SaveStateList getSaveSlots() const;
 	void autoSave();
@@ -249,6 +251,7 @@ public:
 	void pushMouseCursorVisible();
 	void popMouseCursorVisible();
 
+	bool isCDROM() const { return true; /* TODO */}
 	bool isLBA1() const { return _gameType == TwineGameType::GType_LBA; }
 	bool isLBA2() const { return _gameType == TwineGameType::GType_LBA2; }
 	bool isLBASlideShow() const { return _gameType == TwineGameType::GType_LBASHOW; }

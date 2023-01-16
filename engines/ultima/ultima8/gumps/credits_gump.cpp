@@ -20,6 +20,7 @@
  */
 
 #include "common/config-manager.h"
+#include "common/events.h"
 
 #include "ultima/ultima8/gumps/credits_gump.h"
 
@@ -139,7 +140,7 @@ void CreditsGump::run() {
 	}
 
 	if (_state == CS_CLOSING) {
-		// pout << "CreditsGump: closing" << Std::endl;
+		//debug(MM_INFO, "CreditsGump: closing");
 		Close();
 		return;
 	}
@@ -156,7 +157,7 @@ void CreditsGump::run() {
 	if (available == 0) nextblock = 0;
 
 	if (_state == CS_FINISHING && available <= 156) {
-		// pout << "CreditsGump: waiting before closing" << Std::endl;
+		//debug(MM_INFO, "CreditsGump: waiting before closing");
 		_timer = 120;
 		_state = CS_CLOSING;
 
@@ -192,7 +193,7 @@ void CreditsGump::run() {
 				continue;
 			}
 
-			// pout << "Rendering paragraph: " << line << Std::endl;
+			//debug(MM_INFO, "Rendering paragraph: %s", line.c_str());
 
 			if (line[0] == '+') {
 				// set _title
@@ -234,7 +235,7 @@ void CreditsGump::run() {
 					unsigned int remaining;
 					extractLine(line, modifier, outline);
 
-					// pout << "Rendering line: " << outline << Std::endl;
+					//debug(MM_INFO, "Rendering line: %s", outline.c.str());
 
 					switch (modifier) {
 					case '&':
@@ -251,7 +252,7 @@ void CreditsGump::run() {
 						indent = 32;
 						break;
 					case '@':
-						// pout << "CreditsGump: done, finishing" << Std::endl;
+						//debug(MM_INFO, "CreditsGump: done, finishing");
 						_state = CS_FINISHING;
 						break;
 					default:

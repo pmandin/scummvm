@@ -165,17 +165,33 @@ Common::U32String DetectionResults::generateUnknownGameReport(bool translate, ui
 	return ::generateUnknownGameReport(_detectedGames, translate, false, wordwrapAt);
 }
 
-// Sync with engines/advancedDetector.cpp
-static char flagsToMD5Prefix(uint32 flags) {
-	if (flags & kMD5MacResFork) {
+const char *md5PropToCachePrefix(MD5Properties flags) {
+	switch (flags & kMD5MacMask) {
+	case kMD5MacDataFork: {
 		if (flags & kMD5Tail)
-			return 'e';
-		return 'm';
+			return "dt";
+		return "d";
 	}
-	if (flags & kMD5Tail)
-		return 't';
 
-	return 'f';
+	case kMD5MacResOrDataFork: {
+		if (flags & kMD5Tail)
+			return "mt";
+		return "m";
+	}
+
+	case kMD5MacResFork: {
+		if (flags & kMD5Tail)
+			return "rt";
+		return "r";
+	}
+
+	default: {
+		if (flags & kMD5Tail)
+			return "ft";
+
+		return "f";
+	}
+	}
 }
 
 Common::U32String generateUnknownGameReport(const DetectedGames &detectedGames, bool translate, bool fullPath, uint32 wordwrapAt) {
@@ -224,7 +240,7 @@ Common::U32String generateUnknownGameReport(const DetectedGames &detectedGames, 
 
 		// Consolidate matched files across all engines and detection entries
 		for (FilePropertiesMap::const_iterator it = game.matchedFiles.begin(); it != game.matchedFiles.end(); it++) {
-			Common::String key = Common::String::format("%c:%s", flagsToMD5Prefix(it->_value.md5prop), it->_key.c_str());
+			Common::String key = Common::String::format("%s:%s", md5PropToCachePrefix(it->_value.md5prop), it->_key.c_str());
 			matchedFiles.setVal(key, it->_value);
 		}
 	}
@@ -235,17 +251,27 @@ Common::U32String generateUnknownGameReport(const DetectedGames &detectedGames, 
 
 	report += Common::U32String("\n\n");
 
+	Common::StringArray filenames;
 	for (FilePropertiesMap::const_iterator file = matchedFiles.begin(); file != matchedFiles.end(); ++file) {
-		Common::String addon;
+		filenames.push_back(file->_key);
+	}
+	Common::sort(filenames.begin(), filenames.end());
+	for (uint i = 0; i < filenames.size(); ++i) {
+		const FileProperties &file = matchedFiles[filenames[i]];
+		Common::String md5Prefix;
 
-		if (file->_value.md5prop & kMD5MacResFork)
-			addon += ", ADGF_MACRESFORK";
-		if (file->_value.md5prop & kMD5Tail)
-			addon += ", ADGF_TAILMD5";
+		if (file.md5prop & kMD5MacResFork)
+			md5Prefix += "r";
+		if (file.md5prop & kMD5MacDataFork)
+			md5Prefix += "d";
+		if (file.md5prop & kMD5Tail)
+			md5Prefix += "t";
+		if (!md5Prefix.empty())
+			md5Prefix += ":";
 
-		report += Common::String::format("  {\"%s\", 0, \"%s\", %lld}%s,\n",
-			Common::punycode_encodefilename(Common::U32String(&file->_key.c_str()[2])).c_str(), // Skip the md5 prefix
-			file->_value.md5.c_str(), (long long)file->_value.size, addon.c_str());
+		report += Common::String::format("  {\"%s\", 0, \"%s%s\", %lld},\n",
+			Common::punycode_encodefilename(Common::U32String(strchr(filenames[i].c_str(), ':') + 1)).c_str(), // Skip the md5 prefix
+			md5Prefix.c_str(), file.md5.c_str(), (long long)file.size);
 	}
 
 	report += Common::U32String("\n");

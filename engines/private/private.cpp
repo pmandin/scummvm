@@ -32,6 +32,8 @@
 #include "common/str.h"
 #include "common/system.h"
 #include "common/timer.h"
+#include "common/macresman.h"
+#include "common/compression/stuffit.h"
 #include "engines/util.h"
 #include "image/bmp.h"
 
@@ -134,43 +136,56 @@ Common::SeekableReadStream *PrivateEngine::loadAssets() {
 	Common::SeekableReadStream *file = nullptr;
 
 	if (isDemo() && test->open("SUPPORT/ASSETS/DEMOGAME.WIN"))
-		file = test;
-	else if (isDemo() && test->open("SUPPORT/DEMOGAME.MAC"))
-		file = test;
-	else if (test->open("SUPPORT/ASSETS/GAME.WIN")) {
-		file = test;
-	} else if (test->open("SUPPORT/GAME.MAC")) {
-		file = test;
-	} else {
-		delete test;
-		if (!_installerArchive.open("SUPPORT/ASSETS.Z"))
-			error("Failed to open SUPPORT/ASSETS.Z");
-		// if the full game is used
-		if (!isDemo()) {
-			if (_installerArchive.hasFile("GAME.DAT"))
-				file = _installerArchive.createReadStreamForMember("GAME.DAT");
-			else if (_installerArchive.hasFile("GAME.WIN"))
-				file = _installerArchive.createReadStreamForMember("GAME.WIN");
-			else
-				error("Unknown version");
-		} else {
-			// if the demo from archive.org is used
-			if (_installerArchive.hasFile("GAME.TXT"))
-				file = _installerArchive.createReadStreamForMember("GAME.TXT");
+		return test;
 
-			// if the demo from the full retail CDROM is used
-			else if (_installerArchive.hasFile("DEMOGAME.DAT"))
-				file = _installerArchive.createReadStreamForMember("DEMOGAME.DAT");
-			else if (_installerArchive.hasFile("DEMOGAME.WIN"))
-				file = _installerArchive.createReadStreamForMember("DEMOGAME.WIN");
-			else {
-				error("Unknown version");
-			}
-		}
+	if (isDemo() && test->open("SUPPORT/DEMOGAME.MAC"))
+		return test;
+	if (test->open("SUPPORT/ASSETS/GAME.WIN"))
+		return test;
+	if (test->open("SUPPORT/GAME.MAC"))
+		return test;
+
+	delete test;
+
+	if (_platform == Common::kPlatformMacintosh && _language == Common::JA_JPN)
+		file = Common::MacResManager::openFileOrDataFork("xn--16jc8na7ay6a0eyg9e5nud0e4525d");
+	else
+		file = Common::MacResManager::openFileOrDataFork(isDemo() ? "Private Eye Demo Installer" : "Private Eye Installer");
+	if (file) {
+		Common::Archive *s = createStuffItArchive(file);
+		Common::SeekableReadStream *file2 = nullptr;
+		if (s)
+			file2 = s->createReadStreamForMember(isDemo() ? "demogame.mac" : "game.mac");
+		// file2 is enough to keep valid reference
+		delete file;
+		if (file2)
+			return file2;
 	}
-	if (file == nullptr)
+
+	if (!_installerArchive.open("SUPPORT/ASSETS.Z"))
+		error("Failed to open SUPPORT/ASSETS.Z");
+	// if the full game is used
+	if (!isDemo()) {
+		if (_installerArchive.hasFile("GAME.DAT"))
+			return _installerArchive.createReadStreamForMember("GAME.DAT");
+		if (_installerArchive.hasFile("GAME.WIN"))
+			return _installerArchive.createReadStreamForMember("GAME.WIN");
 		error("Unknown version");
-	return file;
+		return nullptr;
+	}
+
+	// if the demo from archive.org is used
+	if (_installerArchive.hasFile("GAME.TXT"))
+		return _installerArchive.createReadStreamForMember("GAME.TXT");
+
+	// if the demo from the full retail CDROM is used
+	if (_installerArchive.hasFile("DEMOGAME.DAT"))
+		return _installerArchive.createReadStreamForMember("DEMOGAME.DAT");
+	if (_installerArchive.hasFile("DEMOGAME.WIN"))
+		return _installerArchive.createReadStreamForMember("DEMOGAME.WIN");
+
+	error("Unknown version");
+	return nullptr;
 }
 
 Common::Error PrivateEngine::run() {
@@ -1178,10 +1193,10 @@ Common::String PrivateEngine::convertPath(const Common::String &name) {
 void PrivateEngine::playSound(const Common::String &name, uint loops, bool stopOthers, bool background) {
 	debugC(1, kPrivateDebugFunction, "%s(%s,%d,%d,%d)", __FUNCTION__, name.c_str(), loops, stopOthers, background);
 
-	Common::File *file = new Common::File();
 	Common::String path = convertPath(name);
+	Common::SeekableReadStream *file = Common::MacResManager::openFileOrDataFork(path);
 
-	if (!file->open(path))
+	if (!file)
 		error("unable to find sound file %s", path.c_str());
 
 	Audio::LoopingAudioStream *stream;
@@ -1209,10 +1224,10 @@ bool PrivateEngine::isSoundActive() {
 void PrivateEngine::playVideo(const Common::String &name) {
 	debugC(1, kPrivateDebugFunction, "%s(%s)", __FUNCTION__, name.c_str());
 	//stopSound(true);
-	Common::File *file = new Common::File();
 	Common::String path = convertPath(name);
+	Common::SeekableReadStream *file = Common::MacResManager::openFileOrDataFork(path);
 
-	if (!file->open(path))
+	if (!file)
 		error("unable to find video file %s", path.c_str());
 
 	if (!_videoDecoder->loadStream(file))
@@ -1240,12 +1255,12 @@ void PrivateEngine::stopSound(bool all) {
 
 Graphics::Surface *PrivateEngine::decodeImage(const Common::String &name, byte **palette) {
 	debugC(1, kPrivateDebugFunction, "%s(%s)", __FUNCTION__, name.c_str());
-	Common::File file;
 	Common::String path = convertPath(name);
-	if (!file.open(path))
-		error("unable to load image %s", path.c_str());
+	Common::ScopedPtr<Common::SeekableReadStream> file(Common::MacResManager::openFileOrDataFork(path));
+	if (!file)
+		error("unable to load image %s", name.c_str());
 
-	_image->loadStream(file);
+	_image->loadStream(*file);
 	const Graphics::Surface *oldImage = _image->getSurface();
 	Graphics::Surface *newImage;
 

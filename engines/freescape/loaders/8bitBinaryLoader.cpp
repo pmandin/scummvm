@@ -546,7 +546,7 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 	// grab the areas
 	Area *newArea = nullptr;
 	for (uint16 area = 0; area < numberOfAreas; area++) {
-		debugC(1, kFreescapeDebugParser, "Area offset %d", fileOffsetForArea[area]);
+		debugC(1, kFreescapeDebugParser, "Starting to parse area index %d at offset %x", area, fileOffsetForArea[area]);
 
 		file->seek(offset + fileOffsetForArea[area]);
 		newArea = load8bitArea(file, ncolors);
@@ -574,11 +574,11 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 
 void FreescapeEngine::loadBundledImages() {
 	Image::BitmapDecoder decoder;
-	Common::String targetName = _targetName;
+	Common::String targetName = Common::String(_gameDescription->gameId);
 	if (isDOS() && isDemo())
 		Common::replace(targetName, "-demo", "");
 
-	Common::String borderFilename = targetName + "_" + Common::getRenderModeDescription(_renderMode) + ".bmp";
+	Common::String borderFilename = targetName + "_" + Common::getRenderModeCode(_renderMode) + ".bmp";
 	if (_dataBundle->hasFile(borderFilename)) {
 		Common::SeekableReadStream *borderFile = _dataBundle->createReadStreamForMember(borderFilename);
 		decoder.loadStream(*borderFile);
@@ -602,7 +602,7 @@ void FreescapeEngine::loadFonts(Common::SeekableReadStream *file, int offset) {
 	file->seek(offset);
 	int charNumber = 60;
 	byte *font = nullptr;
-	if (isDOS() || isSpectrum()) {
+	if (isDOS() || isSpectrum() || isCPC() || isC64()) {
 		font = (byte *)malloc(6 * charNumber);
 		file->read(font, 6 * charNumber);
 

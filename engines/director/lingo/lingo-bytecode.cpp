@@ -588,11 +588,9 @@ void LC::cb_theassign() {
 	Common::String name = g_lingo->readString();
 	Datum value = g_lingo->pop();
 	if (g_lingo->_state->me.type == OBJECT) {
-		if (g_lingo->_state->me.u.obj->hasProp(name)) {
-			g_lingo->_state->me.u.obj->setProp(name, value);
-		} else {
-			warning("cb_theassign: me object has no property '%s'", name.c_str());
-		}
+		// Don't bother checking if the property is defined, leave that to the object.
+		// For D3-style anonymous objects/factories, you are allowed to define whatever properties you like.
+		g_lingo->_state->me.u.obj->setProp(name, value);
 	} else {
 		warning("cb_theassign: no me object");
 	}
@@ -1075,12 +1073,17 @@ ScriptContext *LingoCompiler::compileLingoV4(Common::SeekableReadStreamEndian &s
 		warning("Lscr properties store missing");
 		return nullptr;
 	}
-
-	debugC(5, kDebugLoading, "Lscr property list:");
 	stream.seek(propertiesOffset);
+	if (debugChannelSet(5, kDebugLoading)) {
+		debugC(5, kDebugLoading, "Lscr property list:");
+		stream.hexdump(propertiesCount * 2);
+	}
 	for (uint16 i = 0; i < propertiesCount; i++) {
 		int16 index = stream.readSint16();
-		if (0 <= index && index < (int16)archive->names.size()) {
+		if (index == -1) {
+			debugC(5, kDebugLoading, "[end of list]");
+			break;
+		} else if (0 <= index && index < (int16)archive->names.size()) {
 			const char *name = archive->names[index].c_str();
 			debugC(5, kDebugLoading, "%d: %s", i, name);
 			_assemblyContext->_properties[name] = Datum();
@@ -1095,8 +1098,11 @@ ScriptContext *LingoCompiler::compileLingoV4(Common::SeekableReadStreamEndian &s
 		return nullptr;
 	}
 
-	debugC(5, kDebugLoading, "Lscr globals list:");
 	stream.seek(globalsOffset);
+	if (debugChannelSet(5, kDebugLoading)) {
+		debugC(5, kDebugLoading, "Lscr globals list:");
+		stream.hexdump(globalsCount * 2);
+	}
 	for (uint16 i = 0; i < globalsCount; i++) {
 		int16 index = stream.readSint16();
 		if (0 <= index && index < (int16)archive->names.size()) {

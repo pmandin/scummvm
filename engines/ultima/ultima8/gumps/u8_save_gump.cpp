@@ -171,7 +171,7 @@ Gump *U8SaveGump::onMouseDown(int button, int32 mx, int32 my) {
 
 
 void U8SaveGump::onMouseClick(int button, int32 mx, int32 my) {
-	if (button != Shared::BUTTON_LEFT) return;
+	if (button != Mouse::BUTTON_LEFT) return;
 
 	ParentToGump(mx, my);
 
@@ -272,8 +272,6 @@ bool U8SaveGump::loadgame(int saveIndex) {
 }
 
 bool U8SaveGump::savegame(int saveIndex, const Std::string &name) {
-	pout << "Save " << saveIndex << ": \"" << name << "\"" << Std::endl;
-
 	if (name.empty())
 		return false;
 
@@ -314,7 +312,7 @@ Gump *U8SaveGump::showLoadSaveGump(Gump *parent, bool save) {
 		return nullptr;
 	}
 
-	if (save && !Ultima8Engine::get_instance()->canSaveGameStateCurrently(false)) {
+	if (save && !Ultima8Engine::get_instance()->canSaveGameStateCurrently()) {
 		return nullptr;
 	}
 

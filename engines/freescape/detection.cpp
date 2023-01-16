@@ -44,7 +44,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformZX,
-		ADGF_ZX_RETAIL | ADGF_TESTING,
+		GF_ZX_RETAIL | ADGF_TESTING,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -56,7 +56,104 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformZX,
-		ADGF_ZX_MUSICAL | ADGF_TESTING,
+		GF_ZX_BUDGET | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"",
+		{
+			{"DRILLER.CPC.EDSK", 0, "05df84207b5373e145ef90a3e4b98ae0", 215073},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmstradCPC,
+		GF_CPC_RETAIL | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"",
+		{
+			{"DRILLER.CPC.EDSK", 0, "ccca1fb22252f43403f75a546ebb5a57", 194816},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmstradCPC,
+		GF_CPC_RETAIL2 | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"",
+		{
+			{"DRILLER.CPC.EDSK", 0, "252f90756eaee25f2231e8d3bfaab68f", 125952},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmstradCPC,
+		GF_CPC_BUDGET | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"VirtualWorlds-A",
+		{
+			{"VIRTUALWORLDS.A.CPC.EDSK", 0, "421d369636984fc209a0969007daa35b", 195635},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmstradCPC,
+		GF_CPC_VIRTUALWORLDS | ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"spacestationoblivion",
+		"",
+		{
+			{"SPACESTATIONOBLIVION.C64.EXTRACTED", 0, "85680576865e211f868885e9997a08b8", 22782},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformC64,
+		ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+
+	{
+		"spacestationoblivion",
+		"",
+		{
+			{"SPACESTATIONOBLIVION.C64.EXTRACTED", 0, "2b3537e21b8b871ec074df2962999781", 64514},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformC64,
+		ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller", // Commodore Force - Jan 94
+		"",
+		{
+			{"DRILLER.C64.EXTRACTED", 0, "511778d3167ff7504d905df507a03ac5", 63490},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformC64,
+		ADGF_TESTING,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"",
+		{
+			{"DRILLER.C64.EXTRACTED", 0, "73a6f206e54fb13245fe6d92f60fbb34", 41071},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformC64,
+		ADGF_TESTING,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -95,7 +192,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
-		ADGF_AMIGA_RETAIL | ADGF_TESTING,
+		GF_AMIGA_RETAIL | ADGF_TESTING,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -108,7 +205,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
-		ADGF_AMIGA_BUDGET | ADGF_TESTING,
+		GF_AMIGA_BUDGET | ADGF_TESTING,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -475,7 +572,7 @@ static const DebugChannelDef debugFlagList[] = {
 class FreescapeMetaEngineDetection : public AdvancedMetaEngineDetection {
 public:
 	FreescapeMetaEngineDetection() : AdvancedMetaEngineDetection(Freescape::gameDescriptions, sizeof(ADGameDescription), Freescape::freescapeGames) {
-		_guiOptions = GUIO5(GUIO_NOMIDI, GAMEOPTION_PRERECORDED_SOUNDS, GAMEOPTION_EXTENDED_TIMER, GAMEOPTION_DISABLE_DEMO_MODE, GAMEOPTION_DISABLE_SENSORS);
+		_guiOptions = GUIO6(GUIO_NOMIDI, GAMEOPTION_PRERECORDED_SOUNDS, GAMEOPTION_EXTENDED_TIMER, GAMEOPTION_DISABLE_DEMO_MODE, GAMEOPTION_DISABLE_SENSORS, GAMEOPTION_DISABLE_FALLING);
 	}
 
 	const char *getName() const override {

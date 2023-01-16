@@ -94,7 +94,8 @@ static const char HELP_STRING1[] =
 	"  --console                Enable the console window (default:enabled)\n"
 #endif
 	"\n"
-	"  -c, --config=CONFIG      Use alternate configuration file\n"
+	"  -c, --config=CONFIG      Use alternate configuration file path\n"
+	"  -i, --initial-cfg=CONFIG Load an initial configuration file if no configuration file has been saved yet\n"
 #if defined(SDL_BACKEND)
 	"  -l, --logfile=PATH       Use alternate path for log file\n"
 	"  --screenshotpath=PATH    Specify path where screenshot files are created\n"
@@ -175,6 +176,7 @@ static const char HELP_STRING4[] =
 																			  ")\n"
 	"  --show-fps               Set the turn on display FPS info in 3D games\n"
 	"  --no-show-fps            Set the turn off display FPS info in 3D games\n"
+	"  --random-seed=SEED       Set the random seed used to initialize entropy\n"
 	"  --renderer=RENDERER      Select 3D renderer (software, opengl, opengl_shaders)\n"
 	"  --aspect-ratio           Enable aspect ratio correction\n"
 	"  --[no-]dirtyrects        Enable dirty rectangles optimisation in software renderer\n"
@@ -457,7 +459,7 @@ static Common::String createTemporaryTarget(const Common::String &engineId, cons
 
 // Use this for options which have an *optional* value
 #define DO_OPTION_OPT(shortCmd, longCmd, defaultVal) \
-	if (isLongCmd ? (!strcmp(s + 2, longCmd) || !memcmp(s + 2, longCmd"=", sizeof(longCmd"=") - 1)) : (tolower(s[1]) == shortCmd)) { \
+	if (isLongCmd ? (!strcmp(s + 2, longCmd) || !strncmp(s + 2, longCmd"=", sizeof(longCmd"=") - 1)) : (tolower(s[1]) == shortCmd)) { \
 		s += 2; \
 		if (isLongCmd) { \
 			s += sizeof(longCmd) - 1; \
@@ -630,6 +632,9 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			END_COMMAND
 
 			DO_OPTION('c', "config")
+			END_OPTION
+
+			DO_OPTION('i', "initial-cfg")
 			END_OPTION
 
 #if defined(SDL_BACKEND)
@@ -863,6 +868,9 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			END_OPTION
 
 			DO_LONG_OPTION_INT("talkspeed")
+			END_OPTION
+
+			DO_LONG_OPTION_INT("random-seed")
 			END_OPTION
 
 			DO_LONG_OPTION_BOOL("copy-protection")
@@ -1880,6 +1888,7 @@ bool processSettings(Common::String &command, Common::StringMap &settings, Commo
 	// Finally, store the command line settings into the config manager.
 	static const char * const sessionSettings[] = {
 		"config",
+		"initial-cfg",
 		"fullscreen",
 		"gfx-mode",
 		"stretch-mode",
@@ -1904,6 +1913,7 @@ bool processSettings(Common::String &command, Common::StringMap &settings, Commo
 		"opl-driver",
 		"talkspeed",
 		"render-mode",
+		"random-seed",
 		nullptr
 	};
 

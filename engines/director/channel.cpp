@@ -107,8 +107,8 @@ Channel::~Channel() {
 
 DirectorPlotData Channel::getPlotData() {
 	DirectorPlotData pd(g_director, _sprite->_spriteType, _sprite->_ink, _sprite->_blend, _sprite->getBackColor(), _sprite->getForeColor());
-	pd.colorWhite = 255;
-	pd.colorBlack = 0;
+	pd.colorWhite = 0;
+	pd.colorBlack = 255;
 	pd.dst = nullptr;
 
 	pd.srf = getSurface();
@@ -162,7 +162,12 @@ const Graphics::Surface *Channel::getMask(bool forceMatte) {
 		// as they already have all non-enclosed white pixels transparent.
 		// Matte on text has a trivial enough effect to not worry about implementing.
 		if (_sprite->_cast->_type == kCastBitmap) {
-			return ((BitmapCastMember *)_sprite->_cast)->getMatte(bbox);
+			BitmapCastMember *bitmap = ((BitmapCastMember *)_sprite->_cast);
+			// 1-bit images only require a matte for the matte ink type
+			if (bitmap->_bitsPerPixel == 1 && _sprite->_ink != kInkTypeMatte) {
+				return nullptr;
+			}
+			return bitmap->getMatte(bbox);
 		} else {
 			return nullptr;
 		}

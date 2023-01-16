@@ -1170,13 +1170,24 @@ const char *ScummEngine_v7::getGUIString(int stringId) {
 		resStringId = 49;
 		break;
 	case gsVoiceOnly:
-		resStringId = 50;
+		if (_game.id == GID_FT &&
+			(_language != Common::EN_ANY && _language != Common::RU_RUS)) {
+			resStringId = 52;
+		} else {
+			resStringId = 50;
+		}
+
 		break;
 	case gsVoiceAndText:
 		resStringId = 51;
 		break;
 	case gsTextDisplayOnly:
-		resStringId = 52;
+		if (_game.id == GID_FT &&
+			(_language != Common::EN_ANY && _language != Common::RU_RUS)) {
+			resStringId = 50;
+		} else {
+			resStringId = 52;
+		}
 		break;
 	case gsTextSpeedSlider:
 		resStringId = 53;
@@ -1483,6 +1494,16 @@ void ScummEngine::queryQuit(bool returnToLauncher) {
 
 	convertMessageToString((const byte *)getGUIString(gsQuitPrompt), (byte *)msgLabelPtr, sizeof(msgLabelPtr));
 	if (msgLabelPtr[0] != '\0') {
+
+		// WORKAROUND: In the german version of LOOM FM-Towns, the string in the game data is stored with a '\r'
+		// character at the end. This means that the string being displayed on screen will end with "(J oder N)J",
+		// and localizedYesKey will be assigned to '\r'. Let's fix this by truncating the relevant string.
+		if (_enableEnhancements && _game.id == GID_LOOM &&
+			_game.platform == Common::kPlatformFMTowns &&
+			strstr(msgLabelPtr, "(J oder N)J\r")) {
+			msgLabelPtr[Common::strnlen(msgLabelPtr, sizeof(msgLabelPtr)) - 1] = '\0';
+		}
+
 		localizedYesKey = msgLabelPtr[Common::strnlen(msgLabelPtr, sizeof(msgLabelPtr)) - 1];
 		msgLabelPtr[Common::strnlen(msgLabelPtr, sizeof(msgLabelPtr)) - 1] = '\0';
 

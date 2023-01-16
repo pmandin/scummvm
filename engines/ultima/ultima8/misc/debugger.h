@@ -23,86 +23,18 @@
 #define ULTIMA_ULTIMA8_ENGINE_DEBUGGER_H
 
 #include "ultima/ultima8/misc/common_types.h"
-#include "ultima/shared/engine/debugger.h"
 #include "ultima/shared/std/containers.h"
 #include "common/debug.h"
 #include "common/stream.h"
+#include "gui/debugger.h"
 
 namespace Ultima {
 namespace Ultima8 {
 
-class ConsoleStream : public Common::WriteStream {
-public:
-	enum Precision { hex = 16, dec = 10 };
-private:
-	Precision _precision;
-public:
-	ConsoleStream() : Common::WriteStream(), _precision(dec) {
-	}
-
-	int64 pos() const override {
-		return 0;
-	}
-
-	void Print(const char *fmt, ...) {
-		va_list argptr;
-		va_start(argptr, fmt);
-		Common::String str = Common::String::vformat(fmt, argptr);
-		va_end(argptr);
-
-		write(str.c_str(), str.size());
-	}
-
-	ConsoleStream &operator<<(const char *s) {
-		write(s, strlen(s));
-		return *this;
-	}
-
-	ConsoleStream &operator<<(const void *ptr) {
-		Common::String str = Common::String::format("%p", ptr);
-		write(str.c_str(), str.size());
-		return *this;
-	}
-
-	ConsoleStream &operator<<(const Common::String &str) {
-		write(str.c_str(), str.size());
-		return *this;
-	}
-
-	ConsoleStream &operator<<(Precision p) {
-		_precision = p;
-		return *this;
-	}
-
-	ConsoleStream &operator<<(int val) {
-		Common::String str = Common::String::format(
-			(_precision == hex) ? "%x" : "%d", val);
-		write(str.c_str(), str.size());
-		return *this;
-	}
-};
-
-template<class T>
-class console_ostream : public ConsoleStream {
-	uint32 write(const void *dataPtr, uint32 dataSize) override {
-		Common::String str((const char *)dataPtr, (const char *)dataPtr + dataSize);
-		debugN(MM_INFO, "%s", str.c_str());
-		return dataSize;
-	}
-};
-
-// Standard Output Stream Object
-extern console_ostream<char> *ppout;
-
-#define pout (*ppout)
-
 /**
  * Debugger base class
  */
-class Debugger : public Shared::Debugger {
-private:
-	// Standard Output Stream Object
-	console_ostream<char> _strOut;
+class Debugger : public GUI::Debugger {
 private:
 	const char *strBool(bool flag) {
 		return flag ? "true" : "false";
@@ -234,14 +166,11 @@ private:
 	// UCMachine
 	bool cmdGetGlobal(int argc, const char **argv);
 	bool cmdSetGlobal(int argc, const char **argv);
-#ifdef DEBUG
 	bool cmdTracePID(int argc, const char **argv);
 	bool cmdTraceObjID(int argc, const char **argv);
 	bool cmdTraceClass(int argc, const char **argv);
 	bool cmdTraceAll(int argc, const char **argv);
-	bool cmdTraceEvents(int argc, const char **argv);
 	bool cmdStopTrace(int argc, const char **argv);
-#endif
 
 	// Miscellaneous
 	bool cmdToggleFastArea(int argc, const char **argv);

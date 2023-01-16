@@ -777,6 +777,7 @@ struct DynamicList {
 
 	bool getAtIndex(size_t index, DynamicValue &value) const;
 	bool setAtIndex(size_t index, const DynamicValue &value);
+	void deleteAtIndex(size_t index);
 	void truncateToSize(size_t sz);
 	void expandToMinimumSize(size_t sz);
 	size_t getSize() const;
@@ -1312,6 +1313,8 @@ struct LowLevelSceneStateTransitionAction {
 		kUnload,
 		kSendMessage,
 		kAutoResetCursor,
+		kHideAllElements,
+		kShowDefaultVisibleElements,
 	};
 
 	explicit LowLevelSceneStateTransitionAction(const Common::SharedPtr<MessageDispatch> &msg);
@@ -1572,7 +1575,6 @@ public:
 
 	void addVolume(int volumeID, const char *name, bool isMounted);
 	bool getVolumeState(const Common::String &name, int &outVolumeID, bool &outIsMounted) const;
-	void setDefaultVolumeState(bool defaultState);
 
 	void addSceneStateTransition(const HighLevelSceneTransition &transition);
 
@@ -1671,7 +1673,10 @@ public:
 
 	void addCollider(ICollider *collider);
 	void removeCollider(ICollider *collider);
-	void checkCollisions();
+	void checkCollisions(ICollider *optRestrictToCollider);
+
+	void setCursorElement(const Common::WeakPtr<VisualElement> &element);
+	void updateCursorElementPosition();
 
 	void addBoundaryDetector(IBoundaryDetector *boundaryDetector);
 	void removeBoundaryDetector(IBoundaryDetector *boundaryDetector);
@@ -1758,6 +1763,13 @@ private:
 		Common::SharedPtr<MessageProperties> message;
 	};
 
+	struct ApplyDefaultVisibilityTaskData {
+		ApplyDefaultVisibilityTaskData();
+
+		VisualElement *element;
+		bool targetVisibility;
+	};
+
 	struct UpdateMouseStateTaskData {
 		UpdateMouseStateTaskData();
 
@@ -1802,6 +1814,7 @@ private:
 	void executeHighLevelSceneTransition(const HighLevelSceneTransition &transition);
 	void executeCompleteTransitionToScene(const Common::SharedPtr<Structural> &scene);
 	void executeSharedScenePostSceneChangeActions();
+	void executeSceneChangeRecursiveVisibilityChange(Structural *structural, bool showing);
 
 	void recursiveAutoPlayMedia(Structural *structural);
 	void recursiveDeactivateStructural(Structural *structural);
@@ -1827,6 +1840,7 @@ private:
 	VThreadState consumeCommandTask(const ConsumeCommandTaskData &data);
 	VThreadState updateMouseStateTask(const UpdateMouseStateTaskData &data);
 	VThreadState updateMousePositionTask(const UpdateMousePositionTaskData &data);
+	VThreadState applyDefaultVisibility(const ApplyDefaultVisibilityTaskData &data);
 
 	void updateMainWindowCursor();
 
@@ -1891,6 +1905,7 @@ private:
 
 	Common::SharedPtr<CursorGraphic> _lastFrameCursor;
 	Common::SharedPtr<CursorGraphic> _defaultCursor;
+	bool _lastFrameMouseVisible;
 
 	Common::WeakPtr<Window> _mouseFocusWindow;
 	bool _mouseFocusFlags[Actions::kMouseButtonCount];
@@ -1925,6 +1940,7 @@ private:
 
 	uint32 _modifierOverrideCursorID;
 	bool _haveModifierOverrideCursor;
+	bool _haveCursorElement;
 
 	uint32 _multiClickStartTime;
 	uint32 _multiClickInterval;
@@ -1940,6 +1956,9 @@ private:
 	Common::Array<Common::SharedPtr<CollisionCheckState> > _colliders;
 	Common::Array<BoundaryCheckState> _boundaryChecks;
 	uint32 _collisionCheckTime;
+
+	Common::WeakPtr<VisualElement> _elementTrackedToCursor;
+	uint32 _elementCursorUpdateTime;
 
 	Common::Array<IPostEffect *> _postEffects;
 
@@ -2048,6 +2067,7 @@ private:
 	MiniscriptInstructionOutcome setRefreshCursor(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome setAutoResetCursor(MiniscriptThread *thread, const DynamicValue &value);
 	MiniscriptInstructionOutcome setWinSndBufferSize(MiniscriptThread *thread, const DynamicValue &value);
+	MiniscriptInstructionOutcome setCursor(MiniscriptThread *thread, const DynamicValue &value);
 
 	int32 _opInt;
 	bool _gameMode;
@@ -2376,6 +2396,8 @@ public:
 	void closeSegmentStream(int segmentIndex);
 	Common::SeekableReadStream *getStreamForSegment(int segmentIndex);
 
+	const Common::String *findNameOfLabel(const Label &label) const;
+
 	void onPostRender();
 	void onKeyboardEvent(Runtime *runtime, const Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt);
 
@@ -2680,6 +2702,7 @@ public:
 	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
 
 	bool isVisible() const;
+	bool isVisibleByDefault() const;
 	void setVisible(Runtime *runtime, bool visible);
 
 	bool isDirectToScreen() const;
@@ -2775,6 +2798,7 @@ protected:
 
 	bool _directToScreen;
 	bool _visible;
+	bool _visibleByDefault;
 	Common::Rect _rect;
 	Common::Point _cachedAbsoluteOrigin;
 	uint16 _layer;
@@ -2848,7 +2872,7 @@ public:
 	virtual bool isBehavior() const;
 	virtual bool isCompoundVariable() const;
 	virtual bool isKeyboardMessenger() const;
-	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad();
+	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime);
 
 	bool isModifier() const override;
 
@@ -2858,6 +2882,9 @@ public:
 
 	const Common::WeakPtr<RuntimeObject> &getParent() const;
 	void setParent(const Common::WeakPtr<RuntimeObject> &parent);
+
+	Modifier *findNextSibling() const;
+	Modifier *findPrevSibling() const;
 
 	bool respondsToEvent(const Event &evt) const override;
 	VThreadState consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) override;
@@ -2914,7 +2941,7 @@ protected:
 class VariableStorage {
 public:
 	virtual ~VariableStorage();
-	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad() = 0;
+	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) = 0;
 
 	virtual Common::SharedPtr<VariableStorage> clone() const = 0;
 };
@@ -2927,7 +2954,7 @@ public:
 	virtual bool isVariable() const override;
 	virtual bool isListVariable() const;
 
-	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad() override final;
+	virtual Common::SharedPtr<ModifierSaveLoad> getSaveLoad(Runtime *runtime) override final;
 
 	const Common::SharedPtr<VariableStorage> &getStorage() const;
 	void setStorage(const Common::SharedPtr<VariableStorage> &storage);

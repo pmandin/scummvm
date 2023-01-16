@@ -83,6 +83,7 @@ struct ADGameFileDescription {
  * records that contain just a filename with an MD5, plus a file size.
  */
 #define AD_ENTRY3s(f1, x1, s1, f2, x2, s2, f3, x3, s3) {{f1, 0, x1, s1}, {f2, 0, x2, s2}, {f3, 0, x3, s3}, AD_LISTEND}
+#define AD_ENTRY4s(f1, x1, s1, f2, x2, s2, f3, x3, s3, f4, x4, s4) {{f1, 0, x1, s1}, {f2, 0, x2, s2}, {f3, 0, x3, s3}, {f4, 0, x4, s4}, AD_LISTEND}
 
 /**
  * Flags used in the game description.
@@ -241,7 +242,24 @@ enum ADFlags {
 	 * the detector to find files inside subdirectories. @c _directoryGlobs are
 	 * extracted from the entries.
 	 */
-	 kADFlagMatchFullPaths = (1 << 1)
+	 kADFlagMatchFullPaths = (1 << 1),
+
+	/**
+	 * If set, the engine's fallback detection results are used instead of the
+	 * partial matches found in the detection table.
+	 *
+	 * An engine sets this if its fallback detection produces good results that
+	 * should always be used. If fallback detection fails, then partial matches
+	 * are still used.
+	 */
+	 kADFlagPreferFallbackDetection = (1 << 2),
+
+	 /**
+	  * Indicates engine's ability to play a variant of a game with unknown files.
+	  * This will leave the detection entries with partial matches in the list
+	  * of detected games.
+	  */
+	kADFlagCanPlayUnknownVariants = (1 << 3),
 };
 
 
@@ -414,12 +432,6 @@ protected:
 	virtual ADDetectedGames detectGame(const Common::FSNode &parent, const FileMap &allFiles, Common::Language language, Common::Platform platform, const Common::String &extra, uint32 skipADFlags = 0, bool skipIncomplete = false);
 
 	/**
-	 * @return True if variant of a game with unknown files can be played with the engine and false otherwise.
-	 * By default this is false.
-	 */
-	virtual bool canPlayUnknownVariants() const { return false; }
-
-	/**
 	 * Iterate over all @ref ADFileBasedFallback records inside @p fileBasedFallback
 	 * and return the record (or rather, the ADGameDescription
 	 * contained in it) for which all files described by it are present, and
@@ -440,7 +452,7 @@ protected:
 	void composeFileHashMap(FileMap &allFiles, const Common::FSList &fslist, int depth, const Common::String &parentName = Common::String()) const;
 
 	/** Get the properties (size and MD5) of this file. */
-	bool getFileProperties(const FileMap &allFiles, const ADGameDescription &game, const Common::String &fname, FileProperties &fileProps) const;
+	bool getFileProperties(const FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps) const;
 
 	/** Convert an AD game description into the shared game description format. */
 	virtual DetectedGame toDetectedGame(const ADDetectedGame &adGame, ADDetectedGameExtraInfo *extraInfo = nullptr) const;
@@ -509,7 +521,7 @@ public:
 	 *
 	 * Based on @ref MetaEngine::getFileProperties.
 	 */
-	bool getFilePropertiesExtern(uint md5Bytes, const FileMap &allFiles, const ADGameDescription &game, const Common::String &fname, FileProperties &fileProps) const;
+	bool getFilePropertiesExtern(uint md5Bytes, const FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps) const;
 
 protected:
 	/**
