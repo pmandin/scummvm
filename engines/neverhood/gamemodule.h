@@ -60,6 +60,7 @@ public:
 	int getPreviousModuleNum() { return _moduleNum; }
 
 	void createModule(int moduleNum, int which);
+	static byte parseCrystalColor(char colorLetter);
 protected:
 	int _moduleNum;
 	Entity *_prevChildObject;
@@ -68,6 +69,7 @@ protected:
 	bool _restartGameRequested;
 	bool _canRequestMainMenu;
 	bool _mainMenuRequested;
+	Common::String _currentCheat;
 	uint32 handleMessage(int messageNum, const MessageParam &param, Entity *sender);
 	void createModuleByHash(uint32 nameHash);
 	void updateModule();

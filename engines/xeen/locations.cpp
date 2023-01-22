@@ -490,6 +490,9 @@ void BlacksmithLocation::farewell() {
 	if (_ccNum) {
 		sound.stopSound();
 		sound.playVoice("come1.voc", 1);
+
+		while (sound.isSoundPlaying() && !g_vm->shouldExit())
+			g_vm->_events->pollEventsAndWait();
 	}
 }
 
@@ -735,6 +738,7 @@ Character *TavernLocation::doOptions(Character *c) {
 
 		g_vm->_mode = MODE_INTERACTIVE7;
 		party.addTime(1440);
+		int partyId = party._mazeId;
 		party._mazeId = 0;
 
 		// Say farewell
@@ -749,7 +753,7 @@ Character *TavernLocation::doOptions(Character *c) {
 		// Show the party dialog
 		PartyDialog::show(g_vm);
 
-		if (party._mazeId != 0)
+		if (party._mazeId != partyId)
 			map.load(party._mazeId);
 		_exitToUi = true;
 	} else if (Res.KeyConstants.Locations.KEY_TIP == _buttonValue) {
@@ -811,6 +815,8 @@ void TavernLocation::farewell() {
 
 	sound.stopSound();
 	sound.playVoice(_ccNum ? "gdluck1.voc" : "goodbye.voc");
+	while (sound.isSoundPlaying() && !g_vm->shouldExit())
+		g_vm->_events->pollEventsAndWait();
 
 	map.mazeData()._mazeNumber = party._mazeId;
 }

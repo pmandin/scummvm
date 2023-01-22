@@ -26,6 +26,7 @@
 
 #include <jni.h>
 #include <semaphore.h>
+#include <pthread.h>
 
 #include "common/fs.h"
 #include "common/archive.h"
@@ -59,7 +60,14 @@ public:
 
 	static jint onLoad(JavaVM *vm);
 
-	static JNIEnv *getEnv();
+	static inline JNIEnv *getEnv() {
+		JNIEnv *env = (JNIEnv*) pthread_getspecific(_env_tls);
+		if (env != nullptr) {
+			return env;
+		}
+
+		return fetchEnv();
+	}
 
 	static void attachThread();
 	static void detachThread();
@@ -79,8 +87,8 @@ public:
 	static Graphics::Surface *getBitmapResource(BitmapResources resource);
 	static void setTouchMode(int touchMode);
 	static int getTouchMode();
-	static void showSAFRevokePermsControl(bool enable);
 	static void addSysArchivesToSearchSet(Common::SearchSet &s, int priority);
+	static jint getAndroidSDKVersionId();
 
 	static inline bool haveSurface();
 	static inline bool swapBuffers();
@@ -96,12 +104,13 @@ public:
 
 	static Common::Array<Common::String> getAllStorageLocations();
 
-	static bool createDirectoryWithSAF(const Common::String &dirPath);
-	static Common::U32String createFileWithSAF(const Common::String &filePath);
-	static void closeFileWithSAF(const Common::String &hackyFilename);
-	static bool isDirectoryWritableWithSAF(const Common::String &dirPath);
+	static jobject getNewSAFTree(bool folder, bool writable, const Common::String &initURI, const Common::String &prompt);
+	static Common::Array<jobject> getSAFTrees();
+	static jobject findSAFTree(const Common::String &name);
 
 private:
+	static pthread_key_t _env_tls;
+
 	static JavaVM *_vm;
 	// back pointer to (java) peer instance
 	static jobject _jobj;
@@ -128,15 +137,13 @@ private:
 	static jmethodID _MID_getBitmapResource;
 	static jmethodID _MID_setTouchMode;
 	static jmethodID _MID_getTouchMode;
-	static jmethodID _MID_showSAFRevokePermsControl;
 	static jmethodID _MID_getSysArchives;
 	static jmethodID _MID_getAllStorageLocations;
 	static jmethodID _MID_initSurface;
 	static jmethodID _MID_deinitSurface;
-	static jmethodID _MID_createDirectoryWithSAF;
-	static jmethodID _MID_createFileWithSAF;
-	static jmethodID _MID_closeFileWithSAF;
-	static jmethodID _MID_isDirectoryWritableWithSAF;
+	static jmethodID _MID_getNewSAFTree;
+	static jmethodID _MID_getSAFTrees;
+	static jmethodID _MID_findSAFTree;
 
 	static jmethodID _MID_EGL10_eglSwapBuffers;
 
@@ -172,6 +179,8 @@ private:
 	static Common::U32String convertFromJString(JNIEnv *env, const jstring &jstr);
 
 	static PauseToken _pauseToken;
+
+	static JNIEnv *fetchEnv();
 };
 
 inline bool JNI::haveSurface() {

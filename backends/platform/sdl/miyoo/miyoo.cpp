@@ -25,6 +25,9 @@
 #include "common/config-manager.h"
 #include "common/translation.h"
 
+#ifdef MIYOOMINI
+#include "backends/graphics/miyoo/miyoomini-graphics.h"
+#endif
 #include "backends/platform/sdl/miyoo/miyoo.h"
 
 #include "backends/fs/posix/posix-fs-factory.h"
@@ -37,13 +40,37 @@
 #include "backends/keymapper/keymap.h"
 #include "backends/keymapper/keymapper.h"
 
+#ifdef MIYOOMINI
+#define SCUMM_DIR	"/mnt/SDCARD/.scummvm"
+#define CONFIG_FILE	"/mnt/SDCARD/.scummvmrc"
+#define SAVE_PATH	"/mnt/SDCARD/.scummvm/saves"
+#define LOG_FILE	"/mnt/SDCARD/.scummvm/scummvm.log"
+#else
 #define SCUMM_DIR	"/mnt/.scummvm"
 #define CONFIG_FILE	"/mnt/.scummvmrc"
 #define SAVE_PATH	"/mnt/.scummvm/saves"
 #define LOG_FILE	"/mnt/.scummvm/scummvm.log"
+#endif
 #define JOYSTICK_DIR	"/sys/devices/platform/joystick"
 
 static const Common::KeyTableEntry odKeyboardButtons[] = {
+#ifdef MIYOOMINI
+	{ "JOY_A",		Common::KEYCODE_SPACE,		_s("A")			},
+	{ "JOY_B",		Common::KEYCODE_LCTRL,		_s("B")			},
+	{ "JOY_X",		Common::KEYCODE_LSHIFT,		_s("X")			},
+	{ "JOY_Y",		Common::KEYCODE_LALT,		_s("Y")			},
+	{ "JOY_BACK",		Common::KEYCODE_RCTRL,		_s("Select")		},
+	{ "JOY_START",		Common::KEYCODE_RETURN,		_s("Start")		},
+	{ "JOY_LEFT_SHOULDER",	Common::KEYCODE_e,		_s("L")			},
+	{ "JOY_RIGHT_SHOULDER", Common::KEYCODE_t,		_s("R")			},
+	{ "JOY_UP",		Common::KEYCODE_UP,		_s("D-pad Up")	},
+	{ "JOY_DOWN",		Common::KEYCODE_DOWN,		_s("D-pad Down")	},
+	{ "JOY_LEFT",		Common::KEYCODE_LEFT,		_s("D-pad Left")	},
+	{ "JOY_RIGHT",		Common::KEYCODE_RIGHT,		_s("D-pad Right")	},
+	{ "JOY_LEFT_STICK",     Common::KEYCODE_TAB,		_s("L2")		},
+	{ "JOY_RIGHT_STICK",    Common::KEYCODE_BACKSPACE,	_s("R2")		},
+	{ "JOY_GUIDE",		Common::KEYCODE_ESCAPE,		_s("Menu")	 	},
+#else
 	{ "JOY_A",		Common::KEYCODE_LALT,		_s("A")			},
 	{ "JOY_B",		Common::KEYCODE_LCTRL,		_s("B")			},
 	{ "JOY_X",		Common::KEYCODE_LSHIFT,		_s("X")			},
@@ -61,18 +88,8 @@ static const Common::KeyTableEntry odKeyboardButtons[] = {
 	{ "JOY_LEFT_TRIGGER",	Common::KEYCODE_RALT,		_s("L3")	 	},
 	{ "JOY_RIGHT_TRIGGER",	Common::KEYCODE_RSHIFT,		_s("R3")	 	},
 	{ "JOY_GUIDE",		Common::KEYCODE_RCTRL,		_s("Menu")	 	},
+#endif
 	{nullptr,			Common::KEYCODE_INVALID,	nullptr			}
-};
-
-static const Common::HardwareInputTableEntry odJoystickButtons[] = {
-	{ "JOY_LEFT_TRIGGER",	Common::JOYSTICK_BUTTON_LEFT_STICK,	_s("L3")	 },
-	{ nullptr,		0,					nullptr		 }
-};
-
-static const Common::AxisTableEntry odJoystickAxes[] = {
-	{ "JOY_LEFT_STICK_X",  Common::JOYSTICK_AXIS_LEFT_STICK_X,  Common::kAxisTypeFull, _s("Left Stick X")  },
-	{ "JOY_LEFT_STICK_Y",  Common::JOYSTICK_AXIS_LEFT_STICK_Y,  Common::kAxisTypeFull, _s("Left Stick Y")  },
-	{ nullptr,	       0,				    Common::kAxisTypeFull, nullptr	       }
 };
 
 Common::KeymapperDefaultBindings *OSystem_SDL_Miyoo::getKeymapperDefaultBindings() {
@@ -147,6 +164,13 @@ void OSystem_SDL_Miyoo::initBackend() {
 		_savefileManager = new DefaultSaveFileManager(SAVE_PATH);
 	}
 
+#ifdef MIYOOMINI
+	if (!_eventSource)
+		_eventSource = new SdlEventSource();
+	if (!_graphicsManager)
+		_graphicsManager = new MiyooMiniGraphicsManager(_eventSource, _window);
+#endif
+
 	OSystem_SDL::initBackend();
 }
 
@@ -173,7 +197,7 @@ bool OSystem_SDL_Miyoo::hasFeature(Feature f) {
 
 void OSystem_SDL_Miyoo::setFeatureState(Feature f, bool enable) {
 	OSystem_SDL::setFeatureState(f, enable);
-	}
+}
 
 bool OSystem_SDL_Miyoo::getFeatureState(Feature f) {
 	return OSystem_SDL::getFeatureState(f);
@@ -186,9 +210,7 @@ Common::HardwareInputSet *OSystem_SDL_Miyoo::getHardwareInputSet() {
 
 	// Users may use USB mice - keyboards currently not possible with SDL1 as it conflicts with gpios
 	inputSet->addHardwareInputSet(new MouseHardwareInputSet(defaultMouseButtons));
-	//inputSet->addHardwareInputSet(new KeyboardHardwareInputSet(defaultKeys, defaultModifiers));
 	inputSet->addHardwareInputSet(new KeyboardHardwareInputSet(odKeyboardButtons, defaultModifiers));
-	inputSet->addHardwareInputSet(new JoystickHardwareInputSet(odJoystickButtons, odJoystickAxes));
 
 	return inputSet;
 }

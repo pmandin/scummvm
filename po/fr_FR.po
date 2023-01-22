@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.8.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-01-16 17:10+0000\n"
-"PO-Revision-Date: 2023-01-15 10:11+0000\n"
+"POT-Creation-Date: 2023-01-20 13:14+0000\n"
+"PO-Revision-Date: 2023-01-19 05:03+0000\n"
 "Last-Translator: Purple T <ZEONK@hotmail.com>\n"
 "Language-Team: French <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/fr/>\n"
@@ -245,9 +245,10 @@ msgstr "Téléchargement terminé, %d packs téléchargés, %s %S"
 
 #: gui/downloadpacksdialog.cpp:293 gui/downloadpacksdialog.cpp:385
 #: gui/gui-manager.cpp:162 gui/unknown-game-dialog.cpp:53
-#: engines/nancy/dialogs.cpp:313 engines/scumm/help.cpp:123
-#: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
-#: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
+#: backends/platform/android/options.cpp:358 engines/nancy/dialogs.cpp:313
+#: engines/scumm/help.cpp:123 engines/scumm/help.cpp:138
+#: engines/scumm/help.cpp:163 engines/scumm/help.cpp:189
+#: engines/scumm/help.cpp:207
 msgid "Close"
 msgstr "Fermer"
 
@@ -328,8 +329,8 @@ msgstr ""
 #: gui/options.cpp:1616 gui/options.cpp:1630 gui/options.cpp:2035
 #: gui/options.cpp:2443 gui/options.cpp:2496 gui/options.cpp:2711
 #: gui/options.cpp:3171 audio/null.cpp:40
-#: backends/platform/android/options.cpp:112
-#: backends/platform/android/options.cpp:113 engines/ags/dialogs.cpp:62
+#: backends/platform/android/options.cpp:137
+#: backends/platform/android/options.cpp:138 engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<défaut>"
 
@@ -1135,10 +1136,8 @@ msgid "the filtering setting could not be changed"
 msgstr "le mode de filtrage n'a pu être changé"
 
 #: gui/options.cpp:842
-#, fuzzy
-#| msgid "the fullscreen setting could not be changed"
 msgid "the vsync setting could not be changed"
-msgstr "le mode plein écran n'a pu être changé"
+msgstr "le mode vsync n'a pu être changé"
 
 #: gui/options.cpp:859
 msgid "the shader could not be changed"
@@ -3225,27 +3224,27 @@ msgid "Resolution: %dx%d"
 msgstr "Résolution : %dx%d"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:724
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2507
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2497
 msgid "Enabled aspect ratio correction"
 msgstr "Correction du rapport d'aspect activée"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:726
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2513
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2503
 msgid "Disabled aspect ratio correction"
 msgstr "Correction du rapport d'aspect désactivée"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:739
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2529
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2519
 msgid "Filtering enabled"
 msgstr "Filtrage activé"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:741
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2531
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2521
 msgid "Filtering disabled"
 msgstr "Filtrage désactivé"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:767
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2558
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2548
 msgid "Stretch mode"
 msgstr "Mode d'étirement"
 
@@ -3253,7 +3252,7 @@ msgstr "Mode d'étirement"
 msgid "SDL Surface"
 msgstr "SDL Surface"
 
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2473
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2463
 msgid "Active graphics filter:"
 msgstr "Mode graphique actif :"
 
@@ -3834,48 +3833,53 @@ msgstr "Mode Loupe désactivé. Réactivation du Mode Déplacement..."
 msgid "Magnify Mode Off"
 msgstr "Mode Loupe désactivé"
 
-#: backends/platform/android/options.cpp:93
+#: backends/platform/android/options.cpp:118
 msgid "Show On-screen control"
 msgstr "Afficher les contrôles sur l'écran"
 
-#: backends/platform/android/options.cpp:94
+#: backends/platform/android/options.cpp:119
 msgid "Choose the preferred touch mode:"
 msgstr "Choix du mode tactile préféré :"
 
-#: backends/platform/android/options.cpp:96
+#: backends/platform/android/options.cpp:121
 msgid "In menus"
 msgstr "Dans les menus"
 
-#: backends/platform/android/options.cpp:98
-#: backends/platform/android/options.cpp:116
-#: backends/platform/android/options.cpp:117
+#: backends/platform/android/options.cpp:123
+#: backends/platform/android/options.cpp:141
+#: backends/platform/android/options.cpp:142
 msgid "Touchpad emulation"
 msgstr "Emulation d'un touchpad"
 
-#: backends/platform/android/options.cpp:99
-#: backends/platform/android/options.cpp:119
-#: backends/platform/android/options.cpp:120
+#: backends/platform/android/options.cpp:124
+#: backends/platform/android/options.cpp:144
+#: backends/platform/android/options.cpp:145
 msgid "Direct mouse"
 msgstr "Souris directe"
 
-#: backends/platform/android/options.cpp:100
-#: backends/platform/android/options.cpp:122
-#: backends/platform/android/options.cpp:123
+#: backends/platform/android/options.cpp:125
+#: backends/platform/android/options.cpp:147
+#: backends/platform/android/options.cpp:148
 msgid "Gamepad emulation"
 msgstr "Emulation d'une manette"
 
-#: backends/platform/android/options.cpp:106
+#: backends/platform/android/options.cpp:131
 msgid "In 2D games"
 msgstr "Dans les jeux 2D"
 
-#: backends/platform/android/options.cpp:108
+#: backends/platform/android/options.cpp:133
 msgid "In 3D games"
 msgstr "Dans les jeux 3D"
 
-#. I18N: Show a button to revoke Storage Access Framework permissions for Android
-#: backends/platform/android/options.cpp:128
-msgid "Show SAF revoke permissions overlay button"
-msgstr "Afficher le bouton de révocation des autorisations SAF"
+#: backends/platform/android/options.cpp:152
+msgid "Forget SAF authorization"
+msgstr ""
+
+#: backends/platform/android/options.cpp:359
+#, fuzzy
+#| msgid "~R~emove Game"
+msgid "Remove"
+msgstr "~S~upprimer"
 
 #: backends/platform/ds/ds-graphics.cpp:281
 msgid "Unscaled"
@@ -4611,8 +4615,8 @@ msgstr ""
 #: engines/mohawk/detection_tables.h:2492
 #: engines/mohawk/detection_tables.h:3562
 #: engines/mohawk/detection_tables.h:3577 engines/myst3/detection.cpp:142
-#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5193
-#: engines/sci/detection_tables.h:5201 engines/sherlock/detection_tables.h:223
+#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5201
+#: engines/sci/detection_tables.h:5209 engines/sherlock/detection_tables.h:223
 #: engines/stark/detection.cpp:319 engines/teenagent/detection.cpp:117
 #: engines/toltecs/detection.cpp:210 engines/trecision/detection.cpp:201
 #: engines/zvision/detection_tables.h:127
@@ -6648,11 +6652,11 @@ msgid "Repeat actual useful hint by Willie"
 msgstr "Répète l'astuce utile en cours de Willie"
 
 #. I18N: NHC is a file extension
-#: engines/neverhood/dialogs.cpp:83
+#: engines/neverhood/dialogs.cpp:90
 msgid "NHC replacement:"
 msgstr "Remplacement du NHC :"
 
-#: engines/neverhood/dialogs.cpp:89
+#: engines/neverhood/dialogs.cpp:96
 msgid "<original>"
 msgstr "<original>"
 
@@ -6946,11 +6950,19 @@ msgstr "Roland D-110 / D-10 / D-20"
 msgid "Yamaha FB-01"
 msgstr "Yamaha FB-01"
 
+#: engines/sci/detection_options.h:255
+msgid "Casio MT-540"
+msgstr "Casio MT-540"
+
+#: engines/sci/detection_options.h:259
+msgid "Casio CT-460 / CSM-1"
+msgstr "Casio CT-460 / CSM-1"
+
 #: engines/sci/detection_tables.h:4492
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr "Jeu incomplet détecté. Vous devez copier les données de tous les CD."
 
-#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:368
+#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:369
 msgid "(Autosave)"
 msgstr "(Sauvegarde automatique)"
 
@@ -7000,7 +7012,7 @@ msgstr ""
 "Impossible de lire une vidéo %d bpp sur un système avec une profondeur de "
 "couleur maximale de 8 bpp"
 
-#: engines/sci/metaengine.cpp:300
+#: engines/sci/metaengine.cpp:301
 msgid "SCI32 support not compiled in"
 msgstr ""
 "La prise en charge des jeux SCI32 n'a pas été activée dans cette version"
@@ -7110,7 +7122,7 @@ msgstr ""
 "Quest for Glory 1, 'qfg2' for Quest for Glory 2. Par exemple : 'qfg2-thief."
 "sav'."
 
-#: engines/sci/sound/music.cpp:160
+#: engines/sci/sound/music.cpp:166
 msgid ""
 "The selected audio driver requires the following file(s):\n"
 "\n"
@@ -7118,7 +7130,7 @@ msgstr ""
 "Le pilote audio sélectionné nécessite le/les fichier(s) suivant(s) :\n"
 "\n"
 
-#: engines/sci/sound/music.cpp:163
+#: engines/sci/sound/music.cpp:169
 msgid ""
 "\n"
 "\n"
@@ -7207,11 +7219,11 @@ msgstr "Essai"
 msgid "Expert"
 msgstr "Expert"
 
-#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:647
+#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:648
 msgid "Enable game-specific enhancements"
 msgstr "Activer les améliorations spécifiques au jeu"
 
-#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:648
+#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:649
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -7219,23 +7231,28 @@ msgstr ""
 "Permet à ScummVM d'apporter de petites améliorations au jeu, généralement "
 "basées sur d'autres versions du même jeu."
 
-#: engines/scumm/dialogs.cpp:1051 engines/scumm/metaengine.cpp:665
+#: engines/scumm/dialogs.cpp:1052 engines/scumm/metaengine.cpp:666
 msgid "Enable the original GUI and Menu"
 msgstr "Activer le menu et l'interface d'origine"
 
-#: engines/scumm/dialogs.cpp:1051 engines/scumm/metaengine.cpp:666
+#: engines/scumm/dialogs.cpp:1053
+#, fuzzy
+#| msgid ""
+#| "Allow the game to use the in-engine graphical interface and the original "
+#| "save/load menu."
 msgid ""
 "Allow the game to use the in-engine graphical interface and the original "
-"save/load menu."
+"save/load menu. Use it together with the \"Ask for confirmation on exit\" "
+"for a more complete experience."
 msgstr ""
 "Permet au jeu d'utiliser l'interface graphique du moteur et le menu "
 "sauvegarder/charger d'origine."
 
-#: engines/scumm/dialogs.cpp:1072
+#: engines/scumm/dialogs.cpp:1075
 msgid "Overture Timing:"
 msgstr "Timing de l'ouverture :"
 
-#: engines/scumm/dialogs.cpp:1076
+#: engines/scumm/dialogs.cpp:1079
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -7243,11 +7260,11 @@ msgstr ""
 "Lorsque des musiques de remplacement sont utilisées, ajuste le moment où "
 "l'ouverture passe à la scène avec les logos Lucasfilm et Loom."
 
-#: engines/scumm/dialogs.cpp:1159
+#: engines/scumm/dialogs.cpp:1162
 msgid "Playback Adjust:"
 msgstr "Ajustement du son :"
 
-#: engines/scumm/dialogs.cpp:1163
+#: engines/scumm/dialogs.cpp:1166
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -7256,11 +7273,11 @@ msgstr ""
 "départ du son de cette valeur. Utilisez cette option si vous entendez "
 "souvent des parties de sons incorrects."
 
-#: engines/scumm/dialogs.cpp:1242
+#: engines/scumm/dialogs.cpp:1245
 msgid "Intro Adjust:"
 msgstr "Ajustement de l'Intro :"
 
-#: engines/scumm/dialogs.cpp:1246
+#: engines/scumm/dialogs.cpp:1249
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -7271,11 +7288,11 @@ msgstr ""
 "vous n'êtes pas satisfait de la façon dont la musique se synchronise avec "
 "l'intro."
 
-#: engines/scumm/dialogs.cpp:1255
+#: engines/scumm/dialogs.cpp:1258
 msgid "Outlook Adjust:"
 msgstr "Ajustement de l'accompagnement :"
 
-#: engines/scumm/dialogs.cpp:1259
+#: engines/scumm/dialogs.cpp:1262
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -7805,23 +7822,23 @@ msgstr "Voler vers la droite"
 msgid "Fly to lower right"
 msgstr "Voler vers la bas à droite"
 
-#: engines/scumm/input.cpp:1271
+#: engines/scumm/input.cpp:1275
 msgid "Snap scroll on"
 msgstr "Défilement par à-coups"
 
-#: engines/scumm/input.cpp:1273
+#: engines/scumm/input.cpp:1277
 msgid "Snap scroll off"
 msgstr "Défilement régulier"
 
-#: engines/scumm/input.cpp:1286
+#: engines/scumm/input.cpp:1290
 msgid "Music volume: "
 msgstr "Volume Musique : "
 
-#: engines/scumm/input.cpp:1303
+#: engines/scumm/input.cpp:1307
 msgid "Subtitle speed: "
 msgstr "Vitesse des ST : "
 
-#: engines/scumm/metaengine.cpp:357
+#: engines/scumm/metaengine.cpp:358
 msgid ""
 "The Lite version of Putt-Putt Saves the Zoo iOS is not supported to avoid "
 "piracy.\n"
@@ -7831,38 +7848,38 @@ msgstr ""
 "éviter le piratage.\n"
 "La version complète peut être achetée sur l'iTunes Store."
 
-#: engines/scumm/metaengine.cpp:454
+#: engines/scumm/metaengine.cpp:455
 msgid "HE v71+ support is not compiled in"
 msgstr "La prise en charge de HE V71+ n'a pas été activée dans cette version"
 
-#: engines/scumm/metaengine.cpp:478
+#: engines/scumm/metaengine.cpp:479
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr ""
 "La prise en charge de SCUMM V7-8 n'a pas été activée dans cette version"
 
-#: engines/scumm/metaengine.cpp:593
+#: engines/scumm/metaengine.cpp:594
 msgid "Show Object Line"
 msgstr "Afficher la barre d'objets"
 
-#: engines/scumm/metaengine.cpp:594
+#: engines/scumm/metaengine.cpp:595
 msgid "Show the names of objects at the bottom of the screen"
 msgstr "Afficher le nom des objets en bas de l'écran"
 
-#: engines/scumm/metaengine.cpp:602
+#: engines/scumm/metaengine.cpp:603
 msgid "Use NES Classic Palette"
 msgstr "Utiliser la palette NES Classique"
 
-#: engines/scumm/metaengine.cpp:603
+#: engines/scumm/metaengine.cpp:604
 msgid "Use a more neutral color palette that closely emulates the NES Classic"
 msgstr ""
 "Utilise une palette de couleurs plus neutre qui reproduit au plus près la "
 "NES Classique"
 
-#: engines/scumm/metaengine.cpp:611
+#: engines/scumm/metaengine.cpp:612
 msgid "Trim FM-TOWNS games to 200 pixels height"
 msgstr "Rogner la hauteur des jeux FM-TOWNS à 200 pixels"
 
-#: engines/scumm/metaengine.cpp:612
+#: engines/scumm/metaengine.cpp:613
 msgid ""
 "Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
 "pixels height, allowing using 'aspect ratio correction'"
@@ -7871,11 +7888,11 @@ msgstr ""
 "hauteur standard de 200 pixels, ce qui permet d'utiliser la \"correction du "
 "rapport d'aspect\""
 
-#: engines/scumm/metaengine.cpp:620
+#: engines/scumm/metaengine.cpp:621
 msgid "Play simplified music"
 msgstr "Jouer la musique simplifiée"
 
-#: engines/scumm/metaengine.cpp:621
+#: engines/scumm/metaengine.cpp:622
 msgid ""
 "This music was presumably intended for low-end Macs, and uses only one "
 "channel."
@@ -7883,19 +7900,19 @@ msgstr ""
 "Cette musique était vraisemblablement destinée aux Macs bas de gamme, et "
 "n'utilise qu'un seul canal."
 
-#: engines/scumm/metaengine.cpp:629
+#: engines/scumm/metaengine.cpp:630
 msgid "Enable smooth scrolling"
 msgstr "Activer le défilement fluide"
 
-#: engines/scumm/metaengine.cpp:630
+#: engines/scumm/metaengine.cpp:631
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(au lieu du défilement normal par pas de 8 pixels)"
 
-#: engines/scumm/metaengine.cpp:638
+#: engines/scumm/metaengine.cpp:639
 msgid "Allow semi-smooth scrolling"
 msgstr "Permettre un défilement semi-fluide"
 
-#: engines/scumm/metaengine.cpp:639
+#: engines/scumm/metaengine.cpp:640
 msgid ""
 "Allow scrolling to be less smooth during the fast camera movement in the "
 "intro."
@@ -7903,11 +7920,11 @@ msgstr ""
 "Permet au défilement d'être moins fluide pendant le mouvement rapide de la "
 "caméra pendant l'intro."
 
-#: engines/scumm/metaengine.cpp:656
+#: engines/scumm/metaengine.cpp:657
 msgid "Load modded audio"
 msgstr "Charger de l'audio modifié"
 
-#: engines/scumm/metaengine.cpp:657
+#: engines/scumm/metaengine.cpp:658
 msgid ""
 "Replace music, sound effects, and speech clips with modded audio files, if "
 "available."
@@ -7915,16 +7932,29 @@ msgstr ""
 "Remplace la musique, les effets sonores et les clips vocaux par des fichiers "
 "audio modifiés, s'ils sont disponibles."
 
-#: engines/scumm/metaengine.cpp:674
+#: engines/scumm/metaengine.cpp:667
+#, fuzzy
+#| msgid ""
+#| "Allow the game to use the in-engine graphical interface and the original "
+#| "save/load menu."
+msgid ""
+"Allow the game to use the in-engine graphical interface and the original "
+"save/load menu. \t\tUse it together with the \"Ask for confirmation on exit"
+"\" for a more complete experience."
+msgstr ""
+"Permet au jeu d'utiliser l'interface graphique du moteur et le menu "
+"sauvegarder/charger d'origine."
+
+#: engines/scumm/metaengine.cpp:676
 msgid "Enable low latency audio mode"
 msgstr "Activer le mode audio à faible latence"
 
-#: engines/scumm/metaengine.cpp:675
+#: engines/scumm/metaengine.cpp:677
 msgid ""
-"Allows the game to use low latency audio, at the cost of sound accuracy."
+"Allows the game to use low latency audio, at the cost of sound accuracy. \t"
+"\tIt is recommended to enable this feature only if you incur in audio "
+"latency issues during normal gameplay."
 msgstr ""
-"Permet au jeu d'utiliser une latence audio faible, au détriment de la "
-"précision du son."
 
 #: engines/scumm/scumm.cpp:263
 msgid ""
@@ -9488,6 +9518,15 @@ msgstr ""
 "les polices du paquet de polices que vous avez choisi, c'est-à-dire "
 "LiberationMono, LiberationSans et LiberationSerif, ou respectivement "
 "FreeMono, FreeSans et FreeSerif."
+
+#~ msgid "Show SAF revoke permissions overlay button"
+#~ msgstr "Afficher le bouton de révocation des autorisations SAF"
+
+#~ msgid ""
+#~ "Allows the game to use low latency audio, at the cost of sound accuracy."
+#~ msgstr ""
+#~ "Permet au jeu d'utiliser une latence audio faible, au détriment de la "
+#~ "précision du son."
 
 #~ msgctxt "lowres"
 #~ msgid "Misc"

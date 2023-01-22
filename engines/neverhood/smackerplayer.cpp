@@ -46,7 +46,7 @@ void SmackerSurface::draw() {
 				subDrawRect.y = _drawRect.y + _drawRect.height - 17;
 				subDrawRect.width = _drawRect.width;
 				subDrawRect.height = 16;
-				_vm->_screen->drawSurface2(bottom, subDrawRect, _clipRect, true, ++_version, nullptr, _subtitles->kSubtitleAlpha);
+				_vm->_screen->drawSurface2(bottom, subDrawRect, _clipRect, true, ++_version, nullptr, _subtitles->getSubtitleAlpha());
 			}
 			const Graphics::Surface *top = _subtitles->getTopSubs();
 			if (top) {
@@ -55,7 +55,7 @@ void SmackerSurface::draw() {
 				subDrawRect.y = _drawRect.y + 1;
 				subDrawRect.width = _drawRect.width;
 				subDrawRect.height = 16;
-				_vm->_screen->drawSurface2(top, subDrawRect, _clipRect, true, ++_version, nullptr, _subtitles->kSubtitleAlpha);
+				_vm->_screen->drawSurface2(top, subDrawRect, _clipRect, true, ++_version, nullptr, _subtitles->getSubtitleAlpha());
 			}
 		}
 	}
@@ -103,7 +103,7 @@ void SmackerDoubleSurface::draw() {
 				subDrawRect.y = _drawRect.y + _drawRect.height * 2 - 34;
 				subDrawRect.width = _drawRect.width;
 				subDrawRect.height = 16;
-				_vm->_screen->drawDoubleSurface2Alpha(bottom, subDrawRect, _subtitles->kSubtitleAlpha);
+				_vm->_screen->drawDoubleSurface2Alpha(bottom, subDrawRect, _subtitles->getSubtitleAlpha());
 			}
 			const Graphics::Surface *top = _subtitles->getTopSubs();
 			if (top) {
@@ -112,7 +112,7 @@ void SmackerDoubleSurface::draw() {
 				subDrawRect.y = _drawRect.y + 2;
 				subDrawRect.width = _drawRect.width;
 				subDrawRect.height = 16;
-				_vm->_screen->drawDoubleSurface2Alpha(top, subDrawRect, _subtitles->kSubtitleAlpha);
+				_vm->_screen->drawDoubleSurface2Alpha(top, subDrawRect, _subtitles->getSubtitleAlpha());
 			}
 		}
 	}
@@ -152,9 +152,9 @@ SmackerPlayer::SmackerPlayer(NeverhoodEngine *vm, Scene *scene, uint32 fileHash,
 	SetUpdateHandler(&SmackerPlayer::update);
 
 	if (_doubleSurface) {
-		_smackerSurface = new SmackerDoubleSurface(_vm);
+		_smackerSurface.reset(new SmackerDoubleSurface(_vm));
 	} else {
-		_smackerSurface = new SmackerSurface(_vm);
+		_smackerSurface.reset(new SmackerSurface(_vm));
 	}
 
 	open(fileHash, flag);
@@ -162,8 +162,7 @@ SmackerPlayer::SmackerPlayer(NeverhoodEngine *vm, Scene *scene, uint32 fileHash,
 
 SmackerPlayer::~SmackerPlayer() {
 	close();
-	delete _smackerSurface;
-	_smackerSurface = nullptr;
+	_smackerSurface.reset();
 }
 
 void SmackerPlayer::open(uint32 fileHash, bool keepLastFrame) {

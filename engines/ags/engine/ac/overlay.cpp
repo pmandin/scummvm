@@ -53,18 +53,37 @@ void Overlay_Remove(ScriptOverlay *sco) {
 	sco->Remove();
 }
 
-void Overlay_SetText(ScriptOverlay *scover, int wii, int fontid, int text_color, const char *text) {
+void Overlay_SetText(ScriptOverlay *scover, int width, int fontid, int text_color, const char *text) {
 	int ovri = find_overlay_of_type(scover->overlayId);
 	if (ovri < 0)
 		quit("!Overlay.SetText: invalid overlay ID specified");
-	int xx = game_to_data_coord(_GP(screenover)[ovri].x);
-	int yy = game_to_data_coord(_GP(screenover)[ovri].y);
+	auto &over = _GP(screenover)[ovri];
+	const int x = over.x;
+	const int y = over.y;
 
-	RemoveOverlay(scover->overlayId);
-	const int disp_type = scover->overlayId;
+	// TODO: find a nice way to refactor and share these code pieces
+	// from CreateTextOverlay
+	width = data_to_game_coord(width);
+	// allow DisplaySpeechBackground to be shrunk
+	int allow_shrink = (x == OVR_AUTOPLACE) ? 1 : 0;
 
-	if (CreateTextOverlay(xx, yy, wii, fontid, text_color, get_translation(text), disp_type) != scover->overlayId)
-		quit("SetTextOverlay internal error: inconsistent type ids");
+	// from Overlay_CreateTextCore
+	if (width < 8) width = _GP(play).GetUIViewport().GetWidth() / 2;
+
+	if (text_color == 0) text_color = 16;
+
+	// Recreate overlay image
+	int dummy_x = x, dummy_y = y, adj_x = x, adj_y = y;
+	bool has_alpha = false;
+	// NOTE: we pass text_color negated to let optionally use textwindow (if applicable)
+	// this is a generic ugliness of _display_main args, need to refactor later.
+	Bitmap *image = create_textual_image(get_translation(text), -text_color, 0, dummy_x, dummy_y, adj_x, adj_y,
+										 width, fontid, allow_shrink, has_alpha);
+
+	// Update overlay properties
+	over.SetImage(image, adj_x - dummy_x, adj_y - dummy_y);
+	over.SetAlphaChannel(has_alpha);
+	over.ddb = nullptr; // is generated during first draw pass
 }
 
 int Overlay_GetX(ScriptOverlay *scover) {
@@ -367,17 +386,15 @@ size_t add_screen_overlay_impl(bool roomlayer, int x, int y, int type, int sprnu
 	}
 	ScreenOverlay over;
 	if (piccy) {
-		over.SetImage(piccy);
+		over.SetImage(piccy, pic_offx, pic_offy);
 		over.SetAlphaChannel(has_alpha);
 	} else {
-		over.SetSpriteNum(sprnum);
+		over.SetSpriteNum(sprnum, pic_offx, pic_offy);
 		over.SetAlphaChannel((_GP(game).SpriteInfos[sprnum].Flags & SPF_ALPHACHANNEL) != 0);
 	}
 	over.ddb = nullptr; // is generated during first draw pass
 	over.x = x;
 	over.y = y;
-	over.offsetX = pic_offx;
-	over.offsetY = pic_offy;
 	// by default draw speech and portraits over GUI, and the rest under GUI
 	over.zorder = (roomlayer || type == OVER_TEXTMSG || type == OVER_PICTURE || type == OVER_TEXTSPEECH) ?
 		INT_MAX : INT_MIN;

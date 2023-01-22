@@ -532,6 +532,31 @@ void TwinEEngine::queueMovie(const char *filename) {
 	_queuedFlaMovie = filename;
 }
 
+void TwinEEngine::adjustScreenMax(Common::Rect &rect, int16 x, int16 y) {
+	if (x < rect.left) {
+		rect.left = x;
+	}
+
+	if (x > rect.right) {
+		rect.right = x;
+	}
+
+	if (y < rect.top) {
+		rect.top = y;
+	}
+
+	if (y > rect.bottom) {
+		rect.bottom = y;
+	}
+}
+
+void TwinEEngine::clearScreenMinMax(Common::Rect &rect) {
+	rect.left = 0x7D00; // SCENE_SIZE_MAX
+	rect.right = -0x7D00;
+	rect.top = 0x7D00;
+	rect.bottom = -0x7D00;
+}
+
 void TwinEEngine::playIntro() {
 	_input->enableKeyMap(cutsceneKeyMapId);
 	// Display company logo
@@ -548,6 +573,9 @@ void TwinEEngine::playIntro() {
 			abort |= _screens->loadBitmapDelay("TLBA1C_640_480_256.bmp", 3);
 		}
 	} else {
+		if (isDotEmuEnhanced()) {
+			abort |= _screens->loadBitmapDelay("splash_1.png", 3);
+		}
 		abort |= _screens->adelineLogo();
 
 		if (isLBA1()) {
@@ -555,14 +583,14 @@ void TwinEEngine::playIntro() {
 			if (!abort && _cfgfile.Version == EUROPE_VERSION) {
 				// Little Big Adventure screen
 				abort |= _screens->loadImageDelay(_resources->lbaLogo(), 3);
-				if (!abort) {
+				if (!abort && !isDotEmuEnhanced()) {
 					// Electronic Arts Logo
 					abort |= _screens->loadImageDelay(_resources->eaLogo(), 2);
 				}
 			} else if (!abort && _cfgfile.Version == USA_VERSION) {
 				// Relentless screen
 				abort |= _screens->loadImageDelay(_resources->relentLogo(), 3);
-				if (!abort) {
+				if (!abort && !isDotEmuEnhanced()) {
 					// Electronic Arts Logo
 					abort |= _screens->loadImageDelay(_resources->eaLogo(), 2);
 				}
@@ -594,7 +622,7 @@ void TwinEEngine::initAll() {
 	_scene->_sceneHero = _scene->getActor(OWN_ACTOR_SCENE_INDEX);
 
 	// Set clip to fullscreen by default, allows main menu to render properly after load
-	_interface->resetClip();
+	_interface->unsetClip();
 
 	// getting configuration file
 	initConfigurations();
@@ -618,7 +646,7 @@ int TwinEEngine::getRandomNumber(uint max) {
 
 void TwinEEngine::freezeTime(bool pause) {
 	if (_isTimeFreezed == 0) {
-		_saveFreezedTime = _lbaTime;
+		_saveFreezedTime = timerRef;
 		if (pause)
 			_pauseToken = pauseEngine();
 	}
@@ -628,7 +656,7 @@ void TwinEEngine::freezeTime(bool pause) {
 void TwinEEngine::unfreezeTime() {
 	--_isTimeFreezed;
 	if (_isTimeFreezed == 0) {
-		_lbaTime = _saveFreezedTime;
+		timerRef = _saveFreezedTime;
 		if (_pauseToken.isActive()) {
 			_pauseToken.clear();
 		}
@@ -681,7 +709,7 @@ void TwinEEngine::processInventoryAction() {
 
 	switch (_loopInventoryItem) {
 	case kiHolomap:
-		_holomap->processHolomap();
+		_holomap->holoMap();
 		_screens->_fadePalette = true;
 		break;
 	case kiMagicBall:
@@ -723,21 +751,22 @@ void TwinEEngine::processInventoryAction() {
 
 		const IVec3 &destPos = _movements->rotate(0, 800, _scene->_sceneHero->_beta);
 
-		penguin->_pos = _scene->_sceneHero->_pos;
+		penguin->_pos = _scene->_sceneHero->posObj();
 		penguin->_pos.x += destPos.x;
 		penguin->_pos.z += destPos.z;
 
 		penguin->_beta = _scene->_sceneHero->_beta;
+		debug("penguin angle: %i", penguin->_beta);
 
 		if (_collision->checkValidObjPos(_scene->_mecaPenguinIdx)) {
 			penguin->setLife(kActorMaxLife);
 			penguin->_genBody = BodyType::btNone;
 			_actor->initBody(BodyType::btNormal, _scene->_mecaPenguinIdx);
 			penguin->_dynamicFlags.bIsDead = 0;
-			penguin->setBrickShape(ShapeType::kNone);
-			_movements->initRealAngleConst(penguin->_beta, penguin->_beta, penguin->_speed, &penguin->_moveAngle);
+			penguin->setCollision(ShapeType::kNone);
+			_movements->initRealAngleConst(penguin->_beta, penguin->_beta, penguin->_speed, &penguin->realAngle);
 			_gameState->removeItem(InventoryItems::kiPenguin);
-			penguin->_delayInMillis = _lbaTime + toSeconds(30);
+			penguin->_delayInMillis = timerRef + toSeconds(30);
 		}
 		break;
 	}
@@ -895,7 +924,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 
 		// Draw holomap
 		if (_input->toggleActionIfActive(TwinEActionType::OpenHolomap) && _gameState->hasItem(InventoryItems::kiHolomap) && !_gameState->inventoryDisabled()) {
-			_holomap->processHolomap();
+			_holomap->holoMap();
 			_screens->_fadePalette = true;
 			_redraw->redrawEngineActions(true);
 		}
@@ -925,7 +954,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 	}
 
-	_loopActorStep = _loopMovePtr.getRealValue(_lbaTime);
+	_loopActorStep = _loopMovePtr.getRealValueFromTime(timerRef);
 	if (!_loopActorStep) {
 		_loopActorStep = 1;
 	}
@@ -1001,7 +1030,7 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 						if (!_actor->_cropBottomScreen) {
 							_animations->initAnim(AnimationTypes::kDrawn, AnimType::kAnimationSet, AnimationTypes::kStanding, OWN_ACTOR_SCENE_INDEX);
 						}
-						const IVec3 &projPos = _renderer->projectPositionOnScreen(actor->posObj() - _grid->_camera);
+						const IVec3 &projPos = _renderer->projectPoint(actor->posObj() - _grid->_worldCube);
 						actor->_controlMode = ControlMode::kNoMove;
 						actor->setLife(-1);
 						_actor->_cropBottomScreen = projPos.y;
@@ -1098,7 +1127,7 @@ bool TwinEEngine::gameEngineLoop() {
 		if (runGameEngine()) {
 			return true;
 		}
-		_lbaTime++;
+		timerRef++;
 		if (shouldQuit()) {
 			break;
 		}
@@ -1156,6 +1185,10 @@ void TwinEEngine::setPalette(const uint32 *palette) {
 }
 
 void TwinEEngine::setPalette(uint startColor, uint numColors, const byte *palette) {
+	if (numColors == 0 || palette == nullptr) {
+		warning("Could not set palette");
+		return;
+	}
 	_frontVideoBuffer.setPalette(palette, startColor, numColors);
 }
 

@@ -96,7 +96,7 @@ int32 Extra::extraSearch(int32 actorIdx, int32 x, int32 y, int32 z, int32 sprite
 
 		_engine->_movements->setActorAngle(LBAAngles::ANGLE_0, maxSpeed, LBAAngles::ANGLE_17, &extra->trackActorMove);
 		const ActorStruct *actor = _engine->_scene->getActor(targetActor);
-		extra->angle = _engine->_movements->getAngleAndSetTargetActorDistance(extra->pos, actor->posObj());
+		extra->angle = _engine->_movements->getAngle(extra->pos, actor->posObj());
 		return i;
 	}
 	return -1;
@@ -115,7 +115,7 @@ int32 Extra::addExtraExplode(int32 x, int32 y, int32 z) {
 		extra->pos.y = y;
 		extra->pos.z = z;
 		extra->payload.lifeTime = 40;
-		extra->spawnTime = _engine->_lbaTime;
+		extra->spawnTime = _engine->timerRef;
 		extra->strengthOfHit = 0;
 		return i;
 	}
@@ -145,7 +145,7 @@ void Extra::initFly(ExtraListStruct *extra, int32 xAngle, int32 yAngle, int32 x,
 	extra->destPos.z = destPos.z;
 
 	extra->angle = extraAngle;
-	extra->spawnTime = _engine->_lbaTime;
+	extra->spawnTime = _engine->timerRef;
 }
 
 int32 Extra::initSpecial(int32 x, int32 y, int32 z, ExtraSpecialType type) {
@@ -178,7 +178,7 @@ int32 Extra::initSpecial(int32 x, int32 y, int32 z, ExtraSpecialType type) {
 			extra->pos.z = z;
 
 			extra->strengthOfHit = 0;
-			extra->spawnTime = _engine->_lbaTime;
+			extra->spawnTime = _engine->timerRef;
 			extra->payload.lifeTime = 5;
 		}
 		return i;
@@ -264,7 +264,7 @@ int32 Extra::throwExtra(int32 actorIdx, int32 x, int32 y, int32 z, int32 spriteI
 		initFly(extra, xAngle, yAngle, xRotPoint, extraAngle);
 
 		extra->strengthOfHit = strengthOfHit;
-		extra->spawnTime = _engine->_lbaTime;
+		extra->spawnTime = _engine->timerRef;
 		extra->payload.actorIdx = actorIdx;
 		extra->info1 = 0;
 
@@ -292,7 +292,7 @@ int32 Extra::addExtraAiming(int32 actorIdx, int32 x, int32 y, int32 z, int32 spr
 		extra->strengthOfHit = strengthOfHit;
 		_engine->_movements->setActorAngle(LBAAngles::ANGLE_0, finalAngle, LBAAngles::ANGLE_17, &extra->trackActorMove);
 		const ActorStruct *actor = _engine->_scene->getActor(targetActorIdx);
-		extra->angle = _engine->_movements->getAngleAndSetTargetActorDistance(extra->pos, actor->posObj());
+		extra->angle = _engine->_movements->getAngle(extra->pos, actor->posObj());
 
 		return i;
 	}
@@ -327,7 +327,7 @@ int32 Extra::extraSearchKey(int32 actorIdx, int32 x, int32 y, int32 z, int32 spr
 		extra->destPos.z = 4000;
 		extra->strengthOfHit = 0;
 		_engine->_movements->setActorAngle(LBAAngles::ANGLE_0, 4000, LBAAngles::ANGLE_17, &extra->trackActorMove);
-		extra->angle = _engine->_movements->getAngleAndSetTargetActorDistance(extra->pos, _extraList[extraIdx].pos);
+		extra->angle = _engine->_movements->getAngle(extra->pos, _extraList[extraIdx].pos);
 
 		return i;
 	}
@@ -394,106 +394,64 @@ void Extra::addExtraThrowMagicball(int32 x, int32 y, int32 z, int32 xAngle, int3
 	}
 }
 
-void Extra::drawSpecialShape(const ExtraShape &shapeTable, int32 x, int32 y, int32 color, int32 angle, int32 size, Common::Rect &renderRect) {
+void Extra::aff2DShape(const ExtraShape &shapeTable, int32 x, int32 y, int32 color, int32 angle, int32 zoom, Common::Rect &renderRect) {
 	int shapeDataIndex = 0;
-	int16 shapeX = shapeTable.data[shapeDataIndex].x * size / 16;
-	int16 shapeZ = shapeTable.data[shapeDataIndex].z * size / 16;
+	int16 shapeX = shapeTable.data[shapeDataIndex].x * zoom / 16;
+	int16 shapeZ = shapeTable.data[shapeDataIndex].z * zoom / 16;
 
 	++shapeDataIndex;
 
-	renderRect.left = 0x7D00; // SCENE_SIZE_MAX
-	renderRect.right = -0x7D00;
-	renderRect.top = 0x7D00;
-	renderRect.bottom = -0x7D00;
+	_engine->clearScreenMinMax(renderRect);
 
 	IVec3 destPos = _engine->_movements->rotate(shapeX, shapeZ, angle);
 
 	const int32 computedX = destPos.x + x;
 	const int32 computedY = destPos.z + y;
 
-	if (computedX < renderRect.left) {
-		renderRect.left = computedX;
-	}
-
-	if (computedX > renderRect.right) {
-		renderRect.right = computedX;
-	}
-
-	if (computedY < renderRect.top) {
-		renderRect.top = computedY;
-	}
-
-	if (computedY > renderRect.bottom) {
-		renderRect.bottom = computedY;
-	}
+	_engine->adjustScreenMax(renderRect, computedX, computedY);
 
 	int32 currentX = computedX;
 	int32 currentY = computedY;
 
 	for (int32 numEntries = 1; numEntries < shapeTable.n; ++numEntries) {
-		shapeX = shapeTable.data[shapeDataIndex].x * size / 16;
-		shapeZ = shapeTable.data[shapeDataIndex].z * size / 16;
+		shapeX = shapeTable.data[shapeDataIndex].x * zoom / 16;
+		shapeZ = shapeTable.data[shapeDataIndex].z * zoom / 16;
 		++shapeDataIndex;
 
 		const int32 oldComputedX = currentX;
 		const int32 oldComputedY = currentY;
-
-		_engine->_renderer->_projPos.x = currentX;
-		_engine->_renderer->_projPos.y = currentY;
 
 		destPos = _engine->_movements->rotate(shapeX, shapeZ, angle);
 
 		currentX = destPos.x + x;
 		currentY = destPos.z + y;
 
-		if (currentX < renderRect.left) {
-			renderRect.left = currentX;
-		}
-
-		if (currentX > renderRect.right) {
-			renderRect.right = currentX;
-		}
-
-		if (currentY < renderRect.top) {
-			renderRect.top = currentY;
-		}
-
-		if (currentY > renderRect.bottom) {
-			renderRect.bottom = currentY;
-		}
-
-		_engine->_renderer->_projPos.x = currentX;
-		_engine->_renderer->_projPos.y = currentY;
-
+		_engine->adjustScreenMax(renderRect, currentX, currentY);
 		_engine->_interface->drawLine(oldComputedX, oldComputedY, currentX, currentY, color);
-
-		currentX = _engine->_renderer->_projPos.x;
-		currentY = _engine->_renderer->_projPos.y;
 	}
-
-	_engine->_renderer->_projPos.x = currentX;
-	_engine->_renderer->_projPos.y = currentY;
 	_engine->_interface->drawLine(currentX, currentY, computedX, computedY, color);
 }
 
-void Extra::drawExtraSpecial(int32 extraIdx, int32 x, int32 y, Common::Rect &renderRect) {
+void Extra::affSpecial(int32 extraIdx, int32 x, int32 y, Common::Rect &renderRect) {
 	ExtraListStruct *extra = &_extraList[extraIdx];
 	ExtraSpecialType specialType = (ExtraSpecialType)(extra->sprite & (EXTRA_SPECIAL_MASK - 1));
 
 	switch (specialType) {
 	case ExtraSpecialType::kHitStars:
-		drawSpecialShape(hitStarsShape, x, y, COLOR_WHITE, (_engine->_lbaTime * 32) & LBAAngles::ANGLE_270, 4, renderRect);
+		aff2DShape(hitStarsShape, x, y, COLOR_WHITE, (_engine->timerRef * 32) & LBAAngles::ANGLE_270, 4, renderRect);
 		break;
 	case ExtraSpecialType::kExplodeCloud: {
-		int32 cloudTime = 1 + _engine->_lbaTime - extra->spawnTime;
+		int32 zoom = 1 + _engine->timerRef - extra->spawnTime;
 
-		if (cloudTime > 32) {
-			cloudTime = 32;
+		if (zoom > 32) {
+			zoom = 32;
 		}
 
-		drawSpecialShape(explodeCloudShape, x, y, COLOR_WHITE, LBAAngles::ANGLE_0, cloudTime, renderRect);
+		aff2DShape(explodeCloudShape, x, y, COLOR_WHITE, LBAAngles::ANGLE_0, zoom, renderRect);
 		break;
 	}
+	case ExtraSpecialType::kFountain:
+		break;
 	}
 }
 
@@ -515,7 +473,7 @@ void Extra::bounceExtra(ExtraListStruct *extra, int32 x, int32 y, int32 z) {
 	extra->pos.z = z;
 	extra->lastPos.z = z;
 
-	extra->spawnTime = _engine->_lbaTime;
+	extra->spawnTime = _engine->timerRef;
 }
 
 void Extra::gereExtras() {
@@ -530,7 +488,7 @@ void Extra::gereExtras() {
 		}
 		// process extra life time
 		if (extra->type & ExtraType::TIME_OUT) {
-			if (extra->payload.lifeTime + extra->spawnTime <= _engine->_lbaTime) {
+			if (extra->payload.lifeTime + extra->spawnTime <= _engine->timerRef) {
 				extra->sprite = -1;
 				continue;
 			}
@@ -540,7 +498,7 @@ void Extra::gereExtras() {
 			extra->sprite = -1;
 			continue;
 		}
-		const int32 deltaT = _engine->_lbaTime - extra->spawnTime;
+		const int32 deltaT = _engine->timerRef - extra->spawnTime;
 
 		if (extra->type & ExtraType::EXPLOSION) {
 			extra->sprite = _engine->_collision->clampedLerp(SPRITEHQR_EXPLOSION_FIRST_FRAME, 100, 30, deltaT);
@@ -589,7 +547,7 @@ void Extra::gereExtras() {
 		}
 
 		if (extra->type & ExtraType::WAIT_SOME_TIME) {
-			if (_engine->_lbaTime - extra->spawnTime > 40) {
+			if (_engine->timerRef - extra->spawnTime > 40) {
 				extra->type &= ~ExtraType::WAIT_SOME_TIME;
 			}
 			continue;
@@ -604,7 +562,7 @@ void Extra::gereExtras() {
 			currentExtraY = actor->_pos.y + 1000;
 			currentExtraZ = actor->_pos.z;
 
-			const int32 tmpAngle = _engine->_movements->getAngleAndSetTargetActorDistance(extra->pos, actor->posObj());
+			const int32 tmpAngle = _engine->_movements->getAngle(extra->pos, actor->posObj());
 			const int32 angle = ClampAngle(tmpAngle - extra->angle);
 
 			if (angle > LBAAngles::ANGLE_140 && angle < LBAAngles::ANGLE_210) {
@@ -620,8 +578,8 @@ void Extra::gereExtras() {
 				continue;
 			}
 
-			const int32 angle2 = _engine->_movements->getAngleAndSetTargetActorDistance(extra->pos.y, 0, currentExtraY, _engine->_movements->_targetActorDistance);
-			int32 pos = extra->trackActorMove.getRealAngle(_engine->_lbaTime);
+			const int32 angle2 = _engine->_movements->getAngle(extra->pos.y, 0, currentExtraY, _engine->_movements->_targetActorDistance);
+			int32 pos = extra->trackActorMove.getRealValueFromTime(_engine->timerRef);
 			if (!pos) {
 				pos = 1;
 			}
@@ -649,14 +607,14 @@ void Extra::gereExtras() {
 			ExtraListStruct *extraKey = &_extraList[extra->payload.extraIdx];
 			const int32 extraIdx = extra->payload.extraIdx;
 
-			const int32 tmpAngle = _engine->_movements->getAngleAndSetTargetActorDistance(extra->pos, extraKey->pos);
+			const int32 tmpAngle = _engine->_movements->getAngle(extra->pos, extraKey->pos);
 			const int32 angle = ClampAngle(tmpAngle - extra->angle);
 
 			if (angle > LBAAngles::ANGLE_140 && angle < LBAAngles::ANGLE_210) {
 				_engine->_sound->playSample(Samples::ItemFound, 1, _engine->_scene->_sceneHero->posObj(), OWN_ACTOR_SCENE_INDEX);
 
 				if (extraKey->info1 > 1) {
-					const IVec3 &projPos = _engine->_renderer->projectPositionOnScreen(extraKey->pos - _engine->_grid->_camera);
+					const IVec3 &projPos = _engine->_renderer->projectPoint(extraKey->pos - _engine->_grid->_worldCube);
 					_engine->_redraw->addOverlay(OverlayType::koNumber, extraKey->info1, projPos.x, projPos.y, COLOR_BLACK, OverlayPosType::koNormal, 2);
 				}
 
@@ -669,8 +627,8 @@ void Extra::gereExtras() {
 				_engine->_gameState->_magicBall = extraSearch(-1, extra->pos.x, extra->pos.y, extra->pos.z, SPRITEHQR_KEY, 0, 8000, 0);
 				continue;
 			}
-			const int32 angle2 = _engine->_movements->getAngleAndSetTargetActorDistance(extra->pos.y, 0, extraKey->pos.y, _engine->_movements->_targetActorDistance);
-			int32 pos = extra->trackActorMove.getRealAngle(_engine->_lbaTime);
+			const int32 angle2 = _engine->_movements->getAngle(extra->pos.y, 0, extraKey->pos.y, _engine->_movements->_targetActorDistance);
+			int32 pos = extra->trackActorMove.getRealValueFromTime(_engine->timerRef);
 
 			if (!pos) {
 				pos = 1;
@@ -689,7 +647,7 @@ void Extra::gereExtras() {
 				_engine->_sound->playSample(Samples::ItemFound, 1, _engine->_scene->_sceneHero->posObj(), OWN_ACTOR_SCENE_INDEX);
 
 				if (extraKey->info1 > 1) {
-					const IVec3 &projPos = _engine->_renderer->projectPositionOnScreen(extraKey->pos - _engine->_grid->_camera);
+					const IVec3 &projPos = _engine->_renderer->projectPoint(extraKey->pos - _engine->_grid->_worldCube);
 					_engine->_redraw->addOverlay(OverlayType::koNumber, extraKey->info1, projPos.x, projPos.y, COLOR_BLACK, OverlayPosType::koNormal, 2);
 				}
 
@@ -837,7 +795,7 @@ void Extra::gereExtras() {
 				_engine->_sound->playSample(Samples::ItemFound, 1, extra->pos);
 
 				if (extra->info1 > 1) {
-					const IVec3 &projPos = _engine->_renderer->projectPositionOnScreen(extra->pos - _engine->_grid->_camera);
+					const IVec3 &projPos = _engine->_renderer->projectPoint(extra->pos - _engine->_grid->_worldCube);
 					const int16 fontColor = COLOR_158;
 					_engine->_redraw->addOverlay(OverlayType::koNumber, extra->info1, projPos.x, projPos.y, fontColor, OverlayPosType::koNormal, 2);
 				}

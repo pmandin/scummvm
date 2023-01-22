@@ -46,6 +46,8 @@
 #include "twine/text.h"
 #include "twine/twine.h"
 
+#define SIZE_FOUND_OBJ 130
+
 namespace TwinE {
 
 GameState::GameState(TwinEEngine *engine) : _engine(engine) {
@@ -55,9 +57,9 @@ GameState::GameState(TwinEEngine *engine) : _engine(engine) {
 	Common::fill(&_gameChoices[0], &_gameChoices[10], TextId::kNone);
 }
 
-void GameState::initEngineProjections() {
-	_engine->_renderer->setIsoProjection(_engine->width() / 2 - 9, _engine->height() / 2, 512);
-	_engine->_renderer->setBaseTranslation(0, 0, 0);
+void GameState::init3DGame() {
+	_engine->_renderer->setIsoProjection(_engine->width() / 2 - 8 - 1, _engine->height() / 2, SIZE_BRICK_XZ);
+	_engine->_renderer->setPosCamera(0, 0, 0);
 	_engine->_renderer->setAngleCamera(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0);
 	_engine->_renderer->setLightVector(_engine->_scene->_alphaLight, _engine->_scene->_betaLight, LBAAngles::ANGLE_0);
 }
@@ -102,11 +104,11 @@ void GameState::initHeroVars() {
 
 void GameState::initEngineVars() {
 	debug(2, "Init engine variables");
-	_engine->_interface->resetClip();
+	_engine->_interface->unsetClip();
 
 	_engine->_scene->_alphaLight = LBAAngles::ANGLE_315;
 	_engine->_scene->_betaLight = LBAAngles::ANGLE_334;
-	initEngineProjections();
+	init3DGame();
 	initGameStateVars();
 	initHeroVars();
 
@@ -333,15 +335,15 @@ void GameState::doFoundObj(InventoryItems item) {
 	}
 	const int32 itemZ = (_engine->_scene->_sceneHero->_pos.z + SIZE_BRICK_Y) / SIZE_BRICK_XZ;
 
-	_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
+	_engine->_grid->drawOverBrick(itemX, itemY, itemZ);
 
-	IVec3 &projPos = _engine->_renderer->projectPositionOnScreen(bodyPos);
+	IVec3 projPos = _engine->_renderer->projectPoint(bodyPos);
 	projPos.y -= 150;
 
-	const int32 boxTopLeftX = projPos.x - 65;
-	const int32 boxTopLeftY = projPos.y - 65;
-	const int32 boxBottomRightX = projPos.x + 65;
-	const int32 boxBottomRightY = projPos.y + 65;
+	const int32 boxTopLeftX = projPos.x - (SIZE_FOUND_OBJ / 2);
+	const int32 boxTopLeftY = projPos.y - (SIZE_FOUND_OBJ / 2);
+	const int32 boxBottomRightX = projPos.x + (SIZE_FOUND_OBJ / 2);
+	const int32 boxBottomRightY = projPos.y + (SIZE_FOUND_OBJ / 2);
 	const Common::Rect boxRect(boxTopLeftX, boxTopLeftY, boxBottomRightX, boxBottomRightY);
 	_engine->_sound->playSample(Samples::BigItemFound);
 
@@ -349,7 +351,7 @@ void GameState::doFoundObj(InventoryItems item) {
 	_engine->_music->stopMusic();
 	_engine->_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
 
-	_engine->_interface->resetClip();
+	_engine->_interface->unsetClip();
 	_engine->_text->initItemFoundText(item);
 	_engine->_text->initDialogueBox();
 
@@ -372,7 +374,7 @@ void GameState::doFoundObj(InventoryItems item) {
 	int16 itemAngle = LBAAngles::ANGLE_0;
 	for (;;) {
 		FrameMarker frame(_engine, 66);
-		_engine->_interface->resetClip();
+		_engine->_interface->unsetClip();
 		_engine->_redraw->_currNumOfRedrawBox = 0;
 		_engine->_redraw->blitBackgroundAreas();
 		_engine->_interface->drawTransparentBox(boxRect, 4);
@@ -381,12 +383,12 @@ void GameState::doFoundObj(InventoryItems item) {
 
 		itemAngle += LBAAngles::ANGLE_2;
 
-		_engine->_renderer->renderInventoryItem(_engine->_renderer->_projPos.x, _engine->_renderer->_projPos.y, _engine->_resources->_inventoryTable[item], itemAngle, 10000);
+		_engine->_renderer->draw3dObject(projPos.x, projPos.y, _engine->_resources->_inventoryTable[item], itemAngle, 10000);
 
 		_engine->_menu->drawRectBorders(boxRect);
 		_engine->_redraw->addRedrawArea(boxRect);
-		_engine->_interface->resetClip();
-		initEngineProjections();
+		_engine->_interface->unsetClip();
+		init3DGame();
 
 		if (_engine->_animations->setModelAnimation(currentAnimState, currentAnimData, bodyData, &_engine->_scene->_sceneHero->_animTimerData)) {
 			currentAnimState++; // keyframe
@@ -397,11 +399,11 @@ void GameState::doFoundObj(InventoryItems item) {
 
 		_engine->_renderer->renderIsoModel(bodyPos, LBAAngles::ANGLE_0, LBAAngles::ANGLE_45, LBAAngles::ANGLE_0, bodyData, modelRect);
 		_engine->_interface->setClip(modelRect);
-		_engine->_grid->drawOverModelActor(itemX, itemY, itemZ);
+		_engine->_grid->drawOverBrick(itemX, itemY, itemZ);
 		_engine->_redraw->addRedrawArea(modelRect);
 
 		if (textState == ProgressiveTextState::ContinueRunning) {
-			_engine->_interface->resetClip();
+			_engine->_interface->unsetClip();
 			textState = _engine->_text->updateProgressiveText();
 		} else {
 			_engine->_text->fadeInRemainingChars();
@@ -427,7 +429,7 @@ void GameState::doFoundObj(InventoryItems item) {
 
 		_engine->_text->playVoxSimple(_engine->_text->_currDialTextEntry);
 
-		_engine->_lbaTime++;
+		_engine->timerRef++;
 	}
 
 	while (_engine->_text->playVoxSimple(_engine->_text->_currDialTextEntry)) {
@@ -438,12 +440,12 @@ void GameState::doFoundObj(InventoryItems item) {
 		}
 	}
 
-	initEngineProjections();
+	init3DGame();
 	_engine->_text->initSceneTextBank();
 	_engine->_text->stopVox(_engine->_text->_currDialTextEntry);
 
 	_engine->_scene->_sceneHero->_animTimerData = tmpAnimTimer;
-	_engine->_interface->resetClip();
+	_engine->_interface->unsetClip();
 }
 
 void GameState::processGameChoices(TextId choiceIdx) {
@@ -479,7 +481,7 @@ void GameState::processGameChoices(TextId choiceIdx) {
 }
 
 void GameState::processGameoverAnimation() {
-	const int32 tmpLbaTime = _engine->_lbaTime;
+	const int32 tmpLbaTime = _engine->timerRef;
 
 	_engine->exitSceneryView();
 	// workaround to fix hero redraw after drowning
@@ -498,40 +500,41 @@ void GameState::processGameoverAnimation() {
 	_engine->_sound->stopSamples();
 	_engine->_music->stopMidiMusic(); // stop fade music
 	_engine->_renderer->setProjection(_engine->width() / 2, _engine->height() / 2, 128, 200, 200);
-	int32 startLbaTime = _engine->_lbaTime;
+	int32 startLbaTime = _engine->timerRef;
 	const Common::Rect &rect = _engine->centerOnScreen(_engine->width() / 2, _engine->height() / 2);
 	_engine->_interface->setClip(rect);
 
+	int32 zoom = 50000;
 	Common::Rect dummy;
-	while (!_engine->_input->toggleAbortAction() && (_engine->_lbaTime - startLbaTime) <= _engine->toSeconds(10)) {
+	while (!_engine->_input->toggleAbortAction() && (_engine->timerRef - startLbaTime) <= _engine->toSeconds(10)) {
 		FrameMarker frame(_engine, 66);
 		_engine->readKeys();
 		if (_engine->shouldQuit()) {
 			return;
 		}
 
-		const int32 zoom = _engine->_collision->clampedLerp(40000, 3200, _engine->toSeconds(10), _engine->_lbaTime - startLbaTime);
-		const int32 angle = _engine->_screens->lerp(1, LBAAngles::ANGLE_360, _engine->toSeconds(2), (_engine->_lbaTime - startLbaTime) % _engine->toSeconds(2));
+		zoom = _engine->_collision->clampedLerp(40000, 3200, _engine->toSeconds(10), _engine->timerRef - startLbaTime);
+		const int32 angle = _engine->_screens->lerp(1, LBAAngles::ANGLE_360, _engine->toSeconds(2), (_engine->timerRef - startLbaTime) % _engine->toSeconds(2));
 
 		_engine->blitWorkToFront(rect);
-		_engine->_renderer->setCameraAngle(0, 0, 0, 0, -angle, 0, zoom);
-		_engine->_renderer->renderIsoModel(0, 0, 0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, gameOverPtr, dummy);
+		_engine->_renderer->setFollowCamera(0, 0, 0, 0, -angle, 0, zoom);
+		_engine->_renderer->affObjetIso(0, 0, 0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, gameOverPtr, dummy);
 
-		_engine->_lbaTime++;
+		_engine->timerRef++;
 	}
 
 	_engine->_sound->playSample(Samples::Explode);
 	_engine->blitWorkToFront(rect);
-	_engine->_renderer->setCameraAngle(0, 0, 0, 0, 0, 0, 3200);
-	_engine->_renderer->renderIsoModel(0, 0, 0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, gameOverPtr, dummy);
+	_engine->_renderer->setFollowCamera(0, 0, 0, 0, 0, 0, zoom);
+	_engine->_renderer->affObjetIso(0, 0, 0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, gameOverPtr, dummy);
 
 	_engine->delaySkip(2000);
 
-	_engine->_interface->resetClip();
+	_engine->_interface->unsetClip();
 	_engine->restoreFrontBuffer();
-	initEngineProjections();
+	init3DGame();
 
-	_engine->_lbaTime = tmpLbaTime;
+	_engine->timerRef = tmpLbaTime;
 }
 
 void GameState::giveUp() {

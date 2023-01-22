@@ -122,11 +122,11 @@ bool Animations::setModelAnimation(int32 keyframeIdx, const AnimData &animData, 
 		lastKeyFramePtr = keyFrame;
 		remainingFrameTime = keyFrameLength;
 	}
-	const int32 deltaTime = _engine->_lbaTime - remainingFrameTime;
+	const int32 deltaTime = _engine->timerRef - remainingFrameTime;
 	if (deltaTime >= keyFrameLength) {
 		copyKeyFrameToState(keyFrame, bodyData, numOfBonesInAnim);
 		animTimerDataPtr->ptr = keyFrame;
-		animTimerDataPtr->time = _engine->_lbaTime;
+		animTimerDataPtr->time = _engine->timerRef;
 		return true;
 	}
 
@@ -186,7 +186,7 @@ void Animations::setAnimObjet(int32 keyframeIdx, const AnimData &animData, BodyD
 	_processLastRotationAngle = ToAngle(keyFrame->boneframes[0].y);
 
 	animTimerDataPtr->ptr = animData.getKeyframe(keyframeIdx);
-	animTimerDataPtr->time = _engine->_lbaTime;
+	animTimerDataPtr->time = _engine->timerRef;
 
 	const int16 numBones = bodyData.getNumBones();
 
@@ -206,7 +206,7 @@ void Animations::stockInterAnim(const BodyData &bodyData, AnimTimerDataStruct *a
 	if (_animKeyframeBufIdx >= ARRAYSIZE(_animKeyframeBuf)) {
 		_animKeyframeBufIdx = 0;
 	}
-	animTimerDataPtr->time = _engine->_lbaTime;
+	animTimerDataPtr->time = _engine->timerRef;
 	KeyFrame *keyframe = &_animKeyframeBuf[_animKeyframeBufIdx++];
 	animTimerDataPtr->ptr = keyframe;
 	copyStateToKeyFrame(keyframe, bodyData);
@@ -238,7 +238,7 @@ bool Animations::verifyAnimAtKeyframe(int32 keyframeIdx, const AnimData &animDat
 		remainingFrameTime = keyFrameLength;
 	}
 
-	const int32 deltaTime = _engine->_lbaTime - remainingFrameTime;
+	const int32 deltaTime = _engine->timerRef - remainingFrameTime;
 
 	_currentStep.x = keyFrame->x;
 	_currentStep.y = keyFrame->y;
@@ -250,7 +250,7 @@ bool Animations::verifyAnimAtKeyframe(int32 keyframeIdx, const AnimData &animDat
 
 	if (deltaTime >= keyFrameLength) {
 		animTimerDataPtr->ptr = animData.getKeyframe(keyframeIdx);
-		animTimerDataPtr->time = _engine->_lbaTime;
+		animTimerDataPtr->time = _engine->timerRef;
 		return true;
 	}
 
@@ -349,7 +349,7 @@ void Animations::processAnimActions(int32 actorIdx) { // GereAnimAction
 		case ActionType::ACTION_THROW_3D_ALPHA:
 			if (action.animFrame == actor->_frame) {
 				const int32 distance = getDistance2D(actor->posObj(), _engine->_scene->_sceneHero->posObj());
-				const int32 newAngle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->_pos.y, 0, _engine->_scene->_sceneHero->_pos.y, distance);
+				const int32 newAngle = _engine->_movements->getAngle(actor->_pos.y, 0, _engine->_scene->_sceneHero->_pos.y, distance);
 
 				const IVec3 &destPos = _engine->_movements->rotate(action.distanceX, action.distanceZ, actor->_beta);
 
@@ -483,9 +483,9 @@ void Animations::doAnim(int32 actorIdx) {
 
 		if (!actor->_dynamicFlags.bIsFalling) {
 			if (actor->_speed) {
-				int32 xAxisRotation = actor->_moveAngle.getRealValue(_engine->_lbaTime);
+				int32 xAxisRotation = actor->realAngle.getRealValueFromTime(_engine->timerRef);
 				if (!xAxisRotation) {
-					if (actor->_moveAngle.to > 0) {
+					if (actor->realAngle.endValue > 0) {
 						xAxisRotation = 1;
 					} else {
 						xAxisRotation = -1;
@@ -501,7 +501,7 @@ void Animations::doAnim(int32 actorIdx) {
 				processActor.x = actor->_pos.x + destPos.x;
 				processActor.z = actor->_pos.z + destPos.z;
 
-				_engine->_movements->setActorAngle(LBAAngles::LBAAngles::ANGLE_0, actor->_speed, LBAAngles::LBAAngles::ANGLE_17, &actor->_moveAngle);
+				_engine->_movements->setActorAngle(LBAAngles::LBAAngles::ANGLE_0, actor->_speed, LBAAngles::LBAAngles::ANGLE_17, &actor->realAngle);
 
 				if (actor->_dynamicFlags.bIsSpriteMoving) {
 					if (actor->_doorWidth) { // open door
@@ -602,7 +602,7 @@ void Animations::doAnim(int32 actorIdx) {
 				if (numKeyframe == (int16)animData.getNumKeyframes()) {
 					actor->_dynamicFlags.bIsHitting = 0;
 
-					if (actor->_flagAnim == AnimType::kAnimationTypeLoop) {
+					if (actor->_flagAnim == AnimType::kAnimationTypeRepeat) {
 						actor->_frame = animData.getLoopFrame();
 					} else {
 						actor->_genAnim = actor->_nextGenAnim;
@@ -615,7 +615,7 @@ void Animations::doAnim(int32 actorIdx) {
 
 						actor->_ptrAnimAction = _currentActorAnimExtraPtr;
 
-						actor->_flagAnim = AnimType::kAnimationTypeLoop;
+						actor->_flagAnim = AnimType::kAnimationTypeRepeat;
 						actor->_frame = 0;
 						actor->_strengthOfHit = 0;
 					}
@@ -717,7 +717,7 @@ void Animations::doAnim(int32 actorIdx) {
 		}
 
 		brickShape = _engine->_grid->worldColBrick(processActor);
-		actor->setBrickShape(brickShape);
+		actor->setCollision(brickShape);
 
 		if (brickShape != ShapeType::kNone) {
 			if (brickShape == ShapeType::kSolid) {
@@ -779,10 +779,10 @@ void Animations::doAnim(int32 actorIdx) {
 							if (fallHeight <= (2 * SIZE_BRICK_Y) && actor->_genAnim == AnimationTypes::kForward) {
 								actor->_dynamicFlags.bWasWalkingBeforeFalling = 1;
 							} else {
-								initAnim(AnimationTypes::kFall, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, actorIdx);
+								initAnim(AnimationTypes::kFall, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, actorIdx);
 							}
 						} else {
-							initAnim(AnimationTypes::kFall, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, actorIdx);
+							initAnim(AnimationTypes::kFall, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, actorIdx);
 						}
 					}
 				}

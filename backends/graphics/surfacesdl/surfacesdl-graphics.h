@@ -100,6 +100,7 @@ protected:
 	// PaletteManager API
 	void setPalette(const byte *colors, uint start, uint num) override;
 	void grabPalette(byte *colors, uint start, uint num) const override;
+	virtual void initGraphicsSurface();
 
 	/**
 	 * Convert from the SDL pixel format to Graphics::PixelFormat
@@ -419,6 +420,7 @@ protected:
 	virtual void blitCursor();
 
 	virtual void internUpdateScreen();
+	virtual void updateScreen(SDL_Rect *dirtyRectList, int actualDirtyRects);
 
 	virtual bool loadGFXMode();
 	virtual void unloadGFXMode();
@@ -432,7 +434,7 @@ protected:
 
 	bool saveScreenshot(const Common::String &filename) const override;
 	virtual void setGraphicsModeIntern();
-	void getDefaultResolution(uint &w, uint &h);
+	virtual void getDefaultResolution(uint &w, uint &h);
 
 private:
 	void setFullscreenMode(bool enable);

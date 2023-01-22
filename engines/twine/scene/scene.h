@@ -156,7 +156,7 @@ public:
 	~Scene();
 
 	int32 _needChangeScene = LBA1SceneId::Citadel_Island_Prison;
-	int32 _currentSceneIdx = LBA1SceneId::Citadel_Island_Prison;
+	int32 _currentSceneIdx = LBA1SceneId::Citadel_Island_Prison; // NumCube
 	int32 _previousSceneIdx = LBA1SceneId::Citadel_Island_Prison;
 
 	int32 _planet = -1;
@@ -185,7 +185,7 @@ public:
 	/** Current followed actor in scene */
 	int16 _currentlyFollowedActor = OWN_ACTOR_SCENE_INDEX;
 	/** Current actor in zone - climbing a ladder */
-	bool _currentActorInZone = false;
+	bool _flagClimbing = false;
 	bool _enableEnhancements = false;
 	/** Current actor manipulated in scripts */
 	int16 _currentScriptValue = 0;

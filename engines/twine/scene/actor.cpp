@@ -63,7 +63,7 @@ void Actor::restartHeroScene() {
 	sceneHero->_zone = -1;
 	sceneHero->_beta = _previousHeroAngle;
 
-	_engine->_movements->initRealAngle(sceneHero->_beta, sceneHero->_beta, LBAAngles::ANGLE_0, &sceneHero->_moveAngle);
+	_engine->_movements->initRealAngle(sceneHero->_beta, sceneHero->_beta, LBAAngles::ANGLE_0, &sceneHero->realAngle);
 	setBehaviour(_previousHeroBehaviour);
 
 	_cropBottomScreen = 0;
@@ -126,9 +126,9 @@ void Actor::setBehaviour(HeroBehaviourType behaviour) {
 	initBody(bodyIdx, OWN_ACTOR_SCENE_INDEX);
 
 	sceneHero->_genAnim = AnimationTypes::kAnimNone;
-	sceneHero->_flagAnim = AnimType::kAnimationTypeLoop;
+	sceneHero->_flagAnim = AnimType::kAnimationTypeRepeat;
 
-	_engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, OWN_ACTOR_SCENE_INDEX);
+	_engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, OWN_ACTOR_SCENE_INDEX);
 }
 
 void Actor::initSpriteActor(int32 actorIdx) {
@@ -236,7 +236,7 @@ void Actor::initActor(int16 actorIdx) {
 
 		initSpriteActor(actorIdx);
 
-		_engine->_movements->initRealAngle(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, &actor->_moveAngle);
+		_engine->_movements->initRealAngle(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, &actor->realAngle);
 
 		if (actor->_staticFlags.bUsesClipping) {
 			actor->_animStep = actor->posObj();
@@ -248,13 +248,13 @@ void Actor::initActor(int16 actorIdx) {
 		initBody(actor->_genBody, actorIdx);
 
 		actor->_anim = -1;
-		actor->_flagAnim = AnimType::kAnimationTypeLoop;
+		actor->_flagAnim = AnimType::kAnimationTypeRepeat;
 
 		if (actor->_body != -1) {
-			_engine->_animations->initAnim(actor->_genAnim, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, actorIdx);
+			_engine->_animations->initAnim(actor->_genAnim, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, actorIdx);
 		}
 
-		_engine->_movements->initRealAngle(actor->_beta, actor->_beta, LBAAngles::ANGLE_0, &actor->_moveAngle);
+		_engine->_movements->initRealAngle(actor->_beta, actor->_beta, LBAAngles::ANGLE_0, &actor->realAngle);
 	}
 
 	actor->_offsetTrack = -1;
@@ -274,7 +274,7 @@ void Actor::resetActor(int16 actorIdx) {
 	memset(&actor->_dynamicFlags, 0, sizeof(DynamicFlagsStruct));
 	memset(&actor->_bonusParameter, 0, sizeof(BonusParameter));
 
-	_engine->_movements->initRealAngle(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, &actor->_moveAngle);
+	_engine->_movements->initRealAngle(LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, LBAAngles::ANGLE_0, &actor->realAngle);
 }
 
 void Actor::hitObj(int32 actorIdx, int32 actorIdxAttacked, int32 hitforce, int32 angle) {
@@ -300,7 +300,7 @@ void Actor::hitObj(int32 actorIdx, int32 actorIdxAttacked, int32 hitforce, int32
 
 		} else {
 			if (angle != -1) {
-				_engine->_movements->initRealAngle(angle, angle, LBAAngles::ANGLE_0, &actor->_moveAngle);
+				_engine->_movements->initRealAngle(angle, angle, LBAAngles::ANGLE_0, &actor->realAngle);
 			}
 
 			if (_engine->getRandomNumber() & 1) {
@@ -349,7 +349,7 @@ void Actor::giveExtraBonus(int32 actorIdx) {
 		_engine->_sound->playSample(Samples::ItemPopup, 1, actor->posObj(), actorIdx);
 	} else {
 		const ActorStruct *sceneHero = _engine->_scene->_sceneHero;
-		const int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(actor->posObj(), sceneHero->posObj());
+		const int32 angle = _engine->_movements->getAngle(actor->posObj(), sceneHero->posObj());
 		const IVec3 pos(actor->_pos.x, actor->_pos.y + actor->_boundingBox.maxs.y, actor->_pos.z);
 		_engine->_extra->addExtraBonus(pos, LBAAngles::ANGLE_70, angle, bonusSprite, actor->_bonusAmount);
 		_engine->_sound->playSample(Samples::ItemPopup, 1, pos, actorIdx);
@@ -369,41 +369,38 @@ void ActorStruct::loadModel(int32 modelIndex, bool lba1) {
 	}
 }
 
-int32 ActorMoveStruct::getRealAngle(int32 time) {
-	if (numOfStep) {
-		const int32 timePassed = time - timeOfChange;
+int16 ActorMoveStruct::getRealValueFromTime(int32 time) {
+	if (timeValue) {
+		const int32 delta = time - memoTicks;
 
-		if (timePassed >= numOfStep) { // rotation is finished
-			numOfStep = 0;
-			return to;
+		if (delta >= timeValue) { // rotation is finished
+			timeValue = 0;
+			return endValue;
 		}
 
-		int32 remainingAngle = NormalizeAngle(to - from);
-		remainingAngle *= timePassed;
-		remainingAngle /= numOfStep;
-		remainingAngle += from;
+		int32 t = ((endValue - startValue) * delta) / timeValue;
+		t += startValue;
 
-		return remainingAngle;
+		return (int16)t;
 	}
 
-	return to;
+	return endValue;
 }
 
-int32 ActorMoveStruct::getRealValue(int32 time) {
-	if (!numOfStep) {
-		return to;
+int16 ActorMoveStruct::getRealAngle(int32 time) {
+	if (timeValue) {
+		int32 delta = time - memoTicks;
+		if (delta < timeValue) {
+			int32 t = NormalizeAngle(endValue - startValue);
+			t = (t * delta) / timeValue;
+			t += startValue;
+			return (int16)t;
+		}
+
+		timeValue = 0;
 	}
 
-	if (time - timeOfChange >= numOfStep) {
-		numOfStep = 0;
-		return to;
-	}
-
-	int32 tempStep = to - from;
-	tempStep *= time - timeOfChange;
-	tempStep /= numOfStep;
-
-	return tempStep + from;
+	return endValue;
 }
 
 bool ActorStruct::isAttackAnimationActive() const {

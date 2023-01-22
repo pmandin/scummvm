@@ -18,6 +18,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - RetroMini RS90 mit OpenDingux Beta-Firmware.
    - Erste Generation von Miyoo (New BittBoy, Pocket Go und PowKiddy Q90-V90-Q20)
      mit der TriForceX MiyooCFW.
+   - Miyoo mini
 
  Allgemein:
    - Anzahl an falsch-positiven Einträgen reduziert, wenn das Gerät nach Spielen durchsucht wird.
@@ -87,6 +88,11 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Inherit the Earth kann nun direkt mit den Dateien des Disketten-Installationsprogramms gespielt werden.
    - Unterstützung für die Amiga-Versionen (AGA/ECS, Retail/Demo, Englisch/Deutsch) von Inherit the Earth hinzugefügt.
 
+ SCI:
+   - Verbesserte Text-Darstellung in den Macintosh-Versionen der Spiele.
+   - Unterstützung für Casio MT-540, CT-460 und CSM-1-MIDI-Geräte für alle
+     SCI0-Spiele hinzugefügt, welche die genannten Geräte unterstützen.
+
  SCUMM:
    - Unterstützung von CGA-, CGA Composite-, CGA schwarz/weiß- und Herkules-Grafikmodi
      für die SCUMM 1-Versionen von Zak McKracken und Maniac Mansion hinzugefügt.
@@ -120,12 +126,16 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      in den anderen Sprachen).
    - Verbesserte Unterstützung der hebräischen Versionen der Spiele von Humongous Entertainment.
    - Unterstützung für Roland MT-32 in Sam & Max korrigiert.
-   - Unterstützung für die originale Benutzeroberfläche und die Speicher-Menüs von LucasArts-Spielen hinzugefügt (DOS, Windows, Amiga, Macintosh, FM-Towns, Atari ST, Sega CD, NES- und Commodore 64-Versionen).
-   - Unterstützung für die originale Benutzeroberfläche für die SegaCD-Version von MI1 hinzugefügt.
+   - Unterstützung für die originale Benutzeroberfläche und die Speicher-Menüs
+     von LucasArts-Spielen hinzugefügt (DOS, Windows, Amiga, Macintosh,
+     FM-Towns, Atari ST, Sega CD, NES- und Commodore 64-Versionen).
+     Aktiviere ebenfalls die Option "Beim Verlassen um Bestätigung bitten" für
+     eine noch authentischere Spielerfahrung!
    - Einige kleinere Timing-Probleme in der SMUSH-Video-Engine korrigiert, die hauptsächlich
      Full Throttle betreffen.
    - Audiomodus mit niedriger Latenz für Full Throttle, The Dig und The Curse of Monkey Island
-     hinzugefügt. Dieser Modus kann die Audio-Performance gerade auf mobilen Geräten verbessern.
+     hinzugefügt. Dieser Modus kann die Audio-Performance gerade auf mobilen Geräten verbessern,
+     ist allerdings auch etwas weniger genau als die ursprüngliche Wiedergabe.
    - Die CD-Audiowiedergabe wird in den CD-Versionen von Monkey Island 1 und Loom
      nach dem Laden eines Spielstands nun korrekt fortgesetzt.
 
@@ -163,6 +173,10 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Xeen:
    - Fehlerkorrekturen für mehrere Abstürze in Clouds of Xeen.
+   - Shops werden nun erst nach der Verabschiedung verlassen.
+   - Die Karte wird nun nicht mehr neu geladen, wenn die Erstellung eines Charakters abgeschlossen ist.
+   - Die Logik, nach der die Wolken in Swords of Xeen fallen, wurde korrigiert.
+   - Fehlerkorrektur für das GateMaster-Monster in der Underworld-Map.
 
  3DS-Portierung:
    - Der Relocation-Parser wurde um Unterstützung für PREL31, welches von neuen Compilern verwendet wird, erweitert.

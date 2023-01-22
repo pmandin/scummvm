@@ -222,6 +222,7 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 
 	if (areaID == _startArea && entranceID == _startEntrance) {
 		_yaw = 280;
+		_pitch = 0;
 	} else if (areaID == 127) {
 		assert(entranceID == 0);
 		_yaw = 90;
@@ -242,10 +243,7 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 	_currentArea->_skyColor = 0;
 	_currentArea->_usualBackgroundColor = 0;
 
-	if (areaID != _startArea || entranceID != _startEntrance) {
-		g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
-		rotate(0, 0);
-	}
+	resetInput();
 }
 
 void DrillerEngine::loadGlobalObjects(Common::SeekableReadStream *file, int offset) {
@@ -545,19 +543,30 @@ void DrillerEngine::loadAssetsFullGame() {
 		if (!file.isOpen())
 			error("Failed to open driller.zx.extracted");
 
-		loadMessagesFixedSize(&file, 0x20e4, 14, 20);
+		if (_variant & GF_ZX_DISC)
+			loadMessagesFixedSize(&file, 0x2164, 14, 20);
+		else
+			loadMessagesFixedSize(&file, 0x20e4, 14, 20);
 
 		if (_variant & GF_ZX_RETAIL)
 			loadFonts(&file, 0x62ca);
-		if (_variant & GF_ZX_BUDGET)
+		else if (_variant & GF_ZX_BUDGET)
 			loadFonts(&file, 0x5aa8);
+		else if (_variant & GF_ZX_DISC)
+			loadFonts(&file, 0x63f0);
 
-		loadGlobalObjects(&file, 0x1c93);
+		if (_variant & GF_ZX_DISC)
+			loadGlobalObjects(&file, 0x1d13);
+		else
+			loadGlobalObjects(&file, 0x1c93);
 
 		if (_variant & GF_ZX_RETAIL)
 			load8bitBinary(&file, 0x642c, 4);
 		else if (_variant & GF_ZX_BUDGET)
 			load8bitBinary(&file, 0x5c0a, 4);
+		else if (_variant & GF_ZX_DISC)
+			load8bitBinary(&file, 0x6552, 4);
+
 		else
 			error("Unknown ZX spectrum variant");
 	} else if (isCPC()) {
@@ -719,10 +728,10 @@ void DrillerEngine::processBorder() {
 		while (entry->areaId) {
 
 			if (entry->palette == kDrillerCGAPaletteRedGreen) {
-				_borderCGAByArea[entry->areaId] = borderTextureRedGreen; 
+				_borderCGAByArea[entry->areaId] = borderTextureRedGreen;
 				_paletteCGAByArea[entry->areaId] = (byte *)kDrillerCGAPaletteRedGreenData;
 			} else if (entry->palette == kDrillerCGAPalettePinkBlue) {
-				_borderCGAByArea[entry->areaId] = _borderTexture; 
+				_borderCGAByArea[entry->areaId] = _borderTexture;
 				_paletteCGAByArea[entry->areaId] = (byte *)kDrillerCGAPalettePinkBlueData;
 			} else
 				error("Invalid CGA palette to use");

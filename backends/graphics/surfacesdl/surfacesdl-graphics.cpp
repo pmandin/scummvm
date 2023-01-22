@@ -136,7 +136,9 @@ SurfaceSdlGraphicsManager::SurfaceSdlGraphicsManager(SdlEventSource *sdlEventSou
 #endif
 	_transactionMode(kTransactionNone),
 	_scalerPlugins(ScalerMan.getPlugins()), _scalerPlugin(nullptr), _scaler(nullptr),
-	_needRestoreAfterOverlay(false), _isInOverlayPalette(false), _isDoubleBuf(false), _prevForceRedraw(false), _numPrevDirtyRects(0) {
+	_needRestoreAfterOverlay(false), _isInOverlayPalette(false), _isDoubleBuf(false), _prevForceRedraw(false), _numPrevDirtyRects(0),
+	_prevCursorNeedsRedraw(false)
+{
 
 	// allocate palette storage
 	_currentPalette = (SDL_Color *)calloc(sizeof(SDL_Color), 256);
@@ -172,11 +174,7 @@ SurfaceSdlGraphicsManager::SurfaceSdlGraphicsManager(SdlEventSource *sdlEventSou
 	_scaler = nullptr;
 	_maxExtraPixels = ScalerMan.getMaxExtraPixels();
 
-#ifdef RS90
-	_videoMode.fullscreen = false;
-#else
 	_videoMode.fullscreen = ConfMan.getBool("fullscreen");
-#endif
 	_videoMode.filtering = ConfMan.getBool("filtering");
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	_videoMode.stretchMode = STRETCH_FIT;
@@ -731,30 +729,8 @@ int SurfaceSdlGraphicsManager::getStretchMode() const {
 #endif
 
 void SurfaceSdlGraphicsManager::getDefaultResolution(uint &w, uint &h) {
-#ifdef RS90
-	SDL_PixelFormat p;
-	p.BitsPerPixel = 16;
-	p.BytesPerPixel = 2;
-	p.Rloss = 3;
-	p.Gloss = 2;
-	p.Bloss = 3;
-	p.Rshift = 11;
-	p.Gshift = 5;
-	p.Bshift = 0;
-	p.Rmask = 0xf800;
-	p.Gmask = 0x07e0;
-	p.Bmask = 0x001f;
-	p.colorkey = 0;
-	p.alpha = 0;
-	// Only native screen resolution is supported in RGB565 fullscreen hwsurface.
-	SDL_Rect const* const*availableModes = SDL_ListModes(&p, SDL_FULLSCREEN|SDL_HWSURFACE);
-	w = availableModes[0]->w;
-	h = availableModes[0]->h;
-	if (h > w) h /= 2; // RG99 has a 320x480 screen, gui should render at 320x240 to look correct
-#else
 	w = 320;
 	h = 200;
-#endif
 }
 
 void SurfaceSdlGraphicsManager::initSize(uint w, uint h, const Graphics::PixelFormat *format) {
@@ -885,13 +861,6 @@ void SurfaceSdlGraphicsManager::fixupResolutionForAspectRatio(AspectRatio desire
 }
 
 void SurfaceSdlGraphicsManager::setupHardwareSize() {
-#ifdef RS90
-	_videoMode.isHwPalette = true;
-	_videoMode.scaleFactor = 1;
-#else
-	_videoMode.isHwPalette = false;
-#endif
-
 	_videoMode.overlayWidth = _videoMode.screenWidth * _videoMode.scaleFactor;
 	_videoMode.overlayHeight = _videoMode.screenHeight * _videoMode.scaleFactor;
 
@@ -907,9 +876,28 @@ void SurfaceSdlGraphicsManager::setupHardwareSize() {
 	}
 }
 
+void SurfaceSdlGraphicsManager::initGraphicsSurface() {
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	Uint32 flags = SDL_SWSURFACE;
+#else
+	Uint32 flags = _videoMode.isHwPalette ? (SDL_HWSURFACE | SDL_HWPALETTE | SDL_DOUBLEBUF) : SDL_SWSURFACE;
+#endif
+	if (_videoMode.fullscreen)
+		flags |= SDL_FULLSCREEN;
+	_hwScreen = SDL_SetVideoMode(_videoMode.hardwareWidth, _videoMode.hardwareHeight, _videoMode.isHwPalette ? 8 : 16,
+				     flags);
+#if SDL_VERSION_ATLEAST(2, 0, 0)
+	_isDoubleBuf = false;
+#else
+	_isDoubleBuf = flags & SDL_DOUBLEBUF;
+#endif
+}
+
 bool SurfaceSdlGraphicsManager::loadGFXMode() {
 	_forceRedraw = true;
 
+	// Init isHwPalette. Allow setupHardwareSize to override it.
+	_videoMode.isHwPalette = false;
 	setupHardwareSize();
 
 	//
@@ -963,22 +951,7 @@ bool SurfaceSdlGraphicsManager::loadGFXMode() {
 		}
 #endif
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-		Uint32 flags = SDL_SWSURFACE;
-#else
-		Uint32 flags = _videoMode.isHwPalette ? (SDL_HWSURFACE | SDL_HWPALETTE | SDL_DOUBLEBUF) : SDL_SWSURFACE;
-#endif
-#ifndef RS90
-		if (_videoMode.fullscreen)
-			flags |= SDL_FULLSCREEN;
-#endif
-		_hwScreen = SDL_SetVideoMode(_videoMode.hardwareWidth, _videoMode.hardwareHeight, _videoMode.isHwPalette ? 8 : 16,
-					       flags);
-#if SDL_VERSION_ATLEAST(2, 0, 0)
-		_isDoubleBuf = false;
-#else
-		_isDoubleBuf = flags & SDL_DOUBLEBUF;
-#endif
+		initGraphicsSurface();
 	}
 
 #ifdef USE_RGB_COLOR
@@ -1169,6 +1142,10 @@ void SurfaceSdlGraphicsManager::updateScreen() {
 	Common::StackLock lock(_graphicsMutex);	// Lock the mutex until this function ends
 
 	internUpdateScreen();
+}
+
+void SurfaceSdlGraphicsManager::updateScreen(SDL_Rect *dirtyRectList, int actualDirtyRects) {
+	SDL_UpdateRects(_hwScreen, actualDirtyRects, dirtyRectList);
 }
 
 void SurfaceSdlGraphicsManager::internUpdateScreen() {
@@ -1474,7 +1451,7 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 
 		// Finally, blit all our changes to the screen
 		if (!_displayDisabled) {
-			SDL_UpdateRects(_hwScreen, actualDirtyRects, _dirtyRectList);
+			updateScreen(_dirtyRectList, actualDirtyRects);
 		}
 	}
 
@@ -1859,6 +1836,19 @@ void SurfaceSdlGraphicsManager::clearOverlay() {
 	SDL_LockSurface(_tmpscreen);
 	SDL_LockSurface(_overlayscreen);
 
+	// Transpose from game palette to RGB332 (overlay palette)
+	if (_videoMode.isHwPalette) {
+		byte *p = (byte *)(_tmpscreen->pixels) + _maxExtraPixels * _tmpscreen->pitch + _maxExtraPixels * _tmpscreen->format->BytesPerPixel;
+		int pitchSkip = _tmpscreen->pitch - _videoMode.screenWidth;
+		for (int y = 0; y < _videoMode.screenHeight; y++) {
+			for (int x = 0; x < _videoMode.screenWidth; x++, p++) {
+				const SDL_Color &col = _currentPalette[*p];
+				*p = (col.r & 0xe0) | ((col.g >> 3) & 0x1c) | ((col.b >> 6) & 0x03);
+			}
+			p += pitchSkip;
+		}
+	}
+
 	_scaler->scale((byte *)(_tmpscreen->pixels) + _maxExtraPixels * _tmpscreen->pitch + _maxExtraPixels * _tmpscreen->format->BytesPerPixel, _tmpscreen->pitch,
 	(byte *)_overlayscreen->pixels, _overlayscreen->pitch, _videoMode.screenWidth, _videoMode.screenHeight, 0, 0);
 
@@ -2007,7 +1997,7 @@ void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, 
 		assert(!_mouseOrigSurface);
 
 		// Allocate bigger surface because scalers will read past the boudaries.
-		_mouseOrigSurface = SDL_CreateRGBSurface(SDL_SWSURFACE | SDL_RLEACCEL | SDL_SRCCOLORKEY | SDL_SRCALPHA,
+		_mouseOrigSurface = SDL_CreateRGBSurface(SDL_SWSURFACE,
 						_mouseCurState.w + _maxExtraPixels * 2,
 						_mouseCurState.h + _maxExtraPixels * 2,
 						_cursorFormat.bytesPerPixel * 8,
@@ -2101,7 +2091,7 @@ void SurfaceSdlGraphicsManager::blitCursor() {
 		if (_mouseSurface)
 			SDL_FreeSurface(_mouseSurface);
 
-		_mouseSurface = SDL_CreateRGBSurface(SDL_SWSURFACE | SDL_RLEACCEL | SDL_SRCCOLORKEY | SDL_SRCALPHA,
+		_mouseSurface = SDL_CreateRGBSurface(SDL_SWSURFACE,
 						_mouseCurState.rW,
 						_mouseCurState.rH,
 						_mouseOrigSurface->format->BitsPerPixel,
@@ -2287,7 +2277,7 @@ void SurfaceSdlGraphicsManager::displayMessageOnOSD(const Common::U32String &msg
 		height = _hwScreen->h;
 
 	_osdMessageSurface = SDL_CreateRGBSurface(
-		SDL_SWSURFACE | SDL_RLEACCEL | SDL_SRCALPHA,
+		SDL_SWSURFACE,
 		width, height, _hwScreen->format->BitsPerPixel, _hwScreen->format->Rmask, _hwScreen->format->Gmask, _hwScreen->format->Bmask, _hwScreen->format->Amask
 	);
 
@@ -2361,7 +2351,7 @@ void SurfaceSdlGraphicsManager::displayActivityIconOnOSD(const Graphics::Surface
 		const Graphics::PixelFormat &iconFormat = icon->format;
 
 		_osdIconSurface = SDL_CreateRGBSurface(
-				SDL_SWSURFACE | SDL_RLEACCEL | SDL_SRCALPHA,
+				SDL_SWSURFACE,
 				icon->w, icon->h, iconFormat.bytesPerPixel * 8,
 				((0xFF >> iconFormat.rLoss) << iconFormat.rShift),
 				((0xFF >> iconFormat.gLoss) << iconFormat.gShift),

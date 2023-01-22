@@ -971,7 +971,7 @@ void Menu::drawKeys(int32 left, int32 top) {
 }
 
 void Menu::drawInfoMenu(int16 left, int16 top, int16 width) {
-	_engine->_interface->resetClip();
+	_engine->_interface->unsetClip();
 	const int16 height = 80;
 	const Common::Rect rect(left, top, left + width, top + height);
 	drawRectBorders(rect);
@@ -1035,8 +1035,8 @@ void Menu::drawBehaviour(int32 left, int32 top, HeroBehaviourType behaviour, int
 		drawRectBorders(boxRectCopy);
 	}
 
-	_engine->_interface->saveClip();
-	_engine->_interface->resetClip();
+	_engine->_interface->memoClip();
+	_engine->_interface->unsetClip();
 
 	if (behaviour == _engine->_actor->_heroBehaviour) {
 		const int titleOffset = 10;
@@ -1065,9 +1065,9 @@ void Menu::drawBehaviour(int32 left, int32 top, HeroBehaviourType behaviour, int
 		_engine->_interface->drawFilledRect(boxRect, COLOR_BLACK);
 	}
 
-	_engine->_renderer->renderBehaviourModel(boxRect, -600, angle, *_behaviourEntity, _moveMenu);
+	_engine->_renderer->drawObj3D(boxRect, -600, angle, *_behaviourEntity, _moveMenu);
 
-	_engine->_interface->loadClip();
+	_engine->_interface->restoreClip();
 }
 
 void Menu::prepareAndDrawBehaviour(int32 left, int32 top, int32 angle, HeroBehaviourType behaviour) {
@@ -1137,7 +1137,7 @@ void Menu::processBehaviourMenu(bool behaviourMenu) {
 		const int animIdx = _engine->_actor->_heroAnimIdx[(byte)_engine->_actor->_heroBehaviour];
 		_engine->_animations->setAnimObjet(_behaviourAnimState[(byte)_engine->_actor->_heroBehaviour], _engine->_resources->_animData[animIdx], *_behaviourEntity, &_behaviourAnimData[(byte)_engine->_actor->_heroBehaviour]);
 
-		int32 tmpTime = _engine->_lbaTime;
+		int32 tmpTime = _engine->timerRef;
 
 #if 0
 		ScopedCursor scopedCursor(_engine);
@@ -1187,12 +1187,12 @@ void Menu::processBehaviourMenu(bool behaviourMenu) {
 
 			drawBehaviour(left, top, _engine->_actor->_heroBehaviour, -1, true);
 
-			_engine->_lbaTime++;
+			_engine->timerRef++;
 		}
 
-		_engine->_lbaTime = tmpTime;
+		_engine->timerRef = tmpTime;
 
-		_engine->_gameState->initEngineProjections();
+		_engine->_gameState->init3DGame();
 	}
 	_engine->_actor->setBehaviour(_engine->_actor->_heroBehaviour);
 
@@ -1216,8 +1216,8 @@ void Menu::drawItem(int32 left, int32 top, int32 item) {
 	if (item < NUM_INVENTORY_ITEMS && _engine->_gameState->hasItem((InventoryItems)item) && (!_engine->_gameState->inventoryDisabled() || item == InventoryItems::kiCloverLeaf)) {
 		_itemAngle[item] += LBAAngles::ANGLE_2;
 		_engine->_interface->setClip(rect);
-		_engine->_renderer->renderInventoryItem(itemX, itemY, _engine->_resources->_inventoryTable[item], _itemAngle[item], 15000);
-		_engine->_interface->resetClip();
+		_engine->_renderer->draw3dObject(itemX, itemY, _engine->_resources->_inventoryTable[item], _itemAngle[item], 15000);
+		_engine->_interface->unsetClip();
 		if (item == InventoryItems::kGasItem) {
 			_engine->_text->setFontColor(COLOR_WHITE);
 			const Common::String &inventoryNumGas = Common::String::format("%d", _engine->_gameState->_inventoryNumGas);
@@ -1236,7 +1236,7 @@ void Menu::drawInventoryItems(int32 left, int32 top) {
 	for (int32 item = 0; item < NUM_INVENTORY_ITEMS; item++) {
 		drawItem(left, top, item);
 	}
-	_engine->_interface->resetClip();
+	_engine->_interface->unsetClip();
 }
 
 void Menu::processInventoryMenu() {
@@ -1356,7 +1356,7 @@ void Menu::processInventoryMenu() {
 	_engine->_scene->_alphaLight = tmpAlphaLight;
 	_engine->_scene->_betaLight = tmpBetaLight;
 
-	_engine->_gameState->initEngineProjections();
+	_engine->_gameState->init3DGame();
 
 	_engine->_text->initSceneTextBank();
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.1.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-01-16 17:10+0000\n"
+"POT-Creation-Date: 2023-01-20 13:14+0000\n"
 "PO-Revision-Date: 2022-10-27 02:33+0000\n"
 "Last-Translator: Niv Baehr <bloop93@gmail.com>\n"
 "Language-Team: Hebrew <https://translations.scummvm.org/projects/scummvm/"
@@ -244,9 +244,10 @@ msgstr "ההורדה הושלמה. ירדו %d חבילות, %s %S"
 
 #: gui/downloadpacksdialog.cpp:293 gui/downloadpacksdialog.cpp:385
 #: gui/gui-manager.cpp:162 gui/unknown-game-dialog.cpp:53
-#: engines/nancy/dialogs.cpp:313 engines/scumm/help.cpp:123
-#: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
-#: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
+#: backends/platform/android/options.cpp:358 engines/nancy/dialogs.cpp:313
+#: engines/scumm/help.cpp:123 engines/scumm/help.cpp:138
+#: engines/scumm/help.cpp:163 engines/scumm/help.cpp:189
+#: engines/scumm/help.cpp:207
 msgid "Close"
 msgstr "סגירה"
 
@@ -327,8 +328,8 @@ msgstr "שפת המשחק. אפשרות זו לא תהפוך משחק בטורק
 #: gui/options.cpp:1616 gui/options.cpp:1630 gui/options.cpp:2035
 #: gui/options.cpp:2443 gui/options.cpp:2496 gui/options.cpp:2711
 #: gui/options.cpp:3171 audio/null.cpp:40
-#: backends/platform/android/options.cpp:112
-#: backends/platform/android/options.cpp:113 engines/ags/dialogs.cpp:62
+#: backends/platform/android/options.cpp:137
+#: backends/platform/android/options.cpp:138 engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<ברירת מחדל>"
 
@@ -3147,27 +3148,27 @@ msgid "Resolution: %dx%d"
 msgstr "רזולוציה: %dx%d"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:724
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2507
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2497
 msgid "Enabled aspect ratio correction"
 msgstr "תיקון יחס ממדים מופעל"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:726
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2513
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2503
 msgid "Disabled aspect ratio correction"
 msgstr "תיקון יחס ממדים מושבת"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:739
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2529
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2519
 msgid "Filtering enabled"
 msgstr "סינון מופעל"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:741
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2531
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2521
 msgid "Filtering disabled"
 msgstr "הסינון מושבת"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:767
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2558
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2548
 msgid "Stretch mode"
 msgstr "מצב מתיחה"
 
@@ -3175,7 +3176,7 @@ msgstr "מצב מתיחה"
 msgid "SDL Surface"
 msgstr "SDL Surface"
 
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2473
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2463
 msgid "Active graphics filter:"
 msgstr "מסנן גרפי פעיל:"
 
@@ -3752,48 +3753,53 @@ msgstr "מצב זכוכית מגדלת כבוי. מפעיל מחדש מצב גר
 msgid "Magnify Mode Off"
 msgstr "מצב זכוכית מגדלת כבוי"
 
-#: backends/platform/android/options.cpp:93
+#: backends/platform/android/options.cpp:118
 msgid "Show On-screen control"
 msgstr "הצגת בקרים על המסך"
 
-#: backends/platform/android/options.cpp:94
+#: backends/platform/android/options.cpp:119
 msgid "Choose the preferred touch mode:"
 msgstr "בחירת מצב מגע מועדף:"
 
-#: backends/platform/android/options.cpp:96
+#: backends/platform/android/options.cpp:121
 msgid "In menus"
 msgstr "בתפריטים"
 
-#: backends/platform/android/options.cpp:98
-#: backends/platform/android/options.cpp:116
-#: backends/platform/android/options.cpp:117
+#: backends/platform/android/options.cpp:123
+#: backends/platform/android/options.cpp:141
+#: backends/platform/android/options.cpp:142
 msgid "Touchpad emulation"
 msgstr "דמוי משטח מגע"
 
-#: backends/platform/android/options.cpp:99
-#: backends/platform/android/options.cpp:119
-#: backends/platform/android/options.cpp:120
+#: backends/platform/android/options.cpp:124
+#: backends/platform/android/options.cpp:144
+#: backends/platform/android/options.cpp:145
 msgid "Direct mouse"
 msgstr "עכבר ישיר"
 
-#: backends/platform/android/options.cpp:100
-#: backends/platform/android/options.cpp:122
-#: backends/platform/android/options.cpp:123
+#: backends/platform/android/options.cpp:125
+#: backends/platform/android/options.cpp:147
+#: backends/platform/android/options.cpp:148
 msgid "Gamepad emulation"
 msgstr "דמוי בקר משחק"
 
-#: backends/platform/android/options.cpp:106
+#: backends/platform/android/options.cpp:131
 msgid "In 2D games"
 msgstr "במשחקי דו-ממד"
 
-#: backends/platform/android/options.cpp:108
+#: backends/platform/android/options.cpp:133
 msgid "In 3D games"
 msgstr "במשחקי תלת-ממד"
 
-#. I18N: Show a button to revoke Storage Access Framework permissions for Android
-#: backends/platform/android/options.cpp:128
-msgid "Show SAF revoke permissions overlay button"
-msgstr "הצגת כפתור שלילת הרשאות SAF"
+#: backends/platform/android/options.cpp:152
+msgid "Forget SAF authorization"
+msgstr ""
+
+#: backends/platform/android/options.cpp:359
+#, fuzzy
+#| msgid "~R~emove Game"
+msgid "Remove"
+msgstr "ה~ס~רת משחק"
 
 #: backends/platform/ds/ds-graphics.cpp:281
 msgid "Unscaled"
@@ -4500,8 +4506,8 @@ msgstr "המתרגם לא מעוניין לשלב את תרגומו בתוך Scu
 #: engines/mohawk/detection_tables.h:2492
 #: engines/mohawk/detection_tables.h:3562
 #: engines/mohawk/detection_tables.h:3577 engines/myst3/detection.cpp:142
-#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5193
-#: engines/sci/detection_tables.h:5201 engines/sherlock/detection_tables.h:223
+#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5201
+#: engines/sci/detection_tables.h:5209 engines/sherlock/detection_tables.h:223
 #: engines/stark/detection.cpp:319 engines/teenagent/detection.cpp:117
 #: engines/toltecs/detection.cpp:210 engines/trecision/detection.cpp:201
 #: engines/zvision/detection_tables.h:127
@@ -6442,13 +6448,13 @@ msgid "Repeat actual useful hint by Willie"
 msgstr ""
 
 #. I18N: NHC is a file extension
-#: engines/neverhood/dialogs.cpp:83
+#: engines/neverhood/dialogs.cpp:90
 #, fuzzy
 #| msgid "Enable font replacement"
 msgid "NHC replacement:"
 msgstr "הפעלת החלפת גופנים"
 
-#: engines/neverhood/dialogs.cpp:89
+#: engines/neverhood/dialogs.cpp:96
 #, fuzzy
 #| msgid "Original Save"
 msgid "<original>"
@@ -6729,11 +6735,19 @@ msgstr "Roland D-110 / D-10 / D-20"
 msgid "Yamaha FB-01"
 msgstr "Yamaha FB-01"
 
+#: engines/sci/detection_options.h:255
+msgid "Casio MT-540"
+msgstr ""
+
+#: engines/sci/detection_options.h:259
+msgid "Casio CT-460 / CSM-1"
+msgstr ""
+
 #: engines/sci/detection_tables.h:4492
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr "נתגלה משחק שאינו שלם. יש להעתיק את הנתונים מכל התקליטורים."
 
-#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:368
+#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:369
 msgid "(Autosave)"
 msgstr "(שמירה אוטומטית)"
 
@@ -6772,7 +6786,7 @@ msgid ""
 "Cannot play back %dbpp video on a system with maximum color depth of 8bpp"
 msgstr "לא ניתן לנגן וידאו %dbpp על מערכת בעומק צבע מרבי של 8bpp"
 
-#: engines/sci/metaengine.cpp:300
+#: engines/sci/metaengine.cpp:301
 msgid "SCI32 support not compiled in"
 msgstr "תמיכה במנוע SCI32 לא נבנתה"
 
@@ -6872,7 +6886,7 @@ msgstr ""
 "באיזה משחק הוא נשמר ב: 'qfg1-' עבור Quest for Glory 1, 'qfg2-' עבור Quest "
 "for Glory 2. דוגמה: 'qfg2-thief.sav'."
 
-#: engines/sci/sound/music.cpp:160
+#: engines/sci/sound/music.cpp:166
 msgid ""
 "The selected audio driver requires the following file(s):\n"
 "\n"
@@ -6880,7 +6894,7 @@ msgstr ""
 "מנהל התקן השמע שנבחר דורש את הקבצים הבאים:\n"
 "\n"
 
-#: engines/sci/sound/music.cpp:163
+#: engines/sci/sound/music.cpp:169
 msgid ""
 "\n"
 "\n"
@@ -6967,11 +6981,11 @@ msgstr "תרגול"
 msgid "Expert"
 msgstr "מומחה"
 
-#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:647
+#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:648
 msgid "Enable game-specific enhancements"
 msgstr "הפעלת שיפורים תלויי-משחק"
 
-#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:648
+#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:649
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -6979,21 +6993,26 @@ msgstr ""
 "ScummVM יבצע שיפורים קטנים במשחק, המבוססים בדרך כלל על גרסאות אחרות של אותו "
 "המשחק."
 
-#: engines/scumm/dialogs.cpp:1051 engines/scumm/metaengine.cpp:665
+#: engines/scumm/dialogs.cpp:1052 engines/scumm/metaengine.cpp:666
 msgid "Enable the original GUI and Menu"
 msgstr "הפעלת ממשק ותפריטים מקוריים"
 
-#: engines/scumm/dialogs.cpp:1051 engines/scumm/metaengine.cpp:666
+#: engines/scumm/dialogs.cpp:1053
+#, fuzzy
+#| msgid ""
+#| "Allow the game to use the in-engine graphical interface and the original "
+#| "save/load menu."
 msgid ""
 "Allow the game to use the in-engine graphical interface and the original "
-"save/load menu."
+"save/load menu. Use it together with the \"Ask for confirmation on exit\" "
+"for a more complete experience."
 msgstr "המשחק ישתמש בממשק גרפי פנימי של המנוע ובתפריט שמירה/טעינה המקורי."
 
-#: engines/scumm/dialogs.cpp:1072
+#: engines/scumm/dialogs.cpp:1075
 msgid "Overture Timing:"
 msgstr "תזמון אוברטורה:"
 
-#: engines/scumm/dialogs.cpp:1076
+#: engines/scumm/dialogs.cpp:1079
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -7001,11 +7020,11 @@ msgstr ""
 "כאשר משתמשים במוזיקה חלופית, זה מתאים את הזמן עד שהאוברטורה עוברת למסך עם "
 "הסמלים של האורגים ושל Lucasfilm."
 
-#: engines/scumm/dialogs.cpp:1159
+#: engines/scumm/dialogs.cpp:1162
 msgid "Playback Adjust:"
 msgstr "תיקון שמע:"
 
-#: engines/scumm/dialogs.cpp:1163
+#: engines/scumm/dialogs.cpp:1166
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -7013,11 +7032,11 @@ msgstr ""
 "כוונון זמן ההתחלה של הצליל על פי הנתון כאשר מנגנים אותו מרצועת השמע של "
 "התקליטור. מומלץ להשתמש אם שומעים קטעים של צליל לא נכון לעתים קרובות."
 
-#: engines/scumm/dialogs.cpp:1242
+#: engines/scumm/dialogs.cpp:1245
 msgid "Intro Adjust:"
 msgstr "התאמת הקדמה:"
 
-#: engines/scumm/dialogs.cpp:1246
+#: engines/scumm/dialogs.cpp:1249
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -7026,11 +7045,11 @@ msgstr ""
 "להתחיל בנקודה הזו כאשר מנגנים את רצועת ההקדמה. מומלץ להשתמש אם המוזיקה נחתכת "
 "מוקדם מדי, או אם סנכרון המוזיקה עם הפתיח אינו לטעמכם."
 
-#: engines/scumm/dialogs.cpp:1255
+#: engines/scumm/dialogs.cpp:1258
 msgid "Outlook Adjust:"
 msgstr "התאמת תצפית:"
 
-#: engines/scumm/dialogs.cpp:1259
+#: engines/scumm/dialogs.cpp:1262
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -7560,23 +7579,23 @@ msgstr "טוס לימין"
 msgid "Fly to lower right"
 msgstr "טוס לימין תחתון"
 
-#: engines/scumm/input.cpp:1271
+#: engines/scumm/input.cpp:1275
 msgid "Snap scroll on"
 msgstr "גלול הצמד על"
 
-#: engines/scumm/input.cpp:1273
+#: engines/scumm/input.cpp:1277
 msgid "Snap scroll off"
 msgstr "גלול את הצמד"
 
-#: engines/scumm/input.cpp:1286
+#: engines/scumm/input.cpp:1290
 msgid "Music volume: "
 msgstr "עוצמת שמע: "
 
-#: engines/scumm/input.cpp:1303
+#: engines/scumm/input.cpp:1307
 msgid "Subtitle speed: "
 msgstr "מהירות כתוביות: "
 
-#: engines/scumm/metaengine.cpp:357
+#: engines/scumm/metaengine.cpp:358
 msgid ""
 "The Lite version of Putt-Putt Saves the Zoo iOS is not supported to avoid "
 "piracy.\n"
@@ -7586,35 +7605,35 @@ msgstr ""
 "פיראטיות.\n"
 "הגרסה המלאה זמינה לרכישה מחנות iTunes."
 
-#: engines/scumm/metaengine.cpp:454
+#: engines/scumm/metaengine.cpp:455
 msgid "HE v71+ support is not compiled in"
 msgstr "תמיכה במנוע HE v71+ לא נבנתה"
 
-#: engines/scumm/metaengine.cpp:478
+#: engines/scumm/metaengine.cpp:479
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr "תמיכה במנוע SCUMM v7-8 לא נבנתה"
 
-#: engines/scumm/metaengine.cpp:593
+#: engines/scumm/metaengine.cpp:594
 msgid "Show Object Line"
 msgstr "הצג קו אובייקט"
 
-#: engines/scumm/metaengine.cpp:594
+#: engines/scumm/metaengine.cpp:595
 msgid "Show the names of objects at the bottom of the screen"
 msgstr "הצגת שמות של אובייקטים בתחתית המסך"
 
-#: engines/scumm/metaengine.cpp:602
+#: engines/scumm/metaengine.cpp:603
 msgid "Use NES Classic Palette"
 msgstr "השתמש בערכת צבעים של NES"
 
-#: engines/scumm/metaengine.cpp:603
+#: engines/scumm/metaengine.cpp:604
 msgid "Use a more neutral color palette that closely emulates the NES Classic"
 msgstr "שימוש בערכת צבעים טבעית יותר שמזכירה את NES Classic"
 
-#: engines/scumm/metaengine.cpp:611
+#: engines/scumm/metaengine.cpp:612
 msgid "Trim FM-TOWNS games to 200 pixels height"
 msgstr "כיווץ משחקי FM-TOWNS לגובה של 200 פיקסלים"
 
-#: engines/scumm/metaengine.cpp:612
+#: engines/scumm/metaengine.cpp:613
 msgid ""
 "Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
 "pixels height, allowing using 'aspect ratio correction'"
@@ -7622,54 +7641,67 @@ msgstr ""
 "חיתוך 40 הפיקסלים הנוספים בתחתית המסך, כך שיהיה בגובה סטנדרטי של 200 "
 "פיקסלים, שמאפשר שימוש באפשרות 'תיקון יחס ממדים'"
 
-#: engines/scumm/metaengine.cpp:620
+#: engines/scumm/metaengine.cpp:621
 msgid "Play simplified music"
 msgstr "ניגון מוזיקה מפושטת"
 
-#: engines/scumm/metaengine.cpp:621
+#: engines/scumm/metaengine.cpp:622
 msgid ""
 "This music was presumably intended for low-end Macs, and uses only one "
 "channel."
 msgstr ""
 "מוזיקה זו נועדה ככל הנראה למחשבי מקינטוש בדגמים הזולים, ומשתמשת רק בערוץ אחד."
 
-#: engines/scumm/metaengine.cpp:629
+#: engines/scumm/metaengine.cpp:630
 msgid "Enable smooth scrolling"
 msgstr "הפעלת גלילה חלקה"
 
-#: engines/scumm/metaengine.cpp:630
+#: engines/scumm/metaengine.cpp:631
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(במקום גלילה רגילה של צעדים ברוחב 8 פיקסלים)"
 
-#: engines/scumm/metaengine.cpp:638
+#: engines/scumm/metaengine.cpp:639
 msgid "Allow semi-smooth scrolling"
 msgstr "הפעלת גלילה חלקה-למחצה"
 
-#: engines/scumm/metaengine.cpp:639
+#: engines/scumm/metaengine.cpp:640
 msgid ""
 "Allow scrolling to be less smooth during the fast camera movement in the "
 "intro."
 msgstr "הפעלת גלילה פחות חלקה במהלך תנועות המצלמה המהירות במבוא."
 
-#: engines/scumm/metaengine.cpp:656
+#: engines/scumm/metaengine.cpp:657
 msgid "Load modded audio"
 msgstr "טעינת שמע משופר"
 
-#: engines/scumm/metaengine.cpp:657
+#: engines/scumm/metaengine.cpp:658
 msgid ""
 "Replace music, sound effects, and speech clips with modded audio files, if "
 "available."
 msgstr "החלפת מוזיקה, אפקטים קוליים וקטעי דיבור בקבצי שמע מותאמים, אם זמינים."
 
-#: engines/scumm/metaengine.cpp:674
+#: engines/scumm/metaengine.cpp:667
+#, fuzzy
+#| msgid ""
+#| "Allow the game to use the in-engine graphical interface and the original "
+#| "save/load menu."
+msgid ""
+"Allow the game to use the in-engine graphical interface and the original "
+"save/load menu. \t\tUse it together with the \"Ask for confirmation on exit"
+"\" for a more complete experience."
+msgstr "המשחק ישתמש בממשק גרפי פנימי של המנוע ובתפריט שמירה/טעינה המקורי."
+
+#: engines/scumm/metaengine.cpp:676
 #, fuzzy
 #| msgid "Enable the debug mode"
 msgid "Enable low latency audio mode"
 msgstr "הפעלת מצב ניפוי התקלים"
 
-#: engines/scumm/metaengine.cpp:675
+#: engines/scumm/metaengine.cpp:677
 msgid ""
-"Allows the game to use low latency audio, at the cost of sound accuracy."
+"Allows the game to use low latency audio, at the cost of sound accuracy. \t"
+"\tIt is recommended to enable this feature only if you incur in audio "
+"latency issues during normal gameplay."
 msgstr ""
 
 #: engines/scumm/scumm.cpp:263
@@ -9155,6 +9187,9 @@ msgstr ""
 "New ו-Arial. לחלופין,ניתן להוריד את חבילת GNU FreeFont או גופני Liberation. "
 "יש להעתיק את כל הגופנים מהחבילה שנבחרה, לדוגמה, FreeMono, FreeSans ו-"
 "FreeSerif או LiberationMono, LiberationSans ו-LiberationSerif בהתאמה."
+
+#~ msgid "Show SAF revoke permissions overlay button"
+#~ msgstr "הצגת כפתור שלילת הרשאות SAF"
 
 #~ msgctxt "lowres"
 #~ msgid "Misc"

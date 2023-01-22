@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.3.0svn\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-01-16 17:10+0000\n"
-"PO-Revision-Date: 2023-01-16 13:05+0000\n"
+"POT-Creation-Date: 2023-01-20 13:14+0000\n"
+"PO-Revision-Date: 2023-01-18 11:36+0000\n"
 "Last-Translator: Stian Schultz <Stian.schultz@gmail.com>\n"
 "Language-Team: Norwegian Bokmål <https://translations.scummvm.org/projects/"
 "scummvm/scummvm/nb_NO/>\n"
@@ -246,9 +246,10 @@ msgstr "Nedlasting fullført. Lastet ned %d pakker, %s %S"
 
 #: gui/downloadpacksdialog.cpp:293 gui/downloadpacksdialog.cpp:385
 #: gui/gui-manager.cpp:162 gui/unknown-game-dialog.cpp:53
-#: engines/nancy/dialogs.cpp:313 engines/scumm/help.cpp:123
-#: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
-#: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
+#: backends/platform/android/options.cpp:358 engines/nancy/dialogs.cpp:313
+#: engines/scumm/help.cpp:123 engines/scumm/help.cpp:138
+#: engines/scumm/help.cpp:163 engines/scumm/help.cpp:189
+#: engines/scumm/help.cpp:207
 msgid "Close"
 msgstr "Lukk"
 
@@ -329,8 +330,8 @@ msgstr ""
 #: gui/options.cpp:1616 gui/options.cpp:1630 gui/options.cpp:2035
 #: gui/options.cpp:2443 gui/options.cpp:2496 gui/options.cpp:2711
 #: gui/options.cpp:3171 audio/null.cpp:40
-#: backends/platform/android/options.cpp:112
-#: backends/platform/android/options.cpp:113 engines/ags/dialogs.cpp:62
+#: backends/platform/android/options.cpp:137
+#: backends/platform/android/options.cpp:138 engines/ags/dialogs.cpp:62
 msgid "<default>"
 msgstr "<standard>"
 
@@ -1129,10 +1130,8 @@ msgid "the filtering setting could not be changed"
 msgstr "filterinnstillingen kunne ikke endres"
 
 #: gui/options.cpp:842
-#, fuzzy
-#| msgid "the fullscreen setting could not be changed"
 msgid "the vsync setting could not be changed"
-msgstr "fullskjermsinnstillingen kunne ikke endres"
+msgstr "Kunne ikke endre innstillingene for vertikal synkronisering"
 
 #: gui/options.cpp:859
 msgid "the shader could not be changed"
@@ -1226,7 +1225,7 @@ msgstr "Fullskjermsmodus"
 
 #: gui/options.cpp:1608
 msgid "V-Sync"
-msgstr "V-Sync"
+msgstr "Vertikal synk"
 
 #: gui/options.cpp:1608
 msgid ""
@@ -3191,27 +3190,27 @@ msgid "Resolution: %dx%d"
 msgstr "Oppløsning: %dx%d"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:724
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2507
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2497
 msgid "Enabled aspect ratio correction"
 msgstr "Bildeformatskorrigering aktivert"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:726
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2513
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2503
 msgid "Disabled aspect ratio correction"
 msgstr "Bildeformatskorrigering deaktivert"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:739
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2529
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2519
 msgid "Filtering enabled"
 msgstr "Filtrering aktivert"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:741
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2531
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2521
 msgid "Filtering disabled"
 msgstr "Filtrering deaktivert"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:767
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2558
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2548
 msgid "Stretch mode"
 msgstr "Strekkmodus"
 
@@ -3219,7 +3218,7 @@ msgstr "Strekkmodus"
 msgid "SDL Surface"
 msgstr "SDL-overflate"
 
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2473
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2463
 msgid "Active graphics filter:"
 msgstr "Aktivt grafikkfilter:"
 
@@ -3797,48 +3796,53 @@ msgstr "Forstørrelsesmodus av. Reaktiverer Dra-modus ..."
 msgid "Magnify Mode Off"
 msgstr "Forstørrelsesmodus av"
 
-#: backends/platform/android/options.cpp:93
+#: backends/platform/android/options.cpp:118
 msgid "Show On-screen control"
 msgstr "Vis kontroll på skjermen"
 
-#: backends/platform/android/options.cpp:94
+#: backends/platform/android/options.cpp:119
 msgid "Choose the preferred touch mode:"
 msgstr "Velg foretrukket berøringsmodi:"
 
-#: backends/platform/android/options.cpp:96
+#: backends/platform/android/options.cpp:121
 msgid "In menus"
 msgstr "På menyer"
 
-#: backends/platform/android/options.cpp:98
-#: backends/platform/android/options.cpp:116
-#: backends/platform/android/options.cpp:117
+#: backends/platform/android/options.cpp:123
+#: backends/platform/android/options.cpp:141
+#: backends/platform/android/options.cpp:142
 msgid "Touchpad emulation"
 msgstr "Emulering av berøringsplate"
 
-#: backends/platform/android/options.cpp:99
-#: backends/platform/android/options.cpp:119
-#: backends/platform/android/options.cpp:120
+#: backends/platform/android/options.cpp:124
+#: backends/platform/android/options.cpp:144
+#: backends/platform/android/options.cpp:145
 msgid "Direct mouse"
 msgstr "Direktemus"
 
-#: backends/platform/android/options.cpp:100
-#: backends/platform/android/options.cpp:122
-#: backends/platform/android/options.cpp:123
+#: backends/platform/android/options.cpp:125
+#: backends/platform/android/options.cpp:147
+#: backends/platform/android/options.cpp:148
 msgid "Gamepad emulation"
 msgstr "Emulering av håndkontroll"
 
-#: backends/platform/android/options.cpp:106
+#: backends/platform/android/options.cpp:131
 msgid "In 2D games"
 msgstr "I 2D-spill"
 
-#: backends/platform/android/options.cpp:108
+#: backends/platform/android/options.cpp:133
 msgid "In 3D games"
 msgstr "I 3D-spill"
 
-#. I18N: Show a button to revoke Storage Access Framework permissions for Android
-#: backends/platform/android/options.cpp:128
-msgid "Show SAF revoke permissions overlay button"
-msgstr "Vis overleggsknapp for tilbaketrekking av SAF-tillatelser"
+#: backends/platform/android/options.cpp:152
+msgid "Forget SAF authorization"
+msgstr ""
+
+#: backends/platform/android/options.cpp:359
+#, fuzzy
+#| msgid "~R~emove Game"
+msgid "Remove"
+msgstr "~F~jern spill"
 
 #: backends/platform/ds/ds-graphics.cpp:281
 msgid "Unscaled"
@@ -4565,8 +4569,8 @@ msgstr ""
 #: engines/mohawk/detection_tables.h:2492
 #: engines/mohawk/detection_tables.h:3562
 #: engines/mohawk/detection_tables.h:3577 engines/myst3/detection.cpp:142
-#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5193
-#: engines/sci/detection_tables.h:5201 engines/sherlock/detection_tables.h:223
+#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5201
+#: engines/sci/detection_tables.h:5209 engines/sherlock/detection_tables.h:223
 #: engines/stark/detection.cpp:319 engines/teenagent/detection.cpp:117
 #: engines/toltecs/detection.cpp:210 engines/trecision/detection.cpp:201
 #: engines/zvision/detection_tables.h:127
@@ -6571,11 +6575,11 @@ msgid "Repeat actual useful hint by Willie"
 msgstr "Gjenta de tipsene fra Willie som faktisk er hendige"
 
 #. I18N: NHC is a file extension
-#: engines/neverhood/dialogs.cpp:83
+#: engines/neverhood/dialogs.cpp:90
 msgid "NHC replacement:"
 msgstr "NHC-erstatning:"
 
-#: engines/neverhood/dialogs.cpp:89
+#: engines/neverhood/dialogs.cpp:96
 msgid "<original>"
 msgstr "<opprinnelig>"
 
@@ -6862,13 +6866,21 @@ msgstr "Roland D-110 / D-10 / D-20"
 msgid "Yamaha FB-01"
 msgstr "Yamaha FB-01"
 
+#: engines/sci/detection_options.h:255
+msgid "Casio MT-540"
+msgstr ""
+
+#: engines/sci/detection_options.h:259
+msgid "Casio CT-460 / CSM-1"
+msgstr ""
+
 #: engines/sci/detection_tables.h:4492
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr ""
 "Ufullstendig spill oppdaget. Du må kopiere spilldata fra alle CD-ene til "
 "spillet."
 
-#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:368
+#: engines/sci/engine/kfile.cpp:484 engines/sci/metaengine.cpp:369
 msgid "(Autosave)"
 msgstr "(Automatisk lagring)"
 
@@ -6914,7 +6926,7 @@ msgstr ""
 "Kan ikke avspille video i %dbpp på et system med en maksimal fargedybde på "
 "8bpp"
 
-#: engines/sci/metaengine.cpp:300
+#: engines/sci/metaengine.cpp:301
 msgid "SCI32 support not compiled in"
 msgstr "SCI32-støtte er ikke innkompilert"
 
@@ -7021,7 +7033,7 @@ msgstr ""
 "Quest for Glory 1 eller 'qfg2-' for Quest for Glory 2.\n"
 "Eksempel: 'qfg2-thief.sav'"
 
-#: engines/sci/sound/music.cpp:160
+#: engines/sci/sound/music.cpp:166
 msgid ""
 "The selected audio driver requires the following file(s):\n"
 "\n"
@@ -7029,7 +7041,7 @@ msgstr ""
 "Den valgte lyddriveren krever følgende fil(er):\n"
 "\n"
 
-#: engines/sci/sound/music.cpp:163
+#: engines/sci/sound/music.cpp:169
 msgid ""
 "\n"
 "\n"
@@ -7116,11 +7128,11 @@ msgstr "Trening"
 msgid "Expert"
 msgstr "Ekspert"
 
-#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:647
+#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:648
 msgid "Enable game-specific enhancements"
 msgstr "Aktiver spillspesifikke forbedringer"
 
-#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:648
+#: engines/scumm/dialogs.cpp:1047 engines/scumm/metaengine.cpp:649
 msgid ""
 "Allow ScummVM to make small enhancements to the game, usually based on other "
 "versions of the same game."
@@ -7128,23 +7140,28 @@ msgstr ""
 "Lar ScummVM legge til enkelte småforbedringer basert på andre versjoner av "
 "det samme spillet."
 
-#: engines/scumm/dialogs.cpp:1051 engines/scumm/metaengine.cpp:665
+#: engines/scumm/dialogs.cpp:1052 engines/scumm/metaengine.cpp:666
 msgid "Enable the original GUI and Menu"
 msgstr "Bruk opprinnelig grensesnitt og meny"
 
-#: engines/scumm/dialogs.cpp:1051 engines/scumm/metaengine.cpp:666
+#: engines/scumm/dialogs.cpp:1053
+#, fuzzy
+#| msgid ""
+#| "Allow the game to use the in-engine graphical interface and the original "
+#| "save/load menu."
 msgid ""
 "Allow the game to use the in-engine graphical interface and the original "
-"save/load menu."
+"save/load menu. Use it together with the \"Ask for confirmation on exit\" "
+"for a more complete experience."
 msgstr ""
 "Lar spillet bruke spillmotorens grafiske grensesnitt og den opprinnelige "
 "menyen for lagring og innlasting av spill."
 
-#: engines/scumm/dialogs.cpp:1072
+#: engines/scumm/dialogs.cpp:1075
 msgid "Overture Timing:"
 msgstr "Ouverture-timing:"
 
-#: engines/scumm/dialogs.cpp:1076
+#: engines/scumm/dialogs.cpp:1079
 msgid ""
 "When using replacement music, this adjusts the time when the Overture "
 "changes to the scene with the Lucasfilm and Loom logotypes."
@@ -7152,11 +7169,11 @@ msgstr ""
 "Hvis du bruker erstatningsmusikk, vil dette justere timingen for når "
 "åpningsmusikken endrer seg til scenen med Lucasfilm- og Loom-logoene."
 
-#: engines/scumm/dialogs.cpp:1159
+#: engines/scumm/dialogs.cpp:1162
 msgid "Playback Adjust:"
 msgstr "Avspillingsjustering:"
 
-#: engines/scumm/dialogs.cpp:1163
+#: engines/scumm/dialogs.cpp:1166
 msgid ""
 "When playing sound from the CD audio track, adjust the start position of the "
 "sound by this much. Use this if you often hear bits of the wrong sound."
@@ -7165,11 +7182,11 @@ msgstr ""
 "denne verdien. Bruk denne funksjonen hvis du ofte hører deler av feil "
 "lydspor."
 
-#: engines/scumm/dialogs.cpp:1242
+#: engines/scumm/dialogs.cpp:1245
 msgid "Intro Adjust:"
 msgstr "Introjustering:"
 
-#: engines/scumm/dialogs.cpp:1246
+#: engines/scumm/dialogs.cpp:1249
 msgid ""
 "When playing the intro track, play from this point in it. Use this if the "
 "music gets cut off prematurely, or if you are unhappy with the way the music "
@@ -7179,11 +7196,11 @@ msgstr ""
 "denne funksjonen hvis musikken blir avbrutt for tidlig, eller hvis du ikke "
 "er fornøyd med måten musikken synkroniseres opp mot introsekvensen."
 
-#: engines/scumm/dialogs.cpp:1255
+#: engines/scumm/dialogs.cpp:1258
 msgid "Outlook Adjust:"
 msgstr "Utkikksjustering:"
 
-#: engines/scumm/dialogs.cpp:1259
+#: engines/scumm/dialogs.cpp:1262
 msgid ""
 "The outlook music is part of the intro track. Adjust the position in the "
 "track at which it starts playing. Use this if the music is cut off, or if "
@@ -7712,23 +7729,23 @@ msgstr "Fly til høyre"
 msgid "Fly to lower right"
 msgstr "Fly til nedre høyre"
 
-#: engines/scumm/input.cpp:1271
+#: engines/scumm/input.cpp:1275
 msgid "Snap scroll on"
 msgstr "Trinnvis skjermrulling på"
 
-#: engines/scumm/input.cpp:1273
+#: engines/scumm/input.cpp:1277
 msgid "Snap scroll off"
 msgstr "Trinnvis skjermrulling av"
 
-#: engines/scumm/input.cpp:1286
+#: engines/scumm/input.cpp:1290
 msgid "Music volume: "
 msgstr "Musikkvolum: "
 
-#: engines/scumm/input.cpp:1303
+#: engines/scumm/input.cpp:1307
 msgid "Subtitle speed: "
 msgstr "Teksthastighet: "
 
-#: engines/scumm/metaengine.cpp:357
+#: engines/scumm/metaengine.cpp:358
 msgid ""
 "The Lite version of Putt-Putt Saves the Zoo iOS is not supported to avoid "
 "piracy.\n"
@@ -7738,36 +7755,36 @@ msgstr ""
 "piratkopiering.\n"
 "Fullversjonen kan kjøpes i iTunes-butikken."
 
-#: engines/scumm/metaengine.cpp:454
+#: engines/scumm/metaengine.cpp:455
 msgid "HE v71+ support is not compiled in"
 msgstr "HE v71+-støtte ikke innkompilert"
 
-#: engines/scumm/metaengine.cpp:478
+#: engines/scumm/metaengine.cpp:479
 msgid "SCUMM v7-8 support is not compiled in"
 msgstr "SCUMM v7-8-støtte er ikke innkompilert"
 
-#: engines/scumm/metaengine.cpp:593
+#: engines/scumm/metaengine.cpp:594
 msgid "Show Object Line"
 msgstr "Vis objektlinje"
 
-#: engines/scumm/metaengine.cpp:594
+#: engines/scumm/metaengine.cpp:595
 msgid "Show the names of objects at the bottom of the screen"
 msgstr "Vis navnene til gjenstander på bunnen av skjermen"
 
-#: engines/scumm/metaengine.cpp:602
+#: engines/scumm/metaengine.cpp:603
 msgid "Use NES Classic Palette"
 msgstr "Bruk fargepalett fra NES Classic"
 
-#: engines/scumm/metaengine.cpp:603
+#: engines/scumm/metaengine.cpp:604
 msgid "Use a more neutral color palette that closely emulates the NES Classic"
 msgstr ""
 "Bruk en mer nøytral fargepalett som nærmere emulerer den til en NES Classic"
 
-#: engines/scumm/metaengine.cpp:611
+#: engines/scumm/metaengine.cpp:612
 msgid "Trim FM-TOWNS games to 200 pixels height"
 msgstr "Kutt ned FM-TOWNS-spill til en høyde på 200 piksler"
 
-#: engines/scumm/metaengine.cpp:612
+#: engines/scumm/metaengine.cpp:613
 msgid ""
 "Cut the extra 40 pixels at the bottom of the screen, to make it standard 200 "
 "pixels height, allowing using 'aspect ratio correction'"
@@ -7776,11 +7793,11 @@ msgstr ""
 "standardhøyden til 200 piksler. Dette lar deg bruke 'Korrigering av "
 "bildeformat'"
 
-#: engines/scumm/metaengine.cpp:620
+#: engines/scumm/metaengine.cpp:621
 msgid "Play simplified music"
 msgstr "Spill forenklet musikk"
 
-#: engines/scumm/metaengine.cpp:621
+#: engines/scumm/metaengine.cpp:622
 msgid ""
 "This music was presumably intended for low-end Macs, and uses only one "
 "channel."
@@ -7788,19 +7805,19 @@ msgstr ""
 "Denne musikken var angivelig påtenkt billigere Mac-modeller og bruker kun én "
 "lydkanal."
 
-#: engines/scumm/metaengine.cpp:629
+#: engines/scumm/metaengine.cpp:630
 msgid "Enable smooth scrolling"
 msgstr "Aktiver jevn skjermrulling"
 
-#: engines/scumm/metaengine.cpp:630
+#: engines/scumm/metaengine.cpp:631
 msgid "(instead of the normal 8-pixels steps scrolling)"
 msgstr "(istedenfor den trinnvise skjermrullingen på 8 piksler av gangen)"
 
-#: engines/scumm/metaengine.cpp:638
+#: engines/scumm/metaengine.cpp:639
 msgid "Allow semi-smooth scrolling"
 msgstr "Tillat delvis jevn skjermrulling"
 
-#: engines/scumm/metaengine.cpp:639
+#: engines/scumm/metaengine.cpp:640
 msgid ""
 "Allow scrolling to be less smooth during the fast camera movement in the "
 "intro."
@@ -7808,11 +7825,11 @@ msgstr ""
 "Gjør at skjermrullingen er litt mindre utjevnet under den raske "
 "kameraføringen i introen."
 
-#: engines/scumm/metaengine.cpp:656
+#: engines/scumm/metaengine.cpp:657
 msgid "Load modded audio"
 msgstr "Last inn modifisert lyd"
 
-#: engines/scumm/metaengine.cpp:657
+#: engines/scumm/metaengine.cpp:658
 msgid ""
 "Replace music, sound effects, and speech clips with modded audio files, if "
 "available."
@@ -7820,15 +7837,29 @@ msgstr ""
 "Erstatt musikk, lydeffekter og tale med modifiserte lydfiler hvis "
 "tilgjengelig."
 
-#: engines/scumm/metaengine.cpp:674
+#: engines/scumm/metaengine.cpp:667
+#, fuzzy
+#| msgid ""
+#| "Allow the game to use the in-engine graphical interface and the original "
+#| "save/load menu."
+msgid ""
+"Allow the game to use the in-engine graphical interface and the original "
+"save/load menu. \t\tUse it together with the \"Ask for confirmation on exit"
+"\" for a more complete experience."
+msgstr ""
+"Lar spillet bruke spillmotorens grafiske grensesnitt og den opprinnelige "
+"menyen for lagring og innlasting av spill."
+
+#: engines/scumm/metaengine.cpp:676
 msgid "Enable low latency audio mode"
 msgstr "Aktiver lydmodus for lav forsinkelse"
 
-#: engines/scumm/metaengine.cpp:675
+#: engines/scumm/metaengine.cpp:677
 msgid ""
-"Allows the game to use low latency audio, at the cost of sound accuracy."
+"Allows the game to use low latency audio, at the cost of sound accuracy. \t"
+"\tIt is recommended to enable this feature only if you incur in audio "
+"latency issues during normal gameplay."
 msgstr ""
-"Lar spillet bruke lyd med lav forsinkelse, på bekostning av lydpresisjon."
 
 #: engines/scumm/scumm.cpp:263
 msgid ""
@@ -9366,6 +9397,14 @@ msgstr ""
 "Liberation Fonts-pakken eller GNU FreeFont-pakken. Du trenger alle fontene "
 "fra fontpakken du velger å bruke, dvs. enten LiberationMono, LiberationSans "
 "og LiberationSerif eller FreeMono, FreeSans og FreeSerif."
+
+#~ msgid "Show SAF revoke permissions overlay button"
+#~ msgstr "Vis overleggsknapp for tilbaketrekking av SAF-tillatelser"
+
+#~ msgid ""
+#~ "Allows the game to use low latency audio, at the cost of sound accuracy."
+#~ msgstr ""
+#~ "Lar spillet bruke lyd med lav forsinkelse, på bekostning av lydpresisjon."
 
 #~ msgctxt "lowres"
 #~ msgid "Misc"

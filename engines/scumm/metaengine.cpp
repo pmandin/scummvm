@@ -241,7 +241,8 @@ bool ScummEngine::hasFeature(EngineFeature f) const {
 		(
 			f == kSupportsChangingOptionsDuringRuntime &&
 			Common::String(_game.guioptions).contains(GUIO_AUDIO_OVERRIDE)
-		);
+		) ||
+		(f == kSupportsQuitDialogOverride && _useOriginalGUI);
 }
 
 
@@ -663,7 +664,8 @@ static const ExtraGuiOption audioOverride {
 
 static const ExtraGuiOption enableOriginalGUI = {
 	_s("Enable the original GUI and Menu"),
-	_s("Allow the game to use the in-engine graphical interface and the original save/load menu."),
+	_s("Allow the game to use the in-engine graphical interface and the original save/load menu. \
+		Use it together with the \"Ask for confirmation on exit\" for a more complete experience."),
 	"original_gui",
 	true,
 	0,
@@ -672,7 +674,8 @@ static const ExtraGuiOption enableOriginalGUI = {
 
 static const ExtraGuiOption enableLowLatencyAudio = {
 	_s("Enable low latency audio mode"),
-	_s("Allows the game to use low latency audio, at the cost of sound accuracy."),
+	_s("Allows the game to use low latency audio, at the cost of sound accuracy. \
+		It is recommended to enable this feature only if you incur in audio latency issues during normal gameplay."),
 	"dimuse_low_latency_mode",
 	false,
 	0,

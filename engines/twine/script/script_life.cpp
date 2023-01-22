@@ -223,7 +223,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 		}
 
 		if (ABS(targetActor->_pos.y - ctx.actor->_pos.y) < 1500) {
-			newAngle = engine->_movements->getAngleAndSetTargetActorDistance(ctx.actor->posObj(), targetActor->posObj());
+			newAngle = engine->_movements->getAngle(ctx.actor->posObj(), targetActor->posObj());
 			if (ABS(engine->_movements->_targetActorDistance) > MAX_TARGET_ACTOR_DISTANCE) {
 				engine->_movements->_targetActorDistance = MAX_TARGET_ACTOR_DISTANCE;
 			}
@@ -435,7 +435,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 			engine->_scene->_currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			break;
 		}
-		int32 angle = engine->_movements->getAngleAndSetTargetActorDistance(ctx.actor->posObj(), otherActor->posObj());
+		int32 angle = engine->_movements->getAngle(ctx.actor->posObj(), otherActor->posObj());
 		engine->_scene->_currentScriptValue = ClampAngle(ctx.actor->_beta - angle);
 		if (engine->_scene->_currentScriptValue > LBAAngles::ANGLE_180) {
 			engine->_scene->_currentScriptValue = LBAAngles::ANGLE_360 - engine->_scene->_currentScriptValue;
@@ -450,7 +450,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 			engine->_scene->_currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			break;
 		}
-		int32 angle = engine->_movements->getAngleAndSetTargetActorDistance(otherActor->posObj(), ctx.actor->posObj());
+		int32 angle = engine->_movements->getAngle(otherActor->posObj(), ctx.actor->posObj());
 		engine->_scene->_currentScriptValue = ClampAngle(otherActor->_beta - angle);
 		if (engine->_scene->_currentScriptValue > LBAAngles::ANGLE_180) {
 			engine->_scene->_currentScriptValue = LBAAngles::ANGLE_360 - engine->_scene->_currentScriptValue;
@@ -465,7 +465,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 			engine->_scene->_currentScriptValue = MAX_TARGET_ACTOR_DISTANCE;
 			break;
 		}
-		int32 angle = engine->_movements->getAngleAndSetTargetActorDistance(ctx.actor->posObj(), otherActor->posObj());
+		int32 angle = engine->_movements->getAngle(ctx.actor->posObj(), otherActor->posObj());
 		engine->_scene->_currentScriptValue = ClampAngle(ctx.actor->_beta - angle);
 		if (engine->_scene->_currentScriptValue > LBAAngles::ANGLE_180) {
 			engine->_scene->_currentScriptValue = LBAAngles::ANGLE_360 - engine->_scene->_currentScriptValue;
@@ -530,7 +530,7 @@ static ReturnType processLifeConditions(TwinEEngine *engine, LifeScriptContext &
 		}
 
 		if (ABS(otherActor->posObj().y - ctx.actor->posObj().y) < 1500) {
-			int32 angle = engine->_movements->getAngleAndSetTargetActorDistance(ctx.actor->posObj(),
+			int32 angle = engine->_movements->getAngle(ctx.actor->posObj(),
 																				otherActor->posObj());
 			angle = ClampAngle(ctx.actor->_beta - angle + LBAAngles::ANGLE_90);
 
@@ -839,7 +839,7 @@ int32 ScriptLife::lBODY_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
 int32 ScriptLife::lANIM(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const AnimationTypes animIdx = (AnimationTypes)ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::ANIM(%i)", (int)animIdx);
-	engine->_animations->initAnim(animIdx, AnimType::kAnimationTypeLoop, AnimationTypes::kStanding, ctx.actorIdx);
+	engine->_animations->initAnim(animIdx, AnimType::kAnimationTypeRepeat, AnimationTypes::kStanding, ctx.actorIdx);
 	return 0;
 }
 
@@ -851,7 +851,7 @@ int32 ScriptLife::lANIM_OBJ(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const int32 otherActorIdx = ctx.stream.readByte();
 	const AnimationTypes otherAnimIdx = (AnimationTypes)ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::ANIM_OBJ(%i, %i)", (int)otherActorIdx, (int)otherAnimIdx);
-	engine->_animations->initAnim(otherAnimIdx, AnimType::kAnimationTypeLoop, AnimationTypes::kStanding, otherActorIdx);
+	engine->_animations->initAnim(otherAnimIdx, AnimType::kAnimationTypeRepeat, AnimationTypes::kStanding, otherActorIdx);
 	return 0;
 }
 
@@ -919,7 +919,7 @@ int32 ScriptLife::lMESSAGE(TwinEEngine *engine, LifeScriptContext &ctx) {
 	// if we are in sporty mode, we might have triggered a jump with the special action binding
 	// see https://bugs.scummvm.org/ticket/13676 for more details.
 	if (ctx.actor->isJumpAnimationActive()) {
-		engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, OWN_ACTOR_SCENE_INDEX);
+		engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, OWN_ACTOR_SCENE_INDEX);
 	}
 
 	engine->_text->drawTextProgressive(textIdx);
@@ -1005,7 +1005,7 @@ int32 ScriptLife::lSET_BEHAVIOUR(TwinEEngine *engine, LifeScriptContext &ctx) {
 	const HeroBehaviourType behavior = (HeroBehaviourType)ctx.stream.readByte();
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::SET_BEHAVIOUR(%i)", (int)behavior);
 
-	engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, OWN_ACTOR_SCENE_INDEX);
+	engine->_animations->initAnim(AnimationTypes::kStanding, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, OWN_ACTOR_SCENE_INDEX);
 	engine->_actor->setBehaviour(behavior);
 
 	return 0;
@@ -1141,9 +1141,9 @@ int32 ScriptLife::lGIVE_GOLD_PIECES(TwinEEngine *engine, LifeScriptContext &ctx)
 	for (int16 i = 0; i < OVERLAY_MAX_ENTRIES; i++) {
 		OverlayListStruct *overlay = &engine->_redraw->overlayList[i];
 		if (overlay->info0 != -1 && overlay->type == OverlayType::koNumberRange) {
-			overlay->info0 = engine->_collision->clampedLerp(overlay->info1, overlay->info0, engine->toSeconds(2), overlay->lifeTime - engine->_lbaTime - engine->toSeconds(1));
+			overlay->info0 = engine->_collision->clampedLerp(overlay->info1, overlay->info0, engine->toSeconds(2), overlay->lifeTime - engine->timerRef - engine->toSeconds(1));
 			overlay->info1 = engine->_gameState->_goldPieces;
-			overlay->lifeTime = engine->_lbaTime + engine->toSeconds(3);
+			overlay->lifeTime = engine->timerRef + engine->toSeconds(3);
 			hideRange = true;
 			break;
 		}
@@ -1752,7 +1752,7 @@ int32 ScriptLife::lGRM_OFF(TwinEEngine *engine, LifeScriptContext &ctx) {
 	if (engine->_grid->_cellingGridIdx != -1) {
 		engine->_grid->_useCellingGrid = -1;
 		engine->_grid->_cellingGridIdx = -1;
-		engine->_grid->createGridMap();
+		engine->_grid->copyMapToCube();
 		engine->_redraw->redrawEngineActions(true);
 	}
 
@@ -1952,7 +1952,7 @@ int32 ScriptLife::lANIM_SET(TwinEEngine *engine, LifeScriptContext &ctx) {
 
 	ctx.actor->_genAnim = AnimationTypes::kAnimNone;
 	ctx.actor->_anim = -1;
-	engine->_animations->initAnim(animIdx, AnimType::kAnimationTypeLoop, AnimationTypes::kStanding, ctx.actorIdx);
+	engine->_animations->initAnim(animIdx, AnimType::kAnimationTypeRepeat, AnimationTypes::kStanding, ctx.actorIdx);
 
 	return 0;
 }
@@ -2024,7 +2024,7 @@ int32 ScriptLife::lPLAY_CD_TRACK(TwinEEngine *engine, LifeScriptContext &ctx) {
  */
 int32 ScriptLife::lPROJ_ISO(TwinEEngine *engine, LifeScriptContext &ctx) {
 	debugC(3, kDebugLevels::kDebugScripts, "LIFE::PROJ_ISO()");
-	engine->_gameState->initEngineProjections();
+	engine->_gameState->init3DGame();
 	return 0;
 }
 
@@ -2039,7 +2039,7 @@ int32 ScriptLife::lPROJ_3D(TwinEEngine *engine, LifeScriptContext &ctx) {
 	engine->_scene->_enableGridTileRendering = false;
 
 	engine->_renderer->setProjection(engine->width() / 2, engine->height() / 2, 128, 1024, 1024);
-	engine->_renderer->setCameraAngle(0, 1500, 0, 25, -128, 0, 13000);
+	engine->_renderer->setFollowCamera(0, 1500, 0, 25, -128, 0, 13000);
 	engine->_renderer->setLightVector(LBAAngles::ANGLE_315, LBAAngles::ANGLE_334, LBAAngles::ANGLE_0);
 
 	engine->_text->initDial(TextBankId::Credits);

@@ -296,7 +296,7 @@ public:
 
 	int32 _frameCounter = 0;
 	SceneLoopState _sceneLoopState = SceneLoopState::ReturnToMenu;
-	int32 _lbaTime = 0;
+	int32 timerRef = 0;
 
 	int32 _loopInventoryItem = 0;
 	int32 _loopActorStep = 0;
@@ -327,6 +327,9 @@ public:
 	void exitSceneryView();
 
 	void queueMovie(const char *filename);
+
+	void clearScreenMinMax(Common::Rect &rect);
+	void adjustScreenMax(Common::Rect &rect, int16 x, int16 y);
 
 	/**
 	 * @return A random value between [0-max)

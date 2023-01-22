@@ -128,7 +128,7 @@ private:
 	 * @param gridEntry current grid index
 	 * @param dest destination block buffer
 	 */
-	void createGridColumn(const uint8 *gridEntry, uint32 gridEntrySize, uint8 *dest, uint32 destSize);
+	void decompColumn(const uint8 *gridEntry, uint32 gridEntrySize, uint8 *dest, uint32 destSize);
 	/**
 	 * Load grid bricks according with block librarie usage
 	 */
@@ -148,7 +148,7 @@ private:
 	 * @param y grid Y coordinate
 	 * @param buffer work video buffer
 	 */
-	void copyGridMask(int32 index, int32 x, int32 y, const Graphics::ManagedSurface &buffer);
+	void copyMask(int32 index, int32 x, int32 y, const Graphics::ManagedSurface &buffer);
 
 	/** Table with all loaded bricks */
 	uint8 *_brickTable[NUM_BRICKS]{nullptr};
@@ -197,7 +197,7 @@ public:
 	IVec3 _newCamera;
 
 	/** Current grid camera x, y and z coordinates */
-	IVec3 _camera; // WorldXCube WorldYCube
+	IVec3 _worldCube; // WorldXCube WorldYCube
 
 	/** Flag to know if the engine is using celling grids */
 	int16 _useCellingGrid = 0;
@@ -210,7 +210,7 @@ public:
 	 * @param y actor.y coordinate
 	 * @param z actor.z coordinate
 	 */
-	void drawOverModelActor(int32 x, int32 y, int32 z);
+	void drawOverBrick(int32 x, int32 y, int32 z);
 
 	/**
 	 * Draw sprite actor over bricks
@@ -218,7 +218,7 @@ public:
 	 * @param y actor.y coordinate
 	 * @param z actor.z coordinate
 	 */
-	void drawOverSpriteActor(int32 x, int32 y, int32 z);
+	void drawOverBrick3(int32 x, int32 y, int32 z);
 
 	/**
 	 * Get sprite width and height sizes
@@ -270,7 +270,7 @@ public:
 	const BlockDataEntry* getBlockPointer(int32 blockIdx, int32 tmpBrickIdx) const;
 
 	/** Create grid map from current grid to block library buffer */
-	void createGridMap();
+	void copyMapToCube();
 
 	/**
 	 * Initialize grid (background scenearios)

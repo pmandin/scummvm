@@ -719,7 +719,11 @@ void ScummEngine_v6::o6_jump() {
 
 	// WORKAROUND bug #4464: Talking to the guard at the bigfoot party, after
 	// he's let you inside, will cause the game to hang, if you end the conversation.
-	// This is a script bug, due to a missing jump in one segment of the script.
+	// This is a script bug, due to a missing jump in one segment of the script,
+	// and it also happens with the original interpreters.
+	//
+	// Intentionally not using `_enableEnhancements`, since having the game hang
+	// is not useful to anyone.
 	if (_game.id == GID_SAMNMAX && vm.slot[_currentScript].number == 101 && readVar(0x8000 + 97) == 1 && offset == 1) {
 		offset = -18;
 	}
@@ -749,7 +753,7 @@ void ScummEngine_v6::o6_startScript() {
 	// This fix checks for this situation happening (and only this one), and makes a call
 	// to a soundKludge operation like script 29 would have done.
 	if (_game.id == GID_CMI && _currentRoom == 19 &&
-		vm.slot[_currentScript].number == 168 && script == 118) {
+		vm.slot[_currentScript].number == 168 && script == 118 && _enableEnhancements) {
 		int list[16] = { 4096, 1278, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		_sound->soundKludge(list, 2);
 	}
@@ -757,9 +761,9 @@ void ScummEngine_v6::o6_startScript() {
 	// WORKAROUND bug #269: At Dino Bungee National Memorial, the buttons for
 	// the Wally and Rex dinosaurs will always restart their speech, instead of
 	// stopping and starting their speech. This was a script bug in the original
-	// game.
+	// game, which would also block the "That was informative" reaction from Sam.
 	if (_game.id == GID_SAMNMAX && _roomResource == 59 &&
-		vm.slot[_currentScript].number == 201 && script == 48) {
+		vm.slot[_currentScript].number == 201 && script == 48 && _enableEnhancements) {
 		o6_breakHere();
 	}
 
@@ -1204,11 +1208,13 @@ void ScummEngine_v6::o6_animateActor() {
 	int anim = pop();
 	int act = pop();
 
-	if (_game.id == GID_SAMNMAX && _roomResource == 35 &&
-		vm.slot[_currentScript].number == 202 && act == 4 && anim == 14) {
+	if (_game.id == GID_SAMNMAX && _roomResource == 35 && vm.slot[_currentScript].number == 202 &&
+		act == 4 && anim == 14 && _enableEnhancements) {
 		// WORKAROUND bug #2068 (Animation glitch at World of Fish).
 		// Before starting animation 14 of the fisherman, make sure he isn't
-		// talking anymore. This appears to be a bug in the original game as well.
+		// talking anymore, otherwise the fishing line may appear twice when Max
+		// grabs it and subtitles (at a slow speed) and voices are both enabled.
+		// This bug exists in the original game as well.
 		if (getTalkingActor() == 4) {
 			stopTalk();
 		}

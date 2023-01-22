@@ -52,12 +52,8 @@ Common::Error Window::loadInitialMovie() {
 	debug(0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 	Common::String movie = (_vm->getGameGID() == GID_TESTALL) ? getNextMovieFromQueue().movie : _vm->getEXEName();
 
-	if (g_director->getPlatform() == Common::kPlatformWindows) {
-		loadEXE(movie);
-	} else {
-		probeProjector(movie);
-		loadMac(movie);
-	}
+	loadINIStream();
+	_mainArchive = openArchive(movie);
 
 	if (!_mainArchive) {
 		warning("Cannot open main movie");
@@ -152,16 +148,16 @@ void Window::probeMacBinary(MacArchive *archive) {
 				_nextMovie.movie = moviePath;
 				warning("Replaced score name with: %s (from %s)", _nextMovie.movie.c_str(), sname.c_str());
 
-				delete _currentMovie;
-				_currentMovie = nullptr;
+				if (_currentMovie) {
+					delete _currentMovie;
+					_currentMovie = nullptr;
+				}
 
 				probeProjector(moviePath);
 			} else {
 				warning("Couldn't find score with name: %s", sname.c_str());
 			}
 			delete name;
-
-
 		}
 	}
 
@@ -193,48 +189,34 @@ void Window::probeMacBinary(MacArchive *archive) {
 	g_director->_allOpenResFiles.setVal(archive->getPathName(), archive);
 }
 
-Archive *Window::openMainArchive(const Common::String movie) {
-	debug(1, "openMainArchive(\"%s\")", movie.c_str());
+Archive *Window::openArchive(const Common::String movie) {
+	debug(1, "openArchive(\"%s\")", movie.c_str());
 
 	// If the archive is already open, don't reopen it;
 	// just init from the existing archive. This prevents errors that
 	// can happen when trying to load the same archive more than once.
 	if (g_director->_allOpenResFiles.contains(movie) && SearchMan.hasFile(movie)) {
-		_mainArchive = g_director->_allOpenResFiles.getVal(movie);
-
-		if (g_director->getPlatform() == Common::kPlatformWindows) {
-			return loadEXE(movie);
-		} else {
-			probeProjector(movie);
-			return loadMac(movie);
-		}
+		return g_director->_allOpenResFiles.getVal(movie);
 	}
 
-	_mainArchive = g_director->createArchive();
-
-	if (!_mainArchive->openFile(movie)) {
-		if (!SearchMan.hasFile(movie)) {
-			delete _mainArchive;
-			_mainArchive = nullptr;
-
-			warning("openMainArchive(): Could not open '%s'", movie.c_str());
-			return nullptr;
-		} else {
-			warning("openMainArchive(): Could not open '%s'; trying EXE", movie.c_str());
-
-			if (g_director->getPlatform() == Common::kPlatformWindows) {
-				return loadEXE(movie);
-			} else {
-				probeProjector(movie);
-				return loadMac(movie);
-			}
+	Archive *result = nullptr;
+	if (g_director->getPlatform() == Common::kPlatformWindows) {
+		result = loadEXE(movie);
+	} else {
+		probeProjector(movie);
+		result = loadMac(movie);
+	}
+	if (!result) {
+		result = g_director->createArchive();
+		if (!result->openFile(movie)) {
+			delete result;
+			result = nullptr;
 		}
 	}
-
-	return _mainArchive;
+	return result;
 }
 
-Archive *Window::loadEXE(const Common::String movie) {
+void Window::loadINIStream() {
 	Common::SeekableReadStream *iniStream = SearchMan.createReadStreamForMember("LINGO.INI");
 	if (iniStream) {
 		char *script = (char *)calloc(iniStream->size() + 1, 1);
@@ -251,31 +233,42 @@ Archive *Window::loadEXE(const Common::String movie) {
 	} else {
 		warning("No LINGO.INI");
 	}
+}
 
+Archive *Window::loadEXE(const Common::String movie) {
 	Common::SeekableReadStream *exeStream = SearchMan.createReadStreamForMember(Common::Path(movie, g_director->_dirSeparator));
-	if (!exeStream)
+	if (!exeStream) {
+		warning("Window::loadEXE(): Failed to open EXE '%s'", g_director->getEXEName().c_str());
 		return nullptr;
+	}
+
+	Archive *result = nullptr;
 
 	uint32 initialTag = exeStream->readUint32LE();
 	if (initialTag == MKTAG('R', 'I', 'F', 'X') || initialTag == MKTAG('X', 'F', 'I', 'R')) {
 		// we've encountered a movie saved from Director, not a projector.
-		loadEXERIFX(exeStream, 0);
+		result = loadEXERIFX(exeStream, 0);
 	} else if (initialTag == MKTAG('R', 'I', 'F', 'F') || initialTag == MKTAG('F', 'F', 'I', 'R')) { // This is just a normal movie
-		_mainArchive = new RIFFArchive();
+		result = new RIFFArchive();
 
-		if (!_mainArchive->openStream(exeStream, 0))
+		if (!result->openStream(exeStream, 0)) {
+			warning("Window::loadEXE(): Failed to load RIFF");
+			delete result;
 			return nullptr;
+		}
 	} else {
 		Common::WinResources *exe = Common::WinResources::createFromEXE(movie);
-		if (!exe)
+		if (!exe) {
+			warning("Window::loadEXE(): Failed to open EXE '%s'", g_director->getEXEName().c_str());
 			return nullptr;
+		}
 
 		const Common::Array<Common::WinResourceID> versions = exe->getIDList(Common::kWinVersion);
 		for (uint i = 0; i < versions.size(); i++) {
 			Common::WinResources::VersionInfo *info = exe->getVersionResource(versions[i]);
 
 			for (Common::WinResources::VersionHash::const_iterator it = info->hash.begin(); it != info->hash.end(); ++it)
-				warning("info <%s>: <%s>", it->_key.c_str(), it->_value.encode().c_str());
+				warning("Window::loadEXE(): info <%s>: <%s>", it->_key.c_str(), it->_value.encode().c_str());
 
 			delete info;
 
@@ -293,28 +286,25 @@ Archive *Window::loadEXE(const Common::String movie) {
 		exeStream->seek(exeStream->readUint32LE());
 
 		if (g_director->getVersion() >= 700) {
-			loadEXEv7(exeStream);
+			result = loadEXEv7(exeStream);
 		} else if (g_director->getVersion() >= 500) {
-			loadEXEv5(exeStream);
+			result = loadEXEv5(exeStream);
 		} else if (g_director->getVersion() >= 400) {
-			loadEXEv4(exeStream);
+			result = loadEXEv4(exeStream);
 		} else if (g_director->getVersion() >= 200) {
-			loadEXEv3(exeStream);
+			result = loadEXEv3(exeStream);
 		} else {
-			warning("Unhandled Windows EXE version %d", g_director->getVersion());
+			warning("Window::loadEXE(): Unhandled Windows EXE version %d", g_director->getVersion());
 			return nullptr;
 		}
 	}
 
-	if (_mainArchive) {
-		_mainArchive->setPathName(movie);
-		return _mainArchive;
-	} else {
-		return nullptr;
-	}
+	if (result)
+		result->setPathName(movie);
+	return result;
 }
 
-void Window::loadEXEv3(Common::SeekableReadStream *stream) {
+Archive *Window::loadEXEv3(Common::SeekableReadStream *stream) {
 	uint32 mmmSize = 0;
 	Common::String mmmFileName;
 	Common::String directoryName;
@@ -338,12 +328,12 @@ void Window::loadEXEv3(Common::SeekableReadStream *stream) {
 			directoryName = directoryName_;
 		} else {
 			if (!SearchMan.hasFile(Common::Path(mmmFileName_, g_director->_dirSeparator)))
-				warning("Failed to find MMM '%s'", mmmFileName_.c_str());
+				warning("Window::loadEXEv3(): Failed to find MMM '%s'", mmmFileName_.c_str());
 			else {
 				Common::SeekableReadStream *const mmmFile_ = SearchMan.createReadStreamForMember(Common::Path(mmmFileName_, g_director->_dirSeparator));
 				uint32 mmmFileSize_ = mmmFile_->size();
 				if (mmmSize_ != mmmFileSize_)
-					warning("File size for '%s' doesn't match. Got %d (0x%x), want %d (0x%x)", mmmFileName_.c_str(), mmmFileSize_, mmmFileSize_, mmmSize_, mmmSize_);
+					warning("Window::loadEXEv3(): File size for '%s' doesn't match. Got %d (0x%x), want %d (0x%x)", mmmFileName_.c_str(), mmmFileSize_, mmmFileSize_, mmmSize_, mmmSize_);
 				delete mmmFile_;
 			}
 		}
@@ -351,6 +341,7 @@ void Window::loadEXEv3(Common::SeekableReadStream *stream) {
 		debugC(1, kDebugLoading, "%s", "");
 	}
 
+	Archive *result = nullptr;
 	if (mmmSize) {
 		uint32 riffOffset = stream->pos();
 
@@ -377,25 +368,34 @@ void Window::loadEXEv3(Common::SeekableReadStream *stream) {
 		}
 
 
-		_mainArchive = new RIFFArchive();
+		result = new RIFFArchive();
 
-		if (_mainArchive->openStream(stream, riffOffset))
-			return;
+		if (result->openStream(stream, riffOffset))
+			return result;
 
-		warning("Failed to load RIFF from EXE");
-		delete _mainArchive;
-		_mainArchive = nullptr;
+		warning("Window::loadEXEv3(): Failed to load RIFF from EXE");
+		delete result;
+		result = nullptr;
 		delete stream;
 	}
 
-	openMainArchive(mmmFileName);
+	result = g_director->createArchive();
+
+	if (!result->openFile(mmmFileName)) {
+		warning("Window::loadEXEv3(): Could not open '%s'", mmmFileName.c_str());
+		delete result;
+		result = nullptr;
+	}
+	return result;
 }
 
-void Window::loadEXEv4(Common::SeekableReadStream *stream) {
+Archive *Window::loadEXEv4(Common::SeekableReadStream *stream) {
 	uint32 ver = stream->readUint32BE();
 
-	if (ver != MKTAG('P', 'J', '9', '3'))
-		error("Invalid projector tag found in v4 EXE [%s]", tag2str(ver));
+	if (ver != MKTAG('P', 'J', '9', '3')) {
+		warning("Window::loadEXEv4(): Invalid projector tag found in v4 EXE [%s]", tag2str(ver));
+		return nullptr;
+	}
 
 	uint32 rifxOffset = stream->readUint32LE();
 	/* uint32 fontMapOffset = */ stream->readUint32LE();
@@ -406,16 +406,18 @@ void Window::loadEXEv4(Common::SeekableReadStream *stream) {
 	/* uint32 rifxOffsetAlt = */ stream->readUint32LE(); // equivalent to rifxOffset
 	uint32 flags = stream->readUint32LE();
 
-	warning("PJ93 projector flags: %08x", flags);
+	warning("Window::loadEXEv4(): PJ93 projector flags: %08x", flags);
 
-	loadEXERIFX(stream, rifxOffset);
+	return loadEXERIFX(stream, rifxOffset);
 }
 
-void Window::loadEXEv5(Common::SeekableReadStream *stream) {
+Archive *Window::loadEXEv5(Common::SeekableReadStream *stream) {
 	uint32 ver = stream->readUint32LE();
 
-	if (ver != MKTAG('P', 'J', '9', '5'))
-		error("Invalid projector tag found in v5 EXE [%s]", tag2str(ver));
+	if (ver != MKTAG('P', 'J', '9', '5')) {
+		warning("Window::loadEXEv5(): Invalid projector tag found in v5 EXE [%s]", tag2str(ver));
+		return nullptr;
+	}
 
 	uint32 rifxOffset = stream->readUint32LE();
 	uint32 pflags = stream->readUint32LE();
@@ -428,16 +430,18 @@ void Window::loadEXEv5(Common::SeekableReadStream *stream) {
 	stream->readUint32LE(); // number of driver files
 	stream->readUint32LE(); // fontMapOffset
 
-	warning("PJ95 projector pflags: %08x  flags: %08x", pflags, flags);
+	warning("Window::loadEXEv5(): PJ95 projector pflags: %08x  flags: %08x", pflags, flags);
 
-	loadEXERIFX(stream, rifxOffset);
+	return loadEXERIFX(stream, rifxOffset);
 }
 
-void Window::loadEXEv7(Common::SeekableReadStream *stream) {
+Archive *Window::loadEXEv7(Common::SeekableReadStream *stream) {
 	uint32 ver = stream->readUint32LE();
 
-	if (ver != MKTAG('P', 'J', '0', '0') && ver != MKTAG('P', 'J', '0', '1'))
-		error("Invalid projector tag found in v7 EXE [%s]", tag2str(ver));
+	if (ver != MKTAG('P', 'J', '0', '0') && ver != MKTAG('P', 'J', '0', '1')) {
+		warning("Window::loadEXEv7(): Invalid projector tag found in v7 EXE [%s]", tag2str(ver));
+		return nullptr;
+	}
 
 	uint32 rifxOffset = stream->readUint32LE();
 	stream->readUint32LE(); // unknown
@@ -446,29 +450,40 @@ void Window::loadEXEv7(Common::SeekableReadStream *stream) {
 	stream->readUint32LE(); // unknown
 	stream->readUint32LE(); // some DLL offset
 
-	loadEXERIFX(stream, rifxOffset);
+	return loadEXERIFX(stream, rifxOffset);
 }
 
-void Window::loadEXERIFX(Common::SeekableReadStream *stream, uint32 offset) {
-	_mainArchive = new RIFXArchive();
+Archive *Window::loadEXERIFX(Common::SeekableReadStream *stream, uint32 offset) {
+	Archive *result = new RIFXArchive();
 
-	if (!_mainArchive->openStream(stream, offset))
-		error("Failed to load RIFX from EXE");
+	if (!result->openStream(stream, offset)) {
+		warning("Window::loadEXERIFX(): Failed to load RIFX from EXE");
+		delete result;
+		result = nullptr;
+	}
+	return result;
 }
 
 Archive *Window::loadMac(const Common::String movie) {
+	Archive *result = nullptr;
 	if (g_director->getVersion() < 400) {
 		// The data is part of the resource fork of the executable
-		return openMainArchive(movie);
+		result = g_director->createArchive();
+
+		if (!result->openFile(movie)) {
+			delete result;
+			result = nullptr;
+			warning("Window::loadMac(): Could not open '%s'", movie.c_str());
+		}
 	} else {
 		// The RIFX is located in the data fork of the executable
 		Common::SeekableReadStream *dataFork = Common::MacResManager::openFileOrDataFork(Common::Path(movie, g_director->_dirSeparator));
 		if (!dataFork) {
-			warning("Failed to open Mac binary '%s'", movie.c_str());
+			warning("Window::loadMac(): Failed to open Mac binary '%s'", movie.c_str());
 			return nullptr;
 		}
-		_mainArchive = new RIFXArchive();
-		_mainArchive->setPathName(movie);
+		result = new RIFXArchive();
+		result->setPathName(movie);
 
 		// First we need to detect PPC vs. 68k
 
@@ -483,14 +498,17 @@ Archive *Window::loadMac(const Common::String movie) {
 			startOffset = 0;
 		}
 
-		if (!_mainArchive->openStream(dataFork, startOffset)) {
-			warning("Failed to load RIFX from Mac binary");
-			delete _currentMovie;
-			_currentMovie = nullptr;
+		if (!result->openStream(dataFork, startOffset)) {
+			warning("Window::loadMac(): Failed to load RIFX from Mac binary");
+			delete result;
+			result = nullptr;
+			if (_currentMovie) {
+				delete _currentMovie;
+				_currentMovie = nullptr;
+			}
 		}
-
-		return _mainArchive;
 	}
+	return result;
 }
 
 void Window::loadStartMovieXLibs() {

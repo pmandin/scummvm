@@ -160,9 +160,12 @@ FreescapeEngine::~FreescapeEngine() {
 		delete _border;
 	}
 
-	delete _borderTexture;
-	delete _uiTexture;
-	delete _titleTexture;
+
+	if (_gfx->_isAccelerated) {
+		delete _borderTexture;
+		delete _uiTexture;
+		delete _titleTexture;
+	}
 
 	for (auto &it : _areaMap) {
 		delete it._value;
@@ -332,6 +335,16 @@ void FreescapeEngine::drawFrame() {
 }
 
 void FreescapeEngine::pressedKey(const int keycode) {}
+
+void FreescapeEngine::resetInput() {
+	_shootMode = false;
+	centerCrossair();
+	g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
+	g_system->getEventManager()->purgeMouseEvents();
+	g_system->getEventManager()->purgeKeyboardEvents();
+	rotate(0, 0);
+}
+
 
 void FreescapeEngine::processInput() {
 	float currentFrame = g_system->getMillis();
@@ -509,7 +522,6 @@ Common::Error FreescapeEngine::run() {
 
 	// Simple main event loop
 	int saveSlot = ConfMan.getInt("save_slot");
-	centerCrossair();
 	if (saveSlot == -1)
 		titleScreen();
 	loadBorder(); // Border is load unmodified
@@ -526,7 +538,7 @@ Common::Error FreescapeEngine::run() {
 	bool endGame = false;
 	// Draw first frame
 
-	rotate(0, 0);
+	resetInput();
 	drawFrame();
 	_gfx->flipBuffer();
 	g_system->updateScreen();
@@ -756,6 +768,18 @@ void FreescapeEngine::loadDataBundle() {
 	if (!_dataBundle) {
 		error("ENGINE: Couldn't load data bundle '%s'.", FREESCAPE_DATA_BUNDLE.c_str());
 	}
+	Common::String versionFilename = "version";
+	if (!_dataBundle->hasFile(versionFilename))
+		error("No version number in %s", FREESCAPE_DATA_BUNDLE.c_str());
+
+	Common::SeekableReadStream *versionFile = _dataBundle->createReadStreamForMember(versionFilename);
+	char *versionData = (char *)malloc((versionFile->size() + 1) * sizeof(char));
+	versionFile->read(versionData, versionFile->size());
+	versionData[versionFile->size()] = '\0';
+	Common::String expectedVersion = "1";
+	if (versionData != expectedVersion)
+		error("Unexpected version number for freescape.dat: expecting '%s' but found '%s'", expectedVersion.c_str(), versionData);
+	free(versionData);
 }
 
 void FreescapeEngine::insertTemporaryMessage(const Common::String message, int deadline) {

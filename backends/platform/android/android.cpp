@@ -33,7 +33,7 @@
 // which gets messed up by our override mechanism; this could
 // be avoided by either changing the Android SDK to use the equally
 // legal and valid
-//   __attribute__ ((format(printf, 3, 4)))
+//   __attribute__ ((format(__printf__, 3, 4)))
 // or by refining our printf override to use a varadic macro
 // (which then wouldn't be portable, though).
 // Anyway, for now we just disable the printf override globally
@@ -70,6 +70,7 @@
 #include "backends/graphics3d/android/android-graphics3d.h"
 #include "backends/platform/android/jni-android.h"
 #include "backends/platform/android/android.h"
+#include "backends/fs/android/android-fs-factory.h"
 
 const char *android_log_tag = "ScummVM";
 
@@ -144,8 +145,6 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_trackball_scale(2),
 	_joystick_scale(10) {
 
-	_fsFactory = new POSIXFilesystemFactory();
-
 	LOGI("Running on: [%s] [%s] [%s] [%s] [%s] SDK:%s ABI:%s",
 			getSystemProperty("ro.product.manufacturer").c_str(),
 			getSystemProperty("ro.product.model").c_str(),
@@ -154,6 +153,18 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 			getSystemProperty("ro.build.display.id").c_str(),
 			getSystemProperty("ro.build.version.sdk").c_str(),
 			getSystemProperty("ro.product.cpu.abi").c_str());
+	// JNI::getAndroidSDKVersionId() should be identical to the result from ("ro.build.version.sdk"),
+	// though getting it via JNI is maybe the most reliable option (?)
+	// Also __system_property_get which is used by getSystemProperty() is being deprecated in recent NDKs
+
+	int sdkVersion = JNI::getAndroidSDKVersionId();
+	LOGI("SDK Version: %d", sdkVersion);
+
+	AndroidFilesystemFactory &fsFactory = AndroidFilesystemFactory::instance();
+	if (sdkVersion >= 21) {
+		fsFactory.initSAF();
+	}
+	_fsFactory = &fsFactory;
 }
 
 OSystem_Android::~OSystem_Android() {
@@ -172,8 +183,8 @@ OSystem_Android::~OSystem_Android() {
 	_audiocdManager = 0;
 	delete _mixer;
 	_mixer = 0;
-	delete _fsFactory;
 	_fsFactory = 0;
+	AndroidFilesystemFactory::destroy();
 	delete _timerManager;
 	_timerManager = 0;
 

@@ -18,6 +18,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - RetroMini RS90 under OpenDingux beta.
    - 1st generation Miyoo (New BittBoy, Pocket Go and PowKiddy Q90-V90-Q20)
      under TriForceX MiyooCFW.
+   - Miyoo mini
 
  General:
    - Reduced amount of false positives in Mass Add.
@@ -91,6 +92,8 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  SCI:
    - Improved text rendering for Macintosh titles.
+   - Added support for Casio MT-540, CT-460 and CSM-1 MIDI devices for the SCI0
+     games that originally supported it.
 
  SCUMM:
    - Added support for CGA, CGA Composite, CGA black & white and Hercules modes
@@ -126,11 +129,13 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed Roland MT-32 support in Sam & Max.
    - Implemented original GUI and save menus for LucasArts games (DOS, Windows,
      Amiga, Macintosh, FM-Towns, SegaCD, Atari ST, NES and Commodore 64 versions).
+     Also activate the general "Ask for confirmation on exit" option for a more
+     authentic '90s experience!
    - Fixed minor timing issues for the SMUSH video engine, mostly affecting
      Full Throttle.
    - Added a low latency audio mode to Full Throttle, The Dig and The Curse of
      Monkey Island; this can improve audio performance expecially in non-desktop
-     devices.
+     devices, but it is also a little less accurate than the original.
    - Implemented reloading CD audio for Monkey Island 1 and Loom (CD versions),
      when reloading a save state.
 
@@ -168,6 +173,10 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Xeen:
    - Several crash fixes for Clouds of Xeen.
+   - Wait until farewell finishes before leaving shops.
+   - Don't reload map after leaving character creation.
+   - Implement correct clouds falling logic for Swords of Xeen.
+   - Fix GateMaster monster in Underworld map.
 
  3DS port:
    - Update relocation parser to support PREL31 that are emitted by new compiler.

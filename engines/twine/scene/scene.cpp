@@ -648,7 +648,7 @@ void Scene::playSceneMusic() {
 }
 
 void Scene::processEnvironmentSound() {
-	if (_engine->_lbaTime < _sampleAmbienceTime) {
+	if (_engine->timerRef < _sampleAmbienceTime) {
 		return;
 	}
 	int16 currentAmb = _engine->getRandomNumber(4); // random ambiance
@@ -676,7 +676,7 @@ void Scene::processEnvironmentSound() {
 	}
 
 	// compute next ambiance timer
-	_sampleAmbienceTime = _engine->_lbaTime + _engine->toSeconds(_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay);
+	_sampleAmbienceTime = _engine->timerRef + _engine->toSeconds(_engine->getRandomNumber(_sampleMinDelayRnd) + _sampleMinDelay);
 }
 
 void Scene::processZoneExtraBonus(ZoneStruct *zone) {
@@ -692,7 +692,7 @@ void Scene::processZoneExtraBonus(ZoneStruct *zone) {
 	const int32 amount = zone->infoData.Bonus.amount;
 	const int32 x = (zone->maxs.x + zone->mins.x) / 2;
 	const int32 z = (zone->maxs.z + zone->mins.z) / 2;
-	const int32 angle = _engine->_movements->getAngleAndSetTargetActorDistance(x, z, _sceneHero->_pos.x, _sceneHero->_pos.z);
+	const int32 angle = _engine->_movements->getAngle(x, z, _sceneHero->_pos.x, _sceneHero->_pos.z);
 	const int32 index = _engine->_extra->addExtraBonus(x, zone->maxs.y, z, LBAAngles::ANGLE_63, angle, bonusSprite, amount);
 
 	if (index != -1) {
@@ -712,7 +712,7 @@ void Scene::checkZoneSce(int32 actorIdx) {
 	bool tmpCellingGrid = false;
 
 	if (IS_HERO(actorIdx)) {
-		_currentActorInZone = false;
+		_flagClimbing = false;
 	}
 
 	for (int32 z = 0; z < _sceneNumZones; z++) {
@@ -753,7 +753,7 @@ void Scene::checkZoneSce(int32 actorIdx) {
 					tmpCellingGrid = true;
 					if (_engine->_grid->_useCellingGrid != zone->num) {
 						if (zone->num != -1) {
-							_engine->_grid->createGridMap();
+							_engine->_grid->copyMapToCube();
 						}
 
 						_engine->_grid->_useCellingGrid = zone->num;
@@ -787,11 +787,11 @@ void Scene::checkZoneSce(int32 actorIdx) {
 
 					if (destPos.x >= 0 && destPos.z >= 0 && destPos.x <= SCENE_SIZE_MAX && destPos.z <= SCENE_SIZE_MAX) {
 						if (_engine->_grid->worldColBrick(destPos.x, actor->_pos.y + SIZE_BRICK_Y, destPos.z) != ShapeType::kNone) {
-							_currentActorInZone = true;
-							if (actor->_pos.y >= ABS(zone->mins.y + zone->maxs.y) / 2) {
+							_flagClimbing = true;
+							if (actor->_pos.y >= (zone->mins.y + zone->maxs.y) / 2) {
 								_engine->_animations->initAnim(AnimationTypes::kTopLadder, AnimType::kAnimationAllThen, AnimationTypes::kStanding, actorIdx); // reached end of ladder
 							} else {
-								_engine->_animations->initAnim(AnimationTypes::kClimbLadder, AnimType::kAnimationTypeLoop, AnimationTypes::kAnimInvalid, actorIdx); // go up in ladder
+								_engine->_animations->initAnim(AnimationTypes::kClimbLadder, AnimType::kAnimationTypeRepeat, AnimationTypes::kAnimInvalid, actorIdx); // go up in ladder
 							}
 						}
 					}
@@ -804,7 +804,7 @@ void Scene::checkZoneSce(int32 actorIdx) {
 	if (!tmpCellingGrid && actorIdx == _currentlyFollowedActor && _engine->_grid->_useCellingGrid != -1) {
 		_engine->_grid->_useCellingGrid = -1;
 		_engine->_grid->_cellingGridIdx = -1;
-		_engine->_grid->createGridMap();
+		_engine->_grid->copyMapToCube();
 		_engine->_redraw->_firstTime = true;
 	}
 }

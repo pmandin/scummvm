@@ -31,11 +31,6 @@
 
 #include <dirent.h>
 
-DrivePOSIXFilesystemNode::Config::Config() {
-	bufferingMode = kBufferingModeStdio;
-	bufferSize = 0; // Use the default stdio buffer size
-}
-
 DrivePOSIXFilesystemNode::DrivePOSIXFilesystemNode(const Common::String &path, const Config &config) :
 		POSIXFilesystemNode(path),
 		_isPseudoRoot(false),
@@ -110,7 +105,7 @@ DrivePOSIXFilesystemNode *DrivePOSIXFilesystemNode::getChildWithKnownType(const 
 		newPath += '/';
 	newPath += n;
 
-	DrivePOSIXFilesystemNode *child = new DrivePOSIXFilesystemNode(_config);
+	DrivePOSIXFilesystemNode *child = reinterpret_cast<DrivePOSIXFilesystemNode *>(makeNode());
 	child->_path = newPath;
 	child->_isValid = true;
 	child->_isPseudoRoot = false;
@@ -131,11 +126,7 @@ bool DrivePOSIXFilesystemNode::getChildren(AbstractFSList &list, AbstractFSNode:
 	assert(_isDirectory);
 
 	if (_isPseudoRoot) {
-		for (uint i = 0; i < _config.drives.size(); i++) {
-			list.push_back(makeNode(_config.drives[i]));
-		}
-
-		return true;
+		return _config.getDrives(list, hidden);
 	} else {
 		DIR *dirp = opendir(_path.c_str());
 		struct dirent *dp;
@@ -187,8 +178,7 @@ AbstractFSNode *DrivePOSIXFilesystemNode::getParent() const {
 	}
 
 	if (isDrive(_path)) {
-		DrivePOSIXFilesystemNode *root = new DrivePOSIXFilesystemNode(_config);
-		return root;
+		return makeNode();
 	}
 
 	return POSIXFilesystemNode::getParent();
@@ -196,9 +186,7 @@ AbstractFSNode *DrivePOSIXFilesystemNode::getParent() const {
 
 bool DrivePOSIXFilesystemNode::isDrive(const Common::String &path) const {
 	Common::String normalizedPath = Common::normalizePath(path, '/');
-	DrivesArray::const_iterator drive = Common::find(_config.drives.begin(), _config.drives.end(), normalizedPath);
-	return drive != _config.drives.end();
+	return _config.isDrive(normalizedPath);
 }
-
 
 #endif //#if defined(POSIX)

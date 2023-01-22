@@ -178,6 +178,7 @@ public:
 	bool _shootMode;
 	bool _noClipMode;
 	void processInput();
+	void resetInput();
 	void generateDemoInput();
 	virtual void pressedKey(const int keycode);
 	void move(CameraMovement direction, uint8 scale, float deltaTime);
@@ -352,10 +353,11 @@ enum DrillerReleaseFlags {
 		GF_AMIGA_BUDGET = (1 << 1),
 		GF_ZX_RETAIL = (1 << 2),
 		GF_ZX_BUDGET = (1 << 3),
-		GF_CPC_RETAIL = (1 << 4),
-		GF_CPC_RETAIL2 = (1 << 5),
-		GF_CPC_BUDGET = (1 << 6),
-		GF_CPC_VIRTUALWORLDS = (1 << 7),
+		GF_ZX_DISC = (1 << 4),
+		GF_CPC_RETAIL = (1 << 5),
+		GF_CPC_RETAIL2 = (1 << 6),
+		GF_CPC_BUDGET = (1 << 7),
+		GF_CPC_VIRTUALWORLDS = (1 << 8),
 };
 
 class DrillerEngine : public FreescapeEngine {

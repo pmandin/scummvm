@@ -37,22 +37,17 @@ namespace TwinE {
 
 /** Actors move structure */
 struct ActorMoveStruct {
-	int16 from = 0;
-	int16 to = 0;
-	int16 numOfStep = 0;
-	int32 timeOfChange = 0;
+	int16 startValue = 0;
+	int16 endValue = 0;
+	int16 timeValue = 0;
+	int32 memoTicks = 0;
 
 	/**
 	 * Get actor real angle
 	 * @param time engine time used for interpolation
 	 */
-	int32 getRealAngle(int32 time);
-
-	/**
-	 * Get actor step
-	 * @param time engine time used for interpolation
-	 */
-	int32 getRealValue(int32 time);
+	int16 getRealValueFromTime(int32 time);
+	int16 getRealAngle(int32 time);
 };
 
 /** Actors animation timer structure */
@@ -140,7 +135,7 @@ struct BonusParameter {
  */
 class ActorStruct {
 private:
-	ShapeType _brickShape = ShapeType::kNone; // field_3
+	ShapeType _col = ShapeType::kNone; // collision
 	bool _brickCausesDamage = false; // TODO: this is a bitmask with multiple values in the original source
 
 	EntityData _entityData;
@@ -148,9 +143,9 @@ public:
 	StaticFlagsStruct _staticFlags;
 	DynamicFlagsStruct _dynamicFlags;
 
-	inline ShapeType brickShape() const { return _brickShape; }
-	inline void setBrickShape(ShapeType shapeType) {
-		_brickShape = shapeType;
+	inline ShapeType brickShape() const { return _col; }
+	inline void setCollision(ShapeType shapeType) {
+		_col = shapeType;
 		_brickCausesDamage = false;
 	}
 	inline void setBrickCausesDamage() { _brickCausesDamage = true; }
@@ -227,12 +222,12 @@ public:
 	int32 _anim = -1;
 	int32 _doorWidth = 0;
 	int32 _frame = 0;
-	AnimType _flagAnim = AnimType::kAnimationTypeLoop;
+	AnimType _flagAnim = AnimType::kAnimationTypeRepeat;
 	int32 _spriteActorRotation = 0;
 	uint8 _brickSound = 0U; // CodeJeu
 
 	BoundingBox _boundingBox; // Xmin, YMin, Zmin, Xmax, Ymax, Zmax
-	ActorMoveStruct _moveAngle;
+	ActorMoveStruct realAngle;
 	AnimTimerDataStruct _animTimerData;
 };
 
