@@ -1,6 +1,12 @@
 Umfangreichere Informationen über die Änderungen des aktuellen Codes findest Du unter:
         https://github.com/scummvm/scummvm/commits/
 
+#### 2.8.0 (XXXX-XX-XX)
+
+ Xeen:
+   - Die Engine "xeen" wurde für Might & Magic zu "mm" umbenannt.
+
+
 #### 2.7.0 (DD.MM.YYYY)
 
  Neue Spiele:
@@ -11,7 +17,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für Obsidian hinzugefügt.
    - Unterstützung für Added support for Pink Panther: Passport to Peril hinzugefügt.
    - Unterstützung für Pink Panther: Hokus Pokus Pink hinzugefügt.
-   - Unterstützung für Driller/Space Station Oblivion (DOS/EGA, Amiga und Atari ST-Versionen) hinzugefügt.
+   - Unterstützung für Driller/Space Station Oblivion (DOS/EGA/CGA, Amiga, Atari ST, ZX Spectrum und Amstrad CPC-Versionen) hinzugefügt.
    - Unterstützung für Halls of the Dead: Faery Tale Adventure II hinzugefügt.
 
  Neue Plattformen:
@@ -77,6 +83,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Private:
    - Die Macintosh-Version kann nun direkt von der Installations-CD gespielt werden.
+   - Unterstützung für die japanische Macintosh-Version hinzugefügt.
 
  Queen:
    - Eine zusätzliche Option erlaubt die Verwendung einer verbesserten Schriftart für die hebräische Version.

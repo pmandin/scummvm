@@ -102,13 +102,30 @@ bool Game::addAnimToSet(const Common::String &anim) {
 	return false;
 }
 
-void Game::addArtworkUnlocked(const Common::String &name, bool notify) {
-	if (_unlockedArtwork.contains(name))
-		return;
-	_unlockedArtwork[name] = true;
-	if (notify) {
-		_notifier.push("BONUS!", "Inventory/Objects/VPapierCrayon.png");
+/*static*/
+Common::String Game::artworkConfName(const Common::String &name) {
+	Common::String configName = Common::String::format("artwork_%s", name.c_str());
+	for (uint i = 0; i < configName.size(); i++) {
+		if (configName[i] == '/' || configName[i] == '.')
+			configName.setChar('_', i);
 	}
+	return configName;
+}
+
+void Game::addArtworkUnlocked(const Common::String &name, bool notify) {
+	const Common::String configName = artworkConfName(name);
+	if (_unlockedArtwork.contains(configName))
+		return;
+	ConfMan.setBool(configName, true);
+	ConfMan.flushToDisk();
+	_unlockedArtwork[configName] = true;
+	if (notify)
+		_notifier.push("BONUS!", "Inventory/Objects/VPapierCrayon.png");
+}
+
+bool Game::isArtworkUnlocked(const Common::String &name) const {
+	const Common::String configName = artworkConfName(name);
+	return _unlockedArtwork.getValOrDefault(configName, false);
 }
 
 void Game::addNoScale2Child(TeLayout *layout) {
@@ -806,6 +823,15 @@ void Game::loadBackup(const Common::String &path) {
 	}
 }
 
+void Game::loadUnlockedArtwork() {
+	Common::ConfigManager::Domain *domain = ConfMan.getActiveDomain();
+	for (auto &val : *domain) {
+		if (val._key.substr(0, 8) == "artwork_") {
+			_unlockedArtwork[val._key] = true;
+		}
+	}
+}
+
 bool Game::loadCharacter(const Common::String &name) {
 	bool result = true;
 	Character *character = _scene.character(name);
@@ -1497,7 +1523,11 @@ void Game::stopSound(const Common::String &name) {
 
 Common::Error Game::syncGame(Common::Serializer &s) {
 	Application *app = g_engine->getApplication();
-	s.setVersion(1);
+
+	// TODO: should be an error before testing.
+	//if (!s.syncVersion(1))
+	//	error("Save game version too new: %d", s.getVersion());
+
 	inventory().syncState(s);
 	inventory().cellphone()->syncState(s);
 	// dialog2().syncState(s); // game saves this here, but doesn't actually save anything
@@ -1521,6 +1551,7 @@ Common::Error Game::syncGame(Common::Serializer &s) {
 	s.syncString(_scene._character->walkModeStr());
 	s.syncAsByte(_firstInventory);
 	s.syncAsByte(app->tutoActivated());
+
 	app->showLoadingIcon(false);
 	return Common::kNoError;
 }

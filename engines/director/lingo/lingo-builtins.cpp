@@ -1689,8 +1689,42 @@ void LB::b_floatP(int nargs) {
 }
 
 void LB::b_ilk(int nargs) {
-	Datum d = g_lingo->pop();
-	Datum res(Common::String(d.type2str(true)));
+	Datum res(0);
+	if (nargs == 1) {
+		// Single-argument mode returns the type of the item as a symbol.
+		// D4 is inconsistent about what types this variant is allowed to work with; e.g. #integer is fine,
+		// but #proplist is not. For now, give a response for all types.
+		Datum item = g_lingo->pop();
+		res = Datum(Common::String(item.type2str(true)));
+		res.type = SYMBOL;
+		g_lingo->push(res);
+		return;
+	}
+
+	if (nargs > 2) {
+		warning("b_ilk: dropping %d extra args", nargs - 2);
+		g_lingo->dropStack(nargs - 2);
+	}
+
+	// Two argument mode checks the type of the item against a symbol.
+	Datum type = g_lingo->pop();
+	Datum item = g_lingo->pop();
+	if (type.type != SYMBOL) {
+		warning("b_ilk: expected a symbol for second arg");
+	} else {
+		Common::String typeCopy = type.asString();
+
+		// A special case is #list, which is the equivalent of checking the item type is one of #linearlist,
+		// #proplist, #point and #rect.
+		if (typeCopy.equalsIgnoreCase("list")) {
+			res.u.i = item.type == ARRAY ? 1 : 0;
+			res.u.i |= item.type == PARRAY ? 1 : 0;
+			res.u.i |= item.type == POINT ? 1 : 0;
+			res.u.i |= item.type == RECT ? 1 : 0;
+		} else {
+			res.u.i = typeCopy.equalsIgnoreCase(item.type2str(true)) ? 1 : 0;
+		}
+	}
 	g_lingo->push(res);
 }
 
@@ -2692,10 +2726,10 @@ void LB::b_updateStage(int nargs) {
 	g_director->draw();
 
 	if (debugChannelSet(-1, kDebugFewFramesOnly)) {
-		score->_framesRan++;
-			warning("LB::b_updateStage(): ran frame %0d", score->_framesRan);
+		g_director->_framesRan++;
+		warning("LB::b_updateStage(): ran frame %0d", g_director->_framesRan);
 
-		if (score->_framesRan > 9) {
+		if (g_director->_framesRan > kFewFamesMaxCounter) {
 			warning("b_updateStage(): exiting due to debug few frames only");
 			score->_playState = kPlayStopped;
 		}
@@ -2945,8 +2979,8 @@ void LB::b_sound(int nargs) {
 		soundManager->stopSound(firstArg.u.i);
 	} else if (verb.u.s->equalsIgnoreCase("fadeIn")) {
 		if (nargs > 2) {
-			TYPECHECK(secondArg, INT);
-			ticks = secondArg.u.i;
+			TYPECHECK2(secondArg, INT, FLOAT);
+			ticks = secondArg.asInt();
 		} else {
 			ticks = 15 * (60 / score->_currentFrameRate);
 		}
@@ -2957,14 +2991,14 @@ void LB::b_sound(int nargs) {
 		return;
 	} else if (verb.u.s->equalsIgnoreCase("fadeOut")) {
 		if (nargs > 2) {
-			TYPECHECK(secondArg, INT);
-			ticks = secondArg.u.i;
+			TYPECHECK2(secondArg, INT, FLOAT);
+			ticks = secondArg.asInt();
 		} else {
 			ticks = 15 * (60 / score->_currentFrameRate);
 		}
 
-		TYPECHECK(firstArg, INT);
-		soundManager->registerFade(firstArg.u.i, false, ticks);
+		TYPECHECK2(firstArg, INT, FLOAT);
+		soundManager->registerFade(firstArg.asInt(), false, ticks);
 		score->_activeFade = firstArg.u.i;
 		return;
 	} else if (verb.u.s->equalsIgnoreCase("playFile")) {
@@ -3053,7 +3087,9 @@ void LB::b_cast(int nargs) {
 void LB::b_script(int nargs) {
 	Datum d = g_lingo->pop();
 	// FIXME: Check with later versions of director
-	//        The kCastText check version breaks Phibos and Yokai Ningen Bem.
+	//        The kCastText check version breaks Phibos, which loads a
+	//        non-kCastText script using this builtin.
+	//        With the kCastText version, Phibos crashes during its intro.
 	// CastMemberID memberID = d.asMemberID(kCastText);
 	CastMemberID memberID = d.asMemberID();
 	CastMember *cast = g_director->getCurrentMovie()->getCastMember(memberID);

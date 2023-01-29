@@ -78,6 +78,11 @@ struct soundFx {
 	byte *data;
 };
 
+class SizedPCSpeaker : public Audio::PCSpeaker {
+public:
+	bool endOfStream() const override { return !isPlaying(); }
+};
+
 class FreescapeEngine : public Engine {
 
 public:
@@ -239,6 +244,7 @@ public:
 	// Instructions
 	void executeIncrementVariable(FCLInstruction &instruction);
 	void executeDecrementVariable(FCLInstruction &instruction);
+	void executeSetVariable(FCLInstruction &instruction);
 	void executeGoto(FCLInstruction &instruction);
 	void executeIfThenElse(FCLInstruction &instruction);
 	void executeMakeInvisible(FCLInstruction &instruction);
@@ -261,10 +267,19 @@ public:
 	// Sound
 	Audio::SoundHandle _soundFxHandle;
 	Audio::SoundHandle _musicHandle;
+	Freescape::SizedPCSpeaker *_speaker;
+
+	bool _syncSound;
+	bool _firstSound;
 	bool _usePrerecordedSounds;
+	void waitForSounds();
+	void stopAllSounds();
+	bool isPlayingSound();
 	void playSound(int index, bool sync);
 	void playWav(const Common::String filename);
 	void playMusic(const Common::String filename);
+	void queueSoundConst(double hzFreq, int duration);
+	void playSilence(int duration, bool sync);
 	void playSoundConst(double hzFreq, int duration, bool sync);
 	void playSoundSweepIncWL(double hzFreq1, double hzFreq2, double wlStepPerMS, int resolution, bool sync);
 	void playTeleporter(int totalIters, bool sync);
@@ -338,6 +353,10 @@ public:
 	int _countdown;
 	int _ticks;
 	int _lastTick;
+	int _lastMinute;
+
+	void getTimeFromCountdown(int &seconds, int &minutes, int &hours);
+	void updateTimeVariables();
 
 	// Cheats
 	bool _useExtendedTimer;
@@ -402,6 +421,7 @@ private:
 	void addDrill(const Math::Vector3d position, bool gasFound);
 	bool checkDrill(const Math::Vector3d position);
 	void removeDrill(Area *area);
+	void addSkanner(Area *area);
 
 	void loadAssetsDemo();
 	void loadAssetsFullGame();

@@ -81,8 +81,6 @@ Score::Score(Movie *movie) {
 	_playState = kPlayNotStarted;
 
 	_numChannelsDisplayed = 0;
-
-	_framesRan = 0; // used by kDebugFewFramesOnly and kDebugScreenshot
 }
 
 Score::~Score() {
@@ -296,11 +294,11 @@ void Score::step() {
 	update();
 
 	if (debugChannelSet(-1, kDebugFewFramesOnly) || debugChannelSet(-1, kDebugScreenshot)) {
-		warning("Score::startLoop(): ran frame %0d", _framesRan);
-		_framesRan++;
+		warning("Score::startLoop(): ran frame %0d", g_director->_framesRan);
+		g_director->_framesRan++;
 	}
 
-	if (debugChannelSet(-1, kDebugFewFramesOnly) && _framesRan > 9) {
+	if (debugChannelSet(-1, kDebugFewFramesOnly) && g_director->_framesRan > kFewFamesMaxCounter) {
 		warning("Score::startLoop(): exiting due to debug few frames only");
 		_playState = kPlayStopped;
 		return;
@@ -646,8 +644,12 @@ bool Score::renderPrePaletteCycle(uint16 frameId, RenderMode mode) {
 		PaletteV4 *destPal = g_director->getPalette(resolvePaletteId(currentPalette));
 
 		int frameRate = CLIP<int>(_frames[frameId]->_palette.speed, 1, 30);
+
+		if (debugChannelSet(-1, kDebugFast))
+			frameRate = 30;
+
 		int frameDelay = 1000/60;
-		int fadeFrames = fadeColorFrames[frameRate - 1];
+		int fadeFrames = kFadeColorFrames[frameRate - 1];
 		byte calcPal[768];
 
 		if (_frames[frameId]->_palette.normal) {
@@ -668,7 +670,7 @@ bool Score::renderPrePaletteCycle(uint16 frameId, RenderMode mode) {
 					g_director->setPalette(resolvePaletteId(currentPalette));
 					return true;
 				}
-				g_system->delayMillis(frameDelay);
+				g_director->delayMillis(frameDelay);
 			}
 
 		} else {
@@ -678,10 +680,10 @@ bool Score::renderPrePaletteCycle(uint16 frameId, RenderMode mode) {
 			byte *fadePal = nullptr;
 			if (_frames[frameId]->_palette.fadeToBlack) {
 				// Fade everything except color index 0 to black
-				fadePal = blackPalette;
+				fadePal = kBlackPalette;
 			} else if (_frames[frameId]->_palette.fadeToWhite) {
 				// Fade everything except color index 255 to white
-				fadePal = whitePalette;
+				fadePal = kWhitePalette;
 			} else {
 				// Shouldn't reach here
 				return false;
@@ -702,7 +704,7 @@ bool Score::renderPrePaletteCycle(uint16 frameId, RenderMode mode) {
 					g_director->setPalette(resolvePaletteId(currentPalette));
 					return true;
 				}
-				g_system->delayMillis(frameDelay);
+				g_director->delayMillis(frameDelay);
 			}
 		}
 	}
@@ -757,6 +759,10 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 	int speed = _frames[frameId]->_palette.speed;
 	if (speed == 0)
 		return;
+
+	if (debugChannelSet(-1, kDebugFast))
+		speed = 30;
+
 	// 30 (the maximum) is actually unbounded
 	int delay = speed == 30 ? 10 : 1000 / speed;
 	if (_frames[frameId]->_palette.colorCycling) {
@@ -770,7 +776,7 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 			g_director->draw();
 		} else {
 			// Short circuit for few frames renderer
-			if (debugChannelSet(-1, kDebugFewFramesOnly)) {
+			if (debugChannelSet(-1, kDebugFast)) {
 				g_director->setPalette(resolvePaletteId(currentPalette));
 				return;
 			}
@@ -786,7 +792,7 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 						g_director->setPalette(resolvePaletteId(currentPalette));
 						return;
 					}
-					g_system->delayMillis(delay);
+					g_director->delayMillis(delay);
 				}
 				if (_frames[frameId]->_palette.autoReverse) {
 					for (int j = 0; j < steps; j++) {
@@ -797,7 +803,7 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 							g_director->setPalette(resolvePaletteId(currentPalette));
 							return;
 						}
-						g_system->delayMillis(delay);
+						g_director->delayMillis(delay);
 					}
 				}
 			}
@@ -833,10 +839,10 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 				byte *fadePal = nullptr;
 				if (_frames[frameId]->_palette.fadeToBlack) {
 					// Fade everything except color index 0 to black
-					fadePal = blackPalette;
+					fadePal = kBlackPalette;
 				} else if (_frames[frameId]->_palette.fadeToWhite) {
 					// Fade everything except color index 255 to white
-					fadePal = whitePalette;
+					fadePal = kWhitePalette;
 				} else {
 					// Shouldn't reach here
 					return;
@@ -864,8 +870,8 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 			_paletteTransitionIndex++;
 			_paletteTransitionIndex %= frameCount;
 		} else {
-			// Short circuit for few frames renderer
-			if (debugChannelSet(-1, kDebugFewFramesOnly)) {
+			// Short circuit for fast renderer
+			if (debugChannelSet(-1, kDebugFast)) {
 				g_director->setPalette(resolvePaletteId(currentPalette));
 				return;
 			}
@@ -876,17 +882,21 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 				byte *fadePal = nullptr;
 				if (_frames[frameId]->_palette.fadeToBlack) {
 					// Fade everything except color index 0 to black
-					fadePal = blackPalette;
+					fadePal = kBlackPalette;
 				} else if (_frames[frameId]->_palette.fadeToWhite) {
 					// Fade everything except color index 255 to white
-					fadePal = whitePalette;
+					fadePal = kWhitePalette;
 				} else {
 					// Shouldn't reach here
 					return;
 				}
 				int frameRate = CLIP<int>(_frames[frameId]->_palette.speed, 1, 30);
+
+				if (debugChannelSet(-1, kDebugFast))
+					frameRate = 30;
+
 				int frameDelay = 1000/60;
-				int fadeFrames = fadeColorFrames[frameRate - 1];
+				int fadeFrames = kFadeColorFrames[frameRate - 1];
 
 				// Wait for a fixed time
 				g_director->setPalette(fadePal, 256);
@@ -897,7 +907,7 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 						g_director->setPalette(resolvePaletteId(currentPalette));
 						return;
 					}
-					g_system->delayMillis(frameDelay);
+					g_director->delayMillis(frameDelay);
 				}
 
 				for (int i = 0; i < fadeFrames; i++) {
@@ -915,7 +925,7 @@ void Score::renderPaletteCycle(uint16 frameId, RenderMode mode) {
 						g_director->setPalette(resolvePaletteId(currentPalette));
 						return;
 					}
-					g_system->delayMillis(frameDelay);
+					g_director->delayMillis(frameDelay);
 				}
 
 			}
@@ -993,7 +1003,7 @@ void Score::screenShot() {
 	Common::String currentPath = _vm->getCurrentPath().c_str();
 	Common::replace(currentPath, Common::String(g_director->_dirSeparator), "-"); // exclude dir separator from screenshot filename prefix
 	Common::String prefix = Common::String::format("%s%s", currentPath.c_str(), _movie->getMacName().c_str());
-	Common::String filename = dumpScriptName(prefix.c_str(), kMovieScript, _framesRan, "png");
+	Common::String filename = dumpScriptName(prefix.c_str(), kMovieScript, g_director->_framesRan, "png");
 
 	Common::DumpFile screenshotFile;
 	if (screenshotFile.open(filename)) {

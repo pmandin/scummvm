@@ -54,7 +54,6 @@
 #include "hpl1/penumbra-overture/FadeHandler.h"
 #include "hpl1/penumbra-overture/GameMusicHandler.h"
 #include "hpl1/penumbra-overture/GraphicsHelper.h"
-#include "hpl1/penumbra-overture/HapticGameCamera.h"
 #include "hpl1/penumbra-overture/Inventory.h"
 #include "hpl1/penumbra-overture/MapLoadText.h"
 #include "hpl1/penumbra-overture/Notebook.h"
@@ -102,8 +101,6 @@ cInit::cInit() : iUpdateable("Init") {
 	mlMaxSoundDataNum = 120;
 	mlMaxPSDataNum = 12;
 	mbShowCrossHair = false;
-	mbHasHaptics = false;
-	mbHasHapticsOnRestart = false;
 
 	gpInit = this;
 }
@@ -165,7 +162,6 @@ bool cInit::Init(tString saveToLoad) {
 	mvScreenSize.x = getIntConfig("screen-width", 800);
 	mvScreenSize.y = getIntConfig("screen-height", 600);
 	mbFullScreen = ConfMan.getBool("fullscreen");
-	mbVsync = ConfMan.getBool("vsync");
 	mbLogResources = false;
 	mbDebugInteraction = false;
 
@@ -176,15 +172,6 @@ bool cInit::Init(tString saveToLoad) {
 	_allowInputUnlock = getBoolConfig("allow_input_unlock", false);
 	mbFlashItems = getBoolConfig("flash_items", true);
 	mbShowCrossHair = getBoolConfig("show_crosshair", false);
-
-	mbHapticsAvailable = false;
-	mbHasHaptics = false;
-	mfHapticForceMul = 1.0f;
-	mfHapticMoveScreenSpeedMul = 1.0f;
-	mfHapticScale = 0.04f;
-	mfHapticProxyRadius = 0.019f;
-	mfHapticOffsetZ = 1.9f;
-	mfHapticMaxInteractDist = 2;
 
 	mbSimpleSwingInOptions = false;
 
@@ -246,16 +233,8 @@ bool cInit::Init(tString saveToLoad) {
 	CheckTimeLimit();
 #endif
 
-	// Make sure there really is haptic support!
-	if (mbHasHaptics && cHaptic::GetIsUsed() == false) {
-		// CreateMessageBoxW(_W("Error!"), _W("No haptic support found. Mouse will be used instead!\n"));
-		mbHasHaptics = false;
-	}
-
 	// Make sure hardware is really used.
 	mbUseSoundHardware = mpGame->GetSound()->GetLowLevel()->IsHardwareAccelerated();
-
-	mpGame->GetGraphics()->GetLowLevel()->SetVsyncActive(mbVsync);
 
 	mbShowPreMenu = getBoolConfig("show_pre_menu", true);
 	mbShowIntro = getBoolConfig("show_intro", true);
@@ -301,7 +280,7 @@ bool cInit::Init(tString saveToLoad) {
 	mpGame->GetSound()->GetLowLevel()->SetVolume(1);
 
 	// PHYSICS INIT /////////////////////
-	mpGame->GetPhysics()->LoadSurfaceData("materials.cfg", mpGame->GetHaptic());
+	mpGame->GetPhysics()->LoadSurfaceData("materials.cfg");
 
 	// EARLY GAME INIT /////////////////////
 	mpEffectHandler = hplNew(cEffectHandler, (this));
@@ -327,14 +306,6 @@ bool cInit::Init(tString saveToLoad) {
 	mpGame->GetGraphics()->GetRenderer3D()->SetShowShadows(static_cast<eRendererShowShadows>(getIntConfig("shadows", eRendererShowShadows_All)));
 
 	mpGame->SetLimitFPS(getBoolConfig("limit_fps", true));
-
-	// HAPTIC INIT ////////////////////
-	if (mbHasHaptics) {
-		mpGame->GetHaptic()->GetLowLevel()->SetWorldScale(mfHapticScale);
-		mpGame->GetHaptic()->GetLowLevel()->SetVirtualMousePosBounds(cVector2f(-60, -60),
-																	 cVector2f(25, 25), cVector2f(800, 600));
-		mpGame->GetHaptic()->GetLowLevel()->SetProxyRadius(mfHapticProxyRadius);
-	}
 
 	// BASE GAME INIT /////////////////////
 	mpMusicHandler = hplNew(cGameMusicHandler, (this));

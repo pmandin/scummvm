@@ -24,6 +24,8 @@
 #include "common/textconsole.h"
 #include "tetraedge/tetraedge.h"
 #include "tetraedge/game/application.h"
+#include "tetraedge/game/game.h"
+#include "tetraedge/te/te_core.h"
 #include "tetraedge/te/te_input_mgr.h"
 
 namespace Tetraedge {
@@ -46,10 +48,24 @@ void BonusMenu::enter(const Common::String &scriptName) {
 		TeButtonLayout *btn = buttonLayout(btnNoStr);
 		if (!btn)
 			break;
-		SaveButton *saveBtn = new SaveButton(btn, btnNoStr);
+		SaveButton *saveBtn = new SaveButton(btn, btnNoStr, this);
 		_saveButtons.push_back(saveBtn);
 
-		// TODO: Finish this.
+		TeVector3f32 mainWinSz = g_engine->getApplication()->getMainWindow().size();
+		if (g_engine->getCore()->fileFlagSystemFlag("definition") == "SD")
+			mainWinSz = mainWinSz / 3.0f;
+		else
+			mainWinSz = mainWinSz / 4.0f;
+		mainWinSz.z() = 1.0f;
+		saveBtn->setSize(mainWinSz);
+		for (Te3DObject2 *child : saveBtn->childList()) {
+			child->setSize(mainWinSz);
+		}
+
+		if (btn->childCount() <= 4)
+			error("expected save button to have >4 children");
+		const Common::String artName = btn->child(4)->name();
+		btn->setEnable(g_engine->getGame()->isArtworkUnlocked(artName));
 
 		btnNo++;
 	}
@@ -83,7 +99,7 @@ void BonusMenu::enter(const Common::String &scriptName) {
 	if (rightBtn)
 		rightBtn->onMouseClickValidated().add(this, &BonusMenu::onRightButton);
 
-	// TODO: more stuff here with "text" values (also finish loop above)
+	// TODO: more stuff here with "text" values
 	warning("TODO: Finish BonusMenu::enter(%s)", scriptName.c_str());
 
 	TeButtonLayout *pictureBtn = buttonLayout("fullScreenPictureButton");
@@ -136,7 +152,17 @@ bool BonusMenu::onMouseMove(const Common::Point &pt) {
 	if (slideLayout->state() == TeButtonLayout::BUTTON_STATE_DOWN) {
 		TeCurveAnim2<TeLayout, TeVector3f32> *slideAnim = layoutPositionLinearAnimation("slideAnimation");
 		if (!slideAnim->_runTimer.running()) {
-			warning("TODO: implement BonusMenu::onMouseMove");
+			const Common::Point mousePos = g_engine->getInputMgr()->lastMousePos();
+			const TeVector3f32 slotsSize = layoutChecked("slots")->size();
+
+			float slideAmount = (mousePos.x - _slideBtnStartMousePos._x) / slotsSize.x();
+			if (slideAmount <= -0.1) {
+				onRightButton();
+				buttonLayoutChecked("slideButton")->setClickPassThrough(false);
+			} else if (slideAmount > 0.1){
+				onLeftButton();
+				buttonLayoutChecked("slideButton")->setClickPassThrough(false);
+			}
 		}
 	}
 
@@ -198,10 +224,10 @@ bool BonusMenu::onSlideButtonDown() {
 	return false;
 }
 
-BonusMenu::SaveButton::SaveButton(TeButtonLayout *btn, const Common::String &name) {
+BonusMenu::SaveButton::SaveButton(TeButtonLayout *btn, const Common::String &name, BonusMenu *owner) : _menu(owner) {
 	setName(name);
 	btn->setEnable(true);
-	// TODO: Add child something here?
+	addChild(btn);
 	btn->onMouseClickValidated().add(this, &BonusMenu::SaveButton::onLoadSave);
 }
 
@@ -210,7 +236,16 @@ Common::String BonusMenu::SaveButton::path() const {
 }
 
 bool BonusMenu::SaveButton::onLoadSave() {
-	error("TODO: implement BonusMenu::SaveButton::onLoadSave");
+	_menu->buttonLayoutChecked("menu")->setVisible(false);
+	TeSpriteLayout *pic = _menu->spriteLayoutChecked("fullScreenPicture");
+	const Common::String picName = child(0)->child(4)->name();
+	pic->load(picName);
+
+	TeSpriteLayout *picLayout = _menu->spriteLayoutChecked("fullScreenPictureLayout");
+	g_engine->getApplication()->frontLayout().addChild(picLayout);
+	picLayout->setVisible(true);
+
+	return false;
 }
 
 } // end namespace Tetraedge

@@ -41,8 +41,9 @@ class ItemSorter {
 	SortItem    *_itemsUnused;
 	SortItem    *_painted;
 
-	int32       _sortLimit;
 	int32       _camSx, _camSy;
+	int32       _sortLimit;
+	bool        _sortLimitChanged;
 
 public:
 	ItemSorter(int capacity);
@@ -69,10 +70,6 @@ public:
 
 private:
 	bool PaintSortItem(RenderSurface *surf, SortItem *si);
-
-	//! Check Clipped. -1 if off screen, 0 if not clipped, 1 if clipped
-	int16 CheckClipped(const Rect &) const;
-
 };
 
 } // End of namespace Ultima8

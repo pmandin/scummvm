@@ -60,7 +60,7 @@ int32 Animations::searchAnim(AnimationTypes animIdx, int32 actorIdx) {
 	return bodyAnimIndex;
 }
 
-int16 Animations::applyAnimStepRotation(int32 deltaTime, int32 keyFrameLength, int16 newAngle1, int16 lastAngle1) const {
+int16 Animations::patchInterAngle(int32 deltaTime, int32 keyFrameLength, int16 newAngle1, int16 lastAngle1) const {
 	const int16 lastAngle = ClampAngle(lastAngle1);
 	const int16 newAngle = ClampAngle(newAngle1);
 
@@ -82,7 +82,7 @@ int16 Animations::applyAnimStepRotation(int32 deltaTime, int32 keyFrameLength, i
 	return ClampAngle(computedAngle);
 }
 
-int16 Animations::applyAnimStepTranslation(int32 deltaTime, int32 keyFrameLength, int16 newPos, int16 lastPos) const {
+int16 Animations::patchInterStep(int32 deltaTime, int32 keyFrameLength, int16 newPos, int16 lastPos) const {
 	int16 distance = newPos - lastPos;
 
 	int16 computedPos;
@@ -95,7 +95,7 @@ int16 Animations::applyAnimStepTranslation(int32 deltaTime, int32 keyFrameLength
 	return computedPos;
 }
 
-bool Animations::setModelAnimation(int32 keyframeIdx, const AnimData &animData, BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr) {
+bool Animations::doSetInterAnimObjet(int32 keyframeIdx, const AnimData &animData, BodyData &bodyData, AnimTimerDataStruct *animTimerDataPtr) {
 	if (!bodyData.isAnimated()) {
 		return false;
 	}
@@ -105,8 +105,8 @@ bool Animations::setModelAnimation(int32 keyframeIdx, const AnimData &animData, 
 	_currentStep.y = keyFrame->y;
 	_currentStep.z = keyFrame->z;
 
-	_processRotationByAnim = keyFrame->boneframes[0].type;
-	_processLastRotationAngle = ToAngle(keyFrame->boneframes[0].y);
+	_animMasterRot = keyFrame->animMasterRot;
+	_animStepBeta = ToAngle(keyFrame->animStepBeta);
 
 	const int16 numBones = bodyData.getNumBones();
 
@@ -130,7 +130,7 @@ bool Animations::setModelAnimation(int32 keyframeIdx, const AnimData &animData, 
 		return true;
 	}
 
-	_processLastRotationAngle = (_processLastRotationAngle * deltaTime) / keyFrameLength;
+	_animStepBeta = (_animStepBeta * deltaTime) / keyFrameLength;
 
 	if (numOfBonesInAnim <= 1) {
 		return false;
@@ -145,16 +145,16 @@ bool Animations::setModelAnimation(int32 keyframeIdx, const AnimData &animData, 
 
 		boneState->type = boneFrame.type;
 		switch (boneFrame.type) {
-		case 0:
-			boneState->x = applyAnimStepRotation(deltaTime, keyFrameLength, boneFrame.x, lastBoneFrame.x);
-			boneState->y = applyAnimStepRotation(deltaTime, keyFrameLength, boneFrame.y, lastBoneFrame.y);
-			boneState->z = applyAnimStepRotation(deltaTime, keyFrameLength, boneFrame.z, lastBoneFrame.z);
+		case BoneType::TYPE_ROTATE:
+			boneState->x = patchInterAngle(deltaTime, keyFrameLength, boneFrame.x, lastBoneFrame.x);
+			boneState->y = patchInterAngle(deltaTime, keyFrameLength, boneFrame.y, lastBoneFrame.y);
+			boneState->z = patchInterAngle(deltaTime, keyFrameLength, boneFrame.z, lastBoneFrame.z);
 			break;
-		case 1:
-		case 2:
-			boneState->x = applyAnimStepTranslation(deltaTime, keyFrameLength, boneFrame.x, lastBoneFrame.x);
-			boneState->y = applyAnimStepTranslation(deltaTime, keyFrameLength, boneFrame.y, lastBoneFrame.y);
-			boneState->z = applyAnimStepTranslation(deltaTime, keyFrameLength, boneFrame.z, lastBoneFrame.z);
+		case BoneType::TYPE_TRANSLATE:
+		case BoneType::TYPE_ZOOM:
+			boneState->x = patchInterStep(deltaTime, keyFrameLength, boneFrame.x, lastBoneFrame.x);
+			boneState->y = patchInterStep(deltaTime, keyFrameLength, boneFrame.y, lastBoneFrame.y);
+			boneState->z = patchInterStep(deltaTime, keyFrameLength, boneFrame.z, lastBoneFrame.z);
 			break;
 		default:
 			error("Unsupported animation rotation mode %d", boneFrame.type);
@@ -182,8 +182,8 @@ void Animations::setAnimObjet(int32 keyframeIdx, const AnimData &animData, BodyD
 	_currentStep.y = keyFrame->y;
 	_currentStep.z = keyFrame->z;
 
-	_processRotationByAnim = keyFrame->boneframes[0].type;
-	_processLastRotationAngle = ToAngle(keyFrame->boneframes[0].y);
+	_animMasterRot = keyFrame->animMasterRot;
+	_animStepBeta = ToAngle(keyFrame->animStepBeta);
 
 	animTimerDataPtr->ptr = animData.getKeyframe(keyframeIdx);
 	animTimerDataPtr->time = _engine->timerRef;
@@ -244,9 +244,8 @@ bool Animations::verifyAnimAtKeyframe(int32 keyframeIdx, const AnimData &animDat
 	_currentStep.y = keyFrame->y;
 	_currentStep.z = keyFrame->z;
 
-	const BoneFrame &boneFrame = keyFrame->boneframes[0];
-	_processRotationByAnim = boneFrame.type;
-	_processLastRotationAngle = ToAngle(boneFrame.y);
+	_animMasterRot = keyFrame->animMasterRot;
+	_animStepBeta = ToAngle(keyFrame->animStepBeta);
 
 	if (deltaTime >= keyFrameLength) {
 		animTimerDataPtr->ptr = animData.getKeyframe(keyframeIdx);
@@ -254,7 +253,7 @@ bool Animations::verifyAnimAtKeyframe(int32 keyframeIdx, const AnimData &animDat
 		return true;
 	}
 
-	_processLastRotationAngle = (_processLastRotationAngle * deltaTime) / keyFrameLength;
+	_animStepBeta = (_animStepBeta * deltaTime) / keyFrameLength;
 	_currentStep.x = (_currentStep.x * deltaTime) / keyFrameLength;
 	_currentStep.y = (_currentStep.y * deltaTime) / keyFrameLength;
 	_currentStep.z = (_currentStep.z * deltaTime) / keyFrameLength;
@@ -336,11 +335,11 @@ void Animations::processAnimActions(int32 actorIdx) { // GereAnimAction
 			break;
 		case ActionType::ACTION_THROW_3D:
 			if (action.animFrame == actor->_frame) {
-				const IVec3 &destPos = _engine->_movements->rotate(action.distanceX, action.distanceZ, actor->_beta);
+				const IVec2 &destPos = _engine->_renderer->rotate(action.distanceX, action.distanceZ, actor->_beta);
 
 				const int32 throwX = destPos.x + actor->_pos.x;
 				const int32 throwY = action.distanceY + actor->_pos.y;
-				const int32 throwZ = destPos.z + actor->_pos.z;
+				const int32 throwZ = destPos.y + actor->_pos.z;
 
 				_engine->_extra->throwExtra(actorIdx, throwX, throwY, throwZ, action.spriteIndex,
 				                               action.xAngle, action.yAngle + actor->_beta, action.xRotPoint, action.extraAngle, action.strength);
@@ -351,11 +350,11 @@ void Animations::processAnimActions(int32 actorIdx) { // GereAnimAction
 				const int32 distance = getDistance2D(actor->posObj(), _engine->_scene->_sceneHero->posObj());
 				const int32 newAngle = _engine->_movements->getAngle(actor->_pos.y, 0, _engine->_scene->_sceneHero->_pos.y, distance);
 
-				const IVec3 &destPos = _engine->_movements->rotate(action.distanceX, action.distanceZ, actor->_beta);
+				const IVec2 &destPos = _engine->_renderer->rotate(action.distanceX, action.distanceZ, actor->_beta);
 
 				const int32 throwX = destPos.x + actor->_pos.x;
 				const int32 throwY = action.distanceY + actor->_pos.y;
-				const int32 throwZ = destPos.z + actor->_pos.z;
+				const int32 throwZ = destPos.y + actor->_pos.z;
 
 				_engine->_extra->throwExtra(actorIdx, throwX, throwY, throwZ, action.spriteIndex,
 				                               action.xAngle + newAngle, action.yAngle + actor->_beta, action.xRotPoint, action.extraAngle, action.strength);
@@ -363,20 +362,20 @@ void Animations::processAnimActions(int32 actorIdx) { // GereAnimAction
 			break;
 		case ActionType::ACTION_THROW_3D_SEARCH:
 			if (action.animFrame == actor->_frame) {
-				const IVec3 &destPos = _engine->_movements->rotate(action.distanceX, action.distanceZ, actor->_beta);
+				const IVec2 &destPos = _engine->_renderer->rotate(action.distanceX, action.distanceZ, actor->_beta);
 				const int32 x = actor->_pos.x + destPos.x;
 				const int32 y = actor->_pos.y + action.distanceY;
-				const int32 z = actor->_pos.z + destPos.z;
+				const int32 z = actor->_pos.z + destPos.y;
 				_engine->_extra->addExtraAiming(actorIdx, x, y, z, action.spriteIndex,
 				                                action.targetActor, action.finalAngle, action.strength);
 			}
 			break;
 		case ActionType::ACTION_THROW_3D_MAGIC:
 			if (_engine->_gameState->_magicBall == -1 && action.animFrame == actor->_frame) {
-				const IVec3 &destPos = _engine->_movements->rotate(action.distanceX, action.distanceZ, actor->_beta);
+				const IVec2 &destPos = _engine->_renderer->rotate(action.distanceX, action.distanceZ, actor->_beta);
 				const int32 x = actor->_pos.x + destPos.x;
 				const int32 y = actor->_pos.y + action.distanceY;
-				const int32 z = actor->_pos.z + destPos.z;
+				const int32 z = actor->_pos.z + destPos.y;
 				_engine->_extra->addExtraThrowMagicball(x, y, z, action.xAngle, actor->_beta, action.yAngle, action.finalAngle);
 			}
 			break;
@@ -492,14 +491,14 @@ void Animations::doAnim(int32 actorIdx) {
 					}
 				}
 
-				const IVec3 xRotPos = _engine->_movements->rotate(xAxisRotation, 0, actor->_spriteActorRotation);
+				const IVec2 xRotPos = _engine->_renderer->rotate(xAxisRotation, 0, actor->_spriteActorRotation);
 
-				processActor.y = actor->_pos.y - xRotPos.z;
+				processActor.y = actor->_pos.y - xRotPos.y;
 
-				const IVec3 destPos = _engine->_movements->rotate(0, xRotPos.x, actor->_beta);
+				const IVec2 destPos = _engine->_renderer->rotate(0, xRotPos.x, actor->_beta);
 
 				processActor.x = actor->_pos.x + destPos.x;
-				processActor.z = actor->_pos.z + destPos.z;
+				processActor.z = actor->_pos.z + destPos.y;
 
 				_engine->_movements->setActorAngle(LBAAngles::LBAAngles::ANGLE_0, actor->_speed, LBAAngles::LBAAngles::ANGLE_17, &actor->realAngle);
 
@@ -570,19 +569,19 @@ void Animations::doAnim(int32 actorIdx) {
 				keyFramePassed = verifyAnimAtKeyframe(actor->_frame, animData, &actor->_animTimerData);
 			}
 
-			if (_processRotationByAnim) {
+			if (_animMasterRot) {
 				actor->_dynamicFlags.bIsRotationByAnim = 1;
 			} else {
 				actor->_dynamicFlags.bIsRotationByAnim = 0;
 			}
 
-			actor->_beta = ClampAngle(actor->_beta + _processLastRotationAngle - actor->_animStepBeta);
-			actor->_animStepBeta = _processLastRotationAngle;
+			actor->_beta = ClampAngle(actor->_beta + _animStepBeta - actor->_animStepBeta);
+			actor->_animStepBeta = _animStepBeta;
 
-			const IVec3 &destPos = _engine->_movements->rotate(_currentStep.x, _currentStep.z, actor->_beta);
+			const IVec2 &destPos = _engine->_renderer->rotate(_currentStep.x, _currentStep.z, actor->_beta);
 
 			_currentStep.x = destPos.x;
-			_currentStep.z = destPos.z;
+			_currentStep.z = destPos.y;
 
 			processActor = actor->posObj() + _currentStep - actor->_animStep;
 
@@ -697,13 +696,13 @@ void Animations::doAnim(int32 actorIdx) {
 
 		// process wall hit while running
 		if (collision->_causeActorDamage && !actor->_dynamicFlags.bIsFalling && IS_HERO(actorIdx) && _engine->_actor->_heroBehaviour == HeroBehaviourType::kAthletic && actor->_genAnim == AnimationTypes::kForward) {
-			IVec3 destPos = _engine->_movements->rotate(actor->_boundingBox.mins.x, actor->_boundingBox.mins.z, actor->_beta + LBAAngles::LBAAngles::ANGLE_360 + LBAAngles::LBAAngles::ANGLE_135);
+			IVec2 destPos = _engine->_renderer->rotate(actor->_boundingBox.mins.x, actor->_boundingBox.mins.z, actor->_beta + LBAAngles::LBAAngles::ANGLE_360 + LBAAngles::LBAAngles::ANGLE_135);
 
 			destPos.x += processActor.x;
-			destPos.z += processActor.z;
+			destPos.y += processActor.z;
 
-			if (destPos.x >= 0 && destPos.z >= 0 && destPos.x <= SCENE_SIZE_MAX && destPos.z <= SCENE_SIZE_MAX) {
-				if (_engine->_grid->worldColBrick(destPos.x, processActor.y + SIZE_BRICK_Y, destPos.z) != ShapeType::kNone && _engine->_cfgfile.WallCollision) { // avoid wall hit damage
+			if (destPos.x >= 0 && destPos.y >= 0 && destPos.x <= SCENE_SIZE_MAX && destPos.y <= SCENE_SIZE_MAX) {
+				if (_engine->_grid->worldColBrick(destPos.x, processActor.y + SIZE_BRICK_Y, destPos.y) != ShapeType::kNone && _engine->_cfgfile.WallCollision) { // avoid wall hit damage
 					_engine->_extra->initSpecial(actor->_pos.x, actor->_pos.y + 1000, actor->_pos.z, ExtraSpecialType::kHitStars);
 					initAnim(AnimationTypes::kBigHit, AnimType::kAnimationAllThen, AnimationTypes::kStanding, actorIdx);
 

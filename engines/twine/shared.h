@@ -29,7 +29,7 @@
 /** Number of colors used in the game */
 #define NUMOFCOLORS 256
 
-#define NUM_LOCATIONS 150
+#define NUM_LOCATIONS 334 /* 150 for lba1 */
 
 #define NUM_INVENTORY_ITEMS 28
 /**
@@ -90,6 +90,25 @@ struct I16Vec3 {
 };
 #include "common/pack-end.h"
 STATIC_ASSERT(sizeof(I16Vec3) == 6, "Unexpected pointTab size");
+
+struct IVec2 {
+	constexpr IVec2() : x(0), y(0) {}
+	constexpr IVec2(int32 _x, int32 _y) : x(_x), y(_y) {}
+	int32 x;
+	int32 y;
+
+	inline IVec2& operator+=(const IVec2 &other) {
+		x += other.x;
+		y += other.y;
+		return *this;
+	}
+
+	inline IVec2& operator-=(const IVec2 &other) {
+		x -= other.x;
+		y -= other.y;
+		return *this;
+	}
+};
 
 struct IVec3 {
 	constexpr IVec3() : x(0), y(0), z(0) {}

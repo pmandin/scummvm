@@ -134,7 +134,7 @@ void GameState::initEngineVars() {
 	_magicLevelIdx = 0;
 	_usingSabre = false;
 
-	_gameChapter = 0;
+	setChapter(0);
 
 	_engine->_scene->_sceneTextBank = TextBankId::Options_and_menus;
 	_engine->_scene->_currentlyFollowedActor = OWN_ACTOR_SCENE_INDEX;
@@ -181,7 +181,7 @@ bool GameState::loadGame(Common::SeekableReadStream *file) {
 		setGameFlag(i, file->readByte());
 	}
 	_engine->_scene->_needChangeScene = file->readByte(); // scene index
-	_gameChapter = file->readByte();
+	setChapter(file->readByte());
 
 	_engine->_actor->_heroBehaviour = (HeroBehaviourType)file->readByte();
 	_engine->_actor->_previousHeroBehaviour = _engine->_actor->_heroBehaviour;
@@ -198,11 +198,11 @@ bool GameState::loadGame(Common::SeekableReadStream *file) {
 	_engine->_scene->_sceneHero->_genBody = (BodyType)file->readByte();
 
 	const byte numHolomapFlags = file->readByte(); // number of holomap locations
-	if (numHolomapFlags != NUM_LOCATIONS) {
-		warning("Failed to load holomapflags. Got %u, expected %i", numHolomapFlags, NUM_LOCATIONS);
+	if (numHolomapFlags != _engine->numLocations()) {
+		warning("Failed to load holomapflags. Got %u, expected %i", numHolomapFlags, _engine->numLocations());
 		return false;
 	}
-	file->read(_holomapFlags, NUM_LOCATIONS);
+	file->read(_holomapFlags, _engine->numLocations());
 
 	setGas(file->readByte());
 
@@ -249,7 +249,7 @@ bool GameState::saveGame(Common::WriteStream *file) {
 		file->writeByte(hasGameFlag(i));
 	}
 	file->writeByte(sceneIdx);
-	file->writeByte(_gameChapter);
+	file->writeByte(getChapter());
 	file->writeByte((byte)_engine->_actor->_heroBehaviour);
 	file->writeByte(_engine->_scene->_sceneHero->_lifePoint);
 	file->writeSint16LE(_goldPieces);
@@ -265,8 +265,8 @@ bool GameState::saveGame(Common::WriteStream *file) {
 	file->writeByte((uint8)_engine->_scene->_sceneHero->_genBody);
 
 	// number of holomap locations
-	file->writeByte(NUM_LOCATIONS);
-	file->write(_holomapFlags, NUM_LOCATIONS);
+	file->writeByte(_engine->numLocations());
+	file->write(_holomapFlags, _engine->numLocations());
 
 	file->writeByte(_inventoryNumGas);
 
@@ -279,6 +279,21 @@ bool GameState::saveGame(Common::WriteStream *file) {
 	file->writeByte(0);
 
 	return true;
+}
+
+void GameState::setChapter(int16 chapter) {
+	if (_engine->isLBA1()) {
+		_gameChapter = chapter;
+		return;
+	}
+	setGameFlag(253, chapter);
+}
+
+int16 GameState::getChapter() const {
+	if (_engine->isLBA1()) {
+		return _gameChapter;
+	}
+	return _gameStateFlags[253];
 }
 
 void GameState::setGameFlag(uint8 index, uint8 value) {
@@ -390,7 +405,7 @@ void GameState::doFoundObj(InventoryItems item) {
 		_engine->_interface->unsetClip();
 		init3DGame();
 
-		if (_engine->_animations->setModelAnimation(currentAnimState, currentAnimData, bodyData, &_engine->_scene->_sceneHero->_animTimerData)) {
+		if (_engine->_animations->doSetInterAnimObjet(currentAnimState, currentAnimData, bodyData, &_engine->_scene->_sceneHero->_animTimerData)) {
 			currentAnimState++; // keyframe
 			if (currentAnimState >= currentAnimData.getNumKeyframes()) {
 				currentAnimState = currentAnimData.getLoopFrame();

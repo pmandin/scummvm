@@ -223,6 +223,8 @@ public:
 	// game-quirks.cpp
 	void gameQuirks(const char *target, Common::Platform platform);
 
+	void delayMillis(uint32 delay);
+
 public:
 	RandomState _rnd;
 	Graphics::MacWindowManager *_wm;
@@ -284,6 +286,8 @@ private:
 public:
 	int _tickBaseline;
 	Common::String _traceLogFile;
+
+	uint16 _framesRan = 0; // used by kDebugFewFramesOnly
 };
 
 // An extension of MacPlotData for interfacing with inks and patterns without

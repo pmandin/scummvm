@@ -288,14 +288,14 @@ bool TwinEConsole::doPrintInventoryFlag(int argc, const char **argv) {
 
 bool TwinEConsole::doPrintHolomapFlag(int argc, const char **argv) {
 	if (argc <= 1) {
-		for (int i = 0; i < NUM_LOCATIONS; ++i) {
+		for (int i = 0; i < _engine->numLocations(); ++i) {
 			debugPrintf("[%03d] = %d\n", i, _engine->_gameState->_holomapFlags[i]);
 		}
 		return true;
 	}
 
-	const uint8 idx = atoi(argv[1]);
-	if (idx < NUM_LOCATIONS) {
+	const uint16 idx = atoi(argv[1]);
+	if (idx < _engine->numLocations()) {
 		debugPrintf("[%03d] = %d\n", idx, _engine->_gameState->_holomapFlags[idx]);
 	}
 
@@ -430,8 +430,8 @@ bool TwinEConsole::doChangeChapter(int argc, const char **argv) {
 		debugPrintf("Expected to get a chapter index as first parameter\n");
 		return true;
 	}
-	debugPrintf("Old chapter was: %i\n", _engine->_gameState->_gameChapter);
-	_engine->_gameState->_gameChapter = (int16)atoi(argv[1]);
+	debugPrintf("Old chapter was: %i\n", _engine->_gameState->getChapter());
+	_engine->_gameState->setChapter(atoi(argv[1]));
 	return true;
 }
 

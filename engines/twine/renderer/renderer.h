@@ -160,8 +160,8 @@ private:
 	void rotMatIndex2(IMatrix3x3 *targetMatrix, const IMatrix3x3 *currentMatrix, const IVec3 &angleVec);
 	void rotList(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *rotationMatrix, const IVec3 &destPos);
 	void processRotatedElement(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
-	void applyPointsTranslation(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *translationMatrix, const IVec3 &angleVec, const IVec3 &destPos);
-	void processTranslatedElement(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
+	void transRotList(const Common::Array<BodyVertex>& vertices, int32 firstPoint, int32 numPoints, I16Vec3 *destPoints, const IMatrix3x3 *translationMatrix, const IVec3 &angleVec, const IVec3 &destPos);
+	void translateGroup(IMatrix3x3 *targetMatrix, const Common::Array<BodyVertex>& vertices, int32 rotX, int32 rotY, int32 rotZ, const BodyBone &bone, ModelData *modelData);
 	IVec3 rot(const IMatrix3x3 &matrix, int32 x, int32 y, int32 z);
 
 	IVec3 _cameraPos;
@@ -173,7 +173,7 @@ private:
 
 	IMatrix3x3 _matrixWorld;
 	IMatrix3x3 _matricesTable[30 + 1];
-	IVec3 _normalLight; // NormalXLight
+	IVec3 _normalLight; // NormalXLight, NormalYLight, NormalZLight
 	IVec3 _cameraRot;
 
 	RenderCommand _renderCmds[1000];
@@ -231,7 +231,14 @@ public:
 	void init(int32 w, int32 h);
 
 	void setCameraRotation(int32 x, int32 y, int32 z);
-	IVec3 getHolomapRotation(const int32 angleX, const int32 angleY, const int32 angleZ) const;
+
+	/**
+	 * Calculate offset for the side and forward distances by the given angle of an actor
+	 * @param side Actor current X coordinate
+	 * @param forward Actor current Z coordinate
+	 * @param angle Actor angle to rotate
+	 */
+	IVec2 rotate(int32 side, int32 forward, int32 angle) const;
 
 	void setLightVector(int32 angleX, int32 angleY, int32 angleZ);
 	IVec3 longWorldRot(int32 x, int32 y, int32 z);

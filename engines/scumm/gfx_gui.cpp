@@ -1511,7 +1511,7 @@ void ScummEngine::queryQuit(bool returnToLauncher) {
 
 		// "Are you sure you want to quit?  (Y/N)"
 		Common::KeyState ks;
-		if (ConfMan.hasKey("confirm_exit") && ConfMan.getBool("confirm_exit")) {
+		if (ConfMan.hasKey("confirm_exit") && ConfMan.getBool("confirm_exit") && ChainedGamesMan.empty()) {
 			_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, true);
 
 			if (_game.version > 4) {
@@ -1750,7 +1750,7 @@ void ScummEngine::restoreCursorPostMenu() {
 		setCursorFromBuffer(_curGrabbedCursor, _curCursorWidth, _curCursorHeight, _curCursorWidth, true);
 		free(_curGrabbedCursor);
 		_curGrabbedCursor = nullptr;
-	} else if (_game.version == 6) {
+	} else if (_game.version == 6 && _game.id != GID_TENTACLE) {
 		setCursorHotspot(_curCursorHotspotX, _curCursorHotspotY);
 		_cursor.width = _curCursorWidth;
 		_cursor.height = _curCursorHeight;
@@ -2222,11 +2222,18 @@ bool ScummEngine::executeMainMenuOperation(int op, int mouseX, int mouseY, bool 
 				curSlot = _mainMenuSavegameLabel + (isLoomVga ? _firstSaveStateOfList : _curDisplayedSaveSlotPage * 9);
 				if (canWriteGame(curSlot)) {
 					restoreCursorPostMenu();
+
+					// Temporarily restore the shake effect to save it...
+					setShake(_shakeTempSavedState);
+
 					if (saveState(curSlot - 1, false, dummyString)) {
+						setShake(0);
 						saveCursorPreMenu();
 						_saveScriptParam = GAME_PROPER_SAVE;
 						drawMainMenuControls();
 						return true;
+					} else {
+						setShake(0);
 					}
 				} else {
 					convertMessageToString((const byte *)getGUIString(gsGameNotSaved), (byte *)saveScreenTitle, sizeof(saveScreenTitle));

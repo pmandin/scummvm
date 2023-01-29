@@ -123,6 +123,9 @@ public:
 	bool loadPlayerCharacter(const Common::String &name);
 	bool loadScene(const Common::String &name);
 
+	// Not in original. Load unlocked artwork from ScummVM config.
+	void loadUnlockedArtwork();
+
 	bool onAnswered(const Common::String &val);
 	bool onCallNumber(Common::String val);
 	bool onCharacterAnimationFinished(const Common::String &val);
@@ -199,6 +202,8 @@ public:
 	Common::RandomSource &randomSource() { return _randomSource; }
 	void setLoadName(const Common::String &loadName) { _loadName = loadName; }
 	bool hasLoadName() const { return !_loadName.empty(); }
+	bool isArtworkUnlocked(const Common::String &name) const;
+	static Common::String artworkConfName(const Common::String &name);
 
 private:
 	bool _luaShowOwnerError;

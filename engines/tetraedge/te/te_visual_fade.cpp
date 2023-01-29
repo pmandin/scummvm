@@ -21,6 +21,7 @@
 
 #include "common/textconsole.h"
 #include "tetraedge/tetraedge.h"
+#include "tetraedge/game/application.h"
 #include "tetraedge/te/te_visual_fade.h"
 #include "tetraedge/te/te_renderer.h"
 
@@ -43,7 +44,7 @@ void TeVisualFade::animateBlackFade() {
 	_fadeCurveAnim.setCurve(curve);
 	_fadeCurveAnim._duration = 2000.0;
 	_fadeCurveAnim._callbackObj = &_fadeCaptureSprite;
-	_fadeCurveAnim._callbackMethod = &Te3DObject2::setColor;
+	_fadeCurveAnim._callbackMethod = &TeSpriteLayout::setColor;
 	_fadeCurveAnim.play();
 
 	_blackFadeSprite.setVisible(true);
@@ -53,7 +54,7 @@ void TeVisualFade::animateBlackFade() {
 	_blackFadeCurveAnim.setCurve(curve);
 	_blackFadeCurveAnim._duration = 2000.0;
 	_blackFadeCurveAnim._callbackObj = &_blackFadeSprite;
-	_blackFadeCurveAnim._callbackMethod = &Te3DObject2::setColor;
+	_blackFadeCurveAnim._callbackMethod = &TeSpriteLayout::setColor;
 	_blackFadeCurveAnim.play();
 }
 
@@ -69,7 +70,7 @@ void TeVisualFade::animateFade() {
 	_fadeCurveAnim.setCurve(curve);
 	_fadeCurveAnim._duration = 400.0;
 	_fadeCurveAnim._callbackObj = &_fadeCaptureSprite;
-	_fadeCurveAnim._callbackMethod = &Te3DObject2::setColor;
+	_fadeCurveAnim._callbackMethod = &TeSpriteLayout::setColor;
 	_fadeCurveAnim.play();
 }
 
@@ -107,9 +108,8 @@ void TeVisualFade::init() {
 	// create an image the size of the window, no palette, format 6.
 	Common::SharedPtr<TePalette> nullpal;
 	_image.destroy();
-	// TODO: should this get actual window size instead of default?
-	_image.createImg(g_engine->getDefaultScreenWidth(),
-			g_engine->getDefaultScreenHeight(), nullpal, TeImage::RGBA8);
+	const TeVector3f32 winSize = g_engine->getApplication()->getMainWindow().size();
+	_image.createImg((int)winSize.x(), (int)winSize.y(), nullpal, TeImage::RGBA8);
 	_texturePtr->load(_image);
 	g_engine->getRenderer()->enableTexture();
 	_texturePtr->load(_image);
