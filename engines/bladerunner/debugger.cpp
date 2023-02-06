@@ -745,13 +745,13 @@ const struct SceneList {
 	{ 4, "MA07", 53, 53 },   { 4, "NR01", 54, 54 },  { 4, "NR02", 11, 55 },   { 4, "NR03", 55, 56 },
 	{ 4, "NR04", 12, 57 },   { 4, "NR05", 13, 58 },  { 4, "NR06", 56, 59 },   { 4, "NR07", 57, 60 },
 	{ 4, "NR08", 13, 61 },   { 4, "NR09", 58, 62 },  { 4, "NR10", 59, 63 },   { 4, "NR11", 60, 64 },
-	{ 4, "PS09", 67, 72 },   { 4, "PS14", 68, 77 },  { 4, "RC01", 69, 78 },   { 4, "RC02", 16, 89 },
+	{ 4, "PS09", 67, 72 },   { 4, "PS14", 68, 77 },  { 4, "RC01", 69, 78 },   { 4, "RC02", 16, 79 },
 	{ 4, "RC03", 70, 80 },   { 4, "RC04", 71, 81 },  { 4, "RC51", 16, 107 },  { 4, "TB02", 17, 82 },
 	{ 4, "TB03", 17, 83 },   { 4, "TB07", 18, 108 }, { 4, "UG01", 74, 86 },   { 4, "UG02", 75, 87 },
 	{ 4, "UG03", 76, 88 },   { 4, "UG04", 77, 89 },  { 4, "UG05", 78, 90 },   { 4, "UG06", 79, 91 },
 	{ 4, "UG07", 80, 92 },   { 4, "UG08", 81, 93 },  { 4, "UG09", 82, 94 },   { 4, "UG10", 83, 95 },
 	{ 4, "UG12", 84, 96 },   { 4, "UG13", 85, 97 },  { 4, "UG14", 86, 98 },   { 4, "UG15", 87, 99 },
-	{ 4, "UG16", 16, 100 },  { 4, "UG17", 88, 101 }, { 4, "UG18", 89, 102 },  { 4, "UG19", 90, 103 },
+	{ 4, "UG16", 19, 100 },  { 4, "UG17", 88, 101 }, { 4, "UG18", 89, 102 },  { 4, "UG19", 90, 103 },
 
 	{ 0, nullptr, 0, 0 }
 };
@@ -793,6 +793,11 @@ bool Debugger::dbgAttemptToLoadChapterSetScene(int chapterId, int setId, int sce
 	return true;
 }
 
+// Note: The chapterId that is set with this command affects loading
+//       of game resources and the return value of _vm->_settings->getChapter()
+//       However, it will NOT change the value of the game's global variable (1) for the current chapter.
+//       The user has to explicitly set that as well, after executing this debugger command,
+//       using eg. var 1 3 (for chapter 3)
 bool Debugger::cmdScene(int argc, const char **argv) {
 	if (argc != 0 && argc > 4) {
 		debugPrintf("Changes set and scene.\n");

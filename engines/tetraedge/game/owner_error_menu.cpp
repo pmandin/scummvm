@@ -34,12 +34,13 @@ OwnerErrorMenu::OwnerErrorMenu() : _entered(false) {
 
 void OwnerErrorMenu::enter() {
 	_entered = true;
-	const Common::Path luaPath("menus/ownerError/ownerError.lua");
-	load(luaPath);
+	load("menus/ownerError/ownerError.lua");
 	Application *app = g_engine->getApplication();
 	TeLayout *menuLayout = layoutChecked("menu");
 	app->frontLayout().addChild(menuLayout);
 	TeTextLayout *txt = dynamic_cast<TeTextLayout*>(layoutChecked("ownerMenuText"));
+	if (!txt)
+		error("Couldn't get ownerMenuText layout");
 	const Common::String *locname = app->loc().value(txt->name());
 	txt->setText(value("textAttributs").toString() + (locname ? *locname : txt->name()));
 }

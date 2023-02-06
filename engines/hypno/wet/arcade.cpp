@@ -216,7 +216,8 @@ void WetEngine::findNextSegment(ArcadeShooting *arc) {
 						_segmentOffset = 8;
 						_segmentRepetition = 0;
 						_segmentShootSequenceOffset = 8;
-					}
+					} else if (_arcadeMode == "Y3")
+						_skipLevel = true;
 				} else {
 					_loseLevel = true;
 					return;
@@ -620,6 +621,12 @@ void WetEngine::runBeforeArcade(ArcadeShooting *arc) {
 
 	if (!arc->beforeVideo.empty()) {
 		video = new MVideo(arc->beforeVideo, Common::Point(0, 0), false, true, false);
+		runIntro(*video);
+		delete video;
+	}
+
+	if (arc->mode == "Y2" && !arc->additionalVideo.empty()) {
+		video = new MVideo(arc->additionalVideo, Common::Point(0, 0), false, true, false);
 		runIntro(*video);
 		delete video;
 	}

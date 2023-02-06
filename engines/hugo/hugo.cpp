@@ -165,11 +165,11 @@ void HugoEngine::setMaxScore(const int newScore) {
 }
 
 Common::Error HugoEngine::saveGameState(int slot, const Common::String &desc, bool isAutosave) {
-	return (_file->saveGame(slot, desc) ? Common::kWritingFailed : Common::kNoError);
+	return (_file->saveGame(slot, desc) ? Common::kNoError : Common::kWritingFailed);
 }
 
 Common::Error HugoEngine::loadGameState(int slot) {
-	return (_file->restoreGame(slot) ? Common::kReadingFailed : Common::kNoError);
+	return (_file->restoreGame(slot) ? Common::kNoError : Common::kReadingFailed);
 }
 
 bool HugoEngine::hasFeature(EngineFeature f) const {
@@ -298,7 +298,7 @@ Common::Error HugoEngine::run() {
 			_status._skipIntroFl = true;
 			_file->restoreGame(loadSlot);
 		} else {
-			_file->saveGame(0, "New Game");
+			_file->saveGame(99, "New Game [reserved]");
 		}
 	}
 

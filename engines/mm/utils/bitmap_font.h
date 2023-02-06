@@ -67,7 +67,7 @@ public:
 	 */
 	void drawChar(Graphics::Surface *dst, uint32 chr, int x, int y, uint32 color) const override;
 	void drawChar(Graphics::ManagedSurface *dst, uint32 chr, int x, int y, uint32 color) const override {
-		return Graphics::Font::drawChar(dst, chr, x, y, color);
+		Graphics::Font::drawChar(dst, chr, x, y, color);
 	}
 };
 

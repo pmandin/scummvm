@@ -22,6 +22,8 @@
 #include "graphics/tinygl/gl.h"
 #include "graphics/tinygl/zgl.h"
 #include "graphics/tinygl/zbuffer.h"
+#include "graphics/tinygl/colormasks.h"
+#include "graphics/tinygl/pixelbuffer.h"
 #include "graphics/tinygl/texelbuffer.h"
 
 namespace TinyGL {
@@ -77,22 +79,100 @@ void TexelBuffer::getARGBAt(
 }
 
 // Nearest: store texture in original size.
-NearestTexelBuffer::NearestTexelBuffer(const Graphics::PixelBuffer &buf, uint width, uint height, uint textureSize) : TexelBuffer(width, height, textureSize) {
-	uint pixel_count = _width * _height;
-	_buf = Graphics::PixelBuffer(buf.getFormat(), pixel_count, DisposeAfterUse::NO);
-	_buf.copyBuffer(0, pixel_count, buf);
+class BaseNearestTexelBuffer : public TexelBuffer {
+public:
+	BaseNearestTexelBuffer(const byte *buf, const Graphics::PixelFormat &format, uint width, uint height, uint textureSize);
+	~BaseNearestTexelBuffer();
+
+protected:
+	byte *_buf;
+	Graphics::PixelFormat _format;
+};
+
+BaseNearestTexelBuffer::BaseNearestTexelBuffer(const byte *buf, const Graphics::PixelFormat &format, uint width, uint height, uint textureSize) : TexelBuffer(width, height, textureSize), _format(format) {
+	uint count = _width * _height * _format.bytesPerPixel;
+	_buf = (byte *)gl_malloc(count);
+	memcpy(_buf, buf, count);
 }
 
-NearestTexelBuffer::~NearestTexelBuffer() {
-	_buf.free();
+BaseNearestTexelBuffer::~BaseNearestTexelBuffer() {
+	gl_free(_buf);
 }
 
-void NearestTexelBuffer::getARGBAt(
-	uint pixel,
-	uint, uint,
-	uint8 &a, uint8 &r, uint8 &g, uint8 &b
-) const {
-	_buf.getARGBAt(pixel, a, r, g, b);
+template<uint Format, uint Type>
+class NearestTexelBuffer final : public BaseNearestTexelBuffer {
+public:
+	NearestTexelBuffer(const byte *buf, const Graphics::PixelFormat &format, uint width, uint height, uint textureSize)
+	  : BaseNearestTexelBuffer(buf, format, width, height, textureSize) {}
+
+protected:
+	void getARGBAt(
+		uint pixel,
+		uint, uint,
+		uint8 &a, uint8 &r, uint8 &g, uint8 &b
+	) const override {
+		Pixel col = *(((const Pixel *)_buf) + pixel);
+		_format.colorToARGBT<ColorMask>(col, a, r, g, b);
+	}
+
+	typedef ColorMasks<Format, Type> ColorMask;
+	typedef typename ColorMask::PixelType Pixel;
+};
+
+template<>
+class NearestTexelBuffer<TGL_RGB, TGL_UNSIGNED_BYTE> final : public BaseNearestTexelBuffer {
+public:
+	NearestTexelBuffer(const byte *buf, const Graphics::PixelFormat &format, uint width, uint height, uint textureSize)
+	  : BaseNearestTexelBuffer(buf, format, width, height, textureSize) {}
+
+protected:
+	void getARGBAt(
+		uint pixel,
+		uint, uint,
+		uint8 &a, uint8 &r, uint8 &g, uint8 &b
+	) const override {
+		byte *col = _buf + (pixel * 3);
+		a = 0xff;
+		r = col[0];
+		g = col[1];
+		b = col[2];
+	}
+};
+
+TexelBuffer *createNearestTexelBuffer(const byte *buf, const Graphics::PixelFormat &pf, uint format, uint type, uint width, uint height, uint textureSize) {
+	if (format == TGL_RGBA && type == TGL_UNSIGNED_BYTE) {
+		return new NearestTexelBuffer<TGL_RGBA, TGL_UNSIGNED_BYTE>(
+			buf, pf,
+			width, height,
+			textureSize
+		);
+	} else if (format == TGL_RGB && type == TGL_UNSIGNED_BYTE) {
+		return new NearestTexelBuffer<TGL_RGB,  TGL_UNSIGNED_BYTE>(
+			buf, pf,
+			width, height,
+			textureSize
+		);
+	} else if (format == TGL_RGB && type == TGL_UNSIGNED_SHORT_5_6_5) {
+		return new NearestTexelBuffer<TGL_RGB,  TGL_UNSIGNED_SHORT_5_6_5>(
+			buf, pf,
+			width, height,
+			textureSize
+		);
+	} else if (format == TGL_RGBA && type == TGL_UNSIGNED_SHORT_5_5_5_1) {
+		return new NearestTexelBuffer<TGL_RGBA, TGL_UNSIGNED_SHORT_5_5_5_1>(
+			buf, pf,
+			width, height,
+			textureSize
+		);
+	} else if (format == TGL_RGBA && type == TGL_UNSIGNED_SHORT_4_4_4_4) {
+		return new NearestTexelBuffer<TGL_RGBA, TGL_UNSIGNED_SHORT_4_4_4_4>(
+			buf, pf,
+			width, height,
+			textureSize
+		);
+	} else {
+		error("TinyGL texture: format 0x%04x and type 0x%04x combination not supported", format, type);
+	}
 }
 
 // Bilinear: each texture coordinates corresponds to the 4 original image
@@ -101,6 +181,22 @@ void NearestTexelBuffer::getARGBAt(
 // allows applying linear filtering at render time at a very low performance
 // cost. As we expect to work on small-ish textures (512*512 ?) the 4x memory
 // usage increase should be negligible.
+class BilinearTexelBuffer : public TexelBuffer {
+public:
+	BilinearTexelBuffer(byte *buf, const Graphics::PixelFormat &format, uint width, uint height, uint textureSize);
+	~BilinearTexelBuffer();
+
+protected:
+	void getARGBAt(
+		uint pixel,
+		uint ds, uint dt,
+		uint8 &a, uint8 &r, uint8 &g, uint8 &b
+	) const override;
+
+private:
+	uint32 *_texels;
+};
+
 #define A_OFFSET (0 * 4)
 #define R_OFFSET (1 * 4)
 #define G_OFFSET (2 * 4)
@@ -111,17 +207,19 @@ void NearestTexelBuffer::getARGBAt(
 #define P11_OFFSET 3
 #define PIXEL_PER_TEXEL_SHIFT 2
 
-BilinearTexelBuffer::BilinearTexelBuffer(const Graphics::PixelBuffer &buf, uint width, uint height, uint textureSize) : TexelBuffer(width, height, textureSize) {
+BilinearTexelBuffer::BilinearTexelBuffer(byte *buf, const Graphics::PixelFormat &format, uint width, uint height, uint textureSize) : TexelBuffer(width, height, textureSize) {
+	const Graphics::PixelBuffer src(format, buf);
+
 	uint pixel00_offset = 0, pixel11_offset, pixel01_offset, pixel10_offset;
 	uint8 *texel8;
 	uint32 *texel32;
 
-	texel32 = _texels = new uint32[_width * _height << PIXEL_PER_TEXEL_SHIFT];
+	texel32 = _texels = (uint32 *)gl_malloc((_width * _height << PIXEL_PER_TEXEL_SHIFT) * sizeof(uint32));
 	for (uint y = 0; y < _height; y++) {
 		for (uint x = 0; x < _width; x++) {
 			texel8 = (uint8 *)texel32;
 			pixel11_offset = pixel00_offset + _width + 1;
-			buf.getARGBAt(
+			src.getARGBAt(
 				pixel00_offset,
 				*(texel8 + P00_OFFSET + A_OFFSET),
 				*(texel8 + P00_OFFSET + R_OFFSET),
@@ -133,7 +231,7 @@ BilinearTexelBuffer::BilinearTexelBuffer(const Graphics::PixelBuffer &buf, uint 
 				pixel01_offset = pixel00_offset;
 			} else
 				pixel01_offset = pixel00_offset + 1;
-			buf.getARGBAt(
+			src.getARGBAt(
 				pixel01_offset,
 				*(texel8 + P01_OFFSET + A_OFFSET),
 				*(texel8 + P01_OFFSET + R_OFFSET),
@@ -145,14 +243,14 @@ BilinearTexelBuffer::BilinearTexelBuffer(const Graphics::PixelBuffer &buf, uint 
 				pixel10_offset = pixel00_offset;
 			} else
 				pixel10_offset = pixel00_offset + _width;
-			buf.getARGBAt(
+			src.getARGBAt(
 				pixel10_offset,
 				*(texel8 + P10_OFFSET + A_OFFSET),
 				*(texel8 + P10_OFFSET + R_OFFSET),
 				*(texel8 + P10_OFFSET + G_OFFSET),
 				*(texel8 + P10_OFFSET + B_OFFSET)
 			);
-			buf.getARGBAt(
+			src.getARGBAt(
 				pixel11_offset,
 				*(texel8 + P11_OFFSET + A_OFFSET),
 				*(texel8 + P11_OFFSET + R_OFFSET),
@@ -166,7 +264,7 @@ BilinearTexelBuffer::BilinearTexelBuffer(const Graphics::PixelBuffer &buf, uint 
 }
 
 BilinearTexelBuffer::~BilinearTexelBuffer() {
-	delete[] _texels;
+	gl_free(_texels);
 }
 
 static inline int interpolate(int v00, int v01, int v10, int xf, int yf) {
@@ -218,6 +316,14 @@ void BilinearTexelBuffer::getARGBAt(
 		*(texel + p10_offset + B_OFFSET),
 		ds,
 		dt
+	);
+}
+
+TexelBuffer *createBilinearTexelBuffer(byte *buf, const Graphics::PixelFormat &pf, uint format, uint type, uint width, uint height, uint textureSize) {
+	return new BilinearTexelBuffer(
+		buf, pf,
+		width, height,
+		textureSize
 	);
 }
 

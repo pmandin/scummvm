@@ -37,7 +37,8 @@ public:
 
 	virtual bool onParentWorldColorChanged() override;
 
-	bool load(const Common::Path &path);
+	bool load(const Common::String &path);
+	bool load(const Common::FSNode &node);
 	bool load(TeImage &img);
 	bool load(TeIntrusivePtr<Te3DTexture> &texture);
 
@@ -45,7 +46,7 @@ public:
 	void pause();
 	void play();
 
-	void setBufferSize(long bufsize);
+	void setBufferSize(int bufsize);
 	void setColor(const TeColor &col) override;
 
 	void setColorKey(const TeColor &col);

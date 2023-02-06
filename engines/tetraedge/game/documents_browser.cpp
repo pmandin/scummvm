@@ -99,7 +99,7 @@ void DocumentsBrowser::load() {
 	button->setVisible(false);
 
 	// Game tries to load a file that doesn't exist..
-	debug("TODO?? DocumentsBrowser::load: Game opens Documents.xml here.");
+	// TODO?? DocumentsBrowser::load: Game opens Documents.xml here
 	_timer.start();
 }
 
@@ -111,8 +111,8 @@ void DocumentsBrowser::loadZoomed() {
 	_zoomedLayout.addChild(zoomedChild);
 }
 
-void DocumentsBrowser::currentPage(long setPage) {
-	const Common::String setPageName = Common::String::format("page%ld", setPage);
+void DocumentsBrowser::currentPage(int setPage) {
+	const Common::String setPageName = Common::String::format("page%d", setPage);
 	TeLayout *pageLayout = _gui1.layout(setPageName);
 	if (!pageLayout)
 		return;
@@ -133,7 +133,7 @@ void DocumentsBrowser::currentPage(long setPage) {
 }
 
 bool DocumentsBrowser::onQuitDocumentDoubleClickTimer() {
-	long time = _timer.getTimeFromStart();
+	uint64 time = _timer.getTimeFromStart();
 	_timer.stop();
 	if (time >= 200000) {
 		showDocument(_curDocName, _startPage + 1);
@@ -165,7 +165,7 @@ bool DocumentsBrowser::onZoomedButton() {
 	return false;
 }
 
-void DocumentsBrowser::showDocument(const Common::String &docName, long startPage) {
+void DocumentsBrowser::showDocument(const Common::String &docName, int startPage) {
 	_curPage = startPage;
 	_startPage = startPage;
 	_curDocName = docName;
@@ -173,11 +173,11 @@ void DocumentsBrowser::showDocument(const Common::String &docName, long startPag
 	TeCore *core = g_engine->getCore();
 	const Common::Path docPathBase(Common::String::format("DocumentsBrowser/Documents/Documents/%s_zoomed_%d", docName.c_str(), (int)startPage));
 	Common::Path docPath = docPathBase.append(".png");
-	docPath = core->findFile(docPath);
-	if (!Common::File::exists(docPath)) {
+	Common::FSNode docNode = core->findFile(docPath);
+	if (!docNode.exists()) {
 		docPath = docPathBase.append(".jpg");
-		docPath = core->findFile(docPath);
-		if (!Common::File::exists(docPath)) {
+		docNode = core->findFile(docPath);
+		if (!docNode.exists()) {
 			// Probably the end of the doc
 			if (startPage == 0)
 				warning("Can't find first page of doc named %s", docName.c_str());
@@ -189,7 +189,7 @@ void DocumentsBrowser::showDocument(const Common::String &docName, long startPag
 	app->captureFade();
 	TeSpriteLayout *sprite = _gui1.spriteLayoutChecked("zoomedSprite");
 	//sprite->setSizeType(ABSOLUTE);
-	sprite->load(docPath);
+	sprite->load(docNode);
 	TeVector2s32 spriteSize = sprite->_tiledSurfacePtr->tiledTexture()->totalSize();
 	sprite->setSizeType(RELATIVE_TO_PARENT);
 	TeVector3f32 winSize = app->getMainWindow().size();
@@ -200,10 +200,9 @@ void DocumentsBrowser::showDocument(const Common::String &docName, long startPag
 		error("DocumentsBrowser::showDocument Couldn't fetch scroll object");
 	scroll->resetScrollPosition();
 	scroll->playAutoScroll();
-	Common::Path luaPath = docPathBase.append(".lua");
-	luaPath = core->findFile(luaPath);
-	if (Common::File::exists(luaPath)) {
-		_gui2.load(luaPath);
+	Common::FSNode luaNode = core->findFile(docPathBase.append(".lua"));
+	if (luaNode.exists()) {
+		_gui2.load(luaNode);
 		error("Finish DocumentsBrowser::showDocument");
 	}
 	_gui1.layoutChecked("zoomed")->setVisible(true);
@@ -225,7 +224,7 @@ void DocumentsBrowser::unload() {
 			TeLayout *slot = _gui1.layout(pageSlotName);
 			if (!slot)
 				break;
-			for (long i = 0; i < slot->childCount(); i++) {
+			for (int i = 0; i < slot->childCount(); i++) {
 				Document *doc = dynamic_cast<Document *>(slot->child(i));
 				if (doc)
 					delete doc;

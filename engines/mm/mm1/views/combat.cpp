@@ -47,6 +47,10 @@ void Combat::setMode(Mode newMode) {
 		// Make a copy of monster spell 
 		_monsterSpellLines = getMonsterSpellMessage();
 
+	if (_mode != MONSTER_ADVANCES && _mode != MONSTER_ATTACK &&
+			_mode != MONSTER_SPELL)
+		_activeMonsterNum = -1;
+
 	redraw();
 }
 
@@ -98,6 +102,7 @@ bool Combat::msgGame(const GameMessage &msg) {
 void Combat::draw() {
 	switch (_mode) {
 	case NEXT_ROUND:
+		writeMonsters();
 		resetBottom();
 		highlightNextRound();
 		delaySeconds(1);
@@ -112,20 +117,11 @@ void Combat::draw() {
 		return;
 	case MONSTERS_AFFECTED:
 		writeMonsterEffects();
-		delaySeconds(3);
-		return;
-	case MONSTER_FLEES:
-	case MONSTER_WANDERS:
-		writeMonsterAction(_mode == MONSTER_FLEES);
-		delaySeconds(3);
+		delaySeconds(2);
 		return;
 	case MONSTER_SPELL:
 		writeMonsterSpell();
 		delaySeconds(2);
-		return;
-	case MONSTER_ATTACK:
-		writeMonsterAttack();
-		delaySeconds(4);
 		return;
 	case INFILTRATION:
 		writeInfiltration();
@@ -142,6 +138,11 @@ void Combat::draw() {
 		return;
 	case NO_EFFECT:
 		writeCharAttackNoEffect();
+		delaySeconds(3);
+		return;
+	case DEFEATED_MONSTERS:
+		writeDefeat();
+		Sound::sound2(SOUND_3);
 		delaySeconds(3);
 		return;
 	default:
@@ -161,16 +162,21 @@ void Combat::draw() {
 		writeOptions();
 		break;
 
-	case DEFEATED_MONSTERS:
-		writeDefeat();
-		Sound::sound2(SOUND_3);
-		delaySeconds(5);
-		break;
-
 	case SPELL_RESULT:
 		writeSpellResult();
 		if (_spellResult._delaySeconds)
 			delaySeconds(_spellResult._delaySeconds);
+		break;
+
+	case MONSTER_ATTACK:
+		writeMonsterAttack();
+		delaySeconds(2);
+		break;
+
+	case MONSTER_FLEES:
+	case MONSTER_WANDERS:
+		writeMonsterAction(_mode == MONSTER_FLEES);
+		delaySeconds(2);
 		break;
 
 	default:
@@ -189,12 +195,9 @@ void Combat::timeout() {
 	case MONSTERS_AFFECTED:
 	case CHAR_ATTACKS:
 	case NO_EFFECT:
-		removeDeadMonsters();
-		combatLoop();
-		break;
 	case MONSTER_FLEES:
 		removeDeadMonsters();
-		checkMonsterSpells();
+		combatLoop();
 		break;
 	case MONSTER_WANDERS:
 	case INFILTRATION:
@@ -209,17 +212,9 @@ void Combat::timeout() {
 	case WAITS_FOR_OPENING:
 		combatLoop(true);
 		break;
-	case DEFEATED_MONSTERS: {
-		auto &spells = g_globals->_activeSpells;
-		spells._s.bless = 0;
-		spells._s.invisbility = 0;
-		spells._s.shield = 0;
-		spells._s.power_shield = 0;
-
-		close();
-		g_events->send("Game", GameMessage("UPDATE"));
+	case DEFEATED_MONSTERS:
+		combatDone();
 		break;
-	}
 	case SPELL_RESULT:
 		if (_spellResult._timeoutCallback)
 			_spellResult._timeoutCallback();
@@ -348,7 +343,6 @@ bool Combat::msgAction(const ActionMessage &msg) {
 		}
 		break;
 	default:
-		// TODO: Character and quickref views
 		break;
 	}
 
@@ -539,7 +533,8 @@ void Combat::writeMonsters() {
 }
 
 void Combat::writeMonsterStatus(int monsterNum) {
-	monsterSetPtr(monsterNum);
+	_monsterP = _remainingMonsters[monsterNum];
+	monsterIndexOf();
 	byte statusBits = _remainingMonsters[monsterNum]->_status;
 
 	if (statusBits) {
@@ -556,7 +551,7 @@ void Combat::writeMonsterStatus(int monsterNum) {
 
 		writeString(STRING[Common::String::format("dialogs.combat.status.%d",
 			status)]);
-	} else if (_remainingMonsters[monsterNum]->_hp != _monsterP->_defaultHP) {
+	} else if (_monsterP->_hp != _monsterP->_defaultHP) {
 		writeDots();
 		writeString(STRING["dialogs.combat.status.wounded"]);
 	} else {
@@ -573,9 +568,14 @@ void Combat::writeParty() {
 	clearPartyArea();
 
 	for (uint i = 0; i < g_globals->_combatParty.size(); ++i) {
-		writeChar(1 + 21 * (i % 2), 16 + (i / 2), '1' + i);
-		writeString(") ");
-		writeString(g_globals->_combatParty[i]->_name);
+		const Character &c = *g_globals->_combatParty[i];
+		writeString(21 * (i % 2), 16 + (i / 2),
+			Common::String::format("%c%c) %s",
+				(c._condition == 0) ? ' ' : '*',
+				'1' + i,
+				c._name
+			)
+		);
 	}
 }
 
@@ -584,13 +584,10 @@ void Combat::clearPartyArea() {
 }
 
 void Combat::writeDefeat() {
-	resetBottom();
 	writeString(10, 0, "+----------------------------+");
-	for (int y = 1; y < 8; ++y) {
-		writeChar(10, y, '!');
-		writeChar(37, y, '!');
-	}
-	writeString(10, 0, "+----------------------------+");
+	for (int y = 1; y < 8; ++y)
+		writeString(10, y, "!                            !");
+	writeString(10, 8, "+----------------------------+");
 
 	writeString(10, 2, STRING["dialogs.combat.defeating1"]);
 	writeString(10, 4, STRING["dialogs.combat.defeating2"]);
@@ -627,6 +624,7 @@ void Combat::writeMonsterEffects() {
 void Combat::writeMonsterAction(bool flees) {
 	resetBottom();
 	writeString(0, 20, _monsterName);
+	writeChar(' ');
 	writeString(STRING[flees ?
 		"dialogs.combat.monster_flees" : "dialogs.combat.monster_wanders"
 	]);
@@ -656,18 +654,10 @@ void Combat::writeMonsterAttack() {
 	Common::String line = Common::String::format("%s %s %s",
 		monsterName.c_str(),
 		attackStyle.c_str(),
-		getAttackString().c_str()
+		c._name
 	);
 	writeString(0, 20, line);
-
-	// It's not ideal, but we have to do some final minor damage
-	// adjustment here after we've written the basic damage the
-	// character will receive
-	if (g_globals->_activeSpells._s.power_shield)
-		_damage /= 2;
-
-	if (_val10 && g_globals->_activeSpells._s.shield)
-		_damage = MAX((int)_damage - 8, 0);
+	writeString(0, 21, getAttackString());
 
 	if (_damage) {
 		// Attacks wake up sleeping characters
@@ -678,18 +668,13 @@ void Combat::writeMonsterAttack() {
 		// This returns a text line to display, and can also
 		// adjust the damage amount. Another reason why we
 		// can't actually apply damage until here
+		int yp = 22;
 		if (monsterTouch(line))
-			writeString(0, 21, line);
+			writeString(0, yp++, line);
 
-		// TODO: Maybe refactor subtractDamage to not use
-		// the _lines/add methods, which would make it cleaner
-		// to call it from here
-		_lines.clear();
-		_lines.push_back(Line(0, 2, ""));
-		subtractDamage();
-
-		if (!_lines.back()._text.empty())
-			writeString(0, 22, _lines.back()._text);
+		Common::String damageStr = subtractDamageFromChar();
+		if (!damageStr.empty())
+			writeString(0, yp, damageStr);
 	}
 }
 
@@ -766,16 +751,9 @@ void Combat::shoot() {
 }
 
 void Combat::writeMessage() {
-	size_t idx;
-
 	resetBottom();
-	for (const auto &line : _message) {
-		Common::String text = line._text;
-		while ((idx = text.findFirstOf('|')) != Common::String::npos)
-			text.deleteChar(idx);
-
-		writeString(line.x, line.y, text);
-	}
+	for (const auto &line : _message)
+		writeString(line.x, line.y, line._text);
 }
 
 void Combat::writeCharAttackDamage() {
@@ -823,7 +801,7 @@ Common::String Combat::getAttackString() {
 
 	line1 += Common::String::format(" %s ", STRING["dialogs.combat.and"].c_str());
 
-	if (_damage == 0) {
+	if (_displayedDamage == 0) {
 		line1 += STRING["dialogs.combat.misses"];
 	} else {
 		line1 += STRING["dialogs.combat.hit"];
@@ -840,7 +818,7 @@ Common::String Combat::getAttackString() {
 		}
 
 		line1 += Common::String::format(" %s %d %s",
-			STRING["dialogs.combat.for"].c_str(), _damage,
+			STRING["dialogs.combat.for"].c_str(), _displayedDamage,
 			STRING[_damage == 1 ? "dialogs.combat.point" : "dialogs.combat.points"].c_str());
 
 		if (line1.size() < 30) {
@@ -863,8 +841,7 @@ void Combat::setOption(SelectedOption option) {
 }
 
 void Combat::displaySpellResult(const InfoMessage &msg) {
-	assert(msg._timeoutCallback || msg._keyCallback);
-	assert(!msg._delaySeconds || !msg._timeoutCallback);
+	assert(msg._delaySeconds);
 	_spellResult = msg;
 
 	setMode(SPELL_RESULT);
@@ -872,7 +849,9 @@ void Combat::displaySpellResult(const InfoMessage &msg) {
 
 void Combat::combatDone() {
 	Game::Combat::combatDone();
+
 	close();
+	g_events->send("Game", GameMessage("UPDATE"));
 }
 
 } // namespace Views

@@ -498,6 +498,11 @@ void FreescapeEngine::processInput() {
 	}
 }
 
+void FreescapeEngine::executeMovementConditions() {
+	// Only execute "on collision" room/global conditions
+	executeLocalGlobalConditions(false, true);
+}
+
 void FreescapeEngine::updateTimeVariables() {
 	int seconds, minutes, hours;
 	getTimeFromCountdown(seconds, minutes, hours);
@@ -620,6 +625,19 @@ void FreescapeEngine::processBorder() {
 bool FreescapeEngine::checkIfGameEnded() {
 	return false; // TODO
 }
+
+void FreescapeEngine::setGameBit(int index) {
+	_gameStateBits[_currentArea->getAreaID()] |= (1 << (index - 1));
+}
+
+void FreescapeEngine::clearGameBit(int index) {
+	_gameStateBits[_currentArea->getAreaID()] &= ~(1 << (index - 1));
+}
+
+void FreescapeEngine::toggleGameBit(int index) {
+	_gameStateBits[_currentArea->getAreaID()] ^= (1 << (index - 1));
+}
+
 
 void FreescapeEngine::initGameState() {
 	for (int i = 0; i < k8bitMaxVariable; i++) // TODO: check maximum variable

@@ -81,12 +81,14 @@ SdlEventSource::SdlEventSource()
 	if (joystick_num >= 0) {
 		// Initialize SDL joystick subsystem
 		if (SDL_InitSubSystem(SDL_INIT_JOYSTICK) == -1) {
-			error("Could not initialize SDL: %s", SDL_GetError());
+			warning("Could not initialize SDL joystick: %s", SDL_GetError());
+			return;
 		}
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 		if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) == -1) {
-			error("Could not initialize SDL: %s", SDL_GetError());
+			warning("Could not initialize SDL game controller: %s", SDL_GetError());
+			return;
 		}
 		loadGameControllerMappingFile();
 #endif
@@ -318,7 +320,9 @@ Common::KeyCode SdlEventSource::SDLToOSystemKeycode(const SDL_Keycode key) {
 	case SDLK_SYSREQ: return Common::KEYCODE_SYSREQ;
 	case SDLK_MENU: return Common::KEYCODE_MENU;
 	case SDLK_POWER: return Common::KEYCODE_POWER;
+#if SDL_VERSION_ATLEAST(1, 2, 3)
 	case SDLK_UNDO: return Common::KEYCODE_UNDO;
+#endif
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	case SDLK_SCROLLLOCK: return Common::KEYCODE_SCROLLOCK;
 	case SDLK_NUMLOCKCLEAR: return Common::KEYCODE_NUMLOCK;

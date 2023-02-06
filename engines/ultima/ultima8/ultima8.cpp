@@ -142,20 +142,20 @@ Ultima8Engine::Ultima8Engine(OSystem *syst, const Ultima::UltimaGameDescription 
 }
 
 Ultima8Engine::~Ultima8Engine() {
-	FORGET_OBJECT(_kernel);
-	FORGET_OBJECT(_objectManager);
-	FORGET_OBJECT(_audioMixer);
-	FORGET_OBJECT(_ucMachine);
-	FORGET_OBJECT(_paletteManager);
-	FORGET_OBJECT(_mouse);
-	FORGET_OBJECT(_gameData);
-	FORGET_OBJECT(_world);
-	FORGET_OBJECT(_ucMachine);
-	FORGET_OBJECT(_fontManager);
-	FORGET_OBJECT(_screen);
-	FORGET_OBJECT(_fileSystem);
-	FORGET_OBJECT(_configFileMan);
-	FORGET_OBJECT(_gameInfo);
+	delete _kernel;
+	delete _objectManager;
+	delete _audioMixer;
+	delete _ucMachine;
+	delete _paletteManager;
+	delete _mouse;
+	delete _gameData;
+	delete _world;
+	delete _ucMachine;
+	delete _fontManager;
+	delete _screen;
+	delete _fileSystem;
+	delete _configFileMan;
+	delete _gameInfo;
 
 	_instance = nullptr;
 }
@@ -356,7 +356,7 @@ Common::Error Ultima8Engine::startup() {
 			return result;
 	} else {
 		// Couldn't setup the game, should never happen?
-		CANT_HAPPEN_MSG("game failed to initialize");
+		warning("game failed to initialize");
 	}
 	paint();
 	return Common::kNoError;
@@ -493,7 +493,7 @@ Common::Error Ultima8Engine::startupGame() {
 			break;
 		}
 	} else {
-		CANT_HAPPEN_MSG("Invalid game type.");
+		warning("Invalid game type.");
 	}
 
 	_inBetweenFrame = false;
@@ -534,10 +534,6 @@ Common::Error Ultima8Engine::startupGame() {
 }
 
 void Ultima8Engine::shutdown() {
-	shutdownGame(false);
-}
-
-void Ultima8Engine::shutdownGame(bool reloading) {
 	debug(MM_INFO, "-- Shutting down Game -- ");
 
 	// Save config here....
@@ -546,20 +542,29 @@ void Ultima8Engine::shutdownGame(bool reloading) {
 	_mouse->popAllCursors();
 	_mouse->pushMouseCursor(Mouse::MOUSE_NORMAL);
 
-	FORGET_OBJECT(_world);
+	delete _world;
+	_world = nullptr;
+
 	_objectManager->reset();
-	FORGET_OBJECT(_ucMachine);
+
+	delete _ucMachine;
+	_ucMachine = nullptr;
+
 	_kernel->reset();
 	_paletteManager->reset();
 	_fontManager->resetGameFonts();
 
-	FORGET_OBJECT(_game);
-	FORGET_OBJECT(_gameData);
+	delete _game;
+	_game = nullptr;
+
+	delete _gameData;
+	_gameData = nullptr;
 
 	if (_audioMixer) {
 		_audioMixer->closeMidiOutput();
 		_audioMixer->reset();
-		FORGET_OBJECT(_audioMixer);
+		delete _audioMixer;
+		_audioMixer = nullptr;
 	}
 
 	_desktopGump = nullptr;
@@ -579,22 +584,6 @@ void Ultima8Engine::shutdownGame(bool reloading) {
 	_gameInfo = nullptr;
 
 	debug(MM_INFO, "-- Game Shutdown -- ");
-
-	if (reloading) {
-		Rect dims;
-		_screen->GetSurfaceDims(dims);
-
-		debugN(MM_INFO, "Creating Desktop...\n");
-		_desktopGump = new DesktopGump(0, 0, dims.width(), dims.height());
-		_desktopGump->InitGump(0);
-		_desktopGump->MakeFocus();
-
-		if (GAME_IS_U8) {
-			debugN(MM_INFO, "Creating Inverter...\n");
-			_inverterGump = new InverterGump(0, 0, dims.width(), dims.height());
-			_inverterGump->InitGump(0);
-		}
-	}
 }
 
 //

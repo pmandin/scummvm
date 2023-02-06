@@ -92,25 +92,25 @@ void CharactersShadowTinyGL::draw(InGameScene *scene) {
 
 	float f[4];
 	for (uint i = 0; i < 4; i++)
-		f[i] = matrix(i, 0);
+		f[i] = matrix(0, i);
 
 	tglTexGenfv(TGL_S, TGL_EYE_PLANE, f);
 	tglTexGeni(TGL_T, TGL_TEXTURE_GEN_MODE, TGL_EYE_LINEAR);
 
 	for (uint i = 0; i < 4; i++)
-		f[i] = matrix(i, 1);
+		f[i] = matrix(1, i);
 
 	tglTexGenfv(TGL_T, TGL_EYE_PLANE, f);
 	tglTexGeni(TGL_R, TGL_TEXTURE_GEN_MODE, TGL_EYE_LINEAR);
 
 	for (uint i = 0; i < 4; i++)
-		f[i] = matrix(i, 2);
+		f[i] = matrix(2, i);
 
 	tglTexGenfv(TGL_R, TGL_EYE_PLANE, f);
 	tglTexGeni(TGL_Q, TGL_TEXTURE_GEN_MODE, TGL_EYE_LINEAR);
 
 	for (uint i = 0; i < 4; i++)
-		f[i] = matrix(i, 3);
+		f[i] = matrix(3, i);
 
 	tglTexGenfv(TGL_Q, TGL_EYE_PLANE, f);
 	*/
@@ -123,7 +123,7 @@ void CharactersShadowTinyGL::draw(InGameScene *scene) {
 	for (TeIntrusivePtr<TeModel> model : scene->zoneModels()) {
 		if (model->meshes().size() > 0 && model->meshes()[0]->materials().empty()) {
 			model->meshes()[0]->defaultMaterial(TeIntrusivePtr<Te3DTexture>());
-			model->meshes()[0]->materials()[0]._enableSomethingDefault0 = true;
+			model->meshes()[0]->materials()[0]._isShadowTexture = true;
 			model->meshes()[0]->materials()[0]._diffuseColor = scene->shadowColor();
 		}
 		model->draw();

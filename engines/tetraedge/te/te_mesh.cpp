@@ -72,7 +72,7 @@ bool TeMesh::hasAlpha(uint idx) {
 	bool retval = hasGlobalAlpha;
 	if (idx < _materials.size()) {
 		const TeMaterial &material = _materials[idx];
-		if (material._enableSomethingDefault0) {
+		if (material._isShadowTexture) {
 			retval = false;
 		} else {
 			retval = true;
@@ -90,7 +90,7 @@ TeVector3f32 TeMesh::normal(uint idx) const {
 		return _normals[idx];
 }
 
-void TeMesh::resizeUpdatedTables(unsigned long newSize) {
+void TeMesh::resizeUpdatedTables(uint newSize) {
 	_updatedVerticies.resize(newSize);
 	_updatedNormals.resize(newSize);
 }
@@ -118,7 +118,7 @@ void TeMesh::setColor(uint idx, const TeColor &col) {
 	_colors[idx] = col;
 }
 
-void TeMesh::setConf(unsigned long vertexCount, unsigned long indexCount, enum Mode mode, uint materialCount, uint materialIndexCount) {
+void TeMesh::setConf(uint vertexCount, uint indexCount, enum Mode mode, uint materialCount, uint materialIndexCount) {
 	destroy();
 	_initialMaterialIndexCount = materialIndexCount;
 	_verticies.resize(vertexCount);
@@ -157,7 +157,7 @@ void TeMesh::attachMaterial(uint idx, const TeMaterial &src) {
 	TeMaterial &dest = _materials[idx];
 	dest._texture = src._texture;
 	dest._enableLights = src._enableLights;
-	dest._enableSomethingDefault0 = src._enableSomethingDefault0;
+	dest._isShadowTexture = src._isShadowTexture;
 	dest._emissionColor = src._emissionColor;
 	dest._shininess = src._shininess;
 	dest._diffuseColor = src._diffuseColor;

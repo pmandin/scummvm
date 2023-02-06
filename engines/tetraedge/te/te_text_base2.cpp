@@ -98,6 +98,8 @@ void TeTextBase2::build() {
 	TeImage img;
 	Common::SharedPtr<TePalette> nullpal;
 	img.createImg(_size._x, _size._y, nullpal, TeImage::RGBA8);
+	// fill with global color, alpha 0 so that the font anti-aliasing blends
+	// to the right color (see eg, the cellphone display)
 	img.fill(_globalColor.r(), _globalColor.g(), _globalColor.b(), 0);
 
 	for (uint i = 0; i < _wrappedLines.size(); i++) {
@@ -112,6 +114,7 @@ void TeTextBase2::build() {
 	dumpFile.open(Common::String::format("/tmp/rendered-font-dump-%04d.png", dumpCount));
 	dumpCount++;
 	Image::writePNG(dumpFile, img);
+	dumpFile.close();
 #endif
 
 	_mesh->setConf(4, 4, TeMesh::MeshMode_TriangleStrip, 0, 0);
@@ -269,7 +272,7 @@ void TeTextBase2::setFont(uint offset, const TeIntrusivePtr<TeFont3> &newfont) {
 	_valueWasSet = true;
 }
 
-void TeTextBase2::setFontSize(unsigned long newSize) {
+void TeTextBase2::setFontSize(int newSize) {
 	if (_fontSize != newSize) {
 		_fontSize = newSize;
 		_valueWasSet = true;

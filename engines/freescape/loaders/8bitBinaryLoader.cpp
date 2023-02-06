@@ -26,6 +26,7 @@
 
 #include "freescape/freescape.h"
 #include "freescape/language/8bitDetokeniser.h"
+#include "freescape/objects/connections.h"
 #include "freescape/objects/global.h"
 #include "freescape/objects/group.h"
 #include "freescape/objects/sensor.h"
@@ -115,6 +116,21 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 		while(--byteSizeOfObject > 0)
 			structureArray.push_back(file->readByte());
 		return new GlobalStructure(structureArray);
+	} else if (objectID == 254 && objectType == ObjectType::kEntranceType) {
+		debugC(1, kFreescapeDebugParser, "Found the area connections (objectID: 254 with size %d)", byteSizeOfObject + 6);
+		Common::Array<uint8> connectionsArray;
+		connectionsArray.push_back(uint8(position.x()));
+		connectionsArray.push_back(uint8(position.y()));
+		connectionsArray.push_back(uint8(position.z()));
+
+		connectionsArray.push_back(uint8(v.x()));
+		connectionsArray.push_back(uint8(v.y()));
+		connectionsArray.push_back(uint8(v.z()));
+
+		byteSizeOfObject++;
+		while(--byteSizeOfObject > 0)
+			connectionsArray.push_back(file->readByte());
+		return new AreaConnections(connectionsArray);
 	}
 
 	debugC(1, kFreescapeDebugParser, "Object %d ; type %d ; size %d", objectID, (int)objectType, byteSizeOfObject);
@@ -438,6 +454,15 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 	debugC(1, kFreescapeDebugParser, "Start area: %d", startArea);
 	uint8 startEntrance = readField(file, 8);
 	debugC(1, kFreescapeDebugParser, "Entrace area: %d", startEntrance);
+	readField(file, 8); // Unknown
+
+	uint8 initialEnergy1 = readField(file, 8);
+	uint8 initialShield1 = readField(file, 8);
+	uint8 initialEnergy2 = readField(file, 8);
+	uint8 initialShield2 = readField(file, 8);
+
+	debugC(1, kFreescapeDebugParser, "Initial levels of energy: %d and shield: %d", initialEnergy1, initialShield1);
+	debugC(1, kFreescapeDebugParser, "Initial levels of energy: %d and shield: %d", initialEnergy2, initialShield2);
 
 	if (isAmiga() || isAtariST())
 		file->seek(offset + 0x14);
@@ -528,7 +553,9 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 
 		if (_useExtendedTimer)
 			_initialCountdown = 359999; // 99:59:59
-	}
+	} else if (isDark())
+		_initialCountdown = 2 * 3600; // 02:00:00
+
 
 	if (isAmiga() || isAtariST())
 		file->seek(offset + 0x190);
@@ -632,7 +659,7 @@ void FreescapeEngine::loadMessagesFixedSize(Common::SeekableReadStream *file, in
 		file->read(buffer, size);
 		Common::String message = (const char *)buffer;
 		_messagesList.push_back(message);
-		debugC(1, kFreescapeDebugParser, "%s", _messagesList[i].c_str());
+		debugC(1, kFreescapeDebugParser, "%s", _messagesList[_messagesList.size() - 1].c_str());
 	}
 	free(buffer);
 }

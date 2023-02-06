@@ -68,6 +68,7 @@ void InGameScene::addAnchorZone(const Common::String &s1, const Common::String &
 		}
 	}
 
+	assert(currentCamera());
 	currentCamera()->apply();
 	AnchorZone *zone = new AnchorZone();
 	zone->_name = name;
@@ -86,6 +87,7 @@ void InGameScene::addAnchorZone(const Common::String &s1, const Common::String &
 			zone->_loc = d._position;
 		}
 	}
+	_anchorZones.push_back(zone);
 }
 
 bool InGameScene::addMarker(const Common::String &markerName, const Common::String &imgPath, float x, float y, const Common::String &locType, const Common::String &markerVal) {
@@ -226,12 +228,13 @@ void InGameScene::convertPathToMesh(TeFreeMoveZone *zone) {
 	model->setPosition(zone->position());
 	model->setRotation(zone->rotation());
 	model->setScale(zone->scale());
-	unsigned long nverticies = zone->verticies().size();
-	model->meshes()[0]->setConf(nverticies, nverticies, TeMesh::MeshMode_Triangles, 0, 0);
+	uint64 nverticies = zone->freeMoveZoneVerticies().size();
+	TeMesh *mesh0 = model->meshes()[0].get();
+	mesh0->setConf(nverticies, nverticies, TeMesh::MeshMode_Triangles, 0, 0);
 	for (uint i = 0; i < nverticies; i++) {
-		model->meshes()[0]->setIndex(i, i);
-		model->meshes()[0]->setVertex(i, zone->verticies()[i]);
-		model->meshes()[0]->setNormal(i, TeVector3f32(0, 0, 1));
+		mesh0->setIndex(i, i);
+		mesh0->setVertex(i, zone->freeMoveZoneVerticies()[i]);
+		mesh0->setNormal(i, TeVector3f32(0, 0, 1));
 	}
 	_zoneModels.push_back(model);
 }
@@ -511,7 +514,7 @@ Common::String InGameScene::imagePathMarker(const Common::String &name) {
 	for (Te3DObject2 *child : bg->childList()) {
 		TeSpriteLayout *spritelayout = dynamic_cast<TeSpriteLayout *>(child);
 		if (spritelayout && spritelayout->name() == name) {
-			return spritelayout->_tiledSurfacePtr->path().toString();
+			return spritelayout->_tiledSurfacePtr->loadedPath();
 		}
 	}
 	return Common::String();
@@ -537,7 +540,7 @@ bool InGameScene::isObjectBlocking(const Common::String &name) {
 	return false;
 }
 
-bool InGameScene::load(const Common::Path &path) {
+bool InGameScene::load(const Common::FSNode &sceneNode) {
 	_actZones.clear();
 	Common::File actzonefile;
 	if (actzonefile.open(getActZoneFileName())) {
@@ -547,12 +550,12 @@ bool InGameScene::load(const Common::Path &path) {
 				error("Improbable number of actzones %d", count);
 			_actZones.resize(count);
 			for (uint i = 0; i < _actZones.size(); i++) {
-				_actZones[i].s1 = Te3DObject2::deserializeString(actzonefile);
-				_actZones[i].s2 = Te3DObject2::deserializeString(actzonefile);
+				_actZones[i]._s1 = Te3DObject2::deserializeString(actzonefile);
+				_actZones[i]._s2 = Te3DObject2::deserializeString(actzonefile);
 				for (int j = 0; j < 4; j++)
-					TeVector2f32::deserialize(actzonefile, _actZones[i].points[j]);
-				_actZones[i].flag1 = (actzonefile.readByte() != 0);
-				_actZones[i].flag2 = true;
+					TeVector2f32::deserialize(actzonefile, _actZones[i]._points[j]);
+				_actZones[i]._flag1 = (actzonefile.readByte() != 0);
+				_actZones[i]._flag2 = true;
 			}
 		}
 	}
@@ -566,16 +569,18 @@ bool InGameScene::load(const Common::Path &path) {
 	_shadowLightNo = -1;
 
 	const Common::Path lightspath = getLightsFileName();
-	if (Common::File::exists(lightspath))
-		loadLights(lightspath);
+	TeCore *core = g_engine->getCore();
+	const Common::FSNode lightsNode(core->findFile(lightspath));
+	if (lightsNode.isReadable())
+		loadLights(lightsNode);
 
-	if (!Common::File::exists(path))
+	if (!sceneNode.isReadable())
 		return false;
 
 	close();
-	_loadedPath = path;
+	_loadedPath = sceneNode.getPath();
 	Common::File scenefile;
-	if (!scenefile.open(path))
+	if (!scenefile.open(sceneNode))
 		return false;
 
 	uint32 ncameras = scenefile.readUint32LE();
@@ -686,15 +691,15 @@ bool InGameScene::loadCharacter(const Common::String &name) {
 	return true;
 }
 
-bool InGameScene::loadLights(const Common::Path &path) {
+bool InGameScene::loadLights(const Common::FSNode &node) {
 	SceneLightsXmlParser parser;
 
 	parser.setLightArray(&_lights);
 
-	if (!parser.loadFile(path.toString()))
-		error("InGameScene::loadLights: Can't load %s", path.toString().c_str());
+	if (!parser.loadFile(node))
+		error("InGameScene::loadLights: Can't load %s", node.getPath().c_str());
 	if (!parser.parse())
-		error("InGameScene::loadLights: Can't parse %s", path.toString().c_str());
+		error("InGameScene::loadLights: Can't parse %s", node.getPath().c_str());
 
 	_shadowColor = parser.getShadowColor();
 	_shadowLightNo = parser.getShadowLightNo();
@@ -712,7 +717,7 @@ bool InGameScene::loadLights(const Common::Path &path) {
 	debug("Shadow: %s no:%d far:%.02f near:%.02f fov:%.02f", _shadowColor.dump().c_str(), _shadowLightNo, _shadowFarPlane, _shadowNearPlane, _shadowFov);
 	debug("Global: %s", TeLight::globalAmbient().dump().c_str());
 	for (uint i = 0; i < _lights.size(); i++) {
-		debug("%s", _lights[i].dump().c_str());
+		debug("%s", _lights[i]->dump().c_str());
 	}
 	debug("---  end lights  ---");
 #endif
@@ -720,8 +725,8 @@ bool InGameScene::loadLights(const Common::Path &path) {
 	return true;
 }
 
-void InGameScene::loadMarkers(const Common::Path &path) {
-	_markerGui.load(path);
+void InGameScene::loadMarkers(const Common::FSNode &node) {
+	_markerGui.load(node);
 	TeLayout *bg = _bgGui.layoutChecked("background");
 	TeSpriteLayout *root = Game::findSpriteLayoutByName(bg, "root");
 	bg->setRatioMode(TeILayout::RATIO_MODE_NONE);
@@ -747,12 +752,13 @@ bool InGameScene::loadObject(const Common::String &name) {
 bool InGameScene::loadObjectMaterials(const Common::String &name) {
 	TeImage img;
 	bool retval = false;
+	TeCore *core = g_engine->getCore();
 	for (auto &obj : _objects) {
 		if (obj._name.empty())
 			continue;
 
 		Common::Path mpath = _loadedPath.getParent().join(name).join(obj._name + ".png");
-		if (img.load(mpath)) {
+		if (img.load(core->findFile(mpath))) {
 			Te3DTexture *tex = Te3DTexture::makeInstance();
 			tex->load(img);
 			obj._model->meshes()[0]->defaultMaterial(tex);
@@ -850,8 +856,8 @@ void InGameScene::loadBlockers() {
 	}
 }
 
-void InGameScene::loadBackground(const Common::Path &path) {
-	_bgGui.load(path);
+void InGameScene::loadBackground(const Common::FSNode &node) {
+	_bgGui.load(node);
 	TeLayout *bg = _bgGui.layout("background");
 	TeLayout *root = _bgGui.layout("root");
 	bg->setRatioMode(TeILayout::RATIO_MODE_NONE);
@@ -860,7 +866,7 @@ void InGameScene::loadBackground(const Common::Path &path) {
 	bg->disableAutoZ();
 	bg->setZPosition(wincam->orthoNearPlane());
 
-	for (auto layoutEntry : _bgGui.spriteLayouts()) {
+	for (const auto &layoutEntry : _bgGui.spriteLayouts()) {
 		AnimObject *animobj = new AnimObject();
 		animobj->_name = layoutEntry._key;
 		animobj->_layout = layoutEntry._value;
@@ -885,8 +891,8 @@ bool InGameScene::loadBillboard(const Common::String &name) {
 	}
 }
 
-void InGameScene::loadInteractions(const Common::Path &path) {
-	_hitObjectGui.load(path);
+void InGameScene::loadInteractions(const Common::FSNode &node) {
+	_hitObjectGui.load(node);
 	TeLayout *bgbackground = _bgGui.layoutChecked("background");
 	Game *game = g_engine->getGame();
 	TeSpriteLayout *root = game->findSpriteLayoutByName(bgbackground, "root");
@@ -1100,7 +1106,7 @@ void InGameScene::update() {
 			if (aroundAnchorZone(zone)) {
 				TeVector2f32 headRot(getHeadHorizontalRotation(_character, zone->_loc),
 					getHeadVerticalRotation(_character, zone->_loc));
-				if (headRot.getX() * 180.0 / M_PI > 90.0 || headRot.getY() * 180.0 / M_PI > 45.0) {
+				if (fabs(headRot.getX() * 180.0 / M_PI) > 90.0 || fabs(headRot.getY() * 180.0 / M_PI) > 45.0) {
 					_character->setHasAnchor(false);
 					_character->setLastHeadRotation(_character->headRotation());
 				} else {

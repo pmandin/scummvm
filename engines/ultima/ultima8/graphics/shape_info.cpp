@@ -19,7 +19,7 @@
  *
  */
 
-#include "ultima/ultima8/misc/pent_include.h"
+#include "ultima/ultima8/misc/common_types.h"
 
 #include "ultima/ultima8/graphics/shape_info.h"
 #include "ultima/ultima8/ultima8.h"
@@ -32,7 +32,7 @@ bool ShapeInfo::getTypeFlag(int typeFlag) const {
 		return getTypeFlagU8(typeFlag);
 	else if (GAME_IS_CRUSADER)
 		return getTypeFlagCrusader(typeFlag);
-	CANT_HAPPEN_MSG("Invalid game type");
+	warning("Invalid game type for shape info");
 	return false;
 }
 

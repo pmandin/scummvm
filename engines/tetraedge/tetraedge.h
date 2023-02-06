@@ -91,10 +91,7 @@ public:
 			(f == kSupportsReturnToLauncher);
 	};
 
-	bool canLoadGameStateCurrently() override {
-		return true;
-	}
-
+	bool canLoadGameStateCurrently() override;
 	bool canSaveGameStateCurrently() override;
 	bool canSaveAutosaveCurrently() override;
 
@@ -128,7 +125,7 @@ public:
 	bool onKeyUp(const Common::KeyState &state);
 
 	static Common::StringArray splitString(const Common::String &text, char c);
-	
+
 	/* Pick the renderer type to use.
 	   Currently will only return kRendererTypeOpenGL or kRendererTypeTinyGL */
 	Graphics::RendererType preferredRendererType() const;

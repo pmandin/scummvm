@@ -199,7 +199,7 @@ bool Inventory::addObject(InventoryObject *obj) {
 				TeLayout *slot = _gui.layout(Common::String::format("page%dSlot%d", pageNo, slotNo));
 				if (!slot)
 					break;
-				for (long c = 0; c < slot->childCount(); c++) {
+				for (int c = 0; c < slot->childCount(); c++) {
 					Te3DObject2 *child = slot->child(c);
 					InventoryObject *iobj = dynamic_cast<InventoryObject *>(child);
 					if (iobj) {
@@ -414,6 +414,8 @@ void Inventory::selectedObject(InventoryObject *obj) {
 		TeSpriteLayout *selection = _gui.spriteLayoutChecked("selectionSprite");
 		selection->setVisible(obj->worldVisible());
 		TeLayout *parentLayout = dynamic_cast<TeLayout *>(obj->parent());
+		if (!parentLayout)
+			error("Couldn't get parent of object");
 		TeVector3f32 pos = parentLayout->position();
 		pos.z() = selection->position().z();
 		selection->setPosition(pos);
@@ -424,9 +426,10 @@ void Inventory::selectedObject(InventoryObject *obj) {
 					objectDescription(objId).c_str());
 		_gui.textLayout("text")->setText(text);
 		_gui.buttonLayoutChecked("lire")->setEnable(isDocument(objId));
-		game->setCurrentObjectSprite(obj->spritePath());
+		const Common::String spritePathStr = obj->spritePath();
+		game->setCurrentObjectSprite(spritePathStr);
 		TeLayout *textObj = _gui.layout("textObject");
-		for (long i = 0; i < textObj->childCount(); i++) {
+		for (int i = 0; i < textObj->childCount(); i++) {
 			if (textObj->child(i)->name() == obj->name()) {
 				textObj->setVisible(true);
 				textObj->child(i)->setVisible(true);
@@ -434,7 +437,7 @@ void Inventory::selectedObject(InventoryObject *obj) {
 				textObj->child(i)->setVisible(false);
 			}
 		}
-		game->inGameGui().spriteLayoutChecked("selectedObject")->load(obj->spritePath());
+		game->inGameGui().spriteLayoutChecked("selectedObject")->load(spritePathStr);
 	}
 }
 

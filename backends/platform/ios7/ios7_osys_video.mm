@@ -28,26 +28,26 @@
 #include "graphics/blit.h"
 #include "backends/platform/ios7/ios7_app_delegate.h"
 
-@interface iOS7AlertHandler : NSObject<UIAlertViewDelegate>
-@end
-
-@implementation iOS7AlertHandler
-
-- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex {
-	OSystem_iOS7::sharedInstance()->quit();
-	abort();
-}
-
-@end
+#define UIViewParentController(__view) ({ \
+	UIResponder *__responder = __view; \
+	while ([__responder isKindOfClass:[UIView class]]) \
+		__responder = [__responder nextResponder]; \
+	(UIViewController *)__responder; \
+})
 
 static void displayAlert(void *ctx) {
-	UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Fatal Error"
-	                                                message:[NSString stringWithCString:(const char *)ctx encoding:NSUTF8StringEncoding]
-	                                               delegate:[[iOS7AlertHandler alloc] init]
-	                                      cancelButtonTitle:@"OK"
-	                                      otherButtonTitles:nil];
-	[alert show];
-	[alert autorelease];
+	UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"Fatal Error"
+								message:[NSString stringWithCString:(const char *)ctx 	encoding:NSUTF8StringEncoding]
+								preferredStyle:UIAlertControllerStyleAlert];
+
+	UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+	   handler:^(UIAlertAction * action) {
+		OSystem_iOS7::sharedInstance()->quit();
+		abort();
+	}];
+
+	[alert addAction:defaultAction];
+	[UIViewParentController([iOS7AppDelegate iPhoneView]) presentViewController:alert animated:YES completion:nil];
 }
 
 void OSystem_iOS7::fatalError() {
@@ -84,6 +84,7 @@ void OSystem_iOS7::engineInit() {
 	dispatch_async(dispatch_get_main_queue(), ^{
 		[[UIApplication sharedApplication] setIdleTimerDisabled:YES];
 	});
+	[[iOS7AppDelegate iPhoneView] setIsInGame:YES];
 }
 
 void OSystem_iOS7::engineDone() {
@@ -92,6 +93,7 @@ void OSystem_iOS7::engineDone() {
 	dispatch_async(dispatch_get_main_queue(), ^{
 		[[UIApplication sharedApplication] setIdleTimerDisabled:NO];
 	});
+	[[iOS7AppDelegate iPhoneView] setIsInGame:NO];
 }
 
 void OSystem_iOS7::initVideoContext() {
@@ -583,9 +585,18 @@ void OSystem_iOS7::updateMouseTexture() {
 
 void OSystem_iOS7::setShowKeyboard(bool show) {
 	if (show) {
+#if TARGET_OS_IOS
 		execute_on_main_thread(^ {
 			[[iOS7AppDelegate iPhoneView] showKeyboard];
 		});
+#elif TARGET_OS_TV
+		// Delay the showing of keyboard 1 second so the user
+		// is able to see the message
+		dispatch_time_t delay = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC));
+		dispatch_after(delay, dispatch_get_main_queue(), ^(void){
+			[[iOS7AppDelegate iPhoneView] showKeyboard];
+		});
+#endif
 	} else {
 		// Do not hide the keyboard in portrait mode as it is shown automatically and not
 		// just when asked with the kFeatureVirtualKeyboard.
@@ -598,5 +609,9 @@ void OSystem_iOS7::setShowKeyboard(bool show) {
 }
 
 bool OSystem_iOS7::isKeyboardShown() const {
-	return [[iOS7AppDelegate iPhoneView] isKeyboardShown];
+	__block bool isShown = false;
+	execute_on_main_thread(^{
+		isShown = [[iOS7AppDelegate iPhoneView] isKeyboardShown];
+	});
+	return isShown;
 }

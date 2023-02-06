@@ -17,6 +17,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für Obsidian hinzugefügt.
    - Unterstützung für Added support for Pink Panther: Passport to Peril hinzugefügt.
    - Unterstützung für Pink Panther: Hokus Pokus Pink hinzugefügt.
+   - Unterstützung für Adibou 2 (Adi Junior) "Environment", "Read/Count 4 & 5" und "Read/Count 6 & 7" hinzugefügt.
    - Unterstützung für Driller/Space Station Oblivion (DOS/EGA/CGA, Amiga, Atari ST, ZX Spectrum und Amstrad CPC-Versionen) hinzugefügt.
    - Unterstützung für Halls of the Dead: Faery Tale Adventure II hinzugefügt.
 
@@ -25,6 +26,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Erste Generation von Miyoo (New BittBoy, Pocket Go und PowKiddy Q90-V90-Q20)
      mit der TriForceX MiyooCFW.
    - Miyoo mini
+   - KolibriOS
 
  Allgemein:
    - Anzahl an falsch-positiven Einträgen reduziert, wenn das Gerät nach Spielen durchsucht wird.
@@ -59,9 +61,6 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Dreamweb:
    - Das Spiel kann nun direkt von den originalen Installations-Disketten gespielt werden.
-
- GOB:
-   - Unterstützung für Adibou 2 (Adi Junior) "Environment", "Read/Count 4 & 5" und "Read/Count 6 & 7" hinzugefügt.
 
  Hadesch:
    - Unterstützung für eine weitere Version von 1997 hinzugefügt.

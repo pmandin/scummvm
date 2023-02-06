@@ -45,10 +45,6 @@ GLTexture *GLContext::find_texture(uint h) {
 	return nullptr;
 }
 
-void GLContext::free_texture(uint h) {
-	free_texture(find_texture(h));
-}
-
 void GLContext::free_texture(GLTexture *t) {
 	GLTexture **ht;
 	GLImage *im;
@@ -155,21 +151,7 @@ void GLContext::glopTexImage2D(GLParam *p) {
 		}
 		if (!found)
 			error("TinyGL texture: format 0x%04x and type 0x%04x combination not supported", format, type);
-		Graphics::PixelBuffer src(pf, pixels);
-		Graphics::PixelFormat internalPf;
-#if defined(SCUMM_LITTLE_ENDIAN)
-		if (internalformat == TGL_RGBA)
-			internalPf = Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24);
-		else if (internalformat == TGL_RGB)
-			internalPf = Graphics::PixelFormat(3, 8, 8, 8, 0, 0, 8, 16, 0);
-#else
-		if (internalformat == TGL_RGBA)
-			internalPf = Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
-		else if (internalformat == TGL_RGB)
-			internalPf = Graphics::PixelFormat(3, 8, 8, 8, 0, 16, 8, 0, 0);
-#endif
-		Graphics::PixelBuffer srcInternal(internalPf, width * height, DisposeAfterUse::YES);
-		srcInternal.copyBuffer(0, width * height, src);
+
 		if (width > _textureSize || height > _textureSize)
 			filter = texture_mag_filter;
 		else
@@ -178,15 +160,17 @@ void GLContext::glopTexImage2D(GLParam *p) {
 		case TGL_LINEAR_MIPMAP_NEAREST:
 		case TGL_LINEAR_MIPMAP_LINEAR:
 		case TGL_LINEAR:
-			im->pixmap = new BilinearTexelBuffer(
-				srcInternal,
+			im->pixmap = createBilinearTexelBuffer(
+				pixels, pf,
+				format, type,
 				width, height,
 				_textureSize
 			);
 			break;
 		default:
-			im->pixmap = new NearestTexelBuffer(
-				srcInternal,
+			im->pixmap = createNearestTexelBuffer(
+				pixels, pf,
+				format, type,
 				width, height,
 				_textureSize
 			);
@@ -281,7 +265,7 @@ void GLContext::gl_DeleteTextures(TGLsizei n, const TGLuint *textures) {
 		TinyGL::GLTexture *t = find_texture(textures[i]);
 		if (t) {
 			if (t == current_texture) {
-				current_texture = find_texture(0);
+				current_texture = default_texture;
 			}
 			t->disposed = true;
 		}

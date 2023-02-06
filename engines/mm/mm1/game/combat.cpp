@@ -54,7 +54,7 @@ void Combat::clear() {
 	_val1 = 0;
 	_val6 = _val7 = 0;
 	_partyIndex = _val9 = 0;
-	_val10 = _destCharCtr = 0;
+	_monsterShootingCtr = _destCharCtr = 0;
 	_activeMonsterNum = 0;
 	_destAC = 0;
 	_numberOfTimes = 0;
@@ -165,7 +165,7 @@ void Combat::setupCanAttacks() {
 					g_globals->_combatParty[5]->_canAttack = true;
 			}
 
-			setupAttackerVal();
+			setupAttackersCount();
 			return;
 		}
 	}
@@ -176,17 +176,17 @@ void Combat::setupCanAttacks() {
 	for (uint i = 0; i < g_globals->_combatParty.size(); ++i)
 		g_globals->_combatParty[i]->_canAttack = true;
 
-	setupAttackerVal();
+	setupAttackersCount();
 }
 
-void Combat::setupAttackerVal() {
+void Combat::setupAttackersCount() {
 	_attackersCount = 0;
 	for (uint i = 0; i < g_globals->_combatParty.size(); ++i) {
 		if (g_globals->_combatParty[i]->_canAttack)
 			++_attackersCount;
 	}
 
-	_attackersCount = getRandomNumber(_attackersCount + 1) - 1;
+	_attackersCount += getRandomNumber(_attackersCount + 1) - 1;
 }
 
 void Combat::checkLeftWall() {
@@ -281,7 +281,8 @@ void Combat::combatLoop(bool checkMonstersFirst) {
 					_currentChar = i;
 					g_globals->_currCharacter = &c;
 
-					if (!(c._condition & (BLINDED | SILENCED | DISEASED | POISONED))) {
+					if (!(c._condition & (BAD_CONDITION | UNCONSCIOUS |
+							PARALYZED | ASLEEP))) {
 						// Character is enabled
 						setMode(SELECT_OPTION);
 						return;
@@ -346,10 +347,7 @@ void Combat::defeatedMonsters() {
 			g_globals->_combatParty[i]->_exp += _totalExperience;
 	}
 
-	// Update the party's characters
-	g_globals->_party.combatDone();
-
-	combatDone();
+	setMode(DEFEATED_MONSTERS);
 }
 
 void Combat::setTreasure() {
@@ -585,12 +583,13 @@ void Combat::proc2() {
 void Combat::monsterAction() {
 	Encounter &enc = g_globals->_encounters;
 	byte bitset = _monsterP->_counterFlags;
-	int threshold = -1;
+	int threshold = 999;	// Never flee by default
 
 	_activeMonsterNum = _monsterIndex;
 	_monsterName = _monsterP->_name;
 	monsterIndexOf();
 
+	// Set up threshold to check whether monster flees
 	if (!(bitset & (COUNTER_THRESHOLD1 | COUNTER_THRESHOLD2))) {
 		if (enc._highestLevel < 4) {
 		} else if (enc._highestLevel < 9) {
@@ -615,21 +614,25 @@ void Combat::monsterAction() {
 	}
 
 	if (getRandomNumber(100) >= threshold) {
+		// Monster flees from combat
 		_monsterP->_experience = 0;
 		_monsterP->_field18 = 0;
-		enc._monsterList[_monsterIndex]._hp = 0;
-		enc._monsterList[_monsterIndex]._status = MONFLAG_DEAD;
+		_monsterP->_hp = 0;
+		_monsterP->_status = MONFLAG_DEAD;
 		removeMonster();
+
+		_activeMonsterNum = -1;
 		setMode(MONSTER_FLEES);
 	} else {
-		checkMonsterSpells();
+		// Otherwise, move on to checking monster actions
+		checkMonsterActions();
 	}
 }
 
 bool Combat::checkMonsterSpells() {
 	Encounter &enc = g_globals->_encounters;
 	if (_remainingMonsters.empty()) {
-		setMode(DEFEATED_MONSTERS);
+		defeatedMonsters();
 		return true;
 	}
 
@@ -655,7 +658,7 @@ bool Combat::checkMonsterSpells() {
 
 void Combat::checkMonsterActions() {
 	if (checkMonsterSpells())
-		// Monster wandered or cast spell, so things are taken care of
+		// Monster cast spell, so things are taken care of
 		return;
 
 	_destCharCtr = 0;
@@ -718,7 +721,7 @@ void Combat::removeDeadMonsters() {
 }
 
 void Combat::checkParty() {
-	_val10 = 0;
+	_monsterShootingCtr = 0;
 
 	if (g_globals->_party.checkPartyIncapacitated())
 		return;
@@ -726,7 +729,7 @@ void Combat::checkParty() {
 	// Update the array for the party
 	for (uint i = 0; i < g_globals->_combatParty.size(); ++i) {
 		const Character &c = *g_globals->_combatParty[i];
-		if ((c._condition & BAD_CONDITION) || !c._hpBase)
+		if ((c._condition & BAD_CONDITION) || !c._hpCurrent)
 			g_globals->_combatParty[i]->_checked = true;
 	}
 
@@ -890,6 +893,8 @@ void Combat::addAttackDamage() {
 			++_timesHit;
 		}
 	}
+
+	_displayedDamage = _damage;
 }
 
 void Combat::updateMonsterStatus() {
@@ -908,7 +913,7 @@ void Combat::updateMonsterStatus() {
 bool Combat::monsterTouch(Common::String &line) {
 	line.clear();
 
-	if (_val10 || !_monsterP->_bonusOnTouch)
+	if (_monsterShootingCtr || !_monsterP->_bonusOnTouch)
 		return false;
 	if (_monsterP->_bonusOnTouch & 0x80) {
 		proc9();
@@ -958,9 +963,9 @@ void Combat::iterateMonsters1Inner() {
 
 	} else {
 		enc._monsterList[getMonsterIndex()]._status |=
-			g_globals->_spellsState._newCondition;
+			g_globals->_spellsState._damage;
 
-		byte bits = g_globals->_spellsState._newCondition;
+		byte bits = g_globals->_spellsState._damage;
 		int effectNum;
 		for (effectNum = 0; effectNum < 8; ++effectNum, bits >>= 1) {
 			if (bits & 1)
@@ -1005,12 +1010,12 @@ void Combat::iterateMonsters2() {
 
 void Combat::iterateMonsters2Inner() {
 	Encounter &enc = g_globals->_encounters;
-	Common::String line1 = Common::String::format("|%s| %s",
+	Common::String line1 = Common::String::format("%s %s",
 		g_globals->_currCharacter->_name,
 		STRING["spells.casts_spell"].c_str());
 	const Common::String monsterName = _monsterP->_name;
 
-	_damage = g_globals->_spellsState._newCondition;
+	_damage = g_globals->_spellsState._damage;
 
 	bool affects = !monsterLevelThreshold();
 	if (affects) {
@@ -1026,7 +1031,7 @@ void Combat::iterateMonsters2Inner() {
 				idx = 0;
 
 			static const byte FLAGS[8] = {
-			0x40, 0x20, 0x60, 0x10, 8, 4, 2, 1
+				0x40, 0x20, 0x60, 0x10, 8, 4, 2, 1
 			};
 			if ((_monsterP->_field1a & FLAGS[idx]) == FLAGS[idx])
 				_damage >>= 2;
@@ -1048,16 +1053,16 @@ void Combat::iterateMonsters2Inner() {
 	} else {
 		Common::String line2 = Common::String::format("%s %s %d %s %s",
 			monsterName.c_str(),
-			STRING["monster_spells.takes"].c_str(),
+			STRING["dialogs.combat.takes"].c_str(),
 			_damage,
-			STRING[_damage == 1 ? "monster_spells.point" : "monster_spells.points"].c_str(),
-			STRING["monster_spells.of_damage"].c_str()
+			STRING[_damage == 1 ? "dialogs.combat.point" : "dialogs.combat.points"].c_str(),
+			STRING["dialogs.combat.of_damage"].c_str()
 		);
 
 		msg._lines.push_back(Line(0, 1, line2));
 
 		if (_damage >= enc._monsterList[getMonsterIndex()]._hp) {
-			msg._lines.push_back(Line(0, 2, STRING["monster_spells.and_goes_down"]));
+			msg._lines.push_back(Line(0, 2, STRING["dialogs.combat.and_goes_down"]));
 		}
 	}
 
@@ -1078,7 +1083,7 @@ void Combat::iterateMonsters2Inner() {
 			g_globals->_combat->iterateMonsters2Inner();
 		};
 	} else {
-		msg._ynCallback = []() {
+		msg._timeoutCallback = []() {
 			g_globals->_combat->characterDone();
 		};
 	}
@@ -1156,7 +1161,7 @@ void Combat::summonLightning() {
 			g_globals->_currCharacter->_name,
 			STRING["spells.casts_spell"].c_str());
 
-		ss._newCondition = g_globals->_currCharacter->_level * 2 + 4;
+		ss._damage = g_globals->_currCharacter->_level * 2 + 4;
 		ss._mmVal1++;
 		ss._mmVal2++;
 		ss._resistanceType = RESISTANCE_ELECTRICITY;
@@ -1178,7 +1183,7 @@ void Combat::summonLightning2() {
 	ss._mmVal1 = 1;
 	ss._mmVal2 = 2;
 	ss._resistanceType = RESISTANCE_ELECTRICITY;
-	ss._newCondition = getRandomNumber(29) + 3;
+	ss._damage = getRandomNumber(29) + 3;
 
 	iterateMonsters2();
 }
@@ -1188,7 +1193,7 @@ void Combat::fireball2() {
 	ss._mmVal1 = 1;
 	ss._mmVal2 = 1;
 	ss._resistanceType = 5;
-	ss._newCondition = 0;
+	ss._damage = 0;
 
 	levelAdjust();
 }
@@ -1196,7 +1201,7 @@ void Combat::fireball2() {
 void Combat::levelAdjust() {
 	SpellsState &ss = g_globals->_spellsState;
 	for (uint i = 0; i < g_globals->_currCharacter->_level._current; ++i)
-		ss._newCondition += getRandomNumber(6);
+		ss._damage += getRandomNumber(6);
 
 	iterateMonsters2();
 }
@@ -1208,7 +1213,7 @@ void Combat::paralyze() {
 	ss._mmVal1++;
 	ss._mmVal2 = 6;
 	ss._resistanceType = _attackersCount;
-	ss._newCondition = BAD_CONDITION;
+	ss._damage = BAD_CONDITION;
 
 	iterateMonsters1();
 }
@@ -1230,8 +1235,8 @@ bool Combat::divineIntervention() {
 
 		if (c._condition != ERADICATED) {
 			c._condition = 0;
-			c._hpBase = c._hp;
-			c._hpMax = c._hpBase;
+			c._hpCurrent = c._hp;
+			c._hpMax = c._hpCurrent;
 		}
 	}
 
@@ -1314,7 +1319,7 @@ void Combat::fireball() {
 			g_globals->_currCharacter->_name,
 			STRING["spells.casts_spell"].c_str());
 
-		ss._newCondition = g_globals->_currCharacter->_level * 2 + 4;
+		ss._damage = g_globals->_currCharacter->_level * 2 + 4;
 		ss._mmVal1++;
 		ss._mmVal2++;
 		ss._resistanceType++;
@@ -1362,7 +1367,7 @@ void Combat::weaken() {
 
 	resetDestMonster();
 	ss._mmVal1++;
-	ss._newCondition = 2;
+	ss._damage = 2;
 	iterateMonsters2();
 }
 
@@ -1374,7 +1379,7 @@ bool Combat::web() {
 	ss._mmVal1++;
 	ss._mmVal2 = 0;
 	ss._resistanceType = 5;
-	ss._newCondition = UNCONSCIOUS;
+	ss._damage = UNCONSCIOUS;
 
 	iterateMonsters1();
 	return true;
@@ -1392,10 +1397,10 @@ bool Combat::acidRain() {
 	ss._mmVal1 = 1;
 	ss._mmVal2 = 3;
 	ss._resistanceType = 15;
-	ss._newCondition = 0;
+	ss._damage = 0;
 
 	for (int i = 0; i < 5; ++i)
-		ss._newCondition += getRandomNumber(10);
+		ss._damage += getRandomNumber(10);
 
 	iterateMonsters2();
 	return true;
@@ -1469,13 +1474,13 @@ void Combat::monsterAttackRandom() {
 	size_t monsterNameSize = enc._monsterList[getMonsterIndex()]._name.size() + 1;
 
 	_monsterAttackStyle = getRandomNumber((monsterNameSize < 13) ? 15 : 11);
-	_val10 = 0;
+	_monsterShootingCtr = 0;
 
 	monsterAttackInner();
 }
 
 void Combat::monsterAttackShooting() {
-	++_val10;
+	++_monsterShootingCtr;
 	_monsterAttackStyle = 99;	// shooting
 
 	monsterAttackInner();
@@ -1493,7 +1498,7 @@ void Combat::monsterAttackInner() {
 	if (c._condition & (ASLEEP | BLINDED | PARALYZED))
 		_attackerLevel += 5;
 
-	if (_val10) {
+	if (_monsterShootingCtr) {
 		_attackAttr2._base = _monsterP->_specialAbility & 0x7f;
 		_numberOfTimes = 1;
 
@@ -1512,6 +1517,18 @@ void Combat::monsterAttackInner() {
 		_attackerLevel = (attackerLevel > 255) ? 192 : attackerLevel;
 	}
 
+	// Calculate attack damage
+	addAttackDamage();
+
+	// Do some final damage adjustment which may reduce the
+	// actual damage from what gets displayed
+	if (g_globals->_activeSpells._s.power_shield)
+		_damage /= 2;
+
+	if (_monsterShootingCtr && g_globals->_activeSpells._s.shield)
+		_damage = MAX((int)_damage - 8, 0);
+
+	// Display the result
 	setMode(MONSTER_ATTACK);
 }
 
@@ -1612,8 +1629,42 @@ void Combat::combatDone() {
 	g_globals->_activeSpells._s.shield = 0;
 	g_globals->_activeSpells._s.power_shield = 0;
 
+	// Update the party's characters
+	g_globals->_party.combatDone();
+
 	// Rearrange the party to match the combat order
 	g_globals->_party.rearrange(g_globals->_combatParty);
+}
+
+Common::String Combat::subtractDamageFromChar() {
+	Character &c = *g_globals->_currCharacter;
+	int newHp = c._hpCurrent - _damage;
+	Common::String result;
+
+	if (newHp > 0) {
+		c._hpCurrent = newHp;
+
+	} else {
+		c._hpCurrent = 0;
+
+		if (!(c._condition & (BAD_CONDITION | UNCONSCIOUS))) {
+			c._condition |= UNCONSCIOUS;
+
+			result = Common::String::format("%s %s", c._name,
+				STRING["dialogs.combat.goes_down"].c_str());
+			Sound::sound2(SOUND_8);
+
+		} else {
+			if (c._condition & BAD_CONDITION)
+				c._condition = BAD_CONDITION | DEAD;
+
+			result = Common::String::format("%s %s", c._name,
+				STRING["dialogs.combat.dies"].c_str());
+			Sound::sound2(SOUND_8);
+		}
+	}
+
+	return result;
 }
 
 } // namespace Game

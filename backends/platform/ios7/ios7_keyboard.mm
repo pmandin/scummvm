@@ -28,9 +28,9 @@
 - (void)setEnablesReturnKeyAutomatically:(BOOL)val;
 @end
 
-@interface TextInputHandler : UITextView {
+@interface TextInputHandler : UITextField<UITabBarDelegate, UITextInput> {
 	SoftKeyboard *softKeyboard;
-	UIToolbar *toolbar;
+	UITabBar *toolbar;
 	UIScrollView *scrollView;
 }
 
@@ -51,7 +51,7 @@
 	[self setAutocorrectionType:UITextAutocorrectionTypeNo];
 	[self setAutocapitalizationType:UITextAutocapitalizationTypeNone];
 	[self setEnablesReturnKeyAutomatically:NO];
-
+#if TARGET_OS_IOS
 	// Hide the input assistent bar. The API is only available since IOS 9.0.
 	// The code only compils with the iOS 9.0+ SDK, and only works on iOS 9.0
 	// or above.
@@ -68,46 +68,65 @@
 		}
 	}
 #endif
+#endif
 
-	toolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 0.0f, 0.0f)];
+	toolbar = [[UITabBar alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 0.0f, 0.0f)];
 	toolbar.barTintColor = keyboard.backgroundColor;
 	toolbar.tintColor = keyboard.tintColor;
 	toolbar.translucent = NO;
+	toolbar.delegate = self;
 
 	toolbar.items = @[
 		// GMM button
-		[[[UIBarButtonItem alloc] initWithTitle:@"\u2630" style:UIBarButtonItemStylePlain target:self action:@selector(mainMenuKey)] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"\u2630" image:nil tag:1] autorelease],
 		// Escape key
-		[[[UIBarButtonItem alloc] initWithTitle:@"Esc" style:UIBarButtonItemStylePlain target:self action:@selector(escapeKey)] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"Esc" image:nil tag:2] autorelease],
 		// Tab key
-		[[[UIBarButtonItem alloc] initWithTitle:@"Tab" style:UIBarButtonItemStylePlain target:self action:@selector(tabKey)] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"Tab" image:nil tag:3] autorelease],
 		// Return key
-		[[[UIBarButtonItem alloc] initWithTitle:@"\u23ce" style:UIBarButtonItemStylePlain target:self action:@selector(returnKey)] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"\u23ce" image:nil tag:4] autorelease],
 		// Function keys
-		[[[UIBarButtonItem alloc] initWithTitle:@"F1" style:UIBarButtonItemStylePlain target:self action:@selector(fn1Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F2" style:UIBarButtonItemStylePlain target:self action:@selector(fn2Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F3" style:UIBarButtonItemStylePlain target:self action:@selector(fn3Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F4" style:UIBarButtonItemStylePlain target:self action:@selector(fn4Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F5" style:UIBarButtonItemStylePlain target:self action:@selector(fn5Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F6" style:UIBarButtonItemStylePlain target:self action:@selector(fn6Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F7" style:UIBarButtonItemStylePlain target:self action:@selector(fn7Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F8" style:UIBarButtonItemStylePlain target:self action:@selector(fn8Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F9" style:UIBarButtonItemStylePlain target:self action:@selector(fn9Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F10" style:UIBarButtonItemStylePlain target:self action:@selector(fn10Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F11" style:UIBarButtonItemStylePlain target:self action:@selector(fn11Key)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"F12" style:UIBarButtonItemStylePlain target:self action:@selector(fn12Key)] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F1" image:nil tag:5] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F2" image:nil tag:6] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F3" image:nil tag:7] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F4" image:nil tag:8] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F5" image:nil tag:9] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F6" image:nil tag:10] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F7" image:nil tag:11] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F8" image:nil tag:12] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F9" image:nil tag:13] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F10" image:nil tag:14] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F11" image:nil tag:15] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"F12" image:nil tag:16] autorelease],
 		// Arrow keys
-		[[[UIBarButtonItem alloc] initWithTitle:@"\u2190" style:UIBarButtonItemStylePlain target:self action:@selector(leftArrowKey)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"\u2191" style:UIBarButtonItemStylePlain target:self action:@selector(upArrowKey)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"\u2192" style:UIBarButtonItemStylePlain target:self action:@selector(rightArrowKey)] autorelease],
-		[[[UIBarButtonItem alloc] initWithTitle:@"\u2193" style:UIBarButtonItemStylePlain target:self action:@selector(downArrowKey)] autorelease],
-		// Spacer at the end
-		[[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"\u2190" image:nil tag:17] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"\u2191" image:nil tag:18] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"\u2192" image:nil tag:19] autorelease],
+		[[[UITabBarItem alloc] initWithTitle:@"\u2193" image:nil tag:20] autorelease]
 	];
+
+	// Increase the font size on the UITabBarItems to make them readable on small displays
+	for (UITabBarItem *item in toolbar.items) {
+		[item setTitleTextAttributes: [NSDictionary dictionaryWithObjectsAndKeys: [UIFont fontWithName:@"Helvetica" size:20.0], NSFontAttributeName, nil] forState:UIControlStateNormal];
+	}
+
+#if TARGET_OS_TV
+	// In tvOS a UITabBarItem is selected when moving to the selected item, in other words
+	// no click is required. This is not a great user experience since the user needs to
+	// scroll to the wanted UITabBarItem causing the delegate function
+	// tabBar:(UITabBar *)tabBar didSelectItem:(UITabBarItem *)item to be called multiple
+	// times. Instead add a tap gesture on the UITabBar and let the delegate function set
+	// the selected item. Then trigger the action when the user press the button.
+	UITapGestureRecognizer *tapGesture = [[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(selectUITabBarItem:)] autorelease];
+	[toolbar addGestureRecognizer:tapGesture];
+#endif
 
 	self.inputAccessoryView = toolbar;
 	[toolbar sizeToFit];
 
+#if TARGET_OS_IOS
+	// In tvOS the UITabBar is scrollable but not in iOS. In iOS the UITabBar must be
+	// put in a UIScrollView to be scrollable.
 	scrollView = [[UIScrollView alloc] init];
 	scrollView.frame = toolbar.frame;
 	scrollView.bounds = toolbar.bounds;
@@ -118,6 +137,7 @@
 	[scrollView addSubview:toolbar];
 	self.inputAccessoryView = scrollView;
 
+#endif
 	return self;
 }
 
@@ -127,15 +147,121 @@
 	[super dealloc];
 }
 
+/* There's a difference between UITextFields and UITextViews that the
+ * delegate function textView:shouldChangeTextInRange:replacementText:
+ * is called when pressing the backward button on a keyboard also when
+ * the textView is empty. This is not the case for UITextFields, the
+ * function textField:shouldChangeTextInRange:replacementText: is not
+ * called if the textField is empty which is problematic in the cases
+ * where there's already text in the open dialog (e.g. the save dialog
+ * when the user wants to overwrite an existing slot). There's currently
+ * no possibility to propagate existing text elements from dialog into
+ * the textField. To be able to handle the cases where the user wants to
+ * delete existing texts when the textField is empty the inputView has
+ * to implement the UITextInput protocol function deleteBackward that is
+ * called every time the backward key is pressed. */
+-(void)deleteBackward {
+	if ([self hasText]) {
+		/* If the textField has text the backward key presses will be
+		 * forwarded to the EventManager in the delegate function
+		 * textField:shouldChangeTextInRange:replacementText:
+		 * call the super class to delete characters in the textField */
+		[super deleteBackward];
+	} else {
+		/* Forward the key press to the EventManager also in the cases
+		 * where the textField is empty to remove prefilled characters
+		 * in dialogs. */
+		[softKeyboard handleKeyPress:'\b'];
+	}
+}
+
+-(void)selectUITabBarItem:(UITapGestureRecognizer *)recognizer {
+	switch ([[toolbar selectedItem] tag]) {
+	case 1:
+		[self mainMenuKey];
+		break;
+	case 2:
+		[self escapeKey];
+		break;
+	case 3:
+		[self tabKey];
+		break;
+	case 4:
+		[self returnKey];
+		break;
+	case 5:
+		[self fn1Key];
+		break;
+	case 6:
+		[self fn2Key];
+		break;
+	case 7:
+		[self fn3Key];
+		break;
+	case 8:
+		[self fn4Key];
+		break;
+	case 9:
+		[self fn5Key];
+		break;
+	case 10:
+		[self fn6Key];
+		break;
+	case 11:
+		[self fn7Key];
+		break;
+	case 12:
+		[self fn8Key];
+		break;
+	case 13:
+		[self fn9Key];
+		break;
+	case 14:
+		[self fn10Key];
+		break;
+	case 15:
+		[self fn11Key];
+		break;
+	case 16:
+		[self fn12Key];
+		break;
+	case 17:
+		[self leftArrowKey];
+		break;
+	case 18:
+		[self upArrowKey];
+		break;
+	case 19:
+		[self rightArrowKey];
+		break;
+	case 20:
+		[self downArrowKey];
+		break;
+	default:
+		break;
+	}
+}
+
+-(void)tabBar:(UITabBar *)tabBar didSelectItem:(UITabBarItem *)item {
+#if TARGET_OS_IOS
+	// In iOS the UITabBarItem is selected on touch. Trigger the action
+	// on the selected item.
+	[self selectUITabBarItem:nil];
+#endif
+}
+
 - (void)attachAccessoryView {
 	self.inputAccessoryView.hidden = NO;
 	// Alternatively we could add/remove instead of show/hide the inpute accessory view
 //	self.inputAccessoryView = scrollView;
 //	[self reloadInputViews];
-	// We need at least a width of 768 pt for the toolbar. If we add more buttons this may need to be increased.
-	toolbar.frame = CGRectMake(0, 0, MAX(768, [[UIScreen mainScreen] bounds].size.width), toolbar.frame.size.height);
+	// We need at least a width of 1024 pt for the toolbar. If we add more buttons this may need to be increased.
+	toolbar.frame = CGRectMake(0, 0, MAX(1024, [[UIScreen mainScreen] bounds].size.width), toolbar.frame.size.height);
 	toolbar.bounds = toolbar.frame;
+	toolbar.selectedItem = nil;
+#if TARGET_OS_IOS
 	scrollView.contentSize = toolbar.frame.size;
+#endif
 }
 
 - (void)detachAccessoryView {
@@ -276,7 +402,9 @@
 	inputDelegate = nil;
 	inputView = [[TextInputHandler alloc] initWithKeyboard:self];
 	inputView.delegate = self;
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(prepareKeyboard:) name:UIKeyboardWillShowNotification object:nil];
+	inputView.clearsOnBeginEditing = YES;
+	[inputView layoutIfNeeded];
+
 	return self;
 }
 
@@ -285,7 +413,7 @@
 	[super dealloc];
 }
 
-- (BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)text {
 	unichar c;
 	if (text.length) {
 		c = [text characterAtIndex:0];
@@ -297,7 +425,14 @@
 	return YES;
 }
 
-- (UITextView *)inputView {
+- (void)textFieldDidBeginEditing:(UITextField *)textField {
+	[inputView attachAccessoryView];
+}
+- (void)textFieldDidEndEditing:(UITextField *)textField {
+	[inputView detachAccessoryView];
+}
+
+-(UITextField *)inputView {
 	return inputView;
 }
 
@@ -313,21 +448,6 @@
 	[inputDelegate handleMainMenuKey];
 }
 
-- (void)prepareKeyboard:(NSNotification *)notification {
-	// Check if a hardware keyboard is connected, and only show the accessory view if there isn't one.
-	// If there is a hardware keyboard, the software one will only contains the text assistance bar
-	// and will be small (less than 100 pt, but use a bit more in case it changes with future iOS versions).
-	// This only works with iOS 9 and above. For ealier version the keyboard size is fixed and instead it
-	// only shows part of the keyboard (which could be detected with the origin position, but that would
-	// depend on the current orientation and screen resolution).
-	NSDictionary* info = [notification userInfo];
-	CGRect keyboardEndFrame = [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
-	if (keyboardEndFrame.size.height < 140)
-		[inputView detachAccessoryView];
-	else
-		[inputView attachAccessoryView];
-}
-
 - (void)showKeyboard {
 	[inputView becomeFirstResponder];
 }
@@ -336,4 +456,7 @@
 	[inputView endEditing:YES];
 }
 
+- (BOOL)isKeyboardShown {
+	return [inputView isFirstResponder];
+}
 @end

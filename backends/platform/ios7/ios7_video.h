@@ -47,7 +47,6 @@ typedef struct {
 	Common::List<InternalEvent> _events;
 	NSLock *_eventLock;
 	SoftKeyboard *_keyboardView;
-	BOOL _keyboardVisible;
 	Common::List<GameController*> _controllers;
 
 	UIBackgroundTaskIdentifier _backgroundSaveStateTask;
@@ -92,6 +91,7 @@ typedef struct {
 }
 
 @property (nonatomic, assign) CGPoint pointerPosition;
+@property (nonatomic, assign) BOOL isInGame;
 
 - (id)initWithFrame:(struct CGRect)frame;
 
@@ -113,11 +113,15 @@ typedef struct {
 - (void)updateMouseCursorScaling;
 - (void)updateMouseCursor;
 
+#if TARGET_OS_IOS
 - (void)deviceOrientationChanged:(UIDeviceOrientation)orientation;
+#endif
 
 - (void)showKeyboard;
 - (void)hideKeyboard;
 - (BOOL)isKeyboardShown;
+
+- (void)handleMainMenuKey;
 
 - (void)applicationSuspend;
 - (void)applicationResume;

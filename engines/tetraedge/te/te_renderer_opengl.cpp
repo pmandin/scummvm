@@ -21,6 +21,7 @@
 
 #include "common/textconsole.h"
 #include "common/debug.h"
+#include "common/system.h"
 
 #include "graphics/opengl/system_headers.h"
 
@@ -99,20 +100,12 @@ void TeRendererOpenGL::init(uint width, uint height) {
 	// Note: original doesn't separate but blends are nicer that way.
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthFunc(GL_LEQUAL);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_DONT_CARE);
+	// Original does this, probably not needed?
+	//glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_DONT_CARE);
 	glClearDepth(1.0);
 	glClearStencil(0);
 	_clearColor = TeColor(0, 0, 0, 255);
 	glClearColor(0, 0, 0, 1.0);
-	debug("[TeRenderer::init] Vendor : %s", vendor().c_str());
-	debug("[TeRenderer::init] Renderer : %s", renderer().c_str());
-	debug("[TeRenderer::init] Version : %s", glGetString(GL_VERSION));
-	int bits;
-	glGetIntegerv(GL_STENCIL_BITS, &bits);
-	debug("[TeRenderer::init] Sentil buffer bits : %d", bits);
-	glGetIntegerv(GL_DEPTH_BITS, &bits);
-	debug("[TeRenderer::init] Depth buffer bits : %d", bits);
-	//debug("[TeRenderer::init] Extensions : %s", glGetString(GL_EXTENSIONS));
 	//TeOpenGLExtensions::loadExtensions(); // this does nothing in the game?
 	_currentColor = TeColor(255, 255, 255, 255);
 	_scissorEnabled = false;
@@ -184,7 +177,7 @@ void TeRendererOpenGL::renderTransparentMeshes() {
 			glEnable(GL_TEXTURE_2D);
 			_textureEnabled = true;
 		}
-		if (material._enableSomethingDefault0) {
+		if (material._isShadowTexture) {
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 			glDisableClientState(GL_COLOR_ARRAY);
 		}
@@ -207,7 +200,7 @@ void TeRendererOpenGL::renderTransparentMeshes() {
 
 		vertsDrawn += meshProperties._vertexCount;
 
-		if (material._enableSomethingDefault0) {
+		if (material._isShadowTexture) {
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glEnableClientState(GL_COLOR_ARRAY);
 		}
@@ -299,7 +292,7 @@ void TeRendererOpenGL::shadowMode(enum ShadowMode mode) {
 void TeRendererOpenGL::applyMaterial(const TeMaterial &m) {
 	//debug("TeMaterial::apply (%s)", dump().c_str());
 	static const float constColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	if (_shadowMode == TeRenderer::ShadowModeNone) {
+	if (_shadowMode == ShadowModeNone) {
 		if (m._enableLights)
 			TeLightOpenGL::enableAll();
 		else
@@ -347,10 +340,10 @@ void TeRendererOpenGL::applyMaterial(const TeMaterial &m) {
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
 
 		setCurrentColor(m._diffuseColor);
-	} else if (_shadowMode == TeRenderer::ShadowModeCreating) {
-		// NOTE: Diverge from original here, it sets 255.0 but the
-		// colors should be scaled -1.0 .. 1.0.
-		static const float fullColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	} else if (_shadowMode == ShadowModeCreating) {
+		// NOTE: Replicate seeming bug from original here, it sets 255.0 but the
+		// colors should be scaled -1.0 .. 1.0?
+		static const float fullColor[4] = { 255.0f, 255.0f, 255.0f, 255.0f };
 		TeLightOpenGL::disableAll();
 		glDisable(GL_ALPHA_TEST);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -360,8 +353,7 @@ void TeRendererOpenGL::applyMaterial(const TeMaterial &m) {
 		glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, fullColor);
 	}
 
-	// TODO: Work out what TeMaterial::_enableSomethingDefault0 actually is.
-	if (!m._enableSomethingDefault0) {
+	if (!m._isShadowTexture) {
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 		glDisable(GL_TEXTURE_GEN_R);
@@ -390,6 +382,10 @@ void TeRendererOpenGL::applyMaterial(const TeMaterial &m) {
 
 void TeRendererOpenGL::updateGlobalLight() {
 	TeLightOpenGL::updateGlobal();
+}
+
+void TeRendererOpenGL::updateScreen() {
+	g_system->updateScreen();
 }
 
 Common::String TeRendererOpenGL::vendor() {

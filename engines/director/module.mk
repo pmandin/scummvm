@@ -43,6 +43,8 @@ MODULE_OBJS = \
 	lingo/xlibs/applecdxobj.o \
 	lingo/xlibs/askuser.o \
 	lingo/xlibs/barakeobj.o \
+	lingo/xlibs/batqt.o \
+	lingo/xlibs/blitpict.o \
 	lingo/xlibs/cdromxobj.o \
 	lingo/xlibs/darkenscreen.o \
 	lingo/xlibs/developerStack.o \
@@ -50,6 +52,7 @@ MODULE_OBJS = \
 	lingo/xlibs/fileexists.o \
 	lingo/xlibs/fileio.o \
 	lingo/xlibs/findfolder.o \
+	lingo/xlibs/findsys.o \
 	lingo/xlibs/flushxobj.o \
 	lingo/xlibs/fplayxobj.o \
 	lingo/xlibs/gpid.o \

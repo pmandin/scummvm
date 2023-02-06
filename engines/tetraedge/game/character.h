@@ -70,6 +70,8 @@ public:
 		Common::String _defaultMouth;	// Note: Engine supports more, but in practice only one ever used.
 		Common::String _defaultBody;	// Note: Engine supports more, but in practice only one ever used.
 
+		bool _invertNormals;
+
 		void clear();
 	};
 
@@ -99,7 +101,7 @@ public:
 	static void animCacheFreeOldest();
 	static TeIntrusivePtr<TeModelAnimation> animCacheLoad(const Common::Path &path);
 
-	float animLength(const TeModelAnimation &modelanim, long bone, long lastframe);
+	float animLength(const TeModelAnimation &modelanim, int bone, int lastframe);
 	float animLengthFromFile(const Common::String &animname, uint32 *pframeCount, uint lastframe = 9999);
 	bool blendAnimation(const Common::String &animname, float amount, bool repeat, bool returnToIdle);
 	TeVector3f32 correctPosition(const TeVector3f32 &pos);
@@ -115,7 +117,7 @@ public:
 	bool isWalkEnd();
 	int leftStepFrame(enum WalkPart walkpart);
 	int rightStepFrame(enum WalkPart walkpart);
-	bool loadModel(const Common::String &name, bool param_2);
+	bool loadModel(const Common::String &name, bool unused);
 	static bool loadSettings(const Common::String &path);
 
 	bool onBonesUpdate(const Common::String &boneName, TeMatrix4x4 &boneMatrix);
@@ -135,15 +137,15 @@ public:
 	void setStepSound(const Common::String &stepSound1, const Common::String &stepSound2);
 	float speedFromAnim(double amount);
 	//void stop(); // just maps to TeAnimation::stop();
-	float translationFromAnim(const TeModelAnimation &anim, long bone, long frame);
-	TeVector3f32 translationVectorFromAnim(const TeModelAnimation &anim, long bone, long frame);
-	TeTRS trsFromAnim(const TeModelAnimation &anim, long bone, long frame);
+	float translationFromAnim(const TeModelAnimation &anim, int bone, int frame);
+	TeVector3f32 translationVectorFromAnim(const TeModelAnimation &anim, int bone, int frame);
+	TeTRS trsFromAnim(const TeModelAnimation &anim, int bone, int frame);
 	void update(double percentval) override;
 	void updateAnimFrame();
 	void updatePosition(float curveOffset);
 	Common::String walkAnim(WalkPart part);
 	void walkMode(const Common::String &mode);
-	void walkTo(float param_1, bool param_2);
+	void walkTo(float curveEnd, bool walkFlag);
 
 	TeIntrusivePtr<TeModel> _model;
 	TeIntrusivePtr<TeModel> _shadowModel[2];

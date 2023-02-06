@@ -1126,7 +1126,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "pbtoilet1",			"PerfectBLUE TOILET1" },
 	{ "pbtoilet2",			"PerfectBLUE TOILET2" },
 	{ "panicook",			"PANICOOK" },
-	{ "pepperon",			"ペペロン村の四季" },			// Four Seasons in Pepperon Village, aka Valmaison au fil des saisons, aka Livet i Pepperon
+	{ "pepperon",			"Four Seasons in Pepperon" },	// ペペロン村の四季 aka Valmaison au fil des saisons, aka Livet i Pepperon
 	{ "perfectblue",		"Perfect Blue そらいろ★ナイト" },
 	{ "please",				"Please!" }, // by Teruo Takashima
 	{ "pod1",				"POD: Super Pop Digital Magazine" },
@@ -1304,6 +1304,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "picarddossier",		"Mini-Omnipedia: Picard Dossier" },
 	{ "poliq",				"Political IQ Test" },
 	{ "pqmakingof",			"The Making of Police Quest" },
+	{ "ronja",				"Ronja Rövardotter" },
 	{ "scissorsnstones",	"Scissors N Stones On-Line Manual" },
 	{ "solmahjong",			"Solitudes Mahjong Game" },
 	{ "superbowltrivia",	"Super Bowl Trivia Game" },
@@ -1840,13 +1841,6 @@ static const DirectorGameDescription gameDescriptions[] = {
 #undef SUPPORT_STATUS
 #define SUPPORT_STATUS ADGF_TESTING
 
-	// Original filename is 'BD-J/Demo'
-	// Developed by ART Sector ONE / Richard M. Coombs
-	// ベターデッド ーラティフィケーションー published by NEC Interchannel, Minato, Tokyo (1995)
-	MACGAME1("betterd", "", "Better Dead 12 megs", "17efee018a660458fae80de4364021ac", 486717, 404),
-	MACDEMO1_l("betterd", "Demo", "xn--BD-JDemo-na47b", "17efee018a660458fae80de4364021ac", 487275, Common::JA_JPN, 404),
-	WINGAME1_l("betterd", "", "BETTERD.EXE", "e484d23ce2b6750d9e7e4a7b32632f47", 696877, Common::JA_JPN, 404),
-
 	// Original filename is 東脳スタート
 	MACGAME1_l("easternmind", "", "xn--zckm1a5qp59wok6a", "276bee761e48a6fd709df77d5c2f60dd", 394781, Common::JA_JPN, 313),
 
@@ -1882,6 +1876,13 @@ static const DirectorGameDescription gameDescriptions[] = {
 // Macromedia Director v4
 //
 //////////////////////////////////////////////////
+
+	// Original filename is 'BD-J/Demo'
+	// Developed by ART Sector ONE / Richard M. Coombs
+	// ベターデッド ーラティフィケーションー published by NEC Interchannel, Minato, Tokyo (1995)
+	MACGAME1("betterd", "", "Better Dead 12 megs", "17efee018a660458fae80de4364021ac", 486717, 404),
+	MACDEMO1_l("betterd", "Demo", "xn--BD-JDemo-na47b", "17efee018a660458fae80de4364021ac", 487275, Common::JA_JPN, 404),
+	WINGAME1_l("betterd", "", "BETTERD.EXE", "e484d23ce2b6750d9e7e4a7b32632f47", 696877, Common::JA_JPN, 404),
 
 	MACGAME1("chopsuey", "", "Chop8", "01be45e7241194dad07938e7059b88e3", 481254, 404),
 	WINGAME1("chopsuey", "", "CHOPSUEY.EXE", "785e26240153a028549e8a66c2e904bf", 772382, 404),
@@ -2078,6 +2079,7 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINGAME1("cdphysics", "", "CDPHYS/CDINTRO.EXE", "65d06b5fef155a2473434571aff5bc29", 370004, 313),
 
 	MACDEMO1_l("cellofania", "Demo", "Cellofania.Demo", "f5277c53bacd27936158dd3867e587e2", 389970, Common::JA_JPN, 311),
+	MACGAME1t_l("cellofania", "", "Cellofania", "09f361d7e8b581d2475d0e586b102016", 394124, Common::JA_JPN, 311),
 
 	// English Mac filename is The C.H.A.O.S. Continuum™
 	// Japanese Mac demo filename is CHAOS デモ and another file is called CHAOS Demo
@@ -4334,7 +4336,7 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACDEMO1_l("makingmusic", "Demo", "xn--  -of4abb5d3cqd2fzgpb5ywa2a4b3r6f", "0c7bbb4b24823e5ab871cb4c1d6f3710", 502657, Common::JA_JPN, 404),
 
 	MACGAME1("makers", "", "Makers of the 20th Century", "da0da5d543b237051975ad70bec129f4", 482610, 404),
-	WINGAME2("makers", "", "MAKERS.EXE", "d879d7b40dd9f2eb59a2fbae5bc62306", 690883, 
+	WINGAME2("makers", "", "MAKERS.EXE", "d879d7b40dd9f2eb59a2fbae5bc62306", 690883,
 						   "MAKERS/MAIN.DIR", "05c3dff851aecbfeb1d3818404f3140c", 3391418, 404),
 
 	// Original filename is 'ママ　うたおう！'
@@ -5032,7 +5034,7 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACGAME1_l("syzygys", "", "xn--SYZYGYS-zj5o702ne6ytna4l0a3a5eb1g1hmjwa1h", "17efee018a660458fae80de4364021ac", 483159, Common::JA_JPN, 402),
 
 	WINGAME1("teamxtreme1", "", "XTREME.EXE", "45ab80997efedec388ff5200722e673c", 690123, 400),
-	WINGAME1("teamxtreme2", "", "TX2.EXE", "50c80bd2add25e574494838772973beb", 2585471, 400),
+	WINGAME1("teamxtreme2", "", "COPY2HD/TX2.EXE", "50c80bd2add25e574494838772973beb", 2585471, 400),
 
 	// From MacFormat #42
 	MACDEMO1("texturescape", "", "TextureScape Show", "77f4098988d5386794d1530065f514cd", 303961, 400),
@@ -7589,6 +7591,11 @@ static const DirectorGameDescription gameDescriptions[] = {
 
 	WINGAME2t_l("ritterrost", "",  "start.exe",			"9bc3d64be0fe3caa612f070b27c943b8", 2595758,
 								   "data/Rostburg.DXR", "6bf95a48f366bdf8af3a198c7b723c77", 38107269, Common::DE_DEU, 702),
+
+	// Just a launcher for the game installer (Dutch release)
+	// Game is not Director
+	WINGAME2t_l("ronja", "Launcher", "start.exe",	   "6406cc4e3d59440e68717076ffe04f91", 2933829,
+									 "Ronja.exe",	   "42b225e052662197dd8bbb7ff3d4e5bd", 253952, Common::NL_NLD, 700),
 
 	// original filename is a single space
 	MACGAME1("sentence", "", "xn-- -", "0944b962ebb00f4b5d5149d220f8449b", 113458, 702),

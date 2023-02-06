@@ -350,7 +350,12 @@ int spriteLayoutBindings(lua_State *L) {
 				}
 				if (imgPath.substr(0, 2) == "./") {
 					imgPath = imgPath.substr(0, 2);
-					imgFullPath = gui->scriptPath().getParent().join(imgPath);
+					// NOTE: This is bad.. the scriptPath is a system-local path so the
+					// separator may not be '/', we can't just make a Path from it like
+					// this.  Fortunately it seems this is never actually used? No sprites
+					// use './' in their data.
+					warning("Taking non-portable code path to load image in spriteLayoutBindings");
+					imgFullPath = Common::Path(gui->scriptPath()).getParent().join(imgPath);
 				} else {
 					imgFullPath = imgPath;
 				}
@@ -383,8 +388,9 @@ int spriteLayoutBindings(lua_State *L) {
 		}
 		lua_settop(L, -2);
 	}
-	if (!imgFullPath.empty()) {}
-		layout->load(imgFullPath);
+
+	if (!imgFullPath.empty())
+		layout->load(imgFullPath.toString());
 
 	lua_pushnil(L);
 	while (lua_next(L, -2) != 0) {
@@ -405,12 +411,6 @@ int spriteLayoutBindings(lua_State *L) {
 	if (layout->name() == "11070-1")
 		layout->setName("ab11070-1");
 
-	if (playNow) {
-		layout->play();
-	} else {
-		layout->stop();
-	}
-
 	TeICodec *codec = layout->_tiledSurfacePtr->codec();
 	if (codec) {
 		float frameRate = codec->frameRate();
@@ -420,6 +420,14 @@ int spriteLayoutBindings(lua_State *L) {
 		} else {
 			layout->_tiledSurfacePtr->_frameAnim.setEndTime((endingFrame / frameRate) * 1000.0 * 1000.0);
 		}
+	}
+
+	// Slight divergence from original.. start playing only after setting
+	// start/end values above as it makes more sense that way.
+	if (playNow) {
+		layout->play();
+	} else {
+		layout->stop();
 	}
 
 	if (!gui->spriteLayout(layout->name())) {

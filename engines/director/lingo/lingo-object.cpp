@@ -40,6 +40,8 @@
 #include "director/lingo/xlibs/applecdxobj.h"
 #include "director/lingo/xlibs/askuser.h"
 #include "director/lingo/xlibs/barakeobj.h"
+#include "director/lingo/xlibs/batqt.h"
+#include "director/lingo/xlibs/blitpict.h"
 #include "director/lingo/xlibs/cdromxobj.h"
 #include "director/lingo/xlibs/darkenscreen.h"
 #include "director/lingo/xlibs/developerStack.h"
@@ -47,6 +49,7 @@
 #include "director/lingo/xlibs/fileexists.h"
 #include "director/lingo/xlibs/fileio.h"
 #include "director/lingo/xlibs/findfolder.h"
+#include "director/lingo/xlibs/findsys.h"
 #include "director/lingo/xlibs/flushxobj.h"
 #include "director/lingo/xlibs/fplayxobj.h"
 #include "director/lingo/xlibs/gpid.h"
@@ -149,6 +152,8 @@ static struct XLibProto {
 	{ AppleCDXObj::fileNames,			AppleCDXObj::open,			AppleCDXObj::close,			kXObj,					400 },	// D4
 	{ AskUser::fileNames,				AskUser::open,				AskUser::close,				kXObj,					400 },	// D4
 	{ BarakeObj::fileNames,				BarakeObj::open,			BarakeObj::close,			kXObj,					400 },	// D4
+	{ BatQT::fileNames,					BatQT::open,				BatQT::close,				kXObj,					400 },	// D4
+	{ BlitPict::fileNames,				BlitPict::open,				BlitPict::close,			kXObj,					400 },	// D4
 	{ CDROMXObj::fileNames,				CDROMXObj::open,			CDROMXObj::close,			kXObj,					200 },	// D2
 	{ DarkenScreen::fileNames,			DarkenScreen::open,			DarkenScreen::close,		kXObj,					300 },	// D3
 	{ DeveloperStack::fileNames,		DeveloperStack::open,		DeveloperStack::close,		kXObj,					300 },	// D3
@@ -156,6 +161,7 @@ static struct XLibProto {
 	{ FileExists::fileNames,			FileExists::open,			FileExists::close,			kXObj,					300 },	// D3
 	{ FileIO::fileNames,				FileIO::open,				FileIO::close,				kXObj | kXtraObj,		200 },	// D2
 	{ FindFolder::fileNames,			FindFolder::open,			FindFolder::close,			kXObj,					300 },	// D3
+	{ FindSys::fileNames,				FindSys::open,				FindSys::close,				kXObj,					400 },	// D4
 	{ FlushXObj::fileNames,				FlushXObj::open,			FlushXObj::close,			kXObj,					300 },	// D3
 	{ FPlayXObj::fileNames,				FPlayXObj::open,			FPlayXObj::close,			kXObj,					200 },	// D2
 	{ GpidXObj::fileNames,				GpidXObj::open,				GpidXObj::close,			kXObj,					400 },	// D4

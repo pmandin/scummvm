@@ -23,6 +23,7 @@
 
 #include "tetraedge/tetraedge.h"
 #include "tetraedge/game/credits.h"
+#include "tetraedge/game/game.h"
 #include "tetraedge/game/application.h"
 
 namespace Tetraedge {
@@ -98,6 +99,7 @@ void Credits::enter(bool returnToOptions) {
 		_curveAnim._callbackObj = bgchild;
 		_curveAnim._callbackMethod = &TeLayout::setColor;
 		_curveAnim.play();
+		bgchild->setVisible(true);
 		const Common::String bgAnimName = bgchild->name() + "Anim";
 		bgPosAnim = _gui.layoutPositionLinearAnimation(bgAnimName);
 		if (!bgPosAnim)
@@ -111,7 +113,7 @@ void Credits::enter(bool returnToOptions) {
 
 void Credits::leave() {
 	_curveAnim.stop();
-	for (auto anim : _gui.layoutPositionLinearAnimations()) {
+	for (auto &anim : _gui.layoutPositionLinearAnimations()) {
 		anim._value->stop();
 	}
 	if (_gui.loaded()) {
@@ -120,10 +122,14 @@ void Credits::leave() {
 		app->frontLayout().removeChild(_gui.layoutChecked("menu"));
 		_timer.stop();
 		_gui.unload();
-		if (_returnToOptions)
+		if (_returnToOptions) {
 			error("TODO: Implement returning to options menu");
-		else
+		} else {
+			// WORKAROUND: Ensure game is left before opening menu to
+			// stop inventory button appearing in menu.
+			g_engine->getGame()->leave(true);
 			app->mainMenu().enter();
+		}
 		app->fade();
 		_curveAnim.onFinished().remove(this, &Credits::onBackgroundAnimFinished);
 	}
@@ -144,13 +150,14 @@ bool Credits::onBackgroundAnimFinished() {
 		_curveAnim._callbackObj = bgchild;
 		_curveAnim._callbackMethod = &TeLayout::setColor;
 		_curveAnim.play();
+		bgchild->setVisible(true);
 		const Common::String bgAnimName = bgchild->name() + "Anim";
-		TeCurveAnim2<TeLayout, TeVector3f32> *bgposanim = _gui.layoutPositionLinearAnimation(bgAnimName);
-		if (!bgposanim)
+		TeCurveAnim2<TeLayout, TeVector3f32> *bgPosAnim = _gui.layoutPositionLinearAnimation(bgAnimName);
+		if (!bgPosAnim)
 			error("Couldn't find bg position anim %s", bgAnimName.c_str());
-		bgposanim->_callbackObj = bgchild;
-		bgposanim->_callbackMethod = &TeLayout::setPosition;
-		bgposanim->play();
+		bgPosAnim->_callbackObj = bgchild;
+		bgPosAnim->_callbackMethod = &TeLayout::setPosition;
+		bgPosAnim->play();
 	}
 	return false;
 }

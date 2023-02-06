@@ -22,6 +22,7 @@
 // Disable symbol overrides so that we can use system headers.
 #define FORBIDDEN_SYMBOL_ALLOW_ALL
 
+#include "common/events.h"
 #include "backends/platform/ios7/ios7_video.h"
 #include "backends/platform/ios7/ios7_touch_controller.h"
 #include "backends/platform/ios7/ios7_mouse_controller.h"
@@ -54,7 +55,11 @@ void printOglError(const char *file, int line) {
 }
 
 bool iOS7_isBigDevice() {
+#if TARGET_OS_IOS
 	return UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad;
+#elif TARGET_OS_TV
+	return true;
+#endif
 }
 
 static inline void execute_on_main_thread(void (^block)(void)) {
@@ -338,6 +343,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (void)setupGestureRecognizers {
+#if TARGET_OS_IOS
 	UIPinchGestureRecognizer *pinchKeyboard = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(keyboardPinch:)];
 
 	UISwipeGestureRecognizer *swipeRight = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(twoFingersSwipeRight:)];
@@ -415,6 +421,35 @@ uint getSizeNextPOT(uint size) {
 	[swipeUp3 release];
 	[swipeDown3 release];
 	[doubleTapTwoFingers release];
+#elif TARGET_OS_TV
+	UITapGestureRecognizer *tapUpGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(threeFingersSwipeUp:)];
+	[tapUpGestureRecognizer setAllowedPressTypes:@[@(UIPressTypeUpArrow)]];
+
+	UITapGestureRecognizer *tapDownGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(threeFingersSwipeDown:)];
+	[tapDownGestureRecognizer setAllowedPressTypes:@[@(UIPressTypeDownArrow)]];
+
+	UITapGestureRecognizer *tapLeftGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(threeFingersSwipeLeft:)];
+	[tapLeftGestureRecognizer setAllowedPressTypes:@[@(UIPressTypeLeftArrow)]];
+
+	UITapGestureRecognizer *tapRightGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(threeFingersSwipeRight:)];
+	[tapRightGestureRecognizer setAllowedPressTypes:@[@(UIPressTypeRightArrow)]];
+
+	UILongPressGestureRecognizer *longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard)];
+	[longPressGestureRecognizer setAllowedPressTypes:@[[NSNumber numberWithInteger:UIPressTypePlayPause]]];
+	[longPressGestureRecognizer setMinimumPressDuration:1.0];
+
+	[self addGestureRecognizer:tapUpGestureRecognizer];
+	[self addGestureRecognizer:tapDownGestureRecognizer];
+	[self addGestureRecognizer:tapLeftGestureRecognizer];
+	[self addGestureRecognizer:tapRightGestureRecognizer];
+	[self addGestureRecognizer:longPressGestureRecognizer];
+
+	[tapUpGestureRecognizer release];
+	[tapDownGestureRecognizer release];
+	[tapLeftGestureRecognizer release];
+	[tapRightGestureRecognizer release];
+	[longPressGestureRecognizer release];
+#endif
 }
 
 - (id)initWithFrame:(struct CGRect)frame {
@@ -424,7 +459,7 @@ uint getSizeNextPOT(uint size) {
 
 	[self setupGestureRecognizers];
 
-	if (@available(iOS 14.0, *)) {
+	if (@available(iOS 14.0, tvOS 14.0, *)) {
 		_controllers.push_back([[MouseController alloc] initWithView:self]);
 		_controllers.push_back([[GamepadController alloc] initWithView:self]);
 	}
@@ -433,7 +468,6 @@ uint getSizeNextPOT(uint size) {
 	[self setContentScaleFactor:[[UIScreen mainScreen] scale]];
 
 	_keyboardView = nil;
-	_keyboardVisible = NO;
 	_screenTexture = 0;
 	_overlayTexture = 0;
 	_mouseCursorTexture = 0;
@@ -720,14 +754,15 @@ uint getSizeNextPOT(uint size) {
 	// available when running on iOS 11+ if it has been compiled on iOS 11+
 #ifdef __IPHONE_11_0
 #if __has_builtin(__builtin_available)
-	if ( @available(iOS 11,*) ) {
+	if ( @available(iOS 11, tvOS 11, *) ) {
 #else
 	if ( [[[UIApplication sharedApplication] keyWindow] respondsToSelector:@selector(safeAreaInsets)] ) {
 #endif
 		CGRect screenSize = [[UIScreen mainScreen] bounds];
+		CGRect newFrame = screenSize;
+#if TARGET_OS_IOS
 		UIEdgeInsets inset = [[[UIApplication sharedApplication] keyWindow] safeAreaInsets];
 		UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-		CGRect newFrame = screenSize;
 		if ( orientation == UIInterfaceOrientationPortrait ) {
 			newFrame = CGRectMake(screenSize.origin.x, screenSize.origin.y + inset.top, screenSize.size.width, screenSize.size.height - inset.top);
 		} else if ( orientation == UIInterfaceOrientationLandscapeLeft ) {
@@ -735,6 +770,7 @@ uint getSizeNextPOT(uint size) {
 		} else if ( orientation == UIInterfaceOrientationLandscapeRight ) {
 			newFrame = CGRectMake(screenSize.origin.x + inset.left, screenSize.origin.y, screenSize.size.width - inset.left, screenSize.size.height);
 		}
+#endif
 		self.frame = newFrame;
 	}
 #endif
@@ -834,7 +870,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (BOOL)isMouseControllerConnected {
-	if (@available(iOS 14.0, *)) {
+	if (@available(iOS 14.0, tvOS 14.0, *)) {
 		return [self isControllerTypeConnected:MouseController.class];
 	} else {
 		// Fallback on earlier versions
@@ -843,7 +879,7 @@ uint getSizeNextPOT(uint size) {
 }
 
 - (BOOL)isGamepadControllerConnected {
-	if (@available(iOS 14.0, *)) {
+	if (@available(iOS 14.0, tvOS 14.0, *)) {
 		return [self isControllerTypeConnected:GamepadController.class];
 	} else {
 		// Fallback on earlier versions
@@ -851,6 +887,7 @@ uint getSizeNextPOT(uint size) {
 	}
 }
 
+#if TARGET_OS_IOS
 - (void)deviceOrientationChanged:(UIDeviceOrientation)orientation {
 	[self addEvent:InternalEvent(kInputOrientationChanged, orientation, 0)];
 
@@ -861,19 +898,18 @@ uint getSizeNextPOT(uint size) {
 		[self showKeyboard];
 	}
 }
+#endif
 
 - (void)showKeyboard {
 	[_keyboardView showKeyboard];
-	_keyboardVisible = YES;
 }
 
 - (void)hideKeyboard {
 	[_keyboardView hideKeyboard];
-	_keyboardVisible = NO;
 }
 
 - (BOOL)isKeyboardShown {
-	return _keyboardVisible;
+	return [_keyboardView isKeyboardShown];
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
@@ -908,12 +944,66 @@ uint getSizeNextPOT(uint size) {
 	}
 }
 
+#if TARGET_OS_TV
+// UIKit calls these methods when a button is pressed by the user.
+// These methods are used to determine which button was pressed and
+// to take any needed actions. The default implementation of these
+// methods forwardsm the message up the responder chain.
+// Button presses are already handled by the GameController class for
+// connected game controllers (including the Apple TV remote).
+// The Apple TV remote is not registered as a micro game controller
+// when running the application in tvOS simulator, hence these methods
+// only needs to be implemented for the tvOS simulator to handle presses
+// on the Apple TV remote.
+-(void)pressesBegan:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
+#if TARGET_OS_SIMULATOR
+	UIPress *press = [presses anyObject];
+	if (press.type == UIPressTypeMenu) {
+		// Trigger on pressesEnded
+	} else if (press.type == UIPressTypeSelect || press.type == UIPressTypePlayPause) {
+		[self addEvent:InternalEvent(kInputJoystickButtonDown, press.type == UIPressTypeSelect ? Common::JOYSTICK_BUTTON_A : Common::JOYSTICK_BUTTON_B, 0)];
+	}
+	else {
+		[super pressesBegan:presses withEvent:event];
+	}
+#endif
+}
+
+-(void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
+#if TARGET_OS_SIMULATOR
+	UIPress *press = [presses anyObject];
+	if (press.type == UIPressTypeMenu) {
+		[self handleMainMenuKey];
+	} else if (press.type == UIPressTypeSelect || press.type == UIPressTypePlayPause) {
+		[self addEvent:InternalEvent(kInputJoystickButtonUp, press.type == UIPressTypeSelect ? Common::JOYSTICK_BUTTON_A : Common::JOYSTICK_BUTTON_B, 0)];
+	}
+	else {
+		[super pressesEnded:presses withEvent:event];
+	}
+#endif
+}
+
+-(void)pressesChanged:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
+#if TARGET_OS_SIMULATOR
+	[super pressesChanged:presses withEvent:event];
+#endif
+}
+
+-(void)pressesCancelled:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
+#if TARGET_OS_SIMULATOR
+	[super pressesCancelled:presses withEvent:event];
+#endif
+}
+#endif
+
+#if TARGET_OS_IOS
 - (void)keyboardPinch:(UIPinchGestureRecognizer *)recognizer {
 	if ([recognizer scale] < 0.8)
 		[self showKeyboard];
 	else if ([recognizer scale] > 1.25)
 		[self hideKeyboard];
 }
+#endif
 
 - (void)twoFingersSwipeRight:(UISwipeGestureRecognizer *)recognizer {
 	[self addEvent:InternalEvent(kInputSwipe, kUIViewSwipeRight, 2)];
@@ -953,14 +1043,18 @@ uint getSizeNextPOT(uint size) {
 
 - (void)handleKeyPress:(unichar)c {
 	if (c == '`') {
-		[self addEvent:InternalEvent(kInputKeyPressed, '\E', 0)];
+		[self addEvent:InternalEvent(kInputKeyPressed, '\033', 0)];
 	} else {
 		[self addEvent:InternalEvent(kInputKeyPressed, c, 0)];
 	}
 }
 
 - (void)handleMainMenuKey {
-	[self addEvent:InternalEvent(kInputMainMenu, 0, 0)];
+	if ([self isInGame]) {
+		[self addEvent:InternalEvent(kInputMainMenu, 0, 0)];
+	} else {
+		[[UIApplication sharedApplication] performSelector:@selector(suspend)];
+	}
 }
 
 - (void)applicationSuspend {

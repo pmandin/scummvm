@@ -41,7 +41,7 @@ public:
 	void addLoc(TeILoc *loc);
 	//void args(int argc, char **argv); // Probably not needed
 	void create();
-	TeICodec *createVideoCodec(const Common::Path &path);
+	TeICodec *createVideoCodec(const Common::FSNode &node);
 	const Common::String &fileFlagSystemFlag(const Common::String &name) const;
 	bool fileFlagSystemFlagsContains(const Common::String &name) const;
 	Common::Array<Common::String> fileFlagSystemPossibleFlags();
@@ -61,7 +61,7 @@ public:
 	// Note: this is not in the original, but it's not clear how the original
 	// adds things like "PC-MacOSX" to the path, and there is not clear logic
 	// to them, so here we are.
-	Common::Path findFile(const Common::Path &path);
+	Common::FSNode findFile(const Common::Path &path);
 
 	bool _coreNotReady;
 

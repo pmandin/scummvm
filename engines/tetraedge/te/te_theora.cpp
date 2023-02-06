@@ -38,9 +38,9 @@ bool TeTheora::matchExtension(const Common::String &extn) {
 	return extn == "ogv";
 }
 
-bool TeTheora::load(const Common::Path &path) {
-	_path = path;
-	return _decoder->loadFile(path);
+bool TeTheora::load(const Common::FSNode &node) {
+	_loadedNode = node;
+	return _decoder->loadStream(node.createReadStream());
 }
 
 uint TeTheora::width() {
@@ -97,11 +97,11 @@ float TeTheora::frameRate() {
 	return _decoder->getRate().toDouble();
 }
 
-bool TeTheora::update(unsigned long i, TeImage &imgout) {
-	if (_decoder->getCurFrame() > (int)i && !_path.empty()) {
+bool TeTheora::update(uint i, TeImage &imgout) {
+	if (_decoder->getCurFrame() > (int)i && _loadedNode.isReadable()) {
 		// rewind.. no good way to do that, but it should
 		// only happen on loop.
-		load(_path);
+		load(_loadedNode);
 	}
 
 	const Graphics::Surface *frame = nullptr;
@@ -114,9 +114,9 @@ bool TeTheora::update(unsigned long i, TeImage &imgout) {
 		//debug("TeTheora: %s %ld", _path.toString().c_str(), i);
 		imgout.copyFrom(*frame);
 		return true;
-	} else if (_hitEnd && !_path.empty()) {
+	} else if (_hitEnd && _loadedNode.isReadable()) {
 		// Loop to the start.
-		load(_path);
+		load(_loadedNode);
 		frame = _decoder->decodeNextFrame();
 		if (frame) {
 			imgout.copyFrom(*frame);

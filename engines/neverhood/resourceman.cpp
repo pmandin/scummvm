@@ -131,10 +131,21 @@ bool ResourceMan::nhcExists(uint32 fileHash, uint32 type) {
 	return false;
 }
 
+bool ResourceMan::exists(uint32 fileHash) {
+	ResourceFileEntry *entry = findEntry(fileHash);
+	if (!entry)
+		return false;
+	if (entry->nhcArchiveEntry && entry->nhcArchive && entry->nhcArchiveEntry->isNormal())
+		return true;
+	if (entry->archiveEntry && entry->archive)
+		return true;
+	return false;
+}
+
 void ResourceMan::queryResource(uint32 fileHash, ResourceHandle &resourceHandle) {
 	ResourceFileEntry *firstEntry;
 	resourceHandle._resourceFileEntry = findEntry(fileHash, &firstEntry);
-	resourceHandle._extData = firstEntry ? firstEntry->archiveEntry->extData : nullptr;
+	resourceHandle._extData = firstEntry && firstEntry->archiveEntry ? firstEntry->archiveEntry->extData : nullptr;
 }
 
 struct EntrySizeFix {
@@ -191,7 +202,6 @@ void ResourceMan::loadResource(ResourceHandle &resourceHandle, bool applyResourc
 			resourceData->dataRefCount++;
 		} else {
 			NhcArchiveEntry *nhcEntry = resourceHandle._resourceFileEntry->nhcArchiveEntry;
-			// TODO: types B (subfont), C (MgsText), D (SubText)
 			if (nhcEntry && nhcEntry->isNormal()) {
 				resourceData->data = new byte[nhcEntry->size];
 				resourceHandle._resourceFileEntry->nhcArchive->load(nhcEntry, resourceData->data, 0);

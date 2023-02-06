@@ -132,6 +132,10 @@ Common::String TetraedgeEngine::getGameId() const {
 	return _gameDescription->gameId;
 }
 
+bool TetraedgeEngine::canLoadGameStateCurrently() {
+	return _game && _application && !_application->mainMenu().isEntered();
+}
+
 bool TetraedgeEngine::canSaveGameStateCurrently() {
 	return canSaveAutosaveCurrently() && !_application->isLockCursor();
 }
@@ -264,11 +268,11 @@ Graphics::RendererType TetraedgeEngine::preferredRendererType() const {
 	// Currently no difference between shaders and otherwise for this engine.
 	if (matchingRendererType == Graphics::kRendererTypeOpenGLShaders)
 		matchingRendererType = Graphics::kRendererTypeOpenGL;
-	
+
 	if (matchingRendererType == 0) {
 		error("No supported renderer available.");
 	}
-	
+
 	return matchingRendererType;
 }
 

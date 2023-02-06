@@ -24,7 +24,7 @@
 
 #include "engines/stark/stark.h"
 #include "engines/stark/ui/window.h"
-#include "engines/stark/visual/text.h"
+#include "engines/stark/gfx/color.h"
 
 #include "common/keyboard.h"
 #include "common/scummsys.h"
@@ -69,7 +69,7 @@ protected:
 	void onClick(const Common::Point &pos) override;
 
 private:
-	Graphics::Surface *loadBackground();
+	Gfx::Bitmap *loadBackground(Gfx::Driver *gfx);
 	static void drawBevel(Graphics::Surface *surface, const Common::Rect &rect);
 	static Common::Rect centerRect(const Common::Rect &container, const Common::Rect &size);
 
@@ -90,7 +90,8 @@ private:
 	Common::Rect _cancelButtonRect;
 	Common::Rect _messageRect;
 
-	const Color _textColor = Color(0xFF, 0xFF, 0xFF);
+	const Gfx::Color _textColor = Gfx::Color(0xFF, 0xFF, 0xFF);
+	const Gfx::Color _backgroundColor = Gfx::Color(26, 28, 57);
 
 	ConfirmCallback *_confirmCallback;
 };

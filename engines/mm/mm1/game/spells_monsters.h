@@ -81,21 +81,6 @@ private:
 	bool casts();
 
 	/**
-	 * Adds text to the current line
-	 */
-	void add(const Common::String &msg) {
-		_lines.back()._text += msg;
-	}
-	void add(char c) {
-		_lines.back()._text += c;
-	}
-
-	/**
-	 * Adds current character's name
-	 */
-	void addCharName();
-
-	/**
 	 * Selects a random character and applies the damage to them
 	 */
 	void damageRandomChar();
@@ -148,12 +133,18 @@ private:
 protected:
 	Common::Array<Monster *> _remainingMonsters;
 	LineArray _lines;
-	int _damage = 0;
+	int _damage = 0, _displayedDamage = 0;
 
 	virtual bool canMonsterCast() const = 0;
 	virtual int getMonsterIndex() const = 0;
 	virtual void dispelParty() = 0;
 	virtual void removeMonster() = 0;
+
+	/**
+	 * Subtracts the damage from the character, making
+	 * them unconscious or die if needed
+	 */
+	virtual Common::String subtractDamageFromChar() = 0;
 
 	/**
 	 * Adds text for damage effects on the party
@@ -184,10 +175,19 @@ protected:
 	void proc9();
 
 	/**
-	 * Subtracts the damage from the character, making
-	 * them unconscious or die if needed
+	 * Adds text to the current line
 	 */
-	void subtractDamage();
+	void add(const Common::String &msg) {
+		_lines.back()._text += msg;
+	}
+	void add(char c) {
+		_lines.back()._text += c;
+	}
+
+	/**
+	 * Adds current character's name
+	 */
+	void addCharName();
 
 public:
 	SpellsMonsters();

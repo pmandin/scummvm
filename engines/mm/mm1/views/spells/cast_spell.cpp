@@ -132,7 +132,7 @@ void CastSpell::draw() {
 void CastSpell::spellLevelEntered(uint level) {
 	// Ensure the spell level is valid
 	if (level < 1 || level > 7 ||
-		level > g_globals->_currCharacter->_spellLevel) {
+		(!g_globals->_allSpells && level > g_globals->_currCharacter->_spellLevel)) {
 		close();
 		return;
 	}
@@ -215,6 +215,8 @@ void CastSpell::performSpell(Character *chr) {
 
 		default:
 			// Spell done, but don't display done message
+			if (isInCombat())
+				close();
 			break;
 		}
 	}

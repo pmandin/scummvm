@@ -187,6 +187,7 @@ public:
 	void generateDemoInput();
 	virtual void pressedKey(const int keycode);
 	void move(CameraMovement direction, uint8 scale, float deltaTime);
+	virtual void checkIfStillInArea();
 	void changePlayerHeight(int index);
 	void increaseStepSize();
 	void decreaseStepSize();
@@ -237,6 +238,7 @@ public:
 
 	bool checkCollisions(bool executeCode);
 	Math::Vector3d _objExecutingCodeSize;
+	virtual void executeMovementConditions();
 	void executeObjectConditions(GeometricObject *obj, bool shot, bool collided);
 	void executeLocalGlobalConditions(bool shot, bool collided);
 	void executeCode(FCLInstructionVector &code, bool shot, bool collided);
@@ -261,7 +263,7 @@ public:
 	bool executeEndIfBitNotEqual(FCLInstruction &instruction);
 	bool executeEndIfVisibilityIsEqual(FCLInstruction &instruction);
 	void executeSwapJet(FCLInstruction &instruction);
-	void executePrint(FCLInstruction &instruction);
+	virtual void executePrint(FCLInstruction &instruction);
 	void executeSPFX(FCLInstruction &instruction);
 
 	// Sound
@@ -324,6 +326,10 @@ public:
 
 	// Game state
 	virtual void initGameState();
+	void setGameBit(int index);
+	void clearGameBit(int index);
+	void toggleGameBit(int index);
+
 	StateVars _gameStateVars;
 	StateBits _gameStateBits;
 	virtual bool checkIfGameEnded();
@@ -356,7 +362,7 @@ public:
 	int _lastMinute;
 
 	void getTimeFromCountdown(int &seconds, int &minutes, int &hours);
-	void updateTimeVariables();
+	virtual void updateTimeVariables();
 
 	// Cheats
 	bool _useExtendedTimer;
@@ -437,9 +443,27 @@ class DarkEngine : public FreescapeEngine {
 public:
 	DarkEngine(OSystem *syst, const ADGameDescription *gd);
 
+	uint32 _initialFuel;
+	uint32 _initialShield;
+
 	void loadAssets() override;
+	void initGameState() override;
+	void borderScreen() override;
+
 	void gotoArea(uint16 areaID, int entranceID) override;
+	void checkIfStillInArea() override;
+	void pressedKey(const int keycode) override;
+	void executePrint(FCLInstruction &instruction) override;
+
+	void loadAssetsDemo();
+	void loadAssetsFullGame();
+	int _lastTenSeconds;
+	void updateTimeVariables() override;
+	void executeMovementConditions() override;
+
 	void drawUI() override;
+	void drawDOSUI(Graphics::Surface *surface);
+	void drawFullscreenMessage(Common::String message);
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 };

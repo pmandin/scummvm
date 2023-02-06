@@ -113,8 +113,7 @@ void Te3DTextureTinyGL::forceTexData(uint gltexture, uint xsize, uint ysize) {
 }
 
 bool Te3DTextureTinyGL::load(const TeImage &img) {
-	Common::Path accessName = img.getAccessName();
-	setAccessName(accessName.append(".3dtex"));
+	setAccessName(img.getAccessName() + ".3dtex");
 
 	_width = img.w;
 	_height = img.h;
@@ -132,12 +131,13 @@ bool Te3DTextureTinyGL::load(const TeImage &img) {
 	_texHeight = _height;
 
 	tglBindTexture(TGL_TEXTURE_2D, _glTexture);
+	// Note: these are unsupported in TGL but should be the defaults?
 	//tglPixelStorei(TGL_UNPACK_SWAP_BYTES, TGL_FALSE);
 	//tglPixelStorei(TGL_UNPACK_LSB_FIRST, TGL_FALSE);
 	//tglPixelStorei(TGL_UNPACK_ROW_LENGTH, 0);
 	//tglPixelStorei(TGL_UNPACK_SKIP_ROWS, 0);
 	//tglPixelStorei(TGL_UNPACK_SKIP_PIXELS, 0);
-	//tglPixelStorei(TGL_UNPACK_ALIGNMENT, 1);
+	tglPixelStorei(TGL_UNPACK_ALIGNMENT, 1);
 
 	const void *imgdata = img.getPixels();
 	if (_format == TeImage::RGB8) {
@@ -183,13 +183,14 @@ void Te3DTextureTinyGL::update(const TeImage &img, uint xoff, uint yoff) {
 	if (!img.w || !img.h)
 		return;
 
-	setAccessName(img.getAccessName().append(".3dtex"));
+	setAccessName(img.getAccessName() + ".3dtex");
 	tglBindTexture(TGL_TEXTURE_2D, _glTexture);
-	tglPixelStorei(TGL_UNPACK_SWAP_BYTES, 0);
-	tglPixelStorei(TGL_UNPACK_LSB_FIRST, 0);
-	tglPixelStorei(TGL_UNPACK_ROW_LENGTH, 0);
-	tglPixelStorei(TGL_UNPACK_SKIP_ROWS, 0);
-	tglPixelStorei(TGL_UNPACK_SKIP_PIXELS, 0);
+	// Note: these are unsupported in TGL but should be the defaults?
+	//tglPixelStorei(TGL_UNPACK_SWAP_BYTES, TGL_FALSE);
+	//tglPixelStorei(TGL_UNPACK_LSB_FIRST, TGL_FALSE);
+	//tglPixelStorei(TGL_UNPACK_ROW_LENGTH, 0);
+	//tglPixelStorei(TGL_UNPACK_SKIP_ROWS, 0);
+	//tglPixelStorei(TGL_UNPACK_SKIP_PIXELS, 0);
 	tglPixelStorei(TGL_UNPACK_ALIGNMENT, 1);
 
 	//const void *imgdata = img.getPixels();

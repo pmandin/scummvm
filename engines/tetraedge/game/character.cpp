@@ -52,6 +52,7 @@ void Character::CharacterSettings::clear() {
 	_defaultEyes.clear();
 	_defaultMouth.clear();
 	_defaultBody.clear();
+	_invertNormals = false;
 }
 
 void Character::WalkSettings::clear() {
@@ -67,8 +68,10 @@ _stepSound1("sounds/SFX/PAS_H_BOIS1.ogg"), _stepSound2("sounds/SFX/PAS_H_BOIS2.o
 _freeMoveZone(nullptr), _animSoundOffset(0), _lastAnimFrame(0), _charLookingAt(nullptr),
 _recallageY(true), _walkToFlag(false), _walkCurveEnd(0.0f), _walkCurveLast(0.0f),
 _walkCurveLen(0.0f), _walkCurveIncrement(0.0f), _walkEndAnimG(false), _walkTotalFrames(0),
-_walkCurveNextLength(0.0f) {
-	_curModelAnim.setDeleteFn(&TeModelAnimation::deleteLater);
+_walkCurveNextLength(0.0f), _walkedLength(0.0f), _walkLoopAnimLen(0.0f), _walkEndGAnimLen(0.0f),
+_walkStartAnimLen(0.0f), _walkStartAnimFrameCount(0), _walkLoopAnimFrameCount(0),
+_walkEndGAnimFrameCount(0), _hasAnchor(false) {
+	_curModelAnim.setDeleteFn(&TeModelAnimation::deleteLaterStatic);
 }
 
 Character::~Character() {
@@ -181,7 +184,7 @@ TeIntrusivePtr<TeModelAnimation> Character::animCacheLoad(const Common::Path &pa
 	return modelAnim;
 }
 
-float Character::animLength(const TeModelAnimation &modelanim, long bone, long lastframe) {
+float Character::animLength(const TeModelAnimation &modelanim, int bone, int lastframe) {
 	int last = modelanim.lastFrame();
 	if (lastframe > last)
 		lastframe = last;
@@ -361,10 +364,10 @@ bool Character::loadModel(const Common::String &mname, bool unused) {
 	_characterSettings = _globalCharacterSettings->getVal(mname);
 	_model->setTexturePath("models/Textures");
 	_model->setEnableLights(true);
-	Common::Path modelPath("models");
-	modelPath.joinInPlace(_characterSettings._modelFileName);
-	if (!_model->load(modelPath))
+	if (!_model->load(Common::Path("models").join(_characterSettings._modelFileName))) {
+		warning("Failed to load character model %s", _characterSettings._modelFileName.c_str());
 		return false;
+	}
 
 	_model->setName(mname);
 	_model->setScale(_characterSettings._defaultScale);
@@ -389,7 +392,8 @@ bool Character::loadModel(const Common::String &mname, bool unused) {
 	_walkLoopAnimLen = animLengthFromFile(walkAnim(WalkPart_Loop), &_walkLoopAnimFrameCount);
 
 	TeIntrusivePtr<Te3DTexture> shadow = Te3DTexture::makeInstance();
-	shadow->load("models/Textures/simple_shadow_alpha.tga");
+	TeCore *core = g_engine->getCore();
+	shadow->load(core->findFile("models/Textures/simple_shadow_alpha.tga"));
 
 	for (int i = 0; i < 2; i++) {
 		TeModel *pmodel = new TeModel();
@@ -788,16 +792,16 @@ float Character::speedFromAnim(double msFromStart) {
 	return result;
 }
 
-float Character::translationFromAnim(const TeModelAnimation &anim, long bone, long param_3) {
-	return translationVectorFromAnim(anim, bone, param_3).z();
+float Character::translationFromAnim(const TeModelAnimation &anim, int bone, int frame) {
+	return translationVectorFromAnim(anim, bone, frame).z();
 }
 
-TeVector3f32 Character::translationVectorFromAnim(const TeModelAnimation &anim, long bone, long frame) {
+TeVector3f32 Character::translationVectorFromAnim(const TeModelAnimation &anim, int bone, int frame) {
 	const TeTRS trs = trsFromAnim(anim, bone, frame);
 	return trs.getTranslation();
 }
 
-TeTRS Character::trsFromAnim(const TeModelAnimation &anim, long bone, long frame) {
+TeTRS Character::trsFromAnim(const TeModelAnimation &anim, int bone, int frame) {
 	if (bone == -1)
 		return TeTRS();
 

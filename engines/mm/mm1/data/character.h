@@ -426,7 +426,7 @@ struct Character : public PrimaryAttributes {
 
 	uint32 _exp = 0;
 	uint16 _gems = 0;
-	uint16 _hpBase = 0, _hp = 0, _hpMax = 0;
+	uint16 _hpCurrent = 0, _hp = 0, _hpMax = 0;
 	uint32 _gold = 0;
 	uint8 _food = 0;
 	uint8 _condition = 0;
@@ -525,11 +525,6 @@ struct Character : public PrimaryAttributes {
 	 * Returns true if the character has a given item
 	 */
 	bool hasItem(byte itemId) const;
-
-	/**
-	 * Return a display version of the character's name
-	 */
-	Common::String getDisplayName() const;
 
 	/**
 	 * Gets the numeric value of every property a character

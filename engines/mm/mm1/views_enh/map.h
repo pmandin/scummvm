@@ -28,6 +28,10 @@ namespace MM {
 namespace MM1 {
 namespace ViewsEnh {
 
+#define MAP_BORDER_SIZE 1
+#define MAP_TILE_W 10
+#define MAP_TILE_H 8
+
 class Map : public UIElement {
 public:
 	Map(UIElement *owner);

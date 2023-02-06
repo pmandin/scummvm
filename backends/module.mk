@@ -146,8 +146,13 @@ MODULE_OBJS += \
 	graphics/surfacesdl/surfacesdl-graphics.o \
 	mixer/sdl/sdl-mixer.o \
 	mutex/sdl/sdl-mutex.o \
-	plugins/sdl/sdl-provider.o \
 	timer/sdl/sdl-timer.o
+
+ifndef RISCOS
+ifndef KOLIBRIOS
+MODULE_OBJS += plugins/sdl/sdl-provider.o
+endif
+endif
 
 # SDL 2 removed audio CD support
 ifndef USE_SDL2
@@ -172,6 +177,15 @@ ifdef USE_DISCORD
 MODULE_OBJS += \
 	presence/discord/discord.o
 endif
+endif
+
+ifdef KOLIBRIOS
+MODULE_OBJS += \
+	fs/kolibrios/kolibrios-fs.o \
+	fs/kolibrios/kolibrios-fs-factory.o \
+	fs/posix/posix-iostream.o \
+	plugins/kolibrios/kolibrios-provider.o \
+	saves/kolibrios/kolibrios-saves.o
 endif
 
 ifdef POSIX

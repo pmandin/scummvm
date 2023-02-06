@@ -21,7 +21,7 @@
 
 #include "common/config-manager.h"
 
-#include "ultima/ultima8/misc/pent_include.h"
+#include "ultima/ultima8/misc/debugger.h"
 #include "ultima/ultima8/games/u8_game.h"
 #include "ultima/ultima8/games/cru_game.h"
 #include "ultima/ultima8/graphics/palette_manager.h"
@@ -52,7 +52,7 @@ Game *Game::createGame(const GameInfo *info) {
 	case GameInfo::GAME_REGRET:
 		return new CruGame();
 	default:
-		CANT_HAPPEN_MSG("createGame: invalid _game");
+		error("createGame: invalid game tyoe");
 	}
 
 	return nullptr;

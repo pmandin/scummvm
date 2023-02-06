@@ -39,7 +39,7 @@ void TeImage::copy(TeImage &dest, const TeVector2s32 &vec1, const TeVector2s32 &
 	error("TODO: Implement TeImage::copy");
 }
 
-unsigned long TeImage::countPixelsOfColor(const TeColor &col) const {
+uint64 TeImage::countPixelsOfColor(const TeColor &col) const {
 	error("TODO: Implement TeImage::countPixelsOfColor");
 }
 
@@ -92,11 +92,12 @@ bool TeImage::isExtensionSupported(const Common::Path &path) {
 	error("TODO: Implement TeImage::isExtensionSupported");
 }
 
-bool TeImage::load(const Common::Path &path) {
+bool TeImage::load(const Common::FSNode &node) {
 	TeCore *core = g_engine->getCore();
-	TeICodec *codec = core->createVideoCodec(path);
-	if (!codec->load(path)) {
-		warning("TeImage::load: Failed to load %s.", path.toString().c_str());
+	TeICodec *codec = core->createVideoCodec(node);
+	if (!node.isReadable() || !codec->load(node)) {
+		warning("TeImage::load: Failed to load %s.", node.getPath().c_str());
+		delete codec;
 		return false;
 	}
 
@@ -104,8 +105,9 @@ bool TeImage::load(const Common::Path &path) {
 	createImg(codec->width(), codec->height(), nullpal, codec->imageFormat(), codec->width(), codec->height());
 
 	if (!codec->update(0, *this)) {
-		error("TeImage::load: Failed to update from %s.", path.toString().c_str());
+		error("TeImage::load: Failed to update from %s.", node.getPath().c_str());
 	}
+	delete codec;
 	return true;
 }
 

@@ -90,9 +90,9 @@ void TeRendererTinyGL::enableZBuffer() {
 }
 
 void TeRendererTinyGL::init(uint width, uint height) {
-	Graphics::PixelFormat pixelFormat = g_system->getScreenFormat();
-	initGraphics(width, height, &pixelFormat);
+	initGraphics(width, height, nullptr);
 
+	const Graphics::PixelFormat pixelFormat = g_system->getScreenFormat();
 	debug(2, "INFO: TinyGL front buffer pixel format: %s", pixelFormat.toString().c_str());
 	TinyGL::createContext(width, height, pixelFormat, 256, true, ConfMan.getBool("dirtyrects"));
 
@@ -107,17 +107,12 @@ void TeRendererTinyGL::init(uint width, uint height) {
 	tglEnable(TGL_BLEND);
 	tglBlendFunc(TGL_SRC_ALPHA, TGL_ONE_MINUS_SRC_ALPHA);
 	tglDepthFunc(TGL_LEQUAL);
-	tglHint(TGL_PERSPECTIVE_CORRECTION_HINT, TGL_DONT_CARE);
+	// Original does this, probably not needed?
+	//tglHint(TGL_PERSPECTIVE_CORRECTION_HINT, TGL_DONT_CARE);
 	tglClearDepth(1.0);
-	tglClearStencil(0);
+	//tglClearStencil(0);
 	_clearColor = TeColor(0, 0, 0, 255);
 	tglClearColor(0, 0, 0, 1.0);
-	debug("[TeRenderer::init] Vendor : %s", vendor().c_str());
-	debug("[TeRenderer::init] Renderer : %s", renderer().c_str());
-	debug("[TeRenderer::init] Version : (tinygl version)");
-	debug("[TeRenderer::init] Sentil buffer bits : (not supported)");
-	debug("[TeRenderer::init] Depth buffer bits : (not supported)");
-	//debug("[TeRenderer::init] Extensions : %s", glGetString(TGL_EXTENSIONS));
 	//TeOpenGLExtensions::loadExtensions(); // this does nothing in the game?
 	_currentColor = TeColor(255, 255, 255, 255);
 	_scissorEnabled = false;
@@ -165,7 +160,13 @@ void TeRendererTinyGL::renderTransparentMeshes() {
 	tglVertexPointer(3, TGL_FLOAT, sizeof(TeVector3f32), _transparentMeshVertexes.data());
 	tglNormalPointer(TGL_FLOAT, sizeof(TeVector3f32), _transparentMeshNormals.data());
 	tglTexCoordPointer(2, TGL_FLOAT, sizeof(TeVector2f32), _transparentMeshCoords.data());
-	tglColorPointer(4, TGL_UNSIGNED_BYTE, sizeof(TeColor), _transparentMeshColors.data());
+	// TinyGL doesn't correctly scale BYTE color data, so provide it pre-scaled.
+	Common::Array<float> colorVals(_transparentMeshColors.size() * 4);
+	const byte *coldata = reinterpret_cast<const byte *>(_transparentMeshColors.data());
+	for (unsigned int i = 0; i < colorVals.size(); i++) {
+		colorVals[i] = (float)coldata[i] / 255.0f;
+	}
+	tglColorPointer(4, TGL_FLOAT, sizeof(float) * 4, colorVals.data());
 
 	TeMaterial lastMaterial;
 	TeMatrix4x4 lastMatrix;
@@ -190,7 +191,7 @@ void TeRendererTinyGL::renderTransparentMeshes() {
 			tglEnable(TGL_TEXTURE_2D);
 			_textureEnabled = true;
 		}
-		if (material._enableSomethingDefault0) {
+		if (material._isShadowTexture) {
 			tglDisableClientState(TGL_TEXTURE_COORD_ARRAY);
 			tglDisableClientState(TGL_COLOR_ARRAY);
 		}
@@ -202,7 +203,7 @@ void TeRendererTinyGL::renderTransparentMeshes() {
 
 		if (meshProperties._scissorEnabled) {
 			tglEnable(TGL_SCISSOR_TEST);
-			// No scissoring in TGL..
+			// TODO: No scissoring in TGL..
 			/*
 			tglScissor(meshProperties._scissorX,
 					  meshProperties._scissorY,
@@ -210,18 +211,18 @@ void TeRendererTinyGL::renderTransparentMeshes() {
 					  meshProperties._scissorHeight);*/
 		}
 		// TODO: not supported in TGL
-		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, meshProperties._glTexEnvMode);
+		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_DECAL/*meshProperties._glTexEnvMode*/);
 		tglDrawElements(TGL_TRIANGLES, meshProperties._vertexCount, TGL_UNSIGNED_SHORT,
 				   _transparentMeshVertexNums.data() + vertsDrawn);
 
 		vertsDrawn += meshProperties._vertexCount;
 
-		if (material._enableSomethingDefault0) {
+		if (material._isShadowTexture) {
 			tglEnableClientState(TGL_TEXTURE_COORD_ARRAY);
 			tglEnableClientState(TGL_COLOR_ARRAY);
 		}
 		// TODO: not supported in TGL
-		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_MODULATE);
+		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_DECAL);
 		if (meshProperties._scissorEnabled) {
 			tglDisable(TGL_SCISSOR_TEST);
 		}
@@ -334,8 +335,8 @@ void TeRendererTinyGL::applyMaterial(const TeMaterial &m) {
 			tglTexEnvi(TGL_TEXTURE_ENV, TGL_OPERAND0_ALPHA, TGL_SRC_ALPHA);
 			*/
 		} else {
-			// TODO: not supported in TGL
-			//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_MODULATE);
+			// TODO: GL_MODULATE supported in TGL
+			//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_DECAL);
 			if (m._mode != TeMaterial::MaterialMode1) {
 				tglEnable(TGL_ALPHA_TEST);
 				tglAlphaFunc(TGL_GREATER, 0.5);
@@ -366,23 +367,22 @@ void TeRendererTinyGL::applyMaterial(const TeMaterial &m) {
 		static const float fullColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 		TeLightTinyGL::disableAll();
 		tglDisable(TGL_ALPHA_TEST);
-		// TODO: not supported in TGL
-		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_MODULATE);
+		// TODO: GL_MODULATE not supported in TGL
+		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_DECAL);
 		tglMaterialfv(TGL_FRONT_AND_BACK, TGL_AMBIENT, fullColor);
 		tglMaterialfv(TGL_FRONT_AND_BACK, TGL_DIFFUSE, fullColor);
 		tglMaterialfv(TGL_FRONT_AND_BACK, TGL_SPECULAR, fullColor);
 		tglMaterialfv(TGL_FRONT_AND_BACK, TGL_EMISSION, fullColor);
 	}
 
-	//warning("TODO: Work out what TeMaterial::_enableSomethingDefault0 actually is.");
-	if (!m._enableSomethingDefault0) {
+	if (!m._isShadowTexture) {
 		tglDisable(TGL_TEXTURE_GEN_S);
 		tglDisable(TGL_TEXTURE_GEN_T);
 		tglDisable(TGL_TEXTURE_GEN_R);
 		tglDisable(TGL_TEXTURE_GEN_Q);
 	} else {
-		// TODO: not supported in TGL
-		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_MODULATE);
+		// TODO: GL_MODULATE not supported in TGL
+		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_DECAL);
 		tglEnable(TGL_TEXTURE_GEN_S);
 		tglEnable(TGL_TEXTURE_GEN_T);
 		tglEnable(TGL_TEXTURE_GEN_R);
@@ -391,8 +391,8 @@ void TeRendererTinyGL::applyMaterial(const TeMaterial &m) {
 		TeLightTinyGL::disableAll();
 		tglDisable(TGL_ALPHA_TEST);
 		enableTexture();
-		// TODO: not supported in TGL
-		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_MODULATE);
+		// TODO: GL_MODULATE not supported in TGL
+		//tglTexEnvi(TGL_TEXTURE_ENV, TGL_TEXTURE_ENV_MODE, TGL_DECAL);
 
 		const float diffuse[4] = { m._diffuseColor.r() / 255.0f, m._diffuseColor.g() / 255.0f,
 			m._diffuseColor.b() / 255.0f, m._diffuseColor.a() / 255.0f };
@@ -406,6 +406,23 @@ void TeRendererTinyGL::applyMaterial(const TeMaterial &m) {
 
 void TeRendererTinyGL::updateGlobalLight() {
 	TeLightTinyGL::updateGlobal();
+}
+
+void TeRendererTinyGL::updateScreen() {
+      Common::List<Common::Rect> dirtyAreas;
+      TinyGL::presentBuffer(dirtyAreas);
+
+      Graphics::Surface glBuffer;
+      TinyGL::getSurfaceRef(glBuffer);
+
+      if (!dirtyAreas.empty()) {
+          for (Common::List<Common::Rect>::iterator itRect = dirtyAreas.begin(); itRect != dirtyAreas.end(); ++itRect) {
+              g_system->copyRectToScreen(glBuffer.getBasePtr((*itRect).left, (*itRect).top), glBuffer.pitch,
+                                         (*itRect).left, (*itRect).top, (*itRect).width(), (*itRect).height());
+          }
+      }
+
+      g_system->updateScreen();
 }
 
 Common::String TeRendererTinyGL::vendor() {

@@ -21,6 +21,7 @@
 
 #include "common/keyboard.h"
 
+#include "ultima/shared/std/string.h"
 #include "ultima/ultima8/gumps/computer_gump.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/audio/audio_process.h"
@@ -260,11 +261,11 @@ uint32 ComputerGump::I_readComputer(const uint8 *args, unsigned int /*argsize*/)
 }
 
 void ComputerGump::saveData(Common::WriteStream *ws) {
-	CANT_HAPPEN_MSG("Trying to load ModalGump");
+	warning("Trying to save ModalGump");
 }
 
 bool ComputerGump::loadData(Common::ReadStream *rs, uint32 version) {
-	CANT_HAPPEN_MSG("Trying to load ModalGump");
+	warning("Trying to load ModalGump");
 
 	return false;
 }

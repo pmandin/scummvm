@@ -346,59 +346,6 @@ void OptionsDialog::build() {
 			_renderModePopUp->setSelectedTag(sel);
 		}
 
-		_stretchPopUp->setSelected(0);
-
-		if (g_system->hasFeature(OSystem::kFeatureStretchMode)) {
-			if (ConfMan.hasKey("stretch_mode", _domain)) {
-				const OSystem::GraphicsMode *sm = g_system->getSupportedStretchModes();
-				Common::String stretchMode(ConfMan.get("stretch_mode", _domain));
-				int stretchCount = 1;
-				while (sm->name) {
-					stretchCount++;
-					if (scumm_stricmp(sm->name, stretchMode.c_str()) == 0)
-						_stretchPopUp->setSelected(stretchCount);
-					sm++;
-				}
-			}
-		} else {
-			_stretchPopUpDesc->setVisible(false);
-			_stretchPopUp->setVisible(false);
-			_stretchPopUp->setEnabled(false);
-		}
-
-		_scalerPopUp->setSelected(0);
-		_scaleFactorPopUp->setSelected(0);
-
-		if (g_system->hasFeature(OSystem::kFeatureScalers)) {
-			if (ConfMan.hasKey("scaler", _domain)) {
-				const PluginList &scalerPlugins = ScalerMan.getPlugins();
-				Common::String scaler(ConfMan.get("scaler", _domain));
-
-				for (uint scalerIndex = 0; scalerIndex < scalerPlugins.size(); scalerIndex++) {
-					if (scumm_stricmp(scalerPlugins[scalerIndex]->get<ScalerPluginObject>().getName(), scaler.c_str()) != 0)
-						continue;
-
-					_scalerPopUp->setSelectedTag(scalerIndex);
-					updateScaleFactors(scalerIndex);
-
-					if (ConfMan.hasKey("scale_factor", _domain)) {
-						int scaleFactor = ConfMan.getInt("scale_factor", _domain);
-						if (scalerPlugins[scalerIndex]->get<ScalerPluginObject>().hasFactor(scaleFactor))
-							_scaleFactorPopUp->setSelectedTag(scaleFactor);
-					}
-
-					break;
-				}
-
-			}
-		} else {
-			_scalerPopUpDesc->setVisible(false);
-			_scalerPopUp->setVisible(false);
-			_scalerPopUp->setEnabled(false);
-			_scaleFactorPopUp->setVisible(false);
-			_scaleFactorPopUp->setEnabled(false);
-		}
-
 		// Fullscreen setting
 		if (g_system->hasFeature(OSystem::kFeatureFullscreenMode)) {
 			_fullscreenCheckbox->setState(ConfMan.getBool("fullscreen", _domain));
@@ -430,15 +377,59 @@ void OptionsDialog::build() {
 			if (ConfMan.isKeyTemporary("vsync"))
 				_vsyncCheckbox->setOverride(true);
 		}
+	}
 
-		_rendererTypePopUp->setEnabled(true);
-		_rendererTypePopUp->setSelectedTag(Graphics::Renderer::parseTypeCode(ConfMan.get("renderer", _domain)));
+	if (_stretchPopUp) {
+		if (g_system->hasFeature(OSystem::kFeatureStretchMode)) {
+			_stretchPopUp->setSelected(0);
 
-		_antiAliasPopUp->setEnabled(true);
-		if (ConfMan.hasKey("antialiasing", _domain)) {
-			_antiAliasPopUp->setSelectedTag(ConfMan.getInt("antialiasing", _domain));
+			if (ConfMan.hasKey("stretch_mode", _domain)) {
+				const OSystem::GraphicsMode *sm = g_system->getSupportedStretchModes();
+				Common::String stretchMode(ConfMan.get("stretch_mode", _domain));
+				int stretchCount = 1;
+				while (sm->name) {
+					stretchCount++;
+					if (scumm_stricmp(sm->name, stretchMode.c_str()) == 0)
+						_stretchPopUp->setSelected(stretchCount);
+					sm++;
+				}
+			}
 		} else {
-			_antiAliasPopUp->setSelectedTag(uint32(-1));
+			_stretchPopUpDesc->setVisible(false);
+			_stretchPopUp->setVisible(false);
+		}
+	}
+
+	if (_scalerPopUp) {
+		if (g_system->hasFeature(OSystem::kFeatureScalers)) {
+			_scalerPopUp->setSelected(0);
+			_scaleFactorPopUp->setSelected(0);
+
+			if (ConfMan.hasKey("scaler", _domain)) {
+				const PluginList &scalerPlugins = ScalerMan.getPlugins();
+				Common::String scaler(ConfMan.get("scaler", _domain));
+
+				for (uint scalerIndex = 0; scalerIndex < scalerPlugins.size(); scalerIndex++) {
+					if (scumm_stricmp(scalerPlugins[scalerIndex]->get<ScalerPluginObject>().getName(), scaler.c_str()) != 0)
+						continue;
+
+					_scalerPopUp->setSelectedTag(scalerIndex);
+					updateScaleFactors(scalerIndex);
+
+					if (ConfMan.hasKey("scale_factor", _domain)) {
+						int scaleFactor = ConfMan.getInt("scale_factor", _domain);
+						if (scalerPlugins[scalerIndex]->get<ScalerPluginObject>().hasFactor(scaleFactor))
+							_scaleFactorPopUp->setSelectedTag(scaleFactor);
+					}
+
+					break;
+				}
+
+			}
+		} else {
+			_scalerPopUpDesc->setVisible(false);
+			_scalerPopUp->setVisible(false);
+			_scaleFactorPopUp->setVisible(false);
 		}
 	}
 
@@ -460,6 +451,20 @@ void OptionsDialog::build() {
 			_shader->setVisible(false);
 			_shaderButton->setVisible(false);
 			_shaderClearButton->setVisible(false);
+		}
+	}
+
+	if (_rendererTypePopUp) {
+		_rendererTypePopUp->setEnabled(true);
+		_rendererTypePopUp->setSelectedTag(Graphics::Renderer::parseTypeCode(ConfMan.get("renderer", _domain)));
+	}
+
+	if (_antiAliasPopUp) {
+		_antiAliasPopUp->setEnabled(true);
+		if (ConfMan.hasKey("antialiasing", _domain)) {
+			_antiAliasPopUp->setSelectedTag(ConfMan.getInt("antialiasing", _domain));
+		} else {
+			_antiAliasPopUp->setSelectedTag(uint32(-1));
 		}
 	}
 
@@ -650,73 +655,81 @@ void OptionsDialog::apply() {
 				}
 			}
 
-			isSet = false;
-			if ((int32)_stretchPopUp->getSelectedTag() >= 0) {
-				const OSystem::GraphicsMode *sm = g_system->getSupportedStretchModes();
+			if (g_system->hasFeature(OSystem::kFeatureStretchMode)) {
+				isSet = false;
+				if ((int32)_stretchPopUp->getSelectedTag() >= 0) {
+					const OSystem::GraphicsMode *sm = g_system->getSupportedStretchModes();
 
-				while (sm->name) {
-					if (sm->id == (int)_stretchPopUp->getSelectedTag()) {
-						if (ConfMan.get("stretch_mode", _domain) != sm->name) {
-							graphicsModeChanged = true;
-							ConfMan.set("stretch_mode", sm->name, _domain);
-							_stretchPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+					while (sm->name) {
+						if (sm->id == (int)_stretchPopUp->getSelectedTag()) {
+							if (ConfMan.get("stretch_mode", _domain) != sm->name) {
+								graphicsModeChanged = true;
+								ConfMan.set("stretch_mode", sm->name, _domain);
+								_stretchPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+							}
+							isSet = true;
+							break;
 						}
-						isSet = true;
-						break;
+						sm++;
 					}
-					sm++;
+				}
+				if (!isSet) {
+					_stretchPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+					ConfMan.removeKey("stretch_mode", _domain);
+					if (g_system->getStretchMode() != g_system->getDefaultStretchMode())
+						graphicsModeChanged = true;
 				}
 			}
-			if (!isSet) {
-				_stretchPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
-				ConfMan.removeKey("stretch_mode", _domain);
-				if (g_system->getStretchMode() != g_system->getDefaultStretchMode())
-					graphicsModeChanged = true;
-			}
 
-			isSet = false;
-			const PluginList &scalerPlugins = ScalerMan.getPlugins();
-			if ((int32)_scalerPopUp->getSelectedTag() >= 0) {
-				const char *name = scalerPlugins[_scalerPopUp->getSelectedTag()]->get<ScalerPluginObject>().getName();
-				if (ConfMan.get("scaler", _domain) != name) {
-					graphicsModeChanged = true;
-					ConfMan.set("scaler", name, _domain);
+			if (g_system->hasFeature(OSystem::kFeatureScalers)) {
+				isSet = false;
+				const PluginList &scalerPlugins = ScalerMan.getPlugins();
+				if ((int32)_scalerPopUp->getSelectedTag() >= 0) {
+					const char *name = scalerPlugins[_scalerPopUp->getSelectedTag()]->get<ScalerPluginObject>().getName();
+					if (ConfMan.get("scaler", _domain) != name) {
+						graphicsModeChanged = true;
+						ConfMan.set("scaler", name, _domain);
+						_scalerPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+					}
+
+					int factor = _scaleFactorPopUp->getSelectedTag();
+					if (ConfMan.getInt("scale_factor", _domain) != factor) {
+						ConfMan.setInt("scale_factor", factor, _domain);
+						graphicsModeChanged = true;
+						_scalerPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+					}
+					isSet = true;
+				}
+				if (!isSet) {
+					ConfMan.removeKey("scaler", _domain);
+					ConfMan.removeKey("scale_factor", _domain);
 					_scalerPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+
+					uint defaultScaler = g_system->getDefaultScaler();
+					uint defaultScaleFactor = g_system->getDefaultScaleFactor();
+					if (g_system->getScaler() != defaultScaler)
+						graphicsModeChanged = true;
+					else if (g_system->getScaleFactor() != defaultScaleFactor)
+						graphicsModeChanged = true;
 				}
+			}
 
-				int factor = _scaleFactorPopUp->getSelectedTag();
-				if (ConfMan.getInt("scale_factor", _domain) != factor) {
-					ConfMan.setInt("scale_factor", factor, _domain);
-					graphicsModeChanged = true;
-					_scalerPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
+			if (_rendererTypePopUp) {
+				if (_rendererTypePopUp->getSelectedTag() > 0) {
+					Graphics::RendererType selected = (Graphics::RendererType) _rendererTypePopUp->getSelectedTag();
+					ConfMan.set("renderer", Graphics::Renderer::getTypeCode(selected), _domain);
+				} else {
+					ConfMan.removeKey("renderer", _domain);
 				}
-				isSet = true;
-			}
-			if (!isSet) {
-				ConfMan.removeKey("scaler", _domain);
-				ConfMan.removeKey("scale_factor", _domain);
-				_scalerPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorNormal);
-
-				uint defaultScaler = g_system->getDefaultScaler();
-				uint defaultScaleFactor = g_system->getDefaultScaleFactor();
-				if (g_system->getScaler() != defaultScaler)
-					graphicsModeChanged = true;
-				else if (g_system->getScaleFactor() != defaultScaleFactor)
-					graphicsModeChanged = true;
 			}
 
-			if (_rendererTypePopUp->getSelectedTag() > 0) {
-				Graphics::RendererType selected = (Graphics::RendererType) _rendererTypePopUp->getSelectedTag();
-				ConfMan.set("renderer", Graphics::Renderer::getTypeCode(selected), _domain);
-			} else {
-				ConfMan.removeKey("renderer", _domain);
-			}
-
-			if (_antiAliasPopUp->getSelectedTag() != (uint32)-1) {
-				uint level = _antiAliasPopUp->getSelectedTag();
-				ConfMan.setInt("antialiasing", level, _domain);
-			} else {
-				ConfMan.removeKey("antialiasing", _domain);
+			if (_antiAliasPopUp) {
+				if (_antiAliasPopUp->getSelectedTag() != (uint32)-1) {
+					uint level = _antiAliasPopUp->getSelectedTag();
+					ConfMan.setInt("antialiasing", level, _domain);
+				} else {
+					ConfMan.removeKey("antialiasing", _domain);
+				}
 			}
 
 		} else {
@@ -1220,17 +1233,26 @@ void OptionsDialog::setGraphicSettingsState(bool enabled) {
 	_gfxPopUp->setEnabled(enabled);
 	_renderModePopUpDesc->setEnabled(enabled);
 	_renderModePopUp->setEnabled(enabled);
-	_rendererTypePopUpDesc->setEnabled(enabled);
-	_rendererTypePopUp->setEnabled(enabled);
-	_antiAliasPopUpDesc->setEnabled(enabled);
-	_antiAliasPopUp->setEnabled(enabled);
+
+	if (_rendererTypePopUp) {
+		_rendererTypePopUpDesc->setEnabled(enabled);
+		_rendererTypePopUp->setEnabled(enabled);
+	}
+
+	if (_antiAliasPopUp) {
+		_antiAliasPopUpDesc->setEnabled(enabled);
+		_antiAliasPopUp->setEnabled(enabled);
+	}
 
 	if (g_system->hasFeature(OSystem::kFeatureStretchMode)) {
 		_stretchPopUpDesc->setEnabled(enabled);
 		_stretchPopUp->setEnabled(enabled);
 	} else {
-		_stretchPopUpDesc->setEnabled(false);
-		_stretchPopUp->setEnabled(false);
+		// Happens when we switch to backend that doesn't support stretch modes
+		if (_stretchPopUp) {
+			_stretchPopUpDesc->setEnabled(false);
+			_stretchPopUp->setEnabled(false);
+		}
 	}
 
 	if (g_system->hasFeature(OSystem::kFeatureScalers)) {
@@ -1238,9 +1260,12 @@ void OptionsDialog::setGraphicSettingsState(bool enabled) {
 		_scalerPopUp->setEnabled(enabled);
 		_scaleFactorPopUp->setEnabled(enabled);
 	} else {
-		_scalerPopUpDesc->setEnabled(false);
-		_scalerPopUp->setEnabled(false);
-		_scaleFactorPopUp->setEnabled(false);
+		// Happens when we switch to backend that doesn't support scalers
+		if (_scalerPopUp) {
+			_scalerPopUpDesc->setEnabled(false);
+			_scalerPopUp->setEnabled(false);
+			_scaleFactorPopUp->setEnabled(false);
+		}
 	}
 
 	if (g_system->hasFeature(OSystem::kFeatureShaders)) {
@@ -1582,32 +1607,36 @@ void OptionsDialog::addGraphicControls(GuiObject *boss, const Common::String &pr
 	}
 
 	// The Stretch mode popup
-	const OSystem::GraphicsMode *sm = g_system->getSupportedStretchModes();
-	_stretchPopUpDesc = new StaticTextWidget(boss, prefix + "grStretchModePopupDesc", _("Stretch mode:"));
-	if (ConfMan.isKeyTemporary("stretch_mode"))
-		_stretchPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
-	_stretchPopUp = new PopUpWidget(boss, prefix + "grStretchModePopup");
+	if (g_system->hasFeature(OSystem::kFeatureStretchMode)) {
+		const OSystem::GraphicsMode *sm = g_system->getSupportedStretchModes();
+		_stretchPopUpDesc = new StaticTextWidget(boss, prefix + "grStretchModePopupDesc", _("Stretch mode:"));
+		if (ConfMan.isKeyTemporary("stretch_mode"))
+			_stretchPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
+		_stretchPopUp = new PopUpWidget(boss, prefix + "grStretchModePopup");
 
-	_stretchPopUp->appendEntry(_("<default>"));
-	_stretchPopUp->appendEntry(Common::U32String());
-	while (sm->name) {
-		_stretchPopUp->appendEntry(_c(sm->description, context), sm->id);
-		sm++;
+		_stretchPopUp->appendEntry(_("<default>"));
+		_stretchPopUp->appendEntry(Common::U32String());
+		while (sm->name) {
+			_stretchPopUp->appendEntry(_c(sm->description, context), sm->id);
+			sm++;
+		}
 	}
 
 	// The Scaler popup
-	const PluginList &scalerPlugins = ScalerMan.getPlugins();
-	_scalerPopUpDesc = new StaticTextWidget(boss, prefix + "grScalerPopupDesc", _("Scaler:"));
-	_scalerPopUp = new PopUpWidget(boss, prefix + "grScalerPopup", Common::U32String(), kScalerPopUpCmd);
+	if (g_system->hasFeature(OSystem::kFeatureScalers)) {
+		const PluginList &scalerPlugins = ScalerMan.getPlugins();
+		_scalerPopUpDesc = new StaticTextWidget(boss, prefix + "grScalerPopupDesc", _("Scaler:"));
+		_scalerPopUp = new PopUpWidget(boss, prefix + "grScalerPopup", Common::U32String(), kScalerPopUpCmd);
 
-	_scalerPopUp->appendEntry(_("<default>"));
-	_scalerPopUp->appendEntry(Common::U32String());
-	for (uint scalerIndex = 0; scalerIndex < scalerPlugins.size(); scalerIndex++) {
-		_scalerPopUp->appendEntry(_c(scalerPlugins[scalerIndex]->get<ScalerPluginObject>().getPrettyName(), context), scalerIndex);
+		_scalerPopUp->appendEntry(_("<default>"));
+		_scalerPopUp->appendEntry(Common::U32String());
+		for (uint scalerIndex = 0; scalerIndex < scalerPlugins.size(); scalerIndex++) {
+			_scalerPopUp->appendEntry(_c(scalerPlugins[scalerIndex]->get<ScalerPluginObject>().getPrettyName(), context), scalerIndex);
+		}
+
+		_scaleFactorPopUp = new PopUpWidget(boss, prefix + "grScaleFactorPopup");
+		updateScaleFactors(_scalerPopUp->getSelectedTag());
 	}
-
-	_scaleFactorPopUp = new PopUpWidget(boss, prefix + "grScaleFactorPopup");
-	updateScaleFactors(_scalerPopUp->getSelectedTag());
 
 	if (g_system->hasFeature(OSystem::kFeatureShaders)) {
 		if (g_system->getOverlayWidth() > 320)
@@ -1631,37 +1660,36 @@ void OptionsDialog::addGraphicControls(GuiObject *boss, const Common::String &pr
 	if (g_system->hasFeature(OSystem::kFeatureVSync))
 		_vsyncCheckbox = new CheckboxWidget(boss, prefix + "grVSyncCheckbox", _("V-Sync"), _("Wait for the vertical sync to refresh the screen in order to prevent tearing artifacts"));
 
-	if (g_system->getOverlayWidth() > 320)
-		_rendererTypePopUpDesc = new StaticTextWidget(boss, prefix + "grRendererTypePopupDesc", _("Game 3D Renderer:"));
-	else
-		_rendererTypePopUpDesc = new StaticTextWidget(boss, prefix + "grRendererTypePopupDesc", _c("Game 3D Renderer:", "lowres"));
-
-	_rendererTypePopUp = new PopUpWidget(boss, prefix + "grRendererTypePopup");
-	_rendererTypePopUp->appendEntry(_("<default>"), Graphics::kRendererTypeDefault);
-	_rendererTypePopUp->appendEntry("");
 	Common::Array<Graphics::RendererTypeDescription> rt = Graphics::Renderer::listTypes();
-	for (Common::Array<Graphics::RendererTypeDescription>::iterator it = rt.begin();
-	        it != rt.end(); ++it) {
-		if (g_system->getOverlayWidth() > 320) {
-			_rendererTypePopUp->appendEntry(_(it->description), it->id);
-		} else {
-			_rendererTypePopUp->appendEntry(_c(it->description, "lowres"), it->id);
+	if (!rt.empty()) {
+		if (g_system->getOverlayWidth() > 320)
+			_rendererTypePopUpDesc = new StaticTextWidget(boss, prefix + "grRendererTypePopupDesc", _("Game 3D Renderer:"));
+		else
+			_rendererTypePopUpDesc = new StaticTextWidget(boss, prefix + "grRendererTypePopupDesc", _c("Game 3D Renderer:", "lowres"));
+
+		_rendererTypePopUp = new PopUpWidget(boss, prefix + "grRendererTypePopup");
+		_rendererTypePopUp->appendEntry(_("<default>"), Graphics::kRendererTypeDefault);
+		_rendererTypePopUp->appendEntry("");
+		for (Common::Array<Graphics::RendererTypeDescription>::iterator it = rt.begin();
+		        it != rt.end(); ++it) {
+			if (g_system->getOverlayWidth() > 320) {
+				_rendererTypePopUp->appendEntry(_(it->description), it->id);
+			} else {
+				_rendererTypePopUp->appendEntry(_c(it->description, "lowres"), it->id);
+			}
 		}
 	}
 
-	_antiAliasPopUpDesc = new StaticTextWidget(boss, prefix + "grAntiAliasPopupDesc", _("3D Anti-aliasing:"));
-	_antiAliasPopUp = new PopUpWidget(boss, prefix + "grAntiAliasPopup");
-	_antiAliasPopUp->appendEntry(_("<default>"), uint32(-1));
-	_antiAliasPopUp->appendEntry("");
-	_antiAliasPopUp->appendEntry(_("Disabled"), 0);
 	const Common::Array<uint> levels = g_system->getSupportedAntiAliasingLevels();
-	for (uint i = 0; i < levels.size(); i++) {
-		_antiAliasPopUp->appendEntry(Common::String::format("%dx", levels[i]), levels[i]);
-	}
-	if (levels.empty()) {
-		// Don't show the anti-aliasing selection menu when it is not supported
-		_antiAliasPopUpDesc->setVisible(false);
-		_antiAliasPopUp->setVisible(false);
+	if (!levels.empty()) {
+		_antiAliasPopUpDesc = new StaticTextWidget(boss, prefix + "grAntiAliasPopupDesc", _("3D Anti-aliasing:"));
+		_antiAliasPopUp = new PopUpWidget(boss, prefix + "grAntiAliasPopup");
+		_antiAliasPopUp->appendEntry(_("<default>"), uint32(-1));
+		_antiAliasPopUp->appendEntry("");
+		_antiAliasPopUp->appendEntry(_("Disabled"), 0);
+		for (uint i = 0; i < levels.size(); i++) {
+			_antiAliasPopUp->appendEntry(Common::String::format("%dx", levels[i]), levels[i]);
+		}
 	}
 
 	// Filtering checkbox
@@ -1998,6 +2026,10 @@ void OptionsDialog::setupGraphicsTab() {
 		// Fixes crash when switching from SDL Surface to OpenGL
 		if (!_shader && g_system->hasFeature(OSystem::kFeatureShaders)) {
 			rebuild();
+		} else if (!_scalerPopUp && g_system->hasFeature(OSystem::kFeatureScalers)) {
+			rebuild();
+		} else if (!_stretchPopUp && g_system->hasFeature(OSystem::kFeatureStretchMode)) {
+			rebuild();
 		}
 		setGraphicSettingsState(_enableGraphicSettings);
 	}
@@ -2008,9 +2040,6 @@ void OptionsDialog::setupGraphicsTab() {
 	if (g_system->hasFeature(OSystem::kFeatureStretchMode)) {
 		_stretchPopUpDesc->setVisible(true);
 		_stretchPopUp->setVisible(true);
-	} else {
-		_stretchPopUpDesc->setVisible(false);
-		_stretchPopUp->setVisible(false);
 	}
 	_fullscreenCheckbox->setVisible(true);
 	if (g_system->hasFeature(OSystem::kFeatureFilteringMode))
@@ -2026,10 +2055,6 @@ void OptionsDialog::setupGraphicsTab() {
 			_scalerPopUpDesc->setFontColor(ThemeEngine::FontColor::kFontColorOverride);
 		_scalerPopUp->setVisible(true);
 		_scaleFactorPopUp->setVisible(true);
-	} else {
-		_scalerPopUpDesc->setVisible(false);
-		_scalerPopUp->setVisible(false);
-		_scaleFactorPopUp->setVisible(false);
 	}
 
 	if (g_system->hasFeature(OSystem::kFeatureShaders)) {
@@ -3541,8 +3566,8 @@ void GlobalOptionsDialog::setupCloudTab() {
 	if (_storageUsedSpaceDesc) _storageUsedSpaceDesc->setVisible(shownConnectedInfo);
 	if (_storageUsedSpace) {
 		uint64 usedSpace = CloudMan.getStorageUsedSpace(_selectedStorageIndex);
-		Common::String usedSpaceNumber, usedSpaceUnits;
-		usedSpaceNumber = Common::getHumanReadableBytes(usedSpace, usedSpaceUnits);
+		const char *usedSpaceUnits;
+		Common::String usedSpaceNumber = Common::getHumanReadableBytes(usedSpace, usedSpaceUnits);
 		_storageUsedSpace->setLabel(Common::U32String::format("%s %S", usedSpaceNumber.c_str(), _(usedSpaceUnits).c_str()));
 		_storageUsedSpace->setVisible(shownConnectedInfo);
 	}

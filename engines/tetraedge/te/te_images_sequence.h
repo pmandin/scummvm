@@ -37,7 +37,7 @@ public:
 	TeImagesSequence();
 	virtual ~TeImagesSequence();
 
-	virtual bool load(const Common::Path &path) override;
+	virtual bool load(const Common::FSNode &node) override;
 	virtual uint width() override { return _width; }
 	virtual uint height() override { return _height; }
 	virtual int nbFrames() override { return _files.size(); }
@@ -51,7 +51,7 @@ public:
 	virtual uint topBorderSize() override { return 0; }
 	virtual TeImage::Format imageFormat() override;
 	virtual float frameRate() override { return _frameRate; }
-	virtual bool update(unsigned long i, TeImage &imgout) override;
+	virtual bool update(uint i, TeImage &imgout) override;
 	virtual bool isAtEnd() override;
 	virtual void setColorKeyActivated(bool val) override { }
 	virtual void setColorKey(const TeColor &col) override { }

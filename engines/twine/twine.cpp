@@ -317,7 +317,7 @@ Common::Error TwinEEngine::run() {
 		} else {
 			debug("Boot parameter: %i\n", sceneIndex);
 			_gameState->initEngineVars();
-			_text->textClipSmall();
+			_text->normalWinDial();
 			_text->_drawTextBoxBackground = true;
 			_text->_renderTextTriangle = false;
 			_scene->_needChangeScene = sceneIndex;
@@ -340,7 +340,7 @@ Common::Error TwinEEngine::run() {
 				_scene->_heroPositionType = ScenePositionType::kNoPosition;
 			}
 			_text->_renderTextTriangle = false;
-			_text->textClipSmall();
+			_text->normalWinDial();
 			_text->_drawTextBoxBackground = true;
 			_state = EngineState::GameLoop;
 			break;
@@ -674,13 +674,13 @@ void TwinEEngine::processBookOfBu() {
 	_screens->loadImage(TwineImage(Resources::HQR_RESS_FILE, 15, 16));
 	_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
 	_text->_drawTextBoxBackground = false;
-	_text->textClipFull();
+	_text->bigWinDial();
 	_text->setFontCrossColor(COLOR_WHITE);
 	const bool tmpFlagDisplayText = _cfgfile.FlagDisplayText;
 	_cfgfile.FlagDisplayText = true;
 	_text->drawTextProgressive(TextId::kBookOfBu);
 	_cfgfile.FlagDisplayText = tmpFlagDisplayText;
-	_text->textClipSmall();
+	_text->normalWinDial();
 	_text->_drawTextBoxBackground = true;
 	_text->initSceneTextBank();
 	_screens->fadeToBlack(_screens->_paletteRGBACustom);
@@ -692,13 +692,13 @@ void TwinEEngine::processBookOfBu() {
 
 void TwinEEngine::processBonusList() {
 	_text->initDial(TextBankId::Inventory_Intro_and_Holomap);
-	_text->textClipFull();
+	_text->bigWinDial();
 	_text->setFontCrossColor(COLOR_WHITE);
 	const bool tmpFlagDisplayText = _cfgfile.FlagDisplayText;
 	_cfgfile.FlagDisplayText = true;
 	_text->drawTextProgressive(TextId::kBonusList);
 	_cfgfile.FlagDisplayText = tmpFlagDisplayText;
-	_text->textClipSmall();
+	_text->normalWinDial();
 	_text->initSceneTextBank();
 }
 
@@ -954,9 +954,9 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 		}
 	}
 
-	_loopActorStep = _loopMovePtr.getRealValueFromTime(timerRef);
-	if (!_loopActorStep) {
-		_loopActorStep = 1;
+	_stepFalling = _loopMovePtr.getRealValueFromTime(timerRef);
+	if (!_stepFalling) {
+		_stepFalling = 1;
 	}
 
 	_movements->setActorAngle(LBAAngles::ANGLE_0, -LBAAngles::ANGLE_90, LBAAngles::ANGLE_1, &_loopMovePtr);
@@ -965,13 +965,13 @@ bool TwinEEngine::runGameEngine() { // mainLoopInteration
 	_scene->processEnvironmentSound();
 
 	// Reset HitBy state
-	for (int32 a = 0; a < _scene->_sceneNumActors; a++) {
+	for (int32 a = 0; a < _scene->_nbObjets; a++) {
 		_scene->getActor(a)->_hitBy = -1;
 	}
 
 	_extra->gereExtras();
 
-	for (int32 a = 0; a < _scene->_sceneNumActors; a++) {
+	for (int32 a = 0; a < _scene->_nbObjets; a++) {
 		ActorStruct *actor = _scene->getActor(a);
 
 		if (actor->_dynamicFlags.bIsDead) {

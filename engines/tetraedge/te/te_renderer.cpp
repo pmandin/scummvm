@@ -33,10 +33,11 @@
 namespace Tetraedge {
 
 TeRenderer::TeRenderer() : _textureEnabled(false), _shadowMode(ShadowModeNone), _matrixMode(MM_GL_PROJECTION),
-_numTransparentMeshes(0), _pendingTransparentMeshProperties(0) {
+_numTransparentMeshes(0), _pendingTransparentMeshProperties(0), _currentCamera(nullptr), _scissorEnabled(false),
+_scissorX(0), _scissorY(0), _scissorWidth(0), _scissorHeight(0) {
 }
 
-void TeRenderer::addTransparentMesh(const TeMesh &mesh, unsigned long i1, unsigned long tricount, unsigned long materialno) {
+void TeRenderer::addTransparentMesh(const TeMesh &mesh, uint i1, uint tricount, uint materialno) {
 	const float orthNearVal = _currentCamera->orthoNearPlane();
 	const TeMesh::Mode meshMode = mesh.getMode();
 	if (!tricount) {
@@ -284,7 +285,7 @@ void TeRenderer::pushMatrix() {
 }
 
 void TeRenderer::dumpTransparentMeshProps() const {
-	debug("** Transparent MeshProps: num:%ld pending:%d **", _numTransparentMeshes, _pendingTransparentMeshProperties);
+	debug("** Transparent MeshProps: num:%d pending:%d **", _numTransparentMeshes, _pendingTransparentMeshProperties);
 	debug("draw? / nverts / source / transl / zorder");
 	for (uint i = 0; i < _transparentMeshProps.size(); i++) {
 		debug("%s %d %d %s %f",
@@ -298,7 +299,7 @@ void TeRenderer::dumpTransparentMeshProps() const {
 }
 
 void TeRenderer::dumpTransparentMeshData() const {
-	debug("** Transparent Meshes: num:%ld pending:%d **", _numTransparentMeshes, _pendingTransparentMeshProperties);
+	debug("** Transparent Meshes: num:%d pending:%d **", _numTransparentMeshes, _pendingTransparentMeshProperties);
 	debug("vert / normal / coord / color / vertNo");
 	for (uint i = 0; i < _transparentMeshVertexes.size(); i++) {
 		debug("%s %s %s %s %d",

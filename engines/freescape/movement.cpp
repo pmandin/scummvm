@@ -149,7 +149,7 @@ void FreescapeEngine::rise() {
 
 	_lastPosition = _position;
 	debugC(1, kFreescapeDebugMove, "new player position: %f, %f, %f", _position.x(), _position.y(), _position.z());
-	executeLocalGlobalConditions(false, true); // Only execute "on collision" room/global conditions
+	executeMovementConditions();
 }
 
 void FreescapeEngine::lower() {
@@ -174,7 +174,18 @@ void FreescapeEngine::lower() {
 
 	_lastPosition = _position;
 	debugC(1, kFreescapeDebugMove, "new player position: %f, %f, %f", _position.x(), _position.y(), _position.z());
-	executeLocalGlobalConditions(false, true); // Only execute "on collision" room/global conditions
+	executeMovementConditions();
+}
+
+void FreescapeEngine::checkIfStillInArea() {
+	for (int i = 0; i < 3; i++) {
+		if (_position.getValue(i) < 0)
+			_position.setValue(i, 0);
+		else if (_position.getValue(i) > 8128)
+			_position.setValue(i, 8128);
+	}
+	if (_position.y() >= 2016)
+		_position.y() = _lastPosition.z();
 }
 
 void FreescapeEngine::move(CameraMovement direction, uint8 scale, float deltaTime) {
@@ -207,14 +218,9 @@ void FreescapeEngine::move(CameraMovement direction, uint8 scale, float deltaTim
 	if (!_flyMode)
 		_position.set(_position.x(), positionY, _position.z());
 
-	for (int i = 0; i < 3; i++) {
-		if (_position.getValue(i) < 0)
-			_position.setValue(i, 0);
-		else if (_position.getValue(i) > 8128)
-			_position.setValue(i, 8128);
-	}
-	if (_position.y() >= 2016)
-		_position.y() = _lastPosition.z();
+	checkIfStillInArea();
+	if (_currentArea->getAreaID() != previousAreaID)
+		return;
 
 	bool collided = checkCollisions(false);
 
@@ -239,10 +245,12 @@ void FreescapeEngine::move(CameraMovement direction, uint8 scale, float deltaTim
 				playSound(3, false);
 		}
 		debugC(1, kFreescapeDebugCode, "Runing effects:");
+		if (_flyMode)
+			setGameBit(31);
 		checkCollisions(true); // run the effects
 	} else {
 		debugC(1, kFreescapeDebugCode, "Runing effects: at: %f, %f, %f", _position.x(), _position.y(), _position.z());
-
+		setGameBit(31);
 		checkCollisions(true); // run the effects
 		if (_currentArea->getAreaID() == previousAreaID) {
 			if (_flyMode)
@@ -267,7 +275,8 @@ void FreescapeEngine::move(CameraMovement direction, uint8 scale, float deltaTim
 	debugC(1, kFreescapeDebugMove, "new player position: %f, %f, %f", _position.x(), _position.y(), _position.z());
 	//debugC(1, kFreescapeDebugMove, "player height: %f", _position.y() - areaScale * _playerHeight);
 	if (_currentArea->getAreaID() == previousAreaID)
-		executeLocalGlobalConditions(false, true); // Only execute "on collision" room/global conditions
+		executeMovementConditions();
+	clearGameBit(31);
 }
 
 bool FreescapeEngine::checkFloor(Math::Vector3d currentPosition) {

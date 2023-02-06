@@ -49,7 +49,7 @@ bool Object3D::loadModel(const Common::String &name) {
 		_modelFileName = settings->_value._modelFileName;
 		_defaultScale = settings->_value._defaultScale;
 		_modelPtr->setTexturePath("objects/Textures");
-		bool loaded = _modelPtr->load(Common::Path("objects").join(_modelFileName));
+		bool loaded = _modelPtr->load(Common::Path("objects").join(_modelFileName).toString());
 		if (loaded) {
 			_modelPtr->setName(name);
 			_modelPtr->setScale(_defaultScale);
@@ -82,6 +82,8 @@ void Object3D::ObjectSettings::clear() {
 	_name.clear();
 	_modelFileName.clear();
 	_defaultScale = TeVector3f32();
+	_originOffset = TeVector3f32();
+	_invertNormals = false;
 }
 
 

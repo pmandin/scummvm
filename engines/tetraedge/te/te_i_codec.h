@@ -36,7 +36,7 @@ public:
 	TeICodec() {};
 
 	virtual ~TeICodec() {};
-	virtual bool load(const Common::Path &path) = 0;
+	virtual bool load(const Common::FSNode &node) = 0;
 	virtual uint width() = 0;
 	virtual uint height() = 0;
 	virtual int nbFrames() = 0;
@@ -50,7 +50,7 @@ public:
 	virtual void setTopBorderSize(uint val) = 0;
 	virtual uint topBorderSize() = 0;
 	virtual float frameRate() = 0;
-	virtual bool update(unsigned long i, TeImage &imgout) = 0;
+	virtual bool update(uint i, TeImage &imgout) = 0;
 	virtual bool isAtEnd() = 0;
 	virtual TeSignal0Param &onVideoFinished() { return _finishedSignal; };
 	virtual void setColorKeyActivated(bool val) = 0;

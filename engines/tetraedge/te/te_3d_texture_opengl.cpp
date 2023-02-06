@@ -111,8 +111,7 @@ void Te3DTextureOpenGL::forceTexData(uint gltexture, uint xsize, uint ysize) {
 }
 
 bool Te3DTextureOpenGL::load(const TeImage &img) {
-	Common::Path accessName = img.getAccessName();
-	setAccessName(accessName.append(".3dtex"));
+	setAccessName(img.getAccessName() + ".3dtex");
 
 	_width = img.w;
 	_height = img.h;
@@ -145,6 +144,15 @@ bool Te3DTextureOpenGL::load(const TeImage &img) {
 	} else if (_format == TeImage::RGBA8) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _texWidth, _texHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, img.w, img.h, GL_RGBA, GL_UNSIGNED_BYTE, imgdata);
+		// FIXME: Slight hack.. sometimes artifacts appear because we draw
+		// a (half?)pixel outside the original texture. Clear one more row
+		// of the new texture with 0s to avoid artifacts.
+		if ((int)_texHeight > img.h) {
+			byte *buf = new byte[img.w * 4];
+			memset(buf, 0, img.w * 4);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, img.h, img.w, 1, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+			delete [] buf;
+		}
 	} else {
 		warning("Te3DTexture::load can't send image format %d to GL.", _format);
 	}
@@ -184,10 +192,10 @@ void Te3DTextureOpenGL::update(const TeImage &img, uint xoff, uint yoff) {
 	if (!img.w || !img.h)
 		return;
 
-	setAccessName(img.getAccessName().append(".3dtex"));
+	setAccessName(img.getAccessName() + ".3dtex");
 	glBindTexture(GL_TEXTURE_2D, _glTexture);
-	glPixelStorei(GL_UNPACK_SWAP_BYTES, 0);
-	glPixelStorei(GL_UNPACK_LSB_FIRST, 0);
+	glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
+	glPixelStorei(GL_UNPACK_LSB_FIRST, GL_FALSE);
 	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
 	glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);

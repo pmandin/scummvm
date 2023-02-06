@@ -503,6 +503,7 @@ void Holomap::drawListPos(int calpha, int cbeta, int cgamma, bool pos) {
 			const int32 angleX = _locations[drawList.actorIdx].angleX;
 			const int32 angleY = _locations[drawList.actorIdx].angleY;
 			Common::Rect dummy;
+			// first scene with twinsen model: x = 0, y = -497, z -764, a 432, b: 172
 			_engine->_renderer->affObjetIso(drawList.x, drawList.y, drawList.z, angleX, angleY, LBAAngles::ANGLE_0, *bodyData, dummy);
 		}
 	}
@@ -617,8 +618,8 @@ void Holomap::holoMap() {
 
 		if (automove) {
 			const int32 dt = _engine->timerRef - otimer;
-			calpha = _engine->_collision->clampedLerp(oalpha, dalpha, 75, dt);
-			cbeta = _engine->_collision->clampedLerp(obeta, dbeta, 75, dt);
+			calpha = _engine->_collision->boundRuleThree(oalpha, dalpha, 75, dt);
+			cbeta = _engine->_collision->boundRuleThree(obeta, dbeta, 75, dt);
 			redraw = true;
 		}
 

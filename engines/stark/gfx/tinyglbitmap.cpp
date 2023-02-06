@@ -28,8 +28,7 @@ namespace Stark {
 namespace Gfx {
 
 TinyGlBitmap::TinyGlBitmap() :
-		Bitmap(),
-		 _1x1Color(0) {
+		Bitmap() {
 	_blitImage = tglGenBlitImage();
 }
 
@@ -44,19 +43,13 @@ void TinyGlBitmap::update(const Graphics::Surface *surface, const byte *palette)
 	_width = surface->w;
 	_height = surface->h;
 
-	if (surface->format.bytesPerPixel != 4) {
+	if (surface->format != Driver::getRGBAPixelFormat()) {
 		// Convert the surface to bitmap format
 		Graphics::Surface *convertedSurface = surface->convertTo(Driver::getRGBAPixelFormat(), palette);
 		tglUploadBlitImage(_blitImage, *convertedSurface, 0, false);
 		convertedSurface->free();
 		delete convertedSurface;
 	} else {
-		assert(surface->format == Driver::getRGBAPixelFormat());
-		// W/A for 1x1 size bitmap
-		// store pixel color used later fo creating scalled bitmap
-		if (_width == 1 && _height == 1) {
-			_1x1Color = surface->getPixel(0, 0);
-		}
 		tglUploadBlitImage(_blitImage, *surface, 0, false);
 	}
 }
