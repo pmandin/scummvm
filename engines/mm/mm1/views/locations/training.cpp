@@ -33,7 +33,7 @@ Training::Training() : Location("Training") {
 }
 
 bool Training::msgFocus(const FocusMessage &msg) {
-	send("View", ValueMessage(LOC_TRAINING));
+	send("View", GameMessage("LOCATION", LOC_TRAINING));
 	changeCharacter(0);
 
 	return true;
@@ -53,8 +53,10 @@ void Training::checkCharacter() {
 	Character &c = *g_globals->_currCharacter;
 
 	_currLevel = c._level._base;
-	if (_currLevel >= MAX_LEVEL)
+	if (_currLevel >= MAX_LEVEL) {
+		_canTrain = false;
 		return;
+	}
 
 	// Initialize fields
 	_expTotal = 0;
@@ -117,11 +119,6 @@ void Training::draw() {
 }
 
 bool Training::msgKeypress(const KeypressMessage &msg) {
-	if (msg.keycode == Common::KEYCODE_ESCAPE) {
-		leave();
-		return true;
-	}
-
 	// If a delay is active, end it
 	if (endDelay())
 		return true;
@@ -148,6 +145,18 @@ bool Training::msgKeypress(const KeypressMessage &msg) {
 	}
 
 	return true;
+}
+
+bool Training::msgAction(const ActionMessage &msg) {
+	if (endDelay())
+		return true;
+
+	if (msg._action == KEYBIND_ESCAPE) {
+		leave();
+		return true;
+	}
+
+	return false;
 }
 
 void Training::train() {

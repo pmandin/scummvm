@@ -113,7 +113,7 @@ void GfxTinyGL::setupCameraFrustum(float fov, float nclip, float fclip) {
 	tglLoadIdentity();
 
 	float right = nclip * tan(fov / 2 * ((float)M_PI / 180));
-	tglFrustum(-right, right, -right * 0.75, right * 0.75, nclip, fclip);
+	tglFrustumf(-right, right, -right * 0.75f, right * 0.75f, nclip, fclip);
 
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
@@ -500,7 +500,7 @@ void GfxTinyGL::startActorDraw(const Actor *actor) {
 			float right = 1;
 			float top = right * 0.75;
 			float div = 6.0f;
-			tglFrustum(-right / div, right / div, -top / div, top / div, 1.0f / div, 3276.8f);
+			tglFrustumf(-right / div, right / div, -top / div, top / div, 1.0f / div, 3276.8f);
 			tglMatrixMode(TGL_MODELVIEW);
 			tglLoadIdentity();
 			tglScalef(1.0, 1.0, -1.0);
@@ -916,7 +916,7 @@ void GfxTinyGL::createBitmap(BitmapData *bitmap) {
 			bitmap->_data[pic].free();
 			bitmap->_data[pic] = buffer;
 			imgs[pic] = tglGenBlitImage();
-			tglUploadBlitImage(imgs[pic], bitmap->_data[pic], 0, false);
+			tglUploadBlitImage(imgs[pic], bitmap->_data[pic], 0, false, true);
 		}
 	} else {
 		for (int i = 0; i < bitmap->_numImages; ++i) {
@@ -1055,52 +1055,12 @@ void GfxTinyGL::createTextObject(TextObject *text) {
 	}
 	for (int j = 0; j < numLines; j++) {
 		const Common::String &currentLine = lines[j];
-
-		int width = font->getBitmapStringLength(currentLine) + 1;
-		int height = font->getStringHeight(currentLine) + 1;
-
-		uint8 *_textBitmap = new uint8[height * width]();
-
-		int startColumn = 0;
-		for (unsigned int d = 0; d < currentLine.size(); d++) {
-			int ch = currentLine[d];
-			int32 charBitmapWidth = font->getCharBitmapWidth(ch);
-			int8 fontRow = font->getCharStartingLine(ch) + font->getBaseOffsetY();
-			int8 fontCol = font->getCharStartingCol(ch);
-
-			for (int line = 0; line < font->getCharBitmapHeight(ch); line++) {
-				int lineOffset = ((fontRow + line) * width);
-				for (int bitmapCol = 0; bitmapCol < charBitmapWidth; bitmapCol++) {
-					int columnOffset = startColumn + fontCol + bitmapCol;
-					int fontOffset = (charBitmapWidth * line) + bitmapCol;
-					int8 pixel = font->getCharData(ch)[fontOffset];
-					assert(lineOffset + columnOffset < width*height);
-					if (pixel != 0)
-						_textBitmap[lineOffset + columnOffset] = pixel;
-				}
-			}
-			startColumn += font->getCharKernedWidth(ch);
-		}
-
 		Graphics::Surface buf;
-		buf.create(width, height, _pixelFormat);
 
-		uint8 *bitmapData = _textBitmap;
-		for (int iy = 0; iy < height; iy++) {
-			for (int ix = 0; ix < width; ix++, bitmapData++) {
-				byte pixel = *bitmapData;
-				if (pixel == 0x00) {
-					buf.setPixel(ix, iy, kKitmapColorkey);
-				} else if (pixel == 0x80) {
-					buf.setPixel(ix, iy, blackColor);
-				} else if (pixel == 0xFF) {
-					buf.setPixel(ix, iy, color);
-				}
-			}
-		}
+		font->render(buf, currentLine, _pixelFormat, blackColor, color, kKitmapColorkey);
 
-		userData[j].width = width;
-		userData[j].height = height;
+		userData[j].width = buf.w;
+		userData[j].height = buf.h;
 		userData[j].image = tglGenBlitImage();
 		tglUploadBlitImage(userData[j].image, buf, kKitmapColorkey, true);
 		userData[j].x = text->getLineX(j);
@@ -1113,7 +1073,6 @@ void GfxTinyGL::createTextObject(TextObject *text) {
 		}
 
 		buf.free();
-		delete[] _textBitmap;
 	}
 }
 
@@ -1154,11 +1113,11 @@ void GfxTinyGL::createTexture(Texture *texture, const uint8 *data, const CMap *c
 				if (col == 0) {
 					memset(texdatapos, 0, 4); // transparent
 					if (!texture->_hasAlpha) {
-						texdatapos[3] = '\xff'; // fully opaque
+						texdatapos[3] = 0xff; // fully opaque
 					}
 				} else {
 					memcpy(texdatapos, cmap->_colors + 3 * (col), 3);
-					texdatapos[3] = '\xff'; // fully opaque
+					texdatapos[3] = 0xff; // fully opaque
 				}
 				texdatapos += 4;
 				data++;
@@ -1227,7 +1186,7 @@ void GfxTinyGL::loadEmergFont() {
 	uint32 colorTransparent = textureFormat.ARGBToColor(0, 255, 255, 255);
 	for (int i = 0; i < 96; i++) {
 		_emergFont[i] = tglGenBlitImage();
-		const uint8 *ptr = Font::emerFont[i];
+		const uint8 *ptr = BitmapFont::emerFont[i];
 		for (int py = 0; py < 13; py++) {
 				int line = ptr[12 - py];
 				for (int px = 0; px < 8; px++) {
@@ -1259,7 +1218,7 @@ Bitmap *GfxTinyGL::getScreenshot(int w, int h, bool useStored) {
 	if (useStored) {
 		bmp = createScreenshotBitmap(_storedDisplay, w, h, true);
 	} else {
-		Graphics::Surface *src = TinyGL::copyToBuffer(_pixelFormat);
+		Graphics::Surface *src = TinyGL::copyFromFrameBuffer(_pixelFormat);
 		bmp = createScreenshotBitmap(src, w, h, true);
 		src->free();
 		delete src;
@@ -1276,7 +1235,7 @@ void GfxTinyGL::storeDisplay() {
 	TinyGL::presentBuffer();
 	_storedDisplay->free();
 	delete _storedDisplay;
-	_storedDisplay = TinyGL::copyToBuffer(_pixelFormat);
+	_storedDisplay = TinyGL::copyFromFrameBuffer(_pixelFormat);
 }
 
 void GfxTinyGL::copyStoredToDisplay() {
@@ -1292,7 +1251,7 @@ void GfxTinyGL::dimScreen() {
 void GfxTinyGL::dimRegion(int x, int y, int w, int h, float level) {
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0, _gameWidth, _gameHeight, 0, 0, 1);
+	tglOrthof(0, _gameWidth, _gameHeight, 0, 0, 1);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 
@@ -1322,7 +1281,7 @@ void GfxTinyGL::dimRegion(int x, int y, int w, int h, float level) {
 void GfxTinyGL::irisAroundRegion(int x1, int y1, int x2, int y2) {
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0.0, _gameWidth, _gameHeight, 0.0, 0.0, 1.0);
+	tglOrthof(0, _gameWidth, _gameHeight, 0, 0, 1);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 
@@ -1374,7 +1333,7 @@ void GfxTinyGL::drawRectangle(const PrimitiveObject *primitive) {
 
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0, _screenWidth, _screenHeight, 0, 0, 1);
+	tglOrthof(0, _screenWidth, _screenHeight, 0, 0, 1);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 
@@ -1418,7 +1377,7 @@ void GfxTinyGL::drawLine(const PrimitiveObject *primitive) {
 
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0, _screenWidth, _screenHeight, 0, 0, 1);
+	tglOrthof(0, _screenWidth, _screenHeight, 0, 0, 1);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 
@@ -1447,7 +1406,7 @@ void GfxTinyGL::drawDimPlane() {
 
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0, 1.0, 1.0, 0, 0, 1);
+	tglOrthof(0, 1, 1, 0, 0, 1);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 
@@ -1489,7 +1448,7 @@ void GfxTinyGL::drawPolygon(const PrimitiveObject *primitive) {
 
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0, _screenWidth, _screenHeight, 0, 0, 1);
+	tglOrthof(0, _screenWidth, _screenHeight, 0, 0, 1);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 

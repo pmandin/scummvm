@@ -104,7 +104,7 @@ void TinyGLRenderer::updateProjectionMatrix(float fov, float nearClipPlane, floa
 	float ymaxValue = xmaxValue / aspectRatio;
 	// debug("max values: %f %f", xmaxValue, ymaxValue);
 
-	tglFrustum(xmaxValue, -xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);
+	tglFrustumf(xmaxValue, -xmaxValue, -ymaxValue, ymaxValue, nearClipPlane, farClipPlane);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 }
@@ -135,7 +135,7 @@ void TinyGLRenderer::renderPlayerShoot(byte color, const Common::Point position,
 
 	tglMatrixMode(TGL_PROJECTION);
 	tglLoadIdentity();
-	tglOrtho(0, _screenW, _screenH, 0, 0, 1);
+	tglOrthof(0, _screenW, _screenH, 0, 0, 1);
 	tglMatrixMode(TGL_MODELVIEW);
 	tglLoadIdentity();
 
@@ -227,7 +227,8 @@ void TinyGLRenderer::clear(uint8 color) {
 
 void TinyGLRenderer::drawFloor(uint8 color) {
 	uint8 r1, g1, b1, r2, g2, b2;
-	assert(getRGBAt(color, r1, g1, b1, r2, g2, b2, nullptr)); // TODO: move check inside this function
+	byte *stipple = nullptr;
+	assert(getRGBAt(color, r1, g1, b1, r2, g2, b2, stipple)); // TODO: move check inside this function
 	tglColor3ub(r1, g1, b1);
 
 	tglEnableClientState(TGL_VERTEX_ARRAY);

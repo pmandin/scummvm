@@ -58,9 +58,6 @@ void BlacksmithSubview::drawIsAllowed() {
 
 bool BlacksmithSubview::msgKeypress(const KeypressMessage &msg) {
 	switch (msg.keycode) {
-	case Common::KEYCODE_ESCAPE:
-		close();
-		break;
 	case Common::KEYCODE_a:
 	case Common::KEYCODE_b:
 	case Common::KEYCODE_c:
@@ -77,6 +74,15 @@ bool BlacksmithSubview::msgKeypress(const KeypressMessage &msg) {
 	return true;
 }
 
+bool BlacksmithSubview::msgAction(const ActionMessage &msg) {
+	if (msg._action == KEYBIND_ESCAPE) {
+		close();
+		return true;
+	}
+
+	return false;
+}
+
 void BlacksmithSubview::selectItem(uint index) {
 	switch (g_globals->_currCharacter->buyItem(
 		_items[index])) {
@@ -88,7 +94,6 @@ void BlacksmithSubview::selectItem(uint index) {
 		break;
 	default:
 		// Purchased successfully
-		clearSurface();
 		displayMessage(15, STRING["dialogs.blacksmith.thankyou"]);
 		break;
 	}

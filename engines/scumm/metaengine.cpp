@@ -29,6 +29,10 @@
 
 #include "audio/mididrv.h"
 
+#include "backends/keymapper/action.h"
+#include "backends/keymapper/keymap.h"
+#include "backends/keymapper/standard-actions.h"
+
 #include "scumm/he/intern_he.h"
 #include "scumm/scumm_v0.h"
 #include "scumm/scumm_v8.h"
@@ -240,7 +244,8 @@ bool ScummEngine::hasFeature(EngineFeature f) const {
 		(f == kSupportsHelp) ||
 		(
 			f == kSupportsChangingOptionsDuringRuntime &&
-			Common::String(_game.guioptions).contains(GUIO_AUDIO_OVERRIDE)
+			(Common::String(_game.guioptions).contains(GUIO_AUDIO_OVERRIDE) ||
+			 Common::String(_game.guioptions).contains(GUIO_NETWORK))
 		) ||
 		(f == kSupportsQuitDialogOverride && (_useOriginalGUI || !ChainedGamesMan.empty()));
 }
@@ -586,6 +591,11 @@ GUI::OptionsContainerWidget *ScummMetaEngine::buildEngineOptionsWidget(GUI::GuiO
 
 		return new Scumm::MI1CdGameOptionsWidget(boss, name, target);
 	}
+#ifdef USE_ENET
+	else if (gameid == "football" || gameid == "baseball2001" || gameid == "football2002" ||
+		gameid == "moonbase")
+		return new Scumm::HENetworkGameOptionsWidget(boss, name, target, gameid);
+#endif
 
 	return MetaEngine::buildEngineOptionsWidget(boss, name, target);
 }
@@ -682,6 +692,16 @@ static const ExtraGuiOption enableLowLatencyAudio = {
 	0
 };
 
+static const ExtraGuiOption enableCOMISong = {
+	_s("Enable the \"A Pirate I Was Meant To Be\" song"),
+	_s("Enable the song at the beginning of Part 3 of the game, \"A Pirate I Was Meant To Be\", \
+		which was cut in international releases. Beware though: subtitles may not be fully translated."),
+	"enable_song",
+	false,
+	0,
+	0
+};
+
 const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &target) const {
 	ExtraGuiOptions options;
 	// Query the GUI options
@@ -690,6 +710,7 @@ const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &
 	const Common::String extra = ConfMan.get("extra", target);
 	const Common::String guiOptions = parseGameGUIOptions(guiOptionsString);
 	const Common::Platform platform = Common::parsePlatform(ConfMan.get("platform", target));
+	const Common::String language = ConfMan.get("language", target);
 
 	if (target.empty() || guiOptions.contains(GUIO_ORIGINALGUI)) {
 		options.push_back(enableOriginalGUI);
@@ -705,6 +726,10 @@ const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &
 	}
 	if (target.empty() || gameid == "comi") {
 		options.push_back(comiObjectLabelsOption);
+
+		if (!language.equals("en")) {
+			options.push_back(enableCOMISong);
+		}
 	}
 	if (target.empty() || platform == Common::kPlatformNES) {
 		options.push_back(mmnesObjectLabelsOption);
@@ -729,6 +754,100 @@ const ExtraGuiOptions ScummMetaEngine::getExtraGuiOptions(const Common::String &
 	}
 
 	return options;
+}
+
+Common::KeymapArray ScummMetaEngine::initKeymaps(const char *target) const {
+	using namespace Common;
+	using namespace Scumm;
+
+	Common::KeymapArray keymaps = MetaEngine::initKeymaps(target);
+	Common::String gameId = ConfMan.get("gameid", target);
+	Action *act;
+
+	if (gameId == "ft") {
+		Keymap *insaneKeymap = new Keymap(Keymap::kKeymapTypeGame, insaneKeymapId, "SCUMM - Bike Fights");
+
+		act = new Action("DOWNLEFT", _("Down Left"));
+		act->setCustomEngineActionEvent(kScummActionInsaneDownLeft);
+		act->addDefaultInputMapping("KP1");
+		act->addDefaultInputMapping("END");
+		insaneKeymap->addAction(act);
+
+		act = new Action(kStandardActionMoveDown, _("Down"));
+		act->setCustomEngineActionEvent(kScummActionInsaneDown);
+		act->addDefaultInputMapping("DOWN");
+		act->addDefaultInputMapping("KP2");
+		act->addDefaultInputMapping("JOY_DOWN");
+		insaneKeymap->addAction(act);
+
+		act = new Action("DOWNRIGHT", _("Down Right"));
+		act->setCustomEngineActionEvent(kScummActionInsaneDownRight);
+		act->addDefaultInputMapping("KP3");
+		act->addDefaultInputMapping("PAGEDOWN");
+		insaneKeymap->addAction(act);
+
+		act = new Action(kStandardActionMoveLeft, _("Left"));
+		act->setCustomEngineActionEvent(kScummActionInsaneLeft);
+		act->addDefaultInputMapping("LEFT");
+		act->addDefaultInputMapping("KP4");
+		act->addDefaultInputMapping("JOY_LEFT");
+		insaneKeymap->addAction(act);
+
+		act = new Action(kStandardActionMoveRight, _("Right"));
+		act->setCustomEngineActionEvent(kScummActionInsaneRight);
+		act->addDefaultInputMapping("RIGHT");
+		act->addDefaultInputMapping("KP6");
+		act->addDefaultInputMapping("JOY_RIGHT");
+		insaneKeymap->addAction(act);
+
+		act = new Action("UPLEFT", _("Up Left"));
+		act->setCustomEngineActionEvent(kScummActionInsaneUpLeft);
+		act->addDefaultInputMapping("KP7");
+		act->addDefaultInputMapping("INSERT");
+		insaneKeymap->addAction(act);
+
+		act = new Action(kStandardActionMoveUp, _("Up"));
+		act->setCustomEngineActionEvent(kScummActionInsaneUp);
+		act->addDefaultInputMapping("UP");
+		act->addDefaultInputMapping("KP8");
+		act->addDefaultInputMapping("JOY_UP");
+		insaneKeymap->addAction(act);
+
+		act = new Action("UPRIGHT", _("Up Right"));
+		act->setCustomEngineActionEvent(kScummActionInsaneUpRight);
+		act->addDefaultInputMapping("KP9");
+		act->addDefaultInputMapping("PAGEUP");
+		insaneKeymap->addAction(act);
+
+		act = new Action("ATTACK", _("Attack"));
+		act->setCustomEngineActionEvent(kScummActionInsaneAttack);
+		act->addDefaultInputMapping("RETURN");
+		act->addDefaultInputMapping("JOY_A");
+		insaneKeymap->addAction(act);
+
+		act = new Action("SWITCH", _("Switch weapon"));
+		act->setCustomEngineActionEvent(kScummActionInsaneSwitch);
+		act->addDefaultInputMapping("TAB");
+		act->addDefaultInputMapping("JOY_B");
+		insaneKeymap->addAction(act);
+
+		// TODO: Use a custom engine action here?
+		act = new Action(kStandardActionSkip, _("Skip cutscene"));
+		act->setKeyEvent(KeyState(KEYCODE_ESCAPE, ASCII_ESCAPE));
+		act->addDefaultInputMapping("ESCAPE");
+		act->addDefaultInputMapping("JOY_Y");
+		insaneKeymap->addAction(act);
+
+		// I18N: Lets one skip the bike/car fight sequences in Full Throttle
+		act = new Action("CHEAT", _("Win the bike fight cheat"));
+		act->setCustomEngineActionEvent(kScummActionInsaneCheat);
+		act->addDefaultInputMapping("S+v");
+		insaneKeymap->addAction(act);
+
+		keymaps.push_back(insaneKeymap);
+	}
+
+	return keymaps;
 }
 
 #if PLUGIN_ENABLED_DYNAMIC(SCUMM)

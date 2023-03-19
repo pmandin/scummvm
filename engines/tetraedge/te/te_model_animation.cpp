@@ -177,7 +177,7 @@ int TeModelAnimation::lastFrame() const {
 	} else {
 		result = _numNMOFrames;
 	}
-	return MIN(_lastFrame, result);
+	return MIN(_lastFrame, result - 1);
 }
 
 bool TeModelAnimation::load(const Common::Path &path) {
@@ -356,6 +356,10 @@ void TeModelAnimation::update(double millis) {
 		if (_finishedSignalPending) {
 			_finishedSignalPending = false;
 			_onFinishedSignal.call();
+			if (g_engine->gameType() == TetraedgeEngine::kSyberia2) {
+				if (_repeatNum >= _repeatCount && _repeatCount != -1)
+					stop();
+			}
 		}
 	}
 }

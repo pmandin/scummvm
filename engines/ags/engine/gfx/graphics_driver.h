@@ -92,7 +92,7 @@ struct RenderMatrixes {
 
 
 typedef void (*GFXDRV_CLIENTCALLBACK)();
-typedef bool (*GFXDRV_CLIENTCALLBACKXY)(int x, int y);
+typedef bool (*GFXDRV_CLIENTCALLBACKEVT)(int evt, int data);
 typedef void (*GFXDRV_CLIENTCALLBACKINITGFX)(void *data);
 
 class IGraphicsDriver {
@@ -124,20 +124,26 @@ public:
 	// TODO: get rid of draw screen callback at some point when all fade functions are more or less grouped in one
 	virtual void SetCallbackToDrawScreen(GFXDRV_CLIENTCALLBACK callback, GFXDRV_CLIENTCALLBACK post_callback) = 0;
 	virtual void SetCallbackOnInit(GFXDRV_CLIENTCALLBACKINITGFX callback) = 0;
-	// The NullSprite callback is called in the main render loop when a
-	// null sprite is encountered. You can use this to hook into the rendering
-	// process.
-	virtual void SetCallbackForNullSprite(GFXDRV_CLIENTCALLBACKXY callback) = 0;
+	// The event callback is called in the main render loop when a
+	// event entry is encountered inside a sprite list.
+	// You can use this to hook into the rendering process.
+	virtual void SetCallbackOnSpriteEvt(GFXDRV_CLIENTCALLBACKEVT callback) = 0;
 	// Clears the screen rectangle. The coordinates are expected in the **native game resolution**.
 	virtual void ClearRectangle(int x1, int y1, int x2, int y2, RGB *colorToUse) = 0;
 	// Gets closest recommended bitmap format (currently - only color depth) for the given original format.
 	// Engine needs to have game bitmaps brought to the certain range of formats, easing conversion into the video bitmaps.
 	virtual int  GetCompatibleBitmapFormat(int color_depth) = 0;
+
 	// Creates a "raw" DDB, without pixel initialization
 	virtual IDriverDependantBitmap *CreateDDB(int width, int height, int color_depth, bool opaque = false) = 0;
-	// Creates DDB, initializes from the given bitmap
+	// Creates DDB, initializes from the given bitmap.
 	virtual IDriverDependantBitmap *CreateDDBFromBitmap(Shared::Bitmap *bitmap, bool hasAlpha, bool opaque = false) = 0;
+	// Creates DDB intended to be used as a render target (allow render other DDBs on it).
+	virtual IDriverDependantBitmap *CreateRenderTargetDDB(int width, int height, int color_depth, bool opaque = false) = 0;
+	// Updates DBB using the given bitmap; bitmap must have same size and format
+	// as the one that this DDB was initialized with.
 	virtual void UpdateDDBFromBitmap(IDriverDependantBitmap *bitmapToUpdate, Shared::Bitmap *bitmap, bool hasAlpha) = 0;
+	// Destroy the DDB.
 	virtual void DestroyDDB(IDriverDependantBitmap *bitmap) = 0;
 
 	// Get shared texture from cache, or create from bitmap and assign ID
@@ -152,8 +158,8 @@ public:
 	// sprites to this batch's list.
 	// Beginning a batch while the previous was not ended will create a sub-batch
 	// (think of it as of a child scene node).
-	virtual void BeginSpriteBatch(const Rect &viewport, const SpriteTransform &transform,
-		const Point offset = Point(), Shared::GraphicFlip flip = Shared::kFlip_None, PBitmap surface = nullptr) = 0;
+	virtual void BeginSpriteBatch(const Rect &viewport, const SpriteTransform &transform = SpriteTransform(),
+		Shared::GraphicFlip flip = Shared::kFlip_None, PBitmap surface = nullptr) = 0;
 	// Ends current sprite batch
 	virtual void EndSpriteBatch() = 0;
 	// Adds sprite to the active batch
@@ -163,6 +169,12 @@ public:
 	// Adds tint overlay fx to the active batch
 	// TODO: redesign this to allow various post-fx per sprite batch?
 	virtual void SetScreenTint(int red, int green, int blue) = 0;
+	// Sets stage screen parameters for the current batch.
+	// Currently includes size and optional position offset;
+	// the position is relative, as stage screens are using sprite batch transforms.
+	// Stage screens are used to let plugins do raw drawing during render callbacks.
+	// TODO: find a better term? note, it's used in several places around renderers.
+	virtual void SetStageScreen(const Size &sz, int x = 0, int y = 0) = 0;
 	// Clears all sprite batches, resets batch counter
 	virtual void ClearDrawLists() = 0;
 	virtual void RenderToBackBuffer() = 0;
@@ -207,7 +219,11 @@ public:
 	virtual void SetMemoryBackBuffer(Shared::Bitmap *backBuffer) = 0;
 	// Returns memory backbuffer for the current rendering stage (or base virtual screen if called outside of render pass).
 	// All renderers should support this.
-	virtual Shared::Bitmap *GetStageBackBuffer(bool mark_dirty) = 0;
+	virtual Shared::Bitmap *GetStageBackBuffer(bool mark_dirty = false) = 0;
+	// Sets custom backbuffer bitmap to render current render stage to.
+	// Passing NULL pointer will tell renderer to switch back to its original stage buffer.
+	// Note that only software renderer supports this.
+	virtual void SetStageBackBuffer(Shared::Bitmap *backBuffer) = 0;
 	// Retrieves 3 transform matrixes for the current rendering stage: world (model), view and projection.
 	// These matrixes will be filled in accordance to the renderer's compatible format;
 	// returns false if renderer does not use matrixes (not a 3D renderer).

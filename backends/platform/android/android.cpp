@@ -70,6 +70,7 @@
 #include "backends/graphics3d/android/android-graphics3d.h"
 #include "backends/platform/android/jni-android.h"
 #include "backends/platform/android/android.h"
+#include "backends/fs/android/android-fs.h"
 #include "backends/fs/android/android-fs-factory.h"
 
 const char *android_log_tag = "ScummVM";
@@ -122,6 +123,38 @@ void checkGlError(const char *expr, const char *file, int line) {
 }
 #endif
 
+class AndroidSaveFileManager : public DefaultSaveFileManager {
+public:
+	AndroidSaveFileManager(const Common::String &defaultSavepath) : DefaultSaveFileManager(defaultSavepath) {}
+
+	bool removeSavefile(const Common::String &filename) override {
+		Common::String path = getSavePath() + "/" + filename;
+		AbstractFSNode *node = AndroidFilesystemFactory::instance().makeFileNodePath(path);
+
+		if (!node) {
+			return false;
+		}
+
+		AndroidFSNode *anode = dynamic_cast<AndroidFSNode *>(node);
+
+		if (!anode) {
+			// This should never happen
+			warning("Invalid node received");
+			delete node;
+			return false;
+		}
+
+		bool ret = anode->remove();
+
+		delete anode;
+
+		if (!ret) {
+			setError(Common::kUnknownError, Common::String::format("Couldn't delete the save file: %s", path.c_str()));
+		}
+		return ret;
+	}
+};
+
 OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_audio_sample_rate(audio_sample_rate),
 	_audio_buffer_size(audio_buffer_size),
@@ -161,7 +194,7 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	LOGI("SDK Version: %d", sdkVersion);
 
 	AndroidFilesystemFactory &fsFactory = AndroidFilesystemFactory::instance();
-	if (sdkVersion >= 21) {
+	if (sdkVersion >= 24) {
 		fsFactory.initSAF();
 	}
 	_fsFactory = &fsFactory;
@@ -368,11 +401,6 @@ void OSystem_Android::initBackend() {
 
 	_main_thread = pthread_self();
 
-	// TODO Setting debug level to 3, temporarily
-	//      only for catching the level 3 messages from the new (Apr 2021)
-	//      gui-scale (hidpi) code
-	gDebugLevel = 3;
-
 	// Warning: ConfMan.registerDefault() can be used for a Session of ScummVM
 	//          but:
 	//              1. The values will NOT persist to storage
@@ -455,22 +483,16 @@ void OSystem_Android::initBackend() {
 		ConfMan.setInt("gui_scale", 125); // "Large" (see gui/options.cpp and guiBaseValues[])
 	}
 
-	// BUG: "transient" ConfMan settings get nuked by the options
-	// screen. Passing the savepath in this way makes it stick
-	// (via ConfMan.registerDefault() which is called from DefaultSaveFileManager constructor (backends/saves/default/default-saves.cpp))
-	// Note: The aforementioned bug is probably the one reported here:
-	//  https://bugs.scummvm.org/ticket/3712
-	//  and maybe here:
-	//  https://bugs.scummvm.org/ticket/7389
-	// However, we do NOT set the savepath key explicitly for ConfMan
-	//          and thus the savepath will only be persisted as "default" config
-	//          for the rest of the app session (until exit).
-	//          It will NOT be reflected on the GUI, if it's not set explicitly by the user there
-	// TODO Why do we need it not shown on the GUI though?
-	//      Btw, this is a ScummVM thing, the "defaults" do not show they values on our GUI)
-	_savefileManager = new DefaultSaveFileManager(ConfMan.get("savepath"));
+	Common::String basePath = JNI::getScummVMBasePath();
+
+	_savefileManager = new AndroidSaveFileManager(basePath + "/saves");
 	// TODO remove the debug message eventually
 	LOGD("Setting DefaultSaveFileManager path to: %s", ConfMan.get("savepath").c_str());
+
+
+	ConfMan.registerDefault("iconspath", basePath + "/icons");
+	// TODO remove the debug message eventually
+	LOGD("Setting Default Icons and Shaders path to: %s", ConfMan.get("iconspath").c_str());
 
 	_timerManager = new DefaultTimerManager();
 
@@ -502,6 +524,10 @@ void OSystem_Android::initBackend() {
 	_audiocdManager = new DefaultAudioCDManager();
 
 	BaseBackend::initBackend();
+}
+
+Common::String OSystem_Android::getDefaultConfigFileName() {
+	return JNI::getScummVMConfigPath();
 }
 
 bool OSystem_Android::hasFeature(Feature f) {

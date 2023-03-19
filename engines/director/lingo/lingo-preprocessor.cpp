@@ -62,7 +62,7 @@ static Common::U32String nexttok(const Common::u32char_type_t *s, const Common::
 	return res;
 }
 
-Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code, LingoArchive *archive, ScriptType type, CastMemberID id, bool simple) {
+Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code, LingoArchive *archive, ScriptType type, CastMemberID id, uint32 flags) {
 	const Common::u32char_type_t *s = code.c_str();
 	Common::U32String res;
 
@@ -161,7 +161,7 @@ Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code,
 		s++;
 	}
 
-	if (simple)
+	if (flags & kLPPSimple)
 		return res;
 
 	tmp = res;
@@ -172,7 +172,8 @@ Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code,
 	int linenumber = 1;
 	bool defFound = false;
 
-	const Common::U32String macro("macro"), factory("factory"), on("on"), global("global"), property("property");
+	const Common::U32String macro("macro"), factory("factory"), on("on"), global("global"), property("property"),
+		mci("mci");
 
 	while (*s) {
 		line.clear();
@@ -193,9 +194,15 @@ Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code,
 
 		if (!defFound && (type == kMovieScript || type == kCastScript) && (g_director->getVersion() < 400 || g_director->getCurrentMovie()->_allowOutdatedLingo)) {
 			tok = nexttok(line.c_str());
-			if (tok.equals(macro) || tok.equals(factory) || tok.equals(on) || tok.equals(global) || tok.equals(property)) {
+			if (tok.equals(macro) || tok.equals(factory)) {
 				defFound = true;
-			} else {
+			} else if (!(flags & kLPPForceD2)) {
+				if (tok.equals(on) || tok.equals(global) || tok.equals(property)) {
+					defFound = true;
+				}
+			}
+
+			if (!defFound) {
 				debugC(2, kDebugParse | kDebugPreprocess, "skipping line before first definition");
 				for (int i = 0; i < continuationCount; i++) {
 					res += CONTINUATION;
@@ -205,6 +212,26 @@ Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code,
 					res += *s++;
 				continue;
 			}
+		}
+
+		// In MultiMedia Movie format, .MMM files used by Microsoft
+		// 'mci' keyword is followed by the unquoted commands, e.g.
+		//     mci close all
+		//     mci play wave to 15228 hold
+		//
+		// Since Director requires them in a single thing, we add
+		// quotes around
+		const Common::u32char_type_t *contLine;
+		tok = nexttok(line.c_str(), &contLine);
+
+		if (tok.equals(mci) && *contLine != 0 && !Common::U32String(contLine).contains('\"')) {
+			// Scan first non-whitespace
+			while (*contLine && (*contLine == ' ' || *contLine == '\t' || *contLine == CONTINUATION)) // If we see a whitespace
+				contLine++;
+
+			res1 = Common::U32String::format("%S \"%S\"", tok.c_str(), contLine);
+
+			debugC(2, kDebugParse | kDebugPreprocess, "wrapped mci command into quotes");
 		}
 
 		res1 = patchLingoCode(res1, archive, type, id, linenumber);

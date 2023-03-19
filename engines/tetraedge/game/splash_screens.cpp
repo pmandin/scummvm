@@ -58,7 +58,7 @@ bool SplashScreens::onAlarm() {
 	const Common::String scriptName = Common::String::format("menus/splashes/splash%d.lua", _splashNo);
 	_splashNo++;
 
-	if (ConfMan.get("skip_splash") == "true") {
+	if (ConfMan.getBool("skip_splash")) {
 		onQuitSplash();
 		return true;
 	}
@@ -68,7 +68,7 @@ bool SplashScreens::onAlarm() {
 	} else {
 		load(scriptName);
 
-		TeButtonLayout *btnLayout = buttonLayout("splash");
+		TeButtonLayout *btnLayout = buttonLayoutChecked("splash");
 		btnLayout->onMouseClickValidated().add(this, &SplashScreens::onQuitSplash);
 
 		TeLayout *splash = layout("splash");

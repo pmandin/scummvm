@@ -23,14 +23,17 @@
 #define ANDROID_SAF_FILESYSTEM_H
 
 #include <jni.h>
+
 #include "backends/fs/abstract-fs.h"
+
+#include "backends/fs/android/android-fs.h"
 
 /**
  * Implementation of the ScummVM file system API.
  *
  * Parts of this class are documented in the base interface class, AbstractFSNode.
  */
-class AndroidSAFFilesystemNode final : public AbstractFSNode {
+class AndroidSAFFilesystemNode final : public AbstractFSNode, public AndroidFSNode {
 protected:
 	// SAFFSTree
 	static jmethodID _MID_getTreeId;
@@ -41,6 +44,7 @@ protected:
 	static jmethodID _MID_createFile;
 	static jmethodID _MID_createReadStream;
 	static jmethodID _MID_createWriteStream;
+	static jmethodID _MID_removeNode;
 	static jmethodID _MID_removeTree;
 
 	static jfieldID _FID__treeName;
@@ -64,7 +68,6 @@ protected:
 	// In this case _path is the parent path, _newName the node name and _safParent the parent SAF object
 	jobject _safNode;
 
-	bool _cached;
 	Common::String _path;
 	int _flags;
 	jobject _safParent;
@@ -132,6 +135,8 @@ public:
 	Common::SeekableWriteStream *createWriteStream() override;
 	bool createDirectory() override;
 
+	bool remove() override;
+
 	/**
 	 * Removes the SAF tree.
 	 * Only works on the root node
@@ -149,10 +154,10 @@ protected:
 	AndroidSAFFilesystemNode(jobject safTree, jobject safParent,
 	                         const Common::String &path, const Common::String &name);
 
-	void cacheData(bool force = false);
+	void cacheData();
 };
 
-class AddSAFFakeNode final : public AbstractFSNode {
+class AddSAFFakeNode final : public AbstractFSNode, public AndroidFSNode {
 protected:
 	AbstractFSNode *getChild(const Common::String &name) const override;
 	AbstractFSNode *getParent() const override;
@@ -160,30 +165,32 @@ protected:
 public:
 	static const char SAF_ADD_FAKE_PATH[];
 
-	AddSAFFakeNode() : _proxied(nullptr) { }
+	AddSAFFakeNode(bool fromPath) : _proxied(nullptr), _fromPath(fromPath) { }
 	~AddSAFFakeNode() override;
 
 	bool exists() const override;
 
 	bool getChildren(AbstractFSList &list, ListMode mode, bool hidden) const override;
 
-	Common::U32String getDisplayName() const override { return Common::U32String("\x01" "<Add SAF node>"); };
-	Common::String getName() const override { return "\x01" "<Add SAF node>"; };
+	// I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
+	Common::U32String getDisplayName() const override;
+	Common::String getName() const override;
 	Common::String getPath() const override;
 
 	bool isDirectory() const override { return true; }
 	bool isReadable() const override;
 	bool isWritable() const override;
 
-
 	Common::SeekableReadStream *createReadStream() override { return nullptr; }
-	virtual Common::SeekableWriteStream *createWriteStream() override { return nullptr; }
+	Common::SeekableWriteStream *createWriteStream() override { return nullptr; }
 
-	virtual bool createDirectory() { return false; }
+	bool createDirectory() override { return false; }
+	bool remove() override { return false; }
 
 private:
 	void makeProxySAF() const;
 
+	bool _fromPath;
 	mutable AbstractFSNode *_proxied;
 };
 #endif

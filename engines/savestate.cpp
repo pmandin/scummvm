@@ -35,24 +35,28 @@ SaveStateDescriptor::SaveStateDescriptor()
 }
 
 SaveStateDescriptor::SaveStateDescriptor(const MetaEngine *metaEngine, int slot, const Common::U32String &d)
-	: _slot(slot), _description(d), _isLocked(false), _playTimeMSecs(0) {
-	initSaveType(metaEngine);
+	: _slot(slot), _description(d), _isLocked(false), _playTimeMSecs(0), _saveType(kSaveTypeUndetermined) {
+	initSaveSlot(metaEngine);
 }
 
 SaveStateDescriptor::SaveStateDescriptor(const MetaEngine *metaEngine, int slot, const Common::String &d)
-	: _slot(slot), _description(Common::U32String(d)), _isLocked(false), _playTimeMSecs(0) {
-	initSaveType(metaEngine);
+	: _slot(slot), _description(Common::U32String(d)), _isLocked(false), _playTimeMSecs(0), _saveType(kSaveTypeUndetermined) {
+	initSaveSlot(metaEngine);
 }
 
-void SaveStateDescriptor::initSaveType(const MetaEngine *metaEngine) {
-	// Do not allow auto-save slot to be deleted or overwritten.
+void SaveStateDescriptor::initSaveSlot(const MetaEngine *metaEngine) {
 	if (!metaEngine && g_engine)
 		metaEngine = g_engine->getMetaEngine();
-	const bool autosave =
-			metaEngine && ConfMan.getInt("autosave_period") && _slot == metaEngine->getAutosaveSlot();
-	_isWriteProtected = autosave;
-	_saveType = autosave ? kSaveTypeAutosave : kSaveTypeRegular;
-	_isDeletable = !autosave;
+	int autosaveSlot = metaEngine ? metaEngine->getAutosaveSlot() : -1;
+	
+	if (autosaveSlot >= 0 && _slot == autosaveSlot) {
+		// Do not allow autosave slot to be deleted or overwritten
+		_isWriteProtected = true;
+		_isDeletable = false;	
+	} else {
+		_isWriteProtected = false;
+		_isDeletable = true;		
+	}
 }
 
 void SaveStateDescriptor::setThumbnail(Graphics::Surface *t) {

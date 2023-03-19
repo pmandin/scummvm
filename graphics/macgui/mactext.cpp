@@ -235,7 +235,7 @@ void MacText::init() {
 	if (!colorFontRun.text.empty()) {
 		_fgcolor = colorFontRun.fgcolor;
 		colorFontRun.text.clear();
-		debug(9, "Reading fg color though text, instead of the argument, read %x", _fgcolor);
+		debug(9, "Reading fg color though text, instead of the argument, read %d", _fgcolor);
 		_defaultFormatting = colorFontRun;
 		_defaultFormatting.wm = _wm;
 	}
@@ -1380,7 +1380,7 @@ bool MacText::draw(bool forceRedraw) {
 
 	for (int bb = 0; bb < _border; bb++) {
 		Common::Rect borderRect(bb, bb, _composeSurface->w - bb, _composeSurface->h - bb);
-		_composeSurface->frameRect(borderRect, 0);
+		_composeSurface->frameRect(borderRect, 0xff);
 	}
 
 	if (_selectedText.endY != -1)
@@ -2170,8 +2170,12 @@ Common::U32String MacText::getTextChunk(int startRow, int startCol, int endRow, 
 		// We requested only part of one line
 		if (i == startRow && i == endRow) {
 			for (uint chunk = 0; chunk < _textLines[i].chunks.size(); chunk++) {
-				if (_textLines[i].chunks[chunk].text.empty()) // skip empty chunks
+				if (_textLines[i].chunks[chunk].text.empty()) {
+					// skip empty chunks, but keep them formatted,
+					// a text input box needs to keep the formatting even when all text is removed.
+					ADDFORMATTING();
 					continue;
+				}
 
 				if (startCol <= 0) {
 					ADDFORMATTING();

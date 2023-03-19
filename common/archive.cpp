@@ -20,10 +20,12 @@
  */
 
 #include "common/archive.h"
+#include "common/file.h"
 #include "common/fs.h"
 #include "common/system.h"
 #include "common/textconsole.h"
 #include "common/memstream.h"
+#include "common/punycode.h"
 
 namespace Common {
 
@@ -62,11 +64,53 @@ int Archive::listMatchingMembers(ArchiveMemberList &list, const Path &pattern, b
 	return matches;
 }
 
+void Archive::dumpArchive(String destPath) {
+	Common::ArchiveMemberList files;
+
+	listMembers(files);
+
+	byte *data = nullptr;
+	uint dataSize = 0;
+
+	for (auto &f : files) {
+		Common::String filename = Common::punycode_encodefilename(f->getName());
+		warning("File: %s", filename.c_str());
+
+		Common::SeekableReadStream *stream = f->createReadStream();
+
+		uint32 len = stream->size();
+		if (dataSize < len) {
+			free(data);
+			data = (byte *)malloc(stream->size());
+			dataSize = stream->size();
+		}
+
+		stream->read(data, len);
+
+		Common::DumpFile out;
+		Common::String outname = destPath + filename;
+		if (!out.open(outname, true)) {
+			warning("Archive::dumpArchive(): Can not open dump file %s", outname.c_str());
+		} else {
+			out.write(data, len);
+			out.flush();
+			out.close();
+		}
+
+		delete stream;
+	}
+
+	free(data);
+}
+
 SeekableReadStream *MemcachingCaseInsensitiveArchive::createReadStreamForMember(const Path &path) const {
 	String translated = translatePath(path);
 	bool isNew = false;
 	if (!_cache.contains(translated)) {
-		_cache[translated] = readContentsForPath(translated);
+		SharedArchiveContents readResult = readContentsForPath(translated);
+		if (readResult._bypass)
+			return readResult._bypass;
+		_cache[translated] = readResult;
 		isNew = true;
 	}
 
@@ -80,7 +124,10 @@ SeekableReadStream *MemcachingCaseInsensitiveArchive::createReadStreamForMember(
 	// Check whether the entry is still valid as WeakPtr might have expired.
 	if (!entry->makeStrong()) {
 		// If it's expired, recreate the entry.
-		_cache[translated] = readContentsForPath(translated);
+		SharedArchiveContents readResult = readContentsForPath(translated);
+		if (readResult._bypass)
+			return readResult._bypass;
+		_cache[translated] = readResult;
 		entry = &_cache[translated];
 		isNew = true;
 	}
@@ -221,6 +268,15 @@ bool SearchSet::hasArchive(const String &name) const {
 	return (find(name) != _list.end());
 }
 
+Archive *SearchSet::getArchive(const String &name) const {
+	auto arch = find(name);
+
+	if (arch == _list.end())
+		return nullptr;
+
+	return arch->_arc;
+}
+
 void SearchSet::clear() {
 	for (ArchiveNodeList::iterator i = _list.begin(); i != _list.end(); ++i) {
 		if (i->_autoFree)
@@ -306,6 +362,24 @@ SeekableReadStream *SearchSet::createReadStreamForMember(const Path &path) const
 	return nullptr;
 }
 
+SeekableReadStream *SearchSet::createReadStreamForMemberNext(const Path &path, const Archive *starting) const {
+	if (path.empty())
+		return nullptr;
+
+	ArchiveNodeList::const_iterator it = _list.begin();
+	for (; it != _list.end(); ++it)
+		if (it->_arc == starting) {
+			++it;
+			break;
+		}
+	for (; it != _list.end(); ++it) {
+		SeekableReadStream *stream = it->_arc->createReadStreamForMember(path);
+		if (stream)
+			return stream;
+	}
+
+	return nullptr;
+}
 
 SearchManager::SearchManager() {
 	clear(); // Force a reset

@@ -52,11 +52,13 @@
       :glob:
       :hidden:
 
+      advanced_topics/autostart
       advanced_topics/command_line
       advanced_topics/configuration_file
       advanced_topics/understand_audio
       advanced_topics/understand_graphics
       advanced_topics/understand_search_box
+      
 
 .. toctree::
       :caption: Help
@@ -165,6 +167,8 @@ We also have guides on how to get ScummVM running on a wide range of other platf
       ^^^^^^^^^^^^^^^
       :doc:`other_platforms/ios`
 
+      :doc:`other_platforms/tvos`
+
       :doc:`other_platforms/android`
 
       ---
@@ -198,6 +202,9 @@ In this section, we also take a deep dive into understanding the graphics and au
 
       Advanced features
       ^^^^^^^^^^^^^^^^^^^^
+      
+      :doc:`advanced_topics/autostart`
+      
       :doc:`advanced_topics/configuration_file`
 
       :doc:`advanced_topics/command_line`
@@ -210,6 +217,8 @@ In this section, we also take a deep dive into understanding the graphics and au
       :doc:`The audio settings <advanced_topics/understand_audio>`
 
       :doc:`The graphics settings <advanced_topics/understand_graphics>`
+
+      :doc:`The search box <advanced_topics/understand_search_box>`
 
 
 

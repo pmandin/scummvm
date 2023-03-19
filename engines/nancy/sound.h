@@ -64,7 +64,9 @@ public:
 	void stopSound(const SoundDescription &description);
 	void stopSound(const Common::String &chunkName);
 	void stopAllSounds();
-	
+
+	void calculatePan(uint16 channelID);
+	void calculatePan(const SoundDescription &description);
 	void calculatePanForAllSounds();
 
 	// Used when changing scenes

@@ -23,7 +23,6 @@
 #define NANCY_ACTION_SECONDARYMOVIE_H
 
 #include "engines/nancy/video.h"
-#include "engines/nancy/commontypes.h"
 #include "engines/nancy/renderobject.h"
 
 #include "engines/nancy/action/actionrecord.h"
@@ -33,12 +32,21 @@ namespace Action {
 
 class PlaySecondaryMovie : public ActionRecord, public RenderObject {
 public:
+	static const byte kMovieSceneChange			= 5;
+	static const byte kMovieNoSceneChange		= 6;
+
+	static const byte kPlayerCursorAllowed		= 1;
+	static const byte kNoPlayerCursorAllowed	= 2;
+
+	static const byte kPlayMovieForward			= 1;
+	static const byte kPlayMovieReverse			= 2;
+
 	struct FlagAtFrame {
 		int16 frameID;
-		EventFlagDescription flagDesc;
+		FlagDescription flagDesc;
 	};
 
-	PlaySecondaryMovie(RenderObject &redrawFrom) : RenderObject(redrawFrom, 8) {}
+	PlaySecondaryMovie() : RenderObject(8) {}
 	virtual ~PlaySecondaryMovie();
 
 	void init() override;
@@ -49,13 +57,14 @@ public:
 	void execute() override;
 
 	Common::String _videoName; // 0x00
+	Common::String _paletteName;
 
-	uint16 _unknown = 0; // 0x1C
-	NancyFlag _hideMouse = NancyFlag::kFalse; // 0x1E
-	NancyFlag _isReverse = NancyFlag::kFalse; // 0x20
-	uint16 _firstFrame = 0; // 0x22
-	uint16 _lastFrame = 0; // 0x24
-	FlagAtFrame _frameFlags[15]; // 0x26
+	uint16 _videoSceneChange = kMovieNoSceneChange; // 0x1C
+	byte _playerCursorAllowed = kPlayerCursorAllowed; // 0x1E
+	byte _playDirection = kPlayMovieForward; // 0x20, 2E
+	uint16 _firstFrame = 0; // 0x22, 30
+	uint16 _lastFrame = 0; // 0x24, 32
+	Common::Array<FlagAtFrame> _frameFlags; // 0x26
 	MultiEventFlagDescription _triggerFlags; // 0x80
 
 	SoundDescription _sound; // 0xA8
@@ -68,6 +77,7 @@ protected:
 	bool isViewportRelative() const override { return true; }
 
 	AVFDecoder _decoder;
+	Graphics::ManagedSurface _fullFrame;
 	int _curViewportFrame = -1;
 	bool _isFinished = false;
 };

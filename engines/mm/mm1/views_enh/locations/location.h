@@ -22,14 +22,19 @@
 #ifndef MM1_VIEWS_ENH_LOCATIONS_LOCATION_H
 #define MM1_VIEWS_ENH_LOCATIONS_LOCATION_H
 
-#include "mm/mm1/views_enh/scroll_view.h"
+#include "mm/mm1/views_enh/party_view.h"
+#include "mm/shared/xeen/sprites.h"
 
 namespace MM {
 namespace MM1 {
 namespace ViewsEnh {
 namespace Locations {
 
-class Location : public ScrollView {
+class Location : public PartyView {
+protected:
+	Shared::Xeen::SpriteResource _escSprite;
+	int _locationId = -1;
+
 protected:
 	/**
 	 * Called when an active timeout countdown expired
@@ -37,11 +42,6 @@ protected:
 	void timeout() override {
 		leave();
 	}
-
-	/**
-	 * Change character
-	 */
-	virtual void changeCharacter(uint index);
 
 	/**
 	 * Subtract gold from current character
@@ -64,12 +64,36 @@ protected:
 	void backpackFull();
 
 public:
-	Location(const Common::String &name);
+	Location(const Common::String &name, int locationId);
+
+	/**
+	 * Game message handler
+	 */
+	bool msgGame(const GameMessage &msg) override;
+
+	/**
+	 * Called when a message is finished being shown
+	 */
+	virtual void messageShown() {
+		leave();
+	}
 
 	/**
 	 * Leave the location, turning around
 	 */
 	void leave();
+
+	bool msgUnfocus(const UnfocusMessage &msg) override;
+
+	/**
+	 * Draw the location
+	 */
+	void draw() override;
+
+	/**
+	 * Tick handler
+	 */
+	bool tick() override;
 };
 
 } // namespace Locations

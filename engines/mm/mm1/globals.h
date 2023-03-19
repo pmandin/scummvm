@@ -24,8 +24,8 @@
 
 #include "common/serializer.h"
 #include "graphics/font.h"
-#include "mm/utils/strings_data.h"
-#include "mm/utils/xeen_font.h"
+#include "mm/shared/utils/strings_data.h"
+#include "mm/shared/utils/xeen_font.h"
 #include "mm/xeen/sprites.h"
 #include "mm/mm1/data/game_state.h"
 #include "mm/mm1/data/items.h"
@@ -66,10 +66,11 @@ public:
 
 public:
 	// Enhanced mode globals
-	Xeen::SpriteResource _mainIcons;
-	Xeen::SpriteResource _confirmIcons;
-	Xeen::SpriteResource _globalSprites;
-	Xeen::SpriteResource _tileSprites;
+	Shared::Xeen::SpriteResource _mainIcons;
+	Shared::Xeen::SpriteResource _confirmIcons;
+	Shared::Xeen::SpriteResource _globalSprites;
+	Shared::Xeen::SpriteResource _tileSprites;
+	Shared::Xeen::SpriteResource _escSprites;
 	byte SYMBOLS[20][64];
 	XeenFont _fontNormal;
 	XeenFont _fontReduced;
@@ -85,10 +86,7 @@ public:
 	/**
 	 * Returns a string
 	 */
-	const Common::String &operator[](const Common::String &name) {
-		assert(_strings.contains(name));
-		return _strings[name];
-	}
+	Common::String operator[](const Common::String &name) const;
 
 	/**
 	 * Saves global data to/from savegames

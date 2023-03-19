@@ -235,40 +235,37 @@ void EfhEngine::displayStatusMenu(int16 windowId) {
 void EfhEngine::prepareStatusRightWindowIndexes(int16 menuId, int16 charId) {
 	debugC(6, kDebugEngine, "prepareStatusRightWindowIndexes %d %d", menuId, charId);
 
-	int16 maxId = 0;
-	int16 minId;
 	_menuItemCounter = 0;
 
 	switch (menuId) {
 	case kEfhMenuInfo:
-		minId = 26;
-		maxId = 36;
+		for (int16 counter = 0; counter <= 10; ++counter) {
+			if (_npcBuf[charId]._infoScore[counter] != 0) {
+				_menuStatItemArr[_menuItemCounter++] = counter + 26;
+			}
+		}
 		break;
 	case kEfhMenuPassive:
-		minId = 15;
-		maxId = 25;
+		for (int16 counter = 0; counter <= 10; ++counter) {
+			if (_npcBuf[charId]._passiveScore[counter] != 0) {
+				_menuStatItemArr[_menuItemCounter++] = counter + 15;
+			}
+		}
 		break;
 	case kEfhMenuActive:
-		minId = 0;
-		maxId = 14;
+		for (int16 counter = 0; counter <= 14; ++counter) {
+			if (_npcBuf[charId]._activeScore[counter] != 0) {
+				_menuStatItemArr[_menuItemCounter++] = counter;
+			}
+		}
 		break;
 	default:
-		minId = -1;
-		break;
-	}
-
-	if (minId == -1) {
 		for (uint counter = 0; counter < 10; ++counter) {
 			if (_npcBuf[charId]._inventory[counter]._ref != 0x7FFF) {
 				_menuStatItemArr[_menuItemCounter++] = counter;
 			}
 		}
-	} else {
-		for (int16 counter = minId; counter < maxId; ++counter) {
-			if (_npcBuf[charId]._activeScore[counter] != 0) {
-				_menuStatItemArr[_menuItemCounter++] = counter;
-			}
-		}
+		break;
 	}
 }
 
@@ -668,7 +665,7 @@ int16 EfhEngine::handleStatusMenu(int16 gameMode, int16 charId) {
 
 			prepareStatusMenu(windowId, menuId, curMenuLine, charId, true);
 
-		} while (!selectionDoneFl); // Loop until a menu entry is confirmed by the user by pressing the enter key 
+		} while (!selectionDoneFl); // Loop until a menu entry is confirmed by the user by pressing the enter key
 
 		bool validationFl = true;
 
@@ -740,7 +737,7 @@ int16 EfhEngine::handleStatusMenu(int16 gameMode, int16 charId) {
 					validationFl = false;
 				displayWindowAndStatusMenu(charId, windowId, menuId, curMenuLine);
 			}
-			
+
 			if (validationFl) {
 				bool givenFl;
 				int16 destCharId;
@@ -1094,7 +1091,7 @@ int16 EfhEngine::useObject(int16 charId, int16 objectId, int16 teamMonsterId, in
 		_mapPosY = getRandom(_largeMapFlag ? 63 : 23);
 		int16 tileFactId = getTileFactId(_mapPosX, _mapPosY);
 
-		if (_tileFact[tileFactId]._field0 == 0) {
+		if (_tileFact[tileFactId]._status == 0) {
 			totalPartyKill();
 			buffer1 = "The entire party vanishes in a flash... only to appear in stone !";
 			if (gameMode == 2) {
@@ -1129,7 +1126,7 @@ int16 EfhEngine::useObject(int16 charId, int16 objectId, int16 teamMonsterId, in
 		_mapPosX = _items[itemId]._field19_mapPosX_or_maxDeltaPoints;
 		_mapPosY = _items[itemId]._mapPosY;
 		int16 tileFactId = getTileFactId(_mapPosX, _mapPosY);
-		if (_tileFact[tileFactId]._field0 == 0) {
+		if (_tileFact[tileFactId]._status == 0) {
 			totalPartyKill();
 			buffer1 = "The entire party vanishes in a flash... only to appear in stone !";
 			if (gameMode == 2) {

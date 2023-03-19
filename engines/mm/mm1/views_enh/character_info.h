@@ -22,9 +22,9 @@
 #ifndef MM1_VIEWS_ENH_CHARACTER_INFO_H
 #define MM1_VIEWS_ENH_CHARACTER_INFO_H
 
-#include "mm/mm1/views_enh/scroll_view.h"
+#include "mm/mm1/views_enh/party_view.h"
 #include "mm/mm1/views_enh/scroll_popup.h"
-#include "mm/xeen/sprites.h"
+#include "mm/shared/xeen/sprites.h"
 
 namespace MM {
 namespace MM1 {
@@ -32,14 +32,14 @@ namespace ViewsEnh {
 
 #define CHAR_ICONS_COUNT 22
 
-class CharacterInfo : public ScrollView {
+class CharacterInfo : public PartyView {
 	struct IconPos {
 		int _frame; int _x; int _y;
 	};
 private:
-	Xeen::SpriteResource _viewIcon;
+	Shared::Xeen::SpriteResource _viewIcon;
 	static const IconPos ICONS[CHAR_ICONS_COUNT];
-	const char *ICONS_TEXT[CHAR_ICONS_COUNT];
+	Common::String ICONS_TEXT[CHAR_ICONS_COUNT];
 	int _cursorCell = 0;
 	bool _cursorVisible = false;
 	ScrollPopup _statInfo;
@@ -58,11 +58,6 @@ private:
 	 * Draw the stats
 	 */
 	void drawStats();
-
-	/**
-	 * Return the color for a given stat
-	 */
-	int statColor(int amount, int threshold);
 
 	/**
 	 * Toggle display of cursor

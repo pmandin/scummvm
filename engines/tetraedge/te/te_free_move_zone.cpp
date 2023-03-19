@@ -21,15 +21,24 @@
 
 #include "tetraedge/tetraedge.h"
 
+#include "common/file.h"
+#include "common/compression/zlib.h"
+
 #include "tetraedge/te/te_free_move_zone.h"
 #include "tetraedge/te/micropather.h"
 #include "tetraedge/te/te_renderer.h"
 #include "tetraedge/te/te_ray_intersection.h"
+#include "tetraedge/te/te_core.h"
+
+//#define TETRAEDGE_DUMP_PATHFINDING_DATA 1
 
 namespace Tetraedge {
 
 /*static*/
 //TeIntrusivePtr<TeCamera> TeFreeMoveZone::_globalCamera;
+
+/*static*/
+bool TeFreeMoveZone::_collisionSlide = false;
 
 class TeFreeMoveZoneGraph : micropather::Graph {
 	friend class TeFreeMoveZone;
@@ -104,6 +113,13 @@ void TeFreeMoveZone::buildAStar() {
 	if (graphSize._x == 0 || graphSize._y == 0)
 		return;
 
+	bool regenerate = true;
+	if (!_aszGridPath.empty()) {
+		regenerate = !loadAStar(_aszGridPath, graphSize);
+	}
+	if (!regenerate)
+		return;
+
 	if (!_loadedFromBin) {
 		for (int x = 0; x < graphSize._x; x++) {
 			for (int y = 0; y < graphSize._y; y++) {
@@ -130,19 +146,102 @@ void TeFreeMoveZone::buildAStar() {
 						else
 							_graph->_flags[graphSize._x * y + x] = 0;
 					} else {
-					_graph->_flags[graphSize._x * y + x] = 2;
+						_graph->_flags[graphSize._x * y + x] = 2;
 					}
 				}
 			}
 		}
 	} else {
 		// Loaded from bin..
-		error("TODO: Implement TeFreeMoveZone::buildAStar for loaded from bin case");
+		for (int x = 0; x < graphSize._x; x++) {
+			for (int y = 0; y < graphSize._y; y++) {
+				byte blockerIntersection = hasBlockerIntersection(TeVector2s32(x, y));
+				if (blockerIntersection == 1) {
+					_graph->_flags[_graph->_size._x * y + x] = 1;
+				} else {
+					if (!hasCellBorderIntersection(TeVector2s32(x, y))) {
+						const float gridSquareX = _gridSquareSize.getX();
+						const float gridSquareY = _gridSquareSize.getY();
+						TeVector3f32 gridPt = _gridMatrix * TeVector3f32(
+								 x * gridSquareX + _gridTopLeft.getX() + gridSquareX / 2, 0.0,
+								 y * gridSquareY + _gridTopLeft.getY() + gridSquareY / 2);
+						bool doesIntersect = intersect2D(TeVector2f32(gridPt.x(), gridPt.z()));
+						if (!doesIntersect)
+							_graph->_flags[graphSize._x * y + x] = 1;
+						else if (blockerIntersection == 2)
+							_graph->_flags[graphSize._x * y + x] = 2;
+						else
+							_graph->_flags[graphSize._x * y + x] = 0;
+					} else {
+						_graph->_flags[graphSize._x * y + x] = 2;
+					}
+				}
+			}
+		}
 	}
 }
 
+bool TeFreeMoveZone::loadAStar(const Common::Path &path, const TeVector2s32 &size) {
+	Common::FSNode node = g_engine->getCore()->findFile(path);
+	Common::File file;
+	if (!node.isReadable() || !file.open(node)) {
+		warning("[TeFreeMoveZone::loadAStar] Can't open file : %s.", path.toString().c_str());
+		return false;
+	}
+	TeVector2s32 readSize;
+	readSize.deserialize(file, readSize);
+	if (size != readSize) {
+		warning("[TeFreeMoveZone::loadAStar] Wrong file : %s.", path.toString().c_str());
+		return false;
+	}
+	uint32 bytes = file.readUint32LE();
+	if (bytes > 100000)
+		error("Improbable size %d for compressed astar data", bytes);
+
+	unsigned long decompBytes = size._x * size._y;
+	byte *buf = new byte[bytes];
+	byte *outBuf = new byte[decompBytes];
+	file.read(buf, bytes);
+	bool result = Common::uncompress(outBuf, &decompBytes, buf, bytes);
+	delete [] buf;
+	if (result) {
+		for (uint i = 0; i < decompBytes; i++)
+			_graph->_flags.data()[i] = outBuf[i];
+	}
+	delete [] outBuf;
+	return result;
+}
+
+
 void TeFreeMoveZone::calcGridMatrix() {
-	error("TODO: Implement TeFreeMoveZone::calcGridMatrix");
+	float angle = 0.0f;
+	float mul = 0.0f;
+	for (uint i = 0; i < _borders.size() - 1; i += 2) {
+		const TeVector3f32 &v1 = _verticies[_borders[i]];
+		const TeVector3f32 &v2 = _verticies[_borders[i + 1]];
+		const TeVector3f32 diff = v2 - v1;
+		const TeVector2f32 diff2(diff.x(), diff.z());
+		float len = diff2.length();
+		float f = fmod(atan2(diff.z(), diff.x()), M_PI_2);
+		if (f < 0)
+			f += (float)M_PI_2;
+
+		if (f - angle < -M_PI_4) {
+			angle -= (float)M_PI_2;
+		} else if (f - angle > M_PI_4) {
+			f -= (float)M_PI_2;
+		}
+
+		angle *= mul;
+		mul += len;
+		angle = fmod((f * len + angle) / mul, M_PI_2);
+		if (angle < 0)
+			angle += (float)M_PI_2;
+	}
+
+	const TeQuaternion rot = TeQuaternion::fromAxisAndAngle(TeVector3f32(0, 1, 0), angle);
+	const TeMatrix4x4 rotMatrix = rot.toTeMatrix();
+	_gridMatrix = TeMatrix4x4() * rotMatrix;
 }
 
 void TeFreeMoveZone::clear() {
@@ -170,15 +269,20 @@ TeVector3f32 TeFreeMoveZone::correctCharacterPosition(const TeVector3f32 &pos, b
 	TeVector3f32 testPos(pos.x(), 0, pos.z());
 	if (!intersect(testPos, TeVector3f32(0, -1, 0), intersectPoint, f, intersectFlag, nullptr)) {
 		if (!intersect(testPos, TeVector3f32(0, 1, 0), intersectPoint, f, intersectFlag, nullptr)) {
-			if (*flagout)
-				*flagout = false;
-			return pos;
+			// Note: This flag should only ever get set in Syberia 2.
+			if (!_collisionSlide) {
+				if (flagout)
+					*flagout = false;
+				return pos;
+			}
+			return slide(pos);
 		}
 	}
 	if (flagout)
 		*flagout = true;
 	return intersectPoint;
 }
+
 
 TeIntrusivePtr<TeBezierCurve> TeFreeMoveZone::curve(const TeVector3f32 &startpt, const TeVector2s32 &clickPt, float param_5, bool findMeshFlag) {
 	updateGrid(false);
@@ -187,8 +291,13 @@ TeIntrusivePtr<TeBezierCurve> TeFreeMoveZone::curve(const TeVector3f32 &startpt,
 	meshes.push_back(this);
 
 	TePickMesh2 *nearest = findNearestMesh(_camera, clickPt, meshes, &newend, findMeshFlag);
-	if (!nearest)
-		return TeIntrusivePtr<TeBezierCurve>();
+	if (!nearest) {
+		if (g_engine->gameType() == TetraedgeEngine::kSyberia2) {
+			newend = findNearestPointOnBorder(TeVector2f32(clickPt));
+		} else {
+			return TeIntrusivePtr<TeBezierCurve>();
+		}
+	}
 
 	return curve(startpt, newend);
 }
@@ -200,7 +309,6 @@ TeIntrusivePtr<TeBezierCurve> TeFreeMoveZone::curve(const TeVector3f32 &startpt,
 	const int xsize = _graph->_size._x;
 	char *graphData = _graph->_flags.data();
 	float cost = 0;
-	// Passing an int to void*, yuck? but it's what the original does..
 	Common::Array<void *> path;
 	int pathResult = _micropather->Solve(graphData + xsize * projectedStart._y + projectedStart._x,
 			graphData + xsize * projectedEnd._y + projectedEnd._x, &path, &cost);
@@ -224,23 +332,34 @@ TeIntrusivePtr<TeBezierCurve> TeFreeMoveZone::curve(const TeVector3f32 &startpt,
 		}
 		pts3d.push_back(endpt);
 
+#ifdef TETRAEDGE_DUMP_PATHFINDING_DATA
+		debug("curve: pathfind from %s to %s", startpt.dump().c_str(), endpt.dump().c_str());
+		debug("curve: %d grid points:", points.size());
+		for (uint i = 0; i < points.size(); i++)
+			debug("curve: gridpt %2d: %d, %d", i, points[i]._x, points[i]._y);
+		debug("curve: %d 3d (world) points:", pts3d.size());
+		for (uint i = 0; i < pts3d.size(); i++)
+			debug("curve: wrldpt %2d: %s", i, pts3d[i].dump().c_str());
+		uint firstsz = pts3d.size();
+#endif
+
 		removeInsignificantPoints(pts3d);
+
+#ifdef TETRAEDGE_DUMP_PATHFINDING_DATA
+		debug("curve: removed insignificant pts, %d -> %d", firstsz, pts3d.size());
+#endif
+
 		retval = new TeBezierCurve();
 		retval->setControlPoints(pts3d);
-	} else {
-		Common::Array<TeVector3f32> points;
-		points.push_back(startpt);
-		points.push_back(endpt);
-		retval = new TeBezierCurve();
-		retval->setControlPoints(points);
 	}
+	// If no path found, return nullptr.
 
 	return retval;
 }
 
 /*static*/
-void TeFreeMoveZone::deserialize(Common::ReadStream &stream, TeFreeMoveZone &dest, Common::Array<TeBlocker> *blockers,
-			Common::Array<TeRectBlocker> *rectblockers, Common::Array<TeActZone> *actzones) {
+void TeFreeMoveZone::deserialize(Common::ReadStream &stream, TeFreeMoveZone &dest, const Common::Array<TeBlocker> *blockers,
+			const Common::Array<TeRectBlocker> *rectblockers, const Common::Array<TeActZone> *actzones) {
 	dest.clear();
 	TePickMesh2::deserialize(stream, dest);
 	TeVector2f32::deserialize(stream, dest._gridSquareSize);
@@ -290,46 +409,115 @@ void TeFreeMoveZone::draw() {
 	renderer->multiplyMatrix(worldTransformationMatrix());
 	renderer->setCurrentColor(TeColor(0, 0x80, 0xff, 0xff));
 	mesh->draw();
-	renderer->popMatrix();
+
+	if (!_loadedFromBin)
+		renderer->popMatrix();
+
+	if (!_gridDirty && false) {
+		const TeVector2s32 aStarRes = aStarResolution();
+		// Note: original iterates through the graph first here and
+		// calls flag but doesn't do anything with it.. not sure why?
+		for (int x = 0; x < aStarRes._x; x++) {
+			for (int y = 0; y < aStarRes._y; y++) {
+				float left = _gridSquareSize.getX() * x + _gridTopLeft.getX();
+				float top  = _gridSquareSize.getY() * y + _gridTopLeft.getY();
+				const TeVector3f32 tl(left, _gridWorldY, top);
+				const TeVector3f32 tr(left + _gridSquareSize.getX(), _gridWorldY, top);
+				const TeVector3f32 bl(left, _gridWorldY, top + _gridSquareSize.getY());
+				const TeVector3f32 br(left + _gridSquareSize.getX(), _gridWorldY, top + _gridSquareSize.getY());
+
+				int flag = _graph->flag(TeVector2s32(x, y));
+				if (flag == 1) {
+					renderer->setCurrentColor(TeColor(0xff, 0xff, 0xff, 0xff));
+				} else if (flag == 2) {
+					renderer->setCurrentColor(TeColor(0xff, 0xff, 0, 0xff));
+				} else {
+					renderer->setCurrentColor(TeColor(0, 0xff, 0, 0xff));
+				}
+
+				renderer->drawLine(tl, tr);
+				renderer->drawLine(tr, br);
+				renderer->drawLine(tl, br);
+				renderer->drawLine(tr, bl);
+			}
+		}
+	}
+
+	// TODO: do a bunch of other drawing stuff here (line 294 on)
+
+	if (_loadedFromBin)
+		renderer->popMatrix();
 	renderer->setCurrentColor(prevColor);
-
-	// TODO: do a bunch of other drawing stuff here.
-
 	renderer->disableWireFrame();
-}
-
-TeVector3f32 TeFreeMoveZone::findNearestPointOnBorder(const TeVector2f32 &pt) {
-	error("TODO: Implement TeFreeMoveZone::findNearestPointOnBorder");
 }
 
 static int segmentIntersection(const TeVector2f32 &s1start, const TeVector2f32 &s1end,
 						const TeVector2f32 &s2start, const TeVector2f32 &s2end,
 						TeVector2f32 *sout, float *fout1, float *fout2) {
-	TeVector2f32 s1len = s1end - s1start;
-	TeVector2f32 s2len = s2end - s2start;
-	float squarelen = s1len.getX() * s2len.getX() + s1len.getY() * s2len.getY();
+	const TeVector2f32 s1len = s1end - s1start;
+	const TeVector2f32 s2len = s2end - s2start;
+	float det = s1len.getX() * s2len.getY() + s1len.getY() * s2len.getX();
 	int result = 0;
-	if (squarelen != 0) {
+	if (det != 0) {
 		result = 1;
-		float intersection1 = -((s1len.getY() * s1start.getX() +
+		float intersect1 = -((s1len.getY() * s1start.getX() +
 						(s1len.getX() * s2start.getY() - s1len.getX() * s1start.getY())) -
-						 s1len.getY() * s2start.getX()) / squarelen;
-		if (intersection1 >= 0.0f && intersection1 <= 1.0f) {
-			float intersection2 = -((s2len.getY() * s2start.getY() +
-						(s2len.getX() * s1start.getX() - s2len.getX() * s2start.getX())) -
-						 s2len.getY() * s1start.getY()) / squarelen;
-			if (intersection2 >= 0.0f && intersection2 <= 1.0f) {
+						 s1len.getY() * s2start.getX()) / det;
+		if (intersect1 >= 0.0f && intersect1 <= 1.0f) {
+			float intersect2 = -((s2len.getY() * s2start.getX() +
+						(s2len.getX() * s1start.getY() - s2len.getX() * s2start.getY())) -
+						 s2len.getY() * s1start.getX()) / det;
+			if (intersect2 >= 0.0f && intersect2 <= 1.0f) {
 				result = 2;
-				if (sout || fout1 || fout2) {
-					// Seems like these are always null?
-					error("TODO: implement output in segmentIntersection");
-				}
+				if (sout)
+					*sout = s1start + s1len * intersect2;
+				if (fout1)
+					*fout1 = intersect2;
+				if (fout2)
+					*fout2 = intersect1;
 			}
 		}
 	}
 	return result;
 }
 
+TeVector3f32 TeFreeMoveZone::findNearestPointOnBorder(const TeVector2f32 &pt) {
+	TeVector3f32 retval;
+	const TeVector2f32 pt_x0(pt.getX(), 0);
+	const TeVector2f32 pt_x1(pt.getX(), _camera->getViewportHeight());
+	const TeVector2f32 pt_y0(0, pt.getY());
+	const TeVector2f32 pt_y1(_camera->getViewportWidth(), pt.getY());
+
+	updateProjectedPoints();
+	updateBorders();
+
+	float leastDist = FLT_MAX;
+	for (uint i = 0; i < _borders.size() / 2; i++) {
+		uint b1 = _borders[i * 2];
+		uint b2 = _borders[i * 2 + 1];
+		const TeVector2f32 &projb1 = _projectedPoints[b1];
+		const TeVector2f32 &projb2 = _projectedPoints[b2];
+		const TeVector3f32 &transb1 = _transformedVerticies[_pickMesh[b1]];
+		const TeVector3f32 &transb2 = _transformedVerticies[_pickMesh[b2]];
+		float dist = 0;
+		TeVector2f32 dir;
+		if (segmentIntersection(pt_x0, pt_x1, projb1, projb2, &dir, nullptr, &dist) == 2) {
+			float sqLen = (dir - pt).getSquareMagnitude();
+			if (sqLen < leastDist) {
+				retval = transb1 + (transb2 - transb1) * dist;
+				leastDist = sqLen;
+			}
+		}
+        if (segmentIntersection(pt_y0, pt_y1, projb1, projb2, &dir, nullptr, &dist) == 2) {
+			float sqLen = (dir - pt).getSquareMagnitude();
+			if (sqLen < leastDist) {
+				retval = transb1 + (transb2 - transb1) * dist;
+				leastDist = sqLen;
+			}
+		}
+	}
+	return retval;
+}
 
 byte TeFreeMoveZone::hasBlockerIntersection(const TeVector2s32 &pt) {
 	TeVector2f32 borders[4];
@@ -417,6 +605,59 @@ TeActZone *TeFreeMoveZone::isInZone(const TeVector3f32 &pt) {
 	error("TODO: Implement TeFreeMoveZone::isInZone");
 }
 
+bool TeFreeMoveZone::loadBin(const Common::Path &path, const Common::Array<TeBlocker> *blockers,
+		const Common::Array<TeRectBlocker> *rectblockers, const Common::Array<TeActZone> *actzones,
+		const TeVector2f32 &gridSize) {
+	Common::FSNode node = g_engine->getCore()->findFile(path);
+	if (!node.isReadable()) {
+		warning("[TeFreeMoveZone::loadBin] Can't open file : %s.", node.getName().c_str());
+		return false;
+	}
+	_aszGridPath = path.append(".aszgrid");
+	Common::File file;
+	file.open(node);
+	return loadBin(file, blockers, rectblockers, actzones, gridSize);
+}
+
+bool TeFreeMoveZone::loadBin(Common::ReadStream &stream, const Common::Array<TeBlocker> *blockers,
+		const Common::Array<TeRectBlocker> *rectblockers, const Common::Array<TeActZone> *actzones,
+		const TeVector2f32 &gridSize) {
+	_loadGridSize = gridSize;
+	_loadedFromBin = true;
+
+	// Load position, rotation, scale (not name)
+	Te3DObject2::deserialize(stream, *this, false);
+
+	Common::Array<TeVector3f32> vecs;
+	Te3DObject2::deserializeVectorArray(stream, vecs);
+
+	uint32 triangles = stream.readUint32LE();
+	_freeMoveZoneVerticies.resize(triangles * 3);
+	_gridDirty = true;
+	_transformedVerticiesDirty = true;
+	_bordersDirty = true;
+	_pickMeshDirty = true;
+	_projectedPointsDirty = true;
+
+	for (uint v = 0; v < triangles * 3; v++) {
+		uint16 s = stream.readUint16LE();
+		if (s >= vecs.size())
+			error("Invalid vertex offset %d (of %d) loading TeFreeMoveZone", s, vecs.size());
+		_freeMoveZoneVerticies[v] = vecs[s];
+	}
+	updateTransformedVertices();
+	updatePickMesh();
+
+	_blockers = blockers;
+	_rectBlockers = rectblockers;
+	_actzones = actzones;
+	updateGrid(false);
+	Common::Path p(name());
+	setName(p.getLastComponent().toString());
+
+	return true;
+}
+
 bool TeFreeMoveZone::onViewportChanged() {
 	_projectedPointsDirty = true;
 	return false;
@@ -443,6 +684,7 @@ void TeFreeMoveZone::preUpdateGrid() {
 
 		_gridTopLeft.setX(newVec.x());
 		_gridTopLeft.setY(newVec.z());
+		_gridBottomRight = _gridTopLeft;
 
 		_gridWorldY = newVec.y();
 	}
@@ -454,18 +696,16 @@ void TeFreeMoveZone::preUpdateGrid() {
 		else
 			newVec = gridInverse * _freeMoveZoneVerticies[vertNo];
 
-		if (_gridTopLeft.getX() <= newVec.x()) {
-			if (_gridBottomRight.getX() < newVec.x())
-				_gridBottomRight.setX(newVec.x());
-		} else {
+		if (_gridTopLeft.getX() > newVec.x()) {
 			_gridTopLeft.setX(newVec.x());
+		} else if (_gridBottomRight.getX() < newVec.x()) {
+			_gridBottomRight.setX(newVec.x());
 		}
 
-		if (_gridTopLeft.getY() <= newVec.z()) {
-			if (_gridBottomRight.getY() < newVec.z())
-				_gridBottomRight.setY(newVec.z());
-		} else {
+		if (_gridTopLeft.getY() > newVec.z()) {
 			_gridTopLeft.setY(newVec.z());
+		} else if (_gridBottomRight.getY() < newVec.z()) {
+			_gridBottomRight.setY(newVec.z());
 		}
 
 		if (newVec.y() < _gridWorldY)
@@ -478,17 +718,15 @@ void TeFreeMoveZone::preUpdateGrid() {
 		else
 			_gridSquareSize = TeVector2f32(2.0f, 2.0f);
 	} else {
+		/* Syberia 1 code, never actually used..
 		const TeVector2f32 gridVecDiff = _gridBottomRight - _gridTopLeft;
 		float minSide = MIN(gridVecDiff.getX(), gridVecDiff.getY()) / 20.0f;
 		_gridSquareSize.setX(minSide);
 		_gridSquareSize.setY(minSide);
-
-		error("FIXME: Finish preUpdateGrid for loaded-from-bin case.");
-		/*
-		// what's this field?
-		if (_field_0x414.x != 0.0)
-			_gridOffsetSomething = _field_0x414;
+		if (_loadGridSize.getX())
+			_gridSquareSize = _loadGridSize;
 		*/
+		_gridSquareSize = TeVector2f32(20.0f, 20.0f);
 	}
 
 	TeMatrix4x4 worldTrans = worldTransformationMatrix();
@@ -501,7 +739,11 @@ TeVector2s32 TeFreeMoveZone::projectOnAStarGrid(const TeVector3f32 &pt) {
 	if (!_loadedFromBin) {
 		offsetpt = TeVector2f32(pt.x() - _gridTopLeft.getX(), pt.z() - _gridTopLeft.getY());
 	} else {
-		error("TODO: Implement TeFreeMoveZone::projectOnAStarGrid for _loadedFromBin");
+		TeMatrix4x4 invGrid = _gridMatrix;
+		invGrid.inverse();
+		TeVector3f32 transPt = invGrid * (_inverseWorldTransform * pt);
+		offsetpt.setX(transPt.x() - _gridTopLeft.getX());
+		offsetpt.setY(transPt.z() - _gridTopLeft.getY());
 	}
 	const TeVector2f32 projected = offsetpt / _gridSquareSize;
 	return TeVector2s32((int)projected.getX(), (int)projected.getY());
@@ -586,9 +828,9 @@ void TeFreeMoveZone::setVertex(uint offset, const TeVector3f32 &vertex) {
 
 TeVector3f32 TeFreeMoveZone::transformAStarGridInWorldSpace(const TeVector2s32 &gridpt) {
 	float offsetx = (float)gridpt._x * _gridSquareSize.getX() + _gridTopLeft.getX() +
-				_gridSquareSize.getX() / 2;
+				_gridSquareSize.getX() / 2.0f;
 	float offsety = (float)gridpt._y * _gridSquareSize.getY() + _gridTopLeft.getY() +
-				_gridSquareSize.getY() / 2;
+				_gridSquareSize.getY() / 2.0f;
 	if (!_loadedFromBin) {
 		return TeVector3f32(offsetx, _gridWorldY, offsety);
 	} else {
@@ -613,36 +855,34 @@ void TeFreeMoveZone::updateBorders() {
 
 	updatePickMesh();
 
-	if (_verticies.size() > 2) {
-		for (uint triNo1 = 0; triNo1 < _verticies.size() / 3; triNo1++) {
-			for (uint vecNo1 = 0; vecNo1 < 3; vecNo1++) {
-				uint left1 = triNo1 * 3 + vecNo1;
-				uint left2 = triNo1 * 3 + (vecNo1 == 2 ? 0 : vecNo1 + 1);
-				const TeVector3f32 vleft1 = _verticies[left1];
-				const TeVector3f32 vleft2 = _verticies[left2];
+	for (uint triNo1 = 0; triNo1 < _verticies.size() / 3; triNo1++) {
+		for (uint vecNo1 = 0; vecNo1 < 3; vecNo1++) {
+			uint left1 = triNo1 * 3 + vecNo1;
+			uint left2 = triNo1 * 3 + (vecNo1 == 2 ? 0 : vecNo1 + 1);
+			const TeVector3f32 vleft1 = _verticies[left1];
+			const TeVector3f32 vleft2 = _verticies[left2];
 
-				bool skip = false;
-				for (uint triNo2 = 0; triNo2 < _verticies.size() / 3; triNo2++) {
-					if (skip)
+			bool skip = false;
+			for (uint triNo2 = 0; triNo2 < _verticies.size() / 3; triNo2++) {
+				if (skip)
+					break;
+				if (triNo2 == triNo1)
+					continue;
+
+				for (uint vecNo2 = 0; vecNo2 < 3; vecNo2++) {
+					uint right1 = triNo2 * 3 + vecNo2;
+					uint right2 = triNo2 * 3 + (vecNo2 == 2 ? 0 : vecNo2 + 1);
+					const TeVector3f32 vright1 = _verticies[right1];
+					const TeVector3f32 vright2 = _verticies[right2];
+					if ((vright1 == vleft1 && vright2 == vleft2) || (vright1 == vleft2 && vright2 == vleft1)) {
+						skip = true;
 						break;
-
-					for (uint vecNo2 = 0; vecNo2 < 3; vecNo2++) {
-						if (triNo2 == triNo1)
-							continue;
-						uint right1 = triNo2 * 3 + vecNo2;
-						uint right2 = triNo2 * 3 + (vecNo2 == 2 ? 0 : vecNo2 + 1);
-						TeVector3f32 vright1 = _verticies[right1];
-						TeVector3f32 vright2 = _verticies[right2];
-						if (vright1 == vleft1 && vright2 == vleft2 && vright1 == vleft2 && vright2 == vleft1) {
-							skip = true;
-							break;
-						}
 					}
 				}
-				if (!skip) {
-					_borders.push_back(left1);
-					_borders.push_back(left2);
-				}
+			}
+			if (!skip) {
+				_borders.push_back(left1);
+				_borders.push_back(left2);
 			}
 		}
 	}
@@ -657,7 +897,9 @@ void TeFreeMoveZone::updateGrid(bool force) {
 	_updateTimer.start();
 	buildAStar();
 	_micropather->Reset();
-	debug("[TeFreeMoveZone::updateGrid()] %s time : %.2f", name().c_str(), _updateTimer.getTimeFromStart() / 1000000.0);
+	// This debug msg copied from the original, but it's
+	// a bit noisy and not so useful.
+	// debug("[TeFreeMoveZone::updateGrid()] %s time : %.2f", name().c_str(), _updateTimer.getTimeFromStart() / 1000000.0);
 	_gridDirty = false;
 }
 
@@ -674,7 +916,7 @@ void TeFreeMoveZone::updatePickMesh() {
 		_pickMesh.push_back(vecNo + 1);
 		_pickMesh.push_back(vecNo + 2);
 		vecNo += 3;
-}
+	}
 
 	debug("[TeFreeMoveZone::updatePickMesh] %s nb triangles reduced from : %d to : %d", name().c_str(),
 			 _freeMoveZoneVerticies.size() / 3, _pickMesh.size() / 3);
@@ -694,7 +936,20 @@ void TeFreeMoveZone::updateProjectedPoints() {
 	if (!_projectedPointsDirty)
 		return;
 
-	error("TODO: Implement TeFreeMoveZone::updateProjectedPoints");
+    updateTransformedVertices();
+    updatePickMesh();
+    if (!_camera) {
+		_projectedPoints.clear();
+		_projectedPointsDirty = false;
+		return;
+	}
+
+	_projectedPoints.resize(_pickMesh.size());
+	for (uint i = 0; i < _pickMesh.size(); i++) {
+		_projectedPoints[i] = _camera->projectPoint(_transformedVerticies[_pickMesh[i]]);
+		_projectedPoints[i].setY(_camera->getViewportHeight() - _projectedPoints[i].getY());
+    }
+    _projectedPointsDirty = false;
 }
 
 void TeFreeMoveZone::updateTransformedVertices() {

@@ -35,7 +35,7 @@ Market::Market() : Location("Market") {
 }
 
 bool Market::msgFocus(const FocusMessage &msg) {
-	send("View", ValueMessage(LOC_MARKET));
+	send("View", GameMessage("LOCATION", LOC_MARKET));
 
 	Maps::Map &map = *g_maps->_currentMap;
 	_foodCost = FOOD_COST[map[Maps::MAP_ID] - 1];
@@ -48,9 +48,8 @@ bool Market::msgKeypress(const KeypressMessage &msg) {
 		return true;
 
 	switch (msg.keycode) {
-	case Common::KEYCODE_ESCAPE:
 	case Common::KEYCODE_n:
-		leave();
+		msgAction(ActionMessage(KEYBIND_ESCAPE));
 		break;
 	case Common::KEYCODE_y:
 		buyFood();
@@ -60,6 +59,24 @@ bool Market::msgKeypress(const KeypressMessage &msg) {
 	}
 
 	return true;
+}
+
+bool Market::msgAction(const ActionMessage &msg) {
+	if (endDelay())
+		return true;
+
+	switch (msg._action) {
+	case KEYBIND_ESCAPE:
+		leave();
+		return true;
+	case KEYBIND_SELECT:
+		buyFood();
+		return true;
+	default:
+		break;
+	}
+
+	return false;
 }
 
 void Market::draw() {

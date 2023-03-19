@@ -107,17 +107,19 @@ void Events::processEvent(Common::Event &ev) {
 
 void Events::replaceView(UIElement *ui, bool replaceAllViews) {
 	assert(ui);
+	UIElement *priorView = focusedView();
+
 	if (replaceAllViews) {
 		clearViews();
 
 	} else if (!_views.empty()) {
-		focusedView()->msgUnfocus(UnfocusMessage());
+		priorView->msgUnfocus(UnfocusMessage());
 		_views.pop();
 	}
 
 	_views.push(ui);
 	ui->redraw();
-	ui->msgFocus(FocusMessage());
+	ui->msgFocus(FocusMessage(priorView));
 }
 
 void Events::replaceView(const Common::String &name, bool replaceAllViews) {
@@ -126,12 +128,14 @@ void Events::replaceView(const Common::String &name, bool replaceAllViews) {
 
 void Events::addView(UIElement *ui) {
 	assert(ui);
+	UIElement *priorView = focusedView();
+
 	if (!_views.empty())
-		focusedView()->msgUnfocus(UnfocusMessage());
+		priorView->msgUnfocus(UnfocusMessage());
 
 	_views.push(ui);
 	ui->redraw();
-	ui->msgFocus(FocusMessage());
+	ui->msgFocus(FocusMessage(priorView));
 }
 
 void Events::addView(const Common::String &name) {
@@ -139,12 +143,20 @@ void Events::addView(const Common::String &name) {
 }
 
 void Events::popView() {
-	focusedView()->msgUnfocus(UnfocusMessage());
+	UIElement *priorView = focusedView();
+	priorView->msgUnfocus(UnfocusMessage());
 	_views.pop();
 
+	for (int i = 0; i < (int)_views.size() - 1; ++i) {
+		_views[i]->redraw();
+		_views[i]->draw();
+	}
+
 	if (!_views.empty()) {
-		focusedView()->redraw();
-		focusedView()->msgFocus(FocusMessage());
+		UIElement *view = focusedView();
+		view->msgFocus(FocusMessage(priorView));
+		view->redraw();
+		view->draw();
 	}
 }
 

@@ -51,20 +51,17 @@ struct SpriteBatchDesc {
 	Rect                     Viewport;
 	// Optional model transformation, to be applied to each sprite
 	SpriteTransform          Transform;
-	// Global node offset applied to the whole batch as the last transform
-	Point                    Offset;
-	// Global node flip applied to the whole batch as the last transform
+	// Optional flip, applied to the whole batch as the last transform
 	Shared::GraphicFlip      Flip = Shared::kFlip_None;
 	// Optional bitmap to draw sprites upon. Used exclusively by the software rendering mode.
 	PBitmap                  Surface;
 
 	SpriteBatchDesc() = default;
-	SpriteBatchDesc(uint32_t parent, const Rect viewport, const SpriteTransform & transform, const Point offset = Point(),
+	SpriteBatchDesc(uint32_t parent, const Rect viewport, const SpriteTransform & transform,
 		Shared::GraphicFlip flip = Shared::kFlip_None, PBitmap surface = nullptr)
 		: Parent(parent)
 		, Viewport(viewport)
 		, Transform(transform)
-		, Offset(offset)
 		, Flip(flip)
 		, Surface(surface) {
 	}
@@ -105,7 +102,7 @@ public:
 	Rect        GetRenderDestination() const override;
 
 	void        BeginSpriteBatch(const Rect &viewport, const SpriteTransform &transform,
-	                             const Point offset = Point(), Shared::GraphicFlip flip = Shared::kFlip_None, PBitmap surface = nullptr) override;
+	                             Shared::GraphicFlip flip = Shared::kFlip_None, PBitmap surface = nullptr) override;
 	void        EndSpriteBatch() override;
 	void        ClearDrawLists() override;
 
@@ -119,8 +116,8 @@ public:
 	void        SetCallbackOnInit(GFXDRV_CLIENTCALLBACKINITGFX callback) override {
 		_initGfxCallback = callback;
 	}
-	void        SetCallbackForNullSprite(GFXDRV_CLIENTCALLBACKXY callback) override {
-		_nullSpriteCallback = callback;
+	void        SetCallbackOnSpriteEvt(GFXDRV_CLIENTCALLBACKEVT callback) override {
+		_spriteEvtCallback = callback;
 	}
 
 protected:
@@ -146,6 +143,8 @@ protected:
 	virtual void OnSetFilter();
 	// Initialize sprite batch and allocate necessary resources
 	virtual void InitSpriteBatch(size_t index, const SpriteBatchDesc &desc) = 0;
+	// Gets the index of a last draw entry (sprite)
+	virtual size_t GetLastDrawEntryIndex() = 0;
 	// Clears sprite lists
 	virtual void ResetAllBatches() = 0;
 
@@ -162,12 +161,19 @@ protected:
 	GFXDRV_CLIENTCALLBACK _pollingCallback;
 	GFXDRV_CLIENTCALLBACK _drawScreenCallback;
 	GFXDRV_CLIENTCALLBACK _drawPostScreenCallback;
-	GFXDRV_CLIENTCALLBACKXY _nullSpriteCallback;
+	GFXDRV_CLIENTCALLBACKEVT _spriteEvtCallback;
 	GFXDRV_CLIENTCALLBACKINITGFX _initGfxCallback;
 
 	// Sprite batch parameters
-	SpriteBatchDescs _spriteBatchDesc; // sprite batches list
-	size_t _actSpriteBatch; // active batch index
+	SpriteBatchDescs _spriteBatchDesc;
+	// The range of sprites in this sprite batch (counting nested sprites):
+	// the last of the previous batch, and the last of the current.
+	std::vector<std::pair<size_t, size_t>> _spriteBatchRange;
+	// The index of a currently filled sprite batch
+	size_t _actSpriteBatch;
+	// The index of a currently rendered sprite batch
+	// (or -1 / UINT32_MAX if we are outside of the render pass)
+	uint32_t _rendSpriteBatch;
 };
 
 
@@ -225,8 +231,11 @@ public:
 	Bitmap *GetMemoryBackBuffer() override;
 	void SetMemoryBackBuffer(Bitmap *backBuffer) override;
 	Bitmap *GetStageBackBuffer(bool mark_dirty) override;
+	void SetStageBackBuffer(Bitmap *backBuffer) override;
 	bool GetStageMatrixes(RenderMatrixes &rm) override;
+	// Creates new texture using given parameters
 	IDriverDependantBitmap *CreateDDB(int width, int height, int color_depth, bool opaque) override = 0;
+	// Creates new texture and copy bitmap contents over
 	IDriverDependantBitmap *CreateDDBFromBitmap(Bitmap *bitmap, bool hasAlpha, bool opaque = false) override;
 	// Get shared texture from cache, or create from bitmap and assign ID
 	IDriverDependantBitmap *GetSharedDDB(uint32_t sprite_id, Bitmap *bitmap, bool hasAlpha, bool opaque) override;
@@ -236,9 +245,12 @@ public:
 	 void UpdateSharedDDB(uint32_t sprite_id, Bitmap *bitmap, bool hasAlpha, bool opaque) override;
 	void DestroyDDB(IDriverDependantBitmap* ddb) override;
 
+	// Sets stage screen parameters for the current batch.
+	void SetStageScreen(const Size &sz, int x = 0, int y = 0) override;
+
 protected:
 	// Create texture data with the given parameters
-	virtual TextureData *CreateTextureData(int width, int height, bool opaque) = 0;
+	virtual TextureData *CreateTextureData(int width, int height, bool opaque, bool as_render_target = false) = 0;
 	// Update texture data from the given bitmap
 	virtual void UpdateTextureData(TextureData *txdata, Bitmap *bmp, bool opaque, bool hasAlpha) = 0;
 	// Create DDB using preexisting texture data
@@ -251,13 +263,20 @@ protected:
 	// Stage screens are raw bitmap buffers meant to be sent to plugins on demand
 	// at certain drawing stages. If used at least once these buffers are then
 	// rendered as additional sprites in their respected order.
-	PBitmap CreateStageScreen(size_t index, const Size &sz);
-	PBitmap GetStageScreen(size_t index);
+	// Presets a stage screen with the given position (size is obligatory, offsets not).
+	void SetStageScreen(size_t index, const Size &sz, int x = 0, int y = 0);
+	// Returns a raw bitmap for the given stage screen.
+	Bitmap *GetStageScreenRaw(size_t index);
+	// Updates and returns a DDB for the given stage screen, and optional x,y position;
+	// clears the raw bitmap after copying to the texture.
+	IDriverDependantBitmap *UpdateStageScreenDDB(size_t index, int &x, int &y);
+	// Disposes all the stage screen raw bitmaps and DDBs.
 	void DestroyAllStageScreens();
-	// Use engine callback to acquire replacement for the null sprite;
-	// returns true if the sprite was provided onto the virtual screen,
-	// and false if this entry should be skipped.
-	bool DoNullSpriteCallback(int x, int y);
+	// Use engine callback to pass a render event;
+	// returns a DDB if anything was drawn onto the current stage screen
+	// (in which case it also fills optional x,y position),
+	// or nullptr if this entry should be skipped.
+	IDriverDependantBitmap *DoSpriteEvtCallback(int evt, int data, int &x, int &y);
 
 	// Prepare and get fx item from the pool
 	IDriverDependantBitmap *MakeFx(int r, int g, int b);
@@ -288,8 +307,16 @@ protected:
 	int _vmem_b_shift_32;
 
 private:
-	// Virtual screens for rendering stages (sprite batches)
-	std::vector<PBitmap> _stageScreens;
+	// Stage virtual screens are used to let plugins draw custom graphics
+	// in between render stages (between room and GUI, after GUI, and so on).
+	// TODO: possibly may be optimized further by having only 1 bitmap/ddb
+	// pair, and subbitmaps for raw drawing on separate stages.
+	struct StageScreen {
+		Rect Position; // bitmap size and pos preset (bitmap may be created later)
+		std::unique_ptr<Bitmap> Raw;
+		IDriverDependantBitmap *DDB = nullptr;
+	};
+	std::vector<StageScreen> _stageScreens;
 	// Flag which indicates whether stage screen was drawn upon during engine
 	// callback and has to be inserted into sprite stack.
 	bool _stageScreenDirty;

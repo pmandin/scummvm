@@ -124,6 +124,10 @@ ScummVM Team
        Arnaud Boutonne
        Paul Gilbert
 
+    Chamber:
+       Retro-Junk;
+       Eugene Sandulenko
+
     Chewy:
        Paul Gilbert
        Eugene Sandulenko
@@ -264,6 +268,9 @@ ScummVM Team
     Illusions:
        Benjamin Haisch
        Eric Fry
+
+    Immortal:
+       Michael Hayman
 
     Kingdom:
        Arnaud Boutonne
@@ -550,6 +557,9 @@ ScummVM Team
        Ryan Nunn                      - (Pentagram)
        Willem Jan Palenstijn          - (Pentagram)
 
+    V-Cruise:
+       Eric Lasota
+
     Voyeur:
        Arnaud Boutonne
        Paul Gilbert
@@ -584,9 +594,10 @@ ScummVM Team
        John Willis
 
     iPhone / iPad:
-       Oystein Eftevaag
+       Oystein Eftevaag               - (retired)
        Vincent Benony
        Thierry Crozat
+       Lars Sundstroem
 
     LinuxMoto:
        Lubomyr Lisen
@@ -762,8 +773,9 @@ Other contributions
 
     macOS:
        Max Horn                       - (retired)
-       Oystein Eftevaag
+       Oystein Eftevaag               - (retired)
        Thierry Crozat
+       dwa                            - Tiger/Leopard PPC
 
     Mandriva:
        Dominik Scherer                - (retired)

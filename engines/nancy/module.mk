@@ -5,6 +5,7 @@ MODULE_OBJS = \
   action/actionrecord.o \
   action/arfactory.o \
   action/leverpuzzle.o \
+  action/lightning.o \
   action/orderingpuzzle.o \
   action/passwordpuzzle.o \
   action/primaryvideo.o \
@@ -16,8 +17,11 @@ MODULE_OBJS = \
   action/staticbitmapanim.o \
   action/telephone.o \
   ui/fullscreenimage.o \
+  ui/animatedbutton.o \
   ui/button.o \
+  ui/clock.o \
   ui/inventorybox.o \
+  ui/ornaments.o \
   ui/scrollbar.o \
   ui/textbox.o \
   ui/viewport.o \
@@ -29,7 +33,6 @@ MODULE_OBJS = \
   state/scene.o \
   commontypes.o \
   console.o \
-  constants.o \
   cursor.o \
   decompress.o \
   dialogs.o \

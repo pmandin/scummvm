@@ -31,38 +31,37 @@
 #include "engines/nancy/graphics.h"
 
 #include "engines/nancy/action/primaryvideo.h"
-#include "engines/nancy/action/responses.cpp"
 
 #include "engines/nancy/state/scene.h"
 
 namespace Nancy {
 namespace Action {
 
-void PlayPrimaryVideoChan0::ConditionFlag::read(Common::SeekableReadStream &stream) {
-	type = (ConditionType)stream.readByte();
+void PlayPrimaryVideoChan0::PrimaryVideoFlag::read(Common::SeekableReadStream &stream) {
+	type = stream.readByte();
 	flag.label = stream.readSint16LE();
-	flag.flag = (NancyFlag)stream.readByte();
+	flag.flag = stream.readByte();
 	orFlag = stream.readByte();
 }
 
-bool PlayPrimaryVideoChan0::ConditionFlag::isSatisfied() const {
+bool PlayPrimaryVideoChan0::PrimaryVideoFlag::isSatisfied() const {
 	switch (type) {
-	case ConditionFlag::kEventFlags:
+	case kFlagEvent:
 		return NancySceneState.getEventFlag(flag);
-	case ConditionFlag::kInventory:
+	case kFlagInventory:
 		return NancySceneState.hasItem(flag.label) == flag.flag;
 	default:
 		return false;
 	}
 }
 
-void PlayPrimaryVideoChan0::ConditionFlag::set() const {
+void PlayPrimaryVideoChan0::PrimaryVideoFlag::set() const {
 	switch (type) {
-	case ConditionFlag::kEventFlags:
+	case kFlagEvent:
 		NancySceneState.setEventFlag(flag);
 		break;
-	case ConditionFlag::kInventory:
-		if (flag.flag == kTrue) {
+	case kFlagInventory:
+		if (flag.flag == kInvHolding) {
 			NancySceneState.addItemToInventory(flag.label);
 		} else {
 			NancySceneState.removeItemFromInventory(flag.label);
@@ -74,36 +73,42 @@ void PlayPrimaryVideoChan0::ConditionFlag::set() const {
 	}
 }
 
-void PlayPrimaryVideoChan0::ConditionFlags::read(Common::SeekableReadStream &stream) {
+void PlayPrimaryVideoChan0::PrimaryVideoFlags::read(Common::SeekableReadStream &stream) {
 	uint16 numFlags = stream.readUint16LE();
 
-	conditionFlags.reserve(numFlags);
+	conditionFlags.resize(numFlags);
 	for (uint i = 0; i < numFlags; ++i) {
-		conditionFlags.push_back(ConditionFlag());
-		conditionFlags.back().read(stream);
+		conditionFlags[i].read(stream);
 	}
 }
 
-bool PlayPrimaryVideoChan0::ConditionFlags::isSatisfied() const {
-	bool orFlag = false;
+bool PlayPrimaryVideoChan0::PrimaryVideoFlags::isSatisfied() const {
+	Common::Array<bool> conditionsMet(conditionFlags.size(), false);
 
 	for (uint i = 0; i < conditionFlags.size(); ++i) {
-		const ConditionFlag &cur = conditionFlags[i];
+		if (conditionFlags[i].isSatisfied()) {
+			conditionsMet[i] = true;
+		}
 
-		if (!cur.isSatisfied()) {
-			if (orFlag) {
-				return false;
-			} else {
-				orFlag = true;
+		if (conditionFlags[i].orFlag && i < conditionFlags.size() - 1) {
+			if (conditionsMet[i] == true) {
+				conditionsMet[i + 1] = true;
+				++i;
+			} else if (conditionFlags[i + 1].isSatisfied()) {
+				conditionsMet[i] = true;
+				conditionsMet[i + 1] = true;
+				++i;
 			}
 		}
 	}
 
-	if (orFlag) {
-		return false;
-	} else {
-		return true;
+	for (uint i = 0; i < conditionsMet.size(); ++i) {
+		if (conditionsMet[i] == false) {
+			return false;
+		}
 	}
+
+	return true;
 }
 
 PlayPrimaryVideoChan0::~PlayPrimaryVideoChan0() {
@@ -121,8 +126,6 @@ void PlayPrimaryVideoChan0::init() {
 	if (!_decoder.loadFile(_videoName + ".avf")) {
 		error("Couldn't load video file %s", _videoName.c_str());
 	}
-
-	_drawSurface.create(_src.width(), _src.height(), _decoder.getPixelFormat());
 
 	if (!_paletteName.empty()) {
 		GraphicsManager::loadSurfacePalette(_drawSurface, _paletteName);
@@ -144,16 +147,7 @@ void PlayPrimaryVideoChan0::updateGraphics() {
 	}
 
 	if (_decoder.needsUpdate()) {
-		if (_videoFormat == 2) {
-			_drawSurface.blitFrom(*_decoder.decodeNextFrame(), _src, Common::Point());
-		} else if (_videoFormat == 1) {
-			// This seems to be the only place in the engine where format 1 videos
-			// are scaled with arbitrary sizes; everything else uses double size
-			Graphics::Surface *scaledFrame = _decoder.decodeNextFrame()->getSubArea(_src).scale(_screenPosition.width(), _screenPosition.height());
-			GraphicsManager::copyToManaged(*scaledFrame, _drawSurface, true);
-			scaledFrame->free();
-			delete scaledFrame;
-		}
+		GraphicsManager::copyToManaged(*_decoder.decodeNextFrame(), _drawSurface, _videoFormat == 1);
 
 		_needsRedraw = true;
 	}
@@ -184,7 +178,7 @@ void PlayPrimaryVideoChan0::readData(Common::SeekableReadStream &stream) {
 	ser.skip(0x13, kGameTypeVampire, kGameTypeVampire);
 	ser.skip(0xF, kGameTypeNancy1);
 
-	readRect(stream, _src);
+	ser.skip(0x10); // Bounds
 	readRect(stream, _screenPosition);
 
 	char *rawText = new char[1500];
@@ -197,8 +191,8 @@ void PlayPrimaryVideoChan0::readData(Common::SeekableReadStream &stream) {
 	ser.skip(1);
 	ser.syncAsByte(_conditionalResponseCharacterID);
 	ser.syncAsByte(_goodbyeResponseCharacterID);
-	ser.syncAsByte(_isDialogueExitScene);
-	ser.syncAsByte(_doNotPop);
+	ser.syncAsByte(_defaultNextScene);
+	ser.syncAsByte(_popNextScene);
 	_sceneChange.readData(stream);
 
 	ser.skip(0x35, kGameTypeVampire, kGameTypeVampire);
@@ -217,8 +211,7 @@ void PlayPrimaryVideoChan0::readData(Common::SeekableReadStream &stream) {
 		UI::Textbox::assembleTextLine(rawText, response.text, 400);
 		readFilename(stream, response.soundName);
 		ser.skip(1);
-		response.sceneChange.readData(stream);
-		ser.skip(3, kGameTypeVampire, kGameTypeVampire);
+		response.sceneChange.readData(stream, ser.getVersion() == kGameTypeVampire);
 		ser.syncAsSint16LE(response.flagDesc.label);
 		ser.syncAsByte(response.flagDesc.flag);
 		ser.skip(0x32);
@@ -227,26 +220,37 @@ void PlayPrimaryVideoChan0::readData(Common::SeekableReadStream &stream) {
 	delete[] rawText;
 
 	uint16 numSceneBranchStructs = stream.readUint16LE();
-	if (numSceneBranchStructs > 0) {
-		// TODO
+	_sceneBranchStructs.resize(numSceneBranchStructs);
+	for (uint i = 0; i < numSceneBranchStructs; ++i) {
+		_sceneBranchStructs[i].conditions.read(stream);
+		_sceneBranchStructs[i].sceneChange.readData(stream, g_nancy->getGameType() == kGameTypeVampire);
+		stream.skip(0x32);
 	}
 
 	uint16 numFlagsStructs = stream.readUint16LE();
-	_flagsStructs.reserve(numFlagsStructs);
-	for (uint16 i = 0; i < numFlagsStructs; ++i) {
-		_flagsStructs.push_back(FlagsStruct());
-		FlagsStruct &flagsStruct = _flagsStructs.back();
+	_flagsStructs.resize(numFlagsStructs);
+	for (uint i = 0; i < numFlagsStructs; ++i) {
+		FlagsStruct &flagsStruct = _flagsStructs[i];
 		flagsStruct.conditions.read(stream);
-		flagsStruct.flagToSet.type = (ConditionFlag::ConditionType)stream.readByte();
+		flagsStruct.flagToSet.type = stream.readByte();
 		flagsStruct.flagToSet.flag.label = stream.readSint16LE();
-		flagsStruct.flagToSet.flag.flag = (NancyFlag)stream.readByte();
+		flagsStruct.flagToSet.flag.flag = stream.readByte();
 	}
 }
 
 void PlayPrimaryVideoChan0::execute() {
 	PlayPrimaryVideoChan0 *activeVideo = NancySceneState.getActivePrimaryVideo();
 	if (activeVideo != this && activeVideo != nullptr) {
-		return;
+		if (	!activeVideo->_isDone ||
+				activeVideo->_defaultNextScene == kDefaultNextSceneEnabled ||
+				activeVideo->_pickedResponse != -1	) {
+
+			return;
+		} else {
+			// Chained videos, hide the previous one and start this
+			activeVideo->setVisible(false);
+			NancySceneState.setActivePrimaryVideo(this);
+		}
 	}
 
 	switch (_state) {
@@ -292,7 +296,7 @@ void PlayPrimaryVideoChan0::execute() {
 
 			// Add responses when conditions have been satisfied
 			if (_conditionalResponseCharacterID != 10) {
-				addConditionalResponses();
+				addConditionalDialogue();
 			}
 
 			if (_goodbyeResponseCharacterID != 10) {
@@ -304,6 +308,7 @@ void PlayPrimaryVideoChan0::execute() {
 
 				if (res.conditionFlags.isSatisfied()) {
 					NancySceneState.getTextbox().addTextLine(res.text);
+					res.isOnScreen = true;
 				}
 			}
 		}
@@ -317,8 +322,20 @@ void PlayPrimaryVideoChan0::execute() {
 			} else {
 				// NPC has finished talking, we have responses
 				for (uint i = 0; i < 30; ++i) {
-					if (NancySceneState.getLogicCondition(i, kTrue)) {
-						_pickedResponse = i;
+					if (NancySceneState.getLogicCondition(i, kLogUsed)) {
+						int pickedOnScreenResponse = _pickedResponse = i;
+
+						// Adjust to account for hidden responses
+						for (uint j = 0; j < _responses.size(); ++j) {
+							if (!_responses[j].isOnScreen) {
+								++_pickedResponse;
+							}
+
+							if ((int)j == pickedOnScreenResponse) {
+								break;
+							}
+						}
+
 						break;
 					}
 				}
@@ -356,11 +373,16 @@ void PlayPrimaryVideoChan0::execute() {
 			if (_pickedResponse != -1) {
 				NancySceneState.changeScene(_responses[_pickedResponse].sceneChange);
 			} else {
-				// Evaluate scene branch structs here
+				for (uint i = 0; i < _sceneBranchStructs.size(); ++i) {
+					if (_sceneBranchStructs[i].conditions.isSatisfied()) {
+						NancySceneState.changeScene(_sceneBranchStructs[i].sceneChange);
+						break;
+					}
+				}
 
-				if (_isDialogueExitScene == kFalse) {
+				if (_defaultNextScene == kDefaultNextSceneEnabled) {
 					NancySceneState.changeScene(_sceneChange);
-				} else if (_doNotPop == kFalse) {
+				} else if (_popNextScene == kPopNextScene) {
 					// Exit dialogue
 					NancySceneState.popScene();
 				}
@@ -373,27 +395,54 @@ void PlayPrimaryVideoChan0::execute() {
 	}
 }
 
-void PlayPrimaryVideoChan0::handleInput(NancyInput &input) {
-	const Common::Rect &inactiveZone = g_nancy->_cursorManager->getPrimaryVideoInactiveZone();
-	const Common::Point cursorHotspot = g_nancy->_cursorManager->getCurrentCursorHotspot();
-	Common::Point adjustedMousePos = input.mousePos;
-	adjustedMousePos.y -= cursorHotspot.y;
+void PlayPrimaryVideoChan0::addConditionalDialogue() {
+	for (const auto &res : g_nancy->getStaticData().conditionalDialogue[_conditionalResponseCharacterID]) {
+		bool isSatisfied = true;
 
-	if (inactiveZone.bottom > adjustedMousePos.y) {
-		input.mousePos.y = inactiveZone.bottom + cursorHotspot.y;
-		g_system->warpMouse(input.mousePos.x, input.mousePos.y);
+		for (const auto &cond : res.flagConditions) {
+			if (!NancySceneState.getEventFlag(cond.label, cond.flag)) {
+				isSatisfied = false;
+				break;
+			}
+		}
+
+		for (const auto &cond : res.inventoryConditions) {
+			if (NancySceneState.hasItem(cond.label) != cond.flag) {
+				isSatisfied = false;
+				break;
+			}
+		}
+
+		if (isSatisfied) {
+			_responses.push_back(ResponseStruct());
+			ResponseStruct &newResponse = _responses.back();
+			newResponse.soundName = res.soundID;
+			newResponse.text = g_nancy->getStaticData().conditionalDialogueTexts[res.textID];
+			newResponse.sceneChange.sceneID = res.sceneID;
+			newResponse.sceneChange.continueSceneSound = kContinueSceneSound;
+		}
 	}
 }
 
-void PlayPrimaryVideoChan0::addConditionalResponses() {
-	for (const auto &res : nancy1ConditionalResponses) {
-		if (res.characterID == _conditionalResponseCharacterID) {
-			bool isSatisfied = true;
-			for (const auto & cond : res.conditions) {
-				if (cond.label == -1) {
-					break;
-				}
+void PlayPrimaryVideoChan0::addGoodbye() {
+	auto &res = g_nancy->getStaticData().goodbyes[_goodbyeResponseCharacterID];
+	_responses.push_back(ResponseStruct());
+	ResponseStruct &newResponse = _responses.back();
+	newResponse.soundName = res.soundID;
+	newResponse.text = g_nancy->getStaticData().goodbyeTexts[_goodbyeResponseCharacterID];
 
+	// Evaluate conditions to pick from the collection of replies
+	uint sceneChangeID = 0;
+	for (uint i = 0; i < res.sceneChanges.size(); ++i) {
+		const GoodbyeSceneChange &sc = res.sceneChanges[i];
+		if (sc.flagConditions.size() == 0) {
+			// No conditions, default choice
+			sceneChangeID = i;
+			break;
+		} else {
+			bool isSatisfied = true;
+
+			for (const auto &cond : sc.flagConditions) {
 				if (!NancySceneState.getEventFlag(cond.label, cond.flag)) {
 					isSatisfied = false;
 					break;
@@ -401,49 +450,21 @@ void PlayPrimaryVideoChan0::addConditionalResponses() {
 			}
 
 			if (isSatisfied) {
-				Common::File file;
-				char snd[9];
-
-				file.open("game.exe");
-				file.seek(nancy1ResponseBaseFileOffset + res.fileOffset);
-				file.read(snd, 8);
-				snd[8] = '\0';
-
-				_responses.push_back(ResponseStruct());
-				ResponseStruct &newResponse = _responses.back();
-				newResponse.soundName = snd;
-				newResponse.text = file.readString();
-				newResponse.sceneChange.sceneID = res.sceneID;
-				newResponse.sceneChange.doNotStartSound = true;
-
-				file.close();
+				sceneChangeID = i;
+				break;
 			}
 		}
 	}
-}
 
-void PlayPrimaryVideoChan0::addGoodbye() {
-	for (const auto &res : nancy1Goodbyes) {
-		if (res.characterID == _goodbyeResponseCharacterID) {
-			Common::File file;
-			char snd[9];
+	const GoodbyeSceneChange &sceneChange = res.sceneChanges[sceneChangeID];
 
-			file.open("game.exe");
-			file.seek(nancy1ResponseBaseFileOffset + res.fileOffset);
-			file.read(snd, 8);
-			snd[8] = '\0';
+	// The reply from the character is picked randomly
+	newResponse.sceneChange.sceneID = sceneChange.sceneIDs[g_nancy->_randomSource->getRandomNumber(sceneChange.sceneIDs.size() - 1)];
 
-			_responses.push_back(ResponseStruct());
-			ResponseStruct &newResponse = _responses.back();
-			newResponse.soundName = snd;
-			newResponse.text = file.readString();
-			// response is picked randomly
-			newResponse.sceneChange.sceneID = res.sceneIDs[g_nancy->_randomSource->getRandomNumber(3)];
-			newResponse.sceneChange.doNotStartSound = true;
+	// Set an event flag if applicable
+	NancySceneState.setEventFlag(sceneChange.flagToSet);
 
-			file.close();
-		}
-	}
+	newResponse.sceneChange.continueSceneSound = kContinueSceneSound;
 }
 
 } // End of namespace Action

@@ -33,6 +33,7 @@
 #include "tetraedge/game/owner_error_menu.h"
 #include "tetraedge/game/splash_screens.h"
 #include "tetraedge/game/in_game_scene.h"
+#include "tetraedge/game/upsell_screen.h"
 
 #include "tetraedge/te/te_visual_fade.h"
 #include "tetraedge/te/te_music.h"
@@ -93,6 +94,7 @@ public:
 	MainMenu &mainMenu() { return _mainMenu; }
 	TeMusic &music() { return _music; }
 	Credits &credits() { return _credits; }
+	UpsellScreen &upsellScreen() { return _upsellScreen; }
 	TeVisualFade &visualFade() { return _visFade; }
 	TeSpriteLayout &appSpriteLayout() { return _appSpriteLayout; }
 	TeSpriteLayout &mouseCursorLayout() { return _mouseCursorLayout; }
@@ -113,6 +115,7 @@ public:
 	TeLayout &frontOrientationLayout() { return _frontOrientationLayout; }
 	TeLayout &backLayout() { return _backLayout; }
 	LocFile &loc() { return _loc; }
+	bool ratioStretched() const { return _ratioStretched; }
 
 private:
 	bool _finishedGame;
@@ -154,6 +157,7 @@ private:
 	Credits _credits;
 	OwnerErrorMenu _ownerErrorMenu;
 	SplashScreens _splashScreens;
+	UpsellScreen _upsellScreen;
 
 	TeIntrusivePtr<TeFont3> _fontComic;
 	TeIntrusivePtr<TeFont3> _fontArgh;
@@ -166,6 +170,7 @@ private:
 	bool _created;
 	bool _tutoActivated;
 	bool _drawShadows;
+	bool _ratioStretched;
 
 	int _difficulty;
 

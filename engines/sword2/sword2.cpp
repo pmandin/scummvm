@@ -56,6 +56,7 @@ Sword2Engine::Sword2Engine(OSystem *syst, const ADGameDescription *gameDesc) : E
 	SearchMan.addSubDirectoryMatching(gameDataDir, "sword2");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "video");
 	SearchMan.addSubDirectoryMatching(gameDataDir, "smacks");
+	SearchMan.addSubDirectoryMatching(gameDataDir, "extras"); // GOG.com
 	SearchMan.addSubDirectoryMatching(gameDataDir, "streams"); // PSX video
 
 	_features = gameDesc->flags;
@@ -203,6 +204,8 @@ Common::Error Sword2Engine::run() {
 	_fontRenderer = new FontRenderer(this);
 	_sound = new Sound(this);
 	_mouse = new Mouse(this);
+	
+	_fontRenderer->loadTranslations();
 
 	registerDefaultSettings();
 	readSettings();

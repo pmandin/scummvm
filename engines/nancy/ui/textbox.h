@@ -36,7 +36,7 @@ class Scrollbar;
 
 class Textbox : public Nancy::RenderObject {
 public:
-	Textbox(RenderObject &redrawFrom);
+	Textbox();
 	virtual ~Textbox();
 
 	void init() override;
@@ -74,6 +74,8 @@ private:
 	uint16 _maxWidthDifference;
 	uint16 _numLines;
 	uint16 _fontID;
+
+	bool _lastResponseisMultiline;
 
 	bool _needsTextRedraw;
 	float _scrollbarPos;

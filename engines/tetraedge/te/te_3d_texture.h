@@ -50,7 +50,9 @@ public:
 
 	bool load(const Common::FSNode &path);
 	virtual bool load(const TeImage &img) = 0;
-	static TeIntrusivePtr<Te3DTexture> load2(const Common::FSNode &node, uint size);
+	// The original passes a GL enum param, but it's only ever GL_INVALID or GL_ALPHA.
+	// Simplify to avoid leaking gl types.
+	static TeIntrusivePtr<Te3DTexture> load2(const Common::FSNode &node, bool alphaOnly);
 
 	static TeVector2s32 optimisedSize(const TeVector2s32 &size);
 
@@ -61,18 +63,20 @@ public:
 
 	uint width() const { return _width; }
 	uint height() const { return _height; }
+	void setLoadAlphaOnly() { _alphaOnly = true; }
 
 	static Te3DTexture *makeInstance();
+
 
 protected:
 	uint _width;
 	uint _height;
-	int _numFrames;
-	int _frameRate;
 	TeImage::Format _format;
 	bool _createdTexture;
 	bool _loaded;
 	TeMatrix4x4 _matrix;
+
+	bool _alphaOnly;
 
 	uint _texWidth;
 	uint _texHeight;

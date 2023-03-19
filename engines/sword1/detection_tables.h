@@ -125,7 +125,7 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO0()
 	},
 
-	{ // 25th Anniversary rerelease
+	{ // 25th Anniversary rerelease / Steam DLC for Director's Cut
 		"sword1",
 		"25th Anniversary",
 		AD_ENTRY4s("scripts.clu",        "72b10193714e8c6e4daca51791c0db0c", 1087240,
@@ -335,6 +335,19 @@ static const ADGameDescription gameDescriptions[] = {
 
 	{
 		"sword1",
+		"English speech and DXA cutscenes",
+		AD_ENTRY4s("clusters/scripts.clu",  "72b10193714e8c6e4daca51791c0db0c", 1088292,
+				   "clusters/swordres.rif", "04a41fc5783d18a8958d41aa9a3823af", 59788,
+				   "clusters/text.clu",     "b9e7b3e342569be68738e4681f2adeff", 3164267,
+				   "intro.dxa",             nullptr, -1),
+		Common::PL_POL,
+		Common::kPlatformWindows,
+		ADGF_NO_FLAGS,
+		GUIO0()
+	},
+
+	{
+		"sword1",
 		"English speech",
 		AD_ENTRY4s("clusters/scripts.clu",  "72b10193714e8c6e4daca51791c0db0c", 1088292,
 				   "clusters/swordres.rif", "5463362dc77b6efc36e46ac84998bd2f", 59788,
@@ -353,6 +366,19 @@ static const ADGameDescription gameDescriptions[] = {
 				   "clusters/swordres.rif", "239bdd76c405bad0f804a8ae5df4adb0", 59788,
 				   "clusters/text.clu",     "76f93f5feecc8915435105478f3c6615", 3199652,
 				   "smackshi/intro.smk",    "d82a7869ace8fcecaa519c04c4bfc483", 13233268),
+		Common::CS_CZE,
+		Common::kPlatformWindows,
+		ADGF_NO_FLAGS,
+		GUIO0()
+	},
+
+	{
+		"sword1",
+		"English speech and DXA cutscenes",
+		AD_ENTRY4s("clusters/scripts.clu",  "72b10193714e8c6e4daca51791c0db0c", 1088372,
+				   "clusters/swordres.rif", "239bdd76c405bad0f804a8ae5df4adb0", 59788,
+				   "clusters/text.clu",     "76f93f5feecc8915435105478f3c6615", 3199652,
+				   "intro.dxa",             nullptr, -1),
 		Common::CS_CZE,
 		Common::kPlatformWindows,
 		ADGF_NO_FLAGS,

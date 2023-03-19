@@ -77,7 +77,7 @@ void ActionManager::handleInput(NancyInput &input) {
 
 					// Re-add the object to the inventory unless it's marked as a one-time use
 					if (rec->_itemRequired == heldItem && rec->_itemRequired != -1) {
-						if (NancySceneState.getInventoryBox().getItemDescription(heldItem).oneTimeUse != 0) {
+						if (NancySceneState.getInventoryBox().getItemDescription(heldItem).keepItem == kInvItemKeepAlways) {
 							NancySceneState.getInventoryBox().addItem(heldItem);
 						}
 
@@ -146,89 +146,6 @@ bool ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
 
 	_records.push_back(newRecord);
 
-	debugC(1, kDebugActionRecord, "Loaded action record %i, type %s, typeID %i, description \"%s\", execType == %s",
-			_records.size() - 1,
-			newRecord->getRecordTypeName().c_str(),
-			newRecord->_type,
-			newRecord->_description.c_str(),
-			newRecord->_execType == ActionRecord::kRepeating ? "kRepeating" : "kOneShot");
-	for (uint i = 0; i < newRecord->_dependencies.size(); ++i) {
-		debugCN(1, kDebugActionRecord, "\tDependency %i: type ", i);
-		DependencyRecord &dep = newRecord->_dependencies[i];
-		switch (dep.type) {
-		case DependencyType::kNone :
-			debugCN(1, kDebugActionRecord, "kNone");
-			break;
-		case DependencyType::kInventory :
-			debugCN(1, kDebugActionRecord, "kInventory, item ID %i %s",
-						dep.label,
-						dep.condition == kTrue ? "is in possession" : "is not in possession");
-			break;
-		case DependencyType::kEventFlag :
-			debugCN(1, kDebugActionRecord, "kEventFlag, flag ID %i == %s",
-						dep.label,
-						dep.condition == kTrue ? "true" : "false");
-			break;
-		case DependencyType::kLogicCondition :
-			debugCN(1, kDebugActionRecord, "kLogicCondition, logic condition ID %i == %s",
-						dep.label,
-						dep.condition == kTrue ? "true" : "false");
-			break;
-		case DependencyType::kTotalTime :
-			debugCN(1, kDebugActionRecord, "kTotalTime, %i hours, %i minutes, %i seconds, %i milliseconds",
-						dep.hours,
-						dep.minutes,
-						dep.seconds,
-						dep.milliseconds);
-			break;
-		case DependencyType::kSceneTime :
-			debugCN(1, kDebugActionRecord, "kSceneTime, %i hours, %i minutes, %i seconds, %i milliseconds",
-						dep.hours,
-						dep.minutes,
-						dep.seconds,
-						dep.milliseconds);
-			break;
-		case DependencyType::kPlayerTime :
-			debugCN(1, kDebugActionRecord, "kPlayerTime, %i days, %i hours, %i minutes, %i seconds",
-						dep.hours,
-						dep.minutes,
-						dep.seconds,
-						dep.milliseconds);
-			break;
-		case DependencyType::kSceneCount :
-			debugCN(1, kDebugActionRecord, "kSceneCount, scene ID %i, hit count %s %i",
-						dep.hours,
-						dep.milliseconds == 1 ? ">" : dep.milliseconds == 2 ? "<" : "==",
-						dep.seconds);
-			break;
-		case DependencyType::kResetOnNewDay :
-			debugCN(1, kDebugActionRecord, "kResetOnNewDay");
-			break;
-		case DependencyType::kUseItem :
-			debugCN(1, kDebugActionRecord, "kUseItem, item ID %i %s",
-						dep.label,
-						dep.condition == kTrue ? "is held" : "is not held");
-			break;
-		case DependencyType::kTimeOfDay :
-			debugCN(1, kDebugActionRecord, "kTimeOfDay, %s",
-						dep.label == 0 ? "day" : dep.label == 1 ? "night" : "dusk/dawn");
-			break;
-		case DependencyType::kTimerNotDone :
-			debugCN(1, kDebugActionRecord, "kTimerNotDone");
-			break;
-		case DependencyType::kTimerDone :
-			debugCN(1, kDebugActionRecord, "kTimerDone");
-			break;
-		case DependencyType::kDifficultyLevel :
-			debugCN(1, kDebugActionRecord, "kDifficultyLevel, level %i", dep.condition);
-			break;
-		default:
-			debugCN(1, kDebugActionRecord, "unknown");
-			break;
-		}
-		debugC(1, kDebugActionRecord, ", orFlag == %s", dep.orFlag == true ? "true" : "false");
-	}
-
 	return true;
 }
 
@@ -249,16 +166,16 @@ void ActionManager::processActionRecords() {
 						break;
 					case DependencyType::kInventory:
 						switch (dep.condition) {
-						case kFalse:
+						case kInvEmpty:
 							// Item not in possession or held
-							if (NancySceneState._flags.items[dep.label] == kFalse &&
+							if (NancySceneState._flags.items[dep.label] == kInvEmpty &&
 								dep.label != NancySceneState._flags.heldItem) {
 								dep.satisfied = true;
 							}
 
 							break;
-						case kTrue:
-							if (NancySceneState._flags.items[dep.label] == kTrue ||
+						case kInvHolding:
+							if (NancySceneState._flags.items[dep.label] == kInvHolding ||
 								dep.label == NancySceneState._flags.heldItem) {
 								dep.satisfied = true;
 							}
@@ -269,15 +186,15 @@ void ActionManager::processActionRecords() {
 						}
 
 						break;
-					case DependencyType::kEventFlag:
-						if (NancySceneState.getEventFlag(dep.label, (NancyFlag)dep.condition)) {
+					case DependencyType::kEvent:
+						if (NancySceneState.getEventFlag(dep.label, dep.condition)) {
 							// nancy1 has code for some timer array that never gets used
 							// and is discarded from nancy2 onward
 							dep.satisfied = true;
 						}
 
 						break;
-					case DependencyType::kLogicCondition:
+					case DependencyType::kLogic:
 						if (NancySceneState._flags.logicConditions[dep.label].flag == dep.condition) {
 							// Wait for specified time before satisfying dependency condition
 							Time elapsed = NancySceneState._timers.lastTotalTime - NancySceneState._flags.logicConditions[dep.label].timestamp;
@@ -288,30 +205,24 @@ void ActionManager::processActionRecords() {
 						}
 
 						break;
-					case DependencyType::kTotalTime:
+					case DependencyType::kElapsedGameTime:
 						if (NancySceneState._timers.lastTotalTime >= dep.timeData) {
 							dep.satisfied = true;
 						}
 
 						break;
-					case DependencyType::kSceneTime:
+					case DependencyType::kElapsedSceneTime:
 						if (NancySceneState._timers.sceneTime >= dep.timeData) {
 							dep.satisfied = true;
 						}
 
 						break;
-					case DependencyType::kPlayerTime:
+					case DependencyType::kElapsedPlayerTime:
 						// TODO almost definitely wrong, as the original engine treats player time differently
 						if (NancySceneState._timers.playerTime >= dep.timeData) {
 							dep.satisfied = true;
 						}
 
-						break;
-					case DependencyType::kUnknownType7:
-						warning("Unknown Dependency type 7");
-						break;
-					case DependencyType::kUnknownType8:
-						warning("Unknown Dependency type 8");
 						break;
 					case DependencyType::kSceneCount:
 						// This dependency type keeps its data in the time variables
@@ -338,7 +249,7 @@ void ActionManager::processActionRecords() {
 						}
 
 						break;
-					case DependencyType::kResetOnNewDay:
+					case DependencyType::kElapsedPlayerDay:
 						if (record->_days == -1) {
 							record->_days = NancySceneState._timers.playerTime.getDays();
 							dep.satisfied = true;
@@ -348,14 +259,14 @@ void ActionManager::processActionRecords() {
 						if (record->_days < NancySceneState._timers.playerTime.getDays()) {
 							record->_days = NancySceneState._timers.playerTime.getDays();
 							for (uint j = 0; j < record->_dependencies.size(); ++j) {
-								if (record->_dependencies[j].type == DependencyType::kPlayerTime) {
+								if (record->_dependencies[j].type == DependencyType::kElapsedPlayerTime) {
 									record->_dependencies[j].satisfied = false;
 								}
 							}
 						}
 
 						break;
-					case DependencyType::kUseItem: {
+					case DependencyType::kCursorType: {
 						bool hasUnsatisfiedDeps = false;
 						for (uint j = 0; j < record->_dependencies.size(); ++j) {
 							if (j != i && record->_dependencies[j].satisfied == false) {
@@ -369,26 +280,26 @@ void ActionManager::processActionRecords() {
 
 						record->_itemRequired = dep.label;
 
-						if (dep.condition == 1) {
-							record->_itemRequired += 100;
+						if (dep.condition == kCursInvNotHolding) {
+							record->_itemRequired += kCursInvNotHoldingOffset;
 						}
 
 						dep.satisfied = true;
 						break;
 					}
-					case DependencyType::kTimeOfDay:
-						if (dep.label == (byte)NancySceneState._timers.timeOfDay) {
+					case DependencyType::kPlayerTOD:
+						if (dep.label == NancySceneState.getPlayerTOD()) {
 							dep.satisfied = true;
 						}
 
 						break;
-					case DependencyType::kTimerNotDone:
+					case DependencyType::kTimerLessThanDependencyTime:
 						if (NancySceneState._timers.timerTime <= dep.timeData) {
 							dep.satisfied = true;
 						}
 
 						break;
-					case DependencyType::kTimerDone:
+					case DependencyType::kTimerGreaterThanDependencyTime:
 						if (NancySceneState._timers.timerTime > dep.timeData) {
 							dep.satisfied = true;
 						}
@@ -401,7 +312,7 @@ void ActionManager::processActionRecords() {
 
 						break;
 					default:
-						warning("Unknown Dependency type %i", (int)dep.type);
+						warning("Unimplemented Dependency type %i", (int)dep.type);
 						break;
 					}
 				}

@@ -206,13 +206,21 @@ static const char HELP_STRING4[] =
 #if defined(ENABLE_SCUMM) || defined(ENABLE_GROOVIE)
 	"  --demo-mode              Start demo mode of Maniac Mansion or The 7th Guest\n"
 #endif
-#if defined(ENABLE_DIRECTOR)
+#if defined(ENABLE_DIRECTOR) || defined(ENABLE_TESTBED)
 	"  --start-movie=NAME@NUM   Start movie at frame for Director\n"
 	"							Either can be specified without the other.\n"
 #endif
 #ifdef ENABLE_SCUMM
 	"  --tempo=NUM              Set music tempo (in percent, 50-200) for SCUMM games\n"
 	"                           (default: 100)\n"
+#endif
+#if defined(ENABLE_HE) && defined(USE_ENET)
+	"  --host-game              Host an online game for Moonbase Commander.\n"
+	"                           This method only works on the full version of the game,\n"
+	"                           Demo users can still host a game via the main menu.\n"
+	"  --join-game=IP[:PORT]    Join an online game for Moonbase Commander.\n"
+	"                           This method only works on the full version of the game,\n"
+	"                           Demo users can still join a game via the main menu.\n"
 #endif
 	"  --engine-speed=NUM       Set frame per second limit (0 - 100), 0 = no limit\n"
 	"                           (default: 60)\n"
@@ -335,6 +343,10 @@ void registerDefaults() {
 #endif
 #ifdef ENABLE_SCUMM
 	ConfMan.registerDefault("tempo", 0);
+#endif
+#if defined(ENABLE_HE) && defined(USE_ENET)
+	ConfMan.registerDefault("host_game", false);
+	ConfMan.registerDefault("join_game", "null");
 #endif
 #if defined(ENABLE_SKY) || defined(ENABLE_QUEEN)
 	ConfMan.registerDefault("alt_intro", false);
@@ -908,6 +920,13 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			END_OPTION
 #endif
 
+#if defined(ENABLE_HE) && defined(USE_ENET)
+			DO_LONG_OPTION_BOOL("host-game")
+			END_OPTION
+			DO_LONG_OPTION("join-game")
+			END_OPTION
+#endif
+
 #if defined(ENABLE_SCUMM) || defined(ENABLE_GROOVIE)
 			DO_LONG_OPTION_BOOL("demo-mode")
 			END_OPTION
@@ -936,7 +955,7 @@ Common::String parseCommandLine(Common::StringMap &settings, int argc, const cha
 			END_OPTION
 #endif
 
-#if defined(ENABLE_DIRECTOR)
+#if defined(ENABLE_DIRECTOR) || defined(ENABLE_TESTBED)
 			DO_LONG_OPTION("start-movie")
 			END_OPTION
 #endif

@@ -31,12 +31,12 @@ namespace Views {
 class Search : public TextView {
 private:
 	enum Mode {
-		INITIAL, OPTIONS, RESPONSE, WHO_WILL_TRY,
-		FOCUS_GET_TREASURE, GET_TREASURE, GET_ITEMS,
-		GET_ITEMS_DONE
+		INITIAL, OPTIONS, RESPONSE, WHO_WILL_TRY, GET_TREASURE,
+		GET_ITEMS, GET_ITEMS_DONE
 	};
+	enum OptionMode { OMODE_OPEN, OMODE_REMOVE_TRAP, OMODE_DETECT };
 	Mode _mode = INITIAL;
-	bool _removing = false;
+	OptionMode _optionMode = OMODE_OPEN;
 	byte _val1 = 0;
 	int _lineNum = 0;
 
@@ -56,6 +56,7 @@ private:
 	 * Detect magic/trap
 	 */
 	void detectMagicTrap();
+	void detectMagicTrap2();
 
 	/**
 	 * Select which user to try and remove trap or detect magic
@@ -85,6 +86,7 @@ public:
 	bool msgFocus(const FocusMessage &msg) override;
 	void draw() override;
 	bool msgKeypress(const KeypressMessage &msg) override;
+	bool msgAction(const ActionMessage &msg) override;
 	void timeout() override;
 };
 

@@ -796,7 +796,7 @@ void UpdateGameOnce(bool checkControls, IDriverDependantBitmap *extraBitmap, int
 
 	_G(our_eip) = 7;
 
-	update_polled_stuff_if_runtime();
+	update_polled_stuff();
 	if (_G(abort_engine))
 		return;
 
@@ -812,7 +812,7 @@ void UpdateGameOnce(bool checkControls, IDriverDependantBitmap *extraBitmap, int
 
 	game_loop_update_fps();
 
-	update_polled_stuff_if_runtime();
+	update_polled_stuff();
 	if (_G(abort_engine))
 		return;
 
@@ -910,9 +910,8 @@ static int UpdateWaitMode() {
 	auto was_disabled_for = _G(restrict_until).disabled_for;
 
 	set_default_cursor();
-	if (GUI::Options.DisabledStyle != kGuiDis_Unchanged) { // If GUI looks change when disabled, then update them all
-		GUI::MarkAllGUIForUpdate();
-	}
+	// If GUI looks change when disabled, then mark all of them for redraw
+	GUI::MarkAllGUIForUpdate(GUI::Options.DisabledStyle != kGuiDis_Unchanged, true);
 	_GP(play).disabled_user_interface--;
 	_G(restrict_until).disabled_for = 0;
 
@@ -956,9 +955,9 @@ static int GameTick() {
 
 static void SetupLoopParameters(int untilwhat, const void *data_ptr = nullptr, int data1 = 0, int data2 = 0) {
 	_GP(play).disabled_user_interface++;
-	if (GUI::Options.DisabledStyle != kGuiDis_Unchanged) { // If GUI looks change when disabled, then update them all
-		GUI::MarkAllGUIForUpdate();
-	}
+	// If GUI looks change when disabled, then mark all of them for redraw
+	GUI::MarkAllGUIForUpdate(GUI::Options.DisabledStyle != kGuiDis_Unchanged, true);
+
 	// Only change the mouse cursor if it hasn't been specifically changed first
 	// (or if it's speech, always change it)
 	if (((_G(cur_cursor) == _G(cur_mode)) || (untilwhat == UNTIL_NOOVERLAY)) &&
@@ -1028,7 +1027,7 @@ void GameLoopUntilButAnimEnd(int guin, int objn) {
 }
 
 void RunGameUntilAborted() {
-	// skip ticks to account for time spent starting _GP(game).
+	// skip ticks to account for time spent starting game.
 	skipMissedTicks();
 
 	while (!_G(abort_engine)) {
@@ -1041,7 +1040,7 @@ void RunGameUntilAborted() {
 	}
 }
 
-void update_polled_stuff_if_runtime() {
+void update_polled_stuff() {
 	::AGS::g_events->pollEvents();
 
 	if (_G(want_exit)) {
@@ -1049,7 +1048,7 @@ void update_polled_stuff_if_runtime() {
 		quit("||exit!");
 
 	} else if (_G(editor_debugging_initialized))
-		check_for_messages_from_editor();
+		check_for_messages_from_debugger();
 }
 
 } // namespace AGS3

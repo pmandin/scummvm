@@ -70,7 +70,7 @@ _recallageY(true), _walkToFlag(false), _walkCurveEnd(0.0f), _walkCurveLast(0.0f)
 _walkCurveLen(0.0f), _walkCurveIncrement(0.0f), _walkEndAnimG(false), _walkTotalFrames(0),
 _walkCurveNextLength(0.0f), _walkedLength(0.0f), _walkLoopAnimLen(0.0f), _walkEndGAnimLen(0.0f),
 _walkStartAnimLen(0.0f), _walkStartAnimFrameCount(0), _walkLoopAnimFrameCount(0),
-_walkEndGAnimFrameCount(0), _hasAnchor(false) {
+_walkEndGAnimFrameCount(0), _hasAnchor(false), _charLookingAtFloat(0.0f) {
 	_curModelAnim.setDeleteFn(&TeModelAnimation::deleteLaterStatic);
 }
 
@@ -88,6 +88,8 @@ Character::~Character() {
 	}
 	removeAnim();
 	for (uint s = 0; s < 2; s++) {
+		if (!_shadowModel[s])
+			continue;
 		for (uint i = 0; i < models.size(); i++) {
 			if (models[i] == _shadowModel[s]) {
 				models.remove_at(i);
@@ -115,30 +117,48 @@ void Character::addCallback(const Common::String &animKey, const Common::String 
 	// the way this gets used later, setting large negative is more correct.
 	c->_callsMade = (maxCalls == -1.0 ? -1e9 : 0.0f);
 
-	//
-	// WORKAROUND: This callback seems to be set too late.. frame 31, but it
-	// only gets to 15?  Some bug in the way anim blends hand off?
-	// for scenes/CitSpace2/34230/Logic34230.lua
-	//
-	if (fnName == "ChangeClef" && c->_triggerFrame == 31)
-		c->_triggerFrame = 15;
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia) {
+		// Syberia 1 has slightly weird logic to decide what key to use.
 
-	const Common::Path animPath = _model->anim()->loadedPath();
+		//
+		// WORKAROUND: This callback seems to be set too late.. frame 31, but it
+		// only gets to 15?  Some bug in the way anim blends hand off?
+		// for scenes/CitSpace2/34230/Logic34230.lua
+		//
+		if (fnName == "ChangeClef" && c->_triggerFrame == 31)
+			c->_triggerFrame = 15;
 
-	// Another difference.. the original messes with paths a bit - just
-	// use the file name, since it's already limited by character.
-	Common::String animName = animPath.getLastComponent().toString();
-	if (animName.empty())
-		animName = animPath.toString();
+		const Common::Path animPath = _model->anim()->loadedPath();
 
-	if (_callbacks.contains(animName)) {
-		_callbacks[animName].push_back(c);
+		// Another difference.. the original messes with paths a bit - just
+		// use the file name, since it's already limited by character.
+		Common::String animName = animPath.getLastComponent().toString();
+		if (animName.empty())
+			animName = animPath.toString();
+
+		if (_callbacks.contains(animName)) {
+			_callbacks[animName].push_back(c);
+		} else {
+			Common::Path animKeyPath(animKey);
+			Common::Array<Callback *> callbacks;
+			callbacks.push_back(c);
+
+			_callbacks.setVal(animKeyPath.getLastComponent().toString(), callbacks);
+		}
+	} else if (g_engine->gameType() == TetraedgeEngine::kSyberia2){
+		// Syberia 2 is simpler, it always uses a lower-case version of the anim
+		// file in the passed key.
+		Common::String key = Common::Path(animKey).getLastComponent().toString();
+		key.toLowercase();
+		if (_callbacks.contains(key)) {
+			_callbacks[key].push_back(c);
+		} else {
+			Common::Array<Callback *> callbacks;
+			callbacks.push_back(c);
+			_callbacks.setVal(key, callbacks);
+		}
 	} else {
-		Common::Path animKeyPath(animKey);
-		Common::Array<Callback *> callbacks;
-		callbacks.push_back(c);
-
-		_callbacks.setVal(animKeyPath.getLastComponent().toString(), callbacks);
+		error("addCallback: Unsupported game type.");
 	}
 }
 
@@ -210,7 +230,7 @@ float Character::animLengthFromFile(const Common::String &animname, uint32 *pfra
 	}
 
 	// The "Pere" or "father" bone is the root.
-	float animLen = animLength(*anim, anim->findBone("Pere"), lastframe);
+	float animLen = animLength(*anim, anim->findBone(rootBone()), lastframe);
 	int frameCount = anim->lastFrame() + 1 - anim->firstFrame();
 	*pframeCount = frameCount;
 
@@ -230,6 +250,7 @@ bool Character::blendAnimation(const Common::String &animname, float amount, boo
 	if (_curModelAnim) {
 		_curModelAnim->onFinished().remove(this, &Character::onModelAnimationFinished);
 		_curModelAnim->unbind();
+		_curModelAnim->reset();
 	}
 
 	_curModelAnim = animCacheLoad(animpath);
@@ -272,6 +293,7 @@ void Character::deleteAnim() {
 	if (_curModelAnim) {
 		_curModelAnim->onFinished().remove(this, &Character::onModelAnimationFinished);
 		_curModelAnim->unbind();
+		_curModelAnim->reset();
 	}
 	_model->removeAnim();
 	_curModelAnim.release();
@@ -305,7 +327,7 @@ void Character::deleteCallback(const Common::String &key, const Common::String &
 }
 
 void Character::endMove() {
-	if (_model->name() == "Kate")
+	if (g_engine->getGame()->scene()._character == this)
 		walkMode("Walk");
 
 	_onFinishedSignal.call();
@@ -371,14 +393,17 @@ bool Character::loadModel(const Common::String &mname, bool unused) {
 
 	_model->setName(mname);
 	_model->setScale(_characterSettings._defaultScale);
+	if (_characterSettings._invertNormals)
+		_model->invertNormals();
 
 	for (auto &mesh : _model->meshes())
 		mesh->setVisible(true);
 
-	// Set all mouthes not visible by default
+	// Set all mouthes, eyes, etc not visible by default
 	_model->setVisibleByName("_B_", false);
-	// Set all eyes not visible by default
 	_model->setVisibleByName("_Y_", false);
+	_model->setVisibleByName("_M_", false);
+	_model->setVisibleByName("_E_", false);
 
 	// Note: game loops through "faces" here, but it only ever uses the default ones.
 	_model->setVisibleByName(_characterSettings._defaultEyes, true);
@@ -391,21 +416,24 @@ bool Character::loadModel(const Common::String &mname, bool unused) {
 	_walkEndGAnimLen = animLengthFromFile(walkAnim(WalkPart_EndG), &_walkEndGAnimFrameCount);
 	_walkLoopAnimLen = animLengthFromFile(walkAnim(WalkPart_Loop), &_walkLoopAnimFrameCount);
 
-	TeIntrusivePtr<Te3DTexture> shadow = Te3DTexture::makeInstance();
-	TeCore *core = g_engine->getCore();
-	shadow->load(core->findFile("models/Textures/simple_shadow_alpha.tga"));
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia) {
+		// Only Syberia 1 has the simple shadow.
+		TeIntrusivePtr<Te3DTexture> shadow = Te3DTexture::makeInstance();
+		TeCore *core = g_engine->getCore();
+		shadow->load(core->findFile("models/Textures/simple_shadow_alpha.tga"));
 
-	for (int i = 0; i < 2; i++) {
-		TeModel *pmodel = new TeModel();
-		_shadowModel[i] = pmodel;
-		pmodel->setName("Shadow");
-		Common::Array<TeVector3f32> arr;
-		arr.resize(4);
-		arr[0] = TeVector3f32(-60.0, 0.0, -60.0);
-		arr[1] = TeVector3f32(-60.0, 0.0, 60.0);
-		arr[2] = TeVector3f32(60.0, 0.0, -60.0);
-		arr[3] = TeVector3f32(60.0, 0.0, 60.0);
-		pmodel->setQuad(shadow, arr, TeColor(0xff, 0xff, 0xff, 0x50));
+		for (int i = 0; i < 2; i++) {
+			TeModel *pmodel = new TeModel();
+			_shadowModel[i] = pmodel;
+			pmodel->setName("Shadow");
+			Common::Array<TeVector3f32> arr;
+			arr.resize(4);
+			arr[0] = TeVector3f32(-60.0, 0.0, -60.0);
+			arr[1] = TeVector3f32(-60.0, 0.0, 60.0);
+			arr[2] = TeVector3f32(60.0, 0.0, -60.0);
+			arr[3] = TeVector3f32(60.0, 0.0, 60.0);
+			pmodel->setQuad(shadow, arr, TeColor(0xff, 0xff, 0xff, 0x50));
+		}
 	}
 	return true;
 }
@@ -430,6 +458,7 @@ bool Character::loadSettings(const Common::String &path) {
 	buf[bufsize] = '\0';
 	xmlFile.read(buf, bufsize);
 	Common::String fixedbuf(buf);
+	delete [] buf;
 	size_t offset = fixedbuf.find("------------");
 	while (offset != Common::String::npos) {
 		fixedbuf.replace(offset, 12, "--");
@@ -462,7 +491,7 @@ bool Character::onBonesUpdate(const Common::String &boneName, TeMatrix4x4 &boneM
 		return false;
 
 	Game *game = g_engine->getGame();
-	if (boneName == "Pere") {
+	if (boneName == rootBone()) {
 		const Common::String animfile = _model->anim()->loadedPath().getLastComponent().toString();
 		bool resetX = false;
 		if (game->scene()._character == this) {
@@ -507,8 +536,7 @@ bool Character::onBonesUpdate(const Common::String &boneName, TeMatrix4x4 &boneM
 			float newY = (fabs(minY) > fabs(lastHeadY)) ? 0.0 : minY + lastHeadY;
 			_lastHeadRotation.setY(newY);
 
-			_headRotation.setX(_lastHeadRotation.getX());
-			_headRotation.setY(_lastHeadRotation.getY());
+			_headRotation = _lastHeadRotation;
 
 			TeQuaternion rot1 = TeQuaternion::fromAxisAndAngle(TeVector3f32(-1, 0, 0), _lastHeadRotation.getX());
 			TeQuaternion rot2 = TeQuaternion::fromAxisAndAngle(TeVector3f32(0, 0, 1), _lastHeadRotation.getY());
@@ -531,9 +559,11 @@ bool Character::onBonesUpdate(const Common::String &boneName, TeMatrix4x4 &boneM
 			pos = _freeMoveZone->correctCharacterPosition(pos, &flag, true);
 		}
 		int shadowNo = boneName.contains("Bip01 L Foot") ? 0 : 1;
-		_shadowModel[shadowNo]->setPosition(pos);
-		_shadowModel[shadowNo]->setRotation(_model->rotation());
-		_shadowModel[shadowNo]->setScale(_model->scale());
+		if (_shadowModel[shadowNo]) {
+			_shadowModel[shadowNo]->setPosition(pos);
+			_shadowModel[shadowNo]->setRotation(_model->rotation());
+			_shadowModel[shadowNo]->setScale(_model->scale());
+		}
 	}
 
 	// Move any objects attached to the bone
@@ -542,14 +572,22 @@ bool Character::onBonesUpdate(const Common::String &boneName, TeMatrix4x4 &boneM
 			if (_model->anim()->curFrame2() >= obj->_startFrame
 					&& _model->anim()->curFrame2() <= obj->_endFrame) {
 				obj->model()->setVisible(true);
-				TeMatrix4x4 objmatrix = boneMatrix;
-				objmatrix.scale(obj->_objScale);
-				objmatrix.rotate(obj->_objRotation);
-				objmatrix.translate(obj->_objTranslation);
-				obj->model()->forceMatrix(objmatrix);
-				obj->model()->setRotation(_model->rotation());
-				obj->model()->setPosition(_model->position());
-				obj->model()->setScale(_model->scale());
+
+				if (!obj->_moveAnim._runTimer.running()) {
+					obj->_lastMatrix = boneMatrix;
+					obj->_lastMatrix.scale(obj->_objScale);
+					obj->_lastMatrix.rotate(obj->_objRotation);
+					obj->_lastMatrix.translate(obj->_objTranslation);
+					obj->model()->forceMatrix(obj->_lastMatrix);
+					obj->model()->setRotation(_model->rotation());
+					obj->model()->setPosition(_model->position());
+					obj->model()->setScale(_model->scale());
+				} else {
+					obj->model()->forceMatrix(obj->_lastMatrix);
+					obj->model()->setRotation(_model->rotation());
+					obj->model()->setPosition(_model->position() + obj->_curMovePos);
+					obj->model()->setScale(_model->scale());
+				}
 			} else {
 				obj->model()->setVisible(false);
 			}
@@ -561,7 +599,7 @@ bool Character::onBonesUpdate(const Common::String &boneName, TeMatrix4x4 &boneM
 
 bool Character::onModelAnimationFinished() {
 	// this shouldn't happen but check to be sure..
-	if (!_model->anim())
+	if (!_model || !_model->anim())
 		return false;
 
 	const Common::Path loadedPath = _model->anim()->loadedPath();
@@ -576,13 +614,13 @@ bool Character::onModelAnimationFinished() {
 	Game *game = g_engine->getGame();
 	bool isWalkAnim = false;
 	if (game->scene()._character == this) {
-		// TODO: check if this logic matches..
 		for (const auto &walkSettings : _characterSettings._walkSettings) {
-			isWalkAnim |= (walkSettings._key.contains("Walk") || walkSettings._key.contains("Jog"));
-			isWalkAnim |= (walkSettings._value._walkParts[0]._file == animfile
-						|| walkSettings._value._walkParts[1]._file == animfile
-						|| walkSettings._value._walkParts[2]._file == animfile
-						|| walkSettings._value._walkParts[3]._file == animfile);
+			if (walkSettings._key.contains("Walk") || walkSettings._key.contains("Jog")) {
+				isWalkAnim |= (walkSettings._value._walkParts[0]._file.contains(animfile)
+							 || walkSettings._value._walkParts[1]._file.contains(animfile)
+							 || walkSettings._value._walkParts[2]._file.contains(animfile)
+							 || walkSettings._value._walkParts[3]._file.contains(animfile));
+			}
 		}
 		isWalkAnim |= animfile.contains(_characterSettings._idleAnimFileName);
 	} else {
@@ -594,7 +632,7 @@ bool Character::onModelAnimationFinished() {
 	}
 
 	if (!isWalkAnim && shouldAdjust) {
-		int pereBone = _curModelAnim->findBone("Pere");
+		int pereBone = _curModelAnim->findBone(rootBone());
 		const TeTRS endTRS = trsFromAnim(*_curModelAnim, pereBone, _curModelAnim->lastFrame());
 		TeVector3f32 trans = endTRS.getTranslation();
 		trans.x() = -trans.x();
@@ -642,12 +680,19 @@ void Character::permanentUpdate() {
 	_callbacksChanged = false;
 	// Diverge from original - just use filename for anim callbacks as the
 	// original does werid things with paths.
-	const Common::String animFile = animPath.getLastComponent().toString();
+	Common::String animFile = animPath.getLastComponent().toString();
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia2)
+		animFile.toLowercase();
+
+	//if (!_callbacks.empty())
+	//	debug("%s: check cbs for %s frame %d speed %.02f", _model->name().c_str(),
+	//			animFile.c_str(), curFrame, _model->anim()->speed());
+
 	if (_callbacks.contains(animFile)) {
 		Common::Array<Callback *> &cbs = _callbacks.getVal(animFile);
 		for (Callback *cb : cbs) {
-			//debug("check cb for %s frame %d against %d. speed %.02f", animFile.c_str(),
-			//		curFrame, cb->_triggerFrame, _model->anim()->speed());
+			//debug("%s: check cb for %s frame %d against %d. speed %.02f", _model->name().c_str(),
+			//		animFile.c_str(), curFrame, cb->_triggerFrame, _model->anim()->speed());
 			if (cb->_triggerFrame > cb->_lastCheckFrame && curFrame >= cb->_triggerFrame){
 				int callsMade = cb->_callsMade;
 				cb->_callsMade++;
@@ -687,6 +732,7 @@ void Character::removeAnim() {
 	if (_curModelAnim) {
 		_curModelAnim->onFinished().remove(this, &Character::onModelAnimationFinished);
 		_curModelAnim->unbind();
+		_curModelAnim->reset();
 	}
 	_model->removeAnim();
 	if (_curModelAnim) {
@@ -696,6 +742,13 @@ void Character::removeAnim() {
 
 void Character::removeFromCurve() {
 	_curve.release();
+}
+
+Common::String Character::rootBone() const {
+	if (g_engine->gameType() != TetraedgeEngine::kSyberia2 || _model->name() != "Youki")
+		return "Pere";
+	else
+		return "Bip01";
 }
 
 bool Character::setAnimation(const Common::String &aname, bool repeat, bool returnToIdle, bool unused, int startFrame, int endFrame) {
@@ -714,6 +767,7 @@ bool Character::setAnimation(const Common::String &aname, bool repeat, bool retu
 	if (_curModelAnim) {
 		_curModelAnim->onFinished().remove(this, &Character::onModelAnimationFinished);
 		_curModelAnim->unbind();
+		_curModelAnim->reset();
 	}
 
 	_curModelAnim = animCacheLoad(animPath);
@@ -752,8 +806,10 @@ void Character::setStepSound(const Common::String &stepSound1, const Common::Str
 }
 
 bool Character::setShadowVisible(bool visible) {
-	_shadowModel[0]->setVisible(visible);
-	_shadowModel[1]->setVisible(visible);
+	if (_shadowModel[0]) {
+		_shadowModel[0]->setVisible(visible);
+		_shadowModel[1]->setVisible(visible);
+	}
 	return false;
 }
 
@@ -771,7 +827,7 @@ float Character::speedFromAnim(double msFromStart) {
 	if (!modelAnim)
 		return 0.0f;
 
-	const int pereBone = modelAnim->findBone("Pere");
+	const int pereBone = modelAnim->findBone(rootBone());
 	int curFrame = modelAnim->calcCurrentFrame(msFromStart);
 
 	float result;
@@ -822,6 +878,7 @@ void Character::update(double msFromStart) {
 
 	const float baseAngle = (_walkCurveStart > _walkCurveEnd ? M_PI : 0);
 	const float sign = (_walkCurveStart > _walkCurveEnd ? -1 : 1);
+
 	updatePosition(_walkCurveLast);
 
 	float lastWalkedLength = _walkedLength;
@@ -1041,11 +1098,52 @@ void Character::walkTo(float curveEnd, bool walkFlag) {
 				animLen = walkEndLen + (float)_walkStartAnimLen + intpart * _walkLoopAnimLen;
 			}
 		} else {
+			_walkTotalFrames = _walkStartAnimFrameCount;
 			animLen = (float)(_walkStartAnimLen + _walkEndGAnimLen);
 		}
 		_walkCurveIncrement = _walkCurveLen / animLen;
 	}
 	play();
+}
+
+Character::Water::Water() {
+	_model = new TeModel();
+	_model->setName("Water");
+	TeIntrusivePtr<TeCamera> cam = g_engine->getGame()->scene().currentCamera();
+	if (!cam)
+		error("No active camera when constructing water");
+	TeMatrix4x4 camMatrix = cam->worldTransformationMatrix();
+	Common::Array<TeVector3f32> quad;
+	quad.resize(4);
+	quad[0] = camMatrix.mult3x3(TeVector3f32(-0.1f, 0.0f,  0.1f));
+	quad[1] = camMatrix.mult3x3(TeVector3f32( 0.1f, 0.0f,  0.1f));
+	quad[2] = camMatrix.mult3x3(TeVector3f32(-0.1f, 0.0f, -0.1f));
+	quad[3] = camMatrix.mult3x3(TeVector3f32( 0.1f, 0.0f, -0.1f));
+	TeQuaternion rot = TeQuaternion::fromEuler(TeVector3f32(0, 0, 0));
+	TeIntrusivePtr<Te3DTexture> tex = Te3DTexture::makeInstance();
+	tex->load(g_engine->getCore()->findFile("texturesIngame/EauOndine1.tga"));
+	_model->setQuad(tex, quad, TeColor(255, 0, 0, 0));
+	_model->setRotation(rot);
+	_model->setScale(TeVector3f32(0.5, 0.5, 0.5));
+	_colorAnim._duration = 2000.0f;
+	TeColor col = _model->color();
+	col.a() = 100;
+	_colorAnim._startVal = col;
+	col.a() = 0;
+	_colorAnim._endVal = col;
+	Common::Array<float> curve;
+	curve.push_back(0);
+	curve.push_back(1);
+	_colorAnim.setCurve(curve);
+	_colorAnim._callbackObj = _model.get();
+	_colorAnim._callbackMethod = &TeModel::setColor;
+	_colorAnim.play();
+	_scaleAnim._duration = 2000.0f;
+	_scaleAnim._startVal = _model->scale();
+	_scaleAnim._endVal = TeVector3f32(3.0f, 3.0f, 3.0f);
+	_scaleAnim.setCurve(curve);
+	_scaleAnim._callbackObj = _model.get();
+	_scaleAnim._callbackMethod = &TeModel::setScale;
 }
 
 } // end namespace Tetraedge

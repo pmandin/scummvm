@@ -329,7 +329,7 @@ const Plugin *PluginManager::getMetaEngineFromEngine(const Plugin *plugin) {
 		return metaEngine;
 	}
 
-	debug(9, "Engine: %s couldn't find a match for an MetaEngine plugin.", plugin->getFileName());
+	debug(9, "Engine: %s couldn't find a match for a MetaEngine plugin.", plugin->getFileName());
 	return nullptr;
 }
 
@@ -1080,6 +1080,15 @@ static const LegacyGraphicsMode s_legacyGraphicsModes[] = {
 	{ "dotmatrix2x", "dotmatrix", 2 },
 	{ "tv2x", "tv", 2 }
 };
+
+bool ScalerManager::isOldGraphicsSetting(const Common::String &gfxMode) {
+	for (uint i = 0; i < ARRAYSIZE(s_legacyGraphicsModes); ++i) {
+		if (gfxMode == s_legacyGraphicsModes[i].oldName) {
+			return true;
+		}
+	}
+	return false;
+}
 
 void ScalerManager::updateOldSettings() {
 	// Search for legacy gfx_mode and replace it

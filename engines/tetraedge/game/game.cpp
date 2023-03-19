@@ -53,7 +53,7 @@ _lastCharMoveMousePos(0.0f, 0.0f), _randomSoundFinished(false),
 _previousMousePos(-1, -1), _markersVisible(true), _saveRequested(false),
 _gameLoadState(0), _luaShowOwnerError(false), _score(0), _warped(false),
 _firstInventory(true), _randomSource("SyberiaGameRandom"), _frameCounter(0),
-_warpFadeFlag(false), _dialogsTold(0) {
+_warpFadeFlag(false), _dialogsTold(0), _runModeEnabled(true) {
 	for (int i = 0; i < NUM_OBJECTS_TAKEN_IDS; i++) {
 		_objectsTakenBits[i] = false;
 	}
@@ -82,7 +82,7 @@ bool Game::addAnimToSet(const Common::String &anim) {
 	const Common::Path animPath(Common::String("scenes/") + anim + "/");
 
 	if (Common::File::exists(animPath)) {
-		Common::StringArray parts = TetraedgeEngine::splitString(anim, '/');
+		const Common::StringArray parts = TetraedgeEngine::splitString(anim, '/');
 		assert(parts.size() >= 2);
 
 		const Common::String layoutName = parts[1];
@@ -214,11 +214,15 @@ void Game::addToScore(int score) {
 bool Game::changeWarp(const Common::String &zone, const Common::String &scene, bool fadeFlag) {
 	//debug("Game::changeWarp(%s, %s, %s)", zone.c_str(), scene.c_str(), fadeFlag ? "true" : "false");
 	Application *app = g_engine->getApplication();
-	if (fadeFlag) {
+	if (fadeFlag && g_engine->gameType() == TetraedgeEngine::kSyberia) {
 		app->blackFade();
 	} else {
 		app->captureFade();
 	}
+	// Slight divergence from original.. free after capturing fade so characters don't disappear.
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia2)
+		_scene.freeGeometry();
+
 	_warpZone = zone;
 	_warpScene = scene;
 	_warpFadeFlag = fadeFlag;
@@ -241,7 +245,7 @@ bool Game::changeWarp2(const Common::String &zone, const Common::String &scene, 
 	luapath.appendInPlace(scene);
 	luapath.appendInPlace(".lua");
 
-	if (Common::File::exists(luapath)) {
+	if (g_engine->getCore()->findFile(luapath).exists()) {
 		_luaScript.execute("OnLeave");
 		_luaContext.removeGlobal("On");
 		_luaContext.removeGlobal("OnEnter");
@@ -306,7 +310,7 @@ void Game::enter() {
 	Character::loadSettings("models/ModelsSettings.xml");
 	Object3D::loadSettings("objects/ObjectsSettings.xml");
 	if (_scene._character) {
-		_scene._character->onFinished().remove(this, &Game::onDisplacementFinished);
+		_scene._character->onFinished().remove(this, &Game::onDisplacementPlayerFinished);
 		_scene.unloadCharacter(_scene._character->_model->name());
 	}
 	bool loaded = loadPlayerCharacter("Kate");
@@ -364,8 +368,8 @@ void Game::enter() {
 		onFinishedLoadingBackup("");
 	}
 	_sceneCharacterVisibleFromLoad = true;
-	_scene._character->onFinished().remove(this, &Game::onDisplacementFinished);
-	_scene._character->onFinished().add(this, &Game::onDisplacementFinished);
+	_scene._character->onFinished().remove(this, &Game::onDisplacementPlayerFinished);
+	_scene._character->onFinished().add(this, &Game::onDisplacementPlayerFinished);
 	_prevSceneName.clear();
 	_notifier.load();
 }
@@ -484,8 +488,10 @@ bool Game::initWarp(const Common::String &zone, const Common::String &scene, boo
 		_scene._character->setAnimation(_scene._character->characterSettings()._idleAnimFileName, true);
 		if (!_scene.findKate()) {
 			_scene.models().push_back(_scene._character->_model);
-			_scene.models().push_back(_scene._character->_shadowModel[0]);
-			_scene.models().push_back(_scene._character->_shadowModel[1]);
+			if (_scene._character->_shadowModel[0]) {
+				_scene.models().push_back(_scene._character->_shadowModel[0]);
+				_scene.models().push_back(_scene._character->_shadowModel[1]);
+			}
 		}
 	}
 
@@ -544,7 +550,14 @@ bool Game::initWarp(const Common::String &zone, const Common::String &scene, boo
 	_scene.hitObjectGui().unload();
 	Common::Path geomPath(Common::String::format("scenes/%s/Geometry%s.bin",
 												 zone.c_str(), zone.c_str()));
-	_scene.load(core->findFile(geomPath));
+	Common::FSNode geomFile = core->findFile(geomPath);
+	if (geomFile.isReadable()) {
+		// Syberia 1, load geom bin
+		_scene.load(geomFile);
+	} else {
+		// Syberia 2, load from xml
+		_scene.loadXml(zone, scene);
+	}
 	_scene.loadBackground(setLuaNode);
 
 	Application *app = g_engine->getApplication();
@@ -580,22 +593,22 @@ bool Game::initWarp(const Common::String &zone, const Common::String &scene, boo
 	_inventoryMenu.load();
 	_inGameGui.load("InGame.lua");
 
-	TeButtonLayout *skipbtn = _inGameGui.buttonLayout("skipVideoButton");
+	TeButtonLayout *skipbtn = _inGameGui.buttonLayoutChecked("skipVideoButton");
 	skipbtn->setVisible(false);
 	skipbtn->onMouseClickValidated().remove(this, &Game::onSkipVideoButtonValidated);
 	skipbtn->onMouseClickValidated().add(this, &Game::onSkipVideoButtonValidated);
 
-	TeButtonLayout *vidbgbtn = _inGameGui.buttonLayout("videoBackgroundButton");
+	TeButtonLayout *vidbgbtn = _inGameGui.buttonLayoutChecked("videoBackgroundButton");
 	vidbgbtn->setVisible(false);
 	vidbgbtn->onMouseClickValidated().remove(this, &Game::onLockVideoButtonValidated);
 	vidbgbtn->onMouseClickValidated().add(this, &Game::onLockVideoButtonValidated);
 
-	TeSpriteLayout *video = _inGameGui.spriteLayout("video");
+	TeSpriteLayout *video = _inGameGui.spriteLayoutChecked("video");
 	video->setVisible(false);
 	video->_tiledSurfacePtr->_frameAnim.onStop().remove(this, &Game::onVideoFinished);
 	video->_tiledSurfacePtr->_frameAnim.onStop().add(this, &Game::onVideoFinished);
 
-	TeButtonLayout *invbtn = _inGameGui.buttonLayout("inventoryButton");
+	TeButtonLayout *invbtn = _inGameGui.buttonLayoutChecked("inventoryButton");
 	invbtn->onMouseClickValidated().remove(this, &Game::onInventoryButtonValidated);
 	invbtn->onMouseClickValidated().add(this, &Game::onInventoryButtonValidated);
 	invbtn->setSizeType(TeILayout::RELATIVE_TO_PARENT);
@@ -647,16 +660,40 @@ bool Game::initWarp(const Common::String &zone, const Common::String &scene, boo
 	_scene.setCurrentCamera(camname);
 
 	// Special hacks for certain scenes (don't blame me, original does this..)
-	if (scene == "14050") {
-		TeIntrusivePtr<TeCamera> curcamera = _scene.currentCamera();
-		const TeVector3f32 coords(1200.6f, -1937.5f, 1544.1f);
-		curcamera->setPosition(coords);
-	} else if (scene == "34610") {
-		TeIntrusivePtr<TeCamera> curcamera = _scene.currentCamera();
-		const TeVector3f32 coords(-328.243f, 340.303f, -1342.84f);
-		curcamera->setPosition(coords);
-		const TeQuaternion rot(0.003194f, 0.910923f, -0.009496f, -0.412389f);
-		curcamera->setRotation(rot);
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia) {
+		if (scene == "14050") {
+			TeIntrusivePtr<TeCamera> curcamera = _scene.currentCamera();
+			const TeVector3f32 coords(1200.6f, -1937.5f, 1544.1f);
+			curcamera->setPosition(coords);
+		} else if (scene == "34610") {
+			TeIntrusivePtr<TeCamera> curcamera = _scene.currentCamera();
+			const TeVector3f32 coords(-328.243f, 340.303f, -1342.84f);
+			curcamera->setPosition(coords);
+			const TeQuaternion rot(0.003194f, 0.910923f, -0.009496f, -0.412389f);
+			curcamera->setRotation(rot);
+		}
+
+		//
+		// WORKAROUND: Fix the camera in the restored scenes
+		//
+		if (zone == "ValStreet" && scene == "11100") {
+			TeIntrusivePtr<TeCamera> cam = _scene.currentCamera();
+			cam->setProjMatrixType(3);
+			cam->setFov(0.5f);
+		} else if (zone == "ValField" && scene == "11170") {
+			TeIntrusivePtr<TeCamera> cam = _scene.currentCamera();
+			cam->setProjMatrixType(3);
+			// TODO: Is camera position right? Kate not visible..
+			// default values:
+			// -494.447998  -79.2976989  1408.5
+			// scene entrance and exit
+			// -184, -143, 1563
+			// -42, -147, 1534
+		} else if (zone == "BarRiverSide" && scene == "24020") {
+			TeIntrusivePtr<TeCamera> cam = _scene.currentCamera();
+			cam->setProjMatrixType(3);
+			cam->setFov(0.5f);
+		}
 	}
 
 	if (logicLuaExists) {
@@ -843,7 +880,12 @@ bool Game::loadCharacter(const Common::String &name) {
 			assert(character);
 			character->_onCharacterAnimFinishedSignal.remove(this, &Game::onCharacterAnimationFinished);
 			character->_onCharacterAnimFinishedSignal.add(this, &Game::onCharacterAnimationFinished);
-			character->onFinished().add(this, &Game::onDisplacementFinished);
+			// Syberia 2 uses a simplified callback here.
+			// We have made onDisplacementPlayerFinished more like Syberia 1's onDisplacementFinished.
+			if (g_engine->gameType() == TetraedgeEngine::kSyberia)
+				character->onFinished().add(this, &Game::onDisplacementPlayerFinished);
+			else
+				character->onFinished().add(this, &Game::onDisplacementFinished);
 		}
 	}
 	return result;
@@ -854,8 +896,10 @@ bool Game::loadPlayerCharacter(const Common::String &name) {
 	if (result) {
 		_scene._character->_characterAnimPlayerFinishedSignal.remove(this, &Game::onCharacterAnimationPlayerFinished);
 		_scene._character->_characterAnimPlayerFinishedSignal.add(this, &Game::onCharacterAnimationPlayerFinished);
-		_scene._character->onFinished().remove(this, &Game::onDisplacementFinished);
-		_scene._character->onFinished().add(this, &Game::onDisplacementFinished);
+		_scene._character->onFinished().remove(this, &Game::onDisplacementPlayerFinished);
+		_scene._character->onFinished().add(this, &Game::onDisplacementPlayerFinished);
+	} else {
+		debug("failed to load player character %s", name.c_str());
 	}
 	return result;
 }
@@ -885,6 +929,18 @@ bool Game::onCharacterAnimationFinished(const Common::String &charName) {
 	if (!_scene._character)
 		return false;
 
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia2) {
+		Character *character = scene().character(charName);
+		if (character) {
+			const Common::String curAnimName = character->curAnimName();
+			if (curAnimName == character->walkAnim(Character::WalkPart_EndD)
+				|| curAnimName == character->walkAnim(Character::WalkPart_EndG)) {
+				character->updatePosition(1.0);
+				character->endMove();
+			}
+		}
+	}
+
 	for (uint i = 0; i < _yieldedCallbacks.size(); i++) {
 		YieldedCallback &cb = _yieldedCallbacks[i];
 		if (cb._luaFnName == "OnCharacterAnimationFinished" && cb._luaParam == charName) {
@@ -908,6 +964,7 @@ bool Game::onCharacterAnimationPlayerFinished(const Common::String &anim) {
 	bool callScripts = true;
 	for (uint i = 0; i < _yieldedCallbacks.size(); i++) {
 		YieldedCallback &cb = _yieldedCallbacks[i];
+		// Yes, even Syberia2 checks for Kate here..
 		if (cb._luaFnName == "OnCharacterAnimationFinished" && cb._luaParam == "Kate") {
 			TeLuaThread *lua = cb._luaThread;
 			_yieldedCallbacks.remove_at(i);
@@ -919,7 +976,10 @@ bool Game::onCharacterAnimationPlayerFinished(const Common::String &anim) {
 		}
 	}
 	if (callScripts) {
-		_luaScript.execute("OnCharacterAnimationFinished", "Kate");
+		if (g_engine->gameType() == TetraedgeEngine::kSyberia)
+			_luaScript.execute("OnCharacterAnimationFinished", "Kate");
+		else
+			_luaScript.execute("OnCharacterAnimationPlayerFinished", anim);
 		_luaScript.execute("OnCellCharacterAnimationPlayerFinished", anim);
 	}
 
@@ -972,20 +1032,10 @@ bool Game::onDialogFinished(const Common::String &val) {
 	return false;
 }
 
+// This is the Syberia 2 version of this function, not used in Syb 1.
+// Syb 1 uses a function much more like onDisplacementPlayerFinished below.
 bool Game::onDisplacementFinished() {
-	_sceneCharacterVisibleFromLoad = true;
-	_scene._character->stop();
-	_scene._character->setAnimation(_scene._character->characterSettings()._idleAnimFileName, true);
-
-	if (!_isCharacterWalking) {
-		_isCharacterWalking = false;
-		_isCharacterIdle = true;
-	} else {
-		_isCharacterIdle = false;
-	}
-
 	TeLuaThread *thread = nullptr;
-
 	for (uint i = 0; i < _yieldedCallbacks.size(); i++) {
 		YieldedCallback &cb = _yieldedCallbacks[i];
 		if (cb._luaFnName == "OnDisplacementFinished") {
@@ -998,6 +1048,41 @@ bool Game::onDisplacementFinished() {
 		thread->resume();
 	} else {
 		_luaScript.execute("OnDisplacementFinished");
+	}
+	return false;
+}
+
+bool Game::onDisplacementPlayerFinished() {
+	_sceneCharacterVisibleFromLoad = true;
+	assert(_scene._character);
+	_scene._character->stop();
+	_scene._character->walkMode("Walk");
+	_scene._character->setAnimation(_scene._character->characterSettings()._idleAnimFileName, true);
+
+	if (_isCharacterWalking) {
+		_isCharacterWalking = false;
+		_isCharacterIdle = true;
+	} else {
+		_isCharacterIdle = false;
+	}
+
+	TeLuaThread *thread = nullptr;
+
+	const char *cbName = (g_engine->gameType() == TetraedgeEngine::kSyberia ?
+						"OnDisplacementFinished" : "OnDisplacementPlayerFinished");
+
+	for (uint i = 0; i < _yieldedCallbacks.size(); i++) {
+		YieldedCallback &cb = _yieldedCallbacks[i];
+		if (cb._luaFnName == cbName) {
+			thread = cb._luaThread;
+			_yieldedCallbacks.remove_at(i);
+			break;
+		}
+	}
+	if (thread) {
+		thread->resume();
+	} else {
+		_luaScript.execute(cbName);
 	}
 	return false;
 }
@@ -1107,7 +1192,7 @@ bool Game::onMouseClick(const Common::Point &pt) {
 			if (curve->controlPoints().size() == 1) {
 				character->endMove();
 			} else {
-				if (!_walkTimer.running() || _walkTimer.timeElapsed() > 300000) {
+				if (!_walkTimer.running() || _walkTimer.timeElapsed() > 300000 || !_runModeEnabled) {
 					_walkTimer.stop();
 					_walkTimer.start();
 					character->walkMode("Walk");
@@ -1254,8 +1339,10 @@ bool Game::onSkipVideoButtonValidated() {
 }
 
 bool Game::onVideoFinished() {
-	if (!_inGameGui.loaded())
+	if (!_inGameGui.loaded()) {
+		_music.stop();
 		return false;
+	}
 
 	Application *app = g_engine->getApplication();
 
@@ -1294,7 +1381,7 @@ void Game::pauseMovie() {
 	sprite->pause();
 }
 
-bool Game::playMovie(const Common::String &vidPath, const Common::String &musicPath) {
+bool Game::playMovie(const Common::String &vidPath, const Common::String &musicPath, float volume /* = 1.0f */) {
 	Application *app = g_engine->getApplication();
 	app->captureFade();
 	TeButtonLayout *videoBackgroundButton = _inGameGui.buttonLayoutChecked("videoBackgroundButton");
@@ -1307,26 +1394,40 @@ bool Game::playMovie(const Common::String &vidPath, const Common::String &musicP
 	music.stop();
 	music.setChannelName("video");
 	music.repeat(false);
-	music.volume(1.0f);
+	music.volume(volume);
 	music.load(musicPath);
 
 	_running = false;
 
 	TeSpriteLayout *videoSpriteLayout = _inGameGui.spriteLayoutChecked("video");
-	// TODO: check return value here.
-	videoSpriteLayout->load(vidPath);
-	videoSpriteLayout->setVisible(true);
-	music.play();
-	videoSpriteLayout->play();
+	if (videoSpriteLayout->load(vidPath)) {
+		uint vidHeight = videoSpriteLayout->_tiledSurfacePtr->codec()->height();
+		uint vidWidth = videoSpriteLayout->_tiledSurfacePtr->codec()->width();
 
-	// Stop the movie and sound early for testing if skip_videos set
-	if (ConfMan.get("skip_videos") == "true") {
-		videoSpriteLayout->_tiledSurfacePtr->_frameAnim.setNbFrames(10);
-		music.stop();
+		// Note: Not in original, but original incorrectly stretches
+		// videos that should be 16:9.
+		if (ConfMan.getBool("correct_movie_aspect")) {
+			videoSpriteLayout->setRatioMode(TeILayout::RATIO_MODE_LETTERBOX);
+			videoSpriteLayout->setRatio((float)vidWidth / vidHeight);
+			videoSpriteLayout->updateSize();
+		}
+
+		videoSpriteLayout->setVisible(true);
+		music.play();
+		videoSpriteLayout->play();
+
+		// Stop the movie and sound early for testing if skip_videos set
+		if (ConfMan.getBool("skip_videos")) {
+			videoSpriteLayout->_tiledSurfacePtr->_frameAnim.setNbFrames(10);
+			music.stop();
+		}
+
+		app->fade();
+		return true;
+	} else {
+		warning("Failed to load movie %s", vidPath.c_str());
+		return false;
 	}
-
-	app->fade();
-	return true;
 }
 
 void Game::playRandomSound(const Common::String &name) {
@@ -1531,11 +1632,21 @@ void Game::stopSound(const Common::String &name) {
 Common::Error Game::syncGame(Common::Serializer &s) {
 	Application *app = g_engine->getApplication();
 
-	// TODO: should be an error before testing.
-	//if (!s.syncVersion(1))
-	//	error("Save game version too new: %d", s.getVersion());
+	//
+	// Note: Early versions of this code didn't sync a version number so it was
+	// the inventory item count.  We use a large version number which would never
+	// be the inventory count.
+	//
+	if (!s.syncVersion(1000))
+		error("Save game version too new: %d", s.getVersion());
 
-	inventory().syncState(s);
+	if (s.getVersion() < 1000) {
+		warning("Loading as old un-versioned save data");
+		inventory().syncStateWithCount(s, s.getVersion());
+	} else {
+		inventory().syncState(s);
+	}
+
 	inventory().cellphone()->syncState(s);
 	// dialog2().syncState(s); // game saves this here, but doesn't actually save anything
 	_luaContext.syncState(s);
@@ -1576,7 +1687,12 @@ bool Game::unloadCharacter(const Common::String &charname) {
 	}
 	c->_onCharacterAnimFinishedSignal.remove(this, &Game::onCharacterAnimationFinished);
 	c->removeAnim();
-	c->onFinished().remove(this, &Game::onDisplacementFinished);
+	// Syberia 2 uses a simplified callback here.
+	// We have made onDisplacementPlayerFinished more like Syberia 1's onDisplacementPlayerFinished.
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia)
+		c->onFinished().remove(this, &Game::onDisplacementPlayerFinished);
+	else
+		c->onFinished().remove(this, &Game::onDisplacementFinished);
 	_scene.unloadCharacter(charname);
 	return true;
 }
@@ -1590,9 +1706,14 @@ bool Game::unloadCharacters() {
 	return true;
 }
 
-bool Game::unloadPlayerCharacter(const Common::String &character) {
-	_scene.unloadCharacter(character);
-	return true;
+bool Game::unloadPlayerCharacter(const Common::String &charname) {
+	Character *c = _scene.character(charname);
+	if (c) {
+		c->_onCharacterAnimFinishedSignal.remove(this, &Game::onCharacterAnimationPlayerFinished);
+		c->onFinished().remove(this, &Game::onDisplacementPlayerFinished);
+		_scene.unloadCharacter(charname);
+	}
+	return c != nullptr;
 }
 
 void Game::update() {
@@ -1684,7 +1805,9 @@ void Game::update() {
 		_scene.update();
 	} else {
 		TeSoundManager *soundmgr = g_engine->getSoundManager();
-		for (auto &music : soundmgr->musics()) {
+		// Take a copy in case the active music objects changes as we iterate.
+		Common::Array<TeMusic *> musics = soundmgr->musics();
+		for (TeMusic *music : musics) {
 			const Common::String &chanName = music->channelName();
 			if (chanName != "music" && chanName != "sfx" && chanName != "dialog")
 				music->stop();
@@ -1707,7 +1830,7 @@ bool Game::HitObject::onDown() {
 }
 
 bool Game::HitObject::onUp() {
-	debug("Game::HitObject mouseup: %s", _name.c_str());
+	// debug("Game::HitObject mouseup: %s", _name.c_str());
 	_game->luaScript().execute("OnButtonUp", _name);
 	_game->_isCharacterIdle = true;
 	return false;

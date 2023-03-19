@@ -77,7 +77,9 @@ MODULE_OBJS += \
 	networking/curl/postrequest.o \
 	networking/curl/request.o \
 	networking/curl/session.o \
-	networking/curl/sessionrequest.o
+	networking/curl/sessionrequest.o \
+	networking/curl/socket.o \
+	networking/curl/url.o
 endif
 
 ifdef USE_SDL_NET
@@ -97,6 +99,29 @@ MODULE_OBJS += \
 	networking/sdl_net/localwebserver.o \
 	networking/sdl_net/reader.o \
 	networking/sdl_net/uploadfileclienthandler.o
+endif
+
+# ENet networking source files.
+ifdef USE_ENET
+MODULE_OBJS += \
+	networking/enet/source/callbacks.o \
+	networking/enet/source/compress.o \
+	networking/enet/source/host.o \
+	networking/enet/source/list.o \
+	networking/enet/source/packet.o \
+	networking/enet/source/peer.o \
+	networking/enet/source/protocol.o
+ifdef WIN32
+MODULE_OBJS += \
+	networking/enet/source/win32.o
+else
+MODULE_OBJS += \
+	networking/enet/source/unix.o
+endif
+MODULE_OBJS += \
+	networking/enet/enet.o \
+	networking/enet/host.o \
+	networking/enet/socket.o
 endif
 
 ifdef USE_ELF_LOADER
@@ -290,6 +315,7 @@ endif
 ifdef RISCOS
 MODULE_OBJS += \
 	events/riscossdl/riscossdl-events.o \
+	graphics/riscossdl/riscossdl-graphics.o \
 	fs/riscos/riscos-fs.o \
 	fs/riscos/riscos-fs-factory.o \
 	midi/riscos.o \
@@ -318,6 +344,16 @@ endif
 ifeq ($(BACKEND),3ds)
 MODULE_OBJS += \
 	plugins/3ds/3ds-provider.o
+endif
+
+ifeq ($(BACKEND),atari)
+MODULE_OBJS += \
+	events/atari/atari-events.o \
+	graphics/atari/atari_c2p-asm.o \
+	graphics/atari/atari-graphics.o \
+	graphics/atari/atari-graphics-asm.o \
+	graphics/atari/videl-resolutions.o \
+	mixer/atari/atari-mixer.o
 endif
 
 ifeq ($(BACKEND),ds)

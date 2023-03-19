@@ -75,6 +75,9 @@ const struct GameOpt {
 	{ GUIO_RENDERATARIST,		"atari" },
 	{ GUIO_RENDERMACINTOSH,		"macintosh" },
 	{ GUIO_RENDERMACINTOSHBW,	"macintoshbw" },
+	{ GUIO_RENDERCPC,			"cpc" },
+	{ GUIO_RENDERZX,			"zx" },
+	{ GUIO_RENDERC64,			"c64" },
 
 	{ GUIO_GAMEOPTIONS1, "gameOption1" },
 	{ GUIO_GAMEOPTIONS2, "gameOption2" },
@@ -115,6 +118,25 @@ const struct GameOpt {
 };
 
 bool checkGameGUIOption(const String &option, const String &str) {
+#ifndef RELEASE_BUILD
+	static bool firstRun = true;
+
+	// Check GUIO constants for duplicates
+	if (firstRun) {
+		HashMap<String, bool, CaseSensitiveString_Hash, CaseSensitiveString_EqualTo> allOptions;
+
+		for (int i = 0; g_gameOptions[i].desc; i++) {
+			if (allOptions.contains(g_gameOptions[i].option)) {
+				error("Duplicate GUIO constant, id: \\x%02x, renumerate them", g_gameOptions[i].option[0]);
+			}
+
+			allOptions[g_gameOptions[i].option] = true;
+		}
+
+		firstRun = false;
+	}
+#endif
+
 	for (int i = 0; g_gameOptions[i].desc; i++) {
 		if (option.contains(g_gameOptions[i].option)) {
 			if (str.contains(g_gameOptions[i].desc))
@@ -147,7 +169,7 @@ const String getGameGUIOptionsDescription(const String &options) {
 	String res;
 
 	for (int i = 0; g_gameOptions[i].desc; i++)
-		if (options.contains(g_gameOptions[i].option[0])) 
+		if (options.contains(g_gameOptions[i].option[0]))
 			res += String(g_gameOptions[i].desc) + " ";
 
 	res.trim();

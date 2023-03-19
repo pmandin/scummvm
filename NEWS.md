@@ -3,11 +3,78 @@ For a more comprehensive changelog of the latest experimental code, see:
 
 #### 2.8.0 (XXXX-XX-XX)
 
+ New games:
+   - Added support for macOS versions of Syberia and Syberia II.
+
+ New platforms:
+   - Added libretro new shiny port.
+   - Added Atari port.
+
+ General:
+  - Added optional dependency for libvpx.
+
+ Asylum:
+   - Added support for Chinese Sanitarium.
+
+ Dragons:
+   - Implemented localizations for the copyright screen and main menu.
+
+ GrimE:
+   - Added support for Chinese Grim Fandango.
+   - Added support for Russian Grim Fandango translations from Fargus,
+     ENPY and 7Wolf.
+
+ SCUMM:
+   - Added support for unpacked RuSCUMM patches for Russian localizations.
+
+ Sherlock:
+   - Added support for Chinese Serrated Scalpel.
+
+ Sword2:
+   - Added support for Chinese translation.
+
+ Ultima:
+   - Improve Ultima VI responsiveness.
+   - Fix crash loading Ultima VI savegames when dialogs are open.
+   - Fix ordering of generated items in Ultima VI.
+   - Fix auto-readying throwing weapons in Ultima VI.
+
+ Voyeur:
+   - Added support for German fan translation.
+
  Xeen:
    - Renamed 'xeen' engine to 'mm' for Might & Magic.
 
 
-#### 2.7.0 (XXXX-XX-XX)
+#### 2.7.1 (2023-XX-XX)
+
+ General:
+  - Fixed playback speed for Theora videos.
+
+ AGI:
+   - Restored possibility to pick arbitrary render mode in Game Options.
+
+ HDB:
+   - Fixed bug with inability to pick up red envelope with keyboard.
+
+ SAGA2:
+   - Fixed crash when hovering over certain spells.
+
+ Sword1:
+   - Added detection for Czech and Polish versions with DXA cutscenes.
+
+ Sword2:
+   - Added support for GOG.com version.
+   - Added detection for alternate Polish version.
+
+ iOS port:
+   - Fix default theme selection on modern devices.
+
+ RISC OS port:
+   - Fixed crash on RISC OS 5 with games that require lots of RAM.
+
+
+#### 2.7.0 "The Real Slim Shader" (2023-02-26)
 
  New games:
    - Added support for Soldier Boyz.
@@ -20,13 +87,13 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Adibou 2 "Environment", "Read/Count 4 & 5" and "Read/Count 6 & 7".
    - Added support for Driller/Space Station Oblivion (DOS/EGA/CGA, Amiga, AtariST, ZX Spectrum and Amstrad CPC versions).
    - Added support for Halls of the Dead: Faery Tale Adventure II.
+   - Added support for Chop Suey, Eastern Mind, and 16 other Director 3 and Director 4 titles.
 
  New platforms:
-   - RetroMini RS90 under OpenDingux beta.
-   - 1st generation Miyoo (New BittBoy, Pocket Go and PowKiddy Q90-V90-Q20)
-     under TriForceX MiyooCFW.
-   - Miyoo mini
-   - KolibriOS
+   - Added support for the RetroMini RS90 under OpenDingux beta.
+   - Added support for the 1st generation Miyoo (New BittBoy, Pocket Go and PowKiddy Q90-V90-Q20) under TriForceX MiyooCFW.
+   - Added support for the Miyoo Mini.
+   - Added support for KolibriOS.
 
  General:
    - Reduced amount of false positives in Mass Add.
@@ -45,6 +112,8 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added possibility to customize the default settings by specifying an initial
      configuration file to load if no configuration file exists in the usual
      location (via --initial-cfg=FILE or -i command line option).
+   - Added support for loading game resources which are bigger than 2GB on more
+     platforms.
 
  AGI:
    - Improved support for French translations.
@@ -112,8 +181,8 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added EGA dithering mode for VGA versions of Loom, Monkey Island 1 and 2 and
      Indiana Jones 4.
    - Fixed a possible dead-end in the Ultimate Talkie Edition of Monkey Island 2,
-     if one doesn't pick up the model lighthouse lens before Captain Dread brings
-     Guybrush back to Scabb Island, at the end of Part II.
+     if one doesn't pick up a required item before Captain Dread brings Guybrush
+     back to Scabb Island, at the end of Part II.
    - Fixed various original game bugs, oversights and continuity errors (only
      when using the "Enable game-specific enhancements" setting).
    - Improved the decoding of some Western European game strings when they're
@@ -159,6 +228,9 @@ For a more comprehensive changelog of the latest experimental code, see:
  Sword2:
    - Switched detection to md5-based. Submit your unrecognized versions!
 
+ Tinsel:
+   - Fixed Discworld II subtitle colors on big-endian ports.
+
  Toon:
    - Made game menus behave like in the original.
 
@@ -187,6 +259,30 @@ For a more comprehensive changelog of the latest experimental code, see:
  3DS port:
    - Update relocation parser to support PREL31 that are emitted by new compiler.
    - Do more autoconfiguration in ./configure.
+
+ Android port:
+   - Added Storage Access Framework support.
+   - Improved support for game controllers.
+
+ iOS port:
+   - Added pointer device support.
+   - Improved support for touchpad mode.
+   - Added support for games that use 32 bit pixel formats.
+
+ Nintendo DS port:
+   - Added a splash screen to the top screen when the launcher is active.
+
+ OpenDingux port:
+   - Added support for dynamic plugins.
+
+ PS Vita port:
+   - Added support for dynamic plugins.
+
+ PSP port:
+   - Improved support for games that use 32 bit pixel formats.
+
+ RISC OS port:
+   - Added support for 26-bit versions of RISC OS.
 
 #### 2.6.1 "Incremental Escapism" (2022-10-31)
 

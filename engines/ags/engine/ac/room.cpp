@@ -72,6 +72,7 @@
 #include "ags/engine/gfx/gfxfilter.h"
 #include "ags/shared/util/math.h"
 #include "ags/engine/media/audio/audio_system.h"
+#include "ags/engine/main/game_run.h"
 #include "ags/shared/debugging/out.h"
 #include "ags/engine/script/script_api.h"
 #include "ags/engine/script/script_runtime.h"
@@ -215,8 +216,8 @@ void save_room_data_segment() {
 
 	_G(croom)->tsdatasize = _G(roominst)->globaldatasize;
 	if (_G(croom)->tsdatasize > 0) {
-		_G(croom)->tsdata = (char *)malloc(_G(croom)->tsdatasize + 10);
-		memcpy(_G(croom)->tsdata, &_G(roominst)->globaldata[0], _G(croom)->tsdatasize);
+		_G(croom)->tsdata.resize(_G(croom)->tsdatasize);
+		memcpy(_G(croom)->tsdata.data(), &_G(roominst)->globaldata[0], _G(croom)->tsdatasize);
 	}
 
 }
@@ -431,8 +432,6 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 		}
 	}
 
-	update_polled_stuff_if_runtime();
-
 	// load the room from disk
 	_G(our_eip) = 200;
 	_GP(thisroom).GameID = NO_GAME_ID_IN_ROOM_FILE;
@@ -440,7 +439,7 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 
 	if ((_GP(thisroom).GameID != NO_GAME_ID_IN_ROOM_FILE) &&
 	        (_GP(thisroom).GameID != _GP(game).uniqueid)) {
-		quitprintf("!Unable to load '%s'. This room file is assigned to a different _GP(game).", room_filename.GetCStr());
+		quitprintf("!Unable to load '%s'. This room file is assigned to a different game.", room_filename.GetCStr());
 	}
 
 	HError err = LoadRoomScript(&_GP(thisroom), newnum);
@@ -450,7 +449,6 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 
 	convert_room_coordinates_to_data_res(&_GP(thisroom));
 
-	update_polled_stuff_if_runtime();
 	_G(our_eip) = 201;
 
 	_GP(play).room_width = _GP(thisroom).Width;
@@ -474,11 +472,8 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	}
 
 	for (size_t i = 0; i < _GP(thisroom).BgFrameCount; ++i) {
-		update_polled_stuff_if_runtime();
 		_GP(thisroom).BgFrames[i].Graphic = PrepareSpriteForUse(_GP(thisroom).BgFrames[i].Graphic, false);
 	}
-
-	update_polled_stuff_if_runtime();
 
 	_G(our_eip) = 202;
 	// Update game viewports
@@ -505,11 +500,8 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	_G(walkareabackup) = BitmapHelper::CreateBitmapCopy(_GP(thisroom).WalkAreaMask.get());
 
 	_G(our_eip) = 204;
-	update_polled_stuff_if_runtime();
 	redo_walkable_areas();
-	update_polled_stuff_if_runtime();
 	walkbehinds_recalc();
-	update_polled_stuff_if_runtime();
 
 	_G(our_eip) = 205;
 	// setup objects
@@ -541,7 +533,7 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 			_GP(thisroom).LocalVariables[i].Value = _G(croom)->interactionVariableValues[i];
 
 		// Always copy object and hotspot names for < 3.6.0 games, because they were not settable
-		if (_G(loaded_game_file_version) < kGameVersion_360_16) {
+		if ((_G(loaded_game_file_version) < kGameVersion_360_16) ||	(_G(croom)->contentFormat < kRoomStatSvgVersion_36025)) {
 			for (size_t cc = 0; cc < _GP(thisroom).Objects.size(); ++cc)
 				_G(croom)->obj[cc].name = _GP(thisroom).Objects[cc].Name;
 			for (int cc = 0; cc < MAX_ROOM_HOTSPOTS; cc++)
@@ -605,8 +597,8 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 		_G(croom)->beenhere = 1;
 		_G(in_new_room) = 2;
 	}
-
-	update_polled_stuff_if_runtime();
+	// Reset contentFormat hint to avoid doing fixups later
+	_G(croom)->contentFormat = kRoomStatSvgVersion_Current;
 
 	if (_GP(thisroom).EventHandlers == nullptr) {
 		// legacy interactions
@@ -635,10 +627,6 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 
 		ccAddExternalDynamicObject(_GP(thisroom).Hotspots[cc].ScriptName, &_G(scrHotspot)[cc], &_GP(ccDynamicHotspot));
 	}
-
-	_G(our_eip) = 206;
-
-	update_polled_stuff_if_runtime();
 
 	_G(our_eip) = 210;
 	if (IS_ANTIALIAS_SPRITES) {
@@ -682,16 +670,14 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 			StopMoving(cc);
 	}
 
-	update_polled_stuff_if_runtime();
-
 	_G(roominst) = nullptr;
 	if (_G(debug_flags) & DBG_NOSCRIPT) ;
 	else if (_GP(thisroom).CompiledScript != nullptr) {
 		compile_room_script();
 		if (_G(croom)->tsdatasize > 0) {
-			if (_G(croom)->tsdatasize != _G(roominst)->globaldatasize)
+			if (_G(croom)->tsdatasize != (unsigned) _G(roominst)->globaldatasize)
 				quit("room script data segment size has changed");
-			memcpy(&_G(roominst)->globaldata[0], _G(croom)->tsdata, _G(croom)->tsdatasize);
+			memcpy(&_G(roominst)->globaldata[0], _G(croom)->tsdata.data(), _G(croom)->tsdatasize);
 		}
 	}
 	_G(our_eip) = 207;
@@ -840,7 +826,6 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 	_G(color_map) = nullptr;
 
 	_G(our_eip) = 209;
-	update_polled_stuff_if_runtime();
 	generate_light_table();
 	update_music_volume();
 
@@ -870,9 +855,9 @@ void load_new_room(int newnum, CharacterInfo *forchar) {
 		setpal();
 
 	_G(our_eip) = 220;
-	update_polled_stuff_if_runtime();
+	update_polled_stuff();
 	debug_script_log("Now in room %d", _G(displayed_room));
-	GUI::MarkAllGUIForUpdate();
+	GUI::MarkAllGUIForUpdate(true, true);
 	pl_run_plugin_hooks(AGSE_ENTERROOM, _G(displayed_room));
 }
 
@@ -881,8 +866,6 @@ void new_room(int newnum, CharacterInfo *forchar) {
 	EndSkippingUntilCharStops();
 
 	debug_script_log("Room change requested to room %d", newnum);
-
-	update_polled_stuff_if_runtime();
 
 	// we are currently running Leaves Screen scripts
 	_G(in_leaves_screen) = newnum;
@@ -904,7 +887,6 @@ void new_room(int newnum, CharacterInfo *forchar) {
 		// who is not in the new room. therefore, abort the follow
 		_G(playerchar)->following = -1;
 	}
-	update_polled_stuff_if_runtime();
 
 	// change rooms
 	unload_old_room();
@@ -912,11 +894,7 @@ void new_room(int newnum, CharacterInfo *forchar) {
 	if (_GP(usetup).clear_cache_on_room_change) {
 		// Delete all cached sprites
 		_GP(spriteset).DisposeAll();
-
-		GUI::MarkAllGUIForUpdate();
 	}
-
-	update_polled_stuff_if_runtime();
 
 	load_new_room(newnum, forchar);
 

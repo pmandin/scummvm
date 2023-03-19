@@ -26,5 +26,11 @@ MODULE_OBJS += \
 	theora_decoder.o
 endif
 
+ifdef USE_VPX
+MODULE_OBJS += \
+	mkv_decoder.o \
+	mkv/mkvparser.o
+endif
+
 # Include common rules
 include $(srcdir)/rules.mk

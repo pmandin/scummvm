@@ -40,18 +40,16 @@ namespace UI {
 class Scrollbar;
 
 class InventoryBox : public RenderObject {
-	friend class InventoryScrollbar;
-	friend class Shades;
 	friend class Nancy::State::Scene;
 
 public:
 	struct ItemDescription {
 		Common::String name; // 0x00
-		byte oneTimeUse = 0; // 0x14
+		byte keepItem = kInvItemUseThenLose; // 0x14
 		Common::Rect sourceRect; // 0x16
 	};
 
-	InventoryBox(RenderObject &redrawFrom);
+	InventoryBox();
 	virtual ~InventoryBox();
 
 	void init() override;
@@ -73,8 +71,8 @@ private:
 
 	class Curtains : public RenderObject {
 	public:
-		Curtains(RenderObject &redrawFrom, InventoryBox *parent) :
-			RenderObject(redrawFrom, 9),
+		Curtains(InventoryBox *parent) :
+			RenderObject(9),
 			_parent(parent),
 			_soundTriggered(false),
 			_areOpen(false),

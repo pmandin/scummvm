@@ -21,6 +21,7 @@
 
 #include "common/algorithm.h"
 #include "mm/mm1/data/character.h"
+#include "mm/shared/utils/strings.h"
 #include "mm/mm1/mm1.h"
 
 namespace MM {
@@ -158,8 +159,22 @@ Character::Character() : PrimaryAttributes() {
 	Common::fill(&_flags[0], &_flags[14], 0);
 }
 
-void Character::synchronize(Common::Serializer &s) {
-	s.syncBytes((byte *)_name, 16);
+void Character::synchronize(Common::Serializer &s, int portraitNum) {
+	char name[16];
+	if (s.isSaving()) {
+		// Save the name in uppercase to match original
+		Common::strlcpy(name, uppercase(_name).c_str(), 16);
+		s.syncBytes((byte *)name, 16);
+	} else {
+		s.syncBytes((byte *)name, 16);
+		name[15] = '\0';
+
+		if (g_engine->isEnhanced())
+			Common::strlcpy(_name, camelCase(name).c_str(), 16);
+		else
+			Common::strlcpy(_name, uppercase(name).c_str(), 16);
+	}
+
 	s.syncAsByte(_sex);
 	s.syncAsByte(_alignmentInitial);
 	s.syncAsByte(_alignment);
@@ -213,6 +228,19 @@ void Character::synchronize(Common::Serializer &s) {
 	s.syncAsByte(_alignmentCtr);
 	s.syncBytes(_flags, 14);
 	s.syncAsByte(_portrait);
+	if (s.isLoading() && portraitNum != -1)
+		_portrait = portraitNum;
+
+	if (s.isLoading())
+		loadFaceSprites();
+}
+
+void Character::loadFaceSprites() {
+	if (_portrait != 0xff && g_engine->isEnhanced()) {
+		Common::String cname = Common::String::format("char%02d.fac",
+			_portrait * 2 + (_sex == MALE ? 0 : 1) + 1);
+		_faceSprites.load(cname);
+	}
 }
 
 void Character::clear() {
@@ -498,24 +526,24 @@ Common::String Character::getConditionString() const {
 		if (cond & BAD_CONDITION) {
 			// Fatal conditions
 			if (cond & DEAD)
-				result += STRING["stats.conditions.dead"];
+				result += STRING["stats.conditions.dead"] + ",";
 			if (cond & STONE)
-				result += STRING["stats.conditions.stone"];
+				result += STRING["stats.conditions.stone"] + ",";
 		} else {
 			if (cond & UNCONSCIOUS)
-				result += STRING["stats.conditions.unconscious"];
+				result += STRING["stats.conditions.unconscious"] + ",";
 			if (cond & PARALYZED)
-				result += STRING["stats.conditions.paralyzed"];
+				result += STRING["stats.conditions.paralyzed"] + ",";
 			if (cond & POISONED)
-				result += STRING["stats.conditions.poisoned"];
+				result += STRING["stats.conditions.poisoned"] + ",";
 			if (cond & DISEASED)
-				result += STRING["stats.conditions.diseased"];
+				result += STRING["stats.conditions.diseased"] + ",";
 			if (cond & SILENCED)
-				result += STRING["stats.conditions.silenced"];
+				result += STRING["stats.conditions.silenced"] + ",";
 			if (cond & BLINDED)
-				result += STRING["stats.conditions.blinded"];
+				result += STRING["stats.conditions.blinded"] + ",";
 			if (cond & ASLEEP)
-				result += STRING["stats.conditions.asleep"];
+				result += STRING["stats.conditions.asleep"] + ",";
 		}
 
 		result.deleteLastChar();
@@ -637,6 +665,74 @@ size_t Character::getPerformanceTotal() const {
 		+ _worthiness
 		+ _alignmentCtr
 		+ totalFlags;
+}
+
+byte Character::statColor(int amount, int threshold) const {
+	if (amount < 1)
+		return 6;
+	else if (amount > threshold)
+		return 2;
+	else if (amount == threshold)
+		return 15;
+	else if (amount >= (threshold / 4))
+		return 9;
+	else
+		return 32;
+}
+
+byte Character::conditionColor() const {
+	if (_condition == ERADICATED)
+		return 32;
+	else if (_condition == FINE)
+		return 15;
+	else if (_condition & BAD_CONDITION)
+		return 6;
+	else
+		return 9;
+}
+
+ConditionEnum Character::worstCondition() const {
+	if (_condition == ERADICATED) {
+		return C_ERADICATED;
+	} else if (_condition & BAD_CONDITION) {
+		if (_condition & DEAD)
+			return C_DEAD;
+		if (_condition & STONE)
+			return C_STONE;
+		if (_condition & UNCONSCIOUS)
+			return C_UNCONSCIOUS;
+	} else {
+		if (_condition & PARALYZED)
+			return C_PARALYZED;
+		if (_condition & POISONED)
+			return C_POISONED;
+		if (_condition & DISEASED)
+			return C_DISEASED;
+		if (_condition & SILENCED)
+			return C_SILENCED;
+		if (_condition & BLINDED)
+			return C_BLINDED;
+		if (_condition & ASLEEP)
+			return C_ASLEEP;
+	}
+
+	return C_GOOD;
+}
+
+Common::String Character::getConditionString(ConditionEnum cond) {
+	switch (cond) {
+	case C_ERADICATED: return STRING["stats.conditions.eradicated"];
+	case C_DEAD: return STRING["stats.conditions.dead"];
+	case C_STONE: return STRING["stats.conditions.stone"];
+	case C_UNCONSCIOUS: return STRING["stats.conditions.unconscious"];
+	case C_PARALYZED: return STRING["stats.conditions.paralyzed"];
+	case C_POISONED: return STRING["stats.conditions.poisoned"];
+	case C_DISEASED: return STRING["stats.conditions.diseased"];
+	case C_SILENCED: return STRING["stats.conditions.silenced"];
+	case C_BLINDED: return STRING["stats.conditions.blinded"];
+	case C_ASLEEP: return STRING["stats.conditions.asleep"];
+	default: return STRING["stats.conditions.good"];
+	}
 }
 
 } // namespace MM1

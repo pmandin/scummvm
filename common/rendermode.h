@@ -42,6 +42,8 @@ class String;
  * to use. Some targets used postprocessing dithering routines for
  * reducing color depth of final image which let it to be rendered on
  * such low-level adapters as CGA or Hercules.
+ *
+ * If you are adding an option here, do not forget to create relevant GUIO
  */
 enum RenderMode {
 	kRenderDefault = 0,
@@ -62,7 +64,7 @@ enum RenderMode {
 	kRenderCGA_BW = 15,
 	kRenderCPC = 16,
 	kRenderZX = 17,
-	kRenderC64 = 18,
+	kRenderC64 = 18
 };
 
 struct RenderModeDescription {

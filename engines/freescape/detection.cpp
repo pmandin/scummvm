@@ -39,96 +39,60 @@ static const ADGameDescription gameDescriptions[] = {
 		"driller",
 		"",
 		{
-			{"DRILLER.ZX.EXTRACTED", 0, "396c1789a7da3db5058d18eb8d2d35a3", 37590},
+			{"DRILLER.ZX.DATA", 0, "396c1789a7da3db5058d18eb8d2d35a3", 37590},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformZX,
-		GF_ZX_RETAIL | ADGF_TESTING,
+		GF_ZX_RETAIL,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
 		"driller",
 		"",
 		{
-			{"DRILLER.ZX.EXTRACTED", 0, "6876fc03e754137f428bd4d5f16452b5", 37888},
+			{"DRILLER.ZX.DATA", 0, "6876fc03e754137f428bd4d5f16452b5", 37888},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformZX,
-		GF_ZX_DISC | ADGF_TESTING,
+		GF_ZX_DISC,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
 		"driller",
 		"",
 		{
-			{"DRILLER.ZX.EXTRACTED", 0, "2b996ab877f45414f8e2ae4c862746f3", 35214},
+			{"DRILLER.ZX.DATA", 0, "2b996ab877f45414f8e2ae4c862746f3", 35214},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformZX,
-		GF_ZX_BUDGET | ADGF_TESTING,
+		GF_ZX_BUDGET,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
 		"driller",
 		"",
 		{
-			{"DRILLER.CPC.EDSK", 0, "05df84207b5373e145ef90a3e4b98ae0", 215073},
+			{"DRILL.BIN", 0, "719f5157391e88b2c391c30576340637", 35320},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmstradCPC,
-		GF_CPC_RETAIL | ADGF_TESTING,
-		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
-	},
-	{
-		"driller",
-		"",
-		{
-			{"DRILLER.CPC.EDSK", 0, "ccca1fb22252f43403f75a546ebb5a57", 194816},
-			AD_LISTEND
-		},
-		Common::EN_ANY,
-		Common::kPlatformAmstradCPC,
-		GF_CPC_RETAIL2 | ADGF_TESTING,
-		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
-	},
-	{
-		"driller",
-		"",
-		{
-			{"DRILLER.CPC.EDSK", 0, "252f90756eaee25f2231e8d3bfaab68f", 125952},
-			AD_LISTEND
-		},
-		Common::EN_ANY,
-		Common::kPlatformAmstradCPC,
-		GF_CPC_BUDGET | ADGF_TESTING,
-		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
-	},
-	{
-		"driller",
-		"VirtualWorlds-A",
-		{
-			{"VIRTUALWORLDS.A.CPC.EDSK", 0, "421d369636984fc209a0969007daa35b", 195635},
-			AD_LISTEND
-		},
-		Common::EN_ANY,
-		Common::kPlatformAmstradCPC,
-		GF_CPC_VIRTUALWORLDS | ADGF_TESTING,
+		GF_CPC_RETAIL,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
 		"spacestationoblivion",
 		"",
 		{
-			{"SPACESTATIONOBLIVION.C64.EXTRACTED", 0, "85680576865e211f868885e9997a08b8", 22782},
+			{"SPACESTATIONOBLIVION.C64.DATA", 0, "85680576865e211f868885e9997a08b8", 22782},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformC64,
-		ADGF_TESTING,
+		ADGF_UNSTABLE,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 
@@ -136,36 +100,36 @@ static const ADGameDescription gameDescriptions[] = {
 		"spacestationoblivion",
 		"",
 		{
-			{"SPACESTATIONOBLIVION.C64.EXTRACTED", 0, "2b3537e21b8b871ec074df2962999781", 64514},
+			{"SPACESTATIONOBLIVION.C64.DATA", 0, "2b3537e21b8b871ec074df2962999781", 64514},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformC64,
-		ADGF_TESTING,
+		ADGF_UNSTABLE,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
 		"driller", // Commodore Force - Jan 94
 		"",
 		{
-			{"DRILLER.C64.EXTRACTED", 0, "511778d3167ff7504d905df507a03ac5", 63490},
+			{"DRILLER.C64.DATA", 0, "511778d3167ff7504d905df507a03ac5", 63490},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformC64,
-		ADGF_TESTING,
+		ADGF_UNSTABLE,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
 		"driller",
 		"",
 		{
-			{"DRILLER.C64.EXTRACTED", 0, "73a6f206e54fb13245fe6d92f60fbb34", 41071},
+			{"DRILLER.C64.DATA", 0, "73a6f206e54fb13245fe6d92f60fbb34", 41071},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformC64,
-		ADGF_TESTING,
+		ADGF_UNSTABLE,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -178,7 +142,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_TESTING,
+		ADGF_NO_FLAGS,
 		GUIO4(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -191,7 +155,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAtariST,
-		ADGF_TESTING,
+		ADGF_NO_FLAGS,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -204,7 +168,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
-		GF_AMIGA_RETAIL | ADGF_TESTING,
+		GF_AMIGA_RETAIL,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -217,7 +181,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
-		GF_AMIGA_BUDGET | ADGF_TESTING,
+		GF_AMIGA_BUDGET,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -231,7 +195,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_TESTING | ADGF_DEMO,
+		ADGF_DEMO,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -245,7 +209,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
-		ADGF_TESTING | ADGF_DEMO,
+		ADGF_DEMO,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -259,7 +223,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAtariST,
-		ADGF_TESTING | ADGF_DEMO,
+		ADGF_DEMO,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -318,7 +282,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformDOS,
-		ADGF_TESTING,
+		ADGF_NO_FLAGS,
 		GUIO4(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{

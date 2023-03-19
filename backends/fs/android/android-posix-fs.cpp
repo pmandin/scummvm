@@ -21,6 +21,9 @@
 
 #if defined(__ANDROID__)
 
+// For remove()
+#include <stdio.h>
+
 #include "backends/fs/android/android-fs-factory.h"
 #include "backends/fs/android/android-posix-fs.h"
 #include "backends/fs/android/android-saf-fs.h"
@@ -30,13 +33,15 @@ AbstractFSNode *AndroidPOSIXFilesystemNode::makeNode() const {
 }
 
 AbstractFSNode *AndroidPOSIXFilesystemNode::makeNode(const Common::String &path) const {
-	// If SAF works, it was a SAF URL
-	AbstractFSNode *node = AndroidSAFFilesystemNode::makeFromPath(path);
-	if (node) {
-		return node;
-	}
+	return AndroidFilesystemFactory::instance().makeFileNodePath(path);
+}
 
-	return new AndroidPOSIXFilesystemNode(path, _config);
+bool AndroidPOSIXFilesystemNode::remove() {
+	if (::remove(_path.c_str()) != 0)
+		return false;
+
+	setFlags();
+	return true;
 }
 
 #endif

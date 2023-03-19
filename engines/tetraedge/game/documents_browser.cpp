@@ -90,11 +90,11 @@ void DocumentsBrowser::load() {
 	if (docBrowser)
 		addChild(docBrowser);
 
-	TeButtonLayout *button = _gui1.buttonLayout("previousPage");
+	TeButtonLayout *button = _gui1.buttonLayoutChecked("previousPage");
 	button->onMouseClickValidated().add(this, &DocumentsBrowser::onPreviousPage);
-	button = _gui1.buttonLayout("nextPage");
+	button = _gui1.buttonLayoutChecked("nextPage");
 	button->onMouseClickValidated().add(this, &DocumentsBrowser::onNextPage);
-	button = _gui1.buttonLayout("zoomed");
+	button = _gui1.buttonLayoutChecked("zoomed");
 	button->onMouseClickValidated().add(this, &DocumentsBrowser::onZoomedButton);
 	button->setVisible(false);
 
@@ -163,6 +163,43 @@ bool DocumentsBrowser::onZoomedButton() {
 		onQuitDocumentDoubleClickTimer();
 	}
 	return false;
+}
+
+bool DocumentsBrowser::addDocument(Document *document) {
+	int pageno = 0;
+	while (true) {
+		Common::String pageName = Common::String::format("page%d", pageno);
+		TeLayout *page = _gui1.layout(pageName);
+		if (!page)
+			break;
+		int slotno = 0;
+		while (true) {
+			Common::String pageSlotName = Common::String::format("page%dSlot%d", pageno, slotno);
+			TeLayout *slot = _gui1.layout(pageSlotName);
+			if (!slot)
+				break;
+			if (slot->childCount() == 0) {
+				slot->addChild(document);
+				return true;
+			}
+			slotno++;
+		}
+		pageno++;
+	}
+	return false;
+}
+
+void DocumentsBrowser::addDocument(const Common::String &str) {
+	Document *doc = new Document(this);
+	doc->load(str);
+	if (!addDocument(doc))
+		delete doc;
+}
+
+Common::String DocumentsBrowser::documentName(const Common::String &name) {
+	// Note: this returns a value from an xml file,
+	// but the xml file doesn't exist in either game.
+	return "";
 }
 
 void DocumentsBrowser::showDocument(const Common::String &docName, int startPage) {

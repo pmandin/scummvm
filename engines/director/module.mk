@@ -23,6 +23,7 @@ MODULE_OBJS = \
 	stxt.o \
 	tests.o \
 	transitions.o \
+	types.o \
 	util.o \
 	window.o \
 	lingo/lingo.o \
@@ -48,6 +49,7 @@ MODULE_OBJS = \
 	lingo/xlibs/cdromxobj.o \
 	lingo/xlibs/darkenscreen.o \
 	lingo/xlibs/developerStack.o \
+	lingo/xlibs/draw.o \
 	lingo/xlibs/ednox.o \
 	lingo/xlibs/fileexists.o \
 	lingo/xlibs/fileio.o \
@@ -75,10 +77,12 @@ MODULE_OBJS = \
 	lingo/xlibs/serialportxobj.o \
 	lingo/xlibs/soundjam.o \
 	lingo/xlibs/spacemgr.o \
+	lingo/xlibs/unittest.o \
 	lingo/xlibs/videodiscxobj.o \
 	lingo/xlibs/volumelist.o \
 	lingo/xlibs/widgetxobj.o \
 	lingo/xlibs/winxobj.o \
+	lingo/xlibs/xio.o \
 	lingo/xlibs/xplayanim.o \
 	lingo/xlibs/yasix.o
 

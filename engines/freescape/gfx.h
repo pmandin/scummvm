@@ -26,6 +26,7 @@
 #include "common/rect.h"
 
 #include "graphics/pixelformat.h"
+#include "graphics/managed_surface.h"
 #include "graphics/renderer.h"
 #include "math/frustum.h"
 #include "math/vector3d.h"
@@ -76,7 +77,7 @@ public:
 	virtual void polygonOffset(bool enabled) = 0;
 
 	virtual Texture *createTexture(const Graphics::Surface *surface) = 0;
-	void convertImageFormatIfNecessary(Graphics::Surface *surface);
+	Graphics::Surface *convertImageFormatIfNecessary(Graphics::ManagedSurface *surface);
 
 	virtual void freeTexture(Texture *texture) = 0;
 	virtual void drawTexturedRect2D(const Common::Rect &screenRect, const Common::Rect &textureRect, Texture *texture) = 0;
@@ -98,12 +99,12 @@ public:
 	// palette
 	void readFromPalette(uint8 index, uint8 &r, uint8 &g, uint8 &b);
 	uint8 indexFromColor(uint8 r, uint8 g, uint8 b);
-	bool getRGBAt(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *stipple);
+	bool getRGBAt(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
 	bool getRGBAtC64(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2);
-	bool getRGBAtCGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2);
-	bool getRGBAtCPC(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2);
+	bool getRGBAtCGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
+	bool getRGBAtCPC(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
 	bool getRGBAtEGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2);
-	bool getRGBAtZX(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *stipple);
+	bool getRGBAtZX(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
 	void extractCPCIndexes(uint8 cm1, uint8 cm2, uint8 &i1, uint8 &i2);
 	void extractC64Indexes(uint8 cm1, uint8 cm2, uint8 &i1, uint8 &i2);
 
@@ -112,12 +113,16 @@ public:
 	virtual void setStippleData(byte *data) {};
 	virtual void useStipple(bool enabled) {};
 	byte *_palette;
+	void setColorMap(ColorMap *colorMap_);
 	ColorMap *_colorMap;
 	ColorReMap *_colorRemaps;
+	void fillColorPairArray();
+	byte _colorPair[16];
 	int _keyColor;
 	int _inkColor;
 	int _paperColor;
 	int _underFireBackgroundColor;
+	byte _stipples[16][128];
 
 	/**
 	 * Select the window where to render

@@ -124,7 +124,7 @@ void FreescapeEngine::loadColorPalette() {
 	} else
 		error("Invalid render mode, no palette selected");
 
-	_gfx->_colorMap = &_colorMap;
+	_gfx->setColorMap(&_colorMap);
 }
 
 void FreescapeEngine::loadPalettes(Common::SeekableReadStream *file, int offset) {
@@ -155,19 +155,105 @@ void FreescapeEngine::loadPalettes(Common::SeekableReadStream *file, int offset)
 	}
 }
 
+enum {
+	kDrillerCGAPalettePinkBlue = 0,
+	kDrillerCGAPaletteRedGreen = 1,
+};
+
+static const struct CGAPalettteEntry {
+	int areaId;
+	int palette;
+} rawCGAPaletteTable[] {
+	{1, kDrillerCGAPaletteRedGreen},
+	{2, kDrillerCGAPalettePinkBlue},
+	{3, kDrillerCGAPaletteRedGreen},
+	{4, kDrillerCGAPalettePinkBlue},
+	{5, kDrillerCGAPaletteRedGreen},
+	{6, kDrillerCGAPalettePinkBlue},
+	{7, kDrillerCGAPaletteRedGreen},
+	{8, kDrillerCGAPalettePinkBlue},
+	{9, kDrillerCGAPaletteRedGreen},
+	{10, kDrillerCGAPalettePinkBlue},
+	{11, kDrillerCGAPaletteRedGreen},
+	{12, kDrillerCGAPalettePinkBlue},
+
+	{14, kDrillerCGAPalettePinkBlue},
+
+	{16, kDrillerCGAPalettePinkBlue},
+
+	{19, kDrillerCGAPaletteRedGreen},
+	{20, kDrillerCGAPalettePinkBlue},
+	{21, kDrillerCGAPaletteRedGreen},
+	{22, kDrillerCGAPalettePinkBlue},
+	{23, kDrillerCGAPaletteRedGreen},
+
+	{28, kDrillerCGAPalettePinkBlue},
+
+	{32, kDrillerCGAPalettePinkBlue},
+	{127, kDrillerCGAPaletteRedGreen},
+	{0, 0}   // This marks the end
+};
+
+byte kDrillerCGAPalettePinkBlueData[4][3] = {
+	{0x00, 0x00, 0x00},
+	{0x00, 0xaa, 0xaa},
+	{0xaa, 0x00, 0xaa},
+	{0xaa, 0xaa, 0xaa},
+};
+
+byte kDrillerCGAPaletteRedGreenData[4][3] = {
+	{0x00, 0x00, 0x00},
+	{0x00, 0xaa, 0x00},
+	{0xaa, 0x00, 0x00},
+	{0xaa, 0x55, 0x00},
+};
+
 void FreescapeEngine::swapPalette(uint16 levelID) {
-	if (isAmiga() || isAtariST())
+	if (isAmiga() || isAtariST()) {
+		// The following palette was not available in the demo, so we select another one
+		if (isDemo() && levelID == 32)
+			levelID = 31;
+
 		_gfx->_palette = _paletteByArea[levelID];
-	else if (isSpectrum() || isCPC() || isC64()) {
+	} else if (isSpectrum() || isCPC() || isC64()) {
 		_gfx->_inkColor = _areaMap[levelID]->_inkColor;
 		_gfx->_paperColor = _areaMap[levelID]->_paperColor;
 		_gfx->_underFireBackgroundColor = _areaMap[levelID]->_underFireBackgroundColor;
+
+		byte *palette = (byte *)malloc(sizeof(byte) * 4 * 3);
+		for (int c = 0; c < 4; c++) {
+			byte r, g, b;
+			_gfx->selectColorFromFourColorPalette(c, r, g, b);
+			palette[3 * c + 0] = r;
+			palette[3 * c + 1] = g;
+			palette[3 * c + 2] = b;
+		}
+		_border->setPalette(palette, 0, 4);
+		free(palette);
+		processBorder();
 	} else if (isDOS() && _renderMode == Common::kRenderCGA) {
-		assert(_borderCGAByArea.contains(levelID));
-		assert(_paletteCGAByArea.contains(levelID));
-		_borderTexture = _borderCGAByArea.getVal(levelID);
-		_gfx->_palette = _paletteCGAByArea.getVal(levelID);
+		const CGAPalettteEntry *entry = rawCGAPaletteTable;
+		while (entry->areaId) {
+			if (entry->areaId == levelID) {
+				if (entry->palette == kDrillerCGAPaletteRedGreen) {
+					_gfx->_palette = (byte *)kDrillerCGAPaletteRedGreenData;
+				} else if (entry->palette == kDrillerCGAPalettePinkBlue) {
+					_gfx->_palette = (byte *)kDrillerCGAPalettePinkBlueData;
+				} else
+					error("Invalid CGA palette to use");
+				break;
+			}
+			entry++;
+		}
+
+		assert(entry->areaId == levelID);
+		_border->setPalette(_gfx->_palette, 0, 4);
+		processBorder();
+	} else if (isDOS() && _renderMode == Common::kRenderEGA) {
+		_border->setPalette(_gfx->_palette, 0, 4);
+		processBorder();
 	}
+
 }
 
 } // End of namespace Freescape

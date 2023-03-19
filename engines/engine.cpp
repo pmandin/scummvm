@@ -223,6 +223,14 @@ void initCommonGFX() {
 
 		if (gameDomain->contains("shader"))
 			g_system->setShader(ConfMan.get("shader"));
+
+		// TODO: switching between OpenGL and SurfaceSDL is quite fragile
+		// and the SDL backend doesn't really need this so leave it out
+		// for now to avoid regressions
+#ifndef SDL_BACKEND
+		if (gameDomain->contains("gfx_mode"))
+			g_system->setGraphicsMode(ConfMan.get("gfx_mode").c_str());
+#endif
 	}
 }
 
@@ -310,37 +318,53 @@ void initGraphicsModes(const Graphics::ModeList &modes) {
 	g_system->initSizeHint(modes);
 }
 
-void initGraphics(int width, int height, const Graphics::PixelFormat *format) {
+/**
+ * Inits any of the modes in "modes". "modes" is in the order of preference.
+ * Return value is index in modes of resulting mode.
+ */
+int initGraphicsAny(const Graphics::ModeWithFormatList &modes) {
+	int candidate = -1;
+	OSystem::TransactionError gfxError = OSystem::kTransactionSizeChangeFailed;
+	int last_width = 0, last_height = 0;
 
-	g_system->beginGFXTransaction();
-
+	for (candidate = 0; candidate < (int)modes.size(); candidate++) {
+		g_system->beginGFXTransaction();
 		initCommonGFX();
 #ifdef USE_RGB_COLOR
-		if (format)
-			g_system->initSize(width, height, format);
+		if (modes[candidate].hasFormat)
+			g_system->initSize(modes[candidate].width, modes[candidate].height, &modes[candidate].format);
 		else {
 			Graphics::PixelFormat bestFormat = g_system->getSupportedFormats().front();
-			g_system->initSize(width, height, &bestFormat);
+			g_system->initSize(modes[candidate].width, modes[candidate].height, &bestFormat);
 		}
 #else
-		g_system->initSize(width, height);
+		g_system->initSize(modes[candidate].width, modes[candidate].height);
 #endif
+		last_width = modes[candidate].width;
+		last_height = modes[candidate].height;
 
-	OSystem::TransactionError gfxError = g_system->endGFXTransaction();
+		gfxError = g_system->endGFXTransaction();
 
-	if (!splash && !GUI::GuiManager::instance()._launched)
-		splashScreen();
+		if (!splash && !GUI::GuiManager::instance()._launched)
+			splashScreen();
 
-	if (gfxError == OSystem::kTransactionSuccess)
-		return;
+		if (gfxError == OSystem::kTransactionSuccess)
+			return candidate;
+
+		// If error is related to resolution, continue
+		if (gfxError & (OSystem::kTransactionSizeChangeFailed | OSystem::kTransactionFormatNotSupported))
+			continue;
+
+		break;
+	}
 
 	// Error out on size switch failure
 	if (gfxError & OSystem::kTransactionSizeChangeFailed) {
 		Common::U32String message;
-		message = Common::U32String::format(_("Could not switch to resolution '%dx%d'."), width, height);
+		message = Common::U32String::format(_("Could not switch to resolution '%dx%d'."), last_width, last_height);
 
 		GUIErrorMessage(message);
-		error("Could not switch to resolution '%dx%d'.", width, height);
+		error("Could not switch to resolution '%dx%d'.", last_width, last_height);
 	}
 
 	// Just show warnings then these occur:
@@ -383,6 +407,14 @@ void initGraphics(int width, int height, const Graphics::PixelFormat *format) {
 		GUI::MessageDialog dialog(_("Could not apply filtering setting."));
 		dialog.runModal();
 	}
+
+	return candidate;
+}
+
+void initGraphics(int width, int height, const Graphics::PixelFormat *format) {
+	Graphics::ModeWithFormatList modes;
+	modes.push_back(Graphics::ModeWithFormat(width, height, format));
+	initGraphicsAny(modes);
 }
 
 /**
@@ -553,26 +585,29 @@ bool Engine::warnBeforeOverwritingAutosave() {
 	if (!desc.isValid() || desc.isAutosave())
 		return true;
 	Common::U32StringArray altButtons;
-	altButtons.push_back(_("Overwrite"));
-	altButtons.push_back(_("Cancel autosave"));
+	altButtons.push_back(_("Delete"));
+	altButtons.push_back(_("Skip autosave"));
 	const Common::U32String message = Common::U32String::format(
-				_("WARNING: The autosave slot has a saved game named %S. "
-				  "You can either move the existing save to a new slot, "
-				  "Overwrite the existing save, "
-				  "or cancel autosave (will not prompt again until restart)"), desc.getDescription().c_str());
+				_("WARNING: The autosave slot contains a saved game named %S, and an autosave is pending.\n"
+				  "Please move this saved game to a new slot, or delete it if it's no longer needed.\n"
+				  "Alternatively, you can skip the autosave (will prompt again in 5 minutes)."), desc.getDescription().c_str());
 	GUI::MessageDialog warn(message, _("Move"), altButtons);
 	switch (runDialog(warn)) {
 	case GUI::kMessageOK:
-		if (!getMetaEngine()->copySaveFileToFreeSlot(_targetName.c_str(), getAutosaveSlot())) {
-			GUI::MessageDialog error(_("ERROR: Could not copy the savegame to a new slot"));
-			error.runModal();
-			return false;
+		if (getMetaEngine()->copySaveFileToFreeSlot(_targetName.c_str(), getAutosaveSlot())) {
+				g_system->getSavefileManager()->removeSavefile(
+							getMetaEngine()->getSavegameFile(getAutosaveSlot(), _targetName.c_str()));
+		} else {
+				GUI::MessageDialog error(_("ERROR: Could not copy the savegame to a new slot"));
+				error.runModal();
+				return false;
 		}
 		return true;
-	case GUI::kMessageAlt: // Overwrite
+	case GUI::kMessageAlt: // Delete
+		g_system->getSavefileManager()->removeSavefile(
+					getMetaEngine()->getSavegameFile(getAutosaveSlot(), _targetName.c_str()));
 		return true;
-	case GUI::kMessageAlt + 1: // Cancel autosave
-		_autosaveInterval = 0;
+	case GUI::kMessageAlt + 1: // Skip autosave
 		return false;
 	default: // Hitting Escape returns -1. On this case, don't save but do prompt again later.
 		return false;
@@ -602,9 +637,9 @@ void Engine::saveAutosaveIfEnabled() {
 		saveFlag = false;
 	}
 
-	if (saveFlag) {
-		_lastAutosaveTime = _system->getMillis();
-	} else {
+	_lastAutosaveTime = _system->getMillis();
+	
+	if (!saveFlag) {
 		// Set the next autosave interval to be in 5 minutes, rather than whatever
 		// full autosave interval the user has selected
 		_lastAutosaveTime += ((5 * 60 - _autosaveInterval) * 1000);

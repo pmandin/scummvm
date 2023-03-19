@@ -20,6 +20,7 @@
  */
 
 #include "common/config-manager.h"
+#include "common/gui_options.h"
 #include "common/savefile.h"
 #include "common/system.h"
 #include "common/events.h"
@@ -31,6 +32,7 @@
 
 #include "gui/gui-manager.h"
 #include "gui/widget.h"
+#include "gui/widgets/edittext.h"
 #include "gui/ThemeEval.h"
 
 #include "scumm/dialogs.h"
@@ -570,7 +572,7 @@ const Common::U32String InfoDialog::queryResString(int stringno) {
 
 const ResString &InfoDialog::getStaticResString(Common::Language lang, int stringno) {
 	// The string parts are only needed for v1/2. So we need to provide only the
-	// language varieties that exist for these. I have added the langugage I found
+	// language varieties that exist for these. I have added the languages I found
 	// in scumm-md5.h. I guess we could actually ditch the first 3 lines...
 	static const ResString strMap1[][6] = {
 		{	// English
@@ -633,7 +635,7 @@ const ResString &InfoDialog::getStaticResString(Common::Language lang, int strin
 
 	// Added in SCUMM4. Only the numbers are used, so there
 	// is no need to provide language specific strings; there are
-	// some exceptions for which there's only an hardcoded English
+	// some exceptions for which there's only a hardcoded English
 	// string.
 	static const ResString strMap2[] = {
 		{7, ("Save")},
@@ -750,7 +752,7 @@ const ResString &InfoDialog::getStaticResString(Common::Language lang, int strin
 	bool useHardcodedV3QuitPrompt = stringno == 5 && _vm->_game.version == 3 && _vm->_game.id != GID_LOOM;
 	bool useFixedDottMenuStrings = stringno >= 21 && stringno <= 26 && _vm->_game.id == GID_TENTACLE;
 
-	// I have added the langugages I found in scumm-md5.h for v1/2 games...
+	// I have added the languages I found in scumm-md5.h for v1/2 games...
 	int langIndex = 0;
 	switch (lang) {
 	case Common::FR_FRA:
@@ -1346,5 +1348,153 @@ void MI1CdGameOptionsWidget::updateIntroAdjustmentValue() {
 void MI1CdGameOptionsWidget::updateOutlookAdjustmentValue() {
 	updateAdjustmentSlider(_outlookAdjustmentSlider, _outlookAdjustmentValue);
 }
+
+#ifdef USE_ENET
+// HE Network Play Adjustment settings
+
+HENetworkGameOptionsWidget::HENetworkGameOptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain, Common::String gameid) :
+		ScummOptionsContainerWidget(boss, name, "HENetworkGameOptionsDialog", domain), _gameid(gameid) {
+	Common::String extra = ConfMan.get("extra", domain);
+
+	// Add back the "Load modded audio" option.
+	_audioOverride = nullptr;
+	const Common::String guiOptionsString = ConfMan.get("guioptions", domain);
+	const Common::String guiOptions = parseGameGUIOptions(guiOptionsString);
+	if (guiOptions.contains(GUIO_AUDIO_OVERRIDE))
+		_audioOverride = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.AudioOverride", _("Load modded audio"), _("Replace music, sound effects, and speech clips with modded audio files, if available."));
+
+	GUI::StaticTextWidget *text = new GUI::StaticTextWidget(widgetsBoss(), "HENetworkGameOptionsDialog.SessionServerLabel", _("Multiplayer Server:"));
+	text->setAlign(Graphics::TextAlign::kTextAlignEnd);
+
+	if (_gameid == "football" || _gameid == "baseball2001") {
+		// Lobby configuration (Do not include LAN settings)
+#ifdef USE_LIBCURL
+		text->setLabel(_("Online Server:"));
+		_lobbyServerAddr = new GUI::EditTextWidget(widgetsBoss(), "HENetworkGameOptionsDialog.LobbyServerAddress", Common::U32String(""), _("Address of the server to connect to for online play.  It must start with either \"https://\" or \"http://\" schemas."));
+		_serverResetButton = addClearButton(widgetsBoss(), "HENetworkGameOptionsDialog.ServerReset", kResetServersCmd);
+		_enableCompetitiveMods = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.EnableCompetitiveMods", _("Enable online competitive mods"), _("Enables custom-made modifications intented for online competitive play."));
+#endif
+	} else {
+		// Network configuration (Include LAN settings)
+		_enableSessionServer = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.EnableSessionServer", _("Enable connection to Multiplayer Server"), _("Toggles the connection to the server that allows hosting and joining online multiplayer games over the Internet."), kEnableSessionCmd);
+		_enableLANBroadcast = new GUI::CheckboxWidget(widgetsBoss(), "HENetworkGameOptionsDialog.EnableLANBroadcast", _("Host games over LAN"), _("Allows the game sessions to be discovered over your local area network."));
+
+		_sessionServerAddr = new GUI::EditTextWidget(widgetsBoss(), "HENetworkGameOptionsDialog.SessionServerAddress", Common::U32String(""), _("Address of the server to connect to for hosting and joining online game sessions."));
+
+		_serverResetButton = addClearButton(widgetsBoss(), "HENetworkGameOptionsDialog.ServerReset", kResetServersCmd);
+	}
+}
+
+void HENetworkGameOptionsWidget::load() {
+	if (_audioOverride) {
+		bool audioOverride = true;
+		if (ConfMan.hasKey("audio_override", _domain))
+			audioOverride = ConfMan.getBool("audio_override", _domain);
+		_audioOverride->setState(audioOverride);
+	}
+	if (_gameid == "football" || _gameid == "baseball2001") {
+#ifdef USE_LIBCURL
+		Common::String lobbyServerAddr = "https://multiplayer.scummvm.org:9130";
+		bool enableCompetitiveMods = false;
+
+		if (ConfMan.hasKey("lobby_server", _domain))
+			lobbyServerAddr = ConfMan.get("lobby_server", _domain);
+		_lobbyServerAddr->setEditString(lobbyServerAddr);
+		if (ConfMan.hasKey("enable_competitive_mods", _domain))
+			enableCompetitiveMods = ConfMan.getBool("enable_competitive_mods", _domain);
+		_enableCompetitiveMods->setState(enableCompetitiveMods);
+#endif
+	} else {
+		bool enableSessionServer = true;
+		bool enableLANBroadcast = true;
+		Common::String sessionServerAddr = "multiplayer.scummvm.org";
+
+		if (ConfMan.hasKey("enable_session_server", _domain))
+			enableSessionServer = ConfMan.getBool("enable_session_server", _domain);
+		_enableSessionServer->setState(enableSessionServer);
+
+		if (ConfMan.hasKey("enable_lan_broadcast", _domain))
+			enableLANBroadcast = ConfMan.getBool("enable_lan_broadcast", _domain);
+		_enableLANBroadcast->setState(enableLANBroadcast);
+
+		if (ConfMan.hasKey("session_server", _domain))
+			sessionServerAddr = ConfMan.get("session_server", _domain);
+		_sessionServerAddr->setEditString(sessionServerAddr);
+		_sessionServerAddr->setEnabled(enableSessionServer);
+	}
+}
+
+bool HENetworkGameOptionsWidget::save() {
+	if (_audioOverride)
+		ConfMan.setBool("audio_override", _audioOverride->getState(), _domain);
+	if (_gameid == "football" || _gameid == "baseball2001") {
+#ifdef USE_LIBCURL
+		ConfMan.set("lobby_server", _lobbyServerAddr->getEditString(), _domain);
+		ConfMan.setBool("enable_competitive_mods", _enableCompetitiveMods->getState(), _domain);
+#endif
+	} else {
+		ConfMan.setBool("enable_session_server", _enableSessionServer->getState(), _domain);
+		ConfMan.setBool("enable_lan_broadcast", _enableLANBroadcast->getState(), _domain);
+		ConfMan.set("session_server", _sessionServerAddr->getEditString(), _domain);
+	}
+	return true;
+}
+
+void HENetworkGameOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const {
+	if (_gameid == "football" || _gameid == "baseball2001") {
+#ifdef USE_LIBCURL
+		layouts.addDialog(layoutName, overlayedLayout)
+			.addLayout(GUI::ThemeLayout::kLayoutVertical, 5)
+				.addPadding(0, 0, 12, 0)
+				.addWidget("AudioOverride", "Checkbox")
+				.addLayout(GUI::ThemeLayout::kLayoutHorizontal, 12)
+					.addPadding(0, 0, 12, 0)
+					.addWidget("SessionServerLabel", "OptionsLabel")
+					.addWidget("LobbyServerAddress", "EditTextWidget")
+					.addWidget("ServerReset", "", 15, 15)
+				.closeLayout()
+				.addWidget("EnableCompetitiveMods", "Checkbox")
+			.closeLayout()
+		.closeDialog();
+#endif
+	} else {
+		layouts.addDialog(layoutName, overlayedLayout)
+			.addLayout(GUI::ThemeLayout::kLayoutVertical, 5)
+				.addPadding(0, 0, 12, 0)
+				.addWidget("EnableSessionServer", "Checkbox")
+				.addWidget("EnableLANBroadcast", "Checkbox")
+				.addLayout(GUI::ThemeLayout::kLayoutHorizontal, 12)
+					.addPadding(0, 0, 12, 0)
+					.addWidget("SessionServerLabel", "OptionsLabel")
+					.addWidget("SessionServerAddress", "EditTextWidget")
+					.addWidget("ServerReset", "", 15, 15)
+				.closeLayout()
+			.closeLayout()
+		.closeDialog();
+	}
+}
+
+void HENetworkGameOptionsWidget::handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) {
+
+	switch (cmd) {
+	case kEnableSessionCmd:
+		_sessionServerAddr->setEnabled(_enableSessionServer->getState());
+		g_gui.scheduleTopDialogRedraw();
+		break;
+	case kResetServersCmd:
+		if (_gameid == "football" || _gameid == "baseball2001") {
+			_lobbyServerAddr->setEditString(Common::U32String("https://multiplayer.scummvm.org:9130"));
+		} else {
+			_enableSessionServer->setState(true);
+			_sessionServerAddr->setEditString(Common::U32String("multiplayer.scummvm.org"));
+		}
+		g_gui.scheduleTopDialogRedraw();
+		break;
+	default:
+		GUI::OptionsContainerWidget::handleCommand(sender, cmd, data);
+		break;
+	}
+}
+#endif
 
 } // End of namespace Scumm

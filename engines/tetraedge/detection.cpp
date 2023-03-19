@@ -20,6 +20,7 @@
  */
 
 #include "tetraedge/detection.h"
+#include "tetraedge/metaengine.h"
 #include "tetraedge/detection_tables.h"
 
 const DebugChannelDef TetraedgeMetaEngineDetection::debugFlagList[] = {
@@ -35,5 +36,36 @@ TetraedgeMetaEngineDetection::TetraedgeMetaEngineDetection() : AdvancedMetaEngin
 	sizeof(ADGameDescription), Tetraedge::GAME_NAMES) {
 	_flags = kADFlagMatchFullPaths;
 }
+
+static const Common::Language *getGameLanguages() {
+	static Common::Language languages[] = {
+		Common::EN_ANY,
+		Common::FR_FRA,
+		Common::DE_DEU,
+		Common::IT_ITA,
+		Common::ES_ESP,
+		Common::RU_RUS,
+		Common::UNK_LANG
+	};
+	return languages;
+}
+
+DetectedGame TetraedgeMetaEngineDetection::toDetectedGame(const ADDetectedGame &adGame, ADDetectedGameExtraInfo *extraInfo) const {
+	DetectedGame game = AdvancedMetaEngineDetection::toDetectedGame(adGame);
+
+	// The AdvancedDetector model only allows specifying a single supported
+	// game language. Both games support multiple languages
+	if (game.gameId == "syberia" || game.gameId == "syberia2") {
+		for (const Common::Language *language = getGameLanguages(); *language != Common::UNK_LANG; language++) {
+			// "ru" only present on syberia 1
+			if (game.gameId == "syberia2" && *language == Common::RU_RUS)
+				continue;
+			game.appendGUIOptions(Common::getGameGUIOptionsDescriptionLanguage(*language));
+		}
+	}
+
+	return game;
+}
+
 
 REGISTER_PLUGIN_STATIC(TETRAEDGE_DETECTION, PLUGIN_TYPE_ENGINE_DETECTION, TetraedgeMetaEngineDetection);

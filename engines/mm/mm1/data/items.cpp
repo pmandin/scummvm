@@ -45,8 +45,10 @@ bool ItemsArray::load() {
 		Common::String line = f.readLine();
 		assert(line.size() > 20 && line[0] == '"' && line[15] == '"');
 
-		item._name = Common::String(line.c_str() + 1, line.c_str() + 14);
+		item._name = Common::String(line.c_str() + 1, line.c_str() + 15);
 		line = Common::String(line.c_str() + 16);
+		while (item._name.lastChar() == ' ')
+			item._name.deleteLastChar();
 
 		item._disablements = getNextValue(line);
 		item._equipMode = (EquipMode)getNextValue(line);
@@ -65,8 +67,6 @@ bool ItemsArray::load() {
 Item *ItemsArray::getItem(byte index) const {
 	assert(index > 0);
 	g_globals->_currItem = (*this)[index - 1];
-	g_globals->_currItem._name = STRING[Common::String::format(
-		"stats.items.%d", (int)index)];
 
 	return &g_globals->_currItem;
 }

@@ -20,7 +20,7 @@
  */
 
 #include "common/util.h"
-#include "mm/utils/strings.h"
+#include "mm/shared/utils/strings.h"
 #include "mm/mm1/views_enh/game_messages.h"
 #include "mm/mm1/events.h"
 #include "mm/mm1/globals.h"
@@ -31,12 +31,10 @@ namespace ViewsEnh {
 
 GameMessages::YesNo::YesNo() :
 		ScrollView("MessagesYesNo", g_events) {
-	_bounds = Common::Rect(234, 18 * 8, 320, 200);
-	addButton(&g_globals->_confirmIcons,
-		Common::Point(14, 10), 0,
+	_bounds = Common::Rect(234, 144, 320, 200);
+	addButton(&g_globals->_confirmIcons, Common::Point(0, 0), 0,
 		Common::KeyState(Common::KEYCODE_y, 'y'));
-	addButton(&g_globals->_confirmIcons,
-		Common::Point(40, 10), 2,
+	addButton(&g_globals->_confirmIcons, Common::Point(26, 0), 2,
 		Common::KeyState(Common::KEYCODE_n, 'n'));
 }
 
@@ -47,52 +45,60 @@ bool GameMessages::YesNo::msgKeypress(const KeypressMessage &msg) {
 
 /*------------------------------------------------------------------------*/
 
-GameMessages::GameMessages(UIElement *owner) :
-		ScrollText("GameMessages", owner) {
+GameMessages::GameMessages() : ScrollText("GameMessages") {
+	setBounds(Common::Rect(0, 144, 234, 200));
 }
 
 void GameMessages::draw() {
-	// Only draw non-focused messages for a single turn
-	if (_show || g_events->focusedView() == this) {
-		ScrollText::draw();
-		if (_ynCallback) {
-			_yesNo.resetSelectedButton();
-			_yesNo.draw();
-		}
+	ScrollText::draw();
 
-		_show = false;
+	if (_ynCallback && !isDelayActive()) {
+		_yesNo.resetSelectedButton();
+		_yesNo.draw();
 	}
 }
 
+bool GameMessages::msgFocus(const FocusMessage &msg) {
+	MetaEngine::setKeybindingMode(_ynCallback || _keyCallback ?
+		KeybindingMode::KBMODE_MENUS :
+		KeybindingMode::KBMODE_NORMAL);
+	return true;
+}
+
 bool GameMessages::msgInfo(const InfoMessage &msg) {
-	if (msg._ynCallback || msg._keyCallback) {
-		// Do a first draw to show 3d view at new position
-		g_events->redraw();
-		g_events->drawElements();
+	// Do a first draw to show 3d view at new position
+	g_events->redraw();
+	g_events->draw();
 
-		addView(this);
-	}
-
-	setBounds(Common::Rect(0, 18 * 8, 234, 200));
-
-	_show = true;
 	_ynCallback = msg._ynCallback;
 	_keyCallback = msg._keyCallback;
 
+	// Add the view
+	addView(this);
+
+	if (msg._largeMessage)
+		setBounds(Common::Rect(0, 90, 234, 200));
+	else
+		setBounds(Common::Rect(0, 144, 234, 200));
+
 	// Process the lines
 	clear();
-	for (auto line : msg._lines)
-		addText(line._text, line.y, 0, ALIGN_LEFT, line.x * 8);
+	for (const auto &line : msg._lines)
+		addText(line._text, line.y, 0,
+			(line.x > 0) ? ALIGN_MIDDLE : line._align, 0);
 
-	redraw();
+	if (msg._delaySeconds)
+		delaySeconds(msg._delaySeconds);
+
 	return true;
 }
 
 bool GameMessages::msgKeypress(const KeypressMessage &msg) {
-	if (g_events->focusedView() == this) {
-		if (_keyCallback) {
-			_keyCallback(msg);
-		} else if (msg.keycode == Common::KEYCODE_n) {
+	if (_keyCallback) {
+		_keyCallback(msg);
+
+	} else if (_ynCallback) {
+		if (msg.keycode == Common::KEYCODE_n) {
 			close();
 			g_events->drawElements();
 		} else if (msg.keycode == Common::KEYCODE_y) {
@@ -100,8 +106,46 @@ bool GameMessages::msgKeypress(const KeypressMessage &msg) {
 			g_events->drawElements();
 			_ynCallback();
 		}
+	} else {
+		// Displayed message, any keypress closes the window
+		// and passes control to the game
+		close();
 
-		return true;
+		if (msg.keycode != Common::KEYCODE_SPACE)
+			send("Game", msg);
+	}
+
+	return true;
+}
+
+bool GameMessages::msgAction(const ActionMessage &msg) {
+	if (_ynCallback || _keyCallback) {
+		switch (msg._action) {
+		case KEYBIND_ESCAPE:
+			if (_keyCallback) {
+				_keyCallback(Common::KeyState(Common::KEYCODE_ESCAPE));
+			} else {
+				close();
+				g_events->drawElements();
+			}
+			return true;
+		case KEYBIND_SELECT:
+			if (_keyCallback) {
+				_keyCallback(Common::KeyState(Common::KEYCODE_RETURN));
+			} else {
+				close();
+				g_events->drawElements();
+				_ynCallback();
+			}
+			return true;
+		default:
+			break;
+		}
+	} else {
+		// Single turn message display
+		close();
+		if (msg._action != KEYBIND_SELECT)
+			return send("Game", msg);
 	}
 
 	return false;
@@ -119,6 +163,13 @@ bool GameMessages::msgMouseUp(const MouseUpMessage &msg) {
 	if (_ynCallback)
 		return send("MessagesYesNo", msg);
 	return false;
+}
+
+void GameMessages::timeout() {
+	close();
+
+	if (_timeoutCallback)
+		_timeoutCallback();
 }
 
 } // namespace ViewsEnh

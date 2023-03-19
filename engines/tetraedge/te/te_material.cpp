@@ -83,7 +83,6 @@ TeMaterial &TeMaterial::operator=(const TeMaterial &other) {
 	_enableLights = other._enableLights;
 	_shininess = other._shininess;
 	_mode = other._mode;
-	_enableLights = other._enableLights;
 	_isShadowTexture = other._isShadowTexture;
 
 	return *this;
@@ -99,7 +98,7 @@ void TeMaterial::deserialize(Common::SeekableReadStream &stream, TeMaterial &mat
 	if (nameStr.size()) {
 		TeCore *core = g_engine->getCore();
 		Common::FSNode texNode = core->findFile(Common::Path(texPath).join(nameStr));
-		material._texture = Te3DTexture::load2(texNode, 0x500);
+		material._texture = Te3DTexture::load2(texNode, false);
 		if (!material._texture)
 			warning("failed to load texture %s (texpath %s)", nameStr.c_str(), texPath.c_str());
 	}

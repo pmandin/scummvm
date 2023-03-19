@@ -251,6 +251,7 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 	int srcBpp = _img->getSurface()->format.bytesPerPixel;
 
 	const byte *pal = _img->getPalette();
+	bool previouslyDithered = _ditheredImg != nullptr;
 	if (_ditheredImg) {
 		_ditheredImg->free();
 		delete _ditheredImg;
@@ -286,8 +287,10 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 				currentPalette = g_director->getPalette(currentPaletteId);
 			}
 			int castPaletteId = score->resolvePaletteId(_clut);
+			// It is possible for Director to have saved an invalid ID in _clut;
+			// if this is the case, do no dithering.
 			if (!castPaletteId)
-				castPaletteId = cast->_defaultPalette;
+				castPaletteId = currentPaletteId;
 
 			// Check if the palette is in the middle of a color fade event
 			bool isColorCycling = score->isPaletteColorCycling();
@@ -317,6 +320,9 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 				break;
 			// 8bpp - if using a different palette, and we're not doing a color cycling operation, convert using nearest colour matching
 			case 8:
+				// Only redither 8-bit images if we have the flag set
+				if (!movie->_remapPalettesWhenNeeded)
+					break;
 				if (castPaletteId != currentPaletteId && !isColorCycling) {
 					const auto pals = g_director->getLoadedPalettes();
 					int palIndex = pals.contains(castPaletteId) ? castPaletteId : kClutSystemMac;
@@ -329,6 +335,7 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 			}
 
 			if (_ditheredImg) {
+				debugC(4, kDebugImages, "BitmapCastMember::createWidget(): Dithering image from source palette %d to target palette %d", _clut, score->getCurrentPalette());
 				// Save the palette ID so we can check if a redraw is required
 				_ditheredTargetClut = currentPaletteId;
 
@@ -343,6 +350,8 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 						}
 					}
 				}
+			} else if (previouslyDithered) {
+				debugC(4, kDebugImages, "BitmapCastMember::createWidget(): Removed dithered image, score palette %d matches cast member", score->getCurrentPalette());
 			}
 
 		}
@@ -1121,7 +1130,7 @@ TextCastMember::TextCastMember(Cast *cast, uint16 castId, Common::SeekableReadSt
 	_maxHeight = _textHeight = 0;
 
 	_bgcolor = 0;
-	_fgcolor = 0;
+	_fgcolor = 0xff;
 
 	_textFlags = 0;
 	_scroll = 0;
@@ -1431,6 +1440,12 @@ void TextCastMember::updateFromWidget(Graphics::MacWidget *widget) {
 }
 
 Common::String TextCastMember::formatInfo() {
+	Common::String format = _ptext.encode();
+	for (int i = 0; i < (int)format.size(); i++) {
+		if (format[i] == '\r')
+			format.replace(i, 1, "\n");
+	}
+
 	return Common::String::format(
 		"initialRect: %dx%d@%d,%d, boundingRect: %dx%d@%d,%d, foreColor: %d, backColor: %d, editable: %d, text: \"%s\"",
 		_initialRect.width(), _initialRect.height(),
@@ -1438,7 +1453,7 @@ Common::String TextCastMember::formatInfo() {
 		_boundingRect.width(), _boundingRect.height(),
 		_boundingRect.left, _boundingRect.top,
 		getForeColor(), getBackColor(),
-		_editable, _ptext.encode().c_str()
+		_editable, format.c_str()
 	);
 
 }
@@ -1599,6 +1614,17 @@ PaletteCastMember::PaletteCastMember(Cast *cast, uint16 castId, Common::Seekable
 	: CastMember(cast, castId, stream) {
 	_type = kCastPalette;
 	_palette = nullptr;
+}
+
+Common::String PaletteCastMember::formatInfo() {
+	Common::String result;
+	if (_palette) {
+		result = "data: ";
+		for (size_t i = 0; i < (size_t)_palette->length; i++) {
+			result += Common::String::format("%02X%02X%02X", _palette->palette[3 * i], _palette->palette[3 * i + 1], _palette->palette[3 * i + 2]);
+		}
+	}
+	return result;
 }
 
 } // End of namespace Director

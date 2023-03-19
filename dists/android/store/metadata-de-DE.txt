@@ -31,16 +31,12 @@ https://forums.scummvm.org/viewforum.php?f=17 ist unser Forum, wo du dich mit an
 Eine vollständige Aufstellung aller Änderungen findest Du unter https://scummvm.org/frs/scummvm/2.5.0/ReleaseNotes.html
 
 *** Beta release name:
-
-2.2.1c (beta)
+2.7.0.2 (beta 3)
 
 *** Beta release notes:
 <de-DE>
-- Verbesserte Behandlung von Installationen auf einer SD-Karte
-- Halbtransparente In-App-Tastatur hinzugefügt
-- Die bilineare Filterung ist standardmäßig deaktiviert
-- Die Korrektur des Seitenverhältnisses ist jetzt standardmäßig aktiviert
-- Die ScummVM-Grafikoptionen geben nun den aktuellen Status der Einstellungen korrekt wieder
-- Fehler in der Upload-Funktion des LAN-Server-Modus behoben
-- Die Zurück-Taste fungiert nun als standardmäßig aktive "Überspringen"-Taste in einem Spiel
+- Schnellere App-Ladezeit
+- Eine Reihe von gemeldeten App-Abstürzen wurde behoben
+- Unterstützung von Geräten mit mindestens API-Level 16 (Android 4.1) wieder eingeführt
+- Vollständige Versionshinweise für 2.7.0 findest Du unter: https://scummvm.org/frs/scummvm/2.7.0/ReleaseNotes.html
 </de-DE>

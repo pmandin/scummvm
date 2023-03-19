@@ -25,12 +25,14 @@
 #include "common/array.h"
 #include "common/serializer.h"
 #include "mm/mm1/data/items.h"
+#include "mm/shared/xeen/sprites.h"
 
 namespace MM {
 namespace MM1 {
 
 #define INVENTORY_COUNT 6
 #define MAX_LEVEL 200
+#define NUM_PORTRAITS 12
 
 enum CharacterClass {
 	KNIGHT = 1, PALADIN = 2, ARCHER = 3, CLERIC = 4,
@@ -54,6 +56,22 @@ enum Condition {
 	DEAD = 0x40, STONE = 0x20,
 	UNCONSCIOUS = 0x40, PARALYZED = 0x20, POISONED = 0x10,
 	DISEASED = 8,  SILENCED = 4, BLINDED = 2, ASLEEP = 1
+};
+
+enum ConditionEnum {
+	HEART_BROKEN = 1,
+	C_BLINDED = 2,			// WEAK condition in Xeen
+	C_POISONED = 3,
+	C_DISEASED = 4,
+	C_ASLEEP = 8,
+	DEPRESSED = 9,
+	C_SILENCED = 10,		// CONFUSED condition in Xeen
+	C_PARALYZED = 11,
+	C_UNCONSCIOUS = 12,
+	C_DEAD = 13,
+	C_STONE = 14,
+	C_ERADICATED = 15,
+	C_GOOD = 16
 };
 
 enum Resistance {
@@ -440,20 +458,26 @@ struct Character : public PrimaryAttributes {
 	byte _worthiness = 0;
 	byte _alignmentCtr = 0;
 	byte _flags[14];
+
 	byte _portrait = 0;
+	Shared::Xeen::SpriteResource _faceSprites;
 
 	// Non persistent fields
 	byte _numDrinks = 0;
 	// Combat fields
 	bool _checked = false;
 	bool _canAttack = false;
+	int _nonCombatSpell = -1;
+	int _combatSpell = -1;
 
 	Character();
 
 	/**
 	 * Handles save/loading a character
+	 * @param portraitNum		Override for portrait to use for
+	 * a character being loaded from the game defaults
 	 */
-	void synchronize(Common::Serializer &s);
+	void synchronize(Common::Serializer &s, int portraitNum = -1);
 
 	/**
 	 * Equality test
@@ -532,6 +556,33 @@ struct Character : public PrimaryAttributes {
 	 * value for the party at the end of the game
 	 */
 	size_t getPerformanceTotal() const;
+
+	/**
+	 * Loads the face sprites for the character
+	 */
+	void loadFaceSprites();
+
+	/**
+	 * Returns the color to use in enhanced mode to
+	 * represent the color of a character attribute
+	 */
+	byte statColor(int amount, int threshold) const;
+
+	/**
+	 * Returns the condition color for display
+	 */
+	byte conditionColor() const;
+
+	/**
+	 * Returns the worst condition, if any, a character
+	 * currently has.
+	 */
+	ConditionEnum worstCondition() const;
+
+	/**
+	 * Returns a string for a given condition
+	 */
+	static Common::String getConditionString(ConditionEnum cond);
 };
 
 } // namespace MM1

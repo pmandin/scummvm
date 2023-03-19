@@ -64,8 +64,6 @@ Sprite::Sprite(Frame *frame) {
 	_backColor = g_director->_wm->_colorWhite;
 	_foreColor = g_director->_wm->_colorBlack;
 
-	_blend = 0;
-
 	_volume = 0;
 	_stretch = 0;
 }
@@ -108,8 +106,6 @@ Sprite& Sprite::operator=(const Sprite &sprite) {
 	_immediate = sprite._immediate;
 	_backColor = sprite._backColor;
 	_foreColor = sprite._foreColor;
-
-	_blend = sprite._blend;
 
 	_volume = sprite._volume;
 	_stretch = sprite._stretch;
@@ -165,10 +161,10 @@ void Sprite::createQDMatte() {
 		break;
 	case kLineBottomTopSprite:
 	case kLineTopBottomSprite:
-		warning("Sprite::createQDMatte doesn't support creating matte for type %d", _spriteType);
+		warning("Sprite::createQDMatte doesn't support creating matte for type %d (%s)", _spriteType, spriteType2str(_spriteType));
 		break;
 	default:
-		warning("Sprite::createQDMatte Expected shape type but got type %d", _spriteType);
+		warning("Sprite::createQDMatte Expected shape type but got type %d (%s)", _spriteType, spriteType2str(_spriteType));
 	}
 
 	Graphics::Surface surface;
@@ -427,7 +423,7 @@ bool Sprite::checkSpriteType() {
 	// if it doesn't match, then we treat it as transparent
 	// this happens in warlock-mac data/stambul/c up
 	if (_spriteType == kBitmapSprite && _cast->_type != kCastBitmap) {
-		if (debugChannelSet(2, kDebugImages))
+		if (debugChannelSet(4, kDebugImages))
 			warning("Sprite::checkSpriteType: Didn't render sprite due to the sprite type mismatch with cast type");
 		return false;
 	}
@@ -497,7 +493,7 @@ void Sprite::setCast(CastMemberID memberID) {
 		}
 
 	} else {
-		if (_castId.member != 0 && debugChannelSet(kDebugImages, 2))
+		if (_castId.member != 0 && debugChannelSet(kDebugImages, 4))
 			warning("Sprite::setCast(): %s is null", memberID.asString().c_str());
 	}
 }

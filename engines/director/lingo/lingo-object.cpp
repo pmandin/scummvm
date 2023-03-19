@@ -45,6 +45,7 @@
 #include "director/lingo/xlibs/cdromxobj.h"
 #include "director/lingo/xlibs/darkenscreen.h"
 #include "director/lingo/xlibs/developerStack.h"
+#include "director/lingo/xlibs/draw.h"
 #include "director/lingo/xlibs/ednox.h"
 #include "director/lingo/xlibs/fileexists.h"
 #include "director/lingo/xlibs/fileio.h"
@@ -72,10 +73,12 @@
 #include "director/lingo/xlibs/serialportxobj.h"
 #include "director/lingo/xlibs/soundjam.h"
 #include "director/lingo/xlibs/spacemgr.h"
+#include "director/lingo/xlibs/unittest.h"
 #include "director/lingo/xlibs/videodiscxobj.h"
 #include "director/lingo/xlibs/volumelist.h"
 #include "director/lingo/xlibs/widgetxobj.h"
 #include "director/lingo/xlibs/winxobj.h"
+#include "director/lingo/xlibs/xio.h"
 #include "director/lingo/xlibs/xplayanim.h"
 #include "director/lingo/xlibs/yasix.h"
 
@@ -157,6 +160,7 @@ static struct XLibProto {
 	{ CDROMXObj::fileNames,				CDROMXObj::open,			CDROMXObj::close,			kXObj,					200 },	// D2
 	{ DarkenScreen::fileNames,			DarkenScreen::open,			DarkenScreen::close,		kXObj,					300 },	// D3
 	{ DeveloperStack::fileNames,		DeveloperStack::open,		DeveloperStack::close,		kXObj,					300 },	// D3
+	{ DrawXObj::fileNames,				DrawXObj::open,				DrawXObj::close,			kXObj,					400 },	// D4
 	{ Ednox::fileNames,					Ednox::open,				Ednox::close,				kXObj,					300 },	// D3
 	{ FileExists::fileNames,			FileExists::open,			FileExists::close,			kXObj,					300 },	// D3
 	{ FileIO::fileNames,				FileIO::open,				FileIO::close,				kXObj | kXtraObj,		200 },	// D2
@@ -185,9 +189,11 @@ static struct XLibProto {
 	{ SerialPortXObj::fileNames,		SerialPortXObj::open,		SerialPortXObj::close,		kXObj,					200 },	// D2
 	{ SoundJam::fileNames,				SoundJam::open,				SoundJam::close,			kXObj,					400 },	// D4
 	{ SpaceMgr::fileNames,				SpaceMgr::open,				SpaceMgr::close,			kXObj,					400 },	// D4
+	{ UnitTest::fileNames,				UnitTest::open,				UnitTest::close,			kXObj,					400 },	// D4
 	{ VolumeList::fileNames,			VolumeList::open,			VolumeList::close,			kXObj,					300 },	// D3
 	{ WidgetXObj::fileNames,			WidgetXObj::open,			WidgetXObj::close, 			kXObj,					400 },  // D4
 	{ VideodiscXObj::fileNames,			VideodiscXObj::open,		VideodiscXObj::close,		kXObj,					200 },	// D2
+	{ XioXObj::fileNames,				XioXObj::open,				XioXObj::close,				kXObj,					400 },	// D3
 	{ XPlayAnim::fileNames,				XPlayAnim::open,			XPlayAnim::close,			kXObj,					300 },	// D3
 	{ Yasix::fileNames,					Yasix::open,				Yasix::close,				kXObj,					300 },	// D3
 	{ nullptr, nullptr, nullptr, 0, 0 }
@@ -708,7 +714,7 @@ Datum CastMember::getField(int field) {
 		break;
 	case kTheCastType:
 		d.type = SYMBOL;
-		d.u.s = new Common::String(castTypeToString(_type));
+		d.u.s = new Common::String(castType2str(_type));
 		break;
 	case kTheFileName:
 		if (castInfo)
@@ -1072,7 +1078,8 @@ bool TextCastMember::setField(int field, const Datum &d) {
 		}
 		if (toEdit) {
 			Common::Rect bbox = toEdit->getBbox();
-			toEdit->_widget = createWidget(bbox, toEdit, toEdit->_sprite->_spriteType);
+			if (!toEdit->_widget)
+				toEdit->_widget = createWidget(bbox, toEdit, toEdit->_sprite->_spriteType);
 		}
 	}
 
@@ -1128,8 +1135,6 @@ bool TextCastMember::setField(int field, const Datum &d) {
 		((Graphics::MacText *)toEdit->_widget)->enforceTextFont((uint16) g_director->_wm->_fontMan->getFontIdByName(d.asString()));
 		_ptext = ((Graphics::MacText *)toEdit->_widget)->getPlainText();
 		_ftext = ((Graphics::MacText *)toEdit->_widget)->getTextChunk(0, 0, -1, -1, true);
-		_modified = true;
-		toEdit->_widget->removeWidget(_widget);
 		return true;
 	case kTheTextHeight:
 		_lineSpacing = d.asInt();
@@ -1143,8 +1148,6 @@ bool TextCastMember::setField(int field, const Datum &d) {
 		((Graphics::MacText *)toEdit->_widget)->setTextSize(d.asInt());
 		_ptext = ((Graphics::MacText *)toEdit->_widget)->getPlainText();
 		_ftext = ((Graphics::MacText *)toEdit->_widget)->getTextChunk(0, 0, -1, -1, true);
-		_modified = true;
-		toEdit->_widget->removeWidget(_widget);
 		return true;
 	case kTheTextStyle:
 		if (!toEdit) {
@@ -1157,8 +1160,6 @@ bool TextCastMember::setField(int field, const Datum &d) {
 		}
 		_ptext = ((Graphics::MacText *)toEdit->_widget)->getPlainText();
 		_ftext = ((Graphics::MacText *)toEdit->_widget)->getTextChunk(0, 0, -1, -1, true);
-		_modified = true;
-		toEdit->_widget->removeWidget(_widget);
 		return true;
 	default:
 		break;

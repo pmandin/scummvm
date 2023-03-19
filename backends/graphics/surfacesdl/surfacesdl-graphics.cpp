@@ -137,8 +137,8 @@ SurfaceSdlGraphicsManager::SurfaceSdlGraphicsManager(SdlEventSource *sdlEventSou
 	_transactionMode(kTransactionNone),
 	_scalerPlugins(ScalerMan.getPlugins()), _scalerPlugin(nullptr), _scaler(nullptr),
 	_needRestoreAfterOverlay(false), _isInOverlayPalette(false), _isDoubleBuf(false), _prevForceRedraw(false), _numPrevDirtyRects(0),
-	_prevCursorNeedsRedraw(false)
-{
+	_prevCursorNeedsRedraw(false),
+	_mouseKeyColor(0) {
 
 	// allocate palette storage
 	_currentPalette = (SDL_Color *)calloc(sizeof(SDL_Color), 256);
@@ -155,7 +155,8 @@ SurfaceSdlGraphicsManager::SurfaceSdlGraphicsManager(SdlEventSource *sdlEventSou
 #endif
 	}
 
-	_mouseBackup.x = _mouseBackup.y = _mouseBackup.w = _mouseBackup.h = 0;
+	_mouseLastRect.x = _mouseLastRect.y = _mouseLastRect.w = _mouseLastRect.h = 0;
+	_mouseNextRect.x = _mouseNextRect.y = _mouseNextRect.w = _mouseNextRect.h = 0;
 
 #ifdef USE_SDL_DEBUG_FOCUSRECT
 	if (ConfMan.hasKey("use_sdl_debug_focusrect"))
@@ -178,8 +179,8 @@ SurfaceSdlGraphicsManager::SurfaceSdlGraphicsManager(SdlEventSource *sdlEventSou
 	_videoMode.filtering = ConfMan.getBool("filtering");
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 	_videoMode.stretchMode = STRETCH_FIT;
-	_videoMode.vsync = ConfMan.getBool("vsync");
 #endif
+	_videoMode.vsync = ConfMan.getBool("vsync");
 
 	_videoMode.scalerIndex = getDefaultScaler();
 	_videoMode.scaleFactor = getDefaultScaleFactor();
@@ -219,7 +220,8 @@ bool SurfaceSdlGraphicsManager::hasFeature(OSystem::Feature f) const {
 		(f == OSystem::kFeatureVSync) ||
 #endif
 		(f == OSystem::kFeatureCursorPalette) ||
-		(f == OSystem::kFeatureIconifyWindow);
+		(f == OSystem::kFeatureIconifyWindow) ||
+		(f == OSystem::kFeatureCursorMask);
 }
 
 void SurfaceSdlGraphicsManager::setFeatureState(OSystem::Feature f, bool enable) {
@@ -235,11 +237,9 @@ void SurfaceSdlGraphicsManager::setFeatureState(OSystem::Feature f, bool enable)
 	case OSystem::kFeatureFilteringMode:
 		setFilteringMode(enable);
 		break;
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	case OSystem::kFeatureVSync:
 		setVSync(enable);
 		break;
-#endif
 	case OSystem::kFeatureCursorPalette:
 		_cursorPaletteDisabled = !enable;
 		blitCursor();
@@ -266,10 +266,8 @@ bool SurfaceSdlGraphicsManager::getFeatureState(OSystem::Feature f) const {
 	case OSystem::kFeatureAspectRatioCorrection:
 		return _videoMode.aspectRatioCorrection;
 #endif
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	case OSystem::kFeatureVSync:
 		return _videoMode.vsync;
-#endif
 	case OSystem::kFeatureFilteringMode:
 		return _videoMode.filtering;
 	case OSystem::kFeatureCursorPalette:
@@ -347,13 +345,13 @@ OSystem::TransactionError SurfaceSdlGraphicsManager::endGFXTransaction() {
 
 			_videoMode.stretchMode = _oldVideoMode.stretchMode;
 		}
-
+#endif
 		if (_videoMode.vsync != _oldVideoMode.vsync) {
 			errors |= OSystem::kTransactionVSyncFailed;
 
 			_videoMode.vsync = _oldVideoMode.vsync;
 		}
-#endif
+
 		if (_videoMode.filtering != _oldVideoMode.filtering) {
 			errors |= OSystem::kTransactionFilteringFailed;
 
@@ -1169,11 +1167,19 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 	// When building with SDL2, the shake offset is added to the active rect instead,
 	// so this isn't needed there.
 	if (_currentShakeXOffset != _gameScreenShakeXOffset ||
-		(_cursorNeedsRedraw && _mouseBackup.x <= _currentShakeXOffset)) {
-		SDL_Rect blackrect = {0, 0, (Uint16)(_gameScreenShakeXOffset * _videoMode.scaleFactor), (Uint16)(_videoMode.screenHeight * _videoMode.scaleFactor)};
+		(_cursorNeedsRedraw && _mouseLastRect.x <= _currentShakeXOffset)) {
+		SDL_Rect blackrect = {0, 0, (Uint16)(_videoMode.screenWidth * _videoMode.scaleFactor), (Uint16)(_videoMode.screenHeight * _videoMode.scaleFactor)};
 
-		if (_videoMode.aspectRatioCorrection && !_overlayInGUI)
+		if (_gameScreenShakeXOffset >= 0)
+			blackrect.w = (Uint16)(_gameScreenShakeXOffset * _videoMode.scaleFactor);
+		else {
+			blackrect.w = ((-_gameScreenShakeXOffset) * _videoMode.scaleFactor);
+			blackrect.x = ((_videoMode.screenWidth + _gameScreenShakeXOffset) * _videoMode.scaleFactor);
+		}
+
+		if (_videoMode.aspectRatioCorrection && !_overlayInGUI) {
 			blackrect.h = real2Aspect(blackrect.h - 1) + 1;
+		}
 
 		SDL_FillRect(_hwScreen, &blackrect, 0);
 
@@ -1182,11 +1188,20 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 		_forceRedraw = true;
 	}
 	if (_currentShakeYOffset != _gameScreenShakeYOffset ||
-		(_cursorNeedsRedraw && _mouseBackup.y <= _currentShakeYOffset)) {
-		SDL_Rect blackrect = {0, 0, (Uint16)(_videoMode.screenWidth * _videoMode.scaleFactor), (Uint16)(_gameScreenShakeYOffset * _videoMode.scaleFactor)};
+		(_cursorNeedsRedraw && _mouseLastRect.y <= _currentShakeYOffset)) {
+		SDL_Rect blackrect = {0, 0, (Uint16)(_videoMode.screenWidth * _videoMode.scaleFactor), (Uint16)(_videoMode.screenHeight * _videoMode.scaleFactor)};
 
-		if (_videoMode.aspectRatioCorrection && !_overlayInGUI)
-			blackrect.h = real2Aspect(blackrect.h - 1) + 1;
+		if (_gameScreenShakeYOffset >= 0)
+			blackrect.h = (Uint16)(_gameScreenShakeYOffset * _videoMode.scaleFactor);
+		else {
+			blackrect.h = ((-_gameScreenShakeYOffset) * _videoMode.scaleFactor);
+			blackrect.y = ((_videoMode.screenHeight + _gameScreenShakeYOffset) * _videoMode.scaleFactor);
+		}
+
+		if (_videoMode.aspectRatioCorrection && !_overlayInGUI) {
+			blackrect.y = real2Aspect(blackrect.y);
+			blackrect.h = real2Aspect(blackrect.h + blackrect.y - 1) - blackrect.y + 1;
+		}
 
 		SDL_FillRect(_hwScreen, &blackrect, 0);
 
@@ -1314,22 +1329,39 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 		dstPitch = _hwScreen->pitch;
 
 		for (r = _dirtyRectList; r != lastRect; ++r) {
-			int dst_x = r->x + _currentShakeXOffset;
-			int dst_y = r->y + _currentShakeYOffset;
-			int dst_w = 0;
-			int dst_h = 0;
+			int src_x = r->x;
+			int src_y = r->y;
+			int dst_x = r->x;
+			int dst_y = r->y;
+			int dst_w = r->w;
+			int dst_h = r->h;
 #ifdef USE_ASPECT
 			int orig_dst_y = 0;
 #endif
+			dst_x += _currentShakeXOffset;
+			if (dst_x < 0) {
+				src_x -= dst_x;
+				dst_w += dst_x;
+				dst_x = 0;
+			}
 
-			if (dst_x < width && dst_y < height) {
-				dst_w = r->w;
+			dst_y += _currentShakeYOffset;
+			if (dst_y < 0) {
+				src_y -= dst_y;
+				dst_h += dst_y;
+				dst_y = 0;
+			}
+
+			if (dst_x < width && dst_y < height && dst_w > 0 && dst_h > 0) {
 				if (dst_w > width - dst_x)
 					dst_w = width - dst_x;
+				if (dst_w > width - src_x)
+					dst_w = width - src_x;
 
-				dst_h = r->h;
 				if (dst_h > height - dst_y)
 					dst_h = height - dst_y;
+				if (dst_h > height - src_y)
+					dst_h = height - src_y;
 
 #ifdef USE_ASPECT
 				orig_dst_y = dst_y;
@@ -1340,18 +1372,18 @@ void SurfaceSdlGraphicsManager::internUpdateScreen() {
 				if (_videoMode.aspectRatioCorrection && !_overlayInGUI)
 					dst_y = real2Aspect(dst_y);
 
-				_scaler->scale((byte *)srcSurf->pixels + (r->x + _maxExtraPixels) * bpp + (r->y + _maxExtraPixels) * srcPitch, srcPitch,
-					(byte *)_hwScreen->pixels + dst_x * bpp + dst_y * dstPitch, dstPitch, dst_w, dst_h, r->x, r->y);
-			}
+				_scaler->scale((byte *)srcSurf->pixels + (src_x + _maxExtraPixels) * bpp + (src_y + _maxExtraPixels) * srcPitch, srcPitch,
+						(byte *)_hwScreen->pixels + dst_x * bpp + dst_y * dstPitch, dstPitch, dst_w, dst_h, src_x, src_y);
 
-			r->x = dst_x;
-			r->y = dst_y;
-			r->w = dst_w * scale1;
-			r->h = dst_h * scale1;
+				r->x = dst_x;
+				r->y = dst_y;
+				r->w = dst_w * scale1;
+				r->h = dst_h * scale1;
 
 #ifdef USE_ASPECT
-			if (_videoMode.aspectRatioCorrection && orig_dst_y < height && !_overlayInGUI)
-				r->h = stretch200To240((uint8 *) _hwScreen->pixels, dstPitch, r->w, r->h, r->x, r->y, orig_dst_y * scale1, _videoMode.filtering, convertSDLPixelFormat(_hwScreen->format));
+				if (_videoMode.aspectRatioCorrection && orig_dst_y < height && !_overlayInGUI)
+					r->h = stretch200To240((uint8 *) _hwScreen->pixels, dstPitch, r->w, r->h, r->x, r->y, orig_dst_y * scale1, _videoMode.filtering, 	convertSDLPixelFormat(_hwScreen->format));
+			}
 #endif
 		}
 		SDL_UnlockSurface(srcSurf);
@@ -1486,11 +1518,30 @@ bool SurfaceSdlGraphicsManager::saveScreenshot(const Common::String &filename) c
 	Graphics::PixelFormat format = convertSDLPixelFormat(_hwScreen->format);
 	Graphics::Surface data;
 	data.init(_hwScreen->w, _hwScreen->h, _hwScreen->pitch, _hwScreen->pixels, format);
+
+	bool success;
+
+	SDL_Palette *sdlPalette = _hwScreen->format->palette;
+	if (sdlPalette) {
+		byte palette[256 * 3];
+		for (int i = 0; i < sdlPalette->ncolors; i++) {
+			palette[(i * 3) + 0] = sdlPalette->colors[i].r;
+			palette[(i * 3) + 1] = sdlPalette->colors[i].g;
+			palette[(i * 3) + 2] = sdlPalette->colors[i].b;
+		}
+
 #ifdef USE_PNG
-	const bool success = Image::writePNG(out, data);
+		success = Image::writePNG(out, data, palette);
 #else
-	const bool success = Image::writeBMP(out, data);
+		success = Image::writeBMP(out, data, palette);
 #endif
+	} else {
+#ifdef USE_PNG
+		success = Image::writePNG(out, data);
+#else
+		success = Image::writeBMP(out, data);
+#endif
+	}
 
 	SDL_UnlockSurface(_hwScreen);
 
@@ -1512,7 +1563,6 @@ void SurfaceSdlGraphicsManager::setFullscreenMode(bool enable) {
 	}
 }
 
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 void SurfaceSdlGraphicsManager::setVSync(bool enable) {
 	Common::StackLock lock(_graphicsMutex);
 
@@ -1527,7 +1577,6 @@ void SurfaceSdlGraphicsManager::setVSync(bool enable) {
 		_transactionDetails.needHotswap = true;
 	}
 }
-#endif
 
 void SurfaceSdlGraphicsManager::setAspectRatioCorrection(bool enable) {
 	Common::StackLock lock(_graphicsMutex);
@@ -1794,7 +1843,7 @@ void SurfaceSdlGraphicsManager::setFocusRectangle(const Common::Rect &rect) {
 	// thus we need to clip the rect here...
 	_focusRect.clip(_videoMode.screenWidth, _videoMode.screenHeight);
 
-	// We just fake this as a dirty rect for now, to easily force an screen update whenever
+	// We just fake this as a dirty rect for now, to easily force a screen update whenever
 	// the rect changes.
 	addDirtyRect(_focusRect.left, _focusRect.top, _focusRect.width(), _focusRect.height(), _overlayVisible);
 #endif
@@ -1808,7 +1857,7 @@ void SurfaceSdlGraphicsManager::clearFocusRectangle() {
 
 	_enableFocusRect = false;
 
-	// We just fake this as a dirty rect for now, to easily force an screen update whenever
+	// We just fake this as a dirty rect for now, to easily force a screen update whenever
 	// the rect changes.
 	addDirtyRect(_focusRect.left, _focusRect.top, _focusRect.width(), _focusRect.height(), _overlayVisible);
 #endif
@@ -1939,7 +1988,102 @@ void SurfaceSdlGraphicsManager::copyRectToOverlay(const void *buf, int pitch, in
 #pragma mark --- Mouse ---
 #pragma mark -
 
-void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keyColor, bool dontScale, const Graphics::PixelFormat *format) {
+void SurfaceSdlGraphicsManager::setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keyColor, bool dontScale, const Graphics::PixelFormat *format, const byte *mask) {
+
+	if (mask && (!format || format->bytesPerPixel == 1)) {
+		// 8-bit masked cursor, SurfaceSdl has no alpha mask support so we must convert this to color key
+		const byte *bufBytes = static_cast<const byte *>(buf);
+
+		uint numPixelUsingColor[256];
+		for (uint i = 0; i < 256; i++)
+			numPixelUsingColor[i] = 0;
+
+		uint numPixels = w * h;
+
+		for (uint i = 0; i < numPixels; i++) {
+			if (mask[i] == kCursorMaskOpaque)
+				numPixelUsingColor[bufBytes[i]]++;
+		}
+
+		uint bestColorNumPixels = 0xffffffffu;
+		uint bestKey = 0;
+		for (uint i = 0; i < 256; i++) {
+			if (numPixelUsingColor[i] < bestColorNumPixels) {
+				bestColorNumPixels = numPixelUsingColor[i];
+				bestKey = i;
+				if (bestColorNumPixels == 0)
+					break;
+			}
+		}
+
+		if (bestColorNumPixels != 0)
+			warning("SurfaceSdlGraphicsManager::setMouseCursor: A mask was specified for an 8-bit cursor but the cursor couldn't be converted to color key");
+
+		Common::Array<byte> maskedImage;
+		maskedImage.resize(w * h);
+		for (uint i = 0; i < numPixels; i++) {
+			if (mask[i] == kCursorMaskOpaque)
+				maskedImage[i] = bufBytes[i];
+			else
+				maskedImage[i] = static_cast<byte>(bestKey);
+		}
+
+		setMouseCursor(&maskedImage[0], w, h, hotspotX, hotspotY, bestKey, dontScale, format, nullptr);
+		return;
+	}
+
+#ifdef USE_RGB_COLOR
+	if (mask && format && format->bytesPerPixel > 1) {
+		const uint numPixels = w * h;
+		const uint inBPP = format->bytesPerPixel;
+
+		Graphics::PixelFormat formatWithAlpha = Graphics::createPixelFormat<8888>();
+
+		// Use the existing format if it already has alpha
+		if (format->aBits() > 0)
+			formatWithAlpha = *format;
+
+		const uint outBPP = format->bytesPerPixel;
+
+		Common::Array<byte> maskedImage;
+		maskedImage.resize(numPixels * outBPP);
+
+		uint32 inColor = 0;
+		byte *inColorPtr = reinterpret_cast<byte *>(&inColor);
+#ifdef SCUMM_BIG_ENDIAN
+		inColorPtr += 4 - inBPP;
+#endif
+
+		uint32 outColor = 0;
+		byte *outColorPtr = reinterpret_cast<byte *>(&outColor);
+#ifdef SCUMM_BIG_ENDIAN
+		outColorPtr += 4 - inBPP;
+#endif
+
+		for (uint i = 0; i < numPixels; i++) {
+			if (mask[i] != kCursorMaskOpaque)
+				outColor = 0;
+			else {
+				memcpy(inColorPtr, static_cast<const byte *>(buf) + i * inBPP, inBPP);
+
+				uint8 r = 0;
+				uint8 g = 0;
+				uint8 b = 0;
+				uint8 a = 0;
+				format->colorToARGB(inColor, a, r, g, b);
+				if (a == 0)
+					outColor = 0;
+				else
+					outColor = formatWithAlpha.ARGBToColor(a, r, g, b);
+			}
+			memcpy(&maskedImage[i * outBPP], outColorPtr, outBPP);
+		}
+
+		setMouseCursor(&maskedImage[0], w, h, hotspotX, hotspotY, 0, dontScale, &formatWithAlpha, nullptr);
+		return;
+	}
+#endif
+
 	bool formatChanged = false;
 
 	if (format) {
@@ -2148,71 +2292,69 @@ void SurfaceSdlGraphicsManager::blitCursor() {
 }
 
 void SurfaceSdlGraphicsManager::undrawMouse() {
-	const int x = _mouseBackup.x;
-	const int y = _mouseBackup.y;
+	_mouseLastRect = _mouseNextRect;
 
-	// When we switch bigger overlay off mouse jumps. Argh!
-	// This is intended to prevent undrawing offscreen mouse
-	if (!_overlayInGUI && (x >= _videoMode.screenWidth || y >= _videoMode.screenHeight))
-		return;
+	const Common::Point virtualCursor = convertWindowToVirtual(_cursorX, _cursorY);
 
-	if (_mouseBackup.w != 0 && _mouseBackup.h != 0)
-		addDirtyRect(x, y, _mouseBackup.w, _mouseBackup.h, _overlayInGUI);
+	// The offsets must be applied, since the call to convertWindowToVirtual()
+	// counteracts the move of the view port.
+
+	_mouseNextRect.x = virtualCursor.x + _gameScreenShakeXOffset;
+	_mouseNextRect.y = virtualCursor.y + _gameScreenShakeYOffset;
+
+	if (!_overlayInGUI) {
+		_mouseNextRect.w = _mouseCurState.vW;
+		_mouseNextRect.h = _mouseCurState.vH;
+		_mouseNextRect.x -= _mouseCurState.vHotX;
+		_mouseNextRect.y -= _mouseCurState.vHotY;
+	} else {
+		_mouseNextRect.w = _mouseCurState.rW;
+		_mouseNextRect.h = _mouseCurState.rH;
+		_mouseNextRect.x -= _mouseCurState.rHotX;
+		_mouseNextRect.y -= _mouseCurState.rHotY;
+	}
+
+	if (!_cursorVisible || !_mouseSurface) {
+		_mouseNextRect.x = _mouseNextRect.y = _mouseNextRect.w = _mouseNextRect.h = 0;
+	}
+
+	// Add the area covered by the mouse cursor to the list of dirty rects if
+	// we have to redraw the mouse, or if the cursor is alpha-blended since
+	// alpha-blended cursors will happily blend into themselves if the surface
+	// under the cursor is not reset first
+	//
+	// The mouse is undrawn using virtual coordinates, i.e. they may be
+	// scaled and aspect-ratio corrected.
+
+	if (_mouseLastRect.w != 0 && _mouseLastRect.h != 0)
+		addDirtyRect(_mouseLastRect.x, _mouseLastRect.y, _mouseLastRect.w, _mouseLastRect.h, _overlayInGUI);
+
+	if (_mouseNextRect.w != 0 && _mouseNextRect.h != 0)
+		addDirtyRect(_mouseNextRect.x, _mouseNextRect.y, _mouseNextRect.w, _mouseNextRect.h, _overlayInGUI);
 }
 
 void SurfaceSdlGraphicsManager::drawMouse() {
 	if (!_cursorVisible || !_mouseSurface || !_mouseCurState.w || !_mouseCurState.h) {
-		_mouseBackup.x = _mouseBackup.y = _mouseBackup.w = _mouseBackup.h = 0;
 		return;
 	}
 
 	SDL_Rect dst;
-	int scale;
-	int hotX, hotY;
-
-	const Common::Point virtualCursor = convertWindowToVirtual(_cursorX, _cursorY);
-
-	dst.x = virtualCursor.x;
-	dst.y = virtualCursor.y;
-
-	if (!_overlayInGUI) {
-		scale = _videoMode.scaleFactor;
-		dst.w = _mouseCurState.vW;
-		dst.h = _mouseCurState.vH;
-		hotX = _mouseCurState.vHotX;
-		hotY = _mouseCurState.vHotY;
-	} else {
-		scale = 1;
-		dst.w = _mouseCurState.rW;
-		dst.h = _mouseCurState.rH;
-		hotX = _mouseCurState.rHotX;
-		hotY = _mouseCurState.rHotY;
-	}
-
-	// The offsets must be applied, since the call to convertWindowToVirtual()
-	// counteracts the move of the view port.
-	dst.x += _gameScreenShakeXOffset;
-	dst.y += _gameScreenShakeYOffset;
-
-	// The mouse is undrawn using virtual coordinates, i.e. they may be
-	// scaled and aspect-ratio corrected.
-
-	_mouseBackup.x = dst.x - hotX;
-	_mouseBackup.y = dst.y - hotY;
-	_mouseBackup.w = dst.w;
-	_mouseBackup.h = dst.h;
 
 	// We draw the pre-scaled cursor image, so now we need to adjust for
 	// scaling, shake position and aspect ratio correction manually.
 
-	dst.x += _currentShakeXOffset;
-	dst.y += _currentShakeYOffset;
+	dst.x = _mouseNextRect.x;
+	dst.y = _mouseNextRect.y;
+	dst.w = _mouseNextRect.w;
+	dst.h = _mouseNextRect.h;
 
 	if (_videoMode.aspectRatioCorrection && !_overlayInGUI)
 		dst.y = real2Aspect(dst.y);
 
-	dst.x = scale * dst.x - _mouseCurState.rHotX;
-	dst.y = scale * dst.y - _mouseCurState.rHotY;
+	if (!_overlayInGUI) {
+		dst.x *= _videoMode.scaleFactor;
+		dst.y *= _videoMode.scaleFactor;
+	}
 	dst.w = _mouseCurState.rW;
 	dst.h = _mouseCurState.rH;
 
@@ -2221,11 +2363,6 @@ void SurfaceSdlGraphicsManager::drawMouse() {
 
 	if (SDL_BlitSurface(_mouseSurface, nullptr, _hwScreen, &dst) != 0)
 		error("SDL_BlitSurface failed: %s", SDL_GetError());
-
-	// The screen will be updated using real surface coordinates, i.e.
-	// they will not be scaled or aspect-ratio corrected.
-
-	addDirtyRect(dst.x, dst.y, dst.w, dst.h, _overlayInGUI, true);
 }
 
 #pragma mark -

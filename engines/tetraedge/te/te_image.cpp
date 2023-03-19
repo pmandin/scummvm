@@ -31,7 +31,7 @@ namespace Tetraedge {
 TeImage::TeImage() : ManagedSurface(), _teFormat(INVALID) {
 }
 
-TeImage::TeImage(const TeImage &other) : ManagedSurface(other) {
+TeImage::TeImage(const TeImage &other) : ManagedSurface(other), _teFormat(INVALID) {
 	error("TODO: Implement TeImage::TeImage copy constructor");
 }
 
@@ -115,7 +115,7 @@ bool TeImage::load(Common::ReadStream &stream, const Common::Path &path) {
 	error("TODO: Implement TeImage::load");
 }
 
-bool TeImage::save(const Common::Path &path, enum Type type) {
+bool TeImage::save(const Common::Path &path, enum SaveType type) {
 	error("TODO: Implement TeImage::save");
 }
 

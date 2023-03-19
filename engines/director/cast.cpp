@@ -21,12 +21,14 @@
 
 #include "common/config-manager.h"
 #include "common/file.h"
+#include "common/macresman.h"
 #include "common/memstream.h"
 #include "common/substream.h"
 
 #include "graphics/macgui/macfontmanager.h"
 #include "graphics/macgui/macwindowmanager.h"
 #include "image/bmp.h"
+#include "image/pict.h"
 
 #include "director/director.h"
 #include "director/cast.h"
@@ -41,24 +43,6 @@
 #include "director/lingo/lingo-object.h"
 
 namespace Director {
-
-const char *scriptTypes[] = {
-	"ScoreScript",
-	"CastScript",
-	"MovieScript",
-	"EventScript",
-	"TestScript"
-};
-
-const char *scriptType2str(ScriptType scr) {
-	if (scr < 0)
-		return "NoneScript";
-
-	if (scr > kMaxScriptType)
-		return "<unknown>";
-
-	return scriptTypes[scr];
-}
 
 Cast::Cast(Movie *movie, uint16 castLibID, bool isShared) {
 	_movie = movie;
@@ -77,6 +61,8 @@ Cast::Cast(Movie *movie, uint16 castLibID, bool isShared) {
 	_castArchive = nullptr;
 	_version = 0;
 	_platform = Common::kPlatformMacintosh;
+
+	_isProtected = false;
 
 	_stageColor = 0;
 
@@ -373,6 +359,7 @@ bool Cast::loadConfig() {
 		_platform = platformFromID(platform);
 
 		int16 protection = stream->readSint16();
+		_isProtected = (protection % 23) == 0;
 		/* int32 field29 = */ stream->readSint32();
 		uint32 checksum = stream->readUint32();
 
@@ -467,11 +454,7 @@ void Cast::loadCast() {
 			debugC(2, kDebugLoading, "****** Loading Palette CLUT, #%d", clutList[i]);
 			PaletteV4 p = loadPalette(*pal);
 
-			// for D2, we are using palette cast member id to resolve palette Id, so we are using lowest 1 bit to represent cast id. see Also loadCastChildren
-			if (_version < kFileVer300)
-				g_director->addPalette(clutList[i] & 0xff, p.palette, p.length);
-			else
-				g_director->addPalette(clutList[i], p.palette, p.length);
+			g_director->addPalette(clutList[i], p.palette, p.length);
 
 			delete pal;
 		}
@@ -607,7 +590,7 @@ void Cast::loadCast() {
 			if (debugChannelSet(-1, kDebugFewFramesOnly))
 				warning("Compiling STXT %d", *iterator);
 
-			loadScriptText(*(r = _castArchive->getResource(MKTAG('S','T','X','T'), *iterator)), *iterator - _castIDoffset);
+			loadScriptV2(*(r = _castArchive->getResource(MKTAG('S','T','X','T'), *iterator)), *iterator - _castIDoffset);
 			delete r;
 		}
 
@@ -632,18 +615,20 @@ void Cast::loadStxtData(int key, TextCastMember *member) {
 	}
 }
 
-void Cast::loadPaletteData(PaletteCastMember *member, Common::HashMap<int, PaletteV4>::iterator &p) {
+void Cast::loadPaletteData(PaletteCastMember *member) {
 	// TODO: Verify how palettes work in >D4 versions
+	int paletteId = 0;
 	if (_version >= kFileVer400 && _version < kFileVer500 && member->_children.size() == 1) {
-		member->_palette = g_director->getPalette(member->_children[0].index);
-	} else if (_version >= kFileVer300 && _version < kFileVer400) {
-		// D3 palettes are always kept in this ascending order
-		member->_palette = g_director->getPalette((++p)->_value.id);
-	} else if (_version < kFileVer300) {
-		// for D2, we shall use the castId to get the palette
-		member->_palette = g_director->getPalette(member->getID());
+		paletteId = member->_children[0].index;
+	} else if (_version < kFileVer400) {
+		// For D3 and below, palette IDs are stored in the CLUT resource as cast ID + 1024
+		paletteId = member->getID() + 1024;
 	} else {
 		warning("Cast::loadPaletteData(): Expected 1 child for palette cast, got %d", member->_children.size());
+	}
+	if (paletteId) {
+		debugC(2, kDebugImages, "Cast::loadPaletteData(): linking palette id %d to cast member %d", paletteId, member->getID());
+		member->_palette = g_director->getPalette(paletteId);
 	}
 }
 
@@ -686,6 +671,40 @@ void Cast::loadBitmapData(int key, BitmapCastMember *bitmapCast) {
 				pic = _castArchive->getResource(tag, imgId);
 			else if (sharedCast && sharedCast->getArchive()->hasResource(tag, imgId))
 				pic = sharedCast->getArchive()->getResource(tag, imgId);
+		}
+
+		if ((pic == nullptr || pic->size() == 0)
+				&& _castsInfo.contains(key) && !_castsInfo[key]->fileName.empty()) {
+			// image file is linked, load from the filesystem
+			Common::String filename = _castsInfo[key]->fileName;
+			Common::String directory = _castsInfo[key]->directory;
+
+			Common::String imageFilename = directory + g_director->_dirSeparator + filename;
+
+			Common::Path path = Common::Path(pathMakeRelative(imageFilename), g_director->_dirSeparator);
+
+			Common::SeekableReadStream *file = Common::MacResManager::openFileOrDataFork(path);
+			if (file) {
+				Image::PICTDecoder *pict = new Image::PICTDecoder();
+
+				bool res = pict->loadStream(*file);
+				delete file;
+
+				if (res) {
+					bitmapCast->_img = pict;
+
+					const Graphics::Surface *surf = pict->getSurface();
+					bitmapCast->_size = surf->pitch * surf->h + pict->getPaletteColorCount() * 3;
+
+					delete pic;
+					return;
+				} else {
+					delete pict;
+					warning("BUILDBOT: Cast::loadBitmapData(): wrong format for external picture '%s'", path.toString().c_str());
+				}
+			} else {
+				warning("Cast::loadBitmapData(): cannot open external picture '%s'", path.toString().c_str());
+			}
 		}
 	} else {
 		if (_loadedCast->contains(imgId)) {
@@ -746,7 +765,7 @@ void Cast::loadBitmapData(int key, BitmapCastMember *bitmapCast) {
 
 	delete pic;
 
-	debugC(4, kDebugImages, "Cast::loadBitmapData(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %x", imgId, w, h, bitmapCast->_flags1, bitmapCast->_flags2, bitmapCast->_bytes, bitmapCast->_bitsPerPixel, bitmapCast->_clut);
+	debugC(5, kDebugImages, "Cast::loadBitmapData(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %x", imgId, w, h, bitmapCast->_flags1, bitmapCast->_flags2, bitmapCast->_bytes, bitmapCast->_bitsPerPixel, bitmapCast->_clut);
 }
 
 void Cast::loadSoundData(int key, SoundCastMember *soundCast) {
@@ -796,8 +815,6 @@ void Cast::loadSoundData(int key, SoundCastMember *soundCast) {
 void Cast::loadCastMemberData() {
 	debugC(1, kDebugLoading, "****** Loading casts data: sprite palettes, images, filmloops, sounds and texts.");
 
-	Common::HashMap<int, PaletteV4>::iterator p = _vm->getLoadedPalettes().find(0);
-
 	int idx = 0;
 
 	for (Common::HashMap<int, CastMember *>::iterator c = _loadedCast->begin(); c != _loadedCast->end(); ++c) {
@@ -806,7 +823,7 @@ void Cast::loadCastMemberData() {
 
 		switch (c->_value->_type){
 			case kCastPalette:
-				loadPaletteData((PaletteCastMember *)c->_value, p);
+				loadPaletteData((PaletteCastMember *)c->_value);
 				break;
 			case kCastFilmLoop:
 				loadFilmLoopData((FilmLoopCastMember *)c->_value);
@@ -873,27 +890,51 @@ Common::String Cast::getVideoPath(int castId) {
 }
 
 PaletteV4 Cast::loadPalette(Common::SeekableReadStreamEndian &stream) {
-	uint16 steps = stream.size() / 6;
-	uint16 index = 0;
+	int size = stream.size();
+	debugC(3, kDebugLoading, "Cast::loadPalette(): %d bytes", size);
+	if (debugChannelSet(5, kDebugLoading))
+		stream.hexdump(stream.size());
+
+	bool hasHeader = size != 6 * 256;
+	int steps = 256;
+	if (hasHeader) {
+		stream.skip(6);
+		steps = stream.readUint16();
+		int maxSteps = (size - 8) / 8;
+		if (steps > maxSteps) {
+			warning("Cast::loadPalette(): header says %d steps but there's only enough data for %d, reducing", steps, maxSteps);
+			steps = maxSteps;
+		}
+	}
+	debugC(3, kDebugLoading, "Cast::loadPalette(): %d steps", steps);
+
 	byte *_palette = new byte[steps * 3];
 
-	debugC(3, kDebugLoading, "Cast::loadPalette(): %d steps, %d bytes", steps, (int)stream.size());
 
-	if (steps > 256) {
-		warning("Cast::loadPalette(): steps > 256: %d", steps);
-		steps = 256;
-	}
+	int colorIndex = 0;
 
 	for (int i = 0; i < steps; i++) {
-		_palette[index] = stream.readByte();
+		if (hasHeader) {
+			int index = stream.readUint16BE();
+			if (index != 0x8000) {
+				colorIndex = index;
+			}
+		}
+
+		if (colorIndex >= steps) {
+			warning("Cast::loadPalette(): attempted to set invalid color index %d, aborting", colorIndex);
+			break;
+		}
+
+		_palette[3 * colorIndex] = stream.readByte();
 		stream.readByte();
 
-		_palette[index + 1] = stream.readByte();
+		_palette[3 * colorIndex + 1] = stream.readByte();
 		stream.readByte();
 
-		_palette[index + 2] = stream.readByte();
+		_palette[3 * colorIndex + 2] = stream.readByte();
 		stream.readByte();
-		index += 3;
+		colorIndex += 1;
 	}
 
 	return PaletteV4(0, _palette, steps);
@@ -1262,7 +1303,12 @@ void Cast::loadLingoContext(Common::SeekableReadStreamEndian &stream) {
 	}
 }
 
-void Cast::loadScriptText(Common::SeekableReadStreamEndian &stream, uint16 id) {
+void Cast::loadScriptV2(Common::SeekableReadStreamEndian &stream, uint16 id) {
+	// In Director 2 (and Director 3 with compatibility mode), any text cast
+	// member which begins with a comment "--" gets parsed as a movie script.
+	// In this mode, fewer top-level keywords are recognised; this is indicated
+	// by passing kLPPForceD2 to the Lingo preprocessor.
+
 	/*uint32 unk1 = */ stream.readUint32();
 	uint32 strLen = stream.readUint32();
 	/*uin32 dataLen = */ stream.readUint32();
@@ -1276,10 +1322,7 @@ void Cast::loadScriptText(Common::SeekableReadStreamEndian &stream, uint16 id) {
 	if (ConfMan.getBool("dump_scripts"))
 		dumpScript(script.c_str(), kMovieScript, id);
 
-	if (script.contains("\nmenu:") || script.hasPrefix("menu:"))
-		return;
-
-	_lingoArchive->addCode(script.decode(Common::kMacRoman), kMovieScript, id);
+	_lingoArchive->addCode(script.decode(Common::kMacRoman), kMovieScript, id, nullptr, kLPPForceD2);
 }
 
 void Cast::dumpScript(const char *script, ScriptType type, uint16 id) {
@@ -1540,7 +1583,7 @@ Common::String Cast::formatCastSummary(int castId = -1) {
 		CastMemberInfo *castMemberInfo = getCastMemberInfo(*it);
 		Common::String info = castMember->formatInfo();
 		result += Common::String::format("%5d: type=%s, name=\"%s\"",
-			*it, castTypeToString(castMember->_type).c_str(),
+			*it, castType2str(castMember->_type),
 			castMemberInfo ? castMemberInfo->name.c_str() : ""
 		);
 

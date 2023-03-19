@@ -51,6 +51,16 @@ bool ObjectSettingsXmlParser::parserCallback_defaultScale(ParserNode *node) {
 	return true;
 }
 
+bool ObjectSettingsXmlParser::parserCallback_originOffset(ParserNode *node) {
+	_textTagType = TagOriginOffset;
+	return true;
+}
+
+bool ObjectSettingsXmlParser::parserCallback_invertNormals(ParserNode *node) {
+	_curObject._invertNormals = true;
+	return true;
+}
+
 bool ObjectSettingsXmlParser::textCallback(const Common::String &val) {
 	switch (_textTagType) {
 		case TagModelFileName:
@@ -63,9 +73,18 @@ bool ObjectSettingsXmlParser::textCallback(const Common::String &val) {
 				warning("Failed to parse Object defaultScale from %s", val.c_str());
 			break;
 		}
+		case TagOriginOffset:
+		{
+			bool result = _curObject._originOffset.parse(val);
+			if (!result)
+				warning("Failed to parse Object originOffset from %s", val.c_str());
+			break;
+		}
 		default:
 			error("should only see text for model file name or scale");
 	}
+
+	_textTagType = TagNone;
 	return true;
 }
 

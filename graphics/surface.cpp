@@ -24,10 +24,10 @@
 #include "common/util.h"
 #include "common/rect.h"
 #include "common/textconsole.h"
+#include "graphics/blit.h"
 #include "graphics/palette.h"
 #include "graphics/primitives.h"
 #include "graphics/surface.h"
-#include "graphics/blit.h"
 #include "graphics/transform_tools.h"
 
 namespace Graphics {
@@ -63,6 +63,8 @@ void Surface::drawThickLine(int x0, int y0, int x1, int y1, int penX, int penY, 
 		error("Surface::drawThickLine: bytesPerPixel must be 1, 2, or 4");
 }
 
+// see graphics/blit-atari.cpp, Atari Falcon's SuperVidel addon allows accelerated blitting
+#ifndef ATARI
 void Surface::create(int16 width, int16 height, const PixelFormat &f) {
 	assert(width >= 0 && height >= 0);
 	free();
@@ -84,6 +86,7 @@ void Surface::free() {
 	w = h = pitch = 0;
 	format = PixelFormat();
 }
+#endif
 
 void Surface::init(int16 width, int16 height, int16 newPitch, void *newPixels, const PixelFormat &f) {
 	w = width;
@@ -95,17 +98,12 @@ void Surface::init(int16 width, int16 height, int16 newPitch, void *newPixels, c
 
 void Surface::copyFrom(const Surface &surf) {
 	create(surf.w, surf.h, surf.format);
-	if (surf.pitch == pitch) {
-		memcpy(pixels, surf.pixels, h * pitch);
-	} else {
-		const byte *src = (const byte *)surf.pixels;
-		byte *dst = (byte *)pixels;
-		for (int y = h; y > 0; --y) {
-			memcpy(dst, src, w * format.bytesPerPixel);
-			src += surf.pitch;
-			dst += pitch;
-		}
-	}
+	copyBlit((byte *)pixels, (const byte *)surf.pixels, pitch, surf.pitch, w, h, format.bytesPerPixel);
+}
+
+void Surface::convertFrom(const Surface &surf, const PixelFormat &f) {
+	create(surf.w, surf.h, f);
+	crossBlit((byte *)pixels, (const byte *)surf.pixels, pitch, surf.pitch, w, h, format, surf.format);
 }
 
 Surface Surface::getSubArea(const Common::Rect &area) {
@@ -176,11 +174,7 @@ void Surface::copyRectToSurface(const void *buffer, int srcPitch, int destX, int
 	// Copy buffer data to internal buffer
 	const byte *src = (const byte *)buffer;
 	byte *dst = (byte *)getBasePtr(destX, destY);
-	for (int i = 0; i < height; i++) {
-		memcpy(dst, src, width * format.bytesPerPixel);
-		src += srcPitch;
-		dst += pitch;
-	}
+	copyBlit(dst, src, pitch, srcPitch, width, height, format.bytesPerPixel);
 }
 
 void Surface::copyRectToSurface(const Graphics::Surface &srcSurface, int destX, int destY, const Common::Rect subRect) {

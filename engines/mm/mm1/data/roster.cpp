@@ -20,6 +20,7 @@
  */
 
 #include "common/file.h"
+#include "common/memstream.h"
 #include "common/savefile.h"
 #include "common/system.h"
 #include "mm/mm1/data/roster.h"
@@ -28,9 +29,13 @@
 namespace MM {
 namespace MM1 {
 
-void Roster::synchronize(Common::Serializer &s) {
+static byte DEFAULT_PORTRAITS[6] = { 0, 11, 9, 7, 4, 3 };
+
+void Roster::synchronize(Common::Serializer &s, bool isLoadingDefaults) {
 	for (int i = 0; i < ROSTER_COUNT; ++i)
-		_items[i].synchronize(s);
+		_items[i].synchronize(s, s.isLoading() && isLoadingDefaults ?
+			(i < 6 ? DEFAULT_PORTRAITS[i] : 0xff) : -1
+		);
 
 	for (int i = 0; i < ROSTER_COUNT; ++i)
 		s.syncAsByte(_towns[i]);
@@ -42,7 +47,7 @@ void Roster::load() {
 
 	if (sf) {
 		Common::Serializer s(sf, nullptr);
-		synchronize(s);
+		synchronize(s, false);
 
 		while (!sf->eos()) {
 			uint32 chunk = sf->readUint32BE();
@@ -57,7 +62,7 @@ void Roster::load() {
 			error("Could not open roster.dta");
 
 		Common::Serializer s(&f, nullptr);
-		synchronize(s);
+		synchronize(s, true);
 	}
 }
 
@@ -70,7 +75,7 @@ void Roster::update(const IntArray &charNums) {
 		int destIndex;
 		if (charNums.size() == g_globals->_party.size() &&
 				charNums[i] < ROSTER_COUNT &&
-				_items[charNums[i]]._name == c._name) {
+				!strcmp(_items[charNums[i]]._name, c._name)) {
 			// Started game from title screen and set up party,
 			// so we known the correct roster index already
 			destIndex = charNums[i];
@@ -104,7 +109,7 @@ void Roster::save() {
 	Common::OutSaveFile *sf = g_system->getSavefileManager()->openForSaving(
 		rosterSaveName());
 	Common::Serializer s(nullptr, sf);
-	synchronize(s);
+	synchronize(s, false);
 
 	// Get automap data to save
 	Common::MemoryWriteStreamDynamic mapData(DisposeAfterUse::YES);

@@ -54,6 +54,7 @@
 #include "backends/fs/posix/posix-iostream.h"
 
 #include "common/debug.h"
+#include "common/translation.h"
 #include "common/util.h"
 
 jmethodID AndroidSAFFilesystemNode::_MID_getTreeId = 0;
@@ -64,6 +65,7 @@ jmethodID AndroidSAFFilesystemNode::_MID_createDirectory = 0;
 jmethodID AndroidSAFFilesystemNode::_MID_createFile = 0;
 jmethodID AndroidSAFFilesystemNode::_MID_createReadStream = 0;
 jmethodID AndroidSAFFilesystemNode::_MID_createWriteStream = 0;
+jmethodID AndroidSAFFilesystemNode::_MID_removeNode = 0;
 jmethodID AndroidSAFFilesystemNode::_MID_removeTree = 0;
 
 jfieldID AndroidSAFFilesystemNode::_FID__treeName = 0;
@@ -107,6 +109,7 @@ void AndroidSAFFilesystemNode::initJNI() {
 	FIND_METHOD(, createFile, "(" SAFFSNodeSig "Ljava/lang/String;)" SAFFSNodeSig);
 	FIND_METHOD(, createReadStream, "(" SAFFSNodeSig ")I");
 	FIND_METHOD(, createWriteStream, "(" SAFFSNodeSig ")I");
+	FIND_METHOD(, removeNode, "(" SAFFSNodeSig ")Z");
 	FIND_METHOD(, removeTree, "()V");
 
 	FIND_FIELD(, _treeName, "Ljava/lang/String;");
@@ -167,17 +170,64 @@ AndroidSAFFilesystemNode *AndroidSAFFilesystemNode::makeFromPath(const Common::S
 		return nullptr;
 	}
 
-	if (!node) {
+	if (node) {
+		AndroidSAFFilesystemNode *ret = new AndroidSAFFilesystemNode(safTree, node);
+
+		env->DeleteLocalRef(node);
+		env->DeleteLocalRef(safTree);
+
+		return ret;
+	}
+
+	// Node doesn't exist: we will try to make a node from the parent and
+	// if it works we will create a non-existent node
+
+	pos = realPath.findLastOf('/');
+	if (pos == Common::String::npos || pos == 0) {
+		// No / in path or at root, no parent and we have a tree: it's all good
+		if (pos == 0) {
+			realPath = realPath.substr(1);
+		}
+		AndroidSAFFilesystemNode *parent = makeFromTree(safTree);
+		AndroidSAFFilesystemNode *ret = static_cast<AndroidSAFFilesystemNode *>(parent->getChild(realPath));
+		delete parent;
+
+		// safTree has already been released by makeFromTree
+		return ret;
+	}
+
+	Common::String baseName(realPath.substr(pos + 1));
+	realPath.erase(pos);
+
+	pathObj = env->NewStringUTF(realPath.c_str());
+
+	node = env->CallObjectMethod(safTree, _MID_pathToNode, pathObj);
+
+	env->DeleteLocalRef(pathObj);
+
+	if (env->ExceptionCheck()) {
+		LOGE("SAFFSTree::pathToNode failed");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+
 		env->DeleteLocalRef(safTree);
 		return nullptr;
 	}
 
-	AndroidSAFFilesystemNode *ret = new AndroidSAFFilesystemNode(safTree, node);
+	if (node) {
+		AndroidSAFFilesystemNode *parent = new AndroidSAFFilesystemNode(safTree, node);
+		env->DeleteLocalRef(node);
+		env->DeleteLocalRef(safTree);
 
-	env->DeleteLocalRef(node);
+		AndroidSAFFilesystemNode *ret = static_cast<AndroidSAFFilesystemNode *>(parent->getChild(baseName));
+		delete parent;
+
+		return ret;
+	}
+
 	env->DeleteLocalRef(safTree);
-
-	return ret;
+	return nullptr;
 }
 
 AndroidSAFFilesystemNode *AndroidSAFFilesystemNode::makeFromTree(jobject safTree) {
@@ -200,7 +250,7 @@ AndroidSAFFilesystemNode *AndroidSAFFilesystemNode::makeFromTree(jobject safTree
 }
 
 AndroidSAFFilesystemNode::AndroidSAFFilesystemNode(jobject safTree, jobject safNode) :
-	_cached(false), _flags(0), _safParent(nullptr) {
+	_flags(0), _safParent(nullptr) {
 
 	JNIEnv *env = JNI::getEnv();
 
@@ -214,7 +264,7 @@ AndroidSAFFilesystemNode::AndroidSAFFilesystemNode(jobject safTree, jobject safN
 
 AndroidSAFFilesystemNode::AndroidSAFFilesystemNode(jobject safTree, jobject safParent,
         const Common::String &path, const Common::String &name) :
-	_safNode(nullptr), _cached(false), _flags(0), _safParent(nullptr) {
+	_safNode(nullptr), _flags(0), _safParent(nullptr) {
 
 	JNIEnv *env = JNI::getEnv();
 
@@ -247,7 +297,6 @@ AndroidSAFFilesystemNode::AndroidSAFFilesystemNode(const AndroidSAFFilesystemNod
 		assert(_safParent);
 	}
 
-	_cached = node._cached;
 	_path = node._path;
 	_flags = node._flags;
 	_newName = node._newName;
@@ -334,6 +383,11 @@ bool AndroidSAFFilesystemNode::getChildren(AbstractFSList &myList, ListMode mode
 		env->ExceptionDescribe();
 		env->ExceptionClear();
 
+		return false;
+	}
+
+	if (!array) {
+		// Fetching children failed: a log error has already been produced in Java code
 		return false;
 	}
 
@@ -429,7 +483,7 @@ Common::SeekableWriteStream *AndroidSAFFilesystemNode::createWriteStream() {
 
 		env->DeleteLocalRef(child);
 
-		cacheData(true);
+		cacheData();
 	}
 
 	jint fd = env->CallIntMethod(_safTree, _MID_createWriteStream, _safNode);
@@ -490,7 +544,60 @@ bool AndroidSAFFilesystemNode::createDirectory() {
 
 	env->DeleteLocalRef(child);
 
-	cacheData(true);
+	cacheData();
+
+	return true;
+}
+
+bool AndroidSAFFilesystemNode::remove() {
+	assert(_safTree != nullptr);
+
+	if (!_safNode) {
+		return false;
+	}
+
+	if (!_safParent) {
+		// It's the root of the tree: we can't delete it
+		return false;
+	}
+
+	if (isDirectory()) {
+		// Don't delete folders (yet?)
+		return false;
+	}
+
+	JNIEnv *env = JNI::getEnv();
+
+	bool result = env->CallBooleanMethod(_safTree, _MID_removeNode, _safNode);
+
+	if (env->ExceptionCheck()) {
+		LOGE("SAFFSTree::removeNode failed");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+
+		return false;
+	}
+
+	if (!result) {
+		return false;
+	}
+
+	env->DeleteGlobalRef(_safNode);
+	_safNode = nullptr;
+
+	// Create the parent node to fetch informations needed to make us a non-existent node
+	AndroidSAFFilesystemNode *parent = new AndroidSAFFilesystemNode(_safTree, _safParent);
+
+	size_t pos = _path.findLastOf('/');
+	if (pos == Common::String::npos) {
+		_newName = _path;
+	} else {
+		_newName = _path.substr(pos + 1);
+	}
+	_path = parent->_path;
+
+	delete parent;
 
 	return true;
 }
@@ -510,11 +617,7 @@ void AndroidSAFFilesystemNode::removeTree() {
 	}
 }
 
-void AndroidSAFFilesystemNode::cacheData(bool force) {
-	if (_cached && !force) {
-		return;
-	}
-
+void AndroidSAFFilesystemNode::cacheData() {
 	JNIEnv *env = JNI::getEnv();
 
 	_flags = env->GetIntField(_safNode, _FID__flags);
@@ -538,45 +641,48 @@ void AndroidSAFFilesystemNode::cacheData(bool force) {
 		}
 		env->DeleteLocalRef(nameObj);
 	}
-	_path.clear();
 
 	Common::String workingPath;
 
 	jstring pathObj = (jstring)env->GetObjectField(_safNode, _FID__path);
 	const char *path = env->GetStringUTFChars(pathObj, 0);
-	if (path != 0) {
-		workingPath = Common::String(path);
-		env->ReleaseStringUTFChars(pathObj, path);
-	} else {
+	if (path == nullptr) {
 		env->DeleteLocalRef(pathObj);
+		error("SAFFSNode::_path is null");
 		return;
 	}
+	workingPath = Common::String(path);
+	env->ReleaseStringUTFChars(pathObj, path);
 	env->DeleteLocalRef(pathObj);
 
 	jstring idObj = (jstring)env->CallObjectMethod(_safTree, _MID_getTreeId);
 	if (env->ExceptionCheck()) {
-		LOGE("SAFFSTree::getTreeId failed");
-
 		env->ExceptionDescribe();
 		env->ExceptionClear();
 
 		env->ReleaseStringUTFChars(pathObj, path);
 		env->DeleteLocalRef(pathObj);
+		error("SAFFSTree::getTreeId failed");
 		return;
 	}
 
 	if (!idObj) {
+		error("SAFFSTree::getTreeId returned null");
 		return;
 	}
 
 	const char *id = env->GetStringUTFChars(idObj, 0);
-	if (id != 0) {
-		_path = Common::String::format("%s%s%s", SAF_MOUNT_POINT, id, workingPath.c_str());
-		env->ReleaseStringUTFChars(idObj, id);
+	if (id == nullptr) {
+		error("Failed to get string from SAFFSTree::getTreeId");
+		env->DeleteLocalRef(idObj);
+		return;
 	}
-	env->DeleteLocalRef(idObj);
 
-	_cached = true;
+	_path = Common::String(SAF_MOUNT_POINT);
+	_path += id;
+	_path += workingPath;
+	env->ReleaseStringUTFChars(idObj, id);
+	env->DeleteLocalRef(idObj);
 }
 
 const char AddSAFFakeNode::SAF_ADD_FAKE_PATH[] = "/saf";
@@ -585,7 +691,20 @@ AddSAFFakeNode::~AddSAFFakeNode() {
 	delete _proxied;
 }
 
+Common::U32String AddSAFFakeNode::getDisplayName() const {
+	// I18N: This is displayed in the file browser to let the user choose a new folder for Android Storage Attached Framework
+	return Common::U32String::format("\x01<%s>", _("Add a new folder").c_str());
+}
+
+Common::String AddSAFFakeNode::getName() const {
+	return Common::String::format("\x01<%s>", _("Add a new folder").encode().c_str());
+}
+
 AbstractFSNode *AddSAFFakeNode::getChild(const Common::String &name) const {
+	if (_fromPath) {
+		// When starting from /saf try to get the tree node
+		return AndroidSAFFilesystemNode::makeFromPath(Common::String(AndroidSAFFilesystemNode::SAF_MOUNT_POINT) + name);
+	}
 	// We can't call getChild as it's protected
 	return nullptr;
 }
@@ -596,6 +715,11 @@ AbstractFSNode *AddSAFFakeNode::getParent() const {
 }
 
 bool AddSAFFakeNode::exists() const {
+	if (_fromPath) {
+		// /saf always exists when created as a path
+		return true;
+	}
+
 	if (!_proxied) {
 		makeProxySAF();
 	}
@@ -608,6 +732,16 @@ bool AddSAFFakeNode::exists() const {
 }
 
 bool AddSAFFakeNode::getChildren(AbstractFSList &list, ListMode mode, bool hidden) const {
+	if (_fromPath) {
+		// When built from path, /saf lists all SAF node but never proposes to add one
+		if (mode == Common::FSNode::kListFilesOnly) {
+			// All directories
+			return true;
+		}
+		AndroidFilesystemFactory::instance().getSAFTrees(list, false);
+		return true;
+	}
+
 	if (!_proxied) {
 		makeProxySAF();
 	}
@@ -620,6 +754,10 @@ bool AddSAFFakeNode::getChildren(AbstractFSList &list, ListMode mode, bool hidde
 }
 
 Common::String AddSAFFakeNode::getPath() const {
+	if (_fromPath) {
+		return SAF_ADD_FAKE_PATH;
+	}
+
 	if (!_proxied) {
 		makeProxySAF();
 	}
@@ -632,6 +770,10 @@ Common::String AddSAFFakeNode::getPath() const {
 }
 
 bool AddSAFFakeNode::isReadable() const {
+	if (_fromPath) {
+		return true;
+	}
+
 	if (!_proxied) {
 		makeProxySAF();
 	}
@@ -644,6 +786,10 @@ bool AddSAFFakeNode::isReadable() const {
 }
 
 bool AddSAFFakeNode::isWritable() const {
+	if (_fromPath) {
+		return false;
+	}
+
 	if (!_proxied) {
 		makeProxySAF();
 	}
@@ -656,11 +802,14 @@ bool AddSAFFakeNode::isWritable() const {
 }
 
 void AddSAFFakeNode::makeProxySAF() const {
+	assert(!_fromPath);
+
 	if (_proxied) {
 		return;
 	}
 
-	jobject saftree = JNI::getNewSAFTree(true, true, "", "Choose a new SAF tree");
+	// I18N: This may be displayed in the Android UI used to add a Sotrage Attach Framework authorization
+	jobject saftree = JNI::getNewSAFTree(true, true, "", _("Choose a new folder"));
 	if (!saftree) {
 		return;
 	}

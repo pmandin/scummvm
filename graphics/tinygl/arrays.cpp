@@ -27,6 +27,15 @@
 
 #include "graphics/tinygl/zgl.h"
 
+#define NORLALIZE_SBYTE(n)   ( ( (float) n * 2.0f + 1.0f ) / 255.0f )
+#define NORLALIZE_UBYTE(n)   (   (float) n                 / 255.0f )
+
+#define NORLALIZE_SSHORT(n)  ( ( (float) n * 2.0f + 1.0f ) / 65535.0f )
+#define NORLALIZE_USHORT(n)  (   (float) n                 / 65535.0f )
+
+#define NORLALIZE_SINT(n)    ( ( (float) n * 2.0f + 1.0f ) / 4294967295.0f )
+#define NORLALIZE_UINT(n)    (   (float) n                 / 4294967295.0f )
+
 namespace TinyGL {
 
 void GLContext::glopArrayElement(GLParam *param) {
@@ -41,50 +50,50 @@ void GLContext::glopArrayElement(GLParam *param) {
 		switch (color_array_type) {
 		case TGL_UNSIGNED_BYTE: {
 				TGLubyte *array = (TGLubyte *)color_array + offset;
-				p[1].f = array[0];
-				p[2].f = array[1];
-				p[3].f = array[2];
-				p[4].f = size > 3 ? array[3] : 1.0f;
+				p[1].f = NORLALIZE_UBYTE(array[0]);
+				p[2].f = NORLALIZE_UBYTE(array[1]);
+				p[3].f = NORLALIZE_UBYTE(array[2]);
+				p[4].f = size > 3 ? NORLALIZE_UBYTE(array[3]) : 1.0f;
 				break;
 			}
 		case TGL_BYTE: {
 				TGLbyte *array = (TGLbyte *)color_array + offset;
-				p[1].f = array[0];
-				p[2].f = array[1];
-				p[3].f = array[2];
-				p[4].f = size > 3 ? array[3] : 1.0f;
+				p[1].f = NORLALIZE_SBYTE(array[0]);
+				p[2].f = NORLALIZE_SBYTE(array[1]);
+				p[3].f = NORLALIZE_SBYTE(array[2]);
+				p[4].f = size > 3 ? NORLALIZE_SBYTE(array[3]) : 1.0f;
 				break;
 			}
 		case TGL_UNSIGNED_INT: {
 				TGLuint *array = (TGLuint *)((TGLbyte *)color_array + offset);
-				p[1].f = array[0];
-				p[2].f = array[1];
-				p[3].f = array[2];
-				p[4].f = size > 3 ? array[3] : 1.0f;
+				p[1].f = NORLALIZE_UINT(array[0]);
+				p[2].f = NORLALIZE_UINT(array[1]);
+				p[3].f = NORLALIZE_UINT(array[2]);
+				p[4].f = size > 3 ? NORLALIZE_UINT(array[3]) : 1.0f;
 				break;
 			}
 		case TGL_INT: {
 				TGLint *array = (TGLint *)((TGLbyte *)color_array + offset);
-				p[1].f = array[0];
-				p[2].f = array[1];
-				p[3].f = array[2];
-				p[4].f = size > 3 ? array[3] : 1.0f;
+				p[1].f = NORLALIZE_SINT(array[0]);
+				p[2].f = NORLALIZE_SINT(array[1]);
+				p[3].f = NORLALIZE_SINT(array[2]);
+				p[4].f = size > 3 ? NORLALIZE_SINT(array[3]) : 1.0f;
 				break;
 			}
 		case TGL_UNSIGNED_SHORT: {
 				TGLushort *array = (TGLushort *)((TGLbyte *)color_array + offset);
-				p[1].f = array[0];
-				p[2].f = array[1];
-				p[3].f = array[2];
-				p[4].f = size > 3 ? array[3] : 1.0f;
+				p[1].f = NORLALIZE_USHORT(array[0]);
+				p[2].f = NORLALIZE_USHORT(array[1]);
+				p[3].f = NORLALIZE_USHORT(array[2]);
+				p[4].f = size > 3 ? NORLALIZE_USHORT(array[3]) : 1.0f;
 				break;
 			}
 		case TGL_SHORT: {
 				TGLshort *array = (TGLshort *)((TGLbyte *)color_array + offset);
-				p[1].f = array[0];
-				p[2].f = array[1];
-				p[3].f = array[2];
-				p[4].f = size > 3 ? array[3] : 1.0f;
+				p[1].f = NORLALIZE_SSHORT(array[0]);
+				p[2].f = NORLALIZE_SSHORT(array[1]);
+				p[3].f = NORLALIZE_SSHORT(array[2]);
+				p[4].f = size > 3 ? NORLALIZE_SSHORT(array[3]) : 1.0f;
 				break;
 			}
 		case TGL_FLOAT: {
@@ -128,16 +137,16 @@ void GLContext::glopArrayElement(GLParam *param) {
 			}
 		case TGL_INT: {
 				TGLint *array = (TGLint *)((TGLbyte *)normal_array + offset);
-				current_normal.X = array[0];
-				current_normal.Y = array[1];
-				current_normal.Z = array[2];
+				current_normal.X = NORLALIZE_SINT(array[0]);
+				current_normal.Y = NORLALIZE_SINT(array[1]);
+				current_normal.Z = NORLALIZE_SINT(array[2]);
 				break;
 			}
 		case TGL_SHORT: {
 				TGLshort *array = (TGLshort *)((TGLbyte *)normal_array + offset);
-				current_normal.X = array[0];
-				current_normal.Y = array[1];
-				current_normal.Z = array[2];
+				current_normal.X = NORLALIZE_SSHORT(array[0]);
+				current_normal.Y = NORLALIZE_SSHORT(array[1]);
+				current_normal.Z = NORLALIZE_SSHORT(array[2]);
 			break;
 		}
 		default:
@@ -270,15 +279,15 @@ void GLContext::glopDrawElements(GLParam *p) {
 	glopEnd(nullptr);
 }
 
-void GLContext::glopEnableClientState(GLParam *p) {
+void GLContext::gl_EnableClientState(GLParam *p) {
 	client_states |= p[1].i;
 }
 
-void GLContext::glopDisableClientState(GLParam *p) {
+void GLContext::gl_DisableClientState(GLParam *p) {
 	client_states &= p[1].i;
 }
 
-void GLContext::glopVertexPointer(GLParam *p) {
+void GLContext::gl_VertexPointer(GLParam *p) {
 	vertex_array_size = p[1].i;
 	vertex_array_type = p[2].i;
 	vertex_array = p[4].p;
@@ -301,7 +310,7 @@ void GLContext::glopVertexPointer(GLParam *p) {
 	}
 }
 
-void GLContext::glopColorPointer(GLParam *p) {
+void GLContext::gl_ColorPointer(GLParam *p) {
 	color_array_size = p[1].i;
 	color_array_type = p[2].i;
 	color_array = p[4].p;
@@ -330,7 +339,7 @@ void GLContext::glopColorPointer(GLParam *p) {
 	}
 }
 
-void GLContext::glopNormalPointer(GLParam *p) {
+void GLContext::gl_NormalPointer(GLParam *p) {
 	normal_array_type = p[1].i;
 	normal_array = p[3].p;
 	switch (p[1].i) {
@@ -352,7 +361,7 @@ void GLContext::glopNormalPointer(GLParam *p) {
 	}
 }
 
-void GLContext::glopTexCoordPointer(GLParam *p) {
+void GLContext::gl_TexCoordPointer(GLParam *p) {
 	texcoord_array_size = p[1].i;
 	texcoord_array_type = p[2].i;
 	texcoord_array = p[4].p;

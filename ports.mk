@@ -60,6 +60,9 @@ dist-generic: $(EXECUTABLE) $(PLUGINS)
 	mkdir -p ./dist-generic/scummvm/data
 	mkdir -p ./dist-generic/scummvm/doc
 	cp $(EXECUTABLE) ./dist-generic/scummvm
+ifeq ($(BACKEND), atari)
+	m68k-atari-mint-flags -S ./dist-generic/scummvm/$(EXECUTABLE)
+endif
 	cp $(DIST_FILES_DOCS) ./dist-generic/scummvm/doc
 	cp $(DIST_FILES_THEMES) ./dist-generic/scummvm/data
 ifdef DIST_FILES_ENGINEDATA
@@ -517,6 +520,10 @@ ifdef USE_A52
 OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/liba52.a
 endif
 
+ifdef USE_VPX
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libvpx.a
+endif
+
 ifdef USE_JPEG
 OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libjpeg.a
 endif
@@ -556,7 +563,7 @@ iphone: $(DETECT_OBJS) $(OBJS)
 	+$(LD) $(LDFLAGS) -o scummvm $(DETECT_OBJS) $(OBJS) \
 		$(OSX_STATIC_LIBS) \
 		-framework UIKit -framework CoreGraphics -framework OpenGLES -framework GameController \
-		-framework CoreFoundation -framework QuartzCore -framework Foundation \
+		-framework CoreFoundation -framework QuartzCore -framework Foundation -framework Accelerate \
 		-framework AudioToolbox -framework CoreAudio -framework SystemConfiguration -lobjc -lz
 
 # Special target to create a snapshot disk image for macOS
@@ -572,6 +579,7 @@ osxsnap: bundle
 	mv ./ScummVM-snapshot/COPYING.ISC ./ScummVM-snapshot/License\ \(ISC\)
 	mv ./ScummVM-snapshot/COPYING.LUA ./ScummVM-snapshot/License\ \(Lua\)
 	mv ./ScummVM-snapshot/COPYING.MIT ./ScummVM-snapshot/License\ \(MIT\)
+	mv ./ScummVM-snapshot/COPYING.MKV ./ScummVM-snapshot/License\ \(MKV\)
 	mv ./ScummVM-snapshot/COPYING.TINYGL ./ScummVM-snapshot/License\ \(TinyGL\)
 	mv ./ScummVM-snapshot/COPYING.GLAD ./ScummVM-snapshot/License\ \(Glad\)
 	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/*
@@ -595,7 +603,7 @@ osxsnap: bundle
 	cp $(DIST_FILES_DOCS_se) ./ScummVM-snapshot/doc/se/
 	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/QuickStart
 	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/*/*
-	xattr -w "com.apple.TextEncoding" "utf-8;134217984" ./ScummVM-snapshot/doc/*/*
+	command -v xattr >/dev/null 2>&1 && xattr -w "com.apple.TextEncoding" "utf-8;134217984" ./ScummVM-snapshot/doc/*/*
 	cp -RP $(bundle_name) ./ScummVM-snapshot/
 	cp $(srcdir)/dists/macosx/DS_Store ./ScummVM-snapshot/.DS_Store
 	cp $(srcdir)/dists/macosx/background.jpg ./ScummVM-snapshot/background.jpg
@@ -637,6 +645,10 @@ endif
 	@echo All is done.
 	@echo Now run
 	@echo -e "\tgit commit -m 'DISTS: Generated Code::Blocks and MSVC project files'"
+
+
+release-checks:
+	devtools/release-checks.sh
 
 # Mark special targets as phony
 .PHONY: deb bundle osxsnap install uninstall

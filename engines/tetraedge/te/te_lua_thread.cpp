@@ -19,16 +19,22 @@
  *
  */
 
+#include "tetraedge/tetraedge.h"
+
 #include "tetraedge/te/te_lua_thread.h"
 #include "tetraedge/te/te_lua_context.h"
 #include "tetraedge/te/te_variant.h"
 
+#include "common/config-manager.h"
 #include "common/str.h"
 #include "common/debug.h"
 #include "common/file.h"
 #include "common/lua/lua.h"
 #include "common/lua/lauxlib.h"
 #include "common/lua/lualib.h"
+
+//#define TETRAEDGE_LUA_DEBUG 1
+//#define TETRAEDGE_RESTORE_EXPERIMENTAL 1
 
 namespace Tetraedge {
 
@@ -73,6 +79,11 @@ void TeLuaThread::execute(const Common::String &fname) {
 	if (!_luaThread)
 		return;
 
+#ifdef TETRAEDGE_LUA_DEBUG
+	if (fname != "Update" && fname != "UpdateHelp")
+		debug("TeLuaThread::execute: %s()", fname.c_str());
+#endif
+
 	lua_getglobal(_luaThread, fname.c_str());
 	if (lua_type(_luaThread, -1) == LUA_TFUNCTION) {
 		_resume(0);
@@ -87,12 +98,20 @@ void TeLuaThread::execute(const Common::String &fname, const TeVariant &p1) {
 	if (!_luaThread)
 		return;
 
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::execute: %s(%s)", fname.c_str(), p1.dumpStr().c_str());
+#endif
+
 	lua_getglobal(_luaThread, fname.c_str());
 	if (lua_type(_luaThread, -1) == LUA_TFUNCTION) {
 		pushValue(p1);
 		_resume(1);
 	} else {
-		if (!fname.contains("Update"))
+		// Don't report Update (as original) or some other functions which are not
+		// implemented in both games
+		if (!fname.contains("Update") && !fname.equals("OnCellCharacterAnimationPlayerFinished")
+				&& !fname.equals("OnCharacterAnimationFinished") && !fname.equals("OnCellDialogFinished")
+				&& !fname.equals("OnCellFreeSoundFinished"))
 			debug("[TeLuaThread::Execute1] Function: \"%s\" does not exist", fname.c_str());
 		lua_settop(_luaThread, -2);
 	}
@@ -101,6 +120,11 @@ void TeLuaThread::execute(const Common::String &fname, const TeVariant &p1) {
 void TeLuaThread::execute(const Common::String &fname, const TeVariant &p1, const TeVariant &p2) {
 	if (!_luaThread)
 		return;
+
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::execute: %s(%s, %s)", fname.c_str(), p1.dumpStr().c_str(),
+			p2.dumpStr().c_str());
+#endif
 
 	lua_getglobal(_luaThread, fname.c_str());
 	if (lua_type(_luaThread, -1) == LUA_TFUNCTION) {
@@ -118,6 +142,12 @@ void TeLuaThread::execute(const Common::String &fname, const TeVariant &p1, cons
 	if (!_luaThread)
 		return;
 
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::execute: %s(%s, %s, %s)", fname.c_str(), p1.dumpStr().c_str(),
+				p2.dumpStr().c_str(), p3.dumpStr().c_str());
+#endif
+
+
 	lua_getglobal(_luaThread, fname.c_str());
 	if (lua_type(_luaThread, -1) == LUA_TFUNCTION) {
 		pushValue(p1);
@@ -131,6 +161,99 @@ void TeLuaThread::execute(const Common::String &fname, const TeVariant &p1, cons
 	}
 }
 
+void TeLuaThread::applyScriptWorkarounds(char *buf, const Common::String &fileName) {
+	char *fixline;
+
+	//
+	// WORKAROUND: Some script files have rogue ";" lines in them with nothing
+	// else, and ScummVM common lua version doesn't like them. Clean those up.
+	//
+	fixline = strstr(buf, "\n\t;");
+	if (fixline)
+		fixline[2] = '\t';
+
+	//
+	// Restore Syberia 1 scenes by patching up the scripts
+	//
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia && ConfMan.getBool("restore_scenes")) {
+		if (fileName.contains("Logic11070.lua")) {
+			// Allow Kate to enter scene 11100
+			fixline = strstr(buf, "\"11110\"");
+			if (fixline) // 11110 -> 11100
+				fixline[4] = '0';
+			fixline = strstr(buf, "\"11110\"");
+			if (fixline)
+				fixline[4] = '0';
+		} else if (fileName.contains("Logic11110.lua")) {
+			// Allow Kate to enter scene 11100
+			fixline = strstr(buf, "\"11070\"");
+			if (fixline) // 11070 -> 11100
+				strncpy(fixline + 3, "10 ", 2);
+			fixline = strstr(buf, "\"11070\"");
+			if (fixline)
+				strncpy(fixline + 3, "10 ", 2);
+#ifdef TETRAEDGE_RESTORE_EXPERIMENTAL
+		// The 11170 scene is not usable yet - it seems
+		// to not have any free move zone data?
+		} else if (fileName.contains("Logic11160.lua")) {
+			fixline = strstr(buf, "\"11180\"");
+			if (fixline) // 11180 -> 11170
+				fixline[4] = '7';
+			fixline = strstr(buf, "\"11180\"");
+			if (fixline)
+				fixline[4] = '7';
+		} else if (fileName.contains("Logic11180.lua")) {
+			fixline = strstr(buf, "\"11160\"");
+			if (fixline) // 11160 -> 11170
+				fixline[4] = '7';
+			fixline = strstr(buf, "\"11160\"");
+			if (fixline)
+				fixline[4] = '7';
+#endif
+		} else if (fileName.contains("Logic11100.lua")) {
+			fixline = strstr(buf, " , 55 ,70, ");
+			if (fixline) // 70 -> 65 to fix speech marker location
+				strncpy(fixline + 7, "65 ", 2);
+		} else if (fileName.contains("Int11100.lua") || fileName.contains("Int11170.lua")) {
+			fixline = strstr(buf, "ratio = 16/9,");
+			if (fixline) // 16/9 -> 4/3
+				strncpy(fixline + 8, "4/3 ", 4);
+			fixline = strstr(buf, "ratioMode = PanScan,");
+			if (fixline)
+				strncpy(fixline + 9, "=LetterBox", 10);
+		} else if (fileName.contains("For11100.lua") || fileName.contains("For11170.lua")) {
+			fixline = strstr(buf, "size = {1.0");
+			if (fixline) // 1.0 -> 1.5
+				fixline[10] = '5';
+		}
+	}
+
+	//
+	// WORKAROUND: Syberia 2 constantly re-seeds the random number generator.
+	// This fails on ScummVM Lua because os.time() returns a large Number and
+	// math.randomseed() clamps the number to an int, so it always seeds on the
+	// same value.  It's also kind of pointless, so just patch it out.
+	//
+	static const char RESEED_PATTERN[] = "math.randomseed( os.time() )";
+	fixline = strstr(buf, RESEED_PATTERN);
+	while (fixline != nullptr) {
+		for (int i = 0; i < ARRAYSIZE(RESEED_PATTERN); i++) {
+			fixline[i] = ' ';
+		}
+		fixline = strstr(fixline, RESEED_PATTERN);
+	}
+
+	//
+	// WORKAROUND: Syberia 2 A1_Cabaret/11420/Logic11420.lua has a typo on a
+	// variable name that causes the game to lock up
+	//
+	fixline = strstr(buf, "OBJECT_10050_Inventory_obj_coeurmec_Taketoun ");
+	if (fixline) {
+		// Taketoun -> Taken
+		strncpy(fixline + 40, "n   ", 4);
+	}
+}
+
 void TeLuaThread::executeFile(const Common::FSNode &node) {
 	Common::File scriptFile;
 	if (!scriptFile.open(node)) {
@@ -138,15 +261,17 @@ void TeLuaThread::executeFile(const Common::FSNode &node) {
 		return;
 	}
 
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::executeFile: %s", node.getName().c_str());
+#endif
+
 	int64 fileLen = scriptFile.size();
 	char *buf = new char[fileLen + 1];
 	scriptFile.read(buf, fileLen);
 	buf[fileLen] = 0;
 	scriptFile.close();
-	// WORKAROUND: Some script files have rogue ";" lines in them with nothing else, clean those up.
-	char *fixline = strstr(buf, "\n\t;");
-	if (fixline)
-		fixline[2] = '\t';
+
+	applyScriptWorkarounds(buf, node.getName());
 
 	_lastResumeResult = luaL_loadbuffer(_luaThread, buf, fileLen, node.getPath().c_str());
 	if (_lastResumeResult) {
@@ -200,11 +325,19 @@ void TeLuaThread::release() {
 }
 
 void TeLuaThread::resume() {
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::resume");
+#endif
+
 	if (_luaThread)
 		_resume(0);
 }
 
 void TeLuaThread::resume(const TeVariant &p1) {
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::resume(%s)", p1.dumpStr().c_str());
+#endif
+
 	if (_luaThread) {
 		pushValue(p1);
 		_resume(1);
@@ -212,6 +345,10 @@ void TeLuaThread::resume(const TeVariant &p1) {
 }
 
 void TeLuaThread::resume(const TeVariant &p1, const TeVariant &p2) {
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::resume(%s, %s)", p1.dumpStr().c_str(), p2.dumpStr().c_str());
+#endif
+
 	if (_luaThread) {
 		pushValue(p1);
 		pushValue(p2);
@@ -220,6 +357,11 @@ void TeLuaThread::resume(const TeVariant &p1, const TeVariant &p2) {
 }
 
 void TeLuaThread::resume(const TeVariant &p1, const TeVariant &p2, const TeVariant &p3) {
+#ifdef TETRAEDGE_LUA_DEBUG
+	debug("TeLuaThread::resume(%s, %s, %s)", p1.dumpStr().c_str(), p2.dumpStr().c_str(),
+				p3.dumpStr().c_str());
+#endif
+
 	if (_luaThread) {
 		pushValue(p1);
 		pushValue(p2);

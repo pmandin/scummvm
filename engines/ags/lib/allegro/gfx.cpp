@@ -194,16 +194,25 @@ bool is_linear_bitmap(BITMAP *bmp) {
 	return true;
 }
 
+bool is_same_bitmap(BITMAP *bmp1, BITMAP *bmp2) {
+	if ((bmp1 == nullptr) || (bmp2 == nullptr))
+		return false;
+	if (bmp1 == bmp2)
+		return true;
+
+	// TODO: allegro also returns true if one bmp is a sub of the other,
+	// i.e. they share the same id
+	// This (if needed?) would require a different implementation
+
+	return false;
+}
+
 void bmp_select(BITMAP *bmp) {
 	// No implementation needed
 }
 
 byte *bmp_write_line(BITMAP *bmp, int line) {
 	return bmp->line[line];
-}
-
-void bmp_unwrite_line(BITMAP *bmp) {
-	// No implementation needed
 }
 
 void bmp_write8(byte *addr, int color) {
@@ -234,7 +243,7 @@ void memory_putpixel(BITMAP *bmp, int x, int y, int color) {
 
 void putpixel(BITMAP *bmp, int x, int y, int color) {
 	Graphics::ManagedSurface &surf = **bmp;
-	if (x >= surf.w || y >= surf.h)
+	if (x < 0 || x >= surf.w || y < 0 || y >= surf.h)
 		return;
 	void *p = surf.getBasePtr(x, y);
 
@@ -255,6 +264,8 @@ void putpixel(BITMAP *bmp, int x, int y, int color) {
 
 void _putpixel(BITMAP *bmp, int x, int y, int color) {
 	Graphics::ManagedSurface &surf = **bmp;
+	if (x < 0 || x >= surf.w || y < 0 || y >= surf.h)
+		return;
 	void *p = surf.getBasePtr(x, y);
 	*((uint8 *)p) = color;
 }
@@ -265,6 +276,8 @@ void _putpixel15(BITMAP *bmp, int x, int y, int color) {
 
 void _putpixel16(BITMAP *bmp, int x, int y, int color) {
 	Graphics::ManagedSurface &surf = **bmp;
+	if (x < 0 || x >= surf.w || y < 0 || y >= surf.h)
+		return;
 	void *p = surf.getBasePtr(x, y);
 	*((uint16 *)p) = color;
 }
@@ -275,6 +288,8 @@ void _putpixel24(BITMAP *bmp, int x, int y, int color) {
 
 void _putpixel32(BITMAP *bmp, int x, int y, int color) {
 	Graphics::ManagedSurface &surf = **bmp;
+	if (x < 0 || x >= surf.w || y < 0 || y >= surf.h)
+		return;
 	void *p = surf.getBasePtr(x, y);
 	*((uint32 *)p) = color;
 }

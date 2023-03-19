@@ -74,22 +74,28 @@ void Unlock::draw() {
 	clearSurface();
 
 	writeString(4, 1, Common::String::format(
-		STRING["dialogs.unlock.who_will_try"].c_str(),
+		STRING["dialogs.misc.who_will_try"].c_str(),
 		'0' + g_globals->_party.size()));
 	escToGoBack(0, 3);
 }
 
 bool Unlock::msgKeypress(const KeypressMessage &msg) {
-	if (msg.keycode == Common::KEYCODE_ESCAPE) {
-		close();
-
-	} else if (msg.keycode >= Common::KEYCODE_1 &&
+	if (msg.keycode >= Common::KEYCODE_1 &&
 		msg.keycode <= (Common::KEYCODE_0 + (int)g_globals->_party.size())) {
 		// Character selected
 		charSelected(msg.keycode - Common::KEYCODE_1);
 	}
 
 	return true;
+}
+
+bool Unlock::msgAction(const ActionMessage &msg) {
+	if (msg._action == KEYBIND_ESCAPE) {
+		close();
+		return true;
+	}
+
+	return false;
 }
 
 void Unlock::charSelected(uint charIndex) {

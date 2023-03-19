@@ -121,6 +121,27 @@ enum Type {
 } // End of namespace LogMessageType
 
 /**
+* Pixel mask modes for cursor graphics.
+*/
+enum CursorMaskValue {
+	/** Overlapped pixel is unchanged */
+	kCursorMaskTransparent = 0,
+
+	/** Overlapped pixel is replaced with the cursor pixel. */
+	kCursorMaskOpaque = 1,
+
+	/** Fully inverts the overlapped pixel regardless of the cursor color data.
+	 *  Backend must support kFeatureCursorMaskInvert for this mode. */
+	kCursorMaskInvert = 2,
+
+	/** Blends with mode (Destination AND Mask) XOR Color in palette modes, or
+	 *  (Destination AND Mask) XOR (NOT Color) in RGB modes, which is equivalent to
+	 *  Classic MacOS behavior for pixel colors other than black and white.
+	 *  Backend must support kFeatureCursorMaskPaletteXorColorXnor for this mode. */
+	kCursorMaskPaletteXorColorXnor = 3,
+};
+
+/**
  * Interface for ScummVM backends.
  *
  * If you want to port ScummVM to a system that is not currently
@@ -385,6 +406,25 @@ public:
 		 * The GUI also relies on this feature for mouse cursors.
 		 */
 		kFeatureCursorPalette,
+
+		/**
+		 * Backends supporting this feature allow specifying a mask for a
+		 * cursor instead of a key color.
+		 */
+		kFeatureCursorMask,
+
+		/**
+		 * Backends supporting this feature allow cursor masks to use mode kCursorMaskInvert in mask values,
+		 * which inverts the destination pixel.
+		 */
+		kFeatureCursorMaskInvert,
+
+		/**
+		 * Backends supporting this feature allow cursor masks to use mode kCursorMaskPaletteXorColorXnor in the mask values,
+		 * which uses (Color XOR Destination) for CLUT8 blending and (Color XNOR Destination) for RGB blending.  This is
+		 * equivalent to Classic MacOS behavior for pixel colors other than black and white.
+		 */
+		kFeatureCursorMaskPaletteXorColorXnor,
 
 		/**
 		 * A backend has this feature if its overlay pixel format has an alpha
@@ -762,7 +802,7 @@ public:
 	 * OpenGL context does not support the function.
 	 *
 	 * @param name The name of the OpenGL function.
-	 * @return An function pointer for the requested OpenGL function or
+	 * @return A function pointer for the requested OpenGL function or
 	 *         nullptr in case of failure.
 	 */
 	virtual void *getOpenGLProcAddress(const char *name) const { return nullptr; }
@@ -1113,15 +1153,17 @@ public:
 	virtual void updateScreen() = 0;
 
 	/**
-	 * Set current shake position, a feature needed for some SCUMM screen
-	 * effects.
+	 * Set current shake position, a feature needed for screen effects in some
+	 * engines.
 	 *
-	 * The effect causes the displayed graphics to be shifted upwards
-	 * by the specified (always positive) offset. The area at the bottom of the
-	 * screen which is moved into view by this is filled with black. This does
-	 * not cause any graphic data to be lost. To restore the original
-	 * view, the game engine only has to call this method again with offset
-	 * equal to zero. No calls to copyRectToScreen are necessary.
+	 * The effect causes the displayed graphics to be shifted upwards and
+	 * rightward by the specified offsets (the offsets can be negative to shift
+	 * downward or leftward). The area at the border of the screen which is
+	 * moved into view by this  (for example at the bottom when moving
+	 * upward) is filled with black. This does not cause any graphic data to
+	 * be lost. To restore the original view, the game engine only has to call
+	 * this method again with offset equal to zero. No calls to
+	 * copyRectToScreen are necessary.
 	 *
 	 * @param shakeXOffset	Shake x offset.
 	 * @param shakeYOffset	Shake y offset.
@@ -1312,11 +1354,13 @@ public:
 	 * @param keycolor  Transparency color value. This should not exceed the maximum color value of the specified format.
 	 *                  In case it does, the behavior is undefined. The backend might just error out or simply ignore the
 	 *                  value. (The SDL backend will just assert to prevent abuse of this).
+	 *                  This parameter does nothing if a mask is provided.
 	 * @param dontScale Whether the cursor should never be scaled. An exception is high ppi displays, where the cursor
 	 *                  might be too small to notice otherwise, these are allowed to scale the cursor anyway.
 	 * @param format    Pointer to the pixel format that the cursor graphic uses (0 means CLUT8).
+	 * @param mask      A mask containing values from the CursorMaskValue enum for each cursor pixel.
 	 */
-	virtual void setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale = false, const Graphics::PixelFormat *format = nullptr) = 0;
+	virtual void setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale = false, const Graphics::PixelFormat *format = nullptr, const byte *mask = nullptr) = 0;
 
 	/**
 	 * Replace the specified range of cursor palette with new colors.

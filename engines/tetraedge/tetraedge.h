@@ -51,6 +51,14 @@ class TeResourceManager;
 class TeInputMgr;
 
 class TetraedgeEngine : public Engine {
+public:
+	enum TetraedgeGameType {
+		kNone,
+		kSyberia,
+		kSyberia2,
+		kAmerzone
+	};
+
 private:
 	const ADGameDescription *_gameDescription;
 	Common::RandomSource _randomSource;
@@ -61,6 +69,7 @@ private:
 	TeRenderer *_renderer;
 	TeResourceManager *_resourceManager;
 	TeInputMgr *_inputMgr;
+	enum TetraedgeGameType _gameType;
 
 protected:
 	// Engine APIs
@@ -77,6 +86,12 @@ public:
 	 */
 	Common::String getGameId() const;
 
+	Common::Language getGameLanguage() const;
+
+	Common::Platform getGamePlatform() const;
+
+	bool isGameDemo() const;
+
 	/**
 	 * Gets a random number
 	 */
@@ -88,7 +103,8 @@ public:
 		return
 			(f == kSupportsLoadingDuringRuntime) ||
 			(f == kSupportsSavingDuringRuntime) ||
-			(f == kSupportsReturnToLauncher);
+			(f == kSupportsReturnToLauncher) ||
+			(f == kSupportsChangingOptionsDuringRuntime);
 	};
 
 	bool canLoadGameStateCurrently() override;
@@ -100,6 +116,8 @@ public:
 	 * loading and saving using a single method
 	 */
 	Common::Error syncGame(Common::Serializer &s);
+
+	Common::Error saveGameState(int slot, const Common::String &desc, bool isAutosave) override;
 
 	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override {
 		Common::Serializer s(nullptr, stream);
@@ -120,6 +138,7 @@ public:
 	TeRenderer *getRenderer();
 	TeResourceManager *getResourceManager();
 	TeInputMgr *getInputMgr();
+	TetraedgeGameType gameType() const { return _gameType; }
 
 	void openConfigDialog();
 	bool onKeyUp(const Common::KeyState &state);
@@ -132,6 +151,7 @@ public:
 
 private:
 	void configureSearchPaths();
+	void registerConfigDefaults();
 };
 
 extern TetraedgeEngine *g_engine;

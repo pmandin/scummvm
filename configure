@@ -138,6 +138,7 @@ _ogg=auto
 _vorbis=auto
 _sdlnet=auto
 _libcurl=auto
+_enet=yes
 _tremor=auto
 _tremolo=no
 _flac=auto
@@ -157,6 +158,7 @@ _jpeg=auto
 _png=auto
 _gif=auto
 _theoradec=auto
+_vpx=auto
 _faad=auto
 _fluidsynth=auto
 _fluidlite=auto
@@ -280,6 +282,7 @@ add_feature png "PNG" "_png"
 add_feature gif "GIF" "_gif"
 add_feature theoradec "libtheoradec" "_theoradec"
 add_feature tinygl "TinyGL" "_tinygl"
+add_feature vpx "libvpx" "_vpx"
 add_feature vorbis "Vorbis file support" "_vorbis _tremor"
 add_feature zlib "zlib" "_zlib"
 add_feature lua "lua" "_lua"
@@ -563,6 +566,15 @@ get_system_exe_extension() {
 	mingw* | *os2-emx)
 		_exeext=".exe"
 		;;
+	mint)
+		if test "$_backend" = "atari"; then
+			# ATARI backend
+			_exeext=".ttp"
+		else
+			# SDL backend
+			_exeext=".gtp"
+		fi
+		;;
 	emscripten)
 		_exeext=".html"
 		;;
@@ -793,7 +805,7 @@ Usage: $0 [OPTIONS]...
 
 Configuration:
   -h, --help              display this help and exit
-  --backend=BACKEND       backend to build (3ds, android, dc, dingux, ds, gcw0,
+  --backend=BACKEND       backend to build (3ds, atari, android, dc, dingux, ds, gcw0,
                           gph, iphone, ios7, ios7-arm64, maemo, n64, null, opendingux,
                           openpandora, psp, psp2, samsungtv, sdl, switch, wii) [sdl]
 
@@ -853,7 +865,7 @@ Special configuration feature:
                                            psp for PlayStation Portable
                                            samsungtv for Samsung TV
                                            switch for Nintendo Switch
-										   tvos for Apple TV (tvOS 9.0+)
+                                           tvos for Apple TV (tvOS 9.0+)
                                            wasm32-unknown-emscripten for WebAssembly
                                            wii for Nintendo Wii
 
@@ -982,6 +994,9 @@ Optional Libraries:
   --with-theoradec-prefix=DIR  prefix where libtheoradec is installed (optional)
   --disable-theoradec      disable Theora decoder [autodetect]
 
+  --with-vpx-prefix=DIR    prefix where libtvpx is installed (optional)
+  --disable-vpx            disable VP8/VP9 decoder [autodetect]
+
   --with-faad-prefix=DIR   prefix where libfaad is installed (optional)
   --disable-faad           disable AAC decoder [autodetect]
 
@@ -1037,6 +1052,8 @@ Optional Libraries:
 
   --with-libcurl-prefix=DIR    prefix where libcurl is installed (optional)
   --disable-libcurl        disable libcurl networking library [autodetect]
+
+  --disable-enet         don't enable ENet networking support
 
   --with-discord-prefix=DIR   prefix where discord-rpc is installed (optional)
   --disable-discord       disable Discord rich presence integration [autodetect]
@@ -1155,6 +1172,8 @@ for ac_option in $@; do
 	--enable-gif)                 _gif=yes               ;;
 	--disable-theoradec)          _theoradec=no          ;;
 	--enable-theoradec)           _theoradec=yes         ;;
+	--disable-vpx)                _vpx=no                ;;
+	--enable-vpx)                 _vpx=yes               ;;
 	--disable-faad)               _faad=no               ;;
 	--enable-faad)                _faad=yes              ;;
 	--disable-fluidsynth)         _fluidsynth=no         ;;
@@ -1173,6 +1192,8 @@ for ac_option in $@; do
 	--disable-sdlnet)             _sdlnet=no             ;;
 	--enable-libcurl)             _libcurl=yes           ;;
 	--disable-libcurl)            _libcurl=no            ;;
+	--enable-enet)                _enet=yes              ;;
+	--disable-enet)               _enet=no               ;;
 	--enable-cloud)               _cloud=yes             ;;
 	--disable-cloud)              _cloud=no              ;;
 	--enable-lld)                 _lld=yes               ;;
@@ -1311,6 +1332,12 @@ for ac_option in $@; do
 		arg=`echo $ac_option | cut -d '=' -f 2`
 		THEORADEC_CFLAGS="-I$arg/include"
 		THEORADEC_LIBS="-L$arg/lib"
+		;;
+	--with-vpx-prefix=*)
+		arg=`echo $ac_option | cut -d '=' -f 2`
+		VPX_CFLAGS="-I$arg/include"
+		VPX_LIBS="-L$arg/lib"
+		VPX_STATIC_LIBS="-L$arg/lib"
 		;;
 	--with-faad-prefix=*)
 		arg=`echo $ac_option | cut -d '=' -f 2`
@@ -1513,8 +1540,8 @@ for ac_option in $@; do
 	*)
 		option_error
 		;;
-	esac;
-done;
+	esac
+done
 
 guessed_host=`$_srcdir/config.guess`
 get_system_exe_extension $guessed_host
@@ -1636,6 +1663,11 @@ kos32)
 	_host_os=kolibrios
 	_host_cpu=i686
 	_host_alias=kos32
+	;;
+m68k-atari-mint)
+	_host_os=mint
+	_host_cpu=m68k
+	_host_alias=m68k-atari-mint
 	;;
 maemo)
 	_host_os=maemo
@@ -1868,12 +1900,12 @@ kolibrios)
 		echo "Please set KOS32_SDK_DIR and KOS32_AUTOBUILD in your environment. export KOS32_SDK_DIR=<path to KOS32 SDK> and export KOS32_AUTOBUILD=<path to KOS32 build>"
 		exit 1
 	fi
-	_as="${KOS32_AUTOBUILD}/bin/kos32-as"
-	_ar="${KOS32_AUTOBUILD}/bin/kos32-ar cr"
-	_ranlib="${KOS32_AUTOBUILD}/bin/kos32-ar -s"
-	_strip="${KOS32_AUTOBUILD}/bin/kos32-strip"
+	_as="${KOS32_AUTOBUILD}/tools/win32/bin/kos32-as"
+	_ar="${KOS32_AUTOBUILD}/tools/win32/bin/kos32-ar cr"
+	_ranlib="${KOS32_AUTOBUILD}/tools/win32/bin/kos32-ar -s"
+	_strip="${KOS32_AUTOBUILD}/tools/win32/bin/kos32-strip"
 	if test -z "$CXX"; then
-		CXX="${KOS32_AUTOBUILD}/bin/kos32-g++"
+		CXX="${KOS32_AUTOBUILD}/tools/win32/bin/kos32-g++"
 	fi
 	append_var DEFINES "-U__WIN32__ -U_Win32 -U_WIN32 -U__MINGW32__ -UWIN32 -DKOLIBRIOS=1 -D_POSIX_C_SOURCE=1 -D_XOPEN_SOURCE=1"
 	append_var CXXFLAGS "-I${KOS32_SDK_DIR}/sources/newlib/libc/include -I${KOS32_SDK_DIR}/sources/libstdc++-v3/include -fno-ident -fomit-frame-pointer"
@@ -1941,7 +1973,6 @@ riscos)
 	elif `which makerun >/dev/null 2>&1`; then
 		add_line_to_config_mk "MAKERUN := makerun"
 	fi
-	echo Over here!
 	;;
 *)
 	;;
@@ -2171,8 +2202,17 @@ if test "$have_gcc" = yes; then
 		cxx_version=`gcc_get_define __clang_version__`
 		cxx_version="`echo "${cxx_version}" | sed -e 's/"\([^ ]*\) .*/\1/'`"
 		cxx_version="clang $cxx_version, ok"
+
+		append_var CXXFLAGS "-Wshadow"
 	else
 		cxx_version="GCC $cxx_version, ok"
+
+		# Way too many false positives before GCC 5
+		if test $_cxx_major -ge 5; then
+			append_var CXXFLAGS "-Wshadow"
+		else
+			append_var CXXFLAGS "-Wno-missing-field-initializers"
+		fi
 	fi
 elif test "$have_icc" = yes; then
 	cxx_version="`( $CXX -dumpversion ) 2>/dev/null`"
@@ -2282,7 +2322,7 @@ else
 fi
 
 # Check if std::nullptr_t is available
-echo_n "Checking if C++11 std::nullptr_t is available..."
+echo_n "Checking if C++11 std::nullptr_t is available... "
 cat > $TMPC << EOF
 #include <cstddef>
 int main(int argc, char *argv[]) {
@@ -2292,10 +2332,10 @@ int main(int argc, char *argv[]) {
 EOF
 cc_check
 if test "$TMPR" -eq 0; then
-		echo yes
+	echo yes
 else
-		echo no
-		define_in_config_if_yes yes 'NO_CXX11_NULLPTR_T'
+	echo no
+	define_in_config_if_yes yes 'NO_CXX11_NULLPTR_T'
 fi
 
 #
@@ -2584,8 +2624,14 @@ define_in_config_h_if_yes $_need_memalign 'SCUMM_NEED_ALIGNMENT'
 #
 echo_n "Checking host CPU architecture... "
 case $_host_cpu in
+	aarch64)
+		echo "aarch64"
+		;;
+	alpha*)
+		echo "Alpha"
+		;;
 	arm*)
-		echo "arm"
+		echo "ARM"
 		case $_host in
 			openpandora)
 				define_in_config_if_yes yes 'USE_ARM_NEON_ASPECT_CORRECTOR'
@@ -2602,13 +2648,19 @@ case $_host_cpu in
 
 		append_var DEFINES "-DARM_TARGET"
 		;;
-	aarch64)
-		echo "aarch64"
+	hppa* | parisc*)
+		echo "PA-RISC"
 		;;
 	i[3-6]86)
 		echo "x86"
 		_have_x86=yes
 		define_in_config_h_if_yes $_have_x86 'HAVE_X86'
+		;;
+	ia64*)
+		echo "Itanium"
+		;;
+	m68*)
+		echo "m68k"
 		;;
 	mips*)
 		echo "MIPS"
@@ -2618,13 +2670,22 @@ case $_host_cpu in
 		echo "PowerPC"
 		append_var DEFINES "-DPPC_TARGET"
 		;;
-	amd64 | x86_64)
-		echo "x86_64"
-		_have_amd64=yes
-		define_in_config_h_if_yes $_have_amd64 'HAVE_AMD64'
+	riscv*)
+		echo "RISC-V"
+		;;
+	sh*)
+		echo "SuperH"
+		;;
+	sparc*)
+		echo "SPARC"
 		;;
 	wasm32)
 		echo "wasm32"
+		;;
+	x86_64 | amd64)
+		echo "x86_64"
+		_have_amd64=yes
+		define_in_config_h_if_yes $_have_amd64 'HAVE_AMD64'
 		;;
 	*)
 		echo "unknown ($_host_cpu)"
@@ -2945,6 +3006,12 @@ EOF
 		if test "$_dynamic_modules" = yes ; then
 			_detection_features_static=no
 		fi
+		# XXX: Enabling SCUMM v7+ hasn't been useful on DC for many years (bug #6008),
+		# and may confuse users, since this is one of the most popular engines, so make
+		# sure that it won't be enabled (until a better backend capability requirement
+		# feature is implemented). This may also help SCUMMv6 and below behave better
+		# on this very memory-limited platform.
+		engine_disable scumm_7_8
 		;;
 	ds)
 		_optimization_level=-Os
@@ -3179,9 +3246,6 @@ EOF
 	psp)
 		_optimization_level=-O2
 		_freetypepath="$PSPDEV/psp/bin"
-		if test -z "$PKG_CONFIG_LIBDIR"; then
-			PKG_CONFIG_LIBDIR="$PSPDEV/psp/lib/pkgconfig"
-		fi
 		append_var CXXFLAGS "-I$PSPSDK/include"
 		# FIXME: Why is the following in CXXFLAGS and not in DEFINES? Change or document this.
 		append_var CXXFLAGS "-D_PSP_FW_VERSION=150"
@@ -3198,11 +3262,9 @@ EOF
 		# RiscOS has no OpenGL support at all even though it's SDL based
 		_opengl_mode=none
 		if test "$_dynamic_modules" = yes ; then
-			_detection_features_static=no
 			_plugins_default=dynamic
-		else
-			_detection_features_full=no
 		fi
+		_detection_features_full=no
 		;;
 	solaris*)
 		append_var DEFINES "-DSOLARIS"
@@ -3550,6 +3612,24 @@ if test -n "$_host"; then
 			_port_mk="backends/platform/sdl/kolibrios/kolibrios.mk"
 			;;
 		m68k-atari-mint)
+			# auto -> yes (overriden by $_release_build = yes)
+			if test "$_debug_build" = "no"; then
+				# --disable-debug
+				append_var LDFLAGS "-s"
+			fi
+
+			# auto -> no
+			if test "$_optimizations" = "yes"; then
+				# --enable-release, --enable-optimizations
+				append_var CXXFLAGS "-fomit-frame-pointer"
+			fi
+
+			# auto -> no
+			if test "$_release_build" = "yes"; then
+				# --enable-release
+				append_var DEFINES "-DNDEBUG"
+			fi
+
 			_seq_midi=no
 			_timidity=no
 			;;
@@ -3772,6 +3852,7 @@ if test -n "$_host"; then
 			_build_aspect=no
 			_mt32emu=no
 			_port_mk="backends/platform/psp/psp.mk"
+			_pkgconfig="${PSPDEV}/bin/psp-pkg-config"
 			;;
 		tvos)
 			add_line_to_config_mk 'IPHONE = 1'
@@ -3838,6 +3919,17 @@ case $_backend in
 			_sdlnet=no
 		fi
 		;;
+	atari)
+		define_in_config_if_yes yes "ATARI"
+		append_var DEFINES "-DDISABLE_LAUNCHERDISPLAY_GRID"
+		#append_var DEFINES "-DDISABLE_FANCY_THEMES"
+		#append_var DEFINES "-DDISABLE_SID"
+		#append_var DEFINES "-DDISABLE_NES_APU"
+		#append_var DEFINES "-DDISABLE_DOSBOX_OPL"
+		append_var ASFLAGS "-m68030"
+		append_var CXXFLAGS "-m68020-60"
+		append_var LDFLAGS "-m68020-60"
+		;;
 	dc)
 		append_var INCLUDES '-I$(srcdir)/backends/platform/dc'
 		append_var INCLUDES "-isystem $RONINDIR/include"
@@ -3882,7 +3974,7 @@ case $_backend in
 		append_var LIBS "-lobjc -framework UIKit -framework CoreGraphics -framework OpenGLES"
 		append_var LIBS "-framework QuartzCore -framework CoreFoundation -framework Foundation"
 		append_var LIBS "-framework AudioToolbox -framework CoreAudio -framework SystemConfiguration "
-		append_var LIBS "-framework GameController"
+		append_var LIBS "-framework GameController -framework Accelerate"
 		if test "$_host" = 'tvos'; then
 			append_var LDFLAGS "-mtvos-version-min=9 -arch arm64"
 			append_var CFLAGS "-mtvos-version-min=9 -arch arm64"
@@ -4036,6 +4128,7 @@ if test "$_sdl" = yes ; then
 	append_var LIBS "$SDL_LIBS"
 	case $_sdlversion in
 		2.*.*)
+			append_var DEFINES "-DUSE_SDL2"
 			add_line_to_config_mk "USE_SDL2 = 1"
 			_sdlMajorVersionNumber=2
 			;;
@@ -4116,6 +4209,219 @@ EOF
 	echo "$_sdlnet"
 fi
 
+#
+# Check for stuff required for ENet to compile
+#
+if test "$_enet" = yes ; then
+	case "$_host_os" in
+		mingw*)
+			# Skip for mingw.
+			;;
+		*)
+			echo "Checks for ENet..."
+
+				echo_n "   "
+				echocheck "sendmsg"
+				cat > $TMPC << EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+int main(void) { return sendmsg(0, 0, 0); }
+EOF
+				cc_check
+				if test "$TMPR" -eq 0; then
+					echo "yes"
+				else
+					echo "no, required for ENet.  Disabling."
+					_enet=no
+				fi
+
+				echo_n "   "
+				echocheck "recvmsg"
+				cat > $TMPC << EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+int main(void) { return recvmsg(0, 0, 0); }
+EOF
+				cc_check
+				if test "$TMPR" -eq 0; then
+					echo "yes"
+				else
+					echo "no, required for ENet.  Disabling."
+					_enet=no
+				fi
+			;;
+	esac
+fi
+
+#
+# Check whether ENet networking support is requested
+#
+define_in_config_if_yes "$_enet" 'USE_ENET'
+
+#
+# Check and set additional stuff needed for ENet.
+#
+if test "$_enet" = yes ; then
+	case "$_host_os" in
+		mingw*)
+			# Additional libraries.
+			append_var LIBS "-lwinmm -lws2_32"
+			;;
+
+		*)
+			# Check for features and define.
+			echo "Optional checks for ENet..."
+
+			echo_n "   "
+			echocheck "getaddrinfo"
+			cat > $TMPC << EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+int main(void) { return getaddrinfo(0, 0, 0, 0); }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_GETADDRINFO"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "getnameinfo"
+			cat > $TMPC << EOF
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+int main(void) { return getnameinfo(0, 0, 0, 0, 0, 0, 0); }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_GETNAMEINFO"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "gethostbyaddr_r"
+			cat > $TMPC << EOF
+#include <netdb.h>
+int main(void) { return gethostbyaddr_r(0, 0, 0, 0, 0, 0, 0, 0); }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_GETHOSTBYADDR_R"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "gethostbyname_r"
+			cat > $TMPC << EOF
+#include <netdb.h>
+int main(void) { return gethostbyname_r(0, 0, 0, 0, 0, 0); }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_GETHOSTBYNAME_R"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "poll"
+			cat > $TMPC << EOF
+#include <poll.h>
+int main(void) { return poll(0, 0, 0); }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_POLL"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "fcntl"
+			cat > $TMPC << EOF
+#include <unistd.h>
+#include <fcntl.h>
+int main(void) { return fcntl(0, 0); }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_FCNTL"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "inet_pton"
+			cat > $TMPC << EOF
+#include <sys/socket.h>
+#include <arpa/inet.h>
+int main(void) { return inet_pton(0, 0, 0); }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_INET_PTON"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "inet_ntop"
+			cat > $TMPC << EOF
+#include <sys/socket.h>
+#include <arpa/inet.h>
+int main(void) { inet_ntop(0, 0, 0, 0); return 0; }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_INET_NTOP"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "msghdr.msg_flags"
+			cat > $TMPC << EOF
+#include <sys/socket.h>
+struct msghdr msg;
+int main(void) { return msg.msg_flags; }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_MSGHDR_FLAGS"
+				echo "yes"
+			else
+				echo "no"
+			fi
+
+			echo_n "   "
+			echocheck "socklen_t"
+			cat > $TMPC << EOF
+#include <sys/socket.h>
+int main(void) { socklen_t len = 0; return 0; }
+EOF
+			cc_check
+			if test "$TMPR" -eq 0; then
+				append_var DEFINES "-DHAS_SOCKLEN_T"
+				echo "yes"
+			else
+				echo "no"
+			fi
+			;;
+	esac
+fi
 
 #
 # Enable 16bit support only for backends which support it
@@ -4503,7 +4809,7 @@ PRE_OBJS_FLAGS  := -Wl,-export-dynamic -Wl,-whole-archive
 POST_OBJS_FLAGS := -Wl,-no-whole-archive
 '
 		;;
-	*mingw32* | mingw64)
+	*cygwin* | *mingw32* | mingw64)
 		_plugin_prefix=""
 		_plugin_suffix=".dll"
 _mak_plugins='
@@ -5008,6 +5314,56 @@ fi
 define_in_config_if_yes "$_theoradec" 'USE_THEORADEC'
 if test ! "$_theoradec" = notsupported ; then
 	echo "$_theoradec"
+fi
+
+#
+# Check for VP8/VP9 Decoder
+#
+echocheck "libvpx >= 1.6"
+if test "$_vorbis" = no && test "$_tremor" = no ; then
+	echo "skipping. no vorbis"
+	_vpx=notsupported
+fi
+if test "$_vpx" = auto ; then
+	_vpx=no
+
+	if test "$_pkg_config" = "yes" && $_pkgconfig --exists vpx; then
+		append_var VPX_LIBS "`$_pkgconfig --libs vpx`"
+		append_var VPX_STATIC_LIBS "`$_pkgconfig --static --libs vpx`"
+		append_var VPX_CFLAGS "`$_pkgconfig --cflags vpx`"
+	else
+		append_var VPX_LIBS "-lvpx"
+	fi
+
+	cat > $TMPC << EOF
+#include "vpx/vpx_decoder.h"
+#include "vpx/vp8dx.h"
+int main(void) {
+	vpx_codec_ctx_t codec;
+	vpx_codec_dec_init(&codec, &vpx_codec_vp8_dx_algo, NULL, 0);
+
+#if VPX_DECODER_ABI_VERSION >= 10 // Check for 1.6
+#else
+  syntax error
+#endif
+	return 0;
+}
+EOF
+	cc_check_no_clean $VPX_CFLAGS $VPX_LIBS && _vpx=yes
+	# If it fails, try with static libs, it may help
+	if test "$_vpx" != "yes"; then
+		VPX_LIBS="$VPX_STATIC_LIBS"
+		cc_check_no_clean $VPX_CFLAGS $VPX_LIBS && _vpx=yes
+	fi
+	cc_check_clean
+fi
+if test "$_vpx" = yes ; then
+	append_var LIBS "$VPX_LIBS -lvpx"
+	append_var INCLUDES "$VPX_CFLAGS"
+fi
+define_in_config_if_yes "$_vpx" 'USE_VPX'
+if test ! "$_vpx" = notsupported ; then
+	echo "$_vpx"
 fi
 
 #
@@ -6448,7 +6804,10 @@ if test "$_eventrec" = yes ; then
 fi
 
 if test "$_cloud" = yes ; then
-	echo ", cloud"
+	echo_n ", cloud"
+fi
+if test "$_enet" = yes ; then
+	echo ", ENet"
 else
 	echo
 fi

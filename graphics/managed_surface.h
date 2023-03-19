@@ -499,10 +499,10 @@ public:
 	/**
 	 * Does a blitFrom ignoring any transparency settings
 	 */
-	void rawBlitFrom(const Surface &src, const Common::Rect &srcRect,
-			const Common::Point &destPos, const uint32 *palette) {
-		blitFromInner(src, srcRect, Common::Rect(destPos.x, destPos.y,
-			destPos.x + srcRect.width(), destPos.y + srcRect.height()), palette);
+	void rawBlitFrom(const ManagedSurface &src, const Common::Rect &srcRect,
+			const Common::Point &destPos) {
+		blitFromInner(src._innerSurface, srcRect, Common::Rect(destPos.x, destPos.y, destPos.x + srcRect.width(),
+			destPos.y + srcRect.height()), src._paletteSet ? src._palette : nullptr);
 	}
 
 	/**
@@ -669,21 +669,21 @@ public:
 	}
 
 	/**
-	 * Get the palette array.
+	 * Return true if a palette has been set.
 	 */
-	const uint32 *getPalette() const {
-		return _palette;
+	bool hasPalette() const {
+		return _paletteSet;
 	}
+
+	/**
+	 * Grab the palette using RGB tuples.
+	 */
+	void grabPalette(byte *colors, uint start, uint num) const;
 
 	/**
 	 * Set the palette using RGB tuples.
 	 */
 	void setPalette(const byte *colors, uint start, uint num);
-
-	/**
-	 * Set the palette using RGBA values.
-	 */
-	void setPalette(const uint32 *colors, uint start, uint num);
 };
 /** @} */
 } // End of namespace Graphics

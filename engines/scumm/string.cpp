@@ -540,7 +540,9 @@ bool ScummEngine_v72he::handleNextCharsetCode(Actor *a, int *code) {
 bool ScummEngine::newLine() {
 	_nextLeft = _string[0].xpos;
 	if (_charset->_center) {
-		_nextLeft -= _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) / 2;
+		int stringWidth = _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos);
+		_nextLeft -= stringWidth / 2;
+
 		if (_nextLeft < 0)
 			// The commented out part of the next line was meant as a fix for Kanji text glitches in DIG.
 			// But these glitches couldn't be reproduced in recent tests. So the underlying issue might
@@ -548,6 +550,19 @@ bool ScummEngine::newLine() {
 			// (FT/German, if you look at the sign on the container at game start). After counterchecking
 			// the original code it seems that setting _nextLeft to 0 is the right thing to do here.
 			_nextLeft = /*_game.version >= 6 ? _string[0].xpos :*/ 0;
+
+		// See CHARSET_1() for more context about the following Sega CD code.
+		if (_game.platform == Common::kPlatformSegaCD) {
+			// Clip 16 pixels away from the right
+			if (_nextLeft + stringWidth > (_screenWidth - 16)) {
+				_nextLeft -= (_nextLeft + stringWidth) - (_screenWidth - 16);
+			}
+
+			// Clip 16 pixels away from the left
+			if (_nextLeft < 16) {
+				_nextLeft = 16;
+			}
+		}
 	} else if (_isRTL) {
 		if (_game.id == GID_MANIAC || _game.heversion >= 72 || ((_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && _charset->getCurID() == 4)) {
 			_nextLeft = _screenWidth - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) - _nextLeft;
@@ -560,17 +575,41 @@ bool ScummEngine::newLine() {
 	} else if (!(_game.platform == Common::kPlatformFMTowns) && _string[0].height) {
 		_nextTop += _string[0].height;
 	} else {
-		bool useCJK = _useCJKMode;
-		// SCUMM5 FM-Towns doesn't use the height of the ROM font here.
-		if (_game.platform == Common::kPlatformFMTowns && _game.version == 5)
-			_useCJKMode = false;
-		_nextTop += _charset->getFontHeight();
-		_useCJKMode = useCJK;
+		if (_game.platform == Common::kPlatformSegaCD && _useCJKMode) {
+			// The JAP Sega CD version of Monkey Island 1 doesn't just calculate
+			// the font height, but instead relies on the actual string height.
+			// If the string contains at least a 2 byte character, then we signal it with
+			// a flag, so that getFontHeight() can yield the correct result.
+			for (int i = 0; _charsetBuffer[i]; i++) {
+				// Handle the special 0xFAFD character, which actually is a 0x20 space char.
+				if (_charsetBuffer[i] == 0xFD && _charsetBuffer[i + 1] == 0xFA) {
+					i++;
+					continue;
+				}
+
+				if (is2ByteCharacter(_language, _charsetBuffer[i])) {
+					_segaForce2ByteCharHeight = true;
+					break;
+				}
+			}
+
+			_nextTop += _charset->getFontHeight();
+		} else {
+			bool useCJK = _useCJKMode;
+			// SCUMM5 FM-Towns doesn't use the height of the ROM font here.
+			if (_game.platform == Common::kPlatformFMTowns && _game.version == 5)
+				_useCJKMode = false;
+			_nextTop += _charset->getFontHeight();
+			_useCJKMode = useCJK;
+		}
 	}
 	if (_game.version > 3) {
 		// FIXME: is this really needed?
 		_charset->_disableOffsX = true;
 	}
+
+	_segaForce2ByteCharHeight = false;
+
 	return true;
 }
 
@@ -920,20 +959,158 @@ void ScummEngine::CHARSET_1() {
 	}
 
 	if (_game.version > 3) {
-		int maxwidth = _charset->_right - _string[0].xpos - 1;
+		int maxWidth = _charset->_right - _string[0].xpos;
+
+		maxWidth -= _game.platform == Common::kPlatformSegaCD ? 16 : 1;
+
 		if (_charset->_center) {
-			if (maxwidth > _nextLeft)
-				maxwidth = _nextLeft;
-			maxwidth *= 2;
+			if (maxWidth > _nextLeft)
+				maxWidth = _nextLeft;
+			maxWidth *= 2;
 		}
 
-		_charset->addLinebreaks(0, _charsetBuffer + _charsetBufPos, 0, maxwidth);
+		// If the string is centered and this is MI1 Sega CD, don't add linebreaks right away;
+		// we will take care of it in a different way just below ... :-)
+		if (_game.platform != Common::kPlatformSegaCD ||
+			(_game.platform != Common::kPlatformSegaCD && !_charset->_center)) {
+			_charset->addLinebreaks(0, _charsetBuffer + _charsetBufPos, 0, maxWidth);
+		}
 	}
 
 	if (_charset->_center) {
-		_nextLeft -= _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) / 2;
-		if (_nextLeft < 0)
-			_nextLeft = _game.version >= 6 ? _string[0].xpos : 0;
+		// MI1 Sega CD appears to be doing its own thing in here when
+		// the string x coordinate is on the right side of the screen:
+		// - Applies some tentative line breaks;
+		// - Go line by line and check if the string still overflows
+		//   on the last 16 pixels of the right side of the screen;
+		// - If so, take the original string and apply a stricter final wrapping;
+		// - Finally, clip the string final position to 16 pixels from the right
+		//   and from the left sides of the screen.
+		//
+		// I agree that this is very convoluted :-) , but it's the only way
+		// to display pixel accurate text on both ENG and JAP editions of this
+		// version.
+
+		if (_game.platform == Common::kPlatformSegaCD) {
+			int predictionMaxWidth = _charset->_right - _string[0].xpos;
+			int predictionNextLeft = _nextLeft;
+
+			bool useStricterWrapping = (_string[0].xpos > _screenWidth / 2);
+
+			// Predict if a stricter wrapping is going to be necessary
+			if (!useStricterWrapping) {
+				if (predictionMaxWidth > predictionNextLeft)
+					predictionMaxWidth = predictionNextLeft;
+				predictionMaxWidth *= 2;
+
+				byte predictionString[512];
+
+				memcpy(predictionString, _charsetBuffer, sizeof(predictionString));
+
+				// Impose a tentative max string width for the wrapping
+				_charset->addLinebreaks(0, predictionString + _charsetBufPos, 0, predictionMaxWidth);
+
+				int predictionStringWidth = _charset->getStringWidth(0, predictionString + _charsetBufPos);
+				predictionNextLeft -= predictionStringWidth / 2;
+
+				if (predictionNextLeft < 16)
+					predictionNextLeft = 16;
+
+				byte *ptrToCurLine = predictionString + _charsetBufPos;
+				byte curChar = *ptrToCurLine;
+
+				// Go line by line and check if the string overflows
+				// on the last 16 pixels on the right side of the screen...
+				while (curChar) {
+					predictionStringWidth = _charset->getStringWidth(0, ptrToCurLine);
+					predictionNextLeft -= predictionStringWidth / 2;
+
+					if (predictionNextLeft < 16)
+						predictionNextLeft = 16;
+
+					useStricterWrapping |= (predictionNextLeft + predictionStringWidth > (_screenWidth - 16));
+
+					if (useStricterWrapping)
+						break;
+
+					// Advance to next line, if any...
+					do {
+						// Control code handling...
+						if (curChar == 0xFE || curChar == 0xFF) {
+							// Advance to the control code and
+							// check if it's a new line instruction...
+							ptrToCurLine++;
+							curChar = *ptrToCurLine;
+
+							// Gotcha!
+							if (curChar == 1 || (_newLineCharacter && curChar == _newLineCharacter)) {
+								ptrToCurLine++;
+								curChar = *ptrToCurLine;
+								break;
+							}
+
+							// If we're here, we don't need this control code,
+							// let's just skip it...
+							ptrToCurLine++;
+						} else if (_useCJKMode && curChar & 0x80) { // CJK char
+							ptrToCurLine++;
+						}
+
+						// Line breaks and string termination
+						if (curChar == '\r' || curChar == '\n') {
+							ptrToCurLine++;
+							curChar = *ptrToCurLine;
+							break;
+						} else if (curChar == '\0') {
+							curChar = *ptrToCurLine;
+							break;
+						}
+
+						ptrToCurLine++;
+						curChar = *ptrToCurLine;
+					} while (true);
+				}
+			}
+
+
+			// Impose the final line breaks with the correct max string width;
+			// this part is practically the default v5 text centering code...
+			int finalMaxWidth = _charset->_right - _string[0].xpos;
+			finalMaxWidth -= useStricterWrapping ? 16 : 0;
+
+			if (finalMaxWidth > _nextLeft)
+				finalMaxWidth = _nextLeft;
+			finalMaxWidth *= 2;
+
+			_charset->addLinebreaks(0, _charsetBuffer + _charsetBufPos, 0, finalMaxWidth);
+
+			int finalStringWidth = _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos);
+			_nextLeft -= finalStringWidth / 2;
+
+			// Final additional clippings (these will also be repeated on newLine()):
+
+			// Clip 16 pixels away from the right
+			if (_nextLeft + finalStringWidth > (_screenWidth - 16)) {
+				_nextLeft -= (_nextLeft + finalStringWidth) - (_screenWidth - 16);
+			}
+
+			// Clip 16 pixels away from the left
+			if (_nextLeft < 16) {
+				_nextLeft = 16;
+			}
+		} else {
+			int stringWidth = _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos);
+			_nextLeft -= stringWidth / 2;
+
+			if (_nextLeft < 0)
+				// The commented out part of the next line was meant as a fix for Kanji text glitches in DIG.
+				// But these glitches couldn't be reproduced in recent tests. So the underlying issue might
+				// have been taken care of in a different manner. And the fix actually caused other text glitches
+				// (FT/German, if you look at the sign on the container at game start). After counterchecking
+				// the original code it seems that setting _nextLeft to 0 is the right thing to do here.
+				_nextLeft = /*_game.version >= 6 ? _string[0].xpos :*/ 0;
+		}
+
 	} else if (_isRTL) {
 		if (_game.id == GID_MANIAC || _game.heversion >= 72 || ((_game.id == GID_MONKEY || _game.id == GID_MONKEY2) && _charset->getCurID() == 4)) {
 			_nextLeft = _screenWidth - _charset->getStringWidth(0, _charsetBuffer + _charsetBufPos) - _nextLeft;

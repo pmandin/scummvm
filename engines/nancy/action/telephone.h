@@ -22,7 +22,6 @@
 #ifndef NANCY_ACTION_TELEPHONE_H
 #define NANCY_ACTION_TELEPHONE_H
 
-#include "engines/nancy/commontypes.h"
 #include "engines/nancy/renderobject.h"
 
 #include "engines/nancy/action/actionrecord.h"
@@ -38,13 +37,13 @@ public:
 		Common::String text; // 0x15, 0xC8 bytes
 		SceneChangeDescription sceneChange; // 0xDD
 		// shouldStopRendering
-		EventFlagDescription flag; // 0xE7
+		FlagDescription flag; // 0xE7
 	};
 
 	enum CallState { kWaiting, kButtonPress, kRinging, kBadNumber, kCall, kHangUp };
 
-	Telephone(RenderObject &redrawFrom) :
-		RenderObject(redrawFrom, 7),
+	Telephone() :
+		RenderObject(7),
 		_callState(kWaiting),
 		_selected(0) {}
 	virtual ~Telephone() {}
@@ -68,9 +67,9 @@ public:
 	Common::String _addressBookString; // 0x2CE, 0xC8 long
 	Common::String _dialAgainString; // 0x396
 	SceneChangeDescription _reloadScene; // 0x45E
-	EventFlagDescription _flagOnReload; // 0x468 ??
+	FlagDescription _flagOnReload; // 0x468 ??
 	SceneChangeDescription _exitScene; // 0x46C
-	EventFlagDescription _flagOnExit; // 0x476
+	FlagDescription _flagOnExit; // 0x476
 	Common::Rect _exitHotspot; // 0x47A
 	// 0x48A numConvos
 	Common::Array<PhoneCall> _calls; // 0x48C

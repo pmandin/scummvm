@@ -23,7 +23,7 @@
 #include "mm/mm1/gfx/gfx.h"
 #include "mm/mm1/views_enh/text_view.h"
 #include "mm/mm1/mm1.h"
-#include "mm/utils/strings.h"
+#include "mm/shared/utils/strings.h"
 
 namespace MM {
 namespace MM1 {
@@ -45,7 +45,7 @@ byte TextView::setTextColor(byte col) {
 	return oldColor;
 }
 
-Graphics::Font *TextView::getFont() const {
+XeenFont *TextView::getFont() const {
 	return _fontReduced ? &g_globals->_fontReduced :
 		&g_globals->_fontNormal;
 }
@@ -80,7 +80,9 @@ void TextView::writeChar(int x, int y, char c) {
 	writeChar(c);
 }
 
-void TextView::writeString(const Common::String &str) {
+void TextView::rawWriteString(const Common::String &str) {
+	int y = _textPos.y;
+
 	for (const char *s = (const char *)str.c_str(); *s; ++s) {
 		char c = *s;
 
@@ -92,9 +94,62 @@ void TextView::writeString(const Common::String &str) {
 			writeChar(*s);
 			setTextColor(oldCol);
 
+		} else if (c == '\x02') {
+			int colNum = atoi(Common::String(s + 1, s + 3).c_str());
+			setTextColor(colNum);
+			s += 2;
+
 		} else {
 			writeChar(c);
 		}
+	}
+
+	_textPos.y = y;
+}
+
+void TextView::writeString(const Common::String &str, TextAlign align) {
+	if (_textPos.x == 0) {
+		if (align == ALIGN_RIGHT)
+			_textPos.x = _innerBounds.width();
+		else if (align == ALIGN_MIDDLE)
+			_textPos.x = _innerBounds.width() / 2;
+	}
+
+	// Figure out line widths
+	int lineWidth;
+	switch (align) {
+	case ALIGN_RIGHT:
+		lineWidth = _textPos.x;
+		break;
+	case ALIGN_MIDDLE:
+		lineWidth = MIN(_textPos.x, (int16)(_innerBounds.width() - _textPos.x)) * 2;
+		break;
+	default:
+		lineWidth = _innerBounds.width() - _textPos.x;
+		break;
+	}
+
+	// Split the string into lines
+	Common::StringArray lines = splitLines(str, lineWidth);
+
+	int xStart = _textPos.x;
+	for (const auto &line : lines) {
+		if (line != lines.front()) {
+			newLine();
+			_textPos.x = xStart;
+		}
+
+		if (align != ALIGN_LEFT) {
+			int strWidth = getFont()->getStringWidth(line);
+
+			if (align == ALIGN_MIDDLE)
+				_textPos.x = xStart - strWidth / 2;
+			else
+				// Right align
+				_textPos.x = xStart - strWidth;
+		}
+
+		rawWriteString(line);
 	}
 }
 
@@ -103,30 +158,7 @@ void TextView::writeString(int x, int y, const Common::String &str,
 	_textPos.x = x;
 	_textPos.y = y;
 
-	Common::StringArray lines = splitLines(str);
-
-	for (auto line : lines) {
-		if (line != lines.front())
-			newLine();
-
-		if (align != ALIGN_LEFT) {
-			int strWidth = getFont()->getStringWidth(line);
-
-			if (x == 0) {
-				if (align == ALIGN_MIDDLE)
-					x = _innerBounds.width() / 2;
-				else
-					x = _innerBounds.width();
-			}
-
-			if (align == ALIGN_MIDDLE)
-				_textPos.x = MAX(x - (strWidth / 2), 0);
-			else
-				_textPos.x = MAX(x - strWidth, 0);
-		}
-
-		writeString(line);
-	}
+	writeString(str, align);
 }
 
 void TextView::writeNumber(int val) {
@@ -144,9 +176,70 @@ void TextView::writeLine(int lineNum, const Common::String &str,
 	writeString(xp, lineNum * ROW_HEIGHT, str, align);
 }
 
+size_t TextView::getStringWidth(const Common::String &str) {
+	return getFont()->getStringWidth(str);
+}
+
 void TextView::newLine() {
 	_textPos.x = 0;
 	_textPos.y += ROW_HEIGHT;
+}
+
+Common::StringArray TextView::splitLines(const Common::String &str,
+		int lineWidth) {
+	XeenFont &font = _fontReduced ?
+		g_globals->_fontReduced : g_globals->_fontNormal;
+	const Common::String CONTROL_CHARS = "\x01\x02";
+	bool hasControlChars = str.findFirstOf(CONTROL_CHARS) != Common::String::npos;
+	const char *startP = str.c_str();
+	const char *endP;
+
+	if (lineWidth == -1)
+		lineWidth = _innerBounds.width();
+
+	Common::StringArray lines;
+	if (str.empty())
+		return lines;
+
+	do {
+		endP = strchr(startP, '\n');
+		int strWidth = font.getStringWidth(endP ?
+			Common::String(startP, endP) : Common::String(startP));
+
+		if (strWidth > lineWidth) {
+			// Find the last space before a full line
+			endP = startP + strlen(startP) - 1;
+			while (strWidth > lineWidth) {
+				// Move back to a prior space
+				for (--endP; endP > startP && *endP != ' '; --endP) {
+					if (hasControlChars) {
+						// Strings can have a byte value of 1 or 2 (for changing the
+						// color of the next character/all text), followed by 2 characters
+						// for the color. So in such cases, skip over the digits
+						size_t p = Common::String(startP).findLastOf(CONTROL_CHARS);
+						if (p != Common::String::npos && endP >= (startP + p) &&
+							endP < (startP + p + 3))
+							endP = startP + p;
+					}
+				}
+				assert(endP > startP);
+
+				strWidth = font.getStringWidth(Common::String(startP, endP));
+			}
+		}
+
+		// Add line to results
+		lines.push_back(endP ? Common::String(startP, endP) : Common::String(startP));
+
+		if (!endP)
+			break;
+
+		// Start next line after space or carriage return
+		startP = endP + 1;
+
+	} while (*startP);
+
+	return lines;
 }
 
 void TextView::clearSurface() {

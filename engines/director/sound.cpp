@@ -135,7 +135,9 @@ void DirectorSound::playCastMember(CastMemberID memberID, uint8 soundChannel, bo
 		//   4. maybe more?
 		if (shouldStopOnZero(soundChannel)) {
 			stopSound(soundChannel);
-		} else {
+		// Director 4 will stop after the current loop iteration, but
+		// Director 3 will continue looping until the sound is replaced.
+		} else if (g_director->getVersion() >= 400) {
 			// If there is a loopable stream specified, set the loop to expire by itself
 			if (_channels[soundChannel - 1].loopPtr) {
 				debugC(5, kDebugSound, "DirectorSound::playCastMember(): telling loop in channel %d to stop", soundChannel);
@@ -776,8 +778,14 @@ Audio::AudioStream *SNDDecoder::getAudioStream(bool looping, bool forPuppet, Dis
 
 	if (looping) {
 		if (hasLoopBounds()) {
-			// Return an automatically looping stream.
-			return new Audio::SubLoopingAudioStream(stream, 0, Audio::Timestamp(0, _loopStart, _rate), Audio::Timestamp(0, _loopEnd, _rate));
+			// FIXME: determine the correct behaviour for non-consecutive loop bounds
+			if (_loopEnd < _loopStart) {
+				warning("SNDDecoder::getAudioStream: Looping sound has non-consecutive bounds, using entire sample");
+				return new Audio::LoopingAudioStream(stream, 0);
+			} else {
+				// Return an automatically looping stream.
+				return new Audio::SubLoopingAudioStream(stream, 0, Audio::Timestamp(0, _loopStart, _rate), Audio::Timestamp(0, _loopEnd, _rate));
+			}
 		} else {
 			// Not sure if looping sounds can appear without loop bounds.
 			// Let's just log a warning and loop the entire sound...
@@ -790,7 +798,7 @@ Audio::AudioStream *SNDDecoder::getAudioStream(bool looping, bool forPuppet, Dis
 }
 
 bool SNDDecoder::hasLoopBounds() {
-	return _loopStart != 0 && _loopEnd != 0;
+	return _loopStart != 0 || _loopEnd != 0;
 }
 
 AudioFileDecoder::AudioFileDecoder(Common::String &path)

@@ -107,7 +107,31 @@ bool TePickMesh2::intersect(const TeVector3f32 &origin, const TeVector3f32 &dir,
 }
 
 bool TePickMesh2::intersect2D(const TeVector2f32 &pt) {
-	error("TODO: Implement TePickMesh2::intersect2D");
+	if (_verticies.size() < 3)
+		return false;
+
+	// Check last triangle hit first..
+	TeVector2f32 vert2s[3];
+	for (uint i = 0; i < 3; i++) {
+		const TeVector3f32 &vert = _verticies[_lastTriangleHit * 3 + i];
+		vert2s[i] = TeVector2f32(vert.x(), vert.z());
+	}
+
+	if (pointInTriangle(pt, vert2s[0], vert2s[1], vert2s[2]))
+		return true;
+
+	for (uint tri = 0; tri < _verticies.size() / 3; tri++) {
+		for (uint i = 0; i < 3; i++) {
+			const TeVector3f32 &vert = _verticies[tri * 3 + i];
+			vert2s[i] = TeVector2f32(vert.x(), vert.z());
+		}
+
+		if (pointInTriangle(pt, vert2s[0], vert2s[1], vert2s[2])) {
+			_lastTriangleHit = tri;
+			return true;
+		}
+	}
+	return false;
 }
 
 uint TePickMesh2::lastTriangleHit() const {
@@ -150,6 +174,66 @@ void TePickMesh2::setTriangle(uint num, const TeVector3f32 &v1, const TeVector3f
 	_verticies[num * 3 + 0] = v1;
 	_verticies[num * 3 + 1] = v2;
 	_verticies[num * 3 + 2] = v3;
+}
+
+static float linePointIntersection(const TeVector3f32 &v1, const TeVector3f32 &v2, const TeVector3f32 &v3) {
+	const TeVector3f32 line = v2 - v1;
+	float dot = line.dotProduct(line);
+	float retval = 0;
+	if (dot != 0) {
+		const TeVector3f32 segment = v3 - v1;
+		retval = segment.dotProduct(line);
+	}
+	return retval;
+}
+
+static float segmentPointIntersection(const TeVector3f32 &v1, const TeVector3f32 &v2, const TeVector3f32 &v3) {
+	float intersect = linePointIntersection(v1, v2, v3);
+	float retval;
+	if (intersect < 0)
+		retval = 0;
+	else if (intersect > 1)
+		retval = 1;
+	else
+		retval = intersect;
+	return retval;
+}
+
+TeVector3f32 TePickMesh2::slide(const TeVector3f32 &pos) {
+	const TeMatrix4x4 worldTransform = worldTransformationMatrix();
+	float shortest = 0;
+	TeVector3f32 retval;
+    for (uint i = 0; i < _verticies.size() / 3; i += 3) {
+		TeVector3f32 v1 = _verticies[i];
+		TeVector3f32 v2 = _verticies[i + 1];
+		TeVector3f32 v3 = _verticies[i + 2];
+
+		v1 = worldTransform * v1;
+		v2 = worldTransform * v2;
+		v3 = worldTransform * v3;
+
+		const TeVector3f32 pt1 = (v1 + (v2 - v1) * segmentPointIntersection(v1, v2, pos));
+		const TeVector3f32 off1 = pos - pt1;
+		if (i == 0 || off1.squaredLength() < shortest) {
+			retval = pt1;
+			shortest = off1.squaredLength();
+		}
+
+		const TeVector3f32 pt2 = v2 + (v3 - v2) * segmentPointIntersection(v2, v3, pos);
+		const TeVector3f32 off2 = pos - pt2;
+		if (off2.squaredLength() < shortest) {
+			retval = pt2;
+			shortest = off2.squaredLength();
+		}
+
+		const TeVector3f32 pt3 = v3 + (v1 - v3) * segmentPointIntersection(v3, v1, pos);
+		const TeVector3f32 off3 = pos - pt3;
+		if (off3.squaredLength() < shortest) {
+			retval = pt3;
+			shortest = off3.squaredLength();
+		}
+	}
+	return retval;
 }
 
 /*static*/

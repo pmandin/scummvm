@@ -35,7 +35,6 @@
 #include "engines/nancy/graphics.h"
 #include "engines/nancy/dialogs.h"
 #include "engines/nancy/console.h"
-#include "engines/nancy/constants.h"
 #include "engines/nancy/util.h"
 
 #include "engines/nancy/action/primaryvideo.h"
@@ -51,7 +50,13 @@ namespace Nancy {
 
 NancyEngine *g_nancy;
 
-NancyEngine::NancyEngine(OSystem *syst, const NancyGameDescription *gd) : Engine(syst), _gameDescription(gd), _system(syst) {
+NancyEngine::NancyEngine(OSystem *syst, const NancyGameDescription *gd) :
+		Engine(syst),
+		_gameDescription(gd),
+		_system(syst),
+		_datFileMajorVersion(0),
+		_datFileMinorVersion(1) {
+
 	g_nancy = this;
 
 	_randomSource = new Common::RandomSource("Nancy");
@@ -65,7 +70,6 @@ NancyEngine::NancyEngine(OSystem *syst, const NancyGameDescription *gd) : Engine
 	_resource = nullptr;
 	_startTimeHours = 0;
 	_overrideMovementTimeDeltas = false;
-	_cheatTypeIsEventFlag = false;
 	_horizontalEdgesSize = 0;
 	_verticalEdgesSize = 0;
 }
@@ -106,7 +110,7 @@ Common::Error NancyEngine::saveGameStream(Common::WriteStream *stream, bool isAu
 	return synchronize(ser);
 }
 
-bool NancyEngine::canLoadGameStateCurrently()  {
+bool NancyEngine::canLoadGameStateCurrently() {
 	return canSaveGameStateCurrently();
 }
 
@@ -151,8 +155,8 @@ Common::Platform NancyEngine::getPlatform() const {
 	return _gameDescription->desc.platform;
 }
 
-const GameConstants &NancyEngine::getConstants() const {
-	return gameConstants[getGameType() - 1];
+const StaticData &NancyEngine::getStaticData() const {
+	return _staticData;
 }
 
 void NancyEngine::setState(NancyState::NancyState state, NancyState::NancyState overridePrevious) {
@@ -189,18 +193,6 @@ void NancyEngine::setState(NancyState::NancyState state, NancyState::NancyState 
 
 		return;
 	}
-	case NancyState::kCheat:
-		if (_cheatTypeIsEventFlag) {
-			EventFlagDialog *dialog = new EventFlagDialog();
-			runDialog(*dialog);
-			delete dialog;
-		} else {
-			CheatDialog *dialog = new CheatDialog();
-			runDialog(*dialog);
-			delete dialog;
-		}
-		_input->forceCleanInput();
-		return;
 	default:
 		break;
 	}
@@ -244,11 +236,6 @@ void NancyEngine::setMouseEnabled(bool enabled) {
 	_cursorManager->showCursor(enabled); _input->setMouseInputEnabled(enabled);
 }
 
-void NancyEngine::callCheatMenu(bool eventFlags) {
-	_cheatTypeIsEventFlag = eventFlags;
-	setState(NancyState::kCheat);
-}
-
 Common::Error NancyEngine::run() {
 	setDebugger(new NancyConsole());
 
@@ -280,9 +267,18 @@ Common::Error NancyEngine::run() {
 		_system->delayMillis(16);
 	}
 
-	if (State::Scene::hasInstance()) {
-		NancySceneState.destroy();
-	}
+	if (State::Logo::hasInstance())
+		State::Logo::instance().destroy();
+	if (State::Credits::hasInstance())
+		State::Credits::instance().destroy();
+	if (State::Map::hasInstance())
+		State::Map::instance().destroy();
+	if (State::Help::hasInstance())
+		State::Help::instance().destroy();
+	if (State::Scene::hasInstance())
+		State::Scene::instance().destroy();
+	if (State::MainMenu::hasInstance())
+		State::MainMenu::instance().destroy();
 
 	return Common::kNoError;
 }
@@ -318,6 +314,9 @@ void NancyEngine::bootGameEngine() {
 	_resource = new ResourceManager();
 	_resource->initialize();
 
+	// Read nancy.dat
+	readDatFile();
+
 	// Setup mixer
 	syncSoundSettings();
 
@@ -338,9 +337,7 @@ void NancyEngine::bootGameEngine() {
 		"MAP", "CD", "TBOX", "CURS", "VIEW", "MSND",
 		"BUOK", "BUDE", "BULS", "GLOB", "SLID",
 		"SET", "CURT", "CANT", "TH1", "TH2",
-		"QUOT", "TMOD",
-		// Used in nancy2
-		"CLOK", "SPEC"
+		"QUOT", "TMOD", "CLOK", "SPEC"
 	};
 
 	for (auto const &n : names) {
@@ -473,11 +470,12 @@ void NancyEngine::readBootSummary(const IFF &boot) {
 	ser.skip(0x89, kGameTypeNancy2, kGameTypeNancy3);
 	ser.syncAsUint16LE(_horizontalEdgesSize);
 	ser.syncAsUint16LE(_verticalEdgesSize);
-	ser.skip(0x1C);
+	ser.skip(0x1A, kGameTypeVampire, kGameTypeVampire);
+	ser.skip(0x1C, kGameTypeNancy1);
 	int16 time = 0;
 	ser.syncAsSint16LE(time);
 	_playerTimeMinuteLength = time;
-	ser.skip(2, kGameTypeNancy1, kGameTypeNancy3);
+	ser.skip(2);
 	ser.syncAsByte(_overrideMovementTimeDeltas);
 
 	if (_overrideMovementTimeDeltas) {
@@ -486,6 +484,36 @@ void NancyEngine::readBootSummary(const IFF &boot) {
 		ser.syncAsSint16LE(time);
 		_fastMovementTimeDelta = time;
 	}
+}
+
+void NancyEngine::readDatFile() {
+	Common::SeekableReadStream *datFile = SearchMan.createReadStreamForMember("nancy.dat");
+	if (!datFile) {
+		error("Unable to find nancy.dat");
+	}
+
+	if (datFile->readUint32BE() != MKTAG('N', 'N', 'C', 'Y')) {
+		error("nancy.dat is invalid");
+	}
+
+	byte major = datFile->readByte();
+	byte minor = datFile->readByte();
+	if (major != _datFileMajorVersion || minor != _datFileMinorVersion) {
+		error("Incorrect nancy.dat version. Expected '%d.%d', found %d.%d",
+			_datFileMajorVersion, _datFileMinorVersion, major, minor);
+	}
+
+	uint16 numGames = datFile->readUint16LE();
+	if (getGameType() > numGames) {
+		warning("Data for game type %d is not in nancy.dat", numGames);
+		return;
+	}
+
+	// Seek to offset containing current game
+	datFile->skip((getGameType() - 1) * 4);
+	datFile->seek(datFile->readUint32LE());
+
+	_staticData.readData(*datFile, _gameDescription->desc.language);
 }
 
 Common::Error NancyEngine::synchronize(Common::Serializer &ser) {

@@ -27,12 +27,16 @@ namespace Sludge {
  movieIsPlaying tracks the state of movie playing
  */
 enum MovieStates {
-	nothing = 0, playing, paused
+	kMovieNothing = 0,
+	kMoviePlaying,
+	kMoviePaused
 };
 extern MovieStates movieIsPlaying;
+extern int movieIsEnding;
 
 int playMovie(int fileNumber);
 int stopMovie();
+MovieStates isMoviePlaying();
 int pauseMovie();
 
 } // End of namespace Sludge

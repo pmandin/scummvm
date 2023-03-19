@@ -31,6 +31,7 @@
 #include "mm/mm1/gfx/gfx.h"
 #include "mm/mm1/views/game.h"
 #include "mm/mm1/views_enh/game.h"
+#include "mm/shared/xeen/cc_archive.h"
 
 namespace MM {
 namespace MM1 {
@@ -40,18 +41,22 @@ namespace MM1 {
 MM1Engine *g_engine = nullptr;
 
 MM1Engine::MM1Engine(OSystem *syst, const MightAndMagicGameDescription *gameDesc)
-		: Engine(syst), Events(gameDesc->features & GF_ENHANCED),
-		_gameDescription(gameDesc), _randomSource("MM1") {
+		: MMEngine(syst, gameDesc), Events(gameDesc->features & GF_ENHANCED) {
 	g_engine = this;
 }
 
 MM1Engine::~MM1Engine() {
 	g_engine = nullptr;
+	delete _sound;
 }
 
 Common::Error MM1Engine::run() {
 	// Initialize graphics mode
 	initGraphics(320, 200);
+
+	// Setup mixer
+	_sound = new Sound(_mixer);
+	syncSoundSettings();
 
 	if (isEnhanced()) {
 		if (!setupEnhanced())
@@ -74,6 +79,13 @@ Common::Error MM1Engine::run() {
 	return Common::kNoError;
 }
 
+void MM1Engine::syncSoundSettings() {
+	Engine::syncSoundSettings();
+
+	if (_sound)
+		_sound->updateSoundSettings();
+}
+
 bool MM1Engine::isEnhanced() const {
 	return (_gameDescription->features & GF_ENHANCED) != 0;
 }
@@ -94,7 +106,7 @@ bool MM1Engine::setupEnhanced() {
 	}
 
 	// Add the Xeen cc archives
-	::MM::Xeen::CCArchive *xeenCC = new ::MM::Xeen::CCArchive(
+	Shared::Xeen::CCArchive *xeenCC = new Shared::Xeen::CCArchive(
 		"xeen.cc", "xeen", true);
 	SearchMan.add("xeen", xeenCC);
 
@@ -116,13 +128,6 @@ bool MM1Engine::setupEnhanced() {
 	g_events->showCursor();
 
 	return true;
-}
-
-bool MM1Engine::hasFeature(EngineFeature f) const {
-	return
-		(f == kSupportsReturnToLauncher) ||
-		(f == kSupportsLoadingDuringRuntime) ||
-		(f == kSupportsSavingDuringRuntime);
 }
 
 bool MM1Engine::canSaveGameStateCurrently() {

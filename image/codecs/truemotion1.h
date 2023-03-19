@@ -21,8 +21,8 @@
 
 // Based on the TrueMotion 1 decoder by Alex Beregszaszi & Mike Melanson in FFmpeg
 
-// Only compile if SCI32 is enabled, ZVISION is enabled, or if we're building dynamic modules
-#if defined(ENABLE_SCI32) || defined(ENABLE_ZVISION) || defined(DYNAMIC_MODULES)
+// Only compile if SCI32 is enabled, TESTBED is enabled, ZVISION is enabled, or if we're building dynamic modules
+#if defined(ENABLE_SCI32) || defined(ENABLE_TESTBED) || defined(ENABLE_ZVISION) || defined(DYNAMIC_MODULES)
 
 #ifndef IMAGE_CODECS_TRUEMOTION1_H
 #define IMAGE_CODECS_TRUEMOTION1_H
@@ -39,12 +39,12 @@ namespace Image {
 class TrueMotion1Decoder : public Codec {
 public:
 	TrueMotion1Decoder();
-	~TrueMotion1Decoder();
+	~TrueMotion1Decoder() override;
 
-	const Graphics::Surface *decodeFrame(Common::SeekableReadStream &stream);
+	const Graphics::Surface *decodeFrame(Common::SeekableReadStream &stream) override;
 
 	// Always return RGB565
-	Graphics::PixelFormat getPixelFormat() const { return Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0); }
+	Graphics::PixelFormat getPixelFormat() const override { return Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0); }
 
 private:
 	Graphics::Surface *_surface;

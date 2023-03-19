@@ -64,7 +64,9 @@ public:
 		return _colorInheritance;
 	}
 
-	static void deserialize(Common::ReadStream &stream, Te3DObject2 &dest);
+	/* Note: Added control for includesName not in original as Syberia 2 data format uses
+	   the file name as the model name. */
+	static void deserialize(Common::ReadStream &stream, Te3DObject2 &dest, bool includesName = true);
 	static void serialize(Common::WriteStream &stream, Te3DObject2 &src);
 
 	virtual void draw() {}
@@ -116,6 +118,7 @@ public:
 	}
 	virtual void setParent(Te3DObject2 *newparent);  // note, probably should be Te*I*3DObject2 arg
 	virtual void setPosition(const TeVector3f32 &pos);
+	virtual void setPositionFast(const TeVector3f32 &pos);
 	virtual void setRotation(const TeQuaternion &rot);
 	virtual void setScale(const TeVector3f32 &newScale);
 	virtual void setSize(const TeVector3f32 &newSize);

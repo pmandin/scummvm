@@ -23,7 +23,6 @@
 #define NANCY_ACTION_SECONDARYVIDEO_H
 
 #include "engines/nancy/video.h"
-#include "engines/nancy/commontypes.h"
 #include "engines/nancy/renderobject.h"
 
 #include "engines/nancy/action/actionrecord.h"
@@ -35,9 +34,12 @@ namespace Action {
 // different animations depending on whether the NPC is hovered by the mouse
 class PlaySecondaryVideo : public ActionRecord, public RenderObject {
 public:
+	static const byte kNoVideoHotspots	= 1;
+	static const byte kVideoHotspots	= 2;
+
 	enum HoverState { kNoHover, kHover, kEndHover };
 
-	PlaySecondaryVideo(uint chan, RenderObject &redrawFrom) : RenderObject(redrawFrom, 8), channel(chan) {}
+	PlaySecondaryVideo(uint chan) : RenderObject(8), channel(chan) {}
 	virtual ~PlaySecondaryVideo() { _decoder.close(); }
 
 	void init() override;
@@ -50,6 +52,11 @@ public:
 
 	Common::String _filename;
 	Common::String _paletteFilename;
+	// Common::String _bitmapOverlayFilename
+
+	// TVD only
+	uint16 _videoHotspots = kVideoHotspots;
+
 	uint16 _loopFirstFrame = 0; // 0x1E
 	uint16 _loopLastFrame = 0; // 0x20
 	uint16 _onHoverFirstFrame = 0; // 0x22

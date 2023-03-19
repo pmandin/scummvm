@@ -377,7 +377,8 @@ FakeTexture::FakeTexture(GLenum glIntFormat, GLenum glFormat, GLenum glType, con
 	: Texture(glIntFormat, glFormat, glType, format),
 	  _fakeFormat(fakeFormat),
 	  _rgbData(),
-	  _palette(nullptr) {
+	  _palette(nullptr),
+	  _mask(nullptr) {
 	if (_fakeFormat.isCLUT8()) {
 		_palette = new uint32[256];
 		memset(_palette, 0, sizeof(uint32));
@@ -386,6 +387,7 @@ FakeTexture::FakeTexture(GLenum glIntFormat, GLenum glFormat, GLenum glType, con
 
 FakeTexture::~FakeTexture() {
 	delete[] _palette;
+	delete[] _mask;
 	_palette = nullptr;
 	_rgbData.free();
 }
@@ -400,6 +402,22 @@ void FakeTexture::allocate(uint width, uint height) {
 	}
 
 	_rgbData.create(width, height, getFormat());
+}
+
+void FakeTexture::setMask(const byte *mask) {
+	if (mask) {
+		const uint numPixels = _rgbData.w * _rgbData.h;
+
+		if (!_mask)
+			_mask = new byte[numPixels];
+
+		memcpy(_mask, mask, numPixels);
+	} else {
+		delete[] _mask;
+		_mask = nullptr;
+	}
+
+	flagDirty();
 }
 
 void FakeTexture::setColorKey(uint colorKey) {
@@ -440,14 +458,44 @@ void FakeTexture::updateGLTexture() {
 	byte *dst = (byte *)outSurf->getBasePtr(dirtyArea.left, dirtyArea.top);
 	const byte *src = (const byte *)_rgbData.getBasePtr(dirtyArea.left, dirtyArea.top);
 
-	if (_palette) {
-		Graphics::crossBlitMap(dst, src, outSurf->pitch, _rgbData.pitch, dirtyArea.width(), dirtyArea.height(), outSurf->format.bytesPerPixel, _palette);
-	} else {
-		Graphics::crossBlit(dst, src, outSurf->pitch, _rgbData.pitch, dirtyArea.width(), dirtyArea.height(), outSurf->format, _rgbData.format);
-	}
+	applyPaletteAndMask(dst, src, outSurf->pitch, _rgbData.pitch, _rgbData.w, dirtyArea, outSurf->format, _rgbData.format);
 
 	// Do generic handling of updating the texture.
 	Texture::updateGLTexture();
+}
+
+void FakeTexture::applyPaletteAndMask(byte *dst, const byte *src, uint dstPitch, uint srcPitch, uint srcWidth, const Common::Rect &dirtyArea, const Graphics::PixelFormat &dstFormat, const Graphics::PixelFormat &srcFormat) const {
+	if (_palette) {
+		Graphics::crossBlitMap(dst, src, dstPitch, srcPitch, dirtyArea.width(), dirtyArea.height(), dstFormat.bytesPerPixel, _palette);
+	} else {
+		Graphics::crossBlit(dst, src, dstPitch, srcPitch, dirtyArea.width(), dirtyArea.height(), dstFormat, srcFormat);
+	}
+
+	if (_mask) {
+		uint maskPitch = srcWidth;
+		uint dirtyWidth = dirtyArea.width();
+		byte destBPP = dstFormat.bytesPerPixel;
+
+		const byte *maskRowStart = (_mask + dirtyArea.top * maskPitch + dirtyArea.left);
+		byte *dstRowStart = dst;
+
+		for (uint y = dirtyArea.top; y < static_cast<uint>(dirtyArea.bottom); y++) {
+			if (destBPP == 2) {
+				for (uint x = 0; x < dirtyWidth; x++) {
+					if (!maskRowStart[x])
+						reinterpret_cast<uint16 *>(dstRowStart)[x] = 0;
+				}
+			} else if (destBPP == 4) {
+				for (uint x = 0; x < dirtyWidth; x++) {
+					if (!maskRowStart[x])
+						reinterpret_cast<uint32 *>(dstRowStart)[x] = 0;
+				}
+			}
+
+			dstRowStart += dstPitch;
+			maskRowStart += maskPitch;
+		}
+	}
 }
 
 TextureRGB555::TextureRGB555()
@@ -573,6 +621,11 @@ void ScaledTexture::updateGLTexture() {
 
 	Common::Rect dirtyArea = getDirtyArea();
 
+	// Extend the dirty region for scalers
+	// that "smear" the screen, e.g. 2xSAI
+	dirtyArea.grow(_extraPixels);
+	dirtyArea.clip(Common::Rect(0, 0, _rgbData.w, _rgbData.h));
+
 	const byte *src = (const byte *)_rgbData.getBasePtr(dirtyArea.left, dirtyArea.top);
 	uint srcPitch = _rgbData.pitch;
 	byte *dst;
@@ -582,11 +635,7 @@ void ScaledTexture::updateGLTexture() {
 		dst = (byte *)_convData->getBasePtr(dirtyArea.left + _extraPixels, dirtyArea.top + _extraPixels);
 		dstPitch = _convData->pitch;
 
-		if (_palette) {
-			Graphics::crossBlitMap(dst, src, dstPitch, srcPitch, dirtyArea.width(), dirtyArea.height(), _convData->format.bytesPerPixel, _palette);
-		} else {
-			Graphics::crossBlit(dst, src, dstPitch, srcPitch, dirtyArea.width(), dirtyArea.height(), _convData->format, _rgbData.format);
-		}
+		applyPaletteAndMask(dst, src, dstPitch, srcPitch, _rgbData.w, dirtyArea, _convData->format, _rgbData.format);
 
 		src = dst;
 		srcPitch = dstPitch;

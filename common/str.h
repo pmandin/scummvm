@@ -252,6 +252,7 @@ public:
 protected:
 	StringEncodingResult encodeUTF8(const U32String &src, char errorChar);
 	StringEncodingResult encodeWindows932(const U32String &src, char errorChar);
+	StringEncodingResult encodeWindows936(const U32String &src, char errorChar);
 	StringEncodingResult encodeWindows949(const U32String &src, char errorChar);
 	StringEncodingResult encodeWindows950(const U32String &src, bool translit, char errorChar);
 	StringEncodingResult encodeJohab(const U32String &src, char errorChar);
@@ -456,7 +457,7 @@ FORCEINLINE GCC_PRINTF(2, 0) int vsprintf_s(T (&dst)[N], const char *format, va_
 /**
  * A sprintf shim which warns when the buffer overruns and null terminates in this case
  *
- * @param dst Where the resulting string will be storeyyd.
+ * @param dst Where the resulting string will be stored.
  * @param size The (total) size of the destination buffer.
  * @param format The format string.
  */

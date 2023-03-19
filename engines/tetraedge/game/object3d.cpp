@@ -20,8 +20,13 @@
  */
 
 #include "common/textconsole.h"
+
+#include "tetraedge/tetraedge.h"
+#include "tetraedge/game/game.h"
 #include "tetraedge/game/object3d.h"
 #include "tetraedge/game/object_settings_xml_parser.h"
+
+#include "tetraedge/te/te_lua_script.h"
 
 namespace Tetraedge {
 
@@ -59,15 +64,42 @@ bool Object3D::loadModel(const Common::String &name) {
 	return false;
 }
 
+void Object3D::setObjectMoveDest(const TeVector3f32 &vec) {
+	_moveAnim._startVal = TeVector3f32();
+	_moveAnim._endVal = vec;
+}
+
+void Object3D::setObjectMoveTime(float time) {
+	_moveAnim._duration = time * 1000;
+	_moveAnim._callbackObj = this;
+	_moveAnim._callbackMethod = &Object3D::setCurMovePos;
+	Common::Array<float> curve;
+	curve.push_back(0.0f);
+	curve.push_back(1.0f);
+	_moveAnim.setCurve(curve);
+	_moveAnim.onFinished().remove(this, &Object3D::onMoveAnimFinished);
+	_moveAnim.onFinished().add(this, &Object3D::onMoveAnimFinished);
+	_moveAnim.play();
+}
+
+bool Object3D::onMoveAnimFinished() {
+	g_engine->getGame()->luaScript().execute("OnObjectMoveFinished", _modelPtr->name());
+	_moveAnim.onFinished().remove(this, &Object3D::onMoveAnimFinished);
+	return false;
+}
+
+void Object3D::setCurMovePos(const TeVector3f32 &vec) {
+	_curMovePos = vec;
+}
+
 /*static*/
 bool Object3D::loadSettings(const Common::String &path) {
-	ObjectSettingsXmlParser parser;
-	parser.setAllowText();
-
 	if (_objectSettings)
 		delete _objectSettings;
 	_objectSettings = new Common::HashMap<Common::String, ObjectSettings>();
-	parser.setObjectSettings(_objectSettings);
+
+	ObjectSettingsXmlParser parser(_objectSettings);
+	parser.setAllowText();
 
 	if (!parser.loadFile(path))
 		error("Object3D::loadSettings: Can't load %s", path.c_str());

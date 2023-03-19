@@ -31,6 +31,8 @@ namespace Director {
 int castNumToNum(const char *str);
 char *numToCastNum(int num);
 
+bool isAbsolutePath(Common::String &path);
+
 Common::String convertPath(Common::String &path);
 
 Common::String unixToMacPath(const Common::String &path);
@@ -41,7 +43,7 @@ bool testPath(Common::String &path, bool directory = false);
 
 Common::String pathMakeRelative(Common::String path, bool recursive = true, bool addexts = true, bool directory = false);
 
-Common::String wrappedPathMakeRelative(Common::String path, bool recursive = true, bool addexts = true, bool directory = false);
+Common::String wrappedPathMakeRelative(Common::String path, bool recursive = true, bool addexts = true, bool directory = false, bool absolute = false);
 
 bool hasExtension(Common::String filename);
 
@@ -57,8 +59,6 @@ Common::String dumpScriptName(const char *prefix, int type, int id, const char *
 Common::String dumpFactoryName(const char *prefix, const char *name, const char *ext);
 
 bool isButtonSprite(SpriteType spriteType);
-
-Common::String castTypeToString(const CastType &type);
 
 class RandomState {
 public:

@@ -42,21 +42,24 @@ const CMakeProvider::Library *CMakeProvider::getLibraryFromFeature(const char *f
 		{ "png",        "libpng",            kSDLVersionAny, "FindPNG",      "PNG",      "PNG_INCLUDE_DIRS",      "PNG_LIBRARIES",       nullptr      },
 		{ "jpeg",       "libjpeg",           kSDLVersionAny, "FindJPEG",     "JPEG",     "JPEG_INCLUDE_DIRS",     "JPEG_LIBRARIES",      nullptr      },
 		{ "mpeg2",      "libmpeg2",          kSDLVersionAny, "FindMPEG2",    "MPEG2",    "MPEG2_INCLUDE_DIRS",    "MPEG2_mpeg2_LIBRARY", nullptr      },
-		{ "flac",       "flac",              kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "FLAC"       },
-		{ "mad",        "mad",               kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "mad"        },
-		{ "ogg",        "ogg",               kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "ogg"        },
-		{ "vorbis",     "vorbisfile vorbis", kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "vorbisfile vorbis" },
-		{ "tremor",     "vorbisidec",        kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "vorbisidec" },
-		{ "theoradec",  "theoradec",         kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "theoradec"  },
-		{ "fluidsynth", "fluidsynth",        kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "fluidsynth" },
-		{ "faad",       "faad2",             kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "faad"       },
-		{ "fribidi",    "fribidi",           kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "fribidi"    },
-		{ "discord",    "discord",           kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "discord-rpc"},
 		{ "opengl",     nullptr,             kSDLVersionAny, "FindOpenGL",   "OpenGL",   "OPENGL_INCLUDE_DIR",    "OPENGL_gl_LIBRARY",   nullptr      },
 		{ "libcurl",    "libcurl",           kSDLVersionAny, "FindCURL",     "CURL",     "CURL_INCLUDE_DIRS",     "CURL_LIBRARIES",      nullptr      },
 		{ "sdlnet",     nullptr,             kSDLVersion1,   "FindSDL_net",  "SDL_net",  "SDL_NET_INCLUDE_DIRS",  "SDL_NET_LIBRARIES",   nullptr      },
-		{ "sdlnet",     "SDL2_net",          kSDLVersion2,   nullptr,        nullptr,    nullptr,                 nullptr,               "SDL2_net"   },
-		{ "retrowave",  "retrowave",         kSDLVersionAny, nullptr,        nullptr,    nullptr,                 nullptr,               "retrowave"  }
+		LibraryProps("sdlnet", "SDL2_net", kSDLVersion2).Libraries("SDL2_net"),
+		LibraryProps("flac", "flac").Libraries("FLAC"),
+		LibraryProps("mad", "mad").Libraries("mad"),
+		LibraryProps("ogg", "ogg").Libraries("ogg"),
+		LibraryProps("vorbis", "vorbisfile vorbis").Libraries("vorbisfile vorbis"),
+		LibraryProps("tremor", "vorbisidec").Libraries("vorbisidec"),
+		LibraryProps("theoradec", "theoradec").Libraries("theoradec"),
+		LibraryProps("vpx", "vpx").Libraries("vpx"),
+		LibraryProps("fluidsynth", "fluidsynth").Libraries("fluidsynth"),
+		LibraryProps("faad", "faad2").Libraries("faad"),
+		LibraryProps("fribidi", "fribidi").Libraries("fribidi"),
+		LibraryProps("discord", "discord").Libraries("discord-rpc"),
+		LibraryProps("tts").WinLibraries("sapi ole32"),
+		LibraryProps("enet").WinLibraries("winmm ws2_32"),
+		LibraryProps("retrowave", "retrowave").Libraries("retrowave")
 	};
 
 	for (unsigned int i = 0; i < sizeof(s_libraries) / sizeof(s_libraries[0]); i++) {
@@ -89,7 +92,7 @@ set(SCUMMVM_LIBS)
 macro(find_feature)
 	set(_OPTIONS_ARGS)
 	set(_ONE_VALUE_ARGS name findpackage_name include_dirs_var libraries_var)
-	set(_MULTI_VALUE_ARGS pkgconfig_name libraries)
+	set(_MULTI_VALUE_ARGS pkgconfig_name libraries win_libraries)
 	cmake_parse_arguments(_feature "${_OPTIONS_ARGS}" "${_ONE_VALUE_ARGS}" "${_MULTI_VALUE_ARGS}" ${ARGN})
 
 	if (_feature_pkgconfig_name AND PKG_CONFIG_FOUND)
@@ -110,6 +113,9 @@ macro(find_feature)
 		endif()
 		if (_feature_libraries)
 			list(APPEND SCUMMVM_LIBS ${_feature_libraries})
+		endif()
+		if (WIN32 AND _feature_win_libraries)
+			list(APPEND SCUMMVM_LIBS ${_feature_win_libraries})
 		endif()
 	endif()
 endmacro()
@@ -212,6 +218,10 @@ void CMakeProvider::writeFeatureLibSearch(const BuildSetup &setup, std::ofstream
 			workspace << " libraries ";
 			workspace << library->libraries;
 		}
+		if (library->winLibraries) {
+			workspace << " win_libraries ";
+			workspace << library->winLibraries;
+		}
 		workspace << ")\n";
 	}
 }
@@ -299,12 +309,6 @@ void CMakeProvider::createProjectFile(const std::string &name, const std::string
 		project << "\ttarget_link_libraries(" << name << " winmm)\n";
 		project << "endif()\n";
 		project << "\n";
-
-		if (getFeatureBuildState("tts", setup.features)) {
-			project << "if (WIN32)\n";
-			project << "\ttarget_link_libraries(" << name << " sapi ole32)\n";
-			project << "endif()\n";
-		}
 
 		project << "set_property(TARGET " << name << " PROPERTY CXX_STANDARD 11)\n";
 		project << "set_property(TARGET " << name << " PROPERTY CXX_STANDARD_REQUIRED ON)\n";

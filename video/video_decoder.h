@@ -114,7 +114,7 @@ public:
 	void stop();
 
 	/**
-	 * Set the rate of playback.
+	 * Set the rate (speed multiplier) of playback.
 	 *
 	 * For instance, a rate of 0 would stop the video, while a rate of 1
 	 * would play the video normally. Passing 2 to this function would
@@ -129,7 +129,8 @@ public:
 	void setRate(const Common::Rational &rate);
 
 	/**
-	 * Returns the rate at which the video is being played.
+	 * Returns the rate (speed multiplier, not frame rate) at which the video
+	 * is being played.  Defaults to 1.0 when a video is started.
 	 */
 	Common::Rational getRate() const { return _playbackRate; }
 
@@ -192,8 +193,8 @@ public:
 	 * variables can be updated appropriately.
 	 *
 	 * This is a convenience method which automatically keeps track on how
-	 * often the video has been paused, ensuring that after pausing an video
-	 * e.g. twice, it has to be unpaused twice before actuallying resuming.
+	 * often the video has been paused, ensuring that after pausing a video
+	 * e.g. twice, it has to be unpaused twice before actually resuming.
 	 *
 	 * @param pause		true to pause the video, false to resume it
 	 */

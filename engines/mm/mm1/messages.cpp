@@ -20,6 +20,7 @@
  */
 
 #include "mm/mm1/messages.h"
+#include "mm/mm1/mm1.h"
 
 namespace MM {
 namespace MM1 {
@@ -27,9 +28,11 @@ namespace MM1 {
 MouseMessage::MouseMessage(Common::EventType type,
 		const Common::Point &pos) : Message(), _pos(pos) {
 	switch (type) {
+	case Common::EVENT_RBUTTONDOWN:
 	case Common::EVENT_RBUTTONUP:
 		_button = MB_RIGHT;
 		break;
+	case Common::EVENT_MBUTTONDOWN:
 	case Common::EVENT_MBUTTONUP:
 		_button = MB_MIDDLE;
 		break;
@@ -41,12 +44,14 @@ MouseMessage::MouseMessage(Common::EventType type,
 
 InfoMessage::InfoMessage() : Message() {}
 
-InfoMessage::InfoMessage(const Common::String &str) : Message() {
-	_lines.push_back(str);
+InfoMessage::InfoMessage(const Common::String &str,
+		TextAlign align) : Message() {
+	_lines.push_back(Line(0, 0, str, align));
 }
 
-InfoMessage::InfoMessage(int x, int y, const Common::String &str) {
-	_lines.push_back(Line(x, y, str));
+InfoMessage::InfoMessage(int x, int y, const Common::String &str,
+		TextAlign align) {
+	_lines.push_back(Line(x, y, str, align));
 }
 
 InfoMessage::InfoMessage(int x1, int y1, const Common::String &str1,
@@ -101,6 +106,23 @@ InfoMessage &InfoMessage::operator=(const InfoMessage &src) {
 
 size_t Line::size() const {
 	return _text.size();
+}
+
+SoundMessage::SoundMessage(const Common::String &str, TextAlign align) :
+	InfoMessage(0, g_engine->isEnhanced() ? 0 : 1, str, align) {
+	_sound = true;
+}
+
+SoundMessage::SoundMessage(const Common::String &str,
+	YNCallback ynCallback) :
+	InfoMessage(0, g_engine->isEnhanced() ? 0 : 1, str, ynCallback) {
+	_sound = true;
+}
+
+SoundMessage::SoundMessage(const Common::String &str,
+	KeyCallback keyCallback) :
+	InfoMessage(0, g_engine->isEnhanced() ? 0 : 1, str, keyCallback) {
+	_sound = true;
 }
 
 } // namespace MM1

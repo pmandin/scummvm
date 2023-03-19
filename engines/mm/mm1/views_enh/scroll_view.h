@@ -29,18 +29,42 @@ namespace MM1 {
 namespace ViewsEnh {
 
 #define FRAME_BORDER_SIZE 8
+#define GLYPH_W 24
+#define GLYPH_H 20
 
 class ScrollView : public TextView {
 	struct Button {
-		Xeen::SpriteResource *_sprites;
-		Common::Point _pos;
-		int _frame;
+		Shared::Xeen::SpriteResource *_sprites;
+		Common::Rect _bounds;
+		int _frame = -1;
 		Common::KeyState _key;
+		KeybindingAction _action = KEYBIND_NONE;
+		bool _enabled = true;
+		bool _halfSize = false;
 
-		Button(Xeen::SpriteResource *sprites,
+		Button(Shared::Xeen::SpriteResource *sprites,
 			const Common::Point &pos, int frame,
-			const Common::KeyState &key) :
-			_sprites(sprites), _pos(pos), _frame(frame), _key(key) {
+			const Common::KeyState &key, bool halfSize = false) :
+			_sprites(sprites), _frame(frame), _key(key), _halfSize(halfSize),
+			_bounds(Common::Rect(pos.x, pos.y,
+				pos.x + (halfSize ? GLYPH_W / 2 : GLYPH_W),
+				pos.y + (halfSize ? GLYPH_H / 2 : GLYPH_H))
+			) {
+		}
+		Button(Shared::Xeen::SpriteResource *sprites,
+			const Common::Point &pos, int frame,
+			KeybindingAction action, bool halfSize = false) :
+			_sprites(sprites), _frame(frame), _action(action), _halfSize(halfSize),
+			_bounds(Common::Rect(pos.x, pos.y,
+				pos.x + (halfSize ? GLYPH_W / 2 : GLYPH_W),
+				pos.y + (halfSize ? GLYPH_H / 2 : GLYPH_H))
+			) {
+		}
+		Button(const Common::Rect &r, const Common::KeyState &key) :
+			_sprites(nullptr), _bounds(r), _key(key) {
+		}
+		Button(const Common::Rect &r, const KeybindingAction action) :
+			_sprites(nullptr), _bounds(r), _action(action) {
 		}
 	};
 private:
@@ -68,6 +92,13 @@ protected:
 	 * Get the button at the given position
 	 */
 	int getButtonAt(const Common::Point &pos);
+
+	/**
+	 * Return the number of buttons
+	 */
+	size_t getButtonCount() const {
+		return _buttons.size();
+	}
 public:
 	ScrollView(const Common::String &name);
 	ScrollView(const Common::String &name, UIElement *owner);
@@ -83,9 +114,45 @@ public:
 	/**
 	 * Add a button for display
 	 */
-	void addButton(Xeen::SpriteResource *sprites,
+	int addButton(Shared::Xeen::SpriteResource *sprites,
 		const Common::Point &pos, int frame,
-		const Common::KeyState &key);
+		const Common::KeyState &key, bool halfSize = false);
+
+	/**
+	 * Add a button for display
+	 */
+	int addButton(Shared::Xeen::SpriteResource *sprites,
+		const Common::Point &pos, int frame, KeybindingAction action,
+		bool halfSize = false);
+
+	/**
+	 * Add a button for display
+	 */
+	int addButton(const Common::Rect &r, const Common::KeyState &key);
+
+	/**
+	 * Add a button for display
+	 */
+	int addButton(const Common::Rect &r, KeybindingAction action);
+
+	/**
+	 * Set a button's enablement
+	 */
+	void setButtonEnabled(int buttonNum, bool enabled) {
+		_buttons[buttonNum]._enabled = enabled;
+	}
+
+	/**
+	 * Set a button's position
+	 */
+	void setButtonPos(int buttonNum, const Common::Point &pos) {
+		_buttons[buttonNum]._bounds.moveTo(pos);
+	}
+
+	/**
+	 * Delete buttons
+	 */
+	void removeButtons(int start, int end = -2);
 
 	/**
 	 * Reset selected button

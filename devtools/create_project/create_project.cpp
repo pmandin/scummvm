@@ -396,7 +396,7 @@ int main(int argc, char *argv[]) {
 		setup.defines.push_back("POSIX");
 		// Define both MACOSX, and IPHONE, but only one of them will be associated to the
 		// correct target by the Xcode project provider.
-		// This define will help catching up target dependend files, like "browser_osx.mm"
+		// This define will help catching up target-dependent files, like "browser_osx.mm"
 		// The suffix ("_osx", or "_ios") will be used by the project provider to filter out
 		// the files, according to the target.
 		setup.defines.push_back("MACOSX");
@@ -431,9 +431,6 @@ int main(int argc, char *argv[]) {
 		cout << "\nBuilding against SDL 1.2\n\n";
 	} else {
 		cout << "\nBuilding against SDL 2.0\n\n";
-		// TODO: This also defines USE_SDL2 in the preprocessor, we don't do
-		// this in our configure/make based build system. Adapt create_project
-		// to replicate this behavior.
 		setup.defines.push_back("USE_SDL2");
 	}
 
@@ -1071,6 +1068,7 @@ const Feature s_features[] = {
 	{      "faad",        "USE_FAAD", true, false, "AAC support" },
 	{     "mpeg2",       "USE_MPEG2", true, true,  "MPEG-2 support" },
 	{ "theoradec",   "USE_THEORADEC", true, true,  "Theora decoding support" },
+	{       "vpx",         "USE_VPX", true, false, "VP8/VP9 decoding support" },
 	{ "freetype2",   "USE_FREETYPE2", true, true,  "FreeType support" },
 	{      "jpeg",        "USE_JPEG", true, true,  "libjpeg support" },
 	{"fluidsynth",  "USE_FLUIDSYNTH", true, true,  "FluidSynth support" },
@@ -1097,6 +1095,7 @@ const Feature s_features[] = {
 	{   "opengl_shaders",            "USE_OPENGL_SHADERS", false, true,  "OpenGL support (shaders) in 3d games" },
 	{          "taskbar",                   "USE_TASKBAR", false, true,  "Taskbar integration support" },
 	{            "cloud",                     "USE_CLOUD", false, true,  "Cloud integration support" },
+	{            "enet",                       "USE_ENET", false, true,  "ENet networking support" },
 	{      "translation",               "USE_TRANSLATION", false, true,  "Translation support" },
 	{           "vkeybd",                 "ENABLE_VKEYBD", false, false, "Virtual keyboard support"},
 	{    "eventrecorder",          "ENABLE_EVENTRECORDER", false, false, "Event recorder support"},
@@ -1648,6 +1647,7 @@ void ProjectProvider::createProject(BuildSetup &setup) {
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.ISC");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.LUA");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.MIT");
+			in.push_back(setup.srcDir + "/LICENSES/COPYING.MKV");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.TINYGL");
 			in.push_back(setup.srcDir + "/LICENSES/COPYING.GLAD");
 			in.push_back(setup.srcDir + "/COPYRIGHT");

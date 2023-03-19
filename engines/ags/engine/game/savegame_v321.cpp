@@ -94,8 +94,9 @@ static HSaveError restore_game_scripts(Stream *in, const PreservedParams &pp, Re
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching size of global script data.");
 	}
 	r_data.GlobalScript.Len = gdatasize;
-	r_data.GlobalScript.Data.reset(new char[gdatasize]);
-	in->Read(r_data.GlobalScript.Data.get(), gdatasize);
+	r_data.GlobalScript.Data.resize(gdatasize);
+	if (gdatasize > 0)
+		in->Read(&r_data.GlobalScript.Data.front(), gdatasize);
 
 	if ((uint32_t)in->ReadInt32() != _G(numScriptModules)) {
 		return new SavegameError(kSvgErr_GameContentAssertion, "Mismatching number of script modules.");
@@ -107,8 +108,9 @@ static HSaveError restore_game_scripts(Stream *in, const PreservedParams &pp, Re
 			return new SavegameError(kSvgErr_GameContentAssertion, String::FromFormat("Mismatching size of script module data, module %d.", i));
 		}
 		r_data.ScriptModules[i].Len = module_size;
-		r_data.ScriptModules[i].Data.reset(new char[module_size]);
-		in->Read(r_data.ScriptModules[i].Data.get(), module_size);
+		r_data.ScriptModules[i].Data.resize(module_size);
+		if (module_size > 0)
+			in->Read(&r_data.ScriptModules[i].Data.front(), module_size);
 	}
 	return HSaveError::None();
 }
@@ -135,8 +137,8 @@ static void restore_game_room_state(Stream *in) {
 			if (roomstat->beenhere) {
 				ReadRoomStatus_Aligned(roomstat, in);
 				if (roomstat->tsdatasize > 0) {
-					roomstat->tsdata = (char *)malloc(roomstat->tsdatasize + 8);  // JJS: Why allocate 8 additional bytes?
-					in->Read(&roomstat->tsdata[0], roomstat->tsdatasize);
+					roomstat->tsdata.resize(roomstat->tsdatasize);
+					in->Read(roomstat->tsdata.data(), roomstat->tsdatasize);
 				}
 			}
 		}
@@ -325,10 +327,10 @@ static void restore_game_displayed_room_status(Stream *in, RestoredData &r_data)
 		ReadRoomStatus_Aligned(&_GP(troom), in);
 
 		if (_GP(troom).tsdatasize > 0) {
-			_GP(troom).tsdata = (char *)malloc(_GP(troom).tsdatasize + 5);
-			in->Read(&_GP(troom).tsdata[0], _GP(troom).tsdatasize);
+			_GP(troom).tsdata.resize(_GP(troom).tsdatasize);
+			in->Read(_GP(troom).tsdata.data(), _GP(troom).tsdatasize);
 		} else
-			_GP(troom).tsdata = nullptr;
+			_GP(troom).tsdata.clear();
 	}
 }
 
@@ -400,8 +402,6 @@ HSaveError restore_save_data_v321(Stream *in, const PreservedParams &pp, Restore
 		return err;
 	restore_game_spriteset(in);
 
-	update_polled_stuff_if_runtime();
-
 	err = restore_game_scripts(in, pp, r_data);
 	if (!err)
 		return err;
@@ -414,7 +414,7 @@ HSaveError restore_save_data_v321(Stream *in, const PreservedParams &pp, Restore
 	ccScript *compsc = _GP(game).compiled_script;
 	CharacterInfo *chwas = _GP(game).chars;
 	WordsDictionary *olddict = _GP(game).dict;
-	char *mesbk[MAXGLOBALMES];
+	std::vector<String> mesbk(MAXGLOBALMES);
 	int numchwas = _GP(game).numcharacters;
 	for (size_t i = 0; i < MAXGLOBALMES; ++i)
 		mesbk[i] = _GP(game).messages[i];
@@ -461,13 +461,7 @@ HSaveError restore_save_data_v321(Stream *in, const PreservedParams &pp, Restore
 	restore_game_thisroom(in, r_data);
 	restore_game_ambientsounds(in, r_data);
 	restore_game_overlays(in);
-
-	update_polled_stuff_if_runtime();
-
 	restore_game_dynamic_surfaces(in, r_data);
-
-	update_polled_stuff_if_runtime();
-
 	restore_game_displayed_room_status(in, r_data);
 	err = restore_game_globalvars(in);
 	if (!err)

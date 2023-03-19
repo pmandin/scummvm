@@ -35,9 +35,13 @@ void EfhEngine::songDelay(int delay) {
 
 void EfhEngine::playNote(int frequencyIndex, int totalDelay) {
 	debugC(3, kDebugEngine, "playNote %d %d", frequencyIndex, totalDelay);
-	_speakerStream->play(Audio::PCSpeaker::kWaveFormSquare, 0x1234DD / kSoundFrequency[frequencyIndex], -1);
-	songDelay(totalDelay);
-	_speakerStream->stop();
+	if (frequencyIndex > 0 && frequencyIndex < 72) {
+		_speakerStream->play(Audio::PCSpeaker::kWaveFormSquare, 0x1234DD / kSoundFrequency[frequencyIndex], -1);
+		songDelay(totalDelay);
+		_speakerStream->stop();
+	} else {
+		warning("playNote - Skip note with frequency index %d", frequencyIndex);
+	}
 }
 
 Common::KeyCode EfhEngine::playSong(uint8 *buffer) {
@@ -113,18 +117,18 @@ void EfhEngine::generateSound1(int lowFreq, int highFreq, int duration) {
 
 	_speakerStream->play(Audio::PCSpeaker::kWaveFormSquare, highFreq, -1);
 	songDelay(10);
-	_speakerStream->stop();		
+	_speakerStream->stop();
 
 
 	for (int i = 0; i < duration; ++i) {
 		var2 = ROR(var2 + 0x9248, 3);
 		int val = (var2 * (highFreq - lowFreq)) >> 16;
-		
+
 		_speakerStream->play(Audio::PCSpeaker::kWaveFormSquare, lowFreq + val, -1);
 		songDelay(10);
-		_speakerStream->stop();		
+		_speakerStream->stop();
 	}
-	
+
 
 	_mixer->stopHandle(_speakerHandle);
 	delete _speakerStream;
@@ -143,9 +147,9 @@ void EfhEngine::generateSound2(int startFreq, int endFreq, int speed) {
 	int delta;
 	// The original is using -/+1 but it takes ages even with speed / 10, so I switched to -/+5
 	if (startFreq > endFreq)
-		delta = -5;
+		delta = -50;
 	else
-		delta = 5;
+		delta = 50;
 
 	_speakerStream = new Audio::PCSpeaker(_mixer->getOutputRate());
 	_mixer->playStream(Audio::Mixer::kSFXSoundType, &_speakerHandle,
@@ -157,11 +161,11 @@ void EfhEngine::generateSound2(int startFreq, int endFreq, int speed) {
 		_speakerStream->play(Audio::PCSpeaker::kWaveFormSquare, curFreq, -1);
 		// The original is just looping, making the sound improperly timed as the length of a loop is directly related to the speed of the CPU
 		// Dividing by 10 is just a guess based on how it sounds. I suspect it may be still too much
-		songDelay(speed / 10);
+		songDelay(speed);
 		_speakerStream->stop();
 		curFreq += delta;
 	} while (curFreq < endFreq && !shouldQuit());
-	
+
 
 	_mixer->stopHandle(_speakerHandle);
 	delete _speakerStream;
@@ -196,7 +200,7 @@ void EfhEngine::generateSound5(int repeat) {
 	debugC(3, kDebugEngine, "generateSound5 %d", repeat);
 	for (int i = 0; i < repeat; ++i)
 		//It looks identical, so I'm reusing generateSound2
-		generateSound2(256, 4096, 10);
+		generateSound2(256, 4096, 2);
 }
 
 void EfhEngine::generateSound(int16 soundType) {
@@ -207,20 +211,21 @@ void EfhEngine::generateSound(int16 soundType) {
 		generateSound3();
 		break;
 	case 9:
-		generateSound1(20, 888, 3000);
-		generateSound1(20, 888, 3000);
+		generateSound1(20, 888, 500);
+		g_system->delayMillis(100);
+		generateSound1(20, 888, 500);
 		break;
 	case 10:
 		generateSound5(1);
 		break;
 	case 13:
-		generateSound2(256, 4096, 18);
+		generateSound2(256, 4096, 2);
 		break;
 	case 14:
-		generateSound2(20, 400, 100);
+		generateSound2(20, 400, 20);
 		break;
 	case 15:
-		generateSound2(100, 888, 88);
+		generateSound2(100, 888, 10);
 		break;
 	case 16:
 		generateSound1(2000, 6096, 1500);
@@ -259,6 +264,7 @@ void EfhEngine::genericGenerateSound(int16 soundType, int16 repeatCount) {
 	case 9:
 	case 10:
 		generateSound(10);
+		g_system->delayMillis(100);
 		generateSound(9);
 		break;
 	case 14:
@@ -269,6 +275,7 @@ void EfhEngine::genericGenerateSound(int16 soundType, int16 repeatCount) {
 	case 13:
 		for (int counter = 0; counter < repeatCount; ++counter) {
 			generateSound(17);
+			g_system->delayMillis(100);
 		}
 		break;
 	case 15:

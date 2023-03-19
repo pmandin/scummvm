@@ -288,6 +288,90 @@ void DirectorEngine::loadKeyCodes() {
 	}
 }
 
+void DirectorEngine::setMachineType(int machineType) {
+    _machineType = machineType;
+    
+    switch (machineType) {
+    case 1: // Macintosh 512Ke
+    case 2: // Macintosh Plus
+    case 3: // Macintosh SE
+    case 4: // Macintosh II
+    case 5: // Macintosh IIx
+    case 6: // Macintosh IIcx 
+    case 7: // Macintosh SE/30
+    case 8: // Macintosh Portable
+    case 9: // Macintosh IIci
+        _wmWidth = 512;
+        _wmHeight = 384;
+        _colorDepth = 8;
+        break;
+    case 11: // Macintosh IIfx
+        _wmWidth = 1152;
+        _wmHeight = 870;
+        _colorDepth = 1;
+        break;
+    case 15: // Macintosh Classic
+    case 16: // Macintosh IIsi
+    case 17: // Macintosh LC
+    case 20: // Macintosh Quadra 700
+    case 21: // Classic II
+    case 22: // PowerBook 100
+    case 23: // PowerBook 140
+    case 27: // Macintosh LCIII
+    case 28: // Macintosh Centris 650
+    case 30: // PowerBook Duo 230
+    case 31: // PowerBook 180
+    case 32: // PowerBook 160
+    case 33: // Macintosh Quadra 800
+    case 35: // Macintosh LC II
+    case 42: // Macintosh IIvi
+    case 46: // Macintosh IIvx
+    case 47: // Macintosh Color Classic
+    case 48: // PowerBook 165c
+    case 50: // Macintosh Centris 610
+    case 52: // PowerBook 145
+        _wmWidth = 640;
+        _wmHeight = 480;
+        _colorDepth = 8;
+        break;
+    case 45: // Power Macintosh 7100/70
+    case 53: // PowerComputing 8100/100
+        _wmWidth = 832;
+        _wmHeight = 624;
+        _colorDepth = 8;
+        break;
+    case 70: // PowerBook 540C
+        _wmWidth = 640;
+        _wmHeight = 480;
+        _colorDepth = 16;
+        break;
+    case 73: // Power Macintosh 6100/60
+        _wmWidth = 832;
+        _wmHeight = 624;
+        _colorDepth = 16;
+        break;
+    case 18: // Macintosh Quadra 900
+    case 24: // Macintosh Quadra 950
+    case 76: // Macintosh Quadra 840av
+        _wmWidth = 832;
+        _wmHeight = 624;
+        _colorDepth = 32;
+        break;
+    case 19: // PowerBook 170
+    case 25: // PowerBook Duo 210
+        _wmWidth = 640;
+        _wmHeight = 400;
+        _colorDepth = 4;
+        break;
+    case 256: // IBM PC-type machine
+    default:
+        _wmWidth = 640;
+        _wmHeight = 480;
+        _colorDepth = 8;
+        break;
+    }
+}
+
 int castNumToNum(const char *str) {
 	if (strlen(str) != 3)
 		return -1;
@@ -335,9 +419,48 @@ Common::String CastMemberID::asString() const {
 	return res;
 }
 
+int recLevel = 0;
+const char *tabs[] = {	"",
+						"  ",
+						"    ",
+						"      ",
+						"        ",
+						"          ",
+						"            ",
+						"              ",
+						"                ",
+						"                  ",
+						"                    ",
+};
+
+const char *recIndent() {
+	if (recLevel >= ARRAYSIZE(tabs)) {
+		warning("recIndent() too deep: %d", recLevel);
+		return tabs[0];
+	}
+
+	return tabs[recLevel];
+}
+
+bool isAbsolutePath(Common::String &path) {
+	// Starts with Mac directory notation for the game root
+	if (path.hasPrefix("@:"))
+		return true;
+	// Starts with a Windows drive letter
+	if (path.size() >= 3
+			&& Common::isAlpha(path[0])
+			&& path[1] == ':'
+			&& path[2] == '\\')
+		return true;
+	return false;
+}
+
 Common::String convertPath(Common::String &path) {
 	if (path.empty())
 		return path;
+
+	debugN(9, "%s", recIndent());
+	debug(9, "convertPath(%s)", path.c_str());
 
 	if (!path.contains(':') && !path.contains('\\') && !path.contains('@')) {
 		return path;
@@ -406,6 +529,7 @@ bool testPath(Common::String &path, bool directory) {
 	     Common::MacResManager::exists(Common::Path(path, g_director->_dirSeparator))))
 		return true;
 
+	debugN(9, "%s", recIndent());
 	debug(9, "testPath: %s  dir: %d", path.c_str(), directory);
 
 	// check for the game data dir
@@ -452,10 +576,12 @@ bool testPath(Common::String &path, bool directory) {
 			}
 		}
 		if (!exists) {
+			debugN(9, "%s", recIndent());
 			debug(9, "testPath: Not exists");
 			return false;
 		}
 	}
+	debugN(9, "%s", recIndent());
 	debug(9, "testPath: ***** HAVE MATCH");
 	// write back path with correct case
 	path = newPath;
@@ -467,56 +593,92 @@ Common::String pathMakeRelative(Common::String path, bool recursive, bool addext
 	//Wrap pathMakeRelative to search in extra paths defined by the game
 	Common::String foundPath;
 
+	recLevel = 0;
+
+	debugN(8, "%s", recIndent());
+	debug(8, "pathMakeRelative(\"%s\", recursive: %d, addexts: %d, directory: %d):", path.c_str(), recursive, addexts, directory);
+	bool isAbsolute = isAbsolutePath(path);
+	path = convertPath(path);
+	debugN(9, "%s", recIndent());
+	debug(9, "pathMakeRelative(): converted -> %s", path.c_str());
+
+	// Absolute paths should not be matched against the global search path list
+	if (isAbsolute) {
+		return wrappedPathMakeRelative(path, recursive, addexts, directory, true);
+	}
+
 	Datum searchPath = g_director->getLingo()->_searchPath;
 	if (searchPath.type == ARRAY && searchPath.u.farr->arr.size() > 0) {
 		for (uint i = 0; i < searchPath.u.farr->arr.size(); i++) {
 			Common::String searchIn = searchPath.u.farr->arr[i].asString();
+			// Ensure there's a trailing directory separator
+			Common::String separator = Common::String::format("%c", g_director->_dirSeparator);
+			if (!searchIn.hasSuffix(separator)) {
+				searchIn += separator;
+			}
+			debugN(9, "%s", recIndent());
 			debug(9, "pathMakeRelative(): searchPath: %s", searchIn.c_str());
 
-			foundPath = wrappedPathMakeRelative(searchIn + path, recursive, addexts, directory);
-			if (testPath(foundPath))
+			recLevel++;
+			foundPath = wrappedPathMakeRelative(searchIn + path, recursive, addexts, directory, false);
+			recLevel--;
+
+			if (testPath(foundPath, directory))
 				return foundPath;
 
+			debugN(9, "%s", recIndent());
 			debug(9, "pathMakeRelative(): -- searchPath not found: %s", foundPath.c_str());
 		}
 	}
 
 	for (auto i = g_director->_extraSearchPath.begin(); i != g_director->_extraSearchPath.end(); ++i) {
+		debugN(9, "%s", recIndent());
 		debug(9, "pathMakeRelative(): extraSearchPath: %s", i->c_str());
 
-		foundPath = wrappedPathMakeRelative(*i + path, recursive, addexts, directory);
-		if (testPath(foundPath))
+		recLevel++;
+		foundPath = wrappedPathMakeRelative(*i + path, recursive, addexts, directory, false);
+		recLevel--;
+
+		if (testPath(foundPath, directory))
 			return foundPath;
 
+		debugN(9, "%s", recIndent());
 		debug(9, "pathMakeRelative(): -- extraSearchPath not found: %s", foundPath.c_str());
 	}
-
-	return wrappedPathMakeRelative(path, recursive, addexts, directory);
+	return wrappedPathMakeRelative(path, recursive, addexts, directory, false);
 }
 
 
 // if we are finding the file path, then this func will return exactly the executable file path
 // if we are finding the directory path, then we will get the path relative to the game data dir.
 // e.g. if we have game data dir as SSwarlock, then "A:SSwarlock" -> "", "A:SSwarlock:Nav" -> "Nav"
-Common::String wrappedPathMakeRelative(Common::String path, bool recursive, bool addexts, bool directory) {
+Common::String wrappedPathMakeRelative(Common::String path, bool recursive, bool addexts, bool directory, bool absolute) {
 
 	Common::String initialPath(path);
 
+	debugN(9, "%s", recIndent());
 	debug(9, "wrappedPathMakeRelative(): s0 %s -> %s", path.c_str(), initialPath.c_str());
 
 	if (recursive) // first level
 		initialPath = convertPath(initialPath);
 
+	debugN(9, "%s", recIndent());
 	debug(9, "wrappedPathMakeRelative(): s1 %s -> %s", path.c_str(), initialPath.c_str());
 
-	initialPath = Common::normalizePath(g_director->getCurrentPath() + initialPath, g_director->_dirSeparator);
+	if (absolute) {
+		initialPath = Common::normalizePath(initialPath, g_director->_dirSeparator);
+	} else {
+		initialPath = Common::normalizePath(g_director->getCurrentPath() + initialPath, g_director->_dirSeparator);
+	}
 	Common::String convPath = initialPath;
 
+	debugN(9, "%s", recIndent());
 	debug(9, "wrappedPathMakeRelative(): s2 %s", convPath.c_str());
 
 	if (testPath(initialPath, directory))
 		return initialPath;
 
+	debugN(9, "%s", recIndent());
 	debug(9, "wrappedPathMakeRelative(): s2.1 -- not found %s", initialPath.c_str());
 
 	// Now try to search the file
@@ -526,15 +688,18 @@ Common::String wrappedPathMakeRelative(Common::String path, bool recursive, bool
 		int pos = convPath.find(g_director->_dirSeparator);
 		convPath = Common::String(&convPath.c_str()[pos + 1]);
 
+		debugN(9, "%s", recIndent());
 		debug(9, "wrappedPathMakeRelative(): s3 try %s", convPath.c_str());
 
 		if (!testPath(convPath, directory)) {
 			// If we were supplied a path with subdirectories,
 			// attempt to combine it with the current movie path at every iteration
 			Common::String locPath = Common::normalizePath(g_director->getCurrentPath() + convPath, g_director->_dirSeparator);
+			debugN(9, "%s", recIndent());
 			debug(9, "wrappedPathMakeRelative(): s3.1 try %s", locPath.c_str());
 
 			if (!testPath(locPath, directory)) {
+				debugN(9, "%s", recIndent());
 				debug(9, "wrappedPathMakeRelative(): s3.1 -- not found %s", locPath.c_str());
 				continue;
 			}
@@ -551,11 +716,13 @@ Common::String wrappedPathMakeRelative(Common::String path, bool recursive, bool
 		// Try stripping all of the characters not allowed in FAT
 		convPath = stripMacPath(initialPath.c_str());
 
+		debugN(9, "%s", recIndent());
 		debug(9, "wrappedPathMakeRelative(): s4 %s", convPath.c_str());
 
 		if (testPath(initialPath, directory))
 			return initialPath;
 
+		debugN(9, "%s", recIndent());
 		debug(9, "wrappedPathMakeRelative(): s4.1 -- not found %s", initialPath.c_str());
 
 		// Now try to search the file
@@ -563,13 +730,16 @@ Common::String wrappedPathMakeRelative(Common::String path, bool recursive, bool
 			int pos = convPath.find(g_director->_dirSeparator);
 			convPath = Common::String(&convPath.c_str()[pos + 1]);
 
+			debugN(9, "%s", recIndent());
 			debug(9, "wrappedPathMakeRelative(): s5 try %s", convPath.c_str());
 
 			if (!testPath(convPath, directory)) {
+				debugN(9, "%s", recIndent());
 				debug(9, "wrappedPathMakeRelative(): s5 -- not found %s", convPath.c_str());
 				continue;
 			}
 
+			debugN(9, "%s", recIndent());
 			debug(9, "wrappedPathMakeRelative(): s5 converted %s -> %s", path.c_str(), convPath.c_str());
 
 			opened = true;
@@ -610,12 +780,17 @@ Common::String wrappedPathMakeRelative(Common::String path, bool recursive, bool
 				Common::String ext = component.substr(component.size() - 4);
 				Common::String newpath = convPath + convertMacFilename(nameWithoutExt.c_str()) + ext;
 
+				debugN(9, "%s", recIndent());
 				debug(9, "wrappedPathMakeRelative(): s6 %s -> try %s", initialPath.c_str(), newpath.c_str());
+
+				recLevel++;
 				Common::String res = wrappedPathMakeRelative(newpath, false, false);
+				recLevel--;
 
 				if (testPath(res))
 					return res;
 
+				debugN(9, "%s", recIndent());
 				debug(9, "wrappedPathMakeRelative(): s6 -- not found %s", res.c_str());
 			}
 		}
@@ -652,6 +827,7 @@ Common::String testExtensions(Common::String component, Common::String initialPa
 	for (int i = 0; exts[i]; ++i) {
 		Common::String newpath = convPath + component.c_str() + exts[i];
 
+		debugN(9, "%s", recIndent());
 		debug(9, "testExtensions(): sT %s -> try %s, comp: %s", initialPath.c_str(), newpath.c_str(), component.c_str());
 		Common::String res = wrappedPathMakeRelative(newpath, false, false);
 
@@ -661,6 +837,7 @@ Common::String testExtensions(Common::String component, Common::String initialPa
 	for (int i = 0; exts[i]; ++i) {
 		Common::String newpath = convPath + convertMacFilename(component.c_str()) + exts[i];
 
+		debugN(9, "%s", recIndent());
 		debug(9, "testExtensions(): sT %s -> try %s, comp: %s", initialPath.c_str(), newpath.c_str(), component.c_str());
 		Common::String res = wrappedPathMakeRelative(newpath, false, false);
 
@@ -930,8 +1107,6 @@ Common::SeekableReadStreamEndian *readZlibData(Common::SeekableReadStream &strea
 }
 
 uint16 humanVersion(uint16 ver) {
-	if (ver >= kFileVer1201)
-		return 1201;
 	if (ver >= kFileVer1200)
 		return 1200;
 	if (ver >= kFileVer1150)
@@ -968,7 +1143,7 @@ Common::Platform platformFromID(uint16 id) {
 	case 2:
 		return Common::kPlatformWindows;
 	default:
-		warning("platformFromID: Unknown platform ID %d", id);
+		warning("BUILDBOT: platformFromID: Unknown platform ID %d", id);
 		break;
 	}
 	return Common::kPlatformUnknown;
@@ -1022,49 +1197,6 @@ Common::String utf8ToPrintable(const Common::String &str) {
 	return Common::toPrintable(Common::U32String(str));
 }
 
-Common::String castTypeToString(const CastType &type) {
-	Common::String res;
-	switch (type) {
-	case kCastBitmap:
-		res = "bitmap";
-		break;
-	case kCastPalette:
-		res = "palette";
-		break;
-	case kCastButton:
-		res = "button";
-		break;
-	case kCastPicture:
-		res = "picture";
-		break;
-	case kCastDigitalVideo:
-		res = "digitalVideo";
-		break;
-	case kCastLingoScript:
-		res = "script";
-		break;
-	case kCastShape:
-		res = "shape";
-		break;
-	case kCastFilmLoop:
-		res = "filmLoop";
-		break;
-	case kCastSound:
-		res = "sound";
-		break;
-	case kCastMovie:
-		res = "movie";
-		break;
-	case kCastText:
-		res = "text";
-		break;
-	default:
-		res = "empty";
-		break;
-	}
-	return res;
-}
-
 Common::String decodePlatformEncoding(Common::String input) {
 	return input.decode(g_director->getPlatformEncoding());
 }
@@ -1108,6 +1240,38 @@ const byte orderTableD2mac[256] = {
 	0xe8, 0xe9, 0x26, 0x27, 0x2d, 0x2e, 0xea, 0xeb, 0xb6, 0xb7, 0xec, 0xed, 0xee, 0xef, 0x6c, 0x6d,
 	0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0x4b, 0x63, 0x49, 0x64, 0x62, 0x73, 0x75, 0x76, 0x74, 0x8a, 0x8c,
 	0xf5, 0x8b, 0xa5, 0xa7, 0xa6, 0x77, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
+};
+
+//
+// Director 4.0 Mac, MacJapanese encoding
+//
+// �...............................
+// ................................
+// ............................ !"#
+// $%&'()*+,-./0123456789:;<=>?@AaB
+// bCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqR
+// rSsTtUuVvWwXxYyZz[\]^_`{|}~.����
+// ��������������������������������
+// ������Ӭԭծ������ܦݠ���������.
+
+
+const byte orderTableD4Jmac[256] = {
+	0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b,
+	0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b,
+	0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b,
+	0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b,
+	0x7c, 0x7d, 0x7f, 0x81, 0x83, 0x85, 0x87, 0x89, 0x8b, 0x8d, 0x8f, 0x91, 0x93, 0x95, 0x97, 0x99,
+	0x9b, 0x9d, 0x9f, 0xa1, 0xa3, 0xa5, 0xa7, 0xa9, 0xab, 0xad, 0xaf, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5,
+	0xb6, 0x7e, 0x80, 0x82, 0x84, 0x86, 0x88, 0x8a, 0x8c, 0x8e, 0x90, 0x92, 0x94, 0x96, 0x98, 0x9a,
+	0x9c, 0x9e, 0xa0, 0xa2, 0xa4, 0xa6, 0xa8, 0xaa, 0xac, 0xae, 0xb0, 0xb7, 0xb8, 0xb9, 0xba, 0xbb,
+	0xbc, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xf5, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xf3, 0xbe, 0xc0, 0xc2, 0xc4, 0xc6, 0xe7, 0xe9, 0xeb, 0xd4,
+	0xbd, 0xbf, 0xc1, 0xc3, 0xc5, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0xd1,
+	0xd2, 0xd3, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf, 0xe0, 0xe1, 0xe2,
+	0xe3, 0xe4, 0xe5, 0xe6, 0xe8, 0xea, 0xec, 0xed, 0xee, 0xef, 0xf0, 0xf1, 0xf2, 0xf4, 0xfb, 0xfc,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfd, 0xfe, 0xff,
 };
 
 //
@@ -1185,6 +1349,9 @@ static int getCharOrder(Common::u32char_type_t ch) {
 
 	if (pl == Common::kPlatformMacintosh && lang != Common::JA_JPN && version < 500)
 		return orderTableD2mac[num];
+
+	if (pl == Common::kPlatformMacintosh && lang == Common::JA_JPN && version < 500)
+		return orderTableD4Jmac[num];
 
 	if (pl == Common::kPlatformWindows && lang != Common::JA_JPN && version < 600)
 		return orderTableD4win[num];

@@ -22,6 +22,8 @@
 #ifndef NANCY_INPUT_H
 #define NANCY_INPUT_H
 
+#include "engines/nancy/commontypes.h"
+
 #include "common/rect.h"
 #include "common/keyboard.h"
 
@@ -38,20 +40,20 @@ class State;
 
 struct NancyInput {
 	enum InputType : uint16 {
-		kLeftMouseButtonDown    = 1 << 0,
-		kLeftMouseButtonHeld    = 1 << 1,
-		kLeftMouseButtonUp      = 1 << 2,
-		kRightMouseButtonDown   = 1 << 3,
-		kRightMouseButtonHeld   = 1 << 4,
-		kRightMouseButtonUp     = 1 << 5,
-		kMoveUp                 = 1 << 6,
-		kMoveDown               = 1 << 7,
-		kMoveLeft               = 1 << 8,
-		kMoveRight              = 1 << 9,
-		kMoveFastModifier       = 1 << 10,
+		kLeftMouseButtonDown	= 1 << 0,
+		kLeftMouseButtonHeld	= 1 << 1,
+		kLeftMouseButtonUp		= 1 << 2,
+		kRightMouseButtonDown	= 1 << 3,
+		kRightMouseButtonHeld	= 1 << 4,
+		kRightMouseButtonUp		= 1 << 5,
+		kMoveUp					= 1 << 6,
+		kMoveDown				= 1 << 7,
+		kMoveLeft				= 1 << 8,
+		kMoveRight				= 1 << 9,
+		kMoveFastModifier		= 1 << 10,
 
-		kLeftMouseButton        = kLeftMouseButtonDown | kLeftMouseButtonHeld | kLeftMouseButtonUp,
-		kRightMouseButton       = kRightMouseButtonDown | kRightMouseButtonHeld | kRightMouseButtonUp
+		kLeftMouseButton		= kLeftMouseButtonDown | kLeftMouseButtonHeld | kLeftMouseButtonUp,
+		kRightMouseButton		= kRightMouseButtonDown | kRightMouseButtonHeld | kRightMouseButtonUp
 	};
 
 	Common::Point mousePos;
@@ -81,9 +83,7 @@ enum NancyAction {
 	kNancyActionRequestSaveLoad,
 	kNancyActionRequestSetupMenu,
 	kNancyActionRequestCredits,
-	kNancyActionRequestMap,
-	kNancyActionRequestCheatMenu,
-	kNancyActionRequestEventMenu
+	kNancyActionRequestMap
 };
 
 public:

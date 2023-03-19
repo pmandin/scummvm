@@ -36,40 +36,51 @@ namespace Action {
 // ActionRecord subclass that handles all NPC dialog and nancy1's intro video
 class PlayPrimaryVideoChan0 : public ActionRecord, public RenderObject {
 
-struct ConditionFlag {
-enum ConditionType : byte { kNone = 0, kEventFlags = 1, kInventory = 2 };
-
-	ConditionType type;
-	EventFlagDescription flag;
-	bool orFlag;
+struct PrimaryVideoFlag {
+	byte type;
+	FlagDescription flag;
+	byte orFlag;
 
 	void read(Common::SeekableReadStream &stream);
 	bool isSatisfied() const;
 	void set() const;
 };
 
-struct ConditionFlags {
-	Common::Array<ConditionFlag> conditionFlags;
+struct PrimaryVideoFlags {
+	Common::Array<PrimaryVideoFlag> conditionFlags;
 
 	void read(Common::SeekableReadStream &stream);
 	bool isSatisfied() const;
 };
 
 struct ResponseStruct {
-	ConditionFlags conditionFlags; // 0x01
+	PrimaryVideoFlags conditionFlags; // 0x01
 	Common::String text; // 0x06
 	Common::String soundName; // 0x196
 	SceneChangeDescription sceneChange; // 0x1A0
-	EventFlagDescription flagDesc; // 0x1A8
+	FlagDescription flagDesc; // 0x1A8
+
+	bool isOnScreen = false;
 };
 
 struct FlagsStruct {
-	ConditionFlags conditions;
-	ConditionFlag flagToSet;
+	PrimaryVideoFlags conditions;
+	PrimaryVideoFlag flagToSet;
+};
+
+struct SceneBranchStruct {
+	PrimaryVideoFlags conditions;
+	SceneChangeDescription sceneChange;
 };
 
 public:
-	PlayPrimaryVideoChan0(RenderObject &redrawFrom) : RenderObject(redrawFrom, 8) {}
+	static const byte kDefaultNextSceneEnabled	= 1;
+	static const byte kDefaultNextSceneDisabled	= 2;
+
+	static const byte kPopNextScene				= 1;
+	static const byte kNoPopNextScene			= 2;
+
+	PlayPrimaryVideoChan0() : RenderObject(8) {}
 	virtual ~PlayPrimaryVideoChan0();
 
 	void init() override;
@@ -78,16 +89,14 @@ public:
 
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
-	void handleInput(NancyInput &input) override;
 
 	// Functions for handling the built-in dialogue responses found in the executable
-	void addConditionalResponses();
+	void addConditionalDialogue();
 	void addGoodbye();
 
 	Common::String _videoName;
 	Common::String _paletteName;
 	uint _videoFormat = 2;
-	Common::Rect _src;
 	Common::String _text;
 
 	SoundDescription _sound;
@@ -95,12 +104,13 @@ public:
 
 	byte _conditionalResponseCharacterID = 0;
 	byte _goodbyeResponseCharacterID = 0;
-	NancyFlag _isDialogueExitScene = NancyFlag::kFalse;
-	NancyFlag _doNotPop = NancyFlag::kFalse;
+	byte _defaultNextScene = kDefaultNextSceneEnabled;
+	byte _popNextScene = kNoPopNextScene;
 	SceneChangeDescription _sceneChange;
 
 	Common::Array<ResponseStruct> _responses;
 	Common::Array<FlagsStruct> _flagsStructs;
+	Common::Array<SceneBranchStruct> _sceneBranchStructs;
 
 	AVFDecoder _decoder;
 

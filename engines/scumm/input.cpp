@@ -105,6 +105,23 @@ void ScummEngine_v80he::parseEvent(Common::Event event) {
 
 void ScummEngine::parseEvent(Common::Event event) {
 	switch (event.type) {
+	case Common::EVENT_CUSTOM_ENGINE_ACTION_START:
+		if (event.customType >= kScummActionCount) {
+			debugC(DEBUG_GENERAL, "customType >= kScummActionCount (%d)", event.customType);
+		} else {
+			_actionMap[event.customType] = true;
+		}
+		break;
+
+	case Common::EVENT_CUSTOM_ENGINE_ACTION_END:
+		if (event.customType >= kScummActionCount) {
+			debugC(DEBUG_GENERAL, "customType >= kScummActionCount (%d)", event.customType);
+		} else {
+			_actionMap[event.customType] = false;
+		}
+		break;
+
+
 	case Common::EVENT_KEYDOWN:
 		if (event.kbd.keycode >= Common::KEYCODE_0 && event.kbd.keycode <= Common::KEYCODE_9 &&
 			((event.kbd.hasFlags(Common::KBD_ALT) && canSaveGameStateCurrently()) ||
@@ -150,11 +167,9 @@ void ScummEngine::parseEvent(Common::Event event) {
 		// FIXME: We are using ASCII values to index the _keyDownMap here,
 		// yet later one code which checks _keyDownMap will use KEYCODEs
 		// to do so. That is, we are mixing ascii and keycode values here,
-		// which is bad. We probably should be only using keycodes, but at
-		// least INSANE checks for "Shift-V" by looking for the 'V' key
-		// being pressed. It would be easy to solve that by also storing
-		// the modifier flags. However, since getKeyState() is also called
-		// by scripts, we have to be careful with semantic changes.
+		// which is bad. We probably should be only using keycodes, however,
+		// since getKeyState() is called by scripts, we have to be careful with
+		// semantic changes.
 		if (_keyPressed.ascii >= 512)
 			debugC(DEBUG_GENERAL, "_keyPressed > 512 (%d)", _keyPressed.ascii);
 		else
@@ -184,6 +199,8 @@ void ScummEngine::parseEvent(Common::Event event) {
 			// Fixes bug #3173: "FT: CAPSLOCK + V enables cheating for all fights"
 			//
 			// Fingolfin remarks: This wouldn't be a problem if we used keycodes.
+			//
+			// TODO: Is this still needed now that INSANE uses keymapper actions?
 			_keyDownMap[toupper(event.kbd.ascii)] = false;
 		}
 		break;
@@ -424,6 +441,8 @@ void ScummEngine::processInput() {
 			// source (i.e. the OS), I guess there is no harm in doing the same thing in our code,
 			// fetching the correct state for the mouse buttons right from the event manager, only when
 			// the INSANE/SMUSH system is active.
+			//
+			// TODO: Is this still needed now that INSANE uses keymapper actions?
 			if (_game.id == GID_FT && isInsaneActive()) {
 				VAR(VAR_LEFTBTN_HOLD) = (getEventManager()->getButtonState() & 0x1) != 0 ? 1 : 0;
 				VAR(VAR_RIGHTBTN_HOLD) = (getEventManager()->getButtonState() & 0x2) != 0 ? 1 : 0;
@@ -1037,7 +1056,9 @@ void ScummEngine::processKeyboard(Common::KeyState lastKeyHit) {
 				bool leftBtnPressed = false, rightBtnPressed = false;
 				waitForBannerInput(60, ks, leftBtnPressed, rightBtnPressed);
 			} while (ks.ascii == '+' || ks.ascii == '-');
-			clearBanner();
+
+			if (_game.version > 6)
+				clearBanner();
 
 			pt.clear();
 
@@ -1334,12 +1355,17 @@ void ScummEngine::processKeyboard(Common::KeyState lastKeyHit) {
 			// because that's what MI2 looks for in its "instant win" cheat.
 			_mouseAndKeyboardStat = lastKeyHit.keycode + 154;
 
-		} else if (lastKeyHit.keycode >= Common::KEYCODE_UP &&
-		          lastKeyHit.keycode <= Common::KEYCODE_LEFT) {
-			if (_game.id == GID_MONKEY && _game.platform == Common::kPlatformSegaCD) {
+		} else if (lastKeyHit.keycode >= Common::KEYCODE_UP && lastKeyHit.keycode <= Common::KEYCODE_LEFT) {
+			if (isSegaCD) {
 				// Map arrow keys to number keys in the SEGA version of MI to support
 				// scrolling to conversation choices. See bug report #2013 for details.
 				_mouseAndKeyboardStat = lastKeyHit.keycode - Common::KEYCODE_UP + 54;
+
+				// Left and right are swapped
+				if (lastKeyHit.keycode == Common::KEYCODE_LEFT || lastKeyHit.keycode == Common::KEYCODE_RIGHT) {
+					_mouseAndKeyboardStat += lastKeyHit.keycode == Common::KEYCODE_LEFT ? -1 : 1;
+				}
+
 			} else if (isUsingOriginalGUI() || (_game.id == GID_LOOM && _game.platform == Common::kPlatformPCEngine)) {
 				// Map arrow keys to number keys in games which use the original menu screen.
 				switch (lastKeyHit.keycode) {
@@ -1367,6 +1393,24 @@ void ScummEngine::processKeyboard(Common::KeyState lastKeyHit) {
 				_mouseAndKeyboardStat = lastKeyHit.ascii;
 			}
 
+		} else if (isSegaCD && lastKeyHit.keycode >= Common::KEYCODE_KP0 && lastKeyHit.keycode <= Common::KEYCODE_KP9) {
+			switch (lastKeyHit.keycode) {
+			case Common::KEYCODE_KP8: // Up:
+				_mouseAndKeyboardStat = 54;
+				break;
+			case Common::KEYCODE_KP2: // Down:
+				_mouseAndKeyboardStat = 55;
+				break;
+			case Common::KEYCODE_KP4: // Left (swapped):
+				_mouseAndKeyboardStat = 56;
+				break;
+			case Common::KEYCODE_KP6: // Right (swapped):
+				_mouseAndKeyboardStat = 57;
+				break;
+			default:
+				break;
+			}
+
 		} else {
 			// Map the DEL key when using the original GUI; used when writing the savegame name.
 			if (isUsingOriginalGUI() && lastKeyHit.keycode == Common::KEYCODE_DELETE)
@@ -1381,9 +1425,9 @@ void ScummEngine::processKeyboard(Common::KeyState lastKeyHit) {
 	// scripts, we have to do this manually for the other games.  We don't want to do this for (later)
 	// HE games, since they can sometimes have scripts that accept Enter and Tab keys.
 	if (_game.heversion < 71) {
-		if (_mouseAndKeyboardStat == Common::KEYCODE_RETURN && _cursor.state > 0 && _game.version <= 6) {
+		if (_mouseAndKeyboardStat == Common::KEYCODE_RETURN && (_cursor.state > 0 || isSegaCD) && _game.version <= 6) {
 			_mouseAndKeyboardStat = MBS_LEFT_CLICK;
-		} else if (_mouseAndKeyboardStat == Common::KEYCODE_TAB && _cursor.state > 0 && _game.version >= 4 && _game.version <= 6) {
+		} else if (_mouseAndKeyboardStat == Common::KEYCODE_TAB && (_cursor.state > 0 || isSegaCD) && _game.version >= 4 && _game.version <= 6) {
 			_mouseAndKeyboardStat = MBS_RIGHT_CLICK;
 		}
 	}

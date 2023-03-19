@@ -27,245 +27,45 @@
 #include "mm/xeen/xeen.h"
 #include "mm/xeen/files.h"
 #include "mm/xeen/saves.h"
-#include "mm/utils/engine_data.h"
+#include "mm/shared/utils/engine_data.h"
 
 namespace MM {
 namespace Xeen {
 
-uint16 BaseCCArchive::convertNameToId(const Common::String &resourceName) {
-	if (resourceName.empty())
-		return 0xffff;
-
-	Common::String name = resourceName;
-	name.toUppercase();
-
-	// Check if a resource number is being directly specified
-	if (name.size() == 4) {
-		char *endPtr;
-		uint16 num = (uint16)strtol(name.c_str(), &endPtr, 16);
-		if (!*endPtr)
-			return num;
-	}
-
-	const byte *msgP = (const byte *)name.c_str();
-	int total = *msgP++;
-	for (; *msgP; total += *msgP++) {
-		// Rotate the bits in 'total' right 7 places
-		total = (total & 0x007F) << 9 | (total & 0xFF80) >> 7;
-	}
-
-	return total;
-}
-
-void BaseCCArchive::loadIndex(Common::SeekableReadStream &stream) {
-	int count = stream.readUint16LE();
-	size_t size = count * 8;
-
-	// Read in the data for the archive's index
-	byte *rawIndex = new byte[size];
-
-	if (stream.read(rawIndex, size) != size) {
-		delete[] rawIndex;
-		error("Failed to read %zu bytes from CC file", size);
-	}
-
-	// Decrypt the index
-	int seed = 0xac;
-	for (int i = 0; i < count * 8; ++i, seed += 0x67) {
-		rawIndex[i] = (byte)((((rawIndex[i] << 2) | (rawIndex[i] >> 6)) + seed) & 0xff);
-	}
-
-	// Extract the index data into entry structures
-	_index.resize(count);
-	const byte *entryP = &rawIndex[0];
-	for (int idx = 0; idx < count; ++idx, entryP += 8) {
-		CCEntry entry;
-		entry._id = READ_LE_UINT16(entryP);
-		entry._offset = READ_LE_UINT32(entryP + 2) & 0xffffff;
-		entry._size = READ_LE_UINT16(entryP + 5);
-		assert(!entryP[7]);
-
-		_index[idx] = entry;
-	}
-
-	delete[] rawIndex;
-}
-
-void BaseCCArchive::saveIndex(Common::WriteStream &stream) {
-	// Fill up the data for the index entries into a raw data block
-	byte *rawIndex = new byte[_index.size() * 8];
-	byte b;
-
-	byte *entryP = rawIndex;
-	for (uint i = 0; i < _index.size(); ++i, entryP += 8) {
-		CCEntry &entry = _index[i];
-		WRITE_LE_UINT16(&entryP[0], entry._id);
-		WRITE_LE_UINT32(&entryP[2], entry._writeOffset);
-		WRITE_LE_UINT16(&entryP[5], entry._size);
-		entryP[7] = 0;
-	}
-
-	// Encrypt the index
-	int seed = 0xac;
-	for (uint i = 0; i < _index.size() * 8; ++i, seed += 0x67) {
-		b = (rawIndex[i] - seed) & 0xff;
-		b = (byte)((b >> 2) | (b << 6));
-
-		assert(rawIndex[i] == (byte)((((b << 2) | (b >> 6)) + seed) & 0xff));
-		rawIndex[i] = b;
-	}
-
-	// Write out the number of entries and the encrypted index data
-	stream.writeUint16LE(_index.size());
-	stream.write(rawIndex, _index.size() * 8);
-
-	delete[] rawIndex;
-}
-
-bool BaseCCArchive::hasFile(const Common::Path &path) const {
-	Common::String name = path.toString();
-	CCEntry ccEntry;
-	return getHeaderEntry(name, ccEntry);
-}
-
-bool BaseCCArchive::getHeaderEntry(const Common::String &resourceName, CCEntry &ccEntry) const {
-	return getHeaderEntry(convertNameToId(resourceName), ccEntry);
-}
-
-bool BaseCCArchive::getHeaderEntry(uint16 id, CCEntry &ccEntry) const {
-	// Loop through the index
-	for (uint i = 0; i < _index.size(); ++i) {
-		if (_index[i]._id == id) {
-			ccEntry = _index[i];
-			return true;
-		}
-	}
-
-	// Could not find an entry
-	return false;
-}
-
-const Common::ArchiveMemberPtr BaseCCArchive::getMember(const Common::Path &path) const {
-	Common::String name = path.toString();
-	if (!hasFile(name))
-		return Common::ArchiveMemberPtr();
-
-	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name, this));
-}
-
-int BaseCCArchive::listMembers(Common::ArchiveMemberList &list) const {
-	// CC files don't maintain the original filenames, so we can't list it
-	return 0;
-}
-
-/*------------------------------------------------------------------------*/
-
-CCArchive::CCArchive(const Common::String &filename, bool encoded):
-		BaseCCArchive(), _filename(filename), _encoded(encoded) {
-	File f(filename, SearchMan);
-	loadIndex(f);
-}
-
-CCArchive::CCArchive(const Common::String &filename, const Common::String &prefix,
-		bool encoded): BaseCCArchive(), _filename(filename),
-		_prefix(prefix), _encoded(encoded) {
-	_prefix.toLowercase();
-	File f(filename, SearchMan);
-	loadIndex(f);
-}
-
-CCArchive::~CCArchive() {
-}
-
-bool CCArchive::getHeaderEntry(const Common::String &resourceName, CCEntry &ccEntry) const {
-	Common::String resName = resourceName;
-
-	if (!_prefix.empty() && resName.contains('|')) {
-		resName.toLowercase();
-		Common::String prefix = _prefix + "|";
-
-		if (!strncmp(resName.c_str(), prefix.c_str(), prefix.size()))
-			// Matching CC prefix, so strip it off and allow processing to
-			// continue onto the base getHeaderEntry method
-			resName = Common::String(resName.c_str() + prefix.size());
-		else
-			// Not matching prefix, so don't allow a match
-			return false;
-	}
-
-	return BaseCCArchive::getHeaderEntry(resName, ccEntry);
-}
-
-Common::SeekableReadStream *CCArchive::createReadStreamForMember(const Common::Path &path) const {
-	Common::String name = path.toString();
-	CCEntry ccEntry;
-
-	if (getHeaderEntry(name, ccEntry)) {
-		// Open the correct CC file
-		Common::File f;
-		if (!f.open(_filename))
-			error("Could not open CC file");
-
-		// Read in the data for the specific resource
-		if (!f.seek(ccEntry._offset))
-			error("Failed to seek to %d bytes in CC file", ccEntry._offset);
-
-		byte *data = (byte *)malloc(ccEntry._size);
-
-		if (f.read(data, ccEntry._size) != ccEntry._size) {
-			free(data);
-			error("Failed to read %hu bytes in CC file", ccEntry._size);
-		}
-
-		if (_encoded) {
-			// Decrypt the data
-			for (int i = 0; i < ccEntry._size; ++i)
-				data[i] ^= 0x35;
-		}
-
-		// Return the data as a stream
-		return new Common::MemoryReadStream(data, ccEntry._size, DisposeAfterUse::YES);
-	}
-
-	return nullptr;
-}
-
-/*------------------------------------------------------------------------*/
-
 FileManager::FileManager(XeenEngine *vm) {
 	_ccNum = vm->getGameID() == GType_DarkSide;
-	File::_xeenCc = File::_darkCc = File::_introCc = nullptr;
-	File::_xeenSave = File::_darkSave = nullptr;
-	File::_currentSave = nullptr;
-	File::_currentArchive = nullptr;
+	_xeenCc = _darkCc = _introCc = nullptr;
+	_xeenSave = _darkSave = nullptr;
+	_currentSave = nullptr;
+	_currentArchive = nullptr;
 }
 
 FileManager::~FileManager() {
 	SearchMan.remove("intro");
 	SearchMan.remove("data");
-	delete File::_xeenCc;
-	delete File::_darkCc;
+	delete _xeenCc;
+	delete _darkCc;
 }
 
 bool FileManager::setup() {
 	if (g_vm->getGameID() == GType_Swords) {
-		File::_xeenCc = nullptr;
-		File::_darkCc = new CCArchive("swrd.cc", "xeen", true);
+		_xeenCc = nullptr;
+		_darkCc = new CCArchive("swrd.cc", "xeen", true);
 	} else {
-		File::_xeenCc = (g_vm->getGameID() == GType_DarkSide) ? nullptr :
+		_xeenCc = (g_vm->getGameID() == GType_DarkSide) ? nullptr :
 			new CCArchive("xeen.cc", "xeen", true);
-		File::_darkCc = (g_vm->getGameID() == GType_Clouds) ? nullptr :
+		_darkCc = (g_vm->getGameID() == GType_Clouds) ? nullptr :
 			new CCArchive("dark.cc", "dark", true);
 	}
 
 	if (Common::File::exists("intro.cc")) {
-		File::_introCc = new CCArchive("intro.cc", "intro", true);
-		SearchMan.add("intro", File::_introCc);
+		_introCc = new CCArchive("intro.cc", "intro", true);
+		SearchMan.add("intro", _introCc);
 	}
 
-	File::_currentArchive = g_vm->getGameID() == GType_DarkSide || g_vm->getGameID() == GType_Swords ?
-		File::_darkCc : File::_xeenCc;
-	assert(File::_currentArchive);
+	_currentArchive = g_vm->getGameID() == GType_DarkSide || g_vm->getGameID() == GType_Swords ?
+		_darkCc : _xeenCc;
+	assert(_currentArchive);
 
 	// Set up the engine data file
 	Common::U32String errMsg;
@@ -293,160 +93,6 @@ void FileManager::load(Common::SeekableReadStream &stream) {
 
 void FileManager::save(Common::WriteStream &s) {
 	s.writeByte(_ccNum ? 1 : 0);
-}
-
-/*------------------------------------------------------------------------*/
-
-CCArchive *File::_xeenCc;
-CCArchive *File::_darkCc;
-CCArchive *File::_introCc;
-SaveArchive *File::_xeenSave;
-SaveArchive *File::_darkSave;
-BaseCCArchive *File::_currentArchive;
-SaveArchive *File::_currentSave;
-
-File::File(const Common::String &filename) {
-	File::open(filename);
-}
-
-File::File(const Common::String &filename, Common::Archive &archive) {
-	File::open(filename, archive);
-}
-
-File::File(const Common::String &filename, int ccMode) {
-	File::open(filename, ccMode);
-}
-
-bool File::open(const Common::Path &filename) {
-	if (!_currentSave || !Common::File::open(filename, *_currentSave)) {
-		if (!_currentArchive || !Common::File::open(filename, *_currentArchive)) {
-			// Could not find in current archive, so try intro.cc or in folder
-			if (!Common::File::open(filename))
-				error("Could not open file - %s", filename.toString().c_str());
-		}
-	}
-
-	return true;
-}
-
-bool File::open(const Common::Path &filename, Common::Archive &archive) {
-	if (!Common::File::open(filename, archive))
-		error("Could not open file - %s", filename.toString().c_str());
-	return true;
-}
-
-bool File::open(const Common::String &filename, int ccMode) {
-	FileManager &files = *g_vm->_files;
-	int oldNum = files._ccNum;
-
-	files.setGameCc(ccMode);
-	if (File::exists(filename, *_currentArchive))
-		File::open(filename, *_currentArchive);
-	else
-		File::open(filename);
-
-	files.setGameCc(oldNum);
-
-	return true;
-}
-
-void File::setCurrentArchive(int ccMode) {
-	switch (ccMode) {
-	case 0:
-		_currentArchive = _xeenCc;
-		_currentSave = _xeenSave;
-		break;
-
-	case 1:
-		_currentArchive = _darkCc;
-		_currentSave = _darkSave;
-		break;
-
-	case 2:
-		_currentArchive = _introCc;
-		_currentSave = nullptr;
-		break;
-
-	default:
-		break;
-	}
-
-	assert(_currentArchive);
-}
-
-Common::String File::readString() {
-	Common::String result;
-	char c;
-
-	while (pos() < size() && (c = (char)readByte()) != '\0')
-		result += c;
-
-	return result;
-}
-
-bool File::exists(const Common::String &filename) {
-	if (!_currentSave || !_currentSave->hasFile(filename)) {
-		if (!_currentArchive->hasFile(filename)) {
-			// Could not find in current archive, so try intro.cc or in folder
-			return Common::File::exists(filename);
-		}
-	}
-
-	return true;
-}
-
-bool File::exists(const Common::String &filename, int ccMode) {
-	FileManager &files = *g_vm->_files;
-	int oldNum = files._ccNum;
-
-	files.setGameCc(ccMode);
-	bool result = exists(filename);
-	files.setGameCc(oldNum);
-
-	return result;
-}
-
-bool File::exists(const Common::String &filename, Common::Archive &archive) {
-	return archive.hasFile(filename);
-}
-
-void File::syncBitFlags(Common::Serializer &s, bool *startP, bool *endP) {
-	byte data = 0;
-
-	int bitCounter = 0;
-	for (bool *p = startP; p < endP; ++p, bitCounter = (bitCounter + 1) % 8) {
-		if (bitCounter == 0) {
-			if (s.isLoading() || p != startP)
-				s.syncAsByte(data);
-
-			if (s.isSaving())
-				data = 0;
-		}
-
-		if (s.isLoading())
-			*p = ((data >> bitCounter) & 1) != 0;
-		else if (*p)
-			data |= 1 << bitCounter;
-	}
-
-	if (s.isSaving())
-		s.syncAsByte(data);
-}
-
-/*------------------------------------------------------------------------*/
-
-void StringArray::load(const Common::String &name) {
-	File f(name);
-	clear();
-	while (f.pos() < f.size())
-		push_back(f.readString());
-}
-
-void StringArray::load(const Common::String &name, int ccMode) {
-	File f(name, ccMode);
-	clear();
-	while (f.pos() < f.size())
-		push_back(f.readString());
 }
 
 /*------------------------------------------------------------------------*/
@@ -618,7 +264,8 @@ void SaveArchive::replaceEntry(uint16 id, const byte *data, size_t size) {
 
 OutFile::OutFile(const Common::String &filename) :
 		_filename(filename), _backingStream(DisposeAfterUse::YES) {
-	_archive = File::_currentSave;
+	FileManager &files = *g_vm->_files;
+	_archive = files._currentSave;
 }
 
 OutFile::OutFile(const Common::String &filename, SaveArchive *archive) :
@@ -627,8 +274,9 @@ OutFile::OutFile(const Common::String &filename, SaveArchive *archive) :
 
 OutFile::OutFile(const Common::String &filename, int ccMode) :
 		_filename(filename), _backingStream(DisposeAfterUse::YES) {
+	FileManager &files = *g_vm->_files;
 	g_vm->_files->setGameCc(ccMode);
-	_archive = File::_currentSave;
+	_archive = files._currentSave;
 }
 
 uint32 OutFile::write(const void *dataPtr, uint32 dataSize) {

@@ -94,7 +94,7 @@ void Map00::special03() {
 void Map00::special04() {
 	visitedExit();
 	send(SoundMessage(
-		STRING["maps.map00.passage_outside"],
+		STRING["maps.passage_outside1"],
 		[]() {
 			g_maps->_mapPos = Common::Point(10, 10);
 			g_maps->changeMap(0xa11, 2);
@@ -131,6 +131,7 @@ void Map00::special08() {
 			case Common::KEYCODE_3:
 			case Common::KEYCODE_4:
 			case Common::KEYCODE_5:
+				g_events->focusedView()->close();
 				map[TOWN_NUM] = keyState.ascii;
 
 				for (uint i = 0; i < g_globals->_party.size(); ++i) {
@@ -152,7 +153,6 @@ void Map00::special08() {
 				}
 
 				maps._mapPos = Common::Point(8, 5);
-				g_events->send("View", GameMessage("UPDATE"));
 				break;
 			default:
 				break;
@@ -276,7 +276,7 @@ void Map00::searchStatue() {
 		STRING["maps.map00.statue"],
 		[]() {
 			Map &map = *g_maps->_currentMap;
-			g_events->send("Statue", ValueMessage(map[STATUE_VAL]));
+			g_events->send("Statue", GameMessage("STATUE", map[STATUE_VAL]));
 		}
 	));
 }

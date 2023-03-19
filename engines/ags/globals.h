@@ -302,7 +302,6 @@ public:
 	std::array<AmbientSound> *_ambient;
 
 	ScriptAudioChannel *_scrAudioChannel;
-	char _acaudio_buffer[256];
 	int _reserved_channel_count = 0;
 
 	// This is an indicator of a music played by an old audio system
@@ -535,7 +534,7 @@ public:
 	int _said_text = 0;
 	int _longestline = 0;
 	// Old dialog support
-	std::vector< std::shared_ptr<unsigned char> > _old_dialog_scripts;
+	std::vector<std::vector<uint8_t>> _old_dialog_scripts;
 	std::vector<String> _old_speech_lines;
 
 	/**@}*/
@@ -790,7 +789,6 @@ public:
 	// The version of the engine the loaded game was compiled for (if available)
 	Version _game_compiled_version;
 	int _game_paused = 0;
-	char _pexbuf[STD_BUFFER_SIZE] = { 0 };
 	unsigned int _load_new_game = 0;
 	int _load_new_game_restore = -1;
 	// TODO: refactor these global vars into function arguments
@@ -1064,7 +1062,7 @@ public:
 	uint8_t *_lzbuffer = nullptr;
 	int *_node = nullptr;
 	int _pos = 0;
-	size_t _outbytes = 0, _maxsize = 0, _putbytes = 0;
+	size_t _outbytes = 0;
 
 	/**@}*/
 

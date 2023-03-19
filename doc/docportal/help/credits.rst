@@ -290,6 +290,17 @@ CGE2
    * - Paul Gilbert
      -
 
+Chamber
+^^^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Retro-Junk;
+     -
+   * - Eugene Sandulenko
+     -
+
 Chewy
 ^^^^^
 
@@ -651,6 +662,15 @@ Illusions
    * - Benjamin Haisch
      -
    * - Eric Fry
+     -
+
+Immortal
+^^^^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Michael Hayman
      -
 
 Kingdom
@@ -1378,6 +1398,15 @@ Ultima
    * - Willem Jan Palenstijn
      - (Pentagram)
 
+V-Cruise
+^^^^^^^^
+
+.. list-table::
+   :widths: 35 65
+
+   * - Eric Lasota
+     -
+
 Voyeur
 ^^^^^^
 
@@ -1474,10 +1503,12 @@ iPhone / iPad
    :widths: 35 65
 
    * - Oystein Eftevaag
-     -
+     - (retired)
    * - Vincent Bénony
      -
    * - Thierry Crozat
+     -
+   * - Lars Sundström
      -
 
 LinuxMoto
@@ -1880,9 +1911,11 @@ macOS
    * - Max Horn
      - (retired)
    * - Oystein Eftevaag
-     -
+     - (retired)
    * - Thierry Crozat
      -
+   * - dwa
+     - Tiger/Leopard PPC
 
 Mandriva
 ^^^^^^^^

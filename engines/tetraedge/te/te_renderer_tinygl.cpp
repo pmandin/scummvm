@@ -49,6 +49,10 @@ void TeRendererTinyGL::clearBuffer(TeRenderer::Buffer buf) {
 	tglClear(glBuf);
 }
 
+void TeRendererTinyGL::colorMask(bool r, bool g, bool b, bool a) {
+	tglColorMask(r, g, b, a);
+}
+
 void TeRendererTinyGL::disableAllLights() {
 	TeLightTinyGL::disableAll();
 }
@@ -68,7 +72,7 @@ void TeRendererTinyGL::disableZBuffer() {
 }
 
 void TeRendererTinyGL::drawLine(const TeVector3f32 &from, const TeVector3f32 &to) {
-	error("TODO: Implement TeRenderer::drawLine");
+	error("TODO: Implement TeRendererTinyGL::drawLine");
 }
 
 void TeRendererTinyGL::enableAllLights() {
@@ -109,7 +113,7 @@ void TeRendererTinyGL::init(uint width, uint height) {
 	tglDepthFunc(TGL_LEQUAL);
 	// Original does this, probably not needed?
 	//tglHint(TGL_PERSPECTIVE_CORRECTION_HINT, TGL_DONT_CARE);
-	tglClearDepth(1.0);
+	tglClearDepthf(1.0f);
 	//tglClearStencil(0);
 	_clearColor = TeColor(0, 0, 0, 255);
 	tglClearColor(0, 0, 0, 1.0);
@@ -160,13 +164,7 @@ void TeRendererTinyGL::renderTransparentMeshes() {
 	tglVertexPointer(3, TGL_FLOAT, sizeof(TeVector3f32), _transparentMeshVertexes.data());
 	tglNormalPointer(TGL_FLOAT, sizeof(TeVector3f32), _transparentMeshNormals.data());
 	tglTexCoordPointer(2, TGL_FLOAT, sizeof(TeVector2f32), _transparentMeshCoords.data());
-	// TinyGL doesn't correctly scale BYTE color data, so provide it pre-scaled.
-	Common::Array<float> colorVals(_transparentMeshColors.size() * 4);
-	const byte *coldata = reinterpret_cast<const byte *>(_transparentMeshColors.data());
-	for (unsigned int i = 0; i < colorVals.size(); i++) {
-		colorVals[i] = (float)coldata[i] / 255.0f;
-	}
-	tglColorPointer(4, TGL_FLOAT, sizeof(float) * 4, colorVals.data());
+	tglColorPointer(4, TGL_UNSIGNED_BYTE, sizeof(TeColor), _transparentMeshColors.data());
 
 	TeMaterial lastMaterial;
 	TeMatrix4x4 lastMatrix;

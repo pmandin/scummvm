@@ -132,6 +132,11 @@ bool CharacterSettingsXmlParser::parserCallback_body(ParserNode *node) {
 	return true;
 }
 
+bool CharacterSettingsXmlParser::parserCallback_invertNormals(ParserNode *node) {
+	_curCharacter->_invertNormals = true;
+	return true;
+}
+
 bool CharacterSettingsXmlParser::textCallback(const Common::String &val) {
 	switch (_curTextTag) {
 	case TagModelFileName:
@@ -162,6 +167,19 @@ bool CharacterSettingsXmlParser::textCallback(const Common::String &val) {
 		break;
 	}
 	return true;
+}
+
+bool CharacterSettingsXmlParser::handleUnknownKey(ParserNode *node) {
+	if (node->values.contains("animFile")) {
+		// The game actually does nothing with these, they seem to be
+		// for debugging purposes only.
+		//const Common::String &animFile = node->values["animFile"];
+		//debug("TODO: CharacterSettingsXmlParser handle mapping %s -> %s",
+		//	node->name.c_str(), animFile.c_str());
+		return true;
+	}
+	parserError("Unknown key");
+	return false;
 }
 
 } // end namespace Tetraedge

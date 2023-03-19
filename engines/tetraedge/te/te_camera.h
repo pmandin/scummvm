@@ -49,15 +49,20 @@ public:
 
 	Math::Ray getRay(const TeVector2s32 &pxloc);
 
-	void loadBin(const Common::String &path);
-	void loadBin(const Common::ReadStream &stream);
+	// Syberia 2 redefines loadBin to actually load XML.
+	// We just have a separate function.
+	void loadXml(const Common::Path &path);
+
+	// Unused in Syberia 1.
+	//void loadBin(const Common::Path &path);
+	//void loadBin(const Common::ReadStream &stream);
 
 	//void lookAt(const TeVector3f32 &point) {} // empty and unused?
 
 	void orthogonalParams(float f1, float f2, float f3, float f4);
 	TeMatrix4x4 projectionMatrix();
 
-	TeVector3f32 projectPoint(const TeVector3f32 &pt);
+	TeVector2f32 projectPoint(const TeVector3f32 &pt);
 	TeVector3f32 projectPoint3f32(const TeVector3f32 &pt);
 
 	static void restore();
@@ -77,9 +82,13 @@ public:
 	}
 	void setProjMatrixType(int matrixType) { _projectionMatrixType = matrixType; }
 	int projMatrixType() const { return _projectionMatrixType; }
-	void setPerspectiveVal(float val) { _somePerspectiveVal = val; }
+	void setAspectRatio(float val) { _aspectRatio = val; }
 	float orthoNearPlane() const { return _orthNearVal; }
 	float orthoFarPlane() const { return _orthFarVal; }
+	void setOrthoNear(float f) { _orthNearVal = f; }
+	void setOrthoFar(float f) { _orthFarVal = f; }
+	float getViewportHeight() const { return _viewportH; }
+	float getViewportWidth() const { return _viewportW; }
 
 private:
 	void updateProjectionMatrix();
@@ -88,7 +97,7 @@ private:
 	float _orthNearVal;
 	float _orthFarVal;
 	float _fov;
-	float _somePerspectiveVal;
+	float _aspectRatio;
 
 	int _viewportX;
 	int _viewportY;

@@ -406,9 +406,9 @@ void replace_macro_tokens(const char *text, String &fixed_text) {
 	}
 }
 
-
 bool sort_gui_less(const int g1, const int g2) {
-	return _GP(guis)[g1].ZOrder < _GP(guis)[g2].ZOrder;
+	return (_GP(guis)[g1].ZOrder < _GP(guis)[g2].ZOrder) ||
+		   ((_GP(guis)[g1].ZOrder == _GP(guis)[g2].ZOrder) && (g1 < g2));
 }
 
 void update_gui_zorder() {
@@ -445,11 +445,8 @@ void update_gui_disabled_status() {
 	}
 
 	if (all_buttons_was != _G(all_buttons_disabled)) {
-		// As controls become enabled we must notify parent GUIs
-		// to let them reset control-under-mouse detection
-		for (int aa = 0; aa < _GP(game).numgui; aa++) {
-			_GP(guis)[aa].MarkControlsChanged();
-		}
+		// Mark guis for redraw and reset control-under-mouse detection
+		GUI::MarkAllGUIForUpdate(GUI::Options.DisabledStyle != kGuiDis_Unchanged, true);
 		if (GUI::Options.DisabledStyle != kGuiDis_Unchanged) {
 			invalidate_screen();
 		}

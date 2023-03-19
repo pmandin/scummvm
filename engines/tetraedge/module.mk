@@ -23,6 +23,7 @@ MODULE_OBJS := \
 	game/help_option_menu.o \
 	game/how_to.o \
 	game/in_game_scene.o \
+	game/in_game_scene_xml_parser.o \
 	game/inventory.o \
 	game/inventory_menu.o \
 	game/inventory_object.o \
@@ -36,9 +37,12 @@ MODULE_OBJS := \
 	game/objectif.o \
 	game/options_menu.o \
 	game/owner_error_menu.o \
+	game/particle_xml_parser.o \
 	game/question2.o \
 	game/scene_lights_xml_parser.o \
 	game/splash_screens.o \
+	game/upsell_screen.o \
+	game/youki_manager.o \
 	te/micropather.o \
 	te/te_3d_object2.o \
 	te/te_3d_texture.o \
@@ -47,6 +51,7 @@ MODULE_OBJS := \
 	te/te_bezier_curve.o \
 	te/te_button_layout.o \
 	te/te_camera.o \
+	te/te_camera_xml_parser.o \
 	te/te_checkbox_layout.o \
 	te/te_clip_layout.o \
 	te/te_color.o \
@@ -84,6 +89,7 @@ MODULE_OBJS := \
 	te/te_object.o \
 	te/te_obp.o \
 	te/te_palette.o \
+	te/te_particle.o \
 	te/te_pick_mesh2.o \
 	te/te_png.o \
 	te/te_quaternion.o \
@@ -111,6 +117,7 @@ MODULE_OBJS := \
 	te/te_vector2s32.o \
 	te/te_vector3f32.o \
 	te/te_visual_fade.o \
+	te/te_xml_parser.o \
 	te/te_xml_gui.o \
 	metaengine.o
 

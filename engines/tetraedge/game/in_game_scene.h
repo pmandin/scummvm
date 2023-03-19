@@ -28,6 +28,7 @@
 
 #include "tetraedge/game/object3d.h"
 #include "tetraedge/game/billboard.h"
+#include "tetraedge/game/youki_manager.h"
 
 #include "tetraedge/te/te_act_zone.h"
 #include "tetraedge/te/te_bezier_curve.h"
@@ -35,6 +36,7 @@
 #include "tetraedge/te/te_scene.h"
 #include "tetraedge/te/te_light.h"
 #include "tetraedge/te/te_lua_gui.h"
+#include "tetraedge/te/te_particle.h"
 #include "tetraedge/te/te_pick_mesh2.h"
 
 namespace Tetraedge {
@@ -45,6 +47,8 @@ class TeLayout;
 
 class InGameScene : public TeScene {
 public:
+	friend class InGameSceneXmlParser;
+
 	InGameScene();
 
 	struct AnimObject {
@@ -88,13 +92,57 @@ public:
 		TeVector3f32 _scale;
 	};
 
+	static const int MAX_FIRE;
+	static const int MAX_SNOW;
+	static const int MAX_SMOKE;
+	static const float DUREE_MAX_FIRE;
+	static const float SCALE_FIRE;
+	static const int MAX_FLAKE;
+	static const float DUREE_MIN_FLAKE;
+	static const float DUREE_MAX_FLAKE;
+	static const float SCALE_FLAKE;
+	static const float DEPTH_MAX_FLAKE;
+
+	struct Fire {
+		TeCurveAnim2<TeModel, TeVector3f32> _positionAnim;
+		TeCurveAnim2<TeModel, TeColor> _colorAnim;
+		TeCurveAnim2<TeModel, TeVector3f32> _scaleAnim;
+	};
+
+	struct Flamme {
+		Flamme() : _needsFires(false), _addFireOnUpdate(false) {};
+		~Flamme();
+		Common::Array<Fire*> _fires;
+		Common::String _name;
+		TeVector3f32 _center;
+		TeVector3f32 _yMax;
+		TeVector3f32 _offsetMin;
+		TeVector3f32 _offsetMax;
+		bool _needsFires;
+		bool _addFireOnUpdate;
+		void initFire();
+	};
+
+	// TODO: Any other members of RippleMask?
+	class RippleMask : public TeModel {
+
+	};
+
+	struct SceneLight {
+		Common::String _name;
+		TeVector3f32 _v1;
+		TeVector3f32 _v2;
+		TeColor _color;
+		float _f;
+	};
+
 	void activateAnchorZone(const Common::String &name, bool val);
 	void addAnchorZone(const Common::String &s1, const Common::String &name, float radius);
 	void addBlockingObject(const Common::String &obj) {
 		_blockingObjects.push_back(obj);
 	}
 	void addCallbackAnimation2D(const Common::String &param_1, const Common::String &param_2, float param_3);
-	bool addMarker(const Common::String &name, const Common::String &imgPath, float x, float y, const Common::String &locType, const Common::String &markerVal);
+	bool addMarker(const Common::String &name, const Common::String &imgPath, float x, float y, const Common::String &locType, const Common::String &markerVal, float anchorX, float anchorY);
 	static float angularDistance(float a1, float a2);
 	bool aroundAnchorZone(const AnchorZone *zone);
 	TeLayout *background();
@@ -114,6 +162,9 @@ public:
 	void deserializeCam(Common::ReadStream &stream, TeIntrusivePtr<TeCamera> &cam);
 	void deserializeModel(Common::ReadStream &stream, TeIntrusivePtr<TeModel> &model, TePickMesh2 *pickmesh);
 	virtual void draw() override;
+	void drawKate();
+	void drawMask();
+	void drawReflection();
 	void drawPath();
 	Dummy dummy(const Common::String &name);
 	bool findKate();
@@ -147,11 +198,32 @@ public:
 	bool loadObjectMaterials(const Common::String &path, const Common::String &name);
 	bool loadPlayerCharacter(const Common::String &cname);
 
+	// Syberia 2 specific data..
+	void loadActZones();
+	bool loadCamera(const Common::String &name);
+	bool loadCurve(const Common::String &name);
+	bool loadDynamicLightBloc(const Common::String &name, const Common::String &texture, const Common::String &zone, const Common::String &scene);
+	// loadFlamme uses the xml doc
+	bool loadFreeMoveZone(const Common::String &name, TeVector2f32 &gridSize);
+	bool loadLight(const Common::String &fname, const Common::String &zone, const Common::String &scene);
+	bool loadMask(const Common::String &name, const Common::String &texture, const Common::String &zone, const Common::String &scene);
+	bool loadRBB(const Common::String &fname, const Common::String &zone, const Common::String &scene);
+	bool loadRippleMask(const Common::String &name, const Common::String &texture, const Common::String &zone, const Common::String &scene);
+	bool loadRObject(const Common::String &fname, const Common::String &zone, const Common::String &scene);
+	//bool loadSBB(const Common::String &fname, const Common::String &zone, const Common::String &scene); // Unused?
+	bool loadShadowMask(const Common::String &name, const Common::String &texture, const Common::String &zone, const Common::String &scene);
+	bool loadShadowReceivingObject(const Common::String &fname, const Common::String &zone, const Common::String &scene);
+	//bool loadSnowCone(const Common::String &fname, const Common::String &zone, const Common::String &scene) { return false; } // Unused?
+	//bool loadSnowCustom() // todo: from xml file?
+	bool loadXml(const Common::String &zone, const Common::String &scene);
+	bool loadZBufferObject(const Common::String &fname, const Common::String &zone, const Common::String &scene);
+
 	void moveCharacterTo(const Common::String &charName, const Common::String &curveName, float curveOffset, float curveEnd);
 	int object(const Common::String &oname);
 	Object3D *object3D(const Common::String &oname);
 	void onMainWindowSizeChanged();
 	TeFreeMoveZone *pathZone(const Common::String &zname);
+	void playVerticalScrolling(float time);
 	TeVector3f32 positionMarker(const Common::String &mname);
 	void removeBlockingObject(const Common::String &oname);
 
@@ -170,8 +242,8 @@ public:
 	void update() override;
 
 	// Does nothing, but to keep calls from original..
-	static void updateScroll() {};
-	static void updateViewport() {};
+	void updateScroll();
+	void updateViewport(int ival);
 
 	Character *_character;
 	Common::Array<Character *> _characters;
@@ -192,13 +264,21 @@ public:
 	TeIntrusivePtr<TeBezierCurve> curve() { return _curve; }
 	void setCurve(TeIntrusivePtr<TeBezierCurve> &c) { _curve = c; }
 	Common::Array<TeIntrusivePtr<TeModel>> &zoneModels() { return _zoneModels; }
+	Common::Array<TeIntrusivePtr<TeModel>> &shadowReceivingObjects() { return _shadowReceivingObjects; }
 	Common::Array<TeRectBlocker> &rectBlockers() { return _rectBlockers; }
 	Common::Array<TeBlocker> &blockers() { return _blockers; }
 	Common::Array<Object3D *> object3Ds() { return _object3Ds; }
-	void setWaitTime(float usecs) { _waitTime = usecs; }
+	void setWaitTime(double usecs) { _waitTime = usecs; }
 	TeTimer &waitTimeTimer() { return _waitTimeTimer; }
 	Common::Array<Common::SharedPtr<TeLight>> &lights() { return _lights; }
+	Common::Array<TeIntrusivePtr<TeParticle>> &particles() { return _particles; }
 
+	// Note: Zone name and scene name are only set in Syberia 2
+	const Common::String getZoneName() const { return _zoneName; }
+	const Common::String getSceneName() const { return _sceneName; }
+
+	void activateMask(const Common::String &name, bool val);
+	YoukiManager &youkiManager() { return _youkiManager; }
 
 private:
 	int _shadowLightNo;
@@ -208,7 +288,7 @@ private:
 	float _shadowNearPlane;
 	float _shadowFov;
 
-	float _waitTime;
+	double _waitTime;
 	TeTimer _waitTimeTimer;
 
 	Common::Array<TeBlocker> _blockers;
@@ -222,6 +302,7 @@ private:
 	Common::Array<Billboard *> _billboards;
 	Common::Array<TeSpriteLayout *> _sprites;
 	Common::Array<TePickMesh2 *> _clickMeshes;
+	Common::Array<RippleMask *> _rippleMasks;
 
 	Common::HashMap<Common::String, SoundStep> _soundSteps;
 	Common::HashMap<Common::String, Common::Array<Callback*>> _callbacks;
@@ -230,7 +311,12 @@ private:
 	Common::Array<Object> _objects;
 	Common::Array<TeIntrusivePtr<TeBezierCurve>> _bezierCurves;
 	Common::Array<Dummy> _dummies;
+	Common::Array<Flamme> _flammes;
+	Common::Array<SceneLight> _sceneLights;
 	Common::Array<TeIntrusivePtr<TeModel>> _zoneModels;
+	Common::Array<TeIntrusivePtr<TeModel>> _masks;
+	Common::Array<TeIntrusivePtr<TeParticle>> _particles;
+	Common::Array<TeIntrusivePtr<TeModel>> _shadowReceivingObjects;
 
 	TeIntrusivePtr<TeModel> _playerCharacterModel;
 	TeIntrusivePtr<TeBezierCurve> _curve;
@@ -241,10 +327,21 @@ private:
 
 	Common::Array<Common::SharedPtr<TeLight>> _lights;
 
-	TeVector2f32 _someScrollVector;
+	TeVector2f32 _scrollOffset;
+	TeVector2f32 _scrollScale;
 	TeVector2f32 _viewportSize;
 
 	Common::Path _loadedPath;
+
+	// Syberia 2 specific items
+	static bool _collisionSlide;
+	Common::String _sceneName;
+	Common::String _zoneName;
+	bool _maskAlpha;
+	YoukiManager _youkiManager;
+	TeTimer _verticalScrollTimer;
+	float _verticalScrollTime;
+	bool _verticalScrollPlaying;
 };
 
 } // end namespace Tetraedge

@@ -20,12 +20,16 @@
  */
 
 #include "common/config-manager.h"
+#include "common/compression/clickteam.h"
 #include "common/debug-channels.h"
 #include "common/macresman.h"
 #include "common/md5.h"
 #include "common/events.h"
 #include "common/system.h"
 #include "common/translation.h"
+
+#include "backends/keymapper/keymap.h"
+#include "backends/keymapper/keymapper.h"
 
 #include "engines/util.h"
 
@@ -37,6 +41,7 @@
 #include "scumm/charset.h"
 #include "scumm/costume.h"
 #include "scumm/debugger.h"
+#include "scumm/detection_tables.h"
 #include "scumm/dialogs.h"
 #include "scumm/file.h"
 #include "scumm/file_nes.h"
@@ -84,6 +89,16 @@
 #include "scumm/imuse/drivers/midi.h"
 #include "scumm/detection_steam.h"
 
+#ifdef ENABLE_HE
+#ifdef USE_ENET
+#include "scumm/he/net/net_main.h"
+#include "scumm/dialog-sessionselector.h"
+#ifdef USE_LIBCURL
+#include "scumm/he/net/net_lobby.h"
+#endif
+#endif
+#endif
+
 #include "backends/audiocd/audiocd.h"
 
 #include "audio/mixer.h"
@@ -100,6 +115,9 @@ struct dbgChannelDesc {
 	const char *channel, *desc;
 	uint32 flag;
 };
+
+
+const char *const insaneKeymapId = "scumm-insane";
 
 
 ScummEngine::ScummEngine(OSystem *syst, const DetectorResult &dr)
@@ -707,6 +725,20 @@ ScummEngine_v90he::ScummEngine_v90he(OSystem *syst, const DetectorResult &dr)
 	_videoParams.number = 0;
 	_videoParams.wizResNum = 0;
 
+#ifdef USE_ENET
+	/* Online stuff for compatable HE games */
+	_net = 0;
+	if (_game.id == GID_FOOTBALL || _game.id == GID_BASEBALL2001 || _game.id == GID_FOOTBALL2002 ||
+		_game.id == GID_MOONBASE) {
+		_net = new Net(this);
+	}
+#ifdef USE_LIBCURL
+	_lobby = 0;
+	if (_game.id == GID_FOOTBALL || _game.id == GID_BASEBALL2001)
+		_lobby = new Lobby(this);
+#endif
+#endif
+
 	VAR_NUM_SPRITE_GROUPS = 0xFF;
 	VAR_NUM_SPRITES = 0xFF;
 	VAR_NUM_PALETTES = 0xFF;
@@ -719,6 +751,14 @@ ScummEngine_v90he::ScummEngine_v90he(OSystem *syst, const DetectorResult &dr)
 ScummEngine_v90he::~ScummEngine_v90he() {
 	delete _moviePlay;
 	delete _sprite;
+
+#ifdef USE_ENET
+	delete _net;
+#ifdef USE_LIBCURL
+	delete _lobby;
+#endif
+#endif
+
 	if (_game.heversion >= 98) {
 		delete _logicHE;
 	}
@@ -849,6 +889,21 @@ ScummEngine_v8::~ScummEngine_v8() {
 Common::Error ScummEngine::init() {
 
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
+
+	for (uint i = 0; ruScummPatcherTable[i].patcherName; i++) {
+		if (ruScummPatcherTable[i].gameid == _game.id && (_game.variant == nullptr || strcmp(_game.variant, ruScummPatcherTable[i].variant) == 0)) {
+			Common::File *f = new Common::File();
+			if (f->open(ruScummPatcherTable[i].patcherName)) {
+				Common::Archive *patcher = Common::ClickteamInstaller::openPatch(f, true, true, &SearchMan, DisposeAfterUse::YES);
+				if (patcher) {
+					SearchMan.add("ruscumm", patcher, 3);
+					break;
+				}
+			}
+			delete f;
+		}
+	}
+
 
 	ConfMan.registerDefault("original_gui", true);
 	if (ConfMan.hasKey("original_gui", _targetName)) {
@@ -1230,6 +1285,11 @@ Common::Error ScummEngine::init() {
 	// Create the debugger now that _numVariables has been set
 	setDebugger(new ScummDebugger(this));
 
+	Common::Keymapper *keymapper = _system->getEventManager()->getKeymapper();
+	_insaneKeymap = keymapper->getKeymap(insaneKeymapId);
+	if (_insaneKeymap)
+		_insaneKeymap->setEnabled(false);
+
 	resetScumm();
 	resetScummVars();
 
@@ -1302,8 +1362,11 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 		} else
 			track = 1;
 
+		// The Ultimate Talkie version of Monkey Island 1 provides an automatic
+		// fallback with MIDI music when CD tracks are not found.
 		if (!existExtractedCDAudioFiles(track)
-		    && !isDataAndCDAudioReadFromSameCD()) {
+		    && !isDataAndCDAudioReadFromSameCD()
+			&& !(_game.id == GID_MONKEY && _game.features & GF_ULTIMATE_TALKIE)) {
 			warnMissingExtractedCDAudio();
 		}
 		_system->getAudioCDManager()->open();
@@ -1378,9 +1441,6 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 	else
 		OF_OWNER_ROOM = 0x0F;
 
-	// if (_game.id==GID_MONKEY2 && _bootParam == 0)
-	//	_bootParam = 10001;
-
 	if (!_copyProtection && _game.id == GID_INDY4 && _bootParam == 0) {
 		_bootParam = -7873;
 	}
@@ -1398,6 +1458,14 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 		_bootParam = -1;
 	}
 
+	if (_game.version == 8 && (_language != Common::EN_ANY && _language != Common::EN_GRB && _language != Common::EN_USA)) {
+		ConfMan.registerDefault("enable_song", true);
+		if (ConfMan.hasKey("enable_song", _targetName)) {
+			_enableCOMISong = ConfMan.getBool("enable_song");
+		}
+	}
+
+#ifndef ATARI
 	int maxHeapThreshold = -1;
 
 	if (_game.features & GF_16BIT_COLOR) {
@@ -1412,6 +1480,10 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 	}
 
 	_res->setHeapThreshold(400000, maxHeapThreshold);
+#else
+	// RAM is cheap, disk I/O isn't... helps with retaining the resources in COMI and similar
+	_res->setHeapThreshold(16 * 1024 * 1024, 32 * 1024 * 1024);
+#endif
 
 	free(_compositeBuf);
 	_compositeBuf = (byte *)malloc(_screenWidth * _textSurfaceMultiplier * _screenHeight * _textSurfaceMultiplier * _outputPixelFormat.bytesPerPixel);
@@ -1753,6 +1825,8 @@ void ScummEngine::resetScumm() {
 	// all keys are released
 	for (i = 0; i < 512; i++)
 		_keyDownMap[i] = false;
+	for (i = 0; i < kScummActionCount; i++)
+		_actionMap[i] = false;
 
 	_lastSaveTime = _system->getMillis();
 }
@@ -2079,7 +2153,7 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 			// of the Mac music via a selected MIDI device.
 			nativeMidiDriver = new IMuseDriver_MacM68k(_mixer);
 			// The Mac driver is never MT-32.
-			_native_mt32 = false;
+			_native_mt32 = enable_gs = false;
 			// Ignore non-native drivers. This also ignores the multi MIDI setting.
 			useOnlyNative = true;
 		} else if (_sound->_musicType == MDT_AMIGA) {
@@ -3395,6 +3469,31 @@ char ScummEngine::displayMessage(const char *altButton, const char *message, ...
 	return runDialog(dialog);
 }
 
+bool ScummEngine::displayMessageYesNo(const char *message, ...) {
+	char buf[STRINGBUFLEN];
+	va_list va;
+
+	va_start(va, message);
+	vsnprintf(buf, STRINGBUFLEN, message, va);
+	va_end(va);
+
+	GUI::MessageDialog dialog(buf, _("Yes"), _("No"));
+	return runDialog(dialog) == GUI::kMessageOK;
+}
+
+#if defined(ENABLE_HE) && defined(USE_ENET)
+int ScummEngine_v90he::networkSessionDialog() {
+	GUI::MessageDialog dialog(_("Would you like to host or join a network play session?"), _("Host"), _("Join"));
+	int res = runDialog(dialog);
+	if (res == GUI::kMessageOK)
+		// Hosting session.
+		return -1;
+
+	// Joining a session
+	SessionSelectorDialog sessionDialog(this);
+	return runDialog(sessionDialog);
+}
+#endif
 
 #pragma mark -
 #pragma mark --- Miscellaneous ---

@@ -343,24 +343,9 @@ void CreateCharacters::printSummary(bool promptToSave) {
 }
 
 bool CreateCharacters::msgKeypress(const KeypressMessage &msg) {
-	if (msg.keycode == Common::KEYCODE_ESCAPE) {
-		if (_state == SELECT_CLASS) {
-			close();
-		} else {
-			_state = SELECT_CLASS;
-			_newChar.reroll();
-			redraw();
-		}
-		return true;
-	}
-
 	switch (_state) {
 	case SELECT_CLASS:
-		if (msg.keycode == Common::KEYCODE_RETURN) {
-			// Re-roll attributes
-			_newChar.reroll();
-			redraw();
-		} else if (msg.keycode >= Common::KEYCODE_1 &&
+		if (msg.keycode >= Common::KEYCODE_1 &&
 				msg.keycode <= Common::KEYCODE_6) {
 			if (_newChar._classesAllowed[msg.keycode - Common::KEYCODE_0] &&
 					!g_globals->_roster.full()) {
@@ -437,7 +422,7 @@ bool CreateCharacters::msgKeypress(const KeypressMessage &msg) {
 			_newChar._name += toupper(msg.ascii);
 			redraw();
 		}
-		if (msg.keycode == Common::KEYCODE_RETURN || _newChar._name.size() == 15) {
+		if (_newChar._name.size() == 15) {
 			_state = SAVE_PROMPT;
 			redraw();
 		} else if (msg.keycode == Common::KEYCODE_BACKSPACE &&
@@ -458,6 +443,48 @@ bool CreateCharacters::msgKeypress(const KeypressMessage &msg) {
 	}
 
 	return true;
+}
+
+bool CreateCharacters::msgAction(const ActionMessage &msg) {
+	switch (msg._action) {
+	case KEYBIND_ESCAPE:
+		if (_state == SELECT_CLASS) {
+			close();
+		} else {
+			_state = SELECT_CLASS;
+			_newChar.reroll();
+			redraw();
+		}
+		return true;
+
+	case KEYBIND_SELECT:
+		switch (_state) {
+		case SELECT_CLASS:
+			// Re-roll attributes
+			_newChar.reroll();
+			redraw();
+			break;
+		case SELECT_NAME:
+			_state = SAVE_PROMPT;
+			redraw();
+			break;
+		case SAVE_PROMPT:
+			_newChar.save();
+
+			_state = SELECT_CLASS;
+			_newChar.reroll();
+			redraw();
+			break;
+		default:
+			break;
+		}
+		return true;
+
+	default:
+		break;
+	}
+
+	return false;
 }
 
 } // namespace Views

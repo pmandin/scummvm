@@ -30,6 +30,7 @@
 #include "freescape/freescape.h"
 #include "freescape/language/8bitDetokeniser.h"
 #include "freescape/neo.h"
+#include "freescape/scr.h"
 #include "freescape/objects/sensor.h"
 
 namespace Freescape {
@@ -185,7 +186,6 @@ void FreescapeEngine::drawBorder() {
 		return;
 
 	_gfx->setViewport(_fullscreenViewArea);
-
 	assert(_borderTexture);
 	_gfx->drawTexturedRect2D(_fullscreenViewArea, _fullscreenViewArea, _borderTexture);
 	_gfx->setViewport(_viewArea);
@@ -193,22 +193,14 @@ void FreescapeEngine::drawBorder() {
 
 void FreescapeEngine::drawTitle() {
 	_gfx->setViewport(_fullscreenViewArea);
-	if (isSpectrum()) {
-		Graphics::Surface *title = new Graphics::Surface();
-		title->create(320, 200, _title->format);
-		title->copyRectToSurface(*_title, (320 - _title->w) / 2, (200 - _title->h) / 2, Common::Rect(_title->w, _title->h));
-		_title->free();
-		delete _title;
-		_title = title;
+	if (!_titleTexture) {
+		Graphics::Surface *title = _gfx->convertImageFormatIfNecessary(_title);
+		_titleTexture = _gfx->createTexture(title);
+		title->free();
+		delete title;
 	}
-	if (!_titleTexture)
-		_titleTexture = _gfx->createTexture(_title);
 	_gfx->drawTexturedRect2D(_fullscreenViewArea, _fullscreenViewArea, _titleTexture);
 	_gfx->setViewport(_viewArea);
-}
-
-void FreescapeEngine::loadAssets() {
-	error("Function \"%s\" not implemented", __FUNCTION__);
 }
 
 // Taken from the Myst 3 codebase, it should be abstracted
@@ -224,25 +216,6 @@ Math::Vector3d FreescapeEngine::directionToVector(float pitch, float heading) {
 	v.normalize();
 
 	return v;
-}
-
-void FreescapeEngine::drawUI() {
-	// TODO: crossair
-	_gfx->setViewport(_viewArea);
-}
-
-void FreescapeEngine::drawInfoMenu() {
-	warning("Function \"%s\" not implemented", __FUNCTION__);
-}
-
-void FreescapeEngine::drawCrossair(Graphics::Surface *surface) {
-	uint32 white = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
-
-	surface->drawLine(_crossairPosition.x - 3, _crossairPosition.y, _crossairPosition.x - 2, _crossairPosition.y, white);
-	surface->drawLine(_crossairPosition.x + 2, _crossairPosition.y, _crossairPosition.x + 3, _crossairPosition.y, white);
-
-	surface->drawLine(_crossairPosition.x, _crossairPosition.y - 3, _crossairPosition.x, _crossairPosition.y - 2, white);
-	surface->drawLine(_crossairPosition.x, _crossairPosition.y + 2, _crossairPosition.x, _crossairPosition.y + 3, white);
 }
 
 void FreescapeEngine::centerCrossair() {
@@ -298,7 +271,6 @@ void FreescapeEngine::drawBackground() {
 	_gfx->setViewport(_viewArea);
 	_gfx->clear(_currentArea->_skyColor);
 }
-
 
 void FreescapeEngine::drawFrame() {
 	_gfx->updateProjectionMatrix(70.0, _nearClipPlane, _farClipPlane);
@@ -442,6 +414,8 @@ void FreescapeEngine::processInput() {
 				} else {
 					g_system->lockMouse(false);
 					g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
+					g_system->getEventManager()->purgeMouseEvents();
+					g_system->getEventManager()->purgeKeyboardEvents();
 				}
 				break;
 			case Common::KEYCODE_i:
@@ -471,15 +445,34 @@ void FreescapeEngine::processInput() {
 				g_system->warpMouse(mousePos.x, mousePos.y);
 
 			if (_shootMode) {
-				_crossairPosition = mousePos;
-				if (mousePos.x < _viewArea.left)
-					g_system->warpMouse(_viewArea.left + 1, _crossairPosition.y);
-				else if  (mousePos.x > _viewArea.right)
-					g_system->warpMouse(_viewArea.right - 1, _crossairPosition.y);
-				else if (mousePos.y < _viewArea.top)
-					g_system->warpMouse(_crossairPosition.x, _viewArea.top + 1);
-				else if  (mousePos.y > _viewArea.bottom)
-					g_system->warpMouse(_crossairPosition.x, _viewArea.bottom - 1);
+				{
+					bool shouldWarp = false;
+					_crossairPosition = mousePos;
+					if (mousePos.x < _viewArea.left) {
+						_crossairPosition.x = _viewArea.left + 1;
+						shouldWarp = true;
+					}
+
+					if  (mousePos.x > _viewArea.right) {
+						_crossairPosition.x = _viewArea.right - 1;
+						shouldWarp = true;
+					}
+					if (mousePos.y < _viewArea.top) {
+						_crossairPosition.y =  _viewArea.top + 1;
+						shouldWarp = true;
+					}
+
+					if  (mousePos.y > _viewArea.bottom) {
+						_crossairPosition.y = _viewArea.bottom - 1;
+						shouldWarp = true;
+					}
+
+					if (shouldWarp) {
+						g_system->warpMouse(_crossairPosition.x, _crossairPosition.y);
+						g_system->getEventManager()->purgeMouseEvents();
+						g_system->getEventManager()->purgeKeyboardEvents();
+					}
+				}
 				break;
 			}
 
@@ -540,8 +533,6 @@ Common::Error FreescapeEngine::run() {
 	initGameState();
 	loadColorPalette();
 
-	_gfx->convertImageFormatIfNecessary(_title);
-	_gfx->convertImageFormatIfNecessary(_border);
 	g_system->lockMouse(true);
 
 	// Simple main event loop
@@ -597,28 +588,37 @@ void FreescapeEngine::titleScreen() {}
 void FreescapeEngine::borderScreen() {}
 
 void FreescapeEngine::loadBorder() {
-	if (_border)
-		_borderTexture = _gfx->createTexture(_border);
+	if (_border) {
+		Graphics::Surface *border = _gfx->convertImageFormatIfNecessary(_border);
+		_borderTexture = _gfx->createTexture(border);
+		border->free();
+		delete border;
+	}
 }
 
 void FreescapeEngine::processBorder() {
 	if (_border) {
 		if (_borderTexture)
 			delete _borderTexture;
+		Graphics::Surface *border = _gfx->convertImageFormatIfNecessary(_border);
+
 		uint32 gray = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0xA0, 0xA0, 0xA0);
-		_border->fillRect(_viewArea, gray);
+		border->fillRect(_viewArea, gray);
 
 		// Replace black pixel for transparent ones
-		uint32 black = _border->format.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
-		uint32 transparent = _border->format.ARGBToColor(0x00, 0x00, 0x00, 0x00);
+		uint32 black = border->format.ARGBToColor(0xFF, 0x00, 0x00, 0x00);
+		uint32 transparent = border->format.ARGBToColor(0x00, 0x00, 0x00, 0x00);
 
-		for (int i = 0; i < _border->w; i++) {
-			for (int j = 0; j < _border->h; j++) {
-				if (_border->getPixel(i, j) == black)
-					_border->setPixel(i, j, transparent);
+		for (int i = 0; i < border->w; i++) {
+			for (int j = 0; j < border->h; j++) {
+				if (border->getPixel(i, j) == black)
+					border->setPixel(i, j, transparent);
 			}
 		}
-		_borderTexture = _gfx->createTexture(_border);
+
+		_borderTexture = _gfx->createTexture(border);
+		border->free();
+		delete border;
 	}
 }
 
@@ -814,7 +814,7 @@ void FreescapeEngine::loadDataBundle() {
 	char *versionData = (char *)malloc((versionFile->size() + 1) * sizeof(char));
 	versionFile->read(versionData, versionFile->size());
 	versionData[versionFile->size()] = '\0';
-	Common::String expectedVersion = "1";
+	Common::String expectedVersion = "2";
 	if (versionData != expectedVersion)
 		error("Unexpected version number for freescape.dat: expecting '%s' but found '%s'", expectedVersion.c_str(), versionData);
 	free(versionData);
@@ -850,13 +850,23 @@ byte *FreescapeEngine::getPaletteFromNeoImage(Common::SeekableReadStream *stream
 	return palette;
 }
 
-Graphics::Surface *FreescapeEngine::loadAndConvertNeoImage(Common::SeekableReadStream *stream, int offset, byte *palette) {
+Graphics::ManagedSurface *FreescapeEngine::loadAndConvertNeoImage(Common::SeekableReadStream *stream, int offset, byte *palette) {
 	stream->seek(offset);
 	NeoDecoder decoder(palette);
 	decoder.loadStream(*stream);
-	Graphics::Surface *surface = new Graphics::Surface();
+	Graphics::ManagedSurface *surface = new Graphics::ManagedSurface();
 	surface->copyFrom(*decoder.getSurface());
 	surface->convertToInPlace(_gfx->_currentPixelFormat, decoder.getPalette());
+	return surface;
+}
+
+Graphics::ManagedSurface *FreescapeEngine::loadAndCenterScrImage(Common::SeekableReadStream *stream) {
+	ScrDecoder decoder;
+	decoder.loadStream(*stream);
+	Graphics::ManagedSurface *surface = new Graphics::ManagedSurface();
+	const Graphics::Surface *decoded = decoder.getSurface();
+	surface->create(320, 200, decoded->format);
+	surface->copyRectToSurface(*decoded, (320 - decoded->w) / 2, (200 - decoded->h) / 2, Common::Rect(decoded->w, decoded->h));
 	return surface;
 }
 

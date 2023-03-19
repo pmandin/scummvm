@@ -185,7 +185,7 @@ void EfhEngine::handleFight_checkEndEffect(int16 charId) {
 	// At this point : The status is different to 0 (normal) and the effect duration is finally 0 (end of effect)
 	_enemyNamePt2 = _npcBuf[_teamChar[charId]._id]._name;
 	_enemyNamePt1 = getArticle(_npcBuf[_teamChar[charId]._id].getPronoun());
-	
+
 	// End of effect message depends on the type of effect
 	switch (_teamChar[charId]._status._type) {
 	case kEfhStatusSleeping:
@@ -221,7 +221,7 @@ void EfhEngine::handleFight_lastAction_A(int16 teamCharId) {
 
 	if (minMonsterGroupId == -1)
 		return;
-	
+
 	int16 maxMonsterGroupId;
 	if (_items[teamCharItemId]._range == 4)
 		maxMonsterGroupId = 5;
@@ -468,7 +468,7 @@ void EfhEngine::handleFight_MobstersAttack(int groupId) {
 	// In the original, this function is part of handleFight.
 	// It has been split for readability purposes.
 	debugC(3, kDebugFight, "handleFight_MobstersAttack %d", groupId);
-	
+
 	// handleFight - Loop on mobsterId - Start
 	for (uint ctrMobsterId = 0; ctrMobsterId < 9; ++ctrMobsterId) {
 		if (isMonsterActive(groupId, ctrMobsterId)) {
@@ -491,7 +491,7 @@ void EfhEngine::handleFight_MobstersAttack(int groupId) {
 				maxTeamMemberId = _teamSize;
 			}
 
-			if (minTeamMemberId == -1)
+			if (minTeamMemberId <= -1)
 				continue;
 
 			// handleFight - Loop on targetId - Start
@@ -723,12 +723,12 @@ bool EfhEngine::isTeamMemberStatusNormal(int16 teamMemberId) {
 void EfhEngine::getDeathTypeDescription(int16 victimId, int16 attackerId) {
 	debugC(3, kDebugFight, "getDeathTypeDescription %d %d", victimId, attackerId);
 
-	uint8 pronoun;
+	uint8 pronoun = 0;
 
 	if (victimId >= 1000) { // Magic value for team members
 		int16 charId = _teamChar[victimId - 1000]._id;
 		pronoun = _npcBuf[charId].getPronoun();
-	} else {
+	} else if (victimId < 5) { // Safeguard added
 		int16 charId = _teamMonster[victimId]._id;
 		pronoun = _mapMonsters[_techId][charId].getPronoun();
 	}
@@ -750,7 +750,8 @@ void EfhEngine::getDeathTypeDescription(int16 victimId, int16 attackerId) {
 			else
 				deathType = _items[exclusiveItemId]._attackType + 1;
 		}
-	} else if (_teamMonster[attackerId]._id == -1) {
+	// The check "attackerId >= 5" is a safeguard for a Coverity "OVERRUN" ticket, not present in the original
+	} else if (attackerId >= 5 || _teamMonster[attackerId]._id == -1) {
 		deathType = 0;
 	} else {
 		int16 itemId = _mapMonsters[_techId][_teamMonster[attackerId]._id]._weaponItemId;
@@ -1390,6 +1391,10 @@ int16 EfhEngine::getWeakestMobster(int16 groupNumber) {
 		}
 	}
 
+	//Safeguard added
+	if (weakestMobsterId < 0)
+		return -1;
+
 	for (int16 counter = weakestMobsterId + 1; counter < 9; ++counter) {
 		if (!isMonsterActive(groupNumber, counter))
 			continue;
@@ -1398,9 +1403,7 @@ int16 EfhEngine::getWeakestMobster(int16 groupNumber) {
 			weakestMobsterId = counter;
 	}
 
-	// Useless check, as the
-	if (_mapMonsters[_techId][monsterId]._hitPoints[weakestMobsterId] <= 0)
-		return -1;
+	// Useless check on _hitPoints > 0 removed. It's covered by isMonsterActive()
 
 	return weakestMobsterId;
 }

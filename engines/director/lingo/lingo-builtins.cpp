@@ -201,7 +201,7 @@ static BuiltinProto builtins[] = {
 	// Sound
 	{ "beep",	 		LB::b_beep,			0, 1, 200, CBLTIN },	// D2
 	{ "mci",	 		LB::b_mci,			1, 1, 300, CBLTIN },	//		D3.1 c
-	{ "mciwait",		LB::b_mciwait,		1, 1, 400, CBLTIN },	//			D4 c
+	{ "mciwait",		LB::b_mciwait,		1, 1, 300, CBLTIN },	//		D3.1 c
 	{ "sound",			LB::b_sound,		2, 3, 300, CBLTIN },	//		D3 c
 	{ "soundBusy",		LB::b_soundBusy,	1, 1, 300, FBLTIN },	//		D3 f
 	// Constants
@@ -1164,6 +1164,20 @@ void LB::b_getNthFileNameInFolder(int nargs) {
 				Common::Array<Common::String> fileNameList;
 				for (uint i = 0; i < f.size(); i++)
 					fileNameList.push_back(f[i].getName());
+
+				// Now mix in any files coming from the quirks
+				Common::Archive *cache = SearchMan.getArchive(kQuirksCacheArchive);
+
+				if (cache) {
+					Common::ArchiveMemberList files;
+
+					cache->listMatchingMembers(files, path + (path.empty() ? "*" : "/*"), true);
+
+					for (auto &fi : files) {
+						fileNameList.push_back(fi->getName().c_str());
+					}
+				}
+
 				Common::sort(fileNameList.begin(), fileNameList.end());
 				r = Datum(fileNameList[fileNum]);
 			}
@@ -1330,6 +1344,13 @@ void LB::b_delay(int nargs) {
 void LB::b_do(int nargs) {
 	Common::String code = g_lingo->pop().asString();
 	ScriptContext *sc = g_lingo->_compiler->compileAnonymous(code);
+	if (!sc) {
+		warning("b_do(): compilation failed, ignoring");
+		return;
+	} else if (!sc->_eventHandlers.contains(kEventGeneric)) {
+		warning("b_do(): compiled code did not return handler, ignoring");
+		return;
+	}
 	Symbol sym = sc->_eventHandlers[kEventGeneric];
 
 	// Check if we have anything to execute

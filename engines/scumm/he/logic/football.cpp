@@ -22,7 +22,36 @@
 #include "common/savefile.h"
 
 #include "scumm/he/intern_he.h"
+
+#ifdef USE_ENET
+#include "scumm/he/net/net_main.h"
+#ifdef USE_LIBCURL
+#include "scumm/he/net/net_lobby.h"
+#endif
+#include "scumm/he/net/net_defines.h"
+#endif
+
 #include "scumm/he/logic_he.h"
+
+// DirectPlay opcodes:
+#define OP_NET_REMOTE_START_SCRIPT		1492
+#define OP_NET_QUERY_PROVIDERS			1497
+#define OP_NET_CLOSE_PROVIDER			1500
+#define OP_NET_QUERY_SESSIONS			1501
+#define OP_NET_GET_SESSION_NAME			1502
+#define OP_NET_JOIN_SESSION				1504
+#define OP_NET_END_SESSION				1505
+#define OP_NET_ADD_USER					1506
+#define OP_NET_WHO_SENT_THIS			1508
+#define OP_NET_REMOTE_SEND_ARRAY		1509
+#define OP_NET_INIT						1513
+#define OP_NET_WHO_AM_I					1510
+#define OP_NET_INIT_LAN_GAME			1515
+#define OP_NET_SET_PROVIDER_BY_NAME		1516
+
+// MAIA (Updater) opcodes.
+#define OP_NET_CHECK_INTERNET_STATUS	3001
+
 
 namespace Scumm {
 
@@ -36,9 +65,15 @@ public:
 	LogicHEfootball(ScummEngine_v90he *vm) : LogicHE(vm) {}
 
 	int versionID() override;
+	int startOfFrame() override;
 	int32 dispatch(int op, int numArgs, int32 *args) override;
 
 protected:
+#ifdef USE_ENET
+	void netRemoteStartScript(int numArgs, int32 *args);
+	void netRemoteSendArray(int32 *args);
+#endif
+
 	int lineEquation3D(int32 *args);
 	virtual int translateWorldToScreen(int32 *args);
 	int fieldGoalScreenTranslation(int32 *args);
@@ -52,7 +87,27 @@ int LogicHEfootball::versionID() {
 	return 1;
 }
 
+int LogicHEfootball::startOfFrame() {
+#ifdef USE_ENET
+#ifdef USE_LIBCURL
+	// Football 2002 does not have lobby support, so
+	// _lobby is not defined.
+	if (_vm->_lobby)
+		_vm->_lobby->doNetworkOnceAFrame();
+#endif
+	_vm->_net->doNetworkOnceAFrame(0);
+#endif
+	return 0;
+}
+
+
 int32 LogicHEfootball::dispatch(int op, int numArgs, int32 *args) {
+#if defined(USE_ENET) && defined(USE_LIBCURL)
+	if (op > 2120 && op < 3003 && op != OP_NET_CHECK_INTERNET_STATUS &&
+		_vm->_lobby)
+		return _vm->_lobby->dispatch(op, numArgs, args);
+#endif
+
 	int res = 0;
 
 	switch (op) {
@@ -89,31 +144,86 @@ int32 LogicHEfootball::dispatch(int op, int numArgs, int32 *args) {
 		res = getFromArray(args[0], args[1], args[2]);
 		break;
 
-	case 1492: case 1493: case 1494: case 1495: case 1496:
-	case 1497: case 1498: case 1499: case 1500: case 1501:
-	case 1502: case 1503: case 1504: case 1505: case 1506:
-	case 1507: case 1508: case 1509: case 1510: case 1511:
-	case 1512: case 1513: case 1514: case 1555:
+
+	case OP_NET_INIT:
+		// Initialize network system, this gets called at boot up and
+		// sets VAR_NETWORK_AVAILABLE (100).  We just return a 1 if
+		// ENet is compiled.  Used in both 1999 and 2002.
+#ifdef USE_ENET
+		res = 1;
+#endif
+		break;
+
+#ifdef USE_ENET
+	case OP_NET_REMOTE_START_SCRIPT:
+		netRemoteStartScript(numArgs, args);
+		break;
+
+	case OP_NET_QUERY_SESSIONS:
+#ifdef USE_LIBCURL
+		if (_vm->_lobby->_sessionId) {
+			_vm->_net->querySessions();
+			// Only proceed if we've found the session
+			// we're looking for.
+			res = _vm->_net->ifSessionExist(_vm->_lobby->_sessionId);
+		}
+#endif
+		break;
+
+	case OP_NET_JOIN_SESSION:
+#ifdef USE_LIBCURL
+		if (_vm->_lobby->_sessionId) {
+			res = _vm->_net->joinSessionById(_vm->_lobby->_sessionId);
+			if (res) {
+				_vm->_net->stopQuerySessions();
+			}
+		}
+#endif
+		break;
+
+	case OP_NET_END_SESSION:
+		res = _vm->_net->endSession();
+		break;
+
+	case OP_NET_ADD_USER:
+		char userName[MAX_PLAYER_NAME];
+		_vm->getStringFromArray(args[0], userName, sizeof(userName));
+		res = _vm->_net->addUser(userName, userName);
+		break;
+
+	case OP_NET_WHO_SENT_THIS:
+		res = _vm->_net->whoSentThis();
+		break;
+
+	case OP_NET_REMOTE_SEND_ARRAY:
+		netRemoteSendArray(args);
+		break;
+
+	case OP_NET_WHO_AM_I:
+		res = _vm->_net->whoAmI();
+		break;
+#endif // USE_ENET
+
+	case OP_NET_CHECK_INTERNET_STATUS:
+#if defined(USE_ENET) && defined(USE_LIBCURL)
+		// We can only use the lobby system if both
+		// libcurl (for lobby communication) and
+		// ENet (for gameplay communication) is enabled.
+
+		// TODO: Actually check if we're connected to the
+		// Internet.
+		res = 1;
+#endif
+		break;
+
+	case 1493: case 1494: case 1495: case 1496:
+	case 1498: case 1499:
+	case 1502: case 1503:
+	case 1507: case 1511:
+	case 1512: case 1514: case 1555:
 		// DirectPlay-related
 		// 1513: initialize
 		// 1555: set fake lag
-		break;
-
-	case 2200: case 2201: case 2202: case 2203: case 2204:
-	case 2205: case 2206: case 2207: case 2208: case 2209:
-	case 2210: case 2211: case 2212: case 2213: case 2214:
-	case 2215: case 2216: case 2217: case 2218: case 2219:
-	case 2220: case 2221: case 2222: case 2223: case 2224:
-	case 2225: case 2226: case 2227: case 2228:
-		// Boneyards-related
-		break;
-
-	case 3000: case 3001: case 3002: case 3003: case 3004:
-		// Internet-related
-		// 3000: check for updates
-		// 3001: check network status
-		// 3002: autoupdate
-		// 3003: close connection
 		break;
 
 	default:
@@ -283,6 +393,32 @@ int LogicHEfootball::computeTwoCircleIntercepts(int32 *args) {
 	return 1;
 }
 
+#ifdef USE_ENET
+void LogicHEfootball::netRemoteStartScript(int numArgs, int32 *args) {
+	int priority = PN_PRIORITY_HIGH;
+
+	int targetUserId;
+	if (_vm->_net->_isHost)
+		targetUserId = 2;
+	else
+		targetUserId = 1;
+
+	_vm->_net->remoteStartScript(PN_SENDTYPE_INDIVIDUAL, targetUserId, priority, numArgs - 3, &args[3]);
+}
+
+void LogicHEfootball::netRemoteSendArray(int32 *args) {
+	int priority = PN_PRIORITY_HIGH;
+
+	int targetUserId;
+	if (_vm->_net->_isHost)
+		targetUserId = 2;
+	else
+		targetUserId = 1;
+
+	_vm->_net->remoteSendArray(PN_SENDTYPE_INDIVIDUAL, targetUserId, priority, args[3]);
+}
+#endif // USE_ENET
+
 class LogicHEfootball2002 : public LogicHEfootball {
 public:
 	LogicHEfootball2002(ScummEngine_v90he *vm) : LogicHEfootball(vm) {
@@ -302,6 +438,11 @@ private:
 	int getPlaybookFiles(int32 *args);
 	int largestFreeBlock();
 
+#ifdef USE_ENET
+	int netGetSessionName(int index);
+	int netInitLanGame(int32 *args);
+#endif
+
 	float _var0;
 	float _var1;
 	float _var2;
@@ -310,6 +451,8 @@ private:
 	float _angle;
 	int32 _maxX;
 	int32 _minX;
+
+	int _requestedSessionIndex = -2;
 };
 
 int32 LogicHEfootball2002::dispatch(int op, int numArgs, int32 *args) {
@@ -342,13 +485,46 @@ int32 LogicHEfootball2002::dispatch(int op, int numArgs, int32 *args) {
 		// Get Computer Name (online play only)
 		break;
 
-	case 1515:
-		// Initialize Session (online play only)
+	// These cases are outside #ifdef USE_ENET intentionally
+	// to silence warnings:
+	case OP_NET_QUERY_PROVIDERS:
+#ifdef USE_ENET
+		res = _vm->_net->queryProviders();
+#endif
 		break;
 
-	case 1516:
-		// Start auto LAN game (online play only)
+	case OP_NET_SET_PROVIDER_BY_NAME:
+#ifdef USE_ENET
+		res = _vm->_net->setProviderByName(args[0], args[1]);
+		if (res)
+			_requestedSessionIndex = _vm->networkSessionDialog();
+		if (_requestedSessionIndex == -2) {
+			// Cancelled out the join dialog.
+			_vm->_net->closeProvider();
+			res = 0;
+		}
+#endif
 		break;
+
+#ifdef USE_ENET
+	case OP_NET_CLOSE_PROVIDER:
+		res = _vm->_net->closeProvider();
+		break;
+
+	case OP_NET_QUERY_SESSIONS:
+		if (_requestedSessionIndex > -1)
+			// Emulate that we've found a session.
+			res = 1;
+		break;
+
+	case OP_NET_GET_SESSION_NAME:
+		res = netGetSessionName(args[0]);
+		break;
+
+	case OP_NET_INIT_LAN_GAME:
+		res = netInitLanGame(args);
+		break;
+#endif
 
 	default:
 		res = LogicHEfootball::dispatch(op, numArgs, args);
@@ -473,7 +649,6 @@ int LogicHEfootball2002::getPlaybookFiles(int32 *args) {
 	// Now store the result in an array
 	int array = _vm->setupStringArray(output.size());
 	Common::strlcpy((char *)_vm->getStringAddress(array), output.c_str(), output.size() + 1);
-	_vm->getResourceSize(rtString, array);
 
 	// And store the array index in variable 108
 	writeScummVar(108, array);
@@ -487,6 +662,42 @@ int LogicHEfootball2002::largestFreeBlock() {
 	writeScummVar(108, 100000000);
 	return 1;
 }
+
+#ifdef USE_ENET
+int LogicHEfootball2002::netGetSessionName(int index) {
+	char name[MAX_SESSION_NAME];
+	_vm->_net->getSessionName(_requestedSessionIndex, name, sizeof(name));
+	return _vm->setupStringArrayFromString(name);
+}
+
+int LogicHEfootball2002::netInitLanGame(int32 *args) {
+	// Initialize Session
+	// Arg 0 is the provider name ("TCP/IP")
+	// Arg 1 is the session name
+	// Arg 2 is the host name.
+	// Arg 3 is a boolean determining we're hosting or joining a session.
+	char sessionName[MAX_SESSION_NAME];
+	_vm->getStringFromArray(args[1], sessionName, sizeof(sessionName));
+	char userName[MAX_PLAYER_NAME];
+	_vm->getStringFromArray(args[2], userName, sizeof(userName));
+
+	int res;
+
+	if (args[3] == 1) {
+		// Stop querying sessions if we haven't already
+		_vm->_net->stopQuerySessions();
+		// And host our new game.
+		res = _vm->_net->hostGame(sessionName, userName);
+	} else {
+		res = _vm->_net->joinSession(_requestedSessionIndex);
+		if (res)
+			_vm->_net->addUser(userName, userName);
+		_vm->_net->stopQuerySessions();
+	}
+
+	return res;
+}
+#endif
 
 LogicHE *makeLogicHEfootball(ScummEngine_v90he *vm) {
 	return new LogicHEfootball(vm);

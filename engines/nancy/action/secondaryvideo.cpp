@@ -28,6 +28,8 @@
 
 #include "engines/nancy/state/scene.h"
 
+#include "common/serializer.h"
+
 namespace Nancy {
 namespace Action {
 
@@ -61,7 +63,7 @@ void PlaySecondaryVideo::updateGraphics() {
 		return;
 	}
 
-	if (_isInFrame) {
+	if (_isInFrame && _decoder.isPlaying() ? _decoder.needsUpdate() || _decoder.atEnd() : true) {
 		int lastAnimationFrame = -1;
 		switch (_hoverState) {
 		case kNoHover:
@@ -82,7 +84,6 @@ void PlaySecondaryVideo::updateGraphics() {
 					_decoder.start();
 				}
 
-				_decoder.seekToFrame(_onHoverEndLastFrame);
 				_decoder.setRate(-_decoder.getRate());
 			} else {
 				lastAnimationFrame = _onHoverLastFrame;
@@ -100,11 +101,15 @@ void PlaySecondaryVideo::updateGraphics() {
 			}
 		}
 
-		if (_decoder.isPlaying() && _decoder.needsUpdate()) {
-			GraphicsManager::copyToManaged(*_decoder.decodeNextFrame(), _fullFrame, _paletteFilename.size() > 0);
-			_needsRedraw = true;
+		if (_decoder.isPlaying()) {
+			if (_decoder.needsUpdate()) {
+				GraphicsManager::copyToManaged(*_decoder.decodeNextFrame(), _fullFrame, _paletteFilename.size() > 0);
+				_needsRedraw = true;
+			}
 
-			if (lastAnimationFrame > -1 && _decoder.getCurFrame() == lastAnimationFrame + (_decoder.getRate().getNumerator() > 0 ? 1 : -1)) {
+			if (lastAnimationFrame > -1 &&
+					(_decoder.atEnd() ||
+					 _decoder.getCurFrame() == lastAnimationFrame + (_decoder.getRate().getNumerator() > 0 ? 1 : -1))) {
 				if (_hoverState == kNoHover) {
 					_decoder.seekToFrame(_loopFirstFrame);
 				} else {
@@ -112,18 +117,21 @@ void PlaySecondaryVideo::updateGraphics() {
 				}
 			}
 		}
+	}
 
-		if (_needsRedraw && _isVisible) {
-			int vpFrame = -1;
-			for (uint i = 0; i < _videoDescs.size(); ++i) {
-				if (_videoDescs[i].frameID == _currentViewportFrame) {
-					vpFrame = i;
-					break;
-				}
+	if (_needsRedraw && _isVisible) {
+		int vpFrame = -1;
+		for (uint i = 0; i < _videoDescs.size(); ++i) {
+			if (_videoDescs[i].frameID == _currentViewportFrame) {
+				vpFrame = i;
+				break;
 			}
+		}
 
-			_drawSurface.create(_fullFrame, _videoDescs[vpFrame].srcRect);
-			_screenPosition = _videoDescs[vpFrame].destRect;
+		_drawSurface.create(_fullFrame, _videoDescs[vpFrame].srcRect);
+		moveTo(_videoDescs[vpFrame].destRect);
+
+		if (_videoHotspots == kVideoHotspots) {
 			_hotspot = _screenPosition;
 			_hotspot.clip(NancySceneState.getViewport().getBounds());
 			_hasHotspot = true;
@@ -150,33 +158,30 @@ void PlaySecondaryVideo::handleInput(NancyInput &input) {
 }
 
 void PlaySecondaryVideo::readData(Common::SeekableReadStream &stream) {
+	Common::Serializer ser(&stream, nullptr);
+	ser.setVersion(g_nancy->getGameType());
+
 	readFilename(stream, _filename);
 	readFilename(stream, _paletteFilename);
-	stream.skip(10);
+	ser.skip(10); // video overlay bitmap filename
 
-	if (_paletteFilename.size()) {
-		stream.skip(14); // unknown data
-	}
+	ser.skip(12, kGameTypeVampire, kGameTypeVampire);
+	ser.syncAsUint16LE(_videoHotspots, kGameTypeVampire, kGameTypeVampire);
 
-	_loopFirstFrame = stream.readUint16LE();
-	_loopLastFrame = stream.readUint16LE();
-	_onHoverFirstFrame = stream.readUint16LE();
-	_onHoverLastFrame = stream.readUint16LE();
-	_onHoverEndFirstFrame = stream.readUint16LE();
-	_onHoverEndLastFrame = stream.readUint16LE();
+	ser.syncAsUint16LE(_loopFirstFrame);
+	ser.syncAsUint16LE(_loopLastFrame);
+	ser.syncAsUint16LE(_onHoverFirstFrame);
+	ser.syncAsUint16LE(_onHoverLastFrame);
+	ser.syncAsUint16LE(_onHoverEndFirstFrame);
+	ser.syncAsUint16LE(_onHoverEndLastFrame);
 
-	_sceneChange.readData(stream);
+	_sceneChange.readData(stream, ser.getVersion() == kGameTypeVampire);
+	ser.skip(1, kGameTypeNancy1);
 
-	if (_paletteFilename.size()) {
-		stream.skip(3);
-	} else {
-		stream.skip(1);
-	}
-
-	uint16 numVideoDescs = stream.readUint16LE();
-	_videoDescs.reserve(numVideoDescs);
+	uint16 numVideoDescs;
+	ser.syncAsUint16LE(numVideoDescs);
+	_videoDescs.resize(numVideoDescs);
 	for (uint i = 0; i < numVideoDescs; ++i) {
-		_videoDescs.push_back(SecondaryVideoDescription());
 		_videoDescs[i].readData(stream);
 	}
 }
@@ -212,13 +217,13 @@ void PlaySecondaryVideo::execute() {
 				}
 
 				_isInFrame = true;
-				_hoverState = kNoHover;
 				setVisible(true);
 			} else {
 				if (_isVisible) {
 					setVisible(false);
 					_hasHotspot = false;
 					_isInFrame = false;
+					_hoverState = kNoHover;
 					_decoder.stop();
 				}
 			}

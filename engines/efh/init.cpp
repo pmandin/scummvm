@@ -215,7 +215,7 @@ void InitiativeStruct::init() {
 }
 
 void TileFactStruct::init() {
-	_field0 = _tileId = 0;
+	_status = _tileId = 0;
 }
 
 void TeamChar::init() {
@@ -393,6 +393,8 @@ EfhEngine::EfhEngine(OSystem *syst, const ADGameDescription *gd) : Engine(syst),
 	// If requested, load a savegame instead of showing the intro
 	_loadSaveSlot = -1;
 	_saveAuthorized = false;
+
+	_speakerStream = nullptr;
 
 	if (ConfMan.hasKey("save_slot")) {
 		int saveSlot = ConfMan.getInt("save_slot");

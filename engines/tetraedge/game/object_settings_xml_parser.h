@@ -30,9 +30,8 @@ namespace Tetraedge {
 
 class ObjectSettingsXmlParser : public Common::XMLParser {
 public:
-	void setObjectSettings(Common::HashMap<Common::String, Object3D::ObjectSettings> *settings) {
-		_objectSettings = settings;
-	}
+	ObjectSettingsXmlParser(Common::HashMap<Common::String, Object3D::ObjectSettings> *settings) :
+		Common::XMLParser(), _textTagType(TagNone), _objectSettings(settings) {}
 
 	void finalize();
 
@@ -45,6 +44,10 @@ public:
 				KEY_END()
 				XML_KEY(defaultScale)
 				KEY_END()
+				XML_KEY(originOffset)
+				KEY_END()
+				XML_KEY(invertNormals)
+				KEY_END()
 			KEY_END()
 		KEY_END()
 	} PARSER_END()
@@ -55,11 +58,15 @@ private:
 	bool parserCallback_Object(ParserNode *node);
 	bool parserCallback_modelFileName(ParserNode *node);
 	bool parserCallback_defaultScale(ParserNode *node);
+	bool parserCallback_originOffset(ParserNode *node);
+	bool parserCallback_invertNormals(ParserNode *node);
 	bool textCallback(const Common::String &val) override;
 
 	enum TextTagType {
+		TagNone,
 		TagModelFileName,
-		TagDefaultScale
+		TagDefaultScale,
+		TagOriginOffset
 	};
 
 	TextTagType _textTagType;

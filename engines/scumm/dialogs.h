@@ -318,6 +318,46 @@ private:
 	void updateOutlookAdjustmentValue();
 };
 
+#ifdef USE_ENET
+/**
+ * Options widget for network supported HE games
+ * (Football 1999/2002, Baseball 2001 and
+ * Moonbase Commander).
+ */
+class HENetworkGameOptionsWidget : public ScummOptionsContainerWidget {
+public:
+	HENetworkGameOptionsWidget(GuiObject *boss, const Common::String &name, const Common::String &domain, const Common::String gameid);
+	~HENetworkGameOptionsWidget() override {};
+
+	void load() override;
+	bool save() override;
+
+private:
+	enum {
+		kEnableSessionCmd = 'ENBS',
+		kResetServersCmd = 'CLRS',
+	};
+
+	Common::String _gameid;
+
+	void defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const override;
+	void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
+
+	GUI::CheckboxWidget *_audioOverride;
+
+	GUI::CheckboxWidget *_enableSessionServer;
+
+	GUI::EditTextWidget *_sessionServerAddr;
+	GUI::ButtonWidget *_serverResetButton;
+
+	GUI::CheckboxWidget *_enableLANBroadcast;
+
+	GUI::EditTextWidget *_lobbyServerAddr;
+
+	GUI::CheckboxWidget *_enableCompetitiveMods;
+};
+#endif
+
 } // End of namespace Scumm
 
 #endif

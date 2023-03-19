@@ -23,8 +23,11 @@
 #include "common/fs.h"
 #include "common/debug.h"
 #include "common/config-manager.h"
+#include "common/language.h"
 
 #include "tetraedge/te/te_core.h"
+
+#include "tetraedge/tetraedge.h"
 
 #include "tetraedge/te/te_png.h"
 #include "tetraedge/te/te_images_sequence.h"
@@ -46,8 +49,14 @@ void TeCore::addLoc(TeILoc *loc) {
 }
 
 void TeCore::create() {
-	// TODO: Get language from the game definition.  For now just default to en.
-	language("en");
+	const char *langCode = getLanguageCode(g_engine->getGameLanguage());
+	const Common::String confLang = ConfMan.get("language");
+	Common::String useLang = "en";
+	if (langCode)
+		useLang = langCode;
+	if (!confLang.empty())
+		useLang = confLang;
+	language(useLang);
 	_coreNotReady = false;
 	_activityTrackingTimer.alarmSignal().add(this, &TeCore::onActivityTrackingAlarm);
 	warning("TODO: TeCore::create: Finish implementing me.");
@@ -128,7 +137,7 @@ static Common::FSNode _findSubPath(const Common::FSNode &parent, const Common::P
 }
 
 
-Common::FSNode TeCore::findFile(const Common::Path &path) {
+Common::FSNode TeCore::findFile(const Common::Path &path) const {
 	Common::FSNode node(path);
 	if (node.exists())
 		return node;
@@ -136,7 +145,8 @@ Common::FSNode TeCore::findFile(const Common::Path &path) {
 	const Common::FSNode gameRoot(ConfMan.get("path"));
 	if (!gameRoot.isDirectory())
 		error("Game directory should be a directory");
-	const Common::FSNode resNode = gameRoot.getChild("Resources");
+	const Common::FSNode resNode = (g_engine->getGamePlatform() == Common::kPlatformMacintosh
+			?  gameRoot.getChild("Resources") : gameRoot);
 	if (!resNode.isDirectory())
 		error("Resources directory should exist in game");
 
@@ -160,14 +170,25 @@ Common::FSNode TeCore::findFile(const Common::Path &path) {
 		"Part2-Full-Part1",
 		"Part3-Full-Part1",
 		"HD",
-		"HD/PC-MacOSX-Xbox360-PS3"
+		"HD/PC-MacOSX-Xbox360-PS3",
+		"PC-PS3-Android-MacOSX-iPhone-iPad",	// for iOS Syb 1
+		"Android-iPhone-iPad",					// for iOS Syb 1
+		"Android-iPhone-iPad/HD",				// for iOS Syb 1
+		"HD/Android-iPhone-iPad",				// for iOS Syb 1
+		"iPhone-iPad",							// for iOS Syb 1
+		"iPhone-iPad/HD",						// for iOS Syb 1
+		"iPhone-iPad/HD/Freemium",				// for iOS Syb 1
+		"Android-MacOSX-iPhone-iPad",			// for iOS Syb 1
+		"Freemium-BUKAFree/HD"					// for iOS Syb 1
 	};
 
 	const Common::Path langs[] = {
 		"",
 		language(),
 		"en",
-		"de-es-fr-it-en"
+		"de-es-fr-it-en",
+		"en-es-fr-de-it",
+		"de-en-es-fr-it"
 	};
 
 	// Note: the audio files for a few videos have a weird path

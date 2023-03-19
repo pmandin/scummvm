@@ -125,7 +125,8 @@ enum {
 	DEBUG_ACTORS	=	1 << 8,		// General Actor Debug
 	DEBUG_INSANE	=	1 << 9,		// Track INSANE
 	DEBUG_SMUSH	=	1 << 10,		// Track SMUSH
-	DEBUG_MOONBASE_AI = 1 << 11		// Moonbase AI
+	DEBUG_MOONBASE_AI = 1 << 11,		// Moonbase AI
+	DEBUG_NETWORK = 1 << 12		// Track Networking
 };
 
 struct VerbSlot;
@@ -490,6 +491,25 @@ struct InternalGUIControl {
 	bool doubleLinesFlag;
 };
 
+enum ScummAction {
+	kScummActionNone,
+	kScummActionInsaneDownLeft,
+	kScummActionInsaneDown,
+	kScummActionInsaneDownRight,
+	kScummActionInsaneLeft,
+	kScummActionInsaneRight,
+	kScummActionInsaneUpLeft,
+	kScummActionInsaneUp,
+	kScummActionInsaneUpRight,
+	kScummActionInsaneAttack,
+	kScummActionInsaneSwitch,
+	kScummActionInsaneCheat,
+
+	kScummActionCount
+};
+
+extern const char *const insaneKeymapId;
+
 /**
  * Base class for all SCUMM engines.
  */
@@ -528,6 +548,9 @@ public:
 	bool _enableEnhancements = false;
 	bool _useOriginalGUI = true;
 	bool _enableAudioOverride = false;
+	bool _enableCOMISong = false;
+
+	Common::Keymap *_insaneKeymap;
 
 protected:
 	VirtualMachineState vm;
@@ -762,6 +785,7 @@ protected:
 
 public:
 	char displayMessage(const char *altButton, MSVC_PRINTF const char *message, ...) GCC_PRINTF(3, 4);
+	bool displayMessageYesNo(MSVC_PRINTF const char *message, ...) GCC_PRINTF(2, 3);
 
 protected:
 	byte _fastMode = 0;
@@ -845,6 +869,7 @@ public:
 protected:
 	Common::KeyState _keyPressed;
 	bool _keyDownMap[512]; // FIXME - 512 is a guess. it's max(kbd.ascii)
+	bool _actionMap[kScummActionCount];
 
 	Common::Point _mouse;
 	Common::Point _virtualMouse;
@@ -897,6 +922,7 @@ protected:
 	}
 
 	int getKeyState(int key);
+	int getActionState(ScummAction action);
 
 public:
 	static Common::String makeSavegameName(const Common::String &target, int slot, bool temporary);
@@ -1573,6 +1599,7 @@ public:
 	bool _useMultiFont = false;
 	int _numLoadedFont = 0;
 	int _2byteShadow = 0;
+	bool _segaForce2ByteCharHeight = false;
 
 	int _2byteHeight = 0;
 	int _2byteWidth = 0;

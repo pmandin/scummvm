@@ -40,6 +40,7 @@
 #include "tetraedge/te/te_lua_thread.h"
 #include "tetraedge/te/te_sound_manager.h"
 #include "tetraedge/te/te_input_mgr.h"
+#include "tetraedge/te/te_particle.h"
 
 namespace Tetraedge {
 
@@ -48,7 +49,7 @@ TetraedgeEngine *g_engine;
 TetraedgeEngine::TetraedgeEngine(OSystem *syst, const ADGameDescription *gameDesc) : Engine(syst),
 	_gameDescription(gameDesc), _randomSource("Tetraedge"), _resourceManager(nullptr),
 	_core(nullptr),	_application(nullptr), _game(nullptr), _renderer(nullptr),
-	_soundManager(nullptr), _inputMgr(nullptr) {
+	_soundManager(nullptr), _inputMgr(nullptr), _gameType(kNone) {
 	g_engine = this;
 }
 
@@ -67,10 +68,11 @@ TetraedgeEngine::~TetraedgeEngine() {
 	TeLuaThread::cleanup();
 	TeTimer::cleanup();
 	TeObject::cleanup();
+	TeParticle::cleanup();
 }
 
 /*static*/
-Common::StringArray TetraedgeEngine::splitString (const Common::String &text, char c) {
+Common::StringArray TetraedgeEngine::splitString(const Common::String &text, char c) {
 	Common::StringArray values;
 
 	Common::String str = text;
@@ -132,6 +134,18 @@ Common::String TetraedgeEngine::getGameId() const {
 	return _gameDescription->gameId;
 }
 
+Common::Language TetraedgeEngine::getGameLanguage() const {
+	return _gameDescription->language;
+}
+
+Common::Platform TetraedgeEngine::getGamePlatform() const {
+	return _gameDescription->platform;
+}
+
+bool TetraedgeEngine::isGameDemo() const {
+	return (_gameDescription->flags & ADGF_DEMO) != 0;
+}
+
 bool TetraedgeEngine::canLoadGameStateCurrently() {
 	return _game && _application && !_application->mainMenu().isEntered();
 }
@@ -171,7 +185,8 @@ Common::Error TetraedgeEngine::loadGameStream(Common::SeekableReadStream *stream
 
 void TetraedgeEngine::configureSearchPaths() {
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
-	SearchMan.addSubDirectoryMatching(gameDataDir, "Resources", 0, 5);
+	if (_gameDescription->platform != Common::kPlatformIOS)
+		SearchMan.addSubDirectoryMatching(gameDataDir, "Resources", 0, 5);
 }
 
 int TetraedgeEngine::getDefaultScreenWidth() const {
@@ -193,7 +208,33 @@ bool TetraedgeEngine::onKeyUp(const Common::KeyState &state) {
 	return false;
 }
 
+void TetraedgeEngine::registerConfigDefaults() {
+	// The skips are mostly for debugging to jump straight to certain
+	// things.  If they are all enabled you get into a new game as
+	// soon as possible.
+	ConfMan.registerDefault("skip_videos", false);
+	ConfMan.registerDefault("skip_splash", false);
+	ConfMan.registerDefault("skip_mainmenu", false);
+	ConfMan.registerDefault("skip_confirm", false);
+
+	ConfMan.registerDefault("disable_shadows", false);
+	ConfMan.registerDefault("correct_movie_aspect", true);
+	ConfMan.registerDefault("restore_scenes", false);
+}
+
+
 Common::Error TetraedgeEngine::run() {
+	if (getGameId() == "syberia")
+		_gameType = kSyberia;
+	else if (getGameId() == "syberia2")
+		_gameType = kSyberia2;
+	else if (getGameId() == "amerzone")
+		_gameType = kAmerzone;
+	else
+		error("Unknown game id %s", getGameId().c_str());
+
+	registerConfigDefaults();
+
 	configureSearchPaths();
 	// from BasicOpenGLView::prepareOpenGL..
 	_application = new Application();
@@ -276,9 +317,19 @@ Graphics::RendererType TetraedgeEngine::preferredRendererType() const {
 	return matchingRendererType;
 }
 
+Common::Error TetraedgeEngine::saveGameState(int slot, const Common::String &desc, bool isAutosave) {
+	Common::Error result = Engine::saveGameState(slot, desc, isAutosave);
+	if (result.getCode() == Common::kNoError) {
+		ConfMan.setInt("last_save_slot", slot);
+		ConfMan.flushToDisk();
+	}
+	return result;
+}
+
 /*static*/
 void TetraedgeEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
 	g_engine->getApplication()->getSavegameThumbnail(thumb);
 }
+
 
 } // namespace Tetraedge

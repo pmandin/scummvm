@@ -30,14 +30,18 @@
 #include "common/serializer.h"
 #include "common/str-array.h"
 #include "graphics/surface.h"
+#include "mm/shared/xeen/cc_archive.h"
+#include "mm/shared/xeen/file.h"
 
 namespace MM {
 namespace Xeen {
 
+using Shared::Xeen::BaseCCArchive;
+using Shared::Xeen::CCArchive;
+using Shared::Xeen::CCEntry;
+using Shared::Xeen::File;
+
 class XeenEngine;
-class CCArchive;
-class BaseCCArchive;
-class File;
 class SaveArchive;
 class Party;
 class OutFile;
@@ -57,27 +61,18 @@ class SavesManager;
 		_bytesSynced += SIZE; \
 	}
 
-/**
- * Details of a single entry in a CC file index
- */
-struct CCEntry {
-	uint16 _id;
-	int _offset;
-	uint16 _size;
-	int _writeOffset;
-
-	CCEntry() : _id(0), _offset(0), _size(0), _writeOffset(0) {}
-	CCEntry(uint16 id, uint32 offset, uint32 size)
-		: _id(id), _offset(offset), _size(size) {
-	}
-};
-
 /*
  * Main resource manager
  */
 class FileManager {
 public:
-	int _ccNum;
+	int _ccNum = 0;
+	CCArchive *_xeenCc = nullptr, *_darkCc = nullptr,
+		*_introCc = nullptr;
+	SaveArchive *_xeenSave = nullptr, *_darkSave = nullptr;
+	BaseCCArchive *_currentArchive = nullptr;
+	SaveArchive *_currentSave = nullptr;
+
 public:
 	/**
 	 * Constructor
@@ -113,97 +108,6 @@ public:
 };
 
 /**
- * Derived file class
- */
-class File : public Common::File {
-	friend class FileManager;
-	friend class OutFile;
-	friend class SavesManager;
-	friend class Debugger;
-private:
-	static CCArchive *_xeenCc, *_darkCc, *_introCc;
-	static SaveArchive *_xeenSave, *_darkSave;
-	static BaseCCArchive *_currentArchive;
-	static SaveArchive *_currentSave;
-public:
-	/**
-	 * Sets which archive is used by default
-	 */
-	static void setCurrentArchive(int ccMode);
-
-	/**
-	 * Synchronizes a boolean array as a bitfield set
-	 */
-	static void syncBitFlags(Common::Serializer &s, bool *startP, bool *endP);
-public:
-	File() : Common::File() {}
-	File(const Common::String &filename);
-	File(const Common::String &filename, int ccMode);
-	File(const Common::String &filename, Common::Archive &archive);
-	~File() override {}
-
-	/**
-	 * Opens the given file, throwing an error if it can't be opened
-	 */
-	bool open(const Common::Path &filename) override;
-
-	/**
-	 * Opens the given file, throwing an error if it can't be opened
-	 */
-	bool open(const Common::Path &filename, Common::Archive &archive) override;
-
-	/**
-	 * Opens the given file, throwing an error if it can't be opened
-	 */
-	virtual bool open(const Common::String &filename, int ccMode);
-
-	/**
-	 * Opens the given file
-	 */
-	bool open(const Common::FSNode &node) override {
-		return Common::File::open(node);
-	}
-
-	/**
-	 * Opens the given file
-	 */
-	bool open(SeekableReadStream *stream, const Common::String &name) override {
-		return Common::File::open(stream, name);
-	}
-
-	/**
-	 * Reads in a null terminated string
-	 */
-	Common::String readString();
-
-	/**
-	 * Checks if a given file exists
-	 *
-	 * @param	filename	the file to check for
-	 * @return	true if the file exists, false otherwise
-	 */
-	static bool exists(const Common::String &filename);
-
-	/**
-	 * Checks if a given file exists
-	 *
-	 * @param	filename	the file to check for
-	 * @param	ccMode		Archive to use
-	 * @return	true if the file exists, false otherwise
-	 */
-	static bool exists(const Common::String &filename, int ccMode);
-
-	/**
-	 * Checks if a given file exists
-	 *
-	 * @param	filename	the file to check for
-	 * @param	archive		Archive to use
-	 * @return	true if the file exists, false otherwise
-	 */
-	static bool exists(const Common::String &filename, Common::Archive &archive);
-};
-
-/**
  * SubWriteStream provides a way of compartmentalizing writing to a subsection of
  * a file. This is primarily useful for the pos() function which can, for example,
  * be used in asserts to ensure writing is being done at the correct offset within
@@ -226,22 +130,6 @@ public:
 	int64 pos() const override { return _parentStream->pos() - _begin; }
 };
 
-class StringArray : public Common::StringArray {
-public:
-	StringArray() {}
-	StringArray(const Common::String &name) { load(name); }
-
-	/**
-	 * Loads a string array from the specified file
-	 */
-	void load(const Common::String &name);
-
-	/**
-	 * Loads a string array from the specified file
-	 */
-	void load(const Common::String &name, int ccMode);
-};
-
 class XeenSerializer : public Common::Serializer {
 private:
 	Common::SeekableReadStream *_in;
@@ -257,67 +145,6 @@ public:
 			_filesize = _in->size();
 		return _in != nullptr && _in->pos() >= _filesize;
 	}
-};
-
-/**
- * Base Xeen CC file implementation
- */
-class BaseCCArchive : public Common::Archive {
-protected:
-	Common::Array<CCEntry> _index;
-
-	/**
-	 * Load the index of a given CC file
-	 */
-	void loadIndex(Common::SeekableReadStream &stream);
-
-	/**
-	 * Saves out the contents of the index. Used when creating savegames
-	 */
-	void saveIndex(Common::WriteStream &stream);
-
-	/**
-	 * Given a resource name, returns whether an entry exists, and returns
-	 * the header index data for that entry
-	 */
-	virtual bool getHeaderEntry(const Common::String &resourceName, CCEntry &ccEntry) const;
-
-	/**
-	 * Given a resource Id, returns whether an entry exists, and returns
-	 * the header index data for that entry
-	 */
-	virtual bool getHeaderEntry(uint16 id, CCEntry &ccEntry) const;
-public:
-	/**
-	 * Hash a given filename to produce the Id that represents it
-	 */
-	static uint16 convertNameToId(const Common::String &resourceName);
-public:
-	BaseCCArchive() {}
-
-	// Archive implementation
-	bool hasFile(const Common::Path &path) const override;
-	int listMembers(Common::ArchiveMemberList &list) const override;
-	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
-};
-
-/**
- * Xeen CC file implementation
- */
-class CCArchive : public BaseCCArchive {
-private:
-	Common::String _filename;
-	Common::String _prefix;
-	bool _encoded;
-protected:
-	bool getHeaderEntry(const Common::String &resourceName, CCEntry &ccEntry) const override;
-public:
-	CCArchive(const Common::String &filename, bool encoded);
-	CCArchive(const Common::String &filename, const Common::String &prefix, bool encoded);
-	~CCArchive() override;
-
-	// Archive implementation
-	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
 };
 
 class SaveArchive : public BaseCCArchive {

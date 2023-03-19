@@ -22,7 +22,9 @@
 #include "engines/engine.h"
 #include "graphics/fonts/ttf.h"
 #include "mm/mm1/globals.h"
-#include "mm/utils/engine_data.h"
+#include "mm/mm1/mm1.h"
+#include "mm/shared/utils/engine_data.h"
+#include "mm/shared/utils/strings.h"
 #include "graphics/fontman.h"
 
 namespace MM {
@@ -64,6 +66,7 @@ bool Globals::load(bool isEnhanced) {
 		_confirmIcons.load("confirm.icn");
 		_globalSprites.load("global.icn");
 		_tileSprites.load("town.til");
+		_escSprites.load("esc.icn");
 
 		{
 			Common::File f;
@@ -94,6 +97,35 @@ bool Globals::load(bool isEnhanced) {
 
 	return true;
 }
+
+Common::String Globals::operator[](const Common::String &name) const {
+	bool isMapStr = name.hasPrefix("maps.map");
+
+	if (g_engine->isEnhanced()) {
+		if (isMapStr) {
+			// Map strings support having alternate versions in Enhanced version
+			Common::String altName = Common::String::format("maps.emap%s",
+				name.c_str() + 8);
+			if (_strings.contains(altName))
+				return _strings[altName];
+		}
+
+		if (name.hasPrefix("dialogs.")) {
+			Common::String altName = Common::String::format("enh%s", name.c_str());
+			if (_strings.contains(altName))
+				return _strings[altName];
+		}
+	}
+
+	assert(_strings.contains(name));
+	Common::String result = _strings[name];
+
+	if (g_engine->isEnhanced() && isMapStr)
+		result = searchAndReplace(result, "\n", " ");
+
+	return result;
+}
+
 
 void Globals::synchronize(Common::Serializer &s) {
 	s.syncAsByte(_startingTown);

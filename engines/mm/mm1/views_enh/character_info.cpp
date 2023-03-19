@@ -20,7 +20,7 @@
  */
 
 #include "mm/mm1/views_enh/character_info.h"
-#include "mm/utils/strings.h"
+#include "mm/shared/utils/strings.h"
 #include "mm/mm1/globals.h"
 
 namespace MM {
@@ -62,7 +62,7 @@ const CharacterInfo::IconPos CharacterInfo::ICONS[CHAR_ICONS_COUNT] = {
 
 
 CharacterInfo::CharacterInfo() :
-		ScrollView("CharacterInfo"), _statInfo("ScrollText") {
+		PartyView("CharacterInfo"), _statInfo("ScrollText") {
 	_bounds = Common::Rect(0, 0, 320, 146);
 	_statInfo.setReduced(true);
 
@@ -76,34 +76,28 @@ CharacterInfo::CharacterInfo() :
 
 	for (int i = 0; i < ICONS_COUNT; ++i) {
 		ICONS_TEXT[i] = STRING[Common::String::format(
-			"enhdialogs.character.stats.%s", FIELDS[i])].c_str();
+			"enhdialogs.character.stats.%s", FIELDS[i])];
 	}
 }
 
 bool CharacterInfo::msgFocus(const FocusMessage &msg) {
 	_viewIcon.load("view.icn");
-	MetaEngine::setKeybindingMode(
-		KeybindingMode::KBMODE_PARTY_MENUS);
-
 	_cursorCell = 0;
 	showCursor(true);
 	delayFrames(CURSOR_BLINK_FRAMES);
 
-	return ScrollView::msgFocus(msg);
+	return PartyView::msgFocus(msg);
 }
 
 bool CharacterInfo::msgUnfocus(const UnfocusMessage &msg) {
 	_viewIcon.clear();
-	return ScrollView::msgUnfocus(msg);
+	return PartyView::msgUnfocus(msg);
 }
 
 bool CharacterInfo::msgKeypress(const KeypressMessage &msg) {
 	int idx;
 
 	switch (msg.keycode) {
-	case Common::KEYCODE_ESCAPE:
-		close();
-		return true;
 	case Common::KEYCODE_UP:
 		showCursor(false);
 		if (--_cursorCell < 0)
@@ -136,8 +130,11 @@ bool CharacterInfo::msgKeypress(const KeypressMessage &msg) {
 		_cursorCell = EXPANDED_TO_REDUCED(idx);
 		showCursor(true);
 		break;
-	case Common::KEYCODE_RETURN:
-		showAttribute(_cursorCell);
+	case Common::KEYCODE_e:
+		addView("Exchange");
+		break;
+	case Common::KEYCODE_q:
+		addView("QuickRef");
 		break;
 	default:
 		break;
@@ -147,15 +144,18 @@ bool CharacterInfo::msgKeypress(const KeypressMessage &msg) {
 }
 
 bool CharacterInfo::msgAction(const ActionMessage &msg) {
-	if (msg._action >= KEYBIND_VIEW_PARTY1 &&
-			msg._action <= KEYBIND_VIEW_PARTY6) {
-		g_globals->_currCharacter = &g_globals->_party[
-				msg._action - KEYBIND_VIEW_PARTY1];
-		redraw();
+	switch (msg._action) {
+	case KEYBIND_ESCAPE:
+		close();
 		return true;
-	}
 
-	return false;
+	case KEYBIND_SELECT:
+		showAttribute(_cursorCell);
+		return true;
+
+	default:
+		return PartyView::msgAction(msg);
+	}
 }
 
 bool CharacterInfo::msgMouseUp(const MouseUpMessage &msg) {
@@ -183,11 +183,12 @@ void CharacterInfo::draw() {
 void CharacterInfo::drawTitle() {
 	const Character &c = *g_globals->_currCharacter;
 	Common::String msg = Common::String::format(
-		"%s : %s %s %s",
+		"%s : %s %s %s %s",
 		camelCase(c._name).c_str(),
-		capitalize(STRING[Common::String::format("stats.alignments.%d", (int)c._alignment)]).c_str(),
-		capitalize(STRING[Common::String::format("stats.races.%d", (int)c._race)]).c_str(),
-		capitalize(STRING[Common::String::format("stats.classes.%d", (int)c._class)]).c_str()
+		STRING[Common::String::format("stats.sex.%d", (int)c._sex)].c_str(),
+		STRING[Common::String::format("stats.alignments.%d", (int)c._alignment)].c_str(),
+		STRING[Common::String::format("stats.races.%d", (int)c._race)].c_str(),
+		STRING[Common::String::format("stats.classes.%d", (int)c._class)].c_str()
 	);
 
 	writeString(0, 0, msg);
@@ -203,7 +204,7 @@ void CharacterInfo::drawIcons() {
 
 	// Text for buttons
 	writeString(277, 25, STRING["enhdialogs.character.item"]);
-	writeString(275, 57, STRING["enhdialogs.character.quick"]);
+	writeString(273, 57, STRING["enhdialogs.character.quick"]);
 	writeString(276, 90, STRING["enhdialogs.character.exchange"]);
 	writeString(278, 122, STRING["enhdialogs.misc.exit"]);
 }
@@ -211,8 +212,7 @@ void CharacterInfo::drawIcons() {
 void CharacterInfo::drawStats() {
 	// Draw stat titles
 	for (int i = 0; i < 18; ++i) {
-		writeString(ICONS[i]._x + 27, ICONS[i]._y + 2,
-			ICONS_TEXT[i]);
+		writeString(ICONS[i]._x + 27, ICONS[i]._y + 2, ICONS_TEXT[i]);
 	}
 
 	// Draw stat values
@@ -242,7 +242,7 @@ void CharacterInfo::drawStats() {
 		if (i < 10)
 			pt.x += 8 + (CURR[i] < 10 ? 8 : 0);
 
-		setTextColor(statColor(CURR[i], BASE[i]));
+		setTextColor(c.statColor(CURR[i], BASE[i]));
 
 		if (i == 16) {
 			// Food
@@ -269,19 +269,6 @@ void CharacterInfo::drawStats() {
 	}
 
 	writeString(196, 120, condStr);
-}
-
-int CharacterInfo::statColor(int amount, int threshold) {
-	if (amount < 1)
-		return 6;
-	else if (amount > threshold)
-		return 2;
-	else if (amount == threshold)
-		return 15;
-	else if (amount >= (threshold / 4))
-		return 9;
-	else
-		return 32;
 }
 
 void CharacterInfo::showCursor(bool flag) {

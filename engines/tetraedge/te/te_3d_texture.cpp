@@ -28,10 +28,10 @@
 
 namespace Tetraedge {
 
-Te3DTexture::Te3DTexture() : _createdTexture(false),
-_numFrames(1), _frameRate(0), _format(TeImage::INVALID), _loaded(false),
-_width(0), _height(0), _texHeight(0), _texWidth(0), _topBorder(0), _leftBorder(0),
-_rightBorder(0), _btmBorder(0), _flipY(false) {
+Te3DTexture::Te3DTexture() : _createdTexture(false), _format(TeImage::INVALID),
+_loaded(false), _width(0), _height(0), _texHeight(0), _texWidth(0),
+_topBorder(0), _leftBorder(0), _rightBorder(0), _btmBorder(0),
+_flipY(false), _alphaOnly(false) {
 }
 
 Te3DTexture::~Te3DTexture() {
@@ -44,7 +44,7 @@ bool Te3DTexture::hasAlpha() const {
 }
 
 /*static*/
-TeIntrusivePtr<Te3DTexture> Te3DTexture::load2(const Common::FSNode &node, uint size) {
+TeIntrusivePtr<Te3DTexture> Te3DTexture::load2(const Common::FSNode &node, bool alphaOnly) {
 	const Common::String fullPath = node.getPath() + ".3dtex";
 
 	TeResourceManager *resMgr = g_engine->getResourceManager();
@@ -52,9 +52,13 @@ TeIntrusivePtr<Te3DTexture> Te3DTexture::load2(const Common::FSNode &node, uint 
 		TeIntrusivePtr<Te3DTexture> retval(makeInstance());
 		if (!node.isReadable())
 			warning("Request to load unreadable texture %s", node.getPath().c_str());
+		if (alphaOnly)
+			retval->setLoadAlphaOnly();
+
 		bool result = retval->load(node);
 		if (!result)
 			warning("Failed loading texture %s", node.getPath().c_str());
+
 		retval->setAccessName(fullPath);
 		resMgr->addResource(retval.get());
 		return retval;

@@ -2,11 +2,18 @@ MODULE := engines/freescape
 
 MODULE_OBJS := \
 	area.o \
+	assets.o \
 	demo.o \
 	freescape.o \
 	games/castle.o \
-	games/dark.o \
-	games/driller.o \
+	games/dark/dark.o \
+	games/dark/dos.o \
+	games/driller/amiga.o \
+	games/driller/atari.o \
+	games/driller/cpc.o \
+	games/driller/dos.o \
+	games/driller/driller.o \
+	games/driller/zx.o \
 	games/eclipse.o \
 	games/palettes.o \
 	gfx.o \
@@ -18,7 +25,9 @@ MODULE_OBJS := \
 	neo.o \
 	objects/geometricobject.o \
 	objects/sensor.o \
-	sound.o
+	scr.o \
+	sound.o \
+	ui.o
 
 ifdef USE_TINYGL
 MODULE_OBJS += \

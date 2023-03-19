@@ -68,6 +68,7 @@
 #include "ags/shared/gui/gui_slider.h"
 #include "ags/engine/gui/gui_dialog.h"
 #include "ags/engine/main/engine.h"
+#include "ags/engine/main/game_run.h"
 #include "ags/engine/media/audio/audio_system.h"
 #include "ags/engine/media/video/video.h"
 #include "ags/engine/platform/base/ags_platform_driver.h"
@@ -823,7 +824,7 @@ long write_screen_shot_for_vista(Stream *out, Bitmap *screenshot) {
 	Common::MemoryWriteStreamDynamic bitmap(DisposeAfterUse::YES);
 	screenshot->SaveToFile(bitmap, _G(palette));
 
-	update_polled_stuff_if_runtime();
+	update_polled_stuff();
 
 	// Write the bitmap to the output stream
 	out->Write(bitmap.getData(), bitmap.size());
@@ -888,8 +889,6 @@ void save_game(int slotn, const char *descript) {
 		return;
 	}
 
-	update_polled_stuff_if_runtime();
-
 	// Actual dynamic game data is saved here
 	SaveGameState(out.get());
 
@@ -897,7 +896,7 @@ void save_game(int slotn, const char *descript) {
 		int screenShotOffset = out->GetPosition() - sizeof(RICH_GAME_MEDIA_HEADER);
 		int screenShotSize = write_screen_shot_for_vista(out.get(), screenShot.get());
 
-		update_polled_stuff_if_runtime();
+		update_polled_stuff();  // TODO: probably unneeded
 
 		out->Seek(12, kSeekBegin);
 		out->WriteInt32(screenShotOffset);
@@ -1299,9 +1298,9 @@ void replace_tokens(const char *srcmes, char *destm, int maxlen) {
 }
 
 const char *get_global_message(int msnum) {
-	if (_GP(game).messages[msnum - 500] == nullptr)
+	if (_GP(game).messages[msnum - 500].IsEmpty())
 		return "";
-	return get_translation(_GP(game).messages[msnum - 500]);
+	return get_translation(_GP(game).messages[msnum - 500].GetCStr());
 }
 
 void get_message_text(int msnum, char *buffer, char giveErr) {
@@ -1311,14 +1310,14 @@ void get_message_text(int msnum, char *buffer, char giveErr) {
 
 	if (msnum >= 500) {
 
-		if ((msnum >= MAXGLOBALMES + 500) || (_GP(game).messages[msnum - 500] == nullptr)) {
+		if ((msnum >= MAXGLOBALMES + 500) || (_GP(game).messages[msnum - 500].IsEmpty())) {
 			if (giveErr)
 				quit("!DisplayGlobalMessage: message does not exist");
 			buffer[0] = 0;
 			return;
 		}
 		buffer[0] = 0;
-		replace_tokens(get_translation(_GP(game).messages[msnum - 500]), buffer, maxlen);
+		replace_tokens(get_translation(_GP(game).messages[msnum - 500].GetCStr()), buffer, maxlen);
 		return;
 	} else if (msnum < 0 || (size_t)msnum >= _GP(thisroom).MessageCount) {
 		if (giveErr)

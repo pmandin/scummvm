@@ -177,6 +177,11 @@ public:
 	int getRandomNumber(int maxNumber);
 
 	/**
+	 * Gets the element's name
+	 */
+	Common::String getName() const { return _name; }
+
+	/**
 	 * Sets the element's bounds
 	 */
 	virtual void setBounds(const Common::Rect &r) {
@@ -246,7 +251,6 @@ public:
 	MESSAGE(Game);
 	MESSAGE(Header);
 	MESSAGE(Info);
-	MESSAGE(Value);
 	MESSAGE(DrawGraphic);
 	#undef MESSAGE
 };
@@ -331,6 +335,13 @@ public:
 	 * at all in the visible view stack
 	 */
 	bool isPresent(const Common::String &name) const;
+
+	/**
+	 * Returns true if combat is active
+	 */
+	bool isInCombat() const {
+		return isPresent("Combat");
+	}
 
 	Graphics::Screen *getScreen() const {
 		return _screen;

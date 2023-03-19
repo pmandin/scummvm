@@ -124,7 +124,7 @@ public:
 	int16 getOverlayHeight() const override { return _videoMode.overlayHeight; }
 	int16 getOverlayWidth() const override { return _videoMode.overlayWidth; }
 
-	void setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale = false, const Graphics::PixelFormat *format = NULL) override;
+	void setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor, bool dontScale = false, const Graphics::PixelFormat *format = NULL, const byte *mask = NULL) override;
 	void setCursorPalette(const byte *colors, uint start, uint num) override;
 
 #ifdef USE_OSD
@@ -263,8 +263,8 @@ protected:
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 		int stretchMode;
-		bool vsync;
 #endif
+		bool vsync;
 
 		uint scalerIndex;
 		int scaleFactor;
@@ -285,8 +285,8 @@ protected:
 
 #if SDL_VERSION_ATLEAST(2, 0, 0)
 			stretchMode = 0;
-			vsync = false;
 #endif
+			vsync = false;
 
 			scalerIndex = 0;
 			scaleFactor = 0;
@@ -373,7 +373,7 @@ protected:
 			{ }
 	};
 
-	SDL_Rect _mouseBackup;
+	SDL_Rect _mouseLastRect, _mouseNextRect;
 	MousePos _mouseCurState;
 #ifdef USE_RGB_COLOR
 	uint32 _mouseKeyColor;
@@ -428,9 +428,7 @@ protected:
 
 	virtual void setAspectRatioCorrection(bool enable);
 	void setFilteringMode(bool enable);
-#if SDL_VERSION_ATLEAST(2, 0, 0)
 	void setVSync(bool enable);
-#endif
 
 	bool saveScreenshot(const Common::String &filename) const override;
 	virtual void setGraphicsModeIntern();

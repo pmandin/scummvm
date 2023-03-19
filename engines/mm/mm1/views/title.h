@@ -32,9 +32,16 @@ namespace Views {
 
 class Title : public UIElement {
 private:
+	/**
+	 * Starts the slideshow of game scenes
+	 */
+	void startSlideshow();
+
+protected:
 	Graphics::ManagedSurface _screens[SCREENS_COUNT];
 	int _screenNum = -1;
 	int _fadeIndex = 0;
+
 public:
 	Title();
 	virtual ~Title() {}
@@ -64,6 +71,10 @@ public:
 	 */
 	bool msgKeypress(const KeypressMessage &msg) override;
 
+	/**
+	 * Handle actions
+	 */
+	bool msgAction(const ActionMessage &msg) override;
 };
 
 } // namespace Views

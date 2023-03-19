@@ -22,36 +22,49 @@
 #include "mm/mm1/views_enh/locations/location.h"
 #include "mm/mm1/globals.h"
 #include "mm/mm1/sound.h"
-#include "mm/utils/strings.h"
+#include "mm/shared/utils/strings.h"
 
 namespace MM {
 namespace MM1 {
 namespace ViewsEnh {
 namespace Locations {
 
-Location::Location(const Common::String &name) :
-		ScrollView(name) {
+Location::Location(const Common::String &name, int locationId) :
+		PartyView(name), _locationId(locationId) {
 	_bounds = Common::Rect(232, 0, 320, 146);
+	_escSprite.load("esc.icn");
+}
+
+bool Location::msgGame(const GameMessage &msg) {
+	if (msg._name == "DISPLAY") {
+		send("View", GameMessage("LOCATION", _locationId));
+		addView();
+		return true;
+	} else {
+		return PartyView::msgGame(msg);
+	}
 }
 
 void Location::leave() {
+	if (g_events->focusedView() == this)
+		close();
+
+	send("View", GameMessage("LOCATION", -1));
+
 	g_maps->turnAround();
-	close();
 	g_events->redraw();
 }
 
 void Location::displayMessage(const Common::String &msg) {
-	Location::draw();
+	InfoMessage infoMsg(0, 0, msg, ALIGN_MIDDLE);
+	infoMsg._delaySeconds = 3;
+	infoMsg._timeoutCallback = []() {
+		Location *loc = dynamic_cast<Location *>(g_events->focusedView());
+		assert(loc);
+		loc->messageShown();
+	};
 
-	writeLine(3, msg, ALIGN_MIDDLE);
-}
-
-void Location::changeCharacter(uint index) {
-	if (index >= g_globals->_party.size())
-		return;
-
-	g_globals->_currCharacter = &g_globals->_party[index];
-	redraw();
+	g_events->send(infoMsg);
 }
 
 bool Location::subtractGold(uint amount) {
@@ -72,6 +85,24 @@ void Location::notEnoughGold() {
 void Location::backpackFull() {
 	Sound::sound(SOUND_2);
 	displayMessage(STRING["dialogs.misc.backpack_full"]);
+}
+
+bool Location::msgUnfocus(const UnfocusMessage &msg) {
+	(void)PartyView::msgUnfocus(msg);
+	return true;
+}
+
+void Location::draw() {
+	send("View", GameMessage("LOCATION_DRAW"));
+	PartyView::draw();
+}
+
+bool Location::tick() {
+	// Locations have animated game backgrounds, so pass on tick
+	// to the game view to let it update
+	g_events->findView("View")->tick();
+	redraw();
+	return true;
 }
 
 } // namespace Locations

@@ -47,11 +47,7 @@ bool TePng::load(Common::SeekableReadStream &stream) {
 	if (!png.loadStream(stream))
 		return false;
 
-	//if (png.getTransparentColor() == -1) {
-	//	_loadedSurface = png.getSurface()->convertTo(Graphics::createPixelFormat<888>());
-	//} else {
-		_loadedSurface = png.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
-	//}
+	_loadedSurface = png.getSurface()->convertTo(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
 	return true;
 }
 

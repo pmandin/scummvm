@@ -25,13 +25,108 @@
  * It also has modifications by the ResidualVM-team, which are covered under the GPLv2 (or later).
  */
 
+#include "common/singleton.h"
+#include "common/array.h"
+
+#include "graphics/tinygl/tinygl.h"
 #include "graphics/tinygl/zgl.h"
 #include "graphics/tinygl/zblit.h"
 #include "graphics/tinygl/zdirtyrect.h"
 
 namespace TinyGL {
 
+class GLContextArray : public Common::Singleton<GLContextArray> {
+private:
+
+	Common::Array<GLContext *> _glContextArray;
+
+public:
+
+	GLContext *createContext() {
+		GLContext *ctx = new GLContext;
+		_glContextArray.push_back(ctx);
+		return ctx;
+	}
+
+	void destroyContext(ContextHandle *handle) {
+		for (Common::Array<GLContext *>::iterator it = _glContextArray.begin(); it != _glContextArray.end(); it++) {
+			if (*it == (GLContext *)handle) {
+				(*it)->deinit();
+				delete *it;
+				_glContextArray.erase(it);
+				break;
+			}
+		}
+	}
+
+	void destroyContexts() {
+		for (Common::Array<GLContext *>::iterator it = _glContextArray.begin(); it != _glContextArray.end(); it++) {
+			if (*it != nullptr) {
+				(*it)->deinit();
+				delete *it;
+			}
+		}
+		_glContextArray.clear();
+	}
+
+	bool existsContexts() {
+		return _glContextArray.size() != 0;
+	}
+
+	GLContext *getContext(ContextHandle *handle) {
+		for (Common::Array<GLContext *>::iterator it = _glContextArray.begin(); it != _glContextArray.end(); it++) {
+			if ((*it) == (GLContext *)handle) {
+				return *it;
+			}
+		}
+		return nullptr;
+	}
+};
+
+} // end of namespace TinyGL
+
+namespace Common {
+DECLARE_SINGLETON(TinyGL::GLContextArray);
+}
+
+namespace TinyGL {
+
 GLContext *gl_ctx;
+
+GLContext *gl_get_context() {
+	assert(gl_ctx);
+	return gl_ctx;
+}
+
+ContextHandle *createContext(int screenW, int screenH, Graphics::PixelFormat pixelFormat, int textureSize,
+							 bool enableStencilBuffer, bool dirtyRectsEnable, uint32 drawCallMemorySize) {
+	gl_ctx = GLContextArray::instance().createContext();
+	gl_ctx->init(screenW, screenH, pixelFormat, textureSize, enableStencilBuffer,
+				 dirtyRectsEnable, drawCallMemorySize);
+	return (ContextHandle *)gl_ctx;
+}
+
+void destroyContext() {
+	GLContextArray::instance().destroyContexts();
+	GLContextArray::destroy();
+	gl_ctx = nullptr;
+}
+
+void destroyContext(ContextHandle *handle) {
+	GLContextArray::instance().destroyContext(handle);
+	if ((GLContext *)handle == gl_ctx)
+		gl_ctx = nullptr;
+	if (!GLContextArray::instance().existsContexts())
+		GLContextArray::destroy();
+}
+
+void setContext(ContextHandle *handle) {
+	GLContext *ctx = GLContextArray::instance().getContext(handle);
+	if (ctx == nullptr) {
+		error("TinyGL: makeContextCurrent() Failed get context");
+	}
+	gl_ctx = ctx;
+}
 
 void GLContext::initSharedState() {
 	GLSharedState *s = &shared_state;
@@ -50,16 +145,12 @@ void GLContext::endSharedState() {
 	gl_free(s->texture_hash_table);
 }
 
-void createContext(int screenW, int screenH, Graphics::PixelFormat pixelFormat, int textureSize, bool enableStencilBuffer, bool dirtyRectsEnable) {
-	assert(gl_ctx == nullptr);
-	gl_ctx = new GLContext();
-	gl_ctx->init(screenW, screenH, pixelFormat, textureSize, enableStencilBuffer, dirtyRectsEnable);
-}
-
-void GLContext::init(int screenW, int screenH, Graphics::PixelFormat pixelFormat, int textureSize, bool enableStencilBuffer, bool dirtyRectsEnable) {
+void GLContext::init(int screenW, int screenH, Graphics::PixelFormat pixelFormat, int textureSize,
+	             bool enableStencilBuffer, bool dirtyRectsEnable, uint32 drawCallMemorySize) {
 	GLViewport *v;
 
 	_enableDirtyRectangles = dirtyRectsEnable;
+	stencil_buffer_supported = enableStencilBuffer;
 
 	fb = new TinyGL::FrameBuffer(screenW, screenH, pixelFormat, enableStencilBuffer);
 	renderRect = Common::Rect(0, 0, screenW, screenH);
@@ -257,27 +348,13 @@ void GLContext::init(int screenW, int screenH, Graphics::PixelFormat pixelFormat
 	// color mask
 	color_mask_red = color_mask_green = color_mask_blue = color_mask_alpha = true;
 
-	const size_t kDrawCallMemory = 60ULL * 1024ULL * 1024ULL;
-
 	_currentAllocatorIndex = 0;
-	_drawCallAllocator[0].initialize(kDrawCallMemory);
-	_drawCallAllocator[1].initialize(kDrawCallMemory);
+	_drawCallAllocator[0].initialize(drawCallMemorySize);
+	_drawCallAllocator[1].initialize(drawCallMemorySize);
 	_debugRectsEnabled = false;
 	_profilingEnabled = false;
 
 	TinyGL::Internal::tglBlitResetScissorRect();
-}
-
-GLContext *gl_get_context() {
-	return gl_ctx;
-}
-
-void destroyContext() {
-	GLContext *c = gl_get_context();
-	assert(c);
-	c->deinit();
-	delete c;
-	gl_ctx = nullptr;
 }
 
 void GLContext::deinit() {

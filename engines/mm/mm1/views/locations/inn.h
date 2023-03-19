@@ -36,6 +36,12 @@ private:
 	CharacterView _characterView;
 	Common::Array<uint> _charNums;
 	IntArray _partyChars;
+
+	/**
+	 * Exit the Inn
+	 */
+	void exitInn();
+
 public:
 	Inn() : TextView("Inn") {
 	}
@@ -45,6 +51,7 @@ public:
 	bool msgFocus(const FocusMessage &msg) override;
 	void draw() override;
 	bool msgKeypress(const KeypressMessage &msg) override;
+	bool msgAction(const ActionMessage &msg) override;
 };
 
 } // namespace Locations

@@ -101,6 +101,11 @@ public:
 		return _alBitmap->isSubBitmap();
 	}
 
+	// Do both bitmaps share same data (usually: subbitmaps, or parent/subbitmap)
+	inline bool IsSameBitmap(Bitmap *other) const {
+		return is_same_bitmap(_alBitmap, other->_alBitmap) != 0;
+	}
+
 	// Checks if bitmap cannot be used
 	inline bool IsNull() const {
 		return !_alBitmap;
@@ -149,10 +154,12 @@ public:
 
 	// Get scanline for direct reading
 	inline const unsigned char *GetScanLine(int index) const {
-		return (index >= 0 && index < GetHeight()) ? _alBitmap->getBasePtr(0, index) : nullptr;
+		assert(index >= 0 && index < GetHeight());
+		return _alBitmap->getBasePtr(0, index);
 	}
 	inline unsigned char *GetScanLine(int index) {
-		return (index >= 0 && index < GetHeight()) ? (unsigned char *)_alBitmap->getBasePtr(0, index) : nullptr;
+		assert(index >= 0 && index < GetHeight());
+		return (unsigned char *)_alBitmap->getBasePtr(0, index);
 	}
 
 	// Get bitmap's mask color (transparent color)
@@ -231,7 +238,8 @@ public:
 	// TODO: think how to increase safety over this (some fixed memory buffer class with iterator?)
 	// Gets scanline for directly writing into it
 	inline unsigned char *GetScanLineForWriting(int index) {
-		return (index >= 0 && index < GetHeight()) ? _alBitmap->line[index] : nullptr;
+		assert(index >= 0 && index < GetHeight());
+		return _alBitmap->line[index];
 	}
 	inline unsigned char *GetDataForWriting() {
 		return _alBitmap->line[0];

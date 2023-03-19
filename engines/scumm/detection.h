@@ -34,6 +34,7 @@ namespace Scumm {
 #define GUIO_AUDIO_OVERRIDE                            GUIO_GAMEOPTIONS3
 #define GUIO_ORIGINALGUI                               GUIO_GAMEOPTIONS4
 #define GUIO_LOWLATENCYAUDIO                           GUIO_GAMEOPTIONS5
+#define GUIO_NETWORK                                   GUIO_GAMEOPTIONS6
 
 /**
  * Descriptor of a specific SCUMM game. Used internally to store
@@ -246,6 +247,11 @@ enum ScummGameId {
 	GID_HECUP		// CUP demos
 };
 
+struct RuScummPatcher {
+	ScummGameId gameid;
+	const char *variant;
+	const char *patcherName;
+};
 } // End of namespace Scumm
 
 

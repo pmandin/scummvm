@@ -251,6 +251,10 @@ IDriverDependantBitmap *ScummVMRendererGraphicsDriver::CreateDDBFromBitmap(Bitma
 	return new ALSoftwareBitmap(bitmap, opaque, hasAlpha);
 }
 
+IDriverDependantBitmap *ScummVMRendererGraphicsDriver::CreateRenderTargetDDB(int width, int height, int color_depth, bool opaque) {
+	return new ALSoftwareBitmap(width, height, color_depth, opaque);
+}
+
 void ScummVMRendererGraphicsDriver::UpdateDDBFromBitmap(IDriverDependantBitmap *bitmapToUpdate, Bitmap *bitmap, bool hasAlpha) {
 	ALSoftwareBitmap *alSwBmp = (ALSoftwareBitmap *)bitmapToUpdate;
 	alSwBmp->_bmp = bitmap;
@@ -285,8 +289,10 @@ void ScummVMRendererGraphicsDriver::InitSpriteBatch(size_t index, const SpriteBa
 	else if (desc.Transform.ScaleX == 1.f && desc.Transform.ScaleY == 1.f) {
 		// We need this subbitmap for plugins, which use _stageVirtualScreen and are unaware of possible multiple viewports;
 		// TODO: there could be ways to optimize this further, but best is to update plugin rendering hooks (and upgrade plugins)
-		if (!batch.Surface || !batch.IsVirtualScreen || batch.Surface->GetWidth() != src_w || batch.Surface->GetHeight() != src_h
-		        || batch.Surface->GetSubOffset() != desc.Viewport.GetLT()) {
+		if (!batch.Surface || !batch.IsVirtualScreen ||
+			(batch.Surface->GetWidth() != src_w) || (batch.Surface->GetHeight() != src_h) ||
+			(!batch.Surface->IsSameBitmap(virtualScreen)) ||
+			(batch.Surface->GetSubOffset() != desc.Viewport.GetLT())) {
 			Rect rc = RectWH(desc.Viewport.Left, desc.Viewport.Top, desc.Viewport.GetWidth(), desc.Viewport.GetHeight());
 			batch.Surface.reset(BitmapHelper::CreateSubBitmap(virtualScreen, rc));
 		}
@@ -302,7 +308,8 @@ void ScummVMRendererGraphicsDriver::InitSpriteBatch(size_t index, const SpriteBa
 }
 
 void ScummVMRendererGraphicsDriver::ResetAllBatches() {
-	_spriteBatches.clear();
+	// NOTE: we don't release batches themselves here, only sprite lists.
+	// This is because we cache batch surfaces, for perfomance reasons.
 	_spriteList.clear();
 }
 
@@ -323,6 +330,10 @@ void ScummVMRendererGraphicsDriver::SetScreenTint(int red, int green, int blue) 
 		_spriteList.push_back(
 			ALDrawListEntry(reinterpret_cast<ALSoftwareBitmap *>(DRAWENTRY_TINT), _actSpriteBatch, 0, 0));
 	}
+}
+
+void ScummVMRendererGraphicsDriver::SetStageScreen(const Size & /*sz*/, int /*x*/, int /*y*/) {
+	// unsupported, as using _stageVirtualScreen instead
 }
 
 void ScummVMRendererGraphicsDriver::RenderToBackBuffer() {
@@ -348,6 +359,7 @@ void ScummVMRendererGraphicsDriver::RenderToBackBuffer() {
 		const Rect &viewport = batch_desc.Viewport;
 		const SpriteTransform &transform = batch_desc.Transform;
 
+		_rendSpriteBatch = batch.ID;
 		virtualScreen->SetClip(viewport);
 		Bitmap *surface = batch.Surface.get();
 		const int view_offx = viewport.Left;
@@ -363,8 +375,9 @@ void ScummVMRendererGraphicsDriver::RenderToBackBuffer() {
 		} else {
 			cur_spr = RenderSpriteBatch(batch, cur_spr, virtualScreen, view_offx + transform.X, view_offy + transform.Y);
 		}
-		_stageVirtualScreen = virtualScreen;
 	}
+	_stageVirtualScreen = virtualScreen;
+	_rendSpriteBatch = UINT32_MAX;
 	ClearDrawLists();
 }
 
@@ -372,11 +385,12 @@ size_t ScummVMRendererGraphicsDriver::RenderSpriteBatch(const ALSpriteBatch &bat
 	for (; (from < _spriteList.size()) && (_spriteList[from].node == batch.ID); ++from) {
 		const auto &sprite = _spriteList[from];
 		if (sprite.ddb == nullptr) {
-			if (_nullSpriteCallback)
-				_nullSpriteCallback(sprite.x, sprite.y);
+			if (_spriteEvtCallback)
+				_spriteEvtCallback(sprite.x, sprite.y);
 			else
 				error("Unhandled attempt to draw null sprite");
-
+			// Stage surface could have been replaced by plugin
+			surface = _stageVirtualScreen;
 			continue;
 		} else if (sprite.ddb == reinterpret_cast<ALSoftwareBitmap *>(DRAWENTRY_TINT)) {
 			// draw screen tint fx
@@ -557,14 +571,20 @@ Bitmap *ScummVMRendererGraphicsDriver::GetMemoryBackBuffer() {
 }
 
 void ScummVMRendererGraphicsDriver::SetMemoryBackBuffer(Bitmap *backBuffer) {
-	if (backBuffer) {
+	// We need to also test internal AL BITMAP pointer, because we may receive it raw from plugin,
+	// in which case the Bitmap object may be a different wrapper over our own virtual screen.
+	if (backBuffer && (backBuffer->GetAllegroBitmap() != _origVirtualScreen->GetAllegroBitmap())) {
 		virtualScreen = backBuffer;
 	} else {
 		virtualScreen = _origVirtualScreen.get();
 	}
 	_stageVirtualScreen = virtualScreen;
 
-	// Reset old virtual screen's subbitmaps
+	// Reset old virtual screen's subbitmaps;
+	// NOTE: this MUST NOT be called in the midst of the RenderSpriteBatches!
+	assert(_rendSpriteBatch == UINT32_MAX);
+	if (_rendSpriteBatch != UINT32_MAX)
+		return;
 	for (auto &batch : _spriteBatches) {
 		if (batch.IsVirtualScreen)
 			batch.Surface.reset();
@@ -573,6 +593,16 @@ void ScummVMRendererGraphicsDriver::SetMemoryBackBuffer(Bitmap *backBuffer) {
 
 Bitmap *ScummVMRendererGraphicsDriver::GetStageBackBuffer(bool /*mark_dirty*/) {
 	return _stageVirtualScreen;
+}
+
+void ScummVMRendererGraphicsDriver::SetStageBackBuffer(Bitmap *backBuffer) {
+	Bitmap *cur_stage = (_rendSpriteBatch == UINT32_MAX) ? virtualScreen : _spriteBatches[_rendSpriteBatch].Surface.get();
+	// We need to also test internal AL BITMAP pointer, because we may receive it raw from plugin,
+	// in which case the Bitmap object may be a different wrapper over our own virtual screen.
+	if (backBuffer && (backBuffer->GetAllegroBitmap() != cur_stage->GetAllegroBitmap()))
+		_stageVirtualScreen = backBuffer;
+	else
+		_stageVirtualScreen = cur_stage;
 }
 
 bool ScummVMRendererGraphicsDriver::GetCopyOfScreenIntoBitmap(Bitmap *destination, bool at_native_res, GraphicResolution *want_fmt) {

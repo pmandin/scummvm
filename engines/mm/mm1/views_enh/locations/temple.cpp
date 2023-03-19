@@ -23,23 +23,20 @@
 #include "mm/mm1/globals.h"
 #include "mm/mm1/mm1.h"
 #include "mm/mm1/sound.h"
-#include "mm/utils/strings.h"
+#include "mm/shared/utils/strings.h"
 
 namespace MM {
 namespace MM1 {
 namespace ViewsEnh {
 namespace Locations {
 
-Temple::Temple() : Location("Temple") {
-	addButton(&g_globals->_confirmIcons,
-		Common::Point(_innerBounds.width() / 2 - 24,
-			_innerBounds.height() - 32),
-		0, Common::KEYCODE_y);
+Temple::Temple() : Location("Temple", LOC_TEMPLE) {
+	addButton(&_escSprite, Common::Point(24, 100), 0, KEYBIND_ESCAPE);
 }
 
 bool Temple::msgFocus(const FocusMessage &msg) {
-	send("View", ValueMessage(LOC_TEMPLE));
-	changeCharacter(0);
+	Location::msgFocus(msg);
+	updateCosts();
 
 	return true;
 }
@@ -47,6 +44,7 @@ bool Temple::msgFocus(const FocusMessage &msg) {
 void Temple::draw() {
 	Location::draw();
 
+	setReduced(false);
 	writeLine(0, STRING["enhdialogs.temple.title"], ALIGN_MIDDLE);
 	writeLine(1, STRING["enhdialogs.location.options_for"], ALIGN_MIDDLE);
 	writeLine(3, camelCase(g_globals->_currCharacter->_name), ALIGN_MIDDLE);
@@ -68,18 +66,18 @@ void Temple::draw() {
 		ALIGN_RIGHT);
 	writeLine(8, Common::String::format("%d", _donateCost).c_str(),
 		ALIGN_RIGHT);
-	setReduced(false);
 
+	setReduced(false);
 	writeLine(10, STRING["enhdialogs.location.gold"]);
 	writeLine(10, Common::String::format("%d",
 		g_globals->_currCharacter->_gold), ALIGN_RIGHT);
+
+	setReduced(true);
+	writeString(27, 122, STRING["enhdialogs.location.esc"]);
 }
 
 bool Temple::msgKeypress(const KeypressMessage &msg) {
 	switch (msg.keycode) {
-	case Common::KEYCODE_ESCAPE:
-		leave();
-		break;
 	case Common::KEYCODE_h:
 		restoreHealth();
 		break;
@@ -96,29 +94,33 @@ bool Temple::msgKeypress(const KeypressMessage &msg) {
 		g_globals->_currCharacter->gatherGold();
 		redraw();
 		break;
-	case Common::KEYCODE_1:
-	case Common::KEYCODE_2:
-	case Common::KEYCODE_3:
-	case Common::KEYCODE_4:
-	case Common::KEYCODE_5:
-	case Common::KEYCODE_6:
-		changeCharacter(msg.keycode - Common::KEYCODE_1);
-		break;
 	default:
-		break;
+		return Location::msgKeypress(msg);
 	}
 
 	return true;
 }
 
-void Temple::changeCharacter(uint index) {
+bool Temple::msgAction(const ActionMessage &msg) {
+	switch (msg._action) {
+	case KEYBIND_ESCAPE:
+		leave();
+		return true;
+	default:
+		return Location::msgAction(msg);
+	}
+}
+
+bool Temple::msgGame(const GameMessage &msg) {
+	Location::msgGame(msg);
+	if (msg._name == "UPDATE")
+		updateCosts();
+	return true;
+}
+
+void Temple::updateCosts() {
 	Maps::Map &map = *g_maps->_currentMap;
 	int i;
-
-	if (index >= g_globals->_party.size())
-		return;
-	Location::changeCharacter(index);
-
 	_isEradicated = false;
 
 	int townNum = map[Maps::MAP_ID];

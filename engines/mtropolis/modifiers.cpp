@@ -1153,7 +1153,7 @@ const char *PathMotionModifier::getDefaultName() const {
 	return "Path Motion Modifier";
 }
 
-SimpleMotionModifier::SimpleMotionModifier() : _motionType(kMotionTypeIntoScene), _directionFlags(0), _steps(0), _delayMSecTimes4800(0) {
+SimpleMotionModifier::SimpleMotionModifier() : _motionType(kMotionTypeIntoScene), _directionFlags(0), _steps(0)/*, _delayMSecTimes4800(0)*/ {
 }
 
 bool SimpleMotionModifier::load(ModifierLoaderContext &context, const Data::SimpleMotionModifier &data) {
@@ -2562,7 +2562,7 @@ bool ReturnModifier::respondsToEvent(const Event &evt) const {
 }
 
 VThreadState ReturnModifier::consumeMessage(Runtime *runtime, const Common::SharedPtr<MessageProperties> &msg) {
-	warning("Return modifier not implemented");
+	runtime->addSceneStateTransition(HighLevelSceneTransition(nullptr, HighLevelSceneTransition::kTypeReturn, false, false));
 	return kVThreadReturn;
 }
 

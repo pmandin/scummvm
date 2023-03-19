@@ -46,13 +46,13 @@ class Serializer;
  * every other game is untested but definitely unplayable
  *
  * Games using this engine:
- *  - The Vampire Diaries (1996)
- *  - Almost every mainline Nancy Drew game by HeR Interactive,
- * 	up to and including Nancy Drew: Sea of Darkness (2015)
+ *	- The Vampire Diaries (1996)
+ *	- Almost every mainline Nancy Drew game by HeR Interactive,
+ *		up to and including Nancy Drew: Sea of Darkness (2015)
  */
 namespace Nancy {
 
-static const int kSavegameVersion = 1;
+static const int kSavegameVersion = 2;
 
 struct NancyGameDescription;
 
@@ -62,9 +62,7 @@ class InputManager;
 class SoundManager;
 class GraphicsManager;
 class CursorManager;
-class CheatDialog;
 class NancyConsole;
-struct GameConstants;
 
 namespace State {
 class State;
@@ -93,7 +91,7 @@ public:
 	GameType getGameType() const;
 	Common::Platform getPlatform() const;
 
-	const GameConstants &getConstants() const;
+	const StaticData &getStaticData() const;
 
 	void setState(NancyState::NancyState state, NancyState::NancyState overridePrevious = NancyState::kNone);
 	NancyState::NancyState getState() { return _gameFlow.curState; }
@@ -103,8 +101,6 @@ public:
 	Common::SeekableReadStream *getBootChunkStream(const Common::String &name) const;
 
 	void setMouseEnabled(bool enabled);
-
-	void callCheatMenu(bool eventFlags);
 
 	// Managers
 	ResourceManager *_resource;
@@ -117,7 +113,7 @@ public:
 
 	// BSUM data
 	SceneChangeDescription _firstScene;
-	
+
 	uint16 _startTimeHours;
 	uint16 _startTimeMinutes;
 
@@ -150,12 +146,15 @@ private:
 	void readChunkList(const IFF &boot, Common::Serializer &ser, const Common::String &prefix);
 
 	void readBootSummary(const IFF &boot);
+	void readDatFile();
 
 	Common::Error synchronize(Common::Serializer &serializer);
 
 	bool isCompressed();
 
-	bool _cheatTypeIsEventFlag;
+	StaticData _staticData;
+	const byte _datFileMajorVersion;
+	const byte _datFileMinorVersion;
 
 	GameFlow _gameFlow;
 	OSystem *_system;

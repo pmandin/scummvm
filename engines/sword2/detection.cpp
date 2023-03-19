@@ -37,7 +37,9 @@ static const PlainGameDescriptor sword2Games[] = {
 static const char *const directoryGlobs[] = {
 	"clusters",
 	"smacks",
+	"sub",
 	"video",
+	"extras", // GOG.com
 	nullptr
 };
 

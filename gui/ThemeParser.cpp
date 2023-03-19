@@ -69,10 +69,10 @@ static const TextColorDataInfo kTextColorDefaults[] = {
 	{ kTextColorAlternativeInverted,	"color_alternative_inverted" },
 	{ kTextColorAlternativeHover,		"color_alternative_hover" },
 	{ kTextColorAlternativeDisabled,	"color_alternative_disabled" },
-	{ kTextColorOverride,               "color_override" }, 
-	{ kTextColorOverrideInverted,       "color_override_inverted" }, 
-	{ kTextColorOverrideHover,          "color_override_hover" }, 
-	{ kTextColorOverrideDisabled,       "color_override_disabled" }, 
+	{ kTextColorOverride,               "color_override" },
+	{ kTextColorOverrideInverted,       "color_override_inverted" },
+	{ kTextColorOverrideHover,          "color_override_hover" },
+	{ kTextColorOverrideDisabled,       "color_override_disabled" },
 	{ kTextColorButton,					"color_button" },
 	{ kTextColorButtonHover,			"color_button_hover" },
 	{ kTextColorButtonDisabled,			"color_button_disabled" }
@@ -1040,7 +1040,7 @@ bool ThemeParser::resolutionCheck(const Common::String &resolution) {
 		bool lt;
 		int val;
 
-		if (cur.size() < 5) {
+		if (cur.size() < 3) {
 			warning("Invalid theme 'resolution' token '%s'", resolution.c_str());
 			return false;
 		}
@@ -1063,7 +1063,35 @@ bool ThemeParser::resolutionCheck(const Common::String &resolution) {
 			return false;
 		}
 
-		int token = atoi(cur.c_str() + 2);
+		bool eq = false;
+		int offset = 2;
+
+		if (cur[2] == '=') {
+			eq = true;
+			offset++;
+		}
+
+		int token;
+
+		if (cur[offset] == 'W') { // Reported threshold width
+			token = 320;
+		} else if (cur[offset] == 'H') { // Reported threshold height
+#ifndef IPHONE
+			token = 400;
+#else
+			// HACK. Think about API to move it to OSystem?
+			// iPhone SE (gen3) is 375 × 667 @2, iPhone 14 is 390 × 844 @3
+			//
+			// Hence, we are setting height to 375, so we have highres
+			// theme by default
+			token = 375;
+#endif
+		} else {
+			token = atoi(cur.c_str() + offset);
+		}
+
+		if (eq && val == token)
+			return true;
 
 		// check inverse for unfulfilled requirements
 		if (lt) {

@@ -28,6 +28,7 @@
 #include "mm/mm.h"
 #include "mm/mm1/events.h"
 #include "mm/mm1/globals.h"
+#include "mm/mm1/sound.h"
 
 /**
  * This is the Might and Magic I engine
@@ -35,10 +36,7 @@
 namespace MM {
 namespace MM1 {
 
-class MM1Engine : public Engine, public Events {
-private:
-	const MightAndMagicGameDescription *_gameDescription;
-	Common::RandomSource _randomSource;
+class MM1Engine : public MMEngine, public Events {
 private:
 	// Engine APIs
 	Common::Error run() override;
@@ -47,11 +45,10 @@ private:
 	bool setupEnhanced();
 public:
 	Globals _globals;
+	Sound *_sound = nullptr;
 public:
 	MM1Engine(OSystem *syst, const MightAndMagicGameDescription *gameDesc);
 	~MM1Engine() override;
-
-	bool hasFeature(EngineFeature f) const override;
 
 	bool isEnhanced() const;
 
@@ -68,6 +65,11 @@ public:
 	Common::String getTargetName() const {
 		return _targetName;
 	}
+
+	/**
+	 * Sync the sound settings
+	 */
+	void syncSoundSettings() override;
 
 	/**
 	 * Returns true if a game can be saved

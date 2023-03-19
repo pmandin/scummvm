@@ -69,13 +69,15 @@ void Credits::enter(bool returnToOptions) {
 	anchorAnim->_callbackMethod = &TeLayout::setAnchor;
 	anchorAnim->play();
 
-	TeCurveAnim2<TeLayout, TeVector3f32> *bgPosAnim = _gui.layoutPositionLinearAnimation("scrollBackgroundPositionAnim");
-	if (!bgPosAnim)
-		error("Credits gui - couldn't find scrollBackgroundPositionAnim");
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia) {
+		TeCurveAnim2<TeLayout, TeVector3f32> *bgPosAnim = _gui.layoutPositionLinearAnimation("scrollBackgroundPositionAnim");
+		if (!bgPosAnim)
+			error("Credits gui - couldn't find scrollBackgroundPositionAnim");
 
-	bgPosAnim->_callbackObj = _gui.layoutChecked("backgroundSprite");
-	bgPosAnim->_callbackMethod = &TeLayout::setAnchor;
-	bgPosAnim->play();
+		bgPosAnim->_callbackObj = _gui.layoutChecked("backgroundSprite");
+		bgPosAnim->_callbackMethod = &TeLayout::setAnchor;
+		bgPosAnim->play();
+	}
 
 	_curveAnim._runTimer.pausable(false);
 	_curveAnim.stop();
@@ -91,31 +93,57 @@ void Credits::enter(bool returnToOptions) {
 	_curveAnim.setCurve(curve);
 	_curveAnim._duration = 12000;
 
-	TeLayout *backgrounds = _gui.layoutChecked("Backgrounds");
-	if (_animCounter < backgrounds->childCount()) {
-		TeSpriteLayout *bgchild = dynamic_cast<TeSpriteLayout *>(backgrounds->child(_animCounter));
-		if (!bgchild)
-			error("Child of backgrounds is not a TeSpriteLayout");
-		_curveAnim._callbackObj = bgchild;
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia) {
+		TeLayout *backgrounds = _gui.layoutChecked("Backgrounds");
+		if (_animCounter < backgrounds->childCount()) {
+			TeSpriteLayout *bgchild = dynamic_cast<TeSpriteLayout *>(backgrounds->child(_animCounter));
+			if (!bgchild)
+				error("Child of backgrounds is not a TeSpriteLayout");
+			_curveAnim._callbackObj = bgchild;
+			_curveAnim._callbackMethod = &TeLayout::setColor;
+			_curveAnim.play();
+			bgchild->setVisible(true);
+			const Common::String bgAnimName = bgchild->name() + "Anim";
+			TeCurveAnim2<TeLayout, TeVector3f32> *bgPosAnim = _gui.layoutPositionLinearAnimation(bgAnimName);
+			if (!bgPosAnim)
+				error("Couldn't find bg position anim %s", bgAnimName.c_str());
+			bgPosAnim->_callbackObj = bgchild;
+			bgPosAnim->_callbackMethod = &TeLayout::setPosition;
+			bgPosAnim->play();
+		}
+	} else {
+		// Syberia 2
+		TeLayout *foreground = _gui.layoutChecked("foreground1");
+		_curveAnim._callbackObj = foreground;
 		_curveAnim._callbackMethod = &TeLayout::setColor;
 		_curveAnim.play();
-		bgchild->setVisible(true);
-		const Common::String bgAnimName = bgchild->name() + "Anim";
-		bgPosAnim = _gui.layoutPositionLinearAnimation(bgAnimName);
-		if (!bgPosAnim)
-			error("Couldn't find bg position anim %s", bgAnimName.c_str());
-		bgPosAnim->_callbackObj = bgchild;
-		bgPosAnim->_callbackMethod = &TeLayout::setPosition;
-		bgPosAnim->play();
+		_gui.buttonLayoutChecked("quitButton")->onMouseClickValidated().add(this, &Credits::onQuitButton);
+
+		//
+		// WORKAROUND: These are set to PanScan ratio 1.0, but with our code
+		// but that shrinks them down to pillarboxed.  Force back to full size.
+		//
+		_gui.layoutChecked("foreground1")->setRatioMode(TeILayout::RATIO_MODE_NONE);
+		_gui.layoutChecked("foreground")->setRatioMode(TeILayout::RATIO_MODE_NONE);
 	}
+
 	_curveAnim.onFinished().add(this, &Credits::onBackgroundAnimFinished);
 }
 
 void Credits::leave() {
-	_curveAnim.stop();
+	//
+	// Slightly different to original.. stop *all* position/anchor animations
+	// - Syberia 2 only stops certain animations but this works for both.
+	//
 	for (auto &anim : _gui.layoutPositionLinearAnimations()) {
 		anim._value->stop();
 	}
+	for (auto &anim : _gui.layoutAnchorLinearAnimations()) {
+		anim._value->stop();
+	}
+	_curveAnim.stop();
+	_curveAnim.onFinished().remove(this, &Credits::onBackgroundAnimFinished);
+
 	if (_gui.loaded()) {
 		Application *app = g_engine->getApplication();
 		app->captureFade();
@@ -131,7 +159,6 @@ void Credits::leave() {
 			app->mainMenu().enter();
 		}
 		app->fade();
-		_curveAnim.onFinished().remove(this, &Credits::onBackgroundAnimFinished);
 	}
 }
 
@@ -141,6 +168,35 @@ bool Credits::onAnimFinished() {
 }
 
 bool Credits::onBackgroundAnimFinished() {
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia)
+		return onBackgroundAnimFinishedSyb1();
+	else
+		return onBackgroundAnimFinishedSyb2();
+}
+
+bool Credits::onBackgroundAnimFinishedSyb2() {
+	const TeColor white = TeColor(0xff, 0xff, 0xff, 0xff);
+	const TeColor clear = TeColor(0xff, 0xff, 0xff, 0);
+	if (_curveAnim._startVal != white) {
+		_curveAnim._startVal = white;
+		_curveAnim._endVal = clear;
+		TeSpriteLayout *fgLayout = _gui.spriteLayout("foreground");
+		TeVariant fgFile = _gui.value(Common::String::format("foregrounds%d", _animCounter));
+		fgLayout->load(fgFile.toString());
+	} else {
+		_curveAnim._startVal = clear;
+		_curveAnim._endVal = white;
+		TeSpriteLayout *fgLayout = _gui.spriteLayout("foreground1");
+		TeVariant fgFile = _gui.value(Common::String::format("foregrounds%d", _animCounter));
+		fgLayout->load(fgFile.toString());
+	}
+
+	_curveAnim.play();
+	_animCounter++;
+	return false;
+}
+
+bool Credits::onBackgroundAnimFinishedSyb1() {
 	_animCounter++;
 	TeLayout *backgrounds = _gui.layoutChecked("Backgrounds");
 	if (_animCounter < backgrounds->childCount()) {
@@ -171,10 +227,12 @@ bool Credits::onPadButtonUp(uint button) {
 }
 
 bool Credits::onQuitButton() {
-	TeCurveAnim2<TeLayout, TeVector3f32> *anim1 = _gui.layoutPositionLinearAnimation("scrollTextPositionAnim");
-	anim1->stop();
-	TeCurveAnim2<TeLayout, TeVector3f32> *anim2 = _gui.layoutAnchorLinearAnimation("scrollTextAnchorAnim");
-	anim2->stop();
+	if (g_engine->gameType() == TetraedgeEngine::kSyberia) {
+		TeCurveAnim2<TeLayout, TeVector3f32> *anim1 = _gui.layoutPositionLinearAnimation("scrollTextPositionAnim");
+		anim1->stop();
+		TeCurveAnim2<TeLayout, TeVector3f32> *anim2 = _gui.layoutAnchorLinearAnimation("scrollTextAnchorAnim");
+		anim2->stop();
+	}
 	leave();
 	return true;
 }

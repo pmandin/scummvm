@@ -146,7 +146,7 @@ struct GameSetupStruct : public GameSetupStructBase {
 	void read_lipsync(Shared::Stream *in, GameDataVersion data_ver);
 	void read_messages(Shared::Stream *in, GameDataVersion data_ver);
 
-	void ReadCharacters_Aligned(Shared::Stream *in);
+	void ReadCharacters_Aligned(Shared::Stream *in, bool is_save);
 	void WriteCharacters_Aligned(Shared::Stream *out);
 	//------------------------------
 	// Part 3
@@ -159,7 +159,7 @@ struct GameSetupStruct : public GameSetupStructBase {
 
 	// Functions for reading and writing appropriate data from/to save game
 	void ReadFromSaveGame_v321(Shared::Stream *in, char *gswas, ccScript *compsc, CharacterInfo *chwas,
-							   WordsDictionary *olddict, char **mesbk);
+							   WordsDictionary *olddict, std::vector<String> &mesbk);
 
 	void ReadFromSavegame(Shared::Stream *in);
 	void WriteForSavegame(Shared::Stream *out);

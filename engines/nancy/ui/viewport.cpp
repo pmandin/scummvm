@@ -180,7 +180,7 @@ void Viewport::handleInput(NancyInput &input) {
 	_movementLastFrame = direction;
 }
 
-void Viewport::loadVideo(const Common::String &filename, uint frameNr, uint verticalScroll, NancyFlag dontWrap, uint16 format, const Common::String &palette) {
+void Viewport::loadVideo(const Common::String &filename, uint frameNr, uint verticalScroll, byte panningType, uint16 format, const Common::String &palette) {
 	if (_decoder.isVideoLoaded()) {
 		_decoder.close();
 	}
@@ -197,25 +197,13 @@ void Viewport::loadVideo(const Common::String &filename, uint frameNr, uint vert
 	setVerticalScroll(verticalScroll);
 
 	if (palette.size()) {
-		GraphicsManager::loadSurfacePalette(_drawSurface, palette);
-		_fullFrame.setPalette(_drawSurface.getPalette(), 0, 256);
+		GraphicsManager::loadSurfacePalette(_fullFrame, palette);
+		setPalette(palette);
 	}
 
 	_movementLastFrame = 0;
 	_nextMovementTime = 0;
-	_dontWrap = dontWrap;
-}
-
-void Viewport::setPalette(const Common::String &paletteName) {
-	GraphicsManager::loadSurfacePalette(_drawSurface, paletteName);
-	_fullFrame.setPalette(_drawSurface.getPalette(), 0, 256);
-	_needsRedraw = true;
-}
-
-void Viewport::setPalette(const Common::String &paletteName, uint paletteStart, uint paletteSize) {
-	GraphicsManager::loadSurfacePalette(_drawSurface, paletteName, paletteStart, paletteSize);
-	_fullFrame.setPalette(_drawSurface.getPalette(), 0, 256);
-	_needsRedraw = true;
+	_panningType = panningType;
 }
 
 void Viewport::setFrame(uint frameNr) {
@@ -230,7 +218,7 @@ void Viewport::setFrame(uint frameNr) {
 	_needsRedraw = true;
 	_currentFrame = frameNr;
 
-	if (_dontWrap == kTrue && !((_edgesMask & kLeft) && (_edgesMask & kRight))) {
+	if (_panningType == kPanLeftRight && !((_edgesMask & kLeft) && (_edgesMask & kRight))) {
 		if (_currentFrame == 0) {
 			disableEdges(kRight);
 		} else if (_currentFrame == getFrameCount() - 1) {

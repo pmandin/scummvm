@@ -120,6 +120,7 @@ static const char *const selectorNameTable[] = {
 	"solvePuzzle",  // Quest For Glory 3
 	"curIcon",      // Quest For Glory 3, QFG4
 	"curInvIcon",   // Quest For Glory 3, QFG4
+	"edgeHit",      // King's Quest 5
 	"startText",    // King's Quest 6 CD / Laura Bow 2 CD for audio+text support
 	"startAudio",   // King's Quest 6 CD / Laura Bow 2 CD for audio+text support
 	"modNum",       // King's Quest 6 CD / Laura Bow 2 CD for audio+text support
@@ -261,6 +262,7 @@ enum ScriptPatcherSelectors {
 	SELECTOR_solvePuzzle,
 	SELECTOR_curIcon,
 	SELECTOR_curInvIcon,
+	SELECTOR_edgeHit,
 	SELECTOR_startText,
 	SELECTOR_startAudio,
 	SELECTOR_modNum,
@@ -5346,10 +5348,51 @@ static const uint16 kq5PatchPc98CampfireMessages[] = {
 	PATCH_END
 };
 
+// When the boat sinks while game speed is set to fast, the boat jumps from its
+//  initial position to the left edge of the screen. This is because at fast
+//  speeds, ego reaches the right edge when leaving the previous screen.
+//  The sinking script doesn't expect ego:edgeHit to be set, and when it is,
+//  Rm:init moves ego back to the opposite edge.
+//
+// We fix this by clearing ego:edgeHit when initializing the sinking boat.
+//
+// Applies to: All versions
+// Responsible method: rm047:init
+// Fixes bug: #14218
+static const uint16 kq5SignatureSinkingBoatPosition[] = {
+	0x30, SIG_UINT16(0x0078),        // bnt 0078
+	SIG_ADDTOOFFSET(+9),
+	0x81, 0x00,                      // lag 00
+	0x4a, 0x08,                      // send 08 [ ego ... ]
+	SIG_ADDTOOFFSET(+24),
+	SIG_MAGICDWORD,
+	0x39, SIG_SELECTOR8(loop),       // pushi loop
+	0x78,                            // push1
+	0x76,                            // push0 [ redundant, loop is already 0 ]
+	SIG_ADDTOOFFSET(+8),
+	0x4a, 0x24,                      // send 24 [ sailBoat ... loop: 0 ... ]
+	SIG_END
+};
+
+static const uint16 kq5PatchSinkingBoatPosition[] = {
+	0x31, 0x79,                      // bnt 79
+	PATCH_GETORIGINALBYTES(3, 9),
+	0x38, PATCH_SELECTOR16(edgeHit), // pushi edgeHit
+	0x78,                            // push1
+	0x76,                            // push0
+	0x81, 0x00,                      // lag 00
+	0x4a, 0x0e,                      // send 0e [ ego ... edgeHit: 0 ]
+	PATCH_GETORIGINALBYTES(16, 24),
+	PATCH_ADDTOOFFSET(+8),
+	0x4a, 0x1e,                      // send 1e [ sailBoat ... ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                  patch
 static const SciScriptPatcherEntry kq5Signatures[] = {
 	{  true,     0, "CD: harpy volume change",                     1, kq5SignatureCdHarpyVolume,            kq5PatchCdHarpyVolume },
 	{  true,     0, "timer rollover",                              1, sciSignatureTimerRollover,            sciPatchTimerRollover },
+	{  true,    47, "sinking boat position",                       1, kq5SignatureSinkingBoatPosition,      kq5PatchSinkingBoatPosition },
 	{  true,    99, "disable speed test",                          1, sci01SpeedTestLocalSignature,         sci01SpeedTestLocalPatch },
 	{  true,    99, "disable speed test",                          1, sci11SpeedTestSignature,              sci11SpeedTestPatch },
 	{ false,   109, "Crispin intro signal",                        1, kq5SignatureCrispinIntroSignal,       kq5PatchCrispinIntroSignal },
@@ -7915,6 +7958,27 @@ static const uint16 longbowPatchAmigaPubFix[] = {
 	PATCH_END
 };
 
+// During the party in the pub, one of the sheriff's men has a broken doVerb
+//  method that attempts to load an invalid class when clicking an item on him.
+//  This fails silently in the original. We patch out the broken instruction.
+//
+// Applies to: All versions
+// Responsible method: man2:doVerb
+static const uint16 longbowSignaturePubPartyFix[] = {
+	0x50, SIG_ADDTOOFFSET(+2),      // class ????
+	0x1a,                           // eq?
+	0x30, SIG_UINT16(0x0004),       // bnt 0004
+	SIG_MAGICDWORD,
+	0x63, 0x00,                     // pToa species
+	0x87, 0x01,                     // lap 01
+	SIG_END
+};
+
+static const uint16 longbowPatchPubPartyFix[] = {
+	0x34, PATCH_UINT16(0xffff),     // ldi ffff
+	PATCH_END
+};
+
 // WORKAROUND: Script needed, because of differences in our pathfinding
 // algorithm
 // When the guards kick Robin out of archery room 320 the game locks up due to
@@ -8306,6 +8370,33 @@ static const uint16 longbowPatchMapPaletteSpeed[] = {
 	PATCH_END
 };
 
+// After rescuing Marian from the fire, closing message boxes too quickly causes
+//  the game to lockup when using the emerald in the next scene. This is a bug
+//  in room 179, the synopsis room that displays messages and awards points.
+//  synop:dispose calls kDisposeScript(806), but script 806 contains the sound
+//  object for the points sound effect. If a sound object is playing while its
+//  script is disposed then the global sounds collection enters an invalid state
+//  and sound cues no longer work.
+//
+// We fix this by patching out the call to kDisposeScript(806) in synop:dispose.
+//  This call is unnecessary because script 806 already unloads itself in every
+//  procedure, and also whenever specialSound:check finishes playing.
+//
+// Applies to: All versions
+// Responsible method: synop:dispose
+static const uint16 longbowSignatureEmeraldLockup[] = {
+	SIG_MAGICDWORD,
+	0x78,                           // push1
+	0x38, SIG_UINT16(0x0326),       // pushi 0326
+	0x43, 0x03, 0x02,               // callk DisposeScript [ DisposeScript 806 ]
+	SIG_END
+};
+
+static const uint16 longbowPatchEmeraldLockup[] = {
+	0x33, 0x05,                     // jmp 05 [ skip DisposeScript ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                                patch
 static const SciScriptPatcherEntry longbowSignatures[] = {
 	{  true,    29, "amiga day 1 peasant woman",                   1, longbowSignatureAmigaPeasantWoman,       longbowPatchAmigaPeasantWoman},
@@ -8313,6 +8404,7 @@ static const SciScriptPatcherEntry longbowSignatures[] = {
 	{  true,   140, "green man riddles and forest sweep fix",      1, longbowSignatureGreenManForestSweepFix,  longbowPatchGreenManForestSweepFix },
 	{  true,   150, "day 5/6 camp sunset fix",                     2, longbowSignatureCampSunsetFix,           longbowPatchCampSunsetFix },
 	{  true,   150, "day 7 tuck net fix",                          1, longbowSignatureTuckNetFix,              longbowPatchTuckNetFix },
+	{  true,   179, "emerald lockup",                              1, longbowSignatureEmeraldLockup,           longbowPatchEmeraldLockup },
 	{  true,   210, "hand code crash",                             5, longbowSignatureShowHandCode,            longbowPatchShowHandCode },
 	{  true,   225, "arithmetic berry bush fix",                   1, longbowSignatureBerryBushFix,            longbowPatchBerryBushFix },
 	{  true,   250, "day 5/6 rescue flag fix",                     1, longbowSignatureRescueFlagFix,           longbowPatchRescueFlagFix },
@@ -8325,6 +8417,7 @@ static const SciScriptPatcherEntry longbowSignatures[] = {
 	{  true,   450, "abbey map fix",                               1, longbowSignatureAbbeyMapFix,             longbowPatchAbbeyMapFix },
 	{  true,   490, "hedge maze music",                            1, longbowSignatureHedgeMazeMusic,          longbowPatchHedgeMazeMusic },
 	{  true,   530, "amiga pub fix",                               1, longbowSignatureAmigaPubFix,             longbowPatchAmigaPubFix },
+	{  true,   532, "pub party fix",                               1, longbowSignaturePubPartyFix,             longbowPatchPubPartyFix },
 	{  true,   600, "amiga fulk rescue fix",                       1, longbowSignatureAmigaFulkRescue,         longbowPatchAmigaFulkRescue },
 	{  true,   803, "amiga speed test",                            1, longbowSignatureAmigaSpeedTest,          longbowPatchAmigaSpeedTest },
 	{  true,   803, "disable speed test",                          1, sci01SpeedTestLocalSignature,            sci01SpeedTestLocalPatch },

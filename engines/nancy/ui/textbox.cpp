@@ -42,15 +42,16 @@ const char Textbox::_newLineToken[] = "<n>";
 const char Textbox::_tabToken[] = "<t>";
 const char Textbox::_telephoneEndToken[] = "<e>";
 
-Textbox::Textbox(RenderObject &redrawFrom) :
-		RenderObject(redrawFrom, 6),
+Textbox::Textbox() :
+		RenderObject(6),
 		_firstLineOffset(0),
 		_lineHeight(0),
 		_borderWidth(0),
 		_needsTextRedraw(false),
 		_scrollbar(nullptr),
 		_scrollbarPos(0),
-		_numLines(0) {}
+		_numLines(0),
+		_lastResponseisMultiline(false) {}
 
 Textbox::~Textbox() {
 	delete _scrollbar;
@@ -70,10 +71,16 @@ void Textbox::init() {
 	Common::Point scrollbarDefaultPos;
 	scrollbarDefaultPos.x = chunk->readUint16LE();
 	scrollbarDefaultPos.y = chunk->readUint16LE();
+
+	// TVD handles coordinates differently, so we need to nudge scrollbars one pixel to the left
+	if (g_nancy->getGameType() == Nancy::GameType::kGameTypeVampire) {
+		scrollbarDefaultPos.x -= 1;
+	}
+
 	uint16 scrollbarMaxScroll = chunk->readUint16LE();
 
 	_firstLineOffset = chunk->readUint16LE() + 1;
-	_lineHeight = chunk->readUint16LE();
+	_lineHeight = chunk->readUint16LE() + (g_nancy->getGameType() == Nancy::GameType::kGameTypeVampire ? 1 : 0);
 	_borderWidth = chunk->readUint16LE() - 1;
 	_maxWidthDifference = chunk->readUint16LE();
 
@@ -88,7 +95,8 @@ void Textbox::init() {
 
 	RenderObject::init();
 
-	_scrollbar = new Scrollbar(NancySceneState.getFrame(), 9, scrollbarSrcBounds, scrollbarDefaultPos, scrollbarMaxScroll - scrollbarDefaultPos.y);
+	// zOrder bumped by 1 to avoid overlap with the inventory box curtains in The Vampire Diaries
+	_scrollbar = new Scrollbar(10, scrollbarSrcBounds, scrollbarDefaultPos, scrollbarMaxScroll - scrollbarDefaultPos.y);
 	_scrollbar->init();
 }
 
@@ -139,7 +147,7 @@ void Textbox::drawTextbox() {
 	const Font *font = g_nancy->_graphicsManager->getFont(_fontID);
 
 	uint maxWidth = _fullSurface.w - _maxWidthDifference - _borderWidth - 2;
-	uint lineDist = _lineHeight + _lineHeight / 4 + (g_nancy->getGameType() == kGameTypeVampire ? 1 : 0);
+	uint lineDist = _lineHeight + _lineHeight / 4;
 
 	for (uint lineID = 0; lineID < _textLines.size(); ++lineID) {
 		Common::String currentLine = _textLines[lineID];
@@ -190,6 +198,7 @@ void Textbox::drawTextbox() {
 			}
 
 			String currentSubLine;
+			_lastResponseisMultiline = false;
 
 			uint32 nextTabPos = currentLine.find(_tabToken);
 			if (nextTabPos != String::npos) {
@@ -221,7 +230,7 @@ void Textbox::drawTextbox() {
 			if (hasHotspot) {
 				hotspot.left = _borderWidth;
 				hotspot.top = _firstLineOffset - font->getFontHeight() + (_numLines + 1) * lineDist;
-				hotspot.setHeight((wrappedLines.size() - 1) * lineDist + _lineHeight);
+				hotspot.setHeight((wrappedLines.size() - 1) * _lineHeight + lineDist);
 				hotspot.setWidth(0);
 			}
 
@@ -238,6 +247,7 @@ void Textbox::drawTextbox() {
 			// a single line gets a double newline afterwards
 			if (wrappedLines.size() > 1 && hasHotspot) {
 				++_numLines;
+				_lastResponseisMultiline = true;
 			}
 
 			horizontalOffset = 0;
@@ -314,8 +324,13 @@ void Textbox::onScrollbarMove() {
 }
 
 uint16 Textbox::getInnerHeight() const {
+	// These calculations are _almost_ correct, but off by a pixel sometimes
 	uint lineDist = _lineHeight + _lineHeight / 4;
-	return _numLines * lineDist + _firstLineOffset + lineDist / 2 - 1;
+	if (g_nancy->getGameType() == kGameTypeVampire) {
+		return _numLines * lineDist + _firstLineOffset + (_lastResponseisMultiline ? - _lineHeight / 2 : 1);
+	} else {
+		return _numLines * lineDist + _firstLineOffset + lineDist / 2 - 1;
+	}
 }
 
 } // End of namespace UI

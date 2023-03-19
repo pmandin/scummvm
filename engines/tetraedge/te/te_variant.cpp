@@ -58,11 +58,11 @@ float TeVariant::toFloat32(bool *success) const {
 	if (_type == TypeFloat32) {
 		if (success)
 			*success = true;
-		return *(float *)(&_data);
+		return *(const float *)(&_data);
 	} else {
 		if (success)
 			*success = false;
-		return false;
+		return 0;
 	}
 
 }
@@ -71,11 +71,11 @@ double TeVariant::toFloat64(bool *success) const {
 	if (_type == TypeFloat64) {
 		if (success)
 			*success = true;
-		return *(double *)(&_data);
+		return *(const double *)(&_data);
 	} else {
 		if (success)
 			*success = false;
-		return false;
+		return 0;
 	}
 
 }
@@ -84,11 +84,11 @@ int32 TeVariant::toSigned32(bool *success) const {
 	if (_type == TypeInt32) {
 		if (success)
 			*success = true;
-		return *(int32 *)(&_data);
+		return *(const int32 *)(&_data);
 	} else {
 		if (success)
 			*success = false;
-		return false;
+		return 0;
 	}
 
 }
@@ -97,11 +97,11 @@ int64 TeVariant::toSigned64(bool *success) const {
 	if (_type == TypeInt64) {
 		if (success)
 			*success = true;
-		return *(int64 *)(&_data);
+		return *(const int64 *)(&_data);
 	} else {
 		if (success)
 			*success = false;
-		return false;
+		return 0;
 	}
 
 }
@@ -119,30 +119,55 @@ Common::String TeVariant::toString(bool *success) const {
 
 }
 
-int32 TeVariant::toUnsigned32(bool *success) const {
+uint32 TeVariant::toUnsigned32(bool *success) const {
 	if (_type == TypeUInt32) {
 		if (success)
 			*success = true;
-		return *(uint32 *)(&_data);
+		return *(const uint32 *)(&_data);
 	} else {
 		if (success)
 			*success = false;
-		return false;
+		return 0;
 	}
 
 }
 
-int64 TeVariant::toUnsigned64(bool *success) const {
+uint64 TeVariant::toUnsigned64(bool *success) const {
 	if (_type == TypeUInt64) {
 		if (success)
 			*success = true;
-		return *(uint64 *)(&_data);
+		return *(const uint64 *)(&_data);
 	} else {
 		if (success)
 			*success = false;
-		return false;
+		return 0;
 	}
 
 }
+
+Common::String TeVariant::dumpStr() const {
+	switch (_type) {
+	case TypeInt32:
+		return Common::String::format("%d", (int)toSigned32());
+	case TypeUInt32:
+		return Common::String::format("%u", (unsigned int)toUnsigned32());
+	case TypeInt64:
+		return Common::String::format("%ld", (long)toSigned64());
+	case TypeUInt64:
+		return Common::String::format("%lu", (unsigned long)toUnsigned64());
+	case TypeFloat32:
+		return Common::String::format("%.04f", toFloat32());
+	case TypeFloat64:
+		return Common::String::format("%.04f", toFloat64());
+	case TypeBoolean:
+		return Common::String::format("%s", toBoolean() ? "true" : "false");
+	case TypeString:
+		return toString();
+	default:
+	case TypeNone:
+		return "(none)";
+	}
+}
+
 
 } // end namespace Tetraedge

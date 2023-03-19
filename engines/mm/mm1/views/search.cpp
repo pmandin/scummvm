@@ -20,6 +20,7 @@
  */
 
 #include "mm/mm1/views/search.h"
+#include "mm/mm1/views/trap.h"
 #include "mm/mm1/globals.h"
 #include "mm/mm1/sound.h"
 
@@ -54,7 +55,7 @@ bool Search::msgFocus(const FocusMessage &msg) {
 	_bounds = getLineBounds(20, 24);
 	_lineNum = 0;
 
-	if (_mode == FOCUS_GET_TREASURE) {
+	if (dynamic_cast<Trap *>(msg._priorView) != nullptr) {
 		// Returning from trap display
 		if (g_globals->_party.checkPartyDead())
 			return true;
@@ -82,7 +83,8 @@ void Search::draw() {
 		break;
 
 	case OPTIONS:
-		writeString(1, 1, STRING["dialogs.search.options1"]);
+		writeString(1, 1, STRING["dialogs.search.options"]);
+		writeString(20, 1, STRING["dialogs.search.options1"]);
 		writeString(20, 2, STRING["dialogs.search.options2"]);
 		writeString(20, 3, STRING["dialogs.search.options3"]);
 		escToGoBack(0, 3);
@@ -99,7 +101,7 @@ void Search::draw() {
 
 	case WHO_WILL_TRY: {
 		line = Common::String::format(
-			STRING["dialogs.search.who_will_try"].c_str(),
+			STRING["dialogs.misc.who_will_try"].c_str(),
 			'0' + g_globals->_party.size()
 		);
 		writeString(10, 1, line);
@@ -122,9 +124,6 @@ bool Search::msgKeypress(const KeypressMessage &msg) {
 
 	case OPTIONS:
 		switch (msg.keycode) {
-		case Common::KEYCODE_ESCAPE:
-			close();
-			break;
 		case Common::KEYCODE_1:
 			openContainer();
 			break;
@@ -144,11 +143,7 @@ bool Search::msgKeypress(const KeypressMessage &msg) {
 		break;
 
 	case WHO_WILL_TRY:
-		if (msg.keycode == Common::KEYCODE_ESCAPE) {
-			_mode = OPTIONS;
-			draw();
-
-		} else if (msg.keycode >= Common::KEYCODE_1 &&
+		if (msg.keycode >= Common::KEYCODE_1 &&
 			msg.keycode <= (Common::KEYCODE_0 + (int)g_globals->_party.size())) {
 			// Character selected
 			g_globals->_currCharacter = &g_globals->_party[
@@ -158,19 +153,50 @@ bool Search::msgKeypress(const KeypressMessage &msg) {
 				clearSurface();
 				writeString(3, 2, STRING["dialogs.search.check_condition"]);
 				delaySeconds(4);
-			} else if (_removing) {
-				findRemoveTrap2();
 			} else {
-				openContainer2();
+				switch (_optionMode) {
+				case OMODE_OPEN:
+					openContainer2();
+					break;
+				case OMODE_REMOVE_TRAP:
+					findRemoveTrap2();
+					break;
+				case OMODE_DETECT:
+					detectMagicTrap2();
+					break;
+				}
 			}
 		}
 		break;
 
 	case GET_TREASURE:
-
+		break;
 
 	default:
 		break;
+	}
+
+	return true;
+}
+
+bool Search::msgAction(const ActionMessage &msg) {
+	if (endDelay())
+		return true;
+
+	if (msg._action == KEYBIND_ESCAPE) {
+		switch (_mode) {
+		case OPTIONS:
+			close();
+			break;
+		case WHO_WILL_TRY:
+			_mode = OPTIONS;
+			draw();
+			break;
+		default:
+			break;
+		}
+
+		return true;
 	}
 
 	return true;
@@ -229,8 +255,8 @@ void Search::timeout() {
 }
 
 void Search::openContainer() {
-	_removing = false;
-	if (!whoWillTry())
+	_optionMode = OMODE_OPEN;
+	if (whoWillTry())
 		openContainer2();
 }
 
@@ -241,8 +267,6 @@ void Search::openContainer2() {
 			g_globals->_treasure._container;
 
 		if (getRandomNumber(thresold + 5) < thresold) {
-			// Triggered a trap
-			_mode = FOCUS_GET_TREASURE;
 			g_events->send("Trap", GameMessage("TRAP"));
 			return;
 		}
@@ -252,8 +276,8 @@ void Search::openContainer2() {
 }
 
 void Search::findRemoveTrap() {
-	_removing = true;
-	if (!whoWillTry())
+	_optionMode = OMODE_REMOVE_TRAP;
+	if (whoWillTry())
 		findRemoveTrap2();
 }
 
@@ -271,6 +295,12 @@ void Search::findRemoveTrap2() {
 }
 
 void Search::detectMagicTrap() {
+	_optionMode = OMODE_DETECT;
+	if (whoWillTry())
+		detectMagicTrap2();
+}
+
+void Search::detectMagicTrap2() {
 	Character &c = *g_globals->_currCharacter;
 	_mode = RESPONSE;
 

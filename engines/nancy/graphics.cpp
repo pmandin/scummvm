@@ -27,6 +27,7 @@
 #include "engines/nancy/graphics.h"
 #include "engines/nancy/renderobject.h"
 #include "engines/nancy/resource.h"
+#include "engines/nancy/state/scene.h"
 
 namespace Nancy {
 
@@ -51,35 +52,57 @@ void GraphicsManager::init() {
 }
 
 void GraphicsManager::draw() {
+	Common::List<Common::Rect> dirtyRects;
+
+	// Update graphics for all RenderObjects and determine
+	// the areas of the screen that need to be redrawn
 	for (auto it : _objects) {
 		RenderObject &current = *it;
 
 		current.updateGraphics();
 
-		if (current._isVisible && current._needsRedraw) {
-			// object is visible and updated
-
-			if (current._redrawFrom) {
+		if (current._needsRedraw) {
+			if (current._isVisible) {
 				if (current.hasMoved() && !current.getPreviousScreenPosition().isEmpty()) {
-					// Redraw previous location if moved
-					blitToScreen(*current._redrawFrom, current.getPreviousScreenPosition());
+					// Object moved to a new location on screen, update the previous one
+					dirtyRects.push_back(current.getPreviousScreenPosition());
 				}
 
-				if (current._drawSurface.hasTransparentColor()) {
-					// Redraw below if transparent
-					blitToScreen(*current._redrawFrom, current.getScreenPosition());
-				}
+				// Redraw the current location
+				dirtyRects.push_back(current.getScreenPosition());
+			} else if (!current.getPreviousScreenPosition().isEmpty()) {
+				// Object just turned invisible, redraw the last location
+				dirtyRects.push_back(current.getPreviousScreenPosition());
 			}
-
-			// Draw the object itself
-			blitToScreen(current, current.getScreenPosition());
-		} else if (!current._isVisible && current._needsRedraw && current._redrawFrom && !current.getPreviousScreenPosition().isEmpty()) {
-			// Object just turned invisible, redraw below
-			blitToScreen(*current._redrawFrom, current.getPreviousScreenPosition());
 		}
 
 		current._needsRedraw = false;
 		current._previousScreenPosition = current._screenPosition;
+	}
+
+	// Filter out dirty rects that are completely inside others to reduce overdraw
+	for (auto outer = dirtyRects.begin(); outer != dirtyRects.end(); ++outer) {
+		for (auto inner = dirtyRects.begin(); inner != dirtyRects.end(); ++inner) {
+			if (inner != outer && (*outer).contains(*inner)) {
+				dirtyRects.erase(inner);
+				break;
+			}
+		}
+	}
+
+	// Redraw all dirty rects
+	for (auto it : _objects) {
+		RenderObject &current = *it;
+
+		if (!current._isVisible || current.getScreenPosition().isEmpty()) {
+			continue;
+		}
+
+		for (Common::Rect rect : dirtyRects) {
+			if (rect.intersects(current.getScreenPosition())) {
+				blitToScreen(current, rect.findIntersectingRect(current.getScreenPosition()));
+			}
+		}
 	}
 
 	// Draw the screen
@@ -119,16 +142,6 @@ void GraphicsManager::redrawAll() {
 	}
 }
 
-void GraphicsManager::loadSurfacePalette(Graphics::ManagedSurface &inSurf, const Common::String paletteFilename) {
-	Common::File f;
-	if (f.open(paletteFilename + ".bmp")) {
-		Image::BitmapDecoder dec;
-		if (dec.loadStream(f)) {
-			inSurf.setPalette(dec.getPalette(), dec.getPaletteStartIndex(), MIN<uint>(256, dec.getPaletteColorCount()));
-		}
-	}
-}
-
 void GraphicsManager::loadSurfacePalette(Graphics::ManagedSurface &inSurf, const Common::String paletteFilename, uint paletteStart, uint paletteSize) {
 	Common::File f;
 	if (f.open(paletteFilename + ".bmp")) {
@@ -141,13 +154,17 @@ void GraphicsManager::loadSurfacePalette(Graphics::ManagedSurface &inSurf, const
 
 void GraphicsManager::copyToManaged(const Graphics::Surface &src, Graphics::ManagedSurface &dst, bool verticalFlip, bool doubleSize) {
 	if (dst.w != (doubleSize ? src.w * 2 : src.w) || dst.h != (doubleSize ? src.h * 2 : src.h)) {
-		const uint32 *palette = dst.getPalette();
+		uint8 palette[256 * 3];
+		bool hasPalette = dst.hasPalette();
 		bool hasTransColor = dst.hasTransparentColor();
+
+		if (hasPalette && g_nancy->getGameType() == kGameTypeVampire) {
+			dst.grabPalette(palette, 0, 256);
+		}
+
 		dst.create(doubleSize ? src.w * 2 : src.w, doubleSize ? src.h * 2 : src.h, src.format);
 
-		if (palette && g_nancy->getGameType() == kGameTypeVampire) {
-			// free() clears the _hasPalette flag but doesn't clear the palette itself, so
-			// we just set it to itself; hopefully this doesn't cause any issues
+		if (hasPalette && g_nancy->getGameType() == kGameTypeVampire) {
 			dst.setPalette(palette, 0, 256);
 		}
 
@@ -227,7 +244,7 @@ void GraphicsManager::copyToManaged(void *src, Graphics::ManagedSurface &dst, ui
 	copyToManaged(surf, dst, verticalFlip, doubleSize);
 }
 
-void GraphicsManager::debugDrawToScreen(const Graphics::Surface &surf) {
+void GraphicsManager::debugDrawToScreen(const Graphics::ManagedSurface &surf) {
 	_screen.blitFrom(surf, Common::Point());
 	_screen.update();
 }
@@ -252,6 +269,18 @@ uint GraphicsManager::getTransColor() {
 	}
 }
 
+void GraphicsManager::grabViewportObjects(Common::Array<RenderObject *> &inArray) {
+	// Add the viewport
+	inArray.push_back(&(RenderObject &)NancySceneState.getViewport());
+
+	// Add all viewport-relative (non-UI) objects
+	for (RenderObject *obj : _objects) {
+		if (obj->isViewportRelative()) {
+			inArray.push_back(obj);
+		}
+	}
+}
+
 void GraphicsManager::loadFonts() {
 	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("FONT");
 
@@ -264,8 +293,7 @@ void GraphicsManager::loadFonts() {
 
 // Draw a given screen-space rectangle to the screen
 void GraphicsManager::blitToScreen(const RenderObject &src, Common::Rect screenRect) {
-	Common::Point pointDest(screenRect.left, screenRect.top);
-	_screen.blitFrom(src._drawSurface, src.convertToLocal(screenRect), pointDest);
+	_screen.blitFrom(src._drawSurface, src._drawSurface.getBounds().findIntersectingRect(src.convertToLocal(screenRect)), screenRect);
 }
 
 int GraphicsManager::objectComparator(const void *a, const void *b) {

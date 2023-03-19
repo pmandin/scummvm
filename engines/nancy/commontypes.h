@@ -23,6 +23,8 @@
 #define NANCY_COMMONYPES_H
 
 #include "common/rect.h"
+#include "common/array.h"
+#include "common/str.h"
 
 namespace Common {
 class SeekableReadStream;
@@ -32,7 +34,52 @@ namespace Nancy {
 
 class NancyEngine;
 
-enum NancyFlag : byte { kFalse = 1, kTrue = 2 };
+// The original engine used a large amount of #defines for numerical constants,
+// which can be found listed inside the gameflow.h file shipping with many of
+// the titles (the Russian variant of nancy1 has it as a separate file, while
+// nancy2 and above embed it within the ciftree).
+//
+// Other, more specific constants are declared within their related classes,
+// so as not to litter the namespace
+
+static const int8 kFlagNoLabel			= -1;
+static const int8 kEvNoEvent			= -1;
+static const int8 kFrNoFrame			= -1;
+
+// Event flags
+static const byte kEvNotOccurred 		= 1;
+static const byte kEvOccurred 			= 2;
+
+// Logic conditions
+static const byte kLogUsed				= 1;
+static const byte kLogNotUsed			= 2;
+
+// Inventory items flags
+static const byte kInvEmpty				= 1;
+static const byte kInvHolding			= 2;
+
+// Inventory items use types
+static const byte kInvItemUseThenLose	= 0;
+static const byte kInvItemKeepAlways	= 1;
+
+// Dependency types
+static const byte kFlagEvent			= 1;
+static const byte kFlagInventory		= 2;
+static const byte kFlagCursor			= 3;
+
+// Scene sound flags
+static const byte kContinueSceneSound	= 1;
+static const byte kLoadSceneSound		= 0;
+
+// Clock bump types
+static const byte kAbsoluteClockBump 	= 1;
+static const byte kRelativeClockBump 	= 2;
+
+// Time of day
+static const byte kPlayerDay		= 0;
+static const byte kPlayerNight		= 1;
+static const byte kPlayerDuskDawn	= 2;
+
 enum MovementDirection : byte { kUp = 1, kDown = 2, kLeft = 4, kRight = 8, kMoveFast = 16 };
 
 // Separate namespace to remove possible clashes
@@ -50,7 +97,7 @@ enum NancyState {
 	kHelp,
 	kScene,
 	// CD change
-	kCheat,
+	// Cheat,
 	kQuit,
 	// regain focus
 	kNone,
@@ -64,15 +111,17 @@ struct SceneChangeDescription {
 	uint16 sceneID = 0;
 	uint16 frameID = 0;
 	uint16 verticalOffset = 0;
-	bool doNotStartSound = false;
+	uint16 continueSceneSound = kLoadSceneSound;
 
-	void readData(Common::SeekableReadStream &stream);
+	int8 paletteID = -1; // TVD only
+
+	void readData(Common::SeekableReadStream &stream, bool longFormat = false);
 };
 
-// Describes a single event flag change or comparison
-struct EventFlagDescription {
+// Describes a single flag change or comparison
+struct FlagDescription {
 	int16 label;
-	NancyFlag flag;
+	byte flag;
 };
 
 // Describes a hotspot
@@ -94,14 +143,14 @@ struct BitmapDescription {
 
 // Describes 10 event flag changes to be executed when an action is triggered
 struct MultiEventFlagDescription {
-	EventFlagDescription descs[10];
+	FlagDescription descs[10];
 
 	void readData(Common::SeekableReadStream &stream);
 	void execute();
 };
 
 struct SecondaryVideoDescription {
-	int16 frameID = -1;
+	int16 frameID = kFrNoFrame;
 	Common::Rect srcRect;
 	Common::Rect destRect;
 	// 2 unknown/empty rects
@@ -120,6 +169,72 @@ struct SoundDescription {
 	uint16 panAnchorFrame = 0;
 
 	void read(Common::SeekableReadStream &stream, Type type);
+};
+
+// Structs inside nancy.dat, which contains all the data that was
+// originally stored inside the executable
+
+struct ConditionalDialogue {
+	byte textID;
+	uint16 sceneID;
+	Common::String soundID;
+	Common::Array<FlagDescription> flagConditions;
+	Common::Array<FlagDescription> inventoryConditions;
+
+	void readData(Common::SeekableReadStream &stream);
+};
+
+struct GoodbyeSceneChange {
+	Common::Array<uint16> sceneIDs;
+	Common::Array<FlagDescription> flagConditions;
+	FlagDescription flagToSet;
+
+	void readData(Common::SeekableReadStream &stream);
+};
+
+struct Goodbye {
+	Common::String soundID;
+	Common::Array<GoodbyeSceneChange> sceneChanges;
+
+	void readData(Common::SeekableReadStream &stream);
+};
+
+struct Hint {
+	byte textID;
+	int16 hintWeight;
+	SceneChangeDescription sceneChange;
+	Common::String soundIDs[3];
+	Common::Array<FlagDescription> flagConditions;
+	Common::Array<FlagDescription> inventoryConditions;
+
+	void readData(Common::SeekableReadStream &stream);
+};
+
+struct StaticData {
+	// Default values are for nancy1, provided for debugging purposes
+	uint16 numItems = 11;
+	uint16 numEventFlags = 168;
+	Common::Array<uint16> mapAccessSceneIDs;
+	Common::Array<uint16> genericEventFlags;
+	uint16 numNonItemCursors = 12;
+	uint16 numCurtainAnimationFrames = 7;
+	uint32 logoEndAfter = 7000;
+
+	// In-game strings and related logic
+	Common::Array<Common::Array<ConditionalDialogue>> conditionalDialogue;
+	Common::Array<Goodbye> goodbyes;
+	Common::Array<Common::Array<Hint>> hints;
+
+	Common::Array<Common::String> conditionalDialogueTexts;
+	Common::Array<Common::String> goodbyeTexts;
+	Common::Array<Common::String> hintTexts;
+	Common::String ringingText;
+
+	// Debug strings
+	Common::Array<Common::String> itemNames;
+	Common::Array<Common::String> eventFlagNames;
+
+	void readData(Common::SeekableReadStream &stream, Common::Language language);
 };
 
 } // End of namespace Nancy

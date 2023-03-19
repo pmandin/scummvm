@@ -32,7 +32,7 @@ namespace Action {
 class PasswordPuzzle : public ActionRecord, public RenderObject {
 public:
 	enum SolveState { kNotSolved, kFailed, kSolved };
-	PasswordPuzzle(RenderObject &redrawFrom) : RenderObject(redrawFrom, 7) {}
+	PasswordPuzzle() : RenderObject(7) {}
 	virtual ~PasswordPuzzle() {}
 
 	void init() override;
@@ -50,13 +50,13 @@ public:
 	Common::String _name; // 0x34, 20 bytes long
 	Common::String _password; // 0x48, 20 bytes long
 	SceneChangeDescription _solveExitScene; // 0x5A
-	EventFlagDescription _flagOnSolve; // 0x66
+	FlagDescription _flagOnSolve; // 0x66
 	SoundDescription _solveSound; // 0x69
 	SceneChangeDescription _failExitScene; // 0x8B
-	EventFlagDescription _flagOnFail; // 0x95
+	FlagDescription _flagOnFail; // 0x95
 	SoundDescription _failSound; // 0x98
 	SceneChangeDescription _exitScene; // 0xBA
-	EventFlagDescription _flagOnExit; // 0xC4
+	FlagDescription _flagOnExit; // 0xC4
 	Common::Rect _exitHotspot; // 0xC7
 
 	Common::String _playerNameInput;

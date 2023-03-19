@@ -117,7 +117,7 @@ bool shouldSkipFileForTarget(const std::string &fileID, const std::string &targe
 	// - if the parent directory is "backends/platform/ios7", the file belongs to the iOS target.
 	// - if the parent directory is "/sdl", the file belongs to the macOS target.
 	// - if the file has a suffix, like "_osx", or "_ios", the file belongs to one of the target.
-	// - if the file is an macOS icon file (icns), it belongs to the macOS target.
+	// - if the file is a macOS icon file (icns), it belongs to the macOS target.
 	std::string name, ext;
 	splitFilename(fileName, name, ext);
 
@@ -454,6 +454,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	std::map<std::string, FileProperty> properties;
 	int fwOrder = 0;
 	// Frameworks
+	DEF_SYSFRAMEWORK("Accelerate");
 	DEF_SYSFRAMEWORK("ApplicationServices");
 	DEF_SYSFRAMEWORK("AudioToolbox");
 	DEF_SYSFRAMEWORK("AudioUnit");
@@ -529,6 +530,9 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	if (CONTAINS_DEFINE(setup.defines, "USE_RETROWAVE")) {
 		DEF_LOCALLIB_STATIC("libretrowave");
 	}
+	if (CONTAINS_DEFINE(setup.defines, "USE_VPX")) {
+		DEF_LOCALLIB_STATIC("libvpx");
+	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_ZLIB")) {
 		DEF_SYSTBD("libz");
 	}
@@ -582,6 +586,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	frameworks_iOS.push_back("AudioToolbox.framework");
 	frameworks_iOS.push_back("QuartzCore.framework");
 	frameworks_iOS.push_back("OpenGLES.framework");
+	frameworks_iOS.push_back("Accelerate.framework");
 
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
 		frameworks_iOS.push_back("libfaad.a");
@@ -613,6 +618,9 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_THEORADEC")) {
 		frameworks_iOS.push_back("libtheoradec.a");
+	}
+	if (CONTAINS_DEFINE(setup.defines, "USE_VPX")) {
+		frameworks_iOS.push_back("libvpx.a");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MAD")) {
 		frameworks_iOS.push_back("libmad.a");
@@ -736,6 +744,9 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	if (CONTAINS_DEFINE(setup.defines, "USE_RETROWAVE")) {
 		frameworks_osx.push_back("libretrowave.a");
 	}
+	if (CONTAINS_DEFINE(setup.defines, "USE_VPX")) {
+		frameworks_osx.push_back("libvpx.a");
+	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_ZLIB")) {
 		frameworks_osx.push_back("libz.tbd");
 	}
@@ -792,6 +803,7 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	frameworks_tvOS.push_back("AudioToolbox.framework");
 	frameworks_tvOS.push_back("QuartzCore.framework");
 	frameworks_tvOS.push_back("OpenGLES.framework");
+	frameworks_tvOS.push_back("Accelerate.framework");
 
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
 		frameworks_tvOS.push_back("libfaad.a");
@@ -963,6 +975,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("dists/engine-data/drascula.dat");
 		files.push_back("dists/engine-data/encoding.dat");
 		files.push_back("dists/engine-data/fonts.dat");
+		files.push_back("dists/engine-data/freescape.dat");
 		files.push_back("dists/engine-data/hadesch_translations.dat");
 		files.push_back("dists/engine-data/hugo.dat");
 		files.push_back("dists/engine-data/kyra.dat");
@@ -974,7 +987,9 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("dists/engine-data/macventure.dat");
 		files.push_back("dists/engine-data/mm.dat");
 		files.push_back("dists/engine-data/mort.dat");
+		files.push_back("dists/engine-data/nancy.dat");
 		files.push_back("dists/engine-data/neverhood.dat");
+		files.push_back("dists/engine-data/prince_translation.dat");
 		files.push_back("dists/engine-data/queen.tbl");
 		files.push_back("dists/engine-data/sky.cpt");
 		files.push_back("dists/engine-data/supernova.dat");
@@ -1078,6 +1093,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("LICENSES/COPYING.ISC");
 		files.push_back("LICENSES/COPYING.LUA");
 		files.push_back("LICENSES/COPYING.MIT");
+		files.push_back("LICENSES/COPYING.MKV");
 		files.push_back("LICENSES/COPYING.TINYGL");
 		files.push_back("LICENSES/COPYING.GLAD");
 		files.push_back("NEWS.md");
@@ -1359,6 +1375,7 @@ void XcodeProvider::setupBuildConfiguration(const BuildSetup &setup) {
 	ValueList scummvmOSX_defines;
 	ADD_DEFINE(scummvmOSX_defines, "\"$(inherited)\"");
 	ADD_DEFINE(scummvmOSX_defines, "SDL_BACKEND");
+	ADD_DEFINE(scummvmOSX_defines, "USE_SDL2");
 	ADD_DEFINE(scummvmOSX_defines, "MACOSX");
 	ADD_SETTING_LIST(scummvmOSX_Debug, "GCC_PREPROCESSOR_DEFINITIONS", scummvmOSX_defines, kSettingsNoQuote | kSettingsAsList, 5);
 	ADD_SETTING_QUOTE(scummvmOSX_Debug, "GCC_VERSION", "");

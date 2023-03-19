@@ -67,6 +67,7 @@ std::string MSVCProvider::getLibraryFromFeature(const char *feature, const Build
 		{      "faad", "faad.lib",                  nullptr,         nullptr,                                           "libfaad.lib" },
 		{     "mpeg2", "mpeg2.lib",                 nullptr,         nullptr,                                           "libmpeg2.lib" },
 		{ "theoradec", "theora.lib",                nullptr,         nullptr,                                           "libtheora_static.lib" },
+		{       "vpx", "vpx.lib",                   nullptr,         nullptr,                                           nullptr },
 		{ "freetype2", "freetype.lib",              "freetyped.lib", nullptr,                                           nullptr },
 		{      "jpeg", "jpeg.lib",                  nullptr,         nullptr,                                           "jpeg-static.lib" },
 		{"fluidsynth", "fluidsynth.lib",            nullptr,         nullptr,                                           "libfluidsynth.lib" },
@@ -79,7 +80,8 @@ std::string MSVCProvider::getLibraryFromFeature(const char *feature, const Build
 		// Feature flags with library dependencies
 		{   "updates", "winsparkle.lib",            nullptr,         nullptr,                                           nullptr },
 		{       "tts", nullptr,                     nullptr,         "sapi.lib",                                        nullptr },
-		{    "opengl", nullptr,                     nullptr,         "opengl32.lib",                                    nullptr }
+		{    "opengl", nullptr,                     nullptr,         "opengl32.lib",                                    nullptr },
+		{      "enet", nullptr,                     nullptr,         "winmm.lib ws2_32.lib",                            nullptr }
 	};
 
 	// HACK for switching SDL_net to SDL2_net

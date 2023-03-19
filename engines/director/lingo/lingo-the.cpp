@@ -21,6 +21,7 @@
 
 #include "common/config-manager.h"
 #include "common/fs.h"
+#include "common/util.h"
 #include "graphics/macgui/macbutton.h"
 #include "graphics/macgui/macmenu.h"
 
@@ -1086,6 +1087,9 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 	case kTheSearchCurrentFolder:
 		warning("BUILDBOT: Trying to set SearchCurrentFolder lingo property");
 		break;
+	case kTheSearchPath:
+		g_lingo->_searchPath = d;
+		break;
 	case kTheSelEnd:
 		movie->_selEnd = d.asInt();
 		if (movie->_currentEditableTextChannel != 0) {
@@ -1272,7 +1276,7 @@ Datum Lingo::getTheSprite(Datum &id1, int field) {
 		d = (int)g_director->transformColor(sprite->_backColor);
 		break;
 	case kTheBlend:
-		d = sprite->_blend;
+		d = (255 - sprite->_blendAmount) * 255 / 100;
 		break;
 	case kTheBottom:
 		d = channel->getBbox().bottom;
@@ -1425,9 +1429,13 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 		}
 		break;
 	case kTheBlend:
-		if (d.asInt() != sprite->_blend) {
-			sprite->_blend = (d.asInt() == 100 ? 0 : d.asInt());
-			channel->_dirty = true;
+		{
+			// Convert from (0, 100) range to (0xff, 0x00)
+			int blend = (100 - CLIP(d.asInt(), 0, 100)) * 255 / 100;
+			if (blend != sprite->_blendAmount) {
+				sprite->_blendAmount = blend;
+				channel->_dirty = true;
+			}
 		}
 		break;
 	case kTheCastNum:

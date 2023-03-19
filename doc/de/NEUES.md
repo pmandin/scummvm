@@ -3,11 +3,78 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
 #### 2.8.0 (XXXX-XX-XX)
 
+ Neue Spiele:
+   - Unterstützung für die macOS-Versionen von Syberia und Syberia II hinzugefügt.
+
+ Neue Plattformen:
+   - Vollständig erneute Portierung für libretro hinzugefügt.
+   - Unterstützung für Atari hinzugefügt.
+
+ Allgemein:
+   - libvpx wurde als neue, optionale Abhängigkeit hinzugefügt. 
+
+ Asylum:
+   - Unterstützung für die chinesische Version von Sanitarium hinzugefügt.
+
+ Dragons:
+   - Die Copyright-Hinweise und das Hauptmenü werden nun korrekt übersetzt.
+
+ GrimE:
+   - Unterstützung für die chinesische Version von Grim Fandango hinzugefügt.
+   - Unterstützung für die von Fargus, ENPY und 7Wolf erstellte russische Version
+     von Grim Fandango hinzugefügt.
+
+ SCUMM:
+   - Unterstützung für die entpackten RuSCUMM-Patches für russische Übersetzungen hinzugefügt.
+
+ Sherlock:
+   - Unterstützung für die chinesische Version von Serrated Scalpel hinzugefügt.
+
+ Sword2:
+   - Unterstützung für die chinesische Übersetzung hinzugefügt.
+
+ Ultima:
+   - Reaktionsgeschwindigkeit von Ultima VI verbessert.
+   - Absturz beim Laden von Spielständen in Ultima VI behoben, der auftritt, wenn Dialoge geöffnet sind.
+   - Sortierung der erzeugten Items in Ultima VI korrigiert.
+   - Automatische Ausrüstung von Wurf-Waffen in Ultima VI korrigiert.
+
+ Voyeur:
+   - Unterstützung für die deutsche Fan-Übersetzung hinzugefügt.
+
  Xeen:
    - Die Engine "xeen" wurde für Might & Magic zu "mm" umbenannt.
 
 
-#### 2.7.0 (DD.MM.YYYY)
+#### 2.7.1 (2023-XX-XX)
+
+ Allgemein:
+  - Die Wiedergabe-Geschwindigkeit von Theora-Videos wurde korrigiert.
+
+ AGI:
+   - In den Spiel-Optionen kann jetzt wieder ein beliebiger Render-Modus ausgewählt werden.
+
+ HDB:
+   - Fehler behoben, der verhindert, dass der rote Umschlag mit der Tastatur aufgehoben werden kann.
+
+ SAGA2:
+   - Fehler behoben, der zu einem Absturz bei der Nutzung einiger Zaubersprüche führt.
+
+ Sword1:
+   - Die tschechischen und polnischen Versionen mit DXA-Zwischensequenzen werden nun korrekt erkannt.
+
+ Sword2:
+   - Unterstützung für die GOG.com-Version hinzugefügt.
+   - Unterstützung für eine alternative polnische Version hinzugefügt.
+
+ iOS-Portierung:
+   - Die Auswahl des Standard-Themes funktioniert jetzt auch auf modernen Geräten korrekt.
+
+ RISC OS-Portierung:
+   - Absturz unter RISC OS 5 bei der Nutzung von Spielen, die viel RAM benötigen, behoben.
+
+
+#### 2.7.0 "The Real Slim Shader" (26.02.2023)
 
  Neue Spiele:
    - Unterstützung für Soldier Boyz hinzugefügt.
@@ -17,16 +84,17 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für Obsidian hinzugefügt.
    - Unterstützung für Added support for Pink Panther: Passport to Peril hinzugefügt.
    - Unterstützung für Pink Panther: Hokus Pokus Pink hinzugefügt.
-   - Unterstützung für Adibou 2 (Adi Junior) "Environment", "Read/Count 4 & 5" und "Read/Count 6 & 7" hinzugefügt.
+   - Unterstützung für Adibou 2 (Adi Junior) "Environment", "Lesen/Rechnen 4 & 5" und "Lesen/Rechnen 6 & 7" hinzugefügt.
    - Unterstützung für Driller/Space Station Oblivion (DOS/EGA/CGA, Amiga, Atari ST, ZX Spectrum und Amstrad CPC-Versionen) hinzugefügt.
    - Unterstützung für Halls of the Dead: Faery Tale Adventure II hinzugefügt.
+   - Unterstützung für Chop Suey, Eastern Mind, und 16 weitere Director 3- und Director 4-Titel hinzugefügt.
 
  Neue Plattformen:
-   - RetroMini RS90 mit OpenDingux Beta-Firmware.
-   - Erste Generation von Miyoo (New BittBoy, Pocket Go und PowKiddy Q90-V90-Q20)
-     mit der TriForceX MiyooCFW.
-   - Miyoo mini
-   - KolibriOS
+   - Unterstützung für RetroMini RS90 mit OpenDingux Beta-Firmware hinzugefügt.
+   - Unterstützung für die erste Generation von Miyoo (New BittBoy, Pocket Go und PowKiddy Q90-V90-Q20)
+     mit der TriForceX MiyooCFW-Firmware hinzugefügt.
+   - Unterstützung für Miyoo mini hinzugefügt.
+   - Unterstützung für KolibriOS hinzugefügt.
 
  Allgemein:
    - Anzahl an falsch-positiven Einträgen reduziert, wenn das Gerät nach Spielen durchsucht wird.
@@ -44,6 +112,8 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
    - Unterstützung für eine Konfigurationsdatei mit Anweisungen hinzugefügt, die dann gelten,
      wenn keine reguläre Konfigurationsdatei existiert. Die Datei wird über --initial-cfg=DATEI oder
      -i übergeben.
+   - Die Unterstützung für Spiel-Dateien, die eine Dateigröße von mehr als 2GB erreichen, wurde auf
+     weiteren Plattformen hinzugefügt.
 
  AGI:
    - Unterstützung der französischen Übersetzungen verbessert.
@@ -111,7 +181,7 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
      sowie für Indiana Jones 4 hinzugefügt.
    - Mögliche Sackgasse in der Ultimate Talkie Edition von Monkey Island 2 korrigiert.
      Diese ist immer dann aufgetreten, wenn der Spieler am Ende von Part II
-     das Modell des Leuchtturms nicht aufhebt, bevor Captain Dread Guybrush
+     einen benötigten Gegenstand nicht aufhebt, bevor Captain Dread Guybrush
      zurück zu Scabb Island bringt.
    - Einige Fehler in den Originalversionen der Spiele sowie Logik- und Continuity-Fehler
      korrigiert (nur, wenn die Option "Verwende spiel-spezifische Verbesserungen" aktiv ist).
@@ -159,6 +229,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Sword2:
    - Die Spiele-Erkennung nutzt nun MD5-Checksummen. Teile uns deine nicht erkannten Versionen mit!
 
+ Tinsel:
+   - Die Farbe der Untertitel in Discworld II wird nun auch auf Big-Endian-Ports korrekt dargestellt.
+
  Toon:
    - Die Spiel-Menüs verhalten sich nun wie im Original.
 
@@ -187,6 +260,30 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  3DS-Portierung:
    - Der Relocation-Parser wurde um Unterstützung für PREL31, welches von neuen Compilern verwendet wird, erweitert.
    - Weitere Optionen zur automatischen Konfiguration in ./configure hinzugefügt.
+
+ Android-Portierung:
+   - Unterstützung für das Added Storage Access Framework hinzugefügt.
+   - Verbesserte Unterstützung für Game-Controller.
+
+ iOS-Portierung:
+   - Unterstützung für Zeigegeräte hinzugefügt.
+   - Verbesserte Unterstützung des Touchpad-Modus.
+   - Unterstützung für Spiele hinzugefügt, die ein Pixel-Format von 32 Bit verwenden.
+
+ Nintendo DS-Portierung:
+   - Splash-Screen auf dem oberen Bildschirm hinzugefügt, wenn der Launcher aktiv ist.
+
+ OpenDingux-Portierung:
+   - Unterstützung für dynamische Plugins hinzugefügt.
+
+ PS Vita-Portierung:
+   - Unterstützung für dynamische Plugins hinzugefügt.
+
+ PSP-Portierung:
+   - Verbesserte Unterstützung von Spielen, die ein Pixel-Format von 32 Bit verwenden.
+
+ RISC OS-Portierung:
+   - Unterstützung für die 26-bit-Versionen von RISC OS hinzugefügt.
 
 #### 2.6.1 "Incremental Escapism" (31.10.2022)
 

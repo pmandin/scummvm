@@ -29,11 +29,12 @@
 #include "engines/nancy/graphics.h"
 #include "engines/nancy/cursor.h"
 #include "engines/nancy/util.h"
-#include "engines/nancy/constants.h"
 
 #include "engines/nancy/state/scene.h"
 
 #include "engines/nancy/ui/button.h"
+#include "engines/nancy/ui/ornaments.h"
+#include "engines/nancy/ui/clock.h"
 
 namespace Common {
 DECLARE_SINGLETON(Nancy::State::Scene);
@@ -72,8 +73,8 @@ void Scene::SceneSummary::read(Common::SeekableReadStream &stream) {
 	sound.read(stream, SoundDescription::kScene);
 
 	ser.skip(6);
-	ser.syncAsUint16LE(dontWrap);
-	ser.syncAsUint16LE(soundWrapAroundPan);
+	ser.syncAsUint16LE(panningType);
+	ser.syncAsUint16LE(numberOfVideoFrames);
 	ser.syncAsUint16LE(soundPanPerFrame);
 	ser.syncAsUint16LE(totalViewAngle);
 	ser.syncAsUint16LE(horizontalScrollDelta);
@@ -93,14 +94,18 @@ void Scene::SceneSummary::read(Common::SeekableReadStream &stream) {
 
 Scene::Scene() :
 		_state (kInit),
-		_lastHint(-1),
+		_lastHintCharacter(-1),
+		_lastHintID(-1),
 		_gameStateRequested(NancyState::kNone),
 		_frame(),
 		_viewport(),
-		_textbox(_frame),
-		_inventoryBox(_frame),
+		_textbox(),
+		_inventoryBox(),
 		_menuButton(nullptr),
 		_helpButton(nullptr),
+		_viewportOrnaments(nullptr),
+		_textboxOrnaments(nullptr),
+		_clock(nullptr),
 		_actionManager(),
 		_difficulty(0),
 		_activePrimaryVideo(nullptr) {}
@@ -108,6 +113,9 @@ Scene::Scene() :
 Scene::~Scene()  {
 	delete _helpButton;
 	delete _menuButton;
+	delete _viewportOrnaments;
+	delete _textboxOrnaments;
+	delete _clock;
 }
 
 void Scene::process() {
@@ -125,7 +133,7 @@ void Scene::process() {
 		// fall through
 	case kStartSound:
 		_state = kRun;
-		if (!_sceneState.doNotStartSound) {
+		if (_sceneState.continueSceneSound == kLoadSceneSound) {
 			g_nancy->_sound->stopAndUnloadSpecificSounds();
 			g_nancy->_sound->loadSound(_sceneState.summary.sound);
 			g_nancy->_sound->playSound(_sceneState.summary.sound);
@@ -166,7 +174,7 @@ void Scene::onStateExit() {
 	_gameStateRequested = NancyState::kNone;
 }
 
-void Scene::changeScene(uint16 id, uint16 frame, uint16 verticalOffset, bool noSound) {
+void Scene::changeScene(uint16 id, uint16 frame, uint16 verticalOffset, byte continueSceneSound, int8 paletteID) {
 	if (id == 9999) {
 		return;
 	}
@@ -174,12 +182,21 @@ void Scene::changeScene(uint16 id, uint16 frame, uint16 verticalOffset, bool noS
 	_sceneState.nextScene.sceneID = id;
 	_sceneState.nextScene.frameID = frame;
 	_sceneState.nextScene.verticalOffset = verticalOffset;
-	_sceneState.doNotStartSound = noSound;
+	_sceneState.continueSceneSound = continueSceneSound;
+
+	if (paletteID != -1) {
+		_sceneState.nextScene.paletteID = paletteID;
+	}
+
 	_state = kLoad;
 }
 
 void Scene::changeScene(const SceneChangeDescription &sceneDescription) {
-	changeScene(sceneDescription.sceneID, sceneDescription.frameID, sceneDescription.verticalOffset, sceneDescription.doNotStartSound);
+	changeScene(sceneDescription.sceneID,
+				sceneDescription.frameID,
+				sceneDescription.verticalOffset,
+				sceneDescription.continueSceneSound,
+				sceneDescription.paletteID);
 }
 
 void Scene::pushScene() {
@@ -206,8 +223,30 @@ void Scene::unpauseSceneSpecificSounds() {
 	}
 }
 
+void Scene::setPlayerTime(Time time, byte relative) {
+	if (relative == kRelativeClockBump) {
+		// Relative, add the specified time to current playerTime
+		_timers.playerTime += time;
+	} else {
+		// Absolute, maintain days but replace hours and minutes
+		_timers.playerTime = _timers.playerTime.getDays() * 86400000 + time;
+	}
+
+	_timers.playerTimeNextMinute = g_nancy->getTotalPlayTime() + g_nancy->_playerTimeMinuteLength;
+}
+
+byte Scene::getPlayerTOD() const {
+	if (_timers.playerTime.getHours() >= 7 && _timers.playerTime.getHours() < 18) {
+		return kPlayerDay;
+	} else if (_timers.playerTime.getHours() >= 19 || _timers.playerTime.getHours() < 6) {
+		return kPlayerNight;
+	} else {
+		return kPlayerDuskDawn;
+	}
+}
+
 void Scene::addItemToInventory(uint16 id) {
-	_flags.items[id] = kTrue;
+	_flags.items[id] = kInvHolding;
 	if (_flags.heldItem == id) {
 		setHeldItem(-1);
 	}
@@ -216,7 +255,7 @@ void Scene::addItemToInventory(uint16 id) {
 }
 
 void Scene::removeItemFromInventory(uint16 id, bool pickUp) {
-	_flags.items[id] = kFalse;
+	_flags.items[id] = kInvEmpty;
 
 	if (pickUp) {
 		setHeldItem(id);
@@ -229,37 +268,37 @@ void Scene::setHeldItem(int16 id)  {
 	_flags.heldItem = id; g_nancy->_cursorManager->setCursorItemID(id);
 }
 
-void Scene::setEventFlag(int16 label, NancyFlag flag) {
-	if (label > -1 && (uint)label < g_nancy->getConstants().numEventFlags) {
+void Scene::setEventFlag(int16 label, byte flag) {
+	if (label > kEvNoEvent && (uint)label < g_nancy->getStaticData().numEventFlags) {
 		_flags.eventFlags[label] = flag;
 	}
 }
 
-void Scene::setEventFlag(EventFlagDescription eventFlag) {
+void Scene::setEventFlag(FlagDescription eventFlag) {
 	setEventFlag(eventFlag.label, eventFlag.flag);
 }
 
-bool Scene::getEventFlag(int16 label, NancyFlag flag) const {
-	if (label > -1 && (uint)label < g_nancy->getConstants().numEventFlags) {
+bool Scene::getEventFlag(int16 label, byte flag) const {
+	if (label > kEvNoEvent && (uint)label < g_nancy->getStaticData().numEventFlags) {
 		return _flags.eventFlags[label] == flag;
 	} else {
 		return false;
 	}
 }
 
-bool Scene::getEventFlag(EventFlagDescription eventFlag) const {
+bool Scene::getEventFlag(FlagDescription eventFlag) const {
 	return getEventFlag(eventFlag.label, eventFlag.flag);
 }
 
-void Scene::setLogicCondition(int16 label, NancyFlag flag) {
-	if (label > -1) {
+void Scene::setLogicCondition(int16 label, byte flag) {
+	if (label > kEvNoEvent) {
 		_flags.logicConditions[label].flag = flag;
 		_flags.logicConditions[label].timestamp = g_nancy->getTotalPlayTime();
 	}
 }
 
-bool Scene::getLogicCondition(int16 label, NancyFlag flag) const {
-	if (label > -1) {
+bool Scene::getLogicCondition(int16 label, byte flag) const {
+	if (label > kEvNoEvent) {
 		return _flags.logicConditions[label].flag == flag;
 	} else {
 		return false;
@@ -268,15 +307,16 @@ bool Scene::getLogicCondition(int16 label, NancyFlag flag) const {
 
 void Scene::clearLogicConditions() {
 	for (auto &cond : _flags.logicConditions) {
-		cond.flag = kFalse;
+		cond.flag = kLogNotUsed;
 		cond.timestamp = 0;
 	}
 }
 
-void Scene::useHint(int hintID, int hintWeight) {
-	if (_lastHint != hintID) {
-		_hintsRemaining[_difficulty] += hintWeight;
-		_lastHint = hintID;
+void Scene::useHint(uint16 characterID, uint16 hintID) {
+	if (_lastHintID != hintID || _lastHintCharacter != characterID) {
+		_hintsRemaining[_difficulty] += g_nancy->getStaticData().hints[characterID][hintID].hintWeight;
+		_lastHintCharacter = characterID;
+		_lastHintID = hintID;
 	}
 }
 
@@ -285,12 +325,32 @@ void Scene::registerGraphics() {
 	_viewport.registerGraphics();
 	_textbox.registerGraphics();
 	_inventoryBox.registerGraphics();
-	_menuButton->registerGraphics();
-	_helpButton->registerGraphics();
+
+	if (_menuButton) {
+		_menuButton->registerGraphics();
+		_menuButton->setVisible(false);
+	}
+
+	if (_helpButton) {
+		_helpButton->registerGraphics();
+		_helpButton->setVisible(false);
+	}
+
+	if (_viewportOrnaments) {
+		_viewportOrnaments->registerGraphics();
+		_viewportOrnaments->setVisible(true);
+	}
+
+	if (_textboxOrnaments) {
+		_textboxOrnaments->registerGraphics();
+		_textboxOrnaments->setVisible(true);
+	}
+
+	if (_clock) {
+		_clock->registerGraphics();
+	}
 
 	_textbox.setVisible(!_shouldClearTextbox);
-	_menuButton->setVisible(false);
-	_helpButton->setVisible(false);
 }
 
 void Scene::synchronize(Common::Serializer &ser) {
@@ -302,7 +362,9 @@ void Scene::synchronize(Common::Serializer &ser) {
 		ser.syncAsUint16LE(_sceneState.nextScene.sceneID);
 		ser.syncAsUint16LE(_sceneState.nextScene.frameID);
 		ser.syncAsUint16LE(_sceneState.nextScene.verticalOffset);
-		_sceneState.doNotStartSound = false;
+		_sceneState.continueSceneSound = kLoadSceneSound;
+
+		g_nancy->_sound->stopAllSounds();
 
 		load();
 	}
@@ -324,7 +386,7 @@ void Scene::synchronize(Common::Serializer &ser) {
 	// TODO hardcoded inventory size
 	auto &order = getInventoryBox()._order;
 	uint prevSize = getInventoryBox()._order.size();
-	getInventoryBox()._order.resize(g_nancy->getConstants().numItems);
+	getInventoryBox()._order.resize(g_nancy->getStaticData().numItems);
 
 	if (ser.isSaving()) {
 		for (uint i = prevSize; i < order.size(); ++i) {
@@ -332,7 +394,7 @@ void Scene::synchronize(Common::Serializer &ser) {
 		}
 	}
 
-	ser.syncArray(order.data(), g_nancy->getConstants().numItems, Common::Serializer::Sint16LE);
+	ser.syncArray(order.data(), g_nancy->getStaticData().numItems, Common::Serializer::Sint16LE);
 
 	while (order.size() && order.back() == -1) {
 		order.pop_back();
@@ -344,7 +406,7 @@ void Scene::synchronize(Common::Serializer &ser) {
 	}
 
 	// TODO hardcoded inventory size
-	ser.syncArray(_flags.items.data(), g_nancy->getConstants().numItems, Common::Serializer::Byte);
+	ser.syncArray(_flags.items.data(), g_nancy->getStaticData().numItems, Common::Serializer::Byte);
 	ser.syncAsSint16LE(_flags.heldItem);
 	g_nancy->_cursorManager->setCursorItemID(_flags.heldItem);
 
@@ -354,18 +416,20 @@ void Scene::synchronize(Common::Serializer &ser) {
 	ser.syncAsUint32LE((uint32 &)_timers.pushedPlayTime);
 	ser.syncAsUint32LE((uint32 &)_timers.timerTime);
 	ser.syncAsByte(_timers.timerIsActive);
-	ser.syncAsByte(_timers.timeOfDay);
+	ser.skip(1); // timeOfDay; To be removed on next savefile version bump
 
 	g_nancy->setTotalPlayTime((uint32)_timers.lastTotalTime);
 
 	// TODO hardcoded number of event flags
-	ser.syncArray(_flags.eventFlags.data(), g_nancy->getConstants().numEventFlags, Common::Serializer::Byte);
+	ser.syncArray(_flags.eventFlags.data(), g_nancy->getStaticData().numEventFlags, Common::Serializer::Byte);
 
 	ser.syncArray<uint16>(_flags.sceneHitCount, (uint16)2001, Common::Serializer::Uint16LE);
 
 	ser.syncAsUint16LE(_difficulty);
 	ser.syncArray<uint16>(_hintsRemaining.data(), _hintsRemaining.size(), Common::Serializer::Uint16LE);
-	ser.syncAsSint16LE(_lastHint);
+
+	ser.syncAsSint16LE(_lastHintCharacter);
+	ser.syncAsSint16LE(_lastHintID);
 
 	// Synchronize SliderPuzzle static data
 	ser.syncAsByte(_sliderPuzzleState.playerHasTriedPuzzle);
@@ -393,14 +457,14 @@ void Scene::synchronize(Common::Serializer &ser) {
 }
 
 void Scene::init() {
-	_flags.eventFlags = Common::Array<NancyFlag>(g_nancy->getConstants().numEventFlags, kFalse);
+	_flags.eventFlags.resize(g_nancy->getStaticData().numEventFlags, kEvNotOccurred);
 
 	// Does this ever get used?
 	for (uint i = 0; i < 2001; ++i) {
 		_flags.sceneHitCount[i] = 0;
 	}
 
-	_flags.items = Common::Array<NancyFlag>(g_nancy->getConstants().numItems, kFalse);
+	_flags.items.resize(g_nancy->getStaticData().numItems, kInvEmpty);
 
 	_timers.lastTotalTime = 0;
 	_timers.playerTime = g_nancy->_startTimeHours * 3600000;
@@ -409,7 +473,6 @@ void Scene::init() {
 	_timers.timerIsActive = false;
 	_timers.playerTimeNextMinute = 0;
 	_timers.pushedPlayTime = 0;
-	_timers.timeOfDay = Timers::kDay;
 
 	changeScene(g_nancy->_firstScene);
 
@@ -425,7 +488,7 @@ void Scene::init() {
 			_hintsRemaining.push_back(chunk->readByte());
 		}
 
-		_lastHint = -1;
+		_lastHintCharacter = _lastHintID = -1;
 	}
 
 	_sliderPuzzleState.playerHasTriedPuzzle = false;
@@ -474,12 +537,14 @@ void Scene::load() {
 
 	_sceneState.summary.read(*sceneSummaryChunk);
 
-	debugC(0, kDebugScene, "Loading new scene %i: description \"%s\", frame %i, vertical scroll %i, doNotStartSound == %s",
+	delete sceneSummaryChunk;
+
+	debugC(0, kDebugScene, "Loading new scene %i: description \"%s\", frame %i, vertical scroll %i, %s",
 				_sceneState.nextScene.sceneID,
 				_sceneState.summary.description.c_str(),
 				_sceneState.nextScene.frameID,
 				_sceneState.nextScene.verticalOffset,
-				_sceneState.doNotStartSound == true ? "true" : "false");
+				_sceneState.continueSceneSound == kContinueSceneSound ? "kContinueSceneSound" : "kLoadSceneSound");
 
 	_sceneState.currentScene = _sceneState.nextScene;
 
@@ -492,14 +557,15 @@ void Scene::load() {
 		}
 
 		_actionManager.addNewActionRecord(*actionRecordChunk);
+		delete actionRecordChunk;
 	}
 
 	_viewport.loadVideo(_sceneState.summary.videoFile,
 						_sceneState.currentScene.frameID,
 						_sceneState.currentScene.verticalOffset,
-						_sceneState.summary.dontWrap,
+						_sceneState.summary.panningType,
 						_sceneState.summary.videoFormat,
-						_sceneState.summary.palettes.size() ? _sceneState.summary.palettes[_sceneState.currentScene.paletteID] : Common::String());
+						_sceneState.summary.palettes.size() ? _sceneState.summary.palettes[(byte)_sceneState.currentScene.paletteID] : Common::String());
 
 	if (_viewport.getFrameCount() <= 1) {
 		_viewport.disableEdges(kLeft | kRight);
@@ -523,7 +589,6 @@ void Scene::load() {
 	}
 
 	_timers.sceneTime = 0;
-	_sceneState.nextScene.paletteID = 0;
 
 	_state = kStartSound;
 }
@@ -559,19 +624,56 @@ void Scene::run() {
 		_timers.playerTimeNextMinute = currentPlayTime + g_nancy->_playerTimeMinuteLength;
 	}
 
-	// Set the time of day according to playerTime
-	if (_timers.playerTime.getHours() >= 7 && _timers.playerTime.getHours() < 18) {
-		_timers.timeOfDay = Timers::kDay;
-	} else if (_timers.playerTime.getHours() >= 19 || _timers.playerTime.getHours() < 6) {
-		_timers.timeOfDay = Timers::kNight;
-	} else {
-		_timers.timeOfDay = Timers::kDuskDawn;
+	handleInput();
+
+	_actionManager.processActionRecords();
+}
+
+void Scene::handleInput() {
+	NancyInput input = g_nancy->_input->getInput();
+
+	// Warp the mouse below the inactive zone during dialogue scenes
+	if (_activePrimaryVideo != nullptr) {
+		const Common::Rect &inactiveZone = g_nancy->_cursorManager->getPrimaryVideoInactiveZone();
+		const Common::Point cursorHotspot = g_nancy->_cursorManager->getCurrentCursorHotspot();
+		Common::Point adjustedMousePos = input.mousePos;
+		adjustedMousePos.y -= cursorHotspot.y;
+
+		if (inactiveZone.bottom > adjustedMousePos.y) {
+			input.mousePos.y = inactiveZone.bottom + cursorHotspot.y;
+			g_system->warpMouse(input.mousePos.x, input.mousePos.y);
+		}
 	}
 
-	// Update the UI elements and handle input
-	NancyInput input = g_nancy->_input->getInput();
-	_viewport.handleInput(input);
+	// Handle invisible map button
+	// We do this first since TVD's map button overlaps the viewport's right hotspot
+	for (uint16 id : g_nancy->getStaticData().mapAccessSceneIDs) {
+		if ((int)_sceneState.currentScene.sceneID == id) {
+			if (_mapHotspot.contains(input.mousePos)) {
+				g_nancy->_cursorManager->setCursorType(g_nancy->getGameType() == kGameTypeVampire ? CursorManager::kHotspot : CursorManager::kHotspotArrow);
+
+				if (input.input & NancyInput::kLeftMouseButtonUp) {
+					requestStateChange(NancyState::kMap);
+
+					if (g_nancy->getGameType() == kGameTypeVampire) {
+						g_nancy->_cursorManager->showCursor(false);
+					}
+				}
+
+				input.eatMouseInput();
+			}
+
+			break;
+		}
+	}
 	
+	// Handle clock before viewport since it overlaps the left hotspot in TVD
+	if (_clock) {
+		_clock->handleInput(input);
+	}
+
+	_viewport.handleInput(input);
+
 	_sceneState.currentScene.verticalOffset = _viewport.getCurVerticalScroll();
 
 	if (_sceneState.currentScene.frameID != _viewport.getCurFrame()) {
@@ -580,81 +682,99 @@ void Scene::run() {
 	}
 
 	_actionManager.handleInput(input);
-	_menuButton->handleInput(input);
-	_helpButton->handleInput(input);
 	_textbox.handleInput(input);
 	_inventoryBox.handleInput(input);
 
-	if (_menuButton->_isClicked) {
-		_menuButton->_isClicked = false;
-		g_nancy->_sound->playSound("GLOB");
-		requestStateChange(NancyState::kMainMenu);
-	}
+	if (_menuButton) {
+		_menuButton->handleInput(input);
 
-	if (_helpButton->_isClicked) {
-		_helpButton->_isClicked = false;
-		g_nancy->_sound->playSound("GLOB");
-		requestStateChange(NancyState::kHelp);
-	}
-
-	// Handle invisible map button
-	for (uint i = 0; i < ARRAYSIZE(g_nancy->getConstants().mapAccessSceneIDs); ++i) {
-		if (g_nancy->getConstants().mapAccessSceneIDs[i] == -1) {
-			break;
-		}
-
-		if ((int)_sceneState.currentScene.sceneID == g_nancy->getConstants().mapAccessSceneIDs[i]) {
-			if (_mapHotspot.contains(input.mousePos)) {
-				g_nancy->_cursorManager->setCursorType(CursorManager::kHotspotArrow);
-
-				if (input.input & NancyInput::kLeftMouseButtonUp) {
-					requestStateChange(NancyState::kMap);
-				}
-			}
+		if (_menuButton->_isClicked) {
+			_menuButton->_isClicked = false;
+			g_nancy->_sound->playSound("BUOK");
+			requestStateChange(NancyState::kMainMenu);
 		}
 	}
+	
+	if (_helpButton) {
+		_helpButton->handleInput(input);
 
-	_actionManager.processActionRecords();
+		if (_helpButton->_isClicked) {
+			_helpButton->_isClicked = false;
+			g_nancy->_sound->playSound("BUOK");
+			requestStateChange(NancyState::kHelp);
+		}
+	}
 }
 
 void Scene::initStaticData() {
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("MAP");
-	chunk->seek(0x8A);
-	readRect(*chunk, _mapHotspot);
+	Common::SeekableReadStream *chunk;
 
 	chunk = g_nancy->getBootChunkStream("FR0");
 	chunk->seek(0);
+	if (chunk) {
+		_frame.init(chunk->readString());
+	}
 
-	_frame.init(chunk->readString());
 	_viewport.init();
 	_textbox.init();
 	_inventoryBox.init();
 
-	// Init menu and help buttons
+	// Init buttons
 	chunk = g_nancy->getBootChunkStream("BSUM");
-	chunk->seek(0x184);
-	Common::Rect menuSrc, helpSrc, menuDest, helpDest;
-	readRect(*chunk, menuSrc);
-	readRect(*chunk, helpSrc);
-	readRect(*chunk, menuDest);
-	readRect(*chunk, helpDest);
-	_menuButton = new UI::Button(_frame, 5, g_nancy->_graphicsManager->_object0, menuSrc, menuDest);
-	_helpButton = new UI::Button(_frame, 5, g_nancy->_graphicsManager->_object0, helpSrc, helpDest);
-	_menuButton->init();
-	_helpButton->init();
-	g_nancy->_cursorManager->showCursor(true);
+	if (chunk) {
+		chunk->seek(0);
+		Common::Serializer ser(chunk, nullptr);
+		ser.setVersion(g_nancy->getGameType());
+
+		// TVD checks if the _entire_ cursor is within the bounds of the hotspot,
+		// which results in the actual hotspot being about a quarter of the size 
+		// it should be. This is stupid so we sacrifice some accuracy and ignore it.
+		ser.skip(0x136, kGameTypeVampire, kGameTypeVampire);
+		if (ser.getVersion() == kGameTypeVampire) {
+			readRect(*chunk, _mapHotspot);
+		}
+
+		ser.skip(0x30, kGameTypeVampire, kGameTypeVampire);
+		ser.skip(0x184, kGameTypeNancy1);
+		Common::Rect menuSrc, helpSrc, menuDest, helpDest;
+		readRect(*chunk, menuSrc);
+		readRect(*chunk, helpSrc);
+		readRect(*chunk, menuDest);
+		readRect(*chunk, helpDest);
+		_menuButton = new UI::Button(5, g_nancy->_graphicsManager->_object0, menuSrc, menuDest);
+		_helpButton = new UI::Button(5, g_nancy->_graphicsManager->_object0, helpSrc, helpDest);
+		_menuButton->init();
+		_helpButton->init();
+		g_nancy->_cursorManager->showCursor(true);
+	}
+
+	if (g_nancy->getGameType() == kGameTypeNancy1) {
+		chunk = g_nancy->getBootChunkStream("MAP");
+		if (chunk) {
+			chunk->seek(0x8A);
+			readRect(*chunk, _mapHotspot);
+		}
+	}
+	
+	// Init ornaments and clock (TVD only)
+	if (g_nancy->getGameType() == kGameTypeVampire) {
+		_viewportOrnaments = new UI::ViewportOrnaments(9);
+		_viewportOrnaments->init();
+
+		_textboxOrnaments = new UI::TextboxOrnaments(9);
+		_textboxOrnaments->init();
+
+		_clock = new UI::Clock();
+		_clock->init();
+	}
 
 	_state = kLoad;
 }
 
 void Scene::clearSceneData() {
-	// only clear select flags
-	for (uint i = 0; i < ARRAYSIZE(g_nancy->getConstants().eventFlagsToClearOnSceneChange); ++i) {
-		if (g_nancy->getConstants().eventFlagsToClearOnSceneChange[i] == -1) {
-			break;
-		}
-
-		_flags.eventFlags[g_nancy->getConstants().eventFlagsToClearOnSceneChange[i]] = kFalse;
+	// Clear generic flags only
+	for (uint16 id : g_nancy->getStaticData().genericEventFlags) {
+		_flags.eventFlags[id] = kEvNotOccurred;
 	}
 
 	clearLogicConditions();

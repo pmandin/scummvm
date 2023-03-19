@@ -31,7 +31,7 @@ namespace ViewsEnh {
 Game::Game() : TextView("Game"),
 		_view(this),
 		_commands(this),
-		_messages(this) {
+		_party(this) {
 	_view.setBounds(Common::Rect(8, 15, 224, 130));
 
 	// Load the Xeen background
@@ -53,10 +53,8 @@ bool Game::msgUnfocus(const UnfocusMessage &msg) {
 }
 
 void Game::draw() {
-	if (_needsRedraw) {
-		Graphics::ManagedSurface s = getSurface();
-		s.blitFrom(_bg);
-	}
+	Graphics::ManagedSurface s = getSurface();
+	s.blitFrom(_bg);
 
 	UIElement::draw();
 }
@@ -67,20 +65,32 @@ bool Game::msgKeypress(const KeypressMessage &msg) {
 
 bool Game::msgAction(const ActionMessage &msg) {
 	switch (msg._action) {
-	case KEYBIND_VIEW_PARTY1:
-	case KEYBIND_VIEW_PARTY2:
-	case KEYBIND_VIEW_PARTY3:
-	case KEYBIND_VIEW_PARTY4:
-	case KEYBIND_VIEW_PARTY5:
-	case KEYBIND_VIEW_PARTY6:
-	{
-		uint charNum = msg._action - KEYBIND_VIEW_PARTY1;
-		if (charNum < g_globals->_party.size()) {
-			g_globals->_currCharacter = &g_globals->_party[charNum];
-			addView("CharacterInfo");
-		}
+	case KEYBIND_BASH:
+		send("Bash", GameMessage("SHOW"));
 		break;
-	}
+	case KEYBIND_MAP:
+		addView("MapPopup");
+		return true;
+	case KEYBIND_PROTECT:
+		addView("Protect");
+		return true;
+	case KEYBIND_QUICKREF:
+		addView("QuickRef");
+		return true;
+	case KEYBIND_REST:
+		addView("Rest");
+		return true;
+	case KEYBIND_SEARCH:
+		send("Search", GameMessage("SHOW"));
+		break;
+	case KEYBIND_SPELL:
+		addView("CastSpell");
+		return true;
+	case KEYBIND_UNLOCK:
+		send("Unlock", GameMessage("SHOW"));
+		break;
+	//case KEYBIND_ORDER:
+	// Enhanced mode uses Exchange button from Char Info view
 	default:
 		break;
 	}

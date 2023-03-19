@@ -81,6 +81,34 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO0()
 	},
 
+	{ // GOG.com release version 2.0.0.6
+		"sword2",
+		"GOG",
+		AD_ENTRY5s("general.clu", "31db8564f9187538f24d9fda0677f666", 7059728,
+				   "text.clu",    "9b344d976ca8d19a1cf5aa4413397f6b", 304968,
+				   "speech1.clu", "a403904a0e825356107d228f8f74092e", 176260048,
+				   "docks.clu",   "b39246fbb5b955a29f9a207c69bfc318", 20262263,
+				   "eye.dxa",     "7aef7fcb4faae760e82e0c7d3b336ac9", 7052599),
+		Common::EN_ANY,
+		Common::kPlatformWindows,
+		ADGF_NO_FLAGS,
+		GUIO0()
+	},
+
+	{
+		"sword2",
+		"",
+		AD_ENTRY5s("general.clu", "31db8564f9187538f24d9fda0677f666", 7059728,
+				   "text.clu",    "9b344d976ca8d19a1cf5aa4413397f6b", 304968,
+				   "speech1.clu", "a403904a0e825356107d228f8f74092e", 176260048,
+				   "docks.clu",   "b39246fbb5b955a29f9a207c69bfc318", 20262263,
+				   "bs2.dat",   "c8238e7d017faa3b48d98df3f42a63e6", 336246),
+		Common::ZH_CHN,
+		Common::kPlatformWindows,
+		ADGF_NO_FLAGS,
+		GUIO0()
+	},
+
 	{
 		"sword2",
 		"1CD release",
@@ -219,6 +247,18 @@ static const ADGameDescription gameDescriptions[] = {
 		"English speech",
 		AD_ENTRY3s("general.clu", "11e824864a75195652610e8b397382a6", 8030769,
 				   "text.clu",    "f1cf2aaa7e56d8bf6572c9b25267931e", 373704,
+				   "docks.clu",   "b39246fbb5b955a29f9a207c69bfc318", 20262263),
+		Common::PL_POL,
+		Common::kPlatformWindows,
+		ADGF_NO_FLAGS,
+		GUIO0()
+	},
+
+	{ // Alternate version. Bugreport #14277
+		"sword2",
+		"English speech/alternate version",
+		AD_ENTRY3s("general.clu", "31db8564f9187538f24d9fda0677f666", 7059728,
+				   "text.clu",    "77fb6f58acad0f9c4eebeb5527b32861", 410707,
 				   "docks.clu",   "b39246fbb5b955a29f9a207c69bfc318", 20262263),
 		Common::PL_POL,
 		Common::kPlatformWindows,

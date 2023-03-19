@@ -25,6 +25,7 @@
 #include "backends/keymapper/keymap.h"
 #include "backends/keymapper/standard-actions.h"
 
+#include "common/gui_options.h"
 #include "common/savefile.h"
 #include "common/system.h"
 #include "common/translation.h"
@@ -35,6 +36,10 @@
 #include "graphics/scaler.h"
 #include "graphics/managed_surface.h"
 #include "graphics/thumbnail.h"
+
+Common::String MetaEngineDetection::parseAndCustomizeGuiOptions(const Common::String &optionsString, const Common::String &domain) const {
+	return parseGameGUIOptions(optionsString);
+}
 
 Common::String MetaEngine::getSavegameFile(int saveGameIdx, const char *target) const {
 	if (!target)
@@ -180,6 +185,10 @@ bool MetaEngine::hasFeature(MetaEngineFeature f) const {
 		(f == kSavesUseExtendedFormat);
 }
 
+/////////////////////////////////////////
+//// Extended Saves
+/////////////////////////////////////////
+
 void MetaEngine::appendExtendedSave(Common::OutSaveFile *saveFile, uint32 playtime,
 		Common::String desc, bool isAutosave) {
 	appendExtendedSaveToStream(saveFile, playtime, desc, isAutosave);
@@ -221,8 +230,7 @@ void MetaEngine::appendExtendedSaveToStream(Common::WriteStream *saveFile, uint3
 	saveFile->writeUint32LE(headerPos);	// Store where the header starts
 }
 
-bool MetaEngine::copySaveFileToFreeSlot(const char *target, int slot)
-{
+bool MetaEngine::copySaveFileToFreeSlot(const char *target, int slot) {
 	const int emptySlot = findEmptySaveSlot(target);
 	if (emptySlot == -1)
 		return false;
@@ -364,20 +372,26 @@ SaveStateList MetaEngine::listSaves(const char *target) const {
 
 SaveStateList MetaEngine::listSaves(const char *target, bool saveMode) const {
 	SaveStateList saveList = listSaves(target);
-	int autosaveSlot = ConfMan.getInt("autosave_period") ? getAutosaveSlot() : -1;
+	int autosaveSlot = getAutosaveSlot();
 	if (!saveMode || autosaveSlot == -1)
 		return saveList;
 
 	// Check to see if an autosave is present
 	for (SaveStateList::iterator it = saveList.begin(); it != saveList.end(); ++it) {
-		// It has an autosave
-		if (it->isAutosave())
+		int slot = it->getSaveSlot();
+		if (slot == autosaveSlot) {
+			// It has an autosave
 			return saveList;
+		}
 	}
 
 	// No autosave yet. We want to add a dummy one in so that it can be marked as
 	// write protected, and thus be prevented from being saved in
-	SaveStateDescriptor desc(this, autosaveSlot, _("Autosave"));
+	const Common::U32String &dummyAutosave = (ConfMan.getInt("autosave_period") ? _("Autosave on") : _("Autosave off"));
+	SaveStateDescriptor desc(this, autosaveSlot, dummyAutosave);
+	desc.setWriteProtectedFlag(true);
+	desc.setDeletableFlag(false);
+	
 	saveList.push_back(desc);
 	Common::sort(saveList.begin(), saveList.end(), SaveStateDescriptorSlotComparator());
 
@@ -428,6 +442,7 @@ SaveStateDescriptor MetaEngine::querySaveMetaInfos(const char *target, int slot)
 		SaveStateDescriptor desc(this, slot, Common::U32String());
 		parseSavegameHeader(&header, &desc);
 		desc.setThumbnail(header.thumbnail);
+		desc.setAutosave(header.isAutosave);
 		return desc;
 	}
 

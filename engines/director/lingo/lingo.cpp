@@ -248,8 +248,11 @@ LingoArchive::~LingoArchive() {
 	// LctxContexts has a huge overlap with scriptContexts.
 	for (ScriptContextHash::iterator it = lctxContexts.begin(); it != lctxContexts.end(); ++it){
 		ScriptContext *script = it->_value;
-		if (script->getOnlyInLctxContexts())
-			delete script;
+		if (script->getOnlyInLctxContexts()) {
+			*script->_refCount -= 1;
+			if (*script->_refCount <= 0)
+				delete script;
+		}
 	}
 
 	for (int i = 0; i <= kMaxScriptType; i++) {
@@ -258,6 +261,15 @@ LingoArchive::~LingoArchive() {
 			if (*it->_value->_refCount <= 0)
 				delete it->_value;
 		}
+	}
+
+	for (auto it : factoryContexts) {
+		for (auto jt : *it._value) {
+			*jt._value->_refCount -= 1;
+			if (*jt._value->_refCount <= 0)
+				delete jt._value;
+		}
+		delete it._value;
 	}
 }
 
@@ -303,6 +315,22 @@ Common::String LingoArchive::formatFunctionList(const char *prefix) {
 			result += (*it->_value).formatFunctionList(Common::String::format("%s    ", prefix).c_str());
 		}
 	}
+	result += Common::String::format("%sFactories:\n", prefix);
+	if (factoryContexts.empty()) {
+		result += Common::String::format("%s  [empty]\n", prefix);
+	} else {
+		for (auto it : factoryContexts) {
+			result += Common::String::format("%s  %d:\n", prefix, it._key);
+			if (it._value->empty()) {
+				result += Common::String::format("%s    [empty]\n", prefix);
+			} else {
+				for (auto jt : *it._value) {
+					result += Common::String::format("%s    %s:\n", prefix, jt._key.c_str());
+					result += jt._value->formatFunctionList(Common::String::format("%s      ", prefix).c_str());
+				}
+			}
+		}
+	}
 	return result;
 }
 
@@ -322,7 +350,7 @@ Symbol Lingo::getHandler(const Common::String &name) {
 	return sym;
 }
 
-void LingoArchive::addCode(const Common::U32String &code, ScriptType type, uint16 id, const char *scriptName) {
+void LingoArchive::addCode(const Common::U32String &code, ScriptType type, uint16 id, const char *scriptName, uint32 preprocFlags) {
 	debugC(1, kDebugCompile, "Add code for type %s(%d) with id %d in '%s%s'\n"
 			"***********\n%s\n\n***********", scriptType2str(type), type, id, utf8ToPrintable(g_director->getCurrentPath()).c_str(), utf8ToPrintable(cast->getMacName()).c_str(), code.encode().c_str());
 
@@ -340,7 +368,7 @@ void LingoArchive::addCode(const Common::U32String &code, ScriptType type, uint1
 	else
 		contextName = Common::String::format("%d", id);
 
-	ScriptContext *sc = g_lingo->_compiler->compileLingo(code, this, type, CastMemberID(id, cast->_castLibID), contextName);
+	ScriptContext *sc = g_lingo->_compiler->compileLingo(code, this, type, CastMemberID(id, cast->_castLibID), contextName, false, preprocFlags);
 	if (sc) {
 		scriptContexts[type][id] = sc;
 		*sc->_refCount += 1;
@@ -1575,7 +1603,7 @@ Datum Lingo::varFetch(const Datum &var, bool silent) {
 			}
 
 			if (!silent)
-				warning("varFetch: variable %s not found", name.c_str());
+				debugC(1, kDebugLingoExec, "varFetch: variable %s not found", name.c_str());
 			return result;
 		}
 		break;
@@ -1586,7 +1614,7 @@ Datum Lingo::varFetch(const Datum &var, bool silent) {
 			if (_globalvars.contains(name)) {
 				return _globalvars[name];
 			}
-			warning("varFetch: global variable %s not defined", name.c_str());
+			debugC(1, kDebugLingoExec, "varFetch: global variable %s not defined", name.c_str());
 			return result;
 		}
 		break;
@@ -1597,7 +1625,7 @@ Datum Lingo::varFetch(const Datum &var, bool silent) {
 			if (_state->localVars && _state->localVars->contains(name)) {
 				return (*_state->localVars)[name];
 			}
-			warning("varFetch: local variable %s not defined", name.c_str());
+			debugC(1, kDebugLingoExec, "varFetch: local variable %s not defined", name.c_str());
 			return result;
 		}
 		break;

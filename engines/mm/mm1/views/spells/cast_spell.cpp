@@ -33,7 +33,10 @@ CastSpell::CastSpell() : SpellView("CastSpell") {
 	_bounds = getLineBounds(20, 24);
 }
 
-bool CastSpell::msgValue(const ValueMessage &msg) {
+bool CastSpell::msgGame(const GameMessage &msg) {
+	if (msg._name != "SPELL")
+		return false;
+
 	if (msg._value == 0) {
 		// Ensure current character can cast spells
 		if (g_globals->_currCharacter->_spellLevel != 0 &&
@@ -160,21 +163,15 @@ void CastSpell::spellNumberEntered(uint num) {
 	}
 }
 
-bool CastSpell::msgKeypress(const KeypressMessage &msg) {
-	if (msg.keycode == Common::KEYCODE_ESCAPE) {
-		close();
-	} else if (_state == PRESS_ENTER) {
-		if (msg.keycode == Common::KEYCODE_RETURN) {
-			// Time to execute the spell
-			performSpell();
-		}
-	}
-
-	return true;
-}
-
 bool CastSpell::msgAction(const ActionMessage &msg) {
-	if (_state == SELECT_CHAR &&
+	if (msg._action == KEYBIND_ESCAPE) {
+		close();
+
+	} else if (msg._action == KEYBIND_SELECT) {
+		// Time to execute the spell
+		performSpell();
+
+	} else if (_state == SELECT_CHAR &&
 		msg._action >= KEYBIND_VIEW_PARTY1 &&
 		msg._action <= KEYBIND_VIEW_PARTY6) {
 		uint charIndex = (int)(msg._action - KEYBIND_VIEW_PARTY1);

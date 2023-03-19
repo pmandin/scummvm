@@ -22,6 +22,9 @@
 #ifndef MM_MM_H
 #define MM_MM_H
 
+#include "common/random.h"
+#include "mm/detection.h"
+
 namespace MM {
 
 enum MightAndMagicDebugChannels {
@@ -30,6 +33,54 @@ enum MightAndMagicDebugChannels {
 	kDebugGraphics = 1 << 2,
 	kDebugSound = 1 << 3
 };
+
+class MMEngine : public Engine {
+protected:
+	const MightAndMagicGameDescription *_gameDescription;
+	Common::RandomSource _randomSource;
+public:
+	MMEngine(OSystem *syst, const MM::MightAndMagicGameDescription *gameDesc);
+	~MMEngine() override {}
+
+	/**
+	 * Checks for feature flag
+	 */
+	bool hasFeature(EngineFeature f) const override;
+
+	/**
+	 * Returns the features
+	 */
+	uint32 getFeatures() const;
+
+	/**
+	 * Returns the game language
+	 */
+	Common::Language getLanguage() const;
+
+	/**
+	 * Returns the game's platform
+	 */
+	Common::Platform getPlatform() const;
+
+	/**
+	 * Gets the game Id
+	 */
+	uint32 getGameID() const;
+
+	/**
+	 * Returns true if the game is the CD version
+	 */
+	bool getIsCD() const;
+
+	/**
+	 * Get a random number
+	 */
+	uint getRandomNumber(int max) {
+		return _randomSource.getRandomNumber(max);
+	}
+};
+
+extern MMEngine *g_engine;
 
 } // namespace MM
 

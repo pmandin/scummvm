@@ -23,7 +23,6 @@
 
 #include "engines/advancedDetector.h"
 #include "common/file.h"
-#include "common/translation.h"
 
 #include "neverhood/dialogs.h"
 #include "neverhood/neverhood.h"
@@ -63,7 +62,7 @@ public:
 		return "neverhood";
 	}
 
-	GUI::OptionsContainerWidget *buildEngineOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const {
+	GUI::OptionsContainerWidget *buildEngineOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const override {
 		return new Neverhood::NeverhoodOptionsWidget(boss, name, target);
 	}
 

@@ -32,6 +32,7 @@ class SeekableReadStream;
 namespace Nancy {
 
 class NancyEngine;
+class NancyConsole;
 struct NancyInput;
 
 namespace State {
@@ -45,8 +46,13 @@ class ActionRecord;
 // The class that handles ActionRecords and their execution
 class ActionManager {
 	friend class Nancy::State::Scene;
+	friend class Nancy::NancyConsole;
 
 public:
+	static const byte kCursInvHolding			= 0;
+	static const byte kCursInvNotHolding		= 1;
+	static const byte kCursInvNotHoldingOffset	= 100;
+
 	ActionManager() {}
 	virtual ~ActionManager() {}
 

@@ -21,7 +21,7 @@
 
 #include "mm/mm1/views_enh/scroll_text.h"
 #include "mm/mm1/globals.h"
-#include "mm/utils/strings.h"
+#include "mm/shared/utils/strings.h"
 
 namespace MM {
 namespace MM1 {
@@ -61,66 +61,16 @@ void ScrollText::addLine(const Common::String &str,
 
 void ScrollText::addText(const Common::String &s,
 		int lineNum, byte color, TextAlign align, int xp) {
+	const int LINE_HEIGHT = 10;
 	Common::String str = s;
-	Common::Point pt(xp, lineNum * 8);
-	Graphics::Font &font = _fontReduced ?
-		g_globals->_fontReduced : g_globals->_fontNormal;
+	Common::Point pt(xp, lineNum * LINE_HEIGHT);
 
-	int strWidth = font.getStringWidth(str);
-	char *startP = const_cast<char *>(str.c_str());
-	char *endP;
+	// Split the lines
+	Common::StringArray lines = splitLines(s);
 
-	switch (align) {
-	case ALIGN_LEFT:
-		// We have extra logic for standard left aligned strings to
-		// insert extra newlines as necessary to word-wrap any text
-		// that would go over the edge of the dialog
-		while (*startP && strWidth > _innerBounds.width()) {
-			// Find the last space before a full line
-			endP = startP + strlen(startP) - 1;
-			while (strWidth > _innerBounds.width()) {
-				// Move back to a prior space
-				for (--endP; endP > startP && *endP != ' '; --endP) {
-				}
-				assert(endP > startP);
-
-				strWidth = font.getStringWidth(
-					Common::String(startP, endP));
-			}
-
-			if (strWidth == _innerBounds.width()) {
-				// Word break exactly at the line end.
-				// So simply get rid of the space
-				uint i = (const char *)endP - str.c_str();
-				str.deleteChar(i);
-				startP = const_cast<char *>(str.c_str() + i);
-			} else {
-				// Add a newline
-				*endP = '\n';
-				startP = endP + 1;
-			}
-
-			strWidth = font.getStringWidth(startP);
-		}
-		break;
-
-	case ALIGN_MIDDLE:
-		// Middle alignment
-		if (xp == 0)
-			xp = _innerBounds.width() / 2;
-		pt.x = xp - strWidth / 2;
-		break;
-
-	case ALIGN_RIGHT:
-		// Right alignment
-		if (xp == 0)
-			xp = _innerBounds.width();
-		pt.x = xp - strWidth;
-		break;
-	}
-
-	if (!str.empty())
-		_lines.push_back(Line(str, pt, color));
+	// Add them in
+	for (uint i = 0; i < lines.size(); ++i, ++lineNum, pt.y += LINE_HEIGHT)
+		_lines.push_back(Line(lines[i], pt, color, align));
 }
 
 void ScrollText::draw() {
@@ -130,7 +80,7 @@ void ScrollText::draw() {
 	for (Lines::const_iterator i = begin();
 		i != end(); ++i) {
 		setTextColor(i->_color);
-		writeString(i->_pos.x, i->_pos.y, i->_str);
+		writeString(i->_pos.x, i->_pos.y, i->_str, i->_align);
 	}
 }
 

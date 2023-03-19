@@ -46,25 +46,20 @@ void HotspotState::WriteToSavegame(Shared::Stream *out) const {
 }
 
 RoomStatus::RoomStatus() {
+	contentFormat = kRoomStatSvgVersion_Current; // set current to avoid fixups
 	beenhere = 0;
 	numobj = 0;
 	tsdatasize = 0;
-	tsdata = nullptr;
 
 	memset(&region_enabled, 0, sizeof(region_enabled));
 	memset(&walkbehind_base, 0, sizeof(walkbehind_base));
 	memset(&interactionVariableValues, 0, sizeof(interactionVariableValues));
 }
 
-RoomStatus::~RoomStatus() {
-	if (tsdata)
-		delete[] tsdata;
-}
+RoomStatus::~RoomStatus() {}
 
 void RoomStatus::FreeScriptData() {
-	if (tsdata)
-		delete[] tsdata;
-	tsdata = nullptr;
+	tsdata.clear();
 	tsdatasize = 0;
 }
 
@@ -80,6 +75,7 @@ void RoomStatus::ReadFromFile_v321(Stream *in) {
 	FreeScriptData();
 	FreeProperties();
 
+	contentFormat = kRoomStatSvgVersion_Initial;
 	beenhere = in->ReadInt32();
 	numobj = in->ReadInt32();
 	obj.resize(MAX_ROOM_OBJECTS_v300);
@@ -89,7 +85,7 @@ void RoomStatus::ReadFromFile_v321(Stream *in) {
 
 	int16_t dummy[MAX_LEGACY_ROOM_FLAGS]; // cannot seek with AlignedStream
 	in->ReadArrayOfInt16(dummy, MAX_LEGACY_ROOM_FLAGS); // flagstates (OBSOLETE)
-	tsdatasize = in->ReadInt32();
+	tsdatasize = static_cast<uint32_t>(in->ReadInt32());
 	in->ReadInt32(); // tsdata
 	for (int i = 0; i < MAX_ROOM_HOTSPOTS; ++i) {
 		intrHotspot[i].ReadFromSavedgame_v321(in);
@@ -126,7 +122,7 @@ void RoomStatus::ReadRoomObjects_Aligned(Shared::Stream *in) {
 	}
 }
 
-void RoomStatus::ReadFromSavegame(Stream *in, int save_ver) {
+void RoomStatus::ReadFromSavegame(Stream *in, RoomStatSvgVersion save_ver) {
 	FreeScriptData();
 	FreeProperties();
 
@@ -162,10 +158,18 @@ void RoomStatus::ReadFromSavegame(Stream *in, int save_ver) {
 		in->ReadArrayOfInt32(interactionVariableValues, MAX_GLOBAL_VARIABLES);
 	}
 
-	tsdatasize = in->ReadInt32();
+	tsdatasize = static_cast<uint32_t>(in->ReadInt32());
 	if (tsdatasize) {
-		tsdata = new char[tsdatasize];
-		in->Read(tsdata, tsdatasize);
+		tsdata.resize(tsdatasize);
+		in->Read(tsdata.data(), tsdatasize);
+	}
+
+	contentFormat = save_ver;
+	if (save_ver >= kRoomStatSvgVersion_36041) {
+		contentFormat = (RoomStatSvgVersion)in->ReadInt32();
+		in->ReadInt32(); // reserved
+		in->ReadInt32();
+		in->ReadInt32();
 	}
 }
 
@@ -199,9 +203,15 @@ void RoomStatus::WriteToSavegame(Stream *out) const {
 		out->WriteArrayOfInt32(interactionVariableValues, MAX_GLOBAL_VARIABLES);
 	}
 
-	out->WriteInt32(tsdatasize);
+	out->WriteInt32(static_cast<int32_t>(tsdatasize));
 	if (tsdatasize)
-		out->Write(tsdata, tsdatasize);
+		out->Write(tsdata.data(), tsdatasize);
+
+	// kRoomStatSvgVersion_36041
+	out->WriteInt32(contentFormat);
+	out->WriteInt32(0); // reserved
+	out->WriteInt32(0);
+	out->WriteInt32(0);
 }
 
 // JJS: Replacement for the global roomstats array in the original engine.

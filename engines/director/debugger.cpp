@@ -20,6 +20,7 @@
  */
 
 #include "common/language.h"
+#include "common/platform.h"
 #include "director/director.h"
 #include "director/debugger.h"
 #include "director/cast.h"
@@ -46,6 +47,7 @@ Debugger::Debugger(): GUI::Debugger() {
 	registerCmd("help", WRAP_METHOD(Debugger, cmdHelp));
 
 	registerCmd("version", WRAP_METHOD(Debugger, cmdVersion));
+	registerCmd("info", WRAP_METHOD(Debugger, cmdInfo));
 	registerCmd("movie", WRAP_METHOD(Debugger, cmdMovie));
 	registerCmd("m", WRAP_METHOD(Debugger, cmdMovie));
 	registerCmd("frame", WRAP_METHOD(Debugger, cmdFrame));
@@ -91,6 +93,8 @@ Debugger::Debugger(): GUI::Debugger() {
 	registerCmd("be", WRAP_METHOD(Debugger, cmdBpEntity));
 	registerCmd("bpvar", WRAP_METHOD(Debugger, cmdBpVar));
 	registerCmd("bv", WRAP_METHOD(Debugger, cmdBpVar));
+	registerCmd("bpevent", WRAP_METHOD(Debugger, cmdBpEvent));
+	registerCmd("bn", WRAP_METHOD(Debugger, cmdBpEvent));
 	registerCmd("bpdel", WRAP_METHOD(Debugger, cmdBpDel));
 	registerCmd("bpenable", WRAP_METHOD(Debugger, cmdBpEnable));
 	registerCmd("bpdisable", WRAP_METHOD(Debugger, cmdBpDisable));
@@ -118,6 +122,7 @@ Debugger::Debugger(): GUI::Debugger() {
 	_bpCheckVarWrite = false;
 	_bpCheckEntityRead = false;
 	_bpCheckEntityWrite = false;
+	_bpCheckEvent = false;
 }
 
 Debugger::~Debugger() {
@@ -138,8 +143,8 @@ bool Debugger::cmdHelp(int argc, const char **argv) {
 	debugPrintf("--------\n");
 	debugPrintf("Player:\n");
 	debugPrintf(" version - Shows the Director version\n");
+	debugPrintf(" info - Shows information about the current movie\n");
 	debugPrintf(" movie / m [moviePath] - Get or sets the current movie\n");
-	//debugPrintf(" movieinfo / mi - Show information for the current movie\n");
 	debugPrintf(" frame / f [frameNum] - Gets or sets the current score frame\n");
 	debugPrintf(" channels / chan [frameNum] - Shows channel information for a score frame\n");
 	debugPrintf(" cast [castNum] - Shows the cast list or castNum for the current movie\n");
@@ -177,6 +182,7 @@ bool Debugger::cmdHelp(int argc, const char **argv) {
 	debugPrintf(" bpentity / be [entityName:fieldName] [r/w/rw] - Create a breakpoint on a Lingo \"the\" field being accessed in a specific way");
 	debugPrintf(" bpvar / bv [varName] - Create a breakpoint on a Lingo variable being read or modified");
 	debugPrintf(" bpvar / bv [varName] [r/w/rw] - Create a breakpoint on a Lingo variable being accessed in a specific way");
+	debugPrintf(" bpevent / bn [eventName] - Create a breakpoint on a Lingo event");
 	debugPrintf(" bpdel [n] - Deletes a specific breakpoint\n");
 	debugPrintf(" bpenable [n] - Enables a specific breakpoint\n");
 	debugPrintf(" bpdisable [n] - Disables a specific breakpoint\n");
@@ -197,6 +203,32 @@ bool Debugger::cmdVersion(int argc, const char **argv) {
 	debugPrintf("Executable name: %s\n", g_director->getEXEName().c_str());
 	debugPrintf("Startup file name: %s\n", g_director->_gameDescription->desc.filesDescriptions[0].fileName);
 	debugPrintf("Startup file MD5: %s\n", g_director->_gameDescription->desc.filesDescriptions[0].md5);
+	debugPrintf("\n");
+	return true;
+}
+
+bool Debugger::cmdInfo(int argc, const char **argv) {
+	Movie *movie = g_director->getCurrentMovie();
+	Score *score = movie->getScore();
+	Archive *archive = movie->getArchive();
+	Cast *cast = movie->getCast();
+	debugPrintf("Movie path: %s\n", archive->getPathName().c_str());
+	debugPrintf("Movie file size: %d\n", archive->getFileSize());
+	debugPrintf("Movie archive format: %s\n", archive->formatArchiveInfo().c_str());
+	debugPrintf("Movie platform: %s (%s)\n", Common::getPlatformCode(movie->_platform), Common::getPlatformDescription(movie->_platform));
+	debugPrintf("Movie format version: 0x%x\n", movie->_version);
+
+	debugPrintf("Created by: %s\n", movie->_createdBy.c_str());
+	debugPrintf("Modified by: %s\n", movie->_changedBy.c_str());
+	debugPrintf("Original directory: %s\n", movie->_origDirectory.c_str());
+	debugPrintf("Stage size: %dx%d\n", movie->_movieRect.width(), movie->_movieRect.height());
+	debugPrintf("Default palette ID: %d\n", cast->_defaultPalette);
+	debugPrintf("Default stage color: %d\n", cast->_stageColor);
+	debugPrintf("Copy protected: %d\n", cast->_isProtected);
+	debugPrintf("Remap palettes when needed flag: %d\n", movie->_remapPalettesWhenNeeded);
+	debugPrintf("Allow outdated Lingo flag: %d\n", movie->_allowOutdatedLingo);
+	debugPrintf("Frame count: %d\n", score->_frames.size());
+	debugPrintf("Cast member count: %d\n", cast->getCastSize());
 	debugPrintf("\n");
 	return true;
 }
@@ -672,6 +704,35 @@ bool Debugger::cmdBpVar(int argc, const char **argv) {
 	return true;
 }
 
+bool Debugger::cmdBpEvent(int argc, const char **argv) {
+	if (argc == 2) {
+		Breakpoint bp;
+		bp.type = kBreakpointEvent;
+		for (auto &it : g_lingo->_eventHandlerTypeIds) {
+			if (it._key.equalsIgnoreCase(argv[1])) {
+				bp.eventId = (LEvent)it._value;
+				break;
+			}
+		}
+		if (bp.eventId == kEventNone) {
+			debugPrintf("Event %s not found.\n", argv[1]);
+			return true;
+		}
+		bp.id = _bpNextId;
+		_bpNextId++;
+		_breakpoints.push_back(bp);
+		bpUpdateState();
+		debugPrintf("Added %s\n", bp.format().c_str());
+	} else {
+		debugPrintf("Must specify an event name. Choices are:\n");
+		for (auto &it : g_lingo->_eventHandlerTypeIds) {
+			debugPrintf("%s ", it._key.c_str());
+		}
+		debugPrintf("\n");
+	}
+	return true;
+}
+
 bool Debugger::cmdBpFrame(int argc, const char **argv) {
 	Movie *movie = g_director->getCurrentMovie();
 	if (argc == 2 || argc == 3) {
@@ -816,6 +877,7 @@ void Debugger::bpUpdateState() {
 	_bpCheckVarWrite = false;
 	_bpCheckEntityRead = false;
 	_bpCheckEntityWrite = false;
+	_bpCheckEvent = false;
 	Movie *movie = g_director->getCurrentMovie();
 	Common::Array<CFrame *> &callstack = g_lingo->_state->callstack;
 	for (auto &it : _breakpoints) {
@@ -855,6 +917,8 @@ void Debugger::bpUpdateState() {
 		} else if (it.type == kBreakpointEntity) {
 			_bpCheckEntityRead |= it.varRead;
 			_bpCheckEntityWrite |= it.varWrite;
+		} else if (it.type == kBreakpointEvent) {
+			_bpCheckEvent = true;
 		}
 	}
 }
@@ -982,6 +1046,21 @@ void Debugger::movieHook() {
 		cmdMovie(0, nullptr);
 		attach();
 		g_system->updateScreen();
+	}
+}
+
+void Debugger::eventHook(LEvent eventId) {
+	if (_bpCheckEvent) {
+		for (auto &it : _breakpoints) {
+			if (it.type == kBreakpointEvent && eventId == it.eventId) {
+				debugPrintf("Hit a breakpoint:\n");
+				debugPrintf("%s\n", it.format().c_str());
+				cmdScriptFrame(0, nullptr);
+				attach();
+				g_system->updateScreen();
+				break;
+			}
+		}
 	}
 }
 

@@ -50,6 +50,7 @@
 #include "ags/engine/game/savegame.h"
 #include "ags/engine/game/savegame_components.h"
 #include "ags/engine/game/savegame_internal.h"
+#include "ags/engine/main/game_run.h"
 #include "ags/engine/main/engine.h"
 #include "ags/engine/main/main.h"
 #include "ags/engine/platform/base/ags_platform_driver.h"
@@ -125,7 +126,7 @@ String GetSavegameErrorText(SavegameErrorType err) {
 	case kSvgErr_IncompatibleEngine:
 		return "Save was written by incompatible engine, or file is corrupted.";
 	case kSvgErr_GameGuidMismatch:
-		return "Game GUID does not match, saved by a different _GP(game).";
+		return "Game GUID does not match, saved by a different game.";
 	case kSvgErr_ComponentListOpeningTagFormat:
 		return "Failed to parse opening tag of the components list.";
 	case kSvgErr_ComponentListClosingTagMissing:
@@ -378,7 +379,7 @@ void DoBeforeRestore(PreservedParams &pp) {
 	free_do_once_tokens();
 
 	// unregister gui controls from API exports
-	// TODO: find out why are we doing this here? is this really necessary?
+	// CHECKME: find out why are we doing this here? why only to gui controls?
 	for (int i = 0; i < _GP(game).numgui; ++i) {
 		unexport_gui_controls(i);
 	}
@@ -451,8 +452,13 @@ HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data)
 		_G(dynamicallyCreatedSurfaces)[i] = r_data.DynamicSurfaces[i];
 	}
 
+	// Re-export any missing audio channel script objects, e.g. if restoring old save
+	export_missing_audiochans();
+
+	// CHECKME: find out why are we doing this here? why only to gui controls?
 	for (int i = 0; i < _GP(game).numgui; ++i)
 		export_gui_controls(i);
+
 	update_gui_zorder();
 
 	if (create_global_script()) {
@@ -461,14 +467,14 @@ HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data)
 	}
 
 	// read the global data into the newly created script
-	if (r_data.GlobalScript.Data.get())
-		memcpy(_G(gameinst)->globaldata, r_data.GlobalScript.Data.get(),
+	if (!r_data.GlobalScript.Data.empty())
+		memcpy(_G(gameinst)->globaldata, &r_data.GlobalScript.Data.front(),
 		       MIN((size_t)_G(gameinst)->globaldatasize, r_data.GlobalScript.Len));
 
 	// restore the script module data
 	for (size_t i = 0; i < _G(numScriptModules); ++i) {
-		if (r_data.ScriptModules[i].Data.get())
-			memcpy(_GP(moduleInst)[i]->globaldata, r_data.ScriptModules[i].Data.get(),
+		if (!r_data.ScriptModules[i].Data.empty())
+			memcpy(_GP(moduleInst)[i]->globaldata, &r_data.ScriptModules[i].Data.front(),
 			       MIN((size_t)_GP(moduleInst)[i]->globaldatasize, r_data.ScriptModules[i].Len));
 	}
 
@@ -483,15 +489,11 @@ HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data)
 	int queuedMusicSize = _GP(play).music_queue_size;
 	_GP(play).music_queue_size = 0;
 
-	update_polled_stuff_if_runtime();
-
 	// load the room the game was saved in
 	if (_G(displayed_room) >= 0)
 		load_new_room(_G(displayed_room), nullptr);
 	else
 		set_room_placeholder();
-
-	update_polled_stuff_if_runtime();
 
 	_GP(play).gscript_timer = gstimer;
 	// restore the correct room volume (they might have modified
@@ -508,8 +510,6 @@ HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data)
 	_GP(spriteset).Precache(_GP(game).mcurs[r_data.CursorID].pic);
 
 	sys_window_set_title(_GP(play).game_name);
-
-	update_polled_stuff_if_runtime();
 
 	if (_G(displayed_room) >= 0) {
 		// Fixup the frame index, in case the restored room does not have enough background frames
@@ -601,12 +601,12 @@ HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data)
 
 	recreate_overlay_ddbs();
 
-	GUI::MarkAllGUIForUpdate();
+	GUI::MarkAllGUIForUpdate(true, true);
 
 	RestoreViewportsAndCameras(r_data);
 
 	_GP(play).ClearIgnoreInput(); // don't keep ignored input after save restore
-	update_polled_stuff_if_runtime();
+	update_polled_stuff();
 
 	pl_run_plugin_hooks(AGSE_POSTRESTOREGAME, 0);
 

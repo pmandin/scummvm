@@ -30,8 +30,21 @@
 namespace MM {
 namespace MM1 {
 
+class UIElement;
+
+enum TextAlign {
+	ALIGN_LEFT, ALIGN_RIGHT, ALIGN_MIDDLE
+};
+
 struct Message {};
-struct FocusMessage : public Message {};
+
+struct FocusMessage : public Message {
+	UIElement *_priorView = nullptr;
+	FocusMessage() : Message() {}
+	FocusMessage(UIElement *priorView) : Message(),
+		_priorView(priorView) {}
+};
+
 struct UnfocusMessage : public Message {};
 struct ActionMessage : public Message {
 	KeybindingAction _action;
@@ -94,14 +107,16 @@ struct HeaderMessage : public Message {
 
 struct Line : public Common::Point {
 	Common::String _text;
+	TextAlign _align = ALIGN_LEFT;
 
 	Line() {
 	}
-	Line(const Common::String &text) :
-		Common::Point(-1, -1), _text(text) {
+	Line(const Common::String &text, TextAlign align = ALIGN_LEFT) :
+		Common::Point(-1, -1), _text(text), _align(align) {
 	}
-	Line(int x1, int y1, const Common::String &text) :
-		Common::Point(x1, y1), _text(text) {
+	Line(int x1, int y1, const Common::String &text,
+			TextAlign align = ALIGN_LEFT) :
+		Common::Point(x1, y1), _text(text), _align(align) {
 	}
 
 	size_t size() const;
@@ -120,8 +135,8 @@ struct InfoMessage : public Message {
 	int _delaySeconds = 0;
 
 	InfoMessage();
-	InfoMessage(const Common::String &str);
-	InfoMessage(int x, int y, const Common::String &str);
+	InfoMessage(const Common::String &str, TextAlign align = ALIGN_LEFT);
+	InfoMessage(int x, int y, const Common::String &str, TextAlign align = ALIGN_LEFT);
 	InfoMessage(int x1, int y1, const Common::String &str1,
 		int x2, int y2, const Common::String &str2);
 
@@ -147,17 +162,15 @@ struct InfoMessage : public Message {
 struct SoundMessage : public InfoMessage {
 public:
 	SoundMessage() : InfoMessage() { _sound = true; }
-	SoundMessage(const Common::String &str) :
-		InfoMessage(0, 1, str) { _sound = true; }
-	SoundMessage(int x, int y, const Common::String &str) :
-		InfoMessage(x, y, str) { _sound = true; }
+	SoundMessage(const Common::String &str, TextAlign align = ALIGN_LEFT);
+	SoundMessage(int x, int y, const Common::String &str,
+		TextAlign align = ALIGN_LEFT) :
+		InfoMessage(x, y, str, align) { _sound = true; }
 	SoundMessage(int x1, int y1, const Common::String &str1,
 		int x2, int y2, const Common::String &str2) :
 		InfoMessage(x1, y1, str1, x2, y2, str2) { _sound = true; }
 
-	SoundMessage(const Common::String &str,
-		YNCallback ynCallback) :
-		InfoMessage(0, 1, str, ynCallback) { _sound = true; }
+	SoundMessage(const Common::String &str, YNCallback ynCallback);
 	SoundMessage(int x, int y, const Common::String &str,
 		YNCallback ynCallback) :
 		InfoMessage(x, y, str, ynCallback) { _sound = true; }
@@ -166,9 +179,7 @@ public:
 		YNCallback ynCallback) :
 		InfoMessage(x1, y1, str1, x2, y2, str2, ynCallback) { _sound = true; }
 
-	SoundMessage(const Common::String &str,
-		KeyCallback keyCallback) :
-		InfoMessage(0, 1, str, keyCallback) { _sound = true; }
+	SoundMessage(const Common::String &str, KeyCallback keyCallback);
 	SoundMessage(int x, int y, const Common::String &str,
 		KeyCallback keyCallback) :
 		InfoMessage(x, y, str, keyCallback) { _sound = true; }
@@ -181,14 +192,6 @@ public:
 enum LocationType {
 	LOC_TRAINING = 0, LOC_MARKET = 1, LOC_TEMPLE = 2,
 	LOC_BLACKSMITH = 3, LOC_TAVERN = 4
-};
-
-struct ValueMessage : public Message {
-	int _value;
-
-	ValueMessage() : Message(), _value(0) {}
-	ValueMessage(int value) : Message(),
-		_value(value) {}
 };
 
 struct DrawGraphicMessage : public Message {

@@ -23,6 +23,8 @@
 #include "common/error.h"
 #include "common/file.h"
 #include "common/macresman.h"
+#include "common/memstream.h"
+#include "common/bufferedstream.h"
 #include "common/substream.h"
 #include "common/formats/winexe.h"
 #include "graphics/wincursor.h"
@@ -296,12 +298,16 @@ Archive *Window::loadEXE(const Common::String movie) {
 			result = loadEXEv3(exeStream);
 		} else {
 			warning("Window::loadEXE(): Unhandled Windows EXE version %d", g_director->getVersion());
+			delete exeStream;
 			return nullptr;
 		}
 	}
 
 	if (result)
 		result->setPathName(movie);
+	else
+		delete exeStream;
+
 	return result;
 }
 
@@ -519,4 +525,235 @@ void Window::loadStartMovieXLibs() {
 	g_lingo->openXLib("SerialPort", kXObj);
 }
 
+/*******************************************
+ *
+ * Projector Archive
+ *
+ *******************************************/
+
+class ProjectorArchive : public Common::Archive {
+public:
+	ProjectorArchive(Common::String path);
+	~ProjectorArchive() override;
+
+	bool hasFile(const Common::Path &path) const override;
+	int listMembers(Common::ArchiveMemberList &list) const override;
+	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
+	Common::SeekableReadStream *createReadStreamForMember(const Common::Path &path) const override;
+
+private:
+	Common::SeekableReadStream *createBufferedReadStream();
+	bool loadArchive(Common::SeekableReadStream *stream);
+
+	struct Entry {
+		uint32 offset;
+		uint32 size;
+	};
+	typedef Common::HashMap<Common::String, Entry, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> FileMap;
+	FileMap _files;
+	Common::String _path;
+};
+
+ProjectorArchive::ProjectorArchive(Common::String path)
+	: _path(path), _files() {
+
+	// Buffer 100K into memory
+	Common::SeekableReadStream *stream = createBufferedReadStream();
+
+	// Build our filemap using the buffered stream
+	loadArchive(stream);
+
+	delete stream;
+}
+
+Common::SeekableReadStream *ProjectorArchive::createBufferedReadStream() {
+	const uint32 READ_BUFFER_SIZE = 1024 * 100;
+
+	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(_path);
+	if (!stream)
+		error("ProjectorArchive::createBufferedReadStream(): Cannot open %s", _path.c_str());
+
+	return Common::wrapBufferedSeekableReadStream(stream, READ_BUFFER_SIZE, DisposeAfterUse::NO);
+}
+
+ProjectorArchive::~ProjectorArchive() {
+	_files.clear();
+}
+
+bool ProjectorArchive::loadArchive(Common::SeekableReadStream *stream) {
+	bool bigEndian = false, found = false;
+	uint32 off, tag, rifxOffset;
+
+	stream->seek(-4, SEEK_END);
+	off = stream->readUint32LE();
+	stream->seek(off);
+	tag = stream->readUint32BE();
+
+	// Check whether we got a 'PJ' tag while ignoring the version and accounting for endianness
+	if (((tag & 0xffff0000) != MKTAG('P','J', 0, 0)) && ((tag & 0x0000ffff) != MKTAG(0, 0, 'J','P'))) {
+		warning("ProjectorArchive::loadArchive(): Projector Tag not found");
+		return false;
+	}
+
+	rifxOffset = stream->readUint32LE();
+
+	// if value is bigger than the stream size this is most likely a endianness issue.
+	if (rifxOffset > stream->size()) {
+		bigEndian = true;
+		rifxOffset = SWAP_BYTES_32(rifxOffset);
+	}
+
+	stream->seek(rifxOffset);
+	tag = stream->readUint32BE();
+
+	debugC(1, kDebugLoading, "File: %s off: 0x%x, tag: %s rifx: 0x%x", _path.c_str(), off, tag2str(tag), rifxOffset);
+
+	// Try to locate the very next Dict tag(byte-by-byte)
+	tag = stream->readUint32BE();
+	found = false;
+
+	// This loop has neglible performance impact due to the stream being buffered.
+	// Furthermore, comparing 4 bytes at a time should be pretty fast on mordern systems.
+	while (!stream->eos()) {
+		if (tag == MKTAG('D', 'i', 'c', 't') || tag == MKTAG('t', 'c', 'i', 'D')) {
+			found = true;
+			break;
+		}
+
+		stream->seek(-3, SEEK_CUR);
+		tag = stream->readUint32BE();
+	}
+
+	// Return if dict tag is not found
+	if (!found) {
+		warning("ProjectorArchive::loadArchive(): Dict Tag not found.");
+		return false;
+	}
+
+	uint32 size = bigEndian ? stream->readUint32BE() : stream->readUint32LE();
+	uint32 dictOff = bigEndian ? stream->readUint32BE() : stream->readUint32LE();
+
+	// Jump to the actual dict block and parse it
+	if (!stream->seek(dictOff)) {
+		warning("BUILDBOT: ProjectorArchive::loadArchive(): Incorrect dict offset (0x%x)", dictOff);
+		return false;
+	}
+
+	tag = bigEndian ? stream->readUint32BE() : stream->readUint32LE();
+	size = bigEndian ? stream->readUint32BE() : stream->readUint32LE();
+	stream->seek(dictOff + 24);
+	uint32 cnt = bigEndian ? stream->readUint32BE() : stream->readUint32LE();
+
+	// Correction for when there is only a single element present according to the dict
+	uint8 offsetDict = bigEndian && cnt == 1 ? 2 : 0;
+	bool oBigEndian = bigEndian;
+
+	// For 16-bit win projector
+	if (cnt > 0xFFFF) {
+		cnt = SWAP_BYTES_32(cnt);
+		offsetDict = 2;
+		bigEndian = true;
+	}
+
+	debugC(1, kDebugLoading, "Dict off: 0x%x, Size: 0x%x cnt: %d", dictOff, size, cnt);
+
+	uint32 pt = (cnt * 8) + (64 - offsetDict);
+	Common::StringArray arr(cnt);
+
+	for (uint32 i = 0; i < cnt; i++) {
+		// if this fails it likely means that the dict was invalid.
+		if (!stream->seek(dictOff + pt, SEEK_SET)) {
+			warning("ProjectorArchive::loadArchive(): Incorrect entry name offset (0x%x)", dictOff + pt);
+			return false;
+		}
+
+		uint32 namelen = bigEndian ? stream->readUint32BE() : stream->readUint32LE();
+		arr[i] = stream->readString(0, namelen);
+
+		if (i < cnt - 1) {
+			int sub = (namelen % 4) ? (namelen % 4) : 4;
+			pt += 4 + namelen + (4 - sub);
+		}
+	}
+
+	bigEndian = oBigEndian;
+
+	// Jump to the first block which should start right after the dict while making sure size is aligned.
+	size += (size % 2);
+	stream->seek(dictOff + size + 8, SEEK_SET);
+
+	for (uint32 i = 0; i < cnt; i++) {
+		tag = stream->readUint32BE();
+		size = bigEndian ? stream->readUint32BE() : stream->readUint32LE();
+
+		// endianness issue, swap size and continue
+		if (size > stream->pos()) {
+			bigEndian = !bigEndian;
+			size = SWAP_BYTES_32(size);
+		}
+
+		debugC(1, kDebugLoading, "Entry: %s offset %lX tag %s size %d", arr[i].c_str(), stream->pos() - 8, tag2str(tag), size);
+
+		Entry entry;
+
+		// subtract 8 since we want to include tag and size as well
+		entry.offset = static_cast<uint32>(stream->pos() - 8);
+		entry.size = size + 8;
+		_files[arr[i]] = entry;
+
+		// Align size for the next seek.
+		size += (size % 2);
+
+		// if this fails it suggests something is either wrong with the dict or the file itself.
+		if (!stream->seek(size, SEEK_CUR)) {
+			warning("ProjectorArchive::loadArchive(): Could not read next block (0x%x) Prev Block(0x%x : %d)",
+			        entry.offset + entry.size, entry.offset, entry.size);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool ProjectorArchive::hasFile(const Common::Path &path) const {
+	Common::String name = path.toString();
+	return (_files.find(name) != _files.end());
+}
+
+int ProjectorArchive::listMembers(Common::ArchiveMemberList &list) const {
+	int count = 0;
+
+	for (FileMap::const_iterator i = _files.begin(); i != _files.end(); ++i) {
+		list.push_back(Common::ArchiveMemberList::value_type(new Common::GenericArchiveMember(i->_key, this)));
+		++count;
+	}
+
+	return count;
+}
+
+const Common::ArchiveMemberPtr ProjectorArchive::getMember(const Common::Path &path) const {
+	Common::String name = path.toString();
+
+	if (!hasFile(name))
+		return Common::ArchiveMemberPtr();
+
+	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name, this));
+}
+
+Common::SeekableReadStream *ProjectorArchive::createReadStreamForMember(const Common::Path &path) const {
+	Common::String name = path.toString();
+	FileMap::const_iterator fDesc = _files.find(name);
+
+	if (fDesc == _files.end())
+		return nullptr;
+
+	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(_path);
+
+	stream->seek(fDesc->_value.offset, SEEK_SET);
+	byte *data = (byte *)malloc(fDesc->_value.size);
+	stream->read(data, fDesc->_value.size);
+	delete stream;
+
+	return new Common::MemoryReadStream(data, fDesc->_value.size, DisposeAfterUse::YES);
+}
 } // End of namespace Director

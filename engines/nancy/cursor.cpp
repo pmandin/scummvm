@@ -26,18 +26,17 @@
 #include "engines/nancy/graphics.h"
 #include "engines/nancy/resource.h"
 #include "engines/nancy/util.h"
-#include "engines/nancy/constants.h"
 
 namespace Nancy {
 
 void CursorManager::init() {
 	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("INV");
-	chunk->seek(0xD6 + g_nancy->getConstants().numCurtainAnimationFrames * 0x20 + 0x1C);
+	chunk->seek(0xD6 + g_nancy->getStaticData().numCurtainAnimationFrames * 0x20 + 0x1C);
 	Common::String inventoryCursorsImageName = chunk->readString();
 
 	chunk = g_nancy->getBootChunkStream("CURS");
 	chunk->seek(0);
-	uint numCursors = g_nancy->getConstants().numNonItemCursors + g_nancy->getConstants().numItems * 4;
+	uint numCursors = g_nancy->getStaticData().numNonItemCursors + g_nancy->getStaticData().numItems * 4;
 	_cursors.reserve(numCursors);
 	for (uint i = 0; i < numCursors; ++i) {
 		_cursors.push_back(Cursor());
@@ -95,7 +94,7 @@ void CursorManager::setCursor(CursorType type, int16 itemID) {
 			itemID = 0;
 		} else {
 			// Item held
-			itemsOffset = g_nancy->getConstants().numNonItemCursors;
+			itemsOffset = g_nancy->getStaticData().numNonItemCursors;
 			hasItem = true;
 		}
 
@@ -124,12 +123,9 @@ void CursorManager::setCursor(CursorType type, int16 itemID) {
 	// Convert the trans color from the original format to the screen format
 	uint transColor;
 	if (g_nancy->getGameType() == kGameTypeVampire) {
-		uint8 r, g, b;
-		uint32 input = surf->getPalette()[1];
-		r = input & 0xFF;
-		g = (input & 0xFF00) >> 8;
-		b = (input & 0xFF0000) >> 16;
-		transColor = temp.format.RGBToColor(r, g, b);
+		uint8 palette[1 * 3];
+		surf->grabPalette(palette, 1, 1);
+		transColor = temp.format.RGBToColor(palette[0], palette[1], palette[2]);
 	} else {
 		uint8 r, g, b;
 		surf->format.colorToRGB(g_nancy->_graphicsManager->getTransColor(), r, g, b);

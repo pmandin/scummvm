@@ -27,7 +27,6 @@
 #include "engines/nancy/util.h"
 
 #include "engines/nancy/action/recordtypes.h"
-#include "engines/nancy/action/responses.cpp"
 
 #include "engines/nancy/state/scene.h"
 
@@ -106,9 +105,66 @@ void Hot1FrSceneChange::execute() {
 }
 
 void HotMultiframeMultisceneChange::readData(Common::SeekableReadStream &stream) {
-	stream.seek(0x14, SEEK_CUR);
-	uint size = stream.readUint16LE() * 0x12;
-	stream.skip(size);
+	_onTrue.readData(stream);
+	_onFalse.readData(stream);
+	_condType = stream.readByte();
+	_conditionID = stream.readUint16LE();
+	_conditionPayload = stream.readByte();
+	uint numHotspots = stream.readUint16LE();
+
+	_hotspots.resize(numHotspots);
+
+	for (uint i = 0; i < numHotspots; ++i) {
+		_hotspots[i].readData(stream);
+	}
+}
+
+void HotMultiframeMultisceneChange::execute() {
+	switch (_state) {
+	case kBegin:
+		// set something to 1
+		_state = kRun;
+		// fall through
+	case kRun:
+		_hasHotspot = false;
+
+		for (HotspotDescription &desc : _hotspots) {
+			if (desc.frameID == NancySceneState.getSceneInfo().frameID) {
+				_hotspot = desc.coords;
+				_hasHotspot = true;
+			}
+		}
+
+		break;
+	case kActionTrigger: {
+		bool conditionMet = false;
+		switch (_condType) {
+		case kFlagEvent:
+			if (NancySceneState.getEventFlag(_conditionID, _conditionPayload)) {
+				conditionMet = true;
+			}
+			break;
+		case kFlagInventory:
+			if (NancySceneState.hasItem(_conditionID) == _conditionPayload) {
+				conditionMet = true;
+			}
+			break;
+		case kFlagCursor:
+			if (NancySceneState.getHeldItem() == _conditionPayload) {
+				conditionMet = true;
+			}
+			break;
+		}
+
+		if (conditionMet) {
+			NancySceneState.changeScene(_onTrue);
+		} else {
+			NancySceneState.changeScene(_onFalse);
+		}
+
+		break;
+	}
+	}
 }
 
 void PaletteThisScene::readData(Common::SeekableReadStream &stream) {
@@ -141,46 +197,6 @@ void PaletteNextScene::readData(Common::SeekableReadStream &stream) {
 void PaletteNextScene::execute() {
 	NancySceneState.getNextSceneInfo().paletteID = _paletteID;
 	_isDone = true;
-}
-
-void StartFrameNextScene::readData(Common::SeekableReadStream &stream) {
-	stream.skip(4);
-}
-
-void StartStopPlayerScrolling::readData(Common::SeekableReadStream &stream) {
-	stream.skip(1);
-}
-
-void LightningOn::readData(Common::SeekableReadStream &stream) {
-	stream.skip(0xA);
-}
-
-void LightningOff::readData(Common::SeekableReadStream &stream) {
-	stream.skip(1);
-}
-
-void AmbientLightUp::readData(Common::SeekableReadStream &stream) {
-	stream.skip(0x12);
-}
-
-void AmbientLightDown::readData(Common::SeekableReadStream &stream) {
-	stream.skip(0x12);
-}
-
-void AmbientLightToTod::readData(Common::SeekableReadStream &stream) {
-	stream.skip(0x1C);
-}
-
-void AmbientLightToTodOff::readData(Common::SeekableReadStream &stream) {
-	stream.skip(1);
-}
-
-void FlickerOn::readData(Common::SeekableReadStream &stream) {
-	stream.skip(0xA);
-}
-
-void FlickerOff::readData(Common::SeekableReadStream &stream) {
-	stream.skip(1);
 }
 
 void MapCall::readData(Common::SeekableReadStream &stream) {
@@ -243,30 +259,6 @@ void MapCallHotMultiframe::execute() {
 	}
 }
 
-void MapLocationAccess::readData(Common::SeekableReadStream &stream) {
-	stream.skip(4);
-}
-
-void MapLightning::readData(Common::SeekableReadStream &stream) {
-	stream.skip(0xA);
-}
-
-void MapLightningOff::readData(Common::SeekableReadStream &stream) {
-	stream.skip(1);
-}
-
-void MapSound::readData(Common::SeekableReadStream &stream) {
-	stream.skip(0x10);
-}
-
-void MapAviOverride::readData(Common::SeekableReadStream &stream) {
-	stream.skip(2);
-}
-
-void MapAviOverrideOff::readData(Common::SeekableReadStream &stream) {
-	stream.skip(1);
-}
-
 void TextBoxWrite::readData(Common::SeekableReadStream &stream) {
 	uint16 size = stream.readUint16LE();
 	stream.skip(size);
@@ -281,7 +273,14 @@ void TextBoxClear::readData(Common::SeekableReadStream &stream) {
 }
 
 void BumpPlayerClock::readData(Common::SeekableReadStream &stream) {
-	stream.skip(5);
+	_relative = stream.readByte();
+	_hours = stream.readUint16LE();
+	_minutes = stream.readUint16LE();
+}
+
+void BumpPlayerClock::execute() {
+	NancySceneState.setPlayerTime(_hours * 3600000 + _minutes * 60000, _relative);
+	finishExecution();
 }
 
 void SaveContinueGame::readData(Common::SeekableReadStream &stream) {
@@ -388,8 +387,18 @@ void PushScene::readData(Common::SeekableReadStream &stream) {
 	stream.skip(1);
 }
 
+void PushScene::execute() {
+	NancySceneState.pushScene();
+	_isDone = true;
+}
+
 void PopScene::readData(Common::SeekableReadStream &stream) {
 	stream.skip(1);
+}
+
+void PopScene::execute() {
+	NancySceneState.popScene();
+	_isDone = true;
 }
 
 void WinGame::readData(Common::SeekableReadStream &stream) {
@@ -410,7 +419,7 @@ void AddInventoryNoHS::readData(Common::SeekableReadStream &stream) {
 }
 
 void AddInventoryNoHS::execute() {
-	if (NancySceneState.hasItem(_itemID) == kFalse) {
+	if (NancySceneState.hasItem(_itemID) == kInvEmpty) {
 		NancySceneState.addItemToInventory(_itemID);
 	}
 
@@ -424,7 +433,7 @@ void RemoveInventoryNoHS::readData(Common::SeekableReadStream &stream) {
 void DifficultyLevel::readData(Common::SeekableReadStream &stream) {
 	_difficulty = stream.readUint16LE();
 	_flag.label = stream.readSint16LE();
-	_flag.flag = (NancyFlag)stream.readUint16LE();
+	_flag.flag = stream.readUint16LE();
 }
 
 void DifficultyLevel::execute() {
@@ -506,15 +515,10 @@ void ShowInventoryItem::onPause(bool pause) {
 
 void PlayDigiSoundAndDie::readData(Common::SeekableReadStream &stream) {
 	_sound.read(stream, SoundDescription::kDIGI);
-	_sceneChange.readData(stream);
+	_sceneChange.readData(stream, g_nancy->getGameType() == kGameTypeVampire);
 
-	if (g_nancy->getGameType() == kGameTypeVampire) {
-		stream.skip(1);
-		_sceneChange.doNotStartSound = stream.readUint16LE();
-	}
-	
 	_flagOnTrigger.label = stream.readSint16LE();
-	_flagOnTrigger.flag = (NancyFlag)stream.readByte();
+	_flagOnTrigger.flag = stream.readByte();
 	stream.skip(2);
 }
 
@@ -552,7 +556,6 @@ void PlaySoundPanFrameAnchorAndDie::readData(Common::SeekableReadStream &stream)
 void PlaySoundPanFrameAnchorAndDie::execute() {
 	g_nancy->_sound->loadSound(_sound, true);
 	g_nancy->_sound->playSound(_sound);
-	g_nancy->_sound->calculatePanForAllSounds();
 	_isDone = true;
 }
 
@@ -562,10 +565,10 @@ void PlaySoundMultiHS::readData(Common::SeekableReadStream &stream) {
 	if (g_nancy->getGameType() != kGameTypeVampire) {
 		_sceneChange.readData(stream);
 		_flag.label = stream.readSint16LE();
-		_flag.flag = (NancyFlag)stream.readByte();
+		_flag.flag = stream.readByte();
 		stream.skip(2);
 	} else {
-		_flag.label = -1;
+		_flag.label = kEvNoEvent;
 		_sceneChange.sceneID = 9999;
 	}
 
@@ -616,14 +619,11 @@ void HintSystem::readData(Common::SeekableReadStream &stream) {
 void HintSystem::execute() {
 	switch (_state) {
 	case kBegin:
-		if (NancySceneState.getHintsRemaining() > 0) {
-			selectHint();
-		} else {
-			getHint(0, NancySceneState.getDifficulty());
-		}
+		selectHint();
+		_genericSound.name = selectedHint->soundIDs[NancySceneState.getDifficulty()];
 
 		NancySceneState.getTextbox().clear();
-		NancySceneState.getTextbox().addTextLine(_text);
+		NancySceneState.getTextbox().addTextLine(g_nancy->getStaticData().hintTexts[selectedHint->textID + NancySceneState.getDifficulty()]);
 
 		g_nancy->_sound->loadSound(_genericSound);
 		g_nancy->_sound->playSound(_genericSound);
@@ -639,10 +639,10 @@ void HintSystem::execute() {
 
 		// fall through
 	case kActionTrigger:
-		NancySceneState.useHint(_hintID, _hintWeight);
+		NancySceneState.useHint(_characterID, _hintID);
 		NancySceneState.getTextbox().clear();
 
-		NancySceneState.changeScene(_sceneChange);
+		NancySceneState.changeScene(selectedHint->sceneChange);
 
 		_isDone = true;
 		break;
@@ -650,15 +650,18 @@ void HintSystem::execute() {
 }
 
 void HintSystem::selectHint() {
-	for (const auto &hint : nancy1Hints) {
-		if (hint.characterID != _characterID) {
-			continue;
-		}
+	if (NancySceneState.getHintsRemaining() == 0) {
+		selectedHint = &g_nancy->getStaticData().hints[_characterID][0];
+	}
+
+	// Start from 1 since the first hint is always the "I give up" option
+	for (uint i = 1; i < g_nancy->getStaticData().hints[_characterID].size(); ++i) {
+		const auto &hint = g_nancy->getStaticData().hints[_characterID][i];
 
 		bool satisfied = true;
 
 		for (const auto &flag : hint.flagConditions) {
-			if (flag.label == -1) {
+			if (flag.label == kFlagNoLabel) {
 				break;
 			}
 
@@ -668,8 +671,8 @@ void HintSystem::selectHint() {
 			}
 		}
 
-		for (const auto &inv : hint.inventoryCondition) {
-			if (inv.label == -1) {
+		for (const auto &inv : hint.inventoryConditions) {
+			if (inv.label == kFlagNoLabel) {
 				break;
 			}
 
@@ -680,43 +683,10 @@ void HintSystem::selectHint() {
 		}
 
 		if (satisfied) {
-			getHint(hint.hintID, NancySceneState.getDifficulty());
+			selectedHint = &hint;
 			break;
 		}
 	}
-}
-
-void HintSystem::getHint(uint hint, uint difficulty) {
-	uint fileOffset = 0;
-	if (_characterID < 3) {
-		fileOffset = nancy1HintOffsets[_characterID];
-	}
-
-	fileOffset += 0x288 * hint;
-
-	Common::File file;
-	file.open("game.exe");
-	file.seek(fileOffset);
-
-	_hintID = file.readSint16LE();
-	_hintWeight = file.readSint16LE();
-
-	file.seek(difficulty * 10, SEEK_CUR);
-
-	readFilename(file, _genericSound.name);
-
-	file.seek(-(difficulty * 10) - 10, SEEK_CUR);
-	file.seek(30 + difficulty * 200, SEEK_CUR);
-
-	char textBuf[200];
-	file.read(textBuf, 200);
-	textBuf[199] = '\0';
-	_text = textBuf;
-
-	file.seek(-(difficulty * 200) - 200, SEEK_CUR);
-	file.seek(600, SEEK_CUR);
-
-	_sceneChange.readData(file);
 }
 
 } // End of namespace Action

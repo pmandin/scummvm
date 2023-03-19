@@ -34,10 +34,11 @@
 #include "tetraedge/te/te_bezier_curve.h"
 #include "tetraedge/te/te_free_move_zone.h"
 #include "tetraedge/te/te_trs.h"
+#include "tetraedge/te/te_curve_anim2.h"
 
 namespace Tetraedge {
 
-class Character : public TeAnimation {
+class Character : public TeAnimation, public TeObject {
 public:
 	Character();
 	virtual ~Character();
@@ -56,7 +57,7 @@ public:
 	};
 
 	struct CharacterSettings {
-		CharacterSettings() : _walkSpeed(0.0f) {}
+		CharacterSettings() : _walkSpeed(0.0f), _invertNormals(false) {}
 
 		Common::String _name;
 		Common::String _modelFileName;
@@ -95,6 +96,13 @@ public:
 		float _callsMade;
 	};
 
+	class Water {
+		Water();
+		TeIntrusivePtr<TeModel> _model;
+		TeCurveAnim2<TeModel,TeColor> _colorAnim;
+		TeCurveAnim2<TeModel,TeVector3f32> _scaleAnim;
+	};
+
 	void addCallback(const Common::String &s1, const Common::String &s2, float f1, float f2);
 
 	static void animCacheFreeAll();
@@ -127,7 +135,7 @@ public:
 	//void play() // just called TeAnimation::play();
 	void removeAnim();
 	void removeFromCurve();
-	static Common::String rootBone() { return "Pere"; }
+	Common::String rootBone() const;
 
 	bool setAnimation(const Common::String &name, bool repeat, bool returnToIdle = false, bool unused = false, int startFrame = -1, int endFrame = 9999);
 	void setAnimationSound(const Common::String &name, uint offset);
@@ -161,6 +169,7 @@ public:
 	bool needsSomeUpdate() const { return _needsSomeUpdate; }
 	void setNeedsSomeUpdate(bool val) { _needsSomeUpdate = val; }
 	void setCharLookingAt(Character *other) { _charLookingAt = other; }
+	void setCharLookingAtFloat(float f) { _charLookingAtFloat = f; }
 	const TeVector3f32 &positionCharacter() const { return _positionCharacter; }
 	void setPositionCharacter(const TeVector3f32 &val) { _positionCharacter = val; }
 	bool positionFlag() const { return _positionFlag; }
@@ -202,6 +211,7 @@ private:
 	Common::String _animSound;
 
 	Character *_charLookingAt;
+	float _charLookingAtFloat; // TODO: what is this?
 
 	uint _animSoundOffset;
 
