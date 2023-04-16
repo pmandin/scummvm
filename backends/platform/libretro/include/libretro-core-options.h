@@ -82,6 +82,11 @@ struct retro_core_option_v2_category option_cats_us[] = {
 		"Frameskip",
 		"Configure frameskip settings"
 	},
+	{
+		"timing",
+		"Timing",
+		"Configure timing settings"
+	},
 	{ NULL, NULL, NULL },
 };
 
@@ -199,14 +204,14 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		"scummvm_frameskip_type",
 		"Frameskip Mode",
 		NULL,
-		"Skip frames to avoid audio buffer under-run (crackling). Improves performance at the expense of visual smoothness. 'Auto' skips frames when advised by the frontend. 'Manual' uses the 'Frameskip Threshold (%)' setting. 'Fixed' uses the 'Fixed Frameskip' setting.",
+		"Skip frames to avoid audio buffer under-run (crackling). Improves performance at the expense of visual smoothness. 'Auto' skips frames when advised by the frontend. 'Threshold' uses the 'Frameskip Threshold (%)' setting. 'Fixed' uses the 'Fixed Frameskip' setting.",
 		NULL,
 		"frameskip",
 		{
 			{ "disabled", NULL },
 			{ "fixed", "Fixed" },
 			{ "auto", "Auto" },
-			{ "manual", "Manual" },
+			{ "manual", "Threshold" },
 			{ NULL, NULL },
 		},
 		"auto"
@@ -215,7 +220,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		"scummvm_frameskip_threshold",
 		"Frameskip Threshold (%)",
 		NULL,
-		"When 'Frameskip' is set to 'Manual', specifies the audio buffer occupancy threshold (percentage) below which frames will be skipped. Higher values reduce the risk of crackling by causing frames to be dropped more frequently.",
+		"When 'Frameskip' is set to 'Threshold', specifies the audio buffer occupancy threshold (percentage) below which frames will be skipped. Higher values reduce the risk of crackling by causing frames to be dropped more frequently.",
 		NULL,
 		"frameskip",
 		{
@@ -258,10 +263,38 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		"0"
 	},
 	{
-		"scummvm_speed_hack",
-		"Speed Hack (Restart)",
+		"scummvm_consecutive_screen_updates",
+		"Disable consecutive screen updates",
 		NULL,
-		"Enables a speed hack that significantly reduces CPU requirements by allowing subtle timing inaccuracies. This hack is considered 'safe' - it should cause no errors, and most timing deviations are imperceptible. It remains a hack, though, and users of desktop-class machines are advised to keep it disabled. On low power hardware (weak Android devices, single board computers), this hack is essential for full speed operation of the core.",
+		"While libretro is FPS bounded, ScummVM can update the screen independently from the refresh rate set. By default all consecutive ScummVM screen updates will be captured and processed within the same retro_run call, improving accuracy (e.g. see titles effects in Legend of Kyrandia intro) but increasing the execution time of that retro_run loop. If this setting is enabled only last screen update of a consecutive series will be shown. If 'Allow Timing Inaccuracies' is enabled, this setting will be overridden and enabled internally.",
+		NULL,
+		"timing",
+		{
+			{"disabled", NULL},
+			{"enabled", NULL},
+			{NULL, NULL},
+		},
+		"disabled"
+	},
+	{
+		"scummvm_allow_timing_inaccuracies",
+		"Allow Timing Inaccuracies",
+		NULL,
+		"Allow timing inaccuracies that reduces CPU requirements. Though most timing deviations are imperceptible, in some cases it may introduce audio sync/timing issues, hence this option should be enabled only if full speed cannot be reached otherwise.",
+		NULL,
+		"timing",
+		{
+			{"disabled", NULL},
+			{"enabled", NULL},
+			{NULL, NULL},
+		},
+		"disabled"
+	},
+	{
+		"scummvm_auto_performance_tuner",
+		"Auto performance tuner",
+		NULL,
+		"In-game automatic change of timing/frameskip settings if low performances are detected. Timing/frameskip settings will be changed in sequence, if audio buffer underruns are detected and for the current game session only, and restored in sequence if audio buffers recovers. Single saved settings will not be affected but will be overridden in-game.",
 		NULL,
 		NULL,
 		{
@@ -269,7 +302,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 			{"enabled", NULL},
 			{NULL, NULL},
 		},
-#if defined(ANDROID) || defined(DINGUX) || defined(_3DS)
+#if defined(DEFAULT_PERF_TUNER)
 		"enabled"
 #else
 		"disabled"

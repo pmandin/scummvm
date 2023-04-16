@@ -41,6 +41,10 @@
 
 #include <android/bitmap.h>
 
+#include "backends/platform/android/android.h"
+#include "backends/platform/android/jni-android.h"
+#include "backends/platform/android/asset-archive.h"
+
 #include "base/main.h"
 #include "base/version.h"
 #include "common/config-manager.h"
@@ -48,10 +52,6 @@
 #include "common/textconsole.h"
 #include "engines/engine.h"
 #include "graphics/surface.h"
-
-#include "backends/platform/android/android.h"
-#include "backends/platform/android/asset-archive.h"
-#include "backends/platform/android/jni-android.h"
 
 __attribute__ ((visibility("default")))
 jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
@@ -66,6 +66,7 @@ jobject JNI::_jobj_audio_track = 0;
 jobject JNI::_jobj_egl = 0;
 jobject JNI::_jobj_egl_display = 0;
 jobject JNI::_jobj_egl_surface = 0;
+int JNI::_egl_version = 0;
 
 Common::Archive *JNI::_asset_archive = 0;
 OSystem_Android *JNI::_system = 0;
@@ -94,10 +95,12 @@ jmethodID JNI::_MID_setTouchMode = 0;
 jmethodID JNI::_MID_getTouchMode = 0;
 jmethodID JNI::_MID_getScummVMBasePath;
 jmethodID JNI::_MID_getScummVMConfigPath;
+jmethodID JNI::_MID_getScummVMLogPath;
 jmethodID JNI::_MID_getSysArchives = 0;
 jmethodID JNI::_MID_getAllStorageLocations = 0;
 jmethodID JNI::_MID_initSurface = 0;
 jmethodID JNI::_MID_deinitSurface = 0;
+jmethodID JNI::_MID_eglVersion = 0;
 jmethodID JNI::_MID_getNewSAFTree = 0;
 jmethodID JNI::_MID_getSAFTrees = 0;
 jmethodID JNI::_MID_findSAFTree = 0;
@@ -511,7 +514,7 @@ Common::String JNI::getScummVMBasePath() {
 	jstring pathObj = (jstring)env->CallObjectMethod(_jobj, _MID_getScummVMBasePath);
 
 	if (env->ExceptionCheck()) {
-		LOGE("Failed to get ScummVM base path");
+		LOGE("Failed to get ScummVM base folder path");
 
 		env->ExceptionDescribe();
 		env->ExceptionClear();
@@ -536,7 +539,7 @@ Common::String JNI::getScummVMConfigPath() {
 	jstring pathObj = (jstring)env->CallObjectMethod(_jobj, _MID_getScummVMConfigPath);
 
 	if (env->ExceptionCheck()) {
-		LOGE("Failed to get ScummVM base path");
+		LOGE("Failed to get ScummVM config file path");
 
 		env->ExceptionDescribe();
 		env->ExceptionClear();
@@ -555,6 +558,30 @@ Common::String JNI::getScummVMConfigPath() {
 	return path;
 }
 
+Common::String JNI::getScummVMLogPath() {
+	JNIEnv *env = JNI::getEnv();
+
+	jstring pathObj = (jstring)env->CallObjectMethod(_jobj, _MID_getScummVMLogPath);
+
+	if (env->ExceptionCheck()) {
+		LOGE("Failed to get ScummVM log file path");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+
+		return Common::String();
+	}
+
+	Common::String path;
+	const char *pathP = env->GetStringUTFChars(pathObj, 0);
+	if (pathP != 0) {
+		path = Common::String(pathP);
+		env->ReleaseStringUTFChars(pathObj, pathP);
+	}
+	env->DeleteLocalRef(pathObj);
+
+	return path;
+}
 
 // The following adds assets folder to search set.
 // However searching and retrieving from "assets" on Android this is slow
@@ -635,6 +662,23 @@ void JNI::deinitSurface() {
 		env->ExceptionDescribe();
 		env->ExceptionClear();
 	}
+}
+
+int JNI::fetchEGLVersion() {
+	JNIEnv *env = JNI::getEnv();
+
+	_egl_version = env->CallIntMethod(_jobj, _MID_eglVersion);
+
+	if (env->ExceptionCheck()) {
+		LOGE("eglVersion failed");
+
+		env->ExceptionDescribe();
+		env->ExceptionClear();
+
+		_egl_version = 0;
+	}
+
+	return _egl_version;
 }
 
 void JNI::setAudioPause() {
@@ -727,10 +771,12 @@ void JNI::create(JNIEnv *env, jobject self, jobject asset_manager,
 	FIND_METHOD(, getTouchMode, "()I");
 	FIND_METHOD(, getScummVMBasePath, "()Ljava/lang/String;");
 	FIND_METHOD(, getScummVMConfigPath, "()Ljava/lang/String;");
+	FIND_METHOD(, getScummVMLogPath, "()Ljava/lang/String;");
 	FIND_METHOD(, getSysArchives, "()[Ljava/lang/String;");
 	FIND_METHOD(, getAllStorageLocations, "()[Ljava/lang/String;");
 	FIND_METHOD(, initSurface, "()Ljavax/microedition/khronos/egl/EGLSurface;");
 	FIND_METHOD(, deinitSurface, "()V");
+	FIND_METHOD(, eglVersion, "()I");
 	FIND_METHOD(, getNewSAFTree,
 	            "(ZZLjava/lang/String;Ljava/lang/String;)Lorg/scummvm/scummvm/SAFFSTree;");
 	FIND_METHOD(, getSAFTrees, "()[Lorg/scummvm/scummvm/SAFFSTree;");
@@ -738,6 +784,7 @@ void JNI::create(JNIEnv *env, jobject self, jobject asset_manager,
 
 	_jobj_egl = env->NewGlobalRef(egl);
 	_jobj_egl_display = env->NewGlobalRef(egl_display);
+	_egl_version = 0;
 
 	env->DeleteLocalRef(cls);
 

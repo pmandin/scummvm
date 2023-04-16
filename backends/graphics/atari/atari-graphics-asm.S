@@ -31,8 +31,6 @@
 	.globl	_asm_screen_set_vram
 	.globl	_asm_screen_set_scp_res
 
-	.globl	_vbl_counter
-
 	.text
 
 | extern void asm_screen_tt_save(void);
@@ -213,16 +211,19 @@ set_tt_palette_loop:
 	dbra	d0,set_tt_palette_loop
 	rts
 
-| extern void asm_screen_set_falcon_palette(const uint32 pPalette[256]);
+| extern void asm_screen_set_falcon_palette(const byte pPalette[256*3]);
 |
 _asm_screen_set_falcon_palette:
 	move.l	(4,sp),a0
 	lea	pending_palette,a1
-	moveq	#256/2-1,d0
+	move.w	#256-1,d0
 
 set_falcon_palette_loop:
-	move.l	(a0)+,(a1)+
-	move.l	(a0)+,(a1)+
+	clr.l	d1
+	move.w	(a0)+,d1
+	swap	d1
+	move.b	(a0)+,d1
+	move.l	d1,(a1)+
 	dbra	d0,set_falcon_palette_loop
 
 	addq.w	#1,has_pending_palette
@@ -265,7 +266,6 @@ vbl:
 
 	addq.l	#1,0x0462.w			| _vbclock
 	addq.l	#1,0x0466.w			| _frclock
-	addq.l	#1,_vbl_counter			| to avoid accessing protected memory
 
 	tst.w	has_pending_scp
 	beq.b	vbl_no_pending_scp
@@ -349,6 +349,3 @@ save_pal:
 	ds.l	256+16/2			| old colours (sized for falcon+ste palette)
 save_video:
 	ds.b	32+12+2				| old video regs (size of falcon regs)
-
-_vbl_counter:
-	ds.l	1

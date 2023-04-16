@@ -57,23 +57,21 @@ public:
 	void registerGraphics() override;
 	void handleInput(NancyInput &input);
 
-	// To be called from Scene
-	void addItem(int16 itemID);
-	void removeItem(int16 itemID);
-
-	ItemDescription getItemDescription(uint id) const { return _itemDescriptions[id]; }
-
 	void onScrollbarMove();
 
 private:
+	// These are private since they should only be called from Scene
+	void addItem(const int16 itemID);
+	void removeItem(const int16 itemID);
+
 	void onReorder();
-	void setHotspots(uint pageNr);
+	void setHotspots(const uint pageNr);
+	void drawItemInSlot(const uint itemID, const uint slotID, const bool highlighted = false);
 
 	class Curtains : public RenderObject {
 	public:
-		Curtains(InventoryBox *parent) :
-			RenderObject(9),
-			_parent(parent),
+		Curtains() :
+			RenderObject(10),
 			_soundTriggered(false),
 			_areOpen(false),
 			_curFrame(0) {}
@@ -86,8 +84,6 @@ private:
 
 		void setAnimationFrame(uint frame);
 
-		InventoryBox *_parent;
-
 		uint _curFrame;
 		Time _nextFrameTime;
 		bool _areOpen;
@@ -96,6 +92,7 @@ private:
 
 	struct ItemHotspot {
 		int16 itemID = -1;
+		int itemOrder = -1; // index of the item into the _order array
 		Common::Rect hotspot; // in screen coordinates
 	};
 
@@ -109,16 +106,7 @@ private:
 
 	Common::Array<int16> _order;
 	ItemHotspot _itemHotspots[4];
-
-	// INV contents
-	//...
-	Common::Array<Common::Rect> _curtainsSrc; // 0xD6
-	// _screenPosition 0x1B6
-	uint16 _curtainsFrameTime; // 0x1C6
-	Common::String _inventoryCursorsImageName; // 0x1D2, should this be here?
-
-	Common::Rect _emptySpace; // 0x1E4
-	Common::Array<ItemDescription> _itemDescriptions; // 0x1F4
+	int _highlightedHotspot;
 };
 
 } // End of namespace UI

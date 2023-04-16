@@ -141,9 +141,10 @@ void GraphicResource::init(byte *data, int32 size) {
 		uint16 width  = READ_LE_UINT16(dataPtr);
 		dataPtr += 2;
 
-		_frames[i].surface.create(width, height, Graphics::PixelFormat::createFormatCLUT8());
-
-		memcpy(_frames[i].surface.getPixels(), dataPtr, (size_t)(width * height));
+		if (width > 0 && height > 0) {
+			_frames[i].surface.create(width, height, Graphics::PixelFormat::createFormatCLUT8());
+			_frames[i].surface.copyRectToSurface(dataPtr, width, 0, 0, width, height);
+		}
 	}
 }
 

@@ -39,9 +39,8 @@ namespace UI {
 InventoryBox::InventoryBox() :
 		RenderObject(6),
 		_scrollbar(nullptr),
-		_curtains(this),
 		_scrollbarPos(0),
-		_curtainsFrameTime(0) {}
+		_highlightedHotspot(-1) {}
 
 InventoryBox::~InventoryBox() {
 	_fullInventorySurface.free();
@@ -49,51 +48,10 @@ InventoryBox::~InventoryBox() {
 }
 
 void InventoryBox::init() {
-	Common::SeekableReadStream &stream = *g_nancy->getBootChunkStream("INV");
-	stream.seek(0, SEEK_SET);
-
 	_order.clear();
 
-	Common::Rect scrollbarSrcBounds;
-	readRect(stream, scrollbarSrcBounds);
-	Common::Point scrollbarDefaultPos;
-	scrollbarDefaultPos.x = stream.readUint16LE();
-	scrollbarDefaultPos.y = stream.readUint16LE();
-	uint16 scrollbarMaxScroll = stream.readUint16LE();
-
-	stream.seek(0xD6, SEEK_SET);
-
-	uint numFrames = g_nancy->getStaticData().numCurtainAnimationFrames;
-	_curtainsSrc.resize(numFrames * 2);
-	for (uint i = 0; i < numFrames * 2; ++i) {
-		readRect(stream, _curtainsSrc[i]);
-	}
-
-	readRect(stream, _screenPosition);
-	_curtainsFrameTime = stream.readUint16LE();
-
-	Common::String inventoryBoxIconsImageName;
-	readFilename(stream, inventoryBoxIconsImageName);
-	readFilename(stream, _inventoryCursorsImageName);
-
-	stream.skip(8);
-	readRect(stream, _emptySpace);
-
-	char itemName[20];
-	uint itemNameLength = g_nancy->getGameType() == kGameTypeVampire ? 15 : 20;
-
-	_itemDescriptions.reserve(g_nancy->getStaticData().numItems);
-	for (uint i = 0; i < g_nancy->getStaticData().numItems; ++i) {
-		stream.read(itemName, itemNameLength);
-		itemName[itemNameLength - 1] = '\0';
-		_itemDescriptions.push_back(ItemDescription());
-		ItemDescription &desc = _itemDescriptions.back();
-		desc.name = Common::String(itemName);
-		desc.keepItem = stream.readUint16LE();
-		readRect(stream, desc.sourceRect);
-	}
-
-	g_nancy->_resource->loadImage(inventoryBoxIconsImageName, _iconsSurface);
+	moveTo(g_nancy->_bootSummary->inventoryBoxScreenPosition);
+	g_nancy->_resource->loadImage(g_nancy->_inventoryData->inventoryBoxIconsImageName, _iconsSurface);
 
 	_fullInventorySurface.create(_screenPosition.width(), _screenPosition.height() * ((g_nancy->getStaticData().numItems / 4) + 1), g_nancy->_graphicsManager->getScreenPixelFormat());
 	Common::Rect sourceRect = _screenPosition;
@@ -110,7 +68,10 @@ void InventoryBox::init() {
 
 	RenderObject::init();
 
-	_scrollbar = new Scrollbar(9, scrollbarSrcBounds, scrollbarDefaultPos, scrollbarMaxScroll - scrollbarDefaultPos.y);
+	_scrollbar = new Scrollbar(	9,
+								g_nancy->_inventoryData->scrollbarSrcBounds,
+								g_nancy->_inventoryData->scrollbarDefaultPos,
+								g_nancy->_inventoryData->scrollbarMaxScroll - g_nancy->_inventoryData->scrollbarDefaultPos.y);
 	_scrollbar->init();
 	_curtains.init();
 }
@@ -130,9 +91,16 @@ void InventoryBox::registerGraphics() {
 }
 
 void InventoryBox::handleInput(NancyInput &input) {
+	// Disable input when primary video is playing
+	if (NancySceneState.getActiveConversation()) {
+		return;
+	}
+
 	if (_order.size()) {
 		_scrollbar->handleInput(input);
 	}
+
+	int hoveredHotspot = -1;
 
 	for (uint i = 0; i < 4; ++i) {
 		if (_itemHotspots[i].hotspot.contains(input.mousePos)) {
@@ -144,17 +112,36 @@ void InventoryBox::handleInput(NancyInput &input) {
 				}
 			} else if (_itemHotspots[i].itemID != -1) {
 				g_nancy->_cursorManager->setCursorType(CursorManager::kHotspotArrow);
+				
+				hoveredHotspot = i;
+
 				if (input.input & NancyInput::kLeftMouseButtonUp) {
 					NancySceneState.removeItemFromInventory(_itemHotspots[i].itemID);
+					_highlightedHotspot = -1;
+					hoveredHotspot = -1;
 					g_nancy->_sound->playSound("GLOB");
 				}
 			}
 			break;
 		}
 	}
+
+	if (_highlightedHotspot != hoveredHotspot) {
+		if (_highlightedHotspot != -1) {
+			// Un-highlight last hovered item
+			drawItemInSlot(_itemHotspots[_highlightedHotspot].itemID, _itemHotspots[_highlightedHotspot].itemOrder, false);
+			_highlightedHotspot = -1;
+		}
+
+		if (hoveredHotspot != -1) {
+			// Highlight hovered item
+			drawItemInSlot(_itemHotspots[hoveredHotspot].itemID, _itemHotspots[hoveredHotspot].itemOrder, true);
+			_highlightedHotspot = hoveredHotspot;
+		}
+	}
 }
 
-void InventoryBox::addItem(int16 itemID) {
+void InventoryBox::addItem(const int16 itemID) {
 	if (_order.size() == 0) {
 		// Adds first item, start curtains animation
 		_curtains.setOpen(true);
@@ -167,7 +154,7 @@ void InventoryBox::addItem(int16 itemID) {
 	onReorder();
 }
 
-void InventoryBox::removeItem(int16 itemID) {
+void InventoryBox::removeItem(const int16 itemID) {
 	for (auto &i : _order) {
 		if (i == itemID) {
 			_order.erase(&i);
@@ -182,13 +169,7 @@ void InventoryBox::onReorder() {
 
 	_fullInventorySurface.clear();
 	for (uint i = 0; i < _order.size(); ++i) {
-		Common::Rect dest;
-		dest.setWidth(_screenPosition.width() / 2);
-		dest.setHeight(_screenPosition.height() / 2);
-		dest.moveTo((i % 2) * dest.width(), (i / 2) * dest.height());
-		Common::Point destPoint = Common::Point (dest.left, dest.top);
-
-		_fullInventorySurface.blitFrom(_iconsSurface, _itemDescriptions[_order[i]].sourceRect, destPoint);
+		drawItemInSlot(_order[i], i);
 	}
 
 	if (_order.size() > 0) {
@@ -200,14 +181,29 @@ void InventoryBox::onReorder() {
 	_needsRedraw = true;
 }
 
-void InventoryBox::setHotspots(uint pageNr) {
+void InventoryBox::setHotspots(const uint pageNr) {
 	for (uint i = 0; i < 4; ++i) {
 		if (i + pageNr * 4 < _order.size()) {
 			_itemHotspots[i].itemID = _order[i + pageNr * 4];
+			_itemHotspots[i].itemOrder = i + pageNr * 4;
 		} else {
 			_itemHotspots[i].itemID = -1;
+			_itemHotspots[i].itemOrder = -1;
 		}
 	}
+}
+
+void InventoryBox::drawItemInSlot(const uint itemID, const uint slotID, const bool highlighted) {
+	auto &item = g_nancy->_inventoryData->itemDescriptions[itemID];
+	Common::Rect dest;
+
+	dest.setWidth(_screenPosition.width() / 2);
+	dest.setHeight(_screenPosition.height() / 2);
+	dest.moveTo((slotID % 2) * dest.width(), (slotID / 2) * dest.height());
+	Common::Point destPoint = Common::Point (dest.left, dest.top);
+
+	_fullInventorySurface.blitFrom(_iconsSurface, highlighted ? item.highlightedSourceRect : item.sourceRect, destPoint);
+	_needsRedraw = true;
 }
 
 void InventoryBox::onScrollbarMove() {
@@ -227,7 +223,9 @@ void InventoryBox::onScrollbarMove() {
 }
 
 void InventoryBox::Curtains::init() {
-	Common::Rect bounds = _parent->getBounds();
+	moveTo(g_nancy->_inventoryData->curtainsScreenPosition);
+	Common::Rect bounds = _screenPosition;
+	bounds.moveTo(0, 0);
 	_drawSurface.create(bounds.width(), bounds.height(), g_nancy->_graphicsManager->getInputPixelFormat());
 
 	if (g_nancy->getGameType() == kGameTypeVampire) {
@@ -236,7 +234,6 @@ void InventoryBox::Curtains::init() {
 		_drawSurface.setPalette(palette, 0, 256);
 	}
 
-	_screenPosition = _parent->getScreenPosition();
 	_nextFrameTime = 0;
 	setAnimationFrame(_curFrame);
 
@@ -250,7 +247,7 @@ void InventoryBox::Curtains::updateGraphics() {
 	if (_areOpen) {
 		if (_curFrame < g_nancy->getStaticData().numCurtainAnimationFrames && time > _nextFrameTime) {
 			setAnimationFrame(++_curFrame);
-			_nextFrameTime = time + _parent->_curtainsFrameTime;
+			_nextFrameTime = time + g_nancy->_inventoryData->curtainsFrameTime;
 
 			if (!_soundTriggered) {
 				_soundTriggered = true;
@@ -260,7 +257,7 @@ void InventoryBox::Curtains::updateGraphics() {
 	} else {
 		if (_curFrame > 0 && time > _nextFrameTime) {
 			setAnimationFrame(--_curFrame);
-			_nextFrameTime = time + _parent->_curtainsFrameTime;
+			_nextFrameTime = time + g_nancy->_inventoryData->curtainsFrameTime;
 
 			if (!_soundTriggered) {
 				_soundTriggered = true;
@@ -280,7 +277,11 @@ void InventoryBox::Curtains::setAnimationFrame(uint frame) {
 	Common::Point destPoint;
 
 	if (frame > (uint)(g_nancy->getStaticData().numCurtainAnimationFrames - 1)) {
-		setVisible(false);
+		// TVD keeps the last frame visible
+		if (g_nancy->getGameType() > kGameTypeVampire) {
+			setVisible(false);
+		}
+
 		return;
 	} else {
 		setVisible(true);
@@ -289,11 +290,11 @@ void InventoryBox::Curtains::setAnimationFrame(uint frame) {
 	_drawSurface.clear(g_nancy->_graphicsManager->getTransColor());
 
 	// Draw left shade
-	srcRect = _parent->_curtainsSrc[frame * 2];
+	srcRect = g_nancy->_inventoryData->curtainAnimationSrcs[frame * 2];
 	_drawSurface.blitFrom(_object0, srcRect, destPoint);
 
 	// Draw right shade
-	srcRect = _parent->_curtainsSrc[frame * 2 + 1];
+	srcRect = g_nancy->_inventoryData->curtainAnimationSrcs[frame * 2 + 1];
 	destPoint.x = getBounds().width() - srcRect.width();
 	_drawSurface.blitFrom(_object0, srcRect, destPoint);
 

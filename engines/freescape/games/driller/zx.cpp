@@ -25,6 +25,10 @@
 
 namespace Freescape {
 
+void DrillerEngine::initZX() {
+	_viewArea = Common::Rect(56, 20, 264, 124);
+}
+
 void DrillerEngine::loadAssetsZXFullGame() {
 	Common::File file;
 	file.open("driller.zx.title");
@@ -60,9 +64,9 @@ void DrillerEngine::loadAssetsZXFullGame() {
 		loadFonts(&file, 0x63f0);
 
 	if (_variant & GF_ZX_DISC)
-		loadGlobalObjects(&file, 0x1d13);
+		loadGlobalObjects(&file, 0x1d13, 8);
 	else
-		loadGlobalObjects(&file, 0x1c93);
+		loadGlobalObjects(&file, 0x1c93, 8);
 
 	if (_variant & GF_ZX_RETAIL)
 		load8bitBinary(&file, 0x642c, 4);

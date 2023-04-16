@@ -60,6 +60,13 @@ protected:
 	void displayMessage(const Common::String &msg);
 
 	/**
+	 * Get the text color for a line
+	 */
+	virtual int getLineColor() const {
+		return 0;
+	}
+
+	/**
 	 * Called when an item is selected
 	 */
 	virtual void itemSelected() = 0;
@@ -71,6 +78,7 @@ public:
 	bool msgFocus(const FocusMessage &msg) override;
 	void draw() override;
 	bool msgKeypress(const KeypressMessage &msg) override;
+	bool msgMouseDown(const MouseDownMessage &msg) override;
 	bool msgAction(const ActionMessage &msg) override;
 	void timeout() override;
 };

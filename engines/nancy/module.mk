@@ -5,16 +5,16 @@ MODULE_OBJS = \
   action/actionrecord.o \
   action/arfactory.o \
   action/leverpuzzle.o \
-  action/lightning.o \
   action/orderingpuzzle.o \
   action/passwordpuzzle.o \
-  action/primaryvideo.o \
+  action/conversation.o \
   action/recordtypes.o \
+  action/rippedletterpuzzle.o \
   action/rotatinglockpuzzle.o \
   action/secondarymovie.o \
   action/secondaryvideo.o \
   action/sliderpuzzle.o \
-  action/staticbitmapanim.o \
+  action/overlay.o \
   action/telephone.o \
   ui/fullscreenimage.o \
   ui/animatedbutton.o \
@@ -31,11 +31,12 @@ MODULE_OBJS = \
   state/mainmenu.o \
   state/map.o \
   state/scene.o \
+  misc/lightning.o \
   commontypes.o \
   console.o \
   cursor.o \
   decompress.o \
-  dialogs.o \
+  enginedata.o \
   font.o \
   graphics.o \
   iff.o \

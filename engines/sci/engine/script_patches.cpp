@@ -8832,9 +8832,67 @@ static const uint16 larry5PatchGermanEndingPattiTalker[] = {
 	PATCH_END
 };
 
+// The Hollywood sign in room 190 doesn't respond to clicks or display its
+//  messages. This is a script typo. The author attempted to initialize the
+//  `HollywoodSign` object, but typed the word `sign` instead. The compiler
+//  accepted this because `sign` is the name of a procedure in script 999.
+//  The `init` selector was interpreted as a non-existent property.
+//
+// We fix this by calling HollywoodSign:init instead of sign.
+//
+// Applies to: All versions
+// Responsible method: rm190:init
+static const uint16 larry5SignatureHollywoodSign[] = {
+	0x78,                               // push1
+	0x66, SIG_ADDTOOFFSET(+2),          // pTos ????
+	SIG_MAGICDWORD,
+	0x46, SIG_UINT16(0x03e7),           // calle proc999_0 [ sign(????) ]
+	      SIG_UINT16(0x0000), 0x02,
+	SIG_ADDTOOFFSET(+3),
+	0x72,                               // lofsa tree [ 0x40 bytes before HollywoodSign ]
+	SIG_END
+};
+
+static const uint16 larry5PatchHollywoodSign[] = {
+	0x38, PATCH_SELECTOR16(init),       // pushi init
+	0x39, 0x00,                         // pushi 00
+	0x72, PATCH_GETORIGINALUINT16ADJUST(+14, +0x40), // lofsa HollywoodSign
+	0x4a, 0x04,                         // send 04 [ HollywoodSign init: ]
+	PATCH_END
+};
+
+// LSL5's TPrint procedure causes an uninitialized parameter read when printing
+//  messages. This generates many warnings throughout the game. Ideally, we
+//  could suppress these with the workarounds table, but it would take several
+//  entries and bytecode signatures due to all of the callers and versions.
+//  Instead, it can be fixed in all versions with one small script patch.
+//
+// We fix this by removing the uninitialized parameter from TPrint's Print call
+//  and increasing the size of the &rest parameter. TPrint's second parameter is
+//  now only passed to Print when it exists.
+//
+// Applies to: All versions
+// Responsible method: Export 14 in script 0 (TPrint)
+static const uint16 larry5SignatureHTPrintUninitParameter[] = {
+	SIG_MAGICDWORD,
+	0x8f, 0x02,                         // lsp 02 [ often non-existent ]
+	0x59, 0x03,                         // &rest 03
+	0x47, 0xff, 0x00, 0x08,             // calle proc255_0 [ Print ... param2 &rest ]
+	SIG_END
+};
+
+static const uint16 larry5PatchTPrintUninitParameter[] = {
+	0x33, 0x00,                         // jmp 00
+	0x59, 0x02,                         // &rest 02
+	0x47, 0xff, 0x00, 0x06,             // calle proc225_0 [ Print ... &rest ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                               patch
 static const SciScriptPatcherEntry larry5Signatures[] = {
 	{  true,     0, "update stopGroop client",                     1, larry5SignatureUpdateStopGroopClient,   larry5PatchUpdateStopGroopClient },
+	{  true,     0, "TPrint uninit parameter",                     1, larry5SignatureHTPrintUninitParameter,  larry5PatchTPrintUninitParameter },
+	{  true,   190, "hollywood sign",                              1, larry5SignatureHollywoodSign,           larry5PatchHollywoodSign },
 	{  true,   280, "English-only: fix green card limo bug",       1, larry5SignatureGreenCardLimoBug,        larry5PatchGreenCardLimoBug },
 	{  true,   380, "German-only: Enlarge Patti Textbox",          1, larry5SignatureGermanEndingPattiTalker, larry5PatchGermanEndingPattiTalker },
 	SCI_SIGNATUREENTRY_TERMINATOR
@@ -10948,6 +11006,28 @@ static const uint16 laurabow2CDPatchFixBugsWithMeat[] = {
 	PATCH_END
 };
 
+// The dinosaur bone in room 480 has a broken verb handler. Clicking on the bone
+//  itself doesn't work, instead the player has to click on the surrounding area
+//  to look at it or pick it up. bone:doVerb calls dinoBones:doVerb but doesn't
+//  pass the verb parameter. We fix this by increasing the &rest parameter.
+//  
+// Applies to: All versions
+// Responsible method: bone:doVerb
+static const uint16 laurabow2SignatureFixDinosaurBone[] = {
+	SIG_MAGICDWORD,
+	0x76,                               // push0
+	0x59, 0x02,                         // &rest 02 [ excludes verb parameter ]
+	0x72, SIG_ADDTOOFFSET(+2),          // lofsa dinoBones
+	0x4a, 0x04,                         // send 04 [ dinoBones doVerb: &rest ]
+	SIG_END
+};
+
+static const uint16 laurabow2PatchFixDinosaurBone[] = {
+	0x76,                               // push0
+	0x59, 0x01,                         // &rest 01 [ includes verb parameter ]
+	PATCH_END
+};
+
 // LB2 CD ends act 5 in the middle of the finale music instead of waiting for
 //  it to complete. This is a script bug and occurs in Sierra's interpreter.
 //
@@ -11284,6 +11364,7 @@ static const SciScriptPatcherEntry laurabow2Signatures[] = {
 	{  true,   454, "CD/Floppy: fix coffin lockup 2/2",               1, laurabow2SignatureMummyCoffinLid2,              laurabow2PatchMummyCoffinLid2 },
 	{  true,   454, "CD: fix coffin closing cel",                     1, laurabow2CDSignatureMummyCoffinClosingCel,      laurabow2CDPatchMummyCoffinClosingCel },
 	{  true,   460, "CD/Floppy: fix crate room east door lockup",     1, laurabow2SignatureFixCrateRoomEastDoorLockup,   laurabow2PatchFixCrateRoomEastDoorLockup },
+	{  true,   480, "CD/Floppy: fix dinosaur bone",                   1, laurabow2SignatureFixDinosaurBone,              laurabow2PatchFixDinosaurBone },
 	{ false,   500, "CD: fix museum actor loops",                     3, laurabow2CDSignatureFixMuseumActorLoops1,       laurabow2CDPatchFixMuseumActorLoops1 },
 	{  true,  2660, "CD/Floppy: fix elevator lockup",                 1, laurabow2SignatureFixElevatorLockup,            laurabow2PatchFixElevatorLockup },
 	{  true,   520, "CD/Floppy: act 5 trigger",                       1, laurabow2SignatureAct5Trigger,                  laurabow2PatchAct5Trigger },
@@ -11665,6 +11746,51 @@ static const uint16 phant1RatPatch[] = {
 	PATCH_END
 };
 
+// In the basement there is a moment where clicking the fast-forward button
+//  locks up the game. Fast-forward changes the current room script to state
+//  zero and sets global 115. Most scripts' changeState methods start by testing
+//  this global to implement fast-forward behavior. They then reset the global
+//  when disposing before calling handsOn. scaryHandsOnCode:doit enables input,
+//  empties the event queue, and then polls and processes one final event.
+//  This creates a window where handsOn can process a fast-forward click and
+//  re-enter the room script while it's in the middle of disposing itself.
+//
+// Most room scripts have a structure that survives this re-entrancy, but room
+//  20100's sEnterFrom20200 is unusual. It doesn't test the fast-forward global
+//  in state zero. Instead, it unconditionally calls handsOff, causing the
+//  original handsOn call to undo its work before it returns.
+//
+// We fix this by swapping two function calls in sEnterFrom20200:dispose:
+//  handsOn and super:dispose. Now the script is fully disposed before handsOn.
+//  If a fast-forward click occurs it will no longer have any effect, because
+//  the room no longer has a script. If other scripts are discovered with this
+//  same problem, this patch will probably apply.
+//
+// Applies to: All versions
+// Responsible method: sEnterFrom20200:dispose
+// Fixes bug: #14368
+static const uint16 phant1BasementFastForwardSignature[] = {
+	0x35, 0x00,                     // ldi 00
+	0xa1, SIG_MAGICDWORD, 0x73,     // lag 73 [ fast-forward = 0 ]
+	0x38, SIG_SELECTOR16(handsOn),  // pushi handsOn
+	0x76,                           // push0
+	0x81, 0x01,                     // lag 01
+	0x4a, SIG_UINT16(0x0004),       // send 04 [ Scary handsOn: ]
+	0x38, SIG_SELECTOR16(dispose),  // pushi dispose
+	0x76,                           // push0
+	0x59, 0x01,                     // &rest 01
+	0x57, SIG_ADDTOOFFSET(+1),      // super 04 [ super dispose: &rest ]
+	      SIG_UINT16(0x0004),
+	SIG_END
+};
+
+static const uint16 phant1BasementFastForwardPatch[] = {
+	PATCH_ADDTOOFFSET(+4),          // [ fast-forward = 0 ]
+	PATCH_GETORIGINALBYTES(13, 10), // [ super dispose: &rest ]
+	PATCH_GETORIGINALBYTES(4, 9),   // [ Scary handsOn: ]
+	PATCH_END
+};
+
 // In Phantasmagoria the cursor's hover state will not trigger on any of the
 // buttons in the main menu after returning to the main menu from a game, or
 // when choosing "Quit" on the main menu and then cancelling the quit in the
@@ -11850,6 +11976,52 @@ static const uint16 phant1CopyChaseFilePatch[] = {
 	PATCH_END
 };
 
+// Clicking "Start New Game" when all 10 saves are in the chapter 7 chase
+//  crashes the game. Room 901 is supposed to prompt the player to delete one of
+//  their saves first, but in delete mode this room only shows regular saves,
+//  not chase saves. If all of the saves are chase saves then the screen is
+//  unexpectedly empty, and it crashes when trying to select a default icon.
+//
+// We fix this by showing all saves when in delete mode. This fixes the obscure
+//  bug and makes it easier to manage saves. Room 91 sets flag 152 when there
+//  are 10 saves to put room 901 in delete mode. Now that flag is tested before
+//  the save type to determine if a save should be displayed.
+//
+// Applies to: All versions
+// Responsible method: selectGameRoom:init
+// Fixes bug: #14361
+static const uint16 phant1DeleteSaveSignature[] = {
+	SIG_MAGICDWORD,
+	0x31, 0x06,                     // bnt 06
+	0x35, 0x00,                     // ldi 00
+	0xa5, 0x02,                     // sat 02 [ temp2 = 0, redundant ]
+	0x33, SIG_ADDTOOFFSET(+1),      // jmp    [ exit cond ]
+	SIG_ADDTOOFFSET(+7),
+	0x31, 0x17,                     // bnt 17
+	SIG_ADDTOOFFSET(+11),
+	0x36,                           // push
+	0x35, 0x02,                     // ldi 02
+	0x12,                           // and
+	0x31, 0x06,                     // bnt 06
+	0x35, 0x01,                     // ldi 01
+	SIG_END
+};
+
+static const uint16 phant1DeleteSavePatch[] = {
+	0x2f, PATCH_GETORIGINALBYTEADJUST(7, +6), // bt [ exit cond ]
+	0x78,                                     // push1
+	0x38, PATCH_UINT16(0x0098),               // pushi 0098
+	0x45, 0x03, PATCH_UINT16(0x0002),         // callb proc0_3 [ is flag 152 set? ]
+	0xa5, 0x02,                               // sat 02 [ show save in delete mode ]
+	PATCH_GETORIGINALBYTES(8, 7),
+	0x31, 0x1d,                               // bnt 1d
+	PATCH_GETORIGINALBYTES(17, 11),
+	0x7a,                                     // push2
+	0x12,                                     // and
+	0x31, 0x04,                               // bnt 04
+	PATCH_END
+};
+
 // During the chase, the west exit in room 46980 has incorrect logic which kills
 //  the player if they went to the crypt with the crucifix, among other bugs.
 //
@@ -12021,7 +12193,9 @@ static const SciScriptPatcherEntry phantasmagoriaSignatures[] = {
 	{  true,    26, "fix video 2020 censorship",                   1, phant1Video2020CensorSignature,  phant1Video2020CensorPatch },
 	{  true,    33, "disable video benchmarking",                  1, sci2BenchmarkSignature,          sci2BenchmarkPatch },
 	{  true,   901, "fix invalid array construction",              1, sci21IntArraySignature,          sci21IntArrayPatch },
+	{  true,   901, "fix delete save",                             1, phant1DeleteSaveSignature,       phant1DeleteSavePatch },
 	{  true,  1111, "ignore audio settings from save game",        1, phant1SavedVolumeSignature,      phant1SavedVolumePatch },
+	{  true, 20100, "fix basement fast-forward",                   1, phant1BasementFastForwardSignature, phant1BasementFastForwardPatch },
 	{  true, 20200, "fix broken rat init in sEnterFromAlcove",     1, phant1RatSignature,              phant1RatPatch },
 	{  true, 20200, "fix chapter 5 wine cask hotspot",             1, phant1WineCaskHotspotSignature,  phant1WineCaskHotspotPatch },
 	{  true, 45950, "fix chase file deletion",                     1, phant1DeleteChaseFileSignature,  phant1DeleteChaseFilePatch },

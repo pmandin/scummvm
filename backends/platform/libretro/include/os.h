@@ -24,7 +24,7 @@
 
 #define SAMPLE_RATE     48000
 #define REFRESH_RATE    60
-#define FRAMESKIP_MAX   30
+#define FRAMESKIP_MAX   REFRESH_RATE / 2
 
 // Audio status
 #define AUDIO_STATUS_MUTE               (1 << 0)
@@ -32,6 +32,20 @@
 #define AUDIO_STATUS_BUFFER_ACTIVE      (1 << 2)
 #define AUDIO_STATUS_BUFFER_UNDERRUN    (1 << 3)
 #define AUDIO_STATUS_UPDATE_LATENCY     (1 << 4)
+
+// Performance switcher
+#define PERF_SWITCH_FRAMESKIP_EVENTS                    REFRESH_RATE / 2
+#define PERF_SWITCH_ON                                  (1 << 0)
+#define PERF_SWITCH_ENABLE_TIMING_INACCURACIES          (1 << 1)
+#define PERF_SWITCH_DISABLE_CONSECUTIVE_SCREEN_UPDATES  (1 << 2)
+#define PERF_SWITCH_OVER                                (1 << 3)
+#define PERF_SWITCH_RESET_THRESHOLD                     60
+#define PERF_SWITCH_RESET_REST                          REFRESH_RATE * 30
+
+// Thread switch caller
+#define THREAD_SWITCH_POLL              (1 << 0)
+#define THREAD_SWITCH_DELAY             (1 << 1)
+#define THREAD_SWITCH_UPDATE            (1 << 2)
 
 // Preliminary scan results
 #define TEST_GAME_OK_TARGET_FOUND        0
@@ -65,7 +79,7 @@ extern char cmd_params_num;
 extern int access(const char *path, int amode);
 #endif
 
-OSystem *retroBuildOS(bool aEnableSpeedHack);
+OSystem *retroBuildOS();
 const Graphics::Surface &getScreen();
 
 void retroProcessMouse(retro_input_state_t aCallback, int device, float gamepad_cursor_speed, float gamepad_acceleration_time, bool analog_response_is_quadratic, int analog_deadzone, float mouse_speed);
@@ -77,5 +91,7 @@ void retroSetSystemDir(const char *aPath);
 void retroSetSaveDir(const char *aPath);
 
 void retroKeyEvent(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
+
+uint8 getThreadSwitchCaller(void);
 
 #endif

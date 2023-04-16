@@ -56,32 +56,35 @@ void Help::process() {
 	case kRun:
 		run();
 		break;
-	case kWaitForSound:
-		waitForSound();
+	case kWait:
+		wait();
 		break;
 	}
 }
 
+void Help::onStateEnter(const NancyState::NancyState prevState) {
+	if (prevState == NancyState::kPause) {
+		g_nancy->_sound->pauseSound("MSND", false);
+	}
+}
+
+bool Help::onStateExit(const NancyState::NancyState nextState) {
+	// Handle the GMM being called
+	if (nextState == NancyState::kPause) {
+		g_nancy->_sound->pauseSound("MSND", true);
+		
+		return false;
+	} else {
+		return true;
+	}
+}
+
 void Help::init() {
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("HELP");
+	HELP *helpData = g_nancy->_helpData;
+	assert(helpData);
+	_image.init(helpData->imageName);
 
-	chunk->seek(0);
-	Common::String imageName;
-	readFilename(*chunk, imageName);
-	_image.init(imageName);
-
-	chunk->skip(20);
-	Common::Rect buttonSrc, buttonDest;
-	buttonDest.left = chunk->readUint16LE();
-	buttonDest.top = chunk->readUint16LE();
-	buttonDest.right = chunk->readUint16LE();
-	buttonDest.bottom = chunk->readUint16LE();
-	buttonSrc.left = chunk->readUint16LE();
-	buttonSrc.top = chunk->readUint16LE();
-	buttonSrc.right = chunk->readUint16LE();
-	buttonSrc.bottom = chunk->readUint16LE();
-
-	_button = new UI::Button(5, _image._drawSurface, buttonSrc, buttonDest);
+	_button = new UI::Button(5, _image._drawSurface, helpData->buttonSrc, helpData->buttonDest, helpData->buttonHoverSrc);
 	_button->init();
 
 	_state = kBegin;
@@ -108,13 +111,13 @@ void Help::run() {
 	if (_button->_isClicked) {
 		_button->_isClicked = false;
 		g_nancy->_sound->playSound("BUOK");
-		_state = kWaitForSound;
+		_buttonPressActivationTime = g_system->getMillis() + g_nancy->_bootSummary->buttonPressTimeDelay;
+		_state = kWait;
 	}
 }
 
-void Help::waitForSound() {
-	if (!g_nancy->_sound->isSoundPlaying("BUOK")) {
-		g_nancy->_sound->stopSound("BUOK");
+void Help::wait() {
+	if (g_system->getMillis() > _buttonPressActivationTime) {
 		g_nancy->setToPreviousState();
 	}
 }

@@ -29,6 +29,8 @@
 
 #include "engines/nancy/state/credits.h"
 
+#include "common/events.h"
+
 namespace Common {
 DECLARE_SINGLETON(Nancy::State::Credits);
 }
@@ -47,40 +49,45 @@ void Credits::process() {
 	}
 }
 
+void Credits::onStateEnter(const NancyState::NancyState prevState) {
+	// Handle returning from the GMM
+	if (prevState == NancyState::kPause) {
+		g_nancy->_sound->pauseSound(_creditsData->sound, false);
+	}
+}
+
+bool Credits::onStateExit(const NancyState::NancyState nextState) {
+	// Handle the GMM being called
+	if (nextState == NancyState::kPause) {
+		g_nancy->_sound->pauseSound(_creditsData->sound, true);
+
+		return false;
+	} else {
+		return true;
+	}
+}
+
 void Credits::init() {
-	Common::SeekableReadStream *cred = g_nancy->getBootChunkStream("CRED");
-	cred->seek(0);
+	_creditsData = g_nancy->_creditsData;
+	assert(_creditsData);
 
-	Common::String imageName;
-	readFilename(*cred, imageName);
-	_background.init(imageName);
+	_background.init(_creditsData->imageName);
+	_textSurface.moveTo(_creditsData->textScreenPosition);
 
-	readFilename(*cred, imageName);
+	drawTextSurface(0);
 
-	cred->skip(0x20); // Skip the src and dest rectangles
-	readRect(*cred, _text._screenPosition);
-	cred->skip(0x10);
-	_updateTime = cred->readUint16LE();
-	_pixelsToScroll = cred->readUint16LE();
-	_sound.read(*cred, SoundDescription::kMenu);
-
-	g_nancy->_resource->loadImage(imageName, _fullTextSurface);
-
-	Common::Rect src = _text._screenPosition;
-	src.moveTo(Common::Point());
-	_fullTextSurface.setTransparentColor(g_nancy->_graphicsManager->getTransColor());
-	_text._drawSurface.create(_fullTextSurface, src);
-	_text.init();
+	_textSurface._drawSurface.create(_fullTextSurface, _textSurface.getBounds());
+	_textSurface.init();
 
 	g_nancy->_sound->stopSound("MSND");
 
-	g_nancy->_sound->loadSound(_sound);
-	g_nancy->_sound->playSound(_sound);
+	g_nancy->_sound->loadSound(_creditsData->sound);
+	g_nancy->_sound->playSound(_creditsData->sound);
 
 	_background.registerGraphics();
-	_text.registerGraphics();
+	_textSurface.registerGraphics();
 
-	g_nancy->_cursorManager->showCursor(false);
+	g_nancy->setMouseEnabled(false);
 
 	_state = kRun;
 }
@@ -90,28 +97,56 @@ void Credits::run() {
 
 	if (input.input & NancyInput::kLeftMouseButtonDown) {
 		_state = kInit;
-		g_nancy->_sound->stopSound(_sound);
-		g_nancy->_cursorManager->showCursor(true);
+		g_nancy->_sound->stopSound(_creditsData->sound);
+		g_nancy->setMouseEnabled(true);
 		_fullTextSurface.free();
-		g_nancy->setState(NancyState::kMainMenu);
+		
+		// We don't yet support the original menus, so we close the game and go back to the launcher
+		// g_nancy->setState(NancyState::kMainMenu);
+
+		Common::Event ev;
+		ev.type = Common::EVENT_RETURN_TO_LAUNCHER;
+		g_system->getEventManager()->pushEvent(ev);
+
 		return;
 	}
 
 	Time currentTime = g_nancy->getTotalPlayTime();
 	if (currentTime >= _nextUpdateTime) {
-		_nextUpdateTime = currentTime + _updateTime;
+		_nextUpdateTime = currentTime + _creditsData->updateTime;
 
-		Common::Rect newSrc = _text._screenPosition;
-		newSrc.moveTo(_text._drawSurface.getOffsetFromOwner());
-		newSrc.translate(0, _pixelsToScroll);
+		Common::Rect newSrc = _textSurface.getScreenPosition();
+		newSrc.moveTo(_textSurface._drawSurface.getOffsetFromOwner());
+		newSrc.translate(0, _creditsData->pixelsToScroll);
 
 		if (newSrc.bottom > _fullTextSurface.h) {
 			newSrc.moveTo(Common::Point());
+			if (_creditsData->textNames.size() > 1) {
+				drawTextSurface(_currentTextImage == _creditsData->textNames.size() - 1 ? 0 : _currentTextImage + 1);
+			}
 		}
 
-		_text._drawSurface.create(_fullTextSurface, newSrc);
-		_text._needsRedraw = true;
+		_textSurface._drawSurface.create(_fullTextSurface, newSrc);
+		_textSurface.setVisible(true);
 	}
+}
+
+void Credits::drawTextSurface(uint id) {
+	Graphics::ManagedSurface image;
+	uint surfaceHeight = _textSurface.getBounds().height();
+	g_nancy->_resource->loadImage(_creditsData->textNames[id], image);
+	_fullTextSurface.create(image.w, image.h + (surfaceHeight * 2), g_nancy->_graphicsManager->getInputPixelFormat());
+	_fullTextSurface.setTransparentColor(g_nancy->_graphicsManager->getTransColor());
+	_fullTextSurface.clear(_fullTextSurface.getTransparentColor());
+	_fullTextSurface.blitFrom(image, Common::Point(0, surfaceHeight));
+
+	if (image.hasPalette()) {
+		uint8 palette[256 * 3];
+		image.grabPalette(palette, 0, 256);
+		_fullTextSurface.setPalette(palette, 0, 256);
+	}
+
+	_currentTextImage = id;
 }
 
 } // End of namespace State

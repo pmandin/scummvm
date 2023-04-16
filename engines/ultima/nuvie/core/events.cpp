@@ -328,6 +328,16 @@ bool Events::handleEvent(const Common::Event *event_) {
 	if (game->user_paused())
 		return true;
 
+	// if input was requested, handle it first so other events do not interfere
+	if (input.get_text && scroll->has_input()) {
+		if (active_alt_code) {
+			endAction(); // exit INPUT_MODE
+			alt_code_input(scroll->get_input().c_str());
+		} else {
+			doAction();
+		}
+	}
+
 	switch (event_->type) {
 	case Common::EVENT_MOUSEMOVE:
 		break;
@@ -348,14 +358,6 @@ bool Events::handleEvent(const Common::Event *event_) {
 		break;
 	}
 
-	if (input.get_text && scroll->has_input()) {
-		if (active_alt_code) {
-			endAction(); // exit INPUT_MODE
-			alt_code_input(scroll->get_input().c_str());
-		} else {
-			doAction();
-		}
-	}
 	return true;
 }
 
@@ -1149,7 +1151,7 @@ bool Events::lookAtCursor(bool delayed, uint16 x, uint16 y, uint8 z, Obj *obj, A
 
 	if (obj && obj->is_on_map() && ((obj->status & OBJ_STATUS_INVISIBLE) || map_window->tile_is_black(x, y, obj))) {
 		Obj *bottom_obj = obj_manager->get_obj(x, y, z, false);
-		if (game->get_game_type() == NUVIE_GAME_U6 && bottom_obj->obj_n == OBJ_U6_SECRET_DOOR // hack for frame 2
+		if (bottom_obj && game->get_game_type() == NUVIE_GAME_U6 && bottom_obj->obj_n == OBJ_U6_SECRET_DOOR // hack for frame 2
 		        && !map_window->tile_is_black(x, y, bottom_obj))
 			obj = bottom_obj;
 		else

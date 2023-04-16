@@ -52,8 +52,8 @@ protected:
 	/**
 	 * Write a character
 	 */
-	void writeChar(char c);
-	void writeChar(int x, int y, char c);
+	void writeChar(unsigned char c);
+	void writeChar(int x, int y, unsigned char c);
 
 	/**
 	 * Write some text
@@ -95,6 +95,8 @@ protected:
 	 * Clear the surface
 	 */
 	void clearSurface() override;
+
+	void drawGraphic(int gfxNum);
 
 public:
 	TextView(const Common::String &name);

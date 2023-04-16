@@ -49,7 +49,7 @@ public:
 		_movementLastFrame(0),
 		_edgesMask(0),
 		_currentFrame(0),
-		_videoFormat(0),
+		_videoFormat(kLargeVideoFormat),
 		_stickyCursorPos(-1, -1),
 		_panningType(kPanNone) {}
 
@@ -72,8 +72,6 @@ public:
 	uint16 getCurFrame() const { return _currentFrame; }
 	uint16 getCurVerticalScroll() const { return _drawSurface.getOffsetFromOwner().y; }
 	uint16 getMaxScroll() const;
-
-	Common::Rect getBoundsByFormat(uint format) const; // used by video
 
 	Common::Rect convertViewportToScreen(const Common::Rect &viewportRect) const;
 	Common::Rect convertScreenToViewport(const Common::Rect &viewportRect) const;

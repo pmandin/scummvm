@@ -44,7 +44,7 @@ void DrillerEngine::loadAssetsAmigaFullGame() {
 
 		loadFonts(&file, 0x8940);
 		loadMessagesFixedSize(&file, 0xc66e, 14, 20);
-		loadGlobalObjects(&file, 0xbd62);
+		loadGlobalObjects(&file, 0xbd62, 8);
 		load8bitBinary(&file, 0x29c16, 16);
 		loadPalettes(&file, 0x297d4);
 		loadSoundsFx(&file, 0x30e80, 25);
@@ -69,7 +69,7 @@ void DrillerEngine::loadAssetsAmigaFullGame() {
 
 		loadFonts(&file, 0xa62);
 		loadMessagesFixedSize(&file, 0x499a, 14, 20);
-		loadGlobalObjects(&file, 0x4098);
+		loadGlobalObjects(&file, 0x4098, 8);
 		load8bitBinary(&file, 0x21a3e, 16);
 		loadPalettes(&file, 0x215fc);
 
@@ -120,7 +120,7 @@ void DrillerEngine::loadAssetsAmigaDemo() {
 
 	loadFonts(&file, 0xa30);
 	loadMessagesFixedSize(&file, 0x3960, 14, 20);
-	loadGlobalObjects(&file, 0x3716);
+	loadGlobalObjects(&file, 0x3716, 8);
 
 	file.close();
 	file.open("soundfx");
@@ -215,6 +215,21 @@ void DrillerEngine::drawAmigaAtariSTUI(Graphics::Surface *surface) {
 		energyBar = Common::Rect(11, 188, 75 - (k8bitMaxEnergy - energy), 190);
 		surface->fillRect(energyBar, yellow);
 	}
+}
+
+void DrillerEngine::initAmigaAtari() {
+	_viewArea = Common::Rect(36, 16, 284, 118);
+
+	_moveFowardArea = Common::Rect(184, 125, 199, 144);
+	_moveLeftArea = Common::Rect(161, 145, 174, 164);
+	_moveRightArea = Common::Rect(207, 145, 222, 164);
+	_moveBackArea = Common::Rect(184, 152, 199, 171);
+	_moveUpArea = Common::Rect(231, 145, 246, 164);
+	_moveDownArea = Common::Rect(254, 145, 269, 164);
+	_deployDrillArea = Common::Rect(284, 145, 299, 166);
+	_infoScreenArea = Common::Rect(125, 172, 152, 197);
+	_saveGameArea = Common::Rect(9, 145, 39, 154);
+	_loadGameArea = Common::Rect(9, 156, 39, 164);
 }
 
 } // End of namespace Freescape

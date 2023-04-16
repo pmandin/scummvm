@@ -76,9 +76,13 @@ static const byte kAbsoluteClockBump 	= 1;
 static const byte kRelativeClockBump 	= 2;
 
 // Time of day
-static const byte kPlayerDay		= 0;
-static const byte kPlayerNight		= 1;
-static const byte kPlayerDuskDawn	= 2;
+static const byte kPlayerDay			= 0;
+static const byte kPlayerNight			= 1;
+static const byte kPlayerDuskDawn		= 2;
+
+// Video
+static const byte kSmallVideoFormat		= 1;
+static const byte kLargeVideoFormat		= 2;
 
 enum MovementDirection : byte { kUp = 1, kDown = 2, kLeft = 4, kRight = 8, kMoveFast = 16 };
 
@@ -120,8 +124,8 @@ struct SceneChangeDescription {
 
 // Describes a single flag change or comparison
 struct FlagDescription {
-	int16 label;
-	byte flag;
+	int16 label = -1;
+	byte flag = 0;
 };
 
 // Describes a hotspot
@@ -231,10 +235,21 @@ struct StaticData {
 	Common::String ringingText;
 
 	// Debug strings
-	Common::Array<Common::String> itemNames;
 	Common::Array<Common::String> eventFlagNames;
 
 	void readData(Common::SeekableReadStream &stream, Common::Language language);
+};
+
+// Structs for game-specific puzzle data that needs to be saved/loaded
+struct SliderPuzzleState {
+	Common::Array<Common::Array<int16>> playerTileOrder;
+	bool playerHasTriedPuzzle;
+};
+
+struct RippedLetterPuzzleState {
+	Common::Array<int8> order;
+	Common::Array<byte> rotations;
+	bool playerHasTriedPuzzle;
 };
 
 } // End of namespace Nancy

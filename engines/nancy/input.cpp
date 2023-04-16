@@ -40,13 +40,9 @@ void InputManager::processEvents() {
 	while (g_nancy->getEventManager()->pollEvent(event)) {
 		switch (event.type) {
 		case EVENT_KEYDOWN:
-			if (event.kbd.keycode == KEYCODE_q && event.kbd.flags & Common::KBD_CTRL) {
-				// Quit
-				g_nancy->quitGame();
-			} else {
-				// Push all other keyboard events into an array and let getInput() callers handle them
-				_otherKbdInput.push_back(event.kbd);
-			}
+			// Push all keyboard events into an array and let getInput() callers handle them
+			_otherKbdInput.push_back(event.kbd);
+			_inputBeginState = g_nancy->getState();
 			break;
 		case EVENT_CUSTOM_ENGINE_ACTION_START:
 			_inputBeginState = g_nancy->getState();
@@ -133,11 +129,12 @@ NancyInput InputManager::getInput() const {
 		ret.input = 0;
 	}
 
-	if (_mouseEnabled) {
+	if (_mouseEnabled || g_nancy->getState() == NancyState::kCredits) {
 		ret.mousePos = g_nancy->getEventManager()->getMousePos();
 	} else {
 		ret.eatMouseInput();
 	}
+	
 	return ret;
 }
 
@@ -151,7 +148,6 @@ void InputManager::initKeymaps(Common::KeymapArray &keymaps) {
 	using namespace Nancy;
 
 	Keymap *mainKeymap = new Keymap(Keymap::kKeymapTypeGame, "nancy-main", "Nancy Drew");
-	Keymap *debugKeymap = new Keymap(Keymap::kKeymapTypeGame, "nancy-debug", "Nancy Drew - Debug/Cheat Shortcuts");
 	Action *act;
 
 	act = new Action(kStandardActionLeftClick, _("Left Click Interact"));
@@ -198,51 +194,7 @@ void InputManager::initKeymaps(Common::KeymapArray &keymaps) {
 	act->addDefaultInputMapping("JOY_LEFT_SHOULDER");
 	mainKeymap->addAction(act);
 
-	// Debug shortcuts
-
-	act = new Action("FASTC", _("Toggle fast conversation mode"));
-	act->setCustomEngineActionEvent(kNancyActionFastConvoToggle);
-	act->addDefaultInputMapping("C+S+TAB+f");
-	debugKeymap->addAction(act);
-
-	act = new Action("ENDC", _("Toggle end conversation mode"));
-	act->setCustomEngineActionEvent(kNancyActionEndConvoToggle);
-	act->addDefaultInputMapping("C+S+TAB+e");
-	debugKeymap->addAction(act);
-
-	act = new Action("MMENU", _("Go to main menu"));
-	act->setCustomEngineActionEvent(kNancyActionRequestMainMenu);
-	act->addDefaultInputMapping("C+S+TAB+F2");
-	debugKeymap->addAction(act);
-
-	act = new Action("LDSV", _("Go to save/load menu"));
-	act->setCustomEngineActionEvent(kNancyActionRequestSaveLoad);
-	act->addDefaultInputMapping("C+S+TAB+F3");
-	debugKeymap->addAction(act);
-
-	act = new Action("RLDSV", _("Reload last save"));
-	act->setCustomEngineActionEvent(kNancyActionReloadSave);
-	act->addDefaultInputMapping("C+S+TAB+F4");
-	debugKeymap->addAction(act);
-
-	act = new Action("SETUP", _("Go to setup menu"));
-	act->setCustomEngineActionEvent(kNancyActionRequestSetupMenu);
-	act->addDefaultInputMapping("C+S+TAB+F6");
-	debugKeymap->addAction(act);
-
-	act = new Action("CRED", _("Show credits"));
-	act->setCustomEngineActionEvent(kNancyActionRequestCredits);
-	act->addDefaultInputMapping("C+S+TAB+F7");
-	debugKeymap->addAction(act);
-
-	act = new Action("MAP", _("Go to map screen"));
-	act->setCustomEngineActionEvent(kNancyActionRequestMap);
-	act->addDefaultInputMapping("C+S+TAB+F8");
-	act->addDefaultInputMapping("C+S+TAB+m");
-	debugKeymap->addAction(act);
-
 	keymaps.push_back(mainKeymap);
-	keymaps.push_back(debugKeymap);
 }
 
 } // End of namespace Nancy

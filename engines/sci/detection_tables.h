@@ -1667,6 +1667,23 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND },
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_UNDITHER },
 
+	// King's Quest 4 - English DOS (5 1/4" disks)
+	// Game version 1.003.006
+	// SCI interpreter version 0.000.409
+	// Released: January 24, 1989 (Information from QAFILE file)
+	{"kq4sci", "SCI", {
+		{"resource.map", 0, "5051546e5f87aa6103289c8001a94234", 9240},
+		{"resource.001", 0, "91a2aebafb234c486744bd69b145ac43", 184255},
+		{"resource.002", 0, "91a2aebafb234c486744bd69b145ac43", 338296},
+		{"resource.003", 0, "91a2aebafb234c486744bd69b145ac43", 334522},
+		{"resource.004", 0, "91a2aebafb234c486744bd69b145ac43", 310026},
+		{"resource.005", 0, "91a2aebafb234c486744bd69b145ac43", 282391},
+		{"resource.006", 0, "91a2aebafb234c486744bd69b145ac43", 323541},
+		{"resource.007", 0, "91a2aebafb234c486744bd69b145ac43", 333089},
+		{"resource.008", 0, "91a2aebafb234c486744bd69b145ac43", 272995},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16_UNDITHER	},
+
 	// King's Quest 4 - English DOS (3 1/2" disks)
 	// Game version 1.003.006
 	// SCI interpreter version 0.000.409
@@ -1970,6 +1987,23 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.004", 0, "8e5c1bc4d738cf7316ff506f59d265e2", 1187803},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformDOS, 0, GUIO_STD16	},
+
+	// King's Quest 5 DOS Spanish Floppy EGA
+	// Game version 0.000.133 from about box, 1.000 from VERSION file
+	// SCI interpreter version 1.000.575
+	{"kq5", "EGA", {
+		{"resource.map", 0, "0dedf9d810ef864cbcc2370edaf19448", 8040},
+		{"resource.000", 0, "9091979bbdbe9e40b4ff952677bf4d4b", 451270},
+		{"resource.001", 0, "dd692513f878279fbf07d715dd6ddad6", 571171},
+		{"resource.002", 0, "79347fba1de905023dc1549e9676e53b", 618015},
+		{"resource.003", 0, "027f96c38d52276906e67304d9aaf92e", 495375},
+		{"resource.004", 0, "23af8904376aa72ec45b9936be2d8280", 632343},
+		{"resource.005", 0, "4a713d8aa31b74529515ea1edd3466ad", 679888},
+		{"resource.006", 0, "2b54e0487820b79fcc62b72756344555", 677261},
+		{"resource.007", 0, "3cedf14dff9514409508f394ddbc35e8", 552191},
+		{"resource.008", 0, "bae4e3022fd09c5cd751e0945f083983", 609429},
+		AD_LISTEND},
+		Common::ES_ESP, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16	},
 
 	// King's Quest 5 DOS Spanish Floppy VGA (3.5" disks)
 	// Game version 0.000.162 from about box, 1.000 from VERSION file
@@ -2880,6 +2914,17 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.001", 0, "112648995dbc194037f1e4ed2e195910", 1063341},
 		{"resource.002", 0, "3fe2a3aec0ed53c7d6db1845a67e3aa2", 1095908},
 		{"resource.003", 0, "ac175df0ea9a2cba57f0248651856d27", 376556},
+		AD_LISTEND},
+		Common::ES_ESP, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16	},
+
+	// Larry 1 EGA Remake - Spanish DOS
+	// Executable scanning reports "1.SQ4.056", VERSION file reports "1.000"
+	{"lsl1sci", "SCI/EGA", {
+		{"resource.map", 0, "c07cf88e6c69a432f1d11f660faa996a", 3333},
+		{"resource.000", 0, "5e501a9bf8c753bf4c96158042422f00", 502971},
+		{"resource.001", 0, "112648995dbc194037f1e4ed2e195910", 610960},
+		{"resource.002", 0, "3fe2a3aec0ed53c7d6db1845a67e3aa2", 518218},
+		{"resource.003", 0, "2b21fab32a5f49ff871b3ff696d51214", 578780},
 		AD_LISTEND},
 		Common::ES_ESP, Common::kPlatformDOS, ADGF_ADDENGLISH, GUIO_STD16	},
 
@@ -4425,11 +4470,13 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 
 	// Police Quest: SWAT - English DOS/Windows Demo (from jvprat)
 	// Executable scanning reports "2.100.002", VERSION file reports "0.001.200"
-	{"pqswat", "Demo", {
+	// Currently unsupported, since this demo uses Version 4 of Robot videos,
+	// which we haven't implemented yet in RobotDecoder (bug #14388)
+	{"pqswat", _s("This demo uses an unimplemented version of Robot videos"), {
 		{"resource.map", 0, "8c96733ef94c21526792f7ca4e3f2120", 1648},
 		{"resource.000", 0, "d8892f1b8c56c8f7704325460f49b300", 3676175},
 		AD_LISTEND},
-		Common::EN_ANY, Common::kPlatformDOS, ADGF_DEMO, GUIO_PQSWAT_DEMO },
+		Common::EN_ANY, Common::kPlatformDOS, ADGF_DEMO | ADGF_UNSUPPORTED, GUIO_PQSWAT_DEMO },
 
 	// Police Quest: SWAT - English DOS (from GOG.com)
 	// Executable scanning reports "2.100.002", VERSION file reports "1.0c"
@@ -5322,6 +5369,15 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		{"resource.004", 0, "91d58a9eb2187c38424990afe4c12bc6", 1250949},
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformMacintosh, 0, GUIO_STD16_MAC_HIRESFONTS },
+
+	// Space Quest 1 VGA Remake - English Non-Interactive Demo
+	// Earlier version of demo, doesn't include view patch files for musicians
+	// SCI interpreter version 1.000.181
+	{"sq1sci", "SCI/Demo", {
+		{"resource.map", 0, "3ff264347ca7b3335144bddc1f3a76ac", 642},
+		{"resource.001", 0, "fd99ea43f57576ded7c86036996346cf", 549177},
+		AD_LISTEND},
+		Common::EN_ANY, Common::kPlatformDOS, ADGF_DEMO, GUIO_STD16	},
 
 	// Space Quest 1 VGA Remake - English Non-Interactive Demo (from FRG)
 	// SCI interpreter version 1.000.181

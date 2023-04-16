@@ -34,14 +34,13 @@ BlacksmithItems::BlacksmithItems() : ItemsView("BlacksmithItems") {
 	addButton(2, STRING["enhdialogs.blacksmith.buttons.armor"], Common::KEYCODE_a);
 	addButton(6, STRING["enhdialogs.blacksmith.buttons.misc"], Common::KEYCODE_m);
 	addButton(10, STRING["enhdialogs.blacksmith.buttons.sell"], Common::KEYCODE_s);
-	addButton(12, STRING["enhdialogs.blacksmith.buttons.exit"], Common::KEYCODE_ESCAPE);
+	addButton(12, STRING["enhdialogs.misc.exit"], Common::KEYCODE_ESCAPE);
 }
 
 bool BlacksmithItems::msgFocus(const FocusMessage &msg) {
 	ItemsView::msgFocus(msg);
 
-	if (dynamic_cast<Confirm *>(msg._priorView) == nullptr)
-		_mode = WEAPONS_MODE;
+	_mode = WEAPONS_MODE;
 	populateItems();
 
 	return true;
@@ -185,6 +184,11 @@ void BlacksmithItems::itemSelected() {
 	});
 }
 
+void BlacksmithItems::charSwitched(Character *priorChar) {
+	populateItems();
+	redraw();
+}
+
 void BlacksmithItems::itemConfirmed() {
 	Character &c = *g_globals->_currCharacter;
 	Inventory &inv = c._backpack;
@@ -212,6 +216,22 @@ void BlacksmithItems::itemConfirmed() {
 			displayMessage(STRING["dialogs.blacksmith.thankyou"]);
 			break;
 		}
+	}
+}
+
+int BlacksmithItems::getLineColor() const {
+	const Character &c = *g_globals->_currCharacter;
+	const Item &item = g_globals->_currItem;
+
+	if (_mode == SELL_MODE) {
+		return 0;
+	} else {
+		if (c._class != NONE && c._class <= ROBBER) {
+			if (!(BLACKSMITH_CLASS_USAGE[c._class - 1] & item._disablements))
+				return 0;
+		}
+
+		return 1;
 	}
 }
 

@@ -62,19 +62,16 @@ private:
 	};
 
 	Graphics::ManagedSurface _fullSurface;
+	Graphics::ManagedSurface _textHighlightSurface;
+
+	RenderObject _highlightRObj;
 
 	Scrollbar *_scrollbar;
 
 	Common::Array<Common::String> _textLines;
 	Common::Array<Common::Rect> _hotspots;
 
-	uint16 _firstLineOffset;
-	uint16 _lineHeight;
-	uint16 _borderWidth;
-	uint16 _maxWidthDifference;
 	uint16 _numLines;
-	uint16 _fontID;
-
 	bool _lastResponseisMultiline;
 
 	bool _needsTextRedraw;

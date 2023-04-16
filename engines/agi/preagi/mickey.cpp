@@ -876,12 +876,8 @@ void MickeyEngine::drawRoom() {
 	}
 
 	// Draw room objects
-	if (_gameStateMickey.iRoom >= IDI_MSA_MAX_PIC_ROOM) {
-		drawRoomAnimation();
-		return;
-	}
-
-	if (_gameStateMickey.iRmObj[_gameStateMickey.iRoom] != IDI_MSA_OBJECT_NONE) {
+	if (_gameStateMickey.iRoom < IDI_MSA_MAX_ROOM &&
+		_gameStateMickey.iRmObj[_gameStateMickey.iRoom] != IDI_MSA_OBJECT_NONE) {
 		readOfsData(IDO_MSA_ROOM_OBJECT_XY_OFFSETS,
 		            _gameStateMickey.iRmObj[_gameStateMickey.iRoom], buffer, sizeof(buffer));
 
@@ -1380,7 +1376,7 @@ void MickeyEngine::inventory() {
 	drawStr(IDI_MSA_ROW_INV_CRYSTALS, IDI_MSA_COL_INV_ITEMS, IDA_DEFAULT, szCrystals);
 
 	for (int iItem = 0; iItem < IDI_MSA_MAX_ITEM; iItem++) {
-		if (_gameStateMickey.fItem[_gameStateMickey.iItem[iItem]] && (_gameStateMickey.iItem[iItem] != IDI_MSA_OBJECT_NONE)) {
+		if ((_gameStateMickey.iItem[iItem] != IDI_MSA_OBJECT_NONE) && _gameStateMickey.fItem[_gameStateMickey.iItem[iItem]]) {
 			drawStr(iRow++, IDI_MSA_COL_INV_ITEMS, IDA_DEFAULT, (const char *)IDS_MSA_NAME_ITEM[_gameStateMickey.iItem[iItem]]);
 		}
 	}

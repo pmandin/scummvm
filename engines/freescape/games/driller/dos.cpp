@@ -29,6 +29,24 @@ namespace Freescape {
 extern byte kCGAPalettePinkBlueWhiteData[4][3];
 extern byte kEGADefaultPaletteData[16][3];
 
+void DrillerEngine::initDOS() {
+	if (_renderMode == Common::kRenderEGA)
+		_viewArea = Common::Rect(40, 16, 280, 117);
+	else if (_renderMode == Common::kRenderCGA)
+		_viewArea = Common::Rect(36, 16, 284, 117);
+	else
+		error("Invalid or unknown render mode");
+
+	_moveFowardArea = Common::Rect(73, 144, 101, 152);
+	_moveLeftArea = Common::Rect(73, 150, 86, 159);
+	_moveRightArea = Common::Rect(88, 152, 104, 160);
+	_moveBackArea = Common::Rect(73, 160, 101, 168);
+	_moveUpArea = Common::Rect(219, 144, 243, 155);
+	_moveDownArea = Common::Rect(219, 157, 243, 167);
+	_deployDrillArea = Common::Rect(140, 175, 179, 191);
+	_infoScreenArea = Common::Rect(130, 125, 188, 144);
+}
+
 /*
  The following functions are only used for decoding title images for
  the US release of Driller ("Space Station Oblivion")
@@ -268,7 +286,7 @@ void DrillerEngine::loadAssetsDOSFullGame() {
 
 		loadMessagesFixedSize(&file, 0x4135, 14, 20);
 		loadFonts(&file, 0x99dd);
-		loadGlobalObjects(&file, 0x3b42);
+		loadGlobalObjects(&file, 0x3b42, 8);
 		load8bitBinary(&file, 0x9b40, 16);
 		_border = load8bitBinImage(&file, 0x210);
 		_border->setPalette((byte*)&kEGADefaultPaletteData, 0, 16);
@@ -293,7 +311,7 @@ void DrillerEngine::loadAssetsDOSFullGame() {
 		loadFonts(&file, 0x07a4a);
 		loadMessagesFixedSize(&file, 0x2585, 14, 20);
 		load8bitBinary(&file, 0x7bb0, 4);
-		loadGlobalObjects(&file, 0x1fa2);
+		loadGlobalObjects(&file, 0x1fa2, 8);
 		_border = load8bitBinImage(&file, 0x210);
 		_border->setPalette((byte*)&kCGAPalettePinkBlueWhiteData, 0, 4);
 	} else
@@ -320,7 +338,7 @@ void DrillerEngine::loadAssetsDOSDemo() {
 	loadFonts(&file, 0x4eb0);
 	loadMessagesFixedSize(&file, 0x636, 14, 20);
 	load8bitBinary(&file, 0x55b0, 4);
-	loadGlobalObjects(&file, 0x8c);
+	loadGlobalObjects(&file, 0x8c, 5);
 	_border = load8bitDemoImage(&file, 0x6220);
 	_border->setPalette((byte*)&kCGAPalettePinkBlueWhiteData, 0, 4);
 

@@ -319,6 +319,10 @@ static Common::String s_saveDir;
 
 Common::List<Common::Event> _events;
 
+extern bool timing_inaccuracies_is_enabled(void);
+extern bool consecutive_screen_updates_is_enabled(void);
+extern void reset_performance_tuner(void);
+
 class OSystem_RETRO : public EventsBaseBackend, public PaletteManager {
 public:
 	Graphics::Surface _screen;
@@ -357,12 +361,11 @@ public:
 
 	uint32 _startTime;
 	uint32 _threadExitTime;
-
-	bool _speed_hack_enabled;
+	uint8 _threadSwitchCaller;
 
 	Audio::MixerImpl *_mixer;
 
-	OSystem_RETRO(bool aEnableSpeedHack) : _mousePaletteEnabled(false), _mouseVisible(false), _mouseX(0), _mouseY(0), _mouseXAcc(0.0), _mouseYAcc(0.0), _mouseHotspotX(0), _mouseHotspotY(0), _dpadXAcc(0.0), _dpadYAcc(0.0), _dpadXVel(0.0f), _dpadYVel(0.0f), _mouseKeyColor(0), _mouseDontScale(false), _joypadnumpadLast(8), _joypadnumpadActive(false), _mixer(0), _startTime(0), _threadExitTime(10), _speed_hack_enabled(aEnableSpeedHack) {
+	OSystem_RETRO() : _mousePaletteEnabled(false), _mouseVisible(false), _mouseX(0), _mouseY(0), _mouseXAcc(0.0), _mouseYAcc(0.0), _mouseHotspotX(0), _mouseHotspotY(0), _dpadXAcc(0.0), _dpadYAcc(0.0), _dpadXVel(0.0f), _dpadYVel(0.0f), _mouseKeyColor(0), _mouseDontScale(false), _joypadnumpadLast(8), _joypadnumpadActive(false), _mixer(0), _startTime(0), _threadExitTime(0), _threadSwitchCaller(0) {
 		_fsFactory = new FS_SYSTEM_FACTORY();
 		memset(_mouseButtons, 0, sizeof(_mouseButtons));
 		memset(_joypadmouseButtons, 0, sizeof(_joypadmouseButtons));
@@ -407,6 +410,10 @@ public:
 			ConfMan.setBool("original_gui", false);
 			log_cb(RETRO_LOG_INFO, "\"original_gui\" setting forced to false\n");
 		}
+	}
+
+	virtual void engineDone() {
+		reset_performance_tuner();
 	}
 
 	virtual bool hasFeature(Feature f) {
@@ -462,9 +469,13 @@ public:
 	virtual Common::List<Graphics::PixelFormat> getSupportedFormats() const {
 		Common::List<Graphics::PixelFormat> result;
 
+#ifdef SCUMM_LITTLE_ENDIAN
 		/* RGBA8888 */
 		result.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0));
-
+#else
+		/* ABGR8888 */
+		result.push_back(Graphics::PixelFormat(4, 8, 8, 8, 8, 0, 8, 16, 24));
+#endif
 #ifdef FRONTEND_SUPPORTS_RGB565
 		/* RGB565 - overlay */
 		result.push_back(Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0));
@@ -474,6 +485,7 @@ public:
 
 		/* Palette - most games */
 		result.push_back(Graphics::PixelFormat::createFormatCLUT8());
+
 		return result;
 	}
 
@@ -531,6 +543,16 @@ public:
 			case 4:
 				blit_uint32_uint16(_screen, _mouseImage, x, y, _mousePaletteEnabled ? _mousePalette : _gamePalette, _mouseKeyColor);
 				break;
+			}
+		}
+
+		/* Switch directly to main thread in case of consecutive updateScreen, to avoid losing frames.
+		Non consecutive updateScreen are covered by thread switches triggered by pollEvent or delayMillis. */
+		if (! timing_inaccuracies_is_enabled() && consecutive_screen_updates_is_enabled()) {
+			if (_threadSwitchCaller & THREAD_SWITCH_UPDATE) {
+				retro_switch_to_main_thread();
+			} else {
+				_threadSwitchCaller = THREAD_SWITCH_UPDATE;
 			}
 		}
 	}
@@ -622,17 +644,22 @@ public:
 	}
 
 	void retroCheckThread(uint32 offset = 0) {
+		/* Limit the thread switches triggered by pollEvent or delayMillis to one each 10ms. */
 		if (_threadExitTime <= (getMillis() + offset)) {
 			retro_switch_to_main_thread();
 			_threadExitTime = getMillis() + 10;
 		}
+
+		((DefaultTimerManager *)_timerManager)->handler();
+	}
+
+	uint8 getThreadSwitchCaller(){
+		return _threadSwitchCaller;
 	}
 
 	virtual bool pollEvent(Common::Event &event) {
+		_threadSwitchCaller = THREAD_SWITCH_POLL;
 		retroCheckThread();
-
-		((DefaultTimerManager *)_timerManager)->handler();
-
 		if (!_events.empty()) {
 			event = _events.front();
 			_events.pop_front();
@@ -660,7 +687,8 @@ public:
 	virtual void delayMillis(uint msecs) {
 		// Implement 'non-blocking' sleep...
 		uint32 start_time = getMillis();
-		if (_speed_hack_enabled) {
+
+		if (timing_inaccuracies_is_enabled()) {
 			// Use janky inaccurate method...
 			uint32 elapsed_time = 0;
 			uint32 time_remaining = msecs;
@@ -669,6 +697,7 @@ public:
 				// thread exit time, exit the thread immediately
 				// (i.e. start burning delay time in the main RetroArch
 				// thread as soon as possible...)
+				_threadSwitchCaller = THREAD_SWITCH_DELAY;
 				retroCheckThread(time_remaining);
 				// Check how much delay time remains...
 				elapsed_time = getMillis() - start_time;
@@ -678,20 +707,13 @@ public:
 				} else {
 					time_remaining = 0;
 				}
-				// Have to handle the timer manager here, since some engines
-				// (e.g. dreamweb) sit in a delayMillis() loop waiting for a
-				// timer callback...
-				((DefaultTimerManager *)_timerManager)->handler();
 			}
 		} else {
 			// Use accurate method...
 			while (getMillis() < start_time + msecs) {
 				usleep(1000);
+				_threadSwitchCaller = THREAD_SWITCH_DELAY;
 				retroCheckThread();
-				// Have to handle the timer manager here, since some engines
-				// (e.g. dreamweb) sit in a delayMillis() loop waiting for a
-				// timer callback...
-				((DefaultTimerManager *)_timerManager)->handler();
 			}
 		}
 	}
@@ -750,8 +772,6 @@ public:
 			log_cb(RETRO_LOG_INFO, "%s\n", message);
 	}
 
-	//
-
 	const Graphics::Surface &getScreen() {
 		const Graphics::Surface &srcSurface = (_overlayInGUI) ? _overlay : _gameScreen;
 
@@ -795,7 +815,6 @@ public:
 			*cumulativeXYAcc -= (float)cumulativeXYAcc_int;
 		}
 		*relMouseXY = (int)deltaAcc;
-
 	}
 
 	void processMouse(retro_input_state_t aCallback, int device, float gampad_cursor_speed, float gamepad_acceleration_time, bool analog_response_is_quadratic, int analog_deadzone, float mouse_speed) {
@@ -1272,8 +1291,8 @@ public:
 
 };
 
-OSystem *retroBuildOS(bool aEnableSpeedHack) {
-	return new OSystem_RETRO(aEnableSpeedHack);
+OSystem *retroBuildOS() {
+	return new OSystem_RETRO();
 }
 
 const Graphics::Surface &getScreen() {
@@ -1306,4 +1325,8 @@ void retroKeyEvent(bool down, unsigned keycode, uint32_t character, uint16_t key
 
 void retroReset() {
 	dynamic_cast<OSystem_RETRO *>(g_system)->Reset();
+}
+
+uint8 getThreadSwitchCaller(){
+	return dynamic_cast<OSystem_RETRO *>(g_system)->getThreadSwitchCaller();
 }

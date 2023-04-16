@@ -40,21 +40,27 @@
 // for the Android port
 #define FORBIDDEN_SYMBOL_EXCEPTION_printf
 
+#define FORBIDDEN_SYMBOL_EXCEPTION_FILE
+#define FORBIDDEN_SYMBOL_EXCEPTION_fopen
+#define FORBIDDEN_SYMBOL_EXCEPTION_fclose
+#define FORBIDDEN_SYMBOL_EXCEPTION_ftell
+
 #include <EGL/egl.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/system_properties.h>
 #include <time.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
-#include "common/util.h"
-#include "common/textconsole.h"
-#include "common/rect.h"
-#include "common/queue.h"
-#include "common/mutex.h"
-#include "common/events.h"
-#include "common/config-manager.h"
-#include "graphics/cursorman.h"
+#include "backends/platform/android/android.h"
+#include "backends/platform/android/jni-android.h"
+#include "backends/fs/android/android-fs.h"
+#include "backends/fs/android/android-fs-factory.h"
+#include "backends/fs/posix/posix-iostream.h"
+
+#include "backends/graphics/android/android-graphics.h"
+#include "backends/graphics3d/android/android-graphics3d.h"
 
 #include "backends/audiocd/default/default-audiocd.h"
 #include "backends/events/default/default-events.h"
@@ -66,12 +72,14 @@
 #include "backends/keymapper/keymapper-defaults.h"
 #include "backends/keymapper/standard-actions.h"
 
-#include "backends/graphics/android/android-graphics.h"
-#include "backends/graphics3d/android/android-graphics3d.h"
-#include "backends/platform/android/jni-android.h"
-#include "backends/platform/android/android.h"
-#include "backends/fs/android/android-fs.h"
-#include "backends/fs/android/android-fs-factory.h"
+#include "common/util.h"
+#include "common/textconsole.h"
+#include "common/rect.h"
+#include "common/queue.h"
+#include "common/mutex.h"
+#include "common/events.h"
+#include "common/config-manager.h"
+#include "graphics/cursorman.h"
 
 const char *android_log_tag = "ScummVM";
 
@@ -167,6 +175,9 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_touch_pt_dt(),
 	_eventScaleX(100),
 	_eventScaleY(100),
+#if defined(USE_OPENGL) && defined(USE_GLAD)
+	_gles2DL(nullptr),
+#endif
 	// TODO put these values in some option dlg?
 	_touch_mode(TOUCH_MODE_TOUCHPAD),
 	_touchpad_scale(66),
@@ -176,22 +187,31 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_secondPointerId(-1),
 	_thirdPointerId(-1),
 	_trackball_scale(2),
-	_joystick_scale(10) {
+	_joystick_scale(10),
+	_defaultConfigFileName(""),
+	_defaultLogFileName(""),
+	_systemPropertiesSummaryStr(""),
+	_systemSDKdetectedStr(""),
+	_logger(nullptr) {
 
-	LOGI("Running on: [%s] [%s] [%s] [%s] [%s] SDK:%s ABI:%s",
-			getSystemProperty("ro.product.manufacturer").c_str(),
-			getSystemProperty("ro.product.model").c_str(),
-			getSystemProperty("ro.product.brand").c_str(),
-			getSystemProperty("ro.build.fingerprint").c_str(),
-			getSystemProperty("ro.build.display.id").c_str(),
-			getSystemProperty("ro.build.version.sdk").c_str(),
-			getSystemProperty("ro.product.cpu.abi").c_str());
+	_systemPropertiesSummaryStr = Common::String::format("Running on: [%s] [%s] [%s] [%s] [%s] SDK:%s ABI:%s\n",
+	                                                   getSystemProperty("ro.product.manufacturer").c_str(),
+	                                                   getSystemProperty("ro.product.model").c_str(),
+	                                                   getSystemProperty("ro.product.brand").c_str(),
+	                                                   getSystemProperty("ro.build.fingerprint").c_str(),
+	                                                   getSystemProperty("ro.build.display.id").c_str(),
+	                                                   getSystemProperty("ro.build.version.sdk").c_str(),
+	                                                   getSystemProperty("ro.product.cpu.abi").c_str()) ;
+
+	LOGI("%s", _systemPropertiesSummaryStr.c_str());
 	// JNI::getAndroidSDKVersionId() should be identical to the result from ("ro.build.version.sdk"),
 	// though getting it via JNI is maybe the most reliable option (?)
 	// Also __system_property_get which is used by getSystemProperty() is being deprecated in recent NDKs
 
 	int sdkVersion = JNI::getAndroidSDKVersionId();
-	LOGI("SDK Version: %d", sdkVersion);
+
+	_systemSDKdetectedStr = Common::String::format("SDK Version: %d\n", sdkVersion) ;
+	LOGI("%s", _systemSDKdetectedStr.c_str());
 
 	AndroidFilesystemFactory &fsFactory = AndroidFilesystemFactory::instance();
 	if (sdkVersion >= 24) {
@@ -228,6 +248,9 @@ OSystem_Android::~OSystem_Android() {
 
 	// Uninitialize surface now to avoid it to be done later when touch controls are destroyed
 	dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->deinitSurface();
+
+	delete _logger;
+	_logger = nullptr;
 }
 
 void *OSystem_Android::timerThreadFunc(void *arg) {
@@ -401,6 +424,26 @@ void OSystem_Android::initBackend() {
 
 	_main_thread = pthread_self();
 
+	if (!_logger)
+		_logger = new Backends::Log::Log(this);
+
+	if (_logger) {
+		Common::WriteStream *logFile = createLogFileForAppending();
+		if (logFile) {
+			_logger->open(logFile);
+
+			if (!_systemPropertiesSummaryStr.empty())
+				_logger->print(_systemPropertiesSummaryStr.c_str());
+
+			if (!_systemSDKdetectedStr.empty())
+				_logger->print(_systemSDKdetectedStr.c_str());
+		} else {
+			LOGE("Error when opening log file for writing upon initializing backend");
+			//_logger->close();
+			_logger = nullptr;
+		}
+	}
+
 	// Warning: ConfMan.registerDefault() can be used for a Session of ScummVM
 	//          but:
 	//              1. The values will NOT persist to storage
@@ -427,6 +470,10 @@ void OSystem_Android::initBackend() {
 	ConfMan.registerDefault("aspect_ratio", true);
 	ConfMan.registerDefault("filtering", false);
 	ConfMan.registerDefault("autosave_period", 0);
+	// slow down a bit virtual mouse speed (typical default seems to be "3") - eg. when controlling the virtual mouse cursor with DPAD keys
+	// Also see declaration of support for feature kFeatureKbdMouseSpeed bellow
+	ConfMan.registerDefault("kbdmouse_speed", 2);
+	ConfMan.registerDefault("joystick_deadzone", 3);
 
 	// explicitly set this, since fullscreen cannot be changed from GUI
 	// and for Android it should be persisted (and ConfMan.hasKey("fullscreen") check should return true for it)
@@ -527,7 +574,52 @@ void OSystem_Android::initBackend() {
 }
 
 Common::String OSystem_Android::getDefaultConfigFileName() {
-	return JNI::getScummVMConfigPath();
+	// if possible, skip JNI call which is more costly (performance wise)
+	if (_defaultConfigFileName.empty()) {
+		_defaultConfigFileName = JNI::getScummVMConfigPath();
+	}
+	return _defaultConfigFileName;
+}
+
+Common::String OSystem_Android::getDefaultLogFileName() {
+	if (_defaultLogFileName.empty()) {
+		_defaultLogFileName = JNI::getScummVMLogPath();
+	}
+	return _defaultLogFileName;
+}
+
+Common::WriteStream *OSystem_Android::createLogFileForAppending() {
+	if (getDefaultLogFileName().empty()) {
+		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, "Log file path is not known upon create attempt!");
+		return nullptr;
+	}
+
+	FILE *scvmLogFilePtr = fopen(getDefaultLogFileName().c_str(), "a");
+	if (scvmLogFilePtr != nullptr) {
+		// We check for log file size; if it's too big, we rewrite it.
+		// This happens only upon app launch, in initBackend() when createLogFileForAppending() is called
+		// NOTE: We don't check for file size each time we write a log message.
+		long sz = ftell(scvmLogFilePtr);
+		if (sz > MAX_ANDROID_SCUMMVM_LOG_FILESIZE_IN_BYTES) {
+			fclose(scvmLogFilePtr);
+			__android_log_write(ANDROID_LOG_WARN, android_log_tag, "Default log file is bigger than 100KB. It will be overwritten!");
+			if (!getDefaultLogFileName().empty()) {
+				// Create the log file from scratch overwriting the previous one
+				scvmLogFilePtr = fopen(getDefaultLogFileName().c_str(), "w");
+				if (scvmLogFilePtr == nullptr) {
+					__android_log_write(ANDROID_LOG_ERROR, android_log_tag, "Could not open default log file for rewrite!");
+					return nullptr;
+				}
+			} else {
+				__android_log_write(ANDROID_LOG_ERROR, android_log_tag, "Log file path is not known upon rewrite attempt!");
+				return nullptr;
+			}
+		}
+	} else {
+		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, "Could not open default log file for writing/appending.");
+		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, getDefaultLogFileName().c_str());
+	}
+	return new PosixIoStream(scvmLogFilePtr);
 }
 
 bool OSystem_Android::hasFeature(Feature f) {
@@ -535,7 +627,9 @@ bool OSystem_Android::hasFeature(Feature f) {
 		return false;
 	if (f == kFeatureVirtualKeyboard ||
 			f == kFeatureOpenUrl ||
-			f == kFeatureClipboardSupport) {
+			f == kFeatureClipboardSupport ||
+			f == kFeatureKbdMouseSpeed ||
+			f == kFeatureJoystickDeadzone) {
 		return true;
 	}
 	/* Even if we are using the 2D graphics manager,
@@ -623,6 +717,31 @@ Common::KeymapperDefaultBindings *OSystem_Android::getKeymapperDefaultBindings()
 	// See: backends/keymapper/remap-widget.cpp:	kCloseCmd        = 'CLOS'
 	keymapperDefaultBindings->setDefaultBinding(Common::kGuiKeymapName, "CLOS", "AC_BACK");
 
+	// By default DPAD directions will be used for virtual mouse in GUI context
+	// If the user wants to remap them, they will be able to navigate to Global Options -> Keymaps and do so.
+	// In some devices (eg. Android TV) with only the remote control as DPAD input, it is impossible to navigate the launcher GUI,
+	// if the DPAD actions are mapped to "UP", "DOWN", "LEFT", "RIGHT" directions (GUI context) and not mouse cursor movement.
+	// TODO If/when full key-based (ie. non-mouse) navigation of the ScummVM GUI is implemented,
+	// we can revert back to the core behavior of DPAD being mapped to "up", "down", "left", "right" directions.
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSEUP", "JOY_LEFT_STICK_Y-");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSEUP", "JOY_UP");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSEDOWN", "JOY_LEFT_STICK_Y+");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSEDOWN", "JOY_DOWN");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSELEFT", "JOY_LEFT_STICK_X-");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSELEFT", "JOY_LEFT");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSERIGHT", "JOY_LEFT_STICK_X+");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSERIGHT", "JOY_RIGHT");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSESLOW", "JOY_RIGHT_SHOULDER");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGlobalKeymapName, "VMOUSESLOW", "AUDIOPLAYPAUSE");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGuiKeymapName, Common::kStandardActionInteract, "JOY_A");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGuiKeymapName, Common::kStandardActionInteract, "JOY_CENTER");
+	keymapperDefaultBindings->addDefaultBinding(Common::kGuiKeymapName, Common::kStandardActionInteract, "SELECT");
+	// NOTE using nullptr as the third argument clears the bindings for the action.
+	keymapperDefaultBindings->setDefaultBinding(Common::kGuiKeymapName, Common::kStandardActionMoveUp, "UP");
+	keymapperDefaultBindings->setDefaultBinding(Common::kGuiKeymapName, Common::kStandardActionMoveDown, "DOWN");
+	keymapperDefaultBindings->setDefaultBinding(Common::kGuiKeymapName, Common::kStandardActionMoveLeft, "LEFT");
+	keymapperDefaultBindings->setDefaultBinding(Common::kGuiKeymapName, Common::kStandardActionMoveRight, "RIGHT");
+
 	return keymapperDefaultBindings;
 }
 
@@ -702,6 +821,11 @@ void OSystem_Android::logMessage(LogMessageType::Type type, const char *message)
 		__android_log_write(ANDROID_LOG_ERROR, android_log_tag, message);
 		break;
 	}
+
+	// Then log into file (via the logger)
+	if (_logger)
+		_logger->print(message);
+
 }
 
 Common::String OSystem_Android::getSystemLanguage() const {
@@ -827,8 +951,24 @@ int OSystem_Android::getGraphicsMode() const {
 
 #if defined(USE_OPENGL) && defined(USE_GLAD)
 void *OSystem_Android::getOpenGLProcAddress(const char *name) const {
-	// This exists since Android 2.3 (API Level 9)
-	return (void *)eglGetProcAddress(name);
+	// eglGetProcAddress exists since Android 2.3 (API Level 9)
+	// EGL 1.5+ supports loading core functions too: try to optimize
+	if (JNI::eglVersion() >= 0x00010005) {
+		return (void *)eglGetProcAddress(name);
+	}
+
+	if (!_gles2DL) {
+		_gles2DL = dlopen("libGLESv2.so", RTLD_NOW | RTLD_LOCAL);
+		if (!_gles2DL) {
+			error("Can't load libGLESv2.so with old EGL context");
+		}
+	}
+
+	void *ptr = dlsym(_gles2DL, name);
+	if (!ptr) {
+		ptr = (void *)eglGetProcAddress(name);
+	}
+	return ptr;
 }
 #endif
 

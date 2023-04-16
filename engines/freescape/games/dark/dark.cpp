@@ -23,6 +23,7 @@
 
 #include "freescape/freescape.h"
 #include "freescape/language/8bitDetokeniser.h"
+#include "freescape/objects/global.h"
 #include "freescape/objects/connections.h"
 
 namespace Freescape {
@@ -61,19 +62,72 @@ void DarkEngine::titleScreen() {
 	}
 }
 
-void DarkEngine::loadGlobalObjects(Common::SeekableReadStream *file, int offset) {
-	assert(!_areaMap.contains(255));
-	ObjectMap *globalObjectsByID = new ObjectMap;
-	file->seek(offset);
-	for (int i = 0; i < 22; i++) {
-		Object *gobj = load8bitObject(file);
-		assert(gobj);
-		assert(!globalObjectsByID->contains(gobj->getObjectID()));
-		debugC(1, kFreescapeDebugParser, "Adding global object: %d", gobj->getObjectID());
-		(*globalObjectsByID)[gobj->getObjectID()] = gobj;
-	}
+void DarkEngine::addECDs(Area *area) {
+	if (!area->entranceWithID(255))
+		return;
 
-	_areaMap[255] = new Area(255, 0, globalObjectsByID, nullptr);
+	GlobalStructure *rs = (GlobalStructure *)area->entranceWithID(255);
+	debugC(1, kFreescapeDebugParser, "ECD positions:");
+	for (uint i = 0; i < rs->_structure.size(); i = i + 3) {
+		int x = 32 * rs->_structure[i];
+		int y = 32 * rs->_structure[i + 1];
+		int z = 32 * rs->_structure[i + 2];
+
+		debugC(1, kFreescapeDebugParser, "%d %d %d", x, y, z);
+		if (x == 0 && y == 0 && z == 0) {
+			debugC(1, kFreescapeDebugParser, "Skiping ECD zero position");
+			continue;
+		}
+		addECD(area, Math::Vector3d(x, y, z), i / 3);
+	}
+}
+
+void DarkEngine::addWalls(Area *area) {
+	if (!area->entranceWithID(254))
+		return;
+
+	AreaConnections *cons = (AreaConnections *)area->entranceWithID(254);
+	debugC(1, kFreescapeDebugParser, "Adding walls for area %d:", area->getAreaID());
+	int id = 240;
+	for (uint i = 1; i < cons->_connections.size(); i = i + 2) {
+		int target = cons->_connections[i];
+		debugC(1, kFreescapeDebugParser, "Connection to %d using id: %d", target, id);
+		if (target > 0) {
+			area->addObjectFromArea(id, _areaMap[255]);
+			GeometricObject *gobj = (GeometricObject *)area->objectWithID(id);
+			assert((*(gobj->_condition[0]._thenInstructions))[0].getType() == Token::Type::GOTO);
+			assert((*(gobj->_condition[0]._thenInstructions))[0]._destination == 0);
+			(*(gobj->_condition[0]._thenInstructions))[0].setSource(target);
+		} else
+			area->addObjectFromArea(id + 1, _areaMap[255]);
+
+		id = id + 2;
+	}
+}
+
+void DarkEngine::addECD(Area *area, const Math::Vector3d position, int index) {
+	GeometricObject *obj = nullptr;
+	Math::Vector3d origin = position;
+
+	int16 id = 227 + index * 6;
+	int heightLastObject = 0;
+	for (int i = 0; i < 4; i++) {
+		debugC(1, kFreescapeDebugParser, "Adding object %d to room structure", id);
+		obj = (GeometricObject *)_areaMap[255]->objectWithID(id);
+		assert(obj);
+		// Set position for object
+		origin.setValue(0, origin.x());
+		origin.setValue(1, origin.y() + heightLastObject);
+		origin.setValue(2, origin.z());
+
+		obj = (GeometricObject *)obj->duplicate();
+		obj->setOrigin(origin);
+		obj->makeVisible();
+		area->addObject(obj);
+
+		heightLastObject = obj->getSize().y();
+		id--;
+	}
 }
 
 void DarkEngine::initGameState() {
@@ -177,51 +231,20 @@ void DarkEngine::pressedKey(const int keycode) {
 	}
 }
 
-void DarkEngine::checkIfStillInArea() {
-	AreaConnections *cons = (AreaConnections *)_currentArea->entranceWithID(254);
-	if (!cons) {
-		FreescapeEngine::checkIfStillInArea();
-		return;
-	}
-
-	int nextAreaID = 0;
-
-	if (_position.z() >= 4064 - 16)
-		nextAreaID = cons->_connections[1];
-	else if (_position.x() >= 4064 - 16)
-		nextAreaID = cons->_connections[3];
-	else if (_position.z() <= 16)
-		nextAreaID = cons->_connections[5];
-	else if (_position.x() <= 16)
-		nextAreaID = cons->_connections[7];
-
-	if (nextAreaID > 0)
-		gotoArea(nextAreaID, 0);
-	else
-		FreescapeEngine::checkIfStillInArea();
-}
-
-void DarkEngine::executeMovementConditions() {
-	// Only execute "on collision" room/global conditions
-	if (_currentArea->getAreaFlags() == 1)
-		executeLocalGlobalConditions(false, true);
-}
-
 void DarkEngine::updateTimeVariables() {
 	// This function only executes "on collision" room/global conditions
 	int seconds, minutes, hours;
 	getTimeFromCountdown(seconds, minutes, hours);
 	if (_lastTenSeconds != seconds / 10) {
 		_lastTenSeconds = seconds / 10;
-		if (_currentArea->getAreaFlags() == 0)
-			executeLocalGlobalConditions(false, true);
+		executeLocalGlobalConditions(false, false, true);
 	}
 
 	if (_lastMinute != minutes) {
 		_lastMinute = minutes;
 		_gameStateVars[0x1e] += 1;
 		_gameStateVars[0x1f] += 1;
-		executeLocalGlobalConditions(false, true);
+		executeLocalGlobalConditions(false, true, false);
 	}
 }
 

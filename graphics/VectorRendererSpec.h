@@ -88,7 +88,7 @@ public:
 
 	void fillSurface() override;
 	void blitSurface(const Graphics::ManagedSurface *source, const Common::Rect &r) override;
-	void blitKeyBitmap(const Graphics::ManagedSurface *source, const Common::Point &p, bool themeTrans) override;
+	void blitManagedSurface(const Graphics::ManagedSurface *source, const Common::Point &p) override;
 
 	void applyScreenShading(GUI::ThemeEngine::ShadingStyle shadingStyle) override;
 
@@ -234,9 +234,9 @@ protected:
 		PixelType color, VectorRenderer::FillMode fill_m,
 		int baseLeft = 0, int baseRight = 0);
 
-	virtual void drawTabShadow(int x, int y, int w, int h, int r, int s);
+	virtual void drawTabShadow(int x, int y, int w, int h, int r, int offset, uint32 shadowIntensity);
 
-	virtual void drawTabShadowClip(int x, int y, int w, int h, int r, int s);
+	virtual void drawTabShadowClip(int x, int y, int w, int h, int r, int offset, uint32 shadowIntensity);
 
 	virtual void drawBevelTabAlg(int x, int y, int w, int h,
 	    int bevel, PixelType topColor, PixelType bottomColor,
@@ -258,8 +258,8 @@ protected:
 	 */
 	virtual void drawSquareShadow(int x, int y, int w, int h, int offset);
 	virtual void drawSquareShadowClip(int x, int y, int w, int h, int offset);
-	virtual void drawRoundedSquareShadow(int x, int y, int r, int w, int h, int offset);
-	virtual void drawRoundedSquareShadowClip(int x, int y, int r, int w, int h, int offset);
+	virtual void drawRoundedSquareShadow(int x, int y, int r, int w, int h, int offset, uint32 shadowIntensity);
+	virtual void drawRoundedSquareShadowClip(int x, int y, int r, int w, int h, int offset, uint32 shadowIntensity);
 
 	/**
 	 * Calculates the color gradient on a given point.
@@ -321,7 +321,6 @@ protected:
 	Common::Array<int> _gradIndexes;
 
 	PixelType _bevelColor;
-	PixelType _bitmapAlphaColor;
 };
 
 
@@ -381,8 +380,8 @@ protected:
 
 	virtual void drawInteriorRoundedSquareAlg(int x1, int y1, int r, int w, int h, PixelType color, VectorRenderer::FillMode fill_m);
 
-	virtual void drawRoundedSquareShadow(int x, int y, int r, int w, int h, int offset) {
-		Base::drawRoundedSquareShadow(x, y, r, w, h, offset);
+	virtual void drawRoundedSquareShadow(int x, int y, int r, int w, int h, int offset, uint32 shadowIntensity) {
+		Base::drawRoundedSquareShadow(x, y, r, w, h, offset, shadowIntensity);
 	}
 
 	virtual void drawTabAlg(int x, int y, int w, int h, int r,

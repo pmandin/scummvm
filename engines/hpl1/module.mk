@@ -93,16 +93,13 @@ MODULE_OBJS := \
 	engine/impl/CGProgram.o \
 	engine/impl/CharacterBodyNewton.o \
 	engine/impl/CollideShapeNewton.o \
-	engine/impl/KeyboardSDL.o \
 	engine/impl/LowLevelGraphicsSDL.o \
-	engine/impl/LowLevelInputSDL.o \
 	engine/impl/LowLevelPhysicsNewton.o \
 	engine/impl/LowLevelSoundOpenAL.o \
 	engine/impl/MeshLoaderCollada.o \
 	engine/impl/MeshLoaderColladaHelpers.o \
 	engine/impl/MeshLoaderColladaLoader.o \
 	engine/impl/MeshLoaderMSH.o \
-	engine/impl/MouseSDL.o \
 	engine/impl/OcclusionQueryOGL.o \
 	engine/impl/OpenALSoundChannel.o \
 	engine/impl/OpenALSoundData.o \
@@ -131,6 +128,7 @@ MODULE_OBJS := \
 	engine/input/Input.o \
 	engine/input/InputDevice.o \
 	engine/input/Keyboard.o \
+	engine/input/LowLevelInput.o \
 	engine/input/Mouse.o \
 	engine/math/BoundingVolume.o \
 	engine/math/Frustum.o \

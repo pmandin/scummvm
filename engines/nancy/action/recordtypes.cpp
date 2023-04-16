@@ -19,8 +19,6 @@
  *
  */
 
-#include "common/config-manager.h"
-
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/sound.h"
 #include "engines/nancy/resource.h"
@@ -29,6 +27,8 @@
 #include "engines/nancy/action/recordtypes.h"
 
 #include "engines/nancy/state/scene.h"
+
+#include "common/events.h"
 
 namespace Nancy {
 namespace Action {
@@ -199,6 +199,22 @@ void PaletteNextScene::execute() {
 	_isDone = true;
 }
 
+void LightningOn::readData(Common::SeekableReadStream &stream) {
+	_distance = stream.readSint16LE();
+	_pulseTime = stream.readUint16LE();
+	_rgbPercent = stream.readSint16LE();
+	stream.skip(4);
+}
+
+void SpecialEffect::readData(Common::SeekableReadStream &stream) {
+	stream.skip(5);
+}
+
+void LightningOn::execute() {
+	NancySceneState.beginLightning(_distance, _pulseTime, _rgbPercent);
+	_isDone = true;
+}
+
 void MapCall::readData(Common::SeekableReadStream &stream) {
 	stream.skip(1);
 }
@@ -261,11 +277,31 @@ void MapCallHotMultiframe::execute() {
 
 void TextBoxWrite::readData(Common::SeekableReadStream &stream) {
 	uint16 size = stream.readUint16LE();
-	stream.skip(size);
 
 	if (size > 10000) {
 		error("Action Record atTextboxWrite has too many text box chars: %d", size);
 	}
+
+	char *buf = new char[size];
+	stream.read(buf, size);
+	buf[size - 1] = '\0';
+	_text = buf;
+
+	delete[] buf;
+}
+
+TextBoxWrite::~TextBoxWrite() {
+	NancySceneState.setShouldClearTextbox(true);
+	NancySceneState.getTextbox().setVisible(false);
+}
+
+void TextBoxWrite::execute() {
+	auto &tb = NancySceneState.getTextbox();
+	tb.clear();
+	tb.addTextLine(_text);
+	tb.setVisible(true);
+	NancySceneState.setShouldClearTextbox(false);
+	finishExecution();
 }
 
 void TextBoxClear::readData(Common::SeekableReadStream &stream) {
@@ -288,15 +324,7 @@ void SaveContinueGame::readData(Common::SeekableReadStream &stream) {
 }
 
 void SaveContinueGame::execute() {
-	if (ConfMan.getBool("second_chance")) {
-		if (_state == kBegin) {
-			// Slight hack, skip first call to let the graphics render once and provide the correct thumbnail
-			_state = kRun;
-			return;
-		}
-
-		g_nancy->saveGameState(g_nancy->getAutosaveSlot(), "Second Chance", true);
-	}
+	g_nancy->secondChance();
 	_isDone = true;
 }
 
@@ -378,8 +406,14 @@ void LoseGame::readData(Common::SeekableReadStream &stream) {
 
 void LoseGame::execute() {
 	g_nancy->_sound->stopAndUnloadSpecificSounds();
-	g_nancy->setState(NancyState::kMainMenu);
-	NancySceneState.resetStateToInit();
+	
+	// We're not using original menus yet, so just quit the game and go back to the launcher
+	// g_nancy->setState(NancyState::kMainMenu); 
+	
+	Common::Event ev;
+	ev.type = Common::EVENT_RETURN_TO_LAUNCHER;
+	g_system->getEventManager()->pushEvent(ev);
+
 	_isDone = true;
 }
 
@@ -409,8 +443,6 @@ void WinGame::execute() {
 	g_nancy->_sound->stopAndUnloadSpecificSounds();
 	g_nancy->setState(NancyState::kCredits, NancyState::kMainMenu);
 
-	// TODO replace with destroy()?
-	NancySceneState.resetStateToInit();
 	_isDone = true;
 }
 
@@ -427,7 +459,15 @@ void AddInventoryNoHS::execute() {
 }
 
 void RemoveInventoryNoHS::readData(Common::SeekableReadStream &stream) {
-	stream.skip(2);
+	_itemID = stream.readUint16LE();
+}
+
+void RemoveInventoryNoHS::execute() {
+	if (NancySceneState.hasItem(_itemID) == kInvHolding) {
+		NancySceneState.removeItemFromInventory(_itemID, false);
+	}
+
+	_isDone = true;
 }
 
 void DifficultyLevel::readData(Common::SeekableReadStream &stream) {

@@ -20,15 +20,11 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
+#include <time.h>
 
 #include <mint/cookie.h>
-#include <mint/falcon.h>
 #include <mint/osbind.h>
 
-// We use some stdio.h functionality here thus we need to allow some
-// symbols. Alternatively, we could simply allow everything by defining
-// FORBIDDEN_SYMBOL_ALLOW_ALL
 #define FORBIDDEN_SYMBOL_EXCEPTION_FILE
 #define FORBIDDEN_SYMBOL_EXCEPTION_stdout
 #define FORBIDDEN_SYMBOL_EXCEPTION_stderr
@@ -51,6 +47,7 @@
 #include "backends/events/default/default-events.h"
 #include "backends/mixer/atari/atari-mixer.h"
 #include "backends/graphics/atari/atari-graphics.h"
+#include "backends/graphics/atari/atari-graphics-superblitter.h"
 #include "backends/graphics/atari/atari-graphics-supervidel.h"
 #include "backends/graphics/atari/atari-graphics-videl.h"
 #include "gui/debugger.h"
@@ -62,6 +59,10 @@
 
 extern "C" void atari_ikbd_init();
 extern "C" void atari_ikbd_shutdown();
+
+extern "C" void atari_200hz_init();
+extern "C" void atari_200hz_shutdown();
+extern "C" volatile uint32 counter_200hz;
 
 extern void nf_init(void);
 extern void nf_print(const char* msg);
@@ -78,14 +79,20 @@ OSystem_Atari::~OSystem_Atari() {
 		_video_initialized = false;
 	}
 
+	if (_200hz_initialized) {
+		Supexec(atari_200hz_shutdown);
+		_200hz_initialized = false;
+	}
+
 	if (_ikbd_initialized) {
 		Supexec(atari_ikbd_shutdown);
 		_ikbd_initialized = false;
 	}
 }
 
-static void ikbd_and_video_restore() {
+static void critical_restore() {
 	Supexec(asm_screen_falcon_restore);
+	Supexec(atari_200hz_shutdown);
 	Supexec(atari_ikbd_shutdown);
 }
 
@@ -113,10 +120,6 @@ void OSystem_Atari::initBackend() {
 
 	nf_init();
 
-	_startTime = clock();
-
-	bool superVidel = VgetMonitor() == MON_VGA && Getcookie(C_SupV, NULL) == C_FOUND;
-
 	_timerManager = new DefaultTimerManager();
 	_savefileManager = new DefaultSaveFileManager("saves");
 
@@ -125,7 +128,7 @@ void OSystem_Atari::initBackend() {
 
 	// AtariGraphicsManager needs _eventManager ready
 	AtariGraphicsManager *atariGraphicsManager;
-	if (superVidel)
+	if (hasSuperVidel())
 		atariGraphicsManager = new AtariSuperVidelManager();
 	else
 		atariGraphicsManager = new AtariVidelManager();
@@ -140,10 +143,15 @@ void OSystem_Atari::initBackend() {
 	Supexec(atari_ikbd_init);
 	_ikbd_initialized = true;
 
+	Supexec(atari_200hz_init);
+	_200hz_initialized = true;
+
 	Supexec(asm_screen_falcon_save);
 	_video_initialized = true;
 
-	Setexc(VEC_PROCTERM, ikbd_and_video_restore);
+	(void)Setexc(VEC_PROCTERM, critical_restore);
+
+	_startTime = counter_200hz;
 
 	BaseBackend::initBackend();
 }
@@ -154,17 +162,17 @@ Common::MutexInternal *OSystem_Atari::createMutex() {
 
 uint32 OSystem_Atari::getMillis(bool skipRecord) {
 	// CLOCKS_PER_SEC is 200, so no need to use floats
-	return 1000 * (clock() - _startTime) / CLOCKS_PER_SEC;
+	return 1000 * (counter_200hz - _startTime) / CLOCKS_PER_SEC;
 }
 
 void OSystem_Atari::delayMillis(uint msecs) {
-	usleep(msecs * 1000);
+	const uint32 threshold = getMillis() + msecs;
+	while (getMillis() < threshold);
 }
 
 void OSystem_Atari::getTimeAndDate(TimeDate &td, bool skipRecord) const {
-	debug("getTimeAndDate");
+	//debug("getTimeAndDate");
 	time_t curTime = time(0);
-	// TODO: if too slow (e.g. when calling RandomSource::RandomSource()), rewrite
 	struct tm t = *localtime(&curTime);
 	td.tm_sec = t.tm_sec;
 	td.tm_min = t.tm_min;
@@ -215,12 +223,21 @@ void OSystem_Atari::logMessage(LogMessageType::Type type, const char *message) {
 }
 
 void OSystem_Atari::addSysArchivesToSearchSet(Common::SearchSet &s, int priority) {
+	{
+		Common::FSDirectory currentDirectory{ getFilesystemFactory()->makeCurrentDirectoryFileNode()->getPath() };
+		Common::FSNode dataNode = currentDirectory.getSubDirectory("data")->getFSNode();
+		if (dataNode.exists() && dataNode.isDirectory() && dataNode.isReadable()) {
+			s.addDirectory(dataNode.getPath(), dataNode, priority);
+		}
+	}
 #ifdef DATA_PATH
-	// Add the global DATA_PATH to the directory search list
-	// See also OSystem_SDL::addSysArchivesToSearchSet()
-	Common::FSNode dataNode(DATA_PATH);
-	if (dataNode.exists() && dataNode.isDirectory()) {
-		s.add(DATA_PATH, new Common::FSDirectory(dataNode, 4), priority);
+	{
+		// Add the global DATA_PATH to the directory search list
+		// See also OSystem_SDL::addSysArchivesToSearchSet()
+		Common::FSNode dataNode(DATA_PATH);
+		if (dataNode.exists() && dataNode.isDirectory() && dataNode.isReadable()) {
+			s.add(DATA_PATH, new Common::FSDirectory(dataNode, 4), priority);
+		}
 	}
 #endif
 }

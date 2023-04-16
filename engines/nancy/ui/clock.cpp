@@ -34,68 +34,55 @@
 namespace Nancy {
 namespace UI {
 
-Clock::Clock() : 	RenderObject(11),
-					_globe(10, this),
-					_gargoyleEyes(9) {}
+Clock::Clock() : 	RenderObject(g_nancy->getGameType() == kGameTypeVampire ? 11 : 10),
+					_animation(g_nancy->getGameType() == kGameTypeVampire ? 10 : 11, this),
+					_staticImage(9),
+					_clockData(nullptr) {}
 
 void Clock::init() {
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("CLOK");
 	Graphics::ManagedSurface &object0 = g_nancy->_graphicsManager->_object0;
 
-	_globe.init();
+	_clockData = g_nancy->_clockData;
+	assert(_clockData);
 
-	if (chunk) {
-		chunk->seek(0x80);
+	// Calculate the size and location of the surface we'll need to draw the clock hands,
+	// since their dest rects are in absolute screen space
+	Common::Rect clockSurfaceScreenBounds;
 
-		_hoursHandSrcRects.resize(12);
-		for (uint i = 0; i < 12; ++i) {
-			readRect(*chunk, _hoursHandSrcRects[i]);
-		}
-
-		_minutesHandSrcRects.resize(4);
-		for (uint i = 0; i < 4; ++i) {
-			readRect(*chunk, _minutesHandSrcRects[i]);
-		}
-
-		Common::Rect dest;
-		readRect(*chunk, dest);
-		_drawSurface.create(dest.width(), dest.height(), g_nancy->_graphicsManager->getInputPixelFormat());
-		moveTo(dest);
-
-		_hoursHandDestRects.resize(12);
-		for (uint i = 0; i < 12; ++i) {
-			readRect(*chunk, _hoursHandDestRects[i]);
-		}
-
-		_minutesHandDestRects.resize(4);
-		for (uint i = 0; i < 4; ++i) {
-			readRect(*chunk, _minutesHandDestRects[i]);
-		}
-
-		Common::Rect gargoyleEyesSrcRect;
-		Common::Rect gargoyleEyesDestRect;
-
-		readRect(*chunk, gargoyleEyesSrcRect);
-		readRect(*chunk, gargoyleEyesDestRect);
-		_gargoyleEyes._drawSurface.create(object0, gargoyleEyesSrcRect);
-		_gargoyleEyes.moveTo(gargoyleEyesDestRect);
-		_gargoyleEyes.setVisible(false);
-
-		_gargoyleEyes.setTransparent(true);
-		_globe.setTransparent(true);
-		GraphicsManager::loadSurfacePalette(_drawSurface, "OBJECT0");
-		setTransparent(true);
+	for (Common::Rect &r : _clockData->hoursHandDests) {
+		clockSurfaceScreenBounds.extend(r);
 	}
+
+	for (Common::Rect &r : _clockData->minutesHandDests) {
+		clockSurfaceScreenBounds.extend(r);
+	}
+
+	_drawSurface.create(clockSurfaceScreenBounds.width(), clockSurfaceScreenBounds.height(), g_nancy->_graphicsManager->getInputPixelFormat());
+	moveTo(clockSurfaceScreenBounds);
+
+	_staticImage._drawSurface.create(object0, _clockData->staticImageSrc);
+	_staticImage.moveTo(_clockData->staticImageDest);
+	_staticImage.setVisible(false);
+	_staticImage.setTransparent(g_nancy->getGameType() == kGameTypeVampire);
+
+	_animation.setTransparent(true);
+	if (g_nancy->getGameType() == kGameTypeVampire) {
+		GraphicsManager::loadSurfacePalette(_drawSurface, "OBJECT0");
+	}
+	
+	setTransparent(true);
+
+	_animation.init();
 }
 
 void Clock::registerGraphics() {
-	_gargoyleEyes.registerGraphics();
-	_globe.registerGraphics();
+	_staticImage.registerGraphics();
+	_animation.registerGraphics();
 	RenderObject::registerGraphics();
 }
 
 void Clock::updateGraphics() {
-	setVisible(_globe.getCurrentFrame() >= 5);
+	setVisible(_animation.getCurrentFrame() >= (g_nancy->getGameType() == kGameTypeVampire ? 5 : 1));
 
 	if (_isVisible) {
 		Time newPlayerTime = NancySceneState.getPlayerTime();
@@ -111,8 +98,8 @@ void Clock::updateGraphics() {
 }
 
 void Clock::handleInput(NancyInput &input) {
-	if (!_globe.isPlaying()) {
-		_globe.handleInput(input);
+	if (!_animation.isPlaying()) {
+		_animation.handleInput(input);
 	}
 }
 
@@ -124,67 +111,71 @@ void Clock::drawClockHands() {
 	}
 	uint minutesHand = _playerTime.getMinutes() / 15;
 
-	Common::Rect hoursDest = _hoursHandDestRects[hours];
-	Common::Rect minutesDest = _minutesHandDestRects[minutesHand];
+	Common::Rect hoursDest = _clockData->hoursHandDests[hours];
+	Common::Rect minutesDest = _clockData->minutesHandDests[minutesHand];
 
 	hoursDest.translate(-_screenPosition.left, -_screenPosition.top);
 	minutesDest.translate(-_screenPosition.left, -_screenPosition.top);
 
 	_drawSurface.clear(g_nancy->_graphicsManager->getTransColor());
-	_drawSurface.blitFrom(object0, _hoursHandSrcRects[hours], hoursDest);
-	_drawSurface.blitFrom(object0, _minutesHandSrcRects[minutesHand], minutesDest);
+	_drawSurface.blitFrom(object0, _clockData->hoursHandSrcs[hours], hoursDest);
+	_drawSurface.blitFrom(object0, _clockData->minutesHandSrcs[minutesHand], minutesDest);
 }
 
-void Clock::ClockGlobe::init() {
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("CLOK");
-
-	if (chunk) {
-		chunk->seek(0);
-		_srcRects.resize(8);
-		for (uint i = 0; i < 8; ++i) {
-			readRect(*chunk, _srcRects[i]);
-		}
-
-		chunk->seek(0x180);
-		Common::Rect screenDest;
-		readRect(*chunk, screenDest);
-		moveTo(screenDest);
-
-		chunk->seek(0x2B0);
-		_timeToKeepOpen = chunk->readUint32LE();
-		_frameTime = chunk->readUint16LE();
-
-		_alwaysHighlightCursor = true;
-		_hotspot = _screenPosition;
+void Clock::ClockAnim::init() {
+	_srcRects = _owner->_clockData->animSrcs;
+	_destRects = _owner->_clockData->animDests;
+	
+	if (_destRects.size()) {
+		moveTo(g_nancy->_bootSummary->clockHotspot);
+	} else {
+		moveTo(_owner->_clockData->screenPosition);
 	}
+
+	_timeToKeepOpen = _owner->_clockData->timeToKeepOpen;
+	_frameTime = _owner->_clockData->frameTime;
+
+	_alwaysHighlightCursor = true;
+	_hotspot = _screenPosition;
 }
 
-void Clock::ClockGlobe::updateGraphics() {
+void Clock::ClockAnim::updateGraphics() {
 	AnimatedButton::updateGraphics();
-	if (_isOpen && !isPlaying() && g_nancy->getTotalPlayTime() > _closeTime) {
+	if (_isOpen && !isPlaying() && g_nancy->getTotalPlayTime() > _closeTime && _isVisible) {
 		setOpen(false);
-		_owner->_gargoyleEyes.setVisible(false);
+		if (g_nancy->getGameType() == kGameTypeVampire) {
+			_owner->_staticImage.setVisible(false);
+		}
 		g_nancy->_sound->playSound("GLOB");
 	}
 }
 
-void Clock::ClockGlobe::onClick() {
+void Clock::ClockAnim::onClick() {
 	if (!isPlaying()) {
 		setOpen(!_isOpen);
+
 		if (!_isOpen) {
-			_owner->_gargoyleEyes.setVisible(false);
+			if (g_nancy->getGameType() == kGameTypeVampire) {
+				_owner->_staticImage.setVisible(false);
+			}
+		} else if (g_nancy->getGameType() != kGameTypeVampire) {
+			_owner->_staticImage.setVisible(true);
 		}
+		
 		_owner->_playerTime = NancySceneState.getPlayerTime();
 		g_nancy->_sound->playSound("GLOB");
 	}
 }
 
-void Clock::ClockGlobe::onTrigger() {
+void Clock::ClockAnim::onTrigger() {
 	if (_isOpen) {
 		_closeTime = g_nancy->getTotalPlayTime() + _timeToKeepOpen;
-		_owner->_gargoyleEyes.setVisible(true);
+		if (g_nancy->getGameType() == kGameTypeVampire) {
+			_owner->_staticImage.setVisible(true);
+		}
 	} else {
 		_owner->setVisible(false);
+		_owner->_staticImage.setVisible(false);
 	}
 }
 

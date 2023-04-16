@@ -24,47 +24,25 @@
 
 #include "backends/graphics/atari/atari-graphics.h"
 
-#include <mint/osbind.h>
-
 #include "backends/graphics/atari/atari_c2p-asm.h"
 #include "common/system.h"
-#include "common/textconsole.h"	// for error()
 
 class AtariVidelManager : public AtariGraphicsManager {
 public:
 	AtariVidelManager() {
-		for (int i = 0; i < SCREENS; ++i) {
-			if (!allocateAtariSurface(_screen[i], _screenSurface, SCREEN_WIDTH, SCREEN_HEIGHT, PIXELFORMAT8, MX_STRAM))
-				error("Failed to allocate screen memory in ST RAM");
-			_screenAligned[i] = (byte*)_screenSurface.getPixels();
-		}
-		_screenSurface.setPixels(_screenAligned[getDefaultGraphicsMode() <= 1 ? FRONT_BUFFER : BACK_BUFFER1]);
-
-		if (!allocateAtariSurface(_chunkyBuffer, _chunkySurface, SCREEN_WIDTH, SCREEN_HEIGHT, PIXELFORMAT8, MX_PREFTTRAM))
-			error("Failed to allocate chunky buffer memory in ST/TT RAM");
-
-		if (!allocateAtariSurface(_overlayScreen, _screenOverlaySurface, getOverlayWidth(), getOverlayHeight(),
-								  getOverlayFormat(), MX_STRAM))
-			error("Failed to allocate overlay memory in ST RAM");
-
-		if (!allocateAtariSurface(_overlayBuffer, _overlaySurface, getOverlayWidth(), getOverlayHeight(),
-								  getOverlayFormat(), MX_PREFTTRAM))
-			error("Failed to allocate overlay buffer memory in ST/TT RAM");
+		// using virtual methods so must be done here
+		allocateSurfaces();
 	}
 
 	~AtariVidelManager() {
-		Mfree(_chunkyBuffer);
-		_chunkyBuffer = nullptr;
-
-		Mfree(_overlayBuffer);
-		_overlayBuffer = nullptr;
+		// using virtual methods so must be done here
+		freeSurfaces();
 	}
 
 	virtual const OSystem::GraphicsMode *getSupportedGraphicsModes() const override {
 		static const OSystem::GraphicsMode graphicsModes[] = {
-			{"single", "Single buffering", 1},
-			{"double", "Double buffering", 2},
-			{"triple", "Triple buffering", 3},
+			{"single", "Single buffering", (int)GraphicsMode::SingleBuffering},
+			{"triple", "Triple buffering", (int)GraphicsMode::TripleBuffering},
 			{nullptr, nullptr, 0 }
 		};
 		return graphicsModes;
@@ -85,39 +63,33 @@ public:
 		return AtariGraphicsManager::endGFXTransaction();
 	}
 
-	int16 getOverlayHeight() const override { return _vgaMonitor ? OVERLAY_HEIGHT : 2 * OVERLAY_HEIGHT; }
-	int16 getOverlayWidth() const override { return _vgaMonitor ? OVERLAY_WIDTH : 2 * OVERLAY_WIDTH; }
-
 private:
-	virtual void* allocFast(size_t bytes) const override {
-		return (void*)Mxalloc(bytes, MX_PREFTTRAM);
-	}
-
-	void copySurfaceToSurface(const Graphics::Surface &srcSurface, Graphics::Surface &dstSurface) const override {
-		asm_c2p1x1_8(
-			(const byte*)srcSurface.getPixels(),
-			(const byte*)srcSurface.getBasePtr(srcSurface.w, srcSurface.h-1),
-			(byte*)dstSurface.getPixels());
-	}
-
-	void copyRectToSurface(const Graphics::Surface &srcSurface, int destX, int destY,
-						   Graphics::Surface &dstSurface, const Common::Rect &subRect) const override {
+	void copyRectToSurface(Graphics::Surface &dstSurface,
+						   const Graphics::Surface &srcSurface, int destX, int destY,
+						   const Common::Rect &subRect) const override {
 		// 'pChunkyEnd' is a delicate parameter: the c2p routine compares it to the address register
 		// used for pixel reading; two common mistakes:
 		// 1. (subRect.left, subRect.bottom) = beginning of the next line *including the offset*
 		// 2. (subRect.right, subRect.bottom) = even worse, end of the *next* line, not current one
-		asm_c2p1x1_8_rect(
-			(const byte*)srcSurface.getBasePtr(subRect.left, subRect.top),
-			(const byte*)srcSurface.getBasePtr(subRect.right, subRect.bottom-1),
-			subRect.width(),
-			srcSurface.pitch,
-			(byte*)dstSurface.getBasePtr(destX, destY),
-			dstSurface.pitch);
+		if (subRect.width() == dstSurface.w) {
+			asm_c2p1x1_8(
+				(const byte*)srcSurface.getBasePtr(subRect.left, subRect.top),
+				(const byte*)srcSurface.getBasePtr(subRect.right, subRect.bottom-1),
+				(byte*)dstSurface.getBasePtr(destX, destY));
+		} else {
+			asm_c2p1x1_8_rect(
+				(const byte*)srcSurface.getBasePtr(subRect.left, subRect.top),
+				(const byte*)srcSurface.getBasePtr(subRect.right, subRect.bottom-1),
+				subRect.width(),
+				srcSurface.pitch,
+				(byte*)dstSurface.getBasePtr(destX, destY),
+				dstSurface.pitch);
+		}
 	}
 
-	// TODO: allow specifying different background than _chunkySurface?
-	void copyRectToSurfaceWithKey(const Graphics::Surface &srcSurface, int destX, int destY,
-								  Graphics::Surface &dstSurface, const Common::Rect &subRect, uint32 key) const override {
+	void copyRectToSurfaceWithKey(Graphics::Surface &dstSurface, const Graphics::Surface &bgSurface,
+								  const Graphics::Surface &srcSurface, int destX, int destY,
+								  const Common::Rect &subRect, uint32 key, const byte srcPalette[256*3]) const override {
 		Common::Rect backgroundRect(destX, destY, destX + subRect.width(), destY + subRect.height());
 
 		// ensure that background's left and right lie on a 16px boundary and double the width if needed
@@ -126,27 +98,57 @@ private:
 		const int deltaX = destX - backgroundRect.left;
 
 		backgroundRect.right = (backgroundRect.right + deltaX + 15) & 0xfff0;
-		if (backgroundRect.right > _chunkySurface.w)
-			backgroundRect.right = _chunkySurface.w;
+		if (backgroundRect.right > bgSurface.w)
+			backgroundRect.right = bgSurface.w;
 
 		static Graphics::Surface cachedSurface;
 
-		if (cachedSurface.w != backgroundRect.width() || cachedSurface.h != backgroundRect.height()) {
+		if (cachedSurface.w != backgroundRect.width()
+				|| cachedSurface.h != backgroundRect.height()
+				|| cachedSurface.format != bgSurface.format) {
 			cachedSurface.create(
 				backgroundRect.width(),
 				backgroundRect.height(),
-				_chunkySurface.format);
+				bgSurface.format);
 		}
 
 		// copy background
-		cachedSurface.copyRectToSurface(_chunkySurface, 0, 0, backgroundRect);
+		cachedSurface.copyRectToSurface(bgSurface, 0, 0, backgroundRect);
+
 		// copy cursor
-		cachedSurface.copyRectToSurfaceWithKey(srcSurface, deltaX, 0, subRect, key);
+		if (cachedSurface.format == PIXELFORMAT_RGB332) {
+			assert(srcSurface.format == PIXELFORMAT_CLUT8);
+
+			// Convert CLUT8 to RGB332 palette and do copyRectToSurfaceWithKey() at the same time
+			const byte *src = (const byte*)srcSurface.getBasePtr(subRect.left, subRect.top);
+			byte *dst = (byte*)cachedSurface.getBasePtr(deltaX, 0);
+
+			const int16 w = subRect.width();
+			const int16 h = subRect.height();
+
+			for (int16 y = 0; y < h; ++y) {
+				for (int16 x = 0; x < w; ++x) {
+					const uint32 color = *src++;
+					if (color != key) {
+						*dst++ = (srcPalette[color*3 + 0] & 0xe0)
+							  | ((srcPalette[color*3 + 1] >> 3) & 0x1c)
+							  | ((srcPalette[color*3 + 2] >> 6) & 0x03);
+					} else {
+						dst++;
+					}
+				}
+
+				src += (srcSurface.pitch - w);
+				dst += (cachedSurface.pitch - w);
+			}
+		} else {
+			cachedSurface.copyRectToSurfaceWithKey(srcSurface, deltaX, 0, subRect, key);
+		}
 
 		copyRectToSurface(
+			dstSurface,
 			cachedSurface,
 			backgroundRect.left, backgroundRect.top,
-			dstSurface,
 			Common::Rect(cachedSurface.w, cachedSurface.h));
 	}
 

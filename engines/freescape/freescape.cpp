@@ -344,6 +344,25 @@ void FreescapeEngine::processInput() {
 		}
 
 		switch (event.type) {
+		case Common::EVENT_JOYBUTTON_DOWN:
+			if (_hasFallen)
+				break;
+			switch (event.joystick.button) {
+			case Common::JOYSTICK_BUTTON_B:
+			case Common::JOYSTICK_BUTTON_DPAD_UP:
+				move(kForwardMovement, _scaleVector.x(), deltaTime);
+				break;
+			case Common::JOYSTICK_BUTTON_DPAD_DOWN:
+				move(kBackwardMovement, _scaleVector.x(), deltaTime);
+				break;
+			case Common::JOYSTICK_BUTTON_DPAD_LEFT:
+				move(kLeftMovement, _scaleVector.y(), deltaTime);
+				break;
+			case Common::JOYSTICK_BUTTON_DPAD_RIGHT:
+				move(kRightMovement, _scaleVector.y(), deltaTime);
+				break;
+			}
+		break;
 		case Common::EVENT_KEYDOWN:
 			if (_hasFallen)
 				break;
@@ -482,7 +501,17 @@ void FreescapeEngine::processInput() {
 		case Common::EVENT_LBUTTONDOWN:
 			if (_hasFallen)
 				break;
-			shoot();
+			mousePos = event.mouse;
+			{
+				bool touchedScreenControls = false;
+
+				#if defined(__ANDROID__) || defined(IPHONE)
+				touchedScreenControls = onScreenControls(mousePos);
+				#endif
+
+				if (!touchedScreenControls && _viewArea.contains(_crossairPosition))
+					shoot();
+			}
 			break;
 
 		default:
@@ -491,9 +520,13 @@ void FreescapeEngine::processInput() {
 	}
 }
 
+bool FreescapeEngine::onScreenControls(Common::Point mouse) {
+	return false;
+}
+
 void FreescapeEngine::executeMovementConditions() {
 	// Only execute "on collision" room/global conditions
-	executeLocalGlobalConditions(false, true);
+	executeLocalGlobalConditions(false, true, false);
 }
 
 void FreescapeEngine::updateTimeVariables() {
@@ -504,7 +537,7 @@ void FreescapeEngine::updateTimeVariables() {
 		_lastMinute = minutes;
 		_gameStateVars[0x1e] += 1;
 		_gameStateVars[0x1f] += 1;
-		executeLocalGlobalConditions(false, true); // Only execute "on collision" room/global conditions
+		executeLocalGlobalConditions(false, true, false); // Only execute "on collision" room/global conditions
 	}
 }
 

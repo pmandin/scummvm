@@ -1139,6 +1139,12 @@ const SciWorkaroundEntry kUnLoad_workarounds[] = {
 };
 
 //    gameID,           room,script,lvl,          object-name, method-name,  local-call-signature, index-range,   workaround
+const SciWorkaroundEntry kWait_workarounds[] = {
+	{ GID_SQ1,             1,     1,  0,              "demo1", "changeState",             nullptr,     0,     0, { WORKAROUND_IGNORE, 0 } }, // DEMO: calls kWait with no parameters
+	SCI_WORKAROUNDENTRY_TERMINATOR
+};
+
+//    gameID,           room,script,lvl,          object-name, method-name,  local-call-signature, index-range,   workaround
 const SciWorkaroundEntry kScrollWindowAdd_workarounds[] = {
 	{ GID_PHANTASMAGORIA, 45, 64907,  0,   "ScrollableWindow", "addString",               nullptr,     0,     0, { WORKAROUND_STILLCALL, 0 } }, // ScrollWindow interface passes the last two parameters twice
 	SCI_WORKAROUNDENTRY_TERMINATOR
@@ -1335,6 +1341,8 @@ static const SciMessageWorkaroundEntry messageWorkarounds[] = {
 	{ GID_LAURABOW2,     SCI_MEDIA_FLOPPY, K_LANG_GERMAN,   -1, 1892,   1,   6,   3,  1, { MSG_WORKAROUND_EXTRACT, 1892,   1,   6,   3,  1, 25,   0, 249, nullptr } },
 	// Asking Ramses about snake oil in German version. Same as above: excessive trailing newlines.
 	{ GID_LAURABOW2,     SCI_MEDIA_FLOPPY, K_LANG_GERMAN,   -1, 1891,   1,   6,  41,  1, { MSG_WORKAROUND_EXTRACT, 1891,   1,   6,  41,  1, 27,   0, 146, nullptr } },
+	// Using the game's debugger and clicking "Museum", wrong resource number for "T. Rex Room"
+	{ GID_LAURABOW2,     SCI_MEDIA_ALL,    K_LANG_NONE,     29,    0,   2,   0,   0, 16, { MSG_WORKAROUND_REMAP,     10,   2,   0,   0, 16, 97,   0,   0, nullptr } },
 	// Using the hand icon on Keith in the Blue Room (missing message) - bug #6253
 	{ GID_PQ1,           SCI_MEDIA_ALL,    K_LANG_NONE,     -1,   38,  10,   4,   8,  1, { MSG_WORKAROUND_REMAP,     38,  10,   4,   9,  1,  0,   0,   0, nullptr } },
 	// Using the eye icon on Keith in the Blue Room (no message and wrong talker) - bug #6253

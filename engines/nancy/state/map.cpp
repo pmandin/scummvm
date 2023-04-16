@@ -53,7 +53,10 @@ Map::Map() : _state(kInit),
 			_pickedLocationID(-1),
 			_label(7),
 			_closedLabel(7),
-			_background(0) {}
+			_background(0) {
+	_mapData = g_nancy->_mapData;
+	assert(_mapData);
+}
 
 void Map::process() {
 	switch (_state) {
@@ -72,10 +75,34 @@ void Map::process() {
 	}
 }
 
-void Map::onStateExit() {
-	g_nancy->_graphicsManager->clearObjects();
-	_viewport.unloadVideo();
-	_state = kLoad;
+void Map::onStateEnter(const NancyState::NancyState prevState) {
+	// Unpause sound and video when coming back from the GMM
+	if (prevState == NancyState::kPause) {
+		g_nancy->_sound->pauseSound(getSound(), false);
+		if (_viewport._decoder.getFrameCount() > 1) {
+			_viewport._decoder.pauseVideo(false);
+		}
+	}
+}
+
+bool Map::onStateExit(const NancyState::NancyState nextState) {
+	// Only pause when going to the GMM
+	if (nextState == NancyState::kPause) {
+		g_nancy->_sound->pauseSound(getSound(), true);
+		if (_viewport._decoder.getFrameCount() > 1) {
+			_viewport._decoder.pauseVideo(true);
+		}
+	} else {
+		g_nancy->_graphicsManager->clearObjects();
+		_viewport.unloadVideo();
+		_state = kLoad;
+	}
+
+	return false;
+}
+
+const SoundDescription &Map::getSound() {
+	return _mapData->sounds[_mapID];
 }
 
 void Map::load() {
@@ -86,6 +113,13 @@ void Map::load() {
 	_background._drawSurface.blitFrom(*screen);
 	_background.moveTo(_background._drawSurface.getBounds());
 	_background.setVisible(true);
+
+	// The clock may become invisible after the map is opened, resulting in the left half appearing still open
+	// This is a slightly hacky solution but it works
+	if (g_nancy->getGameType() == kGameTypeVampire) {
+		Common::Rect r(52, 100);
+		_background._drawSurface.blitFrom(NancySceneState.getFrame()._drawSurface, r, r);
+	}
 }
 
 void Map::registerGraphics() {
@@ -100,36 +134,27 @@ void Map::setLabel(int labelID) {
 		_label.setVisible(false);
 		_closedLabel.setVisible(false);
 	} else {
-		_label.moveTo(_locations[labelID].labelDest);
-		_label._drawSurface.create(g_nancy->_graphicsManager->_object0, _locations[labelID].labelSrc);
+		_label.moveTo(_locationLabelDests[labelID]);
+		_label._drawSurface.create(g_nancy->_graphicsManager->_object0, _mapData->locations[labelID].labelSrc);
 		_label.setVisible(true);
 		_label.setTransparent(true);
 
-		if (!_locations[labelID].isActive) {
+		if (!_activeLocations[labelID]) {
 			_closedLabel.setVisible(true);
 		}
 	}
 }
 
 void Map::MapViewport::init() {
-	Common::SeekableReadStream *viewChunk = g_nancy->getBootChunkStream("VIEW");
-
-	if (viewChunk) {
-		viewChunk->seek(0);
-		Common::Rect dest;
-		readRect(*viewChunk, dest);
-		moveTo(dest);
-
-		_drawSurface.create(dest.width(), dest.height(), g_nancy->_graphicsManager->getInputPixelFormat());
-	}
+	moveTo(g_nancy->_viewportData->screenPosition);
+	_drawSurface.create(_screenPosition.width(), _screenPosition.height(), g_nancy->_graphicsManager->getInputPixelFormat());
 
 	RenderObject::init();
 }
 
 void Map::MapViewport::updateGraphics() {
-	// TODO: One frame plays for longer than it should
 	if (_decoder.getFrameCount() > 1) {
-		if (_decoder.atEnd()) {
+		if (_decoder.endOfVideo()) {
 			_decoder.rewind();
 		}
 
@@ -165,84 +190,26 @@ void TVDMap::init() {
 	_ornaments.init();
 	_globe.init();
 
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("MAP");
-	Common::Rect textboxScreenPosition = NancySceneState.getTextbox().getScreenPosition();
+	Common::Rect textboxScreenPosition = g_nancy->_bootSummary->textboxScreenPosition;
+	_closedLabel._drawSurface.create(g_nancy->_graphicsManager->_object0, _mapData->closedLabelSrc);
 
-	if (chunk) {
-		chunk->seek(0);
+	Common::Rect closedScreenRect;
+	closedScreenRect.left = textboxScreenPosition.left + ((textboxScreenPosition.width() - _mapData->closedLabelSrc.width()) / 2);
+	closedScreenRect.right = closedScreenRect.left + _mapData->closedLabelSrc.width();
+	closedScreenRect.bottom = textboxScreenPosition.bottom - 10;
+	closedScreenRect.top = closedScreenRect.bottom - _mapData->closedLabelSrc.height();
 
-		_mapNames.resize(4);
-		for (uint i = 0; i < 4; ++i) {
-			readFilename(*chunk, _mapNames[i]);
-		}
+	_closedLabel.moveTo(closedScreenRect);
+	_closedLabel.setTransparent(true);
 
-		_mapPalettes.resize(4);
-		for (uint i = 0; i < 4; ++i) {
-			readFilename(*chunk, _mapPalettes[i]);
-		}
+	_activeLocations.resize(7, true);
+	_locationLabelDests.resize(7);
 
-		chunk->skip(4);
-
-		_mapSounds.resize(4);
-		for (uint i = 0; i < 4; ++i) {
-			_mapSounds[i].read(*chunk, SoundDescription::kMenu);
-		}
-
-		chunk->seek(0x1E6);
-		Common::Rect closedLabelSrc;
-		readRect(*chunk, closedLabelSrc);
-
-		_closedLabel._drawSurface.create(g_nancy->_graphicsManager->_object0, closedLabelSrc);
-
-		Common::Rect newScreenRect;
-
-		newScreenRect.left = textboxScreenPosition.left + ((textboxScreenPosition.width() - closedLabelSrc.width()) / 2);
-		newScreenRect.right = newScreenRect.left + closedLabelSrc.width();
-		newScreenRect.bottom = textboxScreenPosition.bottom - 10;
-		newScreenRect.top = newScreenRect.bottom - closedLabelSrc.height();
-
-		_closedLabel.moveTo(newScreenRect);
-		_closedLabel.setTransparent(true);
-
-		char buf[30];
-		_locations.resize(7);
-		for (uint i = 0; i < 7; ++i) {
-			Location &loc = _locations[i];
-
-			chunk->seek(0x226 + i * 30);
-			chunk->read(buf, 30);
-			buf[29] = '\0';
-			loc.description = buf;
-
-			chunk->seek(0x2F8 + i * 16);
-			readRect(*chunk, loc.hotspot);
-
-			loc.scenes.resize(2);
-			for (uint j = 0; j < 2; ++j) {
-				SceneChangeDescription &sc = loc.scenes[j];
-				chunk->seek(0x38A + (8 * i) + (56 * j));
-				sc.sceneID = chunk->readUint16LE();
-				sc.frameID = chunk->readUint16LE();
-				sc.verticalOffset = chunk->readUint16LE();
-				sc.paletteID = chunk->readUint16LE();
-			}
-
-			chunk->seek(0x186 + i * 16);
-			readRect(*chunk, loc.labelSrc);
-
-			Common::Rect closedScreenRect = _closedLabel.getScreenPosition();
-
-			loc.labelDest.left = textboxScreenPosition.left + ((textboxScreenPosition.width() - loc.labelSrc.width()) / 2);
-			loc.labelDest.right = loc.labelDest.left + loc.labelSrc.width();
-			loc.labelDest.bottom = closedScreenRect.bottom - ((closedScreenRect.bottom - loc.labelSrc.height() - textboxScreenPosition.top) / 2) - 10;
-			loc.labelDest.top = loc.labelDest.bottom - loc.labelSrc.height();
-
-			loc.isActive = true;
-		}
-
-		chunk->seek(0x386);
-		_cursorPosition.x = chunk->readUint16LE();
-		_cursorPosition.y = chunk->readUint16LE();
+	for (uint i = 0; i < 7; ++i) {
+		_locationLabelDests[i].left = textboxScreenPosition.left + ((textboxScreenPosition.width() - _mapData->locations[i].labelSrc.width()) / 2);
+		_locationLabelDests[i].right = _locationLabelDests[i].left + _mapData->locations[i].labelSrc.width();
+		_locationLabelDests[i].bottom = closedScreenRect.bottom - ((closedScreenRect.bottom - _mapData->locations[i].labelSrc.height() - textboxScreenPosition.top) / 2) - 10;
+		_locationLabelDests[i].top = _locationLabelDests[i].bottom - _mapData->locations[i].labelSrc.height();
 	}
 
 	_state = kLoad;
@@ -252,7 +219,7 @@ void TVDMap::load() {
 	Map::load();
 
 	// Determine which version of the map will be shown
-	if (NancySceneState.getEventFlag(52, kEvOccurred)) {
+	if (NancySceneState.getEventFlag(82, kEvOccurred)) {
 		_mapID = 3;										// Storm
 		//
 	} else {
@@ -267,7 +234,7 @@ void TVDMap::load() {
 		}
 	}
 
-	_viewport.loadVideo(_mapNames[_mapID], _mapPalettes[_mapID]);
+	_viewport.loadVideo(_mapData->mapNames[_mapID], _mapData->mapPaletteNames[_mapID]);
 
 	g_nancy->_cursorManager->setCursorItemID(-1);
 
@@ -285,17 +252,18 @@ void TVDMap::load() {
 	_state = kRun;
 }
 
-void TVDMap::onStateExit() {
-	if (_pickedLocationID != -1) {
-		auto &loc = _locations[_pickedLocationID];
-		NancySceneState.changeScene(loc.scenes[NancySceneState.getPlayerTOD() == kPlayerDay ? 0 : 1]);
+bool TVDMap::onStateExit(const NancyState::NancyState nextState) {
+	if (nextState != NancyState::kPause) {
+		if (_pickedLocationID != -1) {
+			NancySceneState.changeScene(_mapData->locations[_pickedLocationID].scenes[NancySceneState.getPlayerTOD() == kPlayerDay ? 0 : 1]);
 
-		g_nancy->_sound->playSound("BUOK");
-	} else {
-		g_nancy->_sound->stopSound(getSound());
+			g_nancy->_sound->playSound("BUOK");
+		} else {
+			g_nancy->_sound->stopSound(getSound());
+		}
 	}
 
-	Map::onStateExit();
+	return Map::onStateExit(nextState);
 }
 
 void TVDMap::run() {
@@ -311,12 +279,11 @@ void TVDMap::run() {
 
 		_globe.handleInput(input);
 
-		for (uint i = 0; i < _locations.size(); ++i) {
-			auto &loc = _locations[i];
-			if (_viewport.convertToScreen(loc.hotspot).contains(input.mousePos)) {
+		for (uint i = 0; i < 7; ++i) {
+			if (_viewport.convertToScreen(_mapData->locations[i].hotspot).contains(input.mousePos)) {
 				setLabel(i);
 
-				if (loc.isActive){
+				if (_activeLocations[i]){
 					g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
 					if (input.input & NancyInput::kLeftMouseButtonUp) {
@@ -339,35 +306,18 @@ void TVDMap::registerGraphics() {
 }
 
 void TVDMap::MapGlobe::init() {
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("MAP");
+	moveTo(_owner->_mapData->globeDest);
 
-	if (chunk) {
-		chunk->seek(0xf4);
+	_frameTime = _owner->_mapData->globeFrameTime;
+	_srcRects = _owner->_mapData->globeSrcs;
 
-		_frameTime = chunk->readUint16LE();
+	_gargoyleEyes._drawSurface.create(g_nancy->_graphicsManager->_object0, _owner->_mapData->globeGargoyleSrc);
+	_gargoyleEyes.moveTo(_owner->_mapData->globeGargoyleDest);
+	_gargoyleEyes.setTransparent(true);
+	_gargoyleEyes.setVisible(false);
 
-		_srcRects.resize(8);
-		for (uint i = 0; i < 8; ++i) {
-			readRect(*chunk, _srcRects[i]);
-		}
-
-		Common::Rect screenDest;
-		readRect(*chunk, screenDest);
-		moveTo(screenDest);
-
-		Common::Rect gargoyleSrc, gargoyleDest;
-		chunk->skip(0x80);
-		readRect(*chunk, gargoyleSrc);
-		readRect(*chunk, gargoyleDest);
-
-		_gargoyleEyes._drawSurface.create(g_nancy->_graphicsManager->_object0, gargoyleSrc);
-		_gargoyleEyes.moveTo(gargoyleDest);
-		_gargoyleEyes.setTransparent(true);
-		_gargoyleEyes.setVisible(false);
-
-		_alwaysHighlightCursor = false;
-		_hotspot = _screenPosition;
-	}
+	_alwaysHighlightCursor = false;
+	_hotspot = _screenPosition;
 
 	AnimatedButton::init();
 }
@@ -387,8 +337,8 @@ void TVDMap::MapGlobe::onTrigger() {
 		_gargoyleEyes.setVisible(true);
 		_owner->_viewport.setVisible(true);
 		_owner->_viewport.playVideo();
-		g_system->warpMouse(_owner->_cursorPosition.x, _owner->_cursorPosition.y);
-		g_nancy->_cursorManager->showCursor(true);
+		g_system->warpMouse(_owner->_mapData->cursorPosition.x, _owner->_mapData->cursorPosition.y);
+		g_nancy->setMouseEnabled(true);
 	} else {
 		_owner->_state = kExit;
 		_nextFrameTime = 0;
@@ -405,83 +355,30 @@ void Nancy1Map::init() {
 	_viewport.init();
 	_label.init();
 
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("MAP");
 	Common::Rect textboxScreenPosition = NancySceneState.getTextbox().getScreenPosition();
+	_closedLabel._drawSurface.create(g_nancy->_graphicsManager->_object0, _mapData->closedLabelSrc);
 
-	if (chunk) {
-		chunk->seek(0);
+	Common::Rect closedScreenRect;
+	closedScreenRect.left = textboxScreenPosition.left + ((textboxScreenPosition.width() - _mapData->closedLabelSrc.width()) / 2);
+	closedScreenRect.right = closedScreenRect.left + _mapData->closedLabelSrc.width() - 1;
+	closedScreenRect.bottom = textboxScreenPosition.bottom - 11;
+	closedScreenRect.top = closedScreenRect.bottom - _mapData->closedLabelSrc.height() + 1;
 
-		_mapNames.resize(2);
-		for (uint i = 0; i < 2; ++i) {
-			readFilename(*chunk, _mapNames[i]);
-		}
+	_closedLabel.moveTo(closedScreenRect);
 
-		chunk->skip(4);
+	_activeLocations.resize(4, true);
+	_locationLabelDests.resize(4);
 
-		_mapSounds.resize(2);
-		for (uint i = 0; i < 2; ++i) {
-			_mapSounds[i].read(*chunk, SoundDescription::kMenu);
-		}
-
-		Common::Rect buttonSrc, buttonDest;
-		chunk->seek(0x7A, SEEK_SET);
-		readRect(*chunk, buttonSrc);
-		readRect(*chunk, buttonDest);
-
-		chunk->seek(0xDA, SEEK_SET);
-		Common::Rect closedLabelSrc;
-		readRect(*chunk, closedLabelSrc);
-
-		_closedLabel._drawSurface.create(g_nancy->_graphicsManager->_object0, closedLabelSrc);
-
-		Common::Rect newScreenRect;
-
-		newScreenRect.left = textboxScreenPosition.left + ((textboxScreenPosition.width() - closedLabelSrc.width()) / 2);
-		newScreenRect.right = newScreenRect.left + closedLabelSrc.width() - 1;
-		newScreenRect.bottom = textboxScreenPosition.bottom - 11;
-		newScreenRect.top = newScreenRect.bottom - closedLabelSrc.height() + 1;
-
-		_closedLabel.moveTo(newScreenRect);
-
-		_button = new UI::Button(9, g_nancy->_graphicsManager->_object0, buttonSrc, buttonDest);
-		_button->init();
-		_button->setVisible(true);
-
-		char buf[30];
-		_locations.resize(4);
-		for (uint i = 0; i < 4; ++i) {
-			Location &loc = _locations[i];
-
-			chunk->seek(0xEA + i * 16);
-			chunk->read(buf, 30);
-			buf[29] = '\0';
-			loc.description = buf;
-
-			chunk->seek(0x162 + i * 16);
-			readRect(*chunk, loc.hotspot);
-
-			loc.scenes.resize(2);
-			for (uint j = 0; j < 2; ++j) {
-				SceneChangeDescription &sc = loc.scenes[j];
-				chunk->seek(0x1BE + (6 * i) + (24 * j));
-				sc.sceneID = chunk->readUint16LE();
-				sc.frameID = chunk->readUint16LE();
-				sc.verticalOffset = chunk->readUint16LE();
-			}
-
-			chunk->seek(0x9A + i * 16);
-			readRect(*chunk, loc.labelSrc);
-
-			Common::Rect closedScreenRect = _closedLabel.getScreenPosition();
-
-			loc.labelDest.left = textboxScreenPosition.left + ((textboxScreenPosition.width() - loc.labelSrc.width()) / 2);
-			loc.labelDest.right = loc.labelDest.left + loc.labelSrc.width() - 1;
-			loc.labelDest.bottom = closedScreenRect.bottom - ((closedScreenRect.bottom - loc.labelSrc.height() - textboxScreenPosition.top) / 2) - 11;
-			loc.labelDest.top = loc.labelDest.bottom - loc.labelSrc.height() + 1;
-
-			loc.isActive = true;
-		}
+	for (uint i = 0; i < 4; ++i) {
+		_locationLabelDests[i].left = textboxScreenPosition.left + ((textboxScreenPosition.width() - _mapData->locations[i].labelSrc.width()) / 2);
+		_locationLabelDests[i].right = _locationLabelDests[i].left + _mapData->locations[i].labelSrc.width() - 1;
+		_locationLabelDests[i].bottom = closedScreenRect.bottom - ((closedScreenRect.bottom - _mapData->locations[i].labelSrc.height() - textboxScreenPosition.top) / 2) - 11;
+		_locationLabelDests[i].top = _locationLabelDests[i].bottom - _mapData->locations[i].labelSrc.height() + 1;
 	}
+
+	_button = new UI::Button(9, g_nancy->_graphicsManager->_object0, _mapData->buttonSrc, _mapData->buttonDest);
+	_button->init();
+	_button->setVisible(true);
 
 	_state = kLoad;
 }
@@ -494,20 +391,21 @@ void Nancy1Map::load() {
 		NancySceneState.getEventFlag(95, kEvOccurred)) {	// Connie chickens
 		_mapID = 1;		// Night
 
-		_locations[1].isActive = _locations[3].isActive = false;
+		_activeLocations[1] = _activeLocations[3] = false;
 	} else {
 		_mapID = 0;		// Day
 	}
 
-	_viewport.loadVideo(_mapNames[_mapID]);
+	_viewport.loadVideo(_mapData->mapNames[_mapID]);
 
 	setLabel(-1);
 	g_nancy->_cursorManager->setCursorItemID(-1);
+	g_system->warpMouse(_mapData->cursorPosition.x, _mapData->cursorPosition.y);
 
 	if (!g_nancy->_sound->isSoundPlaying(getSound())) {
 		g_nancy->_sound->loadSound(getSound());
 	}
-
+		
 	registerGraphics();
 	_state = kRun;
 }
@@ -529,12 +427,11 @@ void Nancy1Map::run() {
 		return;
 	}
 
-	for (uint i = 0; i < _locations.size(); ++i) {
-		auto &loc = _locations[i];
-		if (_viewport.convertToScreen(loc.hotspot).contains(input.mousePos)) {
+	for (uint i = 0; i < 4; ++i) {
+		if (_viewport.convertToScreen(_mapData->locations[i].hotspot).contains(input.mousePos)) {
 			setLabel(i);
 
-			if (loc.isActive){
+			if (_activeLocations[i]){
 				g_nancy->_cursorManager->setCursorType(CursorManager::kHotspotArrow);
 
 				if (input.input & NancyInput::kLeftMouseButtonUp) {
@@ -553,18 +450,19 @@ void Nancy1Map::registerGraphics() {
 	_button->registerGraphics();
 }
 
-void Nancy1Map::onStateExit() {
-	if (_pickedLocationID != -1) {
-		auto &loc = _locations[_pickedLocationID];
-		NancySceneState.changeScene(loc.scenes[_mapID]);
+bool Nancy1Map::onStateExit(const NancyState::NancyState nextState) {
+	if (nextState != NancyState::kPause) {
+		if (_pickedLocationID != -1) {
+			NancySceneState.changeScene(_mapData->locations[_pickedLocationID].scenes[_mapID]);
 
-		g_nancy->_sound->playSound("BUOK");
+			g_nancy->_sound->playSound("BUOK");
+		}
+
+		g_nancy->_sound->stopSound(getSound());
+		g_nancy->_sound->playSound("GLOB");
 	}
 
-	g_nancy->_sound->stopSound(getSound());
-	g_nancy->_sound->playSound("GLOB");
-
-	Map::onStateExit();
+	return Map::onStateExit(nextState);
 }
 
 } // End of namespace State

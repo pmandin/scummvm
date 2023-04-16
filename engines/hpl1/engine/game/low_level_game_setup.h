@@ -49,19 +49,20 @@ public:
 	cGraphics *createGraphics();
 	cResources *createResources(cGraphics *graphics);
 	cScene *createScene(cGraphics *graphics, cResources *resources, cSound *sound,
-								cPhysics *physics, cSystem *system, cAI *ai);
+						cPhysics *physics, cSystem *system, cAI *ai);
 	cSound *createSound();
 	cPhysics *createPhysics();
 	cAI *createAi();
+
 private:
 	LowLevelSystem *_lowLevelSystem;
 	iLowLevelGraphics *_lowLevelGraphics;
-	iLowLevelInput *_lowLevelInput;
+	LowLevelInput *_lowLevelInput;
 	LowLevelResources *_lowLevelResources;
 	iLowLevelSound *_lowLevelSound;
 	iLowLevelPhysics *_lowLevelPhysics;
 };
 
-}     // namespace hpl
+} // namespace hpl
 
 #endif // HPL_LOWLEVELGAMESETUP_H

@@ -135,6 +135,7 @@ private:
 		uint16 getWidth() const;
 		uint16 getHeight() const;
 		Graphics::PixelFormat getPixelFormat() const;
+		bool setOutputPixelFormat(const Graphics::PixelFormat &format);
 		int getCurFrame() const { return _curFrame; }
 		int getFrameCount() const;
 		uint32 getNextFrameStartTime() const; // milliseconds
@@ -178,7 +179,9 @@ private:
 		uint32 getRateAdjustedFrameTime() const; // media time
 		uint32 getCurEditTimeOffset() const;     // media time
 		uint32 getCurEditTrackDuration() const;  // media time
+		bool atFirstEdit() const;
 		bool atLastEdit() const;
+		bool beforeCurEdit() const;
 		bool endOfCurEdit() const;
 		void checkEditListBounds();
 	};

@@ -128,7 +128,7 @@ public:
 	bool SendMouseClickUp(eGuiMouseButton aButton);
 	bool SendMouseDoubleClick(eGuiMouseButton aButton);
 
-	bool SendKeyPress(const cKeyPress &keyPress);
+	bool SendKeyPress(Common::KeyState keyPress);
 
 	// bool SentArrowKey(eGuiArrowKey aDir);
 
@@ -160,6 +160,6 @@ private:
 	unsigned long mlLastRenderTime;
 };
 
-}     // namespace hpl
+} // namespace hpl
 
 #endif // HPL_GUI_H

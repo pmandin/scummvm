@@ -267,6 +267,7 @@ const HardwareInputTableEntry defaultJoystickButtons[] = {
 	{ "JOY_DOWN",           JOYSTICK_BUTTON_DPAD_DOWN,      _s("D-pad Down")     },
 	{ "JOY_LEFT",           JOYSTICK_BUTTON_DPAD_LEFT,      _s("D-pad Left")     },
 	{ "JOY_RIGHT",          JOYSTICK_BUTTON_DPAD_RIGHT,     _s("D-pad Right")    },
+	{ "JOY_CENTER",         JOYSTICK_BUTTON_DPAD_CENTER,    _s("D-pad Center")   },
 	{ nullptr,              0,                              nullptr              }
 };
 
@@ -277,6 +278,8 @@ const AxisTableEntry defaultJoystickAxes[] = {
 	{ "JOY_LEFT_STICK_Y",  JOYSTICK_AXIS_LEFT_STICK_Y,  kAxisTypeFull, _s("Left Stick Y")  },
 	{ "JOY_RIGHT_STICK_X", JOYSTICK_AXIS_RIGHT_STICK_X, kAxisTypeFull, _s("Right Stick X") },
 	{ "JOY_RIGHT_STICK_Y", JOYSTICK_AXIS_RIGHT_STICK_Y, kAxisTypeFull, _s("Right Stick Y") },
+	{ "JOY_HAT_X",         JOYSTICK_AXIS_HAT_X,         kAxisTypeFull, _s("Hat X")         },
+	{ "JOY_HAT_Y",         JOYSTICK_AXIS_HAT_Y,         kAxisTypeFull, _s("Hat Y")         },
 	{ nullptr,             0,                           kAxisTypeFull, nullptr             }
 };
 

@@ -39,11 +39,10 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 	Common::Array<uint8>::size_type sizeOfTokenisedContent = tokenisedCondition.size();
 
 	// on the 8bit platforms, all instructions have a conditional flag;
-	// we'll want to convert them into runs of "if shot? then" and "if collided? then",
+	// we'll want to convert them into runs of "if shot? then", "if collided? then" or "if timer? then",
 	// and we'll want to start that from the top
-	uint8 conditionalIsShot = 0x1;
 	FCLInstructionVector *conditionalInstructions = new FCLInstructionVector();
-	FCLInstruction currentInstruction;
+	FCLInstruction currentInstruction = FCLInstruction(Token::UNKNOWN);
 
 	// this lookup table tells us how many argument bytes to read per opcode
 	uint8 argumentsRequiredByOpcode[49] =
@@ -55,33 +54,46 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 		 0, 0, 0, 0, 0, 0, 2, 2,
 		 1};
 
+	if (sizeOfTokenisedContent > 0)
+		detokenisedStream += Common::String::format("CONDITION FLAG: %x\n", tokenisedCondition[0]);
+	Token::Type newConditional = Token::UNKNOWN;
+	Token::Type oldConditional = Token::UNKNOWN;
+
 	while (bytePointer < sizeOfTokenisedContent) {
 		// get the conditional type of the next operation
-		uint8 newConditionalIsShot = tokenisedCondition[bytePointer] & 0x80;
+		uint8 conditionalByte = tokenisedCondition[bytePointer];
+
+		if (conditionalByte & 0x80)
+			newConditional = Token::SHOTQ;
+		else if (conditionalByte & 0x40)
+			newConditional = Token::TIMERQ;
+		else
+			newConditional = Token::COLLIDEDQ;
 
 		// if the conditional type has changed then end the old conditional,
 		// if we were in one, and begin a new one
-		if (newConditionalIsShot != conditionalIsShot) {
+		if (bytePointer == 0 || newConditional != oldConditional) {
+			oldConditional = newConditional;
 			FCLInstruction branch;
-			if (conditionalIsShot)
-				branch = FCLInstruction(Token::SHOTQ);
-			else
-				branch = FCLInstruction(Token::COLLIDEDQ);
+			branch = FCLInstruction(oldConditional);
 
 			branch.setBranches(conditionalInstructions, nullptr);
 			instructions.push_back(branch);
 
-			conditionalIsShot = newConditionalIsShot;
-			if (bytePointer)
+			if (bytePointer > 0) {
 				detokenisedStream += "ENDIF\n";
+				// Allocate the next vector of instructions
+				conditionalInstructions = new FCLInstructionVector();
+			}
 
-			if (conditionalIsShot)
+			if (oldConditional == Token::SHOTQ)
 				detokenisedStream += "IF SHOT? THEN\n";
-			else
+			else if (oldConditional == Token::TIMERQ)
+				detokenisedStream += "IF TIMER? THEN\n";
+			else if (oldConditional == Token::COLLIDEDQ)
 				detokenisedStream += "IF COLLIDED? THEN\n";
-
-			// Allocate the next vector of instructions
-			conditionalInstructions = new FCLInstructionVector();
+			else
+				error("Invalid conditional: %x", oldConditional);
 		}
 
 		// get the actual operation
@@ -408,20 +420,6 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 		// throw in a newline
 		detokenisedStream += "\n";
 	}
-
-	// if (!conditionalInstructions)
-	//	conditionalInstructions = new FCLInstructionVector();
-
-	// conditionalInstructions->push_back(currentInstruction);
-
-	FCLInstruction branch;
-	if (conditionalIsShot)
-		branch = FCLInstruction(Token::SHOTQ);
-	else
-		branch = FCLInstruction(Token::COLLIDEDQ);
-
-	branch.setBranches(conditionalInstructions, nullptr);
-	instructions.push_back(branch);
 
 	return detokenisedStream;
 }

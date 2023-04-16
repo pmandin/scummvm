@@ -19,8 +19,6 @@
  *
  */
 
-#define FORBIDDEN_SYMBOL_EXCEPTION_time_h
-
 #include "backends/events/atari/atari-events.h"
 
 #include <mint/osbind.h>
@@ -105,29 +103,6 @@ AtariEventSource::AtariEventSource() {
 bool AtariEventSource::pollEvent(Common::Event &event) {
 	if (!_graphicsManager)
 		return false;
-
-	static uint32 startMillis = _system->getMillis();
-	static uint32 oldMillis = _system->getMillis();
-	uint32 curMillis = _system->getMillis();
-
-	uint32 diff = curMillis - oldMillis;
-	oldMillis = curMillis;
-
-	if (diff > 0) {
-		static float avgFpsSum;
-		static int avgFpsCount;
-
-		avgFpsSum += 1000.0f / diff;
-		avgFpsCount++;
-
-		if (curMillis - startMillis >= 1000) {
-			float avgFps = avgFpsSum / avgFpsCount;
-			debug("*** Average FPS in 1s: %f ***", avgFps);
-			startMillis = curMillis;
-			avgFpsSum = 0;
-			avgFpsCount = 0;
-		}
-	}
 
 	_system->update();
 

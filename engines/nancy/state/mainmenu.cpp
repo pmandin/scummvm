@@ -49,12 +49,12 @@ void MainMenu::process() {
 	}
 }
 
-void MainMenu::onStateExit() {
-	destroy();
+bool MainMenu::onStateExit(const NancyState::NancyState nextState) {
+	return true;
 }
 
 void MainMenu::init() {
-	Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("MENU");
+	/*Common::SeekableReadStream *chunk = g_nancy->getBootChunkStream("MENU");
 	chunk->seek(0);
 
 	Common::String imageName;
@@ -64,7 +64,7 @@ void MainMenu::init() {
 	_background.registerGraphics();
 
 	g_nancy->_cursorManager->setCursorType(CursorManager::kNormalArrow);
-	g_nancy->_cursorManager->showCursor(true);
+	g_nancy->setMouseEnabled(true);
 
 	if (!g_nancy->_sound->isSoundPlaying("MSND")) {
 		g_nancy->_sound->playSound("MSND");
@@ -91,7 +91,7 @@ void MainMenu::init() {
 		rect.bottom = chunk->readSint16LE();
 	}
 
-	_buttonDown.registerGraphics();
+	_buttonDown.registerGraphics();*/
 
 	_state = kRun;
 }

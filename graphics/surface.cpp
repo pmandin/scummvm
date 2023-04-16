@@ -64,7 +64,7 @@ void Surface::drawThickLine(int x0, int y0, int x1, int y1, int penX, int penY, 
 }
 
 // see graphics/blit-atari.cpp, Atari Falcon's SuperVidel addon allows accelerated blitting
-#ifndef ATARI
+#ifndef USE_SV_BLITTER
 void Surface::create(int16 width, int16 height, const PixelFormat &f) {
 	assert(width >= 0 && height >= 0);
 	free();
@@ -424,6 +424,22 @@ void Surface::flipHorizontal(const Common::Rect &r) {
 			memcpy(row + width - format.bytesPerPixel - x, &tmp, format.bytesPerPixel);
 		}
 	}
+}
+
+bool Surface::applyColorKey(uint8 rKey, uint8 gKey, uint8 bKey, bool overwriteAlpha) {
+	return Graphics::applyColorKey((byte *)pixels, (const byte *)pixels, pitch, pitch, w, h, format,
+	                               overwriteAlpha, rKey, gKey, bKey, rKey, gKey, bKey);
+}
+
+bool Surface::applyColorKey(uint8 rKey, uint8 gKey, uint8 bKey, bool overwriteAlpha,
+                            uint8 rNew, uint8 gNew, uint8 bNew) {
+	return Graphics::applyColorKey((byte *)pixels, (const byte *)pixels, pitch, pitch, w, h, format,
+	                               overwriteAlpha, rKey, gKey, bKey, rNew, gNew, bNew);
+}
+
+bool Surface::setAlpha(uint8 alpha, bool skipTransparent) {
+	return Graphics::setAlpha((byte *)pixels, (const byte *)pixels, pitch, pitch, w, h, format,
+	                          skipTransparent, alpha);
 }
 
 Graphics::Surface *Surface::scale(int16 newWidth, int16 newHeight, bool filtering) const {

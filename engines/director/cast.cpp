@@ -28,6 +28,7 @@
 #include "graphics/macgui/macfontmanager.h"
 #include "graphics/macgui/macwindowmanager.h"
 #include "image/bmp.h"
+#include "image/jpeg.h"
 #include "image/pict.h"
 
 #include "director/director.h"
@@ -506,10 +507,9 @@ void Cast::loadCast() {
 		debug("STUB: Unhandled VWtc resource");
 	}
 
-	// Tape Key resource. Perhaps a lookup for labels?
-	// TODO: Is this a score resource?
+	// Tape Key resource. Used as a lookup for labels in early Directors, later dropped
 	if (_castArchive->hasResource(MKTAG('V', 'W', 't', 'k'), -1)) {
-		debug("STUB: Unhandled VWtk resource");
+		debugC(4, kDebugLoading, "VWtk resource skipped");
 	}
 
 	// External sound files
@@ -563,8 +563,9 @@ void Cast::loadCast() {
 	}
 
 	// External Cast Reference resources
+	// Used only by authoring tools for referring to the external casts
 	if (_castArchive->hasResource(MKTAG('S', 'C', 'R', 'F'), -1)) {
-		debug("STUB: Unhandled 'SCRF' resource");
+		debugC(4, kDebugLoading, "'SCRF' resource skipped");
 	}
 
 	// Score Order List resources
@@ -685,21 +686,42 @@ void Cast::loadBitmapData(int key, BitmapCastMember *bitmapCast) {
 
 			Common::SeekableReadStream *file = Common::MacResManager::openFileOrDataFork(path);
 			if (file) {
-				Image::PICTDecoder *pict = new Image::PICTDecoder();
+				// Detect the filetype. Director will ignore file extensions, as do we.
+				Image::ImageDecoder *decoder = nullptr;
+				uint32 fileType = file->readUint32BE();
+				file->seek(0);
 
-				bool res = pict->loadStream(*file);
+				if ((fileType >> 16) == MKTAG16('B', 'M')) {
+					// Windows Bitmap file
+					decoder = new Image::BitmapDecoder();
+				} else if ((fileType == 0xffd8ffe0) || (fileType == 0xffd8ffe1) || (fileType == 0xffd8ffe2)) {
+					// JPEG file
+					decoder = new Image::JPEGDecoder();
+				} else {
+					// Well... Director allowed someone to add it, so it must be a PICT. No further questions!
+					decoder = new Image::PICTDecoder();
+				}
+
+				bool res = decoder->loadStream(*file);
 				delete file;
 
 				if (res) {
-					bitmapCast->_img = pict;
+					bitmapCast->setPicture(*decoder, decoder->hasPalette());
+					bitmapCast->_external = true;
 
-					const Graphics::Surface *surf = pict->getSurface();
-					bitmapCast->_size = surf->pitch * surf->h + pict->getPaletteColorCount() * 3;
+					const Graphics::Surface *surf = decoder->getSurface();
+					if (decoder->hasPalette()) {
+						// For BMPs this sometimes gets set to 16 in the cast record,
+						// we should go with what the target image has.
+						bitmapCast->_bitsPerPixel = 8;
+					}
 
+					debugC(5, kDebugImages, "Cast::loadBitmapData(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %x", imgId, surf->w, surf->h, bitmapCast->_flags1, bitmapCast->_flags2, bitmapCast->_bytes, bitmapCast->_bitsPerPixel, bitmapCast->_clut);
 					delete pic;
+					delete decoder;
 					return;
 				} else {
-					delete pict;
+					delete decoder;
 					warning("BUILDBOT: Cast::loadBitmapData(): wrong format for external picture '%s'", path.toString().c_str());
 				}
 			} else {
@@ -759,10 +781,9 @@ void Cast::loadBitmapData(int key, BitmapCastMember *bitmapCast) {
 		return;
 	}
 
-	bitmapCast->_img = img;
-	const Graphics::Surface *surf = img->getSurface();
-	bitmapCast->_size = surf->pitch * surf->h + img->getPaletteColorCount() * 3;
+	bitmapCast->setPicture(*img, true);
 
+	delete img;
 	delete pic;
 
 	debugC(5, kDebugImages, "Cast::loadBitmapData(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %x", imgId, w, h, bitmapCast->_flags1, bitmapCast->_flags2, bitmapCast->_bytes, bitmapCast->_bitsPerPixel, bitmapCast->_clut);
@@ -1587,8 +1608,12 @@ Common::String Cast::formatCastSummary(int castId = -1) {
 			castMemberInfo ? castMemberInfo->name.c_str() : ""
 		);
 
-		if (castMemberInfo && !castMemberInfo->fileName.empty())
-			result += ", filename=\"" + castMemberInfo->directory + g_director->_dirSeparator + castMemberInfo->fileName + "\"";
+		if (castMemberInfo) {
+			if (!castMemberInfo->fileName.empty())
+				result += ", filename=\"" + castMemberInfo->directory + g_director->_dirSeparator + castMemberInfo->fileName + "\"";
+			if (!castMemberInfo->script.empty())
+				result += ", script=\"" + formatStringForDump(castMemberInfo->script) + "\"";
+		}
 
 		if (!info.empty()) {
 			result += ", ";

@@ -161,6 +161,7 @@ Graphics::DrawStep *ThemeParser::defaultDrawStep() {
 	step->fillMode = Graphics::VectorRenderer::kFillDisabled;
 	step->scale = (1 << 16);
 	step->radius = 0xFF;
+	step->shadowIntensity = SCALEVALUE((1 << 16));
 
 	return step;
 }
@@ -813,6 +814,11 @@ bool ThemeParser::parserCallback_import(ParserNode *node) {
 }
 
 bool ThemeParser::parserCallback_layout(ParserNode *node) {
+	if (resolutionCheck(node->values["resolution"]) == false) {
+		node->ignore = true;
+		return true;
+	}
+
 	int spacing = -1;
 
 	if (node->values.contains("spacing")) {
@@ -1086,6 +1092,10 @@ bool ThemeParser::resolutionCheck(const Common::String &resolution) {
 			// theme by default
 			token = 375;
 #endif
+		} else if (cur[offset] == 'x') {
+			token = _baseWidth;
+		} else if (cur[offset] == 'y') {
+			token = _baseHeight;
 		} else {
 			token = atoi(cur.c_str() + offset);
 		}

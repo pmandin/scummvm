@@ -28,6 +28,7 @@
 #include "hpl1/engine/graphics/RenderState.h"
 #include "hpl1/engine/graphics/Renderer3D.h"
 
+#include "hpl1/debug.h"
 #include "hpl1/engine/graphics/GPUProgram.h"
 #include "hpl1/engine/graphics/LowLevelGraphics.h"
 #include "hpl1/engine/graphics/Material.h"
@@ -110,12 +111,6 @@ void iRenderState::SetMode(cRenderSettings *apSettings) {
 		break;
 	case eRenderStateType_BlendMode:
 		SetBlendMode(apSettings);
-		break;
-	case eRenderStateType_VertexProgram:
-		SetVtxProgMode(apSettings);
-		break;
-	case eRenderStateType_FragmentProgram:
-		SetFragProgMode(apSettings);
 		break;
 	case eRenderStateType_Texture:
 		SetTextureMode(apSettings);
@@ -373,101 +368,35 @@ void iRenderState::SetBlendMode(cRenderSettings *apSettings) {
 
 //-----------------------------------------------------------------------
 
-void iRenderState::SetVtxProgMode(cRenderSettings *apSettings) {
-	if (gpuProgram != apSettings->gpuProgram) {
-		if (apSettings->mbLog) {
-			if (gpuProgram)
-				Log("Setting vertex program: '%s'/%d ", gpuProgram->GetName().c_str(),
-					(size_t)gpuProgram);
-			else
-				Log("Setting vertex program: NULL");
-		}
-
-		if (gpuProgram == NULL && apSettings->gpuProgram) {
-			apSettings->gpuProgram->UnBind();
-			if (apSettings->mbLog)
-				Log("Unbinding old");
-		}
-		apSettings->gpuProgram = gpuProgram;
-
-		if (gpuProgram) {
-			if (apSettings->mbLog)
-				Log("Binding new");
-			gpuProgram->Bind();
-
-			if (gpuProgramSetup) {
-				if (apSettings->mbLog)
-					Log("Custom setup %d ", gpuProgram);
-				gpuProgramSetup->Setup(gpuProgram, apSettings);
-			}
-			apSettings->gpuProgramSetup = gpuProgramSetup;
-
-			// reset this so all matrix setting are set to vertex program.
-			apSettings->mbMatrixWasNULL = false;
-
-			if (mbUsesLight) {
-				if (apSettings->mbLog)
-					Log("Setting light properites");
-
-				// gpuProgram->SetFloat("LightRadius",mpLight->GetFarAttenuation());
-				gpuProgram->SetColor4f("LightColor", mpLight->GetDiffuseColor());
-
-				apSettings->mpLight = mpLight;
-			} else {
-				apSettings->mpLight = NULL;
-			}
-
-			apSettings->mbUsesLight = mbUsesLight;
-			apSettings->mbUsesEye = mbUsesEye;
-		}
-		if (apSettings->mbLog)
-			Log("\n");
-	} else {
-		if (apSettings->gpuProgram && mbUsesLight && mpLight != apSettings->mpLight) {
-			if (apSettings->mbLog)
-				Log("Setting new light properites\n");
-			// gpuProgram->SetFloat("LightRadius",mpLight->GetFarAttenuation());
-			gpuProgram->SetColor4f("LightColor", mpLight->GetDiffuseColor());
-
-			apSettings->mpLight = mpLight;
-		}
-	}
-}
-
 void iRenderState::setGpuProgMode(cRenderSettings *settings) {
-	SetVtxProgMode(settings);
-	SetFragProgMode(settings);
-}
+	if (gpuProgram != settings->gpuProgram) {
+		if (gpuProgram != settings->gpuProgram) {
+			if (gpuProgram) {
+				gpuProgram->Bind();
 
-//-----------------------------------------------------------------------
+				if (gpuProgramSetup) {
+					gpuProgramSetup->Setup(gpuProgram, settings);
+				}
+				settings->gpuProgramSetup = gpuProgramSetup;
 
-void iRenderState::SetFragProgMode(cRenderSettings *apSettings) {
-	if (gpuProgram != apSettings->gpuProgram) {
-		if (apSettings->mbLog) {
-			if (gpuProgram)
-				Log("Setting fragment program: '%s' /%d ", gpuProgram->GetName().c_str(),
-					(size_t)gpuProgram);
-			else
-				Log("Setting fragment program: NULL");
+				// reset this so all matrix setting are set to vertex program.
+				settings->mbMatrixWasNULL = false;
+				if (mbUsesLight) {
+					gpuProgram->SetColor4f("LightColor", mpLight->GetDiffuseColor());
+					settings->mpLight = mpLight;
+				} else {
+					settings->mpLight = nullptr;
+				}
+				settings->mbUsesLight = mbUsesLight;
+				settings->mbUsesEye = mbUsesEye;
+			} else {
+				settings->gpuProgram->UnBind();
+			}
+			settings->gpuProgram = gpuProgram;
+		} else if (settings->gpuProgram && mbUsesLight && mpLight != settings->mpLight) {
+			gpuProgram->SetColor4f("LightColor", mpLight->GetDiffuseColor());
+			settings->mpLight = mpLight;
 		}
-
-		// if(gpuProgram==NULL && apSettings->mpFragmentProgram) apSettings->mpFragmentProgram->UnBind();
-		if (apSettings->gpuProgram)
-			apSettings->gpuProgram->UnBind();
-
-		apSettings->gpuProgram = gpuProgram;
-
-		if (gpuProgram) {
-			if (apSettings->mbLog)
-				Log("Binding new ");
-			gpuProgram->Bind();
-
-			if (gpuProgramSetup)
-				gpuProgramSetup->Setup(gpuProgram, apSettings);
-		}
-
-		if (apSettings->mbLog)
-			Log("\n");
 	}
 }
 
@@ -538,8 +467,8 @@ void iRenderState::SetMatrixMode(cRenderSettings *apSettings) {
 	if (apSettings->gpuProgram) {
 		// Might be quicker if this is set directly
 		apSettings->gpuProgram->SetMatrixf("worldViewProj",
-												eGpuProgramMatrix_ViewProjection,
-												eGpuProgramMatrixOp_Identity);
+										   eGpuProgramMatrix_ViewProjection,
+										   eGpuProgramMatrixOp_Identity);
 		if (apSettings->gpuProgramSetup) {
 			apSettings->gpuProgramSetup->SetupMatrix(mpModelMatrix, apSettings);
 		}
@@ -566,7 +495,7 @@ void iRenderState::SetMatrixMode(cRenderSettings *apSettings) {
 						Log("SpotLightViewProj ");
 					cLight3DSpot *pSpotLight = static_cast<cLight3DSpot *>(apSettings->mpLight);
 					apSettings->gpuProgram->SetMatrixf("spotViewProj",
-															cMath::MatrixMul(pSpotLight->GetViewProjMatrix(), *mpModelMatrix));
+													   cMath::MatrixMul(pSpotLight->GetViewProjMatrix(), *mpModelMatrix));
 				}
 			} else {
 				// Light position

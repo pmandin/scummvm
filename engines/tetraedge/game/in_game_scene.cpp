@@ -26,7 +26,7 @@
 #include "tetraedge/tetraedge.h"
 #include "tetraedge/game/application.h"
 #include "tetraedge/game/billboard.h"
-#include "tetraedge/game/game.h"
+#include "tetraedge/game/syberia_game.h"
 #include "tetraedge/game/in_game_scene.h"
 #include "tetraedge/game/in_game_scene_xml_parser.h"
 #include "tetraedge/game/character.h"
@@ -108,7 +108,8 @@ void InGameScene::addAnchorZone(const Common::String &s1, const Common::String &
 bool InGameScene::addMarker(const Common::String &markerName, const Common::String &imgPath, float x, float y, const Common::String &locType, const Common::String &markerVal, float anchorX, float anchorY) {
 	const TeMarker *marker = findMarker(markerName);
 	if (!marker) {
-		Game *game = g_engine->getGame();
+		SyberiaGame *game = dynamic_cast<SyberiaGame *>(g_engine->getGame());
+		assert(game);
 		Application *app = g_engine->getApplication();
 		TeSpriteLayout *markerSprite = new TeSpriteLayout();
 		// Note: game checks paths here but seems to just use the original?
@@ -137,10 +138,11 @@ bool InGameScene::addMarker(const Common::String &markerName, const Common::Stri
 		float yscale = 1.0f;
 
 		// Originally this is only done in Syberia 2, but
-		// should be fine to calculate in Syberia 1.
+		// should be fine to calculate in Syberia 1, as long
+		// as the root layout is loaded.
 		TeLayout *bglayout = _bgGui.layoutChecked("background");
 		TeSpriteLayout *rootlayout = Game::findSpriteLayoutByName(bglayout, "root");
-		if (rootlayout) {
+		if (rootlayout && rootlayout->_tiledSurfacePtr && rootlayout->_tiledSurfacePtr->tiledTexture()) {
 			TeVector2s32 bgSize = rootlayout->_tiledSurfacePtr->tiledTexture()->totalSize();
 			xscale = 800.0f / bgSize._x;
 			yscale = 600.0f / bgSize._y;
@@ -550,7 +552,8 @@ void InGameScene::freeSceneObjects() {
 		_characters[0]->deleteAllCallback();
 	}
 
-	Game *game = g_engine->getGame();
+	SyberiaGame *game = dynamic_cast<SyberiaGame *>(g_engine->getGame());
+	assert(game);
 	game->unloadCharacters();
 
 	_characters.clear();
@@ -1456,7 +1459,8 @@ void InGameScene::loadInteractions(const Common::FSNode &node) {
 void InGameScene::moveCharacterTo(const Common::String &charName, const Common::String &curveName, float curveOffset, float curveEnd) {
 	Character *c = character(charName);
 	if (c != nullptr && c != _character) {
-		Game *game = g_engine->getGame();
+		SyberiaGame *game = dynamic_cast<SyberiaGame *>(g_engine->getGame());
+		assert(game);
 		if (!game->_movePlayerCharacterDisabled) {
 			c->setCurveStartLocation(c->characterSettings()._cutSceneCurveDemiPosition);
 			TeIntrusivePtr<TeBezierCurve> crve = curve(curveName);
@@ -1657,7 +1661,8 @@ void InGameScene::unloadSpriteLayouts() {
 }
 
 void InGameScene::update() {
-	Game *game = g_engine->getGame();
+	SyberiaGame *game = dynamic_cast<SyberiaGame *>(g_engine->getGame());
+	assert(game);
 	if (_bgGui.loaded()) {
 		_bgGui.layoutChecked("background")->setZPosition(0.0f);
 	}
@@ -1730,7 +1735,7 @@ void InGameScene::update() {
 		_waitTimeTimer.stop();
 		bool resumed = false;
 		for (uint i = 0; i < game->yieldedCallbacks().size(); i++) {
-			Game::YieldedCallback &yc = game->yieldedCallbacks()[i];
+			SyberiaGame::YieldedCallback &yc = game->yieldedCallbacks()[i];
 			if (yc._luaFnName == "OnWaitFinished") {
 				TeLuaThread *thread = yc._luaThread;
 				game->yieldedCallbacks().remove_at(i);
@@ -1775,6 +1780,9 @@ void InGameScene::updateScroll() {
 		error("No root layout in the background");
 	_scrollOffset = TeVector2f32();
 	TeIntrusivePtr<TeTiledTexture> rootTex = root->_tiledSurfacePtr->tiledTexture();
+	// During startup root texture is not yet loaded
+	if (!rootTex)
+		return;
 	const TeVector2s32 texSize = rootTex->totalSize();
 	if (texSize._x < 801) {
 		if (texSize._y < 601) {
@@ -1875,9 +1883,10 @@ void InGameScene::activateMask(const Common::String &name, bool val) {
 }
 
 bool InGameScene::AnimObject::onFinished() {
-	Game *game = g_engine->getGame();
+	SyberiaGame *game = dynamic_cast<SyberiaGame *>(g_engine->getGame());
+	assert(game);
 	for (uint i = 0; i < game->yieldedCallbacks().size(); i++) {
-		Game::YieldedCallback &yc = game->yieldedCallbacks()[i];
+		SyberiaGame::YieldedCallback &yc = game->yieldedCallbacks()[i];
 		if (yc._luaFnName == "OnFinishedAnim" && yc._luaParam == _name) {
 			TeLuaThread *thread = yc._luaThread;
 			game->yieldedCallbacks().remove_at(i);

@@ -29,9 +29,6 @@ namespace MM1 {
 namespace Views {
 namespace Maps {
 
-#define VAL1 123
-#define ANSWER_OFFSET 167
-
 Ghost::Ghost() : TextView("Ghost") {
 	_bounds = getLineBounds(20, 24);
 }

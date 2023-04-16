@@ -28,10 +28,10 @@
 #ifndef HPL_SOUNDHANDLER_H
 #define HPL_SOUNDHANDLER_H
 
+#include "common/list.h"
 #include "hpl1/engine/math/MathTypes.h"
 #include "hpl1/engine/physics/PhysicsWorld.h"
 #include "hpl1/engine/system/SystemTypes.h"
-#include "common/list.h"
 
 namespace hpl {
 
@@ -41,7 +41,7 @@ class cWorld3D;
 
 //----------------------------------------
 
-enum eSoundDest {
+enum eSoundDest : unsigned int {
 	eSoundDest_World = eFlagBit_0,
 	eSoundDest_Gui = eFlagBit_1,
 	eSoundDest_All = eFlagBit_All
@@ -59,7 +59,7 @@ public:
 
 private:
 	bool mbHasCollided;
-	//int mlCount;
+	// int mlCount;
 };
 
 //----------------------------------------
@@ -205,6 +205,6 @@ private:
 	int mlIdCount;
 };
 
-}     // namespace hpl
+} // namespace hpl
 
 #endif // HPL_SOUNDHANDLER_H

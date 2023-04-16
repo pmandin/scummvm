@@ -36,15 +36,21 @@ MODULE_OBJS += \
 	mm1/data/text_parser.o \
 	mm1/data/trap.o \
 	mm1/data/treasure.o \
+	mm1/game/arenko.o \
+	mm1/game/arrested.o \
 	mm1/game/game_logic.o \
 	mm1/game/combat.o \
 	mm1/game/encounter.o \
+	mm1/game/equip_remove.o \
+	mm1/game/leprechaun.o \
 	mm1/game/monster_touch.o \
 	mm1/game/rest.o \
 	mm1/game/spell_casting.o \
 	mm1/game/spells_party.o \
 	mm1/game/spells_monsters.o \
+	mm1/game/use_item.o \
 	mm1/game/view_base.o \
+	mm1/game/wheel_spin.o \
 	mm1/gfx/dta.o \
 	mm1/gfx/gfx.o \
 	mm1/gfx/screen_decoder.o \
@@ -67,6 +73,7 @@ MODULE_OBJS += \
 	mm1/views/maps/alamar.o \
 	mm1/views/maps/alien.o \
 	mm1/views/maps/answer_entry.o \
+	mm1/views/maps/arenko.o \
 	mm1/views/maps/arrested.o \
 	mm1/views/maps/chess.o \
 	mm1/views/maps/dog_statue.o \
@@ -77,6 +84,7 @@ MODULE_OBJS += \
 	mm1/views/maps/ice_princess.o \
 	mm1/views/maps/inspectron.o \
 	mm1/views/maps/keeper.o \
+	mm1/views/maps/leprechaun.o \
 	mm1/views/maps/lion.o \
 	mm1/views/maps/lord_archer.o \
 	mm1/views/maps/lord_ironfist.o \
@@ -102,6 +110,7 @@ MODULE_OBJS += \
 	mm1/views/character_manage.o \
 	mm1/views/character_view_combat.o \
 	mm1/views/characters.o \
+	mm1/views/color_questions.o \
 	mm1/views/combat.o \
 	mm1/views/create_characters.o \
 	mm1/views/dead.o \
@@ -122,18 +131,24 @@ MODULE_OBJS += \
 	mm1/views/text_view.o \
 	mm1/views/trap.o \
 	mm1/views/unlock.o \
+	mm1/views/wheel_spin.o \
 	mm1/views_enh/spells/cast_spell.o \
 	mm1/views_enh/spells/spellbook.o \
 	mm1/views_enh/button_container.o \
 	mm1/views_enh/character_base.o \
 	mm1/views_enh/character_info.o \
+	mm1/views_enh/character_inventory.o \
 	mm1/views_enh/character_manage.o \
 	mm1/views_enh/character_select.o \
 	mm1/views_enh/character_view.o \
 	mm1/views_enh/characters.o \
+	mm1/views_enh/color_questions.o \
+	mm1/views_enh/combat.o \
 	mm1/views_enh/confirm.o \
 	mm1/views_enh/create_characters.o \
+	mm1/views_enh/dead.o \
 	mm1/views_enh/dialogs.o \
+	mm1/views_enh/encounter.o \
 	mm1/views_enh/exchange.o \
 	mm1/views_enh/game.o \
 	mm1/views_enh/game_commands.o \
@@ -156,12 +171,35 @@ MODULE_OBJS += \
 	mm1/views_enh/text_entry.o \
 	mm1/views_enh/text_view.o \
 	mm1/views_enh/title.o \
+	mm1/views_enh/trade.o \
 	mm1/views_enh/trap.o \
 	mm1/views_enh/unlock.o \
+	mm1/views_enh/wheel_spin.o \
+	mm1/views_enh/which_character.o \
+	mm1/views_enh/which_item.o \
 	mm1/views_enh/who_will_try.o \
+	mm1/views_enh/won_game.o \
 	mm1/views_enh/yes_no.o \
+	mm1/views_enh/interactions/access_code.o \
+	mm1/views_enh/interactions/alien.o \
+	mm1/views_enh/interactions/arenko.o \
+	mm1/views_enh/interactions/arrested.o \
+	mm1/views_enh/interactions/chess.o \
+	mm1/views_enh/interactions/giant.o \
+	mm1/views_enh/interactions/ghost.o \
+	mm1/views_enh/interactions/gypsy.o \
+	mm1/views_enh/interactions/hacker.o \
+	mm1/views_enh/interactions/ice_princess.o \
+	mm1/views_enh/interactions/inspectron.o \
 	mm1/views_enh/interactions/interaction.o \
+	mm1/views_enh/interactions/interaction_query.o \
+	mm1/views_enh/interactions/leprechaun.o \
+	mm1/views_enh/interactions/lion.o \
+	mm1/views_enh/interactions/prisoners.o \
+	mm1/views_enh/interactions/resistances.o \
 	mm1/views_enh/interactions/statue.o \
+	mm1/views_enh/interactions/trivia.o \
+	mm1/views_enh/interactions/volcano_god.o \
 	mm1/views_enh/locations/blacksmith.o \
 	mm1/views_enh/locations/blacksmith_items.o \
 	mm1/views_enh/locations/inn.o \

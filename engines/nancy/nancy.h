@@ -30,6 +30,7 @@
 #include "nancy/detection.h"
 #include "nancy/time.h"
 #include "nancy/commontypes.h"
+#include "nancy/enginedata.h"
 
 namespace Common {
 class RandomSource;
@@ -40,14 +41,13 @@ class Serializer;
  * This is the namespace of the Nancy engine.
  *
  * Status of this engine:
- * Nancy Drew: Secrets can kill is completable,
- * with a few minor graphical glitches;
- * The Vampire Diaries boots, but crashes almost immediately;
- * every other game is untested but definitely unplayable
+ * The Vampire Diaries and Nancy Drew: Secrets can Kill are completable.
+ * Every other game is untested but definitely unplayable
  *
  * Games using this engine:
  *	- The Vampire Diaries (1996)
  *	- Almost every mainline Nancy Drew game by HeR Interactive,
+ *		beginnning with Nancy Drew: Secrets can Kill (1998)
  *		up to and including Nancy Drew: Sea of Darkness (2015)
  */
 namespace Nancy {
@@ -85,6 +85,8 @@ public:
 	bool canSaveGameStateCurrently() override;
 	bool canSaveAutosaveCurrently() override;
 
+	void secondChance();
+
 	const char *getCopyrightString() const;
 	uint32 getGameFlags() const;
 	const char *getGameId() const;
@@ -97,9 +99,6 @@ public:
 	NancyState::NancyState getState() { return _gameFlow.curState; }
 	void setToPreviousState();
 
-	// Chunks found in BOOT get extracted and cached at startup, this function lets other classes access them
-	Common::SeekableReadStream *getBootChunkStream(const Common::String &name) const;
-
 	void setMouseEnabled(bool enabled);
 
 	// Managers
@@ -111,41 +110,38 @@ public:
 
 	Common::RandomSource *_randomSource;
 
-	// BSUM data
-	SceneChangeDescription _firstScene;
+	// BOOT chunks data
+	BSUM *_bootSummary;
+	VIEW *_viewportData;
+	INV *_inventoryData;
+	TBOX *_textboxData;
+	MAP *_mapData;
+	HELP *_helpData;
+	CRED *_creditsData;
+	HINT *_hintData;
+	SPUZ *_sliderPuzzleData;
+	CLOK *_clockData;
 
-	uint16 _startTimeHours;
-	uint16 _startTimeMinutes;
+	Common::HashMap<Common::String, ImageChunk> _imageChunks;
 
-	bool _overrideMovementTimeDeltas;
-	Time _slowMovementTimeDelta;
-	Time _fastMovementTimeDelta;
-	Time _playerTimeMinuteLength;
-
-	uint _horizontalEdgesSize;
-	uint _verticalEdgesSize;
-
-	Common::Rect _textboxScreenPosition;
+protected:
+	Common::Error run() override;
+	void pauseEngineIntern(bool pause) override;
 
 private:
 	struct GameFlow {
 		NancyState::NancyState curState = NancyState::kNone;
 		NancyState::NancyState prevState = NancyState::kNone;
+		bool changingState = true;
 	};
-
-	Common::Error run() override;
 
 	void bootGameEngine();
 
 	State::State *getStateObject(NancyState::NancyState state) const;
-
-	bool addBootChunk(const Common::String &name, Common::SeekableReadStream *stream);
-	void clearBootChunks();
+	void destroyState(NancyState::NancyState state) const;
 
 	void preloadCals(const IFF &boot);
-	void readChunkList(const IFF &boot, Common::Serializer &ser, const Common::String &prefix);
 
-	void readBootSummary(const IFF &boot);
 	void readDatFile();
 
 	Common::Error synchronize(Common::Serializer &serializer);
@@ -160,8 +156,6 @@ private:
 	OSystem *_system;
 
 	const NancyGameDescription *_gameDescription;
-
-	Common::HashMap<Common::String, Common::SeekableReadStream *> _bootChunks;
 };
 
 extern NancyEngine *g_nancy;

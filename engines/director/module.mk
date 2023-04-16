@@ -16,6 +16,7 @@ MODULE_OBJS = \
 	images.o \
 	metaengine.o \
 	movie.o \
+	picture.o \
 	resource.o \
 	score.o \
 	sound.o \
@@ -33,6 +34,7 @@ MODULE_OBJS = \
 	lingo/lingo-codegen.o \
 	lingo/lingo-events.o \
 	lingo/lingo-funcs.o \
+	lingo/lingo-mci.o \
 	lingo/lingo-gr.o \
 	lingo/lingo-lex.o \
 	lingo/lingo-object.o \
@@ -49,8 +51,14 @@ MODULE_OBJS = \
 	lingo/xlibs/cdromxobj.o \
 	lingo/xlibs/darkenscreen.o \
 	lingo/xlibs/developerStack.o \
+	lingo/xlibs/dialogsxobj.o \
+	lingo/xlibs/dpwavi.o \
+	lingo/xlibs/dpwqtw.o \
 	lingo/xlibs/draw.o \
 	lingo/xlibs/ednox.o \
+	lingo/xlibs/fedracul.o \
+	lingo/xlibs/feimasks.o \
+	lingo/xlibs/feiprefs.o \
 	lingo/xlibs/fileexists.o \
 	lingo/xlibs/fileio.o \
 	lingo/xlibs/findfolder.o \

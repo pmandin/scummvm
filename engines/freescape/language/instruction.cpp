@@ -27,6 +27,29 @@
 
 namespace Freescape {
 
+FCLInstructionVector *duplicateCondition(FCLInstructionVector *condition) {
+	if (!condition)
+		return nullptr;
+
+	FCLInstructionVector *copy = new FCLInstructionVector();
+	for (uint i = 0; i < condition->size(); i++) {
+		copy->push_back((*condition)[i].duplicate());
+	}
+	return copy;
+}
+
+FCLInstruction FCLInstruction::duplicate() {
+	FCLInstruction copy(_type);
+	copy.setSource(_source);
+	copy.setDestination(_destination);
+	copy.setAdditional(_additional);
+
+	copy._thenInstructions = duplicateCondition(_thenInstructions);
+	copy._elseInstructions = duplicateCondition(_elseInstructions);
+
+	return copy;
+}
+
 FCLInstruction::FCLInstruction(Token::Type type_) {
 	_source = 0;
 	_destination = 0;
@@ -71,12 +94,17 @@ void FreescapeEngine::executeObjectConditions(GeometricObject *obj, bool shot, b
 	if (!obj->_conditionSource.empty()) {
 		_firstSound = true;
 		_objExecutingCodeSize = obj->getSize();
-		debugC(1, kFreescapeDebugCode, "Executing with collision flag: %s", obj->_conditionSource.c_str());
-		executeCode(obj->_condition, shot, collided);
+		if (collided)
+			debugC(1, kFreescapeDebugCode, "Executing with collision flag: %s", obj->_conditionSource.c_str());
+		else if (shot)
+			debugC(1, kFreescapeDebugCode, "Executing with shot flag: %s", obj->_conditionSource.c_str());
+		else
+			error("Neither shot or collided flag is set!");
+		executeCode(obj->_condition, shot, collided, false); // TODO: check this last parameter
 	}
 }
 
-void FreescapeEngine::executeLocalGlobalConditions(bool shot, bool collided) {
+void FreescapeEngine::executeLocalGlobalConditions(bool shot, bool collided, bool timer) {
 	if (isCastle())
 		return;
 	debugC(1, kFreescapeDebugCode, "Executing room conditions");
@@ -85,23 +113,23 @@ void FreescapeEngine::executeLocalGlobalConditions(bool shot, bool collided) {
 
 	for (uint i = 0; i < conditions.size(); i++) {
 		debugC(1, kFreescapeDebugCode, "%s", conditionSources[i].c_str());
-		executeCode(conditions[i], shot, collided);
+		executeCode(conditions[i], shot, collided, timer);
 	}
 
 	debugC(1, kFreescapeDebugCode, "Executing global conditions (%d)", _conditions.size());
 	for (uint i = 0; i < _conditions.size(); i++) {
 		debugC(1, kFreescapeDebugCode, "%s", _conditionSources[i].c_str());
-		executeCode(_conditions[i], shot, collided);
+		executeCode(_conditions[i], shot, collided, timer);
 	}
 }
 
-void FreescapeEngine::executeCode(FCLInstructionVector &code, bool shot, bool collided) {
+void FreescapeEngine::executeCode(FCLInstructionVector &code, bool shot, bool collided, bool timer) {
 	assert(!(shot && collided));
 	int ip = 0;
 	int codeSize = code.size();
 	while (ip <= codeSize - 1) {
 		FCLInstruction &instruction = code[ip];
-		debugC(1, kFreescapeDebugCode, "Executing ip: %d in code with size: %d", ip, codeSize);
+		debugC(1, kFreescapeDebugCode, "Executing ip: %d with type %d in code with size: %d", ip, instruction.getType(), codeSize);
 		switch (instruction.getType()) {
 		default:
 			if (!isCastle())
@@ -109,13 +137,19 @@ void FreescapeEngine::executeCode(FCLInstructionVector &code, bool shot, bool co
 			break;
 		case Token::COLLIDEDQ:
 			if (collided)
-				executeCode(*instruction._thenInstructions, shot, collided);
+				executeCode(*instruction._thenInstructions, shot, collided, timer);
 			// else branch is always empty
 			assert(instruction._elseInstructions == nullptr);
 			break;
 		case Token::SHOTQ:
 			if (shot)
-				executeCode(*instruction._thenInstructions, shot, collided);
+				executeCode(*instruction._thenInstructions, shot, collided, timer);
+			// else branch is always empty
+			assert(instruction._elseInstructions == nullptr);
+			break;
+		case Token::TIMERQ:
+			if (timer)
+				executeCode(*instruction._thenInstructions, shot, collided, timer);
 			// else branch is always empty
 			assert(instruction._elseInstructions == nullptr);
 			break;

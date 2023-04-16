@@ -53,20 +53,18 @@ less hungry games even a CT2/DFB@50 MHz or the AfterBurner040 could be enough).
   change is the exclusion of the 16bpp games (those are mostly hi-res anyway)
   but games in 640x480@8bpp work nicely.
 
-- Direct rendering and single/double/triple buffering support.
+- Direct rendering and single/triple buffering support.
 
 - Custom (and optimal) drawing routines (especially for the cursor).
 
 - Custom (Super)Videl resolutions for the best possible performance and visual
-  experience (320x240 in RGB, chunky modes with SuperVidel, 640x480@16bpp for
-  the overlay in RGB/SuperVidel, ...)
+  experience (320x240 in RGB, chunky modes with SuperVidel, 640x480@8bpp for
+  the overlay, ...)
 
 - Custom (hardware based) aspect ratio correction (!)
 
 - Support for PC keys (page up, page down, pause, F11/F12, ...) and mouse wheel
   (Eiffel/Aranym only)
-
-- Still without any assembly optimizations...
 
 This makes such games as The Curse of Monkey Island better playable (on
 SuperVidel nearly always also with CD (WAV) music and speech). Also, AdLib
@@ -86,13 +84,13 @@ toggle.
 24585, 19668, 16390, 12292, 9834, 8195 (the lower the value, the faster the
 mixing but also in worse quality). Default is 24585 Hz (16-bit, stereo).
 
-"output_samples" in scummvm.ini: number of samples to preload. Default is 2048
-which equals to about 83ms of audio lag and seems to be about right for most
-games on my CT60@66 MHz.
+"audio_buffer_size" in scummvm.ini: number of samples to preload. Default is
+2048 which equals to about 83ms of audio lag and seems to be about right for
+most games on my CT60@66 MHz.
 
 If you want to play with those two values, the rule of thumb is: (lag in ms) =
-(output_samples / output_rate) * 1000. But it's totally OK just to double the
-samples value to get rid of stuttering in a heavier game.
+(audio_buffer_size / output_rate) * 1000. But it's totally OK just to double
+the samples value to get rid of stuttering in a heavier game.
 
 
 Graphics modes
@@ -101,20 +99,14 @@ Graphics modes
 This topic is more complex than it looks. ScummVM renders game graphics using
 rectangles and this port offers following options to render them:
 
-Direct rendering (vsync on/off) - present only with the SuperVidel
-Single buffering (vsync on/off)
-Double buffering (vsync always on, the checkbox is ignored)
-Triple buffering (vsync always off, the checkbox just selects a different kind)
+Direct rendering (present only with the SuperVidel)
+Single buffering
+Triple buffering
 
 Direct rendering:
 ~~~~~~~~~~~~~~~~~
 
-This is direct writing of the pixels into (SuperVidel's) screen buffer. Since
-the updates are supplied as rectangles and not the whole screen there's no way
-to implement direct writing *and* double/triple buffering. Vsync() only
-synchronizes the point when the rendering process begins - if it takes more
-than the time reserved for the vertical blank interrupt (what happens
-with most of the games), you'll see screen tearing.
+This is direct writing of the pixels into (SuperVidel's) screen buffer.
 
 Pros:
 
@@ -145,55 +137,18 @@ This is very similar to the previous mode with the difference that the engine
 uses an intermediate buffer for storing the rectangles but yet it remembers
 which ones they were. It works also on plain Videl and applies the chunky to
 planar process to each one of the rectangles separately, avoiding fullscreen
-updates (but if such is needed, there is an optimized code path for it). Vsync()
-is used the same way as in the previous mode, i.e. screen tearing is still
-possible.
+updates (but if such is needed, there is an optimized code path for it).
 
 Pros:
 
 - second fastest possible rendering
 
-- doesn't update the whole screen (works best with a moderate amount of
-  rectangles to update)
-
 Cons:
 
 - screen tearing in most cases
 
-- if there are too many smaller rectangles, it can be less efficient than
+- if there is too many smaller rectangles, it can be less efficient than
   updating the whole buffer at once
-
-SuperBlitter used: yes, for rectangle blitting to screen and cursor restoration.
-Sometimes also for generic copying between buffers (see above).
-
-Double buffering:
-~~~~~~~~~~~~~~~~~
-
-The most common rendering mode. It extends the idea of single buffering - it
-renders into two buffers, one is visible while the other one is used for
-updating. At the end of the update process the two buffers are swapped, so the
-newly updated one is displayed. By definition, Vsync() must be always enabled
-(the buffers are swapped in the vertical blank handler) otherwise you'd see
-screen tearing.
-
-Pros:
-
-- stable frame rate, leading to fixed e.g. 30 FPS rendering for the whole time
-  if game takes, say, 1.7 - 1.9 frames per update
-
-- no screen tearing in any situation
-
-Cons:
-
-- since two buffers are present, the buffer is always blitted into the screen
-  surface as whole, even if only one tiny little rectangle is changed (excluding
-  the cursor)
-
-- frame rate is set to 60/30/15/etc FPS so you can see big irregular jumps
-  between 30 and 15 FPS for example; this is happening when screen updates take
-  variable amount of time but since Vsync() is always called, the rendering
-  pipeline has to wait until the next frame even if only 1% of the frame time
-  has been used.
 
 SuperBlitter used: yes, for rectangle blitting to screen and cursor restoration.
 Sometimes also for generic copying between buffers (see above).
@@ -201,18 +156,15 @@ Sometimes also for generic copying between buffers (see above).
 Triple buffering:
 ~~~~~~~~~~~~~~~~~
 
-Best of both worlds - screen tearing is avoided thanks to using of multiple
-buffers and the rendering pipeline doesn't have to wait until Vsync(). The vsync
-flag is used only to differentiate between two (very similar) modes of
-operation:
-
-1. "True triple buffering" as described in
-https://en.wikipedia.org/wiki/Multiple_buffering#Triple_buffering (vsync on)
-
-2. "Swap chain" as described in https://en.wikipedia.org/wiki/Swap_chain (vsync
-off)
+This is the "true" triple buffering as described in
+https://en.wikipedia.org/wiki/Multiple_buffering#Triple_buffering and not "swap
+chain" as described in https://en.wikipedia.org/wiki/Swap_chain. The latter
+would be slightly slower as three buffers would need to be updated instead of
+two.
 
 Pros:
+
+- no screen tearing
 
 - best compromise between performance and visual experience
 
@@ -220,23 +172,18 @@ Pros:
 
 Cons:
 
-- since three buffers are present, the buffer is always blitted into the screen
-  surface as whole, even if only one tiny little rectangle is changed (excluding
-  the cursor)
+- if there is too many smaller rectangles, it can be less efficient than
+  single buffering
 
 - slightly irregular frame rate (depends solely on the game's complexity)
 
-- in case of extremely fast rendering in 1.), one or more buffers are
-  dropped in favor of showing only the most recent one (unlikely)
-
-- in case of extremely fast rendering in 2.), screen tearing is possible
-  because the rendering pipeline starts overwriting the buffer which is
-  currently displayed (unlikely)
+- in case of extremely fast rendering, one or more frames are dropped in favor
+  of showing only the most recent one
 
 SuperBlitter used: yes, for rectangle blitting to screen and cursor restoration.
 Sometimes also for generic copying between buffers (see above).
 
-Triple buffering with vsync on is the default mode for this port.
+Triple buffering is the default mode for this port.
 
 
 SuperVidel and SuperBlitter
@@ -254,9 +201,7 @@ means that if the SuperVidel is detected, it does the following:
 
 - when SuperVidel FW version >= 9 is detected, the async FIFO buffer is used
   instead of the slower sync blitting (where one has to wait for every
-  rectangle blit to finish). This applies only for chunky buffer -> screen
-  surfaces copy (as the generic surface copy can't rely on this behavior) but
-  despite this limitation it sometimes leads to nearly zero-cost rendering
+  rectangle blit to finish), this sometimes leads to nearly zero-cost rendering
   and makes a *huge* difference for 640x480 fullscreen updates.
 
 
@@ -269,18 +214,19 @@ to avoid unpleasant playing experiences.
 Game engines with unexpected performance hit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A typical example from this category is the Gobliins engine (and its
-sequels). At first it looks like our machine / backend is doing something
-terribly wrong but the truth is it is the engine itself which is doing a lot of
-unnecessary redraws and updates, sometimes even before reaching the backend.
-The only real solution is to profile and fix the engine.
+A typical example from this category is Gobliiins (and its sequels) and SCI
+engine games (Gabriel Knight, Larry 2/7, ...). At first it looks like our
+machine or Atari backend is doing something terribly wrong but the truth is
+that it is the engine itself which is doing a lot of unnecessary redraws and
+updates, sometimes even before reaching the backend. The only solution is to
+profile and fix those engines.
 
 Too many fullscreen updates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Somewhat related to the previous point - sometimes the engine authors didn't
 realize the impact of every update on the overall performance and instead of
-updating only the rectangles that really had changed, they ask for a full screen
+updating only the rectangles that really had changed, they ask for a fullscreen
 update. Not a problem on a >1 GHz machine but very visible on Atari! Also, this
 is (by definition) the case of animated intros, especially those in 640x480.
 
@@ -291,7 +237,7 @@ It could seem that sample music replay must be the most demanding one but on the
 contrary! _Always_ choose a CD version of a game (with *.wav tracks) to any
 other version. With one exception: if you have a native MIDI device able to
 replay the given game's MIDI notes (using the STMIDI plugin). MIDI emulation
-(synthesis) can easily take down as many as 10 FPS.
+(synthesis) can easily eat as much as 50% of all used CPU time.
 
 CD music slows everything down
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -299,11 +245,12 @@ CD music slows everything down
 Some games use separate audio *and* video streams (files). Even if the CPU is
 able to handle both, the bottleneck becomes ... disk access. This is visible in
 The Curse Of Monkey Island for example -- there's audible stuttering during the
-intro sequence (and during the game as well). Increasing "output_samples" makes
-the rendering literally crawling! Why? Because disk I/O is busy with loading
-even *more* sample data so there's less time for video loading and rendering.
-Try to put "musdisk1.bun" and "musdisk2.bun" into a ramdisk (i.e. u:/ram in
-FreeMiNT), you'll be pleasantly surprised with the performance boost gained.
+intro sequence (and during the game as well). Increasing "audio_buffer_size"
+makes the rendering literally crawling! Why? Because disk I/O is busy with
+loading even *more* sample data so there's less time for video loading and
+rendering. Try to put "musdisk1.bun" and "musdisk2.bun" into a ramdisk (i.e.
+u:/ram in FreeMiNT), you'll be pleasantly surprised with the performance boost
+gained.
 
 "Mute" vs. "Mute all" in GUI vs. "No music" in GUI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -325,17 +272,6 @@ soundtrack.
 Please note that it is not that bad, you surely can play The Secret of Monkey
 Island with AdLib enabled (but the CD/talkie versions sound better and
 are cheaper to play ;)).
-
-Vsync in GUI
-~~~~~~~~~~~~
-
-Carefully with the vsync option. It can easily cripple direct/single buffer
-rendering by 10-15 FPS if not used with caution. That happens if a game takes,
-say, 1.2 frames per update (so causing screen tearing anyway and rendering the
-option useless) but Vsync() forces it to wait 2 full frames instead.
-
-By the way, the vsync flag in Global Options affects also the overlay rendering
-(with all the pitfalls which apply to the single buffering mode)
 
 Slow GUI
 ~~~~~~~~
@@ -375,31 +311,18 @@ Future plans
 
 - unified file paths in scummvm.ini
 
-- 8bpp overlay (and get rid of all that 16bpp handling code)
-
-- profiling :) (see also https://github.com/scummvm/scummvm/pull/2382)
-
 - DSP-based sample mixer
 
 - avoid loading music/speech files (and thus slowing down everything) if muted
 
-- assembly copy routines for screen/chunky surfaces (even with SuperVidel
-  present it is not possible to use the SuperBlitter for every surface)
-
-- cached audio/video streams (i.e. don't load only "output_samples" number of
-  samples but cache, say, 1 second so disk i/o wont be so stressed)
+- cached audio/video streams (i.e. don't load only "audio_buffer_size" number
+  of samples but cache, say, 1 second so disk i/o wont be so stressed)
 
 - using LDG or Thorsten Otto's sharedlibs: https://tho-otto.de/sharedlibs.php
   for game engine plugins to relieve the huge binary size
 
-- reuse modified rects in double/triple buffer in the next frame - that way we
-  wouldn't need to refresh the whole screen in every case
-
 - add support for the TT030; this would be easily possible when I rewrite the
   renderer with a more flexible resolution switching
-
-- ignore (queue) updateScreen() calls to avoid aggressive drawing / buffer
-  switching from some engines; update every X ms instead
 
 - don't hardcode some of the buffers for cacheing purposes, determine the size
   based on amount of free RAM
@@ -408,13 +331,20 @@ Future plans
 
 - OPL2LPT and Retrowave support (if I manage to purchase it somewhere)
 
+- engines based on Graphics::Screen don't have to use my chunky buffer (however
+  it may be tricky to detect this situation)
+
+- C2P could support 4- and 6-bit depth
+
+- increase file buffer size with setvbuf or by using
+  Common::wrapBufferedWriteStream and disabling stdio buffering
+
+
 Closing words
-—------------
+-------------
 
-I have opened a pull request with all of my code
-(https://github.com/scummvm/scummvm/pull/4687) so who knows, maybe ScummVM
-2.8.0 for Atari will be already present on the official website. :-)
-
+This backend is part of ScummVM 2.8.0 onwards. Let's see whether we can make it
+to the official website. :-)
 
 MiKRO / Mystic Bytes, XX.XX.2023
 Kosice / Slovakia

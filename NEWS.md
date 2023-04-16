@@ -5,6 +5,7 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  New games:
    - Added support for macOS versions of Syberia and Syberia II.
+   - Added support for The Vampire Diaries and Nancy Drew: Secrets Can Kill
 
  New platforms:
    - Added libretro new shiny port.
@@ -12,6 +13,7 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  General:
   - Added optional dependency for libvpx.
+  - Added optional dependency for libmikmod.
 
  Asylum:
    - Added support for Chinese Sanitarium.
@@ -23,6 +25,10 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Chinese Grim Fandango.
    - Added support for Russian Grim Fandango translations from Fargus,
      ENPY and 7Wolf.
+
+ Kyra:
+   - Added support for Kyra1 Amiga French release and DOS Czech fan translation.
+   - Improved game controls menu accuracy for all platforms.
 
  SCUMM:
    - Added support for unpacked RuSCUMM patches for Russian localizations.
@@ -38,6 +44,11 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fix crash loading Ultima VI savegames when dialogs are open.
    - Fix ordering of generated items in Ultima VI.
    - Fix auto-readying throwing weapons in Ultima VI.
+   - Fix Ultima VI crash opening new-style spellbook gump.
+   - Fix Ultima VI actor doll and gump colors.
+   - Fix Ultima VI crash using look action on walls.
+   - Fix several other miscellaneous crashes.
+   - Fix spawners and projectiles to more closely match the original.
 
  Voyeur:
    - Added support for German fan translation.
@@ -50,6 +61,8 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  General:
   - Fixed playback speed for Theora videos.
+  - Added scummvm.log file viewer.
+  - Exposed ScummVM debug level in the GUI (Misc tab).
 
  AGI:
    - Restored possibility to pick arbitrary render mode in Game Options.
@@ -67,8 +80,15 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for GOG.com version.
    - Added detection for alternate Polish version.
 
+ Touche:
+   - Added support for Russian translation by old-games.ru.
+
  iOS port:
    - Fix default theme selection on modern devices.
+   - Better support for autostart configurations.
+
+ macOS port:
+   - Better support for autostart configurations.
 
  RISC OS port:
    - Fixed crash on RISC OS 5 with games that require lots of RAM.

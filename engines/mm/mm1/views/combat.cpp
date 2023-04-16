@@ -94,6 +94,10 @@ bool Combat::msgGame(const GameMessage &msg) {
 
 		setMode(SPELL_RESULT);
 		return true;
+
+	} else if (msg._name == "DISABLE_ATTACKS") {
+		disableAttacks();
+		return true;
 	}
 
 	return false;
@@ -273,8 +277,15 @@ bool Combat::msgAction(const ActionMessage &msg) {
 	if (endDelay())
 		return true;
 
+	if (_mode == SELECT_OPTION && _option != OPTION_NONE &&
+		msg._action == KEYBIND_ESCAPE) {
+		_option = OPTION_NONE;
+		combatLoop();
+		return true;
+	}
+
 	if (_mode != SELECT_OPTION || (_option != OPTION_NONE &&
-			_option != OPTION_EXCHANGE))
+		_option != OPTION_EXCHANGE))
 		return false;
 
 	switch (msg._action) {
@@ -330,12 +341,6 @@ bool Combat::msgAction(const ActionMessage &msg) {
 		break;
 	case KEYBIND_COMBAT_USE:
 		use();
-		break;
-	case KEYBIND_ESCAPE:
-		if (_mode == SELECT_OPTION) {
-			_option = OPTION_NONE;
-			combatLoop();
-		}
 		break;
 	default:
 		break;

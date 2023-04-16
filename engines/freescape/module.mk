@@ -10,6 +10,7 @@ MODULE_OBJS := \
 	games/dark/dos.o \
 	games/driller/amiga.o \
 	games/driller/atari.o \
+	games/driller/c64.o \
 	games/driller/cpc.o \
 	games/driller/dos.o \
 	games/driller/driller.o \
@@ -33,6 +34,11 @@ ifdef USE_TINYGL
 MODULE_OBJS += \
 	gfx_tinygl.o \
 	gfx_tinygl_texture.o
+endif
+
+ifdef USE_OPENGL_SHADERS
+MODULE_OBJS += \
+	gfx_opengl_shaders.o
 endif
 
 ifdef USE_OPENGL

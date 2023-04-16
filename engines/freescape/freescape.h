@@ -154,6 +154,9 @@ public:
 	virtual void loadAssetsCPCFullGame();
 	virtual void loadAssetsCPCDemo();
 
+	virtual void loadAssetsC64FullGame();
+	virtual void loadAssetsC64Demo();
+
 	virtual void drawDOSUI(Graphics::Surface *surface);
 	virtual void drawZXUI(Graphics::Surface *surface);
 	virtual void drawCPCUI(Graphics::Surface *surface);
@@ -190,6 +193,7 @@ public:
 	void load8bitBinary(Common::SeekableReadStream *file, int offset, int ncolors);
 	Area *load8bitArea(Common::SeekableReadStream *file, uint16 ncolors);
 	Object *load8bitObject(Common::SeekableReadStream *file);
+	void loadGlobalObjects(Common::SeekableReadStream *file, int offset, int size);
 	void renderPixels8bitBinImage(Graphics::ManagedSurface *surface, int &i, int &j, uint8 pixels, int color);
 
 	void renderPixels8bitBinCGAImage(Graphics::ManagedSurface *surface, int &i, int &j, uint8 pixels, int color);
@@ -218,6 +222,7 @@ public:
 	void resetInput();
 	void generateDemoInput();
 	virtual void pressedKey(const int keycode);
+	virtual bool onScreenControls(Common::Point mouse);
 	void move(CameraMovement direction, uint8 scale, float deltaTime);
 	virtual void checkIfStillInArea();
 	void changePlayerHeight(int index);
@@ -272,8 +277,8 @@ public:
 	Math::Vector3d _objExecutingCodeSize;
 	virtual void executeMovementConditions();
 	void executeObjectConditions(GeometricObject *obj, bool shot, bool collided);
-	void executeLocalGlobalConditions(bool shot, bool collided);
-	void executeCode(FCLInstructionVector &code, bool shot, bool collided);
+	void executeLocalGlobalConditions(bool shot, bool collided, bool timer);
+	void executeCode(FCLInstructionVector &code, bool shot, bool collided, bool timer);
 
 	// Instructions
 	void executeIncrementVariable(FCLInstruction &instruction);
@@ -450,7 +455,6 @@ public:
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 
 private:
-	void loadGlobalObjects(Common::SeekableReadStream *file, int offset);
 	bool drillDeployed(Area *area);
 	GeometricObject *_drillBase;
 	Math::Vector3d drillPosition();
@@ -460,25 +464,38 @@ private:
 	void addSkanner(Area *area);
 
 	void loadAssetsFullGame() override;
-
 	void loadAssetsAtariFullGame() override;
 	void loadAssetsAtariDemo() override;
-
 	void loadAssetsAmigaFullGame() override;
 	void loadAssetsAmigaDemo() override;
-
 	void loadAssetsDOSFullGame() override;
 	void loadAssetsDOSDemo() override;
-
 	void loadAssetsZXFullGame() override;
-
 	void loadAssetsCPCFullGame() override;
+	void loadAssetsC64FullGame() override;
 
 	void drawDOSUI(Graphics::Surface *surface) override;
 	void drawZXUI(Graphics::Surface *surface) override;
 	void drawCPCUI(Graphics::Surface *surface) override;
 	void drawC64UI(Graphics::Surface *surface) override;
 	void drawAmigaAtariSTUI(Graphics::Surface *surface) override;
+	bool onScreenControls(Common::Point mouse) override;
+	void initAmigaAtari();
+	void initDOS();
+	void initZX();
+	void initCPC();
+	void initC64();
+
+	Common::Rect _moveFowardArea;
+	Common::Rect _moveLeftArea;
+	Common::Rect _moveRightArea;
+	Common::Rect _moveBackArea;
+	Common::Rect _moveUpArea;
+	Common::Rect _moveDownArea;
+	Common::Rect _deployDrillArea;
+	Common::Rect _infoScreenArea;
+	Common::Rect _saveGameArea;
+	Common::Rect _loadGameArea;
 
 	Graphics::ManagedSurface *load8bitTitleImage(Common::SeekableReadStream *file, int offset);
 	Graphics::ManagedSurface *load8bitDemoImage(Common::SeekableReadStream *file, int offset);
@@ -499,7 +516,6 @@ public:
 	void titleScreen() override;
 
 	void gotoArea(uint16 areaID, int entranceID) override;
-	void checkIfStillInArea() override;
 	void pressedKey(const int keycode) override;
 	void executePrint(FCLInstruction &instruction) override;
 
@@ -508,7 +524,6 @@ public:
 
 	int _lastTenSeconds;
 	void updateTimeVariables() override;
-	void executeMovementConditions() override;
 
 	void drawDOSUI(Graphics::Surface *surface) override;
 	void drawFullscreenMessage(Common::String message);
@@ -516,7 +531,9 @@ public:
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
 
 private:
-	void loadGlobalObjects(Common::SeekableReadStream *file, int offset);
+	void addECDs(Area *area);
+	void addECD(Area *area, const Math::Vector3d position, int index);
+	void addWalls(Area *area);
 };
 
 class EclipseEngine : public FreescapeEngine {
@@ -537,7 +554,9 @@ class CastleEngine : public FreescapeEngine {
 public:
 	CastleEngine(OSystem *syst, const ADGameDescription *gd);
 
+	void titleScreen() override;
 	void loadAssetsDOSFullGame() override;
+	void drawUI() override;
 
 	void gotoArea(uint16 areaID, int entranceID) override;
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;

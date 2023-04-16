@@ -23,6 +23,8 @@
 #define NANCY_UI_CLOCK_H
 
 #include "engines/nancy/renderobject.h"
+#include "engines/nancy/enginedata.h"
+#include "engines/nancy/time.h"
 
 #include "engines/nancy/ui/animatedbutton.h"
 
@@ -33,7 +35,7 @@ struct NancyInput;
 namespace UI {
 
 class Clock : public RenderObject {
-	friend class ClockGlobe;
+	friend class ClockAnim;
 public:
 	Clock();
 	virtual ~Clock() = default;
@@ -46,10 +48,10 @@ public:
 	void drawClockHands();
 
 protected:
-	class ClockGlobe : public AnimatedButton {
+	class ClockAnim : public AnimatedButton {
 	public:
-		ClockGlobe(uint zOrder, Clock *owner) : AnimatedButton(zOrder), _owner(owner), _closeTime(0) {}
-		virtual ~ClockGlobe() = default;
+		ClockAnim(uint zOrder, Clock *owner) : AnimatedButton(zOrder), _owner(owner), _closeTime(0), _timeToKeepOpen(0) {}
+		virtual ~ClockAnim() = default;
 
 		void init() override;
 		void updateGraphics() override;
@@ -63,14 +65,11 @@ protected:
 		uint32 _timeToKeepOpen;
 	};
 
-	RenderObject _gargoyleEyes;
-	ClockGlobe _globe;
+	CLOK *_clockData;
+	ClockAnim _animation;
 
-	Common::Array<Common::Rect> _globeSrcRects;
-	Common::Array<Common::Rect> _hoursHandSrcRects;
-	Common::Array<Common::Rect> _minutesHandSrcRects;
-	Common::Array<Common::Rect> _hoursHandDestRects;
-	Common::Array<Common::Rect> _minutesHandDestRects;
+	// Used for gargoyle eyes in TVD, inside of watch in nancy2 and up
+	RenderObject _staticImage;
 
 	Time _playerTime;
 };

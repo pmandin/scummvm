@@ -41,12 +41,14 @@ namespace Director {
 
 struct ChunkReference;
 struct MenuReference;
+struct PictureReference;
 struct TheEntity;
 struct TheEntityField;
 struct LingoArchive;
 struct LingoV4Bytecode;
 struct LingoV4TheEntity;
 struct Node;
+struct Picture;
 class AbstractObject;
 class Cast;
 class ScriptContext;
@@ -143,6 +145,7 @@ struct Datum {	/* interpreter stack type */
 		ChunkReference *cref; /* CHUNKREF */
 		CastMemberID *cast;	/* CASTREF, FIELDREF */
 		MenuReference *menu; /* MENUREF	*/
+		PictureReference *picture; /* PICTUREREF */
 	} u;
 
 	int *refCount;
@@ -206,6 +209,11 @@ struct MenuReference {
 	Common::String *menuItemIdStr;
 
 	MenuReference();
+};
+
+struct PictureReference {
+	Picture *_picture = nullptr;
+	~PictureReference();
 };
 
 struct PCell {
@@ -395,6 +403,7 @@ public:
 	char *readString() { char *s = getString(_state->pc); _state->pc += calcStringAlignment(s); return s; }
 	char *getString(uint pc) { return (char *)(&((*_state->script)[_state->pc])); }
 
+	Datum getVoid();
 	void pushVoid();
 
 	void printSTUBWithArglist(const char *funcname, int nargs, const char *prefix = "STUB:");

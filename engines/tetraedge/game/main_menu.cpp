@@ -68,19 +68,27 @@ void MainMenu::enter() {
 	app->captureFade();
 
 	_entered = true;
-	load("menus/mainMenu/mainMenu.lua");
+	const char *luaFile = (g_engine->gameType() == TetraedgeEngine::kAmerzone ? "GUI/MainMenu.lua" : "menus/mainMenu/mainMenu.lua");
+	load(luaFile);
+
+	TeLayout *menuLayout = layoutChecked("menu");
+	appSpriteLayout.addChild(menuLayout);
 
 	//
 	// WORKAROUND: This is set to PanScan ratio 1.0, but with our code
 	// but that shrinks it down to pillarboxed.  Force back to full size.
 	//
-	layoutChecked("background")->setRatioMode(TeILayout::RATIO_MODE_NONE);
+	TeLayout *background;
+	if (layout("background"))
+		background = layoutChecked("background");
+	else
+		background = dynamic_cast<TeLayout *>(menuLayout->child(0));
+	assert(background);
+	background->setRatioMode(TeILayout::RATIO_MODE_NONE);
 
-	TeLayout *menuLayout = layoutChecked("menu");
-	appSpriteLayout.addChild(menuLayout);
 
 	app->mouseCursorLayout().setVisible(true);
-	app->mouseCursorLayout().load("pictures/cursor.png");
+	app->mouseCursorLayout().load(app->defaultCursor());
 
 	TeMusic &music = app->music();
 	if (music.isPlaying()) {
@@ -118,6 +126,11 @@ void MainMenu::enter() {
 
 	// TODO: confirmation (menus/confirm/confirmNotSound.lua)
 	// if TeSoundManager is not valid.
+
+	// Hide the Facebook button since we don't support it anyway..
+	TeButtonLayout *fbButton = buttonLayout("facebookButton");
+	if (fbButton)
+		fbButton->setVisible(false);
 
 	_confirmingTuto = false;
 	TeLayout *panel = layout("panel");
@@ -288,7 +301,15 @@ bool MainMenu::onNewGameConfirmed() {
 }
 
 bool MainMenu::onOptionsButtonValidated() {
-	g_engine->openConfigDialog();
+	if (ConfMan.getBool("use_scummvm_options")) {
+		g_engine->openConfigDialog();
+	} else {
+		Application *app = g_engine->getApplication();
+		app->captureFade();
+		leave();
+		app->optionsMenu().enter();
+		app->fade();
+	}
 	return true;
 }
 

@@ -29,11 +29,8 @@ namespace Nancy {
 namespace UI {
 
 void ViewportOrnaments::init() {
-	Common::Rect viewportBounds;
-	Common::SeekableReadStream *viewChunk = g_nancy->getBootChunkStream("VIEW");
-	viewChunk->seek(0);
-	readRect(*viewChunk, _screenPosition);
-	readRect(*viewChunk, viewportBounds);
+	Common::Rect viewportBounds = g_nancy->_viewportData->bounds;
+	moveTo(g_nancy->_viewportData->screenPosition);
 
 	Graphics::ManagedSurface &object0 = g_nancy->_graphicsManager->_object0;
 
@@ -74,7 +71,7 @@ void ViewportOrnaments::init() {
 }
 
 void TextboxOrnaments::init() {
-	_screenPosition = g_nancy->_textboxScreenPosition;
+	moveTo(g_nancy->_bootSummary->textboxScreenPosition);
 	Common::Rect textboxBounds = _screenPosition;
 	textboxBounds.moveTo(0, 0);
 
@@ -89,26 +86,36 @@ void TextboxOrnaments::init() {
 	_drawSurface.clear(g_nancy->_graphicsManager->getTransColor());
 	setTransparent(true);
 
-	// Values for textbox ornaments are stored in the TBOX chunk
-	Common::Rect src[14];
-	Common::Rect dest[14];
-
-	Common::SeekableReadStream *tboxChunk = g_nancy->getBootChunkStream("TBOX");
-	tboxChunk->seek(0x3E);
-
 	for (uint i = 0; i < 14; ++i) {
-		readRect(*tboxChunk, src[i]);
-	}
-
-	for (uint i = 0; i < 14; ++i) {
-		readRect(*tboxChunk, dest[i]);
-	}
-
-	for (uint i = 0; i < 14; ++i) {
-		_drawSurface.blitFrom(object0, src[i], Common::Point(dest[i].left - _screenPosition.left, dest[i].top - _screenPosition.top));
+		_drawSurface.blitFrom(object0, g_nancy->_textboxData->ornamentSrcs[i],
+								Common::Point(	g_nancy->_textboxData->ornamentDests[i].left - _screenPosition.left,
+												g_nancy->_textboxData->ornamentDests[i].top - _screenPosition.top));
 	}
 
 	RenderObject::init();
+}
+
+void InventoryBoxOrnaments::init() {
+	moveTo(g_nancy->_bootSummary->inventoryBoxScreenPosition);
+	Common::Rect invBoxBounds = _screenPosition;
+	invBoxBounds.moveTo(0, 0);
+
+	Graphics::ManagedSurface &object0 = g_nancy->_graphicsManager->_object0;
+
+	_drawSurface.create(invBoxBounds.width(), invBoxBounds.height(), g_nancy->_graphicsManager->getInputPixelFormat());
+
+	uint8 palette[256 * 3];
+	object0.grabPalette(palette, 0, 256);
+	_drawSurface.setPalette(palette, 0, 256);
+
+	_drawSurface.clear(g_nancy->_graphicsManager->getTransColor());
+	setTransparent(true);
+
+	for (uint i = 0; i < 6; ++i) {
+		_drawSurface.blitFrom(object0, g_nancy->_inventoryData->ornamentSrcs[i],
+								Common::Point(	g_nancy->_inventoryData->ornamentDests[i].left - _screenPosition.left,
+												g_nancy->_inventoryData->ornamentDests[i].top - _screenPosition.top));
+	}
 }
 
 } // End of namespace UI

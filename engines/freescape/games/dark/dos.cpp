@@ -44,10 +44,15 @@ void DarkEngine::loadAssetsDOSDemo() {
 		loadMessagesFixedSize(&file, 0x4525, 16, 27);
 		loadMessagesFixedSize(&file, 0x9959, 307, 5);
 		loadFonts(&file, 0xa598);
-		loadGlobalObjects(&file, 0x3d04);
+		loadGlobalObjects(&file, 0x3d04, 23);
 		load8bitBinary(&file, 0xa700, 16);
 		_border = load8bitBinImage(&file, 0x210);
 		_border->setPalette((byte *)&kEGADefaultPaletteData, 0, 16);
+
+		for (auto &it : _areaMap) {
+			addWalls(it._value);
+			addECDs(it._value);
+		}
 	} else if (_renderMode == Common::kRenderCGA) {
 		//loadBundledImages();
 		file.open("DSIDEC.EXE");
@@ -76,17 +81,16 @@ void DarkEngine::loadAssetsDOSFullGame() {
 
 		loadFonts(&file, 0xa113);
 		loadMessagesFixedSize(&file, 0x4525, 16, 27);
-		loadGlobalObjects(&file, 0x3d04);
+		loadGlobalObjects(&file, 0x3d04, 23);
 		load8bitBinary(&file, 0xa280, 16);
 		_border = load8bitBinImage(&file, 0x210);
 		_border->setPalette((byte *)&kEGADefaultPaletteData, 0, 16);
 
 		// TODO: load objects
-		/*for (auto &it : _areaMap) {
-			if (!it._value->entranceWithID(255))
-				continue;
-			it._value->addStructure(_areaMap[255]);
-		}*/
+		for (auto &it : _areaMap) {
+			addWalls(it._value);
+			addECDs(it._value);
+		}
 	} else if (_renderMode == Common::kRenderCGA) {
 		loadBundledImages();
 		file.open("DSIDEC.EXE");

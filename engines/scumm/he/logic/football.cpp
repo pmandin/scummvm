@@ -19,6 +19,7 @@
  *
  */
 
+#include "common/config-manager.h"
 #include "common/savefile.h"
 
 #include "scumm/he/intern_he.h"
@@ -51,6 +52,7 @@
 
 // MAIA (Updater) opcodes.
 #define OP_NET_CHECK_INTERNET_STATUS	3001
+#define OP_NET_SHUT_DOWN_MAIA			3004
 
 
 namespace Scumm {
@@ -159,6 +161,10 @@ int32 LogicHEfootball::dispatch(int op, int numArgs, int32 *args) {
 		netRemoteStartScript(numArgs, args);
 		break;
 
+	case OP_NET_CLOSE_PROVIDER:
+		res = _vm->_net->closeProvider();
+		break;
+
 	case OP_NET_QUERY_SESSIONS:
 #ifdef USE_LIBCURL
 		if (_vm->_lobby->_sessionId) {
@@ -214,6 +220,9 @@ int32 LogicHEfootball::dispatch(int op, int numArgs, int32 *args) {
 		// Internet.
 		res = 1;
 #endif
+		break;
+
+	case OP_NET_SHUT_DOWN_MAIA:
 		break;
 
 	case 1493: case 1494: case 1495: case 1496:
@@ -483,6 +492,9 @@ int32 LogicHEfootball2002::dispatch(int op, int numArgs, int32 *args) {
 
 	case 1030:
 		// Get Computer Name (online play only)
+		if (ConfMan.hasKey("network_player_name")) {
+			res = _vm->setupStringArrayFromString(ConfMan.get("network_player_name").c_str());
+		}
 		break;
 
 	// These cases are outside #ifdef USE_ENET intentionally
@@ -507,10 +519,6 @@ int32 LogicHEfootball2002::dispatch(int op, int numArgs, int32 *args) {
 		break;
 
 #ifdef USE_ENET
-	case OP_NET_CLOSE_PROVIDER:
-		res = _vm->_net->closeProvider();
-		break;
-
 	case OP_NET_QUERY_SESSIONS:
 		if (_requestedSessionIndex > -1)
 			// Emulate that we've found a session.
@@ -687,6 +695,11 @@ int LogicHEfootball2002::netInitLanGame(int32 *args) {
 		// Stop querying sessions if we haven't already
 		_vm->_net->stopQuerySessions();
 		// And host our new game.
+		// If there's a custom game name, use that instead.
+		if (ConfMan.hasKey("game_session_name")) {
+			Common::String gameSessionName = ConfMan.get("game_session_name");
+			return _vm->_net->hostGame(const_cast<char *>(gameSessionName.c_str()), userName);
+		}
 		res = _vm->_net->hostGame(sessionName, userName);
 	} else {
 		res = _vm->_net->joinSession(_requestedSessionIndex);

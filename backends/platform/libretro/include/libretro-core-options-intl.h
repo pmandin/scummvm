@@ -80,6 +80,11 @@ struct retro_core_option_v2_category option_cats_it[] = {
 		"Salto dei fotogrammi",
 		"Impostazioni per il salto dei fotogrammi"
 	},
+	{
+		"timing",
+		NULL,
+		"Impostazioni relative al timing"
+	},
 	{ NULL, NULL, NULL },
 };
 
@@ -150,14 +155,14 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 		"scummvm_frameskip_type",
 		"Salto dei fotogrammi",
 		NULL,
-		"Salto dei fotogrammi per evitare buffer under-run audio (crackling). Migliora le prestazioni a discapito della fluidità video. 'Auto' salta i fotogrammi su indicazione del frontend, 'Manuale' usa l'impostazione di 'Soglia minima buffer audio (%)', 'Fisso' usa l'impostazione 'Salto dei fotogrammi fisso'.",
+		"Salto dei fotogrammi per evitare buffer under-run audio (crackling). Migliora le prestazioni a discapito della fluidità video. 'Auto' salta i fotogrammi su indicazione del frontend, 'Soglia' usa l'impostazione di 'Soglia minima buffer audio (%)', 'Fisso' usa l'impostazione 'Salto dei fotogrammi fisso'.",
 		NULL,
 		"frameskip",
 		{
 			{ "disabled", NULL },
 			{ "fixed", "Fisso" },
 			{ "auto", "Auto" },
-			{ "manual", "Manuale" },
+			{ "manual", "Soglia" },
 			{ NULL, NULL },
 		},
 		NULL
@@ -166,7 +171,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 		"scummvm_frameskip_threshold",
 		"Soglia minima buffer audio (%)",
 		NULL,
-		"Quando 'Salto dei fotogrammi' è impostato su 'Manuale', specifica la soglia minima del buffer audio al di sotto della quale il fotogramma viene saltato. Valori più alti riducono il rischio di crackling al costo di un salto di fotogrammi più frequente.",
+		"Quando 'Salto dei fotogrammi' è impostato su 'Soglia', specifica la soglia minima del buffer audio al di sotto della quale il fotogramma viene saltato. Valori più alti riducono il rischio di crackling al costo di un salto di fotogrammi più frequente.",
 		NULL,
 		"frameskip",
 		{
@@ -193,10 +198,34 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 		NULL
 	},
 	{
-		"scummvm_speed_hack",
-		"Speed Hack (riavvio necessario)",
+		"scummvm_consecutive_screen_updates",
+		"Disabilita aggiornamenti schermo consecutivi",
 		NULL,
-		"Modalità che riduce significativamente le richeste di CPU consentendo lievi inaccuratezze di timing. Questo 'hack' è considerato 'sicuro' - non dovrebbe causare errori e la maggior parte delle inaccuratezze sono impercettibili. Rimane comunque un hack, e gli utenti con macchine di classe desktop dovrebbero lasciarlo disabilitato. Su hardware a basse prestazioni (vecchi device Android, computer su singola scheda), questo hack è essenziale per il funzionamento del core a velocità piena.",
+		"Mentre libretro si basa su FPS costante, ScummVM può aggiornare lo schermo indipentendemente dal framerate impostato. Di default tutti gli aggiornamenti schermo consecutivi di ScummVM vengono catturati e processati nella stessa chiamata a retro_run, migliorando l'accuratezza (es. effetti nei titoli dell'intro di Legend of Kyrandia) ma aumentando il tempo di esecuzione di quel loop retro_run. Se questa opzione è abilitata solo l'ultimo aggiornamento schermo di una serie consecutiva sarà mostrato. Se 'Consenti inaccuratezze di timing' è abilitato, questa impostazione sarà ignorata e abilitata internamente.",
+		NULL,
+		NULL,
+                {
+			{NULL, NULL},
+		},
+		NULL
+        },
+	{
+		"scummvm_allow_timing_inaccuracies",
+		"Consenti inaccuratezze di timing",
+		NULL,
+		"Consente inaccuratezze di timing che riducono significativamente le richeste di CPU. Anche se la maggior parte delle inaccuratezze sono impercettibili, in alcuni casi potrebbe introdurre problemi di sincronizzazione audio, quindi questa opzione andrebbe abilitata solo se il raggiungimento della piena velocità non è possibile in altro modo.",
+		NULL,
+		NULL,
+		{
+			{NULL, NULL},
+		},
+		NULL
+	},
+	{
+		"scummvm_auto_performance_tuner",
+		"Regolazione automatica performance",
+		NULL,
+		"Cambio automatico delle impostazioni di timing e salto dei fotogrammi se vengono rilevate performance scadenti durante il gioco. Le impostazioni di timing/frameskip saranno temporaneamente cambiate in sequenza, se saranno rilevati audio buffer underrun e per la sola sessione di gioco, e ripristinati in sequenza in caso di recupero del buffer audio. Le singole impostazioni salvate non saranno modificate ma saranno ignorati.",
 		NULL,
 		NULL,
 		{
@@ -206,7 +235,6 @@ struct retro_core_option_v2_definition option_defs_it[] = {
 	},
 	{ NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
 };
-
 struct retro_core_options_v2 options_it = {
 	option_cats_it,
 	option_defs_it

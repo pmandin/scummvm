@@ -52,15 +52,15 @@ dialogs:
 		cast_spell: "cast spell:  level="
 		number: "number="
 		use_combat:
-			use_no_special_power: "no special power"
-			use_not_equipped: "not equipped"
-			no_charges_left: "no charges left"
-			done: "done"
+			no_special_power: "No special power"
+			not_equipped: "Not equipped"
+			no_charges_left: "No charges left"
+			done: "Done"
 		use_noncombat:
-			no_special_power: "*** no special power ***"
-			not_equipped: "*** not equipped ***"
-			no_charges_left: "*** no charges left ***"
-			done: "*** done ***"
+			no_special_power: "*** No special power ***"
+			not_equipped: "*** Not equipped ***"
+			no_charges_left: "*** No charges left ***"
+			done: "*** Done ***"
 	create_characters:
 		title: "Create New Characters"
 		intellect: "intellect...="
@@ -83,12 +83,12 @@ dialogs:
 		start_over: "'esc' start over"
 		name: "name:"
 	dead:
-		1: "the shadow of death"
+		1: "The shadow of death"
 		2: "has fallen upon your party!"
-		3: "fortunately, you may renew"
+		3: "Fortunately, you may renew"
 		4: "your quest from the last"
 		5: "inn in which you stayed"
-		6: "by pressing 'enter'"	
+		6: "by pressing 'Enter'"	
 	inn:
 		title: "(%c) Inn of "
 		to_view: "to view"
@@ -182,9 +182,10 @@ dialogs:
 			1: "an elven wizard"
 			2: "a gnome robber"
 			3: "a dwarf paladin\npainted a black & white checkered motif"
-			4: "a human cleric"
-			5: "a blue dragon"
-			6: "a gray minotaur"			
+			4: "a h-orc archer"
+			5: "a human cleric"
+			6: "a blue dragon"
+			7: "a gray minotaur"			
 		messages:
 			0: "Services rendered, secrets unfold\nthe brothers together\nlead to treasures untold\n\nfive towns you must travel\nfor this quest to unravel"
 			1: "Seek the wizard ranalou\nin his lair at the korin bluffs\nsix castles he will send you to\nbut doom will be quite tough!\ncruelty and kindness\nmeasured throughout\njudgement day is then sought out"
@@ -335,41 +336,41 @@ dialogs:
 		teleport_dir: "direction (n,e,s,w): "
 		teleport_squares: "# of squares (0-9): "
 	encounter:
-		title: " encounter! "
-		surprised: "the monsters surprised you!"
-		surprise: "you surprised a group of monsters,"
-		approach: "approach (Y/N)?"
-		options1: "options:  'a' attack  'r' retreat"
-		options2: "'b' bribe   's' surrender"
-		surrender_failed: "the monsters don't take prisoners!"
-		nowhere_to_run: "nowhere to run"
-		surround: "the monsters surround you!"
-		no_response: "no response"
-		give_up: "give up all your %s (Y/N)?"
+		title: " Encounter! "
+		surprised: "The monsters surprised you!"
+		surprise: "You surprised a group of monsters,"
+		approach: "Approach (Y/N)?"
+		options1: "Options:  'A' Attack  'R' Retreat"
+		options2: "'B' bribe   'S' surrender"
+		surrender_failed: "The monsters don't take prisoners!"
+		nowhere_to_run: "Nowhere to run"
+		surround: "The monsters surround you!"
+		no_response: "No response"
+		give_up: "Give up all your %s (Y/N)?"
 		gems: "gems"
 		food: "food"
 		gold: "gold"
-		not_enough: "not enough"
-		alignment_slips: "*** alignment slips ***"
-		combat: "combat!"
+		not_enough: "Not enough"
+		alignment_slips: "*** Alignment slips ***"
+		combat: "Combat!"
 	combat:
-		combat: "combat"
+		combat: "Combat"
 		round: "Round #"
-		delay: "d delay"
-		protect: "p protect"
-		quickref: "q quickref"
-		view_char: "# view ch"
-		handicap: "handicap"
-		options_for: "options for: "
-		attack: "'a' attack(a)"
-		cast: "'c' cast"
-		fight: "'f' fight(+)"
-		shoot: "'s' shoot"
-		exchange_use: "'e' exchange  'u' use"
-		retreat_block: "'r' retreat   'b' block"
-		even: "even"
-		party_plus: "party +"
-		monster_plus: "monster +"
+		delay: "D Delay"
+		protect: "P Protect"
+		quickref: "Q QuickRef"
+		view_char: "# View Ch"
+		handicap: "Handicap"
+		options_for: "Options for: "
+		attack: "'A' Attack(a)"
+		cast: "'C' Cast"
+		fight: "'F' Fight(+)"
+		shoot: "'S' Shoot"
+		exchange_use: "'E' Exchange  'U' Use"
+		retreat_block: "'R' Retreat   'B' Block"
+		even: "Even"
+		party_plus: "Party +"
+		monster_plus: "Monster +"
 		and_goes_down: "and goes down!!!"
 		goes_down: "goes down!!!"
 		dies: "dies!"
@@ -382,7 +383,7 @@ dialogs:
 		monster_wanders: "wanders aimlessly"
 		attacks: "attacks"
 		shoots: "shoots"
-		weapon_no_effect: "weapon has no effect!"
+		weapon_no_effect: "Weapon has no effect!"
 		once: "once"
 		times: "times"
 		and: "and"
@@ -393,12 +394,12 @@ dialogs:
 		point: "point"
 		points: "points"
 		of_damage: "of damage!"
-		fight_which: "fight which 'a'-'%c'?"
-		shoot_which: "shoot which 'a'-'%c'?"
-		set_delay: "set delay (0-9):"
+		fight_which: "Fight which 'A'-'%c'?"
+		shoot_which: "Shoot which 'A'-'%c'?"
+		set_delay: "Set delay (0-9):"
 		delay_currently: "(currently= %d)"
 		infiltration: "infiltrates the ranks!"
-		exchange_places: "exchange places with (1-%c)?"
+		exchange_places: "Exchange places with (1-%c)?"
 		status:
 			0: "(paralyze)"
 			1: "(webbed)  "
@@ -430,7 +431,6 @@ dialogs:
 enhdialogs:
 	blacksmith:
 		browse: "\x01""37Browse"
-		backpack_for: "Backpack for %s the %s"
 		cost: "Cost"
 		gold: "Gold"
 		available: "Available"
@@ -438,7 +438,7 @@ enhdialogs:
 		sell: "Sell"
 		for_gold: "for %d gold"
 		areas:
-			weapons: "Weapons"
+			weapons: "Weapons"	
 			armor: "Armor"
 			misc: "Misc"
 		buttons:
@@ -449,7 +449,6 @@ enhdialogs:
 			sell: "\x01""37Sell"
 			buy: "\x01""37Buy"
 			sell: "\x01""37Sell"
-			exit: "Exit"
 	cast_spell:
 		title: "Cast Spell"
 		spell_ready: "Spell Ready:"
@@ -514,6 +513,15 @@ enhdialogs:
 		title: "Select target"
 	characters:
 		left_click: "Left click portraits to view"
+	combat:
+		attack: "\x01""37Attack(A)"
+		cast: "\x01""37Cast"
+		fight: "\x01""37Fight(+)"
+		shoot: "\x01""37Shoot"
+		exchange: "\x01""37Exchange"
+		use: "\x01""37Use"
+		retreat: "\x01""37Retreat"
+		block: "\x01""37Block"
 	create_characters:
 		intellect: "Intellect ="
 		might: "Might ="
@@ -531,12 +539,42 @@ enhdialogs:
 		select_portrait: "Select a portrait"
 		select: "\x01""37Select"
 		enter_name: "Enter name:"
+	encounter:
+		options: "Options:"
+		attack: "\x01""37Attack"
+		bribe: "\x01""37Bribe"
+		retreat: "\x01""37Retreat"
+		surrender: "\x01""37Surrender"
 	exchange: "Exhange with whom?"
 	inn:
 		left_click: "Left click potraits to add/remove"
 		right_click: "Right click to view"
 		exit: "Exit Inn"
 		esc: "ESC to go back"
+	items:
+		arms_for: "Equipment for %s the %s"
+		backpack_for: "Backpack for %s the %s"
+		which_item: "which item?"
+		equip: "Equip"
+		remove: "Remove"
+		discard: "Discard"
+		use: "Use"
+		buttons:
+		buttons:
+			weapons: "\x01""37Weap"
+			armor: "\x01""37Armor"
+			misc: "\x01""37Misc"
+			buy: "\x01""37Buy"
+			sell: "\x01""37Sell"
+			buy: "\x01""37Buy"
+			sell: "\x01""37Sell"
+			arms: "\x01""37Arms"
+			backpack: "\x01""37BkPack"
+			equip: "\x01""37Equip"
+			remove: "\x01""37Rem"
+			discard: "\x01""37Disc"
+			trade: "\x01""37Trade"		
+			use: "\x01""37Use"
 	location:
 		store: "Store"
 		options: "options"
@@ -557,6 +595,7 @@ enhdialogs:
 		exit: "Exit"
 		go_back: "Go back"
 		no_items: "Inventory empty"
+		exchange: "Exchange with whom?"
 	quickref:
 		title: "Quick Reference Chart"
 		headers:
@@ -587,6 +626,15 @@ enhdialogs:
 		donate: "\x01""37Donate"
 		uncurse: "\x01""37Uncurse"
 		realign: "\x01""37Re-align"
+	trade:
+		which: "Trade which:"
+		gems: "Ge\x01""37ms"
+		gold: "\x01""37Gold"
+		food: "\x01""37Food"
+		items: "\x01""37Items"
+		how_much: "How much:"
+		dest: "Trade to whom?"
+		items_help: "To trade items, select an item from the inventory, and then select the portrait of the character to trade to"
 	training:
 		title: "Training"
 		train: "\x01""37Train"
@@ -880,6 +928,15 @@ monster_actions:
 	steals_something: "steals something"
 	takes_food: "takes food"
 	turned_to_stone: "is turned to stone"
+colors:
+	0: "Red Thorac"
+	1: "Blue Ogram"
+	2: "Green Bagar"
+	3: "Yellow Limra"
+	4: "Purple Sagran"
+	5: "Orange Oolak"
+	6: "Black Dresidion"
+	7: "White Dilithium"
 maps:
 	poof: "Poof!"
 	sign: "A sign above the door reads:\n"
@@ -889,6 +946,8 @@ maps:
 	tavern_inside: "Step up to the bar (Y/N)?"
 	passage_outside1: "A passage leads outside, take it (Y/N)?"
 	passage_outside2: "Passage outside, exit (Y/N)?"
+	accept: "Accept"
+	decline: "Decline"
 
 	desert:
 		its_hot: "It's hot... "
@@ -909,6 +968,11 @@ maps:
 		options3: "3) Leave without disturbing."
 		flees: "The prisoner flees!"
 		cowers: "The prisoner cowers!"
+	eprisoners:
+		title: "Prisoner"
+		options1: "Set the prisoner free.\n"
+		options2: "Torment the prisoner.\n"
+		options3: "Leave without disturbing."
 
 	map00:
 		blacksmith: "\"B and B Blacksmithing\""
@@ -931,7 +995,8 @@ maps:
 		levitate: ", levitation saves you!"
 	emap00:
 		training_inside: "Before you are various groups engaged in training exercises. Worg, the guildmaster asks, \"Do you require training (Y/N)?\""
-		leprechaun: "A tenacious leprechaun appears saying, \"Traveling the roads is quite dangerous save for the strong and courageous, Only 1 gem you lose and i'll send you to the town you choose.\"\n\n'ESC' to go back\nWhich town (1-5)?"
+		leprechaun: "A tenacious leprechaun appears saying, \"Traveling the roads is quite dangerous. Only 1 gem and i'll teleport you.\""
+		leprechaun_title: "Leprechaun"
 
 	map01:
 		blacksmith: "\"B. Smith's workshop\""
@@ -941,30 +1006,32 @@ maps:
 		temple: "\"Temple Succubon\""
 		training: "\"Amazonia's Training\""
 
-		blacksmith_inside: "\"Busily forging a long sword,an extremely\nbeautiful young girl says with a\nseductive smile, \"Can i help you (Y/N)?\""
-		inn_inside: "lara, the inkeepers voluptuous\ndaughter, asks if you will be spending\nthe night... sign in (Y/N)?"
+		blacksmith_inside: "Busily forging a long sword,an extremely\nbeautiful young girl says with a\nseductive smile, \"Can i help you (Y/N)?\""
+		inn_inside: "Lara, the inkeepers voluptuous\ndaughter, asks if you will be spending\nthe night... sign in (Y/N)?"
 		market_inside: "From behind the fruit stand\na sultry voice asks, \"See anything\nyou like (Y/N)?\""
-		temple_inside: "The once magnificent temple shows\nsigns of neglect and decay. the high\npriestess asks,\"Need help (Y/N)?\""
+		temple_inside: "The once magnificent temple shows\nsigns of neglect and decay. The high\npriestess asks, \"Need help (Y/N)?\""
 		training_inside: "A tall, muscular female clad in leather\narmor approaches asking, \"Strangers,\nare you here for training (Y/N)?\""
 
 		males_drained: "Males are drained!"
 		secret: "A sensuous female voice speaks from\nwithin an intoxicating mist,\n\"You've discovered my secret!\""
-		zam0: "Note: zam 12,2"
-		zam1: "\"I am zam, astral brother of zom and\nonly living male residing in portsmith\n"
+		zam0: "Note: Zam 12,2"
+		zam1: "\"I am Zam, astral brother of Zom and\nonly living male residing in Portsmith\n"
 		zam2: "My clue is c-15\""
 		zam3: "You're not the couriers!\""
+	emap01:
+		blacksmith_inside: "Busily forging a long sword, an extremely beautiful young girl says with a seductive smile, \"Can i help you (Y/N)?\""
 
 	map02:
-		blacksmith: "\"Swampside supplies\""
-		inn: "\"The inn of Algary\""
-		market: "\"Arcon's slop\""
-		tavern: "\"Jolly jester tavern\""
-		temple: "\"Temple half-dead\""
-		training: "\"Dragons claw training\""
-		docks: "\"Ye old docks\""
+		blacksmith: "\"Swampside Supplies\""
+		inn: "\"The Inn of Algary\""
+		market: "\"Arcon's Slop\""
+		tavern: "\"Jolly Jester Tavern\""
+		temple: "\"Temple Half-dead\""
+		training: "\"Dragons Claw Training\""
+		docks: "\"Ye Old Docks\""
 
-		blacksmith_inside: "A man enclosed in a steel cage says,\n\"can i help you find anything (Y/N)?\""
-		inn_inside: "Standing behind a large desk, a tall\nbearded half-orc grunts, \"If you don't\nsign in, you can't stay! well (Y/N)?\""
+		blacksmith_inside: "A man enclosed in a steel cage says,\n\"Can i help you find anything (Y/N)?\""
+		inn_inside: "Standing behind a large desk, a tall\nbearded half-orc grunts, \"If you don't\nsign in, you can't stay! Well (Y/N)?\""
 		market_inside: "A putrid smell pervades the room...\nlook for some food (Y/N)?"
 		temple_inside: "An ancient looking cleric staggers up to\nthe party gasping, \"I can help,\nreally i can!\" Accept the offer (Y/N)?"
 		training_inside: "several adventurers armored in dragon\nscales, address the party,\n\"Looking for training (Y/N)?\""
@@ -978,6 +1045,16 @@ maps:
 		zom1: "\"I am zom, astral brother of zam.\n"
 		zom2: "My clue is 1-15.\""
 		zom3: "You're not the couriers!\""
+	emap02:
+		resistances: "Resistances"
+		magic: "Magic"
+		fire: "Fire"
+		cold: "Cold"
+		electricity: "Elc"
+		acid: "Acid"
+		fear: "Fear"
+		poison: "Poison"
+		sleep: "Sleep"
 
 	map03:
 		blacksmith: "\"Mystical Metal Works\""
@@ -992,13 +1069,16 @@ maps:
 		blacksmith_inside: "A young gnome materializes, asking,\n\"Would you be wanting my services(Y/N)?\""
 		inn_inside: "An eerie silence pervades the deserted\ninn. suddenly, a ghostly apparition\nappears, asking, \"Sign in (Y/N)?\""
 		market_inside: "A faint outline of a man appears,\nsaying, \"Need some feed (Y/N)?\""
-		temple_inside: "Bright lights swirl throughout the room.a horrifying voice shrieks,\n\"Need help (Y/N)?\""
+		temple_inside: "Bright lights swirl throughout the room.A horrifying voice shrieks,\n\"Need help (Y/N)?\""
 		training_inside: "Several empty suits of armor approach\nasking, \"Need training (Y/N)?\""
 
 		telgoran1: "An elf dressed in robes approaches...\n\n"
 		telgoran2: "\"Friends, I am telgoran. This scroll you\nhave brought me will be very helpful\n(+2500 exp) Here's 1500 gold for your\nservices. I'll tell you a secret, if\ntreasure is what you want...\""
 		telgoran3: "\"The brothers you must find...\nPortsmith and Algary are combined.\"" 
 		telgoran4: "\"You're not the couriers!\""
+	emap03:
+		blacksmith_inside: "A young gnome materializes, asking,\n\"Would you be wanting my services (Y/N)?\""
+		temple_inside: "Bright lights swirl throughout the room. A horrifying voice shrieks,\n\"Need help (Y/N)?\""
 
 	map04:
 		blacksmith: "\"Current Trends Ironworks\""
@@ -1010,21 +1090,29 @@ maps:
 
 		blacksmith_inside: "A boistrous half-orc proclaims,\n\"We carry the very latest,\nbrowse (Y/N)?\""
 		inn_inside: "Adjusting his spectacles, an elderly\ngnome eyes the party and asks,\n\"Signing in (Y/N)?\""
-		market_inside: "The chef says,\"i only serve the best!\nHungry (Y/N)?\""
+		market_inside: "The chef says,\"I only serve the best!\nHungry (Y/N)?\""
 		training_inside: "Three huge armor clad knights bark in\nunison, \"Want a good workout (Y/N)?\""
 		temple_inside: "Several fat clerics welcome you.\nNeed help (Y/N)?"
 
 		agar1: "The wizard Agar speaks:\n\n"
 		agar2: "\"You have done well to bring me this\nscroll. (+1000 exp) Now take it to my\nprotege Telgoran in Dusk.\""
-		agar3: "\"I have no business with you. begone!\""
+		agar3: "\"I have no business with you. Begone!\""
 		guards: "Town guards: you're under arrest!\n\na)Attack b)Bribe c)Run d)Surrender"
-		sentence: "High court sentence: years= "
+		sentence: "High court sentence: Years= "
 		treasure: "Town treasure, steal (Y/N)?"
+	emap04:
+		town_guards: "Town Guards"
+		guards: "Town guards: you're under arrest!"
+		attack: "\x01""37Attack"
+		bribe: "\x01""37Bribe"
+		run: "\x01""37Run"
+		surrender: "\x01""37Surrender"
+		sentence: "High court sentence: %d years"
 
 	map05:
 		arena: "\"The Arena\""
 		arena_inside: "Around the room there are several\nbalconies filled with cheering peasants\nA man asks \"Will you participate (Y/N)?\""
-		portal: "A shimmering blue and white portal\nappears! enter (Y/N)?"
+		portal: "A shimmering blue and white portal\nappears! Enter (Y/N)?"
 		message1: "Scrawled on the wall, a message reads:\n"
 		message2: "The jail above has many cells."
 		message3: "Don't turn around!"
@@ -1037,7 +1125,7 @@ maps:
 		portal: "Shimmering blue and white portal,\nenter (Y/N)?"
 		acid: "Splash! A pool of acid!"
 		button: "Button on the wall, press it (Y/N)?"
-		banner: "A banner reads:\ncorridor of endless encounters!"
+		banner: "A banner reads:\nCorridor of Endless Encounters!"
 		wizard: "A crazed wizard exclaims,\n\"Encounter the 13, win the prize!\""
 		slide: "A slide!"
 
@@ -1056,31 +1144,32 @@ maps:
 		dancing_lights: "Dancing lights flicker and crackel in\nthe area in front of you!"
 		enter_code: "Covered with flashing lights the wall\nspeaks: \"Please enter access code:\"\n"
 		good_code: "\"Thank you, fields deactivated.\""
-		zap: "zap!"
+		zap: "Zap!"
+	emap08:
+		access_code: "Access Code"
 
 	map09:
-		accuracy: "The prism of precision grants those\nwho are worthy +4 accuracy!"
-		agility: "The flame of agility grants those who\nare worthy +4 speed!"
+		accuracy: "The Prism of Precision grants those\nwho are worthy +4 accuracy!"
+		agility: "The Flame of Agility grants those who\nare worthy +4 speed!"
 		corak_was_here: "Corak was here"
 		levitation: "Levitation saved you."
-		message: "Behind an old tapestry, a message\netched in gold reads: yicu2me3"
+		message: "Behind an old tapestry, a message\netched in gold reads: YICU2ME3"
 		passage_outside: "A cavernous passage, take it (Y/N)?"
 		pit: "A pit of poisonous spikes!\n"
 		portal: "Blue and white portal, enter (Y/N)?"
 		protection: "Protection saved you."
 		psychic_blast: "Psychic blast!\n"
 		scrawl: "Scrawled in stone:\nCharacter #1 leads the way.\nBeware, traps abound!"
-		shrine1: "The shrine of okzar, pray (Y/N)?"
+		shrine1: "The Shrine of Okzar, pray (Y/N)?"
 		shrine2: "Your leader is of clear mind."
 		shrine3: "Your leader is inconsistent. Begone!"
-		speed: "The flame of agility grants those who\nare worthy +4 speed!"
 		stalactites: "Stalactites shower the party!"
 
 	map10:
 		levitation: "Levitation saved you."
 		pit: "Jagged slime pit!"
 		poof: "Poof! you've been teleported..."
-		ranalou1: "\"I'm the wizard ranalou. are you here to\nuse the portals (Y/N)?\""
+		ranalou1: "\"I'm the wizard Ranalou. Are you here to\nuse the portals (Y/N)?\""
 		ranalou2: "\"Good! inside this room are 6 portals,\neach of which leads to a castle. The\nstatue of judgement requires you to find\none prisoner from each of these castles\nbefore you may be found worthy.\""
 		ranalou3: "\"Then begone!\""
 		sign1: "A sign:\n\nExperiment in progress, do not enter!"
@@ -1093,11 +1182,22 @@ maps:
 		pit: "Pit of bubbling lava!"
 		levitation: "Levitation saves you."
 		virgin: "A luscious virgin shackled to the wall!\na) Kiss her  b) Release her  c) Leave"
-		tip1: "Try setting 1b,2j"
+		tip1: "Try setting 1B,2J"
 		tip2: "This cavern is random until the dials\nare set."
-		dial: "Stabilization dial #%c set (a-z)?"
+		dial: "Stabilization dial #%c set (A-Z)?"
 		poof: "Poof! You've been teleported..."
 		ladder: "A ladder going up, take it (Y/N)?"
+	emap11:
+		virgin: "A luscious virgin shackled to the wall!"
+		virgin_a: "Kiss her"
+		virgin_b: "Release her"
+		virgin_c: "Leave"
+		god_a: "Challenge"
+		god_b: "A Riddle"
+		god_c: "A Clue"
+		volcano_god: "Volcano God"
+		god_text: "The volcano god bellows,\n\"What do you seek here?\""
+		question: "Who was brave yet failed?""
 
 	map12:
 		ladder_up: "Ladder up, climb (Y/N)?"
@@ -1122,9 +1222,9 @@ maps:
 
 	map14:
 		words: "Carved on a block of ice are the words:\nStart at 15-7 and walk to Doom!"
-		passage: "A secret passage to Ddoom, take it (Y/N)?"
+		passage: "A secret passage to Doom, take it (Y/N)?"
 		pool: "The pool of health grants those who are\nworthy +4 endurance!"
-		surrounded: "You've been surrounded by the Dark Riderand his men! He challenges you to a duel...accept (Y/N)?"
+		surrounded: "You've been surrounded by the Dark Rider\nand his men! He challenges you to a duel... accept (Y/N)?"
 		castle: "The fabeled Castle Doom!\nWill you enter (Y/N)?"
 
 	map15:
@@ -1134,6 +1234,8 @@ maps:
 		percella1: "I am Percella the druid and i have what\nyou need. But promise me that you won't\nhelp that demonic menace. Accept (Y/N)?"
 		percella2: "Then meet my pets!"
 		its_hot: "It's hot!"
+	emap15:
+		body: "The dragon's body disappears, except for a shiny tooth!"
 
 	map16:
 		loser: "Loser!\n"
@@ -1155,33 +1257,44 @@ maps:
 	map18:
 		passage: "Cavernous passage to Erliquin,\ntake it (Y/N)?"
 		cave: "A cave, enter (Y/N)?"
-		castle_north: "Castle blackridge north, enter (Y/N)?"
-		castle_south: "Castle blackridge south, enter (Y/N)?"
+		castle_north: "Castle Blackridge North, enter (Y/N)?"
+		castle_south: "Castle Blackridge South, enter (Y/N)?"
 		ruins: "Ancient ruins of a deserted wizards lair\nshow signs of recent use, enter (Y/N)?"
-		gates: "The gates to another world!\n"
-		congratulations: "Congratulations distinguished \ntravelers! The gates are now\nopen to you, in order to pass\nthrough you must first find\n<ight and Magic Book Two !!!"
+		gates: "The Gates to Another World!\n"
+		congratulations: "Congratulations distinguished \ntravelers! The gates are now\nopen to you, in order to pass\nthrough you must first find\nMight and Magic Book Two !!!"
 		sign1: "A sign pointing S. reads: Blackridge N."
 		sign2: "A sign pointing E. reads: Blackridge S."
 		sign3: "A sign pointing E. reads: Erliquin"
+	emap18:
+		ruins: "Ancient ruins of a deserted wizard's lair show signs of recent use, enter (Y/N)?"
+		sign1: "A sign pointing S. reads:\nBlackridge N."
+		sign2: "A sign pointing E. reads:\nBlackridge S."
+		congratulations: "Congratulations distinguished \ntravelers! The gates are now\nopen to you. In order to pass\nthrough you must first find\nMight and Magic Book Two !!!"
 
 	map19:
-		ice_princess: "An a throne adorned with precious gems\nthe ice princess speaks,\n\"Conqueror of worlds, maker of dreams\nThe greatest force of all, yet elusive\nit seems.\"\n\nAnswer:> "
+		ice_princess: "On a throne adorned with precious gems\nthe ice princess speaks,\n\"Conqueror of worlds, maker of dreams\nThe greatest force of all, yet elusive\nit seems.\"\n\nAnswer:> "
 		incorrect: "Wrong, you're too young to understand."
 		correct: "Correct!"
 		carving: "Carved on a tree: \"9-9 Raven's Lair\""
 		cave: "There's a cave here, enter (Y/N)?"
 		stairs_down: "A descending staircase is the entrance\nto a warriors stronghold, go in (Y/N)?"
+	emap19:
+		title: "Ice Princess"
+		ice_princess: "On a throne adorned with precious gems\nthe ice princess speaks,\n\"Conqueror of worlds, maker of dreams\nThe greatest force of all, yet elusive\nit seems.\""
+		stairs_down: "A descending staircase is the entrance to a warrior's stronghold, go in (Y/N)?"
 
 	map20:
 		passage: "Passage to Portsmith, take it (Y/N)?"
 		cave: "A cave, enter (Y/N)?"
-		castle: "Castle white wolf, enter (Y/N)?"
+		castle: "Castle White Wolf, enter (Y/N)?"
 		whistle: "Your ruby whistle begins to glow,\nblow it (0-9 times)?"
 		stairs_down: "Stairs going down, enter (Y/N)?"
 		temple: "An ancient temple converted to a\nstronghold has no apparent entrance."
 		peak: "Atop this peak looking:\n\nN= A cave beyond white wolf.\nE= Large beasts above wyvern peaks!\nS= Distant uncharted isles.\nW= A pirate ship beyond korin bluffs."
 		sign1: "A sign pointing N. reads: White Wolf"
 		sign2: "A sign pointing S. reads: Portsmith"
+	emap20:
+		peak: "Atop this peak looking:\n\nN= A cave beyond White Wolf.\nE= Large beasts above Wyvern Peaks!\nS= Distant uncharted isles.\nW= A pirate ship beyond Korin Bluffs."
 
 	map21:
 		trivia_island: "Trivia Island! 500 gold, enter (Y/N)?"
@@ -1204,6 +1317,8 @@ maps:
 		correct: "Correct! +50 gems"
 		incorrect: "Wrong!"
 		answer: "Answer:> .............."
+	emap21:
+		title: "Trivia Island"
 
 	map22:
 		ambush: "Ambush!"
@@ -1211,8 +1326,8 @@ maps:
 		poison: "Arghhh... poison!"
 		today_spells: "Today spells!"
 		today_might: "Today might!"
-		fountain: "A fountain speaks:\n\"will the party drink (Y/N)?\""
-		chest: "You found a chest upon which an\ninscription reads: Property of xx!xx!\nInside you found a ruby whistle, 2000\ngold and a note:\nThe stronghold lies at b-3,14-2\nBlow twice to enter."
+		fountain: "A fountain speaks:\n\"Will the party drink (Y/N)?\""
+		chest: "You found a chest upon which an\ninscription reads: Property of Xx!xx!\nInside you found a ruby whistle, 2000\ngold and a note:\nThe stronghold lies at B-3,14-2\nBlow twice to enter."
 		roadsign: "Roadsign: Sorpigal S.17, W.1, N.2"
 
 	map23:
@@ -1229,25 +1344,21 @@ maps:
 		look_out: "Look out!"
 		gypsy: "A toothless gypsy seer asks, \"Who would\nlike to hear their sign (1-6)?\""
 		your_sign_is: "\"Your sign is the %s\""
-		signs:
-			0: "Red Thorac"
-			1: "Blue Ogram"
-			2: "Green Bagar"
-			3: "Yellow Limra"
-			4: "Purple Sagran"
-			5: "Orange Oolak"
-			6: "Black Dresidion"
-			7: "White Dilithium"
+	emap23:
+		statues: "Statues block the path, smash them (Y/N)?"
+		gypsy_title: "Gypsy"
 
 	map24:
 		wyverns: "Wyverns attack from above!"
-		wyvern_eye: "One of the wyvern's eyes begins to glow!Take it (Y/N)?"
+		wyvern_eye: "One of the wyvern's eyes begins to glow!\nTake it (Y/N)?"
 		roadsign: "Roadsign: Sorpigal N.22, W.2, N.2"
 		kilburn: "The exiled Lord Kilburn speaks:\n\"Take this map and explore the desert.\nReport your findings to the other lords.\nThen they will understand!\" Accept(Y/N)?"
 		backpacks_full: "*** Backpacks full!"
 		lair: "A wyvern's lair, investigate (Y/N)?"
 		sign: "Painted in a black and white pattern,\na sign reads: The first part is female."
 		hermit: "The hermit says: \"Trade wares (Y/N)?\""
+	emap24:
+		kilburn: "The exiled Lord Kilburn speaks: \"Take this map and explore the desert. Report your findings to the other lords. Then they will understand!\" Accept (Y/N)?"
 
 	map25:
 		slab: "A large slab of coral blocks a passage!\n"
@@ -1264,7 +1375,7 @@ maps:
 		scorpion: "Suddenly, a gargantuan scorpion attacks!"
 		trading_post: "A small tribe of desert nomads have\nestablished a trading post here.\nTrade item (Y/N)?"
 		nothing_to_trade: "Your leader has nothing to trade!"
-		kilburn: "Kilburn, c-3 6-14"
+		kilburn: "Kilburn, C-3 6-14"
 
 	map27:
 		pool: "The pool of wisdom grants those who are\nworthy +4 personality."
@@ -1291,6 +1402,12 @@ maps:
 		cursed: "Cursed"
 		keep_climbing: "Keep climbing."
 		sign: "Roadsign: Algary S.9"
+	emap28:
+		arenko_title: "Arenko"
+		well_done: "Well done! What is your pleasure?"
+		gold: "Gold"
+		gems: "Gems"
+		item: "Item"
 
 	map29:
 		algary: "Algary, enter (Y/N)?"
@@ -1299,6 +1416,9 @@ maps:
 		begone: "Og says, \"Begone!\""
 		chess: "Painted on these grounds is a black &\nwhite checkered motif covered with\nidols similar to the ones you carry.\na large being approaches...\nOg speaks, \"Queen to queens level 3\"\n\nResponse: "
 		restored_sight: "You have restored my sight! (+25000 exp)\nI see an important prisoner in a castle\non Mt. Doom! he has your sight.\n\nOg curses as the idols vanish!"
+	emap29:
+		og_title: "Og"
+		og: "Painted on these grounds is a black &\nwhite checkered motif covered with idols similar to the ones you carry. A large being approaches... Og speaks, \"Queen to queens level 3\""
 
 	map30:
 		passage: "Passage to Dusk, enter (Y/N)?"
@@ -1306,7 +1426,7 @@ maps:
 		hourglass: "At the center of the land that time\nforgot stands an hourglass,turn it(Y/N)?"
 		unworthy: "Not worthy!"
 		worthy: "Your actions reflect your views %d of 6\n+"
-		giant: "Statue of a giant holding the scale of\njudgement. who will climb on (1-6)?"
+		giant: "Statue of a giant holding the Scale of\nJudgement. Who will climb on (1-6)?"
 		experience: "experience"
 		attributes:
 			0: "intellect"
@@ -1316,6 +1436,9 @@ maps:
 			4: "speed"
 			5: "accuracy"
 			6: "luck"
+	emap30:
+		hourglass: "At the center of the land that time forgot stands an hourglass, turn it (Y/N)?"
+		giant_title: "Giant"
 
 	map31:
 		device: "Strange alien device grants those who\nare worthy +4 intellect!"
@@ -1323,39 +1446,48 @@ maps:
 		flash: "A bright flash!"
 		varnlings: "\"Varnlings take heed! our prisoner has\nescaped and may be disguised as a noble.\nFind his counterpart to expose him!\""
 		poof: "Poof!"
+	emap31:
+		alien_title: "Alien"
+		alien: "Scattered remains of a metallic craft!\nAn alien grunts, \"Eep op oop!\"\nReaction?"
+		option_a: "Hostile"
+		option_b: "Neutral"
+		option_c: "Friendly"
 
 	map32:
 		castle: "King alamar's castle, enter (Y/N)?"
 		door: "A diamond door!"
-		key: " Use your key (Y/N)?"
+		key: "Use your key (Y/N)?"
 		statue: "Statue of a lion growls, \"Password?\"\nResponse:> .........."
 		password: "is the password for today,\nleave the area and change it i may!\""
 		heratio: "Heratio harper sings:"
 		music: "Distant harp music..."
 		passwords:
-			0: "musical"
-			1: "tones"
-			2: "together"
-			3: "clerics"
-			4: "south"
-			5: "deem"
-			6: "worthy"
+			0: "Musical"
+			1: "Tones"
+			2: "Together"
+			3: "Clerics"
+			4: "South"
+			5: "Deem"
+			6: "Worthy"
 		trespassing: "Trespassing!"
 		correct: "Correct! you may pass."
+	emap32:
+		statue: "Statue of a lion growls, \"Password?\"\n"
+		statue_title: "Lion Statue"
 
 	map33:
 		building: "The fabled building of gold,\nenter (Y/N)?"
 		slime: "Ectoplasmic slime slushes beneath you!\n"
 		tombstones: "Toppled tombstones abound!"
-		coffin: "Unearthed coffin! examine (Y/N)?"
-		crypt: "Open crypt! examine (Y/N)?"
+		coffin: "Unearthed coffin! Examine (Y/N)?"
+		crypt: "Open crypt! Examine (Y/N)?"
 		corpse: "Half buried corpse asks for help!\nAssist (Y/N)?"
 		meeting: "Dragon City, town meeting...\nDisrupt (Y/N)?"
 		quicksand: "Quicksand!"
 		thanks: "Thanks! It ain't easy being a corpse!\nTake these..."
 
 	map34:
-		statue: "A gruesome statue says:\n\"start at 15-7 and walk to doom!\""
+		statue: "A gruesome statue says:\n\"Start at 15-7 and walk to Doom!\""
 		banner: "A banner reads:\nThe endless spiral!!!"
 		sign: "A sign above the door reads:\nMonster breeding grounds, keep out!"
 		machine: "A loud machine pulsates rhythmically."
@@ -1368,20 +1500,21 @@ maps:
 		message6: "Etched in gold:\nMessage interleave '8,5,3,9,1,4,6,2,7'"
 		message7: "Written on the wall:\nJump three times to reach center."
 		door: "A golden door repels you!"
-		alamar1: "Suspended in a forcefield is the body\nof a man enclosed in an iron suit.\nTelepathic communication:\"I am the true\nKing Alamar, imprisoned by a demonic\nalien being! Confront him with this eye\nof goros and you shall see his true\nself."
-		alamar2: "The fate of the realm is at stake.\""
+		alamar: "Suspended in a forcefield is the body\nof a man enclosed in an iron suit.\nTelepathic communication: \"I am the true\nKing Alamar, imprisoned by a demonic\nalien being! Confront him with this Eye\nof Goros and you shall see his true\nself. The fate of the realm is at stake\""
+	emap34:
+		alamar1: "Suspended in a forcefield is the body\nof a man enclosed in an iron suit. Telepathic communication: \"I am the true King Alamar, imprisoned by a demonic alien being! Confront him with this eye of goros and you shall see his true self."
 
 	map35:
-		exit: "Exit castle, (Y/N)?"
+		exit: "Exit castle (Y/N)?"
 		merchant_pass: "Castle guards exclaim\n\"No merchants pass! Begone peasants.\""
 		quests:
-			0: "Find the ancient ruins in the\nquivering forest"
-			1: "Visit blithes peak, and report"
+			0: "Find the ancient ruins in the\nQuivering Forest"
+			1: "Visit Blithes Peak, and report"
 			2: "The people of the desert have much to\ntrade,bring me a sample of their goods"
-			3: "Find the shrine of okzar in the\ncaves below dusk"
-			4: "Find the fabled fountain in dragadune"
-			5: "Solve the riddle of the ruby"
-			6: "Defeat the stronghold\nin the enchanted forest"
+			3: "Find the Shrine of Okzar in the\ncaves below dusk"
+			4: "Find the Fabled Fountain in Dragadune"
+			5: "Solve the Riddle of the Ruby"
+			6: "Defeat the stronghold\nin the Enchanted Forest"
 		inspectron1: "Lord inspectron speaks:\n"
 		inspectron2: "\"Your services are needed!\"Accept (Y/N)?"
 		inspectron3: "\"Return not until thy quest is complete\""
@@ -1390,9 +1523,12 @@ maps:
 		message: "Etched in silver, message a reads:\natis-19-31ud54aeupi1"
 		slide: "A slide!"
 		vault: "Empty vault, alarm!"
+	emap35:
+		inspectron_title: "Lord Inspectron"
+		inspectron2: "\"Your services are needed!\" Accept (Y/N)?"
 
 	map36:
-		exit: "Exit castle, (Y/N)?"
+		exit: "Exit castle (Y/N)?"
 		begone: "Castle guards exclaim,\"Begone peasants!\""
 		slide: "Slide!"
 		pit: "The pit of peril..."
@@ -1407,21 +1543,29 @@ maps:
 			6: "the ring of okirm"
 		hacker1: "Lord hacker speaks:\n"
 		hacker2: "\"Your services are needed!\"Accept (Y/N)?"
-		hacker3: "Bring me "
+		hacker3: "Bring me"
 		hacker4: "\"Sorry, you're already quested.\""
 		hacker5: "\"Return not until thy quest is complete\"\n(leader should present items)"
 		hacker6: "Well done, quest complete! +%u exp"
 		hacker7: "My brew is complete, guards take their\nitems and send them to the pit!"
 		message: "Etched in silver, message C reads:\niaci1;-2;0nu--g,not2"
+	emap36:
+		hacker_title: "Lord Hacker"
+		begone: "Castle guards exclaim, \"Begone peasants!\""
+		hacker2: "\"Your services are needed!\" Accept (Y/N)?"
+		hacker7: "My brew is complete. Guards take their items and send them to the pit!"
 
 	map37:
 		message1: "Etched in gold, message 1 reads:\nCompletion-must-each-kings-of-astral-\nwith-9th-sanctum-and-wondrous"
-		okrim1: "A ghostlike figure rises from the body\nof okrim and speaks,\"In exchange for\nmy ring, forfeit a life, accept (Y/N)?\""
+		okrim1: "A ghostlike figure rises from the body\nof Okrim and speaks,\"In exchange for\nmy ring, forfeit a life. Accept (Y/N)?\""
 		okrim2: "\"May the shadow of death greet you\nwith open arms!\""
 		archway: "A gem encrusted archway reads:\nLair of the omnipotent wizard Okrim"
 		opening: "An opening above leads outside,\nClimb out (Y/N)?"
 		spins: "The floor spins!"
-
+	emap37:
+		okrim: "Okrim"
+		okrim1: "A ghostlike figure rises from the body of Okrim and speaks, \"In exchange for my ring, forfeit a life. Accept (Y/N)?\""
+	
 	map38:
 		message4: "Etched in gold, message 4 reads:'\nof-be-has-true-knowledge-plane-a-level-'\nto-reality-it"
 		banner: "A banner reads:\nthe labyrinth of lazzeruth...\nfew have entered, none have returned!"

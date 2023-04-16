@@ -99,6 +99,12 @@ protected:
 	size_t getButtonCount() const {
 		return _buttons.size();
 	}
+
+	/**
+	 * Draws the buttons
+	 */
+	void drawButtons();
+
 public:
 	ScrollView(const Common::String &name);
 	ScrollView(const Common::String &name, UIElement *owner);
@@ -140,6 +146,13 @@ public:
 	 */
 	void setButtonEnabled(int buttonNum, bool enabled) {
 		_buttons[buttonNum]._enabled = enabled;
+	}
+
+	/**
+	 * Return true if a button is enabled
+	 */
+	bool isButtonEnabled(int buttonNum) const {
+		return _buttons[buttonNum]._enabled;
 	}
 
 	/**

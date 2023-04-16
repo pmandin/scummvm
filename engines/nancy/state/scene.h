@@ -48,13 +48,18 @@ struct SceneChangeDescription;
 
 namespace Action {
 class SliderPuzzle;
-class PlayPrimaryVideoChan0;
+class ConversationSound;
+}
+
+namespace Misc {
+class Lightning;
 }
 
 namespace UI {
 class Button;
 class ViewportOrnaments;
 class TextboxOrnaments;
+class InventoryBoxOrnaments;
 class Clock;
 }
 
@@ -71,7 +76,6 @@ struct SceneInfo {
 class Scene : public State, public Common::Singleton<Scene> {
 	friend class Nancy::Action::ActionRecord;
 	friend class Nancy::Action::ActionManager;
-	friend class Nancy::Action::SliderPuzzle;
 	friend class Nancy::NancyConsole;
 	friend class Nancy::NancyEngine;
 
@@ -115,8 +119,8 @@ public:
 
 	// State API
 	void process() override;
-	void onStateEnter() override;
-	void onStateExit() override;
+	void onStateEnter(const NancyState::NancyState prevState) override;
+	bool onStateExit(const NancyState::NancyState nextState) override;
 
 	void changeScene(uint16 id, uint16 frame, uint16 verticalOffset, byte continueSceneSound, int8 paletteID = -1);
 	void changeScene(const SceneChangeDescription &sceneDescription);
@@ -176,8 +180,15 @@ public:
 	SceneInfo &getNextSceneInfo() { return _sceneState.nextScene; }
 	const SceneSummary &getSceneSummary() const { return _sceneState.summary; }
 
-	void setActivePrimaryVideo(Action::PlayPrimaryVideoChan0 *activeVideo);
-	Action::PlayPrimaryVideoChan0 *getActivePrimaryVideo();
+	void setActiveConversation(Action::ConversationSound *activeConversation);
+	Action::ConversationSound *getActiveConversation();
+
+	// The Vampire Diaries only;
+	void beginLightning(int16 distance, uint16 pulseTime, int16 rgbPercent);
+
+	// Game-specific data that needs to be saved/loaded
+	SliderPuzzleState *_sliderPuzzleState;
+	RippedLetterPuzzleState *_rippedLetterPuzzleState;
 
 private:
 	void init();
@@ -230,11 +241,6 @@ private:
 		int16 primaryVideoResponsePicked = -1;
 	};
 
-	struct SliderPuzzleState {
-		Common::Array<Common::Array<int16>> playerTileOrder;
-		bool playerHasTriedPuzzle;
-	};
-
 	// UI
 	UI::FullScreenImage _frame;
 	UI::Viewport _viewport;
@@ -243,30 +249,32 @@ private:
 
 	UI::Button *_menuButton;
 	UI::Button *_helpButton;
+	Time _buttonPressActivationTime;
 
 	UI::ViewportOrnaments *_viewportOrnaments;
 	UI::TextboxOrnaments *_textboxOrnaments;
+	UI::InventoryBoxOrnaments *_inventoryBoxOrnaments;
 	UI::Clock *_clock;
 
-	// Data
+	// General data
 	SceneState _sceneState;
 	PlayFlags _flags;
 	Timers _timers;
-	SliderPuzzleState _sliderPuzzleState;
 	uint16 _difficulty;
 	Common::Array<uint16> _hintsRemaining;
 	int16 _lastHintCharacter;
 	int16 _lastHintID;
 	NancyState::NancyState _gameStateRequested;
 
+	Misc::Lightning *_lightning;
+
 	Common::Rect _mapHotspot;
 
 	Action::ActionManager _actionManager;
-	Action::PlayPrimaryVideoChan0 *_activePrimaryVideo;
+	Action::ConversationSound *_activeConversation;
 
 	State _state;
 
-	bool _isComingFromMenu = true;
 	bool _shouldClearTextbox = true;
 };
 

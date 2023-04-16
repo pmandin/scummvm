@@ -73,8 +73,6 @@ cRenderSettings::cRenderSettings() {
 
 //-----------------------------------------------------------------------
 
-
-
 cRenderer3D::cRenderer3D(iLowLevelGraphics *apLowLevelGraphics, cResources *apResources,
 						 cMeshCreator *apMeshCreator, cRenderList *apRenderList) {
 	Hpl1::logInfo(Hpl1::kDebugGraphics, "%s", "Creating Renderer3D\n");
@@ -563,18 +561,20 @@ void cRenderer3D::InitSkyBox() {
 
 //-----------------------------------------------------------------------
 
+static void clearTextures(uint start, cRenderSettings &rendererSettings, iLowLevelGraphics *lowLevelGfx) {
+	for (uint i = start; i < MAX_TEXTUREUNITS; ++i) {
+		if (rendererSettings.mpTexture[i]) {
+			lowLevelGfx->SetTexture(i, nullptr);
+			rendererSettings.mpTexture[i] = nullptr;
+		}
+	}
+}
+
 void cRenderer3D::RenderFog(cCamera3D *apCamera) {
 	if (mRenderSettings.mbFogActive == false || !_solidFogProgram)
 		return;
-	int i;
-	//////////////////////////////////
-	// Set textures to NULL
-	for (i = 0; i < MAX_TEXTUREUNITS; ++i) {
-		if (mRenderSettings.mpTexture[i]) {
-			mpLowLevelGraphics->SetTexture(i, NULL);
-			mRenderSettings.mpTexture[i] = NULL;
-		}
-	}
+
+	clearTextures(0, mRenderSettings, mpLowLevelGraphics);
 
 	//////////////////////////////////
 	// Set fog program
@@ -585,7 +585,6 @@ void cRenderer3D::RenderFog(cCamera3D *apCamera) {
 	_solidFogProgram->SetColor3f("fogColor", mRenderSettings.mFogColor);
 	_solidFogProgram->SetFloat("fogStart", mRenderSettings.mfFogStart);
 	_solidFogProgram->SetFloat("fogEnd", mRenderSettings.mfFogEnd);
-
 
 	//////////////////////////////////
 	// Blend mode
@@ -614,7 +613,7 @@ void cRenderer3D::RenderFog(cCamera3D *apCamera) {
 																			  *pMtx));
 
 			_solidFogProgram->SetMatrixf("worldViewProj", eGpuProgramMatrix_ViewProjection,
-											 eGpuProgramMatrixOp_Identity);
+										 eGpuProgramMatrixOp_Identity);
 		}
 		//////////////////
 		// NULL Model view matrix (static)
@@ -622,7 +621,7 @@ void cRenderer3D::RenderFog(cCamera3D *apCamera) {
 			mpLowLevelGraphics->SetMatrix(eMatrix_ModelView, apCamera->GetViewMatrix());
 
 			_solidFogProgram->SetMatrixf("worldViewProj", eGpuProgramMatrix_ViewProjection,
-											 eGpuProgramMatrixOp_Identity);
+										 eGpuProgramMatrixOp_Identity);
 		}
 
 		pObject->GetVertexBuffer()->Bind();
@@ -639,13 +638,11 @@ void cRenderer3D::RenderSkyBox(cCamera3D *apCamera) {
 	if (mbSkyBoxActive == false)
 		return;
 
-	Hpl1::logInfo(Hpl1::kDebugRenderer, "%s", "Drawing skybox");
+	Hpl1::logInfo(Hpl1::kDebugRenderer, "%s\n", "Drawing skybox");
 
 	if (mRenderSettings.gpuProgram) {
 		mRenderSettings.gpuProgram->UnBind();
 		mRenderSettings.gpuProgram = nullptr;
-		if (mbLog)
-			Log(" Setting Vertex program: NULL\n");
 	}
 
 	if (mRenderSettings.mpVtxBuffer) {
@@ -655,14 +652,7 @@ void cRenderer3D::RenderSkyBox(cCamera3D *apCamera) {
 			Log(" Setting Vertex Buffer: NULL\n");
 	}
 
-	for (int i = 1; i < MAX_TEXTUREUNITS; ++i) {
-		if (mRenderSettings.mpTexture[i]) {
-			mpLowLevelGraphics->SetTexture(i, NULL);
-			mRenderSettings.mpTexture[i] = NULL;
-			if (mbLog)
-				Log(" Setting Texture %d : NULL\n", i);
-		}
-	}
+	clearTextures(1, mRenderSettings, mpLowLevelGraphics);
 
 	mRenderSettings.mbMatrixWasNULL = false;
 
@@ -670,7 +660,7 @@ void cRenderer3D::RenderSkyBox(cCamera3D *apCamera) {
 
 	// Calculate the size of the sky box need to just touch the far clip plane.
 	float fFarClip = apCamera->GetFarClipPlane();
-	float fSide = sqrt((fFarClip * fFarClip) / 3) * 0.95f;
+	float fSide = fFarClip / sqrt(3) * 0.95f;
 	mtxSky.m[0][0] = fSide;
 	mtxSky.m[1][1] = fSide;
 	mtxSky.m[2][2] = fSide;
@@ -776,7 +766,7 @@ void cRenderer3D::RenderOcclusionQueries(cCamera3D *apCamera) {
 			// Set the vertex program matrix.
 			if (_diffuseProgram)
 				_diffuseProgram->SetMatrixf("worldViewProj", eGpuProgramMatrix_ViewProjection,
-												eGpuProgramMatrixOp_Identity);
+											eGpuProgramMatrixOp_Identity);
 
 			if (mbLog)
 				Log(" Setting matrix %d\n", pObject->mpMatrix);
@@ -879,7 +869,7 @@ void cRenderer3D::RenderTrans(cCamera3D *apCamera) {
 		mRenderSettings.mpTexture[i] = NULL;
 	}*/
 
-	/*cVector3f vForward = */apCamera->GetForward();
+	/*cVector3f vForward = */ apCamera->GetForward();
 
 	//////////////////////////////////
 	// Iterate the query objects
@@ -1118,8 +1108,8 @@ void cRenderer3D::RenderTrans(cCamera3D *apCamera) {
 				mRenderSettings.mbMatrixWasNULL = true;
 			}
 			refractProgram->SetMatrixf("worldViewProj",
-										   eGpuProgramMatrix_ViewProjection,
-										   eGpuProgramMatrixOp_Identity);
+									   eGpuProgramMatrix_ViewProjection,
+									   eGpuProgramMatrixOp_Identity);
 
 			// Eye position
 			if (pMaterial->GetRefractionUsesEye()) {
@@ -1330,8 +1320,8 @@ void cRenderer3D::RenderTrans(cCamera3D *apCamera) {
 		if (mRenderSettings.gpuProgram && bSetVtxProgMatrix) {
 			// Might be quicker if this is set directly
 			mRenderSettings.gpuProgram->SetMatrixf("worldViewProj",
-														eGpuProgramMatrix_ViewProjection,
-														eGpuProgramMatrixOp_Identity);
+												   eGpuProgramMatrix_ViewProjection,
+												   eGpuProgramMatrixOp_Identity);
 			if (mRenderSettings.gpuProgramSetup) {
 				mRenderSettings.gpuProgramSetup->SetupMatrix(pModelMatrix, &mRenderSettings);
 			}

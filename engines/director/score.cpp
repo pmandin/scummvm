@@ -19,9 +19,13 @@
  *
  */
 
+#define FORBIDDEN_SYMBOL_EXCEPTION_getenv
+
 #include "common/config-manager.h"
 #include "common/file.h"
+#include "common/md5.h"
 #include "common/memstream.h"
+#include "common/punycode.h"
 #include "common/substream.h"
 
 #include "audio/audiostream.h"
@@ -466,6 +470,8 @@ void Score::update() {
 		} else if (tempo <= 120) {
 			// FPS
 			_currentFrameRate = tempo;
+			if (g_director->_fpsLimit)
+				_currentFrameRate = MIN(g_director->_fpsLimit, _currentFrameRate);
 			_nextFrameTime = g_system->getMillis() + 1000.0 / (float)_currentFrameRate;
 			debugC(5, kDebugLoading, "Score::update(): setting _nextFrameTime to %d based on a framerate of %d", _nextFrameTime, tempo);
 		} else {
@@ -1064,26 +1070,107 @@ void Score::invalidateRectsForMember(CastMember *member) {
 	}
 }
 
+static Common::String computeSurfaceMd5(const Graphics::Surface *surf) {
+	Common::MemoryReadStream stream((const byte *)surf->getPixels(), surf->pitch * surf->h);
+
+	return Common::computeStreamMD5AsString(stream);
+}
+
 void Score::screenShot() {
+#ifndef USE_PNG
+		warning("Screenshot requested, but PNG support is not compiled in");
+
+		return;
+#else
+
 	Graphics::Surface rawSurface = _window->getSurface()->rawSurface();
 	const Graphics::PixelFormat requiredFormat_4byte(4, 8, 8, 8, 8, 0, 8, 16, 24);
 	Graphics::Surface *newSurface = rawSurface.convertTo(requiredFormat_4byte, _vm->getPalette());
+
 	Common::String currentPath = _vm->getCurrentPath().c_str();
 	Common::replace(currentPath, Common::String(g_director->_dirSeparator), "-"); // exclude dir separator from screenshot filename prefix
-	Common::String prefix = Common::String::format("%s%s", currentPath.c_str(), _movie->getMacName().c_str());
+	Common::String prefix = Common::String::format("%s%s", currentPath.c_str(), Common::punycode_encodefilename(_movie->getMacName()).c_str());
 	Common::String filename = dumpScriptName(prefix.c_str(), kMovieScript, g_director->_framesRan, "png");
 
+	const char *buildNumber = getenv("BUILD_NUMBER");
+
+	// If we are not inside of buildbot, we just dump it
+	if (buildNumber && ConfMan.hasKey("screenshotpath")) {
+		// The filename is in the form:
+		// ./dumps/theapartment/25/xn--Main Menu-zd0e-19.png
+
+		Common::String buildDir = Common::String::format("%s/%s", ConfMan.get("screenshotpath").c_str(),
+			g_director->getTargetName().c_str());
+
+		// We run for the first time, let's check if we had the directory previously
+		if (_previousBuildBotBuild == -1) {
+			Common::FSNode dir(buildDir);
+
+			if (!dir.exists())
+				_previousBuildBotBuild = 0; // We will skip attempts to search screenshots
+			else
+				_previousBuildBotBuild = atoi(buildNumber) - 1;
+		}
+
+		int prevbuild = _previousBuildBotBuild;
+
+		// Now we try to find any previous dump
+		while (prevbuild > 0) {
+			filename = Common::String::format("%s/%d/%s-%d.png", buildDir.c_str(), prevbuild, prefix.c_str(), g_director->_framesRan);
+
+			Common::FSNode fs(filename);
+
+			if (fs.exists())
+				break;
+
+			prevbuild--;
+		}
+
+		// We found a previous screenshot. Let's compare it
+		if (prevbuild > 0) {
+			Common::FSNode fs(filename);
+			Image::PNGDecoder decoder;
+			Common::SeekableReadStream *stream = fs.createReadStream();
+
+			if (stream && decoder.loadStream(*stream)) {
+				Common::String oldMd5 = computeSurfaceMd5(decoder.getSurface());
+				Common::String newMd5 = computeSurfaceMd5(newSurface);
+
+				if (oldMd5 == newMd5) {
+					warning("Screenshot is equal to previous one, skipping: %s", filename.c_str());
+					newSurface->free();
+					delete newSurface;
+					delete stream;
+
+					return;
+				}
+			} else {
+				warning("Error loading previous screenshot %s", filename.c_str());
+			}
+
+			delete stream;
+		}
+
+		// We are here because we either have nothing to compare with or
+		// the screenshot was different from the previous one.
+		//
+		// Regenerate file name with the correct build number
+		filename = Common::String::format("%s/%s/%s-%d.png", buildDir.c_str(), buildNumber, prefix.c_str(), g_director->_framesRan);
+	}
+
 	Common::DumpFile screenshotFile;
-	if (screenshotFile.open(filename)) {
-#ifdef USE_PNG
+	if (screenshotFile.open(filename, true)) {
+		debug("Dumping screenshot to %s", filename.c_str());
+
 		Image::writePNG(screenshotFile, *newSurface);
-#else
-		warning("Screenshot requested, but PNG support is not compiled in");
-#endif
+	} else {
+		warning("Cannot write screenshot to %s", filename.c_str());
 	}
 
 	newSurface->free();
 	delete newSurface;
+
+#endif // USE_PNG
 }
 
 uint16 Score::getSpriteIDFromPos(Common::Point pos) {

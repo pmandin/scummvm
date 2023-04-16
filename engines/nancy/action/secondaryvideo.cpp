@@ -103,7 +103,7 @@ void PlaySecondaryVideo::updateGraphics() {
 
 		if (_decoder.isPlaying()) {
 			if (_decoder.needsUpdate()) {
-				GraphicsManager::copyToManaged(*_decoder.decodeNextFrame(), _fullFrame, _paletteFilename.size() > 0);
+				GraphicsManager::copyToManaged(*_decoder.decodeNextFrame(), _fullFrame, _paletteFilename.size(), _videoFormat == kSmallVideoFormat);
 				_needsRedraw = true;
 			}
 
@@ -143,10 +143,6 @@ void PlaySecondaryVideo::updateGraphics() {
 
 void PlaySecondaryVideo::onPause(bool pause) {
 	_decoder.pauseVideo(pause);
-
-	if (!pause) {
-		registerGraphics();
-	}
 }
 
 void PlaySecondaryVideo::handleInput(NancyInput &input) {
@@ -165,7 +161,10 @@ void PlaySecondaryVideo::readData(Common::SeekableReadStream &stream) {
 	readFilename(stream, _paletteFilename);
 	ser.skip(10); // video overlay bitmap filename
 
-	ser.skip(12, kGameTypeVampire, kGameTypeVampire);
+	ser.skip(2, kGameTypeVampire, kGameTypeVampire);
+	ser.syncAsUint16LE(_videoFormat, kGameTypeVampire, kGameTypeVampire);
+	ser.skip(8, kGameTypeVampire, kGameTypeVampire);
+
 	ser.syncAsUint16LE(_videoHotspots, kGameTypeVampire, kGameTypeVampire);
 
 	ser.syncAsUint16LE(_loopFirstFrame);

@@ -20,6 +20,7 @@
  */
 
 #include "common/formats/winexe.h"
+#include "common/config-manager.h"
 #include "common/endian.h"
 #include "common/file.h"
 #include "common/math.h"
@@ -87,6 +88,74 @@ void Runtime::RenderSection::init(const Common::Rect &paramRect, const Graphics:
 Runtime::OSEvent::OSEvent() : type(kOSEventTypeInvalid), keyCode(static_cast<Common::KeyCode>(0)) {
 }
 
+Runtime::StackValue::ValueUnion::ValueUnion() {
+}
+
+Runtime::StackValue::ValueUnion::ValueUnion(StackInt_t iVal) : i(iVal) {
+}
+
+Runtime::StackValue::ValueUnion::ValueUnion(const Common::String &strVal) : s(strVal) {
+}
+
+Runtime::StackValue::ValueUnion::ValueUnion(Common::String &&strVal) : s(Common::move(strVal)) {
+}
+
+Runtime::StackValue::ValueUnion::~ValueUnion() {
+}
+
+Runtime::StackValue::StackValue() : type(kNumber), value(0) {
+	new (&value) ValueUnion(0);
+}
+
+Runtime::StackValue::StackValue(const StackValue &other) : type(kNumber), value(0) {
+	(*this) = other;
+}
+
+Runtime::StackValue::StackValue(StackValue &&other) : type(kNumber), value(0) {
+	(*this) = Common::move(other);
+}
+
+Runtime::StackValue::StackValue(StackInt_t i) : type(kNumber), value(i) {
+}
+
+Runtime::StackValue::StackValue(const Common::String &str) : type(kString), value(str) {
+}
+
+Runtime::StackValue::StackValue(Common::String &&str) : type(kString), value(Common::move(str)) {
+}
+
+Runtime::StackValue::~StackValue() {
+	value.~ValueUnion();
+}
+
+Runtime::StackValue &Runtime::StackValue::operator=(const StackValue &other) {
+	value.~ValueUnion();
+
+	if (other.type == StackValue::kNumber)
+		new (&value) ValueUnion(other.value.i);
+
+	if (other.type == StackValue::kString)
+		new (&value) ValueUnion(other.value.s);
+
+	type = other.type;
+
+	return *this;
+}
+
+Runtime::StackValue &Runtime::StackValue::operator=(StackValue &&other) {
+	value.~ValueUnion();
+
+	if (other.type == StackValue::kNumber)
+		new (&value) ValueUnion(other.value.i);
+
+	if (other.type == StackValue::kString)
+		new (&value) ValueUnion(Common::move(other.value.s));
+
+	type = other.type;
+
+	return *this;
+}
+
 Runtime::Gyro::Gyro() {
 	reset();
 }
@@ -144,8 +213,10 @@ void Runtime::GyroState::reset() {
 	isWaitingForAnimation = false;
 }
 
+Runtime::SubtitleDef::SubtitleDef() : subIndex(0), color{0, 0, 0}, unknownValue1(0), unknownValue2(0) {
+}
 
-SfxPlaylistEntry::SfxPlaylistEntry() : frame(0), balance(0), volume(0) {
+SfxPlaylistEntry::SfxPlaylistEntry() : frame(0), balance(0), volume(0), isUpdate(false) {
 }
 
 SfxPlaylist::SfxPlaylist() {
@@ -211,7 +282,7 @@ void SfxData::load(Common::SeekableReadStream &stream, Audio::Mixer *mixer) {
 
 			sample->memoryStream.reset(new Common::MemoryReadStream(&sample->soundData[0], static_cast<uint32>(size)));
 			sample->audioStream.reset(Audio::makeWAVStream(sample->memoryStream.get(), DisposeAfterUse::NO));
-			sample->audioPlayer.reset(new AudioPlayer(mixer, sample->audioStream));
+			sample->audioPlayer.reset(new AudioPlayer(mixer, sample->audioStream, Audio::Mixer::kSFXSoundType));
 
 			this->sounds[keyValue.key] = sample;
 		}
@@ -221,7 +292,23 @@ void SfxData::load(Common::SeekableReadStream &stream, Audio::Mixer *mixer) {
 		Common::SharedPtr<SfxPlaylist> playlist;
 
 		for (const Common::INIFile::KeyValue &keyValue : playlistsSection->keys) {
-			const Common::String &key = keyValue.key;
+			const Common::String &baseKey = keyValue.key;
+
+			// Strip inline comments
+			uint keyValidLength = 0;
+			for (uint i = 0; i < baseKey.size(); i++) {
+				char c = baseKey[i];
+				if ((c & 0x80) == 0 && ((c & 0x7f) <= ' '))
+					continue;
+
+				if (c == ';')
+					break;
+
+				keyValidLength = i + 1;
+			}
+
+			Common::String key = baseKey.substr(0, keyValidLength);
+
 
 			if (key.size() == 0)
 				continue;
@@ -282,9 +369,16 @@ void SfxData::load(Common::SeekableReadStream &stream, Audio::Mixer *mixer) {
 					continue;
 				}
 
-				SoundMap_t::const_iterator soundIt = this->sounds.find(tokens[1]);
+				bool isUpdate = false;
+				Common::String soundName = tokens[1];
+				if (soundName.size() >= 1 && soundName[0] == '*') {
+					soundName = soundName.substr(1);
+					isUpdate = true;
+				}
+
+				SoundMap_t::const_iterator soundIt = this->sounds.find(soundName);
 				if (soundIt == this->sounds.end()) {
-					warning("Playlist entry referenced non-existent sound: %s", tokens[1].c_str());
+					warning("Playlist entry referenced non-existent sound: %s", soundName.c_str());
 					continue;
 				}
 
@@ -293,6 +387,7 @@ void SfxData::load(Common::SeekableReadStream &stream, Audio::Mixer *mixer) {
 				plEntry.frame = frameNum;
 				plEntry.volume = volume;
 				plEntry.sample = soundIt->_value;
+				plEntry.isUpdate = isUpdate;
 
 				playlist->entries.push_back(plEntry);
 			} else {
@@ -303,12 +398,7 @@ void SfxData::load(Common::SeekableReadStream &stream, Audio::Mixer *mixer) {
 	}
 }
 
-CachedSound::CachedSound()
-	: rampStartVolume(0), rampEndVolume(0), rampRatePerMSec(0), rampStartTime(0), rampTerminateOnCompletion(false),
-	  volume(0), balance(0), effectiveBalance(0), effectiveVolume(0), is3D(false), x(0), y(0), z(0) {
-}
-
-CachedSound::~CachedSound() {
+SoundCache::~SoundCache() {
 	// Dispose player first so playback stops
 	this->player.reset();
 
@@ -316,6 +406,42 @@ CachedSound::~CachedSound() {
 	this->loopingStream.reset();
 
 	this->stream.reset();
+}
+
+SoundInstance::SoundInstance()
+	: id(0), rampStartVolume(0), rampEndVolume(0), rampRatePerMSec(0), rampStartTime(0), rampTerminateOnCompletion(false),
+	  volume(0), balance(0), effectiveBalance(0), effectiveVolume(0), is3D(false), isLooping(false), isSpeech(false), isSilencedLoop(false), x(0), y(0), endTime(0) {
+}
+
+SoundInstance::~SoundInstance() {
+}
+
+RandomAmbientSound::RandomAmbientSound() : volume(0), balance(0), frequency(0), sceneChangesRemaining(0) {
+}
+
+void RandomAmbientSound::write(Common::WriteStream *stream) const {
+	stream->writeUint32BE(name.size());
+	stream->writeString(name);
+
+	stream->writeUint32BE(volume);
+	stream->writeSint32BE(balance);
+
+	stream->writeUint32BE(frequency);
+	stream->writeUint32BE(sceneChangesRemaining);
+}
+
+void RandomAmbientSound::read(Common::ReadStream *stream) {
+	uint nameLen = stream->readUint32BE();
+	if (stream->eos() || stream->err())
+		nameLen = 0;
+
+	name = stream->readString(0, nameLen);
+
+	volume = stream->readUint32BE();
+	balance = stream->readSint32BE();
+
+	frequency = stream->readUint32BE();
+	sceneChangesRemaining = stream->readUint32BE();
 }
 
 TriggeredOneShot::TriggeredOneShot() : soundID(0), uniqueSlot(0) {
@@ -329,7 +455,29 @@ bool TriggeredOneShot::operator!=(const TriggeredOneShot &other) const {
 	return !((*this) == other);
 }
 
+void TriggeredOneShot::write(Common::WriteStream *stream) const {
+	stream->writeUint32BE(soundID);
+	stream->writeUint32BE(uniqueSlot);
+}
+
+void TriggeredOneShot::read(Common::ReadStream *stream) {
+	soundID = stream->readUint32BE();
+	uniqueSlot = stream->readUint32BE();
+}
+
 StaticAnimParams::StaticAnimParams() : initialDelay(0), repeatDelay(0), lockInteractions(false) {
+}
+
+void StaticAnimParams::write(Common::WriteStream *stream) const {
+	stream->writeUint32BE(initialDelay);
+	stream->writeUint32BE(repeatDelay);
+	stream->writeByte(lockInteractions ? 1 : 0);
+}
+
+void StaticAnimParams::read(Common::ReadStream *stream) {
+	initialDelay = stream->readUint32BE();
+	repeatDelay = stream->readUint32BE();
+	lockInteractions = (stream->readByte() != 0);
 }
 
 StaticAnimation::StaticAnimation() : currentAlternation(0), nextStartTime(0) {
@@ -344,19 +492,252 @@ FrameData2::FrameData2() : x(0), y(0), angle(0), frameNumberInArea(0), unknown(0
 SoundParams3D::SoundParams3D() : minRange(0), maxRange(0), unknownRange(0) {
 }
 
+void SoundParams3D::write(Common::WriteStream *stream) const {
+	stream->writeUint32BE(minRange);
+	stream->writeUint32BE(maxRange);
+	stream->writeUint32BE(unknownRange);
+}
+
+void SoundParams3D::read(Common::ReadStream *stream) {
+	minRange = stream->readUint32BE();
+	maxRange = stream->readUint32BE();
+	unknownRange = stream->readUint32BE();
+}
+
 InventoryItem::InventoryItem() : itemID(0), highlighted(false) {
+}
+
+Fraction::Fraction() : numerator(0), denominator(1) {
+}
+
+Fraction::Fraction(uint pNumerator, uint pDenominator) : numerator(pNumerator), denominator(pDenominator) {
+}
+
+SaveGameSnapshot::InventoryItem::InventoryItem() : itemID(0), highlighted(false) {
+}
+
+void SaveGameSnapshot::InventoryItem::write(Common::WriteStream *stream) const {
+	stream->writeUint32BE(itemID);
+	stream->writeByte(highlighted ? 1 : 0);
+}
+
+void SaveGameSnapshot::InventoryItem::read(Common::ReadStream *stream) {
+	itemID = stream->readUint32BE();
+	highlighted = (stream->readByte() != 0);
+}
+
+SaveGameSnapshot::Sound::Sound() : id(0), volume(0), balance(0), is3D(false), isLooping(false), isSpeech(false), x(0), y(0) {
+}
+
+void SaveGameSnapshot::Sound::write(Common::WriteStream *stream) const {
+	stream->writeUint32BE(name.size());
+	stream->writeString(name);
+
+	stream->writeUint32BE(id);
+	stream->writeUint32BE(volume);
+	stream->writeSint32BE(balance);
+
+	stream->writeByte(is3D ? 1 : 0);
+	stream->writeByte(isLooping ? 1 : 0);
+	stream->writeByte(isSpeech ? 1 : 0);
+
+	stream->writeSint32BE(x);
+	stream->writeSint32BE(y);
+
+	params3D.write(stream);
+}
+
+void SaveGameSnapshot::Sound::read(Common::ReadStream *stream) {
+	uint nameLen = stream->readUint32BE();
+
+	if (stream->eos() || stream->err() || nameLen > 256)
+		nameLen = 0;
+
+	name = stream->readString(0, nameLen);
+
+	id = stream->readUint32BE();
+	volume = stream->readUint32BE();
+	balance = stream->readSint32BE();
+
+	is3D = (stream->readByte() != 0);
+	isLooping = (stream->readByte() != 0);
+	isSpeech = (stream->readByte() != 0);
+
+	x = stream->readSint32BE();
+	y = stream->readSint32BE();
+
+	params3D.read(stream);
+}
+
+SaveGameSnapshot::SaveGameSnapshot() : roomNumber(0), screenNumber(0), direction(0), escOn(false), musicTrack(0), loadedAnimation(0),
+									   animDisplayingFrame(0), listenerX(0), listenerY(0), listenerAngle(0) {
+}
+
+void SaveGameSnapshot::write(Common::WriteStream *stream) const {
+	stream->writeUint32BE(kSaveGameIdentifier);
+	stream->writeUint32BE(kSaveGameCurrentVersion);
+
+	stream->writeUint32BE(roomNumber);
+	stream->writeUint32BE(screenNumber);
+	stream->writeUint32BE(direction);
+
+	stream->writeByte(escOn ? 1 : 0);
+	stream->writeSint32BE(musicTrack);
+
+	stream->writeUint32BE(loadedAnimation);
+	stream->writeUint32BE(animDisplayingFrame);
+
+	pendingStaticAnimParams.write(stream);
+	pendingSoundParams3D.write(stream);
+
+	stream->writeSint32BE(listenerX);
+	stream->writeSint32BE(listenerY);
+	stream->writeSint32BE(listenerAngle);
+
+	stream->writeUint32BE(inventory.size());
+	stream->writeUint32BE(sounds.size());
+	stream->writeUint32BE(triggeredOneShots.size());
+	stream->writeUint32BE(sayCycles.size());
+	stream->writeUint32BE(randomAmbientSounds.size());
+
+	stream->writeUint32BE(variables.size());
+	stream->writeUint32BE(timers.size());
+
+	for (const InventoryItem &invItem : inventory)
+		invItem.write(stream);
+
+	for (const Sound &sound : sounds)
+		sound.write(stream);
+
+	for (const TriggeredOneShot &triggeredOneShot : triggeredOneShots)
+		triggeredOneShot.write(stream);
+
+	for (const Common::HashMap<uint32, uint>::Node &cycle : sayCycles) {
+		stream->writeUint32BE(cycle._key);
+		stream->writeUint32BE(cycle._value);
+	}
+
+	for (const RandomAmbientSound &randomAmbientSound : randomAmbientSounds)
+		randomAmbientSound.write(stream);
+
+	for (const Common::HashMap<uint32, int32>::Node &var : variables) {
+		stream->writeUint32BE(var._key);
+		stream->writeSint32BE(var._value);
+	}
+
+	for (const Common::HashMap<uint, uint32>::Node &timer : timers) {
+		stream->writeUint32BE(timer._key);
+		stream->writeUint32BE(timer._value);
+	}
+}
+
+LoadGameOutcome SaveGameSnapshot::read(Common::ReadStream *stream) {
+	uint32 saveIdentifier = stream->readUint32BE();
+	uint32 saveVersion = stream->readUint32BE();
+
+	if (stream->eos() || stream->err())
+		return kLoadGameOutcomeMissingVersion;
+
+	if (saveIdentifier != kSaveGameIdentifier)
+		return kLoadGameOutcomeInvalidVersion;
+
+	if (saveVersion > kSaveGameCurrentVersion)
+		return kLoadGameOutcomeSaveIsTooNew;
+
+	if (saveVersion < kSaveGameEarliestSupportedVersion)
+		return kLoadGameOutcomeSaveIsTooOld;
+	
+	roomNumber = stream->readUint32BE();
+	screenNumber = stream->readUint32BE();
+	direction = stream->readUint32BE();
+
+	escOn = (stream->readByte() != 0);
+	musicTrack = stream->readSint32BE();
+
+	loadedAnimation = stream->readUint32BE();
+	animDisplayingFrame = stream->readUint32BE();
+
+	pendingStaticAnimParams.read(stream);
+	pendingSoundParams3D.read(stream);
+
+	listenerX = stream->readSint32BE();
+	listenerY = stream->readSint32BE();
+	listenerAngle = stream->readSint32BE();
+
+	uint numInventory = stream->readUint32BE();
+	uint numSounds = stream->readUint32BE();
+	uint numOneShots = stream->readUint32BE();
+
+	uint numSayCycles = 0;
+	if (saveVersion >= 4)
+		numSayCycles = stream->readUint32BE();
+
+	uint numRandomAmbientSounds = 0;
+	if (saveVersion >= 3)
+		numRandomAmbientSounds = stream->readUint32BE();
+
+	uint numVars = stream->readUint32BE();
+	uint numTimers = stream->readUint32BE();
+
+	if (stream->eos() || stream->err())
+		return kLoadGameOutcomeSaveDataCorrupted;
+
+	inventory.resize(numInventory);
+	sounds.resize(numSounds);
+	triggeredOneShots.resize(numOneShots);
+	randomAmbientSounds.resize(numRandomAmbientSounds);
+
+	for (uint i = 0; i < numInventory; i++)
+		inventory[i].read(stream);
+
+	for (uint i = 0; i < numSounds; i++)
+		sounds[i].read(stream);
+
+	for (uint i = 0; i < numOneShots; i++)
+		triggeredOneShots[i].read(stream);
+
+	for (uint i = 0; i < numSayCycles; i++) {
+		uint32 key = stream->readUint32BE();
+		uint value = stream->readUint32BE();
+
+		sayCycles[key] = value;
+	}
+
+	for (uint i = 0; i < numRandomAmbientSounds; i++)
+		randomAmbientSounds[i].read(stream);
+
+	for (uint i = 0; i < numVars; i++) {
+		uint32 key = stream->readUint32BE();
+		int32 value = stream->readSint32BE();
+
+		variables[key] = value;
+	}
+
+	for (uint i = 0; i < numTimers; i++) {
+		uint32 key = stream->readUint32BE();
+		uint32 value = stream->readUint32BE();
+
+		timers[key] = value;
+	}
+
+	if (stream->eos() || stream->err())
+		return kLoadGameOutcomeSaveDataCorrupted;
+
+	return kLoadGameOutcomeSucceeded;
 }
 
 Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &rootFSNode, VCruiseGameID gameID)
 	: _system(system), _mixer(mixer), _roomNumber(1), _screenNumber(0), _direction(0), _haveHorizPanAnimations(false), _loadedRoomNumber(0), _activeScreenNumber(0),
 	  _gameState(kGameStateBoot), _gameID(gameID), _havePendingScreenChange(false), _forceScreenChange(false), _havePendingReturnToIdleState(false), _havePendingCompletionCheck(false),
-	  _scriptNextInstruction(0), _escOn(false), _debugMode(false), _panoramaDirectionFlags(0),
+	  _havePendingPlayAmbientSounds(false), _ambientSoundFinishTime(0), _scriptNextInstruction(0), _escOn(false), _debugMode(false), _fastAnimationMode(false), _musicTrack(0), _panoramaDirectionFlags(0),
 	  _loadedAnimation(0), _animPendingDecodeFrame(0), _animDisplayingFrame(0), _animFirstFrame(0), _animLastFrame(0), _animStopFrame(0),
-	  _animFrameRateLock(0), _animStartTime(0), _animFramesDecoded(0), _animDecoderState(kAnimDecoderStateStopped),
+	  _animStartTime(0), _animFramesDecoded(0), _animDecoderState(kAnimDecoderStateStopped),
 	  _animPlayWhileIdle(false), _idleIsOnInteraction(false), _idleHaveClickInteraction(false), _idleHaveDragInteraction(false), _idleInteractionID(0), _haveIdleStaticAnimation(false),
 	  /*_loadedArea(0), */_lmbDown(false), _lmbDragging(false), _lmbReleaseWasClick(false), _lmbDownTime(0),
+	  _delayCompletionTime(0),
 	  _panoramaState(kPanoramaStateInactive),
-	  _listenerX(0), _listenerY(0), _listenerAngle(0) {
+	  _listenerX(0), _listenerY(0), _listenerAngle(0), _soundCacheIndex(0),
+	  _subtitleFont(nullptr), _subtitleExpireTime(0), _displayingSubtitles(false), _languageIndex(0) {
 
 	for (uint i = 0; i < kNumDirections; i++) {
 		_haveIdleAnimations[i] = false;
@@ -368,6 +749,10 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &roo
 		_panCursors[i] = 0;
 
 	_rng.reset(new Common::RandomSource("vcruise"));
+
+	_subtitleFont = FontMan.getFontByUsage(Graphics::FontManager::kGUIFont);
+	if (!_subtitleFont)
+		warning("Couldn't load subtitle font, subtitles will be disabled");
 }
 
 Runtime::~Runtime() {
@@ -446,6 +831,10 @@ void Runtime::setDebugMode(bool debugMode) {
 	}
 }
 
+void Runtime::setFastAnimationMode(bool fastAnimationMode) {
+	_fastAnimationMode = fastAnimationMode;
+}
+
 bool Runtime::runFrame() {
 	bool moreActions = true;
 	while (moreActions) {
@@ -458,6 +847,9 @@ bool Runtime::runFrame() {
 			return false;
 		case kGameStateIdle:
 			moreActions = runIdle();
+			break;
+		case kGameStateDelay:
+			moreActions = runDelay();
 			break;
 		case kGameStatePanLeft:
 			moreActions = runHorizontalPan(false);
@@ -526,6 +918,81 @@ bool Runtime::bootGame(bool newGame) {
 			error("Couldn't figure out what screen to start on");
 	}
 
+	Common::Language lang = Common::parseLanguage(ConfMan.get("language"));
+
+	bool foundLang = false;
+
+	if (_gameID == GID_REAH) {
+		_animSpeedRotation = Fraction(21, 1);	// Probably accurate
+		_animSpeedStaticAnim = Fraction(21, 1); // Probably accurate
+		_animSpeedDefault = Fraction(16, 1);    // Possibly not accurate
+
+		const Common::Language langIndexes[] = {
+			Common::PL_POL,
+			Common::EN_ANY,
+			Common::DE_DEU,
+			Common::FR_FRA,
+			Common::NL_NLD,
+			Common::ES_ESP,
+			Common::IT_ITA,
+		};
+
+		_languageIndex = 1;
+		uint langCount = sizeof(langIndexes) / sizeof(langIndexes[0]);
+
+		for (uint li = 0; li < langCount; li++) {
+			if (langIndexes[li] == lang) {
+				_languageIndex = li;
+				foundLang = true;
+				break;
+			}
+		}
+	} else if (_gameID == GID_SCHIZM) {
+		const Common::Language langIndexes[] = {
+			Common::PL_POL,
+			Common::EN_GRB,
+			Common::DE_DEU,
+			Common::FR_FRA,
+			Common::NL_NLD,
+			Common::ES_ESP,
+			Common::IT_ITA,
+			Common::RU_RUS,
+			Common::EL_GRC,
+			Common::EN_USA,
+		};
+
+		_languageIndex = 1;
+		uint langCount = sizeof(langIndexes) / sizeof(langIndexes[0]);
+
+		for (uint li = 0; li < langCount; li++) {
+			if (langIndexes[li] == lang) {
+				_languageIndex = li;
+				foundLang = true;
+				break;
+			}
+		}
+	}
+
+	if (!foundLang) {
+		// Maybe should pick this differently
+		if (_gameID == GID_REAH)
+			lang = Common::EN_ANY;
+		else if (_gameID == GID_SCHIZM)
+			lang = Common::EN_GRB;
+	}
+
+	Common::CodePage codePage = Common::CodePage::kWindows1252;
+
+	if (lang == Common::PL_POL)
+		codePage = Common::CodePage::kWindows1250;
+	else if (lang == Common::RU_RUS)
+		codePage = Common::CodePage::kWindows1251;
+	else if (lang == Common::EL_GRC)
+		codePage = Common::CodePage::kWindows1253;
+
+	loadSubtitles(codePage);
+	debug(1, "Subtitles loaded OK");
+
 	return true;
 }
 
@@ -539,10 +1006,16 @@ bool Runtime::runIdle() {
 		return true;
 	}
 
+	if (_havePendingPlayAmbientSounds) {
+		_havePendingPlayAmbientSounds = false;
+		triggerAmbientSounds();
+	}
+
 	if (_havePendingReturnToIdleState) {
 		_havePendingReturnToIdleState = false;
 
 		returnToIdleState();
+		drawCompass();
 		return true;
 	}
 
@@ -566,7 +1039,8 @@ bool Runtime::runIdle() {
 		// Try to re-trigger
 		StaticAnimation &sanim = _idleAnimations[_direction];
 		if (sanim.nextStartTime <= timestamp) {
-			changeAnimation(sanim.animDefs[sanim.currentAlternation], false);
+			const AnimationDef &animDef = sanim.animDefs[sanim.currentAlternation];
+			changeAnimation(animDef, animDef.firstFrame, false, _animSpeedStaticAnim);
 			_animPlayWhileIdle = true;
 		}
 	}
@@ -582,9 +1056,10 @@ bool Runtime::runIdle() {
 			detectPanoramaMouseMovement(osEvent.timestamp);
 
 			bool changedState = dischargeIdleMouseMove();
-			if (changedState)
+			if (changedState) {
+				drawCompass();
 				return true;
-
+			}
 		} else if (osEvent.type == kOSEventTypeLButtonUp) {
 			PanoramaState oldPanoramaState = _panoramaState;
 			_panoramaState = kPanoramaStateInactive;
@@ -594,8 +1069,10 @@ bool Runtime::runIdle() {
 
 			if (_lmbReleaseWasClick) {
 				bool changedState = dischargeIdleClick();
-				if (changedState)
+				if (changedState) {
+					drawCompass();
 					return true;
+				}
 			}
 
 			// If the released from panorama mode, pick up any interactions at the new mouse location, and change the mouse back
@@ -607,17 +1084,30 @@ bool Runtime::runIdle() {
 				_idleIsOnInteraction = false;
 
 				bool changedState = dischargeIdleMouseMove();
-				if (changedState)
+				if (changedState) {
+					drawCompass();
 					return true;
+				}
 			}
 		} else if (osEvent.type == kOSEventTypeLButtonDown) {
 			bool changedState = dischargeIdleMouseDown();
-			if (changedState)
+			if (changedState) {
+				drawCompass();
 				return true;
+			}
 		}
 	}
 
 	// Yield
+	return false;
+}
+
+bool Runtime::runDelay() {
+	if (g_system->getMillis() >= _delayCompletionTime) {
+		_gameState = kGameStateScript;
+		return true;
+	}
+
 	return false;
 }
 
@@ -702,7 +1192,7 @@ bool Runtime::runWaitForFacingToAnim() {
 	continuePlayingAnimation(true, true, animEnded);
 
 	if (animEnded) {
-		changeAnimation(_postFacingAnimDef, true);
+		changeAnimation(_postFacingAnimDef, _postFacingAnimDef.firstFrame, true, _animSpeedDefault);
 		_gameState = kGameStateWaitingForAnimation;
 		return true;
 	}
@@ -776,7 +1266,7 @@ bool Runtime::runGyroIdle() {
 		// firstFrame is left alone so playlists are based correctly.
 		animDef.lastFrame = initialFrame + _gyros.frameSeparation;
 
-		changeAnimation(animDef, initialFrame, false);
+		changeAnimation(animDef, initialFrame, false, _animSpeedDefault);
 
 		gyro.logState();
 		gyro.currentState--;
@@ -797,7 +1287,7 @@ bool Runtime::runGyroIdle() {
 		// firstFrame is left alone so playlists are based correctly.
 		animDef.lastFrame = initialFrame + _gyros.frameSeparation;
 
-		changeAnimation(animDef, initialFrame, false);
+		changeAnimation(animDef, initialFrame, false, _animSpeedDefault);
 
 		gyro.logState();
 		gyro.currentState++;
@@ -867,7 +1357,7 @@ void Runtime::continuePlayingAnimation(bool loop, bool useStopFrame, bool &outAn
 	uint32 millis = 0;
 
 	// Avoid spamming event recorder as much if we don't actually need to fetch millis, but also only fetch it once here.
-	if (_animFrameRateLock)
+	if (_animFrameRateLock.numerator)
 		millis = g_system->getMillis();
 
 	for (;;) {
@@ -877,9 +1367,9 @@ void Runtime::continuePlayingAnimation(bool loop, bool useStopFrame, bool &outAn
 			needNewFrame = true;
 			needsFirstFrame = false;
 		} else {
-			if (_animFrameRateLock) {
-				// if ((millis - startTime) / 1000 * frameRate) >= framesDecoded
-				if ((millis - _animStartTime) * static_cast<uint64>(_animFrameRateLock) >= (static_cast<uint64>(_animFramesDecoded) * 1000u))
+			if (_animFrameRateLock.numerator) {
+				// if ((millis - startTime) / 1000 * frameRate / frameRateDenominator) >= framesDecoded
+				if ((millis - _animStartTime) * static_cast<uint64>(_animFrameRateLock.numerator) >= (static_cast<uint64>(_animFramesDecoded) * static_cast<uint64>(_animFrameRateLock.denominator) * 1000u))
 					needNewFrame = true;
 			} else {
 				if (_animDecoder->getTimeToNextFrame() == 0)
@@ -902,13 +1392,6 @@ void Runtime::continuePlayingAnimation(bool loop, bool useStopFrame, bool &outAn
 
 			_animPendingDecodeFrame = _animFirstFrame;
 		}
-
-		if (useStopFrame && _animPendingDecodeFrame == _animStopFrame) {
-			outAnimationEnded = true;
-			return;
-		}
-
-		debug(4, "Decoding animation frame %u", _animPendingDecodeFrame);
 
 		const Graphics::Surface *surface = _animDecoder->decodeNextFrame();
 		if (!surface) {
@@ -936,9 +1419,13 @@ void Runtime::continuePlayingAnimation(bool loop, bool useStopFrame, bool &outAn
 				if (playlistEntry.frame == decodeFrameInPlaylist) {
 					VCruise::AudioPlayer &audioPlayer = *playlistEntry.sample->audioPlayer;
 
-					audioPlayer.stop();
-					playlistEntry.sample->audioStream->seek(0);
-					audioPlayer.play(playlistEntry.volume, playlistEntry.frame);
+					if (playlistEntry.isUpdate) {
+						audioPlayer.setVolumeAndBalance(playlistEntry.volume, playlistEntry.balance);
+					} else {
+						audioPlayer.stop();
+						playlistEntry.sample->audioStream->seek(0);
+						audioPlayer.play(playlistEntry.volume, playlistEntry.balance);
+					}
 
 					// No break, it's possible for there to be multiple sounds in the same frame
 				}
@@ -967,6 +1454,11 @@ void Runtime::continuePlayingAnimation(bool loop, bool useStopFrame, bool &outAn
 				outAnimationEnded = true;
 				return;
 			}
+		}
+
+		if (useStopFrame && _animDisplayingFrame == _animStopFrame) {
+			outAnimationEnded = true;
+			return;
 		}
 	}
 }
@@ -1022,6 +1514,7 @@ bool Runtime::runScript() {
 			DISPATCH_OP(Static);
 			DISPATCH_OP(VarLoad);
 			DISPATCH_OP(VarStore);
+			DISPATCH_OP(VarAddAndStore);
 			DISPATCH_OP(VarGlobalLoad);
 			DISPATCH_OP(VarGlobalStore);
 			DISPATCH_OP(ItemCheck);
@@ -1042,6 +1535,7 @@ bool Runtime::runScript() {
 			DISPATCH_OP(SoundL3);
 			DISPATCH_OP(3DSoundS2);
 			DISPATCH_OP(3DSoundL2);
+			DISPATCH_OP(3DSoundL3);
 			DISPATCH_OP(StopAL);
 			DISPATCH_OP(Range);
 			DISPATCH_OP(AddXSound);
@@ -1104,12 +1598,15 @@ bool Runtime::runScript() {
 			DISPATCH_OP(EscGet);
 			DISPATCH_OP(BackStart);
 			DISPATCH_OP(SaveAs);
+			DISPATCH_OP(Save0);
+			DISPATCH_OP(Exit);
 
 			DISPATCH_OP(AnimName);
 			DISPATCH_OP(ValueName);
 			DISPATCH_OP(VarName);
 			DISPATCH_OP(SoundName);
 			DISPATCH_OP(CursorName);
+			DISPATCH_OP(Dubbing);
 
 			DISPATCH_OP(CheckValue);
 			DISPATCH_OP(Jump);
@@ -1137,6 +1634,8 @@ void Runtime::terminateScript() {
 		if (checkCompletionConditions())
 			return;
 	}
+
+	drawCompass();
 
 	if (_havePendingScreenChange)
 		changeToScreen(_roomNumber, _screenNumber);
@@ -1338,24 +1837,136 @@ void Runtime::findWaves() {
 	}
 }
 
-void Runtime::loadWave(uint soundID, const Common::String &soundName, const Common::ArchiveMemberPtr &archiveMemberPtr) {
+Common::SharedPtr<SoundInstance> Runtime::loadWave(const Common::String &soundName, uint soundID, const Common::ArchiveMemberPtr &archiveMemberPtr) {
+	for (const Common::SharedPtr<SoundInstance> &activeSound : _activeSounds) {
+		if (activeSound->name == soundName)
+			return activeSound;
+	}
+
 	Common::SeekableReadStream *stream = archiveMemberPtr->createReadStream();
 	if (!stream) {
 		warning("Couldn't open read stream for sound '%s'", soundName.c_str());
-		return;
+		return nullptr;
 	}
 
 	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(stream, DisposeAfterUse::YES);
 	if (!audioStream) {
 		warning("Couldn't open audio stream for sound '%s'", soundName.c_str());
+		return nullptr;
+	}
+
+	Common::SharedPtr<SoundInstance> soundInstance(new SoundInstance());
+
+	soundInstance->name = soundName;
+	soundInstance->id = soundID;
+
+	bool foundExisting = false;
+	for (Common::SharedPtr<SoundInstance> &existingSound : _activeSounds) {
+		if (existingSound->id == soundID) {
+			existingSound = soundInstance;
+			foundExisting = true;
+			break;
+		}
+	}
+
+	if (!foundExisting)
+		_activeSounds.push_back(soundInstance);
+
+	return soundInstance;
+}
+
+SoundCache *Runtime::loadCache(SoundInstance &sound) {
+	if (sound.cache)
+		return sound.cache.get();
+
+	// See if this is already in the cache
+	for (const Common::Pair<Common::String, Common::SharedPtr<SoundCache> > &cacheItem : _soundCache) {
+		if (cacheItem.first == sound.name) {
+			sound.cache = cacheItem.second;
+			return sound.cache.get();
+		}
+	}
+
+	Common::HashMap<Common::String, Common::ArchiveMemberPtr>::const_iterator waveIt = _waves.find(sound.name);
+
+	if (waveIt == _waves.end())
+		return nullptr;
+
+	Common::SeekableReadStream *stream = waveIt->_value->createReadStream();
+	if (!stream) {
+		warning("Couldn't open read stream for sound '%s'", sound.name.c_str());
+		return nullptr;
+	}
+
+	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(stream, DisposeAfterUse::YES);
+	if (!audioStream) {
+		warning("Couldn't open audio stream for sound '%s'", sound.name.c_str());
+		return nullptr;
+	}
+
+	Common::SharedPtr<SoundCache> cachedSound(new SoundCache());
+
+	cachedSound->stream.reset(audioStream);
+
+	_soundCache[_soundCacheIndex].first = sound.name;
+	_soundCache[_soundCacheIndex].second = cachedSound;
+
+	_soundCacheIndex++;
+	if (_soundCacheIndex == kSoundCacheSize)
+		_soundCacheIndex = 0;
+
+	sound.cache = cachedSound;
+
+	return cachedSound.get();
+}
+
+void Runtime::resolveSoundByName(const Common::String &soundName, bool load, StackInt_t &outSoundID, SoundInstance *&outWave) {
+	Common::String sndName = soundName;
+
+	uint soundID = 0;
+	for (uint i = 0; i < 4; i++)
+		soundID = soundID * 10u + (sndName[i] - '0');
+
+	sndName.toLowercase();
+
+	outSoundID = soundID;
+	outWave = nullptr;
+
+	for (const Common::SharedPtr<SoundInstance> &snd : _activeSounds) {
+		if (snd->name == sndName) {
+			outWave = snd.get();
+			return;
+		}
+	}
+
+	if (load) {
+		Common::HashMap<Common::String, Common::ArchiveMemberPtr>::const_iterator waveIt = _waves.find(sndName);
+
+		if (waveIt != _waves.end()) {
+			Common::SharedPtr<SoundInstance> snd = loadWave(sndName, soundID, waveIt->_value);
+			outWave = snd.get();
+		}
+	}
+}
+
+void Runtime::resolveSoundByNameOrID(const StackValue &stackValue, bool load, StackInt_t &outSoundID, SoundInstance *&outWave) {
+	outSoundID = 0;
+	outWave = nullptr;
+
+	if (stackValue.type == StackValue::kNumber) {
+		outSoundID = stackValue.value.i;
+
+		for (const Common::SharedPtr<SoundInstance> &snd : _activeSounds) {
+			if (snd->id == static_cast<uint>(stackValue.value.i)) {
+				outWave = snd.get();
+				break;
+			}
+		}
 		return;
 	}
 
-	Common::SharedPtr<CachedSound> cachedSound(new CachedSound());
-	_cachedSounds[soundID] = cachedSound;
-
-	cachedSound->stream.reset(audioStream);
-	cachedSound->name = soundName;
+	if (stackValue.type == StackValue::kString)
+		resolveSoundByName(stackValue.value.s, load, outSoundID, outWave);
 }
 
 void Runtime::changeToScreen(uint roomNumber, uint screenNumber) {
@@ -1421,6 +2032,10 @@ void Runtime::changeToScreen(uint roomNumber, uint screenNumber) {
 
 		_havePendingReturnToIdleState = true;
 		_haveIdleStaticAnimation = false;
+		_idleCurrentStaticAnimation.clear();
+		_havePendingPlayAmbientSounds = true;
+
+		recordSaveGameSnapshot();
 	}
 }
 
@@ -1704,7 +2319,11 @@ void Runtime::loadFrameData2(Common::SeekableReadStream *stream) {
 }
 
 void Runtime::changeMusicTrack(int track) {
+	if (track == _musicTrack)
+		return;
+
 	_musicPlayer.reset();
+	_musicTrack = track;
 
 	Common::String wavFileName = Common::String::format("Sfx/Music-%02i.wav", static_cast<int>(track));
 	Common::File *wavFile = new Common::File();
@@ -1712,7 +2331,7 @@ void Runtime::changeMusicTrack(int track) {
 		if (Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(wavFile, DisposeAfterUse::YES)) {
 			Common::SharedPtr<Audio::AudioStream> loopingStream(Audio::makeLoopingAudioStream(audioStream, 0));
 
-			_musicPlayer.reset(new AudioPlayer(_mixer, loopingStream));
+			_musicPlayer.reset(new AudioPlayer(_mixer, loopingStream, Audio::Mixer::kMusicSoundType));
 			_musicPlayer->play(100, 0);
 		}
 	} else {
@@ -1726,6 +2345,10 @@ void Runtime::changeAnimation(const AnimationDef &animDef, bool consumeFPSOverri
 }
 
 void Runtime::changeAnimation(const AnimationDef &animDef, uint initialFrame, bool consumeFPSOverride) {
+	changeAnimation(animDef, initialFrame, consumeFPSOverride, Fraction(0, 1));
+}
+
+void Runtime::changeAnimation(const AnimationDef &animDef, uint initialFrame, bool consumeFPSOverride, const Fraction &defaultFrameRate) {
 	debug("changeAnimation: %u -> %u  Initial %u", animDef.firstFrame, animDef.lastFrame, initialFrame);
 
 	_animPlaylist.reset();
@@ -1791,103 +2414,124 @@ void Runtime::changeAnimation(const AnimationDef &animDef, uint initialFrame, bo
 	_animFirstFrame = animDef.firstFrame;
 	_animLastFrame = animDef.lastFrame;
 	_animConstraintRect = animDef.constraintRect;
-	_animFrameRateLock = 0;
+	_animFrameRateLock = Fraction();
 
 	SfxData::PlaylistMap_t::const_iterator playlistIt = _sfxData.playlists.find(animDef.animName);
 
 	if (playlistIt != _sfxData.playlists.end())
 		_animPlaylist = playlistIt->_value;
 
-	if (consumeFPSOverride) {
-		_animFrameRateLock = _scriptEnv.fpsOverride;
+	if (consumeFPSOverride && _scriptEnv.fpsOverride) {
+		_animFrameRateLock = Fraction(_scriptEnv.fpsOverride, 1);
+		_scriptEnv.fpsOverride = 0;
+	} else {
+		if (!_fastAnimationMode && _animDecoder && _animDecoder->getAudioTrackCount() == 0)
+			_animFrameRateLock = defaultFrameRate;
+	}
+
+	if (_animFrameRateLock.numerator) {
 		_animFramesDecoded = 0;
 		_animStartTime = g_system->getMillis();
-		_scriptEnv.fpsOverride = 0;
 	}
 
 	debug(1, "Animation last frame set to %u", animDef.lastFrame);
 }
 
-void Runtime::setSound3DParameters(uint soundID, int32 x, int32 y, const SoundParams3D &soundParams3D) {
-	Common::HashMap<uint, Common::SharedPtr<CachedSound> >::iterator it = _cachedSounds.find(soundID);
-	if (it == _cachedSounds.end()) {
-		warning("Couldn't set sound parameters for sound ID %u, the sound wasn't loaded", soundID);
-		return;
-	}
-
-	CachedSound &snd = *it->_value;
+void Runtime::setSound3DParameters(SoundInstance &snd, int32 x, int32 y, const SoundParams3D &soundParams3D) {
 	snd.x = x;
 	snd.y = y;
 	snd.params3D = soundParams3D;
 }
 
-void Runtime::triggerSound(bool looping, uint soundID, uint volume, int32 balance, bool is3D) {
-	Common::HashMap<uint, Common::SharedPtr<CachedSound> >::iterator it = _cachedSounds.find(soundID);
-	if (it == _cachedSounds.end()) {
-		warning("Couldn't trigger sound ID %u, the sound wasn't loaded", soundID);
-		return;
-	}
-
-	CachedSound &snd = *it->_value;
-
+void Runtime::triggerSound(bool looping, SoundInstance &snd, uint volume, int32 balance, bool is3D, bool isSpeech) {
 	snd.volume = volume;
 	snd.balance = balance;
 	snd.is3D = is3D;
+	snd.isLooping = looping;
+	snd.isSpeech = isSpeech;
 
 	computeEffectiveVolumeAndBalance(snd);
 
-	// Reset if looping state changes
-	if (snd.loopingStream && !looping) {
-		snd.player.reset();
-		snd.loopingStream.reset();
-		snd.stream->rewind();
+	if (volume == 0 && looping) {
+		if (snd.cache) {
+			if (snd.cache->player)
+				snd.cache->player.reset();
+
+			snd.cache.reset();
+		}
+
+		snd.isSilencedLoop = true;
+		snd.endTime = 0;
+		return;
 	}
 
-	if (!snd.loopingStream && looping)
-		snd.player.reset();
+	snd.isSilencedLoop = false;
+
+	SoundCache *cache = loadCache(snd);
+
+	// Reset if looping state changes
+	if (cache->loopingStream && !looping) {
+		cache->player.reset();
+		cache->loopingStream.reset();
+		cache->stream->rewind();
+	}
 
 	// Construct looping stream if needed and none exists
-	if (looping && !snd.loopingStream)
-		snd.loopingStream.reset(new Audio::LoopingAudioStream(snd.stream.get(), 0, DisposeAfterUse::NO, true));
+	if (looping && !cache->loopingStream) {
+		cache->player.reset();
+		cache->loopingStream.reset(new Audio::LoopingAudioStream(cache->stream.get(), 0, DisposeAfterUse::NO, true));
+	}
 
-	if (snd.player) {
+	const Audio::Mixer::SoundType soundType = (isSpeech ? Audio::Mixer::kSpeechSoundType : Audio::Mixer::kSFXSoundType);
+
+	if (cache->player) {
 		// If there is already a player and this is non-looping, start over
 		if (!looping) {
-			snd.player->stop();
-			snd.stream->rewind();
-			snd.player->play(snd.effectiveVolume, snd.effectiveBalance);
+			cache->player->stop();
+			cache->stream->rewind();
+			cache->player->play(snd.effectiveVolume, snd.effectiveBalance);
 		} else {
 			// Adjust volume and balance at least
-			snd.player->setVolumeAndBalance(snd.effectiveVolume, snd.effectiveBalance);
+			cache->player->setVolumeAndBalance(snd.effectiveVolume, snd.effectiveBalance);
 		}
 	} else {
-		snd.player.reset(new AudioPlayer(_mixer, looping ? snd.loopingStream.staticCast<Audio::AudioStream>() : snd.stream.staticCast<Audio::AudioStream>()));
-		snd.player->play(snd.effectiveVolume, snd.effectiveBalance);
+		cache->player.reset(new AudioPlayer(_mixer, looping ? cache->loopingStream.staticCast<Audio::AudioStream>() : cache->stream.staticCast<Audio::AudioStream>(), soundType));
+		cache->player->play(snd.effectiveVolume, snd.effectiveBalance);
 	}
+
+	if (looping)
+		snd.endTime = 0;
+	else
+		snd.endTime = g_system->getMillis(true) + static_cast<uint32>(cache->stream->getLength().msecs()) + 1000u;
 }
 
-void Runtime::triggerSoundRamp(uint soundID, uint durationMSec, uint newVolume, bool terminateOnCompletion) {
-	Common::HashMap<uint, Common::SharedPtr<CachedSound> >::const_iterator it = _cachedSounds.find(soundID);
-	if (it == _cachedSounds.end())
-		return;
-
-	CachedSound &snd = *it->_value;
-
+void Runtime::triggerSoundRamp(SoundInstance &snd, uint durationMSec, uint newVolume, bool terminateOnCompletion) {
 	snd.rampStartVolume = snd.volume;
 	snd.rampEndVolume = newVolume;
 	snd.rampTerminateOnCompletion = terminateOnCompletion;
 	snd.rampStartTime = g_system->getMillis();
 	snd.rampRatePerMSec = 65536;
 
+	if (!snd.isLooping && newVolume == 0)
+		snd.rampTerminateOnCompletion = true;
+
 	if (durationMSec)
 		snd.rampRatePerMSec = 65536 / durationMSec;
 }
 
-void Runtime::updateSounds(uint32 timestamp) {
-	Common::Array<uint> condemnedSounds;
+void Runtime::stopSound(SoundInstance &sound) {
+	if (!sound.cache)
+		return;
 
-	for (const Common::HashMap<uint, Common::SharedPtr<CachedSound> >::Node &node : _cachedSounds) {
-		CachedSound &snd = *node._value;
+	sound.cache->player.reset();
+	sound.cache.reset();
+	sound.endTime = 0;
+	sound.isSilencedLoop = false;
+}
+
+void Runtime::updateSounds(uint32 timestamp) {
+	for (uint sndIndex = 0; sndIndex < _activeSounds.size(); sndIndex++) {
+		SoundInstance &snd = *_activeSounds[sndIndex];
 
 		if (snd.rampRatePerMSec) {
 			uint ramp = snd.rampRatePerMSec * (timestamp - snd.rampStartTime);
@@ -1896,7 +2540,7 @@ void Runtime::updateSounds(uint32 timestamp) {
 				snd.rampRatePerMSec = 0;
 				newVolume = snd.rampEndVolume;
 				if (snd.rampTerminateOnCompletion)
-					condemnedSounds.push_back(node._key);
+					stopSound(snd);
 			} else {
 				uint rampedVolume = (snd.rampStartVolume * (65536u - ramp)) + (snd.rampEndVolume * ramp);
 				newVolume = rampedVolume >> 16;
@@ -1905,21 +2549,44 @@ void Runtime::updateSounds(uint32 timestamp) {
 			if (snd.volume != newVolume) {
 				snd.volume = newVolume;
 
-				if (snd.player) {
-					computeEffectiveVolumeAndBalance(snd);
-					snd.player->setVolumeAndBalance(snd.effectiveVolume, snd.effectiveBalance);
+				if (snd.cache) {
+					SoundCache *cache = snd.cache.get();
+					if (cache->player) {
+						computeEffectiveVolumeAndBalance(snd);
+						cache->player->setVolumeAndBalance(snd.effectiveVolume, snd.effectiveBalance);
+					}
+				}
+			}
+		}
+
+		// Cache-evict stopped sounds
+		if (snd.endTime && snd.endTime <= timestamp) {
+			snd.cache.reset();
+			snd.endTime = 0;
+		}
+
+		if (snd.isLooping) {
+			if (snd.volume == 0) {
+				if (!snd.isSilencedLoop) {
+					if (snd.cache) {
+						snd.cache->player.reset();
+						snd.cache.reset();
+					}
+					snd.isSilencedLoop = true;
+				}
+			} else {
+				if (snd.isSilencedLoop) {
+					triggerSound(true, snd, snd.volume, snd.balance, snd.is3D, snd.isSpeech);
+					assert(snd.isSilencedLoop == false);
 				}
 			}
 		}
 	}
-
-	for (uint id : condemnedSounds)
-		_cachedSounds.erase(id);
 }
 
 void Runtime::update3DSounds() {
-	for (const Common::HashMap<uint, Common::SharedPtr<CachedSound> >::Node &node : _cachedSounds) {
-		CachedSound &snd = *node._value;
+	for (const Common::SharedPtr<SoundInstance> &sndPtr : _activeSounds) {
+		SoundInstance &snd = *sndPtr;
 
 		if (!snd.is3D)
 			continue;
@@ -1927,14 +2594,19 @@ void Runtime::update3DSounds() {
 		bool changed = computeEffectiveVolumeAndBalance(snd);
 
 		if (changed) {
-			VCruise::AudioPlayer *player = snd.player.get();
-			if (player)
-				player->setVolumeAndBalance(snd.effectiveVolume, snd.effectiveBalance);
+			if (snd.cache) {
+				SoundCache *cache = snd.cache.get();
+				if (cache) {
+					VCruise::AudioPlayer *player = cache->player.get();
+					if (player)
+						player->setVolumeAndBalance(snd.effectiveVolume, snd.effectiveBalance);
+				}
+			}
 		}
 	}
 }
 
-bool Runtime::computeEffectiveVolumeAndBalance(CachedSound &snd) {
+bool Runtime::computeEffectiveVolumeAndBalance(SoundInstance &snd) {
 	uint effectiveVolume = snd.volume;
 	int32 effectiveBalance = snd.balance;
 
@@ -1946,7 +2618,10 @@ bool Runtime::computeEffectiveVolumeAndBalance(CachedSound &snd) {
 		int32 dx = snd.x - _listenerX;
 		int32 dy = snd.y - _listenerY;
 
-		uint distance = static_cast<uint>(sqrt(dx * dx + dy * dy));
+		double dxf = dx;
+		double dyf = dy;
+
+		uint distance = static_cast<uint>(sqrt(dxf * dxf + dyf * dyf));
 
 		if (distance >= snd.params3D.maxRange)
 			effectiveVolume = 0;
@@ -1999,7 +2674,48 @@ bool Runtime::computeEffectiveVolumeAndBalance(CachedSound &snd) {
 	return changed;
 }
 
-AnimationDef Runtime::stackArgsToAnimDef(const StackValue_t *args) const {
+void Runtime::triggerAmbientSounds() {
+	if (_randomAmbientSounds.size() == 0)
+		return;
+
+	uint32 timestamp = g_system->getMillis();
+
+	if (timestamp < _ambientSoundFinishTime)
+		return;
+
+	// This has been mostly confirmed to match Reah's behavior, including not decrementing sound scene change
+	// counters if an existing sound was playing when this is checked.
+	for (uint i = 0; i < _randomAmbientSounds.size(); i++) {
+		if (_randomAmbientSounds[i].sceneChangesRemaining == 0) {
+			// Found a sound to play
+			RandomAmbientSound sound = Common::move(_randomAmbientSounds[i]);
+			_randomAmbientSounds.remove_at(i);
+
+			if (sound.frequency > 0)
+				sound.sceneChangesRemaining = sound.frequency - 1;
+
+			StackInt_t soundID = 0;
+			SoundInstance *cachedSound = nullptr;
+			resolveSoundByName(sound.name, true, soundID, cachedSound);
+
+			if (cachedSound) {
+				triggerSound(false, *cachedSound, sound.volume, sound.balance, false, false);
+				if (cachedSound->cache)
+					_ambientSoundFinishTime = timestamp + static_cast<uint>(cachedSound->cache->stream->getLength().msecs());
+			}
+
+			// Requeue at the end
+			_randomAmbientSounds.push_back(Common::move(sound));
+			return;
+		}
+	}
+
+	// No ambient sound was ready
+	for (RandomAmbientSound &snd : _randomAmbientSounds)
+		snd.sceneChangesRemaining--;
+}
+
+AnimationDef Runtime::stackArgsToAnimDef(const StackInt_t *args) const {
 	AnimationDef def;
 	def.animNum = args[0];
 	def.firstFrame = args[1];
@@ -2016,14 +2732,14 @@ AnimationDef Runtime::stackArgsToAnimDef(const StackValue_t *args) const {
 }
 
 void Runtime::pushAnimDef(const AnimationDef &animDef) {
-	_scriptStack.push_back(animDef.animNum);
-	_scriptStack.push_back(animDef.firstFrame);
-	_scriptStack.push_back(animDef.lastFrame);
+	_scriptStack.push_back(StackValue(animDef.animNum));
+	_scriptStack.push_back(StackValue(animDef.firstFrame));
+	_scriptStack.push_back(StackValue(animDef.lastFrame));
 
-	_scriptStack.push_back(animDef.constraintRect.left);
-	_scriptStack.push_back(animDef.constraintRect.top);
-	_scriptStack.push_back(animDef.constraintRect.right);
-	_scriptStack.push_back(animDef.constraintRect.bottom);
+	_scriptStack.push_back(StackValue(animDef.constraintRect.left));
+	_scriptStack.push_back(StackValue(animDef.constraintRect.top));
+	_scriptStack.push_back(StackValue(animDef.constraintRect.right));
+	_scriptStack.push_back(StackValue(animDef.constraintRect.bottom));
 
 	uint animNameIndex = 0;
 	Common::HashMap<Common::String, uint>::const_iterator nameIt = _animDefNameToIndex.find(animDef.animName);
@@ -2034,7 +2750,7 @@ void Runtime::pushAnimDef(const AnimationDef &animDef) {
 	} else
 		animNameIndex = nameIt->_value;
 
-	_scriptStack.push_back(animNameIndex);
+	_scriptStack.push_back(StackValue(animNameIndex));
 }
 
 void Runtime::activateScript(const Common::SharedPtr<Script> &script, const ScriptEnvironmentVars &envVars) {
@@ -2341,6 +3057,73 @@ void Runtime::drawInventory(uint slot) {
 	commitSectionToScreen(_traySection, sliceRect);
 }
 
+void Runtime::drawCompass() {
+	bool haveHorizontalRotate = false;
+	bool haveUp = false;
+	bool haveDown = false;
+	bool haveLocation = false;
+
+	switch (_gameState) {
+	case kGameStateIdle:
+	case kGameStateGyroIdle:
+	case kGameStateGyroAnimation:
+		haveHorizontalRotate = _haveHorizPanAnimations;
+		haveUp = _havePanUpFromDirection[_direction];
+		haveDown = _havePanDownFromDirection[_direction];
+		break;
+	case kGameStatePanLeft:
+	case kGameStatePanRight:
+		haveHorizontalRotate = _haveHorizPanAnimations;
+		break;
+	default:
+		break;
+	}
+
+	haveLocation = (haveUp || haveDown || haveHorizontalRotate);
+
+	const Common::Rect blackoutRects[4] = {
+		Common::Rect(0, 40, 36, 62),  // Left
+		Common::Rect(52, 40, 88, 62), // Right
+		Common::Rect(35, 12, 53, 38), // Up
+		Common::Rect(35, 56, 54, 78), // Down
+	};
+
+	const bool drawSections[4] = {haveHorizontalRotate, haveHorizontalRotate, haveUp, haveDown};
+
+	Common::Rect compassRect = Common::Rect(0, 0, _trayCompassGraphic->w, _trayCompassGraphic->h);
+
+	int16 vertOffset = (_traySection.rect.height() - compassRect.height()) / 2;
+	const int horizOffset = 0;
+
+	compassRect.translate(horizOffset, vertOffset);
+
+	_traySection.surf->blitFrom(*_trayCompassGraphic, Common::Point(compassRect.left, compassRect.top));
+
+	const uint32 blackColor = _traySection.surf->format.ARGBToColor(255, 0, 0, 0);
+
+	for (uint i = 0; i < 4; i++) {
+		if (!drawSections[i]) {
+			Common::Rect blackoutRect = blackoutRects[i];
+			blackoutRect.translate(horizOffset, vertOffset);
+
+			_traySection.surf->fillRect(blackoutRect, blackColor);
+		}
+	}
+
+	Common::Rect lowerRightRect = Common::Rect(_traySection.rect.right - 88, 0, _traySection.rect.right, 88);
+
+	if (haveLocation) {
+		if (_gameID == GID_REAH)
+			_traySection.surf->blitFrom(*_trayCornerGraphic, Common::Point(lowerRightRect.left, lowerRightRect.top));
+	} else {
+		if (_gameID == GID_REAH)
+			_traySection.surf->blitFrom(*_trayBackgroundGraphic, lowerRightRect, lowerRightRect);
+	}
+
+	commitSectionToScreen(_traySection, compassRect);
+	commitSectionToScreen(_traySection, lowerRightRect);
+}
+
 void Runtime::resetInventoryHighlights() {
 	for (uint slot = 0; slot < kNumInventorySlots; slot++) {
 		InventoryItem &item = _inventory[slot];
@@ -2383,6 +3166,71 @@ Common::SharedPtr<Graphics::Surface> Runtime::loadGraphic(const Common::String &
 	return surf;
 }
 
+void Runtime::loadSubtitles(Common::CodePage codePage) {
+	Common::String filePath = Common::String::format("Log/Speech%02u.txt", _languageIndex);
+
+	Common::INIFile ini;
+
+	ini.allowNonEnglishCharacters();
+
+	if (!ini.loadFromFile(filePath)) {
+		warning("Couldn't load subtitle data");
+		return;
+	}
+
+	for (const Common::INIFile::Section &section : ini.getSections()) {
+		if (section.name == "Anims")
+			continue;	// Ignore
+
+		FrameToSubtitleMap_t *frameMap = nullptr;
+		bool isWave = false;
+
+		if (section.name.substr(0, 5) == "Disc-")
+			isWave = true;
+		else if (section.name.size() == 8 && section.name.substr(0, 4) == "Anim") {
+			uint animID = 0;
+			if (sscanf(section.name.substr(4, 4).c_str(), "%u", &animID) == 1)
+				frameMap = &_animSubtitles[animID];
+		}
+
+		if (frameMap != nullptr || isWave) {
+			for (const Common::INIFile::KeyValue &kv : section.getKeys()) {
+				if (kv.value.size() < 23)
+					continue;
+
+				if (kv.value[21] != '\"' || kv.value[kv.value.size() - 1] != '\"')
+					continue;
+
+				Common::String locLineParamSlice = kv.value.substr(0, 21);
+
+				uint colorCode = 0;
+				uint param1 = 0;
+				uint param2 = 0;
+				if (sscanf(locLineParamSlice.c_str(), "0x%x, 0x%x, %u, ", &colorCode, &param1, &param2) == 3) {
+					SubtitleDef *subDef = nullptr;
+
+					if (isWave)
+						subDef = &_waveSubtitles[kv.key];
+					else if (frameMap) {
+						uint frameNum = 0;
+						if (kv.key.size() >= 4 && kv.key.substr(kv.key.size() - 3) == "_01" && sscanf(kv.key.substr(0, kv.key.size() - 3).c_str(), "%u", &frameNum) == 1)
+							subDef = &(*frameMap)[frameNum];
+					}
+
+					if (subDef) {
+						subDef->color[0] = ((colorCode >> 16) & 0xff);
+						subDef->color[1] = ((colorCode >> 8) & 0xff);
+						subDef->color[2] = (colorCode & 0xff);
+						subDef->unknownValue1 = param1;
+						subDef->unknownValue2 = param2;
+						subDef->str = kv.value.substr(22, kv.value.size() - 23).decode(codePage).encode(Common::kUtf8);
+					}
+				}
+			}
+		}
+	}
+}
+
 void Runtime::onLButtonDown(int16 x, int16 y) {
 	onMouseMove(x, y);
 
@@ -2420,136 +3268,198 @@ void Runtime::onKeyDown(Common::KeyCode keyCode) {
 }
 
 bool Runtime::canSave() const {
-	return _gameState == kGameStateIdle;
+	return !!_saveGame;
 }
 
 bool Runtime::canLoad() const {
 	return _gameState == kGameStateIdle;
 }
 
-void Runtime::saveGame(Common::WriteStream *stream) const {
-	stream->writeUint32BE(kSaveGameIdentifier);
-	stream->writeUint32BE(kSaveGameCurrentVersion);
-
-	stream->writeUint32BE(_roomNumber);
-	stream->writeUint32BE(_screenNumber);
-	stream->writeUint32BE(_direction);
-
-	Common::Array<uint32> variableIDs;
-	Common::Array<uint> timerIDs;
+void Runtime::recordSaveGameSnapshot() {
+	_saveGame.reset();
 
 	uint32 timeBase = g_system->getMillis();
 
-	for (const Common::HashMap<uint32, int32>::Node &varNode : _variables)
-		variableIDs.push_back(varNode._key);
+	Common::SharedPtr<SaveGameSnapshot> snapshot(new SaveGameSnapshot());
+
+	_saveGame = snapshot;
+
+	for (const InventoryItem &inventoryItem : _inventory) {
+		SaveGameSnapshot::InventoryItem saveItem;
+		saveItem.itemID = inventoryItem.itemID;
+		saveItem.highlighted = inventoryItem.highlighted;
+
+		snapshot->inventory.push_back(saveItem);
+	}
+
+	snapshot->roomNumber = _roomNumber;
+	snapshot->screenNumber = _screenNumber;
+	snapshot->direction = _direction;
+
+	snapshot->pendingStaticAnimParams = _pendingStaticAnimParams;
+
+	snapshot->variables = _variables;
 
 	for (const Common::HashMap<uint, uint32>::Node &timerNode : _timers)
-		timerIDs.push_back(timerNode._key);
+		snapshot->timers[timerNode._key] = timerNode._value - timeBase;
 
-	Common::sort(variableIDs.begin(), variableIDs.end());
-	Common::sort(timerIDs.begin(), timerIDs.end());
+	snapshot->escOn = _escOn;
 
-	stream->writeUint32BE(variableIDs.size());
-	stream->writeUint32BE(timerIDs.size());
+	snapshot->musicTrack = _musicTrack;
 
-	for (uint32 variableKey : variableIDs) {
-		Common::HashMap<uint32, int32>::const_iterator it = _variables.find(variableKey);
-		assert(it != _variables.end());
+	snapshot->loadedAnimation = _loadedAnimation;
+	snapshot->animDisplayingFrame = _animDisplayingFrame;
 
-		stream->writeUint32BE(variableKey);
-		stream->writeSint32BE(it->_value);
+	for (const Common::SharedPtr<SoundInstance> &soundPtr : _activeSounds) {
+		const SoundInstance &sound = *soundPtr;
+
+		SaveGameSnapshot::Sound saveSound;
+		saveSound.name = sound.name;
+
+		saveSound.id = sound.id;
+
+		saveSound.volume = sound.volume;
+		saveSound.balance = sound.balance;
+
+		// Skip ramp
+		if (sound.rampRatePerMSec != 0) {
+			if (sound.rampTerminateOnCompletion)
+				continue;	// Don't even save this
+
+			saveSound.volume = sound.rampEndVolume;
+		}
+
+		saveSound.is3D = sound.is3D;
+		saveSound.isLooping = sound.isLooping;
+		saveSound.isSpeech = sound.isSpeech;
+		saveSound.x = sound.x;
+		saveSound.y = sound.y;
+
+		saveSound.params3D = sound.params3D;
+
+		snapshot->sounds.push_back(saveSound);
 	}
 
-	for (uint timerKey : timerIDs) {
-		Common::HashMap<uint, uint32>::const_iterator it = _timers.find(timerKey);
-		assert(it != _timers.end());
+	snapshot->pendingSoundParams3D = _pendingSoundParams3D;
 
-		stream->writeUint32BE(timerKey);
-		stream->writeUint32BE(it->_value - timeBase);
-	}
+	snapshot->triggeredOneShots = _triggeredOneShots;
+	snapshot->sayCycles = _sayCycles;
 
-	for (const InventoryItem &item : _inventory)
-		stream->writeUint32BE(item.itemID);
+	snapshot->listenerX = _listenerX;
+	snapshot->listenerY = _listenerY;
+	snapshot->listenerAngle = _listenerAngle;
+
+	snapshot->randomAmbientSounds = _randomAmbientSounds;
 }
 
-Runtime::LoadGameOutcome Runtime::loadGame(Common::ReadStream *stream) {
-	assert(canLoad());
-
-	uint32 saveGameID = stream->readUint32BE();
-	uint32 saveVersion = stream->readUint32BE();
-
-	if (stream->err() || stream->eos())
-		return kLoadGameOutcomeMissingVersion;
-
-	if (saveGameID != kSaveGameIdentifier)
-		return kLoadGameOutcomeInvalidVersion;
-
-	if (saveVersion > kSaveGameCurrentVersion)
-		return kLoadGameOutcomeSaveIsTooNew;
-
-	if (saveVersion < kSaveGameEarliestSupportedVersion)
-		return kLoadGameOutcomeSaveIsTooOld;
-
+void Runtime::restoreSaveGameSnapshot() {
 	uint32 timeBase = g_system->getMillis();
 
-	uint32 roomNumber = stream->readUint32BE();
-	uint32 screenNumber = stream->readUint32BE();
-	uint32 direction = stream->readUint32BE();
+	for (uint i = 0; i < kNumInventorySlots && i < _saveGame->inventory.size(); i++) {
+		const SaveGameSnapshot::InventoryItem &saveItem = _saveGame->inventory[i];
 
-	uint32 numVars = stream->readUint32BE();
-	uint32 numTimers = stream->readUint32BE();
+		_inventory[i].itemID = saveItem.itemID;
+		_inventory[i].highlighted = saveItem.highlighted;
 
-	if (stream->err() || stream->eos())
-		return kLoadGameOutcomeSaveDataCorrupted;
-
-	Common::HashMap<uint32, int32> vars;
-	Common::HashMap<uint, uint32> timers;
-
-	for (uint32 i = 0; i < numVars; i++) {
-		uint32 varID = stream->readUint32BE();
-		int32 varValue = stream->readSint32BE();
-
-		vars[varID] = varValue;
+		if (saveItem.itemID) {
+			Common::String itemFileName = getFileNameForItemGraphic(saveItem.itemID);
+			_inventory[i].graphic = loadGraphic(itemFileName, false);
+		} else {
+			_inventory[i].graphic.reset();
+		}
 	}
 
-	for (uint32 i = 0; i < numTimers; i++) {
-		uint timerID = stream->readUint32BE();
-		uint32 timerValue = stream->readUint32BE();
+	_roomNumber = _saveGame->roomNumber;
+	_screenNumber = _saveGame->screenNumber;
+	_direction = _saveGame->direction;
 
-		timers[timerID] = timerValue + timeBase;
+	_pendingStaticAnimParams = _saveGame->pendingStaticAnimParams;
+
+	_variables.clear();
+	_variables = _saveGame->variables;
+
+	_timers.clear();
+
+	for (const Common::HashMap<uint, uint32>::Node &timerNode : _saveGame->timers)
+		_timers[timerNode._key] = timerNode._value + timeBase;
+
+	_escOn = _saveGame->escOn;
+
+	changeMusicTrack(_saveGame->musicTrack);
+
+	// Stop all sounds since the player instances are stored in the sound cache.
+	for (Common::SharedPtr<SoundInstance> &snd : _activeSounds)
+		stopSound(*snd);
+
+	_activeSounds.clear();
+
+	_pendingSoundParams3D = _saveGame->pendingSoundParams3D;
+
+	_triggeredOneShots = _saveGame->triggeredOneShots;
+	_sayCycles = _saveGame->sayCycles;
+
+	_listenerX = _saveGame->listenerX;
+	_listenerY = _saveGame->listenerY;
+	_listenerAngle = _saveGame->listenerAngle;
+
+	_randomAmbientSounds = _saveGame->randomAmbientSounds;
+
+	for (const SaveGameSnapshot::Sound &sound : _saveGame->sounds) {
+		Common::SharedPtr<SoundInstance> si(new SoundInstance());
+
+		si->name = sound.name;
+		si->id = sound.id;
+		si->volume = sound.volume;
+		si->balance = sound.balance;
+		si->is3D = sound.is3D;
+		si->isLooping = sound.isLooping;
+		si->isSpeech = sound.isSpeech;
+		si->x = sound.x;
+		si->y = sound.y;
+		si->params3D = sound.params3D;
+
+		_activeSounds.push_back(si);
+
+		if (sound.isLooping)
+			triggerSound(true, *si, si->volume, si->balance, si->is3D, si->isSpeech);
 	}
 
-	uint inventoryItems[kNumInventorySlots];
+	uint anim = _saveGame->loadedAnimation;
+	uint frame = _saveGame->animDisplayingFrame;
 
-	for (uint i = 0; i < kNumInventorySlots; i++)
-		inventoryItems[i] = stream->readUint32BE();
+	AnimationDef animDef;
+	animDef.animNum = anim;
+	animDef.firstFrame = frame;
+	animDef.lastFrame = frame;
 
-	if (stream->err() || stream->eos())
-		return kLoadGameOutcomeSaveDataCorrupted;
+	changeAnimation(animDef, false);
 
-	if (direction >= kNumDirections)
-		return kLoadGameOutcomeSaveDataCorrupted;
+	_gameState = kGameStateWaitingForAnimation;
 
-	// Load succeeded
-	_variables = Common::move(vars);
-	_timers = Common::move(timers);
+	_havePendingScreenChange = true;
+	_forceScreenChange = true;
 
-	for (uint i = 0; i < kNumInventorySlots; i++) {
-		_inventory[i].itemID = inventoryItems[i];
-		_inventory[i].highlighted = false;
-		_inventory[i].graphic.reset();
+	for (uint slot = 0; slot < kNumInventorySlots; slot++)
+		drawInventory(slot);
+}
 
-		if (inventoryItems[i] != 0)
-			_inventory[i].graphic = loadGraphic(getFileNameForItemGraphic(inventoryItems[i]), false);
+void Runtime::saveGame(Common::WriteStream *stream) const {
+	_saveGame->write(stream);
+}
 
-		drawInventory(i);
-	}
+LoadGameOutcome Runtime::loadGame(Common::ReadStream *stream) {
+	assert(canLoad());
 
-	_direction = direction;
-	changeToScreen(roomNumber, screenNumber);
-	_havePendingReturnToIdleState = true;
+	Common::SharedPtr<SaveGameSnapshot> snapshot(new SaveGameSnapshot());
+	LoadGameOutcome outcome = snapshot->read(stream);
 
-	return kLoadGameOutcomeSucceeded;
+	if (outcome != kLoadGameOutcomeSucceeded)
+		return outcome;
+
+	_saveGame = snapshot;
+	restoreSaveGameSnapshot();
+
+	return outcome;
 }
 
 #ifdef PEEK_STACK
@@ -2565,26 +3475,66 @@ Runtime::LoadGameOutcome Runtime::loadGame(Common::ReadStream *stream) {
 #endif
 
 #define PEEK_STACK(n)                                                                         \
-	if (this->_scriptStack.size() < (n)) {                                                      \
+	if (this->_scriptStack.size() < (n)) {                                                    \
 		error("Script stack underflow");                                                      \
 		return;                                                                               \
 	}                                                                                         \
-	const ScriptArg_t *stackArgs = &this->_scriptStack[this->_scriptStack.size() - (n)]
+	const StackValue *stackArgs = &this->_scriptStack[this->_scriptStack.size() - (n)]
 
 
-#define TAKE_STACK(n)                                                                         \
-	StackValue_t stackArgs[n];                                                                \
+#define TAKE_STACK_INT_NAMED(n, arrayName)                                                    \
+	StackInt_t arrayName[n];                                                                  \
 	do {                                                                                      \
 		const uint stackSize = _scriptStack.size();                                           \
 		if (stackSize < (n)) {                                                                \
 			error("Script stack underflow");                                                  \
 			return;                                                                           \
 		}                                                                                     \
-		const StackValue_t *stackArgsPtr = &this->_scriptStack[stackSize - (n)];              \
-		for (uint i = 0; i < (n); i++)                                                        \
-			stackArgs[i] = stackArgsPtr[i];                                                   \
+		const StackValue *stackArgsPtr = &this->_scriptStack[stackSize - (n)];                \
+		for (uint i = 0; i < (n); i++) {                                                      \
+			if (stackArgsPtr[i].type != StackValue::kNumber)                                  \
+				error("Expected op argument %u to be a number", i);                           \
+			arrayName[i] = stackArgsPtr[i].value.i;                                           \
+		}                                                                                     \
 		this->_scriptStack.resize(stackSize - (n));                                           \
 	} while (false)
+
+#define TAKE_STACK_INT(n) TAKE_STACK_INT_NAMED(n, stackArgs)
+
+#define TAKE_STACK_STR_NAMED(n, arrayName)                                     \
+	Common::String arrayName[n];                                               \
+	do {                                                                       \
+		const uint stackSize = _scriptStack.size();                            \
+		if (stackSize < (n)) {                                                 \
+			error("Script stack underflow");                                   \
+			return;                                                            \
+		}                                                                      \
+		const StackValue *stackArgsPtr = &this->_scriptStack[stackSize - (n)]; \
+		for (uint i = 0; i < (n); i++) {                                       \
+			if (stackArgsPtr[i].type != StackValue::kString)                   \
+				error("Expected op argument %u to be a string", i);            \
+			arrayName[i] = Common::move(stackArgsPtr[i].value.s);              \
+		}                                                                      \
+		this->_scriptStack.resize(stackSize - (n));                            \
+	} while (false)
+
+#define TAKE_STACK_STR(n) TAKE_STACK_STR_NAMED(n, stackArgs)
+
+#define TAKE_STACK_VAR_NAMED(n, arrayName)                                     \
+	StackValue arrayName[n];                                                   \
+	do {                                                                       \
+		const uint stackSize = _scriptStack.size();                            \
+		if (stackSize < (n)) {                                                 \
+			error("Script stack underflow");                                   \
+			return;                                                            \
+		}                                                                      \
+		const StackValue *stackArgsPtr = &this->_scriptStack[stackSize - (n)]; \
+		for (uint i = 0; i < (n); i++)                                         \
+			arrayName[i] = Common::move(stackArgsPtr[i]);                      \
+		this->_scriptStack.resize(stackSize - (n));                            \
+	} while (false)
+
+#define TAKE_STACK_VAR(n) TAKE_STACK_VAR_NAMED(n, stackArgs)
 
 #define OPCODE_STUB(op)                           \
 	void Runtime::scriptOp##op(ScriptArg_t arg) { \
@@ -2592,11 +3542,11 @@ Runtime::LoadGameOutcome Runtime::loadGame(Common::ReadStream *stream) {
 	}
 
 void Runtime::scriptOpNumber(ScriptArg_t arg) {
-	_scriptStack.push_back(arg);
+	_scriptStack.push_back(StackValue(arg));
 }
 
 void Runtime::scriptOpRotate(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs + kAnimDefStackArgs);
+	TAKE_STACK_INT(kAnimDefStackArgs + kAnimDefStackArgs);
 
 	_panLeftAnimationDef = stackArgsToAnimDef(stackArgs + 0);
 	_panRightAnimationDef = stackArgsToAnimDef(stackArgs + kAnimDefStackArgs);
@@ -2604,28 +3554,28 @@ void Runtime::scriptOpRotate(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpAngle(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
-	_scriptStack.push_back((stackArgs[0] == static_cast<StackValue_t>(_direction)) ? 1 : 0);
+	_scriptStack.push_back(StackValue((stackArgs[0] == static_cast<StackInt_t>(_direction)) ? 1 : 0));
 }
 
 void Runtime::scriptOpAngleGGet(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
-	if (stackArgs[0] < 0 || stackArgs[0] >= static_cast<StackValue_t>(GyroState::kNumGyros))
+	if (stackArgs[0] < 0 || stackArgs[0] >= static_cast<StackInt_t>(GyroState::kNumGyros))
 		error("Invalid gyro index in angleGGet op");
 
-	_scriptStack.push_back(_gyros.gyros[stackArgs[0]].currentState);
+	_scriptStack.push_back(StackValue(_gyros.gyros[stackArgs[0]].currentState));
 }
 
 void Runtime::scriptOpSpeed(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	_scriptEnv.fpsOverride = stackArgs[0];
 }
 
 void Runtime::scriptOpSAnimL(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs + 2);
+	TAKE_STACK_INT(kAnimDefStackArgs + 2);
 
 	if (stackArgs[kAnimDefStackArgs] != 0)
 		warning("sanimL second operand wasn't zero (what does that do?)");
@@ -2646,7 +3596,7 @@ void Runtime::scriptOpSAnimL(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpChangeL(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	// ChangeL changes the screen number, but it also forces screen entry scripts to replay, which is
 	// needed for things like the fountain.
@@ -2672,7 +3622,7 @@ void Runtime::scriptOpAnimR(ScriptArg_t arg) {
 
 		debug(1, "Running frame loop of %u - %u from frame %u", trimmedAnimation.firstFrame, trimmedAnimation.lastFrame, initialFrame);
 
-		changeAnimation(trimmedAnimation, initialFrame, false);
+		changeAnimation(trimmedAnimation, initialFrame, false, _animSpeedRotation);
 		_gameState = kGameStatePanLeft;
 	} else if (_scriptEnv.panInteractionID == kPanRightInteraction) {
 		debug(1, "Pan-right interaction from direction %u", _direction);
@@ -2684,22 +3634,15 @@ void Runtime::scriptOpAnimR(ScriptArg_t arg) {
 
 		debug(1, "Running frame loop of %u - %u from frame %u", trimmedAnimation.firstFrame, trimmedAnimation.lastFrame, initialFrame);
 
-		changeAnimation(trimmedAnimation, initialFrame, false);
+		changeAnimation(trimmedAnimation, initialFrame, false, _animSpeedRotation);
 		_gameState = kGameStatePanRight;
 
 		isRight = true;
 	}
 
-
 	uint cursorID = 0;
 	if (_haveHorizPanAnimations) {
-		uint panCursor = 0;
-		if (_panoramaDirectionFlags & kPanoramaHorizFlags)
-			panCursor |= kPanCursorDraggableHoriz;
-		if (_panoramaDirectionFlags & kPanoramaUpFlag)
-			panCursor |= kPanCursorDraggableUp;
-		if (_panoramaDirectionFlags & kPanoramaUpFlag)
-			panCursor |= kPanCursorDraggableDown;
+		uint panCursor = kPanCursorDraggableHoriz;
 
 		if (isRight)
 			panCursor |= kPanCursorDirectionRight;
@@ -2710,10 +3653,11 @@ void Runtime::scriptOpAnimR(ScriptArg_t arg) {
 	}
 
 	changeToCursor(_cursors[cursorID]);
+	drawCompass();
 }
 
 void Runtime::scriptOpAnimF(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs + 3);
+	TAKE_STACK_INT(kAnimDefStackArgs + 3);
 
 	AnimationDef animDef = stackArgsToAnimDef(stackArgs + 0);
 
@@ -2723,21 +3667,27 @@ void Runtime::scriptOpAnimF(ScriptArg_t arg) {
 	if (computeFaceDirectionAnimation(stackArgs[kAnimDefStackArgs + 2], faceDirectionAnimDef, initialFrame, stopFrame)) {
 		_postFacingAnimDef = animDef;
 		_animStopFrame = stopFrame;
-		changeAnimation(*faceDirectionAnimDef, initialFrame, false);
+		changeAnimation(*faceDirectionAnimDef, initialFrame, false, _animSpeedRotation);
 		_gameState = kGameStateWaitingForFacingToAnim;
 	} else {
-		changeAnimation(animDef, true);
+		changeAnimation(animDef, animDef.firstFrame, true, _animSpeedDefault);
 		_gameState = kGameStateWaitingForAnimation;
 	}
 	_screenNumber = stackArgs[kAnimDefStackArgs + 0];
 	_direction = stackArgs[kAnimDefStackArgs + 1];
 	_havePendingScreenChange = true;
 
-	changeToCursor(_cursors[kCursorArrow]);
+	uint cursorID = kCursorArrow;
+	if (_scriptEnv.panInteractionID == kPanUpInteraction)
+		cursorID = _panCursors[kPanCursorDraggableUp | kPanCursorDirectionUp];
+	else if (_scriptEnv.panInteractionID == kPanDownInteraction)
+		cursorID = _panCursors[kPanCursorDraggableDown | kPanCursorDirectionDown];
+
+	changeToCursor(_cursors[cursorID]);
 }
 
 void Runtime::scriptOpAnimN(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	const AnimationDef *faceDirectionAnimDef = nullptr;
 	uint initialFrame = 0;
@@ -2755,7 +3705,7 @@ void Runtime::scriptOpAnimN(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpAnimG(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs * 2 + 1);
+	TAKE_STACK_INT(kAnimDefStackArgs * 2 + 1);
 
 	_gyros.posAnim = stackArgsToAnimDef(stackArgs + 0);
 	_gyros.negAnim = stackArgsToAnimDef(stackArgs + kAnimDefStackArgs);
@@ -2774,7 +3724,7 @@ void Runtime::scriptOpAnimG(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpAnimS(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs + 2);
+	TAKE_STACK_INT(kAnimDefStackArgs + 2);
 
 	AnimationDef animDef = stackArgsToAnimDef(stackArgs + 0);
 
@@ -2790,22 +3740,42 @@ void Runtime::scriptOpAnimS(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpAnim(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs + 2);
+	TAKE_STACK_INT(kAnimDefStackArgs + 2);
 
 	AnimationDef animDef = stackArgsToAnimDef(stackArgs + 0);
-	changeAnimation(animDef, true);
+	changeAnimation(animDef, animDef.firstFrame, true, _animSpeedDefault);
 
 	_gameState = kGameStateWaitingForAnimation;
 	_screenNumber = stackArgs[kAnimDefStackArgs + 0];
 	_direction = stackArgs[kAnimDefStackArgs + 1];
 	_havePendingScreenChange = true;
 
-	changeToCursor(_cursors[kCursorArrow]);
+	
+	uint cursorID = kCursorArrow;
+	if (_scriptEnv.panInteractionID == kPanUpInteraction)
+		cursorID = _panCursors[kPanCursorDraggableUp | kPanCursorDirectionUp];
+	else if (_scriptEnv.panInteractionID == kPanDownInteraction)
+		cursorID = _panCursors[kPanCursorDraggableDown | kPanCursorDirectionDown];
+
+	changeToCursor(_cursors[cursorID]);
 }
 
 void Runtime::scriptOpStatic(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs);
+	TAKE_STACK_INT(kAnimDefStackArgs);
 
+	debug(10, "scriptOpStatic() kAnimDefStackArgs: %d", kAnimDefStackArgs);
+	for (uint i = 0; i < kAnimDefStackArgs; i++) {
+		debug(10, "\tstackArgs[%d]: %d", i, stackArgs[i]);
+	}
+
+	// FIXME: What does this actually do?
+	// It looks like this sets the last frame of an animation as the current scene graphic, but
+	// in some cases that's wrong.  For instance, after solving the temple puzzle in Reah, viewing
+	// the rock on the left (screen 0c4 in room 20) runs ":PLANAS_SKALA static" after the rock
+	// symbol displays.  However, :PLANAS_SKALA shows the rock with no symbol.
+	//
+	// Another problem occurs when viewing the rotor puzzle in the citadel, described below for now.
+#if 0
 	// QUIRK/BUG WORKAROUND: Static animations don't override other static animations!
 	//
 	// In Reah Room05, the script for 0b8 (NGONG) sets the static animation to :NNAWA_NGONG and then
@@ -2822,7 +3792,9 @@ void Runtime::scriptOpStatic(ScriptArg_t arg) {
 	if (animDef.animName == _idleCurrentStaticAnimation)
 		return;
 
-	changeAnimation(animDef, animDef.lastFrame, false);
+	// FIXME: _idleCurrentStaticAnimation must be cleared sometime!  Maybe on loading a save.
+
+	changeAnimation(animDef, animDef.lastFrame, false, _animSpeedStaticAnim);
 
 	_havePendingReturnToIdleState = true;
 	_haveHorizPanAnimations = false;
@@ -2830,42 +3802,55 @@ void Runtime::scriptOpStatic(ScriptArg_t arg) {
 	_idleCurrentStaticAnimation = animDef.animName;
 
 	_gameState = kGameStateWaitingForAnimation;
+#endif
 }
 
 void Runtime::scriptOpVarLoad(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	uint32 varID = (static_cast<uint32>(_roomNumber) << 16) | static_cast<uint32>(stackArgs[0]);
 
 	Common::HashMap<uint32, int32>::const_iterator it = _variables.find(varID);
 	if (it == _variables.end())
-		_scriptStack.push_back(0);
+		_scriptStack.push_back(StackValue(0));
 	else
-		_scriptStack.push_back(it->_value);
+		_scriptStack.push_back(StackValue(it->_value));
 }
 
 void Runtime::scriptOpVarStore(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	uint32 varID = (static_cast<uint32>(_roomNumber) << 16) | static_cast<uint32>(stackArgs[1]);
 
 	_variables[varID] = stackArgs[0];
 }
 
+void Runtime::scriptOpVarAddAndStore(ScriptArg_t arg) {
+	TAKE_STACK_INT(2);
+
+	uint32 varID = (static_cast<uint32>(_roomNumber) << 16) | static_cast<uint32>(stackArgs[0]);
+
+	Common::HashMap<uint32, int32>::iterator it = _variables.find(varID);
+	if (it == _variables.end())
+		_variables[varID] = stackArgs[1];
+	else
+		it->_value += stackArgs[1];
+}
+
 void Runtime::scriptOpVarGlobalLoad(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	uint32 varID = static_cast<uint32>(stackArgs[0]);
 
 	Common::HashMap<uint32, int32>::const_iterator it = _variables.find(varID);
 	if (it == _variables.end())
-		_scriptStack.push_back(0);
+		_scriptStack.push_back(StackValue(0));
 	else
-		_scriptStack.push_back(it->_value);
+		_scriptStack.push_back(StackValue(it->_value));
 }
 
 void Runtime::scriptOpVarGlobalStore(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	uint32 varID = static_cast<uint32>(stackArgs[1]);
 
@@ -2873,27 +3858,27 @@ void Runtime::scriptOpVarGlobalStore(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpItemCheck(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	for (const InventoryItem &item : _inventory) {
 		if (item.itemID == static_cast<uint>(stackArgs[0])) {
 			_scriptEnv.lastHighlightedItem = item.itemID;
-			_scriptStack.push_back(1);
+			_scriptStack.push_back(StackValue(1));
 			return;
 		}
 	}
 
-	_scriptStack.push_back(0);
+	_scriptStack.push_back(StackValue(0));
 }
 
 void Runtime::scriptOpItemRemove(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	inventoryRemoveItem(stackArgs[0]);
 }
 
 void Runtime::scriptOpItemHighlightSet(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	bool isHighlighted = (stackArgs[1] != 0);
 
@@ -2908,7 +3893,7 @@ void Runtime::scriptOpItemHighlightSet(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpItemAdd(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	if (stackArgs[0] == 0) {
 		// Weird special case, happens in Reah when breaking the glass barrier, this is called with 0 as the parameter.
@@ -2935,23 +3920,23 @@ void Runtime::scriptOpItemClear(ScriptArg_t arg) {
 void Runtime::scriptOpItemHaveSpace(ScriptArg_t arg) {
 	for (const InventoryItem &item : _inventory) {
 		if (item.itemID == 0) {
-			_scriptStack.push_back(1);
+			_scriptStack.push_back(StackValue(1));
 			return;
 		}
 	}
 
-	_scriptStack.push_back(0);
+	_scriptStack.push_back(StackValue(0));
 }
 
 void Runtime::scriptOpSetCursor(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	if (stackArgs[0] < 0 || static_cast<uint>(stackArgs[0]) >= _cursors.size())
 		error("Invalid cursor ID");
 
 	uint resolvedCursorID = stackArgs[0];
 
-	Common::HashMap<StackValue_t, uint>::const_iterator overrideIt = _scriptCursorIDToResourceIDOverride.find(resolvedCursorID);
+	Common::HashMap<StackInt_t, uint>::const_iterator overrideIt = _scriptCursorIDToResourceIDOverride.find(resolvedCursorID);
 	if (overrideIt != _scriptCursorIDToResourceIDOverride.end())
 		resolvedCursorID = overrideIt->_value;
 
@@ -2959,7 +3944,7 @@ void Runtime::scriptOpSetCursor(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpSetRoom(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	_roomNumber = stackArgs[0];
 }
@@ -2979,53 +3964,115 @@ void Runtime::scriptOpLMB1(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpSoundS1(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	triggerSound(false, stackArgs[0], 100, 0, false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSound(false, *cachedSound, 100, 0, false, false);
 }
 
 void Runtime::scriptOpSoundS2(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT_NAMED(1, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	triggerSound(false, stackArgs[0], stackArgs[1], 0, false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSound(false, *cachedSound, sndParamArgs[0], 0, false, false);
 }
 
 void Runtime::scriptOpSoundS3(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	triggerSound(false, stackArgs[0], stackArgs[1], stackArgs[2], false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSound(false, *cachedSound, sndParamArgs[0], sndParamArgs[1], false, false);
 }
 
 void Runtime::scriptOpSoundL1(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	triggerSound(true, stackArgs[0], 100, 0, false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSound(true, *cachedSound, 100, 0, false, false);
 }
 
 void Runtime::scriptOpSoundL2(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT_NAMED(1, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	triggerSound(true, stackArgs[0], stackArgs[1], 0, false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSound(true, *cachedSound, sndParamArgs[0], 0, false, false);
 }
 
 void Runtime::scriptOpSoundL3(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	triggerSound(true, stackArgs[0], stackArgs[1], stackArgs[2], false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSound(true, *cachedSound, sndParamArgs[0], sndParamArgs[1], false, false);
 }
 
 void Runtime::scriptOp3DSoundL2(ScriptArg_t arg) {
-	TAKE_STACK(4);
+	TAKE_STACK_INT_NAMED(3, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	setSound3DParameters(stackArgs[0], stackArgs[2], stackArgs[3], _pendingSoundParams3D);
-	triggerSound(true, stackArgs[0], stackArgs[1], 0, true);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound) {
+		setSound3DParameters(*cachedSound, sndParamArgs[1], sndParamArgs[2], _pendingSoundParams3D);
+		triggerSound(true, *cachedSound, sndParamArgs[0], 0, true, false);
+	}
+}
+
+void Runtime::scriptOp3DSoundL3(ScriptArg_t arg) {
+	TAKE_STACK_INT_NAMED(4, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
+
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound) {
+		setSound3DParameters(*cachedSound, sndParamArgs[2], sndParamArgs[3], _pendingSoundParams3D);
+		triggerSound(true, *cachedSound, sndParamArgs[0], sndParamArgs[1], true, false);
+	}
 }
 
 void Runtime::scriptOp3DSoundS2(ScriptArg_t arg) {
-	TAKE_STACK(4);
+	TAKE_STACK_INT_NAMED(3, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	setSound3DParameters(stackArgs[0], stackArgs[2], stackArgs[3], _pendingSoundParams3D);
-	triggerSound(false, stackArgs[0], stackArgs[1], 0, true);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound) {
+		setSound3DParameters(*cachedSound, sndParamArgs[1], sndParamArgs[2], _pendingSoundParams3D);
+		triggerSound(false, *cachedSound, sndParamArgs[0], 0, true, false);
+	}
 }
 
 void Runtime::scriptOpStopAL(ScriptArg_t arg) {
@@ -3033,14 +4080,20 @@ void Runtime::scriptOpStopAL(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpAddXSound(ScriptArg_t arg) {
-	TAKE_STACK(4);
+	TAKE_STACK_INT_NAMED(3, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	warning("AddXSound not implemented yet");
-	(void)stackArgs;
+	RandomAmbientSound sound;
+	sound.name = sndNameArgs[0];
+	sound.volume = sndParamArgs[0];
+	sound.balance = sndParamArgs[1];
+	sound.frequency = sndParamArgs[2];
+
+	_randomAmbientSounds.push_back(sound);
 }
 
 void Runtime::scriptOpClrXSound(ScriptArg_t arg) {
-	warning("ClrXSound not implemented yet");
+	_randomAmbientSounds.clear();
 }
 
 void Runtime::scriptOpStopSndLA(ScriptArg_t arg) {
@@ -3048,14 +4101,18 @@ void Runtime::scriptOpStopSndLA(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpStopSndLO(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_VAR(1);
 
-	warning("StopSndLO not implemented yet");
-	(void)stackArgs;
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByNameOrID(stackArgs[0], false, soundID, cachedSound);
+
+	if (cachedSound)
+		stopSound(*cachedSound);
 }
 
 void Runtime::scriptOpRange(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT(3);
 
 	_pendingSoundParams3D.minRange = stackArgs[0];
 	_pendingSoundParams3D.maxRange = stackArgs[1];
@@ -3063,27 +4120,27 @@ void Runtime::scriptOpRange(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpMusic(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	changeMusicTrack(stackArgs[0]);
 }
 
 void Runtime::scriptOpMusicUp(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	warning("Music volume ramp up is not implemented");
 	(void)stackArgs;
 }
 
 void Runtime::scriptOpMusicDn(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	warning("Music volume ramp down is not implemented");
 	(void)stackArgs;
 }
 
 void Runtime::scriptOpParm0(ScriptArg_t arg) {
-	TAKE_STACK(4);
+	TAKE_STACK_INT(4);
 
 	if (stackArgs[0] < 0 || static_cast<uint>(stackArgs[0]) >= GyroState::kNumGyros)
 		error("Invalid gyro index for Parm0");
@@ -3097,7 +4154,7 @@ void Runtime::scriptOpParm0(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpParm1(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT(3);
 
 	if (stackArgs[0] < 0 || static_cast<uint>(stackArgs[0]) >= GyroState::kNumGyros)
 		error("Invalid gyro index for Parm1");
@@ -3112,7 +4169,7 @@ void Runtime::scriptOpParm1(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpParm2(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT(3);
 
 	_gyros.completeInteraction = stackArgs[0];
 	_gyros.failureInteraction = stackArgs[1];
@@ -3123,7 +4180,7 @@ void Runtime::scriptOpParm2(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpParm3(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	if (stackArgs[0] < 0 || static_cast<uint>(stackArgs[0]) >= GyroState::kNumGyros)
 		error("Invalid gyro index for Parm3");
@@ -3135,7 +4192,7 @@ void Runtime::scriptOpParm3(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpParmG(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT(3);
 
 	int32 gyroSlot = stackArgs[0];
 	int32 dragMargin = stackArgs[1];
@@ -3150,18 +4207,18 @@ void Runtime::scriptOpParmG(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpSParmX(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT(3);
 
 	_pendingStaticAnimParams.initialDelay = stackArgs[0];
 	_pendingStaticAnimParams.repeatDelay = stackArgs[1];
 	_pendingStaticAnimParams.lockInteractions = (stackArgs[2] != 0);
 
-	if (_pendingStaticAnimParams.lockInteractions)
-		error("Locking interactions for animation is not implemented yet");
+	//if (_pendingStaticAnimParams.lockInteractions)
+	//	error("Locking interactions for animation is not implemented yet");
 }
 
 void Runtime::scriptOpSAnimX(ScriptArg_t arg) {
-	TAKE_STACK(kAnimDefStackArgs * 2 + 1);
+	TAKE_STACK_INT(kAnimDefStackArgs * 2 + 1);
 
 	AnimationDef animDef1 = stackArgsToAnimDef(stackArgs + 0);
 	AnimationDef animDef2 = stackArgsToAnimDef(stackArgs + kAnimDefStackArgs);
@@ -3182,113 +4239,186 @@ void Runtime::scriptOpSAnimX(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpVolumeUp3(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_VAR_NAMED(1, sndIDArgs);
 
-	triggerSoundRamp(stackArgs[0], stackArgs[1] * 100, stackArgs[2], false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByNameOrID(sndIDArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSoundRamp(*cachedSound, sndParamArgs[0] * 100, sndParamArgs[1], false);
 }
 
 void Runtime::scriptOpVolumeDn2(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT_NAMED(1, sndParamArgs);
+	TAKE_STACK_VAR_NAMED(1, sndIDArgs);
+
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByNameOrID(sndIDArgs[0], true, soundID, cachedSound);
 
 	// FIXME: Just do this instantly
-	triggerSoundRamp(stackArgs[0], 1, stackArgs[1], false);
+	if (cachedSound)
+		triggerSoundRamp(*cachedSound, 1, sndParamArgs[0], false);
 }
 
 void Runtime::scriptOpVolumeDn3(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_VAR_NAMED(1, sndIDArgs);
 
-	triggerSoundRamp(stackArgs[0], stackArgs[1] * 100, stackArgs[2], false);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByNameOrID(sndIDArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSoundRamp(*cachedSound, sndParamArgs[0] * 100, sndParamArgs[1], false);
 }
 
 void Runtime::scriptOpVolumeDn4(ScriptArg_t arg) {
-	TAKE_STACK(4);
+	TAKE_STACK_INT_NAMED(3, sndParamArgs);
+	TAKE_STACK_VAR_NAMED(1, sndIDArgs);
 
-	triggerSoundRamp(stackArgs[0], stackArgs[1] * 100, stackArgs[2], stackArgs[3] != 0);
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByNameOrID(sndIDArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSoundRamp(*cachedSound, sndParamArgs[0] * 100, sndParamArgs[1], sndParamArgs[2] != 0);
 }
 
 void Runtime::scriptOpRandom(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	if (stackArgs[0] == 0)
-		_scriptStack.push_back(0);
+		_scriptStack.push_back(StackValue(0));
 	else
-		_scriptStack.push_back(_rng->getRandomNumber(stackArgs[0] - 1));
+		_scriptStack.push_back(StackValue(_rng->getRandomNumber(stackArgs[0] - 1)));
 }
 
 void Runtime::scriptOpDrop(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_VAR(1);
 	(void)stackArgs;
 }
 
 void Runtime::scriptOpDup(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_VAR(1);
 
 	_scriptStack.push_back(stackArgs[0]);
 	_scriptStack.push_back(stackArgs[0]);
 }
 
 void Runtime::scriptOpSwap(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_VAR(2);
 
-	_scriptStack.push_back(stackArgs[1]);
-	_scriptStack.push_back(stackArgs[0]);
+	_scriptStack.push_back(Common::move(stackArgs[1]));
+	_scriptStack.push_back(Common::move(stackArgs[0]));
 }
 
 void Runtime::scriptOpSay1(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	warning("Say1 cycles are not implemented yet, playing first sound in the cycle");
+	// uint unk = sndParamArgs[0];
+	uint cycleLength = sndParamArgs[1];
+	debug(5, "Say1 cycle length: %u", cycleLength);
 
-	uint soundID = stackArgs[0];
-	// uint cycleLength = stackArgs[2];
+	Common::String soundIDStr = sndNameArgs[0];
 
-	triggerSound(false, soundID, 100, 0, false);
+	if (soundIDStr.size() < 4)
+		error("Say1 sound name was invalid");
+
+	uint32 cycleID = 0;
+	
+	for (uint i = 0; i < 4; i++) {
+		char d = soundIDStr[i];
+		if (d < '0' || d > '9')
+			error("Invalid sound ID for say1");
+
+		cycleID = cycleID * 10 + (d - '0');
+	}
+
+	uint &cyclePosRef = _sayCycles[static_cast<uint32>(cycleID)];
+
+	uint32 cycledSoundID = (cyclePosRef + cycleID);
+	cyclePosRef++;
+
+	if (cyclePosRef == cycleLength)
+		cyclePosRef = 0;
+
+	soundIDStr = soundIDStr.substr(4);
+	for (uint i = 0; i < 4; i++) {
+		soundIDStr.insertChar(static_cast<char>((cycledSoundID % 10) + '0'), 0);
+		cycledSoundID /= 10;
+	}
+
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(soundIDStr, true, soundID, cachedSound);
+
+	if (cachedSound)
+		triggerSound(false, *cachedSound, 100, 0, false, true);
 }
 
 void Runtime::scriptOpSay3(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	TriggeredOneShot oneShot;
-	oneShot.soundID = stackArgs[0];
-	oneShot.uniqueSlot = stackArgs[1];
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
 
-	// The third param seems to control sound interruption, but say3 is a Reah-only op and it's only ever 1.
-	if (stackArgs[2] != 1)
-		error("Invalid interrupt arg for say3, only 1 is supported.");
+	if (cachedSound) {
+		TriggeredOneShot oneShot;
+		oneShot.soundID = soundID;
+		oneShot.uniqueSlot = sndParamArgs[0];
 
-	if (Common::find(_triggeredOneShots.begin(), _triggeredOneShots.end(), oneShot) == _triggeredOneShots.end()) {
-		triggerSound(false, oneShot.soundID, 100, 0, false);
-		_triggeredOneShots.push_back(oneShot);
+		// The third param seems to control sound interruption, but say3 is a Reah-only op and it's only ever 1.
+		if (sndParamArgs[1] != 1)
+			error("Invalid interrupt arg for say3, only 1 is supported.");
+
+		if (Common::find(_triggeredOneShots.begin(), _triggeredOneShots.end(), oneShot) == _triggeredOneShots.end()) {
+			triggerSound(false, *cachedSound, 100, 0, false, true);
+			_triggeredOneShots.push_back(oneShot);
+		}
 	}
 }
 
 void Runtime::scriptOpSay3Get(ScriptArg_t arg) {
-	TAKE_STACK(3);
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
 
-	TriggeredOneShot oneShot;
-	oneShot.soundID = stackArgs[0];
-	oneShot.uniqueSlot = stackArgs[1];
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
 
-	// The third param seems to control sound interruption, but say3 is a Reah-only op and it's only ever 1.
-	if (stackArgs[2] != 1)
-		error("Invalid interrupt arg for say3, only 1 is supported.");
+	if (cachedSound) {
+		TriggeredOneShot oneShot;
+		oneShot.soundID = soundID;
+		oneShot.uniqueSlot = sndParamArgs[0];
 
-	if (Common::find(_triggeredOneShots.begin(), _triggeredOneShots.end(), oneShot) == _triggeredOneShots.end()) {
-		triggerSound(false, oneShot.soundID, 100, 0, false);
-		_triggeredOneShots.push_back(oneShot);
-		_scriptStack.push_back(oneShot.soundID);
+		// The third param seems to control sound interruption, but say3 is a Reah-only op and it's only ever 1.
+		if (sndParamArgs[1] != 1)
+			error("Invalid interrupt arg for say3, only 1 is supported.");
+
+		if (Common::find(_triggeredOneShots.begin(), _triggeredOneShots.end(), oneShot) == _triggeredOneShots.end()) {
+			triggerSound(false, *cachedSound, 100, 0, false, true);
+			_triggeredOneShots.push_back(oneShot);
+			_scriptStack.push_back(StackValue(soundID));
+		} else
+			_scriptStack.push_back(StackValue(0));
 	} else
-		_scriptStack.push_back(0);
+		_scriptStack.push_back(StackValue(0));
 }
 
 void Runtime::scriptOpSetTimer(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	_timers[static_cast<uint>(stackArgs[0])] = g_system->getMillis() + static_cast<uint32>(stackArgs[1]) * 1000u;
 }
 
 void Runtime::scriptOpGetTimer(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	bool isCompleted = true;
 
@@ -3296,14 +4426,14 @@ void Runtime::scriptOpGetTimer(ScriptArg_t arg) {
 	if (timerIt != _timers.end())
 		isCompleted = (g_system->getMillis() >= timerIt->_value);
 
-	_scriptStack.push_back(isCompleted ? 1 : 0);
+	_scriptStack.push_back(StackValue(isCompleted ? 1 : 0));
 }
 
 void Runtime::scriptOpDelay(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
-	warning("Delay opcode is not implemented yet");
-	(void)stackArgs;
+	_gameState = kGameStateDelay;
+	_delayCompletionTime = g_system->getMillis() + stackArgs[0];
 }
 
 void Runtime::scriptOpLoSet(ScriptArg_t arg) {
@@ -3323,7 +4453,7 @@ void Runtime::scriptOpHiGet(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpVerticalPanSet(bool *flags) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	uint baseDirection = static_cast<uint>(stackArgs[0]) % kNumDirections;
 	uint radius = stackArgs[1];
@@ -3347,7 +4477,7 @@ void Runtime::scriptOpVerticalPanSet(bool *flags) {
 }
 
 void Runtime::scriptOpVerticalPanGet() {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	// In any scenario where this is used, there is a corresponding hi/lo set and this only ever triggers off of interactions,
 	// so don't really even need to check anything other than the facing direction?
@@ -3359,115 +4489,123 @@ void Runtime::scriptOpVerticalPanGet() {
 
 	bool isInRadius = (rtDirection <= radius || lfDirection <= radius);
 
-	_scriptStack.push_back(isInRadius ? 1 : 0);
+	_scriptStack.push_back(StackValue(isInRadius ? 1 : 0));
 }
 
 void Runtime::scriptOpSaveAs(ScriptArg_t arg) {
-	TAKE_STACK(4);
+	TAKE_STACK_INT(4);
 
 	// Just ignore this op, it looks like it's for save room remapping of some sort but we allow
 	// saves at any idle screen.
 	(void)stackArgs;
 }
 
-void Runtime::scriptOpNot(ScriptArg_t arg) {
-	TAKE_STACK(1);
+void Runtime::scriptOpSave0(ScriptArg_t arg) {
+	warning("save0 op not implemented");
+}
 
-	_scriptStack.push_back((stackArgs[0] == 0) ? 1 : 0);
+void Runtime::scriptOpExit(ScriptArg_t arg) {
+	warning("exit op not implemented");
+}
+
+void Runtime::scriptOpNot(ScriptArg_t arg) {
+	TAKE_STACK_INT(1);
+
+	_scriptStack.push_back(StackValue((stackArgs[0] == 0) ? 1 : 0));
 }
 
 void Runtime::scriptOpAnd(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
-	_scriptStack.push_back((stackArgs[0] != 0 && stackArgs[1] != 0) ? 1 : 0);
+	_scriptStack.push_back(StackValue((stackArgs[0] != 0 && stackArgs[1] != 0) ? 1 : 0));
 }
 
 void Runtime::scriptOpOr(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
-	_scriptStack.push_back((stackArgs[0] != 0 || stackArgs[1] != 0) ? 1 : 0);
+	_scriptStack.push_back(StackValue((stackArgs[0] != 0 || stackArgs[1] != 0) ? 1 : 0));
 }
 
 void Runtime::scriptOpAdd(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
-	_scriptStack.push_back(stackArgs[0] + stackArgs[1]);
+	_scriptStack.push_back(StackValue(stackArgs[0] + stackArgs[1]));
 }
 
 void Runtime::scriptOpSub(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
-	_scriptStack.push_back(stackArgs[0] - stackArgs[1]);
+	_scriptStack.push_back(StackValue(stackArgs[0] - stackArgs[1]));
 }
 
 void Runtime::scriptOpNegate(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
-	_scriptStack.push_back(-stackArgs[0]);
+	_scriptStack.push_back(StackValue(-stackArgs[0]));
 }
 
 void Runtime::scriptOpCmpEq(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
-	_scriptStack.push_back((stackArgs[0] == stackArgs[1]) ? 1 : 0);
+	_scriptStack.push_back(StackValue((stackArgs[0] == stackArgs[1]) ? 1 : 0));
 }
 
 void Runtime::scriptOpCmpLt(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
-	_scriptStack.push_back((stackArgs[0] < stackArgs[1]) ? 1 : 0);
+	_scriptStack.push_back(StackValue((stackArgs[0] < stackArgs[1]) ? 1 : 0));
 }
 
 void Runtime::scriptOpCmpGt(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
-	_scriptStack.push_back((stackArgs[0] > stackArgs[1]) ? 1 : 0);
+	_scriptStack.push_back(StackValue((stackArgs[0] > stackArgs[1]) ? 1 : 0));
 }
 
 void Runtime::scriptOpBitLoad(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 
-	_scriptStack.push_back((stackArgs[0] >> stackArgs[1]) & 1);
+	_scriptStack.push_back(StackValue((stackArgs[0] >> stackArgs[1]) & 1));
 }
 
 void Runtime::scriptOpBitSet0(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	ScriptArg_t bitMask = static_cast<ScriptArg_t>(1) << stackArgs[1];
-	_scriptStack.push_back(stackArgs[0] & ~bitMask);
+	_scriptStack.push_back(StackValue(stackArgs[0] & ~bitMask));
 }
 
 void Runtime::scriptOpBitSet1(ScriptArg_t arg) {
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 
 	ScriptArg_t bitMask = static_cast<ScriptArg_t>(1) << stackArgs[1];
-	_scriptStack.push_back(stackArgs[0] | bitMask);
+	_scriptStack.push_back(StackValue(stackArgs[0] | bitMask));
 }
 
 void Runtime::scriptOpDisc1(ScriptArg_t arg) {
 	// Disc check, always pass
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 	(void)stackArgs;
-	_scriptStack.push_back(1);
+	_scriptStack.push_back(StackValue(1));
 }
 
 void Runtime::scriptOpDisc2(ScriptArg_t arg) {
 	// Disc check, always pass
-	TAKE_STACK(2);
+	TAKE_STACK_INT(2);
 	(void)stackArgs;
-	_scriptStack.push_back(1);
+	_scriptStack.push_back(StackValue(1));
 }
 
 void Runtime::scriptOpDisc3(ScriptArg_t arg) {
 	// Disc check, always pass
-	TAKE_STACK(3);
+	TAKE_STACK_INT(3);
 	(void)stackArgs;
-	_scriptStack.push_back(1);
+	_scriptStack.push_back(StackValue(1));
 }
 
 void Runtime::scriptOpGoto(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	uint newInteraction = static_cast<uint>(stackArgs[0]);
 
@@ -3497,7 +4635,7 @@ void Runtime::scriptOpGoto(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpEscOn(ScriptArg_t arg) {
-	TAKE_STACK(1);
+	TAKE_STACK_INT(1);
 
 	_escOn = (stackArgs[0] != 0);
 }
@@ -3539,7 +4677,7 @@ void Runtime::scriptOpValueName(ScriptArg_t arg) {
 	if (it == roomDef->values.end())
 		error("Value '%s' doesn't exist in room %i", varName.c_str(), static_cast<int>(_roomNumber));
 
-	_scriptStack.push_back(it->_value);
+	_scriptStack.push_back(StackValue(it->_value));
 }
 
 void Runtime::scriptOpVarName(ScriptArg_t arg) {
@@ -3556,50 +4694,33 @@ void Runtime::scriptOpVarName(ScriptArg_t arg) {
 	if (it == roomDef->vars.end())
 		error("Var '%s' doesn't exist in room %i", varName.c_str(), static_cast<int>(_roomNumber));
 
-	_scriptStack.push_back(it->_value);
+	_scriptStack.push_back(StackValue(it->_value));
 }
 
 void Runtime::scriptOpSoundName(ScriptArg_t arg) {
-	Common::String sndName = _scriptSet->strings[arg];
-
-	uint soundID = 0;
-	for (uint i = 0; i < 4; i++)
-		soundID = soundID * 10u + (sndName[i] - '0');
-
-	sndName.toLowercase();
-
-	Common::HashMap<uint, Common::SharedPtr<CachedSound> >::const_iterator cachedSoundIt = _cachedSounds.find(soundID);
-	if (cachedSoundIt != _cachedSounds.end() && cachedSoundIt->_value->name != sndName) {
-		_cachedSounds.erase(cachedSoundIt);
-		cachedSoundIt = _cachedSounds.end();
-	}
-
-	if (cachedSoundIt == _cachedSounds.end()) {
-		Common::HashMap<Common::String, Common::ArchiveMemberPtr>::const_iterator waveIt = _waves.find(sndName);
-
-		if (waveIt != _waves.end())
-			loadWave(soundID, sndName, waveIt->_value);
-	}
-
-	_scriptStack.push_back(soundID);
+	_scriptStack.push_back(StackValue(_scriptSet->strings[arg]));
 }
 
 void Runtime::scriptOpCursorName(ScriptArg_t arg) {
 	const Common::String &cursorName = _scriptSet->strings[arg];
 
-	Common::HashMap<Common::String, StackValue_t>::const_iterator namedCursorIt = _namedCursors.find(cursorName);
+	Common::HashMap<Common::String, StackInt_t>::const_iterator namedCursorIt = _namedCursors.find(cursorName);
 	if (namedCursorIt == _namedCursors.end()) {
 		error("Unimplemented cursor name '%s'", cursorName.c_str());
 		return;
 	}
 
-	_scriptStack.push_back(namedCursorIt->_value);
+	_scriptStack.push_back(StackValue(namedCursorIt->_value));
+}
+
+void Runtime::scriptOpDubbing(ScriptArg_t arg) {
+	warning("Dubbing op not implemented");
 }
 
 void Runtime::scriptOpCheckValue(ScriptArg_t arg) {
 	PEEK_STACK(1);
 
-	if (arg == stackArgs[0])
+	if (stackArgs[0].type == StackValue::kNumber && stackArgs[0].value.i == arg)
 		_scriptStack.pop_back();
 	else
 		_scriptNextInstruction++;
@@ -3609,7 +4730,12 @@ void Runtime::scriptOpJump(ScriptArg_t arg) {
 	_scriptNextInstruction = arg;
 }
 
-#undef TAKE_STACK
+#undef TAKE_STACK_STR
+#undef TAKE_STACK_STR_NAMED
+#undef TAKE_STACK_INT
+#undef TAKE_STACK_INT_NAMED
+#undef TAKE_STACK_VAR
+#undef TAKE_STACK_VAR_NAMED
 #undef PEEK_STACK
 #undef OPCODE_STUB
 

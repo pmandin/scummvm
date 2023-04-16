@@ -23,17 +23,15 @@
 #define MM1_VIEWS_MAPS_ARRESTED_H
 
 #include "mm/mm1/views/text_view.h"
+#include "mm/mm1/game/arrested.h"
 
 namespace MM {
 namespace MM1 {
 namespace Views {
 namespace Maps {
 
-class Arrested : public TextView {
+class Arrested : public TextView, public MM1::Game::Arrested {
 private:
-	void attack();
-	void bribe();
-	void run();
 	void surrender(int numYears = 2);
 
 public:

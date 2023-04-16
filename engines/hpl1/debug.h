@@ -37,7 +37,8 @@ enum DebugChannels {
 	kDebugAudio = 1 << 5,
 	kDebugSaves = 1 << 6,
 	kDebugTextures = 1 << 7,
-	kDebugScripts = 1 << 8
+	kDebugScripts = 1 << 8,
+	kDebugShaders = 1 << 9,
 };
 
 enum DebugLevels {
@@ -61,6 +62,6 @@ void logInfo(uint32 channels, const char *fmt, Args... args) {
 	debugCN(kDebugLevelLog, channels, fmt, args...);
 }
 
-}
+} // namespace Hpl1
 
 #endif

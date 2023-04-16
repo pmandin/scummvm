@@ -33,6 +33,7 @@
 #include "director/archive.h"
 #include "director/cast.h"
 #include "director/movie.h"
+#include "director/picture.h"
 #include "director/score.h"
 #include "director/sound.h"
 #include "director/window.h"
@@ -94,6 +95,8 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 
 	_wmWidth = 1024;
 	_wmHeight = 768;
+
+	_fpsLimit = 0;
 
 	_wm = nullptr;
 
@@ -357,6 +360,10 @@ Common::String DirectorEngine::getStartupPath() const {
 
 bool DirectorEngine::desktopEnabled() {
 	return !(_wmMode & Graphics::kWMModeNoDesktop);
+}
+
+PatternTile::~PatternTile() {
+	delete img;
 }
 
 } // End of namespace Director

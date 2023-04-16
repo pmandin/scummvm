@@ -48,7 +48,7 @@ enum {
 
 /* GridItemInfo */
 struct GridItemInfo {
-	bool		isHeader;
+	bool		isHeader, validEntry;
 	int 		entryID;
 	Common::String 		engineid;
 	Common::String 		gameid;
@@ -64,13 +64,13 @@ struct GridItemInfo {
 	int32				x, y, w, h;
 
 	GridItemInfo(int id, const Common::String &eid, const Common::String &gid, const Common::String &t,
-		const Common::String &d, const Common::String &e, Common::Language l, Common::Platform p)
-		: entryID(id), gameid(gid), engineid(eid), title(t), description(d), extra(e), language(l), platform(p), isHeader(false) {
+		const Common::String &d, const Common::String &e, Common::Language l, Common::Platform p, bool v)
+		: entryID(id), gameid(gid), engineid(eid), title(t), description(d), extra(e), language(l), platform(p), validEntry(v), isHeader(false) {
 		thumbPath = Common::String::format("icons/%s-%s.png", engineid.c_str(), gameid.c_str());
 	}
 
 	GridItemInfo(const Common::String &groupHeader, int groupID) : title(groupHeader), description(groupHeader),
-		isHeader(true), entryID(groupID), language(Common::UNK_LANG), platform(Common::kPlatformUnknown) {
+		isHeader(true), validEntry(true), entryID(groupID), language(Common::UNK_LANG), platform(Common::kPlatformUnknown) {
 		thumbPath = Common::String("");
 	}
 };
@@ -101,7 +101,7 @@ protected:
 	Common::HashMap<int, const Graphics::ManagedSurface *> _platformIcons;
 	Common::HashMap<int, const Graphics::ManagedSurface *> _languageIcons;
 	Common::HashMap<int, const Graphics::ManagedSurface *> _extraIcons;
-
+	Graphics::ManagedSurface *_disabledIconOverlay;
 	// Images are mapped by filename -> surface.
 	Common::HashMap<Common::String, const Graphics::ManagedSurface *> _loadedSurfaces;
 
@@ -174,6 +174,7 @@ public:
 	const Graphics::ManagedSurface *languageToSurface(Common::Language languageCode);
 	const Graphics::ManagedSurface *platformToSurface(Common::Platform platformCode);
 	const Graphics::ManagedSurface *demoToSurface(const Common::String extraString);
+	const Graphics::ManagedSurface *disabledThumbnail();
 
 	/// Update _visibleEntries from _allEntries and returns true if reload is required.
 	bool calcVisibleEntries();
@@ -188,6 +189,8 @@ public:
 	void sortGroups();
 	bool groupExpanded(int groupID) { return _groupExpanded[groupID]; }
 	void toggleGroup(int groupID);
+	void loadClosedGroups(const Common::U32String &groupName);
+	void saveClosedGroups(const Common::U32String &groupName);
 
 	void reloadThumbnails();
 	void loadFlagIcons();
@@ -209,7 +212,6 @@ public:
 
 	void handleMouseWheel(int x, int y, int direction) override;
 	void handleCommand(CommandSender *sender, uint32 cmd, uint32 data) override;
-
 	void reflowLayout() override;
 
 	bool wantsFocus() override { return true; }

@@ -441,7 +441,6 @@ Graphics::Surface *Renderer::convertImageFormatIfNecessary(Graphics::ManagedSurf
 	if (!msurface)
 		return nullptr;
 
-	assert(msurface->format != _texturePixelFormat);
 	Graphics::Surface *surface = new Graphics::Surface();
 	surface->copyFrom(msurface->rawSurface());
 	byte *palette = (byte *)malloc(sizeof(byte) * 16 * 3);
@@ -926,6 +925,9 @@ Graphics::RendererType determinateRenderType() {
 #if defined(USE_OPENGL_GAME)
 						Graphics::kRendererTypeOpenGL |
 #endif
+#if defined(USE_OPENGL_SHADERS)
+			Graphics::kRendererTypeOpenGLShaders |
+#endif
 #if defined(USE_TINYGL)
 						Graphics::kRendererTypeTinyGL |
 #endif
@@ -941,9 +943,13 @@ Graphics::RendererType determinateRenderType() {
 			return matchingRendererType;
 	#endif
 
+	#if defined(USE_OPENGL_SHADERS)
+		if (matchingRendererType == Graphics::kRendererTypeOpenGLShaders)
+			return matchingRendererType;
+	#endif
+
 	#if defined(USE_TINYGL)
-	if (desiredRendererType == Graphics::kRendererTypeTinyGL)
-		return desiredRendererType;
+		return Graphics::kRendererTypeTinyGL;
 	#endif
 
 	return Graphics::kRendererTypeDefault;
@@ -964,6 +970,12 @@ Renderer *createRenderer(int screenW, int screenH, Common::RenderMode renderMode
 	#if defined(USE_OPENGL_GAME) && !defined(USE_GLES2)
 		if (rendererType == Graphics::kRendererTypeOpenGL) {
 			return CreateGfxOpenGL(screenW, screenH, renderMode);
+		}
+	#endif
+
+	#if defined(USE_OPENGL_SHADERS)
+		if (rendererType == Graphics::kRendererTypeOpenGLShaders) {
+			return CreateGfxOpenGLShader(screenW, screenH, renderMode);
 		}
 	#endif
 

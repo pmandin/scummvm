@@ -24,6 +24,7 @@
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/sound.h"
 #include "engines/nancy/input.h"
+#include "engines/nancy/graphics.h"
 
 #include "engines/nancy/state/logo.h"
 
@@ -39,6 +40,9 @@ void Logo::process() {
 	case kInit:
 		init();
 		break;
+	case kPlayIntroVideo:
+		playIntroVideo();
+		break;
 	case kStartSound:
 		startSound();
 		break;
@@ -50,18 +54,62 @@ void Logo::process() {
 	}
 }
 
-void Logo::onStateExit() {
-	destroy();
+void Logo::onStateEnter(const NancyState::NancyState prevState) {
+	// Handle returning from the GMM
+	if (prevState == NancyState::kPause) {
+		if (_state == kPlayIntroVideo) {
+			_tvdVideoDecoder.pauseVideo(false);
+		} else if (_state == kRun) {
+			g_nancy->_sound->pauseSound("MSND", false);
+		}
+	}
+}
+
+bool Logo::onStateExit(const NancyState::NancyState nextState) {
+	// Handle the GMM being called
+	if (nextState == NancyState::kPause) {
+		if (_state == kPlayIntroVideo) {
+			_tvdVideoDecoder.pauseVideo(true);
+		} else if (_state == kRun) {
+			g_nancy->_sound->pauseSound("MSND", true);
+		}
+
+		return false;
+	} else {
+		return true;
+	}
 }
 
 void Logo::init() {
-	Common::SeekableReadStream *lg = g_nancy->getBootChunkStream("LG0");
-	lg->seek(0);
-
-	_logoImage.init(lg->readString());
+	_logoImage.init(g_nancy->_imageChunks["LG0"].imageName);
 	_logoImage.registerGraphics();
 
-	_state = kStartSound;
+	if (g_nancy->getGameType() == kGameTypeVampire && _tvdVideoDecoder.loadFile("VAMPINTR.AVI")) {
+		_tvdVideoDecoder.start();
+		_videoObj.moveTo(Common::Rect(0, 0, 640, 480));
+		_videoObj._drawSurface.create(_tvdVideoDecoder.getWidth(), _tvdVideoDecoder.getHeight(), _tvdVideoDecoder.getPixelFormat());
+		_videoObj.setPalette(_tvdVideoDecoder.getPalette());
+		_videoObj.registerGraphics();
+		_videoObj.setVisible(true);
+		_state = kPlayIntroVideo;
+	} else {
+		_state = kStartSound;
+	}
+}
+
+// The Vampire Diaries originally shipped with a launcher that could either start the game
+// or play an introduction video. We don't bother giving the player a choice, and just
+// play the video before the game logo
+void Logo::playIntroVideo() {
+	if (_tvdVideoDecoder.needsUpdate()) {
+		_videoObj._drawSurface.blitFrom(_tvdVideoDecoder.decodeNextFrame());
+		_videoObj.setVisible(true);
+	}
+	if (_tvdVideoDecoder.endOfVideo() || (g_nancy->_input->getInput().input & NancyInput::kLeftMouseButtonDown)) {
+		_state = kStartSound;
+		_videoObj.setVisible(false);
+		_tvdVideoDecoder.close();
+	}
 }
 
 void Logo::startSound() {

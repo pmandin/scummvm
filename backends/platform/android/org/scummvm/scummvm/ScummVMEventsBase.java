@@ -6,7 +6,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.content.Context;
 //import android.util.Log;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.KeyCharacterMap;
 import android.view.MotionEvent;
@@ -48,6 +47,9 @@ public class ScummVMEventsBase implements
 	public static final int JE_BMB_UP = 19;
 	public static final int JE_FMB_DOWN = 20;
 	public static final int JE_FMB_UP = 21;
+	public static final int JE_MOUSE_WHEEL_UP = 22;
+	public static final int JE_MOUSE_WHEEL_DOWN = 23;
+	public static final int JE_TV_REMOTE = 24;
 	public static final int JE_QUIT = 0x1000;
 	public static final int JE_MENU = 0x1001;
 
@@ -61,8 +63,8 @@ public class ScummVMEventsBase implements
 	public static final int TOUCH_MODE_GAMEPAD = 2;
 	public static final int TOUCH_MODE_MAX = 3;
 
-	public static final int JOYSTICK_AXIS_MAX = 32767;
-	public static final float JOYSTICK_AXIS_HAT_SCALE = 0.33f;
+	public static final int JOYSTICK_AXIS_MAX = 32767; // matches the definition in common/events of "const int16 JOYAXIS_MAX = 32767;"
+	public static final float JOYSTICK_AXIS_HAT_SCALE = 0.66f; // ie. 2/3 to be applied to JOYSTICK_AXIS_MAX
 
 	final protected Context _context;
 	final protected ScummVM _scummvm;
@@ -222,11 +224,12 @@ public class ScummVMEventsBase implements
 //			case KeyEvent.ACTION_DOWN:
 //				actionStr = "KeyEvent.ACTION_DOWN";
 //				break;
-//			case KeyEvent.ACTION_MULTIPLE:
-//				actionStr = "KeyEvent.ACTION_MULTIPLE";
-//				break;
 //			default:
-//				actionStr = e.toString();
+//				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && e.getAction() == KeyEvent.ACTION_MULTIPLE) {
+//					actionStr = "KeyEvent.ACTION_MULTIPLE";
+//				} else {
+//					actionStr = e.toString();
+//				}
 //		}
 //		Log.d(ScummVM.LOG_TAG, "SCUMMV-EVENTS-BASE - onKEY:::" + keyCode + " Action::" + actionStr); // Called
 
@@ -369,17 +372,32 @@ public class ScummVMEventsBase implements
 		case KeyEvent.KEYCODE_VOLUME_UP:
 			// We ignore these so that they can be handled by Android.
 			return false;
+
+//		case KeyEvent.KEYCODE_CHANNEL_UP:
+//		case KeyEvent.KEYCODE_CHANNEL_DOWN:
+		case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
+		case KeyEvent.KEYCODE_MEDIA_REWIND:
+		case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+			type = JE_TV_REMOTE;
+			break;
+
 		case KeyEvent.KEYCODE_DPAD_UP:
 		case KeyEvent.KEYCODE_DPAD_DOWN:
 		case KeyEvent.KEYCODE_DPAD_LEFT:
 		case KeyEvent.KEYCODE_DPAD_RIGHT:
 		case KeyEvent.KEYCODE_DPAD_CENTER:
-			if (e.getSource() == InputDevice.SOURCE_DPAD) {
-				type = JE_DPAD;
-			} else {
-				type = JE_KEY;
-			}
-			break;
+			// NOTE 1 For now, we're handling DPAD keys as JE_GAMEPAD events, regardless the source InputDevice
+			//        We delegate these keypresses to ScummVM's keymapper as JOYSTICK_BUTTON_DPAD presses. 
+			//        (JOYSTICK_BUTTON_DPAD_UP, JOYSTICK_BUTTON_DPAD_DOWN, JOYSTICK_BUTTON_DPAD_LEFT, JOYSTICK_BUTTON_DPAD_RIGHT and JOYSTICK_BUTTON_DPAD_CENTER)
+			//        By default mapped to virtual mouse (VMOUSE).
+			//        As virtual mouse, cursor may be too fast/hard to control, so it's recommended to set and use a VMOUSESLOW binding too,
+			//         (Simultaneous button pressing may work on physical TV remote controls, but may not work on apps for remote controls)
+			//        or adjust the Pointer Speed setting from the "Control" tab.
+			// NOTE 2 Modern gamepads/ game controllers treat the "DPAD" cross buttons as HATs that produce movement events
+			// and *not* DPAD_UP/DOWN/LEFT/RIGHT button press events. Hence, for those controllers these DPAD key events won't be triggered.
+			// Those are handled in ScummVMEventsModern class within its onGenericMotionEvent() implementation.
+			//
+			// fall-through
 		case KeyEvent.KEYCODE_BUTTON_A:
 		case KeyEvent.KEYCODE_BUTTON_B:
 		case KeyEvent.KEYCODE_BUTTON_C:
@@ -397,13 +415,16 @@ public class ScummVMEventsBase implements
 		case KeyEvent.KEYCODE_BUTTON_MODE:
 			type = JE_GAMEPAD;
 			break;
+
 		case KeyEvent.KEYCODE_BUTTON_1:
 		case KeyEvent.KEYCODE_BUTTON_2:
 		case KeyEvent.KEYCODE_BUTTON_3:
 		case KeyEvent.KEYCODE_BUTTON_4:
 			// These are oddly detected with SOURCE_KEYBOARD for joystick so don't bother checking the e.getSource()
+			// Tested on a Saitek ST200 USB Control Stick & Throttle
 			type = JE_JOYSTICK;
 			break;
+
 		default:
 			if (e.isSystem()) {
 				type = JE_SYS_KEY;
@@ -414,6 +435,7 @@ public class ScummVMEventsBase implements
 		}
 
 		//_scummvm.displayMessageOnOSD("GetKey: " + keyCode + " unic=" + eventUnicodeChar+ " arg3= " + (eventUnicodeChar& KeyCharacterMap.COMBINING_ACCENT_MASK) + " meta: " + e.getMetaState());
+		//_scummvm.displayMessageOnOSD("GetKey: " + keyCode + " type=" + type + " source=" + e.getSource() + " action= " + action + " arg5= " + e.getRepeatCount());
 		//Log.d(ScummVM.LOG_TAG,"GetKey: " + keyCode + " unic=" + eventUnicodeChar+ " arg3= " + (eventUnicodeChar& KeyCharacterMap.COMBINING_ACCENT_MASK) + " meta: " + e.getMetaState());
 
 		// look in events.cpp for how this is handled

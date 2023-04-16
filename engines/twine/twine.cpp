@@ -145,25 +145,17 @@ TwinEEngine::TwinEEngine(OSystem *system, Common::Language language, uint32 flag
 		SearchMan.addSubDirectoryMatching(gameDataDir, "common/music");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "common/midi");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/images");
-		if (_gameLang == Common::Language::DE_DEU) {
-			SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/de_voice");
-		} else if (_gameLang == Common::Language::EN_ANY || _gameLang == Common::Language::EN_GRB || _gameLang == Common::Language::EN_USA) {
-			SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/en_voice");
-		} else if (_gameLang == Common::Language::FR_FRA) {
-			SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/fr_voice");
-		}
+		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/de_voice");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/en_voice");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "commonclassic/voices/fr_voice");
 	}
 
 	if (isDotEmuEnhanced()) {
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/hqr");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/fla");
-		if (_gameLang == Common::Language::DE_DEU) {
-			SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/de_voice");
-		} else if (_gameLang == Common::Language::EN_ANY || _gameLang == Common::Language::EN_GRB || _gameLang == Common::Language::EN_USA) {
-			SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/en_voice");
-		} else if (_gameLang == Common::Language::FR_FRA) {
-			SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/fr_voice");
-		}
+		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/de_voice");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/en_voice");
+		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/vox/fr_voice");
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources");
 #ifdef USE_MAD
 		SearchMan.addSubDirectoryMatching(gameDataDir, "resources/lba_files/music");
@@ -271,7 +263,6 @@ Common::Error TwinEEngine::run() {
 	debug("(c) 1994 by Adeline Software International, All Rights Reserved.");
 
 	ConfMan.registerDefault("usehighres", false);
-	ConfMan.registerDefault("wallcollision", false);
 
 	const Common::String &gameTarget = ConfMan.getActiveDomainName();
 	AchMan.setActiveDomain(getMetaEngine()->getAchievementsInfo(gameTarget));
@@ -463,11 +454,13 @@ static int getLanguageTypeIndex(const char *languageName) {
 
 void TwinEEngine::initConfigurations() {
 	// TODO: use existing entries for some of the settings - like volume and so on.
+	ConfMan.registerDefault("wallcollision", false);
 
 	const char *lng = Common::getLanguageDescription(_gameLang);
-	_cfgfile.LanguageId = getLanguageTypeIndex(lng);
-	_cfgfile.Voice = ConfGetBoolOrDefault("voice", true);
-	_cfgfile.FlagDisplayText = ConfGetBoolOrDefault("displaytext", true);
+	_cfgfile._languageId = getLanguageTypeIndex(lng);
+	ConfMan.registerDefault("audio_language", LanguageTypes[_cfgfile._languageId].voice);
+
+	_cfgfile.FlagDisplayText = ConfGetBoolOrDefault("displaytext", true); // TODO: use subtitles
 	const Common::String midiType = ConfGetOrDefault("miditype", "auto");
 	if (midiType == "None") {
 		_cfgfile.MidiType = MIDIFILE_NONE;
@@ -569,6 +562,9 @@ void TwinEEngine::playIntro() {
 
 	if (isLba1Classic()) {
 		abort |= _screens->loadBitmapDelay("Logo2Point21_640_480_256.bmp", 3);
+		if (!abort) {
+			abort |= _screens->adelineLogo();
+		}
 		if (!abort) {
 			abort |= _screens->loadBitmapDelay("TLBA1C_640_480_256.bmp", 3);
 		}

@@ -94,6 +94,15 @@ bool CharacterInfo::msgUnfocus(const UnfocusMessage &msg) {
 	return PartyView::msgUnfocus(msg);
 }
 
+bool CharacterInfo::msgGame(const GameMessage &msg) {
+	if (msg._name == "USE") {
+		g_events->send("CharacterInventory", GameMessage("USE"));
+		return true;
+	}
+
+	return false;
+}
+
 bool CharacterInfo::msgKeypress(const KeypressMessage &msg) {
 	int idx;
 
@@ -130,6 +139,9 @@ bool CharacterInfo::msgKeypress(const KeypressMessage &msg) {
 		_cursorCell = EXPANDED_TO_REDUCED(idx);
 		showCursor(true);
 		break;
+	case Common::KEYCODE_i:
+		addView("CharacterInventory");
+		break;
 	case Common::KEYCODE_e:
 		addView("Exchange");
 		break;
@@ -161,20 +173,38 @@ bool CharacterInfo::msgAction(const ActionMessage &msg) {
 bool CharacterInfo::msgMouseUp(const MouseUpMessage &msg) {
 	// Check if a stat icon was clicked
 	Common::Rect r(25, 22);
-	for (int i = 0; i < ICONS_COUNT; ++i) {
+	for (int i = 0; i < CHAR_ICONS_COUNT; ++i) {
 		r.moveTo(_innerBounds.left + ICONS[i]._x,
 			_innerBounds.top + ICONS[i]._y);
 		if (r.contains(msg._pos)) {
-			showAttribute(i);
+			switch (i) {
+			case 18:
+				msgKeypress(Common::KeyState(Common::KEYCODE_i));
+				break;
+			case 19:
+				msgKeypress(Common::KeyState(Common::KEYCODE_q));
+				break;
+			case 20:
+				msgKeypress(Common::KeyState(Common::KEYCODE_e));
+				break;
+			case 21:
+				msgAction(ActionMessage(KEYBIND_ESCAPE));
+				break;
+			default:
+				showAttribute(i);
+				break;
+			}
+
 			return true;
 		}
 	}
 
-	return ScrollView::msgMouseUp(msg);
+	return PartyView::msgMouseUp(msg);
 }
 
 void CharacterInfo::draw() {
 	ScrollView::draw();
+
 	drawTitle();
 	drawIcons();
 	drawStats();

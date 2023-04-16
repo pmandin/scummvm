@@ -3,6 +3,7 @@ MODULE := graphics
 MODULE_OBJS := \
 	big5.o \
 	blit.o \
+	blit-alpha.o \
 	blit-scale.o \
 	cursorman.o \
 	font.o \
@@ -63,7 +64,7 @@ MODULE_OBJS += \
 	scaler/downscalerARM.o
 endif
 
-ifdef ATARI
+ifdef USE_SV_BLITTER
 MODULE_OBJS += \
 	blit-atari.o
 endif

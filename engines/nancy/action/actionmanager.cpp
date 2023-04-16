@@ -20,6 +20,7 @@
  */
 
 #include "common/serializer.h"
+#include "common/config-manager.h"
 
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/input.h"
@@ -29,7 +30,6 @@
 #include "engines/nancy/action/actionrecord.h"
 
 #include "engines/nancy/state/scene.h"
-
 namespace Nancy {
 namespace Action {
 
@@ -63,7 +63,13 @@ void ActionManager::handleInput(NancyInput &input) {
 					}
 
 					if (!shouldTrigger) {
-						g_nancy->_sound->playSound("CANT");
+						if (g_nancy->getGameType() >= kGameTypeNancy2) {
+							SoundDescription &sound = g_nancy->_inventoryData->itemDescriptions[rec->_itemRequired].specificCantSound;
+							g_nancy->_sound->loadSound(sound);
+							g_nancy->_sound->playSound(sound);
+						} else {
+							g_nancy->_sound->playSound("CANT");
+						}
 					}
 				} else {
 					shouldTrigger = true;
@@ -77,8 +83,8 @@ void ActionManager::handleInput(NancyInput &input) {
 
 					// Re-add the object to the inventory unless it's marked as a one-time use
 					if (rec->_itemRequired == heldItem && rec->_itemRequired != -1) {
-						if (NancySceneState.getInventoryBox().getItemDescription(heldItem).keepItem == kInvItemKeepAlways) {
-							NancySceneState.getInventoryBox().addItem(heldItem);
+						if (g_nancy->_inventoryData->itemDescriptions[heldItem].keepItem == kInvItemKeepAlways) {
+							NancySceneState.addItemToInventory(heldItem);
 						}
 
 						NancySceneState.setHeldItem(-1);
@@ -218,7 +224,6 @@ void ActionManager::processActionRecords() {
 
 						break;
 					case DependencyType::kElapsedPlayerTime:
-						// TODO almost definitely wrong, as the original engine treats player time differently
 						if (NancySceneState._timers.playerTime >= dep.timeData) {
 							dep.satisfied = true;
 						}
@@ -310,6 +315,17 @@ void ActionManager::processActionRecords() {
 							dep.satisfied = true;
 						}
 
+						break;
+					case DependencyType::kClosedCaptioning:
+						if (ConfMan.getBool("subtitles")) {
+							if (dep.condition == 2) {
+								dep.satisfied = true;
+							}
+						} else {
+							if (dep.condition == 1) {
+								dep.satisfied = true;
+							}
+						}
 						break;
 					default:
 						warning("Unimplemented Dependency type %i", (int)dep.type);

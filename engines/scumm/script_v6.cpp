@@ -1439,6 +1439,8 @@ void ScummEngine_v6::o6_getRandomNumber() {
 	if (VAR_RANDOM_NR != 0xFF)
 		VAR(VAR_RANDOM_NR) = rnd;
 	push(rnd);
+
+	debug(6, "o6_getRandomNumber(): %d", rnd);
 }
 
 void ScummEngine_v6::o6_getRandomNumberRange() {
@@ -1466,6 +1468,8 @@ void ScummEngine_v6::o6_getRandomNumberRange() {
 	if (VAR_RANDOM_NR != 0xFF)
 		VAR(VAR_RANDOM_NR) = rnd;
 	push(rnd);
+
+	debug(6, "o6_getRandomNumberRange(): %d (min: %d, max: %d)", rnd, min, max);
 }
 
 void ScummEngine_v6::o6_isScriptRunning() {
@@ -1503,8 +1507,15 @@ void ScummEngine_v6::o6_getActorRoom() {
 		return;
 	}
 
-	Actor *a = derefActor(act, "o6_getActorRoom");
-	push(a->_room);
+	Actor *a = derefActorSafe(act, "o6_getActorRoom");
+	// This check is in place because at least Full Throttle, despite
+	// only allowing 30 actors, might ask for actor 30 (0-indexed), which
+	// on the original went on to fetch garbage data without crashing.
+	// In our case, instead of erroring out, we handle the issue gracefully.
+	if (a)
+		push(a->_room);
+	else
+		push(0);
 }
 
 void ScummEngine_v6::o6_getActorWalkBox() {

@@ -502,6 +502,9 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	if (CONTAINS_DEFINE(setup.defines, "USE_MAD")) {
 		DEF_LOCALLIB_STATIC("libmad");
 	}
+	if (CONTAINS_DEFINE(setup.defines, "USE_MIKMOD")) {
+		DEF_LOCALLIB_STATIC("libmikmod");
+	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MPEG2")) {
 		DEF_LOCALLIB_STATIC("libmpeg2");
 	}
@@ -625,6 +628,9 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	if (CONTAINS_DEFINE(setup.defines, "USE_MAD")) {
 		frameworks_iOS.push_back("libmad.a");
 	}
+	if (CONTAINS_DEFINE(setup.defines, "USE_MIKMOD")) {
+		frameworks_iOS.push_back("libmikmod.a");
+	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MPEG2")) {
 		frameworks_iOS.push_back("libmpeg2.a");
 	}
@@ -715,6 +721,9 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MAD")) {
 		frameworks_osx.push_back("libmad.a");
+	}
+	if (CONTAINS_DEFINE(setup.defines, "USE_MIKMOD")) {
+		frameworks_osx.push_back("libmikmod.a");
 	}
 	if (CONTAINS_DEFINE(setup.defines, "USE_MPEG2")) {
 		frameworks_osx.push_back("libmpeg2.a");
@@ -1082,6 +1091,12 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_shadow_volume.vertex");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_sprite.fragment");
 			files.push_back("engines/wintermute/base/gfx/opengl/shaders/wme_sprite.vertex");
+		}
+		if (CONTAINS_DEFINE(setup.defines, "ENABLE_FREESCAPE")) {
+			files.push_back("engines/freescape/shaders/freescape_bitmap.fragment");
+			files.push_back("engines/freescape/shaders/freescape_bitmap.vertex");
+			files.push_back("engines/freescape/shaders/freescape_triangle.fragment");
+			files.push_back("engines/freescape/shaders/freescape_triange.vertex");
 		}
 		files.push_back("icons/scummvm.icns");
 		files.push_back("AUTHORS");

@@ -27,6 +27,10 @@
 
 namespace Freescape {
 
+void DrillerEngine::initCPC() {
+	_viewArea = Common::Rect(36, 16, 284, 117);
+}
+
 byte kCPCPaletteTitleData[4][3] = {
 	{0x00, 0x00, 0x00},
 	{0x00, 0x80, 0xff},
@@ -123,7 +127,7 @@ void DrillerEngine::loadAssetsCPCFullGame() {
 
 	loadMessagesFixedSize(&file, 0x214c, 14, 20);
 	loadFonts(&file, 0x5b69);
-	loadGlobalObjects(&file, 0x1d07);
+	loadGlobalObjects(&file, 0x1d07, 8);
 	load8bitBinary(&file, 0x5ccb, 16);
 }
 

@@ -38,12 +38,15 @@ public:
 
 	void init();
 	void draw();
+	
+	void loadFonts(Common::SeekableReadStream *chunkStream);
 
 	void addObject(RenderObject *object);
 	void removeObject(RenderObject *object);
 	void clearObjects();
 
 	void redrawAll();
+	void suppressNextDraw();
 
 	const Font *getFont(uint id) const { return id < _fonts.size() ? &_fonts[id] : nullptr; }
 	const Graphics::Screen *getScreen() { return &_screen; }
@@ -58,6 +61,8 @@ public:
 	static void copyToManaged(const Graphics::Surface &src, Graphics::ManagedSurface &dst, bool verticalFlip = false, bool doubleSize = false);
 	static void copyToManaged(void *src, Graphics::ManagedSurface &dst, uint srcW, uint srcH, const Graphics::PixelFormat &format, bool verticalFlip = false, bool doubleSize = false);
 
+	static void rotateBlit(const Graphics::ManagedSurface &src, Graphics::ManagedSurface &dest, byte rotation);
+
 	// Debug
 	void debugDrawToScreen(const Graphics::ManagedSurface &surf);
 
@@ -66,7 +71,6 @@ public:
 	Graphics::PixelFormat _screenPixelFormat;
 
 private:
-	void loadFonts();
 	void blitToScreen(const RenderObject &src, Common::Rect dest);
 
 	static int objectComparator(const void *a, const void *b);
@@ -78,6 +82,8 @@ private:
 
 	Graphics::Screen _screen;
 	Common::Array<Font> _fonts;
+
+	bool _isSuppressed;
 };
 
 } // End of namespace Nancy

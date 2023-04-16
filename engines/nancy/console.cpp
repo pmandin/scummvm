@@ -44,6 +44,7 @@ NancyConsole::NancyConsole() : GUI::Debugger() {
 	registerCmd("cif_export", WRAP_METHOD(NancyConsole, Cmd_cifExport));
 	registerCmd("cif_list", WRAP_METHOD(NancyConsole, Cmd_cifList));
 	registerCmd("cif_info", WRAP_METHOD(NancyConsole, Cmd_cifInfo));
+	registerCmd("chunk_export", WRAP_METHOD(NancyConsole, Cmd_chunkExport));
 	registerCmd("chunk_hexdump", WRAP_METHOD(NancyConsole, Cmd_chunkHexDump));
 	registerCmd("chunk_list", WRAP_METHOD(NancyConsole, Cmd_chunkList));
 	registerCmd("show_image", WRAP_METHOD(NancyConsole, Cmd_showImage));
@@ -202,6 +203,50 @@ bool NancyConsole::Cmd_cifInfo(int argc, const char **argv) {
 	}
 
 	debugPrintf("%s", g_nancy->_resource->getCifDescription((argc == 2 ? "ciftree" : argv[2]), argv[1]).c_str());
+	return true;
+}
+
+bool NancyConsole::Cmd_chunkExport(int argc, const char **argv) {
+	if (argc < 3 || argc > 4) {
+		debugPrintf("Exports an IFF chunk\n");
+		debugPrintf("Usage: %s <iffname> <chunkname> [index]\n", argv[0]);
+		return true;
+	}
+
+	IFF iff(argv[1]);
+	if (!iff.load()) {
+		debugPrintf("Failed to load IFF '%s'\n", argv[1]);
+		return true;
+	}
+
+	const byte *buf;
+	uint size;
+
+	char idStr[4] = { ' ', ' ', ' ', ' ' };
+	uint len = strlen(argv[2]);
+	memcpy(idStr, argv[2], (len <= 4 ? len : 4));
+	uint32 id = READ_BE_UINT32(idStr);
+	uint index = 0;
+
+	if (argc == 4)
+		index = atoi(argv[3]);
+
+	buf = iff.getChunk(id, size, index);
+	if (!buf) {
+		debugPrintf("Failed to find chunk '%s' (index %d) in IFF '%s'\n", argv[2], index, argv[1]);
+		return true;
+	}
+
+	Common::DumpFile dumpfile;
+	Common::String filename = g_nancy->getGameId();
+	filename += '_';
+	filename += argv[1];
+	filename += '_';
+	filename += argv[2];
+	filename += ".dat";
+	dumpfile.open(filename);
+	dumpfile.write(buf, size);
+	dumpfile.close();
 	return true;
 }
 
@@ -416,7 +461,7 @@ bool NancyConsole::Cmd_listAcionRecords(int argc, const char **argv) {
 				case DependencyType::kInventory :
 					debugPrintf("kInventory, item %u, %s, %s",
 						dep.label,
-						g_nancy->getStaticData().itemNames[dep.label].c_str(),
+						g_nancy->_inventoryData->itemDescriptions[dep.label].name.c_str(),
 						dep.condition == kInvHolding ? "kInvHolding" : "kInvEmpty");
 					break;
 				case DependencyType::kEvent :
@@ -463,7 +508,7 @@ bool NancyConsole::Cmd_listAcionRecords(int argc, const char **argv) {
 				case DependencyType::kCursorType :
 					debugPrintf("kCursorType, item %u, %s, %s",
 						dep.label,
-						g_nancy->getStaticData().itemNames[dep.label].c_str(),
+						g_nancy->_inventoryData->itemDescriptions[dep.label].name.c_str(),
 						dep.condition == ActionManager::kCursInvHolding ? "kCursInvHolding" : "kCursInvNotHolding");
 					break;
 				case DependencyType::kPlayerTOD :
@@ -501,7 +546,7 @@ bool NancyConsole::Cmd_scanForActionRecordType(int argc, const char **argv) {
 		return true;
 	}
 
-	byte typeID = atoi(argv[1]) + 10;
+	byte typeID = atoi(argv[1]);
 
 	Common::Array<Common::String> list;
 	g_nancy->_resource->list((argc == 2 ? "ciftree" : argv[2]), list, ResourceManager::kResTypeScript);
@@ -626,7 +671,7 @@ bool NancyConsole::Cmd_getInventory(int argc, const char **argv) {
 		for (uint i = 0; i < numItems; ++i) {
 			debugPrintf("\nItem %u, %s, %s",
 				i,
-				g_nancy->getStaticData().itemNames[i].c_str(),
+				g_nancy->_inventoryData->itemDescriptions[i].name.c_str(),
 				NancySceneState.hasItem(i) == kInvHolding ? "kInvHolding" : "kInvEmpty");
 		}
 	} else {
@@ -638,7 +683,7 @@ bool NancyConsole::Cmd_getInventory(int argc, const char **argv) {
 			}
 			debugPrintf("\nItem %u, %s, %s",
 				flagID,
-				g_nancy->getStaticData().itemNames[flagID].c_str(),
+				g_nancy->_inventoryData->itemDescriptions[flagID].name.c_str(),
 				NancySceneState.hasItem(i) == kInvHolding ? "kInvHolding" : "kInvEmpty");
 
 		}
@@ -672,12 +717,12 @@ bool NancyConsole::Cmd_setInventory(int argc, const char **argv) {
 			NancySceneState.addItemToInventory(itemID);
 			debugPrintf("Added item %i, %s, to inventory\n",
 				itemID,
-				g_nancy->getStaticData().itemNames[itemID].c_str());
+				g_nancy->_inventoryData->itemDescriptions[itemID].name.c_str());
 		} else if (Common::String(argv[i + 1]).compareTo("false") == 0) {
 			NancySceneState.removeItemFromInventory(itemID, false);
 			debugPrintf("Removed item %i, %s, from inventory\n",
 				itemID,
-				g_nancy->getStaticData().itemNames[itemID].c_str());
+				g_nancy->_inventoryData->itemDescriptions[itemID].name.c_str());
 		} else {
 			debugPrintf("Invalid value %s\n", argv[i + 1]);
 			continue;

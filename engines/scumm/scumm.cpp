@@ -93,6 +93,7 @@
 #ifdef USE_ENET
 #include "scumm/he/net/net_main.h"
 #include "scumm/dialog-sessionselector.h"
+#include "scumm/dialog-createsession.h"
 #ifdef USE_LIBCURL
 #include "scumm/he/net/net_lobby.h"
 #endif
@@ -2220,20 +2221,16 @@ void ScummEngine::setupMusic(int midi, const Common::String &macInstrumentFile) 
 
 void ScummEngine::syncSoundSettings() {
 	if (isUsingOriginalGUI() && _game.version > 6) {
-		if (ConfMan.hasKey("original_gui_text_status", _targetName)) {
-			_voiceMode = ConfMan.getInt("original_gui_text_status");
-		} else if (ConfMan.hasKey("subtitles", _targetName) && ConfMan.hasKey("speech_mute", _targetName)){
-			int guiTextStatus = 0;
-			if (ConfMan.getBool("speech_mute")) {
-				guiTextStatus = 2;
-			} else if (ConfMan.getBool("subtitles")) {
-				guiTextStatus = 1;
-			}
-
-			// Let's set it now so we don't have to do the conversion the next time...
-			ConfMan.setInt("original_gui_text_status", guiTextStatus);
-			_voiceMode = guiTextStatus;
+		int guiTextStatus = 0;
+		if (ConfMan.getBool("speech_mute")) {
+			guiTextStatus = 2;
+		} else if (ConfMan.getBool("subtitles")) {
+			guiTextStatus = 1;
 		}
+
+		// Mainly used by COMI
+		ConfMan.setInt("original_gui_text_status", guiTextStatus);
+		_voiceMode = guiTextStatus;
 
 		if (VAR_VOICE_MODE != 0xFF)
 			VAR(VAR_VOICE_MODE) = _voiceMode;
@@ -2334,10 +2331,6 @@ Common::Error ScummEngine::go() {
 	}
 
 	while (!shouldQuit()) {
-		// Randomize the PRNG by calling it at regular intervals. This ensures
-		// that it will be in a different state each time you run the program.
-		_rnd.getRandomNumber(2);
-
 		// Determine how long to wait before the next loop iteration should start
 		int delta = (VAR_TIMER_NEXT != 0xFF) ? VAR(VAR_TIMER_NEXT) : 4;
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
@@ -2375,7 +2368,29 @@ Common::Error ScummEngine::go() {
 			delta = ceil(delta / 3.0) * 3;
 		}
 
-		// In COMI we put no speed limit while on the main menu.
+		// The following delta value substitutions are aimed at removing
+		// any frame rate limit to main menu rooms in which you can type
+		// custom names for save states. We do this in order to avoid
+		// lag and/or lose keyboard inputs.
+
+		if (_enableEnhancements) {
+			// INDY3:
+			if (_game.id == GID_INDY3 && _currentRoom == 14) {
+				delta = 3;
+			}
+
+			// LOOM (EGA & FM-TOWNS):
+			if (_game.id == GID_LOOM && _game.version == 3 && _currentRoom == 70) {
+				delta = 3; // Enough not to flash the cursor too quickly and to remove lag...
+			}
+
+			// ZAK (FM-Towns):
+			if (_game.id == GID_ZAK && _game.version == 3 && _currentRoom == 50) {
+				delta = 3; // Enough not to flash the cursor too quickly and to remove lag...
+			}
+		}
+
+		// COMI (not marked as enhancement because without this the menu shows issues):
 		if (_game.version == 8 && _currentRoom == 92) {
 			delta = 0;
 		}
@@ -2805,6 +2820,12 @@ void ScummEngine::scummLoop_handleSaveLoad() {
 
 			if (success && (_saveTemporaryState || _game.version == 8) && VAR_GAME_LOADED != 0xFF)
 				VAR(VAR_GAME_LOADED) = (_game.version == 8) ? 1 : GAME_PROPER_LOAD;
+
+			// If we are here, it means that we are loading a game from the ScummVM menu;
+			// let's call the exit save/load script (only used in v6) to restore the cursor
+			// properly.
+			if (VAR_SAVELOAD_SCRIPT2 != 0xFF && _currentRoom != 0)
+				runScript(VAR(VAR_SAVELOAD_SCRIPT2), 0, 0, nullptr);
 		}
 
 		if (!success) {
@@ -3016,6 +3037,15 @@ void ScummEngine_v5::scummLoop_handleSaveLoad() {
 }
 
 void ScummEngine_v6::scummLoop_handleSaveLoad() {
+	// When launching a savegame from the launcher it may happen (if the game was
+	// saved within the original GUI) that the cursor can remain invisible until
+	// an event changes it. The original save dialog calls the exit save/load script
+	// to reinstate the cursor correctly, so we do that manually for this edge case.
+	if (_loadFromLauncher && VAR_SAVELOAD_SCRIPT2 != 0xFF && _currentRoom != 0) {
+		_loadFromLauncher = false;
+		runScript(VAR(VAR_SAVELOAD_SCRIPT2), 0, 0, nullptr);
+	}
+
 	ScummEngine::scummLoop_handleSaveLoad();
 
 	if (_videoModeChanged) {
@@ -3412,10 +3442,12 @@ void ScummEngine::pauseEngineIntern(bool pause) {
 
 #ifdef ENABLE_SCUMM_7_8
 void ScummEngine_v7::pauseEngineIntern(bool pause) {
-	if (pause) {
-		_splayer->pause();
-	} else {
-		_splayer->unpause();
+	if (_splayer) { // We may call it from setupScumm() before _splayer is inited
+		if (pause) {
+			_splayer->pause();
+		} else {
+			_splayer->unpause();
+		}
 	}
 
 	ScummEngine::pauseEngineIntern(pause);
@@ -3485,10 +3517,15 @@ bool ScummEngine::displayMessageYesNo(const char *message, ...) {
 int ScummEngine_v90he::networkSessionDialog() {
 	GUI::MessageDialog dialog(_("Would you like to host or join a network play session?"), _("Host"), _("Join"));
 	int res = runDialog(dialog);
-	if (res == GUI::kMessageOK)
-		// Hosting session.
-		return -1;
-
+	if (res == GUI::kMessageOK) {
+		// Hosting a session.
+		CreateSessionDialog createDialog;
+		if (runDialog(createDialog)) {
+			return -1;
+		} else {
+			return -2;
+		}
+	}
 	// Joining a session
 	SessionSelectorDialog sessionDialog(this);
 	return runDialog(sessionDialog);

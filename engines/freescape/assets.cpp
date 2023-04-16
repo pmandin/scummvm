@@ -46,7 +46,7 @@ void FreescapeEngine::loadAssetsFullGame() {
 	} else if (isCPC()) {
 		loadAssetsCPCFullGame();
 	} else if (isC64()) {
-		//loadAssetsC64FullGame();
+		loadAssetsC64FullGame();
 	} else if (isDOS()) {
 		loadAssetsDOSFullGame();
 	} else
@@ -63,9 +63,6 @@ void FreescapeEngine::loadAssetsDemo() {
 		loadAssetsDOSDemo();
 	} else
 		error("Unsupported demo for Driller");
-
-	_demoMode = !_disableDemoMode;
-	_angleRotationIndex = 0;
 }
 
 void FreescapeEngine::loadAssetsAtariDemo() {
@@ -83,6 +80,10 @@ void FreescapeEngine::loadAssetsZXDemo() {
 void FreescapeEngine::loadAssetsCPCDemo() {
 }
 
+void FreescapeEngine::loadAssetsC64Demo() {
+}
+
+
 void FreescapeEngine::loadAssetsAtariFullGame() {
 }
 
@@ -96,6 +97,9 @@ void FreescapeEngine::loadAssetsZXFullGame() {
 }
 
 void FreescapeEngine::loadAssetsCPCFullGame() {
+}
+
+void FreescapeEngine::loadAssetsC64FullGame() {
 }
 
 } // End of namespace Freescape

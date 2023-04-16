@@ -45,8 +45,14 @@
 #include "director/lingo/xlibs/cdromxobj.h"
 #include "director/lingo/xlibs/darkenscreen.h"
 #include "director/lingo/xlibs/developerStack.h"
+#include "director/lingo/xlibs/dialogsxobj.h"
+#include "director/lingo/xlibs/dpwavi.h"
+#include "director/lingo/xlibs/dpwqtw.h"
 #include "director/lingo/xlibs/draw.h"
 #include "director/lingo/xlibs/ednox.h"
+#include "director/lingo/xlibs/fedracul.h"
+#include "director/lingo/xlibs/feimasks.h"
+#include "director/lingo/xlibs/feiprefs.h"
 #include "director/lingo/xlibs/fileexists.h"
 #include "director/lingo/xlibs/fileio.h"
 #include "director/lingo/xlibs/findfolder.h"
@@ -160,8 +166,14 @@ static struct XLibProto {
 	{ CDROMXObj::fileNames,				CDROMXObj::open,			CDROMXObj::close,			kXObj,					200 },	// D2
 	{ DarkenScreen::fileNames,			DarkenScreen::open,			DarkenScreen::close,		kXObj,					300 },	// D3
 	{ DeveloperStack::fileNames,		DeveloperStack::open,		DeveloperStack::close,		kXObj,					300 },	// D3
+	{ DialogsXObj::fileNames,			DialogsXObj::open,			DialogsXObj::close,			kXObj,					400 },	// D4
+	{ DPwAVI::fileNames,				DPwAVI::open,				DPwAVI::close,				kXObj,					400 },	// D4
+	{ DPwQTw::fileNames,				DPwQTw::open,				DPwQTw::close,				kXObj,					400 },	// D4
 	{ DrawXObj::fileNames,				DrawXObj::open,				DrawXObj::close,			kXObj,					400 },	// D4
 	{ Ednox::fileNames,					Ednox::open,				Ednox::close,				kXObj,					300 },	// D3
+	{ FEDraculXObj::fileNames,			FEDraculXObj::open,			FEDraculXObj::close,		kXObj,					400 },	// D4
+	{ FEIMasksXObj::fileNames,			FEIMasksXObj::open,			FEIMasksXObj::close,		kXObj,					400 },	// D4
+	{ FEIPrefsXObj::fileNames,			FEIPrefsXObj::open,			FEIPrefsXObj::close,		kXObj,					400 },	// D4
 	{ FileExists::fileNames,			FileExists::open,			FileExists::close,			kXObj,					300 },	// D3
 	{ FileIO::fileNames,				FileIO::open,				FileIO::close,				kXObj | kXtraObj,		200 },	// D2
 	{ FindFolder::fileNames,			FindFolder::open,			FindFolder::close,			kXObj,					300 },	// D3
@@ -233,6 +245,9 @@ Common::String Lingo::normalizeXLibName(Common::String name) {
 	}
 
 	name.trim();
+
+	// Normalize to remove machintosh path delimiters (':', '@:')
+	name = convertPath(name);
 
 	return name;
 }
@@ -963,7 +978,8 @@ Datum BitmapCastMember::getField(int field) {
 		d = _clut;
 		break;
 	case kThePicture:
-		warning("STUB: BitmapCastMember::getField(): Unprocessed getting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
+		d.type = PICTUREREF;
+		d.u.picture = getPicture();
 		break;
 	default:
 		d = CastMember::getField(field);
@@ -993,7 +1009,12 @@ bool BitmapCastMember::setField(int field, const Datum &d) {
 		_clut = d.asInt();
 		return true;
 	case kThePicture:
-		warning("STUB: BitmapCastMember::setField(): Unprocessed setting field \"%s\" of cast %d", g_lingo->field2str(field), _castId);
+		if (d.type == PICTUREREF && d.u.picture != nullptr) {
+			setPicture(*d.u.picture);
+			return true;
+		} else {
+			warning("BitmapCastMember::setField(): Wrong Datum type %d for kThePicture (or nullptr)", d.type);
+		}
 		return false;
 	default:
 		break;

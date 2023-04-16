@@ -31,27 +31,35 @@ namespace Nancy {
 class NancyEngine;
 
 class CursorManager {
+	friend class NancyEngine;
+
 public:
-	enum CursorType { kNormal = 0, kHotspot = 1, kMove = 2, kExit = 3, kNormalArrow, kHotspotArrow };
+	enum CursorType { kNormal = 0, kHotspot = 1, kMove = 2, kExit = 3, kRotate = 4, kNormalArrow, kHotspotArrow };
 
 	CursorManager() :
 		_isInitialized(false),
 		_curItemID(-1),
 		_curCursorType(kNormal),
-		_curCursorID(0) {}
+		_curCursorID(0),
+		_hasItem(false) {}
 
-	void init();
+	void init(Common::SeekableReadStream *chunkStream);
 
+	// Change the current cursor ID. Does not change the graphic
 	void setCursor(CursorType type, int16 itemID);
 	void setCursorType(CursorType type);
 	void setCursorItemID(int16 itemID);
-	void showCursor(bool shouldShow);
+
+	// Change the cursor graphic. Should be called right before drawing to screen
+	void applyCursor();
 
 	const Common::Point &getCurrentCursorHotspot() { return _cursors[_curCursorID].hotspot;}
 	const Common::Rect &getPrimaryVideoInactiveZone() { return _primaryVideoInactiveZone; }
 	const Common::Point &getPrimaryVideoInitialPos() { return _primaryVideoInitialPos; }
 
 private:
+	void showCursor(bool shouldShow);
+
 	struct Cursor {
 		Common::Rect bounds;
 		Common::Point hotspot;
@@ -68,6 +76,7 @@ private:
 	CursorType _curCursorType;
 	int16 _curItemID;
 	uint _curCursorID;
+	bool _hasItem;
 	bool _isInitialized;
 };
 

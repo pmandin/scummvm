@@ -49,9 +49,10 @@ public:
 	virtual ~Map() = default;
 
 	void process() override;
-	void onStateExit() override;
+	void onStateEnter(const NancyState::NancyState prevState) override;
+	bool onStateExit(const NancyState::NancyState nextState) override;
 
-	const SoundDescription &getSound() { return _mapSounds[_mapID]; }
+	const SoundDescription &getSound();
 
 protected:
 	class MapViewport : public Nancy::RenderObject {
@@ -66,19 +67,8 @@ protected:
 		void playVideo() { _decoder.start(); }
 		void unloadVideo() { _decoder.close(); }
 
-	private:
 		AVFDecoder _decoder;
-	};
-
-	struct Location {
-		Common::String description;
-
-		bool isActive = false;
-		Common::Rect hotspot;
-		Common::Array<SceneChangeDescription> scenes;
-
-		Common::Rect labelSrc;
-		Common::Rect labelDest;
+	private:
 	};
 
 	virtual void init() = 0;
@@ -88,9 +78,7 @@ protected:
 
 	void setLabel(int labelID);
 
-	Common::Array<Common::String> _mapNames;
-	Common::Array<Common::String> _mapPalettes;
-	Common::Array<SoundDescription> _mapSounds;
+	MAP *_mapData;
 
 	MapViewport _viewport;
 	RenderObject _label;
@@ -100,7 +88,8 @@ protected:
 	State _state;
 	uint16 _mapID;
 	int16 _pickedLocationID;
-	Common::Array<Location> _locations;
+	Common::Array<bool> _activeLocations;
+	Common::Array<Common::Rect> _locationLabelDests;
 };
 
 class TVDMap : public Map {
@@ -131,12 +120,10 @@ private:
 	void run() override;
 	void registerGraphics() override;
 
-	void onStateExit() override;
+	bool onStateExit(const NancyState::NancyState nextState) override;
 
 	MapGlobe _globe;
 	UI::ViewportOrnaments _ornaments;
-
-	Common::Point _cursorPosition;
 };
 
 class Nancy1Map : public Map {
@@ -150,10 +137,9 @@ private:
 	void run() override;
 	void registerGraphics() override;
 
-	void onStateExit() override;
+	bool onStateExit(const NancyState::NancyState next) override;
 
 	UI::Button *_button;
-	//bool _mapButtonClicked;
 };
 
 #define NancyMapState Nancy::State::Map::instance()

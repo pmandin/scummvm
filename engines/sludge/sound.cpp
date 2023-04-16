@@ -23,6 +23,7 @@
 #include "audio/decoders/wave.h"
 #include "audio/decoders/vorbis.h"
 #include "audio/mods/mod_xm_s3m.h"
+#include "audio/mods/impulsetracker.h"
 
 #include "sludge/errors.h"
 #include "sludge/fileset.h"
@@ -221,10 +222,18 @@ bool SoundManager::playMOD(int f, int a, int fromTrack) {
 	Common::SeekableReadStream *memImage = readStream->readStream(length);
 
 	if (memImage->size() != (int)length || readStream->err()) {
-		return fatal("Sound reading failed");
+		return fatal("SoundManager::playMOD(): Sound reading failed");
 	}
-	Audio::RewindableAudioStream *mod = Audio::makeModXmS3mStream(memImage, DisposeAfterUse::NO, fromTrack);
+	Audio::RewindableAudioStream *mod = nullptr;
 
+	if (Audio::probeModXmS3m(memImage))
+		mod = Audio::makeModXmS3mStream(memImage, DisposeAfterUse::NO, fromTrack);
+#ifdef USE_MIKMOD
+	if (!mod) {
+		if (Audio::probeImpulseTracker(memImage))
+			mod = Audio::makeImpulseTrackerStream(memImage, DisposeAfterUse::NO);
+	}
+#endif
 	if (!mod) {
 		warning("Could not load MOD file");
 		g_sludge->_resMan->finishAccess();
@@ -315,14 +324,24 @@ int SoundManager::makeSoundAudioStream(int f, Audio::AudioStream *&audiostream, 
 
 	Common::SeekableReadStream *readStream = g_sludge->_resMan->getData();
 	uint curr_ptr = readStream->pos();
-	Audio::RewindableAudioStream *stream = Audio::makeWAVStream(readStream->readStream(length), DisposeAfterUse::NO);
+
+	uint32 tag = readStream->readUint32BE();
+	readStream->seek(curr_ptr);
+
+	Audio::RewindableAudioStream *stream = nullptr;
+	if (tag == MKTAG('R','I','F','F'))
+		stream = Audio::makeWAVStream(readStream->readStream(length), DisposeAfterUse::NO);
 
 #ifdef USE_VORBIS
-	if (!stream) {
-		readStream->seek(curr_ptr);
+	if (tag == MKTAG('O','g','g','S'))
 		stream = Audio::makeVorbisStream(readStream->readStream(length), DisposeAfterUse::NO);
-	}
 #endif
+
+	if (!stream) {
+		warning("SoundManager::makeSoundAudioStream(): Unsupported sound format %s", tag2str(tag));
+		delete stream;
+	}
+
 	g_sludge->_resMan->finishAccess();
 
 	if (stream) {

@@ -72,7 +72,7 @@ static bool analog_response_is_quadratic = false;
 static float mouse_speed = 1.0f;
 static float gamepad_acceleration_time = 0.2f;
 
-static bool speed_hack_is_enabled = false;
+static bool timing_inaccuracies_enabled = false;
 
 char cmd_params[20][200];
 char cmd_params_num;
@@ -85,11 +85,17 @@ static uint8 frameskip_no;
 static uint8 frameskip_type;
 static uint8 frameskip_threshold;
 static uint32 frameskip_counter = 0;
+static uint8 frameskip_events = 0;
 
-static bool can_dupe = false;
+static bool consecutive_screen_updates = false;
+
 static uint8 audio_status = 0;
 
 static unsigned retro_audio_buff_occupancy = 0;
+
+static uint8 performance_switch = 0;
+static uint32 perf_ref_frame = 0;
+static uint32 perf_ref_audio_buff_occupancy = 0;
 
 float frame_rate;
 static uint16 samples_per_frame = 0;                // length in samples per frame
@@ -99,6 +105,7 @@ static int16_t *sound_buffer = NULL;       // pointer to output buffer
 
 static void audio_buffer_init(uint16 sample_rate, uint16 frame_rate) {
 	samples_per_frame = sample_rate / frame_rate;
+
 	samples_per_frame_buffer_size = samples_per_frame << 1 * sizeof(int16_t);
 
 	if (sound_buffer)
@@ -127,18 +134,54 @@ static void retro_audio_buff_status_cb(bool active, unsigned occupancy, bool und
 	retro_audio_buff_occupancy = occupancy;
 }
 
-static void set_audio_buffer_status(){
-	if (frameskip_type > 1) {
-		struct retro_audio_buffer_status_callback buf_status_cb;
-		buf_status_cb.callback = retro_audio_buff_status_cb;
-		audio_status = environ_cb(RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK, &buf_status_cb) ? (audio_status | AUDIO_STATUS_BUFFER_SUPPORT) : (audio_status & ~AUDIO_STATUS_BUFFER_SUPPORT);
-	} else {
-		audio_status = environ_cb(RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK, NULL) ? (audio_status | AUDIO_STATUS_BUFFER_SUPPORT) : (audio_status & ~AUDIO_STATUS_BUFFER_SUPPORT);
+static void increase_performance() {
+	if (!(performance_switch & PERF_SWITCH_DISABLE_CONSECUTIVE_SCREEN_UPDATES)) {
+		performance_switch |= PERF_SWITCH_DISABLE_CONSECUTIVE_SCREEN_UPDATES;
+		log_cb(RETRO_LOG_DEBUG, "Auto performance tuner: 'Disable consecutive screen updates' enabled.\n");
+		return;
+	}
+
+	if (!(performance_switch & PERF_SWITCH_ENABLE_TIMING_INACCURACIES)) {
+		performance_switch |= PERF_SWITCH_ENABLE_TIMING_INACCURACIES;
+		log_cb(RETRO_LOG_DEBUG, "Auto performance tuner: 'Allow Timing Inaccuracies' enabled.\n");
+		return;
+	}
+
+	performance_switch |= PERF_SWITCH_OVER;
+}
+
+static void increase_accuracy() {
+	performance_switch &= ~PERF_SWITCH_OVER;
+
+	if (performance_switch & PERF_SWITCH_ENABLE_TIMING_INACCURACIES) {
+		performance_switch &= ~PERF_SWITCH_ENABLE_TIMING_INACCURACIES;
+		log_cb(RETRO_LOG_DEBUG, "Auto performance tuner: 'Allow Timing Inaccuracies' disabled.\n");
+		return;
+	}
+
+
+	if (performance_switch & PERF_SWITCH_DISABLE_CONSECUTIVE_SCREEN_UPDATES) {
+		performance_switch &= ~PERF_SWITCH_DISABLE_CONSECUTIVE_SCREEN_UPDATES;
+		log_cb(RETRO_LOG_DEBUG, "Auto performance tuner: 'Disable consecutive screen updates' disabled.\n");
+		return;
+	}
+}
+
+void reset_performance_tuner() {
+	if (performance_switch & PERF_SWITCH_ON) {
+		performance_switch = PERF_SWITCH_ON;
+		log_cb(RETRO_LOG_DEBUG, "Auto performance tuner: reset.\n");
 	}
 }
 
 static void update_variables(void) {
 	struct retro_variable var;
+
+	struct retro_message_ext retro_msg;
+	retro_msg.type = RETRO_MESSAGE_TYPE_NOTIFICATION;
+	retro_msg.target = RETRO_MESSAGE_TARGET_OSD;
+	retro_msg.duration = 3000;
+	retro_msg.msg = "";
 
 	var.key = "scummvm_gamepad_cursor_speed";
 	var.value = NULL;
@@ -176,29 +219,28 @@ static void update_variables(void) {
 		mouse_speed = (float)atof(var.value);
 	}
 
-	var.key = "scummvm_speed_hack";
+	var.key = "scummvm_allow_timing_inaccuracies";
 	var.value = NULL;
-	speed_hack_is_enabled = false;
+	timing_inaccuracies_enabled = false;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
 		if (strcmp(var.value, "enabled") == 0)
-			speed_hack_is_enabled = true;
+			timing_inaccuracies_enabled = true;
 	}
 
 	var.key = "scummvm_frameskip_threshold";
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
 		frameskip_threshold = (uint8)strtol(var.value, NULL, 10);
+	}
 
 	var.key = "scummvm_frameskip_no";
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-	{
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
 		frameskip_no = (uint8)strtol(var.value, NULL, 10) + 1;
 	}
 
-	uint8 old_frameskip_type = frameskip_type;
 	var.key = "scummvm_frameskip_type";
 	var.value = NULL;
-	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-	{
+	uint8 old_frameskip_type = frameskip_type;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
 		if (strcmp(var.value, "disabled") == 0)
 			frameskip_type = 0;
 		else if (strcmp(var.value, "fixed") == 0)
@@ -209,10 +251,61 @@ static void update_variables(void) {
 			frameskip_type = 3;
 	}
 
-	if (old_frameskip_type != frameskip_type){
-		set_audio_buffer_status();
+	var.key = "scummvm_auto_performance_tuner";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+		if (strcmp(var.value, "enabled") == 0) {
+			if (!performance_switch)
+				audio_status |= AUDIO_STATUS_UPDATE_LATENCY;
+
+			performance_switch &= ~PERF_SWITCH_OVER;
+			performance_switch |= PERF_SWITCH_ON;
+		} else
+			performance_switch = 0;
+	}
+
+	var.key = "scummvm_consecutive_screen_updates";
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+		if (strcmp(var.value, "enabled") == 0) {
+			consecutive_screen_updates = false;
+		} else
+			consecutive_screen_updates = true;
+	}
+
+	if (!(audio_status & AUDIO_STATUS_BUFFER_SUPPORT)) {
+		if (frameskip_type > 1) {
+			log_cb(RETRO_LOG_WARN, "Selected frameskip mode not available.\n");
+			retro_msg.msg = "Selected frameskip mode not available";
+			environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &retro_msg);
+			frameskip_type = 0;
+		}
+
+		if (performance_switch) {
+			log_cb(RETRO_LOG_WARN, "Auto performance tuner not available.\n");
+			retro_msg.msg = "Auto performance tuner not available";
+			environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &retro_msg);
+			performance_switch = 0;
+		}
+	}
+
+	if (old_frameskip_type != frameskip_type) {
 		audio_status |= AUDIO_STATUS_UPDATE_LATENCY;
 	}
+
+
+}
+
+bool timing_inaccuracies_is_enabled(){
+	if (performance_switch & PERF_SWITCH_ON)
+		return (performance_switch & PERF_SWITCH_ENABLE_TIMING_INACCURACIES);
+	else
+		return timing_inaccuracies_enabled;
+}
+
+bool consecutive_screen_updates_is_enabled(){
+	if (performance_switch & PERF_SWITCH_ON)
+		return !(performance_switch & PERF_SWITCH_DISABLE_CONSECUTIVE_SCREEN_UPDATES);
+	else
+		return consecutive_screen_updates;
 }
 
 void parse_command_params(char *cmdline) {
@@ -368,12 +461,13 @@ void retro_init(void) {
 	else
 		log_cb = NULL;
 
+	struct retro_audio_buffer_status_callback buf_status_cb;
+	buf_status_cb.callback = retro_audio_buff_status_cb;
+	audio_status = environ_cb(RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK, &buf_status_cb) ? (audio_status | AUDIO_STATUS_BUFFER_SUPPORT) : (audio_status & ~AUDIO_STATUS_BUFFER_SUPPORT);
 	frame_rate = environ_cb(RETRO_ENVIRONMENT_GET_TARGET_REFRESH_RATE, &frame_rate) ? frame_rate : REFRESH_RATE;
 
 	audio_buffer_init(SAMPLE_RATE, (uint16) frame_rate);
 	update_variables();
-
-	environ_cb(RETRO_ENVIRONMENT_GET_CAN_DUPE, &can_dupe);
 
 	cmd_params_num = 1;
 	strcpy(cmd_params[0], "scummvm\0");
@@ -441,7 +535,7 @@ void retro_init(void) {
 		retroSetSaveDir(".");
 	}
 
-	g_system = retroBuildOS(speed_hack_is_enabled);
+	g_system = retroBuildOS();
 }
 
 void retro_deinit(void) {
@@ -585,73 +679,6 @@ void retro_run(void) {
 		return;
 	}
 
-	/* Setting RA's video or audio driver to null will disable video/audio bits */
-	int audio_video_enable = 0;
-	environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &audio_video_enable);
-
-	bool skip_frame = false;
-	retro_switch_to_emu_thread();
-
-	if (g_system) {
-		poll_cb();
-		retroProcessMouse(input_cb, retro_device, gampad_cursor_speed, gamepad_acceleration_time, analog_response_is_quadratic, analog_deadzone, mouse_speed);
-
-		if (frameskip_type && can_dupe) {
-			if (audio_status & (AUDIO_STATUS_BUFFER_SUPPORT | AUDIO_STATUS_BUFFER_ACTIVE)){
-				switch (frameskip_type) {
-				case 1:
-					skip_frame = !(current_frame % frameskip_no == 0);
-					break;
-				case 2:
-					skip_frame = (audio_status & AUDIO_STATUS_BUFFER_UNDERRUN);
-					break;
-				case 3:
-					skip_frame = (retro_audio_buff_occupancy < frameskip_threshold);
-					break;
-				}
-			} else
-				skip_frame = !(current_frame % frameskip_no == 0);
-		}
-		/* Upload audio */
-		size_t count = 0;
-		if (audio_video_enable & 2) {
-			count = ((Audio::MixerImpl *)g_system->getMixer())->mixCallback((byte *) sound_buffer, samples_per_frame_buffer_size);
-		}
-		audio_status = count ? (audio_status & ~AUDIO_STATUS_MUTE) : (audio_status | AUDIO_STATUS_MUTE);
-
-		/* No frame skipping if there is no incoming audio (e.g. GUI) */
-		skip_frame = skip_frame && ! (audio_status & AUDIO_STATUS_MUTE);
-
-		if ((!skip_frame && frameskip_counter) || frameskip_counter >= FRAMESKIP_MAX) {
-			if (frameskip_counter)
-				log_cb(RETRO_LOG_WARN, "%d frame(s) skipped\n",frameskip_counter);
-			skip_frame        = false;
-			frameskip_counter = 0;
-		} else if (skip_frame)
-			frameskip_counter++;
-
-		if ((audio_video_enable & 1) && !skip_frame) {
-			const Graphics::Surface &screen = getScreen();
-			video_cb(screen.getPixels(), screen.w, screen.h, screen.pitch);
-		} else {
-			video_cb(NULL, 0, 0, 0); // Set to NULL to skip frame rendering
-		}
-
-#if defined(_3DS)
-		/* Hack: 3DS will produce static noise
-		 * unless we manually send a zeroed
-		 * audio buffer when no samples are
-		 * available (i.e. when the overlay
-		 * is shown) */
-		if (audio_status & AUDIO_STATUS_MUTE) {
-			audio_buffer_init(SAMPLE_RATE, (uint16) frame_rate);
-		}
-#endif
-		audio_batch_cb((audio_status & AUDIO_STATUS_MUTE) ? NULL : (int16_t *) sound_buffer, count); // Set to NULL to skip sound rendering
-
-		current_frame++;
-	}
-
 	bool updated = false;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated){
 		update_variables();
@@ -659,17 +686,114 @@ void retro_run(void) {
 
 	if (audio_status & AUDIO_STATUS_UPDATE_LATENCY){
 		uint32 audio_latency;
-		if (frameskip_type > 1) {
-			float frame_time_msec = 1000.0f / frame_rate;
+		float frame_time_msec = 1000.0f / frame_rate;
 
-			audio_latency = (uint32)((8.0f * frame_time_msec) + 0.5f);
-			audio_latency = (audio_latency + 0x1F) & ~0x1F;
-		} else {
-			audio_latency = 0;
-		}
+		audio_latency = (uint32)((8.0f * frame_time_msec) + 0.5f);
+		audio_latency = (audio_latency + 0x1F) & ~0x1F;
+
 		/* This can only be called from within retro_run() */
 		environ_cb(RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY, &audio_latency);
 		audio_status &= ~AUDIO_STATUS_UPDATE_LATENCY;
+	}
+
+	/* Setting RA's video or audio driver to null will disable video/audio bits */
+	int audio_video_enable = 0;
+	environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &audio_video_enable);
+
+	bool skip_frame = false;
+	size_t samples_count = 0;
+
+	if (g_system) {
+
+		/* ScummVM is not based on fixed framerate like libretro, and engines/scripts
+		can call multiple screen updates between two retro_run calls. Hence if consecutive screen updates
+		are detected we will loop within the same retro_run call until next pollEvent or
+		delayMillis call in ScummVM thread.
+		*/
+		do {
+			/* Determine frameskip need based on settings */
+			if ((frameskip_type == 2) || (performance_switch & PERF_SWITCH_ON))
+				skip_frame = (audio_status & AUDIO_STATUS_BUFFER_UNDERRUN);
+			else if (frameskip_type == 1){
+				skip_frame = !(current_frame % frameskip_no == 0);
+}
+			else if (frameskip_type == 3)
+				skip_frame = (retro_audio_buff_occupancy < frameskip_threshold);
+
+			/* No frame skipping if
+			- no incoming audio (e.g. GUI)
+			- doing a THREAD_SWITCH_UPDATE loop*/
+			skip_frame = skip_frame && !(audio_status & AUDIO_STATUS_MUTE) && !(getThreadSwitchCaller() & THREAD_SWITCH_UPDATE);
+
+			/* Reset frameskip counter if not flagged */
+			if ((!skip_frame && frameskip_counter) || frameskip_counter >= FRAMESKIP_MAX) {
+				log_cb(RETRO_LOG_DEBUG, "%d frame(s) skipped (%ld)\n", frameskip_counter, current_frame);
+				skip_frame = false;
+				frameskip_counter = 0;
+			/* Keep on skipping frames if flagged */
+			} else if (skip_frame) {
+				frameskip_counter++;
+				/* Performance counter */
+				if ((performance_switch & PERF_SWITCH_ON) && !(performance_switch & PERF_SWITCH_OVER)) {
+					frameskip_events += frameskip_counter;
+					if (frameskip_events > PERF_SWITCH_FRAMESKIP_EVENTS) {
+						increase_performance();
+						frameskip_events = 0;
+						perf_ref_frame = current_frame;
+						perf_ref_audio_buff_occupancy = 0;
+					}
+				}
+			}
+
+			/* Performance tuner reset if average buffer occupacy is above the required threshold again */
+			if (!skip_frame && (performance_switch & PERF_SWITCH_ON) && performance_switch > PERF_SWITCH_ON) {
+				perf_ref_audio_buff_occupancy += retro_audio_buff_occupancy;
+				if ((current_frame - perf_ref_frame) % (PERF_SWITCH_RESET_REST) == 0) {
+					uint32 avg_audio_buff_occupancy = perf_ref_audio_buff_occupancy / (current_frame + 1 - perf_ref_frame);
+					if (avg_audio_buff_occupancy > PERF_SWITCH_RESET_THRESHOLD || avg_audio_buff_occupancy == retro_audio_buff_occupancy)
+						increase_accuracy();
+					perf_ref_frame = current_frame - 1;
+					perf_ref_audio_buff_occupancy = 0;
+					frameskip_events = 0;
+				}
+			}
+
+			/* Switch to ScummVM thread, unless frameskipping is ongoing */
+			if (!skip_frame)
+				retro_switch_to_emu_thread();
+
+			/* Retrieve audio */
+			samples_count = 0;
+			if (audio_video_enable & 2) {
+				samples_count = ((Audio::MixerImpl *)g_system->getMixer())->mixCallback((byte *) sound_buffer, samples_per_frame_buffer_size);
+			}
+			audio_status = samples_count ? (audio_status & ~AUDIO_STATUS_MUTE) : (audio_status | AUDIO_STATUS_MUTE);
+
+			/* Retrieve video */
+			if ((audio_video_enable & 1) && !skip_frame) {
+				const Graphics::Surface &screen = getScreen();
+				video_cb(screen.getPixels(), screen.w, screen.h, screen.pitch);
+			}
+
+#if defined(_3DS)
+			/* Hack: 3DS will produce static noise
+			 * unless we manually send a zeroed
+			 * audio buffer when no samples are
+			 * available (i.e. when the overlay
+			 * is shown) */
+			if (audio_status & AUDIO_STATUS_MUTE) {
+				audio_buffer_init(SAMPLE_RATE, (uint16) frame_rate);
+			}
+#endif
+			if (!(audio_status & AUDIO_STATUS_MUTE))
+				audio_batch_cb((int16_t *) sound_buffer, samples_count);
+
+			current_frame++;
+
+		} while (getThreadSwitchCaller() & THREAD_SWITCH_UPDATE);
+
+		poll_cb();
+		retroProcessMouse(input_cb, retro_device, gampad_cursor_speed, gamepad_acceleration_time, analog_response_is_quadratic, analog_deadzone, mouse_speed);
 	}
 }
 

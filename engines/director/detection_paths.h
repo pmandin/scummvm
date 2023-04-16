@@ -29,8 +29,6 @@ const char *directoryGlobs[] = {
 	"win_data",						// L-ZONE
 	"data",
 	"gadget",						// Gadget
-	"vnc",
-	"vnc2",							// Virtual Nightclub
 	"program",						// Arc Media products
 	"demodata",						// Edmark demos
 	"media",						// Gundam
@@ -39,10 +37,8 @@ const char *directoryGlobs[] = {
 	"module_2",						// Takeru
 	"simpdata",
 	"simpsons",						// Simpsons Cartoon Studio
-	"dane",							// Polish Kontyngent '99 catalog
 	"datas",						// O!KAY! subscription from Domino Verlag
 	"daten",						// Bibi Blocksberg games (German)
-	"source",						// Grand Prix 2006 directory
 	"data_k",
 	"data_1",
 	"data_2",						// JumpStart World
@@ -67,14 +63,12 @@ const char *directoryGlobs[] = {
 	"elk1",							// Blinky Bill Kindergarten
 	"endsoung",
 	"gerhelp",
-	"gervideo",
-	"xn--Musejagd mit Ton-vnb",		// GGMD German
+	"gervideo",						// GGMD German
 	"music",
 	"solos",
 	"duthelp",
 	"dutvideo",
-	"endsound",
-	"muizen in \'t hotel, geluid",	// GGMD Dutch
+	"endsound",						// GGMD Dutch
 	"macos9",
 	"macosx",						// Sethi 3
 	"kripos",
@@ -82,13 +76,10 @@ const char *directoryGlobs[] = {
 	"polis",
 	"poliisi",
 	"cd_data",						// Polis
-	"fusion macintosh folder",		// Fusion
 	"oslo",							// Oslo's Tools & Gadgets
 	"ojo2000",
 	"stuff",						// Abrapalabra
 	"tooned",						// Stay Tooned
-	"content",
-	"pcinst",						// Gus and the CyberBuds series
 	"p2data",
 	"p2media",
 	"p3media",
@@ -99,17 +90,12 @@ const char *directoryGlobs[] = {
 	"dayfiles",
 	"xmasfun",						// Fisher-Price Xmas Fun
 	"95instal",						// Fisher-Price Little People
-	"01",					   		// Doing it in C++
 	"freading",
 	"fsetup",						// My First Reading Words (Eureka)
 	"english",
 	"deutsch",
 	"francais",						// Rename from Français
 	"italiano",						// Virtual Tourism Paris
-	"xn--HD-g73avcj4g7a5726ctwzw3ca1i6i",	   // HDにｺﾋﾟｰして下さい
-	"xn--HDG2-rw3c5o2dpa9kzb2170dd4tzyda5j4k", // HDにｺﾋﾟｰして下さい。G2
-	"xn--HDG3-rw3c5o2dpa9kzb2170dd4tzyda5j4k", // HDにｺﾋﾟｰして下さい。G3
-	"_files_",						// The Gate
 	"popup",						// Pop Up Computer
 	"alpha",						// Interactive Alphabet
 	"technik",						// Glasklar Technology Interactive

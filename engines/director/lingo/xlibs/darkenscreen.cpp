@@ -58,7 +58,7 @@ void DarkenScreen::close(int type) {
 }
 
 void DarkenScreen::m_darkenscreen(int nargs) {
-    g_lingo->printSTUBWithArglist("DarkenScreen::m_darkenscreen", nargs);
+	g_lingo->printSTUBWithArglist("DarkenScreen::m_darkenscreen", nargs);
 }
 
 } // End of namespace Director

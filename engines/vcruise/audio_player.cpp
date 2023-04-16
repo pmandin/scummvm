@@ -23,8 +23,8 @@
 
 namespace VCruise {
 
-AudioPlayer::AudioPlayer(Audio::Mixer *mixer, const Common::SharedPtr<Audio::AudioStream> &baseStream)
-	: _exhausted(false), _isPlaying(false), _mixer(mixer), _baseStream(baseStream) {
+AudioPlayer::AudioPlayer(Audio::Mixer *mixer, const Common::SharedPtr<Audio::AudioStream> &baseStream, Audio::Mixer::SoundType soundType)
+	: _exhausted(false), _isPlaying(false), _mixer(mixer), _baseStream(baseStream), _soundType(soundType) {
 }
 
 AudioPlayer::~AudioPlayer() {
@@ -62,9 +62,8 @@ void AudioPlayer::play(byte volume, int8 balance) {
 	if (!_isPlaying) {
 		_isPlaying = true;
 		_exhausted = false;
-		_mixer->playStream(Audio::Mixer::kPlainSoundType, &_handle, this, -1, volume, balance, DisposeAfterUse::NO);
+		_mixer->playStream(_soundType, &_handle, this, -1, volume, balance, DisposeAfterUse::NO);
 	}
-
 }
 
 void AudioPlayer::setVolume(byte volume) {
@@ -76,10 +75,12 @@ void AudioPlayer::setBalance(int8 balance) {
 }
 
 void AudioPlayer::setVolumeAndBalance(byte volume, int8 balance) {
-	Common::StackLock lock(_mixer->mutex());
+	if (_isPlaying) {
+		Common::StackLock lock(_mixer->mutex());
 
-	_mixer->setChannelVolume(_handle, volume);
-	_mixer->setChannelBalance(_handle, balance);
+		_mixer->setChannelVolume(_handle, volume);
+		_mixer->setChannelBalance(_handle, balance);
+	}
 }
 
 void AudioPlayer::stop() {

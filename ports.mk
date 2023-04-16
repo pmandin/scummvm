@@ -59,6 +59,7 @@ endif
 dist-generic: $(EXECUTABLE) $(PLUGINS)
 	mkdir -p ./dist-generic/scummvm/data
 	mkdir -p ./dist-generic/scummvm/doc
+	rm -f ./dist-generic/scummvm/$(EXECUTABLE)
 	cp $(EXECUTABLE) ./dist-generic/scummvm
 ifeq ($(BACKEND), atari)
 	m68k-atari-mint-flags -S ./dist-generic/scummvm/$(EXECUTABLE)
@@ -512,6 +513,10 @@ ifdef USE_FAAD
 OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libfaad.a
 endif
 
+ifdef USE_MIKMOD
+OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libmikmod.a
+endif
+
 ifdef USE_MPEG2
 OSX_STATIC_LIBS += $(STATICLIBPATH)/lib/libmpeg2.a
 endif
@@ -603,7 +608,9 @@ osxsnap: bundle
 	cp $(DIST_FILES_DOCS_se) ./ScummVM-snapshot/doc/se/
 	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/QuickStart
 	$(XCODETOOLSPATH)/SetFile -t ttro -c ttxt ./ScummVM-snapshot/doc/*/*
-	command -v xattr >/dev/null 2>&1 && xattr -w "com.apple.TextEncoding" "utf-8;134217984" ./ScummVM-snapshot/doc/*/*
+ifndef MACOSX_LEOPARD_OR_BELOW
+	xattr -w "com.apple.TextEncoding" "utf-8;134217984" ./ScummVM-snapshot/doc/*/*
+endif
 	cp -RP $(bundle_name) ./ScummVM-snapshot/
 	cp $(srcdir)/dists/macosx/DS_Store ./ScummVM-snapshot/.DS_Store
 	cp $(srcdir)/dists/macosx/background.jpg ./ScummVM-snapshot/background.jpg

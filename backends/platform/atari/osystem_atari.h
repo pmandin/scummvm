@@ -24,8 +24,6 @@
 
 #include "backends/modular-backend.h"
 
-#include <time.h>
-
 class OSystem_Atari : public ModularMixerBackend, public ModularGraphicsBackend {
 public:
 	OSystem_Atari();
@@ -51,9 +49,10 @@ public:
 	void update();
 
 private:
-	clock_t _startTime;
+	long _startTime;
 
 	bool _video_initialized = false;
+	bool _200hz_initialized = false;
 	bool _ikbd_initialized = false;
 };
 

@@ -48,12 +48,7 @@ VideoDecoder::VideoDecoder() {
 	_nextVideoTrack = 0;
 	_mainAudioTrack = 0;
 	_canSetDither = true;
-
-	// Find the best format for output
-	_defaultHighColorFormat = g_system->getScreenFormat();
-
-	if (_defaultHighColorFormat.bytesPerPixel == 1)
-		_defaultHighColorFormat = Graphics::PixelFormat(4, 8, 8, 8, 8, 8, 16, 24, 0);
+	_canSetDefaultFormat = true;
 }
 
 void VideoDecoder::close() {
@@ -79,6 +74,7 @@ void VideoDecoder::close() {
 	_nextVideoTrack = 0;
 	_mainAudioTrack = 0;
 	_canSetDither = true;
+	_canSetDefaultFormat = true;
 }
 
 bool VideoDecoder::loadFile(const Common::Path &filename) {
@@ -208,6 +204,7 @@ Graphics::PixelFormat VideoDecoder::getPixelFormat() const {
 const Graphics::Surface *VideoDecoder::decodeNextFrame() {
 	_needsUpdate = false;
 	_canSetDither = false;
+	_canSetDefaultFormat = false;
 
 	readNextPacket();
 
@@ -547,6 +544,23 @@ bool VideoDecoder::setDitheringPalette(const byte *palette) {
 	return result;
 }
 
+bool VideoDecoder::setOutputPixelFormat(const Graphics::PixelFormat &format) {
+	// If a frame was already decoded, we can't set it now.
+	if (!_canSetDefaultFormat)
+		return false;
+
+	bool result = false;
+
+	for (TrackList::iterator it = _tracks.begin(); it != _tracks.end(); it++) {
+		if ((*it)->getTrackType() == Track::kTrackTypeVideo) {
+			if (((VideoTrack *)*it)->setOutputPixelFormat(format))
+				result = true;
+		}
+	}
+
+	return result;
+}
+
 VideoDecoder::Track::Track() {
 	_paused = false;
 }
@@ -727,6 +741,11 @@ VideoDecoder::StreamFileAudioTrack::StreamFileAudioTrack(Audio::Mixer::SoundType
 	_stream = 0;
 }
 
+VideoDecoder::StreamFileAudioTrack::StreamFileAudioTrack(Audio::SeekableAudioStream *stream, Audio::Mixer::SoundType soundType) :
+		SeekableAudioTrack(soundType) {
+	_stream = stream;
+}
+
 VideoDecoder::StreamFileAudioTrack::~StreamFileAudioTrack() {
 	delete _stream;
 }
@@ -774,6 +793,16 @@ void VideoDecoder::addTrack(Track *track, bool isExternal) {
 	// Start the track if we're playing
 	if (isPlaying() && track->getTrackType() == Track::kTrackTypeAudio)
 		((AudioTrack *)track)->start();
+}
+
+bool VideoDecoder::addStreamTrack(Audio::SeekableAudioStream *stream) {
+	// Only allow adding external tracks if a video is already loaded
+	if (!isVideoLoaded())
+		return false;
+
+	StreamFileAudioTrack *track = new StreamFileAudioTrack(stream, getSoundType());
+	addTrack(track, true);
+	return true;
 }
 
 bool VideoDecoder::addStreamFileTrack(const Common::String &baseName) {
