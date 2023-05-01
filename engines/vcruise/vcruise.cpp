@@ -24,9 +24,12 @@
 #include "common/config-manager.h"
 #include "common/events.h"
 #include "common/stream.h"
+#include "common/savefile.h"
 #include "common/system.h"
 #include "common/algorithm.h"
 #include "common/translation.h"
+
+#include "audio/mixer.h"
 
 #include "gui/message.h"
 
@@ -61,6 +64,9 @@ void VCruiseEngine::handleEvents() {
 			break;
 		case Common::EVENT_KEYDOWN:
 			_runtime->onKeyDown(evt.kbd.keycode);
+			break;
+		case Common::EVENT_CUSTOM_ENGINE_ACTION_START:
+			_runtime->onKeymappedEvent(static_cast<VCruise::KeymappedEvent>(evt.customType));
 			break;
 		default:
 			break;
@@ -159,7 +165,7 @@ Common::Error VCruiseEngine::run() {
 	_system->fillScreen(0);
 
 	_runtime.reset(new Runtime(_system, _mixer, _rootFSNode, _gameDescription->gameID));
-	_runtime->initSections(_videoRect, _menuBarRect, _trayRect, _system->getScreenFormat());
+	_runtime->initSections(_videoRect, _menuBarRect, _trayRect, Common::Rect(640, 480), _system->getScreenFormat());
 
 	const char *exeName = _gameDescription->desc.filesDescriptions[0].fileName;
 
@@ -213,6 +219,44 @@ bool VCruiseEngine::hasFeature(EngineFeature f) const {
 	default:
 		return false;
 	};
+}
+
+void VCruiseEngine::syncSoundSettings() {
+	// Sync the engine with the config manager
+	int soundVolumeMusic = ConfMan.getInt("music_volume");
+	int soundVolumeSFX = ConfMan.getInt("sfx_volume");
+	int soundVolumeSpeech = ConfMan.getInt("speech_volume");
+
+	bool mute = false;
+	if (ConfMan.hasKey("mute"))
+		mute = ConfMan.getBool("mute");
+
+	// We need to handle the speech mute separately here. This is because the
+	// engine code should be able to rely on all speech sounds muted when the
+	// user specified subtitles only mode, which results in "speech_mute" to
+	// be set to "true". The global mute setting has precedence over the
+	// speech mute setting though.
+	bool speechMute = mute;
+	if (!speechMute)
+		speechMute = ConfMan.getBool("speech_mute");
+
+	bool muteMusic = false;
+	if (ConfMan.hasKey("vcruise_mute_music"))
+		muteMusic = ConfMan.getBool("vcruise_mute_music");
+
+	bool muteSound = ConfMan.getBool("vcruise_mute_sound");
+	if (ConfMan.hasKey("vcruise_mute_sound"))
+		muteSound = ConfMan.getBool("vcruise_mute_sound");
+
+	_mixer->muteSoundType(Audio::Mixer::kPlainSoundType, mute || muteSound);
+	_mixer->muteSoundType(Audio::Mixer::kMusicSoundType, mute || muteMusic);
+	_mixer->muteSoundType(Audio::Mixer::kSFXSoundType, mute || muteSound);
+	_mixer->muteSoundType(Audio::Mixer::kSpeechSoundType, speechMute || muteSound);
+
+	_mixer->setVolumeForSoundType(Audio::Mixer::kPlainSoundType, Audio::Mixer::kMaxMixerVolume);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kMusicSoundType, soundVolumeMusic);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kSFXSoundType, soundVolumeSFX);
+	_mixer->setVolumeForSoundType(Audio::Mixer::kSpeechSoundType, soundVolumeSpeech);
 }
 
 Common::Error VCruiseEngine::saveGameStream(Common::WriteStream *stream, bool isAutosave) {
@@ -282,5 +326,17 @@ void VCruiseEngine::initializePath(const Common::FSNode &gamePath) {
 
 	_rootFSNode = gamePath;
 }
+
+bool VCruiseEngine::hasDefaultSave() {
+	const Common::String &autoSaveName = getSaveStateName(getMetaEngine()->getAutosaveSlot());
+	bool autoSaveExists = getSaveFileManager()->exists(autoSaveName);
+
+	return autoSaveExists;
+}
+
+bool VCruiseEngine::hasAnySave() {
+	return hasDefaultSave();	// Maybe could do this better, but with how ScummVM works, if there are any saves at all, then the autosave should exist.
+}
+
 
 } // End of namespace VCruise

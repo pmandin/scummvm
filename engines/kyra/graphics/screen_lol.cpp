@@ -30,7 +30,7 @@
 
 namespace Kyra {
 
-Screen_LoL::Screen_LoL(LoLEngine *vm, OSystem *system) : Screen_v2(vm, system,  vm->gameFlags().use16ColorMode ? _screenDimTable16C : _screenDimTable256C, _screenDimTableCount) {
+Screen_LoL::Screen_LoL(LoLEngine *vm, OSystem *system) : Screen_v2(vm, system,  vm->gameFlags().use16ColorMode ? _screenDimTable16C : vm->gameFlags().lang == Common::Language::ZH_TWN ? _screenDimTableZH : _screenDimTable256C, _screenDimTableCount) {
 	_paletteOverlay1 = new uint8[0x100]();
 	_paletteOverlay2 = new uint8[0x100]();
 	_grayOverlay = new uint8[0x100]();
@@ -882,6 +882,21 @@ void Screen_LoL::postProcessCursor(uint8 *data, int w, int h, int pitch) {
 
 		data += pitch - w;
 	}
+}
+
+void ChineseOneByteFontLoL::processColorMap() {
+	_textColor[0] = _colorMap[1];
+	_textColor[1] = _colorMap[0];
+}
+
+uint32 ChineseTwoByteFontLoL::getFontOffset(uint16 c) const {
+	c = ((c & 0x7F00) >> 2) | (c & 0x3F);
+	return c * 28;
+}
+
+void ChineseTwoByteFontLoL::processColorMap() {
+	_textColor[0] = _colorMap[1];
+	_textColor[1] = _colorMap[0];
 }
 
 } // End of namespace Kyra

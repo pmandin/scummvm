@@ -39,6 +39,7 @@
 #include "director/director.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-object.h"
+#include "director/lingo/lingo-utils.h"
 #include "director/lingo/xlibs/xio.h"
 
 
@@ -54,8 +55,8 @@ static MethodProto xlibMethods[] = {
 	{ "New",		XioXObj::m_new,			0,	0,	400 },	// D4
 	{ "Dispose",	XioXObj::m_dispose,		0,	0,	400 },	// D4
 	{ "Unlock",		XioXObj::m_unlock,		1,	1,	400 },	// D4
-	{ "DeleteFile",	XioXObj::m_deleteFile,	2,	2,	400 },	// D4
-	{ "CopyFile",	XioXObj::m_copyFile,	3,	3,	400 },	// D4
+	{ "DeleteFile",	XioXObj::m_deleteFile,	1,	1,	400 },	// D4
+	{ "CopyFile",	XioXObj::m_copyFile,	2,	2,	400 },	// D4
 	{ nullptr, nullptr, 0, 0, 0 }
 };
 
@@ -94,18 +95,7 @@ void XioXObj::m_unlock(int nargs) {
 	g_lingo->push(Datum(1));
 }
 
-void XioXObj::m_deleteFile(int nargs) {
-	Common::String filename = g_lingo->pop().asString();
-	warning("XioXObj::m_deleteFile: filename: \"%s\"", filename.c_str());
-	g_lingo->dropStack(nargs);
-	g_lingo->push(Datum(1));
-}
-
-void XioXObj::m_copyFile(int nargs) {
-	Common::String source = g_lingo->pop().asString();
-	Common::String destination = g_lingo->pop().asString();
-	warning("XioXObj::m_copyFile: source: \"%s\", destination: \"%s\"", source.c_str(), destination.c_str());
-	g_lingo->push(Datum(1));
-}
+XOBJSTUB(XioXObj::m_deleteFile, 1)
+XOBJSTUB(XioXObj::m_copyFile, 1)
 
 } // End of namespace Director

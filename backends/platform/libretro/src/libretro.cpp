@@ -27,6 +27,7 @@
 #include "common/scummsys.h"
 #include "common/str.h"
 #include "common/fs.h"
+#include "common/error.h"
 #include "streams/file_stream.h"
 #include "graphics/surface.h"
 #ifdef _WIN32
@@ -53,6 +54,9 @@
 #include "backends/platform/libretro/include/libretro-core-options.h"
 #include "backends/platform/libretro/include/os.h"
 
+static struct retro_game_info game_buf;
+static struct retro_game_info * game_buf_ptr;
+
 retro_log_printf_t log_cb = NULL;
 static retro_video_refresh_t video_cb = NULL;
 static retro_audio_sample_batch_t audio_batch_cb = NULL;
@@ -73,6 +77,7 @@ static float mouse_speed = 1.0f;
 static float gamepad_acceleration_time = 0.2f;
 
 static bool timing_inaccuracies_enabled = false;
+static bool consecutive_screen_updates = false;
 
 char cmd_params[20][200];
 char cmd_params_num;
@@ -87,9 +92,7 @@ static uint8 frameskip_threshold;
 static uint32 frameskip_counter = 0;
 static uint8 frameskip_events = 0;
 
-static bool consecutive_screen_updates = false;
-
-static uint8 audio_status = 0;
+static uint8 audio_status = AUDIO_STATUS_MUTE;
 
 static unsigned retro_audio_buff_occupancy = 0;
 
@@ -102,6 +105,15 @@ static uint16 samples_per_frame = 0;                // length in samples per fra
 static size_t samples_per_frame_buffer_size = 0;
 
 static int16_t *sound_buffer = NULL;       // pointer to output buffer
+
+static void log_scummvm_exit_code(void) {
+	if (retro_get_scummvm_res() == Common::kNoError)
+		log_cb(RETRO_LOG_INFO, "ScummVM exited successfully.\n");
+	else if (retro_get_scummvm_res() < Common::kNoError)
+		log_cb(RETRO_LOG_WARN, "Unknown ScummVM exit code.\n");
+	else
+		log_cb(RETRO_LOG_ERROR, "ScummVM exited with error %d.\n", retro_get_scummvm_res());
+}
 
 static void audio_buffer_init(uint16 sample_rate, uint16 frame_rate) {
 	samples_per_frame = sample_rate / frame_rate;
@@ -308,6 +320,12 @@ bool consecutive_screen_updates_is_enabled(){
 		return consecutive_screen_updates;
 }
 
+void init_command_params(void) {
+	memset(cmd_params, 0, sizeof(cmd_params));
+	cmd_params_num = 1;
+	strcpy(cmd_params[0], "scummvm\0");
+}
+
 void parse_command_params(char *cmdline) {
 	int j = 0;
 	int cmdlen = strlen(cmdline);
@@ -343,6 +361,18 @@ void parse_command_params(char *cmdline) {
 			break;
 		}
 	}
+}
+
+static void exit_to_frontend(void) {
+	log_scummvm_exit_code();
+	environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
+}
+
+static void close_emu_thread(void) {
+	retroQuit();
+	while (!retro_emu_thread_exited())
+		retro_switch_to_emu_thread();
+	retro_deinit_emu_thread();
 }
 
 #if defined(WIIU) || defined(__SWITCH__) || defined(_MSC_VER) || defined(_3DS)
@@ -469,8 +499,7 @@ void retro_init(void) {
 	audio_buffer_init(SAMPLE_RATE, (uint16) frame_rate);
 	update_variables();
 
-	cmd_params_num = 1;
-	strcpy(cmd_params[0], "scummvm\0");
+	init_command_params();
 
 	struct retro_input_descriptor desc[] = {
 		{0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "Mouse Cursor Left"},
@@ -539,6 +568,7 @@ void retro_init(void) {
 }
 
 void retro_deinit(void) {
+	g_system->destroy();
 	free(sound_buffer);
 }
 
@@ -568,7 +598,15 @@ bool retro_load_game(const struct retro_game_info *game) {
 		return false;
 	}
 
+#ifdef LIBRETRO_DEBUG
+	char debug_buf [20];
+	sprintf(debug_buf, "--debuglevel=11");
+	parse_command_params(debug_buf);
+#endif
+
 	if (game) {
+		game_buf_ptr = &game_buf;
+		memcpy(game_buf_ptr, game, sizeof(retro_game_info));
 		// Retrieve the game path.
 		Common::FSNode detect_target = Common::FSNode(game->path);
 		Common::FSNode parent_dir = detect_target.getParent();
@@ -655,6 +693,8 @@ bool retro_load_game(const struct retro_game_info *game) {
 		} else {
 			parse_command_params(buffer);
 		}
+	} else {
+		game_buf_ptr = NULL;
 	}
 
 	if (!retro_init_emu_thread()) {
@@ -670,15 +710,6 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 }
 
 void retro_run(void) {
-
-	if (retro_emu_thread_exited())
-		retro_deinit_emu_thread();
-
-	if (!retro_emu_thread_initialized()) {
-		environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, NULL);
-		return;
-	}
-
 	bool updated = false;
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated){
 		update_variables();
@@ -708,21 +739,19 @@ void retro_run(void) {
 		/* ScummVM is not based on fixed framerate like libretro, and engines/scripts
 		can call multiple screen updates between two retro_run calls. Hence if consecutive screen updates
 		are detected we will loop within the same retro_run call until next pollEvent or
-		delayMillis call in ScummVM thread.
-		*/
+		delayMillis call in ScummVM thread. */
 		do {
 			/* Determine frameskip need based on settings */
 			if ((frameskip_type == 2) || (performance_switch & PERF_SWITCH_ON))
 				skip_frame = (audio_status & AUDIO_STATUS_BUFFER_UNDERRUN);
-			else if (frameskip_type == 1){
+			else if (frameskip_type == 1)
 				skip_frame = !(current_frame % frameskip_no == 0);
-}
 			else if (frameskip_type == 3)
 				skip_frame = (retro_audio_buff_occupancy < frameskip_threshold);
 
 			/* No frame skipping if
 			- no incoming audio (e.g. GUI)
-			- doing a THREAD_SWITCH_UPDATE loop*/
+			- doing a THREAD_SWITCH_UPDATE loop */
 			skip_frame = skip_frame && !(audio_status & AUDIO_STATUS_MUTE) && !(getThreadSwitchCaller() & THREAD_SWITCH_UPDATE);
 
 			/* Reset frameskip counter if not flagged */
@@ -762,11 +791,16 @@ void retro_run(void) {
 			if (!skip_frame)
 				retro_switch_to_emu_thread();
 
+			if (retro_emu_thread_exited()) {
+				exit_to_frontend();
+				return;
+			}
+
 			/* Retrieve audio */
 			samples_count = 0;
-			if (audio_video_enable & 2) {
+			if (audio_video_enable & 2)
 				samples_count = ((Audio::MixerImpl *)g_system->getMixer())->mixCallback((byte *) sound_buffer, samples_per_frame_buffer_size);
-			}
+
 			audio_status = samples_count ? (audio_status & ~AUDIO_STATUS_MUTE) : (audio_status | AUDIO_STATUS_MUTE);
 
 			/* Retrieve video */
@@ -798,23 +832,19 @@ void retro_run(void) {
 }
 
 void retro_unload_game(void) {
-	if (!retro_emu_thread_initialized())
-		return;
-	while (!retro_emu_thread_exited()) {
-		retroQuit();
-		retro_switch_to_emu_thread();
-	}
-	retro_deinit_emu_thread();
-	// g_system->destroy(); //TODO: This call causes "pure virtual method called" after frontend "Unloading core symbols". Check if needed at all.
+	close_emu_thread();
 }
 
 void retro_reset(void) {
+	close_emu_thread();
+	init_command_params();
+	retro_load_game(game_buf_ptr);
 	retroReset();
 }
 
 // Stubs
 void *retro_get_memory_data(unsigned type) {
-	return 0;
+	return NULL;
 }
 size_t retro_get_memory_size(unsigned type) {
 	return 0;

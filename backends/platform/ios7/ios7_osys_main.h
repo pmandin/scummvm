@@ -38,10 +38,7 @@
 #define AUDIO_BUFFERS 3
 #define WAVE_BUFFER_SIZE 2048
 #define AUDIO_SAMPLE_RATE 44100
-
-#define SCUMMVM_ROOT_PATH "/var/mobile/Library/ScummVM"
-#define SCUMMVM_SAVE_PATH SCUMMVM_ROOT_PATH "/Savegames"
-#define SCUMMVM_PREFS_PATH SCUMMVM_ROOT_PATH "/Preferences"
+#define MAX_IOS7_SCUMMVM_LOG_FILESIZE_IN_BYTES (100*1024)
 
 typedef void (*SoundProc)(void *param, byte *buf, int len);
 typedef int (*TimerProc)(int interval);
@@ -111,9 +108,7 @@ protected:
 
 	Common::String _lastErrorMessage;
 
-#ifdef IPHONE_SANDBOXED
 	Common::String _chrootBasePath;
-#endif
 
 public:
 
@@ -218,7 +213,7 @@ public:
 
 	bool isConnectionLimited() override;
 
-	virtual Common::String getDefaultLogFileName() { return Common::String("/var/mobile/.scummvm.log"); }
+	virtual Common::String getDefaultLogFileName() override { return Common::String("/scummvm.log"); }
 
 protected:
 	void initVideoContext();

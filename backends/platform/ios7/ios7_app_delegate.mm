@@ -43,15 +43,13 @@
 - (void)applicationDidFinishLaunching:(UIApplication *)application {
 	CGRect rect = [[UIScreen mainScreen] bounds];
 
-#ifdef IPHONE_SANDBOXED
 	// Create the directory for savegames
 	NSFileManager *fm = [NSFileManager defaultManager];
-	NSString *documentPath = [NSString stringWithUTF8String:iOS7_getDocumentsDir()];
+	NSString *documentPath = [NSString stringWithUTF8String:iOS7_getDocumentsDir().c_str()];
 	NSString *savePath = [documentPath stringByAppendingPathComponent:@"Savegames"];
 	if (![fm fileExistsAtPath:savePath]) {
 		[fm createDirectoryAtPath:savePath withIntermediateDirectories:YES attributes:nil error:nil];
 	}
-#endif
 
 	_window = [[UIWindow alloc] initWithFrame:rect];
 	[_window retain];
@@ -66,14 +64,6 @@
 
 	[_window setRootViewController:_controller];
 	[_window makeKeyAndVisible];
-
-#if TARGET_OS_IOS
-	[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
-	[[NSNotificationCenter defaultCenter] addObserver:self
-	                                         selector:@selector(didRotate:)
-	                                             name:@"UIDeviceOrientationDidChangeNotification"
-	                                           object:nil];
-#endif
 
 	// Force creation of the shared instance on the main thread
 	iOS7_buildSharedOSystemInstance();
@@ -98,8 +88,16 @@
 	// Make sure we have the correct orientation in case the orientation was changed while
 	// the app was inactive.
 #if TARGET_OS_IOS
-	UIDeviceOrientation screenOrientation = [[UIDevice currentDevice] orientation];
-	[_view deviceOrientationChanged:screenOrientation];
+	UIInterfaceOrientation interfaceOrientation = UIInterfaceOrientationUnknown;
+	if (@available(iOS 13.0, *)) {
+		interfaceOrientation = [[[_view window] windowScene] interfaceOrientation];
+	} else {
+		interfaceOrientation = [[UIApplication sharedApplication] statusBarOrientation];
+	}
+	if (interfaceOrientation != UIInterfaceOrientationUnknown) {
+		[_view interfaceOrientationChanged:interfaceOrientation];
+		[_controller setCurrentOrientation: interfaceOrientation];
+	}
 #endif
 }
 
@@ -124,13 +122,6 @@
 	_restoreState = YES;
 }
 
-- (void)didRotate:(NSNotification *)notification {
-#if TARGET_OS_IOS
-	UIDeviceOrientation screenOrientation = [[UIDevice currentDevice] orientation];
-	[_view deviceOrientationChanged:screenOrientation];
-#endif
-}
-
 + (iOS7AppDelegate *)iOS7AppDelegate {
 	UIApplication *app = [UIApplication sharedApplication];
 	// [UIApplication delegate] must be used from the main thread only
@@ -151,14 +142,3 @@
 }
 
 @end
-
-const char *iOS7_getDocumentsDir() {
-	NSArray *paths;
-#if TARGET_OS_IOS
-	paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-#else
-	paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-#endif
-	NSString *documentsDirectory = [paths objectAtIndex:0];
-	return [documentsDirectory UTF8String];
-}

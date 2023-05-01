@@ -30,7 +30,7 @@ namespace AGS3 {
 namespace Plugins {
 namespace AGSWaves {
 
-const float PI = 3.14159265f;
+//const float PI = 3.14159265f;
 
 void AGSWaves::SFX_Play(ScriptMethodParams &params) {
 	PARAMS2(int, sfxNum, int, repeat);
@@ -99,11 +99,12 @@ void AGSWaves::SFX_Stop(ScriptMethodParams &params) {
 }
 
 void AGSWaves::SFX_SetPosition(ScriptMethodParams &params) {
+#if 0
 	PARAMS4(int, sfxNum, int, xS, int, yS, int, intensity);
 
 	SoundEffect &effect = SFX[sfxNum];
 
-	if (_mixer->isSoundHandleActive(effect._soundHandle)) { 
+	if (_mixer->isSoundHandleActive(effect._soundHandle)) {
 		int angle = 0;
 		int dist = 0;
 
@@ -138,6 +139,8 @@ void AGSWaves::SFX_SetPosition(ScriptMethodParams &params) {
 		(void)angle;
 		(void)dist;
 	}
+#endif
+	debug(0, "TODO: SFX_Setposition positional sound not yet implemented");
 }
 
 void AGSWaves::SFX_SetGlobalVolume(ScriptMethodParams &params) {
@@ -181,8 +184,7 @@ Audio::AudioStream *AGSWaves::loadOGG(const Common::FSNode &fsNode) {
 			error("Failed to open");
 
 		Audio::AudioStream *stream = Audio::makeVorbisStream(soundFile, DisposeAfterUse::YES);
-		assert(stream);
-		return stream;
+		return (stream) ? stream : nullptr;
 	}
 #endif
 

@@ -49,7 +49,7 @@ bool Application::_dontUpdateWhenApplicationPaused = false;
 Application::Application() : _finishedGame(false), _finishedFremium(false),
 _captureFade(false), _difficulty(1), _created(false), _tutoActivated(false),
 _drawShadows(true), _compassLook(false), _inverseLook(false),
-_permanentHelp(false) {
+_permanentHelp(true), _musicOn(true) {
 	//
 	// TODO: Game defaults _ratioStretched to false, but then
 	// the horizontally scrolling scenes don't scroll properly.
@@ -88,10 +88,7 @@ _permanentHelp(false) {
 
 	// Note: original has an app run timer, but it's never used?
 
-	if (g_engine->gameType() == TetraedgeEngine::kAmerzone)
-		_defaultCursor = "2D/arrow6.png";
-	else
-		_defaultCursor = "pictures/cursor.png";
+	_defaultCursor = g_engine->gameIsAmerzone() ? "2D/arrow6.png" : "pictures/cursor.png";
 
 	loadOptions("options.xml");
 }
@@ -154,7 +151,7 @@ void Application::create() {
 	textBase.build();
 	 */
 
-	static const char allLangs[][3] = {"en", "fr", "de", "es", "it", "ru"};
+	static const char allLangs[][3] = {"en", "fr", "de", "es", "it", "ru", "he"};
 	const Common::Path textsPath("texts");
 
 	// Try alternate langs..
@@ -174,15 +171,16 @@ void Application::create() {
 	_loc.load(textFileNode);
 	core->addLoc(&_loc);
 
-	if (g_engine->gameType() != TetraedgeEngine::kAmerzone) {
+	if (!g_engine->gameIsAmerzone()) {
 		const Common::Path helpMenuPath("menus/help/help_");
 		Common::Path helpMenuFilePath;
+		Common::String lang(core->language());
 		i = 0;
 		while (i < ARRAYSIZE(allLangs)) {
-			helpMenuFilePath = helpMenuPath.append(core->language() + ".xml");
+			helpMenuFilePath = helpMenuPath.append(lang + ".xml");
 			if (Common::File::exists(helpMenuFilePath))
 				break;
-			core->language(allLangs[i]);
+			lang = allLangs[i];
 			i++;
 		}
 		if (i == ARRAYSIZE(allLangs)) {
@@ -303,7 +301,7 @@ void Application::create() {
 	onMainWindowSizeChanged();
 	_splashScreens.enter();
 
-	_drawShadows = (!ConfMan.getBool("disable_shadows"));
+	_drawShadows = !(g_engine->gameIsAmerzone() || ConfMan.getBool("disable_shadows"));
 
 	// Note: this is not in the original, but seems like a good place to do it..
 	g_engine->getGame()->loadUnlockedArtwork();
@@ -434,7 +432,7 @@ static void dumpLayout(TeLayout *layout, Common::String indent = "++") {
 	assert(layout);
 	if (!layout->worldVisible())
 		return;
-	debug("%s %s  pos:%s  worldScale:%s  userSize:%s  size:%s  col:%s", indent.c_str(), layout->name().c_str(),
+	debug("%s '%s'%s  pos:%s  worldScale:%s  userSize:%s  size:%s  col:%s", indent.c_str(), layout->name().c_str(), (layout->worldVisible() ? "" : " (invis)"),
 			layout->position().dump().c_str(), layout->worldScale().dump().c_str(),
 			layout->userSize().dump().c_str(), layout->size().dump().c_str(),
 			layout->color().dump().c_str());

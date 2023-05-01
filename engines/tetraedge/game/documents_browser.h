@@ -30,6 +30,12 @@ namespace Tetraedge {
 
 class DocumentsBrowser : public TeLayout {
 public:
+	struct DocumentData {
+		Common::String _id;
+		Common::String _name;
+		Common::String _description; // seems always empty..
+	};
+
 	DocumentsBrowser();
 
 	bool addDocument(Document *document);
@@ -40,8 +46,8 @@ public:
 		return 1;
 	}
 
-	Common::String documentDescription(const Common::String &name);
-	Common::String documentName(const Common::String &name);
+	Common::String documentDescription(const Common::String &name) const;
+	Common::String documentName(const Common::String &name) const;
 
 	void enter();
 	void hideDocument();
@@ -51,11 +57,23 @@ public:
 	void loadZoomed();
 	// void saveToBackup(TiXmlNode *node);
 
-	void onDocumentSelected(Document *doc);
+	void showDocument(const Common::String &str, int startPage);
+	void unload();
+
+	TeLayout &zoomedLayout() { return _zoomedLayout; }
+
+	TeLuaGUI &gui() { return _gui; }
+
+private:
+	void loadXMLFile(const Common::String &path);
+
+	bool onDocumentSelected(Document &doc);
 	bool onNextPage();
 	bool onPreviousPage();
 	bool onQuitDocumentDoubleClickTimer();
 	bool onZoomedButton();
+
+	Common::String zoomedPageName() const;
 
 	// Sorry, this is how the original does it...
 	bool onShowedDocumentButton0();
@@ -68,6 +86,8 @@ public:
 	bool onShowedDocumentButton7();
 	bool onShowedDocumentButton8();
 	bool onShowedDocumentButton9();
+	/*
+	These are defined but unused in any game..
 	bool onShowedDocumentButton10();
 	bool onShowedDocumentButton11();
 	bool onShowedDocumentButton12();
@@ -78,15 +98,8 @@ public:
 	bool onShowedDocumentButton17();
 	bool onShowedDocumentButton18();
 	bool onShowedDocumentButton19();
+	*/
 
-	void showDocument(const Common::String &str, int startPage);
-	void unload();
-
-	TeLayout &zoomedLayout() { return _zoomedLayout; }
-
-	TeLuaGUI &gui1() { return _gui1; }
-
-private:
 	TeTimer _timer;
 	TeLayout _zoomedLayout;
 	uint64 _curPage;
@@ -94,9 +107,10 @@ private:
 	int _zoomCount;
 	Common::String _curDocName;
 
-	TeLuaGUI _gui1;
-	TeLuaGUI _gui2;
-	// TiXmlDocument _xmldoc;
+	TeLuaGUI _gui;
+	TeLuaGUI _zoomedDocGui;
+
+	Common::HashMap<Common::String, DocumentData> _documentData;
 };
 
 } // end namespace Tetraedge

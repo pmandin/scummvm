@@ -567,6 +567,12 @@ int ScummEngine::readVar(uint var) {
 				!(_currentRoom == 4 && (vm.slot[_currentScript].number == 2150 || vm.slot[_currentScript].number == 2208 || vm.slot[_currentScript].number == 2210))) {
 				return 263;
 			}
+			// Mod for Backyard Baseball 2001 online competitive play: allow random bounces
+			// Normally they only happen offline; this script checks var399, here we tell this
+			// script that we're not in online play even if we are
+			if (_game.id == GID_BASEBALL2001 && vm.slot[_currentScript].number == 39 && var == 399) {
+				return 0;
+			}
 		}
 #endif
 		assertRange(0, var, _numVariables - 1, "variable (reading)");
@@ -593,6 +599,12 @@ int ScummEngine::readVar(uint var) {
 					} else if (_roomVars[0] == 2 && (_roomVars[var] == 13 || _roomVars[var] == 41)) {  // Left-handed batter
 						return _roomVars[var] - 1;
 					}
+				}
+				// Mod for Backyard Baseball 2001 online competitive play: don't give powerups for double plays
+				// Return true for this variable, which dictates whether powerups are disabled, but only in this script
+				// that detects double plays (among other things)
+				if (_game.id == GID_BASEBALL2001 && _currentRoom == 3 && vm.slot[_currentScript].number == 2099 && var == 32 && readVar(399) == 1) {
+					return 1;
 				}
 			}
 #endif

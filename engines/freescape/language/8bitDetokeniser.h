@@ -36,11 +36,18 @@ enum {
 	k8bitVariableEnergyDrillerJet = 57
 };
 
+enum {
+	kConditionalShot = 1 << 0,
+	kConditionalTimeout = 1 << 1,
+	kConditionalCollided = 1 << 2,
+	kConditionalActivated = 1 << 3,
+};
+
 extern uint8 k8bitMaxVariable;
 extern uint8 k8bitMaxShield;
 extern uint8 k8bitMaxEnergy;
 
-Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition, FCLInstructionVector &instructions);
+Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition, FCLInstructionVector &instructions, bool enableActivated);
 
 } // End of namespace Freescape
 

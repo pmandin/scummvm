@@ -27,6 +27,7 @@
 #include "tetraedge/game/application.h"
 #include "tetraedge/game/game.h"
 #include "tetraedge/game/splash_screens.h"
+#include "tetraedge/te/te_core.h"
 
 namespace Tetraedge {
 
@@ -38,11 +39,17 @@ void SplashScreens::enter()	{
 	if (!_entered) {
 		_entered = true;
 		_splashNo = 0;
-		const Common::Path scriptPath("menus/splashes/splash0.lua");
-		if (Common::File::exists(scriptPath)) {
-			TeLuaGUI::load(scriptPath.toString());
+		const char *scriptStr = g_engine->gameIsAmerzone() ? "GUI/PC-MacOSX/Splash0.lua" : "menus/splashes/splash0.lua";
+		Common::FSNode node = g_engine->getCore()->findFile(scriptStr);
+		if (node.exists()) {
+			load(node);
 			Application *app = g_engine->getApplication();
-			TeLayout *splash = layout("splash");
+			TeLayout *splash = layoutChecked("splash");
+
+			TeLayout *splashImg = dynamic_cast<TeLayout *>(splash->child(0));
+			splashImg->setRatioMode(TeILayout::RATIO_MODE_NONE);
+			splashImg->updateSize();
+
 			app->frontLayout().addChild(splash);
 			app->performRender();
 		}
@@ -55,7 +62,8 @@ bool SplashScreens::onAlarm() {
 	app->visualFade().init();
 	app->captureFade();
 	TeLuaGUI::unload();
-	const Common::String scriptName = Common::String::format("menus/splashes/splash%d.lua", _splashNo);
+	const char *scriptStr = g_engine->gameIsAmerzone() ? "GUI/PC-MacOSX/Splash%d.lua" : "menus/splashes/splash%d.lua";
+	const Common::String scriptName = Common::String::format(scriptStr, _splashNo);
 	_splashNo++;
 
 	if (ConfMan.getBool("skip_splash")) {
@@ -63,15 +71,19 @@ bool SplashScreens::onAlarm() {
 		return true;
 	}
 
-	if (!Common::File::exists(scriptName)) {
+	Common::FSNode node = g_engine->getCore()->findFile(scriptName);
+	if (!node.exists()) {
 		onQuitSplash();
 	} else {
-		load(scriptName);
+		load(node);
 
-		TeButtonLayout *btnLayout = buttonLayoutChecked("splash");
-		btnLayout->onMouseClickValidated().add(this, &SplashScreens::onQuitSplash);
+		TeButtonLayout *splash = buttonLayoutChecked("splash");
+		splash->onMouseClickValidated().add(this, &SplashScreens::onQuitSplash);
 
-		TeLayout *splash = layout("splash");
+		TeLayout *splashImg = dynamic_cast<TeLayout *>(splash->child(0));
+		splashImg->setRatioMode(TeILayout::RATIO_MODE_NONE);
+		splashImg->updateSize();
+
 		app->frontLayout().addChild(splash);
 
 		_timer.start();

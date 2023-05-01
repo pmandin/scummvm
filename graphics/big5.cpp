@@ -76,8 +76,12 @@ void Big5Font::loadPrefixedRaw(Common::ReadStream &input, int height) {
 		// Big-endian because it's not really a u16 but a big5 sequence.
 		uint16 ch = input.readUint16BE();
 		ChineseTraditionalGlyph glyph;
+		if (input.eos())
+			break;
 		if (ch == 0xffff)
 			break;
+		if (!(ch & 0x8000))
+			continue;
 		memset(&glyph.bitmap, 0, sizeof(glyph.bitmap));
 		memset(&glyph.outline, 0, sizeof(glyph.outline));
 		input.read(&glyph.bitmap, (kChineseTraditionalWidth / 8) * _chineseTraditionalHeight);
@@ -109,22 +113,22 @@ template <class T> bool Big5Font::drawReal(byte *dest, uint16 textChar, int maxX
 	return true;
 }
 
-bool Big5Font::drawBig5Char(byte *dest, uint16 ch, int maxX, int maxY, uint32 destPitch, byte color, byte outlineColor) const {
-	return drawReal<uint8>(dest, ch, maxX, maxY, destPitch, color, outlineColor, true);
-}
-
-bool Big5Font::drawBig5Char(Graphics::Surface *surf, uint16 ch, const Common::Point &pt, uint32 color) const {
-	switch(surf->format.bytesPerPixel) {
+bool Big5Font::drawBig5Char(byte *dest, uint16 ch, int maxX, int maxY, uint32 destPitch, byte color, byte outlineColor, bool outline, int bpp) const {
+	switch(bpp) {
 	case 4:
-		return drawReal<uint32>((byte*)surf->getBasePtr(pt.x, pt.y), ch, surf->w - pt.x, surf->h - pt.y, surf->pitch, color, 0, false);
+		return drawReal<uint32>(dest, ch, maxX, maxY, destPitch, color, outlineColor, outline);
 	case 2:
-		return drawReal<uint16>((byte*)surf->getBasePtr(pt.x, pt.y), ch, surf->w - pt.x, surf->h - pt.y, surf->pitch, color, 0, false);
+		return drawReal<uint16>(dest, ch, maxX, maxY, destPitch, color, outlineColor, outline);
 	case 1:
-		return drawReal<uint8>((byte*)surf->getBasePtr(pt.x, pt.y), ch, surf->w - pt.x, surf->h - pt.y, surf->pitch, color, 0, false);
+		return drawReal<uint8>(dest, ch, maxX, maxY, destPitch, color, outlineColor, outline);
 	default:
-		error("Big5 font for bpp=%d is not supported", surf->format.bytesPerPixel);
+		error("Big5 font for bpp=%d is not supported", bpp);
 	}
 
+}
+
+bool Big5Font::drawBig5Char(Graphics::Surface *surf, uint16 ch, const Common::Point &pt, uint32 color, byte outlineColor, bool outline) const {
+	return drawBig5Char((byte*)surf->getBasePtr(pt.x, pt.y), ch, surf->w - pt.x, surf->h - pt.y, surf->pitch, color, outlineColor, outline, surf->format.bytesPerPixel);
 }
 
 }

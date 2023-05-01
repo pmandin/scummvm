@@ -95,6 +95,7 @@ public:
 
 	// Game selection
 	uint32 _variant;
+	Common::Language _language;
 	bool isDriller() { return _targetName.hasPrefix("driller") || _targetName.hasPrefix("spacestationoblivion"); }
 	bool isDark() { return _targetName.hasPrefix("darkside"); }
 	bool isEclipse() { return _targetName.hasPrefix("totaleclipse"); }
@@ -281,6 +282,8 @@ public:
 	void executeCode(FCLInstructionVector &code, bool shot, bool collided, bool timer);
 
 	// Instructions
+	bool checkConditional(FCLInstruction &instruction, bool shot, bool collided, bool timer, bool activated);
+	bool checkIfGreaterOrEqual(FCLInstruction &instruction);
 	void executeIncrementVariable(FCLInstruction &instruction);
 	void executeDecrementVariable(FCLInstruction &instruction);
 	void executeSetVariable(FCLInstruction &instruction);
@@ -519,13 +522,20 @@ public:
 	void pressedKey(const int keycode) override;
 	void executePrint(FCLInstruction &instruction) override;
 
+	void initDOS();
+	void initZX();
+
 	void loadAssetsDOSFullGame() override;
 	void loadAssetsDOSDemo() override;
+
+	void loadAssetsZXDemo() override;
 
 	int _lastTenSeconds;
 	void updateTimeVariables() override;
 
 	void drawDOSUI(Graphics::Surface *surface) override;
+	void drawZXUI(Graphics::Surface *surface) override;
+
 	void drawFullscreenMessage(Common::String message);
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;
@@ -553,7 +563,10 @@ public:
 class CastleEngine : public FreescapeEngine {
 public:
 	CastleEngine(OSystem *syst, const ADGameDescription *gd);
+	~CastleEngine();
 
+
+	Graphics::ManagedSurface *_option;
 	void titleScreen() override;
 	void loadAssetsDOSFullGame() override;
 	void drawUI() override;

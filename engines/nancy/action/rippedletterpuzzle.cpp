@@ -87,24 +87,14 @@ void RippedLetterPuzzle::readData(Common::SeekableReadStream &stream) {
 		_solveRotations[i] = stream.readByte();
 	}
 
-	_takeSound.read(stream, SoundDescription::kNormal);
-	_dropSound.read(stream, SoundDescription::kNormal);
-	_rotateSound.read(stream, SoundDescription::kNormal);
+	_takeSound.readData(stream, SoundDescription::kNormal);
+	_dropSound.readData(stream, SoundDescription::kNormal);
+	_rotateSound.readData(stream, SoundDescription::kNormal);
 
 	_solveExitScene.readData(stream);
-	stream.skip(2); // shouldStopRendering, useless
-
-	_flagOnSolve.label = stream.readSint16LE();
-	_flagOnSolve.flag = stream.readByte();
-
-	_solveSound.read(stream, SoundDescription::kNormal);
+	_solveSound.readData(stream, SoundDescription::kNormal);
 
 	_exitScene.readData(stream);
-
-	stream.skip(2); // shouldStopRendering, useless
-	_flagOnExit.label = stream.readSint16LE();
-	_flagOnExit.flag = stream.readByte();
-
 	readRect(stream, _exitHotspot);
 }
 
@@ -155,12 +145,10 @@ void RippedLetterPuzzle::execute() {
 	case kActionTrigger :
 		switch (_solveState) {
 		case kNotSolved:
-			NancySceneState.changeScene(_exitScene);
-			NancySceneState.setEventFlag(_flagOnExit);
+			_exitScene.execute();
 			break;
 		case kWaitForSound:
-			NancySceneState.changeScene(_solveExitScene);
-			NancySceneState.setEventFlag(_flagOnSolve);
+			_solveExitScene.execute();
 			_puzzleState->playerHasTriedPuzzle = false;
 			break;
 		}
@@ -173,6 +161,10 @@ void RippedLetterPuzzle::execute() {
 }
 
 void RippedLetterPuzzle::handleInput(NancyInput &input) {
+	if (_state != kRun && _solveState != kNotSolved) {
+		return;
+	}
+
 	for (uint i = 0; i < 24; ++i) {
 		Common::Rect screenHotspot = NancySceneState.getViewport().convertViewportToScreen(_destRects[i]);
 		if (screenHotspot.contains(input.mousePos)) {

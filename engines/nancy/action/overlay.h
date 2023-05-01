@@ -22,8 +22,6 @@
 #ifndef NANCY_ACTION_OVERLAY_H
 #define NANCY_ACTION_OVERLAY_H
 
-#include "engines/nancy/renderobject.h"
-
 #include "engines/nancy/action/actionrecord.h"
 
 namespace Nancy {
@@ -36,7 +34,7 @@ namespace Action {
 // - PlayStaticBitmapAnimation: nancy1 only, does not support static mode
 // - PlayIntStaticBitmapAnimation: nancy1 only, same as above but supports being interrupted by an event flag
 // - Overlay: nancy2 and above, supports static mode
-class Overlay : public ActionRecord, public RenderObject {
+class Overlay : public RenderActionRecord {
 public:
 	static const byte kPlayOverlayPlain				= 1;
 	static const byte kPlayOverlayTransparent		= 2;
@@ -56,14 +54,13 @@ public:
 	static const byte kPlayOverlayWithHotspot		= 1;
 	static const byte kPlayOverlayNoHotspot			= 2;
 
-	Overlay(bool interruptible) : RenderObject(7), _isInterruptible(interruptible) {}
+	Overlay(bool interruptible) : RenderActionRecord(7), _isInterruptible(interruptible) {}
 	virtual ~Overlay() { _fullSurface.free(); }
 
 	void init() override;
 
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
-	void onPause(bool pause) override;
 
 	Common::String _imageName;
 
@@ -79,9 +76,9 @@ public:
 	Time _frameTime;
 	FlagDescription _interruptCondition;
 	SceneChangeDescription _sceneChange;
-	MultiEventFlagDescription _flagsOnTrigger; // 0x2A
+	MultiEventFlagDescription _flagsOnTrigger;
 
-	Nancy::SoundDescription _sound; // 0x52
+	Nancy::SoundDescription _sound;
 
 	// Describes a single frame in this animation
 	Common::Array<Common::Rect> _srcRects;

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.6.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-04-13 21:27+0000\n"
-"PO-Revision-Date: 2023-04-12 15:35+0000\n"
+"POT-Creation-Date: 2023-04-30 18:01+0000\n"
+"PO-Revision-Date: 2023-04-30 17:40+0000\n"
 "Last-Translator: Xaviu <xaviu@xaviu.com>\n"
 "Language-Team: Catalan <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ca/>\n"
@@ -56,7 +56,7 @@ msgctxt "lowres"
 msgid "Go up"
 msgstr "Amunt"
 
-#: gui/browser.cpp:81 gui/chooser.cpp:45 gui/cloudconnectionwizard.cpp:60
+#: gui/browser.cpp:81 gui/chooser.cpp:45 gui/cloudconnectionwizard.cpp:61
 #: gui/downloadpacksdialog.cpp:267 gui/downloadpacksdialog.cpp:462
 #: gui/editgamedialog.cpp:352 gui/editrecorddialog.cpp:66
 #: gui/filebrowser-dialog.cpp:68 gui/fluidsynth-dialog.cpp:152
@@ -72,7 +72,7 @@ msgstr "Amunt"
 #: backends/events/default/default-events.cpp:217
 #: backends/platform/wii/options.cpp:47 engines/asylum/asylum.cpp:201
 #: engines/buried/saveload.cpp:69 engines/cine/saveload.cpp:863
-#: engines/director/lingo/xlibs/jitdraw3.cpp:129
+#: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:84
 #: engines/mohawk/myst_stacks/menu.cpp:283
 #: engines/mohawk/myst_stacks/menu.cpp:300
@@ -95,217 +95,208 @@ msgstr "Cancel·la"
 msgid "Choose"
 msgstr "Tria"
 
-#: gui/cloudconnectionwizard.cpp:175
+#: gui/cloudconnectionwizard.cpp:176
 msgid "Cloud Connection Wizard"
 msgstr "Assistent de connexió al núvol"
 
-#: gui/cloudconnectionwizard.cpp:178
+#: gui/cloudconnectionwizard.cpp:179
 msgid "Quick mode"
 msgstr "Mode ràpid"
 
-#: gui/cloudconnectionwizard.cpp:179
+#: gui/cloudconnectionwizard.cpp:180
 msgid "Manual mode"
 msgstr "Mode manual"
 
-#: gui/cloudconnectionwizard.cpp:182
-msgid "Will ask you to run Local Webserver"
+#: gui/cloudconnectionwizard.cpp:183
+msgid "Will ask you to run the Local Webserver"
 msgstr "Us demanarà que executeu el servidor web local"
 
-#: gui/cloudconnectionwizard.cpp:184
-msgid "Requires Local Webserver feature"
+#: gui/cloudconnectionwizard.cpp:185
+msgid "Requires the Local Webserver feature"
 msgstr "Requereix la característica de servidor web local"
 
-#: gui/cloudconnectionwizard.cpp:200
+#: gui/cloudconnectionwizard.cpp:201
 msgid "Quick Mode: Step 1"
 msgstr "Mode ràpid: pas 1"
 
-#: gui/cloudconnectionwizard.cpp:205
-msgid "In this mode, Local Webserver must be running,"
-msgstr "En aquest mode, el servidor web local ha d'estar executant-se,"
-
 #: gui/cloudconnectionwizard.cpp:206
-msgid "so your browser could forward data to ScummVM"
-msgstr "perquè el vostre navegador pugui reenviar dades a ScummVM"
+msgid ""
+"In this mode, the Local Webserver must be running,\n"
+"so your browser can forward data to ScummVM"
+msgstr ""
+"En aquest mode, el servidor web local ha d'estar executant-se,\n"
+"de manera que el vostre navegador pot enviar dades a ScummVM"
 
-#: gui/cloudconnectionwizard.cpp:226 gui/options.cpp:3657
+#: gui/cloudconnectionwizard.cpp:235 gui/options.cpp:3657
 msgid "Stop server"
 msgstr "Aturar servidor"
 
-#: gui/cloudconnectionwizard.cpp:226 gui/options.cpp:2730
+#: gui/cloudconnectionwizard.cpp:235 gui/options.cpp:2730
 msgid "Run server"
 msgstr "Executa el servidor"
 
-#: gui/cloudconnectionwizard.cpp:227 gui/options.cpp:3658
+#: gui/cloudconnectionwizard.cpp:236 gui/options.cpp:3658
 msgid "Stop local webserver"
 msgstr "Atura el servidor web local"
 
-#: gui/cloudconnectionwizard.cpp:227 gui/options.cpp:2730
+#: gui/cloudconnectionwizard.cpp:236 gui/options.cpp:2730
 msgid "Run local webserver"
 msgstr "Executa el servidor web local"
 
-#: gui/cloudconnectionwizard.cpp:235 gui/options.cpp:2731 gui/options.cpp:3665
+#: gui/cloudconnectionwizard.cpp:244 gui/options.cpp:2731 gui/options.cpp:3665
 msgid "Not running"
 msgstr "Aturat"
 
-#: gui/cloudconnectionwizard.cpp:250
+#: gui/cloudconnectionwizard.cpp:259
 msgid "Quick Mode: Step 2"
 msgstr "Mode ràpid: pas 2"
 
-#: gui/cloudconnectionwizard.cpp:254
+#: gui/cloudconnectionwizard.cpp:263
 msgid "Now, open this link in your browser:"
 msgstr "Ara, obriu aquest enllaç al navegador:"
 
-#: gui/cloudconnectionwizard.cpp:255 gui/cloudconnectionwizard.cpp:302
+#: gui/cloudconnectionwizard.cpp:264 gui/cloudconnectionwizard.cpp:319
 #: gui/message.cpp:218 gui/message.cpp:222
 msgid "Open URL"
 msgstr "Obre URL"
 
-#: gui/cloudconnectionwizard.cpp:257
-msgid "It will automatically pass the data to ScummVM,"
-msgstr "Es passarà automàticament les dades a ScummVM,"
+#: gui/cloudconnectionwizard.cpp:266
+msgid ""
+"It will automatically pass the data to ScummVM,\n"
+"and warn you should there be any errors."
+msgstr ""
+"Es passarà automàticament les dades a ScummVM,\n"
+"i avisa si hi ha errors."
 
-#: gui/cloudconnectionwizard.cpp:258
-msgid "and warn you should there be any errors."
-msgstr "i t'avisa si hi ha cap error."
-
-#: gui/cloudconnectionwizard.cpp:262
+#: gui/cloudconnectionwizard.cpp:279
 msgid "Local Webserver address: "
 msgstr "Adreça del servidor web local: "
 
-#: gui/cloudconnectionwizard.cpp:278
+#: gui/cloudconnectionwizard.cpp:295
 msgid "Quick Mode: Success"
 msgstr "Mode ràpid: èxit"
 
-#: gui/cloudconnectionwizard.cpp:282
-msgid "You cloud storage has been connected!"
+#: gui/cloudconnectionwizard.cpp:299 gui/cloudconnectionwizard.cpp:398
+msgid "Your cloud storage has been connected!"
 msgstr "El vostre emmagatzematge al núvol s'ha connectat!"
 
-#: gui/cloudconnectionwizard.cpp:283 gui/cloudconnectionwizard.cpp:370
+#: gui/cloudconnectionwizard.cpp:300 gui/cloudconnectionwizard.cpp:399
 msgid "Finish"
 msgstr "Finalitza"
 
-#: gui/cloudconnectionwizard.cpp:296
+#: gui/cloudconnectionwizard.cpp:313
 msgid "Manual Mode: Step 1"
 msgstr "Mode manual: pas 1"
 
-#: gui/cloudconnectionwizard.cpp:301
+#: gui/cloudconnectionwizard.cpp:318
 msgid "Open this link in your browser:"
 msgstr "Obre aquest enllaç al navegador:"
 
-#: gui/cloudconnectionwizard.cpp:304
-msgid "When it fails to pass JSON code to ScummVM,"
-msgstr "Quan falla en passar el codi JSON a ScummVM,"
-
-#: gui/cloudconnectionwizard.cpp:305
-msgid "find it on Troubleshooting section of the page,"
-msgstr "troba'l a la secció de resolució de problemes de la pàgina,"
-
-#: gui/cloudconnectionwizard.cpp:306
-msgid "and go to the next step here."
-msgstr "i ves al següent pas aquí."
-
 #: gui/cloudconnectionwizard.cpp:321
+msgid ""
+"When it fails to pass the JSON code to ScummVM,\n"
+"find it on the Troubleshooting section of the page,\n"
+"and go to the next step here."
+msgstr ""
+
+#: gui/cloudconnectionwizard.cpp:350
 msgid "Manual Mode: Step 2"
 msgstr "Mode manual: pas 2"
 
-#: gui/cloudconnectionwizard.cpp:326
-msgid "Copy JSON code from browser here and press Next:"
+#: gui/cloudconnectionwizard.cpp:355
+msgid "Copy the JSON code from the browser here and press Next:"
 msgstr "Copieu aquí el codi JSON del navegador i premeu Següent:"
 
-#: gui/cloudconnectionwizard.cpp:328
+#: gui/cloudconnectionwizard.cpp:357
 msgid "Paste"
 msgstr "Enganxa"
 
-#: gui/cloudconnectionwizard.cpp:328
+#: gui/cloudconnectionwizard.cpp:357
 msgid "Paste code from clipboard"
 msgstr "Enganxa el codi del porta-retalls"
 
-#: gui/cloudconnectionwizard.cpp:344
+#: gui/cloudconnectionwizard.cpp:373
 msgid "Manual Mode: Something went wrong"
 msgstr "Mode manual: alguna cosa ha anat malament"
 
-#: gui/cloudconnectionwizard.cpp:348
+#: gui/cloudconnectionwizard.cpp:377
 msgid "Cloud storage was not connected."
 msgstr "L'emmagatzematge al núvol no està connectat."
 
-#: gui/cloudconnectionwizard.cpp:349
-msgid "Make sure JSON code was copied correctly and retry."
+#: gui/cloudconnectionwizard.cpp:378
+msgid "Make sure the JSON code was copied correctly and retry."
 msgstr ""
 "Assegureu-vos que el codi JSON s'ha copiat correctament i torneu-ho a "
 "intentar."
 
-#: gui/cloudconnectionwizard.cpp:350
-msgid "It it doesn't work, try from the beginning."
-msgstr "Si no funciona, intenta-ho des del principi."
+#: gui/cloudconnectionwizard.cpp:379
+msgid "If that doesn't work, try again from the beginning."
+msgstr "Si això no funciona, torneu-ho a provar des del principi."
 
-#: gui/cloudconnectionwizard.cpp:351
+#: gui/cloudconnectionwizard.cpp:380
 msgid "Error message: "
 msgstr "Missatge d'error: "
 
-#: gui/cloudconnectionwizard.cpp:365
+#: gui/cloudconnectionwizard.cpp:394
 msgid "Manual Mode: Success"
 msgstr "Mode manual: èxit"
 
-#: gui/cloudconnectionwizard.cpp:369
-msgid "Your cloud storage has been connected!"
-msgstr "El vostre emmagatzematge al núvol s'ha connectat!"
-
-#: gui/cloudconnectionwizard.cpp:393
+#: gui/cloudconnectionwizard.cpp:422
 msgid "Back"
 msgstr "Enrere"
 
-#: gui/cloudconnectionwizard.cpp:401 gui/saveload-dialog.cpp:829
+#: gui/cloudconnectionwizard.cpp:430 gui/saveload-dialog.cpp:829
 msgid "Next"
 msgstr "Següent"
 
-#: gui/cloudconnectionwizard.cpp:464
-msgid "Another Storage is working now. Do you want to interrupt it?"
-msgstr "Un altre Emmagatzematge està actiu ara. Voleu interrompre'l?"
+#: gui/cloudconnectionwizard.cpp:493
+msgid "Another Storage is working right now. Do you want to interrupt it?"
+msgstr "Un altre Emmagatzematge està actiu ara mateix. Voleu interrompre'l?"
 
-#: gui/cloudconnectionwizard.cpp:464 gui/downloaddialog.cpp:118
+#: gui/cloudconnectionwizard.cpp:493 gui/downloaddialog.cpp:118
 #: gui/downloaddialog.cpp:152 gui/filebrowser-dialog.cpp:136
 #: gui/fluidsynth-dialog.cpp:217 gui/launcher.cpp:415 gui/launcher.cpp:444
 #: gui/launcher.cpp:487 gui/options.cpp:3367 gui/options.cpp:3741
 #: base/main.cpp:595 backends/events/default/default-events.cpp:193
 #: engines/buried/buried.cpp:584 engines/director/events.cpp:91
-#: engines/director/lingo/xlibs/jitdraw3.cpp:145 engines/grim/grim.cpp:359
-#: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
+#: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:359
+#: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:145
 #: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3512
 #: engines/toon/toon.cpp:1502
 msgid "Yes"
 msgstr "Sí"
 
-#: gui/cloudconnectionwizard.cpp:464 gui/downloaddialog.cpp:118
+#: gui/cloudconnectionwizard.cpp:493 gui/downloaddialog.cpp:118
 #: gui/downloaddialog.cpp:153 gui/filebrowser-dialog.cpp:136
 #: gui/fluidsynth-dialog.cpp:217 gui/launcher.cpp:415 gui/launcher.cpp:444
 #: gui/launcher.cpp:487 gui/options.cpp:3367 gui/options.cpp:3741
 #: engines/buried/buried.cpp:584 engines/director/events.cpp:91
-#: engines/director/lingo/xlibs/jitdraw3.cpp:145 engines/grim/grim.cpp:359
-#: engines/kyra/gui/saveload_eob.cpp:597 engines/kyra/gui/saveload_eob.cpp:630
+#: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:359
+#: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:151
 #: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3512
 #: engines/toon/toon.cpp:1502
 msgid "No"
 msgstr "No"
 
-#: gui/cloudconnectionwizard.cpp:473 gui/options.cpp:3376
-msgid "Wait until current Storage finishes up and try again."
+#: gui/cloudconnectionwizard.cpp:502
+msgid "Wait until current Storage finishes and try again."
 msgstr "Espereu fins que l'Emmagatzematge actual acabi i torneu a provar-ho."
 
 #. I18N: JSON is name of the format, this message is displayed if user entered something incorrect to the text field
-#: gui/cloudconnectionwizard.cpp:501
-msgid "JSON code contents is malformed."
+#: gui/cloudconnectionwizard.cpp:530
+msgid "JSON code contents are malformed."
 msgstr "El contingut del codi JSON està mal format."
 
-#: gui/cloudconnectionwizard.cpp:522 gui/downloaddialog.cpp:146
+#: gui/cloudconnectionwizard.cpp:551 gui/downloaddialog.cpp:146
 #: gui/editgamedialog.cpp:353 gui/editrecorddialog.cpp:67
 #: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:543 gui/launcher.cpp:547
 #: gui/massadd.cpp:90 gui/options.cpp:2345 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1221 engines/engine.cpp:544 engines/engine.cpp:567
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1811
+#: engines/director/lingo/lingo-builtins.cpp:1818
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:660 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:75
@@ -317,21 +308,21 @@ msgstr "El contingut del codi JSON està mal format."
 #: engines/sword1/animation.cpp:568 engines/sword1/control.cpp:888
 #: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
-#: engines/vcruise/vcruise.cpp:85 engines/vcruise/vcruise.cpp:95
+#: engines/vcruise/vcruise.cpp:91 engines/vcruise/vcruise.cpp:101
 #: engines/zvision/file/save_manager.cpp:225
 msgid "OK"
 msgstr "D'acord"
 
-#: gui/cloudconnectionwizard.cpp:523
+#: gui/cloudconnectionwizard.cpp:552
 msgid "Incorrect JSON."
 msgstr "JSON incorrecte."
 
 #. I18N: error message displayed on 'Manual Mode: Failure' step of 'Cloud Connection Wizard', describing that storage connection process was interrupted
-#: gui/cloudconnectionwizard.cpp:530
+#: gui/cloudconnectionwizard.cpp:559
 msgid "Interrupted."
 msgstr "Interromput."
 
-#: gui/cloudconnectionwizard.cpp:580 gui/options.cpp:3358
+#: gui/cloudconnectionwizard.cpp:609 gui/options.cpp:3358
 msgid ""
 "Failed to open URL!\n"
 "Please navigate to this page manually."
@@ -2221,6 +2212,10 @@ msgstr "paquets de shaders"
 msgid "This Storage is working now. Do you want to interrupt it?"
 msgstr "Aquest Emmagatzematge està funcionant ara. Voleu interrompre'l?"
 
+#: gui/options.cpp:3376
+msgid "Wait until current Storage finishes up and try again."
+msgstr "Espereu fins que l'Emmagatzematge actual acabi i torneu a provar-ho."
+
 #: gui/options.cpp:3572 backends/cloud/cloudmanager.cpp:157
 msgid "<right now>"
 msgstr "<ara mateix>"
@@ -2532,9 +2527,9 @@ msgid ""
 msgstr ""
 
 #: base/main.cpp:663 base/main.cpp:684
-#: engines/director/lingo/lingo-builtins.cpp:1199
-#: engines/director/lingo/xlibs/jitdraw3.cpp:129
-#: engines/director/lingo/xlibs/jitdraw3.cpp:137
+#: engines/director/lingo/lingo-builtins.cpp:1207
+#: engines/director/lingo/xlibs/jitdraw3.cpp:123
+#: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
 msgstr "Acceptar"
 
@@ -2961,7 +2956,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ERROR: No s'ha pogut copiar la partida desada a una ranura nova"
 
 #: engines/engine.cpp:630 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:266 engines/mm/xeen/saves.cpp:293
+#: backends/platform/ios7/ios7_osys_main.cpp:254 engines/mm/xeen/saves.cpp:293
 #: engines/sky/metaengine.cpp:216
 msgid "Autosave"
 msgstr "Desament automàtic"
@@ -3131,31 +3126,31 @@ msgstr "OpenGL amb shaders"
 msgid "AdLib emulator"
 msgstr "Emulador AdLib"
 
-#: audio/fmopl.cpp:81
+#: audio/fmopl.cpp:85
 msgid "MAME OPL emulator"
 msgstr "Emulador OPL de MAME"
 
-#: audio/fmopl.cpp:83
+#: audio/fmopl.cpp:87
 msgid "DOSBox OPL emulator"
 msgstr "Emulador OPL de DOSBox"
 
-#: audio/fmopl.cpp:86
+#: audio/fmopl.cpp:90
 msgid "Nuked OPL emulator"
 msgstr "Emulador OPL de Nuked"
 
-#: audio/fmopl.cpp:89
+#: audio/fmopl.cpp:93
 msgid "ALSA Direct FM"
 msgstr "ALSA Direct FM"
 
-#: audio/fmopl.cpp:92
+#: audio/fmopl.cpp:96
 msgid "OPL2LPT"
 msgstr "OPL2LPT"
 
-#: audio/fmopl.cpp:93
+#: audio/fmopl.cpp:97
 msgid "OPL3LPT"
 msgstr "OPL3LPT"
 
-#: audio/fmopl.cpp:96
+#: audio/fmopl.cpp:100
 msgid "RetroWave OPL3"
 msgstr "RetroWave OPL3"
 
@@ -3698,11 +3693,11 @@ msgstr "Stick dret Y"
 
 #: backends/keymapper/hardware-input.cpp:281
 msgid "Hat X"
-msgstr ""
+msgstr "Selector X"
 
 #: backends/keymapper/hardware-input.cpp:282
 msgid "Hat Y"
-msgstr ""
+msgstr "Selector Y"
 
 #: backends/keymapper/remap-widget.cpp:295
 #: backends/keymapper/remap-widget.cpp:325
@@ -4471,7 +4466,7 @@ msgstr "Llançador"
 msgid "Check for Updates..."
 msgstr "Comprova si hi ha actualitzacions..."
 
-#: engines/access/resources.cpp:43 engines/drascula/drascula.cpp:933
+#: engines/access/resources.cpp:43 engines/drascula/drascula.cpp:940
 #: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:301 engines/sky/compact.cpp:129
 #: engines/supernova/supernova.cpp:464 engines/teenagent/resources.cpp:97
@@ -4480,7 +4475,7 @@ msgstr "Comprova si hi ha actualitzacions..."
 msgid "Unable to locate the '%s' engine data file."
 msgstr "No s'ha pogut localitzar el fitxer de dades del motor '%s'."
 
-#: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:949
+#: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:956
 #: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:66
 #: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:469
 #: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5372
@@ -4488,7 +4483,7 @@ msgstr "No s'ha pogut localitzar el fitxer de dades del motor '%s'."
 msgid "The '%s' engine data file is corrupt."
 msgstr "El fitxer de dades del motor '%s' està malmès."
 
-#: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:960
+#: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:967
 #: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:319 engines/tony/tony.cpp:211
 #: engines/toon/toon.cpp:5383
@@ -4537,7 +4532,7 @@ msgid "Early AGI games for Tandy Color Computer are not yet supported."
 msgstr ""
 "Els primers jocs d'AGI per a Tandy Color Computer encara no són compatibles."
 
-#: engines/agi/font.cpp:1096
+#: engines/agi/font.cpp:691
 msgid ""
 "Could not open/use file 'hgc_font' for Hercules hires font.\n"
 "If you have such file in other AGI (Sierra) game, you can copy it to the "
@@ -4880,7 +4875,7 @@ msgstr "Continua"
 
 #: engines/bladerunner/detection_tables.h:90
 #: engines/bladerunner/detection_tables.h:101
-#: engines/kyra/detection_tables.h:75
+#: engines/kyra/detection_tables.h:76
 msgid ""
 "The fan translator does not wish his translation to be incorporated into "
 "ScummVM."
@@ -5166,7 +5161,7 @@ msgstr ""
 "demanar la propera vegada que inicieu el joc.\n"
 
 #: engines/buried/saveload.cpp:165 engines/mtropolis/saveload.cpp:158
-#: engines/vcruise/vcruise.cpp:249
+#: engines/vcruise/vcruise.cpp:293
 msgid "Saved game was created with a newer version of ScummVM. Unable to load."
 msgstr ""
 "El joc es va crear amb una nova versió de ScummVM. No s'ha pogut carregar."
@@ -5252,6 +5247,7 @@ msgid ""
 "The game prevents quitting at this moment. Are you sure you want to quit "
 "anyway?"
 msgstr ""
+"El joc impedeix sortir en aquest moment. Segur que voleu sortir igualment?"
 
 #: engines/dragons/dragons.cpp:1885
 #, c-format
@@ -5354,7 +5350,7 @@ msgstr "Perforació automàtica"
 
 #: engines/freescape/metaengine.cpp:58
 msgid "Allow to succefully drill in any part of the area in Driller"
-msgstr ""
+msgstr "Permet perforar amb èxit en qualsevol part de l'àrea a Driller"
 
 #: engines/freescape/metaengine.cpp:68
 msgid "Disable demo mode"
@@ -5362,7 +5358,7 @@ msgstr "Desactiva el mode de demostració"
 
 #: engines/freescape/metaengine.cpp:69
 msgid "Never activate demo mode"
-msgstr ""
+msgstr "No activis mai el mode de demostració"
 
 #: engines/freescape/metaengine.cpp:79
 msgid "Disable sensors"
@@ -5370,7 +5366,7 @@ msgstr "Desactiva els sensors"
 
 #: engines/freescape/metaengine.cpp:80
 msgid "Sensors will not shoot the player"
-msgstr ""
+msgstr "Els sensors no dispararan al jugador"
 
 #: engines/freescape/metaengine.cpp:90
 msgid "Disable falling"
@@ -5378,11 +5374,11 @@ msgstr "Desactiva la caiguda"
 
 #: engines/freescape/metaengine.cpp:91
 msgid "Player cannot fall over edges"
-msgstr ""
+msgstr "El jugador no pot caure sobre les vores"
 
 #: engines/glk/glk_api.cpp:62
 msgid "[ press any key to exit ]"
-msgstr ""
+msgstr "[ premeu qualsevol tecla per sortir ]"
 
 #: engines/glk/quetzal.cpp:147 engines/glk/quetzal.cpp:156
 msgid "Untitled Savegame"
@@ -5419,24 +5415,24 @@ msgstr "No s'ha pogut crear la partida desada"
 
 #: engines/glk/advsys/vm.cpp:560
 msgid "Speak up! I can't hear you!\n"
-msgstr ""
+msgstr "Parlar alt! No et sento!\n"
 
 #: engines/glk/advsys/vm.cpp:596
 #, c-format
 msgid "I don't know the word \"%s\".\n"
-msgstr ""
+msgstr "No conec la paraula \"%s\".\n"
 
 #: engines/glk/advsys/vm.cpp:682
 msgid "I don't understand.\n"
-msgstr ""
+msgstr "No ho entenc.\n"
 
 #: engines/glk/alan2/alan2.cpp:75
 msgid "This is too short to be a valid Alan2 file."
-msgstr ""
+msgstr "Això és massa curt per a ser un fitxer Alan2 vàlid."
 
 #: engines/glk/alan2/alan2.cpp:81
 msgid "This is not a valid Alan2 file."
-msgstr ""
+msgstr "Aquest no és un fitxer Alan2 vàlid."
 
 #: engines/glk/comprehend/game.cpp:321
 msgid "Savegame"
@@ -5444,7 +5440,7 @@ msgstr "Desa la partida"
 
 #: engines/glk/comprehend/game.cpp:860
 msgid "Picture window toggled\n"
-msgstr ""
+msgstr "Finestra d'imatge commutada\n"
 
 #: engines/glk/glulx/glulx.cpp:81
 msgid "This is too short to be a valid Glulx file."
@@ -5476,18 +5472,18 @@ msgstr "S'ha produït un error en desar la partida\n"
 
 #: engines/glk/hugo/hugo.cpp:182
 msgid "Incorrect rs file."
-msgstr ""
+msgstr "Fitxer rs incorrecte."
 
 #: engines/glk/hugo/hugo.cpp:189
 msgid "Save file created by different version."
-msgstr ""
+msgstr "El fitxer de la partida desada va ser creat per una versió diferent."
 
-#: engines/gob/inter_playtoons.cpp:259 engines/gob/inter_v2.cpp:1492
+#: engines/gob/inter_playtoons.cpp:259 engines/gob/inter_v2.cpp:1499
 #: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:582
 msgid "Failed to load saved game from file."
 msgstr "No s'ha pogut carregar la partida desada al fitxer."
 
-#: engines/gob/inter_v2.cpp:1562 engines/gob/inter_v7.cpp:1407
+#: engines/gob/inter_v2.cpp:1569 engines/gob/inter_v7.cpp:1407
 #: engines/gob/inter_geisha.cpp:262 engines/tinsel/saveload.cpp:595
 msgid "Failed to save game to file."
 msgstr "No s'ha pogut desar la partida al fitxer."
@@ -5498,7 +5494,7 @@ msgstr "No s'ha pogut esborrar el fitxer."
 
 #: engines/griffon/metaengine.cpp:109
 msgid "Menu / Skip"
-msgstr ""
+msgstr "Menú / Omet"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/griffon/metaengine.cpp:145 engines/mm/mm1/metaengine.cpp:65
@@ -5523,7 +5519,7 @@ msgstr ""
 #: engines/hpl1/metaengine.cpp:87 engines/icb/icb.cpp:131
 #: engines/icb/icb.cpp:197
 msgid "Run"
-msgstr ""
+msgstr "Còrrer"
 
 #: engines/grim/grim.cpp:482 engines/hpl1/metaengine.cpp:95
 #: engines/scumm/help.cpp:237 engines/scumm/help.cpp:245
@@ -5887,26 +5883,26 @@ msgstr "Remora"
 msgid "Side Step"
 msgstr "Pas lateral"
 
-#: engines/kyra/detection_tables.h:73
+#: engines/kyra/detection_tables.h:74
 msgid "Missing language specific game code and/or resources."
 msgstr ""
 
-#: engines/kyra/detection_tables.h:74
+#: engines/kyra/detection_tables.h:75
 msgid ""
 "Missing language specific game code and/or resources for this fan "
 "translation."
 msgstr ""
 
-#: engines/kyra/detection_tables.h:76
+#: engines/kyra/detection_tables.h:77
 msgid "Demo plays simple animations without using Westwood's Engine."
 msgstr ""
 
-#: engines/kyra/detection_tables.h:1367
+#: engines/kyra/detection_tables.h:1368
 msgid "You added the game incorrectly. Please add the root folder of the game."
 msgstr ""
 
 #. I18N: The file in the game directory needs to be extracted
-#: engines/kyra/detection_tables.h:1383
+#: engines/kyra/detection_tables.h:1384
 msgid ""
 "You added the game incorrectly. The GAME.DAT file is an ISO image and you "
 "need to extract the game data files from it."
@@ -5998,24 +5994,24 @@ msgstr ""
 msgid "Eye of Beholder support is not compiled in"
 msgstr "No s'ha compilat el suport per a Eye of Beholder"
 
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:468
+#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:472
 #: engines/ultima/ultima4/metaengine.cpp:224
 #: engines/ultima/ultima8/metaengine.cpp:142
 msgid "Interact via Left Click"
 msgstr "Interacciona amb el clic esquerre"
 
-#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:469
+#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:473
 #: engines/ultima/ultima4/metaengine.cpp:230
 #: engines/ultima/ultima8/metaengine.cpp:148
 msgid "Interact via Right Click"
 msgstr "Interacciona amb el clic dret"
 
-#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:476
+#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:480
 #: engines/twine/metaengine.cpp:380
 msgid "Move Forward"
 msgstr "Mou endavant"
 
-#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:477
+#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:481
 msgid "Move Back"
 msgstr "Mou enrere"
 
@@ -6027,13 +6023,13 @@ msgstr "Mou a l'esquerra"
 msgid "Move Right"
 msgstr "Mou a la dreta"
 
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:480
+#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:484
 #: engines/mm/mm1/metaengine.cpp:97 engines/pegasus/pegasus.cpp:2739
 #: engines/twine/metaengine.cpp:401 engines/zvision/metaengine.cpp:209
 msgid "Turn Left"
 msgstr "Gira a l'esquerra"
 
-#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:481
+#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:485
 #: engines/mm/mm1/metaengine.cpp:98 engines/pegasus/pegasus.cpp:2746
 #: engines/twine/metaengine.cpp:394 engines/zvision/metaengine.cpp:215
 msgid "Turn Right"
@@ -6079,62 +6075,62 @@ msgstr ""
 msgid "Spell Level 6"
 msgstr ""
 
-#: engines/kyra/engine/lol.cpp:472
+#: engines/kyra/engine/lol.cpp:476
 msgid "Attack 1"
 msgstr "Atac 1"
 
-#: engines/kyra/engine/lol.cpp:473
+#: engines/kyra/engine/lol.cpp:477
 msgid "Attack 2"
 msgstr "Atac 2"
 
-#: engines/kyra/engine/lol.cpp:474
+#: engines/kyra/engine/lol.cpp:478
 msgid "Attack 3"
 msgstr "Atac 3"
 
-#: engines/kyra/engine/lol.cpp:475 engines/mm/mm1/metaengine.cpp:103
+#: engines/kyra/engine/lol.cpp:479 engines/mm/mm1/metaengine.cpp:103
 msgid "Show Map"
 msgstr "Mostra el mapa"
 
-#: engines/kyra/engine/lol.cpp:478
+#: engines/kyra/engine/lol.cpp:482
 msgid "Slide Left"
 msgstr "Mou a l'esquerra"
 
-#: engines/kyra/engine/lol.cpp:479
+#: engines/kyra/engine/lol.cpp:483
 msgid "Slide Right"
 msgstr "Mou a la dreta"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/kyra/engine/lol.cpp:482 engines/mm/mm1/metaengine.cpp:109
+#: engines/kyra/engine/lol.cpp:486 engines/mm/mm1/metaengine.cpp:109
 msgid "Rest"
 msgstr "Descansa"
 
-#: engines/kyra/engine/lol.cpp:483
+#: engines/kyra/engine/lol.cpp:487
 msgid "Options"
 msgstr "Opcions"
 
-#: engines/kyra/engine/lol.cpp:484
+#: engines/kyra/engine/lol.cpp:488
 msgid "Choose Spell"
 msgstr "Escull l'encanteri"
 
-#: engines/kyra/gui/saveload_eob.cpp:597
+#: engines/kyra/gui/saveload_eob.cpp:598
 #, c-format
 msgid ""
 "The following original saved game file has been found in your game path:\n"
 "\n"
-"%s %s\n"
+"%s %S\n"
 "\n"
 "Do you wish to use this saved game file with ScummVM?\n"
 "\n"
 msgstr ""
 
-#: engines/kyra/gui/saveload_eob.cpp:630
+#: engines/kyra/gui/saveload_eob.cpp:631
 #, c-format
 msgid ""
 "A saved game file was found in the specified slot %d. Overwrite?\n"
 "\n"
 msgstr ""
 
-#: engines/kyra/gui/saveload_eob.cpp:663
+#: engines/kyra/gui/saveload_eob.cpp:664
 #, c-format
 msgid ""
 "%d original saved games have been successfully imported into\n"
@@ -6552,7 +6548,7 @@ msgstr ""
 "no desat."
 
 #: engines/mohawk/myst_stacks/menu.cpp:283
-#: engines/mohawk/riven_stacks/aspit.cpp:349
+#: engines/mohawk/riven_stacks/aspit.cpp:349 engines/vcruise/metaengine.cpp:112
 #: engines/wintermute/keymapper_tables.h:925
 #: engines/wintermute/keymapper_tables.h:1265
 msgid "Load game"
@@ -6706,11 +6702,11 @@ msgid ""
 "difficulty of sound recognition puzzles and minigames."
 msgstr ""
 
-#: engines/mtropolis/metaengine.cpp:107 engines/vcruise/metaengine.cpp:39
+#: engines/mtropolis/metaengine.cpp:107 engines/vcruise/metaengine.cpp:42
 msgid "Start with debugger"
 msgstr "Inicia amb el depurador"
 
-#: engines/mtropolis/metaengine.cpp:108 engines/vcruise/metaengine.cpp:40
+#: engines/mtropolis/metaengine.cpp:108 engines/vcruise/metaengine.cpp:43
 msgid "Starts with the debugger dashboard active."
 msgstr "Inicia amb el tauler de control del depurador actiu."
 
@@ -6726,12 +6722,12 @@ msgstr ""
 msgid "Failed to read version information from save file"
 msgstr "No s'ha pogut llegir la informació de la versió de la partida desada"
 
-#: engines/mtropolis/saveload.cpp:150 engines/vcruise/vcruise.cpp:244
+#: engines/mtropolis/saveload.cpp:150 engines/vcruise/vcruise.cpp:288
 msgid ""
 "Failed to load save, the save file doesn't contain valid version information."
 msgstr ""
 
-#: engines/mtropolis/saveload.cpp:166 engines/vcruise/vcruise.cpp:254
+#: engines/mtropolis/saveload.cpp:166 engines/vcruise/vcruise.cpp:298
 msgid ""
 "Saved game was created with an earlier, incompatible version of ScummVM. "
 "Unable to load."
@@ -6939,7 +6935,7 @@ msgstr "Mostra/Oculta el menú de pausa"
 msgid "Toggle Chatty AI"
 msgstr "Commutar IA de xat"
 
-#: engines/pink/gui.cpp:279
+#: engines/pink/gui.cpp:278
 msgid "This menu item is not yet implemented"
 msgstr ""
 
@@ -7193,7 +7189,7 @@ msgstr ""
 msgid "SCI32 support not compiled in"
 msgstr "No s'ha compilat el suport per a SCI32"
 
-#: engines/sci/resource/resource.cpp:863
+#: engines/sci/resource/resource.cpp:858
 msgid ""
 "Missing or corrupt game resources have been detected. Some game features may "
 "not work properly. Please check the console for more information, and verify "
@@ -7511,7 +7507,7 @@ msgstr "Esc"
 msgid "Space"
 msgstr "Espai"
 
-#: engines/scumm/help.cpp:76
+#: engines/scumm/help.cpp:76 engines/vcruise/metaengine.cpp:127
 msgid "Pause game"
 msgstr "Pausa la partida"
 
@@ -8890,41 +8886,85 @@ msgid ""
 "wiki: https://wiki.scummvm.org/index.php?title=Crusader:_No_Remorse."
 msgstr ""
 
-#: engines/vcruise/metaengine.cpp:50
+#: engines/vcruise/metaengine.cpp:53
 msgid "Faster animations"
 msgstr "Animacions més ràpides"
 
-#: engines/vcruise/metaengine.cpp:51
+#: engines/vcruise/metaengine.cpp:54
 msgid "Speeds up animations."
 msgstr "Accelera les animacions."
 
-#: engines/vcruise/vcruise.cpp:76
+#: engines/vcruise/metaengine.cpp:102
+msgid "Display help screen"
+msgstr "Mostra la pantalla d'ajuda"
+
+#: engines/vcruise/metaengine.cpp:107 engines/wintermute/keymapper_tables.h:920
+msgid "Save game"
+msgstr "Desa la partida"
+
+#: engines/vcruise/metaengine.cpp:117
+msgid "Open sound settings"
+msgstr "Obre la configuració del so"
+
+#: engines/vcruise/metaengine.cpp:122
+msgid "Quit game"
+msgstr "Surt del joc"
+
+#: engines/vcruise/metaengine.cpp:133
+msgid "Toggle music on/off"
+msgstr "Activa/desactiva la música"
+
+#: engines/vcruise/metaengine.cpp:138
+msgid "Toggle sound effects on/off"
+msgstr "Activa/desactiva els efectes de so"
+
+#: engines/vcruise/metaengine.cpp:143
+msgid "Music volume down"
+msgstr "Abaixa el volum de música"
+
+#: engines/vcruise/metaengine.cpp:148
+msgid "Music volume up"
+msgstr "Apuja el volum de música"
+
+#: engines/vcruise/metaengine.cpp:153
+msgid "Sound effect volume down"
+msgstr "Abaixa el volum de l'efecte de so"
+
+#: engines/vcruise/metaengine.cpp:158
+msgid "Sound effect volume up"
+msgstr "Apuja el volum de l'efecte de so"
+
+#: engines/vcruise/metaengine.cpp:163
+msgid "Skip current animation"
+msgstr "Omet l'animació actual"
+
+#: engines/vcruise/vcruise.cpp:82
 msgid "This game requires JPEG support, which was not compiled in."
 msgstr "Aquest joc requereix suport JPEG, que no està dins la compilació."
 
-#: engines/vcruise/vcruise.cpp:83
+#: engines/vcruise/vcruise.cpp:89
 msgid ""
 "Music for this game requires Ogg Vorbis support, which was not compiled in.\n"
 "The game will still play, but will not have any music."
 msgstr ""
 
-#: engines/vcruise/vcruise.cpp:93
+#: engines/vcruise/vcruise.cpp:99
 msgid ""
 "Music for this game requires MP3 support, which was not compiled in.\n"
 "The game will still play, but will not have any music."
 msgstr ""
 
-#: engines/vcruise/vcruise.cpp:234
+#: engines/vcruise/vcruise.cpp:278
 msgid "Failed to load save, the save data appears to be damaged."
 msgstr ""
 "No s'ha pogut carregar la partida desada, sembla que les dades desades estan "
 "malmeses."
 
-#: engines/vcruise/vcruise.cpp:239
+#: engines/vcruise/vcruise.cpp:283
 msgid "Failed to read version information from save file."
 msgstr "No s'ha pogut llegir la informació de la versió de la partida desada."
 
-#: engines/vcruise/vcruise.cpp:259
+#: engines/vcruise/vcruise.cpp:303
 msgid "An unknown error occurred while attempting to load the saved game."
 msgstr ""
 "S'ha produït un error desconegut en intentar carregar la partida desada."
@@ -9301,10 +9341,6 @@ msgstr "Volum desactivat"
 msgid "Change font size"
 msgstr ""
 
-#: engines/wintermute/keymapper_tables.h:920
-msgid "Save game"
-msgstr "Desa la partida"
-
 #: engines/wintermute/keymapper_tables.h:935
 msgid "Walking speed: Low"
 msgstr ""
@@ -9640,6 +9676,24 @@ msgid ""
 "LiberationSans and LiberationSerif, or FreeMono, FreeSans and FreeSerif "
 "respectively."
 msgstr ""
+
+#~ msgid "You cloud storage has been connected!"
+#~ msgstr "El vostre emmagatzematge al núvol s'ha connectat!"
+
+#~ msgid "so your browser could forward data to ScummVM"
+#~ msgstr "perquè el vostre navegador pugui reenviar dades a ScummVM"
+
+#~ msgid "and warn you should there be any errors."
+#~ msgstr "i t'avisa si hi ha cap error."
+
+#~ msgid "When it fails to pass JSON code to ScummVM,"
+#~ msgstr "Quan falla en passar el codi JSON a ScummVM,"
+
+#~ msgid "find it on Troubleshooting section of the page,"
+#~ msgstr "troba'l a la secció de resolució de problemes de la pàgina,"
+
+#~ msgid "and go to the next step here."
+#~ msgstr "i ves al següent pas aquí."
 
 #~ msgid "Speech Options"
 #~ msgstr "Opcions de veus"

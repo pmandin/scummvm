@@ -47,12 +47,12 @@ class NancyConsole;
 struct SceneChangeDescription;
 
 namespace Action {
-class SliderPuzzle;
 class ConversationSound;
 }
 
 namespace Misc {
 class Lightning;
+class SpecialEffect;
 }
 
 namespace UI {
@@ -186,9 +186,14 @@ public:
 	// The Vampire Diaries only;
 	void beginLightning(int16 distance, uint16 pulseTime, int16 rgbPercent);
 
+	// Used from nancy2 onwards
+	void specialEffect(byte type, uint16 fadeToBlackTime, uint16 frameTime);
+
 	// Game-specific data that needs to be saved/loaded
 	SliderPuzzleState *_sliderPuzzleState;
 	RippedLetterPuzzleState *_rippedLetterPuzzleState;
+	TowerPuzzleState *_towerPuzzleState;
+	RiddlePuzzleState *_riddlePuzzleState;
 
 private:
 	void init();
@@ -267,6 +272,7 @@ private:
 	NancyState::NancyState _gameStateRequested;
 
 	Misc::Lightning *_lightning;
+	Misc::SpecialEffect *_specialEffect;
 
 	Common::Rect _mapHotspot;
 

@@ -23,6 +23,7 @@
 #include "ags/engine/gfx/gfxfilter.h"
 #include "ags/engine/gfx/gfx_driver_base.h"
 #include "ags/engine/gfx/gfx_util.h"
+#include "ags/shared/debugging/out.h"
 
 namespace AGS3 {
 
@@ -36,10 +37,7 @@ GraphicsDriverBase::GraphicsDriverBase()
 	, _drawScreenCallback(nullptr)
 	, _spriteEvtCallback(nullptr)
 	, _initGfxCallback(nullptr) {
-	// Initialize default sprite batch, it will be used when no other batch was activated
-	_actSpriteBatch = 0;
-	_spriteBatchDesc.push_back(SpriteBatchDesc());
-	_spriteBatchRange.push_back(std::make_pair((size_t) 0, (size_t) 0));
+	_actSpriteBatch = UINT32_MAX;
 	_rendSpriteBatch = UINT32_MAX;
 }
 
@@ -67,6 +65,27 @@ Rect GraphicsDriverBase::GetRenderDestination() const {
 	return _dstRect;
 }
 
+bool GraphicsDriverBase::SetVsync(bool enabled) {
+	if (!_capsVsync || (_mode.Vsync == enabled)) {
+		return _mode.Vsync;
+	}
+
+	bool new_value = true;
+	if (SetVsyncImpl(enabled, new_value) && new_value == enabled) {
+		Debug::Printf("SetVsync: switched to %d", new_value);
+		_mode.Vsync = new_value;
+	}
+	else {
+		Debug::Printf("SetVsync: failed, stay at %d", new_value);
+		_capsVsync = false; // mark as non-capable (at least in current mode)
+	}
+	return _mode.Vsync;
+}
+
+bool GraphicsDriverBase::GetVsync() const {
+	return _mode.Vsync;
+}
+
 void GraphicsDriverBase::BeginSpriteBatch(const Rect &viewport, const SpriteTransform &transform,
 	GraphicFlip flip, PBitmap surface) {
 	_spriteBatchDesc.push_back(SpriteBatchDesc(_actSpriteBatch, viewport, transform, flip, surface));
@@ -76,17 +95,18 @@ void GraphicsDriverBase::BeginSpriteBatch(const Rect &viewport, const SpriteTran
 }
 
 void GraphicsDriverBase::EndSpriteBatch() {
+	assert(_actSpriteBatch != UINT32_MAX);
+	if (_actSpriteBatch == UINT32_MAX)
+		return;
 	_spriteBatchRange[_actSpriteBatch].second = GetLastDrawEntryIndex();
 	_actSpriteBatch = _spriteBatchDesc[_actSpriteBatch].Parent;
 }
 
 void GraphicsDriverBase::ClearDrawLists() {
 	ResetAllBatches();
-	_actSpriteBatch = 0;
+	_actSpriteBatch = UINT32_MAX;
 	_spriteBatchDesc.clear();
 	_spriteBatchRange.clear();
-	_spriteBatchDesc.push_back(SpriteBatchDesc());
-	_spriteBatchRange.push_back(std::make_pair((size_t) 0, (size_t) 0));
 }
 
 void GraphicsDriverBase::OnInit() {
@@ -97,6 +117,8 @@ void GraphicsDriverBase::OnUnInit() {
 
 void GraphicsDriverBase::OnModeSet(const DisplayMode &mode) {
 	_mode = mode;
+	// Adjust some generic parameters as necessary
+	_mode.Vsync &= _capsVsync;
 }
 
 void GraphicsDriverBase::OnModeReleased() {
@@ -117,10 +139,6 @@ void GraphicsDriverBase::OnSetNativeRes(const GraphicResolution &native_res) {
 	_srcRect = RectWH(0, 0, native_res.Width, native_res.Height);
 	_srcColorDepth = native_res.ColorDepth;
 	OnScalingChanged();
-
-	// Adjust default sprite batch making it comply to native size
-	_spriteBatchDesc[0].Viewport = RectWH(native_res);
-	InitSpriteBatch(_actSpriteBatch, _spriteBatchDesc[_actSpriteBatch]);
 }
 
 void GraphicsDriverBase::OnSetRenderFrame(const Rect &dst_rect) {

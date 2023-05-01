@@ -60,6 +60,8 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 
 	_variant = gd->flags;
 
+	_language = Common::parseLanguage(ConfMan.get("language"));
+
 	if (!Common::parseBool(ConfMan.get("prerecorded_sounds"), _usePrerecordedSounds))
 		error("Failed to parse bool from prerecorded_sounds option");
 
@@ -165,7 +167,6 @@ FreescapeEngine::~FreescapeEngine() {
 		delete _border;
 	}
 
-
 	if (_gfx->_isAccelerated) {
 		delete _borderTexture;
 		delete _uiTexture;
@@ -267,9 +268,9 @@ void FreescapeEngine::takeDamageFromSensor() {
 
 void FreescapeEngine::drawBackground() {
 	_gfx->setViewport(_fullscreenViewArea);
-	_gfx->clear(_currentArea->_usualBackgroundColor);
+	_gfx->drawBackground(_currentArea->_usualBackgroundColor);
 	_gfx->setViewport(_viewArea);
-	_gfx->clear(_currentArea->_skyColor);
+	_gfx->drawBackground(_currentArea->_skyColor);
 }
 
 void FreescapeEngine::drawFrame() {
@@ -644,7 +645,7 @@ void FreescapeEngine::processBorder() {
 
 		for (int i = 0; i < border->w; i++) {
 			for (int j = 0; j < border->h; j++) {
-				if (border->getPixel(i, j) == black)
+				if (!isCastle() && border->getPixel(i, j) == black)
 					border->setPixel(i, j, transparent);
 			}
 		}

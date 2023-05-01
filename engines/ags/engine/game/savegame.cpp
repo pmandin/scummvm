@@ -543,8 +543,11 @@ HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data)
 	// restore the queue now that the music is playing
 	_GP(play).music_queue_size = queuedMusicSize;
 
-	if (_GP(play).digital_master_volume >= 0)
-		System_SetVolume(_GP(play).digital_master_volume);
+	if (_GP(play).digital_master_volume >= 0) {
+		int temp_vol = _GP(play).digital_master_volume;
+		_GP(play).digital_master_volume = -1; // reset to invalid state before re-applying
+		System_SetVolume(temp_vol);
+	}
 
 	// Run audio clips on channels
 	// these two crossfading parameters have to be temporarily reset
@@ -663,7 +666,7 @@ void WriteDescription(Stream *out, const String &user_text, const Bitmap *user_i
 	soff_t env_pos = out->GetPosition();
 	out->WriteInt32(0);
 	// Enviroment information
-	StrUtil::WriteString("Adventure Game Studio run-time engine", out);
+	StrUtil::WriteString(get_engine_name(), out);
 	StrUtil::WriteString(_G(EngineVersion).LongString, out);
 	StrUtil::WriteString(_GP(game).guid, out);
 	StrUtil::WriteString(_GP(game).gamename, out);

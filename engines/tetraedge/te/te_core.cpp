@@ -32,6 +32,7 @@
 #include "tetraedge/te/te_png.h"
 #include "tetraedge/te/te_images_sequence.h"
 #include "tetraedge/te/te_jpeg.h"
+#include "tetraedge/te/te_zlib_jpeg.h"
 #include "tetraedge/te/te_theora.h"
 #include "tetraedge/te/te_tga.h"
 
@@ -62,18 +63,16 @@ void TeCore::create() {
 	warning("TODO: TeCore::create: Finish implementing me.");
 }
 
-TeICodec *TeCore::createVideoCodec(const Common::FSNode &node) {
-	const Common::String filename = node.getName();
-	if (!filename.contains('.'))
-		return nullptr;
-	Common::String extn = filename.substr(filename.findFirstOf('.') + 1);
-	extn.toLowercase();
+TeICodec *TeCore::createVideoCodec(const Common::String &extn) {
 	// The original engine has more formats and even checks for alpha maps,
 	// but it never uses them.
 	if (TePng::matchExtension(extn)) {
-		return new TePng();
+		// png codec needs to know extension
+		return new TePng(extn);
 	} else if (TeJpeg::matchExtension(extn)) {
 		return new TeJpeg();
+	} else if (TeZlibJpeg::matchExtension(extn)) {
+		return new TeZlibJpeg();
 	} else if (TeTheora::matchExtension(extn)) {
 		return new TeTheora();
 	} else if (TeTga::matchExtension(extn)) {
@@ -81,7 +80,19 @@ TeICodec *TeCore::createVideoCodec(const Common::FSNode &node) {
 	} else if (TeImagesSequence::matchExtension(extn)) {
 		return new TeImagesSequence();
 	}
-	error("TTeCore::createVideoCodec: Unrecognised format %s", node.getName().c_str());
+	return nullptr;
+}
+
+TeICodec *TeCore::createVideoCodec(const Common::Path &path) {
+	const Common::String filename = path.getLastComponent().toString();
+	if (!filename.contains('.'))
+		return nullptr;
+	Common::String extn = filename.substr(filename.findLastOf('.') + 1);
+	extn.toLowercase();
+	TeICodec *codec = createVideoCodec(extn);
+	if (!codec)
+		error("TTeCore::createVideoCodec: Unrecognised format %s", filename.c_str());
+	return codec;
 }
 
 const Common::String &TeCore::fileFlagSystemFlag(const Common::String &name) const {
@@ -136,7 +147,6 @@ static Common::FSNode _findSubPath(const Common::FSNode &parent, const Common::P
 	return Common::FSNode();
 }
 
-
 Common::FSNode TeCore::findFile(const Common::Path &path) const {
 	Common::FSNode node(path);
 	if (node.exists())
@@ -146,11 +156,15 @@ Common::FSNode TeCore::findFile(const Common::Path &path) const {
 	if (!gameRoot.isDirectory())
 		error("Game directory should be a directory");
 	const Common::FSNode resNode = (g_engine->getGamePlatform() == Common::kPlatformMacintosh
-			?  gameRoot.getChild("Resources") : gameRoot);
+			? gameRoot.getChild("Resources") : gameRoot);
 	if (!resNode.isDirectory())
 		error("Resources directory should exist in game");
 
-	const Common::Path fname = path.getLastComponent();
+	Common::String fname = path.getLastComponent().toString();
+
+	// Slight HACK: Remove 'comments' used to specify animated pngs
+	if (fname.contains('#'))
+		fname = fname.substr(0, fname.find('#'));
 	const Common::Path dir = path.getParent();
 
 	static const char *pathSuffixes[] = {
@@ -185,7 +199,13 @@ Common::FSNode TeCore::findFile(const Common::Path &path) const {
 		"iPhone-iPad/DefaultDistributor",		// iOS Syb 1 paid
 		"Android-iPhone-iPad/iPhone-iPad",		// iOS Syb 2
 		"PC-MacOSX-Android-iPhone-iPad",		// iOS Syb 2
-		"Full/HD"								// Amerzone
+		"Full/HD",								// Amerzone
+		"Part1-Full/PC-MacOSX/DefaultDistributor", // Amerzone
+		"Part1-Part2-Part3-Full/HD",			// Amerzone
+		"Part1-Part2-Part3-Full",				// Amerzone
+		"Part1-Full/HD",						// Amerzone
+		"Part2-Full/HD",						// Amerzone
+		"Part3-Full/HD",						// Amerzone
 	};
 
 	const Common::Path langs[] = {

@@ -970,7 +970,11 @@ void Inter_v2::o2_playImd() {
 	bool close = (props.lastFrame == -1);
 	if (props.startFrame == -2) {
 		props.startFrame = 0;
-		props.lastFrame  = 0;
+		if (_vm->getGameType() == kGameTypeAdibou1) {
+			props.lastFrame  = -1;
+			props.noBlock    = true;
+		} else
+			props.lastFrame  = 0;
 		close = false;
 	}
 
@@ -1177,6 +1181,9 @@ void Inter_v2::o2_addHotspot(OpFuncParams &params) {
 
 	if (key == 0)
 		key = ABS(id) + 41960;
+
+	_vm->_draw->adjustCoords(0, &left, &top);
+	_vm->_draw->adjustCoords(2, &width, &height);
 
 	if (left < 0) {
 		width += left;

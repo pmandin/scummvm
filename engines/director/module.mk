@@ -3,7 +3,6 @@ MODULE := engines/director
 MODULE_OBJS = \
 	archive.o \
 	cast.o \
-	castmember.o \
 	channel.o \
 	cursor.o \
 	director.o \
@@ -27,6 +26,16 @@ MODULE_OBJS = \
 	types.o \
 	util.o \
 	window.o \
+	castmember/castmember.o \
+	castmember/bitmap.o \
+	castmember/digitalvideo.o \
+	castmember/filmloop.o \
+	castmember/movie.o \
+	castmember/palette.o \
+	castmember/script.o \
+	castmember/shape.o \
+	castmember/sound.o \
+	castmember/text.o \
 	lingo/lingo.o \
 	lingo/lingo-builtins.o \
 	lingo/lingo-bytecode.o \
@@ -66,6 +75,7 @@ MODULE_OBJS = \
 	lingo/xlibs/flushxobj.o \
 	lingo/xlibs/fplayxobj.o \
 	lingo/xlibs/gpid.o \
+	lingo/xlibs/hitmap.o \
 	lingo/xlibs/iscd.o \
 	lingo/xlibs/ispippin.o \
 	lingo/xlibs/jitdraw3.o \
@@ -80,12 +90,16 @@ MODULE_OBJS = \
 	lingo/xlibs/palxobj.o \
 	lingo/xlibs/popupmenuxobj.o \
 	lingo/xlibs/porta.o \
+	lingo/xlibs/prefpath.o \
+	lingo/xlibs/printomatic.o \
 	lingo/xlibs/qtmovie.o \
 	lingo/xlibs/registercomponent.o \
 	lingo/xlibs/serialportxobj.o \
 	lingo/xlibs/soundjam.o \
 	lingo/xlibs/spacemgr.o \
+	lingo/xlibs/stagetc.o \
 	lingo/xlibs/unittest.o \
+	lingo/xlibs/valkyrie.o \
 	lingo/xlibs/videodiscxobj.o \
 	lingo/xlibs/volumelist.o \
 	lingo/xlibs/widgetxobj.o \

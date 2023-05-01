@@ -28,6 +28,13 @@ namespace Freescape {
 
 extern byte kEGADefaultPaletteData[16][3];
 
+void DarkEngine::initDOS() {
+	if (_renderMode == Common::kRenderEGA)
+		_viewArea = Common::Rect(40, 24, 279, 124);
+	else
+		error("Invalid or unknown render mode");
+}
+
 void DarkEngine::loadAssetsDOSDemo() {
 	Common::File file;
 	if (_renderMode == Common::kRenderEGA) {

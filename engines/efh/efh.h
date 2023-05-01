@@ -58,7 +58,7 @@ namespace Efh {
 static const uint8 kSavegameVersion = 1;
 #define EFH_SAVE_HEADER MKTAG('E', 'F', 'H', 'S')
 
-enum AccessDebugChannels {
+enum EfhDebugChannels {
 	kDebugEngine = 1 << 0,
 	kDebugUtils = 1 << 1,
 	kDebugGraphics = 1 << 2,
@@ -262,7 +262,6 @@ public:
 	EfhEngine(OSystem *syst, const ADGameDescription *gd);
 	~EfhEngine() override;
 
-	OSystem *_system;
 	Graphics::Surface *_mainSurface;
 	Common::RandomSource *_rnd;
 
@@ -286,7 +285,6 @@ public:
 	bool _shouldQuit;
 
 protected:
-	Common::EventManager *_eventMan;
 	int _lastTime;
 	// Engine APIs
 	Common::Error run() override;
@@ -510,6 +508,7 @@ private:
 	int16 getRandom(int16 maxVal);
 	Common::KeyCode getLastCharAfterAnimCount(int16 delay);
 	Common::KeyCode getInput(int16 delay);
+	Common::KeyCode getKeyCode(const Common::Event & event);
 	Common::KeyCode waitForKey();
 	Common::KeyCode mapInputCode(Common::KeyCode input);
 	Common::KeyCode handleAndMapInput(bool animFl);

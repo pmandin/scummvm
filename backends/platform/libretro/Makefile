@@ -34,6 +34,8 @@ MKDIR     = mkdir -p
 RM        = rm -f
 RM_REC    = rm -rf
 
+LDFLAGS :=
+
 # Raspberry Pi 3 (64 bit)
 ifeq ($(platform), rpi3_64)
    TARGET   = $(TARGET_NAME)_libretro.so
@@ -190,6 +192,7 @@ else ifeq ($(platform), vita)
    CXX = arm-vita-eabi-g++$(EXE_EXT)
    AR = arm-vita-eabi-ar$(EXE_EXT) rcs
    DEFINES += -DVITA
+   LITE := 1
    STATIC_LINKING = 1
 
 # GCW0
@@ -469,9 +472,7 @@ else ifeq ($(platform), osx)
    endif
 endif
 
-ifeq ($(DEBUG), 1)
-   DEFINES += -O0 -g
-else ifeq ($(platform), wiiu)
+ifeq ($(platform), wiiu)
    DEFINES += -Os
 else ifeq ($(platform),genode)
    DEFINES += -O2

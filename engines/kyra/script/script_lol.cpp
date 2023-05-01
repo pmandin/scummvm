@@ -1308,24 +1308,25 @@ int LoLEngine::olol_drawExitButton(EMCState *script) {
 	static const uint8 printPara[] = { 0x90, 0x78, 0x0C, 0x9F, 0x80, 0x1E };
 
 	int cp = _screen->setCurPage(0);
-	Screen::FontId cf = _screen->setFont(Screen::FID_6_FNT);
+	Screen::FontId cf = _screen->setFont(_flags.lang == Common::Language::ZH_TWN ? Screen::FID_CHINESE_FNT : Screen::FID_6_FNT);
 	int x = printPara[3 * stackPos(0)] << 1;
 	int y = printPara[3 * stackPos(0) + 1];
 	int offs = printPara[3 * stackPos(0) + 2];
 
 	const char *str = getLangString(0x4033);
 	int w = _screen->getTextWidth(str);
+	int hButton = _screen->getFontHeight() + 3;
 
 	if (_flags.use16ColorMode) {
-		gui_drawBox(x - offs - w, y - 9, w + offs, 9, 0xEE, 0xCC, 0x11);
-		_screen->printText(str, x - (offs >> 1) - w, y - 7, 0xBB, 0);
+		gui_drawBox(x - offs - w, y - hButton, w + offs, hButton, 0xEE, 0xCC, 0x11);
+		_screen->printText(str, x - (offs >> 1) - w, y - hButton + 2, 0xBB, 0);
 	} else {
-		gui_drawBox(x - offs - w, y - 9, w + offs, 9, 136, 251, 252);
-		_screen->printText(str, x - (offs >> 1) - w, y - 7, 144, 0);
+		gui_drawBox(x - offs - w, y - hButton, w + offs, hButton, 136, 251, 252);
+		_screen->printText(str, x - (offs >> 1) - w, y - hButton + 2, 144, 0);
 	}
 
 	if (stackPos(1))
-		_screen->drawGridBox(x - offs - w + 1, y - 8, w + offs - 2, 7, 1);
+		_screen->drawGridBox(x - offs - w + 1, y - hButton + 1, w + offs - 2, hButton - 2, 1);
 
 	_screen->setFont(cf);
 	_screen->setCurPage(cp);

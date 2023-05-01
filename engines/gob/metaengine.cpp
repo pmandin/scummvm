@@ -20,8 +20,10 @@
  */
 
 #include "engines/advancedDetector.h"
+#include "engines/obsolete.h"
 
 #include "gob/gob.h"
+#include "gob/obsolete.h"
 
 // For struct GOBGameDescription.
 #include "gob/detection/detection.h"
@@ -33,6 +35,11 @@ public:
 	}
 
 	bool hasFeature(MetaEngineFeature f) const override;
+
+	Common::Error createInstance(OSystem *syst, Engine **engine) override {
+		Engines::upgradeTargetIfNecessary(obsoleteGameIDsTable);
+		return AdvancedMetaEngine::createInstance(syst, engine);
+	}
 
 	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *desc) const override;
 };
@@ -81,6 +88,7 @@ void GobEngine::initGame(const GOBGameDescription *gd) {
 	_platform = gd->desc.platform;
 
 	_enableAdibou2FreeBananasWorkaround = gd->desc.flags & GF_ENABLE_ADIBOU2_FREE_BANANAS_WORKAROUND;
+	_enableAdibou2FlowersInfiniteLoopWorkaround = gd->desc.flags & GF_ENABLE_ADIBOU2_FLOWERS_INFINITE_LOOP_WORKAROUND;
 }
 
 } // End of namespace Gob

@@ -234,15 +234,22 @@ public:
 	volatile int _mouse_z = 0;  // Mouse wheel vertical
 	volatile int _mouse_b = 0;  // Mouse buttons bitflags
 	volatile int _mouse_pos = 0;    // X position in upper 16 bits, Y in lower 16
+
+	// Accumulated absolute and relative mouse device motion.
+	// May be retrieved by calling *acquire_absxy and *acquire_relxy functions,
+	// after which these are reset, until next motion event is received.
 	volatile int _sys_mouse_x = 0; // mouse x position
 	volatile int _sys_mouse_y = 0; // mouse y position
 	volatile int _sys_mouse_z = 0; // mouse wheel position
+
 	volatile int _freeze_mouse_flag = 0;
+
+	// Relative x and y deltas
+	int _mouse_accum_relx = 0, _mouse_accum_rely = 0;
 
 	int _mouse_button_state = 0;
 	int _mouse_accum_button_state = 0;
 	uint32 _mouse_clear_at_time = 0;
-	int _mouse_accum_relx = 0, _mouse_accum_rely = 0;
 	eAGSMouseButton _wasbutdown = kMouseNone;
 	int _wasongui = 0;
 
@@ -1123,10 +1130,9 @@ public:
 	int8 _currentcursor = 0;
 	// virtual mouse cursor coordinates
 	int _mousex = 0, _mousey = 0, _numcurso = -1, _hotx = 0, _hoty = 0;
-	// real mouse coordinates and bounds
+	// real mouse coordinates and bounds (in window coords)
 	int _real_mouse_x = 0, _real_mouse_y = 0;
 	int _boundx1 = 0, _boundx2 = 99999, _boundy1 = 0, _boundy2 = 99999;
-	int _disable_mgetgraphpos = 0;
 	int8 _ignore_bounds = 0;
 	AGS::Shared::Bitmap *_mousecurs[MAXCURSORS];
 

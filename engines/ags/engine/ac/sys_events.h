@@ -71,10 +71,10 @@ extern void ags_simulate_keypress(eAGSKeyCode ags_key);
 //
 // Tells if the mouse button is currently down
 extern bool ags_misbuttondown(eAGSMouseButton but);
-// Returns mouse button code
+// Returns last "clicked" mouse button
 extern eAGSMouseButton ags_mgetbutton();
-// Returns recent relative mouse movement
-extern void ags_mouse_get_relxy(int &x, int &y);
+// Returns recent relative mouse movement; resets accumulated values
+extern void ags_mouse_acquire_relxy(int &x, int &y);
 // Updates mouse cursor position in game
 extern void ags_domouse();
 // Returns -1 for wheel down and +1 for wheel up

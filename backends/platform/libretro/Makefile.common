@@ -32,6 +32,7 @@ NO_WIP           ?= 1
 USE_LIBCO        ?= 1
 USE_MT32EMU      ?= 1
 USE_CLOUD        ?= 0
+DEBUG            ?= 0
 
 DEBUG_ALLOW_DIRTY_SUBMODULES ?= 0
 
@@ -84,9 +85,9 @@ CORE_NAME = "ScummVM"
 CORE_EXTENSIONS = "scummvm"
 
 INCLUDES += -I$(SCUMMVM_PATH)
-DEFINES  += -D__LIBRETRO__ -DNONSTANDARD_PORT -DUSE_RGB_COLOR -DUSE_OSD -DDISABLE_TEXT_CONSOLE -DFRONTEND_SUPPORTS_RGB565 -DUSE_TRANSLATION -DDETECTION_STATIC -DHAVE_CONFIG_H -DUSE_BINK -DUSE_LUA -DUSE_TINYGL -DENABLE_VKEYBD
+DEFINES  += -D__LIBRETRO__ -DNONSTANDARD_PORT -DUSE_RGB_COLOR -DUSE_OSD -DFRONTEND_SUPPORTS_RGB565 -DUSE_TRANSLATION -DDETECTION_STATIC -DHAVE_CONFIG_H -DUSE_BINK -DUSE_LUA -DUSE_TINYGL -DENABLE_VKEYBD
 DEFINES  += -DCORE_NAME=\"$(CORE_NAME)\" -DCORE_EXTENSIONS=\"$(CORE_EXTENSIONS)\"
-CXXFLAGS += -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder
+CXXFLAGS += -Wno-long-long -Wno-multichar -Wno-unknown-pragmas -Wno-reorder -Wno-undefined-var-template
 
 ifeq ($(USE_LIBCO), 1)
    DEFINES += -DUSE_LIBCO
@@ -98,6 +99,12 @@ ifeq ($(TARGET_64BIT), 1)
    DEFINES += -DSIZEOF_SIZE_T=8 -DSCUMM_64BITS
 else
    DEFINES += -DSIZEOF_SIZE_T=4
+endif
+
+ifeq ($(DEBUG), 1)
+   DEFINES += -O0 -g -DLIBRETRO_DEBUG
+else
+   DEFINES += -DDISABLE_TEXT_CONSOLE -DRELEASE_BUILD
 endif
 
 ######################################################################
@@ -192,6 +199,9 @@ all: $(TARGET) scummvm.zip $(TARGET_NAME)_libretro.info
 #bundle_files
 scummvm.zip: $(SCUMMVM_PATH)/dists/scummvm.rc
 	@echo Preparing $@
+ifeq (, $(shell which zip))
+	$(error "No zip found, consider doing apt-get install zip")
+endif
 	@$(SCRIPTS_PATH)/bundle_datafiles.sh $(ROOT_PATH) $(SCUMMVM_PATH) bundle $(TARGET_NAME)
 
 $(TARGET_NAME)_libretro.info: $(SCUMMVM_PATH)/dists/scummvm.rc

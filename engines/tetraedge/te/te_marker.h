@@ -29,23 +29,27 @@
 namespace Tetraedge {
 
 // Note: Only used in Amerzone
-class TeMarker {
+class TeMarker : public TeObject {
 public:
 	TeMarker();
 
 	void active(bool val);
-	void update(TeCamera *camera);
+	void update(TeCamera &camera);
 	void visible(bool val);
 
 	TeButtonLayout &button() { return _button; }
+	TeVector3f32 &loc() { return _loc; }
+
+	void setZLoc(float f) { _zLoc = f; }
+
 private:
 	bool _visible;
 	bool _isActive;
+	float _zLoc;
 	TeVector3f32 _loc;
 	// Note: this is a TeSpriteButton in the original, updated
 	// to use the newer ButtonLayout
 	TeButtonLayout _button;
-
 };
 
 } // end namespace Tetraedge

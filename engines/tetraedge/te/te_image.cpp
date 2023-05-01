@@ -25,6 +25,7 @@
 #include "tetraedge/te/te_core.h"
 #include "tetraedge/te/te_image.h"
 #include "tetraedge/te/te_i_codec.h"
+#include "tetraedge/te/te_scummvm_codec.h"
 
 namespace Tetraedge {
 
@@ -94,7 +95,7 @@ bool TeImage::isExtensionSupported(const Common::Path &path) {
 
 bool TeImage::load(const Common::FSNode &node) {
 	TeCore *core = g_engine->getCore();
-	TeICodec *codec = core->createVideoCodec(node);
+	TeICodec *codec = core->createVideoCodec(Common::Path(node.getPath()));
 	if (!node.isReadable() || !codec->load(node)) {
 		warning("TeImage::load: Failed to load %s.", node.getPath().c_str());
 		delete codec;
@@ -111,8 +112,23 @@ bool TeImage::load(const Common::FSNode &node) {
 	return true;
 }
 
-bool TeImage::load(Common::ReadStream &stream, const Common::Path &path) {
-	error("TODO: Implement TeImage::load");
+bool TeImage::load(Common::SeekableReadStream &stream, const Common::String &type) {
+	TeCore *core = g_engine->getCore();
+	TeScummvmCodec *codec = dynamic_cast<TeScummvmCodec *>(core->createVideoCodec(type));
+	if (!codec || !codec->load(stream)) {
+		warning("TeImage::load: Failed to load stream");
+		delete codec;
+		return false;
+	}
+
+	Common::SharedPtr<TePalette> nullpal;
+	createImg(codec->width(), codec->height(), nullpal, codec->imageFormat(), codec->width(), codec->height());
+
+	if (!codec->update(0, *this)) {
+		error("TeImage::load: Failed to update from stream");
+	}
+	delete codec;
+	return true;
 }
 
 bool TeImage::save(const Common::Path &path, enum SaveType type) {

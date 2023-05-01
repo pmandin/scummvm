@@ -23,16 +23,15 @@
 #define NANCY_ACTION_CONVERSATION_H
 
 #include "engines/nancy/action/actionrecord.h"
-#include "engines/nancy/renderobject.h"
 #include "engines/nancy/video.h"
 
 namespace Nancy {
 namespace Action {
 
 // The base class for conversations, with no video data
-class ConversationSound : public ActionRecord, public RenderObject {
+class ConversationSound : public RenderActionRecord {
 public:
-	ConversationSound() : RenderObject(8) {}
+	ConversationSound() : RenderActionRecord(8) {}
 	virtual ~ConversationSound();
 
 	void init() override;
@@ -60,11 +59,11 @@ protected:
 	};
 
 	struct ResponseStruct {
-		ConversationFlags conditionFlags; // 0x01
-		Common::String text; // 0x06
-		Common::String soundName; // 0x196
-		SceneChangeDescription sceneChange; // 0x1A0
-		FlagDescription flagDesc; // 0x1A8
+		ConversationFlags conditionFlags;
+		Common::String text;
+		Common::String soundName;
+		SceneChangeDescription sceneChange;
+		FlagDescription flagDesc;
 
 		bool isOnScreen = false;
 	};

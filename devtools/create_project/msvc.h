@@ -47,7 +47,6 @@ protected:
 		const char *release; ///< Filename of the Release build of the library.
 		const char *debug;   ///< Filename of the Debug build of the library.
 		const char *depends; ///< Win32 libs this library must be linked against.
-		const char *legacy;  ///< Legacy name for old precompiled libraries (deprecated).
 	};
 
 	std::string getLibraryFromFeature(const char *feature, const BuildSetup &setup, bool isRelease) const;
@@ -74,13 +73,13 @@ protected:
 	 * two platform configurations will output their files into different
 	 * directories.
 	 *
+	 * @param setup      Description of the desired build setup.
 	 * @param properties File stream in which to write the property settings.
-	 * @param bits Number of bits the platform supports.
-	 * @param defines Defines the platform needs to have set.
-	 * @param prefix File prefix, used to add additional include paths.
-	 * @param runBuildEvents true if generating a revision number, false otherwise
+	 * @param arch       Target architecture
+	 * @param defines    Defines the platform needs to have set.
+	 * @param prefix     File prefix, used to add additional include paths.
 	 */
-	virtual void outputGlobalPropFile(const BuildSetup &setup, std::ofstream &properties, MSVC_Architecture arch, const StringList &defines, const std::string &prefix, bool runBuildEvents) = 0;
+	virtual void outputGlobalPropFile(const BuildSetup &setup, std::ofstream &properties, MSVC_Architecture arch, const StringList &defines, const std::string &prefix) = 0;
 
 	/**
 	 * Generates the project properties for debug and release settings.
@@ -112,12 +111,13 @@ protected:
 	/**
 	 * Get the command line for copying data files to the build directory.
 	 *
-	 * @param	arch	Target architecture
-	 * @param	setup	Description of the desired build setup.
+	 * @param	arch	   Target architecture
+	 * @param	setup	   Description of the desired build setup.
+	 * @param   isRelease  Type of build file
 	 *
 	 * @return	The post build event.
 	 */
-	std::string getPostBuildEvent(MSVC_Architecture arch, const BuildSetup &setup) const;
+	std::string getPostBuildEvent(MSVC_Architecture arch, const BuildSetup &setup, bool isRelease) const;
 };
 
 } // namespace CreateProjectTool

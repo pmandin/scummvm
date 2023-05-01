@@ -26,6 +26,8 @@
 #include "engines/util.h"
 
 #include "efh/efh.h"
+
+#include "common/config-manager.h"
 #include "efh/constants.h"
 
 namespace Efh {
@@ -135,6 +137,7 @@ Common::Error EfhEngine::run() {
 			goNorthWest();
 			_imageSetSubFilesIdx = 147;
 			break;
+		case Common::KEYCODE_1:
 		case Common::KEYCODE_F1:
 			if (_teamChar[0]._id != -1) {
 				handleStatusMenu(1, _teamChar[0]._id);
@@ -143,6 +146,7 @@ Common::Error EfhEngine::run() {
 				_redrawNeededFl = true;
 			}
 			break;
+		case Common::KEYCODE_2:
 		case Common::KEYCODE_F2:
 			if (_teamChar[1]._id != -1) {
 				handleStatusMenu(1, _teamChar[1]._id);
@@ -151,6 +155,7 @@ Common::Error EfhEngine::run() {
 				_redrawNeededFl = true;
 			}
 			break;
+		case Common::KEYCODE_3:
 		case Common::KEYCODE_F3:
 			if (_teamChar[2]._id != -1) {
 				handleStatusMenu(1, _teamChar[2]._id);
@@ -159,7 +164,7 @@ Common::Error EfhEngine::run() {
 				_redrawNeededFl = true;
 			}
 			break;
-		case Common::KEYCODE_F5: { // Original is using CTRL-S
+		case Common::KEYCODE_F5: { // Original is using CTRL-S, which is mapped to F5 in utils
 			for (uint counter = 0; counter < 2; ++counter) {
 				clearBottomTextZone(0);
 				displayCenteredString("Are You Sure You Want To Save?", 24, 296, 160);
@@ -180,7 +185,7 @@ Common::Error EfhEngine::run() {
 
 			}
 			break;
-		case Common::KEYCODE_F7: { // Original is using CTRL-L
+		case Common::KEYCODE_F7: { // Original is using CTRL-L, which is mapped to F7 in utils
 			for (uint counter = 0; counter < 2; ++counter) {
 				clearBottomTextZone(0);
 				displayCenteredString("Are You Sure You Want To Load?", 24, 296, 160);
@@ -200,27 +205,35 @@ Common::Error EfhEngine::run() {
 			displayLowStatusScreen(true);
 
 		} break;
+
 		// debug cases to test sound
-		case Common::KEYCODE_1:
-			generateSound(13);
-			break;
-		case Common::KEYCODE_2:
-			generateSound(14);
-			break;
-		case Common::KEYCODE_3:
-			generateSound(15);
-			break;
 		case Common::KEYCODE_4:
-			generateSound(5);
+			if (ConfMan.getBool("dump_scripts"))
+				generateSound(13);
 			break;
 		case Common::KEYCODE_5:
-			generateSound(10);
+			if (ConfMan.getBool("dump_scripts"))
+				generateSound(14);
 			break;
 		case Common::KEYCODE_6:
-			generateSound(9);
+			if (ConfMan.getBool("dump_scripts"))
+				generateSound(15);
 			break;
 		case Common::KEYCODE_7:
-			generateSound(16);
+			if (ConfMan.getBool("dump_scripts"))
+				generateSound(5);
+			break;
+		case Common::KEYCODE_8:
+			if (ConfMan.getBool("dump_scripts"))
+				generateSound(10);
+			break;
+		case Common::KEYCODE_9:
+			if (ConfMan.getBool("dump_scripts"))
+				generateSound(9);
+			break;
+		case Common::KEYCODE_0:
+			if (ConfMan.getBool("dump_scripts"))
+				generateSound(16);
 			break;
 		default:
 			if (retVal != Common::KEYCODE_INVALID)
@@ -427,11 +440,13 @@ void EfhEngine::initEngine() {
 	fileName = "titlsong";
 	readFileToBuffer(fileName, _titleSong);
 	setDefaultNoteDuration();
-	Common::KeyCode lastInput = playSong(_titleSong);
+	Common::KeyCode lastInput = Common::KEYCODE_INVALID;
 
-	if (lastInput != Common::KEYCODE_ESCAPE && _loadSaveSlot == -1) {
+	if (_loadSaveSlot == -1)
+		lastInput = playSong(_titleSong);
+
+	if (lastInput != Common::KEYCODE_ESCAPE && _loadSaveSlot == -1)
 		playIntro();
-	}
 
 	loadImageSet(6, _circleImageBuf, _circleImageSubFileArray, _decompBuf);
 	readImpFile(99, false);
@@ -977,7 +992,7 @@ int16 EfhEngine::handleCharacterJoining() {
 void EfhEngine::drawText(uint8 *srcPtr, int16 posX, int16 posY, int16 maxX, int16 maxY, bool flag) {
 	debugC(7, kDebugEngine, "drawText %d-%d %d-%d %s", posX, posY, maxX, maxY, flag ? "True" : "False");
 
-	uint16 stringIdx = 0;
+	//uint16 stringIdx = 0;
 	uint8 *impPtr = srcPtr;
 	_messageToBePrinted = "";
 
@@ -989,13 +1004,13 @@ void EfhEngine::drawText(uint8 *srcPtr, int16 posX, int16 posY, int16 maxX, int1
 
 		if (curChar == 0x0D) {
 			_messageToBePrinted += " ";
-			stringIdx++;
+			//stringIdx++;
 			++impPtr;
 		} else if (curChar == 0x0A) {
 			++impPtr;
 		} else {
 			_messageToBePrinted += curChar;
-			stringIdx++;
+			//stringIdx++;
 			++impPtr;
 		}
 	}
@@ -1838,7 +1853,7 @@ bool EfhEngine::handleTalk(int16 monsterId, int16 arg2, int16 itemId) {
 		}
 		break;
 	case 5:
-		if (arg2 == 2 && _npcBuf[npcId].field11_NpcId == itemId) {
+		if (arg2 == 3 && _npcBuf[npcId].field11_NpcId == itemId) {
 			displayMonsterAnim(monsterId);
 			displayImp1Text(_npcBuf[npcId].field14_textId);
 			displayAnimFrames(0xFE, true);
@@ -2135,7 +2150,7 @@ bool EfhEngine::handleInteractionText(int16 mapPosX, int16 mapPosY, int16 charId
 	if (tileId < 0)
 		return false;
 
-	if ((arg8 == 4 && _mapSpecialTiles[_techId][tileId]._triggerType < 0xFA) || arg8 != 4) {
+	if (arg8 != 4 || _mapSpecialTiles[_techId][tileId]._triggerType < 0xFA) {
 		if (_mapSpecialTiles[_techId][tileId]._field7_textId > 0xFE)
 			return false;
 		displayImp1Text(_mapSpecialTiles[_techId][tileId]._field7_textId);
@@ -2162,7 +2177,7 @@ int8 EfhEngine::checkTileStatus(int16 mapPosX, int16 mapPosY, bool teamFl) {
 	}
 
 	if (_tileFact[tileFactId]._tileId != 0xFF) {
-		if (teamFl || (!teamFl && tileFactId != 128 && tileFactId != 121)) {
+		if (teamFl || (tileFactId != 128 && tileFactId != 121)) {
 			if (_largeMapFlag)
 				_mapGameMaps[_techId][mapPosX][mapPosY] = _tileFact[tileFactId]._tileId;
 			else

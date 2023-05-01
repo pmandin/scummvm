@@ -37,6 +37,7 @@
 #include "director/director.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-object.h"
+#include "director/lingo/lingo-utils.h"
 #include "director/lingo/xlibs/barakeobj.h"
 
 
@@ -53,7 +54,7 @@ static MethodProto xlibMethods[] = {
 	{ "Clear",			BarakeObj::m_clear,		0,	0,	400 },	// D4
 	{ "Gpal",			BarakeObj::m_gpal,		3,	3,	400 },	// D4
 	{ "Line",			BarakeObj::m_line,		6,	6,	400 },	// D4
-    { nullptr, nullptr, 0, 0, 0 }
+	{ nullptr, nullptr, 0, 0, 0 }
 };
 
 void BarakeObj::open(int type) {
@@ -83,14 +84,7 @@ void BarakeObj::m_new(int nargs) {
 void BarakeObj::m_clear(int nargs) {
 }
 
-void BarakeObj::m_gpal(int nargs) {
-	g_lingo->printSTUBWithArglist("BarakeObj::Gpal", nargs);
-	g_lingo->dropStack(nargs);
-}
-
-void BarakeObj::m_line(int nargs) {
-	g_lingo->printSTUBWithArglist("BarakeObj::Line", nargs);
-	g_lingo->dropStack(nargs);
-}
+XOBJSTUBNR(BarakeObj::m_gpal)
+XOBJSTUBNR(BarakeObj::m_line)
 
 } // End of namespace Director

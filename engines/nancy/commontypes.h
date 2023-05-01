@@ -128,6 +128,14 @@ struct FlagDescription {
 	byte flag = 0;
 };
 
+struct SceneChangeWithFlag {
+	SceneChangeDescription _sceneChange;
+	FlagDescription _flag;
+
+	void readData(Common::SeekableReadStream &stream, bool longFormat = false);
+	void execute();
+};
+
 // Describes a hotspot
 struct HotspotDescription {
 	uint16 frameID = 0;
@@ -142,7 +150,7 @@ struct BitmapDescription {
 	Common::Rect src;
 	Common::Rect dest;
 
-	void readData(Common::SeekableReadStream &stream);
+	void readData(Common::SeekableReadStream &stream, bool frameIsLong = false);
 };
 
 // Describes 10 event flag changes to be executed when an action is triggered
@@ -164,15 +172,16 @@ struct SecondaryVideoDescription {
 
 // Descrbes a single sound. Combines four different structs found in the data in one
 struct SoundDescription {
-	enum Type { kNormal, kMenu, kDIGI, kScene };
+	enum Type { kNormal = 0, kDIGI = 1, kMenu = 2, kScene = 3 };
 
 	Common::String name;
 	uint16 channelID = 0;
 	uint16 numLoops = 0;
 	uint16 volume = 0;
 	uint16 panAnchorFrame = 0;
+	uint32 samplesPerSec = 0;
 
-	void read(Common::SeekableReadStream &stream, Type type);
+	void readData(Common::SeekableReadStream &stream, Type type);
 };
 
 // Structs inside nancy.dat, which contains all the data that was
@@ -250,6 +259,16 @@ struct RippedLetterPuzzleState {
 	Common::Array<int8> order;
 	Common::Array<byte> rotations;
 	bool playerHasTriedPuzzle;
+};
+
+struct TowerPuzzleState {
+	Common::Array<Common::Array<int8>> order;
+	bool playerHasTriedPuzzle;
+};
+
+struct RiddlePuzzleState {
+	Common::Array<byte> solvedRiddleIDs;
+	int8 incorrectRiddleID;
 };
 
 } // End of namespace Nancy

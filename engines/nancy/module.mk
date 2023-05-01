@@ -4,17 +4,20 @@ MODULE_OBJS = \
   action/actionmanager.o \
   action/actionrecord.o \
   action/arfactory.o \
+  action/conversation.o \
   action/leverpuzzle.o \
   action/orderingpuzzle.o \
+  action/overlay.o \
+  action/overridelockpuzzle.o \
   action/passwordpuzzle.o \
-  action/conversation.o \
   action/recordtypes.o \
   action/rippedletterpuzzle.o \
   action/rotatinglockpuzzle.o \
+  action/riddlepuzzle.o \
   action/secondarymovie.o \
   action/secondaryvideo.o \
   action/sliderpuzzle.o \
-  action/overlay.o \
+  action/towerpuzzle.o \
   action/telephone.o \
   ui/fullscreenimage.o \
   ui/animatedbutton.o \
@@ -32,6 +35,7 @@ MODULE_OBJS = \
   state/map.o \
   state/scene.o \
   misc/lightning.o \
+  misc/specialeffect.o \
   commontypes.o \
   console.o \
   cursor.o \

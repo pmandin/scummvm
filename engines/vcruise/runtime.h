@@ -24,6 +24,7 @@
 
 #include "common/hashmap.h"
 #include "common/keyboard.h"
+#include "common/rect.h"
 
 #include "vcruise/detection.h"
 
@@ -67,6 +68,9 @@ static const uint kNumHighPrecisionDirections = 256;
 static const uint kHighPrecisionDirectionMultiplier = kNumHighPrecisionDirections / kNumDirections;
 
 class AudioPlayer;
+class MenuInterface;
+class MenuPage;
+class RuntimeMenuInterface;
 class TextParser;
 struct ScriptSet;
 struct Script;
@@ -86,6 +90,8 @@ enum GameState {
 
 	kGameStatePanLeft,
 	kGameStatePanRight,
+
+	kGameStateMenu,
 };
 
 struct AnimationDef {
@@ -135,11 +141,13 @@ struct MapDef {
 struct ScriptEnvironmentVars {
 	ScriptEnvironmentVars();
 
-	bool lmb;
-	bool lmbDrag;
 	uint panInteractionID;
 	uint fpsOverride;
 	uint lastHighlightedItem;
+	bool lmb;
+	bool lmbDrag;
+	bool esc;
+	bool exitToMenu;
 };
 
 struct SfxSound {
@@ -230,6 +238,7 @@ struct SoundInstance {
 	SoundParams3D params3D;
 
 	uint32 endTime;
+	uint32 duration;
 };
 
 struct RandomAmbientSound {
@@ -335,7 +344,7 @@ struct SaveGameSnapshot {
 	LoadGameOutcome read(Common::ReadStream *stream);
 
 	static const uint kSaveGameIdentifier = 0x53566372;
-	static const uint kSaveGameCurrentVersion = 4;
+	static const uint kSaveGameCurrentVersion = 5;
 	static const uint kSaveGameEarliestSupportedVersion = 2;
 
 	struct InventoryItem {
@@ -376,6 +385,8 @@ struct SaveGameSnapshot {
 	bool escOn;
 	int musicTrack;
 
+	uint musicVolume;
+
 	uint loadedAnimation;
 	uint animDisplayingFrame;
 
@@ -396,12 +407,55 @@ struct SaveGameSnapshot {
 	Common::HashMap<uint, uint32> timers;
 };
 
+enum OSEventType {
+	kOSEventTypeInvalid,
+
+	kOSEventTypeMouseMove,
+	kOSEventTypeLButtonDown,
+	kOSEventTypeLButtonUp,
+
+	kOSEventTypeKeyDown,
+
+	kOSEventTypeKeymappedEvent,
+};
+
+enum KeymappedEvent {
+	kKeymappedEventNone,
+
+	kKeymappedEventHelp,
+	kKeymappedEventSaveGame,
+	kKeymappedEventLoadGame,
+	kKeymappedEventSoundSettings,
+	kKeymappedEventQuit,
+	kKeymappedEventPause,
+	kKeymappedEventMusicToggle,
+	kKeymappedEventSoundToggle,
+	kKeymappedEventMusicVolumeDown,
+	kKeymappedEventMusicVolumeUp,
+	kKeymappedEventSoundVolumeDown,
+	kKeymappedEventSoundVolumeUp,
+
+	kKeymappedEventSkipAnimation,
+};
+
+struct OSEvent {
+	OSEvent();
+
+	OSEventType type;
+	Common::Point pos;
+	Common::KeyCode keyCode;
+	KeymappedEvent keymappedEvent;
+	uint32 timestamp;
+};
+
 class Runtime {
 public:
+	friend class RuntimeMenuInterface;
+
 	Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &rootFSNode, VCruiseGameID gameID);
 	virtual ~Runtime();
 
-	void initSections(Common::Rect gameRect, Common::Rect menuRect, Common::Rect trayRect, const Graphics::PixelFormat &pixFmt);
+	void initSections(const Common::Rect &gameRect, const Common::Rect &menuRect, const Common::Rect &trayRect, const Common::Rect &fullscreenMenuRect, const Graphics::PixelFormat &pixFmt);
 
 	void loadCursors(const char *exeName);
 	void setDebugMode(bool debugMode);
@@ -414,6 +468,7 @@ public:
 	void onLButtonUp(int16 x, int16 y);
 	void onMouseMove(int16 x, int16 y);
 	void onKeyDown(Common::KeyCode keyCode);
+	void onKeymappedEvent(KeymappedEvent evt);
 
 	bool canSave() const;
 	bool canLoad() const;
@@ -502,16 +557,6 @@ private:
 		bool isWaitingForAnimation;
 	};
 
-	enum OSEventType {
-		kOSEventTypeInvalid,
-
-		kOSEventTypeMouseMove,
-		kOSEventTypeLButtonDown,
-		kOSEventTypeLButtonUp,
-
-		kOSEventTypeKeyDown,
-	};
-
 	enum PanoramaCursorFlags {
 		kPanCursorDraggableHoriz	= (1 << 0),
 		kPanCursorDraggableUp		= (1 << 1),
@@ -536,6 +581,16 @@ private:
 		kPanoramaStatePanningDown,
 	};
 
+	enum InGameMenuState {
+		kInGameMenuStateInvisible,
+		kInGameMenuStateVisible,
+		kInGameMenuStateHoveringInactive,
+		kInGameMenuStateHoveringActive,
+		kInGameMenuStateClickingOver,		// Mouse was pressed on a button and is holding on it
+		kInGameMenuStateClickingNotOver,	// Mouse was pressed on a button and dragged off
+		kInGameMenuStateClickingInactive,
+	};
+
 	static const uint kPanLeftInteraction = 1;
 	static const uint kPanDownInteraction = 2;
 	static const uint kPanRightInteraction = 3;
@@ -548,15 +603,6 @@ private:
 	static const uint kPanoramaHorizFlags = (kPanoramaLeftFlag | kPanoramaRightFlag);
 
 	static const uint kNumInventorySlots = 6;
-
-	struct OSEvent {
-		OSEvent();
-
-		OSEventType type;
-		Common::Point pos;
-		Common::KeyCode keyCode;
-		uint32 timestamp;
-	};
 
 	typedef int32 ScriptArg_t;
 	typedef int32 StackInt_t;
@@ -596,11 +642,17 @@ private:
 	struct SubtitleDef {
 		SubtitleDef();
 
-		uint subIndex;
 		uint8 color[3];
 		uint unknownValue1;
-		uint unknownValue2;
+		uint durationInDeciseconds;
 		Common::String str;
+	};
+
+	struct SubtitleQueueItem {
+		Common::U32String str;
+		uint8 color[3];
+		uint32 startTime;
+		uint32 endTime;
 	};
 
 	bool runIdle();
@@ -623,6 +675,8 @@ private:
 
 	bool popOSEvent(OSEvent &evt);
 	void queueOSEvent(const OSEvent &evt);
+
+	void processUniversalKeymappedEvents(KeymappedEvent evt);
 
 	void loadIndex();
 	void findWaves();
@@ -651,9 +705,13 @@ private:
 	void triggerSoundRamp(SoundInstance &sound, uint durationMSec, uint newVolume, bool terminateOnCompletion);
 	void stopSound(SoundInstance &sound);
 	void updateSounds(uint32 timestamp);
+	void updateSubtitles();
 	void update3DSounds();
 	bool computeEffectiveVolumeAndBalance(SoundInstance &snd);
 	void triggerAmbientSounds();
+
+	void triggerWaveSubtitles(const SoundInstance &sound, const Common::String &id);
+	void stopSubtitles();
 
 	AnimationDef stackArgsToAnimDef(const StackInt_t *args) const;
 	void pushAnimDef(const AnimationDef &animDef);
@@ -675,14 +733,25 @@ private:
 
 	void inventoryAddItem(uint item);
 	void inventoryRemoveItem(uint item);
+	void clearScreen();
+	void redrawTray();
+	void clearTray();
 	void drawInventory(uint slot);
 	void drawCompass();
+	bool isTrayVisible() const;
 	void resetInventoryHighlights();
 
 	Common::String getFileNameForItemGraphic(uint itemID) const;
 	Common::SharedPtr<Graphics::Surface> loadGraphic(const Common::String &graphicName, bool required);
 
 	void loadSubtitles(Common::CodePage codePage);
+
+	void changeToMenuPage(MenuPage *menuPage);
+
+	void checkInGameMenuHover();
+	void dismissInGameMenu();
+	void dischargeInGameMenuMouseUp();
+	void drawInGameMenuButton(uint element);
 
 	// Script things
 	void scriptOpNumber(ScriptArg_t arg);
@@ -735,8 +804,7 @@ private:
 	void scriptOpStopSndLO(ScriptArg_t arg);
 
 	void scriptOpMusic(ScriptArg_t arg);
-	void scriptOpMusicUp(ScriptArg_t arg);
-	void scriptOpMusicDn(ScriptArg_t arg);
+	void scriptOpMusicVolRamp(ScriptArg_t arg);
 	void scriptOpParm0(ScriptArg_t arg);
 	void scriptOpParm1(ScriptArg_t arg);
 	void scriptOpParm2(ScriptArg_t arg);
@@ -754,6 +822,7 @@ private:
 	void scriptOpDup(ScriptArg_t arg);
 	void scriptOpSwap(ScriptArg_t arg);
 	void scriptOpSay1(ScriptArg_t arg);
+	void scriptOpSay2(ScriptArg_t arg);
 	void scriptOpSay3(ScriptArg_t arg);
 	void scriptOpSay3Get(ScriptArg_t arg);
 	void scriptOpSetTimer(ScriptArg_t arg);
@@ -815,6 +884,8 @@ private:
 	Common::SharedPtr<Graphics::Surface> _trayHighlightGraphic;
 	Common::SharedPtr<Graphics::Surface> _trayCornerGraphic;
 
+	Common::Array<Common::SharedPtr<Graphics::Surface> > _uiGraphics;
+
 	uint _panCursors[kPanCursorMaxCount];
 
 	Common::HashMap<Common::String, StackInt_t> _namedCursors;
@@ -857,6 +928,9 @@ private:
 	bool _havePendingCompletionCheck;
 	GameState _gameState;
 
+	Common::SharedPtr<MenuPage> _menuPage;
+	Common::SharedPtr<MenuInterface> _menuInterface;
+
 	bool _havePendingPlayAmbientSounds;
 	uint32 _ambientSoundFinishTime;
 
@@ -878,6 +952,13 @@ private:
 
 	Common::SharedPtr<AudioPlayer> _musicPlayer;
 	int _musicTrack;
+	uint _musicVolume;
+
+	uint32 _musicVolumeRampStartTime;
+	uint _musicVolumeRampStartVolume;
+	int32 _musicVolumeRampRatePerMSec;
+	uint _musicVolumeRampEnd;
+
 	SfxData _sfxData;
 
 	Common::SharedPtr<Video::AVIDecoder> _animDecoder;
@@ -893,6 +974,7 @@ private:
 	uint32 _animStartTime;
 	uint32 _animFramesDecoded;
 	uint _loadedAnimation;
+	bool _loadedAnimationHasSound;
 	bool _animPlayWhileIdle;
 
 	Common::Array<FrameData> _frameData;
@@ -902,10 +984,15 @@ private:
 	Common::Array<Common::String> _animDefNames;
 	Common::HashMap<Common::String, uint> _animDefNameToIndex;
 
+	bool _idleLockInteractions;
 	bool _idleIsOnInteraction;
 	bool _idleHaveClickInteraction;
 	bool _idleHaveDragInteraction;
 	uint _idleInteractionID;
+
+	InGameMenuState _inGameMenuState;
+	uint _inGameMenuActiveElement;
+	bool _inGameMenuButtonActive[5];
 
 	Audio::Mixer *_mixer;
 
@@ -915,6 +1002,7 @@ private:
 	RenderSection _gameDebugBackBuffer;
 	RenderSection _menuSection;
 	RenderSection _traySection;
+	RenderSection _fullscreenMenuSection;
 
 	Common::Point _mousePos;
 	Common::Point _lmbDownPos;
@@ -961,11 +1049,11 @@ private:
 	uint _soundCacheIndex;
 
 	Common::SharedPtr<SaveGameSnapshot> _saveGame;
+	bool _isInGame;
 
 	const Graphics::Font *_subtitleFont;
-	uint32 _subtitleExpireTime;
+	Common::SharedPtr<Graphics::Font> _subtitleFontKeepalive;
 	uint _languageIndex;
-	bool _displayingSubtitles;
 
 	typedef Common::HashMap<uint, SubtitleDef> FrameToSubtitleMap_t;
 	typedef Common::HashMap<uint, FrameToSubtitleMap_t> AnimSubtitleMap_t;
@@ -973,6 +1061,8 @@ private:
 
 	AnimSubtitleMap_t _animSubtitles;
 	Common::HashMap<Common::String, SubtitleDef> _waveSubtitles;
+	Common::Array<SubtitleQueueItem> _subtitleQueue;
+	bool _isDisplayingSubtitles;
 };
 
 } // End of namespace VCruise

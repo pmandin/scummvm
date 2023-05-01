@@ -36,7 +36,7 @@ TextDisplayer_rpg::TextDisplayer_rpg(KyraRpgEngine *engine, Screen *scr) : _vm(e
 	_lineCount(0), _printFlag(false), _lineWidth(0), _numCharsTotal(0), _allowPageBreak(true),
 	_numCharsLeft(0), _numCharsPrinted(0), _sjisTextModeLineBreak(false), _waitButtonMode(1),
 	_pc98TextMode(engine->gameFlags().use16ColorMode && engine->game() == GI_LOL),
-	_waitButtonFont(Screen::FID_6_FNT) {
+	_waitButtonFont(Screen::FID_6_FNT), _isChinese(_vm->gameFlags().lang == Common::Language::ZH_TWN || _vm->gameFlags().lang == Common::Language::ZH_CHN) {
 
 	static const uint8 amigaColorMap[16] = {
 		0x00, 0x06, 0x1d, 0x1b, 0x1a, 0x17, 0x18, 0x0e, 0x19, 0x1c, 0x1c, 0x1e, 0x13, 0x0a, 0x11, 0x1f
@@ -52,6 +52,8 @@ TextDisplayer_rpg::TextDisplayer_rpg(KyraRpgEngine *engine, Screen *scr) : _vm(e
 		_waitButtonFont = Screen::FID_8_FNT;
 	else if ((_vm->game() == GI_EOB1 && _vm->gameFlags().platform == Common::kPlatformPC98))
 		_waitButtonFont = Screen::FID_SJIS_FNT;
+	else if ((_vm->game() == GI_LOL && _vm->gameFlags().lang == Common::Language::ZH_TWN))
+		_waitButtonFont = Screen::FID_CHINESE_FNT;
 
 	_textDimData = new TextDimData[_screen->screenDimTableCount()];
 
@@ -183,6 +185,22 @@ void TextDisplayer_rpg::displayText(char *str, ...) {
 				_lineWidth += sjisOffs;
 				if (_vm->game() == GI_EOB1 && ((sd->w << 3) - sjisOffs) <= (_textDimData[sdx].column + _lineWidth))
 					printLine(_currentLine);
+				c = parseCommand();
+				continue;
+			}
+		}
+
+		if (_isChinese) {
+			uint8 cu = (uint8) c;
+			if (cu & 0x80) {
+				if ((_textDimData[sdx].column + _lineWidth + Graphics::Big5Font::kChineseTraditionalWidth) > (sd->w << 3))
+					printLine(_currentLine);
+
+				_currentLine[_numCharsLeft++] = c;
+				_currentLine[_numCharsLeft++] = parseCommand();
+				_currentLine[_numCharsLeft] = '\0';
+
+				_lineWidth += Graphics::Big5Font::kChineseTraditionalWidth;
 				c = parseCommand();
 				continue;
 			}
@@ -324,7 +342,13 @@ void TextDisplayer_rpg::printLine(char *str) {
 	bool sjisTextMode = _pc98TextMode && (sdx == 3 || sdx == 4 || sdx == 5 || sdx == 15) ? true : false;
 	int sjisOffs = (sjisTextMode || _vm->game() != GI_LOL) ? 8 : 9;
 
-	int fh = (_screen->_currentFont == Screen::FID_SJIS_TEXTMODE_FNT) ? 9 : (_screen->getFontHeight() + _screen->_lineSpacing);
+	int fh;
+	if (_screen->_currentFont == Screen::FID_CHINESE_FNT && _vm->_flags.lang == Common::Language::ZH_TWN && _vm->_flags.gameID == GI_EOB2)
+		fh = 14;
+	else if (_screen->_currentFont == Screen::FID_SJIS_TEXTMODE_FNT)
+		fh = 9;
+	else
+		fh = _screen->getFontHeight() + _screen->_lineSpacing;
 	int lines = (sd->h - _screen->_lineSpacing) / fh;
 
 	while (_textDimData[sdx].line >= lines) {
@@ -397,6 +421,13 @@ void TextDisplayer_rpg::printLine(char *str) {
 			}
 		}
 
+		if (_isChinese) {
+			for (int i = 0; i < s; ++i) {
+				if (str[i] & 0x80)
+					twoByteCharOffs = 16;
+			}
+		}
+
 		if ((lw + _textDimData[sdx].column) >= w) {
 			if ((lines - 1) <= _lineCount && _allowPageBreak)
 				// cut off line to leave space for "MORE" button
@@ -414,7 +445,10 @@ void TextDisplayer_rpg::printLine(char *str) {
 
 				for (strPos = 0; strPos < s; ++strPos) {
 					uint8 cu = (uint8) str[strPos];
-					if (cu >= 0xE0 || (cu > 0x80 && cu < 0xA0)) {
+					if (_isChinese && (cu & 0x80)) {
+						lw += twoByteCharOffs;
+						strPos++;
+					} else if (cu >= 0xE0 || (cu > 0x80 && cu < 0xA0)) {
 						lw += sjisOffs;
 						strPos++;
 					} else {
@@ -639,7 +673,9 @@ void TextDisplayer_rpg::textPageBreak() {
 	int w = _vm->_dialogueButtonWidth;
 
 	if (_vm->game() == GI_LOL) {
-		if (_vm->_needSceneRestore && (_vm->_updateFlags & 2)) {
+		if (_vm->gameFlags().lang == Common::Language::ZH_TWN) {
+			y = dim->sy + dim->h - 15;
+		} else if (_vm->_needSceneRestore && (_vm->_updateFlags & 2)) {
 			if (_vm->_currentControlMode || !(_vm->_updateFlags & 2)) {
 				y = dim->sy + dim->h - 5;
 			} else {
@@ -694,7 +730,7 @@ void TextDisplayer_rpg::textPageBreak() {
 		if (inputFlag == _vm->_keyMap[Common::KEYCODE_SPACE] || inputFlag == _vm->_keyMap[Common::KEYCODE_RETURN]) {
 			loop = false;
 		} else if (inputFlag == 199 || inputFlag == 201) {
-			if (_vm->posWithinRect(_vm->_mouseX, _vm->_mouseY, x, y, x + w, y + 9)) {
+			if (_vm->posWithinRect(_vm->_mouseX, _vm->_mouseY, x, y, x + w, y + _vm->guiSettings()->buttons.height)) {
 				if (_vm->game() == GI_LOL)
 					target = true;
 				else
@@ -708,7 +744,7 @@ void TextDisplayer_rpg::textPageBreak() {
 
 	_screen->set16bitShadingLevel(4);
 	if (_vm->game() == GI_LOL && _vm->gameFlags().use16ColorMode)
-		_screen->fillRect(x + 8, y, x + 57, y + 9, _textDimData[_screen->curDimIndex()].color2);
+		_screen->fillRect(x + 8, y, x + 57, y + _vm->guiSettings()->buttons.height, _textDimData[_screen->curDimIndex()].color2);
 	else
 		_screen->fillRect(x, y, x + w - 1, y + _vm->guiSettings()->buttons.height - 1, _textDimData[_screen->curDimIndex()].color2);
 

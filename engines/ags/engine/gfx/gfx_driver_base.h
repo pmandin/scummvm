@@ -45,7 +45,7 @@ using Shared::PlaneScaling;
 
 // Sprite batch, defines viewport and an optional model transformation for the list of sprites
 struct SpriteBatchDesc {
-	uint32_t                 Parent = 0;
+	uint32_t                 Parent = UINT32_MAX;
 	// View rectangle for positioning and clipping, in resolution coordinates
 	// (this may be screen or game frame resolution, depending on circumstances)
 	Rect                     Viewport;
@@ -101,6 +101,9 @@ public:
 	Size        GetNativeSize() const override;
 	Rect        GetRenderDestination() const override;
 
+	bool		SetVsync(bool enabled) override;
+	bool		GetVsync() const override;
+
 	void        BeginSpriteBatch(const Rect &viewport, const SpriteTransform &transform,
 	                             Shared::GraphicFlip flip = Shared::kFlip_None, PBitmap surface = nullptr) override;
 	void        EndSpriteBatch() override;
@@ -141,6 +144,11 @@ protected:
 	virtual void OnSetRenderFrame(const Rect &dst_rect);
 	// Called when the new filter is set
 	virtual void OnSetFilter();
+
+	// Try changing vsync setting; fills new current mode in vsync_res,
+	// returns whether the new setting was set successfully.
+	virtual bool SetVsyncImpl(bool vsync, bool &vsync_res) { return false; }
+
 	// Initialize sprite batch and allocate necessary resources
 	virtual void InitSpriteBatch(size_t index, const SpriteBatchDesc &desc) = 0;
 	// Gets the index of a last draw entry (sprite)
@@ -156,6 +164,9 @@ protected:
 	Rect                _dstRect;       // rendering destination rect
 	Rect                _filterRect;    // filter scaling destination rect (before final scaling)
 	PlaneScaling        _scaling;       // native -> render dest coordinate transformation
+
+	// Capability flags
+	bool				_capsVsync = false; // is vsync available
 
 	// Callbacks
 	GFXDRV_CLIENTCALLBACK _pollingCallback;
@@ -207,6 +218,7 @@ protected:
 // properties. It may be shared between multiple sprites if necessary.
 struct TextureData {
 	uint32_t ID = UINT32_MAX;
+	bool RenderTarget = false; // replace with flags later
 	virtual ~TextureData() = default;
 protected:
 	TextureData() = default;

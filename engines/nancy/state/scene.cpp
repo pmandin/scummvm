@@ -38,6 +38,7 @@
 #include "engines/nancy/ui/clock.h"
 
 #include "engines/nancy/misc/lightning.h"
+#include "engines/nancy/misc/specialeffect.h"
 
 namespace Common {
 DECLARE_SINGLETON(Nancy::State::Scene);
@@ -73,7 +74,7 @@ void Scene::SceneSummary::read(Common::SeekableReadStream &stream) {
 		readFilename(stream, palettes[2]);
 	}
 
-	sound.read(stream, SoundDescription::kScene);
+	sound.readData(stream, SoundDescription::kScene);
 
 	ser.skip(6);
 	ser.syncAsUint16LE(panningType);
@@ -114,8 +115,11 @@ Scene::Scene() :
 		_difficulty(0),
 		_activeConversation(nullptr),
 		_lightning(nullptr),
+		_specialEffect(nullptr),
 		_sliderPuzzleState(nullptr),
-		_rippedLetterPuzzleState(nullptr) {}
+		_rippedLetterPuzzleState(nullptr),
+		_towerPuzzleState(nullptr),
+		_riddlePuzzleState(nullptr) {}
 
 Scene::~Scene()  {
 	delete _helpButton;
@@ -125,8 +129,11 @@ Scene::~Scene()  {
 	delete _inventoryBoxOrnaments;
 	delete _clock;
 	delete _lightning;
+	delete _specialEffect;
 	delete _sliderPuzzleState;
 	delete _rippedLetterPuzzleState;
+	delete _towerPuzzleState;
+	delete _riddlePuzzleState;
 }
 
 void Scene::process() {
@@ -207,6 +214,10 @@ void Scene::changeScene(uint16 id, uint16 frame, uint16 verticalOffset, byte con
 
 	if (paletteID != -1) {
 		_sceneState.nextScene.paletteID = paletteID;
+	}
+
+	if (_specialEffect) {
+		_specialEffect->onSceneChange();
 	}
 
 	_state = kLoad;
@@ -501,8 +512,8 @@ void Scene::synchronize(Common::Serializer &ser) {
 
 		break;
 	}
-	case kGameTypeNancy2 :
-		if (!_rippedLetterPuzzleState) {
+	case kGameTypeNancy2 : {
+		if (!_rippedLetterPuzzleState || !_towerPuzzleState || !_riddlePuzzleState) {
 			break;
 		}
 
@@ -516,7 +527,27 @@ void Scene::synchronize(Common::Serializer &ser) {
 		ser.syncArray(_rippedLetterPuzzleState->order.data(), 24, Common::Serializer::Byte);
 		ser.syncArray(_rippedLetterPuzzleState->rotations.data(), 24, Common::Serializer::Byte);
 
+		ser.syncAsByte(_towerPuzzleState->playerHasTriedPuzzle);
+
+		if (ser.isLoading()) {
+			_towerPuzzleState->order.resize(3, Common::Array<int8>(6, -1));
+		}
+
+		for (uint i = 0; i < 3; ++i) {
+			ser.syncArray(_towerPuzzleState->order[i].data(), 6, Common::Serializer::Byte);
+		}
+
+		byte numRiddles;
+		ser.syncAsByte(numRiddles);
+
+		if (ser.isLoading()) {
+			_riddlePuzzleState->solvedRiddleIDs.resize(numRiddles);
+		}
+
+		ser.syncArray(_riddlePuzzleState->solvedRiddleIDs.data(), numRiddles, Common::Serializer::Byte);
+
 		break;
+	}
 	default:
 		break;
 	}
@@ -559,6 +590,7 @@ void Scene::init() {
 		delete _sliderPuzzleState;
 		_sliderPuzzleState = new SliderPuzzleState();
 		_sliderPuzzleState->playerHasTriedPuzzle = false;
+		
 		break;
 	case kGameTypeNancy2:
 		delete _rippedLetterPuzzleState;
@@ -566,6 +598,17 @@ void Scene::init() {
 		_rippedLetterPuzzleState->playerHasTriedPuzzle = false;
 		_rippedLetterPuzzleState->order.resize(24, 0);
 		_rippedLetterPuzzleState->rotations.resize(24, 0);
+
+		delete _towerPuzzleState;
+		_towerPuzzleState = new TowerPuzzleState();
+		_towerPuzzleState->playerHasTriedPuzzle = false;
+		_towerPuzzleState->order.resize(3, Common::Array<int8>(6, -1));
+
+		delete _riddlePuzzleState;
+		_riddlePuzzleState = new RiddlePuzzleState();
+		_riddlePuzzleState->incorrectRiddleID = -1;
+		
+		break;
 	default:
 		break;
 	}
@@ -603,6 +646,15 @@ void Scene::beginLightning(int16 distance, uint16 pulseTime, int16 rgbPercent) {
 	if (_lightning) {
 		_lightning->beginLightning(distance, pulseTime, rgbPercent);
 	}
+}
+
+void Scene::specialEffect(byte type, uint16 fadeToBlackTime, uint16 frameTime) {
+	if (_specialEffect) {
+		delete _specialEffect;
+	}
+
+	_specialEffect = new Misc::SpecialEffect(type, fadeToBlackTime, frameTime);
+	_specialEffect->init();
 }
 
 void Scene::load() {
@@ -677,12 +729,26 @@ void Scene::load() {
 
 	_timers.sceneTime = 0;
 
+	if (_specialEffect) {
+		_specialEffect->afterSceneChange();
+	}
+
 	_state = kStartSound;
 }
 
 void Scene::run() {
 	if (_gameStateRequested != NancyState::kNone) {
 		g_nancy->setState(_gameStateRequested);
+
+		return;
+	}
+
+	if (_specialEffect && _specialEffect->isInitialized()) {
+		if (_specialEffect->isDone()) {
+			delete _specialEffect;
+			_specialEffect = nullptr;
+			g_nancy->_graphicsManager->redrawAll();
+		}
 
 		return;
 	}
@@ -815,7 +881,7 @@ void Scene::initStaticData() {
 	assert(bsum);
 	
 	if (g_nancy->getGameType() == kGameTypeVampire) {
-		_mapHotspot = bsum->mapButtonHotspot;
+		_mapHotspot = bsum->extraButtonHotspot;
 	} else if (g_nancy->_mapData) {
 		_mapHotspot = g_nancy->_mapData->buttonDest;
 	}

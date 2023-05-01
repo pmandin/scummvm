@@ -280,6 +280,7 @@ add_feature highres "high resolution" "_highres"
 add_feature mad "MAD" "_mad"
 add_feature jpeg "JPEG" "_jpeg"
 add_feature mpeg2 "mpeg2" "_mpeg2"
+add_feature opengl_game_classic "OpenGL (classic)" "_opengl_game_classic"
 add_feature opengl_game_shaders "OpenGL with shaders" "_opengl_game_shaders"
 add_feature png "PNG" "_png"
 add_feature gif "GIF" "_gif"
@@ -3622,7 +3623,7 @@ if test -n "$_host"; then
 			;;
 		ios7*)
 			add_line_to_config_mk 'IPHONE = 1'
-			append_var DEFINES "-DIPHONE -DIPHONE_IOS7 -DIPHONE_SANDBOXED"
+			append_var DEFINES "-DIPHONE -DIPHONE_IOS7"
 			_backend="ios7"
 			_seq_midi=no
 			_timidity=no
@@ -3904,7 +3905,7 @@ if test -n "$_host"; then
 			;;
 		tvos)
 			add_line_to_config_mk 'IPHONE = 1'
-			append_var DEFINES "-DIPHONE -DIPHONE_IOS7 -DIPHONE_SANDBOXED"
+			append_var DEFINES "-DIPHONE -DIPHONE_IOS7"
 			_backend="ios7"
 			_seq_midi=no
 			_timidity=no

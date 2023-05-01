@@ -85,7 +85,7 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 
 	_sceneChange.readData(stream);
 	_flagsOnTrigger.readData(stream);
-	_sound.read(stream, SoundDescription::kNormal);
+	_sound.readData(stream, SoundDescription::kNormal);
 	uint numViewportFrames = stream.readUint16LE();
 
 	if (_overlayType == kPlayOverlayAnimated) {
@@ -96,7 +96,7 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 
 	_bitmaps.resize(numViewportFrames);
 	for (auto &bm : _bitmaps) {
-		bm.readData(stream);
+		bm.readData(stream, ser.getVersion() >= kGameTypeNancy2);
 	}
 }
 
@@ -206,12 +206,6 @@ void Overlay::execute() {
 	}
 }
 
-void Overlay::onPause(bool pause) {
-	if (!pause) {
-		registerGraphics();
-	}
-}
-
 Common::String Overlay::getRecordTypeName() const {
 	if (g_nancy->getGameType() <= kGameTypeNancy1) {
 		if (_isInterruptible) {
@@ -227,18 +221,19 @@ Common::String Overlay::getRecordTypeName() const {
 void Overlay::setFrame(uint frame) {
 	_currentFrame = frame;
 	
-	// Workaround for the fireplace in nancy2 scene 2491,
-	// where one of the rects is invalid. Assumes all
-	// rects in a single animation have the same dimensions
+	// Workaround for:
+	// - the fireplace in nancy2 scene 2491, where one of the rects is invalid.
+	// - the ball thing in nancy2 scene 1562, where one of the rects is twice as tall as it should be
+	// Assumes all rects in a single animation have the same dimensions
 	Common::Rect srcRect = _srcRects[frame];
-	if (!srcRect.isValidRect()) {
+	if (!srcRect.isValidRect() || srcRect.height() > _srcRects[0].height()) {
 		srcRect.setWidth(_srcRects[0].width());
 		srcRect.setHeight(_srcRects[0].height());
 	}
 
 	_drawSurface.create(_fullSurface, srcRect);
 
-	setTransparent(_transparency == kPlayOverlayPlain);
+	setTransparent(_transparency == kPlayOverlayTransparent);
 
 	_needsRedraw = true;
 }

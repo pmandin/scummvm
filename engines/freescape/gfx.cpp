@@ -126,6 +126,11 @@ byte getCGAStipple(byte x, int back, int fore) {
 	return st;
 }
 
+void Renderer::clearColorPairArray() {
+	for (int i = 0; i < 15; i++)
+		_colorPair[i] = 0;
+}
+
 void Renderer::fillColorPairArray() {
 	for (int i = 4; i < 15; i++) {
 		byte *entry = (*_colorMap)[i];
@@ -361,8 +366,7 @@ bool Renderer::getRGBAtCPC(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &
 	return true;
 }
 
-bool Renderer::getRGBAtEGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2) {
- 	// assert(index-1 < _colorMap->size());
+uint8 Renderer::mapEGAColor(uint8 index) {
 	byte *entry = (*_colorMap)[index - 1];
 	uint8 color = 0;
 	uint8 acc = 1;
@@ -376,10 +380,23 @@ bool Renderer::getRGBAtEGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &
 		entry++;
 	}
 	assert(color < 16);
-	readFromPalette(color, r1, g1, b1);
-	r2 = r1;
-	g2 = g1;
-	b2 = b1;
+	return color;
+}
+
+bool Renderer::getRGBAtEGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2) {
+	uint8 color;
+	if (_colorPair[index] > 0) {
+		color = mapEGAColor(_colorPair[index] & 0xf);
+		readFromPalette(color, r1, g1, b1);
+		color = mapEGAColor(_colorPair[index] >> 4);
+		readFromPalette(color, r2, g2, b2);
+	} else {
+		color = mapEGAColor(index);
+		readFromPalette(color, r1, g1, b1);
+		r2 = r1;
+		g2 = g1;
+		b2 = b1;
+	}
 	return true;
 }
 
@@ -812,15 +829,6 @@ void Renderer::renderRectangle(const Math::Vector3d &origin, const Math::Vector3
 
 			vertices.push_back(Math::Vector3d(origin.x() + dx, origin.y() + dy, origin.z() + dz));
 			vertices.push_back(Math::Vector3d(origin.x() + size.x(), origin.y() + size.y(), origin.z() + size.z()));
-			renderFace(vertices);
-			if (r1 != r2 || g1 != g2 || b1 != b2) {
-				useStipple(true);
-				useColor(r2, g2, b2);
-				renderFace(vertices);
-				useStipple(false);
-			}
-
-			vertices.clear();
 			vertices.push_back(Math::Vector3d(origin.x(), origin.y(), origin.z()));
 
 			dx = dy = dz = 0.0;
@@ -916,6 +924,22 @@ void Renderer::renderPolygon(const Math::Vector3d &origin, const Math::Vector3d 
 	}
 
 	polygonOffset(false);
+}
+
+void Renderer::drawBackground(uint8 color) {
+
+	if (_colorRemaps && _colorRemaps->contains(color)) {
+		color = (*_colorRemaps)[color];
+	}
+
+	byte *stipple = nullptr;
+	uint8 r1, g1, b1, r2, g2, b2;
+	bool render = getRGBAt(color, r1, g1, b1, r2, g2, b2, stipple);
+	if (!render)
+		r1 = g1 = b1 = 0;
+
+	//assert(stipple == nullptr); // Unclear if this is ever used
+	clear(r1, g1, b1);
 }
 
 Graphics::RendererType determinateRenderType() {

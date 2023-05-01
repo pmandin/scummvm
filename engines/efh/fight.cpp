@@ -345,15 +345,16 @@ void EfhEngine::handleFight_lastAction_A(int16 teamCharId) {
 						addReactionText(kEfhReactionCriesOut);
 					} else if (_mapMonsters[_techId][_teamMonster[groupId]._id]._hitPoints[ctrMobsterId] < hitPointsBefore / 4) {
 						addReactionText(kEfhReactionFalters);
+					// The original checked /2 before /3, making the code in /3 unreachable. This fix allow the originally text to be displayed
+					} else if (_mapMonsters[_techId][_teamMonster[groupId]._id]._hitPoints[ctrMobsterId] < hitPointsBefore / 3) {
+						addReactionText(kEfhReactionScreams);
 					} else if (_mapMonsters[_techId][_teamMonster[groupId]._id]._hitPoints[ctrMobsterId] < hitPointsBefore / 2) {
 						addReactionText(kEfhReactionWinces);
-					} else if (_mapMonsters[_techId][_teamMonster[groupId]._id]._hitPoints[ctrMobsterId] < hitPointsBefore / 3) {
-						// CHECKME: Doesn't make any sense to check /3 after /2... I don't get it. Looks like an original bug
-						addReactionText(kEfhReactionScreams);
 					} else if (hitPointsBefore / 8 >= originalDamage) {
 						addReactionText(kEfhReactionChortles);
-					} else if (originalDamage == 0 && getRandom(100) < 35) {
-						// CHECKME: "originalDamage == 0" is always false as it's checked beforehand. Looks like another original bug
+					} else if (getRandom(100) < 35) {
+						// Note : The original had a bug as it was doing an (always false) check "originalDamage == 0".
+						// This check has been removed so that it behaves as originally expected
 						addReactionText(kEfhReactionLaughs);
 					}
 				}
@@ -593,8 +594,9 @@ void EfhEngine::handleFight_MobstersAttack(int groupId) {
 							addReactionText(kEfhReactionScreams);
 						} else if (_npcBuf[_teamChar[targetId]._id]._maxHP / 8 >= originalDamage) {
 							addReactionText(kEfhReactionChortles);
-						} else if (originalDamage == 0 && getRandom(100) < 35) {
-							// CHECKME: "originalDamage == 0" is always false as it's checked beforehand. Looks like another original bug
+						} else if (getRandom(100) < 35) {
+							// Note : The original had a bug as it was doing an (always false) check "originalDamage == 0".
+							// This check has been removed so that it behaves as originally expected
 							addReactionText(kEfhReactionLaughs);
 						}
 					}

@@ -39,8 +39,8 @@ struct BSUM {
 	uint16 startTimeMinutes;
 
 	// UI
-	Common::Rect mapButtonHotspot;
-	Common::Rect clockHotspot;
+	Common::Rect extraButtonHotspot;	// Extra button is map in tvd, clock in nancy2 and up
+	Common::Rect extraButtonHighlightDest;
 	Common::Rect textboxScreenPosition;
 	Common::Rect inventoryBoxScreenPosition;
 	Common::Rect menuButtonSrc;
@@ -206,6 +206,14 @@ struct CLOK {
 
 	uint32 timeToKeepOpen;
 	uint16 frameTime;
+};
+
+struct SPEC {
+	SPEC(Common::SeekableReadStream *chunkStream);
+
+	byte fadeToBlackNumFrames;
+	uint16 fadeToBlackFrameTime;
+	byte crossDissolveNumFrames;
 };
 
 struct ImageChunk {

@@ -101,6 +101,7 @@ public:
 	DocumentsBrowser &documentsBrowser() { return _documentsBrowser; }
 	bool entered() const { return _entered; }
 	bool running() const { return _running; }
+	void setRunning(bool val) { _running = val; }
 	bool luaShowOwnerError() const { return _luaShowOwnerError; }
 
 	bool _returnToMainMenu;
@@ -160,7 +161,7 @@ protected:
 	TeLuaScript _luaScript;
 	TeLuaContext _luaContext;
 	TeLuaScript _gameEnterScript;
-	TeMusic _music;
+	TeMusic _videoMusic;
 	Notifier _notifier;
 	DocumentsBrowser _documentsBrowser;
 

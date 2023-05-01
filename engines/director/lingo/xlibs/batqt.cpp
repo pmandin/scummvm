@@ -55,6 +55,7 @@
 #include "director/director.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-object.h"
+#include "director/lingo/lingo-utils.h"
 #include "director/lingo/xlibs/batqt.h"
 
 
@@ -68,7 +69,27 @@ const char *BatQT::fileNames[] = {
 };
 
 static MethodProto xlibMethods[] = {
-	{ "new",		BatQT::m_new,			 0, 0,	400 },	// D4
+	{ "new",			BatQT::m_new,			0, 0,	400 },	// D4
+	{ "dispose",		BatQT::m_dispose,		1, 1,	400 },	// D4
+	{ "name",			BatQT::m_name,			0, 0,	400 },	// D4
+	{ "status",			BatQT::m_status,		0, 0,	400 },	// D4
+	{ "error",			BatQT::m_error,			1, 1,	400 },	// D4
+	{ "lastError",		BatQT::m_lastError,		0, 0,	400 },	// D4
+	{ "open",			BatQT::m_open,			2, 2,	400 },	// D4
+	{ "play",			BatQT::m_play,			3, 3,	400 },	// D4
+	{ "stop",			BatQT::m_stop,			0, 0,	400 },  // D4
+	{ "getTimeRange",	BatQT::m_getTimeRange,	0, 0,	400 },  // D4
+	{ "getMovieBox",	BatQT::m_getMovieBox,	0, 0,	400 },  // D4
+	{ "getTime",		BatQT::m_getTime,		0, 0,	400 },  // D4
+	{ "setTime",		BatQT::m_setTime,		1, 1,	400 },  // D4
+	{ "setVolume",		BatQT::m_setVolume,		1, 1,	400 },  // D4
+	{ "length",			BatQT::m_length,		0, 0,	400 },  // D4
+	{ "setMovieBox",	BatQT::m_setMovieBox,	4, 4,	400 },  // D4
+	{ "setTimeRange",	BatQT::m_setTimeRange,	2, 2,	400 },  // D4
+	{ "addCallback",	BatQT::m_addCallback,	1, 1,	400 },  // D4
+	{ "removeCallback",	BatQT::m_removeCallback,1, 1,	400 },  // D4
+	{ "resetCallbacks",	BatQT::m_resetCallbacks,0, 0,	400 },  // D4
+	{ "setBatch",		BatQT::m_setBatch,		1, 1,	400 },  // D4
 	{ nullptr, nullptr, 0, 0, 0 }
 };
 
@@ -88,12 +109,33 @@ void BatQT::close(int type) {
 }
 
 
-BatQTXObject::BatQTXObject(ObjectType ObjectType) : Object<BatQTXObject>("FindSys") {
+BatQTXObject::BatQTXObject(ObjectType ObjectType) : Object<BatQTXObject>("BatQt") {
 	_objType = ObjectType;
 }
 
 void BatQT::m_new(int nargs) {
 	g_lingo->push(g_lingo->_state->me);
 }
+
+XOBJSTUBNR(BatQT::m_dispose)
+XOBJSTUB(BatQT::m_name, "")
+XOBJSTUB(BatQT::m_status, 0)
+XOBJSTUB(BatQT::m_error, "")
+XOBJSTUB(BatQT::m_lastError, "")
+XOBJSTUB(BatQT::m_open, 0)
+XOBJSTUB(BatQT::m_play, 0)
+XOBJSTUB(BatQT::m_stop, 0)
+XOBJSTUB(BatQT::m_getTimeRange, "")
+XOBJSTUB(BatQT::m_getMovieBox, "0,0,320,240")
+XOBJSTUB(BatQT::m_getTime, 0)
+XOBJSTUB(BatQT::m_setTime, "")
+XOBJSTUB(BatQT::m_setVolume, "")
+XOBJSTUB(BatQT::m_length, 0)
+XOBJSTUB(BatQT::m_setMovieBox, 0)
+XOBJSTUB(BatQT::m_setTimeRange, 0)
+XOBJSTUB(BatQT::m_addCallback, 0)
+XOBJSTUB(BatQT::m_removeCallback, 0)
+XOBJSTUB(BatQT::m_resetCallbacks, 0)
+XOBJSTUBNR(BatQT::m_setBatch)
 
 } // End of namespace Director

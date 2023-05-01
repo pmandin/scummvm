@@ -79,18 +79,12 @@ void LeverPuzzle::readData(Common::SeekableReadStream &stream) {
 		_correctSequence.push_back(stream.readByte());
 	}
 
-	_moveSound.read(stream, SoundDescription::kNormal);
-	_noMoveSound.read(stream, SoundDescription::kNormal);
+	_moveSound.readData(stream, SoundDescription::kNormal);
+	_noMoveSound.readData(stream, SoundDescription::kNormal);
 	_solveExitScene.readData(stream);
-	stream.skip(2);
-	_flagOnSolve.label = stream.readSint16LE();
-	_flagOnSolve.flag = stream.readByte();
 	_solveSoundDelay = stream.readUint16LE();
-	_solveSound.read(stream, SoundDescription::kNormal);
+	_solveSound.readData(stream, SoundDescription::kNormal);
 	_exitScene.readData(stream);
-	stream.skip(2);
-	_flagOnExit.label = stream.readSint16LE();
-	_flagOnExit.flag = stream.readByte();
 	readRect(stream, _exitHotspot);
 }
 
@@ -117,7 +111,7 @@ void LeverPuzzle::execute() {
 				}
 			}
 
-			NancySceneState.setEventFlag(_flagOnSolve);
+			NancySceneState.setEventFlag(_solveExitScene._flag);
 			_solveSoundPlayTime = g_nancy->getTotalPlayTime() + _solveSoundDelay * 1000;
 			_solveState = kPlaySound;
 			break;
@@ -145,10 +139,9 @@ void LeverPuzzle::execute() {
 		g_nancy->_sound->stopSound(_noMoveSound);
 
 		if (_solveState == kNotSolved) {
-			NancySceneState.changeScene(_exitScene);
-			NancySceneState.setEventFlag(_flagOnExit);
+			_exitScene.execute();
 		} else {
-			NancySceneState.changeScene(_solveExitScene);
+			NancySceneState.changeScene(_solveExitScene._sceneChange);
 		}
 
 		finishExecution();
@@ -222,12 +215,6 @@ void LeverPuzzle::handleInput(NancyInput &input) {
 				}
 			}
 		}
-	}
-}
-
-void LeverPuzzle::onPause(bool pause) {
-	if (!pause) {
-		registerGraphics();
 	}
 }
 

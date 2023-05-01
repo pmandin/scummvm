@@ -22,6 +22,7 @@
 #include "ags/lib/allegro.h"
 #include "ags/plugins/plugin_base.h"
 #include "ags/plugins/ags_agi/ags_agi.h"
+#include "ags/plugins/ags_app_open_url/ags_app_open_url.h"
 #include "ags/plugins/ags_blend/ags_blend.h"
 #include "ags/plugins/ags_clipboard/ags_clipboard.h"
 #include "ags/plugins/ags_controller/ags_controller.h"
@@ -42,6 +43,7 @@
 #include "ags/plugins/ags_sprite_font/ags_sprite_font_clifftop.h"
 #include "ags/plugins/ags_tcp_ip/ags_tcp_ip.h"
 #include "ags/plugins/ags_touch/ags_touch.h"
+#include "ags/plugins/ags_trans/ags_trans.h"
 #include "ags/plugins/ags_wadjet_util/ags_wadjet_util.h"
 #include "ags/plugins/ags_waves/ags_waves.h"
 #include "ags/ags.h"
@@ -69,6 +71,9 @@ Plugins::PluginBase *pluginOpen(const char *filename) {
 
 	if (fname.equalsIgnoreCase("AGS_AGI"))
 		return new AGSAgi::AGSAgi();
+
+	if (fname.equalsIgnoreCase("agsappopenurl"))
+		return new AGSAppOpenURL::AGSAppOpenURL();
 
 	if (fname.equalsIgnoreCase("AGSBlend"))
 		return new AGSBlend::AGSBlend();
@@ -132,6 +137,9 @@ Plugins::PluginBase *pluginOpen(const char *filename) {
 
 	if (fname.equalsIgnoreCase("AGSTouch"))
 		return new AGSTouch::AGSTouch();
+
+	if (fname.equalsIgnoreCase("AGSTrans"))
+		return new AGSTrans::AGSTrans();
 
 	if (fname.equalsIgnoreCase("AGSWadjetUtil"))
 		return new AGSWadjetUtil::AGSWadjetUtil();

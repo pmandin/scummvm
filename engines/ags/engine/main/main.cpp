@@ -39,6 +39,7 @@
 #include "ags/shared/util/directory.h"
 #include "ags/shared/util/path.h"
 #include "ags/shared/util/string_compat.h"
+#include "ags/shared/util/string_utils.h"
 #include "ags/globals.h"
 
 namespace AGS3 {
@@ -82,13 +83,10 @@ void main_init(int argc, const char *argv[]) {
 
 String get_engine_string() {
 	return String::FromFormat("Adventure Game Studio v%s Interpreter\n"
-	                          "Copyright (c) 1999-2011 Chris Jones and " ACI_COPYRIGHT_YEARS " others\n"
-#ifdef BUILD_STR
-	                          "ACI version %s (Build: %s)\n",
-	                          _G(EngineVersion).ShortString.GetCStr(), _G(EngineVersion).LongString.GetCStr(), _G(EngineVersion).BuildInfo.GetCStr());
-#else
-	                          "ACI version %s\n", _G(EngineVersion).ShortString.GetCStr(), _G(EngineVersion).LongString.GetCStr());
-#endif
+							  "Copyright (c) 1999-2011 Chris Jones and " ACI_COPYRIGHT_YEARS " others\n"
+							  "Engine version %s\n",
+							  _G(EngineVersion).ShortString.GetCStr(),
+							  get_engine_version_and_build().GetCStr());
 }
 
 void main_print_help() {
@@ -113,9 +111,11 @@ void main_print_help() {
 #endif
 	                          "  --gfxfilter FILTER [SCALING]\n"
 	                          "                               Request graphics filter. Available options:\n"
-	                          "                                 hqx, linear, none, stdscale\n"
-	                          "                                 (support differs between graphic drivers);\n"
-	                          "                                 scaling is specified by integer number\n"
+							  "                                 none, linear, stdscale\n"
+							  "                               (support may differ between graphic drivers);\n"
+							  "                               Scaling is specified as:\n"
+							  "                                 proportional, round, stretch,\n"
+							  "                                 or an explicit integer multiplier.\n"
 	                          "  --help                       Print this help message and stop\n"
 	                          "  --loadsavedgame FILEPATH     Load savegame on startup\n"
 	                          "  --localuserconf              Read and write user config in the game's \n"
@@ -252,13 +252,21 @@ int main_process_cmdline(ConfigTree &cfg, int argc, const char *argv[]) {
 		else if ((ags_stricmp(arg, "--gfxdriver") == 0) && (argc > ee + 1)) {
 			cfg["graphics"]["driver"] = argv[++ee];
 		} else if ((ags_stricmp(arg, "--gfxfilter") == 0) && (argc > ee + 1)) {
-			// NOTE: we make an assumption here that if user provides scaling factor,
-			// this factor means to be applied to windowed mode only.
 			cfg["graphics"]["filter"] = argv[++ee];
-			if (argc > ee + 1 && argv[ee + 1][0] != '-')
-				cfg["graphics"]["game_scale_win"] = argv[++ee];
-			else
-				cfg["graphics"]["game_scale_win"] = "max_round";
+			if (argc > ee + 1 && argv[ee + 1][0] != '-') {
+				// NOTE: we make an assumption here that if user provides scaling
+				// multiplier, then it's meant to be applied to windowed mode only;
+				// Otherwise the scaling style is applied to both.
+				String scale_value = argv[++ee];
+				int scale_mul = StrUtil::StringToInt(scale_value);
+				if (scale_mul > 0) {
+					cfg["graphics"]["window"] = String::FromFormat("x%d", scale_mul);
+					cfg["graphics"]["game_scale_win"] = "round";
+				} else {
+					cfg["graphics"]["game_scale_fs"] = scale_value;
+					cfg["graphics"]["game_scale_win"] = scale_value;
+				}
+			}
 		} else if ((ags_stricmp(arg, "--translation") == 0) && (argc > ee + 1)) {
 			cfg["language"]["translation"] = argv[++ee];
 		} else if (ags_stricmp(arg, "--no-translation") == 0) {

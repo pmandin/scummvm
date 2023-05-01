@@ -745,8 +745,12 @@ void Inter_v1::o1_loadCursor(OpFuncParams &params) {
 			index * _vm->_draw->_cursorWidth + _vm->_draw->_cursorWidth - 1,
 			_vm->_draw->_cursorHeight - 1, 0);
 
+	int16 width = resource->getWidth();
+	int16 height = resource->getHeight();
+	_vm->_draw->adjustCoords(0, &width, &height);
+
 	_vm->_video->drawPackedSprite(resource->getData(),
-			resource->getWidth(), resource->getHeight(),
+			width, height,
 			index * _vm->_draw->_cursorWidth, 0, 0, *_vm->_draw->_cursorSprites);
 	_vm->_draw->_cursorAnimLow[index] = 0;
 
@@ -848,6 +852,29 @@ void Inter_v1::o1_if(OpFuncParams &params) {
 		warning("Workaround for Gob1 Goblin Stuck On Reload Bug applied...");
 		// VAR(59) actually locks goblin movement, but these variables trigger this in the script.
 		WRITE_VAR(285, 0);
+	}
+
+	if (_vm->getGameType() == kGameTypeAdibou2 &&
+		_vm->_enableAdibou2FlowersInfiniteLoopWorkaround &&
+		_vm->isCurrentTot("FLORAL.tot") &&
+		(_vm->_game->_script->pos() == 30743 ||
+		 _vm->_game->_script->pos() == 31074 ||
+		 _vm->_game->_script->pos() == 31109) &&
+		_vm->_game->_script->peekByte() == 15 && // "offset from an array"
+		_vm->_game->_script->peekByte(7) == OP_LOAD_VAR_INT32 &&
+		_vm->_game->_script->peekByte(11) == 97 && // end of "offset from an array"
+		_vm->_game->_script->peekByte(12) == OP_LOAD_VAR_INT32 &&
+		_vm->_game->_script->peekByte(13) == 2 && // offset of the flower state in the flower struct
+		_vm->_game->_script->peekByte(15) == OP_GREATER) {
+		// WORKAROUND an infinite loop in Adibou2 "Flower Garden" activity.
+		// At most 30 flowers can exist at the same time. When the max is reached,
+		// the script iterates over the possible spots until it finds one that is
+		// occupied by a flower (status >= 1) and removes it. But it wrongly checks
+		// for strict inequality ("status > 1") instead of "status >= 1", so if all
+		// flowers happen to be at status 1 (meaning they have not grown at all yet),
+		// the script loops forever.
+		// We fix this by changing the comparison operator to ">=".
+		_vm->_game->_script->writeByte(15, OP_GEQ);
 	}
 
 	int pos = _vm->_game->_script->pos();
@@ -1348,7 +1375,7 @@ void Inter_v1::o1_capturePush(OpFuncParams &params) {
 	width = _vm->_game->_script->readValExpr();
 	height = _vm->_game->_script->readValExpr();
 
-	if ((width < 0) || (height < 0))
+	if ((width <= 0) || (height <= 0))
 		return;
 
 	_vm->_game->capturePush(left, top, width, height);
@@ -1478,6 +1505,7 @@ void Inter_v1::o1_createSprite(OpFuncParams &params) {
 		height = _vm->_game->_script->readValExpr();
 	}
 
+	_vm->_draw->adjustCoords(0, &width, &height);
 	flag = _vm->_game->_script->readInt16();
 	_vm->_draw->initSpriteSurf(index, width, height, flag ? 2 : 0);
 }
@@ -1758,6 +1786,7 @@ void Inter_v1::o1_istrlen(OpFuncParams &params) {
 void Inter_v1::o1_setMousePos(OpFuncParams &params) {
 	_vm->_global->_inter_mouseX = _vm->_game->_script->readValExpr();
 	_vm->_global->_inter_mouseY = _vm->_game->_script->readValExpr();
+	_vm->_draw->adjustCoords(0, &_vm->_global->_inter_mouseX, &_vm->_global->_inter_mouseY);
 	_vm->_global->_inter_mouseX -= _vm->_video->_scrollOffsetX;
 	_vm->_global->_inter_mouseY -= _vm->_video->_scrollOffsetY;
 	if (_vm->_global->_useMouse != 0)

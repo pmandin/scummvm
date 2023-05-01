@@ -103,16 +103,10 @@ void SliderPuzzle::readData(Common::SeekableReadStream &stream) {
 
 	stream.skip((6 - _height) * 6 * 2);
 
-	_clickSound.read(stream, SoundDescription::kNormal);
+	_clickSound.readData(stream, SoundDescription::kNormal);
 	_solveExitScene.readData(stream);
-	stream.skip(2);
-	_flagOnSolve.label = stream.readSint16LE();
-	_flagOnSolve.flag = stream.readByte();
-	_solveSound.read(stream, SoundDescription::kNormal);
+	_solveSound.readData(stream, SoundDescription::kNormal);
 	_exitScene.readData(stream);
-	stream.skip(2);
-	_flagOnExit.label = stream.readSint16LE();
-	_flagOnExit.flag = stream.readByte();
 	readRect(stream, _exitHotspot);
 }
 
@@ -171,12 +165,10 @@ void SliderPuzzle::execute() {
 	case kActionTrigger:
 		switch (_solveState) {
 		case kNotSolved:
-			NancySceneState.changeScene(_exitScene);
-			NancySceneState.setEventFlag(_flagOnExit);
+			_exitScene.execute();
 			break;
 		case kWaitForSound:
-			NancySceneState.changeScene(_solveExitScene);
-			NancySceneState.setEventFlag(_flagOnSolve);
+			_solveExitScene.execute();
 			_puzzleState->playerHasTriedPuzzle = false;
 			break;
 		}
@@ -287,12 +279,6 @@ void SliderPuzzle::handleInput(NancyInput &input) {
 			}
 			}
 		}
-	}
-}
-
-void SliderPuzzle::onPause(bool pause) {
-	if (!pause) {
-		registerGraphics();
 	}
 }
 

@@ -5,7 +5,8 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  New games:
    - Added support for macOS versions of Syberia and Syberia II.
-   - Added support for The Vampire Diaries and Nancy Drew: Secrets Can Kill
+   - Added support for The Vampire Diaries and Nancy Drew: Secrets Can Kill.
+   - Added support for Reah: Face the Unknown.
 
  New platforms:
    - Added libretro new shiny port.
@@ -29,6 +30,7 @@ For a more comprehensive changelog of the latest experimental code, see:
  Kyra:
    - Added support for Kyra1 Amiga French release and DOS Czech fan translation.
    - Improved game controls menu accuracy for all platforms.
+   - Added support for Chinese EOB2.
 
  SCUMM:
    - Added support for unpacked RuSCUMM patches for Russian localizations.

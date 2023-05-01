@@ -23,22 +23,35 @@
 
 namespace Tetraedge {
 
-TeMarker::TeMarker() : _visible(true), _isActive(false) {
+TeMarker::TeMarker() : _visible(true), _isActive(false), _zLoc(0) {
 }
 
 void TeMarker::active(bool val) {
 	_isActive = val;
-	_button.setVisible(!_visible && val);
+	_button.setVisible(_visible && val);
 }
 
-void TeMarker::update(TeCamera *camera) {
+void TeMarker::update(TeCamera &camera) {
+	_button.setVisible(true);
 	if (!_visible)
 		return;
-	TeVector3f32 transformLoc = camera->transformCoord(_loc);
-	if (transformLoc.z() < 0) {
-		error("TODO: Finish TeMarker::update (z < 0)");
+	const TeVector3f32 transformLoc = camera.projectPoint3f32(_loc);
+	const TeVector3f32 btnSize = _button.size();
+	_button.setPositionType(TeILayout::ABSOLUTE);
+	float vpWidth = camera.getViewportWidth();
+	float vpHeight = camera.getViewportHeight();
+	if (transformLoc.z() < 1.0f) {
+		// Behind the camera, move off-screen.
+		_button.setPosition(TeVector3f32(-btnSize.x() - vpWidth / 2, -btnSize.y() - vpHeight / 2, _zLoc));
 	} else {
-		error("TODO: Finish TeMarker::update (z >= 0)");
+		TeVector3f32 buttonMiddle(transformLoc.x() - btnSize.x() / 2 - vpWidth / 2, transformLoc.y() - btnSize.y() / 2  - vpHeight / 2, _zLoc);
+		// Note: device rotation is taken account of here in original, skip that.
+		// Original also uses scales 480 and 320, but that makes it too small
+		// in HD.
+		//TeVector3f32 newScale(480.0f / vpWidth, 320.0f / vpHeight, 1.0);
+		//_button.setScale(newScale);
+		_button.setPosition(TeVector3f32(buttonMiddle.x(), buttonMiddle.y(), buttonMiddle.z()));
+		/*debug("Updated button pos to %s (transformed %s middle %s)", _button.position().dump().c_str(), transformLoc.dump().c_str(), buttonMiddle.dump().c_str());*/
 	}
 }
 

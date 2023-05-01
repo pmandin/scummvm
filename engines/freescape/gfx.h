@@ -91,14 +91,17 @@ public:
 	virtual void renderFace(const Common::Array<Math::Vector3d> &vertices) = 0;
 
 	void setColorRemaps(ColorReMap *colorRemaps);
-	virtual void clear(uint8 color) = 0;
+	virtual void clear(uint8 r, uint8 g, uint8 b) = 0;
 	virtual void drawFloor(uint8 color) = 0;
+	virtual void drawBackground(uint8 color);
 
 	Common::Rect viewport() const;
 
 	// palette
 	void readFromPalette(uint8 index, uint8 &r, uint8 &g, uint8 &b);
 	uint8 indexFromColor(uint8 r, uint8 g, uint8 b);
+	uint8 mapEGAColor(uint8 index);
+
 	bool getRGBAt(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
 	bool getRGBAtC64(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2);
 	bool getRGBAtCGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple);
@@ -116,6 +119,7 @@ public:
 	void setColorMap(ColorMap *colorMap_);
 	ColorMap *_colorMap;
 	ColorReMap *_colorRemaps;
+	void clearColorPairArray();
 	void fillColorPairArray();
 	byte _colorPair[16];
 	int _keyColor;

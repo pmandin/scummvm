@@ -147,7 +147,7 @@ void StaticResource::freeEoBNpcData(void *&ptr, int &size) {
 	size = 0;
 }
 
-const ScreenDim Screen_EoB::_screenDimTable[] = {
+const ScreenDim Screen_EoB::_screenDimTableIntl[] = {
 	{ 0x00, 0x00, 0x28, 0xC8, 0x0F, 0x0C, 0x00, 0x00 },
 	{ 0x08, 0x48, 0x18, 0x38, 0x0E, 0x0C, 0x00, 0x00 },
 	{ 0x13, 0x40, 0x14, 0x80, 0x06, 0x0C, 0x00, 0x00 },
@@ -179,7 +179,39 @@ const ScreenDim Screen_EoB::_screenDimTable[] = {
 	{ 0x0A, 0xA8, 0x15, 0x18, 0x0F, 0x0C, 0x00, 0x00 }
 };
 
-const int Screen_EoB::_screenDimTableCount = ARRAYSIZE(Screen_EoB::_screenDimTable);
+const ScreenDim Screen_EoB::_screenDimTableZH[] = {
+	{ 0x00, 0x00, 0x28, 0xC8, 0x0F, 0x0C, 0x00, 0x00 },
+	{ 0x08, 0x48, 0x18, 0x38, 0x0E, 0x0C, 0x00, 0x00 },
+	{ 0x13, 0x40, 0x14, 0x80, 0x06, 0x0C, 0x00, 0x00 },
+	{ 0x1D, 0x78, 0x08, 0x40, 0x0F, 0x0D, 0x00, 0x00 },
+	{ 0x02, 0x18, 0x14, 0x78, 0x0F, 0x02, 0x03, 0x00 },
+	{ 0x00, 0x00, 0x16, 0x78, 0x0F, 0x0D, 0x00, 0x00 },
+	{ 0x0A, 0x6C, 0x15, 0x28, 0x0F, 0x00, 0x00, 0x00 },
+	{ 0x01, 0xAB, 0x23, 0x1C, 0x0F, 0x0C, 0x00, 0x00 },
+	{ 0x02, 0x18, 0x14, 0x00, 0x0F, 0x02, 0x03, 0x00 },
+	{ 0x01, 0x7D, 0x26, 0x40, 0x0F, 0x00, 0x03, 0x00 },
+	{ 0x00, 0x00, 0x16, 0x90, 0x0F, 0x02, 0x00, 0x00 },
+	{ 0x01, 0x14, 0x14, 0x38, 0x0F, 0x02, 0x00, 0x00 },
+	{ 0x01, 0x04, 0x14, 0x9C, 0x0F, 0x02, 0x00, 0x00 },
+	{ 0x01, 0x19, 0x26, 0x64, 0x0F, 0x02, 0x00, 0x00 },
+	{ 0x01, 0x14, 0x14, 0x58, 0x0F, 0x02, 0x00, 0x00 },
+	{ 0x02, 0x06, 0x23, 0x78, 0x0F, 0x02, 0x00, 0x00 },
+	{ 0x09, 0x14, 0x16, 0x38, 0x0F, 0x02, 0x00, 0x00 },
+	{ 0x01, 0x96, 0x26, 0x31, 0x0F, 0x00, 0x00, 0x00 },
+	{ 0x01, 0x08, 0x26, 0x80, 0x0C, 0x0F, 0x00, 0x00 },
+	{ 0x01, 0x10, 0x26, 0x14, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x10, 0x10, 0x0C, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x10, 0x17, 0x00, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x10, 0x10, 0x00, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x10, 0x07, 0x04, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x00, 0x11, 0x05, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x00, 0x15, 0x05, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x00, 0x11, 0x08, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x00, 0x00, 0x15, 0x03, 0x00, 0x0F, 0x06, 0x00 },
+	{ 0x0A, 0xA8, 0x15, 0x18, 0x0F, 0x0C, 0x00, 0x00 }
+};
+
+const int Screen_EoB::_screenDimTableCount = ARRAYSIZE(Screen_EoB::_screenDimTableIntl);
 
 const uint8 EoBCoreEngine::_hpIncrPerLevel[] = { 10, 4, 8, 6, 10, 10, 9, 10, 9, 10, 9, 9, 3, 1, 2, 2, 3, 3 };
 
@@ -530,10 +562,9 @@ void EoBCoreEngine::initStaticResource() {
 		{   "Abbr.",    "Leerer Slot",		"Speichern",    "  Laden"       },
 		{	" < < ",	"Posizione Vuota",	"Salva",		"Carica"	    },
 		{	"Anular",	"Sin Uso",			"Grabar",		"Cargar"	    },
-		{   0,          0,					0,					0			},
-		{	0,          0,					0,					0			},
 		{   "Cancel",   "\x82""d""\x82\x8d\x82\x90\x82\x94\x82\x99\x81""@""\x82\x92\x82\x85\x82\x87\x82\x89\x82\x8f\x82\x8e",		"Select save area",    "Select load data"     },
-		{   "\x82\xe2\x82\xdf\x82\xe9",   "\x8b\xf3\x82\xab\x97\xcc\x88\xe6",	"\x82\xc7\x82\xb1\x82\xc9\x83""Z""\x81""|""\x83""u""\x82\xb5\x82\xdc\x82\xb7\x82\xa9\x81""H",	"\x82\xc7\x82\xea\x82\xf0\x83\x8d\x81""|""\x83""h""\x82\xb5\x82\xdc\x82\xb7\x82\xa9\x81""H"    }
+		{   "\x82\xe2\x82\xdf\x82\xe9",   "\x8b\xf3\x82\xab\x97\xcc\x88\xe6",	"\x82\xc7\x82\xb1\x82\xc9\x83""Z""\x81""|""\x83""u""\x82\xb5\x82\xdc\x82\xb7\x82\xa9\x81""H",	"\x82\xc7\x82\xea\x82\xf0\x83\x8d\x81""|""\x83""h""\x82\xb5\x82\xdc\x82\xb7\x82\xa9\x81""H"    },
+		{   "\xa8\xfa\xae\xf8" /* "取消"; */, "\xa9\x7c\xa5\xbc\xa8\xcf\xa5\xce" /* "尚未使用"; */, "\xa6\x73\xa9\xf1\xb6\x69\xab\xd7" /* "存放進度"; */, "\xb8\xfc\xa4\x4a\xb6\x69\xab\xd7" /* "載入進度"; */  },
 	};
 
 	static const char *const errorSlotEmptyString[8] = {
@@ -543,14 +574,17 @@ void EoBCoreEngine::initStaticResource() {
 		"No hay partidas\rgrabadas!",
 		"\r ""\x82\xBB\x82\xCC\x83""X""\x83\x8D\x83""b""\x83""g""\x82\xC9\x82\xCD\x83""Q""\x81""[""\x83\x80\x82\xAA\x83""Z""\x81""[""\x83""u\r ""\x82\xB3\x82\xEA\x82\xC4\x82\xA2\x82\xDC\x82\xB9\x82\xF1\x81""B",
 		"\x8b\xf3\x82\xab\x97\xcc\x88\xe6",
+		"\xb3\x6f\xad\xd3\xa6\xec\xb8\x6d\xa9\x7c\xa5\xbc\xc0\x78\xa6\x73\x0d\xb8\xea\xae\xc6\xc0\xc9\x2c\xbd\xd0\xad\xab\xb7\x73\xbf\xef\xbe\xdc", /* "這個位置尚未\r資料檔,請重新選擇"; */
 		0
 	};
+
+	_menuOkString = "OK";
 
 	switch (_flags.lang) {
 	case Common::EN_ANY: {
 		if (_flags.platform == Common::kPlatformSegaCD) {
-			_saveLoadStrings = saveLoadStrings[6];
-			_errorSlotEmptyString = errorSlotEmptyString[5];
+			_saveLoadStrings = saveLoadStrings[4];
+			_errorSlotEmptyString = errorSlotEmptyString[4];
 		} else {
 			_saveLoadStrings = saveLoadStrings[0];
 			_errorSlotEmptyString = errorSlotEmptyString[0];
@@ -571,8 +605,8 @@ void EoBCoreEngine::initStaticResource() {
 		break;
 	case Common::JA_JPN:
 		if (_flags.platform == Common::kPlatformSegaCD) {
-			_saveLoadStrings = saveLoadStrings[7];
-			_errorSlotEmptyString = errorSlotEmptyString[6];
+			_saveLoadStrings = saveLoadStrings[5];
+			_errorSlotEmptyString = errorSlotEmptyString[5];
 		} else {
 			// EOB II FM-Towns uses English here.
 			// Only the empty slot warning is in Japanese.
@@ -580,13 +614,17 @@ void EoBCoreEngine::initStaticResource() {
 			_errorSlotEmptyString = errorSlotEmptyString[4];
 		}
 		break;
+	case Common::ZH_TWN:
+		_saveLoadStrings = saveLoadStrings[6];
+		_errorSlotEmptyString = errorSlotEmptyString[6];
+		_menuOkString = "\xa7\xb9\xb2\xa6"; /* "完畢" */
+		break;
+
 	default:
-		_saveLoadStrings = saveLoadStrings[5];
-		_errorSlotEmptyString = errorSlotEmptyString[7];
+		_saveLoadStrings = saveLoadStrings[0];
+		_errorSlotEmptyString = errorSlotEmptyString[0];
 		break;
 	}
-
-	_menuOkString = "OK";
 }
 
 void EoBCoreEngine::initButtonData() {
@@ -899,6 +937,73 @@ void EoBCoreEngine::initMenus() {
 		{  8,  128, 122,  40,  14,  19,  7  }
 	};
 
+	static const EoBMenuButtonDef buttonDefsChineseEOB2[] = {
+		// Camp menu
+		{  2,   42,   4, 128,  19,  20,  3  },
+		{  3,   42,  24, 128,  19,  52,  3  },
+		{  4,   42,  44, 128,  19,  26,  3  },
+		{  5,   42,  64, 128,  19,  32,  3  },
+		{  6,   42,  84, 128,  19,   0,  3  },
+		{  7,   42, 104, 128,  19,  35,  3  },
+		{  8,  128, 123,  40,  19,  19,  3  },
+
+		{  9,   12,  20, 158,  17,  39,  3  },
+		{  10,  12,  37, 158,  17,  32,  3  },
+		{  11,  12,  54, 158,  17,  33,  3  },
+		{  12,  12,  71, 158,  17,  17,  3  },
+		{  8,  128, 122,  40,  19,  19,  7  },
+		{  18,  12,  20, 158,  17,  32,  3  },
+		{  19,  12,  37, 158,  17,  50,  3  },
+		{  8,  128, 122,  40,  19,  19,  7  },
+		{  8,  128, 122,  40,  19,  19,  5  },
+		{  0,  184,   0,  64,  48, 112,  0  },
+		{  0,  256,   0,  64,  48, 113,  0  },
+		{  0,  184,  56,  64,  48, 114,  0  },
+		{  0,  256,  56,  64,  48, 115,  0  },
+		{  0,  184, 112,  64,  48, 116,  0  },
+		{  0,  256, 112,  64,  48, 117,  0  },
+
+		// OK/Cancel buttons in spell menu
+		{  36,   8, 122,  40,  19,  48,  5  },
+		{  8,  128, 122,  40,  19,  19,  5  },
+
+		// Spell window bounds
+		{  0,    0,  50, 168,  72,  61,  0  },
+
+		// Spell number buttons 1-6
+		{  31,  11,  20,  18,  18,   2,  5  },
+		{  32,  38,  20,  18,  18,   3,  5  },
+		{  33,  65,  20,  18,  18,   4,  5  },
+		{  34,  92,  20,  18,  18,   5,  5  },
+		{  35, 119,  20,  18,  18,   6,  5  },
+		{  60, 146,  20,  18,  18,   7,  5  },
+
+		{  61, 150,  16,  20,  18,   8,  5  },
+		{  38,  16,  57,  32,  17,  22,  7  },
+		{  39, 128,  57,  32,  17,  51,  7  },
+		{  8,  128, 126,  40,  17,  19,  7  },
+		{  0,    0,  50, 168,  72,  61,  0  },
+		// EOB 1 memorize/pray menu:
+		{  36,   8, 126,  48,  17,  48,  5  },
+		{  8,  128, 126,  40,  17,  19,  5  },
+		{  0,    0,  50, 168,  72,  61,  0  },
+		{  31,   8,  16,  24,  20,   2,  5  },
+		{  32,  40,  16,  24,  20,   3,  5  },
+		{  33,  72,  16,  24,  20,   4,  5  },
+		{  34, 104,  16,  24,  20,   5,  5  },
+		{  35, 136,  16,  24,  20,   6,  5  },
+		// FM-Towns options menu
+		{  18,  12,  20, 158,  17,  32,  3  },
+		{  19,  12,  37, 158,  17,  50,  3  },
+		{  20,  12,  54, 158,  17,  21,  3  },
+		{  8,  128, 122,  40,  17,  19,  7  },
+		// PC-98 options menu
+		{  17,  12,  20, 158,  17,  32,  3  },
+		{  18,  12,  37, 158,  17,  50,  3  },
+		{  19,  12,  54, 158,  17,  21,  3  },
+		{  8,  128, 122,  40,  17,  19,  7  }
+	};
+
 	static const EoBMenuButtonDef buttonDefsSegaCD[] = {
 		{   0,   8,  40,  80,  16,  20,  3  },
 		{   0,  88,  40,  80,  16,  52,  3  },
@@ -942,7 +1047,12 @@ void EoBCoreEngine::initMenus() {
 		{   0,  24,  80,  80,  48,   0,  3  }
 	};
 
-	_menuButtonDefs = (_flags.platform == Common::kPlatformSegaCD) ? buttonDefsSegaCD : buttonDefsDefault;
+	if (_flags.lang == Common::Language::ZH_TWN)
+		_menuButtonDefs = buttonDefsChineseEOB2;
+	else if (_flags.platform == Common::kPlatformSegaCD)
+		_menuButtonDefs = buttonDefsSegaCD;
+	else
+		_menuButtonDefs = buttonDefsDefault;
 
 	static const EoBMenuDef menuDefsDefault[7] = {
 		{  1, 10,  0, 7,  9 },
@@ -1441,6 +1551,7 @@ void EoBEngine::initStaticResource() {
 
 	switch (_flags.lang) {
 	case Common::EN_ANY:
+	default:
 		_errorSlotNoNameString = errorSlotNoNameString[0];
 		break;
 	case Common::DE_DEU:
@@ -1452,8 +1563,6 @@ void EoBEngine::initStaticResource() {
 	case Common::JA_JPN:
 		_errorSlotNoNameString = errorSlotNoNameString[3];
 		break;
-	default:
-		_errorSlotNoNameString = errorSlotNoNameString[ARRAYSIZE(errorSlotNoNameString) - 1];
 	}
 }
 
@@ -1736,10 +1845,11 @@ void DarkMoonEngine::initStaticResource() {
 	_amigaSoundIndex2 = _staticres->loadRawData(kEoB2SoundIndex2, temp);
 	_amigaSoundPatch = _staticres->loadRawData(kEoB2MonsterSoundPatchData, _amigaSoundPatchSize);
 
-	static const char *const errorSlotNoNameString[4] = {
+	static const char *const errorSlotNoNameString[5] = {
 		" You must specify\r a name for your\r save game!",
 		" Spielst[nde m]ssen\r einen Namen haben!",
 		" Debes poner\run nombre al\rfichero!",
+		" \xb1\x7a\xa5\xb2\xb6\xb7\xbf\xe9\xa4\x4a\xc0\xc9\xae\xd7\xa6\x57\xba\xd9", /* " 您必須輸入檔案名稱" */
 		0
 	};
 
@@ -1766,13 +1876,11 @@ void DarkMoonEngine::initStaticResource() {
 			"Escoge Fichero",
 			"\r\r   Un momento\r   por favor..."
 		},
-		{
-			0, 0, 0, 0
-		}
 	};
 
 	switch(_flags.lang) {
 		case Common::EN_ANY:
+		default:
 			_errorSlotNoNameString = errorSlotNoNameString[0];
 			_transferStringsScummVM = transferStringsScummVM[0];
 			break;
@@ -1784,9 +1892,10 @@ void DarkMoonEngine::initStaticResource() {
 			_errorSlotNoNameString = errorSlotNoNameString[2];
 			_transferStringsScummVM = transferStringsScummVM[2];
 			break;
-		default:
+		case Common::ZH_TWN:
 			_errorSlotNoNameString = errorSlotNoNameString[3];
-			_transferStringsScummVM = transferStringsScummVM[3];
+			_transferStringsScummVM = transferStringsScummVM[0];
+			break;
 	}
 
 }

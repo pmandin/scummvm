@@ -41,6 +41,7 @@ namespace Gob {
 #define RENDERFLAG_NOSUBTITLES       0x0400
 #define RENDERFLAG_FROMSPLIT         0x0800
 #define RENDERFLAG_DOUBLECOORDS      0x1000
+#define RENDERFLAG_DOUBLEVIDEO       0x2000
 
 class Draw {
 public:
@@ -156,7 +157,12 @@ public:
 	int16 _palLoadData1[4];
 	int16 _palLoadData2[4];
 
+	// Coordinates adjustment mode
+	// Some game were released for a higher resolution than the one they
+	// were originally designed for. adjustCoords() is used to adjust
+	//
 	int16 _needAdjust;
+
 	int16 _scrollOffsetY;
 	int16 _scrollOffsetX;
 

@@ -73,6 +73,13 @@ struct CachedFile {
 		"WOLFGANG.dat",	// It needs an empty file
 			(const byte *)"", 0
 	},
+	{ "teamxtreme2", Common::kPlatformWindows,
+		// In Operation: Eco-Nightmare, the game will try and check if the
+		// save file exists with getNthFileNameInFolder before attempting to
+		// read it with FileIO (which uses the save data store).
+		"WINDOWS/TX2SAVES",
+			(const byte *)"", 0
+	},
 	{ nullptr, Common::kPlatformUnknown, nullptr, nullptr, 0 }
 };
 
@@ -96,6 +103,11 @@ static void quirkMcLuhanWin() {
 	fontMan->loadWindowsFont("MCLUHAN/SYSTEM/MCBOLD13.FON");
 	fontMan->loadWindowsFont("MCLUHAN/SYSTEM/MCLURG__.FON");
 	fontMan->loadWindowsFont("MCLUHAN/SYSTEM/MCL1N___.FON");
+}
+
+static void quirkPipCatalog() {
+	// Pippin game that uses Unix path separators rather than Mac
+	g_director->_dirSeparator = '/';
 }
 
 static void quirkMcLuhanMac() {
@@ -156,6 +168,7 @@ struct Quirk {
 	{ "mamauta1", Common::kPlatformWindows, &quirk640x480Desktop },
 	{ "mcluhan", Common::kPlatformWindows, &quirkMcLuhanWin },
 	{ "mcluhan", Common::kPlatformMacintosh, &quirkMcLuhanMac },
+	{ "pipcatalog", Common::kPlatformPippin, &quirkPipCatalog },
 	{ nullptr, Common::kPlatformUnknown, nullptr }
 };
 

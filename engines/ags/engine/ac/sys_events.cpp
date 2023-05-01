@@ -99,6 +99,8 @@ void ags_simulate_keypress(eAGSKeyCode ags_key) {
 	e.kbd.ascii = (e.kbd.keycode >= 32 && e.kbd.keycode <= 127) ? e.kbd.keycode : 0;
 
 	::AGS::g_events->pushKeyboardEvent(e);
+	e.type = Common::EVENT_KEYUP;
+	::AGS::g_events->pushKeyboardEvent(e);
 }
 
 // ----------------------------------------------------------------------------
@@ -189,7 +191,7 @@ eAGSMouseButton ags_mgetbutton() {
 	return mgetbutton();;
 }
 
-void ags_mouse_get_relxy(int &x, int &y) {
+void ags_mouse_acquire_relxy(int &x, int &y) {
 	x = _G(mouse_accum_relx);
 	y = _G(mouse_accum_rely);
 	_G(mouse_accum_relx) = 0;
@@ -197,7 +199,7 @@ void ags_mouse_get_relxy(int &x, int &y) {
 }
 
 void ags_domouse() {
-	mgetgraphpos();
+	_GP(mouse).Poll();
 }
 
 int ags_check_mouse_wheel() {
@@ -220,11 +222,10 @@ int ags_check_mouse_wheel() {
 void ags_clear_input_state() {
 	// Clear everything related to the input field
 	::AGS::g_events->clearEvents();
-	_G(mouse_accum_relx) = 0;
-	_G(mouse_accum_rely) = 0;
 	_G(mouse_button_state) = 0;
 	_G(mouse_accum_button_state) = 0;
 	_G(mouse_clear_at_time) = AGS_Clock::now();
+	ags_clear_mouse_movement();
 }
 
 void ags_clear_input_buffer() {
@@ -232,8 +233,7 @@ void ags_clear_input_buffer() {
 	// accumulated state only helps to not miss clicks
 	_G(mouse_accum_button_state) = 0;
 	// forget about recent mouse relative movement too
-	_G(mouse_accum_relx) = 0;
-	_G(mouse_accum_rely) = 0;
+	ags_clear_mouse_movement();
 }
 
 void ags_clear_mouse_movement() {

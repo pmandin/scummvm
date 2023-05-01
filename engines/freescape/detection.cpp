@@ -73,6 +73,18 @@ static const ADGameDescription gameDescriptions[] = {
 	},
 	{
 		"driller",
+		"Not implemented yet",
+		{
+			{"DRILLER.ZX.DATA", 0, "e571795806ed8a30df0fa3109eaa8ffb", 36000},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformZX,
+		ADGF_UNSUPPORTED | ADGF_DEMO,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
 		"",
 		{
 			{"DRILL.BIN", 0, "719f5157391e88b2c391c30576340637", 35320},
@@ -227,6 +239,20 @@ static const ADGameDescription gameDescriptions[] = {
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
+		"driller",
+		"Packed data",
+		{
+			{"driller.prg", 0, "ae9b03e247def6f0793174b1cb4352b5", 1821},
+			{"data", 0, "0c927fbc6c390afd0d0c15b2d7f8766f", 10893},
+			{"demo.cmd", 0, "9c732dcdad26b36b537e632924cd8f0e", 745},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAtariST,
+		ADGF_UNSUPPORTED | ADGF_DEMO,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
 		"darkside",
 		"",
 		{
@@ -255,6 +281,18 @@ static const ADGameDescription gameDescriptions[] = {
 		Common::kPlatformDOS,
 		ADGF_UNSTABLE | ADGF_DEMO,
 		GUIO3(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA)
+	},
+	{
+		"darkside",
+		"Demo",
+		{
+			{"DARKSIDE.ZX.DATA", 0, "0e4d9b6e64ff24801272ff0b18a3caab", 29182},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformZX,
+		ADGF_UNSTABLE | ADGF_DEMO,
+		GUIO1(GUIO_NOMIDI)
 	},
 	{
 		"totaleclipse",
@@ -308,7 +346,7 @@ static const ADGameDescription gameDescriptions[] = {
 			{"CMH.EXE", 0, "1f3b67e649e718e239ebfd7c56e96d47", 63040},
 			AD_LISTEND
 		},
-		Common::EN_ANY,
+		Common::UNK_LANG,
 		Common::kPlatformDOS,
 		ADGF_UNSTABLE,
 		GUIO1(GUIO_NOMIDI)
@@ -581,6 +619,19 @@ public:
 	const DebugChannelDef *getDebugChannels() const override {
 		return debugFlagList;
 	}
+	DetectedGame toDetectedGame(const ADDetectedGame &adGame, ADDetectedGameExtraInfo *extraInfo) const override;
 };
+
+DetectedGame FreescapeMetaEngineDetection::toDetectedGame(const ADDetectedGame &adGame, ADDetectedGameExtraInfo *extraInfo) const {
+	DetectedGame game = AdvancedMetaEngineDetection::toDetectedGame(adGame);
+
+	// The AdvancedDetector model only allows specifying a single supported game language.
+	if (game.gameId == "castlemaster" && game.language == Common::UNK_LANG) {
+		game.appendGUIOptions(Common::getGameGUIOptionsDescriptionLanguage(Common::EN_ANY));
+		game.appendGUIOptions(Common::getGameGUIOptionsDescriptionLanguage(Common::FR_FRA));
+		game.appendGUIOptions(Common::getGameGUIOptionsDescriptionLanguage(Common::DE_DEU));
+	}
+	return game;
+}
 
 REGISTER_PLUGIN_STATIC(FREESCAPE_DETECTION, PLUGIN_TYPE_ENGINE_DETECTION, FreescapeMetaEngineDetection);

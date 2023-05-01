@@ -49,7 +49,7 @@ public:
 	~VCruiseEngine() override;
 
 	bool hasFeature(EngineFeature f) const override;
-	//void syncSoundSettings() override;
+	void syncSoundSettings() override;
 
 	const VCruiseGameDescription *_gameDescription;
 
@@ -61,6 +61,9 @@ public:
 	bool canLoadGameStateCurrently() override;
 
 	void initializePath(const Common::FSNode &gamePath) override;
+
+	bool hasDefaultSave();
+	bool hasAnySave();
 
 protected:
 	void pauseEngineIntern(bool pause) override;

@@ -23,8 +23,6 @@
 #define NANCY_ACTION_SECONDARYVIDEO_H
 
 #include "engines/nancy/video.h"
-#include "engines/nancy/renderobject.h"
-
 #include "engines/nancy/action/actionrecord.h"
 
 namespace Nancy {
@@ -32,14 +30,14 @@ namespace Action {
 
 // ActionRecord that shows NPC animations outside of dialogue. Supports
 // different animations depending on whether the NPC is hovered by the mouse
-class PlaySecondaryVideo : public ActionRecord, public RenderObject {
+class PlaySecondaryVideo : public RenderActionRecord {
 public:
 	static const byte kNoVideoHotspots	= 1;
 	static const byte kVideoHotspots	= 2;
 
 	enum HoverState { kNoHover, kHover, kEndHover };
 
-	PlaySecondaryVideo(uint chan) : RenderObject(8), channel(chan) {}
+	PlaySecondaryVideo(uint chan) : RenderActionRecord(8), channel(chan) {}
 	virtual ~PlaySecondaryVideo() { _decoder.close(); }
 
 	void init() override;
@@ -58,15 +56,15 @@ public:
 	uint16 _videoFormat = kLargeVideoFormat;
 	uint16 _videoHotspots = kVideoHotspots;
 
-	uint16 _loopFirstFrame = 0; // 0x1E
-	uint16 _loopLastFrame = 0; // 0x20
-	uint16 _onHoverFirstFrame = 0; // 0x22
-	uint16 _onHoverLastFrame = 0; // 0x24
-	uint16 _onHoverEndFirstFrame = 0; // 0x26
-	uint16 _onHoverEndLastFrame = 0; // 0x28
-	SceneChangeDescription _sceneChange; // 0x2A
-	// unknown byte
-	Common::Array<SecondaryVideoDescription> _videoDescs; // 0x35
+	uint16 _loopFirstFrame = 0;
+	uint16 _loopLastFrame = 0;
+	uint16 _onHoverFirstFrame = 0;
+	uint16 _onHoverLastFrame = 0;
+	uint16 _onHoverEndFirstFrame = 0;
+	uint16 _onHoverEndLastFrame = 0;
+	SceneChangeDescription _sceneChange;
+
+	Common::Array<SecondaryVideoDescription> _videoDescs;
 
 protected:
 	Common::String getRecordTypeName() const override { return Common::String::format("PlaySecondaryVideoChan%i", channel); }

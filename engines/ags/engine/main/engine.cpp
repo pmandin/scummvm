@@ -258,7 +258,7 @@ void engine_init_fonts() {
 }
 
 void engine_init_mouse() {
-	int res = minstalled();
+	int res = _GP(mouse).GetButtonCount();
 	if (res < 0)
 		Debug::Printf(kDbgMsg_Info, "Initializing mouse: failed");
 	else
@@ -499,7 +499,9 @@ void show_preload() {
 		IDriverDependantBitmap *ddb = _G(gfxDriver)->CreateDDBFromBitmap(tsc, false, true);
 		ddb->SetStretch(view.GetWidth(), view.GetHeight());
 		_G(gfxDriver)->ClearDrawLists();
+		_G(gfxDriver)->BeginSpriteBatch(view);
 		_G(gfxDriver)->DrawSprite(0, 0, ddb);
+		_G(gfxDriver)->EndSpriteBatch();
 		render_to_screen();
 		_G(gfxDriver)->DestroyDDB(ddb);
 		delete splashsc;
@@ -1224,6 +1226,9 @@ bool engine_try_switch_windowed_gfxmode() {
 	DisplayMode last_opposite_mode = setting.Dm;
 	FrameScaleDef frame = setting.Frame;
 
+	// Apply vsync in case it has been toggled at runtime
+	last_opposite_mode.Vsync = _GP(usetup).Screen.Params.VSync;
+
 	// If there are saved parameters for given mode (fullscreen/windowed)
 	// then use them, if there are not, get default setup for the new mode.
 	bool res;
@@ -1278,6 +1283,20 @@ const char *get_engine_name() {
 
 const char *get_engine_version() {
 	return _G(EngineVersion).LongString.GetCStr();
+}
+
+String get_engine_version_and_build() {
+	const char *bit = (AGS_PLATFORM_64BIT) ? "64-bit" : "32-bit";
+	const char *end = (AGS_PLATFORM_ENDIAN_LITTLE) ? "LE" : "BE";
+#ifdef BUILD_STR
+	return String::FromFormat("%s (Build: %s), %s %s",
+							  _G(EngineVersion).LongString.GetCStr(), EngineVersion.BuildInfo.GetCStr(),
+							  bit, end);
+#else
+	return String::FromFormat("%s, %s %s",
+							  _G(EngineVersion).LongString.GetCStr(),
+							  bit, end);
+#endif
 }
 
 void engine_set_pre_init_callback(t_engine_pre_init_callback callback) {

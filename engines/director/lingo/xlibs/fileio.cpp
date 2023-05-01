@@ -95,6 +95,7 @@
 #include "director/director.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-object.h"
+#include "director/lingo/lingo-utils.h"
 #include "director/lingo/xlibs/fileio.h"
 
 namespace Director {
@@ -232,11 +233,11 @@ void FileIO::m_new(int nargs) {
 	}
 
 	// Enforce target to the created files so they do not mix up
-	Common::String filename = lastPathComponent(path, dirSeparator);
-	Common::String dir = firstPathComponents(path, dirSeparator);
+	Common::String filenameOrig = lastPathComponent(path, dirSeparator);
 
+	Common::String filename = filenameOrig;
 	if (!filename.hasPrefixIgnoreCase(prefix))
-		filename = dir + prefix + filename;
+		filename = prefix + filenameOrig;
 
 	if (option.equalsIgnoreCase("read")) {
 		me->_inStream = saves->openForLoading(filename);
@@ -332,10 +333,7 @@ void FileIO::m_readWord(int nargs) {
 	FileIO::m_readToken(2);
 }
 
-void FileIO::m_readPict(int nargs) {
-	g_lingo->printSTUBWithArglist("FileIO::m_readPict", nargs);
-	g_lingo->push(Datum(""));
-}
+XOBJSTUB(FileIO::m_readPict, "")
 
 bool FileIO::charInMatchString(char ch, const Common::String &matchString) {
 	return matchString.contains(ch);
@@ -433,17 +431,8 @@ void FileIO::m_writeString(int nargs) {
 
 // Getters/Setters
 
-void FileIO::m_getFinderInfo(int nargs) {
-	g_lingo->printSTUBWithArglist("FileIO::m_getFinderInfo", nargs);
-	g_lingo->dropStack(nargs);
-	g_lingo->push(Datum());
-}
-
-void FileIO::m_setFinderInfo(int nargs) {
-	g_lingo->printSTUBWithArglist("FileIO::m_setFinderInfo", nargs);
-	g_lingo->dropStack(nargs);
-	g_lingo->push(Datum());
-}
+XOBJSTUB(FileIO::m_getFinderInfo, "")
+XOBJSTUB(FileIO::m_setFinderInfo, 0)
 
 void FileIO::m_getPosition(int nargs) {
 	FileObject *me = static_cast<FileObject *>(g_lingo->_state->me.u.obj);
@@ -515,17 +504,8 @@ void FileIO::m_fileName(int nargs) {
 	}
 }
 
-void FileIO::m_error(int nargs) {
-	g_lingo->printSTUBWithArglist("FileIO::m_error", nargs);
-	g_lingo->dropStack(nargs);
-	g_lingo->push(Datum());
-}
-
-void FileIO::m_status(int nargs) {
-	g_lingo->printSTUBWithArglist("FileIO::m_status", nargs);
-	g_lingo->dropStack(nargs);
-	g_lingo->push(Datum());
-}
+XOBJSTUB(FileIO::m_error, "")
+XOBJSTUB(FileIO::m_status, 0)
 
 // Other
 

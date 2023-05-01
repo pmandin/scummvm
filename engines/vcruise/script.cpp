@@ -387,7 +387,7 @@ static ScriptNamedInstruction g_namedInstructions[] = {
 	{"dup", ProtoOp::kProtoOpScript, ScriptOps::kDup},
 	{"swap", ProtoOp::kProtoOpScript, ScriptOps::kSwap},
 	{"say1", ProtoOp::kProtoOpScript, ScriptOps::kSay1},
-	{"say2", ProtoOp::kProtoOpScript, ScriptOps::kSay3}, // FIXME: Figure out what the difference is between say2 and say3.  I think say2 is repeatable?  Maybe works as say1 instead?
+	{"say2", ProtoOp::kProtoOpScript, ScriptOps::kSay2},
 	{"say3", ProtoOp::kProtoOpScript, ScriptOps::kSay3},
 	{"say3@", ProtoOp::kProtoOpScript, ScriptOps::kSay3Get},
 	{"setTimer", ProtoOp::kProtoOpScript, ScriptOps::kSetTimer},
@@ -429,8 +429,8 @@ static ScriptNamedInstruction g_namedInstructions[] = {
 	{"stopSndLO", ProtoOp::kProtoOpScript, ScriptOps::kStopSndLO},
 
 	{"music", ProtoOp::kProtoOpScript, ScriptOps::kMusic},
-	{"musicUp", ProtoOp::kProtoOpScript, ScriptOps::kMusicUp},
-	{"musicDn", ProtoOp::kProtoOpScript, ScriptOps::kMusicDn},
+	{"musicUp", ProtoOp::kProtoOpScript, ScriptOps::kMusicVolRamp},
+	{"musicDn", ProtoOp::kProtoOpScript, ScriptOps::kMusicVolRamp},
 
 	{"parm0", ProtoOp::kProtoOpScript, ScriptOps::kParm0},
 	{"parm1", ProtoOp::kProtoOpScript, ScriptOps::kParm1},
@@ -461,7 +461,7 @@ static ScriptNamedInstruction g_namedInstructions[] = {
 	{"backStart", ProtoOp::kProtoOpScript, ScriptOps::kBackStart},
 	{"saveAs", ProtoOp::kProtoOpScript, ScriptOps::kSaveAs},
 	{"save0", ProtoOp::kProtoOpNoop, ScriptOps::kSave0},
-	{"exit", ProtoOp::kProtoOpNoop, ScriptOps::kExit},
+	{"exit", ProtoOp::kProtoOpScript, ScriptOps::kExit},
 	{"allowedSave", ProtoOp::kProtoOpNoop, ScriptOps::kInvalid},
 };
 

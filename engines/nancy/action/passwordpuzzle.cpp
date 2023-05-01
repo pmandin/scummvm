@@ -56,19 +56,10 @@ void PasswordPuzzle::readData(Common::SeekableReadStream &stream) {
 	buf[19] = '\0';
 	_password = buf;
 	_solveExitScene.readData(stream);
-	stream.skip(2);
-	_flagOnSolve.label = stream.readSint16LE();
-	_flagOnSolve.flag = stream.readByte();
-	_solveSound.read(stream, SoundDescription::kNormal);
+	_solveSound.readData(stream, SoundDescription::kNormal);
 	_failExitScene.readData(stream);
-	stream.skip(2);
-	_flagOnFail.label = stream.readSint16LE();
-	_flagOnFail.flag = stream.readByte();
-	_failSound.read(stream, SoundDescription::kNormal);
+	_failSound.readData(stream, SoundDescription::kNormal);
 	_exitScene.readData(stream);
-	stream.skip(2);
-	_flagOnExit.label = stream.readSint16LE();
-	_flagOnExit.flag = stream.readByte();
 	readRect(stream, _exitHotspot);
 }
 
@@ -145,21 +136,17 @@ void PasswordPuzzle::execute() {
 	case kActionTrigger:
 		switch (_solveState) {
 		case kNotSolved:
-			NancySceneState.changeScene(_exitScene);
-			NancySceneState.setEventFlag(_flagOnExit);
+			_exitScene.execute();
 			break;
 		case kFailed:
-			NancySceneState.changeScene(_failExitScene);
-			NancySceneState.setEventFlag(_flagOnFail.label);
+			_failExitScene.execute();
 			break;
 		case kSolved:
-			NancySceneState.changeScene(_solveExitScene);
-			NancySceneState.setEventFlag(_flagOnSolve.label);
+			_solveExitScene.execute();
 			break;
 		}
 		
 		g_system->setFeatureState(OSystem::kFeatureVirtualKeyboard, false);
-
 		finishExecution();
 	}
 }
@@ -175,8 +162,6 @@ void PasswordPuzzle::handleInput(NancyInput &input) {
 		if (input.input & NancyInput::kLeftMouseButtonUp) {
 			_state = kActionTrigger;
 		}
-
-		return;
 	}
 
 	for (uint i = 0; i < input.otherKbdInput.size(); ++i) {
@@ -210,12 +195,6 @@ void PasswordPuzzle::handleInput(NancyInput &input) {
 
 			drawText();
 		}
-	}
-}
-
-void PasswordPuzzle::onPause(bool pause) {
-	if (!pause) {
-		registerGraphics();
 	}
 }
 

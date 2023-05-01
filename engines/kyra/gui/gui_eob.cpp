@@ -49,6 +49,15 @@ Button *EoBCoreEngine::gui_getButton(Button *buttonList, int index) {
 void EoBCoreEngine::gui_drawPlayField(bool refresh) {
 	_screen->loadEoBBitmap("PLAYFLD", _cgaMappingDeco, 5, 3, 2);
 	int cp = _screen->setCurPage(2);
+	if (_flags.lang == Common::Language::ZH_TWN) {
+		Screen::FontId of = _screen->setFont(Screen::FID_CHINESE_FNT);
+		_screen->fillRect(290, 180, 318, 194, guiSettings()->colors.fill);
+		_screen->printShadedText("\xbf\xef?" /* 選? */, 292, 181, guiSettings()->colors.guiColorYellow, guiSettings()->colors.fill, guiSettings()->colors.guiColorBlack, -1);
+		_screen->setFont(of);
+
+		_screen->fillRect(3, 170, 290, 198, guiSettings()->colors.fill);
+		_screen->fillRect(4, 171, 289, 197, guiSettings()->colors.guiColorBlack);
+	}
 	gui_drawCompass(true);
 
 	if (refresh && !_sceneDrawPage2)
@@ -2072,24 +2081,73 @@ int GUI_EoB::processButtonList(Kyra::Button *buttonList, uint16 inputFlags, int8
 	return result;
 }
 
+Common::Point GUI_EoB::simpleMenu_getTextPoint(int num, int *col) {
+	int column = 0;
+        int line = num;
+        int tx = 0;
+        for (; line >= _menuLines[column] && column + 1 < _menuColumns; line -= _menuLines[column], column++)
+                tx += _menuColumnWidth[column];
+        int ty = (line + _menuColumnOffset[column]) * (_menuLineSpacing + _screen->getCharHeight(' '));
+	if (col)
+		*col = column;
+	return Common::Point(tx, ty);
+}
+
+void GUI_EoB::simpleMenu_printButton(int sd, int num, const char *title, bool isHighlight, bool isInitial) {
+	int column;
+	Common::Point tPoint = simpleMenu_getTextPoint(num, &column);
+        if (_vm->gameFlags().platform == Common::kPlatformSegaCD) {
+                _vm->_txt->printShadedText(title, 4 + tPoint.x, (sd == 8 ? 2 : 20) + tPoint.y, isHighlight ? _menuHighlightColor : _menuTextColor, _menuShadowColor);
+        } else {
+		Common::Point p = tPoint + _menuPoint;
+                _screen->printShadedText(title, p.x, p.y, _menuTextColor, 0, _menuShadowColor);
+                if (isHighlight)
+                        _screen->printText(title, p.x, p.y, _menuHighlightColor, 0);
+		if (num < ARRAYSIZE(_menuOverflow) && isInitial)
+			_menuOverflow[num] = _screen->getTextWidth(title) > _menuColumnWidth[column];
+        }
+}
+
 void GUI_EoB::simpleMenu_setup(int sd, int maxItem, const char *const *strings, int32 menuItemsMask, int itemOffset, int lineSpacing, int textColor, int highlightColor, int shadowColor) {
 	simpleMenu_initMenuItemsMask(sd, maxItem, menuItemsMask, itemOffset);
 
 	const ScreenDim *dm = _screen->getScreenDim(19 + sd);
-	int x = (_screen->_curDim->sx + dm->sx) << 3;
-	int y = _screen->_curDim->sy + dm->sy;
+        _menuPoint = Common::Point((_screen->_curDim->sx + dm->sx) << 3, _screen->_curDim->sy + dm->sy);
 
 	int v = simpleMenu_getMenuItem(_menuCur, menuItemsMask, itemOffset);
+	_menuColumns = 1;
+	_menuLines[0] = _menuNumItems;
+	_menuLines[1] = 0;
+	_menuColumnWidth[0] = dm->w * _screen->getCharWidth('W');
+	_menuColumnWidth[1] = 0;
+	_menuColumnOffset[0] = 0;
+	_menuColumnOffset[1] = 0;
 
-	for (int i = 0; i < _menuNumItems; i++) {
-		int item = simpleMenu_getMenuItem(i, menuItemsMask, itemOffset);
-		int ty = i * (lineSpacing + _screen->getCharHeight(' '));
-		if (_vm->gameFlags().platform == Common::kPlatformSegaCD) {
-			_vm->_txt->printShadedText(strings[item], 4, (sd == 8 ? 2 : 20) + ty, item == v ? highlightColor : textColor, shadowColor);
-		} else {
-			_screen->printShadedText(strings[item], x, y + ty, textColor, 0, shadowColor);
-			if (item == v)
-				_screen->printText(strings[item], x, y + ty, highlightColor, 0);
+	memset(_menuOverflow, 0, sizeof(_menuOverflow));
+
+	if (_vm->game() == GI_EOB2 && _vm->gameFlags().lang == Common::Language::ZH_TWN) {
+		switch (sd) {
+		case 1:
+		case 3:
+			_menuPoint.x = (_screen->_curDim->sx << 3) - 7;
+			if (_menuNumItems >= 6) {
+				_menuLines[0] = 6;
+				_menuLines[1] = _menuNumItems - 6;
+				_menuColumnWidth[0] = _menuColumnWidth[1] = 75;
+				_menuColumns = 2;
+			}
+			break;
+		case 2:
+			_menuPoint.x = (_screen->_curDim->sx << 3) - 7;
+			if (_menuNumItems >= 7) {
+				_menuLines[0] = 7;
+				_menuColumnOffset[1] = -1;
+				_menuLines[1] = _menuNumItems - 7;
+				_menuColumnWidth[0] = 48;
+				_menuColumnWidth[1] = 135;
+				_menuColumns = 2;
+			}
+			break;
 		}
 	}
 
@@ -2098,65 +2156,113 @@ void GUI_EoB::simpleMenu_setup(int sd, int maxItem, const char *const *strings, 
 	_menuTextColor = textColor;
 	_menuHighlightColor = highlightColor;
 	_menuShadowColor = shadowColor;
+
+	for (int i = 0; i < _menuNumItems; i++) {
+		int item = simpleMenu_getMenuItem(i, menuItemsMask, itemOffset);
+                simpleMenu_printButton(sd, i, strings[item], item == v, true);
+	}
+
 	_vm->removeInputTop();
 }
 
-int GUI_EoB::simpleMenu_process(int sd, const char *const *strings, void *b, int32 menuItemsMask, int itemOffset) {
+int GUI_EoB::simpleMenu_getMouseItem(int sd) {
 	const ScreenDim *dm = _screen->getScreenDim(19 + sd);
-	int h = _menuNumItems - 1;
+	Common::Point mousePos = _vm->getMousePos();
+	int xrel = mousePos.x - _menuPoint.x;
+	int y1 = _screen->_curDim->sy + dm->sy - (_menuLineSpacing >> 1);
+	int lineH = (_menuLineSpacing + _screen->getCharHeight(' '));
+	int yrel = mousePos.y - y1;
+	int column;
+	int columnItems = 0;
+
+	if (xrel < 0)
+		return -1;
+
+	for (column = 0; column < _menuColumns; column++) {
+		if (xrel < _menuColumnWidth[column])
+			break;
+		xrel -= _menuColumnWidth[column];
+		columnItems += _menuLines[column];
+	}
+
+	if (column == _menuColumns)
+		return -1;
+	
+	int yrelcol = yrel - _menuColumnOffset[column] * lineH;
+
+	if (yrelcol >= 0 && yrelcol < _menuLines[column] * lineH)
+		return yrelcol / lineH + columnItems;
+
+	// Try previous column if it's wide
+	if (column == 0)
+		return -1;
+
+	column--;
+	columnItems -= _menuLines[column];
+	yrelcol = yrel - _menuColumnOffset[column] * lineH;
+	if (yrelcol >= 0 && yrelcol < _menuLines[column] * lineH) {
+		int candidate = yrelcol / lineH + columnItems;
+		if (candidate < ARRAYSIZE(_menuOverflow) && _menuOverflow[candidate])
+			return candidate;
+	}
+
+	return -1;
+}
+
+int GUI_EoB::simpleMenu_process(int sd, const char *const *strings, void *b, int32 menuItemsMask, int itemOffset) {
 	int currentItem = _menuCur % _menuNumItems;
 	int newItem = currentItem;
 	int result = -1;
-	int lineH = (_menuLineSpacing + _screen->getCharHeight(' '));
-	int lineS1 = _menuLineSpacing >> 1;
-	int x = (_screen->_curDim->sx + dm->sx) << 3;
-	int y = _screen->_curDim->sy + dm->sy;
 
 	int inFlag = _vm->checkInput(0, false, 0) & 0x8FF;
 	_vm->removeInputTop();
-	Common::Point mousePos = _vm->getMousePos();
 
-	int x1 = (_screen->_curDim->sx << 3) + (dm->sx * _screen->getCharWidth('W'));
-	int y1 = _screen->_curDim->sy + dm->sy - lineS1;
-	int x2 = x1 + (dm->w * _screen->getCharWidth('W')) - 1;
-	int y2 = y1 + _menuNumItems * lineH - 1;
-	if (_vm->posWithinRect(mousePos.x, mousePos.y, x1, y1, x2, y2))
-		newItem = (mousePos.y - y1) / lineH;
+	int mouseItem = simpleMenu_getMouseItem(sd);
+
+	if (mouseItem >= 0)
+		newItem = mouseItem;
 
 	if (inFlag == 199 || inFlag == 201) {
-		if (_vm->posWithinRect(_vm->_mouseX, _vm->_mouseY, x1, y1, x2, y2))
-			result = newItem = (_vm->_mouseY - y1) / lineH;
+		if (mouseItem >= 0)
+			result = newItem = mouseItem;
 	} else if (inFlag == _vm->_keyMap[Common::KEYCODE_RETURN] || inFlag == _vm->_keyMap[Common::KEYCODE_SPACE] || inFlag == _vm->_keyMap[Common::KEYCODE_KP5]) {
 		result = newItem;
 	} else if (inFlag == _vm->_keyMap[Common::KEYCODE_HOME] || inFlag == _vm->_keyMap[Common::KEYCODE_KP7] || inFlag == _vm->_keyMap[Common::KEYCODE_PAGEUP] || inFlag == _vm->_keyMap[Common::KEYCODE_KP9]) {
 		newItem = 0;
 	} else if (inFlag == _vm->_keyMap[Common::KEYCODE_END] || inFlag == _vm->_keyMap[Common::KEYCODE_KP1] || inFlag == _vm->_keyMap[Common::KEYCODE_PAGEDOWN] || inFlag == _vm->_keyMap[Common::KEYCODE_KP3]) {
-		newItem = h;
+		newItem = _menuNumItems - 1;
 	} else if (inFlag == _vm->_keyMap[Common::KEYCODE_UP] || inFlag == _vm->_keyMap[Common::KEYCODE_KP8]) {
 		if (--newItem < 0)
-			newItem = h;
+			newItem = _menuNumItems - 1;
 	} else if (inFlag == _vm->_keyMap[Common::KEYCODE_DOWN] || inFlag == _vm->_keyMap[Common::KEYCODE_KP2]) {
-		if (++newItem > h)
+		if (++newItem > _menuNumItems - 1)
 			newItem = 0;
+	} else if (inFlag == _vm->_keyMap[Common::KEYCODE_LEFT] || inFlag == _vm->_keyMap[Common::KEYCODE_KP4]) {
+		newItem -= _menuLines[0];
+		if (newItem < 0)
+			newItem = 0;
+	} else if (inFlag == _vm->_keyMap[Common::KEYCODE_RIGHT] || inFlag == _vm->_keyMap[Common::KEYCODE_KP6]) {
+		newItem += _menuLines[0];
+		if (newItem > _menuNumItems - 1)
+			newItem = _menuNumItems - 1;
 	} else {
 		_menuLastInFlags = inFlag;
 	}
 
 	if (newItem != currentItem) {
+                simpleMenu_printButton(sd, currentItem, strings[simpleMenu_getMenuItem(currentItem, menuItemsMask, itemOffset)], false, false);
+                simpleMenu_printButton(sd, newItem, strings[simpleMenu_getMenuItem(newItem, menuItemsMask, itemOffset)], true, false);
 		if (_vm->gameFlags().platform == Common::kPlatformSegaCD) {
-			_vm->_txt->printShadedText(strings[simpleMenu_getMenuItem(currentItem, menuItemsMask, itemOffset)], 4, (sd == 8 ? 2 : 20) + currentItem * lineH, _menuTextColor, _menuShadowColor);
-			_vm->_txt->printShadedText(strings[simpleMenu_getMenuItem(newItem, menuItemsMask, itemOffset)], 4, (sd == 8 ? 2 : 20) + newItem * lineH, _menuHighlightColor, _menuShadowColor);
 			_screen->sega_getRenderer()->render(0, 6, 20, 26, 5);
-		} else {
-			_screen->printText(strings[simpleMenu_getMenuItem(currentItem, menuItemsMask, itemOffset)], x, y + currentItem * lineH, _menuTextColor, 0);
-			_screen->printText(strings[simpleMenu_getMenuItem(newItem, menuItemsMask, itemOffset)], x, y + newItem * lineH, _menuHighlightColor, 0);
 		}
 		_screen->updateScreen();
 	}
 
 	if (result != -1) {
 		result = simpleMenu_getMenuItem(result, menuItemsMask, itemOffset);
-		simpleMenu_flashSelection(strings[result], x, y + newItem * lineH, _vm->guiSettings()->colors.guiColorWhite, _menuHighlightColor, 0);
+		Common::Point tPoint = simpleMenu_getTextPoint(newItem);
+		Common::Point p = _menuPoint + tPoint;
+		simpleMenu_flashSelection(strings[result], p.x, p.y, _vm->guiSettings()->colors.guiColorWhite, _menuHighlightColor, 0);
 	}
 
 	_menuCur = newItem;
@@ -2197,7 +2303,7 @@ void GUI_EoB::simpleMenu_flashSelection(const char *str, int x, int y, int color
 }
 
 void GUI_EoB::runCampMenu() {
-	Screen::FontId of = _screen->setFont(_vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	Screen::FontId of = _screen->setFont(_vm->_flags.lang == Common::Language::ZH_TWN ? Screen::FID_CHINESE_FNT : _vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
 
 	Button *highlightButton = 0;
 	Button *prevHighlightButton = 0;
@@ -2527,7 +2633,7 @@ bool GUI_EoB::runLoadMenu(int x, int y, bool fromMainMenu) {
 
 bool GUI_EoB::confirmDialogue2(int dim, int id, int deflt) {
 	int od = _screen->curDimIndex();
-	Screen::FontId of = _screen->setFont(_vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	Screen::FontId of = _screen->setFont(_vm->_flags.lang == Common::Language::ZH_TWN ? Screen::FontId::FID_CHINESE_FNT : _vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
 	_screen->setScreenDim(dim);
 
 	drawTextBox(dim, id);
@@ -2596,7 +2702,7 @@ bool GUI_EoB::confirmDialogue2(int dim, int id, int deflt) {
 void GUI_EoB::messageDialogue(int dim, int id, int buttonTextCol) {
 	int od = _screen->curDimIndex();
 	_screen->setScreenDim(dim);
-	Screen::FontId of = _screen->setFont(_vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	Screen::FontId of = _screen->setFont(_vm->_flags.lang == Common::Language::ZH_TWN ? Screen::FontId::FID_CHINESE_FNT : _vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
 
 	drawTextBox(dim, id);
 	const ScreenDim *dm = _screen->getScreenDim(dim);
@@ -2605,8 +2711,13 @@ void GUI_EoB::messageDialogue(int dim, int id, int buttonTextCol) {
 	int by = dm->sy + dm->h - 19;
 	int bw = _screen->getTextWidth(_vm->_menuOkString) + 7;
 
-	drawMenuButtonBox(bx, by, bw, 14, false, false);
-	_screen->printShadedText(_vm->_menuOkString, bx + 4, by + 3, buttonTextCol, 0, _vm->guiSettings()->colors.guiColorBlack);
+	if (_vm->_flags.lang == Common::Language::ZH_TWN) {
+		drawMenuButtonBox(bx, by, bw, 16, false, false);
+		_screen->printShadedText(_vm->_menuOkString, bx + 4, by + 1, buttonTextCol, 0, _vm->guiSettings()->colors.guiColorBlack);
+	} else {
+		drawMenuButtonBox(bx, by, bw, 14, false, false);
+		_screen->printShadedText(_vm->_menuOkString, bx + 4, by + 3, buttonTextCol, 0, _vm->guiSettings()->colors.guiColorBlack);
+	}
 	_screen->updateScreen();
 
 	for (bool runLoop = true; runLoop && !_vm->shouldQuit();) {
@@ -2713,6 +2824,7 @@ int GUI_EoB::getTextInput(char *dest, int x, int y, int destMaxLen, int textColo
 	uint8 *segaCharBuf = new uint8[destMaxLen << 5]();
 
 	int len = strlen(dest);
+	int height = (_vm->game() == GI_EOB2 && _vm->gameFlags().lang == Common::Language::ZH_TWN) ? 15 : 9;
 	if (len > destMaxLen) {
 		len = destMaxLen;
 		dest[destMaxLen] = 0;
@@ -2722,7 +2834,7 @@ int GUI_EoB::getTextInput(char *dest, int x, int y, int destMaxLen, int textColo
 	if (len >= destMaxLen)
 		pos--;
 
-	_screen->copyRegion((x - 1) << 3, y, 0, 191, (destMaxLen + 2) << 3, 9, 0, 2, Screen::CR_NO_P_CHECK);
+	_screen->copyRegion((x - 1) << 3, y, 0, 200 - height, (destMaxLen + 2) << 3, height, 0, 2, Screen::CR_NO_P_CHECK);
 	if (_vm->gameFlags().platform == Common::kPlatformFMTowns)
 		_screen->copyRegion(0, 0, 160, 0, 160, 128, 2, 2, Screen::CR_NO_P_CHECK);
 	_screen->printShadedText(dest, x << 3, y, textColor1, textColor2, _vm->guiSettings()->colors.guiColorBlack);
@@ -2751,10 +2863,10 @@ int GUI_EoB::getTextInput(char *dest, int x, int y, int destMaxLen, int textColo
 					_screen->sega_getRenderer()->render(0, x + pos, y >> 3, 1, 1);
 					_screen->sega_setTextBuffer(0, 0);
 				} else if (cursorState) {
-					_screen->copyRegion((pos + 1) << 3, 191, (x + pos) << 3, y, 8, 9, 2, 0, Screen::CR_NO_P_CHECK);
+					_screen->copyRegion((pos + 1) << 3, 200 - height, (x + pos) << 3, y, 8, height, 2, 0, Screen::CR_NO_P_CHECK);
 					_screen->printShadedText(sufx, (x + pos) << 3, y, textColor1, textColor2, _vm->guiSettings()->colors.guiColorBlack);
 				} else {
-					_screen->fillRect((x + pos) << 3, y, ((x + pos) << 3) + 7, y + 7, cursorColor);
+					_screen->fillRect((x + pos) << 3, y, ((x + pos) << 3) + 7, y + height - 2, cursorColor);
 					_screen->printText(sufx, (x + pos) << 3, y, textColor1, cursorColor);
 				}
 
@@ -2878,7 +2990,7 @@ int GUI_EoB::getTextInput(char *dest, int x, int y, int destMaxLen, int textColo
 			_screen->sega_getRenderer()->render(0, x, y >> 3, destMaxLen, 1);
 			_screen->sega_setTextBuffer(0, 0);
 		} else {
-			_screen->copyRegion(0, 191, (x - 1) << 3, y, (destMaxLen + 2) << 3, 9, 2, 0, Screen::CR_NO_P_CHECK);
+			_screen->copyRegion(0, 200 - height, (x - 1) << 3, y, (destMaxLen + 2) << 3, height, 2, 0, Screen::CR_NO_P_CHECK);
 			_screen->printShadedText(dest, x << 3, y, textColor1, textColor2, _vm->guiSettings()->colors.guiColorBlack);
 		}
 
@@ -3332,7 +3444,8 @@ void GUI_EoB::drawSaveSlotDialog(int x, int y, int id) {
 	_screen->setCurPage(2);
 	drawMenuButtonBox(0, 0, 176, 144, false, false);
 	const char* title = (id < 2) ? _vm->_saveLoadStrings[2 + id] : _vm->_transferStringsScummVM[id - 1];
-	_screen->printShadedText(title, 52, 5, (_vm->_configRenderMode == Common::kRenderCGA) ? 1 : _vm->guiSettings()->colors.guiColorWhite, 0, _vm->guiSettings()->colors.guiColorBlack);
+	_screen->printShadedText(title, 52, _vm->_flags.lang == Common::Language::ZH_TWN ? 3 : 5,
+				 (_vm->_configRenderMode == Common::kRenderCGA) ? 1 : _vm->guiSettings()->colors.guiColorWhite, 0, _vm->guiSettings()->colors.guiColorBlack);
 	_screen->copyRegion(0, 0, x, y, 176, 144, 2, 0, Screen::CR_NO_P_CHECK);
 	_screen->fillRect(0, 0, 175, 143, 0, 2);
 	_screen->setCurPage(0);
@@ -3443,8 +3556,6 @@ void GUI_EoB::runMemorizePrayMenu(int charIndex, int spellType) {
 	int newHighLightButton = 0;
 	int newHighLightText = 0;
 	int buttonStart = (_vm->gameFlags().platform == Common::kPlatformSegaCD) ? 0x801B : 0x8017;
-	int listY = (_vm->gameFlags().platform == Common::kPlatformSegaCD) ? 80 : 50;
-	int listEntryH = (_vm->gameFlags().platform == Common::kPlatformSegaCD) ? 8 : 9;
 	bool updateDesc = true;
 	bool updateList = true;
 	bool highLightClicked = (_vm->gameFlags().platform == Common::kPlatformSegaCD);
@@ -3493,7 +3604,7 @@ void GUI_EoB::runMemorizePrayMenu(int charIndex, int spellType) {
 				_screen->sega_getRenderer()->render(0, 1, 8, 20, 2);
 			} else {
 				_screen->set16bitShadingLevel(4);
-				_screen->printShadedText(Common::String::format(_vm->_menuStringsMgc[1], np[lastHighLightButton] - numAssignedSpellsPerBookPage[lastHighLightButton], np[lastHighLightButton]).c_str(), 8, 38, _vm->guiSettings()->colors.guiColorLightBlue, _vm->guiSettings()->colors.fill, _vm->guiSettings()->colors.guiColorBlack);
+				_screen->printShadedText(Common::String::format(_vm->_menuStringsMgc[1], np[lastHighLightButton] - numAssignedSpellsPerBookPage[lastHighLightButton], np[lastHighLightButton]).c_str(), _vm->_flags.lang == Common::Language::ZH_TWN ? 4 : 8, _vm->_flags.lang == Common::Language::ZH_TWN ? 40 : 38, _vm->guiSettings()->colors.guiColorLightBlue, _vm->guiSettings()->colors.fill, _vm->guiSettings()->colors.guiColorBlack);
 				_screen->set16bitShadingLevel(0);
 			}
 		}
@@ -3520,9 +3631,9 @@ void GUI_EoB::runMemorizePrayMenu(int charIndex, int spellType) {
 		} else if (inputFlag == _vm->_keyMap[Common::KEYCODE_ESCAPE]) {
 			inputFlag = buttonStart + 1;
 		} else {
-			Common::Point p = _vm->getMousePos();
-			if (_vm->posWithinRect(p.x, p.y, 8, listY, 168, listY + 72)) {
-				newHighLightText = (p.y - listY) / listEntryH;
+			int entry = mapPointToEntry(_vm->getMousePos());
+			if (entry >= 0) {
+				newHighLightText = entry;
 				if (menuSpellMap[lastHighLightButton * 11] - 1 < newHighLightText)
 					newHighLightText = menuSpellMap[lastHighLightButton * 11] - 1;
 			}
@@ -3927,7 +4038,10 @@ bool GUI_EoB::restParty() {
 					crs[i] = 0;
 					injured--;
 
-					_vm->_txt->printMessage(Common::String::format(_vm->_menuStringsRest2[2], _vm->_characters[i].name, _vm->_characters[injured].name).c_str());
+					if (_vm->_flags.lang == Common::Language::ZH_TWN && i == injured)
+						_vm->_txt->printMessage(Common::String::format(_vm->_menuStringsRest2[5], _vm->_characters[injured].name).c_str());
+					else
+						_vm->_txt->printMessage(Common::String::format(_vm->_menuStringsRest2[2], _vm->_characters[i].name, _vm->_characters[injured].name).c_str());
 
 					_vm->delay(80);
 
@@ -4067,7 +4181,7 @@ void GUI_EoB::printScribeScrollSpellString(const int16 *menuItems, int id, bool 
 
 bool GUI_EoB::confirmDialogue(int id) {
 	int od = _screen->curDimIndex();
-	Screen::FontId of = _screen->setFont(_vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	Screen::FontId of = _screen->setFont(_vm->_flags.lang == Common::Language::ZH_TWN ? Screen::FontId::FID_CHINESE_FNT : _vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
 
 	Button *buttonList = initMenu(5);
 
@@ -4290,7 +4404,7 @@ int GUI_EoB::selectCharacterDialogue(int id) {
 void GUI_EoB::displayTextBox(int id, int, bool) {
 	int op = _screen->setCurPage(2);
 	int od = _screen->curDimIndex();
-	Screen::FontId of = _screen->setFont(_vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	Screen::FontId of = _screen->setFont(_vm->_flags.lang == Common::Language::ZH_TWN ? Screen::FontId::FID_CHINESE_FNT : _vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
 	_screen->setClearScreenDim(11);
 	const ScreenDim *dm = _screen->getScreenDim(11);
 
@@ -4328,8 +4442,12 @@ Button *GUI_EoB::initMenu(int id) {
 	}
 
 	if (m->titleStrId != -1) {
+		if (_vm->gameFlags().lang == Common::Language::ZH_TWN)
+			_screen->setFont(Screen::FID_CHINESE_FNT);
 		if (_vm->gameFlags().platform == Common::kPlatformSegaCD)
 			displayTextBox(m->titleStrId, 0x55, false);
+		else if (_vm->_flags.lang == Common::Language::ZH_TWN)
+			_screen->printShadedText(getMenuString(m->titleStrId), 3, 3, m->titleCol, 0, _vm->guiSettings()->colors.guiColorBlack);
 		else
 			_screen->printShadedText(getMenuString(m->titleStrId), 5, 5, m->titleCol, 0, _vm->guiSettings()->colors.guiColorBlack);
 		_screen->setTextMarginRight(Screen::SCREEN_W);
@@ -4389,11 +4507,14 @@ void GUI_EoB::drawMenuButton(Button *b, bool clicked, bool highlight, bool noFil
 		const char *s = getMenuString(d->labelId);
 
 		int xOffs = 4;
-		int yOffs = 3;
+		int yOffs = _vm->_flags.lang == Common::Language::ZH_TWN ? 2 : 3;
 
 		if (d->flags & 4) {
 			xOffs = ((b->width - _screen->getTextWidth(s)) >> 1) + 1;
-			yOffs = (b->height - 7) >> 1;
+			if (_vm->_flags.lang == Common::Language::ZH_TWN)
+				yOffs = (b->height - 14) >> 1;
+			else
+				yOffs = (b->height - 7) >> 1;
 		}
 
 		int col1 = (_vm->_configRenderMode == Common::kRenderCGA) ? 1 : _vm->guiSettings()->colors.guiColorWhite;
@@ -4422,7 +4543,7 @@ void GUI_EoB::drawTextBox(int dim, int id) {
 	int od = _screen->curDimIndex();
 	_screen->setScreenDim(dim);
 	const ScreenDim *dm = _screen->getScreenDim(dim);
-	Screen::FontId of = _screen->setFont(_vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	Screen::FontId of = _screen->setFont(_vm->_flags.lang == Common::Language::ZH_TWN ? Screen::FontId::FID_CHINESE_FNT : _vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
 
 	if (dm->w <= 22 && dm->h <= 84)
 		_screen->copyRegion(dm->sx << 3, dm->sy, 0, dm->h, dm->w << 3, dm->h, 0, 2, Screen::CR_NO_P_CHECK);
@@ -4444,7 +4565,7 @@ void GUI_EoB::drawSaveSlotButton(int slot, int redrawBox, bool highlight) {
 		return;
 
 	int x = _saveSlotX + 4;
-	int y = _saveSlotY + slot * 17 + 20;
+	int y = _vm->_flags.lang == Common::Language::ZH_TWN ? _saveSlotY + slot * 18 + 18 : _saveSlotY + slot * 17 + 20;
 	int w = 167;
 	char slotString[26];
 	memset(slotString, 0, 26);
@@ -4452,12 +4573,12 @@ void GUI_EoB::drawSaveSlotButton(int slot, int redrawBox, bool highlight) {
 
 	if (slot >= 6) {
 		x = _saveSlotX + 118;
-		y = _saveSlotY + 126;
+		y = _vm->_flags.lang == Common::Language::ZH_TWN ? _saveSlotY + 125 : _saveSlotY + 126;
 		w = 53;
 	}
 
 	if (redrawBox)
-		drawMenuButtonBox(x, y, w, 14, (redrawBox - 1) ? true : false, false);
+		drawMenuButtonBox(x, y, w, _vm->_flags.lang == Common::Language::ZH_TWN ? 18 : 14, (redrawBox - 1) ? true : false, false);
 
 	Screen::FontId fnt = _screen->_currentFont;
 	if (_vm->gameFlags().platform == Common::kPlatformFMTowns) {
@@ -4465,17 +4586,38 @@ void GUI_EoB::drawSaveSlotButton(int slot, int redrawBox, bool highlight) {
 		y++;
 	}
 
-	_screen->printShadedText(slotString, x + 4, y + 3, highlight ? _vm->guiSettings()->colors.guiColorLightRed : (_vm->_configRenderMode == Common::kRenderCGA ? 1 : _vm->guiSettings()->colors.guiColorWhite), 0, _vm->guiSettings()->colors.guiColorBlack);
+	_screen->printShadedText(slotString, x + 4,
+				 _vm->_flags.lang == Common::Language::ZH_TWN ? y + 2 : y + 3,
+				 highlight ? _vm->guiSettings()->colors.guiColorLightRed : (_vm->_configRenderMode == Common::kRenderCGA ? 1 : _vm->guiSettings()->colors.guiColorWhite), 0, _vm->guiSettings()->colors.guiColorBlack);
 	_vm->screen()->setFont(fnt);
+}
+
+int GUI_EoB::mapPointToEntry(const Common::Point &p) const {
+	if (_vm->_flags.lang == Common::ZH_TWN) {
+		if (_vm->posWithinRect(p.x, p.y, 4, 58, 168, 122))
+			return (p.y - 58) / 16 + (p.x >= 84) * 4;
+		return -1;
+	}
+	if (_vm->posWithinRect(p.x, p.y, 8, 50, 168, 122))
+		return (p.y - 50) / 9;
+
+	return -1;
 }
 
 void GUI_EoB::memorizePrayMenuPrintString(int spellId, int bookPageIndex, int spellType, bool noFill, bool highLight) {
 	if (bookPageIndex < 0)
 		return;
 
-	int y = bookPageIndex * 9 + 50;
+	int x1 = _vm->_flags.lang == Common::ZH_TWN ? 4 + (bookPageIndex / 4) * 80 : 8;
+	int x2 = _vm->_flags.lang == Common::ZH_TWN ? x1 : 6;
+	int y = _vm->_flags.lang == Common::ZH_TWN ? (bookPageIndex % 4) * 16 + 58 : bookPageIndex * 9 + 50;
+	int w = _vm->_flags.lang == Common::ZH_TWN ? 80 : 160;
+	int h = _vm->_flags.lang == Common::ZH_TWN ? 15 : 8;
 	int col1 = (_vm->_configRenderMode == Common::kRenderCGA) ? 1 : _vm->guiSettings()->colors.guiColorWhite;
 	_screen->set16bitShadingLevel(4);
+
+	if (!spellId || _vm->_flags.lang == Common::ZH_TWN)
+		_screen->fillRect(x2, y, x1 + w, y + h,  _vm->guiSettings()->colors.fill);
 
 	if (spellId) {
 		Common::String s;
@@ -4489,11 +4631,9 @@ void GUI_EoB::memorizePrayMenuPrintString(int spellId, int bookPageIndex, int sp
 		}
 
 		if (noFill)
-			_screen->printText(s.c_str(), 8, y, highLight ? _vm->guiSettings()->colors.guiColorLightRed : col1, 0);
+			_screen->printText(s.c_str(), x1, y, highLight ? _vm->guiSettings()->colors.guiColorLightRed : col1, 0);
 		else
-			_screen->printShadedText(s.c_str(), 8, y, highLight ? _vm->guiSettings()->colors.guiColorLightRed : col1, _vm->guiSettings()->colors.fill, _vm->guiSettings()->colors.guiColorBlack);
-	} else {
-		_screen->fillRect(6, y, 168, y + 8,  _vm->guiSettings()->colors.fill);
+			_screen->printShadedText(s.c_str(), x1, y, highLight ? _vm->guiSettings()->colors.guiColorLightRed : col1, _vm->guiSettings()->colors.fill, _vm->guiSettings()->colors.guiColorBlack);
 	}
 
 	_screen->set16bitShadingLevel(0);
@@ -4598,13 +4738,13 @@ void GUI_EoB::setupSaveMenuSlots() {
 				Common::strlcpy(_saveSlotStringsTemp[i], _savegameList[i + _savegameOffset], 25);
 
 				if (!(_vm->gameFlags().lang == Common::JA_JPN && _vm->gameFlags().platform == Common::kPlatformSegaCD &&
-					Common::String(_saveSlotStringsTemp[i]).contains('\r')) && (_vm->gameFlags().lang == Common::JA_JPN || _vm->gameFlags().lang == Common::ZH_TWN || _vm->gameFlags().platform == Common::kPlatformSegaCD)) {
+				      Common::String(_saveSlotStringsTemp[i]).contains('\r')) && (_vm->gameFlags().lang == Common::JA_JPN || (_vm->gameFlags().lang == Common::ZH_TWN && _vm->game() != GI_EOB2) || _vm->gameFlags().platform == Common::kPlatformSegaCD)) {
 						// Strip special characters from GMM save dialog which might get misinterpreted as SJIS
 						// Special case for Japanese SegaCD: Only the save descriptions from GMM should be stripped. The auto-generated descriptions from the ingame save dialog
 						// have a special 1-byte encoding that must be kept. It is easy to distinguish between GMM descriptions and ingame descriptions due to the '\r' characters
 						// that the auto-generated strings always and the GMM strings never have.
 						for (uint ii = 0; ii < strlen(_saveSlotStringsTemp[i]); ++ii) {
-							if (_saveSlotStringsTemp[i][ii] < 32 && _saveSlotStringsTemp[i][ii] != '\r') // due to the signed char type this will also clean up everything >= 0x80
+						  if ((_saveSlotStringsTemp[i][ii] & 0x80) || (_saveSlotStringsTemp[i][ii] < 32 && _saveSlotStringsTemp[i][ii] != '\r'))
 								_saveSlotStringsTemp[i][ii] = ' ';
 						}
 				}
@@ -4641,7 +4781,7 @@ void GUI_EoB::sortSaveSlots() {
 }
 
 void GUI_EoB::restParty_updateRestTime(int hours, bool init) {
-	Screen::FontId of = _screen->setFont(_vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	Screen::FontId of = _screen->setFont(_vm->_flags.lang == Common::Language::ZH_TWN ? Screen::FontId::FID_CHINESE_FNT : _vm->_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
 	int od = _screen->curDimIndex();
 	_screen->setScreenDim(10);
 

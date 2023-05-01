@@ -36,6 +36,69 @@ CastleEngine::CastleEngine(OSystem *syst, const ADGameDescription *gd) : Freesca
 	_playerDepth = 8;
 }
 
+CastleEngine::~CastleEngine() {
+	if (_option) {
+		_option->free();
+		delete _option;
+	}
+}
+
+byte kCastleTitleDOSPalette[16][3] = {
+	{0x00, 0x00, 0x00}, // correct!
+	{0x00, 0x00, 0xaa}, // correct!
+	{0x00, 0x00, 0x00}, // ????
+	{0x00, 0xaa, 0xaa}, // changed
+	{0x55, 0x55, 0x55}, // changed
+	{0x55, 0x55, 0xff}, // changed
+	{0xaa, 0xaa, 0xaa}, // changed
+	{0x55, 0xff, 0xff}, // changed
+	{0xff, 0x55, 0xff}, // changed
+	{0x00, 0x00, 0x00},
+	{0xff, 0xff, 0xff}, // changed
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00}
+};
+
+byte kCastleOptionDOSPalette[16][3] = {
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0xaa},
+	{0x00, 0xaa, 0x00},
+	{0xaa, 0x00, 0x00},
+	{0x55, 0x55, 0x55},
+	{0xaa, 0x55, 0x00},
+	{0xaa, 0xaa, 0xaa},
+	{0xff, 0x55, 0x55},
+	{0x12, 0x34, 0x56},
+	{0xff, 0xff, 0x55},
+	{0xff, 0xff, 0xff},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00}
+};
+
+byte kCastleBorderDOSPalette[16][3] = {
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0xaa},
+	{0x00, 0xaa, 0x00},
+	{0xaa, 0x00, 0x00},
+	{0x55, 0x55, 0x55},
+	{0xaa, 0x55, 0x00},
+	{0xaa, 0xaa, 0xaa}, // can be also green
+	{0xff, 0x55, 0x55},
+	{0x00, 0x00, 0x00},
+	{0xff, 0xff, 0x55},
+	{0xff, 0xff, 0xff},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00},
+	{0x00, 0x00, 0x00}
+};
+
 Common::SeekableReadStream *CastleEngine::decryptFile(const Common::String filename) {
 	Common::File file;
 	file.open(filename);
@@ -63,21 +126,40 @@ void CastleEngine::loadAssetsDOSFullGame() {
 	Common::SeekableReadStream *stream = nullptr;
 
 	if (_renderMode == Common::kRenderEGA) {
-		_viewArea = Common::Rect(39, 31, 278, 150);
+		_viewArea = Common::Rect(40, 33, 280, 152);
+
+		file.open("CMLE.DAT");
+		_title = load8bitBinImage(&file, 0x0);
+		_title->setPalette((byte *)&kCastleTitleDOSPalette, 0, 16);
+		file.close();
 
 		file.open("CMOE.DAT");
-		_title = load8bitBinImage(&file, 0x0);
-		_title->setPalette((byte *)&kEGADefaultPaletteData, 0, 16);
-
+		_option = load8bitBinImage(&file, 0x0);
+		_option->setPalette((byte *)&kCastleOptionDOSPalette, 0, 16);
 		file.close();
 
 		file.open("CME.DAT");
 		_border = load8bitBinImage(&file, 0x0);
-		_border->setPalette((byte *)&kEGADefaultPaletteData, 0, 16);
-
+		_border->setPalette((byte *)&kCastleBorderDOSPalette, 0, 16);
 		file.close();
 
-		stream = decryptFile("CMLE");
+		switch (_language) {
+			case Common::ES_ESP:
+				stream = decryptFile("CMLS");
+				break;
+			case Common::FR_FRA:
+				stream = decryptFile("CMLF");
+				break;
+			case Common::DE_DEU:
+				stream = decryptFile("CMLG");
+				break;
+			case Common::EN_ANY:
+				stream = decryptFile("CMLE");
+				break;
+			default:
+				error("Invalid or unsupported language: %x", _language);
+		}
+
 		loadMessagesVariableSize(stream, 0x11, 164);
 		delete stream;
 
@@ -85,6 +167,8 @@ void CastleEngine::loadAssetsDOSFullGame() {
 		load8bitBinary(stream, 0, 16);
 		for (auto &it : _areaMap)
 			it._value->addStructure(_areaMap[255]);
+
+		_areaMap[2]->addFloor();
 		delete stream;
 	} else
 		error("Not implemented yet");
@@ -124,9 +208,31 @@ void CastleEngine::gotoArea(uint16 areaID, int entranceID) {
 
 	if (_currentArea->_skyColor > 0 && _currentArea->_skyColor != 255) {
 		_gfx->_keyColor = 0;
-		_gfx->clear(_currentArea->_skyColor);
 	} else
 		_gfx->_keyColor = 255;
+
+	_lastPosition = _position;
+	_gameStateVars[0x1f] = 0;
+
+	if (areaID == _startArea && entranceID == _startEntrance) {
+		_yaw = 310;
+		_pitch = 0;
+	}
+
+	debugC(1, kFreescapeDebugMove, "starting player position: %f, %f, %f", _position.x(), _position.y(), _position.z());
+	clearTemporalMessages();
+	playSound(5, false);
+	// Ignore sky/ground fields
+	_gfx->_keyColor = 0;
+	_gfx->clearColorPairArray();
+
+	_gfx->_colorPair[_currentArea->_underFireBackgroundColor] = _currentArea->_extraColor[0];
+	_gfx->_colorPair[_currentArea->_usualBackgroundColor] = _currentArea->_extraColor[1];
+	_gfx->_colorPair[_currentArea->_paperColor] = _currentArea->_extraColor[2];
+	_gfx->_colorPair[_currentArea->_inkColor] = _currentArea->_extraColor[3];
+
+	swapPalette(areaID);
+	resetInput();
 }
 
 void CastleEngine::drawUI() {

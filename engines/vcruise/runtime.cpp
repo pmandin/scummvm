@@ -22,15 +22,18 @@
 #include "common/formats/winexe.h"
 #include "common/config-manager.h"
 #include "common/endian.h"
+#include "common/events.h"
 #include "common/file.h"
 #include "common/math.h"
 #include "common/ptr.h"
 #include "common/random.h"
+#include "common/savefile.h"
 #include "common/system.h"
 #include "common/stream.h"
 
 #include "graphics/cursorman.h"
 #include "graphics/font.h"
+#include "graphics/fonts/ttf.h"
 #include "graphics/fontman.h"
 #include "graphics/wincursor.h"
 #include "graphics/managed_surface.h"
@@ -45,12 +48,118 @@
 #include "gui/message.h"
 
 #include "vcruise/audio_player.h"
+#include "vcruise/menu.h"
 #include "vcruise/runtime.h"
 #include "vcruise/script.h"
 #include "vcruise/textparser.h"
+#include "vcruise/vcruise.h"
 
 
 namespace VCruise {
+
+class RuntimeMenuInterface : public MenuInterface {
+public:
+	explicit RuntimeMenuInterface(Runtime *runtime);
+
+	void commitRect(const Common::Rect &rect) const override;
+	bool popOSEvent(OSEvent &evt) const override;
+	Graphics::Surface *getUIGraphic(uint index) const override;
+	Graphics::ManagedSurface *getMenuSurface() const override;
+	bool hasDefaultSave() const override;
+	bool hasAnySave() const override;
+	Common::Point getMouseCoordinate() const override;
+	void restartGame() const override;
+	void goToCredits() const override;
+	void changeMenu(MenuPage *newPage) const override;
+	void quitGame() const override;
+	bool canSave() const override;
+	bool reloadFromCheckpoint() const override;
+
+private:
+	Runtime *_runtime;
+};
+
+
+RuntimeMenuInterface::RuntimeMenuInterface(Runtime *runtime) : _runtime(runtime) {
+}
+
+void RuntimeMenuInterface::commitRect(const Common::Rect &rect) const {
+	_runtime->commitSectionToScreen(_runtime->_fullscreenMenuSection, rect);
+}
+
+bool RuntimeMenuInterface::popOSEvent(OSEvent &evt) const {
+	return _runtime->popOSEvent(evt);
+}
+
+Graphics::Surface *RuntimeMenuInterface::getUIGraphic(uint index) const {
+	if (index >= _runtime->_uiGraphics.size())
+		return nullptr;
+	return _runtime->_uiGraphics[index].get();
+}
+
+Graphics::ManagedSurface *RuntimeMenuInterface::getMenuSurface() const {
+	return _runtime->_fullscreenMenuSection.surf.get();
+}
+
+bool RuntimeMenuInterface::hasDefaultSave() const {
+	return static_cast<VCruiseEngine *>(g_engine)->hasDefaultSave();
+}
+
+bool RuntimeMenuInterface::hasAnySave() const {
+	return static_cast<VCruiseEngine *>(g_engine)->hasAnySave();
+}
+
+Common::Point RuntimeMenuInterface::getMouseCoordinate() const {
+	return _runtime->_mousePos;
+}
+
+void RuntimeMenuInterface::restartGame() const {
+	Common::SharedPtr<SaveGameSnapshot> snapshot(new SaveGameSnapshot());
+
+	if (_runtime->_gameID == GID_REAH) {
+		snapshot->roomNumber = 1;
+		snapshot->screenNumber = 0xb0;
+		snapshot->loadedAnimation = 1;
+	} else {
+		error("Don't know what screen to start on for this game");
+	}
+
+	_runtime->_saveGame = snapshot;
+	_runtime->restoreSaveGameSnapshot();
+}
+
+void RuntimeMenuInterface::goToCredits() const {
+	_runtime->clearScreen();
+
+	if (_runtime->_gameID == GID_REAH) {
+		_runtime->changeToScreen(40, 0xa1);
+	} else {
+		error("Don't know what screen to go to for credits for this game");
+	}
+}
+
+void RuntimeMenuInterface::changeMenu(MenuPage *newPage) const {
+	_runtime->changeToMenuPage(newPage);
+}
+
+void RuntimeMenuInterface::quitGame() const {
+	Common::Event evt;
+	evt.type = Common::EVENT_QUIT;
+
+	g_engine->getEventManager()->pushEvent(evt);
+}
+
+bool RuntimeMenuInterface::canSave() const {
+	return _runtime->canSave();
+}
+
+bool RuntimeMenuInterface::reloadFromCheckpoint() const {
+	if (!_runtime->canSave())
+		return false;
+
+	_runtime->restoreSaveGameSnapshot();
+	return true;
+}
 
 AnimationDef::AnimationDef() : animNum(0), firstFrame(0), lastFrame(0) {
 }
@@ -76,16 +185,16 @@ const MapScreenDirectionDef *MapDef::getScreenDirection(uint screen, uint direct
 	return screenDirections[screen][direction].get();
 }
 
-ScriptEnvironmentVars::ScriptEnvironmentVars() : lmb(false), lmbDrag(false), panInteractionID(0), fpsOverride(0), lastHighlightedItem(0) {
+ScriptEnvironmentVars::ScriptEnvironmentVars() : lmb(false), lmbDrag(false), esc(false), exitToMenu(false), panInteractionID(0), fpsOverride(0), lastHighlightedItem(0) {
+}
+
+OSEvent::OSEvent() : type(kOSEventTypeInvalid), keyCode(static_cast<Common::KeyCode>(0)), keymappedEvent(kKeymappedEventNone), timestamp(0) {
 }
 
 void Runtime::RenderSection::init(const Common::Rect &paramRect, const Graphics::PixelFormat &fmt) {
 	rect = paramRect;
 	surf.reset(new Graphics::ManagedSurface(paramRect.width(), paramRect.height(), fmt));
 	surf->fillRect(Common::Rect(0, 0, surf->w, surf->h), 0xffffffff);
-}
-
-Runtime::OSEvent::OSEvent() : type(kOSEventTypeInvalid), keyCode(static_cast<Common::KeyCode>(0)) {
 }
 
 Runtime::StackValue::ValueUnion::ValueUnion() {
@@ -213,7 +322,7 @@ void Runtime::GyroState::reset() {
 	isWaitingForAnimation = false;
 }
 
-Runtime::SubtitleDef::SubtitleDef() : subIndex(0), color{0, 0, 0}, unknownValue1(0), unknownValue2(0) {
+Runtime::SubtitleDef::SubtitleDef() : color{0, 0, 0}, unknownValue1(0), durationInDeciseconds(0) {
 }
 
 SfxPlaylistEntry::SfxPlaylistEntry() : frame(0), balance(0), volume(0), isUpdate(false) {
@@ -410,7 +519,7 @@ SoundCache::~SoundCache() {
 
 SoundInstance::SoundInstance()
 	: id(0), rampStartVolume(0), rampEndVolume(0), rampRatePerMSec(0), rampStartTime(0), rampTerminateOnCompletion(false),
-	  volume(0), balance(0), effectiveBalance(0), effectiveVolume(0), is3D(false), isLooping(false), isSpeech(false), isSilencedLoop(false), x(0), y(0), endTime(0) {
+	  volume(0), balance(0), effectiveBalance(0), effectiveVolume(0), is3D(false), isLooping(false), isSpeech(false), isSilencedLoop(false), x(0), y(0), endTime(0), duration(0) {
 }
 
 SoundInstance::~SoundInstance() {
@@ -569,7 +678,7 @@ void SaveGameSnapshot::Sound::read(Common::ReadStream *stream) {
 	params3D.read(stream);
 }
 
-SaveGameSnapshot::SaveGameSnapshot() : roomNumber(0), screenNumber(0), direction(0), escOn(false), musicTrack(0), loadedAnimation(0),
+SaveGameSnapshot::SaveGameSnapshot() : roomNumber(0), screenNumber(0), direction(0), escOn(false), musicTrack(0), musicVolume(100), loadedAnimation(0),
 									   animDisplayingFrame(0), listenerX(0), listenerY(0), listenerAngle(0) {
 }
 
@@ -583,6 +692,7 @@ void SaveGameSnapshot::write(Common::WriteStream *stream) const {
 
 	stream->writeByte(escOn ? 1 : 0);
 	stream->writeSint32BE(musicTrack);
+	stream->writeUint32BE(musicVolume);
 
 	stream->writeUint32BE(loadedAnimation);
 	stream->writeUint32BE(animDisplayingFrame);
@@ -653,6 +763,11 @@ LoadGameOutcome SaveGameSnapshot::read(Common::ReadStream *stream) {
 
 	escOn = (stream->readByte() != 0);
 	musicTrack = stream->readSint32BE();
+
+	if (saveVersion >= 5)
+		musicVolume = stream->readUint32BE();
+	else
+		musicVolume = 100;
 
 	loadedAnimation = stream->readUint32BE();
 	animDisplayingFrame = stream->readUint32BE();
@@ -729,15 +844,19 @@ LoadGameOutcome SaveGameSnapshot::read(Common::ReadStream *stream) {
 Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &rootFSNode, VCruiseGameID gameID)
 	: _system(system), _mixer(mixer), _roomNumber(1), _screenNumber(0), _direction(0), _haveHorizPanAnimations(false), _loadedRoomNumber(0), _activeScreenNumber(0),
 	  _gameState(kGameStateBoot), _gameID(gameID), _havePendingScreenChange(false), _forceScreenChange(false), _havePendingReturnToIdleState(false), _havePendingCompletionCheck(false),
-	  _havePendingPlayAmbientSounds(false), _ambientSoundFinishTime(0), _scriptNextInstruction(0), _escOn(false), _debugMode(false), _fastAnimationMode(false), _musicTrack(0), _panoramaDirectionFlags(0),
-	  _loadedAnimation(0), _animPendingDecodeFrame(0), _animDisplayingFrame(0), _animFirstFrame(0), _animLastFrame(0), _animStopFrame(0),
+	  _havePendingPlayAmbientSounds(false), _ambientSoundFinishTime(0), _scriptNextInstruction(0), _escOn(false), _debugMode(false), _fastAnimationMode(false),
+	  _musicTrack(0), _musicVolume(100), _musicVolumeRampStartTime(0), _musicVolumeRampStartVolume(0), _musicVolumeRampRatePerMSec(0), _musicVolumeRampEnd(0),
+	  _panoramaDirectionFlags(0),
+	  _loadedAnimation(0), _loadedAnimationHasSound(false), _animPendingDecodeFrame(0), _animDisplayingFrame(0), _animFirstFrame(0), _animLastFrame(0), _animStopFrame(0),
 	  _animStartTime(0), _animFramesDecoded(0), _animDecoderState(kAnimDecoderStateStopped),
-	  _animPlayWhileIdle(false), _idleIsOnInteraction(false), _idleHaveClickInteraction(false), _idleHaveDragInteraction(false), _idleInteractionID(0), _haveIdleStaticAnimation(false),
+	  _animPlayWhileIdle(false), _idleLockInteractions(false), _idleIsOnInteraction(false), _idleHaveClickInteraction(false), _idleHaveDragInteraction(false), _idleInteractionID(0), _haveIdleStaticAnimation(false),
+	  _inGameMenuState(kInGameMenuStateInvisible), _inGameMenuActiveElement(0), _inGameMenuButtonActive {false, false, false, false, false},
 	  /*_loadedArea(0), */_lmbDown(false), _lmbDragging(false), _lmbReleaseWasClick(false), _lmbDownTime(0),
 	  _delayCompletionTime(0),
 	  _panoramaState(kPanoramaStateInactive),
 	  _listenerX(0), _listenerY(0), _listenerAngle(0), _soundCacheIndex(0),
-	  _subtitleFont(nullptr), _subtitleExpireTime(0), _displayingSubtitles(false), _languageIndex(0) {
+	  _isInGame(false),
+	  _subtitleFont(nullptr), _isDisplayingSubtitles(false), _languageIndex(0) {
 
 	for (uint i = 0; i < kNumDirections; i++) {
 		_haveIdleAnimations[i] = false;
@@ -750,18 +869,28 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &roo
 
 	_rng.reset(new Common::RandomSource("vcruise"));
 
-	_subtitleFont = FontMan.getFontByUsage(Graphics::FontManager::kGUIFont);
+#ifdef USE_FREETYPE2
+	_subtitleFontKeepalive.reset(Graphics::loadTTFFontFromArchive("NotoSans-Regular.ttf", 16, Graphics::kTTFSizeModeCharacter, 0, Graphics::kTTFRenderModeLight));
+	_subtitleFont = _subtitleFontKeepalive.get();
+#endif
+
+	if (!_subtitleFont)
+		_subtitleFont = FontMan.getFontByUsage(Graphics::FontManager::kLocalizedFont);
+
 	if (!_subtitleFont)
 		warning("Couldn't load subtitle font, subtitles will be disabled");
+
+	_menuInterface.reset(new RuntimeMenuInterface(this));
 }
 
 Runtime::~Runtime() {
 }
 
-void Runtime::initSections(Common::Rect gameRect, Common::Rect menuRect, Common::Rect trayRect, const Graphics::PixelFormat &pixFmt) {
+void Runtime::initSections(const Common::Rect &gameRect, const Common::Rect &menuRect, const Common::Rect &trayRect, const Common::Rect &fullscreenMenuRect, const Graphics::PixelFormat &pixFmt) {
 	_gameSection.init(gameRect, pixFmt);
 	_menuSection.init(menuRect, pixFmt);
 	_traySection.init(trayRect, pixFmt);
+	_fullscreenMenuSection.init(fullscreenMenuRect, pixFmt);
 }
 
 void Runtime::loadCursors(const char *exeName) {
@@ -875,6 +1004,9 @@ bool Runtime::runFrame() {
 		case kGameStateGyroAnimation:
 			moreActions = runGyroAnimation();
 			break;
+		case kGameStateMenu:
+			moreActions = _menuPage->run();
+			break;
 		default:
 			error("Unknown game state");
 			return false;
@@ -890,6 +1022,7 @@ bool Runtime::runFrame() {
 	uint32 timestamp = g_system->getMillis();
 
 	updateSounds(timestamp);
+	updateSubtitles();
 
 	return true;
 }
@@ -912,8 +1045,7 @@ bool Runtime::bootGame(bool newGame) {
 
 	if (newGame) {
 		if (_gameID == GID_REAH) {
-			// TODO: Change to the logo instead (0xb1) instead when menus are implemented
-			changeToScreen(1, 0xb0);
+			changeToScreen(1, 0xb1);
 		} else
 			error("Couldn't figure out what screen to start on");
 	}
@@ -993,6 +1125,15 @@ bool Runtime::bootGame(bool newGame) {
 	loadSubtitles(codePage);
 	debug(1, "Subtitles loaded OK");
 
+	_uiGraphics.resize(24);
+	for (uint i = 0; i < _uiGraphics.size(); i++) {
+		if (_gameID == GID_REAH) {
+			_uiGraphics[i] = loadGraphic(Common::String::format("Image%03u", static_cast<uint>(_languageIndex * 100u + i)), false);
+			if (_languageIndex != 0 && !_uiGraphics[i])
+				_uiGraphics[i] = loadGraphic(Common::String::format("Image%03u", static_cast<uint>(i)), false);
+		}
+	}
+
 	return true;
 }
 
@@ -1034,6 +1175,15 @@ bool Runtime::runIdle() {
 			_animPlayWhileIdle = false;
 			sanim.nextStartTime = timestamp + sanim.params.repeatDelay * 1000u;
 			sanim.currentAlternation = 1 - sanim.currentAlternation;
+
+			if (_idleLockInteractions) {
+				_idleLockInteractions = false;
+				bool changedState = dischargeIdleMouseMove();
+				if (changedState) {
+					drawCompass();
+					return true;
+				}
+			}
 		}
 	} else if (_haveIdleAnimations[_direction]) {
 		// Try to re-trigger
@@ -1042,6 +1192,14 @@ bool Runtime::runIdle() {
 			const AnimationDef &animDef = sanim.animDefs[sanim.currentAlternation];
 			changeAnimation(animDef, animDef.firstFrame, false, _animSpeedStaticAnim);
 			_animPlayWhileIdle = true;
+
+			_idleLockInteractions = sanim.params.lockInteractions;
+			if (_idleLockInteractions) {
+				_panoramaState = kPanoramaStateInactive;
+				bool changedState = dischargeIdleMouseMove();
+				assert(!changedState);	// Shouldn't be changing state from this!
+				(void)changedState;
+			}
 		}
 	}
 
@@ -1061,32 +1219,36 @@ bool Runtime::runIdle() {
 				return true;
 			}
 		} else if (osEvent.type == kOSEventTypeLButtonUp) {
-			PanoramaState oldPanoramaState = _panoramaState;
-			_panoramaState = kPanoramaStateInactive;
+			if (_inGameMenuState != kInGameMenuStateInvisible) {
+				dischargeInGameMenuMouseUp();
+			} else {
+				PanoramaState oldPanoramaState = _panoramaState;
+				_panoramaState = kPanoramaStateInactive;
 
-			// This is the correct place for matching the original game's behavior, not switching to panorama
-			resetInventoryHighlights();
+				// This is the correct place for matching the original game's behavior, not switching to panorama
+				resetInventoryHighlights();
 
-			if (_lmbReleaseWasClick) {
-				bool changedState = dischargeIdleClick();
-				if (changedState) {
-					drawCompass();
-					return true;
+				if (_lmbReleaseWasClick) {
+					bool changedState = dischargeIdleClick();
+					if (changedState) {
+						drawCompass();
+						return true;
+					}
 				}
-			}
 
-			// If the released from panorama mode, pick up any interactions at the new mouse location, and change the mouse back
-			if (oldPanoramaState != kPanoramaStateInactive) {
-				changeToCursor(_cursors[kCursorArrow]);
+				// If the released from panorama mode, pick up any interactions at the new mouse location, and change the mouse back
+				if (oldPanoramaState != kPanoramaStateInactive) {
+					changeToCursor(_cursors[kCursorArrow]);
 
-				// Clear idle interaction so that if a drag occurs but doesn't trigger a panorama or other state change,
-				// interactions are re-detected here.
-				_idleIsOnInteraction = false;
+					// Clear idle interaction so that if a drag occurs but doesn't trigger a panorama or other state change,
+					// interactions are re-detected here.
+					_idleIsOnInteraction = false;
 
-				bool changedState = dischargeIdleMouseMove();
-				if (changedState) {
-					drawCompass();
-					return true;
+					bool changedState = dischargeIdleMouseMove();
+					if (changedState) {
+						drawCompass();
+						return true;
+					}
 				}
 			}
 		} else if (osEvent.type == kOSEventTypeLButtonDown) {
@@ -1094,6 +1256,40 @@ bool Runtime::runIdle() {
 			if (changedState) {
 				drawCompass();
 				return true;
+			}
+		} else if (osEvent.type == kOSEventTypeKeymappedEvent) {
+			if (!_lmbDown) {
+				switch (osEvent.keymappedEvent) {
+				case kKeymappedEventHelp:
+					if (_gameID == GID_REAH)
+						changeToMenuPage(createMenuReahHelp());
+					else
+						error("Don't have a help menu for this game");
+					return true;
+				case kKeymappedEventLoadGame:
+					if (g_engine->loadGameDialog())
+						return true;
+					break;
+				case kKeymappedEventSaveGame:
+					if (g_engine->saveGameDialog())
+						return true;
+					break;
+				case kKeymappedEventPause:
+					if (_gameID == GID_REAH)
+						changeToMenuPage(createMenuReahPause());
+					else
+						error("Don't have a pause menu for this game");
+					return true;
+				case kKeymappedEventQuit:
+					if (_gameID == GID_REAH)
+						changeToMenuPage(createMenuReahQuit());
+					else
+						error("Don't have a quit menu for this game");
+					return true;
+
+				default:
+					break;
+				}
 			}
 		}
 	}
@@ -1180,6 +1376,8 @@ bool Runtime::runWaitForAnimation() {
 				_gameState = kGameStateScript;
 				return true;
 			}
+		} else if (evt.type == kOSEventTypeKeymappedEvent && evt.keymappedEvent == kKeymappedEventSkipAnimation) {
+			_animFrameRateLock = Fraction(600, 1);
 		}
 	}
 
@@ -1413,6 +1611,36 @@ void Runtime::continuePlayingAnimation(bool loop, bool useStopFrame, bool &outAn
 
 		update3DSounds();
 
+		AnimSubtitleMap_t::const_iterator animSubtitlesIt = _animSubtitles.find(_loadedAnimation);
+		if (animSubtitlesIt != _animSubtitles.end()) {
+			const FrameToSubtitleMap_t &frameMap = animSubtitlesIt->_value;
+
+			FrameToSubtitleMap_t::const_iterator frameIt = frameMap.find(_animDisplayingFrame);
+			if (frameIt != frameMap.end()) {
+				if (!millis)
+					millis = g_system->getMillis();
+
+				const SubtitleDef &subDef = frameIt->_value;
+
+				_subtitleQueue.clear();
+				_isDisplayingSubtitles = false;
+
+				SubtitleQueueItem queueItem;
+				queueItem.startTime = millis;
+				queueItem.endTime = millis + 1000u;
+
+				for (int ch = 0; ch < 3; ch++)
+					queueItem.color[ch] = subDef.color[ch];
+
+				if (subDef.durationInDeciseconds != 1)
+					queueItem.endTime = queueItem.startTime + subDef.durationInDeciseconds * 100u;
+
+				queueItem.str = subDef.str.decode(Common::kUtf8);
+
+				_subtitleQueue.push_back(queueItem);
+			}
+		}
+
 		if (_animPlaylist) {
 			uint decodeFrameInPlaylist = _animDisplayingFrame - _animFirstFrame;
 			for (const SfxPlaylistEntry &playlistEntry : _animPlaylist->entries) {
@@ -1544,8 +1772,7 @@ bool Runtime::runScript() {
 			DISPATCH_OP(StopSndLO);
 
 			DISPATCH_OP(Music);
-			DISPATCH_OP(MusicUp);
-			DISPATCH_OP(MusicDn);
+			DISPATCH_OP(MusicVolRamp);
 			DISPATCH_OP(Parm0);
 			DISPATCH_OP(Parm1);
 			DISPATCH_OP(Parm2);
@@ -1563,6 +1790,7 @@ bool Runtime::runScript() {
 			DISPATCH_OP(Dup);
 			DISPATCH_OP(Swap);
 			DISPATCH_OP(Say1);
+			DISPATCH_OP(Say2);
 			DISPATCH_OP(Say3);
 			DISPATCH_OP(Say3Get);
 			DISPATCH_OP(SetTimer);
@@ -1639,6 +1867,14 @@ void Runtime::terminateScript() {
 
 	if (_havePendingScreenChange)
 		changeToScreen(_roomNumber, _screenNumber);
+
+	if (_scriptEnv.exitToMenu && _gameState == kGameStateIdle) {
+		changeToCursor(_cursors[kCursorArrow]);
+		if (_gameID == GID_REAH)
+			changeToMenuPage(createMenuReahMain());
+		else
+			error("Missing main menu behavior for this game");
+	}
 }
 
 bool Runtime::checkCompletionConditions() {
@@ -1750,6 +1986,8 @@ bool Runtime::popOSEvent(OSEvent &evt) {
 			_lmbReleaseWasClick = !_lmbDragging;
 			_lmbDown = false;
 			_lmbDragging = false;
+		} else if (tempEvent.type == kOSEventTypeKeymappedEvent) {
+			processUniversalKeymappedEvents(tempEvent.keymappedEvent);
 		}
 
 		evt = tempEvent;
@@ -1757,6 +1995,63 @@ bool Runtime::popOSEvent(OSEvent &evt) {
 	}
 
 	return false;
+}
+
+void Runtime::processUniversalKeymappedEvents(KeymappedEvent evt) {
+	const int soundSettingGranularity = 25;
+
+	switch (evt) {
+	case kKeymappedEventMusicToggle:
+		ConfMan.setBool("vcruise_mute_music", !(ConfMan.hasKey("vcruise_mute_music")) || !(ConfMan.getBool("vcruise_mute_music")), ConfMan.getActiveDomainName());
+		g_engine->syncSoundSettings();
+		if (_menuPage)
+			_menuPage->onSettingsChanged();
+		break;
+	case kKeymappedEventMusicVolumeUp: {
+			int newVol = ConfMan.getInt("music_volume") + soundSettingGranularity;
+			if (newVol > Audio::Mixer::kMaxMixerVolume)
+				newVol = Audio::Mixer::kMaxMixerVolume;
+			ConfMan.setInt("music_volume", newVol, ConfMan.getActiveDomainName());
+			g_engine->syncSoundSettings();
+			if (_menuPage)
+				_menuPage->onSettingsChanged();
+		} break;
+	case kKeymappedEventMusicVolumeDown: {
+			int newVol = ConfMan.getInt("music_volume") - soundSettingGranularity;
+			if (newVol < 0)
+				newVol = 0;
+			ConfMan.setInt("music_volume", newVol, ConfMan.getActiveDomainName());
+			g_engine->syncSoundSettings();
+			if (_menuPage)
+				_menuPage->onSettingsChanged();
+		} break;
+	case kKeymappedEventSoundToggle:
+		ConfMan.setBool("vcruise_mute_sound", !(ConfMan.hasKey("vcruise_mute_sound")) || !(ConfMan.getBool("vcruise_mute_sound")), ConfMan.getActiveDomainName());
+		g_engine->syncSoundSettings();
+		if (_menuPage)
+			_menuPage->onSettingsChanged();
+		break;
+	case kKeymappedEventSoundVolumeUp: {
+			int newVol = ConfMan.getInt("sfx_volume") + soundSettingGranularity;
+			if (newVol > Audio::Mixer::kMaxMixerVolume)
+				newVol = Audio::Mixer::kMaxMixerVolume;
+			ConfMan.setInt("sfx_volume", newVol, ConfMan.getActiveDomainName());
+			g_engine->syncSoundSettings();
+			if (_menuPage)
+				_menuPage->onSettingsChanged();
+		} break;
+	case kKeymappedEventSoundVolumeDown: {
+			int newVol = ConfMan.getInt("sfx_volume") - soundSettingGranularity;
+			if (newVol < 0)
+				newVol = 0;
+			ConfMan.setInt("sfx_volume", newVol, ConfMan.getActiveDomainName());
+			g_engine->syncSoundSettings();
+			if (_menuPage)
+				_menuPage->onSettingsChanged();
+		} break;
+	default:
+		break;
+	}
 }
 
 void Runtime::queueOSEvent(const OSEvent &evt) {
@@ -2057,7 +2352,8 @@ void Runtime::returnToIdleState() {
 			sanim.currentAlternation = 1;
 		}
 	}
-
+	
+	_idleLockInteractions = false;
 	_idleIsOnInteraction = false;
 	_idleHaveClickInteraction = false;
 	_idleHaveDragInteraction = false;
@@ -2085,43 +2381,15 @@ void Runtime::changeToCursor(const Common::SharedPtr<Graphics::WinCursorGroup> &
 bool Runtime::dischargeIdleMouseMove() {
 	const MapScreenDirectionDef *sdDef = _map.getScreenDirection(_screenNumber, _direction);
 
-	if (_panoramaState == kPanoramaStateInactive) {
-		Common::Point relMouse(_mousePos.x - _gameSection.rect.left, _mousePos.y - _gameSection.rect.top);
+	if (_inGameMenuState != kInGameMenuStateInvisible) {
+		checkInGameMenuHover();
 
-		bool isOnInteraction = false;
-		uint interactionID = 0;
-		if (sdDef) {
-			for (const InteractionDef &idef : sdDef->interactions) {
-				if (idef.objectType == 1 && idef.rect.contains(relMouse)) {
-					isOnInteraction = true;
-					interactionID = idef.interactionID;
-					break;
-				}
-			}
-		}
+		// If still in the menu, ignore anything else
+		if (_inGameMenuState != kInGameMenuStateInvisible)
+			return false;
+	}
 
-		if (_idleIsOnInteraction && (!isOnInteraction || interactionID != _idleInteractionID)) {
-			// Mouse left the previous interaction
-			_idleIsOnInteraction = false;
-			_idleHaveClickInteraction = false;
-			_idleHaveDragInteraction = false;
-			changeToCursor(_cursors[kCursorArrow]);
-			resetInventoryHighlights();
-		}
-
-		if (isOnInteraction && _idleIsOnInteraction == false) {
-			_idleIsOnInteraction = true;
-			_idleInteractionID = interactionID;
-
-			// New interaction, is there a script?
-			Common::SharedPtr<Script> script = findScriptForInteraction(interactionID);
-
-			if (script) {
-				activateScript(script, ScriptEnvironmentVars());
-				return true;
-			}
-		}
-	} else {
+	if (_panoramaState != kPanoramaStateInactive) {
 		uint interactionID = 0;
 
 		Common::Point panRelMouse = _mousePos - _panoramaAnchor;
@@ -2155,11 +2423,58 @@ bool Runtime::dischargeIdleMouseMove() {
 		}
 	}
 
+	Common::Point relMouse(_mousePos.x - _gameSection.rect.left, _mousePos.y - _gameSection.rect.top);
+
+	bool isOnInteraction = false;
+	uint interactionID = 0;
+	if (sdDef && !_idleLockInteractions) {
+		for (const InteractionDef &idef : sdDef->interactions) {
+			if (idef.objectType == 1 && idef.rect.contains(relMouse)) {
+				isOnInteraction = true;
+				interactionID = idef.interactionID;
+				break;
+			}
+		}
+	}
+
+	if (_idleIsOnInteraction && (!isOnInteraction || interactionID != _idleInteractionID)) {
+		// Mouse left the previous interaction
+		_idleIsOnInteraction = false;
+		_idleHaveClickInteraction = false;
+		_idleHaveDragInteraction = false;
+		changeToCursor(_cursors[kCursorArrow]);
+		resetInventoryHighlights();
+	}
+
+	if (isOnInteraction && _idleIsOnInteraction == false) {
+		_idleIsOnInteraction = true;
+		_idleInteractionID = interactionID;
+
+		// New interaction, is there a script?
+		Common::SharedPtr<Script> script = findScriptForInteraction(interactionID);
+
+		if (script) {
+			activateScript(script, ScriptEnvironmentVars());
+			return true;
+		}
+	}
+
+	if (_panoramaState == kPanoramaStateInactive)
+		checkInGameMenuHover();
+
 	// Didn't do anything
 	return false;
 }
 
 bool Runtime::dischargeIdleMouseDown() {
+	if (_inGameMenuState != kInGameMenuStateInvisible) {
+		if (_inGameMenuState == kInGameMenuStateHoveringActive) {
+			_inGameMenuState = kInGameMenuStateClickingOver;
+			drawInGameMenuButton(_inGameMenuActiveElement);
+		}
+		return false;
+	}
+
 	if (_idleIsOnInteraction && _idleHaveDragInteraction) {
 		// Interaction, is there a script?
 		Common::SharedPtr<Script> script = findScriptForInteraction(_idleInteractionID);
@@ -2319,7 +2634,7 @@ void Runtime::loadFrameData2(Common::SeekableReadStream *stream) {
 }
 
 void Runtime::changeMusicTrack(int track) {
-	if (track == _musicTrack)
+	if (track == _musicTrack && _musicPlayer.get() != nullptr)
 		return;
 
 	_musicPlayer.reset();
@@ -2332,7 +2647,7 @@ void Runtime::changeMusicTrack(int track) {
 			Common::SharedPtr<Audio::AudioStream> loopingStream(Audio::makeLoopingAudioStream(audioStream, 0));
 
 			_musicPlayer.reset(new AudioPlayer(_mixer, loopingStream, Audio::Mixer::kMusicSoundType));
-			_musicPlayer->play(100, 0);
+			_musicPlayer->play(_musicVolume, 0);
 		}
 	} else {
 		warning("Music file '%s' is missing", wavFileName.c_str());
@@ -2400,6 +2715,10 @@ void Runtime::changeAnimation(const AnimationDef &animDef, uint initialFrame, bo
 		if (twoDtFile.open(twoDtFileName))
 			loadFrameData2(&twoDtFile);
 		twoDtFile.close();
+
+		_loadedAnimationHasSound = (_animDecoder->getAudioTrackCount() > 0);
+
+		stopSubtitles();
 	}
 
 	if (_animDecoderState == kAnimDecoderStatePlaying) {
@@ -2425,7 +2744,7 @@ void Runtime::changeAnimation(const AnimationDef &animDef, uint initialFrame, bo
 		_animFrameRateLock = Fraction(_scriptEnv.fpsOverride, 1);
 		_scriptEnv.fpsOverride = 0;
 	} else {
-		if (!_fastAnimationMode && _animDecoder && _animDecoder->getAudioTrackCount() == 0)
+		if (!_fastAnimationMode && _animDecoder && !_loadedAnimationHasSound)
 			_animFrameRateLock = defaultFrameRate;
 	}
 
@@ -2462,12 +2781,15 @@ void Runtime::triggerSound(bool looping, SoundInstance &snd, uint volume, int32 
 
 		snd.isSilencedLoop = true;
 		snd.endTime = 0;
+		snd.duration = 0;
 		return;
 	}
 
 	snd.isSilencedLoop = false;
 
 	SoundCache *cache = loadCache(snd);
+
+	snd.duration = cache->stream->getLength().msecs();
 
 	// Reset if looping state changes
 	if (cache->loopingStream && !looping) {
@@ -2517,6 +2839,65 @@ void Runtime::triggerSoundRamp(SoundInstance &snd, uint durationMSec, uint newVo
 
 	if (durationMSec)
 		snd.rampRatePerMSec = 65536 / durationMSec;
+}
+
+void Runtime::triggerWaveSubtitles(const SoundInstance &snd, const Common::String &id) {
+	char appendedCode[4] = {'_', '0', '0', '\0'};
+
+	char digit1 = '0';
+	char digit2 = '0';
+
+	stopSubtitles();
+
+	uint32 currentTime = g_system->getMillis(true);
+
+	uint32 soundEndTime = currentTime + snd.duration;
+
+	for (;;) {
+		if (digit2 == '9') {
+			digit2 = '0';
+
+			if (digit1 == '9')
+				return;	// This should never happen
+
+			digit1++;
+		} else
+			digit2++;
+
+		appendedCode[1] = digit1;
+		appendedCode[2] = digit2;
+
+		Common::String subtitleID = id + appendedCode;
+
+		WaveSubtitleMap_t::const_iterator subIt = _waveSubtitles.find(subtitleID);
+
+		if (subIt != _waveSubtitles.end()) {
+			const SubtitleDef &subDef = subIt->_value;
+
+			SubtitleQueueItem queueItem;
+			queueItem.startTime = currentTime;
+			queueItem.endTime = soundEndTime + 1000u;
+
+			if (_subtitleQueue.size() > 0)
+				queueItem.startTime = _subtitleQueue.back().endTime;
+
+			for (int ch = 0; ch < 3; ch++)
+				queueItem.color[ch] = subDef.color[ch];
+
+			if (subDef.durationInDeciseconds != 1)
+				queueItem.endTime = queueItem.startTime + subDef.durationInDeciseconds * 100u;
+
+			queueItem.str = subDef.str.decode(Common::kUtf8);
+
+			_subtitleQueue.push_back(queueItem);
+		}
+	}
+}
+
+void Runtime::stopSubtitles() {
+	_subtitleQueue.clear();
+	_isDisplayingSubtitles = false;
+	redrawTray();
 }
 
 void Runtime::stopSound(SoundInstance &sound) {
@@ -2580,6 +2961,102 @@ void Runtime::updateSounds(uint32 timestamp) {
 					assert(snd.isSilencedLoop == false);
 				}
 			}
+		}
+	}
+
+	if (_musicVolumeRampRatePerMSec != 0) {
+		bool negative = (_musicVolumeRampRatePerMSec < 0);
+
+		uint32 rampMax = 0;
+		uint32 absRampRate = 0;
+		if (negative) {
+			rampMax = _musicVolumeRampStartVolume - _musicVolumeRampEnd;
+			absRampRate = -_musicVolumeRampRatePerMSec;
+		} else {
+			rampMax = _musicVolumeRampEnd - _musicVolumeRampStartVolume;
+			absRampRate = _musicVolumeRampRatePerMSec;
+		}
+
+		uint32 rampTime = timestamp - _musicVolumeRampStartTime;
+
+		uint32 ramp = (rampTime * absRampRate) >> 16;
+		if (ramp > rampMax)
+			ramp = rampMax;
+
+		uint32 newVolume = _musicVolumeRampStartVolume;
+		if (negative)
+			newVolume -= ramp;
+		else
+			newVolume += ramp;
+
+		if (newVolume != _musicVolume) {
+			_musicPlayer->setVolume(static_cast<byte>(newVolume));
+			_musicVolume = newVolume;
+		}
+
+		if (newVolume == _musicVolumeRampEnd)
+			_musicVolumeRampRatePerMSec = 0;
+	}
+}
+
+void Runtime::updateSubtitles() {
+	uint32 timestamp = g_system->getMillis(true);
+
+	while (_subtitleQueue.size() > 0) {
+		const SubtitleQueueItem &queueItem = _subtitleQueue[0];
+
+		if (_isDisplayingSubtitles) {
+			assert(_subtitleQueue.size() > 0);
+
+			if (queueItem.endTime <= timestamp) {
+				_subtitleQueue.remove_at(0);
+				_isDisplayingSubtitles = false;
+
+				if (_subtitleQueue.size() == 0) {
+					// Is this really what we want to be doing?
+					if (_escOn)
+						clearTray();
+					else
+						redrawTray();
+				}
+			} else
+				break;
+		} else {
+			Graphics::ManagedSurface *surf = _traySection.surf.get();
+
+			Common::Array<Common::U32String> lines;
+
+			uint lineStart = 0;
+			for (;;) {
+				uint lineEnd = queueItem.str.find(static_cast<Common::u32char_type_t>('\\'), lineStart);
+				if (lineEnd == Common::U32String::npos) {
+					lines.push_back(queueItem.str.substr(lineStart));
+					break;
+				}
+
+				lines.push_back(queueItem.str.substr(lineStart, lineEnd - lineStart));
+				lineStart = lineEnd + 1;
+			}
+
+			clearTray();
+
+			if (_subtitleFont) {
+				int lineHeight = _subtitleFont->getFontHeight();
+
+				int topY = (surf->h - lineHeight * static_cast<int>(lines.size())) / 2;
+
+				uint32 textColor = surf->format.RGBToColor(queueItem.color[0], queueItem.color[1], queueItem.color[2]);
+
+				for (uint lineIndex = 0; lineIndex < lines.size(); lineIndex++) {
+					const Common::U32String &line = lines[lineIndex];
+					int lineWidth = _subtitleFont->getStringWidth(line);
+					_subtitleFont->drawString(surf, line, (surf->w - lineWidth) / 2, topY + static_cast<int>(lineIndex) * lineHeight, lineWidth, textColor);
+				}
+			}
+
+			commitSectionToScreen(_traySection, Common::Rect(0, 0, _traySection.rect.width(), _traySection.rect.height()));
+
+			_isDisplayingSubtitles = true;
 		}
 	}
 }
@@ -2926,7 +3403,7 @@ void Runtime::detectPanoramaDirections() {
 }
 
 void Runtime::detectPanoramaMouseMovement(uint32 timestamp) {
-	if (_panoramaState == kPanoramaStateInactive && (_lmbDragging || (_lmbDown && (timestamp - _lmbDownTime) >= 500)))
+	if (_panoramaState == kPanoramaStateInactive && _inGameMenuState == kInGameMenuStateInvisible && (_lmbDragging || (_lmbDown && (timestamp - _lmbDownTime) >= 500)) && !_idleLockInteractions)
 		panoramaActivate();
 }
 
@@ -2990,8 +3467,6 @@ void Runtime::inventoryAddItem(uint item) {
 	uint firstOpenSlot = kNumInventorySlots;
 
 	for (uint i = 0; i < kNumInventorySlots; i++) {
-		if (_inventory[i].itemID == item)
-			return;
 		if (_inventory[i].itemID == 0 && firstOpenSlot == kNumInventorySlots)
 			firstOpenSlot = i;
 	}
@@ -3016,11 +3491,36 @@ void Runtime::inventoryRemoveItem(uint itemID) {
 			item.itemID = 0;
 			item.graphic.reset();
 			drawInventory(slot);
+			break;
 		}
 	}
 }
 
+void Runtime::clearScreen() {
+	_system->fillScreen(_system->getScreenFormat().RGBToColor(0, 0, 0));
+}
+
+void Runtime::redrawTray() {
+	if (_subtitleQueue.size() != 0)
+		return;
+
+	clearTray();
+
+	drawCompass();
+
+	for (uint slot = 0; slot < kNumInventorySlots; slot++)
+		drawInventory(slot);
+}
+
+void Runtime::clearTray() {
+	uint32 blackColor = _traySection.surf->format.RGBToColor(0, 0, 0);
+	_traySection.surf->fillRect(Common::Rect(0, 0, _traySection.surf->w, _traySection.surf->h), blackColor);
+}
+
 void Runtime::drawInventory(uint slot) {
+	if (!isTrayVisible())
+		return;
+
 	Common::Rect trayRect = _traySection.rect;
 	trayRect.translate(-trayRect.left, -trayRect.top);
 
@@ -3058,6 +3558,9 @@ void Runtime::drawInventory(uint slot) {
 }
 
 void Runtime::drawCompass() {
+	if (!isTrayVisible())
+		return;
+
 	bool haveHorizontalRotate = false;
 	bool haveUp = false;
 	bool haveDown = false;
@@ -3124,6 +3627,10 @@ void Runtime::drawCompass() {
 	commitSectionToScreen(_traySection, lowerRightRect);
 }
 
+bool Runtime::isTrayVisible() const {
+	return _subtitleQueue.size() == 0 && !_loadedAnimationHasSound && _isInGame && (_gameState != kGameStateMenu);
+}
+
 void Runtime::resetInventoryHighlights() {
 	for (uint slot = 0; slot < kNumInventorySlots; slot++) {
 		InventoryItem &item = _inventory[slot];
@@ -3153,6 +3660,10 @@ Common::SharedPtr<Graphics::Surface> Runtime::loadGraphic(const Common::String &
 		warning("Couldn't open BMP file '%s'", filePath.c_str());
 		return nullptr;
 	}
+
+	// 1-byte BMPs are placeholders for no file
+	if (f.size() == 1)
+		return nullptr;
 
 	Image::BitmapDecoder bmpDecoder;
 	if (!bmpDecoder.loadStream(f)) {
@@ -3222,13 +3733,187 @@ void Runtime::loadSubtitles(Common::CodePage codePage) {
 						subDef->color[1] = ((colorCode >> 8) & 0xff);
 						subDef->color[2] = (colorCode & 0xff);
 						subDef->unknownValue1 = param1;
-						subDef->unknownValue2 = param2;
+						subDef->durationInDeciseconds = param2;
 						subDef->str = kv.value.substr(22, kv.value.size() - 23).decode(codePage).encode(Common::kUtf8);
 					}
 				}
 			}
 		}
 	}
+}
+
+void Runtime::changeToMenuPage(MenuPage *menuPage) {
+	_menuPage.reset(menuPage);
+
+	_gameState = kGameStateMenu;
+
+	menuPage->init(_menuInterface.get());
+	menuPage->start();
+}
+
+void Runtime::checkInGameMenuHover() {
+	if (_inGameMenuState == kInGameMenuStateInvisible) {
+		if (_menuSection.rect.contains(_mousePos) && _isInGame) {
+			// Figure out what elements should be visible
+
+			// Help
+			_inGameMenuButtonActive[0] = true;
+
+			// Save
+			_inGameMenuButtonActive[1] = (_saveGame != nullptr);
+
+			// Load
+			_inGameMenuButtonActive[2] = static_cast<VCruiseEngine *>(g_engine)->hasAnySave();
+
+			// Sound
+			_inGameMenuButtonActive[3] = true;
+
+			// Quit
+			_inGameMenuButtonActive[4] = true;
+
+			_inGameMenuState = kInGameMenuStateVisible;
+			for (uint i = 0; i < 5; i++)
+				drawInGameMenuButton(i);
+		}
+	}
+
+	if (_inGameMenuState == kInGameMenuStateInvisible)
+		return;
+
+	if (!_menuSection.rect.contains(_mousePos) || !_isInGame) {
+		if (_inGameMenuState != kInGameMenuStateClickingOver && _inGameMenuState != kInGameMenuStateClickingNotOver && _inGameMenuState != kInGameMenuStateClickingInactive) {
+			dismissInGameMenu();
+			return;
+		}
+	}
+
+	uint activeElement = 0;
+	if (_mousePos.x >= _menuSection.rect.left && _mousePos.y < _menuSection.rect.right)
+		activeElement = static_cast<uint>(_mousePos.x - _menuSection.rect.left) / 128u;
+
+	assert(activeElement < 5);
+
+	switch (_inGameMenuState) {
+	case kInGameMenuStateVisible:
+		if (_inGameMenuButtonActive[activeElement]) {
+			_inGameMenuState = kInGameMenuStateHoveringActive;
+			_inGameMenuActiveElement = activeElement;
+			drawInGameMenuButton(activeElement);
+		}
+		break;
+	case kInGameMenuStateHoveringActive:
+		if (activeElement != _inGameMenuActiveElement) {
+			uint oldElement = _inGameMenuActiveElement;
+
+			if (_inGameMenuButtonActive[activeElement]) {
+				_inGameMenuState = kInGameMenuStateHoveringActive;
+				_inGameMenuActiveElement = activeElement;
+				drawInGameMenuButton(activeElement);
+			} else
+				_inGameMenuState = kInGameMenuStateVisible;
+
+			drawInGameMenuButton(oldElement);
+		}
+		break;
+	case kInGameMenuStateClickingOver:
+		if (activeElement != _inGameMenuActiveElement) {
+			_inGameMenuState = kInGameMenuStateClickingNotOver;
+			drawInGameMenuButton(_inGameMenuActiveElement);
+		}
+		break;
+	case kInGameMenuStateClickingNotOver:
+		if (activeElement == _inGameMenuActiveElement) {
+			_inGameMenuState = kInGameMenuStateClickingOver;
+			drawInGameMenuButton(_inGameMenuActiveElement);
+		}
+		break;
+	case kInGameMenuStateClickingInactive:
+		break;
+	default:
+		error("Invalid menu state");
+		break;
+	}
+}
+
+void Runtime::dismissInGameMenu() {
+	const Common::Rect menuRect(0, 0, _menuSection.surf->w, _menuSection.surf->h);
+
+	uint32 blackColor = _menuSection.surf->format.RGBToColor(0, 0, 0);
+	_menuSection.surf->fillRect(menuRect, blackColor);
+
+	commitSectionToScreen(_menuSection, menuRect);
+
+	_inGameMenuState = kInGameMenuStateInvisible;
+}
+
+void Runtime::dischargeInGameMenuMouseUp() {
+	if (_inGameMenuState == kInGameMenuStateClickingOver) {
+		dismissInGameMenu();
+
+		// Handle click event
+		switch (_inGameMenuActiveElement) {
+		case 0:
+			changeToMenuPage(createMenuReahHelp());
+			break;
+		case 1:
+			g_engine->saveGameDialog();
+			break;
+		case 2:
+			g_engine->loadGameDialog();
+			break;
+		case 3:
+			changeToMenuPage(createMenuReahSound());
+			break;
+		case 4:
+			changeToMenuPage(createMenuReahQuit());
+			break;
+		default:
+			break;
+		}
+	} else {
+		_inGameMenuState = kInGameMenuStateVisible;
+		drawInGameMenuButton(_inGameMenuActiveElement);
+
+		checkInGameMenuHover();
+	}
+}
+
+void Runtime::drawInGameMenuButton(uint element) {
+	Common::Rect buttonDestRect = Common::Rect(element * 128u, 0, element * 128u + 128u, _menuSection.rect.height());
+
+	int buttonState = 0;
+	if (_inGameMenuButtonActive[element])
+		buttonState = 1;
+
+	switch (_inGameMenuState) {
+	case kInGameMenuStateVisible:
+		break;
+	case kInGameMenuStateHoveringActive:
+		if (element == _inGameMenuActiveElement)
+			buttonState = 2;
+		break;
+	case kInGameMenuStateClickingOver:
+		if (element == _inGameMenuActiveElement)
+			buttonState = 3;
+		break;
+	case kInGameMenuStateClickingNotOver:
+		if (element == _inGameMenuActiveElement)
+			buttonState = 2;
+		break;
+	case kInGameMenuStateClickingInactive:
+		break;
+	default:
+		error("Invalid menu state");
+		break;
+	}
+
+	Common::Point buttonTopLeftPoint = Common::Point(buttonDestRect.left, buttonDestRect.top);
+	buttonTopLeftPoint.y += buttonState * 44;
+
+	Common::Rect buttonSrcRect = Common::Rect(buttonTopLeftPoint.x, buttonTopLeftPoint.y, buttonTopLeftPoint.x + 128, buttonTopLeftPoint.y + _menuSection.rect.height());
+
+	_menuSection.surf->blitFrom(*_uiGraphics[4], buttonSrcRect, buttonDestRect);
+	commitSectionToScreen(_menuSection, buttonDestRect);
 }
 
 void Runtime::onLButtonDown(int16 x, int16 y) {
@@ -3267,15 +3952,26 @@ void Runtime::onKeyDown(Common::KeyCode keyCode) {
 	queueOSEvent(evt);
 }
 
+void Runtime::onKeymappedEvent(KeymappedEvent kme) {
+	OSEvent evt;
+	evt.type = kOSEventTypeKeymappedEvent;
+	evt.keymappedEvent = kme;
+
+	queueOSEvent(evt);
+}
+
 bool Runtime::canSave() const {
 	return !!_saveGame;
 }
 
 bool Runtime::canLoad() const {
-	return _gameState == kGameStateIdle;
+	return _gameState == kGameStateIdle || _gameState == kGameStateMenu;
 }
 
 void Runtime::recordSaveGameSnapshot() {
+	if (!_isInGame)
+		return;
+
 	_saveGame.reset();
 
 	uint32 timeBase = g_system->getMillis();
@@ -3306,6 +4002,12 @@ void Runtime::recordSaveGameSnapshot() {
 	snapshot->escOn = _escOn;
 
 	snapshot->musicTrack = _musicTrack;
+
+	snapshot->musicVolume = _musicVolume;
+
+	// If music volume is ramping, use the end volume and skip the ramp
+	if (_musicVolumeRampRatePerMSec != 0)
+		snapshot->musicVolume = _musicVolumeRampEnd;
 
 	snapshot->loadedAnimation = _loadedAnimation;
 	snapshot->animDisplayingFrame = _animDisplayingFrame;
@@ -3385,6 +4087,12 @@ void Runtime::restoreSaveGameSnapshot() {
 
 	_escOn = _saveGame->escOn;
 
+	_musicVolume = _saveGame->musicVolume;
+	_musicVolumeRampStartTime = 0;
+	_musicVolumeRampStartVolume = 0;
+	_musicVolumeRampRatePerMSec = 0;
+	_musicVolumeRampEnd = _musicVolume;
+
 	changeMusicTrack(_saveGame->musicTrack);
 
 	// Stop all sounds since the player instances are stored in the sound cache.
@@ -3435,12 +4143,14 @@ void Runtime::restoreSaveGameSnapshot() {
 	changeAnimation(animDef, false);
 
 	_gameState = kGameStateWaitingForAnimation;
+	_isInGame = true;
 
 	_havePendingScreenChange = true;
 	_forceScreenChange = true;
 
-	for (uint slot = 0; slot < kNumInventorySlots; slot++)
-		drawInventory(slot);
+	stopSubtitles();
+	clearScreen();
+	redrawTray();
 }
 
 void Runtime::saveGame(Common::WriteStream *stream) const {
@@ -3750,14 +4460,17 @@ void Runtime::scriptOpAnim(ScriptArg_t arg) {
 	_direction = stackArgs[kAnimDefStackArgs + 1];
 	_havePendingScreenChange = true;
 
-	
-	uint cursorID = kCursorArrow;
-	if (_scriptEnv.panInteractionID == kPanUpInteraction)
-		cursorID = _panCursors[kPanCursorDraggableUp | kPanCursorDirectionUp];
-	else if (_scriptEnv.panInteractionID == kPanDownInteraction)
-		cursorID = _panCursors[kPanCursorDraggableDown | kPanCursorDirectionDown];
+	if (_loadedAnimationHasSound)
+		changeToCursor(nullptr);
+	else {
+		uint cursorID = kCursorArrow;
+		if (_scriptEnv.panInteractionID == kPanUpInteraction)
+			cursorID = _panCursors[kPanCursorDraggableUp | kPanCursorDirectionUp];
+		else if (_scriptEnv.panInteractionID == kPanDownInteraction)
+			cursorID = _panCursors[kPanCursorDraggableDown | kPanCursorDirectionDown];
 
-	changeToCursor(_cursors[cursorID]);
+		changeToCursor(_cursors[cursorID]);
+	}
 }
 
 void Runtime::scriptOpStatic(ScriptArg_t arg) {
@@ -3888,6 +4601,7 @@ void Runtime::scriptOpItemHighlightSet(ScriptArg_t arg) {
 		if (item.itemID == static_cast<uint>(stackArgs[0])) {
 			item.highlighted = isHighlighted;
 			drawInventory(slot);
+			break;
 		}
 	}
 }
@@ -4125,19 +4839,30 @@ void Runtime::scriptOpMusic(ScriptArg_t arg) {
 	changeMusicTrack(stackArgs[0]);
 }
 
-void Runtime::scriptOpMusicUp(ScriptArg_t arg) {
+void Runtime::scriptOpMusicVolRamp(ScriptArg_t arg) {
 	TAKE_STACK_INT(2);
 
-	warning("Music volume ramp up is not implemented");
-	(void)stackArgs;
+	uint32 duration = static_cast<uint32>(stackArgs[0]) * 100u;
+	uint32 newVolume = stackArgs[1];
+
+	_musicVolumeRampRatePerMSec = 0;
+
+	if (duration == 0) {
+		_musicVolume = newVolume;
+		if (_musicPlayer)
+			_musicPlayer->setVolume(newVolume);
+	} else {
+		if (newVolume != _musicVolume) {
+			uint32 timestamp = g_system->getMillis();
+
+			_musicVolumeRampRatePerMSec = (static_cast<int32>(newVolume) - static_cast<int32>(_musicVolume)) * 65536 / static_cast<int32>(duration);
+			_musicVolumeRampStartTime = timestamp;
+			_musicVolumeRampStartVolume = _musicVolume;
+			_musicVolumeRampEnd = newVolume;
+		}
+	}
 }
 
-void Runtime::scriptOpMusicDn(ScriptArg_t arg) {
-	TAKE_STACK_INT(2);
-
-	warning("Music volume ramp down is not implemented");
-	(void)stackArgs;
-}
 
 void Runtime::scriptOpParm0(ScriptArg_t arg) {
 	TAKE_STACK_INT(4);
@@ -4254,13 +4979,20 @@ void Runtime::scriptOpVolumeDn2(ScriptArg_t arg) {
 	TAKE_STACK_INT_NAMED(1, sndParamArgs);
 	TAKE_STACK_VAR_NAMED(1, sndIDArgs);
 
-	StackInt_t soundID = 0;
-	SoundInstance *cachedSound = nullptr;
-	resolveSoundByNameOrID(sndIDArgs[0], true, soundID, cachedSound);
+	uint32 durationMSec = static_cast<uint>(sndParamArgs[0]) * 100u;
 
-	// FIXME: Just do this instantly
-	if (cachedSound)
-		triggerSoundRamp(*cachedSound, 1, sndParamArgs[0], false);
+	if (sndIDArgs[0].type == StackValue::kNumber && sndIDArgs[0].value.i == 0) {
+		// Apply to all sounds
+		for (const Common::SharedPtr<SoundInstance> &sndPtr : _activeSounds)
+			triggerSoundRamp(*sndPtr, durationMSec, 0, true);
+	} else {
+		StackInt_t soundID = 0;
+		SoundInstance *cachedSound = nullptr;
+		resolveSoundByNameOrID(sndIDArgs[0], true, soundID, cachedSound);
+
+		if (cachedSound)
+			triggerSoundRamp(*cachedSound, durationMSec, 0, true);
+	}
 }
 
 void Runtime::scriptOpVolumeDn3(ScriptArg_t arg) {
@@ -4356,8 +5088,28 @@ void Runtime::scriptOpSay1(ScriptArg_t arg) {
 	SoundInstance *cachedSound = nullptr;
 	resolveSoundByName(soundIDStr, true, soundID, cachedSound);
 
-	if (cachedSound)
+	if (cachedSound) {
 		triggerSound(false, *cachedSound, 100, 0, false, true);
+		triggerWaveSubtitles(*cachedSound, soundIDStr);
+	}
+}
+
+void Runtime::scriptOpSay2(ScriptArg_t arg) {
+	TAKE_STACK_INT_NAMED(2, sndParamArgs);
+	TAKE_STACK_STR_NAMED(1, sndNameArgs);
+
+	StackInt_t soundID = 0;
+	SoundInstance *cachedSound = nullptr;
+	resolveSoundByName(sndNameArgs[0], true, soundID, cachedSound);
+
+	if (cachedSound) {
+		// The third param seems to control sound interruption, but say3 is a Reah-only op and it's only ever 1.
+		if (sndParamArgs[1] != 1)
+			error("Invalid interrupt arg for say2, only 1 is supported.");
+
+		triggerSound(false, *cachedSound, 100, 0, false, true);
+		triggerWaveSubtitles(*cachedSound, sndNameArgs[0]);
+	}
 }
 
 void Runtime::scriptOpSay3(ScriptArg_t arg) {
@@ -4380,6 +5132,8 @@ void Runtime::scriptOpSay3(ScriptArg_t arg) {
 		if (Common::find(_triggeredOneShots.begin(), _triggeredOneShots.end(), oneShot) == _triggeredOneShots.end()) {
 			triggerSound(false, *cachedSound, 100, 0, false, true);
 			_triggeredOneShots.push_back(oneShot);
+
+			triggerWaveSubtitles(*cachedSound, sndNameArgs[0]);
 		}
 	}
 }
@@ -4505,7 +5259,24 @@ void Runtime::scriptOpSave0(ScriptArg_t arg) {
 }
 
 void Runtime::scriptOpExit(ScriptArg_t arg) {
-	warning("exit op not implemented");
+	_isInGame = false;
+	_saveGame.reset();
+
+	if (_gameID == GID_REAH) {
+		_havePendingScreenChange = true;
+		_forceScreenChange = true;
+
+		_roomNumber = 40;
+		_screenNumber = 0xa1;
+
+		terminateScript();
+
+		changeMusicTrack(0);
+		if (_musicPlayer)
+			_musicPlayer->setVolumeAndBalance(100, 0);
+	} else {
+		error("Don't know what screen to go to on exit");
+	}
 }
 
 void Runtime::scriptOpNot(ScriptArg_t arg) {
@@ -4644,8 +5415,14 @@ void Runtime::scriptOpEscOff(ScriptArg_t arg) {
 	_escOn = false;
 }
 
-OPCODE_STUB(EscGet)
-OPCODE_STUB(BackStart)
+void Runtime::scriptOpEscGet(ScriptArg_t arg) {
+	_scriptStack.push_back(StackValue(_scriptEnv.esc ? 1 : 0));
+	_scriptEnv.esc = false;
+}
+
+void Runtime::scriptOpBackStart(ScriptArg_t arg) {
+	_scriptEnv.exitToMenu = true;
+}
 
 void Runtime::scriptOpAnimName(ScriptArg_t arg) {
 	if (_roomNumber >= _roomDefs.size())

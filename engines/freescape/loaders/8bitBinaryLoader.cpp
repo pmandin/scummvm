@@ -187,7 +187,7 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 		Common::String conditionSource;
 		if (byteSizeOfObject) {
 			Common::Array<uint8> conditionArray = readArray(file, byteSizeOfObject);
-			conditionSource = detokenise8bitCondition(conditionArray, instructions);
+			conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
 			// instructions = getInstructions(conditionSource);
 			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
 		}
@@ -257,7 +257,7 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 		// grab the object condition, if there is one
 		if (byteSizeOfObject) {
 			Common::Array<uint8> conditionArray = readArray(file, byteSizeOfObject);
-			conditionSource = detokenise8bitCondition(conditionArray, instructions);
+			conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
 			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
 		}
 		debugC(1, kFreescapeDebugParser, "End of object at %lx", file->pos());
@@ -438,10 +438,12 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	// debug("Condition Ptr: %x", cPtr);
 	debugC(1, kFreescapeDebugParser, "Pos before first object: %lx", file->pos());
 
+	// Driller specific
 	uint8 gasPocketX = 0;
 	uint8 gasPocketY = 0;
 	uint8 gasPocketRadius = 0;
-
+	// Castle specific
+	uint8 extraColor[4];
 	if (isEclipse()) {
 		byte idx = file->readByte();
 		name = idx < 8 ? eclipseRoomName[idx] : eclipseRoomName[8];
@@ -471,10 +473,10 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	} else if (isCastle()) {
 		byte idx = file->readByte();
 		name = _messagesList[idx + 41];
-		debug("byte: %d", file->readByte());
-		debug("byte: %d", file->readByte());
-		debug("byte: %d", file->readByte());
-		debug("byte: %d", file->readByte());
+		extraColor[0] = file->readByte();
+		extraColor[1] = file->readByte();
+		extraColor[2] = file->readByte();
+		extraColor[3] = file->readByte();
 	}
 	debugC(1, kFreescapeDebugParser, "Area name: %s", name.c_str());
 
@@ -511,10 +513,16 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	area->_scale = scale;
 	area->_skyColor = skyColor;
 	area->_groundColor = groundColor;
+
 	area->_inkColor = inkColor;
 	area->_paperColor = paperColor;
 	area->_usualBackgroundColor = usualBackgroundColor;
 	area->_underFireBackgroundColor = underFireBackgroundColor;
+
+	area->_extraColor[0] = extraColor[0];
+	area->_extraColor[1] = extraColor[1];
+	area->_extraColor[2] = extraColor[2];
+	area->_extraColor[3] = extraColor[3];
 
 	// Driller specific
 	area->_gasPocketPosition = Common::Point(32 * gasPocketX, 32 * gasPocketY);
@@ -526,11 +534,13 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 		uint32 lengthOfCondition = readField(file, 8);
 		debugC(1, kFreescapeDebugParser, "length of condition: %d", lengthOfCondition);
 		// get the condition
-		Common::Array<uint8> conditionArray = readArray(file, lengthOfCondition);
-		Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions);
-		area->_conditions.push_back(instructions);
-		area->_conditionSources.push_back(conditionSource);
-		debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
+		if (lengthOfCondition > 0) {
+			Common::Array<uint8> conditionArray = readArray(file, lengthOfCondition);
+			Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
+			area->_conditions.push_back(instructions);
+			area->_conditionSources.push_back(conditionSource);
+			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
+		}
 	}
 
 	debugC(1, kFreescapeDebugParser, "End of area at %lx", file->pos());
@@ -617,12 +627,13 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 		uint32 lengthOfCondition = readField(file, 8);
 		debugC(1, kFreescapeDebugParser, "length of condition: %d at %lx", lengthOfCondition, file->pos());
 		// get the condition
-		Common::Array<uint8> conditionArray = readArray(file, lengthOfCondition);
-		// debug("Global condition %d", numConditions + 1);
-		Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions);
-		_conditions.push_back(instructions);
-		_conditionSources.push_back(conditionSource);
-		debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
+		if (lengthOfCondition > 0) {
+			Common::Array<uint8> conditionArray = readArray(file, lengthOfCondition);
+			Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
+			_conditions.push_back(instructions);
+			_conditionSources.push_back(conditionSource);
+			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
+		}
 	}
 
 	if (isDriller()) {
@@ -757,7 +768,7 @@ void FreescapeEngine::loadMessagesFixedSize(Common::SeekableReadStream *file, in
 		file->read(buffer, size);
 		Common::String message = (const char *)buffer;
 		_messagesList.push_back(message);
-		debugC(1, kFreescapeDebugParser, "%s", _messagesList[_messagesList.size() - 1].c_str());
+		debugC(1, kFreescapeDebugParser, "'%s'", _messagesList[_messagesList.size() - 1].c_str());
 	}
 	free(buffer);
 }

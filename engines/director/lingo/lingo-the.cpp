@@ -27,7 +27,6 @@
 
 #include "director/director.h"
 #include "director/cast.h"
-#include "director/castmember.h"
 #include "director/cursor.h"
 #include "director/channel.h"
 #include "director/frame.h"
@@ -36,6 +35,9 @@
 #include "director/sprite.h"
 #include "director/score.h"
 #include "director/window.h"
+#include "director/castmember/castmember.h"
+#include "director/castmember/digitalvideo.h"
+#include "director/castmember/text.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-code.h"
@@ -1885,6 +1887,21 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		int index = LC::compareArrays(LC::eqData, obj, propName, true).u.i;
 		if (index > 0) {
 			d = obj.u.parr->arr[index - 1].v;
+		}
+		g_lingo->push(d);
+		return;
+	}
+	if (obj.type == RECT) {
+		if (propName.equalsIgnoreCase("left")) {
+			d = obj.u.farr->arr[0];
+		} else if (propName.equalsIgnoreCase("top")) {
+			d = obj.u.farr->arr[1];
+		} else if (propName.equalsIgnoreCase("right")) {
+			d = obj.u.farr->arr[2];
+		} else if (propName.equalsIgnoreCase("bottom")) {
+			d = obj.u.farr->arr[3];
+		} else {
+			g_lingo->lingoError("Lingo::getObjectProp: Rect <%s> has no property '%s'", obj.asString(true).c_str(), propName.c_str());
 		}
 		g_lingo->push(d);
 		return;

@@ -16,6 +16,7 @@ MODULE_OBJS := \
 	game/dialog2.o \
 	game/document.o \
 	game/documents_browser.o \
+	game/documents_browser_xml_parser.o \
 	game/gallery_menu.o \
 	game/game.o \
 	game/game_achievements.o \
@@ -39,6 +40,15 @@ MODULE_OBJS := \
 	game/options_menu.o \
 	game/owner_error_menu.o \
 	game/particle_xml_parser.o \
+	game/puzzle_cadenas.o \
+	game/puzzle_coffre.o \
+	game/puzzle_computer_hydra.o \
+	game/puzzle_computer_pwd.o \
+	game/puzzle_disjoncteur.o \
+	game/puzzle_hanjie.o \
+	game/puzzle_liquides.o \
+	game/puzzle_pentacle.o \
+	game/puzzle_transfusion.o \
 	game/question2.o \
 	game/scene_lights_xml_parser.o \
 	game/splash_screens.o \
@@ -94,6 +104,7 @@ MODULE_OBJS := \
 	te/te_obp.o \
 	te/te_palette.o \
 	te/te_particle.o \
+	te/te_pick_mesh.o \
 	te/te_pick_mesh2.o \
 	te/te_png.o \
 	te/te_quaternion.o \
@@ -103,6 +114,8 @@ MODULE_OBJS := \
 	te/te_resource.o \
 	te/te_resource_manager.o \
 	te/te_scene.o \
+	te/te_scene_warp.o \
+	te/te_scene_warp_xml_parser.o \
 	te/te_scrolling_layout.o \
 	te/te_scummvm_codec.o \
 	te/te_sound_manager.o \
@@ -122,8 +135,10 @@ MODULE_OBJS := \
 	te/te_vector3f32.o \
 	te/te_visual_fade.o \
 	te/te_warp.o \
+	te/te_warp_bloc.o \
 	te/te_warp_marker.o \
 	te/te_xml_parser.o \
+	te/te_zlib_jpeg.o \
 	te/te_xml_gui.o \
 	metaengine.o
 

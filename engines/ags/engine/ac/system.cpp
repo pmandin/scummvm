@@ -127,8 +127,14 @@ int System_GetVsync() {
 }
 
 void System_SetVsync(int newValue) {
-	if (_G(gfxDriver)->DoesSupportVsyncToggle())
-		_GP(scsystem).vsync = newValue;
+	if (_G(gfxDriver)->DoesSupportVsyncToggle()) {
+		System_SetVSyncInternal(newValue != 0);
+	}
+}
+
+void System_SetVSyncInternal(bool vsync) {
+	_GP(scsystem).vsync = vsync;
+	_GP(usetup).Screen.Params.VSync = vsync;
 }
 
 int System_GetWindowed() {
@@ -180,6 +186,9 @@ int System_GetVolume() {
 void System_SetVolume(int newvol) {
 	if ((newvol < 0) || (newvol > 100))
 		quit("!System.Volume: invalid volume - must be from 0-100");
+
+	if (newvol == _GP(play).digital_master_volume)
+		return;
 
 	_GP(play).digital_master_volume = newvol;
 

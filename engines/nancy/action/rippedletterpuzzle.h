@@ -22,16 +22,15 @@
 #ifndef NANCY_ACTION_RIPPEDLETTERPUZZLE_H
 #define NANCY_ACTION_RIPPEDLETTERPUZZLE_H
 
-#include "engines/nancy/renderobject.h"
 #include "engines/nancy/action/actionrecord.h"
 
 namespace Nancy {
 namespace Action {
 
-class RippedLetterPuzzle : public ActionRecord, public RenderObject {
+class RippedLetterPuzzle : public RenderActionRecord {
 public:
 	enum SolveState { kNotSolved, kWaitForSound };
-	RippedLetterPuzzle() : RenderObject(7), _pickedUpPiece(8) {}
+	RippedLetterPuzzle() : RenderActionRecord(7), _pickedUpPiece(8) {}
 	virtual ~RippedLetterPuzzle() {}
 
 	void init() override;
@@ -53,11 +52,9 @@ public:
 	SoundDescription _takeSound;
 	SoundDescription _dropSound;
 	SoundDescription _rotateSound;
-	SceneChangeDescription _solveExitScene;
+	SceneChangeWithFlag _solveExitScene;
 	SoundDescription _solveSound;
-	FlagDescription _flagOnSolve;
-	SceneChangeDescription _exitScene;
-	FlagDescription _flagOnExit;
+	SceneChangeWithFlag _exitScene;
 	Common::Rect _exitHotspot;
 
 	RenderObject _pickedUpPiece;

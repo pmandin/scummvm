@@ -33,7 +33,7 @@ uint8 k8bitMaxVariable = 64;
 uint8 k8bitMaxShield = 64;
 uint8 k8bitMaxEnergy = 64;
 
-Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition, FCLInstructionVector &instructions) {
+Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition, FCLInstructionVector &instructions, bool multipleConditionals) {
 	Common::String detokenisedStream;
 	Common::Array<uint8>::size_type bytePointer = 0;
 	Common::Array<uint8>::size_type sizeOfTokenisedContent = tokenisedCondition.size();
@@ -56,29 +56,30 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 
 	if (sizeOfTokenisedContent > 0)
 		detokenisedStream += Common::String::format("CONDITION FLAG: %x\n", tokenisedCondition[0]);
-	Token::Type newConditional = Token::UNKNOWN;
-	Token::Type oldConditional = Token::UNKNOWN;
+	uint16 newConditional = 0;
+	uint16 oldConditional = 0;
 
 	while (bytePointer < sizeOfTokenisedContent) {
 		// get the conditional type of the next operation
-		uint8 conditionalByte = tokenisedCondition[bytePointer];
+		uint8 conditionalByte = tokenisedCondition[bytePointer] & 0xc0;
+		//detokenisedStream += Common::String::format("CONDITION FLAG: %x\n", conditionalByte);
+		newConditional = 0;
 
-		if (conditionalByte & 0x80)
-			newConditional = Token::SHOTQ;
-		else if (conditionalByte & 0x40)
-			newConditional = Token::TIMERQ;
+		if (conditionalByte == 0x40)
+			newConditional = kConditionalTimeout;
+		else if (conditionalByte == 0x80)
+			newConditional = kConditionalShot;
+		else if (conditionalByte == 0xc0)
+			newConditional = kConditionalActivated;
 		else
-			newConditional = Token::COLLIDEDQ;
+			newConditional = kConditionalCollided;
 
 		// if the conditional type has changed then end the old conditional,
 		// if we were in one, and begin a new one
 		if (bytePointer == 0 || newConditional != oldConditional) {
 			oldConditional = newConditional;
 			FCLInstruction branch;
-			branch = FCLInstruction(oldConditional);
-
-			branch.setBranches(conditionalInstructions, nullptr);
-			instructions.push_back(branch);
+			branch = FCLInstruction(Token::CONDITIONAL);
 
 			if (bytePointer > 0) {
 				detokenisedStream += "ENDIF\n";
@@ -86,14 +87,24 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 				conditionalInstructions = new FCLInstructionVector();
 			}
 
-			if (oldConditional == Token::SHOTQ)
-				detokenisedStream += "IF SHOT? THEN\n";
-			else if (oldConditional == Token::TIMERQ)
-				detokenisedStream += "IF TIMER? THEN\n";
-			else if (oldConditional == Token::COLLIDEDQ)
-				detokenisedStream += "IF COLLIDED? THEN\n";
+			branch.setBranches(conditionalInstructions, nullptr);
+			branch.setSource(oldConditional); // conditional flag
+			instructions.push_back(branch);
+
+			detokenisedStream += "IF ";
+
+			if (oldConditional & kConditionalShot)
+				detokenisedStream += "SHOT? ";
+			else if (oldConditional & kConditionalTimeout)
+				detokenisedStream += "TIMER? ";
+			else if (oldConditional & kConditionalCollided)
+				detokenisedStream += "COLLIDED? ";
+			else if (oldConditional & kConditionalActivated)
+				detokenisedStream += "ACTIVATED? ";
 			else
 				error("Invalid conditional: %x", oldConditional);
+
+			detokenisedStream += "THEN\n";
 		}
 
 		// get the actual operation
@@ -124,6 +135,8 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 		case 0:
 			detokenisedStream += "NOP ";
 			currentInstruction = FCLInstruction(Token::NOP);
+			conditionalInstructions->push_back(currentInstruction);
+			currentInstruction = FCLInstruction(Token::UNKNOWN);
 			break; // NOP
 		case 1:    // add three-byte value to score
 		{
@@ -188,6 +201,7 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 
 		case 9:
 			detokenisedStream += "ADDVAR (1, v";
+			detokenisedStream += Common::String::format("%d)", tokenisedCondition[bytePointer]);
 			currentInstruction = FCLInstruction(Token::ADDVAR);
 			currentInstruction.setSource(tokenisedCondition[bytePointer]);
 			currentInstruction.setDestination(1);
@@ -198,6 +212,7 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 			break;
 		case 10:
 			detokenisedStream += "SUBVAR (1, v";
+			detokenisedStream += Common::String::format("%d)", tokenisedCondition[bytePointer]);
 			currentInstruction = FCLInstruction(Token::SUBVAR);
 			currentInstruction.setSource(tokenisedCondition[bytePointer]);
 			currentInstruction.setDestination(1);
@@ -355,10 +370,8 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 			break;
 
 		case 20:
-			detokenisedStream += "SETVAR ";
-			detokenisedStream += Common::String::format("(v%d, %d)", (int)tokenisedCondition[bytePointer], (int)tokenisedCondition[bytePointer + 1]);
-			bytePointer += 2;
-			numberOfArguments = 0;
+			detokenisedStream += "SETVAR (v";
+			currentInstruction = FCLInstruction(Token::SETVAR);
 			break;
 
 		case 35:
@@ -368,28 +381,32 @@ Common::String detokenise8bitCondition(Common::Array<uint8> &tokenisedCondition,
 
 		case 44:
 			detokenisedStream += "ELSE ";
+			currentInstruction = FCLInstruction(Token::ELSE);
+			conditionalInstructions->push_back(currentInstruction);
+			currentInstruction = FCLInstruction(Token::UNKNOWN);
+			numberOfArguments = 0;
 			break;
 
 		case 45:
 			detokenisedStream += "ENDIF ";
+			currentInstruction = FCLInstruction(Token::ENDIF);
+			conditionalInstructions->push_back(currentInstruction);
+			currentInstruction = FCLInstruction(Token::UNKNOWN);
+			numberOfArguments = 0;
 			break;
 
 		case 46:
-			detokenisedStream += "IFGTE ";
-			detokenisedStream += Common::String::format("(v%d, %d)", (int)tokenisedCondition[bytePointer], (int)tokenisedCondition[bytePointer + 1]);
-			bytePointer += 2;
-			numberOfArguments = 0;
+			detokenisedStream += "IFGTE (v";
+			currentInstruction = FCLInstruction(Token::IFGTEQ);
 			break;
 
 		case 47:
-			detokenisedStream += "IFLTE ";
-			detokenisedStream += Common::String::format("(v%d, %d)", (int)tokenisedCondition[bytePointer], (int)tokenisedCondition[bytePointer + 1]);
-			bytePointer += 2;
-			numberOfArguments = 0;
+			detokenisedStream += "IFLTE (v";
+			currentInstruction = FCLInstruction(Token::IFGTEQ);
 			break;
 
 		case 48:
-			detokenisedStream += "EXECUTE ";
+			detokenisedStream += "EXECUTE (";
 			currentInstruction = FCLInstruction(Token::EXECUTE);
 			break;
 		}

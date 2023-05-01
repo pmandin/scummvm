@@ -23,6 +23,7 @@
 #define MAIN_WAITING   (1 << 1)
 #define EMU_EXITED     (1 << 2)
 static uint8_t status = EMU_WAITING | MAIN_WAITING;
+static int scummvm_res = -1;
 
 #ifdef USE_LIBCO
 #include <libco.h>
@@ -75,9 +76,8 @@ static int retro_run_emulator(void) {
 static void retro_wrap_emulator(void) {
 
 	status &= ~EMU_EXITED;
-	retro_run_emulator();
+	scummvm_res = retro_run_emulator();
 	status |= EMU_EXITED;
-
 	retro_exit_to_main_thread();
 }
 
@@ -105,6 +105,8 @@ static void retro_free_emu_thread() {
 }
 
 void retro_switch_to_emu_thread() {
+	if (retro_emu_thread_exited() || !retro_emu_thread_initialized())
+		return;
 #ifdef USE_LIBCO
 	co_switch(emu_thread);
 #else
@@ -163,14 +165,17 @@ bool retro_init_emu_thread(void) {
 
 	if (!success)
 		retro_free_emu_thread();
+	else
+		status &= ~EMU_EXITED;
 
 	return success;
 }
 
 void retro_deinit_emu_thread() {
-	if (!retro_emu_thread_initialized())
-		return;
-	if (!retro_current_thread_is_main())
-		retro_switch_to_main_thread();
-	retro_free_emu_thread();
+	if (retro_emu_thread_initialized())
+		retro_free_emu_thread();
+}
+
+int retro_get_scummvm_res() {
+	return scummvm_res;
 }

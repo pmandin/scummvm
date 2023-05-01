@@ -46,7 +46,6 @@
 #include "graphics/macgui/mactext.h"
 
 #include "director/director.h"
-#include "director/castmember.h"
 #include "director/movie.h"
 #include "director/score.h"
 #include "director/sprite.h"
@@ -54,6 +53,7 @@
 #include "director/cursor.h"
 #include "director/channel.h"
 #include "director/util.h"
+#include "director/castmember/castmember.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-code.h"
@@ -727,7 +727,7 @@ Datum LC::addData(Datum &d1, Datum &d2) {
 	} else if (alignedType == INT) {
 		res = Datum(d1.asInt() + d2.asInt());
 	} else {
-		warning("LC::addData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
+		g_lingo->lingoError("LC::addData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
 	}
 	return res;
 }
@@ -751,7 +751,7 @@ Datum LC::subData(Datum &d1, Datum &d2) {
 	} else if (alignedType == INT) {
 		res = Datum(d1.asInt() - d2.asInt());
 	} else {
-		warning("LC::subData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
+		g_lingo->lingoError("LC::subData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
 	}
 	return res;
 }
@@ -775,7 +775,7 @@ Datum LC::mulData(Datum &d1, Datum &d2) {
 	} else if (alignedType == INT) {
 		res = Datum(d1.asInt() * d2.asInt());
 	} else {
-		warning("LC::mulData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
+		g_lingo->lingoError("LC::mulData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
 	}
 	return res;
 }
@@ -808,7 +808,7 @@ Datum LC::divData(Datum &d1, Datum &d2) {
 	} else if (alignedType == INT) {
 		res = Datum(d1.asInt() / d2.asInt());
 	} else {
-		warning("LC::divData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
+		g_lingo->lingoError("LC::divData(): not supported between types %s and %s", d1.type2str(), d2.type2str());
 	}
 
 	return res;
@@ -828,7 +828,7 @@ Datum LC::modData(Datum &d1, Datum &d2) {
 	int i1 = d1.asInt();
 	int i2 = d2.asInt();
 	if (i2 == 0) {
-		warning("LC::modData(): division by zero");
+		g_lingo->lingoError("LC::modData(): division by zero");
 		i2 = 1;
 	}
 
@@ -860,7 +860,7 @@ Datum LC::negateData(Datum &d) {
 	} else if (d.type == FLOAT) {
 		res = Datum(-d.asFloat());
 	} else {
-		warning("LC::negateData(): not supported for type %s", d.type2str());
+		g_lingo->lingoError("LC::negateData(): not supported for type %s", d.type2str());
 	}
 
 	return res;
@@ -1532,6 +1532,16 @@ void LC::call(const Common::String &name, int nargs, bool allowRetVal) {
 
 	// Handler
 	funcSym = g_lingo->getHandler(name);
+
+	if (g_lingo->_builtinListHandlers.contains(name) && nargs >= 1) {
+		// Lingo builtin functions in the "List" category have very strange override mechanics.
+		// If the first argument is an ARRAY or PARRAY, it will use the builtin.
+		// Otherwise, it will fall back to whatever handler is defined globally.
+		Datum firstArg = g_lingo->peek(nargs - 1);
+		if (firstArg.type == ARRAY || firstArg.type == PARRAY) {
+			funcSym = g_lingo->_builtinListHandlers[name];
+		}
+	}
 
 	if (funcSym.type == VOIDSYM) { // The built-ins could be overridden
 		// Builtin

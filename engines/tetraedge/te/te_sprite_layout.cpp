@@ -81,22 +81,21 @@ bool TeSpriteLayout::load(const Common::String &path) {
 
 	TeCore *core = g_engine->getCore();
 	Common::FSNode node = core->findFile(path);
-	if (load(node)) {
-		_tiledSurfacePtr->setLoadedPath(path);
-		return true;
-	}
-	return false;
+	if (!load(node, &path))
+		return false;
+	return true;
 }
 
-bool TeSpriteLayout::load(const Common::FSNode &node) {
+bool TeSpriteLayout::load(const Common::FSNode &node, const Common::String *forcePath) {
 	if (!node.exists()) {
 		_tiledSurfacePtr = new TeTiledSurface();
-		return true;
+		return false;
 	}
 
 	stop();
 	unload();
 
+	_tiledSurfacePtr->setLoadedPath(forcePath ? *forcePath : Common::String());
 	if (_tiledSurfacePtr->load(node)) {
 		const TeVector2s32 texSize = _tiledSurfacePtr->tiledTexture()->totalSize();
 		if (texSize._y <= 0) {
@@ -110,6 +109,7 @@ bool TeSpriteLayout::load(const Common::FSNode &node) {
 		updateMesh();
 	} else {
 		debug("Failed to load TeSpriteLayout %s", node.getPath().c_str());
+		_tiledSurfacePtr->setLoadedPath("");
 	}
 	return true;
 }

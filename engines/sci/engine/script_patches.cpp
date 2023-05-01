@@ -1175,32 +1175,25 @@ static const SciScriptPatcherEntry castleBrainSignatures[] = {
 };
 
 // ===========================================================================
+// EcoQuest 1
+
 // stayAndHelp::changeState (0) is called when ego swims to the left or right
 //  boundaries of room 660. Normally a textbox is supposed to get on screen
 //  but the call is wrong, so not only do we get an error message the script
 //  is also hanging because the cue won't get sent out
 //  This also happens in sierra sci
-// Applies to at least: PC-CD
+//
+// Applies to: PC-CD
 // Responsible method: stayAndHelp::changeState
 // Fixes bug: #5107
 static const uint16 ecoquest1SignatureStayAndHelp[] = {
-	0x3f, 0x01,                      // link 01
-	0x87, 0x01,                      // lap param[1]
-	0x65, 0x14,                      // aTop state
-	0x36,                            // push
 	0x3c,                            // dup
 	0x35, 0x00,                      // ldi 00
 	0x1a,                            // eq?
-	0x31, 0x1c,                      // bnt [next state]
-	0x76,                            // push0
-	0x45, 0x01, 0x00,                // callb [export 1 of script 0], 00 (switching control off)
-	SIG_MAGICDWORD,
-	0x38, SIG_UINT16(0x0122),        // pushi 0122
-	0x78,                            // push1
-	0x76,                            // push0
-	0x81, 0x00,                      // lag global[0]
-	0x4a, 0x06,                      // send 06 - call ego::setMotion(0)
+	0x31, 0x1c,                      // bnt 1c [next state]
+	SIG_ADDTOOFFSET(+13),
 	0x39, SIG_SELECTOR8(init),       // pushi init
+	SIG_MAGICDWORD,
 	0x39, 0x04,                      // pushi 04
 	0x76,                            // push0
 	0x76,                            // push0
@@ -1208,30 +1201,19 @@ static const uint16 ecoquest1SignatureStayAndHelp[] = {
 	0x7c,                            // pushSelf
 	0x51, 0x82,                      // class EcoNarrator
 	0x4a, 0x0c,                      // send 0c - call EcoNarrator::init(0, 0, 23, self) (BADLY BROKEN!)
-	0x33,                            // jmp [end]
 	SIG_END
 };
 
 static const uint16 ecoquest1PatchStayAndHelp[] = {
-	0x87, 0x01,                      // lap param[1]
-	0x65, 0x14,                      // aTop state
-	0x36,                            // push
-	0x2f, 0x22,                      // bt [next state] (this optimization saves 6 bytes)
-	0x39, 0x00,                      // pushi 0 (wasting 1 byte here)
-	0x45, 0x01, 0x00,                // callb [export 1 of script 0], 00 (switching control off)
-	0x38, PATCH_UINT16(0x0122),      // pushi 0122
-	0x78,                            // push1
-	0x76,                            // push0
-	0x81, 0x00,                      // lag global[0]
-	0x4a, 0x06,                      // send 06 - call ego::setMotion(0)
-	0x39, PATCH_SELECTOR8(init),     // pushi init
+	0x2f, 0x20,                      // bt 20 [next state] (saves 4 bytes)
+	PATCH_GETORIGINALBYTES(6, 15),
 	0x39, 0x06,                      // pushi 06
-	0x39, 0x02,                      // pushi 02 (additional 2 bytes)
+	0x7a,                            // push2
 	0x76,                            // push0
 	0x76,                            // push0
 	0x39, 0x17,                      // pushi 17
 	0x7c,                            // pushSelf
-	0x38, PATCH_UINT16(0x0280),      // pushi 280 (additional 3 bytes)
+	0x38, PATCH_UINT16(0x0280),      // pushi 0280
 	0x51, 0x82,                      // class EcoNarrator
 	0x4a, 0x10,                      // send 10 - call EcoNarrator::init(2, 0, 0, 23, self, 640)
 	PATCH_END
@@ -8429,13 +8411,14 @@ static const SciScriptPatcherEntry longbowSignatures[] = {
 
 // Pushing the penthouse elevator button in room 350 causes a broken polygon to
 //  be used for pathfinding. openObstacle:points is set to a local array of 17
-//  points but its size property is incorrectly set to 19. We fix the size so
-//  that the interpreter doesn't use the wrong values for pathfinding.
+//  points but its size property is incorrectly set to 19. In the first version
+//  of the game this was correct, but the array was changed without updating the
+//  size value. We fix the size so that the interpreter doesn't use the wrong
+//  values for pathfinding.
 //
-// Applies to: All versions
+// Applies to: All versions except 2.0 VGA
 // Responsible method: rm350:init
 static const uint16 larry1SignatureElevatorPolygon[] = {
-	SIG_MAGICDWORD,
 	0x5b, 0x02, 0x1f,                // lea 02 1f
 	0x36,                            // push
 	0x39, SIG_SELECTOR8(size),       // pushi size
@@ -8443,6 +8426,10 @@ static const uint16 larry1SignatureElevatorPolygon[] = {
 	0x39, 0x13,                      // pushi 13 [ incorrect size ]
 	0x72, SIG_ADDTOOFFSET(+2),       // lofsa openObstacle
 	0x4a, 0x0c,                      // send 0c [ openObstacle points: @local31 size: 19 ]
+	SIG_ADDTOOFFSET(+2),
+	SIG_MAGICDWORD,
+	0x78,                            // push1
+	0x5b, 0x02, 0x41,                // lea 02 41 [ 41 in broken versions, otherwise 45 ]
 	SIG_END
 };
 
@@ -14807,36 +14794,25 @@ static const SciScriptPatcherEntry qfg1vgaSignatures[] = {
 };
 
 // ===========================================================================
+// Quest for Glory 2
 
-// This is a very complicated bug.
 // When the player encounters an enemy in the desert while riding a saurus and
 //  later tries to get back on it by entering "ride", the game will not give
 //  control back to the player.
 //
-// This is caused by script mountSaurus getting triggered twice. Once by
-//  entering the command "ride" and then a second time by a proximity check.
+// This is caused by two scripts running the mountSaurus script concurrently.
+//  desertReg:handleEvent sets mountSaurus as the room script when entering
+//  "ride". sheepScript sets mountSaurus as ego's script when saurus animation
+//  completes after entering the saurus room. The unexpected second instance of
+//  mountSaurus interrupts the motions and cyclers that the other is waiting on,
+//  preventing them from both completing and returning control to the player.
 //
-// Both are calling mountSaurus::init() in script 20. This one disables
-//  controls. Then mountSaurus::changeState() from script 660 is triggered.
-//  Finally, mountSaurus::changeState(5) calls mountSaurus::dispose(), also in
-//  script 20, which re-enables controls.
+// We fix this by patching sheepScript to skip running mountSaurus if input is
+//  already disabled. Alternatively, we could expand this into a larger patch
+//  that tests if the room script is already mountSaurus.
 //
-// A fix is difficult to implement. The code in script 20 is generic and used
-//  by multiple objects
-//
-// An early attempt changed the responsible vars (global[102], global[161])
-//  during mountSaurus::changeState(5). This worked for controls, but
-//  mountSaurus::init changes a few selectors of ego as well, which won't get
-//  restored in that situation, which then messes up room changes and other
-//  things.
-//
-// Instead we change sheepScript::changeState(2) in script 665.
-//
-// Note: This could cause issues in case there is a cutscene, where ego is
-//  supposed to get onto the saurus using sheepScript.
-//
-// Applies to at least: English PC Floppy, English Amiga Floppy
-// Responsible method: mountSaurus::changeState(), mountSaurus::init(), mountSaurus::dispose()
+// Applies to: All versions
+// Responsible method: sheepScript:changeState(2)
 // Fixes bug: #5156
 static const uint16 qfg2SignatureSaurusFreeze[] = {
 	0x3c,                               // dup
@@ -14992,9 +14968,39 @@ static const uint16 qfg2PatchImportCharType[] = {
 	PATCH_END
 };
 
+// On day 27, approaching the Emir's palace at night without a visa crashes with
+//  a missing text error. The script is missing the first boolean parameter to
+//  the game-over procedure, causing the other parameters to be misinterpreted
+//  as text resource numbers.
+//
+// We fix this by adding the missing parameter, just like script 380's version.
+//
+// Applies to: All versions
+// Responsible method: backToInn:changeState(6)
+static const uint16 qfg2SignatureVisaCrash[] = {
+	0x39, SIG_MAGICDWORD, 0x04,        // pushi 04
+	0x38, SIG_UINT16(0x0191),          // pushi 0191
+	0x39, 0x12,                        // pushi 12
+	0x39, SIG_ADDTOOFFSET(+1),         // pushi title
+	0x72, SIG_ADDTOOFFSET(+2),         // lofsa "...Get a visa"
+	0x36,                              // push
+	0x47, 0x01, 0x18, 0x08,            // calle proc1_24 [ game-over, missing first parameter ]
+	SIG_END
+};
+
+static const uint16 qfg2PatchVisaCrash[] = {
+	0x39, 0x05,                        // pushi 05
+	0x78,                              // push1
+	PATCH_GETORIGINALBYTES(2, 7),
+	0x74, PATCH_GETORIGINALUINT16ADJUST(10, -1), // lofss "...Get a visa"
+	0x47, 0x01, 0x18, 0x0a,            // calle proc1_24 [ game-over ]
+	PATCH_END
+};
+
 //          script, description,                                      signature                       patch
 static const SciScriptPatcherEntry qfg2Signatures[] = {
 	{  true,    98, "disable speed test",                          1, sci01SpeedTestGlobalSignature,  sci01SpeedTestGlobalPatch },
+	{  true,   401, "visa crash",                                  1, qfg2SignatureVisaCrash,         qfg2PatchVisaCrash },
 	{  true,   665, "getting back on saurus freeze fix",           1, qfg2SignatureSaurusFreeze,      qfg2PatchSaurusFreeze },
 	{  true,   695, "Oops Jackalmen fix",                          1, qfg2SignatureOopsJackalMen,     qfg2PatchOopsJackalMen },
 	{  true,   805, "import character type fix",                   1, qfg2SignatureImportCharType,    qfg2PatchImportCharType },

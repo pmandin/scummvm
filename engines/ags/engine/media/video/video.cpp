@@ -74,6 +74,7 @@ static bool play_video(Video::VideoDecoder *decoder, const char *name, int flags
 	bool stretchVideo = (flags & kVideo_Stretch) != 0;
 	bool enableVideo = (flags & kVideo_EnableVideo) != 0;
 	bool enableAudio = (flags & kVideo_EnableAudio) != 0;
+	bool clut8Screen = scr.format.isCLUT8();
 
 	if (!enableAudio)
 		decoder->setVolume(0);
@@ -85,6 +86,8 @@ static bool play_video(Video::VideoDecoder *decoder, const char *name, int flags
 		if (decoder->needsUpdate()) {
 			// Get the next video frame and draw onto the screen
 			const Graphics::Surface *frame = decoder->decodeNextFrame();
+			if (clut8Screen && decoder->hasDirtyPalette())
+				scr.setPalette(decoder->getPalette(), 0, 256);
 
 			if (frame && enableVideo) {
 				Rect dstRect = PlaceInRect(RectWH(0, 0, scr.w, scr.h), RectWH(0, 0, frame->w, frame->h),
@@ -96,9 +99,10 @@ static bool play_video(Video::VideoDecoder *decoder, const char *name, int flags
 
 				if (stretchVideo) {
 					scr.transBlitFrom(*frame, Common::Rect(0, 0, frame->w, frame->h),
-					                  Common::Rect(dstRect.Left, dstRect.Top, dstRect.Right + 1, dstRect.Bottom + 1));
+					                  Common::Rect(dstRect.Left, dstRect.Top, dstRect.Right + 1, dstRect.Bottom + 1),
+					                  decoder->getPalette());
 				} else {
-					scr.blitFrom(*frame, Common::Point(dstRect.Left, dstRect.Top));
+					scr.blitFrom(*frame, Common::Point(dstRect.Left, dstRect.Top), decoder->getPalette());
 				}
 			}
 

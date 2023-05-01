@@ -57,6 +57,7 @@ public:
 	ObjectArray checkCollisions(const Math::AABB &boundingBox);
 	void addObjectFromArea(int16 id, Area *global);
 	void addObject(Object *obj);
+	void addFloor();
 	void addStructure(Area *global);
 	void removeObject(int16 id);
 	void resetArea();
@@ -79,6 +80,7 @@ public:
 	uint8 _underFireBackgroundColor;
 	uint8 _inkColor;
 	uint8 _paperColor;
+	uint8 _extraColor[4];
 	ColorReMap _colorRemaps;
 
 private:

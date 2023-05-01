@@ -591,6 +591,11 @@ void EoBCoreEngine::loadFonts() {
 		_screen->setFontStyles(Screen::FID_8_FNT, Font::kStyleNone);
 		_invFont1 = _invFont2 = _conFont = Screen::FID_8_FNT;
 	}
+
+	if (_flags.lang == Common::ZH_TWN) {
+		_screen->loadFont(Screen::FID_CHINESE_FNT, "FONT8.FNT");
+		_conFont = Screen::FID_CHINESE_FNT;
+	}
 }
 
 Common::Error EoBCoreEngine::go() {
@@ -963,8 +968,14 @@ void EoBCoreEngine::setHandItem(Item itemIndex) {
 	}
 
 	if (_screen->curDimIndex() == 7 && itemIndex) {
-		printFullItemName(itemIndex);
-		_txt->printMessage(_takenStrings[0]);
+		if (_flags.lang == Common::Language::ZH_TWN) {
+			_txt->printMessage(_takenStrings[0]);
+			printFullItemName(itemIndex);
+			_txt->printMessage("\r");
+		} else {
+			printFullItemName(itemIndex);
+			_txt->printMessage(_takenStrings[0]);
+		}
 	}
 
 	_itemInHand = itemIndex;

@@ -37,13 +37,47 @@
 #include "graphics/cursorman.h"
 #include "graphics/palette.h"
 #include "graphics/sjis.h"
+#include "graphics/fonts/dosfont.h"
 
 #define EXPLOSION_ANIM_DURATION 750
 #define VORTEX_ANIM_DURATION 750
 
 namespace Kyra {
+namespace {
+void naive_memcpy(byte *dest, const byte *src, int len) {
+	while(len--)
+		*dest++ = *src++;
+}
 
-Screen_EoB::Screen_EoB(EoBCoreEngine *vm, OSystem *system) : Screen(vm, system, _screenDimTable, _screenDimTableCount), _cursorColorKey16Bit(0x8000) {
+struct eob2ChineseLZInStream {
+	Common::SeekableReadStream *srcStream;
+	int numBits;
+	uint16 bits;
+
+	int getBit() {
+		if (numBits == 0) {
+			numBits = 16;
+			bits = getShort();
+		}
+		numBits--;
+		int val = bits & 1;
+		bits >>= 1;
+		return val;
+	}
+
+	byte getByte() {
+		return srcStream->readByte();
+	}
+
+	uint16 getShort() {
+		return srcStream->readUint16LE();
+	}
+
+	eob2ChineseLZInStream(Common::SeekableReadStream *src) : srcStream(src), numBits(0), bits(0) {}
+};
+}
+
+Screen_EoB::Screen_EoB(EoBCoreEngine *vm, OSystem *system) : Screen(vm, system, vm->gameFlags().lang == Common::Language::ZH_TWN ? _screenDimTableZH : _screenDimTableIntl, _screenDimTableCount), _cursorColorKey16Bit(0x8000) {
 	_dsBackgroundFading = false;
 	_dsShapeFadingLevel = 0;
 	_dsBackgroundFadingXOffs = 0;
@@ -147,6 +181,14 @@ bool Screen_EoB::init() {
 			ci = 2;
 		}
 		_cpsFilePattern += cpsExt[ci];
+
+		if (_vm->game() == GI_EOB2 && _vm->gameFlags().lang == Common::Language::ZH_TWN) {
+			Common::File f;
+			if (!f.open("ceob.pat"))
+				return false;
+			_big5.reset(new Graphics::Big5Font());
+			_big5->loadPrefixedRaw(f, 14);
+		}
 
 		return true;
 	}
@@ -284,7 +326,75 @@ void Screen_EoB::loadShapeSetBitmap(const char *file, int tempPage, int destPage
 	_curPage = 2;
 }
 
+void Screen_EoB::eob2ChineseLZUncompress(byte *dest, uint32 destSize, Common::SeekableReadStream *src) {
+	src->skip(6);
+	eob2ChineseLZInStream in(src);
+	int lzOffset, lzLen;
+	byte *destPtr = dest;
+	byte *destEnd = dest + destSize;
+
+	while (1) {
+		if (in.getBit()) {
+			assert(destPtr < destEnd);
+			*destPtr++ = in.getByte();
+			continue;
+		}
+
+		if (!in.getBit()) {
+			lzLen = in.getBit() << 1;
+			lzLen |= in.getBit();
+			lzOffset = 0x100 - in.getByte();
+		} else {
+			uint16 lzPair = in.getShort();
+			lzOffset = 0x2000 - (lzPair >> 3);
+			lzLen = lzPair & 7;
+			if (lzLen == 0) {
+				lzLen = in.getByte();
+				if (lzLen == 0) {
+					return;
+				}
+			}
+		}
+		lzLen += 2;
+		assert(destPtr < destEnd);
+		assert(destPtr + lzLen < destEnd);
+		assert(destPtr - lzOffset >= dest);
+		naive_memcpy(destPtr, destPtr - lzOffset, lzLen);
+		destPtr += lzLen;
+	}
+}
+
+void Screen_EoB::loadChineseEOB2LZBitmap(Common::SeekableReadStream *s, int pageNum, uint32 size) {
+	eob2ChineseLZUncompress(_pagePtrs[pageNum], size, s);
+}
+
 void Screen_EoB::loadBitmap(const char *filename, int tempPage, int dstPage, Palette *pal, bool skip) {
+	if (_vm->game() == GI_EOB2 && _vm->gameFlags().lang == Common::Language::ZH_TWN && scumm_stricmp(filename, "menu.cps") == 0) {
+		uint32 palSize;
+		uint8 *palData = _vm->resource()->fileData("menu.col", &palSize);
+		if (!palData) {
+			warning("couldn't load bitmap: '%s'", filename);
+			return;
+		}
+		loadPalette(palData, *pal, palSize);
+		delete[] palData;
+
+		Common::ScopedPtr<Common::SeekableReadStream> srcStream(_vm->resource()->createReadStream(filename));
+
+		if (!srcStream) {
+			warning("couldn't load bitmap: '%s'", filename);
+			return;
+		}
+
+		uint8 *dstData = getPagePtr(dstPage);
+		memset(dstData, 0, _screenPageSize);
+		if (dstPage == 0 || tempPage == 0)
+			_forceFullUpdate = true;
+
+		eob2ChineseLZUncompress(dstData, _screenPageSize, srcStream.get());
+		return;
+	}
+
 	if (!scumm_stricmp(filename + strlen(filename) - 3, "BIN")) {
 		Common::SeekableReadStream *str = _vm->resource()->createReadStream(filename);
 		if (!str)
@@ -650,6 +760,65 @@ uint8 *Screen_EoB::encodeShape(uint16 x, uint16 y, uint16 w, uint16 h, bool enco
 	}
 
 	return shp;
+}
+
+void Screen_EoB::drawT1Shape(uint8 pageNum, const byte *t1data, int x, int y, int sd) {
+	const byte *src = t1data;
+	int width = READ_LE_UINT16(t1data);
+	int height = READ_LE_UINT16(t1data + 2);
+	src += 4;
+
+	const ScreenDim *dm = getScreenDim(sd);
+	setShapeFrame(dm->sx, dm->sy, dm->sx + dm->w, dm->sy + dm->h);
+	int fx = dm->sx << 3;
+	int fy = dm->sy;
+	int fw = dm->w << 3;
+	int fh = dm->h;
+
+	int rX = fx + x;
+	int rY = fy + y;
+	int rW = (fx + fw) - rX;
+	int rH = (fy + fh) - rY;
+	int dX = 0, dY = 0;
+
+	if (rX < 0) {
+		dX = -rX;
+		rX = 0;
+	}
+
+	if (rY < 0) {
+		dY = -rY;
+		rY = 0;
+	}
+
+	if (dX >= width || dY >= height)
+		return;
+
+	if (rW > width - dX)
+		rW = width - dX;
+	if (rH > height - rY)
+		rH = height - dY;
+	if (rW <= 0 || rH <= 0)
+		return;
+
+	if (pageNum == 0 || pageNum == 1)
+		addDirtyRect(rX, rY, rW, rH);
+
+	int dH = rH;
+	uint8 *dstL = getPagePtr(pageNum) + rY * _bytesPerPixel * SCREEN_W;
+	src += dY * width;
+
+	while (dH--) {
+		const uint8 *src2 = src + dX;
+		uint8 *dst = dstL + rX * _bytesPerPixel;
+
+		for (int i = 0; i < rW; i++, src2++, dst += _bytesPerPixel)
+			if (*src2)
+				drawShapeSetPixel(dst, *src2);
+
+		dstL += SCREEN_W * _bytesPerPixel;
+		src += width;
+	}
 }
 
 void Screen_EoB::drawShape(uint8 pageNum, const uint8 *shapeData, int x, int y, int sd, int flags, ...) {
@@ -1550,6 +1719,13 @@ bool Screen_EoB::loadFont(FontId fontId, const char *filename) {
 	} else if (_isSegaCD) {
 		fnt = new SegaCDFont(_vm->gameFlags().lang, _vm->staticres()->loadRawDataBe16(kEoB1Ascii2SjisTable1, temp), _vm->staticres()->loadRawDataBe16(kEoB1Ascii2SjisTable2, temp),
 			_vm->staticres()->loadRawData(kEoB1CharWidthTable1, temp), _vm->staticres()->loadRawData(kEoB1CharWidthTable2, temp), _vm->staticres()->loadRawData(kEoB1CharWidthTable3, temp));
+	} else if (fontId == FID_CHINESE_FNT && _vm->game() == GI_EOB2 && _vm->gameFlags().lang == Common::ZH_TWN) {
+		// We wrap all fonts in Big5 support but FID_CHINESE additionally attempts to match height
+		OldDOSFont *ofnt = new OldDOSFont(_useHiResEGADithering ? Common::kRenderVGA : _renderMode, 12);
+		ofnt->loadPCBIOSTall();
+		fnt = new ChineseTwoByteFontEoB(_big5, ofnt);
+		fnt->setColorMap(_textColorsMap);
+		return true;
 	} else {
 		// We use normal VGA rendering in EOB II, since we do the complete EGA dithering in updateScreen().
 		fnt = new OldDOSFont(_useHiResEGADithering ? Common::kRenderVGA : _renderMode, 12);
@@ -1564,6 +1740,8 @@ bool Screen_EoB::loadFont(FontId fontId, const char *filename) {
 	bool ret = false;
 	if (fnt) {
 		ret = fnt->load(*file);
+		if (_big5)
+			fnt = new ChineseTwoByteFontEoB(_big5, fnt);
 		fnt->setColorMap(_textColorsMap);
 	}
 
@@ -1826,6 +2004,34 @@ OldDOSFont::~OldDOSFont() {
 	}
 }
 
+bool OldDOSFont::loadPCBIOSTall() {
+	unload();
+
+	_numGlyphs = 128;
+	_width = 8;
+	const int originalBytesPerGlyph = 8;
+	const int originalHeight = 8;
+	const int bytesPerGlyph = 15;
+	_height = originalHeight * 2 - 1;
+	_data = new uint8[_numGlyphs * bytesPerGlyph + _numGlyphs * sizeof(uint16)];
+	assert(_data);
+
+	_bitmapOffsets = (uint16 *)_data;
+
+	for (int i = 0; i < _numGlyphs; ++i) {
+		_bitmapOffsets[i] = _numGlyphs * sizeof(uint16) + i * bytesPerGlyph;
+		byte *optr = _data + _bitmapOffsets[i];
+		const byte *iptr = Graphics::DosFont::fontData_PCBIOS + i * originalBytesPerGlyph;
+		*optr++ = *iptr++;
+		for (int j = 1; j < originalHeight; j++) {
+			*optr++ = *iptr;
+			*optr++ = *iptr++;
+		}
+	}
+
+	return true;
+}
+
 bool OldDOSFont::load(Common::SeekableReadStream &file) {
 	unload();
 
@@ -2040,6 +2246,34 @@ void OldDOSFont::unload() {
 	_data = 0;
 	_width = _height = _numGlyphs = 0;
 	_bitmapOffsets = 0;
+}
+
+uint16 ChineseTwoByteFontEoB::translateBig5(uint16 in) const {
+	if (in < 0x80)
+		return in;
+	in = ((in & 0xff00) >> 8) | ((in & 0xff) << 8);
+	if (_big5->hasGlyphForBig5Char(in))
+		return in;
+	return '?';
+}
+
+int ChineseTwoByteFontEoB::getCharWidth(uint16 c) const {
+	uint16 t = translateBig5(c);
+	return (t < 0x80) ? _singleByte->getCharWidth(t) : _big5->kChineseTraditionalWidth;
+}
+
+int ChineseTwoByteFontEoB::getCharHeight(uint16 c) const {
+	uint16 t = translateBig5(c);
+	return (t < 0x80) ? _singleByte->getCharHeight(t) : _big5->getFontHeight() + 1;
+}
+
+void ChineseTwoByteFontEoB::drawChar(uint16 c, byte *dst, int pitch, int bpp) const {
+	uint16 t = translateBig5(c);
+	if (t < 0x80)
+		_singleByte->drawChar(t, dst, pitch, bpp);
+	else
+		_big5->drawBig5Char(dst, t,
+				    _big5->kChineseTraditionalWidth, _big5->getFontHeight(), pitch, _colorMap[1], _colorMap[0], _border, bpp);
 }
 
 } // End of namespace Kyra

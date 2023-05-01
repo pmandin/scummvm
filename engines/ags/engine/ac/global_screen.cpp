@@ -31,6 +31,7 @@
 #include "ags/engine/ac/screen.h"
 #include "ags/engine/debugging/debug_log.h"
 #include "ags/engine/main/game_run.h"
+#include "ags/engine/media/audio/audio.h"
 #include "ags/engine/platform/base/ags_platform_driver.h"
 #include "ags/engine/gfx/graphics_driver.h"
 #include "ags/shared/gfx/bitmap.h"
@@ -39,14 +40,6 @@ namespace AGS3 {
 
 using namespace AGS::Shared;
 using namespace AGS::Engine;
-
-
-
-
-
-
-
-
 
 
 void FlipScreen(int amount) {
@@ -71,6 +64,9 @@ void ShakeScreen(int severe) {
 	_GP(play).shakesc_amount = severe;
 	_GP(play).mouse_cursor_hidden++;
 
+	// FIXME: we have to sync audio here explicitly, because ShakeScreen
+	// does not call any game update function while it works
+	sync_audio_playback();
 	if (_G(gfxDriver)->RequiresFullRedrawEachFrame()) {
 		for (int hh = 0; hh < 40; hh++) {
 			_G(loopcounter)++;
@@ -94,6 +90,7 @@ void ShakeScreen(int severe) {
 		clear_letterbox_borders();
 		render_to_screen();
 	}
+	sync_audio_playback();
 
 	_GP(play).mouse_cursor_hidden--;
 	_GP(play).shakesc_length = 0;
@@ -133,14 +130,23 @@ void TintScreen(int red, int grn, int blu) {
 	_GP(play).screen_tint = red + (grn << 8) + (blu << 16);
 }
 
-void my_fade_out(int spdd) {
+void FadeOut(int sppd) {
 	EndSkippingUntilCharStops();
 
 	if (_GP(play).fast_forward)
 		return;
 
-	if (_GP(play).screen_is_faded_out == 0)
+	// FIXME: we have to sync audio here explicitly, because FadeOut
+	// does not call any game update function while it works
+	sync_audio_playback();
+	fadeout_impl(sppd);
+	sync_audio_playback();
+}
+
+void fadeout_impl(int spdd) {
+	if (_GP(play).screen_is_faded_out == 0) {
 		_G(gfxDriver)->FadeOut(spdd, _GP(play).fade_to_red, _GP(play).fade_to_green, _GP(play).fade_to_blue);
+	}
 
 	if (_GP(game).color_depth > 1)
 		_GP(play).screen_is_faded_out = 1;
@@ -180,7 +186,11 @@ void FadeIn(int sppd) {
 	if (_GP(play).fast_forward)
 		return;
 
-	my_fade_in(_G(palette), sppd);
+	// FIXME: we have to sync audio here explicitly, because FadeIn
+	// does not call any game update function while it works
+	sync_audio_playback();
+	fadein_impl(_G(palette), sppd);
+	sync_audio_playback();
 }
 
 } // namespace AGS3

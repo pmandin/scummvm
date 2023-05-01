@@ -298,11 +298,15 @@ int main(int argc, char *argv[]) {
 		} else if (!std::strcmp(argv[i], "--sdl1")) {
 			setup.useSDL2 = false;
 		} else if (!std::strcmp(argv[i], "--use-canonical-lib-names")) {
-			setup.useCanonicalLibNames = true;
+			// Deprecated: Kept here so it doesn't error
 		} else if (!std::strcmp(argv[i], "--use-windows-unicode")) {
 			setup.useWindowsUnicode = true;
 		} else if (!std::strcmp(argv[i], "--use-windows-ansi")) {
 			setup.useWindowsUnicode = false;
+		} else if (!std::strcmp(argv[i], "--use-xcframework")) {
+			setup.useXCFramework = true;
+		} else if (!std::strcmp(argv[i], "--vcpkg")) {
+			setup.useVcpkg = true;
 		} else {
 			std::cerr << "ERROR: Unknown parameter \"" << argv[i] << "\"\n";
 			return -1;
@@ -333,7 +337,7 @@ int main(int argc, char *argv[]) {
 
 	// HACK: These features depend on OpenGL
 	if (!getFeatureBuildState("opengl", setup.features)) {
-		setFeatureBuildState("opengl_game", setup.features, false);
+		setFeatureBuildState("opengl_game_classic", setup.features, false);
 		setFeatureBuildState("opengl_shaders", setup.features, false);
 	}
 
@@ -733,12 +737,11 @@ void displayHelp(const char *exe) {
 	        " --tests                    Create project files for the tests\n"
 	        "                            (ignores --build-events and --installer, as well as engine settings)\n"
 	        "                            (default: false)\n"
-	        " --use-canonical-lib-names  Use canonical library names for linking. This makes it easy to use\n"
-	        "                            e.g. vcpkg-provided libraries\n"
-	        "                            (default: false)\n"
 	        " --use-windows-unicode      Use Windows Unicode APIs\n"
 	        "                            (default: true)\n"
 	        " --use-windows-ansi         Use Windows ANSI APIs\n"
+	        "                            (default: false)\n"
+	        " --vcpkg                    Use vcpkg-provided libraries instead of pre-built SCUMMVM_LIBS\n"
 	        "                            (default: false)\n"
 	        "\n"
 	        "Engines settings:\n"
@@ -1080,35 +1083,35 @@ const Feature s_features[] = {
 	{ "retrowave",   "USE_RETROWAVE", true, false, "RetroWave OPL3 support" },
 
 	// Feature flags
-	{             "bink",                      "USE_BINK", false, true,  "Bink video support" },
-	{          "scalers",                   "USE_SCALERS", false, true,  "Scalers" },
-	{        "hqscalers",                "USE_HQ_SCALERS", false, true,  "HQ scalers" },
-	{      "edgescalers",              "USE_EDGE_SCALERS", false, true,  "Edge scalers" },
-	{           "aspect",                    "USE_ASPECT", false, true,  "Aspect ratio correction" },
-	{            "16bit",                 "USE_RGB_COLOR", false, true,  "16bit color support" },
-	{          "highres",                   "USE_HIGHRES", false, true,  "high resolution" },
-	{          "mt32emu",                   "USE_MT32EMU", false, true,  "integrated MT-32 emulator" },
-	{              "lua",                       "USE_LUA", false, true,  "lua" },
-	{             "nasm",                      "USE_NASM", false, true,  "IA-32 assembly support" }, // This feature is special in the regard, that it needs additional handling.
-	{           "tinygl",                    "USE_TINYGL", false, true,  "TinyGL support" },
-	{           "opengl",                    "USE_OPENGL", false, true,  "OpenGL support" },
-	{      "opengl_game",               "USE_OPENGL_GAME", false, true,  "OpenGL support (classic) in 3d games" },
-	{   "opengl_shaders",            "USE_OPENGL_SHADERS", false, true,  "OpenGL support (shaders) in 3d games" },
-	{          "taskbar",                   "USE_TASKBAR", false, true,  "Taskbar integration support" },
-	{            "cloud",                     "USE_CLOUD", false, true,  "Cloud integration support" },
-	{            "enet",                       "USE_ENET", false, true,  "ENet networking support" },
-	{      "translation",               "USE_TRANSLATION", false, true,  "Translation support" },
-	{           "vkeybd",                 "ENABLE_VKEYBD", false, false, "Virtual keyboard support"},
-	{    "eventrecorder",          "ENABLE_EVENTRECORDER", false, false, "Event recorder support"},
-	{          "updates",                   "USE_UPDATES", false, false, "Updates support"},
-	{          "dialogs",                "USE_SYSDIALOGS", false, true,  "System dialogs support"},
-	{       "langdetect",                "USE_DETECTLANG", false, true,  "System language detection support" }, // This feature actually depends on "translation", there
+	{               "bink",                      "USE_BINK", false, true,  "Bink video support" },
+	{            "scalers",                   "USE_SCALERS", false, true,  "Scalers" },
+	{          "hqscalers",                "USE_HQ_SCALERS", false, true,  "HQ scalers" },
+	{        "edgescalers",              "USE_EDGE_SCALERS", false, true,  "Edge scalers" },
+	{             "aspect",                    "USE_ASPECT", false, true,  "Aspect ratio correction" },
+	{              "16bit",                 "USE_RGB_COLOR", false, true,  "16bit color support" },
+	{            "highres",                   "USE_HIGHRES", false, true,  "high resolution" },
+	{            "mt32emu",                   "USE_MT32EMU", false, true,  "integrated MT-32 emulator" },
+	{                "lua",                       "USE_LUA", false, true,  "lua" },
+	{               "nasm",                      "USE_NASM", false, true,  "IA-32 assembly support" }, // This feature is special in the regard, that it needs additional handling.
+	{             "tinygl",                    "USE_TINYGL", false, true,  "TinyGL support" },
+	{             "opengl",                    "USE_OPENGL", false, true,  "OpenGL support" },
+	{"opengl_game_classic",               "USE_OPENGL_GAME", false, true,  "OpenGL support (classic) in 3d games" },
+	{     "opengl_shaders",            "USE_OPENGL_SHADERS", false, true,  "OpenGL support (shaders) in 3d games" },
+	{            "taskbar",                   "USE_TASKBAR", false, true,  "Taskbar integration support" },
+	{              "cloud",                     "USE_CLOUD", false, true,  "Cloud integration support" },
+	{               "enet",                       "USE_ENET", false, true,  "ENet networking support" },
+	{        "translation",               "USE_TRANSLATION", false, true,  "Translation support" },
+	{             "vkeybd",                 "ENABLE_VKEYBD", false, false, "Virtual keyboard support"},
+	{      "eventrecorder",          "ENABLE_EVENTRECORDER", false, false, "Event recorder support"},
+	{            "updates",                   "USE_UPDATES", false, false, "Updates support"},
+	{            "dialogs",                "USE_SYSDIALOGS", false, true,  "System dialogs support"},
+	{         "langdetect",                "USE_DETECTLANG", false, true,  "System language detection support" }, // This feature actually depends on "translation", there
 	                                                                                                           // is just no current way of properly detecting this...
-	{     "text-console", "USE_TEXT_CONSOLE_FOR_DEBUGGER", false, false, "Text console debugger" }, // This feature is always applied in xcode projects
-	{              "tts",                       "USE_TTS", false, true,  "Text to speech support"},
-	{"builtin-resources",             "BUILTIN_RESOURCES", false, true,  "include resources (e.g. engine data, fonts) into the binary"},
-	{   "detection-full",                "DETECTION_FULL", false, true,  "Include detection objects for all engines" },
-	{ "detection-static", "USE_DETECTION_FEATURES_STATIC", false, true,  "Static linking of detection objects for engines."},
+	{       "text-console", "USE_TEXT_CONSOLE_FOR_DEBUGGER", false, false, "Text console debugger" }, // This feature is always applied in xcode projects
+	{                "tts",                       "USE_TTS", false, true,  "Text to speech support"},
+	{  "builtin-resources",             "BUILTIN_RESOURCES", false, true,  "include resources (e.g. engine data, fonts) into the binary"},
+	{     "detection-full",                "DETECTION_FULL", false, true,  "Include detection objects for all engines" },
+	{   "detection-static", "USE_DETECTION_FEATURES_STATIC", false, true,  "Static linking of detection objects for engines."},
 };
 
 const Tool s_tools[] = {
@@ -1628,10 +1631,13 @@ void ProjectProvider::createProject(BuildSetup &setup) {
 		createModuleList(setup.srcDir + "/graphics", setup.defines, setup.testDirs, in, ex);
 		createModuleList(setup.srcDir + "/gui", setup.defines, setup.testDirs, in, ex);
 		createModuleList(setup.srcDir + "/audio", setup.defines, setup.testDirs, in, ex);
-		createModuleList(setup.srcDir + "/audio/softsynth/mt32", setup.defines, setup.testDirs, in, ex);
 		createModuleList(setup.srcDir + "/video", setup.defines, setup.testDirs, in, ex);
 		createModuleList(setup.srcDir + "/image", setup.defines, setup.testDirs, in, ex);
 		createModuleList(setup.srcDir + "/math", setup.defines, setup.testDirs, in, ex);
+
+		if (getFeatureBuildState("mt32emu", setup.features))
+			createModuleList(setup.srcDir + "/audio/softsynth/mt32", setup.defines, setup.testDirs, in, ex);
+
 		if (setup.tests) {
 			createModuleList(setup.srcDir + "/test", setup.defines, setup.testDirs, in, ex);
 		} else {

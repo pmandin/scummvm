@@ -100,7 +100,7 @@ TeCore *TetraedgeEngine::getCore() {
 
 Game *TetraedgeEngine::getGame() {
 	if (_game == nullptr) {
-		if (gameType() == kAmerzone)
+		if (gameIsAmerzone())
 			_game = new AmerzoneGame();
 		else
 			_game = new SyberiaGame();
@@ -195,11 +195,11 @@ void TetraedgeEngine::configureSearchPaths() {
 }
 
 int TetraedgeEngine::getDefaultScreenWidth() const {
-	return 800;
+	return gameIsAmerzone() ? 1280 : 800;
 }
 
 int TetraedgeEngine::getDefaultScreenHeight() const {
-	return 600;
+	return gameIsAmerzone() ? 800 : 600;
 }
 
 bool TetraedgeEngine::onKeyUp(const Common::KeyState &state) {

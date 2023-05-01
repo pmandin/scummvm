@@ -74,7 +74,7 @@ void PlaySecondaryMovie::readData(Common::SeekableReadStream &stream) {
 	}
 
 	_triggerFlags.readData(stream);
-	_sound.read(stream, SoundDescription::kNormal);
+	_sound.readData(stream, SoundDescription::kNormal);
 	_sceneChange.readData(stream, ser.getVersion() == kGameTypeVampire);
 
 	uint16 numVideoDescs;
@@ -173,6 +173,7 @@ void PlaySecondaryMovie::updateGraphics() {
 
 void PlaySecondaryMovie::onPause(bool pause) {
 	_decoder.pauseVideo(pause);
+	RenderActionRecord::onPause(pause);
 }
 
 void PlaySecondaryMovie::execute() {

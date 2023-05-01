@@ -24,6 +24,8 @@
 
 #ifdef ENABLE_EOB
 
+#include "graphics/big5.h"
+
 #include "kyra/graphics/screen.h"
 
 namespace Kyra {
@@ -67,6 +69,8 @@ public:
 
 	void printShadedText(const char *string, int x, int y, int col1, int col2, int shadowCol, int pitch = -1);
 
+	static void eob2ChineseLZUncompress(byte *dest, uint32 destSize, Common::SeekableReadStream *src);
+	void loadChineseEOB2LZBitmap(Common::SeekableReadStream *s, int pageNum, uint32 size);
 	void loadBitmap(const char *filename, int tempPage, int dstPage, Palette *pal, bool skip = false) override;
 	void loadEoBBitmap(const char *file, const uint8 *cgaMapping, int tempPage, int destPage, int convertToPage);
 	void loadShapeSetBitmap(const char *file, int tempPage, int destPage);
@@ -78,6 +82,7 @@ public:
 
 	uint8 *encodeShape(uint16 x, uint16 y, uint16 w, uint16 h, bool encode8bit = false, const uint8 *cgaMapping = 0);
 	void drawShape(uint8 pageNum, const uint8 *shapeData, int x, int y, int sd = -1, int flags = 0, ...) override;
+	void drawT1Shape(uint8 pageNum, const byte *t1data, int x, int y, int sd);
 	const uint8 *scaleShape(const uint8 *shapeData, int blockDistance);
 	const uint8 *scaleShapeStep(const uint8 *shp);
 	const uint8 *generateShapeOverlay(const uint8 *shp, const uint8 *fadingTable);
@@ -197,7 +202,8 @@ private:
 	const uint16 _cursorColorKey16Bit;
 
 	static const uint8 _egaMatchTable[];
-	static const ScreenDim _screenDimTable[];
+	static const ScreenDim _screenDimTableIntl[];
+	static const ScreenDim _screenDimTableZH[];
 	static const int _screenDimTableCount;
 
 	// SegaCD specific
@@ -219,6 +225,34 @@ private:
 	uint16 *_segaCustomPalettes;
 	uint8 *_defaultRenderBuffer;
 	int _defaultRenderBufferSize;
+
+	Common::SharedPtr<Graphics::Big5Font> _big5;
+};
+
+class ChineseTwoByteFontEoB final : public Font {
+public:
+	ChineseTwoByteFontEoB(Common::SharedPtr<Graphics::Big5Font> big5, Font *singleByte) : _big5(big5), _singleByte(singleByte), _border(false), _colorMap(nullptr) {}
+
+	virtual Type getType() const override { return kBIG5; }
+
+	bool load(Common::SeekableReadStream &data) override {
+		return _singleByte->load(data);
+	}
+
+	void setStyles(int styles) override { _border = (styles & kStyleBorder); _singleByte->setStyles(styles); }
+	int getHeight() const override { return MAX(_big5->getFontHeight(), _singleByte->getHeight()); }
+	int getWidth() const override { return MAX(_big5->kChineseTraditionalWidth + 2, _singleByte->getWidth()); }
+	void setColorMap(const uint8 *src) override { _colorMap = src; _singleByte->setColorMap(src); }
+	int getCharWidth(uint16 c) const override;
+	int getCharHeight(uint16 c) const override;
+	void drawChar(uint16 c, byte *dst, int pitch, int bpp) const override;
+
+private:
+	uint16 translateBig5(uint16 in) const;
+	Common::SharedPtr<Graphics::Big5Font> _big5;
+	Common::ScopedPtr<Font> _singleByte;
+	bool _border;
+	const uint8 *_colorMap;
 };
 
 /**
@@ -232,6 +266,7 @@ public:
 	~OldDOSFont() override;
 
 	bool load(Common::SeekableReadStream &file) override;
+	bool loadPCBIOSTall();
 	Type getType() const override { return kASCII; }
 	int getHeight() const override { return _height; }
 	int getWidth() const override { return _width; }

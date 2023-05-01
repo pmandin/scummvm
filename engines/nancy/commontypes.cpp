@@ -38,13 +38,25 @@ void SceneChangeDescription::readData(Common::SeekableReadStream &stream, bool l
 	continueSceneSound = stream.readUint16LE();
 }
 
+void SceneChangeWithFlag::readData(Common::SeekableReadStream &stream, bool longFormat) {
+	_sceneChange.readData(stream, longFormat);
+	stream.skip(2); // shouldStopRendering
+	_flag.label = stream.readSint16LE();
+	_flag.flag = stream.readByte();
+}
+
+void SceneChangeWithFlag::execute() {
+	NancySceneState.changeScene(_sceneChange);
+	NancySceneState.setEventFlag(_flag);
+}
+
 void HotspotDescription::readData(Common::SeekableReadStream &stream) {
 	frameID = stream.readUint16LE();
 	readRect(stream, coords);
 }
 
-void BitmapDescription::readData(Common::SeekableReadStream &stream) {
-	if (g_nancy->getGameType() <= kGameTypeNancy1) {
+void BitmapDescription::readData(Common::SeekableReadStream &stream, bool frameIsLong) {
+	if (!frameIsLong) {
 		frameID = stream.readUint16LE();
 	} else {
 		frameID = stream.readUint32LE();
@@ -74,41 +86,35 @@ void SecondaryVideoDescription::readData(Common::SeekableReadStream &stream) {
 	stream.skip(0x20);
 }
 
-void SoundDescription::read(Common::SeekableReadStream &stream, Type type) {
-	readFilename(stream, name);
+void SoundDescription::readData(Common::SeekableReadStream &stream, Type type) {
+	Common::Serializer s(&stream, nullptr);
+	s.setVersion(type);
 
-	if (type == SoundDescription::kScene) {
-		stream.skip(4);
-	}
-	channelID = stream.readUint16LE();
+	readFilename(s, name);
 
-	// 0xE is soundPlayFormat, but I have no idea what that does yet
+	s.skip(4, kScene, kScene);
+	s.syncAsUint16LE(channelID);
 
-	// The difference between these is a couple members found at the same position
-	// whose purpose I don't understand, so for now just skip them
-	switch (type) {
-	case kNormal:
-		stream.skip(8);
-		break;
-	case kMenu:
-		stream.skip(6);
-		break;
-	case kScene:
-		// fall through
-	case kDIGI:
-		stream.skip(4);
-		break;
-	}
+	s.skip(2); // PLAY_SOUND_FROM_HD = 1, PLAY_SOUND_FROM_CDROM = 2
+	s.skip(2); // PLAY_SOUND_AS_DIGI = 1, PLAY_SOUND_AS_STREAM = 2
+	s.skip(4, kNormal, kNormal);
+	s.skip(2, kMenu, kMenu);
 
-	numLoops = stream.readUint16LE();
-	if (stream.readUint16LE() != 0) { // loop indefinitely
+	s.syncAsUint16LE(numLoops);
+	uint16 loopType;
+	s.syncAsUint16LE(loopType);
+	if (loopType != 0) { // LOOP_ONCE = 1, LOOP_INFINITE = 0
 		numLoops = 0;
 	}
-	stream.skip(2);
-	volume = stream.readUint16LE();
-	stream.skip(2);
-	panAnchorFrame = stream.readUint16LE();
-	stream.skip(2);
+	
+	s.skip(2);
+	s.syncAsUint16LE(volume);
+	s.skip(2); // Second volume, always (?) same as the first
+	
+	s.syncAsUint32LE(samplesPerSec, kNormal, kNormal);
+	s.syncAsUint16LE(panAnchorFrame, kDIGI, kDIGI);
+	s.skip(2, kDIGI, kDIGI);
+	s.skip(4, kMenu, kScene);
 }
 
 void ConditionalDialogue::readData(Common::SeekableReadStream &stream) {
