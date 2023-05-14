@@ -79,10 +79,20 @@ static int tolua_ExportedFunctions_LoadObjectMaterials01(lua_State *L) {
 	return tolua_ExportedFunctions_LoadObjectMaterials00(L);
 }
 
-static void PlayMovie(const Common::String &vidpath, const Common::String &musicpath) {
+static void PlayMovie(Common::String vidpath, Common::String musicpath) {
 	Application *app = g_engine->getApplication();
 	app->mouseCursorLayout().load(app->defaultCursor());
 	Game *game = g_engine->getGame();
+
+	// WORKAROUND: Fix some broken paths in Amerzone
+	if (musicpath == "Videos/sc19.ogg")
+		musicpath = "Videos/019.ogg";
+	if (vidpath == "Videos/sc18.ogv") {
+		// Need the correct path for callback, call this first.
+		game->playMovie(vidpath, musicpath);
+		vidpath = "Videos/I_018_P2_001.ogv";
+	}
+
 	game->playMovie(vidpath, musicpath);
 }
 
@@ -120,7 +130,7 @@ static int tolua_ExportedFunctions_PlayMovie00(lua_State *L) {
 		// iOS version.. sometimes has "video" as 3rd param?
 		Common::String s1(tolua_tostring(L, 1, nullptr));
 		Common::String s2(tolua_tostring(L, 2, nullptr));
-		Common::String s3(tolua_tostring(L, 2, nullptr));
+		Common::String s3(tolua_tostring(L, 3, nullptr));
 		PlayMovie(s1, s2);
 		return 0;
 	}
@@ -207,7 +217,8 @@ static int tolua_ExportedFunctions_Selected00(lua_State *L) {
 
 static void TakeObject_Amerzone(const Common::String &obj) {
 	AmerzoneGame *game = dynamic_cast<AmerzoneGame *>(g_engine->getGame());
-	assert(game);
+	assert(game && game->warpY());
+	debug("TakeObject: lastObj %s, obj %s", game->lastHitObjectName().c_str(), obj.c_str());
 	game->luaContext().setGlobal(game->lastHitObjectName(), true);
 	game->warpY()->takeObject(game->lastHitObjectName());
 	if (!obj.empty()) {
@@ -917,7 +928,7 @@ static int tolua_ExportedFunctions_PlaceCharacterOnDummy00(lua_State *L) {
 }
 
 static void SetCharacterRotation(const Common::String &charname, float rx, float ry, float rz) {
-	TeQuaternion quat = TeQuaternion::fromEuler(TeVector3f32(rx * M_PI / 180.0, ry * M_PI / 180.0, rz * M_PI / 180.0));
+	const TeQuaternion quat = TeQuaternion::fromEulerDegrees(TeVector3f32(rx, ry, rz));
 	Game *game = g_engine->getGame();
 	Character *c = game->scene().character(charname);
 	if (c) {
@@ -1139,8 +1150,7 @@ static void SetGroundObjectRotation(const Common::String &objname, float x, floa
 		return;
 	}
 
-	TeVector3f32 rotvec(x * M_PI / 180.0, y * M_PI / 180.0, z * M_PI / 180.0);
-	obj->model()->setRotation(TeQuaternion::fromEuler(rotvec));
+	obj->model()->setRotation(TeQuaternion::fromEulerDegrees(TeVector3f32(x, y, z)));
 	obj->model()->setVisible(true);
 }
 
@@ -2055,8 +2065,7 @@ static void SetObjectRotation(const Common::String &obj, float xr, float yr, flo
 		warning("[SetObjectRotation] Object not found %s", obj.c_str());
 		return;
 	}
-	const TeVector3f32 rot(xr * M_PI / 180.0, yr * M_PI / 180.0, zr * M_PI / 180.0);
-	obj3d->_objRotation = TeQuaternion::fromEuler(rot);
+	obj3d->_objRotation = TeQuaternion::fromEulerDegrees(TeVector3f32(xr, yr, zr));
 }
 
 static int tolua_ExportedFunctions_SetObjectRotation00(lua_State *L) {
@@ -2917,14 +2926,21 @@ static int tolua_ExportedFunctions_RemoveObject00_Amerzone(lua_State *L) {
 	error("#ferror in function 'RemoveObject': %d %d %s", err.index, err.array, err.type);
 }
 
+static void AddToBag(const Common::String &name) {
+	Game *game = g_engine->getGame();
+	game->addToBag(name);
+	TeSoundManager *sndMgr = g_engine->getSoundManager();
+	sndMgr->playFreeSound("Sounds/SFX/N_prendre.ogg");
+}
+
 static int tolua_ExportedFunctions_AddToBag00(lua_State *L) {
 	tolua_Error err;
 	if (tolua_isstring(L, 1, 0, &err) && tolua_isnoobj(L, 2, &err)) {
 		Common::String s1(tolua_tostring(L, 1, nullptr));
-		debug("%s", s1.c_str());
+		AddToBag(s1);
 		return 0;
 	}
-	error("#ferror in function 'PrintDebugMessage': %d %d %s", err.index, err.array, err.type);
+	error("#ferror in function 'AddToBag': %d %d %s", err.index, err.array, err.type);
 }
 
 void SaveGame(const Common::String &name) {
@@ -2963,11 +2979,13 @@ static int tolua_ExportedFunctions_SetMarker00(lua_State *L) {
 static void LookAt(int x, int y) {
 	AmerzoneGame *game = dynamic_cast<AmerzoneGame *>(g_engine->getGame());
 	assert(game);
-	game->setAngleX(-x);
-	int yval = y + -360;
+	// Note: Reverse the angles to what the game does, because we apply them
+	// using fromEuler.
+	game->setAngleX(x);
+	int yval = y - 360;
 	if (y < 90)
 		yval = y;
-	game->setAngleY(-yval);
+	game->setAngleY(yval);
 }
 
 static int tolua_ExportedFunctions_LookAt00(lua_State *L) {

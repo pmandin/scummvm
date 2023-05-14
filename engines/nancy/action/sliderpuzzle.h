@@ -24,13 +24,10 @@
 
 #include "engines/nancy/action/actionrecord.h"
 
-namespace Common {
-class Serializer;
-}
-
 namespace Nancy {
 
 struct SPUZ;
+struct SliderPuzzleData;
 
 namespace Action {
 
@@ -47,7 +44,7 @@ public:
 	void handleInput(NancyInput &input) override;
 
 	SPUZ *_spuzData = nullptr;
-	SliderPuzzleState *_puzzleState = nullptr;
+	SliderPuzzleData *_puzzleState = nullptr;
 
 	Common::String _imageName;
 	uint16 _width = 0;

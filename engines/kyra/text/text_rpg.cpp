@@ -50,7 +50,7 @@ TextDisplayer_rpg::TextDisplayer_rpg(KyraRpgEngine *engine, Screen *scr) : _vm(e
 		_waitButtonFont = Screen::FID_SJIS_TEXTMODE_FNT;
 	else if ((_vm->game() == GI_EOB2 && _vm->gameFlags().platform == Common::kPlatformFMTowns))
 		_waitButtonFont = Screen::FID_8_FNT;
-	else if ((_vm->game() == GI_EOB1 && _vm->gameFlags().platform == Common::kPlatformPC98))
+	else if (_vm->gameFlags().platform == Common::kPlatformPC98)
 		_waitButtonFont = Screen::FID_SJIS_FNT;
 	else if ((_vm->game() == GI_LOL && _vm->gameFlags().lang == Common::Language::ZH_TWN))
 		_waitButtonFont = Screen::FID_CHINESE_FNT;
@@ -67,10 +67,10 @@ TextDisplayer_rpg::TextDisplayer_rpg(KyraRpgEngine *engine, Screen *scr) : _vm(e
 
 	for (int i = 0; i < _screen->screenDimTableCount(); i++) {
 		const ScreenDim *d = _screen->getScreenDim(i);
-		_textDimData[i].color1 = _colorMap[d->unk8];
-		_textDimData[i].color2 = _colorMap[d->unkA];
-		_textDimData[i].line = d->unkC;
-		_textDimData[i].column = d->unkE;
+		_textDimData[i].color1 = _colorMap[d->col1];
+		_textDimData[i].color2 = _colorMap[d->col2];
+		_textDimData[i].line = d->line;
+		_textDimData[i].column = d->column;
 	}
 
 	_table1 = new char[128]();
@@ -576,7 +576,10 @@ void TextDisplayer_rpg::printDialogueText(int stringId, const char *pageBreakStr
 	Common::strlcpy(_dialogueBuffer, str, kEoBTextBufferSize);
 
 	_screen->set16bitShadingLevel(4);
+	int cs = (_vm->gameFlags().platform == Common::kPlatformPC98 && !_vm->gameFlags().use16ColorMode) ? _screen->setFontStyles(_screen->_currentFont, Font::kStyleFat) : -1;
 	displayText(_dialogueBuffer);
+	if (cs != -1)
+		_screen->setFontStyles(_screen->_currentFont, cs);
 	_screen->set16bitShadingLevel(0);
 
 	if (pageBreakString) {
@@ -594,7 +597,10 @@ void TextDisplayer_rpg::printDialogueText(const char *str, bool wait) {
 	assert(Common::strnlen(str, kEoBTextBufferSize) < kEoBTextBufferSize);
 	Common::strlcpy(_dialogueBuffer, str, kEoBTextBufferSize);
 
+	int cs = (_vm->gameFlags().platform == Common::kPlatformPC98 && !_vm->gameFlags().use16ColorMode) ? _screen->setFontStyles(_screen->_currentFont, Font::kStyleFat) : -1;
 	displayText(_dialogueBuffer);
+	if (cs != -1)
+		_screen->setFontStyles(_screen->_currentFont, cs);
 	if (wait)
 		displayWaitButton();
 }
@@ -622,8 +628,8 @@ void TextDisplayer_rpg::printMessage(const char *str, int textColor, ...) {
 int TextDisplayer_rpg::clearDim(int dim) {
 	int res = _screen->curDimIndex();
 	_screen->setScreenDim(dim);
-	_textDimData[dim].color1 = _colorMap[_screen->_curDim->unk8];
-	_textDimData[dim].color2 = (_vm->game() == GI_LOL || _vm->gameFlags().platform == Common::kPlatformAmiga) ? _colorMap[_screen->_curDim->unkA] : _vm->guiSettings()->colors.fill;
+	_textDimData[dim].color1 = _colorMap[_screen->_curDim->col1];
+	_textDimData[dim].color2 = (_vm->game() == GI_LOL || _vm->gameFlags().platform == Common::kPlatformAmiga) ? _colorMap[_screen->_curDim->col2] : _vm->guiSettings()->colors.fill;
 	clearCurDim();
 	return res;
 }
@@ -646,6 +652,7 @@ void TextDisplayer_rpg::textPageBreak() {
 
 	int cp = _screen->setCurPage(0);
 	Screen::FontId cf = _screen->setFont(_waitButtonFont);
+	int cs = (_vm->gameFlags().platform == Common::kPlatformPC98 && !_vm->gameFlags().use16ColorMode) ? _screen->setFontStyles(_waitButtonFont, Font::kStyleFat) : -1;
 
 	if (_vm->game() == GI_LOL)
 		_vm->_timer->pauseSingleTimer(11, true);
@@ -765,6 +772,8 @@ void TextDisplayer_rpg::textPageBreak() {
 		_vm->_updatePortraitSpeechAnimDuration = updatePortraitSpeechAnimDuration;
 	}
 
+	if (cs != -1)
+		_screen->setFontStyles(_waitButtonFont, cs);
 	_screen->setFont(cf);
 	_screen->setCurPage(cp);
 

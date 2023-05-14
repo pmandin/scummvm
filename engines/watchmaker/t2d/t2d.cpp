@@ -46,6 +46,7 @@
 #include "watchmaker/ll/ll_sound.h"
 #include "watchmaker/ll/ll_system.h"
 #include "watchmaker/renderer.h"
+#include "common/system.h"
 
 namespace Watchmaker {
 
@@ -281,11 +282,10 @@ void RefreshUpdate(Init &init) {
 }
 
 void ScrollLog(Init &init, int Add) {
-	int LastPos, Sign, i;
+	int Sign, i;
 
 	if (Add == 0) return;
 
-	LastPos = CurrentLogPos;
 	Sign = abs(Add) / Add;
 
 	for (i = 0; i < abs(Add); i++) {
@@ -314,12 +314,12 @@ void ScrollLog(Init &init, int Add) {
 }
 
 
-void WriteLog(Init &init, int i, int *CurDate, int *CurLine, int *RealLine, int PDAScrollLine, int IndentX) {
+void WriteLog(Init &init, int i, int *CurDate, int *CurLine, int *RealLine, int _PDAScrollLine, int IndentX) {
 	t2dWINDOW *w = &t2dWin[T2D_WIN_PDA_LOG];
 	int j;
 
 	//Data
-	if ((!(init.PDALog[i].flags & PDA_MENU)) && ((i != CurrentLogPos) || (PDAScrollLine == 0))) {
+	if ((!(init.PDALog[i].flags & PDA_MENU)) && ((i != CurrentLogPos) || (_PDAScrollLine == 0))) {
 		strcpy(w->text[T2D_TEXT_PDA_LOG_DATA_START + (*CurDate)].text, init.PDALog[i].info.c_str());
 		w->bm[T2D_BM_PDA_LOG_DATA_START + (*CurDate)].py = T2D_PDA_LOG_YI + (*RealLine) * 15;
 		w->bm[T2D_BM_PDA_LOG_DATA_START + (*CurDate)].tnum &= ~T2D_BM_OFF;
@@ -328,7 +328,7 @@ void WriteLog(Init &init, int i, int *CurDate, int *CurLine, int *RealLine, int 
 
 	//Testo
 	for (j = 0; j <= init.PDALog[i].lines; j++) {
-		if ((i == CurrentLogPos) && (j < PDAScrollLine)) continue;
+		if ((i == CurrentLogPos) && (j < _PDAScrollLine)) continue;
 
 		if (j == init.PDALog[i].lines) {
 			(*RealLine)++;
@@ -363,7 +363,7 @@ void WriteLog(Init &init, int i, int *CurDate, int *CurLine, int *RealLine, int 
 #define PDA_LAST_LINE   2
 
 
-int RefreshLogMenu(Init &init, int *Log, int *NumLog, int PDAScrollLine) {
+int RefreshLogMenu(Init &init, int *Log, int *NumLog, int _PDAScrollLine) {
 	int i;
 	int CurDate = 0, CurLine = 0, RealLine = 0;
 	t2dWINDOW *w = &t2dWin[T2D_WIN_PDA_LOG];
@@ -373,7 +373,7 @@ int RefreshLogMenu(Init &init, int *Log, int *NumLog, int PDAScrollLine) {
 
 		CurrentPDALogs[(*NumLog)++] = &init.PDALog[PDALogSorted[*Log].PDALogInd];
 
-		WriteLog(init, PDALogSorted[*Log].PDALogInd, &CurDate, &CurLine, &RealLine, PDAScrollLine, PDALogSorted[*Log].IndentX);
+		WriteLog(init, PDALogSorted[*Log].PDALogInd, &CurDate, &CurLine, &RealLine, _PDAScrollLine, PDALogSorted[*Log].IndentX);
 
 		if (!(init.PDALog[PDALogSorted[*Log].PDALogInd].flags & PDA_MENU)) init.PDALog[PDALogSorted[*Log].PDALogInd].flags &= ~PDA_UPDATE;
 
@@ -1273,7 +1273,6 @@ void doT2DMouse(WGame &game) {
 	char Name[MAX_PATH];
 	//Variabili per gestione scrolling
 	int32 StartY = 0, DimY = 0;
-	SYSTEMTIME sysTime;
 	char Text[1000];
 	int16 mouse_x, mouse_y;
 	Init &init = game.init;
@@ -2907,9 +2906,12 @@ void doT2DMouse(WGame &game) {
 
 						if (optionsSlot == -1) break; //Spazi finiti
 
-						GetLocalTime(&sysTime);
-						sprintf(Text, "%02d:%02d.%02d %02d/%02d/%02d", sysTime.hour, sysTime.minutes,
-						        sysTime.seconds, sysTime.day, sysTime.month, sysTime.year);
+						{
+							TimeDate sysTime;
+							g_system->getTimeAndDate(sysTime);
+							sprintf(Text, "%02d:%02d.%02d %02d/%02d/%02d", sysTime.tm_hour, sysTime.tm_min,
+									sysTime.tm_sec, sysTime.tm_mday, sysTime.tm_mon, sysTime.tm_year);
+						}
 						if (DataSave(Text, (uint8) optionsSlot)) {
 							sprintf(Text, "%stemp.tmp", game.workDirs._gameDir.c_str());
 							sprintf(Name, "%sWmSav%02d.tga", game.workDirs._savesDir.c_str(), optionsSlot);

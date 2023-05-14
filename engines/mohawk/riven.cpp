@@ -201,9 +201,6 @@ Common::Error MohawkEngine_Riven::run() {
 	while (!hasGameEnded())
 		doFrame();
 
-	// Attempt to autosave before exiting from the GMM / when closing the window
-	saveAutosaveIfEnabled();
-
 	return Common::kNoError;
 }
 
@@ -283,6 +280,11 @@ void MohawkEngine_Riven::processInput() {
 				} else if (!isGameVariant(GF_25TH)) {
 					openMainMenuDialog();
 				}
+					
+				if (!isGameVariant(GF_DEMO) && hasGameEnded()) {
+					// Attempt to autosave before exiting
+					saveAutosaveIfEnabled();
+				}	
 				break;
 			case kRivenActionPlayIntroVideos:
 				// Play the intro videos in the demo
@@ -306,6 +308,11 @@ void MohawkEngine_Riven::processInput() {
 				_stack->onAction((RivenAction)event.customType);
 				break;
 			}
+			break;
+		case Common::EVENT_QUIT:
+		case Common::EVENT_RETURN_TO_LAUNCHER:
+			// Attempt to autosave before exiting
+			saveAutosaveIfEnabled();
 			break;
 		default:
 			break;

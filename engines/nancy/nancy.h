@@ -52,7 +52,7 @@ class Serializer;
  */
 namespace Nancy {
 
-static const int kSavegameVersion = 2;
+static const int kSavegameVersion = 3;
 
 struct NancyGameDescription;
 
@@ -100,6 +100,11 @@ public:
 	void setToPreviousState();
 
 	void setMouseEnabled(bool enabled);
+
+	// The first few games used 1/2 for false/true in
+	// inventory, logic conditions, and event flags
+	const byte _true;
+	const byte _false;
 
 	// Managers
 	ResourceManager *_resource;

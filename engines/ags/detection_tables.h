@@ -303,6 +303,10 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "geminirue", "Gemini Rue" },
 	{ "ghostdream", "Ghostdream" },
 	{ "ghostman", "Ghostman: The Council Calamity" },
+	{ "gobliiins5-1", "Gobliiins5 - L'Invasion des Morglotons Part1/Demo" },
+	{ "gobliiins5-2", "Gobliiins5 - L'Invasion des Morglotons Part2" },
+	{ "gobliiins5-3", "Gobliiins5 - L'Invasion des Morglotons Part3" },
+	{ "gobliiins5-4", "Gobliiins5 - L'Invasion des Morglotons Part4" },
 	{ "goldenwake", "A Golden Wake" },
 	{ "graceward", "Graceward" },
 	{ "grandmabadass", "GrandMa Badass" },
@@ -417,6 +421,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "24hourgame", "The 24 Hour Game" },
 	{ "24hours", "24 Hours" },
 	{ "30minutes", "30 minutes" },
+	{ "3dayspandora", "3 Days to Pandora" },
 	{ "3minfart", "3 Minutes a Fart" },
 	{ "3pigsandawolf", "Three Little Pigs and a Wolf" },
 	{ "46memorylane", "46 Memory Lane" },
@@ -683,6 +688,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "beasts", "Beasts" },
 	{ "beatthebuzzer", "Beat the Buzzer" },
 	{ "beautiesandbeasts", "Beauties and Beasts" },
+	{ "beepboop", "Beep Boop" },
 	{ "beforethedarkcrystal", "Before the Dark Crystal" },
 	{ "beforethedarkcrystal2", "Before the Dark Crystal II" },
 	{ "beforeww2", "Before WW2" },
@@ -1062,6 +1068,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "disquiet", "Disquiet" },
 	{ "distancenoobject", "Distance no object" },
 	{ "djdeceased", "D. Jones: Deceased" },
+	{ "dobutsu", "Dobutsu no Costco" },
 	{ "doctormaze", "The Amazing Doctor Maze" },
 	{ "doctormuttonchop", "Doctor Muttonchop" },
 	{ "doctorwho", "Doctor Who: Time Snare" },
@@ -2156,6 +2163,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "nightmareframes", "Nightmare Frames" },
 	{ "nightoftheravingfeminist", "Night of the Raving Feminist" },
 	{ "nightofthetesticle", "Night of the Testicle" },
+	{ "nightowl", "The Night Owl Murder" },
 	{ "nightwatch", "NightWatch (2008)" },
 	{ "nightwitch", "Night Witch" },
 	{ "nightwitches", "Night Witches: Women of the clouds" },
@@ -3258,6 +3266,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "winnersdontdodrugs", "Winners Don't Do Drugs" },
 	{ "winterrose", "The Winter Rose" },
 	{ "wisp", "Wisp" },
+	{ "witchcuisine", "How to: Witchcraft Cuisine" },
 	{ "witchlullaby", "The Witch's Lullaby" },
 	{ "witchnight", "Witch Night" },
 	{ "witchron", "Witch!" },
@@ -3945,6 +3954,17 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY("geminirue", "ac2game.dat", "e8f1d07a6b363e9cc80dac5367f1b4ba", 72836785), // MacOS, Humble Bundle
 	GAME_ENTRY_EN_STEAM("ghostdream", "ghostdream.exe", "05594881531d62e4575545f3c8fd2576", 480856325),
 	GAME_ENTRY_EN_STEAM("ghostman", "Rebut And Ghostman.exe", "0241777c2537fc5d077c05cde10bfa9f", 10312749),
+	// Original release 2023-08-02
+	GAME_ENTRY("gobliiins5-1", "Gobliiins5-Part1.exe", "t:684f59952b168c26b45556d1560bb590", 174840675),
+	GAME_ENTRY("gobliiins5-2", "Gobliiins5-Part2.exe", "t:5f753c3b1df583397cf016d3bcf4bf64", 144263518),
+	GAME_ENTRY("gobliiins5-3", "Gobliiins5-Part3.exe", "t:a6d99497f108311308e812b5ba904d95", 176338687),
+	GAME_ENTRY("gobliiins5-4", "Gobliiins5-Part4.exe", "t:1f2401479d4104539d54a4d11a713044", 352399933),
+	// Bugfix release  2023-05-08
+	GAME_ENTRY("gobliiins5-1", "Gobliiins5-Part1.exe", "t:684f59952b168c26b45556d1560bb590", 174840596),
+	GAME_ENTRY("gobliiins5-2", "Gobliiins5-Part2.exe", "t:5f753c3b1df583397cf016d3bcf4bf64", 144263538),
+	GAME_ENTRY("gobliiins5-3", "Gobliiins5-Part3.exe", "t:a6d99497f108311308e812b5ba904d95", 176341869),
+	GAME_ENTRY("gobliiins5-4", "Gobliiins5-Part4.exe", "t:1f2401479d4104539d54a4d11a713044", 352414577),
+
 	GAME_ENTRY_EN_STEAM("goldenwake", "a-golden-wake.exe", "dbe281d93c914899886e77c09c3c65ec", 130844360), // Linux & Mac
 	GAME_ENTRY_EN_STEAM("goldenwake", "a-golden-wake.exe", "e7080df9729aae2a0097b752198f3cca", 130846774),
 	GAME_ENTRY_EN_STEAM("goldenwake", "a-golden-wake.exe", "409b71f7b73f30bef5098c6449505c1a", 130929070),  // Windows
@@ -4207,6 +4227,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	// Free post-2.5 games that are likely supported by the AGS engine
 	DEMO_ENTRY_EN("24hourgame", "24 Hour Game.exe", "06a03fe35791b0578068ab1873455463", 2209262),
 	DEMO_ENTRY("3geeks", "3GEEKS_Demo.exe", "7ddb9e776648faed5a51170d087074e9", 512546851), // itch.io  En-Fr
+	DEMO_ENTRY_EN("3dayspandora", "3_Days.ags", "654d58a2bc09c516f2ce69a1c2f88ae3", 1120924),
 	DEMO_ENTRY_EN("99species", "99Species.exe", "615e73fc1874e92d60a1996c2330ea36", 23870894),
 	DEMO_ENTRY_EN("aazor", "aazor.exe", "465f972675db2da6040518221af5b0ba", 4955082),
 	DEMO_ENTRY_EN("aazor", "aazor.exe", "465f972675db2da6040518221af5b0ba", 4956212),
@@ -4214,6 +4235,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DEMO_ENTRY_EN("aboardtheadventure", "Aboard.exe", "3c3f8f6c6fdcc519464477d3627b60f6", 125813308),
 	DEMO_ENTRY_EN("abscission", "Abscission.exe", "418a9aaa044bfc5b7a79ba96fe679b60", 54341372),  // v1.0.3
 	DEMO_ENTRY_EN("abscission", "Abscission Demo.exe", "418a9aaa044bfc5b7a79ba96fe679b60", 311033029),  // Steam
+	DEMO_ENTRY_EN("abscission", "Abscission Demo.exe", "7633f0919378749cebf6dacba61ca0e1", 313386788),  // Steam
 	DEMO_ENTRY_EN("absurdistan", "Absurdistan - Demo.exe", "4588012d3077d6b6791fce8cd4b15885", 35712363),  // v1.3
 	DEMO_ENTRY_EN("acaixa", "A caixa.exe", "f434ba41ed68ef8d5224254027aad1f4", 48866212),
 	DEMO_ENTRY_EN("acuriouspastime", "Curious.exe", "3e46b32a00fd4e6b9f68754f854695c5", 27346489),
@@ -4516,6 +4538,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DEMO_ENTRY_EN("morphine", "Morphine.exe", "0a04523bb2e6fe2b4eb8eee70217ac16", 113435250),
 	DEMO_ENTRY("murdercases", "Murder Cases Demo.exe", "e01f39b38593e3f871a803908daa20e7", 431399292),
 	DEMO_ENTRY("murdercases", "Murder Cases Demo.exe", "e01f39b38593e3f871a803908daa20e7", 431401071),
+	DEMO_ENTRY("murdercases", "Murder Cases Demo.exe", "e01f39b38593e3f871a803908daa20e7", 669629768),
 	DEMO_ENTRY_EN("murderinminnesota", "Game.exe", "495d45fb8adfd49690ae3b97921feec6", 14820679),  //v1 Windows
 	DEMO_ENTRY_EN("murderinminnesota", "Game.ags", "b4ed9f317081139a925d1b3a0260c1ad", 12340023),  //v1 Linux
 	DEMO_ENTRY_EN("murderinminnesota", "Game.exe", "495d45fb8adfd49690ae3b97921feec6", 15258174),  //v2 Windows
@@ -5053,6 +5076,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("beatthebuzzer", "Beat the Buzzer.exe", "4d5d25446373d4df71c6bda77a15230a", 227179876),  // v1.1 Post-Jam
 	GAME_ENTRY_EN_PLATFORM("beautiesandbeasts", "beautiesandbeasts.exe", "089fab88e6e1075a2f5b271f6f5b3c57", 6506966, "OROW"),  //v1.00
 	GAME_ENTRY_EN("beautiesandbeasts", "beautiesandbeasts.exe", "089fab88e6e1075a2f5b271f6f5b3c57", 6507202),  //v1.01
+	GAME_ENTRY_EN("beepboop", "Beep Boop.exe", "b781cc4ab0fbe647615fafa4830ec308", 5230657),
+	GAME_ENTRY_EN("beepboop", "Beep Boop.ags", "d0598090532ce80925e08c05424d8f6b", 2063917),
 	GAME_ENTRY("beforethedarkcrystal", "DarkCrystal.exe", "f120690b506dd63cd7d1112ea6af2f77", 15194282),  // En-Fr
 	GAME_ENTRY("beforethedarkcrystal2", "Before the Dark Crystal II.exe", "23a67b6de10ec35e9f5a4dfc7d928222", 59569723),  // En-Fr
 	GAME_ENTRY_EN("bellyofthebeast", "Belly of the beast.exe", "9f8a9d74c09f188af9af3e263f8b59bc", 22461502),  // Windows
@@ -5518,6 +5543,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("distancenoobject", "Distance no object.exe", "5cca0f8af961d2bc1c6e475437d3b23b", 98011325),  // Windows
 	GAME_ENTRY_EN("distancenoobject", "Distance no object.ags", "60b1978b591c4ffcb63e81e69d425343", 94977705),  // Linux
 	GAME_ENTRY_EN("djdeceased", "RON.exe", "0710e2ec71042617f565c01824f0cf3c", 1175250),
+	GAME_ENTRY_EN("dobutsu", "Dobutsu no Costco.exe", "b781cc4ab0fbe647615fafa4830ec308", 29725433),
 	GAME_ENTRY_EN("doctormaze", "Maze.exe", "825ccacaabe2a3b0cd48d6f8deb42d72", 43934617),
 	GAME_ENTRY_EN("doctormuttonchop", "muttonchop.exe", "57e261dd3bb45761af4a002775e45710", 5781714),
 	GAME_ENTRY_EN("doctormuttonchop", "muttonchop.exe", "57e261dd3bb45761af4a002775e45710", 5847364),
@@ -5605,8 +5631,10 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("elegantmurdermystery", "DH.exe", "0b7529a76f38283d6e850b8d56526fc1", 2098899),
 	GAME_ENTRY_EN_PLATFORM("elevation", "Elevation.ags", "bf06b9759714464c095e1c1e597f1e86", 4362276, "Beta"),  // Linux
 	GAME_ENTRY_EN_PLATFORM("elevation", "Elevation.ags", "3063ec0d8db8305d1dc61d7862650f11", 4363999, "Beta"),
+	GAME_ENTRY_EN("elevation", "Elevation.ags", "46d792c62262d9f83e476f96a4bfb74b", 4490040),
 	GAME_ENTRY_EN_PLATFORM("elevation", "Elevation.exe", "2f2bc0b9c539d20529c0e343315d5f65", 7471160, "Beta"),  // Windows
 	GAME_ENTRY_EN_PLATFORM("elevation", "Elevation.exe", "2f2bc0b9c539d20529c0e343315d5f65", 7472883, "Beta"),
+	GAME_ENTRY_EN("elevation", "Elevation.exe", "82e7377dcb9236fc9b622e12baa64a49", 7605580),
 	GAME_ENTRY_EN("elevator", "Elevator.exe", "f10516e88ec858700804ee69d041aead", 29506915),
 	GAME_ENTRY_EN("elevatorriseabyss", "T_E_R.exe", "f120690b506dd63cd7d1112ea6af2f77", 13366126),
 	GAME_ENTRY_LANG("elfer", "socer.exe", "e88fd6a23a5e498d7b0d50e3bb914085", 1911767, Common::DE_DEU),
@@ -6802,6 +6830,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("nightandday", "Night and Day.exe", "430eaebb21d406061d67a9972ad33947", 17206287),  //v1.1
 	GAME_ENTRY_EN("nightandday", "Night and Day.exe", "430eaebb21d406061d67a9972ad33947", 17209105),  //v1.2
 	GAME_ENTRY_EN("nightofthetesticle", "testicle2.exe", "18b284c22010850f79bc5c20054a70c4", 145543486),
+	GAME_ENTRY_EN("nightowl", "LD51.exe", "dbe9bab672130b9a84925cb6da64a3db", 33871100),
+	GAME_ENTRY_EN("nightowl", "LD51.ags", "475ee6971bd15088ab7c4271ef6dccfd", 30762728),
 	GAME_ENTRY_EN("nightwatch", "NWATCH.exe", "089fab88e6e1075a2f5b271f6f5b3c57", 2451134),
 	GAME_ENTRY_EN("nightwitch", "NightWitch.exe", "9632da1faae3ef66d7ea9dd60cc19440", 28701275),
 	GAME_ENTRY_EN("nightwitch", "NightWitch.ags", "220d7fcf6fc747f1861265c338ff3fdd", 25658951),
@@ -6855,9 +6885,9 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("odr3", "ODR3.exe", "af11e94f91b66e11450e8daf51d09292", 7637876),
 	GAME_ENTRY_EN("odr4", "ODR4.exe", "510be04e5eec2aa92bb78b060f138d64", 24227828),
 	GAME_ENTRY_EN("officeshenanigans", "OfficeShenanigans.exe", "25976a689b0f4d73eac69b1728377ecb", 6111931),
-	GAME_ENTRY_EN("offtheclock", "Off The Clock.ags", "8918895c5c695bae90af13ea4f1a9807", 495345700), // Linux
-	GAME_ENTRY_EN("offtheclock", "Off The Clock.exe", "b2eb107c1f9784b7fc4f58c2a7678dea", 498392456), // Windows
-	GAME_ENTRY_EN("offtheclock", "ac2game.dat", "b2eb107c1f9784b7fc4f58c2a7678dea", 498257938), // Mac
+	DETECTION_ENTRY_GUIO("offtheclock", "Off The Clock.ags", "8918895c5c695bae90af13ea4f1a9807", 495345700, Common::EN_ANY, nullptr, GUIO2(GUIO_NOLANG, GUIO_NOLAUNCHLOAD), nullptr, ADGF_NO_FLAGS),  // Linux
+	DETECTION_ENTRY_GUIO("offtheclock", "Off The Clock.exe", "b2eb107c1f9784b7fc4f58c2a7678dea", 498392456, Common::EN_ANY, nullptr, GUIO2(GUIO_NOLANG, GUIO_NOLAUNCHLOAD), nullptr, ADGF_NO_FLAGS),  // Win
+	DETECTION_ENTRY_GUIO("offtheclock", "ac2game.dat", "b2eb107c1f9784b7fc4f58c2a7678dea", 498257938, Common::EN_ANY, nullptr, GUIO2(GUIO_NOLANG, GUIO_NOLAUNCHLOAD), nullptr, ADGF_NO_FLAGS),  // Mac
 	GAME_ENTRY("ohdulieber", "Augustin.exe", "b142b43c146c25443a1d155d441a6a81", 13477896),  // En-Fr-De
 	GAME_ENTRY_EN_PLATFORM("ohdulieber", "Augustin.exe", "b5c41e08919834b549ca350a28f18f87", 12576785, "MAGS"),
 	GAME_ENTRY_EN("ohitschristmas", "soi_c.exe", "0241777c2537fc5d077c05cde10bfa9f", 17522925),
@@ -8142,6 +8172,9 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("winterrose", "Winter Rose.exe", "0500aacb6c176d47ac0f8158f055db83", 37443633),  //v1.2
 	GAME_ENTRY_EN("winterrose", "Winter Rose.exe", "0500aacb6c176d47ac0f8158f055db83", 37444693),  //v1.3
 	GAME_ENTRY_EN("wisp", "Wisp.exe", "9cb3c8dc7a8ab9c44815955696be2677", 2090032),
+	GAME_ENTRY("witchcuisine", "Witchcraft Cuisine.exe", "b781cc4ab0fbe647615fafa4830ec308", 29708682),  // Win Eng-Ita
+	GAME_ENTRY("witchcuisine", "Witchcraft Cuisine.ags", "e21087d20f4671e9082ba9d0063e450a", 26541942),  // Linux
+	GAME_ENTRY("witchcuisine", "games.ags", "90fe5cdf64cc46965c2e3d5c53af193a", 46076827),  // Mac
 	GAME_ENTRY_EN("witchlullaby", "The Witch's Lullaby.exe", "ca511538e3e3244813db0f905a31810a", 70312050),  // v1.1
 	GAME_ENTRY_EN("witchlullaby", "The Witch's Lullaby.ags", "3e89d1cade6b23ae330390a2924882f0", 59534130),  // v1.2
 	GAME_ENTRY_EN("witchnight", "wnight.exe", "9cf51833e787cc919837d9a8bd8fc14c", 2792150),

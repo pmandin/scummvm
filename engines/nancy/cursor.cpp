@@ -33,8 +33,21 @@ void CursorManager::init(Common::SeekableReadStream *chunkStream) {
 	assert(chunkStream);
 
 	chunkStream->seek(0);
-	uint numCursorTypes = g_nancy->getGameType() <= kGameTypeNancy1 ? 4 : 5;
-	uint numCursors = g_nancy->getStaticData().numNonItemCursors + g_nancy->getStaticData().numItems * numCursorTypes;
+
+	switch(g_nancy->getGameType()) {
+	case kGameTypeVampire:
+		// fall thorugh
+	case kGameTypeNancy1:
+		_numCursorTypes = 4;
+		break;
+	case kGameTypeNancy2:	
+		_numCursorTypes = 5;
+		break;
+	default:
+		_numCursorTypes = 8;
+	}
+
+	uint numCursors = g_nancy->getStaticData().numNonItemCursors + g_nancy->getStaticData().numItems * _numCursorTypes;
 	_cursors.resize(numCursors);
 
 	for (uint i = 0; i < numCursors; ++i) {
@@ -76,43 +89,78 @@ void CursorManager::setCursor(CursorType type, int16 itemID) {
 
 	_hasItem = false;
 
+	// kNormalArrow, kHotspotArrow, kExit, kTurnLeft and kTurnRight are
+	// cases where the selected cursor is _always_ shown, regardless
+	// of whether or not an item is held. All other types of cursor
+	// are overridable when holding an item. Every item cursor has
+	// _numItemCursor variants, one corresponding to every numbered
+	// value of the CursorType enum.
 	switch (type) {
 	case kNormalArrow:
 		if (gameType <= kGameTypeNancy1) {
 			_curCursorID = 4;
-		} else {
+		} else if (gameType == kGameTypeNancy2) {
 			_curCursorID = 5;
+		} else {
+			_curCursorID = 8;
 		}
 		
-		break;
+		return;
 	case kHotspotArrow:
 		if (gameType <= kGameTypeNancy1) {
 			_curCursorID = 5;
-		} else {
+		} else if (gameType == kGameTypeNancy2) {
 			_curCursorID = 6;
+		} else {
+			_curCursorID = 9;
+		}
+
+		return;
+	case kTurnLeft:
+		// Only valid for nancy3 and up
+		if (gameType >= kGameTypeNancy3) {
+			_curCursorID = kTurnLeft;
+			return;
+		} else {
+			type = kMove;
 		}
 
 		break;
+	case kTurnRight:
+		// Only valid for nancy3 and up
+		if (gameType >= kGameTypeNancy3) {
+			_curCursorID = kTurnRight;
+			return;
+		} else {
+			type = kMove;
+		}
+		
+		break;
 	case kExit:
+		// Not valid in TVD
 		if (gameType != kGameTypeVampire) {
 			_curCursorID = 3;
-			break;
+			return;
 		}
-		// fall through
-	default: {
-		uint itemsOffset = 0;
-		if (itemID == -1) {
-			// No item held, set to eyeglass
-			itemID = 0;
-		} else {
-			// Item held
-			itemsOffset = g_nancy->getStaticData().numNonItemCursors;
-			_hasItem = true;
-		}
+		
+		break;
+	default:
+		break;
+	}
 
-		_curCursorID = itemID * (gameType <= kGameTypeNancy1? 4 : 5) + itemsOffset + type;
+	// Special cases have been handled, now choose correct
+	// item cursor if holding something
+	uint itemsOffset = 0;
+	if (itemID == -1) {
+		// No item held, set to eyeglass
+		itemID = 0;
+	} else {
+		// Item held
+		itemsOffset = g_nancy->getStaticData().numNonItemCursors;
+		_hasItem = true;
 	}
-	}
+
+	_curCursorID = (itemID * _numCursorTypes) + itemsOffset + type;
 }
 
 void CursorManager::setCursorType(CursorType type) {

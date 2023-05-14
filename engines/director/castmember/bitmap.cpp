@@ -51,10 +51,14 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 	_pitch = 0;
 	_flags2 = 0;
 	_regX = _regY = 0;
-	_clut = 0;
-	_ditheredTargetClut = 0;
+	_clut = CastMemberID(0, 0);
+	_ditheredTargetClut = CastMemberID(0, 0);
 	_bitsPerPixel = 0;
 	_external = false;
+
+	if (debugChannelSet(5, kDebugLoading)) {
+		stream.hexdump(stream.size());
+	}
 
 	if (version < kFileVer400) {
 		_flags1 = flags1;	// region: 0 - auto, 1 - matte, 2 - disabled
@@ -67,12 +71,15 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 
 		if (_bytes & 0x8000) {
 			_bitsPerPixel = stream.readUint16();
-			_clut = stream.readSint16();
-			if (_clut <= 0) // builtin palette
-				_clut -= 1;
+			int clutId = stream.readSint16();
+
+			if (clutId <= 0) // builtin palette
+				_clut = CastMemberID(clutId - 1, -1);
+			else
+				_clut = CastMemberID(clutId, DEFAULT_CAST_LIB);
 		} else {
 			_bitsPerPixel = 1;
-			_clut = kClutSystemMac;
+			_clut = CastMemberID(kClutSystemMac, -1);
 		}
 
 		_pitch = _initialRect.width();
@@ -92,17 +99,26 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 		_regY = stream.readUint16();
 		_regX = stream.readUint16();
 
-		_bitsPerPixel = stream.readUint16();
+		stream.readByte();
+		_bitsPerPixel = stream.readByte();
 
 		if (stream.eos()) {
 			_bitsPerPixel = 0;
 		} else {
+			int clutCastLib = -1;
 			if (version >= kFileVer500) {
-				stream.readSint16(); // is this the castlib? was ff ff
+				clutCastLib = stream.readSint16();
 			}
-			_clut = stream.readSint16();
-			if (_clut <= 0) // builtin palette
-				_clut -= 1;
+			int clutId = stream.readSint16();
+
+			if (clutId <= 0) // builtin palette
+				_clut = CastMemberID(clutId - 1, -1);
+			else if (clutId > 0) {
+				if (clutCastLib == -1) {
+					clutCastLib = _cast->_castLibID;
+				}
+				_clut = CastMemberID(clutId, clutCastLib);
+			}
 			stream.readUint16();
 			/* uint16 unk1 = */ stream.readUint16();
 			stream.readUint16();
@@ -133,6 +149,8 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Common::SeekableRe
 			debug("BitmapCastMember: tail");
 			Common::hexdump(buf, tail);
 		}
+	} else {
+		warning("STUB: BitmapCastMember::BitmapCastMember(): Bitmaps not yet supported for version %d", version);
 	}
 
 	_tag = castTag;
@@ -148,8 +166,8 @@ BitmapCastMember::BitmapCastMember(Cast *cast, uint16 castId, Image::ImageDecode
 		_picture = new Picture(*img);
 	}
 	_ditheredImg = nullptr;
-	_clut = -1;
-	_ditheredTargetClut = 0;
+	_clut = CastMemberID(0, 0);
+	_ditheredTargetClut = CastMemberID(0, 0);
 	_initialRect = Common::Rect(0, 0, img->getSurface()->w, img->getSurface()->h);
 	_pitch = img->getSurface()->pitch;
 	_bitsPerPixel = img->getSurface()->format.bytesPerPixel * 8;
@@ -193,7 +211,7 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 		_ditheredImg->free();
 		delete _ditheredImg;
 		_ditheredImg = nullptr;
-		_ditheredTargetClut = 0;
+		_ditheredTargetClut = CastMemberID(0, 0);
 	}
 
 	if (dstBpp == 1) {
@@ -215,18 +233,18 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 			Cast *cast = movie->getCast();
 			Score *score = movie->getScore();
 			// Get the current score palette. Note that this is the ID of the palette in the list, not the cast member!
-			int currentPaletteId = score->resolvePaletteId(score->getCurrentPalette());
-			if (!currentPaletteId)
+			CastMemberID currentPaletteId = score->getCurrentPalette();
+			if (currentPaletteId.isNull())
 				currentPaletteId = cast->_defaultPalette;
 			PaletteV4 *currentPalette = g_director->getPalette(currentPaletteId);
 			if (!currentPalette) {
-				currentPaletteId = kClutSystemMac;
+				currentPaletteId = CastMemberID(kClutSystemMac, -1);
 				currentPalette = g_director->getPalette(currentPaletteId);
 			}
-			int castPaletteId = score->resolvePaletteId(_clut);
+			CastMemberID castPaletteId = _clut;
 			// It is possible for Director to have saved an invalid ID in _clut;
 			// if this is the case, do no dithering.
-			if (!castPaletteId)
+			if (castPaletteId.isNull())
 				castPaletteId = currentPaletteId;
 
 			// Check if the palette is in the middle of a color fade event
@@ -250,7 +268,7 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 					const auto pals = g_director->getLoaded16Palettes();
 					// in D4 you aren't allowed to use custom palettes for 4-bit images, so uh...
 					// I guess default to the mac palette?
-					int palIndex = pals.contains(castPaletteId) ? castPaletteId : kClutSystemMac;
+					CastMemberID palIndex = pals.contains(castPaletteId) ? castPaletteId : CastMemberID(kClutSystemMac, -1);
 					const PaletteV4 &srcPal = pals.getVal(palIndex);
 					_ditheredImg = _picture->_surface.convertTo(g_director->_wm->_pixelformat, srcPal.palette, srcPal.length, currentPalette->palette, currentPalette->length, Graphics::kDitherNaive);
 				}
@@ -262,7 +280,7 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 					break;
 				if (_external || (castPaletteId != currentPaletteId && !isColorCycling)) {
 					const auto pals = g_director->getLoadedPalettes();
-					int palIndex = pals.contains(castPaletteId) ? castPaletteId : kClutSystemMac;
+					CastMemberID palIndex = pals.contains(castPaletteId) ? castPaletteId : CastMemberID(kClutSystemMac, -1);
 					const PaletteV4 &srcPal = pals.getVal(palIndex);
 
 					// If it is an external image, use the included palette.
@@ -278,7 +296,7 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 			}
 
 			if (_ditheredImg) {
-				debugC(4, kDebugImages, "BitmapCastMember::createWidget(): Dithering image from source palette %d to target palette %d", _clut, score->getCurrentPalette());
+				debugC(4, kDebugImages, "BitmapCastMember::createWidget(): Dithering image from source palette %s to target palette %s", _clut.asString().c_str(), score->getCurrentPalette().asString().c_str());
 				// Save the palette ID so we can check if a redraw is required
 				_ditheredTargetClut = currentPaletteId;
 
@@ -296,7 +314,7 @@ Graphics::MacWidget *BitmapCastMember::createWidget(Common::Rect &bbox, Channel 
 					}
 				}
 			} else if (previouslyDithered) {
-				debugC(4, kDebugImages, "BitmapCastMember::createWidget(): Removed dithered image, score palette %d matches cast member", score->getCurrentPalette());
+				debugC(4, kDebugImages, "BitmapCastMember::createWidget(): Removed dithered image, score palette %s matches cast member", score->getCurrentPalette().asString().c_str());
 			}
 
 		}
@@ -374,24 +392,24 @@ bool BitmapCastMember::isModified() {
 	// will dither the image so that it fits within the current palette.
 	// When the score palette changes, we need to flag that the widget needs
 	// to be recreated.
-	if (_clut) {
+	if (!_clut.isNull()) {
 		Movie *movie = g_director->getCurrentMovie();
 		Cast *cast = movie->getCast();
 		Score *score = movie->getScore();
-		int currentPaletteId = score->resolvePaletteId(score->getCurrentPalette());
-		if (!currentPaletteId)
+		CastMemberID currentPaletteId = score->getCurrentPalette();
+		if (currentPaletteId.isNull())
 			currentPaletteId = cast->_defaultPalette;
 		PaletteV4 *currentPalette = g_director->getPalette(currentPaletteId);
 		if (!currentPalette) {
-			currentPaletteId = kClutSystemMac;
+			currentPaletteId = CastMemberID(kClutSystemMac, -1);
 			currentPalette = g_director->getPalette(currentPaletteId);
 		}
-		int castPaletteId = score->resolvePaletteId(_clut);
-		if (!castPaletteId)
+		CastMemberID castPaletteId = _clut;
+		if (castPaletteId.isNull())
 			castPaletteId = cast->_defaultPalette;
 
 		if (currentPaletteId == castPaletteId) {
-			return _ditheredTargetClut != 0;
+			return !_ditheredTargetClut.isNull();
 		} else {
 			return _ditheredTargetClut != currentPaletteId;
 		}
@@ -473,13 +491,13 @@ Graphics::Surface *BitmapCastMember::getMatte(Common::Rect &bbox) {
 
 Common::String BitmapCastMember::formatInfo() {
 	return Common::String::format(
-		"initialRect: %dx%d@%d,%d, boundingRect: %dx%d@%d,%d, foreColor: %d, backColor: %d, regX: %d, regY: %d, pitch: %d, bitsPerPixel: %d, palette: %d",
+		"initialRect: %dx%d@%d,%d, boundingRect: %dx%d@%d,%d, foreColor: %d, backColor: %d, regX: %d, regY: %d, pitch: %d, bitsPerPixel: %d, palette: %s",
 		_initialRect.width(), _initialRect.height(),
 		_initialRect.left, _initialRect.top,
 		_boundingRect.width(), _boundingRect.height(),
 		_boundingRect.left, _boundingRect.top,
 		getForeColor(), getBackColor(),
-		_regX, _regY, _pitch, _bitsPerPixel, _clut
+		_regX, _regY, _pitch, _bitsPerPixel, _clut.asString().c_str()
 	);
 }
 
@@ -547,7 +565,7 @@ void BitmapCastMember::load() {
 						_bitsPerPixel = 8;
 					}
 
-					debugC(5, kDebugImages, "BitmapCastMember::load(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %x", imgId, surf->w, surf->h, _flags1, _flags2, _bytes, _bitsPerPixel, _clut);
+					debugC(5, kDebugImages, "BitmapCastMember::load(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %s", imgId, surf->w, surf->h, _flags1, _flags2, _bytes, _bitsPerPixel, _clut.asString().c_str());
 					delete pic;
 					delete decoder;
 					_loaded = true;
@@ -611,7 +629,7 @@ void BitmapCastMember::load() {
 	delete img;
 	delete pic;
 
-	debugC(5, kDebugImages, "BitmapCastMember::load(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %x", imgId, w, h, _flags1, _flags2, _bytes, _bitsPerPixel, _clut);
+	debugC(5, kDebugImages, "BitmapCastMember::load(): Bitmap: id: %d, w: %d, h: %d, flags1: %x, flags2: %x bytes: %x, bpp: %d clut: %s", imgId, w, h, _flags1, _flags2, _bytes, _bitsPerPixel, _clut.asString().c_str());
 
 	_loaded = true;
 }
@@ -722,8 +740,18 @@ bool BitmapCastMember::setField(int field, const Datum &d) {
 		}
 		return true;
 	case kThePalette:
-		_clut = d.asInt();
-		return true;
+		{
+			// FIXME: not multicast safe
+			int id = d.asInt();
+			if (id > 0) {
+				_clut = CastMemberID(d.asInt(), DEFAULT_CAST_LIB);
+			} else if (id < 0) {
+				_clut = CastMemberID(d.asInt(), -1);
+			} else {
+				_clut = CastMemberID(0, 0);
+			}
+			return true;
+		}
 	case kThePicture:
 		if (d.type == PICTUREREF && d.u.picture != nullptr) {
 			setPicture(*d.u.picture);

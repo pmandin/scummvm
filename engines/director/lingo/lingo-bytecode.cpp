@@ -254,6 +254,8 @@ static LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x08, 0x01, kThePerFrameHook,		kTheNOField,		true, kTEANOArgs },
 	{ 0x08, 0x02, kTheCastMembers,		kTheNumber,			false, kTEANOArgs },
 	{ 0x08, 0x03, kTheMenus,			kTheNumber,			false, kTEANOArgs },
+	{ 0x08, 0x04, kTheCastlibs,			kTheNumber,			false, kTEANOArgs }, // D5
+	{ 0x08, 0x05, kTheXtras,			kTheNumber,			false, kTEANOArgs }, // D5
 
 	{ 0x09, 0x01, kTheCast,				kTheName,			true, kTEAItemId },
 	{ 0x09, 0x02, kTheCast,				kTheText,			true, kTEAItemId },
@@ -1215,17 +1217,20 @@ ScriptContext *LingoCompiler::compileLingoV4(Common::SeekableReadStreamEndian &s
 					break;
 				}
 
-				// Floats are stored as an "80 bit IEEE Standard 754 floating
-				// point number (Standard Apple Numeric Environment [SANE] data type
-				// Extended).
-				if (length != 10) {
-					error("Constant float expected to be 10 bytes");
-					break;
-				}
-				uint16 signAndExponent = READ_BE_UINT16(&constsStore[pointer]);
-				uint64 mantissa = READ_BE_UINT64(&constsStore[pointer+2]);
+				if (length == 10) {
+					// Floats are stored as an "80 bit IEEE Standard 754 floating
+					// point number (Standard Apple Numeric Environment [SANE] data type
+					// Extended).
+					uint16 signAndExponent = READ_BE_UINT16(&constsStore[pointer]);
+					uint64 mantissa = READ_BE_UINT64(&constsStore[pointer+2]);
 
-				constant.u.f = Common::XPFloat(signAndExponent, mantissa).toDouble(Common::XPFloat::kSemanticsSANE);
+					constant.u.f = Common::XPFloat(signAndExponent, mantissa).toDouble(Common::XPFloat::kSemanticsSANE);
+				} else if (length == 8) {
+					constant.u.f = READ_BE_FLOAT64(&constsStore[pointer]);
+				} else {
+					error("Constant float expected to be 8 or 10 bytes but got %d", length);
+				}
+
 			}
 			break;
 		default:

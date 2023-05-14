@@ -40,7 +40,7 @@ Frame::Frame(Score *score, int numChannels) {
 	_tempo = 0;
 
 	_scoreCachedTempo = 0;
-	_scoreCachedPaletteId = 0;
+	_scoreCachedPaletteId = CastMemberID(0, 0);
 
 	_numChannels = numChannels;
 
@@ -134,7 +134,7 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 
 	if (version < kFileVer400) {
 		// Sound/Tempo/Transition
-		_actionId = CastMemberID(stream->readByte(), 0);
+		_actionId = CastMemberID(stream->readByte(), DEFAULT_CAST_LIB);
 		_soundType1 = stream->readByte(); // type: 0x17 for sounds (sound is cast id), 0x16 for MIDI (sound is cmd id)
 		uint8 transFlags = stream->readByte(); // 0x80 is whole stage (vs changed area), rest is duration in 1/4ths of a second
 
@@ -147,15 +147,15 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 		_transChunkSize = stream->readByte();
 		_tempo = stream->readByte();
 		_transType = static_cast<TransitionType>(stream->readByte());
-		_sound1 = CastMemberID(stream->readUint16(), 0);
-		_sound2 = CastMemberID(stream->readUint16(), 0);
+		_sound1 = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
+		_sound2 = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
 		_soundType2 = stream->readByte();
 
 		_skipFrameFlag = stream->readByte();
 		_blend = stream->readByte();
 
 		if (_vm->getPlatform() == Common::kPlatformWindows) {
-			_sound2 = CastMemberID(stream->readUint16(), 0);
+			_sound2 = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
 			_soundType2 = stream->readByte();
 		} else {
 			stream->read(unk, 3);
@@ -163,7 +163,14 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 		}
 
 		// palette
-		_palette.paletteId = stream->readSint16();
+		int16 paletteId = stream->readSint16();
+		if (paletteId == 0) {
+			_palette.paletteId = CastMemberID(0, 0);
+		} else if (paletteId < 0) {
+			_palette.paletteId = CastMemberID(paletteId, -1);
+		} else {
+			_palette.paletteId = CastMemberID(paletteId, DEFAULT_CAST_LIB);
+		}
 		// loop points for color cycling
 		_palette.firstColor = g_director->transformColor(stream->readByte() ^ 0x80);
 		_palette.lastColor = g_director->transformColor(stream->readByte() ^ 0x80);
@@ -204,9 +211,9 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 		_transChunkSize = stream->readByte();
 		_tempo = stream->readByte();
 		_transType = static_cast<TransitionType>(stream->readByte());
-		_sound1 = CastMemberID(stream->readUint16(), 0);
+		_sound1 = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
 
-		_sound2 = CastMemberID(stream->readUint16(), 0);
+		_sound2 = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
 		_soundType2 = stream->readByte();
 
 		_skipFrameFlag = stream->readByte();
@@ -216,13 +223,20 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 		_colorSound1 = stream->readByte();
 		_colorSound2 = stream->readByte();
 
-		_actionId = CastMemberID(stream->readUint16(), 0);
+		_actionId = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
 
 		_colorScript = stream->readByte();
 		_colorTrans = stream->readByte();
 
 		// palette
-		_palette.paletteId = stream->readSint16();
+		int16 paletteId = stream->readSint16();
+		if (paletteId == 0) {
+			_palette.paletteId = CastMemberID(0, 0);
+		} else if (paletteId < 0) {
+			_palette.paletteId = CastMemberID(paletteId, -1);
+		} else {
+			_palette.paletteId = CastMemberID(paletteId, DEFAULT_CAST_LIB);
+		}
 		// loop points for color cycling
 		_palette.firstColor = g_director->transformColor(stream->readByte() + 0x80);
 		_palette.lastColor = g_director->transformColor(stream->readByte() + 0x80);
@@ -283,9 +297,9 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 		stream->read(unk, 2);
 
 		// palette
-		stream->read(unk, 2);
-
-		_palette.paletteId = stream->readSint16();
+		int16 paletteCastLib = stream->readSint16();
+		int16 paletteId = stream->readSint16();
+		_palette.paletteId = CastMemberID(paletteId, paletteCastLib);
 		_palette.speed = stream->readByte();
 		_palette.flags = stream->readByte();
 		_palette.colorCycling = (_palette.flags & 0x80) != 0;
@@ -312,7 +326,7 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 				debugC(8, kDebugLoading, "Frame::readChannels(): channel %d, 22 bytes", i);
 				stream->hexdump(22);
 			}
-			sprite._scriptId = CastMemberID(stream->readByte(), 0);
+			sprite._scriptId = CastMemberID(stream->readByte(), DEFAULT_CAST_LIB);
 			sprite._spriteType = (SpriteType)stream->readByte();
 			sprite._enabled = sprite._spriteType != kInactiveSprite;
 			if (version >= kFileVer400) {
@@ -330,7 +344,7 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 			if (sprite.isQDShape()) {
 				sprite._pattern = stream->readUint16();
 			} else {
-				sprite._castId = CastMemberID(stream->readUint16(), 0);
+				sprite._castId = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
 			}
 
 			sprite._startPoint.y = (int16)stream->readUint16();
@@ -340,7 +354,7 @@ void Frame::readChannels(Common::SeekableReadStreamEndian *stream, uint16 versio
 			sprite._width = (int16)stream->readUint16();
 
 			if (version >= kFileVer400) {
-				sprite._scriptId = CastMemberID(stream->readUint16(), 0);
+				sprite._scriptId = CastMemberID(stream->readUint16(), DEFAULT_CAST_LIB);
 				// & 0x0f scorecolor
 				// 0x10 forecolor is rgb
 				// 0x20 bgcolor is rgb
@@ -425,9 +439,9 @@ Common::String Frame::formatChannelInfo() {
 	Common::String result;
 	result += Common::String::format("TMPO:   tempo: %d, skipFrameFlag: %d, blend: %d\n",
 		_tempo, _skipFrameFlag, _blend);
-	if (_palette.paletteId) {
-		result += Common::String::format("PAL:    paletteId: %d, firstColor: %d, lastColor: %d, flags: %d, cycleCount: %d, speed: %d, frameCount: %d, fade: %d, delay: %d, style: %d\n",
-			_palette.paletteId, _palette.firstColor, _palette.lastColor, _palette.flags,
+	if (_palette.paletteId.isNull()) {
+		result += Common::String::format("PAL:    paletteId: %s, firstColor: %d, lastColor: %d, flags: %d, cycleCount: %d, speed: %d, frameCount: %d, fade: %d, delay: %d, style: %d\n",
+			_palette.paletteId.asString().c_str(), _palette.firstColor, _palette.lastColor, _palette.flags,
 			_palette.cycleCount, _palette.speed, _palette.frameCount,
 			_palette.fade, _palette.delay, _palette.style);
 	} else {
@@ -464,7 +478,7 @@ void Frame::readMainChannels(Common::SeekableReadStreamEndian &stream, uint16 of
 	while (offset < finishPosition) {
 		switch(offset) {
 		case kScriptIdPosition:
-			_actionId = CastMemberID(stream.readByte(), 0);
+			_actionId = CastMemberID(stream.readByte(), DEFAULT_CAST_LIB);
 			offset++;
 			break;
 		case kSoundType1Position:
@@ -494,7 +508,7 @@ void Frame::readMainChannels(Common::SeekableReadStreamEndian &stream, uint16 of
 			offset++;
 			break;
 		case kSound1Position:
-			_sound1 = CastMemberID(stream.readUint16(), 0);
+			_sound1 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			offset+=2;
 			break;
 		case kSkipFrameFlagsPosition:
@@ -506,7 +520,7 @@ void Frame::readMainChannels(Common::SeekableReadStreamEndian &stream, uint16 of
 			offset++;
 			break;
 		case kSound2Position:
-			_sound2 = CastMemberID(stream.readUint16(), 0);
+			_sound2 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			offset += 2;
 			break;
 		case kSound2TypePosition:
@@ -576,7 +590,7 @@ void Frame::readSprite(Common::SeekableReadStreamEndian &stream, uint16 offset, 
 			fieldPosition += 2;
 			break;
 		case kSpritePositionCastId:
-			sprite._castId = CastMemberID(stream.readUint16(), 0);
+			sprite._castId = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			fieldPosition += 2;
 			break;
 		case kSpritePositionY:

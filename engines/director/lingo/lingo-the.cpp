@@ -393,6 +393,9 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 	case kTheCast:
 		d = getTheCast(id, field);
 		break;
+	case kTheCastlibs: // D5
+		d = getCastlibsNum();
+		break;
 	case kTheCastMembers:
 		d = (int)(movie->getCast()->getCastSize() + (movie->_sharedCast ? movie->_sharedCast->getCastSize() : 0));
 		break;
@@ -898,6 +901,9 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 	case kTheWindowList:
 		d = g_lingo->_windowList;
 		break;
+	case kTheXtras: // D5
+		d = getXtrasNum();
+		break;
 	default:
 		warning("Lingo::getTheEntity(): Unprocessed getting field \"%s\" of entity %s", field2str(field), entity2str(entity));
 		break;
@@ -1223,6 +1229,14 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 
 int Lingo::getMenuNum() {
 	return g_director->_wm->getMenu()->numberOfMenus();
+}
+
+int Lingo::getCastlibsNum() {
+	return _vm->getCurrentMovie()->getCasts()->size();
+}
+
+int Lingo::getXtrasNum() {
+	return _openXLibs.size();
 }
 
 int Lingo::getMenuItemsNum(Datum &d) {

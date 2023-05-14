@@ -94,8 +94,7 @@ public:
 	uint16 getCurrentFrame() { return _currentFrame; }
 	int getNextFrame() { return _nextFrame; }
 
-	int getCurrentPalette();
-	int resolvePaletteId(int id);
+	CastMemberID getCurrentPalette();
 
 	Channel *getChannelById(uint16 id);
 	Sprite *getSpriteById(uint16 id);
@@ -150,7 +149,6 @@ public:
 
 	byte _puppetTempo;
 	bool _puppetPalette;
-	int _lastPalette;
 	int _paletteTransitionIndex;
 	byte _paletteSnapshotBuffer[768];
 
@@ -165,6 +163,7 @@ public:
 	int _activeFade;
 	Cursor _defaultCursor;
 	CursorRef _currentCursor;
+	bool _skipTransition;
 
 	int _numChannelsDisplayed;
 
@@ -178,7 +177,6 @@ private:
 	uint16 _nextFrame;
 	int _currentLabel;
 	DirectorSound *_soundManager;
-	int _currentPalette;
 
 	int _previousBuildBotBuild = -1;
 };

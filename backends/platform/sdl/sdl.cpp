@@ -762,6 +762,13 @@ Common::SaveFileManager *OSystem_SDL::getSavefileManager() {
 #endif
 }
 
+uint32 OSystem_SDL::getDoubleClickTime() const {
+	if (ConfMan.hasKey("double_click_time"))
+		return ConfMan.getInt("double_click_time");
+
+	return getOSDoubleClickTime();
+}
+
 //Not specified in base class
 Common::String OSystem_SDL::getDefaultIconsPath() {
 	Common::String path = ConfMan.get("iconspath");

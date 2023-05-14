@@ -23,8 +23,10 @@
 #define NANCY_STATE_SCENE_H
 
 #include "common/singleton.h"
+#include "common/queue.h"
 
 #include "engines/nancy/commontypes.h"
+#include "engines/nancy/puzzledata.h"
 
 #include "engines/nancy/action/actionmanager.h"
 
@@ -132,6 +134,7 @@ public:
 
 	void setPlayerTime(Time time, byte relative);
 	Time getPlayerTime() const { return _timers.playerTime; }
+	Time getTimerTime() const { return _timers.timerIsActive ? _timers.timerTime : 0; }
 	byte getPlayerTOD() const;
 
 	void addItemToInventory(uint16 id);
@@ -140,13 +143,13 @@ public:
 	void setHeldItem(int16 id);
 	byte hasItem(int16 id) const { return _flags.items[id]; }
 
-	void setEventFlag(int16 label, byte flag = kEvOccurred);
+	void setEventFlag(int16 label, byte flag);
 	void setEventFlag(FlagDescription eventFlag);
-	bool getEventFlag(int16 label, byte flag = kEvOccurred) const;
+	bool getEventFlag(int16 label, byte flag) const;
 	bool getEventFlag(FlagDescription eventFlag) const;
 
-	void setLogicCondition(int16 label, byte flag = kLogUsed);
-	bool getLogicCondition(int16 label, byte flag = kLogUsed) const;
+	void setLogicCondition(int16 label, byte flag);
+	bool getLogicCondition(int16 label, byte flag) const;
 	void clearLogicConditions();
 
 	void setDifficulty(uint difficulty) { _difficulty = difficulty; }
@@ -189,11 +192,8 @@ public:
 	// Used from nancy2 onwards
 	void specialEffect(byte type, uint16 fadeToBlackTime, uint16 frameTime);
 
-	// Game-specific data that needs to be saved/loaded
-	SliderPuzzleState *_sliderPuzzleState;
-	RippedLetterPuzzleState *_rippedLetterPuzzleState;
-	TowerPuzzleState *_towerPuzzleState;
-	RiddlePuzzleState *_riddlePuzzleState;
+	// Get the persistent data for a given puzzle type
+	PuzzleData *getPuzzleData(const uint32 tag);
 
 private:
 	void init();
@@ -204,6 +204,7 @@ private:
 	void initStaticData();
 
 	void clearSceneData();
+	void clearPuzzleData();
 
 	enum State {
 		kInit,
@@ -234,13 +235,14 @@ private:
 
 	struct PlayFlags {
 		struct LogicCondition {
-			byte flag = kLogNotUsed;
+			LogicCondition();
+			byte flag;
 			Time timestamp;
 		};
 
 		LogicCondition logicConditions[30];
 		Common::Array<byte> eventFlags;
-		uint16 sceneHitCount[2001];
+		Common::HashMap<uint16, uint16> sceneCounts;
 		Common::Array<byte> items;
 		int16 heldItem = -1;
 		int16 primaryVideoResponsePicked = -1;
@@ -261,6 +263,8 @@ private:
 	UI::InventoryBoxOrnaments *_inventoryBoxOrnaments;
 	UI::Clock *_clock;
 
+	Common::Rect _mapHotspot;
+
 	// General data
 	SceneState _sceneState;
 	PlayFlags _flags;
@@ -272,9 +276,9 @@ private:
 	NancyState::NancyState _gameStateRequested;
 
 	Misc::Lightning *_lightning;
-	Misc::SpecialEffect *_specialEffect;
+	Common::Queue<Misc::SpecialEffect> _specialEffects;
 
-	Common::Rect _mapHotspot;
+	Common::HashMap<uint32, PuzzleData *> _puzzleData;
 
 	Action::ActionManager _actionManager;
 	Action::ConversationSound *_activeConversation;

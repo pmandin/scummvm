@@ -197,8 +197,8 @@ EoBCoreEngine::EoBCoreEngine(OSystem *system, const GameFlags &flags) : KyraRpgE
 	_buttonList3Size = _buttonList4Size = _buttonList5Size = _buttonList6Size = 0;
 	_buttonList7Size = _buttonList8Size = 0;
 	_inventorySlotsY = _mnDef = 0;
-	_invFont1 = _invFont2 = _conFont = Screen::FID_6_FNT;
-	_invFont3 = Screen::FID_8_FNT;
+	_invFont1 = _invFont2 = _invFont4 = _conFont = _bookFont = Screen::FID_6_FNT;
+	_titleFont = _invFont3 = Screen::FID_8_FNT;
 	_transferStringsScummVM = 0;
 	_buttonDefs = 0;
 	_npcPreset = 0;
@@ -429,7 +429,7 @@ Common::Error EoBCoreEngine::init() {
 			_sound = new SoundPC98_EoB(this, _mixer);
 		} else {
 			dev = MidiDriver::detectDevice(MDT_PC98 | MDT_MIDI);
-			/**/
+			_sound = new SoundPC98_Darkmoon(this, dev, _mixer);
 		}
 		break;
 	case Common::kPlatformAmiga:
@@ -575,6 +575,10 @@ void EoBCoreEngine::loadFonts() {
 		else
 			AmigaDOSFont::errorDialog(0);
 
+	} else if (_flags.gameID == GI_EOB2 && _flags.platform == Common::kPlatformPC98) {
+		_screen->loadFont(Screen::FID_6_FNT, "FONT6B.FNT");
+		_screen->loadFont(Screen::FID_8_FNT, "FONT8B.FNT");
+		_screen->loadFont(Screen::FID_SJIS_SMALL_FNT, "FONT1206.FNT");
 	} else if (_flags.platform != Common::kPlatformSegaCD) {
 		_screen->loadFont(Screen::FID_6_FNT, "FONT6.FNT");
 		_screen->loadFont(Screen::FID_8_FNT, "FONT8.FNT");
@@ -583,25 +587,28 @@ void EoBCoreEngine::loadFonts() {
 	if (_flags.platform == Common::kPlatformFMTowns) {
 		_screen->loadFont(Screen::FID_SJIS_SMALL_FNT, "FONT.DMP");
 	} else if (_flags.platform == Common::kPlatformPC98) {
-		_screen->loadFont(Screen::FID_SJIS_SMALL_FNT, "FONT12.FNT");
+		if (_flags.gameID == GI_EOB1) {
+			_screen->loadFont(Screen::FID_SJIS_SMALL_FNT, "FONT12.FNT");
+			_bookFont = Screen::FID_SJIS_SMALL_FNT;
+			_invFont4 = Screen::FID_SJIS_FNT;
+		}		
+		_titleFont = _conFont = _invFont3 = Screen::FID_SJIS_FNT;
 		_invFont1 = Screen::FID_SJIS_SMALL_FNT;
-		_conFont = _invFont3 = Screen::FID_SJIS_FNT;
 	} else if (_flags.platform == Common::kPlatformSegaCD) {
 		_screen->loadFont(Screen::FID_8_FNT, "FONTK12");
 		_screen->setFontStyles(Screen::FID_8_FNT, Font::kStyleNone);
-		_invFont1 = _invFont2 = _conFont = Screen::FID_8_FNT;
-	}
-
-	if (_flags.lang == Common::ZH_TWN) {
+		_invFont1 = _invFont2 = _invFont4 = _conFont = Screen::FID_8_FNT;
+	} else if (_flags.lang == Common::ZH_TWN) {
 		_screen->loadFont(Screen::FID_CHINESE_FNT, "FONT8.FNT");
-		_conFont = Screen::FID_CHINESE_FNT;
+		_titleFont = _conFont = Screen::FID_CHINESE_FNT;
 	}
 }
 
 Common::Error EoBCoreEngine::go() {
 	static_cast<Debugger_EoB *>(getDebugger())->initialize();
 	_txt->removePageBreakFlag();
-	_screen->setFont(_flags.platform == Common::kPlatformPC98 ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+	_screen->setFont(_titleFont);
+
 	loadItemsAndDecorationsShapes();
 
 	_screen->setMouseCursor(0, 0, _itemIconShapes[0]);
@@ -1328,6 +1335,9 @@ void EoBCoreEngine::npcSequence(int npcIndex) {
 		drawNpcScene(npcIndex);
 
 		Common::SeekableReadStream *s = _res->createReadStream("TEXT.DAT");
+		if (!s)
+			s = _res->createReadStream("JTEXT.DAT");
+
 		if (s) {
 			_screen->loadFileDataToPage(s, 5, 32000);
 		} else {
@@ -1587,6 +1597,9 @@ void EoBCoreEngine::initDialogueSequence() {
 		snd_stopSound();
 
 	Common::SeekableReadStream *s = _res->createReadStream("TEXT.DAT");
+	if (!s)
+		s = _res->createReadStream("JTEXT.DAT");
+
 	if (s) {
 		_screen->loadFileDataToPage(s, 5, 32000);
 	} else {
@@ -1832,6 +1845,9 @@ void EoBCoreEngine::displayParchment(int id) {
 	if (id >= 0) {
 		// display text
 		Common::SeekableReadStream *s = _res->createReadStream("TEXT.DAT");
+		if (!s)
+			s = _res->createReadStream("JTEXT.DAT");
+
 		if (s) {
 			_screen->loadFileDataToPage(s, 5, 32000);
 		} else {
@@ -2030,7 +2046,7 @@ bool EoBCoreEngine::checkPassword() {
 	return true;
 }
 
-Common::String EoBCoreEngine::convertAsciiToSjis(Common::String str) {
+Common::String EoBCoreEngine::convertAsciiToSjis(const Common::String &str) {
 	if (_flags.platform != Common::kPlatformFMTowns)
 		return str;
 
@@ -2702,16 +2718,6 @@ void EoBCoreEngine::snd_playSong(int track, bool loop) {
 	if (_flags.platform == Common::kPlatformSegaCD && !loop)
 		track |= 0x80;
 	_sound->playTrack(track);
-}
-
-void EoBCoreEngine::snd_playLevelScore() {
-	if (_flags.platform == Common::kPlatformPC98) {
-		if (_flags.gameID == GI_EOB1)
-			snd_playSong(_currentLevel + 1);
-	} else if (_flags.platform == Common::kPlatformSegaCD) {
-		static const uint8 levelTracksSegaCD[13] = { 7, 7, 7, 7, 6, 6, 6, 4, 4, 4, 5, 5, 10 };
-		snd_playSong(levelTracksSegaCD[_currentLevel]);
-	}
 }
 
 void EoBCoreEngine::snd_playSoundEffect(int track, int volume) {

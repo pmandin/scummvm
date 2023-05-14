@@ -26,6 +26,7 @@
 #include "engines/nancy/sound.h"
 #include "engines/nancy/input.h"
 #include "engines/nancy/cursor.h"
+#include "engines/nancy/puzzledata.h"
 
 #include "engines/nancy/state/scene.h"
 #include "engines/nancy/action/rippedletterpuzzle.h"
@@ -55,7 +56,7 @@ void RippedLetterPuzzle::registerGraphics() {
 }
 
 void RippedLetterPuzzle::readData(Common::SeekableReadStream &stream) {
-	_puzzleState = NancySceneState._rippedLetterPuzzleState;
+	_puzzleState = (RippedLetterPuzzleData *)NancySceneState.getPuzzleData(RippedLetterPuzzleData::getTag());
 	assert(_puzzleState);
 
 	readFilename(stream, _imageName);
@@ -87,12 +88,12 @@ void RippedLetterPuzzle::readData(Common::SeekableReadStream &stream) {
 		_solveRotations[i] = stream.readByte();
 	}
 
-	_takeSound.readData(stream, SoundDescription::kNormal);
-	_dropSound.readData(stream, SoundDescription::kNormal);
-	_rotateSound.readData(stream, SoundDescription::kNormal);
+	_takeSound.readNormal(stream);
+	_dropSound.readNormal(stream);
+	_rotateSound.readNormal(stream);
 
 	_solveExitScene.readData(stream);
-	_solveSound.readData(stream, SoundDescription::kNormal);
+	_solveSound.readNormal(stream);
 
 	_exitScene.readData(stream);
 	readRect(stream, _exitHotspot);
@@ -177,7 +178,7 @@ void RippedLetterPuzzle::handleInput(NancyInput &input) {
 				insideRect.translate(screenHotspot.left, screenHotspot.top);
 
 				if (insideRect.contains(input.mousePos)) {
-					g_nancy->_cursorManager->setCursorType(CursorManager::kRotate);
+					g_nancy->_cursorManager->setCursorType(CursorManager::kRotateCW);
 
 					if (input.input & NancyInput::kLeftMouseButtonUp) {
 						// Player has clicked, rotate the piece

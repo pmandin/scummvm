@@ -52,7 +52,7 @@
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
 	},
 	kGameTypeAdibou1,
-	kFeaturesAdLib | kFeaturesEGA,
+	kFeaturesAdLib | kFeatures16Colors,
 	0, "base.tot", 0
 },
 
@@ -96,6 +96,22 @@
 		"",
 		AD_ENTRY1s("intro.stk", "e453bea7b28a67c930764d945f64d898", 3913628),
 		EN_ANY,
+		kPlatformDOS,
+		ADGF_UNSTABLE,
+		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)
+	},
+	kGameTypeAdibou1,
+	kFeaturesAdLib,
+	0, 0, 0
+},
+
+// supplied by jp438-2 in bug report #13972
+{
+	{
+		"adibou1",
+		"Adi Jnr.",
+		AD_ENTRY1s("intro.stk", "6d234641b74b3bdf746c39a64ff1abcc", 2678326),
+		EN_GRB,
 		kPlatformDOS,
 		ADGF_UNSTABLE,
 		GUIO2(GUIO_NOSUBTITLES, GUIO_NOSPEECH)

@@ -241,6 +241,7 @@ public:
 	float _lastFrame;
 
 	// Interaction
+	void activate();
 	void shoot();
 	void traverseEntrance(uint16 entranceID);
 
@@ -277,9 +278,9 @@ public:
 	bool checkCollisions(bool executeCode);
 	Math::Vector3d _objExecutingCodeSize;
 	virtual void executeMovementConditions();
-	void executeObjectConditions(GeometricObject *obj, bool shot, bool collided);
+	void executeObjectConditions(GeometricObject *obj, bool shot, bool collided, bool activated);
 	void executeLocalGlobalConditions(bool shot, bool collided, bool timer);
-	void executeCode(FCLInstructionVector &code, bool shot, bool collided, bool timer);
+	void executeCode(FCLInstructionVector &code, bool shot, bool collided, bool timer, bool activated);
 
 	// Instructions
 	bool checkConditional(FCLInstruction &instruction, bool shot, bool collided, bool timer, bool activated);
@@ -358,6 +359,7 @@ public:
 	void loadMessagesVariableSize(Common::SeekableReadStream *file, int offset, int number);
 
 	void loadFonts(Common::SeekableReadStream *file, int offset);
+	void loadFonts(byte *font, int charNumber);
 	Common::StringArray _currentAreaMessages;
 	Common::StringArray _currentEphymeralMessages;
 	Common::BitArray _font;
@@ -565,12 +567,16 @@ public:
 	CastleEngine(OSystem *syst, const ADGameDescription *gd);
 	~CastleEngine();
 
-
 	Graphics::ManagedSurface *_option;
+	void initGameState() override;
 	void titleScreen() override;
 	void loadAssetsDOSFullGame() override;
-	void drawUI() override;
+	void loadAssetsDOSDemo() override;
+	void loadAssetsAmigaDemo() override;
 
+	void drawDOSUI(Graphics::Surface *surface) override;
+
+	void executePrint(FCLInstruction &instruction) override;
 	void gotoArea(uint16 areaID, int entranceID) override;
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;

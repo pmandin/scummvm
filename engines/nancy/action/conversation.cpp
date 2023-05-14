@@ -39,6 +39,10 @@
 namespace Nancy {
 namespace Action {
 
+ConversationSound::ConversationSound() :
+	RenderActionRecord(8),
+	_noResponse(g_nancy->getGameType() <= kGameTypeNancy2 ? 10 : 20) {}
+
 ConversationSound::~ConversationSound() {
 	if (NancySceneState.getActiveConversation() == this) {
 		NancySceneState.setActiveConversation(nullptr);
@@ -58,7 +62,7 @@ void ConversationSound::readData(Common::SeekableReadStream &stream) {
 	ser.setVersion(g_nancy->getGameType());
 
 	if (ser.getVersion() >= kGameTypeNancy2) {
-		_sound.readData(stream, SoundDescription::kNormal);
+		_sound.readNormal(stream);
 	}
 
 	char *rawText = new char[1500];
@@ -67,10 +71,10 @@ void ConversationSound::readData(Common::SeekableReadStream &stream) {
 	delete[] rawText;
 
 	if (ser.getVersion() <= kGameTypeNancy1) {
-		_sound.readData(stream, SoundDescription::kNormal);
+		_sound.readNormal(stream);
 	}
 
-	_responseGenericSound.readData(stream, SoundDescription::kNormal);
+	_responseGenericSound.readNormal(stream);
 	ser.skip(1);
 	ser.syncAsByte(_conditionalResponseCharacterID);
 	ser.syncAsByte(_goodbyeResponseCharacterID);
@@ -166,6 +170,9 @@ void ConversationSound::execute() {
 		_state = kRun;
 		NancySceneState.setActiveConversation(this);
 
+		// Do not draw first frame since video won't be loaded yet
+		g_nancy->_graphicsManager->suppressNextDraw();
+
 		// Do not fall through to give the execution one loop for event flag changes
 		// This fixes TVD scene 750
 		break;
@@ -180,11 +187,11 @@ void ConversationSound::execute() {
 			}
 
 			// Add responses when conditions have been satisfied
-			if (_conditionalResponseCharacterID != 10) {
+			if (_conditionalResponseCharacterID != _noResponse) {
 				addConditionalDialogue();
 			}
 
-			if (_goodbyeResponseCharacterID != 10) {
+			if (_goodbyeResponseCharacterID != _noResponse) {
 				addGoodbye();
 			}
 
@@ -215,7 +222,7 @@ void ConversationSound::execute() {
 			} else {
 				// NPC has finished talking, we have responses
 				for (uint i = 0; i < 30; ++i) {
-					if (NancySceneState.getLogicCondition(i, kLogUsed)) {
+					if (NancySceneState.getLogicCondition(i, g_nancy->_true)) {
 						int pickedOnScreenResponse = _pickedResponse = i;
 
 						// Adjust to account for hidden responses
@@ -384,7 +391,7 @@ void ConversationSound::ConversationFlag::set() const {
 		NancySceneState.setEventFlag(flag);
 		break;
 	case kFlagInventory:
-		if (flag.flag == kInvHolding) {
+		if (flag.flag == g_nancy->_true) {
 			NancySceneState.addItemToInventory(flag.label);
 		} else {
 			NancySceneState.removeItemFromInventory(flag.label);
@@ -529,6 +536,9 @@ void ConversationCel::updateGraphics() {
 	if (_state == kRun && currentTime > _nextFrameTime && _curFrame <= _lastFrame) {
 		Cel &curCel = _cels[_curFrame];
 
+		g_nancy->_resource->loadImage(curCel.bodyCelName, curCel.bodySurf, _bodyTreeName, &curCel.bodySrc, &curCel.bodyDest);
+		g_nancy->_resource->loadImage(curCel.headCelName, curCel.headSurf, _headTreeName, &curCel.headSrc, &curCel.headDest);
+
 		_drawSurface.create(curCel.bodySurf, curCel.bodySrc);
 		moveTo(curCel.bodyDest);
 
@@ -541,10 +551,11 @@ void ConversationCel::updateGraphics() {
 }
 
 void ConversationCel::readData(Common::SeekableReadStream &stream) {
-	Common::String xsheetName, bodyTreeName, headTreeName;
+	Nancy::GameType gameType = g_nancy->getGameType();
+	Common::String xsheetName;
 	readFilename(stream, xsheetName);
-	readFilename(stream, bodyTreeName);
-	readFilename(stream, headTreeName);
+	readFilename(stream, _bodyTreeName);
+	readFilename(stream, _headTreeName);
 	
 	uint xsheetDataSize = 0;
 	byte *xsbuf = g_nancy->_resource->loadData(xsheetName, xsheetDataSize);
@@ -569,22 +580,36 @@ void ConversationCel::readData(Common::SeekableReadStream &stream) {
 	_frameTime = xsheet.readUint16LE();
 	xsheet.skip(2);
 
-	Common::String imageName;
 	_cels.resize(numFrames);
 	for (uint i = 0; i < numFrames; ++i) {
 		Cel &cel = _cels[i];
-		readFilename(xsheet, imageName);
-		g_nancy->_resource->loadImage(imageName, cel.bodySurf, bodyTreeName, &cel.bodySrc, &cel.bodyDest);
-		readFilename(xsheet, imageName);
-		g_nancy->_resource->loadImage(imageName, cel.headSurf, headTreeName, &cel.headSrc, &cel.headDest);
-		xsheet.skip(28);
+		readFilename(xsheet, cel.bodyCelName);
+		readFilename(xsheet, cel.headCelName);
+
+		// Zeroes
+		if (gameType >= kGameTypeNancy3) {
+			xsheet.skip(74);
+		} else {
+			xsheet.skip(28);
+		}
 	}
 
 	// Continue reading the AR stream
-	stream.skip(0x17);
+
+	// Zeroes
+	if (g_nancy->getGameType() >= kGameTypeNancy3) {
+		stream.skip(66);
+	} else {
+		stream.skip(20);
+	}
+
+	// Something related to quality
+	stream.skip(3);
+
 	_firstFrame = stream.readUint16LE();
 	_lastFrame = stream.readUint16LE();
 
+	// A few more quality-related bytes and more zeroes
 	stream.skip(0x8E);
 
 	ConversationSound::readData(stream);

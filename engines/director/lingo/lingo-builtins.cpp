@@ -321,7 +321,7 @@ void Lingo::printSTUBWithArglist(const char *funcname, int nargs, const char *pr
 
 	s += ")";
 
-	debug(5, "%s %s", prefix, s.c_str());
+	debug(3, "%s %s", prefix, s.c_str());
 }
 
 void Lingo::convertVOIDtoString(int arg, int nargs) {
@@ -2227,7 +2227,7 @@ void LB::b_move(int nargs) {
 
 	if (nargs == 1) {
 		int id = (int) g_director->getCurrentMovie()->getCast()->_castArrayStart;
-		CastMemberID *castId = new CastMemberID(id, 0);
+		CastMemberID *castId = new CastMemberID(id, DEFAULT_CAST_LIB);
 		Datum d = Datum(*castId);
 		delete castId;
 		g_lingo->push(d);
@@ -2253,7 +2253,7 @@ void LB::b_move(int nargs) {
 		return;
 	}
 
-	if (src.u.cast->castLib != 0) {
+	if (src.u.cast->castLib != DEFAULT_CAST_LIB) {
 		warning("b_move: wrong castLib '%d' in src CastMemberID", src.u.cast->castLib);
 	}
 
@@ -2288,7 +2288,7 @@ void LB::b_move(int nargs) {
 
 	for (uint i = 0; i < channels.size(); i++) {
 		if (channels[i]->_sprite->_castId == dest.asMemberID()) {
-			channels[i]->_sprite->setCast(CastMemberID(1, 0));
+			channels[i]->_sprite->setCast(CastMemberID(1, DEFAULT_CAST_LIB));
 			channels[i]->_dirty = true;
 		}
 	}
@@ -2380,7 +2380,8 @@ static const struct PaletteNames {
 
 void LB::b_puppetPalette(int nargs) {
 	g_lingo->convertVOIDtoString(0, nargs);
-	int numFrames = 0, speed = 0, palette = 0;
+	int numFrames = 0, speed = 0;
+	CastMemberID palette(0, 0);
 	Datum d;
 	Movie *movie = g_director->getCurrentMovie();
 
@@ -2400,10 +2401,10 @@ void LB::b_puppetPalette(int nargs) {
 
 			for (int i = 0; i < ARRAYSIZE(paletteNames); i++) {
 				if (palStr.equalsIgnoreCase(paletteNames[i].name))
-					palette = paletteNames[i].type;
+					palette = CastMemberID(paletteNames[i].type, -1);
 			}
 		}
-		if (!palette) {
+		if (palette.isNull()) {
 			CastMember *member = movie->getCastMember(d.asMemberID());
 
 			if (member && member->_type == kCastPalette)
@@ -2416,7 +2417,7 @@ void LB::b_puppetPalette(int nargs) {
 	}
 
 	Score *score = movie->getScore();
-	if (palette) {
+	if (!palette.isNull()) {
 		g_director->setPalette(palette);
 		score->_puppetPalette = true;
 	} else {
@@ -2426,10 +2427,10 @@ void LB::b_puppetPalette(int nargs) {
 
 		// FIXME: set system palette decided by platform, should be fixed after windows palette is working.
 		// try to set mac system palette if lastPalette is 0.
-		if (score->_lastPalette == 0)
-			g_director->setPalette(-1);
+		if (g_director->_lastPalette.isNull())
+			g_director->setPalette(CastMemberID(kClutSystemMac, -1));
 		else
-			g_director->setPalette(score->resolvePaletteId(score->_lastPalette));
+			g_director->setPalette(g_director->_lastPalette);
 	}
 
 	// TODO: Implement advanced features that use these.

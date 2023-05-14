@@ -117,6 +117,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "csi",				"CSI: Crime Scene Investigation" },
 	{ "csidarkmotives",		"CSI: Crime Scene Investigation - Dark Motives" },
 	{ "csimiami",			"CSI: Miami" },
+	{ "cutemachine",		"The Cute machine" },
 	{ "daedalus",			"The Daedalus Encounter" },
 	{ "darkeye",			"The Dark Eye" },
 	{ "dazzeloids",			"Dazzeloids" },
@@ -446,6 +447,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "vcop2",				"Virtual Cop: Episode Two: The Angel Returns" },
 	{ "veniceglass",		"Venice Under Glass: A Basil Baker Mystery Adventure" },
 	{ "videocasino",		"Video Casino" },
+	{ "virusalert3d",		"Virus Alert 3D" },
 	{ "vjg",				"Vegas Jackpot Gold" },
 	{ "vnc",				"Virtual Nightclub" },
 	{ "voodoolounge",		"The Rolling Stones: Voodoo Lounge" },
@@ -558,6 +560,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "isscommerce",		"International Space Station: Space Commercialization" },
 	{ "itc",				"Internet the City: A Guided Tour Through the Internet" },
 	{ "journey2life",		"The Journey to Life" },
+	{ "journey2source",		"Journey to the Source: An Expedition along the Yangtze River" },
 	{ "klondikegold",		"Klondike Gold - An Interactive History" },
 	{ "learningcoreldraw3",	"Learning CorelDRAW 3" },
 	{ "laughingbird",		"The Laughing Bird Restaurant" },
@@ -853,6 +856,7 @@ static const PlainGameDescriptor directorGames[] = {
 	{ "girlspack",			"Girl's Pack!" },
 	{ "glitzerschuppen",	"Der Regenbogenfisch Die Suche Nach Den Glitzerschuppen" },
 	{ "globiabc",			"Globi's ABC" },
+	{ "ichsehewas",			"Ich sehe was..." },
 	{ "janoschpanama",		"JANOSCH: Oh, wie schön ist Panama" },
 	{ "janoschverkehr",		"JANOSCH: Tiger und Bär im Straßenverkehr" },
 	{ "loewe1",				"Löwenzahn 1" },
@@ -1330,7 +1334,7 @@ static const PlainGameDescriptor directorGames[] = {
 
 	// Chinese titles
 	{ "ypl2", 				"勇者泡泡龍2" },							// Yongzhe Paopao Long 2, aka Brave Bubble Dragon 2, aka Bubble Hero 2
-	{ "creativenursery",	"创意学前华丈(一)" },						// Creative Nursery Chinese
+	{ "creativenursery",	"创意学前华文(一)" },						// Creative Nursery Chinese
 
 	// Titles containing Director extras
 	{ "amgpremiere",		"The American Girls Premiere" },
@@ -2451,6 +2455,8 @@ static const DirectorGameDescription gameDescriptions[] = {
 
 	// Original filename is JOINT-net/DEMO
 	MACDEMO1_l("jointnet", "Demo", "JOINT-net-DEMO", "9f0bb7ec7720e4f680ee3aa3d22c1c9d", 895326, Common::JA_JPN, 300),
+
+	MACGAME1t("journey2source", "", "The Source Folder/Journey to the Source", "ea32bab5edb60ce30994f0e7e21bf5e6", 656387, 300),
 
 	// HyperCard game calls movie using external MacroMind Player
 	MACGAME2_l("jyajya", "", "MacroMind Player", "f5277c53bacd27936158dd3867e587e2", 390204,
@@ -4909,6 +4915,7 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINGAME2_l("petel", "", "START.EXE", "t:df604411b447d6eea92f5451776b06d3", 690453,
 							"START.DIR", "t:a8495b1e4560b603e93ca1db48513db8", 10596, Common::HE_ISR, 404),
 
+	MACGAME1t_l("phibos", "", "PHIBOS", "099e1816b00984093ac17927f1f9cd2c", 501849, Common::JA_JPN, 404),
 	WINGAME1t_l("phibos", "", "PHIBOS.EXE", "298f47fd72d3f3cee220c25dd797dbb4", 747095, Common::JA_JPN, 404),
 
 	MACGAME1_l("planetdob", "", "Planet Dob", "01be45e7241194dad07938e7059b88e3", 484095, Common::JA_JPN, 404),
@@ -5823,6 +5830,9 @@ static const DirectorGameDescription gameDescriptions[] = {
 	MACGAME1("crystalskull",  "", "Crystal Skull", "c148f66ae3511fb88733102aa27efe7e", 719459,  501),
 	WINGAME1t("crystalskull", "", "CRYS32.EXE",	   "3f5fd025e808943e1fa9b91ce63ef9b7", 1410495, 501),
 
+	WINGAME1("cutemachine", "Windows 3.1", "CUTE.EXE", "2e62abdad839e42068afdcd0644d7dcf", 920035, 500),
+	WINGAME1("cutemachine", "Windows 95", "clickhere.exe", "3460ad87d2ba57104e2810a77b53c220", 1396405, 500),
+
 	WINGAME2("davidsonps", "v1.0", "DPS32.EXE",	  "3460ad87d2ba57104e2810a77b53c220", 1401517,
 								   "DPSHOT.DXR",  "d980c9272bc723c57238a31790b71f11", 1354686, 500),
 	// Developed by Wag the Dog Productions
@@ -6081,6 +6091,11 @@ static const DirectorGameDescription gameDescriptions[] = {
 	// Distributed with IBM Aptiva PCs
 	WINGAME2("ibmcdextra", "", "SAMPLER.EXE", "2e62abdad839e42068afdcd0644d7dcf", 929109,
 							   "TOADMM.DIR",  "b67c1bd97094091404ed1cde88279880", 2573710, 500),
+
+	// Full title "Ich sehe was... siehst du es auch?"
+	// Developed by Terzio
+	MACGAME1_l("ichsehewas", "", "Ich sehe was",   "r:fceaf85985d054f37966f843e4dd6b2b", 719129, Common::DE_DEU, 501),
+	WINGAME1_l("ichsehewas", "", "ichsehewas.exe", "t:f5127fbc00272caecc04eccd6bb69eca", 1436195, Common::DE_DEU, 501),
 
 	// Installers for both platforms also use Director
 	MACGAME1_l("incarnatia", "", "incarnatia_PowerMac", "2e7d373f75c014be20cfb04c5cd65dae", 108480, Common::JA_JPN, 501),
@@ -8889,6 +8904,12 @@ static const DirectorGameDescription gameDescriptions[] = {
 	WINGAME1t("spelunx", "", "Spelunx.exe", "965e31ec421fa6dfe8ea157ef38ebd42", 2800981, 1010),
 
 	WINDEMO1_l("tokimemotypegs", "Demo", "tkmkgstype.exe", "1d1646000633ab994404ac38fb350553", 2716404, Common::JA_JPN, 1000),
+
+	// http://virusalert3d.com
+	// Developed by Left Brain Games
+	// Includes 5 free levels, requires activation for 20 additional levels
+	MACGAME1("virusalert3d", "", "Virus Alert 3D", "r:a171b7a952d1ac68ae3cd419d6dfc674", 309959, 1010),
+	WINGAME1("virusalert3d", "", "VirusAlert.exe", "t:e1ee328cc8e9fb693072842b7386ff3e", 3085579, 1010),
 
 //////////////////////////////////////////////////
 //

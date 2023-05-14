@@ -48,10 +48,9 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 	uint16 numSrcRects;
 
 	readFilename(ser, _imageName);
-	ser.skip(2);
+	ser.skip(2, kGameTypeVampire, kGameTypeNancy2);
 	ser.syncAsUint16LE(_transparency);
 	ser.syncAsUint16LE(_hasSceneChange);
-
 	ser.syncAsUint16LE(_enableHotspot, kGameTypeNancy2);
 	ser.syncAsUint16LE(_z, kGameTypeNancy2);
 	ser.syncAsUint16LE(_overlayType, kGameTypeNancy2);
@@ -80,12 +79,12 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 			ser.syncAsUint16LE(_interruptCondition.flag);
 		} else {
 			_interruptCondition.label = kEvNoEvent;
-			_interruptCondition.flag = kEvNotOccurred;
+			_interruptCondition.flag = g_nancy->_false;
 		}
 
 	_sceneChange.readData(stream);
 	_flagsOnTrigger.readData(stream);
-	_sound.readData(stream, SoundDescription::kNormal);
+	_sound.readNormal(stream);
 	uint numViewportFrames = stream.readUint16LE();
 
 	if (_overlayType == kPlayOverlayAnimated) {

@@ -25,6 +25,7 @@
 #include "engines/nancy/resource.h"
 #include "engines/nancy/sound.h"
 #include "engines/nancy/input.h"
+#include "engines/nancy/puzzledata.h"
 #include "engines/nancy/state/scene.h"
 
 #include "engines/nancy/action/towerpuzzle.h"
@@ -50,7 +51,7 @@ void TowerPuzzle::registerGraphics() {
 }
 
 void TowerPuzzle::readData(Common::SeekableReadStream &stream) {
-	_puzzleState = NancySceneState._towerPuzzleState;
+	_puzzleState = (TowerPuzzleData *)NancySceneState.getPuzzleData(TowerPuzzleData::getTag());
 	assert(_puzzleState);
 
 	readFilename(stream, _imageName);
@@ -80,12 +81,12 @@ void TowerPuzzle::readData(Common::SeekableReadStream &stream) {
 		}
 	}
 
-	_takeSound.readData(stream, SoundDescription::kNormal);
-	_dropSound.readData(stream, SoundDescription::kNormal);
+	_takeSound.readNormal(stream);
+	_dropSound.readNormal(stream);
 
 	_solveExitScene._sceneChange.readData(stream);
 	stream.skip(2);
-	_solveSound.readData(stream, SoundDescription::kNormal);
+	_solveSound.readNormal(stream);
 	_solveExitScene._flag.label = stream.readSint16LE();
 	_solveExitScene._flag.flag = stream.readByte();
 

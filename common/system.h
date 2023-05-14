@@ -1389,6 +1389,14 @@ public:
 	 */
 	virtual void setCursorPalette(const byte *colors, uint start, uint num) {}
 
+	
+
+	/**
+	 * Get the system-configured double-click time interval.
+	 * If the system doesn't support configuring double-click time, returns 0.
+	 */
+	virtual uint32 getDoubleClickTime() const { return 0; }
+
 	/** @} */
 
 

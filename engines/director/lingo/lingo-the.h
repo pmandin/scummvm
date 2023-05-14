@@ -31,6 +31,7 @@ enum TheEntityType {
 	kTheBeepOn,
 	kTheButtonStyle,
 	kTheCast,
+	kTheCastlibs,
 	kTheCastMembers,
 	kTheCenterStage,
 	kTheChars,
@@ -145,6 +146,7 @@ enum TheEntityType {
 	kTheWindow,
 	kTheWindowList,
 	kTheWords,
+	kTheXtras,
 	kTheMaxTheEntityType		// This must be always last
 };
 

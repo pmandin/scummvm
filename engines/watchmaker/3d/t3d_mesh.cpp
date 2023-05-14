@@ -181,10 +181,14 @@ t3dMESH::t3dMESH(t3dBODY *b, Common::SeekableReadStream &stream, t3dMESH *&Recei
 		this->VertsInterpolants = t3dCalloc<t3dV3F>(this->NumVerts);   // Crea spazio per interpolanti
 
 		this->ModVertices.reserve(numAniVerts);
-		for (int i = 0; i < numAniVerts; i++) {
+		for (uint32 i = 0; i < numAniVerts; i++) {
 			this->ModVertices.push_back(t3dMODVERTS(stream));
 		}
 	}
+}
+
+t3dMESH::~t3dMESH() {
+	release();
 }
 
 /* -----------------10/06/99 15.39-------------------
@@ -245,7 +249,7 @@ void t3dMESH::release() { // Will eventually be a destructor.
 	delete[] this->SavedVertexBuffer;
 	this->SavedVertexBuffer = nullptr;
 
-	delete[] this->VertsInterpolants;
+	t3dFree(this->VertsInterpolants);
 	this->VertsInterpolants = nullptr;
 
 //		if(mt->VBptr)

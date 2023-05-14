@@ -292,7 +292,8 @@ void TextBoxWrite::readData(Common::SeekableReadStream &stream) {
 	char *buf = new char[size];
 	stream.read(buf, size);
 	buf[size - 1] = '\0';
-	_text = buf;
+
+	UI::Textbox::assembleTextLine(buf, _text, size);
 
 	delete[] buf;
 }
@@ -305,6 +306,7 @@ TextBoxWrite::~TextBoxWrite() {
 void TextBoxWrite::execute() {
 	auto &tb = NancySceneState.getTextbox();
 	tb.clear();
+	tb.overrideFontID(g_nancy->_textboxData->defaultFontID);
 	tb.addTextLine(_text);
 	tb.setVisible(true);
 	NancySceneState.setShouldClearTextbox(false);
@@ -458,7 +460,7 @@ void AddInventoryNoHS::readData(Common::SeekableReadStream &stream) {
 }
 
 void AddInventoryNoHS::execute() {
-	if (NancySceneState.hasItem(_itemID) == kInvEmpty) {
+	if (NancySceneState.hasItem(_itemID) == g_nancy->_false) {
 		NancySceneState.addItemToInventory(_itemID);
 	}
 
@@ -470,7 +472,7 @@ void RemoveInventoryNoHS::readData(Common::SeekableReadStream &stream) {
 }
 
 void RemoveInventoryNoHS::execute() {
-	if (NancySceneState.hasItem(_itemID) == kInvHolding) {
+	if (NancySceneState.hasItem(_itemID) == g_nancy->_true) {
 		NancySceneState.removeItemFromInventory(_itemID, false);
 	}
 
@@ -554,7 +556,7 @@ void ShowInventoryItem::execute() {
 }
 
 void PlayDigiSoundAndDie::readData(Common::SeekableReadStream &stream) {
-	_sound.readData(stream, SoundDescription::kDIGI);
+	_sound.readDIGI(stream);
 	_sceneChange.readData(stream, g_nancy->getGameType() == kGameTypeVampire);
 
 	_flagOnTrigger.label = stream.readSint16LE();
@@ -589,7 +591,7 @@ void PlayDigiSoundAndDie::execute() {
 }
 
 void PlaySoundPanFrameAnchorAndDie::readData(Common::SeekableReadStream &stream) {
-	_sound.readData(stream, SoundDescription::kDIGI);
+	_sound.readDIGI(stream);
 	stream.skip(2);
 }
 
@@ -600,7 +602,7 @@ void PlaySoundPanFrameAnchorAndDie::execute() {
 }
 
 void PlaySoundMultiHS::readData(Common::SeekableReadStream &stream) {
-	_sound.readData(stream, SoundDescription::kNormal);
+	_sound.readNormal(stream);
 
 	if (g_nancy->getGameType() != kGameTypeVampire) {
 		_sceneChange.readData(stream);
@@ -651,9 +653,19 @@ void PlaySoundMultiHS::execute() {
 	}
 }
 
+void StopSound::readData(Common::SeekableReadStream &stream) {
+	_channelID = stream.readUint16LE();
+	_sceneChange.readData(stream);
+}
+
+void StopSound::execute() {
+	g_nancy->_sound->stopSound(_channelID);
+	_sceneChange.execute();
+}
+
 void HintSystem::readData(Common::SeekableReadStream &stream) {
 	_characterID = stream.readByte();
-	_genericSound.readData(stream, SoundDescription::kNormal);
+	_genericSound.readNormal(stream);
 }
 
 void HintSystem::execute() {

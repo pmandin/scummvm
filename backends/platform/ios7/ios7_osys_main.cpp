@@ -87,12 +87,13 @@ public:
 OSystem_iOS7::OSystem_iOS7() :
 	_mixer(NULL), _lastMouseTap(0), _queuedEventTime(0),
 	_mouseNeedTextureUpdate(false), _secondaryTapped(false), _lastSecondaryTap(0),
-	_screenOrientation(kScreenOrientationFlippedLandscape), _mouseClickAndDragEnabled(false),
-	_gestureStartX(-1), _gestureStartY(-1), _fullScreenIsDirty(false), _fullScreenOverlayIsDirty(false),
+	_screenOrientation(kScreenOrientationFlippedLandscape),
+	_fullScreenIsDirty(false), _fullScreenOverlayIsDirty(false),
 	_mouseDirty(false), _timeSuspended(0), _lastDragPosX(-1), _lastDragPosY(-1), _screenChangeCount(0),
 	_mouseCursorPaletteEnabled(false), _gfxTransactionError(kTransactionSuccess) {
 	_queuedInputEvent.type = Common::EVENT_INVALID;
-	_touchpadModeEnabled = !iOS7_isBigDevice();
+	_touchpadModeEnabled = ConfMan.getBool("touchpad_mode");
+	_mouseClickAndDragEnabled = ConfMan.getBool("clickanddrag_mode");
 
 	_chrootBasePath = iOS7_getDocumentsDir();
 	ChRootFilesystemFactory *chFsFactory = new ChRootFilesystemFactory(_chrootBasePath);
@@ -300,16 +301,17 @@ void OSystem_iOS7::delayMillis(uint msecs) {
 	usleep(msecs * 1000);
 }
 
-
 void OSystem_iOS7::setTimerCallback(TimerProc callback, int interval) {
 	//printf("setTimerCallback()\n");
+	dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+	dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
 
-	if (callback != NULL) {
-		_timerCallbackTimer = interval;
-		_timerCallbackNext = getMillis() + interval;
-		_timerCallback = callback;
-	} else
-		_timerCallback = NULL;
+	if (timer)
+	{
+		dispatch_source_set_timer(timer, dispatch_walltime(NULL, 0), interval * NSEC_PER_MSEC, interval * NSEC_PER_MSEC / 10);
+		dispatch_source_set_event_handler(timer, ^{ callback(interval); });
+		dispatch_resume(timer);
+	}
 }
 
 Common::MutexInternal *OSystem_iOS7::createMutex() {

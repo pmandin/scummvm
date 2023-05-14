@@ -66,11 +66,16 @@ Common::Error DarkMoonEngine::init() {
 	_screen->loadPalette(_flags.platform == Common::kPlatformFMTowns ? "MENU.PAL" : "PALETTE.COL", _screen->getPalette(0));
 	_screen->setScreenPalette(_screen->getPalette(0));
 
+	// adjust menu settings for EOB II FM-Towns/PC-98/Chinese versions
 	if (_flags.platform == Common::kPlatformFMTowns) {
-		// adjust menu settings for EOB II FM-Towns
 		_screen->modifyScreenDim(6, 10, 100, 21, 40);
 		_screen->modifyScreenDim(27, 0, 0, 21, 2);
 		_vcnFilePattern = "%s.VCC";
+	} else if (_flags.platform == Common::kPlatformPC98) {
+		_screen->modifyScreenDim(6, 10, 100, 21, 40);
+		_screen->modifyScreenDim(27, 0, 0, 21, 5);
+	} else if (_flags.lang == Common::Language::ZH_TWN) {
+		_screen->modifyScreenDim(6, 10, 72, 21, 40);
 	}
 
 	return Common::kNoError;
@@ -686,6 +691,11 @@ void DarkMoonEngine::snd_loadAmigaSounds(int level, int sub) {
 	_amigaCurSoundIndex = sndIndex;
 }
 
+void DarkMoonEngine::snd_playLevelScore() {
+	if (_flags.platform == Common::kPlatformPC98)
+		snd_playSong(0);
+}
+
 void DarkMoonEngine::useHorn(int charIndex, int weaponSlot) {
 	int v = _items[_characters[charIndex].inventory[weaponSlot]].value - 1;
 	_txt->printMessage(_hornStrings[v]);
@@ -773,6 +783,8 @@ const KyraRpgGUISettings *DarkMoonEngine::guiSettings() const {
 		return &_guiSettingsAmiga;
 	else if (_flags.platform == Common::kPlatformFMTowns)
 		return &_guiSettingsFMTowns;
+	else if (_flags.platform == Common::kPlatformPC98)
+		return &_guiSettingsPC98;
 	else
 		return &_guiSettingsDOS;
 }

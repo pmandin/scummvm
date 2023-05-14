@@ -66,6 +66,13 @@ namespace VCruise {
 static const uint kNumDirections = 8;
 static const uint kNumHighPrecisionDirections = 256;
 static const uint kHighPrecisionDirectionMultiplier = kNumHighPrecisionDirections / kNumDirections;
+static const uint kNumStartConfigs = 3;
+
+enum StartConfig {
+	kStartConfigCheatMenu,
+	kStartConfigInitial,
+	kStartConfigAlt,
+};
 
 class AudioPlayer;
 class MenuInterface;
@@ -74,6 +81,7 @@ class RuntimeMenuInterface;
 class TextParser;
 struct ScriptSet;
 struct Script;
+struct IScriptCompilerGlobalState;
 struct Instruction;
 
 enum GameState {
@@ -85,6 +93,7 @@ enum GameState {
 	kGameStateIdle,							// Waiting for input events
 	kGameStateDelay,						// Waiting for delay completion time
 	kGameStateScript,						// Running a script
+	kGameStateScriptReset,					// Resetting script interpreter into a new script
 	kGameStateGyroIdle,						// Waiting for mouse movement to run a gyro
 	kGameStateGyroAnimation,				// Animating a gyro
 
@@ -163,7 +172,7 @@ struct SfxPlaylistEntry {
 	uint frame;
 	Common::SharedPtr<SfxSound> sample;
 	int8 balance;
-	uint8 volume;
+	int32 volume;
 	bool isUpdate;
 };
 
@@ -216,13 +225,13 @@ struct SoundInstance {
 
 	uint id;
 
-	uint rampStartVolume;
-	uint rampEndVolume;
-	uint32 rampRatePerMSec;
+	int32 rampStartVolume;
+	int32 rampEndVolume;
+	int32 rampRatePerMSec;
 	uint32 rampStartTime;
 	bool rampTerminateOnCompletion;
 
-	uint volume;
+	int32 volume;
 	int32 balance;
 
 	uint effectiveVolume;
@@ -246,7 +255,7 @@ struct RandomAmbientSound {
 
 	Common::String name;
 
-	uint volume;
+	int32 volume;
 	int32 balance;
 
 	uint frequency;
@@ -267,6 +276,29 @@ struct TriggeredOneShot {
 
 	void write(Common::WriteStream *stream) const;
 	void read(Common::ReadStream *stream);
+};
+
+struct ScoreSectionDef {
+	ScoreSectionDef();
+
+	Common::String musicFileName;	// If empty, this is silent
+	Common::String nextSection;
+	int32 volumeOrDurationInSeconds;
+};
+
+struct ScoreTrackDef {
+	typedef Common::HashMap<Common::String, ScoreSectionDef> ScoreSectionMap_t;
+
+	ScoreSectionMap_t sections;
+};
+
+struct StartConfigDef {
+	StartConfigDef();
+
+	uint disc;
+	uint room;
+	uint screen;
+	uint direction;
 };
 
 struct StaticAnimParams {
@@ -337,16 +369,8 @@ enum LoadGameOutcome {
 	kLoadGameOutcomeSaveIsTooOld,
 };
 
-struct SaveGameSnapshot {
-	SaveGameSnapshot();
-
-	void write(Common::WriteStream *stream) const;
-	LoadGameOutcome read(Common::ReadStream *stream);
-
-	static const uint kSaveGameIdentifier = 0x53566372;
-	static const uint kSaveGameCurrentVersion = 5;
-	static const uint kSaveGameEarliestSupportedVersion = 2;
-
+// State that is swapped when switching between characters in Schizm
+struct SaveGameSwappableState {
 	struct InventoryItem {
 		InventoryItem();
 
@@ -362,7 +386,7 @@ struct SaveGameSnapshot {
 
 		Common::String name;
 		uint id;
-		uint volume;
+		int32 volume;
 		int32 balance;
 
 		bool is3D;
@@ -378,17 +402,52 @@ struct SaveGameSnapshot {
 		void read(Common::ReadStream *stream);
 	};
 
+	SaveGameSwappableState();
+
 	uint roomNumber;
 	uint screenNumber;
 	uint direction;
 
-	bool escOn;
-	int musicTrack;
-
-	uint musicVolume;
-
 	uint loadedAnimation;
 	uint animDisplayingFrame;
+
+	int musicTrack;
+
+	Common::String scoreTrack;
+	Common::String scoreSection;
+	bool musicActive;
+
+	int32 musicVolume;
+	int32 animVolume;
+
+	Common::Array<InventoryItem> inventory;
+	Common::Array<Sound> sounds;
+	Common::Array<RandomAmbientSound> randomAmbientSounds;
+};
+
+struct SaveGameSnapshot {
+	SaveGameSnapshot();
+
+	void write(Common::WriteStream *stream) const;
+	LoadGameOutcome read(Common::ReadStream *stream);
+
+	static const uint kSaveGameIdentifier = 0x53566372;
+	static const uint kSaveGameCurrentVersion = 6;
+	static const uint kSaveGameEarliestSupportedVersion = 2;
+	static const uint kMaxStates = 2;
+
+	static Common::String safeReadString(Common::ReadStream *stream);
+	static void writeString(Common::WriteStream *stream, const Common::String &str);
+
+	uint hero;
+	uint swapOutRoom;
+	uint swapOutScreen;
+	uint swapOutDirection;
+
+	uint numStates;
+	Common::SharedPtr<SaveGameSwappableState> states[kMaxStates];
+
+	bool escOn;
 
 	StaticAnimParams pendingStaticAnimParams;
 	SoundParams3D pendingSoundParams3D;
@@ -397,11 +456,8 @@ struct SaveGameSnapshot {
 	int32 listenerY;
 	int32 listenerAngle;
 
-	Common::Array<InventoryItem> inventory;
-	Common::Array<Sound> sounds;
 	Common::Array<TriggeredOneShot> triggeredOneShots;
 	Common::HashMap<uint32, uint> sayCycles;
-	Common::Array<RandomAmbientSound> randomAmbientSounds;
 
 	Common::HashMap<uint32, int32> variables;
 	Common::HashMap<uint, uint32> timers;
@@ -448,11 +504,42 @@ struct OSEvent {
 	uint32 timestamp;
 };
 
+struct TextStyleDef {
+	Common::String fontName;
+	uint size;
+	uint unknown1;
+	uint unknown2;
+	uint unknown3;	// Seems to always be 0 for English, other values for other languages
+	uint colorRGB;
+	uint shadowColorRGB;
+	uint unknown4;
+	uint unknown5;	// Possibly drop shadow offset
+};
+
+struct UILabelDef {
+	Common::String lineID;
+	Common::String styleDefID;
+	uint unknown1;
+	uint unknown2;
+	uint unknown3;
+	uint unknown4;
+};
+
+struct FontCacheItem {
+	FontCacheItem();
+
+	Common::String fname;
+	uint size;
+
+	const Graphics::Font *font;
+	Common::SharedPtr<Graphics::Font> keepAlive;
+};
+
 class Runtime {
 public:
 	friend class RuntimeMenuInterface;
 
-	Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &rootFSNode, VCruiseGameID gameID);
+	Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &rootFSNode, VCruiseGameID gameID, Common::Language defaultLanguage);
 	virtual ~Runtime();
 
 	void initSections(const Common::Rect &gameRect, const Common::Rect &menuRect, const Common::Rect &trayRect, const Common::Rect &fullscreenMenuRect, const Graphics::PixelFormat &pixFmt);
@@ -475,11 +562,14 @@ public:
 
 	void recordSaveGameSnapshot();
 	void restoreSaveGameSnapshot();
+	Common::SharedPtr<SaveGameSnapshot> generateNewGameSnapshot() const;
 
 	void saveGame(Common::WriteStream *stream) const;
 	LoadGameOutcome loadGame(Common::ReadStream *stream);
 
 	bool bootGame(bool newGame);
+
+	void getLabelDef(const Common::String &labelID, const Graphics::Font *&outFont, const Common::String *&outTextUTF8, uint32 &outColor, uint32 &outShadowColor);
 
 private:
 	enum IndexParseType {
@@ -639,6 +729,13 @@ private:
 		ValueUnion value;
 	};
 
+	struct CallStackFrame {
+		CallStackFrame();
+
+		Common::SharedPtr<Script> _script;
+		uint _nextInstruction;
+	};
+
 	struct SubtitleDef {
 		SubtitleDef();
 
@@ -680,12 +777,16 @@ private:
 
 	void loadIndex();
 	void findWaves();
+	void loadConfig(const char *cfgPath);
+	void loadScore();
 	Common::SharedPtr<SoundInstance> loadWave(const Common::String &soundName, uint soundID, const Common::ArchiveMemberPtr &archiveMemberPtr);
 	SoundCache *loadCache(SoundInstance &sound);
-	void resolveSoundByName(const Common::String &soundName, bool resolveSoundByName, StackInt_t &outSoundID, SoundInstance *&outWave);
-	void resolveSoundByNameOrID(const StackValue &stackValue, bool resolveSoundByName, StackInt_t &outSoundID, SoundInstance *&outWave);
+	void resolveSoundByName(const Common::String &soundName, bool load, StackInt_t &outSoundID, SoundInstance *&outWave);
+	SoundInstance *resolveSoundByID(uint soundID);
+	void resolveSoundByNameOrID(const StackValue &stackValue, bool load, StackInt_t &outSoundID, SoundInstance *&outWave);
 
 	void changeToScreen(uint roomNumber, uint screenNumber);
+	void triggerPreIdleActions();
 	void returnToIdleState();
 	void changeToCursor(const Common::SharedPtr<Graphics::WinCursorGroup> &cursor);
 	bool dischargeIdleMouseMove();
@@ -696,19 +797,26 @@ private:
 	void loadFrameData2(Common::SeekableReadStream *stream);
 
 	void changeMusicTrack(int musicID);
+	void startScoreSection();
+
 	void changeAnimation(const AnimationDef &animDef, bool consumeFPSOverride);
 	void changeAnimation(const AnimationDef &animDef, uint initialFrame, bool consumeFPSOverride);
 	void changeAnimation(const AnimationDef &animDef, uint initialFrame, bool consumeFPSOverride, const Fraction &defaultFrameRate);
+	void applyAnimationVolume();
 
 	void setSound3DParameters(SoundInstance &sound, int32 x, int32 y, const SoundParams3D &soundParams3D);
-	void triggerSound(bool looping, SoundInstance &sound, uint volume, int32 balance, bool is3D, bool isSpeech);
-	void triggerSoundRamp(SoundInstance &sound, uint durationMSec, uint newVolume, bool terminateOnCompletion);
+	void triggerSound(bool looping, SoundInstance &sound, int32 volume, int32 balance, bool is3D, bool isSpeech);
+	void triggerSoundRamp(SoundInstance &sound, uint durationMSec, int32 newVolume, bool terminateOnCompletion);
 	void stopSound(SoundInstance &sound);
 	void updateSounds(uint32 timestamp);
 	void updateSubtitles();
 	void update3DSounds();
 	bool computeEffectiveVolumeAndBalance(SoundInstance &snd);
 	void triggerAmbientSounds();
+	uint decibelsToLinear(int db, uint baseVolume, uint maxVolume) const;
+	int32 getSilentSoundVolume() const;
+	int32 getDefaultSoundVolume() const;
+	uint applyVolumeScale(int32 volume) const;
 
 	void triggerWaveSubtitles(const SoundInstance &sound, const Common::String &id);
 	void stopSubtitles();
@@ -717,6 +825,7 @@ private:
 	void pushAnimDef(const AnimationDef &animDef);
 
 	void activateScript(const Common::SharedPtr<Script> &script, const ScriptEnvironmentVars &envVars);
+	void compileSchizmLogicSet(const uint *roomNumbers, uint numRooms);
 
 	bool parseIndexDef(IndexParseType parseType, uint roomNumber, const Common::String &key, const Common::String &value);
 	void allocateRoomsUpTo(uint roomNumber);
@@ -744,7 +853,7 @@ private:
 	Common::String getFileNameForItemGraphic(uint itemID) const;
 	Common::SharedPtr<Graphics::Surface> loadGraphic(const Common::String &graphicName, bool required);
 
-	void loadSubtitles(Common::CodePage codePage);
+	bool loadSubtitles(Common::CodePage codePage);
 
 	void changeToMenuPage(MenuPage *menuPage);
 
@@ -752,6 +861,8 @@ private:
 	void dismissInGameMenu();
 	void dischargeInGameMenuMouseUp();
 	void drawInGameMenuButton(uint element);
+
+	const Graphics::Font *resolveFont(const Common::String &textStyle, uint size);
 
 	// Script things
 	void scriptOpNumber(ScriptArg_t arg);
@@ -874,6 +985,67 @@ private:
 	void scriptOpVerticalPanSet(bool *flags);
 	void scriptOpVerticalPanGet();
 
+	// Schizm ops
+	void scriptOpCallFunction(ScriptArg_t arg);
+
+	void scriptOpMusicStop(ScriptArg_t arg);
+	void scriptOpMusicPlayScore(ScriptArg_t arg);
+	void scriptOpScoreAlways(ScriptArg_t arg);
+	void scriptOpScoreNormal(ScriptArg_t arg);
+	void scriptOpSndPlay(ScriptArg_t arg);
+	void scriptOpSndPlayEx(ScriptArg_t arg);
+	void scriptOpSndPlay3D(ScriptArg_t arg);
+	void scriptOpSndPlaying(ScriptArg_t arg);
+	void scriptOpSndWait(ScriptArg_t arg);
+	void scriptOpSndHalt(ScriptArg_t arg);
+	void scriptOpSndToBack(ScriptArg_t arg);
+	void scriptOpSndStop(ScriptArg_t arg);
+	void scriptOpSndStopAll(ScriptArg_t arg);
+	void scriptOpSndAddRandom(ScriptArg_t arg);
+	void scriptOpSndClearRandom(ScriptArg_t arg);
+	void scriptOpVolumeAdd(ScriptArg_t arg);
+	void scriptOpVolumeChange(ScriptArg_t arg);
+	void scriptOpAnimVolume(ScriptArg_t arg);
+	void scriptOpAnimChange(ScriptArg_t arg);
+	void scriptOpScreenName(ScriptArg_t arg);
+	void scriptOpExtractByte(ScriptArg_t arg);
+	void scriptOpInsertByte(ScriptArg_t arg);
+	void scriptOpString(ScriptArg_t arg);
+	void scriptOpCmpNE(ScriptArg_t arg);
+	void scriptOpCmpLE(ScriptArg_t arg);
+	void scriptOpCmpGE(ScriptArg_t arg);
+	void scriptOpReturn(ScriptArg_t arg);
+	void scriptOpSpeech(ScriptArg_t arg);
+	void scriptOpSpeechEx(ScriptArg_t arg);
+	void scriptOpSpeechTest(ScriptArg_t arg);
+	void scriptOpSay(ScriptArg_t arg);
+	void scriptOpRandomInclusive(ScriptArg_t arg);
+	void scriptOpHeroOut(ScriptArg_t arg);
+	void scriptOpHeroGetPos(ScriptArg_t arg);
+	void scriptOpHeroSetPos(ScriptArg_t arg);
+	void scriptOpHeroGet(ScriptArg_t arg);
+	void scriptOpGarbage(ScriptArg_t arg);
+	void scriptOpGetRoom(ScriptArg_t arg);
+	void scriptOpBitAnd(ScriptArg_t arg);
+	void scriptOpBitOr(ScriptArg_t arg);
+	void scriptOpAngleGet(ScriptArg_t arg);
+	void scriptOpIsDVDVersion(ScriptArg_t arg);
+	void scriptOpIsCDVersion(ScriptArg_t arg);
+	void scriptOpDisc(ScriptArg_t arg);
+	void scriptOpHidePanel(ScriptArg_t arg);
+	void scriptOpRotateUpdate(ScriptArg_t arg);
+	void scriptOpMul(ScriptArg_t arg);
+	void scriptOpDiv(ScriptArg_t arg);
+	void scriptOpMod(ScriptArg_t arg);
+	void scriptOpCyfraGet(ScriptArg_t arg);
+	void scriptOpPuzzleInit(ScriptArg_t arg);
+	void scriptOpPuzzleCanPress(ScriptArg_t arg);
+	void scriptOpPuzzleDoMove1(ScriptArg_t arg);
+	void scriptOpPuzzleDoMove2(ScriptArg_t arg);
+	void scriptOpPuzzleDone(ScriptArg_t arg);
+	void scriptOpPuzzleWhoWon(ScriptArg_t arg);
+	void scriptOpFn(ScriptArg_t arg);
+
 	Common::Array<Common::SharedPtr<Graphics::WinCursorGroup> > _cursors;		// Cursors indexed as CURSOR_CUR_##
 	Common::Array<Common::SharedPtr<Graphics::WinCursorGroup> > _cursorsShort;	// Cursors indexed as CURSOR_#
 
@@ -895,7 +1067,11 @@ private:
 	uint _roomNumber;	// Room number can be changed independently of the loaded room, the screen doesn't change until a command changes it
 	uint _screenNumber;
 	uint _direction;
-	//uint _highPrecisionDirection;
+	uint _hero;
+
+	uint _swapOutRoom;
+	uint _swapOutScreen;
+	uint _swapOutDirection;
 
 	GyroState _gyros;
 
@@ -924,7 +1100,18 @@ private:
 	uint _activeScreenNumber;
 	bool _havePendingScreenChange;
 	bool _forceScreenChange;
+
+	// returnToIdleState executes any actions that must be executed upon returning to idle state from either
+	// a panorama or the first script that executes upon reaching a screen.
+	//
+	// Unfortunately, this was done slightly prematurely since Schizm plays idle animations during pre-idle
+	// delays and Reah never needs to do that, so _havePendingPreIdleActions exists to handle those actions
+	// during pre-idle upon arriving at a screen.
+	//
+	// Pre-idle actions are executed once upon either entering Idle OR Delay state.
+	bool _havePendingPreIdleActions;
 	bool _havePendingReturnToIdleState;
+
 	bool _havePendingCompletionCheck;
 	GameState _gameState;
 
@@ -943,8 +1130,8 @@ private:
 	Common::Array<Common::SharedPtr<RoomDef> > _roomDefs;
 	Common::SharedPtr<ScriptSet> _scriptSet;
 
-	Common::SharedPtr<Script> _activeScript;
-	uint _scriptNextInstruction;
+	Common::Array<CallStackFrame> _scriptCallStack;
+
 	Common::Array<StackValue> _scriptStack;
 	ScriptEnvironmentVars _scriptEnv;
 
@@ -952,12 +1139,18 @@ private:
 
 	Common::SharedPtr<AudioPlayer> _musicPlayer;
 	int _musicTrack;
-	uint _musicVolume;
+	int32 _musicVolume;
+	bool _musicActive;
+
+	Common::String _scoreTrack;
+	Common::String _scoreSection;
+	uint32 _scoreSectionEndTime;
+	Common::HashMap<Common::String, ScoreTrackDef> _scoreDefs;
 
 	uint32 _musicVolumeRampStartTime;
-	uint _musicVolumeRampStartVolume;
+	int32 _musicVolumeRampStartVolume;
 	int32 _musicVolumeRampRatePerMSec;
-	uint _musicVolumeRampEnd;
+	int32 _musicVolumeRampEnd;
 
 	SfxData _sfxData;
 
@@ -969,6 +1162,7 @@ private:
 	uint _animFirstFrame;
 	uint _animLastFrame;
 	uint _animStopFrame;
+	uint _animVolume;
 	Fraction _animFrameRateLock;
 	Common::Rect _animConstraintRect;
 	uint32 _animStartTime;
@@ -1007,6 +1201,7 @@ private:
 	Common::Point _mousePos;
 	Common::Point _lmbDownPos;
 	uint32 _lmbDownTime;
+	int _lmbDragTolerance;
 	bool _lmbDown;
 	bool _lmbDragging;
 	bool _lmbReleaseWasClick;	// If true, then the mouse didn't move at all since the LMB down
@@ -1049,11 +1244,16 @@ private:
 	uint _soundCacheIndex;
 
 	Common::SharedPtr<SaveGameSnapshot> _saveGame;
+	Common::SharedPtr<SaveGameSwappableState> _altState;
 	bool _isInGame;
 
 	const Graphics::Font *_subtitleFont;
 	Common::SharedPtr<Graphics::Font> _subtitleFontKeepalive;
 	uint _languageIndex;
+	bool _isCDVariant;
+	StartConfigDef _startConfigs[kNumStartConfigs];
+
+	Common::Language _defaultLanguage;
 
 	typedef Common::HashMap<uint, SubtitleDef> FrameToSubtitleMap_t;
 	typedef Common::HashMap<uint, FrameToSubtitleMap_t> AnimSubtitleMap_t;
@@ -1063,6 +1263,14 @@ private:
 	Common::HashMap<Common::String, SubtitleDef> _waveSubtitles;
 	Common::Array<SubtitleQueueItem> _subtitleQueue;
 	bool _isDisplayingSubtitles;
+
+	Common::HashMap<Common::String, Common::String> _locStrings;
+	Common::HashMap<Common::String, TextStyleDef> _locTextStyles;
+	Common::HashMap<Common::String, UILabelDef> _locUILabels;
+
+	Common::Array<Common::SharedPtr<FontCacheItem> > _fontCache;
+
+	int32 _dbToVolume[49];
 };
 
 } // End of namespace VCruise

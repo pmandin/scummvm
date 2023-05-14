@@ -25,7 +25,6 @@
 
 #include "common/memstream.h"
 
-
 namespace Kyra {
 
 #ifdef ENABLE_EOB
@@ -562,8 +561,13 @@ void EoBCoreEngine::initStaticResource() {
 		{   "Abbr.",    "Leerer Slot",		"Speichern",    "  Laden"       },
 		{	" < < ",	"Posizione Vuota",	"Salva",		"Carica"	    },
 		{	"Anular",	"Sin Uso",			"Grabar",		"Cargar"	    },
+		// SegaCD English
 		{   "Cancel",   "\x82""d""\x82\x8d\x82\x90\x82\x94\x82\x99\x81""@""\x82\x92\x82\x85\x82\x87\x82\x89\x82\x8f\x82\x8e",		"Select save area",    "Select load data"     },
+		// SegaCD Japanese
 		{   "\x82\xe2\x82\xdf\x82\xe9",   "\x8b\xf3\x82\xab\x97\xcc\x88\xe6",	"\x82\xc7\x82\xb1\x82\xc9\x83""Z""\x81""|""\x83""u""\x82\xb5\x82\xdc\x82\xb7\x82\xa9\x81""H",	"\x82\xc7\x82\xea\x82\xf0\x83\x8d\x81""|""\x83""h""\x82\xb5\x82\xdc\x82\xb7\x82\xa9\x81""H"    },
+		// PC-98 Japanese
+		{   "Cancel",   "Empty Slot",	  "\x83\x51\x81\x5B\x83\x80\x83\x5A\x81\x5B\x83\x75", "\x83\x51\x81\x5B\x83\x80\x83\x8D\x81\x5B\x83\x68" },
+		// DOS Chinese
 		{   "\xa8\xfa\xae\xf8" /* "取消"; */, "\xa9\x7c\xa5\xbc\xa8\xcf\xa5\xce" /* "尚未使用"; */, "\xa6\x73\xa9\xf1\xb6\x69\xab\xd7" /* "存放進度"; */, "\xb8\xfc\xa4\x4a\xb6\x69\xab\xd7" /* "載入進度"; */  },
 	};
 
@@ -572,10 +576,14 @@ void EoBCoreEngine::initStaticResource() {
 		"Hier ist noch kein\rSpiel gespeichert!",
 		"Non c'\x0E alcun gioco\rsalvato in quella\rposizione!",
 		"No hay partidas\rgrabadas!",
-		"\r ""\x82\xBB\x82\xCC\x83""X""\x83\x8D\x83""b""\x83""g""\x82\xC9\x82\xCD\x83""Q""\x81""[""\x83\x80\x82\xAA\x83""Z""\x81""[""\x83""u\r ""\x82\xB3\x82\xEA\x82\xC4\x82\xA2\x82\xDC\x82\xB9\x82\xF1\x81""B",
+		// SegaCD English
+		"\r  ""\x82\xBB\x82\xCC\x83""X""\x83\x8D\x83""b""\x83""g""\x82\xC9\x82\xCD\x83""Q""\x81""[""\x83\x80\x82\xAA\x83""Z""\x81""[""\x83""u\r ""\x82\xB3\x82\xEA\x82\xC4\x82\xA2\x82\xDC\x82\xB9\x82\xF1\x81""B",
+		// SegaCD + FM-Towns Japanese
 		"\x8b\xf3\x82\xab\x97\xcc\x88\xe6",
-		"\xb3\x6f\xad\xd3\xa6\xec\xb8\x6d\xa9\x7c\xa5\xbc\xc0\x78\xa6\x73\x0d\xb8\xea\xae\xc6\xc0\xc9\x2c\xbd\xd0\xad\xab\xb7\x73\xbf\xef\xbe\xdc", /* "這個位置尚未\r資料檔,請重新選擇"; */
-		0
+		// PC-98 Japanese
+		"\r \x82\xBB\x82\xCC\x83\x58\x83\x8D\x83\x62\x83\x67\x82\xC9\x82\xCD\x83\x66\x81\x5B\x83\x5E\x82\xAA\x83\x5A\x81\x5B\x83\x75\r \x82\xB3\x82\xEA\x82\xC4\x82\xA2\x82\xDC\x82\xB9\x82\xF1\x81\x42",
+		// DOS Chinese
+		"\xb3\x6f\xad\xd3\xa6\xec\xb8\x6d\xa9\x7c\xa5\xbc\xc0\x78\xa6\x73\x0d\xb8\xea\xae\xc6\xc0\xc9\x2c\xbd\xd0\xad\xab\xb7\x73\xbf\xef\xbe\xdc" /* "這個位置尚未\r資料檔,請重新選擇"; */
 	};
 
 	_menuOkString = "OK";
@@ -607,16 +615,22 @@ void EoBCoreEngine::initStaticResource() {
 		if (_flags.platform == Common::kPlatformSegaCD) {
 			_saveLoadStrings = saveLoadStrings[5];
 			_errorSlotEmptyString = errorSlotEmptyString[5];
-		} else {
+		} else if (_flags.platform == Common::kPlatformFMTowns) {
 			// EOB II FM-Towns uses English here.
 			// Only the empty slot warning is in Japanese.
 			_saveLoadStrings = saveLoadStrings[0];
 			_errorSlotEmptyString = errorSlotEmptyString[4];
+		} else if (_flags.platform == Common::kPlatformPC98) {
+			_saveLoadStrings = saveLoadStrings[6];
+			_errorSlotEmptyString = errorSlotEmptyString[6];
+		} else {
+			_saveLoadStrings = saveLoadStrings[0];
+			_errorSlotEmptyString = errorSlotEmptyString[0];
 		}
 		break;
 	case Common::ZH_TWN:
-		_saveLoadStrings = saveLoadStrings[6];
-		_errorSlotEmptyString = errorSlotEmptyString[6];
+		_saveLoadStrings = saveLoadStrings[7];
+		_errorSlotEmptyString = errorSlotEmptyString[7];
 		_menuOkString = "\xa7\xb9\xb2\xa6"; /* "完畢" */
 		break;
 
@@ -1845,20 +1859,21 @@ void DarkMoonEngine::initStaticResource() {
 	_amigaSoundIndex2 = _staticres->loadRawData(kEoB2SoundIndex2, temp);
 	_amigaSoundPatch = _staticres->loadRawData(kEoB2MonsterSoundPatchData, _amigaSoundPatchSize);
 
-	static const char *const errorSlotNoNameString[5] = {
+	static const char *const errorSlotNoNameString[6] = {
 		" You must specify\r a name for your\r save game!",
 		" Spielst[nde m]ssen\r einen Namen haben!",
 		" Debes poner\run nombre al\rfichero!",
+		"\x83""Z""\x81""[""\x83""u""\x83""t""\x83""@""\x83""C""\x83\x8b\r\x82\xc9\x82\xcd\x96\xbc\x91""O""\x82\xaa\r\x95""K""\x97""v""\x82\xc5\x82\xb7\x81""B",
 		" \xb1\x7a\xa5\xb2\xb6\xb7\xbf\xe9\xa4\x4a\xc0\xc9\xae\xd7\xa6\x57\xba\xd9", /* " 您必須輸入檔案名稱" */
 		0
 	};
 
 	// ScummVM specific
-	static const char *const transferStringsScummVM[4][5] = {
+	static const char *const transferStringsScummVM[3][5] = {
 		{
 			"\r We cannot find any EOB save game\r file. Please make sure that the\r save game file with the party\r you wish to transfer is located\r in your ScummVM save game\r directory. If you have set up\r multiple save directories you\r have to copy the EOB save file\r into your EOB II save directory.\r Do you wish to try again?",
 			"Game ID",
-			"\r It seems that you have already\r defeated Xanathar here. Do you\r wish to transfer the party that\r finished the game? If not, you\r will be able to select a save\r game from the save game\r dialogue.",
+			"\r It seems that you have already\r defeated Xanathar here. Do you\r wish to transfer the party that\r finished the game? If not, you\r will be able to select a save\r game from the save game\r dialog.",
 			"Select File",
 			"\r\r   Please wait..."
 		},
@@ -1875,7 +1890,7 @@ void DarkMoonEngine::initStaticResource() {
 			"\r Parece que ya se ha vencido\r Xanathar aqui. Deseas transferir\r el grupo que ha finalizado el\r juego? En caso contrario puedes\r seleccionar otra partida de las\r anteriores guardadas.",
 			"Escoge Fichero",
 			"\r\r   Un momento\r   por favor..."
-		},
+		}
 	};
 
 	switch(_flags.lang) {
@@ -1892,12 +1907,15 @@ void DarkMoonEngine::initStaticResource() {
 			_errorSlotNoNameString = errorSlotNoNameString[2];
 			_transferStringsScummVM = transferStringsScummVM[2];
 			break;
-		case Common::ZH_TWN:
+		case Common::JA_JPN:
 			_errorSlotNoNameString = errorSlotNoNameString[3];
 			_transferStringsScummVM = transferStringsScummVM[0];
 			break;
+		case Common::ZH_TWN:
+			_errorSlotNoNameString = errorSlotNoNameString[4];
+			_transferStringsScummVM = transferStringsScummVM[0];
+			break;
 	}
-
 }
 
 void DarkMoonEngine::initSpells() {
@@ -1922,6 +1940,17 @@ void DarkMoonEngine::initSpells() {
 
 const KyraRpgGUISettings DarkMoonEngine::_guiSettingsFMTowns = {
 	{ _dlgButtonPosX_Def, _dlgButtonPosY_Def, 9, 15, 95, 11, 1, 7, { 221, 76 }, { 187, 162 }, { 95, 95 } },
+	{ 186, 181, 183, 183, 184, 17, 23, 20, 186, 181, 183, 182, 177, 180, 15, 6, 8, 9, 2, 5, 4, 3, 12 },
+	{	{ 184, 256, -1}, { 2, 54, 106 }, 64, 50,
+		{ 8, 80, -1 }, { 11, 63, 115 }, { 181, -1, -1 }, { 3, -1, -1 },
+		{ 40, 112, -1 }, { 11, 27, 63, 79, 115, 131 },
+		{ 23, 95, -1}, { 46, 98, 150 }, 38, 3, { 250, 250, -1}, { 16, 25, -1 }, 51, 5,
+		13, 30
+	}
+};
+
+const KyraRpgGUISettings DarkMoonEngine::_guiSettingsPC98 = {
+	{ _dlgButtonPosX_Def, _dlgButtonPosY_Def, 9, 15, 95, 11, 2, 7, { 221, 76 }, { 189, 162 }, { 95, 95 } },
 	{ 186, 181, 183, 183, 184, 17, 23, 20, 186, 181, 183, 182, 177, 180, 15, 6, 8, 9, 2, 5, 4, 3, 12 },
 	{	{ 184, 256, -1}, { 2, 54, 106 }, 64, 50,
 		{ 8, 80, -1 }, { 11, 63, 115 }, { 181, -1, -1 }, { 3, -1, -1 },

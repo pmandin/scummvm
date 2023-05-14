@@ -122,7 +122,7 @@ void t3dBODY::allocateNormals() {
 }
 
 void t3dBODY::initNormals(Common::SeekableReadStream &stream) {
-	int nListSize = this->NumNormals + this->NumVerticesNormals;
+	uint nListSize = this->NumNormals + this->NumVerticesNormals;
 	assert(this->NList.size() == nListSize);
 	for (uint16 normal = 0; normal < this->NList.size(); normal++) {                // Legge normali globali
 		*this->NList[normal] = t3dNORMAL(stream);
@@ -179,11 +179,11 @@ void t3dBODY::populatePortalLists() {
 		t3dBODY *rez = nullptr;
 		if (((rez = _vm->_roomManager->checkIfAlreadyLoaded(Name)) == nullptr) && (!(LoaderFlags & T3D_NORECURSION))) { // Controlla se lo ha gia' caricato
 			if (Name.equalsIgnoreCase("rxt.t3d"))
-				_vm->_roomManager->addToLoadList(&Mesh[mesh], Name, (uint16)(LoaderFlags | T3D_NORECURSION & ~T3D_RECURSIONLEVEL1));    // aggiunge e leva la ricorsione
+				_vm->_roomManager->addToLoadList(&Mesh[mesh], Name, (uint16)((LoaderFlags | T3D_NORECURSION) & ~T3D_RECURSIONLEVEL1));    // aggiunge e leva la ricorsione
 //				Mesh[mesh].Flags|=T3D_MESH_NOPORTALCHECK;
 			else {
 				if (LoaderFlags & T3D_RECURSIONLEVEL1)
-					_vm->_roomManager->addToLoadList(&Mesh[mesh], Name, (uint16)(LoaderFlags | T3D_NORECURSION & ~T3D_RECURSIONLEVEL1));    // aggiunge e leva la ricorsione
+					_vm->_roomManager->addToLoadList(&Mesh[mesh], Name, (uint16)((LoaderFlags | T3D_NORECURSION) & ~T3D_RECURSIONLEVEL1));    // aggiunge e leva la ricorsione
 				else
 					_vm->_roomManager->addToLoadList(&Mesh[mesh], Name, (uint16)(LoaderFlags));                         // altrimenti lo agggiunge alla lista
 			}
@@ -481,18 +481,17 @@ void LoadLightmaps(WGame &game, t3dBODY *b) {
 /* -----------------10/06/99 16.04-------------------
  *                  t3dLoadSingleRoom
  * --------------------------------------------------*/
-t3dBODY *t3dBODY::loadFromStream(WGame &game, const Common::String &pname, Common::SeekableReadStream &stream, uint32 LoaderFlags) {
-	//decodeLoaderFlags(LoaderFlags);
+t3dBODY *t3dBODY::loadFromStream(WGame &game, const Common::String &pname, Common::SeekableReadStream &stream, uint32 _LoaderFlags) {
+	//decodeLoaderFlags(_LoaderFlags);
 	//char /*t3dU8*/   Name[255];
 
 	uint16  light;
-	t3dPLIGHT   *PLight;
 	t3dF32  minx, miny, minz, maxx, maxy, maxz;
 
 	WorkDirs &workdirs = game.workDirs;
 
 	this->name = pname;
-	auto name = constructPath(workdirs._t3dDir, pname);
+	auto _name = constructPath(workdirs._t3dDir, pname);
 
 	this->NumTotVerts = 0;
 
@@ -547,9 +546,9 @@ t3dBODY *t3dBODY::loadFromStream(WGame &game, const Common::String &pname, Commo
 
 	populatePortalLists();
 
-	warning("LoaderFlags late = %08X", LoaderFlags);
-	//decodeLoaderFlags(LoaderFlags);
-	if (!(LoaderFlags & T3D_NOBOUNDS)) {                                                        // Carica Bounds
+	warning("LoaderFlags late = %08X", _LoaderFlags);
+	//decodeLoaderFlags(_LoaderFlags);
+	if (!(_LoaderFlags & T3D_NOBOUNDS)) {                                                        // Carica Bounds
 		auto bndName = workdirs.join(workdirs._bndDir, pname, "bnd");
 		/*
 		strcpy(Name, workdirs._bndDir.c_str());
@@ -561,23 +560,23 @@ t3dBODY *t3dBODY::loadFromStream(WGame &game, const Common::String &pname, Commo
 		 */
 		LoadBounds(game.workDirs, bndName.c_str(), this);
 	}
-	if (!(LoaderFlags & T3D_NOCAMERAS)) {                                                       // Carica Camere
+	if (!(_LoaderFlags & T3D_NOCAMERAS)) {                                                       // Carica Camere
 		auto cameraName = constructPath(workdirs._camDir, pname, "cam");
 		LoadCameras(game.workDirs, cameraName.c_str(), this);
 	}
-	if (!(LoaderFlags & T3D_NOLIGHTMAPS)) {                                                     // Carica le Lightmaps
+	if (!(_LoaderFlags & T3D_NOLIGHTMAPS)) {                                                     // Carica le Lightmaps
 		// TODO: This looks odd
 		if (!pname.equalsIgnoreCase("rxt.t3d") || !pname.equalsIgnoreCase("rxt-b.t3d") || !pname.equalsIgnoreCase("rxt-c.t3d") ||
 		        !pname.equalsIgnoreCase("rxt-d.t3d") || !pname.equalsIgnoreCase("rxt-e.t3d") || !pname.equalsIgnoreCase("rxt.t3d-f"))
 			LoadLightmaps(game, this);
 	}
-	if ((LoaderFlags & T3D_OUTDOORLIGHTS)) {                                                    // Carica le luci per l'esterno
+	if ((_LoaderFlags & T3D_OUTDOORLIGHTS)) {                                                    // Carica le luci per l'esterno
 		if (pname.equalsIgnoreCase("rxt.t3d")) {
 			auto outdoorLightsPath = constructPath(workdirs._lightmapsDir, pname);
 			t3dLoadOutdoorLights(outdoorLightsPath.c_str(), this, t3dCurTime);
 		}
 	}
-	if (!(LoaderFlags & T3D_NOVOLUMETRICLIGHTS)) {                                              // Carica le luci volumetriche
+	if (!(_LoaderFlags & T3D_NOVOLUMETRICLIGHTS)) {                                              // Carica le luci volumetriche
 		auto volMapPath = constructPath(workdirs._lightmapsDir, pname, "vol");
 		LoadVolumetricMap(workdirs, volMapPath.c_str(), this);
 	}

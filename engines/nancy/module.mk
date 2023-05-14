@@ -4,6 +4,7 @@ MODULE_OBJS = \
   action/actionmanager.o \
   action/actionrecord.o \
   action/arfactory.o \
+  action/bombpuzzle.o \
   action/conversation.o \
   action/leverpuzzle.o \
   action/orderingpuzzle.o \
@@ -47,6 +48,7 @@ MODULE_OBJS = \
   input.o \
   metaengine.o \
   nancy.o \
+  puzzledata.o \
   renderobject.o \
   resource.o \
   sound.o \

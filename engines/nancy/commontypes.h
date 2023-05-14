@@ -46,18 +46,6 @@ static const int8 kFlagNoLabel			= -1;
 static const int8 kEvNoEvent			= -1;
 static const int8 kFrNoFrame			= -1;
 
-// Event flags
-static const byte kEvNotOccurred 		= 1;
-static const byte kEvOccurred 			= 2;
-
-// Logic conditions
-static const byte kLogUsed				= 1;
-static const byte kLogNotUsed			= 2;
-
-// Inventory items flags
-static const byte kInvEmpty				= 1;
-static const byte kInvHolding			= 2;
-
 // Inventory items use types
 static const byte kInvItemUseThenLose	= 0;
 static const byte kInvItemKeepAlways	= 1;
@@ -172,8 +160,6 @@ struct SecondaryVideoDescription {
 
 // Descrbes a single sound. Combines four different structs found in the data in one
 struct SoundDescription {
-	enum Type { kNormal = 0, kDIGI = 1, kMenu = 2, kScene = 3 };
-
 	Common::String name;
 	uint16 channelID = 0;
 	uint16 numLoops = 0;
@@ -181,7 +167,10 @@ struct SoundDescription {
 	uint16 panAnchorFrame = 0;
 	uint32 samplesPerSec = 0;
 
-	void readData(Common::SeekableReadStream &stream, Type type);
+	void readNormal(Common::SeekableReadStream &stream);
+	void readDIGI(Common::SeekableReadStream &stream);
+	void readMenu(Common::SeekableReadStream &stream);
+	void readScene(Common::SeekableReadStream &stream);
 };
 
 // Structs inside nancy.dat, which contains all the data that was
@@ -247,28 +236,6 @@ struct StaticData {
 	Common::Array<Common::String> eventFlagNames;
 
 	void readData(Common::SeekableReadStream &stream, Common::Language language);
-};
-
-// Structs for game-specific puzzle data that needs to be saved/loaded
-struct SliderPuzzleState {
-	Common::Array<Common::Array<int16>> playerTileOrder;
-	bool playerHasTriedPuzzle;
-};
-
-struct RippedLetterPuzzleState {
-	Common::Array<int8> order;
-	Common::Array<byte> rotations;
-	bool playerHasTriedPuzzle;
-};
-
-struct TowerPuzzleState {
-	Common::Array<Common::Array<int8>> order;
-	bool playerHasTriedPuzzle;
-};
-
-struct RiddlePuzzleState {
-	Common::Array<byte> solvedRiddleIDs;
-	int8 incorrectRiddleID;
 };
 
 } // End of namespace Nancy

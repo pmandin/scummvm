@@ -31,7 +31,7 @@ namespace Action {
 // The base class for conversations, with no video data
 class ConversationSound : public RenderActionRecord {
 public:
-	ConversationSound() : RenderActionRecord(8) {}
+	ConversationSound();
 	virtual ~ConversationSound();
 
 	void init() override;
@@ -108,6 +108,8 @@ protected:
 
 	bool _hasDrawnTextbox = false;
 	int16 _pickedResponse = -1;
+
+	const byte _noResponse;
 };
 
 // Conversation with an AVF video. Originally called PlayPrimaryVideoChan0
@@ -137,9 +139,11 @@ protected:
 class ConversationCel : public ConversationSound {
 public:
 	struct Cel {
+		Common::String bodyCelName;
 		Graphics::ManagedSurface bodySurf;
 		Common::Rect bodySrc;
 		Common::Rect bodyDest;
+		Common::String headCelName;
 		Graphics::ManagedSurface headSurf;
 		Common::Rect headSrc;
 		Common::Rect headDest;
@@ -162,6 +166,9 @@ public:
 	bool isVideoDonePlaying() override;
 
 	Common::Array<Cel> _cels;
+	Common::String _bodyTreeName;
+	Common::String _headTreeName;
+
 	uint16 _frameTime = 0;
 	uint _videoFormat = kLargeVideoFormat;
 	uint16 _firstFrame = 0;

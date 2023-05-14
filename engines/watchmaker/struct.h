@@ -417,6 +417,13 @@ struct SRect {
 	int32  x1 = 0, y1 = 0, x2 = 0, y2 = 0;
 	constexpr SRect() = default;
 	constexpr SRect(int32 _x1, int32 _y1, int32 _x2, int32 _y2): x1(_x1), y1(_y1), x2(_x2), y2(_y2) {}
+
+	void reset() {
+		x1 = 0;
+		y1 = 0;
+		x2 = 0;
+		y2 = 0;
+	}
 };
 
 struct SD3DRect {
@@ -480,8 +487,20 @@ struct message {
 		int32 lparam[3] = {}; // long parameter
 		t3dF32 fparam[3]; // float parameter
 	};
+
 	message() = default;
 	message(EventClass _classe, uint8 _event, uint16 _flags) : classe(_classe), event(_event), flags(_flags) {}
+
+	void reset() {
+		classe = MC_IDLE;
+		event = 0;
+		flags = 0;
+		bparam = 0;
+		wparam1 = 0;
+		wparam2 = 0;
+		for (uint i = 0; i < ARRAYSIZE(lparam); i++) lparam[i] = 0;
+		// fparam cleared as union with lparam i.e. shared memory
+	}
 };
 
 struct pqueue {

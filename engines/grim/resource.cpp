@@ -197,7 +197,7 @@ ResourceLoader::ResourceLoader() {
 		error("%s", "Cannot find game data - check configuration file");
 
 	// Load labs
-	int priority = files.size();
+	int priority = -1;
 	for (Common::ArchiveMemberList::const_iterator x = files.begin(); x != files.end(); ++x) {
 		Common::String filename = (*x)->getName();
 		filename.toLowercase();
@@ -367,6 +367,9 @@ Costume *ResourceLoader::loadCostume(const Common::String &filename, Actor *owne
 
 Font *ResourceLoader::loadFont(const Common::String &filename) {
 	Common::SeekableReadStream *stream;
+
+	if (g_grim->_overrideFont)
+		return g_grim->_overrideFont;
 
 	if (g_grim->getGameType() == GType_GRIM && g_grim->isRemastered()) {
 		Common::String name = "FontsHD/" + filename + ".txt";

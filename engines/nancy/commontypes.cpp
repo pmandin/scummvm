@@ -36,6 +36,10 @@ void SceneChangeDescription::readData(Common::SeekableReadStream &stream, bool l
 		stream.skip(2);
 	}
 	continueSceneSound = stream.readUint16LE();
+
+	if (g_nancy->getGameType() >= kGameTypeNancy3) {
+		stream.skip(12); // 3D sound listener position
+	}
 }
 
 void SceneChangeWithFlag::readData(Common::SeekableReadStream &stream, bool longFormat) {
@@ -60,6 +64,11 @@ void BitmapDescription::readData(Common::SeekableReadStream &stream, bool frameI
 		frameID = stream.readUint16LE();
 	} else {
 		frameID = stream.readUint32LE();
+	}
+
+	if (g_nancy->getGameType() >= kGameTypeNancy3) {
+		// Most likely transparency
+		stream.skip(2);
 	}
 	
 	readRect(stream, src);
@@ -86,35 +95,100 @@ void SecondaryVideoDescription::readData(Common::SeekableReadStream &stream) {
 	stream.skip(0x20);
 }
 
-void SoundDescription::readData(Common::SeekableReadStream &stream, Type type) {
+void SoundDescription::readNormal(Common::SeekableReadStream &stream) {
 	Common::Serializer s(&stream, nullptr);
-	s.setVersion(type);
+	s.setVersion(g_nancy->getGameType());
 
 	readFilename(s, name);
 
-	s.skip(4, kScene, kScene);
 	s.syncAsUint16LE(channelID);
 
 	s.skip(2); // PLAY_SOUND_FROM_HD = 1, PLAY_SOUND_FROM_CDROM = 2
 	s.skip(2); // PLAY_SOUND_AS_DIGI = 1, PLAY_SOUND_AS_STREAM = 2
-	s.skip(4, kNormal, kNormal);
-	s.skip(2, kMenu, kMenu);
 
-	s.syncAsUint16LE(numLoops);
-	uint16 loopType;
-	s.syncAsUint16LE(loopType);
-	if (loopType != 0) { // LOOP_ONCE = 1, LOOP_INFINITE = 0
-		numLoops = 0;
-	}
+	s.skip(4, kGameTypeVampire, kGameTypeNancy2);
+
+	s.syncAsUint32LE(numLoops);
 	
 	s.skip(2);
+
 	s.syncAsUint16LE(volume);
 	s.skip(2); // Second volume, always (?) same as the first
 	
-	s.syncAsUint32LE(samplesPerSec, kNormal, kNormal);
-	s.syncAsUint16LE(panAnchorFrame, kDIGI, kDIGI);
-	s.skip(2, kDIGI, kDIGI);
-	s.skip(4, kMenu, kScene);
+	s.skip(4, kGameTypeVampire, kGameTypeNancy1); // Prior to nancy2 this field was used for something else
+	s.syncAsUint32LE(samplesPerSec, kGameTypeNancy2, kGameTypeNancy2);
+}
+
+void SoundDescription::readDIGI(Common::SeekableReadStream &stream) {
+	Common::Serializer s(&stream, nullptr);
+	s.setVersion(g_nancy->getGameType());
+
+	readFilename(s, name);
+
+	s.syncAsUint16LE(channelID);
+
+	s.skip(2); // PLAY_SOUND_FROM_HD = 1, PLAY_SOUND_FROM_CDROM = 2
+	s.skip(2); // PLAY_SOUND_AS_DIGI = 1, PLAY_SOUND_AS_STREAM = 2
+
+	s.syncAsUint32LE(numLoops);
+	
+	s.skip(2, kGameTypeVampire, kGameTypeNancy2);
+	s.syncAsUint16LE(volume);
+	s.skip(2); // Second volume, always (?) same as the first
+	
+	s.syncAsUint16LE(panAnchorFrame, kGameTypeVampire, kGameTypeNancy2);
+	s.skip(2, kGameTypeVampire, kGameTypeNancy2);
+
+	s.skip(0x61, kGameTypeNancy3);
+}
+
+void SoundDescription::readMenu(Common::SeekableReadStream &stream) {
+	Common::Serializer s(&stream, nullptr);
+	s.setVersion(g_nancy->getGameType());
+
+	readFilename(s, name);
+
+	s.syncAsUint16LE(channelID);
+
+	s.skip(2); // PLAY_SOUND_FROM_HD = 1, PLAY_SOUND_FROM_CDROM = 2
+	s.skip(2); // PLAY_SOUND_AS_DIGI = 1, PLAY_SOUND_AS_STREAM = 2
+
+	s.skip(2, kGameTypeVampire, kGameTypeNancy2);
+
+	s.syncAsUint32LE(numLoops);
+	
+	s.skip(2, kGameTypeVampire, kGameTypeNancy2);
+
+	s.syncAsUint16LE(volume);
+	s.skip(2); // Second volume, always (?) same as the first
+
+	s.skip(4, kGameTypeVampire, kGameTypeNancy2);
+}
+
+void SoundDescription::readScene(Common::SeekableReadStream &stream) {
+	Common::Serializer s(&stream, nullptr);
+	s.setVersion(g_nancy->getGameType());
+
+	readFilename(s, name);
+
+	s.skip(4);
+	s.syncAsUint16LE(channelID);
+
+	s.skip(2, kGameTypeVampire, kGameTypeNancy2); // PLAY_SOUND_FROM_HD = 1, PLAY_SOUND_FROM_CDROM = 2
+	s.skip(2, kGameTypeVampire, kGameTypeNancy2); // PLAY_SOUND_AS_DIGI = 1, PLAY_SOUND_AS_STREAM = 2
+
+	s.skip(2, kGameTypeNancy3);
+
+	s.syncAsUint32LE(numLoops);
+	
+	s.skip(2, kGameTypeVampire, kGameTypeNancy2);
+	s.syncAsUint16LE(volume);
+	s.skip(2); // Second volume, always (?) same as the first
+	s.skip(2);
+	s.skip(4, kGameTypeVampire, kGameTypeNancy2); // Panning, always? at center
+	s.syncAsUint32LE(samplesPerSec, kGameTypeVampire, kGameTypeNancy2);
+
+	s.skip(14, kGameTypeNancy3);
 }
 
 void ConditionalDialogue::readData(Common::SeekableReadStream &stream) {

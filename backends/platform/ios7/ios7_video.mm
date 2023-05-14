@@ -820,6 +820,13 @@ uint getSizeNextPOT(uint size) {
 #endif
 }
 
+#ifdef __IPHONE_11_0
+// This delegate method is called when the safe area of the view changes
+-(void)safeAreaInsetsDidChange {
+	[self adjustViewFrameForSafeArea];
+}
+#endif
+
 - (void)setViewTransformation {
 	// Scale the shake offset according to the overlay size. We need this to
 	// adjust the overlay mouse click coordinates when an offset is set.
@@ -931,6 +938,16 @@ uint getSizeNextPOT(uint size) {
 	}
 }
 
+- (void)virtualController:(bool)connect {
+	if (@available(iOS 15.0, *)) {
+		for (GameController *c : _controllers) {
+			if ([c isKindOfClass:GamepadController.class]) {
+				[(GamepadController*)c virtualController:connect];
+			}
+		}
+	}
+}
+
 #if TARGET_OS_IOS
 - (void)interfaceOrientationChanged:(UIInterfaceOrientation)orientation {
 	[self addEvent:InternalEvent(kInputOrientationChanged, orientation, 0)];
@@ -981,7 +998,7 @@ uint getSizeNextPOT(uint size) {
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
 	for (GameController *c : _controllers) {
 		if ([c isKindOfClass:TouchController.class]) {
-			[(TouchController *)c touchesEnded:touches withEvent:event];
+			[(TouchController *)c touchesCancelled:touches withEvent:event];
 		}
 	}
 }

@@ -87,17 +87,12 @@ protected:
 	bool _secondaryTapped;
 	long _lastSecondaryDown;
 	long _lastSecondaryTap;
-	int _gestureStartX, _gestureStartY;
 	bool _mouseClickAndDragEnabled;
 	bool _touchpadModeEnabled;
 	int _lastPadX;
 	int _lastPadY;
 	int _lastDragPosX;
 	int _lastDragPosY;
-
-	int _timerCallbackNext;
-	int _timerCallbackTimer;
-	TimerProc _timerCallback;
 
 	Common::Array<Common::Rect> _dirtyRects;
 	Common::Array<Common::Rect> _dirtyOverlayRects;
@@ -212,8 +207,13 @@ public:
 	Common::String getSystemLanguage() const override;
 
 	bool isConnectionLimited() override;
+	void virtualController(bool connect);
 
 	virtual Common::String getDefaultLogFileName() override { return Common::String("/scummvm.log"); }
+
+	virtual GUI::OptionsContainerWidget* buildBackendOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const override;
+	virtual void applyBackendSettings() override;
+	virtual void registerDefaultSettings(const Common::String &target) const override;
 
 protected:
 	void initVideoContext();

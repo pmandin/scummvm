@@ -29,6 +29,14 @@
 
 @implementation GamepadController {
 	GCController *_controller;
+#if TARGET_OS_IOS
+#ifdef __IPHONE_15_0
+	API_AVAILABLE(ios(15.0))
+	GCVirtualController *_virtualController;
+	API_AVAILABLE(ios(15.0))
+	GCVirtualControllerConfiguration *_config;
+#endif
+#endif
 }
 
 @dynamic view;
@@ -42,7 +50,32 @@
 												 name:@"GCControllerDidConnectNotification"
 											   object:nil];
 
+#if TARGET_OS_IOS
+#ifdef __IPHONE_15_0
+	if (@available(iOS 15.0, *)) {
+		// Configure a simple game controller with dPad and A and B buttons
+		_config = [[GCVirtualControllerConfiguration alloc] init];
+		_config.elements = [[NSSet alloc] initWithObjects:GCInputDirectionPad, GCInputButtonA, GCInputButtonB, nil];
+		_virtualController = [[GCVirtualController alloc] initWithConfiguration:_config];
+	}
+#endif
+#endif
 	return self;
+}
+
+- (void)virtualController:(bool)connect {
+#if TARGET_OS_IOS
+#ifdef __IPHONE_15_0
+	if (@available(iOS 15.0, *)) {
+		if (connect && ![self isConnected]) {
+			[_virtualController connectWithReplyHandler:^(NSError * _Nullable error) { }];		}
+		else if (!connect && [self isConnected]) {
+			[_virtualController disconnect];
+			[self setIsConnected:NO];
+		}
+	}
+#endif
+#endif
 }
 
 - (void)controllerDidConnect:(NSNotification *)notification {
@@ -89,6 +122,14 @@
 
 			// Apple's Y values are reversed from ScummVM's
 			[self handleJoystickAxisMotionX:x andY:0-y forJoystick:kGameControllerJoystickRight];
+		};
+
+		_controller.extendedGamepad.dpad.valueChangedHandler = ^(GCControllerDirectionPad * _Nonnull dpad, float xValue, float yValue) {
+			// Negative values are left/down, positive are right/up, 0 is no press
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_LEFT isPressed:(xValue < 0)];
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_RIGHT isPressed:(xValue > 0)];
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_UP isPressed:(yValue > 0)];
+			[self handleJoystickButtonAction:Common::JOYSTICK_BUTTON_DPAD_DOWN isPressed:(yValue < 0)];
 		};
 
 		_controller.extendedGamepad.buttonA.valueChangedHandler = ^(GCControllerButtonInput * _Nonnull button, float value, BOOL pressed) {

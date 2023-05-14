@@ -25,6 +25,7 @@
 #include "engines/nancy/sound.h"
 #include "engines/nancy/input.h"
 #include "engines/nancy/util.h"
+#include "engines/nancy/puzzledata.h"
 
 #include "engines/nancy/action/sliderpuzzle.h"
 
@@ -46,7 +47,7 @@ void SliderPuzzle::readData(Common::SeekableReadStream &stream) {
 	_spuzData = g_nancy->_sliderPuzzleData;
 	assert(_spuzData);
 
-	_puzzleState = NancySceneState._sliderPuzzleState;
+	_puzzleState = (SliderPuzzleData *)NancySceneState.getPuzzleData(SliderPuzzleData::getTag());
 	assert(_puzzleState);
 
 	readFilename(stream, _imageName);
@@ -103,9 +104,9 @@ void SliderPuzzle::readData(Common::SeekableReadStream &stream) {
 
 	stream.skip((6 - _height) * 6 * 2);
 
-	_clickSound.readData(stream, SoundDescription::kNormal);
+	_clickSound.readNormal(stream);
 	_solveExitScene.readData(stream);
-	_solveSound.readData(stream, SoundDescription::kNormal);
+	_solveSound.readNormal(stream);
 	_exitScene.readData(stream);
 	readRect(stream, _exitHotspot);
 }

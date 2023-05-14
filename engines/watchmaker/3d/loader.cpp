@@ -331,15 +331,18 @@ t3dBODY* RoomManagerImplementation::loadSingleRoom(const Common::String &_pname,
 	uint16 fileVersion = stream->readByte();
 	if (fileVersion != T3DFILEVERSION) {                                                   // Controlla la versione del file
 		warning("%s file incompatible: current version: %d.\tFile version: %d", name.c_str(), T3DFILEVERSION, fileVersion);
+		delete b;
 		return nullptr;
 	}
 
 	{
 		uint16 j = 1;
-		while (LoadedFiles[j].b != nullptr)
+		while (j < MAX_LOADED_FILES && LoadedFiles[j].b != nullptr) {
 			j++;
-		if (j > MAX_LOADED_FILES) {
+		}
+		if (j >= MAX_LOADED_FILES) {
 			warning("Too many t3d files loaded!");
+			delete b;
 			return nullptr;
 		}
 		if ((j + 1) > NumLoadedFiles)
@@ -590,7 +593,7 @@ void t3dFinalizeMaterialList(t3dBODY *b) {
 			MaterialPtr Mat = Face.getMaterial();
 			if (Face.lightmap) {
 				Mat = nullptr;
-				for (auto material : Face.getMaterial()->AddictionalMaterial) {
+				for (const auto &material : Face.getMaterial()->AddictionalMaterial) {
 					if (material->Texture->ID == Face.lightmap->Texture->ID) {
 						Mat = material;
 						break;
@@ -599,7 +602,7 @@ void t3dFinalizeMaterialList(t3dBODY *b) {
 				if (Mat == nullptr) {
 					warning("%s: Can't find Lightmap Sub-Material!", Mesh.name.c_str());
 					warning("%d %d", Face.getMaterial()->NumAddictionalMaterial, Face.lightmap->Texture->ID);
-					for (auto material : Face.getMaterial()->AddictionalMaterial) {
+					for (const auto &material : Face.getMaterial()->AddictionalMaterial) {
 						warning("%d", material->Texture->ID);
 					}
 					continue;

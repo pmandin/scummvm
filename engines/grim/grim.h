@@ -288,6 +288,8 @@ protected:
 public:
 	int _cursorX = 0;
 	int _cursorY = 0;
+	bool _isUtf8 = false;
+	Font *_overrideFont = nullptr;
 };
 
 extern GrimEngine *g_grim;

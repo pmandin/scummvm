@@ -143,7 +143,7 @@ KyraRpgEngine::KyraRpgEngine(OSystem *system, const GameFlags &flags) : KyraEngi
 	}
 
 	_buttonFont = Screen::FID_6_FNT;
-	if (_flags.use16ColorMode)
+	if (_flags.platform == Common::kPlatformPC98)
 		_buttonFont = _flags.gameID == GI_LOL ? Screen::FID_SJIS_TEXTMODE_FNT : Screen::FID_SJIS_FNT;
 	else if (_flags.gameID == GI_EOB2 && _flags.platform == Common::kPlatformFMTowns)
 		_buttonFont = Screen::FID_8_FNT;
@@ -252,6 +252,7 @@ bool KyraRpgEngine::posWithinRect(int posX, int posY, int x1, int y1, int x2, in
 void KyraRpgEngine::drawDialogueButtons() {
 	int cp = screen()->setCurPage(0);
 	Screen::FontId of = screen()->setFont(_buttonFont);
+	int cs = (_flags.platform == Common::kPlatformPC98 && !_flags.use16ColorMode) ? screen()->setFontStyles(_buttonFont, Font::kStyleFat) : -1;
 
 	for (int i = 0; i < _dialogueNumButtons; i++) {
 		int x = _dialogueButtonPosX[i];
@@ -270,6 +271,8 @@ void KyraRpgEngine::drawDialogueButtons() {
 			                    (_dialogueButtonYoffs + _dialogueButtonPosY[i]) + yOffset, _dialogueHighlightedButton == i ? _dialogueButtonLabelColor1 : _dialogueButtonLabelColor2, 0);
 		}
 	}
+	if (cs != -1)
+		screen()->setFontStyles(_buttonFont, cs);
 	screen()->setFont(of);
 	screen()->setCurPage(cp);
 }
@@ -350,13 +353,13 @@ uint16 KyraRpgEngine::processDialogue() {
 		if (!textEnabled() && _currentControlMode) {
 			screen()->setScreenDim(5);
 			const ScreenDim *d = screen()->getScreenDim(5);
-			screen()->fillRect(d->sx, d->sy + d->h - 9, d->sx + d->w - 1, d->sy + d->h - 1, d->unkA);
+			screen()->fillRect(d->sx, d->sy + d->h - 9, d->sx + d->w - 1, d->sy + d->h - 1, d->col2);
 		} else {
 			const ScreenDim *d = screen()->_curDim;
 			if (gameFlags().use16ColorMode)
-				screen()->fillRect(d->sx, d->sy, d->sx + d->w - 3, d->sy + d->h - 2, d->unkA);
+				screen()->fillRect(d->sx, d->sy, d->sx + d->w - 3, d->sy + d->h - 2, d->col2);
 			else
-				screen()->fillRect(d->sx, d->sy, d->sx + d->w - 2, d->sy + d->h - 1, d->unkA);
+				screen()->fillRect(d->sx, d->sy, d->sx + d->w - 2, d->sy + d->h - 1, d->col2);
 			txt()->clearDim(4);
 			txt()->resetDimTextPositions(4);
 		}

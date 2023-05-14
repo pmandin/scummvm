@@ -54,7 +54,9 @@ NancyEngine::NancyEngine(OSystem *syst, const NancyGameDescription *gd) :
 		_gameDescription(gd),
 		_system(syst),
 		_datFileMajorVersion(0),
-		_datFileMinorVersion(2) {
+		_datFileMinorVersion(2),
+		_false(gd->gameType <= kGameTypeNancy2 ? 1 : 0),
+		_true(gd->gameType <= kGameTypeNancy2 ? 2 : 1) {
 
 	g_nancy = this;
 
@@ -103,18 +105,11 @@ NancyEngine::~NancyEngine() {
 }
 
 NancyEngine *NancyEngine::create(GameType type, OSystem *syst, const NancyGameDescription *gd) {
-	switch (type) {
-	case kGameTypeVampire:
+	if (type >= kGameTypeVampire && type <= kGameTypeNancy6) {
 		return new NancyEngine(syst, gd);
-	case kGameTypeNancy1:
-		return new NancyEngine(syst, gd);
-	case kGameTypeNancy2:
-		return new NancyEngine(syst, gd);
-	case kGameTypeNancy3:
-		return new NancyEngine(syst, gd);
-	default:
-		error("Unknown GameType");
 	}
+	
+	error("Unknown GameType");
 }
 
 Common::Error NancyEngine::loadGameStream(Common::SeekableReadStream *stream) {
@@ -509,7 +504,7 @@ void NancyEngine::readDatFile() {
 
 	uint16 numGames = datFile->readUint16LE();
 	if (getGameType() > numGames) {
-		warning("Data for game type %d is not in nancy.dat", numGames);
+		warning("Data for game type %d is not in nancy.dat", getGameType());
 		return;
 	}
 

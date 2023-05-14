@@ -31,6 +31,8 @@
 
 namespace Scumm {
 
+static const int kMaxRawJpCharNum = 1500;
+
 /*
 TODO:
 Right now our charset renderers directly access _textSurface, as well as the
@@ -64,7 +66,7 @@ void ScummEngine::loadCJKFont() {
 		return;
 	}
 
-	ScummFile fp;
+	ScummFile fp(this);
 
 	if (_game.version <= 5 && _game.platform == Common::kPlatformFMTowns && _language == Common::JA_JPN) { // FM-TOWNS v3 / v5 Kanji
 #if defined(DISABLE_TOWNS_DUAL_LAYER_MODE) || !defined(USE_RGB_COLOR)
@@ -89,14 +91,14 @@ void ScummEngine::loadCJKFont() {
 		_2byteWidth = _2byteHeight = 12;
 		_useCJKMode = true;
 #endif
-	} else if (_game.id == GID_MONKEY && _game.platform == Common::kPlatformSegaCD && _language == Common::JA_JPN) {
-		int numChar = 1413;
+	} else if ((_game.id == GID_MONKEY && _game.platform == Common::kPlatformSegaCD && _language == Common::JA_JPN)
+		   || (_game.id == GID_INDY4 && _game.platform == Common::kPlatformMacintosh && _language == Common::JA_JPN)) {
 		_2byteWidth = 16;
 		_2byteHeight = 16;
 		_useCJKMode = true;
 		_newLineCharacter = 0x5F;
 		// charset resources are not inited yet, load charset later
-		_2byteFontPtr = new byte[_2byteWidth * _2byteHeight * numChar / 8];
+		_2byteFontPtr = new byte[_2byteWidth * _2byteHeight * kMaxRawJpCharNum / 8];
 		// set byte 0 to 0xFF (0x00 when loaded) to indicate that the font was not loaded
 		_2byteFontPtr[0] = 0xFF;
 	} else if (_language == Common::KO_KOR ||
@@ -244,18 +246,20 @@ byte *ScummEngine::get2byteCharPtr(int idx) {
 		idx = ((idx % 256) - 0xb0) * 94 + (idx / 256) - 0xa1;
 		break;
 	case Common::JA_JPN:
-		if (_game.id == GID_MONKEY && _game.platform == Common::kPlatformSegaCD && _language == Common::JA_JPN) {
+		if ((_game.id == GID_MONKEY && _game.platform == Common::kPlatformSegaCD)
+		    || (_game.id == GID_INDY4 && _game.platform == Common::kPlatformMacintosh)) {
 			// init pointer to charset resource
 			if (_2byteFontPtr[0] == 0xFF) {
 				int charsetId = 5;
-				int numChar = 1413;
+				int numChar = (getResourceSize(rtCharset, charsetId) - 14) / 32;
+				assert(numChar <= kMaxRawJpCharNum);
 				byte *charsetPtr = getResourceAddress(rtCharset, charsetId);
 				if (charsetPtr == nullptr)
 					error("ScummEngine::get2byteCharPtr: charset %d not found", charsetId);
-				memcpy(_2byteFontPtr, charsetPtr + 46, _2byteWidth * _2byteHeight * numChar / 8);
+				memcpy(_2byteFontPtr, charsetPtr + 14, _2byteWidth * _2byteHeight * numChar / 8);
 			}
 
-			idx = (SWAP_CONSTANT_16(idx) & 0x7fff) - 1;
+			idx = (SWAP_CONSTANT_16(idx) & 0x7fff);
 		} else {
 			idx = Graphics::FontTowns::getCharFMTChunk(idx);
 		}
@@ -334,7 +338,7 @@ CharsetRenderer::~CharsetRenderer() {
 }
 
 CharsetRendererCommon::CharsetRendererCommon(ScummEngine *vm)
-	: CharsetRenderer(vm), _bytesPerPixel(0), _fontHeight(0), _numChars(0) {
+	: CharsetRenderer(vm), _bitsPerPixel(0), _fontHeight(0), _numChars(0) {
 	_enableShadow = false;
 	_shadowColor = 0;
 }
@@ -356,7 +360,7 @@ void CharsetRendererCommon::setCurID(int32 id) {
 	else
 		_fontPtr += 29;
 
-	_bytesPerPixel = _fontPtr[0];
+	_bitsPerPixel = _fontPtr[0];
 	_fontHeight = _fontPtr[1];
 	_numChars = READ_LE_UINT16(_fontPtr + 2);
 
@@ -400,7 +404,7 @@ void CharsetRendererV3::setCurID(int32 id) {
 	if (_fontPtr == nullptr)
 		error("CharsetRendererCommon::setCurID: charset %d not found", id);
 
-	_bytesPerPixel = 1;
+	_bitsPerPixel = 1;
 	_numChars = _fontPtr[4];
 	_fontHeight = _fontPtr[5];
 
@@ -1099,6 +1103,8 @@ void CharsetRendererClassic::printChar(int chr, bool ignoreCharsetMask) {
 		_origWidth++;
 
 	_left += _origWidth;
+	if (is2byte)
+		_left += _cjkSpacing;
 
 	if (_str.right < _left) {
 		_str.right = _left;
@@ -1117,7 +1123,7 @@ void CharsetRendererClassic::printCharIntern(bool is2byte, const byte *charPtr, 
 	byte *back = nullptr;
 	int drawTop = _top - vs->topline;
 
-	if ((_vm->_game.heversion >= 71 && _bytesPerPixel >= 8) || (_vm->_game.heversion >= 90 && _bytesPerPixel == 0)) {
+	if ((_vm->_game.heversion >= 71 && _bitsPerPixel >= 8) || (_vm->_game.heversion >= 90 && _bitsPerPixel == 0)) {
 #ifdef ENABLE_HE
 		if (ignoreCharsetMask || !vs->hasTwoBuffers) {
 			dstPtr = vs->getPixels(0, 0);
@@ -1130,7 +1136,7 @@ void CharsetRendererClassic::printCharIntern(bool is2byte, const byte *charPtr, 
 		}
 
 		Common::Rect rScreen(vs->w, vs->h);
-		if (_bytesPerPixel >= 8) {
+		if (_bitsPerPixel >= 8) {
 			byte imagePalette[256];
 			memset(imagePalette, 0, sizeof(imagePalette));
 			memcpy(imagePalette, _vm->_charsetColorMap, 4);
@@ -1993,8 +1999,7 @@ void CharsetRendererMac::setColor(byte color) {
 }
 
 #ifdef ENABLE_SCUMM_7_8
-CharsetRendererV7::CharsetRendererV7(ScummEngine *vm) : CharsetRendererClassic(vm),
-	_spacing(vm->_useCJKMode && vm->_language != Common::JA_JPN ? 1 : 0),
+CharsetRendererV7::CharsetRendererV7(ScummEngine *vm) : CharsetRendererClassic(vm, vm->_useCJKMode && vm->_language != Common::JA_JPN ? 1 : 0),
 	_direction(vm->_language == Common::HE_ISR ? -1 : 1),
 	_newStyle(vm->_useCJKMode) {
 }
@@ -2019,7 +2024,7 @@ int CharsetRendererV7::draw2byte(byte *buffer, Common::Rect &clipRect, int x, in
 		}
 		buffer += pitch;
 	}
-	return _origWidth + _spacing;
+	return _origWidth + _cjkSpacing;
 }
 
 int CharsetRendererV7::drawCharV7(byte *buffer, Common::Rect &clipRect, int x, int y, int pitch, int16 col, TextStyleFlags flags, byte chr) {
@@ -2066,7 +2071,7 @@ int CharsetRendererV7::drawCharV7(byte *buffer, Common::Rect &clipRect, int x, i
 
 int CharsetRendererV7::getCharWidth(uint16 chr) const {
 	if ((chr & 0x80) && _vm->_useCJKMode)
-		return _vm->_2byteWidth + _spacing;
+		return _vm->_2byteWidth + _cjkSpacing;
 
 	int offs = READ_LE_UINT32(_fontPtr + (chr & 0xFF) * 4 + 4);
 	// SCUMM7 does not use the "kerning" from _fontPtr[offs + 2] here (compare CharsetRendererClassic::getCharWidth()
@@ -2217,7 +2222,7 @@ void CharsetRendererNES::drawChar(int chr, Graphics::Surface &s, int x, int y) {
 
 #ifdef USE_RGB_COLOR
 #ifndef DISABLE_TOWNS_DUAL_LAYER_MODE
-CharsetRendererTownsClassic::CharsetRendererTownsClassic(ScummEngine *vm) : CharsetRendererClassic(vm), _sjisCurChar(0) {
+CharsetRendererTownsClassic::CharsetRendererTownsClassic(ScummEngine *vm) : CharsetRendererClassic(vm, 0), _sjisCurChar(0) {
 	assert(vm->_game.platform == Common::kPlatformFMTowns);
 }
 
@@ -2391,7 +2396,7 @@ bool CharsetRendererTownsClassic::useFontRomCharacter(uint16 chr) const {
 }
 
 void CharsetRendererTownsClassic::processCharsetColors() {
-	for (int i = 0; i < (1 << _bytesPerPixel); i++) {
+	for (int i = 0; i < (1 << _bitsPerPixel); i++) {
 		uint8 c = _vm->_charsetColorMap[i];
 
 		if (c > 16) {

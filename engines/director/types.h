@@ -22,6 +22,8 @@
 #ifndef DIRECTOR_TYPES_H
 #define DIRECTOR_TYPES_H
 
+#include "common/hashmap.h"
+
 namespace Director {
 
 #define CONTINUATION (0xAC)
@@ -51,7 +53,8 @@ enum CastType {
 	kCastMovie = 9,
 	kCastDigitalVideo = 10,
 	kCastLingoScript = 11,
-	kCastRTE = 12
+	kCastRTE = 12,
+	kCastTransition = 14,
 };
 
 enum ScriptType {
@@ -61,7 +64,8 @@ enum ScriptType {
 	kMovieScript = 2,
 	kEventScript = 3,
 	kTestScript = 4,
-	kMaxScriptType = 4	// Sync with types.cpp:28, array scriptTypes[]
+	kParentScript = 7,
+	kMaxScriptType = 7	// Sync with types.cpp:28, array scriptTypes[]
 };
 
 enum ScriptFlag {
@@ -292,7 +296,8 @@ enum PaletteType {
 	kClutVivid = -5,
 	kClutNTSC = -6,
 	kClutMetallic = -7,
-	kClutSystemWin = -101
+	kClutSystemWin = -101,
+	kClutSystemWinD5 = -102
 };
 
 enum {
@@ -392,16 +397,18 @@ struct CastMemberID {
 	CastMemberID(int memberID, int castLibID)
 		: member(memberID), castLib(castLibID) {}
 
-	bool operator==(const CastMemberID &c) {
+	bool operator==(const CastMemberID &c) const {
 		return member == c.member && castLib == c.castLib;
 	}
-	bool operator!=(const CastMemberID &c) {
+	bool operator!=(const CastMemberID &c) const {
 		return member != c.member || castLib != c.castLib;
 	}
 
-	bool isNull() { return member == 0 && castLib == 0; }
+	bool isNull() const { return member == 0 && castLib == 0; }
 
 	Common::String asString() const;
+
+	uint hash() const { return ((castLib & 0xffff) << 16) + (member & 0xffff); }
 };
 
 enum CompareResult {
@@ -426,5 +433,16 @@ const char *castType2str(CastType type);
 const char *spriteType2str(SpriteType type);
 
 } // End of namespace Director
+
+namespace Common {
+
+template<>
+struct Hash<Director::CastMemberID> {
+	uint operator()(const Director::CastMemberID &id) const {
+		return id.hash();
+	}
+};
+
+} // End of namespace Common
 
 #endif
