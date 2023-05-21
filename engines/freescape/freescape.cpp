@@ -278,16 +278,17 @@ void FreescapeEngine::drawFrame() {
 	_gfx->positionCamera(_position, _position + _cameraFront);
 
 	if (_underFireFrames > 0) {
-		int underFireColor = isDriller() && isDOS() ? 1
-							: _currentArea->_underFireBackgroundColor;
-		if (underFireColor < 16) {
-			_currentArea->remapColor(_currentArea->_usualBackgroundColor, underFireColor);
-			_currentArea->remapColor(_currentArea->_skyColor, underFireColor);
-		}
+		int underFireColor = _currentArea->_underFireBackgroundColor;
+
+		if (isDriller() && (isDOS() || isAmiga() || isAtariST()))
+			underFireColor = 1;
+
+		_currentArea->remapColor(_currentArea->_usualBackgroundColor, underFireColor);
+		_currentArea->remapColor(_currentArea->_skyColor, underFireColor);
 	}
 
 	drawBackground();
-	_currentArea->draw(_gfx);
+	_currentArea->draw(_gfx, _ticks);
 
 	if (_underFireFrames > 0) {
 		for (auto &it : _sensors) {

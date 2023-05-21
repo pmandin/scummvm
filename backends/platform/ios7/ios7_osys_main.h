@@ -243,16 +243,23 @@ protected:
 	void handleEvent_applicationRestoreState();
 	void handleEvent_applicationClearState();
 
-	bool handleEvent_mouseDown(Common::Event &event, int x, int y);
-	bool handleEvent_mouseUp(Common::Event &event, int x, int y);
+	bool handleEvent_touchFirstDown(Common::Event &event, int x, int y);
+	bool handleEvent_touchFirstUp(Common::Event &event, int x, int y);
 
-	bool handleEvent_secondMouseDown(Common::Event &event, int x, int y);
-	bool handleEvent_secondMouseUp(Common::Event &event, int x, int y);
+	bool handleEvent_touchSecondDown(Common::Event &event, int x, int y);
+	bool handleEvent_touchSecondUp(Common::Event &event, int x, int y);
 
-	bool handleEvent_mouseDragged(Common::Event &event, int x, int y);
-	bool handleEvent_mouseSecondDragged(Common::Event &event, int x, int y);
+	bool handleEvent_touchFirstDragged(Common::Event &event, int x, int y);
+	bool handleEvent_touchSecondDragged(Common::Event &event, int x, int y);
+
+	void handleEvent_mouseLeftButtonDown(Common::Event &event, int x, int y);
+	void handleEvent_mouseLeftButtonUp(Common::Event &event, int x, int y);
+	void handleEvent_mouseRightButtonDown(Common::Event &event, int x, int y);
+	void handleEvent_mouseRightButtonUp(Common::Event &event, int x, int y);
+	void handleEvent_mouseDelta(Common::Event &event, int deltaX, int deltaY);
 
 	void rebuildSurface();
+	float getMouseSpeed();
 };
 
 #endif

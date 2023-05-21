@@ -42,6 +42,7 @@ Interaction::Interaction(const Common::String &name, int portrait) : PartyView(n
 }
 
 void Interaction::addText(const Common::String &str) {
+	setReduced(false);
 	_lines = splitLines(searchAndReplace(str, "\n", " "));
 }
 
@@ -82,7 +83,7 @@ void Interaction::draw() {
 
 	// Write out any buttons
 	if (!_buttons.empty()) {
-		_textPos = Common::Point(0, (8 + _lines.size()) * 8);
+		_textPos = Common::Point(0, (6 + _lines.size()) * 9);
 		setReduced(true);
 
 		// Create a blank button

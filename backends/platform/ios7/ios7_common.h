@@ -26,12 +26,17 @@
 
 
 enum InputEvent {
-	kInputMouseDown,
-	kInputMouseUp,
-	kInputMouseDragged,
-	kInputMouseSecondDragged,
-	kInputMouseSecondDown,
-	kInputMouseSecondUp,
+	kInputTouchFirstDown,
+	kInputTouchFirstUp,
+	kInputTouchFirstDragged,
+	kInputTouchSecondDragged,
+	kInputTouchSecondDown,
+	kInputTouchSecondUp,
+	kInputMouseLeftButtonDown,
+	kInputMouseLeftButtonUp,
+	kInputMouseRightButtonDown,
+	kInputMouseRightButtonUp,
+	kInputMouseDelta,
 	kInputOrientationChanged,
 	kInputKeyPressed,
 	kInputApplicationSuspended,

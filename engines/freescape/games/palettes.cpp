@@ -74,13 +74,13 @@ byte kDrillerZXPalette[9][3] = {
 };
 
 byte kDrillerCPCPalette[32][3] = {
-	{0x00, 0x00, 0x00}, // 0: special case?
+	{0x80, 0x80, 0x80}, // 0: special case?
 	{0x11, 0x22, 0x33},
 	{0x80, 0xff, 0x80}, // 2
 	{0xff, 0xff, 0x80}, // 3
 	{0x11, 0x22, 0x33},
 	{0xff, 0x00, 0x80}, // 5
-	{0x00, 0xff, 0x80}, // 6
+	{0x00, 0x80, 0x00}, // 6
 	{0xff, 0x80, 0x80}, // 7
 	{0x11, 0x22, 0x33},
 	{0x11, 0x22, 0x33},
@@ -94,7 +94,7 @@ byte kDrillerCPCPalette[32][3] = {
 	{0x00, 0xff, 0x80}, // 17
 	{0x00, 0xff, 0x00}, // 18
 	{0x80, 0xff, 0xff}, // 19
-	{0x11, 0x22, 0x33},
+	{0x00, 0x00, 0x00}, // 20
 	{0x00, 0x00, 0xff}, // 21
 	{0x00, 0x80, 0x00}, // 22
 	{0x00, 0x80, 0xff}, // 23
@@ -136,7 +136,7 @@ void FreescapeEngine::loadPalettes(Common::SeekableReadStream *file, int offset)
 	for (uint i = 0; i < _areaMap.size() + 2; i++) {
 		int label = readField(file, 8);
 		auto palette = new byte[16][3];
-		debugC(1, kFreescapeDebugParser, "Loading palette for area: %d", label);
+		debugC(1, kFreescapeDebugParser, "Loading palette for area: %d at %lx", label, file->pos());
 		for (int c = 0; c < 16; c++) {
 			int v = file->readUint16BE();
 			r = (v & 0xf00) >> 8;
@@ -176,19 +176,22 @@ static const struct CGAPalettteEntry {
 	{10, kDrillerCGAPalettePinkBlue},
 	{11, kDrillerCGAPaletteRedGreen},
 	{12, kDrillerCGAPalettePinkBlue},
-
+	{13, kDrillerCGAPaletteRedGreen},
 	{14, kDrillerCGAPalettePinkBlue},
-
+	{15, kDrillerCGAPaletteRedGreen},
 	{16, kDrillerCGAPalettePinkBlue},
-
+	{17, kDrillerCGAPalettePinkBlue},
+	{18, kDrillerCGAPalettePinkBlue},
 	{19, kDrillerCGAPaletteRedGreen},
 	{20, kDrillerCGAPalettePinkBlue},
 	{21, kDrillerCGAPaletteRedGreen},
 	{22, kDrillerCGAPalettePinkBlue},
 	{23, kDrillerCGAPaletteRedGreen},
-
+	{25, kDrillerCGAPalettePinkBlue},
+	{27, kDrillerCGAPaletteRedGreen},
 	{28, kDrillerCGAPalettePinkBlue},
 
+	{31, kDrillerCGAPaletteRedGreen},
 	{32, kDrillerCGAPalettePinkBlue},
 	{127, kDrillerCGAPaletteRedGreen},
 	{0, 0}   // This marks the end
@@ -209,9 +212,6 @@ byte kDrillerCGAPaletteRedGreenData[4][3] = {
 };
 
 void FreescapeEngine::swapPalette(uint16 levelID) {
-	if (!_border)
-		return;
-
 	if (isAmiga() || isAtariST()) {
 		// The following palette was not available in the demo, so we select another one
 		if (isDemo() && levelID == 32)
@@ -222,6 +222,9 @@ void FreescapeEngine::swapPalette(uint16 levelID) {
 		_gfx->_inkColor = _areaMap[levelID]->_inkColor;
 		_gfx->_paperColor = _areaMap[levelID]->_paperColor;
 		_gfx->_underFireBackgroundColor = _areaMap[levelID]->_underFireBackgroundColor;
+
+		if (!_border)
+			return;
 
 		byte *palette = (byte *)malloc(sizeof(byte) * 4 * 3);
 		for (int c = 0; c < 4; c++) {
@@ -250,9 +253,14 @@ void FreescapeEngine::swapPalette(uint16 levelID) {
 		}
 
 		assert(entry->areaId == levelID);
+		if (!_border)
+			return;
 		_border->setPalette(_gfx->_palette, 0, 4);
 		processBorder();
 	} else if (isDOS() && _renderMode == Common::kRenderEGA) {
+		if (!_border)
+			return;
+
 		_border->setPalette(_gfx->_palette, 0, 4);
 		processBorder();
 	}

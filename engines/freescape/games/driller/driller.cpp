@@ -180,8 +180,13 @@ void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 	_gfx->setColorRemaps(&_currentArea->_colorRemaps);
 
 	swapPalette(areaID);
-	_currentArea->_skyColor = 0;
-	_currentArea->_usualBackgroundColor = 0;
+
+	if (isDOS() || isAmiga() || isAtariST()) {
+		_currentArea->_skyColor = 0;
+		_currentArea->_usualBackgroundColor = 0;
+	} else if (isCPC()) {
+		_currentArea->_skyColor = _currentArea->_usualBackgroundColor;
+	}
 
 	resetInput();
 }
@@ -243,9 +248,18 @@ void DrillerEngine::drawInfoMenu() {
 	uint8 r, g, b;
 
 	_gfx->readFromPalette(color, r, g, b);
+	if (isAmiga() || isAtariST()) {
+		r = 0xFF;
+		g = 0xFF;
+		b = 0x55;
+	}
+
 	uint32 front = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
 
-	drawStringInSurface(Common::String::format("%10s : %s", "sector", _currentArea->_name.c_str()), 69, 25, front, black, surface);
+	Common::String areaName = _currentArea->_name;
+	areaName.trim();
+
+	drawStringInSurface(Common::String::format("%10s : %s", "sector", areaName.c_str()), 59, 25, front, black, surface);
 	Common::String rigStatus;
 	Common::String gasFound;
 	Common::String perTapped;
@@ -276,10 +290,10 @@ void DrillerEngine::drawInfoMenu() {
 			break;
 	}
 
-	drawStringInSurface(Common::String::format("%10s : %s", "rig status", rigStatus.c_str()), 69, 33, front, black, surface);
-	drawStringInSurface(Common::String::format("%10s : %s", "gas found", gasFound.c_str()), 69, 41, front, black, surface);
-	drawStringInSurface(Common::String::format("%10s : %s", "% tapped", perTapped.c_str()), 69, 49, front, black, surface);
-	drawStringInSurface(Common::String::format("%10s : %s", "gas tapped", gasTapped.c_str()), 69, 57, front, black, surface);
+	drawStringInSurface(Common::String::format("%10s : %s", "rig status", rigStatus.c_str()), 59, 33, front, black, surface);
+	drawStringInSurface(Common::String::format("%10s : %s", "gas found", gasFound.c_str()), 59, 41, front, black, surface);
+	drawStringInSurface(Common::String::format("%10s : %s", "% tapped", perTapped.c_str()), 59, 49, front, black, surface);
+	drawStringInSurface(Common::String::format("%10s : %s", "gas tapped", gasTapped.c_str()), 59, 57, front, black, surface);
 
 	drawStringInSurface(Common::String::format("%13s : %d", "total sectors", 18), 84, 73, front, black, surface);
 	drawStringInSurface(Common::String::format("%13s : %d", "safe sectors", _gameStateVars[32]), 84, 81, front, black, surface);
@@ -290,7 +304,8 @@ void DrillerEngine::drawInfoMenu() {
 	} else if (isSpectrum()) {
 		drawStringInSurface("l-load s-save 1-abort", 76, 97, front, black, surface);
 		drawStringInSurface("any other key-continue", 76, 105, front, black, surface);
-	}
+	} else if (isAmiga() || isAtariST())
+		drawStringInSurface("press any key to continue", 66, 97, front, black, surface);
 
 	_uiTexture->update(surface);
 	_gfx->setViewport(_fullscreenViewArea);
@@ -796,9 +811,15 @@ bool DrillerEngine::checkIfGameEnded() {
 			insertTemporaryMessage(_messagesList[19], _countdown - 2);
 			_gameStateVars[32] = 0;  // Avoid repeating the message
 		}
-		drawFrame();
-		_gfx->flipBuffer();
-		g_system->updateScreen();
+
+		// Draw a few frames
+		for (int i = 0; i < 10; i++) {
+			drawFrame();
+			_gfx->flipBuffer();
+			g_system->updateScreen();
+			g_system->delayMillis(10);
+		}
+
 		g_system->delayMillis(5000);
 		return true;
 	}

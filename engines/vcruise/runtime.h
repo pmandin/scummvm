@@ -43,6 +43,7 @@ namespace Audio {
 
 class AudioStream;
 class SeekableAudioStream;
+class LoopingAudioStream;
 
 } // End of namespace Audio
 
@@ -83,6 +84,7 @@ struct ScriptSet;
 struct Script;
 struct IScriptCompilerGlobalState;
 struct Instruction;
+struct RoomScriptSet;
 
 enum GameState {
 	kGameStateBoot,							// Booting the game
@@ -153,10 +155,13 @@ struct ScriptEnvironmentVars {
 	uint panInteractionID;
 	uint fpsOverride;
 	uint lastHighlightedItem;
+	uint animChangeFrameOffset;
+	uint animChangeNumFrames;
 	bool lmb;
 	bool lmbDrag;
 	bool esc;
 	bool exitToMenu;
+	bool animChangeSet;
 };
 
 struct SfxSound {
@@ -212,8 +217,14 @@ struct SoundCache {
 	~SoundCache();
 
 	Common::SharedPtr<Audio::SeekableAudioStream> stream;
-	Common::SharedPtr<Audio::AudioStream> loopingStream;
+	Common::SharedPtr<Audio::LoopingAudioStream> loopingStream;
 	Common::SharedPtr<AudioPlayer> player;
+};
+
+enum SoundLoopingType {
+	kSoundLoopingTypeNotLooping,	// Was never looping
+	kSoundLoopingTypeTerminated,	// Was looping and then converted into non-looping
+	kSoundLoopingTypeLooping,		// Is looping
 };
 
 struct SoundInstance {
@@ -238,7 +249,7 @@ struct SoundInstance {
 	int32 effectiveBalance;
 
 	bool is3D;
-	bool isLooping;
+	SoundLoopingType loopingType;
 	bool isSpeech;
 	bool isSilencedLoop;	// Loop is still playing but reached 0 volume so the player was unloaded
 	int32 x;
@@ -246,6 +257,7 @@ struct SoundInstance {
 
 	SoundParams3D params3D;
 
+	uint32 startTime;
 	uint32 endTime;
 	uint32 duration;
 };
@@ -535,6 +547,9 @@ struct FontCacheItem {
 	Common::SharedPtr<Graphics::Font> keepAlive;
 };
 
+typedef Common::HashMap<Common::String, uint> ScreenNameToRoomMap_t;
+typedef Common::HashMap<uint, ScreenNameToRoomMap_t> RoomToScreenNameToRoomMap_t;
+
 class Runtime {
 public:
 	friend class RuntimeMenuInterface;
@@ -756,6 +771,7 @@ private:
 	bool runDelay();
 	bool runHorizontalPan(bool isRight);
 	bool runScript();
+	bool requireAvailableStack(uint n);
 	bool runWaitForAnimation();
 	bool runWaitForFacing();
 	bool runWaitForFacingToAnim();
@@ -766,6 +782,7 @@ private:
 	void drawSectionToScreen(const RenderSection &section, const Common::Rect &rect);
 	void commitSectionToScreen(const RenderSection &section, const Common::Rect &rect);
 	void terminateScript();
+	RoomScriptSet *getRoomScriptSetForCurrentRoom() const;
 	bool checkCompletionConditions();
 
 	void startTerminatingHorizontalPan(bool isRight);
@@ -779,6 +796,8 @@ private:
 	void findWaves();
 	void loadConfig(const char *cfgPath);
 	void loadScore();
+	void loadDuplicateRooms();
+	void loadAllSchizmScreenNames();
 	Common::SharedPtr<SoundInstance> loadWave(const Common::String &soundName, uint soundID, const Common::ArchiveMemberPtr &archiveMemberPtr);
 	SoundCache *loadCache(SoundInstance &sound);
 	void resolveSoundByName(const Common::String &soundName, bool load, StackInt_t &outSoundID, SoundInstance *&outWave);
@@ -786,6 +805,8 @@ private:
 	void resolveSoundByNameOrID(const StackValue &stackValue, bool load, StackInt_t &outSoundID, SoundInstance *&outWave);
 
 	void changeToScreen(uint roomNumber, uint screenNumber);
+	void clearIdleAnimations();
+	void changeHero();
 	void triggerPreIdleActions();
 	void returnToIdleState();
 	void changeToCursor(const Common::SharedPtr<Graphics::WinCursorGroup> &cursor);
@@ -808,6 +829,7 @@ private:
 	void triggerSound(bool looping, SoundInstance &sound, int32 volume, int32 balance, bool is3D, bool isSpeech);
 	void triggerSoundRamp(SoundInstance &sound, uint durationMSec, int32 newVolume, bool terminateOnCompletion);
 	void stopSound(SoundInstance &sound);
+	void convertLoopingSoundToNonLooping(SoundInstance &sound);
 	void updateSounds(uint32 timestamp);
 	void updateSubtitles();
 	void update3DSounds();
@@ -817,11 +839,13 @@ private:
 	int32 getSilentSoundVolume() const;
 	int32 getDefaultSoundVolume() const;
 	uint applyVolumeScale(int32 volume) const;
+	int applyBalanceScale(int32 balance) const;
 
 	void triggerWaveSubtitles(const SoundInstance &sound, const Common::String &id);
 	void stopSubtitles();
 
 	AnimationDef stackArgsToAnimDef(const StackInt_t *args) const;
+	void consumeAnimChangeAndAdjustAnim(AnimationDef &animDef);
 	void pushAnimDef(const AnimationDef &animDef);
 
 	void activateScript(const Common::SharedPtr<Script> &script, const ScriptEnvironmentVars &envVars);
@@ -1037,7 +1061,7 @@ private:
 	void scriptOpMul(ScriptArg_t arg);
 	void scriptOpDiv(ScriptArg_t arg);
 	void scriptOpMod(ScriptArg_t arg);
-	void scriptOpCyfraGet(ScriptArg_t arg);
+	void scriptOpGetDigit(ScriptArg_t arg);
 	void scriptOpPuzzleInit(ScriptArg_t arg);
 	void scriptOpPuzzleCanPress(ScriptArg_t arg);
 	void scriptOpPuzzleDoMove1(ScriptArg_t arg);
@@ -1045,6 +1069,7 @@ private:
 	void scriptOpPuzzleDone(ScriptArg_t arg);
 	void scriptOpPuzzleWhoWon(ScriptArg_t arg);
 	void scriptOpFn(ScriptArg_t arg);
+	void scriptOpItemHighlightSetTrue(ScriptArg_t arg);
 
 	Common::Array<Common::SharedPtr<Graphics::WinCursorGroup> > _cursors;		// Cursors indexed as CURSOR_CUR_##
 	Common::Array<Common::SharedPtr<Graphics::WinCursorGroup> > _cursorsShort;	// Cursors indexed as CURSOR_#
@@ -1128,6 +1153,8 @@ private:
 	VCruiseGameID _gameID;
 
 	Common::Array<Common::SharedPtr<RoomDef> > _roomDefs;
+	Common::Array<uint> _roomDuplicationOffsets;
+	RoomToScreenNameToRoomMap_t _globalRoomScreenNameToScreenIDs;
 	Common::SharedPtr<ScriptSet> _scriptSet;
 
 	Common::Array<CallStackFrame> _scriptCallStack;
@@ -1157,6 +1184,7 @@ private:
 	Common::SharedPtr<Video::AVIDecoder> _animDecoder;
 	Common::SharedPtr<SfxPlaylist> _animPlaylist;
 	AnimDecoderState _animDecoderState;
+	bool _animTerminateAtStartOfFrame;
 	uint _animPendingDecodeFrame;
 	uint _animDisplayingFrame;
 	uint _animFirstFrame;
@@ -1239,6 +1267,8 @@ private:
 	static const int kPanoramaPanningMarginY = 11;
 
 	static const uint kSoundCacheSize = 16;
+
+	static const uint kHeroChangeInteractionID = 0xffffffffu;
 
 	Common::Pair<Common::String, Common::SharedPtr<SoundCache> > _soundCache[kSoundCacheSize];
 	uint _soundCacheIndex;
