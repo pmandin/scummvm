@@ -64,47 +64,6 @@ enum {
 
 struct MacMenuSubMenu;
 
-struct MacMenuSubMenu {
-	ItemArray items;
-	Common::Rect bbox;
-	int highlight;
-
-	MacMenuSubMenu() : highlight(-1) {}
-
-	~MacMenuSubMenu();
-
-	void enableAllItems();
-
-	int ytoItem(int y, int itemHeight) { return MIN<int>((y - bbox.top) / itemHeight, items.size() - 1); }
-};
-
-struct MacMenuItem {
-	Common::String text;
-	Common::U32String unicodeText;
-	bool unicode;
-	int action;
-	int style;
-	char shortcut;
-	int shortcutPos;
-	bool enabled;
-	bool checked;
-	Common::Rect bbox;
-
-	MacMenuSubMenu *submenu;
-
-	MacMenuItem(const Common::String &t, int a = -1, int s = 0, char sh = 0, int sp = -1, bool e = true, bool c = false) :
-			text(t), unicode(false), action(a), style(s), shortcut(sh),
-			shortcutPos(sp), enabled(e), submenu(nullptr), checked(c) {}
-	MacMenuItem(const Common::U32String &t, int a = -1, int s = 0, char sh = 0, int sp = -1, bool e = true, bool c = false) :
-			unicodeText(t), unicode(true), action(a), style(s), shortcut(sh),
-			shortcutPos(sp), enabled(e), submenu(nullptr), checked(c) {}
-
-	~MacMenuItem() {
-		if (submenu)
-			delete submenu;
-	}
-};
-
 MacMenuSubMenu::~MacMenuSubMenu() {
 	for (uint i = 0; i < items.size(); i++)
 		delete items[i];
@@ -155,6 +114,8 @@ MacMenu::MacMenu(int id, const Common::Rect &bounds, MacWindowManager *wm)
 
 	_activeItem = -1;
 	_activeSubItem = -1;
+	_lastActiveItem = -1;
+	_lastActiveSubItem = -1;
 
 	_ccallback = NULL;
 	_unicodeccallback = NULL;
@@ -726,7 +687,7 @@ void MacMenu::createSubMenuFromString(int id, const char *str, int commandId) {
 		submenu = addSubMenu(nullptr, id);
 
 	for (uint i = 0; i < string.size(); i++) {
-		while (i < string.size() && string[i] != ';') // Read token
+		while (i < string.size() && (string[i] != ';' && string[i] != '\r')) // Read token, consume \r for popup menu (MacPopUp)
 			item += string[i++];
 
 		if (item.lastChar() == ']') { // we have command id
@@ -1170,12 +1131,13 @@ void MacMenu::renderSubmenu(MacMenuSubMenu *menu, bool recursive) {
 
 			if (menu->items[i]->checked) {
 				const Font *font = getMenuFont(menu->items[i]->style);
+				int checkSymbol = _wm->_fontMan->hasBuiltInFonts() ? 0xD7 : 18;
 
 				int padding = _align == kTextAlignRight ? -_menuRightDropdownPadding: _menuLeftDropdownPadding;
-				int offset = padding - font->getCharWidth(195);
+				int offset = padding - font->getCharWidth(checkSymbol);
 
 				// calculating the padding and offset, we draw the √ at the center
-				font->drawChar(s, 195, tx - padding + offset, ty, color);
+				font->drawChar(s, checkSymbol, tx - padding + offset, ty, color);
 			}
 
 			if (!acceleratorText.empty() && shortcutPos == -1)
@@ -1494,6 +1456,10 @@ bool MacMenu::mouseRelease(int x, int y) {
 			}
 		}
 	}
+
+	// Set last active items and subitems before leaving!
+	_lastActiveItem = _activeItem;
+	_lastActiveSubItem = _activeSubItem;
 
 	// if the mode is not win95, or the click position is outside of the menu, then we close it
 	if (!(_wm->_mode & kWMModeWin95) || !contains(x, y) || haveCallBack)

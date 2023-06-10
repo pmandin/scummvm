@@ -212,12 +212,18 @@ public:
 	void move(int x, int y);
 
 	/*
-	 * Change the width and the height of the window.
+	 * Change the width and the height of the window (outer dimensions).
 	 * @param w New width of the window.
 	 * @param h New height of the window.
-	 * @param inner True to set the inner dimensions.
 	 */
-	virtual void resize(int w, int h, bool inner = false);
+	virtual void resize(int w, int h);
+
+	/*
+	 * Change the width and the height of the inner window.
+	 * @param w New width of the window.
+	 * @param h New height of the window.
+	 */
+	virtual void resizeInner(int w, int h);
 
 	/**
 	 * Change the dimensions of the window ([0, 0, 0, 0] by default).
@@ -226,6 +232,14 @@ public:
 	 * @param r The desired dimensions of the window.
 	 */
 	void setDimensions(const Common::Rect &r) override;
+
+	/**
+	 * Change the inner dimension of the window.
+	 * Note that this changes the window inner dimension and calculates
+	 * outer dimension (ie with border, etc)
+	 * @param r The desired dimensions of the window.
+	 */
+	void setInnerDimensions(const Common::Rect &r);
 
 	/**
 	 * Set a background pattern for the window.
@@ -269,6 +283,18 @@ public:
 	 * @param title Target title.
 	 */
 	void setTitle(const Common::String &title);
+
+	/**
+	 * Set visibility of window title.
+	 * @param visible visibility of window.
+	 */
+	virtual void setTitleVisible(bool visible);
+
+	/**
+	 * Get visibility of window title.
+	 */
+	bool isTitleVisible();
+
 	/**
 	 * Accessor to get the title of the window.
 	 * @return Title.
@@ -354,6 +380,7 @@ public:
 	void updateInnerDims();
 
 private:
+	void rebuildSurface(); // Propagate dimensions change and recreate patter/borders, etc.
 	void drawBorderFromSurface(ManagedSurface *g, uint32 flags);
 	void drawPattern();
 	void drawBox(ManagedSurface *g, int x, int y, int w, int h);
@@ -390,6 +417,7 @@ private:
 	bool _resizable;
 
 	bool _closeable;
+	bool _isTitleVisible;
 
 	int _borderWidth;
 
@@ -399,6 +427,7 @@ private:
 	WindowClick _highlightedPart;
 
 	Common::String _title;
+	Common::String _shadowedTitle;
 
 	int _borderType;
 };

@@ -76,6 +76,7 @@ enum StartConfig {
 };
 
 class AudioPlayer;
+class CircuitPuzzle;
 class MenuInterface;
 class MenuPage;
 class RuntimeMenuInterface;
@@ -85,10 +86,13 @@ struct Script;
 struct IScriptCompilerGlobalState;
 struct Instruction;
 struct RoomScriptSet;
+struct SoundLoopInfo;
+class SampleLoopAudioStream;
 
 enum GameState {
 	kGameStateBoot,							// Booting the game
-	kGameStateWaitingForAnimation,			// Waiting for a blocking animation with no stop frame complete, then resuming script
+	kGameStateWaitingForAnimation,			// Waiting for a blocking animation with no stop frame to complete, then resuming script
+	kGameStateWaitingForAnimationToDelay,	// Waiting for a blocking animation with no stop frame to complete, then going to delay
 	kGameStateWaitingForFacing,				// Waiting for a blocking animation with a stop frame to complete, then resuming script
 	kGameStateWaitingForFacingToAnim,		// Waiting for a blocking animation to complete, then playing _postFacingAnimDef and switching to kGameStateWaitingForAnimation
 	kGameStateQuit,							// Quitting
@@ -162,6 +166,8 @@ struct ScriptEnvironmentVars {
 	bool esc;
 	bool exitToMenu;
 	bool animChangeSet;
+	bool isEntryScript;
+	bool puzzleWasSet;
 };
 
 struct SfxSound {
@@ -213,18 +219,18 @@ struct SoundParams3D {
 	void read(Common::ReadStream *stream);
 };
 
+
 struct SoundCache {
+	SoundCache();
 	~SoundCache();
 
-	Common::SharedPtr<Audio::SeekableAudioStream> stream;
-	Common::SharedPtr<Audio::LoopingAudioStream> loopingStream;
-	Common::SharedPtr<AudioPlayer> player;
-};
+	Common::SharedPtr<SoundLoopInfo> loopInfo;
 
-enum SoundLoopingType {
-	kSoundLoopingTypeNotLooping,	// Was never looping
-	kSoundLoopingTypeTerminated,	// Was looping and then converted into non-looping
-	kSoundLoopingTypeLooping,		// Is looping
+	Common::SharedPtr<Audio::SeekableAudioStream> stream;
+	Common::SharedPtr<SampleLoopAudioStream> loopingStream;
+	Common::SharedPtr<AudioPlayer> player;
+
+	bool isLoopActive;
 };
 
 struct SoundInstance {
@@ -249,9 +255,10 @@ struct SoundInstance {
 	int32 effectiveBalance;
 
 	bool is3D;
-	SoundLoopingType loopingType;
+	bool isLooping;
 	bool isSpeech;
-	bool isSilencedLoop;	// Loop is still playing but reached 0 volume so the player was unloaded
+	bool restartWhenAudible;
+	bool tryToLoopWhenRestarted;
 	int32 x;
 	int32 y;
 
@@ -403,6 +410,7 @@ struct SaveGameSwappableState {
 
 		bool is3D;
 		bool isLooping;
+		bool tryToLoopWhenRestarted;
 		bool isSpeech;
 
 		int32 x;
@@ -411,7 +419,7 @@ struct SaveGameSwappableState {
 		SoundParams3D params3D;
 
 		void write(Common::WriteStream *stream) const;
-		void read(Common::ReadStream *stream);
+		void read(Common::ReadStream *stream, uint saveGameVersion);
 	};
 
 	SaveGameSwappableState();
@@ -419,6 +427,7 @@ struct SaveGameSwappableState {
 	uint roomNumber;
 	uint screenNumber;
 	uint direction;
+	bool havePendingPostSwapScreenReset;
 
 	uint loadedAnimation;
 	uint animDisplayingFrame;
@@ -428,6 +437,7 @@ struct SaveGameSwappableState {
 	Common::String scoreTrack;
 	Common::String scoreSection;
 	bool musicActive;
+	bool musicMuteDisabled;
 
 	int32 musicVolume;
 	int32 animVolume;
@@ -444,7 +454,7 @@ struct SaveGameSnapshot {
 	LoadGameOutcome read(Common::ReadStream *stream);
 
 	static const uint kSaveGameIdentifier = 0x53566372;
-	static const uint kSaveGameCurrentVersion = 6;
+	static const uint kSaveGameCurrentVersion = 9;
 	static const uint kSaveGameEarliestSupportedVersion = 2;
 	static const uint kMaxStates = 2;
 
@@ -524,17 +534,17 @@ struct TextStyleDef {
 	uint unknown3;	// Seems to always be 0 for English, other values for other languages
 	uint colorRGB;
 	uint shadowColorRGB;
-	uint unknown4;
+	uint alignment;	// Modulo 10 seems to be alignment: 0 = left, 1 = center, 2 = right
 	uint unknown5;	// Possibly drop shadow offset
 };
 
 struct UILabelDef {
 	Common::String lineID;
 	Common::String styleDefID;
-	uint unknown1;
-	uint unknown2;
-	uint unknown3;
-	uint unknown4;
+	uint graphicLeft;
+	uint graphicTop;
+	uint graphicWidth;
+	uint graphicHeight;
 };
 
 struct FontCacheItem {
@@ -554,6 +564,15 @@ class Runtime {
 public:
 	friend class RuntimeMenuInterface;
 
+	enum CharSet {
+		kCharSetLatin,
+		kCharSetGreek,
+		kCharSetCyrillic,
+		kCharSetJapanese,
+		kCharSetChineseTraditional,
+		kCharSetChineseSimplified,
+	};
+
 	Runtime(OSystem *system, Audio::Mixer *mixer, const Common::FSNode &rootFSNode, VCruiseGameID gameID, Common::Language defaultLanguage);
 	virtual ~Runtime();
 
@@ -572,10 +591,11 @@ public:
 	void onKeyDown(Common::KeyCode keyCode);
 	void onKeymappedEvent(KeymappedEvent evt);
 
-	bool canSave() const;
+	bool canSave(bool onCurrentScreen) const;
 	bool canLoad() const;
 
 	void recordSaveGameSnapshot();
+	void recordSounds(SaveGameSwappableState &state);
 	void restoreSaveGameSnapshot();
 	Common::SharedPtr<SaveGameSnapshot> generateNewGameSnapshot() const;
 
@@ -583,8 +603,10 @@ public:
 	LoadGameOutcome loadGame(Common::ReadStream *stream);
 
 	bool bootGame(bool newGame);
+	static void resolveCodePageForLanguage(Common::Language lang, Common::CodePage &outCodePage, CharSet &outCharSet);
 
-	void getLabelDef(const Common::String &labelID, const Graphics::Font *&outFont, const Common::String *&outTextUTF8, uint32 &outColor, uint32 &outShadowColor);
+	void drawLabel(Graphics::ManagedSurface *surface, const Common::String &labelID, const Common::Rect &contentRect);
+	void getLabelDef(const Common::String &labelID, const Graphics::Font *&outFont, const Common::String *&outTextUTF8, uint32 &outColor, uint32 &outShadowColor, uint32 &outShadowOffset);
 
 private:
 	enum IndexParseType {
@@ -640,7 +662,7 @@ private:
 
 		void reset();
 
-		static const uint kNumGyros = 4;
+		static const uint kNumGyros = 5;
 
 		Gyro gyros[kNumGyros];
 
@@ -694,6 +716,12 @@ private:
 		kInGameMenuStateClickingOver,		// Mouse was pressed on a button and is holding on it
 		kInGameMenuStateClickingNotOver,	// Mouse was pressed on a button and dragged off
 		kInGameMenuStateClickingInactive,
+	};
+
+	enum SoundLoopBehavior {
+		kSoundLoopBehaviorNo,
+		kSoundLoopBehaviorYes,
+		kSoundLoopBehaviorAuto,
 	};
 
 	static const uint kPanLeftInteraction = 1;
@@ -773,6 +801,7 @@ private:
 	bool runScript();
 	bool requireAvailableStack(uint n);
 	bool runWaitForAnimation();
+	bool runWaitForAnimationToDelay();
 	bool runWaitForFacing();
 	bool runWaitForFacingToAnim();
 	bool runGyroIdle();
@@ -782,6 +811,7 @@ private:
 	void drawSectionToScreen(const RenderSection &section, const Common::Rect &rect);
 	void commitSectionToScreen(const RenderSection &section, const Common::Rect &rect);
 	void terminateScript();
+	void quitToMenu();
 	RoomScriptSet *getRoomScriptSetForCurrentRoom() const;
 	bool checkCompletionConditions();
 
@@ -807,7 +837,7 @@ private:
 	void changeToScreen(uint roomNumber, uint screenNumber);
 	void clearIdleAnimations();
 	void changeHero();
-	void triggerPreIdleActions();
+	bool triggerPreIdleActions();
 	void returnToIdleState();
 	void changeToCursor(const Common::SharedPtr<Graphics::WinCursorGroup> &cursor);
 	bool dischargeIdleMouseMove();
@@ -819,6 +849,7 @@ private:
 
 	void changeMusicTrack(int musicID);
 	void startScoreSection();
+	void setMusicMute(bool muted);
 
 	void changeAnimation(const AnimationDef &animDef, bool consumeFPSOverride);
 	void changeAnimation(const AnimationDef &animDef, uint initialFrame, bool consumeFPSOverride);
@@ -826,7 +857,7 @@ private:
 	void applyAnimationVolume();
 
 	void setSound3DParameters(SoundInstance &sound, int32 x, int32 y, const SoundParams3D &soundParams3D);
-	void triggerSound(bool looping, SoundInstance &sound, int32 volume, int32 balance, bool is3D, bool isSpeech);
+	void triggerSound(SoundLoopBehavior loopBehavior, SoundInstance &sound, int32 volume, int32 balance, bool is3D, bool isSpeech);
 	void triggerSoundRamp(SoundInstance &sound, uint durationMSec, int32 newVolume, bool terminateOnCompletion);
 	void stopSound(SoundInstance &sound);
 	void convertLoopingSoundToNonLooping(SoundInstance &sound);
@@ -848,8 +879,8 @@ private:
 	void consumeAnimChangeAndAdjustAnim(AnimationDef &animDef);
 	void pushAnimDef(const AnimationDef &animDef);
 
-	void activateScript(const Common::SharedPtr<Script> &script, const ScriptEnvironmentVars &envVars);
-	void compileSchizmLogicSet(const uint *roomNumbers, uint numRooms);
+	void activateScript(const Common::SharedPtr<Script> &script, bool isEntryScript, const ScriptEnvironmentVars &envVars);
+	Common::SharedPtr<ScriptSet> compileSchizmLogicSet(const uint *roomNumbers, uint numRooms) const;
 
 	bool parseIndexDef(IndexParseType parseType, uint roomNumber, const Common::String &key, const Common::String &value);
 	void allocateRoomsUpTo(uint roomNumber);
@@ -877,7 +908,7 @@ private:
 	Common::String getFileNameForItemGraphic(uint itemID) const;
 	Common::SharedPtr<Graphics::Surface> loadGraphic(const Common::String &graphicName, bool required);
 
-	bool loadSubtitles(Common::CodePage codePage);
+	bool loadSubtitles(Common::CodePage codePage, bool guessCodePage);
 
 	void changeToMenuPage(MenuPage *menuPage);
 
@@ -887,6 +918,12 @@ private:
 	void drawInGameMenuButton(uint element);
 
 	const Graphics::Font *resolveFont(const Common::String &textStyle, uint size);
+
+	bool resolveCircuitPuzzleInteraction(const Common::Point &relMouse, Common::Point &outCoord, bool &outIsDown, Common::Rect &outHighlightRect) const;
+	void clearCircuitPuzzle();
+	void clearCircuitHighlightRect(const Common::Rect &rect);
+	void drawCircuitHighlightRect(const Common::Rect &rect);
+	static Common::Rect padCircuitInteractionRect(const Common::Rect &rect);
 
 	// Script things
 	void scriptOpNumber(ScriptArg_t arg);
@@ -995,6 +1032,7 @@ private:
 	void scriptOpSaveAs(ScriptArg_t arg);
 	void scriptOpSave0(ScriptArg_t arg);
 	void scriptOpExit(ScriptArg_t arg);
+	void scriptOpAllowSaves(ScriptArg_t arg);
 
 	void scriptOpAnimName(ScriptArg_t arg);
 	void scriptOpValueName(ScriptArg_t arg);
@@ -1116,6 +1154,10 @@ private:
 
 	AnimationDef _postFacingAnimDef;
 
+	Common::SharedPtr<CircuitPuzzle> _circuitPuzzle;
+	AnimationDef _circuitPuzzleBlockAnimation;
+	AnimationDef _circuitPuzzleConnectAnimation;
+
 	Common::HashMap<uint32, int32> _variables;
 	Common::HashMap<uint, uint32> _timers;
 
@@ -1136,6 +1178,7 @@ private:
 	// Pre-idle actions are executed once upon either entering Idle OR Delay state.
 	bool _havePendingPreIdleActions;
 	bool _havePendingReturnToIdleState;
+	bool _havePendingPostSwapScreenReset;
 
 	bool _havePendingCompletionCheck;
 	GameState _gameState;
@@ -1168,6 +1211,8 @@ private:
 	int _musicTrack;
 	int32 _musicVolume;
 	bool _musicActive;
+	bool _musicMute;
+	bool _musicMuteDisabled;
 
 	Common::String _scoreTrack;
 	Common::String _scoreSection;
@@ -1211,6 +1256,14 @@ private:
 	bool _idleHaveClickInteraction;
 	bool _idleHaveDragInteraction;
 	uint _idleInteractionID;
+
+	bool _idleIsOnOpenCircuitPuzzleLink;
+	Common::Rect _idleCircuitPuzzleLinkHighlightRect;
+
+	bool _idleIsCircuitPuzzleLinkDown;
+	Common::Point _idleCircuitPuzzleCoord;
+
+	bool _forceAllowSaves;
 
 	InGameMenuState _inGameMenuState;
 	uint _inGameMenuActiveElement;
@@ -1273,13 +1326,16 @@ private:
 	Common::Pair<Common::String, Common::SharedPtr<SoundCache> > _soundCache[kSoundCacheSize];
 	uint _soundCacheIndex;
 
-	Common::SharedPtr<SaveGameSnapshot> _saveGame;
+	Common::SharedPtr<SaveGameSnapshot> _mostRecentValidSaveState;			// Always valid
+	Common::SharedPtr<SaveGameSnapshot> _mostRecentlyRecordedSaveState;		// Might be invalid, becomes valid if the player returns to idle
 	Common::SharedPtr<SaveGameSwappableState> _altState;
 	bool _isInGame;
 
 	const Graphics::Font *_subtitleFont;
 	Common::SharedPtr<Graphics::Font> _subtitleFontKeepalive;
+	uint _defaultLanguageIndex;
 	uint _languageIndex;
+	CharSet _charSet;
 	bool _isCDVariant;
 	StartConfigDef _startConfigs[kNumStartConfigs];
 
@@ -1293,6 +1349,7 @@ private:
 	Common::HashMap<Common::String, SubtitleDef> _waveSubtitles;
 	Common::Array<SubtitleQueueItem> _subtitleQueue;
 	bool _isDisplayingSubtitles;
+	bool _isSubtitleSourceAnimation;
 
 	Common::HashMap<Common::String, Common::String> _locStrings;
 	Common::HashMap<Common::String, TextStyleDef> _locTextStyles;

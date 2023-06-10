@@ -6,7 +6,8 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
  Neue Spiele:
    - Unterstützung für die macOS-Versionen von Syberia und Syberia II hinzugefügt.
    - Unterstützung für The Vampire Diaries und Nancy Drew: Secrets Can Kill hinzugefügt.
-   - Unterstützung für Reah: Face the Unknown hinzugefügt.
+   - Unterstützung für Reah: Face the Unknown und Schizm: Mysterious Journey hinzugefügt.
+   - Unterstützung für Might and Magic Book One hinzugefügt.
 
  Neue Plattformen:
    - Vollständig erneute Portierung für libretro hinzugefügt.
@@ -41,6 +42,9 @@ Umfangreichere Informationen über die Änderungen des aktuellen Codes findest D
 
  Sword2:
    - Unterstützung für die chinesische Übersetzung hinzugefügt.
+
+ Twine:
+   - Unterstützung für die japanische Übersetzung hinzugefügt.
 
  Ultima:
    - Reaktionsgeschwindigkeit von Ultima VI verbessert.

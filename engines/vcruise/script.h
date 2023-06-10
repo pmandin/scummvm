@@ -146,6 +146,7 @@ enum ScriptOp {
 	kSaveAs,
 	kSave0,
 	kExit,
+	kAllowSaves,
 
 	kAnimName,
 	kValueName,
@@ -286,6 +287,7 @@ Common::SharedPtr<IScriptCompilerGlobalState> createScriptCompilerGlobalState();
 Common::SharedPtr<ScriptSet> compileReahLogicFile(Common::ReadStream &stream, uint streamSize, const Common::String &blamePath);
 void compileSchizmLogicFile(ScriptSet &scriptSet, uint loadAsRoom, uint fileRoom, Common::ReadStream &stream, uint streamSize, const Common::String &blamePath, IScriptCompilerGlobalState *gs);
 bool checkSchizmLogicForDuplicatedRoom(Common::ReadStream &stream, uint streamSize);
+void optimizeScriptSet(ScriptSet &scriptSet);
 
 }
 

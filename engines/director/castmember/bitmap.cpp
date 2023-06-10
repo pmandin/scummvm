@@ -373,13 +373,6 @@ void BitmapCastMember::copyStretchImg(Graphics::Surface *surface, const Common::
 	} else {
 		surface->copyFrom(*srcSurf);
 	}
-
-	if (g_director->_debugDraw & kDebugDrawCast) {
-		surface->frameRect(Common::Rect(0, 0, surface->w, surface->h), g_director->_wm->_colorWhite);
-
-		const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
-		font->drawString(surface, Common::String::format("%d", _castId), 2, 2, 10, g_director->_wm->_colorWhite);
-	}
 }
 
 bool BitmapCastMember::isModified() {
@@ -680,6 +673,15 @@ void BitmapCastMember::setPicture(Image::ImageDecoder &image, bool adjustSize) {
 	}
 	// Make sure we get redrawn
 	setModified(true);
+}
+
+Common::Point BitmapCastMember::getRegistrationOffset() {
+	return Common::Point(_regX - _initialRect.left, _regY - _initialRect.top);
+}
+
+Common::Point BitmapCastMember::getRegistrationOffset(int16 width, int16 height) {
+	Common::Point offset = getRegistrationOffset();
+	return Common::Point(offset.x * width / MAX((int16)1, _initialRect.width()), offset.y * height / MAX((int16)1, _initialRect.height()));
 }
 
 bool BitmapCastMember::hasField(int field) {

@@ -19,6 +19,7 @@
  *
  */
 
+#include "common/debug.h"
 #include "common/stream.h"
 #include "common/hash-str.h"
 
@@ -444,8 +445,8 @@ void ScriptCompiler::compileRoomScriptSet(RoomScriptSet *rss) {
 			if (isNegative)
 				signedNumber = -signedNumber;
 
-			// TODO: Figure out if the vars should be scoped in _fileRoom or _loadAsRoom in the case of duplicate rooms
-			_gs->define(key, _fileRoom, signedNumber);
+			// Based on testing, this should be _loadAsRoom
+			_gs->define(key, _loadAsRoom, signedNumber);
 		} else if (_dialect == kScriptDialectSchizm && token == "~Fun") {
 			Common::String fnName;
 			if (!_parser.parseToken(fnName, state))
@@ -459,7 +460,9 @@ void ScriptCompiler::compileRoomScriptSet(RoomScriptSet *rss) {
 
 			if (_gs->getFunction(fnIndex)) {
 				// This triggers on fnSoundFountain_Start and fnSoundFountain_Stop in Room30.
-				// fnSoundFountain_Start is called in Room31, so might not matter there?  But fnSoundFountain_Stop is called in Room30.
+				// fnSoundFountain_Start is called in Room31, so that doesn't collide, but
+				// fnSoundFountain_Stop is called in Room30.  Based on testing, the correct
+				// behavior is to call the Room30 version, so we do want to override here.
 				warning("Function '%s' was defined multiple times", fnName.c_str());
 			}
 
@@ -682,7 +685,7 @@ static ScriptNamedInstruction g_reahNamedInstructions[] = {
 	{"saveAs", ProtoOp::kProtoOpScript, ScriptOps::kSaveAs},
 	{"save0", ProtoOp::kProtoOpNoop, ScriptOps::kSave0},
 	{"exit", ProtoOp::kProtoOpScript, ScriptOps::kExit},
-	{"allowedSave", ProtoOp::kProtoOpNoop, ScriptOps::kInvalid},
+	{"allowedSave", ProtoOp::kProtoOpScript, ScriptOps::kAllowSaves},
 };
 
 
@@ -758,7 +761,7 @@ static ScriptNamedInstruction g_schizmNamedInstructions[] = {
 	{"dvd@", ProtoOp::kProtoOpScript, ScriptOps::kIsDVDVersion},
 	{"disc", ProtoOp::kProtoOpScript, ScriptOps::kDisc},
 	{"save0", ProtoOp::kProtoOpNoop, ScriptOps::kSave0},
-	{"hidePanel", ProtoOp::kProtoOpNoop, ScriptOps::kHidePanel},
+	{"hidePanel", ProtoOp::kProtoOpScript, ScriptOps::kHidePanel},
 	{"ItemExist@", ProtoOp::kProtoOpScript, ScriptOps::kItemCheck},
 	{"ItemSelect!", ProtoOp::kProtoOpScript, ScriptOps::kItemHighlightSetTrue},
 	{"ItemPlace@", ProtoOp::kProtoOpScript, ScriptOps::kItemHaveSpace},
@@ -810,7 +813,7 @@ static ScriptNamedInstruction g_schizmNamedInstructions[] = {
 	{"ret", ProtoOp::kProtoOpScript, ScriptOps::kReturn},
 
 	{"backStart", ProtoOp::kProtoOpScript, ScriptOps::kBackStart},
-	{"allowedSave", ProtoOp::kProtoOpNoop, ScriptOps::kInvalid},
+	{"allowedSave", ProtoOp::kProtoOpScript, ScriptOps::kAllowSaves},
 };
 
 bool ScriptCompiler::compileInstructionToken(ProtoScript &script, const Common::String &token) {
@@ -1397,6 +1400,100 @@ bool checkSchizmLogicForDuplicatedRoom(Common::ReadStream &stream, uint streamSi
 		return false;
 
 	return true;
+}
+
+static bool opArgIsStringIndex(ScriptOps::ScriptOp op) {
+	switch (op) {
+		case ScriptOps::kDubbing:
+		case ScriptOps::kVarName:
+		case ScriptOps::kValueName:
+		case ScriptOps::kAnimName:
+		case ScriptOps::kSoundName:
+		case ScriptOps::kCursorName:
+		case ScriptOps::kString:
+		case ScriptOps::kScreenName:
+		case ScriptOps::kGarbage:
+			return true;
+		default:
+			return false;
+	}
+}
+
+void optimizeScriptSet(ScriptSet &scriptSet) {
+	Common::HashMap<uint, uint> functionIndexToUsedFunction;
+	Common::HashMap<uint, uint> stringIndexToUsedString;
+
+	Common::Array<Script *> scriptCheckQueue;
+
+	for (const RoomScriptSetMap_t::Node &rsNode : scriptSet.roomScripts) {
+		for (const ScreenScriptSetMap_t::Node &ssNode : rsNode._value->screenScripts) {
+			if (ssNode._value->entryScript)
+				scriptCheckQueue.push_back(ssNode._value->entryScript.get());
+
+			for (const ScriptMap_t::Node &isNode : ssNode._value->interactionScripts)
+				scriptCheckQueue.push_back(isNode._value.get());
+		}
+	}
+
+	// scriptCheckQueue.size() may grow during the loop
+	for (uint i = 0; i < scriptCheckQueue.size(); i++) {
+		Script *script = scriptCheckQueue[i];
+
+		for (Instruction &instr : script->instrs) {
+			if (instr.op == ScriptOps::kCallFunction) {
+				uint funcID = instr.arg;
+
+				Common::HashMap<uint, uint>::const_iterator funcIDIt = functionIndexToUsedFunction.find(funcID);
+
+				if (funcIDIt == functionIndexToUsedFunction.end()) {
+					uint newIndex = functionIndexToUsedFunction.size();
+					functionIndexToUsedFunction[funcID] = newIndex;
+
+					scriptCheckQueue.push_back(scriptSet.functions[funcID].get());
+					instr.arg = newIndex;
+				} else
+					instr.arg = funcIDIt->_value;
+			} else if (opArgIsStringIndex(instr.op)) {
+				uint strID = instr.arg;
+
+				Common::HashMap<uint, uint>::const_iterator strIndexIt = stringIndexToUsedString.find(strID);
+
+				if (strIndexIt == stringIndexToUsedString.end()) {
+					uint newIndex = stringIndexToUsedString.size();
+					stringIndexToUsedString[strID] = newIndex;
+
+					instr.arg = newIndex;
+				} else
+					instr.arg = strIndexIt->_value;
+			}
+		}
+	}
+
+	debug(1, "Optimize result: Fns: %u -> %u  Strs: %u -> %u", static_cast<uint>(scriptSet.functions.size()), static_cast<uint>(functionIndexToUsedFunction.size()), static_cast<uint>(scriptSet.strings.size()), static_cast<uint>(stringIndexToUsedString.size()));
+
+	Common::Array<Common::SharedPtr<Script> > functions;
+	Common::Array<Common::String> functionNames;
+
+	functions.resize(functionIndexToUsedFunction.size());
+
+	if (scriptSet.functionNames.size())
+		functionNames.resize(functionIndexToUsedFunction.size());
+
+	for (const Common::HashMap<uint, uint>::Node &fnRemapNode : functionIndexToUsedFunction) {
+		functions[fnRemapNode._value] = scriptSet.functions[fnRemapNode._key];
+		if (functionNames.size())
+			functionNames[fnRemapNode._value] = scriptSet.functionNames[fnRemapNode._key];
+	}
+
+	Common::Array<Common::String> strings;
+	strings.resize(stringIndexToUsedString.size());
+
+	for (const Common::HashMap<uint, uint>::Node &strRemapNode : stringIndexToUsedString)
+		strings[strRemapNode._value] = scriptSet.strings[strRemapNode._key];
+
+	scriptSet.functions = Common::move(functions);
+	scriptSet.functionNames = Common::move(functionNames);
+	scriptSet.strings = Common::move(strings);
 }
 
 

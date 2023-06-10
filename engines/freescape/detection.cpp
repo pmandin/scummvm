@@ -157,17 +157,41 @@ static const ADGameDescription gameDescriptions[] = {
 		ADGF_NO_FLAGS,
 		GUIO4(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
-	{
+	{ // Retail release
 		"driller",
 		"",
 		{
-			{"x.prg", 0, "1a79e68e6c2c223c96de0ca2d65149ae", 293062},
-			{"playseq.prg", 0, "535e9f6baf132831aa7fa066a06f242e", 973},
+			{"x.prg", 0, "d002983a8b652f25b18a09425db78c4c", 293159},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformAtariST,
-		ADGF_NO_FLAGS,
+		GF_ATARI_RETAIL,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{ // Budget release
+		"driller",
+		"",
+		{
+			{"x.prg", 0, "1a79e68e6c2c223c96de0ca2d65149ae", 293062},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAtariST,
+		GF_ATARI_BUDGET,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{ // Virtual Worlds release
+		"driller",
+		"This relese requieres unpacking, check the wiki for instructions:\nhttps://wiki.scummvm.org/index.php?title=Driller#AtariST_releases",
+		{
+			{"d.pak", 0, "607b44b9d31e0da5668b653e03d25efe", 706},
+			{"dril.all", 0, "65277222effa1eb4d73b234245001d75", 158158},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAtariST,
+		ADGF_UNSUPPORTED,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{
@@ -256,6 +280,19 @@ static const ADGameDescription gameDescriptions[] = {
 		"darkside",
 		"",
 		{
+			{"0.DRK", 0, "9e51b8f93a9af886fb88ab92ed43cf01", 81544},
+			{"1.DRK", 0, "50bbaa2b19fc4072ad85efe93116e561", 280704},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmiga,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOMIDI)
+	},
+	{
+		"darkside",
+		"",
+		{
 			{"DARKSIDE.EXE", 0, "c6c0d0186ec45e6cecd72bf5550c7f98", 1600},
 			{"DSIDEC.EXE", 0, "31e6c169d9270b6de8c1c2e746ac238e", 49504},
 			{"DSIDEH.EXE", 0, "5e18e0746647bd04f43b9db24b6a036d", 53232},
@@ -327,12 +364,24 @@ static const ADGameDescription gameDescriptions[] = {
 		"spacestationoblivion",
 		"",
 		{
-			{"x.prg", 0, "10c556ee637bf03bcc1a051277542102", 293264},
+			{"x.prg", 0, "bf546ee243c38f51d9beb25c203ccb93", 292624},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
 		Common::kPlatformAtariST,
 		ADGF_UNSUPPORTED,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"spacestationoblivion",
+		"",
+		{
+			{"x.prg", 0, "7fc6ef316be4819d88d8031738571a50", 293264},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAtariST,
+		GF_ATARI_BUDGET,
 		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
 	},
 	{

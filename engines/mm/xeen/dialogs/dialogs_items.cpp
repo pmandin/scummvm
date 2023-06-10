@@ -780,11 +780,14 @@ int ItemsDialog::doItemOptions(Character &c, int actionIndex, int itemIndex, Ite
 							ErrorScroll::show(_vm, Res.USE_ITEM_IN_COMBAT);
 						} else if (i._id && !i.isBad() && i._state._counter > 0) {
 							--i._state._counter;
+
 							_oldCharacter = &c;
+							combat._oldCharacter = _oldCharacter;
 
 							windows[30].close();
 							windows[29].close();
 							windows[24].close();
+
 							spells.castItemSpell(i._id);
 
 							if (!i._state._counter) {

@@ -72,6 +72,20 @@ void CastMember::setModified(bool modified) {
 		_isChanged = true;
 }
 
+Common::Rect CastMember::getBbox() {
+	Common::Rect result(_initialRect);
+	Common::Point offset = getRegistrationOffset();
+	result.moveTo(-offset.x, -offset.y);
+	return result;
+}
+
+Common::Rect CastMember::getBbox(int16 currentWidth, int16 currentHeight) {
+	Common::Rect result(currentWidth, currentHeight);
+	Common::Point offset = getRegistrationOffset(currentWidth, currentHeight);
+	result.moveTo(-offset.x, -offset.y);
+	return result;
+}
+
 bool CastMember::hasProp(const Common::String &propName) {
 	Common::String fieldName = Common::String::format("%d%s", kTheCast, propName.c_str());
 	return g_lingo->_theEntityFields.contains(fieldName) && hasField(g_lingo->_theEntityFields[fieldName]->field);

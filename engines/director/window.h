@@ -139,9 +139,11 @@ public:
 
 	void setWindowType(int type) { _windowType = type; updateBorderType(); }
 	int getWindowType() const { return _windowType; }
-	void setTitleVisible(bool titleVisible) { _titleVisible = titleVisible; updateBorderType(); };
-	bool isTitleVisible() { return _titleVisible; };
+	void setTitleVisible(bool titleVisible) override;
 	Datum getStageRect();
+	bool setStageRect(Datum datum);
+	void setModal(bool modal);
+	bool getModal() { return _isModal; };
 
 	void updateBorderType();
 
@@ -169,17 +171,8 @@ public:
 
 	// resource.cpp
 	Common::Error loadInitialMovie();
-	void probeProjector(const Common::String &movie);
-	void probeMacBinary(MacArchive *archive);
+	void probeResources(Archive *archive);
 	void loadINIStream();
-	Archive *openArchive(const Common::String movie);
-	Archive *loadEXE(const Common::String movie);
-	Archive *loadEXEv3(Common::SeekableReadStream *stream);
-	Archive *loadEXEv4(Common::SeekableReadStream *stream);
-	Archive *loadEXEv5(Common::SeekableReadStream *stream);
-	Archive *loadEXEv7(Common::SeekableReadStream *stream);
-	Archive *loadEXERIFX(Common::SeekableReadStream *stream, uint32 offset);
-	Archive *loadMac(const Common::String movie);
 	void loadStartMovieXLibs();
 
 	// lingo/lingo-object.cpp
@@ -214,7 +207,7 @@ private:
 	int16 _startFrame;
 
 	int _windowType;
-	bool _titleVisible;
+	bool _isModal;
 
 private:
 

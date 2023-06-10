@@ -124,6 +124,7 @@ void Combat::monsterIndexOf() {
 
 void Combat::monsterSetPtr(int monsterNum) {
 	_monsterP = &g_globals->_encounters._monsterList[monsterNum];
+	monsterIndexOf();
 }
 
 void Combat::setupCanAttacks() {
@@ -1604,6 +1605,7 @@ void Combat::retreat() {
 		Maps::Map &map = *maps._currentMap;
 		maps._mapPos = Common::Point(map[Maps::MAP_FLEE_X],
 			map[Maps::MAP_FLEE_Y]);
+		maps.visitedTile();
 
 		g_globals->_treasure.clear0();
 		combatDone();

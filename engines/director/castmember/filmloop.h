@@ -50,6 +50,9 @@ public:
 	void load() override;
 	void unload() override;
 
+	Common::Point getRegistrationOffset() override;
+	Common::Point getRegistrationOffset(int16 currentWidth, int16 currentHeight) override;
+
 	bool _enableSound;
 	bool _looping;
 	bool _crop;

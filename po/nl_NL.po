@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.9.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-05-20 21:27+0000\n"
-"PO-Revision-Date: 2023-03-21 14:26+0000\n"
+"POT-Creation-Date: 2023-06-09 05:48+0000\n"
+"PO-Revision-Date: 2023-05-25 20:16+0000\n"
 "Last-Translator: Ben Castricum <github@bencastricum.nl>\n"
 "Language-Team: Dutch <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/nl/>\n"
@@ -102,26 +102,20 @@ msgid "Cloud Connection Wizard"
 msgstr ""
 
 #: gui/cloudconnectionwizard.cpp:179
-#, fuzzy
-#| msgid "Quick load"
 msgid "Quick mode"
-msgstr "Snel laden"
+msgstr "Snelle modus"
 
 #: gui/cloudconnectionwizard.cpp:180
-#, fuzzy
-#| msgid "Fast mode"
 msgid "Manual mode"
-msgstr "Snelle modus"
+msgstr "Handmatige modus"
 
 #: gui/cloudconnectionwizard.cpp:183
 msgid "Will ask you to run the Local Webserver"
 msgstr ""
 
 #: gui/cloudconnectionwizard.cpp:185
-#, fuzzy
-#| msgid "Run local webserver"
 msgid "Requires the Local Webserver feature"
-msgstr "Draai lokale webserver"
+msgstr "Vereist de lokale webserver functie"
 
 #: gui/cloudconnectionwizard.cpp:201
 msgid "Quick Mode: Step 1"
@@ -181,10 +175,8 @@ msgid "Quick Mode: Success"
 msgstr ""
 
 #: gui/cloudconnectionwizard.cpp:299 gui/cloudconnectionwizard.cpp:398
-#, fuzzy
-#| msgid "Connect your cloud storage account"
 msgid "Your cloud storage has been connected!"
-msgstr "Verbind uw cloud opslag account"
+msgstr "Uw cloud opslag is gekoppeld!"
 
 #: gui/cloudconnectionwizard.cpp:300 gui/cloudconnectionwizard.cpp:399
 msgid "Finish"
@@ -195,10 +187,8 @@ msgid "Manual Mode: Step 1"
 msgstr ""
 
 #: gui/cloudconnectionwizard.cpp:318
-#, fuzzy
-#| msgid "1. Open this link:"
 msgid "Open this link in your browser:"
-msgstr "1. Open deze link:"
+msgstr "Open deze link in uw browser:"
 
 #: gui/cloudconnectionwizard.cpp:321
 msgid ""
@@ -228,10 +218,8 @@ msgid "Manual Mode: Something went wrong"
 msgstr ""
 
 #: gui/cloudconnectionwizard.cpp:377
-#, fuzzy
-#| msgid "Storage connected."
 msgid "Cloud storage was not connected."
-msgstr "Opslag verbonden."
+msgstr "Cloud opslag was niet gekoppeld."
 
 #: gui/cloudconnectionwizard.cpp:378
 msgid "Make sure the JSON code was copied correctly and retry."
@@ -250,18 +238,14 @@ msgid "Manual Mode: Success"
 msgstr ""
 
 #: gui/cloudconnectionwizard.cpp:422
-#, fuzzy
-#| msgid "Backend"
 msgid "Back"
-msgstr "Backend"
+msgstr "Terug"
 
 #: gui/cloudconnectionwizard.cpp:430 gui/saveload-dialog.cpp:829
 msgid "Next"
 msgstr "Volgende"
 
 #: gui/cloudconnectionwizard.cpp:493
-#, fuzzy
-#| msgid "Another Storage is working now. Do you want to interrupt it?"
 msgid "Another Storage is working right now. Do you want to interrupt it?"
 msgstr "Een andere opslag is actief. Wilt u die onderbreken?"
 
@@ -274,8 +258,8 @@ msgstr "Een andere opslag is actief. Wilt u die onderbreken?"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:360
 #: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:145
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3512
-#: engines/toon/toon.cpp:1502
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3822
+#: engines/toon/toon.cpp:1501
 msgid "Yes"
 msgstr "Ja"
 
@@ -287,14 +271,12 @@ msgstr "Ja"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:360
 #: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:151
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3512
-#: engines/toon/toon.cpp:1502
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3822
+#: engines/toon/toon.cpp:1501
 msgid "No"
 msgstr "Nee"
 
 #: gui/cloudconnectionwizard.cpp:502
-#, fuzzy
-#| msgid "Wait until current Storage finishes up and try again."
 msgid "Wait until current Storage finishes and try again."
 msgstr "Wacht totdat de huidige opslag klaar is en probeer het opnieuw."
 
@@ -311,7 +293,7 @@ msgstr ""
 #: engines/engine.cpp:544 engines/engine.cpp:567
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1818
+#: engines/director/lingo/lingo-builtins.cpp:1836
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:660 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:75
@@ -329,17 +311,13 @@ msgid "OK"
 msgstr "OK"
 
 #: gui/cloudconnectionwizard.cpp:552
-#, fuzzy
-#| msgid "Incorrect rs file."
 msgid "Incorrect JSON."
-msgstr "Ongeldig rs bestand."
+msgstr "Ongeldig JSON bestand."
 
 #. I18N: error message displayed on 'Manual Mode: Failure' step of 'Cloud Connection Wizard', describing that storage connection process was interrupted
 #: gui/cloudconnectionwizard.cpp:559
-#, fuzzy
-#| msgid "Interact"
 msgid "Interrupted."
-msgstr "Interactie"
+msgstr "Onderbroken."
 
 #: gui/cloudconnectionwizard.cpp:609 gui/options.cpp:3352
 msgid ""
@@ -537,7 +515,7 @@ msgstr ""
 #: gui/options.cpp:2502 gui/options.cpp:2555 gui/options.cpp:2773
 #: gui/options.cpp:3239 audio/null.cpp:45
 #: backends/platform/android/options.cpp:137
-#: backends/platform/android/options.cpp:138 engines/ags/dialogs.cpp:62
+#: backends/platform/android/options.cpp:138 engines/ags/dialogs.cpp:63
 msgid "<default>"
 msgstr "<standaard>"
 
@@ -1790,10 +1768,8 @@ msgid "ScummVM config path: "
 msgstr "ScummVM configuratie pad: "
 
 #: gui/options.cpp:2492
-#, fuzzy
-#| msgid "ScummVM config path: "
 msgid "ScummVM log path: "
-msgstr "ScummVM configuratie pad: "
+msgstr "ScummVM log pad: "
 
 #: gui/options.cpp:2497
 msgid "View"
@@ -1899,10 +1875,8 @@ msgid "Seed for initializing all random number generators"
 msgstr ""
 
 #: gui/options.cpp:2628
-#, fuzzy
-#| msgid "Debug Menu"
 msgid "Debug level:"
-msgstr "Debug Menu"
+msgstr "Debug level:"
 
 #. I18N: Debug level -1, no messages
 #: gui/options.cpp:2632 gui/options.cpp:2771
@@ -1947,28 +1921,18 @@ msgid "Active cloud storage"
 msgstr "Actieve cloud opslag"
 
 #: gui/options.cpp:2681
-#, fuzzy
-#| msgctxt "lowres"
-#| msgid ""
-#| "4. Storage is not yet enabled. Verify that username is correct and enable "
-#| "it:"
 msgctxt "lowres"
 msgid ""
 "Storage is not yet enabled. Verify that username is correct and enable it:"
 msgstr ""
-"4. Opslag is nog niet geactiveerd. Verifieer dat de gebruikersnaam correct "
-"is en activeer het:"
+"Opslag is nog niet gekoppeld. Controleer de gebruikersnaam en activeer het:"
 
 #: gui/options.cpp:2683
-#, fuzzy
-#| msgid ""
-#| "4. Storage is not yet enabled. Verify that username is correct and enable "
-#| "it:"
 msgid ""
 "Storage is not yet enabled. Verify that username is correct and enable it:"
 msgstr ""
-"4. Opslag is nog niet geactiveerd. Verifieer dat de gebruikersnaam correct "
-"is en activeer het:"
+"Opslag is nog niet gekoppeld. Verifieer dat de gebruikersnaam correct is en "
+"activeer het:"
 
 #: gui/options.cpp:2684
 msgid "Enable storage"
@@ -2070,24 +2034,17 @@ msgid "Stop using this storage on this device"
 msgstr "Stop met het gebruik van deze opslag op dit apparaat"
 
 #: gui/options.cpp:2713
-#, fuzzy
-#| msgctxt "lowres"
-#| msgid "This storage is not connected yet! To connect,"
 msgctxt "lowres"
 msgid "This storage is not connected yet!"
-msgstr "De opslag is nog niet verbonden! Om te verbinden,"
+msgstr "De opslag is nog niet gekoppeld!"
 
 #: gui/options.cpp:2715
-#, fuzzy
-#| msgid "This storage is not connected yet! To connect,"
 msgid "This storage is not connected yet!"
-msgstr "De opslag is nog niet verbonden! Om te verbinden,"
+msgstr "Deze opslag is nog niet verbonden!"
 
 #: gui/options.cpp:2716
-#, fuzzy
-#| msgid "3. Connect"
 msgid "Connect"
-msgstr "3. Verbinden"
+msgstr "Verbinden"
 
 #: gui/options.cpp:2716
 msgid "Connect your cloud storage account"
@@ -2555,7 +2512,7 @@ msgid ""
 msgstr ""
 
 #: base/main.cpp:663 base/main.cpp:684
-#: engines/director/lingo/lingo-builtins.cpp:1207
+#: engines/director/lingo/lingo-builtins.cpp:1229
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -2742,10 +2699,8 @@ msgid "TB"
 msgstr "TB"
 
 #: dists/android.strings.xml.cpp:30
-#, fuzzy
-#| msgid "Quit ScummVM"
 msgid "ScummVM"
-msgstr "Hiermee verlaat u ScummVM"
+msgstr "ScummVM"
 
 #: dists/android.strings.xml.cpp:31
 msgid "Graphic adventure game engine"
@@ -2771,20 +2726,16 @@ msgid "Unable to read ScummVM config file or create a new one!"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:36
-#, fuzzy
-#| msgid "Save Path:"
 msgid "Save Path Error"
-msgstr "Bewaar Pad:"
+msgstr "Bewaar Pad Fout"
 
 #: dists/android.strings.xml.cpp:37
 msgid "Unable to create or access default save path!"
 msgstr ""
 
 #: dists/android.strings.xml.cpp:38
-#, fuzzy
-#| msgid "Icon Path:"
 msgid "Icons Path Error"
-msgstr "Icoon Pad:"
+msgstr "Icoon Pad Fout"
 
 #: dists/android.strings.xml.cpp:39
 msgid "Unable to create or access default icons and shaders path!"
@@ -2797,10 +2748,8 @@ msgid ""
 msgstr ""
 
 #: dists/android.strings.xml.cpp:41
-#, fuzzy
-#| msgid "Virtual keyboard"
 msgid "Toggle virtual keyboard"
-msgstr "Virtueel toetsenbord"
+msgstr "Virtueel toetsenbord aan-/uitzetten"
 
 #: dists/android.strings.xml.cpp:42 engines/scumm/help.cpp:78
 #: engines/scumm/help.cpp:82 engines/scumm/help.cpp:84
@@ -2827,10 +2776,8 @@ msgid "Enter"
 msgstr "Enter"
 
 #: dists/android.strings.xml.cpp:49
-#, fuzzy
-#| msgid "Close"
 msgid "Close popup"
-msgstr "Sluiten"
+msgstr "Popup sluiten"
 
 #: dists/android.strings.xml.cpp:50
 msgid ""
@@ -2843,12 +2790,12 @@ msgid "Storage Access Framework Permissions for ScummVM were revoked!"
 msgstr ""
 
 #. I18N: One line summary as shown in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:32
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:32
 msgid "Interpreter for numerous adventure games and role-playing games"
 msgstr "Interpreter voor diverse adventure spellen en rollenspellen"
 
 #. I18N: 1 of 3 paragraph of ScummVM description in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:37
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:37
 msgid ""
 "ScummVM is a program which allows you to run a wide variety of classic "
 "graphical point-and-click adventure games and role-playing games, provided "
@@ -2863,7 +2810,7 @@ msgstr ""
 "waardoor je ze kan spelen op systemen waar ze niet voor waren gemaakt!"
 
 #. I18N: 2 of 3 paragraph of ScummVM description in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:45
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:45
 msgid ""
 "Currently, ScummVM supports a huge library of adventures with over 4000 "
 "games in total. It supports many classics published by legendary studios "
@@ -2876,7 +2823,7 @@ msgstr ""
 "Cyan, Inc. en Westwood Studios."
 
 #. I18N: 3 of 3 paragraph of ScummVM description in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:51
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:51
 msgid ""
 "Next to ground-breaking titles like the Monkey Island series, Broken Sword, "
 "Myst, Blade Runner and countless other games you will find some really "
@@ -2943,7 +2890,7 @@ msgstr "~T~erug naar Startmenu"
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:742
 #: engines/sci/engine/kfile.cpp:1076 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3765
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3771
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/zvision/file/save_manager.cpp:48
 msgid "Save game:"
@@ -2965,7 +2912,7 @@ msgstr "Spel opslaan:"
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:743
 #: engines/sci/engine/kfile.cpp:1076 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3765
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3771
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/zvision/file/save_manager.cpp:48
 #: engines/zvision/metaengine.cpp:262
@@ -3067,9 +3014,8 @@ msgstr ""
 "voor details."
 
 #: engines/engine.cpp:591
-#, fuzzy
 msgid "Skip autosave"
-msgstr "Lege auto-opgeslagen spel"
+msgstr "automatisch opslaan overslaan"
 
 #: engines/engine.cpp:593
 #, c-format
@@ -3237,14 +3183,12 @@ msgid "Confirm"
 msgstr "Bevestig"
 
 #: engines/metaengine.cpp:390
-#, fuzzy
 msgid "Autosave on"
-msgstr "Automatisch opslaan"
+msgstr "Automatisch opslaan aan"
 
 #: engines/metaengine.cpp:390
-#, fuzzy
 msgid "Autosave off"
-msgstr "Automatisch opslaan"
+msgstr "Automatisch opslaan uit"
 
 #: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:177
 msgid "OpenGL"
@@ -3571,27 +3515,27 @@ msgid "Resolution: %dx%d"
 msgstr "Resolutie: %dx%d"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:728
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2634
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2656
 msgid "Enabled aspect ratio correction"
 msgstr "Pixelverhoudingcorrectie ingeschakeld"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:730
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2640
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2662
 msgid "Disabled aspect ratio correction"
 msgstr "Pixelverhoudingcorrectie uitgeschakeld"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:743
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2656
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2678
 msgid "Filtering enabled"
 msgstr "Filteren aangezet"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:745
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2658
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2680
 msgid "Filtering disabled"
 msgstr "Filteren uitgeschakeld"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:771
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2685
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2707
 msgid "Stretch mode"
 msgstr "Uitrekmodus"
 
@@ -3599,7 +3543,7 @@ msgstr "Uitrekmodus"
 msgid "SDL Surface"
 msgstr "SDL Oppervlak"
 
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2600
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2622
 msgid "Active graphics filter:"
 msgstr "Actieve grafische filter:"
 
@@ -3780,10 +3724,8 @@ msgid "D-pad Right"
 msgstr "D-pad Rechts"
 
 #: backends/keymapper/hardware-input.cpp:270
-#, fuzzy
-#| msgid "D-pad Left"
 msgid "D-pad Center"
-msgstr "D-pad Links"
+msgstr "D-pad Midden"
 
 #: backends/keymapper/hardware-input.cpp:275
 msgid "Left Trigger"
@@ -4294,22 +4236,16 @@ msgid "Software scale (good quality, but slower)"
 msgstr "Software schalen (langzamer, maar goede kwaliteit)"
 
 #: backends/platform/ios7/ios7_options.mm:67
-#, fuzzy
-#| msgid "Show On-screen control"
 msgid "Show On-screen control (iOS 15 and later)"
-msgstr "Toon scherm-besturing"
+msgstr "Toon besturing (iOS 15 en later)"
 
 #: backends/platform/ios7/ios7_options.mm:69
-#, fuzzy
-#| msgid "Mouse-click-and-drag mode enabled."
 msgid "Mouse-click-and-drag mode"
-msgstr "Muis-klik-en-sleepmodus aangezet."
+msgstr "Muis-klik-en-sleepmodus"
 
 #: backends/platform/ios7/ios7_options.mm:71
-#, fuzzy
-#| msgid "Controls"
 msgid "Controls Help"
-msgstr "Besturing"
+msgstr "Besturing Help"
 
 #: backends/platform/ios7/ios7_options.mm:102
 msgid ""
@@ -4345,22 +4281,18 @@ msgid ""
 msgstr ""
 
 #: backends/platform/ios7/ios7_osys_events.cpp:466
-#: backends/platform/iphone/osys_events.cpp:299
 msgid "Mouse-click-and-drag mode enabled."
 msgstr "Muis-klik-en-sleepmodus aangezet."
 
 #: backends/platform/ios7/ios7_osys_events.cpp:468
-#: backends/platform/iphone/osys_events.cpp:301
 msgid "Mouse-click-and-drag mode disabled."
 msgstr "Muis-klik-en-sleepmodus uitgezet."
 
 #: backends/platform/ios7/ios7_osys_events.cpp:489
-#: backends/platform/iphone/osys_events.cpp:312
 msgid "Touchpad mode enabled."
 msgstr "Touchpadmodus ingeschakeld."
 
 #: backends/platform/ios7/ios7_osys_events.cpp:491
-#: backends/platform/iphone/osys_events.cpp:314
 msgid "Touchpad mode disabled."
 msgstr "Touchpadmodus uitgeschakeld."
 
@@ -4642,7 +4574,7 @@ msgstr "Controleren op updates..."
 #: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:301 engines/sky/compact.cpp:129
 #: engines/supernova/supernova.cpp:464 engines/teenagent/resources.cpp:97
-#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5359
+#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5376
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "Kon de '%s' engine data file niet vinden."
@@ -4650,7 +4582,7 @@ msgstr "Kon de '%s' engine data file niet vinden."
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:956
 #: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:66
 #: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:469
-#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5372
+#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5389
 #, c-format
 msgid "The '%s' engine data file is corrupt."
 msgstr "De '%s' engine data file is corrupt."
@@ -4658,7 +4590,7 @@ msgstr "De '%s' engine data file is corrupt."
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:967
 #: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:319 engines/tony/tony.cpp:211
-#: engines/toon/toon.cpp:5383
+#: engines/toon/toon.cpp:5400
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d.%d but got "
@@ -4803,7 +4735,7 @@ msgstr "Voeg spelsnelheid menu toe (net als PC versie)"
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:745
 #: engines/sci/engine/kfile.cpp:1206 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3859
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3865
 #: engines/zvision/file/save_manager.cpp:61
 msgid "Restore game:"
 msgstr "Laad opgeslagen spel:"
@@ -4823,7 +4755,7 @@ msgstr "Laad opgeslagen spel:"
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:746
 #: engines/sci/engine/kfile.cpp:1206 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3859
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3865
 #: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:267
 msgid "Restore"
 msgstr "Laad"
@@ -4832,7 +4764,7 @@ msgstr "Laad"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Snel laden of bewaren wordt niet ondersteund op deze locatie"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2816
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2821
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4843,7 +4775,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2803
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2808
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4854,7 +4786,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2838
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2841
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4931,21 +4863,30 @@ msgstr ""
 "vertalen naar General MIDI instrumenten. Het is mogelijk\n"
 "dat sommige geluidssporen niet goed klinken."
 
-#: engines/ags/dialogs.cpp:58
+#: engines/ags/dialogs.cpp:59
 msgid "Game language:"
 msgstr "Spel taal:"
 
-#: engines/ags/dialogs.cpp:58
+#: engines/ags/dialogs.cpp:59
 msgid "Language to use for multilingual games"
 msgstr "De te gebruiken taal voor meertalige spellen"
 
-#: engines/ags/dialogs.cpp:78
+#: engines/ags/dialogs.cpp:79
 msgid "Force antialiased text"
 msgstr "Forceer antialiasen van text"
 
-#: engines/ags/dialogs.cpp:78
+#: engines/ags/dialogs.cpp:79
 msgid "Use antialiasing to draw text even if the game does not ask for it"
 msgstr "Antialias tekst zelfs als het spel er niet om vraagt"
+
+#: engines/ags/dialogs.cpp:82 engines/grim/metaengine.cpp:48
+#: engines/zvision/metaengine.cpp:221
+msgid "Show FPS"
+msgstr "Toon FPS"
+
+#: engines/ags/dialogs.cpp:82 engines/grim/metaengine.cpp:49
+msgid "Show the current FPS-rate, while you play."
+msgstr "Toon huidige FPS tijdens spelen."
 
 #: engines/ags/ags.cpp:132
 msgid ""
@@ -5072,8 +5013,8 @@ msgstr "De vertaler wil niet dat zijn vertaling geïntegreerd wordt in ScummVM."
 #: engines/mohawk/detection_tables.h:2494
 #: engines/mohawk/detection_tables.h:3564
 #: engines/mohawk/detection_tables.h:3579 engines/myst3/detection.cpp:142
-#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5239
-#: engines/sci/detection_tables.h:5247 engines/stark/detection.cpp:319
+#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5258
+#: engines/sci/detection_tables.h:5266 engines/stark/detection.cpp:319
 #: engines/teenagent/detection.cpp:117 engines/toltecs/detection.cpp:210
 #: engines/trecision/detection.cpp:201 engines/zvision/detection_tables.h:129
 msgid "Missing game code"
@@ -5325,7 +5266,7 @@ msgstr ""
 "de volgende keer als u het spel start.\n"
 
 #: engines/buried/saveload.cpp:165 engines/mtropolis/saveload.cpp:158
-#: engines/vcruise/vcruise.cpp:293
+#: engines/vcruise/vcruise.cpp:310
 msgid "Saved game was created with a newer version of ScummVM. Unable to load."
 msgstr ""
 "Opgeslagen spel is gemaakt met een nieuwere versie van ScummVM. Laden is "
@@ -5417,7 +5358,7 @@ msgid ""
 msgstr ""
 "Het spel verhindert stoppen op dit moment. Wilt u evengoed wilt stoppen?"
 
-#: engines/dragons/dragons.cpp:1885
+#: engines/dragons/dragons.cpp:1884
 #, c-format
 msgid ""
 "Error: The file '%s' hasn't been extracted properly.\n"
@@ -5793,14 +5734,6 @@ msgstr ""
 "Laad een gebruikers patch. Merk op dat het ScummVM team geen ondersteuning "
 "biedt voor zulke patches."
 
-#: engines/grim/metaengine.cpp:48 engines/zvision/metaengine.cpp:221
-msgid "Show FPS"
-msgstr "Toon FPS"
-
-#: engines/grim/metaengine.cpp:49
-msgid "Show the current FPS-rate, while you play."
-msgstr "Toon huidige FPS tijdens spelen."
-
 #: engines/grim/metaengine.cpp:92
 msgid "Escape from Monkey Island support is not compiled in"
 msgstr "Ondersteuning voor Escape from Monkey Island is niet meegecompileerd"
@@ -5901,10 +5834,8 @@ msgid "GroovieV2 support is not compiled in"
 msgstr "Ondersteuning voor GroovieV2 is niet meegecompileerd"
 
 #: engines/groovie/saveload.cpp:52
-#, fuzzy
-#| msgid "Run server"
 msgid "Reserved"
-msgstr "Start server"
+msgstr "Gereserveerd"
 
 #: engines/groovie/script.cpp:660
 msgid "Failed to save game"
@@ -5978,40 +5909,28 @@ msgid "Enable Gore Mode when available"
 msgstr "Gore modus inschakelen waar mogelijk"
 
 #: engines/hpl1/metaengine.cpp:81
-#, fuzzy
-#| msgid "Move Forward"
 msgid "Forward"
-msgstr "Beweeg Vooruit"
+msgstr "Vooruit"
 
 #: engines/hpl1/metaengine.cpp:82
-#, fuzzy
-#| msgid "Move Backward"
 msgid "Backward"
-msgstr "Beweeg Achteruit"
+msgstr "Achteruit"
 
 #: engines/hpl1/metaengine.cpp:83 engines/mm/mm1/metaengine.cpp:99
-#, fuzzy
-#| msgid "Slide Left"
 msgid "Strafe Left"
 msgstr "Schuif Links"
 
 #: engines/hpl1/metaengine.cpp:84 engines/mm/mm1/metaengine.cpp:100
-#, fuzzy
-#| msgid "Slide Right"
 msgid "Strafe Right"
 msgstr "Schuif Rechts"
 
 #: engines/hpl1/metaengine.cpp:85
-#, fuzzy
-#| msgid "Pad Left"
 msgid "Lean Left"
-msgstr "Pad Links"
+msgstr "Leun Links"
 
 #: engines/hpl1/metaengine.cpp:86
-#, fuzzy
-#| msgid "Pad Right"
 msgid "Lean Right"
-msgstr "Pad Rechts"
+msgstr "leun Rechts"
 
 #: engines/hpl1/metaengine.cpp:88
 msgid "Jump"
@@ -6020,22 +5939,16 @@ msgstr ""
 #. I18N: Action in In Cold Blood
 #: engines/hpl1/metaengine.cpp:89 engines/icb/icb.cpp:119
 #: engines/icb/icb.cpp:185
-#, fuzzy
-#| msgid "Touch"
 msgid "Crouch"
-msgstr "Aanraken"
+msgstr "Hurken"
 
 #: engines/hpl1/metaengine.cpp:92
-#, fuzzy
-#| msgid "Interact"
 msgid "Interact Mode"
-msgstr "Interactie"
+msgstr "Interactie Modus"
 
 #: engines/hpl1/metaengine.cpp:93
-#, fuzzy
-#| msgid "Gore Mode"
 msgid "Look Mode"
-msgstr "Gore Modus"
+msgstr "Kijk Modus"
 
 #: engines/hpl1/metaengine.cpp:94
 msgid "Holster"
@@ -6050,10 +5963,8 @@ msgid "Personal Notes"
 msgstr ""
 
 #: engines/hpl1/metaengine.cpp:102
-#, fuzzy
-#| msgid "Fly straight"
 msgid "Flashlight"
-msgstr "Vlieg recht"
+msgstr "Zaklantaarn"
 
 #: engines/hpl1/metaengine.cpp:103
 msgid "Glowstick"
@@ -6113,16 +6024,13 @@ msgstr ""
 
 #. I18N: Action in In Cold Blood
 #: engines/icb/icb.cpp:113
-#, fuzzy
 msgid "Remora"
-msgstr "Spel ~V~erwijderen"
+msgstr "Remora"
 
 #. I18N: Action in In Cold Blood
 #: engines/icb/icb.cpp:125 engines/icb/icb.cpp:191
-#, fuzzy
-#| msgid "Slide Left"
 msgid "Side Step"
-msgstr "Schuif Links"
+msgstr "Zijstap"
 
 #: engines/kyra/detection_tables.h:75
 msgid "Missing language specific game code and/or resources."
@@ -6360,14 +6268,7 @@ msgid "Choose Spell"
 msgstr "Kies Spreuk"
 
 #: engines/kyra/gui/saveload_eob.cpp:598
-#, fuzzy, c-format
-#| msgid ""
-#| "The following original saved game file has been found in your game path:\n"
-#| "\n"
-#| "%s %s\n"
-#| "\n"
-#| "Do you wish to use this saved game file with ScummVM?\n"
-#| "\n"
+#, c-format
 msgid ""
 "The following original saved game file has been found in your game path:\n"
 "\n"
@@ -6378,7 +6279,7 @@ msgid ""
 msgstr ""
 "Het volgende originele opgeslagen spel was gevonden in uw spel pad:\n"
 "\n"
-"%s %s\n"
+"%s %S\n"
 "\n"
 "Wilt u dit opgeslagen spel gebruiken in ScummVM?\n"
 "\n"
@@ -6566,10 +6467,8 @@ msgstr ""
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:67
-#, fuzzy
-#| msgid "Unlock"
 msgid "Block"
-msgstr "Maak open"
+msgstr "Blokkeer"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:69
@@ -6583,10 +6482,8 @@ msgstr ""
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:73
-#, fuzzy
-#| msgid "Right"
 msgid "Fight"
-msgstr "Rechts"
+msgstr "Vecht"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:75 engines/mm/mm1/metaengine.cpp:116
@@ -6684,6 +6581,13 @@ msgstr ""
 
 #: engines/mm/mm1/metaengine.cpp:157
 msgid "Might and Magic 1 - Cheats"
+msgstr ""
+
+#: engines/mm/mm1/mm1.cpp:101
+msgid ""
+"In order to run in Enhanced mode,  please copy xeen.cc from a copy of World "
+"of Xeen\n"
+"or Clouds of Xeen to your Might and Magic 1 game folder"
 msgstr ""
 
 #: engines/mm/shared/utils/engine_data.cpp:277
@@ -7065,12 +6969,12 @@ msgstr ""
 msgid "Failed to read version information from save file"
 msgstr "Versie informatie uitlezen uit het opgeslagen bestand is niet gelukt"
 
-#: engines/mtropolis/saveload.cpp:150 engines/vcruise/vcruise.cpp:288
+#: engines/mtropolis/saveload.cpp:150 engines/vcruise/vcruise.cpp:305
 msgid ""
 "Failed to load save, the save file doesn't contain valid version information."
 msgstr ""
 
-#: engines/mtropolis/saveload.cpp:166 engines/vcruise/vcruise.cpp:298
+#: engines/mtropolis/saveload.cpp:166 engines/vcruise/vcruise.cpp:315
 msgid ""
 "Saved game was created with an earlier, incompatible version of ScummVM. "
 "Unable to load."
@@ -7497,11 +7401,11 @@ msgstr ""
 msgid "Casio CT-460 / CSM-1"
 msgstr ""
 
-#: engines/sci/detection_tables.h:4475
+#: engines/sci/detection_tables.h:4494
 msgid "This demo uses an unimplemented version of Robot videos"
 msgstr ""
 
-#: engines/sci/detection_tables.h:4530
+#: engines/sci/detection_tables.h:4549
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr "Onvolledig spel gevonden. U dient de data te kopiëren van alle CDs."
 
@@ -7721,10 +7625,8 @@ msgstr "Nieuw spel opslaan"
 
 #. I18N: Name of the online game session
 #: engines/scumm/dialog-createsession.cpp:40
-#, fuzzy
-#| msgid "Game menu"
 msgid "Game Name:"
-msgstr "Spelmenu"
+msgstr "Spelnaam:"
 
 #. I18N: The user's name for online
 #: engines/scumm/dialog-createsession.cpp:44
@@ -7735,7 +7637,7 @@ msgid "Your Name:"
 msgstr "Naam:"
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:3518
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:3828
 msgid "Host"
 msgstr ""
 
@@ -7747,7 +7649,7 @@ msgid "Querying games..."
 msgstr "Spel opslaan..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:3518
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:3828
 msgid "Join"
 msgstr ""
 
@@ -8650,7 +8552,7 @@ msgid ""
 "required resources for MT-32. Using AdLib instead."
 msgstr ""
 
-#: engines/scumm/scumm.cpp:3407
+#: engines/scumm/scumm.cpp:3717
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -8660,7 +8562,7 @@ msgstr ""
 "moeten de Maniac Mansion bestanden in de 'Maniac' map in de Tentacle spelmap "
 "staan, en het spel moet worden toegevoegd aan ScummVM."
 
-#: engines/scumm/scumm.cpp:3518
+#: engines/scumm/scumm.cpp:3828
 #, fuzzy
 msgid "Would you like to host or join a network play session?"
 msgstr "Wilt u een spel laden of opslaan?"
@@ -9013,11 +8915,11 @@ msgstr "Opgeslagen spel #%d snel geladen"
 msgid "Could not quick load the saved game #%d"
 msgstr "Kon opgeslagen spel #%d niet snelladen"
 
-#: engines/toon/toon.cpp:1502
+#: engines/toon/toon.cpp:1501
 msgid "Are you sure you want to exit?"
 msgstr "Weet u zeker dat u wilt weggaan?"
 
-#: engines/toon/toon.cpp:1906
+#: engines/toon/toon.cpp:1911
 #, c-format
 msgid "Unable to locate the '%s' data file."
 msgstr "Kan de '%s' data file niet vinden."
@@ -9406,16 +9308,12 @@ msgid ""
 msgstr ""
 
 #: engines/vcruise/metaengine.cpp:53
-#, fuzzy
-#| msgid "Transitions:"
 msgid "Faster animations"
-msgstr "~O~vergangen:"
+msgstr "Snellere animaties"
 
 #: engines/vcruise/metaengine.cpp:54
-#, fuzzy
-#| msgid "Speech Options"
 msgid "Speeds up animations."
-msgstr "Spraak Opties"
+msgstr "Versnelt animaties."
 
 #: engines/vcruise/metaengine.cpp:75
 #, fuzzy
@@ -9468,10 +9366,8 @@ msgid "Music volume down"
 msgstr "Muziek volume omhoog / omlaag"
 
 #: engines/vcruise/metaengine.cpp:170
-#, fuzzy
-#| msgid "Music volume: "
 msgid "Music volume up"
-msgstr "Muziek volume: "
+msgstr "Muziek harder"
 
 #: engines/vcruise/metaengine.cpp:175
 #, fuzzy
@@ -9509,18 +9405,18 @@ msgid ""
 "The game will still play, but will not have any music."
 msgstr ""
 
-#: engines/vcruise/vcruise.cpp:278
+#: engines/vcruise/vcruise.cpp:295
 #, fuzzy
 msgid "Failed to load save, the save data appears to be damaged."
 msgstr ""
 "Opgeslagen spel is gemaakt met een nieuwere versie van ScummVM. Laden is "
 "niet mogelijk."
 
-#: engines/vcruise/vcruise.cpp:283
+#: engines/vcruise/vcruise.cpp:300
 msgid "Failed to read version information from save file."
 msgstr "Kon de versie van het opgeslagen bestand niet bepalen."
 
-#: engines/vcruise/vcruise.cpp:303
+#: engines/vcruise/vcruise.cpp:320
 msgid "An unknown error occurred while attempting to load the saved game."
 msgstr "Een onbekende fout trad op tijdens het laden van het opgeslagen spel."
 

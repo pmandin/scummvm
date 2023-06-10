@@ -227,9 +227,15 @@ void Character::synchronize(Common::Serializer &s, int portraitNum) {
 	s.syncAsByte(_worthiness);
 	s.syncAsByte(_alignmentCtr);
 	s.syncBytes(_flags, 14);
+
 	s.syncAsByte(_portrait);
-	if (s.isLoading() && portraitNum != -1)
-		_portrait = portraitNum;
+	if (s.isLoading()) {
+		if (portraitNum != -1)
+			_portrait = portraitNum;
+		if (_portrait >= NUM_PORTRAITS)
+			// Ensure portrait number is valid
+			_portrait = 0;
+	}
 
 	if (s.isLoading())
 		loadFaceSprites();
@@ -382,16 +388,12 @@ Character::LevelIncrease Character::increaseLevel() {
 }
 
 Character::BuyResult Character::buyItem(byte itemId) {
-	g_globals->_items.getItem(itemId);
-
 	// Check if backpack is full
-	int slotIndex = 0;
-	while (slotIndex < INVENTORY_COUNT && _backpack[slotIndex])
-		++slotIndex;
-	if (slotIndex == INVENTORY_COUNT)
+	if (_backpack.full())
 		return BUY_BACKPACK_FULL;
 
 	// Check character has enough gold
+	g_globals->_items.getItem(itemId);
 	Item &item = g_globals->_currItem;
 	if (_gold < item._cost)
 		return BUY_NOT_ENOUGH_GOLD;
@@ -733,6 +735,17 @@ Common::String Character::getConditionString(ConditionEnum cond) {
 	case C_ASLEEP: return STRING["stats.conditions.asleep"];
 	default: return STRING["stats.conditions.good"];
 	}
+}
+
+int Character::spellNumber() const {
+	return g_events->isInCombat() ? _combatSpell : _nonCombatSpell;
+}
+
+void Character::setSpellNumber(int spellNum) {
+	if (g_events->isInCombat())
+		_combatSpell = spellNum;
+	else
+		_nonCombatSpell = spellNum;
 }
 
 } // namespace MM1

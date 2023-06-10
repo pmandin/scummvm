@@ -177,6 +177,8 @@ struct Datum {	/* interpreter stack type */
 	bool isRef() const;
 	bool isVarRef() const;
 	bool isCastRef() const;
+	bool isArray() const;
+	bool isNumeric() const;
 
 	const char *type2str(bool ilk = false) const;
 
@@ -331,6 +333,7 @@ public:
 	int getMenuItemsNum(Datum &d);
 	int getXtrasNum();
 	int getCastlibsNum();
+	int getMembersNum();
 
 	void executeHandler(const Common::String &name);
 	void executeScript(ScriptType type, CastMemberID id);

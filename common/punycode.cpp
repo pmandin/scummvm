@@ -239,6 +239,10 @@ U32String punycode_decode(const String &src1) {
 
 	size_t di = src.findLastOf('-');
 
+	// If we have no '-', the entire string is non-ASCII character insertions.
+	if (di == String::npos)
+		di = 0;
+
 	Common::String tail;
 
 	// Sometimes strings could contain garbage at the end, like '.zip' added
@@ -269,7 +273,7 @@ U32String punycode_decode(const String &src1) {
 			}
 		}
 
-		if (noncode) {
+		if (noncode && di < srclen) {
 			tail = String(src.c_str() + di) + tail;
 			src = String(src.c_str(), di);
 			srclen = src.size();
@@ -286,10 +290,6 @@ U32String punycode_decode(const String &src1) {
 			break;
 		}
 	}
-
-	// If we have no '-', the entire string is non-ASCII character insertions.
-	if (di == String::npos)
-		di = 0;
 
 	U32String dst;
 

@@ -54,17 +54,20 @@ void Game::draw() {
 }
 
 bool Game::msgKeypress(const KeypressMessage &msg) {
-	return true;
-}
-
-bool Game::msgMouseDown(const MouseDownMessage &msg) {
-	if (Common::Rect(109, 137, 122, 147).contains(msg._pos) &&
-			msg._button == MouseDownMessage::MB_LEFT) {
-		g_engine->openMainMenuDialog();
-		return true;
-	} else {
-		return Views::TextView::msgMouseDown(msg);
+	switch (msg.keycode) {
+	case Common::KEYCODE_F5:
+		if (g_engine->canSaveGameStateCurrently())
+			g_engine->saveGameDialog();
+		break;
+	case Common::KEYCODE_F7:
+		if (g_engine->canLoadGameStateCurrently())
+			g_engine->loadGameDialog();
+		break;
+	default:
+		break;
 	}
+
+	return true;
 }
 
 bool Game::msgAction(const ActionMessage &msg) {
@@ -73,7 +76,13 @@ bool Game::msgAction(const ActionMessage &msg) {
 		send("Bash", GameMessage("SHOW"));
 		break;
 	case KEYBIND_MAP:
-		addView("MapPopup");
+		if (g_maps->_currentMap->mappingAllowed())
+			addView("MapPopup");
+		else
+			send(InfoMessage(STRING["enhdialogs.map.disabled"]));
+		return true;
+	case KEYBIND_MENU:
+		g_engine->openMainMenuDialog();
 		return true;
 	case KEYBIND_PROTECT:
 		addView("Protect");

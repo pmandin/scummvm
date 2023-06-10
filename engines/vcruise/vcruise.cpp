@@ -23,6 +23,7 @@
 
 #include "common/config-manager.h"
 #include "common/events.h"
+#include "common/file.h"
 #include "common/stream.h"
 #include "common/savefile.h"
 #include "common/system.h"
@@ -35,13 +36,12 @@
 
 #include "vcruise/runtime.h"
 #include "vcruise/vcruise.h"
+#include "vcruise/gentee_installer.h"
 
 namespace VCruise {
 
 VCruiseEngine::VCruiseEngine(OSystem *syst, const VCruiseGameDescription *gameDesc) : Engine(syst), _gameDescription(gameDesc) {
 	const Common::FSNode gameDataDir(ConfMan.get("path"));
-
-	SearchMan.addDirectory(gameDataDir.getPath(), gameDataDir, 0, 3);
 }
 
 VCruiseEngine::~VCruiseEngine() {
@@ -102,6 +102,19 @@ Common::Error VCruiseEngine::run() {
 		dialog.runModal();
 	}
 #endif
+
+	if (_gameDescription->desc.flags & VCRUISE_GF_GENTEE_PACKAGE) {
+		Common::File *f = new Common::File();
+
+		if (!f->open(_gameDescription->desc.filesDescriptions[0].fileName))
+			error("Couldn't open installer package '%s'", _gameDescription->desc.filesDescriptions[0].fileName);
+
+		Common::Archive *installerPackageArchive = createGenteeInstallerArchive(f, "#setuppath#\\", true);
+		if (!installerPackageArchive)
+			error("Couldn't load installer package '%s'", _gameDescription->desc.filesDescriptions[0].fileName);
+
+		SearchMan.add("VCruiseInstallerPackage", installerPackageArchive);
+	}
 
 	syncSoundSettings();
 
@@ -169,6 +182,9 @@ Common::Error VCruiseEngine::run() {
 
 	const char *exeName = _gameDescription->desc.filesDescriptions[0].fileName;
 
+	if (_gameDescription->desc.flags & VCRUISE_GF_GENTEE_PACKAGE)
+		exeName = "Schizm.exe";
+
 	_runtime->loadCursors(exeName);
 
 	if (ConfMan.getBool("vcruise_debug")) {
@@ -202,6 +218,9 @@ Common::Error VCruiseEngine::run() {
 	}
 
 	_runtime.reset();
+
+	if (_gameDescription->desc.flags & VCRUISE_GF_GENTEE_PACKAGE)
+		SearchMan.remove("VCruiseInstallerPackage");
 
 	return Common::kNoError;
 }
@@ -240,16 +259,14 @@ void VCruiseEngine::syncSoundSettings() {
 	if (!speechMute)
 		speechMute = ConfMan.getBool("speech_mute");
 
-	bool muteMusic = false;
-	if (ConfMan.hasKey("vcruise_mute_music"))
-		muteMusic = ConfMan.getBool("vcruise_mute_music");
-
 	bool muteSound = ConfMan.getBool("vcruise_mute_sound");
 	if (ConfMan.hasKey("vcruise_mute_sound"))
 		muteSound = ConfMan.getBool("vcruise_mute_sound");
 
+	// We don't mute music here because Schizm has a special behavior that bypasses music mute when using one
+	// of the ships to transition zones.
 	_mixer->muteSoundType(Audio::Mixer::kPlainSoundType, mute || muteSound);
-	_mixer->muteSoundType(Audio::Mixer::kMusicSoundType, mute || muteMusic);
+	_mixer->muteSoundType(Audio::Mixer::kMusicSoundType, mute);
 	_mixer->muteSoundType(Audio::Mixer::kSFXSoundType, mute || muteSound);
 	_mixer->muteSoundType(Audio::Mixer::kSpeechSoundType, speechMute || muteSound);
 
@@ -310,11 +327,11 @@ Common::Error VCruiseEngine::loadGameStream(Common::SeekableReadStream *stream) 
 }
 
 bool VCruiseEngine::canSaveAutosaveCurrently() {
-	return _runtime->canSave();
+	return _runtime->canSave(false);
 }
 
 bool VCruiseEngine::canSaveGameStateCurrently() {
-	return _runtime->canSave();
+	return _runtime->canSave(false);
 }
 
 bool VCruiseEngine::canLoadGameStateCurrently() {
@@ -323,6 +340,18 @@ bool VCruiseEngine::canLoadGameStateCurrently() {
 
 void VCruiseEngine::initializePath(const Common::FSNode &gamePath) {
 	Engine::initializePath(gamePath);
+
+	const char *gameSubPath = nullptr;
+	if (_gameDescription->desc.flags & VCRUISE_GF_GENTEE_PACKAGE) {
+		if (_gameDescription->gameID == GID_SCHIZM)
+			gameSubPath = "Schizm";
+	}
+
+	if (gameSubPath) {
+		Common::FSNode gameSubDir = gamePath.getChild(gameSubPath);
+		if (gameSubDir.isDirectory())
+			SearchMan.addDirectory("VCruiseGameDir", gameSubDir, 0, 3);
+	}
 
 	_rootFSNode = gamePath;
 }

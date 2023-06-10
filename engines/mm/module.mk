@@ -38,12 +38,16 @@ MODULE_OBJS += \
 	mm1/data/treasure.o \
 	mm1/game/arenko.o \
 	mm1/game/arrested.o \
+	mm1/game/detect_magic.o \
 	mm1/game/game_logic.o \
 	mm1/game/combat.o \
+	mm1/game/duplication.o \
 	mm1/game/encounter.o \
 	mm1/game/equip_remove.o \
+	mm1/game/fly.o \
 	mm1/game/leprechaun.o \
 	mm1/game/monster_touch.o \
+	mm1/game/recharge_item.o \
 	mm1/game/rest.o \
 	mm1/game/spell_casting.o \
 	mm1/game/spells_party.o \
@@ -134,6 +138,12 @@ MODULE_OBJS += \
 	mm1/views/wheel_spin.o \
 	mm1/views_enh/spells/cast_spell.o \
 	mm1/views_enh/spells/spellbook.o \
+	mm1/views_enh/spells/detect_magic.o \
+	mm1/views_enh/spells/duplication.o \
+	mm1/views_enh/spells/fly.o \
+	mm1/views_enh/spells/location.o \
+	mm1/views_enh/spells/recharge_item.o \
+	mm1/views_enh/spells/teleport.o \
 	mm1/views_enh/button_container.o \
 	mm1/views_enh/character_base.o \
 	mm1/views_enh/character_info.o \
@@ -204,6 +214,7 @@ MODULE_OBJS += \
 	mm1/views_enh/interactions/prisoners.o \
 	mm1/views_enh/interactions/resistances.o \
 	mm1/views_enh/interactions/ruby.o \
+	mm1/views_enh/interactions/scummvm.o \
 	mm1/views_enh/interactions/statue.o \
 	mm1/views_enh/interactions/trivia.o \
 	mm1/views_enh/interactions/volcano_god.o \
@@ -273,7 +284,8 @@ MODULE_OBJS += \
 	mm1/maps/map51.o \
 	mm1/maps/map52.o \
 	mm1/maps/map53.o \
-	mm1/maps/map54.o
+	mm1/maps/map54.o \
+	mm1/maps/map55.o
 endif
 
 ifdef ENABLE_XEEN

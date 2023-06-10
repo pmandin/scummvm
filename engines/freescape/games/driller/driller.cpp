@@ -433,6 +433,7 @@ void DrillerEngine::pressedKey(const int keycode) {
 			_gameStateVars[32]++;
 		} else
 			_drillStatusByArea[_currentArea->getAreaID()] = kDrillerRigOutOfPlace;
+		executeMovementConditions();
 	} else if (keycode == Common::KEYCODE_c) {
 		if (isDOS() && isDemo()) // No support for drilling here yet
 			return;
@@ -473,6 +474,7 @@ void DrillerEngine::pressedKey(const int keycode) {
 		uint32 scoreToRemove = uint32(maxScore * success) / 100;
 		assert(scoreToRemove <= uint32(_gameStateVars[k8bitVariableScore]));
 		_gameStateVars[k8bitVariableScore] -= scoreToRemove;
+		executeMovementConditions();
 	}
 }
 
@@ -754,7 +756,8 @@ void DrillerEngine::initGameState() {
 
 bool DrillerEngine::checkIfGameEnded() {
 	if (isDemo() && _demoMode)
-		return (_demoData[_demoIndex + 1] == 0x5f);
+		if (_demoData[_demoIndex + 1] == 0x5f)
+			return true;
 
 	if (_countdown <= 0) {
 		insertTemporaryMessage(_messagesList[14], _countdown - 2);
@@ -798,12 +801,16 @@ bool DrillerEngine::checkIfGameEnded() {
 
 	if (_forceEndGame) {
 		_forceEndGame = false;
-		insertTemporaryMessage(_messagesList[18], _countdown - 2);
-		drawFrame();
-		_gfx->flipBuffer();
-		g_system->updateScreen();
-		g_system->delayMillis(2000);
-		gotoArea(127, 0);
+		if (isDemo())
+			return true;
+		else {
+			insertTemporaryMessage(_messagesList[18], _countdown - 2);
+			drawFrame();
+			_gfx->flipBuffer();
+			g_system->updateScreen();
+			g_system->delayMillis(2000);
+			gotoArea(127, 0);
+		}
 	}
 
 	if (_currentArea->getAreaID() == 127) {

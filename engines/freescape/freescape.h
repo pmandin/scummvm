@@ -96,6 +96,7 @@ public:
 	// Game selection
 	uint32 _variant;
 	Common::Language _language;
+	bool isSpaceStationOblivion() { return _targetName.hasPrefix("spacestationoblivion"); }
 	bool isDriller() { return _targetName.hasPrefix("driller") || _targetName.hasPrefix("spacestationoblivion"); }
 	bool isDark() { return _targetName.hasPrefix("darkside"); }
 	bool isEclipse() { return _targetName.hasPrefix("totaleclipse"); }
@@ -427,6 +428,8 @@ enum DrillerReleaseFlags {
 		GF_CPC_RETAIL2 = (1 << 6),
 		GF_CPC_BUDGET = (1 << 7),
 		GF_CPC_VIRTUALWORLDS = (1 << 8),
+		GF_ATARI_RETAIL = (1 << 9),
+		GF_ATARI_BUDGET = (1 << 10),
 };
 
 class DrillerEngine : public FreescapeEngine {
@@ -509,6 +512,8 @@ private:
 
 	uint32 getPixel8bitTitleImage(int index);
 	void renderPixels8bitTitleImage(Graphics::ManagedSurface *surface, int &i, int &j, int pixels);
+
+	Common::SeekableReadStream *decryptFileAtari(const Common::String filename);
 };
 
 class DarkEngine : public FreescapeEngine {
@@ -531,6 +536,7 @@ public:
 
 	void loadAssetsDOSFullGame() override;
 	void loadAssetsDOSDemo() override;
+	void loadAssetsAmigaFullGame() override;
 
 	void loadAssetsZXDemo() override;
 
@@ -548,6 +554,7 @@ private:
 	void addECDs(Area *area);
 	void addECD(Area *area, const Math::Vector3d position, int index);
 	void addWalls(Area *area);
+	Common::SeekableReadStream *decryptFile(const Common::String filename);
 };
 
 class EclipseEngine : public FreescapeEngine {

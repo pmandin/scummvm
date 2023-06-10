@@ -278,7 +278,7 @@ void Score::startPlay() {
 	// All frames in the same movie have the same number of channels
 	if (_playState != kPlayStopped)
 		for (uint i = 0; i < _frames[1]->_sprites.size(); i++)
-			_channels.push_back(new Channel(_frames[1]->_sprites[i], i));
+			_channels.push_back(new Channel(this, _frames[1]->_sprites[i], i));
 
 	if (_vm->getVersion() >= 300)
 		_movie->processEvent(kEventStartMovie);
@@ -551,6 +551,7 @@ void Score::update() {
 }
 
 void Score::renderFrame(uint16 frameId, RenderMode mode) {
+	uint32 start = g_system->getMillis(false);
 	// Force cursor update if a new movie's started.
 	if (_window->_newMovieStarted)
 		renderCursor(_movie->getWindow()->getMousePos(), true);
@@ -575,6 +576,8 @@ void Score::renderFrame(uint16 frameId, RenderMode mode) {
 		renderCursor(_movie->getWindow()->getMousePos());
 		_cursorDirty = false;
 	}
+	uint32 end = g_system->getMillis(false);
+	debugC(5, kDebugLoading, "Score::renderFrame() finished in %d millis", end - start);
 }
 
 bool Score::renderTransition(uint16 frameId) {
@@ -694,6 +697,12 @@ bool Score::renderPrePaletteCycle(uint16 frameId, RenderMode mode) {
 		}
 
 		if (_frames[frameId]->_palette.normal) {
+			// If the target palette ID is the same as the previous palette ID,
+			// a normal fade is a no-op.
+			if (_frames[frameId]->_palette.paletteId == g_director->_lastPalette) {
+				return false;
+			}
+
 			// For fade palette transitions, the whole fade happens with
 			// the previous frame's layout.
 			debugC(2, kDebugImages, "Score::renderPrePaletteCycle(): fading palette to %s over %d frames", currentPalette.asString().c_str(), fadeFrames);
@@ -1622,13 +1631,13 @@ Common::String Score::formatChannelInfo() {
 		Channel &channel = *_channels[i + 1];
 		Sprite &sprite = *channel._sprite;
 		if (sprite._castId.member) {
-			result += Common::String::format("CH: %-3d castId: %s, visible: %d, [inkData: 0x%02x [ink: %d, trails: %d, line: %d], %dx%d@%d,%d type: %d (%s) fg: %d bg: %d], script: %s, colorcode: 0x%x, blendAmount: 0x%x, unk3: 0x%x, constraint: %d, puppet: %d, stretch: %d\n",
+			result += Common::String::format("CH: %-3d castId: %s, visible: %d, [inkData: 0x%02x [ink: %d, trails: %d, line: %d], %dx%d@%d,%d type: %d (%s) fg: %d bg: %d], script: %s, colorcode: 0x%x, blendAmount: 0x%x, unk3: 0x%x, constraint: %d, puppet: %d, stretch: %d, moveable: %d\n",
 				i + 1, sprite._castId.asString().c_str(), channel._visible, sprite._inkData,
 				sprite._ink, sprite._trails, sprite._thickness, channel._width, channel._height,
 				channel._currentPoint.x, channel._currentPoint.y,
 				sprite._spriteType, spriteType2str(sprite._spriteType), sprite._foreColor, sprite._backColor,
 				sprite._scriptId.asString().c_str(), sprite._colorcode, sprite._blendAmount, sprite._unk3,
-				channel._constraint, sprite._puppet, sprite._stretch);
+				channel._constraint, sprite._puppet, sprite._stretch, sprite._moveable);
 		} else {
 			result += Common::String::format("CH: %-3d castId: 000\n", i + 1);
 		}

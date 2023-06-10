@@ -203,6 +203,7 @@ public:
 	 * @return Pointer to a new empty menu.
 	 */
 	MacMenu *addMenu();
+	void addMenu(int id, MacMenu *menu);
 
 	void removeMenu();
 	void activateMenu();
@@ -291,9 +292,18 @@ public:
 	 */
 	void setActiveWidget(MacWidget *widget);
 
+	/**
+	 * Similar to setActiveWidget but in this case no action including animation
+	 * hover, etc can work until a window is locked.
+	 * Anything outside this window will not respond to user.
+	 * @param widget Pointer to the widget to lock, nullptr for no widget
+	 */
+	void setLockedWidget(MacWidget *widget);
+	
 	MacPatterns  &getBuiltinPatterns() { return _builtinPatterns; }
 
 	MacWidget *getActiveWidget() { return _activeWidget; }
+	MacWidget *getLockedWidget() { return _lockedWidget; }
 
 	Common::Rect getScreenBounds() { return _screen ? _screen->getBounds() : _screenDims; }
 
@@ -371,6 +381,7 @@ public:
 	Common::String getMenuItemName(MacMenuItem *menuItem);
 	int getMenuItemAction(MacMenuItem *menuItem);
 	MacMenu *getMenu();
+	MacMenu *getMenu(int id);
 
 public:
 	MacFontManager *_fontMan;
@@ -444,6 +455,7 @@ private:
 	Cursor *_cursor;
 
 	MacWidget *_activeWidget;
+	MacWidget *_lockedWidget;
 
 	PauseToken *_screenCopyPauseToken;
 

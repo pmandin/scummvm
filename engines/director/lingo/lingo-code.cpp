@@ -251,7 +251,7 @@ void Lingo::pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRet
 
 	if (funcSym.ctx) {
 		_state->context = funcSym.ctx;
-		*_state->context->_refCount += 1;
+		_state->context->incRefCount();
 	}
 
 	DatumHash *localvars = new DatumHash;
@@ -343,10 +343,7 @@ void Lingo::popContext(bool aborting) {
 		error("handler %s popped extra %d values", fp->sp.name->c_str(), fp->stackSizeBefore - _stack.size());
 	}
 
-	*_state->context->_refCount -= 1;
-	if (*_state->context->_refCount <= 0) {
-		delete _state->context;
-	}
+	_state->context->decRefCount();
 
 	_state->script = fp->retScript;
 	_state->context = fp->retContext;
@@ -661,13 +658,6 @@ void LC::c_swap() {
 	g_lingo->push(d1);
 }
 
-static bool isArray(Datum &d1) {
-	if (d1.type == ARRAY || d1.type == POINT || d1.type == RECT)
-		return true;
-
-	return false;
-}
-
 static DatumType getArrayAlignedType(Datum &d1, Datum &d2) {
 	if (d1.type == POINT && d2.type == ARRAY && d2.u.farr->arr.size() < 2)
 		return ARRAY;
@@ -681,7 +671,7 @@ static DatumType getArrayAlignedType(Datum &d1, Datum &d2) {
 	if (d1.type == RECT)
 		return RECT;
 
-	if (!isArray(d1))
+	if (!d1.isArray())
 		return d2.type;
 
 	return ARRAY;
@@ -690,9 +680,9 @@ static DatumType getArrayAlignedType(Datum &d1, Datum &d2) {
 Datum LC::mapBinaryOp(Datum (*mapFunc)(Datum &, Datum &), Datum &d1, Datum &d2) {
 	// At least one of d1 and d2 must be an array
 	uint arraySize;
-	if (isArray(d1) && isArray(d2)) {
+	if (d1.isArray() && d2.isArray()) {
 		arraySize = MIN(d1.u.farr->arr.size(), d2.u.farr->arr.size());
-	} else if (isArray(d1)) {
+	} else if (d1.isArray()) {
 		arraySize = d1.u.farr->arr.size();
 	} else {
 		arraySize = d2.u.farr->arr.size();
@@ -703,10 +693,10 @@ Datum LC::mapBinaryOp(Datum (*mapFunc)(Datum &, Datum &), Datum &d1, Datum &d2) 
 	Datum a = d1;
 	Datum b = d2;
 	for (uint i = 0; i < arraySize; i++) {
-		if (isArray(d1)) {
+		if (d1.isArray()) {
 			a = d1.u.farr->arr[i];
 		}
-		if (isArray(d2)) {
+		if (d2.isArray()) {
 			b = d2.u.farr->arr[i];
 		}
 		res.u.farr->arr[i] = mapFunc(a, b);
@@ -715,7 +705,7 @@ Datum LC::mapBinaryOp(Datum (*mapFunc)(Datum &, Datum &), Datum &d1, Datum &d2) 
 }
 
 Datum LC::addData(Datum &d1, Datum &d2) {
-	if (isArray(d1) || isArray(d2)) {
+	if (d1.isArray() || d2.isArray()) {
 		return LC::mapBinaryOp(LC::addData, d1, d2);
 	}
 
@@ -739,7 +729,7 @@ void LC::c_add() {
 }
 
 Datum LC::subData(Datum &d1, Datum &d2) {
-	if (isArray(d1) || isArray(d2)) {
+	if (d1.isArray() || d2.isArray()) {
 		return LC::mapBinaryOp(LC::subData, d1, d2);
 	}
 
@@ -763,7 +753,7 @@ void LC::c_sub() {
 }
 
 Datum LC::mulData(Datum &d1, Datum &d2) {
-	if (isArray(d1) || isArray(d2)) {
+	if (d1.isArray() || d2.isArray()) {
 		return LC::mapBinaryOp(LC::mulData, d1, d2);
 	}
 
@@ -787,7 +777,7 @@ void LC::c_mul() {
 }
 
 Datum LC::divData(Datum &d1, Datum &d2) {
-	if (isArray(d1) || isArray(d2)) {
+	if (d1.isArray() || d2.isArray()) {
 		return LC::mapBinaryOp(LC::divData, d1, d2);
 	}
 
@@ -821,7 +811,7 @@ void LC::c_div() {
 }
 
 Datum LC::modData(Datum &d1, Datum &d2) {
-	if (isArray(d1) || isArray(d2)) {
+	if (d1.isArray() || d2.isArray()) {
 		return LC::mapBinaryOp(LC::modData, d1, d2);
 	}
 
@@ -843,7 +833,7 @@ void LC::c_mod() {
 }
 
 Datum LC::negateData(Datum &d) {
-	if (isArray(d)) {
+	if (d.isArray()) {
 		uint arraySize = d.u.farr->arr.size();
 		Datum res;
 		res.type = d.type;
@@ -1245,15 +1235,15 @@ void LC::c_not() {
 Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, bool location, bool value) {
 	// At least one of d1 and d2 must be an array
 	uint arraySize;
-	if (d1.type == ARRAY && d2.type == ARRAY) {
+	if (d1.isArray() && d2.isArray()) {
 		arraySize = MIN(d1.u.farr->arr.size(), d2.u.farr->arr.size());
 	} else if (d1.type == PARRAY && d2.type == PARRAY) {
 		arraySize = MIN(d1.u.parr->arr.size(), d2.u.parr->arr.size());
-	} else if (d1.type == ARRAY) {
+	} else if (d1.isArray()) {
 		arraySize = d1.u.farr->arr.size();
 	} else if (d1.type == PARRAY) {
 		arraySize = d1.u.parr->arr.size();
-	} else if (d2.type == ARRAY) {
+	} else if (d2.isArray()) {
 		arraySize = d2.u.farr->arr.size();
 	} else if (d2.type == PARRAY) {
 		arraySize = d2.u.parr->arr.size();
@@ -1267,14 +1257,14 @@ Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, 
 	Datum a = d1;
 	Datum b = d2;
 	for (uint i = 0; i < arraySize; i++) {
-		if (d1.type == ARRAY) {
+		if (d1.isArray()) {
 			a = d1.u.farr->arr[i];
 		} else if (d1.type == PARRAY) {
 			PCell t = d1.u.parr->arr[i];
 			a = value ? t.v : t.p;
 		}
 
-		if (d2.type == ARRAY) {
+		if (d2.isArray()) {
 			b = d2.u.farr->arr[i];
 		} else if (d2.type == PARRAY) {
 			PCell t = d2.u.parr->arr[i];
@@ -1299,7 +1289,7 @@ Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, 
 
 Datum LC::eqData(Datum d1, Datum d2) {
 	// Lingo doesn't bother checking list equality if the left is longer
-	if (d1.type == ARRAY && d2.type == ARRAY &&
+	if (d1.isArray() && d2.isArray() &&
 			d1.u.farr->arr.size() > d2.u.farr->arr.size()) {
 		return Datum(0);
 	}
@@ -1307,7 +1297,7 @@ Datum LC::eqData(Datum d1, Datum d2) {
 			d1.u.parr->arr.size() > d2.u.parr->arr.size()) {
 		return Datum(0);
 	}
-	if (d1.type == ARRAY || d2.type == ARRAY ||
+	if (d1.isArray() || d2.isArray() ||
 			d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::eqData, d1, d2, false, true);
 	}
@@ -1323,7 +1313,7 @@ void LC::c_eq() {
 }
 
 Datum LC::neqData(Datum d1, Datum d2) {
-	if (d1.type == ARRAY || d2.type == ARRAY ||
+	if (d1.isArray() || d2.isArray() ||
 			d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::neqData, d1, d2, false, true);
 	}
@@ -1339,7 +1329,7 @@ void LC::c_neq() {
 }
 
 Datum LC::gtData(Datum d1, Datum d2) {
-	if (d1.type == ARRAY || d2.type == ARRAY ||
+	if (d1.isArray() || d2.isArray() ||
 			d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::gtData, d1, d2, false, true);
 	}
@@ -1355,7 +1345,7 @@ void LC::c_gt() {
 }
 
 Datum LC::ltData(Datum d1, Datum d2) {
-	if (d1.type == ARRAY || d2.type == ARRAY ||
+	if (d1.isArray() || d2.isArray() ||
 			d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::ltData, d1, d2, false, true);
 	}
@@ -1371,7 +1361,7 @@ void LC::c_lt() {
 }
 
 Datum LC::geData(Datum d1, Datum d2) {
-	if (d1.type == ARRAY || d2.type == ARRAY ||
+	if (d1.isArray() || d2.isArray() ||
 			d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::geData, d1, d2, false, true);
 	}
@@ -1387,7 +1377,7 @@ void LC::c_ge() {
 }
 
 Datum LC::leData(Datum d1, Datum d2) {
-	if (d1.type == ARRAY || d2.type == ARRAY ||
+	if (d1.isArray() || d2.isArray() ||
 			d1.type == PARRAY || d2.type == PARRAY) {
 		return LC::compareArrays(LC::leData, d1, d2, false, true);
 	}

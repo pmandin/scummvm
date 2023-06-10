@@ -269,6 +269,7 @@ private:
 	MiniscriptInstructionOutcome scriptRangeWriteRefAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &result, const Common::String &attrib);
 	MiniscriptInstructionOutcome scriptSetRangeTyped(MiniscriptThread *thread, const IntRange &value);
 	MiniscriptInstructionOutcome scriptSetRangeTyped(MiniscriptThread *thread, const Common::Point &value);
+	MiniscriptInstructionOutcome scriptSetRangeTyped(MiniscriptThread *thread, const Label &value);
 
 	void onPauseStateChanged() override;
 
@@ -293,6 +294,8 @@ private:
 	// NOTE: To produce proper behavior, these are not sanitized until playMedia.  render must tolerate invalid values without changing them.
 	IntRange _playRange;
 	int32 _cel;
+
+	bool _hasIssuedRenderWarning;
 };
 
 class TextLabelElement : public VisualElement {

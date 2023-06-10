@@ -89,6 +89,7 @@ private:
 	uint16 _chargenMaxStats[7];
 
 	const uint8 _menuColor1, _menuColor2, _menuColor3;
+	const uint8 _trackNo;
 
 	const char *const *_chargenStrings1;
 	const char *const *_chargenStrings2;
@@ -141,7 +142,9 @@ CharacterGenerator::CharacterGenerator(EoBCoreEngine *vm, Screen_EoB *screen) : 
 	_updateBoxShapesIndex(0), _lastUpdateBoxShapesIndex(0), _magicShapesBox(6), _activeBox(0),
 	_menuColor1(vm->gameFlags().platform == Common::kPlatformSegaCD ? 0xFF : (vm->_configRenderMode == Common::kRenderCGA ? 1 : vm->guiSettings()->colors.guiColorWhite)),
 	_menuColor2(vm->gameFlags().platform == Common::kPlatformSegaCD ? 0x55 : vm->guiSettings()->colors.guiColorLightRed),
-	_menuColor3(vm->gameFlags().platform == Common::kPlatformSegaCD ? 0x99 : vm->guiSettings()->colors.guiColorBlack) {
+	_menuColor3(vm->gameFlags().platform == Common::kPlatformSegaCD ? 0x99 : vm->guiSettings()->colors.guiColorBlack),
+	_trackNo(vm->game() == GI_EOB1 ? (vm->gameFlags().platform == Common::kPlatformPC98 ? 1 :
+		(vm->gameFlags().platform == Common::kPlatformSegaCD ? 8: 20)) : (vm->gameFlags().platform == Common::kPlatformPC98 ? 53 : 13)) {
 
 	_chargenStatStrings = _vm->_chargenStatStrings;
 	_chargenRaceSexStrings = _vm->_chargenRaceSexStrings;
@@ -352,7 +355,7 @@ bool CharacterGenerator::createCustomParty(const uint8 ***faceShapes) {
 	checkForCompleteParty();
 	initButtonsFromList(0, 5);
 
-	_vm->snd_playSong(_vm->game() == GI_EOB1 ? (_vm->gameFlags().platform == Common::kPlatformPC98 ? 1 : (_vm->gameFlags().platform == Common::kPlatformSegaCD ? 8: 20)) : 13);
+	_vm->snd_playSong(_trackNo);
 	_activeBox = 0;
 
 	for (bool loop = true; loop && (!_vm->shouldQuit());) {
@@ -548,7 +551,8 @@ void CharacterGenerator::drawButton(int index, int buttonState) {
 		const uint8 *bt = &_chargenSegaButtonCoords[index * 5];
 		_screen->sega_getRenderer()->fillRectWithTiles(0, bt[0], bt[1], bt[2], bt[3], (index > 9 ? 0x24BC : 0x2411) + bt[4] + (buttonState ? (bt[2] * bt[3]) : 0), true);
 		_screen->sega_getRenderer()->render(0, bt[0], bt[1], bt[2], bt[3]);
-		_screen->updateScreen();
+		if (buttonState)
+			_screen->updateScreen();
 		return;
 	}
 
@@ -588,7 +592,7 @@ void CharacterGenerator::drawButton(int index, int buttonState) {
 
 	_screen->copyRegion(160, 0, c->destX << 3, c->destY, p->w << 3, p->h, 2, 0, Screen::CR_NO_P_CHECK);
 	_screen->updateScreen();
-}
+ }
 
 void CharacterGenerator::processButtonClick(int index) {
 	drawButton(index, 1);
@@ -893,13 +897,13 @@ int CharacterGenerator::getInput(Button *buttonList) {
 
 	if (_vm->game() == GI_EOB1 && _vm->sound()->checkTrigger()) {
 		_vm->sound()->resetTrigger();
-		_vm->snd_playSong(20);
+		_vm->snd_playSong(_trackNo);
 	} else if (_vm->game() == GI_EOB2 && !_vm->sound()->isPlaying()) {
 		// WORKAROUND for EOB II: The original implements the same sound trigger check as in EOB I.
 		// However, Westwood seems to have forgotten to set the trigger at the end of the AdLib song,
 		// so that the music will not loop. We simply check whether the sound driver is still playing.
 		_vm->delay(3 * _vm->_tickLength);
-		_vm->snd_playSong(13);
+		_vm->snd_playSong(_trackNo);
 	}
 
 	return _vm->checkInput(buttonList, false, 0);
@@ -1966,6 +1970,7 @@ private:
 	void giveKhelbensCoin();
 
 	Common::String convertFromJISX0201(const Common::String &src);
+	Common::String makeTwoByteString(const Common::String &src);
 
 	EoBCoreEngine *_vm;
 	Screen_EoB *_screen;
@@ -2003,8 +2008,11 @@ TransferPartyWiz::~TransferPartyWiz() {
 bool TransferPartyWiz::start() {
 	_screen->copyPage(0, 12);
 
-	if (!selectAndLoadTransferFile())
+	if (!selectAndLoadTransferFile()) {
+		_screen->clearPage(0);
+		_screen->clearPage(2);
 		return false;
+	}
 
 	convertStats();
 
@@ -2227,8 +2235,6 @@ int TransferPartyWiz::selectCharactersMenu() {
 	return selection;
 }
 
-
-
 void TransferPartyWiz::drawCharPortraitWithStats(int charIndex, bool enabled) {
 	int16 x = (charIndex % 2) * 159;
 	int16 y = (charIndex / 2) * 40;
@@ -2296,7 +2302,8 @@ void TransferPartyWiz::convertStats() {
 		if (_vm->_flags.lang == Common::JA_JPN && _vm->_flags.platform == Common::kPlatformPC98) {
 			Common::String cname(c->name);
 			cname = convertFromJISX0201(cname);
-			Common::strlcpy(c->name, cname.c_str(), cname.size() + 1);
+			cname = makeTwoByteString(cname);
+			Common::strlcpy(c->name, cname.c_str(), sizeof(c->name));
 		}
 
 		for (int ii = 0; ii < 25; ii++) {
@@ -2551,6 +2558,29 @@ Common::String TransferPartyWiz::convertFromJISX0201(const Common::String &src) 
 	*d = '\0';
 
 	return tmp;
+}
+
+Common::String TransferPartyWiz::makeTwoByteString(const Common::String &src) {
+	Common::String n;
+	for (const uint8 *s = (const uint8*)src.c_str(); *s; ++s) {
+		if (*s < 32 || *s == 127) {
+			n += (char)*s;
+		} else if (*s < 127) {
+			uint8 c = (*s - 32) * 2;
+			assert(c < 190);
+			n += _vm->_ascii2SjisTables2[0][c];
+			n += _vm->_ascii2SjisTables2[0][c + 1];
+		} else if (*s < 212) {
+			n += '\x83';
+			n += (char)(*s - 64);
+		} else {
+			uint8 c = (*s - 212) * 2;
+			assert(c < 8);
+			n += _vm->_ascii2SjisTables2[1][c];
+			n += _vm->_ascii2SjisTables2[1][c + 1];
+		}
+	}
+	return n;
 }
 
 // Start functions

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.9.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-05-20 21:27+0000\n"
+"POT-Creation-Date: 2023-06-09 05:48+0000\n"
 "PO-Revision-Date: 2023-05-17 15:40+0000\n"
 "Last-Translator: Eugene Sandulenko <sev@scummvm.org>\n"
 "Language-Team: Ukrainian <https://translations.scummvm.org/projects/scummvm/"
@@ -273,8 +273,8 @@ msgstr "Інше хмарне середовище вже є активним. �
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:360
 #: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:145
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3512
-#: engines/toon/toon.cpp:1502
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3822
+#: engines/toon/toon.cpp:1501
 msgid "Yes"
 msgstr "Так"
 
@@ -286,8 +286,8 @@ msgstr "Так"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:360
 #: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:151
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3512
-#: engines/toon/toon.cpp:1502
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3822
+#: engines/toon/toon.cpp:1501
 msgid "No"
 msgstr "Ні"
 
@@ -310,7 +310,7 @@ msgstr ""
 #: engines/engine.cpp:544 engines/engine.cpp:567
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1818
+#: engines/director/lingo/lingo-builtins.cpp:1836
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:660 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:75
@@ -541,7 +541,7 @@ msgstr ""
 #: gui/options.cpp:2502 gui/options.cpp:2555 gui/options.cpp:2773
 #: gui/options.cpp:3239 audio/null.cpp:45
 #: backends/platform/android/options.cpp:137
-#: backends/platform/android/options.cpp:138 engines/ags/dialogs.cpp:62
+#: backends/platform/android/options.cpp:138 engines/ags/dialogs.cpp:63
 msgid "<default>"
 msgstr "<за умовчанням>"
 
@@ -2568,7 +2568,7 @@ msgstr ""
 "Кроки 2 та 3 необхідно повторити для кожної з ваших ігор."
 
 #: base/main.cpp:663 base/main.cpp:684
-#: engines/director/lingo/lingo-builtins.cpp:1207
+#: engines/director/lingo/lingo-builtins.cpp:1229
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -2869,12 +2869,12 @@ msgid "Storage Access Framework Permissions for ScummVM were revoked!"
 msgstr ""
 
 #. I18N: One line summary as shown in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:32
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:32
 msgid "Interpreter for numerous adventure games and role-playing games"
 msgstr "Інтерпретатор для численних пригодницьких і рольових ігор"
 
 #. I18N: 1 of 3 paragraph of ScummVM description in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:37
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:37
 msgid ""
 "ScummVM is a program which allows you to run a wide variety of classic "
 "graphical point-and-click adventure games and role-playing games, provided "
@@ -2889,7 +2889,7 @@ msgstr ""
 "вони ніколи не були розроблені!"
 
 #. I18N: 2 of 3 paragraph of ScummVM description in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:45
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:45
 msgid ""
 "Currently, ScummVM supports a huge library of adventures with over 4000 "
 "games in total. It supports many classics published by legendary studios "
@@ -2902,7 +2902,7 @@ msgstr ""
 "Revolution Software, Cyan, Inc. та Westwood Studios."
 
 #. I18N: 3 of 3 paragraph of ScummVM description in *nix distributions
-#: dists/scummvm.appdata.xml.cpp:51
+#: dists/org.scummvm.scummvm.metainfo.xml.cpp:51
 msgid ""
 "Next to ground-breaking titles like the Monkey Island series, Broken Sword, "
 "Myst, Blade Runner and countless other games you will find some really "
@@ -2968,7 +2968,7 @@ msgstr "~П~овер.в головне меню"
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:742
 #: engines/sci/engine/kfile.cpp:1076 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3765
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3771
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/zvision/file/save_manager.cpp:48
 msgid "Save game:"
@@ -2990,7 +2990,7 @@ msgstr "Зберегти гру:"
 #: engines/prince/saveload.cpp:54 engines/sci/engine/guest_additions.cpp:743
 #: engines/sci/engine/kfile.cpp:1076 engines/sherlock/scalpel/scalpel.cpp:1249
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
-#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3765
+#: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3771
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
 #: engines/wage/saveload.cpp:751 engines/zvision/file/save_manager.cpp:48
 #: engines/zvision/metaengine.cpp:262
@@ -3588,27 +3588,27 @@ msgid "Resolution: %dx%d"
 msgstr "Розгалуження %dx%d"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:728
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2634
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2656
 msgid "Enabled aspect ratio correction"
 msgstr "Корекцію співвідношення сторін увімкнено"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:730
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2640
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2662
 msgid "Disabled aspect ratio correction"
 msgstr "Корекцію співвідношення сторін вимкнено"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:743
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2656
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2678
 msgid "Filtering enabled"
 msgstr "Фільтрування увімкнено"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:745
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2658
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2680
 msgid "Filtering disabled"
 msgstr "Фільтрування вимкнено"
 
 #: backends/graphics/openglsdl/openglsdl-graphics.cpp:771
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2685
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2707
 msgid "Stretch mode"
 msgstr "Стретч-режим"
 
@@ -3616,7 +3616,7 @@ msgstr "Стретч-режим"
 msgid "SDL Surface"
 msgstr "Поверхня SDL"
 
-#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2600
+#: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:2622
 msgid "Active graphics filter:"
 msgstr "Поточний графічний фільтр:"
 
@@ -4359,22 +4359,18 @@ msgid ""
 msgstr ""
 
 #: backends/platform/ios7/ios7_osys_events.cpp:466
-#: backends/platform/iphone/osys_events.cpp:299
 msgid "Mouse-click-and-drag mode enabled."
 msgstr "Режим миші клікнути-та-тягнути увімкнено."
 
 #: backends/platform/ios7/ios7_osys_events.cpp:468
-#: backends/platform/iphone/osys_events.cpp:301
 msgid "Mouse-click-and-drag mode disabled."
 msgstr "Режим миші клікнути-та-тягнути вимкнено."
 
 #: backends/platform/ios7/ios7_osys_events.cpp:489
-#: backends/platform/iphone/osys_events.cpp:312
 msgid "Touchpad mode enabled."
 msgstr "Режим тачпаду увімкнено."
 
 #: backends/platform/ios7/ios7_osys_events.cpp:491
-#: backends/platform/iphone/osys_events.cpp:314
 msgid "Touchpad mode disabled."
 msgstr "Режим тачпаду вимкнено."
 
@@ -4656,7 +4652,7 @@ msgstr "Перевірити оновлення..."
 #: engines/hugo/hugo.cpp:424 engines/lure/lure.cpp:57
 #: engines/mortevielle/mortevielle.cpp:301 engines/sky/compact.cpp:129
 #: engines/supernova/supernova.cpp:464 engines/teenagent/resources.cpp:97
-#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5359
+#: engines/tony/tony.cpp:187 engines/toon/toon.cpp:5376
 #, c-format
 msgid "Unable to locate the '%s' engine data file."
 msgstr "Не вдалося знайти файл даних движка %s."
@@ -4664,7 +4660,7 @@ msgstr "Не вдалося знайти файл даних движка %s."
 #: engines/access/resources.cpp:51 engines/drascula/drascula.cpp:956
 #: engines/hugo/hugo.cpp:436 engines/lure/lure.cpp:66
 #: engines/mortevielle/mortevielle.cpp:309 engines/supernova/supernova.cpp:469
-#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5372
+#: engines/tony/tony.cpp:200 engines/toon/toon.cpp:5389
 #, c-format
 msgid "The '%s' engine data file is corrupt."
 msgstr "Файл движка %s пошкоджено."
@@ -4672,7 +4668,7 @@ msgstr "Файл движка %s пошкоджено."
 #: engines/access/resources.cpp:60 engines/drascula/drascula.cpp:967
 #: engines/hugo/hugo.cpp:446 engines/lure/lure.cpp:69
 #: engines/mortevielle/mortevielle.cpp:319 engines/tony/tony.cpp:211
-#: engines/toon/toon.cpp:5383
+#: engines/toon/toon.cpp:5400
 #, c-format
 msgid ""
 "Incorrect version of the '%s' engine data file found. Expected %d.%d but got "
@@ -4814,7 +4810,7 @@ msgstr "Додати меню швидкості гри (подібно до в�
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:745
 #: engines/sci/engine/kfile.cpp:1206 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3859
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3865
 #: engines/zvision/file/save_manager.cpp:61
 msgid "Restore game:"
 msgstr "Відновити гру:"
@@ -4834,7 +4830,7 @@ msgstr "Відновити гру:"
 #: engines/prince/saveload.cpp:63 engines/sci/engine/guest_additions.cpp:746
 #: engines/sci/engine/kfile.cpp:1206 engines/sherlock/scalpel/scalpel.cpp:1262
 #: engines/sherlock/tattoo/widget_files.cpp:93 engines/startrek/saveload.cpp:67
-#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3859
+#: engines/toltecs/menu.cpp:272 engines/toon/toon.cpp:3865
 #: engines/zvision/file/save_manager.cpp:61 engines/zvision/metaengine.cpp:267
 msgid "Restore"
 msgstr "Відновити"
@@ -4843,7 +4839,7 @@ msgstr "Відновити"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Швидке завантаження або збереження не підтримується в цій локації"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2816
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2821
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4854,7 +4850,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2803
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2808
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4865,7 +4861,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2838
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2841
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -4942,22 +4938,31 @@ msgstr ""
 "MT32 на General MIDI. Але в результаті може\n"
 "статися, що деякі треки будуть грати неправильно."
 
-#: engines/ags/dialogs.cpp:58
+#: engines/ags/dialogs.cpp:59
 msgid "Game language:"
 msgstr "Мова гри.:"
 
-#: engines/ags/dialogs.cpp:58
+#: engines/ags/dialogs.cpp:59
 msgid "Language to use for multilingual games"
 msgstr "Мова для використання багатомовними грами"
 
-#: engines/ags/dialogs.cpp:78
+#: engines/ags/dialogs.cpp:79
 msgid "Force antialiased text"
 msgstr "Примусово шрифти зі згладжуванням"
 
-#: engines/ags/dialogs.cpp:78
+#: engines/ags/dialogs.cpp:79
 msgid "Use antialiasing to draw text even if the game does not ask for it"
 msgstr ""
 "Використовувати шрифти зі згладжуванням, навіть коли гра цього не запитувала"
+
+#: engines/ags/dialogs.cpp:82 engines/grim/metaengine.cpp:48
+#: engines/zvision/metaengine.cpp:221
+msgid "Show FPS"
+msgstr "Показати лічильник кадрів"
+
+#: engines/ags/dialogs.cpp:82 engines/grim/metaengine.cpp:49
+msgid "Show the current FPS-rate, while you play."
+msgstr "Показувати лічильник кадрів під час гри."
 
 #: engines/ags/ags.cpp:132
 msgid ""
@@ -5082,8 +5087,8 @@ msgstr "Автор перекладу проти того, щоб його пе�
 #: engines/mohawk/detection_tables.h:2494
 #: engines/mohawk/detection_tables.h:3564
 #: engines/mohawk/detection_tables.h:3579 engines/myst3/detection.cpp:142
-#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5239
-#: engines/sci/detection_tables.h:5247 engines/stark/detection.cpp:319
+#: engines/saga/detection_tables.h:46 engines/sci/detection_tables.h:5258
+#: engines/sci/detection_tables.h:5266 engines/stark/detection.cpp:319
 #: engines/teenagent/detection.cpp:117 engines/toltecs/detection.cpp:210
 #: engines/trecision/detection.cpp:201 engines/zvision/detection_tables.h:129
 msgid "Missing game code"
@@ -5336,7 +5341,7 @@ msgstr ""
 "наступному запуску гри.\n"
 
 #: engines/buried/saveload.cpp:165 engines/mtropolis/saveload.cpp:158
-#: engines/vcruise/vcruise.cpp:293
+#: engines/vcruise/vcruise.cpp:310
 msgid "Saved game was created with a newer version of ScummVM. Unable to load."
 msgstr ""
 "Цей файл зі збереженою грою було створено у новішій версії ScummVM. Не зможу "
@@ -5425,7 +5430,7 @@ msgid ""
 "anyway?"
 msgstr "Гра запобігає виходу у цей момент. Чи ви дійсно хочете вийти?"
 
-#: engines/dragons/dragons.cpp:1885
+#: engines/dragons/dragons.cpp:1884
 #, c-format
 msgid ""
 "Error: The file '%s' hasn't been extracted properly.\n"
@@ -5794,14 +5799,6 @@ msgid ""
 msgstr ""
 "Завантажити патч користувача. Будь-ласка, зауважте, що команда ScummVM не "
 "надає пидтримку для користувачів таких патчей."
-
-#: engines/grim/metaengine.cpp:48 engines/zvision/metaengine.cpp:221
-msgid "Show FPS"
-msgstr "Показати лічильник кадрів"
-
-#: engines/grim/metaengine.cpp:49
-msgid "Show the current FPS-rate, while you play."
-msgstr "Показувати лічильник кадрів під час гри."
 
 #: engines/grim/metaengine.cpp:92
 msgid "Escape from Monkey Island support is not compiled in"
@@ -6647,6 +6644,13 @@ msgstr "Might and Magic 1"
 msgid "Might and Magic 1 - Cheats"
 msgstr "Might and Magic 1 - Чіти"
 
+#: engines/mm/mm1/mm1.cpp:101
+msgid ""
+"In order to run in Enhanced mode,  please copy xeen.cc from a copy of World "
+"of Xeen\n"
+"or Clouds of Xeen to your Might and Magic 1 game folder"
+msgstr ""
+
 #: engines/mm/shared/utils/engine_data.cpp:277
 #: engines/ultima/shared/engine/data_archive.cpp:80
 #, c-format
@@ -7032,14 +7036,14 @@ msgstr "Примусове програвання роликів до кінця
 msgid "Failed to read version information from save file"
 msgstr "Не вдалося завантажити інформацію про версію зі збереження гри"
 
-#: engines/mtropolis/saveload.cpp:150 engines/vcruise/vcruise.cpp:288
+#: engines/mtropolis/saveload.cpp:150 engines/vcruise/vcruise.cpp:305
 msgid ""
 "Failed to load save, the save file doesn't contain valid version information."
 msgstr ""
 "Не вдалося завантажити гру, у файлі збереження відсутня інформація про "
 "версію."
 
-#: engines/mtropolis/saveload.cpp:166 engines/vcruise/vcruise.cpp:298
+#: engines/mtropolis/saveload.cpp:166 engines/vcruise/vcruise.cpp:315
 msgid ""
 "Saved game was created with an earlier, incompatible version of ScummVM. "
 "Unable to load."
@@ -7459,11 +7463,11 @@ msgstr "Casio MT-540"
 msgid "Casio CT-460 / CSM-1"
 msgstr "Casio MT-540 / CSM-1"
 
-#: engines/sci/detection_tables.h:4475
+#: engines/sci/detection_tables.h:4494
 msgid "This demo uses an unimplemented version of Robot videos"
 msgstr ""
 
-#: engines/sci/detection_tables.h:4530
+#: engines/sci/detection_tables.h:4549
 msgid "Incomplete game detected. You have to copy data from all the CDs."
 msgstr "Неповна версія гри. Ви мусите скопіювати дані з усіх CD."
 
@@ -7692,7 +7696,7 @@ msgid "Your Name:"
 msgstr "Назва:"
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:3518
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:3828
 msgid "Host"
 msgstr "Розпочати"
 
@@ -7702,7 +7706,7 @@ msgid "Querying games..."
 msgstr "Вичитую список ігор..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:3518
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:3828
 msgid "Join"
 msgstr "Приєднатись"
 
@@ -8615,7 +8619,7 @@ msgstr ""
 "Ця версія Monkey Island 1 бракує деякі ресурси, необхідні\n"
 "для роботи MT-32. Перемикаюсь на AdLib."
 
-#: engines/scumm/scumm.cpp:3407
+#: engines/scumm/scumm.cpp:3717
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -8625,7 +8629,7 @@ msgstr ""
 "вам потрібно переписати файли гри Maniac Manssion у папку Maniac всередині "
 "папки з грою Tentacle, а також додати саму гру у ScummVM."
 
-#: engines/scumm/scumm.cpp:3518
+#: engines/scumm/scumm.cpp:3828
 msgid "Would you like to host or join a network play session?"
 msgstr "Чи ви хочете розпочати або приєднатися до мережевої гри?"
 
@@ -8970,11 +8974,11 @@ msgstr "Збережену гру №%d завантажено"
 msgid "Could not quick load the saved game #%d"
 msgstr "Не вдалося завантажити збережену гру №%d"
 
-#: engines/toon/toon.cpp:1502
+#: engines/toon/toon.cpp:1501
 msgid "Are you sure you want to exit?"
 msgstr "Ви упевнені, що хочете вийти?"
 
-#: engines/toon/toon.cpp:1906
+#: engines/toon/toon.cpp:1911
 #, c-format
 msgid "Unable to locate the '%s' data file."
 msgstr "Не вдалося знайти файл даних '%s'."
@@ -9462,15 +9466,15 @@ msgstr ""
 "Музика у цій грі потребує підтримки MP3, яка відсутня у збірці.\n"
 "Гра запуститься, але музика буде відсутня."
 
-#: engines/vcruise/vcruise.cpp:278
+#: engines/vcruise/vcruise.cpp:295
 msgid "Failed to load save, the save data appears to be damaged."
 msgstr "Не вдалося завантажити гру, файл збереження виглядає пошкодженим."
 
-#: engines/vcruise/vcruise.cpp:283
+#: engines/vcruise/vcruise.cpp:300
 msgid "Failed to read version information from save file."
 msgstr "Не вдалося завантажити інформацію про версію зі збереження гри."
 
-#: engines/vcruise/vcruise.cpp:303
+#: engines/vcruise/vcruise.cpp:320
 msgid "An unknown error occurred while attempting to load the saved game."
 msgstr "Виникла невідома помилка під час спроби завантаження збереження гри."
 

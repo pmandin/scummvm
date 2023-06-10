@@ -159,6 +159,7 @@ public:
 	Common::Language getLanguage() const;
 	Common::String getTargetName() { return _targetName; }
 	const char *getExtra();
+	Common::String getRawEXEName() const;
 	Common::String getEXEName() const;
 	StartMovie getStartMovie() const;
 	void parseOptions();
@@ -210,6 +211,14 @@ public:
 	Common::CodePage getPlatformEncoding();
 
 	Archive *createArchive();
+	Archive *openArchive(const Common::String movie);
+	Archive *loadEXE(const Common::String movie);
+	Archive *loadEXEv3(Common::SeekableReadStream *stream);
+	Archive *loadEXEv4(Common::SeekableReadStream *stream);
+	Archive *loadEXEv5(Common::SeekableReadStream *stream);
+	Archive *loadEXEv7(Common::SeekableReadStream *stream);
+	Archive *loadEXERIFX(Common::SeekableReadStream *stream, uint32 offset);
+	Archive *loadMac(const Common::String movie);
 
 	bool desktopEnabled();
 
@@ -229,6 +238,7 @@ public:
 	Graphics::PixelFormat _pixelformat;
 
 	uint32 _debugDraw = 0;
+	int _defaultVolume = 255;
 
 public:
 	int _colorDepth;
@@ -242,9 +252,10 @@ public:
 	Common::Rect _fixStageRect;
 	Common::List<Common::String> _extraSearchPath;
 
+	// Owner of all Archive objects.
 	Common::HashMap<Common::String, Archive *, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> _allOpenResFiles;
-	// Opened Resource Files that were opened by OpenResFile
-	Common::HashMap<Common::String, MacArchive *, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> _openResFiles;
+	// Handles to resource files that were opened by OpenResFile.
+	Common::HashMap<Common::String, Archive *, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> _openResFiles;
 
 	Common::Array<Graphics::WinCursorGroup *> _winCursor;
 
@@ -320,7 +331,6 @@ struct DirectorPlotData {
 	uint32 preprocessColor(uint32 src);
 	void inkBlitShape(Common::Rect &srcRect);
 	void inkBlitSurface(Common::Rect &srcRect, const Graphics::Surface *mask);
-	void inkBlitStretchSurface(Common::Rect &srcRect, const Graphics::Surface *mask);
 
 	DirectorPlotData(DirectorEngine *d_, SpriteType s, InkType i, int a, uint32 b, uint32 f) : d(d_), sprite(s), ink(i), alpha(a), backColor(b), foreColor(f) {
 		colorWhite = d->_wm->_colorWhite;

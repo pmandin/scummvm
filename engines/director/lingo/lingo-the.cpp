@@ -397,7 +397,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = getCastlibsNum();
 		break;
 	case kTheCastMembers:
-		d = (int)(movie->getCast()->getCastSize() + (movie->_sharedCast ? movie->_sharedCast->getCastSize() : 0));
+		d = getMembersNum();
 		break;
 	case kTheCenterStage:
 		d = g_director->_centerStage;
@@ -804,12 +804,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		{
 			switch (field) {
 			case kTheVolume:
-				{
-					SoundChannel *chan = _vm->getCurrentWindow()->getSoundManager()->getChannel(id.asInt());
-					if (chan) {
-						d = (int)chan->volume;
-					}
-				}
+				d = _vm->getCurrentWindow()->getSoundManager()->getChannelVolume(id.asInt());
 				break;
 			default:
 				warning("Lingo::getTheEntity(): Unprocessed getting field \"%s\" of entity %s", field2str(field), entity2str(entity));
@@ -1235,6 +1230,12 @@ int Lingo::getCastlibsNum() {
 	return _vm->getCurrentMovie()->getCasts()->size();
 }
 
+int Lingo::getMembersNum() {
+	// FIXME: deal with D5 castlibs
+	Movie *movie = _vm->getCurrentMovie();
+	return (MAX(movie->getCast()->getCastMaxID(), (movie->_sharedCast ? movie->_sharedCast->getCastMaxID() : 0)));
+}
+
 int Lingo::getXtrasNum() {
 	return _openXLibs.size();
 }
@@ -1550,9 +1551,7 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			movie->getWindow()->addDirtyRect(channel->getBbox());
 			channel->_dirty = true;
 		}
-
-		channel->_currentPoint.x = d.asPoint().x;
-		channel->_currentPoint.y = d.asPoint().y;
+		channel->setPosition(d.asPoint().x, d.asPoint().y);
 		break;
 	case kTheLocH:
 		if (d.asInt() != channel->_currentPoint.x) {
@@ -1562,7 +1561,7 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 				movie->getWindow()->addDirtyRect(channel->getBbox());
 				channel->_dirty = true;
 			}
-			channel->_currentPoint.x = d.asInt();
+			channel->setPosition(d.asInt(), channel->_currentPoint.y);
 		}
 		break;
 	case kTheLocV:
@@ -1571,7 +1570,7 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 				movie->getWindow()->addDirtyRect(channel->getBbox());
 				channel->_dirty = true;
 			}
-			channel->_currentPoint.y = d.asInt();
+			channel->setPosition(channel->_currentPoint.x, d.asInt());
 		}
 		break;
 	case kTheMoveableSprite:
@@ -1691,6 +1690,11 @@ Datum Lingo::getTheCast(Datum &id1, int field) {
 			d = 0;
 		} else if (field == kTheNumber) {
 			d = -1;
+		} else if (id.member <= getMembersNum()) {
+			// If a cast member with the ID doesn't exist,
+			// but the ID isn't greater than the biggest cast member ID,
+			// Lingo will not crash, and instead return a VOID.
+			return d;
 		} else {
 			g_lingo->lingoError("Lingo::getTheCast(): CastMember %s not found", id1.asString().c_str());
 		}

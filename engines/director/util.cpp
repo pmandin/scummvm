@@ -444,7 +444,7 @@ const char *recIndent() {
 
 bool isAbsolutePath(Common::String &path) {
 	// Starts with Mac directory notation for the game root
-	if (path.hasPrefix("@:"))
+	if (path.hasPrefix(Common::String("@") + g_director->_dirSeparator))
 		return true;
 	// Starts with a Windows drive letter
 	if (path.size() >= 3
@@ -471,7 +471,7 @@ Common::String convertPath(Common::String &path) {
 
 	if (path.hasPrefix("::")) { // Parent directory
 		idx = 2;
-	} else if (path.hasPrefix("@:")) { // Root of the game
+	} else if (path.hasPrefix(Common::String("@") + g_director->_dirSeparator)) { // Root of the game
 		idx = 2;
 	} else if (path.size() >= 3
 					&& Common::isAlpha(path[0])
@@ -1476,6 +1476,29 @@ int compareStrings(const Common::String &s1, const Common::String &s2) {
 		p2++;
 	} while (c1 == c2 && c1);
 	return c1 - c2;
+}
+
+const char *d_strstr(const char *str, const char *substr) {
+	int len = strlen(substr);
+	const char *ref = substr;
+
+	while (*str && *ref) {
+		uint32 c1 = getCharOrder(*str);
+		uint32 c2 = getCharOrder(*ref);
+
+		str++;
+
+		if (c1 == c2)
+			ref++;
+
+		if (!*ref)
+			return (str - len);
+
+		if (len == (ref - substr))
+			ref = substr;
+	}
+
+	return NULL;
 }
 
 void DirectorEngine::delayMillis(uint32 delay) {

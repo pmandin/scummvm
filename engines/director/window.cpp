@@ -60,7 +60,8 @@ Window::Window(int id, bool scrollable, bool resizable, bool editable, Graphics:
 	_startFrame = _vm->getStartMovie().startFrame;
 
 	_windowType = -1;
-	_titleVisible = true;
+	_isModal = false;
+
 	updateBorderType();
 }
 
@@ -180,6 +181,26 @@ bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 		font->drawString(blitTo, msg, blitTo->w - 2 - width, 2, width , _wm->_colorWhite);
 	}
 
+	if (g_director->_debugDraw & kDebugDrawCast) {
+		for (uint i = 0; i < _currentMovie->getScore()->_channels.size(); i++) {
+			Channel *channel = _currentMovie->getScore()->_channels[i];
+			if (!channel->isEmpty()) {
+				Common::Rect bbox = channel->getBbox();
+				blitTo->frameRect(bbox, g_director->_wm->_colorWhite);
+
+				const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
+				font->drawString(blitTo, Common::String::format("m: %d, ch: %d", channel->_sprite->_castId.member, i), bbox.left + 2, bbox.top + 2, 128, g_director->_wm->_colorWhite);
+			}
+		}
+
+		const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
+		Common::String msg = Common::String::format("Frame: %d", g_director->getCurrentMovie()->getScore()->getCurrentFrame());
+		uint32 width = font->getStringWidth(msg);
+
+		blitTo->fillRect(Common::Rect(blitTo->w - 3 - width, 1, blitTo->w - 1, font->getFontHeight() + 1), _wm->_colorBlack);
+		font->drawString(blitTo, msg, blitTo->w - 2 - width, 2, width , _wm->_colorWhite);
+	}
+
 	_dirtyRects.clear();
 	_contentIsDirty = true;
 
@@ -194,20 +215,54 @@ void Window::setStageColor(uint32 stageColor, bool forceReset) {
 	}
 }
 
+void Window::setTitleVisible(bool titleVisible) {
+	MacWindow::setTitleVisible(titleVisible);
+	updateBorderType();
+
+	setVisible(true); // Activate this window on top
+}
+
 Datum Window::getStageRect() {
-	Graphics::ManagedSurface *surface = getSurface();
+	Common::Rect rect = getInnerDimensions();
 	Datum d;
 	d.type = RECT;
 	d.u.farr = new FArray;
-	d.u.farr->arr.push_back(0);
-	d.u.farr->arr.push_back(0);
-	d.u.farr->arr.push_back(surface->w);
-	d.u.farr->arr.push_back(surface->h);
+	d.u.farr->arr.push_back(rect.left);
+	d.u.farr->arr.push_back(rect.top);
+	d.u.farr->arr.push_back(rect.right);
+	d.u.farr->arr.push_back(rect.bottom);
+
 	return d;
 }
 
+bool Window::setStageRect(Datum datum) {
+	if (datum.type != RECT) {
+		warning("Window::setStageRect(): bad argument passed to rect field");
+		return false;
+	}
+
+	// Unpack rect from datum
+	Common::Rect rect = Common::Rect(datum.u.farr->arr[0].asInt(), datum.u.farr->arr[1].asInt(), datum.u.farr->arr[2].asInt(), datum.u.farr->arr[3].asInt());
+
+	setInnerDimensions(rect);
+
+	return true;
+}
+
+void Window::setModal(bool modal) {
+	if (_isModal && !modal) {
+		_wm->setLockedWidget(nullptr);
+		_isModal = false;
+	} else if (!_isModal && modal) {
+		_wm->setLockedWidget(this);
+		_isModal = true;
+	}
+	
+	setVisible(true); // Activate this window on top
+}
+
 void Window::reset() {
-	resize(_composeSurface->w, _composeSurface->h, true);
+	resizeInner(_composeSurface->w, _composeSurface->h);
 	_contentIsDirty = true;
 }
 
@@ -222,12 +277,7 @@ void Window::inkBlitFrom(Channel *channel, Common::Rect destRect, Graphics::Mana
 	if (pd.ms) {
 		pd.inkBlitShape(srcRect);
 	} else if (pd.srf) {
-		if (channel->isStretched()) {
-			srcRect = channel->getBbox(true);
-			pd.inkBlitStretchSurface(srcRect, channel->getMask());
-		} else {
-			pd.inkBlitSurface(srcRect, channel->getMask());
-		}
+		pd.inkBlitSurface(srcRect, channel->getMask());
 	} else {
 		if (debugChannelSet(kDebugImages, 4)) {
 			CastType castType = channel->_sprite->_cast ? channel->_sprite->_cast->_type : kCastTypeNull;
@@ -279,7 +329,7 @@ bool Window::setNextMovie(Common::String &movieFilenameRaw) {
 void Window::updateBorderType() {
 	if (_isStage) {
 		setBorderType(3);
-	} else if (!_titleVisible) {
+	} else if (!isTitleVisible()) {
 		setBorderType(2);
 	} else {
 		setBorderType(MAX(0, MIN(_windowType, 16)));
@@ -304,8 +354,7 @@ void Window::loadNewSharedCast(Cast *previousSharedCast) {
 	}
 
 	// Clean up the previous sharedCast
-	if (!previousSharedCastPath.empty()) {
-		g_director->_allOpenResFiles.erase(previousSharedCastPath);
+	if (previousSharedCast) {
 		delete previousSharedCast;
 	}
 
@@ -329,11 +378,12 @@ bool Window::loadNextMovie() {
 	delete _currentMovie;
 	_currentMovie = nullptr;
 
-	Archive *mov = openArchive(_currentPath + Common::lastPathComponent(_nextMovie.movie, g_director->_dirSeparator));
+	Archive *mov = g_director->openArchive(_currentPath + Common::lastPathComponent(_nextMovie.movie, g_director->_dirSeparator));
 
 	if (!mov)
 		return false;
 
+	probeResources(mov);
 	_currentMovie = new Movie(this);
 	_currentMovie->setArchive(mov);
 

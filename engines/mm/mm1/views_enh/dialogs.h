@@ -24,7 +24,6 @@
 
 #include "mm/mm1/events.h"
 #include "mm/mm1/views/bash.h"
-#include "mm/mm1/views/title.h"
 #include "mm/mm1/views_enh/character_info.h"
 #include "mm/mm1/views_enh/character_inventory.h"
 #include "mm/mm1/views_enh/character_select.h"
@@ -75,6 +74,7 @@
 #include "mm/mm1/views_enh/interactions/prisoners.h"
 #include "mm/mm1/views_enh/interactions/resistances.h"
 #include "mm/mm1/views_enh/interactions/ruby.h"
+#include "mm/mm1/views_enh/interactions/scummvm.h"
 #include "mm/mm1/views_enh/interactions/statue.h"
 #include "mm/mm1/views_enh/interactions/trivia.h"
 #include "mm/mm1/views_enh/interactions/volcano_god.h"
@@ -87,6 +87,12 @@
 #include "mm/mm1/views_enh/locations/training.h"
 #include "mm/mm1/views_enh/spells/cast_spell.h"
 #include "mm/mm1/views_enh/spells/spellbook.h"
+#include "mm/mm1/views_enh/spells/detect_magic.h"
+#include "mm/mm1/views_enh/spells/duplication.h"
+#include "mm/mm1/views_enh/spells/fly.h"
+#include "mm/mm1/views_enh/spells/location.h"
+#include "mm/mm1/views_enh/spells/recharge_item.h"
+#include "mm/mm1/views_enh/spells/teleport.h"
 
 namespace MM {
 namespace MM1 {
@@ -115,6 +121,7 @@ private:
 	ViewsEnh::Interactions::Orango _orango;
 	ViewsEnh::Interactions::Resistances _resistances;
 	ViewsEnh::Interactions::Ruby _ruby;
+	ViewsEnh::Interactions::ScummVM _scummVM;
 	ViewsEnh::Interactions::Statue _statue;
 	ViewsEnh::Interactions::Trivia _trivia;
 	ViewsEnh::Interactions::VolcanoGod _volcanoGod;
@@ -136,6 +143,12 @@ private:
 	ViewsEnh::Locations::Training _training;
 	ViewsEnh::Spells::CastSpell _castSpell;
 	ViewsEnh::Spells::Spellbook _spellbook;
+	ViewsEnh::Spells::DetectMagic _detectMagic;
+	ViewsEnh::Spells::Duplication _duplicateItem;
+	ViewsEnh::Spells::Fly _fly;
+	ViewsEnh::Spells::Location _location;
+	ViewsEnh::Spells::RechargeItem _rechargeItem;
+	ViewsEnh::Spells::Teleport _teleport;
 	ViewsEnh::CharacterInfo _characterInfo;
 	ViewsEnh::CharacterInfoCombat _characterInfoCombat;
 	ViewsEnh::CharacterInventory _characterInventory;

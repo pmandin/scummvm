@@ -702,7 +702,7 @@ void EoBCoreEngine::writeSettings() {
 	if (_sound) {
 		if (_flags.platform == Common::kPlatformPC98 || _flags.platform == Common::kPlatformSegaCD) {
 			if (!_configMusic)
-				snd_playSong(0);
+				snd_stopSound();
 		} else if (!_configSounds) {
 			_sound->haltTrack();
 		}
@@ -777,7 +777,7 @@ bool EoBCoreEngine::checkPartyStatus(bool handleDeath) {
 	gui_drawAllCharPortraitsWithStats();
 
 	if (checkPartyStatusExtra()) {
-		Screen::FontId of = _screen->setFont(_flags.use16ColorMode ? Screen::FID_SJIS_FNT : Screen::FID_8_FNT);
+		Screen::FontId of = _screen->setFont(_titleFont);
 		gui_updateControls();
 		int x = 0;
 		int y = 0;
@@ -2046,7 +2046,7 @@ bool EoBCoreEngine::checkPassword() {
 	return true;
 }
 
-Common::String EoBCoreEngine::convertAsciiToSjis(const Common::String &str) {
+Common::String EoBCoreEngine::makeTwoByteString(const Common::String &str) {
 	if (_flags.platform != Common::kPlatformFMTowns)
 		return str;
 

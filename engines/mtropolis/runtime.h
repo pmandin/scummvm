@@ -327,6 +327,16 @@ bool isCommand(EventID eventID);
 
 } // End of namespace EventIDs
 
+namespace MTropolisVersions {
+
+enum MTropolisVersion {
+	kMTropolisVersion1_0,
+	kMTropolisVersion1_1,
+	kMTropolisVersion2_0,
+};
+
+} // End of namespace MTropolisVersions
+
 MiniscriptInstructionOutcome pointWriteRefAttrib(Common::Point &point, MiniscriptThread *thread, DynamicValueWriteProxy &proxy, const Common::String &attrib);
 Common::String pointToString(const Common::Point &point);
 
@@ -1559,8 +1569,10 @@ public:
 
 	const byte *getPalette() const;
 
+	static const uint kNumColors = 256;
+
 private:
-	byte _colors[256 * 3];
+	byte _colors[kNumColors * 3];
 };
 
 class Runtime {
@@ -2415,6 +2427,8 @@ public:
 
 	const SubtitleTables &getSubtitles() const;
 
+	MTropolisVersions::MTropolisVersion guessVersion() const;
+
 #ifdef MTROPOLIS_DEBUG_ENABLE
 	const char *debugGetTypeName() const override { return "Project"; }
 #endif
@@ -2527,6 +2541,8 @@ private:
 	Common::SharedPtr<KeyboardEventSignaller> _keyboardEventSignaller;
 
 	SubtitleTables _subtitles;
+
+	MTropolisVersions::MTropolisVersion _guessedVersion;
 };
 
 class Section : public Structural {
@@ -2756,6 +2772,8 @@ public:
 	const VisualElementRenderProperties &getRenderProperties() const;
 	const Common::WeakPtr<GraphicModifier> &getPrimaryGraphicModifier() const;
 
+	void setShading(int16 topLeftBevelShading, int16 bottomRightBevelShading, int16 interiorShading, uint32 bevelSize);
+
 	void setTransitionProperties(const VisualElementTransitionProperties &props);
 	const VisualElementTransitionProperties &getTransitionProperties() const;
 
@@ -2803,12 +2821,29 @@ protected:
 
 	static VisualElement *recursiveFindItemWithLayer(VisualElement *element, int32 layer);
 
+	void renderShading(Graphics::Surface &surf) const;
+
+	static uint32 quantizeShading(uint32 mask, int16 shading);
+
+	static void renderShadingScanlineDynamic(void *data, size_t numElements, uint32 rMask, uint32 rAdd, uint32 gMask, uint32 gAdd, uint32 bMask, uint32 bAdd, bool isBrighten, byte bytesPerPixel);
+
+	template<class TElement>
+	static void renderBrightenScanline(TElement *element, size_t numElements, TElement rMask, TElement rAdd, TElement gMask, TElement gAdd, TElement bMask, TElement bAdd);
+
+	template<class TElement>
+	static void renderDarkenScanline(TElement *element, size_t numElements, TElement rMask, TElement rSub, TElement gMask, TElement gSub, TElement bMask, TElement bSub);
+
 	bool _directToScreen;
 	bool _visible;
 	bool _visibleByDefault;
 	Common::Rect _rect;
 	Common::Point _cachedAbsoluteOrigin;
 	uint16 _layer;
+
+	int16 _topLeftBevelShading;
+	int16 _bottomRightBevelShading;
+	int16 _interiorShading;
+	uint32 _bevelSize;
 
 	Common::SharedPtr<DragMotionProperties> _dragProps;
 

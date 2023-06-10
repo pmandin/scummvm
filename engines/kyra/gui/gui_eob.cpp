@@ -2322,12 +2322,17 @@ void GUI_EoB::runCampMenu() {
 	Button *buttonList = 0;
 
 	for (bool runLoop = true; runLoop && !_vm->shouldQuit();) {
+		bool buttonsUnchanged = true;
+
 		if (newMenu != -1) {
 			drawCampMenu();
+
 			if (newMenu == 2) {
 				updateOptionsStrings();
 				if (_vm->gameFlags().platform == Common::kPlatformSegaCD)
 					keepButtons = false;
+				else
+					buttonsUnchanged = false;
 			}
 			if (!keepButtons) {
 				releaseButtons(buttonList);
@@ -2521,7 +2526,7 @@ void GUI_EoB::runCampMenu() {
 					else if (_vm->_configMusic)
 						_vm->snd_playSong(11);
 					else
-						_vm->snd_playSong(0);
+						_vm->snd_stopSound();
 				} else {
 					_vm->_configSounds ^= true;
 					_vm->_configMusic = _vm->_configSounds ? 1 : 0;
@@ -2569,8 +2574,11 @@ void GUI_EoB::runCampMenu() {
 		} else {
 			Common::Point p = _vm->getMousePos();
 			for (Button *b = buttonList; b; b = b->nextButton) {
-				if ((b->arg & 2) && _vm->posWithinRect(p.x, p.y, b->x, b->y, b->x + b->width, b->y + b->height))
+				if ((b->arg & 2) && _vm->posWithinRect(p.x, p.y, b->x, b->y, b->x + b->width, b->y + b->height)) {
+					if (highlightButton && highlightButton != b && !prevHighlightButton)
+						prevHighlightButton = highlightButton;
 					highlightButton = b;
+				}
 			}
 		}
 
@@ -2584,7 +2592,7 @@ void GUI_EoB::runCampMenu() {
 		_charSelectRedraw = redrawPortraits = false;
 
 		if (prevHighlightButton != highlightButton && newMenu == -1 && runLoop) {
-			drawMenuButton(prevHighlightButton, false, false, true);
+			drawMenuButton(prevHighlightButton, false, false, buttonsUnchanged);
 			drawMenuButton(highlightButton, false, true, false);
 			_screen->updateScreen();
 			prevHighlightButton = highlightButton;
@@ -2904,7 +2912,7 @@ int GUI_EoB::getTextInput(char *dest, int x, int y, int destMaxLen, int textColo
 					if (_vm->_flags.platform == Common::kPlatformFMTowns && _keyPressed.ascii > 31 && _keyPressed.ascii < 123) {
 						Common::String s;
 						s.insertChar(in & 0xff, 0);
-						s = _vm->convertAsciiToSjis(s);
+						s = _vm->makeTwoByteString(s);
 						if (s.empty()) {
 							in = 0;
 						} else {
@@ -3966,7 +3974,8 @@ bool GUI_EoB::restParty() {
 	for (int l = 0; !res && restLoop && !_vm->shouldQuit();) {
 		l++;
 
-		int cs = (_vm->gameFlags().platform == Common::kPlatformSegaCD && _vm->gameFlags().lang == Common::JA_JPN) ? _screen->setFontStyles(_screen->_currentFont, Font::kStyleNarrow1) : -1;
+		int cs = (_vm->gameFlags().platform == Common::kPlatformSegaCD && _vm->gameFlags().lang == Common::JA_JPN) ? _screen->setFontStyles(_screen->_currentFont, Font::kStyleNarrow1) :
+			((_vm->gameFlags().platform == Common::kPlatformPC98 && !_vm->gameFlags().use16ColorMode) ? _screen->setFontStyles(_menuFont, Font::kStyleNone) : -1);
 
 		// Regenerate spells
 		for (int i = 0; i < 6; i++) {

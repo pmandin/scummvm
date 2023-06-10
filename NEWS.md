@@ -6,7 +6,8 @@ For a more comprehensive changelog of the latest experimental code, see:
  New games:
    - Added support for macOS versions of Syberia and Syberia II.
    - Added support for The Vampire Diaries and Nancy Drew: Secrets Can Kill.
-   - Added support for Reah: Face the Unknown.
+   - Added support for Reah: Face the Unknown and Schizm: Mysterious Journey.
+   - Added support for Might and Magic Book One
 
  New platforms:
    - Added libretro new shiny port.
@@ -41,6 +42,9 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Sword2:
    - Added support for Chinese translation.
+
+ TwinE:
+   - Added support for Japanese translation.
 
  Ultima:
    - Improve Ultima VI responsiveness.
