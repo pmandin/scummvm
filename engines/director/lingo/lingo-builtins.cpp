@@ -1147,6 +1147,9 @@ void LB::b_closeResFile(int nargs) {
 	// closeResFile closes only resource files that were opened with openResFile.
 
 	if (nargs == 0) { // Close all open resource files
+		for (auto &it : g_director->_openResFiles)
+			g_director->_allOpenResFiles.remove(it._key);
+
 		g_director->_openResFiles.clear();
 		return;
 	}
@@ -1156,6 +1159,8 @@ void LB::b_closeResFile(int nargs) {
 
 	if (g_director->_openResFiles.contains(resFileName)) {
 		g_director->_openResFiles.erase(resFileName);
+
+		g_director->_allOpenResFiles.remove(resFileName);
 	}
 }
 
@@ -1246,11 +1251,12 @@ void LB::b_openResFile(int nargs) {
  		return;
  	}
 
-	if (!g_director->_allOpenResFiles.contains(resPath)) {
+	if (!g_director->_allSeenResFiles.contains(resPath)) {
 		MacArchive *arch = new MacArchive();
 		if (arch->openFile(pathMakeRelative(resPath))) {
 			g_director->_openResFiles.setVal(resPath, arch);
-			g_director->_allOpenResFiles.setVal(resPath, arch);
+			g_director->_allSeenResFiles.setVal(resPath, arch);
+			g_director->addArchiveToOpenList(resPath);
 		} else {
 			delete arch;
 		}
@@ -1315,8 +1321,8 @@ void LB::b_showResFile(int nargs) {
 	if (nargs)
 		g_lingo->pop();
 	Common::String out;
-	for (auto it = g_director->_allOpenResFiles.begin(); it != g_director->_allOpenResFiles.end(); it++)
-		out += it->_key + "\n";
+	for (auto &it : g_director->_allOpenResFiles)
+		out += it + "\n";
 	g_debugger->debugLogFile(out, false);
 }
 
@@ -1324,8 +1330,8 @@ void LB::b_showXlib(int nargs) {
 	if (nargs)
 		g_lingo->pop();
 	Common::String out;
-	for (auto it = g_lingo->_openXLibs.begin(); it != g_lingo->_openXLibs.end(); it++)
-		out += it->_key + "\n";
+	for (auto &it : g_lingo->_openXLibs)
+		out += it._key + "\n";
 	g_debugger->debugLogFile(out, false);
 }
 
@@ -1333,8 +1339,8 @@ void LB::b_xFactoryList(int nargs) {
 	g_lingo->pop();
 	Datum d("");
 
-	for (auto it = g_lingo->_openXLibs.begin(); it != g_lingo->_openXLibs.end(); it++)
-		*d.u.s += it->_key + "\n";
+	for (auto &it : g_lingo->_openXLibs)
+		*d.u.s += it._key + "\n";
 	g_lingo->push(d);
 }
 
@@ -1839,9 +1845,9 @@ void LB::b_alert(int nargs) {
 }
 
 void LB::b_clearGlobals(int nargs) {
-	for (DatumHash::iterator it = g_lingo->_globalvars.begin(); it != g_lingo->_globalvars.end(); it++) {
-		if (!it->_value.ignoreGlobal) {
-			g_lingo->_globalvars.erase(it);
+	for (auto &it : g_lingo->_globalvars) {
+		if (!it._value.ignoreGlobal) {
+			g_lingo->_globalvars.erase(it._key);
 		}
 	}
 }

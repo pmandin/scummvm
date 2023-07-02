@@ -21,7 +21,9 @@
 
 #include "video/video_decoder.h"
 #include "video/qt_decoder.h"
+#include "video/avi_decoder.h"
 
+#include "common/file.h"
 #include "common/substream.h"
 
 #include "graphics/macgui/macfontmanager.h"
@@ -618,42 +620,67 @@ void MovieElement::activate() {
 		return;
 	}
 
-	if (asset->getAssetType() != kAssetTypeMovie) {
-		warning("Movie element assigned an asset that isn't a movie");
+	if (asset->getAssetType() == kAssetTypeMovie) {
+		MovieAsset *movieAsset = static_cast<MovieAsset *>(asset.get());
+		size_t streamIndex = movieAsset->getStreamIndex();
+		int segmentIndex = project->getSegmentForStreamIndex(streamIndex);
+		project->openSegmentStream(segmentIndex);
+		Common::SeekableReadStream *stream = project->getStreamForSegment(segmentIndex);
+
+		if (!stream) {
+			warning("Movie element stream could not be opened");
+			return;
+		}
+
+		Video::QuickTimeDecoder *qtDecoder = new Video::QuickTimeDecoder();
+		qtDecoder->setChunkBeginOffset(movieAsset->getMovieDataPos());
+		qtDecoder->setVolume(_volume * 255 / 100);
+
+		_videoDecoder.reset(qtDecoder);
+		_damagedFrames = movieAsset->getDamagedFrames();
+
+		Common::SafeSeekableSubReadStream *movieDataStream = new Common::SafeSeekableSubReadStream(stream, movieAsset->getMovieDataPos(), movieAsset->getMovieDataPos() + movieAsset->getMovieDataSize(), DisposeAfterUse::NO);
+
+		if (!_videoDecoder->loadStream(movieDataStream))
+			_videoDecoder.reset();
+		else {
+			if (getRuntime()->getHacks().removeQuickTimeEdits)
+				qtDecoder->flattenEditLists();
+
+			_timeScale = qtDecoder->getTimeScale();
+
+			_maxTimestamp = qtDecoder->getDuration().convertToFramerate(qtDecoder->getTimeScale()).totalNumberOfFrames();
+		}
+
+		_unloadSignaller = project->notifyOnSegmentUnload(segmentIndex, this);
+	} else if (asset->getAssetType() == kAssetTypeAVIMovie) {
+		AVIMovieAsset *aviAsset = static_cast<AVIMovieAsset *>(asset.get());
+
+		Common::File *f = new Common::File();
+		if (!f->open(Common::Path(Common::String("VIDEO/") + aviAsset->getExtFileName()))) {
+			warning("Movie asset could not be opened");
+			delete f;
+			return;
+		}
+
+		Video::AVIDecoder *aviDec = new Video::AVIDecoder();
+		aviDec->setVolume(_volume * 255 / 100);
+
+		_videoDecoder.reset(aviDec);
+
+		if (!_videoDecoder->loadStream(f))
+			_videoDecoder.reset();
+		else {
+			_timeScale = 1000;
+			_maxTimestamp = aviDec->getDuration().convertToFramerate(1000).totalNumberOfFrames();
+		}
+	} else {
+		warning("Movie element referenced a non-movie asset");
 		return;
 	}
 
-	MovieAsset *movieAsset = static_cast<MovieAsset *>(asset.get());
-	size_t streamIndex = movieAsset->getStreamIndex();
-	int segmentIndex = project->getSegmentForStreamIndex(streamIndex);
-	project->openSegmentStream(segmentIndex);
-	Common::SeekableReadStream *stream = project->getStreamForSegment(segmentIndex);
-
-	if (!stream) {
-		warning("Movie element stream could not be opened");
-		return;
-	}
-
-	Video::QuickTimeDecoder *qtDecoder = new Video::QuickTimeDecoder();
-	qtDecoder->setChunkBeginOffset(movieAsset->getMovieDataPos());
-	qtDecoder->setVolume(_volume * 255 / 100);
-
-	_videoDecoder.reset(qtDecoder);
-	_damagedFrames = movieAsset->getDamagedFrames();
-
-	Common::SafeSeekableSubReadStream *movieDataStream = new Common::SafeSeekableSubReadStream(stream, movieAsset->getMovieDataPos(), movieAsset->getMovieDataPos() + movieAsset->getMovieDataSize(), DisposeAfterUse::NO);
-
-	if (!_videoDecoder->loadStream(movieDataStream))
-		_videoDecoder.reset();
-
-	if (getRuntime()->getHacks().removeQuickTimeEdits)
-		qtDecoder->flattenEditLists();
-	_timeScale = qtDecoder->getTimeScale();
-
-	_unloadSignaller = project->notifyOnSegmentUnload(segmentIndex, this);
 	_playMediaSignaller = project->notifyOnPlayMedia(this);
 
-	_maxTimestamp = qtDecoder->getDuration().convertToFramerate(qtDecoder->getTimeScale()).totalNumberOfFrames();
 	_playRange = IntRange(0, 0);
 	_currentTimestamp = 0;
 
@@ -703,6 +730,9 @@ void MovieElement::queueAutoPlayEvents(Runtime *runtime, bool isAutoPlaying) {
 
 void MovieElement::render(Window *window) {
 	const IntRange realRange = computeRealRange();
+
+	if (!_videoDecoder)
+		return;
 
 	if (_needsReset) {
 		_videoDecoder->setReverse(_reversed);
@@ -1223,7 +1253,7 @@ MiniscriptInstructionOutcome ImageElement::scriptSetFlushPriority(MiniscriptThre
 
 MToonElement::MToonElement()
 	: _cacheBitmap(false), _maintainRate(false), _assetID(0), _rateTimes100000(0), _flushPriority(0), _celStartTimeMSec(0),
-	  _isPlaying(false), _renderedFrame(0), _playRange(IntRange(1, 1)), _cel(1), _hasIssuedRenderWarning(false) {
+	  _isPlaying(false), _isStopped(false), _renderedFrame(0), _playRange(IntRange(1, 1)), _cel(1), _hasIssuedRenderWarning(false) {
 }
 
 MToonElement::~MToonElement() {
@@ -1305,6 +1335,11 @@ VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::Shared
 		becomeVisibleTaskData->desiredFlag = true;
 		becomeVisibleTaskData->runtime = runtime;
 
+		if (_isStopped) {
+			_isStopped = false;
+			runtime->setSceneGraphDirty();
+		}
+
 		return kVThreadReturn;
 	}
 	if (Event(EventIDs::kStop, 0).respondsTo(msg->getEvent())) {
@@ -1320,6 +1355,7 @@ VThreadState MToonElement::consumeCommand(Runtime *runtime, const Common::Shared
 
 		StopPlayingTaskData *stopPlayingTaskData = runtime->getVThread().pushTask("MToonElement::stopPlayingTask", this, &MToonElement::stopPlayingTask);
 		stopPlayingTaskData->runtime = runtime;
+
 		return kVThreadReturn;
 	}
 
@@ -1340,7 +1376,9 @@ void MToonElement::activate() {
 		return;
 	}
 
-	_cachedMToon = static_cast<MToonAsset *>(asset.get())->loadAndCacheMToon(getRuntime());
+	uint hackFlags = 0;
+
+	_cachedMToon = static_cast<MToonAsset *>(asset.get())->loadAndCacheMToon(getRuntime(), hackFlags);
 	_metadata = _cachedMToon->getMetadata();
 
 	_playMediaSignaller = project->notifyOnPlayMedia(this);
@@ -1348,6 +1386,9 @@ void MToonElement::activate() {
 
 	if (_name.empty())
 		_name = project->getAssetNameByID(_assetID);
+
+	if (_hooks)
+		_hooks->onPostActivate(this);
 }
 
 void MToonElement::deactivate() {
@@ -1364,6 +1405,11 @@ bool MToonElement::canAutoPlay() const {
 }
 
 void MToonElement::render(Window *window) {
+	// Stopped mToons are not supposed to render
+	// FIXME: Should this also disable mouse collision?  Should we detect ths somewhere else?
+	if (_isStopped)
+		return;
+
 	if (_cachedMToon) {
 		_cachedMToon->optimize(getRuntime());
 
@@ -1529,9 +1575,16 @@ VThreadState MToonElement::stopPlayingTask(const StopPlayingTaskData &taskData) 
 	_contentsDirty = true;
 	_isPlaying = false;
 
-	Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
-	Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
-	taskData.runtime->sendMessageOnVThread(dispatch);
+	if (!_isStopped) {
+		_isStopped = true;
+
+		Common::SharedPtr<MessageProperties> msgProps(new MessageProperties(Event(EventIDs::kStop, 0), DynamicValue(), getSelfReference()));
+		Common::SharedPtr<MessageDispatch> dispatch(new MessageDispatch(msgProps, this, false, true, false));
+		taskData.runtime->sendMessageOnVThread(dispatch);
+	}
+
+	if (_hooks)
+		_hooks->onStopPlayingMToon(this, _visible, _isStopped, _renderSurface.get());
 
 	return kVThreadReturn;
 }

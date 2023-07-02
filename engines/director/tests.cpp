@@ -149,9 +149,9 @@ void Window::testFonts() {
 
 	Common::MacResIDArray fonds = fontFile->getResIDArray(MKTAG('F','O','N','D'));
 	if (fonds.size() > 0) {
-		for (Common::Array<uint16>::iterator iterator = fonds.begin(); iterator != fonds.end(); ++iterator) {
-			Common::SeekableReadStream *stream = fontFile->getResource(MKTAG('F', 'O', 'N', 'D'), *iterator);
-			Common::String name = fontFile->getResName(MKTAG('F', 'O', 'N', 'D'), *iterator);
+		for (auto &iterator : fonds) {
+			Common::SeekableReadStream *stream = fontFile->getResource(MKTAG('F', 'O', 'N', 'D'), iterator);
+			Common::String name = fontFile->getResName(MKTAG('F', 'O', 'N', 'D'), iterator);
 
 			debug("Font: %s", name.c_str());
 
@@ -304,7 +304,7 @@ void Window::runTests() {
 	initGraphics(640, 480);
 
 	_mainArchive = new RIFXArchive();
-	g_director->_allOpenResFiles.setVal("test.dir", _mainArchive);
+	g_director->_allSeenResFiles.setVal("test.dir", _mainArchive);
 	if (!_mainArchive->openStream(stream, 0)) {
 		error("DirectorEngine::runTests(): Bad movie data");
 	}

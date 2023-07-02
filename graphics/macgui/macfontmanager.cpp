@@ -524,8 +524,10 @@ const Font *MacFontManager::getFont(MacFont *macFont) {
 			font = _winFontRegistry.getVal(_fontInfo.getVal(id)->name);
 			const Graphics::WinFont *winfont = (const Graphics::WinFont *)font;
 
-			if (winfont->getFontHeight() != macFont->getSize())
+			if (winfont->getFontHeight() != macFont->getSize()) {
 				debug(5, "MacFontManager::getFont(): For font '%s' windows font '%s' is used of a different size %d", macFont->getName().c_str(), winfont->getName().c_str(), winfont->getFontHeight());
+				font = WinFont::scaleFont(winfont, macFont->getSize());
+			}
 		}
 	}
 
@@ -636,7 +638,7 @@ const Common::String MacFontManager::getFontName(uint16 id, int size, int slant,
 	return Common::String::format("%s-%d-%d", n.c_str(), slant | extraSlant, size);
 }
 
-const Common::String MacFontManager::getFontName(MacFont &font) {
+const Common::String MacFontManager::getFontName(const MacFont &font) {
 	return getFontName(font.getId(), font.getSize(), font.getSlant());
 }
 
@@ -792,7 +794,7 @@ void MacFontManager::generateTTFFont(MacFont &toFont, Common::SeekableReadStream
 	// TODO: Handle getSlant() flags
 
 	stream->seek(0);
-	Font *font = Graphics::loadTTFFont(*stream, toFont.getSize());
+	Font *font = Graphics::loadTTFFont(*stream, toFont.getSize(), Graphics::kTTFSizeModeCharacter, 0, Graphics::kTTFRenderModeMonochrome);
 
 	if (!font) {
 		warning("Failed to generate font '%s'", getFontName(toFont).c_str());

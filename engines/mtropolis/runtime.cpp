@@ -705,15 +705,15 @@ bool DynamicListContainer<void>::compareEqual(const DynamicListContainerBase &ot
 DynamicListContainerBase *DynamicListContainer<void>::clone() const {
 	return new DynamicListContainer<void>(*this);
 }
-DynamicList::DynamicList() : _type(DynamicValueTypes::kEmpty), _container(nullptr) {
+DynamicList::DynamicList() : _type(DynamicValueTypes::kUnspecified), _container(nullptr) {
 }
 
-DynamicList::DynamicList(const DynamicList &other) : _type(DynamicValueTypes::kEmpty), _container(nullptr) {
+DynamicList::DynamicList(const DynamicList &other) : _type(DynamicValueTypes::kUnspecified), _container(nullptr) {
 	initFromOther(other);
 }
 
 DynamicList::~DynamicList() {
-	clear();
+	destroyContainer();
 }
 
 DynamicValueTypes::DynamicValueType DynamicList::getType() const {
@@ -832,17 +832,13 @@ Common::Array<ObjectReference> &DynamicList::getObjectReference() {
 
 bool DynamicList::setAtIndex(size_t index, const DynamicValue &value) {
 	if (_type != value.getType()) {
-		if (_container != nullptr && _container->getSize() != 0) {
+		if (_container) {
 			DynamicValue converted;
 			if (!value.convertToType(_type, converted))
 				return false;
 			return setAtIndex(index, converted);
 		} else {
-			clear();
-			changeToType(value.getType());
-
-			assert(_container);
-
+			createContainerAndSetType(value.getType());
 			return _container->setAtIndex(index, value);
 		}
 	} else {
@@ -853,7 +849,7 @@ bool DynamicList::setAtIndex(size_t index, const DynamicValue &value) {
 void DynamicList::deleteAtIndex(size_t index) {
 	if (_container != nullptr) {
 		size_t size = _container->getSize();
-		if (size < _container->getSize()) {
+		if (index < _container->getSize()) {
 			for (size_t i = index + 1; i < size; i++) {
 				DynamicValue valueToMove;
 				_container->getAtIndex(i, valueToMove);
@@ -866,9 +862,7 @@ void DynamicList::deleteAtIndex(size_t index) {
 }
 
 void DynamicList::truncateToSize(size_t sz) {
-	if (sz == 0)
-		clear();
-	else if (_container)
+	if (_container)
 		_container->truncateToSize(sz);
 }
 
@@ -891,6 +885,13 @@ size_t DynamicList::getSize() const {
 		return _container->getSize();
 }
 
+void DynamicList::forceType(DynamicValueTypes::DynamicValueType type) {
+	if (_type != type) {
+		destroyContainer();
+		createContainerAndSetType(type);
+	}
+}
+
 bool DynamicList::dynamicValueToIndex(size_t &outIndex, const DynamicValue &value) {
 	if (value.getType() == DynamicValueTypes::kFloat) {
 		double rounded = floor(value.getFloat() + 0.5);
@@ -909,7 +910,7 @@ bool DynamicList::dynamicValueToIndex(size_t &outIndex, const DynamicValue &valu
 
 DynamicList &DynamicList::operator=(const DynamicList &other) {
 	if (this != &other) {
-		clear();
+		destroyContainer();
 		initFromOther(other);
 	}
 
@@ -961,7 +962,7 @@ void DynamicList::createWriteProxyForIndex(size_t index, DynamicValueWriteProxy 
 	proxy.pod.ptrOrOffset = index;
 }
 
-bool DynamicList::changeToType(DynamicValueTypes::DynamicValueType type) {
+bool DynamicList::createContainerAndSetType(DynamicValueTypes::DynamicValueType type) {
 	switch (type) {
 	case DynamicValueTypes::kInvalid:
 		// FIXME: Set _container as per kNull case?
@@ -1005,9 +1006,11 @@ bool DynamicList::changeToType(DynamicValueTypes::DynamicValueType type) {
 	case DynamicValueTypes::kWriteProxy:
 		// FIXME
 		break;
-	case DynamicValueTypes::kEmpty:
+	case DynamicValueTypes::kUnspecified:
 		// FIXME: Set _container as per kNull case?
 		break;
+	default:
+		error("List was set to an invalid type");
 	}
 
 	_type = type;
@@ -1015,19 +1018,19 @@ bool DynamicList::changeToType(DynamicValueTypes::DynamicValueType type) {
 	return true;
 }
 
-void DynamicList::clear() {
-	_type = DynamicValueTypes::kEmpty;
+void DynamicList::destroyContainer() {
 	if (_container)
 		delete _container;
 	_container = nullptr;
+	_type = DynamicValueTypes::kUnspecified;
 }
 
 void DynamicList::initFromOther(const DynamicList &other) {
 	assert(_container == nullptr);
-	assert(_type == DynamicValueTypes::kEmpty);
+	assert(_type == DynamicValueTypes::kUnspecified);
 
-	if (other._type != DynamicValueTypes::kEmpty) {
-		changeToType(other._type);
+	if (other._type != DynamicValueTypes::kUnspecified) {
+		createContainerAndSetType(other._type);
 		_container->setFrom(*other._container);
 	}
 }
@@ -1530,7 +1533,7 @@ bool DynamicValue::operator==(const DynamicValue &other) const {
 void DynamicValue::clear() {
 	switch (_type) {
 	case DynamicValueTypes::kNull:
-	case DynamicValueTypes::kEmpty:
+	case DynamicValueTypes::kUnspecified:
 		_value.destruct<uint64, &ValueUnion::asUnset>();
 		break;
 	case DynamicValueTypes::kInteger:
@@ -1674,7 +1677,7 @@ void DynamicValue::setFromOther(const DynamicValue &other) {
 
 	switch (other._type) {
 	case DynamicValueTypes::kNull:
-	case DynamicValueTypes::kEmpty:
+	case DynamicValueTypes::kUnspecified:
 		clear();
 		_type = other._type;
 		break;
@@ -2769,8 +2772,9 @@ MiniscriptInstructionOutcome WorldManagerInterface::setCurrentScene(MiniscriptTh
 		return kMiniscriptInstructionOutcomeFailed;
 	}
 
-	bool addToReturnList = (_opInt & 0x01) != 0;
-	thread->getRuntime()->addSceneStateTransition(HighLevelSceneTransition(scene->getSelfReference().lock().staticCast<Structural>(), HighLevelSceneTransition::kTypeChangeToScene, false, addToReturnList));
+	bool addToReturnList = (_opInt & 0x02) != 0;
+	bool addToDest = (_opInt & 0x01) != 0;
+	thread->getRuntime()->addSceneStateTransition(HighLevelSceneTransition(scene->getSelfReference().lock().staticCast<Structural>(), HighLevelSceneTransition::kTypeChangeToScene, addToDest, addToReturnList));
 
 	return kMiniscriptInstructionOutcomeContinue;
 }
@@ -2976,7 +2980,16 @@ MiniscriptInstructionOutcome AssetManagerInterface::writeRefAttribute(Miniscript
 void StructuralHooks::onCreate(Structural *structural) {
 }
 
-void StructuralHooks::onSetPosition(Runtime *runtime, Structural *structural, Common::Point &pt) {
+void StructuralHooks::onPostActivate(Structural *structural) {
+}
+
+void StructuralHooks::onSetPosition(Runtime *runtime, Structural *structural, const Common::Point &oldPt, Common::Point &pt) {
+}
+
+void StructuralHooks::onStopPlayingMToon(Structural *structural, bool &visible, bool &stopped, Graphics::ManagedSurface *lastSurf) {
+}
+
+void StructuralHooks::onHidden(Structural *structural, bool &visible) {
 }
 
 ProjectPresentationSettings::ProjectPresentationSettings() : width(640), height(480), bitsPerPixel(8) {
@@ -4246,7 +4259,7 @@ Runtime::Runtime(OSystem *system, Audio::Mixer *mixer, ISaveUIProvider *saveProv
 	  _cachedMousePosition(Common::Point(0, 0)), _realMousePosition(Common::Point(0, 0)), _trackedMouseOutside(false),
 	  _forceCursorRefreshOnce(true), _autoResetCursor(false), _haveModifierOverrideCursor(false), _haveCursorElement(false), _sceneGraphChanged(false), _isQuitting(false),
 	  _collisionCheckTime(0), /*_elementCursorUpdateTime(0), */_defaultVolumeState(true), _activeSceneTransitionEffect(nullptr), _sceneTransitionStartTime(0), _sceneTransitionEndTime(0),
-	  _sharedSceneWasSetExplicitly(false), _modifierOverrideCursorID(0), _subtitleRenderer(subRenderer), _multiClickStartTime(0), _multiClickInterval(500), _multiClickCount(0)
+	  _sharedSceneWasSetExplicitly(false), _modifierOverrideCursorID(0), _subtitleRenderer(subRenderer), _multiClickStartTime(0), _multiClickInterval(500), _multiClickCount(0), _numMouseBlockers(0)
 {
 	_random.reset(new Common::RandomSource("mtropolis"));
 
@@ -4344,6 +4357,8 @@ bool Runtime::runFrame() {
 						DispatchKeyTaskData *taskData = _vthread->pushTask("Runtime::dispatchKeyTask", this, &Runtime::dispatchKeyTask);
 						taskData->dispatch = dispatch;
 					}
+
+					_project->onKeyboardEvent(this, *static_cast<KeyboardInputEvent *>(evt.get()));
 				}
 				break;
 			case kOSEventTypeMouseDown:
@@ -4940,6 +4955,13 @@ void Runtime::executeHighLevelSceneTransition(const HighLevelSceneTransition &tr
 					_pendingLowLevelTransitions.push_back(LowLevelSceneStateTransitionAction(_activeMainScene, LowLevelSceneStateTransitionAction::kUnload));
 
 					queueEventAsLowLevelSceneStateTransitionAction(Event(EventIDs::kSceneReactivated, 0), sceneReturn.scene.get(), true, true);
+
+					for (uint i = 1; i < _sceneStack.size(); i++) {
+						if (_sceneStack[i].scene == _activeMainScene) {
+							_sceneStack.remove_at(i);
+							break;
+						}
+					}
 
 					_activeMainScene = sceneReturn.scene;
 
@@ -5685,9 +5707,11 @@ VThreadState Runtime::updateMousePositionTask(const UpdateMousePositionTaskData 
 	int32 bestLayer = INT32_MIN;
 	bool bestDirect = false;
 
-	for (size_t ri = 0; ri < _sceneStack.size(); ri++) {
-		const SceneStackEntry &sceneStackEntry = _sceneStack[_sceneStack.size() - 1 - ri];
-		recursiveFindMouseCollision(collisionItem, bestSceneStack, bestLayer, bestDirect, sceneStackEntry.scene.get(), _sceneStack.size() - 1 - ri, data.x, data.y, kMouseInteractivityTestAnything);
+	if (_numMouseBlockers == 0) {
+		for (size_t ri = 0; ri < _sceneStack.size(); ri++) {
+			const SceneStackEntry &sceneStackEntry = _sceneStack[_sceneStack.size() - 1 - ri];
+			recursiveFindMouseCollision(collisionItem, bestSceneStack, bestLayer, bestDirect, sceneStackEntry.scene.get(), _sceneStack.size() - 1 - ri, data.x, data.y, kMouseInteractivityTestAnything);
+		}
 	}
 
 	Common::SharedPtr<Structural> newMouseOver;
@@ -6299,6 +6323,15 @@ void Runtime::setGlobalPalette(const Palette &palette) {
 	_globalPalette = palette;
 }
 
+void Runtime::addMouseBlocker() {
+	_numMouseBlockers++;
+}
+
+void Runtime::removeMouseBlocker() {
+	assert(_numMouseBlockers > 0);
+	_numMouseBlockers--;
+}
+
 void Runtime::checkBoundaries() {
 	// Boundary Detection Messenger behavior is very quirky in mTropolis 1.1.  Basically, if an object moves in the direction of
 	// the boundary, then it may trigger collision checks with the boundary.  If it moves but does not move in the direction of
@@ -6827,10 +6860,10 @@ KeyboardEventSignaller::KeyboardEventSignaller() {
 KeyboardEventSignaller::~KeyboardEventSignaller() {
 }
 
-void KeyboardEventSignaller::onKeyboardEvent(Runtime *runtime, Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt) {
+void KeyboardEventSignaller::onKeyboardEvent(Runtime *runtime, const KeyboardInputEvent &keyEvt) {
 	const size_t numReceivers = _receivers.size();
 	for (size_t i = 0; i < numReceivers; i++) {
-		_receivers[i]->onKeyboardEvent(runtime, evtType, repeat, keyEvt);
+		_receivers[i]->onKeyboardEvent(runtime, keyEvt);
 	}
 }
 
@@ -7045,6 +7078,9 @@ void Project::loadSceneFromStream(const Common::SharedPtr<Structural> &scene, ui
 
 	Common::SeekableSubReadStreamEndian stream(_segments[segmentIndex].weakStream, streamDesc.pos, streamDesc.pos + streamDesc.size, _isBigEndian);
 	Data::DataReader reader(streamDesc.pos, stream, _projectFormat);
+
+	if (getRuntime()->getHacks().mtiHispaniolaDamagedStringHack && scene->getName() == "C01b : Main Deck Helm Kidnap")
+		reader.setPermitDamagedStrings(true);
 
 	const Data::PlugInModifierRegistry &plugInDataLoaderRegistry = _plugInRegistry.getDataLoaderRegistry();
 
@@ -7290,8 +7326,8 @@ Common::SharedPtr<PlayMediaSignaller> Project::notifyOnPlayMedia(IPlayMediaSigna
 	return _playMediaSignaller;
 }
 
-void Project::onKeyboardEvent(Runtime *runtime, const Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt) {
-	_keyboardEventSignaller->onKeyboardEvent(runtime, evtType, repeat, keyEvt);
+void Project::onKeyboardEvent(Runtime *runtime, const KeyboardInputEvent &keyEvt) {
+	_keyboardEventSignaller->onKeyboardEvent(runtime, keyEvt);
 }
 
 Common::SharedPtr<KeyboardEventSignaller> Project::notifyOnKeyboardEvent(IKeyboardEventReceiver *receiver) {
@@ -7756,7 +7792,13 @@ void Project::loadContextualObject(size_t streamIndex, ChildLoaderStack &stack, 
 				uint32 guid = element->getStaticGUID();
 				const Common::HashMap<uint32, Common::SharedPtr<StructuralHooks> > &hooksMap = getRuntime()->getHacks().structuralHooks;
 				Common::HashMap<uint32, Common::SharedPtr<StructuralHooks> >::const_iterator hooksIt = hooksMap.find(guid);
-				if (hooksIt != hooksMap.end()) {
+				if (hooksIt == hooksMap.end()) {
+					Common::SharedPtr<StructuralHooks> defaultStructuralHooks = getRuntime()->getHacks().defaultStructuralHooks;
+					if (defaultStructuralHooks) {
+						element->setHooks(defaultStructuralHooks);
+						defaultStructuralHooks->onCreate(element.get());
+					}
+				} else {
 					element->setHooks(hooksIt->_value);
 					hooksIt->_value->onCreate(element.get());
 				}
@@ -8109,6 +8151,10 @@ VThreadState VisualElement::consumeCommand(Runtime *runtime, const Common::Share
 	if (Event(EventIDs::kElementHide, 0).respondsTo(msg->getEvent())) {
 		if (_visible) {
 			_visible = false;
+
+			if (_hooks)
+				_hooks->onHidden(this, _visible);
+
 			runtime->setSceneGraphDirty();
 		}
 
@@ -8286,6 +8332,9 @@ bool VisualElement::readAttribute(MiniscriptThread *thread, DynamicValue &result
 	} else if (attrib == "centerposition") {
 		result.setPoint(getCenterPosition());
 		return true;
+	} else if (attrib == "size") {
+		result.setPoint(Common::Point(_rect.width(), _rect.height()));
+		return true;
 	} else if (attrib == "width") {
 		result.setInt(_rect.right - _rect.left);
 		return true;
@@ -8312,6 +8361,9 @@ MiniscriptInstructionOutcome VisualElement::writeRefAttribute(MiniscriptThread *
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "position") {
 		DynamicValueWriteOrRefAttribFuncHelper<VisualElement, &VisualElement::scriptSetPosition, &VisualElement::scriptWriteRefPositionAttribute>::create(this, writeProxy);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "size") {
+		DynamicValueWriteOrRefAttribFuncHelper<VisualElement, &VisualElement::scriptSetSize, &VisualElement::scriptWriteRefSizeAttribute>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "centerposition") {
 		DynamicValueWriteOrRefAttribFuncHelper<VisualElement, &VisualElement::scriptSetCenterPosition, &VisualElement::scriptWriteRefCenterPositionAttribute>::create(this, writeProxy);
@@ -8418,6 +8470,9 @@ void VisualElement::handleDragMotion(Runtime *runtime, const Common::Point &init
 
 		if (targetPoint.y > maxY)
 			targetPoint.y = maxY;
+
+		if (_hooks)
+			_hooks->onSetPosition(runtime, this, Common::Point(_rect.left, _rect.top), targetPoint);
 
 		offsetTranslate(targetPoint.x - _rect.left, targetPoint.y - _rect.top, false);
 	}
@@ -8541,7 +8596,7 @@ MiniscriptInstructionOutcome VisualElement::scriptSetPosition(MiniscriptThread *
 		Common::Point destPoint = value.getPoint();
 
 		if (_hooks)
-			_hooks->onSetPosition(thread->getRuntime(), this, destPoint);
+			_hooks->onSetPosition(thread->getRuntime(), this, Common::Point(_rect.left, _rect.top), destPoint);
 
 		int32 xDelta = destPoint.x - _rect.left;
 		int32 yDelta = destPoint.y - _rect.top;
@@ -8564,7 +8619,7 @@ MiniscriptInstructionOutcome VisualElement::scriptSetPositionX(MiniscriptThread 
 
 	Common::Point updatedPoint = Common::Point(asInteger, _rect.top);
 	if (_hooks)
-		_hooks->onSetPosition(thread->getRuntime(), this, updatedPoint);
+		_hooks->onSetPosition(thread->getRuntime(), this, Common::Point(_rect.left, _rect.top), updatedPoint);
 	int32 xDelta = updatedPoint.x - _rect.left;
 	int32 yDelta = updatedPoint.y - _rect.top;
 
@@ -8581,7 +8636,7 @@ MiniscriptInstructionOutcome VisualElement::scriptSetPositionY(MiniscriptThread 
 
 	Common::Point updatedPoint = Common::Point(_rect.left, asInteger);
 	if (_hooks)
-		_hooks->onSetPosition(thread->getRuntime(), this, updatedPoint);
+		_hooks->onSetPosition(thread->getRuntime(), this, Common::Point(_rect.left, _rect.top), updatedPoint);
 
 	int32 xDelta = updatedPoint.x - _rect.left;
 	int32 yDelta = updatedPoint.y - _rect.top;
@@ -8633,12 +8688,37 @@ MiniscriptInstructionOutcome VisualElement::scriptSetCenterPositionY(MiniscriptT
 	return kMiniscriptInstructionOutcomeContinue;
 }
 
+MiniscriptInstructionOutcome VisualElement::scriptSetSize(MiniscriptThread *thread, const DynamicValue &value) {
+	int32 asInteger = 0;
+	if (value.getType() == DynamicValueTypes::kPoint) {
+		Common::Point pt = value.getPoint();
+
+		if (_rect.bottom - _rect.top != asInteger || _rect.right - _rect.left != asInteger) {
+			_rect.right = _rect.left + pt.x;
+			_rect.bottom = _rect.top + pt.y;
+
+			thread->getRuntime()->setSceneGraphDirty();
+		}
+	} else {
+#ifdef MTROPOLIS_DEBUG_ENABLE
+		if (Debugger *debugger = thread->getRuntime()->debugGetDebugger())
+			debugger->notify(kDebugSeverityError, "'size' value wasn't a point");
+#endif
+	}
+
+	return kMiniscriptInstructionOutcomeContinue;
+}
+
 MiniscriptInstructionOutcome VisualElement::scriptSetWidth(MiniscriptThread *thread, const DynamicValue &value) {
 	int32 asInteger = 0;
 	if (!value.roundToInt(asInteger))
 		return kMiniscriptInstructionOutcomeFailed;
 
-	_rect.right = _rect.left + asInteger;
+	if (_rect.right - _rect.left != asInteger) {
+		_rect.right = _rect.left + asInteger;
+
+		thread->getRuntime()->setSceneGraphDirty();
+	}
 
 	return kMiniscriptInstructionOutcomeContinue;
 }
@@ -8648,7 +8728,11 @@ MiniscriptInstructionOutcome VisualElement::scriptSetHeight(MiniscriptThread *th
 	if (!value.roundToInt(asInteger))
 		return kMiniscriptInstructionOutcomeFailed;
 
-	_rect.bottom = _rect.top + asInteger;
+	if (_rect.bottom - _rect.top != asInteger) {
+		_rect.bottom = _rect.top + asInteger;
+
+		thread->getRuntime()->setSceneGraphDirty();
+	}
 
 	return kMiniscriptInstructionOutcomeContinue;
 }
@@ -8693,6 +8777,18 @@ MiniscriptInstructionOutcome VisualElement::scriptWriteRefCenterPositionAttribut
 		return kMiniscriptInstructionOutcomeContinue;
 	} else if (attrib == "y") {
 		DynamicValueWriteFuncHelper<VisualElement, &VisualElement::scriptSetCenterPositionY, true>::create(this, writeProxy);
+		return kMiniscriptInstructionOutcomeContinue;
+	}
+
+	return kMiniscriptInstructionOutcomeFailed;
+}
+
+MiniscriptInstructionOutcome VisualElement::scriptWriteRefSizeAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib) {
+	if (attrib == "x") {
+		DynamicValueWriteFuncHelper<VisualElement, &VisualElement::scriptSetWidth, true>::create(this, writeProxy);
+		return kMiniscriptInstructionOutcomeContinue;
+	} else if (attrib == "y") {
+		DynamicValueWriteFuncHelper<VisualElement, &VisualElement::scriptSetHeight, true>::create(this, writeProxy);
 		return kMiniscriptInstructionOutcomeContinue;
 	}
 
@@ -9323,6 +9419,15 @@ DynamicValueWriteProxy VariableModifier::createWriteProxy() {
 	proxy.pod.ifc = DynamicValueWriteInterfaceGlue<VariableModifier::WriteProxyInterface>::getInstance();
 	return proxy;
 }
+
+#ifdef MTROPOLIS_DEBUG_ENABLE
+void VariableModifier::debugInspect(IDebugInspectionReport *report) const {
+	Modifier::debugInspect(report);
+
+	if (report->declareStatic("storage"))
+		report->declareStaticContents(Common::String::format("%p", static_cast<void *>(_storage.get())));
+}
+#endif
 
 MiniscriptInstructionOutcome VariableModifier::WriteProxyInterface::write(MiniscriptThread *thread, const DynamicValue &dest, void *objectRef, uintptr ptrOrOffset) {
 	if (!static_cast<VariableModifier *>(objectRef)->varSetValue(thread, dest))

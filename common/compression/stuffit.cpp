@@ -43,8 +43,8 @@ public:
 	StuffItArchive();
 	~StuffItArchive() override;
 
-	bool open(const Common::String &filename);
-	bool open(Common::SeekableReadStream *stream);
+	bool open(const Common::String &filename, bool flattenTree);
+	bool open(Common::SeekableReadStream *stream, bool flattenTree);
 	void close();
 	bool isOpen() const { return _stream != nullptr; }
 
@@ -53,9 +53,8 @@ public:
 	int listMembers(Common::ArchiveMemberList &list) const override;
 	const Common::ArchiveMemberPtr getMember(const Common::Path &path) const override;
 	Common::SharedArchiveContents readContentsForPath(const Common::String& name) const override;
-	Common::String translatePath(const Common::Path &path) const override {
-		return path.toString();
-	}
+	Common::String translatePath(const Common::Path &path) const override;
+	char getPathSeparator() const override;
 
 private:
 	struct FileEntry {
@@ -74,6 +73,8 @@ private:
 	typedef Common::HashMap<Common::String, Common::MacFinderInfoData, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> MetadataMap;
 	MetadataMap _metadataMap;
 
+	bool _flattenTree;
+
 	// Decompression Functions
 	bool decompress13(Common::SeekableReadStream *src, byte *dst, uint32 uncompressedSize) const;
 	void decompress14(Common::SeekableReadStream *src, byte *dst, uint32 uncompressedSize) const;
@@ -83,7 +84,7 @@ private:
 	void readTree14(Common::BitStream8LSB *bits, SIT14Data *dat, uint16 codesize, uint16 *result) const;
 };
 
-StuffItArchive::StuffItArchive() : Common::MemcachingCaseInsensitiveArchive() {
+StuffItArchive::StuffItArchive() : Common::MemcachingCaseInsensitiveArchive(), _flattenTree(false) {
 	_stream = nullptr;
 }
 
@@ -99,15 +100,16 @@ static const uint32 s_magicNumbers[] = {
 	MKTAG('S', 'T', 'i', '3'), MKTAG('S', 'T', 'i', '4'), MKTAG('S', 'T', '4', '6')
 };
 
-bool StuffItArchive::open(const Common::String &filename) {
+bool StuffItArchive::open(const Common::String &filename, bool flattenTree) {
 	Common::SeekableReadStream *stream = SearchMan.createReadStreamForMember(filename);
-	return open(stream);
+	return open(stream, flattenTree);
 }
 
-bool StuffItArchive::open(Common::SeekableReadStream *stream) {
+bool StuffItArchive::open(Common::SeekableReadStream *stream, bool flattenTree) {
 	close();
 
 	_stream = stream;
+	_flattenTree = flattenTree;
 
 	if (!_stream)
 		return false;
@@ -144,7 +146,11 @@ bool StuffItArchive::open(Common::SeekableReadStream *stream) {
 
 	Common::CRC16 crc;
 
+	Common::String dirPrefix;
+
 	while (_stream->pos() < _stream->size() && !_stream->eos() && _stream->pos() < archiveSize) {
+		const uint kMaxFileLength = 31;
+
 		byte header[112];
 		_stream->read(header, sizeof(header));
 		Common::MemoryReadStream headStream(header, sizeof(header));
@@ -154,8 +160,9 @@ bool StuffItArchive::open(Common::SeekableReadStream *stream) {
 		byte fileNameLength = headStream.readByte();
 		Common::String name;
 
-		if (fileNameLength > 63)
+		if (fileNameLength > kMaxFileLength)
 			error("File name length too long in stuffit archive: %d at 0x%x", fileNameLength, (int) (_stream->pos() - 3));
+
 
 		for (byte i = 0; i < fileNameLength; i++)
 			name += (char)headStream.readByte();
@@ -184,9 +191,34 @@ bool StuffItArchive::open(Common::SeekableReadStream *stream) {
 		if (actualHeaderCRC != headerCRC)
 			error ("StuffItArchive::open(): Header CRC mismatch: %04x vs %04x", actualHeaderCRC, headerCRC);
 
-		// Ignore directories for now
-		if (dataForkCompression == 32 || dataForkCompression == 33)
+		byte dirCheckMethod = (dataForkCompression & 0x6f);	// Strip 0x80 (encrypted) and 0x10 (folder contents encrypted) flags
+		if (dirCheckMethod == 32) {
+			// Start of folder
+			if (!flattenTree)
+				dirPrefix = dirPrefix + name + ":";
 			continue;
+		}
+
+		if (dirCheckMethod == 33) {
+			// End of folder
+			if (!flattenTree && dirPrefix.size() > 0) {
+				size_t secondLastDelimiter = Common::String::npos;
+				if (dirPrefix.size() > 1)
+					secondLastDelimiter = dirPrefix.rfind(':', dirPrefix.size() - 2);
+
+				if (secondLastDelimiter == Common::String::npos) {
+					// Only one level deep
+					dirPrefix.clear();
+				} else {
+					// Multiple levels deep
+					dirPrefix = dirPrefix.substr(0, secondLastDelimiter + 1);
+				}
+			}
+			continue;
+		}
+
+		if (!flattenTree)
+			name = dirPrefix + name;
 
 		_metadataMap[name + ".finf"] = finfo.toData();
 
@@ -235,7 +267,7 @@ void StuffItArchive::close() {
 }
 
 bool StuffItArchive::hasFile(const Common::Path &path) const {
-	Common::String name = path.toString();
+	Common::String name = path.toString(':');
 	return _map.contains(name);
 }
 
@@ -247,7 +279,7 @@ int StuffItArchive::listMembers(Common::ArchiveMemberList &list) const {
 }
 
 const Common::ArchiveMemberPtr StuffItArchive::getMember(const Common::Path &path) const {
-	Common::String name = path.toString();
+	Common::String name = path.toString(':');
 	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name, this));
 }
 
@@ -295,6 +327,14 @@ Common::SharedArchiveContents StuffItArchive::readContentsForPath(const Common::
 	}
 
 	return Common::SharedArchiveContents(uncompressedBlock, entry.uncompressedSize);
+}
+
+Common::String StuffItArchive::translatePath(const Common::Path &path) const {
+	return _flattenTree ? path.getLastComponent().toString() : path.toString(':');
+}
+
+char StuffItArchive::getPathSeparator() const {
+	return ':';
 }
 
 void StuffItArchive::update14(uint16 first, uint16 last, byte *code, uint16 *freq) const {
@@ -1046,10 +1086,10 @@ void StuffItArchive::decompress14(Common::SeekableReadStream *src, byte *dst, ui
 #undef OUTPUT_VAL
 #undef ALIGN_BITS
 
-Common::Archive *createStuffItArchive(const Common::String &fileName) {
+Common::Archive *createStuffItArchive(const Common::String &fileName, bool flattenTree) {
 	StuffItArchive *archive = new StuffItArchive();
 
-	if (!archive->open(fileName)) {
+	if (!archive->open(fileName, flattenTree)) {
 		delete archive;
 		return nullptr;
 	}
@@ -1057,10 +1097,10 @@ Common::Archive *createStuffItArchive(const Common::String &fileName) {
 	return archive;
 }
 
-Common::Archive *createStuffItArchive(Common::SeekableReadStream *stream) {
+Common::Archive *createStuffItArchive(Common::SeekableReadStream *stream, bool flattenTree) {
 	StuffItArchive *archive = new StuffItArchive();
 
-	if (!archive->open(stream)) {
+	if (!archive->open(stream, flattenTree)) {
 		delete archive;
 		return nullptr;
 	}

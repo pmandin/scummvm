@@ -300,6 +300,12 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 									mEventPressTime = -1;
 									mKeyRepeatedCount = -1;
 								}
+
+								@Override
+								public void onConfigurationChanged(Configuration newConfig) {
+									// Reload keyboard to adapt to the new size
+									ChangeKeyboard();
+								}
 							}
 
 							final BuiltInKeyboardView builtinKeyboard = new BuiltInKeyboardView(ScummVMActivity.this, null);
@@ -782,6 +788,15 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
 		@Override
 		protected int getTouchMode() {
 			return _events.getTouchMode();
+		}
+
+		@Override
+		protected void setOrientation(final int orientation) {
+			runOnUiThread(new Runnable() {
+				public void run() {
+					setRequestedOrientation(orientation);
+				}
+			});
 		}
 
 		@Override

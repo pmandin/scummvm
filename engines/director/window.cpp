@@ -113,31 +113,49 @@ void Window::invertChannel(Channel *channel, const Common::Rect &destRect) {
 	}
 }
 
+void Window::drawFrameCounter(Graphics::ManagedSurface *blitTo) {
+	const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
+	Common::String msg = Common::String::format("Frame: %d", g_director->getCurrentMovie()->getScore()->getCurrentFrame());
+	uint32 width = font->getStringWidth(msg);
+
+	blitTo->fillRect(Common::Rect(blitTo->w - 3 - width, 1, blitTo->w - 1, font->getFontHeight() + 1), _wm->_colorBlack);
+	font->drawString(blitTo, msg, blitTo->w - 1 - width, 3, width, _wm->_colorBlack);
+	font->drawString(blitTo, msg, blitTo->w - 2 - width, 2, width, _wm->_colorWhite);
+}
+
 bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 	if (!_currentMovie)
 		return false;
+
+	if (!blitTo)
+		blitTo = _composeSurface;
 
 	if (forceRedraw) {
 		blitTo->clear(_stageColor);
 		markAllDirty();
 	} else {
-		if (_dirtyRects.size() == 0 && _currentMovie->_videoPlayback == false)
+		if (_dirtyRects.size() == 0 && _currentMovie->_videoPlayback == false) {
+			if (g_director->_debugDraw & kDebugDrawFrame) {
+				drawFrameCounter(blitTo);
+
+				_contentIsDirty = true;
+			}
+
 			return false;
+		}
 
 		mergeDirtyRects();
 	}
 
-	if (!blitTo)
-		blitTo = _composeSurface;
 	Channel *hiliteChannel = _currentMovie->getScore()->getChannelById(_currentMovie->_currentHiliteChannelId);
 
-	for (Common::List<Common::Rect>::iterator i = _dirtyRects.begin(); i != _dirtyRects.end(); i++) {
-		const Common::Rect &r = *i;
+	for (auto &i : _dirtyRects) {
+		const Common::Rect &r = i;
 		_dirtyChannels = _currentMovie->getScore()->getSpriteIntersections(r);
 
 		bool shouldClear = true;
-		for (Common::List<Channel *>::iterator j = _dirtyChannels.begin(); j != _dirtyChannels.end(); j++) {
-			if ((*j)->_visible && r == (*j)->getBbox() && (*j)->isTrail()) {
+		for (auto &j : _dirtyChannels) {
+			if (j->_visible && r == j->getBbox() && j->isTrail()) {
 				shouldClear = false;
 				break;
 			}
@@ -147,8 +165,8 @@ bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 			blitTo->fillRect(r, _stageColor);
 
 		for (int pass = 0; pass < 2; pass++) {
-			for (Common::List<Channel *>::iterator j = _dirtyChannels.begin(); j != _dirtyChannels.end(); j++) {
-				if ((*j)->isActiveVideo() && (*j)->isVideoDirectToStage()) {
+			for (auto &j : _dirtyChannels) {
+				if (j->isActiveVideo() && j->isVideoDirectToStage()) {
 					if (pass == 0)
 						continue;
 				} else {
@@ -156,15 +174,15 @@ bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 						continue;
 				}
 
-				if ((*j)->_visible) {
-					if ((*j)->hasSubChannels()) {
-						Common::Array<Channel> *list = (*j)->getSubChannels();
-						for (Common::Array<Channel>::iterator k = list->begin(); k != list->end(); k++) {
-							inkBlitFrom(&(*k), r, blitTo);
+				if (j->_visible) {
+					if (j->hasSubChannels()) {
+						Common::Array<Channel> *list = j->getSubChannels();
+						for (auto &k : *list) {
+							inkBlitFrom(&k, r, blitTo);
 						}
 					} else {
-						inkBlitFrom(*j, r, blitTo);
-						if ((*j) == hiliteChannel)
+						inkBlitFrom(j, r, blitTo);
+						if (j == hiliteChannel)
 							invertChannel(hiliteChannel, r);
 					}
 				}
@@ -172,34 +190,23 @@ bool Window::render(bool forceRedraw, Graphics::ManagedSurface *blitTo) {
 		}
 	}
 
-	if (g_director->_debugDraw & kDebugDrawFrame) {
-		const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
-		Common::String msg = Common::String::format("Frame: %d", g_director->getCurrentMovie()->getScore()->getCurrentFrame());
-		uint32 width = font->getStringWidth(msg);
-
-		blitTo->fillRect(Common::Rect(blitTo->w - 3 - width, 1, blitTo->w - 1, font->getFontHeight() + 1), _wm->_colorBlack);
-		font->drawString(blitTo, msg, blitTo->w - 2 - width, 2, width , _wm->_colorWhite);
-	}
-
 	if (g_director->_debugDraw & kDebugDrawCast) {
+		const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
+
 		for (uint i = 0; i < _currentMovie->getScore()->_channels.size(); i++) {
 			Channel *channel = _currentMovie->getScore()->_channels[i];
 			if (!channel->isEmpty()) {
 				Common::Rect bbox = channel->getBbox();
 				blitTo->frameRect(bbox, g_director->_wm->_colorWhite);
 
-				const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
+				font->drawString(blitTo, Common::String::format("m: %d, ch: %d", channel->_sprite->_castId.member, i), bbox.left + 3, bbox.top + 3, 128, g_director->_wm->_colorBlack);
 				font->drawString(blitTo, Common::String::format("m: %d, ch: %d", channel->_sprite->_castId.member, i), bbox.left + 2, bbox.top + 2, 128, g_director->_wm->_colorWhite);
 			}
 		}
-
-		const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
-		Common::String msg = Common::String::format("Frame: %d", g_director->getCurrentMovie()->getScore()->getCurrentFrame());
-		uint32 width = font->getStringWidth(msg);
-
-		blitTo->fillRect(Common::Rect(blitTo->w - 3 - width, 1, blitTo->w - 1, font->getFontHeight() + 1), _wm->_colorBlack);
-		font->drawString(blitTo, msg, blitTo->w - 2 - width, 2, width , _wm->_colorWhite);
 	}
+
+	if (g_director->_debugDraw & kDebugDrawFrame)
+		drawFrameCounter(blitTo);
 
 	_dirtyRects.clear();
 	_contentIsDirty = true;
@@ -257,7 +264,7 @@ void Window::setModal(bool modal) {
 		_wm->setLockedWidget(this);
 		_isModal = true;
 	}
-	
+
 	setVisible(true); // Activate this window on top
 }
 
@@ -355,6 +362,7 @@ void Window::loadNewSharedCast(Cast *previousSharedCast) {
 
 	// Clean up the previous sharedCast
 	if (previousSharedCast) {
+		g_director->_allSeenResFiles.erase(previousSharedCastPath);
 		delete previousSharedCast;
 	}
 

@@ -39,6 +39,7 @@ public:
 
 	virtual void initSurface() override;
 	virtual void deinitSurface() override;
+	virtual void resizeSurface() override;
 
 	virtual AndroidCommonGraphics::State getState() const override;
 	virtual bool setState(const AndroidCommonGraphics::State &state) override;
@@ -133,8 +134,6 @@ protected:
 	void setSystemMousePosition(int x, int y) {}
 
 	bool loadVideoMode(uint requestedWidth, uint requestedHeight, const Graphics::PixelFormat &format);
-
-	void refreshScreen();
 
 private:
 	void initOverlay();

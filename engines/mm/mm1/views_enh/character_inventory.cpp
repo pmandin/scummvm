@@ -72,7 +72,7 @@ bool CharacterInventory::msgFocus(const FocusMessage &msg) {
 
 bool CharacterInventory::msgGame(const GameMessage &msg) {
 	if (msg._name == "ITEM" && msg._value >= 0 &&
-			msg._value <= (int)_items.size()) {
+			msg._value < (int)_items.size()) {
 		_selectedItem = msg._value;
 		performAction();
 		return true;
@@ -203,6 +203,22 @@ void CharacterInventory::itemSelected() {
 }
 
 void CharacterInventory::selectButton(SelectedButton btnMode) {
+	if (btnMode == BTN_EQUIP && _mode == ARMS_MODE) {
+		// Selecting items to equip only makes sense in BACKPACK_MODE,
+		// so we switch to it:
+		_mode = BACKPACK_MODE;
+		populateItems();
+		redraw();
+		draw();
+	}
+	else if (btnMode == BTN_REMOVE && _mode == BACKPACK_MODE) {
+		// Selecting items to unequip only makes sense in ARMS_MODE,
+		// so we switch to it:
+		_mode = ARMS_MODE;
+		populateItems();
+		redraw();
+		draw();
+	}
 	_selectedButton = btnMode;
 
 	if (_selectedItem != -1) {

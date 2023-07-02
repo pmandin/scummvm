@@ -47,6 +47,7 @@
 #include "director/lingo/xlibs/dpwqtw.h"
 #include "director/lingo/xlibs/draw.h"
 #include "director/lingo/xlibs/ednox.h"
+#include "director/lingo/xlibs/eventq.h"
 #include "director/lingo/xlibs/fedracul.h"
 #include "director/lingo/xlibs/feimasks.h"
 #include "director/lingo/xlibs/feiprefs.h"
@@ -174,6 +175,7 @@ static struct XLibProto {
 	{ DPwQTw::fileNames,				DPwQTw::open,				DPwQTw::close,				kXObj,					400 },	// D4
 	{ DrawXObj::fileNames,				DrawXObj::open,				DrawXObj::close,			kXObj,					400 },	// D4
 	{ Ednox::fileNames,					Ednox::open,				Ednox::close,				kXObj,					300 },	// D3
+	{ EventQXObj::fileNames,			EventQXObj::open,			EventQXObj::close,			kXObj,					400 },	// D4
 	{ FEDraculXObj::fileNames,			FEDraculXObj::open,			FEDraculXObj::close,		kXObj,					400 },	// D4
 	{ FEIMasksXObj::fileNames,			FEIMasksXObj::open,			FEIMasksXObj::close,		kXObj,					400 },	// D4
 	{ FEIPrefsXObj::fileNames,			FEIPrefsXObj::open,			FEIPrefsXObj::close,		kXObj,					400 },	// D4
@@ -237,25 +239,23 @@ void Lingo::cleanupXLibs() {
 }
 
 Common::String Lingo::normalizeXLibName(Common::String name) {
+	// Normalize to remove machintosh path delimiters (':', '@:')
+	name = convertPath(name);
+
+	size_t pos = name.findLastOf(g_director->_dirSeparator);
+	if (pos != Common::String::npos)
+		name = name.substr(pos + 1, name.size());
+
 	Common::Platform platform = _vm->getPlatform();
 	if (platform == Common::kPlatformMacintosh || platform == Common::kPlatformMacintoshII) {
-		size_t pos = name.findLastOf(':');
-		if (pos != Common::String::npos)
-			name = name.substr(pos + 1, name.size());
 		if (name.hasSuffixIgnoreCase(".xlib"))
 			name = name.substr(0, name.size() - 5);
 	} else if (platform == Common::kPlatformWindows) {
-		size_t pos = name.findLastOf("\\");
-		if (pos != Common::String::npos)
-			name = name.substr(pos + 1, name.size());
 		if (name.hasSuffixIgnoreCase(".dll"))
 			name = name.substr(0, name.size() - 4);
 	}
 
 	name.trim();
-
-	// Normalize to remove machintosh path delimiters (':', '@:')
-	name = convertPath(name);
 
 	return name;
 }
@@ -294,16 +294,16 @@ void Lingo::closeXLib(Common::String name) {
 }
 
 void Lingo::closeOpenXLibs() {
-	for (OpenXLibsHash::iterator it = _openXLibs.begin(); it != _openXLibs.end(); ++it) {
-		closeXLib(it->_key);
+	for (auto &it : _openXLibs) {
+		closeXLib(it._key);
 	}
 }
 
 void Lingo::reloadOpenXLibs() {
 	OpenXLibsHash openXLibsCopy = _openXLibs;
-	for (OpenXLibsHash::iterator it = openXLibsCopy.begin(); it != openXLibsCopy.end(); ++it) {
-		closeXLib(it->_key);
-		openXLib(it->_key, it->_value);
+	for (auto &it : openXLibsCopy) {
+		closeXLib(it._key);
+		openXLib(it._key, it._value);
 	}
 }
 
@@ -329,13 +329,13 @@ ScriptContext::ScriptContext(Common::String name, ScriptType type, int id)
 ScriptContext::ScriptContext(const ScriptContext &sc) : Object<ScriptContext>(sc) {
 	_scriptType = sc._scriptType;
 	_functionNames = sc._functionNames;
-	for (SymbolHash::iterator it = sc._functionHandlers.begin(); it != sc._functionHandlers.end(); ++it) {
-		_functionHandlers[it->_key] = it->_value;
-		_functionHandlers[it->_key].ctx = this;
+	for (auto &it : sc._functionHandlers) {
+		_functionHandlers[it._key] = it._value;
+		_functionHandlers[it._key].ctx = this;
 	}
-	for (Common::HashMap<uint32, Symbol>::iterator it = sc._eventHandlers.begin(); it != sc._eventHandlers.end(); ++it) {
-		_eventHandlers[it->_key] = it->_value;
-		_eventHandlers[it->_key].ctx = this;
+	for (auto &it : sc._eventHandlers) {
+		_eventHandlers[it._key] = it._value;
+		_eventHandlers[it._key].ctx = this;
 	}
 	_constants = sc._constants;
 	_properties = sc._properties;
@@ -655,13 +655,13 @@ void LM::m_forget(int nargs) {
 		windowList->arr.remove_at(i);
 
 	// remove me from global vars
-	for (DatumHash::iterator it = g_lingo->_globalvars.begin(); it != g_lingo->_globalvars.end(); ++it) {
-		if (it->_value.type != OBJECT || it->_value.u.obj->getObjType() != kWindowObj)
+	for (auto &it : g_lingo->_globalvars) {
+		if (it._value.type != OBJECT || it._value.u.obj->getObjType() != kWindowObj)
 			continue;
 
 		Window *window = static_cast<Window *>(windowList->arr[i].u.obj);
 		if (window == me)
-			g_lingo->_globalvars[it->_key] = 0;
+			g_lingo->_globalvars[it._key] = 0;
 	}
 }
 

@@ -76,8 +76,9 @@ AndroidGraphicsManager::AndroidGraphicsManager() :
 	loadBuiltinTexture(JNI::BitmapResources::TOUCH_ARROWS_BITMAP, _touchcontrols);
 	_touchcontrols->updateGLTexture();
 
-	// not in 3D, not in overlay
+	// not in 3D, not in GUI
 	dynamic_cast<OSystem_Android *>(g_system)->applyTouchSettings(false, false);
+	dynamic_cast<OSystem_Android *>(g_system)->applyOrientationSettings();
 }
 
 AndroidGraphicsManager::~AndroidGraphicsManager() {
@@ -138,6 +139,25 @@ void AndroidGraphicsManager::deinitSurface() {
 	JNI::deinitSurface();
 }
 
+void AndroidGraphicsManager::resizeSurface() {
+
+	// If we had lost surface just init it again
+	if (!JNI::haveSurface()) {
+		initSurface();
+		return;
+	}
+
+	// Recreate the EGL surface, context is preserved
+	JNI::deinitSurface();
+	JNI::initSurface();
+
+	dynamic_cast<OSystem_Android *>(g_system)->getTouchControls().init(
+	    this, JNI::egl_surface_width, JNI::egl_surface_height);
+
+	handleResize(JNI::egl_surface_width, JNI::egl_surface_height);
+}
+
+
 void AndroidGraphicsManager::updateScreen() {
 	//ENTER();
 
@@ -162,6 +182,7 @@ void AndroidGraphicsManager::showOverlay(bool inGUI) {
 		_old_touch_mode = JNI::getTouchMode();
 		// not in 3D, in overlay
 		dynamic_cast<OSystem_Android *>(g_system)->applyTouchSettings(false, true);
+		dynamic_cast<OSystem_Android *>(g_system)->applyOrientationSettings();
 	} else if (_overlayInGUI) {
 		// Restore touch mode active before overlay was shown
 		JNI::setTouchMode(_old_touch_mode);
@@ -177,6 +198,7 @@ void AndroidGraphicsManager::hideOverlay() {
 	if (_overlayInGUI) {
 		// Restore touch mode active before overlay was shown
 		JNI::setTouchMode(_old_touch_mode);
+		dynamic_cast<OSystem_Android *>(g_system)->applyOrientationSettings();
 	}
 
 	OpenGL::OpenGLGraphicsManager::hideOverlay();

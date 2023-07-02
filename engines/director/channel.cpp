@@ -364,6 +364,11 @@ void Channel::setCast(CastMemberID memberID) {
 	_width = _sprite->_width;
 	_height = _sprite->_height;
 	replaceWidget();
+
+	if (!_sprite->_puppet && g_director->getVersion() >= 600) {
+		// Based on Director in a Nutshell, page 15
+		_sprite->_autoPuppet = true;
+	}
 }
 
 void Channel::setClean(Sprite *nextSprite, int spriteId, bool partial) {
@@ -538,49 +543,61 @@ void Channel::replaceSprite(Sprite *nextSprite) {
 }
 
 void Channel::setWidth(int w) {
-	if (_sprite->_puppet) {
-		if (!(_sprite->_cast && _sprite->_cast->_type == kCastShape) && !_sprite->_stretch)
-			return;
-		_width = MAX<int>(w, 0);
+	if (!(_sprite->_cast && _sprite->_cast->_type == kCastShape) && !_sprite->_stretch)
+		return;
+	_width = MAX<int>(w, 0);
+
+	if (!_sprite->_puppet && g_director->getVersion() >= 600) {
+		// Based on Director in a Nutshell, page 15
+		_sprite->_autoPuppet = true;
 	}
 }
 
 void Channel::setHeight(int h) {
-	if (_sprite->_puppet) {
-		if (!(_sprite->_cast && _sprite->_cast->_type == kCastShape) && !_sprite->_stretch)
-			return;
-		_height = MAX<int>(h, 0);
+	if (!(_sprite->_cast && _sprite->_cast->_type == kCastShape) && !_sprite->_stretch)
+		return;
+	_height = MAX<int>(h, 0);
+
+	if (!_sprite->_puppet && g_director->getVersion() >= 600) {
+		// Based on Director in a Nutshell, page 15
+		_sprite->_autoPuppet = true;
 	}
 }
 
 void Channel::setBbox(int l, int t, int r, int b) {
-	if (_sprite->_puppet || _sprite->_stretch) {
-		if (!(_sprite->_cast && _sprite->_cast->_type == kCastShape) && !_sprite->_stretch)
-			return;
-		_width = r - l;
-		_height = b - t;
+	if (!(_sprite->_cast && _sprite->_cast->_type == kCastShape) && !_sprite->_stretch)
+		return;
+	_width = r - l;
+	_height = b - t;
 
-		Common::Rect source(_width, _height);
-		if (_sprite->_cast) {
-			source = _sprite->_cast->getBbox(_width, _height);
-		}
-		_currentPoint.x = (int16)(l - source.left);
-		_currentPoint.y = (int16)(t - source.top);
+	Common::Rect source(_width, _height);
+	if (_sprite->_cast) {
+		source = _sprite->_cast->getBbox(_width, _height);
+	}
+	_currentPoint.x = (int16)(l - source.left);
+	_currentPoint.y = (int16)(t - source.top);
 
-		if (_width <= 0 || _height <= 0)
-			_width = _height = 0;
+	if (_width <= 0 || _height <= 0)
+		_width = _height = 0;
+
+	if (!_sprite->_puppet && g_director->getVersion() >= 600) {
+		// Based on Director in a Nutshell, page 15
+		_sprite->_autoPuppet = true;
 	}
 }
 
 void Channel::setPosition(int x, int y, bool force) {
-	if (_sprite->_puppet || force) {
-		Common::Point newPos(x, y);
-		if (_constraint > 0 && _score && _constraint <= _score->_channels.size()) {
-			Common::Rect constraintBbox = _score->_channels[_constraint]->getBbox();
-			newPos.x = MIN(constraintBbox.right, MAX(constraintBbox.left, newPos.x));
-			newPos.y = MIN(constraintBbox.bottom, MAX(constraintBbox.top, newPos.y));
-		}
-		_currentPoint = newPos;
+	Common::Point newPos(x, y);
+	if (_constraint > 0 && _score && _constraint <= _score->_channels.size()) {
+		Common::Rect constraintBbox = _score->_channels[_constraint]->getBbox();
+		newPos.x = MIN(constraintBbox.right, MAX(constraintBbox.left, newPos.x));
+		newPos.y = MIN(constraintBbox.bottom, MAX(constraintBbox.top, newPos.y));
+	}
+	_currentPoint = newPos;
+
+	if (!_sprite->_puppet && g_director->getVersion() >= 600) {
+		// Based on Director in a Nutshell, page 15
+		_sprite->_autoPuppet = true;
 	}
 }
 

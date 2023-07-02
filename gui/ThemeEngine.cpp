@@ -780,6 +780,8 @@ void ThemeEngine::loadTheme(const Common::String &themeId) {
 			_widgets[i]->calcBackgroundOffset();
 		}
 	}
+
+	debug(6, "Finished loading theme %s", themeId.c_str());
 }
 
 void ThemeEngine::unloadTheme() {
@@ -1639,6 +1641,8 @@ bool ThemeEngine::createCursor(const Common::String &filename, int hotspotX, int
 			const int index = colorToIndex[col];
 			_cursor[y * _cursorWidth + x] = index;
 		}
+
+		src += cursor->pitch - cursor->w * cursor->format.bytesPerPixel;
 	}
 
 	_useCursor = true;
@@ -1773,8 +1777,11 @@ const Graphics::Font *ThemeEngine::loadFont(const Common::String &filename, cons
 #ifdef USE_TRANSLATION
 	allowNonScalable = TransMan.currentIsBuiltinLanguage();
 #endif
-	if (!font && allowNonScalable)
+	if (!font && allowNonScalable) {
 		font = loadFont(filename, fontName);
+
+		font = Graphics::BdfFont::scaleFont((const Graphics::BdfFont *)font, pointsize);
+	}
 
 	// If the font is successfully loaded store it in the font manager.
 	if (font) {

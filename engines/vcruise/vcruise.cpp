@@ -21,6 +21,8 @@
 
 #include "engines/util.h"
 
+#include "common/compression/gentee_installer.h"
+
 #include "common/config-manager.h"
 #include "common/events.h"
 #include "common/file.h"
@@ -36,7 +38,6 @@
 
 #include "vcruise/runtime.h"
 #include "vcruise/vcruise.h"
-#include "vcruise/gentee_installer.h"
 
 namespace VCruise {
 
@@ -109,7 +110,7 @@ Common::Error VCruiseEngine::run() {
 		if (!f->open(_gameDescription->desc.filesDescriptions[0].fileName))
 			error("Couldn't open installer package '%s'", _gameDescription->desc.filesDescriptions[0].fileName);
 
-		Common::Archive *installerPackageArchive = createGenteeInstallerArchive(f, "#setuppath#\\", true);
+		Common::Archive *installerPackageArchive = Common::createGenteeInstallerArchive(f, "#setuppath#\\", true);
 		if (!installerPackageArchive)
 			error("Couldn't load installer package '%s'", _gameDescription->desc.filesDescriptions[0].fileName);
 
@@ -221,6 +222,9 @@ Common::Error VCruiseEngine::run() {
 
 	if (_gameDescription->desc.flags & VCRUISE_GF_GENTEE_PACKAGE)
 		SearchMan.remove("VCruiseInstallerPackage");
+
+	// Flush any settings changes made in-game
+	ConfMan.flushToDisk();
 
 	return Common::kNoError;
 }
@@ -342,29 +346,109 @@ void VCruiseEngine::initializePath(const Common::FSNode &gamePath) {
 	Engine::initializePath(gamePath);
 
 	const char *gameSubPath = nullptr;
+
 	if (_gameDescription->desc.flags & VCRUISE_GF_GENTEE_PACKAGE) {
 		if (_gameDescription->gameID == GID_SCHIZM)
 			gameSubPath = "Schizm";
 	}
 
 	if (gameSubPath) {
-		Common::FSNode gameSubDir = gamePath.getChild(gameSubPath);
-		if (gameSubDir.isDirectory())
-			SearchMan.addDirectory("VCruiseGameDir", gameSubDir, 0, 3);
+		const int kNumCasePasses = 3;
+
+		for (int casePass = 0; casePass < kNumCasePasses; casePass++) {
+			Common::String subPathStr(gameSubPath);
+
+			if (casePass == 1)
+				subPathStr.toUppercase();
+			else if (casePass == 2)
+				subPathStr.toLowercase();
+
+			Common::FSNode gameSubDir = gamePath.getChild(subPathStr);
+			if (gameSubDir.isDirectory()) {
+				SearchMan.addDirectory("VCruiseGameDir", gameSubDir, 0, 3);
+				break;
+			}
+
+			if (casePass != kNumCasePasses - 1)
+				warning("Expected to find subpath '%s' in the game directory but couldn't find it", gameSubPath);
+		}
 	}
 
 	_rootFSNode = gamePath;
 }
 
 bool VCruiseEngine::hasDefaultSave() {
-	const Common::String &autoSaveName = getSaveStateName(getMetaEngine()->getAutosaveSlot());
-	bool autoSaveExists = getSaveFileManager()->exists(autoSaveName);
-
-	return autoSaveExists;
+	return hasAnySave();
 }
 
 bool VCruiseEngine::hasAnySave() {
-	return hasDefaultSave();	// Maybe could do this better, but with how ScummVM works, if there are any saves at all, then the autosave should exist.
+	Common::StringArray saveFiles = getSaveFileManager()->listSavefiles(_targetName + ".*");
+	return saveFiles.size() > 0;
+}
+
+Common::Error VCruiseEngine::loadMostRecentSave() {
+	Common::SaveFileManager *sfm = getSaveFileManager();
+
+	Common::StringArray saveFiles = sfm->listSavefiles(_targetName + ".*");
+
+	uint64 highestDateTime = 0;
+	uint32 highestPlayTime = 0;
+	Common::String highestSaveFileName;
+
+	for (const Common::String &saveFileName : saveFiles) {
+		Common::InSaveFile *saveFile = sfm->openForLoading(saveFileName);
+
+		if (!saveFile) {
+			warning("Couldn't load save file '%s' to determine recency", saveFileName.c_str());
+			continue;
+		}
+
+		ExtendedSavegameHeader header;
+		bool loadedHeader = getMetaEngine()->readSavegameHeader(saveFile, &header, true);
+		if (!loadedHeader) {
+			warning("Couldn't parse header from '%s'", saveFileName.c_str());
+			continue;
+		}
+
+		uint8 day = 0;
+		uint8 month = 0;
+		uint16 year = 0;
+
+		uint8 hour = 0;
+		uint8 minute = 0;
+
+		MetaEngine::decodeSavegameDate(&header, year, month, day);
+		MetaEngine::decodeSavegameTime(&header, hour, minute);
+
+		uint64 dateTime = static_cast<uint64>(year) << 32;
+		dateTime |= static_cast<uint64>(month) << 24;
+		dateTime |= static_cast<uint64>(day) << 16;
+		dateTime |= static_cast<uint64>(hour) << 8;
+		dateTime |= minute;
+
+		uint32 playTime = header.playtime;
+
+		if (dateTime > highestDateTime || (dateTime == highestDateTime && playTime > highestPlayTime)) {
+			highestSaveFileName = saveFileName;
+			highestDateTime = dateTime;
+			highestPlayTime = playTime;
+		}
+	}
+
+	if (highestSaveFileName.empty()) {
+		warning("Couldn't find any valid saves to load");
+		return Common::Error(Common::kReadingFailed);
+	}
+
+	Common::String slotStr = highestSaveFileName.substr(_targetName.size() + 1);
+
+	int slot = 0;
+	if (sscanf(slotStr.c_str(), "%i", &slot) != 1) {
+		warning("Couldn't parse save slot ID from %s", highestSaveFileName.c_str());
+		return Common::Error(Common::kReadingFailed);
+	}
+
+	return loadGameState(slot);
 }
 
 

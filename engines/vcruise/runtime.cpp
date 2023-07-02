@@ -1189,8 +1189,6 @@ bool Runtime::runFrame() {
 			moreActions = bootGame(true);
 			break;
 		case kGameStateQuit:
-			// Flush any settings changes made in-game
-			ConfMan.flushToDisk();
 			return false;
 		case kGameStateIdle:
 			moreActions = runIdle();
@@ -2714,18 +2712,6 @@ Common::SharedPtr<SoundInstance> Runtime::loadWave(const Common::String &soundNa
 			return activeSound;
 	}
 
-	Common::SeekableReadStream *stream = archiveMemberPtr->createReadStream();
-	if (!stream) {
-		warning("Couldn't open read stream for sound '%s'", soundName.c_str());
-		return nullptr;
-	}
-
-	Audio::SeekableAudioStream *audioStream = Audio::makeWAVStream(stream, DisposeAfterUse::YES);
-	if (!audioStream) {
-		warning("Couldn't open audio stream for sound '%s'", soundName.c_str());
-		return nullptr;
-	}
-
 	Common::SharedPtr<SoundInstance> soundInstance(new SoundInstance());
 
 	soundInstance->name = soundName;
@@ -3514,7 +3500,7 @@ void Runtime::changeAnimation(const AnimationDef &animDef, uint initialFrame, bo
 				return;
 			}
 		} else {
-			warning("Animation file %i is missing", animFile);
+			error("Animation file %i is missing", animFile);
 			delete aviFile;
 		}
 
@@ -4736,10 +4722,9 @@ Common::SharedPtr<Graphics::Surface> Runtime::loadGraphic(const Common::String &
 		return nullptr;
 	}
 
-	Common::SharedPtr<Graphics::Surface> surf(new Graphics::Surface());
+	Common::SharedPtr<Graphics::Surface> surf(new Graphics::Surface(), Graphics::SurfaceDeleter());
 	surf->copyFrom(*bmpDecoder.getSurface());
-	surf.reset(surf->convertTo(Graphics::createPixelFormat<8888>()));
-
+	surf = Common::SharedPtr<Graphics::Surface>(surf->convertTo(Graphics::createPixelFormat<8888>()), Graphics::SurfaceDeleter());
 	return surf;
 }
 

@@ -121,8 +121,8 @@ void Window::probeResources(Archive *archive) {
 
 		if (archive->hasResource(MKTAG('v', 'e', 'r', 's'), -1)) {
 			Common::Array<uint16> vers = archive->getResourceIDList(MKTAG('v', 'e', 'r', 's'));
-			for (Common::Array<uint16>::iterator iterator = vers.begin(); iterator != vers.end(); ++iterator) {
-				Common::SeekableReadStreamEndian *vvers = archive->getResource(MKTAG('v', 'e', 'r', 's'), *iterator);
+			for (auto &iterator : vers) {
+				Common::SeekableReadStreamEndian *vvers = archive->getResource(MKTAG('v', 'e', 'r', 's'), iterator);
 				Common::MacResManager::MacVers *v = Common::MacResManager::parseVers(vvers);
 
 				debug(0, "Detected vers %d.%d %s.%d region %d '%s' '%s'", v->majorVer, v->minorVer, v->devStr.c_str(),
@@ -176,24 +176,24 @@ void Window::probeResources(Archive *archive) {
 		if (resFork->openFile(archive->getPathName())) {
 			if (resFork->hasResource(MKTAG('X', 'C', 'O', 'D'), -1)) {
 				Common::Array<uint16> xcod = resFork->getResourceIDList(MKTAG('X', 'C', 'O', 'D'));
-				for (Common::Array<uint16>::iterator iterator = xcod.begin(); iterator != xcod.end(); ++iterator) {
-					Resource res = resFork->getResourceDetail(MKTAG('X', 'C', 'O', 'D'), *iterator);
+				for (auto &iterator : xcod) {
+					Resource res = resFork->getResourceDetail(MKTAG('X', 'C', 'O', 'D'), iterator);
 					debug(0, "Detected XObject '%s'", res.name.c_str());
 					g_lingo->openXLib(res.name, kXObj);
 				}
 			}
 			if (resFork->hasResource(MKTAG('X', 'C', 'M', 'D'), -1)) {
 				Common::Array<uint16> xcmd = resFork->getResourceIDList(MKTAG('X', 'C', 'M', 'D'));
-				for (Common::Array<uint16>::iterator iterator = xcmd.begin(); iterator != xcmd.end(); ++iterator) {
-					Resource res = resFork->getResourceDetail(MKTAG('X', 'C', 'M', 'D'), *iterator);
+				for (auto &iterator : xcmd) {
+					Resource res = resFork->getResourceDetail(MKTAG('X', 'C', 'M', 'D'), iterator);
 					debug(0, "Detected XCMD '%s'", res.name.c_str());
 					g_lingo->openXLib(res.name, kXObj);
 				}
 			}
 			if (resFork->hasResource(MKTAG('X', 'F', 'C', 'N'), -1)) {
 				Common::Array<uint16> xfcn = resFork->getResourceIDList(MKTAG('X', 'F', 'C', 'N'));
-				for (Common::Array<uint16>::iterator iterator = xfcn.begin(); iterator != xfcn.end(); ++iterator) {
-					Resource res = resFork->getResourceDetail(MKTAG('X', 'F', 'C', 'N'), *iterator);
+				for (auto &iterator : xfcn) {
+					Resource res = resFork->getResourceDetail(MKTAG('X', 'F', 'C', 'N'), iterator);
 					debug(0, "Detected XFCN '%s'", res.name.c_str());
 					g_lingo->openXLib(res.name, kXObj);
 				}
@@ -203,14 +203,23 @@ void Window::probeResources(Archive *archive) {
 	}
 }
 
+void DirectorEngine::addArchiveToOpenList(const Common::String path) {
+	// First, remove it if it is present
+	_allOpenResFiles.remove(path);
+
+	// And add it to the list front
+	_allOpenResFiles.push_front(path);
+}
+
 Archive *DirectorEngine::openArchive(const Common::String path) {
 	debug(1, "DirectorEngine::openArchive(\"%s\")", path.c_str());
 
 	// If the archive is already open, don't reopen it;
 	// just init from the existing archive. This prevents errors that
 	// can happen when trying to load the same archive more than once.
-	if (_allOpenResFiles.contains(path)) {
-		return _allOpenResFiles.getVal(path);
+	if (_allSeenResFiles.contains(path)) {
+		addArchiveToOpenList(path);
+		return _allSeenResFiles.getVal(path);
 	}
 
 	Archive *result = nullptr;
@@ -227,7 +236,9 @@ Archive *DirectorEngine::openArchive(const Common::String path) {
 		}
 	}
 	result->setPathName(path);
-	_allOpenResFiles.setVal(path, result);
+	_allSeenResFiles.setVal(path, result);
+
+	addArchiveToOpenList(path);
 
 	return result;
 }
@@ -403,7 +414,6 @@ Archive *DirectorEngine::loadEXEv3(Common::SeekableReadStream *stream) {
 		warning("DirectorEngine::loadEXEv3(): Failed to load RIFF from EXE");
 		delete result;
 		result = nullptr;
-		delete stream;
 	}
 
 	result = createArchive();

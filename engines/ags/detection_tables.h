@@ -373,6 +373,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "strangeland", "Strangeland" },
 	{ "sulifallenharmony", "Suli Fallen Harmony" },
 	{ "sumatra", "Sumatra: Fate of Yandi" },
+	{ "superegoch12", "Superego - Chapter 1+2" },
 	{ "superjazzman", "Super Jazz Man" },
 	{ "symploke1", "Symploke: Legend of Gustavo Bueno (Chapter 1)" },
 	{ "symploke2", "Symploke: Legend of Gustavo Bueno (Chapter 2)" },
@@ -1543,6 +1544,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "interdimensionalcs", "Interdimensional Community Service" },
 	{ "intergalacticspacepancake", "Intergalactic Space Pancake!" },
 	{ "interstellarborders", "Interstellar Borders" },
+	{ "interstellarinterruption", "Interstellar Interruption" },
 	{ "intestinator", "Intestinator!" },
 	{ "intothelight", "Into The Light" },
 	{ "intraworld", "Intra-World" },
@@ -1786,6 +1788,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "lydianellreno", "Lydia and the Mystery of Nellreno Manor" },
 	{ "lygophilous", "Lygophilous" },
 	{ "machinesdreams", "Machines Have Lucid Dreams" },
+	{ "madjack", "Mad Jack: Breakdown Shakedown" },
 	{ "maelstrom", "Maelstrom Obscura - Case 1: The Legend of the Loch Ness Monster" },
 	{ "mafaldawest", "Mafalda: The Strange and Unusual life of Mafalda West, Part 1" },
 	{ "mafiosooverkill", "Mafioso Over Kill" },
@@ -2210,6 +2213,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "odow", "One Dungeon One Week" },
 	{ "odr3", "Outrage Dreamer Roads 3" },
 	{ "odr4", "Outrage Dreamer Roads 4" },
+	{ "officereturned", "Office of the Returned" },
 	{ "officeshenanigans", "Office Shenanigans" },
 	{ "offtheclock", "Off The Clock" },
 	{ "ohdulieber", "Oh du lieber Augustin" },
@@ -2628,6 +2632,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "shamrockhg", "Shamrock High Graduation" },
 	{ "shapeshift", "Shapeshift for Cheese" },
 	{ "shapevillage", "Shape Village" },
+	{ "shardsofgod", "Shards of God" },
 	{ "sharethis", "Share This With Your Friends" },
 	{ "sharkysthree", "Sharky's 3: The Heist" },
 	{ "shawshank", "The Shawshank Redemption" },
@@ -3014,6 +3019,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "thepaparazziprince", "The Paparazzi Prince; and the Quest for Headlines" },
 	{ "thepark", "The Park" },
 	{ "theparrotsnatchers", "The Parrot Snatchers" },
+	{ "thepassenger", "The Passenger" },
 	{ "thepathpumpkin", "The Path of the Pumpkin" },
 	{ "thepenthouse", "The Penthouse" },
 	{ "theperfectmurder", "The Perfect Murder" },
@@ -3027,6 +3033,7 @@ const PlainGameDescriptor GAME_NAMES[] = {
 	{ "therebirth", "The Rebirth" },
 	{ "therent", "The Rent / L'Affitto" },
 	{ "theroadtomurder", "Laura Bow in: The Road to Murder" },
+	{ "theroadtrip", "The Road Trip" },
 	{ "therobolovers", "The Robolovers" },
 	{ "therotaryclub", "The Rotary Club" },
 	{ "theschool", "The School" },
@@ -3867,6 +3874,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN_GOG("blackwell3", "convergence.exe", "1fbaa55037f7f1c8c5e59b2dacc994e2", 173960748),  // v2.3b Win-Linux
 	GAME_ENTRY_EN_GOG("blackwell3", "ac2game.dat", "0b99002018dcf6d3db95925006da01bb", 170769466), // Mac
 	GAME_ENTRY_EN_GOG("blackwell3", "ac2game.dat", "0b6f9ba727ce934a515dcff9af9c3b9e", 170769945), // Mac v2.3
+	GAME_ENTRY_EN_GOG("blackwell3", "ac2game.dat", "613c49405b24b367a961a7e14a3849d0", 170769944), // Mac v2.3b
 	GAME_ENTRY_PLUGIN_STEAM_EN("blackwell3", "convergence.exe", "2260c1a21aba7ac00baf0100d4ca54f1", 172578803, AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN("blackwell3", "convergence.exe", "2260c1a21aba7ac00baf0100d4ca54f1", 171969680, AGSTEAM_WADJETEYE),
 	GAME_ENTRY_PLUGIN_STEAM_EN("blackwell3", "convergence.exe", "f261c2505f98503a1ec9f1dff7f13bda", 173873229, AGSTEAM_WADJETEYE),
@@ -3972,7 +3980,6 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY("gobliiins5-4", "Gobliiins5-Part4.exe", "t:1f2401479d4104539d54a4d11a713044", 352414577),
 	// Bugfix release  2023-05-14
 	GAME_ENTRY("gobliiins5-3", "Gobliiins5-Part3.exe", "t:a6d99497f108311308e812b5ba904d95", 176342992),
-
 	GAME_ENTRY_EN_STEAM("goldenwake", "a-golden-wake.exe", "dbe281d93c914899886e77c09c3c65ec", 130844360), // Linux & Mac
 	GAME_ENTRY_EN_STEAM("goldenwake", "a-golden-wake.exe", "e7080df9729aae2a0097b752198f3cca", 130846774),
 	GAME_ENTRY_EN_STEAM("goldenwake", "a-golden-wake.exe", "409b71f7b73f30bef5098c6449505c1a", 130929070),  // Windows
@@ -3981,6 +3988,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("goldenwake", "a-golden-wake.exe", "e80586fdc2db32f65658b235d8cbc159", 129814642),
 	GAME_ENTRY_EN("goldenwake", "ac2game.dat", "bb3b4630c44a51e3a23892563121c2c8", 128018480), // Linux Humble Bundle
 	GAME_ENTRY_EN("goldenwake", "ac2game.dat", "d27edc5b7eee382501dfcfea044dfc90", 128018546),
+	GAME_ENTRY_EN_STEAM("graceward", "Graceward.exe", "0564de07d3fd5c16e6947a647061913c", 292555926),
 	GAME_ENTRY_STEAM("grandmabadass", "GrandmaBadass-bundle1.exe", "a66d7de0e58d3f3a09522745c4d523d9", 739736114),  // En-Fr-De-Es-It
 	GAME_ENTRY_STEAM("guardduty", "guardduty.exe", "98d09f79129a5f96b6622661e2a7bc64", 706020335),  // En-Fr-De-Es
 	GAME_ENTRY_GOG("guardduty", "guardduty.exe", "98d09f79129a5f96b6622661e2a7bc64", 706020743),
@@ -4017,9 +4025,10 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_STEAM("mybigsister", "My Big Sister.exe", "4dc50ca8b5d2c762fe86a528b09973cf", 147257266),  // En-Fr-De-Es-Pt
 	GAME_ENTRY_STEAM("mybigsister", "My Big Sister.exe", "4dc50ca8b5d2c762fe86a528b09973cf", 147082912),  // rollback
 	GAME_ENTRY_STEAM("mybigsister", "My Big Sister.exe", "4dc50ca8b5d2c762fe86a528b09973cf", 147248623),  // rollback - latest
-	GAME_ENTRY_EN_STEAM("mybigsisterrm", "MBSRemastered.exe", "e08c78e2591f196a2f42e5911062e56e", 156797059),  // rollback 0.1
-	GAME_ENTRY_STEAM("mybigsisterrm", "MBSRemastered.exe", "e08c78e2591f196a2f42e5911062e56e", 157043019),  // Multilang
-	GAME_ENTRY_STEAM("mybigsisterrm", "MBSRemastered.exe", "e08c78e2591f196a2f42e5911062e56e", 157045932),  // Multilang
+	GAME_ENTRY_EN_STEAM("mybigsisterrm", "MBSRemastered.exe", "e08c78e2591f196a2f42e5911062e56e", 156797059),
+	GAME_ENTRY_STEAM("mybigsisterrm", "MBSRemastered.exe", "e08c78e2591f196a2f42e5911062e56e", 157043019),  // Multilang rollback 0.1
+	GAME_ENTRY_STEAM("mybigsisterrm", "MBSRemastered.exe", "e08c78e2591f196a2f42e5911062e56e", 157045932),  // Multilang rollback 0.2
+	GAME_ENTRY_STEAM("mybigsisterrm", "MBSRemastered.exe", "e08c78e2591f196a2f42e5911062e56e", 157046186),  // Multilang
 	GAME_ENTRY_STEAM("nellycootalot-hd", "Nelly.exe", "521aecdb5343c8d8f1c1000c4c2fa468", 11069524),  // Win En-Fr-De-Es-Pl
 	GAME_ENTRY_STEAM("nellycootalot-hd", "Nelly.exe", "28f22ae60e2f3524665c1d5be60a0bf3", 11069220),
 	GAME_ENTRY_STEAM("nellycootalot-hd", "ac2game.dat", "914d76b051867892f78883a2ff6be6ea", 11060916),  // Mac En-Fr-De-Es-Pl
@@ -4134,6 +4143,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_STEAM("sumatra", "sumatra fate of yandi.exe", "57c868b1a81c0335ab60970292cd79d8", 170088886),  // En-Fr-De-Es
 	GAME_ENTRY_STEAM("sumatra", "sumatra fate of yandi.exe", "b4407ac542f316456f549fc8a60dccae", 170634789),
 	GAME_ENTRY_GOG("sumatra", "sumatra fate of yandi.exe", "b4407ac542f316456f549fc8a60dccae", 170715680),  // v1.2
+	GAME_ENTRY_EN("superegoch12", "Superego - Chapter 1+2 (ENG).exe", "faeaa85c173b559be75f55a3433e1fd2", 346120240),  // itch.io
+	GAME_ENTRY_LANG("superegoch12", "Superego - Cap. 1+2.exe", "2b5c2ecd5dbeafcd1591a6d743cf8adc", 346121328, Common::ES_ESP),
 	GAME_ENTRY_EN("superjazzman", "sjm.exe", "0710e2ec71042617f565c01824f0cf3c", 10841689), // Official website
 	GAME_ENTRY_LANG("symploke1", "Symploke.exe", "ff20c8c9dda8379607db87e7726909c6", 29996616, Common::ES_ESP), // Videojuegos Fermin website (Spanish)
 	GAME_ENTRY_EN("symploke1", "symploke1.exe", "ff20c8c9dda8379607db87e7726909c6", 57363019), // Steam (English), same as Videojuegos Fermin website (English)
@@ -4186,8 +4197,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN_STEAM("waitingfortheloop", "waitingfortheloop.exe", "0241777c2537fc5d077c05cde10bfa9f", 51472537),
 	GAME_ENTRY_EN("waitingfortheloop", "waitingfortheloop.exe", "0241777c2537fc5d077c05cde10bfa9f", 51273604),
 	GAME_ENTRY("welcometosunnymunarvagir", "alpha4.ags", "392dbdd0697ae32af4cfe5212f9213c5", 23000263),
-	GAME_ENTRY_PLUGIN_STEAM_NOLAUNCHLOAD("whispersofamachine", "whispers.exe", "b4962a0a9c9c33954e185a137125f527", 159084291, AGSSPRITEFONT_CLIFFTOP),  // Multilang
-	GAME_ENTRY_PLUGIN_GOG_NOLAUNCHLOAD("whispersofamachine", "whispers.exe", "b8416ff5242d6540980f922f03a01a5f", 159085573, AGSSPRITEFONT_CLIFFTOP),
+	DETECTION_ENTRY_GUIO("whispersofamachine", "whispers.exe", "b4962a0a9c9c33954e185a137125f527", 159084291, Common::UNK_LANG, "Steam", GUIO3(GUIO_NOLANG, GUIO_NOLAUNCHLOAD, GAMEOPTION_NO_SAVE_THUMBNAIL), AGSSPRITEFONT_CLIFFTOP, ADGF_NO_FLAGS),  // Multilang
+	DETECTION_ENTRY_GUIO("whispersofamachine", "whispers.exe", "b8416ff5242d6540980f922f03a01a5f", 159085573, Common::UNK_LANG, "GOG.com", GUIO3(GUIO_NOLANG, GUIO_NOLAUNCHLOAD, GAMEOPTION_NO_SAVE_THUMBNAIL), AGSSPRITEFONT_CLIFFTOP, ADGF_NO_FLAGS),
 	GAME_ENTRY_EN_STEAM("wolfterritory", "wolf.exe", "78dd4ca028ee0156b6a093d6d780aa65", 3957156),
 	GAME_ENTRY_EN_STEAM("yetilastescape", "Big-run.exe", "1e003cdad70709b5bd3d0d957f637e58", 31372723),
 	GAME_ENTRY_STEAM("zniwadventure", "ctgame.exe", "8a2d48ee8d92bad3c5cacd8b883c5871", 100036465),  // Win Eng-Pol
@@ -4638,6 +4649,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	DEMO_ENTRY("shadowsoftheempire", "sote_td.exe", "b8cd640b45c5a79c33c7a8a8fe32ebe2", 63299246),  //v1.1  En-De-It
 	DEMO_ENTRY_EN("shardlight", "shardlight demo.exe", "ee801fba52d252249677a9170bd2db96", 642405010), // Steam
 	DEMO_ENTRY_EN("shardlight", "shardlight demo.exe", "ee801fba52d252249677a9170bd2db96", 642366257),
+	DEMO_ENTRY_EN("shardsofgod", "Shards of God.ags", "b181201165d078ac786fa474ef8c14fd", 36754512),
 	DEMO_ENTRY_EN("shivah", "shivahdemo.exe", "6e3d6225dee662ff6450a3bfa942773b", 20897850),
 	DEMO_ENTRY_EN("shivahkosher", "shivah-demo.exe", "0aaf5445a3544a631d6e7dd4561fc7ae", 23987292),
 	DEMO_ENTRY_EN("signalecho", "Signal & Echo - Iris is Missing (demo).exe", "f9e3e0193fbc975daa3a7c95edf04e0a", 39177267),
@@ -6111,6 +6123,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("interdimensionalcs", "ICS.exe", "8d1ff95c16500befbdc72260d461d73f", 15656530),
 	GAME_ENTRY_EN("intergalacticspacepancake", "space.exe", "97d700529f5cc826f230c27acf81adfd", 1797309),
 	GAME_ENTRY_EN("interstellarborders", "Interstellar Borders New.exe", "23a67b6de10ec35e9f5a4dfc7d928222", 13864633),
+	GAME_ENTRY_EN("interstellarinterruption", "Interstellar Interruption.ags", "5bb241c71681dadc3be75a9795ea9be7", 6222268),
 	GAME_ENTRY_EN("intestinator", "intestinator.exe", "3421b46ff95c5885603086c39a038a20", 1722265),
 	GAME_ENTRY_EN_PLATFORM("intestinator", "ac2game.ags", "af8c785b9c462228b1c134ac79f83986", 423817, "Beta"),
 	GAME_ENTRY_EN("intothelight", "ITL.exe", "3b7cceb3e4bdb031dc5d8f290936e94b", 12145887),
@@ -6406,6 +6419,7 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("lydianellreno", "LydiaW.exe", "615e73fc1874e92d60a1996c2330ea36", 33971307),
 	GAME_ENTRY_EN("lygophilous", "Lygophilous.exe", "0564de07d3fd5c16e6947a647061913c", 38762137),
 	GAME_ENTRY_EN("machinesdreams", "Machines Have Lucid Dreams v0.91.exe", "784c7fae35c6501eaa3673ea29391a7b", 653366138),
+	GAME_ENTRY_EN("madjack", "MadJackBrakeShake.ags", "25e4e7303bce8c521dcfc8056afeaa6e", 26312912),
 	GAME_ENTRY_EN("mafaldawest", "realgame.exe", "be559b7205d41c3f3813cb8a7e8196f6", 16292195),
 	GAME_ENTRY_EN("mafiosooverkill", "Alien Shoot.exe", "0500aacb6c176d47ac0f8158f055db83", 4012551),
 	GAME_ENTRY_EN("magic8ball", "Magic-8-Ball.exe", "82da2565c456dcfb265ded6fe3189c0b", 4233735),
@@ -6899,6 +6913,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("odow", "ODOW.exe", "6e6f33162242d74dd1fa042429f16562", 3968102),
 	GAME_ENTRY_EN("odr3", "ODR3.exe", "af11e94f91b66e11450e8daf51d09292", 7637876),
 	GAME_ENTRY_EN("odr4", "ODR4.exe", "510be04e5eec2aa92bb78b060f138d64", 24227828),
+	GAME_ENTRY_EN("officereturned", "OfficeofTheReturned.ags", "fda695d784c029b3b13a63c7ee989d9a", 3722245),  // AdvJam
+	GAME_ENTRY_EN("officereturned", "OfficeofTheReturned.ags", "551c685d6586066092ff51ec20f96be9", 3744375),  // v1.1
 	GAME_ENTRY_EN("officeshenanigans", "OfficeShenanigans.exe", "25976a689b0f4d73eac69b1728377ecb", 6111931),
 	DETECTION_ENTRY_GUIO("offtheclock", "Off The Clock.ags", "8918895c5c695bae90af13ea4f1a9807", 495345700, Common::EN_ANY, nullptr, GUIO2(GUIO_NOLANG, GUIO_NOLAUNCHLOAD), nullptr, ADGF_NO_FLAGS),  // Linux
 	DETECTION_ENTRY_GUIO("offtheclock", "Off The Clock.exe", "b2eb107c1f9784b7fc4f58c2a7678dea", 498392456, Common::EN_ANY, nullptr, GUIO2(GUIO_NOLANG, GUIO_NOLAUNCHLOAD), nullptr, ADGF_NO_FLAGS),  // Win
@@ -7881,6 +7897,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("thepaparazziprince", "Willy.exe", "f3a13b2d6c2e0fe04c6f466062920e23", 3403804),
 	GAME_ENTRY_EN("thepark", "park.exe", "97d700529f5cc826f230c27acf81adfd", 709265),
 	GAME_ENTRY("theparrotsnatchers", "r.exe", "a524cbb1c51589903c4043b98917f1d9", 11945759),  // En-Pol
+	GAME_ENTRY_EN("thepassenger", "The Passenger.exe", "ae2e93ae61a612dd8cad1290bd5f7443", 4367776),
+	GAME_ENTRY_EN("thepassenger", "The Passenger.ags", "39af4e69a003d070a96bface061b819e", 1255820),
 	GAME_ENTRY("thepathpumpkin", "The path of a pumpkin(The story of Skar).exe", "2c8f16a69b659ddfad4a043a24d8aa49", 264732994),  // En-Ita
 	GAME_ENTRY_EN("thepenthouse", "Penthouse.exe", "0564de07d3fd5c16e6947a647061913c", 13596940),
 	GAME_ENTRY("thephantominheritance", "Phantom.exe", "ec04c7917c003d9e07d4514ff25bf365", 27558669),  // Eng-Esp
@@ -7895,6 +7913,8 @@ const AGSGameDescription GAME_DESCRIPTIONS[] = {
 	GAME_ENTRY_EN("thereaper", "The Reaper.exe", "05f7ff300b322bc431e7cda6a07b5976", 9922339),
 	GAME_ENTRY("therent", "L'Affitto.exe", "d25c3cb8a42c5565634dfef76b3cf83e", 4452748),  // Eng-Ita
 	GAME_ENTRY_EN("theroadtomurder", "lbb.exe", "465f972675db2da6040518221af5b0ba", 1020984),
+	GAME_ENTRY_EN("theroadtrip", "The RoadTrip.ags", "45c1f184bf50b4880bd591fb36e734e5", 3452180),
+	GAME_ENTRY_EN("theroadtrip", "The RoadTrip.exe", "ae2e93ae61a612dd8cad1290bd5f7443", 6564136),
 	GAME_ENTRY_EN("therobolovers", "The Robolovers.exe", "618d7dce9631229b4579340b964c6810", 63850620),
 	GAME_ENTRY_EN("therotaryclub", "The Rotary Club.exe", "01823d511cc00f4de6fd920eb543c6e7", 9641709),
 	GAME_ENTRY_EN_PLATFORM("thesecretofchunkysalsa", "TSOCS.exe", "a01a9639ce30bdcd5bf82e528b51fa06", 3096950, "MAGS"),  //v1.01

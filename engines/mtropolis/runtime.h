@@ -210,7 +210,7 @@ enum DynamicValueType {
 	kObject = 14,
 	kWriteProxy = 15,
 
-	kEmpty = 16,
+	kUnspecified = 16,
 };
 
 } // End of namespace DynamicValuesTypes
@@ -792,6 +792,8 @@ struct DynamicList {
 	void expandToMinimumSize(size_t sz);
 	size_t getSize() const;
 
+	void forceType(DynamicValueTypes::DynamicValueType type);
+
 	static bool dynamicValueToIndex(size_t &outIndex, const DynamicValue &value);
 
 	DynamicList &operator=(const DynamicList &other);
@@ -814,9 +816,9 @@ private:
 		static MiniscriptInstructionOutcome refAttribIndexed(MiniscriptThread *thread, DynamicValueWriteProxy &proxy, void *objectRef, uintptr ptrOrOffset, const Common::String &attrib, const DynamicValue &index);
 	};
 
-	void clear();
 	void initFromOther(const DynamicList &other);
-	bool changeToType(DynamicValueTypes::DynamicValueType type);
+	void destroyContainer();
+	bool createContainerAndSetType(DynamicValueTypes::DynamicValueType type);
 
 	DynamicValueTypes::DynamicValueType _type;
 	DynamicListContainerBase *_container;
@@ -1702,6 +1704,9 @@ public:
 	const Palette &getGlobalPalette() const;
 	void setGlobalPalette(const Palette &palette);
 
+	void addMouseBlocker();
+	void removeMouseBlocker();
+
 	const Common::String *resolveAttributeIDName(uint32 attribID) const;
 
 	const Common::WeakPtr<Window> &getMainWindow() const;
@@ -1959,6 +1964,8 @@ private:
 	uint32 _multiClickInterval;
 	uint _multiClickCount;
 
+	uint _numMouseBlockers;
+
 	bool _defaultVolumeState;
 
 	// True if any elements were added to the scene, removed from the scene, or reparented since last draw
@@ -2126,7 +2133,10 @@ public:
 	virtual ~StructuralHooks();
 
 	virtual void onCreate(Structural *structural);
-	virtual void onSetPosition(Runtime *runtime, Structural *structural, Common::Point &pt);
+	virtual void onPostActivate(Structural *structural);
+	virtual void onSetPosition(Runtime *runtime, Structural *structural, const Common::Point &oldPt, Common::Point &pt);
+	virtual void onStopPlayingMToon(Structural *structural, bool &visible, bool &stopped, Graphics::ManagedSurface *lastSurf);
+	virtual void onHidden(Structural *structural, bool &visible);
 };
 
 class Structural : public RuntimeObject, public IModifierContainer, public IMessageConsumer, public Debuggable {
@@ -2320,7 +2330,7 @@ private:
 };
 
 struct IKeyboardEventReceiver : public IInterfaceBase {
-	virtual void onKeyboardEvent(Runtime *runtime, Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt) = 0;
+	virtual void onKeyboardEvent(Runtime *runtime, const KeyboardInputEvent &keyEvt) = 0;
 };
 
 class KeyboardEventSignaller {
@@ -2328,7 +2338,7 @@ public:
 	KeyboardEventSignaller();
 	~KeyboardEventSignaller();
 
-	void onKeyboardEvent(Runtime *runtime, Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt);
+	void onKeyboardEvent(Runtime *runtime, const KeyboardInputEvent &keyEvt);
 	void addReceiver(IKeyboardEventReceiver *receiver);
 	void removeReceiver(IKeyboardEventReceiver *receiver);
 
@@ -2415,7 +2425,7 @@ public:
 	const Common::String *findNameOfLabel(const Label &label) const;
 
 	void onPostRender();
-	void onKeyboardEvent(Runtime *runtime, const Common::EventType evtType, bool repeat, const Common::KeyState &keyEvt);
+	void onKeyboardEvent(Runtime *runtime, const KeyboardInputEvent &keyEvt);
 
 	Common::SharedPtr<SegmentUnloadSignaller> notifyOnSegmentUnload(int segmentIndex, ISegmentUnloadSignalReceiver *receiver);
 	Common::SharedPtr<KeyboardEventSignaller> notifyOnKeyboardEvent(IKeyboardEventReceiver *receiver);
@@ -2799,14 +2809,17 @@ protected:
 	MiniscriptInstructionOutcome scriptSetCenterPositionX(MiniscriptThread *thread, const DynamicValue &dest);
 	MiniscriptInstructionOutcome scriptSetCenterPositionY(MiniscriptThread *thread, const DynamicValue &dest);
 	MiniscriptInstructionOutcome scriptSetVisibility(MiniscriptThread *thread, const DynamicValue &result);
+	MiniscriptInstructionOutcome scriptSetSize(MiniscriptThread *thread, const DynamicValue &dest);
 	MiniscriptInstructionOutcome scriptSetWidth(MiniscriptThread *thread, const DynamicValue &dest);
 	MiniscriptInstructionOutcome scriptSetHeight(MiniscriptThread *thread, const DynamicValue &dest);
 	MiniscriptInstructionOutcome scriptSetLayer(MiniscriptThread *thread, const DynamicValue &dest);
 
 	MiniscriptInstructionOutcome scriptWriteRefPositionAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib);
+	MiniscriptInstructionOutcome scriptWriteRefSizeAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib);
 	MiniscriptInstructionOutcome scriptWriteRefCenterPositionAttribute(MiniscriptThread *thread, DynamicValueWriteProxy &writeProxy, const Common::String &attrib);
 
 	void offsetTranslate(int32 xDelta, int32 yDelta, bool cachedOriginOnly);
+	void resize(int32 width, int32 height);
 
 	Common::Point getCenterPosition() const;
 
@@ -3010,6 +3023,10 @@ public:
 
 	virtual DynamicValueWriteProxy createWriteProxy();
 
+#ifdef MTROPOLIS_DEBUG_ENABLE
+	void debugInspect(IDebugInspectionReport *report) const override;
+#endif
+
 private:
 	VariableModifier() = delete;
 
@@ -3032,6 +3049,7 @@ enum AssetType {
 	kAssetTypeImage,
 	kAssetTypeText,
 	kAssetTypeMToon,
+	kAssetTypeAVIMovie,
 };
 
 class AssetHooks {

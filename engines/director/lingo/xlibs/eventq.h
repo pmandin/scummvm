@@ -19,22 +19,33 @@
  *
  */
 
-#ifndef HPL1_STD_PAIR_H
-#define HPL1_STD_PAIR_H
+#ifndef DIRECTOR_LINGO_XLIBS_EVENTQ_H
+#define DIRECTOR_LINGO_XLIBS_EVENTQ_H
 
-namespace Hpl1 {
-namespace Std {
-
-template<typename T1, typename T2>
-struct pair {
-	pair(const T1 &f, const T2 &s) : first(f), second(s) {}
-
-	T1 first;
-	T2 second;
+namespace Director {
+class EventQXObject : public Object<EventQXObject> {
+public:
+	EventQXObject(ObjectType objType);
 };
 
-} // namespace Std
+namespace EventQXObj {
 
-} // namespace Hpl1
+extern const char *xlibNames[];
+extern const char *fileNames[];
+
+void open(int type);
+void close(int type);
+
+void m_new(int nargs);
+void m_dispose(int nargs);
+void m_bufferEvents(int nargs);
+void m_flushEvents(int nargs);
+void m_postEvents(int nargs);
+void m_bufferStatus(int nargs);
+void m_getNextEvent(int nargs);
+
+} // End of namespace EventQXObj
+
+} // End of namespace Director
 
 #endif
