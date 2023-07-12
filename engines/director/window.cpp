@@ -115,7 +115,7 @@ void Window::invertChannel(Channel *channel, const Common::Rect &destRect) {
 
 void Window::drawFrameCounter(Graphics::ManagedSurface *blitTo) {
 	const Graphics::Font *font = FontMan.getFontByUsage(Graphics::FontManager::kConsoleFont);
-	Common::String msg = Common::String::format("Frame: %d", g_director->getCurrentMovie()->getScore()->getCurrentFrame());
+	Common::String msg = Common::String::format("Frame: %d", g_director->getCurrentMovie()->getScore()->getCurrentFrameNum());
 	uint32 width = font->getStringWidth(msg);
 
 	blitTo->fillRect(Common::Rect(blitTo->w - 3 - width, 1, blitTo->w - 1, font->getFontHeight() + 1), _wm->_colorBlack);
@@ -268,6 +268,12 @@ void Window::setModal(bool modal) {
 	setVisible(true); // Activate this window on top
 }
 
+void Window::setFileName(Common::String filename) {
+	setNextMovie(filename);
+
+	setVisible(true); // Activate this window on top
+}
+
 void Window::reset() {
 	resizeInner(_composeSurface->w, _composeSurface->h);
 	_contentIsDirty = true;
@@ -313,23 +319,23 @@ void Window::setVisible(bool visible, bool silent) {
 }
 
 bool Window::setNextMovie(Common::String &movieFilenameRaw) {
-	Common::String movieFilename = pathMakeRelative(movieFilenameRaw);
+	Common::Path movieFilename = findMoviePath(movieFilenameRaw);
 
 	bool fileExists = false;
 	Common::File file;
-	if (file.open(Common::Path(movieFilename, _vm->_dirSeparator))) {
+	if (!movieFilename.empty() && file.open(movieFilename)) {
 		fileExists = true;
 		file.close();
 	}
 
-	debug(1, "Window::setNextMovie: '%s' -> '%s' -> '%s'", movieFilenameRaw.c_str(), convertPath(movieFilenameRaw).c_str(), movieFilename.c_str());
+	debug(1, "Window::setNextMovie: '%s' -> '%s' -> '%s'", movieFilenameRaw.c_str(), convertPath(movieFilenameRaw).c_str(), movieFilename.toString().c_str());
 
 	if (!fileExists) {
-		warning("Movie %s does not exist", movieFilename.c_str());
+		warning("Movie %s does not exist", movieFilename.toString().c_str());
 		return false;
 	}
 
-	_nextMovie.movie = movieFilename;
+	_nextMovie.movie = movieFilename.toString(g_director->_dirSeparator);
 	return true;
 }
 
@@ -344,19 +350,19 @@ void Window::updateBorderType() {
 }
 
 void Window::loadNewSharedCast(Cast *previousSharedCast) {
-	Common::String previousSharedCastPath;
-	Common::String newSharedCastPath = getSharedCastPath();
+	Common::Path previousSharedCastPath;
+	Common::Path newSharedCastPath = getSharedCastPath();
 	if (previousSharedCast && previousSharedCast->getArchive()) {
-		previousSharedCastPath = previousSharedCast->getArchive()->getPathName();
+		previousSharedCastPath = Common::Path(previousSharedCast->getArchive()->getPathName(), g_director->_dirSeparator);
 	}
 
 	// Check if previous and new sharedCasts are the same
-	if (!previousSharedCastPath.empty() && previousSharedCastPath.equalsIgnoreCase(newSharedCastPath)) {
+	if (!previousSharedCastPath.empty() && previousSharedCastPath == newSharedCastPath) {
 		// Clear those previous widget pointers
 		previousSharedCast->releaseCastMemberWidget();
 		_currentMovie->_sharedCast = previousSharedCast;
 
-		debugC(1, kDebugLoading, "Skipping loading already loaded shared cast, path: %s", previousSharedCastPath.c_str());
+		debugC(1, kDebugLoading, "Skipping loading already loaded shared cast, path: %s", previousSharedCastPath.toString().c_str());
 		return;
 	}
 
@@ -386,7 +392,9 @@ bool Window::loadNextMovie() {
 	delete _currentMovie;
 	_currentMovie = nullptr;
 
-	Archive *mov = g_director->openArchive(_currentPath + Common::lastPathComponent(_nextMovie.movie, g_director->_dirSeparator));
+	Common::Path archivePath = Common::Path(_currentPath, g_director->_dirSeparator);
+	archivePath.appendInPlace(Common::lastPathComponent(_nextMovie.movie, g_director->_dirSeparator));
+	Archive *mov = g_director->openArchive(archivePath);
 
 	if (!mov)
 		return false;
@@ -479,7 +487,7 @@ bool Window::step() {
 	return false;
 }
 
-Common::String Window::getSharedCastPath() {
+Common::Path Window::getSharedCastPath() {
 	Common::Array<Common::String> namesToTry;
 	if (_vm->getVersion() < 400) {
 		if (g_director->getPlatform() == Common::kPlatformWindows) {
@@ -489,22 +497,19 @@ Common::String Window::getSharedCastPath() {
 		}
 	} else if (_vm->getVersion() < 500) {
 		namesToTry.push_back("Shared.dir");
-		namesToTry.push_back("Shared.dxr");
 	} else {
 		// TODO: Does D5 actually support D4-style shared cast?
 		namesToTry.push_back("Shared.cst");
-		namesToTry.push_back("Shared.cxt");
 	}
 
+	Common::Path result;
 	for (uint i = 0; i < namesToTry.size(); i++) {
-		Common::File f;
-		if (f.open(Common::Path(_currentPath + namesToTry[i], _vm->_dirSeparator))) {
-			f.close();
-			return _currentPath + namesToTry[i];
-		}
+		result = findMoviePath(namesToTry[i]);
+		if (!result.empty())
+			return result;
 	}
 
-	return Common::String();
+	return result;
 }
 
 void Window::freezeLingoState() {

@@ -50,7 +50,7 @@ struct AQCallbackStruct {
 	AudioStreamBasicDescription dataFormat;
 };
 
-class OSystem_iOS7 : public EventsBaseBackend, public PaletteManager {
+class OSystem_iOS7 : public ModularGraphicsBackend, public EventsBaseBackend {
 protected:
 	static AQCallbackStruct s_AudioQueue;
 	static SoundProc s_soundCallback;
@@ -58,27 +58,8 @@ protected:
 
 	Audio::MixerImpl *_mixer;
 
-	VideoContext *_videoContext;
-
-	Graphics::Surface _framebuffer;
-
-	// For signaling that screen format set up might have failed.
-	TransactionError _gfxTransactionError;
-
-	// For use with the game texture
-	uint16  _gamePalette[256];
-	// For use with the mouse texture
-	uint16  _gamePaletteRGBA5551[256];
-
 	CFTimeInterval _startTime;
 	uint32 _timeSuspended;
-
-	bool _mouseCursorPaletteEnabled;
-	uint16 _mouseCursorPalette[256];
-	Graphics::Surface _mouseBuffer;
-	uint16 _mouseKeyColor;
-	bool _mouseDirty;
-	bool _mouseNeedTextureUpdate;
 
 	long _lastMouseDown;
 	long _lastMouseTap;
@@ -91,15 +72,8 @@ protected:
 	bool _touchpadModeEnabled;
 	int _lastPadX;
 	int _lastPadY;
-	int _lastDragPosX;
-	int _lastDragPosY;
 
-	Common::Array<Common::Rect> _dirtyRects;
-	Common::Array<Common::Rect> _dirtyOverlayRects;
 	ScreenOrientation _screenOrientation;
-	bool _fullScreenIsDirty;
-	bool _fullScreenOverlayIsDirty;
-	int _screenChangeCount;
 
 	Common::String _lastErrorMessage;
 
@@ -122,56 +96,31 @@ public:
 	bool hasFeature(Feature f) override;
 	void setFeatureState(Feature f, bool enable) override;
 	bool getFeatureState(Feature f) override;
-	void initSize(uint width, uint height, const Graphics::PixelFormat *format) override;
 
-	void beginGFXTransaction() override;
-	TransactionError endGFXTransaction() override;
-
-	int16 getHeight() override;
-	int16 getWidth() override;
+	bool setGraphicsMode(int mode, uint flags) override;
 
 	bool touchpadModeEnabled() const;
 
-#ifdef USE_RGB_COLOR
-	Graphics::PixelFormat getScreenFormat() const override { return _framebuffer.format; }
-	Common::List<Graphics::PixelFormat> getSupportedFormats() const override;
+#if TARGET_OS_IOS
+	void applyOrientationSettings();
+	void setSupportedScreenOrientation(ScreenOrientation screenOrientation);
 #endif
+
+	uint createOpenGLContext();
+	void destroyOpenGLContext();
+	void refreshScreen() const;
+	int getScreenWidth() const;
+	int getScreenHeight() const;
+	float getSystemHiDPIScreenFactor() const;
+
 #if defined(USE_OPENGL) && defined(USE_GLAD)
 	void *getOpenGLProcAddress(const char *name) const override;
 #endif
-
-	PaletteManager *getPaletteManager() override { return this; }
-
-	float getHiDPIScreenFactor() const override;
-
-protected:
-	// PaletteManager API
-	void setPalette(const byte *colors, uint start, uint num) override;
-	void grabPalette(byte *colors, uint start, uint num) const override;
+#if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
+	OpenGL::ContextType getOpenGLType() const override { return OpenGL::kContextGLES2; }
+#endif
 
 public:
-	void copyRectToScreen(const void *buf, int pitch, int x, int y, int w, int h) override;
-	void updateScreen() override;
-	Graphics::Surface *lockScreen() override;
-	void unlockScreen() override;
-	void setShakePos(int shakeXOffset, int shakeYOffset) override;
-
-	void showOverlay(bool inGUI) override;
-	void hideOverlay() override;
-	bool isOverlayVisible() const override { return _videoContext->overlayVisible; }
-	void clearOverlay() override;
-	void grabOverlay(Graphics::Surface &surface) override;
-	void copyRectToOverlay(const void *buf, int pitch, int x, int y, int w, int h) override;
-	int16 getOverlayHeight() override;
-	int16 getOverlayWidth() override;
-	Graphics::PixelFormat getOverlayFormat() const override;
-
-	bool showMouse(bool visible) override;
-
-	void warpMouse(int x, int y) override;
-	void setMouseCursor(const void *buf, uint w, uint h, int hotspotX, int hotspotY, uint32 keycolor = 255, bool dontScale = false, const Graphics::PixelFormat *format = NULL, const byte *mask = NULL) override;
-	void setCursorPalette(const byte *colors, uint start, uint num) override;
-
 	bool pollEvent(Common::Event &event) override;
 	uint32 getMillis(bool skipRecord = false) override;
 	void delayMillis(uint msecs) override;
@@ -180,7 +129,6 @@ public:
 	static void mixCallback(void *sys, byte *samples, int len);
 	virtual void setupMixer(void);
 	virtual void setTimerCallback(TimerProc callback, int interval);
-	int getScreenChangeID() const override { return _screenChangeCount; }
 	void quit() override;
 
 	void addSysArchivesToSearchSet(Common::SearchSet &s, int priority = 0) override;
@@ -216,20 +164,14 @@ public:
 	virtual void registerDefaultSettings(const Common::String &target) const override;
 
 protected:
-	void initVideoContext();
 	void updateOutputSurface();
 	void setShowKeyboard(bool);
 	bool isKeyboardShown() const;
 
-	void internUpdateScreen();
-	void dirtyFullScreen();
-	void dirtyFullOverlayScreen();
 	void suspendLoop();
 	void saveState();
 	void restoreState();
 	void clearState();
-	void drawDirtyRect(const Common::Rect &dirtyRect);
-	void updateMouseTexture();
 	static void AQBufferCallback(void *in, AudioQueueRef inQ, AudioQueueBufferRef outQB);
 	static int timerHandler(int t);
 
@@ -257,6 +199,7 @@ protected:
 	void handleEvent_mouseRightButtonDown(Common::Event &event, int x, int y);
 	void handleEvent_mouseRightButtonUp(Common::Event &event, int x, int y);
 	void handleEvent_mouseDelta(Common::Event &event, int deltaX, int deltaY);
+	void handleEvent_mouseEvent(Common::Event &event, int relX, int relY);
 
 	void rebuildSurface();
 	float getMouseSpeed();

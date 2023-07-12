@@ -472,6 +472,12 @@ Common::Error EoBCoreEngine::init() {
 		assert(_gui);
 		_txt = new TextDisplayer_rpg(this, _screen);
 		assert(_txt);
+
+		if (_flags.platform == Common::kPlatformAmiga) {
+			static const uint8 cmap[16] = { 0x00, 0x06, 0x1d, 0x1b, 0x1a, 0x17, 0x18, 0x0e, 0x19, 0x1c, 0x1c, 0x1e, 0x13, 0x0a, 0x11, 0x1f };
+			for (int i = 0; i < ARRAYSIZE(cmap); ++i)
+				_txt->setColorMapping(-1, i, cmap[i]);
+		}
 	}
 
 	_inf = new EoBInfProcessor(this, _screen);
@@ -730,7 +736,6 @@ void EoBCoreEngine::runLoop() {
 	_drawSceneTimer = _system->getMillis();
 	_screen->setFont(_conFont);
 	_screen->setScreenDim(7);
-
 	_runFlag = true;
 
 	while (!shouldQuit() && _runFlag) {
@@ -1569,8 +1574,16 @@ void EoBCoreEngine::setupDialogueButtons(int presetfirst, int numStr, va_list &a
 
 	_dialogueButtonPosX = &guiSettings()->buttons.posX[presetfirst];
 	_dialogueButtonPosY = &guiSettings()->buttons.posY[presetfirst];
-	_dialogueButtonXoffs = (_flags.platform == Common::kPlatformSegaCD) ? 8 : 0;
-	_dialogueButtonYoffs = (_flags.platform == Common::kPlatformSegaCD) ? 160 : yOffs;
+	_dialogueButtonXoffs = 0;
+
+	if (_flags.lang == Common::ZH_TWN) {
+		_dialogueButtonYoffs = numStr > 3 ? 166 : 184;
+	} else if (_flags.platform == Common::kPlatformSegaCD) {
+		_dialogueButtonXoffs = 8;
+		_dialogueButtonYoffs =  160;
+	} else {
+		_dialogueButtonYoffs = yOffs;
+	}
 
 	drawDialogueButtons();
 
@@ -1712,6 +1725,7 @@ int EoBCoreEngine::runDialogue(int dialogueTextId, int numStr, int loopButtonId,
 void EoBCoreEngine::restParty_displayWarning(const char *str) {
 	int od = _screen->curDimIndex();
 	_screen->setScreenDim(7);
+
 	Screen::FontId of = _screen->setFont(_conFont);
 	_screen->setCurPage(0);
 
@@ -1737,9 +1751,11 @@ bool EoBCoreEngine::restParty_updateMonsters() {
 		Screen::FontId of = _screen->setFont(_conFont);
 		int od = _screen->curDimIndex();
 		_screen->setScreenDim(7);
+
 		updateMonsters(0);
 		updateMonsters(1);
 		timerProcessFlyingObjects(0);
+
 		_screen->setScreenDim(od);
 		_screen->setFont(of);
 

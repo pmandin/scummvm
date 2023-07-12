@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 2.3.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-07-01 14:26+0000\n"
+"POT-Creation-Date: 2023-07-11 12:36+0000\n"
 "PO-Revision-Date: 2023-02-26 15:01+0000\n"
 "Last-Translator: Kastuś K. <oakum2334@gmail.com>\n"
 "Language-Team: Belarusian (Taraškievica) <https://translations.scummvm.org/"
@@ -160,7 +160,7 @@ msgid "Now, open this link in your browser:"
 msgstr ""
 
 #: gui/cloudconnectionwizard.cpp:264 gui/cloudconnectionwizard.cpp:319
-#: gui/message.cpp:218 gui/message.cpp:222
+#: gui/message.cpp:246 gui/message.cpp:250
 msgid "Open URL"
 msgstr "Адкрыць URL"
 
@@ -311,7 +311,7 @@ msgstr ""
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1842
+#: engines/director/lingo/lingo-builtins.cpp:1882
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:660 engines/mtropolis/mtropolis.cpp:115
 #: engines/mtropolis/mtropolis.cpp:125 engines/parallaction/saveload.cpp:270
@@ -322,7 +322,7 @@ msgstr ""
 #: engines/scumm/scumm.cpp:2048 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:529 engines/sword1/animation.cpp:560
 #: engines/sword1/animation.cpp:568 engines/sword1/control.cpp:888
-#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:426
+#: engines/sword1/logic.cpp:1641 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
 #: engines/vcruise/vcruise.cpp:92 engines/vcruise/vcruise.cpp:102
 #: engines/zvision/file/save_manager.cpp:225
@@ -459,7 +459,7 @@ msgstr "Ладаваньне завершанае, заладавана %d но�
 #: gui/downloadpacksdialog.cpp:293 gui/downloadpacksdialog.cpp:384
 #: gui/gui-manager.cpp:162 gui/textviewer.cpp:53 gui/unknown-game-dialog.cpp:53
 #: backends/platform/android/options.cpp:492
-#: backends/platform/ios7/ios7_options.mm:131 engines/scumm/help.cpp:123
+#: backends/platform/ios7/ios7_options.mm:182 engines/scumm/help.cpp:123
 #: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
 #: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
 msgid "Close"
@@ -540,7 +540,8 @@ msgstr "Мова гульні. Гэта не ператворыць ангель
 #: gui/options.cpp:3250 audio/null.cpp:45
 #: backends/platform/android/options.cpp:150
 #: backends/platform/android/options.cpp:151
-#: backends/platform/android/options.cpp:179 engines/ags/dialogs.cpp:63
+#: backends/platform/android/options.cpp:179
+#: backends/platform/ios7/ios7_options.mm:101 engines/ags/dialogs.cpp:63
 msgid "<default>"
 msgstr "<стандартна>"
 
@@ -1360,7 +1361,7 @@ msgstr "немажліва зьмяніць налады поўнага экра
 msgid "the shader could not be changed"
 msgstr "немажліва зьмяніць рэжым расьцягу"
 
-#: gui/options.cpp:1417 backends/platform/ios7/ios7_options.mm:69
+#: gui/options.cpp:1417 backends/platform/ios7/ios7_options.mm:80
 msgid "Touchpad mouse mode"
 msgstr "Рэжым тачпэду"
 
@@ -2539,7 +2540,7 @@ msgid ""
 msgstr ""
 
 #: base/main.cpp:663 base/main.cpp:684
-#: engines/director/lingo/lingo-builtins.cpp:1234
+#: engines/director/lingo/lingo-builtins.cpp:1266
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -2874,7 +2875,7 @@ msgstr ""
 msgid "Achievement unlocked!"
 msgstr "Дасягненьне разблякавана!"
 
-#: engines/advancedDetector.cpp:235
+#: engines/advancedDetector.cpp:237
 msgid "Illegitimate game copy detected. We provide no support in such cases"
 msgstr "Знойдзена нелегальная копія гульні. Такія гульні мы не падтрымліваем"
 
@@ -3067,7 +3068,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ПАМЫЛКА: Ня выйшла перанесьці захоў у новы слот"
 
 #: engines/engine.cpp:630 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:256 engines/mm/xeen/saves.cpp:293
+#: backends/platform/ios7/ios7_osys_main.cpp:291 engines/mm/xeen/saves.cpp:293
 #: engines/sky/metaengine.cpp:216
 msgid "Autosave"
 msgstr "Аўтазахаваньне"
@@ -3222,7 +3223,7 @@ msgstr "Аўтазахаваньне"
 msgid "Autosave off"
 msgstr "Аўтазахаваньне"
 
-#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:177
+#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:178
 msgid "OpenGL"
 msgstr "OpenGL"
 
@@ -3507,37 +3508,37 @@ msgstr "Выбярыце файл для ладаваньня"
 msgid "Toggle aspect ratio correction"
 msgstr "Пералучэньне карэкцыі прапорцыяў экрану"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:256
+#: backends/graphics/opengl/opengl-graphics.cpp:257
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:72
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:241
 #: engines/twine/metaengine.cpp:360
 msgid "Center"
 msgstr "Цэнтравана"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:257
+#: backends/graphics/opengl/opengl-graphics.cpp:258
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:73
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:242
 msgid "Pixel-perfect scaling"
 msgstr "Павялічэньне акурат у піксэль"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:258
+#: backends/graphics/opengl/opengl-graphics.cpp:259
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:243
 msgid "Even pixels scaling"
 msgstr "Раўнамернае павялічэньне піксэляў"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:259
+#: backends/graphics/opengl/opengl-graphics.cpp:260
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:74
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:244
 msgid "Fit to window"
 msgstr "Па памеру акна"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:260
+#: backends/graphics/opengl/opengl-graphics.cpp:261
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:75
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:245
 msgid "Stretch to window"
 msgstr "Расьцягнуць па акну"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:261
+#: backends/graphics/opengl/opengl-graphics.cpp:262
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:76
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:246
 msgid "Fit to window (4:3)"
@@ -4220,6 +4221,7 @@ msgstr ""
 
 #: backends/platform/android/options.cpp:134
 #: backends/platform/android/options.cpp:165
+#: backends/platform/ios7/ios7_options.mm:87
 msgid "In menus"
 msgstr "У мэню"
 
@@ -4253,27 +4255,35 @@ msgid "In 3D games"
 msgstr "У 3D гульнях"
 
 #: backends/platform/android/options.cpp:163
+#: backends/platform/ios7/ios7_options.mm:85
 msgid "Select the orientation:"
 msgstr ""
 
 #: backends/platform/android/options.cpp:167
 #: backends/platform/android/options.cpp:182
+#: backends/platform/ios7/ios7_options.mm:89
+#: backends/platform/ios7/ios7_options.mm:104
 msgid "Automatic"
 msgstr ""
 
 #: backends/platform/android/options.cpp:168
 #: backends/platform/android/options.cpp:183
+#: backends/platform/ios7/ios7_options.mm:90
+#: backends/platform/ios7/ios7_options.mm:105
 msgid "Portrait"
 msgstr ""
 
 #: backends/platform/android/options.cpp:169
 #: backends/platform/android/options.cpp:184
+#: backends/platform/ios7/ios7_options.mm:91
+#: backends/platform/ios7/ios7_options.mm:106
 #, fuzzy
 #| msgid "Escape"
 msgid "Landscape"
 msgstr "Выйсьці"
 
 #: backends/platform/android/options.cpp:175
+#: backends/platform/ios7/ios7_options.mm:97
 #, fuzzy
 #| msgid "In 2D games"
 msgid "In games"
@@ -4301,29 +4311,29 @@ msgstr "Апаратнае павялічэньне (хутка, але нізк
 msgid "Software scale (good quality, but slower)"
 msgstr "Праграмнае павялічэньне (высокая якасьць, але марудна)"
 
-#: backends/platform/ios7/ios7_options.mm:68
+#: backends/platform/ios7/ios7_options.mm:79
 #, fuzzy
 #| msgid "Show On-screen control"
 msgid "Show On-screen control (iOS 15 and later)"
 msgstr "Паказваць кіраваньне на экране"
 
-#: backends/platform/ios7/ios7_options.mm:70
+#: backends/platform/ios7/ios7_options.mm:81
 #, fuzzy
 #| msgid "Mouse-click-and-drag mode enabled."
 msgid "Mouse-click-and-drag mode"
 msgstr "Рэжым мышы „пстрык/перацяг“ далучаны."
 
-#: backends/platform/ios7/ios7_options.mm:71
+#: backends/platform/ios7/ios7_options.mm:82
 msgid "Show keyboard function bar"
 msgstr ""
 
-#: backends/platform/ios7/ios7_options.mm:73
+#: backends/platform/ios7/ios7_options.mm:109
 #, fuzzy
 #| msgid "Control"
 msgid "Controls Help"
 msgstr "Кіраваньне"
 
-#: backends/platform/ios7/ios7_options.mm:105
+#: backends/platform/ios7/ios7_options.mm:156
 msgid ""
 "Gestures and controls:\n"
 "\n"
@@ -4340,7 +4350,7 @@ msgid ""
 "Keyboard spacebar: Pause"
 msgstr ""
 
-#: backends/platform/ios7/ios7_options.mm:118
+#: backends/platform/ios7/ios7_options.mm:169
 msgid ""
 "Using the Apple TV remote control:\n"
 "\n"
@@ -4356,19 +4366,19 @@ msgid ""
 "Keyboard spacebar: Pause"
 msgstr ""
 
-#: backends/platform/ios7/ios7_osys_events.cpp:466
+#: backends/platform/ios7/ios7_osys_events.cpp:443
 msgid "Mouse-click-and-drag mode enabled."
 msgstr "Рэжым мышы „пстрык/перацяг“ далучаны."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:468
+#: backends/platform/ios7/ios7_osys_events.cpp:445
 msgid "Mouse-click-and-drag mode disabled."
 msgstr "Рэжым мышы „пстрык/перацяг“ адлучаны."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:489
+#: backends/platform/ios7/ios7_osys_events.cpp:466
 msgid "Touchpad mode enabled."
 msgstr "Рэжым тачпэду далучаны."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:491
+#: backends/platform/ios7/ios7_osys_events.cpp:468
 msgid "Touchpad mode disabled."
 msgstr "Рэжым тачпэду адлучаны."
 
@@ -6289,24 +6299,24 @@ msgstr ""
 msgid "Eye of Beholder support is not compiled in"
 msgstr "Падтрыманьне Eye of Beholder не сабранае"
 
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:472
+#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:496
 #: engines/ultima/ultima4/metaengine.cpp:224
 #: engines/ultima/ultima8/metaengine.cpp:145
 msgid "Interact via Left Click"
 msgstr "Інтэракцыя левым пстрыкам"
 
-#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:473
+#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:497
 #: engines/ultima/ultima4/metaengine.cpp:230
 #: engines/ultima/ultima8/metaengine.cpp:151
 msgid "Interact via Right Click"
 msgstr "Інтэракцыя правым пстрыкам"
 
-#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:480
+#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:504
 #: engines/twine/metaengine.cpp:380
 msgid "Move Forward"
 msgstr "Рух наперад"
 
-#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:481
+#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:505
 msgid "Move Back"
 msgstr "Рух назад"
 
@@ -6318,13 +6328,13 @@ msgstr "Рух налева"
 msgid "Move Right"
 msgstr "Рух направа"
 
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:484
+#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:508
 #: engines/mm/mm1/metaengine.cpp:97 engines/pegasus/pegasus.cpp:2739
 #: engines/twine/metaengine.cpp:401 engines/zvision/metaengine.cpp:209
 msgid "Turn Left"
 msgstr "Паварот налева"
 
-#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:485
+#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:509
 #: engines/mm/mm1/metaengine.cpp:98 engines/pegasus/pegasus.cpp:2746
 #: engines/twine/metaengine.cpp:394 engines/zvision/metaengine.cpp:215
 msgid "Turn Right"
@@ -6370,40 +6380,40 @@ msgstr "Чары 5-ай ступені"
 msgid "Spell Level 6"
 msgstr "Чары 6-ай ступені"
 
-#: engines/kyra/engine/lol.cpp:476
+#: engines/kyra/engine/lol.cpp:500
 msgid "Attack 1"
 msgstr "Атака 1"
 
-#: engines/kyra/engine/lol.cpp:477
+#: engines/kyra/engine/lol.cpp:501
 msgid "Attack 2"
 msgstr "Атака 2"
 
-#: engines/kyra/engine/lol.cpp:478
+#: engines/kyra/engine/lol.cpp:502
 msgid "Attack 3"
 msgstr "Атака 3"
 
-#: engines/kyra/engine/lol.cpp:479 engines/mm/mm1/metaengine.cpp:103
+#: engines/kyra/engine/lol.cpp:503 engines/mm/mm1/metaengine.cpp:103
 msgid "Show Map"
 msgstr "Паказаць мапу"
 
-#: engines/kyra/engine/lol.cpp:482
+#: engines/kyra/engine/lol.cpp:506
 msgid "Slide Left"
 msgstr "Сьлізганьне налева"
 
-#: engines/kyra/engine/lol.cpp:483
+#: engines/kyra/engine/lol.cpp:507
 msgid "Slide Right"
 msgstr "Сьлізганьне направа"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/kyra/engine/lol.cpp:486 engines/mm/mm1/metaengine.cpp:109
+#: engines/kyra/engine/lol.cpp:510 engines/mm/mm1/metaengine.cpp:109
 msgid "Rest"
 msgstr "Адпачынак"
 
-#: engines/kyra/engine/lol.cpp:487
+#: engines/kyra/engine/lol.cpp:511
 msgid "Options"
 msgstr "Налады"
 
-#: engines/kyra/engine/lol.cpp:488
+#: engines/kyra/engine/lol.cpp:512
 msgid "Choose Spell"
 msgstr "Выбраць чары"
 
@@ -7205,7 +7215,7 @@ msgstr ""
 msgid "Unable to locate the '%s' engine data file"
 msgstr "Ня выйшла знайсьці рухавіковы файл '%s'"
 
-#: engines/myst3/detection.cpp:179 engines/myst3/detection.cpp:193
+#: engines/myst3/detection.cpp:181 engines/myst3/detection.cpp:195
 msgid "PS2 version is not yet supported"
 msgstr "Вэрсія PS2 яшчэ не падтрымліваецца"
 
@@ -9015,7 +9025,7 @@ msgstr "Захаваць стары"
 msgid "Keep the new one"
 msgstr "Захаваць новы"
 
-#: engines/sword1/logic.cpp:1634
+#: engines/sword1/logic.cpp:1641
 msgid "This is the end of the Broken Sword 1 Demo"
 msgstr "Гэта канец дэманстрацыі Broken Sword 1"
 

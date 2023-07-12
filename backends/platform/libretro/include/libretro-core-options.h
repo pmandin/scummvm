@@ -263,20 +263,6 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 		"0"
 	},
 	{
-		"scummvm_consecutive_screen_updates",
-		"Disable consecutive screen updates",
-		NULL,
-		"While libretro is FPS bounded, ScummVM can update the screen independently from the refresh rate set. By default all consecutive ScummVM screen updates will be captured and processed within the same retro_run call, improving accuracy (e.g. see titles effects in Legend of Kyrandia intro) but increasing the execution time of that retro_run loop. If this setting is enabled only last screen update of a consecutive series will be shown. If 'Allow Timing Inaccuracies' is enabled, this setting will be overridden and enabled internally.",
-		NULL,
-		"timing",
-		{
-			{"disabled", NULL},
-			{"enabled", NULL},
-			{NULL, NULL},
-		},
-		"disabled"
-	},
-	{
 		"scummvm_allow_timing_inaccuracies",
 		"Allow Timing Inaccuracies",
 		NULL,
@@ -289,6 +275,37 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 			{NULL, NULL},
 		},
 		"disabled"
+	},
+	{
+		"scummvm_framerate",
+		"Frame rate cap",
+		NULL,
+		"Set core frame rate upper limit. Changing this setting will reset the core.",
+		NULL,
+		"timing",
+		{
+			{ "disabled", NULL },
+			{ "60 Hz", NULL },
+			{ "50 Hz", NULL },
+			{ "30 Hz", NULL },
+			{ "25 Hz", NULL },
+			{ NULL, NULL },
+		},
+		"disabled"
+	},
+	{
+		"scummvm_samplerate",
+		"Sample rate",
+		NULL,
+		"Set core sample rate. Changing this setting will reset the core.",
+		NULL,
+		"timing",
+		{
+			{ "48000 Hz", NULL },
+			{ "44100 Hz", NULL },
+			{ NULL, NULL },
+		},
+		"48000"
 	},
 	{
 		"scummvm_auto_performance_tuner",

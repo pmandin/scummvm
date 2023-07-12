@@ -214,6 +214,7 @@ static LingoV4TheEntity lingoV4TheEntity[] = {
 	{ 0x06, 0x20, kTheSprite,			kTheScoreColor,		true, kTEAItemId },
 	{ 0x06, 0x21, kTheSprite,			kTheLoc,			true, kTEAItemId },
 	{ 0x06, 0x22, kTheSprite,			kTheRect,			true, kTEAItemId },
+	{ 0x06, 0x23, kTheSprite,			kTheMemberNum,		true, kTEAItemId },
 
 	{ 0x07, 0x01, kTheBeepOn,			kTheNOField,		true, kTEANOArgs },
 	{ 0x07, 0x02, kTheButtonStyle,		kTheNOField,		true, kTEANOArgs },
@@ -355,11 +356,15 @@ Datum Lingo::findVarV4(int varType, const Datum &id) {
 				warning("BUILDBOT: findVarV4: no call frame");
 				return res;
 			}
-			if (id.asInt() % 6 != 0) {
-				warning("BUILDBOT: findVarV4: invalid var ID %d for var type %d (not divisible by 6)", id.asInt(), varType);
+			int stride = 6;
+			if (g_director->getVersion() >= 500) {
+				stride = 8;
+			}
+			if (id.asInt() % stride != 0) {
+				warning("BUILDBOT: findVarV4: invalid var ID %d for var type %d (not divisible by %d)", id.asInt(), varType, stride);
 				return res;
 			}
-			int varIndex = id.asInt() / 6;
+			int varIndex = id.asInt() / stride;
 			Common::Array<Common::String> *varNames = (varType == 4)
 				? callstack.back()->sp.argNames
 				: callstack.back()->sp.varNames;
@@ -622,7 +627,14 @@ void LC::cb_thepush() {
 			g_lingo->push(g_lingo->_state->me.u.obj->getProp(name));
 			return;
 		}
-		warning("cb_thepush: me object has no property '%s'", name.c_str());
+
+		if (name == "me") {
+			// Special case: push the me object itself
+			g_lingo->push(g_lingo->_state->me);
+			return;
+		}
+
+		warning("cb_thepush: me object has no property '%s', type: %d", name.c_str(), g_lingo->_state->me.type);
 	} else {
 		warning("cb_thepush: no me object");
 	}
@@ -826,6 +838,11 @@ void LC::cb_v4theentitynamepush() {
 	id.u.s = nullptr;
 	id.type = VOID;
 
+	if (!g_lingo->_theEntities.contains(name)) {
+		warning("BUILDBOT: cb_v4theentitynamepush: missing the entity %s", name.c_str());
+		g_lingo->push(Datum());
+		return;
+	}
 	TheEntity *entity = g_lingo->_theEntities[name];
 
 	debugC(3, kDebugLingoExec, "cb_v4theentitynamepush: %s", name.c_str());

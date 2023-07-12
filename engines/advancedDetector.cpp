@@ -19,6 +19,8 @@
  *
  */
 
+#define FORBIDDEN_SYMBOL_EXCEPTION_printf
+
 #include "common/debug.h"
 #include "common/util.h"
 #include "common/file.h"
@@ -545,6 +547,31 @@ static MD5Properties gameFileToMD5Props(const ADGameFileDescription *fileEntry, 
 	return ret;
 }
 
+const char *md5PropToGameFile(MD5Properties flags) {
+	switch (flags & kMD5MacMask)
+	case kMD5MacDataFork: {
+		if (flags & kMD5Tail)
+			return "dt";
+		return "d";
+
+	case kMD5MacResOrDataFork:
+		if (flags & kMD5Tail)
+			return "mt";
+		return "m";
+
+	case kMD5MacResFork:
+		if (flags & kMD5Tail)
+			return "rt";
+		return "r";
+
+	case kMD5Tail:
+		return "t";
+
+	default:
+		return "";
+	}
+}
+
 static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps);
 
 bool AdvancedMetaEngineDetection::getFileProperties(const FileMap &allFiles, MD5Properties md5prop, const Common::String &fname, FileProperties &fileProps) const {
@@ -624,6 +651,54 @@ static bool getFilePropertiesIntern(uint md5Bytes, const AdvancedMetaEngine::Fil
 	fileProps.md5 = Common::computeStreamMD5AsString(testFile, md5Bytes);
 	fileProps.md5prop = (MD5Properties) (md5prop & kMD5Tail);
 	return true;
+}
+
+// Add backslash before double quotes (") and backslashes themselves (\)
+Common::String escapeString(const char *string) {
+	if (string == nullptr || Common::String(string) == "")
+		return "NULL";
+
+	Common::String res = "";
+
+	for (int i = 0; string[i] != '\0'; i++) {
+		if (string[i] == '"' || string[i] == '\\')
+			res += "\\";
+
+		res += string[i];
+	}
+
+	return res;
+}
+
+void AdvancedMetaEngineDetection::dumpDetectionEntries() const {
+	const byte *descPtr;
+
+	for (descPtr = _gameDescriptors; ((const ADGameDescription *)descPtr)->gameId != nullptr; descPtr += _descItemSize) {
+		auto g = ((const ADGameDescription *)descPtr);
+		const char *title = ((const PlainGameDescriptor *)_gameIds)->description;
+
+		printf("game (\n");
+		printf("\tname %s\n", escapeString(g->gameId).c_str());
+		printf("\ttitle %s\n", escapeString(title).c_str());
+		printf("\textra %s\n", escapeString(g->extra).c_str());
+		printf("\tlanguage %s\n", escapeString(getLanguageLocale(g->language)).c_str());
+		printf("\tplatform %s\n", escapeString(getPlatformCode(g->platform)).c_str());
+		printf("\tsourcefile %s\n", escapeString(getName()).c_str());
+
+		for (auto fileDesc = g->filesDescriptions; fileDesc->fileName; fileDesc++) {
+			const char *fname = fileDesc->fileName;
+			int64 fsize = fileDesc->fileSize;
+			Common::String md5 = fileDesc->md5;
+			MD5Properties md5prop = gameFileToMD5Props(fileDesc, g->flags);
+			Common::String md5Prefix = md5PropToGameFile(md5prop);
+			Common::String key = md5;
+			if (md5Prefix != "" && md5.find(':') == Common::String::npos)
+				key = md5Prefix + md5;
+
+			printf("\trom ( name \"%s\" size %lld md5-%d %s )\n", escapeString(fname).c_str(), static_cast<long long int>(fsize), _md5Bytes, key.c_str());
+		}
+		printf(")\n\n"); // Closing for 'game ('
+	}
 }
 
 ADDetectedGames AdvancedMetaEngineDetection::detectGame(const Common::FSNode &parent, const FileMap &allFiles, Common::Language language, Common::Platform platform, const Common::String &extra, uint32 skipADFlags, bool skipIncomplete) {

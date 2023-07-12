@@ -155,12 +155,14 @@ void Movie::loadCastLibMapping(Common::SeekableReadStreamEndian &stream) {
 		stream.readUint16();
 		uint16 itemCount = stream.readUint16();
 		stream.readUint16();
-		uint16 libId = stream.readUint16() - CAST_LIB_OFFSET;
-		debugC(5, kDebugLoading, "Movie::loadCastLibMapping: name: %s, path: %s, itemCount: %d, libId: %d", utf8ToPrintable(name).c_str(), utf8ToPrintable(path).c_str(), itemCount, libId);
+		uint16 libResourceId = stream.readUint16();
+		uint16 libId = i + 1;
+		debugC(5, kDebugLoading, "Movie::loadCastLibMapping: name: %s, path: %s, itemCount: %d, libResourceId: %d, libId: %d", utf8ToPrintable(name).c_str(), utf8ToPrintable(path).c_str(), itemCount, libResourceId, libId);
 		Archive *castArchive = _movieArchive;
 		bool isExternal = !path.empty();
 		if (isExternal) {
-			castArchive = loadExternalCastFrom(pathMakeRelative(path));
+			Common::Path archivePath = findMoviePath(path);
+			castArchive = loadExternalCastFrom(archivePath);
 			if (!castArchive) {
 				continue;	// couldn't load external cast
 			}
@@ -245,8 +247,6 @@ bool Movie::loadArchive() {
 		_score->loadActions(*r);
 		delete r;
 	}
-
-	_score->setSpriteCasts();
 
 	return true;
 }
@@ -355,20 +355,20 @@ void Movie::clearSharedCast() {
 	_sharedCast = nullptr;
 }
 
-void Movie::loadSharedCastsFrom(Common::String filename) {
+void Movie::loadSharedCastsFrom(Common::Path &filename) {
 	clearSharedCast();
 
 	Archive *sharedCast = _vm->openArchive(filename);
 
 	if (!sharedCast) {
-		warning("loadSharedCastsFrom(): No shared cast %s", filename.c_str());
+		warning("loadSharedCastsFrom(): No shared cast %s", filename.toString().c_str());
 
 		return;
 	}
-	sharedCast->setPathName(filename);
+	sharedCast->setPathName(filename.toString(g_director->_dirSeparator));
 
 	debug(0, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-	debug(0, "@@@@   Loading shared cast '%s'", filename.c_str());
+	debug(0, "@@@@   Loading shared cast '%s'", sharedCast->getFileName().c_str());
 	debug(0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
 	_sharedCast = new Cast(this, DEFAULT_CAST_LIB, true, false);
@@ -376,17 +376,18 @@ void Movie::loadSharedCastsFrom(Common::String filename) {
 	_sharedCast->loadArchive();
 }
 
-Archive *Movie::loadExternalCastFrom(Common::String filename) {
-	Archive *externalCast = _vm->openArchive(filename);
+Archive *Movie::loadExternalCastFrom(Common::Path &filename) {
+	Archive *externalCast = nullptr;
+	externalCast = _vm->openArchive(filename);
 
 	if (!externalCast) {
-		warning("Movie::loadExternalCastFrom(): Cast file %s not found", filename.c_str());
+		warning("Movie::loadExternalCastFrom(): Cast file %s not found", filename.toString().c_str());
 
 		return nullptr;
 	}
 
 	debug(0, "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-	debug(0, "@@@@   Loading external cast '%s'", filename.c_str());
+	debug(0, "@@@@   Loading external cast '%s'", externalCast->getFileName().c_str());
 	debug(0, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 
 	return externalCast;
@@ -485,8 +486,10 @@ ScriptContext *Movie::getScriptContext(ScriptType type, CastMemberID id) {
 }
 
 Symbol Movie::getHandler(const Common::String &name) {
-	if (_cast->_lingoArchive->functionHandlers.contains(name))
-		return _cast->_lingoArchive->functionHandlers[name];
+	for (auto &it : _casts) {
+		if (it._value->_lingoArchive->functionHandlers.contains(name))
+			return it._value->_lingoArchive->functionHandlers[name];
+	}
 
 	if (_sharedCast && _sharedCast->_lingoArchive->functionHandlers.contains(name))
 		return _sharedCast->_lingoArchive->functionHandlers[name];

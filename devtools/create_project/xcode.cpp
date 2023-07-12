@@ -163,6 +163,10 @@ bool shouldSkipFileForTarget(const std::string &fileID, const std::string &targe
 		if (name.length() > 5 && name.substr(0, 5) == "ios7_") {
 			return true;
 		}
+		// macOS target: we skip all files with the "ios-" prefix
+		if (name.length() > 4 && name.substr(0, 4) == "ios-") {
+			return true;
+		}
 		// parent directory
 		const std::string directory = fileID.substr(0, fileID.length() - fileName.length());
 		static const std::string iphone_directory = "backends/platform/ios7";
@@ -463,7 +467,6 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	std::map<std::string, FileProperty> properties;
 	int fwOrder = 0;
 	// Frameworks
-	DEF_SYSFRAMEWORK("Accelerate");
 	DEF_SYSFRAMEWORK("ApplicationServices");
 	DEF_SYSFRAMEWORK("AudioToolbox");
 	DEF_SYSFRAMEWORK("AudioUnit");
@@ -620,7 +623,6 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	frameworks_iOS.push_back("AudioToolbox.framework");
 	frameworks_iOS.push_back("QuartzCore.framework");
 	frameworks_iOS.push_back("OpenGLES.framework");
-	frameworks_iOS.push_back("Accelerate.framework");
 
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
 		frameworks_iOS.push_back(getLibString("faad", setup.useXCFramework));
@@ -849,7 +851,6 @@ void XcodeProvider::setupFrameworksBuildPhase(const BuildSetup &setup) {
 	frameworks_tvOS.push_back("AudioToolbox.framework");
 	frameworks_tvOS.push_back("QuartzCore.framework");
 	frameworks_tvOS.push_back("OpenGLES.framework");
-	frameworks_tvOS.push_back("Accelerate.framework");
 
 	if (CONTAINS_DEFINE(setup.defines, "USE_FAAD")) {
 		frameworks_tvOS.push_back(getLibString("faad", setup.useXCFramework));
@@ -1056,7 +1057,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 		files.push_back("dists/tvos/LaunchScreen_tvos.storyboard");
 		files.push_back("dists/pred.dic");
 		files.push_back("dists/networking/wwwroot.zip");
-		if (CONTAINS_DEFINE(setup.defines, "ENABLE_GRIME")) {
+		if (CONTAINS_DEFINE(setup.defines, "ENABLE_GRIM")) {
 			files.push_back("engines/grim/shaders/grim_dim.fragment");
 			files.push_back("engines/grim/shaders/grim_dim.vertex");
 			files.push_back("engines/grim/shaders/grim_emerg.fragment");
@@ -1140,7 +1141,7 @@ XcodeProvider::ValueList& XcodeProvider::getResourceFiles(const BuildSetup &setu
 			files.push_back("engines/freescape/shaders/freescape_bitmap.fragment");
 			files.push_back("engines/freescape/shaders/freescape_bitmap.vertex");
 			files.push_back("engines/freescape/shaders/freescape_triangle.fragment");
-			files.push_back("engines/freescape/shaders/freescape_triange.vertex");
+			files.push_back("engines/freescape/shaders/freescape_triangle.vertex");
 		}
 		files.push_back("icons/scummvm.icns");
 		files.push_back("AUTHORS");

@@ -51,12 +51,11 @@ void EoBCoreEngine::gui_drawPlayField(bool refresh) {
 	int cp = _screen->setCurPage(2);
 	if (_flags.lang == Common::Language::ZH_TWN) {
 		Screen::FontId of = _screen->setFont(Screen::FID_CHINESE_FNT);
-		_screen->fillRect(290, 180, 318, 194, guiSettings()->colors.fill);
+		_screen->fillRect(291, 180, 317, 195, guiSettings()->colors.fill);
 		_screen->printShadedText("\xbf\xef?" /* 選? */, 292, 181, guiSettings()->colors.guiColorYellow, guiSettings()->colors.fill, guiSettings()->colors.guiColorBlack, -1);
 		_screen->setFont(of);
-
-		_screen->fillRect(3, 170, 290, 198, guiSettings()->colors.fill);
-		_screen->fillRect(4, 171, 289, 197, guiSettings()->colors.guiColorBlack);
+		_screen->fillRect(4, 171, 289, 198, guiSettings()->colors.guiColorBlack);
+		_screen->drawBox(3, 170, 290, 199, guiSettings()->colors.fill);
 	}
 	gui_drawCompass(true);
 
@@ -3967,6 +3966,9 @@ bool GUI_EoB::restParty() {
 	else
 		_screen->sega_clearTextBuffer(0);
 
+	if (_vm->gameFlags().lang == Common::ZH_TWN)
+		_screen->drawBox(3, 170, 290, 199, _vm->guiSettings()->colors.fill);
+
 	Screen::FontId of = _screen->setFont(_vm->_conFont);
 
 	restParty_updateRestTime(hours, true);
@@ -4579,7 +4581,6 @@ void GUI_EoB::drawMenuButtonBox(int x, int y, int w, int h, bool clicked, bool n
 void GUI_EoB::drawTextBox(int dim, int id) {
 	int od = _screen->curDimIndex();
 	_screen->setScreenDim(dim);
-
 	Screen::FontId of = _screen->setFont(_menuFont);
 	int cs = (_vm->gameFlags().platform == Common::kPlatformPC98 && !_vm->gameFlags().use16ColorMode) ? _screen->setFontStyles(_menuFont, Font::kStyleFat) : -1;
 
@@ -4595,6 +4596,7 @@ void GUI_EoB::drawTextBox(int dim, int id) {
 	_screen->setCurPage(0);
 	_screen->copyRegion(0, 0, dm->sx << 3, dm->sy, dm->w << 3, dm->h, 2, 0, Screen::CR_NO_P_CHECK);
 	_screen->updateScreen();
+
 	_screen->setScreenDim(od);
 
 	if (cs != -1)

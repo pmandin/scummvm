@@ -25,6 +25,7 @@
 #include "director/debugger.h"
 #include "director/archive.h"
 #include "director/cast.h"
+#include "director/channel.h"
 #include "director/frame.h"
 #include "director/movie.h"
 #include "director/score.h"
@@ -103,6 +104,7 @@ Debugger::Debugger(): GUI::Debugger() {
 	registerCmd("bplist", WRAP_METHOD(Debugger, cmdBpList));
 
 	registerCmd("draw", WRAP_METHOD(Debugger, cmdDraw));
+	registerCmd("forceredraw", WRAP_METHOD(Debugger, cmdForceRedraw));
 
 	_nextFrame = false;
 	_nextFrameCounter = 0;
@@ -230,8 +232,16 @@ bool Debugger::cmdInfo(int argc, const char **argv) {
 	debugPrintf("Copy protected: %d\n", cast->_isProtected);
 	debugPrintf("Remap palettes when needed flag: %d\n", movie->_remapPalettesWhenNeeded);
 	debugPrintf("Allow outdated Lingo flag: %d\n", movie->_allowOutdatedLingo);
-	debugPrintf("Frame count: %d\n", score->_frames.size());
+	debugPrintf("Frame count: %d\n", score->getFramesNum());
 	debugPrintf("Cast member count: %d\n", cast->getCastSize());
+	debugPrintf("Search paths:\n");
+	if (g_lingo->_searchPath.isArray() && g_lingo->_searchPath.u.farr->arr.size() > 0) {
+		for (auto &it : g_lingo->_searchPath.u.farr->arr) {
+			debugPrintf("    %s\n", it.asString().c_str());
+		}
+	} else {
+		debugPrintf("    [empty]\n");
+	}
 	debugPrintf("\n");
 	return true;
 }
@@ -248,7 +258,7 @@ bool Debugger::cmdFrame(int argc, const char **argv) {
 		}
 		lingo->func_goto(frame, movie);
 	} else {
-		debugPrintf("%d\n", score->getCurrentFrame());
+		debugPrintf("%d\n", score->getCurrentFrameNum());
 	}
 	return true;
 }
@@ -268,8 +278,8 @@ bool Debugger::cmdMovie(int argc, const char **argv) {
 bool Debugger::cmdChannels(int argc, const char **argv) {
 	Score *score = g_director->getCurrentMovie()->getScore();
 
-	int maxSize = (int)score->_frames.size();
-	int frameId = score->getCurrentFrame();
+	int maxSize = (int)score->getFramesNum();
+	int frameId = score->getCurrentFrameNum();
 	if (argc == 1) {
 		debugPrintf("Channel info for current frame %d of %d\n", frameId, maxSize);
 		debugPrintf("%s\n", score->formatChannelInfo().c_str());
@@ -281,7 +291,9 @@ bool Debugger::cmdChannels(int argc, const char **argv) {
 
 	if (frameId >= 1 && frameId <= maxSize) {
 		debugPrintf("Channel info for frame %d of %d\n", frameId, maxSize);
-		debugPrintf("%s\n", score->_frames[frameId-1]->formatChannelInfo().c_str());
+		Frame *frame = score->getFrameData(frameId-1);
+		debugPrintf("%s\n", frame->formatChannelInfo().c_str());
+		delete frame;
 	} else {
 		debugPrintf("Must specify a frame number between 1 and %d.\n", maxSize);
 	}
@@ -379,22 +391,24 @@ bool Debugger::cmdFuncs(int argc, const char **argv) {
 	Score *score = movie->getScore();
 	ScriptContext *csc = lingo->_state->context;
 	if (csc) {
-		debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrame());
+		debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrameNum());
 		debugPrintf("  %d:", csc->_id);
 		debugPrintf("%s", csc->formatFunctionList("    ").c_str());
 	} else {
-		debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrame());
+		debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrameNum());
 		debugPrintf("  [empty]\n");
 	}
 	debugPrintf("\n");
-	debugPrintf("Cast functions:\n");
-	Cast *cast = movie->getCast();
-	if (cast && cast->_lingoArchive) {
-		debugPrintf("%s", cast->_lingoArchive->formatFunctionList("  ").c_str());
-	} else {
-		debugPrintf("  [empty]\n");
+	for (auto it : *movie->getCasts()) {
+		debugPrintf("Cast %d functions:\n", it._key);
+		Cast *cast = it._value;
+		if (cast && cast->_lingoArchive) {
+			debugPrintf("%s", cast->_lingoArchive->formatFunctionList("  ").c_str());
+		} else {
+			debugPrintf("  [empty]\n");
+		}
+		debugPrintf("\n");
 	}
-	debugPrintf("\n");
 	debugPrintf("Shared cast functions:\n");
 	Cast *sharedCast = movie->getSharedCast();
 	if (sharedCast && sharedCast->_lingoArchive) {
@@ -420,12 +434,12 @@ bool Debugger::cmdDisasm(int argc, const char **argv) {
 			Score *score = movie->getScore();
 			ScriptContext *csc = lingo->_state->context;
 			if (csc) {
-				debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrame());
+				debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrameNum());
 				for (auto &it : csc->_functionHandlers) {
 					debugPrintf("%s\n\n", g_lingo->formatFunctionBody(it._value).c_str());
 				}
 			} else {
-				debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrame());
+				debugPrintf("Functions attached to frame %d:\n", score->getCurrentFrameNum());
 				debugPrintf("  [empty]\n");
 			}
 			debugPrintf("\n");
@@ -884,6 +898,36 @@ bool Debugger::cmdDraw(int argc, const char **argv) {
 	return true;
 }
 
+static void forceWindowRedraw(Window *window) {
+	if (!window->getCurrentMovie())
+		return;
+
+	Score *score = window->getCurrentMovie()->getScore();
+
+	if (!score)
+		return;
+
+	for (uint16 c = 0; c < score->_channels.size(); c++)
+		score->_channels[c]->_dirty = true;
+}
+
+bool Debugger::cmdForceRedraw(int argc, const char **argv) {
+	forceWindowRedraw(g_director->getStage());
+
+	FArray *windowList = g_lingo->_windowList.u.farr;
+	for (uint i = 0; i < windowList->arr.size(); i++) {
+		if (windowList->arr[i].type != OBJECT || windowList->arr[i].u.obj->getObjType() != kWindowObj)
+			continue;
+
+		Window *window = static_cast<Window *>(windowList->arr[i].u.obj);
+
+		forceWindowRedraw(window);
+	}
+
+	debugPrintf("Requested full refresh\n");
+
+	return true;
+}
 
 void Debugger::bpUpdateState() {
 	_bpCheckFunc = false;
@@ -953,7 +997,7 @@ void Debugger::bpTest(bool forceCheck) {
 	bool stop = forceCheck;
 	uint funcOffset = g_lingo->_state->pc;
 	Score *score = g_director->getCurrentMovie()->getScore();
-	uint frameOffset = score->getCurrentFrame();
+	uint frameOffset = score->getCurrentFrameNum();
 	if (_bpCheckFunc) {
 		stop |= _bpMatchFuncOffsets.contains(funcOffset);
 	}

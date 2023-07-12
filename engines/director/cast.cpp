@@ -444,6 +444,8 @@ bool Cast::loadConfig() {
 			// with the builtin palettes starting from -1.
 			if (_defaultPalette.member <= 0)
 				_defaultPalette.member -= 1;
+			else
+				_defaultPalette.castLib = DEFAULT_CAST_LIB;
 			for (int i = 0; i < 0x08; i++) {
 				stream->readByte();
 			}
@@ -812,8 +814,9 @@ void Cast::loadExternalSound(Common::SeekableReadStreamEndian &stream) {
 	Common::String str = stream.readString();
 	str.trim();
 	debugC(1, kDebugLoading, "****** Loading External Sound File %s", str.c_str());
+	str = g_director->getCurrentPath() + str;
 
-	Common::String resPath = g_director->getCurrentPath() + str;
+	Common::Path resPath = findPath(str, true, true, false);
 
 	g_director->openArchive(resPath);
 }

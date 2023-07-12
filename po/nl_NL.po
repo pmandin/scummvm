@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.9.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-07-01 14:26+0000\n"
-"PO-Revision-Date: 2023-06-16 18:53+0000\n"
+"POT-Creation-Date: 2023-07-11 12:36+0000\n"
+"PO-Revision-Date: 2023-07-04 16:50+0000\n"
 "Last-Translator: Ben Castricum <github@bencastricum.nl>\n"
 "Language-Team: Dutch <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/nl/>\n"
@@ -99,7 +99,7 @@ msgstr "Selecteren"
 
 #: gui/cloudconnectionwizard.cpp:176
 msgid "Cloud Connection Wizard"
-msgstr ""
+msgstr "Cloud Verbinding Wizard"
 
 #: gui/cloudconnectionwizard.cpp:179
 msgid "Quick mode"
@@ -111,7 +111,7 @@ msgstr "Handmatige modus"
 
 #: gui/cloudconnectionwizard.cpp:183
 msgid "Will ask you to run the Local Webserver"
-msgstr ""
+msgstr "Zal u vragen om de lokale webserver te draaien"
 
 #: gui/cloudconnectionwizard.cpp:185
 msgid "Requires the Local Webserver feature"
@@ -119,13 +119,15 @@ msgstr "Vereist de lokale webserver functie"
 
 #: gui/cloudconnectionwizard.cpp:201
 msgid "Quick Mode: Step 1"
-msgstr ""
+msgstr "Snelle Modus: Stap 1"
 
 #: gui/cloudconnectionwizard.cpp:206
 msgid ""
 "In this mode, the Local Webserver must be running,\n"
 "so your browser can forward data to ScummVM"
 msgstr ""
+"In deze modus moet de lokale webserver draaien,\n"
+"zodat uw browser de data kan doorsturen naar ScummVM"
 
 #: gui/cloudconnectionwizard.cpp:235 gui/options.cpp:3662
 msgid "Stop server"
@@ -149,14 +151,14 @@ msgstr "Draait niet"
 
 #: gui/cloudconnectionwizard.cpp:259
 msgid "Quick Mode: Step 2"
-msgstr ""
+msgstr "Snelle Modus: Stap 2"
 
 #: gui/cloudconnectionwizard.cpp:263
 msgid "Now, open this link in your browser:"
-msgstr ""
+msgstr "Open deze link nu in uw browser:"
 
 #: gui/cloudconnectionwizard.cpp:264 gui/cloudconnectionwizard.cpp:319
-#: gui/message.cpp:218 gui/message.cpp:222
+#: gui/message.cpp:246 gui/message.cpp:250
 msgid "Open URL"
 msgstr "Open URL"
 
@@ -165,14 +167,16 @@ msgid ""
 "It will automatically pass the data to ScummVM,\n"
 "and warn you should there be any errors."
 msgstr ""
+"Het zal automatisch data doorsturen naar ScummVM\n"
+"en u waarschuwen als er problemen optreden."
 
 #: gui/cloudconnectionwizard.cpp:279
 msgid "Local Webserver address: "
-msgstr ""
+msgstr "Lokale Webserver adres: "
 
 #: gui/cloudconnectionwizard.cpp:295
 msgid "Quick Mode: Success"
-msgstr ""
+msgstr "Snelle Modus: Succes"
 
 #: gui/cloudconnectionwizard.cpp:299 gui/cloudconnectionwizard.cpp:398
 msgid "Your cloud storage has been connected!"
@@ -180,11 +184,11 @@ msgstr "Uw cloud opslag is gekoppeld!"
 
 #: gui/cloudconnectionwizard.cpp:300 gui/cloudconnectionwizard.cpp:399
 msgid "Finish"
-msgstr ""
+msgstr "Klaar"
 
 #: gui/cloudconnectionwizard.cpp:313
 msgid "Manual Mode: Step 1"
-msgstr ""
+msgstr "Handmatige Modus: Stap 1"
 
 #: gui/cloudconnectionwizard.cpp:318
 msgid "Open this link in your browser:"
@@ -196,14 +200,17 @@ msgid ""
 "find it on the Troubleshooting section of the page,\n"
 "and go to the next step here."
 msgstr ""
+"Wanneer het doorsturen van de JSON code naar ScummVM mislukt\n"
+"is het te vinden op de Troubleshooting gedeelte van de pagina,\n"
+"en ga daar verder met de volgende stap."
 
 #: gui/cloudconnectionwizard.cpp:350
 msgid "Manual Mode: Step 2"
-msgstr ""
+msgstr "Handmatige Modus: Stap 2"
 
 #: gui/cloudconnectionwizard.cpp:355
 msgid "Copy the JSON code from the browser here and press Next:"
-msgstr ""
+msgstr "Kopieer de JSON code van de browser hier en druk op Volgende:"
 
 #: gui/cloudconnectionwizard.cpp:357
 msgid "Paste"
@@ -215,7 +222,7 @@ msgstr "Plak vanaf klembord"
 
 #: gui/cloudconnectionwizard.cpp:373
 msgid "Manual Mode: Something went wrong"
-msgstr ""
+msgstr "Handmatige Modus: Er ging iets mis"
 
 #: gui/cloudconnectionwizard.cpp:377
 msgid "Cloud storage was not connected."
@@ -224,18 +231,19 @@ msgstr "Cloud opslag was niet gekoppeld."
 #: gui/cloudconnectionwizard.cpp:378
 msgid "Make sure the JSON code was copied correctly and retry."
 msgstr ""
+"Controleer of de JSON code goed gekopieerd was en probeer het nog eens."
 
 #: gui/cloudconnectionwizard.cpp:379
 msgid "If that doesn't work, try again from the beginning."
-msgstr ""
+msgstr "Als dat niet werkt, begin dan helemaal opnieuw."
 
 #: gui/cloudconnectionwizard.cpp:380
 msgid "Error message: "
-msgstr ""
+msgstr "Foutmelding: "
 
 #: gui/cloudconnectionwizard.cpp:394
 msgid "Manual Mode: Success"
-msgstr ""
+msgstr "Handmatige Modus: Succes"
 
 #: gui/cloudconnectionwizard.cpp:422
 msgid "Back"
@@ -283,7 +291,7 @@ msgstr "Wacht totdat de huidige opslag klaar is en probeer het opnieuw."
 #. I18N: JSON is name of the format, this message is displayed if user entered something incorrect to the text field
 #: gui/cloudconnectionwizard.cpp:530
 msgid "JSON code contents are malformed."
-msgstr ""
+msgstr "JSON code heeft niet het juiste formaat."
 
 #: gui/cloudconnectionwizard.cpp:551 gui/downloaddialog.cpp:146
 #: gui/editgamedialog.cpp:353 gui/editrecorddialog.cpp:67
@@ -294,7 +302,7 @@ msgstr ""
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1842
+#: engines/director/lingo/lingo-builtins.cpp:1882
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:660 engines/mtropolis/mtropolis.cpp:115
 #: engines/mtropolis/mtropolis.cpp:125 engines/parallaction/saveload.cpp:270
@@ -305,7 +313,7 @@ msgstr ""
 #: engines/scumm/scumm.cpp:2048 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:529 engines/sword1/animation.cpp:560
 #: engines/sword1/animation.cpp:568 engines/sword1/control.cpp:888
-#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:426
+#: engines/sword1/logic.cpp:1641 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
 #: engines/vcruise/vcruise.cpp:92 engines/vcruise/vcruise.cpp:102
 #: engines/zvision/file/save_manager.cpp:225
@@ -436,7 +444,7 @@ msgstr "Download klaar, %d packs gedownload, %s-%S"
 #: gui/downloadpacksdialog.cpp:293 gui/downloadpacksdialog.cpp:384
 #: gui/gui-manager.cpp:162 gui/textviewer.cpp:53 gui/unknown-game-dialog.cpp:53
 #: backends/platform/android/options.cpp:492
-#: backends/platform/ios7/ios7_options.mm:131 engines/scumm/help.cpp:123
+#: backends/platform/ios7/ios7_options.mm:182 engines/scumm/help.cpp:123
 #: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
 #: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
 msgid "Close"
@@ -518,7 +526,8 @@ msgstr ""
 #: gui/options.cpp:3250 audio/null.cpp:45
 #: backends/platform/android/options.cpp:150
 #: backends/platform/android/options.cpp:151
-#: backends/platform/android/options.cpp:179 engines/ags/dialogs.cpp:63
+#: backends/platform/android/options.cpp:179
+#: backends/platform/ios7/ios7_options.mm:101 engines/ags/dialogs.cpp:63
 msgid "<default>"
 msgstr "<standaard>"
 
@@ -1340,7 +1349,7 @@ msgstr "de vsync instelling kon niet veranderd worden"
 msgid "the shader could not be changed"
 msgstr "de shader kon niet veranderd worden"
 
-#: gui/options.cpp:1417 backends/platform/ios7/ios7_options.mm:69
+#: gui/options.cpp:1417 backends/platform/ios7/ios7_options.mm:80
 msgid "Touchpad mouse mode"
 msgstr "Touchpadmodus"
 
@@ -1776,7 +1785,7 @@ msgstr "ScummVM log pad: "
 
 #: gui/options.cpp:2508
 msgid "View"
-msgstr ""
+msgstr "Bekijk"
 
 #. I18N: Referring to the last path memorized when adding a game
 #: gui/options.cpp:2518 gui/options.cpp:3250
@@ -1871,11 +1880,11 @@ msgstr "Auto opslaan:"
 
 #: gui/options.cpp:2631
 msgid "Random seed:"
-msgstr ""
+msgstr "Random seed:"
 
 #: gui/options.cpp:2631
 msgid "Seed for initializing all random number generators"
-msgstr ""
+msgstr "Seed om alle willekeurige nummer generators te initialiseren"
 
 #: gui/options.cpp:2639
 msgid "Debug level:"
@@ -1889,7 +1898,7 @@ msgstr "Geen"
 #. I18N: Debug level 11, all messages
 #: gui/options.cpp:2649
 msgid "11 (all)"
-msgstr ""
+msgstr "11 (alles)"
 
 #: gui/options.cpp:2653
 msgid "Enable Discord integration"
@@ -2488,7 +2497,7 @@ msgstr "Opgeslagen spellen"
 
 #: base/main.cpp:595
 msgid "Bad config file format. overwrite?"
-msgstr ""
+msgstr "Configuratiefile formaat onjuist. Overschrijven?"
 
 #. I18N: <Add a new folder> must match the translation done in backends/fs/android/android-saf-fs.h
 #: base/main.cpp:644
@@ -2513,9 +2522,29 @@ msgid ""
 "\n"
 "Steps 2 and 3 need to be done only once for all of your games."
 msgstr ""
+"In deze nieuwe versie van ScummVM Android zijn aanzienlijke aanpassingen "
+"gedaan aan het bestanden toegang systeem om ook moderne versies van het "
+"Android Operating System te ondersteunen.\n"
+"Als u merkt dat bestaande toegevoegde spellen of aangepaste paden het niet "
+"meer doen, pas deze paden dan aan, en gebruik daarbij het SAF systeem om "
+"naar de gewenste locatie te browsen.\n"
+"Dat gaat als volgt:\n"
+"\n"
+"1. Voor elk spel waarvan de data niet gevonden wordt, ga naar het \"Paden\" "
+"tabblad in \"Spel Opties\" en pas het \"Spel pad\"\n"
+"2. In de ScummVM bestanden browser, gebruik \"Ga Omhoog\" totdat u de root "
+"map heeft bereikt. Daar zal u de \"<Voeg een niewe map toe>\" optie vinden.\n"
+"3. Kies die, dan blader en selecteer de \"bovenliggende\" map voor uw "
+"spellen subfolders, bijv. \"SD Card > myGames\". Klik op \"Gebruik deze "
+"folder\".\n"
+"4. Daarna zal er een  nieuwe folder \"myGames\" verschijnen in de \"root\" "
+"folder van de ScummVM browser.\n"
+"5. Blader door deze folder naar uw spel data.\n"
+"\n"
+"Stap 2 en 3 dienen slechts één keer uitgevoerd te worden voor al uw spellen."
 
 #: base/main.cpp:663 base/main.cpp:684
-#: engines/director/lingo/lingo-builtins.cpp:1234
+#: engines/director/lingo/lingo-builtins.cpp:1266
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -2525,7 +2554,7 @@ msgstr "Ok"
 #. I18N: A button caption to dismiss a message and read it later
 #: base/main.cpp:665 base/main.cpp:686
 msgid "Read Later"
-msgstr ""
+msgstr "Later Lezen"
 
 #. I18N: <Add a new folder> must match the translation done in backends/fs/android/android-saf-fs.h
 #: base/main.cpp:672
@@ -2543,6 +2572,19 @@ msgid ""
 "the ScummVM browser.\n"
 "  4. Browse through this folder to your game data."
 msgstr ""
+"In deze nieuwe versie van ScummVM Android zijn aanzienlijke aanpassingen "
+"gedaan aan het bestanden toegang systeem om ook moderne versies van het "
+"Android Operating System te ondersteunen.\n"
+"U zult dus SAF moeten instellen om spellen te kunnen toevoegen.\n"
+"\n"
+"1. In de ScummVM bestanden browser, gebruik \"Ga Omhoog\" totdat u de root "
+"map heeft bereikt. Daar zal u de \"<Voeg een niewe map toe>\" optie vinden.\n"
+"2. Kies die, dan blader en selecteer de \"bovenliggende\" map voor uw "
+"spellen subfolders, bijv. \"SD Card > myGames\". Klik op \"Gebruik deze "
+"folder\".\n"
+"3. Daarna zal er een  nieuwe folder \"myGames\" verschijnen in de \"root\" "
+"folder van de ScummVM browser.\n"
+"4. Blader door deze folder naar uw spel data."
 
 #: base/main.cpp:782
 msgid "Error running game:"
@@ -2707,7 +2749,7 @@ msgstr "ScummVM"
 
 #: dists/android.strings.xml.cpp:31
 msgid "Graphic adventure game engine"
-msgstr ""
+msgstr "Grafische avonturen spel engine"
 
 #: dists/android.strings.xml.cpp:33
 #: backends/events/default/default-events.cpp:217
@@ -2722,11 +2764,11 @@ msgstr "Stoppen"
 
 #: dists/android.strings.xml.cpp:34
 msgid "Config File Error"
-msgstr ""
+msgstr "Configuratiebestand fout"
 
 #: dists/android.strings.xml.cpp:35
 msgid "Unable to read ScummVM config file or create a new one!"
-msgstr ""
+msgstr "Kan het ScummVM configuratiebestand niet lezen of creëer een nieuwe!"
 
 #: dists/android.strings.xml.cpp:36
 msgid "Save Path Error"
@@ -2734,7 +2776,7 @@ msgstr "Bewaar Pad Fout"
 
 #: dists/android.strings.xml.cpp:37
 msgid "Unable to create or access default save path!"
-msgstr ""
+msgstr "Kon geen toegang krijgen tot het standaard bewaar pad!"
 
 #: dists/android.strings.xml.cpp:38
 msgid "Icons Path Error"
@@ -2743,12 +2785,15 @@ msgstr "Icoon Pad Fout"
 #: dists/android.strings.xml.cpp:39
 msgid "Unable to create or access default icons and shaders path!"
 msgstr ""
+"Kon geen toegang krijgen tot of aanmaken van het iconen en shaders pad!"
 
 #: dists/android.strings.xml.cpp:40
 msgid ""
 "Unable to access the globally set save path! Please revert to default from "
 "ScummVM Options"
 msgstr ""
+"Kon geen toegang krijgen tot het algemene bewaar pad! Zet deze a.u.b. terug "
+"naar standaard in de ScummVM Opties"
 
 #: dists/android.strings.xml.cpp:41
 msgid "Toggle virtual keyboard"
@@ -2763,11 +2808,11 @@ msgstr "Alt"
 
 #: dists/android.strings.xml.cpp:45
 msgid "Done"
-msgstr ""
+msgstr "Klaar"
 
 #: dists/android.strings.xml.cpp:46
 msgid "Mode change"
-msgstr ""
+msgstr "Modus verandering"
 
 #: dists/android.strings.xml.cpp:47
 msgid "Shift"
@@ -2787,10 +2832,12 @@ msgid ""
 "Please select the *root* of your external (physical) SD card. This is "
 "required for ScummVM to access this path: "
 msgstr ""
+"Selecteer a.u.b. de \"root\" map van uw externe (fysieke) SD card. Dit heeft "
+"ScummVM nodig om toegang te krijgen tot het pad: "
 
 #: dists/android.strings.xml.cpp:51
 msgid "Storage Access Framework Permissions for ScummVM were revoked!"
-msgstr ""
+msgstr "Storage Access Framework rechten van ScummVM zijn teruggetrokken!"
 
 #. I18N: One line summary as shown in *nix distributions
 #: dists/org.scummvm.scummvm.metainfo.xml.cpp:32
@@ -2840,7 +2887,7 @@ msgstr ""
 msgid "Achievement unlocked!"
 msgstr "Prestatie behaald!"
 
-#: engines/advancedDetector.cpp:235
+#: engines/advancedDetector.cpp:237
 msgid "Illegitimate game copy detected. We provide no support in such cases"
 msgstr ""
 "Illegale spelkopie gedetecteerd. Wij leveren geen support in dit soort "
@@ -3039,7 +3086,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "FOUT: Kon het opgeslagen spel niet kopiëren naar een nieuw slot"
 
 #: engines/engine.cpp:630 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:256 engines/mm/xeen/saves.cpp:293
+#: backends/platform/ios7/ios7_osys_main.cpp:291 engines/mm/xeen/saves.cpp:293
 #: engines/sky/metaengine.cpp:216
 msgid "Autosave"
 msgstr "Automatisch opslaan"
@@ -3193,7 +3240,7 @@ msgstr "Automatisch opslaan aan"
 msgid "Autosave off"
 msgstr "Automatisch opslaan uit"
 
-#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:177
+#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:178
 msgid "OpenGL"
 msgstr "OpenGL"
 
@@ -3464,7 +3511,7 @@ msgstr "Touchscreen 'Tap Modus' - Zweven (DPad Klik)"
 #: backends/fs/android/android-saf-fs.cpp:696
 #: backends/fs/android/android-saf-fs.cpp:700
 msgid "Add a new folder"
-msgstr ""
+msgstr "Voeg een nieuwe map toe"
 
 #. I18N: This may be displayed in the Android UI used to add a Storage Attach Framework authorization
 #: backends/fs/android/android-saf-fs.cpp:812
@@ -3476,37 +3523,37 @@ msgstr "Selecteer een nieuwe map"
 msgid "Toggle aspect ratio correction"
 msgstr "Pixelverhoudingcorrectie aan-/uitzetten"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:256
+#: backends/graphics/opengl/opengl-graphics.cpp:257
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:72
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:241
 #: engines/twine/metaengine.cpp:360
 msgid "Center"
 msgstr "Centreer"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:257
+#: backends/graphics/opengl/opengl-graphics.cpp:258
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:73
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:242
 msgid "Pixel-perfect scaling"
 msgstr "Pixel-perfect schalen"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:258
+#: backends/graphics/opengl/opengl-graphics.cpp:259
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:243
 msgid "Even pixels scaling"
 msgstr "Gelijkmatig pixel schalen"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:259
+#: backends/graphics/opengl/opengl-graphics.cpp:260
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:74
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:244
 msgid "Fit to window"
 msgstr "Maak passend aan window"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:260
+#: backends/graphics/opengl/opengl-graphics.cpp:261
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:75
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:245
 msgid "Stretch to window"
 msgstr "Rek uit naar window"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:261
+#: backends/graphics/opengl/opengl-graphics.cpp:262
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:76
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:246
 msgid "Fit to window (4:3)"
@@ -3767,11 +3814,11 @@ msgstr "Rechter Stick Y"
 
 #: backends/keymapper/hardware-input.cpp:281
 msgid "Hat X"
-msgstr ""
+msgstr "Hat X"
 
 #: backends/keymapper/hardware-input.cpp:282
 msgid "Hat Y"
-msgstr ""
+msgstr "Hat Y"
 
 #: backends/keymapper/remap-widget.cpp:295
 #: backends/keymapper/remap-widget.cpp:325
@@ -4190,6 +4237,7 @@ msgstr "Kies de geprefereerde aanraak modus:"
 
 #: backends/platform/android/options.cpp:134
 #: backends/platform/android/options.cpp:165
+#: backends/platform/ios7/ios7_options.mm:87
 msgid "In menus"
 msgstr "In menus"
 
@@ -4220,38 +4268,40 @@ msgid "In 3D games"
 msgstr "In 3D spellen"
 
 #: backends/platform/android/options.cpp:163
+#: backends/platform/ios7/ios7_options.mm:85
 msgid "Select the orientation:"
-msgstr ""
+msgstr "Selecteerd de oriëntatie:"
 
 #: backends/platform/android/options.cpp:167
 #: backends/platform/android/options.cpp:182
-#, fuzzy
-#| msgid "Automatic drilling"
+#: backends/platform/ios7/ios7_options.mm:89
+#: backends/platform/ios7/ios7_options.mm:104
 msgid "Automatic"
-msgstr "Automatisch boren"
+msgstr "Automatisch"
 
 #: backends/platform/android/options.cpp:168
 #: backends/platform/android/options.cpp:183
+#: backends/platform/ios7/ios7_options.mm:90
+#: backends/platform/ios7/ios7_options.mm:105
 msgid "Portrait"
-msgstr ""
+msgstr "Portret"
 
 #: backends/platform/android/options.cpp:169
 #: backends/platform/android/options.cpp:184
-#, fuzzy
-#| msgid "Escape"
+#: backends/platform/ios7/ios7_options.mm:91
+#: backends/platform/ios7/ios7_options.mm:106
 msgid "Landscape"
-msgstr "Escape"
+msgstr "Landscape"
 
 #: backends/platform/android/options.cpp:175
-#, fuzzy
-#| msgid "In 2D games"
+#: backends/platform/ios7/ios7_options.mm:97
 msgid "In games"
-msgstr "In 2D spellen"
+msgstr "In spellen"
 
 #. I18N: This button opens a list of all folders added for Android Storage Attached Framework
 #: backends/platform/android/options.cpp:189
 msgid "Remove folder authorizations..."
-msgstr ""
+msgstr "Verwijder folder authorisaties..."
 
 #: backends/platform/android/options.cpp:493
 msgid "Remove"
@@ -4269,23 +4319,23 @@ msgstr "Hardware schalen (snel, maar slechte kwaliteit)"
 msgid "Software scale (good quality, but slower)"
 msgstr "Software schalen (langzamer, maar goede kwaliteit)"
 
-#: backends/platform/ios7/ios7_options.mm:68
+#: backends/platform/ios7/ios7_options.mm:79
 msgid "Show On-screen control (iOS 15 and later)"
 msgstr "Toon besturing (iOS 15 en later)"
 
-#: backends/platform/ios7/ios7_options.mm:70
+#: backends/platform/ios7/ios7_options.mm:81
 msgid "Mouse-click-and-drag mode"
 msgstr "Muis-klik-en-sleepmodus"
 
-#: backends/platform/ios7/ios7_options.mm:71
+#: backends/platform/ios7/ios7_options.mm:82
 msgid "Show keyboard function bar"
-msgstr ""
+msgstr "Toon toetenbord functiebalk"
 
-#: backends/platform/ios7/ios7_options.mm:73
+#: backends/platform/ios7/ios7_options.mm:109
 msgid "Controls Help"
 msgstr "Besturing Help"
 
-#: backends/platform/ios7/ios7_options.mm:105
+#: backends/platform/ios7/ios7_options.mm:156
 msgid ""
 "Gestures and controls:\n"
 "\n"
@@ -4301,8 +4351,21 @@ msgid ""
 "Pinch gesture: Enables/disables keyboard\n"
 "Keyboard spacebar: Pause"
 msgstr ""
+"Gebaren and besturing:\n"
+"\n"
+"Een vinger tik: Linker muis klik\n"
+"Twee vinger tik: Rechter muis klik\n"
+"Twee vinger dubbele tik: ESC\n"
+"Twee vinger slepen (naar boven): Zet klik en sleep modus aan/uit\n"
+"Twee vinger slepen (links naar rechts): Schakel tussen direct aanraken en "
+"touchpad modus\n"
+"Twee vinger slepen (rechts naar links): Toon/verberg besturing scherm\n"
+"Twee vinger slepen (boven naar onder): Hoofdmenu\n"
+"Drie vinger slepen: Pijltjestoetsen\n"
+"Knijp gebaar: Zet toetsenboard aan/uit\n"
+"Toetsenbord spatiebalk: Pauze"
 
-#: backends/platform/ios7/ios7_options.mm:118
+#: backends/platform/ios7/ios7_options.mm:169
 msgid ""
 "Using the Apple TV remote control:\n"
 "\n"
@@ -4318,19 +4381,19 @@ msgid ""
 "Keyboard spacebar: Pause"
 msgstr ""
 
-#: backends/platform/ios7/ios7_osys_events.cpp:466
+#: backends/platform/ios7/ios7_osys_events.cpp:443
 msgid "Mouse-click-and-drag mode enabled."
 msgstr "Muis-klik-en-sleepmodus aangezet."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:468
+#: backends/platform/ios7/ios7_osys_events.cpp:445
 msgid "Mouse-click-and-drag mode disabled."
 msgstr "Muis-klik-en-sleepmodus uitgezet."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:489
+#: backends/platform/ios7/ios7_osys_events.cpp:466
 msgid "Touchpad mode enabled."
 msgstr "Touchpadmodus ingeschakeld."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:491
+#: backends/platform/ios7/ios7_osys_events.cpp:468
 msgid "Touchpad mode disabled."
 msgstr "Touchpadmodus uitgeschakeld."
 
@@ -4902,48 +4965,36 @@ msgstr ""
 "dat sommige geluidssporen niet goed klinken."
 
 #: engines/agos/midi.cpp:316
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s. Without this file,\n"
 "the music will not sound the same as the original game."
 msgstr ""
-"Kon de AdLib instrument defenitie files niet vinden\n"
-"%s en %s. Zonder deze bestanden,\n"
-"zal de muziek niet hetzelfde klinken als in het originele spel."
+"Kon het AdLib instrument definitie bestand %s niet vinden.\n"
+"Zonder dit bestand zal de muziek niet hetzelfde klinken\n"
+"als in het originele spel."
 
 #: engines/agos/midi.cpp:374
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s. Without this file,\n"
 "the sound effects will not sound the same as the original game."
 msgstr ""
-"Kon de AdLib instrument defenitie files niet vinden\n"
-"%s en %s. Zonder deze bestanden,\n"
-"zal de muziek niet hetzelfde klinken als in het originele spel."
+"Kon het AdLib instrument definitie bestand\n"
+"%s niet vinden. Zonder dit bestand zullen de \n"
+"geluidseffecten niet hetzelfde klinken als in het originele spel."
 
 #: engines/agos/midi.cpp:453
-#, fuzzy, c-format
-#| msgid ""
-#| "Could not find AdLib instrument definition files\n"
-#| "%s and %s. Without these files,\n"
-#| "the music will not sound the same as the original game."
+#, c-format
 msgid ""
 "Could not find AdLib instrument definition file\n"
 "%s or %s. Without one of these files,\n"
 "the music will not sound the same as the original game."
 msgstr ""
-"Kon de AdLib instrument defenitie files niet vinden\n"
-"%s en %s. Zonder deze bestanden,\n"
+"Kon het AdLib instrument definitie bestand\n"
+"%s of %s niet vinden. Zonder één van deze bestanden\n"
 "zal de muziek niet hetzelfde klinken als in het originele spel."
 
 #: engines/ags/dialogs.cpp:59
@@ -5566,7 +5617,7 @@ msgstr "Sensors uitschakelen"
 
 #: engines/freescape/metaengine.cpp:80
 msgid "Sensors will not shoot the player"
-msgstr ""
+msgstr "Sensoren zullen niet op de speler schieten"
 
 #: engines/freescape/metaengine.cpp:90
 msgid "Disable falling"
@@ -6019,7 +6070,7 @@ msgstr "leun Rechts"
 
 #: engines/hpl1/metaengine.cpp:88
 msgid "Jump"
-msgstr ""
+msgstr "Spring"
 
 #. I18N: Action in In Cold Blood
 #: engines/hpl1/metaengine.cpp:89 engines/icb/icb.cpp:119
@@ -6037,15 +6088,15 @@ msgstr "Kijk Modus"
 
 #: engines/hpl1/metaengine.cpp:94
 msgid "Holster"
-msgstr ""
+msgstr "Holster"
 
 #: engines/hpl1/metaengine.cpp:100
 msgid "Notebook"
-msgstr ""
+msgstr "Notitieboek"
 
 #: engines/hpl1/metaengine.cpp:101
 msgid "Personal Notes"
-msgstr ""
+msgstr "Persoonlijke Aantekeningen"
 
 #: engines/hpl1/metaengine.cpp:102
 msgid "Flashlight"
@@ -6053,7 +6104,7 @@ msgstr "Zaklantaarn"
 
 #: engines/hpl1/metaengine.cpp:103
 msgid "Glowstick"
-msgstr ""
+msgstr "Glowstick"
 
 #: engines/hypno/metaengine.cpp:33
 msgid "Enable original cheats"
@@ -6100,12 +6151,12 @@ msgstr ""
 #. I18N: Action in In Cold Blood
 #: engines/icb/icb.cpp:89
 msgid "Fire"
-msgstr ""
+msgstr "Schiet"
 
 #. I18N: Action in In Cold Blood
 #: engines/icb/icb.cpp:107
 msgid "Arm"
-msgstr ""
+msgstr "Laden"
 
 #. I18N: Action in In Cold Blood
 #: engines/icb/icb.cpp:113
@@ -6234,24 +6285,24 @@ msgstr ""
 msgid "Eye of Beholder support is not compiled in"
 msgstr "Ondersteuning voor Eye of the Beholder is niet meegecompileerd"
 
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:472
+#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:496
 #: engines/ultima/ultima4/metaengine.cpp:224
 #: engines/ultima/ultima8/metaengine.cpp:145
 msgid "Interact via Left Click"
 msgstr "Bestuur met Linker Klik"
 
-#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:473
+#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:497
 #: engines/ultima/ultima4/metaengine.cpp:230
 #: engines/ultima/ultima8/metaengine.cpp:151
 msgid "Interact via Right Click"
 msgstr "Bestuur met Rechter Klik"
 
-#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:480
+#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:504
 #: engines/twine/metaengine.cpp:380
 msgid "Move Forward"
 msgstr "Beweeg Vooruit"
 
-#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:481
+#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:505
 msgid "Move Back"
 msgstr "Beweeg Terug"
 
@@ -6263,13 +6314,13 @@ msgstr "Verplaats naar links"
 msgid "Move Right"
 msgstr "Verplaats naar rechts"
 
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:484
+#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:508
 #: engines/mm/mm1/metaengine.cpp:97 engines/pegasus/pegasus.cpp:2739
 #: engines/twine/metaengine.cpp:401 engines/zvision/metaengine.cpp:209
 msgid "Turn Left"
 msgstr "Draai Linksom"
 
-#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:485
+#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:509
 #: engines/mm/mm1/metaengine.cpp:98 engines/pegasus/pegasus.cpp:2746
 #: engines/twine/metaengine.cpp:394 engines/zvision/metaengine.cpp:215
 msgid "Turn Right"
@@ -6315,40 +6366,40 @@ msgstr "Spreuk Niveau 5"
 msgid "Spell Level 6"
 msgstr "Spreuk Niveau 6"
 
-#: engines/kyra/engine/lol.cpp:476
+#: engines/kyra/engine/lol.cpp:500
 msgid "Attack 1"
 msgstr "Aanval 1"
 
-#: engines/kyra/engine/lol.cpp:477
+#: engines/kyra/engine/lol.cpp:501
 msgid "Attack 2"
 msgstr "Aanval 2"
 
-#: engines/kyra/engine/lol.cpp:478
+#: engines/kyra/engine/lol.cpp:502
 msgid "Attack 3"
 msgstr "Aanval 3"
 
-#: engines/kyra/engine/lol.cpp:479 engines/mm/mm1/metaengine.cpp:103
+#: engines/kyra/engine/lol.cpp:503 engines/mm/mm1/metaengine.cpp:103
 msgid "Show Map"
 msgstr "~T~oon Map"
 
-#: engines/kyra/engine/lol.cpp:482
+#: engines/kyra/engine/lol.cpp:506
 msgid "Slide Left"
 msgstr "Schuif Links"
 
-#: engines/kyra/engine/lol.cpp:483
+#: engines/kyra/engine/lol.cpp:507
 msgid "Slide Right"
 msgstr "Schuif Rechts"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/kyra/engine/lol.cpp:486 engines/mm/mm1/metaengine.cpp:109
+#: engines/kyra/engine/lol.cpp:510 engines/mm/mm1/metaengine.cpp:109
 msgid "Rest"
 msgstr "Rust"
 
-#: engines/kyra/engine/lol.cpp:487
+#: engines/kyra/engine/lol.cpp:511
 msgid "Options"
 msgstr "Opties"
 
-#: engines/kyra/engine/lol.cpp:488
+#: engines/kyra/engine/lol.cpp:512
 msgid "Choose Spell"
 msgstr "Kies Spreuk"
 
@@ -6558,27 +6609,27 @@ msgstr "Escape"
 
 #: engines/mm/mm1/metaengine.cpp:54
 msgid "View Party Member 1"
-msgstr ""
+msgstr "Bekijk Groepslid 1"
 
 #: engines/mm/mm1/metaengine.cpp:55
 msgid "View Party Member 2"
-msgstr ""
+msgstr "Bekijk Groepslid 2"
 
 #: engines/mm/mm1/metaengine.cpp:56
 msgid "View Party Member 3"
-msgstr ""
+msgstr "Bekijk Groepslid 3"
 
 #: engines/mm/mm1/metaengine.cpp:57
 msgid "View Party Member 4"
-msgstr ""
+msgstr "Bekijk Groepslid 4"
 
 #: engines/mm/mm1/metaengine.cpp:58
 msgid "View Party Member 5"
-msgstr ""
+msgstr "Bekijk Groepslid 5"
 
 #: engines/mm/mm1/metaengine.cpp:59
 msgid "View Party Member 6"
-msgstr ""
+msgstr "Bekijk Groepslid 6"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:67
@@ -6608,23 +6659,23 @@ msgstr "Snelle Referentie"
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:77
 msgid "Retreat"
-msgstr ""
+msgstr "Terugtrekken"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:79
 msgid "Shoot"
-msgstr ""
+msgstr "Schiet"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:84
 msgid "Delay"
-msgstr ""
+msgstr "Vertragen"
 
 #. I18N: Combat command in Might & Magic 1
 #. I18N: Action of hero party in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:86 engines/mm/mm1/metaengine.cpp:107
 msgid "Protect"
-msgstr ""
+msgstr "Bescherm"
 
 #. I18N: Party arrangement command in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:94
@@ -6642,7 +6693,7 @@ msgstr "Minikaart aan-/uitzetten"
 
 #: engines/mm/mm1/metaengine.cpp:105
 msgid "Reorder Party"
-msgstr ""
+msgstr "Groep herschikken"
 
 #. I18N: Action of hero party in Might & Magic 1
 #: engines/mm/mm1/metaengine.cpp:111
@@ -6665,16 +6716,16 @@ msgstr "Ga naar lokatie"
 
 #: engines/mm/mm1/metaengine.cpp:133 engines/mm/mm1/metaengine.cpp:143
 msgid "Might and Magic 1 - Menus"
-msgstr ""
+msgstr "Might and Magic 1 - Menus"
 
 #: engines/mm/mm1/metaengine.cpp:138
 msgid "Might and Magic 1 - Minimal Keys"
-msgstr ""
+msgstr "Might and Magic 1 - Minimale Toetsen"
 
 #: engines/mm/mm1/metaengine.cpp:144 engines/mm/mm1/metaengine.cpp:150
 #: engines/mm/mm1/metaengine.cpp:156
 msgid "Might and Magic 1 - Party"
-msgstr ""
+msgstr "Might and Magic 1 - Groep"
 
 #: engines/mm/mm1/metaengine.cpp:149
 msgid "Might and Magic 1 - Combat"
@@ -7125,7 +7176,7 @@ msgstr ""
 msgid "Unable to locate the '%s' engine data file"
 msgstr "Kon de '%s' engine data file niet vinden"
 
-#: engines/myst3/detection.cpp:179 engines/myst3/detection.cpp:193
+#: engines/myst3/detection.cpp:181 engines/myst3/detection.cpp:195
 msgid "PS2 version is not yet supported"
 msgstr "PS2 versie wordt nog niet ondersteund"
 
@@ -8945,7 +8996,7 @@ msgstr "Houd de oude"
 msgid "Keep the new one"
 msgstr "Houd de nieuwe"
 
-#: engines/sword1/logic.cpp:1634
+#: engines/sword1/logic.cpp:1641
 msgid "This is the end of the Broken Sword 1 Demo"
 msgstr "Dit is het einde van de Broken Sword 1 demo"
 

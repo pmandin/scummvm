@@ -144,6 +144,8 @@ public:
 	bool setStageRect(Datum datum);
 	void setModal(bool modal);
 	bool getModal() { return _isModal; };
+	void setFileName(Common::String filename);
+	Common::String getFileName() { return getName(); }
 
 	void updateBorderType();
 
@@ -151,7 +153,7 @@ public:
 	bool loadNextMovie();
 	void loadNewSharedCast(Cast *previousSharedCast);
 
-	Common::String getSharedCastPath();
+	Common::Path getSharedCastPath();
 
 	LingoState *getLingoState() { return _lingoState; };
 	uint32 frozenLingoStateCount() { return _frozenLingoStates.size(); };

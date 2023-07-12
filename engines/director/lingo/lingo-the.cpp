@@ -64,6 +64,7 @@ TheEntity entities[] = {
 	{ kTheCommandDown,		"commandDown",		false, 200, true },	// D2 f
 	{ kTheControlDown,		"controlDown",		false, 200, true },	// D2 f
 	{ kTheDate,				"date",				false, 300, true },	//		D3 f
+	{ kTheDeskTopRectList,	"deskTopRectList",	false, 500, true },	// D5 p
 	{ kTheDoubleClick,		"doubleClick",		false, 200, true },	// D2 f
 	{ kTheExitLock,			"exitLock",			false, 200, false },	// D2 p
 	{ kTheField,			"field",			true,  300, false },	//		D3
@@ -437,6 +438,9 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 	case kTheDate:
 		d = getTheDate(field);
 		break;
+	case kTheDeskTopRectList:
+		d = getTheDeskTopRectList();
+		break;
 	case kTheDoubleClick:
 		// Always measured against the last two clicks.
 		// 25 ticks seems to be the threshold for a double click.
@@ -455,14 +459,14 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = _floatPrecision;
 		break;
 	case kTheFrame:
-		d = (int)score->getCurrentFrame();
+		d = (int)score->getCurrentFrameNum();
 		break;
 	case kTheFrameLabel:
 		d.type = STRING;
-		d.u.s = score->getFrameLabel(score->getCurrentFrame());
+		d.u.s = score->getFrameLabel(score->getCurrentFrameNum());
 		break;
 	case kTheFrameScript:
-		d = score->_frames[score->getCurrentFrame()]->_actionId.member;
+		d = score->_currentFrame->_actionId.member;
 		break;
 	case kTheFramePalette:
 		d = score->getCurrentPalette();
@@ -519,7 +523,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d = (int)(_vm->getMacTicks() - movie->_lastEventTime);
 		break;
 	case kTheLastFrame:
-		d = (int)score->_frames.size() - 1;
+		d = (int)score->getFramesNum();
 		break;
 	case kTheLastKey:
 		d = (int)(_vm->getMacTicks() - movie->_lastKeyTime);
@@ -1145,7 +1149,7 @@ void Lingo::setTheEntity(int entity, Datum &id, int field, Datum &d) {
 		g_director->getCurrentWindow()->setStageColor(g_director->transformColor(d.asInt()));
 
 		// Redraw the stage
-		score->renderSprites(score->getCurrentFrame(), kRenderForceUpdate);
+		score->renderSprites(score->getCurrentFrameNum(), kRenderForceUpdate);
 		g_director->getCurrentWindow()->render();
 		break;
 	case kTheSwitchColorDepth:
@@ -1463,7 +1467,7 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			if (castMember && castMember->_type == kCastDigitalVideo) {
 				Common::String path = castMember->getCast()->getVideoPath(castId.member);
 				if (!path.empty()) {
-					((DigitalVideoCastMember *)castMember)->loadVideo(pathMakeRelative(path));
+					((DigitalVideoCastMember *)castMember)->loadVideo(path);
 					((DigitalVideoCastMember *)castMember)->startVideo(channel);
 					// b_updateStage needs to have _videoPlayback set to render video
 					// in the regular case Score::renderSprites sets it.
@@ -1605,7 +1609,7 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 		break;
 	case kTheRect:
 		if (d.type == RECT || (d.type == ARRAY && d.u.farr->arr.size() >= 4)) {
-			score->renderSprites(score->getCurrentFrame(), kRenderForceUpdate);
+			score->renderSprites(score->getCurrentFrameNum(), kRenderForceUpdate);
 			channel->setBbox(
 				d.u.farr->arr[0].u.i, d.u.farr->arr[1].u.i,
 				d.u.farr->arr[2].u.i, d.u.farr->arr[3].u.i
@@ -1937,10 +1941,12 @@ void Lingo::getObjectProp(Datum &obj, Common::String &propName) {
 		if (!member) {
 			if (propName.equalsIgnoreCase("loaded")) {
 				d = 0;
-			} else  if (propName.equalsIgnoreCase("filename")) {
+			} else if (propName.equalsIgnoreCase("filename")) {
 				d = Datum(Common::String());
+			} else if (id.member <= getMembersNum()) {
+				warning("Lingo::getObjectProp(): %s not found", id.asString().c_str());
 			} else {
-				g_lingo->lingoError("Lingo::getObjectProp(): %s not found", id.asString().c_str());
+				g_lingo->lingoError("Lingo::getObjectProp(): %s not found and out of range", id.asString().c_str());
 			}
 			g_lingo->push(d);
 			return;
@@ -2062,6 +2068,24 @@ Datum Lingo::getTheTime(int field) {
 	}
 
 	d.u.s = new Common::String(s);
+
+	return d;
+}
+
+Datum Lingo::getTheDeskTopRectList() {
+	// Returns dimensions of each monitor
+	Datum monitorSize;
+	monitorSize.type = RECT;
+	monitorSize.u.farr = new FArray;
+	monitorSize.u.farr->arr.push_back(0);
+	monitorSize.u.farr->arr.push_back(0);
+	monitorSize.u.farr->arr.push_back(g_director->getMacWindowManager()->getWidth());
+	monitorSize.u.farr->arr.push_back(g_director->getMacWindowManager()->getHeight());
+
+	Datum d;
+	d.type = ARRAY;
+	d.u.farr = new FArray;
+	d.u.farr->arr.push_back(monitorSize);
 
 	return d;
 }

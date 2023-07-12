@@ -47,6 +47,28 @@
 }
 
 #if TARGET_OS_IOS
+- (UIInterfaceOrientation)interfaceOrientation {
+	if (@available(iOS 13.0, *)) {
+		return [[[[self view] window] windowScene] interfaceOrientation];
+	} else {
+		return [[UIApplication sharedApplication] statusBarOrientation];
+	}
+}
+
+- (UIInterfaceOrientation)currentOrientation {
+	return currentOrientation;
+}
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+       return [[iOS7AppDelegate iPhoneView] supportedScreenOrientations];
+}
+
+-(void) updateCurrentOrientation {
+	UIInterfaceOrientation interfaceOrientation = [self interfaceOrientation];
+	if (interfaceOrientation != UIInterfaceOrientationUnknown)
+		[self setCurrentOrientation: interfaceOrientation];
+}
+
 -(void) setCurrentOrientation:(UIInterfaceOrientation)orientation {
 	if (orientation != currentOrientation) {
 		currentOrientation = orientation;
@@ -57,12 +79,7 @@
 - (void)viewDidAppear:(BOOL)animated {
 	[super viewDidAppear:animated];
 
-	UIInterfaceOrientation orientation = UIInterfaceOrientationUnknown;
-	if (@available(iOS 13.0, *)) {
-		orientation = [[[[self view] window] windowScene] interfaceOrientation];
-	} else {
-		orientation = [[UIApplication sharedApplication] statusBarOrientation];
-	}
+	UIInterfaceOrientation orientation = [self interfaceOrientation];
 	if (orientation != UIInterfaceOrientationUnknown && orientation != currentOrientation) {
 		currentOrientation = orientation;
 		[[iOS7AppDelegate iPhoneView] interfaceOrientationChanged:orientation];
@@ -71,19 +88,11 @@
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
 	[super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
-
-	[coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-		UIInterfaceOrientation orientationAfter = UIInterfaceOrientationUnknown;
-		if (@available(iOS 13.0, *)) {
-			orientationAfter = [[[[self view] window] windowScene] interfaceOrientation];
-		} else {
-			orientationAfter = [[UIApplication sharedApplication] statusBarOrientation];
-		}
-		if (orientationAfter != UIInterfaceOrientationUnknown && orientationAfter != currentOrientation) {
-			currentOrientation = orientationAfter;
-			[[iOS7AppDelegate iPhoneView] interfaceOrientationChanged:currentOrientation];
-		}
-	}];
+	UIInterfaceOrientation orientationAfter = [self interfaceOrientation];
+	if (orientationAfter != UIInterfaceOrientationUnknown && orientationAfter != currentOrientation) {
+		currentOrientation = orientationAfter;
+		[[iOS7AppDelegate iPhoneView] interfaceOrientationChanged:currentOrientation];
+	}
 }
 #endif
 

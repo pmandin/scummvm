@@ -222,7 +222,7 @@ void FileIO::m_new(int nargs) {
 		Common::String mask = prefix + "*.txt";
 		dirSeparator = '/';
 
-		GUI::FileBrowserDialog browser(nullptr, "txt", option.equalsIgnoreCase("write") ? GUI::kFBModeSave : GUI::kFBModeLoad, mask.c_str());
+		GUI::FileBrowserDialog browser(nullptr, "txt", option.equalsIgnoreCase("write") ? GUI::kFBModeSave : GUI::kFBModeLoad, mask.c_str(), origpath.c_str());
 		if (browser.runModal() <= 0) {
 			g_lingo->push(Datum(kErrorFileNotFound));
 			return;
@@ -244,8 +244,8 @@ void FileIO::m_new(int nargs) {
 		if (!me->_inStream) {
 			// Maybe we're trying to read one of the game files
 			Common::File *f = new Common::File;
-
-			if (!f->open(Common::Path(pathMakeRelative(origpath), g_director->_dirSeparator))) {
+			Common::Path location = findPath(origpath);
+			if (location.empty() || !f->open(location)) {
 				delete f;
 				saveFileError();
 				me->dispose();
@@ -494,7 +494,7 @@ void FileIO::m_fileName(int nargs) {
 		Common::String prefix = g_director->getTargetName() + '-';
 		Common::String res = *me->_filename;
 		if (res.hasPrefix(prefix)) {
-			res = Common::String(&me->_filename->c_str()[prefix.size() + 1]);
+			res = Common::String(&me->_filename->c_str()[prefix.size()]);
 		}
 
 		g_lingo->push(Datum(res));

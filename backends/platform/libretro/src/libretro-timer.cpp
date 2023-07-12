@@ -23,17 +23,16 @@
 #include "backends/platform/libretro/include/libretro-defs.h"
 
 LibretroTimerManager::LibretroTimerManager(uint32 refresh_rate) {
-	if (! refresh_rate > 0)
-		refresh_rate = REFRESH_RATE;
 	_interval = 1000 / refresh_rate / 2;
 	_nextSwitchTime = _interval + g_system->getMillis();
 }
 
 void LibretroTimerManager::switchThread(void) {
-	_nextSwitchTime =  g_system->getMillis() + _interval;
+	_spentOnMainThread = g_system->getMillis();
 	retro_switch_to_main_thread();
-	_spentOnMainThread = g_system->getMillis() - _nextSwitchTime + _interval;
-	_nextSwitchTime += _interval <= _spentOnMainThread ? _spentOnMainThread + _interval : 0;
+	_spentOnMainThread = g_system->getMillis() - _spentOnMainThread;
+	_nextSwitchTime =  g_system->getMillis() + _interval;
+	handler();
 }
 
 void LibretroTimerManager::checkThread(void) {

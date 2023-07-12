@@ -368,14 +368,23 @@ void DirectorSound::loadSampleSounds(uint type) {
 	Archive *archive = nullptr;
 
 	for (auto &it : g_director->_allOpenResFiles) {
+		if (!g_director->_allSeenResFiles.contains(it)) {
+			warning("DirectorSound::loadSampleSounds(): file %s not found in allSeenResFiles, skipping", it.toString().c_str());
+			break;
+		}
 		Common::Array<uint16> idList = g_director->_allSeenResFiles[it]->getResourceIDList(tag);
 		for (uint j = 0; j < idList.size(); j++) {
-			if ((idList[j] & 0xFF) == type) {
+			if (static_cast<uint>(idList[j] & 0xFF) == type) {
 				id = idList[j];
 				archive = g_director->_allSeenResFiles[it];
 				break;
 			}
 		}
+	}
+
+	if (!archive) {
+		warning("DirectorSound::loadSampleSounds(): could not find a valid archive");
+		return;
 	}
 
 	if (id == 0xFF) {
@@ -852,11 +861,9 @@ Audio::AudioStream *AudioFileDecoder::getAudioStream(bool looping, bool forPuppe
 	if (_path.empty())
 		return nullptr;
 
-	Common::Path filePath = Common::Path(pathMakeRelative(_path), g_director->_dirSeparator);
-
-	Common::SeekableReadStream *copiedStream = Common::MacResManager::openFileOrDataFork(filePath);
-
-	if (copiedStream == nullptr) {
+	Common::Path newPath = findAudioPath(_path);
+	Common::SeekableReadStream *copiedStream = Common::MacResManager::openFileOrDataFork(newPath);
+	if (!copiedStream) {
 		warning("Failed to open %s", _path.c_str());
 		return nullptr;
 	}

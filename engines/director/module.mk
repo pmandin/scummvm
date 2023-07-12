@@ -60,9 +60,11 @@ MODULE_OBJS = \
 	lingo/xlibs/blitpict.o \
 	lingo/xlibs/cdromxobj.o \
 	lingo/xlibs/colorxobj.o \
+	lingo/xlibs/consumer.o \
 	lingo/xlibs/darkenscreen.o \
 	lingo/xlibs/developerStack.o \
 	lingo/xlibs/dialogsxobj.o \
+	lingo/xlibs/dirutil.o \
 	lingo/xlibs/dpwavi.o \
 	lingo/xlibs/dpwqtw.o \
 	lingo/xlibs/draw.o \

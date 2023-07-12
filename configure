@@ -4002,7 +4002,7 @@ case $_backend in
 		append_var LIBS "-lobjc -framework UIKit -framework CoreGraphics -framework OpenGLES"
 		append_var LIBS "-framework QuartzCore -framework CoreFoundation -framework Foundation"
 		append_var LIBS "-framework AudioToolbox -framework CoreAudio -framework SystemConfiguration "
-		append_var LIBS "-framework GameController -framework Accelerate"
+		append_var LIBS "-framework GameController"
 		if test "$_host" = 'tvos'; then
 			append_var LDFLAGS "-mtvos-version-min=9 -arch arm64"
 			append_var CFLAGS "-mtvos-version-min=9 -arch arm64"
@@ -6124,6 +6124,10 @@ if test "$_opengl_mode" != none ; then
 	case $_backend in
 		android)
 			# We require API level 16 while GLES2 APIs have been added in level 8 so we are safe for compilation
+			_opengl_mode=gles2
+			_opengl_glad=yes
+			;;
+		ios7)
 			_opengl_mode=gles2
 			_opengl_glad=yes
 			;;

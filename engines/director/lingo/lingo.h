@@ -394,7 +394,7 @@ public:
 	CastMemberID resolveCastMember(const Datum &memberID, const Datum &castLib, CastType type);
 	void exposeXObject(const char *name, Datum obj);
 
-	int getAlignedType(const Datum &d1, const Datum &d2, bool numsOnly);
+	int getAlignedType(const Datum &d1, const Datum &d2, bool equality);
 
 	Common::String formatAllVars();
 	void printAllVars();
@@ -463,6 +463,7 @@ public:
 	void setObjectProp(Datum &obj, Common::String &propName, Datum &d);
 	Datum getTheDate(int field);
 	Datum getTheTime(int field);
+	Datum getTheDeskTopRectList();
 
 private:
 	Common::StringArray _entityNames;

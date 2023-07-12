@@ -76,6 +76,7 @@ For a more comprehensive changelog of the latest experimental code, see:
   - Fixed playback speed for Theora videos.
   - Added scummvm.log file viewer.
   - Exposed ScummVM debug level in the GUI (Misc tab).
+  - Fixed shader scaler loading failing in certain conditions.
 
  AGI:
    - Restored possibility to pick arbitrary render mode in Game Options.
@@ -91,12 +92,25 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Fixed wrong walkspeed in old games (e.g. Apprentice).
    - Added small workaround for purple texts appearing transparent.
    - Minor changes to debug/error messages and code style.
- 
+   - Improved display of text.
+
  CRYOMNI3D:
    - Fixed files access preventing to finish Versailles.
 
+ FREESCAPE:
+   - Added OpenGL shaders renderer.
+   - Games are loading original images from the data files.
+   - Refactored and expanded detection tables for Driller and other unsupported games.
+   - Reimplemented object/player collisions to be more robust.
+
  HDB:
    - Fixed bug with inability to pick up red envelope with keyboard.
+
+ HYPNO:
+   - Support rendering Korean font for Wetlands.
+
+ Private:
+   - Dropped 16bit engine requirement.
 
  SAGA2:
    - Fixed crash when hovering over certain spells.

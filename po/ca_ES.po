@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.6.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-07-01 14:26+0000\n"
-"PO-Revision-Date: 2023-06-14 05:40+0000\n"
+"POT-Creation-Date: 2023-07-11 12:36+0000\n"
+"PO-Revision-Date: 2023-07-12 04:40+0000\n"
 "Last-Translator: Xaviu <xaviu@xaviu.com>\n"
 "Language-Team: Catalan <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/ca/>\n"
@@ -157,7 +157,7 @@ msgid "Now, open this link in your browser:"
 msgstr "Ara, obriu aquest enllaç al navegador:"
 
 #: gui/cloudconnectionwizard.cpp:264 gui/cloudconnectionwizard.cpp:319
-#: gui/message.cpp:218 gui/message.cpp:222
+#: gui/message.cpp:246 gui/message.cpp:250
 msgid "Open URL"
 msgstr "Obre URL"
 
@@ -299,7 +299,7 @@ msgstr "El contingut del codi JSON està mal format."
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:69
-#: engines/director/lingo/lingo-builtins.cpp:1842
+#: engines/director/lingo/lingo-builtins.cpp:1882
 #: engines/drascula/saveload.cpp:48 engines/grim/inputdialog.cpp:83
 #: engines/groovie/script.cpp:660 engines/mtropolis/mtropolis.cpp:115
 #: engines/mtropolis/mtropolis.cpp:125 engines/parallaction/saveload.cpp:270
@@ -310,7 +310,7 @@ msgstr "El contingut del codi JSON està mal format."
 #: engines/scumm/scumm.cpp:2048 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:529 engines/sword1/animation.cpp:560
 #: engines/sword1/animation.cpp:568 engines/sword1/control.cpp:888
-#: engines/sword1/logic.cpp:1634 engines/sword2/animation.cpp:426
+#: engines/sword1/logic.cpp:1641 engines/sword2/animation.cpp:426
 #: engines/sword2/animation.cpp:456 engines/sword2/animation.cpp:466
 #: engines/vcruise/vcruise.cpp:92 engines/vcruise/vcruise.cpp:102
 #: engines/zvision/file/save_manager.cpp:225
@@ -443,7 +443,7 @@ msgstr "Baixada completada, descarregats %d paquets, %s %S"
 #: gui/downloadpacksdialog.cpp:293 gui/downloadpacksdialog.cpp:384
 #: gui/gui-manager.cpp:162 gui/textviewer.cpp:53 gui/unknown-game-dialog.cpp:53
 #: backends/platform/android/options.cpp:492
-#: backends/platform/ios7/ios7_options.mm:131 engines/scumm/help.cpp:123
+#: backends/platform/ios7/ios7_options.mm:182 engines/scumm/help.cpp:123
 #: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
 #: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
 msgid "Close"
@@ -527,7 +527,8 @@ msgstr ""
 #: gui/options.cpp:3250 audio/null.cpp:45
 #: backends/platform/android/options.cpp:150
 #: backends/platform/android/options.cpp:151
-#: backends/platform/android/options.cpp:179 engines/ags/dialogs.cpp:63
+#: backends/platform/android/options.cpp:179
+#: backends/platform/ios7/ios7_options.mm:101 engines/ags/dialogs.cpp:63
 msgid "<default>"
 msgstr "<per defecte>"
 
@@ -1350,7 +1351,7 @@ msgstr "no s'ha pogut canviar la configuració de sincronització vertical"
 msgid "the shader could not be changed"
 msgstr "no s'ha pogut canviar el shader"
 
-#: gui/options.cpp:1417 backends/platform/ios7/ios7_options.mm:69
+#: gui/options.cpp:1417 backends/platform/ios7/ios7_options.mm:80
 msgid "Touchpad mouse mode"
 msgstr "Mode Panell Tàctil"
 
@@ -2533,7 +2534,7 @@ msgid ""
 msgstr ""
 
 #: base/main.cpp:663 base/main.cpp:684
-#: engines/director/lingo/lingo-builtins.cpp:1234
+#: engines/director/lingo/lingo-builtins.cpp:1266
 #: engines/director/lingo/xlibs/jitdraw3.cpp:123
 #: engines/director/lingo/xlibs/jitdraw3.cpp:131
 msgid "Ok"
@@ -2744,6 +2745,8 @@ msgstr "Error en el fitxer de configuració"
 #: dists/android.strings.xml.cpp:35
 msgid "Unable to read ScummVM config file or create a new one!"
 msgstr ""
+"No s'ha pogut llegir el fitxer de configuració de ScummVM o crear-ne un de "
+"nou!"
 
 #: dists/android.strings.xml.cpp:36
 msgid "Save Path Error"
@@ -2752,6 +2755,8 @@ msgstr "Error en el camí de les partides desades"
 #: dists/android.strings.xml.cpp:37
 msgid "Unable to create or access default save path!"
 msgstr ""
+"No s'ha pogut crear o accedir a la ruta predeterminada de les partides "
+"desades!"
 
 #: dists/android.strings.xml.cpp:38
 msgid "Icons Path Error"
@@ -2760,12 +2765,16 @@ msgstr "Error en el camí de les icones"
 #: dists/android.strings.xml.cpp:39
 msgid "Unable to create or access default icons and shaders path!"
 msgstr ""
+"No s'han pogut crear o accedir a la ruta predeterminada de les icones i els "
+"shaders!"
 
 #: dists/android.strings.xml.cpp:40
 msgid ""
 "Unable to access the globally set save path! Please revert to default from "
 "ScummVM Options"
 msgstr ""
+"No es pot accedir a la ruta de desament establerta globalment! Torneu al "
+"valor predeterminat des de les opcions de ScummVM"
 
 #: dists/android.strings.xml.cpp:41
 msgid "Toggle virtual keyboard"
@@ -2780,15 +2789,15 @@ msgstr "Alt"
 
 #: dists/android.strings.xml.cpp:45
 msgid "Done"
-msgstr ""
+msgstr "Fet"
 
 #: dists/android.strings.xml.cpp:46
 msgid "Mode change"
-msgstr ""
+msgstr "Canvi de mode"
 
 #: dists/android.strings.xml.cpp:47
 msgid "Shift"
-msgstr ""
+msgstr "Majúscules"
 
 #: dists/android.strings.xml.cpp:48 engines/dragons/metaengine.cpp:154
 #: engines/scumm/help.cpp:84 engines/scumm/help.cpp:87
@@ -2804,10 +2813,14 @@ msgid ""
 "Please select the *root* of your external (physical) SD card. This is "
 "required for ScummVM to access this path: "
 msgstr ""
+"Seleccioneu l'arrel de la targeta SD externa (física). És necessari perquè "
+"ScummVM accedeixi a aquest camí: "
 
 #: dists/android.strings.xml.cpp:51
 msgid "Storage Access Framework Permissions for ScummVM were revoked!"
 msgstr ""
+"S'han revocat els permisos del framework d'accés a l'emmagatzematge per a "
+"ScummVM!"
 
 #. I18N: One line summary as shown in *nix distributions
 #: dists/org.scummvm.scummvm.metainfo.xml.cpp:32
@@ -2857,7 +2870,7 @@ msgstr ""
 msgid "Achievement unlocked!"
 msgstr "Assoliment desbloquejat!"
 
-#: engines/advancedDetector.cpp:235
+#: engines/advancedDetector.cpp:237
 msgid "Illegitimate game copy detected. We provide no support in such cases"
 msgstr ""
 "S'ha detectat una còpia de joc il·legítima. No oferim cap suport en aquests "
@@ -3053,7 +3066,7 @@ msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ERROR: No s'ha pogut copiar la partida desada a una ranura nova"
 
 #: engines/engine.cpp:630 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:256 engines/mm/xeen/saves.cpp:293
+#: backends/platform/ios7/ios7_osys_main.cpp:291 engines/mm/xeen/saves.cpp:293
 #: engines/sky/metaengine.cpp:216
 msgid "Autosave"
 msgstr "Desament automàtic"
@@ -3206,7 +3219,7 @@ msgstr "Desament automàtic activat"
 msgid "Autosave off"
 msgstr "Desament automàtic desactivat"
 
-#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:177
+#: graphics/renderer.cpp:33 backends/graphics/opengl/opengl-graphics.cpp:178
 msgid "OpenGL"
 msgstr "OpenGL"
 
@@ -3491,37 +3504,37 @@ msgstr "Trieu una carpeta nova"
 msgid "Toggle aspect ratio correction"
 msgstr "Commuta la correcció de la relació d'aspecte"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:256
+#: backends/graphics/opengl/opengl-graphics.cpp:257
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:72
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:241
 #: engines/twine/metaengine.cpp:360
 msgid "Center"
 msgstr "Centra"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:257
+#: backends/graphics/opengl/opengl-graphics.cpp:258
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:73
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:242
 msgid "Pixel-perfect scaling"
 msgstr "Escalat pixel-perfect"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:258
+#: backends/graphics/opengl/opengl-graphics.cpp:259
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:243
 msgid "Even pixels scaling"
 msgstr "Escalat de píxels parells"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:259
+#: backends/graphics/opengl/opengl-graphics.cpp:260
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:74
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:244
 msgid "Fit to window"
 msgstr "Ajusta a la finestra"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:260
+#: backends/graphics/opengl/opengl-graphics.cpp:261
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:75
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:245
 msgid "Stretch to window"
 msgstr "Amplia a la finestra"
 
-#: backends/graphics/opengl/opengl-graphics.cpp:261
+#: backends/graphics/opengl/opengl-graphics.cpp:262
 #: backends/graphics/surfacesdl/surfacesdl-graphics.cpp:76
 #: backends/graphics3d/openglsdl/openglsdl-graphics3d.cpp:246
 msgid "Fit to window (4:3)"
@@ -4207,6 +4220,7 @@ msgstr "Trieu el mode tàctil preferit:"
 
 #: backends/platform/android/options.cpp:134
 #: backends/platform/android/options.cpp:165
+#: backends/platform/ios7/ios7_options.mm:87
 msgid "In menus"
 msgstr "Als menús"
 
@@ -4237,33 +4251,35 @@ msgid "In 3D games"
 msgstr "En jocs 3D"
 
 #: backends/platform/android/options.cpp:163
+#: backends/platform/ios7/ios7_options.mm:85
 msgid "Select the orientation:"
-msgstr ""
+msgstr "Seleccioneu l'orientació:"
 
 #: backends/platform/android/options.cpp:167
 #: backends/platform/android/options.cpp:182
-#, fuzzy
-#| msgid "Automatic drilling"
+#: backends/platform/ios7/ios7_options.mm:89
+#: backends/platform/ios7/ios7_options.mm:104
 msgid "Automatic"
-msgstr "Perforació automàtica"
+msgstr "Automàtica"
 
 #: backends/platform/android/options.cpp:168
 #: backends/platform/android/options.cpp:183
+#: backends/platform/ios7/ios7_options.mm:90
+#: backends/platform/ios7/ios7_options.mm:105
 msgid "Portrait"
-msgstr ""
+msgstr "Vertical"
 
 #: backends/platform/android/options.cpp:169
 #: backends/platform/android/options.cpp:184
-#, fuzzy
-#| msgid "Escape"
+#: backends/platform/ios7/ios7_options.mm:91
+#: backends/platform/ios7/ios7_options.mm:106
 msgid "Landscape"
-msgstr "Tecla Escapa"
+msgstr "Horitzontal"
 
 #: backends/platform/android/options.cpp:175
-#, fuzzy
-#| msgid "In 2D games"
+#: backends/platform/ios7/ios7_options.mm:97
 msgid "In games"
-msgstr "En jocs 2D"
+msgstr "En jocs"
 
 #. I18N: This button opens a list of all folders added for Android Storage Attached Framework
 #: backends/platform/android/options.cpp:189
@@ -4286,23 +4302,23 @@ msgstr "Escalat per hardware (ràpid, però de baixa qualitat)"
 msgid "Software scale (good quality, but slower)"
 msgstr "Escalat per software (bona qualitat, però més lent)"
 
-#: backends/platform/ios7/ios7_options.mm:68
+#: backends/platform/ios7/ios7_options.mm:79
 msgid "Show On-screen control (iOS 15 and later)"
 msgstr "Mostra el control en pantalla (iOS 15 i posteriors)"
 
-#: backends/platform/ios7/ios7_options.mm:70
+#: backends/platform/ios7/ios7_options.mm:81
 msgid "Mouse-click-and-drag mode"
 msgstr "Mode de clic-i-arrossega amb el ratolí"
 
-#: backends/platform/ios7/ios7_options.mm:71
+#: backends/platform/ios7/ios7_options.mm:82
 msgid "Show keyboard function bar"
-msgstr ""
+msgstr "Mostra la barra de funcions del teclat"
 
-#: backends/platform/ios7/ios7_options.mm:73
+#: backends/platform/ios7/ios7_options.mm:109
 msgid "Controls Help"
 msgstr "Ajuda de controls"
 
-#: backends/platform/ios7/ios7_options.mm:105
+#: backends/platform/ios7/ios7_options.mm:156
 msgid ""
 "Gestures and controls:\n"
 "\n"
@@ -4319,7 +4335,7 @@ msgid ""
 "Keyboard spacebar: Pause"
 msgstr ""
 
-#: backends/platform/ios7/ios7_options.mm:118
+#: backends/platform/ios7/ios7_options.mm:169
 msgid ""
 "Using the Apple TV remote control:\n"
 "\n"
@@ -4335,19 +4351,19 @@ msgid ""
 "Keyboard spacebar: Pause"
 msgstr ""
 
-#: backends/platform/ios7/ios7_osys_events.cpp:466
+#: backends/platform/ios7/ios7_osys_events.cpp:443
 msgid "Mouse-click-and-drag mode enabled."
 msgstr "S'ha activat el mode de clic-i-arrossega."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:468
+#: backends/platform/ios7/ios7_osys_events.cpp:445
 msgid "Mouse-click-and-drag mode disabled."
 msgstr "S'ha desactivat el mode clic-i-arrossega."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:489
+#: backends/platform/ios7/ios7_osys_events.cpp:466
 msgid "Touchpad mode enabled."
 msgstr "Mode Touchpad activat."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:491
+#: backends/platform/ios7/ios7_osys_events.cpp:468
 msgid "Touchpad mode disabled."
 msgstr "Mode Touchpad desactivat."
 
@@ -6181,24 +6197,24 @@ msgstr ""
 msgid "Eye of Beholder support is not compiled in"
 msgstr "No s'ha compilat el suport per a Eye of Beholder"
 
-#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:472
+#: engines/kyra/engine/eobcommon.cpp:368 engines/kyra/engine/lol.cpp:496
 #: engines/ultima/ultima4/metaengine.cpp:224
 #: engines/ultima/ultima8/metaengine.cpp:145
 msgid "Interact via Left Click"
 msgstr "Interacciona amb el clic esquerre"
 
-#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:473
+#: engines/kyra/engine/eobcommon.cpp:369 engines/kyra/engine/lol.cpp:497
 #: engines/ultima/ultima4/metaengine.cpp:230
 #: engines/ultima/ultima8/metaengine.cpp:151
 msgid "Interact via Right Click"
 msgstr "Interacciona amb el clic dret"
 
-#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:480
+#: engines/kyra/engine/eobcommon.cpp:370 engines/kyra/engine/lol.cpp:504
 #: engines/twine/metaengine.cpp:380
 msgid "Move Forward"
 msgstr "Mou endavant"
 
-#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:481
+#: engines/kyra/engine/eobcommon.cpp:371 engines/kyra/engine/lol.cpp:505
 msgid "Move Back"
 msgstr "Mou enrere"
 
@@ -6210,13 +6226,13 @@ msgstr "Mou a l'esquerra"
 msgid "Move Right"
 msgstr "Mou a la dreta"
 
-#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:484
+#: engines/kyra/engine/eobcommon.cpp:374 engines/kyra/engine/lol.cpp:508
 #: engines/mm/mm1/metaengine.cpp:97 engines/pegasus/pegasus.cpp:2739
 #: engines/twine/metaengine.cpp:401 engines/zvision/metaengine.cpp:209
 msgid "Turn Left"
 msgstr "Gira a l'esquerra"
 
-#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:485
+#: engines/kyra/engine/eobcommon.cpp:375 engines/kyra/engine/lol.cpp:509
 #: engines/mm/mm1/metaengine.cpp:98 engines/pegasus/pegasus.cpp:2746
 #: engines/twine/metaengine.cpp:394 engines/zvision/metaengine.cpp:215
 msgid "Turn Right"
@@ -6262,40 +6278,40 @@ msgstr ""
 msgid "Spell Level 6"
 msgstr ""
 
-#: engines/kyra/engine/lol.cpp:476
+#: engines/kyra/engine/lol.cpp:500
 msgid "Attack 1"
 msgstr "Atac 1"
 
-#: engines/kyra/engine/lol.cpp:477
+#: engines/kyra/engine/lol.cpp:501
 msgid "Attack 2"
 msgstr "Atac 2"
 
-#: engines/kyra/engine/lol.cpp:478
+#: engines/kyra/engine/lol.cpp:502
 msgid "Attack 3"
 msgstr "Atac 3"
 
-#: engines/kyra/engine/lol.cpp:479 engines/mm/mm1/metaengine.cpp:103
+#: engines/kyra/engine/lol.cpp:503 engines/mm/mm1/metaengine.cpp:103
 msgid "Show Map"
 msgstr "Mostra el mapa"
 
-#: engines/kyra/engine/lol.cpp:482
+#: engines/kyra/engine/lol.cpp:506
 msgid "Slide Left"
 msgstr "Mou a l'esquerra"
 
-#: engines/kyra/engine/lol.cpp:483
+#: engines/kyra/engine/lol.cpp:507
 msgid "Slide Right"
 msgstr "Mou a la dreta"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/kyra/engine/lol.cpp:486 engines/mm/mm1/metaengine.cpp:109
+#: engines/kyra/engine/lol.cpp:510 engines/mm/mm1/metaengine.cpp:109
 msgid "Rest"
 msgstr "Descansa"
 
-#: engines/kyra/engine/lol.cpp:487
+#: engines/kyra/engine/lol.cpp:511
 msgid "Options"
 msgstr "Opcions"
 
-#: engines/kyra/engine/lol.cpp:488
+#: engines/kyra/engine/lol.cpp:512
 msgid "Choose Spell"
 msgstr "Escull l'encanteri"
 
@@ -6993,7 +7009,7 @@ msgstr ""
 msgid "Unable to locate the '%s' engine data file"
 msgstr ""
 
-#: engines/myst3/detection.cpp:179 engines/myst3/detection.cpp:193
+#: engines/myst3/detection.cpp:181 engines/myst3/detection.cpp:195
 msgid "PS2 version is not yet supported"
 msgstr "Encara no s'admet la versió PS2"
 
@@ -8668,7 +8684,7 @@ msgstr "Mantingues el vell"
 msgid "Keep the new one"
 msgstr "Mantingues el nou"
 
-#: engines/sword1/logic.cpp:1634
+#: engines/sword1/logic.cpp:1641
 msgid "This is the end of the Broken Sword 1 Demo"
 msgstr "Aquest és el final de la Demo del Broken Sword 1"
 

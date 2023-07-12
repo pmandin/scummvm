@@ -27,6 +27,7 @@ class MacResManager;
 class SeekableMemoryWriteStream;
 class SeekableReadStreamEndian;
 class SeekableReadStream;
+class Path;
 }
 
 namespace Director {
@@ -52,7 +53,7 @@ public:
 	Archive();
 	virtual ~Archive();
 
-	virtual bool openFile(const Common::String &fileName);
+	virtual bool openFile(const Common::Path &path);
 	virtual bool openStream(Common::SeekableReadStream *stream, uint32 offset = 0) = 0;
 	virtual void close();
 
@@ -100,7 +101,7 @@ public:
 	~MacArchive() override;
 
 	void close() override;
-	bool openFile(const Common::String &fileName) override;
+	bool openFile(const Common::Path &path) override;
 	bool openStream(Common::SeekableReadStream *stream, uint32 startOffset = 0) override;
 	Common::SeekableReadStreamEndian *getResource(uint32 tag, uint16 id) override;
 	Common::String formatArchiveInfo() override;
@@ -160,7 +161,7 @@ protected:
 
 class ProjectorArchive : public Common::Archive {
 public:
-	ProjectorArchive(Common::String path);
+	ProjectorArchive(Common::Path path);
 	~ProjectorArchive() override;
 
 	bool hasFile(const Common::Path &path) const override;
@@ -178,7 +179,7 @@ private:
 	};
 	typedef Common::HashMap<Common::String, Entry, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> FileMap;
 	FileMap _files;
-	Common::String _path;
+	Common::Path _path;
 
 	bool _isLoaded;
 };

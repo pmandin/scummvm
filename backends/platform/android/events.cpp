@@ -673,6 +673,16 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 	case JE_DOWN:
 //		LOGD("JE_DOWN");
 		_touch_pt_down = dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->getMousePosition();
+		// If the cursor was outside the area (because the screen rotated) clip it
+		// to not scroll several times to make the cursor appear in the area
+		// Do not clamp the cursor position while rotating the screen because if the user rotated by mistake
+		// rotating again will see the cursor position preserved
+		if (_touch_pt_down.x > JNI::egl_surface_width) {
+			_touch_pt_down.x = JNI::egl_surface_width;
+		}
+		if (_touch_pt_down.y > JNI::egl_surface_height) {
+			_touch_pt_down.y = JNI::egl_surface_height;
+		}
 		_touch_pt_scroll.x = -1;
 		_touch_pt_scroll.y = -1;
 		break;
@@ -732,7 +742,7 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
 			//       This is the reason we use "double tap and move" to emulate that specific behavior.
 			// TODO This might be unwanted "alternate" behavior (better to have it as optional?)
 			// TODO put these time (in milliseconds) values in some option dlg?
-			if (arg3 > 1000) {
+			if (arg3 > 1500) {
 //				LOGD("JE_TAP - arg3 %d --> Middle Mouse Button", arg3);
 				down = Common::EVENT_MBUTTONDOWN;
 				up = Common::EVENT_MBUTTONUP;

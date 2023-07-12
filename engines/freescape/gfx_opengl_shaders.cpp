@@ -198,9 +198,9 @@ void OpenGLShaderRenderer::renderPlayerShoot(byte color, const Common::Point pos
 	if (_renderMode == Common::kRenderCGA || _renderMode == Common::kRenderZX) {
 		r = g = b = 255;
 	} else {
-		r = g = b = 0;
-		glEnable(GL_COLOR_LOGIC_OP);
-		glLogicOp(GL_INVERT);
+		r = g = b = 255;
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
 	}
 
 	glDisable(GL_DEPTH_TEST);
@@ -229,7 +229,7 @@ void OpenGLShaderRenderer::renderPlayerShoot(byte color, const Common::Point pos
 
 	glLineWidth(1);
 
-	glDisable(GL_COLOR_LOGIC_OP);
+	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
 }
@@ -321,9 +321,13 @@ void OpenGLShaderRenderer::useColor(uint8 r, uint8 g, uint8 b) {
 	_triangleShader->setUniform("color", color);
 }
 
-void OpenGLShaderRenderer::clear(uint8 r, uint8 g, uint8 b) {
+void OpenGLShaderRenderer::clear(uint8 r, uint8 g, uint8 b, bool ignoreViewport) {
+	if (ignoreViewport)
+		glDisable(GL_SCISSOR_TEST);
 	glClearColor(r / 255., g / 255., b / 255., 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (ignoreViewport)
+		glEnable(GL_SCISSOR_TEST);
 }
 
 void OpenGLShaderRenderer::drawFloor(uint8 color) {

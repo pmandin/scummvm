@@ -195,15 +195,12 @@ endif
 
 ifdef USE_OPENGL
 MODULE_OBJS += \
+	graphics/openglsdl/openglsdl-graphics.o \
 	graphics3d/opengl/framebuffer.o \
 	graphics3d/opengl/surfacerenderer.o \
 	graphics3d/opengl/texture.o \
-	graphics3d/opengl/tiledsurface.o
-ifdef SDL_BACKEND
-MODULE_OBJS += \
-	graphics/openglsdl/openglsdl-graphics.o \
+	graphics3d/opengl/tiledsurface.o \
 	graphics3d/openglsdl/openglsdl-graphics3d.o
-endif
 endif
 
 ifdef USE_DISCORD
@@ -390,7 +387,14 @@ endif
 
 ifdef IPHONE
 MODULE_OBJS += \
-	mutex/pthread/pthread-mutex.o
+	mutex/pthread/pthread-mutex.o \
+	graphics/ios/ios-graphics.o \
+	graphics/ios/renderbuffer.o \
+	graphics3d/ios/ios-graphics3d.o \
+	graphics3d/opengl/framebuffer.o \
+	graphics3d/opengl/surfacerenderer.o \
+	graphics3d/opengl/texture.o \
+	graphics3d/opengl/tiledsurface.o
 endif
 
 ifeq ($(BACKEND),maemo)
