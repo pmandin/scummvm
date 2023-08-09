@@ -88,7 +88,7 @@ int RofsArchive::listMembers(Common::ArchiveMemberList &list) const {
 }
 
 const Common::ArchiveMemberPtr RofsArchive::getMember(const Common::Path &name) const {
-	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name.toString(), this));
+	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name.toString(), *this));
 }
 
 Common::SeekableReadStream *RofsArchive::createReadStreamForMember(const Common::Path &name) const {
