@@ -54,7 +54,7 @@ bool RofsArchive::open(const Common::String &filename) {
 	int32 dirLocation= _stream->readUint32LE() << 3;
 	//debug(3, "rofs: dir location=%08x", dirLocation);
 
-	int32 dirLength= _stream->readUint32LE();
+	/*int32 dirLength=*/ _stream->readUint32LE();
 	//debug(3, "rofs: dir length=%d", dirLength);
 
 	readFilename(dir1, sizeof(dir1));
@@ -295,7 +295,7 @@ void RofsFileStream::decryptFile(bool isCompressed) {
 	}
 
 	//debug(3, "done");
-	delete keyInfo;
+	delete[] keyInfo;
 }
 
 void RofsFileStream::decryptBlock(byte *src, uint32 key, uint32 length) {
@@ -402,7 +402,7 @@ void RofsFileStream::depack_block(uint8 *dst, uint32 srcLength, uint32 *dstLengt
 
 	free(src);
 	*dstLength = dstIndex;
-	delete tmp4k;
+	delete[] tmp4k;
 }
 
 } // End of namespace Reevengi
