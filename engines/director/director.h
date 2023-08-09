@@ -22,20 +22,12 @@
 #ifndef DIRECTOR_DIRECTOR_H
 #define DIRECTOR_DIRECTOR_H
 
-#include "common/file.h"
-#include "common/hashmap.h"
 #include "common/hash-ptr.h"
-#include "common/hash-str.h"
-#include "common/rect.h"
-#include "common/str-array.h"
 
-#include "engines/engine.h"
-#include "graphics/pixelformat.h"
 #include "graphics/macgui/macwindowmanager.h"
 
 #include "director/types.h"
 #include "director/util.h"
-#include "director/debugger.h"
 #include "director/detection.h"
 
 namespace Common {
@@ -58,10 +50,12 @@ namespace Director {
 class Archive;
 class MacArchive;
 class Cast;
+class Debugger;
 class DirectorSound;
 class Lingo;
 class Movie;
 class Window;
+struct Picture;
 class Score;
 class Channel;
 class CastMember;
@@ -90,6 +84,12 @@ enum {
 	kDebugSound			= 1 << 19,
 	kDebugConsole		= 1 << 20,
 	kDebugXObj			= 1 << 21,
+};
+
+enum {
+	GF_DESKTOP = 1 << 0,
+	GF_640x480 = 1 << 1,
+	GF_32BPP   = 1 << 2,
 };
 
 struct MovieReference {
@@ -157,6 +157,7 @@ public:
 	void setVersion(uint16 version);
 	Common::Platform getPlatform() const;
 	Common::Language getLanguage() const;
+	uint32 getGameFlags() const;
 	Common::String getTargetName() { return _targetName; }
 	const char *getExtra();
 	Common::String getRawEXEName() const;
@@ -273,8 +274,11 @@ public:
 	uint32 _wmMode;
 	uint16 _wmWidth;
 	uint16 _wmHeight;
-	byte _fpsLimit;
 	CastMemberID _lastPalette;
+
+	// used for quirks
+	byte _fpsLimit;
+	TimeDate _forceDate;
 
 private:
 	byte _currentPalette[768];

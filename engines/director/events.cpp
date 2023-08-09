@@ -31,12 +31,10 @@
 #include "director/director.h"
 #include "director/movie.h"
 #include "director/score.h"
-#include "director/cursor.h"
 #include "director/channel.h"
 #include "director/sprite.h"
 #include "director/window.h"
 #include "director/castmember/castmember.h"
-#include "director/lingo/lingo.h"
 
 namespace Director {
 
@@ -113,8 +111,8 @@ bool Window::processEvent(Common::Event &event) {
 
 bool Movie::processEvent(Common::Event &event) {
 	Score *sc = getScore();
-	if (sc->getCurrentFrameNum() >= sc->getFramesNum()) {
-		warning("processEvents: request to access frame %d of %d", sc->getCurrentFrameNum(), sc->getFramesNum() - 1);
+	if (sc->getCurrentFrameNum() > sc->getFramesNum()) {
+		warning("processEvents: request to access frame %d of %d", sc->getCurrentFrameNum(), sc->getFramesNum());
 		return false;
 	}
 	uint16 spriteId = 0;

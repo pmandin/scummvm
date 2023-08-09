@@ -40,11 +40,14 @@ void CursorManager::init(Common::SeekableReadStream *chunkStream) {
 	case kGameTypeNancy1:
 		_numCursorTypes = 4;
 		break;
-	case kGameTypeNancy2:	
+	case kGameTypeNancy2:
 		_numCursorTypes = 5;
 		break;
-	default:
+	case kGameTypeNancy3:
 		_numCursorTypes = 8;
+		break;
+	default:
+		_numCursorTypes = 12;
 	}
 
 	uint numCursors = g_nancy->getStaticData().numNonItemCursors + g_nancy->getStaticData().numItems * _numCursorTypes;
@@ -69,7 +72,7 @@ void CursorManager::init(Common::SeekableReadStream *chunkStream) {
 	showCursor(false);
 
 	_isInitialized = true;
-	
+
 	delete chunkStream;
 }
 
@@ -101,18 +104,22 @@ void CursorManager::setCursor(CursorType type, int16 itemID) {
 			_curCursorID = 4;
 		} else if (gameType == kGameTypeNancy2) {
 			_curCursorID = 5;
-		} else {
+		} else if (gameType ==  kGameTypeNancy3) {
 			_curCursorID = 8;
+		} else {
+			_curCursorID = 12;
 		}
-		
+
 		return;
 	case kHotspotArrow:
 		if (gameType <= kGameTypeNancy1) {
 			_curCursorID = 5;
 		} else if (gameType == kGameTypeNancy2) {
 			_curCursorID = 6;
-		} else {
+		} else if (gameType ==  kGameTypeNancy3) {
 			_curCursorID = 9;
+		} else {
+			_curCursorID = 13;
 		}
 
 		return;
@@ -134,7 +141,27 @@ void CursorManager::setCursor(CursorType type, int16 itemID) {
 		} else {
 			type = kMove;
 		}
-		
+
+		break;
+	case kMoveUp:
+		// Only valid for nancy4 and up
+		if (gameType >= kGameTypeNancy4) {
+			_curCursorID = kMoveUp;
+			return;
+		} else {
+			type = kMove;
+		}
+
+		break;
+	case kMoveDown:
+		// Only valid for nancy4 and up
+		if (gameType >= kGameTypeNancy4) {
+			_curCursorID = kMoveDown;
+			return;
+		} else {
+			type = kMove;
+		}
+
 		break;
 	case kExit:
 		// Not valid in TVD
@@ -142,7 +169,7 @@ void CursorManager::setCursor(CursorType type, int16 itemID) {
 			_curCursorID = 3;
 			return;
 		}
-		
+
 		break;
 	default:
 		break;
@@ -202,7 +229,7 @@ void CursorManager::applyCursor() {
 		transColor = temp.format.RGBToColor(r, g, b);
 	}
 
-	CursorMan.replaceCursor(temp.getPixels(), temp.w, temp.h, hotspot.x, hotspot.y, transColor, false, &temp.format);
+	CursorMan.replaceCursor(temp, hotspot.x, hotspot.y, transColor, false);
 }
 
 void CursorManager::showCursor(bool shouldShow) {

@@ -299,6 +299,13 @@ public:
 	 * @param widget Pointer to the widget to lock, nullptr for no widget
 	 */
 	void setLockedWidget(MacWidget *widget);
+
+	/**
+	 * Sets a background window, which is always active, this window cannot be
+	 * deactivated by clicking outside it, ie it is always in background.
+	 * @param window Pointer to the widget to background, nullptr for no widget
+	 */
+	void setBackgroundWindow(MacWindow *window);
 	
 	MacPatterns  &getBuiltinPatterns() { return _builtinPatterns; }
 
@@ -352,8 +359,8 @@ public:
 	void cleanupDataBundle();
 	void cleanupDesktopBmp();
 
-	BorderOffsets getBorderOffsets(byte windowType);
-	Common::SeekableReadStream *getBorderFile(byte windowType, uint32 flags);
+	BorderOffsets getBorderOffsets(uint32 windowType);
+	Common::SeekableReadStream *getBorderFile(uint32 windowType, uint32 flags);
 	Common::SeekableReadStream *getFile(const Common::String &filename);
 
 	void setTextInClipboard(const Common::U32String &str);
@@ -456,6 +463,7 @@ private:
 
 	MacWidget *_activeWidget;
 	MacWidget *_lockedWidget;
+	MacWindow *_backgroundWindow;
 
 	PauseToken *_screenCopyPauseToken;
 

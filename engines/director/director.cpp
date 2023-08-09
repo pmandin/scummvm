@@ -21,8 +21,6 @@
 
 #include "common/config-manager.h"
 #include "common/debug-channels.h"
-#include "common/error.h"
-#include "common/punycode.h"
 #include "common/tokenizer.h"
 
 #include "graphics/macgui/macwindowmanager.h"
@@ -37,8 +35,6 @@
 #include "director/score.h"
 #include "director/sound.h"
 #include "director/window.h"
-#include "director/lingo/lingo.h"
-#include "director/detection.h"
 
 /**
  * When detection is compiled dynamically, directory globs end up in detection plugin and
@@ -98,6 +94,13 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 	_wmHeight = 768;
 
 	_fpsLimit = 0;
+	_forceDate.tm_sec = -1;
+	_forceDate.tm_min = -1;
+	_forceDate.tm_hour = -1;
+	_forceDate.tm_mday = -1;
+	_forceDate.tm_mon = -1;
+	_forceDate.tm_year = -1;
+	_forceDate.tm_wday = -1;
 
 	_wm = nullptr;
 
@@ -110,7 +113,7 @@ DirectorEngine::DirectorEngine(OSystem *syst, const DirectorGameDescription *gam
 		SearchMan.addSubDirectoryMatching(_gameDataDir, directoryGlob, 0, 5);
 	}
 
-	if (debugChannelSet(-1, kDebug32bpp)) {
+	if (debugChannelSet(-1, kDebug32bpp) || (getGameFlags() & GF_32BPP)) {
 #ifdef USE_RGB_COLOR
 		_colorDepth = 32;
 #else
@@ -206,9 +209,17 @@ Common::Error DirectorEngine::run() {
 		_wmMode |= Graphics::kWMModeFullscreen | Graphics::kWMModeNoDesktop;
 
 #ifdef USE_RGB_COLOR
-	if (debugChannelSet(-1, kDebug32bpp))
+	if (debugChannelSet(-1, kDebug32bpp) || (getGameFlags() & GF_32BPP))
 		_wmMode |= Graphics::kWMMode32bpp;
 #endif
+
+	if (getGameFlags() & GF_DESKTOP)
+		_wmMode &= ~Graphics::kWMModeNoDesktop;
+
+	if (getGameFlags() & GF_640x480) {
+		_wmWidth = 640;
+		_wmHeight = 480;
+	}
 
 	_wm = new Graphics::MacWindowManager(_wmMode, &_director3QuickDrawPatterns, getLanguage());
 	_wm->setEngine(this);
@@ -225,6 +236,9 @@ Common::Error DirectorEngine::run() {
 
 	_stage = new Window(_wm->getNextId(), false, false, false, _wm, this, true);
 	*_stage->_refCount += 1;
+
+	// Set this as background so it doesn't come to foreground when multiple windows present
+	_wm->setBackgroundWindow(_stage);
 
 	if (!desktopEnabled())
 		_stage->disableBorder();

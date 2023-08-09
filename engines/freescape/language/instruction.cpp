@@ -89,22 +89,26 @@ Token::Type FCLInstruction::getType() {
 	return _type;
 }
 
-void FreescapeEngine::executeObjectConditions(GeometricObject *obj, bool shot, bool collided, bool activated) {
+bool FreescapeEngine::executeObjectConditions(GeometricObject *obj, bool shot, bool collided, bool activated) {
+	bool executed = false;;
 	assert(obj != nullptr);
 	if (!obj->_conditionSource.empty()) {
 		_firstSound = true;
 		_syncSound = false;
 		_objExecutingCodeSize = collided ? obj->getSize() : Math::Vector3d();
-		if (collided)
+		if (collided) {
+			clearGameBit(31); // We collided with something that has code
 			debugC(1, kFreescapeDebugCode, "Executing with collision flag: %s", obj->_conditionSource.c_str());
-		else if (shot)
+		} else if (shot)
 			debugC(1, kFreescapeDebugCode, "Executing with shot flag: %s", obj->_conditionSource.c_str());
 		else if (activated)
 			debugC(1, kFreescapeDebugCode, "Executing with activated flag: %s", obj->_conditionSource.c_str());
 		else
 			error("Neither shot or collided flag is set!");
 		executeCode(obj->_condition, shot, collided, false, activated); // TODO: check this last parameter
+		executed = true;
 	}
+	return executed;
 }
 
 void FreescapeEngine::executeLocalGlobalConditions(bool shot, bool collided, bool timer) {
@@ -295,31 +299,45 @@ void FreescapeEngine::executeSPFX(FCLInstruction &instruction) {
 	uint16 src = instruction._source;
 	uint16 dst = instruction._destination;
 	if (isAmiga() || isAtariST()) {
-		int color;
-		if (src == 0 && dst >= 2 && dst <= 5) {
-			_currentArea->remapColor(dst, 1);
-			return;
+		uint8 r = 0;
+		uint8 g = 0;
+		uint8 b = 0;
+		uint32 color = 0;
+
+		if (src & (1 << 7)) {
+			uint16 v = 0;
+			color = 0;
+			// Extract the color to replace from the src/dst values
+			v = (src & 0x77) << 8;
+			v = v | (dst & 0x70);
+			v = v >> 4;
+
+			// Convert the color to RGB
+			r = (v & 0xf00) >> 8;
+			r = r << 4 | r;
+			r = r & 0xff;
+
+			g = (v & 0xf0) >> 4;
+			g = g << 4 | g;
+			g = g & 0xff;
+
+			b = v & 0xf;
+			b = b << 4 | b;
+			b = b & 0xff;
+
+			color = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+			_currentArea->remapColor(dst & 0x0f, color); // src & 0x77, dst & 0x0f
+		} else if ((src & 0xf0) >> 4 == 1) {
+			_gfx->readFromPalette(src & 0x0f, r, g, b);
+			color = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+			for (int i = 1; i < 16; i++)
+				_currentArea->remapColor(i, color);
+		} else if ((src & 0x0f) == 1) {
+			_gfx->readFromPalette(dst & 0x0f, r, g, b);
+			color = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
+			for (int i = 1; i < 16; i++)
+				_currentArea->remapColor(i, color);
 		}
-
-		if (src == 0) {
-			color = dst;
-		} else {
-
-			switch (src) {
-			case 1:
-				color = 15;
-			break;
-			case 2:
-				color = 14;
-			break;
-			default:
-				color = 0;
-			}
-		}
-
-		debugC(1, kFreescapeDebugCode, "Switching complete palette to color %d", dst);
-		for (int i = 1; i < 16; i++)
-			_currentArea->remapColor(i, color);
 	} else {
 		debugC(1, kFreescapeDebugCode, "Switching palette from position %d to %d", src, dst);
 		if (src == 0 && dst == 1)
@@ -329,6 +347,7 @@ void FreescapeEngine::executeSPFX(FCLInstruction &instruction) {
 		else
 			_currentArea->remapColor(src, dst);
 	}
+	_gfx->setColorRemaps(&_currentArea->_colorRemaps);
 	executeRedraw(instruction);
 }
 
@@ -398,15 +417,15 @@ void FreescapeEngine::executeIncrementVariable(FCLInstruction &instruction) {
 		debugC(1, kFreescapeDebugCode, "Score incremented by %d up to %d", increment, _gameStateVars[variable]);
 		break;
 	case k8bitVariableEnergy:
-		if (_gameStateVars[variable] > k8bitMaxEnergy)
-			_gameStateVars[variable] = k8bitMaxEnergy;
+		if (_gameStateVars[variable] > _maxEnergy)
+			_gameStateVars[variable] = _maxEnergy;
 		else if (_gameStateVars[variable] < 0)
 			_gameStateVars[variable] = 0;
 		debugC(1, kFreescapeDebugCode, "Energy incremented by %d up to %d", increment, _gameStateVars[variable]);
 		break;
 	case k8bitVariableShield:
-		if (_gameStateVars[variable] > k8bitMaxShield)
-			_gameStateVars[variable] = k8bitMaxShield;
+		if (_gameStateVars[variable] > _maxShield)
+			_gameStateVars[variable] = _maxShield;
 		else if (_gameStateVars[variable] < 0)
 			_gameStateVars[variable] = 0;
 
@@ -484,6 +503,8 @@ void FreescapeEngine::executeMakeInvisible(FCLInstruction &instruction) {
 
 }
 
+extern Math::AABB createPlayerAABB(Math::Vector3d const position, int playerHeight);
+
 void FreescapeEngine::executeMakeVisible(FCLInstruction &instruction) {
 	uint16 objectID = 0;
 	uint16 areaID = _currentArea->getAreaID();
@@ -500,6 +521,13 @@ void FreescapeEngine::executeMakeVisible(FCLInstruction &instruction) {
 		Object *obj = _areaMap[areaID]->objectWithID(objectID);
 		assert(obj); // We assume an object should be there
 		obj->makeVisible();
+		if (!isDriller()) {
+			Math::AABB boundingBox = createPlayerAABB(_position, _playerHeight);
+			if (obj->_boundingBox.collides(boundingBox)) {
+				_playerWasCrushed = true;
+				_shootingFrames = 0;
+			}
+		}
 	} else {
 		assert(isDOS() && isDemo()); // Should only happen in the DOS demo
 	}
@@ -532,6 +560,15 @@ void FreescapeEngine::executeToggleVisibility(FCLInstruction &instruction) {
 		obj = _areaMap[areaID]->objectWithID(objectID);
 		assert(obj); // We know that an object should be there
 		obj->makeVisible();
+	}
+	if (!obj->isInvisible()) {
+		if (!isDriller()) {
+			Math::AABB boundingBox = createPlayerAABB(_position, _playerHeight);
+			if (obj->_boundingBox.collides(boundingBox)) {
+				_playerWasCrushed = true;
+				_shootingFrames = 0;
+			}
+		}
 	}
 }
 

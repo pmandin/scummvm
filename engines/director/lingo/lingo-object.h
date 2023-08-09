@@ -22,7 +22,6 @@
 #ifndef DIRECTOR_LINGO_OBJECT_H
 #define DIRECTOR_LINGO_OBJECT_H
 
-#include "director/director.h"
 #include "director/lingo/lingo.h"
 
 namespace Director {
@@ -208,6 +207,7 @@ public:
 	Common::Array<Datum> _constants;
 	DatumHash _properties;
 	Common::HashMap<uint32, Datum> _objArray;
+	MethodHash _methodNames;
 
 private:
 	bool _onlyInLctxContexts = false;

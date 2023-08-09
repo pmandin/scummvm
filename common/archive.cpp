@@ -26,19 +26,32 @@
 #include "common/textconsole.h"
 #include "common/memstream.h"
 #include "common/punycode.h"
+#include "common/debug.h"
 
 namespace Common {
 
-GenericArchiveMember::GenericArchiveMember(const String &name, const Archive *parent)
-	: _parent(parent), _name(name) {
+GenericArchiveMember::GenericArchiveMember(const String &pathStr, const Archive &parent)
+	: _parent(parent), _path(pathStr, parent.getPathSeparator()) {
+}
+
+GenericArchiveMember::GenericArchiveMember(const Path &path, const Archive &parent)
+	: _parent(parent), _path(path) {
 }
 
 String GenericArchiveMember::getName() const {
-	return _name;
+	return _path.toString(_parent.getPathSeparator());
+}
+
+Path GenericArchiveMember::getPathInArchive() const {
+	return _path;
+}
+
+String GenericArchiveMember::getFileName() const {
+	return _path.getLastComponent().toString(_parent.getPathSeparator());
 }
 
 SeekableReadStream *GenericArchiveMember::createReadStream() const {
-	return _parent->createReadStreamForMember(_name);
+	return _parent.createReadStreamForMember(_path);
 }
 
 
@@ -49,7 +62,10 @@ int Archive::listMatchingMembers(ArchiveMemberList &list, const Path &pattern, b
 
 	String patternString = pattern.toString();
 	int matches = 0;
-	const char *wildcardExclusions = matchPathComponents ? NULL : "/";
+
+	char pathSepString[2] = {getPathSeparator(), '\0'};
+
+	const char *wildcardExclusions = matchPathComponents ? NULL : pathSepString;
 
 	ArchiveMemberList::const_iterator it = allNames.begin();
 	for (; it != allNames.end(); ++it) {
@@ -64,7 +80,7 @@ int Archive::listMatchingMembers(ArchiveMemberList &list, const Path &pattern, b
 	return matches;
 }
 
-void Archive::dumpArchive(String destPath) {
+Common::Error Archive::dumpArchive(String destPath) {
 	Common::ArchiveMemberList files;
 
 	listMembers(files);
@@ -73,8 +89,11 @@ void Archive::dumpArchive(String destPath) {
 	uint dataSize = 0;
 
 	for (auto &f : files) {
-		Common::String filename = Common::punycode_encodefilename(f->getName());
-		warning("File: %s", filename.c_str());
+		Common::Path filePath = f->getPathInArchive().punycodeEncode();
+		debug(1, "File: %s", filePath.toString().c_str());
+
+		// skip if f represents a directory
+		if (filePath.toString().lastChar() == '/') continue;
 
 		Common::SeekableReadStream *stream = f->createReadStream();
 
@@ -88,11 +107,18 @@ void Archive::dumpArchive(String destPath) {
 		stream->read(data, len);
 
 		Common::DumpFile out;
-		Common::String outname = destPath + filename;
-		if (!out.open(outname, true)) {
-			warning("Archive::dumpArchive(): Can not open dump file %s", outname.c_str());
+		Common::Path outPath = Common::Path(destPath).join(filePath);
+		if (!out.open(outPath.toString(), true)) {
+			return Common::Error(Common::kCreatingFileFailed, "Cannot open/create dump file " + outPath.toString());
 		} else {
-			out.write(data, len);
+			uint32 writtenBytes = out.write(data, len);
+			if (writtenBytes < len) {
+				// Not all data was written
+				out.close();
+				delete stream;
+				free(data);
+				return Common::Error(Common::kWritingFailed, "Not enough storage space! Please free up some storage and try again");
+			}
 			out.flush();
 			out.close();
 		}
@@ -101,6 +127,7 @@ void Archive::dumpArchive(String destPath) {
 	}
 
 	free(data);
+	return Common::kNoError;
 }
 
 char Archive::getPathSeparator() const {

@@ -27,16 +27,13 @@
 #include "director/director.h"
 #include "director/cast.h"
 #include "director/movie.h"
-#include "director/util.h"
 #include "director/window.h"
 #include "director/castmember/castmember.h"
 #include "director/castmember/script.h"
-#include "director/lingo/lingo.h"
 #include "director/lingo/lingo-code.h"
 #include "director/lingo/lingo-codegen.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-bytecode.h"
-#include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-the.h"
 
 namespace Director {
@@ -738,6 +735,12 @@ void LC::cb_v4theentitypush() {
 		case kTEAItemId:
 			{
 				Datum id = g_lingo->pop();
+				if (entity == kTheCast && g_director->getVersion() >= 500) {
+					// For "the member", D5 and above have a lib ID followed by a member ID
+					// Pre-resolve them here.
+					CastMemberID resolved = g_lingo->resolveCastMember(g_lingo->pop(), id, kCastTypeAny);
+					id = Datum(resolved);
+				}
 				debugC(3, kDebugLingoExec, "cb_v4theentitypush: calling getTheEntity(%s, %s, %s)", g_lingo->entity2str(entity), id.asString(true).c_str(), g_lingo->field2str(field));
 				result = g_lingo->getTheEntity(entity, id, field);
 			}

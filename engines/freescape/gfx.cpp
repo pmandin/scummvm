@@ -215,6 +215,15 @@ uint8 Renderer::indexFromColor(uint8 r, uint8 g, uint8 b) {
 
 void Renderer::setColorRemaps(ColorReMap *colorRemaps) {
 	_colorRemaps = colorRemaps;
+
+	if (_renderMode == Common::kRenderZX) {
+		for (auto &it : *_colorRemaps) {
+			if (it._key == 1)
+				_paperColor = it._value;
+			else if (it._key == 3)
+				_inkColor = it._value;
+		}
+	}
 }
 
 bool Renderer::getRGBAtCGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple) {
@@ -330,6 +339,10 @@ bool Renderer::getRGBAtZX(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r
 }
 
 void Renderer::selectColorFromFourColorPalette(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1) {
+	if (_colorRemaps && _colorRemaps->contains(index)) {
+		index = (*_colorRemaps)[index];
+	}
+
 	if (index == 0) {
 		r1 = 0;
 		g1 = 0;
@@ -392,6 +405,11 @@ bool Renderer::getRGBAtEGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &
 		readFromPalette(color, r2, g2, b2);
 	} else {
 		color = mapEGAColor(index);
+
+		if (_colorRemaps && _colorRemaps->contains(color)) {
+			color = (*_colorRemaps)[color];
+		}
+
 		readFromPalette(color, r1, g1, b1);
 		r2 = r1;
 		g2 = g1;
@@ -401,16 +419,6 @@ bool Renderer::getRGBAtEGA(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &
 }
 
 bool Renderer::getRGBAt(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2, uint8 &g2, uint8 &b2, byte *&stipple) {
-
-	if (_colorRemaps && _colorRemaps->contains(index)) {
-		index = (*_colorRemaps)[index];
-		readFromPalette(index, r1, g1, b1);
-		r2 = r1;
-		g2 = g1;
-		b2 = b1;
-		return true;
-	}
-
 	if (index == _keyColor)
 		return false;
 
@@ -423,7 +431,12 @@ bool Renderer::getRGBAt(uint8 index, uint8 &r1, uint8 &g1, uint8 &b1, uint8 &r2,
 	}
 
 	if (_renderMode == Common::kRenderAmiga || _renderMode == Common::kRenderAtariST) {
-		readFromPalette(index, r1, g1, b1);
+		if (_colorRemaps && _colorRemaps->contains(index)) {
+			int color = (*_colorRemaps)[index];
+			_texturePixelFormat.colorToRGB(color, r1, g1, b1);
+		} else
+			readFromPalette(index, r1, g1, b1);
+
 		r2 = r1;
 		g2 = g1;
 		b2 = b1;
@@ -800,9 +813,34 @@ void Renderer::renderCube(const Math::Vector3d &origin, const Math::Vector3d &si
 	}
 }
 
-void Renderer::renderRectangle(const Math::Vector3d &origin, const Math::Vector3d &size, Common::Array<uint8> *colours) {
+void Renderer::renderRectangle(const Math::Vector3d &origin, const Math::Vector3d &originalSize, Common::Array<uint8> *colours) {
 
-	assert(size.x() == 0 || size.y() == 0 || size.z() == 0);
+	Math::Vector3d size = originalSize;
+	if (size.x() > 0 && size.y() > 0 && size.z() > 0) {
+		/* According to https://www.shdon.com/freescape/
+		If the bounding box is has all non-zero dimensions
+		and is thus a cube, the rectangle is rendered as a
+		slope at an angle with the plane of the polygon being
+		parallel to the X axis (its lower edge extends from
+		the base corner along the positive X direction).
+		In that case, when the player is at a Z coordinate
+		greater than (i.e. north of) the base corner,
+		it is rendered in the front face material, otherwise it
+		is rendered in the back face material. This implies
+		that the engine does its material selection as though
+		it were a rectangle perpendicular to the Z axis.
+		TODO: fix this case.
+		*/
+		if (size.x() <= size.y() && size.x() <= size.z())
+			size.x() = 0;
+		else if (size.y() <= size.x() && size.y() <= size.z())
+			size.y() = 0;
+		else if (size.z() <= size.x() && size.z() <= size.y())
+			size.z() = 0;
+		else
+			error("Invalid size!");
+	}
+
 	polygonOffset(true);
 
 	float dx, dy, dz;

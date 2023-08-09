@@ -23,21 +23,19 @@
 #include "common/system.h"
 #include "common/macresman.h"
 
-#include "graphics/primitives.h"
 #include "graphics/macgui/macwindowmanager.h"
 
 #include "director/director.h"
 #include "director/archive.h"
 #include "director/cast.h"
+#include "director/debugger.h"
 #include "director/lingo/lingo.h"
 #include "director/movie.h"
 #include "director/window.h"
 #include "director/score.h"
-#include "director/cursor.h"
 #include "director/channel.h"
 #include "director/sound.h"
 #include "director/sprite.h"
-#include "director/util.h"
 #include "director/castmember/castmember.h"
 
 namespace Director {
@@ -225,8 +223,6 @@ void Window::setStageColor(uint32 stageColor, bool forceReset) {
 void Window::setTitleVisible(bool titleVisible) {
 	MacWindow::setTitleVisible(titleVisible);
 	updateBorderType();
-
-	setVisible(true); // Activate this window on top
 }
 
 Datum Window::getStageRect() {
@@ -264,14 +260,10 @@ void Window::setModal(bool modal) {
 		_wm->setLockedWidget(this);
 		_isModal = true;
 	}
-
-	setVisible(true); // Activate this window on top
 }
 
 void Window::setFileName(Common::String filename) {
 	setNextMovie(filename);
-
-	setVisible(true); // Activate this window on top
 }
 
 void Window::reset() {
@@ -369,6 +361,8 @@ void Window::loadNewSharedCast(Cast *previousSharedCast) {
 	// Clean up the previous sharedCast
 	if (previousSharedCast) {
 		g_director->_allSeenResFiles.erase(previousSharedCastPath);
+		g_director->_allOpenResFiles.remove(previousSharedCastPath);
+		delete previousSharedCast->_castArchive;
 		delete previousSharedCast;
 	}
 
@@ -531,6 +525,25 @@ void Window::thawLingoState() {
 	debugC(kDebugLingoExec, 3, "Thawing Lingo state, depth %d", _frozenLingoStates.size());
 	_lingoState = _frozenLingoStates.back();
 	_frozenLingoStates.pop_back();
+}
+
+// Check how many times previous enterFrame is called recursively, D4 will only process recursive enterFrame handlers to a depth of 2.
+// Therefore look into frozen lingo states and count previous pending enterFrame calls
+// eg. in a movie, frame 1 has an enterFrame handler that calls go(2), frame 2 has an enterFrame handler that calls go(3), now after
+// each frame is processed and it encounters a frame jump instruction (like go, open), it freezes the lingo state and then processes
+// the next frame. How do we know number of times enterFrame is called? Simple look into frozen lingo states for enterFrame calls.
+int Window::recursiveEnterFrameCount() {
+	int count = 0;
+
+	for (int i = _frozenLingoStates.size() - 1; i >= 0; i--) {
+		LingoState *state = _frozenLingoStates[i];
+		CFrame *frame = state->callstack.back();
+		if (frame->sp.name->equalsIgnoreCase("enterFrame")) {
+			count++;
+		}
+	}
+
+	return count;
 }
 
 } // End of namespace Director

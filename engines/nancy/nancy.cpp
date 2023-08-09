@@ -81,6 +81,8 @@ NancyEngine::NancyEngine(OSystem *syst, const NancyGameDescription *gd) :
 	_sliderPuzzleData = nullptr;
 	_clockData = nullptr;
 	_specialEffectData = nullptr;
+	_raycastPuzzleData = nullptr;
+	_raycastPuzzleLevelBuilderData = nullptr;
 }
 
 NancyEngine::~NancyEngine() {
@@ -102,13 +104,15 @@ NancyEngine::~NancyEngine() {
 	delete _sliderPuzzleData;
 	delete _clockData;
 	delete _specialEffectData;
+	delete _raycastPuzzleData;
+	delete _raycastPuzzleLevelBuilderData;
 }
 
 NancyEngine *NancyEngine::create(GameType type, OSystem *syst, const NancyGameDescription *gd) {
 	if (type >= kGameTypeVampire && type <= kGameTypeNancy6) {
 		return new NancyEngine(syst, gd);
 	}
-	
+
 	error("Unknown GameType");
 }
 
@@ -270,12 +274,12 @@ Common::Error NancyEngine::run() {
 		if (s) {
 			s->process();
 		}
-		
+
 		_graphicsManager->draw();
-		
-		if (_gameFlow.changingState) { 
+
+		if (_gameFlow.changingState) {
 			_graphicsManager->clearObjects();
-			
+
 			s = getStateObject(_gameFlow.prevState);
 			if (s) {
 				if(s->onStateExit(_gameFlow.prevState)) {
@@ -393,6 +397,16 @@ void NancyEngine::bootGameEngine() {
 	chunkStream = boot->getChunkStream("SPEC");
 	if (chunkStream) {
 		_specialEffectData = new SPEC(chunkStream);
+	}
+
+	chunkStream = boot->getChunkStream("RCPR");
+	if (chunkStream) {
+		_raycastPuzzleData = new RCPR(chunkStream);
+	}
+
+	chunkStream = boot->getChunkStream("RCLB");
+	if (chunkStream) {
+		_raycastPuzzleLevelBuilderData = new RCLB(chunkStream);
 	}
 
 	_sound->loadCommonSounds(boot);

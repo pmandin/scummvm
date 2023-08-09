@@ -156,7 +156,7 @@ public:
 	 *
 	 * @return The display name.
 	 */
-	virtual U32String getDisplayName() const;
+	U32String getDisplayName() const override;
 
 	/**
 	 * Return a string representation of the name of the file. This can be
@@ -166,7 +166,23 @@ public:
 	 *
 	 * @return The file name.
 	 */
-	virtual String getName() const;
+	String getName() const override;
+
+	/**
+	 * Return a string representation of the name of the file.
+	 *
+	 * @return The file name.
+	 */
+	String getFileName() const override;
+
+	/**
+	 * Return a string representation of the name of the file.  Since FSNode
+	 * parents are always the parent FSDirectory, this will not return a full
+	 * path, only the file name.
+	 *
+	 * @return The file name.
+	 */
+	Common::Path getPathInArchive() const override;
 
 	/**
 	 * Return a string representation of the name of the file, without any
@@ -242,7 +258,7 @@ public:
 	 *
 	 * @return Pointer to the stream object, 0 in case of a failure.
 	 */
-	virtual SeekableReadStream *createReadStream() const;
+	SeekableReadStream *createReadStream() const override;
 
 	/**
 	 * Create a WriteStream instance corresponding to the file

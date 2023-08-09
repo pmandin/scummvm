@@ -22,7 +22,6 @@
 #ifndef DIRECTOR_STAGE_H
 #define DIRECTOR_STAGE_H
 
-#include "graphics/macgui/macwindow.h"
 #include "director/lingo/lingo-object.h"
 
 namespace Common {
@@ -159,6 +158,7 @@ public:
 	uint32 frozenLingoStateCount() { return _frozenLingoStates.size(); };
 	void freezeLingoState();
 	void thawLingoState();
+	int recursiveEnterFrameCount();
 
 	// events.cpp
 	bool processEvent(Common::Event &event) override;

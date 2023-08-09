@@ -26,10 +26,7 @@
 #include "director/director.h"
 #include "director/movie.h"
 #include "director/window.h"
-#include "director/util.h"
-#include "director/lingo/lingo.h"
 #include "director/lingo/lingo-code.h"
-#include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-the.h"
 
 #include "director/lingo/xlibs/aiff.h"
@@ -66,6 +63,7 @@
 #include "director/lingo/xlibs/ispippin.h"
 #include "director/lingo/xlibs/jitdraw3.h"
 #include "director/lingo/xlibs/labeldrvxobj.h"
+#include "director/lingo/xlibs/maniacbg.h"
 #include "director/lingo/xlibs/memoryxobj.h"
 #include "director/lingo/xlibs/miscx.h"
 #include "director/lingo/xlibs/moovxobj.h"
@@ -78,6 +76,7 @@
 #include "director/lingo/xlibs/prefpath.h"
 #include "director/lingo/xlibs/printomatic.h"
 #include "director/lingo/xlibs/qtmovie.h"
+#include "director/lingo/xlibs/quicktime.h"
 #include "director/lingo/xlibs/registercomponent.h"
 #include "director/lingo/xlibs/serialportxobj.h"
 #include "director/lingo/xlibs/soundjam.h"
@@ -196,6 +195,7 @@ static struct XLibProto {
 	{ JITDraw3XObj::fileNames,			JITDraw3XObj::open,			JITDraw3XObj::close,		kXObj,					400 },	// D4
 	{ JourneyWareXINIXObj::fileNames,	JourneyWareXINIXObj::open,	JourneyWareXINIXObj::close,	kXObj,					400 },	// D4
 	{ LabelDrvXObj::fileNames,			LabelDrvXObj::open,			LabelDrvXObj::close,		kXObj,					400 },	// D4
+	{ ManiacBgXObj::fileNames,			ManiacBgXObj::open,			ManiacBgXObj::close,			kXObj,				300 },	// D3
 	{ MemoryXObj::fileNames,			MemoryXObj::open,			MemoryXObj::close,			kXObj,					300 },	// D3
 	{ MiscX::fileNames,					MiscX::open,				MiscX::close,				kXObj,					400 },	// D4
 	{ MoovXObj::fileNames, 				MoovXObj::open, 			MoovXObj::close,			kXObj,					300 },  // D3
@@ -208,6 +208,7 @@ static struct XLibProto {
 	{ PrefPath::fileNames,				PrefPath::open,				PrefPath::close,			kXObj,					400 },	// D4
 	{ PrintOMaticXObj::fileNames,		PrintOMaticXObj::open,		PrintOMaticXObj::close,		kXObj,					400 },	// D4
 	{ QTMovie::fileNames,				QTMovie::open,				QTMovie::close,				kXObj,					400 },	// D4
+	{ Quicktime::fileNames,				Quicktime::open,				Quicktime::close,				kXObj,					300 },	// D3
 	{ RearWindowXObj::fileNames,		RearWindowXObj::open,		RearWindowXObj::close,		kXObj,					400 },	// D4
 	{ RegisterComponent::fileNames,		RegisterComponent::open,	RegisterComponent::close,	kXObj,					400 },	// D4
 	{ SerialPortXObj::fileNames,		SerialPortXObj::open,		SerialPortXObj::close,		kXObj,					200 },	// D2
@@ -490,6 +491,8 @@ void LM::m_put(int nargs) {
 // Other
 
 void LM::m_perform(int nargs) {
+	bool allowRetVal = g_lingo->pop().asInt() != 0; // Pop allowRetVal that should be used for the LC::Call
+
 	// Lingo doesn't seem to bother cloning the object when
 	// mNew is called with mPerform
 	Datum d(g_lingo->_state->me);
@@ -498,7 +501,12 @@ void LM::m_perform(int nargs) {
 	Symbol funcSym = me->getMethod(*methodName.u.s);
 	// Object methods expect the first argument to be the object
 	g_lingo->_stack.insert_at(g_lingo->_stack.size() - nargs + 1, d);
-	LC::call(funcSym, nargs, true);
+	LC::call(funcSym, nargs, allowRetVal);
+
+	if (allowRetVal) {
+		// If the method expects a return value, push dummy on stack
+		g_lingo->pushVoid();
+	}
 }
 
 // XObject

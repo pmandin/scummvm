@@ -168,7 +168,6 @@ OSystem_Android::OSystem_Android(int audio_sample_rate, int audio_buffer_size) :
 	_audio_buffer_size(audio_buffer_size),
 	_screen_changeid(0),
 	_mixer(0),
-	_queuedEventTime(0),
 	_event_queue_lock(0),
 	_touch_pt_down(),
 	_touch_pt_scroll(),
@@ -949,11 +948,6 @@ bool OSystem_Android::setGraphicsMode(int mode, uint flags) {
 int OSystem_Android::getGraphicsMode() const {
 	// We only support one mode
 	return 0;
-}
-
-void OSystem_Android::syncVirtkeyboardState(bool virtkeybd_on) {
-	_virtkeybd_on = virtkeybd_on;
-	dynamic_cast<AndroidCommonGraphics *>(_graphicsManager)->syncVirtkeyboardState(virtkeybd_on);
 }
 
 #if defined(USE_OPENGL) && defined(USE_GLAD)

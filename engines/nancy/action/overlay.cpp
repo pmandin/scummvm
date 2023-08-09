@@ -61,13 +61,13 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 	ser.syncAsUint16LE(_firstFrame);
 	ser.syncAsUint16LE(_loopFirstFrame);
 	ser.syncAsUint16LE(_loopLastFrame);
-	uint16 frameTime = stream.readUint16LE();
-	
+	uint16 framesPerSec = stream.readUint16LE();
+
 	// Avoid divide by 0
-	if (frameTime) {
-		_frameTime = Common::Rational(1000, frameTime).toInt();
+	if (framesPerSec) {
+		_frameTime = Common::Rational(1000, framesPerSec).toInt();
 	}
-	
+
 	ser.syncAsUint16LE(_z, kGameTypeNancy1, kGameTypeNancy1);
 
 	if (ser.getVersion() > kGameTypeNancy1) {
@@ -149,11 +149,21 @@ void Overlay::execute() {
 				uint16 nextFrame = _currentFrame;
 
 				if (_playDirection == kPlayOverlayReverse) {
-					--nextFrame;
-					nextFrame = nextFrame < _loopFirstFrame ? _loopLastFrame : nextFrame;
+					if (nextFrame - 1 < _loopFirstFrame) {
+						if (_loop == kPlayOverlayLoop) {
+							nextFrame = _loopLastFrame;
+						}
+					} else {
+						--nextFrame;
+					}
 				} else {
-					++nextFrame;
-					nextFrame = nextFrame > _loopLastFrame ? _loopFirstFrame : nextFrame;
+					if (nextFrame + 1 > _loopLastFrame) {
+						if (_loop == kPlayOverlayLoop) {
+							nextFrame = _loopFirstFrame;
+						}
+					} else {
+						++nextFrame;
+					}
 				}
 
 				setFrame(nextFrame);
@@ -219,7 +229,7 @@ Common::String Overlay::getRecordTypeName() const {
 
 void Overlay::setFrame(uint frame) {
 	_currentFrame = frame;
-	
+
 	// Workaround for:
 	// - the fireplace in nancy2 scene 2491, where one of the rects is invalid.
 	// - the ball thing in nancy2 scene 1562, where one of the rects is twice as tall as it should be

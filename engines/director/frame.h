@@ -43,7 +43,17 @@ class Sprite;
 class TextCastMember;
 
 enum {
-	kChannelDataSize = (25 * 50)
+	kMainChannelSizeD2 = 32,
+	kSprChannelSizeD2 = 16,
+
+	kMainChannelSizeD4 = 40,
+	kSprChannelSizeD4 = 20,
+
+	kMainChannelSizeD5 = 48,
+	kSprChannelSizeD5 = 24,
+
+	kMainChannelSizeD6 = 48,
+	kSprChannelSizeD6 = 24,
 };
 
 struct PaletteInfo {
@@ -75,6 +85,60 @@ struct PaletteInfo {
 		overTime = false; speed = 0;
 		frameCount = cycleCount = 0;
 		fade = delay = style = colorCode = 0;
+	}
+};
+
+struct MainChannels {
+	CastMemberID actionId;
+	uint16 transDuration;
+	uint8 transArea; // 1 - Whole Window, 0 - Changing Area
+	uint8 transChunkSize;
+	TransitionType transType;
+	CastMemberID trans;
+	PaletteInfo palette;
+	uint8 tempo;
+
+	uint8 scoreCachedTempo;
+	CastMemberID scoreCachedPaletteId;
+
+	CastMemberID sound1;
+	uint8 soundType1;
+	CastMemberID sound2;
+	uint8 soundType2;
+
+	byte colorTempo;
+	byte colorSound1;
+	byte colorSound2;
+	byte colorScript;
+	byte colorTrans;
+
+	uint8 skipFrameFlag;
+	uint8 blend;
+
+	MainChannels() {
+		transDuration = 0;
+		transType = kTransNone;
+		transArea = 0;
+		transChunkSize = 0;
+		tempo = 0;
+
+		scoreCachedTempo = 0;
+		scoreCachedPaletteId = CastMemberID(0, 0);
+
+		sound1 = CastMemberID(0, 0);
+		sound2 = CastMemberID(0, 0);
+		soundType1 = 0;
+		soundType2 = 0;
+
+		actionId = CastMemberID(0, 0);
+		skipFrameFlag = 0;
+		blend = 0;
+
+		colorTempo = 0;
+		colorSound1 = 0;
+		colorSound2 = 0;
+		colorScript = 0;
+		colorTrans = 0;
 	}
 };
 
@@ -124,36 +188,16 @@ private:
 
 public:
 	int _numChannels;
-	byte _channelData[kChannelDataSize];
-	CastMemberID _actionId;
-	uint16 _transDuration;
-	uint8 _transArea; // 1 - Whole Window, 0 - Changing Area
-	uint8 _transChunkSize;
-	TransitionType _transType;
-	CastMemberID _trans;
-	PaletteInfo _palette;
-	uint8 _tempo;
-
-	uint8 _scoreCachedTempo;
-	CastMemberID _scoreCachedPaletteId;
-
-	CastMemberID _sound1;
-	uint8 _soundType1;
-	CastMemberID _sound2;
-	uint8 _soundType2;
-
-	byte _colorTempo;
-	byte _colorSound1;
-	byte _colorSound2;
-	byte _colorScript;
-	byte _colorTrans;
-
-	uint8 _skipFrameFlag;
-	uint8 _blend;
+	MainChannels _mainChannels;
 	Common::Array<Sprite *> _sprites;
 	Score *_score;
 	DirectorEngine *_vm;
 };
+
+void readSpriteDataD2(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition);
+void readSpriteDataD4(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition);
+void readSpriteDataD5(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition);
+void readSpriteDataD6(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition);
 
 } // End of namespace Director
 

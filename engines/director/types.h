@@ -22,14 +22,17 @@
 #ifndef DIRECTOR_TYPES_H
 #define DIRECTOR_TYPES_H
 
-#include "common/hashmap.h"
-
 namespace Director {
 
 #define CONTINUATION (0xAC)
 
 enum {
 	kFewFamesMaxCounter = 19,
+};
+
+enum {
+	kShotColorDiffThreshold = 2,
+	kShotPercentPixelThreshold = 1
 };
 
 #define kQuirksCacheArchive "quirks"

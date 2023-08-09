@@ -27,7 +27,6 @@
 #include "director/score.h"
 #include "director/movie.h"
 #include "director/sprite.h"
-#include "director/util.h"
 
 namespace Director {
 
@@ -36,34 +35,12 @@ Frame::Frame(Score *score, int numChannels) {
 	_vm = score->getMovie()->getVM();
 	_numChannels = numChannels;
 
-
 	reset();
 }
 
 void Frame::reset() {
-	_transDuration = 0;
-	_transType = kTransNone;
-	_transArea = 0;
-	_transChunkSize = 0;
-	_tempo = 0;
-
-	_scoreCachedTempo = 0;
-	_scoreCachedPaletteId = CastMemberID(0, 0);
-
-	_sound1 = CastMemberID(0, 0);
-	_sound2 = CastMemberID(0, 0);
-	_soundType1 = 0;
-	_soundType2 = 0;
-
-	_actionId = CastMemberID(0, 0);
-	_skipFrameFlag = 0;
-	_blend = 0;
-
-	_colorTempo = 0;
-	_colorSound1 = 0;
-	_colorSound2 = 0;
-	_colorScript = 0;
-	_colorTrans = 0;
+	// Reset main channels
+	_mainChannels = MainChannels();
 
 	_sprites.resize(_numChannels + 1);
 
@@ -79,31 +56,31 @@ void Frame::reset() {
 Frame::Frame(const Frame &frame) {
 	_vm = frame._vm;
 	_numChannels = frame._numChannels;
-	_actionId = frame._actionId;
-	_transArea = frame._transArea;
-	_transDuration = frame._transDuration;
-	_transType = frame._transType;
-	_transChunkSize = frame._transChunkSize;
-	_tempo = frame._tempo;
-	_scoreCachedTempo = frame._scoreCachedTempo;
-	_sound1 = frame._sound1;
-	_sound2 = frame._sound2;
-	_soundType1 = frame._soundType1;
-	_soundType2 = frame._soundType2;
-	_skipFrameFlag = frame._skipFrameFlag;
-	_blend = frame._blend;
+	_mainChannels.actionId = frame._mainChannels.actionId;
+	_mainChannels.transArea = frame._mainChannels.transArea;
+	_mainChannels.transDuration = frame._mainChannels.transDuration;
+	_mainChannels.transType = frame._mainChannels.transType;
+	_mainChannels.transChunkSize = frame._mainChannels.transChunkSize;
+	_mainChannels.tempo = frame._mainChannels.tempo;
+	_mainChannels.scoreCachedTempo = frame._mainChannels.scoreCachedTempo;
+	_mainChannels.sound1 = frame._mainChannels.sound1;
+	_mainChannels.sound2 = frame._mainChannels.sound2;
+	_mainChannels.soundType1 = frame._mainChannels.soundType1;
+	_mainChannels.soundType2 = frame._mainChannels.soundType2;
+	_mainChannels.skipFrameFlag = frame._mainChannels.skipFrameFlag;
+	_mainChannels.blend = frame._mainChannels.blend;
 
-	_colorTempo = frame._colorTempo;
-	_colorSound1 = frame._colorSound1;
-	_colorSound2 = frame._colorSound2;
-	_colorScript = frame._colorScript;
-	_colorTrans = frame._colorTrans;
+	_mainChannels.colorTempo = frame._mainChannels.colorTempo;
+	_mainChannels.colorSound1 = frame._mainChannels.colorSound1;
+	_mainChannels.colorSound2 = frame._mainChannels.colorSound2;
+	_mainChannels.colorScript = frame._mainChannels.colorScript;
+	_mainChannels.colorTrans = frame._mainChannels.colorTrans;
 
-	_palette = frame._palette;
+	_mainChannels.palette = frame._mainChannels.palette;
 
 	_score = frame._score;
 
-	debugC(1, kDebugLoading, "Frame. action: %s transType: %d transDuration: %d", _actionId.asString().c_str(), _transType, _transDuration);
+	debugC(1, kDebugLoading, "Frame. action: %s transType: %d transDuration: %d", _mainChannels.actionId.asString().c_str(), _mainChannels.transType, _mainChannels.transDuration);
 
 	_sprites.resize(_numChannels + 1);
 
@@ -139,33 +116,34 @@ void Frame::readChannel(Common::MemoryReadStreamEndian &stream, uint16 offset, u
  *
  **************************/
 
-enum {
-	kMainChannelSizeD2 = 32,
-	kSprChannelSizeD2 = 16
-};
-
 void Frame::readChannelD2(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
+	if (offset < kMainChannelSizeD2) {
+		uint16 needSize = MIN(size, (uint16)(kMainChannelSizeD2 - offset));
+		readMainChannelsD2(stream, offset, needSize);
+		size -= needSize;
+		offset += needSize;
+	}
+
 	if (offset >= kMainChannelSizeD2) {
-		if (size <= kSprChannelSizeD2)
-			readSpriteD2(stream, offset, size);
-		else {
-			// read > 1 sprites channel
-			while (size > kSprChannelSizeD2) {
-				byte spritePosition = (offset - kMainChannelSizeD2) / kSprChannelSizeD2;
-				uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD2 + kMainChannelSizeD2;
-				uint16 needSize = nextStart - offset;
-				readSpriteD2(stream, offset, needSize);
-				offset += needSize;
-				size -= needSize;
-			}
-			readSpriteD2(stream, offset, size);
+		byte spritePosition = (offset - kMainChannelSizeD2) / kSprChannelSizeD2;
+		uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD2 + kMainChannelSizeD2;
+
+		while (size > 0) {
+			uint16 needSize = MIN((uint16)(nextStart - offset), size);
+			readSpriteD2(stream, offset, needSize);
+			offset += needSize;
+			size -= needSize;
+			nextStart += kSprChannelSizeD2;
 		}
-	} else {
-		readMainChannelsD2(stream, offset, size);
 	}
 }
 
 void Frame::readMainChannelsD2(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
+	if (debugChannelSet(8, kDebugLoading)) {
+		debugC(8, kDebugLoading, "Frame::readMainChannelsD2(): %d byte header", size);
+		stream.hexdump(size);
+	}
+
 	uint32 initPos = stream.pos();
 	uint32 finishPosition = initPos + size;
 	byte unk[6];
@@ -173,94 +151,97 @@ void Frame::readMainChannelsD2(Common::MemoryReadStreamEndian &stream, uint16 of
 	while (stream.pos() < finishPosition) {
 		switch (stream.pos() - initPos + offset) {
 		case 0: // Sound/Tempo/Transition
-			_actionId = CastMemberID(stream.readByte(), DEFAULT_CAST_LIB);
+			_mainChannels.actionId = CastMemberID(stream.readByte(), DEFAULT_CAST_LIB);
 			break;
 		case 1:
 			// type: 0x17 for sounds (sound is cast id), 0x16 for MIDI (sound is cmd id)
-			_soundType1 = stream.readByte();
+			_mainChannels.soundType1 = stream.readByte();
 			break;
 		case 2: {
 				// 0x80 is whole stage (vs changed area), rest is duration in 1/4ths of a second
 				uint8 transFlags = stream.readByte();
 				if (transFlags & 0x80)
-					_transArea = 1;
+					_mainChannels.transArea = 1;
 				else
-					_transArea = 0;
-				_transDuration = (transFlags & 0x7f) * 250; // Duration is in 1/4 secs
+					_mainChannels.transArea = 0;
+				_mainChannels.transDuration = (transFlags & 0x7f) * 250; // Duration is in 1/4 secs
 			}
 			break;
 		case 3:
-			_transChunkSize = stream.readByte();
+			_mainChannels.transChunkSize = stream.readByte();
 			break;
 		case 4:
-			_tempo = stream.readByte();
+			_mainChannels.tempo = stream.readByte();
 			break;
 		case 5:
-			_transType = static_cast<TransitionType>(stream.readByte());
+			_mainChannels.transType = static_cast<TransitionType>(stream.readByte());
 			break;
 		case 6:
-			_sound1 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
+			_mainChannels.sound1 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			break;
 		case 8:
-			_sound2 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
+			_mainChannels.sound2 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			break;
 		case 10:
-			_soundType2 = stream.readByte();
+			_mainChannels.soundType2 = stream.readByte();
 			break;
 		case 11:
-			_skipFrameFlag = stream.readByte();
+			_mainChannels.skipFrameFlag = stream.readByte();
 			break;
 		case 12:
-			_blend = stream.readByte();
+			_mainChannels.blend = stream.readByte();
 			break;
 		case 13:
 			stream.read(unk, 1);
-			debugC(8, kDebugLoading, "Frame::readMainChannelsD2(): STUB: unk1: 0x%02x", unk[0]);
+			if (unk[0])
+				debugC(8, kDebugLoading, "Frame::readMainChannelsD2(): STUB: unk1: 0x%02x", unk[0]);
 			break;
 		case 14:
 			stream.read(unk, 2);
-			debugC(8, kDebugLoading, "Frame::readMainChannelsD2(): STUB: unk2: 0x%02x 0x%02x", unk[0], unk[1]);
+			if (unk[0] || unk[1])
+				debugC(8, kDebugLoading, "Frame::readMainChannelsD2(): STUB: unk2: 0x%02x 0x%02x", unk[0], unk[1]);
 			break;
 		case 16: {
 				// palette
 				int16 paletteId = stream.readSint16();
 				if (paletteId == 0) {
-					_palette.paletteId = CastMemberID(0, 0);
+					_mainChannels.palette.paletteId = CastMemberID(0, 0);
 				} else if (paletteId < 0) {
-					_palette.paletteId = CastMemberID(paletteId, -1);
+					_mainChannels.palette.paletteId = CastMemberID(paletteId, -1);
 				} else {
-					_palette.paletteId = CastMemberID(paletteId, DEFAULT_CAST_LIB);
+					_mainChannels.palette.paletteId = CastMemberID(paletteId, DEFAULT_CAST_LIB);
 				}
+				if (!_mainChannels.palette.paletteId.isNull())
+					_mainChannels.scoreCachedPaletteId = _mainChannels.palette.paletteId;
 			}
 			break;
 		case 18:
 			// loop points for color cycling
-			_palette.firstColor = g_director->transformColor(stream.readByte() ^ 0x80);
-			_palette.lastColor = g_director->transformColor(stream.readByte() ^ 0x80);
+			_mainChannels.palette.firstColor = g_director->transformColor(stream.readByte() ^ 0x80);
+			_mainChannels.palette.lastColor = g_director->transformColor(stream.readByte() ^ 0x80);
 			break;
 		case 20:
-			_palette.flags = stream.readByte();
-			_palette.colorCycling = (_palette.flags & 0x80) != 0;
-			_palette.normal = (_palette.flags & 0x60) == 0x00;
-			_palette.fadeToBlack = (_palette.flags & 0x60) == 0x60;
-			_palette.fadeToWhite = (_palette.flags & 0x60) == 0x40;
-			_palette.autoReverse = (_palette.flags & 0x10) != 0;
-			_palette.overTime = (_palette.flags & 0x04) != 0;
-			_palette.speed = stream.readByte();
+			_mainChannels.palette.flags = stream.readByte();
+			_mainChannels.palette.colorCycling = (_mainChannels.palette.flags & 0x80) != 0;
+			_mainChannels.palette.normal = (_mainChannels.palette.flags & 0x60) == 0x00;
+			_mainChannels.palette.fadeToBlack = (_mainChannels.palette.flags & 0x60) == 0x60;
+			_mainChannels.palette.fadeToWhite = (_mainChannels.palette.flags & 0x60) == 0x40;
+			_mainChannels.palette.autoReverse = (_mainChannels.palette.flags & 0x10) != 0;
+			_mainChannels.palette.overTime = (_mainChannels.palette.flags & 0x04) != 0;
+			_mainChannels.palette.speed = stream.readByte();
 			break;
 		case 22:
-			_palette.frameCount = stream.readUint16();
+			_mainChannels.palette.frameCount = stream.readUint16();
 			break;
 		case 24:
-			_palette.cycleCount = stream.readUint16();
+			_mainChannels.palette.cycleCount = stream.readUint16();
 			break;
 		case 26:
 			stream.read(unk, 6);
 
-			debugC(8, kDebugLoading, "Frame::readMainChannelsD2(): STUB: unk1: %02x %02x %02x %02x %02x %02x", unk[0],
-				unk[1], unk[2], unk[3], unk[4], unk[5]);
-			break;
-		case 32:
+			if (unk[0] || unk[1] || unk[2] || unk[3] || unk[4] || unk[5])
+				debugC(8, kDebugLoading, "Frame::readMainChannelsD2(): STUB: unk1: %02x %02x %02x %02x %02x %02x", unk[0],
+					unk[1], unk[2], unk[3], unk[4], unk[5]);
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
@@ -274,8 +255,8 @@ void Frame::readMainChannelsD2(Common::MemoryReadStreamEndian &stream, uint16 of
 		error("Frame::readMainChannelsD2(): Read %ld extra bytes", stream.pos() - finishPosition);
 	}
 
-	_transChunkSize = CLIP<byte>(_transChunkSize, 0, 128);
-	_transDuration = CLIP<uint16>(_transDuration, 0, 32000);  // restrict to 32 secs
+	_mainChannels.transChunkSize = CLIP<byte>(_mainChannels.transChunkSize, 0, 128);
+	_mainChannels.transDuration = CLIP<uint16>(_mainChannels.transDuration, 0, 32000);  // restrict to 32 secs
 }
 
 void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
@@ -293,7 +274,7 @@ void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
-	if (sprite._puppet || sprite._autoPuppet) {
+	if (sprite._puppet) {
 		stream.skip(size);
 		return;
 	}
@@ -301,8 +282,17 @@ void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 	uint32 initPos = stream.pos();
 	uint32 finishPosition = initPos + size;
 
+	readSpriteDataD2(stream, sprite, initPos - fieldPosition, finishPosition);
+
+	if (stream.pos() > finishPosition) {
+		// This means that the relevant `case` label reads too many bytes and must be split
+		error("Frame::readSpriteD2(): Read %ld extra bytes", stream.pos() - finishPosition);
+	}
+}
+
+void readSpriteDataD2(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition) {
 	while (stream.pos() < finishPosition) {
-		switch (stream.pos() - initPos + fieldPosition) {
+		switch (stream.pos() - startPosition) {
 		case 0:
 			sprite._scriptId = CastMemberID(stream.readByte(), DEFAULT_CAST_LIB);
 			break;
@@ -313,11 +303,11 @@ void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 			break;
 		case 2:
 			// Normalize D2 and D3 colors from -128 ... 127 to 0 ... 255.
-			sprite._foreColor = _vm->transformColor((128 + stream.readByte()) & 0xff);
+			sprite._foreColor = g_director->transformColor((128 + stream.readByte()) & 0xff);
 			break;
 		case 3:
 			// Normalize D2 and D3 colors from -128 ... 127 to 0 ... 255.
-			sprite._backColor = _vm->transformColor((128 + stream.readByte()) & 0xff);
+			sprite._backColor = g_director->transformColor((128 + stream.readByte()) & 0xff);
 			break;
 		case 4:
 			sprite._thickness = stream.readByte();
@@ -351,20 +341,10 @@ void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 		case 14:
 			sprite._width = (int16)stream.readUint16();
 			break;
-		case 16:
-			// end of channel, go to next sprite channel
-			readSpriteD2(stream, spriteStart + kSprChannelSizeD2, finishPosition - stream.pos());
-			fieldPosition = finishPosition;
-			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("Frame::readSpriteD2(): Miscomputed field position: %ld", stream.pos() - initPos + fieldPosition);
+			error("readSpriteDataD2(): Miscomputed field position: %ld", stream.pos() - startPosition);
 		}
-	}
-
-	if (stream.pos() > finishPosition) {
-		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readSpriteD2(): Read %ld extra bytes", stream.pos() - finishPosition);
 	}
 
 	// Sometimes removed sprites leave garbage in the channel
@@ -380,37 +360,33 @@ void Frame::readSpriteD2(Common::MemoryReadStreamEndian &stream, uint16 offset, 
  *
  **************************/
 
-enum {
-	kMainChannelSizeD4 = 40,
-	kSprChannelSizeD4 = 20
-};
-
 void Frame::readChannelD4(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
 	// 40 bytes header
+	if (offset < kMainChannelSizeD4) {
+		uint16 needSize = MIN(size, (uint16)(kMainChannelSizeD4 - offset));
+		readMainChannelsD4(stream, offset, needSize);
+		size -= needSize;
+		offset += needSize;
+	}
+
 	if (offset >= kMainChannelSizeD4) {
-		if (size <= kSprChannelSizeD4)
-			readSpriteD4(stream, offset, size);
-		else {
-			// read > 1 sprites channel
-			while (size > kSprChannelSizeD4) {
-				byte spritePosition = (offset - kMainChannelSizeD4) / kSprChannelSizeD4;
-				uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD4 + kMainChannelSizeD4;
-				uint16 needSize = nextStart - offset;
-				readSpriteD4(stream, offset, needSize);
-				offset += needSize;
-				size -= needSize;
-			}
-			readSpriteD4(stream, offset, size);
+		byte spritePosition = (offset - kMainChannelSizeD4) / kSprChannelSizeD4;
+		uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD4 + kMainChannelSizeD4;
+
+		while (size > 0) {
+			uint16 needSize = MIN((uint16)(nextStart - offset), size);
+			readSpriteD4(stream, offset, needSize);
+			offset += needSize;
+			size -= needSize;
+			nextStart += kSprChannelSizeD4;
 		}
-	} else {
-		readMainChannelsD4(stream, offset, size);
 	}
 }
 
 void Frame::readMainChannelsD4(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
 	if (debugChannelSet(8, kDebugLoading)) {
-		debugC(8, kDebugLoading, "Frame::readMainChannelsD4(): 40 byte header");
-		stream.hexdump(kMainChannelSizeD4);
+		debugC(8, kDebugLoading, "Frame::readMainChannelsD4(): %d byte header", size);
+		stream.hexdump(size);
 	}
 
 	uint32 initPos = stream.pos();
@@ -422,101 +398,102 @@ void Frame::readMainChannelsD4(Common::MemoryReadStreamEndian &stream, uint16 of
 		case 0:
 			// Sound/Tempo/Transition
 			unk1 = stream.readByte();
-			if (unk1) {
+			if (unk1)
 				warning("Frame::readMainChannelsD4(): STUB: unk1: %d 0x%x", unk1, unk1);
-			}
 			break;
 		case 1:
-			_soundType1 = stream.readByte(); // type: 0x17 for sounds (sound is cast id), 0x16 for MIDI (sound is cmd id)
+			_mainChannels.soundType1 = stream.readByte(); // type: 0x17 for sounds (sound is cast id), 0x16 for MIDI (sound is cmd id)
 			break;
 		case 2: {
 				uint8 transFlags = stream.readByte();
 				if (transFlags & 0x80)  // 0x80 is whole stage (vs changed area), rest is duration in 1/4ths of a second
-					_transArea = 1;
+					_mainChannels.transArea = 1;
 				else
-					_transArea = 0;
-				_transDuration = (transFlags & 0x7f) * 250; // Duration is in 1/4 secs
+					_mainChannels.transArea = 0;
+				_mainChannels.transDuration = (transFlags & 0x7f) * 250; // Duration is in 1/4 secs
 			}
 			break;
 		case 3:
-			_transChunkSize = stream.readByte();
+			_mainChannels.transChunkSize = stream.readByte();
 			break;
 		case 4:
-			_tempo = stream.readByte();
+			_mainChannels.tempo = stream.readByte();
 			break;
 		case 5:
-			_transType = static_cast<TransitionType>(stream.readByte());
+			_mainChannels.transType = static_cast<TransitionType>(stream.readByte());
 			break;
 		case 6:
-			_sound1 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
+			_mainChannels.sound1 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			break;
 		case 8:
-			_sound2 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
+			_mainChannels.sound2 = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			break;
 		case 10:
-			_soundType2 = stream.readByte();
+			_mainChannels.soundType2 = stream.readByte();
 			break;
 		case 11:
-			_skipFrameFlag = stream.readByte();
+			_mainChannels.skipFrameFlag = stream.readByte();
 			break;
 		case 12:
-			_blend = stream.readByte();
+			_mainChannels.blend = stream.readByte();
 			break;
 		case 13:
-			_colorTempo = stream.readByte();
+			_mainChannels.colorTempo = stream.readByte();
 			break;
 		case 14:
-			_colorSound1 = stream.readByte();
+			_mainChannels.colorSound1 = stream.readByte();
 			break;
 		case 15:
-			_colorSound2 = stream.readByte();
+			_mainChannels.colorSound2 = stream.readByte();
 			break;
 		case 16:
-			_actionId = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
+			_mainChannels.actionId = CastMemberID(stream.readUint16(), DEFAULT_CAST_LIB);
 			break;
 		case 18:
-			_colorScript = stream.readByte();
+			_mainChannels.colorScript = stream.readByte();
 			break;
 		case 19:
-			_colorTrans = stream.readByte();
+			_mainChannels.colorTrans = stream.readByte();
 			break;
 		case 20: {
 				// palette, 13 bytes
 				int16 paletteId = stream.readSint16();
 				if (paletteId == 0) {
-					_palette.paletteId = CastMemberID(0, 0);
+					_mainChannels.palette.paletteId = CastMemberID(0, 0);
 				} else if (paletteId < 0) {
-					_palette.paletteId = CastMemberID(paletteId, -1);
+					_mainChannels.palette.paletteId = CastMemberID(paletteId, -1);
 				} else {
-					_palette.paletteId = CastMemberID(paletteId, DEFAULT_CAST_LIB);
+					_mainChannels.palette.paletteId = CastMemberID(paletteId, DEFAULT_CAST_LIB);
 				}
+				if (!_mainChannels.palette.paletteId.isNull())
+					_mainChannels.scoreCachedPaletteId = _mainChannels.palette.paletteId;
 			}
 			break;
 		case 22:
 			// loop points for color cycling
-			_palette.firstColor = g_director->transformColor(stream.readByte() + 0x80); // 22
-			_palette.lastColor = g_director->transformColor(stream.readByte() + 0x80); // 23
+			_mainChannels.palette.firstColor = g_director->transformColor(stream.readByte() + 0x80); // 22
+			_mainChannels.palette.lastColor = g_director->transformColor(stream.readByte() + 0x80); // 23
 			break;
 		case 24:
-			_palette.flags = stream.readByte(); // 24
-			_palette.colorCycling = (_palette.flags & 0x80) != 0;
-			_palette.normal = (_palette.flags & 0x60) == 0x00;
-			_palette.fadeToBlack = (_palette.flags & 0x60) == 0x60;
-			_palette.fadeToWhite = (_palette.flags & 0x60) == 0x40;
-			_palette.autoReverse = (_palette.flags & 0x10) != 0;
-			_palette.overTime = (_palette.flags & 0x04) != 0;
-			_palette.speed = stream.readByte(); // 25
+			_mainChannels.palette.flags = stream.readByte(); // 24
+			_mainChannels.palette.colorCycling = (_mainChannels.palette.flags & 0x80) != 0;
+			_mainChannels.palette.normal = (_mainChannels.palette.flags & 0x60) == 0x00;
+			_mainChannels.palette.fadeToBlack = (_mainChannels.palette.flags & 0x60) == 0x60;
+			_mainChannels.palette.fadeToWhite = (_mainChannels.palette.flags & 0x60) == 0x40;
+			_mainChannels.palette.autoReverse = (_mainChannels.palette.flags & 0x10) != 0;
+			_mainChannels.palette.overTime = (_mainChannels.palette.flags & 0x04) != 0;
+			_mainChannels.palette.speed = stream.readByte(); // 25
 			break;
 		case 26:
-			_palette.frameCount = stream.readUint16(); // 26
+			_mainChannels.palette.frameCount = stream.readUint16(); // 26
 			break;
 		case 28:
-			_palette.cycleCount = stream.readUint16(); // 28
+			_mainChannels.palette.cycleCount = stream.readUint16(); // 28
 			break;
 		case 30:
-			_palette.fade = stream.readByte(); // 30
-			_palette.delay = stream.readByte(); // 31
-			_palette.style = stream.readByte(); // 32
+			_mainChannels.palette.fade = stream.readByte(); // 30
+			_mainChannels.palette.delay = stream.readByte(); // 31
+			_mainChannels.palette.style = stream.readByte(); // 32
 			break;
 		case 33:
 			unk1 = stream.readByte();
@@ -534,14 +511,12 @@ void Frame::readMainChannelsD4(Common::MemoryReadStreamEndian &stream, uint16 of
 				warning("Frame::readMainChannelsD4(): STUB: unk4: %d 0x%x", unk1, unk1);
 			break;
 		case 38:
-			_palette.colorCode = stream.readByte();
+			_mainChannels.palette.colorCode = stream.readByte();
 			break;
 		case 39:
 			unk1 = stream.readByte();
 			if (unk1)
 				warning("Frame::readMainChannelsD4(): STUB: unk5: 0x%02x", unk1);
-			break;
-		case 40:
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
@@ -555,8 +530,8 @@ void Frame::readMainChannelsD4(Common::MemoryReadStreamEndian &stream, uint16 of
 		error("Frame::readMainChannelsD4(): Read %ld extra bytes", stream.pos() - finishPosition);
 	}
 
-	_transChunkSize = CLIP<byte>(_transChunkSize, 0, 128);
-	_transDuration = CLIP<uint16>(_transDuration, 0, 32000);  // restrict to 32 secs
+	_mainChannels.transChunkSize = CLIP<byte>(_mainChannels.transChunkSize, 0, 128);
+	_mainChannels.transDuration = CLIP<uint16>(_mainChannels.transDuration, 0, 32000);  // restrict to 32 secs
 }
 
 void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
@@ -574,7 +549,7 @@ void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
-	if (sprite._puppet || sprite._autoPuppet) {
+	if (sprite._puppet) {
 		stream.skip(size);
 		return;
 	}
@@ -582,8 +557,17 @@ void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 	uint32 initPos = stream.pos();
 	uint32 finishPosition = initPos + size;
 
+	readSpriteDataD4(stream, sprite, initPos - fieldPosition, finishPosition);
+
+	if (stream.pos() > finishPosition) {
+		// This means that the relevant `case` label reads too many bytes and must be split
+		error("Frame::readSpriteD4(): Read %ld extra bytes", stream.pos() - finishPosition);
+	}
+}
+
+void readSpriteDataD4(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition) {
 	while (stream.pos() < finishPosition) {
-		switch (stream.pos() - initPos + fieldPosition) {
+		switch (stream.pos() - startPosition) {
 		case 0:
 			sprite._scriptId = CastMemberID(stream.readByte(), DEFAULT_CAST_LIB);
 			break;
@@ -593,10 +577,10 @@ void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 			sprite._enabled = sprite._spriteType != kInactiveSprite;
 			break;
 		case 2:
-			sprite._foreColor = _vm->transformColor((uint8)stream.readByte());
+			sprite._foreColor = g_director->transformColor((uint8)stream.readByte());
 			break;
 		case 3:
-			sprite._backColor = _vm->transformColor((uint8)stream.readByte());
+			sprite._backColor = g_director->transformColor((uint8)stream.readByte());
 			break;
 		case 4:
 			sprite._thickness = stream.readByte();
@@ -648,20 +632,10 @@ void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 		case 19:
 			sprite._blendAmount = stream.readByte();
 			break;
-		case 20:
-			// end of channel, go to next sprite channel
-			readSpriteD4(stream, spriteStart + kSprChannelSizeD4, finishPosition - stream.pos());
-			fieldPosition = finishPosition;
-			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("Frame::readSpriteD4(): Miscomputed field position: %ld", stream.pos() - initPos + fieldPosition);
+			error("readSpriteDataD4(): Miscomputed field position: %ld", stream.pos() - startPosition);
 		}
-	}
-
-	if (stream.pos() > finishPosition) {
-		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readMainChannelsD4(): Read %ld extra bytes", stream.pos() - finishPosition);
 	}
 
 	// Sometimes removed sprites leave garbage in the channel
@@ -676,37 +650,33 @@ void Frame::readSpriteD4(Common::MemoryReadStreamEndian &stream, uint16 offset, 
  *
  **************************/
 
-enum {
-	kMainChannelSizeD5 = 48,
-	kSprChannelSizeD5 = 24
-};
-
 void Frame::readChannelD5(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
 	// 48 bytes header
+	if (offset < kMainChannelSizeD5) {
+		uint16 needSize = MIN(size, (uint16)(kMainChannelSizeD5 - offset));
+		readMainChannelsD5(stream, offset, needSize);
+		size -= needSize;
+		offset += needSize;
+	}
+
 	if (offset >= kMainChannelSizeD5) {
-		if (size <= kSprChannelSizeD5)
-			readSpriteD5(stream, offset, size);
-		else {
-			// read > 1 sprites channel
-			while (size > kSprChannelSizeD5) {
-				byte spritePosition = (offset - kMainChannelSizeD5) / kSprChannelSizeD5;
-				uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD5 + kMainChannelSizeD5;
-				uint16 needSize = nextStart - offset;
-				readSpriteD5(stream, offset, needSize);
-				offset += needSize;
-				size -= needSize;
-			}
-			readSpriteD5(stream, offset, size);
+		byte spritePosition = (offset - kMainChannelSizeD5) / kSprChannelSizeD5;
+		uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD5 + kMainChannelSizeD5;
+
+		while (size > 0) {
+			uint16 needSize = MIN((uint16)(nextStart - offset), size);
+			readSpriteD5(stream, offset, needSize);
+			offset += needSize;
+			size -= needSize;
+			nextStart += kSprChannelSizeD5;
 		}
-	} else {
-		readMainChannelsD5(stream, offset, size);
 	}
 }
 
 void Frame::readMainChannelsD5(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
 	if (debugChannelSet(8, kDebugLoading)) {
-		debugC(8, kDebugLoading, "Frame::readMainChannelsD5(): 40 byte header");
-		stream.hexdump(kMainChannelSizeD4);
+		debugC(8, kDebugLoading, "Frame::readMainChannelsD5(): %d byte header", size);
+		stream.hexdump(size);
 	}
 
 	uint32 initPos = stream.pos();
@@ -715,98 +685,101 @@ void Frame::readMainChannelsD5(Common::MemoryReadStreamEndian &stream, uint16 of
 
 	while (stream.pos() < finishPosition) {
 		switch (stream.pos() - initPos + offset) {
-		case 0: {
-				// Sound/Tempo/Transition
-				uint16 actionCastLib = stream.readUint16();
-				uint16 actionId = stream.readUint16();
-				_actionId = CastMemberID(actionId, actionCastLib);
-			}
+		case 0:
+			// Sound/Tempo/Transition
+			_mainChannels.actionId.castLib = stream.readUint16();
 			break;
-		case 2: {
-				uint16 actionId = stream.readUint16();
-				_actionId = CastMemberID(actionId, _actionId.castLib);  // Inherit castLinb from previous frame
-			}
+		case 2:
+			_mainChannels.actionId.member = stream.readUint16();
 			break;
-		case 4: {
-				uint16 sound1CastLib = stream.readUint16();
-				uint16 sound1Id = stream.readUint16();
-				_sound1 = CastMemberID(sound1Id, sound1CastLib);
-			}
+		case 4:
+			_mainChannels.sound1.castLib = stream.readUint16();
 			break;
-		case 6: {
-				uint16 sound1Id = stream.readUint16();
-				_sound1 = CastMemberID(sound1Id, _sound1.castLib);	// Inherit castLinb from previous frame
-			}
+		case 6:
+			_mainChannels.sound1.member = stream.readUint16();
 			break;
-		case 8: {
-				uint16 sound2CastLib = stream.readUint16();
-				uint16 sound2Id = stream.readUint16();
-				_sound2 = CastMemberID(sound2Id, sound2CastLib);
-			}
+		case 8:
+			_mainChannels.sound2.castLib = stream.readUint16();
 			break;
-		case 10: {
-				uint16 sound2Id = stream.readUint16();
-				_sound2 = CastMemberID(sound2Id, _sound2.castLib);	// Inherit castLinb from previous frame
-			}
+		case 10:
+			_mainChannels.sound2.member = stream.readUint16();
 			break;
-		case 12: {
-				uint16 transCastLib = stream.readUint16();
-				uint16 transId = stream.readUint16();
-				_trans = CastMemberID(transId, transCastLib);
-			}
+		case 12:
+			_mainChannels.trans.castLib = stream.readUint16();
+			break;
+		case 14:
+			_mainChannels.trans.member = stream.readUint16();
 			break;
 		case 16:
-			stream.read(unk, 4);
-			warning("Frame::readMainChannelsD5(): STUB: unk1: 0x%02x 0x%02x 0x%02x 0x%02x", unk[0], unk[1], unk[2], unk[3]);
+			stream.read(unk, 2);
+			if (unk[0] || unk[1])
+				warning("Frame::readMainChannelsD5(): STUB: unk1: 0x%02x 0x%02x", unk[0], unk[1]);
+			break;
+		case 18:
+			stream.read(unk, 2);
+			if (unk[0] || unk[1])
+				warning("Frame::readMainChannelsD5(): STUB: unk2: 0x%02x 0x%02x", unk[0], unk[1]);
 			break;
 		case 20:
 			stream.read(unk, 1);
-			warning("Frame::readMainChannelsD5(): STUB: unk2: 0x%02x", unk[0]);
+			if (unk[0])
+				warning("Frame::readMainChannelsD5(): STUB: unk3: 0x%02x", unk[0]);
 			break;
 		case 21:
-			_tempo = stream.readByte();
+			_mainChannels.tempo = stream.readByte();
 			break;
 		case 22:
 			stream.read(unk, 2);
-			warning("Frame::readMainChannelsD5(): STUB: unk3: 0x%02x 0x%02x", unk[0], unk[1]);
+			if (unk[0] || unk[1])
+				warning("Frame::readMainChannelsD5(): STUB: unk4: 0x%02x 0x%02x", unk[0], unk[1]);
 			break;
-		case 24: {
-				int16 paletteCastLib = stream.readSint16();
-				int16 paletteId = stream.readSint16(); // 26
-				_palette.paletteId = CastMemberID(paletteId, paletteCastLib);
-			}
+		case 24:
+			_mainChannels.palette.paletteId.castLib = stream.readSint16();
+			break;
+		case 26:
+			_mainChannels.palette.paletteId.member = stream.readSint16();
+			if (!_mainChannels.palette.paletteId.isNull())
+				_mainChannels.scoreCachedPaletteId = _mainChannels.palette.paletteId;
 			break;
 		case 28:
-			_palette.speed = stream.readByte(); // 28
-			_palette.flags = stream.readByte(); // 29
-			_palette.colorCycling = (_palette.flags & 0x80) != 0;
-			_palette.normal = (_palette.flags & 0x60) == 0x00;
-			_palette.fadeToBlack = (_palette.flags & 0x60) == 0x60;
-			_palette.fadeToWhite = (_palette.flags & 0x60) == 0x40;
-			_palette.autoReverse = (_palette.flags & 0x10) != 0;
-			_palette.overTime = (_palette.flags & 0x04) != 0;
+			_mainChannels.palette.speed = stream.readByte(); // 28
+			_mainChannels.palette.flags = stream.readByte(); // 29
+			_mainChannels.palette.colorCycling = (_mainChannels.palette.flags & 0x80) != 0;
+			_mainChannels.palette.normal = (_mainChannels.palette.flags & 0x60) == 0x00;
+			_mainChannels.palette.fadeToBlack = (_mainChannels.palette.flags & 0x60) == 0x60;
+			_mainChannels.palette.fadeToWhite = (_mainChannels.palette.flags & 0x60) == 0x40;
+			_mainChannels.palette.autoReverse = (_mainChannels.palette.flags & 0x10) != 0;
+			_mainChannels.palette.overTime = (_mainChannels.palette.flags & 0x04) != 0;
 			break;
 		case 30:
-			_palette.firstColor = g_director->transformColor(stream.readByte() + 0x80); // 30
-			_palette.lastColor = g_director->transformColor(stream.readByte() + 0x80); // 31
+			_mainChannels.palette.firstColor = g_director->transformColor(stream.readByte() + 0x80); // 30
+			_mainChannels.palette.lastColor = g_director->transformColor(stream.readByte() + 0x80); // 31
 			break;
 		case 32:
-			_palette.frameCount = stream.readUint16(); // 32
+			_mainChannels.palette.frameCount = stream.readUint16(); // 32
 			break;
 		case 34:
-			_palette.cycleCount = stream.readUint16(); // 34
+			_mainChannels.palette.cycleCount = stream.readUint16(); // 34
 			break;
-		case 36: {
-				stream.read(unk, 12);
+		case 36:
+			stream.read(unk, 2);
+			if (unk[0] || unk[1])
+				warning("Frame::readMainChannelsD5(): STUB: unk5: 0x%02x 0x%02x", unk[0], unk[1]);
+			break;
+		case 38:
+			stream.read(unk, 2);
+			if (unk[0] || unk[1])
+				warning("Frame::readMainChannelsD5(): STUB: unk6: 0x%02x 0x%02x", unk[0], unk[1]);
+			break;
+		case 40: {
+				stream.read(unk, 8);
 
 				Common::String s;
-				for (int i = 0; i < 12; i++)
+				for (int i = 0; i < 8; i++)
 					s += Common::String::format("0x%02x ", unk[i]);
 
-				warning("Frame::readMainChannelsD5(): STUB: unk4: %s", s.c_str());
+				warning("Frame::readMainChannelsD5(): STUB: unk7: %s", s.c_str());
 			}
-			break;
-		case 48:
 			break;
 		default:
 			// This means that a `case` label has to be split at this position
@@ -817,11 +790,11 @@ void Frame::readMainChannelsD5(Common::MemoryReadStreamEndian &stream, uint16 of
 
 	if (stream.pos() > finishPosition) {
 		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readMainChannelsD4(): Read %ld extra bytes", stream.pos() - finishPosition);
+		error("Frame::readMainChannelsD5(): Read %ld extra bytes", stream.pos() - finishPosition);
 	}
 
-	_transChunkSize = CLIP<byte>(_transChunkSize, 0, 128);
-	_transDuration = CLIP<uint16>(_transDuration, 0, 32000);  // restrict to 32 secs
+	_mainChannels.transChunkSize = CLIP<byte>(_mainChannels.transChunkSize, 0, 128);
+	_mainChannels.transDuration = CLIP<uint16>(_mainChannels.transDuration, 0, 32000);  // restrict to 32 secs
 }
 
 void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
@@ -839,7 +812,7 @@ void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
-	if (sprite._puppet || sprite._autoPuppet) {
+	if (sprite._puppet) {
 		stream.skip(size);
 		return;
 	}
@@ -847,8 +820,22 @@ void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 	uint32 initPos = stream.pos();
 	uint32 finishPosition = initPos + size;
 
+	readSpriteDataD5(stream, sprite, initPos - fieldPosition, finishPosition);
+
+	if (fieldPosition > finishPosition) {
+		// This means that the relevant `case` label reads too many bytes and must be split
+		error("Frame::readSpriteD5(): Read %ld extra bytes", stream.pos() - finishPosition);
+	}
+
+	// Sometimes removed sprites leave garbage in the channel
+	// We set it to zero, so then could skip
+	if (sprite._width <= 0 || sprite._height <= 0)
+		sprite._width = sprite._height = 0;
+}
+
+void readSpriteDataD5(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition) {
 	while (stream.pos() < finishPosition) {
-		switch (stream.pos() - initPos + fieldPosition) {
+		switch (stream.pos() - startPosition) {
 		case 0:
 			sprite._spriteType = (SpriteType)stream.readByte();
 			break;
@@ -885,10 +872,10 @@ void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 			}
 			break;
 		case 10:
-			sprite._foreColor = _vm->transformColor((uint8)stream.readByte());
+			sprite._foreColor = g_director->transformColor((uint8)stream.readByte());
 			break;
 		case 11:
-			sprite._backColor = _vm->transformColor((uint8)stream.readByte());
+			sprite._backColor = g_director->transformColor((uint8)stream.readByte());
 			break;
 		case 12:
 			sprite._startPoint.y = (int16)stream.readUint16();
@@ -923,26 +910,12 @@ void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 		case 23:
 			(void)stream.readByte(); // unused
 			break;
-		case 24:
-			// end of channel, go to next sprite channel
-			readSpriteD5(stream, spriteStart + kSprChannelSizeD5, finishPosition - stream.pos());
-			fieldPosition = finishPosition;
-			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("Frame::readSpriteD2(): Miscomputed field position: %ld", stream.pos() - initPos + fieldPosition);
+			error("readSpriteDataD5(): Miscomputed field position: %ld", stream.pos() - startPosition);
 		}
 	}
 
-	if (fieldPosition > finishPosition) {
-		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readMainChannelsD4(): Read %ld extra bytes", stream.pos() - finishPosition);
-	}
-
-	// Sometimes removed sprites leave garbage in the channel
-	// We set it to zero, so then could skip
-	if (sprite._width <= 0 || sprite._height <= 0)
-		sprite._width = sprite._height = 0;
 }
 
 /**************************
@@ -951,34 +924,34 @@ void Frame::readSpriteD5(Common::MemoryReadStreamEndian &stream, uint16 offset, 
  *
  **************************/
 
-enum {
-	kMainChannelSizeD6 = 48,
-	kSprChannelSizeD6 = 24
-};
-
 void Frame::readChannelD6(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
 	// 48 bytes header
+	if (offset < kMainChannelSizeD6) {
+		uint16 needSize = MIN(size, (uint16)(kMainChannelSizeD6 - offset));
+		readMainChannelsD6(stream, offset, needSize);
+		size -= needSize;
+		offset += needSize;
+	}
+
 	if (offset >= kMainChannelSizeD6) {
-		if (size <= kSprChannelSizeD6)
-			readSpriteD6(stream, offset, size);
-		else {
-			// read > 1 sprites channel
-			while (size > kSprChannelSizeD6) {
-				byte spritePosition = (offset - kMainChannelSizeD6) / kSprChannelSizeD6;
-				uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD6 + kMainChannelSizeD6;
-				uint16 needSize = nextStart - offset;
-				readSpriteD6(stream, offset, needSize);
-				offset += needSize;
-				size -= needSize;
-			}
-			readSpriteD6(stream, offset, size);
+		byte spritePosition = (offset - kMainChannelSizeD6) / kSprChannelSizeD6;
+		uint16 nextStart = (spritePosition + 1) * kSprChannelSizeD6 + kMainChannelSizeD6;
+
+		while (size > 0) {
+			uint16 needSize = MIN((uint16)(nextStart - offset), size);
+			readSpriteD6(stream, offset, needSize);
+			offset += needSize;
+			size -= needSize;
+			nextStart += kSprChannelSizeD6;
 		}
-	} else {
-		readMainChannelsD6(stream, offset, size);
 	}
 }
 
 void Frame::readMainChannelsD6(Common::MemoryReadStreamEndian &stream, uint16 offset, uint16 size) {
+	if (debugChannelSet(8, kDebugLoading)) {
+		debugC(8, kDebugLoading, "Frame::readMainChannelsD6(): %d byte header", size);
+		stream.hexdump(size);
+	}
 	error("Frame::readMainChannelsD6(): Miscomputed field position: %d", offset);
 }
 
@@ -997,7 +970,7 @@ void Frame::readSpriteD6(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 
 	Sprite &sprite = *_sprites[spritePosition + 1];
 
-	if (sprite._puppet || sprite._autoPuppet) {
+	if (sprite._puppet) {
 		stream.skip(size);
 		return;
 	}
@@ -1005,30 +978,65 @@ void Frame::readSpriteD6(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 	uint32 initPos = stream.pos();
 	uint32 finishPosition = initPos + size;
 
+	readSpriteDataD6(stream, sprite, initPos - fieldPosition, finishPosition);
+
+	if (stream.pos() > finishPosition) {
+		// This means that the relevant `case` label reads too many bytes and must be split
+		error("Frame::readSpriteD6(): Read %ld extra bytes", stream.pos() - finishPosition);
+	}
+
+	// Sometimes removed sprites leave garbage in the channel
+	// We set it to zero, so then could skip
+	if (sprite._width <= 0 || sprite._height <= 0)
+		sprite._width = sprite._height = 0;
+}
+
+void readSpriteDataD6(Common::SeekableReadStreamEndian &stream, Sprite &sprite, uint32 startPosition, uint32 finishPosition) {
 	while (stream.pos() < finishPosition) {
-		switch (stream.pos() - initPos + fieldPosition) {
+		switch (stream.pos() - startPosition) {
 		case 0:
 			sprite._spriteType = (SpriteType)stream.readByte();
 			break;
-		case 1:
-			sprite._inkData = stream.readByte();
+		case 1: {
+			byte inkData = stream.readByte();
+
+			if (sprite.getAutoPuppet(kAPInk))
+				continue;
+
+			sprite._inkData = inkData;
 
 			sprite._ink = static_cast<InkType>(sprite._inkData & 0x3f);
 			if (sprite._inkData & 0x40)
 				sprite._trails = 1;
 			else
 				sprite._trails = 0;
+			}
+			break;
+		case 2: {
+			uint8 foreColor = stream.readByte();
 
+			if (sprite.getAutoPuppet(kAPForeColor))
+				continue;
+
+			sprite._foreColor = g_director->transformColor(foreColor);
+			}
 			break;
-		case 2:
-			sprite._foreColor = _vm->transformColor((uint8)stream.readByte());
-			break;
-		case 3:
-			sprite._backColor = _vm->transformColor((uint8)stream.readByte());
+		case 3: {
+			uint8 backColor = stream.readByte();
+
+			if (sprite.getAutoPuppet(kAPBackColor))
+				continue;
+
+			sprite._backColor = g_director->transformColor(backColor);
+			}
 			break;
 		case 4: {
 				uint16 castLib = stream.readUint16();
 				uint16 memberID = stream.readUint16();
+
+				if (sprite.getAutoPuppet(kAPCast))
+					continue;
+
 				sprite._castId = CastMemberID(memberID, castLib);
 			}
 			break;
@@ -1038,17 +1046,41 @@ void Frame::readSpriteD6(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 				sprite._scriptId = CastMemberID(scriptMemberID, scriptCastLib);
 			}
 			break;
-		case 12:
-			sprite._startPoint.y = (int16)stream.readUint16();
+		case 12: {
+			uint16 startPointY = stream.readUint16();
+
+			if (sprite.getAutoPuppet(kAPLocV) || sprite.getAutoPuppet(kAPLoc))
+				continue;
+
+			sprite._startPoint.y = startPointY;
 			break;
-		case 14:
-			sprite._startPoint.x = (int16)stream.readUint16();
+			}
+		case 14: {
+			uint16 startPointX = stream.readUint16();
+
+			if (sprite.getAutoPuppet(kAPLocH) || sprite.getAutoPuppet(kAPLoc))
+				continue;
+
+			sprite._startPoint.x = startPointX;
+			}
 			break;
-		case 16:
-			sprite._height = (int16)stream.readUint16();
+		case 16: {
+			uint16 height = stream.readUint16();
+
+			if (sprite.getAutoPuppet(kAPHeight))
+				continue;
+
+			sprite._height = height;
+			}
 			break;
-		case 18:
-			sprite._width = (int16)stream.readUint16();
+		case 18: {
+			uint16 width = stream.readUint16();
+
+			if (sprite.getAutoPuppet(kAPWidth))
+				continue;
+
+			sprite._width = width;
+			}
 			break;
 		case 20:
 			// & 0x0f scorecolor
@@ -1058,12 +1090,20 @@ void Frame::readSpriteD6(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 			// 0x80 moveable
 			sprite._colorcode = stream.readByte();
 
+			if (sprite.getAutoPuppet(kAPMoveable))
+				continue;
+
 			sprite._editable = ((sprite._colorcode & 0x40) == 0x40);
 			sprite._moveable = ((sprite._colorcode & 0x80) == 0x80);
-			sprite._moveable = ((sprite._colorcode & 0x80) == 0x80);
 			break;
-		case 21:
-			sprite._blendAmount = stream.readByte();
+		case 21: {
+			byte blendAmount = stream.readByte();
+
+			if (sprite.getAutoPuppet(kAPBlend))
+				continue;
+
+			sprite._blendAmount = blendAmount;
+			}
 			break;
 		case 22:
 			sprite._thickness = stream.readByte();
@@ -1071,45 +1111,30 @@ void Frame::readSpriteD6(Common::MemoryReadStreamEndian &stream, uint16 offset, 
 		case 23:
 			(void)stream.readByte(); // unused
 			break;
-		case 24:
-			// end of channel, go to next sprite channel
-			readSpriteD6(stream, spriteStart + kSprChannelSizeD6, finishPosition - stream.pos());
-			fieldPosition = finishPosition;
-			break;
 		default:
 			// This means that a `case` label has to be split at this position
-			error("Frame::readSpriteD2(): Miscomputed field position: %ld", stream.pos() - initPos + fieldPosition);
+			error("readSpriteDataD6(): Miscomputed field position: %ld", stream.pos() - startPosition);
 		}
 	}
-
-	if (stream.pos() > finishPosition) {
-		// This means that the relevant `case` label reads too many bytes and must be split
-		error("Frame::readMainChannelsD4(): Read %ld extra bytes", stream.pos() - finishPosition);
-	}
-
-	// Sometimes removed sprites leave garbage in the channel
-	// We set it to zero, so then could skip
-	if (sprite._width <= 0 || sprite._height <= 0)
-		sprite._width = sprite._height = 0;
 }
 
 Common::String Frame::formatChannelInfo() {
 	Common::String result;
 	result += Common::String::format("TMPO:   tempo: %d, skipFrameFlag: %d, blend: %d\n",
-		_tempo, _skipFrameFlag, _blend);
-	if (_palette.paletteId.isNull()) {
+		_mainChannels.tempo, _mainChannels.skipFrameFlag, _mainChannels.blend);
+	if (_mainChannels.palette.paletteId.isNull()) {
 		result += Common::String::format("PAL:    paletteId: %s, firstColor: %d, lastColor: %d, flags: %d, cycleCount: %d, speed: %d, frameCount: %d, fade: %d, delay: %d, style: %d\n",
-			_palette.paletteId.asString().c_str(), _palette.firstColor, _palette.lastColor, _palette.flags,
-			_palette.cycleCount, _palette.speed, _palette.frameCount,
-			_palette.fade, _palette.delay, _palette.style);
+			_mainChannels.palette.paletteId.asString().c_str(), _mainChannels.palette.firstColor, _mainChannels.palette.lastColor, _mainChannels.palette.flags,
+			_mainChannels.palette.cycleCount, _mainChannels.palette.speed, _mainChannels.palette.frameCount,
+			_mainChannels.palette.fade, _mainChannels.palette.delay, _mainChannels.palette.style);
 	} else {
 		result += Common::String::format("PAL:    paletteId: 000\n");
 	}
 	result += Common::String::format("TRAN:   transType: %d, transDuration: %d, transChunkSize: %d\n",
-		_transType, _transDuration, _transChunkSize);
-	result += Common::String::format("SND: 1  sound1: %d, soundType1: %d\n", _sound1.member, _soundType1);
-	result += Common::String::format("SND: 2  sound2: %d, soundType2: %d\n", _sound2.member, _soundType2);
-	result += Common::String::format("LSCR:   actionId: %d\n", _actionId.member);
+		_mainChannels.transType, _mainChannels.transDuration, _mainChannels.transChunkSize);
+	result += Common::String::format("SND: 1  sound1: %d, soundType1: %d\n", _mainChannels.sound1.member, _mainChannels.soundType1);
+	result += Common::String::format("SND: 2  sound2: %d, soundType2: %d\n", _mainChannels.sound2.member, _mainChannels.soundType2);
+	result += Common::String::format("LSCR:   actionId: %d\n", _mainChannels.actionId.member);
 
 	for (int i = 0; i < _numChannels; i++) {
 		Sprite &sprite = *_sprites[i + 1];

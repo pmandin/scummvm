@@ -177,18 +177,61 @@ void OpenGLRenderer::positionCamera(const Math::Vector3d &pos, const Math::Vecto
 	glTranslatef(-pos.x(), -pos.y(), -pos.z());
 }
 
-void OpenGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d player, const Common::Rect viewArea) {
+void OpenGLRenderer::renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d target, const Common::Rect viewArea) {
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
 	glColor3ub(255, 255, 255);
+
 	glLineWidth(20);
-	polygonOffset(true);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	copyToVertexArray(0, sensor);
-	copyToVertexArray(1, player);
+	copyToVertexArray(1, target);
 	glVertexPointer(3, GL_FLOAT, 0, _verts);
 	glDrawArrays(GL_LINES, 0, 2);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	polygonOffset(false);
 	glLineWidth(1);
+
+	glDisable(GL_BLEND);
+	glDepthMask(GL_TRUE);
+}
+
+void OpenGLRenderer::renderCrossair(const Common::Point crossairPosition) {
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, _screenW, _screenH, 0, 0, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE_MINUS_DST_COLOR, GL_ZERO);
+
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+
+	useColor(255, 255, 255);
+
+	glLineWidth(8); // It will not work in every OpenGL implementation since the
+					 // spec doesn't require support for line widths other than 1
+	glEnableClientState(GL_VERTEX_ARRAY);
+	copyToVertexArray(0, Math::Vector3d(crossairPosition.x - 3, crossairPosition.y, 0));
+	copyToVertexArray(1, Math::Vector3d(crossairPosition.x - 1, crossairPosition.y, 0));
+
+	copyToVertexArray(2, Math::Vector3d(crossairPosition.x + 1, crossairPosition.y, 0));
+	copyToVertexArray(3, Math::Vector3d(crossairPosition.x + 3, crossairPosition.y, 0));
+
+	copyToVertexArray(4, Math::Vector3d(crossairPosition.x, crossairPosition.y - 3, 0));
+	copyToVertexArray(5, Math::Vector3d(crossairPosition.x, crossairPosition.y - 1, 0));
+
+	copyToVertexArray(6, Math::Vector3d(crossairPosition.x, crossairPosition.y + 1, 0));
+	copyToVertexArray(7, Math::Vector3d(crossairPosition.x, crossairPosition.y + 3, 0));
+
+	glVertexPointer(3, GL_FLOAT, 0, _verts);
+	glDrawArrays(GL_LINES, 0, 8);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glLineWidth(1);
+
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
 }
 
 void OpenGLRenderer::renderPlayerShoot(byte color, const Common::Point position, const Common::Rect viewArea) {

@@ -20,6 +20,7 @@
  */
 
 #include "common/config-manager.h"
+#include "common/memstream.h"
 #include "common/substream.h"
 
 #include "director/types.h"
@@ -33,10 +34,11 @@
 #include "director/movie.h"
 #include "director/score.h"
 #include "director/window.h"
-#include "director/lingo/lingo.h"
-#include "director/lingo/lingo-object.h"
+#include "director/castmember/castmember.h"
 
 namespace Director {
+
+#include "director/blank-score.h"
 
 Movie::Movie(Window *window) {
 	_window = window;
@@ -235,8 +237,14 @@ bool Movie::loadArchive() {
 
 	// Score
 	if (!(r = _movieArchive->getMovieResourceIfPresent(MKTAG('V', 'W', 'S', 'C')))) {
-		warning("Movie::loadArchive(): Wrong movie format. VWSC resource missing");
-		return false;
+		warning("Movie::loadArchive(): No VWSC resource, injecting a blank score with 1 frame");
+		if (_version < kFileVer400) {
+			r = new Common::MemoryReadStreamEndian(kBlankScoreD2, sizeof(kBlankScoreD2), true);
+		} else if (_version < kFileVer600) {
+			r = new Common::MemoryReadStreamEndian(kBlankScoreD4, sizeof(kBlankScoreD4), true);
+		} else {
+			error("Movie::loadArchive(): score format not yet supported for version %d", _version);
+		}
 	}
 
 	_score->loadFrames(*r, _version);
@@ -411,6 +419,9 @@ CastMember* Movie::createOrReplaceCastMember(CastMemberID memberID, CastMember* 
 	CastMember *result = nullptr;
 
 	if (_casts.contains(memberID.castLib)) {
+		// Delete existing cast member
+		_casts.getVal(memberID.castLib)->eraseCastMember(memberID);
+
 		_casts.getVal(memberID.castLib)->setCastMember(memberID, cast);
 	}
 
@@ -425,15 +436,38 @@ bool Movie::eraseCastMember(CastMemberID memberID) {
 	return false;
 }
 
-CastMember *Movie::getCastMemberByNameAndType(const Common::String &name, int castLib, CastType type) {
-	CastMember *result = nullptr;
+CastMemberID Movie::getCastMemberIDByNameAndType(const Common::String &name, int castLib, CastType type) {
+	CastMemberID result(-1, 0);
 	if (_casts.contains(castLib)) {
-		result = _casts.getVal(castLib)->getCastMemberByNameAndType(name, type);
-		if (result == nullptr && _sharedCast) {
-			result = _sharedCast->getCastMemberByNameAndType(name, type);
+		CastMember *member = _casts.getVal(castLib)->getCastMemberByNameAndType(name, type);
+		if (member) {
+			result = CastMemberID(member->getID(), castLib);
+		}
+		if (result.member == -1 && _sharedCast) {
+			member = _sharedCast->getCastMemberByNameAndType(name, type);
+			if (member) {
+				result = CastMemberID(member->getID(), castLib);
+			}
+		}
+	} else if (castLib == 0) {
+		// Search all cast libraries for a match
+		for (auto &cast : _casts) {
+			CastMember *member = cast._value->getCastMemberByNameAndType(name, type);
+			if (member) {
+				result = CastMemberID(member->getID(), cast._key);
+				break;
+			}
+		}
+		if (result.member == -1 && _sharedCast) {
+			CastMember *member = _sharedCast->getCastMemberByNameAndType(name, type);
+			if (member)
+				result = CastMemberID(member->getID(), DEFAULT_CAST_LIB);
 		}
 	} else {
-		warning("Movie::getCastMemberByNameAndType: Unknown castLib %d", castLib);
+		warning("Movie::getCastMemberIDByNameAndType: Unknown castLib %d", castLib);
+	}
+	if (result.member == -1) {
+		warning("Movie::getCastMemberIDByNameAndType: No match found for member name %s and lib %d", name.c_str(), castLib);
 	}
 	return result;
 }

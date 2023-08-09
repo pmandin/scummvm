@@ -22,10 +22,7 @@
 #ifndef DIRECTOR_SCORE_H
 #define DIRECTOR_SCORE_H
 
-//#include "graphics/macgui/macwindowmanager.h"
-
 #include "director/cursor.h"
-#include "director/frame.h"
 
 namespace Graphics {
 	struct Surface;
@@ -103,6 +100,8 @@ public:
 	int getNextFrame() { return _nextFrame; }
 	uint16 getFramesNum() { return _numFrames; }
 
+	void setPuppetTempo(int16 puppetTempo);
+
 	CastMemberID getCurrentPalette();
 
 	Channel *getChannelById(uint16 id);
@@ -143,6 +142,7 @@ private:
 	void playQueuedSound();
 
 	void screenShot();
+	bool checkShotSimilarity(const Graphics::Surface *surface1, const Graphics::Surface *surface2);
 
 	bool processImmediateFrameScript(Common::String s, int id);
 	bool processFrozenScripts();
@@ -169,7 +169,6 @@ public:
 
 	byte _currentFrameRate;
 
-	byte _puppetTempo;
 	bool _puppetPalette;
 	int _paletteTransitionIndex;
 	byte _paletteSnapshotBuffer[768];

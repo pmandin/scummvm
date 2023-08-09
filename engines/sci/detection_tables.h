@@ -605,6 +605,15 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::EN_ANY, Common::kPlatformWindows, ADGF_CD, GUIO_STD16_SPEECH_GM	},
 
+	// Eco Quest 1 - Hebrew fan translation - by https://github.com/adventurebrew/HebrewAdventure
+	// based on English DOS CD 1.1
+	{"ecoquest", "CD", {
+		{"resource.map", 0, "a4b73d5d2b55bdb6e44345e99c8fbdd0", 4804},
+		{"resource.000", 0, "d908dbef56816ac6c60dd145fdeafb2b", 3536046},
+		{"PATCHES/0.fon", 0, "256b6dde95d3c2442b9c75765b3a5b76", 3410},
+		AD_LISTEND},
+		Common::HE_ISR, Common::kPlatformDOS, ADGF_CD, GUIO_STD16_SPEECH	},
+
 	// Eco Quest - Korean fan translation, based on English DOS CD 1.1
 	// SCI interpreter version 1.001.064
 	// The checksums for the audio file have been removed, to also allow
@@ -6017,15 +6026,16 @@ static const struct ADGameDescription SciGameDescriptions[] = {
 		AD_LISTEND},
 		Common::DE_DEU, Common::kPlatformDOS, ADGF_NO_FLAGS, GUIO_SQ6 },
 
-	// Space Quest 6 - English Win3.11 Demo (from Sneak Peeks 2)
+	// Space Quest 6 - English Win3.11 Interactive Demo (from Sneak Peeks 2)
+	// This demo has no speech, unlike the later DOS/Win version.
 	// Executable scanning reports "2.100.002", VERSION file reports "1.000.000"
 	{"sq6", "Demo", {
 		{"resource.map", 0, "5cf3f0db76080a4ac327190bd027e355", 2164},
 		{"resource.000", 0, "ab12724e078dea34b624e0d2a38dcd7c", 2159708},
 		AD_LISTEND},
-		Common::EN_ANY, Common::kPlatformWindows, ADGF_DEMO, GUIO_SQ6_DEMO },
+		Common::EN_ANY, Common::kPlatformWindows, ADGF_DEMO, GUIO3(GUIO_NOSPEECH, GUIO_NOLAUNCHLOAD, GUIO_NOASPECT) },
 
-	// Space Quest 6 - English Win3.1 Demo (from trembyle)
+	// Space Quest 6 - English Win3.11 Non-Interactive Demo (from trembyle)
 	// Found on Interactive Entertainment Episode 10 - Feb 1995
 	// Executable scanning reports "2.100.002"
 	{"sq6", "Demo", {

@@ -21,14 +21,13 @@
 
 #include "common/config-manager.h"
 #include "common/fs.h"
-#include "common/util.h"
 #include "graphics/macgui/macbutton.h"
-#include "graphics/macgui/macmenu.h"
 
 #include "director/director.h"
 #include "director/cast.h"
 #include "director/cursor.h"
 #include "director/channel.h"
+#include "director/debugger.h"
 #include "director/frame.h"
 #include "director/movie.h"
 #include "director/sound.h"
@@ -38,11 +37,10 @@
 #include "director/castmember/castmember.h"
 #include "director/castmember/digitalvideo.h"
 #include "director/castmember/text.h"
-#include "director/lingo/lingo.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-code.h"
-#include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-the.h"
+
 namespace Director {
 
 class Sprite;
@@ -466,7 +464,7 @@ Datum Lingo::getTheEntity(int entity, Datum &id, int field) {
 		d.u.s = score->getFrameLabel(score->getCurrentFrameNum());
 		break;
 	case kTheFrameScript:
-		d = score->_currentFrame->_actionId.member;
+		d = score->_currentFrame->_mainChannels.actionId.member;
 		break;
 	case kTheFramePalette:
 		d = score->getCurrentPalette();
@@ -1446,6 +1444,9 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			if (newColor != sprite->_backColor) {
 				sprite->_backColor = newColor;
 				channel->_dirty = true;
+
+				// Based on Director in a Nutshell, page 15
+				sprite->setAutoPuppet(kAPBackColor, true);
 			}
 		}
 		break;
@@ -1457,6 +1458,9 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 				sprite->_blendAmount = blend;
 				channel->_dirty = true;
 			}
+
+			// Based on Director in a Nutshell, page 15
+			sprite->setAutoPuppet(kAPBlend, true);
 		}
 		break;
 	case kTheCastNum:
@@ -1526,6 +1530,9 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 				sprite->_foreColor = newColor;
 				channel->_dirty = true;
 			}
+
+			// Based on Director in a Nutshell, page 15
+			sprite->setAutoPuppet(kAPForeColor, true);
 		}
 		break;
 	case kTheHeight:
@@ -1534,6 +1541,10 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			channel->setHeight(d.asInt());
 			channel->_dirty = true;
 		}
+
+		// Based on Director in a Nutshell, page 15
+		sprite->setAutoPuppet(kAPHeight, true);
+
 		break;
 	case kTheImmediate:
 		sprite->_immediate = (bool)d.asInt();
@@ -1543,6 +1554,10 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			sprite->_ink = static_cast<InkType>(d.asInt());
 			channel->_dirty = true;
 		}
+
+		// Based on Director in a Nutshell, page 15
+		sprite->setAutoPuppet(kAPInk, true);
+
 		break;
 	case kTheLineSize:
 		if (d.asInt() != sprite->_thickness) {
@@ -1567,6 +1582,10 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			}
 			channel->setPosition(d.asInt(), channel->_currentPoint.y);
 		}
+
+		// Based on Director in a Nutshell, page 15
+		sprite->setAutoPuppet(kAPLocH, true);
+
 		break;
 	case kTheLocV:
 		if (d.asInt() != channel->_currentPoint.y) {
@@ -1576,9 +1595,17 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			}
 			channel->setPosition(channel->_currentPoint.x, d.asInt());
 		}
+
+		// Based on Director in a Nutshell, page 15
+		sprite->setAutoPuppet(kAPLocV, true);
+
 		break;
 	case kTheMoveableSprite:
 		sprite->_moveable = (bool)d.asInt();
+
+		// Based on Director in a Nutshell, page 15
+		sprite->setAutoPuppet(kAPMoveable, true);
+
 		break;
 	case kTheMovieRate:
 		channel->_movieRate = d.asFloat();
@@ -1616,6 +1643,10 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			);
 			channel->_dirty = true;
 		}
+
+		// Based on Director in a Nutshell, page 15
+		sprite->setAutoPuppet(kAPRect, true);
+
 		break;
 	case kTheStartTime:
 		channel->_startTime = d.asInt();
@@ -1668,6 +1699,10 @@ void Lingo::setTheSprite(Datum &id1, int field, Datum &d) {
 			channel->setWidth(d.asInt());
 			channel->_dirty = true;
 		}
+
+		// Based on Director in a Nutshell, page 15
+		sprite->setAutoPuppet(kAPWidth, true);
+
 		break;
 	default:
 		warning("Lingo::setTheSprite(): Unprocessed setting field \"%s\" of sprite", field2str(field));
@@ -2020,6 +2055,14 @@ static const char *wday[] = {
 Datum Lingo::getTheDate(int field) {
 	TimeDate t;
 	g_system->getTimeAndDate(t);
+
+	if (g_director->_forceDate.tm_year != -1) {
+		// Override date portion
+		t.tm_year = g_director->_forceDate.tm_year;
+		t.tm_mon = g_director->_forceDate.tm_mon;
+		t.tm_wday = g_director->_forceDate.tm_wday;
+		t.tm_mday = g_director->_forceDate.tm_mday;
+	}
 
 	Common::String s;
 

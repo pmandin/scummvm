@@ -20,36 +20,31 @@
  */
 
 #include "common/system.h"
-#include "common/tokenizer.h"
 #include "common/translation.h"
 
 #include "director/types.h"
 #include "gui/message.h"
 
 #include "graphics/macgui/macwindowmanager.h"
-#include "graphics/macgui/macmenu.h"
 
 #include "director/director.h"
 #include "director/cast.h"
+#include "director/debugger.h"
 #include "director/frame.h"
 #include "director/movie.h"
 #include "director/score.h"
 #include "director/sound.h"
 #include "director/sprite.h"
-#include "director/cursor.h"
 #include "director/channel.h"
 #include "director/window.h"
 #include "director/stxt.h"
-#include "director/util.h"
 #include "director/castmember/castmember.h"
 #include "director/castmember/bitmap.h"
 #include "director/castmember/palette.h"
 #include "director/castmember/text.h"
-#include "director/lingo/lingo.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-code.h"
 #include "director/lingo/lingo-codegen.h"
-#include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-utils.h"
 
 #include "image/pict.h"
@@ -2612,7 +2607,7 @@ void LB::b_puppetSprite(int nargs) {
 }
 
 void LB::b_puppetTempo(int nargs) {
-	g_director->getCurrentMovie()->getScore()->_puppetTempo = g_lingo->pop().asInt();
+	g_director->getCurrentMovie()->getScore()->setPuppetTempo(g_lingo->pop().asInt());
 }
 
 void LB::b_puppetTransition(int nargs) {
@@ -3283,7 +3278,14 @@ void LB::b_scummvmassertequal(int nargs) {
 	Datum d2 = g_lingo->pop();
 	Datum d1 = g_lingo->pop();
 
-	int result = (d1 == d2);
+	int result;
+
+	if (d1.type == ARRAY && d2.type == ARRAY) {
+		result = LC::eqData(d1, d2).u.i;
+	} else {
+		result = (d1 == d2);
+	}
+
 	if (!result) {
 		warning("BUILDBOT: LB::b_scummvmassertequals: %s is not equal %s at line %d", d1.asString().c_str(), d2.asString().c_str(), line.asInt());
 	}

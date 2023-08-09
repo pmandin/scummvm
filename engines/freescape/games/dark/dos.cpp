@@ -22,6 +22,7 @@
 #include "common/file.h"
 
 #include "freescape/freescape.h"
+#include "freescape/games/dark/dark.h"
 #include "freescape/language/8bitDetokeniser.h"
 
 namespace Freescape {
@@ -33,6 +34,9 @@ void DarkEngine::initDOS() {
 		_viewArea = Common::Rect(40, 24, 279, 124);
 	else
 		error("Invalid or unknown render mode");
+
+	_maxEnergy = 79;
+	_maxShield = 79;
 }
 
 void DarkEngine::loadAssetsDOSDemo() {
@@ -49,7 +53,7 @@ void DarkEngine::loadAssetsDOSDemo() {
 		if (!file.isOpen())
 			error("Failed to open DSIDEE.EXE");
 		loadMessagesFixedSize(&file, 0x4525, 16, 27);
-		loadMessagesFixedSize(&file, 0x9959, 307, 5);
+		loadMessagesFixedSize(&file, 0x993f - 2, 308, 5);
 		loadFonts(&file, 0xa598);
 		loadGlobalObjects(&file, 0x3d04, 23);
 		load8bitBinary(&file, 0xa700, 16);
@@ -59,9 +63,9 @@ void DarkEngine::loadAssetsDOSDemo() {
 		for (auto &it : _areaMap) {
 			addWalls(it._value);
 			addECDs(it._value);
+			addSkanner(it._value);
 		}
 	} else if (_renderMode == Common::kRenderCGA) {
-		//loadBundledImages();
 		file.open("DSIDEC.EXE");
 
 		if (!file.isOpen())
@@ -70,6 +74,12 @@ void DarkEngine::loadAssetsDOSDemo() {
 		load8bitBinary(&file, 0x8a70, 4); // TODO
 	} else
 		error("Invalid or unsupported render mode %s for Dark Side", Common::getRenderModeDescription(_renderMode));
+
+	_indicators.push_back(loadBundledImage("dark_walk_indicator"));
+	_indicators.push_back(loadBundledImage("dark_jet_indicator"));
+
+	_indicators[0]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
+	_indicators[1]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
 }
 
 void DarkEngine::loadAssetsDOSFullGame() {
@@ -93,13 +103,12 @@ void DarkEngine::loadAssetsDOSFullGame() {
 		_border = load8bitBinImage(&file, 0x210);
 		_border->setPalette((byte *)&kEGADefaultPaletteData, 0, 16);
 
-		// TODO: load objects
 		for (auto &it : _areaMap) {
 			addWalls(it._value);
 			addECDs(it._value);
+			addSkanner(it._value);
 		}
 	} else if (_renderMode == Common::kRenderCGA) {
-		loadBundledImages();
 		file.open("DSIDEC.EXE");
 
 		if (!file.isOpen())
@@ -107,6 +116,14 @@ void DarkEngine::loadAssetsDOSFullGame() {
 		load8bitBinary(&file, 0x7bb0, 4); // TODO
 	} else
 		error("Invalid or unsupported render mode %s for Dark Side", Common::getRenderModeDescription(_renderMode));
+
+	_indicators.push_back(loadBundledImage("dark_fallen_indicator"));
+	_indicators.push_back(loadBundledImage("dark_crouch_indicator"));
+	_indicators.push_back(loadBundledImage("dark_walk_indicator"));
+	_indicators.push_back(loadBundledImage("dark_jet_indicator"));
+
+	for (auto &it : _indicators)
+		it->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
 }
 
 void DarkEngine::drawDOSUI(Graphics::Surface *surface) {
@@ -125,6 +142,7 @@ void DarkEngine::drawDOSUI(Graphics::Surface *surface) {
 	uint32 back = _gfx->_texturePixelFormat.ARGBToColor(0xFF, r, g, b);
 
 	int score = _gameStateVars[k8bitVariableScore];
+	int ecds = _gameStateVars[kVariableActiveECDs];
 	drawStringInSurface(Common::String::format("%04d", int(2 * _position.x())), 199, 137, front, back, surface);
 	drawStringInSurface(Common::String::format("%04d", int(2 * _position.z())), 199, 145, front, back, surface);
 	drawStringInSurface(Common::String::format("%04d", int(2 * _position.y())), 199, 153, front, back, surface);
@@ -132,6 +150,7 @@ void DarkEngine::drawDOSUI(Graphics::Surface *surface) {
 	drawStringInSurface(Common::String::format("%02d", int(_angleRotations[_angleRotationIndex])), 71, 168, front, back, surface);
 	drawStringInSurface(Common::String::format("%3d", _playerSteps[_playerStepIndex]), 71, 177, front, back, surface);
 	drawStringInSurface(Common::String::format("%07d", score), 95, 8, front, back, surface);
+	drawStringInSurface(Common::String::format("%3d%%", ecds), 192, 8, front, back, surface);
 
 	int seconds, minutes, hours;
 	getTimeFromCountdown(seconds, minutes, hours);
@@ -155,21 +174,24 @@ void DarkEngine::drawDOSUI(Graphics::Surface *surface) {
 
 	if (shield >= 0) {
 		Common::Rect shieldBar;
-		shieldBar = Common::Rect(72, 139, 151 - (k8bitMaxShield - shield), 146);
+		shieldBar = Common::Rect(72, 139, 151 - (_maxShield - shield), 146);
 		surface->fillRect(shieldBar, front);
 
-		shieldBar = Common::Rect(72, 140, 151 - (k8bitMaxShield - shield), 145);
+		shieldBar = Common::Rect(72, 140, 151 - (_maxShield - shield), 145);
 		surface->fillRect(shieldBar, blue);
 	}
 
 	if (energy >= 0) {
 		Common::Rect energyBar;
-		energyBar = Common::Rect(72, 147, 151 - (k8bitMaxEnergy - energy), 154);
+		energyBar = Common::Rect(72, 147, 151 - (_maxEnergy - energy), 154);
 		surface->fillRect(energyBar, front);
 
-		energyBar = Common::Rect(72, 148, 151 - (k8bitMaxEnergy - energy), 153);
+		energyBar = Common::Rect(72, 148, 151 - (_maxEnergy - energy), 153);
 		surface->fillRect(energyBar, blue);
 	}
+	uint32 clockColor = _gfx->_texturePixelFormat.ARGBToColor(0xFF, 0xFF, 0xFF, 0xFF);
+	drawBinaryClock(surface, 300, 124, clockColor, back);
+	drawIndicator(surface, 160, 136);
 }
 
 } // End of namespace Freescape

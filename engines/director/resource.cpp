@@ -34,9 +34,7 @@
 #include "director/cast.h"
 #include "director/movie.h"
 #include "director/score.h"
-#include "director/util.h"
 #include "director/window.h"
-#include "director/lingo/lingo.h"
 
 namespace Director {
 
@@ -332,6 +330,9 @@ Archive *DirectorEngine::loadEXE(const Common::Path &movie) {
 
 		if (result)
 			result->setPathName(movie.toString(g_director->_dirSeparator));
+		else {
+			delete exeStream;
+		}
 
 		return result;
 	}
@@ -731,7 +732,7 @@ int ProjectorArchive::listMembers(Common::ArchiveMemberList &list) const {
 	int count = 0;
 
 	for (FileMap::const_iterator i = _files.begin(); i != _files.end(); ++i) {
-		list.push_back(Common::ArchiveMemberList::value_type(new Common::GenericArchiveMember(i->_key, this)));
+		list.push_back(Common::ArchiveMemberList::value_type(new Common::GenericArchiveMember(i->_key, *this)));
 		++count;
 	}
 
@@ -744,7 +745,7 @@ const Common::ArchiveMemberPtr ProjectorArchive::getMember(const Common::Path &p
 	if (!hasFile(name))
 		return Common::ArchiveMemberPtr();
 
-	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name, this));
+	return Common::ArchiveMemberPtr(new Common::GenericArchiveMember(name, *this));
 }
 
 Common::SeekableReadStream *ProjectorArchive::createReadStreamForMember(const Common::Path &path) const {

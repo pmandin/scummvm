@@ -22,14 +22,6 @@
 #ifndef DIRECTOR_LINGO_LINGO_H
 #define DIRECTOR_LINGO_LINGO_H
 
-#include "common/hash-ptr.h"
-#include "common/hash-str.h"
-#include "common/str-array.h"
-#include "common/queue.h"
-#include "common/rect.h"
-
-#include "director/types.h"
-
 namespace Audio {
 class AudioStream;
 }
@@ -74,6 +66,8 @@ struct FuncDesc {
 };
 
 typedef Common::HashMap<void *, FuncDesc *> FuncHash;
+
+typedef Common::HashMap<Common::String, bool, Common::IgnoreCase_Hash, Common::IgnoreCase_EqualTo> MethodHash;
 
 struct BuiltinProto {
 	const char *name;

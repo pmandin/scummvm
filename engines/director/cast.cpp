@@ -23,19 +23,20 @@
 #include "common/file.h"
 #include "common/macresman.h"
 #include "common/memstream.h"
-#include "common/stream.h"
 #include "common/substream.h"
 
 #include "graphics/macgui/macfontmanager.h"
 #include "graphics/macgui/macwindowmanager.h"
+
+#include "video/qt_decoder.h"
 
 #include "director/director.h"
 #include "director/cast.h"
 #include "director/movie.h"
 #include "director/score.h"
 #include "director/sound.h"
+#include "director/sprite.h"
 #include "director/stxt.h"
-#include "director/util.h"
 #include "director/castmember/castmember.h"
 #include "director/castmember/bitmap.h"
 #include "director/castmember/digitalvideo.h"
@@ -47,8 +48,6 @@
 #include "director/castmember/sound.h"
 #include "director/castmember/text.h"
 #include "director/castmember/transition.h"
-#include "director/lingo/lingo.h"
-#include "director/lingo/lingo-object.h"
 
 namespace Director {
 
@@ -475,19 +474,6 @@ bool Cast::loadConfig() {
 }
 
 void Cast::loadCast() {
-	// Palette Information for D2; D3 and higher call this from the cast
-	if (_version < kFileVer300) {
-		Common::Array<uint16> clutList = _castArchive->getResourceIDList(MKTAG('C', 'L', 'U', 'T'));
-		for (uint i = 0; i < clutList.size(); i++) {
-			Common::SeekableReadStreamEndian *pal = _castArchive->getResource(MKTAG('C', 'L', 'U', 'T'), clutList[i]);
-
-			debugC(2, kDebugLoading, "****** Loading Palette CLUT, #%d", clutList[i]);
-			PaletteV4 palData = loadPalette(*pal, clutList[i]);
-			CastMemberID cid(clutList[i], DEFAULT_CAST_LIB);
-			g_director->addPalette(cid, palData.palette, palData.length);
-			delete pal;
-		}
-	}
 	Common::SeekableReadStreamEndian *r = nullptr;
 
 	// Font Directory
@@ -670,7 +656,13 @@ Common::String Cast::getVideoPath(int castId) {
 
 		res = directory + g_director->_dirSeparator + filename;
 	} else {
-		warning("STUB: Cast::getVideoPath(%d): unsupported non-zero MooV block", castId);
+		Video::QuickTimeDecoder qt;
+		qt.loadStream(videoData);
+		videoData = nullptr;
+		res = qt.getAliasPath();
+		if (res.empty()) {
+			warning("STUB: Cast::getVideoPath(%d): unsupported non-alias MooV block found", castId);
+		}
 	}
 	if (videoData)
 		delete videoData;
@@ -797,6 +789,8 @@ void Cast::loadCastDataVWCR(Common::SeekableReadStreamEndian &stream) {
 		case kCastPalette:
 			debugC(3, kDebugLoading, "Cast::loadCastDataVWCR(): CastTypes id: %d(%s) PaletteCastMember", id, numToCastNum(id));
 			_loadedCast->setVal(id, new PaletteCastMember(this, id, stream, _version));
+			// load the palette now, as there are no CastInfo structs
+			_loadedCast->getVal(id)->load();
 			break;
 		case kCastFilmLoop:
 			debugC(3, kDebugLoading, "Cast::loadCastDataVWCR(): CastTypes id: %d(%s) FilmLoopCastMember", id, numToCastNum(id));
@@ -817,6 +811,11 @@ void Cast::loadExternalSound(Common::SeekableReadStreamEndian &stream) {
 	str = g_director->getCurrentPath() + str;
 
 	Common::Path resPath = findPath(str, true, true, false);
+
+	if (resPath.empty()) {
+		warning("Cast::loadExternalSound: could not find external sound file %s", str.c_str());
+		return;
+	}
 
 	g_director->openArchive(resPath);
 }

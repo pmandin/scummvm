@@ -248,8 +248,8 @@ const Common::Array<Common::Array<ConditionalDialogue>> _nancy2ConditionalDialog
 const Common::Array<Goodbye> _nancy2Goodbyes = {
     { "NDA29", { { { 890, 891, 892, 893 }, {}, NOFLAG } } }, // Dwayne
     { "NRD35", { { { 791, 792, 793, 794 }, {}, NOFLAG } } }, // Rick
-    { "NPR16", { { { 391, 392, 393 }, {}, NOFLAG } } },      // Millie
-    { "NLR18", { { { 590, 591, 592 }, {}, NOFLAG } } },      // Lillian
+    { "NPR16", { { { 391, 392, 394 }, {}, NOFLAG } } },      // Millie
+    { "NLR18", { { { 590, 591, 593 }, {}, NOFLAG } } },      // Lillian
     { "NPR16", { { { 3090, 3092, 3093 }, {}, NOFLAG } } },   // Ned
     { "NBES86", { { { 3190 }, {}, NOFLAG } } },              // Bess
     { "NGEO90", { { { 3290 }, {}, NOFLAG } } },              // George
@@ -406,8 +406,10 @@ const Common::Array<Common::Array<const char *>> _nancy2GoodbyeTexts = {
     "Listen, I gotta' go, Rick. Be careful, Okay?<h>", // NRD35
     "I should get back to the set. Goodbye!<h>", //  NPR16
     "Well, I'll let you get back to your business.<h>", // NLR18
+    "I should get back to the set. Goodbye!<h>", //  NPR16
     "I'll talk to you later. Bye!<h>", // NBES86
     "Talk to you later.<h>", // NGEO90
+	"", // No goodbye, empty string
     "Well, I'll see you later, Mattie.<h>", // NMD32
 },
 {   // Russian
@@ -415,8 +417,10 @@ const Common::Array<Common::Array<const char *>> _nancy2GoodbyeTexts = {
 	"Rik, mne nugno idti. Bud%te ostorogn=.<h>",
 	"Mne pora. Poka!<h>",
 	"Ne budu vas zadergivat%.<h>",
+	"Mne pora. Poka!<h>",
 	"Pohovorim pozge. Poka!<h>",
 	"Y pozvony pozge.<h>",
+	"", // No goodbye, empty string
 	"Do vstreqi, M&tti.<h>"
 }
 };

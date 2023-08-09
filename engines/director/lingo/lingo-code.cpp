@@ -46,18 +46,15 @@
 #include "graphics/macgui/mactext.h"
 
 #include "director/director.h"
+#include "director/debugger.h"
 #include "director/movie.h"
 #include "director/score.h"
 #include "director/sprite.h"
 #include "director/window.h"
-#include "director/cursor.h"
 #include "director/channel.h"
-#include "director/util.h"
 #include "director/castmember/castmember.h"
-#include "director/lingo/lingo.h"
 #include "director/lingo/lingo-builtins.h"
 #include "director/lingo/lingo-code.h"
-#include "director/lingo/lingo-object.h"
 #include "director/lingo/lingo-the.h"
 
 namespace Director {
@@ -247,7 +244,11 @@ void Lingo::pushContext(const Symbol funcSym, bool allowRetVal, Datum defaultRet
 
 	_state->script = funcSym.u.defn;
 
-	_state->me = funcSym.target;
+	// Do not set the context for anonymous functions that are called from factory
+	// ie something like b_do(), which is called from mNew() should have access to instance
+	// variables, thus it is in same context as the caller.
+	if (!(funcSym.anonymous && _state->me.type == OBJECT && _state->me.u.obj->getObjType() & (kFactoryObj | kScriptObj)))
+		_state->me = funcSym.target;
 
 	if (funcSym.ctx) {
 		_state->context = funcSym.ctx;
@@ -1271,6 +1272,16 @@ Datum LC::compareArrays(Datum (*compareFunc)(Datum, Datum), Datum d1, Datum d2, 
 			b = value ? t.v : t.p;
 		}
 
+		// Special case, we can retrieve symbolic key by giving their string representation, ie
+		// for arr [a: "abc", "b": "def"], both getProp(arr, "a") and getProp(arr, #a) will return "abc",
+		// vice-versa is also true, ie getProp(arr, "b") and getProp(arr, #b) will return "def"
+		if (a.type == SYMBOL && b.type == STRING) {
+			a = Datum(a.asString());
+		} else if (a.type == STRING && b.type == SYMBOL) {
+            b = Datum(b.asString());
+        }
+
+
 		res = compareFunc(a, b);
 		if (!location) {
 			if (res.u.i == 0) {
@@ -1645,6 +1656,11 @@ void LC::call(const Symbol &funcSym, int nargs, bool allowRetVal) {
 			// Pushing an entire stack frame is not necessary
 			Datum retMe = g_lingo->_state->me;
 			g_lingo->_state->me = target;
+
+			// WORKAROUND: m_Perform needs to know if value should be returned or not (to create a new context frames for handles)
+			if (funcSym.name->equals("perform"))
+				g_lingo->push(Datum(allowRetVal));
+
 			(*funcSym.u.bltin)(nargs);
 			g_lingo->_state->me = retMe;
 		} else {

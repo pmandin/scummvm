@@ -41,7 +41,10 @@ void ActionManager::handleInput(NancyInput &input) {
 			rec->handleInput(input);
 		}
 
-		if (rec->_isActive && rec->_hasHotspot && NancySceneState.getViewport().convertViewportToScreen(rec->_hotspot).contains(input.mousePos)) {
+		if (	rec->_isActive &&
+				rec->_hasHotspot &&
+				rec->_hotspot.isValidRect() && // Needed for nancy2 scene 1600
+				NancySceneState.getViewport().convertViewportToScreen(rec->_hotspot).contains(input.mousePos)) {
 			g_nancy->_cursorManager->setCursorType(rec->getHoverCursor());
 
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
@@ -74,8 +77,10 @@ void ActionManager::handleInput(NancyInput &input) {
 
 							NancySceneState.setHeldItem(-1);
 						}
+
+						rec->_cursorDependency = nullptr;
 					}
-					
+
 				}
 
 				break;
@@ -106,7 +111,7 @@ bool ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
 	// If the localChunkSize is less than the total data, there must be dependencies at the end of the chunk
 	uint16 depsDataSize = (uint16)inputData.size() - localChunkSize;
 	if (depsDataSize > 0) {
-		// Each dependency is 12 (up to nancy2) or 16 (nancy3 and up) bytes long 
+		// Each dependency is 12 (up to nancy2) or 16 (nancy3 and up) bytes long
 		uint singleDepSize = g_nancy->getGameType() <= kGameTypeNancy2 ? 12 : 16;
 		uint numDependencies = depsDataSize / singleDepSize;
 		if (depsDataSize % singleDepSize) {
@@ -116,7 +121,7 @@ bool ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
 				_records.size(),
 				newRecord->_description.c_str());
 		}
-		
+
 		if (numDependencies == 0) {
 			newRecord->_dependencies.satisfied = true;
 		}
@@ -165,12 +170,12 @@ bool ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
 			case DependencyType::kCloseParenthesis:
 				depStack.top()->children.pop_back();
 				depStack.pop();
-				break;			
+				break;
 			default:
 				if (dep.hours != -1 || dep.minutes != -1 || dep.seconds != -1) {
 					dep.timeData = ((dep.hours * 60 + dep.minutes) * 60 + dep.seconds) * 1000 + dep.milliseconds;
 				}
-				
+
 				break;
 			}
 		}
@@ -271,7 +276,7 @@ void ActionManager::processDependency(DependencyRecord &dep, ActionRecord &recor
 				}
 			} else {
 				dep.satisfied = NancySceneState.getLogicCondition(dep.label, dep.condition);
-			}			
+			}
 
 			break;
 		case DependencyType::kElapsedGameTime:
@@ -371,15 +376,10 @@ void ActionManager::processDependency(DependencyRecord &dep, ActionRecord &recor
 					}
 				}
 
-				if (isSatisfied) {
-					dep.satisfied = true;
-					record._cursorDependency = nullptr;
-				} else {
-					dep.satisfied = false;
-					record._cursorDependency = &dep;
-				}
+				dep.satisfied = isSatisfied;
+				record._cursorDependency = &dep;
 			}
-			
+
 			break;
 		}
 		case DependencyType::kPlayerTOD:

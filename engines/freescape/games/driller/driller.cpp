@@ -74,44 +74,22 @@ DrillerEngine::DrillerEngine(OSystem *syst, const ADGameDescription *gd) : Frees
 	_initialJetEnergy = 29;
 	_initialJetShield = 34;
 
+	_maxEnergy = 63;
+	_maxShield = 63;
+
 	Math::Vector3d drillBaseOrigin = Math::Vector3d(0, 0, 0);
 	Math::Vector3d drillBaseSize = Math::Vector3d(3, 2, 3);
 	_drillBase = new GeometricObject(kCubeType, 0, 0, drillBaseOrigin, drillBaseSize, nullptr, nullptr, FCLInstructionVector(), "");
 	assert(!_drillBase->isDestroyed() && !_drillBase->isInvisible());
 
 	if (isDemo()) {
-		_demoMode = !_disableDemoMode; // All the driller demos are non-interactive
+		_demoMode = !_disableDemoMode; // Most of the driller demos are non-interactive
 		_angleRotationIndex = 0;
 	}
 }
 
 DrillerEngine::~DrillerEngine() {
 	delete _drillBase;
-}
-
-void DrillerEngine::titleScreen() {
-	if (isAmiga() || isAtariST()) // TODO: implement these with their own animations
-		return;
-
-	if (_title) {
-		drawTitle();
-		_gfx->flipBuffer();
-		g_system->updateScreen();
-		g_system->delayMillis(3000);
-		_gfx->clear(0, 0, 0, true);
-	}
-}
-void DrillerEngine::borderScreen() {
-	if (isAmiga() || isAtariST()) // TODO: implement these with their own animations
-		return;
-
-	if (_border) {
-		drawBorder();
-		_gfx->flipBuffer();
-		g_system->updateScreen();
-		g_system->delayMillis(3000);
-		_gfx->clear(0, 0, 0, true);
-	}
 }
 
 void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
@@ -204,7 +182,7 @@ void DrillerEngine::loadAssetsFullGame() {
 	*/
 
 	FCLInstructionVector instructions;
-	Common::Array<uint8> conditionArray;
+	Common::Array<uint16> conditionArray;
 
 	conditionArray.push_back(0xb);
 	conditionArray.push_back(0x20);
@@ -217,10 +195,6 @@ void DrillerEngine::loadAssetsFullGame() {
 	debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
 	_areaMap[18]->_conditions.push_back(instructions);
 	_areaMap[18]->_conditionSources.push_back(conditionSource);
-}
-
-void DrillerEngine::processBorder() {
-	FreescapeEngine::processBorder();
 }
 
 void DrillerEngine::drawInfoMenu() {
@@ -269,7 +243,7 @@ void DrillerEngine::drawInfoMenu() {
 
 	switch (_drillStatusByArea[_currentArea->getAreaID()]) {
 		case kDrillerNoRig:
-			rigStatus = "Unpositioned";
+			rigStatus = _currentArea->_gasPocketRadius > 0 ? "Unpositioned" : "Not required";
 			gasFound = "-";
 			perTapped = "-";
 			gasTapped = "-";
@@ -309,10 +283,7 @@ void DrillerEngine::drawInfoMenu() {
 	} else if (isAmiga() || isAtariST())
 		drawStringInSurface("press any key to continue", 66, 97, front, black, surface);
 
-	_uiTexture->update(surface);
-	_gfx->setViewport(_fullscreenViewArea);
-	_gfx->drawTexturedRect2D(_fullscreenViewArea, _fullscreenViewArea, _uiTexture);
-	_gfx->setViewport(_viewArea);
+	drawFullscreenSurface(surface);
 
 	_gfx->flipBuffer();
 	g_system->updateScreen();
@@ -711,6 +682,7 @@ void DrillerEngine::removeDrill(Area *area) {
 void DrillerEngine::initGameState() {
 	_flyMode = false;
 	_noClipMode = false;
+	_playerWasCrushed = false;
 	_shootingFrames = 0;
 	_underFireFrames = 0;
 	_yaw = 0;
@@ -874,6 +846,40 @@ bool DrillerEngine::onScreenControls(Common::Point mouse) {
 	return false;
 }
 
+void DrillerEngine::drawSensorShoot(Sensor *sensor) {
+	Math::Vector3d target;
+	target = _position;
+	target.y() = target.y() - _playerHeight;
+	target.x() = target.x() - 5;
+	_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+
+	target = _position;
+	target.y() = target.y() - _playerHeight;
+	target.x() = target.x() + 5;
+	_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+
+	target = _position;
+	target.y() = target.y() + _playerHeight;
+	target.x() = target.x() - 5;
+	_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+
+	target = _position;
+	target.y() = target.y() + _playerHeight;
+	target.x() = target.x() + 5;
+	_gfx->renderSensorShoot(1, sensor->getOrigin(), target, _viewArea);
+}
+
+void DrillerEngine::updateTimeVariables() {
+	int seconds, minutes, hours;
+	getTimeFromCountdown(seconds, minutes, hours);
+
+	if (_lastMinute != minutes) {
+		_lastMinute = minutes;
+		_gameStateVars[0x1e] += 1;
+		_gameStateVars[0x1f] += 1;
+		executeLocalGlobalConditions(false, true, false); // Only execute "on collision" room/global conditions
+	}
+}
 
 Common::Error DrillerEngine::saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave) {
 	for (auto &it : _areaMap) { // All but skip area 255

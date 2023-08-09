@@ -314,8 +314,15 @@ void DrillerEngine::loadAssetsDOSFullGame() {
 		loadGlobalObjects(&file, 0x1fa2, 8);
 		_border = load8bitBinImage(&file, 0x210);
 		_border->setPalette((byte*)&kCGAPalettePinkBlueWhiteData, 0, 4);
+		swapPalette(1);
 	} else
 		error("Unsupported video mode for DOS");
+
+	_indicators.push_back(loadBundledImage("driller_tank_indicator"));
+	_indicators.push_back(loadBundledImage("driller_ship_indicator"));
+
+	_indicators[0]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
+	_indicators[1]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
 }
 
 void DrillerEngine::loadAssetsDOSDemo() {
@@ -342,11 +349,17 @@ void DrillerEngine::loadAssetsDOSDemo() {
 	_border = load8bitDemoImage(&file, 0x6220);
 	_border->setPalette((byte*)&kCGAPalettePinkBlueWhiteData, 0, 4);
 
-	// Fixed for a corrupted area names in the demo data
+	// Fixes corrupted area names in the demo data
 	_areaMap[2]->_name = "LAPIS LAZULI";
 	_areaMap[3]->_name = "EMERALD";
 	_areaMap[8]->_name = "TOPAZ";
 	file.close();
+
+	_indicators.push_back(loadBundledImage("driller_tank_indicator"));
+	_indicators.push_back(loadBundledImage("driller_ship_indicator"));
+
+	_indicators[0]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
+	_indicators[1]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
 }
 
 void DrillerEngine::drawDOSUI(Graphics::Surface *surface) {
@@ -419,6 +432,11 @@ void DrillerEngine::drawDOSUI(Graphics::Surface *surface) {
 		Common::Rect shieldBar(87 - shield, 177, 88, 183);
 		surface->fillRect(shieldBar, front);
 	}
+
+	if (!_flyMode)
+		surface->copyRectToSurface(*_indicators[0], 132, 128, Common::Rect(_indicators[0]->w, _indicators[0]->h));
+	else
+		surface->copyRectToSurface(*_indicators[1], 132, 128, Common::Rect(_indicators[1]->w, _indicators[1]->h));
 }
 
 } // End of namespace Freescape

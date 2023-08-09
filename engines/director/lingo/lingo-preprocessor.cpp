@@ -117,6 +117,9 @@ Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code,
 		if (*s == '"')
 			inString = !inString;
 
+		if (*s == '\r' || *s == '\n') // Lingo does not allow multiline strings
+			inString = false;
+
 		if (!inString && *s == '-' && *(s + 1) == '-') { // At the end of the line we will have \0
 			while (*s && *s != '\r' && *s != '\n')
 				s++;
@@ -248,6 +251,36 @@ Common::U32String LingoCompiler::codePreprocessor(const Common::U32String &code,
 	res += '\n';
 
 	debugC(2, kDebugParse | kDebugPreprocess, "#############\n%s\n#############", res.encode().c_str());
+
+	return res;
+}
+
+MethodHash LingoCompiler::prescanMethods(const Common::U32String &code) {
+	const Common::u32char_type_t *s = code.c_str();
+	Common::U32String line, tok;
+	MethodHash res;
+
+	const Common::U32String macro("macro"), on("on"), method("method");
+
+	while (*s) {
+		line.clear();
+
+		// Get next line
+		while (*s && *s != '\n')
+			line += tolower(*s++);
+
+		const Common::u32char_type_t *contLine;
+		tok = nexttok(line.c_str(), &contLine);
+
+		if ((tok.equals(macro) || tok.equals(on) || tok.equals(method)) && *contLine != 0) {
+			Common::U32String methodname = nexttok(contLine);
+
+			res[methodname] = true;
+		}
+
+		if (*s)
+			s++;	// Newline symbol
+	}
 
 	return res;
 }

@@ -178,7 +178,7 @@ void Textbox::drawTextbox() {
 
 		// Simply remove telephone end token
 		if (currentLine.hasSuffix(_telephoneEndToken)) {
-			currentLine = currentLine.substr(0, currentLine.size() - ARRAYSIZE(_telephoneEndToken) + 1);
+			currentLine.erase(currentLine.size() - ARRAYSIZE(_telephoneEndToken) + 1, String::npos);
 		}
 
 		// Remove hotspot tokens and mark that we need to calculate the bounds
@@ -206,8 +206,19 @@ void Textbox::drawTextbox() {
 			colorTokens.push(newLinePos);
 
 			newLinePos = currentLine.find(_colorEndToken);
-			currentLine.erase(newLinePos, ARRAYSIZE(_colorEndToken) - 1);
+
+			if (newLinePos != Common::String::npos) {
+				currentLine.erase(newLinePos, ARRAYSIZE(_colorEndToken) - 1);
+			} else {
+				// If we find no color end token we assume the whole line needs to be colored
+				newLinePos = currentLine.size();
+			}
 			colorTokens.push(newLinePos);
+		}
+
+		// A closing color token may appear without an open one. This happens in nancy4's intro
+		while (newLinePos = currentLine.find(_colorEndToken), newLinePos != String::npos) {
+			currentLine.erase(newLinePos, ARRAYSIZE(_colorEndToken) - 1);
 		}
 
 		// Do word wrapping on the text, sans tokens
@@ -228,7 +239,7 @@ void Textbox::drawTextbox() {
 		bool isColor = false;
 		for (Common::String &line : wrappedLines) {
 			uint horizontalOffset = 0;
-			
+
 			// Trim whitespaces at end of wrapped lines to make counting
 			// of characters consistent. We do this manually since we _want_
 			// some whitespaces at the beginning of a line (e.g. tabs)
@@ -247,7 +258,7 @@ void Textbox::drawTextbox() {
 				if (colorTokens.size()) {
 					// Text contains color part
 
-					if (totalCharsDrawn == colorTokens.front()) {
+					if (totalCharsDrawn >= colorTokens.front()) {
 						// Token is at begginning of (what's left of) the current line
 						isColor = !isColor;
 						colorTokens.pop();
@@ -270,7 +281,7 @@ void Textbox::drawTextbox() {
 												tbox->firstLineOffset - font->getFontHeight() + _numLines * lineDist,
 												maxWidth,
 												isColor);
-				
+
 				// Then, draw the highlight
 				if (hasHotspot) {
 					highlightFont->drawString(	&_textHighlightSurface,
@@ -381,7 +392,7 @@ void Textbox::onScrollbarMove() {
 uint16 Textbox::getInnerHeight() const {
 	TBOX *tbox = g_nancy->_textboxData;
 	assert(tbox);
-	
+
 	// These calculations are _almost_ correct, but off by a pixel sometimes
 	uint lineDist = tbox->lineHeight + tbox->lineHeight / 4;
 	if (g_nancy->getGameType() == kGameTypeVampire) {

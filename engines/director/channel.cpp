@@ -22,11 +22,9 @@
 #include "director/director.h"
 #include "director/movie.h"
 #include "director/score.h"
-#include "director/cursor.h"
 #include "director/cast.h"
 #include "director/channel.h"
 #include "director/sprite.h"
-#include "director/types.h"
 #include "director/window.h"
 #include "director/castmember/castmember.h"
 #include "director/castmember/bitmap.h"
@@ -34,6 +32,7 @@
 #include "director/castmember/filmloop.h"
 
 #include "graphics/macgui/mactext.h"
+#include "graphics/macgui/mactextwindow.h"
 #include "graphics/macgui/macbutton.h"
 
 namespace Director {
@@ -100,8 +99,13 @@ Channel& Channel::operator=(const Channel &channel) {
 
 
 Channel::~Channel() {
-	if (_widget)
-		delete _widget;
+	if (_widget) {
+		if (dynamic_cast<Graphics::MacWindow *>(_widget))
+			g_director->_wm->removeWindow((Graphics::MacWindow *)_widget);
+		else
+			delete _widget;
+	}
+
 	if (_mask)
 		delete _mask;
 	if (_sprite)
@@ -366,10 +370,8 @@ void Channel::setCast(CastMemberID memberID) {
 	_height = _sprite->_height;
 	replaceWidget();
 
-	if (!_sprite->_puppet) {
-		// Based on Director in a Nutshell, page 15
-		_sprite->_autoPuppet = true;
-	}
+	// Based on Director in a Nutshell, page 15
+	_sprite->setAutoPuppet(kAPCast, true);
 }
 
 void Channel::setClean(Sprite *nextSprite, int spriteId, bool partial) {
@@ -548,10 +550,8 @@ void Channel::setWidth(int w) {
 		return;
 	_width = MAX<int>(w, 0);
 
-	if (!_sprite->_puppet) {
-		// Based on Director in a Nutshell, page 15
-		_sprite->_autoPuppet = true;
-	}
+	// Based on Director in a Nutshell, page 15
+	_sprite->setAutoPuppet(kAPWidth, true);
 }
 
 void Channel::setHeight(int h) {
@@ -559,10 +559,8 @@ void Channel::setHeight(int h) {
 		return;
 	_height = MAX<int>(h, 0);
 
-	if (!_sprite->_puppet) {
-		// Based on Director in a Nutshell, page 15
-		_sprite->_autoPuppet = true;
-	}
+	// Based on Director in a Nutshell, page 15
+	_sprite->setAutoPuppet(kAPHeight, true);
 }
 
 void Channel::setBbox(int l, int t, int r, int b) {
@@ -581,10 +579,8 @@ void Channel::setBbox(int l, int t, int r, int b) {
 	if (_width <= 0 || _height <= 0)
 		_width = _height = 0;
 
-	if (!_sprite->_puppet) {
-		// Based on Director in a Nutshell, page 15
-		_sprite->_autoPuppet = true;
-	}
+	// Based on Director in a Nutshell, page 15
+	_sprite->setAutoPuppet(kAPBbox, true);
 }
 
 void Channel::setPosition(int x, int y, bool force) {
@@ -595,11 +591,10 @@ void Channel::setPosition(int x, int y, bool force) {
 		newPos.y = MIN(constraintBbox.bottom, MAX(constraintBbox.top, newPos.y));
 	}
 	_currentPoint = newPos;
+	_sprite->_startPoint = _currentPoint;
 
-	if (!_sprite->_puppet) {
-		// Based on Director in a Nutshell, page 15
-		_sprite->_autoPuppet = true;
-	}
+	// Based on Director in a Nutshell, page 15
+	_sprite->setAutoPuppet(kAPLoc, true);
 }
 
 // here is the place for deciding whether the widget can be keep or not
@@ -629,7 +624,11 @@ void Channel::replaceWidget(CastMemberID previousCastId, bool force) {
 	}
 
 	if (_widget) {
-		delete _widget;
+		// Check if _widget is of type window, in which case we need to remove it from the window manager
+		if (dynamic_cast<Graphics::MacWindow *>(_widget))
+			g_director->_wm->removeWindow((Graphics::MacWindow *)_widget);
+		else
+			delete _widget;
 		_widget = nullptr;
 	}
 
@@ -721,6 +720,10 @@ int Channel::getMouseLine(int x, int y) {
 		warning("Channel::getMouseLine getting mouse line on a non-existing widget");
 		return -1;
 	}
+
+	// If widget is type textWindow, then we need to get the line from the window
+	if (dynamic_cast<Graphics::MacTextWindow *>(_widget))
+		return ((Graphics::MacTextWindow *)_widget)->getMouseLine(x, y);
 
 	return ((Graphics::MacText *)_widget)->getMouseLine(x, y);
 }

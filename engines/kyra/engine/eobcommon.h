@@ -835,9 +835,12 @@ protected:
 	Screen::FontId _invFont2;
 	Screen::FontId _invFont3;
 	Screen::FontId _invFont4;
+	Screen::FontId _invFont5;
+	Screen::FontId _invFont6;
 	Screen::FontId _conFont;
 	Screen::FontId _titleFont;
 	Screen::FontId _bookFont;
+	Screen::FontId _hpStatFont;
 	const uint8 **_compassShapes;
 	uint8 _charExchangeSwap;
 	uint8 *_swapShape;
@@ -1280,6 +1283,10 @@ protected:
 
 	// keymap
 	static const char *const kKeymapName;
+
+private:
+	void printStringIntern_statsPage(const char *str, int x, int y, int col);
+	void printStringIntern_spellBook(const char *str, int x, int y, int col1, int col2);
 };
 
 } // End of namespace Kyra

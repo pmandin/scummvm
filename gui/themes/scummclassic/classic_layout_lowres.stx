@@ -39,6 +39,7 @@
 
 		<def var = 'SaveLoadChooser.ExtInfo.Visible' value = '0'/>
 		<def var = 'RecorderDialog.ExtInfo.Visible' value = '0'/>
+		<def var = 'ImageAlbum.ImageInset' value = '16' scalable = 'yes' />
 
 		<def var = 'OnScreenDialog.ShowPics' value = '0'/>
 
@@ -85,9 +86,6 @@
 		/>
 
 		<widget name = 'Slider'
-				size = '85, 12'
-		/>
-		<widget name = 'WideSlider'
 				size = '-1, 12'
 		/>
 		<widget name = 'PopUp'
@@ -742,6 +740,11 @@
 				/>
 			</layout>
 			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '6' align = 'center'>
+				<widget name = 'DisableBDFScaling'
+						type = 'Checkbox'
+				/>
+			</layout>
+			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '6' align = 'center'>
 				<widget name = 'UseSystemDialogs'
 						type = 'Checkbox'
 				/>
@@ -1131,7 +1134,7 @@
 					height = 'Globals.Line.Height'
 			/>
 			<space size = '4' />
-			
+
 			<widget name = 'OpenLinkButton'
 					width = '160'
 					height = 'Globals.Line.Height'
@@ -2164,6 +2167,34 @@
 						type = 'Button'
 				/>
 				<widget name = 'Host'
+						type = 'Button'
+				/>
+			</layout>
+		</layout>
+	</dialog>
+
+	<dialog name = 'ImageAlbum' overlays = 'screen' inset = '8' shading = 'dim'>
+		<layout type = 'vertical' padding = '8, 8, 8, 8' align = 'center'> 
+			<widget name = 'Title' height = 'Globals.Line.Height'/>
+			<widget name = 'ImageContainer' />
+			<layout type = 'horizontal' padding = '0, 0, 16, 0'>
+				<widget name = 'Prev'
+						type = 'Button'
+				/>
+				<widget name = 'ImageNumber'
+					width = '50'
+					height = 'Globals.Line.Height'
+					textalign = 'center'
+					/>
+				<widget name = 'Next'
+						type = 'Button'
+				/>
+				<space/>
+				<widget name = 'Save'
+						type = 'Button'
+				/>
+				<space size = '16'/>
+				<widget name = 'Close'
 						type = 'Button'
 				/>
 			</layout>

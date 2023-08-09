@@ -250,6 +250,34 @@ static const ADGameDescription gameDescriptions[] = {
 	},
 	{
 		"driller",
+		"Demo",
+		{
+			{"driller", 0, "ff9b84a6526de87a301f7aba5c2d87d9", 164736},
+			{"data", 0, "6add87a10042d0a9fd32c62ed56b7690", 24220},
+			{"demo.cmd", 0, "247601bec1bfa858955749364c876609", 4096},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmiga,
+		ADGF_DEMO | GF_AMIGA_MAGAZINE_DEMO,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
+		"Demo",
+		{
+			{"auto_x.prg", 0, "14388ba3cfd222938e5e48f0e316b335", 158919},
+			{"data", 0, "6add87a10042d0a9fd32c62ed56b7690", 24220},
+			{"demo.cmd", 0, "7b90427c5c3c4bbb42d14076af994d50", 4096},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAtariST,
+		ADGF_DEMO | GF_ATARI_MAGAZINE_DEMO,
+		GUIO2(GUIO_NOMIDI, GAMEOPTION_AUTOMATIC_DRILLING)
+	},
+	{
+		"driller",
 		"Rolling Demo",
 		{
 			{"x.prg", 0, "cf96e25a11bee1b57258c2fc0b315699", 157143},
@@ -289,6 +317,34 @@ static const ADGameDescription gameDescriptions[] = {
 		ADGF_UNSTABLE,
 		GUIO1(GUIO_NOMIDI)
 	},
+	// Cinemaware release
+	{
+		"darkside",
+		"",
+		{
+			{"0.DRK", 0, "e237ae052a85ff92e70bd3528442e1e4", 78298},
+			{"1.DRK", 0, "9e700d991054f4393b1ccef706586b5b", 223272},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAtariST,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOMIDI)
+	},
+	// Stampede Amiga, Issue 1, July 1990
+	{
+		"darkside",
+		"",
+		{
+			{"DARKSIDE", 0, "5cf22e88959284097790189cf05b1862", 84004},
+			{"1.DRK", 0, "49cc73a5ca7adb26065286a7afd4d0a4", 280704},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformAmiga,
+		ADGF_UNSTABLE,
+		GUIO1(GUIO_NOMIDI)
+	},
 	{
 		"darkside",
 		"",
@@ -297,6 +353,36 @@ static const ADGameDescription gameDescriptions[] = {
 			{"DSIDEC.EXE", 0, "31e6c169d9270b6de8c1c2e746ac238e", 49504},
 			{"DSIDEH.EXE", 0, "5e18e0746647bd04f43b9db24b6a036d", 53232},
 			{"DSIDEE.EXE", 0, "524281f7d2dc49e0a41fcb1d38ee2559", 56800},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_UNSTABLE,
+		GUIO3(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA)
+	},
+	{
+		"darkside",
+		"",
+		{
+			{"DARKSIDE.EXE", 0, "477c8249665c00e001a84f94911b5960", 21325},
+			{"DSIDEC.EXE", 0, "d4d443777411d6141e94bbf464914251", 49504},
+			{"DSIDEE.EXE", 0, "9d9ba99a8b7c1ae49f9cc328bfa862dd", 56800},
+			{"DSIDEH.EXE", 0, "7764dadc5a0baf0960e9323a8629e321", 53232},
+			AD_LISTEND
+		},
+		Common::EN_ANY,
+		Common::kPlatformDOS,
+		ADGF_UNSTABLE,
+		GUIO3(GUIO_NOMIDI, GUIO_RENDEREGA, GUIO_RENDERCGA)
+	},
+	{
+		"darkside",
+		"",
+		{
+			{"DARKSIDE.EXE", 0, "5a936e23a890f4a96b6fdd865bd1f4a5", 20905},
+			{"DSIDEC.EXE", 0, "31e6c169d9270b6de8c1c2e746ac238e", 49504},
+			{"DSIDEE.EXE", 0, "524281f7d2dc49e0a41fcb1d38ee2559", 56800},
+			{"DSIDEH.EXE", 0, "5e18e0746647bd04f43b9db24b6a036d", 53232},
 			AD_LISTEND
 		},
 		Common::EN_ANY,
@@ -414,7 +500,7 @@ static const ADGameDescription gameDescriptions[] = {
 	// Stampede Amiga, Issue 1, July 1990
 	{
 		"castlemaster",
-		"Demo",
+		"",
 		{
 			{"cm", 0, "b7e713a0742fa09aa81c9606bbbba4af", 4068},
 			{"x", 0, "c8c811439da0cf8a193e35feb5b5c6dc", 353388},
@@ -422,7 +508,7 @@ static const ADGameDescription gameDescriptions[] = {
 		},
 		Common::EN_ANY,
 		Common::kPlatformAmiga,
-		ADGF_UNSTABLE | ADGF_DEMO,
+		ADGF_UNSTABLE,
 		GUIO1(GUIO_NOMIDI)
 	},
 	{

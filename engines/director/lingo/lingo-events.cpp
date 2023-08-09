@@ -20,6 +20,7 @@
  */
 
 #include "director/director.h"
+#include "director/debugger.h"
 #include "director/lingo/lingo.h"
 #include "director/lingo/lingo-code.h"
 #include "director/lingo/lingo-object.h"
@@ -161,7 +162,7 @@ void Movie::queueFrameEvent(Common::Queue<LingoEvent> &queue, LEvent event, int 
 	// } else {
 
 	assert(_score->_currentFrame != nullptr);
-	CastMemberID scriptId = _score->_currentFrame->_actionId;
+	CastMemberID scriptId = _score->_currentFrame->_mainChannels.actionId;
 	if (!scriptId.member)
 		return;
 
@@ -169,9 +170,13 @@ void Movie::queueFrameEvent(Common::Queue<LingoEvent> &queue, LEvent event, int 
 	if (!script)
 		return;
 
+	// Scopeless statements (ie one lined lingo commands) are executed at enterFrame
+	// A score script can have both scopeless and scoped lingo. (eg. porting from D3.1 to D4)
 	if (event == kEventEnterFrame && script->_eventHandlers.contains(kEventGeneric)) {
-		queue.push(LingoEvent(kEventGeneric, eventId, kScoreScript, scriptId, false, 0));
-	} else if (script->_eventHandlers.contains(event)) {
+		queue.push(LingoEvent(kEventGeneric, eventId, kScoreScript, scriptId, true, 0));
+	}
+
+	if (script->_eventHandlers.contains(event)) {
 		queue.push(LingoEvent(event, eventId, kScoreScript, scriptId, false, 0));
 	}
 }

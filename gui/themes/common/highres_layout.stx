@@ -47,6 +47,7 @@
 
 		<def var = 'SaveLoadChooser.ExtInfo.Visible' value = '1'/>
 		<def var = 'RecorderDialog.ExtInfo.Visible' value = '1'/>
+		<def var = 'ImageAlbum.ImageInset' value = '16' scalable = 'yes' />
 
 		<def var = 'OnScreenDialog.ShowPics' value = '1'/>
 
@@ -64,6 +65,7 @@
 		<def var = 'Predictive.ShowDeletePic' value = '1'/>
 
 		<def var = 'DropdownButton.Width' value = '13' scalable = 'yes'/>
+		<def var = 'VolumeSlider.Width' value = '275' scalable = 'yes'/>
 
 		<def var = 'Checkbox.Spacing' value = '15' scalable = 'yes'/>
 		<def var = 'Radiobutton.Spacing' value = '15' scalable = 'yes'/>
@@ -104,9 +106,6 @@
 		/>
 
 		<widget name = 'Slider'
-				size = '128, 18'
-		/>
-		<widget name = 'WideSlider'
 				size = '-1, 18'
 		/>
 		<widget name = 'PopUp'
@@ -731,6 +730,7 @@
 					/>
 					<widget name = 'vcMusicSlider'
 							type = 'Slider'
+							width = 'Globals.VolumeSlider.Width'
 							rtl = 'no'
 					/>
 					<widget name = 'vcMusicLabel'
@@ -743,6 +743,7 @@
 					/>
 					<widget name = 'vcSfxSlider'
 							type = 'Slider'
+							width = 'Globals.VolumeSlider.Width'
 							rtl = 'no'
 					/>
 					<widget name = 'vcSfxLabel'
@@ -755,6 +756,7 @@
 					/>
 					<widget name = 'vcSpeechSlider'
 							type = 'Slider'
+							width = 'Globals.VolumeSlider.Width'
 							rtl = 'no'
 					/>
 					<widget name = 'vcSpeechLabel'
@@ -959,6 +961,11 @@
 			</layout>
 			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '10' align = 'center'>
 				<widget name = 'GuiLanguageUseGameLanguage'
+						type = 'Checkbox'
+				/>
+			</layout>
+			<layout type = 'horizontal' padding = '0, 0, 0, 0' spacing = '10' align = 'center'>
+				<widget name = 'DisableBDFScaling'
 						type = 'Checkbox'
 				/>
 			</layout>
@@ -1411,6 +1418,10 @@
 					height = '24'
 			/>
 			<space size = '8' />
+			<widget name = 'LoadButton'
+					height = '24'
+			/>
+			<space size = '8' />
 
 			<widget name = 'Line2'
 					height = 'Globals.Line.Height'
@@ -1715,6 +1726,7 @@
 						/>
 						<widget name = 'vcMusicSlider'
 								type = 'Slider'
+								width = 'Globals.VolumeSlider.Width'
 								rtl = 'no'
 						/>
 						<widget name = 'vcMusicLabel'
@@ -1727,6 +1739,7 @@
 						/>
 						<widget name = 'vcSfxSlider'
 								type = 'Slider'
+								width = 'Globals.VolumeSlider.Width'
 								rtl = 'no'
 						/>
 						<widget name = 'vcSfxLabel'
@@ -1739,6 +1752,7 @@
 						/>
 						<widget name = 'vcSpeechSlider'
 								type = 'Slider'
+								width = 'Globals.VolumeSlider.Width'
 								rtl = 'no'
 						/>
 						<widget name = 'vcSpeechLabel'
@@ -2431,6 +2445,34 @@
 						type = 'Button'
 				/>
 				<widget name = 'Host'
+						type = 'Button'
+				/>
+			</layout>
+		</layout>
+	</dialog>
+
+	<dialog name = 'ImageAlbum' overlays = 'screen' inset = '8' shading = 'dim'>
+		<layout type = 'vertical' padding = '8, 8, 8, 8' align = 'center'> 
+			<widget name = 'Title' height = 'Globals.Line.Height'/>
+			<widget name = 'ImageContainer' />
+			<layout type = 'horizontal' padding = '0, 0, 16, 0'>
+				<widget name = 'Prev'
+						type = 'Button'
+				/>
+				<widget name = 'ImageNumber'
+					width = '50'
+					height = 'Globals.Line.Height'
+					textalign = 'center'
+					/>
+				<widget name = 'Next'
+						type = 'Button'
+				/>
+				<space/>
+				<widget name = 'Save'
+						type = 'Button'
+				/>
+				<space size = '16'/>
+				<widget name = 'Close'
 						type = 'Button'
 				/>
 			</layout>

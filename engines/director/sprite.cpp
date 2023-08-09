@@ -27,10 +27,7 @@
 #include "director/score.h"
 #include "director/sprite.h"
 #include "director/castmember/castmember.h"
-#include "director/castmember/bitmap.h"
 #include "director/castmember/shape.h"
-#include "director/lingo/lingo.h"
-#include "director/lingo/lingo-object.h"
 
 namespace Director {
 
@@ -62,10 +59,10 @@ Sprite::Sprite(Frame *frame) {
 	_moveable = false;
 	_editable = false;
 	_puppet = false;
-	_autoPuppet = false; // Based on Director in a Nutshell, page 15
+	_autoPuppet = kAPNone; // Based on Director in a Nutshell, page 15
 	_immediate = false;
 	_backColor = g_director->_wm->_colorWhite;
-	_foreColor = g_director->_wm->_colorBlack;
+	_foreColor = g_director->_wm->_colorWhite;
 
 	_volume = 0;
 	_stretch = 0;
@@ -389,6 +386,21 @@ void Sprite::setPattern(uint16 pattern) {
 	default:
 		return;
 	}
+}
+
+void Sprite::setAutoPuppet(AutoPuppetProperty property, bool value) {
+	// Skip this if we're not in D6 or above (auto-puppet is introduced in D6)
+	if (_puppet || g_director->getVersion() < 600)
+		return;
+
+	if (value)
+		_autoPuppet |= (1 << property);
+	else
+		_autoPuppet &= ~(1 << property);
+}
+
+bool Sprite::getAutoPuppet(AutoPuppetProperty property) {
+	return (_autoPuppet & (1 << property)) != 0;
 }
 
 bool Sprite::checkSpriteType() {

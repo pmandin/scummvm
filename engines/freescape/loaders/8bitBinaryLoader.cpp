@@ -22,8 +22,6 @@
 // Based on Phantasma code by Thomas Harte (2013),
 // available at https://github.com/TomHarte/Phantasma/ (MIT)
 
-#include "image/bmp.h"
-
 #include "freescape/freescape.h"
 #include "freescape/language/8bitDetokeniser.h"
 #include "freescape/objects/connections.h"
@@ -62,13 +60,16 @@ uint16 FreescapeEngine::readField(Common::SeekableReadStream *file, int bits) {
 	return value;
 }
 
-Common::Array<uint8> FreescapeEngine::readArray(Common::SeekableReadStream *file, int size) {
-	byte *data = (byte *)malloc(size);
+Common::Array<uint16> FreescapeEngine::readArray(Common::SeekableReadStream *file, int size) {
+	Common::Array<uint16> array;
+
 	for (int i = 0; i < size; i++) {
-		data[i] = readField(file, 8);
+		if (isAmiga() || isAtariST()) {
+			uint16 value = file->readUint16BE();
+			array.push_back(value);
+		} else
+			array.push_back(readField(file, 8));
 	}
-	Common::Array<uint8> array(data, size);
-	free(data);
 	return array;
 }
 
@@ -136,7 +137,7 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 
 		byteSizeOfObject++;
 		while(--byteSizeOfObject > 0)
-			connectionsArray.push_back(file->readByte());
+			connectionsArray.push_back(readField(file, 8));
 		return new AreaConnections(connectionsArray);
 	}
 
@@ -193,8 +194,8 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 		FCLInstructionVector instructions;
 		Common::String conditionSource;
 		if (byteSizeOfObject) {
-			Common::Array<uint8> conditionArray = readArray(file, byteSizeOfObject);
-			conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
+			Common::Array<uint16> conditionArray = readArray(file, byteSizeOfObject);
+			conditionSource = detokenise8bitCondition(conditionArray, instructions, isAmiga() || isAtariST());
 			// instructions = getInstructions(conditionSource);
 			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
 		}
@@ -258,13 +259,16 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 		byte color = readField(file, 8) & 0xf;
 		assert(color > 0);
 		byte firingInterval = readField(file, 8);
-		uint16 firingRange = readField(file, 16);
+		uint16 firingRange = readField(file, 16) / 2;
+		if (isDark())
+			firingRange = firingRange / 2;
 		byte sensorAxis = readField(file, 8);
 		byteSizeOfObject = byteSizeOfObject - 5;
+		debugC(1, kFreescapeDebugParser, "Sensor detected with firing interval %d, firing range %d and axis %d", firingInterval, firingRange, sensorAxis);
 		// grab the object condition, if there is one
 		if (byteSizeOfObject) {
-			Common::Array<uint8> conditionArray = readArray(file, byteSizeOfObject);
-			conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
+			Common::Array<uint16> conditionArray = readArray(file, byteSizeOfObject);
+			conditionSource = detokenise8bitCondition(conditionArray, instructions, isAmiga() || isAtariST());
 			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
 		}
 		debugC(1, kFreescapeDebugParser, "End of object at %lx", long(file->pos()));
@@ -295,7 +299,16 @@ Object *FreescapeEngine::load8bitObject(Common::SeekableReadStream *file) {
 
 		byteSizeOfObject++;
 		while(--byteSizeOfObject > 0)
-			groupDataArray.push_back(readField(file, 8));
+			if (isAmiga() || isAtariST()) {
+				uint16 field = file->readUint16BE();
+				if (isCastle())
+					assert(field >> 8 == 0);
+				else
+					groupDataArray.push_back(field >> 8);
+
+				groupDataArray.push_back(field & 0xff);
+			} else
+				groupDataArray.push_back(readField(file, 8));
 
 		return new Group(
 			objectID,
@@ -499,6 +512,12 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 		extraColor[1] = readField(file, 8);
 		extraColor[2] = readField(file, 8);
 		extraColor[3] = readField(file, 8);
+
+		if (isAmiga()) {
+			// TODO
+			groundColor = skyColor;
+			skyColor = 0;
+		}
 	}
 	debugC(1, kFreescapeDebugParser, "Area name: %s", name.c_str());
 
@@ -531,7 +550,10 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 	}
 	int64 endLastObject = file->pos();
 	debugC(1, kFreescapeDebugParser, "Last position %lx", endLastObject);
-	assert(endLastObject == static_cast<int64>(base + cPtr) || areaNumber == 192);
+	if (isDark() && isAmiga())
+		assert(endLastObject <= static_cast<int64>(base + cPtr));
+	else
+		assert(endLastObject == static_cast<int64>(base + cPtr) || areaNumber == 192);
 	file->seek(base + cPtr);
 	uint8 numConditions = readField(file, 8);
 	debugC(1, kFreescapeDebugParser, "%d area conditions at %x of area %d", numConditions, base + cPtr, areaNumber);
@@ -563,8 +585,8 @@ Area *FreescapeEngine::load8bitArea(Common::SeekableReadStream *file, uint16 nco
 		debugC(1, kFreescapeDebugParser, "length of condition: %d", lengthOfCondition);
 		// get the condition
 		if (lengthOfCondition > 0) {
-			Common::Array<uint8> conditionArray = readArray(file, lengthOfCondition);
-			Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
+			Common::Array<uint16> conditionArray = readArray(file, lengthOfCondition);
+			Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions, isAmiga() || isAtariST());
 			area->_conditions.push_back(instructions);
 			area->_conditionSources.push_back(conditionSource);
 			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
@@ -661,29 +683,35 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 		debugC(1, kFreescapeDebugParser, "length of condition: %d at %lx", lengthOfCondition, long(file->pos()));
 		// get the condition
 		if (lengthOfCondition > 0) {
-			Common::Array<uint8> conditionArray = readArray(file, lengthOfCondition);
-			Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions, isCastle());
+			Common::Array<uint16> conditionArray = readArray(file, lengthOfCondition);
+			Common::String conditionSource = detokenise8bitCondition(conditionArray, instructions, isAmiga() || isAtariST());
 			_conditions.push_back(instructions);
 			_conditionSources.push_back(conditionSource);
 			debugC(1, kFreescapeDebugParser, "%s", conditionSource.c_str());
 		}
 	}
 
-	if (isDriller()) {
+	if (isDriller() || isDark()) {
+		debugC(1, kFreescapeDebugParser, "Time to finish the game:");
 		if (isAmiga() || isAtariST())
 			file->seek(offset + 0x168);
 		else
 			file->seek(offset + 0xb4);
 		Common::String n;
+
+		if (isDriller()) {
+			n += char(readField(file, 8));
+			n += char(readField(file, 8));
+			debugC(1, kFreescapeDebugParser, "'%s' hours", n.c_str());
+			_initialCountdown =_initialCountdown + 3600 * atoi(n.c_str());
+			n.clear();
+			n += char(readField(file, 8));
+			assert(n == ":");
+			n.clear();
+		}
 		n += char(readField(file, 8));
 		n += char(readField(file, 8));
-		_initialCountdown =_initialCountdown + 3600 * atoi(n.c_str());
-		n.clear();
-		n += char(readField(file, 8));
-		assert(n == ":");
-		n.clear();
-		n += char(readField(file, 8));
-		n += char(readField(file, 8));
+		debugC(1, kFreescapeDebugParser, "'%s' minutes", n.c_str());
 		_initialCountdown = _initialCountdown + 60 * atoi(n.c_str());
 		n.clear();
 		n += char(readField(file, 8));
@@ -691,13 +719,11 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 		n.clear();
 		n += char(readField(file, 8));
 		n += char(readField(file, 8));
+		debugC(1, kFreescapeDebugParser, "'%s' seconds", n.c_str());
 		_initialCountdown = _initialCountdown + atoi(n.c_str());
-
 		if (_useExtendedTimer)
 			_initialCountdown = 359999; // 99:59:59
-	} else if (isDark())
-		_initialCountdown = 2 * 3600; // 02:00:00
-	else if (isCastle())
+	} else if (isCastle())
 		_initialCountdown = 1000000000;
 
 	if (isAmiga() || isAtariST())
@@ -740,32 +766,6 @@ void FreescapeEngine::load8bitBinary(Common::SeekableReadStream *file, int offse
 	_startEntrance = startEntrance;
 	_colorNumber = ncolors;
 	_binaryBits = 8;
-}
-
-void FreescapeEngine::loadBundledImages() {
-	/*Image::BitmapDecoder decoder;
-	Common::String targetName = Common::String(_gameDescription->gameId);
-	if (isDOS() && isDemo())
-		Common::replace(targetName, "-demo", "");
-
-	Common::String borderFilename = targetName + "_" + Common::getRenderModeCode(_renderMode) + ".bmp";
-	if (_dataBundle->hasFile(borderFilename)) {
-		Common::SeekableReadStream *borderFile = _dataBundle->createReadStreamForMember(borderFilename);
-		decoder.loadStream(*borderFile);
-		_border = new Graphics::Surface();
-		_border->copyFrom(*decoder.getSurface());
-		decoder.destroy();
-	} else
-		error("Missing border file '%s' in data bundle", borderFilename.c_str());
-
-	Common::String titleFilename = targetName + "_" + Common::getRenderModeDescription(_renderMode) + "_title.bmp";
-	if (_dataBundle->hasFile(titleFilename)) {
-		Common::SeekableReadStream *titleFile = _dataBundle->createReadStreamForMember(titleFilename);
-		decoder.loadStream(*titleFile);
-		_title = new Graphics::Surface();
-		_title->copyFrom(*decoder.getSurface());
-		decoder.destroy();
-	}*/
 }
 
 void FreescapeEngine::loadFonts(byte *font, int charNumber) {

@@ -20,29 +20,25 @@
  */
 
 #include "common/file.h"
-#include "common/config-manager.h"
 
 #include "graphics/macgui/macwindowmanager.h"
 
 #include "director/director.h"
 #include "director/cast.h"
+#include "director/debugger.h"
 #include "director/frame.h"
 #include "director/movie.h"
 #include "director/picture.h"
 #include "director/score.h"
 #include "director/sprite.h"
 #include "director/window.h"
-#include "director/util.h"
 #include "director/castmember/castmember.h"
 #include "director/castmember/text.h"
 
-#include "director/lingo/lingo.h"
 #include "director/lingo/lingo-ast.h"
 #include "director/lingo/lingo-code.h"
 #include "director/lingo/lingo-codegen.h"
-#include "director/lingo/lingo-gr.h"
 #include "director/lingo/lingo-the.h"
-#include "director/lingo/lingo-object.h"
 
 namespace Director {
 
@@ -344,7 +340,7 @@ Symbol Lingo::getHandler(const Common::String &name) {
 
 void LingoArchive::addCode(const Common::U32String &code, ScriptType type, uint16 id, const char *scriptName, uint32 preprocFlags) {
 	debugC(1, kDebugCompile, "Add code for type %s(%d) with id %d in '%s%s'\n"
-			"***********\n%s\n\n***********", scriptType2str(type), type, id, utf8ToPrintable(g_director->getCurrentPath()).c_str(), utf8ToPrintable(cast->getMacName()).c_str(), code.encode().c_str());
+			"***********\n%s\n\n***********", scriptType2str(type), type, id, utf8ToPrintable(g_director->getCurrentPath()).c_str(), utf8ToPrintable(cast->getMacName()).c_str(), formatStringForDump(code.encode()).c_str());
 
 	if (getScriptContext(type, id)) {
 		// Replace the pre-existing context but warn about it.
@@ -1743,18 +1739,18 @@ CastMemberID Lingo::resolveCastMember(const Datum &memberID, const Datum &castLi
 
 	switch (memberID.type) {
 	case STRING:
-		{
-			CastMember *member = movie->getCastMemberByNameAndType(memberID.asString(), castLib.asInt(), type);
-			if (member)
-				return CastMemberID(member->getID(), castLib.asInt());
-
-			warning("Lingo::resolveCastMember: reference to non-existent cast member: %s", memberID.asString().c_str());
-			return CastMemberID(-1, castLib.asInt());
-		}
+		return movie->getCastMemberIDByNameAndType(memberID.asString(), castLib.asInt(), type);
 		break;
 	case INT:
 	case FLOAT:
-		return CastMemberID(memberID.asInt(), castLib.asInt());
+		if (castLib.asInt() == 0) {
+			// When specifying 0 as the castlib, D5 will assume this
+			// means the default (i.e. first) cast library. It will not
+			// try other libraries for matches if the member is a number.
+			return CastMemberID(memberID.asInt(), DEFAULT_CAST_LIB);
+		} else {
+			return CastMemberID(memberID.asInt(), castLib.asInt());
+		}
 		break;
 	case VOID:
 		warning("Lingo::resolveCastMember: reference to VOID member ID");

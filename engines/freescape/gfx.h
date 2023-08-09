@@ -84,6 +84,8 @@ public:
 
 	virtual void renderSensorShoot(byte color, const Math::Vector3d sensor, const Math::Vector3d player, const Common::Rect viewPort) = 0;
 	virtual void renderPlayerShoot(byte color, const Common::Point position, const Common::Rect viewPort) = 0;
+	virtual void renderCrossair(const Common::Point crossairPosition) = 0;
+
 	virtual void renderCube(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours);
 	virtual void renderRectangle(const Math::Vector3d &position, const Math::Vector3d &size, Common::Array<uint8> *colours);
 	virtual void renderPolygon(const Math::Vector3d &origin, const Math::Vector3d &size, const Common::Array<uint16> *ordinates, Common::Array<uint8> *colours);
@@ -100,6 +102,7 @@ public:
 
 	// palette
 	void readFromPalette(uint8 index, uint8 &r, uint8 &g, uint8 &b);
+	void setPaletteValue(uint8 index, uint8 r, uint8 g, uint8 b);
 	uint8 indexFromColor(uint8 r, uint8 g, uint8 b);
 	uint8 mapEGAColor(uint8 index);
 
