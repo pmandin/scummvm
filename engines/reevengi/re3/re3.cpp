@@ -323,7 +323,7 @@ void RE3Engine::loadBgMaskImagePsx(void) {
 			delete imgStream;
 		}
 
-		delete blkBuffer;
+		delete[] blkBuffer;
 	}
 	delete arcStream;
 }

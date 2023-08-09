@@ -401,7 +401,7 @@ void RE2Engine::loadBgMaskImagePsx(void) {
 			delete imgStream;
 		}
 
-		delete blkBuffer;
+		delete[] blkBuffer;
 	}
 	delete arcStream;
 }
