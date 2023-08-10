@@ -26,13 +26,21 @@
 
 namespace Reevengi {
 
-GfxBase::GfxBase() : _gameWidth(320), _gameHeight(240), _smushWidth(0), _smushHeight(0),
-	_maskWidth(0), _maskHeight(0) {
+GfxBase::GfxBase() : _gameWidth(320), _gameHeight(240),
+	_prevSysWidth(0), _prevSysHeight(0), _numFullClear(2),
+	_smushWidth(0), _smushHeight(0), _maskWidth(0), _maskHeight(0) {
 }
 
 bool GfxBase::computeScreenViewport(void) {
 	int32 screenWidth = g_system->getWidth();
 	int32 screenHeight = g_system->getHeight();
+
+	/* Force full window clear on resize */
+	if ((_prevSysWidth!=screenWidth) || (_prevSysHeight!=screenHeight)) {
+		_numFullClear = 2;	/* For double buffer */
+		_prevSysWidth = screenWidth;
+		_prevSysHeight = screenHeight;
+	}
 
 	Common::Rect viewport;
 	if (true /*g_system->getFeatureState(OSystem::kFeatureAspectRatioCorrection)*/) {
