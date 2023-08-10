@@ -38,6 +38,7 @@ public:
 	virtual ~GfxBase() { ; }
 
 	int _gameWidth, _gameHeight;
+	int _prevSysWidth, _prevSysHeight, _numFullClear;
 
 	/**
 	 * Creates a render-context.

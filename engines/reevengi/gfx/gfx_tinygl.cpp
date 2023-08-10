@@ -76,6 +76,11 @@ const char *GfxTinyGL::getVideoDeviceName() {
 }
 
 void GfxTinyGL::clearScreen() {
+	if (_numFullClear>0) {
+		tglDisable(TGL_SCISSOR_TEST);
+		--_numFullClear;
+	}
+
 	tglClear(TGL_COLOR_BUFFER_BIT | TGL_DEPTH_BUFFER_BIT);
 }
 
