@@ -44,16 +44,16 @@ And I could!
 Hardware requirements
 ---------------------
 
-This port requires an Atari computer with TT or Falcon compatible video modes.
-Ideally accelerated with at least 4+32 MB of RAM. It runs fine also in Hatari
-and ARAnyM but in case of ARAnyM don't forget to disable fVDI to show Videl
-output.
+This port requires an Atari computer with TT or Falcon compatible video modes
+with at least 4+32 MB of RAM (this applies to the "slim" version, the "fat" one
+requires more due its file size). It runs fine also in Hatari and ARAnyM but in
+case of ARAnyM don't forget to disable fVDI to show Videl output.
 
 
 Main features
 -------------
 
-- Optimized for the Atari TT/Falcon: ideally the CT60/CT63/CT60e but some games
+- Optimised for the Atari TT/Falcon: ideally the CT60/CT63/CT60e but some games
   run fine on the AfterBurner040, CT2/DFB@50 MHz, Speedy@48 MHz or even less!
 
 - Full support for the SuperVidel, incl. the SuperBlitter (!)
@@ -75,7 +75,10 @@ Main features
 - Support for PC keys (page up, page down, pause, F11/F12, ...) and mouse wheel
   (Eiffel/Aranym only)
 
-- AdLib emulation works nicely with many games without noticeable slow downs.
+- Native MIDI output (if present).
+
+- AdLib emulation works nicely with many games without noticeable slow downs
+  (on a poweful machine, ideally 68060/66 MHz).
 
 
 Platform-specific features outside the GUI
@@ -104,46 +107,46 @@ Graphics modes
 This topic is more complex than it looks. ScummVM renders game graphics using
 rectangles and this port offers following options to render them:
 
-Direct rendering (present only with the SuperVidel)
-Single buffering
-Triple buffering
+Direct rendering
+~~~~~~~~~~~~~~~~
 
-Direct rendering:
-~~~~~~~~~~~~~~~~~
-
-This is direct writing of the pixels into (SuperVidel's) screen buffer.
+This is direct writing of the pixels into the screen buffer. On SuperVidel
+it is done natively, on Videl a chunky to planar conversion takes place
+beforehand.
 
 Pros:
 
-- fastest possible rendering (especially in 640x480 with a lot of small
-  rectangle updates where the buffer copying drags performance down)
+- on SuperVidel this offers fastest possible rendering (especially in 640x480
+  with a lot of small rectangle updates where the buffer copying drags
+  performance down)
+
+- on Videl this _may_ offer fastest possible rendering if the rendering
+  pipeline isn't flooded with too many small rectangles (C2P setup isn't for
+  free). However with fullscreen intro sequences this is a no-brainer.
 
 Cons:
 
 - screen tearing in most cases
 
-- SuperVidel only: using C2P would be not only suboptimal (every rectangle
-  would be C2P'ed instead of multiple copying and just one C2P of the final
-  screen) but poses an additional problem as C2P requires data aligned on a
-  16px boundary and ScummVM supplies arbitrarily-sized rectangles (this is
-  solvable by custom Surface allocation but it's not bullet-proof). In theory I
-  could implement direct rendering for the Falcon hicolor (320x240@16bpp) but
-  this creates another set of issues like when palette would be updated but not
-  the whole screen - so some rectangles would be rendered in old palette and
-  some in new.
+- on Videl, this may not work properly if a game engine uses its own buffers
+  instead of surfaces (which are aligned on a 16pix boundary). Another source
+  of danger is if an engine draws directly to the screen surface. Fortunately,
+  each game can have its own graphics mode set separately so for games which
+  do not work properly one can still leave the default graphics mode set.
+
+- on Videl overlay background isn't rendered (the gui code can't work with
+  bitplanes)
 
 SuperBlitter used: sometimes (when ScummVM allocates surface via its create()
 function; custom/small buffers originating in the engine code are still copied
 using the CPU).
 
-Single buffering:
-~~~~~~~~~~~~~~~~~
+Single buffering
+~~~~~~~~~~~~~~~~
 
 This is very similar to the previous mode with the difference that the engine
 uses an intermediate buffer for storing the rectangles but yet it remembers
-which ones they were. It works also on plain Videl and applies the chunky to
-planar process to each one of the rectangles separately, avoiding fullscreen
-updates (but if such is needed, there is an optimized code path for it).
+which ones they were.
 
 Pros:
 
@@ -159,8 +162,8 @@ Cons:
 SuperBlitter used: yes, for rectangle blitting to screen and cursor restoration.
 Sometimes also for generic copying between buffers (see above).
 
-Triple buffering:
-~~~~~~~~~~~~~~~~~
+Triple buffering
+~~~~~~~~~~~~~~~~
 
 This is the "true" triple buffering as described in
 https://en.wikipedia.org/wiki/Multiple_buffering#Triple_buffering and not "swap
@@ -344,7 +347,7 @@ Known issues
   B interrupt.
 
 - horizontal screen shaking doesn't work on TT because TT Shifter doesn't
-  support fine scrolling.
+  support fine scrolling. However it is "emulated" via vertical shaking.
 
 - tooltips in overlay are sometimes drawn with corrupted background.
 
@@ -355,6 +358,20 @@ Known issues
   folder where *.wav files are located! For MI2 just use the DOS version,
   there are no CD tracks available. :(
 
+- following engines have been explicitly disabled:
+	- Cine (2 games)
+		- incompatible with other engines / prone to freezes
+		- https://wiki.scummvm.org/index.php?title=Cine
+	- Director (many games)
+		- huge game list slows detection for other games, and would require
+		  require (currently missing) localization support
+		- only small subset of games actually supported by upstream, but none
+		  of them detected on TOS 8+3 file system
+		- https://wiki.scummvm.org/index.php?title=Director
+	- Hugo (3 games)
+		- Uses (lot of) overlay dialogs which are problematic for Atari backend
+		- Engine GUI (for save/load/etc) does not support 8-bit screens
+		- https://wiki.scummvm.org/index.php?title=Hugo
 
 Future plans
 ------------
@@ -384,7 +401,10 @@ Closing words
 This backend is part of ScummVM 2.8.0 onwards. Let's see whether we can make it
 to the official website. :-)
 
-MiKRO / Mystic Bytes, XX.XX.2023
+Many optimisations and improvements wouldn't be possible without help of Eero
+Tamminen, so thank you for all the help.
+
+Miro Kropacek a.k.a. MiKRO / Mystic Bytes, XX.XX.2023
 Kosice / Slovakia
 miro.kropacek@gmail.com
 http://mikro.atari.org

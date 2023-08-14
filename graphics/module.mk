@@ -2,9 +2,9 @@ MODULE := graphics
 
 MODULE_OBJS := \
 	big5.o \
-	blit.o \
-	blit-alpha.o \
-	blit-scale.o \
+	blit/blit.o \
+	blit/blit-alpha.o \
+	blit/blit-scale.o \
 	cursorman.o \
 	font.o \
 	fontman.o \
@@ -137,6 +137,22 @@ MODULE_OBJS += \
 	scaler/edge.o
 endif
 
+endif
+
+ifeq ($(SCUMMVM_NEON),1)
+MODULE_OBJS += \
+	blit/blit-neon.o
+$(MODULE)/blit/blit-neon.o: CXXFLAGS += $(NEON_CXXFLAGS)
+endif
+ifeq ($(SCUMMVM_SSE2),1)
+MODULE_OBJS += \
+	blit/blit-sse2.o
+$(MODULE)/blit/blit-sse2.o: CXXFLAGS += -msse2
+endif
+ifeq ($(SCUMMVM_AVX2),1)
+MODULE_OBJS += \
+	blit/blit-avx2.o
+$(MODULE)/blit/blit-avx2.o: CXXFLAGS += -mavx2
 endif
 
 # Include common rules

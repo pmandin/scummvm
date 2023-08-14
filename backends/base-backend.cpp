@@ -64,7 +64,6 @@ void BaseBackend::initBackend() {
 	if (!_audiocdManager)
 		_audiocdManager = new DefaultAudioCDManager();
 #endif
-
 	OSystem::initBackend();
 }
 

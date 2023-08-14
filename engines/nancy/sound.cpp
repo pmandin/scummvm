@@ -41,42 +41,6 @@ enum SoundType {
 	kSoundTypeOgg
 };
 
-// Table valid for vampire diaries and nancy1, could be (and probably is) different between games
-static const Audio::Mixer::SoundType channelSoundTypes[] = {
-	Audio::Mixer::kMusicSoundType, // channel 0
-	Audio::Mixer::kMusicSoundType,
-	Audio::Mixer::kMusicSoundType,
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSFXSoundType, // 5
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSpeechSoundType,
-	Audio::Mixer::kSpeechSoundType,
-	Audio::Mixer::kPlainSoundType,
-	Audio::Mixer::kPlainSoundType, // 10
-	Audio::Mixer::kPlainSoundType,
-	Audio::Mixer::kPlainSoundType,
-	Audio::Mixer::kPlainSoundType,
-	Audio::Mixer::kPlainSoundType,
-	Audio::Mixer::kPlainSoundType, // 15
-	Audio::Mixer::kPlainSoundType,
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kMusicSoundType,
-	Audio::Mixer::kSFXSoundType, // 20
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kSFXSoundType, // 25
-	Audio::Mixer::kSFXSoundType,
-	Audio::Mixer::kMusicSoundType,
-	Audio::Mixer::kMusicSoundType,
-	Audio::Mixer::kMusicSoundType,
-	Audio::Mixer::kSpeechSoundType, // 30
-	Audio::Mixer::kSFXSoundType
-};
-
 bool readDiamondwareHeader(Common::SeekableReadStream *stream, SoundType &type, uint16 &numChannels,
 					uint32 &samplesPerSec, uint16 &bitsPerSample, uint32 &size) {
 	stream->skip(2);
@@ -249,8 +213,6 @@ Audio::SeekableAudioStream *SoundManager::makeHISStream(Common::SeekableReadStre
 
 SoundManager::SoundManager() {
 	_mixer = g_system->getMixer();
-
-	initSoundChannels();
 }
 
 void SoundManager::loadCommonSounds(IFF *boot) {
@@ -303,6 +265,7 @@ void SoundManager::loadSound(const SoundDescription &description, bool panning) 
 	chan.stream = nullptr;
 
 	chan.name = description.name;
+	chan.playCommands = description.playCommands;
 	chan.numLoops = description.numLoops;
 	chan.volume = description.volume;
 	chan.panAnchorFrame = description.panAnchorFrame;
@@ -320,6 +283,10 @@ void SoundManager::playSound(uint16 channelID) {
 
 	Channel &chan = _channels[channelID];
 	chan.stream->seek(0);
+
+	if (chan.playCommands != 1) {
+		debugC(kDebugSound, "Unhandled playCommand type 0x%08x! Sound name: %s", chan.playCommands, chan.name.c_str());
+	}
 
 	_mixer->playStream(	chan.type,
 						&chan.handle,
@@ -511,6 +478,8 @@ void SoundManager::setRate(const Common::String &chunkName, uint32 rate) {
 }
 
 void SoundManager::stopAndUnloadSpecificSounds() {
+	byte numSSChans = g_nancy->getStaticData().soundChannelInfo.numSceneSpecificChannels;
+
 	if (g_nancy->getGameType() == kGameTypeVampire && Nancy::State::Map::hasInstance()) {
 		// Don't stop the map sound in certain scenes
 		uint nextScene = NancySceneState.getNextSceneInfo().sceneID;
@@ -519,7 +488,7 @@ void SoundManager::stopAndUnloadSpecificSounds() {
 		}
 	}
 
-	for (uint i = 0; i < 10; ++i) {
+	for (uint i = 0; i < numSSChans; ++i) {
 		stopSound(i);
 	}
 
@@ -527,9 +496,20 @@ void SoundManager::stopAndUnloadSpecificSounds() {
 }
 
 void SoundManager::initSoundChannels() {
-	// Channel types are hardcoded in the original engine
-	for (uint i = 0; i < 31; ++i) {
-		_channels[i].type = channelSoundTypes[i];
+	const SoundChannelInfo &channelInfo = g_nancy->getStaticData().soundChannelInfo;
+
+	_channels.resize(channelInfo.numChannels);
+
+	for (const short id : channelInfo.speechChannels) {
+		_channels[id].type = Audio::Mixer::SoundType::kSpeechSoundType;
+	}
+
+	for (const short id : channelInfo.musicChannels) {
+		_channels[id].type = Audio::Mixer::SoundType::kMusicSoundType;
+	}
+
+	for (const short id : channelInfo.sfxChannels) {
+		_channels[id].type = Audio::Mixer::SoundType::kSFXSoundType;
 	}
 }
 

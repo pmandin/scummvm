@@ -24,8 +24,12 @@
 
 #include "graphics/pixelformat.h"
 #include "graphics/surface.h"
-#include "common/rect.h"
+#include "graphics/transform_struct.h"
 #include "common/types.h"
+#include "graphics/blit.h"
+
+#define MS_RGB(R,G,B)       (uint32)(((R) << 24) | ((G) << 16) | ((B) << 8) | 0xff)
+#define MS_ARGB(A,R,G,B)    (uint32)(((R) << 24) | ((G) << 16) | ((B) << 8) | (A))
 
 namespace Graphics {
 
@@ -521,6 +525,46 @@ public:
 		blitFromInner(src._innerSurface, srcRect, Common::Rect(destPos.x, destPos.y, destPos.x + srcRect.width(),
 			destPos.y + srcRect.height()), src._paletteSet ? src._palette : nullptr);
 	}
+	
+	/**
+	 * ManagedSurface::blendBlitTo is meant to be a highly optimized
+	 * blending/blitting function, so it can only accept certain format combinations.
+	 * @return true if the formats can be used by blendBlitTo.
+	 */
+	static inline bool isBlendBlitPixelFormatSupported(const PixelFormat &src, const PixelFormat &dst) {
+		return BlendBlit::getSupportedPixelFormat() == src && BlendBlit::getSupportedPixelFormat() == dst;
+	}
+
+	/**
+	 * @brief Renders this surface onto target
+	 * @param target renders this surface onto this one
+	 * @param src source surface
+	 * @param posX, posY are the position of the src onto this surface
+	 * @param flipping flipping flags (use Graphics::FLIP_FLAGS)
+	 * @param srcRect source clipping
+	 * @param width width of destination
+	 * @param height height of destination
+	 * @param colorMod what color to multiply by (0xffffffff does nothing)
+	 * @param blend the blending mode to use.
+	 * @param alphaType what alpha mode to use. FULL is default
+	 * @return returns the size of the rendered rectangle
+	 */
+	Common::Rect blendBlitTo(ManagedSurface &target,
+							 const int posX = 0, const int posY = 0,
+							 const int flipping = FLIP_NONE,
+							 const Common::Rect *srcRect = nullptr,
+							 const uint colorMod = MS_ARGB(255, 255, 255, 255),
+							 const int width = -1, const int height = -1,
+							 const TSpriteBlendMode blend = BLEND_NORMAL,
+							 const AlphaType alphaType = ALPHA_FULL);
+	Common::Rect blendBlitTo(Surface &target,
+							 const int posX = 0, const int posY = 0,
+							 const int flipping = FLIP_NONE,
+							 const Common::Rect *srcRect = nullptr,
+							 const uint colorMod = MS_ARGB(255, 255, 255, 255),
+							 const int width = -1, const int height = -1,
+							 const TSpriteBlendMode blend = BLEND_NORMAL,
+							 const AlphaType alphaType = ALPHA_FULL);
 
 	/**
 	 * Clear the entire surface.

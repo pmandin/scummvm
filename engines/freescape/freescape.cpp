@@ -34,6 +34,8 @@
 
 namespace Freescape {
 
+FreescapeEngine *g_freescape;
+
 FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	: Engine(syst), _gameDescription(gd), _gfx(nullptr) {
 	if (!ConfMan.hasKey("render_mode") || ConfMan.get("render_mode").empty())
@@ -74,6 +76,9 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 		error("Failed to parse bool from disable_sensors option");
 
 	if (!Common::parseBool(ConfMan.get("disable_falling"), _disableFalling))
+		error("Failed to parse bool from disable_falling option");
+
+	if (!Common::parseBool(ConfMan.get("invert_y"), _invertY))
 		error("Failed to parse bool from disable_falling option");
 
 	_startArea = 0;
@@ -154,6 +159,8 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 
 	_maxShield = 63;
 	_maxEnergy = 63;
+
+	g_freescape = this;
 }
 
 FreescapeEngine::~FreescapeEngine() {
@@ -298,7 +305,7 @@ void FreescapeEngine::drawFrame() {
 
 	drawBackground();
 	if (!_playerWasCrushed) // Avoid rendering inside objects
-		_currentArea->draw(_gfx, _ticks);
+		_currentArea->draw(_gfx, _ticks / 10);
 
 	if (_underFireFrames > 0) {
 		for (auto &it : _sensors) {
@@ -491,6 +498,9 @@ void FreescapeEngine::processInput() {
 				// so on-screen controls are still accesible
 				mousePos.x = g_system->getWidth() * ( _viewArea.left + _viewArea.width() / 2) / _screenW;
 				mousePos.y = g_system->getHeight() * (_viewArea.top + _viewArea.height() / 2) / _screenW;
+				if (_invertY)
+					event.relMouse.y = -event.relMouse.y;
+
 				g_system->warpMouse(mousePos.x, mousePos.y);
 				g_system->getEventManager()->purgeMouseEvents();
 			}

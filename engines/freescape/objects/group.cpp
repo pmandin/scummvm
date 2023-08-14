@@ -21,39 +21,33 @@
 #include "freescape/freescape.h"
 #include "freescape/objects/group.h"
 #include "freescape/objects/geometricobject.h"
+#include "freescape/language/8bitDetokeniser.h"
 
 namespace Freescape {
 
-Group::Group(uint16 objectID_, uint16 flags_, const Common::Array<byte> data_) {
+Group::Group(uint16 objectID_, uint16 flags_,
+const Common::Array<uint16> objectIds_,
+const Common::Array<AnimationOpcode *> operations_) {
 	_objectID = objectID_;
 	_flags = flags_;
 	_scale = 0;
+	_active = false;
+	_finished = false;
+	_step = 0;
 
-	int i;
-	for (i = 0; i < 5; i++) {
-		debugC(1, kFreescapeDebugParser, "group data[%d] = %d", i, data_[i]);
-		if (data_[i] > 0)
-			_objectIds.push_back(data_[i]);
-	}
-	i = 5;
-	while (i < int(data_.size() - 4)) {
-		debugC(1, kFreescapeDebugParser, "group data[%d] = %d (index)	", i, data_[i]);
-		_objectIndices.push_back(data_[i]);
-
-		debugC(1, kFreescapeDebugParser, "group data[%d] = %d", i + 1, data_[i + 1]);
-		debugC(1, kFreescapeDebugParser, "group data[%d] = %d", i + 2, data_[i + 2]);
-		debugC(1, kFreescapeDebugParser, "group data[%d] = %d", i + 3, data_[i + 3]);
-		Math::Vector3d position(data_[i + 1], data_[i + 2], data_[i + 3]);
-		_objectPositions.push_back(position);
-
-		i = i + 4;
-	}
+	_objectIds = objectIds_;
+	_operations = operations_;
 
 	if (isDestroyed()) // If the object is destroyed, restore it
 		restore();
 
 	makeInitiallyVisible();
 	makeVisible();
+}
+
+Group::~Group() {
+	for (int i = 0; i < int(_operations.size()); i++)
+		delete _operations[i];
 }
 
 void Group::linkObject(Object *obj) {
@@ -69,14 +63,13 @@ void Group::linkObject(Object *obj) {
 		return;
 
 	_origins.push_back(obj->getOrigin());
-	obj->makeInitiallyVisible();
-	obj->makeVisible();
+	obj->_partOfGroup = this;
 	_objects.push_back(obj);
 }
 
-void Group::assemble(int frame, int index) {
+void Group::assemble(int index) {
 	GeometricObject *gobj = (GeometricObject *)_objects[index];
-	Math::Vector3d position = _objectPositions[frame];
+	Math::Vector3d position = _operations[_step]->position;
 
 	if (!GeometricObject::isPolygon(gobj->getType()))
 		position = 32 * position / _scale;
@@ -85,4 +78,51 @@ void Group::assemble(int frame, int index) {
 
 	gobj->offsetOrigin(position);
 }
+
+void Group::run() {
+	if (_finished)
+		return;
+
+	uint32 groupSize = _objects.size();
+	for (uint32 i = 0; i < groupSize ; i++) {
+		run(i);
+	}
+}
+
+void Group::run(int index) {
+	if (_operations[_step]->opcode == 0x80) {
+		_step = -1;
+		_active = false;
+		_finished = false;
+	} else if (_operations[_step]->opcode == 0x01) {
+		g_freescape->executeCode(_operations[_step]->condition, false, true, false, false);
+	} else {
+		if (_operations[_step]->opcode == 0x10)
+			if (!_active) {
+				_step = -1;
+				return;
+			}
+		assemble(index);
+	}
+}
+
+void Group::draw(Renderer *gfx) {
+	uint32 groupSize = _objects.size();
+	for (uint32 i = 0; i < groupSize ; i++) {
+		if (!_objects[i]->isDestroyed() && !_objects[i]->isInvisible())
+			_objects[i]->draw(gfx);
+	}
+}
+
+void Group::step() {
+	if (_finished)
+		return;
+
+	if (_step < int(_operations.size() - 1))
+		_step++;
+	else {
+		_finished = true;
+	}
+}
+
 } // End of namespace Freescape

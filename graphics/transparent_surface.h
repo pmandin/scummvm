@@ -23,7 +23,9 @@
 #define GRAPHICS_TRANSPARENTSURFACE_H
 
 #include "graphics/surface.h"
+#include "graphics/managed_surface.h"
 #include "graphics/transform_struct.h"
+#include "graphics/blit.h"
 
 /*
  * This code is based on Broken Sword 2.5 engine
@@ -33,9 +35,6 @@
  * Licensed under GNU GPL v2
  *
  */
-
-#define TS_RGB(R,G,B)       (uint32)(((R) << 24) | ((G) << 16) | ((B) << 8) | 0xff)
-#define TS_ARGB(A,R,G,B)    (uint32)(((R) << 24) | ((G) << 16) | ((B) << 8) | (A))
 
 namespace Graphics {
 
@@ -47,13 +46,6 @@ namespace Graphics {
  *
  * @{
  */
-
-// Enums
-enum AlphaType {
-	ALPHA_OPAQUE = 0,
-	ALPHA_BINARY = 1,
-	ALPHA_FULL = 2
-};
 
 /**
  * A transparent graphics surface, which implements alpha blitting.
@@ -71,7 +63,7 @@ struct TransparentSurface : public Graphics::Surface {
 	 * @return Supported pixel format.
 	 */
 	static PixelFormat getSupportedPixelFormat() {
-		return PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
+		return BlendBlit::getSupportedPixelFormat();
 	}
 
 	/**
@@ -89,8 +81,8 @@ struct TransparentSurface : public Graphics::Surface {
 	 @param color an ARGB color value, which determines the parameters for the color modulation und alpha blending.<br>
 	 The alpha component of the color determines the alpha blending parameter (0 = no covering, 255 = full covering).<br>
 	 The color components determines the color for color modulation.<br>
-	 The default value is TS_ARGB(255, 255, 255, 255) (full covering, no color modulation).
-	 The macros TS_RGB and TS_ARGB can be used for the creation of the color value.
+	 The default value is MS_ARGB(255, 255, 255, 255) (full covering, no color modulation).
+	 The macros MS_RGB and MS_ARGB can be used for the creation of the color value.
 	 @param width the output width of the screen section.
 	 The images will be scaled if the output width of the screen section differs from the image section.<br>
 	 The value -1 determines that the image should not be scaled.<br>
@@ -104,14 +96,14 @@ struct TransparentSurface : public Graphics::Surface {
 	Common::Rect blit(Graphics::Surface &target, int posX = 0, int posY = 0,
 	                  int flipping = FLIP_NONE,
 	                  Common::Rect *pPartRect = nullptr,
-	                  uint color = TS_ARGB(255, 255, 255, 255),
+	                  uint color = MS_ARGB(255, 255, 255, 255),
 	                  int width = -1, int height = -1,
 	                  TSpriteBlendMode blend = BLEND_NORMAL);
 	Common::Rect blitClip(Graphics::Surface &target, Common::Rect clippingArea,
 						int posX = 0, int posY = 0,
 						int flipping = FLIP_NONE,
 						Common::Rect *pPartRect = nullptr,
-						uint color = TS_ARGB(255, 255, 255, 255),
+						uint color = MS_ARGB(255, 255, 255, 255),
 						int width = -1, int height = -1,
 						TSpriteBlendMode blend = BLEND_NORMAL);
 

@@ -35,6 +35,7 @@ namespace Nancy {
 namespace Action {
 
 void ActionManager::handleInput(NancyInput &input) {
+	bool setHoverCursor = false;
 	for (auto &rec : _records) {
 		if (rec->_isActive) {
 			// Send input to all active records
@@ -45,7 +46,12 @@ void ActionManager::handleInput(NancyInput &input) {
 				rec->_hasHotspot &&
 				rec->_hotspot.isValidRect() && // Needed for nancy2 scene 1600
 				NancySceneState.getViewport().convertViewportToScreen(rec->_hotspot).contains(input.mousePos)) {
-			g_nancy->_cursorManager->setCursorType(rec->getHoverCursor());
+			if (!setHoverCursor) {
+				// Hotspots may overlap, but we want the hover cursor for the first one we encounter
+				// This fixes the stairs in nancy3
+				g_nancy->_cursorManager->setCursorType(rec->getHoverCursor());
+				setHoverCursor = true;
+			}
 
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				input.input &= ~NancyInput::kLeftMouseButtonUp;
@@ -71,11 +77,22 @@ void ActionManager::handleInput(NancyInput &input) {
 
 						// Re-add the object to the inventory unless it's marked as a one-time use
 						if (item == NancySceneState.getHeldItem() && item != -1) {
-							if (g_nancy->_inventoryData->itemDescriptions[item].keepItem == kInvItemKeepAlways) {
-								NancySceneState.addItemToInventory(item);
-							}
+							switch (g_nancy->_inventoryData->itemDescriptions[item].keepItem) {
+							case kInvItemKeepAlways :
+								if (g_nancy->getGameType() >= kGameTypeNancy3) {
+									// In nancy3 and up this means the object remains in hand, so do nothing
+									// Older games had the kInvItemReturn behavior instead
+									break;
+								}
 
-							NancySceneState.setHeldItem(-1);
+								// fall through
+							case kInvItemReturn :
+								NancySceneState.addItemToInventory(item);
+								// fall through
+							case kInvItemUseThenLose :
+								NancySceneState.setHeldItem(-1);
+								break;
+							}
 						}
 
 						rec->_cursorDependency = nullptr;

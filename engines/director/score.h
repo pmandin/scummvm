@@ -73,11 +73,10 @@ public:
 	Movie *getMovie() const { return _movie; }
 
 	void loadFrames(Common::SeekableReadStreamEndian &stream, uint16 version);
-	bool loadFrame(int frame);
+	bool loadFrame(int frame, bool loadCast);
 	bool readOneFrame();
 	void updateFrame(Frame *frame);
 	Frame *getFrameData(int frameNum);
-	void rebuildChannelData(int frameNum);
 
 	void loadLabels(Common::SeekableReadStreamEndian &stream);
 	void loadActions(Common::SeekableReadStreamEndian &stream);
@@ -163,7 +162,7 @@ public:
 	uint8 _currentTempo;
 	CastMemberID _currentPaletteId;
 
-	Common::Array<int64> _frameOffsets;
+	uint _firstFramePosition;
 	uint _framesStreamSize;
 	Common::MemoryReadStreamEndian *_framesStream;
 

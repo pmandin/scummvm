@@ -23,10 +23,13 @@
 #define GRAPHICS_BLIT_H
 
 #include "graphics/pixelformat.h"
+#include "graphics/transform_struct.h"
 
 namespace Common {
 struct Point;
 }
+
+class BlendBlitUnfilteredTestSuite;
 
 namespace Graphics {
 
@@ -189,6 +192,123 @@ bool setAlpha(byte *dst, const byte *src,
               const uint w, const uint h,
               const Graphics::PixelFormat &format,
               const bool skipTransparent, const uint8 alpha);
+
+// This is a class so that we can declare certain things as private
+class BlendBlit {
+private:
+	struct Args {
+		bool rgbmod, alphamod;
+		int xp, yp;
+		int inStep, inoStep;
+		const byte *ino;
+		byte *outo;
+	
+		int scaleX, scaleY, scaleXoff, scaleYoff;
+		uint dstPitch;
+		uint width, height;
+		uint32 color;
+		int flipping;
+		
+		Args(byte *dst, const byte *src,
+			 const uint dstPitch, const uint srcPitch,
+			 const int posX, const int posY,
+			 const uint width, const uint height,
+			 const int scaleX, const int scaleY,
+			 const int scaleXsrcOff, const int scaleYsrcOff,
+			 const uint32 colorMod, const uint flipping);
+	};
+
+#ifdef SCUMMVM_NEON
+	static void blitNEON(Args &args, const TSpriteBlendMode &blendMode, const AlphaType &alphaType);
+#endif
+#ifdef SCUMMVM_SSE2
+	static void blitSSE2(Args &args, const TSpriteBlendMode &blendMode, const AlphaType &alphaType);
+#endif
+#ifdef SCUMMVM_AVX2
+	static void blitAVX2(Args &args, const TSpriteBlendMode &blendMode, const AlphaType &alphaType);
+#endif
+	static void blitGeneric(Args &args, const TSpriteBlendMode &blendMode, const AlphaType &alphaType);
+#undef LOGIC_FUNCS_EXT
+
+	typedef void(*BlitFunc)(Args &, const TSpriteBlendMode &, const AlphaType &);
+	static BlitFunc blitFunc;
+	friend class ::BlendBlitUnfilteredTestSuite;
+	friend class BlendBlitImpl;
+
+public:
+	static const int SCALE_THRESHOLD = 0x100;
+	static const int kBModShift = 8;
+	static const int kGModShift = 16;
+	static const int kRModShift = 24;
+	static const int kAModShift = 0;
+	
+	static const uint32 kBModMask = 0x0000ff00;
+	static const uint32 kGModMask = 0x00ff0000;
+	static const uint32 kRModMask = 0xff000000;
+	static const uint32 kAModMask = 0x000000ff;
+	static const uint32 kRGBModMask = (kRModMask | kGModMask | kBModMask);
+	
+#ifdef SCUMM_LITTLE_ENDIAN
+	static const int kAIndex = 0;
+	static const int kBIndex = 1;
+	static const int kGIndex = 2;
+	static const int kRIndex = 3;
+#else
+	static const int kAIndex = 3;
+	static const int kBIndex = 2;
+	static const int kGIndex = 1;
+	static const int kRIndex = 0;
+#endif
+
+	static inline int getScaleFactor(int srcSize, int dstSize) {
+		return SCALE_THRESHOLD * srcSize / dstSize;
+	}
+
+	/**
+	 * Returns the pixel format all operations of BlendBlit::blit support.
+	 *
+	 * Use MS_ARGB and MS_RGB to quickly make a color in this format.
+	 * MS_ARGB/RGB are found in graphics/transform_struct.h
+	 *
+	 * @return Supported pixel format.
+	 */
+	static inline PixelFormat getSupportedPixelFormat() {
+		return PixelFormat(4, 8, 8, 8, 8, 24, 16, 8, 0);
+	}
+
+	/**
+	 * Optimized version of doBlit to be used with alpha blended blitting
+	 * NOTE: Can only be used with BlendBlit::getSupportedPixelFormat format
+	 * @param dst a pointer to the destination buffer (can be offseted by pixels)
+	 * @param src a pointer to the source buffer (can be offseted by pixels)
+	 * @param dstPitch destination pitch
+	 * @param srcPitch source pitch
+	 * @param posX where src will be blitted to (onto dest)
+	 * @param posY where src will be blitted to (onto dest)
+	 * @param width width of the input surface
+	 * @param height height of the input surface
+	 * @param scaleX scale factor to use when blitting (src / dst) (0.5 for 2x scale) use BlendBlit::SCALE_THRESHOLD
+	 * @param scaleY scale factor to use when blitting (src / dst) (0.5 for 2x scale) use BlendBlit::SCALE_THRESHOLD
+	 * @param scaleXsrcOff since you can only offset the *src pointer to effectivly
+	 *     get a different part of the source image rendered, it can only go in
+	 *     1 pixel chunks, so this fixes that by added a little offset
+	 * @param scaleYsrcOff same as the X one
+	 * @param colorMod the color to multiply by. (0xffffffff does no multiplication and has 0 overhead usually)
+	 * @param flipping flipping flags used with Graphics::FLIP_FLAGS
+	 * @param blendMode the blending mode to be used
+	 * @param alphaType the alpha mixing mode to be used
+	 */
+	static void blit(byte *dst, const byte *src,
+			  const uint dstPitch, const uint srcPitch,
+			  const int posX, const int posY,
+			  const uint width, const uint height,
+			  const int scaleX, const int scaleY,
+			  const int scaleXsrcOff, const int scaleYsrcOff,
+			  const uint32 colorMod, const uint flipping,
+			  const TSpriteBlendMode blendMode,
+			  const AlphaType alphaType);
+
+}; // End of class BlendBlit
 
 /** @} */
 } // End of namespace Graphics

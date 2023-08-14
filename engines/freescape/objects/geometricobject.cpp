@@ -123,6 +123,7 @@ GeometricObject::GeometricObject(
 	FCLInstructionVector conditionInstructions_,
 	Common::String conditionSource_) {
 	_type = type_;
+	assert(_type != kGroupType);
 	_flags = flags_;
 
 	if (isDestroyed()) // If the object is destroyed, restore it
@@ -383,7 +384,7 @@ bool GeometricObject::collides(const Math::AABB &boundingBox_) {
 	return _boundingBox.collides(boundingBox_);
 }
 
-void GeometricObject::draw(Freescape::Renderer *gfx) {
+void GeometricObject::draw(Renderer *gfx) {
 	if (this->getType() == kCubeType) {
 		gfx->renderCube(_origin, _size, _colours);
 	} else if (this->getType() == kRectangleType) {

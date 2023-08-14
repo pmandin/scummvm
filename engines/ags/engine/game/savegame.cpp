@@ -238,13 +238,13 @@ HSaveError ReadDescription_v321(Stream *in, SavegameVersion &svg_ver, SavegameDe
 	else
 		SkipSaveImage(in);
 
+	const Version low_compat_version(3, 2, 0, 1123);
 	String version_str = String::FromStream(in);
 	Version eng_version(version_str);
-	if (eng_version > _G(EngineVersion) ||
-	        eng_version < _G(SavedgameLowestBackwardCompatVersion)) {
+	if (eng_version > _G(EngineVersion) || eng_version < low_compat_version) {
 		// Engine version is either non-forward or non-backward compatible
 		return new SavegameError(kSvgErr_IncompatibleEngine,
-		                         String::FromFormat("Required: %s, supported: %s - %s.", eng_version.LongString.GetCStr(), _G(SavedgameLowestBackwardCompatVersion).LongString.GetCStr(), _G(EngineVersion).LongString.GetCStr()));
+		                         String::FromFormat("Required: %s, supported: %s - %s.", eng_version.LongString.GetCStr(), low_compat_version.LongString.GetCStr(), _G(EngineVersion).LongString.GetCStr()));
 	}
 	if (elems & kSvgDesc_EnvInfo) {
 		desc.MainDataFilename.Read(in);
@@ -327,6 +327,7 @@ HSaveError OpenSavegame(const String &filename, SavegameDescription &desc, Saveg
 void DoBeforeRestore(PreservedParams &pp) {
 	pp.SpeechVOX = _GP(play).voice_avail;
 	pp.MusicVOX = _GP(play).separate_music_lib;
+	memcpy(pp.GameOptions, _GP(game).options, GameSetupStruct::MAX_OPTIONS * sizeof(int));
 
 	unload_old_room();
 	delete _G(raw_saved_screen);
@@ -423,6 +424,13 @@ void RestoreViewportsAndCameras(const RestoredData &r_data) {
 	_GP(play).InvalidateViewportZOrder();
 }
 
+// Resets a number of options that are not supposed to be changed at runtime
+static void CopyPreservedGameOptions(GameSetupStructBase &gs, const PreservedParams &pp) {
+	const auto restricted_opts = GameSetupStructBase::GetRestrictedOptions();
+	for (auto opt : restricted_opts)
+		gs.options[opt] = pp.GameOptions[opt];
+}
+
 // Final processing after successfully restoring from save
 HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data) {
 	// Use a yellow dialog highlight for older game versions
@@ -433,6 +441,9 @@ HSaveError DoAfterRestore(const PreservedParams &pp, const RestoredData &r_data)
 	// Preserve whether the music vox is available
 	_GP(play).voice_avail = pp.SpeechVOX;
 	_GP(play).separate_music_lib = pp.MusicVOX;
+
+	// Restore particular game options that must not change at runtime
+	CopyPreservedGameOptions(_GP(game), pp);
 
 	// Restore debug flags
 	if (_G(debug_flags) & DBG_DEBUGMODE)
