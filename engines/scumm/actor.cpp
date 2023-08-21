@@ -2160,7 +2160,7 @@ void ScummEngine::playActorSounds() {
 			}
 			// fast mode will flood the queue with walk sounds
 			if (!_fastMode) {
-				_sound->addSoundToQueue(sound);
+				_sound->startSound(sound);
 			}
 			for (j = 1; j < _numActors; j++) {
 				_actors[j]->_cost.soundCounter = 0;
@@ -2489,11 +2489,13 @@ void ActorHE::prepareDrawActorCostume(BaseCostumeRenderer *bcr) {
 
 	if (_vm->_game.heversion >= 80 && _heNoTalkAnimation == 0 && _animProgress == 0) {
 		if (_vm->getTalkingActor() == _number && !_vm->_string[0].no_talk_anim) {
-			int talkState = 0;
+			int talkState = -1;
 
-			if (((SoundHE *)_vm->_sound)->isSoundCodeUsed(1))
-				talkState = ((SoundHE *)_vm->_sound)->getSoundVar(1, 19);
-			if (talkState == 0)
+			if (((SoundHE *)_vm->_sound)->isSoundCodeUsed(HSND_TALKIE_SLOT))
+				talkState = ((SoundHE *)_vm->_sound)->getSoundVar(HSND_TALKIE_SLOT, 19);
+
+			// Allow a talkie with tokens to kick into random mouth mode
+			if (talkState == -1 || talkState == 0)
 				talkState = _vm->_rnd.getRandomNumberRng(1, 10);
 
 			assertRange(1, talkState, 13, "Talk state");
@@ -3124,7 +3126,7 @@ void ScummEngine::stopTalk() {
 
 	_haveMsg = 0;
 	_talkDelay = 0;
-	_sound->_sfxMode = 0;
+	_sound->_digiSndMode = DIGI_SND_MODE_EMPTY;
 
 	act = getTalkingActor();
 	if (act && act < 0x80) {
@@ -3137,19 +3139,14 @@ void ScummEngine::stopTalk() {
 		if (_game.version <= 7 && _game.heversion == 0)
 			setTalkingActor(0xFF);
 		if (_game.heversion != 0) {
-			if (_game.heversion == 98 && _game.id == GID_FREDDI4) {
-				// Delay unsetting _heTalking to next sound frame. fixes bug #3533.
-				_actorShouldStopTalking = true;
-			} else {
-				((ActorHE *)a)->_heTalking = false;
-			}
+			((ActorHE *)a)->_heTalking = false;
 		}
 	}
 
 	if ((_game.id == GID_DIG && !(_game.features & GF_DEMO)) || _game.id == GID_CMI) {
 		setTalkingActor(0);
 		VAR(VAR_HAVE_MSG) = 0;
-	} else if (_game.heversion >= 60 && !_actorShouldStopTalking) {
+	} else if (_game.heversion >= 60) {
 		setTalkingActor(0);
 	}
 

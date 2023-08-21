@@ -19,43 +19,29 @@
  *
  */
 
-#ifndef MM1_DATA_SPELLS_H
-#define MM1_DATA_SPELLS_H
+#ifndef DIRECTOR_LINGO_XLIBS_MISC_H
+#define DIRECTOR_LINGO_XLIBS_MISC_H
 
-#include "common/serializer.h"
-#include "mm/mm1/data/character.h"
+namespace Director {
 
-namespace MM {
-namespace MM1 {
-
-struct SpellsState {
-	byte _mmVal1 = 0;
-	byte _resistenceIndex = 0;
-	byte _mmVal5 = 0;
-	byte _mmVal7 = 0;
-
-	// This can hold both a resistence type, or count of monsters to affect
-	byte _resistanceTypeOrTargetCount = RESISTANCE_MAGIC;
-
-	// TODO: Is this variable different in different contexts?
-	// In some places it's used to hold a new condition,
-	// but others, like moonRay, uses it to hold Hp
-	byte _damage = 0;
-
-	/**
-	 * Synchronize data to/from savegames
-	 */
-	void synchronize(Common::Serializer &s) {
-		s.syncAsByte(_mmVal1);
-		s.syncAsByte(_resistenceIndex);
-		s.syncAsByte(_mmVal5);
-		s.syncAsByte(_mmVal7);
-		s.syncAsByte(_resistanceTypeOrTargetCount);
-		s.syncAsByte(_damage);
-	}
+class MiscObject : public Object<MiscObject> {
+public:
+    MiscObject(ObjectType objType);
 };
 
-} // namespace MM1
-} // namespace MM
+namespace Misc {
+
+extern const char *xlibName;
+extern const char *fileNames[];
+
+void open(int type);
+void close(int type);
+
+void m_getProfileString(int nargs);
+void m_isFilePresent(int nargs);
+
+} // End of namespace Misc
+
+} // End of namespace Director
 
 #endif

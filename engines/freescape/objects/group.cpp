@@ -35,7 +35,12 @@ const Common::Array<AnimationOpcode *> operations_) {
 	_finished = false;
 	_step = 0;
 
-	_objectIds = objectIds_;
+	for (int i = 0; i < int(objectIds_.size()); i++) {
+		if (objectIds_[i] == 0 || objectIds_[i] == 0xffff)
+			break;
+		_objectIds.push_back(objectIds_[i]);
+	}
+
 	_operations = operations_;
 
 	if (isDestroyed()) // If the object is destroyed, restore it
@@ -69,14 +74,14 @@ void Group::linkObject(Object *obj) {
 
 void Group::assemble(int index) {
 	GeometricObject *gobj = (GeometricObject *)_objects[index];
+	gobj->makeVisible();
 	Math::Vector3d position = _operations[_step]->position;
 
 	if (!GeometricObject::isPolygon(gobj->getType()))
 		position = 32 * position / _scale;
 	else
 		position = position / _scale;
-
-	gobj->offsetOrigin(position);
+	gobj->offsetOrigin(position + _origins[index] - _origins[0]);
 }
 
 void Group::run() {
@@ -90,19 +95,36 @@ void Group::run() {
 }
 
 void Group::run(int index) {
-	if (_operations[_step]->opcode == 0x80) {
-		_step = -1;
-		_active = false;
-		_finished = false;
-	} else if (_operations[_step]->opcode == 0x01) {
+	if (_step < 0)
+		return;
+
+	int opcode = _operations[_step]->opcode;
+	if (opcode == 0x80 || opcode == 0xff) {
+		reset();
+	} else if (opcode == 0x01) {
 		g_freescape->executeCode(_operations[_step]->condition, false, true, false, false);
 	} else {
-		if (_operations[_step]->opcode == 0x10)
+		if (opcode == 0x10)
 			if (!_active) {
 				_step = -1;
 				return;
 			}
 		assemble(index);
+	}
+}
+
+void Group::reset() {
+	_step = -1;
+	_active = false;
+	_finished = false;
+	uint32 groupSize = _objects.size();
+	for (uint32 i = 0; i < groupSize ; i++) {
+		GeometricObject *gobj = (GeometricObject *)_objects[i];
+		if (GeometricObject::isPolygon(_objects[i]->getType())) {
+			gobj->setOrigin(_origins[i]);
+			gobj->restoreOrdinates();
+			gobj->makeInvisible();
+		}
 	}
 }
 

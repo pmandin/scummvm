@@ -656,9 +656,11 @@ ScummEngine_v70he::ScummEngine_v70he(OSystem *syst, const DetectorResult &dr)
 	_heSndOffset = 0;
 	_heSndChannel = 0;
 	_heSndFlags = 0;
-	_heSndSoundFreq = 0;
+	_heSndFrequency = 0;
+	_heSndFrequencyShift = 0;
 	_heSndPan = 0;
 	_heSndVol = 0;
+	_heSndStartNewSoundFlag = false;
 
 	_numStoredFlObjects = 0;
 	_storedFlObjects = (ObjectData *)calloc(100, sizeof(ObjectData));
@@ -711,11 +713,6 @@ ScummEngine_v72he::ScummEngine_v72he(OSystem *syst, const DetectorResult &dr)
 
 ScummEngine_v80he::ScummEngine_v80he(OSystem *syst, const DetectorResult &dr)
 	: ScummEngine_v72he(syst, dr) {
-	_heSndResId = 0;
-	_curSndId = 0;
-	_sndPtrOffs = 0;
-	_sndTmrOffs = 0;
-	_sndDataSize = 0;
 
 	VAR_PLATFORM_VERSION = 0xFF;
 	VAR_CURRENT_CHARSET = 0xFF;
@@ -1389,7 +1386,7 @@ void ScummEngine::setupScumm(const Common::String &macResourceFile) {
 
 	// Create the sound manager
 	if (_game.heversion > 0)
-		_sound = new SoundHE(this, _mixer);
+		_sound = new SoundHE(this, _mixer, &_resourceAccessMutex);
 	else
 		_sound = new Sound(this, _mixer, useReplacementAudioTracks);
 
@@ -2305,7 +2302,7 @@ void ScummEngine::syncSoundSettings() {
 
 	// Backyard Baseball 2003 uses a unique subtitle variable,
 	// rather than VAR_SUBTITLES
-	if (_game.id == GID_BASEBALL2003) {
+	if (_scummVars && _game.id == GID_BASEBALL2003) {
 		_scummVars[632] = ConfMan.getBool("subtitles");
 	}
 
@@ -2412,6 +2409,10 @@ Common::Error ScummEngine::go() {
 
 		// Run the main loop
 		scummLoop(delta);
+
+		if (_game.heversion >= 60) {
+			((SoundHE *)_sound)->feedMixer();
+		}
 
 		if (shouldQuit()) {
 			// TODO: Maybe perform an autosave on exit?
@@ -2651,7 +2652,7 @@ load_game:
 	}
 
 	if (_game.heversion >= 80) {
-		((SoundHE *)_sound)->processSoundCode();
+		((SoundHE *)_sound)->handleSoundFrame();
 	}
 
 	if (_game.version < 8) {
@@ -2969,7 +2970,7 @@ void ScummEngine_v3::terminateSaveMenuScript() {
 
 		// Restore the previous sound
 		if (readVar(305)) {
-			_sound->addSoundToQueue(readVar(305));
+			_sound->startSound(readVar(305));
 		}
 
 		// Show the cursor
@@ -3029,7 +3030,7 @@ void ScummEngine_v3::terminateSaveMenuScript() {
 
 		// Restore the previous sound
 		if (readVar(0x4007)) {
-			_sound->addSoundToQueue(readVar(0x4007));
+			_sound->startSound(readVar(0x4007));
 		}
 
 		// Terminate the cutscene state
@@ -3236,7 +3237,7 @@ void ScummEngine_v3::scummLoop_handleSaveLoad() {
 				if (_game.platform == Common::kPlatformNES) {
 					runScript(5, 0, 0, nullptr);
 					if (VAR(224))
-						_sound->addSoundToQueue(VAR(224));
+						_sound->startSound(VAR(224));
 				}
 
 			} else if (_game.platform != Common::kPlatformMacintosh) {
@@ -3547,7 +3548,7 @@ int ScummEngine_v60he::getHETimer(int timer) {
 }
 
 void ScummEngine_v60he::setHETimer(int timer) {
-	assertRange(1, timer, 15, "setHETimer: Timer");
+	assertRange(1, timer, ARRAYSIZE(_heTimers) - 1, "setHETimer: Timer");
 	_heTimers[timer] = _system->getMillis();
 }
 

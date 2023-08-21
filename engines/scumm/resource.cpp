@@ -839,8 +839,12 @@ byte ResourceManager::Resource::getResourceCounter() const {
 byte *ResourceManager::createResource(ResType type, ResId idx, uint32 size) {
 	debugC(DEBUG_RESOURCE, "_res->createResource(%s,%d,%d)", nameOfResType(type), idx, size);
 
-	if (!validateResource("allocating", type, idx))
+	_vm->_insideCreateResource++; // For the HE sound engine
+
+	if (!validateResource("allocating", type, idx)) {
+		_vm->_insideCreateResource--;
 		return nullptr;
+	}
 
 	if (_vm->_game.version <= 2) {
 		// Nuking and reloading a resource can be harmful in some
@@ -865,6 +869,9 @@ byte *ResourceManager::createResource(ResType type, ResId idx, uint32 size) {
 	_types[type][idx]._address = ptr;
 	_types[type][idx]._size = size;
 	setResourceCounter(type, idx, 1);
+
+	_vm->_insideCreateResource--;
+
 	return ptr;
 }
 
@@ -1041,6 +1048,12 @@ bool ResourceManager::isModified(ResType type, ResId idx) const {
 	if (!validateResource("isModified", type, idx))
 		return false;
 	return _types[type][idx].isModified();
+}
+
+bool ResourceManager::isOffHeap(ResType type, ResId idx) const {
+	if (!validateResource("isOffHeap", type, idx))
+		return false;
+	return _types[type][idx].isOffHeap();
 }
 
 bool ResourceManager::Resource::isModified() const {

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.6.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-08-12 15:37+0000\n"
-"PO-Revision-Date: 2023-07-28 01:40+0000\n"
+"POT-Creation-Date: 2023-08-20 20:39+0000\n"
+"PO-Revision-Date: 2023-08-20 19:41+0000\n"
 "Last-Translator: Timo Mikkolainen <tmikkola@gmail.com>\n"
 "Language-Team: Finnish <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/fi/>\n"
@@ -278,7 +278,7 @@ msgstr "Toinen tallennustila on aktiivinen. Haluatko keskeyttää sen?"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:360
 #: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:145
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3837
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3838
 #: engines/toon/toon.cpp:1531
 msgid "Yes"
 msgstr "Kyllä"
@@ -291,7 +291,7 @@ msgstr "Kyllä"
 #: engines/director/lingo/xlibs/jitdraw3.cpp:139 engines/grim/grim.cpp:360
 #: engines/kyra/gui/saveload_eob.cpp:598 engines/kyra/gui/saveload_eob.cpp:631
 #: engines/parallaction/metaengine.cpp:151
-#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3837
+#: engines/sci/graphics/controls32.cpp:929 engines/scumm/scumm.cpp:3838
 #: engines/toon/toon.cpp:1531
 msgid "No"
 msgstr "Ei"
@@ -319,10 +319,10 @@ msgstr "JSON-koodin sisältö on epämuodostunutta."
 #: engines/groovie/script.cpp:660 engines/mtropolis/mtropolis.cpp:115
 #: engines/mtropolis/mtropolis.cpp:125 engines/parallaction/saveload.cpp:270
 #: engines/saga/music.cpp:102 engines/sci/engine/kgraphics.cpp:75
-#: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1160
-#: engines/scumm/scumm.cpp:1186 engines/scumm/scumm.cpp:1208
-#: engines/scumm/scumm.cpp:1561 engines/scumm/scumm.cpp:2032
-#: engines/scumm/scumm.cpp:2048 engines/sky/compact.cpp:140
+#: engines/sci/graphics/controls32.cpp:926 engines/scumm/scumm.cpp:1157
+#: engines/scumm/scumm.cpp:1183 engines/scumm/scumm.cpp:1205
+#: engines/scumm/scumm.cpp:1558 engines/scumm/scumm.cpp:2029
+#: engines/scumm/scumm.cpp:2045 engines/sky/compact.cpp:140
 #: engines/sword1/animation.cpp:529 engines/sword1/animation.cpp:560
 #: engines/sword1/animation.cpp:568 engines/sword1/control.cpp:888
 #: engines/sword1/logic.cpp:1641 engines/sword2/animation.cpp:426
@@ -976,21 +976,17 @@ msgid "Prev"
 msgstr "Edellinen"
 
 #: gui/imagealbum-dialog.cpp:127
-#, fuzzy
-#| msgid "Saving game..."
 msgid "Save Image..."
-msgstr "Tallennetaan peliä..."
+msgstr "Tallenna kuva..."
 
 #: gui/imagealbum-dialog.cpp:264
 #, c-format
 msgid "%u of %u"
-msgstr ""
+msgstr "%u %u:sta"
 
 #: gui/imagealbum-dialog.cpp:377
-#, fuzzy
-#| msgid "Save Game"
 msgid "Save Image"
-msgstr "Tallenna peli"
+msgstr "Tallenna kuva"
 
 #. I18N: Group name for the game list
 #: gui/launcher.cpp:99
@@ -2778,23 +2774,23 @@ msgstr "TB"
 
 #: common/formats/formatinfo.cpp:102
 msgid "Bitmap Image File"
-msgstr ""
+msgstr "Bittikarttakuvatiedosto"
 
 #: common/formats/formatinfo.cpp:104
 msgid "PNG Image File"
-msgstr ""
+msgstr "PNG-kuvatiedosto"
 
 #: common/formats/formatinfo.cpp:106
 msgid "JPEG Image File"
-msgstr ""
+msgstr "JPEG-kuvatiedosto"
 
 #: common/formats/formatinfo.cpp:108
 msgid "QuickDraw PICT Image File"
-msgstr ""
+msgstr "QuickDraw PICT-kuvatiedosto"
 
 #: common/formats/formatinfo.cpp:111
 msgid "Data File"
-msgstr ""
+msgstr "Datatiedosto"
 
 #: dists/android.strings.xml.cpp:30
 msgid "ScummVM"
@@ -4442,19 +4438,19 @@ msgstr ""
 "Koske (älä paina) kosketusalueen alaosaa: Nuolinäppäin alas\n"
 "Välilyönti: Pause"
 
-#: backends/platform/ios7/ios7_osys_events.cpp:443
+#: backends/platform/ios7/ios7_osys_events.cpp:424
 msgid "Mouse-click-and-drag mode enabled."
 msgstr "Hiiren vedä-ja-pudota tila käytössä."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:445
+#: backends/platform/ios7/ios7_osys_events.cpp:426
 msgid "Mouse-click-and-drag mode disabled."
 msgstr "Hiiren vedä-ja-pudota tila pois käytöstä."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:466
+#: backends/platform/ios7/ios7_osys_events.cpp:447
 msgid "Touchpad mode enabled."
 msgstr "Touchpad tila päällä."
 
-#: backends/platform/ios7/ios7_osys_events.cpp:468
+#: backends/platform/ios7/ios7_osys_events.cpp:449
 msgid "Touchpad mode disabled."
 msgstr "Touchpad tila pois päältä."
 
@@ -4922,7 +4918,7 @@ msgstr "Lataa tallenne"
 msgid "Quick load or save game isn't supported in this location"
 msgstr "Pelin pikalataus tai tallennus ei ole tuettu tässä sijainnissa"
 
-#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2836
+#: engines/agos/saveload.cpp:161 engines/scumm/scumm.cpp:2837
 #, c-format
 msgid ""
 "Failed to load saved game from file:\n"
@@ -4933,7 +4929,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2823
+#: engines/agos/saveload.cpp:196 engines/scumm/scumm.cpp:2824
 #, c-format
 msgid ""
 "Failed to save game to file:\n"
@@ -4944,7 +4940,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2856
+#: engines/agos/saveload.cpp:204 engines/scumm/scumm.cpp:2857
 #, c-format
 msgid ""
 "Successfully saved game in file:\n"
@@ -5539,10 +5535,8 @@ msgstr ""
 "Stealth alusta käyttäen uusia pelitallennuksia."
 
 #: engines/crab/input/input.cpp:118
-#, fuzzy
-#| msgid "Interact"
 msgid "Talk/Interact"
-msgstr "Käytä"
+msgstr "Puhu/Vuorovaikuta"
 
 #: engines/crab/input/input.cpp:158 engines/twine/metaengine.cpp:445
 msgid "Accept"
@@ -5550,37 +5544,35 @@ msgstr "Hyväksy"
 
 #: engines/crab/input/input.cpp:164
 msgid "Reply 1"
-msgstr ""
+msgstr "Vastaus 1"
 
 #: engines/crab/input/input.cpp:169
 msgid "Reply 2"
-msgstr ""
+msgstr "Vastaus 2"
 
 #: engines/crab/input/input.cpp:174
 msgid "Reply 3"
-msgstr ""
+msgstr "Vastaus 3"
 
 #: engines/crab/input/input.cpp:179
 msgid "Reply 4"
-msgstr ""
+msgstr "Vastaus 4"
 
 #: engines/crab/input/input.cpp:184
 msgid "Reply 5"
-msgstr ""
+msgstr "Vastaus 5"
 
 #: engines/crab/input/input.cpp:189
 msgid "Reply 6"
-msgstr ""
+msgstr "Vastaus 6"
 
 #: engines/crab/input/input.cpp:204
 msgid "Map"
 msgstr "Näppäinkartta"
 
 #: engines/crab/input/input.cpp:209
-#, fuzzy
-#| msgid "Show journal"
 msgid "Journal"
-msgstr "Näytä päiväkirja"
+msgstr "Päiväkirja"
 
 #. I18N: Action in In Cold Blood
 #: engines/crab/input/input.cpp:214 engines/dragons/metaengine.cpp:149
@@ -5596,7 +5588,7 @@ msgstr "Tavarat"
 
 #: engines/crab/input/input.cpp:219
 msgid "Traits"
-msgstr ""
+msgstr "Piirteet"
 
 #: engines/cryomni3d/metaengine.cpp:145
 msgid "Versailles 1685 support is not compiled in"
@@ -5733,13 +5725,11 @@ msgstr "Pelaaja ei voi pudota kielekkeiltä"
 
 #: engines/freescape/metaengine.cpp:101
 msgid "Invert Y-axis on mouse"
-msgstr ""
+msgstr "Käännä hiiren Y-akseli"
 
 #: engines/freescape/metaengine.cpp:102
-#, fuzzy
-#| msgid "Use an alternative palette"
 msgid "Use alternative camera controls"
-msgstr "Käytä vaihtoehtoista palettia"
+msgstr "Käytä vaihtoehtoisia kamerakontrolleja"
 
 #: engines/glk/glk_api.cpp:62
 msgid "[ press any key to exit ]"
@@ -5842,12 +5832,12 @@ msgstr "Viallinen rs-tiedosto."
 msgid "Save file created by different version."
 msgstr "Pelitallenne on luotu pelin toisella versiolla."
 
-#: engines/gob/inter_playtoons.cpp:259 engines/gob/inter_v2.cpp:1499
+#: engines/gob/inter_playtoons.cpp:259 engines/gob/inter_v2.cpp:1506
 #: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:585
 msgid "Failed to load saved game from file."
 msgstr "Pelitallenteen lataaminen tiedostosta epäonnistui."
 
-#: engines/gob/inter_v2.cpp:1569 engines/gob/inter_v7.cpp:1407
+#: engines/gob/inter_v2.cpp:1576 engines/gob/inter_v7.cpp:1407
 #: engines/gob/inter_geisha.cpp:262 engines/tinsel/saveload.cpp:598
 msgid "Failed to save game to file."
 msgstr "Pelin tallentaminen tiedostoon epäonnistui."
@@ -7295,7 +7285,7 @@ msgstr ""
 
 #: engines/mtropolis/plugin/mti.cpp:549
 msgid "Image Viewer"
-msgstr ""
+msgstr "Kuvankatselu"
 
 #: engines/mutationofjb/util.cpp:32
 #, c-format
@@ -7920,7 +7910,7 @@ msgid "Your Name:"
 msgstr "Sinun nimesi:"
 
 #. I18N: Button, start hosting online multiplayer game
-#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:3843
+#: engines/scumm/dialog-createsession.cpp:49 engines/scumm/scumm.cpp:3844
 msgid "Host"
 msgstr "Isännöi"
 
@@ -7930,7 +7920,7 @@ msgid "Querying games..."
 msgstr "Etsitään pelejä..."
 
 #. I18N: Join online multiplayer game
-#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:3843
+#: engines/scumm/dialog-sessionselector.cpp:64 engines/scumm/scumm.cpp:3844
 msgid "Join"
 msgstr "Liity"
 
@@ -8793,7 +8783,7 @@ msgstr ""
 "Kuvasuhteen korjaus saadaan mahdolliseksi trimmaamalla resoluution 320x200:"
 "aan 'Pelimoottori'-välilehdellä."
 
-#: engines/scumm/scumm.cpp:1159
+#: engines/scumm/scumm.cpp:1156
 msgid ""
 "Could not find the 'Indy' Macintosh executable. High-resolution fonts will\n"
 "be disabled."
@@ -8801,7 +8791,7 @@ msgstr ""
 "\"Indy\":n Macintosh ohjelmatiedostoa ei löydetty. Korkearesoluutioiset\n"
 "versiot fontista eivät ole tuettuina."
 
-#: engines/scumm/scumm.cpp:1185
+#: engines/scumm/scumm.cpp:1182
 msgid ""
 "Could not find the 'Loom' Macintosh executable. Music and high-resolution\n"
 "versions of font and cursor will be disabled."
@@ -8810,7 +8800,7 @@ msgstr ""
 "korkearesoluutioiset\n"
 "versiot fontista ja osoittimesta eivät ole tuettuina."
 
-#: engines/scumm/scumm.cpp:1207
+#: engines/scumm/scumm.cpp:1204
 msgid ""
 "Could not find the 'Monkey Island' Macintosh executable to read the\n"
 "instruments from. Music will be disabled."
@@ -8818,7 +8808,7 @@ msgstr ""
 "\"Monkey Island\":in Macintosh ohjelmatiedostoa ei löydetty\n"
 "instrumenttien lukemiseksi. Emme soita musiikkia."
 
-#: engines/scumm/scumm.cpp:1558
+#: engines/scumm/scumm.cpp:1555
 msgid ""
 "Audio files compressed with ScummVM Tools were detected; *.BUN/*.SOU\n"
 "compression is not supported anymore for this game, audio will be disabled.\n"
@@ -8828,7 +8818,7 @@ msgstr ""
 "pakkaukset eivät enää ole tuettuja tässä pelissä, joten äänet eivät kuulu.\n"
 "Ole hyvä ja asenna peli uudelleen sopivien äänitiedostojen kera."
 
-#: engines/scumm/scumm.cpp:2030
+#: engines/scumm/scumm.cpp:2027
 #, c-format
 msgid ""
 "Native MIDI support requires the Roland Upgrade from LucasArts,\n"
@@ -8837,7 +8827,7 @@ msgstr ""
 "Suora MIDI tuki vaatii Roland päivityksen LucasArtsilta, mutta\n"
 "%s puuttuu. Käytetään AdLibia sen sijaan."
 
-#: engines/scumm/scumm.cpp:2046
+#: engines/scumm/scumm.cpp:2043
 msgid ""
 "This particular version of Monkey Island 1 is known to miss some\n"
 "required resources for MT-32. Using AdLib instead."
@@ -8846,7 +8836,7 @@ msgstr ""
 "vaadittuja käytön mahdollistavia osasia MT-32:lle. Otetaan sen sijasta "
 "käyttöön AdLib."
 
-#: engines/scumm/scumm.cpp:3732
+#: engines/scumm/scumm.cpp:3733
 msgid ""
 "Usually, Maniac Mansion would start now. But for that to work, the game "
 "files for Maniac Mansion have to be in the 'Maniac' directory inside the "
@@ -8856,7 +8846,7 @@ msgstr ""
 "Maniac Mansionin pelitiedostojen pitää löytyä \"Maniac\"-kansiosta Tentacle-"
 "pelikansion sisältä, ja sen pitää myös olla lisätty pelinä ScummVM:ään."
 
-#: engines/scumm/scumm.cpp:3843
+#: engines/scumm/scumm.cpp:3844
 msgid "Would you like to host or join a network play session?"
 msgstr "Haluatko isännöidä vai liittyä verkkopeliin?"
 

@@ -200,6 +200,9 @@ public:
 	Area *load8bitArea(Common::SeekableReadStream *file, uint16 ncolors);
 	Object *load8bitObject(Common::SeekableReadStream *file);
 	Group *load8bitGroup(Common::SeekableReadStream *file, byte rawFlagsAndType);
+	Group *load8bitGroupV1(Common::SeekableReadStream *file, byte rawFlagsAndType);
+	Group *load8bitGroupV2(Common::SeekableReadStream *file, byte rawFlagsAndType);
+
 	void loadGlobalObjects(Common::SeekableReadStream *file, int offset, int size);
 	void renderPixels8bitBinImage(Graphics::ManagedSurface *surface, int &i, int &j, uint8 pixels, int color);
 
@@ -369,7 +372,7 @@ public:
 	Common::StringArray _messagesList;
 
 	void loadMessagesFixedSize(Common::SeekableReadStream *file, int offset, int size, int number);
-	void loadMessagesVariableSize(Common::SeekableReadStream *file, int offset, int number);
+	virtual void loadMessagesVariableSize(Common::SeekableReadStream *file, int offset, int number);
 
 	void loadFonts(Common::SeekableReadStream *file, int offset);
 	void loadFonts(byte *font, int charNumber);
@@ -560,6 +563,7 @@ public:
 	void loadAssetsAmigaFullGame() override;
 
 	void loadAssetsZXDemo() override;
+	void loadMessagesVariableSize(Common::SeekableReadStream *file, int offset, int number) override;
 
 	int _lastTenSeconds;
 	int _lastSecond;

@@ -144,9 +144,12 @@ GeometricObject::GeometricObject(
 		_colours = colours_;
 
 	_ordinates = nullptr;
+	_initialOrdinates = nullptr;
 
-	if (ordinates_)
+	if (ordinates_) {
 		_ordinates = ordinates_;
+		_initialOrdinates = new Common::Array<uint16>(*_ordinates);
+	}
 	_condition = conditionInstructions_;
 	_conditionSource = conditionSource_;
 
@@ -181,9 +184,21 @@ void GeometricObject::offsetOrigin(Math::Vector3d origin_) {
 		Math::Vector3d offset = origin_ - _origin;
 		offset = 32 * offset;
 		for (int i = 0; i < int(_ordinates->size()); i = i + 3) {
-			(*_ordinates)[i    ] += uint16(offset.x());
-			(*_ordinates)[i + 1] += uint16(offset.y());
-			(*_ordinates)[i + 2] += uint16(offset.z());
+			int16 ordinate = 0;
+			ordinate = (*_ordinates)[i];
+			ordinate +=  int16(offset.x());
+			assert(ordinate >= 0);
+			(*_ordinates)[i] = uint16(ordinate);
+
+			ordinate = (*_ordinates)[i + 1];
+			ordinate +=  int16(offset.y());
+			assert(ordinate >= 0);
+			(*_ordinates)[i + 1] = uint16(ordinate);
+
+			ordinate = (*_ordinates)[i + 2];
+			ordinate +=  int16(offset.z());
+			assert(ordinate >= 0);
+			(*_ordinates)[i + 2] = uint16(ordinate);
 		}
 	}
 	setOrigin(origin_);
@@ -196,8 +211,20 @@ void GeometricObject::scale(int factor) {
 		for (uint i = 0; i < _ordinates->size(); i++) {
 			// This division is always exact because each ordinate was multipled by 32
 			(*_ordinates)[i] = (*_ordinates)[i] / factor;
+			if (_initialOrdinates)
+				(*_initialOrdinates)[i] = (*_initialOrdinates)[i] / factor;
 		}
 	}
+	computeBoundingBox();
+}
+
+void GeometricObject::restoreOrdinates() {
+	if (!isPolygon(_type))
+		return;
+
+	for (uint i = 0; i < _ordinates->size(); i++)
+		(*_ordinates)[i] = (*_initialOrdinates)[i];
+
 	computeBoundingBox();
 }
 
@@ -369,6 +396,7 @@ void GeometricObject::computeBoundingBox() {
 GeometricObject::~GeometricObject() {
 	delete _colours;
 	delete _ordinates;
+	delete _initialOrdinates;
 }
 
 bool GeometricObject::isDrawable() { return true; }

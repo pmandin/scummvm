@@ -545,6 +545,7 @@ public:
 
 	/** Central resource data. */
 	ResourceManager *_res = nullptr;
+	int _insideCreateResource = 0; // Counter for HE sound
 
 	bool _enableEnhancements = false;
 	bool _useOriginalGUI = true;
@@ -1567,7 +1568,6 @@ protected:
 	byte _charsetBuffer[512];
 
 	bool _keepText = false;
-	bool _actorShouldStopTalking = false;
 	byte _msgCount = 0;
 
 	int _nextLeft = 0, _nextTop = 0;
@@ -1621,6 +1621,7 @@ public:
 	byte *get2byteCharPtr(int idx);
 
 	bool isScummvmKorTarget();
+	bool hasLocalizer();
 
 //protected:
 	byte *_2byteFontPtr = nullptr;
@@ -1790,19 +1791,28 @@ public:
 
 	// HE specific variables
 	byte VAR_REDRAW_ALL_ACTORS = 0xFF;		// Used in setActorRedrawFlags()
-	byte VAR_SKIP_RESET_TALK_ACTOR = 0xFF;		// Used in setActorCostume()
+	byte VAR_SKIP_RESET_TALK_ACTOR = 0xFF;	// Used in setActorCostume()
 
-	byte VAR_SOUND_CHANNEL = 0xFF;			// Used in o_startSound()
-	byte VAR_TALK_CHANNEL = 0xFF;			// Used in startHETalkSound()
-	byte VAR_SOUNDCODE_TMR = 0xFF;			// Used in processSoundCode()
-	byte VAR_RESERVED_SOUND_CHANNELS = 0xFF;	// Used in findFreeSoundChannel()
+	byte VAR_SOUND_CHANNEL = 0xFF;				// Used in o_startSound()
+	byte VAR_TALK_CHANNEL = 0xFF;				// Used in playVoice()
+	byte VAR_SOUND_TOKEN_OFFSET = 0xFF;			// Used in handleSoundFrame()
+	byte VAR_START_DYN_SOUND_CHANNELS = 0xFF;	// Used in getNextDynamicChannel()
+	byte VAR_SOUND_CALLBACK_SCRIPT = 0xFF;
 
-	byte VAR_MAIN_SCRIPT = 0xFF;			// Used in scummLoop()
+	byte VAR_EARLY_TALKIE_CALLBACK = 0xFF;
+	byte VAR_EARLY_CHAN_0_CALLBACK = 0xFF;
+	byte VAR_EARLY_CHAN_1_CALLBACK = 0xFF;
+	byte VAR_EARLY_CHAN_2_CALLBACK = 0xFF;
+	byte VAR_EARLY_CHAN_3_CALLBACK = 0xFF;
 
-	byte VAR_SCRIPT_CYCLE = 0xFF;			// Used in runScript()/runObjectScript()
-	byte VAR_NUM_SCRIPT_CYCLES = 0xFF;		// Used in runAllScripts()
+	byte VAR_MAIN_SCRIPT = 0xFF; // Used in scummLoop()
 
-	byte VAR_QUIT_SCRIPT = 0xFF;			// Used in confirmExitDialog()
+	byte VAR_DEFAULT_SCRIPT_PRIORITY = 0xFF; // Used in runScript()/runObjectScript()
+	byte VAR_LAST_SCRIPT_PRIORITY = 0xFF;    // Used in runAllScripts()
+
+	byte VAR_QUIT_SCRIPT = 0xFF; // Used in confirmExitDialog()
+	byte VAR_ERROR_FLAG = 0xFF; // HE70-90
+	byte VAR_OPERATION_FAILURE = 0xFF; // HE99+
 
 	// Exists both in V7 and in V72HE:
 	byte VAR_NUM_GLOBAL_OBJS = 0xFF;
