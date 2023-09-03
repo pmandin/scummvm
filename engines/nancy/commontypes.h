@@ -25,6 +25,7 @@
 #include "common/rect.h"
 #include "common/array.h"
 #include "common/str.h"
+#include "math/vector3d.h"
 
 namespace Common {
 class SeekableReadStream;
@@ -79,7 +80,6 @@ enum MovementDirection : byte { kUp = 1, kDown = 2, kLeft = 4, kRight = 8, kMove
 namespace NancyState {
 enum NancyState {
 	kBoot,
-	kPartnerLogo,
 	kLogo,
 	kCredits,
 	kMap,
@@ -94,6 +94,7 @@ enum NancyState {
 	kQuit,
 	// regain focus
 	kNone,
+	kSaveDialog,
 	kPause, // only used when the GMM is on screen
 	kReloadSave
 };
@@ -107,6 +108,9 @@ struct SceneChangeDescription {
 	uint16 continueSceneSound = kLoadSceneSound;
 
 	int8 paletteID = -1; // TVD only
+
+	Math::Vector3d listenerFrontVector;
+	uint16 frontVectorFrameID = 0;
 
 	void readData(Common::SeekableReadStream &stream, bool longFormat = false);
 };
@@ -159,6 +163,43 @@ struct SecondaryVideoDescription {
 	void readData(Common::SeekableReadStream &stream);
 };
 
+// Describes set of effects that can be applied to sounds.
+struct SoundEffectDescription {
+	uint32 minTimeDelay = 0;
+	uint32 maxTimeDelay = 0;
+
+	int32 randomMoveMinX = 0;
+	int32 randomMoveMaxX = 0;
+	int32 randomMoveMinY = 0;
+	int32 randomMoveMaxY = 0;
+	int32 randomMoveMinZ = 0;
+	int32 randomMoveMaxZ = 0;
+
+	int32 fixedPosX = 0;
+	int32 fixedPosY = 0;
+	int32 fixedPosZ = 0;
+
+	uint32 moveStepTime = 0;
+	int32 numMoveSteps = 0;
+
+	int32 linearMoveStartX = 0;
+	int32 linearMoveEndX = 0;
+	int32 linearMoveStartY = 0;
+	int32 linearMoveEndY = 0;
+	int32 linearMoveStartZ = 0;
+	int32 linearMoveEndZ = 0;
+
+	int32 rotateMoveStartX = 0;
+	int32 rotateMoveStartY = 0;
+	int32 rotateMoveStartZ = 0;
+	byte rotateMoveAxis = 0;
+
+	uint32 minDistance = 0;
+	uint32 maxDistance = 0;
+
+	void readData(Common::SeekableReadStream &stream);
+};
+
 // Descrbes a single sound. Combines four different structs found in the data in one
 struct SoundDescription {
 	Common::String name;
@@ -168,6 +209,7 @@ struct SoundDescription {
 	uint16 volume = 0;
 	uint16 panAnchorFrame = 0;
 	uint32 samplesPerSec = 0;
+	bool isPanning = false;
 
 	void readNormal(Common::SeekableReadStream &stream);
 	void readDIGI(Common::SeekableReadStream &stream);
@@ -247,6 +289,7 @@ struct StaticData {
 	Common::Array<Common::String> goodbyeTexts;
 	Common::Array<Common::String> hintTexts;
 	Common::String ringingText;
+	Common::String emptySaveText;
 
 	// Debug strings
 	Common::Array<Common::String> eventFlagNames;

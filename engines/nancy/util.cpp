@@ -20,6 +20,7 @@
 
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/util.h"
+#include "common/system.h"
 
 namespace Nancy {
 
@@ -39,10 +40,10 @@ void readRect(Common::SeekableReadStream &stream, Common::Rect &inRect) {
 void readRect(Common::Serializer &stream, Common::Rect &inRect, Common::Serializer::Version minVersion, Common::Serializer::Version maxVersion) {
 	Common::Serializer::Version version = stream.getVersion();
 	if (version >= minVersion && version <= maxVersion) {
-		stream.syncAsUint32LE(inRect.left);
-		stream.syncAsUint32LE(inRect.top);
-		stream.syncAsUint32LE(inRect.right);
-		stream.syncAsUint32LE(inRect.bottom);
+		stream.syncAsSint32LE(inRect.left);
+		stream.syncAsSint32LE(inRect.top);
+		stream.syncAsSint32LE(inRect.right);
+		stream.syncAsSint32LE(inRect.bottom);
 
 		// TVD's rects are non-inclusive
 		if (version > kGameTypeVampire) {
@@ -64,10 +65,10 @@ void readRectArray(Common::Serializer &stream, Common::Array<Common::Rect> &inAr
 	if (version >= minVersion && version <= maxVersion) {
 		inArray.resize(num);
 		for (Common::Rect &rect : inArray) {
-			stream.syncAsUint32LE(rect.left);
-			stream.syncAsUint32LE(rect.top);
-			stream.syncAsUint32LE(rect.right);
-			stream.syncAsUint32LE(rect.bottom);
+			stream.syncAsSint32LE(rect.left);
+			stream.syncAsSint32LE(rect.top);
+			stream.syncAsSint32LE(rect.right);
+			stream.syncAsSint32LE(rect.bottom);
 
 			// TVD's rects are non-inclusive
 			if (version > kGameTypeVampire) {
@@ -78,6 +79,60 @@ void readRectArray(Common::Serializer &stream, Common::Array<Common::Rect> &inAr
 	}
 }
 
+void readRect16(Common::SeekableReadStream &stream, Common::Rect &inRect) {
+	inRect.left = stream.readSint16LE();
+	inRect.top = stream.readSint16LE();
+	inRect.right = stream.readSint16LE();
+	inRect.bottom = stream.readSint16LE();
+
+	// TVD's rects are non-inclusive
+	if (g_nancy->getGameType() > kGameTypeVampire) {
+		++inRect.right;
+		++inRect.bottom;
+	}
+}
+
+void readRect16(Common::Serializer &stream, Common::Rect &inRect, Common::Serializer::Version minVersion, Common::Serializer::Version maxVersion) {
+	Common::Serializer::Version version = stream.getVersion();
+	if (version >= minVersion && version <= maxVersion) {
+		stream.syncAsSint16LE(inRect.left);
+		stream.syncAsSint16LE(inRect.top);
+		stream.syncAsSint16LE(inRect.right);
+		stream.syncAsSint16LE(inRect.bottom);
+
+		// TVD's rects are non-inclusive
+		if (version > kGameTypeVampire) {
+			++inRect.right;
+			++inRect.bottom;
+		}
+	}
+}
+
+void readRectArray16(Common::SeekableReadStream &stream, Common::Array<Common::Rect> &inArray, uint num) {
+	inArray.resize(num);
+	for (Common::Rect &rect : inArray) {
+		readRect16(stream, rect);
+	}
+}
+
+void readRectArray16(Common::Serializer &stream, Common::Array<Common::Rect> &inArray, uint num, Common::Serializer::Version minVersion, Common::Serializer::Version maxVersion) {
+	Common::Serializer::Version version = stream.getVersion();
+	if (version >= minVersion && version <= maxVersion) {
+		inArray.resize(num);
+		for (Common::Rect &rect : inArray) {
+			stream.syncAsSint16LE(rect.left);
+			stream.syncAsSint16LE(rect.top);
+			stream.syncAsSint16LE(rect.right);
+			stream.syncAsSint16LE(rect.bottom);
+
+			// TVD's rects are non-inclusive
+			if (version > kGameTypeVampire) {
+				++rect.right;
+				++rect.bottom;
+			}
+		}
+	}
+}
 
 void readFilename(Common::SeekableReadStream &stream, Common::String &inString) {
 	char buf[33];
@@ -95,8 +150,6 @@ void readFilename(Common::SeekableReadStream &stream, Common::String &inString) 
 	inString = buf;
 }
 
-
-// Reads an 8-character filename from a 10-character source
 void readFilename(Common::Serializer &stream, Common::String &inString, Common::Serializer::Version minVersion, Common::Serializer::Version maxVersion) {
 	Common::Serializer::Version version = stream.getVersion();
 	if (version >= minVersion && version <= maxVersion) {
@@ -143,6 +196,30 @@ void readFilenameArray(Common::Serializer &stream, Common::Array<Common::String>
 			str = buf;
 		}
 	}
+}
+
+bool DeferredLoader::load(uint32 endTime) {
+	uint32 loopStartTime = g_system->getMillis();
+	uint32 loopTime = 0; // Stores the loop that took the longest time to complete
+
+	while (loopTime + loopStartTime < endTime) {
+		if (loadInner()) {
+			return true;
+		}
+
+		uint32 loopEndTime = g_system->getMillis();
+		loopTime = MAX<uint32>(loopEndTime - loopStartTime, loopTime);
+		loopStartTime = loopEndTime;
+
+		// We do this after at least one execution to avoid the case where the game runs below
+		// the target fps, and thus has no spare milliseconds until the next frame. This way
+		// we ensure loading actually gets done, at the expense of some lag
+		if (g_system->getMillis() < endTime) {
+			break;
+		}
+	}
+
+	return false;
 }
 
 } // End of namespace Nancy

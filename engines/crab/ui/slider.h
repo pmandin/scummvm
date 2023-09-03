@@ -55,12 +55,16 @@ class Slider {
 	// The maximum and minimum values for the slider
 	int _max, _min;
 
+	// Grey out?
+	bool _isGreyed;
+
 public:
 	Slider() {
 		_max = 100;
 		_min = 0;
 		_value = ((_max - _min) / 2);
 		_backup = _value;
+		_isGreyed = false;
 	}
 
 	~Slider() {}
@@ -80,7 +84,14 @@ public:
 
 	void restoreBackup() {
 		_value = _backup;
+		setUI();
 	}
+
+	void setEnabled(bool enabled) {
+		_isGreyed = !enabled;
+	}
+
+	void greyOut();
 
 	void setUI();
 };

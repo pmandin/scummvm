@@ -28,7 +28,12 @@ namespace Nancy {
 
 // Data types corresponding to chunks found inside BOOT
 
-struct BSUM {
+struct EngineData {
+	EngineData(Common::SeekableReadStream *chunkStream);
+	virtual ~EngineData() {}
+};
+
+struct BSUM : public EngineData {
 	BSUM(Common::SeekableReadStream *chunkStream);
 
 	byte header[90];
@@ -61,14 +66,14 @@ struct BSUM {
 	uint16 fastMovementTimeDelta;
 };
 
-struct VIEW {
+struct VIEW : public EngineData {
 	VIEW(Common::SeekableReadStream *chunkStream);
 
 	Common::Rect screenPosition;
 	Common::Rect bounds;
 };
 
-struct INV {
+struct INV : public EngineData {
 	struct ItemDescription {
 		Common::String name;
 		byte keepItem;
@@ -103,7 +108,7 @@ struct INV {
 	Common::Array<ItemDescription> itemDescriptions;
 };
 
-struct TBOX {
+struct TBOX : public EngineData {
 	TBOX(Common::SeekableReadStream *chunkStream);
 
 	Common::Rect scrollbarSrcBounds;
@@ -124,7 +129,7 @@ struct TBOX {
 	uint16 highlightConversationFontID;
 };
 
-struct MAP {
+struct MAP : public EngineData {
 	struct Location {
 		Common::String description;
 		Common::Rect hotspot;
@@ -157,7 +162,7 @@ struct MAP {
 	Common::Point cursorPosition;
 };
 
-struct HELP {
+struct HELP : public EngineData {
 	HELP(Common::SeekableReadStream *chunkStream);
 
 	Common::String imageName;
@@ -166,7 +171,7 @@ struct HELP {
 	Common::Rect buttonHoverSrc;
 };
 
-struct CRED {
+struct CRED : public EngineData {
 	CRED(Common::SeekableReadStream *chunkStream);
 
 	Common::String imageName;
@@ -177,19 +182,104 @@ struct CRED {
 	SoundDescription sound;
 };
 
-struct HINT {
+struct MENU : public EngineData {
+	MENU(Common::SeekableReadStream *chunkStream);
+
+	Common::String _imageName;
+	Common::Array<Common::Rect> _buttonDests;
+	Common::Array<Common::Rect> _buttonDownSrcs;
+	Common::Array<Common::Rect> _buttonHighlightSrcs;
+	Common::Array<Common::Rect> _buttonDisabledSrcs;
+};
+
+struct SET : public EngineData {
+	SET(Common::SeekableReadStream *chunkStream);
+
+	Common::String _imageName;
+	// Common::Rect _scrollbarsBounds
+	Common::Array<Common::Rect> _scrollbarBounds;
+	Common::Array<Common::Rect> _buttonDests;
+	Common::Array<Common::Rect> _buttonDownSrcs;
+	Common::Rect _doneButtonHighlightSrc;
+	Common::Array<Common::Rect> _scrollbarSrcs;
+
+	Common::Array<uint16> _scrollbarsCenterYPos;
+	Common::Array<uint16> _scrollbarsCenterXPosL;
+	Common::Array<uint16> _scrollbarsCenterXPosR;
+
+	Common::Array<SoundDescription> _sounds;
+};
+
+struct LOAD : public EngineData {
+	LOAD(Common::SeekableReadStream *chunkStream);
+
+	Common::String _imageName;
+
+	int16 _mainFontID;
+	int16 _highlightFontID;
+	int16 _disabledFontID;
+	int16 _fontXOffset;
+	int16 _fontYOffset;
+
+	Common::Array<Common::Rect> _saveButtonDests;
+	Common::Array<Common::Rect> _loadButtonDests;
+	Common::Array<Common::Rect> _textboxBounds;
+	Common::Rect _doneButtonDest;
+	Common::Array<Common::Rect> _saveButtonDownSrcs;
+	Common::Array<Common::Rect> _loadButtonDownSrcs;
+
+	Common::Rect _doneButtonDownSrc;
+	Common::Array<Common::Rect> _saveButtonHighlightSrcs;
+	Common::Array<Common::Rect> _loadButtonHighlightSrcs;
+
+	Common::Rect _doneButtonHighlightSrc;
+	Common::Array<Common::Rect> _saveButtonDisabledSrcs;
+	Common::Array<Common::Rect> _loadButtonDisabledSrcs;
+
+	Common::Rect _doneButtonDisabledSrc;
+	Common::Rect _blinkingCursorSrc;
+	uint16 _blinkingTimeDelay;
+	Common::Array<Common::Rect> _cancelButtonSrcs;
+	Common::Array<Common::Rect> _cancelButtonDests;
+	Common::Rect _cancelButtonDownSrc;
+	Common::Rect _cancelButtonHighlightSrc;
+	Common::Rect _cancelButtonDisabledSrc;
+
+	Common::String _gameSavedPopup;
+	// Common::Rect _gameSavedBounds
+};
+
+struct SDLG : public EngineData {
+	SDLG(Common::SeekableReadStream *chunkStream);
+
+	Common::String _imageName;
+
+	Common::Rect _yesDest;
+	Common::Rect _noDest;
+	Common::Rect _cancelDest;
+
+	Common::Rect _yesHighlightSrc;
+	Common::Rect _noHighlightSrc;
+	Common::Rect _cancelHighlightSrc;
+
+	Common::Rect _yesDownSrc;
+	Common::Rect _noDownSrc;
+	Common::Rect _cancelDownSrc;
+};
+
+struct HINT : public EngineData {
 	HINT(Common::SeekableReadStream *chunkStream);
 
 	Common::Array<uint16> numHints;
 };
 
-struct SPUZ {
+struct SPUZ : public EngineData {
 	SPUZ(Common::SeekableReadStream *chunkStream);
 
 	Common::Array<Common::Array<int16>> tileOrder;
 };
 
-struct CLOK {
+struct CLOK : public EngineData {
 	CLOK(Common::SeekableReadStream *chunkStream);
 
 	Common::Array<Common::Rect> animSrcs;
@@ -206,9 +296,13 @@ struct CLOK {
 
 	uint32 timeToKeepOpen;
 	uint16 frameTime;
+
+	uint32 nancy5CountdownTime;
+	Common::Array<Common::Rect> nancy5DaySrcs;
+	Common::Array<Common::Rect> nancy5CountdownSrcs;
 };
 
-struct SPEC {
+struct SPEC : public EngineData {
 	SPEC(Common::SeekableReadStream *chunkStream);
 
 	byte fadeToBlackNumFrames;
@@ -216,7 +310,7 @@ struct SPEC {
 	byte crossDissolveNumFrames;
 };
 
-struct RCLB {
+struct RCLB : public EngineData {
 	struct Theme {
 		Common::String themeName;
 
@@ -246,7 +340,7 @@ struct RCLB {
 	Common::Array<Theme> themes;
 };
 
-struct RCPR {
+struct RCPR : public EngineData {
 	RCPR(Common::SeekableReadStream *chunkStream);
 
 	Common::Array<Common::Rect> screenViewportSizes;
@@ -269,8 +363,7 @@ struct RCPR {
 	Common::Array<Common::String> floorNames;
 };
 
-struct ImageChunk {
-	ImageChunk() : width(0), height(0) {}
+struct ImageChunk : public EngineData {
 	ImageChunk(Common::SeekableReadStream *chunkStream);
 
 	Common::String imageName;

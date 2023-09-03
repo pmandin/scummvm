@@ -224,7 +224,11 @@ Common::Rect Font::getCharacterSourceRect(char chr) const {
 			offset = _slashOffset;
 			break;
 		default:
-			error("Unsupported FONT character: %c", chr);
+			// Replace unknown characters with question marks. This shouldn't happen normally,
+			// but we need it to support displaying saves that were originally made in the GMM
+			// inside the in-game load/save menu.
+			offset = _questionMarkOffset;
+			break;
 		}
 	}
 	ret = _symbolRects[offset];

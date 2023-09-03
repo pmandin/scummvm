@@ -24,9 +24,12 @@
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/graphics.h"
 #include "engines/nancy/input.h"
+#include "engines/nancy/state/scene.h"
 
 #include "common/translation.h"
 #include "common/config-manager.h"
+
+#include "graphics/scaler.h"
 
 static const ADExtraGuiOptionsMap optionsList[] = {
 	{
@@ -64,6 +67,7 @@ public:
 	Common::Error createInstance(OSystem *syst, Engine **engine, const ADGameDescription *gd) const override;
 
 	int getMaximumSaveSlot() const override;
+	SaveStateDescriptor querySaveMetaInfos(const char *target, int slot) const override;
 
 	Common::KeymapArray initKeymaps(const char *target) const override;
 
@@ -100,7 +104,26 @@ Common::Error NancyMetaEngine::createInstance(OSystem *syst, Engine **engine, co
 
 int NancyMetaEngine::getMaximumSaveSlot() const { return 8; }
 
+SaveStateDescriptor NancyMetaEngine::querySaveMetaInfos(const char *target, int slot) const {
+	SaveStateDescriptor ret = AdvancedMetaEngine::querySaveMetaInfos(target, slot);
+	if (slot == getMaximumSaveSlot()) {
+		// We do not allow the second chance slot to be overwritten
+		ret.setWriteProtectedFlag(true);
+	}
+
+	return ret;
+}
+
 void NancyMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
+	if (Nancy::g_nancy->getState() == Nancy::NancyState::kLoadSave) {
+		if (Nancy::State::Scene::hasInstance()) {
+			Graphics::ManagedSurface &screenshot = Nancy::State::Scene::instance().getLastScreenshot();
+			if (!screenshot.empty() && createThumbnail(&thumb, &screenshot)) {
+				return;
+			}
+		}
+	}
+
 	// Second Chance autosaves trigger when a scene changes, but before
 	// it is drawn, so we need to refresh the screen before we take a screenshot
 	Nancy::g_nancy->_graphicsManager->draw();

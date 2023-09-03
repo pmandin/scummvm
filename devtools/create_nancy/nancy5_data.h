@@ -33,7 +33,7 @@ const GameConstants _nancy5Constants ={
 		21, 22, 23, 24, 25, 26, 27, 28, 29, 30 },
 	36,
 	7,
-	7000
+	4000
 };
 
 const Common::Array<Common::Language> _nancy5LanguagesOrder = {
@@ -354,6 +354,11 @@ const Common::Array<Common::Array<const char *>> _nancy5GoodbyeTexts = {
 const Common::Array<const char *> _nancy5TelephoneRinging = {
 	"ringing...<n><e>", // English
 	"\xc3\xf3\xe4\xea\xe8...  <n><e>" // Russian
+};
+
+const Common::Array<const char *> _nancy5EmptySaveStrings = {
+	"Nothing Saved Here",	// English
+	"\xc3\xf3\xf1\xf2\xee"	// Russian
 };
 
 const Common::Array<const char *> _nancy5EventFlagNames = {

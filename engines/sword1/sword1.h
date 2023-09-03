@@ -61,25 +61,29 @@ class Music;
 class Control;
 
 struct SystemVars {
-	bool    runningFromCd;
-	uint32  currentCD;          // starts at zero, then either 1 or 2 depending on section being played
-	uint32  justRestoredGame;   // see main() in sword.c & New_screen() in gtm_core.c
-
-	uint8   controlPanelMode;   // 1 death screen version of the control panel, 2 = successful end of game, 3 = force restart
-	bool    forceRestart;
-	bool    wantFade;           // when true => fade during scene change, else cut.
-	bool   playSpeech;
-	bool   showText;
-	uint8   language;
-	bool    isDemo;
-	bool    isSpanishDemo;
+	bool             runningFromCd;
+	uint32           currentCD;          // starts at zero, then either 1 or 2 depending on section being played
+	uint32           justRestoredGame;   // see main() in sword.c & New_screen() in gtm_core.c
+	uint8            controlPanelMode;   // 1 death screen version of the control panel, 2 = successful end of game, 3 = force restart
+	bool             forceRestart;
+	bool             wantFade;           // when true => fade during scene change, else cut.
+	bool             playSpeech;
+	bool             showText;
+	uint8            language;
+	bool             isDemo;
+	bool             isSpanishDemo;
 	Common::Platform platform;
 	Common::Language realLanguage;
-	bool isLangRtl;
+	bool             isLangRtl;
+	bool             debugMode;
+	bool             slowMode;
+	bool             fastMode;
 };
 
 class SwordEngine : public Engine {
 	friend class SwordConsole;
+	friend class Screen;
+
 public:
 	SwordEngine(OSystem *syst, const ADGameDescription *gameDesc);
 	~SwordEngine() override;
@@ -88,11 +92,25 @@ public:
 
 	uint32 _features;
 
+	int _inTimer = -1; // Is the timer running?
+	int32 _vbl60HzUSecElapsed = 0; // 60 Hz counter for palette fades
+	int _vblCount = 0; // How many vblCallback calls have been made?
+	int _rate = DEFAULT_FRAME_TIME / 10;
+	int _targetFrameTime = DEFAULT_FRAME_TIME;
+
 	bool mouseIsActive();
 
 	static bool isMac() { return _systemVars.platform == Common::kPlatformMacintosh; }
 	static bool isPsx() { return _systemVars.platform == Common::kPlatformPSX; }
 	static bool isWindows() { return _systemVars.platform == Common::kPlatformWindows ; }
+
+	// Used by timer
+	void updateTopMenu();
+	void updateBottomMenu();
+	void fadePaletteStep();
+	void startFadePaletteDown(int speed);
+	void startFadePaletteUp(int speed);
+	void waitForFade();
 
 protected:
 	// Engine APIs
@@ -116,7 +134,8 @@ protected:
 		return Common::String::format("sword1.%03d", slot);
 	}
 private:
-	void delay(int32 amount);
+	void pollInput(uint32 delay);
+	uint8 checkKeys();
 
 	void checkCdFiles();
 	void checkCd();
@@ -124,6 +143,9 @@ private:
 	void flagsToBool(bool *dest, uint8 flags);
 
 	void reinitRes(); //Reinits the resources after a GMM load
+
+	void installTimerRoutines();
+	void uninstallTimerRoutines();
 
 	uint8 mainLoop();
 

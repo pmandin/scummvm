@@ -5,6 +5,7 @@ MODULE_OBJS = \
   action/actionrecord.o \
   action/arfactory.o \
   action/bombpuzzle.o \
+  action/collisionpuzzle.o \
   action/conversation.o \
   action/leverpuzzle.o \
   action/orderingpuzzle.o \
@@ -16,12 +17,15 @@ MODULE_OBJS = \
   action/riddlepuzzle.o \
   action/rippedletterpuzzle.o \
   action/rotatinglockpuzzle.o \
+  action/safelockpuzzle.o \
   action/secondarymovie.o \
   action/secondaryvideo.o \
   action/setplayerclock.o \
   action/sliderpuzzle.o \
   action/soundequalizerpuzzle.o \
+  action/tangrampuzzle.o \
   action/towerpuzzle.o \
+  action/turningpuzzle.o \
   action/telephone.o \
   ui/fullscreenimage.o \
   ui/animatedbutton.o \
@@ -34,10 +38,13 @@ MODULE_OBJS = \
   ui/viewport.o \
   state/credits.o \
   state/logo.o \
+  state/loadsave.o \
   state/help.o \
   state/mainmenu.o \
   state/map.o \
+  state/savedialog.o \
   state/scene.o \
+  state/setupmenu.o \
   misc/lightning.o \
   misc/specialeffect.o \
   commontypes.o \

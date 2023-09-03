@@ -43,18 +43,18 @@ Clock::Clock() : 	RenderObject(g_nancy->getGameType() == kGameTypeVampire ? 11 :
 void Clock::init() {
 	Graphics::ManagedSurface &object0 = g_nancy->_graphicsManager->_object0;
 
-	_clockData = g_nancy->_clockData;
+	_clockData = (const CLOK *)g_nancy->getEngineData("CLOK");
 	assert(_clockData);
 
 	// Calculate the size and location of the surface we'll need to draw the clock hands,
 	// since their dest rects are in absolute screen space
 	Common::Rect clockSurfaceScreenBounds;
 
-	for (Common::Rect &r : _clockData->hoursHandDests) {
+	for (const Common::Rect &r : _clockData->hoursHandDests) {
 		clockSurfaceScreenBounds.extend(r);
 	}
 
-	for (Common::Rect &r : _clockData->minutesHandDests) {
+	for (const Common::Rect &r : _clockData->minutesHandDests) {
 		clockSurfaceScreenBounds.extend(r);
 	}
 
@@ -125,13 +125,16 @@ void Clock::drawClockHands() {
 }
 
 void Clock::ClockAnim::init() {
+	const BSUM *bootSummary = (const BSUM *)g_nancy->getEngineData("BSUM");
+	assert(bootSummary);
+
 	_srcRects = _owner->_clockData->animSrcs;
 	_destRects = _owner->_clockData->animDests;
-	_highlightSrcRect = g_nancy->_bootSummary->clockHighlightSrc;
-	_highlightDestRect = g_nancy->_bootSummary->extraButtonHighlightDest;
+	_highlightSrcRect = bootSummary->clockHighlightSrc;
+	_highlightDestRect = bootSummary->extraButtonHighlightDest;
 
 	if (_destRects.size()) {
-		moveTo(g_nancy->_bootSummary->extraButtonHotspot);
+		moveTo(bootSummary->extraButtonHotspot);
 	} else {
 		moveTo(_owner->_clockData->screenPosition);
 	}
@@ -180,6 +183,52 @@ void Clock::ClockAnim::onTrigger() {
 	} else {
 		_owner->setVisible(false);
 		_owner->_staticImage.setVisible(false);
+	}
+}
+
+void Nancy5Clock::init() {
+	_clockData = (const CLOK *)g_nancy->getEngineData("CLOK");
+	assert(_clockData);
+
+	setVisible(true);
+}
+
+void Nancy5Clock::updateGraphics() {
+	// Show current day
+	if (_currentDay < 3) {
+		if (NancySceneState.getEventFlag(59, true) && _currentDay != 2) {
+			_currentDay = 2;
+			_drawSurface.create(g_nancy->_graphicsManager->_object0, _clockData->nancy5DaySrcs[2]);
+			moveTo(_clockData->staticImageDest);
+			setVisible(true);
+			setTransparent(true);
+		} else if (NancySceneState.getEventFlag(58, true) && _currentDay != 1) {
+			_currentDay = 1;
+			_drawSurface.create(g_nancy->_graphicsManager->_object0, _clockData->nancy5DaySrcs[1]);
+			moveTo(_clockData->staticImageDest);
+			setVisible(true);
+			setTransparent(true);
+		} else if (NancySceneState.getEventFlag(57, true) && _currentDay != 0) {
+			_currentDay = 0;
+			_drawSurface.create(g_nancy->_graphicsManager->_object0, _clockData->nancy5DaySrcs[0]);
+			moveTo(_clockData->staticImageDest);
+			setVisible(true);
+			setTransparent(true);
+		}
+	}
+
+	// Show demolition countdown
+	if (NancySceneState.getEventFlag(320, true)) {
+		_currentDay = 3;
+		Time timerTime = NancySceneState.getTimerTime();
+		int32 countdownFrameID = MIN<int32>((uint32)timerTime / (_clockData->nancy5CountdownTime / 12), 13);
+		if (countdownFrameID != _countdownProgress) {
+			_countdownProgress = countdownFrameID;
+
+			_drawSurface.create(g_nancy->_graphicsManager->_object0, _clockData->nancy5CountdownSrcs[_countdownProgress]);
+			moveTo(_clockData->staticImageDest);
+			setVisible(true);
+		}
 	}
 }
 

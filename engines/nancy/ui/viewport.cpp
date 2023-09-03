@@ -36,12 +36,18 @@ namespace UI {
 
 // does NOT put the object in a valid state until loadVideo is called
 void Viewport::init() {
-	moveTo(g_nancy->_viewportData->screenPosition);
+	const BSUM *bootSummary = (const BSUM *)g_nancy->getEngineData("BSUM");
+	assert(bootSummary);
 
-	setEdgesSize(	g_nancy->_bootSummary->verticalEdgesSize,
-					g_nancy->_bootSummary->verticalEdgesSize,
-					g_nancy->_bootSummary->horizontalEdgesSize,
-					g_nancy->_bootSummary->horizontalEdgesSize);
+	const VIEW *viewportData = (const VIEW *)g_nancy->getEngineData("VIEW");
+	assert(viewportData);
+
+	moveTo(viewportData->screenPosition);
+
+	setEdgesSize(	bootSummary->verticalEdgesSize,
+					bootSummary->verticalEdgesSize,
+					bootSummary->horizontalEdgesSize,
+					bootSummary->horizontalEdgesSize);
 
 	RenderObject::init();
 }
@@ -213,6 +219,7 @@ void Viewport::setFrame(uint frameNr) {
 	assert(frameNr < _decoder.getFrameCount());
 
 	const Graphics::Surface *newFrame = _decoder.decodeFrame(frameNr);
+	_decoder.seek(frameNr); // Seek to take advantage of caching
 
 	// Format 1 uses quarter-size images, while format 2 uses full-size ones
 	// Videos in TVD are always upside-down

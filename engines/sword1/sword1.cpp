@@ -34,6 +34,7 @@
 
 #include "common/config-manager.h"
 #include "common/textconsole.h"
+#include "common/timer.h"
 
 #include "engines/advancedDetector.h"
 #include "engines/util.h"
@@ -115,6 +116,9 @@ Common::Error SwordEngine::init() {
 	_systemVars.wantFade = true;
 	_systemVars.realLanguage = Common::parseLanguage(ConfMan.get("language"));
 	_systemVars.isLangRtl = false;
+	_systemVars.debugMode = (gDebugLevel >= 0);
+	_systemVars.slowMode = false;
+	_systemVars.fastMode = false;
 
 	switch (_systemVars.realLanguage) {
 	case Common::DE_DEU:
@@ -157,7 +161,7 @@ Common::Error SwordEngine::init() {
 	_logic->initialize();
 	_objectMan->initialize();
 	_mouse->initialize();
-	_control = new Control(_saveFileMan, _resMan, _objectMan, _system, _mouse, _sound, _music);
+	_control = new Control(this, _saveFileMan, _resMan, _objectMan, _system, _mouse, _sound, _music, _screen, _logic);
 
 	return Common::kNoError;
 }
@@ -244,6 +248,69 @@ void SwordEngine::flagsToBool(bool *dest, uint8 flags) {
 		flags >>= 1;
 		bitPos++;
 	}
+}
+
+uint8 SwordEngine::checkKeys() {
+	uint8 retCode = 0;
+	if (_systemVars.forceRestart) {
+		retCode = CONTROL_RESTART_GAME;
+	} else {
+		switch (_keyPressed.keycode) {
+		case Common::KEYCODE_F5:
+		case Common::KEYCODE_ESCAPE:
+			if ((Logic::_scriptVars[MOUSE_STATUS] & 1) && (Logic::_scriptVars[GEORGE_HOLDING_PIECE] == 0)) {
+				retCode = _control->runPanel();
+				if (retCode == CONTROL_NOTHING_DONE) {
+					_screen->fullRefresh(true);
+					Logic::_scriptVars[NEW_PALETTE] = 1;
+				}
+
+			}
+			break;
+		default:
+			break;
+		}
+
+		// Debug keys!
+		if (!_systemVars.isDemo && _systemVars.debugMode) {
+			switch (_keyPressed.keycode) {
+			case Common::KEYCODE_1: // Slow mode
+				{
+					if (_systemVars.slowMode) {
+						_systemVars.slowMode = false;
+						_targetFrameTime = DEFAULT_FRAME_TIME; // 12.5Hz
+					} else {
+						_systemVars.slowMode = true;
+						_targetFrameTime = SLOW_FRAME_TIME; // 2Hz
+					}
+
+					_systemVars.fastMode = false; // For good measure...
+
+					_rate = _targetFrameTime / 10;
+				}
+				break;
+			case Common::KEYCODE_4: // Fast mode
+				{
+					if (_systemVars.fastMode) {
+						_systemVars.fastMode = false;
+						_targetFrameTime = DEFAULT_FRAME_TIME; // 12.5Hz
+					} else {
+						_systemVars.fastMode = true;
+						_targetFrameTime = FAST_FRAME_TIME; // 100Hz
+					}
+
+					_systemVars.slowMode = false; // For good measure...
+
+					_rate = _targetFrameTime / 10;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	return retCode;
 }
 
 static const char *const errorMsgs[] = {
@@ -577,6 +644,9 @@ Common::Error SwordEngine::go() {
 	_control->checkForOldSaveGames();
 	setTotalPlayTime(0);
 
+	_screen->initFadePaletteServer();
+	installTimerRoutines();
+
 	uint16 startPos = ConfMan.getInt("boot_param");
 	_control->readSavegameDescriptions();
 	if (startPos) {
@@ -614,6 +684,8 @@ Common::Error SwordEngine::go() {
 			_systemVars.controlPanelMode = CP_NORMAL;
 		}
 	}
+
+	uninstallTimerRoutines();
 
 	return Common::kNoError;
 }
@@ -655,64 +727,72 @@ uint8 SwordEngine::mainLoop() {
 
 		do {
 			uint32 newTime;
+			uint32 frameTime = _system->getMillis();
+
 			bool scrollFrameShown = false;
 
-			uint32 frameTime = _system->getMillis();
 			_logic->engine();
 			_logic->updateScreenParams(); // sets scrolling
 
 			_screen->draw();
 			_mouse->animate();
-			_sound->engine();
-			_menu->refresh(MENU_TOP);
-			_menu->refresh(MENU_BOT);
 
-			newTime = _system->getMillis();
-			if (newTime - frameTime < 1000 / FRAME_RATE) {
-				scrollFrameShown = _screen->showScrollFrame();
-				delay((1000 / (FRAME_RATE * 2)) - (_system->getMillis() - frameTime));
+			if (!Logic::_scriptVars[NEW_PALETTE]) {
+				newTime = _system->getMillis();
+				if ((int32)(newTime - frameTime) < _targetFrameTime / 2) {
+					scrollFrameShown = _screen->showScrollFrame();
+					pollInput((_targetFrameTime / 2) - (_system->getMillis() - frameTime));
+				}
 			}
 
+			_sound->engine();
+
 			newTime = _system->getMillis();
-			if ((newTime - frameTime < 1000 / FRAME_RATE) || (!scrollFrameShown))
+			if (((int32)(newTime - frameTime) < _targetFrameTime) || (!scrollFrameShown))
 				_screen->updateScreen();
-			delay((1000 / FRAME_RATE) - (_system->getMillis() - frameTime));
+			pollInput((_targetFrameTime) - (_system->getMillis() - frameTime));
+
+			_vblCount = 0; // Reset the vBlank counter for the other timers...
 
 			_mouse->engine(_mouseCoord.x, _mouseCoord.y, _mouseState);
 
-			if (_systemVars.forceRestart)
-				retCode = CONTROL_RESTART_GAME;
-
-			// The control panel is triggered by F5 or ESC.
-			else if (((_keyPressed.keycode == Common::KEYCODE_F5 || _keyPressed.keycode == Common::KEYCODE_ESCAPE)
-			          && (Logic::_scriptVars[MOUSE_STATUS] & 1)) || (_systemVars.controlPanelMode)) {
-				retCode = _control->runPanel();
-				if (retCode == CONTROL_NOTHING_DONE)
-					_screen->fullRefresh();
-			}
+			retCode = checkKeys();
 
 			_mouseState = 0;
 			_keyPressed.reset();
+
 		} while ((Logic::_scriptVars[SCREEN] == Logic::_scriptVars[NEW_SCREEN]) && (retCode == 0) && (!shouldQuit()));
 
 		if ((retCode == 0) && (Logic::_scriptVars[SCREEN] != 53) && _systemVars.wantFade && (!shouldQuit())) {
-			_screen->fadeDownPalette();
-			int32 relDelay = (int32)_system->getMillis();
-			while (_screen->stillFading()) {
-				relDelay += (1000 / FRAME_RATE);
-				_screen->updateScreen();
-				delay(relDelay - (int32)_system->getMillis());
-			}
+			_screen->startFadePaletteDown(1);
 		}
 
-		_sound->quitScreen();
-		_screen->quitScreen(); // close graphic resources
-		_objectMan->closeSection(Logic::_scriptVars[SCREEN]); // close the section that PLAYER has just left, if it's empty now
+		_screen->quitScreen(); // Close graphic resources
+		waitForFade();
+
+		_sound->quitScreen(); // Purge the sound AFTER they've been faded
+
+		_objectMan->closeSection(Logic::_scriptVars[SCREEN]); // Close the section that PLAYER has just left, if it's empty now
 	}
 	return retCode;
 }
 
-void SwordEngine::delay(int32 amount) { //copied and mutilated from sky.cpp
+void SwordEngine::waitForFade() {
+	uint32 startTime = _system->getMillis();
+	while (_screen->stillFading()) { // This indirectly also waits for FX to be faded
+		if (_vblCount >= _rate)
+			_vblCount = 0;
+
+		pollInput(0);
+
+		// In the remote event that this wait cycle gets
+		// stuck during debugging, trigger a timeout
+		if (_system->getMillis() - startTime > 2000)
+			break;
+	}
+}
+
+void SwordEngine::pollInput(uint32 delay) { //copied and mutilated from sky.cpp
 
 	Common::Event event;
 	uint32 start = _system->getMillis();
@@ -749,10 +829,10 @@ void SwordEngine::delay(int32 amount) { //copied and mutilated from sky.cpp
 
 		_system->updateScreen();
 
-		if (amount > 0)
+		if (delay > 0)
 			_system->delayMillis(10);
 
-	} while (_system->getMillis() < start + amount);
+	} while (_system->getMillis() < start + delay);
 }
 
 bool SwordEngine::mouseIsActive() {
@@ -770,6 +850,69 @@ void SwordEngine::reinitRes() {
 	_logic->updateScreenParams();
 	_screen->fullRefresh();
 	_screen->draw();
+}
+
+void SwordEngine::updateTopMenu() {
+	_menu->refresh(MENU_TOP);
+}
+
+void SwordEngine::updateBottomMenu() {
+	_menu->refresh(MENU_BOT);
+}
+
+void SwordEngine::fadePaletteStep() {
+	_screen->fadePalette();
+}
+
+void SwordEngine::startFadePaletteDown(int speed) {
+	_screen->startFadePaletteDown(speed);
+
+	// TODO: Fade audio here
+}
+
+void SwordEngine::startFadePaletteUp(int speed) {
+	_screen->startFadePaletteUp(speed);
+
+	// TODO: Fade audio here
+}
+
+static void vblCallback(void *refCon) {
+	SwordEngine *vm = (SwordEngine *)refCon;
+
+	vm->_inTimer++;
+
+	if (vm->_inTimer == 0) {
+		vm->_vblCount++;
+		vm->_vbl60HzUSecElapsed += TIMER_USEC;
+
+		if ((vm->_vblCount == 1) || (vm->_vblCount == 5)) {
+			vm->updateTopMenu();
+		}
+
+		if ((vm->_vblCount == 3) || (vm->_vblCount == 7)) {
+			vm->updateBottomMenu();
+		}
+
+		if (vm->_vbl60HzUSecElapsed >= PALETTE_FADE_USEC) {
+			vm->_vbl60HzUSecElapsed -= PALETTE_FADE_USEC;
+
+			vm->fadePaletteStep();
+		}
+
+		// TODO: Volume fading here...
+	}
+
+	vm->_inTimer--;
+}
+
+void SwordEngine::installTimerRoutines() {
+	debug(2, "SwordEngine::installTimerRoutines(): Installing timers...");
+	getTimerManager()->installTimerProc(&vblCallback, 1000000 / TIMER_RATE, this, "AILTimer");
+}
+
+void SwordEngine::uninstallTimerRoutines() {
+	debug(2, "SwordEngine::uninstallTimerRoutines(): Uninstalling timers...");
+	getTimerManager()->removeTimerProc(&vblCallback);
 }
 
 } // End of namespace Sword1

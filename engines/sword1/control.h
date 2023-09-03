@@ -35,11 +35,14 @@ class MemoryWriteStreamDynamic;
 
 namespace Sword1 {
 
+class SwordEngine;
 class ObjectMan;
 class ResMan;
 class Mouse;
 class Music;
 class Sound;
+class Screen;
+class Logic;
 
 #define SAVEGAME_HEADER MKTAG('B','S','_','1')
 #define SAVEGAME_VERSION 2
@@ -83,7 +86,7 @@ struct ButtonInfo {
 
 class Control {
 public:
-	Control(Common::SaveFileManager *saveFileMan, ResMan *pResMan, ObjectMan *pObjMan, OSystem *system, Mouse *pMouse, Sound *pSound, Music *pMusic);
+	Control(SwordEngine *vm, Common::SaveFileManager *saveFileMan, ResMan *pResMan, ObjectMan *pObjMan, OSystem *system, Mouse *pMouse, Sound *pSound, Music *pMusic, Screen *pScreen, Logic *pLogic);
 	uint8 runPanel();
 	void doRestore();
 	void askForCd();
@@ -146,6 +149,7 @@ private:
 	bool loadCustomStrings(const char* filename);
 	uint8 _customStrings[20][43];
 	const uint8(*_lStrings)[43];
+	SwordEngine *_vm;
 	Common::SaveFileManager *_saveFileMan;
 	ObjectMan *_objMan;
 	ResMan *_resMan;
@@ -153,6 +157,8 @@ private:
 	Mouse *_mouse;
 	Music *_music;
 	Sound *_sound;
+	Screen *_screen;
+	Logic *_logic;
 	uint8 *_font, *_redFont;
 	uint8 *_screenBuf;
 	Common::KeyState _keyPressed;

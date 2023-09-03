@@ -73,7 +73,7 @@ using namespace Shared;
 using namespace Engine;
 
 // function is currently implemented in savegame_v321.cpp
-HSaveError restore_save_data_v321(Stream *in, const PreservedParams &pp, RestoredData &r_data);
+HSaveError restore_save_data_v321(Stream *in, GameDataVersion data_ver, const PreservedParams &pp, RestoredData &r_data);
 
 namespace AGS {
 namespace Engine {
@@ -653,10 +653,13 @@ HSaveError RestoreGameState(Stream *in, SavegameVersion svg_version) {
 	RestoredData r_data;
 	DoBeforeRestore(pp);
 	HSaveError err;
-	if (svg_version >= kSvgVersion_Components)
+	if (svg_version >= kSvgVersion_Components) {
 		err = SavegameComponents::ReadAll(in, svg_version, pp, r_data);
-	else
-		err = restore_save_data_v321(in, pp, r_data);
+	} else {
+		GameDataVersion use_dataver = _GP(usetup).dataver_for_legacysavs != kGameVersion_Undefined ? _GP(usetup).dataver_for_legacysavs
+																								   : _G(loaded_game_file_version);
+		err = restore_save_data_v321(in, use_dataver, pp, r_data);
+	}
 	if (!err)
 		return err;
 	return DoAfterRestore(pp, r_data);

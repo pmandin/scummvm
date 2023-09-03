@@ -293,7 +293,13 @@ void apply_config(const ConfigTree &cfg) {
 			parse_scaling_option(CfgReadString(cfg, "graphics", "game_scale_win", "round"), _GP(usetup).Screen.WinGameFrame);
 
 		_GP(usetup).Screen.Params.RefreshRate = CfgReadInt(cfg, "graphics", "refresh");
-		_GP(usetup).Screen.Params.VSync = CfgReadBoolInt(cfg, "graphics", "vsync");
+
+		// Use ScummVM options to set the vsync flag, if available
+		if (ConfMan.hasKey("vsync"))
+			_GP(usetup).Screen.Params.VSync = ConfMan.getBool("vsync");
+		else
+			_GP(usetup).Screen.Params.VSync = CfgReadBoolInt(cfg, "graphics", "vsync");
+
 		_GP(usetup).RenderAtScreenRes = CfgReadBoolInt(cfg, "graphics", "render_at_screenres");
 		_GP(usetup).Supersampling = CfgReadInt(cfg, "graphics", "supersampling", 1);
 		_GP(usetup).software_render_driver = CfgReadString(cfg, "graphics", "software_driver");
@@ -370,6 +376,7 @@ void apply_config(const ConfigTree &cfg) {
 			_GP(usetup).override_script_os = eOS_Mac;
 		}
 		_GP(usetup).override_upscale = CfgReadBoolInt(cfg, "override", "upscale", _GP(usetup).override_upscale);
+		_GP(usetup).dataver_for_legacysavs = static_cast<GameDataVersion>(CfgReadInt(cfg, "override", "dataver_for_legacysaves", kGameVersion_Undefined));
 		_GP(usetup).key_save_game = CfgReadInt(cfg, "override", "save_game_key", 0);
 		_GP(usetup).key_restore_game = CfgReadInt(cfg, "override", "restore_game_key", 0);
 	}

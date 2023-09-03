@@ -7,6 +7,7 @@ MODULE_OBJS := \
 	freescape.o \
 	games/castle.o \
 	games/dark/amiga.o \
+	games/dark/cpc.o \
 	games/dark/dark.o \
 	games/dark/dos.o \
 	games/dark/zx.o \
@@ -20,6 +21,7 @@ MODULE_OBJS := \
 	games/eclipse.o \
 	games/palettes.o \
 	gfx.o \
+	loaders/8bitImage.o \
 	loaders/8bitBinaryLoader.o \
 	language/8bitDetokeniser.o \
 	language/instruction.o \

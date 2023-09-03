@@ -24,6 +24,7 @@ MODULE_OBJS = \
 	lib/allegro/math.o \
 	lib/allegro/rotate.o \
 	lib/allegro/surface.o \
+	lib/allegro/surface_generic.o \
 	lib/allegro/system.o \
 	lib/allegro/unicode.o \
 	lib/std/std.o \
@@ -374,6 +375,22 @@ MODULE_OBJS += \
 	tests/test_sprintf.o \
 	tests/test_string.o \
 	tests/test_version.o
+endif
+
+ifdef SCUMMVM_NEON
+MODULE_OBJS += \
+	lib/allegro/surface_neon.o
+$(MODULE)/lib/allegro/surface_neon.o: CXXFLAGS += $(NEON_CXXFLAGS)
+endif
+ifdef SCUMMVM_SSE2
+MODULE_OBJS += \
+	lib/allegro/surface_sse2.o
+$(MODULE)/lib/allegro/surface_sse2.o: CXXFLAGS += -msse2
+endif
+ifdef SCUMMVM_AVX2
+MODULE_OBJS += \
+	lib/allegro/surface_avx2.o
+$(MODULE)/lib/allegro/surface_avx2.o: CXXFLAGS += -mavx2 -mavx -msse2
 endif
 
 # This module can be built as a plugin

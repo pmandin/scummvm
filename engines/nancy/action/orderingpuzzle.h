@@ -27,10 +27,14 @@
 namespace Nancy {
 namespace Action {
 
+// Implements three different action record types: OrderingPuzzle,
+// PianoPuzzle, and OrderItemsPuzzle. All three have the same goal:
+// click on a series of items in the same order (hence the name).
 class OrderingPuzzle : public RenderActionRecord {
 public:
 	enum SolveState { kNotSolved, kPlaySound, kWaitForSound };
-	OrderingPuzzle() : RenderActionRecord(7) {}
+	enum PuzzleType { kOrdering, kPiano, kOrderItems };
+	OrderingPuzzle(PuzzleType type) : RenderActionRecord(7), _puzzleType(type) {}
 	virtual ~OrderingPuzzle() {}
 
 	void init() override;
@@ -39,12 +43,33 @@ public:
 	void execute() override;
 	void handleInput(NancyInput &input) override;
 
+protected:
+	Common::String getRecordTypeName() const override;
+	bool isViewportRelative() const override { return true; }
+
+	void pushDown(uint id);
+	void setToSecondState(uint id);
+	void popUp(uint id);
+	void clearAllElements();
+
 	Common::String _imageName;
-	Common::Array<Common::Rect> _srcRects;
+	bool _hasSecondState = false;
+	bool _itemsStayDown = true;
+	Common::Array<Common::Rect> _down1Rects;
+	Common::Array<Common::Rect> _up2Rects;
+	Common::Array<Common::Rect> _down2Rects;
 	Common::Array<Common::Rect> _destRects;
-	uint16 _sequenceLength = 0;
-	Common::Array<byte> _correctSequence;
-	Nancy::SoundDescription _clickSound;
+	Common::Array<Common::Rect> _hotspots;
+	Common::Array<uint16> _correctSequence;
+
+	uint16 _state2InvItem = 0;
+	Common::Array<Common::Rect> _overlaySrcs;
+	Common::Array<Common::Rect> _overlayDests;
+
+	Nancy::SoundDescription _pushDownSound;
+	Nancy::SoundDescription _itemSound;
+	Nancy::SoundDescription _popUpSound;
+
 	SceneChangeWithFlag _solveExitScene;
 	uint16 _solveSoundDelay = 0;
 	Nancy::SoundDescription _solveSound;
@@ -53,17 +78,12 @@ public:
 
 	SolveState _solveState = kNotSolved;
 	Graphics::ManagedSurface _image;
-	Common::Array<int16> _clickedSequence;
-	Common::Array<bool> _drawnElements;
+	Common::Array<uint16> _clickedSequence;
+	Common::Array<bool> _downItems;
+	Common::Array<bool> _secondStateItems;
 	Time _solveSoundPlayTime;
 
-protected:
-	Common::String getRecordTypeName() const override { return "OrderingPuzzle"; }
-	bool isViewportRelative() const override { return true; }
-
-	void drawElement(uint id);
-	void undrawElement(uint id);
-	void clearAllElements();
+	PuzzleType _puzzleType;
 };
 
 } // End of namespace Action

@@ -429,7 +429,8 @@ void unload_game_file() {
 	_G(scrDialog) = nullptr;
 
 	_GP(guis).clear();
-	free(_G(scrGui));
+	delete[] _G(scrGui);
+	_G(scrGui) = nullptr;
 
 	free_all_fonts();
 
@@ -990,7 +991,7 @@ HSaveError load_game(const String &path, int slotNumber, bool &data_overwritten)
 			loadDesc = &desc;
 			String gamefile = FindGameData(_GP(ResPaths).DataDir, TestGame);
 
-			if (Shared::File::TestReadFile(gamefile)) {
+			if (!gamefile.IsEmpty()) {
 				RunAGSGame(gamefile.GetCStr(), 0, 0);
 				_G(load_new_game_restore) = slotNumber;
 				return HSaveError::None();
@@ -1002,7 +1003,7 @@ HSaveError load_game(const String &path, int slotNumber, bool &data_overwritten)
 	// TODO: remove filename test after deprecating old saves
 	else if (desc.MainDataFilename.Compare(_GP(ResPaths).GamePak.Name)) {
 		String gamefile = Path::ConcatPaths(_GP(ResPaths).DataDir, desc.MainDataFilename);
-		if (Shared::File::TestReadFile(gamefile)) {
+		if (IsMainGameLibrary(gamefile)) {
 			RunAGSGame(desc.MainDataFilename, 0, 0);
 			_G(load_new_game_restore) = slotNumber;
 			return HSaveError::None();

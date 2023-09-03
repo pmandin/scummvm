@@ -49,8 +49,9 @@ private:
 	bool Cmd_chunkHexDump(int argc, const char **argv);
 	bool Cmd_chunkList(int argc, const char **argv);
 	bool Cmd_showImage(int argc, const char **argv);
+	bool Cmd_exportImage(int argc, const char **argv);
 	bool Cmd_playVideo(int argc, const char **argv);
-	bool Cmd_playAudio(int argc, const char **argv);
+	bool Cmd_playSound(int argc, const char **argv);
 	bool Cmd_loadScene(int argc, const char **argv);
 	bool Cmd_sceneID(int argc, const char **argv);
 	bool Cmd_listActionRecords(int argc, const char **argv);
@@ -63,6 +64,7 @@ private:
 	bool Cmd_setPlayerTime(int argc, const char **argv);
 	bool Cmd_getDifficulty(int argc, const char **argv);
 	bool Cmd_setDifficulty(int argc, const char **argv);
+	bool Cmd_soundInfo(int argc, const char **argv);
 
 	void recurseDependencies(const Nancy::Action::DependencyRecord &record);
 

@@ -23,6 +23,7 @@
  *
  * USED IN:
  * Around the World With Willy Wabbit
+ * Willy Wabbit Math Adventure
  *
  *************************************/
 
@@ -69,12 +70,18 @@ MiscObject::MiscObject(ObjectType ObjectType) :Object<MiscObject>("Misc") {
 
 void Misc::m_getProfileString(int nargs) {
     Common::String file = g_lingo->pop().asString();
-    Common::Path filePath = findPath(file);
-    Common::INIFile config;
-    config.loadFromFile(filePath.toString());
-
     Common::String entry = g_lingo->pop().asString();
     Common::String section = g_lingo->pop().asString();
+
+    Common::Path filePath = findPath(file);
+    if (filePath.empty()) {
+        warning("Unable to locate config file %s", file.c_str());
+        g_lingo->push(Datum(""));
+        return;
+    }
+
+    Common::INIFile config;
+    config.loadFromFile(filePath.toString());
 
     Common::String value;
     if (config.getKey(entry, section, value)) {
@@ -87,7 +94,7 @@ void Misc::m_getProfileString(int nargs) {
 
 void Misc::m_isFilePresent(int nargs) {
     Common::String filename = g_lingo->pop().asString();
-    Common::Path filePath = findPath(filename);
+    Common::Path filePath = findMoviePath(filename);
     if (filePath.empty()) {
         g_lingo->push(Datum(0));
     } else {

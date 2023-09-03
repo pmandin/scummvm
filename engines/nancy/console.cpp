@@ -24,6 +24,8 @@
 
 #include "audio/audiostream.h"
 
+#include "image/bmp.h"
+
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/console.h"
 #include "engines/nancy/resource.h"
@@ -48,8 +50,9 @@ NancyConsole::NancyConsole() : GUI::Debugger() {
 	registerCmd("chunk_hexdump", WRAP_METHOD(NancyConsole, Cmd_chunkHexDump));
 	registerCmd("chunk_list", WRAP_METHOD(NancyConsole, Cmd_chunkList));
 	registerCmd("show_image", WRAP_METHOD(NancyConsole, Cmd_showImage));
+	registerCmd("export_image", WRAP_METHOD(NancyConsole, Cmd_exportImage));
 	registerCmd("play_video", WRAP_METHOD(NancyConsole, Cmd_playVideo));
-	registerCmd("play_audio", WRAP_METHOD(NancyConsole, Cmd_playAudio));
+	registerCmd("play_sound", WRAP_METHOD(NancyConsole, Cmd_playSound));
 	registerCmd("load_scene", WRAP_METHOD(NancyConsole, Cmd_loadScene));
 	registerCmd("scene_id", WRAP_METHOD(NancyConsole, Cmd_sceneID));
 	registerCmd("list_actionrecords", WRAP_METHOD(NancyConsole, Cmd_listActionRecords));
@@ -62,6 +65,7 @@ NancyConsole::NancyConsole() : GUI::Debugger() {
 	registerCmd("set_player_time", WRAP_METHOD(NancyConsole, Cmd_setPlayerTime));
 	registerCmd("get_difficulty", WRAP_METHOD(NancyConsole, Cmd_getDifficulty));
 	registerCmd("set_difficulty", WRAP_METHOD(NancyConsole, Cmd_setDifficulty));
+	registerCmd("sound_info", WRAP_METHOD(NancyConsole, Cmd_soundInfo));
 
 }
 
@@ -334,6 +338,29 @@ bool NancyConsole::Cmd_showImage(int argc, const char **argv) {
 	}
 }
 
+bool NancyConsole::Cmd_exportImage(int argc, const char **argv) {
+	if (argc != 2) {
+		debugPrintf("Exports an image to a file\n");
+		debugPrintf("Usage: %s <name>\n", argv[0]);
+		return true;
+	}
+
+	Graphics::ManagedSurface surf;
+	if (g_nancy->_resource->loadImage(argv[1], surf)) {
+		Common::DumpFile f;
+		if (!f.open(Common::String(argv[1]) + ".bmp")) {
+			debugPrintf("Couldn't open file for writing!");
+
+			return true;
+		}
+		Image::writeBMP(f, surf);
+	} else {
+		debugPrintf("File doesn't exist!\n");
+	}
+
+	return true;
+}
+
 bool NancyConsole::Cmd_playVideo(int argc, const char **argv) {
 	if (g_nancy->getGameType() == kGameTypeVampire) {
 		if (argc != 3) {
@@ -371,7 +398,7 @@ bool NancyConsole::Cmd_loadCal(int argc, const char **argv) {
 	return true;
 }
 
-bool NancyConsole::Cmd_playAudio(int argc, const char **argv) {
+bool NancyConsole::Cmd_playSound(int argc, const char **argv) {
 	if (argc != 2) {
 		debugPrintf("Plays an audio file\n");
 		debugPrintf("Usage: %s <name>\n", argv[0]);
@@ -415,7 +442,9 @@ bool NancyConsole::Cmd_loadScene(int argc, const char **argv) {
 		return true;
 	}
 
-	NancySceneState.changeScene((uint16)atoi(argv[1]), 0, 0, false);
+	SceneChangeDescription scene;
+	scene.sceneID = (uint16)atoi(argv[1]);
+	NancySceneState.changeScene(scene);
 	NancySceneState._state = State::Scene::kLoad;
 	return cmdExit(0, nullptr);
 }
@@ -433,6 +462,9 @@ bool NancyConsole::Cmd_sceneID(int argc, const char **argv) {
 void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &record) {
 	using namespace Nancy::Action;
 
+	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	assert(inventoryData);
+
 	for (const DependencyRecord &dep : record.children) {
 		debugPrintf("\n\t\t");
 		switch (dep.type) {
@@ -442,7 +474,7 @@ void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &re
 		case DependencyType::kInventory :
 			debugPrintf("kInventory, item %u, %s, %s",
 				dep.label,
-				g_nancy->_inventoryData->itemDescriptions[dep.label].name.c_str(),
+				inventoryData->itemDescriptions[dep.label].name.c_str(),
 				dep.condition == g_nancy->_true ? "true" : "false");
 			break;
 		case DependencyType::kEvent :
@@ -489,7 +521,7 @@ void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &re
 		case DependencyType::kCursorType :
 			debugPrintf("kCursorType, item %u, %s, %s",
 				dep.label,
-				g_nancy->_inventoryData->itemDescriptions[dep.label].name.c_str(),
+				inventoryData->itemDescriptions[dep.label].name.c_str(),
 				dep.condition == ActionManager::kCursInvHolding ? "kCursInvHolding" : "kCursInvNotHolding");
 			break;
 		case DependencyType::kPlayerTOD :
@@ -515,6 +547,9 @@ void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &re
 			debugPrintf("((((((((\n");
 			recurseDependencies(dep);
 			debugPrintf("\n))))))))");
+			break;
+		case DependencyType::kRandom :
+			debugPrintf("kRandom, chance %i", dep.condition);
 			break;
 		default:
 			debugPrintf("unknown type %u", (uint)dep.type);
@@ -722,21 +757,23 @@ bool NancyConsole::Cmd_getInventory(int argc, const char **argv) {
 	}
 
 	uint numItems = g_nancy->getStaticData().numItems;
+	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	assert(inventoryData);
 
 	debugPrintf("Total number of inventory items: %u\n", numItems);
 
 	if (argc == 1) {
 		for (uint i = 0; i < numItems; ++i) {
-			byte keep = g_nancy->_inventoryData->itemDescriptions[i].keepItem;
+			byte keep = inventoryData->itemDescriptions[i].keepItem;
 			debugPrintf("\nItem %u, %s, %s, %s",
 				i,
-				g_nancy->_inventoryData->itemDescriptions[i].name.c_str(),
+				inventoryData->itemDescriptions[i].name.c_str(),
 				keep == 0 ? "UseThenLose" : keep == 1 ? "KeepAlways" : "ReturnToInventory",
 				NancySceneState.hasItem(i) == g_nancy->_true ? "true" : "false");
 		}
 	} else {
 		for (int i = 1; i < argc; ++i) {
-			byte keep = g_nancy->_inventoryData->itemDescriptions[i].keepItem;
+			byte keep = inventoryData->itemDescriptions[i].keepItem;
 			int flagID = atoi(argv[i]);
 			if (flagID < 0 || flagID >= (int)numItems) {
 				debugPrintf("\nInvalid flag %s", argv[i]);
@@ -744,7 +781,7 @@ bool NancyConsole::Cmd_getInventory(int argc, const char **argv) {
 			}
 			debugPrintf("\nItem %u, %s, %s, %s",
 				flagID,
-				g_nancy->_inventoryData->itemDescriptions[flagID].name.c_str(),
+				inventoryData->itemDescriptions[flagID].name.c_str(),
 				keep == 0 ? "UseThenLose" : keep == 1 ? "KeepAlways" : "ReturnToInventory",
 				NancySceneState.hasItem(i) == g_nancy->_true ? "true" : "false");
 
@@ -757,6 +794,9 @@ bool NancyConsole::Cmd_getInventory(int argc, const char **argv) {
 }
 
 bool NancyConsole::Cmd_setInventory(int argc, const char **argv) {
+	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	assert(inventoryData);
+	
 	if (g_nancy->_gameFlow.curState != NancyState::kScene) {
 		debugPrintf("Not in the kScene state\n");
 		return true;
@@ -779,12 +819,12 @@ bool NancyConsole::Cmd_setInventory(int argc, const char **argv) {
 			NancySceneState.addItemToInventory(itemID);
 			debugPrintf("Added item %i, %s, to inventory\n",
 				itemID,
-				g_nancy->_inventoryData->itemDescriptions[itemID].name.c_str());
+				inventoryData->itemDescriptions[itemID].name.c_str());
 		} else if (Common::String(argv[i + 1]).compareTo("false") == 0) {
 			NancySceneState.removeItemFromInventory(itemID, false);
 			debugPrintf("Removed item %i, %s, from inventory\n",
 				itemID,
-				g_nancy->_inventoryData->itemDescriptions[itemID].name.c_str());
+				inventoryData->itemDescriptions[itemID].name.c_str());
 		} else {
 			debugPrintf("Invalid value %s\n", argv[i + 1]);
 			continue;
@@ -874,6 +914,49 @@ bool NancyConsole::Cmd_setDifficulty(int argc, const char **argv) {
 	debugPrintf("Set difficulty to %i\n", diff);
 
 	return cmdExit(0, nullptr);
+}
+
+bool NancyConsole::Cmd_soundInfo(int argc, const char **argv) {
+	if (g_nancy->getGameType() >= kGameTypeNancy3) {
+		const Math::Vector3d &pos = NancySceneState.getSceneSummary().listenerPosition;
+		const Math::Vector3d &ori = g_nancy->_sound->_orientation;
+		debugPrintf("3D listener position: %f, %f, %f\n", pos.x(), pos.y(), pos.z());
+		debugPrintf("3D listener orientation: %f, %f, %f\n\n", ori.x(), ori.y(), ori.z());
+	}
+
+	Common::Array<byte> channelIDs;
+	if (argc == 1) {
+		debugPrintf("Currently playing sounds:\n\n");
+		
+		for (uint i = 0; i < g_nancy->getStaticData().soundChannelInfo.numChannels; ++i) {
+			channelIDs.push_back(i);
+		}
+	} else {
+		for (int i = 1; i < argc; ++i) {
+			channelIDs.push_back(atoi(argv[i]));
+		}
+	}
+
+	for (byte channelID : channelIDs) {
+		const auto &chan = g_nancy->_sound->_channels[channelID];
+
+		if (g_nancy->_sound->isSoundPlaying(channelID)) {
+			debugPrintf("Channel %u, filename %s\n", channelID, chan.name.c_str());
+			debugPrintf("Source rate %i, playing at %i\n", chan.stream->getRate(), g_nancy->_sound->_mixer->getChannelRate(chan.handle));
+			debugPrintf("Volume: %u, pan: %i, numLoops: %u\n\n", chan.volume, g_nancy->_sound->_mixer->getChannelBalance(chan.handle), chan.numLoops);
+			
+			if (chan.playCommands != SoundManager::kPlaySequential) {
+				debugPrintf("\tPlay commands 0x%08x\n", chan.playCommands);
+
+				if (chan.effectData) {
+					debugPrintf("\tPosition: %f, %f, %f, ", chan.position.x(), chan.position.y(), chan.position.z());
+					debugPrintf("delta: %f, %f, %f\n\n", chan.positionDelta.x(), chan.positionDelta.y(), chan.positionDelta.z());
+				}
+			}
+		}
+	}
+
+	return true;
 }
 
 } // End of namespace Nancy

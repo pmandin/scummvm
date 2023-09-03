@@ -84,6 +84,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_startArea = 0;
 	_startEntrance = 0;
 	_currentArea = nullptr;
+	_gotoExecuted = false;
 	_rotation = Math::Vector3d(0, 0, 0);
 	_position = Math::Vector3d(0, 0, 0);
 	_lastPosition = Math::Vector3d(0, 0, 0);
@@ -136,6 +137,7 @@ FreescapeEngine::FreescapeEngine(OSystem *syst, const ADGameDescription *gd)
 	_playerHeight = 0;
 	_playerWidth = 0;
 	_playerDepth = 0;
+	_stepUpDistance = 0;
 	_colorNumber = 0;
 
 	_fullscreenViewArea = Common::Rect(0, 0, _screenW, _screenH);

@@ -152,8 +152,6 @@ void OptionMenu::draw(Button &back) {
 
 bool OptionMenu::handleEvents(Button &back, const Common::Event &event) {
 	if (_state < STATE_ENTER_W) {
-		_bg.draw();
-
 		switch (_state) {
 		case STATE_GENERAL:
 			_general.handleEvents(event);
@@ -221,7 +219,53 @@ bool OptionMenu::handleEvents(Button &back, const Common::Event &event) {
 }
 
 bool OptionMenu::handleTabs(Button &back, const Common::Event &event) {
-	warning("STUB: OptionMenu::handleTabs()");
+	if (back.handleEvents(event) == BUAC_LCLICK) {
+		reset();
+		return true;
+	}
+
+	int choice = _menu.handleEvents(event);
+	if (choice >= 0) {
+		if (choice < 4)
+			for (int i = 0; i < (int)_menu._element.size(); ++i)
+				_menu._element[i].state(i == choice);
+
+		switch (choice) {
+		case 0:
+			_state = STATE_GENERAL;
+			break;
+		case 1:
+			_state = STATE_GRAPHICS;
+			break;
+		case 2:
+			_state = STATE_KEYBOARD;
+			break;
+		case 3:
+			_state = STATE_CONTROLLER;
+			break;
+
+		case 4:
+			// Save settings to file
+			g_engine->_inputManager->save();
+			g_engine->_screenSettings->saveState();
+			g_engine->_musicManager->saveState();
+			saveState();
+			//general.CreateBackup();
+			//g_engine->_screenSettings->CreateBackup();
+			return true;
+
+		case 5:
+			// Revert all changes made to settings and exit
+			//g_engine->_inputManager->RestoreBackup();
+			//keybind.SetCaption();
+			//g_engine->_screenSettings->RestoreBackup();
+			_general.restoreBackup();
+			_general.setUI();
+			return true;
+		default:
+			break;
+		}
+	}
 
 	return false;
 }

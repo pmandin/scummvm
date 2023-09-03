@@ -76,6 +76,7 @@ Common::String InputManager::getAssociatedKey(const InputType &type) {
 			if ((int)action->event.customType == type) {
 				_keyDescs[type] = Common::String(keymap->getActionMapping(action)[0].description);
 				_keyDescs[type].toUppercase();
+				_iv[type] = Common::String(action->description);
 				break;
 			}
 		}
@@ -121,6 +122,16 @@ Common::Keymap* InputManager::getDefaultKeyMapsForGame() {
 	act->addDefaultInputMapping("JOY_A");
 	keymap->addAction(act);
 
+	act = new Action("ATTACK", _("Attack"));
+	act->setCustomEngineActionEvent(IG_ATTACK);
+	act->addDefaultInputMapping("z");
+	keymap->addAction(act);
+
+	act = new Action("BLOCK", _("Block"));
+	act->setCustomEngineActionEvent(IG_BLOCK);
+	act->addDefaultInputMapping("x");
+	keymap->addAction(act);
+
 	return keymap;
 }
 
@@ -161,6 +172,22 @@ Common::Keymap* InputManager::getDefaultKeyMapsForUI() {
 	act->addDefaultInputMapping("JOY_A");
 	uiKeymap->addAction(act);
 
+	act = new Action("UI_BACK", _("Back"));
+	act->setCustomEngineActionEvent(IU_BACK);
+	act->addDefaultInputMapping("ESCAPE");
+	act->addDefaultInputMapping("JOY_B");
+	uiKeymap->addAction(act);
+
+	act = new Action("UI_NEXT", _("Next"));
+	act->setCustomEngineActionEvent(IU_NEXT);
+	act->addDefaultInputMapping("TAB");
+	uiKeymap->addAction(act);
+
+	act = new Action("UI_PREV", _("Previous"));
+	act->setCustomEngineActionEvent(IU_PREV);
+	act->addDefaultInputMapping("r");
+	uiKeymap->addAction(act);
+
 	act = new Action("REPLY1", _("Reply 1"));
 	act->setCustomEngineActionEvent(IU_REPLY_0);
 	act->addDefaultInputMapping("1");
@@ -189,6 +216,16 @@ Common::Keymap* InputManager::getDefaultKeyMapsForUI() {
 	act = new Action("REPLY6", _("Reply 6"));
 	act->setCustomEngineActionEvent(IU_REPLY_5);
 	act->addDefaultInputMapping("6");
+	uiKeymap->addAction(act);
+
+	act = new Action("NEXTPAGE", _("Next Page"));
+	act->setCustomEngineActionEvent(IU_PAGE_NEXT);
+	act->addDefaultInputMapping("PERIOD");
+	uiKeymap->addAction(act);
+
+	act = new Action("PREVPAGE", _("Previous Page"));
+	act->setCustomEngineActionEvent(IU_PAGE_PREV);
+	act->addDefaultInputMapping("COMMA");
 	uiKeymap->addAction(act);
 
 	return uiKeymap;
@@ -221,6 +258,21 @@ Common::Keymap* InputManager::getDefaultKeyMapsForHUD() {
 	act->addDefaultInputMapping("t");
 	hudKeymap->addAction(act);
 
+	act = new Action("PAUSE", _("Pause"));
+	act->setCustomEngineActionEvent(IG_PAUSE);
+	act->addDefaultInputMapping("p");
+	hudKeymap->addAction(act);
+
+	act = new Action("QUICKSAVE", _("Quick Save"));
+	act->setCustomEngineActionEvent(IG_QUICKSAVE);
+	act->addDefaultInputMapping("F5");
+	hudKeymap->addAction(act);
+
+	act = new Action("QUICKLOAD", _("Quick Load"));
+	act->setCustomEngineActionEvent(IG_QUICKLOAD);
+	act->addDefaultInputMapping("F9");
+	hudKeymap->addAction(act);
+
 	return hudKeymap;
 }
 
@@ -244,6 +296,18 @@ void InputManager::setKeyBindingMode(KeyBindingMode mode) {
 
 	// Clear All inputs
 	clearInputs();
+}
+
+void InputManager::save() {
+	Common::KeymapArray keymapArr = g_system->getEventManager()->getKeymapper()->getKeymaps();
+	for(Common::Keymap *keymap : keymapArr) {
+		if (keymap->getType() != Common::Keymap::kKeymapTypeGame)
+			continue;
+
+		keymap->saveMappings();
+	}
+
+	ConfMan.flushToDisk();
 }
 
 } // End of namespace Crab

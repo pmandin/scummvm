@@ -34,7 +34,7 @@
 #include "common/formats/quicktime.h"
 #include "common/textconsole.h"
 #include "common/util.h"
-#include "common/compression/zlib.h"
+#include "common/compression/deflate.h"
 
 namespace Common {
 
@@ -265,7 +265,6 @@ int QuickTimeParser::readMOOV(Atom atom) {
 }
 
 int QuickTimeParser::readCMOV(Atom atom) {
-#ifdef USE_ZLIB
 	// Read in the dcom atom
 	_fd->readUint32BE();
 	if (_fd->readUint32BE() != MKTAG('d', 'c', 'o', 'm'))
@@ -290,7 +289,7 @@ int QuickTimeParser::readCMOV(Atom atom) {
 
 	// Uncompress the data
 	unsigned long dstLen = uncompressedSize;
-	if (!uncompress(uncompressedData, &dstLen, compressedData, compressedSize)) {
+	if (!inflateZlib(uncompressedData, &dstLen, compressedData, compressedSize)) {
 		warning ("Could not uncompress cmov chunk");
 		free(compressedData);
 		free(uncompressedData);
@@ -311,10 +310,6 @@ int QuickTimeParser::readCMOV(Atom atom) {
 	_fd = oldStream;
 
 	return err;
-#else
-	warning ("zlib not found, cannot read QuickTime cmov atom");
-	return -1;
-#endif
 }
 
 int QuickTimeParser::readMVHD(Atom atom) {
@@ -895,14 +890,35 @@ void QuickTimeParser::flattenEditLists() {
 	//
 	// Other players seem to just play the audio track chunks consecutively without the
 	// 30-sample skips, which produces the correct results, not sure why.
-
+	//
+	//
+	// We also need to account for mixed silent and non-silent tracks.  In Obsidian's
+	// Japanese localization, the vidbot that you talk to at the end of the maze (asset
+	// 4375) has a brief silent edit followed by the actual audio track.  If we
+	// collapse the audio track into the silent edit, then it causes the entire track
+	// to be silent.
 	for (Track *track : _tracks) {
-		if (track->editList.size()) {
-			EditListEntry &lastEntry = track->editList.back();
-			EditListEntry &firstEntry = track->editList.front();
-			firstEntry.trackDuration = (lastEntry.timeOffset + lastEntry.trackDuration);
+		if (track->editList.size() >= 2) {
+			Common::Array<EditListEntry> newEdits;
 
-			track->editList.resize(1);
+			for (const EditListEntry &curEdit : track->editList) {
+				if (newEdits.size() == 0) {
+					newEdits.push_back(curEdit);
+					continue;
+				}
+
+				EditListEntry &prevEdit = newEdits.back();
+				bool prevIsSilent = (prevEdit.mediaTime == -1);
+				bool currentIsSilent = (curEdit.mediaTime == -1);
+
+				if (prevIsSilent != currentIsSilent) {
+					newEdits.push_back(curEdit);
+					continue;
+				} else
+					prevEdit.trackDuration += curEdit.trackDuration;
+			}
+
+			track->editList = Common::move(newEdits);
 		}
 	}
 }

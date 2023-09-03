@@ -204,17 +204,23 @@ public:
 	Group *load8bitGroupV2(Common::SeekableReadStream *file, byte rawFlagsAndType);
 
 	void loadGlobalObjects(Common::SeekableReadStream *file, int offset, int size);
-	void renderPixels8bitBinImage(Graphics::ManagedSurface *surface, int &i, int &j, uint8 pixels, int color);
+	void renderPixels8bitBinImage(Graphics::ManagedSurface *surface, int row, int column, int bit, int count);
 
 	void renderPixels8bitBinCGAImage(Graphics::ManagedSurface *surface, int &i, int &j, uint8 pixels, int color);
 	void renderPixels8bitBinEGAImage(Graphics::ManagedSurface *surface, int &i, int &j, uint8 pixels, int color);
 
 	Graphics::ManagedSurface *load8bitBinImage(Common::SeekableReadStream *file, int offset);
+	void load8bitBinImageRow(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int row);
+	void load8bitBinImageRowIteration(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int row, int bit);
+	int execute8bitBinImageCommand(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int row, int pixels, int bit);
+	int execute8bitBinImageSingleCommand(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int row, int pixels, int bit, int count);
+	int execute8bitBinImageMultiCommand(Common::SeekableReadStream *file, Graphics::ManagedSurface *surface, int row, int pixels, int bit, int count);
 
 	// Areas
 	uint16 _startArea;
 	AreaMap _areaMap;
 	Area *_currentArea;
+	bool _gotoExecuted;
 	Math::Vector3d _scale;
 
 	virtual void gotoArea(uint16 areaID, int entranceID);
@@ -281,6 +287,7 @@ public:
 	uint16 _playerHeight;
 	uint16 _playerWidth;
 	uint16 _playerDepth;
+	uint16 _stepUpDistance;
 
 	int _playerStepIndex;
 	Common::Array<int> _playerSteps;
@@ -557,12 +564,16 @@ public:
 	void initDOS();
 	void initAmigaAtari();
 	void initZX();
+	void initCPC();
 
 	void loadAssetsDOSFullGame() override;
 	void loadAssetsDOSDemo() override;
 	void loadAssetsAmigaFullGame() override;
 
+	void loadAssetsCPCFullGame() override;
+
 	void loadAssetsZXDemo() override;
+	void loadAssetsZXFullGame() override;
 	void loadMessagesVariableSize(Common::SeekableReadStream *file, int offset, int number) override;
 
 	int _lastTenSeconds;
@@ -575,6 +586,7 @@ public:
 	void drawSensorShoot(Sensor *sensor) override;
 	void drawDOSUI(Graphics::Surface *surface) override;
 	void drawZXUI(Graphics::Surface *surface) override;
+	void drawCPCUI(Graphics::Surface *surface) override;
 	void drawAmigaAtariSTUI(Graphics::Surface *surface) override;
 
 

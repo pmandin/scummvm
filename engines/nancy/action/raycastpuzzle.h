@@ -30,8 +30,13 @@ struct RCPR;
 
 namespace Action {
 
+class RaycastDeferredLoader;
+class RaycastLevelBuilder;
+
 // Action record implementing nancy3's maze minigame
 class RaycastPuzzle : public RenderActionRecord {
+	friend class RaycastDeferredLoader;
+	friend class RaycastLevelBuilder;
 public:
 	RaycastPuzzle()  : RenderActionRecord(7), _map(7) {}
 	~RaycastPuzzle() override {}
@@ -43,6 +48,19 @@ public:
 	void execute() override;
 	void handleInput(NancyInput &input) override;
 	void updateGraphics() override;
+
+protected:
+	Common::String getRecordTypeName() const override { return "RaycastPuzzle"; }
+	bool isViewportRelative() const override { return true; }
+
+	void loadTextures();
+	void createTextureLightSourcing(Common::Array<Graphics::ManagedSurface> *array, const Common::String &textureName);
+
+	void drawMap();
+	void drawMaze();
+	void clearZBuffer();
+
+	void checkSwitch();
 
 	uint16 _mapWidth = 0;
 	uint16 _mapHeight = 0;
@@ -85,13 +103,13 @@ public:
 
 	int32 _playerX = -1;				// Player position with precision 1/128th of cell width/height
 	int32 _playerY = -1;
-	int32 _playerRotation; 				// Rotation of player (0 - 4096)
+	int32 _playerRotation = 0; 			// Rotation of player (0 - 4096)
 	uint32 _playerAltitude = 88;		// Z position of "camera"; only modified in god mode
 
 	float _rotationSingleStep = 4096.0 / (_pi * 2);
-	float _maxWorldDistance;
+	float _maxWorldDistance = 0.0;
 
-	uint32 _lastMovementTime;
+	uint32 _lastMovementTime = 0;
 	int _lastMouseX = -1;
 
 	uint32 _nextSlowdownMovementTime = 0;
@@ -99,20 +117,8 @@ public:
 	int32 _slowdownDeltaX = -1;
 	int32 _slowdownDeltaY = -1;
 
-	RCPR *_puzzleData = nullptr;
-
-protected:
-	Common::String getRecordTypeName() const override { return "RaycastPuzzle"; }
-	bool isViewportRelative() const override { return true; }
-
-	void loadTextures();
-	void createTextureLightSourcing(Common::Array<Graphics::ManagedSurface> *array, Common::String &textureName);
-
-	void drawMap();
-	void drawMaze();
-	void clearZBuffer();
-
-	void checkSwitch();
+	const RCPR *_puzzleData = nullptr;
+	Common::SharedPtr<RaycastDeferredLoader> _loaderPtr;
 };
 
 } // End of namespace Action

@@ -22,6 +22,7 @@
 #include "common/serializer.h"
 #include "common/stack.h"
 #include "common/config-manager.h"
+#include "common/random.h"
 
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/input.h"
@@ -60,7 +61,10 @@ void ActionManager::handleInput(NancyInput &input) {
 
 				if (!rec->_dependencies.satisfied) {
 					if (g_nancy->getGameType() >= kGameTypeNancy2 && rec->_cursorDependency != nullptr) {
-						SoundDescription &sound = g_nancy->_inventoryData->itemDescriptions[rec->_cursorDependency->label].specificCantSound;
+						const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+						assert(inventoryData);
+
+						const SoundDescription &sound = inventoryData->itemDescriptions[rec->_cursorDependency->label].specificCantSound;
 						g_nancy->_sound->loadSound(sound);
 						g_nancy->_sound->playSound(sound);
 					} else {
@@ -77,7 +81,10 @@ void ActionManager::handleInput(NancyInput &input) {
 
 						// Re-add the object to the inventory unless it's marked as a one-time use
 						if (item == NancySceneState.getHeldItem() && item != -1) {
-							switch (g_nancy->_inventoryData->itemDescriptions[item].keepItem) {
+							const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+							assert(inventoryData);
+
+							switch (inventoryData->itemDescriptions[item].keepItem) {
 							case kInvItemKeepAlways :
 								if (g_nancy->getGameType() >= kGameTypeNancy3) {
 									// In nancy3 and up this means the object remains in hand, so do nothing
@@ -233,14 +240,36 @@ void ActionManager::processDependency(DependencyRecord &dep, ActionRecord &recor
 		}
 
 		// An orFlag marks that its corresponding dependency and the one after it
-		// mutually satisfy each other; if one is satisfied, so is the other
-		for (uint i = 1; i < dep.children.size(); ++i) {
-			if (dep.children[i - 1].orFlag) {
-				if (dep.children[i - 1].satisfied)
-					dep.children[i].satisfied = true;
-				if (dep.children[i].satisfied)
-					dep.children[i - 1].satisfied = true;
+		// mutually satisfy each other; if one is satisfied, so is the other. The effect
+		// can be chained indefinitely (for example, the chiming clock in nancy3)
+		for (uint i = 0; i < dep.children.size(); ++i) {
+			if (dep.children[i].orFlag) {
+				// Found an orFlag, start going down the chain of dependencies with orFlags
+				bool foundSatisfied = false;
+				for (uint j = i; j < dep.children.size(); ++j) {
+					if (dep.children[j].satisfied) {
+						// A dependency has been satisfied
+						foundSatisfied = true;
+						break;
+					}
+
+					if (!dep.children[j].orFlag) {
+						// orFlag chain ended, no satisfied deoendencies
+						break;
+					}
+				}
+
+				if (foundSatisfied) {
+					for (; i < dep.children.size(); ++i) {
+						dep.children[i].satisfied = true;
+						if (!dep.children[i].orFlag) {
+							// Last element of orFlag chain
+							break;
+						}
+					}
+				}
 			}
+			
 		}
 
 		// If all children are satisfied, so is the parent
@@ -440,6 +469,18 @@ void ActionManager::processDependency(DependencyRecord &dep, ActionRecord &recor
 				dep.satisfied = dep.condition == 1;
 			} else {
 				dep.satisfied = dep.condition == 0;
+			}
+
+			break;
+		case DependencyType::kRandom:
+			// Pick a random number and compare it with the value in condition
+			// This is only executed once
+			if (!dep.stopEvaluating) {
+				if ((int)g_nancy->_randomSource->getRandomNumber(99) < dep.condition) {
+					dep.satisfied = true;
+				}
+
+				dep.stopEvaluating = true;
 			}
 
 			break;

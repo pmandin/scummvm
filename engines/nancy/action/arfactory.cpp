@@ -38,6 +38,10 @@
 #include "engines/nancy/action/soundequalizerpuzzle.h"
 #include "engines/nancy/action/setplayerclock.h"
 #include "engines/nancy/action/raycastpuzzle.h"
+#include "engines/nancy/action/turningpuzzle.h"
+#include "engines/nancy/action/tangrampuzzle.h"
+#include "engines/nancy/action/safelockpuzzle.h"
+#include "engines/nancy/action/collisionpuzzle.h"
 
 #include "engines/nancy/state/scene.h"
 
@@ -84,6 +88,8 @@ ActionRecord *ActionManager::createActionRecord(uint16 type) {
 		return new Hot1FrSceneChange(CursorManager::kTurnLeft);
 	case 23:
 		return new Hot1FrSceneChange(CursorManager::kTurnRight);
+	case 24:
+		return new HotMultiframeMultisceneCursorTypeSceneChange();
 	case 40:
 		if (g_nancy->getGameType() < kGameTypeNancy2) {
 			// Only used in TVD
@@ -118,7 +124,9 @@ ActionRecord *ActionManager::createActionRecord(uint16 type) {
 	case 75:
 		return new TextBoxWrite();
 	case 76:
-		return new TextBoxClear();
+		return new TextboxClear();
+	case 99:
+		return new EventFlagsMultiHS(true);
 	case 100:
 		return new BumpPlayerClock();
 	case 101:
@@ -132,11 +140,11 @@ ActionRecord *ActionManager::createActionRecord(uint16 type) {
 	case 105:
 		return new StopTimer();
 	case 106:
-		return new EventFlagsMultiHS();
+		return new EventFlagsMultiHS(false);
 	case 107:
 		return new EventFlags();
 	case 108:
-		return new OrderingPuzzle();
+		return new OrderingPuzzle(OrderingPuzzle::kOrdering);
 	case 109:
 		return new LoseGame();
 	case 110:
@@ -175,6 +183,8 @@ ActionRecord *ActionManager::createActionRecord(uint16 type) {
 		return new StopSound();
 	case 155:
 		return new StopSound(); // StopAndUnloadSound, but we always unload
+	case 157:
+		return new PlayDigiSoundCC();
 	case 160:
 		return new HintSystem();
 	case 170:
@@ -193,6 +203,18 @@ ActionRecord *ActionManager::createActionRecord(uint16 type) {
 		return new RiddlePuzzle();
 	case 206:
 		return new RaycastPuzzle();
+	case 207:
+		return new TangramPuzzle();
+	case 208:
+		return new OrderingPuzzle(OrderingPuzzle::PuzzleType::kPiano);
+	case 209:
+		return new TurningPuzzle();
+	case 210:
+		return new SafeLockPuzzle();
+	case 211:
+		return new CollisionPuzzle();
+	case 212:
+		return new OrderingPuzzle(OrderingPuzzle::PuzzleType::kOrderItems);
 	default:
 		error("Action Record type %i is invalid!", type);
 		return nullptr;

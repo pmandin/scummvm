@@ -24,6 +24,7 @@
 
 #include "common/file.h"
 #include "common/str.h"
+#include "common/ptr.h"
 
 #include "engines/engine.h"
 
@@ -63,6 +64,7 @@ class SoundManager;
 class GraphicsManager;
 class CursorManager;
 class NancyConsole;
+class DeferredLoader;
 
 namespace State {
 class State;
@@ -83,7 +85,6 @@ public:
 	Common::Error saveGameStream(Common::WriteStream *stream, bool isAutosave = false) override;
 	bool canLoadGameStateCurrently() override;
 	bool canSaveGameStateCurrently() override;
-	bool canSaveAutosaveCurrently() override;
 
 	void secondChance();
 
@@ -94,12 +95,15 @@ public:
 	Common::Platform getPlatform() const;
 
 	const StaticData &getStaticData() const;
+	const EngineData *getEngineData(const Common::String &name) const;
 
 	void setState(NancyState::NancyState state, NancyState::NancyState overridePrevious = NancyState::kNone);
 	NancyState::NancyState getState() { return _gameFlow.curState; }
 	void setToPreviousState();
 
 	void setMouseEnabled(bool enabled);
+
+	void addDeferredLoader(Common::SharedPtr<DeferredLoader> &loaderPtr);
 
 	// The first few games used 1/2 for false/true in
 	// inventory, logic conditions, and event flags
@@ -115,22 +119,8 @@ public:
 
 	Common::RandomSource *_randomSource;
 
-	// BOOT chunks data
-	BSUM *_bootSummary;
-	VIEW *_viewportData;
-	INV *_inventoryData;
-	TBOX *_textboxData;
-	MAP *_mapData;
-	HELP *_helpData;
-	CRED *_creditsData;
-	HINT *_hintData;
-	SPUZ *_sliderPuzzleData;
-	CLOK *_clockData;
-	SPEC *_specialEffectData;
-	RCPR *_raycastPuzzleData;
-	RCLB *_raycastPuzzleLevelBuilderData;
-
-	Common::HashMap<Common::String, ImageChunk> _imageChunks;
+	// Used to check whether we need to show the SaveDialog
+	bool _hasJustSaved;
 
 protected:
 	Common::Error run() override;
@@ -157,6 +147,8 @@ private:
 	bool isCompressed();
 
 	StaticData _staticData;
+	Common::HashMap<Common::String, EngineData *> _engineData;
+
 	const byte _datFileMajorVersion;
 	const byte _datFileMinorVersion;
 
@@ -164,6 +156,8 @@ private:
 	OSystem *_system;
 
 	const NancyGameDescription *_gameDescription;
+
+	Common::Array<Common::WeakPtr<DeferredLoader>> _deferredLoaderObjects;
 };
 
 extern NancyEngine *g_nancy;

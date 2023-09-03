@@ -29,6 +29,7 @@
 #include "engines/nancy/state/scene.h"
 
 #include "common/events.h"
+#include "common/config-manager.h"
 
 namespace Nancy {
 namespace Action {
@@ -167,6 +168,56 @@ void HotMultiframeMultisceneChange::execute() {
 	}
 }
 
+void HotMultiframeMultisceneCursorTypeSceneChange::readData(Common::SeekableReadStream &stream) {
+	uint16 numScenes = stream.readUint16LE();
+	_scenes.resize(numScenes);
+	_cursorTypes.resize(numScenes);
+	for (uint i = 0; i < numScenes; ++i) {
+		_cursorTypes[i] = stream.readUint16LE();
+		_scenes[i].readData(stream);
+	}
+
+	stream.skip(2);
+	_defaultScene.readData(stream);
+	
+	uint16 numHotspots = stream.readUint16LE();
+	_hotspots.resize(numHotspots);
+	for (uint i = 0; i < numHotspots; ++i) {
+		_hotspots[i].readData(stream);
+	}
+}
+
+void HotMultiframeMultisceneCursorTypeSceneChange::execute() {
+	switch (_state) {
+	case kBegin:
+		// turn main rendering on
+		_state = kRun;
+		// fall through
+	case kRun:
+		_hasHotspot = false;
+		for (uint i = 0; i < _hotspots.size(); ++i) {
+			if (_hotspots[i].frameID == NancySceneState.getSceneInfo().frameID) {
+				_hasHotspot = true;
+				_hotspot = _hotspots[i].coords;
+			}
+		}
+		break;
+	case kActionTrigger:
+		for (uint i = 0; i < _cursorTypes.size(); ++i) {
+			if (NancySceneState.getHeldItem() == _cursorTypes[i]) {
+				NancySceneState.changeScene(_scenes[i]);
+
+				_isDone = true;
+				return;
+			}
+		}
+
+		NancySceneState.changeScene(_defaultScene);
+		_isDone = true;
+		break;
+	}
+}
+
 void PaletteThisScene::readData(Common::SeekableReadStream &stream) {
 	_paletteID = stream.readByte();
 	_unknownEnum = stream.readByte();
@@ -298,23 +349,23 @@ void TextBoxWrite::readData(Common::SeekableReadStream &stream) {
 	delete[] buf;
 }
 
-TextBoxWrite::~TextBoxWrite() {
-	NancySceneState.setShouldClearTextbox(true);
-	NancySceneState.getTextbox().setVisible(false);
-}
-
 void TextBoxWrite::execute() {
 	auto &tb = NancySceneState.getTextbox();
 	tb.clear();
-	tb.overrideFontID(g_nancy->_textboxData->defaultFontID);
+	const TBOX *textboxData = (const TBOX *)g_nancy->getEngineData("TBOX");
+	tb.overrideFontID(textboxData->defaultFontID);
 	tb.addTextLine(_text);
 	tb.setVisible(true);
-	NancySceneState.setShouldClearTextbox(false);
 	finishExecution();
 }
 
-void TextBoxClear::readData(Common::SeekableReadStream &stream) {
+void TextboxClear::readData(Common::SeekableReadStream &stream) {
 	stream.skip(1);
+}
+
+void TextboxClear::execute() {
+	NancySceneState.getTextbox().clear();
+	finishExecution();
 }
 
 void BumpPlayerClock::readData(Common::SeekableReadStream &stream) {
@@ -374,6 +425,11 @@ void EventFlags::execute() {
 
 void EventFlagsMultiHS::readData(Common::SeekableReadStream &stream) {
 	EventFlags::readData(stream);
+
+	if (_isCursor) {
+		_hoverCursor = (CursorManager::CursorType)stream.readUint16LE();
+	}
+
 	uint16 numHotspots = stream.readUint16LE();
 
 	_hotspots.reserve(numHotspots);
@@ -415,13 +471,15 @@ void LoseGame::readData(Common::SeekableReadStream &stream) {
 
 void LoseGame::execute() {
 	g_nancy->_sound->stopAndUnloadSpecificSounds();
+	NancySceneState.setDestroyOnExit();
 
-	// We're not using original menus yet, so just quit the game and go back to the launcher
-	// g_nancy->setState(NancyState::kMainMenu);
-
-	Common::Event ev;
-	ev.type = Common::EVENT_RETURN_TO_LAUNCHER;
-	g_system->getEventManager()->pushEvent(ev);
+	if (!ConfMan.hasKey("original_menus") || ConfMan.getBool("original_menus")) {
+		g_nancy->setState(NancyState::kMainMenu);
+	} else {
+		Common::Event ev;
+		ev.type = Common::EVENT_RETURN_TO_LAUNCHER;
+		g_system->getEventManager()->pushEvent(ev);
+	}
 
 	_isDone = true;
 }
@@ -450,6 +508,7 @@ void WinGame::readData(Common::SeekableReadStream &stream) {
 
 void WinGame::execute() {
 	g_nancy->_sound->stopAndUnloadSpecificSounds();
+	NancySceneState.setDestroyOnExit();
 	g_nancy->setState(NancyState::kCredits, NancyState::kMainMenu);
 
 	_isDone = true;
@@ -500,14 +559,24 @@ void ShowInventoryItem::init() {
 }
 
 void ShowInventoryItem::readData(Common::SeekableReadStream &stream) {
+	GameType gameType = g_nancy->getGameType();
 	_objectID = stream.readUint16LE();
 	readFilename(stream, _imageName);
 
 	uint16 numFrames = stream.readUint16LE();
+	if (gameType >= kGameTypeNancy3) {
+		stream.skip(2);
+	}
 
 	_bitmaps.resize(numFrames);
 	for (uint i = 0; i < numFrames; ++i) {
-		_bitmaps[i].readData(stream);
+		if (gameType <= kGameTypeNancy2) {
+			_bitmaps[i].readData(stream);
+		} else {
+			_bitmaps[i].frameID = i;
+			readRect(stream, _bitmaps[i].src);
+			readRect(stream, _bitmaps[i].dest);
+		}
 	}
 }
 
@@ -557,6 +626,12 @@ void ShowInventoryItem::execute() {
 
 void PlayDigiSoundAndDie::readData(Common::SeekableReadStream &stream) {
 	_sound.readDIGI(stream);
+
+	if (g_nancy->getGameType() >= kGameTypeNancy3) {
+		_soundEffect = new SoundEffectDescription;
+		_soundEffect->readData(stream);
+	}
+
 	_sceneChange.readData(stream, g_nancy->getGameType() == kGameTypeVampire);
 
 	_flagOnTrigger.label = stream.readSint16LE();
@@ -567,7 +642,7 @@ void PlayDigiSoundAndDie::readData(Common::SeekableReadStream &stream) {
 void PlayDigiSoundAndDie::execute() {
 	switch (_state) {
 	case kBegin:
-		g_nancy->_sound->loadSound(_sound);
+		g_nancy->_sound->loadSound(_sound, &_soundEffect);
 		g_nancy->_sound->playSound(_sound);
 		_state = kRun;
 		break;
@@ -590,13 +665,34 @@ void PlayDigiSoundAndDie::execute() {
 	}
 }
 
+void PlayDigiSoundCC::readData(Common::SeekableReadStream &stream) {
+	PlayDigiSoundAndDie::readData(stream);
+
+	uint16 textSize = stream.readUint16LE();
+	if (textSize) {
+		char *strBuf = new char[textSize];
+		stream.read(strBuf, textSize);
+		UI::Textbox::assembleTextLine(strBuf, _ccText, textSize);
+		delete[] strBuf;
+	}
+}
+
+void PlayDigiSoundCC::execute() {
+	if (_state == kBegin) {
+		NancySceneState.getTextbox().clear();
+		NancySceneState.getTextbox().addTextLine(_ccText);
+	}
+	PlayDigiSoundAndDie::execute();
+}
+
 void PlaySoundPanFrameAnchorAndDie::readData(Common::SeekableReadStream &stream) {
 	_sound.readDIGI(stream);
 	stream.skip(2);
+	_sound.isPanning = true;
 }
 
 void PlaySoundPanFrameAnchorAndDie::execute() {
-	g_nancy->_sound->loadSound(_sound, true);
+	g_nancy->_sound->loadSound(_sound);
 	g_nancy->_sound->playSound(_sound);
 	_isDone = true;
 }

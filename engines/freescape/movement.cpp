@@ -326,6 +326,7 @@ void FreescapeEngine::move(CameraMovement direction, uint8 scale, float deltaTim
 	//debugC(1, kFreescapeDebugMove, "player height: %f", _position.y() - areaScale * _playerHeight);
 	if (_currentArea->getAreaID() == previousAreaID)
 		executeMovementConditions();
+	_gotoExecuted = false;
 	clearGameBit(31);
 }
 
@@ -338,9 +339,10 @@ void FreescapeEngine::resolveCollisions(Math::Vector3d const position) {
 	Math::Vector3d newPosition = position;
 	Math::Vector3d lastPosition = _lastPosition;
 
-	int previousAreaID = _currentArea->getAreaID();
+	_gotoExecuted = false;
 	bool executed = runCollisionConditions(lastPosition, newPosition);
-	if (_currentArea->getAreaID() != previousAreaID) {
+	if (_gotoExecuted) {
+		_gotoExecuted = false;
 		return;
 	}
 
@@ -359,10 +361,10 @@ void FreescapeEngine::resolveCollisions(Math::Vector3d const position) {
 	if ((lastPosition - newPosition).length() < 1) { // If the player has not moved
 		// Try to step up
 		newPosition = position;
-		newPosition.y() = newPosition.y() + 64;
+		newPosition.y() = newPosition.y() + _stepUpDistance;
 
 		lastPosition = _lastPosition;
-		lastPosition.y() = lastPosition.y() + 64;
+		lastPosition.y() = lastPosition.y() + _stepUpDistance;
 
 		newPosition = _currentArea->resolveCollisions(lastPosition, newPosition, _playerHeight);
 	}

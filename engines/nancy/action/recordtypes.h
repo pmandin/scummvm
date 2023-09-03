@@ -128,6 +128,21 @@ protected:
 	Common::String getRecordTypeName() const override { return "HotMultiframeMultisceneChange"; }
 };
 
+class HotMultiframeMultisceneCursorTypeSceneChange : public ActionRecord {
+public:
+	void readData(Common::SeekableReadStream &stream) override;
+	void execute() override;
+
+	Common::Array<SceneChangeDescription> _scenes;
+	Common::Array<uint16> _cursorTypes;
+
+	SceneChangeDescription _defaultScene;
+	Common::Array<HotspotDescription> _hotspots;
+
+protected:
+	Common::String getRecordTypeName() const override { return "HotMultiframeMultisceneCursorTypeSceneChange"; }
+};
+
 class PaletteThisScene : public ActionRecord {
 public:
 	void readData(Common::SeekableReadStream &stream) override;
@@ -216,8 +231,6 @@ protected:
 
 class TextBoxWrite : public ActionRecord {
 public:
-	virtual ~TextBoxWrite();
-
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
 
@@ -227,12 +240,13 @@ protected:
 	Common::String getRecordTypeName() const override { return "TextBoxWrite"; }
 };
 
-class TextBoxClear : public Unimplemented {
+class TextboxClear : public ActionRecord {
 public:
 	void readData(Common::SeekableReadStream &stream) override;
+	void execute() override;
 
 protected:
-	Common::String getRecordTypeName() const override { return "TextBoxClear"; }
+	Common::String getRecordTypeName() const override { return "TextboxClear"; }
 };
 
 class BumpPlayerClock : public ActionRecord {
@@ -304,14 +318,22 @@ protected:
 
 class EventFlagsMultiHS : public EventFlags {
 public:
+	EventFlagsMultiHS(bool isCursor) : _isCursor(isCursor) {}
+	virtual ~EventFlagsMultiHS() {}
+
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
 
+	CursorManager::CursorType getHoverCursor() const override { return _hoverCursor; }
+
+	CursorManager::CursorType _hoverCursor = CursorManager::kHotspot;
 	Common::Array<HotspotDescription> _hotspots;
+
+	bool _isCursor;
 
 protected:
 	bool canHaveHotspot() const override { return true; }
-	Common::String getRecordTypeName() const override { return "EventFlagsMultiHS"; }
+	Common::String getRecordTypeName() const override { return _isCursor ? "EventFlagsCursorHS" : "EventFlagsMultiHS"; }
 };
 
 class LoseGame : public ActionRecord {
@@ -409,15 +431,30 @@ protected:
 
 class PlayDigiSoundAndDie : public ActionRecord {
 public:
+	PlayDigiSoundAndDie() {}
+	~PlayDigiSoundAndDie() { delete _soundEffect; }
+	
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
 
 	SoundDescription _sound;
+	SoundEffectDescription *_soundEffect = nullptr;
 	SceneChangeDescription _sceneChange;
 	FlagDescription _flagOnTrigger;
 
 protected:
 	Common::String getRecordTypeName() const override { return "PlayDigiSoundAndDie"; }
+};
+
+class PlayDigiSoundCC : public PlayDigiSoundAndDie {
+public:
+	void readData(Common::SeekableReadStream &stream) override;
+	void execute() override;
+
+	Common::String _ccText;
+
+protected:
+	Common::String getRecordTypeName() const override { return "PlayDigiSoundCC"; }
 };
 
 class PlaySoundPanFrameAnchorAndDie : public ActionRecord {

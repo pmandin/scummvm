@@ -261,12 +261,19 @@ bool HEMixer::audioOverrideExists(int soundId, bool justGetInfo, int *duration, 
 	return false;
 }
 
+void HEMixer::setSpoolingSongsTable(HESpoolingMusicItem *heSpoolingMusicTable, int32 tableSize) {
+	for (int i = 0; i < tableSize; i++) {
+		_offsetsToSongId.setVal(heSpoolingMusicTable[i].offset, heSpoolingMusicTable[i].song);
+	}
+}
+
+int32 HEMixer::matchOffsetToSongId(int32 offset) {
+	return _offsetsToSongId.getValOrDefault(offset, 0);
+}
+
 /* --- SOFTWARE MIXER --- */
 
 bool HEMixer::mixerInitMyMixerSubSystem() {
-	// Init the channel buffers, and kick start the mixer...
-	memset(_mixerChannels, 0, sizeof(_mixerChannels));
-
 	for (int i = 0; i < MIXER_MAX_CHANNELS; i++) {
 		_mixerChannels[i].stream = Audio::makeQueuingAudioStream(MIXER_DEFAULT_SAMPLE_RATE, false);
 		_mixer->playStream(
@@ -440,7 +447,7 @@ bool HEMixer::mixerIsMixerDisabled() {
 }
 
 bool HEMixer::mixerStopChannel(int channel) {
-	if ((0 <= channel) && (MIXER_MAX_CHANNELS > channel))
+	if ((channel >= 0) && (channel < MIXER_MAX_CHANNELS))
 		return mixerStartChannel(channel, 0, 0, 0, 0, 0, 0, 0, CHANNEL_EMPTY_FLAGS);
 
 	return false;
@@ -467,8 +474,9 @@ bool HEMixer::mixerStartChannel(
 	int sampleLen, int frequency, int volume, int callbackID, uint32 flags, ...) {
 
 	va_list params;
+	bool is3DOMusic = false;
 
-	if ((channel < 0) || (channel > MIXER_MAX_CHANNELS))
+	if ((channel < 0) || (channel >= MIXER_MAX_CHANNELS))
 		return false;
 
 	if (_mixerChannels[channel].flags != CHANNEL_EMPTY_FLAGS) {
@@ -488,10 +496,6 @@ bool HEMixer::mixerStartChannel(
 	if (flags != CHANNEL_EMPTY_FLAGS) {
 		if (sampleLen <= 0) {
 			error("HEMixer::mixerStartChannel(): Sample invalid size %d", sampleLen);
-		}
-
-		if ((flags & CHANNEL_LOOPING) && (sampleLen <= MIXER_PCM_CHUNK_SIZE)) {
-			error("HEMixer::mixerStartChannel(): Sample too small to loop (%d)", sampleLen);
 		}
 	}
 
@@ -560,6 +564,10 @@ bool HEMixer::mixerStartChannel(
 	if (flags != CHANNEL_EMPTY_FLAGS) {
 		byte *ptr = _vm->getResourceAddress((ResType)globType, globNum);
 
+		if (READ_BE_UINT32(ptr) == MKTAG('M', 'R', 'A', 'W')) {
+			is3DOMusic = true;
+		}
+
 		if (READ_BE_UINT32(ptr) == MKTAG('W', 'S', 'O', 'U')) {
 			ptr += 8;
 		}
@@ -592,16 +600,35 @@ bool HEMixer::mixerStartChannel(
 			// Fade-in to avoid possible sound popping...
 			byte *dataTmp = data;
 			int rampUpSampleCount = 64;
-			for (int i = 0; i < rampUpSampleCount; i++) {
-				*dataTmp = 128 + (((*dataTmp - 128) * i) / rampUpSampleCount);
-				dataTmp++;
+			if (!is3DOMusic) {
+				for (int i = 0; i < rampUpSampleCount; i++) {
+					*dataTmp = 128 + (((*dataTmp - 128) * i) / rampUpSampleCount);
+					dataTmp++;
+				}
+			} else {
+				// We can't just ramp volume as done above, we have to take
+				// into account the fact that 3DO music is 8-bit -> signed <-
+				rampUpSampleCount = 128;
+				for (int i = 0; i < rampUpSampleCount; i++) {
+					int8 signedSample = (int8)(*dataTmp);
+					signedSample = (signedSample * i) / rampUpSampleCount;
+					*dataTmp = (byte)signedSample;
+					dataTmp++;
+				}
 			}
 		}
 
 		_mixerChannels[channel].stream = Audio::makeQueuingAudioStream(MIXER_DEFAULT_SAMPLE_RATE, false);
 
+		Audio::Mixer::SoundType soundType =
+			globNum == HSND_TALKIE_SLOT ?
+			Audio::Mixer::kSpeechSoundType : Audio::Mixer::kSFXSoundType;
+
+		if (is3DOMusic)
+			soundType = Audio::Mixer::kMusicSoundType;
+
 		_mixer->playStream(
-			globNum == HSND_TALKIE_SLOT ? Audio::Mixer::kSpeechSoundType : Audio::Mixer::kSFXSoundType,
+			soundType,
 			&_mixerChannels[channel].handle,
 			_mixerChannels[channel].stream,
 			-1,
@@ -616,7 +643,7 @@ bool HEMixer::mixerStartChannel(
 				ptr,
 				_mixerChannels[channel].sampleLen,
 				MIXER_DEFAULT_SAMPLE_RATE,
-				mixerGetOutputFlags(),
+				mixerGetOutputFlags(is3DOMusic),
 				DisposeAfterUse::NO);
 
 			_mixerChannels[channel].stream->queueAudioStream(Audio::makeLoopingAudioStream(stream, 0), DisposeAfterUse::YES);
@@ -626,7 +653,7 @@ bool HEMixer::mixerStartChannel(
 				data,
 				_mixerChannels[channel].sampleLen,
 				DisposeAfterUse::YES,
-				mixerGetOutputFlags());
+				mixerGetOutputFlags(is3DOMusic));
 		}
 
 		if (hasCallbackData && !(_mixerChannels[channel].flags & CHANNEL_LOOPING)) {
@@ -634,7 +661,7 @@ bool HEMixer::mixerStartChannel(
 				_mixerChannels[channel].residualData,
 				_mixerChannels[channel].endSampleAdjustment,
 				DisposeAfterUse::YES,
-				mixerGetOutputFlags());
+				mixerGetOutputFlags(is3DOMusic));
 		}
 
 	} else {
@@ -651,7 +678,7 @@ bool HEMixer::mixerStartSpoolingChannel(
 
 	uint32 initialReadCount;
 
-	if ((channel < 0) || (channel > MIXER_MAX_CHANNELS))
+	if ((channel < 0) || (channel >= MIXER_MAX_CHANNELS))
 		return false;
 
 	if (_mixerChannels[channel].flags != CHANNEL_EMPTY_FLAGS) {
@@ -756,11 +783,13 @@ bool HEMixer::mixerStartSpoolingChannel(
 	return true;
 }
 
-byte HEMixer::mixerGetOutputFlags() {
+byte HEMixer::mixerGetOutputFlags(bool is3DOMusic) {
 	// Just plain mono 8-bit sound...
 
 	byte streamFlags = 0;
-	streamFlags |= Audio::FLAG_UNSIGNED;
+
+	if (!is3DOMusic)
+		streamFlags |= Audio::FLAG_UNSIGNED;
 
 #ifdef SCUMM_LITTLE_ENDIAN
 	streamFlags |= Audio::FLAG_LITTLE_ENDIAN;
@@ -774,13 +803,65 @@ byte HEMixer::mixerGetOutputFlags() {
 
 void HEMixer::milesServiceAllStreams() {
 	for (int i = 0; i < MILES_MAX_CHANNELS; i++) {
-		if (_milesChannels[i]._stream.streamObj != nullptr)
+		if (_milesChannels[i]._stream.streamObj != nullptr && !_milesChannels[i]._isUsingStreamOverride)
 			_milesChannels[i].serviceStream();
 	}
 }
 
 void HEMixer::milesStartSpoolingChannel(int channel, const char *filename, long offset, int flags, HESoundModifiers modifiers) {
 	assert(channel >= 0 && channel < ARRAYSIZE(_milesChannels));
+
+	if (_vm->_enableAudioOverride) {
+		int32 songId = matchOffsetToSongId(offset);
+
+		Audio::SeekableAudioStream *audioOverride = nullptr;
+		if (songId != 0 && audioOverrideExists(songId, false, nullptr, &audioOverride)) {
+			_milesChannels[channel]._playFlags = flags;
+			_milesChannels[channel]._bitsPerSample = 16;
+			_milesChannels[channel]._numChannels = audioOverride->isStereo() ? 2 : 1;
+			_milesChannels[channel]._dataOffset = offset;
+			_milesChannels[channel]._lastPlayPosition = 0;
+			_milesChannels[channel]._globType = 0;
+			_milesChannels[channel]._globNum = songId;
+			_milesChannels[channel]._modifiers.frequencyShift = modifiers.frequencyShift;
+			_milesChannels[channel]._modifiers.volume = modifiers.volume;
+			_milesChannels[channel]._modifiers.pan = modifiers.pan;
+			_milesChannels[channel]._baseFrequency = audioOverride->getRate();
+			_milesChannels[channel]._audioHandleActive = true; // Treat it as a sound effect since we're not streaming it in chunks
+			_milesChannels[channel]._isUsingStreamOverride = true;
+
+			bool shouldLoop = (_milesChannels[channel]._playFlags & CHANNEL_LOOPING);
+
+			if (shouldLoop) {
+				// Looping sounds don't care for modifiers!
+				_mixer->playStream(
+					Audio::Mixer::kMusicSoundType,
+					&_milesChannels[channel]._audioHandle,
+					Audio::makeLoopingAudioStream(audioOverride, 0),
+					channel,
+					255,
+					0,
+					DisposeAfterUse::NO);
+
+			} else {
+				int scaledPan = (modifiers.pan != 64) ? 2 * modifiers.pan - 127 : 0;
+				int newFrequency = (_milesChannels[channel]._baseFrequency * modifiers.frequencyShift) / HSND_SOUND_FREQ_BASE;
+
+				_mixer->playStream(
+					Audio::Mixer::kMusicSoundType,
+					&_milesChannels[channel]._audioHandle,
+					audioOverride,
+					-1,
+					modifiers.volume,
+					scaledPan,
+					DisposeAfterUse::NO);
+
+				_mixer->setChannelRate(_milesChannels[channel]._audioHandle, newFrequency);
+			}
+
+			return;
+		}
+	}
 
 	if (channel >= 0 && channel < ARRAYSIZE(_milesChannels))
 		_milesChannels[channel].startSpoolingChannel(filename, offset, flags, modifiers, _mixer);
@@ -797,6 +878,61 @@ bool HEMixer::milesStartChannel(int channel, int globType, int globNum, uint32 s
 	// Stop any running sound on the target channel; this
 	// is also going to trigger the appropriate callbacks
 	milesStopChannel(channel);
+
+	// Are there any audio overrides? If so, use a different codepath...
+	Audio::SeekableAudioStream *audioOverride = nullptr;
+	if (audioOverrideExists(globNum, false, nullptr, &audioOverride)) {
+
+		_milesChannels[channel]._playFlags = flags;
+		_milesChannels[channel]._bitsPerSample = 16;
+		_milesChannels[channel]._numChannels = audioOverride->isStereo() ? 2 : 1;
+		_milesChannels[channel]._dataOffset = offset;
+		_milesChannels[channel]._lastPlayPosition = 0;
+		_milesChannels[channel]._globType = globType;
+		_milesChannels[channel]._globNum = globNum;
+		_milesChannels[channel]._modifiers.frequencyShift = modifiers.frequencyShift;
+		_milesChannels[channel]._modifiers.volume = modifiers.volume;
+		_milesChannels[channel]._modifiers.pan = modifiers.pan;
+		_milesChannels[channel]._baseFrequency = audioOverride->getRate();
+		_milesChannels[channel]._audioHandleActive = true;
+		_mixerChannels[channel].isUsingStreamOverride = true;
+
+		Audio::Mixer::SoundType soundType =
+			globNum == HSND_TALKIE_SLOT ? Audio::Mixer::kSpeechSoundType : Audio::Mixer::kSFXSoundType;
+
+		bool shouldLoop = (_mixerChannels[channel].flags & CHANNEL_LOOPING);
+
+		if (shouldLoop) {
+			// Looping sounds don't care for modifiers!
+			_mixer->playStream(
+				soundType,
+				&_milesChannels[channel]._audioHandle,
+				Audio::makeLoopingAudioStream(audioOverride, 0),
+				channel,
+				255,
+				0,
+				DisposeAfterUse::NO);
+
+		} else {
+			int scaledPan = (modifiers.pan != 64) ? 2 * modifiers.pan - 127 : 0;
+			int newFrequency = (_milesChannels[channel]._baseFrequency * modifiers.frequencyShift) / HSND_SOUND_FREQ_BASE;
+			int msOffset = (offset * 1000) / newFrequency;
+			audioOverride->seek(msOffset);
+
+			_mixer->playStream(
+				soundType,
+				&_milesChannels[channel]._audioHandle,
+				audioOverride,
+				-1,
+				modifiers.volume,
+				scaledPan,
+				DisposeAfterUse::NO);
+
+			_mixer->setChannelRate(_milesChannels[channel]._audioHandle, newFrequency);
+		}
+
+		return true;
+	}
 
 	uint32 actualDataSize = 0;
 
@@ -981,7 +1117,7 @@ void HEMixer::milesStopAndCallback(int channel, int messageId) {
 		int globType = _milesChannels[channel]._globType;
 		int globNum = _milesChannels[channel]._globNum;
 
-		if (!_vm->_res->isOffHeap((ResType)globType, globNum)) {
+		if (!_milesChannels[channel]._isUsingStreamOverride && !_vm->_res->isOffHeap((ResType)globType, globNum)) {
 			_vm->_res->unlock((ResType)globType, globNum);
 
 			if (globType == rtSound && globNum == HSND_TALKIE_SLOT) {
@@ -990,8 +1126,8 @@ void HEMixer::milesStopAndCallback(int channel, int messageId) {
 			}
 		}
 	} else { // Streamed music
-		_mixer->stopHandle(_milesChannels[channel]._stream.streamHandle);
 		_milesChannels[channel]._stream.streamObj->finish();
+		_mixer->stopHandle(_milesChannels[channel]._stream.streamHandle);
 
 		if (_milesChannels[channel]._stream.fileHandle)
 			_milesChannels[channel]._stream.fileHandle->close();
@@ -1020,7 +1156,7 @@ void HEMixer::milesFeedMixer() {
 			soundDone = !_mixer->isSoundHandleActive(_milesChannels[i]._audioHandle);
 		}
 
-		if (_milesChannels[i]._stream.streamObj) {
+		if (_milesChannels[i]._stream.streamObj && !_milesChannels[i]._isUsingStreamOverride) {
 			soundDone |= _milesChannels[i]._stream.streamObj->endOfStream();
 			soundDone |= !_mixer->isSoundHandleActive(_milesChannels[i]._stream.streamHandle);
 		}
@@ -1263,6 +1399,8 @@ void HEMilesChannel::clearChannelData() {
 	_bitsPerSample = 8;
 	_numChannels = 1;
 	_dataFormat = WAVE_FORMAT_PCM;
+
+	_isUsingStreamOverride = false;
 }
 
 void HEMilesChannel::closeFileHandle() {
@@ -1302,11 +1440,14 @@ void HEMilesChannel::serviceStream() {
 			sizeToRead = MIN<uint32>(MILES_PCM_CHUNK_SIZE * _blockAlign, _stream.dataLength - _stream.curDataPos);
 			reachedTheEnd = sizeToRead < MILES_PCM_CHUNK_SIZE * _blockAlign;
 
-			byte *buffer = (byte *)malloc(sizeToRead);
-			if (sizeToRead > 0 && buffer != nullptr) {
-				int readBytes = _stream.fileHandle->read(buffer, sizeToRead);
-				_stream.curDataPos += readBytes;
-				_stream.streamObj->queueBuffer(buffer, readBytes, DisposeAfterUse::YES, getOutputFlags());
+
+			if (sizeToRead > 0) {
+				byte *buffer = (byte *)malloc(sizeToRead);
+				if (buffer != nullptr) {
+					int readBytes = _stream.fileHandle->read(buffer, sizeToRead);
+					_stream.curDataPos += readBytes;
+					_stream.streamObj->queueBuffer(buffer, readBytes, DisposeAfterUse::YES, getOutputFlags());
+				}
 			}
 
 		} else if (_dataFormat == WAVE_FORMAT_IMA_ADPCM) {
@@ -1320,30 +1461,32 @@ void HEMilesChannel::serviceStream() {
 
 			// We allocate a buffer which is going to be filled with
 			// (MILES_IMA_ADPCM_PER_FRAME_CHUNKS_NUM) compressed blocks or less
-			byte *compressedBuffer = (byte *)malloc(sizeToRead);
-			if (sizeToRead > 0 && compressedBuffer != nullptr) {
-				int readBytes = _stream.fileHandle->read(compressedBuffer, sizeToRead);
-				_stream.curDataPos += readBytes;
+			if (sizeToRead > 0) {
+				byte *compressedBuffer = (byte *)malloc(sizeToRead);
+				if (compressedBuffer != nullptr){
+					int readBytes = _stream.fileHandle->read(compressedBuffer, sizeToRead);
+					_stream.curDataPos += readBytes;
 
-				// Now, the ugly trick: use a MemoryReadStream containing our compressed data,
-				// to feed an ADPCM stream, and then use the latter to read uncompressed data,
-				// and then queue the latter in the output stream.
-				// Hey, it IS ugly! ...and it works :-)
-				Common::MemoryReadStream memStream(compressedBuffer, readBytes);
-				Audio::AudioStream *adpcmStream = Audio::makeADPCMStream(&memStream, DisposeAfterUse::NO,
-					readBytes, Audio::kADPCMMSIma, _baseFrequency, _numChannels, _blockAlign);
+					// Now, the ugly trick: use a MemoryReadStream containing our compressed data,
+					// to feed an ADPCM stream, and then use the latter to read uncompressed data,
+					// and then queue the latter in the output stream.
+					// Hey, it IS ugly! ...and it works :-)
+					Common::MemoryReadStream memStream(compressedBuffer, readBytes);
+					Audio::AudioStream *adpcmStream = Audio::makeADPCMStream(&memStream, DisposeAfterUse::NO,
+																			 readBytes, Audio::kADPCMMSIma, _baseFrequency, _numChannels, _blockAlign);
 
-				uint32 uncompSize =
-					calculateDeflatedADPCMBlockSize(MILES_IMA_ADPCM_PER_FRAME_CHUNKS_NUM, _blockAlign, _numChannels, 16);
+					uint32 uncompSize =
+						calculateDeflatedADPCMBlockSize(MILES_IMA_ADPCM_PER_FRAME_CHUNKS_NUM, _blockAlign, _numChannels, 16);
 
-				byte *adpcmData = (byte *)malloc(uncompSize);
-				uint32 adpcmSize = adpcmStream->readBuffer((int16 *)(void *)adpcmData, uncompSize * 2);
+					byte *adpcmData = (byte *)malloc(uncompSize);
+					uint32 adpcmSize = adpcmStream->readBuffer((int16 *)(void *)adpcmData, uncompSize * 2);
 
-				adpcmSize *= 2;
-				_stream.streamObj->queueBuffer(adpcmData, adpcmSize, DisposeAfterUse::YES, getOutputFlags());
+					adpcmSize *= 2;
+					_stream.streamObj->queueBuffer(adpcmData, adpcmSize, DisposeAfterUse::YES, getOutputFlags());
 
-				delete adpcmStream;
-				free(compressedBuffer);
+					delete adpcmStream;
+					free(compressedBuffer);
+				}
 			}
 		}
 
