@@ -18,6 +18,7 @@
 #define BACKENDS_LIBRETRO_OS_H
 
 #include <libretro.h>
+#include <features/features_cpu.h>
 #include <retro_miscellaneous.h>
 
 #include "audio/mixer_intern.h"
@@ -30,14 +31,30 @@
 #include "graphics/palette.h"
 #include "graphics/surface.h"
 
+#define BASE_CURSOR_SPEED 4
+#define CURSOR_STATUS_DOING_JOYSTICK  (1 << 0)
+#define CURSOR_STATUS_DOING_MOUSE     (1 << 1)
+#define CURSOR_STATUS_DOING_X         (1 << 2)
+#define CURSOR_STATUS_DOING_Y         (1 << 3)
+#define CURSOR_STATUS_DOING_SLOWER    (1 << 4)
+
 #define LIBRETRO_G_SYSTEM dynamic_cast<OSystem_libretro *>(g_system)
 
-extern retro_log_printf_t log_cb;
-extern bool timing_inaccuracies_is_enabled(void);
+/* libretro.cpp functions */
+extern retro_log_printf_t retro_log_cb;
+extern retro_input_state_t retro_input_cb;
+extern bool retro_setting_get_timing_inaccuracies_enabled(void);
+extern float retro_setting_get_frame_rate(void);
+extern uint16 retro_setting_get_sample_rate(void);
+extern int retro_setting_get_analog_deadzone(void);
+extern bool retro_setting_get_analog_response_is_quadratic(void);
+extern float retro_setting_get_mouse_speed(void);
+extern int retro_setting_get_mouse_fine_control_speed_reduction(void);
+extern float retro_setting_get_gamepad_cursor_speed(void);
+extern float retro_setting_get_gamepad_acceleration_time(void);
 extern void reset_performance_tuner(void);
 extern void retro_osd_notification(const char* msg);
-extern float frame_rate;
-extern uint16 sample_rate;
+extern int retro_get_input_device(void);
 extern const char * retro_get_system_dir(void);
 extern const char * retro_get_save_dir(void);
 
@@ -77,9 +94,11 @@ private:
 	float _dpadYAcc;
 	float _dpadXVel;
 	float _dpadYVel;
-	unsigned _joypadnumpadLast;
+	float _adjusted_cursor_speed;
+	float _inverse_acceleration_time;
 	uint32 _startTime;
 	uint8 _threadSwitchCaller;
+	uint8_t _cursorStatus;
 	Common::String s_systemDir;
 	Common::String s_saveDir;
 	Common::String s_extraDir;
@@ -99,9 +118,6 @@ public:
 	bool _overlayInGUI;
 	bool _mouseDontScale;
 	bool _mouseButtons[2];
-	bool _joypadmouseButtons[2];
-	bool _joypadkeyboardButtons[8];
-	bool _joypadnumpadActive;
 	bool _ptrmouseButton;
 	bool _mousePaletteEnabled;
 	bool _mouseVisible;
@@ -115,6 +131,7 @@ public:
 	bool hasFeature(Feature f) override;
 	void setFeatureState(Feature f, bool enable) override;
 	bool getFeatureState(Feature f) override;
+	void refreshRetroSettings(void);
 	void destroy(void);
 	void quit() override {}
 
@@ -173,12 +190,13 @@ private:
 
 	/* Inputs */
 public:
-	void processMouse(retro_input_state_t aCallback, int device, float gampad_cursor_speed, float gamepad_acceleration_time, bool analog_response_is_quadratic, int analog_deadzone, float mouse_speed);
+	void processInputs(void);
 	static void processKeyEvent(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
 	void setShakePos(int shakeXOffset, int shakeYOffset) override {}
 private:
 	void updateMouseXY(float deltaAcc, float * cumulativeXYAcc, int doing_x);
-
+	void getMouseXYFromAnalog(bool is_x, int16_t coor);
+	void getMouseXYFromButton(bool is_x, int16_t sign);
 };
 
 #endif

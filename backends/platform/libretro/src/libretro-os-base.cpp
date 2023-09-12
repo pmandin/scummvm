@@ -14,7 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
+#define FORBIDDEN_SYMBOL_ALLOW_ALL
 #if defined(_WIN32)
 #include "backends/fs/windows/windows-fs-factory.h"
 #define FS_SYSTEM_FACTORY WindowsFilesystemFactory
@@ -33,11 +33,9 @@
 #include "backends/platform/libretro/include/libretro-os.h"
 #include "backends/platform/libretro/include/libretro-defs.h"
 
-OSystem_libretro::OSystem_libretro() : _mousePaletteEnabled(false), _mouseVisible(false), _mouseX(0), _mouseY(0), _mouseXAcc(0.0), _mouseYAcc(0.0), _mouseHotspotX(0), _mouseHotspotY(0), _dpadXAcc(0.0), _dpadYAcc(0.0), _dpadXVel(0.0f), _dpadYVel(0.0f), _mouseKeyColor(0), _mouseDontScale(false), _joypadnumpadLast(8), _joypadnumpadActive(false), _mixer(0), _startTime(0), _threadSwitchCaller(0) {
+OSystem_libretro::OSystem_libretro() : _mousePaletteEnabled(false), _mouseVisible(false), _mouseX(0), _mouseY(0), _mouseXAcc(0.0), _mouseYAcc(0.0), _mouseHotspotX(0), _mouseHotspotY(0), _dpadXAcc(0.0), _dpadYAcc(0.0), _dpadXVel(0.0f), _dpadYVel(0.0f), _mouseKeyColor(0), _mouseDontScale(false), _mixer(0), _startTime(0), _threadSwitchCaller(0), _cursorStatus(0) {
 	_fsFactory = new FS_SYSTEM_FACTORY();
 	memset(_mouseButtons, 0, sizeof(_mouseButtons));
-	memset(_joypadmouseButtons, 0, sizeof(_joypadmouseButtons));
-	memset(_joypadkeyboardButtons, 0, sizeof(_joypadkeyboardButtons));
 
 	s_systemDir = Common::String(retro_get_system_dir());
 	s_saveDir = Common::String(retro_get_save_dir());
@@ -45,7 +43,7 @@ OSystem_libretro::OSystem_libretro() : _mousePaletteEnabled(false), _mouseVisibl
 	s_extraDir = s_systemDir + "/" + SCUMMVM_SYSTEM_SUBDIR + "/" + SCUMMVM_EXTRA_SUBDIR;
 	s_lastDir = s_systemDir;
 
-	_startTime = getMillis();
+	_startTime = (uint32)(cpu_features_get_time_usec() / 1000);
 }
 
 OSystem_libretro::~OSystem_libretro() {
@@ -83,21 +81,23 @@ void OSystem_libretro::initBackend() {
 #else
 	_overlay.create(RES_W_OVERLAY, RES_H_OVERLAY, Graphics::PixelFormat(2, 5, 5, 5, 1, 10, 5, 0, 15));
 #endif
-	_mixer = new Audio::MixerImpl(sample_rate);
-	log_cb(RETRO_LOG_DEBUG,"Mixer set up at %dHz\n", sample_rate);
+	_mixer = new Audio::MixerImpl(retro_setting_get_sample_rate());
+	retro_log_cb(RETRO_LOG_DEBUG,"Mixer set up at %dHz\n", retro_setting_get_sample_rate());
 
-	_timerManager = new LibretroTimerManager(frame_rate);
+	_timerManager = new LibretroTimerManager(retro_setting_get_frame_rate());
 
 	_mixer->setReady(true);
 
 	EventsBaseBackend::initBackend();
+
+	refreshRetroSettings();
 }
 
 void OSystem_libretro::engineInit() {
 	Common::String engineId = ConfMan.get("engineid");
 	if (engineId.equalsIgnoreCase("scumm") && ConfMan.getBool("original_gui")) {
 		ConfMan.setBool("original_gui", false);
-		log_cb(RETRO_LOG_INFO, "\"original_gui\" setting forced to false\n");
+		retro_log_cb(RETRO_LOG_INFO, "\"original_gui\" setting forced to false\n");
 	}
 }
 
@@ -120,6 +120,11 @@ bool OSystem_libretro::getFeatureState(Feature f) {
 
 Audio::Mixer *OSystem_libretro::getMixer() {
         return _mixer;
+}
+
+void OSystem_libretro::refreshRetroSettings() {
+        _adjusted_cursor_speed = (float)BASE_CURSOR_SPEED * retro_setting_get_gamepad_cursor_speed() * (float)(_overlayInGUI ? _overlay.w : _gameScreen.w) / 320.0f; // Dpad cursor speed should always be based off a 320 wide screen, to keep speeds consistent;
+        _inverse_acceleration_time = (retro_setting_get_gamepad_acceleration_time() > 0.0) ? (1.0f / (float)retro_setting_get_frame_rate()) * (1.0f / retro_setting_get_gamepad_acceleration_time()) : 1.0f;
 }
 
 void OSystem_libretro::destroy() {

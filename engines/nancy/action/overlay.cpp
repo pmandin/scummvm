@@ -48,10 +48,10 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 	uint16 numSrcRects = 0;
 
 	readFilename(ser, _imageName);
-	ser.skip(2, kGameTypeVampire, kGameTypeNancy2);
+	ser.skip(2); // VIDEO_STOP_RENDERING or VIDEO_CONTINUE_RENDERING
 	ser.syncAsUint16LE(_transparency);
 	ser.syncAsUint16LE(_hasSceneChange);
-	ser.syncAsUint16LE(_enableHotspot, kGameTypeNancy2);
+	ser.syncAsUint16LE(_enableHotspot, kGameTypeNancy2, kGameTypeNancy2);
 	ser.syncAsUint16LE(_z, kGameTypeNancy2);
 	ser.syncAsUint16LE(_overlayType, kGameTypeNancy2);
 	ser.syncAsUint16LE(numSrcRects, kGameTypeNancy2);
@@ -72,6 +72,12 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 
 	if (ser.getVersion() > kGameTypeNancy1) {
 		_isInterruptible = true;
+		
+		if (ser.getVersion() > kGameTypeNancy2) {
+			if (_overlayType == kPlayOverlayStatic) {
+				_enableHotspot = (_hasSceneChange == kPlayOverlaySceneChange) ? kPlayOverlayWithHotspot : kPlayOverlayNoHotspot;
+			}
+		}
 	}
 
 	if (_isInterruptible) {
@@ -208,8 +214,9 @@ void Overlay::execute() {
 		_flagsOnTrigger.execute();
 		if (_hasSceneChange == kPlayOverlaySceneChange) {
 			NancySceneState.changeScene(_sceneChange);
-			finishExecution();
 		}
+		
+		finishExecution();
 
 		break;
 	}

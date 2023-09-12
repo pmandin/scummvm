@@ -299,6 +299,8 @@ void Scene::addItemToInventory(uint16 id) {
 	if (_flags.heldItem == id) {
 		setHeldItem(-1);
 	}
+	
+	g_nancy->_sound->playSound("BUOK");
 
 	_inventoryBox.addItem(id);
 }
@@ -309,6 +311,8 @@ void Scene::removeItemFromInventory(uint16 id, bool pickUp) {
 	if (pickUp) {
 		setHeldItem(id);
 	}
+	
+	g_nancy->_sound->playSound("BUOK");
 
 	_inventoryBox.removeItem(id);
 }
@@ -558,7 +562,7 @@ void Scene::synchronize(Common::Serializer &ser) {
 		}
 	}
 
-	// Sync sound data
+	g_nancy->_graphicsManager->suppressNextDraw();
 }
 
 UI::Clock *Scene::getClock() {
@@ -736,6 +740,7 @@ void Scene::load() {
 	_flags.sceneCounts.getOrCreateVal(_sceneState.currentScene.sceneID)++;
 
 	g_nancy->_sound->recalculateSoundEffects();
+	g_nancy->_graphicsManager->suppressNextDraw();
 
 	_state = kStartSound;
 }

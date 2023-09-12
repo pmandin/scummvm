@@ -242,7 +242,11 @@ Common::Error NancyEngine::run() {
 	while (!shouldQuit()) {
 		uint32 frameEndTime = _system->getMillis() + 16;
 
-		_cursorManager->setCursorType(CursorManager::kNormalArrow);
+		bool graphicsWereSuppressed = _graphicsManager->_isSuppressed;
+		if (!graphicsWereSuppressed) {
+			_cursorManager->setCursorType(CursorManager::kNormalArrow);
+		}
+
 		_input->processEvents();
 
 		State::State *s;
@@ -276,39 +280,44 @@ Common::Error NancyEngine::run() {
 
 		_system->updateScreen();
 
-		// Use the spare time until the next frame to load larger data objects
-		// Some loading is guaranteed to happen even with no time left, to ensure
-		// slower systems won't be stuck waiting forever
-		if (_deferredLoaderObjects.size()) {
-			uint i = _deferredLoaderObjects.size() - 1;
-			int32 timePerObj = (frameEndTime - g_system->getMillis()) / _deferredLoaderObjects.size();
+		// In cases where the graphics were not drawn for a frame, we want to make sure the next
+		// frame is processed as fast as possible. Thus, we skip deferred loaders and the time
+		// delay that normally maintains 60fps
+		if (!graphicsWereSuppressed) {
+			// Use the spare time until the next frame to load larger data objects
+			// Some loading is guaranteed to happen even with no time left, to ensure
+			// slower systems won't be stuck waiting forever
+			if (_deferredLoaderObjects.size()) {
+				uint i = _deferredLoaderObjects.size() - 1;
+				int32 timePerObj = (frameEndTime - g_system->getMillis()) / _deferredLoaderObjects.size();
 
-			if (timePerObj < 0) {
-				timePerObj = 0;
-			}
+				if (timePerObj < 0) {
+					timePerObj = 0;
+				}
 
-			for (auto *iter = _deferredLoaderObjects.begin(); iter < _deferredLoaderObjects.end(); ++iter) {
-				if (iter->expired()) {
-					iter = _deferredLoaderObjects.erase(iter);
-				} else {
-					auto objectPtr = iter->lock();
-					if (objectPtr) {
-						if (objectPtr->load(frameEndTime - (i * timePerObj))) {
-							iter = _deferredLoaderObjects.erase(iter);
+				for (auto *iter = _deferredLoaderObjects.begin(); iter < _deferredLoaderObjects.end(); ++iter) {
+					if (iter->expired()) {
+						iter = _deferredLoaderObjects.erase(iter);
+					} else {
+						auto objectPtr = iter->lock();
+						if (objectPtr) {
+							if (objectPtr->load(frameEndTime - (i * timePerObj))) {
+								iter = _deferredLoaderObjects.erase(iter);
+							}
+							--i;
 						}
-						--i;
-					}
 
-					if (_system->getMillis() > frameEndTime) {
-						break;
+						if (_system->getMillis() > frameEndTime) {
+							break;
+						}
 					}
 				}
 			}
-		}
 
-		uint32 frameFinishTime = _system->getMillis();
-		if (frameFinishTime < frameEndTime) {
-			_system->delayMillis(frameEndTime - frameFinishTime);
+			uint32 frameFinishTime = _system->getMillis();
+			if (frameFinishTime < frameEndTime) {
+				_system->delayMillis(frameEndTime - frameFinishTime);
+			}
 		}
 	}
 
@@ -363,7 +372,6 @@ void NancyEngine::bootGameEngine() {
 	IFF *boot = new IFF("boot");
 	if (!boot->load())
 		error("Failed to load boot script");
-	preloadCals(*boot);
 
 	// Load BOOT chunks data
 	Common::SeekableReadStream *chunkStream = nullptr;
@@ -375,6 +383,7 @@ void NancyEngine::bootGameEngine() {
 
 	LOAD_BOOT(BSUM)
 	LOAD_BOOT(VIEW)
+	LOAD_BOOT(PCAL)
 	LOAD_BOOT(INV)
 	LOAD_BOOT(TBOX)
 	LOAD_BOOT(HELP)
@@ -411,6 +420,8 @@ void NancyEngine::bootGameEngine() {
 
 	#undef LOAD_BOOT_L
 	#undef LOAD_BOOT
+
+	preloadCals();
 
 	_sound->initSoundChannels();
 	_sound->loadCommonSounds(boot);
@@ -495,33 +506,18 @@ void NancyEngine::destroyState(NancyState::NancyState state) const {
 	}
 }
 
-void NancyEngine::preloadCals(const IFF &boot) {
-	const byte *buf;
-	uint size;
-	buf = boot.getChunk(ID_PCAL, size);
+void NancyEngine::preloadCals() {
+	const PCAL *pcal = (const PCAL *)getEngineData("PCAL");
+	if (!pcal) {
+		// CALs only appeared in nancy2 so a PCAL chunk may not exist
+		return;
+	}
 
-	if (buf) {
-		Common::MemoryReadStream stream(buf, size);
-		uint16 count = stream.readUint16LE();
-		debugC(1, kDebugEngine, "Preloading %d CALs", count);
-		int nameLen = size / count;
-
-		char *name = new char[nameLen];
-
-		for (uint i = 0; i < count; i++) {
-			stream.read(name, nameLen);
-			name[nameLen - 1] = 0;
-			debugC(1, kDebugEngine, "Preloading CAL '%s'", name);
-			if (!_resource->loadCifTree(name, "cal"))
-				error("Failed to preload CAL '%s'", name);
+	for (const Common::String &name : pcal->calNames) {
+		if (!_resource->loadCifTree(name, "cal")) {
+			error("Failed to preload CAL '%s'", name.c_str());
 		}
-
-		delete[] name;
-
-		if (stream.err())
-			error("Error reading PCAL chunk");
-	} else
-		debugC(1, kDebugEngine, "No PCAL chunk found");
+	}
 }
 
 void NancyEngine::readDatFile() {

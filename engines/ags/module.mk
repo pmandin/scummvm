@@ -364,6 +364,16 @@ MODULE_OBJS = \
 	plugins/ags_waves/warper.o \
 	plugins/ags_waves/weather.o
 
+ifdef USE_FREETYPE2
+MODULE_OBJS += \
+	lib/freetype-2.1.3/autohint/ahangles.o \
+	lib/freetype-2.1.3/autohint/ahglobal.o \
+	lib/freetype-2.1.3/autohint/ahglyph.o \
+	lib/freetype-2.1.3/autohint/ahhint.o \
+	lib/freetype-2.1.3/ftgloadr.o \
+	lib/freetype-2.1.3/ftutil.o
+endif
+
 ifdef ENABLE_AGS_TESTS
 MODULE_OBJS += \
 	tests/test_all.o \

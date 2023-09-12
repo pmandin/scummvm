@@ -495,8 +495,8 @@ void DarkEngine::gotoArea(uint16 areaID, int entranceID) {
 	_gfx->setColorRemaps(&_currentArea->_colorRemaps);
 
 	swapPalette(areaID);
-	_currentArea->_skyColor = 0;
-	_currentArea->_usualBackgroundColor = 0;
+	_currentArea->_skyColor = isCPC() ? 1 : 0;
+	_currentArea->_usualBackgroundColor = isCPC() ? 1 : 0;
 
 	resetInput();
 }
@@ -671,6 +671,8 @@ void DarkEngine::drawBinaryClock(Graphics::Surface *surface, int xPosition, int 
 }
 
 void DarkEngine::drawIndicator(Graphics::Surface *surface, int xPosition, int yPosition) {
+	if (_indicators.size() == 0)
+		return;
 	if (_hasFallen)
 		surface->copyRectToSurface(*_indicators[0], xPosition, yPosition, Common::Rect(_indicators[0]->w, _indicators[0]->h));
 	else if (_flyMode)

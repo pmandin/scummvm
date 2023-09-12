@@ -20,6 +20,8 @@
  */
 
 #include "common/scummsys.h"
+
+#ifdef SCUMMVM_NEON
 #include <arm_neon.h>
 
 #include "graphics/blit.h"
@@ -36,7 +38,7 @@ struct AlphaBlend {
         else
             ina = vandq_u32(src, vmovq_n_u32(BlendBlit::kAModMask));
         uint32x4_t alphaMask = vceqq_u32(ina, vmovq_n_u32(0));
-    
+
         if (rgbmod) {
             uint32x4_t dstR = vshrq_n_u32(vandq_u32(dst, vmovq_n_u32(BlendBlit::kRModMask)), 16);
             uint32x4_t srcR = vshrq_n_u32(vandq_u32(src, vmovq_n_u32(BlendBlit::kRModMask)), 16);
@@ -44,7 +46,7 @@ struct AlphaBlend {
             uint32x4_t srcG = vshrq_n_u32(vandq_u32(src, vmovq_n_u32(BlendBlit::kGModMask)), 8);
             uint32x4_t dstB = vandq_u32(dst, vmovq_n_u32(BlendBlit::kBModMask));
             uint32x4_t srcB = vandq_u32(src, vmovq_n_u32(BlendBlit::kBModMask));
-    
+
             dstR = vshrq_n_u32(vmulq_u32(dstR, vsubq_u32(vmovq_n_u32(255), ina)), 8);
             dstG = vshrq_n_u32(vmulq_u32(dstG, vsubq_u32(vmovq_n_u32(255), ina)), 8);
             dstB = vshrq_n_u32(vmulq_u32(dstB, vsubq_u32(vmovq_n_u32(255), ina)), 8);
@@ -59,7 +61,7 @@ struct AlphaBlend {
             uint32x4_t srcRB = vshrq_n_u32(vandq_u32(src, vmovq_n_u32(BlendBlit::kRModMask | BlendBlit::kBModMask)), 8);
             uint32x4_t dstG = vandq_u32(dst, vmovq_n_u32(BlendBlit::kGModMask));
             uint32x4_t srcG = vandq_u32(src, vmovq_n_u32(BlendBlit::kGModMask));
-    
+
             dstRB = vmulq_u32(dstRB, vsubq_u32(vmovq_n_u32(255), ina));
             dstG = vshrq_n_u32(vmulq_u32(dstG, vsubq_u32(vmovq_n_u32(255), ina)), 8);
             srcRB = vaddq_u32(dstRB, vmulq_u32(srcRB, ina));
@@ -67,7 +69,7 @@ struct AlphaBlend {
             src = vorrq_u32(vandq_u32(srcG, vmovq_n_u32(BlendBlit::kGModMask)), vmovq_n_u32(BlendBlit::kAModMask));
             src = vorrq_u32(vandq_u32(srcRB, vmovq_n_u32(BlendBlit::kBModMask | BlendBlit::kRModMask)), src);
         }
-    
+
         dst = vandq_u32(alphaMask, dst);
         src = vandq_u32(vmvnq_u32(alphaMask), src);
         return vorrq_u32(dst, src);
@@ -325,7 +327,7 @@ static inline void blitInnerLoop(BlendBlit::Args &args) {
             }
 
             PixelFunc<doscale, rgbmod, alphamod>::normal(in, out, ca, cr, cg, cb);
-            
+
             if (doscale)
                 scaleXCtr += args.scaleX;
             else
@@ -463,3 +465,4 @@ void BlendBlit::blitNEON(Args &args, const TSpriteBlendMode &blendMode, const Al
 }
 
 } // end of namespace Graphics
+#endif // SCUMMVM_NEON

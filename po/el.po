@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ScummVM 1.10.0git\n"
 "Report-Msgid-Bugs-To: scummvm-devel@lists.scummvm.org\n"
-"POT-Creation-Date: 2023-09-02 09:33+0000\n"
-"PO-Revision-Date: 2023-09-03 05:59+0000\n"
+"POT-Creation-Date: 2023-09-11 20:16+0000\n"
+"PO-Revision-Date: 2023-09-11 12:20+0000\n"
 "Last-Translator: Antoniou Athanasios <a.antoniou79@gmail.com>\n"
 "Language-Team: Greek <https://translations.scummvm.org/projects/scummvm/"
 "scummvm/el/>\n"
@@ -66,7 +66,7 @@ msgstr "Μετάβαση πάνω"
 #: gui/saveload-dialog.cpp:828 gui/saveload-dialog.cpp:1220
 #: gui/shaderbrowser-dialog.cpp:81 gui/themebrowser.cpp:54
 #: gui/unknown-game-dialog.cpp:53 base/main.cpp:595
-#: dists/android.strings.xml.cpp:43 engines/engine.cpp:741
+#: dists/android.strings.xml.cpp:43 engines/engine.cpp:747
 #: backends/dialogs/gtk/gtk-dialogs.cpp:65
 #: backends/events/default/default-events.cpp:193
 #: backends/events/default/default-events.cpp:217
@@ -220,11 +220,11 @@ msgid "Paste code from clipboard"
 msgstr "Επικόλληση κωδικού από το πρόχειρο"
 
 #: gui/cloudconnectionwizard.cpp:362 gui/launcher.cpp:294
-#: engines/dialogs.cpp:98 engines/engine.cpp:909 engines/mm/xeen/saves.cpp:259
+#: engines/dialogs.cpp:98 engines/engine.cpp:915 engines/mm/xeen/saves.cpp:259
 #: engines/parallaction/metaengine.cpp:127
 #: engines/parallaction/saveload.cpp:193 engines/pegasus/pegasus.cpp:387
 #: engines/trecision/saveload.cpp:253 engines/tsage/scenes.cpp:630
-#: engines/wage/saveload.cpp:741
+#: engines/wage/saveload.cpp:736
 msgid "Load"
 msgstr "Φόρτωση"
 
@@ -313,7 +313,7 @@ msgstr "Τα περιεχόμενα του κώδικα JSON δεν έχουν �
 #: gui/fluidsynth-dialog.cpp:153 gui/launcher.cpp:533 gui/launcher.cpp:537
 #: gui/massadd.cpp:90 gui/options.cpp:2335 gui/predictivedialog.cpp:69
 #: gui/saveload-dialog.cpp:1221 dists/android.strings.xml.cpp:32
-#: engines/engine.cpp:544 engines/engine.cpp:567
+#: engines/engine.cpp:550 engines/engine.cpp:573
 #: backends/platform/wii/options.cpp:46 engines/agos/animation.cpp:577
 #: engines/agos/midi.cpp:320 engines/agos/midi.cpp:378
 #: engines/agos/midi.cpp:457 engines/buried/saveload.cpp:69
@@ -472,9 +472,9 @@ msgstr "Η λήψη ολοκληρώθηκε, λήφθηκαν %d πακέτα, 
 #: gui/downloadpacksdialog.cpp:296 gui/downloadpacksdialog.cpp:387
 #: gui/gui-manager.cpp:162 gui/imagealbum-dialog.cpp:131 gui/textviewer.cpp:53
 #: gui/unknown-game-dialog.cpp:53 backends/platform/android/options.cpp:492
-#: backends/platform/ios7/ios7_options.mm:197 engines/scumm/help.cpp:123
-#: engines/scumm/help.cpp:138 engines/scumm/help.cpp:163
-#: engines/scumm/help.cpp:189 engines/scumm/help.cpp:207
+#: backends/platform/ios7/ios7_options.mm:197 engines/scumm/help.cpp:127
+#: engines/scumm/help.cpp:142 engines/scumm/help.cpp:167
+#: engines/scumm/help.cpp:193 engines/scumm/help.cpp:211
 msgid "Close"
 msgstr "Κλείσιμο"
 
@@ -896,7 +896,7 @@ msgid "GUI"
 msgstr "ΓΔΧ"
 
 #. I18N: Action in In Cold Blood
-#: gui/gui-manager.cpp:157 engines/hpl1/metaengine.cpp:96
+#: gui/gui-manager.cpp:157 engines/hpl1/metaengine.cpp:91
 #: engines/icb/icb.cpp:95 engines/icb/icb.cpp:173 engines/mohawk/myst.cpp:573
 #: engines/mohawk/riven.cpp:844
 msgid "Interact"
@@ -1144,10 +1144,10 @@ msgstr "Αναζήτηση στη λίστα παιχνιδιών"
 msgid "Search:"
 msgstr "Αναζήτηση:"
 
-#: gui/launcher.cpp:294 engines/dialogs.cpp:98 engines/engine.cpp:909
+#: gui/launcher.cpp:294 engines/dialogs.cpp:98 engines/engine.cpp:915
 #: engines/mm/xeen/saves.cpp:259 engines/pegasus/pegasus.cpp:387
 #: engines/trecision/saveload.cpp:253 engines/tsage/scenes.cpp:630
-#: engines/wage/saveload.cpp:741
+#: engines/wage/saveload.cpp:736
 msgid "Load game:"
 msgstr "Φόρτωση παιχνιδιού:"
 
@@ -2233,7 +2233,7 @@ msgstr ""
 "\n"
 "Και άλλα..."
 
-#: gui/options.cpp:2847 engines/engine.cpp:596
+#: gui/options.cpp:2847 engines/engine.cpp:602
 msgid "Move"
 msgstr "Μετακίνηση"
 
@@ -2374,7 +2374,7 @@ msgstr "Εγγραφή ή Αναπαραγωγή Gameplay"
 
 #: gui/recorderdialog.cpp:72 gui/recorderdialog.cpp:212
 #: gui/saveload-dialog.cpp:459 gui/saveload-dialog.cpp:526
-#: dists/android.strings.xml.cpp:44 engines/engine.cpp:590
+#: dists/android.strings.xml.cpp:44 engines/engine.cpp:596
 msgid "Delete"
 msgstr "Σβήσιμο"
 
@@ -2877,8 +2877,8 @@ msgstr "Μηχανή παιχνιδιών περιπέτειας"
 #: backends/events/default/default-events.cpp:358
 #: engines/adl/metaengine.cpp:328 engines/hdb/metaengine.cpp:275
 #: engines/mohawk/myst_stacks/menu.cpp:317
-#: engines/mohawk/riven_stacks/aspit.cpp:454 engines/scumm/help.cpp:80
-#: engines/scumm/help.cpp:82 engines/zvision/metaengine.cpp:272
+#: engines/mohawk/riven_stacks/aspit.cpp:454 engines/scumm/help.cpp:84
+#: engines/scumm/help.cpp:86 engines/zvision/metaengine.cpp:272
 #: engines/zvision/metaengine.cpp:290
 msgid "Quit"
 msgstr "Έξοδος"
@@ -2924,10 +2924,10 @@ msgstr ""
 msgid "Toggle virtual keyboard"
 msgstr "Εναλλαγή εμφάνισης εικονικού πληκτρολογίου"
 
-#: dists/android.strings.xml.cpp:42 engines/scumm/help.cpp:78
-#: engines/scumm/help.cpp:82 engines/scumm/help.cpp:84
-#: engines/scumm/help.cpp:98 engines/scumm/help.cpp:99
-#: engines/scumm/help.cpp:100
+#: dists/android.strings.xml.cpp:42 engines/scumm/help.cpp:82
+#: engines/scumm/help.cpp:86 engines/scumm/help.cpp:88
+#: engines/scumm/help.cpp:102 engines/scumm/help.cpp:103
+#: engines/scumm/help.cpp:104
 msgid "Alt"
 msgstr "Alt"
 
@@ -2944,7 +2944,7 @@ msgid "Shift"
 msgstr "Πλήκτρο Shift"
 
 #: dists/android.strings.xml.cpp:48 engines/dragons/metaengine.cpp:154
-#: engines/scumm/help.cpp:84 engines/scumm/help.cpp:87
+#: engines/scumm/help.cpp:88 engines/scumm/help.cpp:91
 msgid "Enter"
 msgstr "Πλήκτρο Enter"
 
@@ -3059,7 +3059,7 @@ msgctxt "lowres"
 msgid "~R~eturn to Launcher"
 msgstr "Επισ~τ~ρ. σε Launcher"
 
-#: engines/dialogs.cpp:99 engines/engine.cpp:938 engines/agi/saveload.cpp:766
+#: engines/dialogs.cpp:99 engines/engine.cpp:944 engines/agi/saveload.cpp:766
 #: engines/avalanche/parser.cpp:1918 engines/cine/various.cpp:349
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
@@ -3075,11 +3075,11 @@ msgstr "Επισ~τ~ρ. σε Launcher"
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3801
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
-#: engines/wage/saveload.cpp:751 engines/zvision/file/save_manager.cpp:48
+#: engines/wage/saveload.cpp:746 engines/zvision/file/save_manager.cpp:48
 msgid "Save game:"
 msgstr "Αποθήκευση παιχνιδιού:"
 
-#: engines/dialogs.cpp:99 engines/engine.cpp:938 engines/agi/saveload.cpp:766
+#: engines/dialogs.cpp:99 engines/engine.cpp:944 engines/agi/saveload.cpp:766
 #: engines/avalanche/parser.cpp:1918 engines/cine/various.cpp:349
 #: engines/dm/loadsave.cpp:199 engines/drascula/saveload.cpp:382
 #: engines/dreamweb/saveload.cpp:261 engines/glk/streams.cpp:1432
@@ -3097,7 +3097,7 @@ msgstr "Αποθήκευση παιχνιδιού:"
 #: engines/sherlock/tattoo/widget_files.cpp:74 engines/startrek/saveload.cpp:42
 #: engines/toltecs/menu.cpp:302 engines/toon/toon.cpp:3801
 #: engines/trecision/saveload.cpp:67 engines/tsage/scenes.cpp:628
-#: engines/wage/saveload.cpp:751 engines/zvision/file/save_manager.cpp:48
+#: engines/wage/saveload.cpp:746 engines/zvision/file/save_manager.cpp:48
 #: engines/zvision/metaengine.cpp:262
 msgid "Save"
 msgstr "Αποθήκευση"
@@ -3162,11 +3162,11 @@ msgstr "Δεν ήταν δυνατή η εφαρμογή ρύθμισης πλή
 msgid "Could not apply filtering setting."
 msgstr "Δεν ήταν δυνατή η εφαρμογή ρύθμισης φιλτραρίσματος."
 
-#: engines/engine.cpp:477
+#: engines/engine.cpp:483
 msgid "Error"
 msgstr "Σφάλμα"
 
-#: engines/engine.cpp:540
+#: engines/engine.cpp:546
 msgid ""
 "You appear to be playing this game directly\n"
 "from the CD. This is known to cause problems,\n"
@@ -3180,7 +3180,7 @@ msgstr ""
 "τα αρχεία δεδομένων στο σκληρό σας δίσκο.\n"
 "Δείτε την τεκμηρίωση του ScummVM (CD audio) για λεπτομέρειες."
 
-#: engines/engine.cpp:563
+#: engines/engine.cpp:569
 msgid ""
 "This game has audio tracks on its CD. These\n"
 "tracks need to be ripped from the CD using\n"
@@ -3194,11 +3194,11 @@ msgstr ""
 "να ακούσετε τη μουσική του παιχνιδιού.\n"
 "Δείτε την τεκμηρίωση του ScummVM (CD audio) για λεπτομέρειες."
 
-#: engines/engine.cpp:591
+#: engines/engine.cpp:597
 msgid "Skip autosave"
 msgstr "Αναβολή αυτόματης αποθήκευσης"
 
-#: engines/engine.cpp:593
+#: engines/engine.cpp:599
 #, c-format
 msgid ""
 "WARNING: The autosave slot contains a saved game named %S, and an autosave "
@@ -3214,21 +3214,21 @@ msgstr ""
 "Εναλλακτικά, μπορείτε να αναβάλλετε την αυτόματη αποθήκευση (θα ερωτηθείτε "
 "ξανά σε 5 λεπτά)."
 
-#: engines/engine.cpp:603
+#: engines/engine.cpp:609
 msgid "ERROR: Could not copy the savegame to a new slot"
 msgstr "ΣΦΑΛΜΑ: Αδυναμία αντιγραφής του αποθηκευμένου παιχνιδιού σε νέα θυρίδα"
 
-#: engines/engine.cpp:630 engines/savestate.cpp:98
-#: backends/platform/ios7/ios7_osys_main.cpp:294 engines/mm/xeen/saves.cpp:293
+#: engines/engine.cpp:636 engines/savestate.cpp:98
+#: backends/platform/ios7/ios7_osys_main.cpp:297 engines/mm/xeen/saves.cpp:293
 #: engines/sky/metaengine.cpp:216
 msgid "Autosave"
 msgstr "Αυτόματη αποθήκευση"
 
-#: engines/engine.cpp:638
+#: engines/engine.cpp:644
 msgid "Error occurred making autosave"
 msgstr "Σφάλμα κατά την αυτόματη αποθήκευση"
 
-#: engines/engine.cpp:713
+#: engines/engine.cpp:719
 #, c-format
 msgid ""
 "Failed to load saved game (%s)! Please consult the README for basic "
@@ -3238,15 +3238,15 @@ msgstr ""
 "το αρχείο README για βασικές πληροφορίες, καθώς και για οδηγίες σχετικά με "
 "το πώς να λάβετε περαιτέρω βοήθεια."
 
-#: engines/engine.cpp:737
+#: engines/engine.cpp:743
 msgid "WARNING: "
 msgstr "ΠΡΟΣΟΧΗ: "
 
-#: engines/engine.cpp:737
+#: engines/engine.cpp:743
 msgid " Shall we still run the game?"
 msgstr " Θέλετε ακόμα να ξεκινήσετε το παιχνίδι;"
 
-#: engines/engine.cpp:738
+#: engines/engine.cpp:744
 msgid ""
 "WARNING: The game you are about to start is not yet fully supported by "
 "ScummVM. As such, it is likely to be unstable, and any saved game you make "
@@ -3257,15 +3257,15 @@ msgstr ""
 "παιχνίδι που κάνετε μπορεί να μη λειτουργεί σε μελλοντικές εκδόσεις του "
 "ScummVM."
 
-#: engines/engine.cpp:741 engines/wintermute/wintermute.cpp:182
+#: engines/engine.cpp:747 engines/wintermute/wintermute.cpp:182
 msgid "Start anyway"
 msgstr "Εκκίνηση παρά ταύτα"
 
-#: engines/engine.cpp:759
+#: engines/engine.cpp:765
 msgid "This game is not supported."
 msgstr "Αυτό το παιχνίδι δεν υποστηρίζεται."
 
-#: engines/engine.cpp:759
+#: engines/engine.cpp:765
 msgid ""
 "This game is not supported for the following reason:\n"
 "\n"
@@ -3273,11 +3273,11 @@ msgstr ""
 "Αυτό το παιχνίδι δεν υποστηρίζεται για τον εξής λόγο:\n"
 "\n"
 
-#: engines/engine.cpp:905
+#: engines/engine.cpp:911
 msgid "Loading game is currently unavailable"
 msgstr "Η φόρτωση παιχνιδιού είναι προσωρινά μη διαθέσιμη"
 
-#: engines/engine.cpp:934
+#: engines/engine.cpp:940
 msgid "Saving game is currently unavailable"
 msgstr "Η αποθήκευση παιχνιδιού είναι προσωρινά μη διαθέσιμη"
 
@@ -3748,11 +3748,11 @@ msgstr "Αδυναμία αποθήκευσης στιγμιότυπου"
 msgid "Windowed mode"
 msgstr "Λειτουργία παραθύρου"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:430 engines/scumm/help.cpp:84
+#: backends/graphics/sdl/sdl-graphics.cpp:430 engines/scumm/help.cpp:88
 msgid "Toggle fullscreen"
 msgstr "Λειτουργία πλήρους οθόνης"
 
-#: backends/graphics/sdl/sdl-graphics.cpp:437 engines/scumm/help.cpp:97
+#: backends/graphics/sdl/sdl-graphics.cpp:437 engines/scumm/help.cpp:101
 #: engines/wintermute/keymapper_tables.h:960
 msgid "Toggle mouse capture"
 msgstr "Εναλλαγή κράτησης ποντικιού"
@@ -5447,7 +5447,7 @@ msgid "Toggle Combat"
 msgstr "Εναλλαγή Ετοιμότητας για Μάχη"
 
 #. I18N: This keymap allows skipping video cutscenes
-#: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:75
+#: engines/bladerunner/metaengine.cpp:229 engines/scumm/help.cpp:79
 #: engines/scumm/metaengine.cpp:835 engines/zvision/metaengine.cpp:284
 msgid "Skip cutscene"
 msgstr "Παράλειψη ταινίας"
@@ -5734,10 +5734,10 @@ msgstr "Ημερολόγιο"
 #: engines/crab/input/input.cpp:251 engines/dragons/metaengine.cpp:149
 #: engines/griffon/metaengine.cpp:152 engines/grim/grim.cpp:507
 #: engines/grim/grim.cpp:603 engines/hdb/metaengine.cpp:251
-#: engines/hpl1/metaengine.cpp:99 engines/icb/icb.cpp:101
-#: engines/icb/icb.cpp:179 engines/scumm/help.cpp:223
-#: engines/scumm/help.cpp:232 engines/scumm/help.cpp:239
-#: engines/scumm/help.cpp:247 engines/twine/metaengine.cpp:418
+#: engines/hpl1/metaengine.cpp:94 engines/icb/icb.cpp:101
+#: engines/icb/icb.cpp:179 engines/scumm/help.cpp:227
+#: engines/scumm/help.cpp:236 engines/scumm/help.cpp:243
+#: engines/scumm/help.cpp:251 engines/twine/metaengine.cpp:418
 #: engines/zvision/metaengine.cpp:232
 msgid "Inventory"
 msgstr "Υπάρχοντα"
@@ -6000,12 +6000,12 @@ msgid "Save file created by different version."
 msgstr "Το αρχείο αποθήκευσης δημιουργήθηκε από διαφορετική έκδοση."
 
 #: engines/gob/inter_playtoons.cpp:259 engines/gob/inter_v2.cpp:1506
-#: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:585
+#: engines/gob/inter_geisha.cpp:231 engines/tinsel/saveload.cpp:590
 msgid "Failed to load saved game from file."
 msgstr "Η ανάγνωση αποθηκευμένου παιχνιδιού από αρχείο απέτυχε."
 
 #: engines/gob/inter_v2.cpp:1576 engines/gob/inter_v7.cpp:1393
-#: engines/gob/inter_geisha.cpp:262 engines/tinsel/saveload.cpp:598
+#: engines/gob/inter_geisha.cpp:262 engines/tinsel/saveload.cpp:603
 msgid "Failed to save game to file."
 msgstr "Η εγγραφή αποθηκευμένου παιχνιδιού σε αρχείο απέτυχε."
 
@@ -6036,13 +6036,13 @@ msgstr ""
 
 #. I18N: Action in In Cold Blood
 #: engines/grim/grim.cpp:487 engines/grim/grim.cpp:578
-#: engines/hpl1/metaengine.cpp:87 engines/icb/icb.cpp:131
+#: engines/hpl1/metaengine.cpp:82 engines/icb/icb.cpp:131
 #: engines/icb/icb.cpp:197
 msgid "Run"
 msgstr "Εκτέλεση"
 
-#: engines/grim/grim.cpp:492 engines/hpl1/metaengine.cpp:95
-#: engines/scumm/help.cpp:237 engines/scumm/help.cpp:245
+#: engines/grim/grim.cpp:492 engines/hpl1/metaengine.cpp:90
+#: engines/scumm/help.cpp:241 engines/scumm/help.cpp:249
 msgid "Examine"
 msgstr "Εξέτασε"
 
@@ -6294,10 +6294,10 @@ msgstr "Κίνηση δεξιά"
 
 #. I18N: Combat command in Might & Magic 1
 #: engines/hdb/metaengine.cpp:237 engines/mm/mm1/metaengine.cpp:81
-#: engines/scumm/help.cpp:126 engines/scumm/help.cpp:150
-#: engines/scumm/help.cpp:168 engines/scumm/help.cpp:196
-#: engines/scumm/help.cpp:211 engines/scumm/help.cpp:222
-#: engines/scumm/help.cpp:248 engines/sky/metaengine.cpp:94
+#: engines/scumm/help.cpp:130 engines/scumm/help.cpp:154
+#: engines/scumm/help.cpp:172 engines/scumm/help.cpp:200
+#: engines/scumm/help.cpp:215 engines/scumm/help.cpp:226
+#: engines/scumm/help.cpp:252 engines/sky/metaengine.cpp:94
 #: engines/wintermute/keymapper_tables.h:140
 #: engines/wintermute/keymapper_tables.h:1552
 msgid "Use"
@@ -6319,65 +6319,65 @@ msgstr "Λειτουργία Αίματος"
 msgid "Enable Gore Mode when available"
 msgstr "Ενεργοποίηση Λειτουργίας Αίματος όταν υπάρχει διαθεσιμότητα"
 
-#: engines/hpl1/metaengine.cpp:81
+#: engines/hpl1/metaengine.cpp:76
 msgid "Forward"
 msgstr "Προς τα εμπρός"
 
-#: engines/hpl1/metaengine.cpp:82
+#: engines/hpl1/metaengine.cpp:77
 msgid "Backward"
 msgstr "Προς τα πίσω"
 
-#: engines/hpl1/metaengine.cpp:83 engines/mm/mm1/metaengine.cpp:99
+#: engines/hpl1/metaengine.cpp:78 engines/mm/mm1/metaengine.cpp:99
 msgid "Strafe Left"
 msgstr "Πλάγια στα Αριστερά"
 
-#: engines/hpl1/metaengine.cpp:84 engines/mm/mm1/metaengine.cpp:100
+#: engines/hpl1/metaengine.cpp:79 engines/mm/mm1/metaengine.cpp:100
 msgid "Strafe Right"
 msgstr "Πλάγια στα Δεξιά"
 
-#: engines/hpl1/metaengine.cpp:85
+#: engines/hpl1/metaengine.cpp:80
 msgid "Lean Left"
 msgstr "Κλίση Αριστερά"
 
-#: engines/hpl1/metaengine.cpp:86
+#: engines/hpl1/metaengine.cpp:81
 msgid "Lean Right"
 msgstr "Κλίση Δεξιά"
 
-#: engines/hpl1/metaengine.cpp:88
+#: engines/hpl1/metaengine.cpp:83
 msgid "Jump"
 msgstr "Άλμα"
 
 #. I18N: Action in In Cold Blood
-#: engines/hpl1/metaengine.cpp:89 engines/icb/icb.cpp:119
+#: engines/hpl1/metaengine.cpp:84 engines/icb/icb.cpp:119
 #: engines/icb/icb.cpp:185
 msgid "Crouch"
 msgstr "Σκυφτά"
 
-#: engines/hpl1/metaengine.cpp:92
+#: engines/hpl1/metaengine.cpp:87
 msgid "Interact Mode"
 msgstr "Σε Αλληλεπίδραση"
 
-#: engines/hpl1/metaengine.cpp:93
+#: engines/hpl1/metaengine.cpp:88
 msgid "Look Mode"
 msgstr "Σε Επισκόπηση"
 
-#: engines/hpl1/metaengine.cpp:94
+#: engines/hpl1/metaengine.cpp:89
 msgid "Holster"
 msgstr "Στη θήκη"
 
-#: engines/hpl1/metaengine.cpp:100
+#: engines/hpl1/metaengine.cpp:95
 msgid "Notebook"
 msgstr "Σημειωματάριο"
 
-#: engines/hpl1/metaengine.cpp:101
+#: engines/hpl1/metaengine.cpp:96
 msgid "Personal Notes"
 msgstr "Προσωπικές Σημειώσεις"
 
-#: engines/hpl1/metaengine.cpp:102
+#: engines/hpl1/metaengine.cpp:97
 msgid "Flashlight"
 msgstr "Φακός"
 
-#: engines/hpl1/metaengine.cpp:103
+#: engines/hpl1/metaengine.cpp:98
 msgid "Glowstick"
 msgstr "Ράβδος φωτός"
 
@@ -6988,7 +6988,7 @@ msgid "Bash"
 msgstr "Χτύπα"
 
 #. I18N: Action of hero party in Might & Magic 1
-#: engines/mm/mm1/metaengine.cpp:115 engines/scumm/help.cpp:144
+#: engines/mm/mm1/metaengine.cpp:115 engines/scumm/help.cpp:148
 msgid "Unlock"
 msgstr "Ξεκλείδωσε"
 
@@ -8388,494 +8388,498 @@ msgstr "Σύνηθεις εντολές πληκτρολογίου:"
 msgid "Save / Load dialog"
 msgstr "Διάλογος Αποθήκευσης / Φόρτωσης"
 
-#: engines/scumm/help.cpp:74
+#: engines/scumm/help.cpp:77
+msgid "Selection screen"
+msgstr "Οθόνη Επιλογών"
+
+#: engines/scumm/help.cpp:78
 msgid "Skip line of text"
 msgstr "Παράλειψη γραμμής κειμένου"
 
-#: engines/scumm/help.cpp:75
+#: engines/scumm/help.cpp:79
 msgid "Esc"
 msgstr "Esc"
 
-#: engines/scumm/help.cpp:76 engines/wintermute/keymapper_tables.h:2136
+#: engines/scumm/help.cpp:80 engines/wintermute/keymapper_tables.h:2136
 msgid "Space"
 msgstr "Space"
 
-#: engines/scumm/help.cpp:76 engines/vcruise/metaengine.cpp:149
+#: engines/scumm/help.cpp:80 engines/vcruise/metaengine.cpp:149
 msgid "Pause game"
 msgstr "Παύση παιχνιδιού"
 
-#: engines/scumm/help.cpp:77 engines/scumm/help.cpp:82
-#: engines/scumm/help.cpp:93 engines/scumm/help.cpp:94
-#: engines/scumm/help.cpp:95 engines/scumm/help.cpp:96
+#: engines/scumm/help.cpp:81 engines/scumm/help.cpp:86
 #: engines/scumm/help.cpp:97 engines/scumm/help.cpp:98
 #: engines/scumm/help.cpp:99 engines/scumm/help.cpp:100
+#: engines/scumm/help.cpp:101 engines/scumm/help.cpp:102
+#: engines/scumm/help.cpp:103 engines/scumm/help.cpp:104
 msgid "Ctrl"
 msgstr "Ctrl"
 
-#: engines/scumm/help.cpp:77
+#: engines/scumm/help.cpp:81
 msgid "Load saved game 1-10"
 msgstr "Φόρτωση αποθηκευμένου παιχνιδιού 1-10"
 
-#: engines/scumm/help.cpp:78
+#: engines/scumm/help.cpp:82
 msgid "Save game 1-10"
 msgstr "Αποθήκευση παιχνιδιού 1-10"
 
-#: engines/scumm/help.cpp:85
+#: engines/scumm/help.cpp:89
 msgid "Music volume up / down"
 msgstr "Ένταση μουσικής πάνω / κάτω"
 
-#: engines/scumm/help.cpp:86
+#: engines/scumm/help.cpp:90
 msgid "Text speed slower / faster"
 msgstr "Ταχύτητα κειμένου πιο αργή / πιο γρήγορη"
 
-#: engines/scumm/help.cpp:87
+#: engines/scumm/help.cpp:91
 msgid "Simulate left mouse button"
 msgstr "Εξομοίωση αριστερού κουμπιού ποντικιού"
 
-#: engines/scumm/help.cpp:88 engines/wintermute/keymapper_tables.h:2191
+#: engines/scumm/help.cpp:92 engines/wintermute/keymapper_tables.h:2191
 msgid "Tab"
 msgstr "Tab"
 
-#: engines/scumm/help.cpp:88
+#: engines/scumm/help.cpp:92
 msgid "Simulate right mouse button"
 msgstr "Εξομοίωση δεξιού κουμπιού ποντικιού"
 
-#: engines/scumm/help.cpp:91
+#: engines/scumm/help.cpp:95
 msgid "Special keyboard commands:"
 msgstr "Ειδικές εντολές πληκτρολογίου:"
 
-#: engines/scumm/help.cpp:92
+#: engines/scumm/help.cpp:96
 msgid "Show / Hide console"
 msgstr "Προβολή / Απόκρυψη κονσόλας"
 
-#: engines/scumm/help.cpp:93
+#: engines/scumm/help.cpp:97
 msgid "Start the debugger"
 msgstr "Εκκίνηση του εντοπισμού σφαλμάτων"
 
-#: engines/scumm/help.cpp:94
+#: engines/scumm/help.cpp:98
 msgid "Show memory consumption"
 msgstr "Προβολή κατανάλωσης μνήμης"
 
-#: engines/scumm/help.cpp:95
+#: engines/scumm/help.cpp:99
 msgid "Run in fast mode (*)"
 msgstr "Εκτέλεση σε γρήγορη λειτουργία (*)"
 
-#: engines/scumm/help.cpp:96
+#: engines/scumm/help.cpp:100
 msgid "Run in really fast mode (*)"
 msgstr "Εκτέλεση σε πολύ γρήγορη λειτουργία (*)"
 
-#: engines/scumm/help.cpp:98
+#: engines/scumm/help.cpp:102
 msgid "Switch between graphics filters"
 msgstr "Εναλλαγή μεταξύ φίλτρων γραφικών"
 
-#: engines/scumm/help.cpp:99
+#: engines/scumm/help.cpp:103
 msgid "Increase / Decrease scale factor"
 msgstr "Αύξηση / Μείωση συντελεστή κλίμακας"
 
-#: engines/scumm/help.cpp:100
+#: engines/scumm/help.cpp:104
 msgid "Toggle aspect-ratio correction"
 msgstr "Εναλλαγή διόρθωσης αναλογίας διαστάσεων"
 
-#: engines/scumm/help.cpp:105
+#: engines/scumm/help.cpp:109
 msgid "* Note that using ctrl-f and"
 msgstr "* Να σημειωθεί ότι η χρήση του ctrl-f"
 
-#: engines/scumm/help.cpp:106
+#: engines/scumm/help.cpp:110
 msgid "  ctrl-g are not recommended"
 msgstr "  και του ctrl-g δε συνίσταται, μια"
 
-#: engines/scumm/help.cpp:107
+#: engines/scumm/help.cpp:111
 msgid "  since they may cause crashes"
 msgstr "  και μπορεί να προκαλέσουν κολλήματα"
 
-#: engines/scumm/help.cpp:108
+#: engines/scumm/help.cpp:112
 msgid "  or incorrect game behavior."
 msgstr "  ή εσφαλμένη συμπεριφορά παιχνιδιών."
 
-#: engines/scumm/help.cpp:112
+#: engines/scumm/help.cpp:116
 msgid "Spinning drafts on the keyboard:"
 msgstr "Δημιουργία 'ηχητικού υφαντού' (spinning draft) με το πληκτρολόγιο:"
 
-#: engines/scumm/help.cpp:114
+#: engines/scumm/help.cpp:118
 msgid "Main game controls:"
 msgstr "Κύριοι χειρισμοί παιχνιδιού:"
 
-#: engines/scumm/help.cpp:119 engines/scumm/help.cpp:134
-#: engines/scumm/help.cpp:159
+#: engines/scumm/help.cpp:123 engines/scumm/help.cpp:138
+#: engines/scumm/help.cpp:163
 msgid "Push"
 msgstr "Σπρώξε"
 
-#: engines/scumm/help.cpp:120 engines/scumm/help.cpp:135
-#: engines/scumm/help.cpp:160
+#: engines/scumm/help.cpp:124 engines/scumm/help.cpp:139
+#: engines/scumm/help.cpp:164
 msgid "Pull"
 msgstr "Τράβηξε"
 
-#: engines/scumm/help.cpp:121 engines/scumm/help.cpp:136
-#: engines/scumm/help.cpp:161 engines/scumm/help.cpp:195
-#: engines/scumm/help.cpp:205
+#: engines/scumm/help.cpp:125 engines/scumm/help.cpp:140
+#: engines/scumm/help.cpp:165 engines/scumm/help.cpp:199
+#: engines/scumm/help.cpp:209
 msgid "Give"
 msgstr "Δώσε"
 
-#: engines/scumm/help.cpp:122 engines/scumm/help.cpp:137
-#: engines/scumm/help.cpp:162 engines/scumm/help.cpp:188
-#: engines/scumm/help.cpp:206
+#: engines/scumm/help.cpp:126 engines/scumm/help.cpp:141
+#: engines/scumm/help.cpp:166 engines/scumm/help.cpp:192
+#: engines/scumm/help.cpp:210
 msgid "Open"
 msgstr "Άνοιξε"
 
-#: engines/scumm/help.cpp:124
+#: engines/scumm/help.cpp:128
 msgid "Go to"
 msgstr "Μετάβαση σε"
 
-#: engines/scumm/help.cpp:125
+#: engines/scumm/help.cpp:129
 msgid "Get"
 msgstr "Πάρε"
 
-#: engines/scumm/help.cpp:127 engines/scumm/help.cpp:139
+#: engines/scumm/help.cpp:131 engines/scumm/help.cpp:143
 msgid "Read"
 msgstr "Διάβασε"
 
-#: engines/scumm/help.cpp:128 engines/scumm/help.cpp:145
+#: engines/scumm/help.cpp:132 engines/scumm/help.cpp:149
 msgid "New kid"
 msgstr "Νέο παιδί"
 
-#: engines/scumm/help.cpp:129 engines/scumm/help.cpp:151
-#: engines/scumm/help.cpp:169
+#: engines/scumm/help.cpp:133 engines/scumm/help.cpp:155
+#: engines/scumm/help.cpp:173
 msgid "Turn on"
 msgstr "Άναψε"
 
-#: engines/scumm/help.cpp:130 engines/scumm/help.cpp:152
-#: engines/scumm/help.cpp:170
+#: engines/scumm/help.cpp:134 engines/scumm/help.cpp:156
+#: engines/scumm/help.cpp:174
 msgid "Turn off"
 msgstr "Σβήσε"
 
-#: engines/scumm/help.cpp:140 engines/scumm/help.cpp:165
-#: engines/scumm/help.cpp:192 engines/wintermute/keymapper_tables.h:1540
+#: engines/scumm/help.cpp:144 engines/scumm/help.cpp:169
+#: engines/scumm/help.cpp:196 engines/wintermute/keymapper_tables.h:1540
 msgid "Walk to"
 msgstr "Περπάτησε σε"
 
-#: engines/scumm/help.cpp:141 engines/scumm/help.cpp:166
-#: engines/scumm/help.cpp:193 engines/scumm/help.cpp:208
-#: engines/scumm/help.cpp:225 engines/wintermute/keymapper_tables.h:134
+#: engines/scumm/help.cpp:145 engines/scumm/help.cpp:170
+#: engines/scumm/help.cpp:197 engines/scumm/help.cpp:212
+#: engines/scumm/help.cpp:229 engines/wintermute/keymapper_tables.h:134
 #: engines/wintermute/keymapper_tables.h:1546
 msgid "Pick up"
 msgstr "Μάζεψε"
 
-#: engines/scumm/help.cpp:142 engines/scumm/help.cpp:167
+#: engines/scumm/help.cpp:146 engines/scumm/help.cpp:171
 msgid "What is"
 msgstr "Τι είναι"
 
-#: engines/scumm/help.cpp:147
+#: engines/scumm/help.cpp:151
 msgid "Put on"
 msgstr "Φόρεσε"
 
-#: engines/scumm/help.cpp:148
+#: engines/scumm/help.cpp:152
 msgid "Take off"
 msgstr "Βγάλε"
 
-#: engines/scumm/help.cpp:154
+#: engines/scumm/help.cpp:158
 msgid "Fix"
 msgstr "Διόρθωσε"
 
-#: engines/scumm/help.cpp:156
+#: engines/scumm/help.cpp:160
 msgid "Switch"
 msgstr "Άλλαξε"
 
-#: engines/scumm/help.cpp:164 engines/scumm/help.cpp:226
+#: engines/scumm/help.cpp:168 engines/scumm/help.cpp:230
 msgid "Look"
 msgstr "Κοίταξε"
 
-#: engines/scumm/help.cpp:171 engines/scumm/help.cpp:221
+#: engines/scumm/help.cpp:175 engines/scumm/help.cpp:225
 msgid "Talk"
 msgstr "Μίλα"
 
-#: engines/scumm/help.cpp:172
+#: engines/scumm/help.cpp:176
 msgid "Travel"
 msgstr "Ταξίδεψε"
 
-#: engines/scumm/help.cpp:173
+#: engines/scumm/help.cpp:177
 msgid "To Henry / To Indy"
 msgstr "Στο Χένρυ / Στον Ίντυ"
 
 #. I18N: These are different musical notes
-#: engines/scumm/help.cpp:177
+#: engines/scumm/help.cpp:181
 msgid "play C minor on distaff"
 msgstr "παίξε C ελάσσονα στη ρόκα"
 
-#: engines/scumm/help.cpp:178
+#: engines/scumm/help.cpp:182
 msgid "play D on distaff"
 msgstr "παίξε D στη ρόκα"
 
-#: engines/scumm/help.cpp:179
+#: engines/scumm/help.cpp:183
 msgid "play E on distaff"
 msgstr "παίξε E στη ρόκα"
 
-#: engines/scumm/help.cpp:180
+#: engines/scumm/help.cpp:184
 msgid "play F on distaff"
 msgstr "παίξε F στη ρόκα"
 
-#: engines/scumm/help.cpp:181
+#: engines/scumm/help.cpp:185
 msgid "play G on distaff"
 msgstr "παίξε G στη ρόκα"
 
-#: engines/scumm/help.cpp:182
+#: engines/scumm/help.cpp:186
 msgid "play A on distaff"
 msgstr "παίξε A στη ρόκα"
 
-#: engines/scumm/help.cpp:183
+#: engines/scumm/help.cpp:187
 msgid "play B on distaff"
 msgstr "παίξε B στη ρόκα"
 
-#: engines/scumm/help.cpp:184
+#: engines/scumm/help.cpp:188
 msgid "play C major on distaff"
 msgstr "παίξε C μείζονα στη ρόκα"
 
-#: engines/scumm/help.cpp:190 engines/scumm/help.cpp:212
+#: engines/scumm/help.cpp:194 engines/scumm/help.cpp:216
 msgid "puSh"
 msgstr "Σπρώξε"
 
-#: engines/scumm/help.cpp:191 engines/scumm/help.cpp:213
+#: engines/scumm/help.cpp:195 engines/scumm/help.cpp:217
 msgid "pull (Yank)"
 msgstr "Τράβηξε"
 
-#: engines/scumm/help.cpp:194 engines/scumm/help.cpp:210
-#: engines/scumm/help.cpp:246 engines/wintermute/keymapper_tables.h:128
+#: engines/scumm/help.cpp:198 engines/scumm/help.cpp:214
+#: engines/scumm/help.cpp:250 engines/wintermute/keymapper_tables.h:128
 #: engines/wintermute/keymapper_tables.h:1558
 msgid "Talk to"
 msgstr "Μίλα με"
 
-#: engines/scumm/help.cpp:197 engines/scumm/help.cpp:209
+#: engines/scumm/help.cpp:201 engines/scumm/help.cpp:213
 #: engines/wintermute/keymapper_tables.h:122
 #: engines/wintermute/keymapper_tables.h:1534
 msgid "Look at"
 msgstr "Κοίτα προς"
 
-#: engines/scumm/help.cpp:198
+#: engines/scumm/help.cpp:202
 msgid "turn oN"
 msgstr "Ενεργοποίησε"
 
-#: engines/scumm/help.cpp:199
+#: engines/scumm/help.cpp:203
 msgid "turn oFf"
 msgstr "Απενεργοποίησε"
 
-#: engines/scumm/help.cpp:215
+#: engines/scumm/help.cpp:219
 msgid "KeyUp"
 msgstr "Πλήκτρο πάνω"
 
-#: engines/scumm/help.cpp:215
+#: engines/scumm/help.cpp:219
 msgid "Highlight prev dialogue"
 msgstr "Επισήμανση προηγούμενου διαλόγου"
 
-#: engines/scumm/help.cpp:216
+#: engines/scumm/help.cpp:220
 msgid "KeyDown"
 msgstr "Πλήκτρο κάτω"
 
-#: engines/scumm/help.cpp:216
+#: engines/scumm/help.cpp:220
 msgid "Highlight next dialogue"
 msgstr "Επισήμανση επόμενου διαλόγου"
 
-#: engines/scumm/help.cpp:220
+#: engines/scumm/help.cpp:224
 msgid "Walk"
 msgstr "Περπάτησε"
 
-#: engines/scumm/help.cpp:224
+#: engines/scumm/help.cpp:228
 msgid "Object"
 msgstr "Αντικείμενο"
 
-#: engines/scumm/help.cpp:227
+#: engines/scumm/help.cpp:231
 msgid "Black and White / Color"
 msgstr "Ασπρόμαυρο / Έγχρωμο"
 
-#: engines/scumm/help.cpp:230
+#: engines/scumm/help.cpp:234
 msgid "Eyes"
 msgstr "Μάτια"
 
-#: engines/scumm/help.cpp:231
+#: engines/scumm/help.cpp:235
 msgid "Tongue"
 msgstr "Γλώσσα"
 
-#: engines/scumm/help.cpp:233
+#: engines/scumm/help.cpp:237
 msgid "Punch"
 msgstr "Γροθιά"
 
-#: engines/scumm/help.cpp:234
+#: engines/scumm/help.cpp:238
 msgid "Kick"
 msgstr "Κλωτσιά"
 
-#: engines/scumm/help.cpp:238
+#: engines/scumm/help.cpp:242
 msgid "Regular cursor"
 msgstr "Κανονικός δρομέας"
 
 #. I18N: Comm is a communication device
-#: engines/scumm/help.cpp:241
+#: engines/scumm/help.cpp:245
 msgid "Comm"
 msgstr "Διαβίβαση"
 
-#: engines/scumm/help.cpp:244
+#: engines/scumm/help.cpp:248
 msgid "Save / Load / Options"
 msgstr "Αποθήκευση / Φόρτωση / Επιλογές"
 
-#: engines/scumm/help.cpp:255
+#: engines/scumm/help.cpp:259
 msgid "Other game controls:"
 msgstr "Άλλοι χειρισμοί του παιχνιδιού:"
 
-#: engines/scumm/help.cpp:257 engines/scumm/help.cpp:267
+#: engines/scumm/help.cpp:261 engines/scumm/help.cpp:271
 msgid "Inventory:"
 msgstr "Υπάρχοντα:"
 
-#: engines/scumm/help.cpp:258 engines/scumm/help.cpp:274
+#: engines/scumm/help.cpp:262 engines/scumm/help.cpp:278
 msgid "Scroll list up"
 msgstr "Κύλιση λίστας πάνω"
 
-#: engines/scumm/help.cpp:259 engines/scumm/help.cpp:275
+#: engines/scumm/help.cpp:263 engines/scumm/help.cpp:279
 msgid "Scroll list down"
 msgstr "Κύλιση λίστας κάτω"
 
-#: engines/scumm/help.cpp:260 engines/scumm/help.cpp:268
+#: engines/scumm/help.cpp:264 engines/scumm/help.cpp:272
 msgid "Upper left item"
 msgstr "Πάνω αριστερά αντικείμενο"
 
-#: engines/scumm/help.cpp:261 engines/scumm/help.cpp:270
+#: engines/scumm/help.cpp:265 engines/scumm/help.cpp:274
 msgid "Lower left item"
 msgstr "Κάτω αριστερά αντικείμενο"
 
-#: engines/scumm/help.cpp:262 engines/scumm/help.cpp:271
+#: engines/scumm/help.cpp:266 engines/scumm/help.cpp:275
 msgid "Upper right item"
 msgstr "Πάνω δεξιά αντικείμενο"
 
-#: engines/scumm/help.cpp:263 engines/scumm/help.cpp:273
+#: engines/scumm/help.cpp:267 engines/scumm/help.cpp:277
 msgid "Lower right item"
 msgstr "Κάτω δεξιά αντικείμενο"
 
-#: engines/scumm/help.cpp:269
+#: engines/scumm/help.cpp:273
 msgid "Middle left item"
 msgstr "Μεσαίο αριστερά αντικείμενο"
 
-#: engines/scumm/help.cpp:272
+#: engines/scumm/help.cpp:276
 msgid "Middle right item"
 msgstr "Μεσαίο δεξιά αντικείμενο"
 
-#: engines/scumm/help.cpp:279 engines/scumm/help.cpp:284
+#: engines/scumm/help.cpp:283 engines/scumm/help.cpp:288
 msgid "Switching characters:"
 msgstr "Εναλλαγή χαρακτήρων:"
 
-#: engines/scumm/help.cpp:281
+#: engines/scumm/help.cpp:285
 msgid "Second kid"
 msgstr "Δεύτερο παιδί"
 
-#: engines/scumm/help.cpp:282
+#: engines/scumm/help.cpp:286
 msgid "Third kid"
 msgstr "Τρίτο παιδί"
 
-#: engines/scumm/help.cpp:291
+#: engines/scumm/help.cpp:295
 msgid "Toggle Inventory/IQ Points display"
 msgstr "Εναλλαγή προβολής υπαρχόντων/Πόντων IQ"
 
-#: engines/scumm/help.cpp:292
+#: engines/scumm/help.cpp:296
 msgid "Toggle Keyboard/Mouse Fighting (*)"
 msgstr "Εναλλαγή Πάλης Πληκτρολογίου/Ποντικιού (*)"
 
-#: engines/scumm/help.cpp:294
+#: engines/scumm/help.cpp:298
 msgid "* Keyboard Fighting is always on,"
 msgstr "* Η χρήση πληκτρολογίου για τις μάχες είναι πάντα ενεργοποιημένη,"
 
-#: engines/scumm/help.cpp:295
+#: engines/scumm/help.cpp:299
 msgid "  so despite the in-game message this"
 msgstr "  έτσι παρά την ειδοποίηση μέσα στο παιχνίδι, αυτή η ρύθμιση"
 
-#: engines/scumm/help.cpp:296
+#: engines/scumm/help.cpp:300
 msgid "  actually toggles Mouse Fighting Off/On"
 msgstr "  ουσιαστικά (απ)ενεργοποιεί τις μάχες με την χρήση Ποντικιού"
 
-#: engines/scumm/help.cpp:303
+#: engines/scumm/help.cpp:307
 msgid "Fighting controls (numpad):"
 msgstr "Χειρισμοί μάχης (αριθ. πληκτρ.):"
 
-#: engines/scumm/help.cpp:304 engines/scumm/help.cpp:305
-#: engines/scumm/help.cpp:306
+#: engines/scumm/help.cpp:308 engines/scumm/help.cpp:309
+#: engines/scumm/help.cpp:310
 msgid "Step back"
 msgstr "Κάνε πίσω"
 
-#: engines/scumm/help.cpp:307
+#: engines/scumm/help.cpp:311
 msgid "Block high"
 msgstr "Μπλοκάρισμα ψηλά"
 
-#: engines/scumm/help.cpp:308
+#: engines/scumm/help.cpp:312
 msgid "Block middle"
 msgstr "Μπλοκάρισμα στη μέση"
 
-#: engines/scumm/help.cpp:309
+#: engines/scumm/help.cpp:313
 msgid "Block low"
 msgstr "Μπλοκάρισμα χαμηλά"
 
-#: engines/scumm/help.cpp:310
+#: engines/scumm/help.cpp:314
 msgid "Punch high"
 msgstr "Μπουνιά ψηλά"
 
-#: engines/scumm/help.cpp:311
+#: engines/scumm/help.cpp:315
 msgid "Punch middle"
 msgstr "Μπουνιά στη μέση"
 
-#: engines/scumm/help.cpp:312
+#: engines/scumm/help.cpp:316
 msgid "Punch low"
 msgstr "Μπουνιά χαμηλά"
 
-#: engines/scumm/help.cpp:314
+#: engines/scumm/help.cpp:318
 msgid "Sucker punch"
 msgstr "Αιφνιδιαστικό χτύπημα"
 
-#: engines/scumm/help.cpp:317
+#: engines/scumm/help.cpp:321
 msgid "These are for Indy on left."
 msgstr "Αυτά ισχύουν όταν ο Ίντυ είναι στα αριστερά."
 
-#: engines/scumm/help.cpp:318
+#: engines/scumm/help.cpp:322
 msgid "When Indy is on the right,"
 msgstr "Όταν ο Ίντυ είναι στα δεξιά,"
 
-#: engines/scumm/help.cpp:319
+#: engines/scumm/help.cpp:323
 msgid "7, 4, and 1 are switched with"
 msgstr "τα 7, 4 και 1 εναλλάσσονται με τα"
 
-#: engines/scumm/help.cpp:320
+#: engines/scumm/help.cpp:324
 msgid "9, 6, and 3, respectively."
 msgstr "9, 6 και 3, αντίστοιχα."
 
-#: engines/scumm/help.cpp:329
+#: engines/scumm/help.cpp:333
 msgid "Biplane controls (numpad):"
 msgstr "Χειρισμός δίπτερου (αριθ. πληκτρ.):"
 
-#: engines/scumm/help.cpp:330
+#: engines/scumm/help.cpp:334
 msgid "Fly to upper left"
 msgstr "Πέταξε πάνω αριστερά"
 
-#: engines/scumm/help.cpp:331
+#: engines/scumm/help.cpp:335
 msgid "Fly to left"
 msgstr "Πέταξε αριστερά"
 
-#: engines/scumm/help.cpp:332
+#: engines/scumm/help.cpp:336
 msgid "Fly to lower left"
 msgstr "Πέταξε κάτω αριστερά"
 
-#: engines/scumm/help.cpp:333
+#: engines/scumm/help.cpp:337
 msgid "Fly upwards"
 msgstr "Πέταξε πάνω"
 
-#: engines/scumm/help.cpp:334
+#: engines/scumm/help.cpp:338
 msgid "Fly straight"
 msgstr "Πέταξε ευθεία"
 
-#: engines/scumm/help.cpp:335
+#: engines/scumm/help.cpp:339
 msgid "Fly down"
 msgstr "Πέταξε κάτω"
 
-#: engines/scumm/help.cpp:336
+#: engines/scumm/help.cpp:340
 msgid "Fly to upper right"
 msgstr "Πέταξε πάνω δεξιά"
 
-#: engines/scumm/help.cpp:337
+#: engines/scumm/help.cpp:341
 msgid "Fly to right"
 msgstr "Πέταξε δεξιά"
 
-#: engines/scumm/help.cpp:338
+#: engines/scumm/help.cpp:342
 msgid "Fly to lower right"
 msgstr "Πέταξε κάτω δεξιά"
 

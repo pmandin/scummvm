@@ -27,6 +27,7 @@
 #include "ultima/ultima8/graphics/shape_frame.h"
 #include "ultima/ultima8/graphics/main_shape_archive.h"
 #include "ultima/ultima8/graphics/render_surface.h"
+#include "ultima/ultima8/graphics/texture.h"
 #include "ultima/ultima8/games/game_data.h"
 #include "ultima/ultima8/ultima8.h"
 
@@ -40,6 +41,9 @@
 
 namespace Ultima {
 namespace Ultima8 {
+
+static const uint32 TRANSPARENT_COLOR = TEX32_PACK_RGBA(0x7F, 0x00, 0x00, 0x7F);
+static const uint32 HIGHLIGHT_COLOR = TEX32_PACK_RGBA(0xFF, 0xFF, 0x00, 0x1F);
 
 ItemSorter::ItemSorter(int capacity) :
 	_shapes(nullptr), _clipWindow(0, 0, 0, 0), _items(nullptr), _itemsTail(nullptr),
@@ -156,8 +160,6 @@ void ItemSorter::AddItem(int32 x, int32 y, int32 z, uint32 shapeNum, uint32 fram
 		return;
 	}
 
-	si->_clipped = !_clipWindow.contains(si->_sr);
-
 	// These help out with sorting. We calc them now, so it will be faster
 	si->_fbigsq = (xd == 128 && yd == 128) || (xd == 256 && yd == 256) || (xd == 512 && yd == 512);
 	si->_flat = zd == 0;
@@ -255,7 +257,8 @@ void ItemSorter::AddItem(const Item *add) {
 void ItemSorter::PaintDisplayList(RenderSurface *surf, bool item_highlight) {
 	if (_sortLimit) {
 		// Clear the surface when debugging the sorter
-		surf->Fill32(0, _clipWindow);
+		uint32 color = TEX32_PACK_RGB(0, 0, 0);
+		surf->fill32(color, _clipWindow);
 	}
 
 	SortItem *it = _items;
@@ -276,7 +279,8 @@ void ItemSorter::PaintDisplayList(RenderSurface *surf, bool item_highlight) {
 				                          it->_sxBot,
 				                          it->_syBot,
 				                          it->_trans,
-				                          (it->_flags & Item::FLG_FLIPPED) != 0, 0x1f00ffff);
+				                          (it->_flags & Item::FLG_FLIPPED) != 0,
+										  HIGHLIGHT_COLOR);
 			}
 
 			it = it->_next;
@@ -318,17 +322,15 @@ bool ItemSorter::PaintSortItem(RenderSurface *surf, SortItem *si) {
 		//	if (wire) si->info->draw_box_back(s, dispx, dispy, 255);
 
 		if (si->_extFlags & Item::EXT_HIGHLIGHT && si->_extFlags & Item::EXT_TRANSPARENT)
-			surf->PaintHighlightInvis(si->_shape, si->_frame, si->_sxBot, si->_syBot, si->_trans, (si->_flags & Item::FLG_FLIPPED) != 0, 0x7F00007F);
+			surf->PaintHighlightInvis(si->_shape, si->_frame, si->_sxBot, si->_syBot, si->_trans, (si->_flags & Item::FLG_FLIPPED) != 0, TRANSPARENT_COLOR);
 		if (si->_extFlags & Item::EXT_HIGHLIGHT)
-			surf->PaintHighlight(si->_shape, si->_frame, si->_sxBot, si->_syBot, si->_trans, (si->_flags & Item::FLG_FLIPPED) != 0, 0x7F00007F);
+			surf->PaintHighlight(si->_shape, si->_frame, si->_sxBot, si->_syBot, si->_trans, (si->_flags & Item::FLG_FLIPPED) != 0, TRANSPARENT_COLOR);
 		else if (si->_extFlags & Item::EXT_TRANSPARENT)
 			surf->PaintInvisible(si->_shape, si->_frame, si->_sxBot, si->_syBot, si->_trans, (si->_flags & Item::FLG_FLIPPED) != 0);
 		else if (si->_flags & Item::FLG_FLIPPED)
 			surf->PaintMirrored(si->_shape, si->_frame, si->_sxBot, si->_syBot, si->_trans);
 		else if (si->_trans)
 			surf->PaintTranslucent(si->_shape, si->_frame, si->_sxBot, si->_syBot);
-		else if (!si->_clipped)
-			surf->PaintNoClip(si->_shape, si->_frame, si->_sxBot, si->_syBot);
 		else
 			surf->Paint(si->_shape, si->_frame, si->_sxBot, si->_syBot);
 

@@ -9,6 +9,7 @@ COPYING.MKV.txt
 COPYING.OFL.txt
 COPYING.TINYGL
 COPYING.GLAD
+CatharonLicense.txt
 COPYING.txt
 COPYRIGHT.txt
 access.dat
