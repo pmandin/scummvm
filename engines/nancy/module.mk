@@ -4,6 +4,7 @@ MODULE_OBJS = \
   action/actionmanager.o \
   action/actionrecord.o \
   action/arfactory.o \
+  action/autotext.o \
   action/navigationrecords.o \
   action/soundrecords.o \
   action/miscrecords.o \
@@ -15,14 +16,16 @@ MODULE_OBJS = \
   action/puzzle/collisionpuzzle.o \
   action/puzzle/leverpuzzle.o \
   action/puzzle/mazechasepuzzle.o \
+  action/puzzle/mouselightpuzzle.o \
   action/puzzle/orderingpuzzle.o \
   action/puzzle/overridelockpuzzle.o \
   action/puzzle/passwordpuzzle.o \
+  action/puzzle/peepholepuzzle.o \
   action/puzzle/raycastpuzzle.o \
   action/puzzle/riddlepuzzle.o \
   action/puzzle/rippedletterpuzzle.o \
   action/puzzle/rotatinglockpuzzle.o \
-  action/puzzle/safelockpuzzle.o \
+  action/puzzle/safedialpuzzle.o \
   action/puzzle/setplayerclock.o \
   action/puzzle/sliderpuzzle.o \
   action/puzzle/soundequalizerpuzzle.o \
@@ -30,6 +33,7 @@ MODULE_OBJS = \
   action/puzzle/telephone.o \
   action/puzzle/towerpuzzle.o \
   action/puzzle/turningpuzzle.o \
+  action/puzzle/twodialpuzzle.o \
   ui/fullscreenimage.o \
   ui/animatedbutton.o \
   ui/button.o \
@@ -48,6 +52,7 @@ MODULE_OBJS = \
   state/savedialog.o \
   state/scene.o \
   state/setupmenu.o \
+  misc/hypertext.o \
   misc/lightning.o \
   misc/specialeffect.o \
   commontypes.o \

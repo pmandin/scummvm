@@ -2,7 +2,9 @@ gui/about.cpp
 gui/browser.cpp
 gui/chooser.cpp
 gui/cloudconnectionwizard.cpp
+gui/dlcsdialog.h
 gui/downloaddialog.cpp
+gui/downloaddlcsdialog.h
 gui/downloadpacksdialog.cpp
 gui/editgamedialog.cpp
 gui/editrecorddialog.cpp
@@ -98,6 +100,7 @@ backends/networking/sdl_net/localwebserver.cpp
 backends/networking/sdl_net/uploadfileclienthandler.cpp
 backends/platform/3ds/options-dialog.cpp
 backends/platform/3ds/osystem-events.cpp
+backends/platform/android/android.cpp
 backends/platform/android/options.cpp
 backends/platform/ds/ds-graphics.cpp
 backends/platform/ds/osystem_ds.cpp
@@ -105,6 +108,7 @@ backends/platform/ios7/ios7_options.mm
 backends/platform/ios7/ios7_osys_events.cpp
 backends/platform/ios7/ios7_osys_main.cpp
 backends/platform/maemo/maemo.cpp
+backends/platform/sdl/sdl.cpp
 backends/platform/sdl/macosx/appmenu_osx.mm
 backends/platform/sdl/macosx/macosx.cpp
 backends/platform/sdl/miyoo/miyoo.cpp

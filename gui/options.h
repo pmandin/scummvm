@@ -108,6 +108,8 @@ protected:
 	void setVolumeSettingsState(bool enabled);
 	void setSubtitleSettingsState(bool enabled);
 
+	void enableShaderControls(bool enabled);
+
 	virtual void setupGraphicsTab();
 	void updateScaleFactors(uint32 tag);
 
@@ -121,6 +123,7 @@ protected:
 
 	StaticTextWidget *_shader;
 	ButtonWidget *_shaderClearButton;
+	ButtonWidget *_updateShadersButton = nullptr;
 
 private:
 
@@ -278,6 +281,10 @@ protected:
 	ButtonWidget	 *_themePathClearButton;
 	StaticTextWidget *_iconPath;
 	ButtonWidget	 *_iconPathClearButton;
+#ifdef USE_DLC
+	StaticTextWidget *_dlcPath;
+	ButtonWidget	 *_dlcPathClearButton;
+#endif
 	StaticTextWidget *_extraPath;
 	ButtonWidget	 *_extraPathClearButton;
 #ifdef DYNAMIC_MODULES

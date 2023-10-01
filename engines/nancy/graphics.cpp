@@ -40,6 +40,18 @@ GraphicsManager::GraphicsManager() :
 	_isSuppressed(false) {}
 
 void GraphicsManager::init() {
+	const BSUM *bsum = (const BSUM *)g_nancy->getEngineData("BSUM");
+	assert(bsum);
+
+	// Extract transparent color from the boot summary
+	if (g_nancy->getGameType() == kGameTypeVampire) {
+		_transColor = bsum->paletteTrans;
+	} else {
+		_transColor = 	(bsum->rTrans << _inputPixelFormat.rShift) |
+						(bsum->gTrans << _inputPixelFormat.gShift) |
+						(bsum->bTrans << _inputPixelFormat.bShift);
+	}
+
 	initGraphics(640, 480, &_screenPixelFormat);
 	_screen.create(640, 480, _screenPixelFormat);
 	_screen.setTransparentColor(getTransColor());
@@ -52,13 +64,12 @@ void GraphicsManager::init() {
 }
 
 void GraphicsManager::draw(bool updateScreen) {
-	if (_isSuppressed) {
+	if (_isSuppressed && updateScreen) {
 		_isSuppressed = false;
 		return;
 	}
 
 	g_nancy->_cursorManager->applyCursor();
-	Common::List<Common::Rect> dirtyRects;
 
 	// Update graphics for all RenderObjects and determine
 	// the areas of the screen that need to be redrawn
@@ -71,14 +82,14 @@ void GraphicsManager::draw(bool updateScreen) {
 			if (current._isVisible) {
 				if (current.hasMoved() && !current.getPreviousScreenPosition().isEmpty()) {
 					// Object moved to a new location on screen, update the previous one
-					dirtyRects.push_back(current.getPreviousScreenPosition());
+					_dirtyRects.push_back(current.getPreviousScreenPosition());
 				}
 
 				// Redraw the current location
-				dirtyRects.push_back(current.getScreenPosition());
+				_dirtyRects.push_back(current.getScreenPosition());
 			} else if (!current.getPreviousScreenPosition().isEmpty()) {
 				// Object just turned invisible, redraw the last location
-				dirtyRects.push_back(current.getPreviousScreenPosition());
+				_dirtyRects.push_back(current.getPreviousScreenPosition());
 			}
 		}
 
@@ -87,10 +98,10 @@ void GraphicsManager::draw(bool updateScreen) {
 	}
 
 	// Filter out dirty rects that are completely inside others to reduce overdraw
-	for (auto outer = dirtyRects.begin(); outer != dirtyRects.end(); ++outer) {
-		for (auto inner = dirtyRects.begin(); inner != dirtyRects.end(); ++inner) {
+	for (auto outer = _dirtyRects.begin(); outer != _dirtyRects.end(); ++outer) {
+		for (auto inner = _dirtyRects.begin(); inner != _dirtyRects.end(); ++inner) {
 			if (inner != outer && (*outer).contains(*inner)) {
-				dirtyRects.erase(inner);
+				_dirtyRects.erase(inner);
 				break;
 			}
 		}
@@ -104,7 +115,7 @@ void GraphicsManager::draw(bool updateScreen) {
 			continue;
 		}
 
-		for (Common::Rect rect : dirtyRects) {
+		for (Common::Rect rect : _dirtyRects) {
 			if (rect.intersects(current.getScreenPosition())) {
 				blitToScreen(current, rect.findIntersectingRect(current.getScreenPosition()));
 			}
@@ -115,15 +126,20 @@ void GraphicsManager::draw(bool updateScreen) {
 	if (updateScreen) {
 		_screen.update();
 	}
+
+	// Remove all dirty rects for the next frame
+	_dirtyRects.clear();
 }
 
 void GraphicsManager::loadFonts(Common::SeekableReadStream *chunkStream) {
+	const BSUM *bsum = (const BSUM *)g_nancy->getEngineData("BSUM");
+	assert(bsum);
 	assert(chunkStream);
 
 	chunkStream->seek(0);
-	while (chunkStream->pos() < chunkStream->size() - 1) {
-		_fonts.push_back(Font());
-		_fonts.back().read(*chunkStream);
+	_fonts.resize(bsum->numFonts);
+	for (uint i = 0; i < _fonts.size(); ++i) {
+		_fonts[i].read(*chunkStream);
 	}
 
 	delete chunkStream;
@@ -144,6 +160,8 @@ void GraphicsManager::addObject(RenderObject *object) {
 void GraphicsManager::removeObject(RenderObject *object) {
 	for (auto &r : _objects) {
 		if (r == object) {
+			// Make sure the object gets properly cleared
+			_dirtyRects.push_back(r->getPreviousScreenPosition());
 			_objects.erase(&r);
 			break;
 		}
@@ -353,14 +371,6 @@ const Graphics::PixelFormat &GraphicsManager::getInputPixelFormat() {
 
 const Graphics::PixelFormat &GraphicsManager::getScreenPixelFormat() {
 	return _screenPixelFormat;
-}
-
-uint GraphicsManager::getTransColor() {
-	if (g_nancy->getGameType() == kGameTypeVampire) {
-		return 1; // If this isn't correct, try picking the pixel at [0, 0] inside the palette bitmap
-	} else {
-		return _inputPixelFormat.ARGBToColor(0, 0, 255, 0);
-	}
 }
 
 void GraphicsManager::grabViewportObjects(Common::Array<RenderObject *> &inArray) {

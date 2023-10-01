@@ -75,18 +75,27 @@ void MemMan::setCondition(MemHandle *bsMem, uint16 pCond) {
 
 void MemMan::flush() {
 	while (_memListFree) {
+		if (_memListFreeEnd == nullptr) {
+			warning("MemMan::flush(): _memListFreeEnd is nullptr");
+			break;
+		}
 		free(_memListFreeEnd->data);
 		_memListFreeEnd->data = NULL;
 		_memListFreeEnd->cond = MEM_FREED;
 		_alloced -= _memListFreeEnd->size;
 		removeFromFreeList(_memListFreeEnd);
 	}
+
 	if (_alloced)
 		warning("MemMan::flush: Something's wrong: still %d bytes alloced", _alloced);
 }
 
 void MemMan::checkMemoryUsage() {
 	while ((_alloced > MAX_ALLOC) && _memListFree) {
+		if (_memListFreeEnd == nullptr) {
+			warning("MemMan::checkMemoryUsage(): _memListFreeEnd is nullptr");
+			break;
+		}
 		free(_memListFreeEnd->data);
 		_memListFreeEnd->data = NULL;
 		_memListFreeEnd->cond = MEM_FREED;

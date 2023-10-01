@@ -119,6 +119,8 @@ void SliderPuzzle::execute() {
 			}
 		}
 
+		NancySceneState.setNoHeldItem();
+
 		g_nancy->_sound->loadSound(_clickSound);
 		_state = kRun;
 		// fall through
@@ -227,7 +229,7 @@ void SliderPuzzle::handleInput(NancyInput &input) {
 	if (currentTileX != -1) {
 		g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-		if (input.input & NancyInput::kLeftMouseButtonUp) {
+		if (!g_nancy->_sound->isSoundPlaying(_clickSound) && input.input & NancyInput::kLeftMouseButtonUp) {
 			g_nancy->_sound->playSound(_clickSound);
 			switch (direction) {
 			case kUp: {

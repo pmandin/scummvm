@@ -135,6 +135,7 @@ Debugger::Debugger() : GUI::Debugger() {
 	registerCmd("GameMapGump::startHighlightItems", WRAP_METHOD(Debugger, cmdStartHighlightItems));
 	registerCmd("GameMapGump::stopHighlightItems", WRAP_METHOD(Debugger, cmdStopHighlightItems));
 	registerCmd("GameMapGump::toggleHighlightItems", WRAP_METHOD(Debugger, cmdToggleHighlightItems));
+	registerCmd("GameMapGump::toggleFootpads", WRAP_METHOD(Debugger, cmdToggleFootpads));
 	registerCmd("GameMapGump::dumpMap", WRAP_METHOD(Debugger, cmdDumpMap));
 	registerCmd("GameMapGump::dumpAllMaps", WRAP_METHOD(Debugger, cmdDumpAllMaps));
 	registerCmd("GameMapGump::incrementSortOrder", WRAP_METHOD(Debugger, cmdIncrementSortOrder));
@@ -663,6 +664,11 @@ bool Debugger::cmdStopHighlightItems(int argc, const char **argv) {
 }
 bool Debugger::cmdToggleHighlightItems(int argc, const char **argv) {
 	GameMapGump::Set_highlightItems(!GameMapGump::is_highlightItems());
+	return false;
+}
+
+bool Debugger::cmdToggleFootpads(int argc, const char **argv) {
+	GameMapGump::toggleFootpads();
 	return false;
 }
 
@@ -1846,7 +1852,7 @@ bool Debugger::cmdBenchmarkRenderSurface(int argc, const char **argv) {
 
 	start = g_system->getMillis();
 	for (int i = 0; i < count; i++) {
-		surface->PaintMirrored(s, frame, 160, 100);
+		surface->Paint(s, frame, 160, 100, true);
 	}
 	end = g_system->getMillis();
 	debugPrintf("PaintMirrored: %d\n", end - start);

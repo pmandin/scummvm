@@ -17,10 +17,10 @@
 #define FORBIDDEN_SYMBOL_EXCEPTION_strcpy
 #define FORBIDDEN_SYMBOL_EXCEPTION_strcat
 
-#include <libretro.h>
+#include "backends/platform/libretro/include/libretro-defs.h"
+#include "backends/platform/libretro/include/libretro-core.h"
 #include "backends/platform/libretro/include/libretro-os.h"
 #include "backends/platform/libretro/include/libretro-mapper.h"
-#include "backends/platform/libretro/include/libretro-defs.h"
 
 void OSystem_libretro::updateMouseXY(float deltaAcc, float *cumulativeXYAcc, int doing_x) {
 	int *mouseXY;
@@ -206,6 +206,9 @@ void OSystem_libretro::processInputs(void) {
 			processKeyEvent((retropad_value & (1 << RETRO_DEVICE_KEY_STATUS)), mapper_get_device_key_scummvm_id(i), 0, key_flags);
 		}
 	}
+
+	if (retro_setting_get_gamepad_cursor_only())
+		return;
 
 #if defined(WIIU) || defined(__SWITCH__)
 	int p_x = retro_input_cb(0, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);

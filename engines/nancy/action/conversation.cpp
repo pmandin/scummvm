@@ -61,17 +61,14 @@ void ConversationSound::readData(Common::SeekableReadStream &stream) {
 		_sound.readNormal(stream);
 	}
 
-	char *rawText = new char[1500];
-	ser.syncBytes((byte *)rawText, 1500);
-	UI::Textbox::assembleTextLine(rawText, _text, 1500);
-	delete[] rawText;
+	readCaptionText(stream);
 
 	if (ser.getVersion() <= kGameTypeNancy1) {
 		_sound.readNormal(stream);
 	}
 
 	_responseGenericSound.readNormal(stream);
-	ser.skip(1);
+	ser.skip(1); // RESPONSE_STARTUP_CLEAR_ALL, RESPONSE_STARTUP_KEEP_OLD; never used (tested up to nancy5)
 	ser.syncAsByte(_conditionalResponseCharacterID);
 	ser.syncAsByte(_goodbyeResponseCharacterID);
 	ser.syncAsByte(_defaultNextScene);
@@ -82,24 +79,20 @@ void ConversationSound::readData(Common::SeekableReadStream &stream) {
 
 	uint16 numResponses = 0;
 	ser.syncAsUint16LE(numResponses);
-	rawText = new char[400];
 
 	_responses.resize(numResponses);
 	for (uint i = 0; i < numResponses; ++i) {
 		ResponseStruct &response = _responses[i];
 		response.conditionFlags.read(stream);
-		ser.syncBytes((byte*)rawText, 400);
-		UI::Textbox::assembleTextLine(rawText, response.text, 400);
+		readResponseText(stream, response);
 		readFilename(stream, response.soundName);
-		ser.skip(1);
+		ser.skip(1); // RESPONSE_ADD_IF_NOT_FOUND, RESPONSE_REMOVE_AND_ADD_TO_END, or RESPONSE_REMOVE
 		response.sceneChange.readData(stream, ser.getVersion() == kGameTypeVampire);
 		ser.syncAsSint16LE(response.flagDesc.label);
 		ser.syncAsByte(response.flagDesc.flag);
 		ser.skip(0x32, kGameTypeVampire, kGameTypeNancy1);
 		ser.skip(2, kGameTypeNancy2);
 	}
-
-	delete[] rawText;
 
 	uint16 numSceneBranchStructs = stream.readUint16LE();
 	_sceneBranchStructs.resize(numSceneBranchStructs);
@@ -146,11 +139,7 @@ void ConversationSound::execute() {
 		}
 
 		// Remove held item and re-add it to inventory
-		int heldItem = NancySceneState.getHeldItem();
-		if (heldItem != -1) {
-			NancySceneState.addItemToInventory(heldItem);
-			NancySceneState.setHeldItem(-1);
-		}
+		NancySceneState.setNoHeldItem();
 
 		// Move the mouse to the default position defined in CURS
 		const Common::Point initialMousePos = g_nancy->_cursorManager->getPrimaryVideoInitialPos();
@@ -176,7 +165,10 @@ void ConversationSound::execute() {
 	case kRun:
 		if (!_hasDrawnTextbox) {
 			_hasDrawnTextbox = true;
+			const TBOX *textboxData = (const TBOX *)g_nancy->getEngineData("TBOX");
+			assert(textboxData);
 			NancySceneState.getTextbox().clear();
+			NancySceneState.getTextbox().setOverrideFont(textboxData->conversationFontID);
 
 			if (ConfMan.getBool("subtitles")) {
 				NancySceneState.getTextbox().addTextLine(_text);
@@ -291,6 +283,20 @@ void ConversationSound::execute() {
 	}
 }
 
+void ConversationSound::readCaptionText(Common::SeekableReadStream &stream) {
+	char *rawText = new char[1500];
+	stream.read(rawText, 1500);
+	assembleTextLine(rawText, _text, 1500);
+	delete[] rawText;
+}
+
+void ConversationSound::readResponseText(Common::SeekableReadStream &stream, ResponseStruct &response) {
+	char *rawText = new char[400];
+	stream.read(rawText, 400);
+	assembleTextLine(rawText, response.text, 400);
+	delete[] rawText;
+}
+
 void ConversationSound::addConditionalDialogue() {
 	for (const auto &res : g_nancy->getStaticData().conditionalDialogue[_conditionalResponseCharacterID]) {
 		bool isSatisfied = true;
@@ -327,9 +333,31 @@ void ConversationSound::addConditionalDialogue() {
 			_responses.push_back(ResponseStruct());
 			ResponseStruct &newResponse = _responses.back();
 			newResponse.soundName = res.soundID;
-			newResponse.text = g_nancy->getStaticData().conditionalDialogueTexts[res.textID];
+
+			if (g_nancy->getGameType() <= kGameTypeNancy5) {
+				// String is also inside nancy.dat
+				newResponse.text = g_nancy->getStaticData().conditionalDialogueTexts[res.textID];
+			} else {
+				// String is inside the CVTX chunk in the CONVO file. Sound ID doubles as string key
+				const CVTX *convo = (const CVTX *)g_nancy->getEngineData("CONVO");
+				assert(convo);
+
+				newResponse.text = convo->texts[res.soundID];
+			}
+			
 			newResponse.sceneChange.sceneID = res.sceneID;
 			newResponse.sceneChange.continueSceneSound = kContinueSceneSound;
+
+			// Check if the response is a repeat. This can happen when multiple condition combinations
+			// trigger the same response.
+			for (uint i = 0; i < _responses.size() - 1; ++i) {
+				if (	_responses[i].soundName == newResponse.soundName &&
+						_responses[i].text == newResponse.text &&
+						_responses[i].sceneChange.sceneID == newResponse.sceneChange.sceneID) {
+					_responses.pop_back();
+					break;
+				}
+			}
 		}
 	}
 }
@@ -339,7 +367,17 @@ void ConversationSound::addGoodbye() {
 	_responses.push_back(ResponseStruct());
 	ResponseStruct &newResponse = _responses.back();
 	newResponse.soundName = res.soundID;
-	newResponse.text = g_nancy->getStaticData().goodbyeTexts[_goodbyeResponseCharacterID];
+
+	if (g_nancy->getGameType() <= kGameTypeNancy5) {
+		// String is also inside nancy.dat
+		newResponse.text = g_nancy->getStaticData().goodbyeTexts[_goodbyeResponseCharacterID];
+	} else {
+		// String is inside the CVTX chunk in the CONVO file. Sound ID doubles as string key
+		const CVTX *convo = (const CVTX *)g_nancy->getEngineData("CONVO");
+		assert(convo);
+
+		newResponse.text = convo->texts[res.soundID];
+	}
 
 	// Evaluate conditions to pick from the collection of replies
 	uint sceneChangeID = 0;
@@ -611,7 +649,7 @@ void ConversationCel::registerGraphics() {
 void ConversationCel::updateGraphics() {
 	uint32 currentTime = g_nancy->getTotalPlayTime();
 
-	if (_state == kRun && currentTime > _nextFrameTime && _curFrame <= _lastFrame) {
+	if (_state == kRun && currentTime > _nextFrameTime && _curFrame < MIN<uint>(_lastFrame + 1, _celNames[0].size())) {
 		for (uint i = 0; i < _celRObjects.size(); ++i) {
 			Cel &cel = loadCel(_celNames[i][_curFrame], _treeNames[i]);
 			if (_overrideTreeRects[i] == kCelOverrideTreeRectsOn) {
@@ -694,7 +732,7 @@ void ConversationCel::readData(Common::SeekableReadStream &stream) {
 }
 
 bool ConversationCel::isVideoDonePlaying() {
-	return _curFrame >= _lastFrame && _nextFrameTime <= g_nancy->getTotalPlayTime();
+	return _curFrame >= MIN<uint>(_lastFrame, _celNames[0].size()) && _nextFrameTime <= g_nancy->getTotalPlayTime();
 }
 
 ConversationCel::Cel &ConversationCel::loadCel(const Common::String &name, const Common::String &treeName) {
@@ -706,6 +744,46 @@ ConversationCel::Cel &ConversationCel::loadCel(const Common::String &name, const
 	Cel &newCel = _celCache.getOrCreateVal(name);
 	g_nancy->_resource->loadImage(name, newCel.surf, treeName, &newCel.src, &newCel.dest);
 	return _celCache[name];
+}
+
+void ConversationSoundT::readCaptionText(Common::SeekableReadStream &stream) {
+	Common::String key;
+	readFilename(stream, key);
+
+	const CVTX *convo = (const CVTX *)g_nancy->getEngineData("CONVO");
+	assert(convo);
+
+	_text = convo->texts[key];
+}
+
+void ConversationSoundT::readResponseText(Common::SeekableReadStream &stream, ResponseStruct &response) {
+	Common::String key;
+	readFilename(stream, key);
+
+	const CVTX *convo = (const CVTX *)g_nancy->getEngineData("CONVO");
+	assert(convo);
+
+	response.text = convo->texts[key];
+}
+
+void ConversationCelT::readCaptionText(Common::SeekableReadStream &stream) {
+	Common::String key;
+	readFilename(stream, key);
+
+	const CVTX *convo = (const CVTX *)g_nancy->getEngineData("CONVO");
+	assert(convo);
+
+	_text = convo->texts[key];
+}
+
+void ConversationCelT::readResponseText(Common::SeekableReadStream &stream, ResponseStruct &response) {
+	Common::String key;
+	readFilename(stream, key);
+
+	const CVTX *convo = (const CVTX *)g_nancy->getEngineData("CONVO");
+	assert(convo);
+
+	response.text = convo->texts[key];
 }
 
 } // End of namespace Action

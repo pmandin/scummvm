@@ -416,6 +416,9 @@ void GUIMain::SetClickable(bool on) {
 		_flags |= kGUIMain_Clickable;
 	else
 		_flags &= ~kGUIMain_Clickable;
+
+	if (!on)
+		ResetOverControl();
 }
 
 void GUIMain::SetConceal(bool on) {
@@ -790,7 +793,8 @@ GUILabelMacro FindLabelMacros(const String &text) {
 	return (GUILabelMacro)macro_flags;
 }
 
-static HError ResortGUI(bool bwcompat_ctrl_zorder = false) {
+HError RebuildGUI() {
+	const bool bwcompat_ctrl_zorder = GameGuiVersion < kGuiVersion_272e;
 	// set up the reverse-lookup array
 	for (auto &gui : _GP(guis)) {
 		HError err = gui.RebuildArray();
@@ -910,7 +914,7 @@ HError ReadGUI(Stream *in, bool is_savegame) {
 			_GP(guilist)[i].ReadFromFile(in, GameGuiVersion);
 		}
 	}
-	return ResortGUI(GameGuiVersion < kGuiVersion_272e);
+	return RebuildGUI();
 }
 
 void WriteGUI(Stream *out) {

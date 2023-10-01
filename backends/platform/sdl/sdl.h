@@ -93,6 +93,7 @@ public:
 
 	// Default paths
 	virtual Common::String getDefaultIconsPath();
+	virtual Common::Path getDefaultDLCsPath();
 	virtual Common::String getScreenshotsPath();
 
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
@@ -190,6 +191,7 @@ protected:
 #endif
 
 	virtual uint32 getOSDoubleClickTime() const { return 0; }
+	virtual const char * const *buildHelpDialogData() override;
 };
 
 #endif

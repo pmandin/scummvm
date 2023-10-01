@@ -67,6 +67,18 @@ MODULE_OBJS += \
 endif
 endif
 
+ifdef USE_SCUMMVMDLC
+ifdef USE_LIBCURL
+MODULE_OBJS += \
+	dlc/scummvmcloud.o
+endif
+endif
+
+ifdef USE_DLC
+MODULE_OBJS += \
+	dlc/dlcmanager.o
+endif
+
 ifdef USE_LIBCURL
 MODULE_OBJS += \
 	networking/curl/connectionmanager.o \

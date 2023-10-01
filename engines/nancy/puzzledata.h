@@ -21,6 +21,7 @@
 
 #include "common/serializer.h"
 #include "common/array.h"
+#include "common/hashmap.h"
 
 #ifndef NANCY_PUZZLEDATA_H
 #define NANCY_PUZZLEDATA_H
@@ -39,6 +40,7 @@ struct PuzzleData {
 
 struct SliderPuzzleData : public PuzzleData {
 	SliderPuzzleData();
+	virtual ~SliderPuzzleData() {}
 
 	static constexpr uint32 getTag() { return MKTAG('S', 'L', 'I', 'D'); }
 	virtual void synchronize(Common::Serializer &ser);
@@ -49,6 +51,7 @@ struct SliderPuzzleData : public PuzzleData {
 
 struct RippedLetterPuzzleData : public PuzzleData {
 	RippedLetterPuzzleData();
+	virtual ~RippedLetterPuzzleData() {}
 
 	static constexpr uint32 getTag() { return MKTAG('R', 'I', 'P', 'L'); }
 	virtual void synchronize(Common::Serializer &ser);
@@ -60,6 +63,7 @@ struct RippedLetterPuzzleData : public PuzzleData {
 
 struct TowerPuzzleData : public PuzzleData {
 	TowerPuzzleData();
+	virtual ~TowerPuzzleData() {}
 
 	static constexpr uint32 getTag() { return MKTAG('T', 'O', 'W', 'R'); }
 	virtual void synchronize(Common::Serializer &ser);
@@ -70,6 +74,7 @@ struct TowerPuzzleData : public PuzzleData {
 
 struct RiddlePuzzleData : public PuzzleData {
 	RiddlePuzzleData();
+	virtual ~RiddlePuzzleData() {}
 
 	static constexpr uint32 getTag() { return MKTAG('R', 'I', 'D', 'L'); }
 	virtual void synchronize(Common::Serializer &ser);
@@ -80,11 +85,34 @@ struct RiddlePuzzleData : public PuzzleData {
 
 struct SoundEqualizerPuzzleData : public PuzzleData {
 	SoundEqualizerPuzzleData();
+	virtual ~SoundEqualizerPuzzleData() {}
 
 	static constexpr uint32 getTag() { return MKTAG('S', 'E', 'Q', 'L'); }
 	virtual void synchronize(Common::Serializer &ser);
 
 	Common::Array<byte> sliderValues;
+};
+
+struct JournalData : public PuzzleData {
+	JournalData() {}
+	virtual ~JournalData() {}
+
+	static constexpr uint32 getTag() { return MKTAG('J', 'O', 'U', 'R'); }
+	virtual void synchronize(Common::Serializer &ser);
+
+	Common::HashMap<uint16, Common::Array<Common::String>> journalEntries;
+};
+
+// Contains data related to nancy6's exhibit puzzle, which
+// spans multiple scenes and uses several special-purpose AR types
+struct TableData : public PuzzleData {
+	TableData();
+	virtual ~TableData() {}
+
+	static constexpr uint32 getTag() { return MKTAG('T', 'A', 'B', 'L'); }
+	virtual void synchronize(Common::Serializer &ser);
+
+	Common::Array<uint16> currentIDs;
 };
 
 PuzzleData *makePuzzleData(const uint32 tag);

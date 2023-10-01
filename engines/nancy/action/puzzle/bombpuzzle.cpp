@@ -187,6 +187,8 @@ void BombPuzzle::execute() {
 		g_nancy->_sound->loadSound(_snipSound);
 		g_nancy->_sound->loadSound(_noToolSound);
 
+		NancySceneState.setNoHeldItem();
+
 		_state = kRun;
 		break;
 	case kRun: {
@@ -255,12 +257,14 @@ void BombPuzzle::handleInput(NancyInput &input) {
 
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				if (NancySceneState.getHeldItem() == _toolID) {
-					_playerOrder.push_back(i);
-					g_nancy->_sound->playSound(_snipSound);
-					Common::Rect dest = _wireDests[i];
-					dest.translate(-_screenPosition.left, -_screenPosition.top);
-					_drawSurface.blitFrom(_image, _wireSrcs[i], dest);
-					_needsRedraw = true;
+					if (!g_nancy->_sound->isSoundPlaying(_snipSound)) {
+						_playerOrder.push_back(i);
+						g_nancy->_sound->playSound(_snipSound);
+						Common::Rect dest = _wireDests[i];
+						dest.translate(-_screenPosition.left, -_screenPosition.top);
+						_drawSurface.blitFrom(_image, _wireSrcs[i], dest);
+						_needsRedraw = true;
+					}
 				} else {
 					g_nancy->_sound->playSound(_noToolSound);
 				}

@@ -113,11 +113,16 @@ public:
 	void setRate(const SoundDescription &description, uint32 rate);
 	void setRate(const Common::String &chunkName, uint32 rate);
 
+	Audio::Timestamp getLength(uint16 channelID);
+	Audio::Timestamp getLength(const SoundDescription &description);
+	Audio::Timestamp getLength(const Common::String &chunkName);
+
 	void soundEffectMaintenance();
 	void recalculateSoundEffects();
 
 	// Used when changing scenes
-	void stopAndUnloadSpecificSounds();
+	void stopAndUnloadSceneSpecificSounds();
+	void pauseSceneSpecificSounds(bool pause);
 
 	static Audio::SeekableAudioStream *makeHISStream(Common::SeekableReadStream *stream, DisposeAfterUse::Flag disposeAfterUse, uint32 overrideSamplesPerSec = 0);
 
@@ -144,7 +149,7 @@ protected:
 		uint32 nextRepeatTime = 0;
 	};
 
-	void soundEffectMaintenance(uint16 channelID);
+	void soundEffectMaintenance(uint16 channelID, bool force = false);
 
 	Audio::Mixer *_mixer;
 
@@ -152,7 +157,10 @@ protected:
 	Common::HashMap<Common::String, SoundDescription> _commonSounds;
 
 	bool _shouldRecalculate;
+
 	Math::Vector3d _orientation;
+	Math::Vector3d _position;
+	uint _positionLerp = 0;
 };
 
 } // End of namespace Nancy

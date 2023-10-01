@@ -119,7 +119,8 @@ Scene::Scene() :
 		_difficulty(0),
 		_activeConversation(nullptr),
 		_lightning(nullptr),
-		_destroyOnExit(false) {}
+		_destroyOnExit(false),
+		_hotspotDebug(50) {}
 
 Scene::~Scene()  {
 	delete _helpButton;
@@ -149,7 +150,7 @@ void Scene::process() {
 	case kStartSound:
 		_state = kRun;
 		if (_sceneState.currentScene.continueSceneSound == kLoadSceneSound) {
-			g_nancy->_sound->stopAndUnloadSpecificSounds();
+			g_nancy->_sound->stopAndUnloadSceneSpecificSounds();
 			g_nancy->_sound->loadSound(_sceneState.summary.sound);
 			g_nancy->_sound->playSound(_sceneState.summary.sound);
 		}
@@ -180,7 +181,7 @@ void Scene::onStateEnter(const NancyState::NancyState prevState) {
 		if (prevState == NancyState::kPause) {
 			g_nancy->_sound->pauseAllSounds(false);
 		} else {
-			unpauseSceneSpecificSounds();
+			g_nancy->_sound->pauseSceneSpecificSounds(false);
 		}
 
 		g_nancy->_sound->stopSound("MSND");
@@ -190,7 +191,10 @@ void Scene::onStateEnter(const NancyState::NancyState prevState) {
 }
 
 bool Scene::onStateExit(const NancyState::NancyState nextState) {
-	g_nancy->_graphicsManager->screenshotScreen(_lastScreenshot);
+	if (_state == kRun) {
+		// Exiting the state outside the kRun state means we've encountered an error
+		g_nancy->_graphicsManager->screenshotScreen(_lastScreenshot);
+	}
 
 	if (nextState != NancyState::kPause) {
 		_timers.pushedPlayTime = g_nancy->getTotalPlayTime();
@@ -201,7 +205,7 @@ bool Scene::onStateExit(const NancyState::NancyState nextState) {
 	if (nextState == NancyState::kPause) {
 		g_nancy->_sound->pauseAllSounds(true);
 	} else {
-		pauseSceneSpecificSounds();
+		g_nancy->_sound->pauseSceneSpecificSounds(true);
 	}
 
 	_gameStateRequested = NancyState::kNone;
@@ -219,6 +223,11 @@ void Scene::changeScene(const SceneChangeDescription &sceneDescription) {
 		return;
 	}
 
+	// Increment scene count on scene exit in order to:
+	// - keep values needed for the kSceneCount dependency correct
+	// - make sure we don't increment when loading a save
+	_flags.sceneCounts.getOrCreateVal(_sceneState.currentScene.sceneID)++;
+
 	_sceneState.nextScene = sceneDescription;
 	_state = kLoad;
 }
@@ -232,32 +241,6 @@ void Scene::popScene() {
 	_sceneState.pushedScene.continueSceneSound = true;
 	changeScene(_sceneState.pushedScene);
 	_sceneState.isScenePushed = false;
-}
-
-void Scene::pauseSceneSpecificSounds() {
-	if (g_nancy->getGameType() == kGameTypeVampire && Nancy::State::Map::hasInstance() && g_nancy->getState() != NancyState::kMap) {
-		uint currentScene = _sceneState.currentScene.sceneID;
-		if (currentScene == 0 || (currentScene >= 15 && currentScene <= 27)) {
-			g_nancy->_sound->pauseSound(NancyMapState.getSound(), true);
-		}
-	}
-
-	for (uint i = 0; i < 10; ++i) {
-		g_nancy->_sound->pauseSound(i, true);
-	}
-}
-
-void Scene::unpauseSceneSpecificSounds() {
-	if (g_nancy->getGameType() == kGameTypeVampire && Nancy::State::Map::hasInstance()) {
-		uint currentScene = _sceneState.currentScene.sceneID;
-		if (currentScene == 0 || (currentScene >= 15 && currentScene <= 27)) {
-			g_nancy->_sound->pauseSound(NancyMapState.getSound(), false);
-		}
-	}
-
-	for (uint i = 0; i < 10; ++i) {
-		g_nancy->_sound->pauseSound(i, false);
-	}
 }
 
 void Scene::setPlayerTime(Time time, byte relative) {
@@ -284,9 +267,21 @@ byte Scene::getPlayerTOD() const {
 		} else {
 			return kPlayerDuskDawn;
 		}
-	} else {
+	} else if (g_nancy->getGameType() <= kGameTypeNancy5) {
 		// nancy2 and up removed dusk/dawn
 		if (_timers.playerTime.getHours() >= 6 && _timers.playerTime.getHours() < 18) {
+			return kPlayerDay;
+		} else {
+			return kPlayerNight;
+		}
+	} else {
+		// nancy6 added the day start/end times (in minutes) to BSUM
+		const BSUM *bootSummary = (const BSUM *)g_nancy->getEngineData("BSUM");
+		assert(bootSummary);
+
+		uint16 minutes = _timers.playerTime.getHours() * 60 + _timers.playerTime.getMinutes();
+
+		if (minutes >= bootSummary->dayStartMinutes && minutes < bootSummary->dayEndMinutes) {
 			return kPlayerDay;
 		} else {
 			return kPlayerNight;
@@ -295,30 +290,159 @@ byte Scene::getPlayerTOD() const {
 }
 
 void Scene::addItemToInventory(uint16 id) {
-	_flags.items[id] = g_nancy->_true;
-	if (_flags.heldItem == id) {
-		setHeldItem(-1);
-	}
-	
-	g_nancy->_sound->playSound("BUOK");
+	if (_flags.items[id] == g_nancy->_false) {
+		_flags.items[id] = g_nancy->_true;
+		if (_flags.heldItem == id) {
+			setHeldItem(-1);
+		}
+		
+		g_nancy->_sound->playSound("BUOK");
 
-	_inventoryBox.addItem(id);
+		_inventoryBox.addItem(id);
+	}
 }
 
 void Scene::removeItemFromInventory(uint16 id, bool pickUp) {
-	_flags.items[id] = g_nancy->_false;
+	if (_flags.items[id] == g_nancy->_true || getHeldItem() == id) {
+		_flags.items[id] = g_nancy->_false;
 
-	if (pickUp) {
-		setHeldItem(id);
+		if (pickUp) {
+			setHeldItem(id);
+		} else if (getHeldItem() == id) {
+			setHeldItem(-1);
+		}
+		
+		g_nancy->_sound->playSound("BUOK");
+
+		_inventoryBox.removeItem(id);
 	}
-	
-	g_nancy->_sound->playSound("BUOK");
-
-	_inventoryBox.removeItem(id);
 }
 
 void Scene::setHeldItem(int16 id)  {
 	_flags.heldItem = id; g_nancy->_cursorManager->setCursorItemID(id);
+}
+
+void Scene::setNoHeldItem() {
+	if (getHeldItem() != -1) {
+		addItemToInventory(getHeldItem());
+	}
+}
+
+void Scene::installInventorySoundOverride(byte command, const SoundDescription &sound, const Common::String &caption, uint16 itemID) {
+	InventorySoundOverride newOverride;
+
+	switch (command) {
+	case kInvSoundOverrideCommandNoSound :
+		// Make the sound silent
+		newOverride.sound = sound;
+		newOverride.sound.name = "NO SOUND";
+		newOverride.caption = caption; // Assumes the caption will be empty
+		_inventorySoundOverrides.setVal(itemID, newOverride);
+		break;
+	case kInvSoundOverrideCommandNewSound :
+		newOverride.sound = sound;
+		newOverride.caption = caption;
+		_inventorySoundOverrides.setVal(itemID, newOverride);
+		break;
+	case kInvSoundOverrideCommandICant :
+		// Make the sound the default "I can't use that here"
+		newOverride.isDefault = true;
+		_inventorySoundOverrides.setVal(itemID, newOverride);
+		break;
+	case kInvSoundOverrideCommandTurnOff :
+		// Remove any previous override
+		_inventorySoundOverrides.erase(itemID);
+		break;
+	default :
+		return;
+	}
+}
+
+void Scene::playItemCantSound(int16 itemID) {
+	if (ConfMan.getBool("subtitles") && g_nancy->getGameType() >= kGameTypeNancy2) {
+		_textbox.clear();
+	}
+
+	// Improvement: nancy2 never shows the caption text, even though it exists in the data; we show it
+	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
+	assert(inventoryData);
+
+	if (itemID < 0) {
+		if (inventoryData->cantSound.name.size()) {
+			// Play default "can't" inside inventory data (if present)
+			g_nancy->_sound->loadSound(inventoryData->cantSound);
+			g_nancy->_sound->playSound(inventoryData->cantSound);
+
+			if (ConfMan.getBool("subtitles")) {
+				_textbox.addTextLine(inventoryData->cantText, inventoryData->captionAutoClearTime);
+			}
+		} else {
+			// TVD and nancy1 contain no sound data in INV, and have no captions
+			g_nancy->_sound->playSound("CANT");
+		}
+	} else if ((uint)itemID < _flags.items.size()) {
+		if (_inventorySoundOverrides.contains(itemID)) {
+			// We have an override installed
+			InventorySoundOverride &override = _inventorySoundOverrides[itemID];
+			if (!override.isDefault) {
+				// Not set to the default sound, play the override
+				g_nancy->_sound->loadSound(override.sound);
+				g_nancy->_sound->playSound(override.sound);
+
+				if (ConfMan.getBool("subtitles")) {
+					_textbox.addTextLine(override.caption, inventoryData->captionAutoClearTime);
+				}
+				return;
+			} else {
+				// Play the default "I can't" sound
+				const INV::ItemDescription item = inventoryData->itemDescriptions[itemID];
+
+				if (item.generalCantSound.name.size()) {
+					// This field only exists in nancy2
+					g_nancy->_sound->loadSound(item.generalCantSound);
+					g_nancy->_sound->playSound(item.generalCantSound);
+
+					if (ConfMan.getBool("subtitles")) {
+						_textbox.addTextLine(item.generalCantText, inventoryData->captionAutoClearTime);
+					}
+				} else if (inventoryData->cantSound.name.size()) {
+					g_nancy->_sound->loadSound(inventoryData->cantSound);
+					g_nancy->_sound->playSound(inventoryData->cantSound);
+
+					if (ConfMan.getBool("subtitles")) {
+						_textbox.addTextLine(inventoryData->cantText, inventoryData->captionAutoClearTime);
+					}
+				} else {
+					// Should be unreachable
+					g_nancy->_sound->playSound("CANT");
+				}
+			}
+		}
+
+		// No override installed
+		const INV::ItemDescription item = inventoryData->itemDescriptions[itemID];
+
+		if (item.specificCantSound.name.size()) {
+			// The inventory data contains a custom "can't" sound for this item
+			g_nancy->_sound->loadSound(item.specificCantSound);
+			g_nancy->_sound->playSound(item.specificCantSound);
+
+			if (ConfMan.getBool("subtitles")) {
+				_textbox.addTextLine(item.specificCantText, inventoryData->captionAutoClearTime);
+			}
+		} else if (inventoryData->cantSound.name.size()) {
+			// No custom sound, play default "can't" inside inventory data. Should (?) be unreachable
+			g_nancy->_sound->loadSound(inventoryData->cantSound);
+			g_nancy->_sound->playSound(inventoryData->cantSound);
+
+			if (ConfMan.getBool("subtitles")) {
+				_textbox.addTextLine(inventoryData->cantText, inventoryData->captionAutoClearTime);
+			}
+		} else {
+			// TVD and nancy1 contain no sound data in INV, and have no captions
+			g_nancy->_sound->playSound("CANT");
+		}
+	}
 }
 
 void Scene::setEventFlag(int16 label, byte flag) {
@@ -395,6 +519,7 @@ void Scene::registerGraphics() {
 	_viewport.registerGraphics();
 	_textbox.registerGraphics();
 	_inventoryBox.registerGraphics();
+	_hotspotDebug.registerGraphics();
 
 	if (_menuButton) {
 		_menuButton->registerGraphics();
@@ -616,6 +741,11 @@ void Scene::init() {
 		_lightning = new Misc::Lightning();
 	}
 
+	Common::Rect vpPos = _viewport.getScreenPosition();
+	_hotspotDebug._drawSurface.create(vpPos.width(), vpPos.height(), g_nancy->_graphicsManager->getScreenPixelFormat());
+	_hotspotDebug.moveTo(vpPos);
+	_hotspotDebug.setTransparent(true);
+
 	registerGraphics();
 	g_nancy->_graphicsManager->redrawAll();
 }
@@ -661,6 +791,7 @@ void Scene::load() {
 	}
 
 	clearSceneData();
+	g_nancy->_graphicsManager->suppressNextDraw();
 
 	// Scene IDs are prefixed with S inside the cif tree; e.g 100 -> S100
 	Common::String sceneName = Common::String::format("S%u", _sceneState.nextScene.sceneID);
@@ -698,9 +829,11 @@ void Scene::load() {
 	// Search for Action Records, maximum for a scene is 30
 	Common::SeekableReadStream *actionRecordChunk = nullptr;
 
-	while (actionRecordChunk = sceneIFF.getChunkStream("ACT", _actionManager._records.size()), actionRecordChunk != nullptr) {
+	uint numRecords = 0;
+	while (actionRecordChunk = sceneIFF.getChunkStream("ACT", numRecords), actionRecordChunk != nullptr) {
 		_actionManager.addNewActionRecord(*actionRecordChunk);
 		delete actionRecordChunk;
+		++numRecords;
 	}
 
 	if (_sceneState.currentScene.paletteID == -1) {
@@ -735,12 +868,13 @@ void Scene::load() {
 		}
 	}
 
+	for (auto &override : _inventorySoundOverrides) {
+		g_nancy->_sound->stopSound(override._value.sound);
+	}
+	_inventorySoundOverrides.clear();
+
 	_timers.sceneTime = 0;
-
-	_flags.sceneCounts.getOrCreateVal(_sceneState.currentScene.sceneID)++;
-
 	g_nancy->_sound->recalculateSoundEffects();
-	g_nancy->_graphicsManager->suppressNextDraw();
 
 	_state = kStartSound;
 }

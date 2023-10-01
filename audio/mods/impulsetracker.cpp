@@ -92,7 +92,7 @@ static BOOL memoryReaderRead(MREADER *reader, void *ptr, size_t size) {
 	MikMemoryReader *mr;
 	mr = (MikMemoryReader *)reader;
 
-	if (!mr && !mr->stream)
+	if (!mr || !mr->stream)
 		return 0;
 
 	uint32 receivedBytes = mr->stream->read(ptr, size);
@@ -173,8 +173,8 @@ private:
 	DisposeAfterUse::Flag _dispose;
 	bool _mikmod_load_successful = false;
 	Common::SeekableReadStream *_stream;
-	MREADER *_reader;
-	MODULE *_mod;
+	MREADER *_reader = nullptr;
+	MODULE *_mod = nullptr;
 };
 
 ImpulseTrackerMod::ImpulseTrackerMod(Common::SeekableReadStream *stream, DisposeAfterUse::Flag disposeAfterUse) {

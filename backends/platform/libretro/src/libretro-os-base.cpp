@@ -23,25 +23,33 @@
 #define FS_SYSTEM_FACTORY LibRetroFilesystemFactory
 #endif
 
+#include <features/features_cpu.h>
+
 #include "audio/mixer_intern.h"
 #include "backends/base-backend.h"
 #include "common/config-manager.h"
 #include "common/system.h"
 #include "graphics/surface.h"
+
 #include "backends/saves/default/default-saves.h"
+#include "backends/platform/libretro/include/libretro-defs.h"
+#include "backends/platform/libretro/include/libretro-core.h"
 #include "backends/platform/libretro/include/libretro-timer.h"
 #include "backends/platform/libretro/include/libretro-os.h"
-#include "backends/platform/libretro/include/libretro-defs.h"
+#include "backends/platform/libretro/include/libretro-fs.h"
 
 OSystem_libretro::OSystem_libretro() : _mousePaletteEnabled(false), _mouseVisible(false), _mouseX(0), _mouseY(0), _mouseXAcc(0.0), _mouseYAcc(0.0), _mouseHotspotX(0), _mouseHotspotY(0), _dpadXAcc(0.0), _dpadYAcc(0.0), _dpadXVel(0.0f), _dpadYVel(0.0f), _mouseKeyColor(0), _mouseDontScale(false), _mixer(0), _startTime(0), _threadSwitchCaller(0), _cursorStatus(0) {
 	_fsFactory = new FS_SYSTEM_FACTORY();
-	memset(_mouseButtons, 0, sizeof(_mouseButtons));
 
-	s_systemDir = Common::String(retro_get_system_dir());
-	s_saveDir = Common::String(retro_get_save_dir());
-	s_themeDir = s_systemDir + "/" + SCUMMVM_SYSTEM_SUBDIR + "/" + SCUMMVM_THEME_SUBDIR;
-	s_extraDir = s_systemDir + "/" + SCUMMVM_SYSTEM_SUBDIR + "/" + SCUMMVM_EXTRA_SUBDIR;
-	s_lastDir = s_systemDir;
+	s_systemDir = retro_get_system_dir();
+	if (s_systemDir.empty() || ! LibRetroFilesystemNode(s_systemDir).isDirectory())
+		s_systemDir.clear();
+
+	s_saveDir = retro_get_save_dir();
+	if (s_saveDir.empty() || ! LibRetroFilesystemNode(s_saveDir).isDirectory())
+		s_saveDir.clear();
+
+	memset(_mouseButtons, 0, sizeof(_mouseButtons));
 
 	_startTime = (uint32)(cpu_features_get_time_usec() / 1000);
 }
@@ -56,25 +64,41 @@ OSystem_libretro::~OSystem_libretro() {
 }
 
 void OSystem_libretro::initBackend() {
+	Common::String s_homeDir(LibRetroFilesystemNode::getHomeDir());
+	Common::String s_themeDir(s_systemDir + "/" + SCUMMVM_SYSTEM_SUBDIR + "/" + SCUMMVM_THEME_SUBDIR);
+	Common::String s_extraDir(s_systemDir + "/" + SCUMMVM_SYSTEM_SUBDIR + "/" + SCUMMVM_EXTRA_SUBDIR);
+	Common::String s_soundfontPath(s_extraDir + "/" + DEFAULT_SOUNDFONT_FILENAME);
 
-	_savefileManager = new DefaultSaveFileManager(s_saveDir);
+	if (! LibRetroFilesystemNode(s_themeDir).isDirectory())
+		s_themeDir.clear();
+	if (! LibRetroFilesystemNode(s_extraDir).isDirectory())
+		s_extraDir.clear();
+	if (! LibRetroFilesystemNode(s_soundfontPath).exists())
+		s_soundfontPath.clear();
+	if ((s_homeDir.empty() || ! LibRetroFilesystemNode(s_homeDir).isDirectory()) && ! s_systemDir.empty())
+		s_homeDir = s_systemDir;
 
-	if (! ConfMan.hasKey("themepath")) {
-		if (! Common::FSNode(s_themeDir).exists())
-			retro_osd_notification("ScummVM theme folder not found.");
-		else
-			ConfMan.set("themepath", s_themeDir);
+	//Register default paths
+	if (! s_homeDir.empty()) {
+		ConfMan.registerDefault("browser_lastpath", s_homeDir);
+		retro_log_cb(RETRO_LOG_DEBUG, "Default browser last path set to: %s\n", s_homeDir.c_str());
+	}
+	if (! s_saveDir.empty()) {
+		ConfMan.registerDefault("savepath", s_saveDir);
+		retro_log_cb(RETRO_LOG_DEBUG, "Default save path set to: %s\n", s_saveDir.c_str());
 	}
 
-	if (! ConfMan.hasKey("extrapath")) {
-		if (! Common::FSNode(s_extraDir).exists())
-			retro_osd_notification("ScummVM datafiles folder not found. Some engines/features will not work.");
-		else
-			ConfMan.set("extrapath", s_extraDir);
-	}
+	//Check current paths
+	if (!checkPathSetting("savepath", s_saveDir))
+		retro_osd_notification("ScummVM save folder not found.");
+	if (!checkPathSetting("themepath", s_themeDir))
+		retro_osd_notification("ScummVM theme folder not found.");
+	if (!checkPathSetting("extrapath", s_extraDir))
+		retro_osd_notification("ScummVM extra folder not found. Some engines/features (e.g. Virtual Keyboard) will not work without relevant datafiles.");
+	checkPathSetting("soundfont", s_soundfontPath, false);
+	checkPathSetting("browser_lastpath", s_homeDir);
 
-	if (! ConfMan.hasKey("browser_lastpath"))
-		ConfMan.set("browser_lastpath", s_lastDir);
+	_savefileManager = new DefaultSaveFileManager();
 
 #ifdef FRONTEND_SUPPORTS_RGB565
 	_overlay.create(RES_W_OVERLAY, RES_H_OVERLAY, Graphics::PixelFormat(2, 5, 6, 5, 0, 11, 5, 0, 0));
@@ -82,7 +106,7 @@ void OSystem_libretro::initBackend() {
 	_overlay.create(RES_W_OVERLAY, RES_H_OVERLAY, Graphics::PixelFormat(2, 5, 5, 5, 1, 10, 5, 0, 15));
 #endif
 	_mixer = new Audio::MixerImpl(retro_setting_get_sample_rate());
-	retro_log_cb(RETRO_LOG_DEBUG,"Mixer set up at %dHz\n", retro_setting_get_sample_rate());
+	retro_log_cb(RETRO_LOG_DEBUG, "Mixer set up at %dHz\n", retro_setting_get_sample_rate());
 
 	_timerManager = new LibretroTimerManager(retro_setting_get_frame_rate());
 
@@ -119,14 +143,27 @@ bool OSystem_libretro::getFeatureState(Feature f) {
 }
 
 Audio::Mixer *OSystem_libretro::getMixer() {
-        return _mixer;
+	return _mixer;
 }
 
 void OSystem_libretro::refreshRetroSettings() {
-        _adjusted_cursor_speed = (float)BASE_CURSOR_SPEED * retro_setting_get_gamepad_cursor_speed() * (float)(_overlayInGUI ? _overlay.w : _gameScreen.w) / 320.0f; // Dpad cursor speed should always be based off a 320 wide screen, to keep speeds consistent;
-        _inverse_acceleration_time = (retro_setting_get_gamepad_acceleration_time() > 0.0) ? (1.0f / (float)retro_setting_get_frame_rate()) * (1.0f / retro_setting_get_gamepad_acceleration_time()) : 1.0f;
+	_adjusted_cursor_speed = (float)BASE_CURSOR_SPEED * retro_setting_get_gamepad_cursor_speed() * (float)(_overlayInGUI ? _overlay.w : _gameScreen.w) / 320.0f; // Dpad cursor speed should always be based off a 320 wide screen, to keep speeds consistent;
+	_inverse_acceleration_time = (retro_setting_get_gamepad_acceleration_time() > 0.0) ? (1.0f / (float)retro_setting_get_frame_rate()) * (1.0f / retro_setting_get_gamepad_acceleration_time()) : 1.0f;
 }
 
 void OSystem_libretro::destroy() {
 	delete this;
+}
+
+bool OSystem_libretro::checkPathSetting(const char *setting, Common::String const &defaultPath, bool isDirectory) {
+	Common::String setPath(ConfMan.get(setting));
+
+	if (setPath.empty() || ! (isDirectory ? LibRetroFilesystemNode(setPath).isDirectory() : LibRetroFilesystemNode(setPath).exists()))
+		ConfMan.removeKey(setting, Common::ConfigManager::kApplicationDomain);
+	if (! ConfMan.hasKey(setting))
+		if (defaultPath.empty())
+			return false;
+		else
+			ConfMan.set(setting, defaultPath);
+	return true;
 }

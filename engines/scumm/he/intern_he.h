@@ -69,7 +69,7 @@ public:
 	Common::Rect _actorClipOverride;	// HE specific
 
 	int _heTimers[16];
-	uint32 _pauseStartTime;
+	uint32 _pauseStartTime = 0;
 
 	int getHETimer(int timer);
 	void setHETimer(int timer);
@@ -744,7 +744,6 @@ protected:
 	byte VAR_REMOTE_START_SCRIPT;
 	byte VAR_NETWORK_AVAILABLE;
 	byte VAR_NETWORK_RECEIVE_ARRAY_SCRIPT;
-	byte VAR_NETWORK_NET_LAG;
 
 public:
 	int networkSessionDialog();
@@ -1053,7 +1052,6 @@ protected:
 	byte VAR_REMOTE_START_SCRIPT;
 	byte VAR_NETWORK_AVAILABLE;
 	byte VAR_NETWORK_RECEIVE_ARRAY_SCRIPT;
-	byte VAR_NETWORK_NET_LAG;
 };
 
 class ScummEngine_vCUPhe : public Engine {

@@ -46,6 +46,10 @@ class GuiObject;
 class OptionsContainerWidget;
 }
 
+namespace DLC {
+class Store;
+}
+
 namespace Common {
 class EventManager;
 class MutexInternal;
@@ -262,6 +266,11 @@ protected:
 	 * @note _fsFactory is deleted by the OSystem destructor.
 	 */
 	FilesystemFactory *_fsFactory;
+
+	/**
+	 * Used by the DLC Manager implementation
+	 */
+	DLC::Store *_dlcStore;
 
 	/**
 	 * Used by the default clipboard implementation, for backends that don't
@@ -568,6 +577,11 @@ public:
 		* Shaders.
 		*/
 		kFeatureShaders,
+
+		/**
+		* Support for downloading DLC packages.
+		*/
+		kFeatureDLC,
 
 		/**
 		* Support for using the native system file browser dialog
@@ -1458,7 +1472,7 @@ public:
 	 */
 	virtual void setCursorPalette(const byte *colors, uint start, uint num) {}
 
-	
+
 
 	/**
 	 * Get the system-configured double-click time interval.
@@ -1726,6 +1740,15 @@ public:
 #endif
 
 	/**
+	 * Return the DLC Store, used to implement DLC manager functions.
+	 *
+	 * @return The Store for the current architecture/distribution platform.
+	 */
+	virtual DLC::Store *getDLCStore() {
+		return _dlcStore;
+	}
+
+	/**
 	 * Return the FilesystemFactory object, depending on the current architecture.
 	 *
 	 * @return The FSNode factory for the current architecture.
@@ -1805,6 +1828,18 @@ public:
 	 * @param target   name of a config manager target
 	 */
 	virtual GUI::OptionsContainerWidget *buildBackendOptionsWidget(GUI::GuiObject *boss, const Common::String &name, const Common::String &target) const { return nullptr; }
+
+	/**
+	 * Return list of strings used for building help dialog
+	 *
+	 * The strings represented in triplets:
+	 *   - Name of a tab (will be translated)
+	 *   - ZIP pack name with images (optional)
+	 *   - Text of the tab with Markdown formatting (also be translated)
+	 *
+	 * The string list is null-terminated.
+	 */
+	 virtual const char * const *buildHelpDialogData() { return nullptr; }
 
 	/**
 	 * Notify the backend that the settings editable from the game tab in the

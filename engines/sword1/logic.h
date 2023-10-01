@@ -63,6 +63,8 @@ public:
 	void updateScreenParams();
 	void runMouseScript(Object *cpt, int32 scriptId);
 	void startPositions(uint32 pos);
+	bool canShowDebugTextNumber();
+	void plotRouteGrid(Object *megaObject);
 
 	static uint32 _scriptVars[NUM_SCRIPT_VARS];
 // public for mouse (menu looking)
@@ -85,6 +87,7 @@ private:
 	bool _speechRunning, _speechFinished, _textRunning;
 	uint8 _speechClickDelay;
 	Common::RandomSource _rnd;
+	bool _psxFudgeRandom = false; // Used within fnIdle() and fnRandom() for the PSX version
 
 	int scriptManager(Object *compact, uint32 id);
 	void processLogic(Object *compact, uint32 id);

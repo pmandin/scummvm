@@ -201,7 +201,8 @@ uint32 ObjectMan::lastTextNumber(int section) {
 Object *ObjectMan::fetchObject(uint32 id) {
 	uint8 *addr = _cptData[id / ITM_PER_SEC];
 	if (!addr)
-		error("fetchObject: section %d is not open", id / ITM_PER_SEC);
+		addr = _cptData[id / ITM_PER_SEC] = ((uint8 *)_resMan->cptResOpen(_objectList[id / ITM_PER_SEC])) + sizeof(Header);
+
 	id &= ITM_ID;
 	// DON'T do endian conversion here. it's already done.
 	return (Object *)(addr + * (uint32 *)(addr + (id + 1) * 4));
@@ -227,6 +228,28 @@ void ObjectMan::loadLiveList(uint16 *src) {
 		_liveList[cnt] = src[cnt];
 		if (_liveList[cnt])
 			_cptData[cnt] = ((uint8 *)_resMan->cptResOpen(_objectList[cnt])) + sizeof(Header);
+	}
+}
+
+void ObjectMan::mainLoopPatch() {
+	// This patch is available in every executable after the
+	// original UK one. Its purpose is to turn off scripts which
+	// were causing issues by continuing running past their scope.
+	// The patch, as descripted within the original source
+	// code, checks if the game is past the Syria section,
+	// and if so it checks if the Market Stall section is still
+	// alive, and if so it closes both the section (45) and
+	// the Mega object for Duane (134), effectively terminating
+	// their scripts.
+
+	if (_liveList[45] > 0) {
+		_liveList[45] = 0; // Turn off the Syria Market Stall
+		_resMan->resClose(_objectList[45]);
+
+		if (_liveList[134] > 0) {
+			_liveList[134] = 0; // Turn off Duane
+			_resMan->resClose(_objectList[134]);
+		}
 	}
 }
 

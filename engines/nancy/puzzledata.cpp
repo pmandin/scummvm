@@ -20,6 +20,8 @@
  */
 
 #include "engines/nancy/puzzledata.h"
+#include "engines/nancy/enginedata.h"
+#include "engines/nancy/nancy.h"
 
 namespace Nancy {
 
@@ -104,6 +106,54 @@ void SoundEqualizerPuzzleData::synchronize(Common::Serializer &ser) {
 	ser.syncArray(sliderValues.data(), 6, Common::Serializer::Byte);
 }
 
+void JournalData::synchronize(Common::Serializer &ser) {
+	uint16 numEntries = journalEntries.size();
+	ser.syncAsUint16LE(numEntries);
+
+	if (ser.isLoading()) {
+		for (uint i = 0; i < numEntries; ++i) {
+			uint16 id = 0;
+			ser.syncAsUint16LE(id);
+			uint16 numStrings = 0;
+			ser.syncAsUint16LE(numStrings);
+			auto &entry = journalEntries[id];
+			for (uint j = 0; j < numStrings; ++j) {
+				Common::String l;
+				ser.syncString(l);
+				entry.push_back(l);
+			}
+		}
+	} else {
+		for (auto &a : journalEntries) {
+			uint16 id = a._key;
+			ser.syncAsUint16LE(id);
+			uint16 numStrings = a._value.size();
+			ser.syncAsUint16LE(numStrings);
+			for (uint i = 0; i < numStrings; ++i) {
+				ser.syncString(a._value[i]);
+			}
+		}
+	}
+}
+
+TableData::TableData() {
+	const TABL *tabl = (const TABL *)g_nancy->getEngineData("TABL");
+	assert(tabl);
+
+	currentIDs = tabl->startIDs;
+}
+
+void TableData::synchronize(Common::Serializer &ser) {
+	byte num = currentIDs.size();
+	ser.syncAsByte(num);
+
+	if (ser.isLoading()) {
+		currentIDs.resize(num);
+	}
+
+	ser.syncArray(currentIDs.data(), num, Common::Serializer::Uint16LE);
+}
+
 PuzzleData *makePuzzleData(const uint32 tag) {
 	switch(tag) {
 	case SliderPuzzleData::getTag():
@@ -116,6 +166,10 @@ PuzzleData *makePuzzleData(const uint32 tag) {
 		return new RiddlePuzzleData();
 	case SoundEqualizerPuzzleData::getTag():
 		return new SoundEqualizerPuzzleData();
+	case JournalData::getTag():
+		return new JournalData();
+	case TableData::getTag():
+		return new TableData();
 	default:
 		return nullptr;
 	}

@@ -567,7 +567,13 @@ bool ScummEngine::saveState(Common::WriteStream *out, bool writeHeader) {
 bool ScummEngine::saveState(int slot, bool compat, Common::String &filename) {
 	bool saveFailed = false;
 
+	// We can't just use _saveTemporaryState here, because at
+	// this point it might not contain an updated value.
+	_pauseSoundsDuringSave = !compat;
+
 	PauseToken pt = pauseEngine();
+
+	_pauseSoundsDuringSave = true;
 
 	Common::WriteStream *out = openSaveFileForWriting(slot, compat, filename);
 	if (!out) {
@@ -668,11 +674,11 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 	if (hdr.ver == VER(7))
 		hdr.ver = VER(8);
 
-	hdr.name[sizeof(hdr.name)-1] = 0;
+	hdr.name[sizeof(hdr.name) - 1] = 0;
 	_saveLoadDescription = hdr.name;
 
 	// Set to 0 during load to minimize stuttering
-	if (_musicEngine)
+	if (_musicEngine && !compat)
 		_musicEngine->setMusicVolume(0);
 
 	// Unless specifically requested with _saveSound, we do not save the iMUSE
@@ -686,9 +692,18 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 	//
 	// If we don't have iMUSE at all we may as well stop the sounds. The previous
 	// default behavior here was to stopAllSounds on all state restores.
+	//
+	// HE games explicitly do not stop sounds when loading a "heap save",
+	// under version 80!
 
-	if (!_imuse || _saveSound || !_saveTemporaryState)
+	if ((!_imuse || _saveSound || !compat) &&
+		!(compat && _game.heversion < 80)) {
 		_sound->stopAllSounds();
+	} else if (compat && !_imuseDigital && _game.heversion == 0) {
+		// Still, we have to stop the talking sound even
+		// if the save state is temporary.
+		_sound->stopTalkSound();
+	}
 
 #ifdef ENABLE_SCUMM_7_8
 	if (_imuseDigital) {
@@ -698,7 +713,8 @@ bool ScummEngine::loadState(int slot, bool compat, Common::String &filename) {
 
 	_sound->stopCD();
 
-	_sound->pauseSounds(true);
+	if (!_saveTemporaryState)
+		_sound->pauseSounds(true);
 
 	closeRoom();
 
@@ -1863,7 +1879,7 @@ void ScummEngine::saveLoadWithSerializer(Common::Serializer &s) {
 	// Set video mode var to the current actual mode, not the one that was enabled when the game was saved.
 	// At least for Loom this fixes glitches, since the game actually reads the var and makes actor palette
 	// adjustments based on that. This is a bug that happens in the original interpreter, too.
-	if (s.isLoading() && VAR_VIDEOMODE != 0xFF) {
+	if (s.isLoading() && VAR_VIDEOMODE != 0xFF && _game.heversion == 0) {
 		int videoModeSaved = VAR(VAR_VIDEOMODE);
 		setVideoModeVarToCurrentConfig();
 		// For MI1EGA we need to know if the savegame is from a different render mode, so we can apply some

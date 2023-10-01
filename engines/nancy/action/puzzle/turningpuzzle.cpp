@@ -180,7 +180,7 @@ void TurningPuzzle::readData(Common::SeekableReadStream &stream) {
 	stream.skip((16 - numSpindles) * 2);
 
 	_solveScene.readData(stream);
-	_solveSoundDelayTime = stream.readUint16LE();
+	_solveSoundDelay = stream.readUint16LE();
 	_solveSound.readNormal(stream);
 
 	_exitScene.readData(stream);
@@ -196,6 +196,9 @@ void TurningPuzzle::execute() {
 		for (uint i = 0; i < _currentOrder.size(); ++i) {
 			drawObject(i, _currentOrder[i], 0);
 		}
+
+		NancySceneState.setNoHeldItem();
+
 		_state = kRun;
 		// fall through
 	case kRun :
@@ -220,9 +223,9 @@ void TurningPuzzle::execute() {
 			}
 			return;
 		case kWaitBeforeSound :
-			if (_soundDelayTime == 0) {
-				_soundDelayTime = g_nancy->getTotalPlayTime() + (_soundDelayTime * 1000);
-			} else if (g_nancy->getTotalPlayTime() > _soundDelayTime) {
+			if (_solveSoundDelayTime == 0) {
+				_solveSoundDelayTime = g_nancy->getTotalPlayTime() + (_solveSoundDelay * 1000);
+			} else if (g_nancy->getTotalPlayTime() > _solveSoundDelayTime) {
 				g_nancy->_sound->loadSound(_solveSound);
 				g_nancy->_sound->playSound(_solveSound);
 				NancySceneState.setEventFlag(_solveScene._flag);
@@ -270,6 +273,9 @@ void TurningPuzzle::handleInput(NancyInput &input) {
 				g_nancy->_sound->playSound(_turnSound);
 				_objectCurrentlyTurning = i;
 			}
+			
+			// fixes nancy4 scene 4308
+			input.eatMouseInput();
 
 			return;
 		}

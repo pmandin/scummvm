@@ -85,7 +85,7 @@ void SetPlayerClock::readData(Common::SeekableReadStream &stream) {
 	_buttonSound.readNormal(stream);
 	_alarmSetScene.readData(stream);
 	_alarmSoundDelay = stream.readUint16LE();
-	_alarmRingSound.readNormal(stream);
+	_alarmSetSound.readNormal(stream);
 	_exitScene.readData(stream);
 }
 
@@ -96,7 +96,6 @@ void SetPlayerClock::execute() {
 		registerGraphics();
 
 		g_nancy->_sound->loadSound(_buttonSound);
-		g_nancy->_sound->loadSound(_alarmRingSound);
 
 		_alarmHours = NancySceneState.getPlayerTime().getHours();
 
@@ -153,14 +152,27 @@ void SetPlayerClock::execute() {
 		}
 
 		if (_alarmState == kWait) {
-			// Alarm has been set, wait for timer
-			if (g_system->getMillis() > _sceneChangeTime) {
-				NancySceneState.setPlayerTime(_alarmHours * 3600000, false);
-				_alarmSetScene.execute();
-				finishExecution();
+			if (_sceneChangeTime != 0) {
+				// Alarm has been set, wait for timer
+				if (g_system->getMillis() > _sceneChangeTime) {
+					_sceneChangeTime = 0;
+					g_nancy->_sound->loadSound(_alarmSetSound);
+					g_nancy->_sound->playSound(_alarmSetSound);
+				}
 			}
+			if (_sceneChangeTime == 0) {
+				if (!g_nancy->_sound->isSoundPlaying(_alarmSetSound)) {
+					g_nancy->_sound->stopSound(_buttonSound);
+					g_nancy->_sound->stopSound(_alarmSetSound);;
+					NancySceneState.setPlayerTime(_alarmHours * 3600000, false);
+					_alarmSetScene.execute();
+					finishExecution();
+				}
+			}
+			
 		} else {
 			// Cancel button pressed, go to exit scene
+			g_nancy->_sound->stopSound(_buttonSound);
 			_exitScene.execute();
 			finishExecution();
 		}
@@ -176,7 +188,7 @@ void SetPlayerClock::handleInput(NancyInput &input) {
 	if (NancySceneState.getViewport().convertViewportToScreen(_cancelButtonDest).contains(input.mousePos)) {
 		g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-		if (input.input & NancyInput::kLeftMouseButtonUp) {
+		if (!_clearButton && input.input & NancyInput::kLeftMouseButtonUp) {
 			// Cancel button pressed
 			_drawSurface.blitFrom(_image, _cancelButtonSrc, _cancelButtonDest);
 			_needsRedraw = true;
@@ -193,7 +205,7 @@ void SetPlayerClock::handleInput(NancyInput &input) {
 		if (NancySceneState.getViewport().convertViewportToScreen(_alarmButtonDest).contains(input.mousePos)) {
 			g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-			if (input.input & NancyInput::kLeftMouseButtonUp) {
+			if (!_clearButton && input.input & NancyInput::kLeftMouseButtonUp) {
 				// Alarm button pressed
 				_drawSurface.blitFrom(_image, _alarmButtonSrc, _alarmButtonDest);
 				_needsRedraw = true;
@@ -211,7 +223,7 @@ void SetPlayerClock::handleInput(NancyInput &input) {
 			// Time button is active only in alarm mode
 			g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-			if (input.input & NancyInput::kLeftMouseButtonUp) {
+			if (!_clearButton && input.input & NancyInput::kLeftMouseButtonUp) {
 				// Alarm button pressed
 				_drawSurface.blitFrom(_image, _timeButtonSrc, _timeButtonDest);
 				_needsRedraw = true;
@@ -226,7 +238,7 @@ void SetPlayerClock::handleInput(NancyInput &input) {
 			// Up button is active only in alarm mode
 			g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-			if (input.input & NancyInput::kLeftMouseButtonUp) {
+			if (!_clearButton && input.input & NancyInput::kLeftMouseButtonUp) {
 				// Up button pressed
 				_drawSurface.blitFrom(_image, _upButtonSrc, _upButtonDest);
 				_needsRedraw = true;
@@ -241,7 +253,7 @@ void SetPlayerClock::handleInput(NancyInput &input) {
 			// Down button is active only in alarm mode
 			g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-			if (input.input & NancyInput::kLeftMouseButtonUp) {
+			if (!_clearButton && input.input & NancyInput::kLeftMouseButtonUp) {
 				// Down button pressed
 				_drawSurface.blitFrom(_image, _downButtonSrc, _downButtonDest);
 				_needsRedraw = true;
@@ -256,7 +268,7 @@ void SetPlayerClock::handleInput(NancyInput &input) {
 			// Set button is active only in alarm mode
 			g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-			if (input.input & NancyInput::kLeftMouseButtonUp) {
+			if (!_clearButton && input.input & NancyInput::kLeftMouseButtonUp) {
 				// Down button pressed
 				_drawSurface.blitFrom(_image, _setButtonSrc, _setButtonDest);
 				_needsRedraw = true;

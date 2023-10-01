@@ -37,6 +37,7 @@
 #include "gui/widget.h"
 
 #include "graphics/cursorman.h"
+#include "graphics/macgui/macwindowmanager.h"
 
 namespace Common {
 DECLARE_SINGLETON(GUI::GuiManager);
@@ -104,6 +105,7 @@ GuiManager::GuiManager() : CommandSender(nullptr), _redrawStatus(kRedrawDisabled
 
 GuiManager::~GuiManager() {
 	delete _theme;
+	delete _wm;
 }
 
 void GuiManager::initIconsSet() {
@@ -546,17 +548,22 @@ void GuiManager::runLoop() {
 		    && systemMillisNowForTooltipCheck - _lastMousePosition.time > (uint32)kTooltipDelay
 		    && !activeDialog->isDragging()) {
 			Widget *wdg = activeDialog->findWidget(_lastMousePosition.x, _lastMousePosition.y);
-			if (wdg && wdg->hasTooltip() && !(wdg->getFlags() & WIDGET_PRESSED)
+			if (wdg && (wdg->hasTooltip() || (wdg->getFlags() & WIDGET_DYN_TOOLTIP)) && !(wdg->getFlags() & WIDGET_PRESSED)
 			    && (_lastTooltipShown.wdg != wdg || systemMillisNowForTooltipCheck - _lastTooltipShown.time > (uint32)kTooltipSameWidgetDelay)) {
 				_lastTooltipShown.time = systemMillisNowForTooltipCheck;
 				_lastTooltipShown.wdg  = wdg;
 				_lastTooltipShown.x = _lastMousePosition.x;
 				_lastTooltipShown.y = _lastMousePosition.y;
 				if (wdg->getType() != kEditTextWidget || activeDialog->getFocusWidget() != wdg) {
-					Tooltip *tooltip = new Tooltip();
-					tooltip->setup(activeDialog, wdg, _lastMousePosition.x, _lastMousePosition.y);
-					tooltip->runModal();
-					delete tooltip;
+					if (wdg->getFlags() & WIDGET_DYN_TOOLTIP)
+						wdg->handleTooltipUpdate(_lastMousePosition.x + activeDialog->_x - wdg->getAbsX(), _lastMousePosition.y + activeDialog->_y - wdg->getAbsY());
+
+					if (wdg->hasTooltip()) {
+						Tooltip *tooltip = new Tooltip();
+						tooltip->setup(activeDialog, wdg, _lastMousePosition.x, _lastMousePosition.y);
+						tooltip->runModal();
+						delete tooltip;
+					}
 				}
 			}
 		}
@@ -878,6 +885,22 @@ void GuiManager::initTextToSpeech() {
 	} else
 		voice = ttsMan->getDefaultVoice();
 	ttsMan->setVoice(voice);
+}
+
+Graphics::MacWindowManager *GuiManager::getWM() {
+	if (_wm)
+		return _wm;
+
+	if (ConfMan.hasKey("extrapath")) {
+		Common::FSNode dir(ConfMan.get("extrapath"));
+		SearchMan.addDirectory(dir.getPath(), dir);
+	}
+
+	uint32 wmMode = Graphics::kWMModeNoDesktop | Graphics::kWMMode32bpp | Graphics::kWMModeNoCursorOverride;
+
+	_wm = new Graphics::MacWindowManager(wmMode);
+
+	return _wm;
 }
 
 } // End of namespace GUI

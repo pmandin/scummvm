@@ -27,6 +27,7 @@
 namespace Nancy {
 
 namespace Action {
+class ActionRecord;
 struct DependencyRecord;
 }
 
@@ -65,8 +66,10 @@ private:
 	bool Cmd_getDifficulty(int argc, const char **argv);
 	bool Cmd_setDifficulty(int argc, const char **argv);
 	bool Cmd_soundInfo(int argc, const char **argv);
+	bool Cmd_showHotspots(int argc, const char **argv);
 
-	void recurseDependencies(const Nancy::Action::DependencyRecord &record);
+	void printActionRecord(const Nancy::Action::ActionRecord *record, bool noDependencies = false);
+	void recursePrintDependencies(const Nancy::Action::DependencyRecord &record);
 
 	Common::String _videoFile;
 	Common::String _imageFile;

@@ -96,6 +96,7 @@ void DarkEngine::addWalls(Area *area) {
 		if (target > 0) {
 			area->addObjectFromArea(id, _areaMap[255]);
 			GeometricObject *gobj = (GeometricObject *)area->objectWithID(id);
+			assert(gobj);
 			assert((*(gobj->_condition[0]._thenInstructions))[0].getType() == Token::Type::GOTO);
 			assert((*(gobj->_condition[0]._thenInstructions))[0]._destination == 0);
 			(*(gobj->_condition[0]._thenInstructions))[0].setSource(target);
@@ -131,12 +132,13 @@ void DarkEngine::addECD(Area *area, const Math::Vector3d position, int index) {
 	}
 }
 
-void DarkEngine::restoreECD(Area *area, int index) {
+void DarkEngine::restoreECD(Area &area, int index) {
 	Object *obj = nullptr;
 	int16 id = 227 + index * 6;
 	for (int i = 0; i < 4; i++) {
 		debugC(1, kFreescapeDebugParser, "Restoring object %d to from ECD %d", id, index);
-		obj = (GeometricObject *)area->objectWithID(id);
+		obj = (GeometricObject *)area.objectWithID(id);
+		assert(obj);
 		obj->restore();
 		obj->makeVisible();
 		id--;
@@ -167,10 +169,10 @@ void DarkEngine::initGameState() {
 	for (int i = 0; i < k8bitMaxVariable; i++) // TODO: check maximum variable
 		_gameStateVars[i] = 0;
 
-	for (auto &it : _areaMap) {
+	for (auto &it : _areaMap)
 		it._value->resetArea();
-		_gameStateBits[it._key] = 0;
-	}
+
+	_gameStateBits = 0;
 
 	_gameStateVars[k8bitVariableEnergy] = _initialEnergy;
 	_gameStateVars[k8bitVariableShield] = _initialShield;
@@ -359,15 +361,13 @@ void DarkEngine::addSkanner(Area *area) {
 bool DarkEngine::checkIfGameEnded() {
 	if (_gameStateVars[kVariableDarkECD] > 0) {
 		int index = _gameStateVars[kVariableDarkECD] - 1;
-		//insertTemporaryMessage(Common::String::format("%-14d", _gameStateVars[kVariableDarkECD] - 1), _countdown - 2);
-		//restoreECD(_currentArea, _gameStateVars[kVariableDarkECD] - 1);
 		bool destroyed = tryDestroyECD(index);
 		if (destroyed) {
 			_gameStateVars[kVariableActiveECDs] -= 4;
 			_gameStateVars[k8bitVariableScore] += 52750;
 			insertTemporaryMessage(_messagesList[2], _countdown - 2);
 		} else {
-			restoreECD(_currentArea, index);
+			restoreECD(*_currentArea, index);
 			insertTemporaryMessage(_messagesList[1], _countdown - 2);
 		}
 		_gameStateVars[kVariableDarkECD] = 0;
@@ -429,8 +429,6 @@ bool DarkEngine::checkIfGameEnded() {
 
 void DarkEngine::gotoArea(uint16 areaID, int entranceID) {
 	debugC(1, kFreescapeDebugMove, "Jumping to area: %d, entrance: %d", areaID, entranceID);
-	if (!_gameStateBits.contains(areaID))
-		_gameStateBits[areaID] = 0;
 
 	if (!_exploredAreas.contains(areaID)) {
 		_gameStateVars[k8bitVariableScore] += 17500;
@@ -445,7 +443,8 @@ void DarkEngine::gotoArea(uint16 areaID, int entranceID) {
 	}
 
 	assert(_areaMap.contains(areaID));
-	bool sameArea = _currentArea ? areaID == _currentArea->getAreaID() : false;
+	int16 previousArea = _currentArea ? _currentArea->getAreaID() : -127;
+	bool sameArea = areaID == previousArea;
 	_currentArea = _areaMap[areaID];
 	_currentArea->show();
 
@@ -457,18 +456,47 @@ void DarkEngine::gotoArea(uint16 areaID, int entranceID) {
 
 	if (sameArea || entranceID == 0) {
 		int newPos = -1;
+		/*
+		This code needed some modificatins to deal with the area transition
+		in the poles. Only the light side is considered, since the dark side
+		pole is only reached at the end of the game using a single path.
+		*/
 		if (_position.z() < 200 || _position.z() >= 3800) {
 			if (_position.z() < 200)
 				newPos = 4000;
 			else
 				newPos = 100;
-			_position.setValue(2, newPos);
+			// Correct position and yaw for transtions to and from the light side
+			if (previousArea == 14 && areaID == 18) {
+				_position.setValue(2, _position.x());
+				_position.setValue(0, 100);
+				_yaw = 0;
+			} else if (previousArea == 18 && areaID == 17) {
+				_yaw = 90;
+			} else if (previousArea == 17 && areaID == 18) {
+				_yaw = 90;
+			} else if (previousArea == 16 && areaID == 18) {
+				_position.setValue(2, 4000 - _position.x());
+				_position.setValue(0, 4000);
+				_yaw = 180;
+			} else
+				_position.setValue(2, newPos);
 		} else if(_position.x() < 200 || _position.x() >= 3800)  {
 			if (_position.x() < 200)
 				newPos = 4000;
 			else
 				newPos = 100;
-			_position.setValue(0, newPos);
+			// Correct position and yaw for transtions to and from the light side
+			if (previousArea == 18 && areaID == 14) {
+				_position.setValue(0, _position.z());
+				_position.setValue(2, 100);
+				_yaw = 90;
+			} else if (previousArea == 18 && areaID == 16) {
+				_position.setValue(0, 4000 - _position.z());
+				_position.setValue(2, 100);
+				_yaw = 90;
+			} else
+				_position.setValue(0, newPos);
 		}
 		assert(newPos != -1);
 		_sensors = _currentArea->getSensors();
@@ -492,6 +520,10 @@ void DarkEngine::gotoArea(uint16 areaID, int entranceID) {
 	playSound(5, false);
 	// Ignore sky/ground fields
 	_gfx->_keyColor = 0;
+	// Color remaps are not restored in Dark Side
+	// since they are used to simulate a fade to black effect
+	// that should not persist
+	_currentArea->_colorRemaps.clear();
 	_gfx->setColorRemaps(&_currentArea->_colorRemaps);
 
 	swapPalette(areaID);
@@ -701,6 +733,7 @@ void DarkEngine::drawSensorShoot(Sensor *sensor) {
 }
 
 void DarkEngine::drawInfoMenu() {
+	PauseToken pauseToken = pauseEngine();
 	_savedScreen = _gfx->getScreenshot();
 	uint32 color = 0;
 	switch (_renderMode) {
@@ -782,6 +815,7 @@ void DarkEngine::drawInfoMenu() {
 	delete _savedScreen;
 	surface->free();
 	delete surface;
+	pauseToken.clear();
 }
 
 void DarkEngine::loadMessagesVariableSize(Common::SeekableReadStream *file, int offset, int number) {

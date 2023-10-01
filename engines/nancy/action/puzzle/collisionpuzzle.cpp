@@ -241,6 +241,7 @@ void CollisionPuzzle::execute() {
 		g_nancy->_sound->loadSound(_moveSound);
 		g_nancy->_sound->loadSound(_wallHitSound);
 		g_nancy->_sound->loadSound(_homeSound);
+		NancySceneState.setNoHeldItem();
 		_state = kRun;
 		// fall through
 	case kRun :
@@ -566,7 +567,7 @@ void CollisionPuzzle::handleInput(NancyInput &input) {
 			if (left.contains(input.mousePos)) {
 				checkPos = movePiece(i, kWallLeft);
 				if (checkPos != _pieces[i]._gridPos) {
-					g_nancy->_cursorManager->setCursorType(CursorManager::kTurnLeft);
+					g_nancy->_cursorManager->setCursorType(CursorManager::kMoveLeft);
 
 					if (input.input & NancyInput::kLeftMouseButtonUp) {
 						_lastPosition = _pieces[i]._gridPos;
@@ -584,7 +585,7 @@ void CollisionPuzzle::handleInput(NancyInput &input) {
 			if (right.contains(input.mousePos)) {
 				checkPos = movePiece(i, kWallRight);
 				if (checkPos != _pieces[i]._gridPos) {
-					g_nancy->_cursorManager->setCursorType(CursorManager::kTurnRight);
+					g_nancy->_cursorManager->setCursorType(CursorManager::kMoveRight);
 
 					if (input.input & NancyInput::kLeftMouseButtonUp) {
 						_lastPosition = _pieces[i]._gridPos;

@@ -17,14 +17,17 @@
 #define FORBIDDEN_SYMBOL_EXCEPTION_time
 
 #include <features/features_cpu.h>
+
 #include "common/tokenizer.h"
 #include "common/config-manager.h"
 #include "base/commandLine.h"
-#include "backends/platform/libretro/include/libretro-os.h"
+
 #include "backends/platform/libretro/include/libretro-defs.h"
+#include "backends/platform/libretro/include/libretro-core.h"
+#include "backends/platform/libretro/include/libretro-os.h"
 
 void OSystem_libretro::getTimeAndDate(TimeDate &t, bool skipRecord) const {
-	uint32 curTime = (uint32) (cpu_features_get_time_usec() / 1000000);
+	uint32 curTime = (uint32)(cpu_features_get_time_usec() / 1000000);
 
 #define YEAR0 1900
 #define EPOCH_YR 1970
@@ -53,21 +56,24 @@ void OSystem_libretro::getTimeAndDate(TimeDate &t, bool skipRecord) const {
 }
 
 Common::String OSystem_libretro::getDefaultConfigFileName() {
-	return s_systemDir + "/scummvm.ini";
+	if (s_systemDir.empty())
+		return Common::String("scummvm.ini");
+	else
+		return s_systemDir + "/scummvm.ini";
 }
 
 void OSystem_libretro::logMessage(LogMessageType::Type type, const char *message) {
 	retro_log_level loglevel = RETRO_LOG_INFO;
 	switch (type) {
-		case LogMessageType::kDebug:
-			loglevel = RETRO_LOG_DEBUG;
-			break;
-		case LogMessageType::kWarning:
-			loglevel = RETRO_LOG_WARN;
-			break;
-		case LogMessageType::kError:
-			loglevel = RETRO_LOG_ERROR;
-			break;
+	case LogMessageType::kDebug:
+		loglevel = RETRO_LOG_DEBUG;
+		break;
+	case LogMessageType::kWarning:
+		loglevel = RETRO_LOG_WARN;
+		break;
+	case LogMessageType::kError:
+		loglevel = RETRO_LOG_ERROR;
+		break;
 	}
 
 	if (retro_log_cb)
@@ -76,7 +82,7 @@ void OSystem_libretro::logMessage(LogMessageType::Type type, const char *message
 
 
 bool OSystem_libretro::parseGameName(const Common::String &gameName, Common::String &engineId,
-				   Common::String &gameId) {
+                                     Common::String &gameId) {
 	Common::StringTokenizer tokenizer(gameName, ":");
 	Common::String token1, token2;
 

@@ -26,6 +26,7 @@
 #include "gui/EventRecorder.h"
 #include "common/taskbar.h"
 #include "common/textconsole.h"
+#include "common/translation.h"
 
 #ifdef USE_DISCORD
 #include "backends/presence/discord/discord.h"
@@ -53,6 +54,9 @@
 #if defined(USE_OPENGL_GAME) || defined(USE_OPENGL_SHADERS)
 #include "backends/graphics3d/openglsdl/openglsdl-graphics3d.h"
 #include "graphics/opengl/context.h"
+#endif
+#if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
+#include "backends/dlc/scummvmcloud.h"
 #endif
 #include "graphics/renderer.h"
 
@@ -90,6 +94,9 @@ OSystem_SDL::OSystem_SDL()
 	_eventSource(nullptr),
 	_eventSourceWrapper(nullptr),
 	_window(nullptr) {
+#if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
+	_dlcStore = new DLC::ScummVMCloud::ScummVMCloud();
+#endif
 }
 
 OSystem_SDL::~OSystem_SDL() {
@@ -198,6 +205,9 @@ bool OSystem_SDL::hasFeature(Feature f) {
 	 * we are at one initGraphics3d call of supporting OpenGL */
 	if (f == kFeatureOpenGLForGame) return true;
 	if (f == kFeatureShadersForGame) return _supportsShaders;
+#endif
+#if defined(USE_SCUMMVMDLC) && defined(USE_LIBCURL)
+	if (f == kFeatureDLC) return true;
 #endif
 	return ModularGraphicsBackend::hasFeature(f);
 }
@@ -314,6 +324,7 @@ void OSystem_SDL::initBackend() {
 #endif
 
 	ConfMan.registerDefault("iconspath", this->getDefaultIconsPath());
+	ConfMan.registerDefault("dlcspath", this->getDefaultDLCsPath().toString());
 
 	_inited = true;
 
@@ -788,6 +799,12 @@ Common::String OSystem_SDL::getDefaultIconsPath() {
 	return path;
 }
 
+// Not specified in base class
+Common::Path OSystem_SDL::getDefaultDLCsPath() {
+	Common::Path path(ConfMan.get("dlcspath"));
+	return path;
+}
+
 //Not specified in base class
 Common::String OSystem_SDL::getScreenshotsPath() {
 	Common::String path = ConfMan.get("screenshotpath");
@@ -988,3 +1005,47 @@ void OSystem_SDL::clearGraphicsModes() {
 	}
 }
 #endif
+
+static const char * const helpTabs[] = {
+_s("Keyboard"),
+"",
+_s(
+"## Keyboard shortcuts\n"
+"\n"
+"ScummVM supports various in-game keyboard and mouse shortcuts, and since version 2.2.0 these can be manually configured in the **Keymaps tab**, or in the **configuration file**.\n"
+"\n"
+"For game-specific controls, see the [wiki entry](https://wiki.scummvm.org/index.php?title=Category:Supported_Games) for the game you are playing.\n"
+"\n"
+"Default shortcuts are shown in the table.\n"
+"\n"
+"| Shortcut      | Description\n"
+"| --------------------------------\n"
+"| `Ctrl+F5` -- Displays the Global Main Menu\n")
+#if defined(MACOSX)
+_s("| `Cmd+q`    -- Quit (macOS)\n")
+#elif defined(WIN32)
+_s("| `Alt+F4`  -- Quit (Windows)\n")
+#else
+_s("| `Ctrl+q`  -- Quit (Linux/Unix)\n")
+_s("| `Ctrl+z`  -- Quit (other platforms)\n")
+#endif
+_s(
+"| `Ctrl+u`  -- Mutes all sounds\n"
+"| `Ctrl+m`  -- Toggles mouse capture\n"
+"| `Ctrl+Alt` and `9` or `0` -- Cycles forwards/backwards between graphics filters\n"
+"| `Ctrl+Alt` and `+` or `-` -- Increases/decreases the scale factor\n"
+"| `Ctrl+Alt+a` -- Toggles aspect ratio correction on/off\n"
+"| `Ctrl+Alt+f` -- Toggles between nearest neighbor and bilinear interpolation (graphics filtering on/off)\n"
+"| `Ctrl+Alt+s` -- Cycles through stretch modes\n"
+"| `Alt+Enter`   -- Toggles full screen/windowed mode\n"
+"| `Alt+s`          -- Takes a screenshot\n"
+"| `Ctrl+F7`       -- Opens virtual keyboard (if enabled). This can also be opened with a long press of the middle mouse button or wheel.\n"
+"| `Ctrl+Alt+d` -- Opens the ScummVM debugger\n"
+),
+
+0,
+	};
+
+const char * const *OSystem_SDL::buildHelpDialogData() {
+	return helpTabs;
+}

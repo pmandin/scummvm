@@ -27,6 +27,7 @@
 namespace Nancy {
 namespace Action {
 
+// Simply changes the scene
 class SceneChange : public ActionRecord {
 public:
 	void readData(Common::SeekableReadStream &stream) override;
@@ -38,6 +39,9 @@ protected:
 	Common::String getRecordTypeName() const override { return "SceneChange"; }
 };
 
+// Changes the scene when clicked. Hotspot can move along with scene background frame.
+// Nancy4 introduced several sub-types with a specific mouse cursor to show when
+// hovering; all of them are handled in this class as well.
 class HotMultiframeSceneChange : public SceneChange {
 public:
 	HotMultiframeSceneChange(CursorManager::CursorType hoverCursor) : _hoverCursor(hoverCursor) {}
@@ -45,6 +49,8 @@ public:
 
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
+
+	CursorManager::CursorType getHoverCursor() const override { return _hoverCursor; }
 
 	Common::Array<HotspotDescription> _hotspots;
 
@@ -66,6 +72,9 @@ protected:
 	CursorManager::CursorType _hoverCursor;
 };
 
+// Changes the scene when clicked; does _not_ move with scene background.
+// Nancy4 introduced several sub-types with a specific mouse cursor to show when
+// hovering; all of them are handled in this class as well.
 class Hot1FrSceneChange : public SceneChange {
 public:
 	Hot1FrSceneChange(CursorManager::CursorType hoverCursor) : _hoverCursor(hoverCursor) {}
@@ -92,9 +101,9 @@ protected:
 			return "Hot1FrUpSceneChange";
 		case CursorManager::kMoveDown:
 			return "Hot1FrDownSceneChange";
-		case CursorManager::kTurnLeft:
+		case CursorManager::kMoveLeft:
 			return "Hot1FrLeftSceneChange";
-		case CursorManager::kTurnRight:
+		case CursorManager::kMoveRight:
 			return "Hot1FrUpSceneChange";
 		default:
 			return "Hot1FrSceneChange";
@@ -104,13 +113,16 @@ protected:
 	CursorManager::CursorType _hoverCursor;
 };
 
+// Changes the scene when clicked. Hotspot can move along with scene background frame.
+// However, the scene it changes to can be one of two options, picked based on
+// a provided condition.
 class HotMultiframeMultisceneChange : public ActionRecord {
 public:
 	void readData(Common::SeekableReadStream &stream) override;
 	void execute() override;
 
-	SceneChangeDescription _onTrue;
-	SceneChangeDescription _onFalse;
+	SceneChangeWithFlag _onTrue;
+	SceneChangeWithFlag _onFalse;
 	byte _condType;
 	uint16 _conditionID;
 	byte _conditionPayload;
@@ -121,6 +133,9 @@ protected:
 	Common::String getRecordTypeName() const override { return "HotMultiframeMultisceneChange"; }
 };
 
+// Changes the scene when clicked. Hotspot can move along with scene background frame.
+// However, the scene it changes to can be one of several options, picked based on
+// the item the player is currently holding.
 class HotMultiframeMultisceneCursorTypeSceneChange : public ActionRecord {
 public:
 	void readData(Common::SeekableReadStream &stream) override;
@@ -136,6 +151,7 @@ protected:
 	Common::String getRecordTypeName() const override { return "HotMultiframeMultisceneCursorTypeSceneChange"; }
 };
 
+// Simply switches to the Map state. TVD/nancy1 only.
 class MapCall : public ActionRecord {
 public:
 	void readData(Common::SeekableReadStream &stream) override;
@@ -147,6 +163,7 @@ protected:
 	Common::String getRecordTypeName() const override { return "MapCall"; }
 };
 
+// Switches to the Map state when clicked; does _not_ move with background frame. TVD/nancy1 only.
 class MapCallHot1Fr : public MapCall {
 public:
 	void readData(Common::SeekableReadStream &stream) override;
@@ -159,6 +176,7 @@ protected:
 	Common::String getRecordTypeName() const override { return "MapCallHot1Fr"; }
 };
 
+// Switches to the Map state when clicked. Hotspot can move along with scene background frame. TVD/nancy1 only.
 class MapCallHotMultiframe : public MapCall {
 public:
 	void readData(Common::SeekableReadStream &stream) override;

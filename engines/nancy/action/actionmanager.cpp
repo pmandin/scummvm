@@ -27,9 +27,14 @@
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/input.h"
 #include "engines/nancy/sound.h"
+#include "engines/nancy/font.h"
+#include "engines/nancy/graphics.h"
 
 #include "engines/nancy/action/actionmanager.h"
 #include "engines/nancy/action/actionrecord.h"
+
+#include "engines/nancy/action/secondarymovie.h"
+#include "engines/nancy/action/soundrecords.h"
 
 #include "engines/nancy/state/scene.h"
 namespace Nancy {
@@ -38,12 +43,17 @@ namespace Action {
 void ActionManager::handleInput(NancyInput &input) {
 	bool setHoverCursor = false;
 	for (auto &rec : _records) {
-		if (rec->_isActive) {
-			// Send input to all active records
+		if (rec->_isActive && !rec->_isDone) {
+			// First, loop through all records and handle special cases.
+			// This needs to be a separate loop to handle Overlays as a special case
+			// (see note in Overlay::handleInput())
 			rec->handleInput(input);
 		}
+	}
 
+	for (auto &rec : _records) {
 		if (	rec->_isActive &&
+				!rec->_isDone &&
 				rec->_hasHotspot &&
 				rec->_hotspot.isValidRect() && // Needed for nancy2 scene 1600
 				NancySceneState.getViewport().convertViewportToScreen(rec->_hotspot).contains(input.mousePos)) {
@@ -57,21 +67,19 @@ void ActionManager::handleInput(NancyInput &input) {
 			if (input.input & NancyInput::kLeftMouseButtonUp) {
 				input.input &= ~NancyInput::kLeftMouseButtonUp;
 
+				rec->_cursorDependency = nullptr;
 				processDependency(rec->_dependencies, *rec, false);
 
 				if (!rec->_dependencies.satisfied) {
-					if (g_nancy->getGameType() >= kGameTypeNancy2 && rec->_cursorDependency != nullptr) {
-						const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
-						assert(inventoryData);
-
-						const SoundDescription &sound = inventoryData->itemDescriptions[rec->_cursorDependency->label].specificCantSound;
-						g_nancy->_sound->loadSound(sound);
-						g_nancy->_sound->playSound(sound);
+					if (rec->_cursorDependency != nullptr) {
+						NancySceneState.playItemCantSound(rec->_cursorDependency->label);
 					} else {
-						g_nancy->_sound->playSound("CANT");
+						continue;
 					}
 				} else {
 					rec->_state = ActionRecord::ExecutionState::kActionTrigger;
+
+					input.eatMouseInput();
 
 					if (rec->_cursorDependency) {
 						int16 item = rec->_cursorDependency->label;
@@ -113,10 +121,26 @@ void ActionManager::handleInput(NancyInput &input) {
 	}
 }
 
-bool ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
+void ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
+	ActionRecord *newRecord = createAndLoadNewRecord(inputData);
+	if (!newRecord) {
+		inputData.seek(0x30);
+		byte ARType = inputData.readByte();
+
+		warning("Action Record type %i is unimplemented or invalid!", ARType);
+		return;
+	}
+	_records.push_back(newRecord);
+}
+
+ActionRecord *ActionManager::createAndLoadNewRecord(Common::SeekableReadStream &inputData) {
 	inputData.seek(0x30);
 	byte ARType = inputData.readByte();
 	ActionRecord *newRecord = createActionRecord(ARType);
+
+	if (!newRecord) {
+		return nullptr;
+	}
 
 	inputData.seek(0);
 	char descBuf[0x30];
@@ -139,11 +163,13 @@ bool ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
 		uint singleDepSize = g_nancy->getGameType() <= kGameTypeNancy2 ? 12 : 16;
 		uint numDependencies = depsDataSize / singleDepSize;
 		if (depsDataSize % singleDepSize) {
-			error("Action record type %s has incorrect read size!\nScene S%u, AR %u, description:\n%s",
+			warning("Action record type %u, %s has incorrect read size!\ndescription:\n%s",
+				newRecord->_type,
 				newRecord->getRecordTypeName().c_str(),
-				NancySceneState.getSceneInfo().sceneID,
-				_records.size(),
 				newRecord->_description.c_str());
+
+				delete newRecord;
+				return nullptr;
 		}
 
 		if (numDependencies == 0) {
@@ -208,28 +234,38 @@ bool ActionManager::addNewActionRecord(Common::SeekableReadStream &inputData) {
 		newRecord->_isActive = true;
 	}
 
-	_records.push_back(newRecord);
-
-	return true;
+	return newRecord;
 }
 
 void ActionManager::processActionRecords() {
+	_activatedRecordsThisFrame.clear();
+
 	for (auto record : _records) {
 		if (record->_isDone) {
 			continue;
 		}
 
-		if (!record->_isActive) {
-			processDependency(record->_dependencies, *record, record->canHaveHotspot());
-			if (record->_dependencies.satisfied) {
-				record->_isActive = true;
-			}
-		}
+		// Process dependencies every call. We make sure to ignore cursor dependencies,
+		// as they are only handled when calling from handleInput()
+		processDependency(record->_dependencies, *record, record->canHaveHotspot());
+		record->_isActive = record->_dependencies.satisfied;
 
 		if (record->_isActive) {
+			if(record->_state == ActionRecord::kBegin) {
+				_activatedRecordsThisFrame.push_back(record);
+			}
+			
 			record->execute();
 		}
+
+		if (NancySceneState._state == State::Scene::kLoad) {
+			// changeScene() must have been called, abort any further processing
+			return;
+		}
 	}
+
+	synchronizeMovieWithSound();
+	debugDrawHotspots();
 }
 
 void ActionManager::processDependency(DependencyRecord &dep, ActionRecord &record, bool doNotCheckCursor) {
@@ -405,7 +441,6 @@ void ActionManager::processDependency(DependencyRecord &dep, ActionRecord &recor
 		case DependencyType::kCursorType: {
 			if (doNotCheckCursor) {
 				dep.satisfied = true;
-				record._cursorDependency = &dep;
 			} else {
 				bool isSatisfied = false;
 				int heldItem = NancySceneState.getHeldItem();
@@ -423,7 +458,19 @@ void ActionManager::processDependency(DependencyRecord &dep, ActionRecord &recor
 				}
 
 				dep.satisfied = isSatisfied;
-				record._cursorDependency = &dep;
+
+				if (isSatisfied) {
+					// A satisfied dependency must be moved into the _cursorDependency slot, to make sure
+					// the remove from/re-add to inventory logic works correctly
+					record._cursorDependency = &dep;
+				} else {
+					if (record._cursorDependency == nullptr) {
+						// However, if the current dependency was not satisfied, we only move it into
+						// the _cursorDependency slot if nothing else was there before. This ensures
+						// the "can't" sound played is the first dependency's
+						record._cursorDependency = &dep;
+					}
+				}
 			}
 
 			break;
@@ -511,6 +558,93 @@ void ActionManager::synchronize(Common::Serializer &ser) {
 	for (auto &rec : _records) {
 		ser.syncAsByte(rec->_isActive);
 		ser.syncAsByte(rec->_isDone);
+	}
+}
+
+void ActionManager::synchronizeMovieWithSound() {
+	// Improvement:
+
+	// The original engine had really bad timing issues with AVF videos,
+	// as it set the next frame time by adding the frame length to the current evaluation
+	// time, instead of to the time the previous frame was drawn. As a result, all
+	// movie (and SecondaryVideos) frames play about 12 ms slower than they should.
+	// This results in some unfortunate issues in nancy4: if we do as the original
+	// engine did and just make frames 12 ms slower, some dialogue scenes (like scene 1400)
+	// are very visibly not in sync; also, the entire videocam sequence suffers from
+	// visible stitches where the scene changes not at the time it was intended to.
+	// On the other hand, if instead we don't add those 12ms, that same videocam
+	// sequence has a really nasty sound cutoff in the middle of a character speaking.
+
+	// This function intends to fix this issue by subtly manipulating the playback rate
+	// of the movie so its length ends up matching that of the sound; if the sound rate was
+	// changed instead, we would get slightly off-pitch dialogue, which would be undesirable.
+
+	// The heuristic for catching these cases relies on the scene having a movie and a sound
+	// record start at the same frame, and have a (valid) scene change to the same scene.
+	PlaySecondaryMovie *movie = nullptr;
+	PlayDigiSound *sound = nullptr;
+
+	for (uint i = 0; i < _activatedRecordsThisFrame.size(); ++i) {
+		byte type = _activatedRecordsThisFrame[i]->_type;
+		// Rely on _type for cheaper type check
+		if (type == 53) {
+			movie = (PlaySecondaryMovie *)_activatedRecordsThisFrame[i];
+		} else if (type == 150 || type == 151 || type == 157) {
+			sound = (PlayDigiSound *)_activatedRecordsThisFrame[i];
+		}
+
+		if (movie && sound) {
+			break;
+		}
+	}
+
+	if (movie && sound) {
+		// A movie and a sound both got activated this frame, check if their scene changes match
+		if (	movie->_videoSceneChange == PlaySecondaryMovie::kMovieSceneChange &&
+				movie->_sceneChange.sceneID == sound->_sceneChange.sceneID &&
+				movie->_sceneChange.sceneID != 9999) {
+			// They match, check how long the sound is...
+			Audio::Timestamp length = g_nancy->_sound->getLength(sound->_sound);
+
+			if (length.msecs() != 0) {
+				// ..and set the movie's playback speed to match
+				movie->_decoder.setRate(Common::Rational(movie->_decoder.getDuration().msecs(), length.msecs()));
+			}
+		}
+	}
+}
+
+void ActionManager::debugDrawHotspots() {
+	// Draws a rectangle around (non-puzzle) hotspots as well as the id
+	// and type of the owning ActionRecord. Hardcoded to font 0 since that's
+	// the smallest one available in the engine.
+	RenderObject &obj = NancySceneState._hotspotDebug;
+	if (ConfMan.getBool("debug_hotspots", ConfMan.kTransientDomain)) {
+		const Font *font = g_nancy->_graphicsManager->getFont(0);
+		assert(font);
+		uint16 yOffset = NancySceneState.getViewport().getCurVerticalScroll();
+		obj.setVisible(true);
+		obj._drawSurface.clear(obj._drawSurface.getTransparentColor());
+
+		for (uint i = 0; i < _records.size(); ++i) {
+			ActionRecord *rec = _records[i];
+			if (rec->_isActive && !rec->_isDone && rec->_hasHotspot) {
+				Common::Rect hotspot = rec->_hotspot;
+				hotspot.translate(0, -yOffset);
+				hotspot.clip(obj._drawSurface.getBounds());
+
+				if (!hotspot.isEmpty()) {
+					font->drawString(&obj._drawSurface, Common::String::format("%u, %s", i, rec->getRecordTypeName().c_str()),
+					hotspot.left, hotspot.bottom - font->getFontHeight() - 2, hotspot.width(), 0,
+					Graphics::kTextAlignCenter, 0, true);
+					obj._drawSurface.frameRect(hotspot, 0xFFFFFF);
+				}
+			}
+		}
+	} else {
+		if (obj.isVisible()) {
+			obj.setVisible(false);
+		}
 	}
 }
 

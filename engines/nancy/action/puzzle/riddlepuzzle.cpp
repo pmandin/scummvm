@@ -132,8 +132,9 @@ void RiddlePuzzle::execute() {
 		g_nancy->_sound->loadSound(_riddles[_riddleID].sound);
 		g_nancy->_sound->playSound(_riddles[_riddleID].sound);
 		NancySceneState.getTextbox().clear();
-		NancySceneState.getTextbox().overrideFontID(_textboxTextFontID);
+		NancySceneState.getTextbox().setOverrideFont(_textboxTextFontID);
 		NancySceneState.getTextbox().addTextLine(_riddles[_riddleID].text);
+		NancySceneState.setNoHeldItem();
 
 		_state = kRun;
 	}

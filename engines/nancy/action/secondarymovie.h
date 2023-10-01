@@ -28,6 +28,14 @@
 namespace Nancy {
 namespace Action {
 
+// Plays an AVF video. Optionally supports:
+// - playing a sound;
+// - reverse playback;
+// - moving with the scene's background frame;
+// - hiding of player cursor (and thus, disabling input);
+// - setting event flags on a specific frame, as well as at the end of the video;
+// - changing the scene after playback ends
+// Mostly used for cinematics, with some occasional uses for background animations
 class PlaySecondaryMovie : public RenderActionRecord {
 public:
 	static const byte kMovieSceneChange			= 5;
@@ -48,7 +56,6 @@ public:
 	virtual ~PlaySecondaryMovie();
 
 	void init() override;
-	void updateGraphics() override;
 	void onPause(bool pause) override;
 
 	void readData(Common::SeekableReadStream &stream) override;
@@ -56,7 +63,9 @@ public:
 
 	Common::String _videoName;
 	Common::String _paletteName;
+	Common::String _bitmapOverlayName;
 
+	uint16 _videoFormat = kLargeVideoFormat;
 	uint16 _videoSceneChange = kMovieNoSceneChange;
 	byte _playerCursorAllowed = kPlayerCursorAllowed;
 	byte _playDirection = kPlayMovieForward;
@@ -70,11 +79,12 @@ public:
 	SceneChangeDescription _sceneChange;
 	Common::Array<SecondaryVideoDescription> _videoDescs;
 
+	AVFDecoder _decoder;
+
 protected:
 	Common::String getRecordTypeName() const override { return "PlaySecondaryMovie"; }
 	bool isViewportRelative() const override { return true; }
 
-	AVFDecoder _decoder;
 	Graphics::ManagedSurface _fullFrame;
 	int _curViewportFrame = -1;
 	bool _isFinished = false;

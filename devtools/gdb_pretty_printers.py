@@ -1,3 +1,32 @@
+"""
+/* ScummVM - Graphic Adventure Engine
+ *
+ * ScummVM is the legal property of its developers, whose names
+ * are too numerous to list here. Please refer to the COPYRIGHT
+ * file distributed with this source distribution.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+"""
+
+"""
+USAGE:
+inside gdb, use:
+> source devtools/gdb_pretty_printers.py
+"""
+
 class StringPrinter:
     "Prints Common::String and Common::U32String"
 
@@ -73,8 +102,8 @@ class RBTreeIterator:
                 parent = self.current_node.dereference()["parent"]
         return value
 
-class StableMapPrinter:
-    "Prints Common::StableMap"
+class RBTreeMapPrinter:
+    "Prints Common::StableMap and Common::MultiMap"
 
     class _iterator:
         def __init__(self, rb_tree):
@@ -152,7 +181,8 @@ def build_pretty_printer():
     pp.add_printer('String', '^Common::String$', StringPrinter)
     pp.add_printer('U32String', '^Common::U32String$', StringPrinter)
     pp.add_printer('Array', '^Common::Array<.*>$', ArrayPrinter)
-    pp.add_printer('StableMap', '^Common::StableMap<.*>$', StableMapPrinter)
+    pp.add_printer('StableMap', '^Common::StableMap<.*>$', RBTreeMapPrinter)
+    pp.add_printer('MultiMap', '^Common::MultiMap<.*>$', RBTreeMapPrinter)
     pp.add_printer('List', '^Common::List<.*>$',  ListPrinter)
     return pp
 

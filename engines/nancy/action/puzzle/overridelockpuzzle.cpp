@@ -80,6 +80,11 @@ void OverrideLockPuzzle::execute() {
 		init();
 		registerGraphics();
 
+		if (g_nancy->getGameType() != kGameTypeNancy5 || NancySceneState.getHeldItem() != 12) {
+			// Hardcoded check for rubber gloves in nancy5
+			NancySceneState.setNoHeldItem();
+		}
+
 		// Set the order of the button presses (always random)
 		// and of the lights (only random on expert difficulty)
 		uint numButtons = _buttonSrcs.size();
@@ -191,7 +196,7 @@ void OverrideLockPuzzle::handleInput(NancyInput &input) {
 		if (NancySceneState.getViewport().convertViewportToScreen(_hotspots[i]).contains(input.mousePos)) {
 			g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
 
-			if (input.input & NancyInput::kLeftMouseButtonUp) {
+			if (!g_nancy->_sound->isSoundPlaying(_buttonSound) && input.input & NancyInput::kLeftMouseButtonUp) {
 				drawButton(i, false);
 				_lastPushedButton = i;
 				_timeToPop = g_nancy->getTotalPlayTime() + _buttonPopTime;

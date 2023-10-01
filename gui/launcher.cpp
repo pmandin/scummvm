@@ -32,7 +32,9 @@
 #include "gui/about.h"
 #include "gui/browser.h"
 #include "gui/chooser.h"
+#include "gui/dlcsdialog.h"
 #include "gui/editgamedialog.h"
+#include "gui/helpdialog.h"
 #include "gui/launcher.h"
 #include "gui/massadd.h"
 #include "gui/message.h"
@@ -57,6 +59,9 @@
 #if defined(USE_CLOUD) && defined(USE_LIBCURL)
 #include "backends/cloud/cloudmanager.h"
 #endif
+#if defined(USE_DLC)
+#include "backends/dlc/dlcmanager.h"
+#endif
 
 namespace GUI {
 
@@ -66,6 +71,7 @@ enum {
 	kOptionsCmd = 'OPTN',
 	kAddGameCmd = 'ADDG',
 	kMassAddGameCmd = 'MADD',
+	kDownloadGameCmd = 'DWNG',
 	kEditGameCmd = 'EDTG',
 	kRemoveGameCmd = 'REMG',
 	kLoadGameCmd = 'LOAD',
@@ -75,6 +81,7 @@ enum {
 	kListSearchCmd = 'LSSR',
 	kSearchClearCmd = 'SRCL',
 	kSetGroupMethodCmd = 'GPBY',
+	kHelpCmd = 'HELP',
 
 	kListSwitchCmd = 'LIST',
 	kGridSwitchCmd = 'GRID',
@@ -201,6 +208,12 @@ LauncherDialog::LauncherDialog(const Common::String &dialogName)
 		_metadataParser.close();
 	}
 	g_gui.unlockIconsSet();
+
+#if defined(USE_DLC)
+	if (g_system->hasFeature(OSystem::kFeatureDLC)) {
+		DLCMan.setLauncher(this);
+	}
+#endif
 }
 
 LauncherDialog::~LauncherDialog() {
@@ -245,6 +258,8 @@ void LauncherDialog::build() {
 #endif
 		new StaticTextWidget(this, _title + ".Version", Common::U32String(gScummVMFullVersion));
 
+	new ButtonWidget(this, _title + ".HelpButton", Common::U32String("?"), _("Help"), kHelpCmd);
+
 	if (!g_system->hasFeature(OSystem::kFeatureNoQuit)) {
 		// I18N: Button Quit ScummVM program. Q is the shortcut, Ctrl+Q, put it in parens for non-latin (~Q~)
 		new ButtonWidget(this, _title + ".QuitButton", _("~Q~uit"), _("Quit ScummVM"), kQuitCmd);
@@ -254,6 +269,12 @@ void LauncherDialog::build() {
 	new ButtonWidget(this, _title + ".AboutButton", _("A~b~out"), _("About ScummVM"), kAboutCmd);
 	// I18N: Button caption. O is the shortcut, Ctrl+O, put it in parens for non-latin (~O~)
 	new ButtonWidget(this, _title + ".OptionsButton", _("Global ~O~ptions..."), _("Change global ScummVM options"), kOptionsCmd, 0, _c("Global ~O~pts...", "lowres"));
+
+#if defined(USE_DLC)
+	if (g_system->hasFeature(OSystem::kFeatureDLC)) {
+		new ButtonWidget(this, _title + ".DownloadGamesButton", _("Download Games"), _("Download freeware games for ScummVM"), kDownloadGameCmd);
+	}
+#endif
 
 	// Above the lowest button rows: two more buttons (directly below the list box)
 	DropdownButtonWidget *addButton =
@@ -727,6 +748,13 @@ void LauncherDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 	case kMassAddGameCmd:
 		massAddGame();
 		break;
+#if defined(USE_DLC)
+	case kDownloadGameCmd: {
+		DLCsDialog downloader;
+		downloader.runModal();
+		}
+		break;
+#endif
 	case kRemoveGameCmd:
 		if (item < 0) return;
 		removeGame(item);
@@ -765,6 +793,11 @@ void LauncherDialog::handleCommand(CommandSender *sender, uint32 cmd, uint32 dat
 		ConfMan.setActiveDomain("");
 		setResult(-1);
 		close();
+		break;
+	case kHelpCmd: {
+		HelpDialog dlg;
+		dlg.runModal();
+		}
 		break;
 #ifndef DISABLE_LAUNCHERDISPLAY_GRID
 	case kGridSwitchCmd:
@@ -1129,7 +1162,7 @@ void LauncherSimple::updateListing() {
 	// Update the filter settings, those are lost when "setList"
 	// is called.
 	_list->setFilter(_searchWidget->getEditString());
-	
+
 	// Close groups that the user closed earlier
 	_list->loadClosedGroups(Common::U32String(groupingModes[_groupBy].name));
 }
@@ -1458,7 +1491,7 @@ void LauncherGrid::handleCommand(CommandSender *sender, uint32 cmd, uint32 data)
 		break;
 	case kSetGroupMethodCmd: {
 		_grid->saveClosedGroups(Common::U32String(groupingModes[_groupBy].name));
-	
+
 		// Change the grouping criteria
 		GroupingMethod newGroupBy = (GroupingMethod)data;
 		if (_groupBy != newGroupBy) {

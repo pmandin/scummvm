@@ -27,6 +27,7 @@ const char *const directoryGlobs[] = {
 	"game",
 	"iff",
 	"cifTree",
+	"datafiles",
 	nullptr
 };
 
@@ -47,6 +48,9 @@ static const PlainGameDescriptor nancyGames[] = {
 	{ "nancy4", "Nancy Drew: Treasure in the Royal Tower" },
 	{ "nancy5", "Nancy Drew: The Final Scene" },
 	{ "nancy6", "Nancy Drew: Secret of the Scarlet Hand" },
+	{ "nancy7", "Nancy Drew: Ghost Dogs of Moon Lake" },
+	{ "nancy8", "Nancy Drew: The Haunted Carousel" },
+	{ "nancy9", "Nancy Drew: Danger on Deception Island" },
 	{ nullptr, nullptr }
 };
 
@@ -59,7 +63,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_TESTING | ADGF_DROPLANGUAGE | ADGF_DROPPLATFORM,
-			GUIO1(GUIO_NOLANG)
+			GUIO3(GUIO_NOLANG, GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeVampire
 	},
@@ -70,7 +74,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_TESTING | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy1
 	},
@@ -81,7 +85,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_TESTING | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy1
 	},
@@ -97,7 +101,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_TESTING | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy1
 	},
@@ -107,8 +111,8 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			AD_ENTRY1s("ciftree.dat", "fa4293d728a1b31407961cd82e86a015", 7784516),
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_UNSTABLE,
-			GUIO0()
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy2
 	},
@@ -119,7 +123,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy2
 	},
@@ -135,7 +139,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy2
 	},
@@ -145,8 +149,8 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			AD_ENTRY1s("ciftree.dat", "ee5f8832226567c3610556497c451b09", 16256355),
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_PLG_BYTE_IN_BSUM,
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy3
 	},
@@ -157,7 +161,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy3
 	},
@@ -172,8 +176,8 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			},
 			Common::EN_ANY,
 			Common::kPlatformWindows,
-			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED | Nancy::GF_PLG_BYTE_IN_BSUM,
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy3
 	},
@@ -184,7 +188,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy3
 	},
@@ -200,7 +204,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy3
 	},
@@ -211,7 +215,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy4
 	},
@@ -222,7 +226,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy4
 	},
@@ -233,7 +237,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy4
 	},
@@ -249,11 +253,11 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy4
 	},
-		{ // MD5 by eriktorbjorn
+	{ // MD5 by eriktorbjorn
 		{
 			"nancy4", nullptr,
 			{
@@ -265,7 +269,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy4
 	},
@@ -282,7 +286,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::RU_RUS,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy4
 	},
@@ -293,7 +297,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy5
 	},
@@ -309,7 +313,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy5
 	},
@@ -325,7 +329,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy5
 	},
@@ -341,7 +345,7 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
-			GUIO0()
+			GUIO2(GAMEOPTION_PLAYER_SPEECH, GAMEOPTION_CHARACTER_SPEECH)
 		},
 		Nancy::kGameTypeNancy5
 	},
@@ -352,10 +356,77 @@ static const Nancy::NancyGameDescription gameDescriptions[] = {
 			Common::EN_ANY,
 			Common::kPlatformWindows,
 			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
-			GUIO0()
+			GUIO1(GAMEOPTION_AUTO_MOVE)
 		},
 		Nancy::kGameTypeNancy6
 	},
+	{ // MD5 by eriktorbjorn
+		{
+			"nancy6", nullptr,
+			{
+				{ "data1.hdr", 0, "6a45cdf632301ae1b55fd7474bec3650", 298551 },
+				{ "data1.cab", 0, "399b83b188bfc05077d81cc1eadd456c", 4470086 },
+				{ "data2.cab", 0, "30ca94b596f6b5971a22c111b24d6764", 206382511 },
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
+			GUIO1(GAMEOPTION_AUTO_MOVE)
+		},
+		Nancy::kGameTypeNancy6
+	},
+	{
+		{
+			"nancy7", nullptr,
+			AD_ENTRY1s("ciftree.dat", "e49e6f56a47c363e2651bd19a70ff557", 55835579),
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+			GUIO1(GAMEOPTION_AUTO_MOVE)
+		},
+		Nancy::kGameTypeNancy7
+	},
+	{ // MD5 by eriktorbjorn
+		{
+			"nancy7", nullptr,
+			{
+				{ "data1.hdr", 0, "f58175e4647e635e96d73dde49deb871", 335485 },
+				{ "data1.cab", 0, "6b48a626a8c6c12c9d7f68ee6c80212a", 4693602 },
+				{ "data2.cab", 0, "0aec46d4a59ea0279228ab25bfb3fcd5", 144613827 },
+				AD_LISTEND
+			},
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM | Nancy::GF_COMPRESSED,
+			GUIO0()
+		},
+		Nancy::kGameTypeNancy7
+	},
+	{
+		{
+			"nancy8", nullptr,
+			AD_ENTRY1s("ciftree.dat", "d85192a942a207017ebf0a19207ac698", 19498032),
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+			GUIO1(GAMEOPTION_AUTO_MOVE)
+		},
+		Nancy::kGameTypeNancy8
+	},
+	{
+		{
+			"nancy9", nullptr,
+			AD_ENTRY1s("ciftree.dat", "3a756e09631f4a2c8f48bf316e77b5d5", 26610718),
+			Common::EN_ANY,
+			Common::kPlatformWindows,
+			ADGF_UNSTABLE | ADGF_DROPPLATFORM,
+			GUIO1(GAMEOPTION_AUTO_MOVE)
+		},
+		Nancy::kGameTypeNancy9
+	},
+
+	// Do not delete
 	{ AD_TABLE_END_MARKER, Nancy::kGameTypeNone }
 };
 
@@ -364,7 +435,7 @@ public:
 	NancyMetaEngineDetection() : AdvancedMetaEngineDetection(gameDescriptions, sizeof(Nancy::NancyGameDescription), nancyGames) {
 		_maxScanDepth = 2;
 		_directoryGlobs = directoryGlobs;
-		_guiOptions = GUIO4(GUIO_NOMIDI, GUIO_NOASPECT, GUIO_GAMEOPTIONS1, GUIO_GAMEOPTIONS2);
+		_guiOptions = GUIO2(GUIO_NOMIDI, GUIO_NOASPECT);
 	}
 
 	const char *getName() const override {

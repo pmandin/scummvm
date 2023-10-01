@@ -25,6 +25,7 @@
 
 #include "sword1/memman.h"
 #include "sword1/resman.h"
+#include "sword1/sword1.h"
 #include "sword1/swordres.h"
 
 #include "gui/message.h"
@@ -162,6 +163,7 @@ void ResMan::freeCluDescript() {
 }
 
 void ResMan::flush() {
+	Common::StackLock lock(_resourceAccessMutex);
 	for (uint32 clusCnt = 0; clusCnt < _prj.noClu; clusCnt++) {
 		Clu *cluster = _prj.clu + clusCnt;
 		for (uint32 grpCnt = 0; grpCnt < cluster->noGrp; grpCnt++) {
@@ -187,6 +189,7 @@ void ResMan::flush() {
 
 void *ResMan::fetchRes(uint32 id) {
 	MemHandle *memHandle = resHandle(id);
+
 	if (!memHandle) {
 		warning("fetchRes:: resource %d out of bounds", id);
 		return NULL;
@@ -246,7 +249,9 @@ void *ResMan::cptResOpen(uint32 id) {
 }
 
 void ResMan::resOpen(uint32 id) {  // load resource ID into memory
+	Common::StackLock lock(_resourceAccessMutex);
 	MemHandle *memHandle = resHandle(id);
+
 	if (!memHandle)
 		return;
 	if (memHandle->cond == MEM_FREED) { // memory has been freed
@@ -269,6 +274,7 @@ void ResMan::resOpen(uint32 id) {  // load resource ID into memory
 }
 
 void ResMan::resClose(uint32 id) {
+	Common::StackLock lock(_resourceAccessMutex);
 	MemHandle *handle = resHandle(id);
 	if (!handle)
 		return;
@@ -496,37 +502,43 @@ void ResMan::openScriptResourceLittleEndian(uint32 id) {
 	}
 }
 
+uint32 ResMan::getDeathFontId() {
+	// At some point in the releases (as evidenced by the disasms of all
+	// known executables, and by the source code in our possession), Revolution
+	// changed the resource offsets for some files. I have tried EVERYTHING to
+	// try and discern which file we are dealing with and spectacularly failed.
+	// The only choice which seems to work correctly is to check the file size,
+	// as the newer GENERAL.CLU file is bigger. Sorry.
+	if (SwordEngine::isPsx())
+		return SR_FONT;
 
-uint32 ResMan::_srIdList[29] = { // the file numbers differ for the control panel file IDs, so we need this array
-	OTHER_SR_FONT,      // SR_FONT
-	0x04050000,         // SR_BUTTON
-	OTHER_SR_REDFONT,   // SR_REDFONT
-	0x04050001,         // SR_PALETTE
-	0x04050002,         // SR_PANEL_ENGLISH
-	0x04050003,         // SR_PANEL_FRENCH
-	0x04050004,         // SR_PANEL_GERMAN
-	0x04050005,         // SR_PANEL_ITALIAN
-	0x04050006,         // SR_PANEL_SPANISH
-	0x04050007,         // SR_PANEL_AMERICAN
-	0x04050008,         // SR_TEXT_BUTTON
-	0x04050009,         // SR_SPEED
-	0x0405000A,         // SR_SCROLL1
-	0x0405000B,         // SR_SCROLL2
-	0x0405000C,         // SR_CONFIRM
-	0x0405000D,         // SR_VOLUME
-	0x0405000E,         // SR_VLIGHT
-	0x0405000F,         // SR_VKNOB
-	0x04050010,         // SR_WINDOW
-	0x04050011,         // SR_SLAB1
-	0x04050012,         // SR_SLAB2
-	0x04050013,         // SR_SLAB3
-	0x04050014,         // SR_SLAB4
-	0x04050015,         // SR_BUTUF
-	0x04050016,         // SR_BUTUS
-	0x04050017,         // SR_BUTDS
-	0x04050018,         // SR_BUTDF
-	0x04050019,         // SR_DEATHPANEL
-	0,
-};
+	Common::File fp;
+	if (fp.open(SwordEngine::isMac() ? "GENERAL.CLM" : "GENERAL.CLU")) {
+		fp.seek(0, SEEK_END);
+		int64 fileSize = fp.pos();
+
+		if (SwordEngine::_systemVars.realLanguage == Common::RU_RUS) {
+			switch (fileSize) {
+			case 6081261: // Akella
+				return SR_DEATHFONT;
+			case 6354790: // Mediahauz
+				return SR_FONT;
+			case 6350630: // Novy Disk
+				return SR_DEATHFONT_ALT;
+			default:
+				warning("ResMan::getDeathFontId(): Unrecognized version of russian GENERAL.CLU, size %d", (int)fileSize);
+				break;
+			}
+
+			return SR_FONT;
+		} else if (fileSize < 6295679) {
+			return SR_DEATHFONT;
+		} else {
+			return SR_DEATHFONT_ALT;
+		}
+	}
+
+	return 0;
+}
 
 } // End of namespace Sword1

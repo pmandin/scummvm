@@ -13,6 +13,7 @@ MODULE_OBJS := \
 	EventRecorder.o \
 	filebrowser-dialog.o \
 	gui-manager.o \
+	helpdialog.o \
 	imagealbum-dialog.o \
 	launcher.o \
 	massadd.o \
@@ -42,6 +43,7 @@ MODULE_OBJS := \
 	widgets/groupedlist.o \
 	widgets/list.o \
 	widgets/popup.o \
+	widgets/richtext.o \
 	widgets/scrollbar.o \
 	widgets/scrollcontainer.o \
 	widgets/tab.o
@@ -54,6 +56,12 @@ MODULE_OBJS += \
 	downloadpacksdialog.o \
 	remotebrowser.o
 endif
+endif
+
+ifdef USE_DLC
+MODULE_OBJS += \
+	dlcsdialog.o \
+	downloaddlcsdialog.o
 endif
 
 ifdef ENABLE_EVENTRECORDER

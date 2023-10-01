@@ -11,6 +11,7 @@ For a more comprehensive changelog of the latest experimental code, see:
    - Added support for Muppet Treasure Island.
    - Added support for Primordia, Shardlight and Technobabylon.
    - Added support for Adibou 1.
+   - Added support for Dark Side.
 
  New platforms:
    - Added libretro new shiny port.
@@ -60,6 +61,7 @@ For a more comprehensive changelog of the latest experimental code, see:
 
  Sword1:
    - Major rewrite of palette fades, bringing it to match the original.
+   - Rewrote all the menu code to make it match the original.
 
  Sword2:
    - Added support for Chinese translation.

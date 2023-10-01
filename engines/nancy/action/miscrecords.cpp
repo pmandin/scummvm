@@ -89,6 +89,90 @@ void SpecialEffect::execute() {
 	_isDone = true;
 }
 
+void TableIndexSetValueHS::readData(Common::SeekableReadStream &stream) {
+	_tableIndex = stream.readUint16LE();
+	_valueChangeType = stream.readByte();
+	_entryCorrectFlagID = stream.readSint16LE();
+	_allEntriesCorrectFlagID = stream.readSint16LE();
+
+	_flags.readData(stream);
+	_cursorType = stream.readUint16LE();
+	uint16 numHotspots = stream.readUint16LE();
+	_hotspots.resize(numHotspots);
+	for (uint i = 0; i < numHotspots; ++i) {
+		_hotspots[i].readData(stream);
+	}
+}
+
+void TableIndexSetValueHS::execute() {
+	switch (_state) {
+	case kBegin:
+		_state = kRun;
+		// fall through
+	case kRun:
+		_hasHotspot = false;
+		for (uint i = 0; i < _hotspots.size(); ++i) {
+			if (_hotspots[i].frameID == NancySceneState.getSceneInfo().frameID) {
+				_hasHotspot = true;
+				_hotspot = _hotspots[i].coords;
+			}
+		}
+		break;
+	case kActionTrigger: {
+		TableData *playerTable = (TableData *)NancySceneState.getPuzzleData(TableData::getTag());
+		assert(playerTable);
+		const TABL *tabl = (const TABL *)g_nancy->getEngineData("TABL");
+		assert(tabl);
+
+		// Edit table. Values start from 1!
+		switch (_valueChangeType) {
+		case kNoChangeTableValue:
+			break;
+		case kIncrementTableValue:
+			++playerTable->currentIDs[_tableIndex - 1];
+			if (playerTable->currentIDs[_tableIndex - 1] >= playerTable->currentIDs.size() + 1) {
+				playerTable->currentIDs[_tableIndex - 1] = 1;
+			}
+			break;
+		case kDecrementTableValue:
+			--playerTable->currentIDs[_tableIndex - 1];
+			if (playerTable->currentIDs[_tableIndex - 1] == 0) {
+				playerTable->currentIDs[_tableIndex - 1] = playerTable->currentIDs.size();
+			}
+			
+			break;
+		}
+
+		// Check for correctness...
+
+		// ...of current index only...
+		if (playerTable->currentIDs[_tableIndex] == tabl->correctIDs[_tableIndex]) {
+			NancySceneState.setEventFlag(_entryCorrectFlagID, g_nancy->_true);
+		} else {
+			NancySceneState.setEventFlag(_entryCorrectFlagID, g_nancy->_false);
+		}
+
+		// ..and of all indices
+		bool allCorrect = true;
+		for (uint i = 0; i < tabl->correctIDs.size(); ++i) {
+			if (playerTable->currentIDs[i] != tabl->correctIDs[i]) {
+				allCorrect = false;
+				break;
+			}
+		}
+
+		if (allCorrect) {
+			NancySceneState.setEventFlag(_allEntriesCorrectFlagID, g_nancy->_true);
+		} else {
+			NancySceneState.setEventFlag(_allEntriesCorrectFlagID, g_nancy->_false);
+		}
+
+		_flags.execute();
+		finishExecution();
+	}
+	}
+}
+
 void LightningOn::execute() {
 	NancySceneState.beginLightning(_distance, _pulseTime, _rgbPercent);
 	_isDone = true;
@@ -105,7 +189,7 @@ void TextBoxWrite::readData(Common::SeekableReadStream &stream) {
 	stream.read(buf, size);
 	buf[size - 1] = '\0';
 
-	UI::Textbox::assembleTextLine(buf, _text, size);
+	assembleTextLine(buf, _text, size);
 
 	delete[] buf;
 }
@@ -113,8 +197,6 @@ void TextBoxWrite::readData(Common::SeekableReadStream &stream) {
 void TextBoxWrite::execute() {
 	auto &tb = NancySceneState.getTextbox();
 	tb.clear();
-	const TBOX *textboxData = (const TBOX *)g_nancy->getEngineData("TBOX");
-	tb.overrideFontID(textboxData->defaultFontID);
 	tb.addTextLine(_text);
 	tb.setVisible(true);
 	finishExecution();
@@ -231,7 +313,7 @@ void LoseGame::readData(Common::SeekableReadStream &stream) {
 }
 
 void LoseGame::execute() {
-	g_nancy->_sound->stopAndUnloadSpecificSounds();
+	g_nancy->_sound->stopAndUnloadSceneSpecificSounds();
 	NancySceneState.setDestroyOnExit();
 
 	if (!ConfMan.hasKey("original_menus") || ConfMan.getBool("original_menus")) {
@@ -268,7 +350,7 @@ void WinGame::readData(Common::SeekableReadStream &stream) {
 }
 
 void WinGame::execute() {
-	g_nancy->_sound->stopAndUnloadSpecificSounds();
+	g_nancy->_sound->stopAndUnloadSceneSpecificSounds();
 	NancySceneState.setDestroyOnExit();
 	g_nancy->setState(NancyState::kCredits, NancyState::kMainMenu);
 
@@ -277,11 +359,30 @@ void WinGame::execute() {
 
 void AddInventoryNoHS::readData(Common::SeekableReadStream &stream) {
 	_itemID = stream.readUint16LE();
+
+	if (g_nancy->getGameType() >= kGameTypeNancy6) {
+		_setCursor = stream.readUint16LE();
+		_forceCursor = stream.readUint16LE();
+	}
 }
 
 void AddInventoryNoHS::execute() {
-	if (NancySceneState.hasItem(_itemID) == g_nancy->_false) {
-		NancySceneState.addItemToInventory(_itemID);
+	if (_setCursor) {
+		if (NancySceneState.getHeldItem() != -1) {
+			// Currently holding another item
+			if (_forceCursor) {
+				NancySceneState.addItemToInventory(NancySceneState.getHeldItem());
+				NancySceneState.setHeldItem(_itemID);
+			} else {
+				NancySceneState.addItemToInventory(_itemID);
+			}
+		} else {
+			NancySceneState.setHeldItem(_itemID);
+		}
+	} else {
+		if (NancySceneState.hasItem(_itemID) == g_nancy->_false) {
+			NancySceneState.addItemToInventory(_itemID);
+		}
 	}
 
 	_isDone = true;
@@ -314,7 +415,7 @@ void DifficultyLevel::execute() {
 void ShowInventoryItem::init() {
 	g_nancy->_resource->loadImage(_imageName, _fullSurface);
 
-	_drawSurface.create(_fullSurface, _bitmaps[0].src);
+	_drawSurface.create(_fullSurface, _blitDescriptions[0].src);
 
 	RenderObject::init();
 }
@@ -329,14 +430,14 @@ void ShowInventoryItem::readData(Common::SeekableReadStream &stream) {
 		stream.skip(2);
 	}
 
-	_bitmaps.resize(numFrames);
+	_blitDescriptions.resize(numFrames);
 	for (uint i = 0; i < numFrames; ++i) {
 		if (gameType <= kGameTypeNancy2) {
-			_bitmaps[i].readData(stream);
+			_blitDescriptions[i].readData(stream);
 		} else {
-			_bitmaps[i].frameID = i;
-			readRect(stream, _bitmaps[i].src);
-			readRect(stream, _bitmaps[i].dest);
+			_blitDescriptions[i].frameID = i;
+			readRect(stream, _blitDescriptions[i].src);
+			readRect(stream, _blitDescriptions[i].dest);
 		}
 	}
 }
@@ -351,8 +452,8 @@ void ShowInventoryItem::execute() {
 	case kRun: {
 		int newFrame = -1;
 
-		for (uint i = 0; i < _bitmaps.size(); ++i) {
-			if (_bitmaps[i].frameID == NancySceneState.getSceneInfo().frameID) {
+		for (uint i = 0; i < _blitDescriptions.size(); ++i) {
+			if (_blitDescriptions[i].frameID == NancySceneState.getSceneInfo().frameID) {
 				newFrame = i;
 				break;
 			}
@@ -363,9 +464,9 @@ void ShowInventoryItem::execute() {
 
 			if (newFrame != -1) {
 				_hasHotspot = true;
-				_hotspot = _bitmaps[newFrame].dest;
-				_drawSurface.create(_fullSurface, _bitmaps[newFrame].src);
-				_screenPosition = _bitmaps[newFrame].dest;
+				_hotspot = _blitDescriptions[newFrame].dest;
+				_drawSurface.create(_fullSurface, _blitDescriptions[newFrame].src);
+				_screenPosition = _blitDescriptions[newFrame].dest;
 				setVisible(true);
 			} else {
 				_hasHotspot = false;
@@ -383,6 +484,22 @@ void ShowInventoryItem::execute() {
 		finishExecution();
 		break;
 	}
+}
+
+void InventorySoundOverride::readData(Common::SeekableReadStream &stream) {
+	_command = stream.readByte();
+	_itemID = stream.readUint16LE();
+	stream.skip(2);
+	char buf[61];
+	stream.read(buf, 60);
+	buf[60] = '\0';
+	_caption = buf;
+	_sound.readNormal(stream);
+}
+
+void InventorySoundOverride::execute() {
+	NancySceneState.installInventorySoundOverride(_command, _sound, _caption, _itemID);
+	_isDone = true;
 }
 
 void HintSystem::readData(Common::SeekableReadStream &stream) {

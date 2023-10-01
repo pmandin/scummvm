@@ -106,19 +106,22 @@ Common::Error SwordEngine::init() {
 	_menu = new Menu(_screen, _mouse);
 	_logic = new Logic(this, _objectMan, _resMan, _screen, _mouse, _sound, _music, _menu, _system, _mixer);
 	_mouse->useLogicAndMenu(_logic, _menu);
+	_mouse->useScreenMutex(&_screen->_screenAccessMutex);
 
 	syncSoundSettings();
 
 	_systemVars.justRestoredGame = 0;
 	_systemVars.currentCD = 0;
 	_systemVars.controlPanelMode = CP_NEWGAME;
-	_systemVars.forceRestart = false;
+	_systemVars.saveGameFlag = SGF_DONE;
+	_systemVars.snrStatus = SNR_BLANK;
 	_systemVars.wantFade = true;
 	_systemVars.realLanguage = Common::parseLanguage(ConfMan.get("language"));
 	_systemVars.isLangRtl = false;
 	_systemVars.debugMode = (gDebugLevel >= 0);
 	_systemVars.slowMode = false;
 	_systemVars.fastMode = false;
+	_systemVars.parallaxOn = true;
 
 	switch (_systemVars.realLanguage) {
 	case Common::DE_DEU:
@@ -150,9 +153,16 @@ Common::Error SwordEngine::init() {
 	}
 
 	_systemVars.showText = ConfMan.getBool("subtitles");
-
+	_systemVars.textNumber = 0;
 	_systemVars.playSpeech = true;
 	_mouseState = 0;
+
+	_systemVars.gamePaused = false;
+	_systemVars.displayDebugText = false;
+	_systemVars.displayDebugMouse = false;
+	_systemVars.displayDebugGrid = false;
+	_systemVars.framesPerSecondCounter = 0;
+	_systemVars.gameCycle = 0;
 
 	// Some Mac versions use big endian for the speech files but not all of them.
 	if (_systemVars.platform == Common::kPlatformMacintosh)
@@ -250,67 +260,105 @@ void SwordEngine::flagsToBool(bool *dest, uint8 flags) {
 	}
 }
 
-uint8 SwordEngine::checkKeys() {
-	uint8 retCode = 0;
-	if (_systemVars.forceRestart) {
-		retCode = CONTROL_RESTART_GAME;
-	} else {
+void SwordEngine::checkKeys() {
+
+	if (_systemVars.gamePaused) {
+		// TODO: Audio
+		//PauseSpeech();
+		//PauseMusic();
+		//PauseFx();
+		_mixer->pauseAll(true);
+
+		while (_keyPressed.keycode != Common::KEYCODE_p && !Engine::shouldQuit()) {
+			pollInput(0);
+			// TODO: Audio
+			// UpdateSampleStreaming();
+		}
+
+		// TODO: Audio
+		//UnpauseSpeech();
+		//UnpauseMusic();
+		//UnpauseFx();
+		_mixer->pauseAll(false);
+
+		_systemVars.gamePaused = false;
+		_keyPressed.reset();
+	}
+
+	switch (_keyPressed.keycode) {
+	case Common::KEYCODE_F5:
+	case Common::KEYCODE_ESCAPE:
+		if ((Logic::_scriptVars[MOUSE_STATUS] & 1) && (Logic::_scriptVars[GEORGE_HOLDING_PIECE] == 0)) {
+			_systemVars.saveGameFlag = SGF_SAVE;
+			_systemVars.snrStatus = SNR_MAINPANEL;
+		}
+
+		break;
+	case Common::KEYCODE_q:
+		if (_keyPressed.hasFlags(Common::KBD_CTRL))
+			Engine::quitGame();
+
+		break;
+	case Common::KEYCODE_p:
+		_systemVars.gamePaused = true;
+		break;
+	default:
+		break;
+	}
+
+	// Debug keys!
+	if (!_systemVars.isDemo && _systemVars.debugMode) {
 		switch (_keyPressed.keycode) {
-		case Common::KEYCODE_F5:
-		case Common::KEYCODE_ESCAPE:
-			if ((Logic::_scriptVars[MOUSE_STATUS] & 1) && (Logic::_scriptVars[GEORGE_HOLDING_PIECE] == 0)) {
-				retCode = _control->runPanel();
-				if (retCode == CONTROL_NOTHING_DONE) {
-					_screen->fullRefresh(true);
-					Logic::_scriptVars[NEW_PALETTE] = 1;
+		case Common::KEYCODE_t: // CTRL-T: Toggles debug text
+			if (_keyPressed.hasFlags(Common::KBD_CTRL))
+				_systemVars.displayDebugText = !_systemVars.displayDebugText;
+			break;
+		case Common::KEYCODE_m: // SHIFT-M: Toggles debug mouse tracking
+			// This was originally CTRL-M, but ScummVM steals that event to
+			// lock the mouse cursor within the window boundaries.
+			if (_keyPressed.hasFlags(Common::KBD_SHIFT))
+				_systemVars.displayDebugMouse = !_systemVars.displayDebugMouse;
+			_screen->fullRefresh(true);
+			break;
+		case Common::KEYCODE_g: // CTRL-G: Toggles walkgrid displaying
+			if (_keyPressed.hasFlags(Common::KBD_CTRL))
+				_systemVars.displayDebugGrid = !_systemVars.displayDebugGrid;
+			_screen->fullRefresh(true);
+			break;
+		case Common::KEYCODE_1: // Slow mode
+			{
+				if (_systemVars.slowMode) {
+					_systemVars.slowMode = false;
+					_targetFrameTime = DEFAULT_FRAME_TIME; // 12.5Hz
+				} else {
+					_systemVars.slowMode = true;
+					_targetFrameTime = SLOW_FRAME_TIME; // 2Hz
 				}
 
+				_systemVars.fastMode = false; // For good measure...
+
+				_rate = _targetFrameTime / 10;
+			}
+			break;
+		case Common::KEYCODE_4: // Fast mode
+			{
+				if (_systemVars.fastMode) {
+					_systemVars.fastMode = false;
+					_targetFrameTime = DEFAULT_FRAME_TIME; // 12.5Hz
+				} else {
+					_systemVars.fastMode = true;
+					_targetFrameTime = FAST_FRAME_TIME; // 100Hz
+				}
+
+				_systemVars.slowMode = false; // For good measure...
+
+				_rate = _targetFrameTime / 10;
 			}
 			break;
 		default:
 			break;
 		}
-
-		// Debug keys!
-		if (!_systemVars.isDemo && _systemVars.debugMode) {
-			switch (_keyPressed.keycode) {
-			case Common::KEYCODE_1: // Slow mode
-				{
-					if (_systemVars.slowMode) {
-						_systemVars.slowMode = false;
-						_targetFrameTime = DEFAULT_FRAME_TIME; // 12.5Hz
-					} else {
-						_systemVars.slowMode = true;
-						_targetFrameTime = SLOW_FRAME_TIME; // 2Hz
-					}
-
-					_systemVars.fastMode = false; // For good measure...
-
-					_rate = _targetFrameTime / 10;
-				}
-				break;
-			case Common::KEYCODE_4: // Fast mode
-				{
-					if (_systemVars.fastMode) {
-						_systemVars.fastMode = false;
-						_targetFrameTime = DEFAULT_FRAME_TIME; // 12.5Hz
-					} else {
-						_systemVars.fastMode = true;
-						_targetFrameTime = FAST_FRAME_TIME; // 100Hz
-					}
-
-					_systemVars.slowMode = false; // For good measure...
-
-					_rate = _targetFrameTime / 10;
-				}
-				break;
-			default:
-				break;
-			}
-		}
 	}
-
-	return retCode;
 }
 
 static const char *const errorMsgs[] = {
@@ -647,8 +695,9 @@ Common::Error SwordEngine::go() {
 	_screen->initFadePaletteServer();
 	installTimerRoutines();
 
+	bool startedFromGMM = false;
 	uint16 startPos = ConfMan.getInt("boot_param");
-	_control->readSavegameDescriptions();
+
 	if (startPos) {
 		_logic->startPositions(startPos);
 	} else {
@@ -657,31 +706,41 @@ Common::Error SwordEngine::go() {
 		// but their filenames are numbered starting from 0.
 		if (saveSlot >= 0 && _control->savegamesExist() && _control->restoreGameFromFile(saveSlot)) {
 			_control->doRestore();
+			startedFromGMM = true;
+			_systemVars.controlPanelMode = CP_NORMAL;
 		} else if (_control->savegamesExist()) {
+			_systemVars.snrStatus = SNR_MAINPANEL;
 			_systemVars.controlPanelMode = CP_NEWGAME;
-			if (_control->runPanel() == CONTROL_GAME_RESTORED)
-				_control->doRestore();
-			else if (!shouldQuit())
-				_logic->startPositions(0);
-		} else {
-			// no savegames, start new game.
-			_logic->startPositions(0);
+			_control->getPlayerOptions();
+
+			// If player clicked on "Start" (Restart)
+			// just ignore it - so game can start from 'startPos'
+			// (which will be '0' for normal game anyway)
+			if (_systemVars.saveGameFlag == SGF_RESTART)
+				_systemVars.saveGameFlag = SGF_DONE;
 		}
 	}
-	_systemVars.controlPanelMode = CP_NORMAL;
 
 	while (!shouldQuit()) {
-		uint8 action = mainLoop();
+		if (_systemVars.saveGameFlag == SGF_RESTORE) {
+			debug(1, "SwordEngine::go(): Restoring game");
+			if (!_control->restoreGame())
+				warning("SwordEngine::go(): Couldn't restore game");
+
+		} else if (_systemVars.saveGameFlag == SGF_RESTART) {
+			debug(1, "SwordEngine::go(): Restarting game");
+			startPos = 0;
+			_logic->startPositions(startPos);
+		} else if (!startedFromGMM) { // START GAME
+			_logic->startPositions(startPos);
+			startPos = 0;
+		}
+
+		mainLoop();
 
 		if (!shouldQuit()) {
 			// the mainloop was left, we have to reinitialize.
 			reinitialize();
-			if (action == CONTROL_GAME_RESTORED)
-				_control->doRestore();
-			else if (action == CONTROL_RESTART_GAME)
-				_logic->startPositions(1);
-			_systemVars.forceRestart = false;
-			_systemVars.controlPanelMode = CP_NORMAL;
 		}
 	}
 
@@ -690,19 +749,193 @@ Common::Error SwordEngine::go() {
 	return Common::kNoError;
 }
 
+void SwordEngine::showDebugInfo() {
+	Object *playerCompact = _objectMan->fetchObject(PLAYER);
+
+	// Screen coordinates for game cycle string
+	int32 gameCycleX = Logic::_scriptVars[SCROLL_OFFSET_X] + 130;
+	int32 gameCycleY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 125;
+
+	// Screen coordinates for mouse coordinates string
+	int32 mouseCoordsX = Logic::_scriptVars[SCROLL_OFFSET_X] + 220;
+	int32 mouseCoordsY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 125;
+
+	// Screen coordinates for special item string
+	int32 specialItemX = Logic::_scriptVars[SCROLL_OFFSET_X] + 350;
+	int32 specialItemY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 125;
+
+	// Screen coordinates for player coordinates string
+	int32 playerCoordsX = Logic::_scriptVars[SCROLL_OFFSET_X] + 475;
+	int32 playerCoordsY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 125;
+
+	// Screen coordinates for Paris flag string
+	int32 parisFlagX = Logic::_scriptVars[SCROLL_OFFSET_X] + 590;
+	int32 parisFlagY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 125;
+
+	// Screen coordinates for player's script level string
+	int32 scriptLevelX = Logic::_scriptVars[SCROLL_OFFSET_X] + 660;
+	int32 scriptLevelY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 125;
+
+	// Screen coordinates for the talk flag string
+	int32 talkFlagX = Logic::_scriptVars[SCROLL_OFFSET_X] + 720;
+	int32 talkFlagY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 125;
+
+	// Screen coordinates for FPS counter string
+	int32 fpsX = Logic::_scriptVars[SCROLL_OFFSET_X] + 130;
+	int32 fpsY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 145;
+
+	// Screen coordinates for game speed string
+	int32 gameSpeedX = Logic::_scriptVars[SCROLL_OFFSET_X] + 220;
+	int32 gameSpeedY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 145;
+
+	// Screen coordinates for screen number string
+	int32 screenX = Logic::_scriptVars[SCROLL_OFFSET_X] + 350;
+	int32 screenY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 145;
+
+	// Screen coordinates for current CD string
+	int32 currentCDX = Logic::_scriptVars[SCROLL_OFFSET_X] + 475;
+	int32 currentCDY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 145;
+
+	// Screen coordinates for the end sequence phase string
+	int32 endSceneX = Logic::_scriptVars[SCROLL_OFFSET_X] + 590;
+	int32 endSceneY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 145;
+
+	// Screen coordinates for the current text line number string
+	int32 textNoX = Logic::_scriptVars[SCROLL_OFFSET_X] + 130;
+	int32 textNoY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 165;
+
+	// Screen coordinates for debug flags string
+	int32 debugFlagsX = Logic::_scriptVars[SCROLL_OFFSET_X] + 130;
+	int32 debugFlagsY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 185;
+
+	// Screen coordinates for the paused message string
+	int32 pausedX = Logic::_scriptVars[SCROLL_OFFSET_X] + 400;
+	int32 pausedY = Logic::_scriptVars[SCROLL_OFFSET_Y] + 315;
+
+	uint8 buf[255];
+
+	if (_systemVars.gamePaused) {
+		Common::sprintf_s(buf, "%s", _control->getPauseString());
+		_screen->printDebugLine(buf, ' ', pausedX, pausedY);
+	}
+
+	if ((_systemVars.displayDebugText) && (!_systemVars.isDemo)) {
+		// Game cycle
+		Common::sprintf_s(buf, "%d", _systemVars.gameCycle);
+		_screen->printDebugLine(buf, ' ', gameCycleX, gameCycleY);
+
+		// Mouse coordinates
+		Common::sprintf_s(buf, "m %d,%d", Logic::_scriptVars[MOUSE_X], Logic::_scriptVars[MOUSE_Y]);
+		_screen->printDebugLine(buf, ' ', mouseCoordsX, mouseCoordsY);
+
+		// Special item
+		Common::sprintf_s(buf, "id %d", Logic::_scriptVars[SPECIAL_ITEM]);
+		_screen->printDebugLine(buf, ' ', specialItemX, specialItemY);
+
+		// Player coordinates
+		Common::sprintf_s(buf, "G %d,%d", playerCompact->o_xcoord, playerCompact->o_ycoord);
+		_screen->printDebugLine(buf, ' ', playerCoordsX, playerCoordsY);
+
+		// Paris status flag
+		Common::sprintf_s(buf, "pf %d", Logic::_scriptVars[PARIS_FLAG]);
+		_screen->printDebugLine(buf, ' ', parisFlagX, parisFlagY);
+
+		// Player script level
+		Common::sprintf_s(buf, "lv %d", playerCompact->o_tree.o_script_level);
+		_screen->printDebugLine(buf, ' ', scriptLevelX, scriptLevelY);
+
+		// Talk flag
+		Common::sprintf_s(buf, "tf %d", Logic::_scriptVars[TALK_FLAG]);
+		_screen->printDebugLine(buf, ' ', talkFlagX, talkFlagY);
+
+		// Frames per second
+		Common::sprintf_s(buf, "%u fps", _systemVars.framesPerSecondCounter);
+		_screen->printDebugLine(buf, ' ', fpsX, fpsY);
+
+		// Debug game speed (based on pressing keys '1' & '4')
+		if (_systemVars.slowMode) {
+			Common::sprintf_s(buf, "(slow)");
+		} else if (_systemVars.fastMode) {
+			Common::sprintf_s(buf, "(fast)");
+		} else {
+			Common::sprintf_s(buf, "(norm)");
+		}
+
+		_screen->printDebugLine(buf, ' ', gameSpeedX, gameSpeedY);
+
+		// Screen number
+		Common::sprintf_s(buf, "screen %d", Logic::_scriptVars[SCREEN]);
+		_screen->printDebugLine(buf, ' ', screenX, screenY);
+
+		// CD in use
+		Common::sprintf_s(buf, "CD-%d", _systemVars.currentCD);
+		_screen->printDebugLine(buf, ' ', currentCDX, currentCDY);
+
+		// End sequence scene number
+		if (Logic::_scriptVars[END_SCENE]) {
+			Common::sprintf_s(buf, "scene %d", Logic::_scriptVars[END_SCENE]);
+			_screen->printDebugLine(buf, ' ', endSceneX, endSceneY);
+		}
+
+		// Debug flags
+		if ((Logic::_scriptVars[DEBUG_FLAG_1] > 0) || (Logic::_scriptVars[DEBUG_FLAG_2] > 0) || (Logic::_scriptVars[DEBUG_FLAG_3] > 0)) {
+			Common::sprintf_s(buf, "debug flags: %d, %d, %d",
+							  Logic::_scriptVars[DEBUG_FLAG_1],
+							  Logic::_scriptVars[DEBUG_FLAG_2],
+							  Logic::_scriptVars[DEBUG_FLAG_3]);
+			_screen->printDebugLine(buf, ' ', debugFlagsX, debugFlagsY);
+		}
+	}
+
+	if (_systemVars.displayDebugText) {
+		// Text line number
+		if (_logic->canShowDebugTextNumber()) {
+			Common::sprintf_s(buf, "TEXT %d", _systemVars.textNumber);
+			_screen->printDebugLine(buf, ' ', textNoX, textNoY);
+		}
+	}
+
+	if (_systemVars.displayDebugGrid) {
+		_logic->plotRouteGrid(playerCompact);
+		_screen->fullRefresh(true);
+	}
+
+	if (_systemVars.displayDebugMouse) {
+		// Draw a cross shaped cursor under the mouse cursor
+		_screen->plotPoint(Logic::_scriptVars[MOUSE_X] - 128, Logic::_scriptVars[MOUSE_Y] - 128, 255);
+		_screen->plotPoint(Logic::_scriptVars[MOUSE_X] - 130, Logic::_scriptVars[MOUSE_Y] - 128, 255);
+		_screen->plotPoint(Logic::_scriptVars[MOUSE_X] - 128, Logic::_scriptVars[MOUSE_Y] - 130, 255);
+		_screen->plotPoint(Logic::_scriptVars[MOUSE_X] - 128, Logic::_scriptVars[MOUSE_Y] - 126, 255);
+		_screen->plotPoint(Logic::_scriptVars[MOUSE_X] - 126, Logic::_scriptVars[MOUSE_Y] - 128, 255);
+
+		// Draw a cross shaped cursor on the player coordinates
+		_screen->plotPoint(playerCompact->o_xcoord - 128, playerCompact->o_ycoord - 128, 255);
+		_screen->plotPoint(playerCompact->o_xcoord - 130, playerCompact->o_ycoord - 128, 255);
+		_screen->plotPoint(playerCompact->o_xcoord - 128, playerCompact->o_ycoord - 130, 255);
+		_screen->plotPoint(playerCompact->o_xcoord - 128, playerCompact->o_ycoord - 126, 255);
+		_screen->plotPoint(playerCompact->o_xcoord - 126, playerCompact->o_ycoord - 128, 255);
+
+		_screen->fullRefresh(true);
+	}
+}
+
+void SwordEngine::setMenuToTargetState() {
+	_menu->setToTargetState();
+}
+
 void SwordEngine::checkCd() {
 	uint8 needCd = _cdList[Logic::_scriptVars[NEW_SCREEN]];
 	if (_systemVars.runningFromCd) { // are we running from cd?
 		if (needCd == 0) { // needCd == 0 means we can use either CD1 or CD2.
 			if (_systemVars.currentCD == 0) {
 				_systemVars.currentCD = 1; // if there is no CD currently inserted, ask for CD1.
-				_control->askForCd();
+				askForCd();
 			} // else: there is already a cd inserted and we don't care if it's cd1 or cd2.
 		} else if (needCd != _systemVars.currentCD) { // we need a different CD than the one in drive.
 			_music->startMusic(0, 0); //
 			_sound->closeCowSystem(); // close music and sound files before changing CDs
 			_systemVars.currentCD = needCd; // askForCd will ask the player to insert _systemVars.currentCd,
-			_control->askForCd();           // so it has to be updated before calling it.
+			askForCd();           // so it has to be updated before calling it.
 		}
 	} else {        // we're running from HDD, we don't have to care about music files and Sound will take care of
 		if (needCd) // switching sound.clu files on Sound::newScreen by itself, so there's nothing to be done.
@@ -712,12 +945,82 @@ void SwordEngine::checkCd() {
 	}
 }
 
-uint8 SwordEngine::mainLoop() {
-	uint8 retCode = 0;
-	_keyPressed.reset();
+void SwordEngine::askForCd() {
+	char buf[255];
 
-	while ((retCode == 0) && (!shouldQuit())) {
-		// do we need the section45-hack from sword.c here?
+	_control->askForCdMessage(SwordEngine::_systemVars.currentCD, false);
+
+	_screen->fnSetFadeTargetPalette(0, 1, 0, BORDER_BLACK); // Set colour 0 to black - for screen borders
+	_screen->fnSetFadeTargetPalette(193, 1, 0, TEXT_WHITE); // Set colours 193 to white - for letters
+
+	while (!shouldQuit()) {
+		_screen->startFadePaletteUp(1);
+
+		uint32 startTime = _system->getMillis();
+		while (_screen->stillFading()) {
+			if (_vblCount >= _rate)
+				_vblCount = 0;
+
+			pollInput(0);
+
+			// In the remote event that this wait cycle gets
+			// stuck during debugging, trigger a timeout
+			if (_system->getMillis() - startTime > 1000)
+				break;
+		}
+
+		while (_keyPressed.keycode == Common::KEYCODE_INVALID && !shouldQuit()) {
+			pollInput(0);
+		}
+
+		_screen->startFadePaletteDown(1);
+
+		startTime = _system->getMillis();
+		while (_screen->stillFading()) {
+			if (_vblCount >= _rate)
+				_vblCount = 0;
+
+			pollInput(0);
+
+			// In the remote event that this wait cycle gets
+			// stuck during debugging, trigger a timeout
+			if (_system->getMillis() - startTime > 1000)
+				break;
+		}
+
+		startTime = _system->getMillis();
+		while (_system->getMillis() - startTime < 500) {
+			pollInput(0);
+		};
+
+		_keyPressed.reset();
+
+		// At this point the original code sets colors 1 to 180 to grey;
+		// the only visible effect of this is that the screen flashes when
+		// loading a save state. It's not clear what the original wanted to do.
+		// for (int i = 1; i < 180; i++) {
+		//     SetPalette(i, 1, _grey);
+		// }
+
+		Common::sprintf_s(buf, "cd%d.id", SwordEngine::_systemVars.currentCD);
+		if (Common::File::exists(buf))
+			break;
+
+		_control->askForCdMessage(SwordEngine::_systemVars.currentCD, true);
+	}
+}
+
+uint8 SwordEngine::mainLoop() {
+	_keyPressed.reset();
+	_systemVars.gameCycle = 1;
+
+	do {
+		if (shouldQuit())
+			break;
+
+		if (Logic::_scriptVars[NEW_SCREEN] > 50)
+			_objectMan->mainLoopPatch();
+
 		checkCd();
 
 		_screen->newScreen(Logic::_scriptVars[NEW_SCREEN]);
@@ -731,10 +1034,17 @@ uint8 SwordEngine::mainLoop() {
 
 			bool scrollFrameShown = false;
 
+			_systemVars.saveGameFlag = SGF_DONE;
+
+			_systemVars.gameCycle++;
+
 			_logic->engine();
 			_logic->updateScreenParams(); // sets scrolling
 
 			_screen->draw();
+
+			showDebugInfo();
+
 			_mouse->animate();
 
 			if (!Logic::_scriptVars[NEW_PALETTE]) {
@@ -743,6 +1053,8 @@ uint8 SwordEngine::mainLoop() {
 					scrollFrameShown = _screen->showScrollFrame();
 					pollInput((_targetFrameTime / 2) - (_system->getMillis() - frameTime));
 				}
+
+				_mainLoopFrameCount++;
 			}
 
 			_sound->engine();
@@ -750,20 +1062,37 @@ uint8 SwordEngine::mainLoop() {
 			newTime = _system->getMillis();
 			if (((int32)(newTime - frameTime) < _targetFrameTime) || (!scrollFrameShown))
 				_screen->updateScreen();
+			_mainLoopFrameCount++;
 			pollInput((_targetFrameTime) - (_system->getMillis() - frameTime));
 
 			_vblCount = 0; // Reset the vBlank counter for the other timers...
 
+			// Calculation for the frames per second counter for the debug text
+			if (_ticker > 5000)
+				_ticker = 0;
+			if (_ticker > 1000) {
+				_systemVars.framesPerSecondCounter = _mainLoopFrameCount;
+				_mainLoopFrameCount = 0;
+				_ticker -= 1000;
+			}
+
 			_mouse->engine(_mouseCoord.x, _mouseCoord.y, _mouseState);
 
-			retCode = checkKeys();
+			checkKeys();
+
+			if (_systemVars.saveGameFlag == SGF_SAVE) {
+				_control->getPlayerOptions();
+				debug(1, "SwordEngine::mainLoop(): Returned to mainloop() from getPlayerOptions()");
+			}
 
 			_mouseState = 0;
 			_keyPressed.reset();
 
-		} while ((Logic::_scriptVars[SCREEN] == Logic::_scriptVars[NEW_SCREEN]) && (retCode == 0) && (!shouldQuit()));
+		} while ((Logic::_scriptVars[SCREEN] == Logic::_scriptVars[NEW_SCREEN]) &&
+			(_systemVars.saveGameFlag == SGF_DONE || _systemVars.saveGameFlag == SGF_SAVE) &&
+			(!shouldQuit()));
 
-		if ((retCode == 0) && (Logic::_scriptVars[SCREEN] != 53) && _systemVars.wantFade && (!shouldQuit())) {
+		if ((Logic::_scriptVars[SCREEN] != 53) && !shouldQuit()) {
 			_screen->startFadePaletteDown(1);
 		}
 
@@ -773,8 +1102,9 @@ uint8 SwordEngine::mainLoop() {
 		_sound->quitScreen(); // Purge the sound AFTER they've been faded
 
 		_objectMan->closeSection(Logic::_scriptVars[SCREEN]); // Close the section that PLAYER has just left, if it's empty now
-	}
-	return retCode;
+	} while ((_systemVars.saveGameFlag < SGF_RESTORE) && (!shouldQuit()));
+
+	return 0;
 }
 
 void SwordEngine::waitForFade() {
@@ -827,7 +1157,9 @@ void SwordEngine::pollInput(uint32 delay) { //copied and mutilated from sky.cpp
 			}
 		}
 
+		_screen->_screenAccessMutex.lock();
 		_system->updateScreen();
+		_screen->_screenAccessMutex.unlock();
 
 		if (delay > 0)
 			_system->delayMillis(10);
@@ -879,18 +1211,27 @@ void SwordEngine::startFadePaletteUp(int speed) {
 static void vblCallback(void *refCon) {
 	SwordEngine *vm = (SwordEngine *)refCon;
 
+	vm->_ticker += 10;
 	vm->_inTimer++;
 
 	if (vm->_inTimer == 0) {
 		vm->_vblCount++;
 		vm->_vbl60HzUSecElapsed += TIMER_USEC;
 
-		if ((vm->_vblCount == 1) || (vm->_vblCount == 5)) {
-			vm->updateTopMenu();
-		}
+		if (!vm->screenIsFading()) {
+			if ((vm->_vblCount == 1) || (vm->_vblCount == 5)) {
+				vm->updateTopMenu();
+			}
 
-		if ((vm->_vblCount == 3) || (vm->_vblCount == 7)) {
-			vm->updateBottomMenu();
+			if ((vm->_vblCount == 3) || (vm->_vblCount == 7)) {
+				vm->updateBottomMenu();
+			}
+		} else {
+			// This is an optimization for all the locks introduced
+			// with the fade palette changes: we disable the menu
+			// updates whenever the palette is fading, and we bring
+			// the menu to its target state.
+			vm->setMenuToTargetState();
 		}
 
 		if (vm->_vbl60HzUSecElapsed >= PALETTE_FADE_USEC) {
@@ -905,8 +1246,13 @@ static void vblCallback(void *refCon) {
 	vm->_inTimer--;
 }
 
+bool SwordEngine::screenIsFading() {
+	return _screen->stillFading() != 0;
+}
+
 void SwordEngine::installTimerRoutines() {
 	debug(2, "SwordEngine::installTimerRoutines(): Installing timers...");
+	_ticker = 0;
 	getTimerManager()->installTimerProc(&vblCallback, 1000000 / TIMER_RATE, this, "AILTimer");
 }
 

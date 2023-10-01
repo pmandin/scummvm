@@ -23,6 +23,9 @@
 #include "engines/nancy/sound.h"
 #include "engines/nancy/resource.h"
 #include "engines/nancy/util.h"
+#include "engines/nancy/input.h"
+#include "engines/nancy/cursor.h"
+#include "engines/nancy/graphics.h"
 
 #include "engines/nancy/action/overlay.h"
 
@@ -34,11 +37,42 @@ namespace Nancy {
 namespace Action {
 
 void Overlay::init() {
-	g_nancy->_resource->loadImage(_imageName, _fullSurface);
+	// Check for special autotext strings, and use the requested surface as source
+	if (_imageName.hasPrefix("USE_AUTOTEXT")) {
+		uint surfID = _imageName[12] - '1';
+		Graphics::ManagedSurface &surf = g_nancy->_graphicsManager->getAutotextSurface(surfID);
+		_fullSurface.create(surf, surf.getBounds());
+	} else if (_imageName.hasPrefix("USE_AUTOJOURNAL")) {
+		uint surfID = _imageName.substr(15).asUint64() + 2;
+		Graphics::ManagedSurface &surf = g_nancy->_graphicsManager->getAutotextSurface(surfID);
+		_fullSurface.create(surf, surf.getBounds());
+	} else {
+		// No autotext, load image source
+		g_nancy->_resource->loadImage(_imageName, _fullSurface);
+	}
 
 	setFrame(_firstFrame);
 
 	RenderObject::init();
+}
+
+void Overlay::handleInput(NancyInput &input) {
+	// For no apparent reason, the original engine handles Overlay input as a special case,
+	// rather than simply set the general hotspot inside the ActionRecord struct. Special cases
+	// (a.k.a puzzle types) get handled before regular ActionRecords, which means an Overlay
+	// must take precedence when handling the mouse. Thus, out ActionManager class first iterates
+	// through all records and calls their handleInput() function just to make sure this special
+	// case is handled. This fixes nancy3 scene 7081.
+	if (_hasHotspot) {
+		if (NancySceneState.getViewport().convertViewportToScreen(_hotspot).contains(input.mousePos)) {
+			g_nancy->_cursorManager->setCursorType(CursorManager::kHotspot);
+
+			if (input.input & NancyInput::kLeftMouseButtonUp) {
+				_state = kActionTrigger;
+				input.eatMouseInput(); // Make sure nothing else gets triggered
+			}
+		}
+	}
 }
 
 void Overlay::readData(Common::SeekableReadStream &stream) {
@@ -70,13 +104,9 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 
 	ser.syncAsUint16LE(_z, kGameTypeNancy1, kGameTypeNancy1);
 
-	if (ser.getVersion() > kGameTypeNancy1) {
-		_isInterruptible = true;
-		
-		if (ser.getVersion() > kGameTypeNancy2) {
-			if (_overlayType == kPlayOverlayStatic) {
-				_enableHotspot = (_hasSceneChange == kPlayOverlaySceneChange) ? kPlayOverlayWithHotspot : kPlayOverlayNoHotspot;
-			}
+	if (ser.getVersion() > kGameTypeNancy2) {
+		if (_overlayType == kPlayOverlayStatic) {
+			_enableHotspot = (_hasSceneChange == kPlayOverlaySceneChange) ? kPlayOverlayWithHotspot : kPlayOverlayNoHotspot;
 		}
 	}
 
@@ -91,6 +121,7 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 	_sceneChange.readData(stream);
 	_flagsOnTrigger.readData(stream);
 	_sound.readNormal(stream);
+
 	uint numViewportFrames = stream.readUint16LE();
 
 	if (_overlayType == kPlayOverlayAnimated) {
@@ -99,8 +130,8 @@ void Overlay::readData(Common::SeekableReadStream &stream) {
 
 	readRectArray(ser, _srcRects, numSrcRects);
 
-	_bitmaps.resize(numViewportFrames);
-	for (auto &bm : _bitmaps) {
+	_blitDescriptions.resize(numViewportFrames);
+	for (auto &bm : _blitDescriptions) {
 		bm.readData(stream, ser.getVersion() >= kGameTypeNancy2);
 	}
 }
@@ -118,12 +149,24 @@ void Overlay::execute() {
 	case kRun: {
 		// Check the timer to see if we need to draw the next animation frame
 		if (_overlayType == kPlayOverlayAnimated && _nextFrameTime <= _currentFrameTime) {
-			// World's worst if statement
-			if (NancySceneState.getEventFlag(_interruptCondition) ||
-				(	(((_currentFrame == _loopLastFrame) && (_playDirection == kPlayOverlayForward) && (_loop == kPlayOverlayOnce)) ||
-					((_currentFrame == _loopFirstFrame) && (_playDirection == kPlayOverlayReverse) && (_loop == kPlayOverlayOnce))) &&
-						!g_nancy->_sound->isSoundPlaying(_sound))	) {
+			bool shouldTrigger = false;
 
+			// Check for interrupt flag
+			if (NancySceneState.getEventFlag(_interruptCondition)) {
+				shouldTrigger = true;
+			}
+
+			// Wait until sound stops (if present)
+			if (!g_nancy->_sound->isSoundPlaying(_sound)) {
+				// Check if we're at the last frame
+				if ((_currentFrame == _loopLastFrame) && (_playDirection == kPlayOverlayForward) && (_loop == kPlayOverlayOnce)) {
+					shouldTrigger = true;
+				} else if ((_currentFrame == _loopFirstFrame) && (_playDirection == kPlayOverlayReverse) && (_loop == kPlayOverlayOnce)) {
+					shouldTrigger = true;
+				}
+			}
+
+			if (shouldTrigger) {
 				_state = kActionTrigger;
 			} else {
 				// Check if we've moved the viewport
@@ -135,14 +178,13 @@ void Overlay::execute() {
 					setVisible(false);
 					_hasHotspot = false;
 
-					for (uint i = 0; i < _bitmaps.size(); ++i) {
-						if (_currentViewportFrame == _bitmaps[i].frameID) {
-							moveTo(_bitmaps[i].dest);
+					for (uint i = 0; i < _blitDescriptions.size(); ++i) {
+						if (_currentViewportFrame == _blitDescriptions[i].frameID) {
+							moveTo(_blitDescriptions[i].dest);
 							setVisible(true);
 
 							if (_enableHotspot == kPlayOverlayWithHotspot) {
 								_hotspot = _screenPosition;
-								_hasHotspot = true;
 							}
 
 							break;
@@ -150,13 +192,18 @@ void Overlay::execute() {
 					}
 				}
 
-				_nextFrameTime = _currentFrameTime + _frameTime;
+				if (_nextFrameTime == 0) {
+					_nextFrameTime = _currentFrameTime + _frameTime;
+				} else {
+					_nextFrameTime += _frameTime;
+				}
 
 				uint16 nextFrame = _currentFrame;
 
 				if (_playDirection == kPlayOverlayReverse) {
 					if (nextFrame - 1 < _loopFirstFrame) {
-						if (_loop == kPlayOverlayLoop) {
+						// We keep looping if sound is present (nancy1 only)
+						if (_loop == kPlayOverlayLoop || (_sound.name != "NO SOUND" && g_nancy->getGameType() == kGameTypeNancy1)) {
 							nextFrame = _loopLastFrame;
 						}
 					} else {
@@ -164,7 +211,7 @@ void Overlay::execute() {
 					}
 				} else {
 					if (nextFrame + 1 > _loopLastFrame) {
-						if (_loop == kPlayOverlayLoop) {
+						if (_loop == kPlayOverlayLoop || (_sound.name != "NO SOUND" && g_nancy->getGameType() == kGameTypeNancy1)) {
 							nextFrame = _loopFirstFrame;
 						}
 					} else {
@@ -184,18 +231,28 @@ void Overlay::execute() {
 				setVisible(false);
 				_hasHotspot = false;
 
-				for (uint i = 0; i < _bitmaps.size(); ++i) {
-					if (_currentViewportFrame == _bitmaps[i].frameID) {
-						moveTo(_bitmaps[i].dest);
+				for (uint i = 0; i < _blitDescriptions.size(); ++i) {
+					if (_currentViewportFrame == _blitDescriptions[i].frameID) {
+						moveTo(_blitDescriptions[i].dest);
 						setVisible(true);
 
 						// In static mode every "animation" frame corresponds to a viewport frame
 						if (_overlayType == kPlayOverlayStatic) {
 							setFrame(i);
 
-							if (_enableHotspot == kPlayOverlayWithHotspot) {
-								_hotspot = _screenPosition;
-								_hasHotspot = true;
+							if (g_nancy->getGameType() <= kGameTypeNancy2) {
+								// In nancy2, the presence of a hotspot relies on whether the Overlay has a scene change
+								if (_enableHotspot == kPlayOverlayWithHotspot) {
+									_hotspot = _screenPosition;
+									_hasHotspot = true;
+								}
+							} else {
+								// nancy3 added a per-frame flag for hotspots. This allows the overlay to be clickable
+								// even without a scene change (useful for setting flags).
+								if (_blitDescriptions[i].hasHotspot == kPlayOverlayWithHotspot) {
+									_hotspot = _screenPosition;
+									_hasHotspot = true;
+								}
 							}
 						}
 
@@ -237,21 +294,102 @@ Common::String Overlay::getRecordTypeName() const {
 void Overlay::setFrame(uint frame) {
 	_currentFrame = frame;
 
-	// Workaround for:
-	// - the fireplace in nancy2 scene 2491, where one of the rects is invalid.
-	// - the ball thing in nancy2 scene 1562, where one of the rects is twice as tall as it should be
-	// Assumes all rects in a single animation have the same dimensions
-	Common::Rect srcRect = _srcRects[frame];
-	if (!srcRect.isValidRect() || srcRect.height() > _srcRects[0].height()) {
-		srcRect.setWidth(_srcRects[0].width());
-		srcRect.setHeight(_srcRects[0].height());
+	Common::Rect srcRect;
+
+	if (_overlayType == kPlayOverlayAnimated) {
+		// Workaround for:
+		// - the arcade machine in nancy1 scene 833
+		// - the fireplace in nancy2 scene 2491, where one of the rects is invalid.
+		// - the ball thing in nancy2 scene 1562, where one of the rects is twice as tall as it should be
+		// Assumes all rects in a single animation have the same dimensions
+		srcRect = _srcRects[frame];
+		if (!srcRect.isValidRect() || srcRect.width() != _srcRects[0].width() || srcRect.height() != _srcRects[0].height()) {
+			srcRect.setWidth(_srcRects[0].width());
+			srcRect.setHeight(_srcRects[0].height());
+		}
+	} else {
+		if (_currentViewportFrame == -1) {
+			return;
+		}
+
+		// Static mode overlays are an absolute mess, and use both the general source rects (_srcRects),
+		// and the ones inside the blit description struct corresponding to the current scene background.
+
+		if (_srcRects.size() > 1) {
+			// First, the order of the blit descriptions does not necessarily correspond to the order of
+			// the general rects, as the general rects are ordered based on the scene's background frame id,
+			// while the blit descriptions can be in arbitrary order. 
+			// An example is nancy4 scene 3500, where the overlay appears on background frames 0, 1, 2, 18 and 19,
+			// while the blit descriptions are in order 18, 19, 0, 1, 2. Thus, if we don't do the counting below
+			// we get wildly inaccurate results.
+			uint srcID = 0;
+
+			for (int i = 0; i < _currentViewportFrame; ++i) {
+				for (uint j = 0; j < _blitDescriptions.size(); ++j) {
+					if (_blitDescriptions[j].frameID == i) {
+						++srcID;
+						continue;
+					}
+				}
+			}
+
+			srcRect = _srcRects[srcID];
+		} else {
+			// Second, the number of general source rects may also be just one, in which case it's valid
+			// for every blit description (nancy4 scene 1300)
+			srcRect = _srcRects[0];
+		}
+
+		// Lastly, the general source rect we just got may also be completely empty (nancy5 scenes 2056, 2057),
+		// or have coordinates other than (0, 0) (nancy3 scene 3070, nancy5 scene 2000). Presumably,
+		// the general source rect was used for blitting to an (optional) intermediate surface, while the ones
+		// inside the blit description below were used for blitting from that intermediate surface to the screen.
+		// We can achieve the same results by doung the calculations below
+		Common::Rect staticSrc = _blitDescriptions[frame].src;
+		srcRect.translate(staticSrc.left, staticSrc.top);
+
+		if (srcRect.isEmpty()) {
+			srcRect.setWidth(staticSrc.width());
+			srcRect.setHeight(staticSrc.height());
+		} else {
+			// Grab whichever dimensions are smaller. Fixes the book in nancy5 scene 3000
+			srcRect.setWidth(MIN<int>(staticSrc.width(), srcRect.width()));
+			srcRect.setHeight(MIN<int>(staticSrc.height(), srcRect.height()));
+		}
+		
 	}
 
 	_drawSurface.create(_fullSurface, srcRect);
-
 	setTransparent(_transparency == kPlayOverlayTransparent);
 
 	_needsRedraw = true;
+}
+
+void TableIndexOverlay::readData(Common::SeekableReadStream &stream) {
+	_tableIndex = stream.readUint16LE();
+	Overlay::readData(stream);
+}
+
+void TableIndexOverlay::execute() {
+	if (_state == kBegin) {
+		Overlay::execute();
+	}
+
+	TableData *playerTable = (TableData *)NancySceneState.getPuzzleData(TableData::getTag());
+	assert(playerTable);
+	const TABL *tabl = (const TABL *)g_nancy->getEngineData("TABL");
+	assert(tabl);
+
+	if (_lastIndexVal != playerTable->currentIDs[_tableIndex - 1]) {
+		_lastIndexVal = playerTable->currentIDs[_tableIndex - 1];
+		_srcRects.clear();
+		_srcRects.push_back(tabl->srcRects[_lastIndexVal - 1]);
+		_currentViewportFrame = -1; // Force redraw 
+	}
+
+	if (_state != kBegin) {
+		Overlay::execute();
+	}
 }
 
 } // End of namespace Action

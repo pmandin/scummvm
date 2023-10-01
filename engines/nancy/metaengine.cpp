@@ -33,7 +33,7 @@
 
 static const ADExtraGuiOptionsMap optionsList[] = {
 	{
-		GUIO_GAMEOPTIONS1,
+		GAMEOPTION_PLAYER_SPEECH,
 		{
 			_s("Player Speech"),
 			_s("Enable player speech. Only works if speech is enabled in the Audio settings."),
@@ -44,11 +44,22 @@ static const ADExtraGuiOptionsMap optionsList[] = {
 		}
 	},
 	{
-		GUIO_GAMEOPTIONS2,
+		GAMEOPTION_CHARACTER_SPEECH,
 		{
 			_s("Character Speech"),
 			_s("Enable NPC speech. Only works if speech is enabled in the Audio settings."),
 			"character_speech",
+			true,
+			0,
+			0
+		}
+	},
+	{
+		GAMEOPTION_AUTO_MOVE,
+		{
+			_s("Auto Move"),
+			_s("Automatically rotate the viewport when the mouse reaches an edge."),
+			"auto_move",
 			true,
 			0,
 			0
@@ -116,6 +127,8 @@ SaveStateDescriptor NancyMetaEngine::querySaveMetaInfos(const char *target, int 
 
 void NancyMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
 	if (Nancy::g_nancy->getState() == Nancy::NancyState::kLoadSave) {
+		// Do not screenshot the screen if we're in the engine's original menus,
+		// since that would just screenshot the menu itself
 		if (Nancy::State::Scene::hasInstance()) {
 			Graphics::ManagedSurface &screenshot = Nancy::State::Scene::instance().getLastScreenshot();
 			if (!screenshot.empty() && createThumbnail(&thumb, &screenshot)) {
@@ -124,10 +137,12 @@ void NancyMetaEngine::getSavegameThumbnail(Graphics::Surface &thumb) {
 		}
 	}
 
-	// Second Chance autosaves trigger when a scene changes, but before
-	// it is drawn, so we need to refresh the screen before we take a screenshot
-	Nancy::g_nancy->_graphicsManager->draw();
-	AdvancedMetaEngine::getSavegameThumbnail(thumb);
+	// Make sure we always trigger a screen redraw to support second chance saves
+	Graphics::ManagedSurface screenshotSurf;
+	Nancy::g_nancy->_graphicsManager->screenshotScreen(screenshotSurf);
+	if (!screenshotSurf.empty() && createThumbnail(&thumb, &screenshotSurf)) {
+		return;
+	}
 }
 
 void NancyMetaEngine::registerDefaultSettings(const Common::String &target) const {

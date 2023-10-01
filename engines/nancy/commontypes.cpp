@@ -47,11 +47,37 @@ void SceneChangeDescription::readData(Common::SeekableReadStream &stream, bool l
 	}
 }
 
-void SceneChangeWithFlag::readData(Common::SeekableReadStream &stream, bool longFormat) {
-	_sceneChange.readData(stream, longFormat);
-	stream.skip(2); // shouldStopRendering
-	_flag.label = stream.readSint16LE();
-	_flag.flag = stream.readByte();
+void SceneChangeWithFlag::readData(Common::SeekableReadStream &stream, bool reverseFormat) {
+	_sceneChange.sceneID = stream.readUint16LE();
+	_sceneChange.frameID = stream.readUint16LE();
+	_sceneChange.verticalOffset = stream.readUint16LE();
+	_sceneChange.continueSceneSound = stream.readUint16LE();
+
+	if (reverseFormat) {
+		// NO shouldStopRendering
+		_flag.label = stream.readSint16LE();
+		_flag.flag = stream.readByte();
+
+		if (g_nancy->getGameType() >= kGameTypeNancy3) {
+			int32 x = stream.readSint32LE();
+			int32 y = stream.readSint32LE();
+			int32 z = stream.readSint32LE();
+			_sceneChange.listenerFrontVector.set(x, y, z);
+			_sceneChange.frontVectorFrameID = _sceneChange.frameID;
+		}
+	} else {
+		if (g_nancy->getGameType() >= kGameTypeNancy3) {
+			int32 x = stream.readSint32LE();
+			int32 y = stream.readSint32LE();
+			int32 z = stream.readSint32LE();
+			_sceneChange.listenerFrontVector.set(x, y, z);
+			_sceneChange.frontVectorFrameID = _sceneChange.frameID;
+		}
+
+		stream.skip(2); // shouldStopRendering
+		_flag.label = stream.readSint16LE();
+		_flag.flag = stream.readByte();
+	}
 }
 
 void SceneChangeWithFlag::execute() {
@@ -64,16 +90,16 @@ void HotspotDescription::readData(Common::SeekableReadStream &stream) {
 	readRect(stream, coords);
 }
 
-void BitmapDescription::readData(Common::SeekableReadStream &stream, bool frameIsLong) {
-	if (!frameIsLong) {
-		frameID = stream.readUint16LE();
-	} else {
-		frameID = stream.readUint32LE();
+void FrameBlitDescription::readData(Common::SeekableReadStream &stream, bool longFormat) {
+	frameID = stream.readUint16LE();
+	
+	if (longFormat) {
+		// Related to static mode, seems to be a frame ID? However, it is always set to zero so we skip it.
+		stream.skip(2);
 	}
 
-	if (g_nancy->getGameType() >= kGameTypeNancy3) {
-		// Most likely transparency
-		stream.skip(2);
+	if (g_nancy->getGameType() >= kGameTypeNancy3 && longFormat) {
+		hasHotspot = stream.readUint16LE();
 	}
 
 	readRect(stream, src);
@@ -389,6 +415,19 @@ void StaticData::readData(Common::SeekableReadStream &stream, Common::Language l
 			}
 
 			break;
+		case MKTAG('C', 'D', 'L', '2') :
+			// Conditional dialogue, no strings (nancy6 and up)
+			num = stream.readUint16LE();
+			conditionalDialogue.resize(num);
+			for (uint16 i = 0; i < num; ++i) {
+				uint16 num2 = stream.readUint16LE();
+				conditionalDialogue[i].resize(num2);
+				for (uint j = 0; j < num2; ++j) {
+					conditionalDialogue[i][j].readData(stream);
+				}
+			}
+
+			break;
 		case MKTAG('G', 'D', 'B', 'Y') :
 			// Goodbyes
 			num = stream.readUint16LE();
@@ -409,6 +448,15 @@ void StaticData::readData(Common::SeekableReadStream &stream, Common::Language l
 				}
 
 				stream.seek(endOffset);
+			}
+
+			break;
+		case MKTAG('G', 'D', 'B', '2') :
+			// Goodbyes, no strings (nancy6 and up)
+			num = stream.readUint16LE();
+			goodbyes.resize(num);
+			for (uint16 i = 0; i < num; ++i) {
+				goodbyes[i].readData(stream);
 			}
 
 			break;

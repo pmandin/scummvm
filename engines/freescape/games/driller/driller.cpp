@@ -96,8 +96,6 @@ DrillerEngine::~DrillerEngine() {
 void DrillerEngine::gotoArea(uint16 areaID, int entranceID) {
 	int prevAreaID = _currentArea ? _currentArea->getAreaID(): -1;
 	debugC(1, kFreescapeDebugMove, "Jumping to area: %d, entrance: %d", areaID, entranceID);
-	if (!_gameStateBits.contains(areaID))
-		_gameStateBits[areaID] = 0;
 
 	if (!_areaMap.contains(areaID)) {
 		assert(isDOS() && isDemo());
@@ -200,6 +198,7 @@ void DrillerEngine::loadAssetsFullGame() {
 }
 
 void DrillerEngine::drawInfoMenu() {
+	PauseToken pauseToken = pauseEngine();
 	_savedScreen = _gfx->getScreenshot();
 
 	uint32 color = _gfx->_texturePixelFormat.ARGBToColor(0x00, 0x00, 0x00, 0x00);
@@ -333,6 +332,7 @@ void DrillerEngine::drawInfoMenu() {
 	delete _savedScreen;
 	surface->free();
 	delete surface;
+	pauseToken.clear();
 }
 
 Math::Vector3d getProjectionToPlane(const Math::Vector3d &vect, const Math::Vector3d normal) {
@@ -552,7 +552,7 @@ bool DrillerEngine::checkDrill(const Math::Vector3d position) {
 
 
 void DrillerEngine::addSkanner(Area *area) {
-	debug("area: %d", area->getAreaID());
+	debugC(1, kFreescapeDebugParser, "Adding skanner to area: %d", area->getAreaID());
 	GeometricObject *obj = nullptr;
 	int16 id;
 
@@ -695,7 +695,6 @@ void DrillerEngine::initGameState() {
 
 	for (auto &it : _areaMap) {
 		it._value->resetArea();
-		_gameStateBits[it._key] = 0;
 		if (_drillStatusByArea[it._key] != kDrillerNoRig)
 			removeDrill(it._value);
 		_drillStatusByArea[it._key] = kDrillerNoRig;
@@ -705,6 +704,7 @@ void DrillerEngine::initGameState() {
 		}
 		_drillSuccessByArea[it._key] = 0;
 	}
+	_gameStateBits = 0;
 
 	_gameStateVars[k8bitVariableEnergy] = _initialTankEnergy;
 	_gameStateVars[k8bitVariableShield] = _initialTankShield;

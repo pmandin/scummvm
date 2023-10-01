@@ -59,7 +59,6 @@ enum CameraMovement {
 typedef Common::HashMap<uint16, Area *> AreaMap;
 typedef Common::Array<byte *> ColorMap;
 typedef Common::HashMap<uint16, int32> StateVars;
-typedef Common::HashMap<uint16, uint32> StateBits;
 
 enum {
 	kFreescapeDebugMove = 1 << 0,
@@ -397,9 +396,10 @@ public:
 	void setGameBit(int index);
 	void clearGameBit(int index);
 	void toggleGameBit(int index);
+	uint16 getGameBit(int index);
 
 	StateVars _gameStateVars;
-	StateBits _gameStateBits;
+	uint32 _gameStateBits;
 	virtual bool checkIfGameEnded();
 	bool _forceEndGame;
 	bool _playerWasCrushed;
@@ -602,7 +602,7 @@ public:
 private:
 	void addECDs(Area *area);
 	void addECD(Area *area, const Math::Vector3d position, int index);
-	void restoreECD(Area *area, int index);
+	void restoreECD(Area &area, int index);
 	bool checkECD(uint16 areaID, int index);
 	bool tryDestroyECD(int index);
 	bool tryDestroyECDFullGame(int index);
@@ -618,7 +618,13 @@ public:
 	void gotoArea(uint16 areaID, int entranceID) override;
 
 	void loadAssetsDOSFullGame() override;
-	void drawUI() override;
+
+	void initDOS();
+	void initCPC();
+	void loadAssetsCPCDemo() override;
+
+	void drawDOSUI(Graphics::Surface *surface) override;
+	void drawCPCUI(Graphics::Surface *surface) override;
 
 	Common::Error saveGameStreamExtended(Common::WriteStream *stream, bool isAutosave = false) override;
 	Common::Error loadGameStreamExtended(Common::SeekableReadStream *stream) override;

@@ -100,7 +100,7 @@ NancyEngine::~NancyEngine() {
 }
 
 NancyEngine *NancyEngine::create(GameType type, OSystem *syst, const NancyGameDescription *gd) {
-	if (type >= kGameTypeVampire && type <= kGameTypeNancy6) {
+	if (type >= kGameTypeVampire && type <= kGameTypeNancy9) {
 		return new NancyEngine(syst, gd);
 	}
 
@@ -132,6 +132,29 @@ bool NancyEngine::canSaveGameStateCurrently() {
 void NancyEngine::secondChance() {
 	uint secondChanceSlot = getMetaEngine()->getMaximumSaveSlot();
 	saveGameState(secondChanceSlot, "SECOND CHANCE", true);
+}
+
+void NancyEngine::errorString(const char *buf_input, char *buf_output, int buf_output_size) {
+	if (State::Scene::hasInstance()) {
+		if (NancySceneState._state == State::Scene::kLoad) {
+			// Error while loading scene
+			snprintf(buf_output, buf_output_size, "While loading scene S%u, frame %u, action record %u:\n%s",
+				NancySceneState._sceneState.currentScene.sceneID,
+				NancySceneState._sceneState.currentScene.frameID,
+				NancySceneState._actionManager.getActionRecords().size(),
+				buf_input);
+		} else {
+			// Error while running
+			snprintf(buf_output, buf_output_size, "In current scene S%u, frame %u:\n%s",
+				NancySceneState._sceneState.currentScene.sceneID,
+				NancySceneState._sceneState.currentScene.frameID,
+				buf_input);
+		}
+	} else {
+		strncpy(buf_output, buf_input, buf_output_size);
+		if (buf_output_size > 0)
+			buf_output[buf_output_size - 1] = '\0';
+	}
 }
 
 bool NancyEngine::hasFeature(EngineFeature f) const {
@@ -369,13 +392,13 @@ void NancyEngine::bootGameEngine() {
 	// Setup mixer
 	syncSoundSettings();
 
-	IFF *boot = new IFF("boot");
-	if (!boot->load())
+	IFF *iff = new IFF("boot");
+	if (!iff->load())
 		error("Failed to load boot script");
 
 	// Load BOOT chunks data
 	Common::SeekableReadStream *chunkStream = nullptr;
-	#define LOAD_BOOT_L(t, s) if (chunkStream = boot->getChunkStream(s), chunkStream) {	\
+	#define LOAD_BOOT_L(t, s) if (chunkStream = iff->getChunkStream(s), chunkStream) {	\
 								_engineData.setVal(s, new t(chunkStream));				\
 								delete chunkStream;										\
 							}
@@ -399,34 +422,63 @@ void NancyEngine::bootGameEngine() {
 	LOAD_BOOT(SPEC)
 	LOAD_BOOT(RCPR)
 	LOAD_BOOT(RCLB)
+	LOAD_BOOT(TABL)
 
 	LOAD_BOOT_L(ImageChunk, "OB0")
 	LOAD_BOOT_L(ImageChunk, "FR0")
 	LOAD_BOOT_L(ImageChunk, "LG0")
 
-	chunkStream = boot->getChunkStream("PLG0");
+	chunkStream = iff->getChunkStream("PLG0");
 	if (!chunkStream) {
-		chunkStream = boot->getChunkStream("PLGO"); // nancy4 and above use an O instead of a zero
+		chunkStream = iff->getChunkStream("PLGO"); // nancy4 and above use an O instead of a zero
 	}	
 
 	if (chunkStream) {
 		_engineData.setVal("PLG0", new ImageChunk(chunkStream));
 	}
 
-	_cursorManager->init(boot->getChunkStream("CURS"));
+	_cursorManager->init(iff->getChunkStream("CURS"));
 
 	_graphicsManager->init();
-	_graphicsManager->loadFonts(boot->getChunkStream("FONT"));
-
-	#undef LOAD_BOOT_L
-	#undef LOAD_BOOT
+	_graphicsManager->loadFonts(iff->getChunkStream("FONT"));
 
 	preloadCals();
 
 	_sound->initSoundChannels();
-	_sound->loadCommonSounds(boot);
+	_sound->loadCommonSounds(iff);
 
-	delete boot;
+	delete iff;
+
+	// Load convo texts and autotext
+	const BSUM *bsum = (const BSUM *)getEngineData("BSUM");
+	if (bsum && bsum->conversationTextsFilename.size() && bsum->autotextFilename.size())  {
+		iff = new IFF(bsum->conversationTextsFilename);
+		if (!iff->load()) {
+			error("Could not load CONVO IFF");
+		}
+
+		if (chunkStream = iff->getChunkStream("CVTX"), chunkStream) {
+			_engineData.setVal("CONVO", new CVTX(chunkStream));
+			delete chunkStream;
+		}
+
+		delete iff;
+
+		iff = new IFF(bsum->autotextFilename);
+		if (!iff->load()) {
+			error("Could not load AUTOTEXT IFF");
+		}
+
+		if (chunkStream = iff->getChunkStream("CVTX"), chunkStream) {
+			_engineData.setVal("AUTOTEXT", new CVTX(chunkStream));
+			delete chunkStream;
+		}
+
+		delete iff;
+	}
+
+	#undef LOAD_BOOT_L
+	#undef LOAD_BOOT
 }
 
 State::State *NancyEngine::getStateObject(NancyState::NancyState state) const {

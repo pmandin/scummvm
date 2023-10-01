@@ -72,6 +72,7 @@ void SoundEqualizerPuzzle::init() {
 	_image.setTransparentColor(_drawSurface.getTransparentColor());
 
 	const VIEW *viewportData = (const VIEW *)g_nancy->getEngineData("VIEW");
+	assert(viewportData);
 	Common::Rect vpPos = viewportData->screenPosition;
 
 	if (_puzzleState->sliderValues[0] == 255) {
@@ -202,6 +203,8 @@ void SoundEqualizerPuzzle::execute() {
 		for (uint i = 0; i < 6; ++i) {
 			updateSlider(i);
 		}
+
+		NancySceneState.setNoHeldItem();
 
 		_state = kRun;
 		break;

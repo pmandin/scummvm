@@ -19,6 +19,8 @@
  *
  */
 
+#include "common/random.h"
+
 #include "engines/nancy/nancy.h"
 #include "engines/nancy/sound.h"
 #include "engines/nancy/util.h"
@@ -30,26 +32,37 @@
 namespace Nancy {
 namespace Action {
 
-void PlayDigiSoundAndDie::readData(Common::SeekableReadStream &stream) {
+void PlayDigiSound::readData(Common::SeekableReadStream &stream) {
 	_sound.readDIGI(stream);
 
 	if (g_nancy->getGameType() >= kGameTypeNancy3) {
 		_soundEffect = new SoundEffectDescription;
 		_soundEffect->readData(stream);
+
+		if (g_nancy->getGameType() >= kGameTypeNancy6) {
+			_changeSceneImmediately = stream.readByte();
+		}
 	}
 
 	_sceneChange.readData(stream, g_nancy->getGameType() == kGameTypeVampire);
 
-	_flagOnTrigger.label = stream.readSint16LE();
-	_flagOnTrigger.flag = stream.readByte();
-	stream.skip(2);
+	_flag.label = stream.readSint16LE();
+	_flag.flag = stream.readByte();
+	stream.skip(2); // VIDEO_STOP_RENDERING, VIDEO_CONTINUE_RENDERING
 }
 
-void PlayDigiSoundAndDie::execute() {
+void PlayDigiSound::execute() {
 	switch (_state) {
 	case kBegin:
 		g_nancy->_sound->loadSound(_sound, &_soundEffect);
 		g_nancy->_sound->playSound(_sound);
+
+		if (_changeSceneImmediately) {
+			NancySceneState.changeScene(_sceneChange);
+			finishExecution();
+			break;
+		}
+
 		_state = kRun;
 		break;
 	case kRun:
@@ -59,11 +72,9 @@ void PlayDigiSoundAndDie::execute() {
 
 		break;
 	case kActionTrigger:
-		if (_sceneChange.sceneID != 9999) {
-			NancySceneState.changeScene(_sceneChange);
-		}
+		NancySceneState.changeScene(_sceneChange);
+		NancySceneState.setEventFlag(_flag);
 
-		NancySceneState.setEventFlag(_flagOnTrigger);
 		g_nancy->_sound->stopSound(_sound);
 
 		finishExecution();
@@ -71,14 +82,18 @@ void PlayDigiSoundAndDie::execute() {
 	}
 }
 
+Common::String PlayDigiSound::getRecordTypeName() const {
+	return g_nancy->getGameType() <= kGameTypeNancy2 ? "PlayDigiSoundAndDie" : "PlayDigiSound";
+}
+
 void PlayDigiSoundCC::readData(Common::SeekableReadStream &stream) {
-	PlayDigiSoundAndDie::readData(stream);
+	PlayDigiSound::readData(stream);
 
 	uint16 textSize = stream.readUint16LE();
 	if (textSize) {
 		char *strBuf = new char[textSize];
 		stream.read(strBuf, textSize);
-		UI::Textbox::assembleTextLine(strBuf, _ccText, textSize);
+		assembleTextLine(strBuf, _ccText, textSize);
 		delete[] strBuf;
 	}
 }
@@ -88,7 +103,7 @@ void PlayDigiSoundCC::execute() {
 		NancySceneState.getTextbox().clear();
 		NancySceneState.getTextbox().addTextLine(_ccText);
 	}
-	PlayDigiSoundAndDie::execute();
+	PlayDigiSound::execute();
 }
 
 void PlaySoundPanFrameAnchorAndDie::readData(Common::SeekableReadStream &stream) {
@@ -163,6 +178,44 @@ void StopSound::readData(Common::SeekableReadStream &stream) {
 void StopSound::execute() {
 	g_nancy->_sound->stopSound(_channelID);
 	_sceneChange.execute();
+}
+
+void PlayRandomSound::readData(Common::SeekableReadStream &stream) {
+	uint16 numSounds = stream.readUint16LE();
+	readFilenameArray(stream, _soundNames, numSounds - 1);
+
+	PlayDigiSound::readData(stream);
+	_soundNames.push_back(_sound.name);
+}
+
+void PlayRandomSound::execute() {
+	if (_state == kBegin) {
+		_sound.name = _soundNames[g_nancy->_randomSource->getRandomNumber(_soundNames.size() - 1)];
+	}
+
+	PlayDigiSound::execute();
+}
+
+void TableIndexPlaySound::readData(Common::SeekableReadStream &stream) {
+	_tableIndex = stream.readUint16LE();
+	PlayDigiSound::readData(stream); // Data does NOT contain captions, so we call the PlayDigiSound version
+}
+
+void TableIndexPlaySound::execute() {
+	TableData *playerTable = (TableData *)NancySceneState.getPuzzleData(TableData::getTag());
+	assert(playerTable);
+	const TABL *tabl = (const TABL *)g_nancy->getEngineData("TABL");
+	assert(tabl);
+
+	if (_lastIndexVal != playerTable->currentIDs[_tableIndex - 1]) {
+		g_nancy->_sound->stopSound(_sound);
+		NancySceneState.getTextbox().clear();
+		_lastIndexVal = playerTable->currentIDs[_tableIndex - 1];
+		_sound.name = Common::String::format("%s%u", tabl->soundBaseName.c_str(), playerTable->currentIDs[_tableIndex - 1]);
+		_ccText = tabl->strings[playerTable->currentIDs[_tableIndex - 1] - 1];
+	}
+
+	PlayDigiSoundCC::execute();
 }
 
 } // End of namespace Action

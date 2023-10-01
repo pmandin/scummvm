@@ -38,9 +38,9 @@ byte kDarkCGAPalettePinkBlue[4][3] = {
 
 byte kDarkCGAPaletteRedGreen[4][3] = {
 	{0x00, 0x00, 0x00},
-	{0x00, 0xaa, 0x00},
-	{0xaa, 0x00, 0x00},
 	{0xaa, 0x55, 0x00},
+	{0xaa, 0x00, 0x00},
+	{0x00, 0xaa, 0x00},
 };
 
 static const CGAPaletteEntry rawCGAPaletteByArea[] {
@@ -79,9 +79,9 @@ static const CGAPaletteEntry rawCGAPaletteByArea[] {
 
 void DarkEngine::initDOS() {
 	if (_renderMode == Common::kRenderEGA)
-		_viewArea = Common::Rect(40, 24, 279, 124);
+		_viewArea = Common::Rect(40, 24, 280, 125);
 	else if (_renderMode == Common::kRenderCGA)
-		_viewArea = Common::Rect(40, 24, 279, 124);
+		_viewArea = Common::Rect(40, 24, 280, 125);
 	else
 		error("Invalid or unknown render mode");
 
@@ -126,11 +126,13 @@ void DarkEngine::loadAssetsDOSDemo() {
 	} else
 		error("Invalid or unsupported render mode %s for Dark Side", Common::getRenderModeDescription(_renderMode));
 
+	_indicators.push_back(loadBundledImage("dark_fallen_indicator"));
+	_indicators.push_back(loadBundledImage("dark_crouch_indicator"));
 	_indicators.push_back(loadBundledImage("dark_walk_indicator"));
 	_indicators.push_back(loadBundledImage("dark_jet_indicator"));
 
-	_indicators[0]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
-	_indicators[1]->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
+	for (auto &it : _indicators)
+		it->convertToInPlace(_gfx->_texturePixelFormat, nullptr);
 }
 
 void DarkEngine::loadAssetsDOSFullGame() {

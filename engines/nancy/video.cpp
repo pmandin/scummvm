@@ -212,9 +212,9 @@ bool AVFDecoder::AVFVideoTrack::setReverse(bool reverse) {
 
 bool AVFDecoder::AVFVideoTrack::endOfTrack() const {
 	if (_reversed)
-		return _curFrame < 0;
+		return _curFrame <= 0;
 
-	return _curFrame >= (getFrameCount() - 1);
+	return _curFrame >= getFrameCount();
 }
 
 bool AVFDecoder::AVFVideoTrack::decode(byte *outBuf, uint32 frameSize, Common::ReadStream &inBuf) const {
@@ -347,11 +347,20 @@ const Graphics::Surface *AVFDecoder::AVFVideoTrack::decodeFrame(uint frameNr)  {
 		delete[] decompBuf;
 	}
 
+	#ifdef SCUMM_BIG_ENDIAN
+	byte *buf = (byte *)frameInCache.getPixels();
+	if (g_nancy->_graphicsManager->getInputPixelFormat().bytesPerPixel == 2) {
+		for (int i = 0; i < frameInCache.pitch * frameInCache.h / 2; ++i) {
+			((uint16 *)buf)[i] = SWAP_BYTES_16(((uint16 *)buf)[i]);
+		}
+	}
+	#endif
+
 	return &frameInCache;
 }
 
 const Graphics::Surface *AVFDecoder::AVFVideoTrack::decodeNextFrame() {
-	return decodeFrame(_reversed ? _curFrame-- : _curFrame++);
+	return decodeFrame(_reversed ? --_curFrame : _curFrame++);
 }
 
 } // End of namespace Nancy

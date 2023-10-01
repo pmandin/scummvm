@@ -36,6 +36,7 @@
 #include "sword1/music.h"
 #include "sword1/swordres.h"
 #include "sword1/animation.h"
+#include "sword1/control.h"
 
 #include "sword1/debug.h"
 
@@ -87,7 +88,7 @@ void Logic::initialize() {
 	_eventMan = new EventManager();
 
 	delete _textMan;
-	_textMan = new Text(_objMan, _resMan,
+	_textMan = new Text(_vm, this, _objMan, _resMan, _screen,
 	                    (SwordEngine::_systemVars.language == BS1_CZECH) ? true : false);
 	_screen->useTextManager(_textMan);
 	_textRunning = _speechRunning = false;
@@ -342,8 +343,10 @@ int Logic::logicArAnimate(Object *compact, uint32 id) {
 }
 
 int Logic::speechDriver(Object *compact) {
-	if ((!_speechClickDelay) && (_mouse->testEvent() & BS1L_BUTTON_DOWN))
+	if ((!_speechClickDelay) &&
+		((_mouse->testEvent() & BS1L_BUTTON_DOWN) || (_mouse->testEvent() & BS1R_BUTTON_DOWN)))
 		_speechFinished = true;
+
 	if (_speechClickDelay)
 		_speechClickDelay--;
 
@@ -356,6 +359,7 @@ int Logic::speechDriver(Object *compact) {
 		else
 			compact->o_speech_time--;
 	}
+
 	if (_speechFinished) {
 		if (_speechRunning)
 			_sound->stopSpeech();
@@ -367,6 +371,7 @@ int Logic::speechDriver(Object *compact) {
 		_speechRunning = _textRunning = false;
 		_speechFinished = true;
 	}
+
 	if (compact->o_anim_resource) {
 		uint8 *animData = ((uint8 *)_resMan->openFetchRes(compact->o_anim_resource)) + sizeof(Header);
 		int32 numFrames = _resMan->readUint32(animData);
@@ -385,6 +390,7 @@ int Logic::speechDriver(Object *compact) {
 		compact->o_frame = _resMan->getUint32(animPtr->animFrame);
 		_resMan->resClose(compact->o_anim_resource);
 	}
+
 	return 0;
 }
 
@@ -947,8 +953,8 @@ int Logic::fnSetWholePalette(Object *cpt, int32 id, int32 spritePal, int32 d, in
 }
 
 int Logic::fnSetFadeTargetPalette(Object *cpt, int32 id, int32 spritePal, int32 d, int32 e, int32 f, int32 z, int32 x) {
-	_screen->fnSetFadeTargetPalette(0, 184, spritePal, false);
-	_screen->fnSetFadeTargetPalette(0, 1, 0, true);
+	_screen->fnSetFadeTargetPalette(0, 184, spritePal);
+	_screen->fnSetFadeTargetPalette(0, 1, 0, BORDER_BLACK);
 	return SCRIPT_CONT;
 }
 
@@ -974,13 +980,34 @@ int Logic::fnPlaySequence(Object *cpt, int32 id, int32 sequenceId, int32 d, int3
 		if (player->load(sequenceId))
 			player->play();
 		delete player;
+
+		// In some instances, when you start a video when the palette is still fading
+		// and the video is finished earlier, another palette fade(-out) is performed with the
+		// wrong palette. This happens when traveling to Spain or Ireland. It couldn't happen
+		// in the original, as it asked for the CD before loading the scene.
+		// Let's fix this by forcing a black fade palette on the next fade out. If a fade-in
+		// is then scheduled, we will clear the flag without doing anything different from the usual.
+		_screen->setNextFadeOutToBlack();
 	}
 	return SCRIPT_CONT;
 }
 
 int Logic::fnIdle(Object *cpt, int32 id, int32 c, int32 d, int32 e, int32 f, int32 z, int32 x) {
 	cpt->o_tree.o_script_level = 0; // force to level 0
-	cpt->o_logic = LOGIC_idle;
+
+	// George never idles, he just does rest anims (if in suitable pose)
+	if (id == GEORGE) {
+		// The PSX deliberately sets a flag here to instruct fnRandom() to return
+		// the minimum value of the target random range;
+		// this changes the way (rather, the timing at which) George idles in-game.
+		if (SwordEngine::isPsx())
+			_psxFudgeRandom = true;
+
+		fnNewScript(cpt, id, SCR_george_rest_anim_script, 0, 0, 0, 0, 0);
+	} else {
+		cpt->o_logic = LOGIC_idle;
+	}
+
 	return SCRIPT_STOP;
 }
 
@@ -1122,6 +1149,8 @@ int Logic::fnISpeak(Object *cpt, int32 id, int32 cdt, int32 textNo, int32 spr, i
 	}
 	cpt->o_logic = LOGIC_speech;
 
+	SwordEngine::_systemVars.textNumber = textNo;
+
 	// first setup the talk animation
 	if (cdt && (!spr)) { // if 'cdt' is non-zero but 'spr' is zero - 'cdt' is an anim table tag
 		AnimSet *animTab = (AnimSet *)((uint8 *)_resMan->openFetchRes(cdt) + sizeof(Header));
@@ -1176,8 +1205,12 @@ int Logic::fnISpeak(Object *cpt, int32 id, int32 cdt, int32 textNo, int32 spr, i
 
 		// now set text coords, above the player, usually
 
-#define TEXT_MARGIN 3 // distance kept from edges of screen
-#define ABOVE_HEAD 20 // distance kept above talking sprite
+		int textMargin = SwordEngine::_systemVars.isDemo ? 5 : 3; // distance kept from edges of screen
+
+		if (SwordEngine::isPsx())
+			textMargin = 33;
+
+		int aboveHead = (SwordEngine::_systemVars.isDemo || SwordEngine::isPsx()) ? 10 : 20; // distance kept above talking sprite
 		uint16 textX, textY;
 		if (((id == GEORGE) || ((id == NICO) && (_scriptVars[SCREEN] == 10))) && (!cpt->o_anim_resource)) {
 			// if George is doing Voice-Over text (centered at the bottom of the screen)
@@ -1189,14 +1222,14 @@ int Logic::fnISpeak(Object *cpt, int32 id, int32 cdt, int32 textNo, int32 spr, i
 			else
 				textX = (cpt->o_mouse_x1 + cpt->o_mouse_x2) / 2 - textSpriteWidth / 2;
 
-			textY = cpt->o_mouse_y1 - textSpriteHeight - ABOVE_HEAD;
+			textY = cpt->o_mouse_y1 - textSpriteHeight - aboveHead;
 		}
 		// now ensure text is within visible screen
 		uint16 textLeftMargin, textRightMargin, textTopMargin, textBottomMargin;
-		textLeftMargin   = SCREEN_LEFT_EDGE   + TEXT_MARGIN + _scriptVars[SCROLL_OFFSET_X];
-		textRightMargin  = SCREEN_RIGHT_EDGE  - TEXT_MARGIN + _scriptVars[SCROLL_OFFSET_X] - textSpriteWidth;
-		textTopMargin    = SCREEN_TOP_EDGE    + TEXT_MARGIN + _scriptVars[SCROLL_OFFSET_Y];
-		textBottomMargin = SCREEN_BOTTOM_EDGE - TEXT_MARGIN + _scriptVars[SCROLL_OFFSET_Y] - textSpriteHeight;
+		textLeftMargin   = SCREEN_LEFT_EDGE   + textMargin + _scriptVars[SCROLL_OFFSET_X];
+		textRightMargin  = SCREEN_RIGHT_EDGE  - textMargin + _scriptVars[SCROLL_OFFSET_X] - textSpriteWidth;
+		textTopMargin    = SCREEN_TOP_EDGE    + textMargin + _scriptVars[SCROLL_OFFSET_Y];
+		textBottomMargin = SCREEN_BOTTOM_EDGE - textMargin + _scriptVars[SCROLL_OFFSET_Y] - textSpriteHeight;
 
 		textCpt->o_anim_x = textCpt->o_xcoord = CLIP<uint16>(textX, textLeftMargin, textRightMargin);
 		textCpt->o_anim_y = textCpt->o_ycoord = CLIP<uint16>(textY, textTopMargin, textBottomMargin);
@@ -1419,20 +1452,23 @@ int Logic::fnWalk(Object *cpt, int32 id, int32 x, int32 y, int32 dir, int32 stan
 	if ((routeRes == 1) || (routeRes == 2)) {
 		cpt->o_down_flag = 1; // 1 means okay.
 		// if both mouse buttons were pressed on an exit => skip george's walk
-		if ((id == GEORGE) && (_mouse->testEvent() == MOUSE_BOTH_BUTTONS)) {
-			int32 target = _scriptVars[CLICK_ID];
-			// exceptions: compacts that use hand pointers but are not actually exits
-			if ((target != LEFT_SCROLL_POINTER) && (target != RIGHT_SCROLL_POINTER) &&
-			        (target != FLOOR_63) && (target != ROOF_63) && (target != GUARD_ROOF_63) &&
-			        (target != LEFT_TREE_POINTER_71) && (target != RIGHT_TREE_POINTER_71)) {
+		if (SwordEngine::_systemVars.debugMode) {
+			if ((id == GEORGE) && (_mouse->testEvent() == MOUSE_BOTH_BUTTONS) && !SwordEngine::_systemVars.isDemo) {
+				int32 target = _scriptVars[CLICK_ID];
+				// exceptions: compacts that use hand pointers but are not actually exits
+				if ((target != LEFT_SCROLL_POINTER) && (target != RIGHT_SCROLL_POINTER) &&
+					(target != FLOOR_63) && (target != ROOF_63) && (target != GUARD_ROOF_63) &&
+					(target != LEFT_TREE_POINTER_71) && (target != RIGHT_TREE_POINTER_71)) {
 
-				target = _objMan->fetchObject(_scriptVars[CLICK_ID])->o_mouse_on;
-				if ((target >= SCR_exit0) && (target <= SCR_exit9)) {
-					fnStandAt(cpt, id, x, y, dir, stance, 0, 0);
-					return SCRIPT_STOP;
+					target = _objMan->fetchObject(_scriptVars[CLICK_ID])->o_mouse_on;
+					if ((target >= SCR_exit0) && (target <= SCR_exit9)) {
+						fnStandAt(cpt, id, x, y, dir, stance, 0, 0);
+						return SCRIPT_STOP;
+					}
 				}
 			}
 		}
+
 		cpt->o_logic = LOGIC_AR_animate;
 		return SCRIPT_STOP;
 	} else if (routeRes == 3)
@@ -1544,7 +1580,15 @@ int Logic::fnGetToError(Object *cpt, int32 id, int32 a, int32 b, int32 c, int32 
 }
 
 int Logic::fnRandom(Object *compact, int32 id, int32 min, int32 max, int32 e, int32 f, int32 z, int32 x) {
-	_scriptVars[RETURN_VALUE] = _rnd.getRandomNumberRng(min, max);
+	if (SwordEngine::isPsx() && id == GEORGE && _psxFudgeRandom) {
+		// If this PSX flag is active, just set the random value as the range minimum.
+		// This changes the timing at which George gets into is idle animation.
+		_psxFudgeRandom = false;
+		_scriptVars[RETURN_VALUE] = min;
+	} else {
+		_scriptVars[RETURN_VALUE] = _rnd.getRandomNumberRng(min, max);
+	}
+
 	return SCRIPT_CONT;
 }
 
@@ -1632,7 +1676,7 @@ int Logic::fnCheckCD(Object *cpt, int32 id, int32 screen, int32 b, int32 c, int3
 }
 
 int Logic::fnRestartGame(Object *cpt, int32 id, int32 a, int32 b, int32 c, int32 d, int32 z, int32 x) {
-	SwordEngine::_systemVars.forceRestart = true;
+	SwordEngine::_systemVars.saveGameFlag = SGF_RESTART;
 	cpt->o_logic = LOGIC_quit;
 	return SCRIPT_STOP;
 }
@@ -1648,6 +1692,8 @@ int Logic::fnQuitGame(Object *cpt, int32 id, int32 a, int32 b, int32 c, int32 d,
 }
 
 int Logic::fnDeathScreen(Object *cpt, int32 id, int32 a, int32 b, int32 c, int32 d, int32 z, int32 x) {
+	SwordEngine::_systemVars.saveGameFlag = SGF_SAVE;
+	SwordEngine::_systemVars.snrStatus = SNR_MAINPANEL;
 
 	if (_scriptVars[FINALE_OPTION_FLAG] == 4) // successful end of game!
 		SwordEngine::_systemVars.controlPanelMode = CP_THEEND;
@@ -1797,6 +1843,74 @@ void Logic::startPositions(uint32 pos) {
 	fnEnterSection(compact, PLAYER, pos, 0, 0, 0, 0, 0);    // (automatically opens the compact resource for that section)
 	SwordEngine::_systemVars.controlPanelMode = CP_NORMAL;
 	SwordEngine::_systemVars.wantFade = true;
+}
+
+bool Logic::canShowDebugTextNumber() {
+	return _speechRunning || _textRunning;
+}
+
+void Logic::plotRouteGrid(Object *megaObject) {
+	WalkGridHeader floorHeader;
+
+	// Load the floor grid for the input megaObject
+	Object *floorObject = _objMan->fetchObject(megaObject->o_place);
+
+	uint8 *fPolygrid = (uint8 *)_resMan->openFetchRes(floorObject->o_resource);
+
+	fPolygrid += sizeof(Header);
+	memmove(&floorHeader, fPolygrid, sizeof(WalkGridHeader));
+	fPolygrid += sizeof(WalkGridHeader);
+
+	_router->_nBars = (int32)_resMan->getUint32(floorHeader.numBars);
+	if (_router->_nBars >= O_GRID_SIZE) {
+		debug(3, "Logic::plotRouteGrid(): RouteFinder: too many bars %d", _router->_nBars);
+		_resMan->resClose(floorObject->o_resource);
+		return;
+	}
+
+	_router->_nNodes = (int32)_resMan->getUint32(floorHeader.numNodes) + 1;
+	if (_router->_nNodes >= O_GRID_SIZE) {
+		debug(3, "Logic::plotRouteGrid(): RouteFinder: too many nodes %d", _router->_nNodes);
+		_resMan->resClose(floorObject->o_resource);
+		return;
+	}
+
+	// Parse the grid lines...
+	for (int j = 0; j < _router->_nBars; j++) {
+		_router->_bars[j].x1   = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].y1   = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].x2   = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].y2   = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].xmin = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].ymin = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].xmax = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].ymax = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].dx   = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].dy   = (int16)_resMan->readUint16(fPolygrid); fPolygrid += 2;
+		_router->_bars[j].co   = (int32)_resMan->readUint32(fPolygrid); fPolygrid += 4;
+	}
+
+	// Parse the node points...
+	for (int j = 1; j < _router->_nNodes; j++) {
+		_router->_node[j].x = (int16)_resMan->readUint16(fPolygrid); fPolygrid += sizeof(int16);
+		_router->_node[j].y = (int16)_resMan->readUint16(fPolygrid); fPolygrid += sizeof(int16);
+	}
+
+	// Draw the grid (color 254)...
+	for (int j = 0; j < _router->_nBars; j++) {
+		_screen->plotLine(_router->_bars[j].x1 - 128, _router->_bars[j].y1 - 128, _router->_bars[j].x2 - 128, _router->_bars[j].y2 - 128, 254);
+	}
+
+	// Draw the nodes (color 255)...
+	for (int j = 1; j < _router->_nNodes; j++) {
+		_screen->plotPoint(_router->_node[j].x - 128, _router->_node[j].y - 128, 255);
+	}
+
+	// At this point the original code plotted more lines related to the collision engine,
+	// which was coded but never used in the game, so we skip right through the end of the
+	// function and deallocate the previously opened resource.
+
+	_resMan->resClose(floorObject->o_resource);
 }
 
 const uint32 Logic::_scriptVarInit[NON_ZERO_SCRIPT_VARS][2] = {

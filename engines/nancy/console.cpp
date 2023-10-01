@@ -21,6 +21,7 @@
 
 #include "common/system.h"
 #include "common/events.h"
+#include "common/config-manager.h"
 
 #include "audio/audiostream.h"
 
@@ -66,6 +67,7 @@ NancyConsole::NancyConsole() : GUI::Debugger() {
 	registerCmd("get_difficulty", WRAP_METHOD(NancyConsole, Cmd_getDifficulty));
 	registerCmd("set_difficulty", WRAP_METHOD(NancyConsole, Cmd_setDifficulty));
 	registerCmd("sound_info", WRAP_METHOD(NancyConsole, Cmd_soundInfo));
+	registerCmd("debug_hotspots", WRAP_METHOD(NancyConsole, Cmd_showHotspots));
 
 }
 
@@ -459,7 +461,21 @@ bool NancyConsole::Cmd_sceneID(int argc, const char **argv) {
 	return true;
 }
 
-void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &record) {
+void NancyConsole::printActionRecord(const Nancy::Action::ActionRecord *record, bool noDependencies) {
+	debugPrintf("\n%s\n\ttype: %i, %s\n\texecType: %s",
+		record->_description.c_str(),
+		record->_type,
+		record->getRecordTypeName().c_str(),
+		record->_execType == Nancy::Action::ActionRecord::kRepeating ? "kRepeating" : "kOneShot");
+
+	if (!noDependencies && record->_dependencies.children.size()) {
+		debugPrintf("\n\tDependencies:");
+
+		recursePrintDependencies(record->_dependencies);
+	}
+}
+
+void NancyConsole::recursePrintDependencies(const Nancy::Action::DependencyRecord &record) {
 	using namespace Nancy::Action;
 
 	const INV *inventoryData = (const INV *)g_nancy->getEngineData("INV");
@@ -503,7 +519,8 @@ void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &re
 				dep.milliseconds);
 			break;
 		case DependencyType::kElapsedPlayerTime :
-			debugPrintf("kPlayerTime, %i hours, %i minutes, %i seconds, %i milliseconds",
+			debugPrintf("kPlayerTime, player time %s %i hours, %i minutes, %i seconds, %i milliseconds",
+				dep.condition == 0 ? "greater than" : (dep.condition == 1 ? "less than" : "equals"),
 				dep.hours,
 				dep.minutes,
 				dep.seconds,
@@ -519,10 +536,9 @@ void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &re
 			debugPrintf("kElapsedPlayerDay");
 			break;
 		case DependencyType::kCursorType :
-			debugPrintf("kCursorType, item %u, %s, %s",
+			debugPrintf("kCursorType, item %u, %s",
 				dep.label,
-				inventoryData->itemDescriptions[dep.label].name.c_str(),
-				dep.condition == ActionManager::kCursInvHolding ? "kCursInvHolding" : "kCursInvNotHolding");
+				inventoryData->itemDescriptions[dep.label].name.c_str());
 			break;
 		case DependencyType::kPlayerTOD :
 			debugPrintf("kPlayerTOD, %s",
@@ -545,7 +561,7 @@ void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &re
 			break;
 		case DependencyType::kOpenParenthesis :
 			debugPrintf("((((((((\n");
-			recurseDependencies(dep);
+			recursePrintDependencies(dep);
 			debugPrintf("\n))))))))");
 			break;
 		case DependencyType::kRandom :
@@ -563,29 +579,71 @@ void NancyConsole::recurseDependencies(const Nancy::Action::DependencyRecord &re
 bool NancyConsole::Cmd_listActionRecords(int argc, const char **argv) {
 	using namespace Nancy::Action;
 
-	if (g_nancy->_gameFlow.curState != NancyState::kScene) {
-		debugPrintf("Not in the kScene state\n");
-		return true;
-	}
-
-	Common::Array<ActionRecord *> &records = NancySceneState.getActionManager()._records;
-
-	debugPrintf("Scene %u has %u action records:\n\n", NancySceneState.getSceneInfo().sceneID, records.size());
-
-	for (ActionRecord *rec : records) {
-		debugPrintf("\n%s\n\ttype: %i, %s\n\texecType: %s",
-			rec->_description.c_str(),
-			rec->_type,
-			rec->getRecordTypeName().c_str(),
-			rec->_execType == ActionRecord::kRepeating ? "kRepeating" : "kOneShot");
-
-		if (rec->_dependencies.children.size()) {
-			debugPrintf("\n\tDependencies:");
-
-			recurseDependencies(rec->_dependencies);
+	if (argc == 1) {
+		// Print the current scene
+		if (g_nancy->_gameFlow.curState != NancyState::kScene) {
+			debugPrintf("Not in the kScene state\n");
+			return true;
 		}
 
-		debugPrintf("\n\n");
+		Common::Array<ActionRecord *> &records = NancySceneState.getActionManager()._records;
+
+		debugPrintf("Scene %u has %u action records:\n\n", NancySceneState.getSceneInfo().sceneID, records.size());
+
+		for (uint i = 0; i < records.size(); ++i) {
+			ActionRecord *rec = records[i];
+			debugPrintf("Record %u:\n", i);
+			printActionRecord(rec);
+			debugPrintf("\n\n");
+		}
+	} else if (argc == 2) {
+		// Print a different scene. We need to load all records into a temporary array and read from it
+		Common::String s = argv[1];
+
+		Common::Array<ActionRecord *> records;
+		Common::Queue<uint> unknownTypes;
+		Common::Queue<Common::String> unknownDescs;
+		Common::SeekableReadStream *chunk;
+		IFF sceneIFF("S" + s);
+		if (!sceneIFF.load()) {
+			debugPrintf("Invalid scene S%s\n", argv[1]);
+			return true;
+		}
+
+		while (chunk = sceneIFF.getChunkStream("ACT", records.size()), chunk != nullptr) {
+			ActionRecord *rec = ActionManager::createAndLoadNewRecord(*chunk);
+			if (rec == nullptr) {
+				chunk->seek(0);
+				char descBuf[0x30];
+				chunk->read(descBuf, 0x30);
+				descBuf[0x2F] = '\0';
+				byte ARType = chunk->readByte();
+				unknownDescs.push(descBuf);
+				unknownTypes.push(ARType);
+			}
+			records.push_back(rec);
+			delete chunk;
+		}
+
+		for (uint i = 0; i < records.size(); ++i) {
+			ActionRecord *rec = records[i];
+			debugPrintf("Record %u:\n", i);
+
+			if (rec == nullptr) {
+				// For unknown record types, we want to print the typeID and description
+				debugPrintf("\nUnknown or changed type %u, description:\n%s", unknownTypes.pop(), unknownDescs.pop().c_str());
+			} else {
+				printActionRecord(rec);
+			}
+
+			debugPrintf("\n\n");
+		}
+
+		for (uint i = 0; i < records.size(); ++i) {
+			delete records[i];
+		}
+	} else {
+		debugPrintf("Invalid input\n");
 	}
 
 	return true;
@@ -733,12 +791,12 @@ bool NancyConsole::Cmd_setEventFlags(int argc, const char **argv) {
 
 		if (Common::String(argv[i + 1]).compareTo("true") == 0) {
 			NancySceneState.setEventFlag(flagID, g_nancy->_true);
-			debugPrintf("Set flag %i, %s, to g_nancy->_true\n",
+			debugPrintf("Set flag %i, %s, to true\n",
 				flagID,
 				g_nancy->getStaticData().eventFlagNames[flagID].c_str());
 		} else if (Common::String(argv[i + 1]).compareTo("false") == 0) {
 			NancySceneState.setEventFlag(flagID, g_nancy->_false);
-			debugPrintf("Set flag %i, %s, to g_nancy->_false\n",
+			debugPrintf("Set flag %i, %s, to false\n",
 				flagID,
 				g_nancy->getStaticData().eventFlagNames[flagID].c_str());
 		} else {
@@ -958,5 +1016,12 @@ bool NancyConsole::Cmd_soundInfo(int argc, const char **argv) {
 
 	return true;
 }
+
+bool NancyConsole::Cmd_showHotspots(int argc, const char **argv) {
+	ConfMan.setBool("debug_hotspots", !ConfMan.getBool("debug_hotspots", ConfMan.kTransientDomain), ConfMan.kTransientDomain);
+
+	return cmdExit(0, nullptr);
+}
+
 
 } // End of namespace Nancy
